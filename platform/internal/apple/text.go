@@ -5,6 +5,7 @@ package apple
 import (
 	"math"
 	"structs"
+	"sync"
 	"unicode/utf8"
 	"unsafe"
 
@@ -112,9 +113,53 @@ func loadText(cf, cg uintptr) {
 // CoreText weights of CSS's 100 to 900, from UIFontWeight.
 var weights = [...]float64{-0.8, -0.6, -0.4, 0, 0.23, 0.3, 0.4, 0.56, 0.62}
 
+// fontKey identifies a font by the four things that choose one. A table
+// of numbers has two or three of these for the whole screen, and asks for
+// them once per changed cell per frame.
+type fontKey struct {
+	family string
+	size   float64
+	weight core.FontWeight
+	italic bool
+}
+
+var (
+	fontMu    sync.Mutex
+	fontCache = map[fontKey]uintptr{} // the cache holds one reference each
+)
+
 // Font returns a new CTFont (an NSFont or UIFont) for f: the system face
 // unless f names a family. The caller releases it.
+//
+// Fonts are immutable and few, so they are built once and handed out
+// again by reference. Building one is seven CoreText calls through cgo;
+// a frame of a table asks for the same font forty times.
 func Font(f core.Font) uintptr {
+	k := fontKey{family: f.Family, size: float64(f.Size), weight: f.Weight, italic: f.Italic}
+	fontMu.Lock()
+	if ref, ok := fontCache[k]; ok {
+		fontMu.Unlock()
+		return cfRetain(ref)
+	}
+	fontMu.Unlock()
+
+	font := buildFont(f)
+	if font == 0 {
+		return 0
+	}
+	fontMu.Lock()
+	if ref, ok := fontCache[k]; ok { // another goroutine built it first
+		fontMu.Unlock()
+		Release(font)
+		return cfRetain(ref)
+	}
+	fontCache[k] = font // the cache keeps this reference
+	fontMu.Unlock()
+	return cfRetain(font)
+}
+
+// buildFont returns a new CTFont for f. The caller releases it.
+func buildFont(f core.Font) uintptr {
 	var base uintptr
 	if f.Family == core.FontMonospace {
 		const uiFontUserFixedPitch = 1
@@ -220,8 +265,60 @@ func utf16Offsets(text string) (toUTF16, toUTF8 []int) {
 
 // attributed returns a new CFAttributedString of t, its spans styled over
 // its style. The caller releases it.
-func attributed(t *core.AttributedText, toUTF16 []int, fonts []core.FontExtent) uintptr {
-	st := t.Style
+// styleAttributes returns a new CFDictionary of st's attributes. The
+// caller releases it.
+//
+// The attributes depend on the style, never on the text — except that a
+// line holding an attachment may grow past its line height, and that case
+// is built fresh instead of cached (see buildAttributes). So a screen
+// builds a handful and asks for them again for every cell of every frame.
+// A frame of the quotes case asks forty times: without this each ask
+// rebuilt a font, a colour, four CFNumbers, a paragraph style and the
+// dictionary, all through cgo.
+var (
+	attrsMu    sync.Mutex
+	attrsCache = map[core.TextStyle]uintptr{} // the cache holds one reference each
+)
+
+// attrsCacheLimit bounds the cache. A screen has a handful of styles.
+const attrsCacheLimit = 256
+
+func styleAttributes(st core.TextStyle) uintptr {
+	attrsMu.Lock()
+	if d, ok := attrsCache[st]; ok {
+		attrsMu.Unlock()
+		return cfRetain(d)
+	}
+	attrsMu.Unlock()
+
+	d := buildAttributes(st, false)
+	if d == 0 {
+		return 0
+	}
+	attrsMu.Lock()
+	if old, ok := attrsCache[st]; ok { // another goroutine built it first
+		attrsMu.Unlock()
+		Release(d)
+		return cfRetain(old)
+	}
+	if len(attrsCache) >= attrsCacheLimit {
+		// Styles are few, but a colour that animates would add one per
+		// frame. Dropping everything is enough; a rebuild costs one frame.
+		for k, v := range attrsCache {
+			Release(v)
+			delete(attrsCache, k)
+		}
+	}
+	attrsCache[st] = d // the cache keeps this reference
+	attrsMu.Unlock()
+	return cfRetain(d)
+}
+
+// buildAttributes returns a new dictionary of st's attributes: the font,
+// colour, letter spacing and underline from runAttributes, plus the
+// paragraph style the alignment and line height ask for. The caller
+// releases it.
+func buildAttributes(st core.TextStyle, withAttachments bool) uintptr {
 	var keys, values, owned []uintptr
 
 	align := uint8(alignLeft)
@@ -236,20 +333,32 @@ func attributed(t *core.AttributedText, toUTF16 []int, fonts []core.FontExtent) 
 	if lineHeight > 0 {
 		settings = append(settings, paragraphSetting{spec: specMinLineHeight, size: 8, value: unsafe.Pointer(&lineHeight)})
 		// A line grows where an attachment reaches past it.
-		if len(t.Attachments) == 0 {
+		if !withAttachments {
 			settings = append(settings, paragraphSetting{spec: specMaxLineHeight, size: 8, value: unsafe.Pointer(&lineHeight)})
 		}
 	}
 	para := ctParagraphStyleCreate(unsafe.Pointer(&settings[0]), uintptr(len(settings)))
 	keys, values, owned = append(keys, attrParagraph), append(values, para), append(owned, para)
 	attrs := runAttributes(st, keys, values)
+	for _, ref := range owned {
+		Release(ref)
+	}
+	return attrs
+}
+
+func attributed(t *core.AttributedText, toUTF16 []int, fonts []core.FontExtent) uintptr {
+	var attrs uintptr
+	if len(t.Attachments) > 0 {
+		// A line holding an attachment may grow past its line height,
+		// which the cached attributes do not allow for.
+		attrs = buildAttributes(t.Style, true)
+	} else {
+		attrs = styleAttributes(t.Style)
+	}
 	str := CFString(t.Text)
 	out := cfAttributedStringCreate(0, str, attrs)
 	Release(str)
 	Release(attrs)
-	for _, ref := range owned {
-		Release(ref)
-	}
 	if len(t.Spans) == 0 && len(t.Attachments) == 0 {
 		return out
 	}
@@ -260,7 +369,7 @@ func attributed(t *core.AttributedText, toUTF16 []int, fonts []core.FontExtent) 
 		if end <= start {
 			continue
 		}
-		a := runAttributes(sp.Style, nil, nil)
+		a := styleAttributes(sp.Style)
 		r := cfRange{Location: toUTF16[start], Length: toUTF16[end] - toUTF16[start]}
 		cfAttributedStringSetAttrs(m, r, a, false)
 		Release(a)
@@ -331,6 +440,25 @@ type prepared struct {
 	decos       []decoration
 	atts        []core.TextAttachment
 	fonts       []core.FontExtent // the attachments'
+	// measured caches Measure by wrap width: layout asks the same prepared
+	// text its size at the width it tried before, two or three times per
+	// frame for a table of numbers. Each entry costs one CTFramesetter call
+	// through cgo, so the answer is kept per width.
+	measured map[measureKey]core.Size
+}
+
+// measureKey is a wrap width. Auto is a NaN, which no map can key on, so
+// it gets its own field.
+type measureKey struct {
+	auto  bool
+	width float32
+}
+
+func keyOf(maxWidth core.Points) measureKey {
+	if maxWidth.IsAuto() {
+		return measureKey{auto: true}
+	}
+	return measureKey{width: float32(maxWidth)}
 }
 
 // unbounded is a size limit nothing reaches; tall is a frame height
@@ -341,6 +469,20 @@ const (
 )
 
 func (p *prepared) Measure(maxWidth core.Points) core.Size {
+	k := keyOf(maxWidth)
+	if size, ok := p.measured[k]; ok {
+		return size
+	}
+	size := p.measure(maxWidth)
+	if p.measured == nil {
+		p.measured = make(map[measureKey]core.Size, 2)
+	}
+	p.measured[k] = size
+	return size
+}
+
+// measure is Measure without the cache.
+func (p *prepared) measure(maxWidth core.Points) core.Size {
 	if p.emptyHeight > 0 {
 		return core.Size{Height: core.Points(math.Ceil(p.emptyHeight))}
 	}
