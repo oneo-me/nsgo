@@ -408,6 +408,11 @@ func Run(app engine.App, opts Options) {
 }
 
 // Mount implements engine.Platform.
+// Animate implements engine.Platform. This backend has no display link yet:
+// apps drive their own frames with a timer, which costs the wakeups a
+// platform-driven frame would not. See the macOS backend for the shape.
+func (w *window) Animate(on bool) {}
+
 func (w *window) Mount(b *core.MountBatch) {
 	if w.batches.Push(b) {
 		postMessageW.Call(w.hwnd, wmApply, 0, 0)

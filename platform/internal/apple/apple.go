@@ -78,8 +78,19 @@ func constant(lib uintptr, name string) uintptr {
 	return **(**uintptr)(unsafe.Pointer(&addr))
 }
 
+// coreFoundation is CoreFoundation, kept for CFStringConstant.
+var coreFoundation uintptr
+
+// CFStringConstant returns a global CFString constant such as
+// kCFRunLoopCommonModes: a run loop mode must be the real constant, not a
+// string that merely compares equal.
+func CFStringConstant(name string) uintptr {
+	return constant(coreFoundation, name)
+}
+
 func init() {
 	cf := load("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+	coreFoundation = cf
 	cg := load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
 	purego.RegisterLibFunc(&cfRelease, cf, "CFRelease")
 	purego.RegisterLibFunc(&cfStringCreateWithBytes, cf, "CFStringCreateWithBytes")

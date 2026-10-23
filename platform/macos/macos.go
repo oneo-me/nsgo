@@ -143,6 +143,10 @@ var (
 	selAlloc, selInit, selNew       = sel("alloc"), sel("init"), sel("new")
 	selRelease                      = sel("release")
 	selSetWantsLayer, selLayer      = sel("setWantsLayer:"), sel("layer")
+	selDisplayLink                  = sel("displayLinkWithTarget:selector:")
+	selAddToRunLoop                 = sel("addToRunLoop:forMode:")
+	selSetPaused                    = sel("setPaused:")
+	selInvalidate                   = sel("invalidate")
 	selSetFrame, selBounds          = sel("setFrame:"), sel("bounds")
 	selSetFrameSize                 = sel("setFrameSize:")
 	selAddSubview, selSuperview     = sel("addSubview:"), sel("superview")
@@ -228,6 +232,7 @@ func loadAppKit() {
 		objc.MethodDef{Cmd: sel("prepareForDragOperation:"), Fn: prepareForDrag},
 		objc.MethodDef{Cmd: sel("performDragOperation:"), Fn: performDrag},
 	))
+	// The display link's target: one frame on the main thread.
 	classObserver = register("NsgoObserver", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("observeValueForKeyPath:ofObject:change:context:"),
 		Fn: func(self objc.ID, _ objc.SEL, path, object, change objc.ID, ctx uintptr) {
@@ -654,8 +659,38 @@ func (s *surface) Prepare(t *core.AttributedText) core.PreparedText {
 	return apple.TextEngine{}.Prepare(t)
 }
 
+// Animate implements engine.Platform: it starts or stops the frame clock.
+// Called from the engine goroutine, so it hops to the main thread.
+func (s *surface) Animate(on bool) {
+	apple.OnMain(func() { s.animate(on) })
+}
+
+// animate starts the frame clock while the app wants frames, and stops it
+// only when nothing is animating either. The clock is shared: the same
+// display link steps the app's frames and the native animations, so a
+// screen that animates both is not woken twice a frame.
+func (s *surface) animate(on bool) {
+	if on {
+		s.startTicking()
+		return
+	}
+	if s.animator.Running() || len(s.motions) > 0 || len(s.ghosts) > 0 {
+		return
+	}
+	s.stopTicking()
+}
+
 // Mount implements engine.Platform.
 func (s *surface) Mount(b *core.MountBatch) {
+	if s.link == 0 && s.timer == 0 && s.native.Send(selWindow) != 0 {
+		// The first commit may arrive before the frame clock exists; the
+		// frame request that caused it would otherwise be lost.
+		apple.OnMain(func() {
+			if s.engine != nil && s.engine.WantsFrames() {
+				s.animate(true)
+			}
+		})
+	}
 	if s.batches.Push(b) {
 		s.native.Send(selPerformOnMain, selApply, objc.ID(0), false)
 	}

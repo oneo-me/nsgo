@@ -47,6 +47,10 @@ type RootOptions struct {
 	Clock Clock
 	// Report receives failures no Catch handles; they are dropped when nil.
 	Report func(error)
+	// Animate tells the host whether the app still wants display frames.
+	// The host starts its display link on true and stops it on false, so an
+	// idle app costs no wakeups. It must be safe to call from any goroutine.
+	Animate func(on bool)
 	// Storage keeps the app's entries; a store in memory when nil.
 	Storage *Store
 	// DataDir and CacheDir are the app's directories, "" where the target
@@ -60,7 +64,8 @@ func NewRoot(opts RootOptions) *Scope {
 		opts.Clock = SystemClock{}
 	}
 	rt := &runtime{post: opts.Post, clock: opts.Clock, report: opts.Report,
-		store: opts.Storage, dataDir: opts.DataDir, cacheDir: opts.CacheDir}
+		store: opts.Storage, dataDir: opts.DataDir, cacheDir: opts.CacheDir,
+		animate: opts.Animate}
 	rt.root = &Scope{rt: rt}
 	return rt.root
 }
@@ -85,6 +90,79 @@ type runtime struct {
 	storage  *storageWatch
 	dataDir  string
 	cacheDir string
+
+	animate   func(bool)
+	frames    []*frameCb // per-frame callbacks; false unregisters
+	animating bool
+}
+
+// frameCb is one registered per-frame callback. Identity is the pointer:
+// comparing func values for equality is not reliable in Go.
+type frameCb struct {
+	fn func() bool
+}
+
+// OnFrame runs fn once per display frame until it returns false or stop is
+// called. The host's display link runs while any callback is registered,
+// so an app with none gets no frames at all: that is what keeps a static
+// screen from waking the process sixty times a second.
+func (cx *Scope) OnFrame(fn func() bool) (stop func()) {
+	rt := cx.rt
+	cb := &frameCb{fn: fn}
+	rt.frames = append(rt.frames, cb)
+	rt.wantFrames(true)
+	stopped := false
+	return func() {
+		if stopped {
+			return
+		}
+		stopped = true
+		rt.removeFrame(cb)
+	}
+}
+
+// removeFrame drops cb and tells the host when the last one goes.
+func (rt *runtime) removeFrame(cb *frameCb) {
+	for i, f := range rt.frames {
+		if f == cb {
+			rt.frames = append(rt.frames[:i], rt.frames[i+1:]...)
+			break
+		}
+	}
+	rt.wantFrames(len(rt.frames) > 0)
+}
+
+// WantsFrames reports whether anything is registered for display frames.
+// Hosts ask before building a display link late, after the first commit.
+func (cx *Scope) WantsFrames() bool { return cx.rt.animating }
+
+// RunFrames runs the frame callbacks and reports whether any is left.
+// The engine calls it once per display frame, on the graph's goroutine.
+func (cx *Scope) RunFrames() bool { return cx.rt.runFrames() }
+
+func (rt *runtime) runFrames() bool {
+	live := rt.frames[:0]
+	for _, cb := range rt.frames {
+		if cb.fn() {
+			live = append(live, cb)
+		}
+	}
+	rt.frames = live
+	// A callback that returned false must release the host's display link,
+	// or a screen that stopped animating keeps a link running for nothing.
+	rt.wantFrames(len(live) > 0)
+	return len(live) > 0
+}
+
+// wantFrames tells the host whether frames are needed, once per change.
+func (rt *runtime) wantFrames(on bool) {
+	if rt.animating == on {
+		return
+	}
+	rt.animating = on
+	if rt.animate != nil {
+		rt.animate(on)
+	}
 }
 
 // current is the scope that owns what code using cx creates now.

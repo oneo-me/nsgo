@@ -15,6 +15,15 @@ type recorder struct {
 	mu      sync.Mutex
 	batches []*core.MountBatch
 	mounted chan struct{}
+	// animate records what the engine told the host about display frames.
+	animate []bool
+}
+
+// Animate implements Platform: the engine starts and stops display frames.
+func (r *recorder) Animate(on bool) {
+	r.mu.Lock()
+	r.animate = append(r.animate, on)
+	r.mu.Unlock()
 }
 
 func (r *recorder) Mount(b *core.MountBatch) {

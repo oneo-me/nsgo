@@ -80,6 +80,32 @@ func (w *window) scrollAnimated(v *view, offset core.Point) {
 	w.animate(v)
 }
 
+// Animate implements engine.Platform: the frame clock runs while the app
+// wants frames, and only stops once nothing is animating either. Called
+// from the engine goroutine, so it hops to the main thread.
+func (w *window) Animate(on bool) {
+	w.post(func() {
+		if on {
+			w.startClock()
+			return
+		}
+		if w.animator.Running() || len(w.animating) > 0 {
+			return
+		}
+		w.stopClock()
+	})
+}
+
+// stopClock removes the frame timer; tickCallback would otherwise keep
+// repeating until the next tick noticed.
+func (w *window) stopClock() {
+	if w.ticking && w.tickID != 0 {
+		gSourceRemove(w.tickID)
+	}
+	w.ticking = false
+	w.tickID = 0
+}
+
 // animate ticks v's animations each frame until they end.
 func (w *window) animate(v *view) {
 	for _, a := range w.animating {
@@ -143,6 +169,9 @@ func tickCallback(data uintptr) int32 {
 
 // tick moves every animation to now and repaints.
 func (w *window) tick() {
+	if w.engine != nil && w.engine.WantsFrames() {
+		w.engine.Frame()
+	}
 	now := time.Now()
 	live := w.animating[:0]
 	for _, v := range w.animating {
@@ -193,7 +222,7 @@ func (w *window) tick() {
 	if w.stepImages(now) {
 		running = true
 	}
-	if len(live) == 0 && !running {
+	if len(live) == 0 && !running && (w.engine == nil || !w.engine.WantsFrames()) {
 		// tickCallback's return removes the timer.
 		w.ticking = false
 		w.tickID = 0

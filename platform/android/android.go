@@ -360,6 +360,11 @@ func (l *textLayout) Attachment(i int) (core.Bounds, bool) {
 
 // Mount implements engine.Platform: one message per commit, then the
 // loads of the image sources it changed.
+// Animate implements engine.Platform. This backend has no display link yet:
+// apps drive their own frames with a timer, which costs the wakeups a
+// platform-driven frame would not. See the macOS backend for the shape.
+func (s *surface) Animate(on bool) {}
+
 func (s *surface) Mount(b *core.MountBatch) {
 	requests, loads := s.trackImages(b)
 	natives := s.trackNatives(b)

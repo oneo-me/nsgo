@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"sync"
+	"sync/atomic"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -17,6 +18,10 @@ type Platform interface {
 	// Mount receives each commit on the engine goroutine. The platform
 	// applies it on its main thread, in one hop, without waiting.
 	Mount(batch *core.MountBatch)
+	// Animate starts or stops display frames. The engine turns it on while
+	// someone is registered for frames and off when the last one leaves,
+	// so an idle app holds no display link and takes no wakeups.
+	Animate(on bool)
 }
 
 // App builds the root's content once.
@@ -45,15 +50,19 @@ type Options struct {
 // Its methods are safe to call from any goroutine and never block, so a
 // platform's main thread can call them.
 type Engine struct {
-	mu     sync.Mutex
-	queue  []message
-	wake   chan struct{}
-	done   chan struct{}
-	exited chan struct{}
-	once   sync.Once
+	mu    sync.Mutex
+	queue []message
+	// wantsFrame mirrors the last Animate call, for platforms that build
+	// their display link late.
+	wantsFrame atomic.Bool
+	wake       chan struct{}
+	done       chan struct{}
+	exited     chan struct{}
+	once       sync.Once
 }
 
 type message struct {
+	frame  bool
 	event  core.Event
 	resize *core.Size
 	env    *core.Environment
@@ -97,6 +106,11 @@ func (e *Engine) run(p Platform, app App, opts Options) {
 		Storage:  opts.Storage,
 		DataDir:  opts.DataDir,
 		CacheDir: opts.CacheDir,
+		// Called from any goroutine: the platform owns the display link.
+		Animate: func(on bool) {
+			e.wantsFrame.Store(on)
+			p.Animate(on)
+		},
 	})
 	defer root.Dispose()
 	tree := core.NewTree(root, p)
@@ -114,6 +128,8 @@ func (e *Engine) run(p Platform, app App, opts Options) {
 		}
 		for _, m := range e.take() {
 			switch {
+			case m.frame:
+				root.RunFrames()
 			case m.fn != nil:
 				m.fn()
 			case m.resize != nil:
@@ -170,6 +186,14 @@ func (e *Engine) take() []message {
 
 // Dispatch reports a platform event.
 func (e *Engine) Dispatch(ev core.Event) { e.push(message{event: ev}) }
+
+// WantsFrames reports whether the app asked for display frames. A platform
+// that builds its link lazily asks this when the first commit arrives.
+func (e *Engine) WantsFrames() bool { return e.wantsFrame.Load() }
+
+// Frame reports a display frame from the platform's display link. It runs
+// the app's frame callbacks on the engine goroutine and commits once.
+func (e *Engine) Frame() { e.push(message{frame: true}) }
 
 // Resize sets the surface size.
 func (e *Engine) Resize(size core.Size) { e.push(message{resize: &size}) }

@@ -481,6 +481,11 @@ func (s *surface) Prepare(t *core.AttributedText) core.PreparedText {
 }
 
 // Mount implements engine.Platform.
+// Animate implements engine.Platform. This backend has no display link yet:
+// apps drive their own frames with a timer, which costs the wakeups a
+// platform-driven frame would not. See the macOS backend for the shape.
+func (s *surface) Animate(on bool) {}
+
 func (s *surface) Mount(b *core.MountBatch) {
 	if s.batches.Push(b) {
 		s.native.Send(selPerformOnMain, selApply, objc.ID(0), false)

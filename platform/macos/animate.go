@@ -53,6 +53,12 @@ func (s *surface) startTicking() {
 	loop := objc.ID(objc.GetClass("NSRunLoop")).Send(sel("mainRunLoop"))
 	if objc.Send[bool](s.native, sel("respondsToSelector:"), sel("displayLinkWithTarget:selector:")) {
 		s.link = s.native.Send(sel("displayLinkWithTarget:selector:"), s.native, selTick).Send(sel("retain"))
+		if s.link == 0 {
+			// No window yet: a link needs the view to be in one. Leave
+			// ticking off so the next mount asks again.
+			s.ticking = false
+			return
+		}
 		s.link.Send(sel("addToRunLoop:forMode:"), loop, apple.CommonModes())
 		return
 	}
@@ -81,8 +87,12 @@ func surfaceTick(self objc.ID, _ objc.SEL, _ objc.ID) {
 	}
 }
 
-// tick steps one frame.
+// tick steps one frame: the engine's frame callbacks first, then the
+// native animations the same clock drives.
 func (s *surface) tick() {
+	if s.engine != nil && s.engine.WantsFrames() {
+		s.engine.Frame()
+	}
 	now := s.clock()
 	if s.animator.Running() {
 		s.animator.Step(now)
@@ -92,7 +102,8 @@ func (s *surface) tick() {
 		s.applyAnimated()
 	})
 	s.startImages()
-	if !s.animator.Running() && len(s.motions) == 0 && len(s.ghosts) == 0 {
+	if !s.animator.Running() && len(s.motions) == 0 && len(s.ghosts) == 0 &&
+		(s.engine == nil || !s.engine.WantsFrames()) {
 		s.stopTicking()
 	}
 }

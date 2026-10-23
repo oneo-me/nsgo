@@ -524,6 +524,11 @@ func (p *preparedText) Release() {
 
 // Mount implements engine.Platform; the page has one thread, so it
 // applies the batch right away.
+// Animate implements engine.Platform. This backend has no display link yet:
+// apps drive their own frames with a timer, which costs the wakeups a
+// platform-driven frame would not. See the macOS backend for the shape.
+func (s *surface) Animate(on bool) {}
+
 func (s *surface) Mount(b *core.MountBatch) {
 	var lb *layoutBatch
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {
