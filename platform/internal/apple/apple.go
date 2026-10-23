@@ -88,6 +88,10 @@ func CFStringConstant(name string) uintptr {
 	return constant(coreFoundation, name)
 }
 
+// MediaTime is CACurrentMediaTime: the clock a display link's timestamps
+// are on, so a frame can ask how long it has before its deadline.
+func MediaTime() float64 { return caCurrentMediaTime() }
+
 func init() {
 	cf := load("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
 	coreFoundation = cf

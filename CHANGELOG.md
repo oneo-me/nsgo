@@ -55,3 +55,4 @@
 - Fix hover events, hover styles and tooltips never firing on Windows and Linux.
 - Fix overlays and modals inside a hidden view staying shown, and hidden views keeping their frames.
 - Fix popups reporting requests that change nothing and skipping `OnCancel` on presses outside, and menus centering on their trigger instead of aligning with its start.
+- Add `Scope.OnFrame`, which runs a callback once per display frame while the host's display link is running, so an app that animates need not run its own timer.
