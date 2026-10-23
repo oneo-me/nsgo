@@ -87,11 +87,48 @@ func surfaceTick(self objc.ID, _ objc.SEL, _ objc.ID) {
 	}
 }
 
+// A frame that cannot be finished before AppKit composites is skipped
+// rather than half-drawn: WWDC21-10147 has the app ask the link how much
+// time is left and drop the work when it is short. maxFrameSkips keeps a
+// busy screen from starving for long.
+const (
+	minFrameWork  = 0.0015 // seconds; below this an engine frame cannot land
+	maxFrameSkips = 3
+)
+
+// shouldSkip reports whether a frame with left seconds before the next
+// composite cannot finish in time. skips bounds how long a screen may go
+// without drawing, so a slow frame cannot stall the app.
+func shouldSkip(left float64, skips int) bool {
+	return left < minFrameWork && skips < maxFrameSkips
+}
+
+// frameTimeLeft is the seconds between now and the display link's next
+// composite. A timer fallback has no target timestamp: it never skips.
+func (s *surface) frameTimeLeft() float64 {
+	if s.link == 0 {
+		return 1
+	}
+	next := objc.Send[float64](s.link, selTargetTimestamp)
+	if next <= 0 {
+		return 1
+	}
+	if left := next - apple.MediaTime(); left > 0 {
+		return left
+	}
+	return 0
+}
+
 // tick steps one frame: the engine's frame callbacks first, then the
 // native animations the same clock drives.
 func (s *surface) tick() {
 	if s.engine != nil && s.engine.WantsFrames() {
-		s.engine.Frame()
+		if shouldSkip(s.frameTimeLeft(), s.frameSkips) {
+			s.frameSkips++
+		} else {
+			s.frameSkips = 0
+			s.engine.Frame()
+		}
 	}
 	now := s.clock()
 	if s.animator.Running() {

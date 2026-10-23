@@ -115,6 +115,7 @@ type surface struct {
 	link       objc.ID // the frame clock's CADisplayLink, made once
 	timer      objc.ID // or its NSTimer while ticking, before macOS 14
 	ticking    bool
+	frameSkips int // frames skipped in a row for want of time
 	motions    map[*view]*motion
 	ghosts     []*ghost
 	components core.NativeComponents
@@ -147,6 +148,7 @@ var (
 	selAddToRunLoop                 = sel("addToRunLoop:forMode:")
 	selSetPaused                    = sel("setPaused:")
 	selInvalidate                   = sel("invalidate")
+	selTargetTimestamp              = sel("targetTimestamp")
 	selSetFrame, selBounds          = sel("setFrame:"), sel("bounds")
 	selSetFrameSize                 = sel("setFrameSize:")
 	selAddSubview, selSuperview     = sel("addSubview:"), sel("superview")
