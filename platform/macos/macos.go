@@ -334,6 +334,10 @@ func Run(app engine.App, opts Options) {
 	s.env = s.environment()
 	eopts := engine.Options{Size: core.Size{Width: opts.Width, Height: opts.Height}, Environment: s.env}
 	eopts.SetDirs(engine.AppDirs(opts.ID))
+	// The engine draws when the display link ticks, not at a priority of
+	// its own: utility keeps it off the performance cores, which is where
+	// most of an idle-ish UI's energy goes.
+	eopts.OnThread = func() { apple.SetThreadQoS(apple.QoSUtility) }
 	s.engine = engine.Start(s, app, eopts)
 	s.observe()
 	window.Send(sel("center"))

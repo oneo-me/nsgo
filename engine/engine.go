@@ -44,6 +44,10 @@ type Options struct {
 	// DataDir and CacheDir are the app's directories, made when the
 	// engine starts; "" where the target has none.
 	DataDir, CacheDir string
+	// OnThread runs once on the engine's own thread before the app mounts,
+	// where a platform sets what belongs to a thread rather than an app:
+	// its QoS class, its name.
+	OnThread func()
 }
 
 // Engine is one running app: one tree, one reactive graph, one goroutine.
@@ -85,6 +89,9 @@ func (e *Engine) run(p Platform, app App, opts Options) {
 	defer close(e.exited)
 	// Text engines such as Android's need the same OS thread each call.
 	runtime.LockOSThread()
+	if opts.OnThread != nil {
+		opts.OnThread()
+	}
 	logger := opts.Logger
 	if logger == nil {
 		logger = slog.Default()
