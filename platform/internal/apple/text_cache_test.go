@@ -46,7 +46,7 @@ func TestFontCacheKeysOnEveryField(t *testing.T) {
 // build them twice.
 func TestStyleAttributesAreReused(t *testing.T) {
 	st := core.TextStyle{Font: core.Font{Size: 13}, Color: core.RGB(0x111111)}
-	a, b := styleAttributes(st), styleAttributes(st)
+	a, b := styleAttributes(st, false), styleAttributes(st, false)
 	defer Release(a)
 	defer Release(b)
 	if a != b {
@@ -68,10 +68,10 @@ func TestStyleAttributesKeyOnEveryField(t *testing.T) {
 		"letter spacing": {Font: core.Font{Size: 13}, Color: core.RGB(0x111111), LetterSpacing: 1},
 		"underline":      {Font: core.Font{Size: 13}, Color: core.RGB(0x111111), Decoration: core.TextDecorationUnderline},
 	}
-	a := styleAttributes(base)
+	a := styleAttributes(base, false)
 	defer Release(a)
 	for name, st := range others {
-		b := styleAttributes(st)
+		b := styleAttributes(st, false)
 		if b == a {
 			t.Errorf("%s: two different styles came back as one dictionary", name)
 		}
@@ -85,7 +85,7 @@ func TestStyleAttributesKeyOnEveryField(t *testing.T) {
 func TestCachedAttributesSurviveRelease(t *testing.T) {
 	st := core.TextStyle{Font: core.Font{Size: 13}, Color: core.RGB(0x222222)}
 	for range 4 {
-		d := styleAttributes(st)
+		d := styleAttributes(st, false)
 		if d == 0 {
 			t.Fatal("the attributes were released with the caller's handle")
 		}
@@ -97,7 +97,7 @@ func TestCachedAttributesSurviveRelease(t *testing.T) {
 func TestAttributesCacheIsBounded(t *testing.T) {
 	for i := range attrsCacheLimit * 2 {
 		st := core.TextStyle{Font: core.Font{Size: 13}, Color: core.RGB(uint32(i%0xffffff) | 0x100000)}
-		Release(styleAttributes(st))
+		Release(styleAttributes(st, false))
 	}
 	attrsMu.Lock()
 	n := len(attrsCache)
@@ -148,4 +148,27 @@ func TestMeasureCacheKeysOnWidth(t *testing.T) {
 	if wide.Width <= narrow.Width {
 		t.Fatalf("a 20pt wrap should be no wider than unwrapped: %v vs %v", narrow, wide)
 	}
+}
+
+// Whether the text holds an attachment changes the paragraph style (a line
+// with one may grow past its line height), so it is part of the key: the
+// two cases must not share attributes, and each must hit its own entry.
+func TestStyleAttributesKeyOnAttachments(t *testing.T) {
+	st := core.TextStyle{Font: core.Font{Size: 13}, Color: core.RGB(0x222222), LineHeight: 20}
+	plain, plain2 := styleAttributes(st, false), styleAttributes(st, false)
+	withAtt := styleAttributes(st, true)
+	defer Release(plain)
+	defer Release(plain2)
+	defer Release(withAtt)
+	if plain != plain2 {
+		t.Fatalf("the same key built attributes twice (%#x, %#x)", plain, plain2)
+	}
+	if plain == withAtt {
+		t.Fatal("text with an attachment shared plain text's attributes: its line cannot grow past the line height")
+	}
+	again := styleAttributes(st, true)
+	if again != withAtt {
+		t.Fatalf("the attachment key built attributes twice (%#x, %#x)", again, withAtt)
+	}
+	Release(again)
 }

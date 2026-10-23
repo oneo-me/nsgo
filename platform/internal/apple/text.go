@@ -277,26 +277,35 @@ func utf16Offsets(text string) (toUTF16, toUTF8 []int) {
 // dictionary, all through cgo.
 var (
 	attrsMu    sync.Mutex
-	attrsCache = map[core.TextStyle]uintptr{} // the cache holds one reference each
+	attrsCache = map[attrsKey]uintptr{} // the cache holds one reference each
 )
+
+// attrsKey is everything buildAttributes reads: the style, and whether the
+// text has attachments, since a line holding one may grow past its line
+// height. Both are small and fixed, so both belong in the key.
+type attrsKey struct {
+	st              core.TextStyle
+	withAttachments bool
+}
 
 // attrsCacheLimit bounds the cache. A screen has a handful of styles.
 const attrsCacheLimit = 256
 
-func styleAttributes(st core.TextStyle) uintptr {
+func styleAttributes(st core.TextStyle, withAttachments bool) uintptr {
+	k := attrsKey{st: st, withAttachments: withAttachments}
 	attrsMu.Lock()
-	if d, ok := attrsCache[st]; ok {
+	if d, ok := attrsCache[k]; ok {
 		attrsMu.Unlock()
 		return cfRetain(d)
 	}
 	attrsMu.Unlock()
 
-	d := buildAttributes(st, false)
+	d := buildAttributes(st, withAttachments)
 	if d == 0 {
 		return 0
 	}
 	attrsMu.Lock()
-	if old, ok := attrsCache[st]; ok { // another goroutine built it first
+	if old, ok := attrsCache[k]; ok { // another goroutine built it first
 		attrsMu.Unlock()
 		Release(d)
 		return cfRetain(old)
@@ -304,12 +313,12 @@ func styleAttributes(st core.TextStyle) uintptr {
 	if len(attrsCache) >= attrsCacheLimit {
 		// Styles are few, but a colour that animates would add one per
 		// frame. Dropping everything is enough; a rebuild costs one frame.
-		for k, v := range attrsCache {
+		for key, v := range attrsCache {
 			Release(v)
-			delete(attrsCache, k)
+			delete(attrsCache, key)
 		}
 	}
-	attrsCache[st] = d // the cache keeps this reference
+	attrsCache[k] = d // the cache keeps this reference
 	attrsMu.Unlock()
 	return cfRetain(d)
 }
@@ -347,14 +356,7 @@ func buildAttributes(st core.TextStyle, withAttachments bool) uintptr {
 }
 
 func attributed(t *core.AttributedText, toUTF16 []int, fonts []core.FontExtent) uintptr {
-	var attrs uintptr
-	if len(t.Attachments) > 0 {
-		// A line holding an attachment may grow past its line height,
-		// which the cached attributes do not allow for.
-		attrs = buildAttributes(t.Style, true)
-	} else {
-		attrs = styleAttributes(t.Style)
-	}
+	attrs := styleAttributes(t.Style, len(t.Attachments) > 0)
 	str := CFString(t.Text)
 	out := cfAttributedStringCreate(0, str, attrs)
 	Release(str)
@@ -369,7 +371,7 @@ func attributed(t *core.AttributedText, toUTF16 []int, fonts []core.FontExtent) 
 		if end <= start {
 			continue
 		}
-		a := styleAttributes(sp.Style)
+		a := styleAttributes(sp.Style, false)
 		r := cfRange{Location: toUTF16[start], Length: toUTF16[end] - toUTF16[start]}
 		cfAttributedStringSetAttrs(m, r, a, false)
 		Release(a)
