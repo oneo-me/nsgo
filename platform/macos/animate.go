@@ -3,6 +3,8 @@
 package macos
 
 import (
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/ebitengine/purego/objc"
@@ -96,6 +98,29 @@ const (
 	maxFrameSkips = 3
 )
 
+// frameCap is the least time between engine frames, from NSGO_FPS. macOS
+// has no preferredFramesPerSecond (that is iOS) and its preferredFrameRate-
+// Range takes a struct this binding cannot pass, so the rate is capped here
+// instead: the link still wakes at the screen's rate, the frame just does
+// not run every time.
+var frameCap = func() time.Duration {
+	v := os.Getenv("NSGO_FPS")
+	if v == "" {
+		return 0
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		return 0
+	}
+	return time.Second / time.Duration(n)
+}()
+
+// frameDue reports whether an engine frame is due, given the cap and how
+// long ago the last one ran. No cap asks for every frame.
+func frameDue(cap, since time.Duration) bool {
+	return cap <= 0 || since >= cap
+}
+
 // shouldSkip reports whether a frame with left seconds before the next
 // composite cannot finish in time. skips bounds how long a screen may go
 // without drawing, so a slow frame cannot stall the app.
@@ -122,15 +147,19 @@ func (s *surface) frameTimeLeft() float64 {
 // tick steps one frame: the engine's frame callbacks first, then the
 // native animations the same clock drives.
 func (s *surface) tick() {
+	now := s.clock()
 	if s.engine != nil && s.engine.WantsFrames() {
-		if shouldSkip(s.frameTimeLeft(), s.frameSkips) {
+		switch {
+		case !frameDue(frameCap, now-s.lastFrame):
+			// Capped below the screen's rate: this tick is not a frame.
+		case shouldSkip(s.frameTimeLeft(), s.frameSkips):
 			s.frameSkips++
-		} else {
+		default:
 			s.frameSkips = 0
+			s.lastFrame = now
 			s.engine.Frame()
 		}
 	}
-	now := s.clock()
 	if s.animator.Running() {
 		s.animator.Step(now)
 	}

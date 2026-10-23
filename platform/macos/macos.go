@@ -115,7 +115,8 @@ type surface struct {
 	link       objc.ID // the frame clock's CADisplayLink, made once
 	timer      objc.ID // or its NSTimer while ticking, before macOS 14
 	ticking    bool
-	frameSkips int // frames skipped in a row for want of time
+	frameSkips int           // frames skipped in a row for want of time
+	lastFrame  time.Duration // when the last engine frame ran, on the clock
 	motions    map[*view]*motion
 	ghosts     []*ghost
 	components core.NativeComponents

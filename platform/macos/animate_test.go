@@ -2,7 +2,10 @@
 
 package macos
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 // A frame that still has time runs. Skipping is for frames that cannot
 // land, not a throttle: skipping these would stutter a screen that is
@@ -29,5 +32,20 @@ func TestSkipsAreBounded(t *testing.T) {
 	}
 	if shouldSkip(0, maxFrameSkips) {
 		t.Fatalf("skipping never stopped at %d: the app would stop drawing", maxFrameSkips)
+	}
+}
+
+// No cap asks for every frame; a cap holds the frame back until its
+// interval has passed, and lets the one at the boundary through.
+func TestFrameCapHoldsFramesBack(t *testing.T) {
+	if !frameDue(0, 0) {
+		t.Fatal("without a cap every tick must be a frame")
+	}
+	sixteen := time.Second / 60
+	if frameDue(sixteen, sixteen/2) {
+		t.Fatal("a frame ran half an interval early: the cap does nothing")
+	}
+	if !frameDue(sixteen, sixteen) {
+		t.Fatal("the frame at the interval boundary must run")
 	}
 }
