@@ -98,8 +98,8 @@ type node struct {
 	responder *Responder // a view's part in the touch responder
 
 	base   Style
-	dyn    Style
-	style  Style // base and dyn merged, with the states' styles
+	dyn    *Style // the StyleFunc's, kept once and updated in place
+	style  Style  // base and dyn merged, with the states' styles
 	states uint8
 	// color is the text color the node has, for CurrentColor.
 	color  Color
@@ -817,7 +817,10 @@ func (t *Tree) bindStyle(cx *Scope, n *node, base Style, fn func() Style) {
 		return
 	}
 	cx.renderEffect(func() {
-		n.dyn = fn()
+		if n.dyn == nil {
+			n.dyn = new(Style)
+		}
+		*n.dyn = fn()
 		changed := t.restyle(n)
 		t.syncPosition(n)
 		if changed {
@@ -839,7 +842,11 @@ func (t *Tree) restyle(n *node) bool {
 	p.Indeterminate = p.Indeterminate || n.part.Indeterminate
 	p.Selected = p.Selected || n.part.Selected
 	p.Disabled = p.Disabled || n.part.Disabled
-	merged := n.base.Merge(n.dyn)
+	var dyn Style
+	if n.dyn != nil {
+		dyn = *n.dyn
+	}
+	merged := n.base.Merge(dyn)
 	var g groupState
 	if gs := merged.GroupStyle; gs != nil {
 		g = n.groupState(gs.Name)
