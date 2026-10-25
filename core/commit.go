@@ -34,6 +34,12 @@ func (t *Tree) Commit() *driver.MountBatch {
 	}
 	b := &driver.MountBatch{Root: t.view.id, Items: append([]driver.MountItem(nil), t.items...), LayoutAnimation: t.layoutAnim}
 	t.layoutAnim = nil
+	// The first commit sends every view, and the slice it grew would stay
+	// this tree's capacity for good: a long list then keeps megabytes for
+	// the handful of items a busy commit sends.
+	if n, c := len(t.items), cap(t.items); c >= 4096 && c > 4*n {
+		t.items = make([]driver.MountItem, 0, max(512, 2*n))
+	}
 	return b
 }
 
