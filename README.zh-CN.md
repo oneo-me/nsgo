@@ -147,6 +147,8 @@ go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 
 参数会覆盖它们对应的 `nsgo.yaml` 值，例如 `-target`、`-version` 或 `-output`；dev 和 build 都接受 `-device` 选择 iPhone、模拟器或 Android 设备，build 的 `-team` 为 iPhone 的包签名，dev 的 `-port` 指定其服务器端口。`-h` 会列出全部参数。
 
+在 macOS 上，滚动视图的边缘效果（`Scroll.EdgeEffects`）通过 Core Animation 的私有类 `CABackdropLayer` 和 `CAFilter` 实现模糊，和 AppKit 自己的边缘效果一样，因为没有公开 API 能让模糊程度在视图内变化。Mac App Store 审核可能拒绝使用私有 API 的应用：NSGo 只在滚动视图有边缘栏时调用它们，但每个 macOS 构建都包含它们的名称。
+
 ## 开发
 
 要求：装有 Xcode 的 macOS，以及 Go 1.26 或更高版本。构建 arm64 的所有目标（包括 Android 的 APK）都不需要其他工具。

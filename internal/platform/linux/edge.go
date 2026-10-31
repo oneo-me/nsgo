@@ -21,7 +21,10 @@ func snapshotEdges(v *view, snap uintptr) {
 		if e.Drawn() == driver.EdgeEffectSoft {
 			x0, y0, x1, y1 := driver.EdgeLine(driver.Side(side))
 			start, end := graphenePoint{x + x0*w, y + y0*h}, graphenePoint{x + x1*w, y + y1*h}
-			stops := []gskColorStop{{0, rgba(e.Tint.Faded(driver.UnblurredSoftTint))}, {1, rgba(e.Tint.Faded(0))}}
+			var stops []gskColorStop
+			for _, st := range e.SoftTint(driver.UnblurredSoftTint) {
+				stops = append(stops, gskColorStop{st.Offset, rgba(st.Color)})
+			}
 			gtkSnapshotAppendLinear(snap, &box, &start, &end, &stops[0], uintptr(len(stops)))
 			continue
 		}

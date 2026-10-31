@@ -64,7 +64,7 @@ func (p *painter) drawEdges(v *view, world matrix) {
 				blurred(l.Total, fade(driver.RGB(0), driver.RGBA(0, 0), l.Full, l.Gone))
 			}
 			p.setTransform(at)
-			if brush := p.gradientBrush(fade(e.Tint.Faded(driver.SoftEdgeTint), e.Tint.Faded(0), 0, 1), w, h); brush != nil {
+			if brush := p.gradientBrush(&driver.GradientPaint{X0: x0, Y0: y0, X1: x1, Y1: y1, Stops: e.SoftTint(driver.EdgeTint)}, w, h); brush != nil {
 				rect := rectF{0, 0, w, h}
 				p.dc.call(rtFillRectangle, uintptr(unsafe.Pointer(&rect)), brush.ptr())
 				brush.release()
@@ -73,7 +73,7 @@ func (p *painter) drawEdges(v *view, world matrix) {
 		}
 		blurred(driver.HardEdgeBlur, nil)
 		p.setTransform(at)
-		p.fillRect(rectF{0, 0, w, h}, e.Tint.Faded(driver.HardEdgeTint))
+		p.fillRect(rectF{0, 0, w, h}, e.Tint.Faded(driver.EdgeTint))
 		line := driver.HairlineRect(driver.Side(side), r.Size)
 		p.fillRect(rectF{float32(line.Origin.X), float32(line.Origin.Y),
 			float32(line.Origin.X + line.Size.Width), float32(line.Origin.Y + line.Size.Height)}, e.Line)

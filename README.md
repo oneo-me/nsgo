@@ -147,6 +147,8 @@ go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 
 Flags replace the `nsgo.yaml` values they name, such as `-target`, `-version` or `-output`; `dev` and `build` take `-device` for an iPhone, simulator or Android device, `build` `-team` to sign the iPhone's package, and `dev` `-port` for its server. `-h` lists every flag.
 
+On macOS, a scroll view's edge effects (`Scroll.EdgeEffects`) blur through Core Animation's private `CABackdropLayer` and `CAFilter`, as AppKit's own edge effects do, since no public API varies a blur across a view. Mac App Store review may reject apps that use private APIs: NSGo calls them only for scroll views with edge bars, but every macOS build contains their names.
+
 ## Development
 
 Requirements: macOS with Xcode and Go 1.26 or later. Nothing else is needed to build every target for arm64, Android's APK included.

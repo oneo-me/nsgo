@@ -310,23 +310,22 @@ func (e *ScrollEdge) Equal(o *ScrollEdge) bool {
 }
 
 // What a platform drawing an edge effect itself draws, alike everywhere:
-// a soft edge blurs by SoftEdgeBlur at the side, down to nothing
-// SoftEdgeTail past the bars, under the tint from SoftEdgeTint; a hard
-// edge blurs by HardEdgeBlur under the bars, under the tint at
-// HardEdgeTint, and draws a hairline HairlineWidth wide past them. Blurs
+// both edges lay the tint at EdgeTint under the bars; a soft edge blurs
+// by SoftEdgeBlur at the side, down to nothing SoftEdgeTail past the bars,
+// where its tint has eased out (SoftTint); a hard edge blurs by HardEdgeBlur
+// under the bars and draws a hairline HairlineWidth wide past them. Blurs
 // are a Gaussian's standard deviation, as CSS's blur() takes.
 const (
 	SoftEdgeBlur  Points  = 10
-	SoftEdgeTail  Points  = 16
-	SoftEdgeTint  float32 = 0.6
+	SoftEdgeTail  Points  = 24
 	HardEdgeBlur  Points  = 6.4
-	HardEdgeTint  float32 = 0.8
+	EdgeTint      float32 = 0.8
 	HairlineWidth Points  = 0.5
 )
 
 // A platform that cannot blur what is behind a view, Linux, fades the
-// content into the tint alone, more opaque: from UnblurredSoftTint at a
-// soft edge's side, and at UnblurredHardTint under a hard edge's bars.
+// content into the tint alone, more opaque: at UnblurredSoftTint under a
+// soft edge's bars, and at UnblurredHardTint under a hard edge's.
 const (
 	UnblurredSoftTint float32 = 0.85
 	UnblurredHardTint float32 = 0.95
@@ -354,6 +353,25 @@ func (e *ScrollEdge) Band() Points {
 		return e.Extent
 	}
 	return 0
+}
+
+// SoftTint returns the stops of a soft edge's tint across its band, from
+// its side: most of the background SoftEdgeTail short of the bars' end,
+// easing out from there to nothing at the band's end. Its ends ease as
+// smoothstep's do, so no line shows where the tint begins to fade.
+func (e *ScrollEdge) SoftTint(most float32) []GradientStop {
+	band := e.Band()
+	if band <= 0 {
+		return nil
+	}
+	from := float32(max(e.Extent-SoftEdgeTail, 0) / band)
+	const steps = 8
+	stops := make([]GradientStop, steps+1)
+	for i := range stops {
+		t := float32(i) / steps
+		stops[i] = GradientStop{Color: e.Tint.Faded(most * (1 - t*t*(3-2*t))), Offset: from + (1-from)*t}
+	}
+	return stops
 }
 
 // BandRect returns the band of side s of a view of size size, in its own

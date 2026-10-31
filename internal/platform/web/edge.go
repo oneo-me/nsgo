@@ -66,12 +66,15 @@ func edgeHTML(e *driver.ScrollEdge, side driver.Side, size driver.Size) string {
 			b.WriteString(layer(fmt.Sprintf("backdrop-filter:blur(%gpx);-webkit-backdrop-filter:blur(%gpx);mask-image:%s;-webkit-mask-image:%[3]s",
 				l.Blur, l.Blur, mask)))
 		}
-		b.WriteString(layer(fmt.Sprintf("background:linear-gradient(%s, %s, %s)", dir,
-			cssColor(e.Tint.Faded(driver.SoftEdgeTint)), cssColor(e.Tint.Faded(0)))))
+		var stops strings.Builder
+		for _, st := range e.SoftTint(driver.EdgeTint) {
+			fmt.Fprintf(&stops, ", %s %g%%", cssColor(st.Color), st.Offset*100)
+		}
+		b.WriteString(layer(fmt.Sprintf("background:linear-gradient(%s%s)", dir, stops.String())))
 		return b.String()
 	}
 	b.WriteString(layer(fmt.Sprintf("backdrop-filter:blur(%gpx);-webkit-backdrop-filter:blur(%[1]gpx);background:%s",
-		driver.HardEdgeBlur, cssColor(e.Tint.Faded(driver.HardEdgeTint)))))
+		driver.HardEdgeBlur, cssColor(e.Tint.Faded(driver.EdgeTint)))))
 	line := driver.HairlineRect(side, size)
 	b.WriteString(fmt.Sprintf(`<div style="position:absolute;left:%s;top:%s;width:%s;height:%s;background:%s"></div>`,
 		px(line.Origin.X), px(line.Origin.Y), px(line.Size.Width), px(line.Size.Height), cssColor(e.Line)))

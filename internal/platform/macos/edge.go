@@ -9,24 +9,31 @@ import (
 	"github.com/oneo-me/nsgo/internal/platform/apple"
 )
 
-// A scroll view's edge effect is AppKit's within-window blur over the
-// container, under the scroll bar, fading in toward the side when soft
-// (apple.ScrollEdge), with the tint and a hard edge's hairline over it.
-// AppKit has a scroll edge effect of its own from macOS 26.1, but only
-// for NSScrollViews under a window's title bar accessories, which the
-// app's scroll views are not.
-
-// materialHeaderView is the NSVisualEffectMaterial of in-line headers and
-// footers, which content scrolls under.
-const materialHeaderView = 10
+// A scroll view's edge effect is drawn as AppKit draws its own
+// (NSScrollPocket): a Core Animation backdrop layer over the container,
+// under the scroll bar, blurring what is under it, with the tint and a
+// hard edge's hairline over it (apple.ScrollEdge). A soft edge's blur is
+// Core Animation's variable blur, whose radius follows a mask image's
+// alpha, from the side to nothing at the band's end; a hard edge's is an
+// even Gaussian blur. CABackdropLayer and CAFilter are private, but
+// NSVisualEffectView's blur cannot vary across it. AppKit's own edge
+// effect, from macOS 26.1, reaches only NSScrollViews under a window's
+// title bar accessories, which the app's scroll views are not.
 
 const viewAbove = 1 // NSWindowAbove
 
-// edgeView is one side's effect: a holder the mouse goes through, with
-// the blur and, over it, the tint.
+// variableBlurSpread is how much wider Core Animation's variable blur
+// spreads than its Gaussian blur, whose radius is the standard deviation,
+// of the same radius: measured on macOS 27.
+const variableBlurSpread = 2
+
+// edgeView is one side's effect: a holder the mouse goes through, whose
+// layer holds the backdrop and, over it, the tint and hairline.
 type edgeView struct {
-	holder, blur, tint objc.ID
-	paint              apple.ScrollEdge
+	holder, backdrop objc.ID
+	// blur is the effect the backdrop's filter draws, soft or hard.
+	blur  driver.EdgeEffect
+	paint apple.ScrollEdge
 }
 
 // placeEdges shows the scroll view's edge effects, at its size.
@@ -47,42 +54,26 @@ func (v *view) placeEdges() {
 			ev.holder.Send(selSetWantsLayer, true)
 			v.native.Send(selAddSubviewPositioned, ev.holder, viewAbove, v.content)
 			ev.holder.Send(selRelease)
-			ev.blur = objc.ID(classOverlay).Send(selNew)
-			// Layer-hosting: the view takes a layer of its own first.
-			ev.blur.Send(sel("setLayer:"), objc.ID(objc.GetClass("CALayer")).Send(sel("layer")))
-			ev.blur.Send(selSetWantsLayer, true)
-			ev.blur.Send(sel("setLayerUsesCoreImageFilters:"), true)
-			ev.holder.Send(selAddSubview, ev.blur)
-			ev.blur.Send(selRelease)
-			ev.tint = objc.ID(classOverlay).Send(selNew)
-			ev.tint.Send(selSetWantsLayer, true)
-			ev.holder.Send(selAddSubview, ev.tint)
-			ev.tint.Send(selRelease)
+			ev.backdrop = objc.ID(objc.GetClass("CABackdropLayer")).Send(selNew)
+			ev.holder.Send(selLayer).Send(sel("addSublayer:"), ev.backdrop)
+			ev.backdrop.Send(selRelease)
 		}
 		r := driver.BandRect(driver.Side(side), v.frame.Size, band)
 		w, h := float64(r.Size.Width), float64(r.Size.Height)
 		apple.WithoutAnimation(func() {
 			ev.holder.Send(selSetFrame, apple.Rect(float64(r.Origin.X), float64(r.Origin.Y), w, h))
-			ev.blur.Send(selSetFrame, apple.Rect(0, 0, w, h))
-			ev.tint.Send(selSetFrame, apple.Rect(0, 0, w, h))
-			fresh := ev.paint.Mask == 0
-			mask := ev.paint.Paint(e, driver.Side(side), w, h)
+			ev.backdrop.Send(selSetFrame, apple.Rect(0, 0, w, h))
+			if d := e.Drawn(); d != ev.blur {
+				ev.backdrop.Send(sel("setFilters:"), edgeBlur(driver.Side(side), d))
+				ev.blur = d
+			}
+			fresh := ev.paint.Tint == 0
+			ev.paint.Paint(e, driver.Side(side), w, h)
 			if fresh {
-				layer := ev.tint.Send(selLayer)
+				layer := ev.holder.Send(selLayer)
 				layer.Send(sel("addSublayer:"), ev.paint.Tint)
 				layer.Send(sel("addSublayer:"), ev.paint.Line)
 			}
-			// TEMP: private CABackdropLayer + variableBlur feasibility test.
-			bd := objc.ID(objc.GetClass("CABackdropLayer")).Send(sel("layer"))
-			bd.Send(selSetFrame, apple.Rect(0, 0, w, h))
-			f := objc.ID(objc.GetClass("CAFilter")).Send(sel("filterWithType:"), apple.NSString("variableBlur"))
-			f.Send(sel("setValue:forKey:"), objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithDouble:"), 20.0), apple.NSString("inputRadius"))
-			cg := apple.FadeImage(driver.Side(side))
-			f.Send(sel("setValue:forKey:"), objc.ID(cg), apple.NSString("inputMaskImage"))
-			f.Send(sel("setValue:forKey:"), objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), true), apple.NSString("inputNormalizeEdges"))
-			bd.Send(sel("setFilters:"), objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), f))
-			ev.blur.Send(selLayer).Send(sel("addSublayer:"), bd)
-			_ = mask
 		})
 	}
 }
@@ -94,52 +85,36 @@ func (ev *edgeView) release() {
 	*ev = edgeView{}
 }
 
+// edgeBlur returns the backdrop's filters for effect d at side s: a blur
+// growing toward a soft side, or an even one.
+func edgeBlur(s driver.Side, d driver.EdgeEffect) objc.ID {
+	filter := objc.ID(objc.GetClass("CAFilter"))
+	set := func(f objc.ID, key string, value objc.ID) {
+		f.Send(sel("setValue:forKey:"), value, apple.NSString(key))
+	}
+	var f objc.ID
+	if d == driver.EdgeEffectSoft {
+		f = filter.Send(sel("filterWithType:"), apple.NSString("variableBlur"))
+		set(f, "inputRadius", nsNumber(float64(driver.SoftEdgeBlur/variableBlurSpread)))
+		set(f, "inputMaskImage", fadeImage(s))
+	} else {
+		f = filter.Send(sel("filterWithType:"), apple.NSString("gaussianBlur"))
+		set(f, "inputRadius", nsNumber(float64(driver.HardEdgeBlur)))
+	}
+	// What is past the band's edges blurs in as if it went on, as
+	// AppKit's edges have it, rather than as clear.
+	set(f, "inputNormalizeEdges", objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), true))
+	return objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), f)
+}
+
 // fadeImages are the soft edges' masks, by side, made on first use.
 var fadeImages [4]objc.ID
 
-// fadeImage returns the soft edge's mask at side s, which AppKit
-// stretches over the blur.
+// fadeImage returns the soft edge's mask at side s, which the variable
+// blur stretches over the band.
 func fadeImage(s driver.Side) objc.ID {
 	if fadeImages[s] == 0 {
-		cg := apple.FadeImage(s)
-		size := apple.CGSize{Width: 1, Height: 64}
-		if s == driver.SideLeft || s == driver.SideRight {
-			size = apple.CGSize{Width: 64, Height: 1}
-		}
-		img := objc.ID(objc.GetClass("NSImage")).Send(selAlloc).Send(sel("initWithCGImage:size:"), cg, size)
-		apple.Release(cg)
-		const resizingStretch = 1 // NSImageResizingModeStretch
-		img.Send(sel("setResizingMode:"), resizingStretch)
-		fadeImages[s] = img
+		fadeImages[s] = objc.ID(apple.FadeImage(s))
 	}
 	return fadeImages[s]
-}
-
-// edgeFilters are a side's Core Image background filters: a blur whose
-// radius grows toward a soft side along a gradient mask, or an even one.
-func edgeFilters(e *driver.ScrollEdge, side driver.Side, w, h float64, soft bool) objc.ID {
-	ci := objc.ID(objc.GetClass("CIFilter"))
-	num := func(v float64) objc.ID { return objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithDouble:"), v) }
-	list := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
-	if !soft {
-		f := ci.Send(sel("filterWithName:"), apple.NSString("CIGaussianBlur"))
-		f.Send(sel("setValue:forKey:"), num(float64(driver.HardEdgeBlur)), apple.NSString("inputRadius"))
-		list.Send(sel("addObject:"), f)
-		return list
-	}
-	// The mask's points, in Core Image's space: y grows up from the
-	// band's bottom.
-	x0, y0, x1, y1 := driver.EdgeLine(side)
-	vec := objc.ID(objc.GetClass("CIVector"))
-	color := objc.ID(objc.GetClass("CIColor"))
-	g := ci.Send(sel("filterWithName:"), apple.NSString("CILinearGradient"))
-	g.Send(sel("setValue:forKey:"), vec.Send(sel("vectorWithX:Y:"), float64(x0)*w, (1-float64(y0))*h), apple.NSString("inputPoint0"))
-	g.Send(sel("setValue:forKey:"), vec.Send(sel("vectorWithX:Y:"), float64(x1)*w, (1-float64(y1))*h), apple.NSString("inputPoint1"))
-	g.Send(sel("setValue:forKey:"), color.Send(sel("colorWithRed:green:blue:"), 1.0, 1.0, 1.0), apple.NSString("inputColor0"))
-	g.Send(sel("setValue:forKey:"), color.Send(sel("colorWithRed:green:blue:"), 0.0, 0.0, 0.0), apple.NSString("inputColor1"))
-	f := ci.Send(sel("filterWithName:"), apple.NSString("CIMaskedVariableBlur"))
-	f.Send(sel("setValue:forKey:"), g.Send(sel("outputImage")), apple.NSString("inputMask"))
-	f.Send(sel("setValue:forKey:"), num(float64(driver.SoftEdgeBlur)), apple.NSString("inputRadius"))
-	list.Send(sel("addObject:"), f)
-	return list
 }

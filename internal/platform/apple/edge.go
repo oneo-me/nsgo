@@ -9,10 +9,10 @@ import (
 var selSetHidden = sel("setHidden:")
 
 // ScrollEdge is what macOS, and iOS before 26, draw of a scroll edge
-// effect over the system's blur, alike: the mask that fades a soft edge's
-// blur in toward the side, the tint of the background the content
-// scrolls over, and a hard edge's hairline. Its layers are in the band's
-// own space; the platform puts them over its blur view.
+// effect over their blur, alike: the tint of the background the content
+// scrolls over, a hard edge's hairline and, for iOS, the mask that fades
+// a soft edge's blur in toward the side. Its layers are in the band's own
+// space; the platform puts them over its blur.
 type ScrollEdge struct {
 	Mask, Tint, Line objc.ID
 }
@@ -27,17 +27,17 @@ func (p *ScrollEdge) Paint(e *driver.ScrollEdge, s driver.Side, w, h float64) (m
 		p.Line = objc.ID(objc.GetClass("CALayer")).Send(selNew)
 	}
 	x0, y0, x1, y1 := driver.EdgeLine(s)
-	gradient := func(g objc.ID, from, to driver.Color) {
+	gradient := func(g objc.ID, stops ...driver.GradientStop) {
 		g.Send(selSetFrame, CGRect{Size: CGSize{Width: w, Height: h}})
-		paintGradient(g, &driver.GradientPaint{X0: x0, Y0: y0, X1: x1, Y1: y1,
-			Stops: []driver.GradientStop{{Color: from}, {Color: to, Offset: 1}}}, w, h)
+		paintGradient(g, &driver.GradientPaint{X0: x0, Y0: y0, X1: x1, Y1: y1, Stops: stops}, w, h)
 	}
 	soft := e.Drawn() == driver.EdgeEffectSoft
 	if soft {
-		gradient(p.Mask, driver.RGB(0), driver.RGBA(0, 0))
-		gradient(p.Tint, e.Tint.Faded(driver.SoftEdgeTint), e.Tint.Faded(0))
+		gradient(p.Mask, driver.GradientStop{Color: driver.RGB(0)}, driver.GradientStop{Color: driver.RGBA(0, 0), Offset: 1})
+		gradient(p.Tint, e.SoftTint(driver.EdgeTint)...)
 	} else {
-		gradient(p.Tint, e.Tint.Faded(driver.HardEdgeTint), e.Tint.Faded(driver.HardEdgeTint))
+		tint := e.Tint.Faded(driver.EdgeTint)
+		gradient(p.Tint, driver.GradientStop{Color: tint}, driver.GradientStop{Color: tint, Offset: 1})
 	}
 	line := driver.HairlineRect(s, driver.Size{Width: driver.Points(w), Height: driver.Points(h)})
 	p.Line.Send(selSetFrame, CGRect{Origin: CGPoint{X: float64(line.Origin.X), Y: float64(line.Origin.Y)},
@@ -62,8 +62,8 @@ func (p *ScrollEdge) Release() {
 
 // FadeImage returns a new CGImage of a soft edge's fade at side s, 64
 // pixels along the band and 1 across: opaque at the side, clear at the
-// other end, for a blur view to stretch over its band as its mask. The
-// caller releases it.
+// other end, for a variable blur to stretch over its band as its mask.
+// The caller releases it.
 func FadeImage(s driver.Side) uintptr {
 	const n = 64
 	pix := make([]byte, 4*n)

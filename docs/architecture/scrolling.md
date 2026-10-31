@@ -24,15 +24,16 @@ A scroll view follows NSH's `scrolling-and-lists.md`: `ScrollBehavior` holds pag
 `Scroll.EdgeEffects` sets the views over a scroll view's sides apart from the content scrolling under them, as iOS 26's scroll edge effects do: its bars, views whose `EdgeBar` names the scroll view by its `Ref` and a side. NSH has none; the looks follow iOS 26's and MyGo's measures of macOS 27's.
 
 - After layout the core measures how far each side's bars reach into the scroll view (`markEdgeScrolls`) and sends it in `ScrollConfig.Edges`, with the bars, the background the content scrolls over and a hard edge's hairline. Automatic is soft under bars and nothing without them.
-- A soft edge blurs most at the side and fades out 16 points past the bars, under the background fading from 60%; a hard edge frosts evenly under the bars, under the background at 80%, with a half-point hairline past them (`driver.SoftEdgeLevels`, `BandRect`, `HairlineRect`).
+- Both edges lay the background at 80% under the bars. A soft edge blurs most at the side, down to nothing 24 points past the bars, and its background eases out along smoothstep's curve from 24 points short of the bars' end, so no line shows where the fade begins; a hard edge frosts evenly under the bars, with a half-point hairline past them (`driver.SoftEdgeLevels`, `SoftTint`, `BandRect`, `HairlineRect`).
 
 | Target | Draws |
 | --- | --- |
 | iOS 26 and later | `UIScrollEdgeEffect`'s soft, hard or automatic style, or hidden, per side. Each bar gets a `UIScrollEdgeElementContainerInteraction` and an empty `UILabel` filling it, since UIKit shapes the effect by the labels and images it finds, and NSGo's views draw into layers |
-| iOS before 26, macOS | A system blur (`UIVisualEffectView`, `NSVisualEffectView`'s header material) over the content, fading in toward a soft side through a mask view or a stretched mask image, with the tint and hairline as layers; iOS's follows the offset inside the scroll view. AppKit's own edge effect reaches only `NSScrollView`s under a title bar's accessories |
+| macOS | A `CABackdropLayer` over the content, under the scroll bar, as AppKit's own pockets (`NSScrollPocket`) draw: soft, Core Animation's `variableBlur`, whose radius follows a mask image's alpha from the side to nothing at the band's end (its radius spreads twice a Gaussian's, so it takes half the blur); hard, an even `gaussianBlur`. The tint and hairline are layers over it. Both classes are private, as `NSVisualEffectView` cannot vary its blur, and AppKit's own edge effect reaches only `NSScrollView`s under a title bar's accessories |
+| iOS before 26 | A system blur (`UIVisualEffectView`) over the content that follows the offset inside the scroll view, fading in toward a soft side through a mask view, with the tint and hairline as layers |
 | Web | Bands that stick over the content (`position: sticky`, from the top left, as the content beside them is absolutely placed), stacking `backdrop-filter` blurs whose radii double toward the side, each fading in through `mask-image` |
 | Windows | Over the children, from one copy of the target: each level blurred by its whole blur through Direct2D's Gaussian blur and faded in by a gradient opacity brush |
-| Linux | The background alone, from 85% at a soft side or at 95% under hard bars, as GTK draws nothing behind a widget |
+| Linux | The background alone, at 85% under soft bars, easing out as elsewhere, or at 95% under hard bars, as GTK draws nothing behind a widget |
 | Android | Nothing yet ([roadmap](../roadmap.md)) |
 
 ### macOS scroll views
