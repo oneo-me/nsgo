@@ -56,7 +56,7 @@ func TestWheelsSettleOnSnapPoints(t *testing.T) {
 func TestThumbFollowsTheOffset(t *testing.T) {
 	b := Bar{Frame: driver.Size{Width: 100, Height: 200}, Content: driver.Size{Width: 100, Height: 800}}
 	thumb, ok := b.Thumb()
-	want := driver.Bounds{Origin: driver.Point{X: 90}, Size: driver.Size{Width: Thickness, Height: 50}}
+	want := driver.Bounds{Origin: driver.Point{X: 91}, Size: driver.Size{Width: Thickness, Height: 50}}
 	if !ok || thumb != want {
 		t.Fatalf("thumb = %v %v, want %v", thumb, ok, want)
 	}
@@ -97,7 +97,7 @@ func TestIndicatorIsMacOSs(t *testing.T) {
 	b := Bar{Frame: driver.Size{Width: 100, Height: 300}, Content: driver.Size{Width: 100, Height: 600}}
 	rect, travel, ok := b.Indicator()
 	// The track is 296 long, the thumb 148, and it starts a margin in.
-	want := driver.Bounds{Origin: driver.Point{X: 90, Y: 2}, Size: driver.Size{Width: Thickness, Height: 148}}
+	want := driver.Bounds{Origin: driver.Point{X: 91, Y: 2}, Size: driver.Size{Width: Thickness, Height: 148}}
 	if !ok || rect != want || travel != 148 {
 		t.Fatalf("indicator = %v %v %v, want %v and 148", rect, travel, ok, want)
 	}

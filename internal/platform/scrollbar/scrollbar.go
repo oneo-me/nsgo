@@ -16,7 +16,7 @@ import (
 const (
 	// Thickness is the thumb's, Inset its distance from the edge.
 	Thickness driver.Points = 6
-	Inset     driver.Points = 4
+	Inset     driver.Points = 3
 	// MinLength is the shortest a thumb gets on long content.
 	MinLength driver.Points = 24
 	// Grab is the width of the strip along the edge where a press takes
