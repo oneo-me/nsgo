@@ -1,17 +1,27 @@
 <p align="center">
-  <img width="128" height="128" alt="NSGo" src="examples/gallery/assets/Icon.png">
+  <img src="examples/gallery/assets/Icon.png" alt="NSGo" width="128">
 </p>
 
-# NSGo
+<h1 align="center">NSGo</h1>
 
-**English** | [简体中文](README.zh-CN.md)
+<p align="center">
+  <strong>English</strong> |
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/oneo-me"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-oneo--me-181717?logo=github&logoColor=white"></a>
+  <a href="https://oneo.me"><img alt="Blog" src="https://img.shields.io/badge/Blog-oneo.me-0969da"></a>
+  <a href="https://x.com/oneo666"><img alt="X" src="https://img.shields.io/badge/X-%40oneo666-000000?logo=x&logoColor=white"></a>
+  <a href="https://github.com/sponsors/oneo-me"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white"></a>
+</p>
 
 NSGo is a cross-platform native UI engine with a Go backend. App logic, the reactive graph and layout run in Go, and each platform draws with its own native UI.
 
 NSGo follows the design of [Native Shell (NSH)](https://nsh.dev), which does the same in Rust. It exists for teams that want NSH's model without writing Rust.
 
 <p align="center">
-  <img alt="The gallery's Stocks demo on macOS" src="examples/gallery/assets/screenshot.jpg">
+  <img src="examples/gallery/assets/screenshot.jpg" alt="The gallery's Stocks demo on macOS">
 </p>
 
 ## Status
@@ -129,7 +139,9 @@ go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 
 `go tool nsgo dev` runs the app once, or with `dev.hot_reload` rebuilds and restarts it on each change. A failed build shows over the running app; Command or Control+R in the app, or `r` and Return in the terminal, builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
 
-`go tool nsgo build` writes a stripped release package per target: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site; `-run` starts the one built for this machine, or installs it on an iPhone, simulator or Android device, which `-device` picks. `-embed` packages the app for an iOS or Android app of your own instead, an XCFramework (of dynamic frameworks with `-dynamic`) or an AAR whose `NSGoView` or `NsgoView` shows it; Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`, whose host is the page's or the module `nsgo.yaml`'s `web.host` names: see `examples/embed-*`.
+`go tool nsgo build` writes a stripped release package per target: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site. `-run` starts the one built for this machine, or installs it on an iPhone, simulator or Android device, which `-device` picks.
+
+`-embed` packages the app for an iOS or Android app of your own instead: an XCFramework (of dynamic frameworks with `-dynamic`) or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`. The host is the page's, or the module `nsgo.yaml`'s `web.host` names. See `examples/embed-*`.
 
 `go tool nsgo test` runs the app's tests with a line per test; `-run` filters them, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
 
@@ -173,7 +185,3 @@ The website at <https://oneo-me.github.io/nsgo/> is a React home page whose live
 Licensed under the [Apache License, Version 2.0](LICENSE). NSGo is a port of NSH, and [NOTICE](NOTICE) records the attribution that port owes.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in NSGo by you, as defined in the Apache-2.0 license, shall be licensed under Apache-2.0, without any additional terms or conditions.
-
-## Author
-
-[Blog](https://oneo.me) · [X @oneo666](https://x.com/oneo666)

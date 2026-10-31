@@ -1,17 +1,27 @@
 <p align="center">
-  <img width="128" height="128" alt="NSGo" src="examples/gallery/assets/Icon.png">
+  <img src="examples/gallery/assets/Icon.png" alt="NSGo" width="128">
 </p>
 
-# NSGo
+<h1 align="center">NSGo</h1>
 
-[English](README.md) | **简体中文**
+<p align="center">
+  <strong>简体中文</strong> |
+  <a href="README.md">English</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/oneo-me"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-oneo--me-181717?logo=github&logoColor=white"></a>
+  <a href="https://oneo.me"><img alt="博客" src="https://img.shields.io/badge/%E5%8D%9A%E5%AE%A2-oneo.me-0969da"></a>
+  <a href="https://x.com/oneo666"><img alt="X" src="https://img.shields.io/badge/X-%40oneo666-000000?logo=x&logoColor=white"></a>
+  <a href="https://github.com/sponsors/oneo-me"><img alt="GitHub 赞助" src="https://img.shields.io/badge/GitHub%20%E8%B5%9E%E5%8A%A9-ea4aaa?logo=githubsponsors&logoColor=white"></a>
+</p>
 
 NSGo 是一个以 Go 为后端的跨平台原生 UI 引擎。应用逻辑、响应式图和布局在 Go 中运行，各平台使用自己的原生 UI 绘制。
 
 NSGo 参考 [Native Shell（NSH）](https://nsh.dev) 的设计，NSH 用 Rust 实现了同样的模型。NSGo 面向想要 NSH 的模型、但不想写 Rust 的团队。
 
 <p align="center">
-  <img alt="macOS 上 gallery 的 Stocks 示例" src="examples/gallery/assets/screenshot.jpg">
+  <img src="examples/gallery/assets/screenshot.jpg" alt="macOS 上 gallery 的 Stocks 示例">
 </p>
 
 ## 状态
@@ -129,7 +139,9 @@ go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 
 `go tool nsgo dev` 运行一次应用，开启 `dev.hot_reload` 后则在每次修改时重新编译并重启。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R，或在终端输入 `r` 并回车，会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
 
-`go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站；`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。`-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示；Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用网站中的 `nsgo.js`，其宿主由网页提供，或是 `nsgo.yaml` 的 `web.host` 指定的模块。参见 `examples/embed-*`。
+`go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站。`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。
+
+`-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示。Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用网站中的 `nsgo.js`。宿主由网页提供，或是 `nsgo.yaml` 的 `web.host` 指定的模块。参见 `examples/embed-*`。
 
 `go tool nsgo test` 运行应用的测试，每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
 
@@ -173,7 +185,3 @@ git -C nsh checkout "$(git -C nsh describe --tags --abbrev=0)"
 本项目以 [Apache License 2.0](LICENSE) 授权。NSGo 是 NSH 的移植，[NOTICE](NOTICE) 记录了移植所需的署名。
 
 除非你明确声明，否则你提交给 NSGo 的任何贡献，按 Apache-2.0 许可证的定义，均以 Apache-2.0 授权，不附加任何额外条款或条件。
-
-## 作者
-
-[博客](https://oneo.me) · [X @oneo666](https://x.com/oneo666)
