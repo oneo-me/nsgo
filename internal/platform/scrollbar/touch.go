@@ -11,9 +11,10 @@ import (
 // NSH's nsh_core::scroll drags them: a finger that moves past TouchSlop
 // along a scroll view's axis drags its content, rubber-banding past the
 // edges where the view bounces; let go, the view glides by its
-// deceleration, snaps, or springs back to its edge. Pulled far enough
-// past its top, a refreshable view refreshes and keeps room above its
-// content while it does. Mouse drags never scroll.
+// deceleration, bouncing at the edge it reaches, snaps, or springs back
+// to its edge. Pulled far enough past its top, a refreshable view
+// refreshes and keeps room above its content while it does. Mouse drags
+// never scroll.
 
 // TouchSlop is how far a finger moves before it drags a scroll view.
 const TouchSlop driver.Points = 10
@@ -135,11 +136,15 @@ type Motion struct {
 	start    time.Time
 	duration time.Duration
 	// A glide's speed at the start and what it keeps per millisecond,
-	// within lo and hi.
+	// within lo and hi. One that bounces hits edge after hits at hitSpeed.
 	glide       bool
 	speed, rate float32
 	lo, hi      driver.Points
 	stopsAfter  time.Duration
+	bounces     bool
+	edge        driver.Points
+	hits        time.Duration
+	hitSpeed    float32
 }
 
 // Release returns how a view of size frame showing content, let go at
@@ -172,6 +177,9 @@ func Release(c *driver.ScrollConfig, frame, content driver.Size, offset driver.P
 		m.stopsAfter = time.Duration(math.Log(glideStop/math.Abs(float64(velocity)))/math.Log(float64(m.rate))) * time.Millisecond
 		m.to = m.glideAt(m.stopsAfter)
 		m.duration = m.stopsAfter
+		if !b.NoBounces && (m.to < lo || m.to > hi) {
+			m.bounceAt(min(max(m.to, lo), hi))
+		}
 	default:
 		m.to = at
 	}
@@ -185,13 +193,33 @@ func (m *Motion) glideAt(t time.Duration) driver.Points {
 	return m.from + driver.Points(float64(m.speed)*(math.Pow(float64(m.rate), ms)-1)/ln)
 }
 
+// bounceAt makes the glide bounce at edge, which it reaches: where it
+// gets there, rate^ms is 1 + (edge-from)·ln(rate)/speed, and so is the
+// share of its speed left.
+func (m *Motion) bounceAt(edge driver.Points) {
+	ln := math.Log(float64(m.rate))
+	left := 1 + float64(edge-m.from)*ln/float64(m.speed)
+	m.bounces, m.edge = true, edge
+	m.hits = time.Duration(math.Log(max(left, 1e-9)) / ln * float64(time.Millisecond))
+	m.hitSpeed = m.speed * float32(left)
+	m.duration = m.hits + 20*bounceTime
+}
+
 // Moves reports whether the motion goes anywhere.
 func (m *Motion) Moves() bool { return m.duration > 0 && (m.to != m.from || m.glide) }
 
 // At returns where the view is at now, and whether it came to rest. A
-// glide stops at the edge it reaches.
+// glide bounces at the edge it reaches, or stops there when the view does
+// not bounce.
 func (m *Motion) At(now time.Time) (driver.Points, bool) {
 	t := now.Sub(m.start)
+	if m.bounces && t >= m.hits {
+		over, back := Bounce(m.hitSpeed, t-m.hits)
+		if back || t >= m.duration {
+			return m.edge, true
+		}
+		return m.edge + over, false
+	}
 	if t >= m.duration {
 		if m.glide {
 			return min(max(m.to, m.lo), m.hi), true
@@ -201,7 +229,7 @@ func (m *Motion) At(now time.Time) (driver.Points, bool) {
 	if m.glide {
 		p := m.glideAt(t)
 		if p <= m.lo || p >= m.hi {
-			return min(max(p, m.lo), m.hi), true
+			return min(max(p, m.lo), m.hi), !m.bounces
 		}
 		return p, false
 	}

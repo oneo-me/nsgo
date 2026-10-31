@@ -62,3 +62,25 @@ func TestReleasePastTheTopSpringsBackOrRefreshes(t *testing.T) {
 		t.Errorf("rubber band %v", got)
 	}
 }
+
+func TestAGlideIntoTheEndBouncesUnlessTheViewDoesNot(t *testing.T) {
+	c := &driver.ScrollConfig{}
+	frame, content := driver.Size{Width: 100, Height: 100}, driver.Size{Width: 100, Height: 1000}
+	lo, hi := Limits(c, frame, content, false)
+	now := time.Unix(0, 0)
+	m := Release(c, frame, content, driver.Point{Y: 850}, 2, lo, hi, now)
+	if !m.bounces || m.edge != hi || m.hitSpeed <= 0 || m.hitSpeed >= 2 {
+		t.Fatalf("release = %+v, want a bounce at the end", m)
+	}
+	if at, done := m.At(now.Add(m.hits + bounceTime)); done || at <= hi {
+		t.Fatalf("after the hit it is at %v (%v), want past the end", at, done)
+	}
+	if at, done := m.At(now.Add(m.duration)); !done || at != hi {
+		t.Fatalf("it ends at %v (%v), want the end", at, done)
+	}
+	c.Behavior.NoBounces = true
+	m = Release(c, frame, content, driver.Point{Y: 850}, 2, lo, hi, now)
+	if at, done := m.At(now.Add(m.hits + bounceTime)); m.bounces || !done || at != hi {
+		t.Fatalf("without bounces it is at %v (%v), want stopped at the end", at, done)
+	}
+}

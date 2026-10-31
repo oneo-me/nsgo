@@ -28,8 +28,9 @@ import (
 // A scroll view moves along its main axis only. Trackpads follow the
 // system: a gesture rubber-bands past the edges unless NoBounces and
 // springs back when the fingers lift, and the momentum after it is the
-// system's, shown in step with the display (scrollbar.Resampler);
-// snapping views snap from the release instead. Mouse wheels move 10
+// system's, shown in step with the display (scrollbar.Resampler), which
+// bounces at the edge it reaches; snapping views snap from the release
+// instead. Mouse wheels move 10
 // points a line, stop at the edges, and snapping views settle once the
 // notches stop. A scroll stays on the view it began in: a gesture and its
 // momentum until they end, wheel notches while they come within 200 ms.
@@ -76,11 +77,15 @@ const (
 	// points so far; gesture for a trackpad's, whose deltas put the
 	// offset at raw before the rubber band.
 	wheeling
-	// awaitingMomentum: a trackpad gesture ended at last; the system's
-	// momentum may follow.
+	// awaitingMomentum: a trackpad gesture ended at last, let go at
+	// velocity; the system's momentum may follow.
 	awaitingMomentum
-	// inMomentum: the system's momentum scrolls.
+	// inMomentum: the system's momentum scrolls, at velocity by its event
+	// at last.
 	inMomentum
+	// bouncing: the momentum hit the edge at to at velocity, shown at
+	// start; the view bounces back to it.
+	bouncing
 	// easing: an eased move from from to to, from start for duration;
 	// momentum for a snap after a release, settles to let the values that
 	// snap settle as it arrives. A zooming view eases its zoom too.
@@ -92,6 +97,7 @@ const (
 type scrollPhase struct {
 	kind                       phaseKind
 	from, to, raw, total       driver.Points
+	velocity                   float32
 	last, start, duration      time.Duration
 	gesture, momentum, settles bool
 	// A zooming view's: rawAt and rawZoom are where a gesture's deltas
@@ -548,6 +554,17 @@ func (v *view) tickScroll(t time.Duration) bool {
 		} else {
 			v.scrollEnded()
 		}
+	case p.kind == bouncing:
+		over, back := scrollbar.Bounce(p.velocity, t-p.start)
+		if back {
+			s.phase = scrollPhase{}
+			s.resampled.Reset()
+			v.moveTo(p.to)
+			v.emit(driver.EventMomentumEnd)
+			v.scrollEnded()
+		} else if !s.resampled.Active() {
+			v.moveTo(p.to + over)
+		}
 	case p.kind == awaitingMomentum && t-p.last > momentumWait:
 		s.phase = scrollPhase{}
 		v.scrollEnded()
@@ -611,7 +628,7 @@ func (v *view) interrupt() {
 	v.showGoal()
 	p := v.sc.phase
 	v.sc.phase = scrollPhase{}
-	if p.kind == inMomentum || p.kind == easing && p.momentum {
+	if p.kind == inMomentum || p.kind == bouncing || p.kind == easing && p.momentum {
 		v.emit(driver.EventMomentumEnd)
 	}
 }
@@ -829,6 +846,8 @@ func (v *view) scrollBy(d driver.Point) {
 		p.raw += by
 	case easing:
 		p.from += by
+		p.to += by
+	case bouncing:
 		p.to += by
 	}
 	s.resampled.Shift(by)
@@ -1065,7 +1084,7 @@ func (v *view) wheelEnd(vx, vy float32) {
 	lo, hi := v.limits()
 	outside := pos < lo-0.5 || pos > hi+0.5
 	if p.gesture && !outside && !s.config.Behavior.Snaps() {
-		s.phase = scrollPhase{kind: awaitingMomentum, last: mediaTime()}
+		s.phase = scrollPhase{kind: awaitingMomentum, last: mediaTime(), velocity: velocity}
 		v.tickOn()
 		return
 	}
@@ -1084,15 +1103,18 @@ func (v *view) momentumBegin() bool {
 	if v.sc.phase.kind != awaitingMomentum {
 		return false
 	}
-	v.sc.phase = scrollPhase{kind: inMomentum}
+	v.sc.phase = scrollPhase{kind: inMomentum, velocity: v.sc.phase.velocity}
 	v.emit(driver.EventMomentumStart)
 	return true
 }
 
-// momentumBy moves the view by the system's momentum, which stops at the
-// edges.
+// momentumBy moves the view by the system's momentum. At the edge it
+// reaches, the view bounces at the momentum's velocity unless NoBounces,
+// as AppKit's do, and the rest of the momentum is ignored; otherwise it
+// stops there.
 func (v *view) momentumBy(dx, dy driver.Points, at time.Duration) {
-	if v.sc.phase.kind != inMomentum {
+	p := &v.sc.phase
+	if p.kind != inMomentum {
 		return
 	}
 	if v.zooms() {
@@ -1100,8 +1122,18 @@ func (v *view) momentumBy(dx, dy driver.Points, at time.Duration) {
 		return
 	}
 	lo, hi := v.limits()
-	pos := v.goal()
-	v.feed(min(max(pos+v.wheelDelta(dx, dy), min(lo, pos)), max(hi, pos)), at)
+	d, pos := v.wheelDelta(dx, dy), v.goal()
+	if p.last > 0 && at > p.last {
+		p.velocity = float32(float64(d) / (float64(at-p.last) / float64(time.Millisecond)))
+	}
+	p.last = at
+	to := min(max(pos+d, min(lo, pos)), max(hi, pos))
+	v.feed(to, at)
+	hit := pos+d < lo && pos >= lo-0.5 || pos+d > hi && pos <= hi+0.5
+	if hit && !v.sc.config.Behavior.NoBounces {
+		// The bounce starts as the frames show the edge, an interval later.
+		*p = scrollPhase{kind: bouncing, to: to, velocity: p.velocity, start: at + v.sc.resampled.Interval + 2*time.Millisecond}
+	}
 }
 
 // momentumEnd ends the system's momentum.

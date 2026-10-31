@@ -51,6 +51,27 @@ func Dragged(raw, lo, hi, dim driver.Points, bounces bool) driver.Points {
 	return raw
 }
 
+const (
+	// bounceTime is the time constant of the bounce a glide makes as it
+	// hits an edge: it overshoots most that long after, and is back within
+	// about ten.
+	bounceTime = 80 * time.Millisecond
+	// bounceSpeed is the fastest a bounce starts, in points per
+	// millisecond, so it overshoots at most about 90 points.
+	bounceSpeed = 3
+)
+
+// Bounce returns how far past an edge content that hit it at velocity is
+// t later, as macOS's and iOS's glides bounce: a critically damped spring
+// that starts at that velocity and comes back to the edge. It reports
+// whether the content is back.
+func Bounce(velocity float32, t time.Duration) (driver.Points, bool) {
+	v := min(max(float64(velocity), -bounceSpeed), bounceSpeed)
+	k := max(float64(t), 0) / float64(bounceTime)
+	over := v * float64(bounceTime/time.Millisecond) * k * math.Exp(-k)
+	return driver.Points(over), k > 1 && math.Abs(over) < 0.5
+}
+
 // EaseOut returns the cubic ease out at t, from 0 to 1.
 func EaseOut(t float64) float64 {
 	t = min(max(t, 0), 1)

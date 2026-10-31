@@ -24,6 +24,27 @@ func TestDragsRubberBandPastTheEdges(t *testing.T) {
 	}
 }
 
+func TestAGlideBouncesAtTheEdgeItHits(t *testing.T) {
+	// It leaves the edge at the speed it hit it, overshoots and comes back.
+	near, _ := Bounce(2, time.Millisecond)
+	if near < 1.9 || near > 2 {
+		t.Fatalf("a millisecond after hitting at 2 points/ms it is %v past", near)
+	}
+	peak, back := Bounce(2, bounceTime)
+	if back || peak < 50 || peak > 70 {
+		t.Fatalf("at its peak it is %v past (%v)", peak, back)
+	}
+	if fast, _ := Bounce(20, bounceTime); fast > 100 {
+		t.Fatalf("a fast hit overshoots %v", fast)
+	}
+	if up, _ := Bounce(-2, bounceTime); up != -peak {
+		t.Fatalf("a bounce at the start is %v, want %v", up, -peak)
+	}
+	if over, back := Bounce(2, 12*bounceTime); !back || over > 0.5 {
+		t.Fatalf("not back after twelve time constants: %v", over)
+	}
+}
+
 func TestSnapsMatchTheRelease(t *testing.T) {
 	if got := SnapDuration(0.2, 1); got != 0 {
 		t.Fatalf("nothing to move took %v", got)
