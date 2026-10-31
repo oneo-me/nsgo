@@ -86,6 +86,7 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 - Each panel's flex basis, grow, shrink and limits come from the size it wants: what a drag gave it, else `Size`. Unsized panels share the rest with a basis of 0; when every panel has a size they grow in proportion. Minimums shrink by one ratio when the group is too short for them.
 - A handle is a 9-point band between two panels (`handleBandNode`) whose negative margins give its thickness back, so it takes no room yet lies over the boundary inside the group, above its neighbours: macOS gives a view its cursor and tracks the pointer only within what its parents show. Touch screens add a 10-point slop each side. `ResizeHandle` is the same band on a container's edge, its line on the edge.
 - Drags resize on a state made from the panels' laid out sizes as they start, and only their end, or a screen reader's 10-point step, reports `OnResize`.
+- Each handle follows the pointer's progression itself (`ResizeHandleState`): hover makes it hovered, a touch going down pressed, its native pan dragging, the pan's or touch's end idle, since a drag leaves the band within a point. `RenderHandle` renders inside the line in a `Dynamic` of that state, so a drag draws it three times, and `ResizeHandle` reports it with `OnStateChange`.
 
 ## Dock
 
@@ -100,5 +101,5 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| `renderHandle` | Handle and thumb classes and styles, which `group-hover:` classes or a `GroupStyle` restyle | `renderHandle` waits for the resizable panels' ([roadmap](../roadmap.md#components)) |
 | `DockAreaApi` through a ref | `DockAreaRef`, bound as the area mounts | Go has no refs to components |
+| `movePanel`'s `index` and `activate`, `null` for no group | `DockTarget.Before`, the tab it goes before, and `NoActivate`; 0 for no group | Go's zero value is the default: last, displayed |

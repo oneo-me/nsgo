@@ -13,10 +13,10 @@
 - Add pointer, touch, focus, keyboard and gesture input, file drops, accessibility, storage and environment signals.
 - Add clipboard images and files, opening links, the photo picker, forced light or dark appearance and a disk cache for downloaded images.
 - Add custom title bars with placed or hidden window controls, window frames, levels and materials, and application and context menus in `desktop`, with scroll bars and a return from `nsgo.Run` on quit.
-- Add `base`: unstyled controls, popups, menus that become sheets on phones, dialogs, sheets, swipeable toasts, resizable panels, a dock, charts, tables, a `DataTable` over a million rows, a streaming `TextView`, a code `Editor` with completion and the app's highlighters, and a `DiffView` with review comments.
+- Add `base`: unstyled controls, popups, menus that become sheets on phones, dialogs, sheets, swipeable toasts, resizable panels with the app's handles, a dock rearranged from its ref, charts, tables, a `DataTable` over a million rows, a streaming `TextView` that reports its images and opens its links, a code `Editor` with completion, a language server's edits and folds by level, and a `DiffView` with review comments and the app's separators and file headers.
 - Add embedding in other apps with `nsgo.NewView` on desktops, `nsgo build -embed` frameworks for iOS devices, simulators and Catalyst and for Android, and several web apps on one page, with a channel to the host.
 - Add `nsgotest` for app tests that act as a user does, headless or on every platform with its native input, menus and screenshots, the test's own clock and clipboard.
 - Add the `nsgo` tool, which creates, runs with hot reload, tests, packages and signs apps for stores from `nsgo.yaml`, reporting each step and each package's build time and size.
 - Add themes in light and dark, Onevra's by default, that a subtree can replace or force into one appearance, read from YAML files and overridden by an embedding host.
-- Add NSH's gallery translated to Go, with a demo of every element, component and service.
+- Add NSH's gallery translated to Go, with a demo of every element, component and service, its editor talking to a simulated language server.
 - Add a React home page whose live gallery runs the gallery's WebAssembly build, reporting its download, compilation and start progress.

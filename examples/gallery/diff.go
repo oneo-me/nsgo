@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/core"
@@ -285,6 +286,13 @@ func diffDemo(cx *core.Scope) core.Node {
 					d.Language = ""
 					d.RenderHunkActions = nil
 					d.Patch = func() string { return diffPatch }
+					d.RenderSeparator = func(cx *core.Scope, s diff.Separator) core.Node {
+						label := fmt.Sprintf("%d lines", s.Lines)
+						if s.Header != "" {
+							label = "@@ " + strings.TrimSpace(s.Header)
+						}
+						return core.Text{Content: label, MaxLines: 1, Style: core.Style{FontFamily: mono, FontSize: 11}, StyleFunc: colored(colorsOf(cx).muted)}
+					}
 				} else {
 					d.OldValue, d.NewValue = oldText.Get, newText.Get
 				}

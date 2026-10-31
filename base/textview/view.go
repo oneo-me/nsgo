@@ -2,6 +2,7 @@ package textview
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
 	"slices"
 	"strconv"
@@ -40,7 +41,8 @@ type TextView struct {
 	StreamingCaret core.Node
 
 	// Styles style the parts; StyleFunc's result for a part goes under
-	// them, again when what it reads changes.
+	// them, again when what it reads changes, and Classes under both.
+	Classes   Classes
 	Styles    Styles
 	StyleFunc func(Part) core.Style
 	// Selectable makes the view a selectable view: one selection runs
@@ -52,8 +54,15 @@ type TextView struct {
 
 	// OnLinkPress receives a pressed link's URL: a heading's anchor is
 	// "#<anchor>", a footnote reference "#footnote-<label>". Nothing opens
-	// a URL; the app decides.
+	// a URL unless OpenLinks; the app decides.
 	OnLinkPress func(url string)
+	// OpenLinks also opens a pressed link to another site or app (a URL
+	// with a scheme: https:, mailto:) outside the app with Scope.OpenURL,
+	// after OnLinkPress; anchors are only reported.
+	OpenLinks bool
+	// OnImagePress receives an image pressed that is in no link, for the
+	// app to show it larger.
+	OnImagePress func(image Image)
 	// RenderCustom shows a custom node: a block, or an inline node as an
 	// attachment in its text unless CustomSpan shows it. Without either, a
 	// node shows its content.
@@ -94,9 +103,11 @@ type TextView struct {
 // it reads (the appearance) build the block again.
 type Highlighter func(code CodeBlock) []Highlight
 
-// Highlight styles the bytes from Start to End of a code block's code.
+// Highlight styles the bytes from Start to End of a code block's code,
+// Class under Style.
 type Highlight struct {
 	Start, End int
+	Class      string
 	Style      core.Style
 }
 
@@ -137,7 +148,7 @@ func (tv TextView) Render(cx *core.Scope) core.Node {
 		}
 		tv.Extensions = append(ext, tv.Extensions...)
 	}
-	r := &renderer{tv: tv, plugins: plugins}
+	r := &renderer{tv: tv, plugins: plugins, cx: cx}
 	doc := core.NewMemoFunc(cx, tv.document, nil)
 	rows := func() []row {
 		blocks := doc.Get().Blocks
@@ -211,6 +222,8 @@ func noStyle() core.Style { return core.Style{} }
 type renderer struct {
 	tv      TextView
 	plugins []Plugin
+	// cx opens the links that leave the document.
+	cx *core.Scope
 }
 
 // style merges the parts' styles: StyleFunc's for each, then Styles'.
@@ -225,6 +238,24 @@ func (r *renderer) style(parts ...Part) core.Style {
 		s = s.Merge(r.tv.Styles[p])
 	}
 	return s
+}
+
+// class joins the parts' classes, later parts winning.
+func (r *renderer) class(parts ...Part) string {
+	var out string
+	for _, p := range parts {
+		if c := r.tv.Classes[p]; c != "" {
+			out = joinClasses(out, c)
+		}
+	}
+	return out
+}
+
+func joinClasses(a, b string) string {
+	if a == "" {
+		return b
+	}
+	return a + " " + b
 }
 
 func (r *renderer) blocks(cx *core.Scope, blocks []Block, depth int) []core.Node {
@@ -275,7 +306,7 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 			}
 			return after(core.Group(nodes))
 		}
-		return core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, nil), caret), StyleFunc: func() core.Style { return r.style(PartParagraph) }}
+		return core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, "", nil), caret), Class: r.class(PartParagraph), StyleFunc: func() core.Style { return r.style(PartParagraph) }}
 	case Heading:
 		level := min(max(b.Level, 1), 6)
 		heading := func() core.Style {
@@ -285,16 +316,18 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 			}
 			return s
 		}
-		return core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, nil), caret), StyleFunc: heading, Role: core.RoleHeader}
+		return core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, "", nil), caret), Class: r.class(PartHeading, PartHeading1+Part(level-1)),
+			StyleFunc: heading, Role: core.RoleHeader}
 	case Blockquote:
 		children := r.blocksAt(cx, b.Children, depth, caret)
 		if b.Alert == AlertNone {
-			return core.View{StyleFunc: func() core.Style { return r.style(PartBlockquote) }, Children: children}
+			return core.View{Class: r.class(PartBlockquote), StyleFunc: func() core.Style { return r.style(PartBlockquote) }, Children: children}
 		}
-		return core.View{StyleFunc: func() core.Style { return r.style(PartBlockquote, PartAlert, PartAlertNote+Part(b.Alert-AlertNote)) },
+		alert := []Part{PartBlockquote, PartAlert, PartAlertNote + Part(b.Alert-AlertNote)}
+		return core.View{Class: r.class(alert...), StyleFunc: func() core.Style { return r.style(alert...) },
 			Children: []core.Node{
-				core.Text{Content: b.Alert.String(), StyleFunc: func() core.Style { return r.style(PartAlertTitle) }},
-				core.View{StyleFunc: func() core.Style { return r.style(PartAlertContent) }, Children: children},
+				core.Text{Content: b.Alert.String(), Class: r.class(PartAlertTitle), StyleFunc: func() core.Style { return r.style(PartAlertTitle) }},
+				core.View{Class: r.class(PartAlertContent), StyleFunc: func() core.Style { return r.style(PartAlertContent) }, Children: children},
 			}}
 	case List:
 		return r.list(cx, b, depth, caret)
@@ -306,7 +339,7 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 	case Table:
 		return r.table(cx, b, caret)
 	case Rule:
-		return after(core.View{StyleFunc: func() core.Style { return r.style(PartRule) }})
+		return after(core.View{Class: r.class(PartRule), StyleFunc: func() core.Style { return r.style(PartRule) }})
 	case Details:
 		return after(r.details(cx, b, depth))
 	case Math:
@@ -314,23 +347,23 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 			return after(r.tv.RenderMath(cx, b, true))
 		}
 		if caret {
-			return core.Text{Spans: r.caretSpans([]core.Span{{Content: b.TeX}}, true), StyleFunc: func() core.Style { return r.style(PartMathBlock) }}
+			return core.Text{Spans: r.caretSpans([]core.Span{{Content: b.TeX}}, true), Class: r.class(PartMathBlock), StyleFunc: func() core.Style { return r.style(PartMathBlock) }}
 		}
-		return core.Text{Content: b.TeX, StyleFunc: func() core.Style { return r.style(PartMathBlock) }}
+		return core.Text{Content: b.TeX, Class: r.class(PartMathBlock), StyleFunc: func() core.Style { return r.style(PartMathBlock) }}
 	case Custom:
 		if n := r.custom(cx, b); n != nil {
 			return after(n)
 		}
 		switch {
 		case len(b.Children) > 0:
-			return core.View{StyleFunc: func() core.Style { return r.style(PartCustom) }, Children: r.blocksAt(cx, b.Children, depth, caret)}
+			return core.View{Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }, Children: r.blocksAt(cx, b.Children, depth, caret)}
 		case len(b.Content) > 0:
-			return core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, nil), caret), StyleFunc: func() core.Style { return r.style(PartCustom) }}
+			return core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, "", nil), caret), Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }}
 		}
 		if caret {
-			return core.Text{Spans: r.caretSpans([]core.Span{{Content: b.Text}}, true), StyleFunc: func() core.Style { return r.style(PartCustom) }}
+			return core.Text{Spans: r.caretSpans([]core.Span{{Content: b.Text}}, true), Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }}
 		}
-		return core.Text{Content: b.Text, StyleFunc: func() core.Style { return r.style(PartCustom) }}
+		return core.Text{Content: b.Text, Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }}
 	}
 	return nil
 }
@@ -365,16 +398,16 @@ func (r *renderer) custom(cx *core.Scope, b Custom) core.Node {
 // closes, and its blocks, made each time it opens.
 func (r *renderer) details(cx *core.Scope, d Details, depth int) core.Node {
 	open := core.NewSignal(cx, d.Open)
-	return core.View{StyleFunc: func() core.Style { return r.style(PartDetails) }, Children: []core.Node{
-		core.View{StyleFunc: func() core.Style { return r.style(PartSummary) }, Role: core.RoleButton, OnPress: func(core.PressEvent) { open.Set(!open.Get()) },
+	return core.View{Class: r.class(PartDetails), StyleFunc: func() core.Style { return r.style(PartDetails) }, Children: []core.Node{
+		core.View{Class: r.class(PartSummary), StyleFunc: func() core.Style { return r.style(PartSummary) }, Role: core.RoleButton, OnPress: func(core.PressEvent) { open.Set(!open.Get()) },
 			Children: []core.Node{
 				core.Text{ContentFunc: func() string {
 					if open.Get() {
 						return "▾"
 					}
 					return "▸"
-				}, StyleFunc: func() core.Style { return r.style(PartSummaryMarker) }},
-				core.Text{Spans: r.spans(nil, d.Summary, noStyle, nil), Style: core.Style{FlexGrow: 1, FlexShrink: 1}},
+				}, Class: r.class(PartSummaryMarker), StyleFunc: func() core.Style { return r.style(PartSummaryMarker) }},
+				core.Text{Spans: r.spans(nil, d.Summary, noStyle, "", nil), Style: core.Style{FlexGrow: 1, FlexShrink: 1}},
 			}},
 		core.Show{When: open.Get, Then: func(cx *core.Scope) core.Node {
 			return core.Group(r.blocks(cx, d.Children, depth))
@@ -401,23 +434,23 @@ func (r *renderer) list(cx *core.Scope, l List, depth int, caret bool) core.Node
 				check = "✓"
 			}
 			done := it.Done
-			marker = core.View{StyleFunc: func() core.Style { return r.style(parts...) }, Role: core.RoleCheckbox, Checked: func() bool { return done },
+			marker = core.View{Class: r.class(parts...), StyleFunc: func() core.Style { return r.style(parts...) }, Role: core.RoleCheckbox, Checked: func() bool { return done },
 				Children: []core.Node{core.Text{Content: check}}}
 		case l.Ordered:
-			marker = core.Text{Content: strconv.Itoa(l.Start+i) + ".", StyleFunc: func() core.Style { return r.style(PartListMarker) }}
+			marker = core.Text{Content: strconv.Itoa(l.Start+i) + ".", Class: r.class(PartListMarker), StyleFunc: func() core.Style { return r.style(PartListMarker) }}
 		default:
-			marker = core.Text{Content: bullets[depth%len(bullets)], StyleFunc: func() core.Style { return r.style(PartListMarker) }}
+			marker = core.Text{Content: bullets[depth%len(bullets)], Class: r.class(PartListMarker), StyleFunc: func() core.Style { return r.style(PartListMarker) }}
 		}
 		content := []Part{PartListItemContent}
 		if it.Task && it.Done {
 			content = append(content, PartTaskDone)
 		}
-		items[i] = core.View{StyleFunc: func() core.Style { return r.style(PartListItem) }, Children: []core.Node{
+		items[i] = core.View{Class: r.class(PartListItem), StyleFunc: func() core.Style { return r.style(PartListItem) }, Children: []core.Node{
 			marker,
-			core.View{StyleFunc: func() core.Style { return r.style(content...) }, Children: r.blocksAt(cx, it.Children, depth+1, caret && i == len(l.Items)-1)},
+			core.View{Class: r.class(content...), StyleFunc: func() core.Style { return r.style(content...) }, Children: r.blocksAt(cx, it.Children, depth+1, caret && i == len(l.Items)-1)},
 		}}
 	}
-	return core.View{StyleFunc: func() core.Style { return r.style(PartList, kind) }, Children: items}
+	return core.View{Class: r.class(PartList, kind), StyleFunc: func() core.Style { return r.style(PartList, kind) }, Children: items}
 }
 
 func (r *renderer) code(cx *core.Scope, c CodeBlock, caret bool) core.Node {
@@ -431,24 +464,24 @@ func (r *renderer) code(cx *core.Scope, c CodeBlock, caret bool) core.Node {
 	// The code recolors in place as the highlighter's colors change (the
 	// appearance, a lexer done); the caret is an attachment, which only
 	// Spans carries, so a block streaming in is built again instead.
-	code := core.Text{SpansFunc: spans, StyleFunc: func() core.Style { return r.style(PartCodeBlockCode) }}
+	code := core.Text{SpansFunc: spans, Class: r.class(PartCodeBlockCode), StyleFunc: func() core.Style { return r.style(PartCodeBlockCode) }}
 	if caret {
 		code.SpansFunc, code.Spans = nil, r.caretSpans(spans(), true)
 	}
 	children := []core.Node{core.Scroll{Horizontal: true, HideIndicator: r.tv.NoCodeBlockScrollbar,
-		StyleFunc: func() core.Style { return r.style(PartCodeBlockScroll) }, Children: []core.Node{code}}}
+		Class: r.class(PartCodeBlockScroll), StyleFunc: func() core.Style { return r.style(PartCodeBlockScroll) }, Children: []core.Node{code}}}
 	if len(r.tv.CodeBlockActions) > 0 {
 		actions := make([]core.Node, len(r.tv.CodeBlockActions))
 		for i, name := range r.tv.CodeBlockActions {
 			actions[i] = r.codeAction(cx, name, c)
 		}
 		children = append(children, core.View{
-			Style:     core.Style{Position: core.Absolute, Top: core.Pt(0), Right: core.Pt(0), Direction: core.Row},
-			StyleFunc: func() core.Style { return r.style(PartCodeBlockHeader) },
-			Children:  actions,
+			Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Right: core.Pt(0), Direction: core.Row},
+			Class: r.class(PartCodeBlockHeader), StyleFunc: func() core.Style { return r.style(PartCodeBlockHeader) },
+			Children: actions,
 		})
 	}
-	return core.View{StyleFunc: func() core.Style { return r.style(PartCodeBlock) }, Children: children}
+	return core.View{Class: r.class(PartCodeBlock), StyleFunc: func() core.Style { return r.style(PartCodeBlock) }, Children: children}
 }
 
 // codeAction is a code block's action button.
@@ -460,7 +493,7 @@ func (r *renderer) codeAction(cx *core.Scope, name string, c CodeBlock) core.Nod
 	if r.tv.RenderCodeBlockAction != nil {
 		content = r.tv.RenderCodeBlockAction(cx, a)
 	}
-	return core.View{StyleFunc: func() core.Style { return r.style(PartCodeBlockAction) }, Role: core.RoleButton, Label: name,
+	return core.View{Class: r.class(PartCodeBlockAction), StyleFunc: func() core.Style { return r.style(PartCodeBlockAction) }, Role: core.RoleButton, Label: name,
 		OnPress: func(core.PressEvent) {
 			if name == CopyAction {
 				cx.SetClipboard(c.Code)
@@ -490,7 +523,7 @@ func codeSpans(code string, highlights []Highlight) []core.Span {
 		if h.Start > at {
 			out = append(out, core.Span{Content: code[at:h.Start]})
 		}
-		out = append(out, core.Span{Content: code[h.Start:h.End], Style: h.Style})
+		out = append(out, core.Span{Content: code[h.Start:h.End], Class: h.Class, Style: h.Style})
 		at = h.End
 	}
 	if at < len(code) || len(out) == 0 {
@@ -538,7 +571,7 @@ func (r *renderer) table(cx *core.Scope, t Table, caret bool) core.Node {
 		if i == 0 {
 			rowParts, cellParts = append(rowParts, PartTableHead), append(cellParts, PartTableHeaderCell)
 		}
-		children = append(children, core.View{StyleFunc: func() core.Style {
+		children = append(children, core.View{Class: r.class(rowParts...), StyleFunc: func() core.Style {
 			return r.style(rowParts...).Merge(core.Style{GridRow: line, GridColumn: core.GridLines{Start: core.GridLine(1), End: core.GridLine(-1)}})
 		}})
 		col := 0
@@ -555,7 +588,7 @@ func (r *renderer) table(cx *core.Scope, t Table, caret bool) core.Node {
 				return s
 			}
 			lastCell := caret && i == len(rows)-1 && col+c.span() >= cols
-			children = append(children, core.Text{Spans: r.caretSpans(r.spans(nil, c.Content, noStyle, nil), lastCell), StyleFunc: s})
+			children = append(children, core.Text{Spans: r.caretSpans(r.spans(nil, c.Content, noStyle, "", nil), lastCell), Class: r.class(cellParts...), StyleFunc: s})
 			col += c.span()
 		}
 	}
@@ -565,14 +598,14 @@ func (r *renderer) table(cx *core.Scope, t Table, caret bool) core.Node {
 		body = core.View{Style: grid, Children: children}
 	} else {
 		grid.MinWidth = core.Pt(core.Points(total))
-		body = core.Scroll{Horizontal: true, HideIndicator: r.tv.NoTableScrollbar, StyleFunc: func() core.Style { return r.style(PartTableScroll) },
+		body = core.Scroll{Horizontal: true, HideIndicator: r.tv.NoTableScrollbar, Class: r.class(PartTableScroll), StyleFunc: func() core.Style { return r.style(PartTableScroll) },
 			Children: []core.Node{core.View{Style: grid, Children: children}}}
 	}
 	nodes := []core.Node{body}
 	if r.tv.RenderTableActions != nil {
-		nodes = []core.Node{core.View{StyleFunc: func() core.Style { return r.style(PartTableActions) }, Children: []core.Node{r.tv.RenderTableActions(cx, t)}}, body}
+		nodes = []core.Node{core.View{Class: r.class(PartTableActions), StyleFunc: func() core.Style { return r.style(PartTableActions) }, Children: []core.Node{r.tv.RenderTableActions(cx, t)}}, body}
 	}
-	return core.View{StyleFunc: func() core.Style { return r.style(PartTable) }, Children: nodes}
+	return core.View{Class: r.class(PartTable), StyleFunc: func() core.Style { return r.style(PartTable) }, Children: nodes}
 }
 
 // textWidth estimates the width of text's widest line in ems: wide (East
@@ -604,33 +637,35 @@ func (r *renderer) footnotes(cx *core.Scope, notes []Footnote) core.Node {
 	}
 	rows := make([]core.Node, len(notes))
 	for i, f := range notes {
-		rows[i] = core.View{StyleFunc: func() core.Style { return r.style(PartFootnote) }, Children: []core.Node{
-			core.Text{Content: strconv.Itoa(f.Index) + ".", StyleFunc: func() core.Style { return r.style(PartFootnoteLabel) }},
+		rows[i] = core.View{Class: r.class(PartFootnote), StyleFunc: func() core.Style { return r.style(PartFootnote) }, Children: []core.Node{
+			core.Text{Content: strconv.Itoa(f.Index) + ".", Class: r.class(PartFootnoteLabel), StyleFunc: func() core.Style { return r.style(PartFootnoteLabel) }},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1}, Children: r.blocks(cx, f.Children, 0)},
 		}}
 	}
-	return core.View{StyleFunc: func() core.Style { return r.style(PartFootnotes) }, Children: rows}
+	return core.View{Class: r.class(PartFootnotes), StyleFunc: func() core.Style { return r.style(PartFootnotes) }, Children: rows}
 }
 
 // spans appends content's spans to out, each styled over style and
-// pressing link, the link around it, if any.
-func (r *renderer) spans(out []core.Span, content []Inline, style func() core.Style, link func(core.PressEvent)) []core.Span {
-	// under is style with part p's over it.
+// class, the inline parts around it, and pressing link, the link around
+// it, if any.
+func (r *renderer) spans(out []core.Span, content []Inline, style func() core.Style, class string, link func(core.PressEvent)) []core.Span {
+	// under is style with part p's over it, and inner class with p's.
 	under := func(p Part) func() core.Style {
 		return func() core.Style { return style().Merge(r.style(p)) }
 	}
+	inner := func(p Part) string { return joinClasses(class, r.class(p)) }
 	for _, in := range content {
 		switch in := in.(type) {
 		case Text:
-			out = append(out, core.Span{Content: in.Text, StyleFunc: style, OnPress: link})
+			out = append(out, core.Span{Content: in.Text, Class: class, StyleFunc: style, OnPress: link})
 		case Strong:
-			out = r.spans(out, in.Content, under(PartStrong), link)
+			out = r.spans(out, in.Content, under(PartStrong), inner(PartStrong), link)
 		case Emphasis:
-			out = r.spans(out, in.Content, under(PartEmphasis), link)
+			out = r.spans(out, in.Content, under(PartEmphasis), inner(PartEmphasis), link)
 		case Strikethrough:
-			out = r.spans(out, in.Content, under(PartStrikethrough), link)
+			out = r.spans(out, in.Content, under(PartStrikethrough), inner(PartStrikethrough), link)
 		case Underline:
-			out = r.spans(out, in.Content, under(PartUnderline), link)
+			out = r.spans(out, in.Content, under(PartUnderline), inner(PartUnderline), link)
 		case Mark:
 			mark := func() core.Style {
 				s := style().Merge(r.style(PartMark))
@@ -639,36 +674,37 @@ func (r *renderer) spans(out []core.Span, content []Inline, style func() core.St
 				}
 				return s
 			}
-			out = r.spans(out, in.Content, mark, link)
+			out = r.spans(out, in.Content, mark, inner(PartMark), link)
 		case Superscript:
-			out = r.spans(out, in.Content, under(PartSuperscript), link)
+			out = r.spans(out, in.Content, under(PartSuperscript), inner(PartSuperscript), link)
 		case Subscript:
-			out = r.spans(out, in.Content, under(PartSubscript), link)
+			out = r.spans(out, in.Content, under(PartSubscript), inner(PartSubscript), link)
 		case Small:
-			out = r.spans(out, in.Content, under(PartSmall), link)
+			out = r.spans(out, in.Content, under(PartSmall), inner(PartSmall), link)
 		case Code:
-			out = append(out, core.Span{Content: in.Code, StyleFunc: under(PartCode), OnPress: link})
+			out = append(out, core.Span{Content: in.Code, Class: inner(PartCode), StyleFunc: under(PartCode), OnPress: link})
 		case Keyboard:
-			out = append(out, core.Span{Content: in.Text, StyleFunc: under(PartKeyboard), OnPress: link})
+			out = append(out, core.Span{Content: in.Text, Class: inner(PartKeyboard), StyleFunc: under(PartKeyboard), OnPress: link})
 		case Math:
 			if render := r.tv.RenderMath; render != nil {
 				out = append(out, core.Span{Attachment: core.Func(func(cx *core.Scope) core.Node { return render(cx, in, false) })})
 			} else {
-				out = append(out, core.Span{Content: in.TeX, StyleFunc: under(PartMath), OnPress: link})
+				out = append(out, core.Span{Content: in.TeX, Class: inner(PartMath), StyleFunc: under(PartMath), OnPress: link})
 			}
 		case Link:
-			out = r.spans(out, in.Content, under(PartLink), r.press(in.URL))
+			out = r.spans(out, in.Content, under(PartLink), inner(PartLink), r.press(in.URL))
 		case Image:
 			out = append(out, core.Span{Attachment: r.inlineImage(in, style, link)})
 		case Break:
-			out = append(out, core.Span{Content: "\n", StyleFunc: style})
+			out = append(out, core.Span{Content: "\n", Class: class, StyleFunc: style})
 		case FootnoteReference:
-			out = append(out, core.Span{Content: "[" + strconv.Itoa(in.Index) + "]",
+			out = append(out, core.Span{Content: "[" + strconv.Itoa(in.Index) + "]", Class: inner(PartFootnoteReference),
 				StyleFunc: under(PartFootnoteReference), OnPress: r.press("#footnote-" + in.Label)})
 		case Custom:
 			if r.tv.CustomSpan != nil {
 				s := r.tv.CustomSpan(in)
 				own, ownFunc := s.Style, s.StyleFunc
+				s.Class = joinClasses(class, s.Class)
 				s.Style, s.StyleFunc = core.Style{}, func() core.Style {
 					st := style().Merge(own)
 					if ownFunc != nil {
@@ -682,20 +718,44 @@ func (r *renderer) spans(out []core.Span, content []Inline, style func() core.St
 			} else {
 				var b strings.Builder
 				in.write(&b)
-				out = append(out, core.Span{Content: b.String(), StyleFunc: under(PartCustom), OnPress: link})
+				out = append(out, core.Span{Content: b.String(), Class: inner(PartCustom), StyleFunc: under(PartCustom), OnPress: link})
 			}
 		}
 	}
 	return out
 }
 
-// press returns what reports a press on a link to url, if anything
-// listens.
-func (r *renderer) press(url string) func(core.PressEvent) {
-	if r.tv.OnLinkPress == nil {
+// press returns what a press on a link to url does, if anything: report
+// it, then with OpenLinks open a URL that leaves the document.
+func (r *renderer) press(link string) func(core.PressEvent) {
+	open := r.tv.OpenLinks && leaves(link)
+	if r.tv.OnLinkPress == nil && !open {
 		return nil
 	}
-	return func(core.PressEvent) { r.tv.OnLinkPress(url) }
+	return func(core.PressEvent) {
+		if r.tv.OnLinkPress != nil {
+			r.tv.OnLinkPress(link)
+		}
+		if open {
+			r.cx.OpenURL(link, nil)
+		}
+	}
+}
+
+// leaves reports whether link names another site or app: it has a
+// scheme.
+func leaves(link string) bool {
+	u, err := url.Parse(link)
+	return err == nil && u.Scheme != ""
+}
+
+// imagePress returns what a press on an image in no link does: report it
+// with OnImagePress.
+func (r *renderer) imagePress(im Image) func(core.PressEvent) {
+	if r.tv.OnImagePress == nil {
+		return nil
+	}
+	return func(core.PressEvent) { r.tv.OnImagePress(im) }
 }
 
 type linkedImage struct {
@@ -735,11 +795,15 @@ func (r *renderer) inlineImage(im Image, style func() core.Style, link func(core
 			return r.tv.RenderImage(cx, im)
 		}
 		natural := core.NewSignal(cx, core.Size{})
+		press := link
+		if press == nil {
+			press = r.imagePress(im)
+		}
 		return core.Image{
 			Source:  core.Src(im.Src),
 			Label:   im.Alt,
 			OnLoad:  natural.Set,
-			OnPress: link,
+			OnPress: press,
 			StyleFunc: func() core.Style {
 				text := r.style(PartRoot, PartParagraph).Merge(style())
 				line := text.LineHeight
@@ -770,6 +834,10 @@ func (r *renderer) image(cx *core.Scope, im Image, url string) core.Node {
 		return r.tv.RenderImage(cx, im)
 	}
 	natural := core.NewSignal(cx, core.Size{})
+	press := r.imagePress(im)
+	if url != "" {
+		press = r.press(url)
+	}
 	return core.Image{
 		Source: core.Src(im.Src),
 		Label:  im.Alt,
@@ -784,6 +852,7 @@ func (r *renderer) image(cx *core.Scope, im Image, url string) core.Node {
 			}
 			return s.Merge(r.style(PartImage))
 		},
-		OnPress: r.press(url),
+		Class:   r.class(PartImage),
+		OnPress: press,
 	}
 }

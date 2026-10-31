@@ -97,12 +97,12 @@ func TestDockAreaShowsItsRegionsAndRearrangesThem(t *testing.T) {
 	if events[len(events)-1] != "left closed" {
 		t.Errorf("events %q", events)
 	}
-	ref.ToggleZoom()
+	ref.ToggleZoom(ref.GroupOf("preview"))
 	app.Settle()
-	if app.Exists("id:panel-preview") == app.Exists("id:panel-editor") {
+	if app.Exists("id:panel-preview") == app.Exists("id:panel-editor") || ref.ZoomedGroup() != ref.GroupOf("preview") {
 		t.Error("zooming shows more than one group")
 	}
-	ref.ToggleZoom()
+	ref.ToggleZoom(0)
 	app.Settle()
 	ref.ClosePanel("editor") // not closable
 	app.Settle()
@@ -167,21 +167,81 @@ func TestDockPanelsKeepTheirStateAsTheyMove(t *testing.T) {
 		t.Fatalf("the editor did not move into the dock: %+v", last.Left.Root)
 	}
 	kept("moved into a dock")
-	ref.ToggleZoom()
+	ref.ToggleZoom(ref.GroupOf("editor"))
 	app.Settle()
-	ref.ToggleZoom()
+	ref.ToggleZoom(ref.GroupOf("editor"))
 	app.Settle()
 	kept("zoomed and back")
 
 	// A closed panel goes for good.
 	ref.ClosePanel("notes")
 	app.Settle()
-	ref.AddPanel("notes", base.DockCenter)
+	ref.AddPanel("notes", base.DockCenter, 0)
 	app.Settle()
-	ref.ActivatePanel("notes")
+	ref.SelectPanel("notes")
 	app.Settle()
 	if app.Find("id:input-notes").Text != "" {
 		t.Error("a panel added again kept the state of the one closed")
+	}
+}
+
+func TestDockAreaRefEditsTheLayout(t *testing.T) {
+	var layouts []base.DockLayout
+	var events []string
+	app, ref := dockApp(t, 1000, &layouts, &events)
+	app.Type("id:input-editor", "kept")
+	left, right := ref.GroupOf("editor"), ref.GroupOf("preview")
+	if left == 0 || right == 0 || left == right || ref.GroupOf("missing") != 0 {
+		t.Fatalf("groups %v %v", left, right)
+	}
+	last := func() base.DockLayout { return layouts[len(layouts)-1] }
+	ref.MovePanel("editor", base.DockTarget{Group: right, Before: "preview"})
+	app.Settle()
+	if g := last().Center.Children[1]; !slices.Equal(g.Panels, []string{"editor", "preview"}) || g.Active != 0 {
+		t.Fatalf("moved before preview: %+v", last().Center)
+	}
+	if app.Find("id:input-editor").Text != "kept" {
+		t.Error("a moved panel lost its state")
+	}
+	ref.MovePanel("notes", base.DockTarget{Group: right, NoActivate: true})
+	app.Settle()
+	if g := last().Center; len(g.Children) != 1 || !slices.Equal(g.Children[0].Panels, []string{"editor", "preview", "notes"}) || g.Children[0].Active != 0 {
+		t.Fatalf("moved last without displaying it: %+v", g)
+	}
+	ref.SplitAt(right, "notes", core.PlaceBottom)
+	app.Settle()
+	if c := last().Center.Children[0]; c.Tabs || c.Axis != base.Vertical || c.Children[1].Panels[0] != "notes" {
+		t.Fatalf("split below: %+v", c)
+	}
+	ref.MovePanel("files", base.DockTarget{Group: ref.GroupOf("notes"), Side: core.PlaceRight, Size: 120})
+	app.Settle()
+	if c := last().Center.Children[0].Children[1]; c.Tabs || c.Axis != base.Horizontal || c.Sizes[1] != 120 || last().Left != nil && len(last().Left.Root.Panels) != 0 {
+		t.Fatalf("split right of notes at 120: %+v, left %+v", c, last().Left)
+	}
+	ref.SelectTab(right, 1)
+	app.Settle()
+	if !app.Exists("id:panel-preview") || app.Exists("id:panel-editor") {
+		t.Error("selecting the second tab did not display preview")
+	}
+	ref.RemovePanel("editor") // not closable, removed all the same
+	app.Settle()
+	if ref.GroupOf("editor") != 0 || events[len(events)-1] != "remove editor" {
+		t.Errorf("removing: events %q", events)
+	}
+	ref.AddPanel("terminal", base.DockBottom, 150)
+	app.Settle()
+	if b := last().Bottom; b == nil || b.Size != 150 || b.Root.Panels[0] != "terminal" {
+		t.Fatalf("a new bottom dock: %+v", b)
+	}
+	ref.SetDockSize(base.DockBottom, 40)
+	app.Settle()
+	if b := last().Bottom; b.Size != base.PanelMinSize {
+		t.Errorf("dock size %v, want at least the minimum", b.Size)
+	}
+	ref.AddPanel("preview", base.DockBottom, 0)
+	app.Settle()
+	if b := last().Bottom; !slices.Equal(b.Root.Panels, []string{"terminal", "preview"}) || ref.GroupOf("preview") != ref.GroupOf("terminal") {
+		t.Errorf("a held panel added to a dock moves there: %+v", b.Root)
 	}
 }
 

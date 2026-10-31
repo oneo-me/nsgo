@@ -496,6 +496,21 @@ func (e *ed) run(c Command) {
 	case SelectNextOccurrence:
 		s.selectNext()
 		e.moved()
+	case SelectPreviousOccurrence:
+		s.selectPrevious()
+		e.moved()
+	case SelectWord:
+		next := make([]selection, len(s.sels))
+		for i, sel := range s.sels {
+			a, b := s.lang.wordAt(s.line(sel.head.line), sel.head.col)
+			next[i] = selection{anchor: pos{sel.head.line, a}, head: pos{sel.head.line, b}, goal: -1}
+		}
+		s.setSels(next)
+		e.moved()
+	case MoveParagraphUp, SelectParagraphUp, MoveParagraphDown, SelectParagraphDown:
+		down := c == MoveParagraphDown || c == SelectParagraphDown
+		s.moveBy(c == SelectParagraphUp || c == SelectParagraphDown, func(p pos) pos { return s.paragraphEdge(p, down) })
+		e.moved()
 	case SelectAllOccurrences:
 		s.selectAllOccurrences()
 		e.moved()
@@ -554,6 +569,8 @@ func (e *ed) run(c Command) {
 		e.edit(func() []change { return s.transform(strings.ToUpper) })
 	case TransformToLowercase:
 		e.edit(func() []change { return s.transform(strings.ToLower) })
+	case TransformToTitleCase:
+		e.edit(func() []change { return s.transform(titleCase) })
 	case TrimTrailingWhitespace:
 		e.edit(s.trimTrailing)
 	case MoveLinesUp, MoveLinesDown:
@@ -593,6 +610,16 @@ func (e *ed) run(c Command) {
 	case UnfoldAll:
 		s.folded = nil
 		e.foldsChanged()
+	case FoldRecursive:
+		(&Ref{e}).FoldRecursive(s.primary().head.line)
+	case UnfoldRecursive:
+		(&Ref{e}).UnfoldRecursive(s.primary().head.line)
+	case FoldSelection:
+		for _, sel := range slices.Clone(s.sels) {
+			if a, b := sel.start(), sel.end(); b.line > a.line {
+				(&Ref{e}).FoldRange(FoldRange{a.line, b.line})
+			}
+		}
 	case FindNext, FindPrevious:
 		e.findStep(c == FindNext)
 	case FindWithSelection:
@@ -618,6 +645,12 @@ func (e *ed) run(c Command) {
 				return s.deleteLines()
 			})
 		}
+	case Paste:
+		e.cx.ReadClipboard(func(text string) {
+			if text != "" {
+				e.edit(func() []change { return s.paste(text, false) })
+			}
+		})
 	case ShowCompletions:
 		e.requestCompletion(CompletionInvoked, "")
 	case GoToDefinition:
@@ -1356,7 +1389,13 @@ func (e *ed) pointer(pt core.Point, page core.Point, mods core.Modifiers) {
 				diags = append(diags, *m.diag)
 			}
 		}
-		e.p.OnHover(HoverEvent{Position: e.position(p), Word: e.rangeOf(word), At: page, Modifiers: mods, Diagnostics: diags})
+		var bounds core.Bounds
+		if rs := e.rowRects(word.from, word.to, e.st.disp.rowOf(word.from), e.st.disp.rowOf(word.from)+1, nil, "", nil); len(rs) > 0 {
+			b, _ := e.boxOf(rs[0])
+			bounds = b.Page
+		}
+		e.p.OnHover(HoverEvent{Position: e.position(p), Offset: e.offset(p), Word: e.rangeOf(word), At: page, Bounds: bounds,
+			Modifiers: mods, Diagnostics: diags})
 	})
 }
 

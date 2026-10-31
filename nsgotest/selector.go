@@ -168,7 +168,11 @@ func (c clip) within(b driver.Bounds) clip {
 // window wherever it is in the tree. Header views and the bar above the
 // keyboard show where the platform puts them. Opacity and transforms do
 // not hide.
-func (a *App) shown() []*View {
+func (a *App) shown() []*View { return a.shownWith(false) }
+
+// shownWith is shown, with images of no size where they would show when
+// unsized: an image that sizes itself as it loads.
+func (a *App) shownWith(unsized bool) []*View {
 	var out []*View
 	window := clip{area: driver.Bounds{Size: a.size}}
 	if r := a.views[a.rootID]; r != nil && r.Frame.Size.Width > 0 {
@@ -187,6 +191,8 @@ func (a *App) shown() []*View {
 		b.Origin.X += origin.X
 		b.Origin.Y += origin.Y
 		if placed || b.Size.Width > 0 && b.Size.Height > 0 && c.shows(b) {
+			out = append(out, v)
+		} else if unsized && v.Kind == driver.KindImage && c.shows(driver.Bounds{Origin: b.Origin, Size: driver.Size{Width: max(b.Size.Width, 1), Height: max(b.Size.Height, 1)}}) {
 			out = append(out, v)
 		}
 		inner := c
@@ -245,8 +251,10 @@ func (a *App) shown() []*View {
 
 // byLayer returns the views shown in the order a user's eyes find them:
 // the topmost modal's first, then the rest in tree order.
-func (a *App) byLayer() []*View {
-	views := a.shown()
+func (a *App) byLayer() []*View { return a.byLayerWith(false) }
+
+func (a *App) byLayerWith(unsized bool) []*View {
+	views := a.shownWith(unsized)
 	var top *View
 	for _, v := range views {
 		if v.Kind == driver.KindModal {
@@ -270,8 +278,11 @@ func (a *App) byLayer() []*View {
 
 // resolve returns the views shown that sel matches, by layer, each part
 // looking inside what the one before matched.
-func (a *App) resolve(sel *selector) []*View {
-	layers := a.byLayer()
+func (a *App) resolve(sel *selector) []*View { return a.resolveWith(sel, false) }
+
+// resolveWith is resolve, with unsized images when unsized.
+func (a *App) resolveWith(sel *selector, unsized bool) []*View {
+	layers := a.byLayerWith(unsized)
 	var scope []*View
 	for i, p := range sel.parts {
 		var found []*View

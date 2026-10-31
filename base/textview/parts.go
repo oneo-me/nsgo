@@ -126,3 +126,6 @@ const (
 
 // Styles are styles by part.
 type Styles map[Part]core.Style
+
+// Classes are Tailwind classes by part, under the parts' styles.
+type Classes map[Part]string

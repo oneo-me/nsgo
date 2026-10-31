@@ -46,7 +46,7 @@ Highlighting is its own package because chroma's lexers add about 4.5 MB to a bi
 
 - `TextView` parses in one memo, then shows the blocks as rows of an `Each` keyed by position and kind. Each row keeps its block in a memo compared deeply, so a document that grows at its end rebuilds only its last block.
 - A row is a `Dynamic`: the part styles and the highlighter it reads, such as the system's appearance, rebuild it.
-- Paragraphs, headings, cells and code are each one `Text` with spans; links are spans with a press handler that calls `OnLinkPress`.
+- Paragraphs, headings, cells and code are each one `Text` with spans; links are spans with a press handler that calls `OnLinkPress`, then with `OpenLinks` opens a URL with a scheme through `Scope.OpenURL`. An image in no link reports its press with `OnImagePress`.
 - Images show as blocks when a paragraph holds only images. In a line of text an image is an attachment: the size it asks for, else three quarters of a line tall.
 - `RenderMath` shows formulas: blocks in place, inline ones as attachments, whose own view's `VerticalAlign` places them. Without it `Math` shows its TeX in `PartMath` or `PartMathBlock`.
 - An inline custom node shows through `CustomSpan` as a span, else through `RenderCustom` as an attachment, else as its content.
@@ -59,14 +59,15 @@ Highlighting is its own package because chroma's lexers add about 4.5 MB to a bi
 
 ## Parts
 
-A node with several parts merges `StyleFunc`'s styles for each, then the app's `Styles` for each, later parts winning, so a typography passed as `StyleFunc` gives way to `Styles`.
+A node with several parts merges `StyleFunc`'s styles for each, then the app's `Styles` for each, later parts winning, so a typography passed as `StyleFunc` gives way to `Styles`. `Classes` go under both, each part's in the same order; an inline part's span takes the classes of the parts around it too.
 
 Where NSGo departs from NSH:
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| `classes` and `styles` props by part | `Styles` map and `StyleFunc` by `Part` | Classes by part are [planned](../roadmap.md#components) |
+| `classes` and `styles` objects by part's name | `Classes` and `Styles` maps and `StyleFunc` by `Part` | A part is a constant, so a typography is one function of it |
 | Typography in `nsh/base`'s `TextView` | Typography from the app | `base` has no look |
+| `links="report"` or `"open"` | `OpenLinks` | Go's zero value is the default |
 | Alert icon | Alert title text, and `PartAlertContent` around its blocks | The title takes the alert's color while the blocks keep the text's |
 | `renderCustom` for inline nodes | `RenderCustom` as an attachment, or `CustomSpan` returning a span | A span keeps a link's press and the text's selection |
 | `renderMath` with a `TextViewMath` | `RenderMath` with the `Math` and whether it is display | Go functions take arguments, not a props object |

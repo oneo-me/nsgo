@@ -1106,7 +1106,7 @@ func (t *Tree) mountTooltip(cx *Scope, n *node, tip Node) {
 
 func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	n := t.newNode(driver.KindText, parent, cx)
-	t.setClasses(n, v.Class)
+	t.bindClasses(cx, n, v.Class, v.ClassFunc)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	n.h = handlers{press: v.OnPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
@@ -1147,7 +1147,15 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 		}
 		if sp.StyleFunc != nil {
 			cx.renderEffect(func() {
-				if s := sp.Style.Merge(sp.StyleFunc()); !reflect.DeepEqual(s, n.text.spans[i].style) {
+				s := sp.Style.Merge(sp.StyleFunc())
+				if c := n.text.spans[i].cls; c != nil {
+					// The classes go under what StyleFunc gives.
+					c.base = s
+					var env classEnv
+					Untracked(n.owner, func() bool { env = t.classEnv(n); return true })
+					s = c.resolve(&env)
+				}
+				if !reflect.DeepEqual(s, n.text.spans[i].style) {
 					n.text.spans[i].style = s
 					n.text.stale = true
 					t.markResolve(n)
@@ -1166,15 +1174,23 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 			}
 			same := len(spans) == len(n.text.spans) && n.text.prepared != nil
 			for i := 0; same && i < len(spans); i++ {
-				same = spans[i].Content == n.text.spans[i].content && reflect.DeepEqual(spans[i].Style, n.text.spans[i].style)
+				old := &n.text.spans[i]
+				own := old.style
+				if old.cls != nil {
+					own = old.cls.base
+				}
+				same = spans[i].Content == old.content && (old.cls == nil) == (spans[i].Class == "") &&
+					(old.cls == nil || old.cls.list == parseClasses(spans[i].Class)) && reflect.DeepEqual(spans[i].Style, own)
 			}
 			if same {
 				return
 			}
 			n.text.spans = n.text.spans[:0]
 			for _, sp := range spans {
-				n.text.spans = append(n.text.spans, spanNode{content: sp.Content, style: sp.Style})
+				style, cls := t.spanStyle(n, sp.Class, sp.Style)
+				n.text.spans = append(n.text.spans, spanNode{content: sp.Content, style: style, cls: cls})
 			}
+			t.followSpanClasses(n)
 			n.text.stale = true
 			t.markResolve(n)
 		})

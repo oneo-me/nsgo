@@ -132,7 +132,23 @@ type DockDropIndicator struct {
 	Side  core.Placement
 }
 
-// DockAreaRef is a DockArea's methods, bound once it mounts.
+// DockTarget is where DockAreaRef.MovePanel puts a panel: into tab
+// group Group, or with Side in a new tab group on that side of container
+// Group.
+type DockTarget struct {
+	Group uint64
+	Side  core.Placement
+	// Before is the tab it goes before; it goes last without one.
+	Before string
+	// NoActivate keeps the group's displayed tab.
+	NoActivate bool
+	// Size is the new group's length along a split, half of what it lands
+	// beside when 0.
+	Size core.Points
+}
+
+// DockAreaRef is a DockArea's methods, bound once it mounts. Each edit
+// is reported with OnLayoutChange, as the user's are.
 type DockAreaRef struct{ a *dockArea }
 
 // Layout returns the layout the area shows.
@@ -141,6 +157,64 @@ func (r *DockAreaRef) Layout() DockLayout {
 		return DockLayout{}
 	}
 	return core.Untracked(r.a.cx, r.a.layout).Clone()
+}
+
+// AddPanel adds panel key to the first tab group of region p, displayed;
+// a dock missing is made, size across (200 when 0). A panel the area
+// holds moves there.
+func (r *DockAreaRef) AddPanel(key string, p DockPlacement, size core.Points) {
+	if r.a != nil {
+		r.a.add(key, p, size)
+	}
+}
+
+// RemovePanel takes panel key out of the area, whatever its options say.
+func (r *DockAreaRef) RemovePanel(key string) {
+	if r.a != nil {
+		r.a.remove(key)
+	}
+}
+
+// ClosePanel takes panel key out of the area as its tab would: unless
+// the area is locked, the panel is not closable, or it is the last panel
+// of a group with nothing beside it.
+func (r *DockAreaRef) ClosePanel(key string) {
+	if r.a != nil {
+		r.a.close(key)
+	}
+}
+
+// MovePanel moves panel key to t; a panel the area does not hold is
+// added there.
+func (r *DockAreaRef) MovePanel(key string, t DockTarget) {
+	if r.a != nil {
+		r.a.move(key, t)
+	}
+}
+
+// SplitAt puts panel key in a new tab group on side of container group.
+func (r *DockAreaRef) SplitAt(group uint64, key string, side core.Placement) {
+	if r.a != nil && side != core.PlaceDefault {
+		r.a.move(key, DockTarget{Group: group, Side: side})
+	}
+}
+
+// SelectPanel displays panel key in its group.
+func (r *DockAreaRef) SelectPanel(key string) {
+	if r.a != nil {
+		r.a.activate(key)
+	}
+}
+
+// SelectTab displays the index'th panel of tab group group.
+func (r *DockAreaRef) SelectTab(group uint64, index int) {
+	if r.a == nil {
+		return
+	}
+	l := r.a.untracked()
+	if g := findGroup(&l, group); g != nil && g.Tabs && index >= 0 && index < len(g.Panels) {
+		r.a.activate(g.Panels[index])
+	}
 }
 
 // SetDockOpen opens or closes dock p; at compact width it presents it,
@@ -158,33 +232,47 @@ func (r *DockAreaRef) ToggleDock(p DockPlacement) {
 	}
 }
 
-// ToggleZoom zooms into the group last used, or out.
-func (r *DockAreaRef) ToggleZoom() {
+// SetDockSize sets dock p's size across its edge, at least PanelMinSize.
+func (r *DockAreaRef) SetDockSize(p DockPlacement, size core.Points) {
+	if r.a == nil {
+		return
+	}
+	r.a.edit(func(l *DockLayout) bool {
+		d := l.Region(p)
+		if d == nil || d.Size == max(size, PanelMinSize) {
+			return false
+		}
+		d.Size = max(size, PanelMinSize)
+		return true
+	})
+}
+
+// ToggleZoom zooms tab group group in, so it fills the area, or out when
+// it is zoomed; 0 zooms the zoomed group out.
+func (r *DockAreaRef) ToggleZoom(group uint64) {
 	if r.a != nil {
-		r.a.toggleZoom(r.a.focused)
+		r.a.toggleZoom(group)
 	}
 }
 
-// ActivatePanel displays panel key in its group.
-func (r *DockAreaRef) ActivatePanel(key string) {
-	if r.a != nil {
-		r.a.activate(key)
+// ZoomedGroup returns the zoomed tab group's ID, 0 for none.
+func (r *DockAreaRef) ZoomedGroup() uint64 {
+	if r.a == nil {
+		return 0
 	}
+	return r.a.zoom.GetUntracked()
 }
 
-// ClosePanel takes panel key out of the area, where the rules let it.
-func (r *DockAreaRef) ClosePanel(key string) {
-	if r.a != nil {
-		r.a.close(key)
+// GroupOf returns the ID of the tab group holding panel key, 0 for none.
+func (r *DockAreaRef) GroupOf(key string) uint64 {
+	if r.a == nil {
+		return 0
 	}
-}
-
-// AddPanel adds panel key to the first tab group of region p, displayed;
-// a dock missing is made.
-func (r *DockAreaRef) AddPanel(key string, p DockPlacement) {
-	if r.a != nil {
-		r.a.add(key, p)
+	l := r.a.untracked()
+	if _, g := regionOf(&l, key); g != nil {
+		return g.ID
 	}
+	return 0
 }
 
 // The width below which an area is compact, Material 3's compact class;
@@ -208,9 +296,8 @@ type dockArea struct {
 	ref  *core.Ref
 	// size is the area's size as last laid out.
 	size *core.Signal[core.Size]
-	// zoom is the zoomed group, 0 none; focused the group last used.
-	zoom    *core.Signal[uint64]
-	focused uint64
+	// zoom is the zoomed group, 0 none.
+	zoom *core.Signal[uint64]
 	// current is the compact presentation's center group; presented its
 	// dock, DockCenter for none.
 	current   *core.Signal[uint64]
@@ -537,21 +624,13 @@ func (a *dockArea) setZoom(id uint64) {
 }
 
 func (a *dockArea) toggleZoom(group uint64) {
-	if a.zoom.GetUntracked() != 0 {
+	if z := a.zoom.GetUntracked(); z != 0 && (group == 0 || group == z) {
 		a.setZoom(0)
 		return
 	}
 	l := a.untracked()
 	g := findGroup(&l, group)
-	if g == nil {
-		// The first group of the center.
-		l.Center.walk(func(c *DockNode) {
-			if g == nil && c.Tabs {
-				g = c
-			}
-		})
-	}
-	if g == nil || g.Active >= len(g.Panels) || a.options(g.Panels[g.Active]).NoZoom {
+	if g == nil || !g.Tabs || g.Active >= len(g.Panels) || a.options(g.Panels[g.Active]).NoZoom {
 		return
 	}
 	a.setZoom(g.ID)
@@ -565,7 +644,6 @@ func (a *dockArea) activate(key string) {
 	if g == nil {
 		return
 	}
-	a.focused = g.ID
 	if region == DockCenter {
 		a.current.Set(g.ID)
 	}
@@ -615,14 +693,52 @@ func (a *dockArea) close(key string) {
 	})
 }
 
-func (a *dockArea) add(key string, p DockPlacement) {
+func (a *dockArea) remove(key string) {
 	a.edit(func(l *DockLayout) bool {
-		if allPanels(l)[key] {
+		region, _ := regionOf(l, key)
+		return l.tree(region).detach(key)
+	})
+}
+
+// move puts panel key where t says, detaching it from where it is.
+func (a *dockArea) move(key string, t DockTarget) {
+	a.edit(func(l *DockLayout) bool {
+		var to DockPlacement
+		var n *DockNode
+		for _, p := range regions {
+			if tree := l.tree(p); tree != nil && n == nil {
+				to, n = p, tree.find(t.Group)
+			}
+		}
+		if n == nil || t.Side == core.PlaceDefault && !n.Tabs {
 			return false
+		}
+		if from, g := regionOf(l, key); g != nil {
+			l.tree(from).detach(key)
+			if from != to {
+				l.tree(from).normalize(from == DockCenter)
+			}
+		}
+		target := dockTarget{region: to, node: t.Group, index: -1, activate: !t.NoActivate,
+			split: t.Side != core.PlaceDefault, side: t.Side, size: t.Size}
+		if !target.split && t.Before != "" {
+			target.index = slices.Index(n.Panels, t.Before)
+		}
+		return l.tree(to).insert(key, target, a.alloc)
+	})
+}
+
+func (a *dockArea) add(key string, p DockPlacement, size core.Points) {
+	a.edit(func(l *DockLayout) bool {
+		if from, g := regionOf(l, key); g != nil {
+			l.tree(from).detach(key)
+			if from != p {
+				l.tree(from).normalize(from == DockCenter)
+			}
 		}
 		t := l.tree(p)
 		if t == nil {
-			l.setRegion(p, &DockRegion{Root: DockNode{ID: a.alloc(), Tabs: true, Panels: []string{key}}})
+			l.setRegion(p, &DockRegion{Root: DockNode{ID: a.alloc(), Tabs: true, Panels: []string{key}}, Size: size})
 			return true
 		}
 		var g *DockNode

@@ -5,7 +5,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/textview"
 	"github.com/oneo-me/nsgo/base/textview/highlight"
 	"github.com/oneo-me/nsgo/core"
@@ -102,48 +101,6 @@ func copyAction(cx *core.Scope, a textview.CodeBlockAction) core.Node {
 	}}
 }
 
-// imageViewer is a full-screen viewer for an image a TextView shows: the
-// image fitted over a dark scrim, zoomed by pinches up to 4× on the
-// platform. A press on the close button, Escape and back close it.
-func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) core.Node {
-	env := cx.Env()
-	return base.Dialog{Open: func() bool { return image().Src != "" }, Animation: core.ModalFade, Label: "Image",
-		OnOpenChange: func(o bool, _ base.Reason) {
-			if !o {
-				onClose()
-			}
-		},
-		PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch},
-		Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, Background: black(0.92)}, Children: []core.Node{
-			core.Scroll{Style: core.Style{FlexGrow: 1}, MaxZoomScale: 4, MinZoomScale: 1, CenterContent: true, TestID: "image-viewer",
-				Children: []core.Node{core.View{StyleFunc: func() core.Style {
-					w := env.Window()
-					return core.Style{Width: core.Pt(w.Width), Height: core.Pt(w.Height), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Padding: core.All(16)}
-				}, Children: []core.Node{core.Image{SourceFunc: func() core.ImageSource { return core.Src(image().Src) }, ResizeMode: core.Contain,
-					Style: core.Style{Width: core.Pct(100), Height: core.Pct(100)}}}}}},
-			core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(24), AlignItems: core.AlignCenter}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return image().Alt }, Style: core.Style{FontSize: 14, Color: white(0.85), TextAlign: core.TextAlignCenter}},
-			}},
-			core.View{StyleFunc: func() core.Style {
-				return core.Style{Position: core.Absolute, Top: core.Pt(env.SafeArea().Top + 12), Right: core.Pt(16)}
-			}, Children: []core.Node{press(pressProps{onPress: onClose, label: "Close", scale: 0.9},
-				core.View{Style: core.Style{Width: core.Pt(36), Height: core.Pt(36), CornerRadius: 18, Background: white(0.16), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-					Children: []core.Node{icon(iconClose, 18, fixed(core.RGB(0xffffff)))}})}},
-		}}},
-	}
-}
-
-// pressableImages shows a document's images pressable, opening viewing.
-func pressableImages(viewing *core.Signal[textview.Image]) func(cx *core.Scope, img textview.Image) core.Node {
-	return func(cx *core.Scope, img textview.Image) core.Node {
-		s := core.Style{CornerRadius: radiusControl, Width: img.Width, Height: img.Height}
-		if img.Width == (core.Length{}) && img.Height == (core.Length{}) {
-			s.Width, s.AspectRatio = core.Pct(100), 16.0/10
-		}
-		return core.Image{Source: core.Src(img.Src), Label: img.Alt, Style: s, OnPress: func(core.PressEvent) { viewing.Set(img) }}
-	}
-}
-
 // streamTokens splits a reply into the chunks a model would send: words
 // of up to four characters with the space before them.
 func streamTokens(s string) []string {
@@ -222,7 +179,7 @@ func markdownCard(cx *core.Scope) core.Node {
 	return card(cx, cardProps{icon: iconText, title: "Markdown", subtitle: "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML"},
 		textview.TextView{Markdown: tvMarkdown, StyleFunc: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
 			CodeBlockActions: []string{textview.CopyAction}, RenderCodeBlockAction: copyAction,
-			OnLinkPress: pressed.Set, RenderImage: pressableImages(viewing)},
+			OnLinkPress: pressed.Set, OnImagePress: viewing.Set},
 		caption(cx, "Link pressed", pressed.Get),
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	)
@@ -231,7 +188,7 @@ func markdownCard(cx *core.Scope) core.Node {
 func htmlCard(cx *core.Scope) core.Node {
 	viewing := core.NewSignal(cx, textview.Image{})
 	return card(cx, cardProps{icon: iconText, title: "HTML", subtitle: "An article page: sections, figures, lists, tables, code"},
-		textview.TextView{HTML: tvHTML, StyleFunc: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), RenderImage: pressableImages(viewing), TestID: "html"},
+		textview.TextView{HTML: tvHTML, StyleFunc: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), OnImagePress: viewing.Set, TestID: "html"},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	)
 }

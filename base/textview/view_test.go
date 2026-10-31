@@ -182,3 +182,33 @@ func TestTextViewRendersFormulasAndInlineNodes(t *testing.T) {
 	}
 	app.Find("text:Energy ￼ and ￼ and ￼.")
 }
+
+func TestTextViewReportsImagePressesAndOpensLinksThatLeave(t *testing.T) {
+	var links []string
+	var images []string
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return textview.TextView{
+			Markdown: "![Alone](a.png)\n\n[![Linked](b.png)](https://b.example)\n\nSee [the site](https://nsgo.dev), [mail](mailto:x@nsgo.dev), " +
+				"[a section](#title) and [a page](docs/page.md) ![inline](c.png).",
+			OpenLinks:    true,
+			Classes:      textview.Classes{textview.PartImage: "size-10"},
+			OnLinkPress:  func(url string) { links = append(links, url) },
+			OnImagePress: func(im textview.Image) { images = append(images, im.Alt) },
+		}
+	})
+	app.Press("label:Alone")
+	app.Press("label:Linked")
+	app.Press("label:inline")
+	for _, l := range []string{"the site", "mail", "a section", "a page"} {
+		app.Press("text:" + l)
+	}
+	if want := "Alone|inline"; strings.Join(images, "|") != want {
+		t.Errorf("images pressed %q, want %q", images, want)
+	}
+	if want := "https://b.example|https://nsgo.dev|mailto:x@nsgo.dev|#title|docs/page.md"; strings.Join(links, "|") != want {
+		t.Errorf("links pressed %q, want %q", links, want)
+	}
+	if want := "https://b.example|https://nsgo.dev|mailto:x@nsgo.dev"; strings.Join(app.OpenedURLs, "|") != want {
+		t.Errorf("opened %q, want the links that leave the document", app.OpenedURLs)
+	}
+}

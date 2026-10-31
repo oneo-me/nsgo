@@ -292,3 +292,53 @@ func TestSpacingAndPositionsFollowTheChildren(t *testing.T) {
 		t.Errorf("after an append: b %+v %#x, c %#x", b.style.Margin, b.style.Background, c.style.Background)
 	}
 }
+
+func TestSpanClassesGoUnderTheirStyleFuncAndSpansFunc(t *testing.T) {
+	var bold, active *Signal[bool]
+	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
+		bold, active = NewSignal(cx, false), NewSignal(cx, false)
+		return View{Children: []Node{
+			Text{TestID: "spans", Spans: []Span{{Content: "a", Class: "text-red-500 italic", StyleFunc: func() Style {
+				if bold.Get() {
+					return Style{FontWeight: FontWeightBold}
+				}
+				return Style{}
+			}}}},
+			Text{TestID: "func", SpansFunc: func() []Span {
+				return []Span{{Content: "b", Class: "text-lg dark:text-white", Style: Style{Color: RGB(0x123456)}}}
+			}},
+			Text{TestID: "text", Content: "c", Class: "text-sm", ClassFunc: func() string {
+				if active.Get() {
+					return "font-bold"
+				}
+				return ""
+			}},
+		}}
+	})
+	h.commit()
+	span := func(id string) spanNode { return h.find(id).text.spans[0] }
+	if s := span("spans").style; s.Color != RGB(0xfb2c36) || s.FontStyle != FontStyleItalic {
+		t.Errorf("a span with StyleFunc lost its classes: color %#x, style %v", s.Color, s.FontStyle)
+	}
+	bold.Set(true)
+	h.commit()
+	if s := span("spans").style; s.FontWeight != FontWeightBold || s.FontStyle != FontStyleItalic {
+		t.Errorf("after StyleFunc changed: weight %v, style %v", s.FontWeight, s.FontStyle)
+	}
+	if s := span("func").style; s.FontSize != 18 || s.Color != RGB(0x123456) {
+		t.Errorf("a SpansFunc span's class: size %v, color %#x", s.FontSize, s.Color)
+	}
+	h.tree.SetEnvironment(driver.Environment{Dark: true})
+	h.commit()
+	if s := span("func").style; s.Color != RGB(0x123456) {
+		t.Errorf("in dark the span's style still wins: %#x", s.Color)
+	}
+	if s := h.find("text").style; s.FontSize != 14 || s.FontWeight == FontWeightBold {
+		t.Errorf("text classes: size %v weight %v", s.FontSize, s.FontWeight)
+	}
+	active.Set(true)
+	h.commit()
+	if s := h.find("text").style; s.FontWeight != FontWeightBold {
+		t.Errorf("ClassFunc on a text: weight %v", s.FontWeight)
+	}
+}

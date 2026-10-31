@@ -21,7 +21,8 @@ Styles follow NSH's `styles.md` with Go values in place of CSS strings: construc
 - Each distinct class string is parsed once into rules ordered as Tailwind orders them: plain utilities first in the string's order, then variants by Tailwind's variant order, then important ones (`!p-4`, `p-4!`).
 - A node resolves its rules for its environment: `dark:` follows `Scope.Dark`, breakpoints and `portrait:` the window, `rtl:`, `motion-reduce:` and `ios:`, `android:` and `web:` theirs. A node whose rules read any of them follows them in a render effect, so only those nodes resolve again.
 - State variants become the style's state styles (`hover:` its `Hover`, `group-hover/item:` a `GroupStyle` named `item`); `group` and `group/item` name the view's `Group`. `first:`, `last:`, `odd:`, `even:` and `only:` follow the node's place among its parent's native children, resolved again as they change.
-- `View.ClassFunc`'s classes follow `Class`'s, again when what it reads changes, so a part's state classes come and go without a new node.
+- `View.ClassFunc`'s and `Text.ClassFunc`'s classes follow `Class`'s, again when what it reads changes, so a part's state classes come and go without a new node.
+- A span's classes go under its `Style` and what its `StyleFunc` returns, and `Text.SpansFunc`'s spans take them too.
 - Classes merge under `Style`, their state styles merging with the style's rather than replaced by them, and important ones over it. `space-x-*` and `space-y-*` give a view's children but the last the margin on that side, under their own.
 - Shadows and rings, filters, gradients (`bg-linear-to-*` with `from-*`, `via-*`, `to-*`) and `tracking-*` are composed once a style's rules are applied, as Tailwind composes its CSS variables.
 - `normal-nums`, `small-caps` and the figure classes (`tabular-nums`, ...) each turn their features on and those they exclude off in the node's `FontVariant`, as CSS's `font-variant-numeric` and `font-variant-caps` do.

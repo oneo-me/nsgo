@@ -61,6 +61,11 @@ const (
 	iconTrash      iconName = "trash"
 	iconFile       iconName = "file"
 	iconTerminal   iconName = "terminal"
+	iconCode       iconName = "code"
+	iconSliders    iconName = "sliders"
+	iconReplace    iconName = "replace"
+	iconReplaceAll iconName = "replace-all"
+	iconProblems   iconName = "diagnostics"
 )
 
 var glyphs = map[iconName]func() *core.SVG{
@@ -115,6 +120,11 @@ var glyphs = map[iconName]func() *core.SVG{
 	iconTrash:      lucide.Trash,
 	iconFile:       lucide.File,
 	iconTerminal:   lucide.Terminal,
+	iconCode:       lucide.Code,
+	iconSliders:    lucide.SlidersHorizontal,
+	iconReplace:    lucide.Replace,
+	iconReplaceAll: lucide.ReplaceAll,
+	iconProblems:   lucide.TriangleAlert,
 }
 
 // icon draws a glyph size points square in the tint, which it follows.

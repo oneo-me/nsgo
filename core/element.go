@@ -196,9 +196,11 @@ type PartStates struct {
 
 // Text is a run of text the engine lays out and the platform draws.
 type Text struct {
-	// Class is Tailwind CSS classes, as View's.
-	Class   string
-	Content string
+	// Class is Tailwind CSS classes, as View's, and ClassFunc's follow
+	// them, again when what it reads changes.
+	Class     string
+	ClassFunc func() string
+	Content   string
 	// ContentFunc replaces Content, again when what it reads changes.
 	ContentFunc func() string
 	Style       Style
@@ -222,7 +224,7 @@ type Text struct {
 	// span is the Text's OnPress.
 	Spans []Span
 	// SpansFunc replaces Spans, again when what it reads changes: runs of
-	// text and style only, as a code editor's rows recolor as their
+	// text, class and style only, as a code editor's rows recolor as their
 	// highlighting comes.
 	SpansFunc func() []Span
 	// Selectable lets the user select and copy the text; the highlight is

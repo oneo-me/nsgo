@@ -307,6 +307,9 @@ type dockTarget struct {
 	split    bool
 	side     core.Placement
 	activate bool
+	// size is the new group's slot along a split, half of what it lands
+	// beside when 0.
+	size core.Points
 }
 
 // insert puts panel at t in tree n, allocating containers' IDs with
@@ -340,8 +343,11 @@ func (n *DockNode) insert(panel string, t dockTarget, next func() uint64) bool {
 		dir = Vertical
 	}
 	if parent, i := n.parentOf(t.node); parent != nil && parent.Axis == dir {
-		share := parent.Sizes[i] / 2
-		parent.Sizes[i] = share
+		share, rest := parent.Sizes[i]/2, parent.Sizes[i]/2
+		if t.size > 0 {
+			share, rest = t.size, max(parent.Sizes[i]-t.size, 0)
+		}
+		parent.Sizes[i] = rest
 		at := i + 1
 		if before {
 			at = i
@@ -351,9 +357,9 @@ func (n *DockNode) insert(panel string, t dockTarget, next func() uint64) bool {
 		return true
 	}
 	old := *target
-	wrapper := DockNode{ID: next(), Axis: dir, Children: []DockNode{old, group}, Sizes: []core.Points{0, 0}}
+	wrapper := DockNode{ID: next(), Axis: dir, Children: []DockNode{old, group}, Sizes: []core.Points{0, t.size}}
 	if before {
-		wrapper.Children = []DockNode{group, old}
+		wrapper.Children, wrapper.Sizes = []DockNode{group, old}, []core.Points{t.size, 0}
 	}
 	*target = wrapper
 	return true

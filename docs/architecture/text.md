@@ -46,7 +46,7 @@ The family `FontMonospace` is each platform's fixed-pitch font: CoreText's user 
 | Linux | fontconfig's `FcConfigAppFontAddFile`, before GTK starts |
 | Android | `Typeface.createFromAsset`, kept by family; a style takes the nearest face and synthesizes the rest |
 
-`Text.Spans` style byte ranges over the text's style; offsets are UTF-8 bytes, Go's own, and platforms convert them. `Text.SpansFunc` gives runs of text and style again when what it reads changes, prepared again only when they differ: an editor's row recolors as its highlighting arrives. `Scope.MeasureText` measures a text in a font as a canvas does, for a column fitted to its text or a monospaced font's advance. A press on a span with a handler comes back with the byte offset under the point.
+`Text.Spans` style byte ranges over the text's style; offsets are UTF-8 bytes, Go's own, and platforms convert them. `Text.SpansFunc` gives runs of text, class and style again when what it reads changes, prepared again only when they differ: an editor's row recolors as its highlighting arrives. `Scope.MeasureText` measures a text in a font as a canvas does, for a column fitted to its text or a monospaced font's advance. A press on a span with a handler comes back with the byte offset under the point.
 
 - A span's `Background` and `CornerRadius` become its `TextBackground`: drawing only, a box per line from the font's ascent to its descent, rounded on every line, behind the selection and the glyphs. Hanging spaces at a line's end are not painted.
 - A span's `Attachment` is a view inside the text, as NSH's inline attachments are. Its view is a layout root at its content size, laid out before the text is prepared, so a change inside it prepares the text again.

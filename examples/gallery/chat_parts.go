@@ -282,6 +282,8 @@ func chatStyles(cx *core.Scope) func(textview.Part) core.Style {
 func chatMarkdown(md func() string, streaming func() bool) core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
 		viewing := core.NewSignal(cx, textview.Image{})
+		// The viewer is made on the first press, and kept for its fade out.
+		used := core.NewSignal(cx, false)
 		hl := highlight.New(cx)
 		return core.View{Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
@@ -291,9 +293,12 @@ func chatMarkdown(md func() string, streaming func() bool) core.Node {
 					c = caret(cx)
 				}
 				return textview.TextView{MarkdownFunc: md, Options: textview.Options{Streaming: on}, StreamingCaret: c, Selectable: true, NoCodeBlockScrollbar: true,
-					StyleFunc: chatStyles(cx), Highlighter: hl, CodeBlockActions: []string{textview.CopyAction}, RenderCodeBlockAction: copyAction, RenderImage: pressableImages(viewing)}
+					StyleFunc: chatStyles(cx), Highlighter: hl, CodeBlockActions: []string{textview.CopyAction}, RenderCodeBlockAction: copyAction,
+					OnImagePress: func(im textview.Image) { used.Set(true); viewing.Set(im) }}
 			}),
-			imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
+			core.Show{When: used.Get, Then: func(cx *core.Scope) core.Node {
+				return imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) })
+			}},
 		}}
 	})
 }

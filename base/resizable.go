@@ -79,9 +79,45 @@ type ResizablePanelGroup struct {
 	HandleThumbClass     string
 	HandleThumbStyle     core.Style
 	HandleThumbStyleFunc func() core.Style
+	// RenderHandle renders what is inside each handle's line, told which
+	// handle it is and how far the pointer has gone with it; it is drawn
+	// again when the handle's state changes, never as a drag moves.
+	RenderHandle func(cx *core.Scope, h ResizeHandleContext) core.Node
 	// HandleLabel names the handles for assistive technology.
 	HandleLabel string
 	TestID      string
+}
+
+// ResizeHandleState is how far the pointer has gone with a handle. A
+// drag takes the pointer off the band within a point or two, so the
+// handle follows its progression itself rather than its hover.
+type ResizeHandleState uint8
+
+const (
+	// HandleIdle is a handle the pointer is elsewhere from.
+	HandleIdle ResizeHandleState = iota
+	// HandleHovered is one the pointer is over.
+	HandleHovered
+	// HandlePressed is one the pointer went down on and has not dragged.
+	HandlePressed
+	// HandleDragging is one being dragged.
+	HandleDragging
+)
+
+func (s ResizeHandleState) String() string {
+	return [...]string{"idle", "hovered", "pressed", "dragging"}[s]
+}
+
+// Active reports whether the pointer holds the handle: pressed on it or
+// dragging it.
+func (s ResizeHandleState) Active() bool { return s == HandlePressed || s == HandleDragging }
+
+// ResizeHandleContext is what RenderHandle is told about a handle.
+type ResizeHandleContext struct {
+	// Index is the boundary after the Index'th visible panel.
+	Index int
+	Axis  Axis
+	State ResizeHandleState
 }
 
 // ResizablePanel is one panel of a ResizablePanelGroup.
@@ -274,7 +310,7 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 	}
 
 	// handle is the handle before panel i.
-	handle := func(i int) core.Node {
+	handle := func(cx *core.Scope, i int) core.Node {
 		at := func() int { return slices.Index(shown.GetUntracked(), i) - 1 }
 		pan := func(e core.PanEvent) {
 			if disabled() {
@@ -335,9 +371,17 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 		if g.TestID != "" {
 			testID = g.TestID + "-handle-" + strconv.Itoa(i-1)
 		}
+		state := core.NewSignal(cx, HandleIdle)
+		var content core.Node
+		if g.RenderHandle != nil {
+			content = core.Dynamic(func(cx *core.Scope) core.Node {
+				return g.RenderHandle(cx, ResizeHandleContext{Index: slices.Index(shown.Get(), i) - 1, Axis: g.Axis, State: state.Get()})
+			})
+		}
 		return handleBandNode(handleBandSpec{horizontal: horizontal, line: part{g.HandleClass, g.HandleStyle, g.HandleStyleFunc},
 			thumb: part{g.HandleThumbClass, g.HandleThumbStyle, g.HandleThumbStyleFunc}, label: g.HandleLabel, testID: testID,
-			disabled: g.Disabled, onPan: pan, onStep: step, value: value, touch: !core.Untracked(cx, cx.Env().Desktop)})
+			disabled: g.Disabled, onPan: pan, onStep: step, value: value, touch: !core.Untracked(cx, cx.Env().Desktop),
+			state: state, content: content})
 	}
 
 	children := make([]core.Node, 0, 2*n)
@@ -347,7 +391,7 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 			// The handle before panel i, shown while a visible panel is on
 			// either side of it.
 			children = append(children, core.Show{When: func() bool { return slices.Index(shown.Get(), i) > 0 },
-				Then: func(*core.Scope) core.Node { return handle(i) }})
+				Then: func(cx *core.Scope) core.Node { return handle(cx, i) }})
 		}
 		children = append(children, core.View{Class: p.Class, Style: p.Style, StyleFunc: panelStyle(i), TestID: p.TestID,
 			OnLayout: func(b core.Bounds) {
@@ -406,6 +450,10 @@ type handleBandSpec struct {
 	onStep      func(string)
 	value       func() core.AccessibilityValue
 	touch       bool
+	// state follows the pointer's progression with the band; content is
+	// the app's, inside the line.
+	state   *core.Signal[ResizeHandleState]
+	content core.Node
 }
 
 // HandleEdge is where a ResizeHandle sits on its container.
@@ -494,14 +542,55 @@ func handleBandNode(h handleBandSpec) core.Node {
 			slop = core.Edges{Top: handleSlop, Bottom: handleSlop}
 		}
 	}
-	parts := []core.Node{core.View{Class: h.line.class, Style: line.Merge(h.line.style), StyleFunc: h.line.fn}}
+	parts := []core.Node{core.View{Class: h.line.class, Style: line.Merge(h.line.style), StyleFunc: h.line.fn, Children: []core.Node{h.content}}}
 	if h.thumb.set() {
 		parts = append(parts, core.View{Style: over, Children: []core.Node{
 			core.View{Class: h.thumb.class, Style: thumb.Merge(h.thumb.style), StyleFunc: h.thumb.fn}}})
 	}
+	set := func(next ResizeHandleState) {
+		if h.state.GetUntracked() != next {
+			h.state.Set(next)
+		}
+	}
+	off := func() bool { return h.disabled != nil && h.disabled() }
+	pan := func(e core.PanEvent) {
+		switch e.Phase {
+		case core.GestureBegan:
+			if !off() {
+				set(HandleDragging)
+			}
+		case core.GestureEnded, core.GestureCancelled:
+			set(HandleIdle)
+		}
+		h.onPan(e)
+	}
 	return core.View{
 		Style: band, Disabled: h.disabled, HitSlop: slop,
-		OnPan: h.onPan, PanActivation: activation,
+		OnPan: pan, PanActivation: activation,
+		OnHoverIn: func() {
+			if h.state.GetUntracked() == HandleIdle {
+				set(HandleHovered)
+			}
+		},
+		OnHoverOut: func() {
+			if h.state.GetUntracked() == HandleHovered {
+				set(HandleIdle)
+			}
+		},
+		// A pointer or finger going down presses the handle until it lifts
+		// or a drag takes over, which ends with the pan.
+		OnTouch: func(e core.TouchEvent) {
+			switch e.Phase {
+			case core.TouchStart:
+				if !off() && h.state.GetUntracked() != HandleDragging {
+					set(HandlePressed)
+				}
+			case core.TouchEnd, core.TouchCancel:
+				if h.state.GetUntracked() == HandlePressed {
+					set(HandleIdle)
+				}
+			}
+		},
 		Role: core.RoleAdjustable, Label: h.label, TestID: h.testID,
 		AccessibilityActions: handleActions, OnAccessibilityAction: h.onStep, AccessibilityValue: h.value,
 		Children: parts,
@@ -525,6 +614,8 @@ type ResizeHandle struct {
 	OnDragMove  func(offset core.Points)
 	OnDragEnd   func(offset core.Points)
 	Disabled    func() bool
+	// OnStateChange follows the pointer's progression with the handle.
+	OnStateChange func(ResizeHandleState)
 	// Value is what assistive technology says the handle is at.
 	Value          func() core.AccessibilityValue
 	Class          string // the line's
@@ -534,12 +625,24 @@ type ResizeHandle struct {
 	ThumbStyle     core.Style
 	ThumbStyleFunc func() core.Style
 	Label          string
-	TestID         string
+	// Children are the app's, inside the line.
+	Children []core.Node
+	TestID   string
 }
 
 // Render implements core.Node.
 func (r ResizeHandle) Render(cx *core.Scope) core.Node {
 	horizontal := r.Axis != Vertical
+	state := core.NewSignal(cx, HandleIdle)
+	if f := r.OnStateChange; f != nil {
+		reported := HandleIdle
+		cx.Effect(func() {
+			if now := state.Get(); now != reported {
+				reported = now
+				cx.Untrack(func() { f(now) })
+			}
+		})
+	}
 	offset := func(e core.PanEvent) core.Points {
 		if !horizontal {
 			return e.Translation.Y
@@ -593,7 +696,14 @@ func (r ResizeHandle) Render(cx *core.Scope) core.Node {
 	}
 	return handleBandNode(handleBandSpec{horizontal: horizontal, edge: r.Edge, line: part{r.Class, r.Style, r.StyleFunc},
 		thumb: part{r.ThumbClass, r.ThumbStyle, r.ThumbStyleFunc}, label: r.Label, testID: r.TestID, disabled: r.Disabled, onPan: pan, onStep: step,
-		value: r.Value, touch: !core.Untracked(cx, cx.Env().Desktop)})
+		value: r.Value, touch: !core.Untracked(cx, cx.Env().Desktop), state: state, content: r.content()})
+}
+
+func (r ResizeHandle) content() core.Node {
+	if len(r.Children) == 0 {
+		return nil
+	}
+	return core.Group(r.Children)
 }
 
 // resizeState is gpui-base's sizing as data: the visible panels' sizes,

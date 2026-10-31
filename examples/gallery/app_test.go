@@ -462,17 +462,43 @@ func TestTable(t *testing.T) {
 }
 
 // TestEditor types in the editor, finds a word and opens the large file.
+// TestEditor opens NSH's Editor demo: the simulated language server's
+// problems in the dock, a hover card with a fix that edits the text, the
+// find bar and another language's sample.
 func TestEditor(t *testing.T) {
+	headless(t)
 	app := startDesktop(t)
 	open(app, "Editor")
-	app.Find("text:type Greeter struct {")
-	app.Find("text:2 problems")
+	app.Find("text:interface Order {")
+	app.WaitFor("text:Problems 6", 5*time.Second)
+	app.Find("text:1 error")
+	app.Find("text:4 warnings")
+	// The misspelled method: its problem in a hover card, whose fix edits
+	// the text as one step.
+	row := app.Find("id:editor >> text:receipt.prnt();")
+	charW := row.Frame.Size.Width / core.Points(len("receipt.prnt();"))
+	app.HoverAt("id:editor >> text:receipt.prnt();", core.Point{X: charW * 9.5, Y: row.Frame.Size.Height / 2})
+	app.Advance(200 * time.Millisecond)
+	app.WaitFor("id:hover-card", 5*time.Second)
+	app.Find("id:hover-card >> text:Property 'prnt' does not exist on type 'Receipt'. Did you mean 'print'?")
+	app.Press("id:hover-card >> role:button Change spelling to 'print'")
+	app.Find("id:editor >> text:receipt.print();")
+	app.Advance(400 * time.Millisecond)
+	app.WaitFor("text:Problems 5", 5*time.Second)
+	app.Find("text:0 errors")
 	app.Press("role:button Find and replace")
-	app.Type("label:Find", "Greet")
-	app.Find("text:results")
-	app.Press("text:200k lines")
-	app.Find("text:func step0(x int) int")
-	app.Find("text:0 problems")
+	app.Type("label:Find", "order")
+	app.Find("id:find-bar >> text:matches")
+	app.Key("Escape")
+	app.Settle()
+	if app.Exists("id:find-bar") {
+		t.Error("Escape left the find bar open")
+	}
+	app.Press("label:Language")
+	app.Press("text:Rust")
+	app.Find("text:fn word_counts(text: &str) -> Vec<(&str, usize)> {")
+	app.Find("text:Problems 1")
+	app.Find("text:main.rs")
 }
 
 // TestDiff counts the changes, reverts one and shows the patch.

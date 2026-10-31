@@ -2,6 +2,7 @@ package diff
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -226,5 +227,95 @@ func TestWrapStartsBreakAfterSpaces(t *testing.T) {
 	}
 	if got := wrapStarts("abcdefghij", 4); !slices.Equal(got, []int{0, 4, 8}) {
 		t.Errorf("hard breaks %v", got)
+	}
+}
+
+func TestDiffViewDrawsTheAppsSeparatorsAndHeaders(t *testing.T) {
+	ref := &Ref{}
+	var lines strings.Builder
+	for i := range 60 {
+		lines.WriteString("line " + strings.Repeat("x", i%7) + string(rune('a'+i%26)) + "\n")
+	}
+	oldText := lines.String()
+	ls := strings.Split(oldText, "\n")
+	ls[10], ls[45] = "changed ten", "changed forty-five"
+	newText := strings.Join(ls, "\n")
+	var seps []Separator
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return DiffView{Ref: ref, TestID: "diff", OldValue: func() string { return oldText }, NewValue: func() string { return newText },
+			Unified: true, Style: core.Style{Width: core.Pt(600), Height: core.Pt(1400)},
+			RenderSeparator: func(cx *core.Scope, s Separator) core.Node {
+				seps = append(seps, s)
+				return core.Text{Content: "sep " + strconv.Itoa(s.Gap) + " of " + strconv.Itoa(s.Lines)}
+			}}
+	}, nsgotest.Size(600, 1400))
+	if len(seps) == 0 || seps[0] != (Separator{Gap: 0, Lines: 7, First: true}) {
+		t.Fatalf("separators %+v", seps)
+	}
+	if !app.Exists("text:sep 1 of 28") {
+		t.Fatalf("the second separator is not the app's: %q", app.Texts())
+	}
+	ref.Expand(1, ExpandUp, 5)
+	app.Settle()
+	if !app.Exists("text:sep 1 of 23") {
+		t.Errorf("after five lines up: %q", app.Texts())
+	}
+	ref.Expand(1, ExpandDown, 0)
+	app.Settle()
+	if !app.Exists("text:sep 1 of 3") {
+		t.Errorf("after twenty lines down: %q", app.Texts())
+	}
+	ref.Expand(1, ExpandEvery, 0)
+	app.Settle()
+	if app.Exists("text:sep 1 of 3") {
+		t.Error("the gap still shows a separator after expanding all of it")
+	}
+	if h := ref.CurrentHunk(); h != 0 {
+		t.Errorf("current change %d at the top, want 0", h)
+	}
+	// From the top, the first change below it; then on from the change
+	// gone to.
+	if h := ref.NextHunk(); h != 0 {
+		t.Errorf("next change from the top %d, want 0", h)
+	}
+	if h := ref.NextHunk(); h != 1 || ref.CurrentHunk() != 1 {
+		t.Errorf("next change %d, current %d, want 1", h, ref.CurrentHunk())
+	}
+	if h := ref.NextHunk(); h != 0 {
+		t.Errorf("after the last change %d, want the first", h)
+	}
+	if h := ref.PreviousHunk(); h != 1 {
+		t.Errorf("before the first change %d, want the last", h)
+	}
+}
+
+func TestDiffViewDrawsTheAppsFileHeaders(t *testing.T) {
+	ref := &Ref{}
+	var toggled []File
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return DiffView{Ref: ref, Patch: func() string { return patch }, Style: core.Style{Width: core.Pt(600), Height: core.Pt(400)},
+			OnFileToggle: func(f File) { toggled = append(toggled, f) },
+			RenderFileHeader: func(cx *core.Scope, f File) core.Node {
+				mark := "open"
+				if f.Collapsed {
+					mark = "shut"
+				}
+				return core.Text{Content: strconv.Itoa(f.Index) + " " + f.Path + " " + mark}
+			}}
+	}, nsgotest.Size(600, 400))
+	if !app.Exists("text:0 main.go open") || !app.Exists("text:1 new.txt open") {
+		t.Fatalf("headers %q", app.Texts())
+	}
+	ref.CollapseFile("new.txt")
+	app.Settle()
+	ref.CollapseFile("new.txt")
+	app.Settle()
+	if !app.Exists("text:1 new.txt shut") || len(toggled) != 1 || app.Exists("text:two") {
+		t.Errorf("collapsing: %q, toggles %d", app.Texts(), len(toggled))
+	}
+	ref.ExpandFile("new.txt")
+	app.Settle()
+	if !app.Exists("text:1 new.txt open") || !app.Exists("text:two") || len(toggled) != 2 {
+		t.Errorf("expanding: %q, toggles %d", app.Texts(), len(toggled))
 	}
 }

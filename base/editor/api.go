@@ -58,26 +58,57 @@ const (
 // Diagnostic is a problem marked in the text, as a language server's: its
 // range, carried through edits until the app sets new ones, its severity's
 // part under its text, and with Unnecessary or Deprecated the
-// UnnecessaryText or DeprecatedText part over it.
+// UnnecessaryText or DeprecatedText part over it. CodeDescription is the
+// URL of the page describing its Code (a lint rule's), and Related the
+// other places that tell about it: a hover hands both to the app's card.
 type Diagnostic struct {
-	Range       Range
-	Severity    Severity
-	Message     string
-	Source      string
-	Code        string
-	Unnecessary bool
-	Deprecated  bool
+	Range           Range
+	Severity        Severity
+	Message         string
+	Source          string
+	Code            string
+	CodeDescription string
+	Unnecessary     bool
+	Deprecated      bool
+	Related         []RelatedInformation
 }
+
+// RelatedInformation is another place that tells about a diagnostic (the
+// first definition of a name defined twice), and what it says there. Its
+// range is passed back as the app gave it, not carried through edits.
+type RelatedInformation struct {
+	Location Location
+	Message  string
+}
+
+// Location is Range in the document at URI, the editor's own when URI is
+// empty.
+type Location struct {
+	URI   string
+	Range Range
+}
+
+// TextEdit replaces Range of the text with Text.
+type TextEdit struct {
+	Range Range
+	Text  string
+}
+
+// Box is a box of the text: Bounds in the editor's box, its scrolling
+// applied, and Page in the root view, which an Overlay anchors to.
+type Box struct{ Bounds, Page core.Bounds }
 
 // Decoration styles a range of the text with Style, and the rows of its
 // lines behind the text with LineStyle; Kind, when set, colors its text as
 // the highlighting's kind of that name (keyword, string, comment, number,
 // title, attr, built), the app's own highlighting.
 type Decoration struct {
-	Range     Range
-	Style     core.Style
-	LineStyle core.Style
-	Kind      string
+	Range Range
+	// Class goes under Style, and LineClass under LineStyle.
+	Class, LineClass string
+	Style            core.Style
+	LineStyle        core.Style
+	Kind             string
 }
 
 // Highlighter is the app's highlighting of a language, in place of the
@@ -160,14 +191,29 @@ type DefinitionRequest struct {
 	Trigger  DefinitionTrigger
 }
 
-// HoverEvent is the mouse resting over a character: its position, its
-// word, the pointer in the root view and the diagnostics there.
+// HoverEvent is the mouse resting over a character: its position and
+// UTF-16 offset in the text, its word, the pointer and the word's box on
+// its row in the root view, and the diagnostics there.
 type HoverEvent struct {
 	Position    Position
+	Offset      int
 	Word        Range
 	At          core.Point
+	Bounds      core.Bounds
 	Modifiers   core.Modifiers
 	Diagnostics []Diagnostic
+}
+
+// TextPressEvent is a press on a character, after the editor placed its
+// caret: its position and UTF-16 offset, its word, the pointer in the
+// root view, the modifiers and the presses counted at the place.
+type TextPressEvent struct {
+	Position  Position
+	Offset    int
+	Word      Range
+	At        core.Point
+	Modifiers core.Modifiers
+	Clicks    int
 }
 
 // ContextMenuEvent asks for a menu: at Position in the text and At in the
@@ -199,7 +245,10 @@ const (
 	SelectDocumentStart, SelectDocumentEnd             Command = "selectDocumentStart", "selectDocumentEnd"
 	MoveToMatchingBracket                              Command = "moveToMatchingBracket"
 	SelectAll, SelectLine, SelectNextOccurrence        Command = "selectAll", "selectLine", "selectNextOccurrence"
+	SelectWord, SelectPreviousOccurrence               Command = "selectWord", "selectPreviousOccurrence"
 	SelectAllOccurrences                               Command = "selectAllOccurrences"
+	MoveParagraphUp, MoveParagraphDown                 Command = "moveParagraphUp", "moveParagraphDown"
+	SelectParagraphUp, SelectParagraphDown             Command = "selectParagraphUp", "selectParagraphDown"
 	AddCaretAbove, AddCaretBelow, SingleSelection      Command = "addCaretAbove", "addCaretBelow", "singleSelection"
 	DeleteBackward, DeleteForward                      Command = "deleteBackward", "deleteForward"
 	DeleteWordLeft, DeleteWordRight                    Command = "deleteWordLeft", "deleteWordRight"
@@ -208,14 +257,16 @@ const (
 	Indent, Outdent, ToggleComment, ToggleBlockComment Command = "indent", "outdent", "toggleComment", "toggleBlockComment"
 	SortLinesAscending, SortLinesDescending            Command = "sortLinesAscending", "sortLinesDescending"
 	TransformToUppercase, TransformToLowercase         Command = "transformToUppercase", "transformToLowercase"
+	TransformToTitleCase                               Command = "transformToTitleCase"
 	TrimTrailingWhitespace                             Command = "trimTrailingWhitespace"
 	MoveLinesUp, MoveLinesDown                         Command = "moveLinesUp", "moveLinesDown"
 	DuplicateLinesUp, DuplicateLinesDown               Command = "duplicateLinesUp", "duplicateLinesDown"
 	JoinLines, TransposeCharacters                     Command = "joinLines", "transposeCharacters"
 	Undo, Redo                                         Command = "undo", "redo"
 	Fold, Unfold, FoldAll, UnfoldAll                   Command = "fold", "unfold", "foldAll", "unfoldAll"
+	FoldRecursive, UnfoldRecursive, FoldSelection      Command = "foldRecursive", "unfoldRecursive", "foldSelection"
 	FindNext, FindPrevious, FindWithSelection          Command = "findNext", "findPrevious", "findWithSelection"
-	Copy, Cut                                          Command = "copy", "cut"
+	Copy, Cut, Paste                                   Command = "copy", "cut", "paste"
 	ShowCompletions, GoToDefinition, ShowCodeActions   Command = "showCompletions", "goToDefinition", "showCodeActions"
 	ExpandSelection, ShrinkSelection                   Command = "expandSelection", "shrinkSelection"
 	UndoSelection, RedoSelection                       Command = "undoSelection", "redoSelection"
@@ -263,6 +314,27 @@ type Styles struct {
 	// ShowWhitespaces; Ruler the line at each of Rulers' columns, 1 point
 	// wide unless it gives a width.
 	Whitespace, Ruler core.Style
+}
+
+// Classes are Tailwind classes of the editor's parts, by Styles' names:
+// each goes under its part's style, and a state's part after the part it
+// follows.
+type Classes struct {
+	Gutter, LineNumber, ActiveLineNumber, FoldMarker                   string
+	Content, Line, ActiveLine                                          string
+	Selection, Caret, Composition                                      string
+	SearchMatch, CurrentSearchMatch                                    string
+	MatchingBracket, IndentGuide, FoldPlaceholder                      string
+	Placeholder                                                        string
+	DiagnosticError, DiagnosticWarning, DiagnosticInfo, DiagnosticHint string
+	UnnecessaryText, DeprecatedText                                    string
+	SelectionHandle                                                    string
+	CompletionMenu, CompletionItem, SelectedCompletionItem             string
+	CompletionMatch, CompletionDetail, CompletionKind                  string
+	CompletionDocumentation                                            string
+	DefinitionLink                                                     string
+	InlineCompletion                                                   string
+	Whitespace, Ruler                                                  string
 }
 
 // Editor is a code editor ([package editor]). The text is the app's with
@@ -325,10 +397,13 @@ type Editor struct {
 	// InlineCompletionDelay is how long typing pauses before
 	// OnInlineCompletionRequest asks: 300 ms when 0.
 	InlineCompletionDelay time.Duration
-	// StylesFunc replaces Styles, again when what it reads changes.
+	// StylesFunc replaces Styles, again when what it reads changes;
+	// Classes go under both, and Class under Style.
+	Classes    Classes
 	Styles     Styles
 	StylesFunc func() Styles
 	Label      string
+	Class      string
 	Style      core.Style
 	StyleFunc  func() core.Style
 	Ref        *Ref
@@ -349,6 +424,8 @@ type Editor struct {
 	OnCodeActionRequest func(Range)
 	OnHover             func(HoverEvent)
 	OnHoverEnd          func()
+	// OnTextPress receives a press on a character, after the caret moved.
+	OnTextPress         func(TextPressEvent)
 	OnContextMenu       func(ContextMenuEvent)
 	OnLineNumberPress   func(line int)
 	OnFindWithSelection func(text string)

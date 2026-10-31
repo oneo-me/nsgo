@@ -4,18 +4,6 @@ This plan lists what NSGo still lacks compared with NSH's 0.3.0 release (tag `v0
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, with the bullet or section to read in brackets. To refresh the plan for NSH's next release, check out its tag in `nsh/`, then read `git log v0.3.0..HEAD` there and the documents it changed, and compare the declarations any `nsh` command run on its gallery writes to `nsh/examples/gallery/.nsh/types/` with `go doc -all` of the public packages.
 
-## Components
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| TextView presses | `text-view.md`, `website/elements/text-view.md` (`onImagePress`, `links`) | `TextView` reports a press on an image outside a link, and can open links that leave the document itself; the gallery's TextView page opens NSH's image viewer, which zooms, pans and swipes closed |
-| Editor's ref | `editor.md`, `website/elements/editor.md` (ref, `onTextPress`) | The ref applies several edits as one, folds by level and recursively, converts offsets and positions, and reports a range's boxes, the scroll offset and the visible range; `OnTextPress` reports a pressed character; a diagnostic links its code's description and related places |
-| DiffView's ref | `diff.md`, `website/elements/diff-view.md` | The app draws file headers and separators; the ref collapses and expands one file, shows some or all of the lines a separator hides, and reports the current change |
-| DockArea's ref | `dock.md`, `website/elements/dock.md` (ref) | The ref removes, moves and selects panels, splits a group, selects a tab, sizes a dock, and reports the zoomed group and a panel's group |
-| Part classes in documents | `text-view.md`, `editor.md`, `diff.md` (`classes`) | `TextView`, `Editor` and `DiffView` take a class beside each part's style, as `base`'s other components do, `classes_test.go` checking their packages too |
-| Resize handles | `website/elements/resizable.md` (`renderHandle`) | `ResizablePanelGroup` shows the app's content in each handle, told its index, axis and state, drawn again only when the state changes |
-| Editor demo | `examples/gallery/demos/EditorDemo.tsx`, `examples/gallery/demos/lsp/` | The gallery's Editor page is NSH's: a `DockArea` with a problems dock around the editor, and a simulated language server whose hovers show in a `TextView` card, whose code actions open a menu at the caret and whose document colors are decorations |
-
 ## Embedding and the tool
 
 | Item | NSH reference | Done when |

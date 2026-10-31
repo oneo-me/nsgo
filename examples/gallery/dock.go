@@ -200,6 +200,8 @@ func dockDemo(cx *core.Scope) core.Node {
 	wide := core.Untracked(cx, cx.Env().Window).Width >= 600
 	showLeft, showBottom := core.NewSignal(cx, wide), core.NewSignal(cx, wide)
 	area := &base.DockAreaRef{}
+	// current is the panel shown last, whose group the zoom takes.
+	current := "main"
 	pointer := cx.Env().Desktop()
 	pad, gap := core.Points(16), core.Points(12)
 	if shell.desktop() {
@@ -220,7 +222,13 @@ func dockDemo(cx *core.Scope) core.Node {
 			tool(cx, "Toggle terminal", "Terminal", showBottom.Get, func() { area.ToggleDock(base.DockBottom) }),
 			tool(cx, "Lock the layout", "Lock", locked.Get, func() { toggled(locked) }),
 			tool(cx, "Show close buttons", "Close", closing.Get, func() { toggled(closing) }),
-			tool(cx, "Zoom the group", "Zoom", func() bool { return zoomed.Get() != "" }, area.ToggleZoom),
+			tool(cx, "Zoom the group", "Zoom", func() bool { return zoomed.Get() != "" }, func() {
+				if zoomed.GetUntracked() != "" {
+					area.ToggleZoom(0)
+				} else {
+					area.ToggleZoom(area.GroupOf(current))
+				}
+			}),
 			tool(cx, "Reset the layout", "Reset", nil, func() { layout.Set(initialDock()) }),
 			core.Text{Content: hint(cx, "Hold a tab to reorder it", "Drag a tab onto another group, or to a group's edge to split it"),
 				Style: core.Style{MinWidth: core.Pt(160), FlexGrow: 1, FlexShrink: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: colored(colors.faint)},
@@ -240,7 +248,7 @@ func dockDemo(cx *core.Scope) core.Node {
 					}
 				}
 				return core.Func(func(cx *core.Scope) core.Node {
-					return dockArea(cx, area, layout, locked, last, zoomed, showLeft, showBottom, panels, pointer)
+					return dockArea(cx, area, layout, locked, last, zoomed, showLeft, showBottom, panels, pointer, &current)
 				})
 			})}},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 20, RowGap: 4, Padding: core.Edges{Top: 2, Right: 10, Bottom: 4, Left: 10}}, Children: []core.Node{
@@ -274,13 +282,14 @@ func dockDemo(cx *core.Scope) core.Node {
 }
 
 func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.DockLayout], locked *core.Signal[bool], last, zoomed *core.Signal[string],
-	showLeft, showBottom *core.Signal[bool], panels map[string]base.DockPanelOptions, pointer bool) core.Node {
+	showLeft, showBottom *core.Signal[bool], panels map[string]base.DockPanelOptions, pointer bool, current *string) core.Node {
 	colors := colorsOf(cx)
 	tints := tintsOf(cx)
 	return base.DockArea{Ref: area, TestID: "dock", Layout: layout.Get, OnLayoutChange: layout.Set, Locked: locked.Get, Panels: panels,
 		OnPanelRemove: func(p string) { last.Set("Closed " + dockTitle(p)) },
 		OnPanelActiveChange: func(p string, active bool) {
 			if active {
+				*current = p
 				last.Set("Showing " + dockTitle(p))
 			}
 		},

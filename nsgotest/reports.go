@@ -208,10 +208,20 @@ func (a *App) modal(selector string) *View {
 	return nil
 }
 
-// Load reports that the image selector matches loaded at pixels.
+// Load reports that the image selector matches loaded at pixels. An
+// image that takes its size from what it loads matches before, at no
+// size.
 func (a *App) Load(selector string, pixels driver.Size) {
 	a.t.Helper()
-	v := a.Find(selector)
+	sel, err := parseSelector(selector)
+	if err != nil {
+		a.t.Fatalf("nsgotest: %v", err)
+	}
+	found := a.resolveWith(sel, true)
+	if len(found) != 1 {
+		a.t.Fatalf("nsgotest: %d views match %q\n%s", len(found), selector, a.Dump())
+	}
+	v := found[0]
 	for _, k := range []driver.EventKind{driver.EventLoadStart, driver.EventLoad, driver.EventLoadEnd} {
 		if v.Events.Has(k) {
 			a.dispatch(driver.Event{Kind: k, ID: v.ID, Size: pixels})

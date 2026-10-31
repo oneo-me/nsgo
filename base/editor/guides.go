@@ -12,14 +12,14 @@ import (
 
 // rulerRects is a line at each of Rulers' columns, the box's height.
 func (e *ed) rulerRects() []rect {
-	if len(e.p.Rulers) == 0 || e.styles().Ruler.IsZero() {
+	if len(e.p.Rulers) == 0 || e.styles().Ruler.IsZero() && e.p.Classes.Ruler == "" {
 		return nil
 	}
 	e.textRev.Get()
 	h := e.contentHeight()
 	out := make([]rect, 0, len(e.p.Rulers))
 	for _, col := range e.p.Rulers {
-		out = append(out, rect{pad + float32(col)*e.charW, 0, 1, h, &e.styles().Ruler})
+		out = append(out, rect{pad + float32(col)*e.charW, 0, 1, h, &e.styles().Ruler, e.p.Classes.Ruler})
 	}
 	return out
 }
@@ -28,7 +28,7 @@ func (e *ed) rulerRects() []rect {
 // per run of rows at a level: a blank line takes the lesser indentation
 // of the lines around it.
 func (e *ed) guideRects() []rect {
-	if e.p.NoIndentGuides || e.styles().IndentGuide.IsZero() {
+	if e.p.NoIndentGuides || e.styles().IndentGuide.IsZero() && e.p.Classes.IndentGuide == "" {
 		return nil
 	}
 	e.textRev.Get()
@@ -51,7 +51,7 @@ func (e *ed) guideRects() []rect {
 				open = append(open, -1)
 			}
 			open[k] = len(out)
-			out = append(out, rect{pad + float32(k*tab)*e.charW, y, 1, e.lh, &e.styles().IndentGuide})
+			out = append(out, rect{pad + float32(k*tab)*e.charW, y, 1, e.lh, &e.styles().IndentGuide, e.p.Classes.IndentGuide})
 		}
 		for k := levels; k < len(open); k++ {
 			open[k] = -1
@@ -143,6 +143,7 @@ func (e *ed) glyphs() core.Node {
 		}
 		return core.Text{
 			MaxLines:    1,
+			Class:       e.p.Classes.Whitespace,
 			ContentFunc: func() string { return g().text },
 			StyleFunc: func() core.Style {
 				x := g()
@@ -170,7 +171,7 @@ func (e *ed) inlineView() core.Node {
 				if i == 0 {
 					x = e.xOf(h)
 				}
-				lines = append(lines, core.Text{Content: strings.ReplaceAll(l, "\t", strings.Repeat(" ", e.st.tab)), MaxLines: 1,
+				lines = append(lines, core.Text{Content: strings.ReplaceAll(l, "\t", strings.Repeat(" ", e.st.tab)), MaxLines: 1, Class: e.p.Classes.InlineCompletion,
 					Style: core.Style{Position: core.Absolute, Left: core.Pt(core.Points(x)), Top: core.Pt(core.Points(float32(row+i) * e.lh)),
 						LineHeight: core.Points(e.lh), WhiteSpace: core.WhiteSpaceNoWrap},
 					StyleFunc: func() core.Style { return e.styles().InlineCompletion }})

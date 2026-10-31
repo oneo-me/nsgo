@@ -1009,6 +1009,83 @@ func (s *state) selectNext() bool {
 	return false
 }
 
+// selectPrevious adds a selection at the occurrence of the primary
+// selection's text before the first selection, wrapping; a caret selects
+// its word as selectNext's does.
+func (s *state) selectPrevious() bool {
+	if s.primary().empty() {
+		return s.selectNext()
+	}
+	p := s.primary()
+	needle := s.r().slice(p.start(), p.end())
+	if needle == "" || strings.Contains(needle, "\n") {
+		return false
+	}
+	first := p.start()
+	for _, x := range s.sels {
+		first = minPos(first, x.start())
+	}
+	n := s.r().lines()
+	for i := 0; i <= n; i++ {
+		line := ((first.line-i)%n + n) % n
+		l := s.line(line)
+		if i == 0 {
+			l = l[:min(first.col, len(l))]
+		}
+		if j := strings.LastIndex(l, needle); j >= 0 {
+			at := pos{line, j}
+			if slices.ContainsFunc(s.sels, func(x selection) bool { return x.start() == at }) {
+				return false
+			}
+			s.setSels(append(slices.Clone(s.sels), selection{anchor: at, head: s.offsetAfter(at, needle), goal: -1}))
+			return true
+		}
+	}
+	return false
+}
+
+// paragraphEdge is the blank line before p's paragraph, or after it when
+// down; the text's start or end without one.
+func (s *state) paragraphEdge(p pos, down bool) pos {
+	n := s.r().lines()
+	blank := func(line int) bool { return strings.TrimSpace(s.line(line)) == "" }
+	line := p.line
+	step := -1
+	if down {
+		step = 1
+	}
+	// Past the blank lines the move starts on, then to the next one.
+	for line += step; line >= 0 && line < n && blank(line); line += step {
+	}
+	for ; line >= 0 && line < n && !blank(line); line += step {
+	}
+	switch {
+	case line < 0:
+		return pos{}
+	case line >= n:
+		return s.r().end()
+	}
+	return pos{line, 0}
+}
+
+// titleCase capitalizes the first letter of each word of text and lowers
+// the rest.
+func titleCase(text string) string {
+	out := []rune(strings.ToLower(text))
+	start := true
+	for i, r := range out {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			if start {
+				out[i] = unicode.ToTitle(r)
+			}
+			start = false
+		} else {
+			start = r != '\''
+		}
+	}
+	return string(out)
+}
+
 // selectAllOccurrences selects every occurrence of the primary selection's
 // text (a caret: its word).
 func (s *state) selectAllOccurrences() {

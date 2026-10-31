@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -152,5 +153,48 @@ func TestHandleThumbsCenterOnTheLineAndKeepTheirTransform(t *testing.T) {
 		if f.Origin.X+f.Size.Width/2 != 0.5 || s.Transform.ScaleY != 0.5 {
 			t.Errorf("axis %v: the thumb at %v with %+v, want centered on the line keeping the app's transform", axis, f, s.Transform)
 		}
+	}
+}
+
+func TestRenderHandleFollowsTheHandlesState(t *testing.T) {
+	var drawn []string
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return base.ResizablePanelGroup{TestID: "group", Style: core.Style{Width: core.Pt(600), Height: core.Pt(100)},
+			RenderHandle: func(cx *core.Scope, h base.ResizeHandleContext) core.Node {
+				drawn = append(drawn, fmt.Sprint(h.Index, " ", h.State))
+				return core.View{TestID: fmt.Sprint("grip-", h.Index, "-", h.State), Style: core.Style{Width: core.Pt(1), Height: core.Pt(8)}}
+			},
+			Panels: []base.ResizablePanel{{TestID: "a"}, {TestID: "b"}, {TestID: "c"}}}
+	}, nsgotest.Size(700, 400))
+	if !app.Exists("id:grip-0-idle") || !app.Exists("id:grip-1-idle") {
+		t.Fatalf("drawn %v, want each handle's content in its line", drawn)
+	}
+	if grip := app.Find("id:grip-1-idle"); grip.Parent != app.Find("id:group-handle-1").Children[0] {
+		t.Errorf("the content is in %+v, want the handle's line", grip.Parent.Props)
+	}
+	app.Hover("id:group-handle-0")
+	app.HoverOut()
+	drawn = nil
+	app.Drag("id:group-handle-0", core.Point{X: 20}, core.Point{X: 40}, core.Point{X: 60})
+	if !slices.Equal(drawn, []string{"0 pressed", "0 dragging", "0 idle"}) {
+		t.Errorf("a drag drew %v, want once per state, never per move", drawn)
+	}
+	if w := app.Find("id:a").Frame.Size.Width; w != 260 {
+		t.Errorf("the first panel is %v wide after the drag, want 260", w)
+	}
+}
+
+func TestResizeHandleReportsItsState(t *testing.T) {
+	var states []base.ResizeHandleState
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Style: core.Style{Width: core.Pt(200), Height: core.Pt(100)}, Children: []core.Node{
+			base.ResizeHandle{TestID: "edge", Edge: base.HandleTrailing,
+				OnStateChange: func(s base.ResizeHandleState) { states = append(states, s) }},
+		}}
+	})
+	app.Hover("id:edge")
+	app.HoverOut()
+	if !slices.Equal(states, []base.ResizeHandleState{base.HandleHovered, base.HandleIdle}) {
+		t.Errorf("states %v, want hovered then idle", states)
 	}
 }
