@@ -4,6 +4,7 @@ package android
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"image"
 	"image/png"
@@ -182,14 +183,20 @@ type decodedImage struct {
 	size  driver.Size
 }
 
-// prepareImage passes bitmaps through for Java's decoders and rasterizes
-// an SVG into a PNG, which Android cannot decode: covering view, the
-// view's size in points, when it is known, else oversampled. An SVG
-// reports its intrinsic size in whole points.
-func (s *surface) prepareImage(data []byte, uri string, view driver.Size) (decodedImage, error) {
+// prepareImage passes bitmaps through for Java's decoders, which decode
+// one at a time, and rasterizes an SVG into a PNG, which Android cannot
+// decode, in one of imagedecode's slots: covering view, the view's size
+// in points, when it is known, else oversampled. An SVG reports its
+// intrinsic size in whole points.
+func (s *surface) prepareImage(ctx context.Context, data []byte, uri string, view driver.Size) (decodedImage, error) {
 	if imagedecode.Sniff(data) != imagedecode.SVG {
 		return decodedImage{data: data, scale: imageScale(uri)}, nil
 	}
+	done, err := imagedecode.Wait(ctx)
+	if err != nil {
+		return decodedImage{}, err
+	}
+	defer done()
 	opts := imagedecode.Options{Layout: imagedecode.RGBA}
 	if ratio := math.Float32frombits(s.ratio.Load()); ratio > 0 && view.Width > 0 && view.Height > 0 {
 		opts.Cover = int(math.Ceil(float64(max(view.Width, view.Height) * driver.Points(ratio))))

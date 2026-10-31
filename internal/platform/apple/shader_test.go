@@ -4,6 +4,7 @@ package apple
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"image/color"
 	"image/png"
@@ -52,7 +53,7 @@ func Fragment(dst vec4, pos vec2) vec4 {
 	}
 	var encoded bytes.Buffer
 	png.Encode(&encoded, src)
-	d, err := decode(encoded.Bytes(), request{ratio: 1, scale: 1})
+	d, err := decode(context.Background(), encoded.Bytes(), request{ratio: 1, scale: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

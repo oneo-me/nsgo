@@ -4,6 +4,7 @@ package windows
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"image/color"
 	"image/png"
@@ -35,7 +36,7 @@ func TestShadersReadImages(t *testing.T) {
 	}
 	var encoded bytes.Buffer
 	png.Encode(&encoded, src)
-	pic, err := decode(encoded.Bytes())
+	pic, err := decode(context.Background(), encoded.Bytes())
 	if err != nil {
 		t.Fatal(err)
 	}

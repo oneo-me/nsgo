@@ -31,6 +31,7 @@ Every native backend loads `http(s)` images through `imageload`, which keeps the
 ## Decoding
 
 - Formats are sniffed from the bytes, never from names or types: `imagedecode.Sniff` finds an SVG after a byte order mark, an XML declaration, comments and a doctype, or inside gzip.
+- At most as many images as processors decode at once, each in a slot of `imagedecode.Wait`, as NSH's decode on a dispatch queue the system sizes; Android's Java decodes bitmaps one at a time. A load cancelled while it waits never decodes, so a fast scroll down a grid of pictures decodes about the visible ones and stays near its resting footprint.
 - `OnLoad` reports the source's size in pixels, whatever size a view decodes it at, and an SVG's intrinsic size in whole points.
 - An animated image plays on its own in each view, with each frame's delay (10 ms or less shows for 100 ms, as in browsers) and its loop count. A tinted one shows its first frame, as NSH's does, and so does a blurred one on Apple platforms.
 - `internal/platform/imagedecode` decodes in pure Go for the backends without a decoder of their own: PNG, JPEG, every frame of GIF and WebP animations (at most 600 frames and 48 MiB of them), and SVG through its own rasterizer within NSH's bounds ([icons](icons.md#svg-documents)).

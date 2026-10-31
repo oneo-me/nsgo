@@ -825,7 +825,7 @@ func canvasImage(src driver.ImageSource, host CanvasHost) *loadedImage {
 		data, err := imageload.Load(context.Background(), src, nil)
 		var d decoded
 		if err == nil {
-			d, err = decode(data, request{mode: driver.Stretch, ratio: max(host.Ratio, 1), scale: uriScale(src.URI)})
+			d, err = decode(context.Background(), data, request{mode: driver.Stretch, ratio: max(host.Ratio, 1), scale: uriScale(src.URI)})
 		}
 		OnMain(func() {
 			if err != nil || d.image == 0 {

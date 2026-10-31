@@ -8,7 +8,8 @@
 // is at most MaxBytes (an .svgz once inflated) and its raster at most
 // MaxSide a side and MaxPixels in all; a bitmap is at most
 // MaxBitmapPixels; an animation keeps at most MaxFrames frames and
-// MaxAnimationBytes of pixels. A panic while decoding is an error.
+// MaxAnimationBytes of pixels. A panic while decoding is an error. Every
+// backend's decodes Wait for one of as many slots as processors.
 package imagedecode
 
 import (

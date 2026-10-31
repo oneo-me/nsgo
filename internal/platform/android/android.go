@@ -764,7 +764,7 @@ func (s *surface) load(l imageLoad) {
 	if !isEmpty(l.placeholder) {
 		go func() {
 			if data, err := imageload.Load(l.ctx, l.placeholder, nil); err == nil && l.ctx.Err() == nil {
-				if img, err := s.prepareImage(data, l.placeholder.URI, l.size); err == nil {
+				if img, err := s.prepareImage(l.ctx, data, l.placeholder.URI, l.size); err == nil {
 					s.sendImage(l, imagePlaceholder, img)
 				}
 			}
@@ -788,7 +788,7 @@ func (s *surface) load(l imageLoad) {
 		s.report(l, driver.Event{Kind: driver.EventError, Text: err.Error()})
 		s.report(l, driver.Event{Kind: driver.EventLoadEnd})
 	default:
-		img, err := s.prepareImage(data, l.source.URI, l.size)
+		img, err := s.prepareImage(l.ctx, data, l.source.URI, l.size)
 		if err != nil {
 			s.report(l, driver.Event{Kind: driver.EventError, Text: err.Error()})
 			s.report(l, driver.Event{Kind: driver.EventLoadEnd})
@@ -1445,7 +1445,7 @@ func (s *surface) loadImages(srcs []driver.ImageSource) {
 			data, err := imageload.Load(context.Background(), src, nil)
 			var img decodedImage
 			if err == nil {
-				img, err = s.prepareImage(data, src.URI, driver.Size{})
+				img, err = s.prepareImage(context.Background(), data, src.URI, driver.Size{})
 			}
 			if err != nil {
 				log.Printf("nsgo: canvas: image %s: %v", key, err)

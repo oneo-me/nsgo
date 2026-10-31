@@ -197,11 +197,17 @@ func animation(src uintptr) (delays []float64, loops int, ok bool) {
 	return delays, loops, true
 }
 
-// decode decodes data upright and at once, at the size r shows it.
-func decode(data []byte, r request) (decoded, error) {
+// decode decodes data upright and at once, at the size r shows it, in
+// one of imagedecode's slots; it returns ctx's error if ctx ends first.
+func decode(ctx context.Context, data []byte, r request) (decoded, error) {
 	if len(data) == 0 {
 		return decoded{}, errors.New("apple: empty image data")
 	}
+	done, err := imagedecode.Wait(ctx)
+	if err != nil {
+		return decoded{}, err
+	}
+	defer done()
 	if imagedecode.Sniff(data) == imagedecode.SVG {
 		return decodeSVG(data, r)
 	}
@@ -561,7 +567,7 @@ func (iv *ImageView) fetch(ctx context.Context, n int, src driver.ImageSource, r
 	}
 	var img decoded
 	if err == nil {
-		img, err = decode(data, r)
+		img, err = decode(ctx, data, r)
 	}
 	OnMain(func() {
 		if iv.load != n || (!source && iv.source) {

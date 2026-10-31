@@ -134,7 +134,7 @@ func (w *window) load(v *view, s *imageSlot, report bool) {
 		data, err := imageload.Load(ctx, src, progress)
 		var pic *picture
 		if err == nil {
-			pic, err = decode(data)
+			pic, err = decode(ctx, data)
 		}
 		if ctx.Err() != nil {
 			return
@@ -185,8 +185,14 @@ func (w *window) report(v *view, ev driver.Event) {
 // decode decodes a PNG, JPEG, GIF, WebP or SVG into premultiplied BGRA,
 // as Cairo's ARGB32 has it on little-endian machines. An SVG is drawn at
 // 4 pixels a point, at most 2048 a side, as NSH's Linux backend draws
-// it, so it stays sharp when scaled up.
-func decode(data []byte) (*picture, error) {
+// it, so it stays sharp when scaled up. It decodes in one of
+// imagedecode's slots and returns ctx's error if ctx ends first.
+func decode(ctx context.Context, data []byte) (*picture, error) {
+	done, err := imagedecode.Wait(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
 	img, err := imagedecode.Decode(data, imagedecode.Options{Layout: imagedecode.BGRA})
 	if err != nil {
 		return nil, err

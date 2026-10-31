@@ -168,7 +168,7 @@ func (w *window) load(v *view, s *imageSlot, report bool) {
 		data, err := imageload.Load(ctx, src, progress)
 		var pic *picture
 		if err == nil {
-			pic, err = decode(data)
+			pic, err = decode(ctx, data)
 		}
 		if ctx.Err() != nil {
 			return // replaced or deleted
@@ -209,8 +209,14 @@ func (w *window) report(v *view, ev driver.Event) {
 }
 
 // decode decodes an image into premultiplied BGRA frames, an SVG drawn
-// oversampled.
-func decode(data []byte) (*picture, error) {
+// oversampled, in one of imagedecode's slots; it returns ctx's error if
+// ctx ends first.
+func decode(ctx context.Context, data []byte) (*picture, error) {
+	done, err := imagedecode.Wait(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
 	img, err := imagedecode.Decode(data, imagedecode.Options{Layout: imagedecode.BGRA})
 	if err != nil {
 		return nil, err

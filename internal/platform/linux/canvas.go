@@ -668,7 +668,7 @@ func (w *window) canvasImage(src driver.ImageSource, v *view) *imageSlot {
 		data, err := imageload.Load(ctx, src, nil)
 		var pic *picture
 		if err == nil {
-			pic, err = decode(data)
+			pic, err = decode(ctx, data)
 		}
 		w.post(func() {
 			cancel()

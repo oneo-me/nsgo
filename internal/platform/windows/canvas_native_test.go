@@ -3,6 +3,7 @@
 package windows
 
 import (
+	"context"
 	"image"
 	"image/png"
 	"os"
@@ -30,7 +31,7 @@ func TestCanvasSamples(t *testing.T) {
 	}
 	logo := canvastest.Logo("../../..")
 	w := &window{scale: canvastest.Scale, animator: driver.NewAnimator(nil)}
-	pic, err := decode(logo)
+	pic, err := decode(context.Background(), logo)
 	if err != nil {
 		t.Fatal(err)
 	}
