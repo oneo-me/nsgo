@@ -161,6 +161,9 @@ func entryStyle(v *view) string {
 	if f.Italic {
 		fmt.Fprintf(&b, "%s { font-style: italic; }\n", all)
 	}
+	if tags := f.Variant.Tags(); len(tags) > 0 {
+		fmt.Fprintf(&b, "%s { font-feature-settings: \"%s\" 1; }\n", all, strings.Join(tags, "\" 1, \""))
+	}
 	if c := in.SelectionColor; c != 0 {
 		fmt.Fprintf(&b, "%s selection { background-color: %s; color: %s; }\n", name, cssColor(c.Faded(0.3)), cssColor(in.Style.Color))
 	}

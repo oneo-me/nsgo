@@ -1,6 +1,8 @@
 package core
 
 import (
+	"time"
+
 	"github.com/oneo-me/nsgo/internal/driver"
 )
 
@@ -36,6 +38,7 @@ type scrollSpec struct {
 	refreshing    func() bool
 	onRefresh     func()
 	onScroll      func(ScrollEvent)
+	throttle      time.Duration
 	onDragStart   func(ScrollEvent)
 	onDragEnd     func(ScrollEvent)
 	onMomentum    func(ScrollEvent)
@@ -95,6 +98,38 @@ func zoomOr(z, or float32) float32 {
 		return z
 	}
 	return or
+}
+
+// reportScroll hands scroll view n's offset p to its OnScroll, at most
+// once per its throttle: an offset that comes sooner waits, and the
+// latest one is reported once the throttle has passed since the last.
+func (t *Tree) reportScroll(n *node, p Point) {
+	sc := n.scroll
+	d := sc.on.throttle
+	if d <= 0 {
+		t.within(n.owner, func() { n.h.scroll(p) })
+		return
+	}
+	sc.latest = p
+	if sc.waiting {
+		return
+	}
+	clock := n.owner.rt.clock
+	now := clock.Now()
+	if wait := sc.reported.Add(d).Sub(now); !sc.reported.IsZero() && wait > 0 {
+		sc.waiting = true
+		clock.AfterFunc(wait, func() {
+			n.owner.Post(func() {
+				sc.waiting, sc.reported = false, clock.Now()
+				if n.h.scroll != nil {
+					n.h.scroll(sc.latest)
+				}
+			})
+		})
+		return
+	}
+	sc.reported = now
+	t.within(n.owner, func() { n.h.scroll(p) })
 }
 
 // scrollEvent is where scroll view n is, with its offset at p.

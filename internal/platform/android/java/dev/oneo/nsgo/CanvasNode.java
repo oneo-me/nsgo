@@ -768,6 +768,7 @@ final class CanvasNode extends View {
             float size = b.getFloat();
             int weight = b.getShort() & 0xffff;
             boolean italic = b.get() != 0;
+            String features = Text.features(b.get() & 0xff);
             if (stroke) {
                 if (!paintWith(state.stroke, state.strokeGradient, new Matrix())) return;
                 strokeStyle();
@@ -777,6 +778,7 @@ final class CanvasNode extends View {
             }
             paint.setTypeface(Text.typeface(family, weight, italic));
             paint.setTextSize(size);
+            paint.setFontFeatureSettings(features);
             canvas.save();
             canvas.concat(state.ctm);
             draw(() -> canvas.drawText(text, x, y, paint), true);

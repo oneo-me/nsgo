@@ -60,6 +60,8 @@ var (
 	cfNumberCreate          func(alloc uintptr, kind int, value unsafe.Pointer) uintptr
 	cgColorCreateSRGB       func(r, g, b, a float64) uintptr
 	keyCallBacks, valueCBs  uintptr
+	cfArrayCreate           func(alloc uintptr, values *uintptr, n int, cb uintptr) uintptr
+	arrayCallBacks          uintptr
 )
 
 func load(path string) uintptr {
@@ -118,6 +120,8 @@ func init() {
 	purego.RegisterLibFunc(&cfNumberCreate, cf, "CFNumberCreate")
 	keyCallBacks = symbol(cf, "kCFTypeDictionaryKeyCallBacks")
 	valueCBs = symbol(cf, "kCFTypeDictionaryValueCallBacks")
+	purego.RegisterLibFunc(&cfArrayCreate, cf, "CFArrayCreate")
+	arrayCallBacks = symbol(cf, "kCFTypeArrayCallBacks")
 	purego.RegisterLibFunc(&cgColorCreateSRGB, cg, "CGColorCreateSRGB")
 	loadText(cf, cg)
 	loadSystem()
@@ -143,6 +147,14 @@ func dictionary(keys, values []uintptr) uintptr {
 		return cfDictionaryCreate(0, nil, nil, 0, keyCallBacks, valueCBs)
 	}
 	return cfDictionaryCreate(0, &keys[0], &values[0], len(keys), keyCallBacks, valueCBs)
+}
+
+// cfArray returns a new CFArray of CF values. The caller releases it.
+func cfArray(values []uintptr) uintptr {
+	if len(values) == 0 {
+		return cfArrayCreate(0, nil, 0, arrayCallBacks)
+	}
+	return cfArrayCreate(0, &values[0], len(values), arrayCallBacks)
 }
 
 // float64Number and int32Number return new CFNumbers. The caller

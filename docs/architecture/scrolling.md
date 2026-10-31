@@ -8,6 +8,7 @@ A scroll view follows NSH's `scrolling-and-lists.md`: `ScrollBehavior` holds pag
 
 - Offsets are UIKit's `contentOffset`: a `ContentInset` makes them negative at the start. `ContentOffset` is an `ItemScrollTo` sent after the first commit.
 - `ScrollBehavior.SnapTarget` decides where a release snaps, as NSH's `snap_target`. iOS and macOS call it, Windows and Linux through `internal/platform/scrollbar`'s `Settle`; Android's `Scrolling.java` ports it, and the web marks `SnapPoints` for CSS scroll snapping.
+- `OnScroll` runs at most once a turn, and at most once per `ScrollEventThrottle` when set (NSH's `scrollEventThrottle`): the core holds an offset that comes sooner and reports the latest when the interval has passed, on the graph's clock. The platforms report every move, which the core's hit tests need.
 - Every scroll view reports its offset as it moves, so the core's hit tests and touches find what shows under a point; a scroll lays out again only while an overlay is placed beside an anchor.
 - Platforms report drags, momentum and refreshes with the offset and the zoom scale (`Event.Value`); the core adds the content and viewport sizes for `ScrollEvent`. After `EventRefresh` the config goes out again, so a spinner the app did not keep stops.
 - iOS uses UIScrollView's own props and UIRefreshControl, Android its scroll views with its own glides and pull, and the web CSS. macOS keeps [offsets of its own](#macos-scroll-views) and ignores the keyboard props.

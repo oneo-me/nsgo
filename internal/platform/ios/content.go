@@ -51,8 +51,11 @@ func drawContent(_ objc.ID, _ objc.SEL, layer objc.ID, ctx uintptr) {
 	if v == nil || ctx == 0 || (v.layout == nil && v.drawing == nil) {
 		return
 	}
-	h := float64(v.frame.Size.Height)
-	apple.DrawTopDown(ctx, h, !apple.MsgBool(layer, selContentsAreFlipped), func(baseUp bool) {
+	// The layer holds the view and the ink of its text past it
+	// (sizeContent).
+	h, f := float64(v.frame.Size.Height), v.contentFrame()
+	apple.DrawTopDown(ctx, f.Size.Height, !apple.MsgBool(layer, selContentsAreFlipped), func(baseUp bool) {
+		apple.TranslateCTM(ctx, -f.Origin.X, -f.Origin.Y)
 		if v.drawing != nil {
 			ops := v.surface.animator.CanvasOps(v.id, v.drawing)
 			apple.Play(ctx, ops, apple.CanvasHost{
@@ -67,7 +70,7 @@ func drawContent(_ objc.ID, _ objc.SEL, layer objc.ID, ctx uintptr) {
 			float64(box.Size.Width), float64(box.Size.Height)), baseUp)
 		if v.animated.Has(driver.PropTextColor) {
 			// A bound color paints over the whole text.
-			apple.Tint(ctx, apple.Rect(0, 0, float64(v.frame.Size.Width), h), v.animated.TextColor)
+			apple.Tint(ctx, f, v.animated.TextColor)
 		}
 	})
 }
@@ -112,13 +115,24 @@ func (v *view) redraw() {
 	}
 }
 
-// sizeContent fits v's content layer to its frame.
+// sizeContent fits v's content layer to its frame and its text's ink.
 func (v *view) sizeContent() {
 	if v.contentLayer != 0 {
 		apple.WithoutAnimation(func() {
-			v.contentLayer.Send(selSetFrame, apple.Rect(0, 0, float64(v.frame.Size.Width), float64(v.frame.Size.Height)))
+			v.contentLayer.Send(selSetFrame, v.contentFrame())
 		})
 	}
+}
+
+// contentFrame is the frame of v's content layer: its bounds, grown to
+// hold its text's ink past them.
+func (v *view) contentFrame() apple.CGRect {
+	w, h := float64(v.frame.Size.Width), float64(v.frame.Size.Height)
+	if v.layout == nil {
+		return apple.Rect(0, 0, w, h)
+	}
+	b := v.box
+	return v.layout.ContentFrame(w, h, apple.Rect(float64(b.Origin.X), float64(b.Origin.Y), float64(b.Size.Width), float64(b.Size.Height)))
 }
 
 // forgetContent drops v's content layer, which goes with its view.

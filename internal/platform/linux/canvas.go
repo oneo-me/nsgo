@@ -6,6 +6,7 @@ import (
 	"context"
 	"log"
 	"math"
+	"strings"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -574,8 +575,24 @@ func canvasLayout(cr uintptr, text string, font driver.Font) uintptr {
 		font.Size = driver.DefaultFontSize
 	}
 	l := pangoCairoCreateLayout(cr)
-	desc := pangoFontDescriptionNew()
+	desc := fontDescription(font)
 	defer pangoFontDescriptionFree(desc)
+	pangoLayoutSetFontDescription(l, desc)
+	// A description has no OpenType features; an attribute carries them.
+	if f := fontFeatures(font.Variant); f != "" {
+		attrs := pangoAttrListNew()
+		pangoAttrListInsert(attrs, pangoAttrFontFeaturesNew(cstr(f)))
+		pangoLayoutSetAttributes(l, attrs)
+		pangoAttrListUnref(attrs)
+	}
+	pangoLayoutSetText(l, cstr(text), int32(len(text)))
+	return l
+}
+
+// fontDescription returns a new PangoFontDescription of font, whose size
+// is set. The caller frees it.
+func fontDescription(font driver.Font) uintptr {
+	desc := pangoFontDescriptionNew()
 	if font.Family != "" {
 		pangoFontDescriptionSetFamily(desc, cstr(font.Family))
 	}
@@ -586,9 +603,20 @@ func canvasLayout(cr uintptr, text string, font driver.Font) uintptr {
 	if font.Italic {
 		pangoFontDescriptionSetStyle(desc, pangoStyleItalic)
 	}
-	pangoLayoutSetFontDescription(l, desc)
-	pangoLayoutSetText(l, cstr(text), int32(len(text)))
-	return l
+	return desc
+}
+
+// fontFeatures is v's OpenType features as Pango's font-features
+// attribute takes them, "smcp 1, tnum 1"; empty when it has none.
+func fontFeatures(v driver.FontVariant) string {
+	var b strings.Builder
+	for i, tag := range v.Tags() {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(tag + " 1")
+	}
+	return b.String()
 }
 
 // canvasImages are the images a window's canvases draw, by

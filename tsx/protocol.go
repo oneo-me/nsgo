@@ -348,6 +348,8 @@ func (r *runtime) scrollProp(p *core.Scroll, name string, v goja.Value) bool {
 			_ = o.Set("zoomScale", float64(e.ZoomScale))
 			r.call(v, o)
 		}
+	case "scrollEventThrottle":
+		p.ScrollEventThrottle = time.Duration(v.ToFloat() * float64(time.Millisecond))
 	case "onLayout":
 		p.OnLayout = r.layoutHandler(v)
 	default:
@@ -611,10 +613,31 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 	case "textAlign":
 		s.TextAlign = pick(r, key, v, map[string]core.TextAlign{"left": core.TextAlignStart, "auto": core.TextAlignStart,
 			"center": core.TextAlignCenter, "right": core.TextAlignEnd, "justify": core.TextAlignJustify})
+	case "fontVariant":
+		s.FontVariant = core.FontVariantNormal
+		var names []string
+		if err := r.vm.ExportTo(v, &names); err != nil {
+			names = strings.Fields(v.String())
+		}
+		for _, name := range names {
+			s.FontVariant |= pick(r, key, r.vm.ToValue(name), fontVariants)
+		}
+	case "textDecorationThickness":
+		if str, ok := v.Export().(string); ok && (str == "auto" || str == "from-font") {
+			s.TextDecorationThickness = core.Length{}
+			break
+		}
+		s.TextDecorationThickness = r.length(key, v)
+	case "textUnderlineOffset":
+		s.TextUnderlineOffset = r.length(key, v)
 	default:
 		r.warn("style key %q is not supported yet", key)
 	}
 }
+
+var fontVariants = map[string]core.FontVariant{"small-caps": core.FontSmallCaps,
+	"oldstyle-nums": core.FontOldstyleNums, "lining-nums": core.FontLiningNums,
+	"tabular-nums": core.FontTabularNums, "proportional-nums": core.FontProportionalNums}
 
 var justifies = map[string]core.Justify{"flex-start": core.JustifyStart, "start": core.JustifyStart,
 	"center": core.JustifyCenter, "flex-end": core.JustifyEnd, "end": core.JustifyEnd,

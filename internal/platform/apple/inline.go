@@ -99,7 +99,7 @@ func fontExtent(st driver.TextStyle) driver.FontExtent {
 }
 
 // decoration is a UTF-16 range drawn on: a span's background box, a
-// strikethrough, or a wavy underline, which CoreText cannot draw.
+// strikethrough, or an underline CoreText cannot draw.
 type decoration struct {
 	start, end int
 	color      driver.Color
@@ -130,8 +130,8 @@ func decorations(t *driver.AttributedText, toUTF16 []int) []decoration {
 	for _, r := range runs {
 		start, end := min(max(r.start, 0), len(t.Text)), min(max(r.end, 0), len(t.Text))
 		strike := r.style.Decoration&driver.TextDecorationLineThrough != 0
-		wavy := r.style.Decoration&driver.TextDecorationUnderline != 0 && r.style.DecorationStyle == driver.DecorationWavy
-		if end <= start || (!strike && !wavy && r.background.Color == 0) {
+		under := r.style.Decoration&driver.TextDecorationUnderline != 0 && drawsUnderline(r.style)
+		if end <= start || (!strike && !under && r.background.Color == 0) {
 			continue
 		}
 		f := Font(r.style.Font)
@@ -148,17 +148,36 @@ func decorations(t *driver.AttributedText, toUTF16 []int) []decoration {
 		}
 		d.strike, d.color, d.style = true, lineColor, r.style.DecorationStyle
 		d.thickness = max(ctFontGetUnderlineThick(f), 1)
+		if t := r.style.DecorationThickness; t > 0 {
+			d.thickness = float64(t)
+		}
 		if strike {
 			d.offset = ctFontGetXHeight(f) / 2
 			out = append(out, d)
 		}
-		if wavy {
-			d.offset = ctFontGetUnderlinePos(f) - d.thickness
+		if under {
+			// offset is the line's middle above the baseline: the font's
+			// underline position, which a wave hangs below, or the app's
+			// offset of its top below the baseline.
+			switch off, ok := r.style.UnderlineOffset.Points(); {
+			case ok:
+				d.offset = -float64(off) - d.thickness/2
+			case r.style.DecorationStyle == driver.DecorationWavy:
+				d.offset = ctFontGetUnderlinePos(f) - d.thickness
+			default:
+				d.offset = ctFontGetUnderlinePos(f)
+			}
 			out = append(out, d)
 		}
 		Release(f)
 	}
 	return out
+}
+
+// drawsUnderline reports whether st's underline is drawn here rather
+// than by CoreText, which has no wavy line, thickness or offset.
+func drawsUnderline(st driver.TextStyle) bool {
+	return st.DecorationStyle == driver.DecorationWavy || st.DecorationThickness > 0 || !st.UnderlineOffset.IsAuto()
 }
 
 // box is a decoration placed in a text's box: from its top left.

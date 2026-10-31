@@ -262,6 +262,9 @@ func (t *Tree) screenConfig(n *node) driver.ScreenConfig {
 		TitleView:         headerID(sn.view),
 		HeaderHeight:      sn.header,
 	}
+	if c.Right != 0 {
+		c.RightSystemItem = s.IOS.HeaderRightSystemItem
+	}
 	if sn.stack != nil {
 		var below *node
 		for _, o := range sn.stack.screens() {

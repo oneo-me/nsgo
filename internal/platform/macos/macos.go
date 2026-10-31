@@ -1409,6 +1409,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.layout.Release()
 			v.layout, _ = it.Text.Layout.(*apple.Layout)
 			v.box = it.Text.Content
+			v.sizeContent()
 			v.spans = it.Text.Spans
 			v.textChanged(it.Text.Text)
 			v.redraw()

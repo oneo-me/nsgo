@@ -36,6 +36,11 @@ type navBar struct {
 	// fit is the bar's height as UIKit sizes it, reported the one last
 	// told to the engine.
 	fit, reported driver.Points
+	// system is the UIKit bar button of the header's RightSystemItem,
+	// systemKind, made once per kind: a new one at every change would
+	// flash.
+	system     objc.ID
+	systemKind driver.HeaderSystemItem
 }
 
 // sheet is a modal presented as a UIKit sheet.
@@ -60,6 +65,7 @@ var (
 	bars                         = map[objc.ID]*view{}
 	sheets                       = map[objc.ID]*view{}
 	selEdgeSwipe                 = sel("nsgoEdgeSwipe:")
+	selHeaderItem                = sel("nsgoHeaderItem:")
 )
 
 // UIInterfaceOrientationMask of each core orientation.
@@ -139,7 +145,7 @@ func registerNav() {
 
 // navMethods are the views' methods for a screen's swipe back.
 func navMethods() []objc.MethodDef {
-	return []objc.MethodDef{{Cmd: selEdgeSwipe, Fn: edgeSwiped}}
+	return []objc.MethodDef{{Cmd: selEdgeSwipe, Fn: edgeSwiped}, {Cmd: selHeaderItem, Fn: headerItemPressed}}
 }
 
 // headerHeights measures a navigation bar on this device, as NSH does:
@@ -185,7 +191,7 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 	}
 	s.showLargeTitle(b)
 	b.item.Send(sel("setLeftBarButtonItem:"), s.barItem(c.Left))
-	b.item.Send(sel("setRightBarButtonItem:"), s.barItem(c.Right))
+	b.item.Send(sel("setRightBarButtonItem:"), s.rightItem(v, c))
 	b.item.Send(sel("setTitleView:"), s.headerWrap(c.TitleView))
 	if !b.itemsSet || old.CanGoBack != c.CanGoBack {
 		b.itemsSet = true
@@ -333,6 +339,70 @@ func (s *surface) followLargeTitle(sv *view, offset driver.Points) {
 	})
 	objc.ID(objc.GetClass("UIView")).Send(sel("animateWithDuration:animations:"), 0.25, animations)
 	animations.Release()
+}
+
+// rightItem returns the bar button at the end of screen v's header:
+// UIKit's own for c's RightSystemItem, else c's Right view.
+func (s *surface) rightItem(v *view, c *driver.ScreenConfig) objc.ID {
+	b := v.bar
+	code, ok := systemItems[c.RightSystemItem]
+	if !ok || c.Right == 0 {
+		if b.system != 0 {
+			b.system.Send(selRelease)
+			b.system, b.systemKind = 0, 0
+		}
+		return s.barItem(c.Right)
+	}
+	if b.systemKind != c.RightSystemItem {
+		if b.system != 0 {
+			b.system.Send(selRelease)
+		}
+		// The screen's view is the target, which UIKit holds weakly; it
+		// outlives the button.
+		b.system = objc.ID(objc.GetClass("UIBarButtonItem")).Send(selAlloc).
+			Send(sel("initWithBarButtonSystemItem:target:action:"), code, v.native, selHeaderItem)
+		b.systemKind = c.RightSystemItem
+	}
+	return b.system
+}
+
+// systemItems are UIKit's UIBarButtonSystemItem of each header item.
+var systemItems = map[driver.HeaderSystemItem]int{
+	driver.HeaderItemDone: 0, driver.HeaderItemCancel: 1, driver.HeaderItemEdit: 2, driver.HeaderItemSave: 3,
+	driver.HeaderItemAdd: 4, driver.HeaderItemCompose: 7, driver.HeaderItemShare: 9, driver.HeaderItemSearch: 12,
+	driver.HeaderItemTrash: 16, driver.HeaderItemClose: 24,
+}
+
+// headerItemPressed presses the first view of the header's Right that
+// takes presses, as the system bar button stands for it.
+func headerItemPressed(self objc.ID, _ objc.SEL, _ objc.ID) {
+	v := views[self]
+	if v == nil || v.bar == nil {
+		return
+	}
+	s, id := v.surface, v.bar.config.Right
+	if int(id) >= len(s.views) || s.views[id] == nil {
+		return
+	}
+	if p := firstPressable(s.views[id].native); p != nil {
+		p.report(driver.Event{Kind: driver.EventPress, Index: -1})
+	}
+}
+
+// firstPressable returns the first view under native, depth first, that
+// takes presses.
+func firstPressable(native objc.ID) *view {
+	subs := native.Send(sel("subviews"))
+	for i, n := 0, objc.Send[int](subs, sel("count")); i < n; i++ {
+		sub := subs.Send(sel("objectAtIndex:"), i)
+		if v := views[sub]; v != nil && v.events.Has(driver.EventPress) {
+			return v
+		}
+		if v := firstPressable(sub); v != nil {
+			return v
+		}
+	}
+	return nil
 }
 
 // barItem returns a bar button item showing header view id, or nil.

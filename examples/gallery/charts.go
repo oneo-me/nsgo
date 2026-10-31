@@ -106,7 +106,7 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 		c = colors.muted
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: []core.Node{
-		seriesKey(cx, dashed), textf(value, 12, regular, c),
+		seriesKey(cx, dashed), tabular(textf(value, 12, regular, c)),
 	}}
 }
 
@@ -150,7 +150,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 			if v > 0 {
 				s = fmt.Sprintf("%gk", v/1000)
 			}
-			yLabels = append(yLabels, core.Text{Content: s, Style: core.Style{Position: core.Absolute, Right: core.Pt(0),
+			yLabels = append(yLabels, core.Text{Content: s, Style: core.Style{Position: core.Absolute, Right: core.Pt(0), FontVariant: core.FontTabularNums,
 				Top: core.Pt(core.Points((1-v/visitorsTop)*160 - 8)), FontSize: 12}, StyleFunc: colored(colors.muted)})
 		}
 		var days []core.Node
@@ -313,8 +313,8 @@ func chartsDemo(cx *core.Scope) core.Node {
 						},
 						// The close over its change: an explicit plus, a true minus.
 						core.View{Style: core.Style{Width: core.Pt(72), AlignItems: core.AlignEnd, Gap: 2}, Children: []core.Node{
-							core.Text{ContentFunc: func() string { return fmt.Sprintf("%.2f", closing()) }, Style: core.Style{FontSize: label}, StyleFunc: colored(colors.text)},
-							core.Text{ContentFunc: changeText, StyleFunc: func() core.Style { return core.Style{FontSize: detail, Color: tn().color(cx)} }},
+							core.Text{ContentFunc: func() string { return fmt.Sprintf("%.2f", closing()) }, Style: core.Style{FontSize: label, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.text)},
+							core.Text{ContentFunc: changeText, Style: core.Style{FontVariant: core.FontTabularNums}, StyleFunc: func() core.Style { return core.Style{FontSize: detail, Color: tn().color(cx)} }},
 						}},
 					}}
 				}})

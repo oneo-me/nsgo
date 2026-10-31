@@ -71,6 +71,9 @@ type textLayout struct {
 	under       []rect
 	underColors []driver.Color
 	attachments []attachmentBox
+	// over are the decoration lines Pango cannot draw, drawn over the
+	// glyphs.
+	over []decorationLine
 
 	// lines are the lines OnTextLayout reports.
 	lines []driver.TextLine
@@ -317,6 +320,9 @@ func addStyle(list uintptr, textLen, start, end int, s driver.TextStyle, holes [
 	if f.Italic {
 		add(pangoAttrStyleNew(pangoStyleItalic))
 	}
+	if features := fontFeatures(f.Variant); features != "" {
+		add(pangoAttrFontFeaturesNew(cstr(features)))
+	}
 	add(pangoAttrForegroundNew(rgb16(s.Color)))
 	if s.LetterSpacing != 0 {
 		add(pangoAttrLetterSpacingNew(int32(s.LetterSpacing * pangoScale)))
@@ -333,8 +339,9 @@ func addStyle(list uintptr, textLen, start, end int, s driver.TextStyle, holes [
 			from = max(from, h[1])
 		}
 	}
-	// Pango draws no dotted or dashed lines, and strikes through solid.
-	if s.Decoration&driver.TextDecorationUnderline != 0 {
+	// Pango draws no dotted or dashed lines, no thickness and no offset,
+	// and strikes through solid: placeDecorations draws those lines.
+	if s.Decoration&driver.TextDecorationUnderline != 0 && !drawsUnderline(s) {
 		line := int32(pangoUnderlineSingle)
 		switch s.DecorationStyle {
 		case driver.DecorationDouble:
@@ -347,12 +354,23 @@ func addStyle(list uintptr, textLen, start, end int, s driver.TextStyle, holes [
 			add(pangoAttrUnderlineColorNew(rgb16(s.DecorationColor)))
 		}
 	}
-	if s.Decoration&driver.TextDecorationLineThrough != 0 {
+	if s.Decoration&driver.TextDecorationLineThrough != 0 && !drawsStrike(s) {
 		add(pangoAttrStrikethroughNew(1))
 		if s.DecorationColor != 0 {
 			add(pangoAttrStrikethroughColorNew(rgb16(s.DecorationColor)))
 		}
 	}
+}
+
+// drawsUnderline and drawsStrike report whether s's underline or
+// strikethrough is drawn by placeDecorations rather than by Pango.
+func drawsUnderline(s driver.TextStyle) bool {
+	return s.DecorationStyle == driver.DecorationDotted || s.DecorationStyle == driver.DecorationDashed ||
+		s.DecorationThickness > 0 || !s.UnderlineOffset.IsAuto()
+}
+
+func drawsStrike(s driver.TextStyle) bool {
+	return s.DecorationStyle > driver.DecorationSolid || s.DecorationThickness > 0
 }
 
 // rgb16 returns c's channels as Pango's 16-bit ones.
@@ -396,6 +414,7 @@ func (p *preparedText) Layout(size driver.Size) driver.TextLayout {
 	src.spans = append([]driver.TextSpan(nil), p.spans...)
 	l := &textLayout{textSource: src, width: size.Width, height: measured.Height}
 	p.placeBackgrounds(l)
+	p.placeDecorations(l)
 	p.placeAttachments(l)
 	p.placeLines(l)
 	w := p.w
@@ -612,6 +631,177 @@ func (p *preparedText) placeBackgrounds(l *textLayout) {
 	}
 }
 
+// lineMetrics are where a font puts its decoration lines: each line's
+// top above the baseline, and its thickness.
+type lineMetrics struct {
+	underline, underlineThickness driver.Points
+	strike, strikeThickness       driver.Points
+}
+
+// fontLines returns f's decoration lines. The engine thread calls it;
+// it caches what it read.
+func (w *window) fontLines(f driver.Font) lineMetrics {
+	if m, ok := w.lineMetrics[f]; ok {
+		return m
+	}
+	desc := fontDescription(f)
+	metrics := pangoContextGetMetrics(w.measureContext(false), desc, 0)
+	pangoFontDescriptionFree(desc)
+	m := lineMetrics{
+		underline: fromPango(pangoFontMetricsUnderlinePos(metrics)), underlineThickness: fromPango(pangoFontMetricsUnderlineThick(metrics)),
+		strike: fromPango(pangoFontMetricsStrikePos(metrics)), strikeThickness: fromPango(pangoFontMetricsStrikeThick(metrics)),
+	}
+	pangoFontMetricsUnref(metrics)
+	if w.lineMetrics == nil {
+		w.lineMetrics = map[driver.Font]lineMetrics{}
+	}
+	w.lineMetrics[f] = m
+	return m
+}
+
+// decorationLine is a decoration line placed in the content box: its
+// box's top left, width and thickness.
+type decorationLine struct {
+	x, y, w, t float64
+	color      driver.Color
+	style      driver.TextDecorationStyle
+}
+
+// placeDecorations puts the underlines and strikethroughs Pango cannot
+// draw on each line their runs reach.
+func (p *preparedText) placeDecorations(l *textLayout) {
+	type run struct {
+		start, end int
+		style      driver.TextStyle
+	}
+	var runs []run
+	if len(p.spans) == 0 {
+		runs = append(runs, run{0, len(p.text), p.style})
+	}
+	for _, sp := range p.spans {
+		runs = append(runs, run{sp.Start, sp.End, sp.Style})
+	}
+	runs = slices.DeleteFunc(runs, func(r run) bool {
+		d := r.style.Decoration
+		return !(d&driver.TextDecorationUnderline != 0 && drawsUnderline(r.style) ||
+			d&driver.TextDecorationLineThrough != 0 && drawsStrike(r.style))
+	})
+	if len(runs) == 0 || p.text == "" {
+		return
+	}
+	iter := pangoLayoutGetIter(p.layout)
+	defer pangoLayoutIterFree(iter)
+	for {
+		line := pangoLayoutIterGetLine(iter)
+		from := int(*(*int32)(unsafe.Add(cPointer(line), 8)))
+		to := from + int(*(*int32)(unsafe.Add(cPointer(line), 12)))
+		baseline := float64(fromPango(pangoLayoutIterGetBaseline(iter)))
+		for _, r := range runs {
+			a, b := max(r.start, from), min(r.end, to, len(p.text))
+			for b > a && blank(p.text[b-1]) {
+				b--
+			}
+			if a >= b {
+				continue
+			}
+			st := r.style
+			m := p.w.fontLines(st.Font)
+			color := st.Color
+			if st.DecorationColor != 0 {
+				color = st.DecorationColor
+			}
+			var placed []decorationLine
+			thick := func(font driver.Points) float64 {
+				if st.DecorationThickness > 0 {
+					return float64(st.DecorationThickness)
+				}
+				return float64(max(font, 1))
+			}
+			if st.Decoration&driver.TextDecorationUnderline != 0 && drawsUnderline(st) {
+				top := baseline - float64(m.underline)
+				if off, ok := st.UnderlineOffset.Points(); ok {
+					top = baseline + float64(off)
+				}
+				placed = append(placed, decorationLine{y: top, t: thick(m.underlineThickness), color: color, style: st.DecorationStyle})
+			}
+			if st.Decoration&driver.TextDecorationLineThrough != 0 && drawsStrike(st) {
+				t := thick(m.strikeThickness)
+				// The font's line stays centered where it was.
+				top := baseline - float64(m.strike) + float64(max(m.strikeThickness, 1))/2 - t/2
+				placed = append(placed, decorationLine{y: top, t: t, color: color, style: st.DecorationStyle})
+			}
+			var ranges uintptr
+			var n int32
+			pangoLayoutLineGetXRanges(line, int32(a), int32(b), &ranges, &n)
+			if ranges == 0 {
+				continue
+			}
+			xs := unsafe.Slice((*int32)(cPointer(ranges)), 2*n)
+			for i := 0; i < int(n); i++ {
+				x0, x1 := float64(fromPango(xs[2*i])), float64(fromPango(xs[2*i+1]))
+				if x1 <= x0 {
+					continue
+				}
+				for _, d := range placed {
+					d.x, d.w = x0, x1-x0
+					l.over = append(l.over, d)
+				}
+			}
+			gFree(ranges)
+		}
+		if pangoLayoutIterNextLine(iter) == 0 {
+			break
+		}
+	}
+}
+
+// draw draws the line with the content box's top left at x, y: a box,
+// two boxes a thickness apart, or a dotted, dashed or wavy stroke along
+// its middle.
+func (d decorationLine) draw(cr uintptr, x, y float64) {
+	x0, top, t := x+d.x, y+d.y, d.t
+	x1, mid := x0+d.w, top+t/2
+	cairoSave(cr)
+	setColor(cr, d.color)
+	switch d.style {
+	case driver.DecorationDouble:
+		cairoRectangle(cr, x0, top-t, d.w, t)
+		cairoRectangle(cr, x0, top+t, d.w, t)
+		cairoFill(cr)
+	case driver.DecorationDotted, driver.DecorationDashed:
+		dash := [2]float64{t, t}
+		if d.style == driver.DecorationDashed {
+			dash = [2]float64{3 * t, 2 * t}
+		}
+		cairoSetLineWidth(cr, t)
+		cairoSetDash(cr, &dash[0], 2, 0)
+		cairoMoveTo(cr, x0, mid)
+		cairoLineTo(cr, x1, mid)
+		cairoStroke(cr)
+	case driver.DecorationWavy:
+		amp := max(1.5*t, 2)
+		step := 2 * amp
+		cairoSetLineWidth(cr, t)
+		cairoMoveTo(cr, x0, mid)
+		up := true
+		for cx := x0; cx < x1; cx += step {
+			nx := min(cx+step, x1)
+			peak := mid + amp
+			if up {
+				peak = mid - amp
+			}
+			// The quadratic through peak, as a cubic.
+			cairoCurveTo(cr, cx+2*((cx+nx)/2-cx)/3, mid+2*(peak-mid)/3, nx+2*((cx+nx)/2-nx)/3, mid+2*(peak-mid)/3, nx, mid)
+			up = !up
+		}
+		cairoStroke(cr)
+	default:
+		cairoRectangle(cr, x0, top, d.w, t)
+		cairoFill(cr)
+	}
+	cairoRestore(cr)
+}
+
 // placeAttachments finds each attachment's placeholder among the
 // layout's runs: its top is its ascent above the baseline. One that is
 // not a run of its own was cut off by the line limit or the ellipsis.
@@ -693,6 +883,9 @@ func (l *textLayout) draw(cr uintptr, x, y driver.Points) {
 	}
 	cairoMoveTo(cr, float64(x), float64(y))
 	pangoCairoShowLayout(cr, l.layout)
+	for _, d := range l.over {
+		d.draw(cr, float64(x), float64(y))
+	}
 	if clip {
 		cairoRestore(cr)
 	}

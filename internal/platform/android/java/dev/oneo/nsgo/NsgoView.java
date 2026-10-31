@@ -695,8 +695,8 @@ public class NsgoView extends FrameLayout {
                 for (int i = 0, n = in.readInt(); i < n; i++) attachments.add(new Text.Attachment(in, density));
                 int ellipsize = in.readUnsignedByte();
                 Text.Shadow shadow = new Text.Shadow(in, density);
-                style.readDecoration(in);
-                for (Text.Span span : spans) span.style.readDecoration(in);
+                style.readDecoration(in, density);
+                for (Text.Span span : spans) span.style.readDecoration(in, density);
                 prepared.put(id, new Text.Prepared(text, style, maxLines, ellipsize, shadow, spans, attachments));
                 break;
             }
@@ -2853,6 +2853,7 @@ public class NsgoView extends FrameLayout {
         field.setTextSize(TypedValue.COMPLEX_UNIT_PX, style.size);
         field.setTextColor(style.color);
         field.setLetterSpacing(style.letterSpacingEm());
+        field.setFontFeatureSettings(style.features);
         field.setPaintFlags(style.paintFlags(field.getPaintFlags()));
         field.setGravity(style.gravity() | (field.multiline() ? Gravity.TOP : Gravity.CENTER_VERTICAL));
         field.setLayoutParams(content);

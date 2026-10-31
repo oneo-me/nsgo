@@ -813,6 +813,7 @@ func drawFont(font Font) Font {
 	if font.Weight == 0 {
 		font.Weight = FontWeightNormal
 	}
+	font.Variant &^= FontVariantNormal
 	return font
 }
 

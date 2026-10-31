@@ -947,6 +947,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.layout.Release()
 			v.layout, _ = it.Text.Layout.(*apple.Layout)
 			v.box = it.Text.Content
+			v.sizeContent()
 			v.textChanged(it.Text.Text)
 			v.redraw()
 		case driver.ItemInput:
@@ -1071,6 +1072,9 @@ func (s *surface) delete(v *view, kept bool) {
 		b.bar.Send(selRelease)
 		b.item.Send(selRelease)
 		b.back.Send(selRelease)
+		if b.system != 0 {
+			b.system.Send(selRelease)
+		}
 	}
 	if v.headerWrap != 0 {
 		v.headerWrap.Send(selRemoveFromSuperview)

@@ -49,6 +49,31 @@ func TestTextTransformShadowAndDecoration(t *testing.T) {
 	}
 }
 
+func TestFontVariantAndDecorationLines(t *testing.T) {
+	h := newHost(t, Size{Width: 400, Height: 100}, func(cx *Scope) Node {
+		return View{Style: Style{FontVariant: FontSmallCaps, FontSize: 20, TextUnderlineOffset: Pct(10)}, Children: []Node{
+			Text{TestID: "inherited", Content: "abc", Style: Style{TextDecoration: TextDecorationUnderline,
+				TextDecorationThickness: Pt(3)}},
+			Text{TestID: "own", Content: "123", Style: Style{FontVariant: FontTabularNums}},
+			Text{TestID: "normal", Content: "123", Style: Style{FontVariant: FontVariantNormal,
+				TextDecoration: TextDecorationLineThrough, TextUnderlineOffset: Pt(0)}},
+		}}
+	})
+	h.commit()
+	if s := h.find("inherited").text.style; s.Font.Variant != FontSmallCaps || s.DecorationThickness != 3 ||
+		s.UnderlineOffset != Pt(2) {
+		t.Errorf("inherited: variant %v, thickness %v, offset %v; want small caps, 3, 2", s.Font.Variant,
+			s.DecorationThickness, s.UnderlineOffset)
+	}
+	if v := h.find("own").text.style.Font.Variant; v != FontTabularNums {
+		t.Errorf("own variant = %v, want tabular figures alone", v)
+	}
+	if s := h.find("normal").text.style; s.Font.Variant != 0 || !s.UnderlineOffset.IsAuto() {
+		t.Errorf("normal: variant %v, offset %v; want none, and no offset without an underline", s.Font.Variant,
+			s.UnderlineOffset)
+	}
+}
+
 func TestTextFitsItsBox(t *testing.T) {
 	var lines []TextLine
 	var batch *driver.MountBatch

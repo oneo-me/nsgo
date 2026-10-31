@@ -296,7 +296,7 @@ func (t *Tree) setScroll(n *node, v Scroll) {
 		offset = Point{}
 	}
 	t.bindScrollSpec(nil, n, scrollSpec{behavior: behavior, offset: offset, onRefresh: v.OnRefresh,
-		onScroll: v.OnScroll, onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
+		onScroll: v.OnScroll, throttle: v.ScrollEventThrottle, onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
 		onMomentum: v.OnMomentumStart, onMomentumEnd: v.OnMomentumEnd, minZoom: v.MinZoomScale,
 		maxZoom: v.MaxZoomScale, zoom: zoom, noBouncesZoom: v.NoBouncesZoom, noPinch: v.NoPinchZoom,
 		centerContent: v.CenterContent})

@@ -260,49 +260,61 @@ var keywords = map[string]func(s *Style){
 	"decoration-dotted":     func(s *Style) { s.TextDecorationStyle = DecorationDotted },
 	"decoration-dashed":     func(s *Style) { s.TextDecorationStyle = DecorationDashed },
 	"decoration-wavy":       func(s *Style) { s.TextDecorationStyle = DecorationWavy },
-	"uppercase":             func(s *Style) { s.TextTransform = TextTransformUppercase },
-	"lowercase":             func(s *Style) { s.TextTransform = TextTransformLowercase },
-	"capitalize":            func(s *Style) { s.TextTransform = TextTransformCapitalize },
-	"normal-case":           func(s *Style) { s.TextTransform = TextTransformNone },
-	"text-left":             func(s *Style) { s.TextAlign = TextAlignStart },
-	"text-start":            func(s *Style) { s.TextAlign = TextAlignStart },
-	"text-center":           func(s *Style) { s.TextAlign = TextAlignCenter },
-	"text-right":            func(s *Style) { s.TextAlign = TextAlignEnd },
-	"text-end":              func(s *Style) { s.TextAlign = TextAlignEnd },
-	"text-justify":          func(s *Style) { s.TextAlign = TextAlignJustify },
-	"align-baseline":        func(s *Style) { s.VerticalAlign = VerticalAlignBaseline },
-	"align-text-top":        func(s *Style) { s.VerticalAlign = VerticalAlignTextTop },
-	"align-text-bottom":     func(s *Style) { s.VerticalAlign = VerticalAlignTextBottom },
-	"align-middle":          func(s *Style) { s.VerticalAlign = VerticalAlignMiddle },
-	"whitespace-nowrap":     func(s *Style) { s.WhiteSpace = WhiteSpaceNoWrap },
-	"text-nowrap":           func(s *Style) { s.WhiteSpace = WhiteSpaceNoWrap },
-	"whitespace-normal":     func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
-	"text-wrap":             func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
-	"text-balance":          func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
-	"text-pretty":           func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
-	"select-none":           func(s *Style) { s.UserSelect = UserSelectNone },
-	"select-text":           func(s *Style) { s.UserSelect = UserSelectText },
-	"select-auto":           func(s *Style) { s.UserSelect = UserSelectNone },
-	"border-solid":          func(s *Style) { s.BorderStyle = BorderSolid },
-	"border-dashed":         func(s *Style) { s.BorderStyle = BorderDashed },
-	"border-dotted":         func(s *Style) { s.BorderStyle = BorderDotted },
-	"border-hidden":         func(s *Style) { s.BorderStyle = BorderHidden },
-	"border-none":           func(s *Style) { s.BorderStyle = BorderNone },
-	"outline-none":          func(s *Style) { s.OutlineStyle = BorderNone },
-	"outline-hidden":        func(s *Style) { s.OutlineStyle = BorderNone },
-	"outline-solid":         func(s *Style) { s.OutlineStyle = BorderSolid },
-	"outline-dashed":        func(s *Style) { s.OutlineStyle = BorderDashed },
-	"outline-dotted":        func(s *Style) { s.OutlineStyle = BorderDotted },
-	"rounded-full":          func(s *Style) { s.CornerRadius = 9999 },
-	"aspect-auto":           func(s *Style) { s.AspectRatio = 0 },
-	"backface-hidden":       func(s *Style) { s.BackfaceHidden = true },
-	"animate-spin":          func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesSpin} },
-	"animate-ping":          func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesPing} },
-	"animate-pulse":         func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesPulse} },
-	"animate-bounce":        func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesBounce} },
-	"animate-none":          func(s *Style) { s.Animation = KeyframeAnimation{} },
-	"fill-none":             func(s *Style) { s.Fill = PaintColor(clearColor) },
-	"stroke-none":           func(s *Style) { s.Stroke = PaintColor(clearColor) },
+	// Auto is the font's thickness and place, which unset lengths are.
+	"decoration-auto":       func(s *Style) { s.TextDecorationThickness = Length{} },
+	"decoration-from-font":  func(s *Style) { s.TextDecorationThickness = Length{} },
+	"underline-offset-auto": func(s *Style) { s.TextUnderlineOffset = Length{} },
+	// font-variant-numeric and font-variant-caps: each sets its own
+	// features and clears those it excludes.
+	"normal-nums":       variant(0, FontOldstyleNums|FontLiningNums|FontTabularNums|FontProportionalNums),
+	"small-caps":        variant(FontSmallCaps, 0),
+	"oldstyle-nums":     variant(FontOldstyleNums, FontLiningNums),
+	"lining-nums":       variant(FontLiningNums, FontOldstyleNums),
+	"tabular-nums":      variant(FontTabularNums, FontProportionalNums),
+	"proportional-nums": variant(FontProportionalNums, FontTabularNums),
+	"uppercase":         func(s *Style) { s.TextTransform = TextTransformUppercase },
+	"lowercase":         func(s *Style) { s.TextTransform = TextTransformLowercase },
+	"capitalize":        func(s *Style) { s.TextTransform = TextTransformCapitalize },
+	"normal-case":       func(s *Style) { s.TextTransform = TextTransformNone },
+	"text-left":         func(s *Style) { s.TextAlign = TextAlignStart },
+	"text-start":        func(s *Style) { s.TextAlign = TextAlignStart },
+	"text-center":       func(s *Style) { s.TextAlign = TextAlignCenter },
+	"text-right":        func(s *Style) { s.TextAlign = TextAlignEnd },
+	"text-end":          func(s *Style) { s.TextAlign = TextAlignEnd },
+	"text-justify":      func(s *Style) { s.TextAlign = TextAlignJustify },
+	"align-baseline":    func(s *Style) { s.VerticalAlign = VerticalAlignBaseline },
+	"align-text-top":    func(s *Style) { s.VerticalAlign = VerticalAlignTextTop },
+	"align-text-bottom": func(s *Style) { s.VerticalAlign = VerticalAlignTextBottom },
+	"align-middle":      func(s *Style) { s.VerticalAlign = VerticalAlignMiddle },
+	"whitespace-nowrap": func(s *Style) { s.WhiteSpace = WhiteSpaceNoWrap },
+	"text-nowrap":       func(s *Style) { s.WhiteSpace = WhiteSpaceNoWrap },
+	"whitespace-normal": func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
+	"text-wrap":         func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
+	"text-balance":      func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
+	"text-pretty":       func(s *Style) { s.WhiteSpace = WhiteSpaceNormal },
+	"select-none":       func(s *Style) { s.UserSelect = UserSelectNone },
+	"select-text":       func(s *Style) { s.UserSelect = UserSelectText },
+	"select-auto":       func(s *Style) { s.UserSelect = UserSelectNone },
+	"border-solid":      func(s *Style) { s.BorderStyle = BorderSolid },
+	"border-dashed":     func(s *Style) { s.BorderStyle = BorderDashed },
+	"border-dotted":     func(s *Style) { s.BorderStyle = BorderDotted },
+	"border-hidden":     func(s *Style) { s.BorderStyle = BorderHidden },
+	"border-none":       func(s *Style) { s.BorderStyle = BorderNone },
+	"outline-none":      func(s *Style) { s.OutlineStyle = BorderNone },
+	"outline-hidden":    func(s *Style) { s.OutlineStyle = BorderNone },
+	"outline-solid":     func(s *Style) { s.OutlineStyle = BorderSolid },
+	"outline-dashed":    func(s *Style) { s.OutlineStyle = BorderDashed },
+	"outline-dotted":    func(s *Style) { s.OutlineStyle = BorderDotted },
+	"rounded-full":      func(s *Style) { s.CornerRadius = 9999 },
+	"aspect-auto":       func(s *Style) { s.AspectRatio = 0 },
+	"backface-hidden":   func(s *Style) { s.BackfaceHidden = true },
+	"animate-spin":      func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesSpin} },
+	"animate-ping":      func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesPing} },
+	"animate-pulse":     func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesPulse} },
+	"animate-bounce":    func(s *Style) { s.Animation = KeyframeAnimation{Keyframes: KeyframesBounce} },
+	"animate-none":      func(s *Style) { s.Animation = KeyframeAnimation{} },
+	"fill-none":         func(s *Style) { s.Fill = PaintColor(clearColor) },
+	"stroke-none":       func(s *Style) { s.Stroke = PaintColor(clearColor) },
 }
 
 // family is the utilities that start with prefix and take a value.
@@ -491,7 +503,17 @@ func init() {
 			return func(_ *Style, p *classProps, _ *classEnv) { p.lines = n }, false
 		}},
 		{"decoration-", false, func(t *tailwindTheme, v string, _ bool) (classDecl, bool) {
+			if l, ok := fontLength(v, false); ok {
+				return set1(func(s *Style) { s.TextDecorationThickness = l }), false
+			}
 			return t.colorDecl(v, func(s *Style, c Color) { s.TextDecorationColor = c })
+		}},
+		{"underline-offset-", true, func(t *tailwindTheme, v string, neg bool) (classDecl, bool) {
+			l, ok := fontLength(v, neg)
+			if !ok {
+				return nil, false
+			}
+			return set1(func(s *Style) { s.TextUnderlineOffset = l }), false
 		}},
 		// Backgrounds.
 		{"bg-linear-", true, func(t *tailwindTheme, v string, neg bool) (classDecl, bool) {
@@ -796,6 +818,38 @@ func width(v string) (Points, bool) {
 	}
 	n, err := strconv.Atoi(v)
 	return Points(n), err == nil && n >= 0
+}
+
+// fontLength reads a decoration's length, negated when neg: a whole
+// number of points, or an arbitrary length, percentages and em of the
+// font size.
+func fontLength(v string, neg bool) (Length, bool) {
+	sign := float32(1)
+	if neg {
+		sign = -1
+	}
+	a, ok := arbitrary(v)
+	if !ok {
+		n, err := strconv.Atoi(v)
+		return Pt(Points(sign * float32(n))), err == nil && n >= 0
+	}
+	a = strings.TrimSpace(a)
+	if n, ok := strings.CutSuffix(a, "%"); ok {
+		f, err := strconv.ParseFloat(n, 32)
+		return Pct(sign * float32(f)), err == nil
+	}
+	if n, ok := strings.CutSuffix(a, "em"); ok && !strings.HasSuffix(n, "r") {
+		f, err := strconv.ParseFloat(n, 32)
+		return Pct(sign * float32(f) * 100), err == nil
+	}
+	p, ok := defaultTailwind.length(a)
+	return Pt(Points(sign) * p), ok
+}
+
+// variant returns a utility that turns on the features on and off those
+// in off, keeping the rest of the node's variant.
+func variant(on, off FontVariant) func(s *Style) {
+	return func(s *Style) { s.FontVariant = s.FontVariant&^off | on | FontVariantNormal }
 }
 
 func numeric(set func(s *Style, n float32)) func(*tailwindTheme, string, bool) (classDecl, bool) {

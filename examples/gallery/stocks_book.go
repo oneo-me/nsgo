@@ -139,7 +139,7 @@ func levelRow(cx *core.Scope, s *stock, lvl func() (level, bool), total func() f
 				return fmt.Sprintf("B%d", n())
 			}
 			return fmt.Sprintf("A%d", n())
-		}, Style: core.Style{Width: core.Pt(28), FontSize: 12}, StyleFunc: colored(colors.faint)},
+		}, Style: core.Style{Width: core.Pt(28), FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.faint)},
 		core.Text{ContentFunc: func() string {
 			if l, ok := lvl(); ok {
 				return priceText(l.price, s)
@@ -147,15 +147,15 @@ func levelRow(cx *core.Scope, s *stock, lvl func() (level, bool), total func() f
 			return "–"
 		}, StyleFunc: func() core.Style {
 			l, _ := lvl()
-			return core.Style{FlexGrow: 1, FontSize: 14, Color: toneOf(cx, l.price-s.quote.Get().prevClose)}
+			return core.Style{FlexGrow: 1, FontSize: 14, FontVariant: core.FontTabularNums, Color: toneOf(cx, l.price-s.quote.Get().prevClose)}
 		}},
 		core.Text{ContentFunc: func() string {
 			if l, ok := lvl(); ok {
 				return compactNumber(l.size)
 			}
 			return ""
-		}, Style: core.Style{Width: core.Pt(64), TextAlign: core.TextAlignEnd, FontSize: 14}, StyleFunc: colored(colors.text)},
-		core.Text{ContentFunc: func() string { return compactNumber(total()) }, Style: core.Style{Width: core.Pt(64), Padding: core.Edges{Right: 6}, TextAlign: core.TextAlignEnd, FontSize: 12}, StyleFunc: colored(colors.faint)},
+		}, Style: core.Style{Width: core.Pt(64), TextAlign: core.TextAlignEnd, FontSize: 14, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.text)},
+		core.Text{ContentFunc: func() string { return compactNumber(total()) }, Style: core.Style{Width: core.Pt(64), Padding: core.Edges{Right: 6}, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.faint)},
 	}}
 }
 
@@ -222,18 +222,18 @@ func orderBookBlock(cx *core.Scope, m *market, s *stock) core.Node {
 	}
 	return block(cx, "Order book", nil, press(pressProps{onPress: toggle, hitSlop: 8, label: "Levels"},
 		core.View{Style: core.Style{Height: core.Pt(30), Padding: core.Symmetric(0, 12), CornerRadius: radiusControl, JustifyContent: core.JustifyCenter}, StyleFunc: filled(colors.raised),
-			Children: []core.Node{textf(func() string {
+			Children: []core.Node{tabular(textf(func() string {
 				if depth.Get() == 5 {
 					return "5 → 10"
 				}
 				return "10 → 5"
-			}, 12, semibold, colors.text)}}), false,
+			}, 12, semibold, colors.text))}}), false,
 		core.View{Style: core.Style{Gap: 5}, Children: []core.Node{
 			core.View{Style: core.Style{Height: core.Pt(6), CornerRadius: 3, Overflow: core.Hidden}, StyleFunc: filled(colors.down), Children: []core.Node{springBar(share, colors.up, false, 6, 0)}},
 			core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("BID %.0f%%", share()*100) }, Style: core.Style{FlexGrow: 1, FontSize: 12}, StyleFunc: colored(colors.up)},
-				textf(func() string { return "spread " + priceText(spread(), s) }, 12, regular, colors.faint),
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%.0f%% ASK", (1-share())*100) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12}, StyleFunc: colored(colors.down)},
+				core.Text{ContentFunc: func() string { return fmt.Sprintf("BID %.0f%%", share()*100) }, Style: core.Style{FlexGrow: 1, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.up)},
+				tabular(textf(func() string { return "spread " + priceText(spread(), s) }, 12, regular, colors.faint)),
+				core.Text{ContentFunc: func() string { return fmt.Sprintf("%.0f%% ASK", (1-share())*100) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.down)},
 			}},
 		}},
 		core.View{Children: []core.Node{

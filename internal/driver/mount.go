@@ -439,10 +439,31 @@ type ScreenConfig struct {
 	// Left, Right and TitleView are the header views, each a layout root
 	// at its content's size that no view holds, or 0.
 	Left, Right, TitleView NodeID
+	// RightSystemItem, with a Right view, is the UIKit button iOS shows
+	// in Right's place; a press on it presses Right's first view that
+	// takes presses.
+	RightSystemItem HeaderSystemItem
 	// HeaderHeight is the area the header covers from the screen's top:
 	// the bar and the part of the status bar the screen reaches under.
 	HeaderHeight Points
 }
+
+// HeaderSystemItem is a button iOS draws in a navigation bar in UIKit's
+// own look, its symbol or label.
+type HeaderSystemItem uint8
+
+const (
+	HeaderItemAdd HeaderSystemItem = iota + 1
+	HeaderItemDone
+	HeaderItemClose
+	HeaderItemEdit
+	HeaderItemCompose
+	HeaderItemSearch
+	HeaderItemShare
+	HeaderItemTrash
+	HeaderItemSave
+	HeaderItemCancel
+)
 
 // TextContent is a text view's content, laid out by the engine.
 type TextContent struct {

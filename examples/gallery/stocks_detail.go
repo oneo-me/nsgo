@@ -41,7 +41,7 @@ func dayRange(cx *core.Scope, s *stock) core.Node {
 	cx.Effect(func() { q(); cx.Untrack(place) })
 	p := func(v float64) string { return priceText(v, s) }
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
-		textf(func() string { return "L " + p(q().low) }, 12, regular, colors.muted),
+		tabular(textf(func() string { return "L " + p(q().low) }, 12, regular, colors.muted)),
 		core.View{OnLayout: func(b core.Bounds) { width = b.Size.Width; place() }, LabelFunc: func() string { return fmt.Sprintf("Day range %s to %s", p(q().low), p(q().high)) },
 			Style: core.Style{FlexGrow: 1, FlexShrink: 1, Height: core.Pt(16), JustifyContent: core.JustifyCenter}, Children: []core.Node{
 				core.View{Style: core.Style{Height: core.Pt(4), CornerRadius: 2}, StyleFunc: filled(colors.raised)},
@@ -58,7 +58,7 @@ func dayRange(cx *core.Scope, s *stock) core.Node {
 						Background: toneOf(cx, q().last-q().prevClose), Animated: &core.AnimatedStyle{TranslateX: x}}
 				}},
 			}},
-		textf(func() string { return "H " + p(q().high) }, 12, regular, colors.muted),
+		tabular(textf(func() string { return "H " + p(q().high) }, 12, regular, colors.muted)),
 	}}
 }
 
@@ -103,7 +103,9 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 		decimals = 3
 	}
 	toneStyle := func(size core.Points, weight core.FontWeight) func() core.Style {
-		return func() core.Style { return core.Style{FontSize: size, FontWeight: weight, Color: toneOf(cx, change())} }
+		return func() core.Style {
+			return core.Style{FontSize: size, FontWeight: weight, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
+		}
 	}
 	w := core.Pct(25)
 	return core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 16, Bottom: 14, Left: 16}, Gap: 10}, Children: []core.Node{
@@ -111,11 +113,11 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 			core.Text{Content: s.name, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: colored(colors.muted)},
 			text(sectorName, 13, regular, colors.faint),
 			liveDot(cx, m.running.Get, 6),
-			textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, regular, colors.muted),
+			tabular(textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, regular, colors.muted)),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: []core.Node{
 			core.Text{ContentFunc: func() string { return p(q().last) }, TestID: "stock-price", StyleFunc: func() core.Style {
-				return core.Style{FontSize: 36, FontWeight: semibold, LetterSpacing: -1, Color: toneOf(cx, change())}
+				return core.Style{FontSize: 36, FontWeight: semibold, LetterSpacing: -1, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 			}},
 			core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: lerp(turn, 0, 180)}}, Children: []core.Node{icon(iconArrowUp, 20, func() core.Color { return toneOf(cx, change()) })}},
 			core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignEnd, Gap: 1}, Children: []core.Node{
@@ -257,7 +259,7 @@ func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool
 			st := m.stats.Get()
 			return fmt.Sprintf("simulated · %.2f ms engine/tick · %.0f quotes/s", st[0], st[1])
 		}, StyleFunc: func() core.Style {
-			return core.Style{Padding: core.Edges{Top: 8, Right: 16, Bottom: 96 + env.SafeArea().Bottom, Left: 16}, FontSize: 12, Color: colors.faint()}
+			return core.Style{Padding: core.Edges{Top: 8, Right: 16, Bottom: 96 + env.SafeArea().Bottom, Left: 16}, FontSize: 12, FontVariant: core.FontTabularNums, Color: colors.faint()}
 		}}
 	}
 	if split == nil {
@@ -332,9 +334,9 @@ func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool
 				Padding: core.Edges{Top: 10, Right: 16, Bottom: 10 + env.SafeArea().Bottom, Left: 16}, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: fin.glass().border}})
 		}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(92), Gap: 1}, Children: []core.Node{
-				textf(func() string { return priceText(s.quote.Get().last, s) }, 15, semibold, colors.text),
+				tabular(textf(func() string { return priceText(s.quote.Get().last, s) }, 15, semibold, colors.text)),
 				core.Text{ContentFunc: func() string { return signed(percentOf(s.quote.Get()), 2) + "%" }, StyleFunc: func() core.Style {
-					return core.Style{FontSize: 12, Color: toneOf(cx, percentOf(s.quote.Get()))}
+					return core.Style{FontSize: 12, FontVariant: core.FontTabularNums, Color: toneOf(cx, percentOf(s.quote.Get()))}
 				}},
 			}},
 			cell(button(buttonProps{label: "Sell", variant: secondary}, func() { trade("sell") })),

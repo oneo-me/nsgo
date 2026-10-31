@@ -474,17 +474,16 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 			w.byte(byte(a.Align))
 		}
 		// Where the line limit cuts, the shadow, then the decorations'
-		// styles and colors of the text and each span.
+		// styles, colors, thicknesses and underline offsets (NaN: the
+		// font's) of the text and each span.
 		w.byte(byte(t.Ellipsize))
 		w.u32(uint32(t.Shadow.Color)) // 0: none
 		w.points(t.Shadow.Offset.X)
 		w.points(t.Shadow.Offset.Y)
 		w.points(t.Shadow.Radius)
-		w.byte(byte(t.Style.DecorationStyle))
-		w.u32(uint32(t.Style.DecorationColor))
+		writeDecoration(w, &t.Style)
 		for _, sp := range t.Spans {
-			w.byte(byte(sp.Style.DecorationStyle))
-			w.u32(uint32(sp.Style.DecorationColor))
+			writeDecoration(w, &sp.Style)
 		}
 	})
 	return p
@@ -1337,6 +1336,7 @@ func writeDrawing(w *writer, d *driver.Drawing) {
 			w.points(op.Font.Size)
 			w.u16(uint16(op.Font.Weight))
 			w.flags(op.Font.Italic)
+			w.byte(byte(op.Font.Variant))
 		case driver.DrawImage:
 			var key string
 			var density float32 = 1
@@ -1550,4 +1550,18 @@ func writeStyle(w *writer, t *driver.TextStyle) {
 	w.flags(t.Font.Italic,
 		t.Decoration&driver.TextDecorationUnderline != 0,
 		t.Decoration&driver.TextDecorationLineThrough != 0, t.RTL)
+	w.byte(byte(t.Font.Variant))
+}
+
+// writeDecoration writes how a text style's decoration lines are drawn,
+// which Text.Style.readDecoration reads.
+func writeDecoration(w *writer, t *driver.TextStyle) {
+	w.byte(byte(t.DecorationStyle))
+	w.u32(uint32(t.DecorationColor))
+	w.points(t.DecorationThickness)
+	offset := driver.Auto
+	if o, ok := t.UnderlineOffset.Points(); ok {
+		offset = o
+	}
+	w.points(offset)
 }

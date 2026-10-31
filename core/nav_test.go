@@ -356,3 +356,33 @@ func TestBackPreviewNamesTheScreenBackPops(t *testing.T) {
 		t.Errorf("preview = %v with a back handler, want none", got)
 	}
 }
+
+func TestScreenHeaderSystemItem(t *testing.T) {
+	h := newPhone(t, phone, func(cx *Scope) Node {
+		return Stack{Style: Style{FlexGrow: 1}, Children: []Node{
+			Screen{Title: "Bare", TestID: "bare", IOS: IOSScreenProps{HeaderRightSystemItem: HeaderItemAdd}},
+			Screen{Title: "Add", TestID: "add", IOS: IOSScreenProps{HeaderRightSystemItem: HeaderItemAdd},
+				HeaderRight: View{TestID: "action", OnPress: func(PressEvent) {}}},
+		}}
+	})
+	items := screenItems(h.commit())
+	if c := items[h.find("add").id]; c.RightSystemItem != HeaderItemAdd || c.Right != h.find("action").parent.id {
+		t.Errorf("with HeaderRight: item %v, right %v; want add over the action", c.RightSystemItem, c.Right)
+	}
+	if c := items[h.find("bare").id]; c.RightSystemItem != 0 {
+		t.Errorf("without HeaderRight: item %v, want none, as nothing would take its press", c.RightSystemItem)
+	}
+}
+
+func TestExitAppLeavesAsBackDoes(t *testing.T) {
+	var scope *Scope
+	h := newPhone(t, phone, func(cx *Scope) Node {
+		scope = cx
+		return View{}
+	})
+	h.commit()
+	scope.ExitApp()
+	if k := kinds(h.commit()); k[driver.ItemBackUnhandled] != 1 {
+		t.Errorf("ExitApp sent %v, want one ItemBackUnhandled", k)
+	}
+}

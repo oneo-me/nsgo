@@ -176,6 +176,10 @@ type Style struct {
 	FontSize   Points
 	FontWeight FontWeight
 	FontStyle  FontStyle
+	// FontVariant turns on small capitals and the forms and widths of
+	// figures; FontVariantNormal undoes an inherited one. A node's
+	// variant replaces its parent's.
+	FontVariant FontVariant
 	// LineHeight is the height of each line. LineHeightMultiple is one in
 	// multiples of the font size, which descendants inherit as a multiple
 	// of theirs; LineHeightEm is one too, resolved where it is set and
@@ -191,6 +195,11 @@ type Style struct {
 	// color when 0.
 	TextDecorationStyle TextDecorationStyle
 	TextDecorationColor Color
+	// TextDecorationThickness is how thick the decoration's lines are,
+	// and TextUnderlineOffset how far below the baseline an underline's
+	// top is; percentages are of the font size, and auto is the font's.
+	TextDecorationThickness Length
+	TextUnderlineOffset     Length
 	// TextTransform changes the case of the characters, as written in the
 	// text it is set on.
 	TextTransform TextTransform
@@ -688,6 +697,9 @@ func (s *Style) mergeText(o Style) {
 	set(&s.TextDecoration, o.TextDecoration)
 	set(&s.TextDecorationStyle, o.TextDecorationStyle)
 	set(&s.TextDecorationColor, o.TextDecorationColor)
+	set(&s.TextDecorationThickness, o.TextDecorationThickness)
+	set(&s.TextUnderlineOffset, o.TextUnderlineOffset)
+	set(&s.FontVariant, o.FontVariant)
 	set(&s.TextTransform, o.TextTransform)
 	set(&s.TextShadowColor, o.TextShadowColor)
 	set(&s.TextShadowOffset, o.TextShadowOffset)
@@ -734,6 +746,9 @@ type textFields struct {
 	SelectionColor                   Color
 	TextDecorationStyle              TextDecorationStyle
 	TextDecorationColor              Color
+	TextDecorationThickness          Length
+	TextUnderlineOffset              Length
+	FontVariant                      FontVariant
 	TextTransform                    TextTransform
 	TextShadowColor                  Color
 	TextShadowOffset                 Point
@@ -769,6 +784,9 @@ func (s *Style) inherit(parent textFields) textFields {
 	set(&t.TextDecoration, s.TextDecoration)
 	set(&t.TextDecorationStyle, s.TextDecorationStyle)
 	set(&t.TextDecorationColor, s.TextDecorationColor)
+	set(&t.TextDecorationThickness, s.TextDecorationThickness)
+	set(&t.TextUnderlineOffset, s.TextUnderlineOffset)
+	set(&t.FontVariant, s.FontVariant)
 	set(&t.TextTransform, s.TextTransform)
 	set(&t.TextShadowColor, s.TextShadowColor)
 	set(&t.TextShadowOffset, s.TextShadowOffset)
@@ -842,6 +860,8 @@ func (s *textFields) textStyle() driver.TextStyle {
 			Size:   s.FontSize,
 			Weight: s.FontWeight,
 			Italic: s.FontStyle == FontStyleItalic,
+			// The normal bit only marks a variant as set.
+			Variant: s.FontVariant &^ FontVariantNormal,
 		},
 		Color:         s.Color,
 		LineHeight:    s.LineHeight,
@@ -857,6 +877,26 @@ func (s *textFields) textStyle() driver.TextStyle {
 	}
 	if t.Font.Size == 0 {
 		t.Font.Size = DefaultFontSize
+	}
+	if t.Decoration != 0 {
+		// Percentages are of the font size, as CSS's are of 1em.
+		em := func(l Length) (Points, bool) {
+			if p, ok := l.Points(); ok {
+				return p, true
+			}
+			if pct, ok := l.Percent(); ok {
+				return t.Font.Size * Points(pct) / 100, true
+			}
+			return 0, false
+		}
+		if p, ok := em(s.TextDecorationThickness); ok {
+			t.DecorationThickness = max(p, 0)
+		}
+		if t.Decoration&TextDecorationUnderline != 0 {
+			if p, ok := em(s.TextUnderlineOffset); ok {
+				t.UnderlineOffset = Pt(p)
+			}
+		}
 	}
 	if s.LineHeightMultiple > 0 {
 		t.LineHeight = Points(s.LineHeightMultiple) * t.Font.Size

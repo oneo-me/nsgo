@@ -373,8 +373,11 @@ type Scroll struct {
 	Style         Style
 	StyleFunc     func() Style
 	Children      []Node
-	// OnScroll receives where it is as it scrolls, at most once a turn.
-	OnScroll func(ScrollEvent)
+	// OnScroll receives where it is as it scrolls, at most once a turn,
+	// and at most once per ScrollEventThrottle when that is set: then the
+	// latest offset waits for the interval to pass.
+	OnScroll            func(ScrollEvent)
+	ScrollEventThrottle time.Duration
 	// OnScrollDragStart and OnScrollDragEnd bracket the user dragging it
 	// (its content or its scroll bar); OnMomentumStart and
 	// OnMomentumEnd the glide or snap after. A glide a new drag catches
@@ -671,6 +674,8 @@ type Screen struct {
 	// shows at its start, at its end and in place of the title, each at
 	// its content's size.
 	HeaderLeft, HeaderRight, HeaderTitle Node
+	// IOS holds what only iOS's header has.
+	IOS IOSScreenProps
 	// HeaderHidden hides the system header.
 	HeaderHidden bool
 	// HeaderTransparent lays the content out under a header without a

@@ -170,6 +170,12 @@ type TextStyle struct {
 	// DecorationColor colors them, Color when 0.
 	DecorationStyle TextDecorationStyle
 	DecorationColor Color
+	// DecorationThickness is how thick Decoration's lines are, the
+	// font's when 0.
+	DecorationThickness Points
+	// UnderlineOffset is how far below the baseline an underline's top
+	// is; auto is where the font puts it.
+	UnderlineOffset Length
 }
 
 // EllipsizeMode is where a text cut by its line limit loses the rest.
@@ -338,4 +344,53 @@ type Font struct {
 	Size   Points
 	Weight FontWeight
 	Italic bool
+	// Variant turns on OpenType features: small capitals and the forms
+	// and widths of figures.
+	Variant FontVariant
+}
+
+// FontVariant is a set of OpenType features, as CSS's font-variant-caps
+// and font-variant-numeric set them; the values combine.
+type FontVariant uint8
+
+const (
+	// FontVariantNormal is a variant that turns no feature on: a style
+	// sets it to undo an inherited variant. Engines ignore it.
+	FontVariantNormal FontVariant = 1 << iota
+	// FontSmallCaps draws lowercase letters as small capitals (smcp).
+	FontSmallCaps
+	// FontOldstyleNums draws figures that rise and fall as lowercase
+	// letters do (onum); FontLiningNums draws them at the capitals'
+	// height (lnum).
+	FontOldstyleNums
+	FontLiningNums
+	// FontTabularNums gives every figure the same width (tnum), so a
+	// changing value keeps its place; FontProportionalNums gives each its
+	// own (pnum).
+	FontTabularNums
+	FontProportionalNums
+)
+
+// fontFeatures are the OpenType tags of FontVariant's features, in the
+// order of their bits.
+var fontFeatures = [...]struct {
+	bit FontVariant
+	tag string
+}{
+	{FontSmallCaps, "smcp"},
+	{FontOldstyleNums, "onum"},
+	{FontLiningNums, "lnum"},
+	{FontTabularNums, "tnum"},
+	{FontProportionalNums, "pnum"},
+}
+
+// Tags returns the OpenType tags of the features v turns on.
+func (v FontVariant) Tags() []string {
+	var tags []string
+	for _, f := range fontFeatures {
+		if v&f.bit != 0 {
+			tags = append(tags, f.tag)
+		}
+	}
+	return tags
 }

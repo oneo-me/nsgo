@@ -1,7 +1,9 @@
 package core
 
 import (
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
 )
@@ -187,5 +189,34 @@ func TestScrollConfigEventsAndCommands(t *testing.T) {
 	if len(zooms) != 2 || zooms[0].Scale != 4 || *zooms[0].Center != (Point{X: 50, Y: 60}) ||
 		zooms[1].Scale != 1 || zooms[1].Center != nil {
 		t.Fatalf("zooms %+v", zooms)
+	}
+}
+
+func TestScrollEventsFollowTheThrottle(t *testing.T) {
+	var got []Points
+	h := newHost(t, Size{Width: 300, Height: 200}, func(cx *Scope) Node {
+		return Scroll{TestID: "scroll", ScrollEventThrottle: 100 * time.Millisecond,
+			OnScroll: func(e ScrollEvent) { got = append(got, e.Offset.Y) },
+			Children: []Node{View{Style: Style{Height: Pt(2000)}}}}
+	})
+	h.commit()
+	id := h.find("scroll").id
+	scroll := func(y Points) { h.tree.Dispatch(driver.Event{Kind: driver.EventScroll, ID: id, Point: Point{Y: y}}) }
+	scroll(10)
+	h.clock.Advance(30 * time.Millisecond)
+	scroll(20)
+	scroll(30)
+	if !slices.Equal(got, []Points{10}) {
+		t.Fatalf("within the throttle: reported %v, want [10]", got)
+	}
+	h.clock.Advance(70 * time.Millisecond)
+	h.drain()
+	if !slices.Equal(got, []Points{10, 30}) {
+		t.Fatalf("after the throttle: reported %v, want [10 30]", got)
+	}
+	h.clock.Advance(150 * time.Millisecond)
+	scroll(40)
+	if !slices.Equal(got, []Points{10, 30, 40}) {
+		t.Fatalf("a scroll after a quiet interval: reported %v, want [10 30 40]", got)
 	}
 }

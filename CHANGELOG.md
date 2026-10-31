@@ -8,8 +8,8 @@
 - Add CSS-like styles: corners, borders, outlines, shadows, gradients, filters, backdrop blur, masks, blend modes, 3D transforms, state styles, the SVG paint canvases draw with, and Tailwind CSS classes with their variants, on elements and every part of `base`'s components.
 - Add TSX apps importing `nsgo`, compiled by `tsx/compiler` with no Node and run on goja with NSH's reactive API, elements, Tailwind classes and error boundaries.
 - Add transitions, keyframes, animated values, motion presets and layout animations that run on each platform's frame clock.
-- Add selectable, hit-testable rich text with the app's fonts, inputs, GIF, WebP and SVG images, Canvas 2D drawing, GPU shaders written in Go and Lucide icons.
-- Add scroll views with overlay scroll bars, touch scrolling, pull to refresh and the app's own refresh indicators, virtualized lists, overlays, modals, navigation stacks with system headers, iOS's sliding pushes and pops, predictive back and browser history, the system tab bar in `mobile`, web views, videos and native views.
+- Add selectable, hit-testable rich text with the app's fonts, OpenType figures and small capitals, decoration lines of any style, thickness and offset, inputs, GIF, WebP and SVG images, Canvas 2D drawing, GPU shaders written in Go and Lucide icons.
+- Add scroll views with overlay scroll bars, touch scrolling, throttled scroll events, pull to refresh and the app's own refresh indicators, virtualized lists, overlays, modals, navigation stacks with system headers and iOS's system bar buttons, iOS's sliding pushes and pops, predictive back and browser history, the system tab bar and leaving the app in `mobile`, web views, videos and native views.
 - Add pointer, touch, focus, keyboard and gesture input, file drops, accessibility, storage and environment signals.
 - Add clipboard images and files, opening links, the photo picker, forced light or dark appearance and a disk cache for downloaded images.
 - Add custom title bars with placed or hidden window controls, window frames, levels and materials, and application and context menus in `desktop`, with scroll bars and a return from `nsgo.Run` on quit.

@@ -80,6 +80,21 @@ final class Text {
 
     private Text() {}
 
+    /** The OpenType tags of core.FontVariant's bits, from its second. */
+    private static final String[] FEATURES = {"smcp", "onum", "lnum", "tnum", "pnum"};
+
+    /** The font feature settings of core.FontVariant's bits, as Paint takes them, or null for none. */
+    static String features(int variant) {
+        StringBuilder b = null;
+        for (int i = 0; i < FEATURES.length; i++) {
+            if ((variant & (2 << i)) == 0) continue;
+            if (b == null) b = new StringBuilder();
+            else b.append(", ");
+            b.append('\'').append(FEATURES[i]).append('\'');
+        }
+        return b == null ? null : b.toString();
+    }
+
     /** A resolved text style, as android.go's writeStyle writes it. */
     static final class Style {
         final String family;
@@ -92,8 +107,12 @@ final class Text {
         final boolean italic, underline, lineThrough;
         /** The paragraphs' base direction is right to left. */
         final boolean rtl;
+        /** The OpenType features of core.FontVariant's bits, as Paint takes them, or null. */
+        final String features;
         /** How the decoration's lines are drawn and their ARGB color, 0 for the text's; read after the rest. */
         int decorationStyle, decorationColor;
+        /** The lines' thickness in pixels, 0 for the font's, and an underline's top below the baseline, NaN for the font's. */
+        float thickness, underlineOffset = Float.NaN;
 
         Style(DataInputStream in, float density) throws IOException {
             family = Protocol.readString(in);
@@ -108,18 +127,25 @@ final class Text {
             underline = Protocol.flag(flags, 1);
             lineThrough = Protocol.flag(flags, 2);
             rtl = Protocol.flag(flags, 3);
+            features = features(in.readUnsignedByte());
         }
 
-        /** Reads the decoration's style and color, which PREPARE sends after the text's parts. */
-        void readDecoration(DataInputStream in) throws IOException {
+        /** Reads how the decoration is drawn, which PREPARE sends after the text's parts. */
+        void readDecoration(DataInputStream in, float density) throws IOException {
             decorationStyle = in.readUnsignedByte();
             decorationColor = argb(in.readInt());
+            thickness = in.readFloat() * density;
+            underlineOffset = in.readFloat() * density;
         }
 
-        /** Whether TextNode draws the decoration, which a paint draws only solid and in the text's color. */
+        /**
+         * Whether TextNode draws the decoration, which a paint draws only
+         * solid, in the text's color and where the font puts it.
+         */
         boolean drawsDecoration() {
             return (underline || lineThrough)
-                    && (decorationStyle > Protocol.DECORATION_SOLID || (decorationColor >>> 24) != 0);
+                    && (decorationStyle > Protocol.DECORATION_SOLID || (decorationColor >>> 24) != 0 || thickness > 0
+                            || underline && !Float.isNaN(underlineOffset));
         }
 
         Typeface typeface() {
@@ -146,6 +172,7 @@ final class Text {
             paint.setTypeface(typeface());
             paint.setColor(color);
             paint.setLetterSpacing(letterSpacingEm());
+            paint.setFontFeatureSettings(features);
             paint.setFlags(paintFlags(paint.getFlags()));
             return paint;
         }
@@ -168,8 +195,12 @@ final class Text {
                 under = measure.getUnderlinePosition();
                 strike = measure.getStrikeThruPosition();
             }
+            if (this.thickness > 0) thickness = this.thickness;
+            thickness = Math.max(thickness, 1);
+            // The app's offset is the line's top; Decoration's is its middle.
+            if (!Float.isNaN(underlineOffset)) under = underlineOffset + thickness / 2;
             int color = (decorationColor >>> 24) != 0 ? decorationColor : this.color;
-            return new Decoration(underline, lineThrough, decorationStyle, color, under, strike, Math.max(thickness, 1));
+            return new Decoration(underline, lineThrough, decorationStyle, color, under, strike, thickness);
         }
 
         /** The horizontal gravity of a text field. */
@@ -376,6 +407,7 @@ final class Text {
             paint.setTextSize(style.size);
             paint.setTypeface(typeface);
             paint.setLetterSpacing(style.letterSpacingEm());
+            paint.setFontFeatureSettings(style.features);
         }
 
         @Override

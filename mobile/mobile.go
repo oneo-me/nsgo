@@ -31,3 +31,9 @@ func IsAvailable(cx *core.Scope) bool {
 	os := cx.Env().OS()
 	return os == core.OSIOS || os == core.OSAndroid
 }
+
+// ExitApp leaves the app on Android as its back button does when nothing
+// in the app takes it: the task's root activity goes to the background,
+// any other finishes. iOS apps never leave themselves, so it does nothing
+// there, as elsewhere.
+func ExitApp(cx *core.Scope) { cx.ExitApp() }

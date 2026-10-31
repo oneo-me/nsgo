@@ -341,6 +341,40 @@ func transformsCard(cx *core.Scope) core.Node {
 	)
 }
 
+// numeralsCard is figures in their proportional and tabular widths, then
+// small capitals and oldstyle figures: the font's OpenType features.
+func numeralsCard(cx *core.Scope) core.Node {
+	colors := colorsOf(cx)
+	figure := func(s string, v core.FontVariant) core.Node {
+		t := text(s, 22, medium, colors.text)
+		t.Style.FontVariant = v
+		return t
+	}
+	column := func(head core.Node, v core.FontVariant) core.Node {
+		return core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pct(0), Gap: 4}, Children: []core.Node{
+			head, figure("1,111.11", v), figure("8,888.88", v)}}
+	}
+	tabular := text("tabular-nums", 12, regular, colors.accent)
+	tabular.Style.FontFamily = mono
+	feature := func(label string, v core.FontVariant, name string) core.Node {
+		l := text(label, 18, regular, colors.text)
+		l.Style.FontVariant, l.Style.FlexGrow, l.Style.FlexShrink = v, 1, 1
+		n := text(name, 13, regular, colors.faint)
+		n.Style.FontFamily = mono
+		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{l, n}}
+	}
+	return card(cx, cardProps{icon: iconText, title: "Numerals", subtitle: "FontVariant"},
+		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
+			column(text("Proportional", 12, regular, colors.muted), 0),
+			core.View{Style: core.Style{Width: core.Pt(1)}, StyleFunc: filled(colors.line)},
+			column(tabular, core.FontTabularNums),
+		}},
+		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: filled(colors.line)},
+		feature("Small Caps", core.FontSmallCaps, "small-caps"),
+		feature("Oldstyle 1234567890", core.FontOldstyleNums, "oldstyle-nums"),
+	)
+}
+
 // rightToLeft is rows, start margins and text under a right-to-left
 // layout: the app's language decides it, and LayoutDirection sets a
 // view's own.
@@ -509,8 +543,9 @@ func keyframesCard(cx *core.Scope) core.Node {
 }
 
 // stylesDemo is how views draw: corners, borders, shadows, clipping,
-// stacking, 3D transforms and direction, then NSGo's gradients, filters,
-// keyframes and group styles.
+// stacking, 3D transforms, numerals and direction, then NSGo's
+// gradients, filters, keyframes and group styles.
 func stylesDemo(cx *core.Scope) core.Node {
-	return demoPage(cx, pageProps{}, cornersCard, bordersCard, shadowsCard, layersCard, transformsCard, rightToLeft, gradientsCard, filtersCard, keyframesCard)
+	return demoPage(cx, pageProps{}, cornersCard, bordersCard, shadowsCard, layersCard, transformsCard, numeralsCard, rightToLeft,
+		gradientsCard, filtersCard, keyframesCard)
 }

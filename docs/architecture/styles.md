@@ -24,6 +24,7 @@ Styles follow NSH's `styles.md` with Go values in place of CSS strings: construc
 - `View.ClassFunc`'s classes follow `Class`'s, again when what it reads changes, so a part's state classes come and go without a new node.
 - Classes merge under `Style`, their state styles merging with the style's rather than replaced by them, and important ones over it. `space-x-*` and `space-y-*` give a view's children but the last the margin on that side, under their own.
 - Shadows and rings, filters, gradients (`bg-linear-to-*` with `from-*`, `via-*`, `to-*`) and `tracking-*` are composed once a style's rules are applied, as Tailwind composes its CSS variables.
+- `normal-nums`, `small-caps` and the figure classes (`tabular-nums`, ...) each turn their features on and those they exclude off in the node's `FontVariant`, as CSS's `font-variant-numeric` and `font-variant-caps` do.
 - `line-clamp-*`, `truncate`, `text-ellipsis` and `pointer-events-*` are props: an explicit one wins over them.
 - A color the palette lacks names a `Palette` role in kebab case (`bg-accent`, `text-text-muted/70`), read from the node's theme in the appearance it shows.
 - `bg-transparent` is a color of alpha 0 that is not the zero `Color`, so it sets the field.

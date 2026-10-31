@@ -66,6 +66,10 @@ var (
 
 	attrFont, attrColor, attrKern, attrUnderline, attrParagraph uintptr
 	attrTraits, attrWeight, attrSymbolic, attrUnderlineColor    uintptr
+	attrFeatureSettings, attrFeatureTag, attrFeatureValue       uintptr
+
+	ctFontDescriptorCreateWithAttrs func(attrs uintptr) uintptr
+	ctFontCreateCopyWithAttrs       func(font uintptr, size float64, matrix, desc uintptr) uintptr
 )
 
 // A CFRange or CGSize argument above is declared as its two fields: both
@@ -133,6 +137,11 @@ func loadText(cf, cg uintptr) {
 	attrWeight = constant(ct, "kCTFontWeightTrait")
 	attrSymbolic = constant(ct, "kCTFontSymbolicTrait")
 	attrUnderlineColor = constant(ct, "kCTUnderlineColorAttributeName")
+	attrFeatureSettings = constant(ct, "kCTFontFeatureSettingsAttribute")
+	attrFeatureTag = constant(ct, "kCTFontOpenTypeFeatureTag")
+	attrFeatureValue = constant(ct, "kCTFontOpenTypeFeatureValue")
+	reg(&ctFontDescriptorCreateWithAttrs, ct, "CTFontDescriptorCreateWithAttributes")
+	reg(&ctFontCreateCopyWithAttrs, ct, "CTFontCreateCopyWithAttributes")
 	loadInline(ct, cg)
 }
 
@@ -143,10 +152,11 @@ var weights = [...]float64{-0.8, -0.6, -0.4, 0, 0.23, 0.3, 0.4, 0.56, 0.62}
 // of numbers has two or three of these for the whole screen, and asks for
 // them once per changed cell per frame.
 type fontKey struct {
-	family string
-	size   float64
-	weight driver.FontWeight
-	italic bool
+	family  string
+	size    float64
+	weight  driver.FontWeight
+	italic  bool
+	variant driver.FontVariant
 }
 
 // fontCacheLimit bounds the cache. A screen uses a handful of fonts; an
@@ -162,7 +172,7 @@ var fontCache = newRefCache[fontKey](fontCacheLimit)
 // again by reference. Building one is seven CoreText calls through purego;
 // a frame of a table asks for the same font forty times.
 func Font(f driver.Font) uintptr {
-	k := fontKey{family: f.Family, size: float64(f.Size), weight: f.Weight, italic: f.Italic}
+	k := fontKey{family: f.Family, size: float64(f.Size), weight: f.Weight, italic: f.Italic, variant: f.Variant}
 	if ref := fontCache.get(k); ref != 0 {
 		return ref
 	}
@@ -175,6 +185,36 @@ func Font(f driver.Font) uintptr {
 
 // buildFont returns a new CTFont for f. The caller releases it.
 func buildFont(f driver.Font) uintptr {
+	font := buildFace(f)
+	if tags := f.Variant.Tags(); len(tags) > 0 && font != 0 {
+		font = withFeatures(font, tags)
+	}
+	return font
+}
+
+// withFeatures returns a copy of font with the OpenType features tags
+// turned on, releasing font.
+func withFeatures(font uintptr, tags []string) uintptr {
+	one := int32Number(1)
+	owned := []uintptr{one}
+	features := make([]uintptr, len(tags))
+	for i, tag := range tags {
+		t := CFString(tag)
+		features[i] = dictionary([]uintptr{attrFeatureTag, attrFeatureValue}, []uintptr{t, one})
+		owned = append(owned, t, features[i])
+	}
+	list := cfArray(features)
+	attrs := dictionary([]uintptr{attrFeatureSettings}, []uintptr{list})
+	desc := ctFontDescriptorCreateWithAttrs(attrs)
+	out := ctFontCreateCopyWithAttrs(font, 0, 0, desc)
+	for _, ref := range append(owned, list, attrs, desc, font) {
+		Release(ref)
+	}
+	return out
+}
+
+// buildFace returns a new CTFont of f's family, size, weight and slant.
+func buildFace(f driver.Font) uintptr {
 	var base uintptr
 	if f.Family == driver.FontMonospace {
 		const uiFontUserFixedPitch = 1
@@ -238,13 +278,13 @@ const (
 
 // runAttributes returns a new dictionary of what st sets per character:
 // font, color, letter spacing and underline, plus extra keys and values.
-// A wavy underline is drawn from the lines instead. The caller releases
+// An underline CoreText cannot draw is drawn from the lines instead. The caller releases
 // it.
 func runAttributes(st driver.TextStyle, keys, values []uintptr) uintptr {
 	font := Font(st.Font)
 	color := CGColor(st.Color)
 	var line int32
-	if st.Decoration&driver.TextDecorationUnderline != 0 {
+	if st.Decoration&driver.TextDecorationUnderline != 0 && !drawsUnderline(st) {
 		switch st.DecorationStyle {
 		case driver.DecorationDouble:
 			line = underlineDouble
@@ -252,7 +292,6 @@ func runAttributes(st driver.TextStyle, keys, values []uintptr) uintptr {
 			line = underlineSingle | underlineDot
 		case driver.DecorationDashed:
 			line = underlineSingle | underlineDash
-		case driver.DecorationWavy:
 		default:
 			line = underlineSingle
 		}
@@ -973,6 +1012,38 @@ func (l *Layout) Draw(ctx uintptr, viewHeight float64, box CGRect, baseUp bool) 
 		drawLines(ctx, l.over, box)
 	}
 }
+
+// ContentFrame is the frame of the layer a text view of size w by h
+// draws l into, its text in box: the view's bounds, grown to hold the
+// decoration lines, backgrounds and shadow that reach past them, as a
+// browser draws a text's ink outside its box. It is in whole points.
+func (l *Layout) ContentFrame(w, h float64, box CGRect) CGRect {
+	x0, y0, x1, y1 := 0.0, 0.0, w, h
+	grow := func(r CGRect) {
+		x0, y0 = min(x0, r.Origin.X), min(y0, r.Origin.Y)
+		x1, y1 = max(x1, r.Origin.X+r.Size.Width), max(y1, r.Origin.Y+r.Size.Height)
+	}
+	if l != nil {
+		for _, b := range append(l.under[:len(l.under):len(l.under)], l.over...) {
+			r := b.rect
+			// A wave or a double line reaches past its box.
+			pad := 2 * max(r.Size.Height, 1)
+			r.Origin.Y -= pad
+			r.Size.Height += 2 * pad
+			grow(Rect(box.Origin.X+r.Origin.X, box.Origin.Y+r.Origin.Y, r.Size.Width, r.Size.Height))
+		}
+		if s := l.shadow; s.Color != 0 {
+			r := float64(s.Radius)
+			grow(Rect(box.Origin.X+float64(s.Offset.X)-r, box.Origin.Y+float64(s.Offset.Y)-r,
+				box.Size.Width+2*r, max(box.Size.Height, l.height)+2*r))
+		}
+	}
+	x0, y0 = math.Floor(x0), math.Floor(y0)
+	return Rect(x0, y0, math.Ceil(x1)-x0, math.Ceil(y1)-y0)
+}
+
+// TranslateCTM moves ctx's origin by x, y.
+func TranslateCTM(ctx uintptr, x, y float64) { cgContextTranslateCTM(ctx, x, y) }
 
 func (l *Layout) drawGlyphs(ctx uintptr, viewHeight float64, box CGRect) {
 	cgContextSaveGState(ctx)

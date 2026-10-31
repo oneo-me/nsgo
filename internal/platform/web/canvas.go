@@ -5,6 +5,7 @@ package web
 import (
 	"math"
 	"strconv"
+	"strings"
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -199,11 +200,11 @@ func (p *canvasPlayer) play(op *driver.DrawOp) {
 	case driver.DrawFillText:
 		ctx.Set("font", fontCSS(op.Font))
 		x, y := f(op.X+op.X1), f(op.Y+op.Y1)
-		p.paint(p.fill, func() { ctx.Call("fillText", op.Text, x, y) }, false)
+		p.paint(p.fill, func() { drawText(ctx, "fillText", op, x, y) }, false)
 	case driver.DrawStrokeText:
 		ctx.Set("font", fontCSS(op.Font))
 		x, y := f(op.X+op.X1), f(op.Y+op.Y1)
-		p.paint(p.stroke, func() { ctx.Call("strokeText", op.Text, x, y) }, true)
+		p.paint(p.stroke, func() { drawText(ctx, "strokeText", op, x, y) }, true)
 	case driver.DrawClear:
 		ctx.Call("clearRect", f(op.X), f(op.Y), f(op.W), f(op.H))
 	case driver.DrawImage:
@@ -395,7 +396,42 @@ func fontCSS(fnt driver.Font) string {
 	if fnt.Italic {
 		style = "italic "
 	}
+	if fnt.Variant&driver.FontSmallCaps != 0 {
+		style += "small-caps "
+	}
 	return style + strconv.Itoa(int(fnt.Weight)) + " " + px(fnt.Size) + " " + family
+}
+
+// drawText draws op's text at x, y with ctx's method. A canvas has no
+// font-variant-numeric, so tabular figures are drawn one by one, each
+// centered in the widest figure's advance, which is the width a font's
+// tabular figures share.
+func drawText(ctx js.Value, method string, op *driver.DrawOp, x, y float64) {
+	if op.Font.Variant&driver.FontTabularNums == 0 || !strings.ContainsAny(op.Text, "0123456789") {
+		ctx.Call(method, op.Text, x, y)
+		return
+	}
+	var cell float64
+	for d := '0'; d <= '9'; d++ {
+		cell = max(cell, ctx.Call("measureText", string(d)).Get("width").Float())
+	}
+	rest := op.Text
+	for rest != "" {
+		i := strings.IndexAny(rest, "0123456789")
+		if i != 0 {
+			run := rest
+			if i > 0 {
+				run = rest[:i]
+			}
+			ctx.Call(method, run, x, y)
+			x += ctx.Call("measureText", run).Get("width").Float()
+			rest = rest[len(run):]
+			continue
+		}
+		w := ctx.Call("measureText", rest[:1]).Get("width").Float()
+		ctx.Call(method, rest[:1], x+(cell-w)/2, y)
+		x, rest = x+cell, rest[1:]
+	}
 }
 
 // describeNodes gives a canvas's named parts to assistive technology: an

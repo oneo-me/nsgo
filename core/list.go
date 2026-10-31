@@ -96,23 +96,24 @@ type List struct {
 	// Refreshing, PullValue and OffsetValues are Scroll's, for the list's
 	// scroll view. In its parent's viewport they are ignored, as are Inverted
 	// and MaintainVisibleContentPosition.
-	Behavior          ScrollBehavior
-	BehaviorFunc      func() ScrollBehavior
-	ContentOffset     Point
-	OnScroll          func(ScrollEvent)
-	OnScrollDragStart func(ScrollEvent)
-	OnScrollDragEnd   func(ScrollEvent)
-	OnMomentumStart   func(ScrollEvent)
-	OnMomentumEnd     func(ScrollEvent)
-	OnRefresh         func()
-	Refreshing        func() bool
-	PullValue         *AnimatedValue
-	OffsetValues      AnimatedXY
-	OnLayout          func(Bounds)
-	Style             Style
-	StyleFunc         func() Style
-	Ref               *Ref
-	TestID            string
+	Behavior            ScrollBehavior
+	BehaviorFunc        func() ScrollBehavior
+	ContentOffset       Point
+	OnScroll            func(ScrollEvent)
+	ScrollEventThrottle time.Duration
+	OnScrollDragStart   func(ScrollEvent)
+	OnScrollDragEnd     func(ScrollEvent)
+	OnMomentumStart     func(ScrollEvent)
+	OnMomentumEnd       func(ScrollEvent)
+	OnRefresh           func()
+	Refreshing          func() bool
+	PullValue           *AnimatedValue
+	OffsetValues        AnimatedXY
+	OnLayout            func(Bounds)
+	Style               Style
+	StyleFunc           func() Style
+	Ref                 *Ref
+	TestID              string
 }
 
 // Render implements Node.
@@ -328,7 +329,7 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 		}
 		v.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: l.Horizontal, HideIndicator: l.HideIndicator}}
 		t.bindScrollSpec(cx, v, scrollSpec{behavior: l.Behavior, behaviorFunc: l.BehaviorFunc,
-			refreshing: l.Refreshing, onRefresh: l.OnRefresh, onScroll: l.OnScroll,
+			refreshing: l.Refreshing, onRefresh: l.OnRefresh, onScroll: l.OnScroll, throttle: l.ScrollEventThrottle,
 			onDragStart: l.OnScrollDragStart, onDragEnd: l.OnScrollDragEnd,
 			onMomentum: l.OnMomentumStart, onMomentumEnd: l.OnMomentumEnd})
 		t.bindScroll(cx, v, l.OffsetValues, l.PullValue)

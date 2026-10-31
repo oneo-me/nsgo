@@ -41,6 +41,35 @@ func styleEqual(a, b Style) bool {
 		a.BorderColor == b.BorderColor && a.Opacity == b.Opacity && a.ZIndex == b.ZIndex
 }
 
+func TestFontVariantAndDecorationClasses(t *testing.T) {
+	for classes, want := range map[string]FontVariant{
+		"tabular-nums":                        FontTabularNums,
+		"small-caps oldstyle-nums":            FontSmallCaps | FontOldstyleNums,
+		"oldstyle-nums lining-nums":           FontLiningNums,
+		"small-caps tabular-nums normal-nums": FontSmallCaps,
+	} {
+		s, _, _ := resolveFor(t, classes, narrow)
+		if got := s.FontVariant &^ FontVariantNormal; got != want || s.FontVariant&FontVariantNormal == 0 {
+			t.Errorf("%s: variant %v, want %v set", classes, s.FontVariant, want)
+		}
+	}
+	for classes, want := range map[string][2]Length{
+		"decoration-2 underline-offset-4":                                       {Pt(2), Pt(4)},
+		"decoration-[3px] -underline-offset-2":                                  {Pt(3), Pt(-2)},
+		"decoration-[10%] underline-offset-[0.5em]":                             {Pct(10), Pct(50)},
+		"decoration-2 decoration-auto underline-offset-1 underline-offset-auto": {},
+	} {
+		s, _, _ := resolveFor(t, classes, narrow)
+		if got := [2]Length{s.TextDecorationThickness, s.TextUnderlineOffset}; got != want {
+			t.Errorf("%s: thickness and offset %v, want %v", classes, got, want)
+		}
+	}
+	if s, _, _ := resolveFor(t, "decoration-red-500", narrow); s.TextDecorationColor != tailwindPalette["red"][5] ||
+		!s.TextDecorationThickness.IsAuto() {
+		t.Errorf("decoration-red-500 sets %v and %v", s.TextDecorationColor, s.TextDecorationThickness)
+	}
+}
+
 func TestLaterClassesWinAndVariantsComeAfter(t *testing.T) {
 	s, _, _ := resolveFor(t, "p-4 p-2", narrow)
 	if s.Padding.Top != 8 {

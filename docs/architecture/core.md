@@ -53,7 +53,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - `ItemHistory` counts the backs the app can take: screens above each stack's first and modals shown. The web keeps that many browser history entries when the app is the whole page, so the browser's back goes back in the app.
 - `OnBackPress` stays in `core`, where NSH's apps take it from `nsh/mobile`, because it also hears Escape and the browser's back.
 - A popped screen reports `OnDismiss` and stays hidden until the app removes it; the last screen never pops.
-- Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar.
+- Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar. `Screen.IOS.HeaderRightSystemItem` with a `HeaderRight` asks iOS for UIKit's own bar button in its place, whose press iOS reports on `HeaderRight`'s first view that takes presses, as NSH's `headerRightSystemItem`.
 - `Header` is then not mounted; elsewhere it is the screen's first child.
 - iOS gives each screen a `UINavigationBar` of its own with a back item, Android a `Toolbar`; their back buttons and iOS's leading-edge swipe send `EventBack` with the screen's ID.
 - iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view.

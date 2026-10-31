@@ -85,6 +85,15 @@ func (cx *Scope) OnBackPress(fn func() bool) {
 	b.owner.addCleanup(func() { t.backs = slices.DeleteFunc(t.backs, func(o *backHandler) bool { return o == b }) })
 }
 
+// ExitApp is the core's part of mobile.ExitApp, which apps use: it
+// leaves the app as Android's back button does when nothing takes it.
+func (cx *Scope) ExitApp() {
+	if t := cx.rt.tree; t != nil {
+		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemBackUnhandled})
+		t.changed = true
+	}
+}
+
 // keymap returns the bindings, oldest first: the newest of a key wins.
 func (t *Tree) keymap() []driver.KeyBinding {
 	out := make([]driver.KeyBinding, 0, len(t.keys))

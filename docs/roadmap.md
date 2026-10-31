@@ -4,16 +4,6 @@ This plan lists what NSGo still lacks compared with NSH's 0.3.0 release (tag `v0
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, with the bullet or section to read in brackets. To refresh the plan for NSH's next release, check out its tag in `nsh/`, then read `git log v0.3.0..HEAD` there and the documents it changed, and compare the declarations any `nsh` command run on its gallery writes to `nsh/examples/gallery/.nsh/types/` with `go doc -all` of the public packages.
 
-## Text, scrolling and navigation
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Font variants | `styles.md` (`fontVariant`), `canvas.md` (`fontVariantNumeric`) | Text, inputs and a drawing's text take small caps and tabular, proportional, lining or oldstyle figures on all six backends; the gallery's Styles page has NSH's Numerals card, and its Stocks and Charts pages set their figures tabular |
-| Decoration lines | `styles.md` (text) | An underline or strike takes a thickness and an underline an offset from the text |
-| Scroll event throttle | `scrolling-and-lists.md` (`scrollEventThrottle`) | A scroll view or list reports scrolls at most once per interval the app sets |
-| iOS header buttons | `website/docs/navigation.md` (`headerRightSystemItem`) | `Screen.IOS` puts a UIKit system bar button (add, done, close, edit, compose, search, share, trash, save, cancel) at the header's end, pressing `HeaderRight`'s first pressable view |
-| Leaving the app | `js-modules.md` (`BackHandler`) | `mobile` can end the app on Android, as `BackHandler.exitApp` does |
-
 ## Components
 
 | Item | NSH reference | Done when |
@@ -56,6 +46,7 @@ These items wait for community contributions, and a change to one backend record
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Real file drags | `file-drop.md` | A real drag from Finder and from a Linux file manager is checked to reach a view, as one from Explorer is |
+| Ink past a text's box | `styles.md` (text) | A text's decoration lines and shadow that reach past its box are checked to draw on Android, Windows and Linux, as they do on Apple and the web |
 
 ## Not ported
 

@@ -116,8 +116,12 @@ const (
 	// IDWriteFactory
 	dwGetSystemFontCollection    = 3
 	dwCreateTextFormat           = 15
+	dwCreateTypography           = 16
 	dwCreateTextLayout           = 18
 	dwCreateEllipsisTrimmingSign = 20
+
+	// IDWriteTypography
+	typographyAddFontFeature = 3
 
 	// IDWriteFontCollection, IDWriteFontFamily, IDWriteFont
 	collectionGetFontFamily    = 4
@@ -142,6 +146,7 @@ const (
 	layoutSetFontSize         = 35
 	layoutSetDrawingEffect    = 38
 	layoutSetInlineObject     = 39
+	layoutSetTypography       = 40
 	layoutGetLineMetrics      = 59
 	layoutGetMetrics          = 60
 	layoutHitTestPoint        = 64

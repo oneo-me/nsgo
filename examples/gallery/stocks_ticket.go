@@ -79,7 +79,7 @@ func ticketLine(cx *core.Scope, lbl string, value func() string, strong bool) co
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, MinHeight: core.Pt(24)}, Children: []core.Node{
 		core.Text{Content: lbl, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.muted)},
-		textf(value, size, weight, colors.text),
+		tabular(textf(value, size, weight, colors.text)),
 	}}
 }
 
@@ -158,14 +158,14 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 	return core.View{Style: core.Style{Gap: 16, Padding: core.Edges{Top: 4}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
 			core.Text{ContentFunc: func() string { return verb() + " " + s.code }, Style: core.Style{FlexGrow: 1, FontSize: 20, FontWeight: semibold}, StyleFunc: colored(colors.text)},
-			text("simulated · nothing is sent", 12, regular, colors.faint),
+			tabular(text("simulated · nothing is sent", 12, regular, colors.faint)),
 		}},
 		segmented([]option[side]{{value: "buy", label: "Buy"}, {value: "sell", label: "Sell"}}, sd.Get, sd.Set, false),
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline}, Children: []core.Node{
 				core.Text{Content: "Limit price", Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.muted)},
 				core.Text{ContentFunc: func() string { return "use last " + p(s.quote.Get().last) }, Role: core.RoleButton,
-					OnPress: func(core.PressEvent) { limit.Set(s.quote.GetUntracked().last) }, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.accent)},
+					OnPress: func(core.PressEvent) { limit.Set(s.quote.GetUntracked().last) }, Style: core.Style{FontSize: 13, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.accent)},
 			}},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 				stepper(iconMinus, "Lower the price", -1),

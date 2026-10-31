@@ -75,7 +75,7 @@ Windows checks the registry first because the shell asks the user for an app for
 | Linux | `gtk-interface-color-scheme` from GTK 4.20, `gtk-application-prefer-dark-theme` before |
 | Web | The page's `color-scheme` |
 
-`Quit` ends the app. On desktops `nsgo.Run` returns once the engine stopped and storage was written, as NSH's `run_app`: macOS cancels `applicationShouldTerminate:` and stops AppKit's loop, posting an event to wake it. Android finishes its task; iOS apps never quit themselves.
+`Quit` ends the app. On desktops `nsgo.Run` returns once the engine stopped and storage was written, as NSH's `run_app`: macOS cancels `applicationShouldTerminate:` and stops AppKit's loop, posting an event to wake it. Android finishes its task; iOS apps never quit themselves. `mobile.ExitApp`, NSH's `BackHandler.exitApp`, does what Android's back does when nothing in the app takes it (`ItemBackUnhandled`): the task's root goes to the background, another activity finishes.
 
 `nsgo.KeepAliveOnClose` keeps a macOS app running when its window closes: the window orders out, and the Dock's reopen shows it again. Windows and Linux end with the window, having no Dock to reopen from.
 

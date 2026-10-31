@@ -93,6 +93,13 @@ type (
 	Font = driver.Font
 	// FontWeight is a CSS font weight from 100 to 900; 0 is unset.
 	FontWeight = driver.FontWeight
+	// HeaderSystemItem is a button iOS draws in a navigation bar in
+	// UIKit's own look, its symbol or label.
+	HeaderSystemItem = driver.HeaderSystemItem
+	// FontVariant is a set of OpenType features, as CSS's
+	// font-variant-caps and font-variant-numeric set them; the values
+	// combine.
+	FontVariant = driver.FontVariant
 	// GesturePhase is where a gesture is in its course.
 	GesturePhase = driver.GesturePhase
 	// CanvasGradient is a linear, radial or conic color gradient that a
@@ -868,6 +875,28 @@ const (
 	TextDecorationNone        = driver.TextDecorationNone
 	TextDecorationUnderline   = driver.TextDecorationUnderline
 	TextDecorationLineThrough = driver.TextDecorationLineThrough
+)
+
+const (
+	HeaderItemAdd     = driver.HeaderItemAdd
+	HeaderItemDone    = driver.HeaderItemDone
+	HeaderItemClose   = driver.HeaderItemClose
+	HeaderItemEdit    = driver.HeaderItemEdit
+	HeaderItemCompose = driver.HeaderItemCompose
+	HeaderItemSearch  = driver.HeaderItemSearch
+	HeaderItemShare   = driver.HeaderItemShare
+	HeaderItemTrash   = driver.HeaderItemTrash
+	HeaderItemSave    = driver.HeaderItemSave
+	HeaderItemCancel  = driver.HeaderItemCancel
+)
+
+const (
+	FontVariantNormal    = driver.FontVariantNormal
+	FontSmallCaps        = driver.FontSmallCaps
+	FontOldstyleNums     = driver.FontOldstyleNums
+	FontLiningNums       = driver.FontLiningNums
+	FontTabularNums      = driver.FontTabularNums
+	FontProportionalNums = driver.FontProportionalNums
 )
 
 const (

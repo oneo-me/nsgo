@@ -235,6 +235,9 @@ func (in *textInput) makeLayout(units []uint16, align uintptr) *comObject {
 	}
 	layout.call(formatSetTextAlignment, align)
 	s := in.config.Style
+	if t := typography(s.Font.Variant); t != nil && n > 0 {
+		layout.callRange(layoutSetTypography, 0, 0, uint32(n), t.ptr())
+	}
 	if ls := float32(s.LetterSpacing); ls != 0 && n > 0 {
 		if l1 := layout.query(&iidDWriteTextLayout1); l1 != nil {
 			l1.callRange(layoutSetCharacterSpacing, 0b111, 0, uint32(n), f32(0), f32(ls), f32(0))

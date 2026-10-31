@@ -433,17 +433,47 @@ func fontStyle(t driver.TextStyle) map[string]string {
 	if t.DecorationColor != 0 {
 		decorationColor = cssColor(t.DecorationColor)
 	}
+	thickness, offset := "auto", "auto"
+	if t.DecorationThickness > 0 {
+		thickness = px(t.DecorationThickness)
+	}
+	if o, ok := t.UnderlineOffset.Points(); ok {
+		offset = px(o)
+	}
 	direction := "ltr"
 	if t.RTL {
 		direction = "rtl"
+	}
+	caps, numeric := "normal", "normal"
+	if t.Font.Variant&driver.FontSmallCaps != 0 {
+		caps = "small-caps"
+	}
+	var nums []string
+	for _, n := range numericVariants {
+		if t.Font.Variant&n.bit != 0 {
+			nums = append(nums, n.css)
+		}
+	}
+	if len(nums) > 0 {
+		numeric = strings.Join(nums, " ")
 	}
 	return map[string]string{
 		"font-family": family, "font-size": px(t.Font.Size), "font-weight": fmt.Sprint(t.Font.Weight),
 		"font-style": italic, "line-height": lineHeight, "letter-spacing": px(t.LetterSpacing),
 		"color": cssColor(t.Color), "text-align": align, "text-decoration-line": decoration,
 		"text-decoration-style": decorationStyles[t.DecorationStyle], "text-decoration-color": decorationColor,
-		"direction": direction,
+		"text-decoration-thickness": thickness, "text-underline-offset": offset,
+		"font-variant-caps": caps, "font-variant-numeric": numeric, "direction": direction,
 	}
+}
+
+// numericVariants are the CSS of font-variant-numeric's values.
+var numericVariants = [...]struct {
+	bit driver.FontVariant
+	css string
+}{
+	{driver.FontOldstyleNums, "oldstyle-nums"}, {driver.FontLiningNums, "lining-nums"},
+	{driver.FontTabularNums, "tabular-nums"}, {driver.FontProportionalNums, "proportional-nums"},
 }
 
 // decorationStyles are the CSS of the decoration styles.

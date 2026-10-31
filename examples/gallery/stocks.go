@@ -31,7 +31,7 @@ func sectorBar(cx *core.Scope, lbl string, change func() float64, scale func() f
 			}, colors.up, false, 8, 2)}},
 		}},
 		core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
-			return core.Style{Width: core.Pt(56), TextAlign: core.TextAlignEnd, FontSize: 12, Color: toneOf(cx, change())}
+			return core.Style{Width: core.Pt(56), TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 		}},
 	}}
 }
@@ -76,9 +76,9 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 				segment(func() int { return b().up }, colors.up), segment(func() int { return b().flat }, colors.faint), segment(func() int { return b().down }, colors.down),
 			}},
 			core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d up", b().up) }, Style: core.Style{FlexGrow: 1, FontSize: 12}, StyleFunc: colored(colors.up)},
-				textf(func() string { return fmt.Sprintf("%d flat · %d issues", b().flat, issues) }, 12, regular, colors.faint),
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d down", b().down) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12}, StyleFunc: colored(colors.down)},
+				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d up", b().up) }, Style: core.Style{FlexGrow: 1, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.up)},
+				tabular(textf(func() string { return fmt.Sprintf("%d flat · %d issues", b().flat, issues) }, 12, regular, colors.faint)),
+				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d down", b().down) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.down)},
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 2}, Children: bars},
@@ -107,13 +107,13 @@ func marketStrip(cx *core.Scope, m *market) core.Node {
 			core.View{OnPress: func(core.PressEvent) { toggle() }, Role: core.RoleButton, Label: "Breadth", Expanded: opened.Get,
 				Style: core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(56)}, Children: []core.Node{
 					core.Text{Content: "Composite", MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
-					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: semibold}, StyleFunc: colored(colors.text)},
+					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: semibold, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.text)},
 					core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
-						return core.Style{FontSize: 13, FontWeight: medium, Color: toneOf(cx, change())}
+						return core.Style{FontSize: 13, FontWeight: medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 					}},
 					core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: lerp(turn, 90, -90)}}, Children: []core.Node{icon(iconChevron, 12, colors.faint)}},
 				}},
-			textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, regular, colors.faint),
+			tabular(textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, regular, colors.faint)),
 			pauseButton(cx, m),
 		}},
 		core.Show{When: opened.Get, Then: func(cx *core.Scope) core.Node { return breadthPanel(cx, m) }},
@@ -269,9 +269,9 @@ func stockRow(cx *core.Scope, s *stock, first func() bool, onPress func(), wide 
 			}},
 			sparkline(cx, s),
 			core.View{Style: core.Style{Width: core.Pt(84), AlignItems: core.AlignEnd, Gap: 3}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return priceText(q().last, s) }, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: semibold}, StyleFunc: colored(colors.text)},
+				core.Text{ContentFunc: func() string { return priceText(q().last, s) }, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: semibold, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.text)},
 				core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, MaxLines: 1, StyleFunc: func() core.Style {
-					return core.Style{FontSize: 13, FontWeight: medium, Color: toneOf(cx, change())}
+					return core.Style{FontSize: 13, FontWeight: medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 				}},
 			}},
 		}}
@@ -378,7 +378,7 @@ func stocksDemo(cx *core.Scope) core.Node {
 			core.Text{ContentFunc: func() string {
 				st := m.stats.Get()
 				return fmt.Sprintf("Simulated, fictional companies · tick 50 ms · %.2f ms engine/tick · %.0f quotes/s", st[0], st[1])
-			}, Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, FontSize: 12, LineHeight: 17}, StyleFunc: colored(colors.faint)},
+			}, Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, FontSize: 12, LineHeight: 17, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.faint)},
 		}},
 	}}
 	if !wide {

@@ -958,6 +958,9 @@ func plainLayout(text string, font driver.Font) *comObject {
 		format.ptr(), f32(unbounded), f32(unbounded), uintptr(unsafe.Pointer(&layout)))) {
 		return nil
 	}
+	if t := typography(font.Variant); t != nil {
+		layout.callRange(layoutSetTypography, 0, 0, uint32(len(units)), t.ptr())
+	}
 	return layout
 }
 

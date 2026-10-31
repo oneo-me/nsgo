@@ -37,6 +37,15 @@ type IOSModalProps struct {
 	SupportedOrientations Orientation
 }
 
+// IOSScreenProps are a Screen's props only iOS has.
+type IOSScreenProps struct {
+	// HeaderRightSystemItem shows UIKit's own bar button, in the system's
+	// look, at the header's end in place of HeaderRight's views. A press
+	// on it presses HeaderRight's first view that takes presses, so keep
+	// one there; it is what the other platforms show.
+	HeaderRightSystemItem HeaderSystemItem
+}
+
 // AndroidModalProps are a Modal's props only Android has.
 type AndroidModalProps struct {
 	// StatusBarTranslucent lets the content reach under Android's status

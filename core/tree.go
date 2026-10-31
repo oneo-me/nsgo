@@ -405,6 +405,11 @@ type scrollNode struct {
 	// sent in its last ItemStickyCells.
 	dependents []*listNode
 	sticky     []StickyCell
+	// reported is when OnScroll last ran, latest the offset it runs with
+	// next, and waiting whether a timer waits for the throttle to pass.
+	reported time.Time
+	latest   Point
+	waiting  bool
 }
 
 // pendingScroll is a scroll the core sent and the platform has not shown
@@ -1233,7 +1238,7 @@ func (t *Tree) mountScroll(cx *Scope, parent *node, v Scroll) {
 	t.setRef(n, v.Ref)
 	n.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: v.Horizontal, HideIndicator: v.HideIndicator}}
 	t.bindScrollSpec(cx, n, scrollSpec{behavior: v.Behavior, behaviorFunc: v.BehaviorFunc, offset: v.ContentOffset,
-		refreshing: v.Refreshing, onRefresh: v.OnRefresh, onScroll: v.OnScroll,
+		refreshing: v.Refreshing, onRefresh: v.OnRefresh, onScroll: v.OnScroll, throttle: v.ScrollEventThrottle,
 		onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
 		onMomentum: v.OnMomentumStart, onMomentumEnd: v.OnMomentumEnd,
 		minZoom: v.MinZoomScale, maxZoom: v.MaxZoomScale, zoom: v.ZoomScale, zoomFunc: v.ZoomScaleFunc,
@@ -1575,7 +1580,11 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			}
 		}
 		if h.scroll != nil {
-			t.within(n.owner, func() { h.scroll(ev.Point) })
+			if n.scroll != nil {
+				t.reportScroll(n, ev.Point)
+			} else {
+				t.within(n.owner, func() { h.scroll(ev.Point) })
+			}
 		}
 	}
 }

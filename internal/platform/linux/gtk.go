@@ -269,6 +269,13 @@ var (
 	pangoAttrUnderlineColorNew     func(uint16, uint16, uint16) uintptr
 	pangoAttrStrikethroughColorNew func(uint16, uint16, uint16) uintptr
 	pangoAttrShapeNew              func(*pangoRectangle, *pangoRectangle) uintptr
+	pangoAttrFontFeaturesNew       func(*byte) uintptr
+	pangoContextGetMetrics         func(context, desc, language uintptr) uintptr
+	pangoFontMetricsUnref          func(uintptr)
+	pangoFontMetricsUnderlinePos   func(uintptr) int32
+	pangoFontMetricsUnderlineThick func(uintptr) int32
+	pangoFontMetricsStrikePos      func(uintptr) int32
+	pangoFontMetricsStrikeThick    func(uintptr) int32
 	pangoLayoutGetExtents          func(uintptr, *pangoRectangle, *pangoRectangle)
 	pangoLayoutGetIter             func(uintptr) uintptr
 	pangoLayoutIterFree            func(uintptr)
@@ -582,6 +589,13 @@ func bind() {
 	purego.RegisterLibFunc(&pangoAttrUnderlineColorNew, pangoLib, "pango_attr_underline_color_new")
 	purego.RegisterLibFunc(&pangoAttrStrikethroughColorNew, pangoLib, "pango_attr_strikethrough_color_new")
 	purego.RegisterLibFunc(&pangoAttrShapeNew, pangoLib, "pango_attr_shape_new")
+	purego.RegisterLibFunc(&pangoAttrFontFeaturesNew, pangoLib, "pango_attr_font_features_new")
+	purego.RegisterLibFunc(&pangoContextGetMetrics, pangoLib, "pango_context_get_metrics")
+	purego.RegisterLibFunc(&pangoFontMetricsUnref, pangoLib, "pango_font_metrics_unref")
+	purego.RegisterLibFunc(&pangoFontMetricsUnderlinePos, pangoLib, "pango_font_metrics_get_underline_position")
+	purego.RegisterLibFunc(&pangoFontMetricsUnderlineThick, pangoLib, "pango_font_metrics_get_underline_thickness")
+	purego.RegisterLibFunc(&pangoFontMetricsStrikePos, pangoLib, "pango_font_metrics_get_strikethrough_position")
+	purego.RegisterLibFunc(&pangoFontMetricsStrikeThick, pangoLib, "pango_font_metrics_get_strikethrough_thickness")
 	purego.RegisterLibFunc(&pangoLayoutGetExtents, pangoLib, "pango_layout_get_extents")
 	purego.RegisterLibFunc(&pangoLayoutGetIter, pangoLib, "pango_layout_get_iter")
 	purego.RegisterLibFunc(&pangoLayoutIterFree, pangoLib, "pango_layout_iter_free")

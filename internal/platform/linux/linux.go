@@ -154,6 +154,7 @@ type window struct {
 	hitMu         sync.Mutex
 	extents       map[driver.Font]driver.FontExtent // the engine thread's font metrics
 	capHeights    map[driver.Font]driver.Points     // and capital heights
+	lineMetrics   map[driver.Font]lineMetrics       // and decoration lines
 	pressConsumed bool
 	// selecting is the selection of an area, and selected the texts
 	// that highlight a part of it (selection.go).

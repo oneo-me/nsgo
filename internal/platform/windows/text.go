@@ -92,6 +92,41 @@ var (
 	})
 )
 
+var (
+	typographiesMu sync.Mutex
+	// typographies holds an IDWriteTypography per font variant, which
+	// texts share and keep for the process.
+	typographies = map[driver.FontVariant]*comObject{}
+)
+
+// typography returns the IDWriteTypography that turns on v's features,
+// or nil when it has none.
+func typography(v driver.FontVariant) *comObject {
+	tags := v.Tags()
+	if len(tags) == 0 {
+		return nil
+	}
+	typographiesMu.Lock()
+	defer typographiesMu.Unlock()
+	if t, ok := typographies[v]; ok {
+		return t
+	}
+	var t *comObject
+	if f := dwriteFactory(); f == nil || failed(f.call(dwCreateTypography, uintptr(unsafe.Pointer(&t)))) {
+		t = nil
+	}
+	for _, tag := range tags {
+		// A DWRITE_FONT_FEATURE is a tag and a parameter, passed by value
+		// as a text range's start and length are.
+		name := uint32(tag[0]) | uint32(tag[1])<<8 | uint32(tag[2])<<16 | uint32(tag[3])<<24
+		if t != nil {
+			t.callRange(typographyAddFontFeature, 0, name, 1)
+		}
+	}
+	typographies[v] = t
+	return t
+}
+
 // fontName returns the family DirectWrite is asked for.
 func fontName(family string) string {
 	switch family {
@@ -445,6 +480,9 @@ func (pt *preparedText) build() *comObject {
 		if ls := float32(r.style.LetterSpacing); ls != 0 && spacing != nil {
 			spacing.callRange(layoutSetCharacterSpacing, 0b111, r.start, n, f32(0), f32(ls), f32(0))
 		}
+		if t := typography(f.Variant); t != nil {
+			layout.callRange(layoutSetTypography, 0, r.start, n, t.ptr())
+		}
 	}
 	spacing.release()
 	for i, a := range pt.attachments {
@@ -709,11 +747,24 @@ func (pt *preparedText) Layout(size driver.Size) driver.TextLayout {
 			}
 			line := func(position, thickness float32) {
 				t := max(thickness*size, thin)
+				if dt := float32(r.style.DecorationThickness); dt > 0 {
+					t = dt
+				}
 				y := b.baseline - position*size
 				l.decorations = append(l.decorations, decoration{rectF{x0, y - t/2, x1, y + t/2}, lineColor, r.style.DecorationStyle})
 			}
 			if deco&driver.TextDecorationUnderline != 0 {
-				line(m.underline, m.underlineThickness)
+				position := m.underline
+				if off, ok := r.style.UnderlineOffset.Points(); ok {
+					// The app's offset puts the line's top that far below
+					// the baseline.
+					t := max(m.underlineThickness*size, thin)
+					if dt := float32(r.style.DecorationThickness); dt > 0 {
+						t = dt
+					}
+					position = -(float32(off) + t/2) / size
+				}
+				line(position, m.underlineThickness)
 			}
 			if deco&driver.TextDecorationLineThrough != 0 {
 				line(m.strike, m.strikeThickness)

@@ -15,6 +15,12 @@ func text(content string, size core.Points, weight core.FontWeight, c func() cor
 		StyleFunc: func() core.Style { return core.Style{Color: c()} }}
 }
 
+// tabular returns t with figures of one width, for values that change.
+func tabular(t core.Text) core.Text {
+	t.Style.FontVariant = core.FontTabularNums
+	return t
+}
+
 // textf is a line whose content follows fn.
 func textf(fn func() string, size core.Points, weight core.FontWeight, c func() core.Color) core.Text {
 	t := text("", size, weight, c)
