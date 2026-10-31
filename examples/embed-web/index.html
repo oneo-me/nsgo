@@ -1,0 +1,66 @@
+<!doctype html>
+<!--
+  A web page of its own that embeds NSGo: a status line, a button and two
+  apps of examples/embedded side by side, each a Go program of its own.
+  The page greets each app's user through its launch parameters, sends
+  both a message from the button, answers their "time" calls, hears their
+  "tapped" posts and routes their order links; the host's badge, a native
+  component, is the native hosts' and stays empty. Build the app, then
+  serve examples/:
+
+    go tool nsgo build -target web examples/embedded
+    python3 -m http.server -d examples
+    open http://localhost:8000/embed-web/
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Embedding NSGo in a page</title>
+<style>
+  body { margin: 0; font: 14px system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; }
+  header { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #d0d7de; }
+  main { flex: 1; display: flex; min-height: 0; }
+  main > div { flex: 1; min-width: 0; }
+  main > div + div { border-left: 1px solid #d0d7de; }
+</style>
+</head>
+<body>
+<header><button id="send">Send a message</button><span id="status">Loading…</span></header>
+<main><div id="ada"></div><div id="grace"></div></main>
+<script type="module">
+const status = (text) => (document.getElementById("status").textContent = text);
+const url = new URL("../embedded/dist/Embedded-0.1.0-web/nsgo.json", location.href);
+const config = await (await fetch(url)).json();
+const { mount } = await import(new URL(config.loader, url));
+
+const players = await Promise.all(["Ada", "Grace"].map((user) =>
+  mount(document.getElementById(user.toLowerCase()), url.href, {
+    config,
+    params: { user },
+    host: {
+      call(name) {
+        if (name === "time") return new Date().toLocaleTimeString();
+        throw new Error(`no host function ${name}`);
+      },
+      post(name, args) {
+        if (name === "tapped") status(`${user} tapped ${args.count} times`);
+      },
+      openURL(link) {
+        // The page's own router takes its order pages.
+        const ours = link.startsWith("https://example.com/orders/");
+        if (ours) status(`${user} opened ${link.slice(link.lastIndexOf("/") + 1)} in the page`);
+        return ours;
+      },
+    },
+  })));
+status("Running");
+
+let sent = 0;
+document.getElementById("send").onclick = () => {
+  sent++;
+  for (const player of players) player.hostEvent("message", { text: `Message ${sent} from the page` });
+};
+</script>
+</body>
+</html>

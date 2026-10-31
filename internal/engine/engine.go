@@ -211,6 +211,12 @@ type message struct {
 	fn      func()
 }
 
+// Trace, when set, hears each commit's batch, before the platform, and
+// how long the commit took, on the engine goroutine of every engine the
+// process starts from then on; it must not block. nsgo dev -trace's
+// builds set it, as their dev client starts.
+var Trace func(b *driver.MountBatch, took time.Duration)
+
 // Start runs app on a new goroutine.
 func Start(p Platform, app App, opts Options) *Engine {
 	e := &Engine{
@@ -275,11 +281,12 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 	tree.SetEnvironment(opts.Environment)
 	tree.SetAppearance(opts.Appearance)
 	tree.SetTokens(tokens)
-	perf := opts.Perf
+	perf, trace := opts.Perf, Trace
 	// commit applies what changed and records what it cost when a monitor
-	// measures; start is when the wake-up that led here began.
+	// measures or a trace hears; start is when the wake-up that led here
+	// began.
 	commit := func(start time.Time) {
-		if perf == nil {
+		if perf == nil && trace == nil {
 			if b := tree.Commit(); b != nil {
 				p.Mount(b)
 			}
@@ -288,6 +295,15 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		coreStart := time.Now()
 		b := tree.Commit()
 		core := time.Since(coreStart)
+		if b != nil && trace != nil {
+			trace(b, core)
+		}
+		if perf == nil {
+			if b != nil {
+				p.Mount(b)
+			}
+			return
+		}
 		if b != nil {
 			app := time.Since(start) - core
 			if app < 0 {

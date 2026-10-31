@@ -4,13 +4,6 @@ This plan lists what NSGo still lacks compared with NSH's 0.3.0 release (tag `v0
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, with the bullet or section to read in brackets. To refresh the plan for NSH's next release, check out its tag in `nsh/`, then read `git log v0.3.0..HEAD` there and the documents it changed, and compare the declarations any `nsh` command run on its gallery writes to `nsh/examples/gallery/.nsh/types/` with `go doc -all` of the public packages.
 
-## Embedding and the tool
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Web host channel | `web.md` (the CLI's web target), `website/docs/web.md` (the host's functions) | A page answers an app's host calls and posts and sends it events, through the loader `nsgo.json` feeds and a host module `nsgo.yaml` names, which the web package copies |
-| Commit traces | `website/docs/dev-server-and-debugging.md` (Logs), `performance.md` | `nsgo dev -trace` prints each commit's time and mount items from the running app on every target |
-
 ## TSX and dynamic delivery
 
 These items port NSH's TSX in order ([TSX and dynamic delivery](architecture/tsx.md)); signed packages wait for their [open question](../ARCHITECTURE.md#open-questions).

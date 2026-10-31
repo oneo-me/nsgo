@@ -1,7 +1,8 @@
 // Command nsgo develops and builds NSGo apps.
 //
 //	nsgo init  [-name N] [-module M] [dir]               write a new app
-//	nsgo dev   [-target T] [-hot-reload] [flags] [dir]   run the app and rebuild it on changes
+//	nsgo dev   [-target T] [-hot-reload] [-trace] [flags] [dir]
+//	                                                      run the app and rebuild it on changes
 //	nsgo build [-target all|T,...] [flags] [dir]         build packages for nsgo.yaml's targets or all platforms
 //	nsgo test  [-run R] [-junit F] [-trace] [-target T] [dir] [-- go test flags]
 //	                                                      run the app's tests headless or on a platform
@@ -36,7 +37,7 @@ func main() {
 		var p *project
 		if p, err = load(fs.Arg(0)); err == nil {
 			f.apply(p)
-			err = dev(ctx, p, devOptions{apply: f.apply, port: f.port, open: f.open, device: f.device, team: f.team, release: f.release})
+			err = dev(ctx, p, devOptions{apply: f.apply, port: f.port, open: f.open, device: f.device, team: f.team, release: f.release, trace: f.trace})
 		}
 	case "init":
 		fs := flag.NewFlagSet("init", flag.ExitOnError)
@@ -91,7 +92,7 @@ func main() {
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage:
   nsgo init  [-name N] [-module M] [dir]
-  nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload] [-release] [-device D] [-port N] [-open=false] [dir]
+  nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload] [-release] [-trace] [-device D] [-port N] [-open=false] [dir]
   nsgo build [-target all|macos_arm64,windows_x64,linux_x64,ios,web,...] [-output DIR] [-open] [-run [-device D]] [dir]
   nsgo test  [-run REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android] [dir] [-- go test flags]
 

@@ -14,7 +14,7 @@ Every command prints one line per step and the details only when a step fails, a
 
 The server finds the app through `NSGO_DEV_SERVER`, which the simulator gets as `SIMCTL_CHILD_`; Android and iPhones, which pass no environment, get it with `-ldflags -X`, Android at `127.0.0.1` through `adb reverse`, removed when the run ends, an iPhone at the Mac's LAN address.
 
-The web target is served from the same server; its page shows the overlay itself and loads each build. `r` and Return in the terminal build again too. Without hot reload, a run ends with the app; a failed first build ends it. `-release` builds as `nsgo build` does, keeping `dev.fps`'s monitor, for measuring. `-device` picks a simulator by name or UDID, booting it, or an adb serial or an emulator's AVD name.
+The web target is served from the same server; its page shows the overlay itself and loads each build. `r` and Return in the terminal build again too. Without hot reload, a run ends with the app; a failed first build ends it. `-release` builds as `nsgo build` does, keeping `dev.fps`'s monitor, for measuring. `-trace` builds with `-X nsgo.devTrace=1`: the dev client sets `engine.Trace` for every engine of the process and posts each commit to `/_nsgo/trace`, printed as `nsgo test -trace` prints a batch (`driver.WriteTrace`), labeled by its number, with the app's output. The web page's Go finds the server at the page's origin and leaves build failures to the page. `-device` picks a simulator by name or UDID, booting it, or an adb serial or an emulator's AVD name.
 
 ## Tests
 
@@ -29,7 +29,7 @@ The web target is served from the same server; its page shows the overlay itself
 - macOS: `<name>.app`, signed ad hoc. iOS: `<name>.app` and `<name>.ipa`, signed with `sign.profile`, else unsigned. Android: `<name>.apk`, signed with `sign.keystore`, else the project's debug key.
 - Windows and Linux: the executable with the resources beside it.
 - With `-embed`, for apps of their own to embed ([embedding](embedding.md)): iOS's `<module>.xcframework` (of dynamic frameworks with `-dynamic`) with `<name>Resources`, Android's `<name>.aar`, and no package for other targets.
-- Web: `index.html`, `manifest.webmanifest` and every other file named by its content (`app.<10 hex>.wasm` and each resource, whose names the page gives the runtime as `NSGO_RESOURCES`), so hosts cache them for good, and `nsgo.json`, which names them for another page showing the app.
+- Web: `index.html`, `manifest.webmanifest`, `nsgo.json`, which names the rest for the loader, and every other file named by its content (`app.<10 hex>.wasm`, `nsgo.<10 hex>.js`, `web.host`'s module as `host.<10 hex>.js` and each resource), so hosts cache them for good. The page mounts the app with the loader and `nsgo.json`'s content inline ([embedding](embedding.md#on-the-web)).
 
 `resources/` ships at each package's resource root: beside the executable on Windows and Linux, beside the page on the web, in the bundle's `Contents/Resources` on macOS, at the bundle's root on iOS and in the APK's assets on Android. `imageload.ResourceRoot`, the web backend and Android's APK reader resolve `asset:` and font paths against it. App icons are drawn in Go; `actool` compiles Apple's `.icon` files, and a Windows icon links from a `.syso` in the app's package directory, the only place Go links one from.
 

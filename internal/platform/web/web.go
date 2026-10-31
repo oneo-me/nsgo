@@ -40,6 +40,9 @@ type Options struct {
 	Fonts []string
 	// Appearance is the appearance the app starts in.
 	Appearance driver.Appearance
+	// Host names the global the loader keeps the page's host bridge in
+	// (host.go); without one the app has no host.
+	Host string
 }
 
 const fontFamily = `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`
@@ -298,7 +301,9 @@ func open(app engine.App, opts Options, test *testOpen) *surface {
 		Size: s.size(), Environment: s.env, Appearance: opts.Appearance,
 		Storage: engine.NewStorage(newLocalStorage(opts.ID)),
 	}
-	if test != nil {
+	if test == nil {
+		eopts.Host = connectHost(opts.Host)
+	} else {
 		eopts.UseTest(test.options, &test.pin)
 		// The page's size, which the test sets, is the surface's.
 		eopts.Size = s.size()

@@ -23,7 +23,7 @@ The host owns the window around a view:
 - A view takes the keyboard while the focus is in it, which a press gives it, and keymaps fire only then. On Windows the host's loop translates keys before NSGo sees them, so a shortcut drops the character that follows.
 - macOS fields get NSGo's field editor from their cell (`fieldEditorForView:`) rather than from the window's delegate, which is the host's.
 
-On the web each app is a Go program of its own, and a page shows several: `nsgo build -target web` writes `nsgo.json` beside the app, naming its WebAssembly, `wasm_exec.js` and resources, and the page runs each with `NSGO_MOUNT` (a CSS selector of the element it fills), `NSGO_BASE` and `NSGO_RESOURCES` in its environment. An app in an element of a page, or in a frame, leaves the browser's history and title to the page.
+On the web each app is a Go program of its own, and a page shows several. `nsgo build -target web` writes `nsgo.json` beside the app, naming its WebAssembly, `wasm_exec.js`, resources, host module and `nsgo.js`, the loader (`cmd/nsgo/web/nsgo.js`), relative to itself. The loader's `mount(element, url, options)` runs the app in the element, or the whole page for null, with `NSGO_MOUNT` (a CSS selector of the element), `NSGO_BASE`, `NSGO_RESOURCES` and `NSGO_HOST` in its environment; the app's own page mounts it so too. An app in an element of a page, or in a frame, leaves the browser's history and title to the page.
 
 ## The host channel
 
@@ -37,7 +37,15 @@ On the web each app is a Go program of its own, and a page shows several: `nsgo 
 - `HandleOpenURL` sees the URLs `Scope.OpenURL` opens, once they pass `CheckURL`, before the platform: the host answers once, and false hands the URL to the platform.
 - Values cross as JSON, encoded and decoded again even in Go, so a Go host sees what Swift and Java see: maps, slices, strings, `float64`, booleans and nil.
 
-`nsgotest.Host` runs an app with a channel, so a test plays the host.
+`HandleDefault` answers every name without a handler of its own, for a host that looks names up itself, as a page does. `nsgotest.Host` runs an app with a channel, so a test plays the host.
+
+### On the web
+
+The page is the host: `mount`'s `params` are the parameters, and its `host` object answers. `call(name, args)` returns the result or a promise of it, a throw or rejection failing the call with its message; posts go to `post(name, args)`, else to `call` with the answer dropped; `openURL(url)`, when present, returns or resolves with whether it took the URL. `player.hostEvent(name, payload)` sends an event, throwing at once for a payload that is not JSON.
+
+Without a `host` option the loader imports `nsgo.json`'s host module, which `nsgo.yaml`'s `web.host` names inside the app's directory and the build copies, named by its content in a release, and awaits its `createHost(player)`; a result without `call` fails the mount. The module imports other code by absolute URL, since it is copied alone. `nsgo dev` serves it and builds again when it changes.
+
+The loader keeps a bridge per app in the global `NSGO_HOST` names (`internal/platform/web/host.go`): the parameters, `call` and `openURL` with an ID that Go answers through `reply` and `opened`, and the events sent before the app ran, which Go takes as it starts, so its first listeners hear them. Values cross as JSON text.
 
 ## Settings
 
@@ -72,5 +80,6 @@ Each `NsgoView` starts a process of the app, so views are apart by nature. The p
 | A dropped `HostReply` rejects the call | An unanswered call fails at its timeout | Go has no destructors |
 | One engine thread per Android view, over JNI | A process per view, over pipes | Android runs NSGo apps as processes |
 | Native modules, `EngineContext`, limits, cache options, dev server sessions | Not ported | Go hosts call the app's Go directly and give each view its values |
+| A web page's host has only `call`; `nsh test` runs the host module | The page's host also takes posts and URLs; tests play the host with `nsgotest.Host` | NSGo's channel has posts and the URL handler, and Go tests run without a JS engine |
 
 Capabilities stay an [open question](../../ARCHITECTURE.md#open-questions): the host's handlers are its own code, which any app it embeds may call.

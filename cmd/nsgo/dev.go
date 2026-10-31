@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -42,6 +43,7 @@ type devOptions struct {
 	device  string // the iPhone, simulator or Android device to run on
 	team    string // the Apple developer team the iOS target signs with
 	release bool   // build as nsgo build does, for measuring
+	trace   bool   // print the running app's commits
 	server  *devServer
 }
 
@@ -74,6 +76,9 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		dirs, err := sourceDirs(ctx, p.Dir)
 		if err != nil {
 			return err
+		}
+		if p.Web.Host != "" {
+			dirs = append(dirs, p.resolve(p.Web.Host))
 		}
 		fingerprint := scan(dirs)
 		progress := begin("building %s", p.Dev.Target)
@@ -133,10 +138,10 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 }
 
 // prepareDev sets what dev's builds carry: the monitor dev.fps asks for,
-// the dev client and the dev icons; -release strips them as nsgo build
-// does, keeping the monitor for measuring.
+// the dev client, -trace's commits and the dev icons; -release strips
+// them as nsgo build does, keeping the monitor for measuring.
 func (p *project) prepareDev(opts devOptions) {
-	p.Perf, p.Release, p.Dev.Client = p.Dev.FPS, opts.release, true
+	p.Perf, p.Release, p.Dev.Client, p.Dev.Trace = p.Dev.FPS, opts.release, true, opts.trace
 	p.useDevIcons()
 }
 
@@ -181,8 +186,8 @@ func readReloadKey(ctx context.Context, srv *devServer) {
 }
 
 // devServer is what dev's builds connect to: it streams build results to
-// the apps and pages it started, takes their reload requests and serves
-// the web target. It listens on every interface, so a phone on the LAN
+// the apps and pages it started, takes their reload requests and the
+// commits -trace prints, and serves the web target. It listens on every interface, so a phone on the LAN
 // reaches it.
 type devServer struct {
 	port    int
@@ -218,6 +223,14 @@ func startDevServer(port int) (*devServer, error) {
 			return
 		}
 		s.reload()
+	})
+	// A traced app's commits, printed as the app's output is.
+	s.mux.HandleFunc("/_nsgo/trace", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "POST a trace", http.StatusMethodNotAllowed)
+			return
+		}
+		io.Copy(&appConsole, r.Body)
 	})
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()

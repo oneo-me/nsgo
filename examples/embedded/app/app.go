@@ -3,8 +3,9 @@
 // and posts to the host, shows the host's own badge as a native
 // component, opens a link the host routes, and themes itself with the
 // host's tokens, locale and text size. The Go desktop host in
-// examples/embed-desktop shows it twice; examples/embedded builds it for
-// the iOS and Android hosts.
+// examples/embed-desktop and the page in examples/embed-web show it
+// twice; examples/embedded builds it for the iOS and Android hosts and,
+// with host.js as its page's host, for the web.
 package app
 
 import (

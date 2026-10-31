@@ -18,14 +18,26 @@ import (
 var devServer = ""
 
 // devApp runs app under nsgo dev: build failures the server reports and
-// the app's own render failures show in an overlay over it, and Command
-// or Control+R asks for a new build.
+// the app's own render failures show in an overlay over it, Command or
+// Control+R asks for a new build, and with -trace the server prints each
+// commit. On the web the page is served from the server and shows build
+// failures itself.
 func devApp(app App) App {
 	server := devServer
 	if s := os.Getenv("NSGO_DEV_SERVER"); s != "" {
 		server = s
 	}
+	page := server == ""
+	if page {
+		server = pageOrigin()
+	}
 	if server == "" {
+		return app
+	}
+	if devTrace == "1" {
+		traceTo(server)
+	}
+	if page {
 		return app
 	}
 	return func(cx *core.Scope) core.Node {

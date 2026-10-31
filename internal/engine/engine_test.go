@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"slices"
 	"strconv"
 	"sync"
 	"testing"
@@ -195,5 +196,28 @@ func TestATestsClipboardIsItsOwn(t *testing.T) {
 				t.Errorf("the platform got %v", it.Kind)
 			}
 		}
+	}
+}
+
+// Trace hears each commit's batch before the platform does.
+func TestTraceHearsEachCommit(t *testing.T) {
+	type heard struct {
+		items   int
+		mounted bool
+	}
+	p := &recorder{mounted: make(chan struct{}, 1)}
+	traced := make(chan heard, 4)
+	Trace = func(b *driver.MountBatch, took time.Duration) {
+		p.mu.Lock()
+		mounted := slices.Contains(p.batches, b)
+		p.mu.Unlock()
+		traced <- heard{len(b.Items), mounted}
+	}
+	defer func() { Trace = nil }()
+	e := Start(p, func(cx *core.Scope) core.Node { return core.Text{Content: "hi"} }, Options{})
+	defer e.Close()
+	<-p.mounted
+	if h := <-traced; h.items == 0 || h.mounted {
+		t.Fatalf("the trace heard %+v", h)
 	}
 }

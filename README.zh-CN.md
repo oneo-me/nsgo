@@ -127,9 +127,9 @@ build:
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` 运行一次应用，开启 `dev.hot_reload` 后则在每次修改时重新编译并重启。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R，或在终端输入 `r` 并回车，会重新编译。
+`go tool nsgo dev` 运行一次应用，开启 `dev.hot_reload` 后则在每次修改时重新编译并重启。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R，或在终端输入 `r` 并回车，会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
 
-`go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站；`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。`-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示；Go 桌面程序用 `nsgo.NewView` 显示应用。参见 `examples/embed-*`。
+`go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站；`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。`-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示；Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用网站中的 `nsgo.js`，其宿主由网页提供，或是 `nsgo.yaml` 的 `web.host` 指定的模块。参见 `examples/embed-*`。
 
 `go tool nsgo test` 运行应用的测试，每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
 

@@ -56,9 +56,17 @@ type project struct {
 		// defaults to false.
 		FPS bool `yaml:"fps"`
 		// Client builds the dev client in, which connects to nsgo dev's
-		// server: nsgo dev sets it.
+		// server: nsgo dev sets it. Trace has the client send the server
+		// each commit: nsgo dev -trace sets it.
 		Client bool `yaml:"-"`
+		Trace  bool `yaml:"-"`
 	} `yaml:"dev"`
+	// Web is the web target's: Host is a JS module, relative to
+	// nsgo.yaml and inside its directory, whose createHost(player) gives
+	// the app's page its host.
+	Web struct {
+		Host string `yaml:"host"`
+	} `yaml:"web"`
 	Sign  signing `yaml:"sign"`
 	Build struct {
 		Output  string   `yaml:"output"`
@@ -192,6 +200,9 @@ func (p *project) ldflags(extra ...string) string {
 	}
 	if p.devURL != "" {
 		flags += fmt.Sprintf(" -X '%s.devServer=%s'", pkg, p.devURL)
+	}
+	if p.Dev.Client && p.Dev.Trace {
+		flags += fmt.Sprintf(" -X %s.devTrace=1", pkg)
 	}
 	if p.Release {
 		flags += " -s -w"

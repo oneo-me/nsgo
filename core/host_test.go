@@ -145,6 +145,34 @@ func TestHostCalls(t *testing.T) {
 	}
 }
 
+func TestHostDefaultHandler(t *testing.T) {
+	ch := NewHost()
+	var names []string
+	ch.Handle("own", func(c *HostCall) { c.Resolve("own") })
+	ch.HandleDefault(func(c *HostCall) {
+		names = append(names, c.Name)
+		c.Resolve("default")
+	})
+	var cx *Scope
+	h := newEmbedded(t, ch, func(c *Scope) Node { cx = c; return View{} })
+	got := map[string]any{}
+	for _, name := range []string{"own", "any.name"} {
+		cx.CallHost(name, nil, func(v any, err error) { got[name] = v })
+	}
+	cx.PostHost("posted", nil)
+	h.drain()
+	if got["own"] != "own" || got["any.name"] != "default" || !slices.Equal(names, []string{"any.name", "posted"}) {
+		t.Fatalf("answers %v, default heard %v", got, names)
+	}
+	ch.HandleDefault(nil)
+	var err error
+	cx.CallHost("any.name", nil, func(_ any, e error) { err = e })
+	h.drain()
+	if !errors.Is(err, ErrNoHostHandler) {
+		t.Fatalf("without a default: %v", err)
+	}
+}
+
 func TestHostTokens(t *testing.T) {
 	var accent, inset Color
 	h := newEmbedded(t, NewHost(), func(c *Scope) Node {

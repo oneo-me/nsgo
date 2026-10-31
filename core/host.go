@@ -22,6 +22,7 @@ type Host struct {
 	mu       sync.Mutex
 	params   map[string]any
 	handlers map[string]func(*HostCall)
+	fallback func(*HostCall)
 	openURL  func(url string, answer func(handled bool))
 	// queue holds the events sent and not yet delivered: taken by the
 	// running app's next turn, or kept for the next app while none runs.
@@ -131,6 +132,15 @@ func (h *Host) RemoveHandler(name string) {
 	h.mu.Unlock()
 }
 
+// HandleDefault has fn answer the calls and posts of every name without a
+// handler of its own, as Handle's handlers do, for a host that looks
+// names up itself, such as a web page's. nil removes it.
+func (h *Host) HandleDefault(fn func(call *HostCall)) {
+	h.mu.Lock()
+	h.fallback = fn
+	h.mu.Unlock()
+}
+
 // HandleOpenURL has fn see the URLs the app opens (Scope.OpenURL) before
 // the platform does, once they pass CheckURL, so the host routes its own
 // links through its own router. fn runs on the app's goroutine and must
@@ -146,7 +156,10 @@ func (h *Host) HandleOpenURL(fn func(url string, answer func(handled bool))) {
 func (h *Host) handler(name string) func(*HostCall) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	return h.handlers[name]
+	if fn := h.handlers[name]; fn != nil {
+		return fn
+	}
+	return h.fallback
 }
 
 // HostCall is one call or post of the app's to a host's handler.

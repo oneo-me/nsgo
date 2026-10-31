@@ -453,7 +453,7 @@ func (a *App) Dump() string {
 			return
 		}
 		f := v.Frame
-		fmt.Fprintf(&b, "%s%s %g,%g %gx%g", strings.Repeat("  ", depth), kindName(v.Kind),
+		fmt.Fprintf(&b, "%s%s %g,%g %gx%g", strings.Repeat("  ", depth), v.Kind,
 			f.Origin.X, f.Origin.Y, f.Size.Width, f.Size.Height)
 		if r := roleName(v.Props.Role); r != "" && r != "text" && r != "textbox" {
 			fmt.Fprintf(&b, " role=%s", r)
@@ -473,32 +473,6 @@ func (a *App) Dump() string {
 		walk(r, 0)
 	}
 	return b.String()
-}
-
-func kindName(k driver.ViewKind) string {
-	switch k {
-	case driver.KindView:
-		return "view"
-	case driver.KindText:
-		return "text"
-	case driver.KindInput:
-		return "input"
-	case driver.KindScroll:
-		return "scroll"
-	case driver.KindImage:
-		return "image"
-	case driver.KindModal:
-		return "modal"
-	case driver.KindCanvas:
-		return "canvas"
-	case driver.KindWeb:
-		return "web"
-	case driver.KindVideo:
-		return "video"
-	case driver.KindShader:
-		return "shader"
-	}
-	return "?"
 }
 
 // center returns the middle of v in its own and in surface points.

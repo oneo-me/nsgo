@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -309,11 +310,12 @@ func buildLinux(ctx context.Context, p *project, dir, arch string) error {
 	return writeLinuxIcon(p, dir)
 }
 
-// buildWeb writes the site to dir: index.html, wasm_exec.js, app.wasm
-// and the resources beside them. A release names every file but the page
-// and its manifest.webmanifest by its content, so hosts cache them for
-// good, and the page tells the runtime the name each resource got; a dev
-// build keeps the names and follows nsgo dev's server.
+// buildWeb writes the site to dir: index.html, nsgo.json, nsgo.js (the
+// loader), wasm_exec.js, app.wasm, nsgo.yaml's host module and the
+// resources beside them. A release names every file but the page,
+// nsgo.json and manifest.webmanifest by its content, so hosts cache them
+// for good, and tells the runtime the name each resource got; a dev build
+// keeps the names and follows nsgo dev's server.
 func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	wasm := filepath.Join(dir, "app.wasm")
 	if err := goBuild(ctx, p, wasm, []string{"GOOS=js", "GOARCH=wasm"}); err != nil {
@@ -331,8 +333,10 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	if err != nil {
 		return err
 	}
-	page := map[string]any{"Name": p.Name, "Reload": dev, "Wasm": "app.wasm", "Exec": "wasm_exec.js",
+	page := map[string]any{"Name": p.Name, "Reload": dev,
 		"Color": appearanceColor(p.Appearance), "Appearance": p.Appearance}
+	// app is nsgo.json: what the loader needs to show the app.
+	app := webApp{Wasm: "app.wasm"}
 	// write puts data in dir, by its content's name in a release, and
 	// returns the name.
 	write := func(name string, data []byte) (string, error) {
@@ -341,8 +345,21 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 		}
 		return name, os.WriteFile(filepath.Join(dir, name), data, 0o644)
 	}
-	if page["Exec"], err = write("wasm_exec.js", js); err != nil {
+	if app.Exec, err = write("wasm_exec.js", js); err != nil {
 		return err
+	}
+	if page["Loader"], err = write("nsgo.js", loaderJS); err != nil {
+		return err
+	}
+	app.Loader = page["Loader"].(string)
+	if p.Web.Host != "" {
+		data, err := p.webHost()
+		if err != nil {
+			return err
+		}
+		if app.Host, err = write("host.js", data); err != nil {
+			return err
+		}
 	}
 	if dev {
 		if err := copyResources(p, dir); err != nil {
@@ -353,21 +370,12 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 		if err != nil {
 			return err
 		}
-		name := hashedName("app.wasm", data)
-		if err := os.Rename(wasm, filepath.Join(dir, name)); err != nil {
+		app.Wasm = hashedName("app.wasm", data)
+		if err := os.Rename(wasm, filepath.Join(dir, app.Wasm)); err != nil {
 			return err
 		}
-		page["Wasm"] = name
-		names, err := copyHashedResources(p, dir)
-		if err != nil {
+		if app.Resources, err = copyHashedResources(p, dir); err != nil {
 			return err
-		}
-		if len(names) > 0 {
-			data, err := json.Marshal(names)
-			if err != nil {
-				return err
-			}
-			page["Resources"] = string(data)
 		}
 	}
 	if img != nil {
@@ -395,11 +403,6 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 		}
 		page["Manifest"] = true
 	}
-	// What another page needs to show the app in an element of its own.
-	app := map[string]any{"wasm": page["Wasm"], "exec": page["Exec"]}
-	if r, ok := page["Resources"].(string); ok {
-		app["resources"] = json.RawMessage(r)
-	}
 	data, err := json.MarshalIndent(app, "", "  ")
 	if err != nil {
 		return err
@@ -407,12 +410,48 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	if err := os.WriteFile(filepath.Join(dir, "nsgo.json"), append(data, '\n'), 0o644); err != nil {
 		return err
 	}
+	if data, err = json.Marshal(app); err != nil {
+		return err
+	}
+	page["App"], page["Exec"] = string(data), app.Exec
 	f, err := os.Create(filepath.Join(dir, "index.html"))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	return indexHTML.Execute(f, page)
+}
+
+// webApp is a site's nsgo.json, which names the files of the app for the
+// loader, relative to itself.
+type webApp struct {
+	Wasm      string            `json:"wasm"`
+	Exec      string            `json:"exec"`
+	Loader    string            `json:"loader"`
+	Host      string            `json:"host,omitempty"`
+	Resources map[string]string `json:"resources,omitempty"`
+}
+
+// loaderJS is nsgo.js, which runs an app in a page.
+//
+//go:embed web/nsgo.js
+var loaderJS []byte
+
+// webHost reads nsgo.yaml's host module, which must be inside the app's
+// directory once symbolic links are resolved.
+func (p *project) webHost() ([]byte, error) {
+	dir, err := filepath.EvalSymlinks(p.Dir)
+	if err != nil {
+		return nil, err
+	}
+	path, err := filepath.EvalSymlinks(p.resolve(p.Web.Host))
+	if err != nil {
+		return nil, fmt.Errorf("nsgo.yaml: web.host: %w", err)
+	}
+	if rel, err := filepath.Rel(dir, path); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return nil, fmt.Errorf("nsgo.yaml: web.host %s is outside the app's directory", p.Web.Host)
+	}
+	return os.ReadFile(path)
 }
 
 var indexHTML = template.Must(template.New("index").Parse(`<!doctype html>
@@ -438,12 +477,15 @@ var indexHTML = template.Must(template.New("index").Parse(`<!doctype html>
 <script src="{{.Exec}}"></script>
 </head>
 <body>
-<script>
-const go = new Go();
-{{- if .Resources}}
-go.env = { NSGO_RESOURCES: JSON.stringify({{.Resources}}) };
-{{- end}}
-WebAssembly.instantiateStreaming(fetch("{{.Wasm}}"), go.importObject).then((r) => go.run(r.instance));
+<script type="module">
+import { mount } from "./{{.Loader}}";
+mount(null, null, { config: {{.App}} }).catch((e) => {
+  console.error(e);
+  const message = document.createElement("pre");
+  message.textContent = "The app could not be loaded: " + e.message;
+  message.style.cssText = "margin:20px;white-space:pre-wrap;font:13px ui-monospace,monospace";
+  document.body.append(message);
+});
 {{- if .Reload}}
 // nsgo dev's server: each new build loads, a failed one shows over the app.
 const events = new EventSource("/_nsgo/events");

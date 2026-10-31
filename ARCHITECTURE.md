@@ -33,7 +33,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `internal/platform/apple` | Shared Apple code | What macOS and iOS share: layers, Metal, CoreText, web views, video |
 | `internal/platform/*` | Platforms' shared code | What backends share: images ([images](docs/architecture/images.md)), picked photos, process readings |
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
-| `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps embedding it |
+| `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
 | `cmd/nsgo` | `nsh-cli` | `nsgo init`, `dev`, `test` and `build` from an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` packages and signs Android apps in Go |
 | `tools/lucidegen` | — | Regenerates `icons/lucide` from a pinned Lucide checkout |
