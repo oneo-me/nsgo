@@ -33,6 +33,8 @@ const scrollCSS = `@keyframes nsgo-spin { to { transform: rotate(360deg) } }
 
 // scrollState is what a scroll view keeps beside its element.
 type scrollState struct {
+	// edges are the bands of its sides' edge effects.
+	edges   [4]js.Value
 	config  driver.ScrollConfig
 	spacer  js.Value // sizes what scrolls: the content, zoomed, and insets
 	markers []js.Value
@@ -137,6 +139,7 @@ func (s *surface) configureScroll(v *view, c *driver.ScrollConfig) {
 	if c.Zooms() && c.ZoomScale != old.ZoomScale {
 		s.zoomCommand(v, &driver.ZoomRequest{Scale: c.ZoomScale}, true)
 	}
+	s.placeEdges(v)
 }
 
 // placeContent sizes a scroll view's content. Children are framed from

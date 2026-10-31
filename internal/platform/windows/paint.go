@@ -693,9 +693,17 @@ func (p *painter) drawContent(v *view, s *driver.ViewStyle, world matrix) {
 		p.drawShadow(v, s, width, height, radius)
 	}
 	p.drawBoxShadows(v, s, &b, e.Shadows, false)
-	p.drawBackdrop(e, &b, world)
+	// Glass reads what is behind it, its background included, in place
+	// of its blur.
+	glass := s.Glass != driver.GlassNone
+	if !glass {
+		p.drawBackdrop(e, &b, world)
+	}
 	p.fillBox(&b, s.Background, nil)
 	p.drawGradients(&b, e.Gradients)
+	if glass && !p.drawGlass(v, s, &b, world) {
+		p.drawBackdrop(e, &b, world)
+	}
 	p.drawBoxShadows(v, s, &b, e.Shadows, true)
 	v.pruneShadows()
 	// An image is clipped to its corners without Clip, as its layer clips
@@ -781,6 +789,7 @@ func (p *painter) drawContent(v *view, s *driver.ViewStyle, world matrix) {
 	}
 	p.setTransform(world)
 	if v.kind == driver.KindScroll {
+		p.drawEdges(v, world)
 		p.drawSpinner(v, world)
 	}
 	if indicator {

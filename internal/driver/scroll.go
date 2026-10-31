@@ -252,10 +252,194 @@ func (c *ScrollConfig) Equal(o *ScrollConfig) bool {
 		c.HeaderInset == o.HeaderInset &&
 		c.Refreshable == o.Refreshable && c.Refreshing == o.Refreshing &&
 		c.MinZoomScale == o.MinZoomScale && c.MaxZoomScale == o.MaxZoomScale && c.ZoomScale == o.ZoomScale &&
-		c.NoBouncesZoom == o.NoBouncesZoom && c.NoPinchZoom == o.NoPinchZoom && c.CenterContent == o.CenterContent
+		c.NoBouncesZoom == o.NoBouncesZoom && c.NoPinchZoom == o.NoPinchZoom && c.CenterContent == o.CenterContent &&
+		slices.EqualFunc(c.Edges[:], o.Edges[:], func(a, b ScrollEdge) bool { return a.Equal(&b) })
 }
 
 // ClampZoom returns z within c's zoom scales.
 func (c *ScrollConfig) ClampZoom(z float32) float32 {
 	return min(max(z, c.MinZoomScale), c.MaxZoomScale)
+}
+
+// EdgeEffect is how a scroll view's side sets the views over it, its
+// bars, apart from the content scrolling under them, as iOS 26's scroll
+// edge effects do.
+type EdgeEffect uint8
+
+const (
+	// EdgeEffectAutomatic is soft under the bars; iOS 26 and later also
+	// draw their own under their system bars.
+	EdgeEffectAutomatic EdgeEffect = iota
+	// EdgeEffectSoft blurs the content under the bars progressively, most
+	// at the side, and fades it into the background it scrolls over.
+	EdgeEffectSoft
+	// EdgeEffectHard frosts the content under the bars evenly, with a
+	// hairline along their far edge.
+	EdgeEffectHard
+	// EdgeEffectHidden draws none, under system bars too.
+	EdgeEffectHidden
+)
+
+// Side is a side of a box, in the order of Edges.
+type Side uint8
+
+const (
+	SideTop Side = iota
+	SideRight
+	SideBottom
+	SideLeft
+)
+
+// ScrollEdge is a scroll view's effect at one of its sides
+// (ScrollConfig.Edges).
+type ScrollEdge struct {
+	Effect EdgeEffect
+	// Extent is how far into the scroll view the bars over this side
+	// reach from it, 0 without bars; Bars are their views, which iOS 26
+	// shapes its effect under (UIScrollEdgeElementContainerInteraction).
+	Extent Points
+	Bars   []NodeID
+	// Tint is the background the content scrolls over, which the effect
+	// fades it into, and Line a hard edge's hairline.
+	Tint, Line Color
+}
+
+// Equal reports whether e and o draw the same.
+func (e *ScrollEdge) Equal(o *ScrollEdge) bool {
+	return e.Effect == o.Effect && e.Extent == o.Extent && slices.Equal(e.Bars, o.Bars) && e.Tint == o.Tint && e.Line == o.Line
+}
+
+// What a platform drawing an edge effect itself draws, alike everywhere:
+// a soft edge blurs by SoftEdgeBlur at the side, down to nothing
+// SoftEdgeTail past the bars, under the tint from SoftEdgeTint; a hard
+// edge blurs by HardEdgeBlur under the bars, under the tint at
+// HardEdgeTint, and draws a hairline HairlineWidth wide past them. Blurs
+// are a Gaussian's standard deviation, as CSS's blur() takes.
+const (
+	SoftEdgeBlur  Points  = 10
+	SoftEdgeTail  Points  = 16
+	SoftEdgeTint  float32 = 0.6
+	HardEdgeBlur  Points  = 6.4
+	HardEdgeTint  float32 = 0.8
+	HairlineWidth Points  = 0.5
+)
+
+// A platform that cannot blur what is behind a view, Linux, fades the
+// content into the tint alone, more opaque: from UnblurredSoftTint at a
+// soft edge's side, and at UnblurredHardTint under a hard edge's bars.
+const (
+	UnblurredSoftTint float32 = 0.85
+	UnblurredHardTint float32 = 0.95
+)
+
+// Drawn returns the effect a platform drawing it itself draws: soft for
+// an automatic side with bars, and none without bars.
+func (e *ScrollEdge) Drawn() EdgeEffect {
+	switch {
+	case e.Extent <= 0 || e.Effect == EdgeEffectHidden:
+		return EdgeEffectHidden
+	case e.Effect == EdgeEffectAutomatic:
+		return EdgeEffectSoft
+	}
+	return e.Effect
+}
+
+// Band returns how far from its side the drawn effect reaches: a soft
+// edge's past the bars by SoftEdgeTail, 0 for none.
+func (e *ScrollEdge) Band() Points {
+	switch e.Drawn() {
+	case EdgeEffectSoft:
+		return e.Extent + SoftEdgeTail
+	case EdgeEffectHard:
+		return e.Extent
+	}
+	return 0
+}
+
+// BandRect returns the band of side s of a view of size size, in its own
+// points.
+func BandRect(s Side, size Size, band Points) Bounds {
+	switch s {
+	case SideRight:
+		band = min(band, size.Width)
+		return Bounds{Origin: Point{X: size.Width - band}, Size: Size{Width: band, Height: size.Height}}
+	case SideBottom:
+		band = min(band, size.Height)
+		return Bounds{Origin: Point{Y: size.Height - band}, Size: Size{Width: size.Width, Height: band}}
+	case SideLeft:
+		return Bounds{Size: Size{Width: min(band, size.Width), Height: size.Height}}
+	}
+	return Bounds{Size: Size{Width: size.Width, Height: min(band, size.Height)}}
+}
+
+// EdgeLine returns the line of a gradient across a band from side s, from
+// the side to the band's other end, in fractions of the band.
+func EdgeLine(s Side) (x0, y0, x1, y1 float32) {
+	switch s {
+	case SideRight:
+		return 1, 0.5, 0, 0.5
+	case SideBottom:
+		return 0.5, 1, 0.5, 0
+	case SideLeft:
+		return 0, 0.5, 1, 0.5
+	}
+	return 0.5, 0, 0.5, 1
+}
+
+// HairlineRect returns where a hard edge's hairline is in its band of
+// size band: along the band's other end, outside it.
+func HairlineRect(s Side, band Size) Bounds {
+	w := HairlineWidth
+	switch s {
+	case SideRight:
+		return Bounds{Origin: Point{X: -w}, Size: Size{Width: w, Height: band.Height}}
+	case SideBottom:
+		return Bounds{Origin: Point{Y: -w}, Size: Size{Width: band.Width, Height: w}}
+	case SideLeft:
+		return Bounds{Origin: Point{X: band.Width}, Size: Size{Width: w, Height: band.Height}}
+	}
+	return Bounds{Origin: Point{Y: band.Height}, Size: Size{Width: band.Width, Height: w}}
+}
+
+// BlurLevel is a step of a soft edge's blur, which grows toward the side:
+// what is under it blurred, shown wholly from the side to Full of the way
+// across the band, and fading out from there to nothing at Gone. Blur
+// adds to the levels drawn before it, whose blurs it reads, as variances
+// add up; Total is the whole blur where it shows wholly, for a platform
+// whose levels each read the content alone.
+type BlurLevel struct {
+	Blur, Total Points
+	Full, Gone  float32
+}
+
+// finestLevel is the least blur a level shows wholly: below it, what is
+// mixed with the sharp content looks as a blur between them.
+const finestLevel Points = 1.5
+
+// SoftEdgeLevels returns the levels of a soft edge's blur, from the
+// finest, as MyGo's progressive blurs: their blurs double from one level
+// to the next up to SoftEdgeBlur, and between two a pixel shows both
+// mixed, which the eye takes for a blur between them.
+func SoftEdgeLevels() []BlurLevel {
+	most := SoftEdgeBlur
+	his := []Points{most}
+	for h := most; h > finestLevel; {
+		h /= 2
+		his = append(his, h)
+	}
+	var levels []BlurLevel
+	var lo Points
+	for i := len(his) - 1; i >= 0; i-- {
+		hi := his[i]
+		// The blur wanted falls from most at the side to 0 at the band's
+		// end: it is hi at 1-hi/most of the way, and lo at 1-lo/most.
+		levels = append(levels, BlurLevel{
+			Blur:  Points(math.Sqrt(float64(hi*hi - lo*lo))),
+			Total: hi,
+			Full:  float32(1 - hi/most),
+			Gone:  float32(1 - lo/most),
+		})
+		lo = hi
+	}
+	return levels
 }

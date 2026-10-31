@@ -112,6 +112,9 @@ type view struct {
 }
 
 type surface struct {
+	// edgesDue are the scroll views whose bars get their edge
+	// interactions at the end of the batch.
+	edgesDue []*view
 	// perf measures the surface while its panel, hud, shows; perfOn says
 	// the app asked for them.
 	perf   *engine.PerfMonitor
@@ -844,6 +847,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.overflow = it.Frame
 		case driver.ItemFrame:
 			s.setFrame(v, it.Frame, lb)
+			if v.sc != nil && v.hasEdges() {
+				v.placeEdges()
+			}
 			if v.bar != nil {
 				s.layoutBar(v)
 			}
@@ -979,6 +985,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			}
 		}
 	}
+	s.attachEdgeBars()
 	if root := s.views[b.Root]; root.native.Send(selSuperview) != s.native {
 		s.native.Send(selAddSubview, root.native)
 	}
@@ -1059,6 +1066,14 @@ func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
 // delete releases v; kept leaves its native where it is, going away.
 func (s *surface) delete(v *view, kept bool) {
 	v.releaseCanvasNodes()
+	if v.sc != nil {
+		for i := range v.sc.edges {
+			if ev := &v.sc.edges[i]; ev.holder != 0 {
+				ev.paint.Release()
+				ev.mask.Send(selRelease)
+			}
+		}
+	}
 	if v.sheet != nil {
 		s.dismissSheet(v)
 		defer s.updateOrientations()
@@ -1430,6 +1445,9 @@ func scrolled(self objc.ID, _ objc.SEL, _ objc.ID) {
 	}
 	if v.sc != nil && len(v.sc.sticky) > 0 {
 		v.pinSticky()
+	}
+	if v.sc != nil && v.hasEdges() {
+		v.followEdges()
 	}
 	v.surface.followLargeTitle(v, offset.Y)
 	v.scrollEvent(driver.EventScroll)

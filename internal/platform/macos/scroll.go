@@ -133,6 +133,8 @@ type scrollState struct {
 	overlay, thumb, spinner objc.ID
 	spokes                  [refreshSpokes]objc.ID
 	drawn                   indicatorLook
+	// edges are the effects at its sides.
+	edges [4]edgeView
 	// The bounds commit is due at commitAt; armed while a timer waits
 	// for it, which saw the view rest from restedAt.
 	commitAt, restedAt time.Duration
@@ -436,6 +438,7 @@ func (v *view) sizeScroll() {
 		}
 	})
 	v.updateOverlay()
+	v.placeEdges()
 	if v.zooms() {
 		v.clampZoom()
 	} else if _, hi := v.limits(); v.pos() > hi+0.5 {
@@ -735,6 +738,7 @@ func (v *view) configureScroll(c *driver.ScrollConfig) {
 		v.animateTo(-v.lead()-c.Behavior.RefreshInset(), scrollbar.Animation, false, false)
 	}
 	v.updateOverlay()
+	v.placeEdges()
 	if s.phase.kind == atRest && !s.ticking {
 		v.commit() // nothing moves: AppKit may as well know
 	}

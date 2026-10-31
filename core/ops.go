@@ -283,6 +283,7 @@ func (t *Tree) setScroll(n *node, v Scroll) {
 	sc := n.scroll
 	first := sc.zoom == 0 // bindScrollSpec sets it
 	sc.config.Horizontal, sc.config.HideIndicator = v.Horizontal, v.HideIndicator
+	sc.effects = v.EdgeEffects
 	behavior := v.Behavior
 	if v.BehaviorFunc != nil {
 		behavior = v.BehaviorFunc()

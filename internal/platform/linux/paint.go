@@ -117,6 +117,7 @@ func (w *window) snapshotView(v *view, snap uintptr) {
 		cur = w.snapshotChild(v, c, cur, clip, &sh)
 	}
 	if v.kind == driver.KindScroll {
+		snapshotEdges(v, cur)
 		snapshotSpinner(v, cur, time.Now())
 		if w.showsBar(v) {
 			snapshotIndicator(v, cur)

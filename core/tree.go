@@ -77,6 +77,9 @@ type Tree struct {
 	boundaries []*node
 	canvases   []*node
 	measures   measureCache
+	// edgeBars are the views that are bars over a scroll view's side, and
+	// edgeScrolls the scroll views they last reached into.
+	edgeBars, edgeScrolls []*node
 	// commits counts commits, the last of which started at commitStart;
 	// paceStop cancels the frame paced lists wait for.
 	commits     int
@@ -149,6 +152,8 @@ type node struct {
 	part       PartStates     // the states it is styled in as a control's part
 	isStack    bool
 	ref        *Ref
+	// edgeBar is the scroll view side the view is a bar over.
+	edgeBar *EdgeBar
 	// place is the holder a place region shows; held the holder whose
 	// content this region is.
 	place, held *Holder
@@ -410,6 +415,10 @@ type scrollNode struct {
 	reported time.Time
 	latest   Point
 	waiting  bool
+	// effects are the edge effects it asks for, and edges what its bars
+	// measured (markEdgeScrolls).
+	effects EdgeEffects
+	edges   [4]driver.ScrollEdge
 }
 
 // pendingScroll is a scroll the core sent and the platform has not shown
@@ -1045,6 +1054,11 @@ func (t *Tree) setViewParts(n *node, v View) {
 		WindowDrag: v.Desktop.WindowDrag, SelectionArea: v.Selectable, PointerEvents: v.PointerEvents, HitSlop: v.HitSlop,
 		DelayLongPress: v.DelayLongPress, NoFocus: v.NoFocus, Ripple: v.Android.Ripple}
 	n.material = v.IOS.BackdropMaterial
+	if v.EdgeBar.Scroll != nil {
+		bar := v.EdgeBar
+		n.edgeBar = &bar
+		t.edgeBars = append(t.edgeBars, n)
+	}
 	_, panClaim := v.Responder.panClaim()
 	n.panning = v.OnPan != nil || v.PanValues != (AnimatedXY{}) || panClaim
 	if n.panning {
@@ -1252,7 +1266,7 @@ func (t *Tree) mountScroll(cx *Scope, parent *node, v Scroll) {
 	}
 	n.props = driver.ViewProps{TestID: v.TestID}
 	t.setRef(n, v.Ref)
-	n.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: v.Horizontal, HideIndicator: v.HideIndicator}}
+	n.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: v.Horizontal, HideIndicator: v.HideIndicator}, effects: v.EdgeEffects}
 	t.bindScrollSpec(cx, n, scrollSpec{behavior: v.Behavior, behaviorFunc: v.BehaviorFunc, offset: v.ContentOffset,
 		refreshing: v.Refreshing, onRefresh: v.OnRefresh, onScroll: v.OnScroll, throttle: v.ScrollEventThrottle,
 		onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,

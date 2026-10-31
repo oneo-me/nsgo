@@ -423,6 +423,9 @@ func scrollingDemo(cx *core.Scope) core.Node {
 	return demoPage(cx, pageProps{still: true, bottom: 16,
 		behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardShouldPersistTaps: taps.Get()} }},
 		func(cx *core.Scope) core.Node {
+			return section(cx, "Edge effects", "Scroll under the bars", api(cx, "EdgeEffects · EdgeBar"), edgeEffects(cx))
+		},
+		func(cx *core.Scope) core.Node {
 			return section(cx, "Paging", "5 pages", api(cx, "Behavior.Paging · OffsetValues"), pager(cx))
 		},
 		func(cx *core.Scope) core.Node {

@@ -365,6 +365,11 @@ func (s *surface) releaseScrolls() bool {
 // which goes away.
 func (s *surface) forgetScroll(v *view) {
 	delete(s.armed, v)
+	for i := range v.sc.edges {
+		if v.sc.edges[i].holder != 0 {
+			v.sc.edges[i].paint.Release()
+		}
+	}
 	w := &s.wheels
 	if w.gesture != nil && w.gesture.view == v {
 		w.gesture.view = nil

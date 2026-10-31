@@ -19,6 +19,22 @@ A scroll view follows NSH's `scrolling-and-lists.md`: `ScrollBehavior` holds pag
 - iOS and Android keep a focused field in a scroll view clear of the software keyboard: the keyboard's height joins the bottom inset while it shows, and the field scrolls into view with the keyboard's motion.
 - Zooming (`MaxZoomScale` above `MinZoomScale`, `Ref.ZoomTo`) is iOS's zoom view, Android's `ZoomScroll`, a scaled content element on the web and the container's bounds on macOS; Windows and Linux ignore it, as NSH's desktops do. Mouse drags never scroll content.
 
+### Edge effects
+
+`Scroll.EdgeEffects` sets the views over a scroll view's sides apart from the content scrolling under them, as iOS 26's scroll edge effects do: its bars, views whose `EdgeBar` names the scroll view by its `Ref` and a side. NSH has none; the looks follow iOS 26's and MyGo's measures of macOS 27's.
+
+- After layout the core measures how far each side's bars reach into the scroll view (`markEdgeScrolls`) and sends it in `ScrollConfig.Edges`, with the bars, the background the content scrolls over and a hard edge's hairline. Automatic is soft under bars and nothing without them.
+- A soft edge blurs most at the side and fades out 16 points past the bars, under the background fading from 60%; a hard edge frosts evenly under the bars, under the background at 80%, with a half-point hairline past them (`driver.SoftEdgeLevels`, `BandRect`, `HairlineRect`).
+
+| Target | Draws |
+| --- | --- |
+| iOS 26 and later | `UIScrollEdgeEffect`'s soft, hard or automatic style, or hidden, per side. Each bar gets a `UIScrollEdgeElementContainerInteraction` and an empty `UILabel` filling it, since UIKit shapes the effect by the labels and images it finds, and NSGo's views draw into layers |
+| iOS before 26, macOS | A system blur (`UIVisualEffectView`, `NSVisualEffectView`'s header material) over the content, fading in toward a soft side through a mask view or a stretched mask image, with the tint and hairline as layers; iOS's follows the offset inside the scroll view. AppKit's own edge effect reaches only `NSScrollView`s under a title bar's accessories |
+| Web | Bands that stick over the content (`position: sticky`, from the top left, as the content beside them is absolutely placed), stacking `backdrop-filter` blurs whose radii double toward the side, each fading in through `mask-image` |
+| Windows | Over the children, from one copy of the target: each level blurred by its whole blur through Direct2D's Gaussian blur and faded in by a gradient opacity brush |
+| Linux | The background alone, from 85% at a soft side or at 95% under hard bars, as GTK draws nothing behind a widget |
+| Android | Nothing yet ([roadmap](../roadmap.md)) |
+
 ### macOS scroll views
 
 macOS follows NSH's `scroll.rs` (`internal/platform/macos/scroll.go`, `wheel.go`); the rubber band, the indicator's geometry and fade, the trackpad's resampling and revealing are `internal/platform/scrollbar`'s.

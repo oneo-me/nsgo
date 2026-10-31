@@ -25,6 +25,9 @@ type (
 	ScreenConfig = driver.ScreenConfig
 	// ScrollConfig configures a scroll view.
 	ScrollConfig = driver.ScrollConfig
+	// ScrollEdge is a scroll view's edge effect at one of its sides: the
+	// effect, how far its bars reach and the bars.
+	ScrollEdge = driver.ScrollEdge
 	// StatusBarConfig is the status bar the platform shows (ItemStatusBar).
 	StatusBarConfig = driver.StatusBarConfig
 	// TextStyle is resolved text style: nothing in it is unset.

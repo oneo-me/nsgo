@@ -1183,6 +1183,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 				}
 				if v.kind == driver.KindScroll {
 					v.placeContent() // centering and snap points follow the size
+					s.placeEdges(v)
 				}
 				s.redrawGradients(v)
 			}

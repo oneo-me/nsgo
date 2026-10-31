@@ -111,6 +111,7 @@ func (t *Tree) commitRound() {
 		t.layout()
 	}
 	t.markHeaderScrolls()
+	t.markEdgeScrolls()
 	t.sendSticky()
 	t.sizeCanvases()
 	t.laidOut = t.laidOut[:0]
@@ -574,6 +575,7 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.scroll != nil:
 		sc := n.scroll
 		c := sc.config
+		c.Edges = sc.scrollEdges()
 		if inset := t.headerInset(n); inset > 0 {
 			c.HeaderInset = inset
 			c.Behavior.ContentInset.Top += inset

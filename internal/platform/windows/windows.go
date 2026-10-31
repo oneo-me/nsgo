@@ -258,6 +258,8 @@ type view struct {
 	canvasCache canvasCache
 	// shaderView is a shader view's Direct3D state.
 	shaderView *shaderView
+	// glass is the textures its Liquid Glass draws through.
+	glass *glassView
 
 	// A web view's WebView2 controller and portal, a video's media engine.
 	web   *webView
@@ -1080,6 +1082,7 @@ func (w *window) destroy(v *view) {
 	v.shadow.release()
 	v.shadow = nil
 	v.shaderView.release()
+	v.glass.release()
 	v.shaderView = nil
 	v.canvasCache.release()
 	for _, sh := range v.boxShadows {

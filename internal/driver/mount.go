@@ -657,6 +657,9 @@ type ScrollConfig struct {
 	NoBouncesZoom bool
 	NoPinchZoom   bool
 	CenterContent bool
+	// Edges are the effects at its sides, in the order of Edges: top,
+	// right, bottom, left.
+	Edges [4]ScrollEdge
 }
 
 // TextEngine prepares text for layout. The engine calls it on its own

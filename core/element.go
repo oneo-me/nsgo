@@ -124,6 +124,10 @@ type View struct {
 	IOS     IOSViewProps
 	Android AndroidViewProps
 	Desktop DesktopViewProps
+	// EdgeBar, when its Scroll is set, makes the view a bar over that
+	// scroll view's side, which the scroll view's edge effect sets apart
+	// from the content scrolling under it (Scroll.EdgeEffects).
+	EdgeBar EdgeBar
 	// Selectable makes the texts inside select together, as a web page's
 	// do: one selection runs from a place in one text to a place in
 	// another, across views. On desktops it is made by dragging, a double
@@ -372,9 +376,12 @@ type Scroll struct {
 	BehaviorFunc func() ScrollBehavior
 	// ContentOffset is where it starts.
 	ContentOffset Point
-	Style         Style
-	StyleFunc     func() Style
-	Children      []Node
+	// EdgeEffects set the bars over its sides (View.EdgeBar) apart from
+	// the content scrolling under them (EdgeEffect).
+	EdgeEffects EdgeEffects
+	Style       Style
+	StyleFunc   func() Style
+	Children    []Node
 	// OnScroll receives where it is as it scrolls, at most once a turn,
 	// and at most once per ScrollEventThrottle when that is set: then the
 	// latest offset waits for the interval to pass.
