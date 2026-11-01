@@ -53,10 +53,13 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - `ItemHistory` counts the backs the app can take: screens above each stack's first and modals shown. The web keeps that many browser history entries when the app is the whole page, so the browser's back goes back in the app.
 - `OnBackPress` stays in `core`, where NSH's apps take it from `nsh/mobile`, because it also hears Escape and the browser's back.
 - A popped screen reports `OnDismiss` and stays hidden until the app removes it; the last screen never pops.
-- Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar. `Screen.IOS.HeaderRightSystemItem` with a `HeaderRight` asks iOS for UIKit's own bar button in its place, whose press iOS reports on `HeaderRight`'s first view that takes presses, as NSH's `headerRightSystemItem`.
+- Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar.
+- `Screen.IOS.HeaderRightSystemItem` with a `HeaderRight` asks iOS for UIKit's own bar button in its place, as NSH's `headerRightSystemItem`. iOS reports its press on `HeaderRight`'s first view that takes presses.
 - `Header` is then not mounted; elsewhere it is the screen's first child.
 - iOS gives each screen a `UINavigationBar` of its own with a back item, Android a `Toolbar`; their back buttons and iOS's leading-edge swipe send `EventBack` with the screen's ID.
-- iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view. `Screen.Animation` fades the screen instead or shows it at once (a push takes the pushed screen's, a pop the popped one's), and `HeaderClass` gives the system header its colors as classes (`bg-*`, `text-*`, `tint-*`) under `HeaderStyle`.
+- iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view.
+- `Screen.Animation` fades the screen instead or shows it at once: a push takes the pushed screen's, a pop the popped one's.
+- `HeaderClass` gives the system header its colors as classes (`bg-*`, `text-*`, `tint-*`) under `HeaderStyle`.
 - A hidden screen has no layout, so a batch that changes a stack first snapshots the screen it shows, and the slide moves that snapshot; the swipe back moves the screens themselves.
 - Each platform measures its bar with what it holds and reports it (`EventScreenHeader`), which replaces the environment's estimate.
 - A transparent header and a large title lay the content under them: each vertical scroll view whose top they cover gets that part as `ScrollConfig.HeaderInset`, added to its top content inset.
@@ -123,17 +126,12 @@ The protocol is defined in `mount.go` and `events.go`. Backends apply items in o
 
 ## Where Go departs from NSH
 
+The departures of Go's API shape as a whole are in [NSGo and NSH](nsh.md#gos-api-shape).
+
 | NSH (Rust) | NSGo | Why |
 | --- | --- | --- |
-| Builders, `#[component]`, derive macros | Struct literals; components are types with `Render` | Go's idiom for many optional fields; no macros |
-| `Reactive<T>` and `IntoReactive` | A `func() T` field beside the static one | A method value such as `sig.Get` already is the accessor |
-| Copy handles in a generational arena | Pointers and the garbage collector | Go frees what nothing references |
-| `TypeId` context keys | `Key[T]` values declared as package variables | Typed, comparable and cheap |
-| A future executor on the engine thread | Goroutines, `Scope.Post` and `Scope.Context` | Go has them built in |
-| `catch_unwind` | `recover`, reported as `PanicError` | The same, in Go terms |
 | `MountItem` enum | One struct with a `Kind` and pointers to large parts | No allocation per item kind; easy to encode across a pipe |
 | `accessibilityActions` as a list in the props | `ViewProps.Actions` points at the element's list, never changed | `ViewProps` stays comparable, so the core diffs it with `!=` |
-| Options with defaults of `true` (`closeOnEscape`) | Negative names (`NoCloseOnEscape`) | The zero value must be the default |
 | Per-platform image loading and caching | One Go loader, `internal/platform/imageload` | Written once; platforms only decode and draw |
 
 ## TSX

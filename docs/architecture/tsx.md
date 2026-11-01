@@ -159,7 +159,6 @@ Without a heap limit a module can still exhaust memory. That suits the app's own
 | Rust components' JS face generated from specs | Go components read by reflection as they are made, declarations from their types | One registration call, no generator step; making a component is not a hot path |
 | Web APIs in Rust | Thin JS classes over Go natives (`web.js`) | Little code; only `fetch`, encoding and URLs need the system |
 | `Intl` for every CLDR locale | Numbers, plurals and collation by CLDR; dates in English | `golang.org/x/text` has no date formats |
-| `onScrollEnd` | Not yet ([roadmap](../roadmap.md)) | The backends report no end of scrolling |
 | `nsh.json` | `nsgo.yaml` | Configuration is YAML |
 | `nsh check` downloads `tsc` from npm | `go run` builds it | Only Go is assumed |
 | The modules `nsh`, `nsh/*`, `nsh:rt` | `nsgo`, `nsgo/*`, `nsgo:rt` | The product's name (decided by the user, 2026-10-28) |

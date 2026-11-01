@@ -114,6 +114,5 @@ On per-frame paths, send messages whose arguments and result are objects, intege
 | --- | --- | --- |
 | `JS` per commit | `APP` per commit | Apps are Go |
 | `ops` and mount items in a commit | Mount items | NSGo's commit does not count ops |
-| `--fps --trace` logs the readings once a second | Not ported | `nsgo dev` has no trace flag |
 | Linux and Windows log one line of readings a second | Every native target shows macOS's panel | One monitor, read the same way on every target |
 | Windows draws the whole window for a paint the system asks for with nothing queued | It draws nothing | The flip model's last frame is still on screen; PrintWindow's captures asked for such paints |
