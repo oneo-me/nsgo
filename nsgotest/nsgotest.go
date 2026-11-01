@@ -113,6 +113,16 @@ type App struct {
 	// the user cancels.
 	Picks      []driver.PickRequest
 	PickImages func(r driver.PickRequest) []driver.PickedFile
+	// FilePicks are the file picks the app asked for, oldest first.
+	// PickFiles answers each with the files the user picks; with none
+	// the user cancels.
+	FilePicks []driver.FilesRequest
+	PickFiles func(r driver.FilesRequest) []driver.File
+	// Saves are the saves the app asked for, oldest first. SaveFile
+	// answers each with the path the user saves to, where the file is
+	// written; with none, or "", the user cancels.
+	Saves    []driver.SaveRequest
+	SaveFile func(r driver.SaveRequest) string
 	// OnAlert answers each alert the app shows with the index of the
 	// button the user presses, or -1 to dismiss it, once the step that
 	// showed it ends. Without it Alerts lists them and Answer answers

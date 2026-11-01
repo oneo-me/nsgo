@@ -5,8 +5,10 @@ package windows
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"image"
 	"image/png"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -19,19 +21,21 @@ import (
 )
 
 // The services Win32 performs: the clipboard's images and files, opening
-// URLs, the photo picker, context menus, the app's appearance, the
+// URLs, the photo and file pickers, the save dialog, context menus, the app's appearance, the
 // window's frame and level, and the menu bar that hides.
 
 var (
-	comdlg32            = syscall.NewLazyDLL("comdlg32.dll")
-	uxtheme             = syscall.NewLazyDLL("uxtheme.dll")
-	getOpenFileNameW    = comdlg32.NewProc("GetOpenFileNameW")
-	shellExecuteExW     = shell32.NewProc("ShellExecuteExW")
-	isIconic            = user32.NewProc("IsIconic")
-	setForegroundWindow = user32.NewProc("SetForegroundWindow")
-	bringWindowToTop    = user32.NewProc("BringWindowToTop")
-	getWindowRect       = user32.NewProc("GetWindowRect")
-	endMenu             = user32.NewProc("EndMenu")
+	comdlg32             = syscall.NewLazyDLL("comdlg32.dll")
+	uxtheme              = syscall.NewLazyDLL("uxtheme.dll")
+	getOpenFileNameW     = comdlg32.NewProc("GetOpenFileNameW")
+	getSaveFileNameW     = comdlg32.NewProc("GetSaveFileNameW")
+	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
+	shellExecuteExW      = shell32.NewProc("ShellExecuteExW")
+	isIconic             = user32.NewProc("IsIconic")
+	setForegroundWindow  = user32.NewProc("SetForegroundWindow")
+	bringWindowToTop     = user32.NewProc("BringWindowToTop")
+	getWindowRect        = user32.NewProc("GetWindowRect")
+	endMenu              = user32.NewProc("EndMenu")
 )
 
 const (
@@ -46,8 +50,9 @@ const (
 	ofnFileMustExist    = 0x00001000
 	ofnExplorer         = 0x00080000
 	ofnNoChangeDir      = 0x00000008
+	ofnOverwritePrompt  = 0x00000002
 
-	wmPick     = 0x8000 + 5 // a photo pick waits
+	wmDialog   = 0x8000 + 5 // an open or save dialog waits
 	wmPopup    = 0x8000 + 6 // a context menu waits
 	wmSysKeyUp = 0x0105
 
@@ -252,58 +257,120 @@ type openFileName struct {
 	FlagsEx       uint32
 }
 
-type pickRequest struct {
-	r  driver.PickRequest
-	id uint32
-}
-
 // pickImages queues a pick: the open dialog's modal loop must not run in
-// the batch's.
+// the batch's. The images chosen are read as they are on a goroutine.
 func (w *window) pickImages(r driver.PickRequest, id uint32) {
-	w.picks = append(w.picks, pickRequest{r, id})
-	postMessageW.Call(w.hwnd, wmPick, 0, 0)
+	w.queueDialog(func() {
+		paths, _ := w.openDialog(syscall.StringToUTF16("Images"), r.DialogExtensions(), r.Limit)
+		go func() {
+			w.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: id, Data: picked.ReadFiles(r, paths)})
+		}()
+	})
 }
 
-// showPick shows the open dialog for the first pick queued and reads the
-// files chosen, as they are, on a goroutine.
-func (w *window) showPick() {
-	if w.picking || len(w.picks) == 0 {
+// pickFiles queues a pick of the files r offers.
+func (w *window) pickFiles(r driver.FilesRequest, id uint32) {
+	w.queueDialog(func() {
+		exts, every := r.Extensions()
+		name := syscall.StringToUTF16("Files")
+		if every {
+			exts, name = nil, syscall.StringToUTF16("All files")
+		}
+		paths, err := w.openDialog(name, exts, r.Limit)
+		ev := driver.Event{Kind: driver.EventFiles, Count: id}
+		if err != nil {
+			ev.Text = err.Error()
+		}
+		var files []driver.File
+		for _, p := range paths {
+			files = append(files, driver.File{Path: p})
+		}
+		ev.Data = files
+		w.engine.Dispatch(ev)
+	})
+}
+
+// saveFile queues a save: the save dialog suggests r's name, and the
+// file is written where the user chose on a goroutine.
+func (w *window) saveFile(r driver.SaveRequest, id uint32) {
+	w.queueDialog(func() {
+		path, err := w.saveDialog(r.Name)
+		ev := driver.Event{Kind: driver.EventFiles, Count: id}
+		if err != nil || path == "" {
+			if err != nil {
+				ev.Text = err.Error()
+			}
+			w.engine.Dispatch(ev)
+			return
+		}
+		go func() {
+			if err := r.SaveTo(path); err != nil {
+				ev.Text = err.Error()
+			} else {
+				ev.Finished = true
+			}
+			w.engine.Dispatch(ev)
+		}()
+	})
+}
+
+// queueDialog runs show from a message of its own, one dialog at a
+// time.
+func (w *window) queueDialog(show func()) {
+	w.dialogs = append(w.dialogs, show)
+	postMessageW.Call(w.hwnd, wmDialog, 0, 0)
+}
+
+// showDialog shows the first dialog queued.
+func (w *window) showDialog() {
+	if w.inDialog || len(w.dialogs) == 0 {
 		return
 	}
-	p := w.picks[0]
-	w.picks = w.picks[1:]
-	w.picking = true
-	paths := w.openDialog(p.r)
-	w.picking = false
-	go func() {
-		w.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: p.id, Data: picked.ReadFiles(p.r, paths)})
-	}()
-	if len(w.picks) > 0 {
-		postMessageW.Call(w.hwnd, wmPick, 0, 0)
+	show := w.dialogs[0]
+	w.dialogs = w.dialogs[1:]
+	w.inDialog = true
+	show()
+	w.inDialog = false
+	if len(w.dialogs) > 0 {
+		postMessageW.Call(w.hwnd, wmDialog, 0, 0)
 	}
 }
 
-// openDialog returns the paths of the images chosen in Windows' open
-// dialog, none when it was cancelled.
-func (w *window) openDialog(r driver.PickRequest) []string {
+// dialogError is what CommDlgExtendedError says failed in a dialog that
+// returned false, nil when the user cancelled it.
+func dialogError() error {
+	code, _, _ := commDlgExtendedError.Call()
+	if code == 0 {
+		return nil
+	}
+	return fmt.Errorf("common dialog error %#x", code)
+}
+
+// openDialog returns the paths of the files chosen in Windows' open
+// dialog, at most limit, offering those of exts under name, or every
+// file for none; none when it was cancelled.
+func (w *window) openDialog(name []uint16, exts []string, limit int) ([]string, error) {
 	var pattern []uint16
-	for i, ext := range r.DialogExtensions() {
+	for i, ext := range exts {
 		if i > 0 {
 			pattern = append(pattern, ';')
 		}
 		pattern = append(pattern, syscall.StringToUTF16("*."+ext)...)
 		pattern = pattern[:len(pattern)-1]
 	}
-	filter := append(syscall.StringToUTF16("Images"), append(pattern, 0, 0)...)
+	if len(exts) == 0 {
+		pattern = append(pattern, '*', '.', '*')
+	}
+	filter := append(name, append(pattern, 0, 0)...)
 	buf := make([]uint16, 64<<10)
 	ofn := openFileName{Owner: w.owner(), Filter: &filter[0], File: &buf[0], MaxFile: uint32(len(buf)),
 		Flags: ofnExplorer | ofnFileMustExist | ofnPathMustExist | ofnNoChangeDir}
-	if r.Limit > 1 {
+	if limit > 1 {
 		ofn.Flags |= ofnAllowMultiSelect
 	}
 	ofn.StructSize = uint32(unsafe.Sizeof(ofn))
 	if ok, _, _ := getOpenFileNameW.Call(uintptr(unsafe.Pointer(&ofn))); ok == 0 {
-		return nil
+		return nil, dialogError()
 	}
 	// One path, or the directory then each name, NUL-separated.
 	var parts []string
@@ -317,14 +384,36 @@ func (w *window) openDialog(r driver.PickRequest) []string {
 		}
 	}
 	if len(parts) <= 1 {
-		return parts
+		return parts, nil
 	}
 	dir := parts[0]
 	paths := make([]string, 0, len(parts)-1)
 	for _, name := range parts[1:] {
-		paths = append(paths, dir+`\`+name)
+		if len(paths) < max(limit, 1) {
+			paths = append(paths, dir+`\`+name)
+		}
 	}
-	return paths
+	return paths, nil
+}
+
+// saveDialog returns the path chosen in Windows' save dialog, which
+// suggests name and asks before replacing a file; "" when it was
+// cancelled.
+func (w *window) saveDialog(name string) (string, error) {
+	buf := make([]uint16, 32<<10)
+	copy(buf[:len(buf)-1], syscall.StringToUTF16(name))
+	filter := append(append(syscall.StringToUTF16("All files"), syscall.StringToUTF16("*.*")...), 0)
+	var defExt *uint16
+	if ext := strings.TrimPrefix(filepath.Ext(name), "."); ext != "" {
+		defExt = &syscall.StringToUTF16(ext)[0]
+	}
+	ofn := openFileName{Owner: w.owner(), Filter: &filter[0], File: &buf[0], MaxFile: uint32(len(buf)), DefExt: defExt,
+		Flags: ofnExplorer | ofnPathMustExist | ofnNoChangeDir | ofnOverwritePrompt}
+	ofn.StructSize = uint32(unsafe.Sizeof(ofn))
+	if ok, _, _ := getSaveFileNameW.Call(uintptr(unsafe.Pointer(&ofn))); ok == 0 {
+		return "", dialogError()
+	}
+	return syscall.UTF16ToString(buf), nil
 }
 
 type popupRequest struct {

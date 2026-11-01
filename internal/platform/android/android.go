@@ -33,6 +33,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -129,6 +130,11 @@ type surface struct {
 	cmu        sync.Mutex
 	components driver.NativeComponents
 	natives    map[driver.NodeID]*nativeView
+
+	// staged are the directories of the files saves of data were written
+	// to for Java to copy, by save, until it answers; smu guards them.
+	smu    sync.Mutex
+	staged map[uint32]string
 
 	// testReply takes the runtime's answers to a test host's steps.
 	testReply func(r *reader)
@@ -253,6 +259,9 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				readClipboard(&ev, data)
 			case driver.EventPick:
 				ev.Data = readPicked(data)
+			case driver.EventFiles:
+				ev.Data = readFiles(data)
+				s.unstage(ev.Count)
 			}
 			if ev.Kind == driver.EventPan {
 				// A pan's start and end carry its bound values as the size.
@@ -393,6 +402,55 @@ func readPicked(data string) []driver.PickedFile {
 		files = append(files, file)
 	}
 	return files
+}
+
+// readFiles reads the files an EventFiles carries in its data, one per
+// line: the name, the MIME type and the path of the copy Java made.
+func readFiles(data string) []driver.File {
+	var files []driver.File
+	for _, line := range strings.Split(data, "\n") {
+		if f := strings.Split(line, "\t"); len(f) == 3 {
+			files = append(files, driver.File{Name: f[0], MIME: f[1], Path: f[2], Temporary: true})
+		}
+	}
+	return files
+}
+
+// stage writes the data of the batch's saves that have no file to the
+// cache, for Java to copy from. A save that cannot be written fails at
+// once, and Java, seeing no path, leaves it.
+func (s *surface) stage(b *driver.MountBatch) {
+	for i := range b.Items {
+		it := &b.Items[i]
+		if it.Kind != driver.ItemSaveFile || it.Save.Path != "" {
+			continue
+		}
+		r := *it.Save
+		path, err := r.Stage(filepath.Join(os.Getenv("NSGO_CACHE_DIR"), "nsgo-save"))
+		if err != nil {
+			go s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: err.Error()})
+		} else {
+			r.Path = path
+			s.smu.Lock()
+			if s.staged == nil {
+				s.staged = map[uint32]string{}
+			}
+			s.staged[it.Count] = filepath.Dir(path)
+			s.smu.Unlock()
+		}
+		it.Save = &r
+	}
+}
+
+// unstage removes what stage wrote for save once Java answered it.
+func (s *surface) unstage(save uint32) {
+	s.smu.Lock()
+	dir, ok := s.staged[save]
+	delete(s.staged, save)
+	s.smu.Unlock()
+	if ok {
+		os.RemoveAll(dir)
+	}
 }
 
 // readEnvironment reads the environment NsgoView.environment writes.
@@ -659,6 +717,7 @@ func (s *surface) RequestFrame() { s.send(msgWantFrame, func(*writer) {}) }
 // loads of the image sources it changed.
 func (s *surface) Mount(b *driver.MountBatch) {
 	requests, loads := s.trackImages(b)
+	s.stage(b)
 	natives := s.trackNatives(b)
 	shaders := s.trackShaders(b)
 	s.send(msgBatch, func(w *writer) { encode(w, b, requests, natives, shaders) })
@@ -1128,6 +1187,22 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.u32(uint32(r.MaxDimension))
 			w.float(r.Quality)
 			w.flags(r.Format == driver.PickCurrent)
+		case driver.ItemPickFiles:
+			// The limit and the media types offered, none for every file.
+			types, _ := it.Files.MIMETypes()
+			w.u32(it.Count)
+			w.u32(uint32(it.Files.Limit))
+			w.u32(uint32(len(types)))
+			for _, t := range types {
+				w.str(t)
+			}
+		case driver.ItemSaveFile:
+			// The file Java copies to where the user chose, "" for a save
+			// that failed already, then the name and type suggested.
+			w.u32(it.Count)
+			w.str(it.Save.Path)
+			w.str(it.Save.Name)
+			w.str(it.Save.MIME)
 		case driver.ItemAppearance:
 			w.byte(byte(it.Appearance))
 		case driver.ItemKeymap:

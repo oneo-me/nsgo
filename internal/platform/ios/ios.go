@@ -766,6 +766,12 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)
 			continue
+		case driver.ItemPickFiles:
+			s.pickFiles(*it.Files, it.Count)
+			continue
+		case driver.ItemSaveFile:
+			s.saveFile(*it.Save, it.Count)
+			continue
 		case driver.ItemAppearance:
 			s.appearance = it.Appearance
 			if s.embedded {

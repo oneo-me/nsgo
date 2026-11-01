@@ -14,8 +14,8 @@ import (
 )
 
 // The services AppKit performs: the clipboard's images and files,
-// opening URLs, the photo picker, context menus, the app's appearance and
-// the window's frame and level.
+// opening URLs, the photo and file pickers, the save panel, context
+// menus, the app's appearance and the window's frame and level.
 
 func generalPasteboard() objc.ID {
 	return objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
@@ -136,6 +136,61 @@ func (s *surface) pickImages(r driver.PickRequest, id uint32) {
 				}
 			}
 			s.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: id, Data: driver.FinishPick(r, files, nil)})
+		}()
+	})
+	panel.Send(sel("beginSheetModalForWindow:completionHandler:"), s.window, done)
+	done.Release()
+}
+
+// pickFiles shows an open panel as a sheet on the window for the files
+// r offers and answers with their paths.
+func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
+	panel := objc.ID(objc.GetClass("NSOpenPanel")).Send(sel("openPanel"))
+	panel.Send(sel("setCanChooseFiles:"), true)
+	panel.Send(sel("setCanChooseDirectories:"), false)
+	panel.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
+	panel.Send(sel("setAllowedContentTypes:"), apple.ContentTypes(r))
+	panel.Send(sel("retain"))
+	done := objc.NewBlock(func(_ objc.Block, response int) {
+		defer panel.Send(selRelease)
+		var files []driver.File
+		if response == 1 { // NSModalResponseOK
+			apple.ForEach(panel.Send(sel("URLs")), func(u objc.ID) {
+				files = append(files, driver.File{Path: apple.GoString(u.Send(sel("path")))})
+			})
+		}
+		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Data: files})
+	})
+	panel.Send(sel("beginSheetModalForWindow:completionHandler:"), s.window, done)
+	done.Release()
+}
+
+// saveFile shows a save panel as a sheet on the window for the file r
+// suggests, then saves it where the user chose off the main thread.
+func (s *surface) saveFile(r driver.SaveRequest, id uint32) {
+	panel := objc.ID(objc.GetClass("NSSavePanel")).Send(sel("savePanel"))
+	panel.Send(sel("setNameFieldStringValue:"), apple.NSString(r.Name))
+	panel.Send(sel("setCanCreateDirectories:"), true)
+	if t := apple.SaveType(r.Name); t != 0 {
+		types := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+		types.Send(sel("addObject:"), t)
+		panel.Send(sel("setAllowedContentTypes:"), types)
+		panel.Send(sel("setAllowsOtherFileTypes:"), true)
+	}
+	panel.Send(sel("retain"))
+	done := objc.NewBlock(func(_ objc.Block, response int) {
+		defer panel.Send(selRelease)
+		if response != 1 {
+			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id})
+			return
+		}
+		path := apple.GoString(panel.Send(sel("URL")).Send(sel("path")))
+		go func() {
+			ev := driver.Event{Kind: driver.EventFiles, Count: id, Finished: true}
+			if err := r.SaveTo(path); err != nil {
+				ev.Finished, ev.Text = false, err.Error()
+			}
+			s.engine.Dispatch(ev)
 		}()
 	})
 	panel.Send(sel("beginSheetModalForWindow:completionHandler:"), s.window, done)

@@ -4,6 +4,7 @@ package linux
 
 import (
 	"bytes"
+	"errors"
 	"image/png"
 	"strconv"
 	"strings"
@@ -18,8 +19,9 @@ import (
 )
 
 // The services GTK performs: the clipboard's images and files, opening
-// URLs (GtkUriLauncher), the photo picker (GtkFileDialog), context menus
-// (GtkPopoverMenu), the app's appearance and the menu bar that hides.
+// URLs (GtkUriLauncher), the photo and file pickers and the save dialog
+// (GtkFileDialog), context menus (GtkPopoverMenu), the app's appearance
+// and the menu bar that hides.
 
 var (
 	gBytesNew                      func(data unsafe.Pointer, size uintptr) uintptr
@@ -38,6 +40,11 @@ var (
 	gtkFileFilterNew               func() uintptr
 	gtkFileFilterSetName           func(filter uintptr, name *byte)
 	gtkFileFilterAddSuffix         func(filter uintptr, suffix *byte)
+	gtkFileFilterAddMIMEType       func(filter uintptr, mime *byte)
+	gtkFileDialogSetInitialName    func(dialog uintptr, name *byte)
+	gtkFileDialogSave              func(dialog, parent, cancellable, callback, data uintptr)
+	gtkFileDialogSaveFinish        func(dialog, result, err uintptr) uintptr
+	gtkDialogErrorQuark            func() uint32
 	gListModelGetNItems            func(model uintptr) uint32
 	gListModelGetItem              func(model uintptr, i uint32) uintptr
 	gtkPopoverMenuNewFromModel     func(model uintptr) uintptr
@@ -78,6 +85,11 @@ func bindSystem() {
 	gtk(&gtkFileFilterNew, "gtk_file_filter_new")
 	gtk(&gtkFileFilterSetName, "gtk_file_filter_set_name")
 	gtk(&gtkFileFilterAddSuffix, "gtk_file_filter_add_suffix")
+	gtk(&gtkFileFilterAddMIMEType, "gtk_file_filter_add_mime_type")
+	gtk(&gtkFileDialogSetInitialName, "gtk_file_dialog_set_initial_name")
+	gtk(&gtkFileDialogSave, "gtk_file_dialog_save")
+	gtk(&gtkFileDialogSaveFinish, "gtk_file_dialog_save_finish")
+	gtk(&gtkDialogErrorQuark, "gtk_dialog_error_quark")
 	gtk(&gtkPopoverMenuNewFromModel, "gtk_popover_menu_new_from_model")
 	gtk(&gtkPopoverSetPointingTo, "gtk_popover_set_pointing_to")
 	gtk(&gtkPopoverSetHasArrow, "gtk_popover_set_has_arrow")
@@ -225,7 +237,6 @@ func (w *window) pickImages(r driver.PickRequest, id uint32) {
 		w.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: id})
 		return
 	}
-	gtkFileDialogSetModal(dialog, 1)
 	filter := gtkFileFilterNew()
 	gtkFileFilterSetName(filter, cstr("Images"))
 	for _, ext := range r.DialogExtensions() {
@@ -233,28 +244,104 @@ func (w *window) pickImages(r driver.PickRequest, id uint32) {
 	}
 	gtkFileDialogSetDefaultFilter(dialog, filter)
 	gObjectUnref(filter)
-	done := func(paths []string) {
-		gObjectUnref(dialog)
+	w.openDialog(dialog, r.Limit > 1, func(paths []string, _ error) {
 		go func() {
 			files := picked.ReadFiles(r, paths)
 			w.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: id, Data: files})
 		}()
+	})
+}
+
+// pickFiles shows GtkFileDialog for the files r offers and answers with
+// their paths.
+func (w *window) pickFiles(r driver.FilesRequest, id uint32) {
+	dialog := gtkFileDialogNew()
+	if dialog == 0 {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: "no file dialog"})
+		return
 	}
-	path := func(file uintptr) string {
-		p := gFileGetPath(file)
-		if p == 0 {
-			return ""
+	if len(r.Types) > 0 {
+		filter := gtkFileFilterNew()
+		gtkFileFilterSetName(filter, cstr("Files"))
+		for _, t := range r.Types {
+			if ext, ok := strings.CutPrefix(t, "."); ok {
+				gtkFileFilterAddSuffix(filter, cstr(ext))
+			} else {
+				gtkFileFilterAddMIMEType(filter, cstr(t))
+			}
 		}
-		defer gFree(p)
-		return goString(p)
+		gtkFileDialogSetDefaultFilter(dialog, filter)
+		gObjectUnref(filter)
 	}
-	if r.Limit > 1 {
+	w.openDialog(dialog, r.Limit > 1, func(paths []string, err error) {
+		ev := driver.Event{Kind: driver.EventFiles, Count: id}
+		if err != nil {
+			ev.Text = err.Error()
+		}
+		var files []driver.File
+		for _, p := range paths {
+			files = append(files, driver.File{Path: p})
+		}
+		ev.Data = files
+		w.engine.Dispatch(ev)
+	})
+}
+
+// saveFile shows GtkFileDialog's save dialog suggesting r's name, then
+// writes the file where the user chose off the main thread.
+func (w *window) saveFile(r driver.SaveRequest, id uint32) {
+	ev := driver.Event{Kind: driver.EventFiles, Count: id}
+	dialog := gtkFileDialogNew()
+	if dialog == 0 {
+		ev.Text = "no file dialog"
+		w.engine.Dispatch(ev)
+		return
+	}
+	gtkFileDialogSetModal(dialog, 1)
+	gtkFileDialogSetInitialName(dialog, cstr(r.Name))
+	gtkFileDialogSave(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
+		var gerr uintptr
+		file := gtkFileDialogSaveFinish(source, result, uintptr(unsafe.Pointer(&gerr)))
+		gObjectUnref(dialog)
+		if file == 0 {
+			if err := dialogError(gerr); err != nil {
+				ev.Text = err.Error()
+			}
+			w.engine.Dispatch(ev)
+			return
+		}
+		path := filePath(file)
+		gObjectUnref(file)
+		go func() {
+			if path == "" {
+				ev.Text = "the chosen file has no path"
+			} else if err := r.SaveTo(path); err != nil {
+				ev.Text = err.Error()
+			} else {
+				ev.Finished = true
+			}
+			w.engine.Dispatch(ev)
+		}()
+	}))
+}
+
+// openDialog shows dialog, modal, for one file or several and calls done
+// with the paths chosen: none when the user cancelled, err when it
+// failed.
+func (w *window) openDialog(dialog uintptr, multiple bool, done func(paths []string, err error)) {
+	gtkFileDialogSetModal(dialog, 1)
+	finish := func(paths []string, gerr uintptr) {
+		gObjectUnref(dialog)
+		done(paths, dialogError(gerr))
+	}
+	if multiple {
 		gtkFileDialogOpenMultiple(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
 			var paths []string
-			if list := gtkFileDialogOpenMultipleFinsh(source, result, 0); list != 0 {
+			var gerr uintptr
+			if list := gtkFileDialogOpenMultipleFinsh(source, result, uintptr(unsafe.Pointer(&gerr))); list != 0 {
 				for i := range gListModelGetNItems(list) {
 					if file := gListModelGetItem(list, i); file != 0 {
-						if p := path(file); p != "" {
+						if p := filePath(file); p != "" {
 							paths = append(paths, p)
 						}
 						gObjectUnref(file)
@@ -262,20 +349,46 @@ func (w *window) pickImages(r driver.PickRequest, id uint32) {
 				}
 				gObjectUnref(list)
 			}
-			done(paths)
+			finish(paths, gerr)
 		}))
 		return
 	}
 	gtkFileDialogOpen(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
 		var paths []string
-		if file := gtkFileDialogOpenFinish(source, result, 0); file != 0 {
-			if p := path(file); p != "" {
+		var gerr uintptr
+		if file := gtkFileDialogOpenFinish(source, result, uintptr(unsafe.Pointer(&gerr))); file != 0 {
+			if p := filePath(file); p != "" {
 				paths = append(paths, p)
 			}
 			gObjectUnref(file)
 		}
-		done(paths)
+		finish(paths, gerr)
 	}))
+}
+
+// filePath returns a GFile's local path, "" for one without.
+func filePath(file uintptr) string {
+	p := gFileGetPath(file)
+	if p == 0 {
+		return ""
+	}
+	defer gFree(p)
+	return goString(p)
+}
+
+// dialogError returns what a file dialog's GError says failed and frees
+// it: nil for none, or for a dialog the user cancelled or dismissed.
+func dialogError(gerr uintptr) error {
+	if gerr == 0 {
+		return nil
+	}
+	defer gErrorFree(gerr)
+	e := (*gError)(cPointer(gerr))
+	const cancelled, dismissed = 1, 2 // GTK_DIALOG_ERROR_*
+	if e.domain == gtkDialogErrorQuark() && (e.code == cancelled || e.code == dismissed) {
+		return nil
+	}
+	return errors.New(goString(e.message))
 }
 
 // popupMenu shows entries as a GtkPopoverMenu pointing at p, one at a

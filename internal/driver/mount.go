@@ -207,6 +207,13 @@ const (
 	// screens above each stack's first and the modals shown. The web
 	// keeps that many browser history entries; others ignore it.
 	ItemHistory
+	// ItemPickFiles shows the system's file picker for Files; the
+	// platform answers with EventFiles carrying Count.
+	ItemPickFiles
+	// ItemSaveFile shows the system's save dialog for Save and saves the
+	// file where the user chose; the platform answers with EventFiles
+	// carrying Count.
+	ItemSaveFile
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -262,6 +269,9 @@ type MountItem struct {
 	Screen    *ScreenConfig
 	// Pick is ItemPickImages' request.
 	Pick *PickRequest
+	// Files is ItemPickFiles' request, Save ItemSaveFile's.
+	Files *FilesRequest
+	Save  *SaveRequest
 }
 
 // StickyCell is a sticky list cell and its travel, in its scroll view's

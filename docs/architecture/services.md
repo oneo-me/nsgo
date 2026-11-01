@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file picks and saves, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
 
 ## Requests and answers
 
@@ -8,7 +8,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, and it records the appearance, quits and the context menu shown.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles` and `SaveFile`, and it records the appearance, quits and the context menu shown.
 
 ## Clipboard
 
@@ -61,6 +61,23 @@ Windows checks the registry first because the shell asks the user for an app for
 | Web | `<input type=file>`, which needs the press's user activation | `internal/platform/picked` |
 
 `picked` decodes in Go, which reads no HEIC, so those pickers offer only the formats it reads unless `PickCurrent`. It turns JPEGs upright by their EXIF orientation and scales with Catmull-Rom.
+
+## Files
+
+`PickFiles` and `SaveFile`, which NSH has not, move files of any type in and out of the app without passing their bytes through the platform's bridge. `PickFilesOptions.Types` offers media types (`application/pdf`), families (`image/*`) and extensions (`.zip`); a picker that filters only by one kind gets the other through `driver`'s table of common types, and offers every file when a type has no counterpart.
+
+- A picked `File` is on disk: the user's own on desktops, a copy in the app's storage on iOS and Android (`Temporary`) that the app deletes. The web has no disk, so `File.Open` reads the file's `Blob` a slice at a time. `FinishFiles` fills names, sizes, modification times and types.
+- `SaveFile` copies the file at `SaveOptions.Path`, or `Data` where it names none. Desktops write through a temporary file beside the destination (`SaveRequest.SaveTo`), so a write that fails leaves nothing where the user chose. iOS and Android save only files on disk, so `Data` and a name other than the file's are staged in a directory that is removed once the dialog answers (`SaveRequest.Stage`).
+- `done` tells a cancel from a failure: no files or `saved == false` with a nil error, against the error the platform reported.
+
+| Target | Picker | Save dialog |
+| --- | --- | --- |
+| macOS | An `NSOpenPanel` sheet with `UTType`s | An `NSSavePanel` sheet, keeping the name's extension |
+| iOS | `UIDocumentPickerViewController` copying into the app's `tmp` | The same, exporting a copy of the staged file |
+| Android | `ACTION_OPEN_DOCUMENT`; Java copies each document into the cache's `nsgo-files` | `ACTION_CREATE_DOCUMENT`; Java copies the file in and deletes the document when that fails |
+| Windows | `GetOpenFileNameW` | `GetSaveFileNameW`, asking before replacing a file |
+| Linux | `GtkFileDialog`, filtering by MIME type and suffix | `GtkFileDialog`'s save |
+| Web | `<input type=file>` | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
 
 ## Appearance and quitting
 
@@ -128,4 +145,4 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 
 ## Verification
 
-`core` tests each request and answer; `examples/gallery` checks its System page with `nsgotest`. The Windows and Linux native tests drive the clipboard, frames, levels, the hiding menu bar, a context menu, the appearance and `Quit` in a window, and Windows' open dialog, drawn alerts, hidden caption buttons and backdrops. `internal/platform/apple` checks HEIC and scaled picks; `picked` checks orientation and scaling. macOS, iOS, Android and the web were checked by running each service.
+`core` tests each request and answer; `examples/gallery` checks its System page with `nsgotest`. The Windows and Linux native tests drive the clipboard, frames, levels, the hiding menu bar, a context menu, the appearance and `Quit` in a window, and Windows' drawn alerts, hidden caption buttons and backdrops. Both pick a file, save a copy and cancel a save in the system's dialogs, Linux's in a process of its own without the portal, and Windows' open dialog also picks an image. `internal/platform/apple` checks HEIC and scaled picks and the uniform types of file picks; `picked` checks orientation and scaling. macOS, iOS, Android and the web were checked by running each service, except file picks and saves on macOS and iOS, which have not run yet.

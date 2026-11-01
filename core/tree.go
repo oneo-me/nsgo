@@ -1406,7 +1406,7 @@ func (t *Tree) Dispatch(ev driver.Event) {
 	case driver.EventAlert:
 		t.answerAlert(ev.Count, ev.Index)
 		return
-	case driver.EventClipboard, driver.EventOpenURL, driver.EventPick:
+	case driver.EventClipboard, driver.EventOpenURL, driver.EventPick, driver.EventFiles:
 		t.answer(ev)
 		return
 	case driver.EventMenuClosed:

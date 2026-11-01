@@ -1,6 +1,8 @@
 package core
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 	"testing"
@@ -173,6 +175,132 @@ func TestPickImages(t *testing.T) {
 	cx.PickImages(PickOptions{Multiple: true}, nil)
 	if r := command(h.commit(), driver.ItemPickImages).Pick; r.Limit != MaxPicked {
 		t.Fatalf("a pick without a limit asks for %d", r.Limit)
+	}
+}
+
+func TestPickFiles(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	var got []File
+	var gotErr error
+	answered := 0
+	pick := func(files []File, err error) { got, gotErr = files, err; answered++ }
+	cx.PickFiles(PickFilesOptions{Multiple: true, Limit: 2, Types: []string{" Application/PDF", "zip", "", "image/*"}}, pick)
+	it := command(h.commit(), driver.ItemPickFiles)
+	if it == nil || it.Files.Limit != 2 || !slices.Equal(it.Files.Types, []string{"application/pdf", ".zip", "image/*"}) {
+		t.Fatalf("pick = %+v", it)
+	}
+	dir := t.TempDir()
+	path := filepath.Join(dir, "report.pdf")
+	if err := os.WriteFile(path, []byte("%PDF-1.7"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Data: []driver.File{
+		{Path: path}, {Name: "notes", Path: filepath.Join(dir, "gone")}, {Name: "third.zip"}}})
+	if answered != 1 || gotErr != nil || len(got) != 2 {
+		t.Fatalf("files = %+v, %v", got, gotErr)
+	}
+	if f := got[0]; f.Name != "report.pdf" || f.MIME != "application/pdf" || f.Size != 8 || f.Modified.IsZero() {
+		t.Fatalf("file = %+v", f)
+	}
+	if f := got[1]; f.MIME != "application/octet-stream" || f.Size != 0 {
+		t.Fatalf("a file without a type or a size = %+v", f)
+	}
+	cx.PickFiles(PickFilesOptions{Types: []string{"text/plain", "*/*"}}, pick)
+	it = command(h.commit(), driver.ItemPickFiles)
+	if it.Files.Limit != 1 || it.Files.Types != nil {
+		t.Fatalf("a single pick of every file = %+v", it.Files)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: "provider failed"})
+	if gotErr == nil || gotErr.Error() != "provider failed" || got != nil {
+		t.Fatalf("a failed pick answers %+v, %v", got, gotErr)
+	}
+}
+
+func TestSaveFile(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	dir := t.TempDir()
+	src := filepath.Join(dir, "download.bin")
+	if err := os.WriteFile(src, []byte("bytes"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	saved, answered := false, 0
+	var saveErr error
+	save := func(ok bool, err error) { saved, saveErr = ok, err; answered++ }
+	cx.SaveFile(SaveOptions{Path: src}, save)
+	it := command(h.commit(), driver.ItemSaveFile)
+	if it == nil || it.Save.Name != "download.bin" || it.Save.MIME != "application/octet-stream" || it.Save.Path != src {
+		t.Fatalf("save = %+v", it)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if answered != 1 || !saved || saveErr != nil {
+		t.Fatalf("saved = %v, %v", saved, saveErr)
+	}
+	cx.SaveFile(SaveOptions{Name: "../notes/a.txt", Data: []byte("hi")}, save)
+	it = command(h.commit(), driver.ItemSaveFile)
+	if it.Save.Name != "a.txt" || it.Save.MIME != "text/plain" {
+		t.Fatalf("save = %+v", it.Save)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count})
+	if answered != 2 || saved || saveErr != nil {
+		t.Fatalf("a cancelled save answers %v, %v", saved, saveErr)
+	}
+	cx.SaveFile(SaveOptions{Path: filepath.Join(dir, "missing")}, save)
+	if answered != 3 || saveErr == nil || command(h.commit(), driver.ItemSaveFile) != nil {
+		t.Fatalf("a save of a missing file asked the platform, or answered %v", saveErr)
+	}
+}
+
+func TestSaveRequestSaveTo(t *testing.T) {
+	dir := t.TempDir()
+	dst := filepath.Join(dir, "out.txt")
+	if err := os.WriteFile(dst, []byte("old"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := (driver.SaveRequest{Name: "out.txt", Path: filepath.Join(dir, "missing")}).SaveTo(dst); err == nil {
+		t.Fatal("a save from a missing file succeeded")
+	}
+	if err := (driver.SaveRequest{Name: "out.txt", Data: []byte("new")}).SaveTo(dst); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(dst); string(b) != "new" {
+		t.Fatalf("saved %q", b)
+	}
+	if err := (driver.SaveRequest{Name: "out.txt", Path: filepath.Join(dir, "nowhere", "x")}).SaveTo(filepath.Join(dir, "nowhere", "y")); err == nil {
+		t.Fatal("a save into a missing directory succeeded")
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 1 {
+		t.Fatalf("a failed save left %v", entries)
+	}
+	staged, err := (driver.SaveRequest{Name: "Report.txt", Path: dst}).Stage(filepath.Join(dir, "stage"))
+	if err != nil || filepath.Base(staged) != "Report.txt" {
+		t.Fatalf("staged %q, %v", staged, err)
+	}
+	if b, _ := os.ReadFile(staged); string(b) != "new" {
+		t.Fatalf("staged %q", b)
+	}
+}
+
+func TestFilesRequestFilters(t *testing.T) {
+	r := driver.FilesRequest{Types: []string{".zip", "application/pdf", "image/*"}}
+	if types, any := r.MIMETypes(); any || !slices.Equal(types, []string{"application/zip", "application/pdf", "image/*"}) {
+		t.Fatalf("types = %v, %v", types, any)
+	}
+	if _, any := (driver.FilesRequest{Types: []string{".nsgo-unknown"}}).MIMETypes(); !any {
+		t.Fatal("an extension without a type filtered the picker")
+	}
+	exts, any := r.Extensions()
+	if any || !slices.Contains(exts, "zip") || !slices.Contains(exts, "pdf") || !slices.Contains(exts, "heic") || !slices.Contains(exts, "svg") {
+		t.Fatalf("extensions = %v, %v", exts, any)
+	}
+	if _, any := (driver.FilesRequest{Types: []string{"application/x-nsgo-unknown"}}).Extensions(); !any {
+		t.Fatal("a type without extensions filtered the dialog")
+	}
+	if _, any := (driver.FilesRequest{}).Extensions(); !any {
+		t.Fatal("no types filtered the dialog")
 	}
 }
 

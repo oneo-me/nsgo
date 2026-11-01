@@ -607,6 +607,12 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemPickImages:
 			w.pickImages(*it.Pick, it.Count)
 			continue
+		case driver.ItemPickFiles:
+			w.pickFiles(*it.Files, it.Count)
+			continue
+		case driver.ItemSaveFile:
+			w.saveFile(*it.Save, it.Count)
+			continue
 		case driver.ItemPopupMenu:
 			w.popupMenu(it.Menu, it.Point, it.Count)
 			continue

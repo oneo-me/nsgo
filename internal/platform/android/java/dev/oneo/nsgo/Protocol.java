@@ -112,6 +112,8 @@ final class Protocol {
     static final int ITEM_QUIT = 54;
     static final int ITEM_BACK_PREVIEW = 55;
     static final int ITEM_HISTORY = 56;
+    static final int ITEM_PICK_FILES = 57;
+    static final int ITEM_SAVE_FILE = 58;
 
     // View kinds, as in core/mount.go.
     static final int KIND_VIEW = 1;
@@ -182,6 +184,7 @@ final class Protocol {
     static final int EVENT_BACK_STARTED = 58;
     static final int EVENT_BACK_CANCELLED = 59;
     static final int EVENT_SCROLL_END = 60;
+    static final int EVENT_FILES = 61;
 
     // core.PointerEvents.
     static final int POINTER_EVENTS_NONE = 1;

@@ -348,6 +348,15 @@ type (
 	// PickedFile is an image the user picked: its name, type, bytes, size
 	// in pixels and modification time.
 	PickedFile = driver.PickedFile
+	// File is a file the user picked: its name, type, size, modification
+	// time and where it is on disk.
+	File = driver.File
+	// FilesRequest is a file pick as the platform carries it out,
+	// PickFilesOptions resolved.
+	FilesRequest = driver.FilesRequest
+	// SaveRequest is a save as the platform carries it out, SaveOptions
+	// resolved.
+	SaveRequest = driver.SaveRequest
 	// WindowCommand is an ItemWindow's request.
 	WindowCommand = driver.WindowCommand
 	// WindowDrag marks a view as a handle that moves the desktop window, or
@@ -397,7 +406,8 @@ const (
 	PickCurrent    = driver.PickCurrent
 )
 
-// MaxPicked is the most images one PickImages answers with.
+// MaxPicked is the most images or files one PickImages or PickFiles
+// answers with.
 const MaxPicked = driver.MaxPicked
 
 // MaxClipboardImage is the most bytes of a PNG ReadClipboardImage gives.

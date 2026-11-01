@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -330,6 +332,121 @@ func (cx *Scope) PickImages(o PickOptions, done func(files []PickedFile)) {
 		if done != nil {
 			done(driver.FinishPick(r, files, nil))
 		}
+	})
+}
+
+// PickFilesOptions say which files PickFiles offers.
+type PickFilesOptions struct {
+	// Multiple lets the user pick several files, at most Limit (0: up to
+	// MaxPicked).
+	Multiple bool
+	Limit    int
+	// Types are the files offered: media types (application/pdf),
+	// families (image/*) and extensions (.zip); none offers every file.
+	Types []string
+}
+
+// request is o as the platform carries it out.
+func (o PickFilesOptions) request() driver.FilesRequest {
+	r := driver.FilesRequest{Limit: 1}
+	if o.Multiple {
+		r.Limit = driver.MaxPicked
+		if o.Limit > 0 {
+			r.Limit = min(o.Limit, driver.MaxPicked)
+		}
+	}
+	for _, t := range o.Types {
+		t = strings.ToLower(strings.TrimSpace(t))
+		switch {
+		case t == "*" || t == "*/*" || t == ".*":
+			r.Types = nil
+			return r
+		case t == "":
+			continue
+		case !strings.HasPrefix(t, ".") && !strings.Contains(t, "/"):
+			t = "." + t
+		}
+		r.Types = append(r.Types, t)
+	}
+	return r
+}
+
+// PickFiles shows the system's file picker and calls done with the files
+// the user picked, as they are, or none when they cancelled; err says
+// what failed. Each is a file on disk the app opens and streams: the
+// user's own on desktops, a copy in the app's storage on iOS and Android
+// (File.Temporary) that is the app's to delete, and none on the web,
+// where File.Open reads it. The pickers need no permission.
+func (cx *Scope) PickFiles(o PickFilesOptions, done func(files []File, err error)) {
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	r := o.request()
+	t.request(cx, driver.MountItem{Kind: driver.ItemPickFiles, Files: &r}, func(ev driver.Event) {
+		if done == nil {
+			return
+		}
+		if ev.Text != "" {
+			done(nil, errors.New(ev.Text))
+			return
+		}
+		files, _ := ev.Data.([]driver.File)
+		done(driver.FinishFiles(r, files), nil)
+	})
+}
+
+// SaveOptions say what SaveFile saves: the file at Path, or else Data.
+type SaveOptions struct {
+	// Name is the file name the dialog suggests; Path's when empty.
+	Name string
+	// MIME is its media type; Name's extension says when empty.
+	MIME string
+	Path string
+	Data []byte
+}
+
+// SaveFile shows the system's save dialog and copies the file o names to
+// where the user chose, streaming it, then calls done with whether it
+// was saved: false with no error when they cancelled. A save that fails
+// leaves nothing where the user chose, or the file that was there. The
+// web has no files on disk, so it saves Data: a save picker where the
+// browser has one, else a download, which counts as saved.
+func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
+	answer := func(saved bool, err error) {
+		if done != nil {
+			done(saved, err)
+		}
+	}
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	r := driver.SaveRequest{Name: o.Name, MIME: o.MIME, Path: o.Path, Data: o.Data}
+	if r.Path != "" {
+		if _, err := os.Stat(r.Path); err != nil {
+			answer(false, err)
+			return
+		}
+	}
+	if i := strings.LastIndexAny(r.Name, `/\`); i >= 0 {
+		r.Name = r.Name[i+1:]
+	}
+	if r.Name == "" && r.Path != "" {
+		r.Name = filepath.Base(r.Path)
+	}
+	if r.Name == "" {
+		r.Name = "file"
+	}
+	if r.MIME == "" {
+		r.MIME = driver.MIMEForFile(r.Name)
+	}
+	t.request(cx, driver.MountItem{Kind: driver.ItemSaveFile, Save: &r}, func(ev driver.Event) {
+		if ev.Text != "" {
+			answer(false, errors.New(ev.Text))
+			return
+		}
+		answer(ev.Finished, nil)
 	})
 }
 

@@ -645,9 +645,72 @@ func servicesCard(cx *core.Scope) core.Node {
 	)
 }
 
+// filesCard is the system's file picker and save dialog.
+func filesCard(cx *core.Scope) core.Node {
+	colors := colorsOf(cx)
+	picked := core.NewSignalFunc(cx, []core.File(nil), func(a, b []core.File) bool { return false })
+	status := core.NewSignal(cx, "Files arrive on disk, copied into the app on iOS and Android")
+	pick := func(o core.PickFilesOptions) func() {
+		return func() {
+			cx.PickFiles(o, func(files []core.File, err error) {
+				switch {
+				case err != nil:
+					status.Set("The pick failed: " + err.Error())
+				case len(files) == 0:
+					status.Set("No file picked")
+				default:
+					status.Set(fmt.Sprintf("Picked %d", len(files)))
+				}
+				picked.Set(files)
+			})
+		}
+	}
+	save := func(o core.SaveOptions) {
+		cx.SaveFile(o, func(saved bool, err error) {
+			switch {
+			case err != nil:
+				status.Set("The save failed: " + err.Error())
+			case saved:
+				status.Set("Saved " + o.Name)
+			default:
+				status.Set("Nothing saved")
+			}
+		})
+	}
+	small := func(l string, fn func()) core.Node {
+		return button(buttonProps{label: l, variant: secondary, small: true}, fn)
+	}
+	return card(cx, cardProps{icon: iconAttach, title: "Files", subtitle: "PickFiles · SaveFile", right: badge(cx, "NSGo", toneNeutral)},
+		caption(cx, "PickFiles", nil),
+		wrap(small("Pick a file", pick(core.PickFilesOptions{})),
+			small("PDFs and images", pick(core.PickFilesOptions{Multiple: true, Types: []string{"application/pdf", "image/*"}}))),
+		core.Dynamic(func(cx *core.Scope) core.Node {
+			colors := colorsOf(cx)
+			var rows []core.Node
+			for i, f := range picked.Get() {
+				rows = append(rows, core.Text{Content: fmt.Sprintf("%s · %s · %d KB", f.Name, f.MIME, (f.Size+512)/1024),
+					TestID: fmt.Sprintf("picked-file-%d", i), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.text)})
+			}
+			return core.View{Style: core.Style{Gap: 4}, Children: rows}
+		}),
+		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: filled(colors.line)},
+		caption(cx, "SaveFile", nil),
+		wrap(small("Save a text file", func() {
+			save(core.SaveOptions{Name: "Hello from NSGo.txt", Data: []byte("Hello from NSGo\n")})
+		}), small("Save the file picked", func() {
+			if files := picked.Get(); len(files) > 0 && files[0].Path != "" {
+				save(core.SaveOptions{Name: files[0].Name, Path: files[0].Path})
+			} else {
+				status.Set("Pick a file first")
+			}
+		})),
+		core.Text{ContentFunc: status.Get, TestID: "files-status", Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
+	)
+}
+
 // systemDemo is what the platform does for the app: the environment, the
 // status bar, alerts, frames and timers, shortcuts, the network, the
-// window, the clipboard, links, photos and the appearance.
+// window, the clipboard, links, photos, the appearance and files.
 func systemDemo(cx *core.Scope) core.Node {
-	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard)
+	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, filesCard)
 }

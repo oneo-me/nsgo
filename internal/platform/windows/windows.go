@@ -341,10 +341,10 @@ type window struct {
 	alertShown   driver.AlertConfig
 	alert        *shownAlert
 	alertRestore *textInput
-	// The photo picks and context menus waiting for a message of their
-	// own, and whether one shows.
-	picks         []pickRequest
-	picking       bool
+	// The open and save dialogs and context menus waiting for a message
+	// of their own, and whether one shows.
+	dialogs       []func()
+	inDialog      bool
 	popups        []popupRequest
 	popupTracking bool
 	// popupChoice is the item a test chose in the menu tracking, which
@@ -790,6 +790,12 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPickImages:
 			w.pickImages(*it.Pick, it.Count)
+			continue
+		case driver.ItemPickFiles:
+			w.pickFiles(*it.Files, it.Count)
+			continue
+		case driver.ItemSaveFile:
+			w.saveFile(*it.Save, it.Count)
 			continue
 		case driver.ItemPopupMenu:
 			w.popupMenu(it.Menu, it.Point, it.Count)
@@ -1591,8 +1597,8 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmAlert:
 		w.showAlert()
 		return 0
-	case wmPick:
-		w.showPick()
+	case wmDialog:
+		w.showDialog()
 		return 0
 	case wmPopup:
 		w.showPopup()

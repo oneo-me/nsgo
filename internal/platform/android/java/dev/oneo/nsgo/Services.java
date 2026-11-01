@@ -25,14 +25,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The services NsgoView performs for the app beyond its views: the
- * clipboard's images and files, opening URLs and the photo picker, whose
- * images it prepares as Go's driver.PickRequest says.
+ * clipboard's images and files, opening URLs, the photo picker, whose
+ * images it prepares as Go's driver.PickRequest says, and the documents
+ * UI's file picks and saves.
  */
 final class Services {
     private Services() {}
@@ -47,8 +49,11 @@ final class Services {
     /** The largest PNG a clipboard read answers with, as driver.MaxClipboardImage. */
     private static final int MAX_CLIPBOARD_IMAGE = 48 << 20;
 
-    /** The request code of the photo picker's activity. */
-    static final int PICK_REQUEST = 0x6e73;
+    /** The request codes of the photo picker's, the file picker's and the save dialog's activities. */
+    static final int PICK_REQUEST = 0x6e73, FILES_REQUEST = 0x6e74, SAVE_REQUEST = 0x6e75;
+
+    /** The directory in the app's cache picked files are copied to, as Go's File.Temporary says. */
+    static final String FILES_DIR = "nsgo-files";
 
     static byte[] read(ContentResolver resolver, Uri uri) throws IOException {
         try (InputStream s = resolver.openInputStream(uri)) {
@@ -192,17 +197,144 @@ final class Services {
 
     /** The images a picker's result names, at most the pick's limit. */
     static List<Uri> picked(Intent result, Pick p) {
+        return picked(result, p.limit);
+    }
+
+    /** The documents a picker's result names, at most limit. */
+    static List<Uri> picked(Intent result, int limit) {
         List<Uri> uris = new ArrayList<>();
         if (result == null) return uris;
         ClipData clip = result.getClipData();
         if (clip != null) {
-            for (int i = 0; i < clip.getItemCount() && uris.size() < p.limit; i++) {
+            for (int i = 0; i < clip.getItemCount() && uris.size() < limit; i++) {
                 if (clip.getItemAt(i).getUri() != null) uris.add(clip.getItemAt(i).getUri());
             }
         } else if (result.getData() != null) {
             uris.add(result.getData());
         }
         return uris;
+    }
+
+    /** A file pick or a save the documents UI answers: Go's request number and what it asked for. */
+    static final class Documents {
+        final long count;
+        final int limit;
+        /** The file a save copies, null for a pick. */
+        final String from;
+
+        Documents(long count, int limit, String from) {
+            this.count = count;
+            this.limit = Math.max(limit, 1);
+            this.from = from;
+        }
+    }
+
+    /**
+     * Starts the documents UI for the files of the media types given, or
+     * any file for none; it needs no permission. It reports false when no
+     * activity can pick.
+     */
+    static boolean startFiles(Activity activity, int limit, String[] types) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(types.length == 1 ? types[0] : "*/*");
+        if (types.length > 1) intent.putExtra(Intent.EXTRA_MIME_TYPES, types);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, limit > 1);
+        return start(activity, intent, FILES_REQUEST);
+    }
+
+    /** Starts the documents UI to create a document named name of type mime. */
+    static boolean startSave(Activity activity, String name, String mime) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(mime.isEmpty() ? "application/octet-stream" : mime);
+        intent.putExtra(Intent.EXTRA_TITLE, name);
+        return start(activity, intent, SAVE_REQUEST);
+    }
+
+    private static boolean start(Activity activity, Intent intent, int request) {
+        try {
+            activity.startActivityForResult(intent, request);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Copies the documents picked into a new directory of the cache, which
+     * the Go process reads, streaming each: lines of the name, the MIME
+     * type and the copy's path. A document that cannot be read removes
+     * the copies and fails the pick.
+     */
+    static String copyPicked(Context context, List<Uri> uris) throws IOException {
+        ContentResolver resolver = context.getContentResolver();
+        File base = new File(context.getCacheDir(), FILES_DIR);
+        if (!base.isDirectory() && !base.mkdirs()) throw new IOException("cannot make " + base);
+        File dir = java.nio.file.Files.createTempDirectory(base.toPath(), "pick").toFile();
+        StringBuilder out = new StringBuilder();
+        try {
+            for (Uri uri : uris) {
+                String name = displayName(resolver, uri);
+                File to = new File(dir, name);
+                for (int n = 2; to.exists(); n++) to = new File(dir, n + " " + name);
+                try (InputStream in = resolver.openInputStream(uri); OutputStream o = new FileOutputStream(to)) {
+                    if (in == null) throw new IOException("no stream for " + uri);
+                    copy(in, o);
+                }
+                String mime = resolver.getType(uri);
+                out.append(name.replace('\t', ' ').replace('\n', ' ')).append('\t')
+                        .append(mime == null ? "" : mime.toLowerCase()).append('\t').append(to.getAbsolutePath()).append('\n');
+            }
+        } catch (IOException | RuntimeException e) {
+            remove(dir);
+            throw e instanceof IOException ? (IOException) e : new IOException(e.getMessage(), e);
+        }
+        return out.toString();
+    }
+
+    /** A document's name as the user saw it, safe as a file name. */
+    private static String displayName(ContentResolver resolver, Uri uri) {
+        String name = null;
+        try (Cursor c = resolver.query(uri, new String[] {OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (c != null && c.moveToFirst() && !c.isNull(0)) name = c.getString(0);
+        } catch (RuntimeException e) {
+            // A provider without the column leaves the URI's last segment.
+        }
+        if (name == null) name = uri.getLastPathSegment();
+        if (name != null) name = name.replace('/', '_').replace('\0', '_').trim();
+        return name == null || name.isEmpty() || name.equals(".") || name.equals("..") ? "file" : name;
+    }
+
+    /**
+     * Copies the file at from into the document the user created,
+     * streaming it; a copy that fails deletes the document, which holds
+     * only part of the file.
+     */
+    static void save(Context context, String from, Uri to) throws IOException {
+        ContentResolver resolver = context.getContentResolver();
+        try (InputStream in = new java.io.FileInputStream(from); OutputStream o = resolver.openOutputStream(to, "w")) {
+            if (o == null) throw new IOException("no stream for " + to);
+            copy(in, o);
+        } catch (IOException | RuntimeException e) {
+            try {
+                android.provider.DocumentsContract.deleteDocument(resolver, to);
+            } catch (Exception ignored) {
+                // The provider keeps it; nothing more to do.
+            }
+            throw e instanceof IOException ? (IOException) e : new IOException(e.getMessage(), e);
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buf = new byte[1 << 16];
+        for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+    }
+
+    private static void remove(File f) {
+        File[] children = f.listFiles();
+        if (children != null) for (File c : children) remove(c);
+        f.delete();
     }
 
     /**

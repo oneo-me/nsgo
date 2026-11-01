@@ -332,6 +332,26 @@ func (a *App) apply(b *driver.MountBatch) {
 				files = a.PickImages(*it.Pick)
 			}
 			a.post(driver.Event{Kind: driver.EventPick, Count: it.Count, Data: files})
+		case driver.ItemPickFiles:
+			a.FilePicks = append(a.FilePicks, *it.Files)
+			var files []driver.File
+			if a.PickFiles != nil {
+				files = a.PickFiles(*it.Files)
+			}
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Data: files})
+		case driver.ItemSaveFile:
+			a.Saves = append(a.Saves, *it.Save)
+			ev := driver.Event{Kind: driver.EventFiles, Count: it.Count}
+			if a.SaveFile != nil {
+				if path := a.SaveFile(*it.Save); path != "" {
+					if err := it.Save.SaveTo(path); err != nil {
+						ev.Text = err.Error()
+					} else {
+						ev.Finished = true
+					}
+				}
+			}
+			a.post(ev)
 		case driver.ItemAppearance:
 			a.Appearance = it.Appearance
 		case driver.ItemQuit:

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -361,6 +363,31 @@ func TestSystem(t *testing.T) {
 	app.OnAlert = func(core.AlertConfig) int { return 1 }
 	app.Press("role:button Confirm")
 	app.Find("text:Delete")
+
+	dir := t.TempDir()
+	report := filepath.Join(dir, "report.pdf")
+	os.WriteFile(report, []byte("%PDF-1.7 report"), 0o644)
+	app.PickFiles = func(r core.FilesRequest) []core.File { return []core.File{{Path: report}} }
+	app.Press("role:button PDFs and images")
+	if r := app.FilePicks[0]; r.Limit != core.MaxPicked || !slices.Equal(r.Types, []string{"application/pdf", "image/*"}) {
+		t.Fatalf("pick = %+v", r)
+	}
+	if got := app.Find("id:picked-file-0").Text; got != "report.pdf · application/pdf · 0 KB" {
+		t.Fatalf("picked file = %q", got)
+	}
+	saved := filepath.Join(dir, "copy.pdf")
+	app.SaveFile = func(core.SaveRequest) string { return saved }
+	app.Press("role:button Save the file picked")
+	app.Find("text:Saved report.pdf")
+	if b, _ := os.ReadFile(saved); string(b) != "%PDF-1.7 report" {
+		t.Fatalf("saved %q", b)
+	}
+	app.SaveFile = nil
+	app.Press("role:button Save a text file")
+	app.Find("text:Nothing saved")
+	if r := app.Saves[1]; r.Name != "Hello from NSGo.txt" || r.MIME != "text/plain" || string(r.Data) != "Hello from NSGo\n" {
+		t.Fatalf("save = %+v", r)
+	}
 }
 
 func TestAccessibility(t *testing.T) {

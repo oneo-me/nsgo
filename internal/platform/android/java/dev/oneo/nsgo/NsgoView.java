@@ -573,6 +573,9 @@ public class NsgoView extends FrameLayout {
     /** The pick the photo picker answers. */
     private Services.Pick pick;
 
+    /** The file pick or save the documents UI answers. */
+    private Services.Documents documents;
+
     /** Dark as shown: the app's forced appearance, else the host's, else the system's. */
     private boolean dark() {
         if (appearance != 0) return appearance == Protocol.APPEARANCE_DARK;
@@ -600,8 +603,12 @@ public class NsgoView extends FrameLayout {
         }
     }
 
-    /** Hears the activity's results: the photo picker's images. */
+    /** Hears the activity's results: the photo picker's images, and the documents UI's files and saves. */
     public void activityResult(int request, int result, android.content.Intent data) {
+        if (request == Services.FILES_REQUEST || request == Services.SAVE_REQUEST) {
+            documentsResult(request, result, data);
+            return;
+        }
         if (request != Services.PICK_REQUEST || pick == null) return;
         Services.Pick p = pick;
         pick = null;
@@ -614,6 +621,49 @@ public class NsgoView extends FrameLayout {
 
     private void answerPick(Services.Pick p, String files) {
         event(Protocol.EVENT_PICK, 0, p.count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, files, false);
+    }
+
+    /** Copies the files picked into the cache, or the file saved to the document created, off the UI thread. */
+    private void documentsResult(int request, int result, android.content.Intent data) {
+        Services.Documents d = documents;
+        if (d == null || (d.from == null) != (request == Services.FILES_REQUEST)) return;
+        documents = null;
+        android.net.Uri created = data != null ? data.getData() : null;
+        if (result != Activity.RESULT_OK || d.from != null && created == null) {
+            answerDocuments(d, "", "", false);
+            return;
+        }
+        Context context = getContext().getApplicationContext();
+        java.util.List<android.net.Uri> uris = Services.picked(data, d.limit);
+        if (d.from == null && uris.isEmpty()) {
+            answerDocuments(d, "", "", false);
+            return;
+        }
+        new Thread(() -> {
+            try {
+                if (d.from == null) answerDocuments(d, Services.copyPicked(context, uris), "", false);
+                else {
+                    Services.save(context, d.from, created);
+                    answerDocuments(d, "", "", true);
+                }
+            } catch (java.io.IOException e) {
+                answerDocuments(d, "", String.valueOf(e.getMessage()), false);
+            }
+        }, "nsgo-documents").start();
+    }
+
+    /** Answers a file pick with its files' lines, or a save with whether it saved; error says what failed. */
+    private void answerDocuments(Services.Documents d, String files, String error, boolean saved) {
+        event(Protocol.EVENT_FILES, 0, d.count, 0, 0, error, 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, files, saved);
+    }
+
+    /** Starts d in the documents UI, answering the one it replaces, or answers d when no activity can. */
+    private void startDocuments(Services.Documents d, java.util.function.Predicate<Activity> start) {
+        if (documents != null) answerDocuments(documents, "", "", false);
+        documents = null;
+        Activity activity = activity();
+        if (activity != null && start.test(activity)) documents = d;
+        else answerDocuments(d, "", "no activity shows documents", false);
     }
 
     /** Reads the safe area and the keyboard's height, in pixels, from the window's insets. */
@@ -1799,6 +1849,23 @@ public class NsgoView extends FrameLayout {
                 Activity activity = activity();
                 if (activity != null && Services.startPick(activity, p)) pick = p;
                 else answerPick(p, "");
+                break;
+            }
+            case Protocol.ITEM_PICK_FILES: {
+                long count = in.readInt() & 0xffffffffL;
+                int limit = in.readInt();
+                String[] types = new String[in.readInt()];
+                for (int i = 0; i < types.length; i++) types[i] = Protocol.readString(in);
+                startDocuments(new Services.Documents(count, limit, null), a -> Services.startFiles(a, limit, types));
+                break;
+            }
+            case Protocol.ITEM_SAVE_FILE: {
+                long count = in.readInt() & 0xffffffffL;
+                String from = Protocol.readString(in), name = Protocol.readString(in), mime = Protocol.readString(in);
+                // No file: Go failed the save already.
+                if (!from.isEmpty()) {
+                    startDocuments(new Services.Documents(count, 1, from), a -> Services.startSave(a, name, mime));
+                }
                 break;
             }
             case Protocol.ITEM_APPEARANCE:

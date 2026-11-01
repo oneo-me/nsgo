@@ -25,12 +25,16 @@ var (
 	getMenu           = user32.NewProc("GetMenu")
 	getWindowLongProc = user32.NewProc("GetWindowLongPtrW")
 	getWindowProc     = user32.NewProc("GetWindow")
-	setDlgItemTextW   = user32.NewProc("SetDlgItemTextW")
 	getDlgItem        = user32.NewProc("GetDlgItem")
+	getGUIThreadInfo  = user32.NewProc("GetGUIThreadInfo")
+
+	getWindowThreadProcessID = user32.NewProc("GetWindowThreadProcessId")
+	sendMessage              = user32.NewProc("SendMessageW")
 )
 
 // TestServicesReachTheSystem puts an image and files on the clipboard
-// and reads them back, opens a URL no app handles, moves and floats the
+// and reads them back, opens a URL no app handles, picks an image and a
+// file and saves one through the system's dialogs, moves and floats the
 // window, hides its menu bar until Alt, shows a context menu and quits,
 // which returns from Run.
 func TestServicesReachTheSystem(t *testing.T) {
@@ -40,6 +44,7 @@ func TestServicesReachTheSystem(t *testing.T) {
 	title := "nsgo-native-services"
 	var cx *core.Scope
 	status := make(chan string, 16)
+	dialogAnswers = status
 	app := func(c *core.Scope) core.Node {
 		cx = c
 		c.SetApplicationMenu([]core.MenuItem{{Label: "File", Items: []core.MenuItem{{Label: "New", OnSelect: func() {}}}}})
@@ -151,28 +156,7 @@ func TestServicesReachTheSystem(t *testing.T) {
 			status <- strings.Join(parts, ",")
 		})
 	})
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		dlg, _, _ := findWindowExW.Call(0, 0, uintptr(unsafe.Pointer(wide("#32770"))), 0)
-		for dlg != 0 {
-			const gwOwner = 4
-			if owner, _, _ := getWindowProc.Call(dlg, gwOwner); owner == hwnd {
-				break
-			}
-			dlg, _, _ = findWindowExW.Call(0, dlg, uintptr(unsafe.Pointer(wide("#32770"))), 0)
-		}
-		const fileName, idOK = 0x47C, 1
-		if item, _, _ := getDlgItem.Call(dlg, fileName); dlg != 0 && item != 0 {
-			time.Sleep(500 * time.Millisecond) // the dialog finishes loading its folder
-			setDlgItemTextW.Call(dlg, fileName, uintptr(unsafe.Pointer(wide(shot))))
-			postMessageW.Call(dlg, wmCommand, idOK, 0)
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("no open dialog showed")
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+	answerFileDialog(t, hwnd, shot)
 	select {
 	case s := <-status:
 		if s != "shot.png image/png {10 5}" {
@@ -180,6 +164,42 @@ func TestServicesReachTheSystem(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the pick did not answer")
+	}
+
+	// The open dialog picks any file as it is; the save dialog copies it
+	// where the name typed says.
+	notes := filepath.Join(filepath.Dir(shot), "notes.txt")
+	os.WriteFile(notes, []byte("notes"), 0o644)
+	cx.Post(func() {
+		cx.PickFiles(core.PickFilesOptions{Types: []string{".txt"}}, func(files []core.File, err error) {
+			var parts []string
+			for _, f := range files {
+				parts = append(parts, fmt.Sprintf("%s %s %d %v", f.Name, f.MIME, f.Size, f.Path == notes))
+			}
+			status <- fmt.Sprint(strings.Join(parts, ","), " ", err)
+		})
+	})
+	answerFileDialog(t, hwnd, notes)
+	if s := <-status; s != "notes.txt text/plain 5 true <nil>" {
+		t.Errorf("picked %q", s)
+	}
+	copied := filepath.Join(filepath.Dir(shot), "copy.txt")
+	cx.Post(func() {
+		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
+	})
+	answerFileDialog(t, hwnd, copied)
+	if s := <-status; s != "true <nil>" {
+		t.Errorf("saved %q", s)
+	}
+	if b, _ := os.ReadFile(copied); string(b) != "notes" {
+		t.Errorf("the copy holds %q", b)
+	}
+	cx.Post(func() {
+		cx.SaveFile(core.SaveOptions{Name: "cancelled.txt", Data: []byte("x")}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
+	})
+	cancelFileDialog(t, hwnd)
+	if s := <-status; s != "false <nil>" {
+		t.Errorf("a cancelled save answered %q", s)
 	}
 
 	// The frame is from the main screen's top left, in the window's
@@ -190,7 +210,7 @@ func TestServicesReachTheSystem(t *testing.T) {
 	cx.Post(func() { cx.SetWindowFrame(core.WindowFrame{X: 100, Y: 120, Move: true, Width: 500, Height: 400}) })
 	cx.Post(func() { cx.SetWindowFrame(core.WindowFrame{Height: 300}) })
 	cx.Post(func() { cx.SetWindowLevel(core.WindowLevelFloating) })
-	deadline = time.Now().Add(3 * time.Second)
+	deadline := time.Now().Add(3 * time.Second)
 	var r rect
 	var ex uintptr
 	for {
@@ -383,4 +403,73 @@ func putClipboard(hwnd, format uintptr, b []byte) {
 	rtlMoveMemory.Call(p, uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)))
 	globalUnlock.Call(h)
 	setClipboardData.Call(format, h)
+}
+
+// dialogAnswers is the test's status channel, which an answer that
+// comes before its dialog shows reaches.
+var dialogAnswers chan string
+
+// fileDialog waits for the open or save dialog owned by hwnd and
+// returns it and its file name field once it shows: the open dialog's
+// control 0x47C, or the save dialog's, which has another, as the field
+// that has the focus.
+func fileDialog(t *testing.T, hwnd uintptr) (dlg, field uintptr) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		dlg, _, _ = findWindowExW.Call(0, 0, uintptr(unsafe.Pointer(wide("#32770"))), 0)
+		for dlg != 0 {
+			const gwOwner = 4
+			if owner, _, _ := getWindowProc.Call(dlg, gwOwner); owner == hwnd {
+				break
+			}
+			dlg, _, _ = findWindowExW.Call(0, dlg, uintptr(unsafe.Pointer(wide("#32770"))), 0)
+		}
+		if dlg != 0 {
+			time.Sleep(500 * time.Millisecond) // the dialog finishes loading its folder
+			const fileName = 0x47C
+			if field, _, _ = getDlgItem.Call(dlg, fileName); field == 0 {
+				thread, _, _ := getWindowThreadProcessID.Call(dlg, 0)
+				var info guiThreadInfo
+				info.Size = uint32(unsafe.Sizeof(info))
+				getGUIThreadInfo.Call(thread, uintptr(unsafe.Pointer(&info)))
+				field = info.Focus
+			}
+			if field != 0 {
+				return dlg, field
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no file dialog showed")
+		}
+		if len(dialogAnswers) > 0 {
+			t.Fatalf("the dialog answered without showing: %s", <-dialogAnswers)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+// guiThreadInfo is GUITHREADINFO.
+type guiThreadInfo struct {
+	Size, Flags                                 uint32
+	Active, Focus, Capture, MenuOwner, MoveSize uintptr
+	Caret                                       uintptr
+	CaretRect                                   [4]int32
+}
+
+// answerFileDialog types path into the dialog hwnd shows and presses OK.
+func answerFileDialog(t *testing.T, hwnd uintptr, path string) {
+	t.Helper()
+	const wmSetText, idOK = 0x000C, 1
+	dlg, field := fileDialog(t, hwnd)
+	sendMessage.Call(field, wmSetText, 0, uintptr(unsafe.Pointer(wide(path))))
+	postMessageW.Call(dlg, wmCommand, idOK, 0)
+}
+
+// cancelFileDialog presses Cancel in the dialog hwnd shows.
+func cancelFileDialog(t *testing.T, hwnd uintptr) {
+	t.Helper()
+	const idCancel = 2
+	dlg, _ := fileDialog(t, hwnd)
+	postMessageW.Call(dlg, wmCommand, idCancel, 0)
 }

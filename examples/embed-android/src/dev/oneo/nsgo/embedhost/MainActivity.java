@@ -99,6 +99,13 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onActivityResult(int request, int result, android.content.Intent data) {
+        super.onActivityResult(request, result, data);
+        // The photo and file pickers and the save dialog answer here.
+        for (NsgoView app : apps) app.activityResult(request, result, data);
+    }
+
+    @Override
     protected void onDestroy() {
         for (NsgoView app : apps) app.stop();
         super.onDestroy();

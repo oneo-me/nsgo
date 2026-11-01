@@ -3,6 +3,8 @@
 package ios
 
 import (
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/ebitengine/purego"
@@ -13,7 +15,8 @@ import (
 )
 
 // The services UIKit performs: the pasteboard's images and files,
-// opening URLs, the photo picker and the app's appearance.
+// opening URLs, the photo picker, the document picker for files and
+// saves, and the app's appearance.
 
 func generalPasteboard() objc.ID {
 	return objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
@@ -193,6 +196,91 @@ func (s *surface) picked(req pickRequest, results objc.ID) {
 		}
 		s.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: req.id, Data: driver.FinishPick(req.r, out, nil)})
 	}()
+}
+
+var (
+	documentsOnce    sync.Once
+	classDocuments   objc.Class
+	documentRequests = map[objc.ID]documentRequest{}
+)
+
+// documentRequest is a pick or a save a document picker answers.
+type documentRequest struct {
+	id    uint32
+	limit int
+	// staged is the directory of the file a save exports, removed once
+	// the picker closed; "" for a pick.
+	staged string
+}
+
+// presentDocuments presents a document picker for req, made by its
+// initializer, whose delegate answers it.
+func (s *surface) presentDocuments(picker objc.ID, req documentRequest) {
+	documentsOnce.Do(func() {
+		var protocols []*objc.Protocol
+		if p := objc.GetProtocol("UIDocumentPickerDelegate"); p != nil {
+			protocols = append(protocols, p)
+		}
+		answer := func(self objc.ID, urls objc.ID) {
+			req, ok := documentRequests[self]
+			if !ok {
+				return
+			}
+			delete(documentRequests, self)
+			defer self.Send(selRelease)
+			ev := driver.Event{Kind: driver.EventFiles, Count: req.id}
+			if req.staged != "" {
+				os.RemoveAll(req.staged)
+				ev.Finished = urls != 0 && objc.Send[int](urls, sel("count")) > 0
+			} else if urls != 0 {
+				var files []driver.File
+				apple.ForEach(urls, func(u objc.ID) {
+					if len(files) < max(req.limit, 1) {
+						files = append(files, driver.File{Path: apple.GoString(u.Send(sel("path"))), Temporary: true})
+					}
+				})
+				ev.Data = files
+			}
+			s.engine.Dispatch(ev)
+		}
+		classDocuments = register("NsgoDocumentPickerDelegate", objc.GetClass("NSObject"), protocols, []objc.MethodDef{{
+			Cmd: sel("documentPicker:didPickDocumentsAtURLs:"),
+			Fn:  func(self objc.ID, _ objc.SEL, _, urls objc.ID) { answer(self, urls) },
+		}, {
+			Cmd: sel("documentPickerWasCancelled:"),
+			Fn:  func(self objc.ID, _ objc.SEL, _ objc.ID) { answer(self, 0) },
+		}})
+	})
+	defer picker.Send(selRelease)
+	delegate := objc.ID(classDocuments).Send(selNew)
+	documentRequests[delegate] = req
+	picker.Send(sel("setDelegate:"), delegate)
+	s.topController().Send(sel("presentViewController:animated:completion:"), picker, true, objc.ID(0))
+}
+
+// pickFiles presents UIDocumentPickerViewController for the files r
+// offers, which copies the ones picked into the app's temporary
+// directory; picking needs no permission.
+func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
+	picker := objc.ID(objc.GetClass("UIDocumentPickerViewController")).Send(selAlloc).
+		Send(sel("initForOpeningContentTypes:asCopy:"), apple.ContentTypes(r), true)
+	picker.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
+	s.presentDocuments(picker, documentRequest{id: id, limit: r.Limit})
+}
+
+// saveFile presents UIDocumentPickerViewController exporting a copy of
+// the file r saves, under its name.
+func (s *surface) saveFile(r driver.SaveRequest, id uint32) {
+	path, err := r.Stage(filepath.Join(os.TempDir(), "nsgo-save"))
+	if err != nil {
+		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: err.Error()})
+		return
+	}
+	urls := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	urls.Send(sel("addObject:"), objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
+	picker := objc.ID(objc.GetClass("UIDocumentPickerViewController")).Send(selAlloc).
+		Send(sel("initForExportingURLs:asCopy:"), urls, true)
+	s.presentDocuments(picker, documentRequest{id: id, staged: filepath.Dir(path)})
 }
 
 // setAppearance shows the window, and the system views in it, in a, or

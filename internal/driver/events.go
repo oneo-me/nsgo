@@ -178,6 +178,10 @@ const (
 	// nothing in motion ended, or a glide, a snap, an animated scroll or
 	// the wheel's turns did; with the offset as EventScroll's.
 	EventScrollEnd
+	// EventFiles answers ItemPickFiles Count with the files picked (Data,
+	// a []File), none when the user cancelled, and ItemSaveFile Count
+	// with whether the file was saved (Finished); Text is what failed.
+	EventFiles
 )
 
 // EventMask is a set of event kinds.
