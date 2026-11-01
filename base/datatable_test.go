@@ -131,10 +131,11 @@ func TestDataTableSelectsCellsMovesColumnsAndCopies(t *testing.T) {
 	}
 }
 
-// TestDataTableReadsTheCellsInView ticks a table whose texts change: the
-// cells made around the view keep theirs, so a tick reads the cells in
-// view only, and a cell coming into view reads its row's.
-func TestDataTableReadsTheCellsInView(t *testing.T) {
+// TestDataTableReadsTheCellsNearTheView scrolls and ticks a table whose
+// texts change: the rows made are those in view and half a viewport
+// around, so a scroll reads the rows coming near the view and a tick the
+// cells near it.
+func TestDataTableReadsTheCellsNearTheView(t *testing.T) {
 	var (
 		tick  *core.Signal[int]
 		reads int
@@ -154,15 +155,27 @@ func TestDataTableReadsTheCellsInView(t *testing.T) {
 			OnVisibleRowsChange: func(s, e int) { rows = [2]int{s, e} },
 		}
 	}, nsgotest.Size(400, 400))
+	// 10 rows of 4 or 5 columns in view, one more each way, and 5 rows
+	// made each way. A million rows scale the scroll view's offsets: 6
+	// points scroll a row or two.
+	app.Scroll("id:data-table-scroll", 60)
+	from := rows[0]
+	reads = 0
+	app.Scroll("id:data-table-scroll", 6)
+	if reads == 0 || reads > 3*7 {
+		t.Errorf("a scroll of a row or two read %d texts, want the rows coming near the view's", reads)
+	}
 	reads = 0
 	tick.Set(1)
 	app.Settle()
-	// 10 rows of 4 or 5 columns in view, one more each way.
-	if reads == 0 || reads > 12*7 {
-		t.Errorf("a tick read %d texts, want those in view", reads)
+	if reads == 0 || reads > 22*7 {
+		t.Errorf("a tick read %d texts, want those near the view", reads)
 	}
-	app.Find("text:R9C1·1")
-	app.Scroll("id:data-table-scroll", 300)
+	if n := len(app.Query(fmt.Sprintf("text:R%dC1·1", from+40))); n != 0 {
+		t.Errorf("row %d, past the rows made, shows %d texts", from+40, n)
+	}
+	app.Find(fmt.Sprintf("text:R%dC1·1", rows[0]+1))
+	app.Scroll("id:data-table-scroll", 3000)
 	if rows[0] < 10 {
 		t.Fatalf("visible rows %v after scrolling", rows)
 	}

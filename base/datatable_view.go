@@ -113,7 +113,7 @@ func (t *dataTable) hitLayer() core.Node {
 		TestID:        "data-table-hit",
 	}
 	return core.Scroll{
-		Ref: t.vscroll, TestID: "data-table-scroll", Behavior: behavior,
+		Ref: t.vscroll, TestID: "data-table-scroll", Behavior: behavior, OffsetValues: core.AnimatedXY{Y: t.follow.offY},
 		HideIndicator: p.NoScrollbar || p.NoVerticalScrollbar || t.cx.Env().Desktop(),
 		StyleFunc:     t.below,
 		OnScroll: func(e core.ScrollEvent) {
@@ -127,7 +127,8 @@ func (t *dataTable) hitLayer() core.Node {
 			StyleFunc: func() core.Style { return core.Style{Height: px(t.sizes.Get().y.extent())} },
 			Children: []core.Node{core.Scroll{
 				Horizontal: true, Ref: t.hscroll, HideIndicator: true, Behavior: behavior,
-				Style: core.Style{FlexGrow: 1},
+				OffsetValues: core.AnimatedXY{X: t.follow.offX},
+				Style:        core.Style{FlexGrow: 1},
 				OnScroll: func(e core.ScrollEvent) {
 					t.scrollX.Set(e.Offset.X)
 					// The desktops' bar follows, unless it leads.
@@ -265,31 +266,42 @@ type tableWindows struct {
 	// scrolling columns reach from it.
 	rowOrigin, colOrigin *core.Memo[int]
 	span                 *core.Memo[float32]
-	// shownRows and shownCols are the rows and the scrolling columns' display
-	// indexes in view, one more each way: only their cells read the texts.
-	shownRows, shownCols *core.Memo[[2]int]
+	// shownCols are the scrolling columns' display indexes in view and one
+	// each way, whose cells show their texts; the other cells made keep
+	// what they showed, hidden.
+	shownCols *core.Signal[[2]int]
 }
 
 func (t *dataTable) windows(cx *core.Scope) tableWindows {
 	w := tableWindows{}
-	w.rowSlots = newTableSlots(cx, func() [2]int {
+	// What the scroll offsets decide is set by one effect, as signals,
+	// rather than read by memos: a signal that does not change reaches no
+	// one, while a memo of the offsets has the reactive graph check every
+	// cell under it at each scroll frame. Only the region boxes follow the
+	// offsets themselves.
+	rows := core.NewSignal(cx, [2]int{})
+	cols := core.NewSignalFunc(cx, []int(nil), slices.Equal)
+	rowOrigin, colOrigin := core.NewSignal(cx, 0), core.NewSignal(cx, 0)
+	w.shownCols = core.NewSignal(cx, [2]int{})
+	cx.Effect(func() {
 		vs, ve := t.visibleRows()
-		s, e := t.rowsWin.Span(vs, ve, t.rowCount())
-		return [2]int{s, e}
-	})
-	w.scrollCols = core.NewMemoFunc(cx, func() []int {
-		vs, ve := t.visibleCols()
+		rows.Set(rowWindow(vs, ve, t.rowCount()))
+		rowOrigin.Set(vs / rowChunk * rowChunk)
+		cvs, cve := t.visibleCols()
 		c := t.st.columns
-		if vs >= ve {
-			return nil
+		colOrigin.Set(max(cvs/columnChunk*columnChunk, c.fixed))
+		w.shownCols.Set([2]int{max(cvs-1, c.fixed), min(cve+1, c.len())})
+		var defs []int
+		if cvs < cve {
+			cs, ce := t.colsWin.Span(cvs, cve, c.len())
+			for d := max(cs, c.fixed); d < ce; d++ {
+				defs = append(defs, c.def(d))
+			}
 		}
-		s, e := t.colsWin.Span(vs, ve, c.len())
-		var out []int
-		for d := max(s, c.fixed); d < e; d++ {
-			out = append(out, c.def(d))
-		}
-		return out
-	}, slices.Equal)
+		cols.Set(defs)
+	})
+	w.rowSlots = newTableSlots(cx, rows.Get)
+	w.scrollCols = core.NewMemoFunc(cx, cols.Get, slices.Equal)
 	w.colSlots = newTableSlots(cx, func() [2]int {
 		defs := w.scrollCols.Get()
 		if len(defs) == 0 {
@@ -302,22 +314,8 @@ func (t *dataTable) windows(cx *core.Scope) tableWindows {
 		t.layoutRev.Get()
 		return slices.Clone(t.st.columns.order[:t.st.columns.fixed])
 	}, slices.Equal)
-	w.rowOrigin = core.NewMemo(cx, func() int {
-		vs, _ := t.visibleRows()
-		return vs / rowChunk * rowChunk
-	})
-	w.colOrigin = core.NewMemo(cx, func() int {
-		vs, _ := t.visibleCols()
-		return max(vs/columnChunk*columnChunk, t.st.columns.fixed)
-	})
-	w.shownRows = core.NewMemo(cx, func() [2]int {
-		vs, ve := t.visibleRows()
-		return [2]int{vs - 1, ve + 1}
-	})
-	w.shownCols = core.NewMemo(cx, func() [2]int {
-		vs, ve := t.visibleCols()
-		return [2]int{vs - 1, ve + 1}
-	})
+	w.rowOrigin = core.NewMemo(cx, rowOrigin.Get)
+	w.colOrigin = core.NewMemo(cx, colOrigin.Get)
 	w.span = core.NewMemo(cx, func() float32 {
 		t.layoutRev.Get()
 		c := t.st.columns
@@ -332,6 +330,34 @@ func (t *dataTable) windows(cx *core.Scope) tableWindows {
 	return w
 }
 
+// rowWindow is the rows made with rows vs to ve in view, of count: half a
+// viewport each way, as many more on one side as the other end cuts, so
+// the window keeps its length and moves with every row that scrolls.
+//
+// NSH's window reaches a viewport and a half ahead and moves only near its
+// edges, so a scroll inside it commits nothing. The cells here move with
+// the scroll views on the main thread (tableFollow), so a commit per row
+// costs nothing to see, and rows made ahead were work thrown away: a fast
+// scroll replaced the whole window every frame, its rows ahead gone
+// before they showed, and a slow one sent the window's next viewport at
+// once.
+func rowWindow(vs, ve, count int) [2]int {
+	if ve <= vs {
+		return [2]int{vs, min(vs+16, count)}
+	}
+	reach := max((ve-vs)/2, 4)
+	s, e := vs-reach, ve+reach
+	if s < 0 {
+		e -= s
+		s = 0
+	}
+	if e > count {
+		s = max(s-(e-count), 0)
+		e = count
+	}
+	return [2]int{s, e}
+}
+
 // tableRegion is which of the body's regions a row or a title is in.
 type tableRegion uint8
 
@@ -344,6 +370,7 @@ const (
 func (t *dataTable) body() core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
 		w := t.windows(cx)
+		t.follow.track(cx, t, w)
 		return core.View{
 			StyleFunc:     func() core.Style { return t.below().Merge(core.Style{Overflow: core.Hidden}) },
 			PointerEvents: core.PointerEventsNone,
@@ -376,17 +403,19 @@ func (t *dataTable) edge(inRow bool) core.Node {
 }
 
 // regionBox is a region's clipped box, from its left edge.
+// Its size is in points, so the rows moving inside it lay out it alone
+// (layout.Boundary).
 func (t *dataTable) regionBox(which tableRegion) core.Style {
 	g := t.sizes.Get()
 	z := core.Pt(0)
-	s := core.Style{Position: core.Absolute, Top: z, Bottom: z, Overflow: core.Hidden}
+	s := core.Style{Position: core.Absolute, Top: z, Height: px(g.y.viewport), Overflow: core.Hidden}
 	switch which {
 	case regionLead:
 		s.Left, s.Width = z, px(g.lead)
 	case regionFixed:
 		s.Left, s.Width = px(g.lead), px(g.fixed)
 	default:
-		s.Left, s.Right = px(g.lead+g.fixed), z
+		s.Left, s.Width = px(g.lead+g.fixed), px(g.x.viewport)
 	}
 	return s
 }
@@ -398,6 +427,91 @@ func (t *dataTable) regionBox(which tableRegion) core.Style {
 func (t *dataTable) scrollOrigin(w tableWindows) float32 {
 	g := t.geo()
 	return float32(math.Round(t.scrollStart(w.colOrigin.Get()) - g.cx))
+}
+
+// rowsTop is where the rows' chunk is placed from in the body, scrolled,
+// in whole points, as scrollOrigin is for the columns.
+func (t *dataTable) rowsTop(w tableWindows) float64 {
+	g := t.geo()
+	return math.Round(float64(w.rowOrigin.Get())*float64(g.rowHeight) - g.cy)
+}
+
+// tableFollow moves the body with the scroll views in the frame they
+// move, on the platform's main thread: a commit places the rows and
+// columns where the table had scrolled to then, and each region's
+// translation is how far the scroll views went since (shiftX, shiftY), so
+// the cells move in step with the content whatever a commit costs and
+// however late it lands. A commit sets the bases (baseX, baseY) with the
+// places it lays out, so the two never show apart, and at rest the
+// translation is what rounding the places to whole points left. The
+// translation stops where the rows made and the columns shown end (madeX, madeY):
+// a jump past them, a scroll bar dragged across a million rows, waits
+// for the commit that brings the cells there rather than showing none.
+type tableFollow struct {
+	// offX and offY follow the scroll views' offsets.
+	offX, offY *core.AnimatedValue
+	// baseX and baseY are how far the scroll views were in the content
+	// at the last commit, as its places have it.
+	baseX, baseY *core.AnimatedValue
+	// madeX and madeY are the content offsets the cells made cover, from
+	// the first to the last at which they fill the view.
+	madeX, madeY *core.Signal[[2]float64]
+	// shiftX and shiftY are the regions' translations: the base less the
+	// content offset the scroll views are at now.
+	shiftX, shiftY *core.Memo[core.AnimatedNode]
+}
+
+func newTableFollow(cx *core.Scope, t *dataTable) tableFollow {
+	f := tableFollow{offX: core.NewAnimatedValue(cx, 0), offY: core.NewAnimatedValue(cx, 0),
+		baseX: core.NewAnimatedValue(cx, 0), baseY: core.NewAnimatedValue(cx, 0),
+		madeX: core.NewSignal(cx, [2]float64{}), madeY: core.NewSignal(cx, [2]float64{})}
+	clamp := func(in core.AnimatedNode, lo, hi float64) core.AnimatedNode {
+		if hi <= lo {
+			return core.Interpolate(in, core.Interpolation{Input: []float64{lo, lo + 1}, Output: []float64{lo, lo},
+				Extrapolate: core.ExtrapolateClamp})
+		}
+		return core.Interpolate(in, core.Interpolation{Input: []float64{lo, hi}, Output: []float64{lo, hi},
+			Extrapolate: core.ExtrapolateClamp})
+	}
+	// The content offset of a scroll offset, as tableAxis.contentOffset
+	// has it: scaled past maxExtent, within the content, then within the
+	// cells made.
+	content := func(off *core.AnimatedValue, a tableAxis, made [2]float64) core.AnimatedNode {
+		scroll, max := a.extent()-a.viewport, a.total-a.viewport
+		var at core.AnimatedNode
+		if scroll <= 0 || max <= 0 {
+			at = clamp(off, 0, 0)
+		} else {
+			at = core.Interpolate(off, core.Interpolation{Input: []float64{0, scroll}, Output: []float64{0, max},
+				Extrapolate: core.ExtrapolateClamp})
+		}
+		return clamp(at, made[0], made[1])
+	}
+	f.shiftY = core.NewMemoFunc(cx, func() core.AnimatedNode {
+		return core.Sub(f.baseY, content(f.offY, t.sizes.Get().y, f.madeY.Get()))
+	}, nil)
+	f.shiftX = core.NewMemoFunc(cx, func() core.AnimatedNode {
+		return core.Sub(f.baseX, content(f.offX, t.sizes.Get().x, f.madeX.Get()))
+	}, nil)
+	return f
+}
+
+// track sets the bases as the commit places the regions.
+func (f tableFollow) track(cx *core.Scope, t *dataTable, w tableWindows) {
+	cx.Effect(func() {
+		f.baseY.Set(float64(w.rowOrigin.Get())*float64(t.geo().rowHeight) - t.rowsTop(w))
+		f.baseX.Set(t.scrollStart(w.colOrigin.Get()) - float64(t.scrollOrigin(w)))
+	})
+	// The cells that show their texts are those it may reach.
+	cx.Effect(func() {
+		g := t.sizes.Get()
+		rh := float64(g.rowHeight)
+		rows := w.rowSlots.window.Get()
+		f.madeY.Set([2]float64{float64(rows[0]) * rh, float64(rows[1])*rh - g.y.viewport})
+		t.layoutRev.Get()
+		cols := w.shownCols.Get()
+		f.madeX.Set([2]float64{t.scrollStart(cols[0]), t.scrollStart(cols[1]) - g.x.viewport})
+	})
 }
 
 func (t *dataTable) region(which tableRegion, w tableWindows) core.Node {
@@ -415,11 +529,11 @@ func (t *dataTable) region(which tableRegion, w tableWindows) core.Node {
 			StyleFunc: func() core.Style { return t.regionBox(which) },
 			Children: []core.Node{core.View{
 				StyleFunc: func() core.Style {
-					g := t.geo()
-					top := math.Round(float64(w.rowOrigin.Get())*float64(g.rowHeight) - g.cy)
-					s := core.Style{Position: core.Absolute, Top: px(top), Left: px(0)}
+					s := core.Style{Position: core.Absolute, Top: px(t.rowsTop(w)), Left: px(0),
+						Animated: &core.AnimatedStyle{TranslateY: t.follow.shiftY.Get()}}
 					if which == regionScroll {
 						s.Left = px(t.scrollOrigin(w))
+						s.Animated.TranslateX = t.follow.shiftX.Get()
 					}
 					return s
 				},
@@ -508,10 +622,6 @@ func (t *dataTable) rowHit(row int, which tableRegion, x core.Points, w tableWin
 func (t *dataTable) bodyRow(cx *core.Scope, row *core.Memo[int], which tableRegion, w tableWindows) core.Node {
 	parts, classes := t.rowParts(cx, row)
 	selected := core.NewMemo(cx, func() bool { return t.selection() == tableSel{kind: selRow, row: row.Get()} })
-	shown := core.NewMemo(cx, func() bool {
-		r, v := row.Get(), w.shownRows.Get()
-		return r >= v[0] && r < v[1]
-	})
 	var children []core.Node
 	switch which {
 	case regionLead:
@@ -522,7 +632,7 @@ func (t *dataTable) bodyRow(cx *core.Scope, row *core.Memo[int], which tableRegi
 		children = []core.Node{t.edge(true), core.Each(w.fixedCols.Get, func(def int) int { return def },
 			func(cx *core.Scope, def func() int, _ func() int) core.Node {
 				d := core.Untracked(cx, def)
-				return t.cell(cx, row, core.NewMemo(cx, func() int { return d }), shown, which, w)
+				return t.cell(cx, row, core.NewMemo(cx, func() int { return d }), which, w)
 			})}
 	default:
 		children = []core.Node{core.Each(w.colSlots.list, func(slot int) int { return slot },
@@ -536,7 +646,7 @@ func (t *dataTable) bodyRow(cx *core.Scope, row *core.Memo[int], which tableRegi
 					}
 					return t.st.columns.def(d)
 				})
-				return t.cell(cx, row, def, shown, which, w)
+				return t.cell(cx, row, def, which, w)
 			})}
 	}
 	return core.View{
@@ -612,11 +722,20 @@ func justify(a DataTableAlign) core.Justify {
 	return core.JustifyStart
 }
 
-// cell is a cell of row and column def, reading its text while shown
-// (its row in view) and its column in view, so a tick costs the cells on
-// screen: a cell made around the view keeps the last text of its row and
-// column, or none once its slot shows another, until it comes into view.
-func (t *dataTable) cell(cx *core.Scope, row, def *core.Memo[int], shown *core.Memo[bool], which tableRegion, w tableWindows) core.Node {
+// cell is a cell of row and column def. It reads its text while its
+// column is among those shown, and keeps the last one, hidden, outside
+// them: a horizontal window shift gives texts to the columns near the
+// view.
+func (t *dataTable) cell(cx *core.Scope, row, def *core.Memo[int], which tableRegion, w tableWindows) core.Node {
+	colShown := core.NewMemo(cx, func() bool {
+		if which != regionScroll {
+			return true
+		}
+		d := def.Get()
+		t.layoutRev.Get()
+		c, b := t.st.columns, w.shownCols.Get()
+		return c.hasDef(d) && c.displayOf(d) >= b[0] && c.displayOf(d) < b[1]
+	})
 	type flags struct{ selected, columnSelected, active bool }
 	marks := core.NewMemo(cx, func() flags {
 		t.dataRev.Get()
@@ -632,33 +751,34 @@ func (t *dataTable) cell(cx *core.Scope, row, def *core.Memo[int], shown *core.M
 	// The text and its sign are memos: a tick that changes some texts
 	// restyles only the cells whose sign changed.
 	var last string
-	lastAt := [2]int{-1, -1}
 	text := core.NewMemo(cx, func() string {
 		r, d := row.Get(), def.Get()
-		at := [2]int{r, d}
-		inView := r >= 0 && d >= 0 && shown.Get()
-		if inView && which == regionScroll {
-			t.layoutRev.Get()
-			v, c := w.shownCols.Get(), t.st.columns
-			inView = c.hasDef(d) && c.displayOf(d) >= v[0] && c.displayOf(d) < v[1]
-		}
-		switch {
-		case inView:
-			last, lastAt = t.cellText(r, d), at
-		case at != lastAt:
-			last, lastAt = "", at
+		if r >= 0 && d >= 0 && colShown.Get() {
+			last = t.cellText(r, d)
 		}
 		return last
 	}).Get
 	sign := core.NewMemo(cx, func() int {
 		t.layoutRev.Get()
-		if col := t.column(def.Get()); col.PositiveStyle.IsZero() && col.NegativeStyle.IsZero() &&
-			col.PositiveClass == "" && col.NegativeClass == "" {
+		if d := def.Get(); d < 0 || d >= len(t.st.toned) || !t.st.toned[d] {
 			return 0
 		}
 		return cellSign(text())
 	})
-	var content core.Node = core.Text{ContentFunc: text, MaxLines: 1, Style: core.Style{FlexShrink: 1, MinWidth: px(0)}}
+	// The text fills the cell and aligns in it, so its box stays as a
+	// new text takes it: a window shift sends the cells' texts, not their
+	// frames too, as when the text's own width placed it.
+	var content core.Node = core.Text{ContentFunc: text, MaxLines: 1, StyleFunc: func() core.Style {
+		t.layoutRev.Get()
+		align := core.TextAlignStart
+		switch t.column(def.Get()).Align {
+		case AlignCenterColumn:
+			align = core.TextAlignCenter
+		case AlignEndColumn:
+			align = core.TextAlignEnd
+		}
+		return core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: px(0), MinWidth: px(0), TextAlign: align}
+	}}
 	if t.p.RenderCell != nil {
 		content = core.View{Style: core.Style{FlexGrow: 1, MinWidth: px(0)}, Children: []core.Node{t.p.RenderCell(cx, func() DataTableCell {
 			r, d := row.Get(), def.Get()
@@ -710,6 +830,9 @@ func (t *dataTable) cell(cx *core.Scope, row, def *core.Memo[int], shown *core.M
 			if d < 0 || !c.hasDef(d) {
 				st.Display = core.DisplayNone
 				return st
+			}
+			if !colShown.Get() {
+				st.Visibility = core.VisibilityHidden
 			}
 			origin := 0.0
 			if which == regionScroll {
@@ -850,6 +973,7 @@ func (t *dataTable) headerRegion(which tableRegion, w tableWindows) core.Node {
 					s := core.Style{Position: core.Absolute, Top: z, Bottom: z, Left: z}
 					if which == regionScroll {
 						s.Left = px(t.scrollOrigin(w))
+						s.Animated = &core.AnimatedStyle{TranslateX: t.follow.shiftX.Get()}
 					}
 					return s
 				},

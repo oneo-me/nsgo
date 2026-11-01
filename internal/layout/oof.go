@@ -1,5 +1,7 @@
 package layout
 
+import "slices"
+
 // Out-of-flow (absolutely and fixed positioned) boxes are hoisted to their
 // containing block: container algorithms report them as candidates with a
 // static position, candidates bubble up the tree until a node claims them,
@@ -508,7 +510,10 @@ func layoutOofBox(candidate oofCandidate, areaSize Size[float32], areaOffset Poi
 		runMode:                    performLayout,
 	}
 	if beforeLayout != nil {
-		beforeLayout(&in)
+		// A copy of its own, so in does not move to the heap for every box.
+		edited := in
+		beforeLayout(&edited)
+		in = edited
 	}
 	out := computeChildLayout(node, in)
 
@@ -569,12 +574,22 @@ func performOofLayout(n Node, candidates []oofCandidate, areaSize Size[float32],
 	// Split the candidates into a work list of claimed ones and the
 	// unclaimed rest. Claimed candidates surfaced while laying out a claimed
 	// box join the work list (as Blink re-sweeps).
-	var worklist []oofCandidate
+	// Usually every candidate is claimed and none surfaces: the work list
+	// is then candidates itself, copied only to grow.
+	worklist, owned := candidates, false
 	for _, c := range candidates {
-		if claims.forPosition(c.position) {
-			worklist = append(worklist, c)
-		} else {
-			*unclaimed = append(*unclaimed, c)
+		if !claims.forPosition(c.position) {
+			worklist, owned = nil, true
+			break
+		}
+	}
+	if owned {
+		for _, c := range candidates {
+			if claims.forPosition(c.position) {
+				worklist = append(worklist, c)
+			} else {
+				*unclaimed = append(*unclaimed, c)
+			}
 		}
 	}
 
@@ -589,6 +604,9 @@ func performOofLayout(n Node, candidates []oofCandidate, areaSize Size[float32],
 		// Re-sweep candidates surfaced from the box's subtree, relative to
 		// this node's border box.
 		if len(box.surfaced) > 0 {
+			if !owned {
+				worklist, owned = slices.Clone(worklist), true
+			}
 			translateCandidates(box.surfaced, location)
 			for _, c := range box.surfaced {
 				if claims.forPosition(c.position) {

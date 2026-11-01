@@ -103,6 +103,7 @@ func (s *surface) RegisterFont(data []byte) error {
 	loaded = js.FuncOf(func(js.Value, []js.Value) any {
 		g.Get("document").Get("fonts").Call("add", face)
 		done()
+		s.widths.forget()
 		s.engine.FontsChanged()
 		return nil
 	})

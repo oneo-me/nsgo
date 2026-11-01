@@ -88,19 +88,23 @@ func (c *clicks) down(p driver.Point) int {
 }
 
 type surface struct {
-	doc       js.Value
-	host      js.Value
-	root      *view
-	measure   js.Value      // a hidden element text is measured in
-	parked    js.Value      // a hidden, inert element removed views wait in
-	measuring *preparedText // the text measure holds
-	metrics   js.Value      // a canvas's 2D context, for fonts' metrics
-	engine    *engine.Engine
-	views     []*view // index is NodeID
-	press     press
-	touch     fingers
-	covers    []covered // what the modals made inert, oldest first
-	history   history
+	doc        js.Value
+	host       js.Value
+	root       *view
+	measure    js.Value   // a hidden element text is measured in
+	measureCSS *cssBox    // its style
+	widths     textWidths // texts measured on a canvas
+	paragraphs map[paragraphKey]*paragraphStyle
+	dom        dom           // frames and texts applied in bulk (dom.go)
+	parked     js.Value      // a hidden, inert element removed views wait in
+	measuring  *preparedText // the text measure holds
+	metrics    js.Value      // a canvas's 2D context, for fonts' metrics
+	engine     *engine.Engine
+	views      []*view // index is NodeID
+	press      press
+	touch      fingers
+	covers     []covered // what the modals made inert, oldest first
+	history    history
 	// whole is set when the app fills the page; an app in an element of
 	// it takes the page's keys only after a press in it, pressedIn, or
 	// while the focus is in it, as another app on the page has them
@@ -149,11 +153,27 @@ type surface struct {
 
 // view is the element of one NodeID.
 type view struct {
-	id        driver.NodeID
-	kind      driver.ViewKind
-	el        js.Value // framed and styled by the view's items
-	content   js.Value // where children go: el, or a scroll view's content
-	inner     js.Value // a text view's text, a text field's <input> or a <canvas>
+	id      driver.NodeID
+	kind    driver.ViewKind
+	el      js.Value // framed and styled by the view's items
+	content js.Value // where children go: el, or a scroll view's content
+	inner   js.Value // a text view's text, a text field's <input> or a <canvas>
+	textCSS *cssBox  // a text view's inner style
+	elCSS   *cssBox  // el's style but its frame (css)
+	// para is the paragraph style textCSS last set; filled the text its
+	// inner element holds, while plain (no spans or attachments).
+	para   *paragraphStyle
+	filled string
+	plain  bool
+	// textBox is the text's box last set on inner, while textBoxOK, and
+	// oneLine whether it was kept on one line.
+	textBox   driver.Bounds
+	textBoxOK bool
+	oneLine   bool
+	// placed is the frame place last set on el, while placedOK.
+	placed    driver.Bounds
+	placedOK  bool
+	elStyle   js.Value // el's style, once place has set it
 	events    driver.EventMask
 	input     *webInput    // a text field's
 	border    driver.Edges // the width of each side's border
@@ -271,12 +291,13 @@ func open(app engine.App, opts Options, test *testOpen) *surface {
 		base.Set("textContent", baseCSS)
 		doc.Get("head").Call("appendChild", base)
 	}
-	s := &surface{doc: doc, host: host, components: opts.Components, unknown: map[string]bool{}}
+	s := &surface{doc: doc, host: host, components: opts.Components, unknown: map[string]bool{}, dom: newDOM()}
 	s.animator = driver.NewAnimator(func(e driver.Event) { s.engine.Dispatch(e) })
 	// Inside the host, measured text inherits what drawn text does.
 	s.measure = doc.Call("createElement", "div")
-	setStyle(s.measure, textBase)
-	setStyle(s.measure, map[string]string{
+	s.measureCSS = newCSSBox(s.measure)
+	s.measureCSS.set(textBase)
+	s.measureCSS.set(map[string]string{
 		"position": "absolute", "visibility": "hidden", "left": "-10000px", "top": "0",
 		"width": "max-content",
 	})
@@ -355,8 +376,67 @@ func (s *surface) send(v *view, ev driver.Event) {
 func setStyle(el js.Value, props map[string]string) {
 	style := el.Get("style")
 	for k, v := range props {
-		style.Call("setProperty", k, v)
+		style.Call("setProperty", cssName(k), v)
 	}
+}
+
+// cssNames are the properties' names as JavaScript strings, made once:
+// every string that crosses into JavaScript costs Go's WebAssembly a
+// finalizer, the most of what a batch of texts costs to apply.
+var cssNames = map[string]js.Value{}
+
+func cssName(k string) js.Value {
+	v, ok := cssNames[k]
+	if !ok {
+		v = js.ValueOf(k)
+		cssNames[k] = v
+	}
+	return v
+}
+
+// cssBox writes an element's inline style, sending only the properties
+// that changed since it last sent them, for elements only the text code
+// styles: a text's, the measuring element. A table's cells share a font,
+// so a new text costs its content and its frame alone.
+type cssBox struct {
+	style js.Value
+	sent  map[string]string
+}
+
+func newCSSBox(el js.Value) *cssBox {
+	return &cssBox{style: el.Get("style"), sent: map[string]string{}}
+}
+
+func (b *cssBox) set(props map[string]string) {
+	for k, v := range props {
+		b.set1(k, v)
+	}
+}
+
+// forget has the next set of props send them whatever they are:
+// something else set them.
+func (b *cssBox) forget(props ...string) {
+	for _, k := range props {
+		b.sent[k] = "\x00" // no value is
+	}
+}
+
+// css is the box v's element's styles go through, but its frame, which
+// place and sticky cells set.
+func (v *view) css() *cssBox {
+	if v.elCSS == nil {
+		v.elCSS = newCSSBox(v.el)
+	}
+	return v.elCSS
+}
+
+// set1 sets one property; "" removes it, which an unsent one is.
+func (b *cssBox) set1(k, v string) {
+	if b.sent[k] == v {
+		return
+	}
+	b.sent[k] = v
+	b.style.Call("setProperty", cssName(k), v)
 }
 
 // setAttr sets an attribute, or removes it when value is empty.
@@ -368,7 +448,10 @@ func setAttr(el js.Value, name, value string) {
 	}
 }
 
-func px(p driver.Points) string { return fmt.Sprintf("%gpx", float32(p)) }
+func px(p driver.Points) string {
+	var b [24]byte
+	return string(append(strconv.AppendFloat(b[:0], float64(p), 'g', -1, 32), "px"...))
+}
 
 func cssColor(c driver.Color) string {
 	r, g, b, a := c.Components()
@@ -391,6 +474,26 @@ func opacityCSS(o float32) string {
 	return fmt.Sprint(o)
 }
 
+// place sets v's element at frame f, sending only the edges that
+// changed since it last placed it: scrolling a table moves its rows'
+// tops alone.
+func (v *view) place(f driver.Bounds) {
+	if v.elStyle.IsUndefined() {
+		v.elStyle = v.el.Get("style")
+	}
+	old, ok := v.placed, v.placedOK
+	v.placed, v.placedOK = f, true
+	set := func(k string, was, now driver.Points) {
+		if !ok || was != now {
+			v.elStyle.Call("setProperty", cssName(k), px(now))
+		}
+	}
+	set("left", old.Origin.X, f.Origin.X)
+	set("top", old.Origin.Y, f.Origin.Y)
+	set("width", old.Size.Width, f.Size.Width)
+	set("height", old.Size.Height, f.Size.Height)
+}
+
 func frameStyle(f driver.Bounds) map[string]string {
 	return map[string]string{
 		"left": px(f.Origin.X), "top": px(f.Origin.Y),
@@ -402,6 +505,14 @@ func frameStyle(f driver.Bounds) map[string]string {
 
 // textBase is how both the measuring element and drawn text break lines.
 var textBase = map[string]string{"white-space": "pre-wrap", "overflow-wrap": "break-word"}
+
+// whiteSpace is how a text keeps its spaces: on one line, or wrapped.
+func whiteSpace(oneLine bool) string {
+	if oneLine {
+		return "pre"
+	}
+	return "pre-wrap"
+}
 
 // fontStyle is the CSS of a resolved text style.
 func fontStyle(t driver.TextStyle) map[string]string {
@@ -506,6 +617,9 @@ type richText struct {
 	// clipped text is measured as clamped and drawn cut by its box.
 	drawn    map[string]string
 	maxLines int
+	// para is the paragraph style shared by texts of its style, which
+	// style and drawn are.
+	para *paragraphStyle
 }
 
 // span is a styled run of the text, from byte start to byte end.
@@ -524,6 +638,9 @@ type preparedText struct {
 	// several (rest).
 	cut  *driver.AttributedText
 	rest bool
+	// line is the canvas font of a text that may be measured on one line
+	// on a canvas, empty for one that is not (measure.go).
+	line lineFont
 }
 
 // textLayout is what the element that draws text needs; the browser lays
@@ -535,6 +652,10 @@ type textLayout struct {
 	boxes []attachmentBox
 	s     *surface
 	width driver.Points
+	// oneLine is a text measured on a canvas that fits its width: the
+	// element keeps it on one line, as a fraction of a point between the
+	// canvas's width and the page's must not wrap it.
+	oneLine bool
 	// carets hit-tests the lines, measured when first asked.
 	carets driver.LazyCarets
 }
@@ -558,8 +679,11 @@ func (l *textLayout) caretLines() driver.CaretLayout {
 	p := &preparedText{s: l.s, richText: l.richText}
 	m := p.hold()
 	defer p.Release()
-	setStyle(m, map[string]string{"width": px(l.width), "max-width": "none"})
-	defer setStyle(m, map[string]string{"width": "max-content"})
+	l.s.measureCSS.set1("width", px(l.width))
+	l.s.measureCSS.set1("max-width", "none")
+	l.s.measureCSS.set1("white-space", whiteSpace(l.oneLine))
+	defer l.s.measureCSS.set1("white-space", whiteSpace(false))
+	defer l.s.measureCSS.set1("width", "max-content")
 	origin := m.Call("getBoundingClientRect")
 	left, top := origin.Get("left").Float(), origin.Get("top").Float()
 	rtl := js.Global().Call("getComputedStyle", m).Get("direction").String() == "rtl"
@@ -661,20 +785,8 @@ func (l *textLayout) Attachment(i int) (driver.Bounds, bool) {
 
 // Prepare implements core.TextEngine.
 func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
-	style := fontStyle(t.Style)
-	// Every property is set, so the measuring element keeps none of the
-	// last text's.
-	style["display"], style["-webkit-box-orient"], style["-webkit-line-clamp"], style["overflow"] =
-		"block", "", "", "visible"
-	style["text-shadow"] = textShadow(t.Shadow)
-	var drawn map[string]string
-	if t.MaxLines > 0 {
-		style["display"], style["-webkit-box-orient"], style["-webkit-line-clamp"], style["overflow"] =
-			"-webkit-box", "vertical", strconv.Itoa(t.MaxLines), "hidden"
-		if t.Ellipsize == driver.EllipsizeClip {
-			drawn = map[string]string{"display": "block", "-webkit-box-orient": "", "-webkit-line-clamp": ""}
-		}
-	}
+	ps := s.paragraphStyle(t)
+	style, drawn := ps.style, ps.drawn
 	var spans []span
 	at := 0
 	for _, sp := range t.Spans {
@@ -696,7 +808,10 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 		at = end
 	}
 	p := &preparedText{s: s, richText: richText{text: t.Text, style: style, spans: spans,
-		attachments: t.Attachments, drawn: drawn, maxLines: t.MaxLines}}
+		attachments: t.Attachments, drawn: drawn, maxLines: t.MaxLines, para: ps}}
+	if len(spans) == 0 && len(t.Attachments) == 0 && oneLine(t.Text) {
+		p.line = ps.line
+	}
 	if t.Ellipsize == driver.EllipsizeHead || t.Ellipsize == driver.EllipsizeMiddle {
 		switch {
 		case t.MaxLines == 1 && !strings.ContainsAny(t.Text, "\n\r"):
@@ -708,6 +823,49 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 		}
 	}
 	return p
+}
+
+// paragraphStyle is the CSS of t's paragraph, kept by what makes it: a
+// table's cells share a few, and making the CSS anew for every text was
+// a third of preparing it. Its maps are shared, never changed.
+type paragraphStyle struct {
+	style, drawn map[string]string
+	line         lineFont // empty when a canvas cannot measure it
+}
+
+type paragraphKey struct {
+	style     driver.TextStyle
+	shadow    driver.TextShadow
+	maxLines  int
+	ellipsize driver.EllipsizeMode
+}
+
+func (s *surface) paragraphStyle(t *driver.AttributedText) *paragraphStyle {
+	key := paragraphKey{t.Style, t.Shadow, t.MaxLines, t.Ellipsize}
+	if ps, ok := s.paragraphs[key]; ok {
+		return ps
+	}
+	style := fontStyle(t.Style)
+	// Every property is set, so the measuring element keeps none of the
+	// last text's.
+	style["display"], style["-webkit-box-orient"], style["-webkit-line-clamp"], style["overflow"] =
+		"block", "", "", "visible"
+	style["text-shadow"] = textShadow(t.Shadow)
+	var drawn map[string]string
+	if t.MaxLines > 0 {
+		style["display"], style["-webkit-box-orient"], style["-webkit-line-clamp"], style["overflow"] =
+			"-webkit-box", "vertical", strconv.Itoa(t.MaxLines), "hidden"
+		if t.Ellipsize == driver.EllipsizeClip {
+			drawn = map[string]string{"display": "block", "-webkit-box-orient": "", "-webkit-line-clamp": ""}
+		}
+	}
+	ps := &paragraphStyle{style: style, drawn: drawn}
+	ps.line, _ = canvasFont(t.Style)
+	if s.paragraphs == nil || len(s.paragraphs) >= 1024 {
+		s.paragraphs = map[paragraphKey]*paragraphStyle{}
+	}
+	s.paragraphs[key] = ps
+	return ps
 }
 
 // verticalAligns are the CSS of the vertical aligns, which core defines
@@ -783,12 +941,15 @@ func (r *richText) fill(doc, el js.Value, interactive bool) {
 
 // Measure implements core.PreparedText with the browser's layout.
 func (p *preparedText) Measure(maxWidth driver.Points) driver.Size {
+	if size, ok := p.quick(); ok && (maxWidth.IsAuto() || size.Width <= maxWidth) {
+		return size
+	}
 	m := p.hold()
 	limit := "none"
 	if !maxWidth.IsAuto() {
 		limit = px(maxWidth)
 	}
-	m.Get("style").Call("setProperty", "max-width", limit)
+	p.s.measureCSS.set1("max-width", limit)
 	r := m.Call("getBoundingClientRect")
 	w := r.Get("width").Float()
 	if p.text == "" {
@@ -799,8 +960,11 @@ func (p *preparedText) Measure(maxWidth driver.Points) driver.Size {
 
 // unclamped returns the width of p on one line.
 func (p *preparedText) unclamped() driver.Points {
+	if size, ok := p.quick(); ok {
+		return size.Width
+	}
 	m := p.hold()
-	m.Get("style").Call("setProperty", "max-width", "none")
+	p.s.measureCSS.set1("max-width", "none")
 	return driver.Points(m.Call("getBoundingClientRect").Get("width").Float())
 }
 
@@ -814,8 +978,11 @@ func (l *textLayout) TextLines() []driver.TextLine {
 	p := &preparedText{s: l.s, richText: l.richText}
 	m := p.hold()
 	defer p.Release()
-	setStyle(m, map[string]string{"width": px(l.width), "max-width": "none"})
-	defer setStyle(m, map[string]string{"width": "max-content"})
+	l.s.measureCSS.set1("width", px(l.width))
+	l.s.measureCSS.set1("max-width", "none")
+	l.s.measureCSS.set1("white-space", whiteSpace(l.oneLine))
+	defer l.s.measureCSS.set1("white-space", whiteSpace(false))
+	defer l.s.measureCSS.set1("width", "max-content")
 	origin := m.Call("getBoundingClientRect")
 	left, top := origin.Get("left").Float(), origin.Get("top").Float()
 	r := l.s.doc.Call("createRange")
@@ -896,7 +1063,7 @@ func (p *preparedText) hold() js.Value {
 	m := p.s.measure
 	if p.s.measuring != p {
 		p.s.measuring = p
-		setStyle(m, p.style)
+		p.s.measureCSS.set(p.style)
 		if p.text == "" {
 			m.Set("textContent", "​") // an empty text keeps a line's height
 		} else {
@@ -950,12 +1117,16 @@ func (p *preparedText) Layout(size driver.Size) driver.TextLayout {
 		return l
 	}
 	l := &textLayout{richText: p.richText, s: p.s, width: size.Width}
+	if q, ok := p.quick(); ok && q.Width <= size.Width {
+		l.oneLine = true
+	}
 	l.carets.Set(l.caretLines)
 	if len(p.attachments) == 0 {
 		return l
 	}
 	m := p.hold()
-	setStyle(m, map[string]string{"width": px(size.Width), "max-width": "none"})
+	p.s.measureCSS.set1("width", px(size.Width))
+	p.s.measureCSS.set1("max-width", "none")
 	r := m.Call("getBoundingClientRect")
 	left, top := r.Get("left").Float(), r.Get("top").Float()
 	// A line limit hides the lines below the element's height.
@@ -978,7 +1149,7 @@ func (p *preparedText) Layout(size driver.Size) driver.TextLayout {
 			shown: y+b.Get("height").Float() <= bottom+0.5,
 		}
 	}
-	setStyle(m, map[string]string{"width": "max-content"})
+	p.s.measureCSS.set1("width", "max-content")
 	return l
 }
 
@@ -991,6 +1162,18 @@ func (p *preparedText) Release() {
 
 // Mounting.
 
+// scrollTo is a batch's scroll of a view, made once its other changes
+// are in.
+type scrollTo struct {
+	v        *view
+	to       driver.Point
+	animated bool
+}
+
+// MountsAtOnce implements engine.SharedMounter: Mount applies a batch
+// before it returns.
+func (s *surface) MountsAtOnce() {}
+
 // Mount implements engine.Platform; the page has one thread, so it
 // applies the batch right away.
 func (s *surface) Mount(b *driver.MountBatch) {
@@ -998,8 +1181,12 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {
 		lb = &layoutBatch{anim: b.LayoutAnimation, created: map[driver.NodeID]bool{}}
 	}
+	var scrolls []scrollTo
 	for i := range b.Items {
 		it := &b.Items[i]
+		if it.Kind != driver.ItemFrame && it.Kind != driver.ItemText {
+			s.dom.flush()
+		}
 		switch it.Kind {
 		case driver.ItemAnimation:
 			s.animator.Apply(it.Animation)
@@ -1130,6 +1317,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemDelete:
 			// Forgotten first, so events its removal fires are not sent.
 			s.views[it.ID] = nil
+			s.dom.forget(it.ID)
 			if v.kind == driver.KindModal {
 				defer s.uncover(v) // once the batch is in
 			}
@@ -1169,14 +1357,21 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			}
 		case driver.ItemFrame:
 			v.frame = it.Frame
-			if v.track.Truthy() {
+			switch {
+			case v.track.Truthy():
+				s.dom.flush()
 				s.placeTrack(v)
-			} else {
+			case s.dom.ok && lb == nil:
+				s.dom.frame(opFrame, v.id, it.Frame, v.placed, !v.placedOK)
+				v.placed, v.placedOK = it.Frame, true
+			default:
+				s.dom.flush()
 				s.moveFrame(v, it.Frame, lb)
-				setStyle(v.el, frameStyle(it.Frame))
+				v.place(it.Frame)
 			}
 			v.framed = true
 			if v.size != it.Frame.Size {
+				s.dom.flush()
 				v.size = it.Frame.Size
 				if v.image != nil {
 					v.image.draw(v.size)
@@ -1236,11 +1431,18 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemScrollTo:
 			if v.kind == driver.KindScroll {
 				// The browser clamps the offset and reports the scroll.
+				// It lays the page out to know where it can scroll, so it
+				// waits for the batch's other changes: one layout for all.
 				v.sc.applied++
 				s.interruptMomentum(v)
-				v.scrollTo(it.Point, it.Animated)
+				scrolls = append(scrolls, scrollTo{v, it.Point, it.Animated})
 			}
 		case driver.ItemScrollBy:
+			// After the scrolls it follows.
+			for _, sc := range scrolls {
+				sc.v.scrollTo(sc.to, sc.animated)
+			}
+			scrolls = scrolls[:0]
 			if v.kind == driver.KindScroll {
 				v.sc.applied++
 				v.scrollBy(it.Point)
@@ -1305,6 +1507,10 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			}
 		}
 	}
+	s.dom.flush()
+	for _, sc := range scrolls {
+		sc.v.scrollTo(sc.to, sc.animated)
+	}
 	s.applyAnimated()
 	s.changedShaders()
 	if s.animator.Running() || len(s.shading) > 0 {
@@ -1344,7 +1550,8 @@ func (s *surface) create(id driver.NodeID, kind driver.ViewKind) *view {
 	case driver.KindText:
 		v.inner = s.element("div")
 		v.inner.Get("classList").Call("add", "nsgo-text")
-		setStyle(v.inner, textBase)
+		v.textCSS = newCSSBox(v.inner)
+		v.textCSS.set(textBase)
 		v.el.Call("appendChild", v.inner)
 	case driver.KindInput:
 		s.createInput(v)
@@ -1363,12 +1570,13 @@ func (s *surface) create(id driver.NodeID, kind driver.ViewKind) *view {
 	case driver.KindShader:
 		s.createShader(v)
 	case driver.KindScroll:
-		setStyle(v.el, map[string]string{"overflow": "auto"})
+		v.css().set1("overflow", "auto")
 		v.content = s.element("div")
 		v.el.Call("appendChild", v.content)
 		s.newScroll(v)
 	}
 	s.views[id] = v
+	s.dom.register(v)
 	return v
 }
 
@@ -1434,7 +1642,7 @@ func (s *surface) setViewStyle(v *view, vs *driver.ViewStyle) {
 			style["overflow"] = clipOverflow()
 		}
 	}
-	setStyle(v.el, style)
+	v.css().set(style)
 	s.setCursor(v)
 	s.setKeyframes(v, vs.Animation)
 }
@@ -1447,7 +1655,7 @@ func (s *surface) setCursor(v *view) {
 	} else if v.pressable() {
 		cursor = driver.CursorPointer.Name()
 	}
-	setStyle(v.el, map[string]string{"cursor": cursor})
+	v.css().set1("cursor", cursor)
 }
 
 // unborder places el, framed from its parent view's origin, where the
@@ -1545,15 +1753,45 @@ func (s *surface) setText(v *view, t *driver.TextContent) {
 	}
 	v.layout = l
 	if l == nil {
+		s.dom.flush()
 		v.inner.Set("textContent", "")
+		v.plain, v.filled = true, ""
 		return
 	}
-	setStyle(v.inner, l.style)
-	if l.drawn != nil {
-		setStyle(v.inner, l.drawn)
+	// A text of the style it had sends its content and box alone, queued
+	// for the page to apply with the batch's other texts and frames.
+	if l.para != v.para || l.para == nil {
+		s.dom.flush()
+		v.para = l.para
+		v.textCSS.set(l.style)
+		if l.drawn != nil {
+			v.textCSS.set(l.drawn)
+		}
 	}
-	setStyle(v.inner, frameStyle(t.Content))
-	l.fill(s.doc, v.inner, true)
+	c := t.Content
+	if s.dom.ok {
+		s.dom.frame(opInnerFrame, v.id, c, v.textBox, !v.textBoxOK)
+		if !v.textBoxOK || v.oneLine != l.oneLine {
+			s.dom.whiteSpace(v.id, l.oneLine)
+		}
+	} else {
+		v.textCSS.set1("left", px(c.Origin.X))
+		v.textCSS.set1("top", px(c.Origin.Y))
+		v.textCSS.set1("width", px(c.Size.Width))
+		v.textCSS.set1("height", px(c.Size.Height))
+		v.textCSS.set1("white-space", whiteSpace(l.oneLine))
+	}
+	v.textBox, v.textBoxOK, v.oneLine = c, true, l.oneLine
+	plain := len(l.spans) == 0 && len(l.attachments) == 0
+	switch {
+	case plain && v.plain && v.filled == l.text:
+	case plain && s.dom.ok:
+		s.dom.setText(v.id, l.text)
+	default:
+		s.dom.flush()
+		l.fill(s.doc, v.inner, true)
+	}
+	v.plain, v.filled = plain, l.text
 }
 
 // Events and accessibility.
@@ -1695,7 +1933,7 @@ func (s *surface) setPointer(v *view, p *driver.ViewProps) {
 	classes.Call("toggle", "nsgo-slop", slop)
 	if slop {
 		px := func(p driver.Points) string { return strconv.FormatFloat(float64(-p), 'f', -1, 32) + "px" }
-		setStyle(v.el, map[string]string{"--nsgo-slop-top": px(p.HitSlop.Top), "--nsgo-slop-right": px(p.HitSlop.Right),
+		v.css().set(map[string]string{"--nsgo-slop-top": px(p.HitSlop.Top), "--nsgo-slop-right": px(p.HitSlop.Right),
 			"--nsgo-slop-bottom": px(p.HitSlop.Bottom), "--nsgo-slop-left": px(p.HitSlop.Left)})
 	}
 }
@@ -1773,7 +2011,7 @@ func (s *surface) setEvents(v *view, m driver.EventMask) {
 			"-webkit-touch-callout": "none", "-webkit-tap-highlight-color": "transparent",
 		}
 	}
-	setStyle(v.el, style)
+	v.css().set(style)
 	v.setTabIndex()
 	s.setGestureStyle(v)
 	if !v.hover && (m.Has(driver.EventHoverIn) || m.Has(driver.EventHoverOut)) {
@@ -1883,7 +2121,7 @@ func (s *surface) setGestureStyle(v *view) {
 	} else if !v.pressable() {
 		style["user-select"], style["-webkit-user-select"], style["-webkit-touch-callout"] = "", "", ""
 	}
-	setStyle(v.el, style)
+	v.css().set(style)
 }
 
 // windowCommand carries out what a page can of a window's commands: full

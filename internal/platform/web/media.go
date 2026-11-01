@@ -79,7 +79,11 @@ func (s *surface) applyAnimated() {
 		if vals.Has(driver.PropTextColor) {
 			style["-webkit-text-fill-color"] = cssColor(vals.TextColor)
 		}
-		setStyle(v.el, style)
+		v.css().set(style)
+		if vals.Has(driver.PropBorderColor) {
+			// The shorthand set every side's color the view style sets.
+			v.css().forget("border-top-color", "border-right-color", "border-bottom-color", "border-left-color")
+		}
 	})
 	s.changedCanvases()
 	s.changedNatives()

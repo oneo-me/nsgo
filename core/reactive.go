@@ -88,10 +88,12 @@ type runtime struct {
 	flushing bool
 	render   []*computation
 	user     []*computation
-	runs     int
-	post     func(func())
-	clock    Clock
-	report   func(error)
+	// renderAt and userAt are the next in each queue flush runs.
+	renderAt, userAt int
+	runs             int
+	post             func(func())
+	clock            Clock
+	report           func(error)
 
 	// The callbacks waiting for the next display frame, and whether the
 	// host has been asked for it.
@@ -519,19 +521,24 @@ func (rt *runtime) flush() {
 	defer func() { rt.flushing = false }()
 	for {
 		var c *computation
+		// Taken by index, so the queues keep what they grew to.
 		switch {
-		case len(rt.render) > 0:
-			c, rt.render = rt.render[0], rt.render[1:]
-		case len(rt.user) > 0:
-			c, rt.user = rt.user[0], rt.user[1:]
+		case rt.renderAt < len(rt.render):
+			c = rt.render[rt.renderAt]
+			rt.render[rt.renderAt] = nil
+			rt.renderAt++
+		case rt.userAt < len(rt.user):
+			c = rt.user[rt.userAt]
+			rt.user[rt.userAt] = nil
+			rt.userAt++
 		default:
-			rt.render, rt.user = rt.render[:0], rt.user[:0]
+			rt.render, rt.user, rt.renderAt, rt.userAt = rt.render[:0], rt.user[:0], 0, 0
 			rt.runs = 0
 			return
 		}
 		c.queued = false
 		if rt.runs++; rt.runs > maxRuns {
-			rt.render, rt.user = nil, nil
+			rt.render, rt.user, rt.renderAt, rt.userAt = nil, nil, 0, 0
 			rt.runs = 0
 			rt.fail(&c.Scope, fmt.Errorf("core: effects ran %d times without settling", maxRuns))
 			return

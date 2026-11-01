@@ -15,9 +15,22 @@ const maxRounds = 8
 // Commit resolves styles, prepares text, lays the tree out and returns
 // what changed since the last commit, or nil when nothing did. Changes
 // that OnLayout handlers make go into the same batch.
-func (t *Tree) Commit() *driver.MountBatch {
+func (t *Tree) Commit() *driver.MountBatch { return t.commit(false) }
+
+// CommitShared is Commit for a platform that applies a batch before the
+// next commit, as the web does on its one thread: the batch's items are
+// the tree's own, until the next commit writes over them, so a commit
+// copies nothing. A busy table's commit copied half a megabyte, which
+// Go's collector paid for on the page's thread.
+func (t *Tree) CommitShared() *driver.MountBatch { return t.commit(true) }
+
+func (t *Tree) commit(shared bool) *driver.MountBatch {
 	if !t.changed {
 		return nil
+	}
+	if t.lastShared {
+		// The last batch was these items, done with now.
+		t.shrinkItems(t.lastItems)
 	}
 	t.items = t.items[:0]
 	t.commits++
@@ -32,15 +45,25 @@ func (t *Tree) Commit() *driver.MountBatch {
 	if len(t.items) == 0 {
 		return nil
 	}
-	b := &driver.MountBatch{Root: t.view.id, Items: append([]driver.MountItem(nil), t.items...), LayoutAnimation: t.layoutAnim}
+	t.lastItems, t.lastShared = len(t.items), shared
+	items := t.items
+	if !shared {
+		items = append([]driver.MountItem(nil), t.items...)
+		t.shrinkItems(len(t.items))
+	}
+	b := &driver.MountBatch{Root: t.view.id, Items: items, LayoutAnimation: t.layoutAnim}
 	t.layoutAnim = nil
-	// The first commit sends every view, and the slice it grew would stay
-	// this tree's capacity for good: a long list then keeps megabytes for
-	// the handful of items a busy commit sends.
-	if n, c := len(t.items), cap(t.items); c >= 4096 && c > 4*n {
+	return b
+}
+
+// shrinkItems drops the items' slice for a smaller one once a commit of n
+// items left most of it unused: the slice the first commit grew would stay
+// this tree's capacity for good, and a long list keep megabytes for the
+// handful of items a busy commit sends.
+func (t *Tree) shrinkItems(n int) {
+	if c := cap(t.items); c >= 4096 && c > 4*n {
 		t.items = make([]driver.MountItem, 0, max(512, 2*n))
 	}
-	return b
 }
 
 // checkCommit commits again, laying every node out anew and comparing

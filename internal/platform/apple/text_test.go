@@ -38,6 +38,35 @@ func render(t *testing.T, text *driver.AttributedText, size driver.Size) (*image
 	defer Release(ctx)
 	p := TextEngine{}.Prepare(text)
 	defer p.Release()
+	return draw(t, ctx, img, p, size)
+}
+
+// renderWith is render of a text prepared already.
+func renderWith(t *testing.T, p driver.PreparedText, size driver.Size) (*image.RGBA, *Layout) {
+	t.Helper()
+	cg := load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
+	var (
+		colorSpace func() uintptr
+		bitmap     func(data unsafe.Pointer, w, h, bits, row, space uintptr, info uint32) uintptr
+	)
+	purego.RegisterLibFunc(&colorSpace, cg, "CGColorSpaceCreateDeviceRGB")
+	purego.RegisterLibFunc(&bitmap, cg, "CGBitmapContextCreate")
+	w, h := int(size.Width), int(size.Height)
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	for i := range img.Pix {
+		img.Pix[i] = 0xff
+	}
+	space := colorSpace()
+	defer Release(space)
+	const premultipliedLast = 1
+	ctx := bitmap(unsafe.Pointer(&img.Pix[0]), uintptr(w), uintptr(h), 8, uintptr(img.Stride), space, premultipliedLast)
+	defer Release(ctx)
+	return draw(t, ctx, img, p, size)
+}
+
+func draw(t *testing.T, ctx uintptr, img *image.RGBA, p driver.PreparedText, size driver.Size) (*image.RGBA, *Layout) {
+	t.Helper()
+	w, h := int(size.Width), int(size.Height)
 	l := p.Layout(size).(*Layout)
 	t.Cleanup(l.Release)
 	// The bitmap's rows go top down in memory but its space is y up:

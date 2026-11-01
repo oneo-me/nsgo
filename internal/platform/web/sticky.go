@@ -116,7 +116,8 @@ func (v *view) unstick() {
 	} else {
 		track.Call("remove")
 	}
-	setStyle(v.el, frameStyle(v.frame))
+	v.placedOK = false
+	v.place(v.frame)
 }
 
 // trackOrigin is where the views around a page list's track put it in
@@ -182,4 +183,5 @@ func (s *surface) placeTrack(cell *view) {
 		style["left"], style["top"] = inset, "auto"
 	}
 	setStyle(cell.el, style)
+	cell.placedOK = false
 }

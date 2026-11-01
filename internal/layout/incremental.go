@@ -20,8 +20,19 @@ import "slices"
 // free space its parent and siblings leave; it is not aligned by its
 // baseline. And its parent laid it out before. What it gives back that
 // the size does not fix, its overflow, Relayout compares.
+//
+// An absolutely positioned n is one too when its size is its style's
+// points and its place follows from its insets:
+// its containing block takes nothing else from it, as what it overflows
+// by is clipped or Relayout finds it the same.
 func Boundary(n Node, parent *Style) bool {
-	if !n.LayoutState().hasLast || parent.Display != DisplayFlex || parent.AlignItems.Keyword == AlignBaseline {
+	if !n.LayoutState().hasLast {
+		return false
+	}
+	if s := n.Style(); s.Position == PositionAbsolute {
+		return s.Display != DisplayNone && placedByInsets(s)
+	}
+	if parent.Display != DisplayFlex || parent.AlignItems.Keyword == AlignBaseline {
 		return false
 	}
 	s := n.Style()
@@ -29,6 +40,20 @@ func Boundary(n Node, parent *Style) bool {
 		s.Size.Width.Unit == UnitPx && s.Size.Height.Unit == UnitPx &&
 		s.FlexShrink.Valid && s.FlexShrink.Value == 0 && s.FlexBasis.IsAuto() &&
 		s.AlignSelf.Keyword != AlignBaseline
+}
+
+// placedByInsets reports whether an absolutely positioned box's size and
+// place follow from its style alone: a size of points each way, which no
+// limit changes, and an inset on each axis. A size its containing block
+// stretches or a percentage would follow the block, which Relayout gives
+// the size it had.
+func placedByInsets(s *Style) bool {
+	inset := func(l Length) bool { return l.Unit == UnitPx || l.Unit == UnitPercent }
+	limit := func(l Length) bool { return l.Unit <= UnitAuto || l.Unit == UnitPx }
+	in := s.Inset
+	return s.Size.Width.Unit == UnitPx && s.Size.Height.Unit == UnitPx && s.AspectRatio == (Opt{}) &&
+		(inset(in.Left) || inset(in.Right)) && (inset(in.Top) || inset(in.Bottom)) &&
+		limit(s.MinSize.Width) && limit(s.MinSize.Height) && limit(s.MaxSize.Width) && limit(s.MaxSize.Height)
 }
 
 // Relayout lays boundary n out again with what its parent's last layout
@@ -41,9 +66,10 @@ func Relayout(n Node) bool {
 	if !st.hasLast {
 		return false
 	}
+	passes.Add(1)
 	before := st.lastOut
 	after := computeNodeLayout(n, st.lastIn, nil)
-	if !sameForParent(&after, &before) {
+	if !sameForParent(&after, &before) && !(clipsOverflow(n.Style()) && sameClipped(&after, &before)) {
 		return false
 	}
 	// What its parent would have stored of it: its content's extent,
@@ -81,6 +107,21 @@ func RoundFrom(n Node, origin Point[float32]) { roundLayout(n, origin.X, origin.
 // sameOutput reports whether two outputs are the same.
 func sameOutput(a, b *layoutOutput) bool {
 	return a.scrollableOverflow == b.scrollableOverflow && sameForParent(a, b)
+}
+
+// clipsOverflow reports whether a box keeps its content's overflow from
+// its parent on both axes (scrollableOverflowContribution).
+func clipsOverflow(s *Style) bool {
+	return s.Overflow.X != OverflowVisible && s.Overflow.Y != OverflowVisible
+}
+
+// sameClipped is sameForParent for a box whose overflow its parent never
+// sees: all but the overflow.
+func sameClipped(a, b *layoutOutput) bool {
+	return a.size == b.size && a.baselines == b.baselines &&
+		a.topMargin == b.topMargin && a.bottomMargin == b.bottomMargin &&
+		a.marginsCanCollapseThrough == b.marginsCanCollapseThrough &&
+		slices.EqualFunc(a.oofCandidates, b.oofCandidates, func(x, y oofCandidate) bool { return x == y })
 }
 
 // sameForParent reports whether two outputs give a parent the same: the

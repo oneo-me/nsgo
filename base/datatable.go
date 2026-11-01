@@ -479,7 +479,9 @@ func (r *DataTableRef) ClearMenuTarget() {
 type tableState struct {
 	columns *tableColumns
 	defs    []DataTableColumn
-	sel     tableSel
+	// toned is whether each def has styles or classes for rises and falls.
+	toned []bool
+	sel   tableSel
 	// active marks the row and column (-1 for none) a context menu was
 	// asked for.
 	active               bool
@@ -524,7 +526,7 @@ type dataTable struct {
 	vscroll, hscroll *core.Ref
 	stripRef         *core.Ref
 	vstripRef        *core.Ref
-	rowsWin, colsWin *window.Rows
+	colsWin          *window.Rows
 	resizing         int
 	resizeFrom       float32
 	handleTap        int
@@ -532,6 +534,9 @@ type dataTable struct {
 	// hlead is which of the horizontal strip (true) and the horizontal
 	// scroll view moved last; vlead the vertical pair's.
 	hlead, vlead tableLead
+	// follow moves the body with the scroll views on the main thread
+	// (datatable_view.go).
+	follow tableFollow
 }
 
 func newDataTable(cx *core.Scope, p DataTable) *dataTable {
@@ -541,12 +546,13 @@ func newDataTable(cx *core.Scope, p DataTable) *dataTable {
 		viewport: core.NewSignal(cx, core.Size{}), hover: core.NewSignal(cx, -1), focused: core.NewSignal(cx, false),
 		drag: core.NewSignal(cx, tableDrag{from: -1}), vscroll: &core.Ref{}, hscroll: &core.Ref{},
 		stripRef: &core.Ref{}, vstripRef: &core.Ref{},
-		rowsWin: window.New(4, 16), colsWin: window.New(1, 3), resizing: -1, handleTap: -1}
+		colsWin: window.New(1, 3), resizing: -1, handleTap: -1}
 	if p.Ref != nil {
 		p.Ref.t = t
 	}
 	t.syncColumns()
 	t.sizes = core.NewMemo(cx, t.measureSizes)
+	t.follow = newTableFollow(cx, t)
 	t.syncSelection()
 	t.report()
 	return t
@@ -605,6 +611,10 @@ func (t *dataTable) syncColumns() {
 				}
 			}
 			st.defs = defs
+			st.toned = make([]bool, len(defs))
+			for i, c := range defs {
+				st.toned[i] = !c.PositiveStyle.IsZero() || !c.NegativeStyle.IsZero() || c.PositiveClass != "" || c.NegativeClass != ""
+			}
 			t.bumpLayout()
 			t.bumpData()
 		})

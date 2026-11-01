@@ -5,6 +5,7 @@ package apple
 import (
 	"math"
 	"slices"
+	"strings"
 	"structs"
 	"unicode/utf8"
 	"unsafe"
@@ -49,6 +50,8 @@ var (
 	ctLineCreateWithAttrString  func(str uintptr) uintptr
 	ctLineCreateTruncatedLine   func(line uintptr, width float64, kind uint32, token uintptr) uintptr
 	ctLineDraw                  func(line, ctx uintptr)
+	ctLinePenOffsetForFlush     func(line uintptr, flush, width float64) float64
+	ctLineTrailingWhitespace    func(line uintptr) float64
 	ctLineIndexForPosition      func(line uintptr, p CGPoint) int
 	ctLineOffsetForIndex        func(line uintptr, i int, secondary *float64) float64
 	cfAttributedStringMutable   func(alloc uintptr, max int, str uintptr) uintptr
@@ -114,6 +117,8 @@ func loadText(cf, cg uintptr) {
 	reg(&ctLineCreateWithAttrString, ct, "CTLineCreateWithAttributedString")
 	reg(&ctLineCreateTruncatedLine, ct, "CTLineCreateTruncatedLine")
 	registerSyscall(&ctLineDraw, ct, "CTLineDraw")
+	reg(&ctLinePenOffsetForFlush, ct, "CTLineGetPenOffsetForFlush")
+	reg(&ctLineTrailingWhitespace, ct, "CTLineGetTrailingWhitespaceWidth")
 	reg(&ctLineIndexForPosition, ct, "CTLineGetStringIndexForPosition")
 	reg(&ctLineOffsetForIndex, ct, "CTLineGetOffsetForStringIndex")
 	reg(&cfAttributedStringMutable, cf, "CFAttributedStringCreateMutableCopy")
@@ -501,9 +506,13 @@ func (TextEngine) Prepare(t *driver.AttributedText) driver.PreparedText {
 		fonts[i] = fontExtent(placeholderStyle(t, at.Offset))
 	}
 	str := attributed(t, toUTF16, fonts)
-	p := &prepared{str: str, fs: ctFramesetterCreate(str), maxLines: t.MaxLines, ellipsize: t.Ellipsize,
+	p := &prepared{str: str, maxLines: t.MaxLines, ellipsize: t.Ellipsize,
 		shadow: t.Shadow, text: t.Text, toUTF8: toUTF8,
 		toUTF16: toUTF16, decos: decorations(t, toUTF16), atts: t.Attachments, fonts: fonts}
+	if oneLineFast && len(t.Attachments) == 0 && len(p.decos) == 0 && t.Style.LineHeight == 0 &&
+		!strings.ContainsAny(t.Text, "\n\r\t\v\f\u0085\u2028\u2029") {
+		p.oneLine, p.flush = true, flushOf(t.Style)
+	}
 	if cfAttributedStringLength(str) == 0 {
 		f := Font(t.Style.Font)
 		p.emptyHeight = ctFontGetAscent(f) + ctFontGetDescent(f) + ctFontGetLeading(f)
@@ -516,6 +525,8 @@ func (TextEngine) Prepare(t *driver.AttributedText) driver.PreparedText {
 }
 
 type prepared struct {
+	// fs is made when first needed: a text on one line never needs it
+	// (oneLine).
 	str, fs     uintptr
 	maxLines    int
 	ellipsize   driver.EllipsizeMode
@@ -532,6 +543,61 @@ type prepared struct {
 	// frame for a table of numbers. Each entry costs one CTFramesetter call
 	// through purego, so the answer is kept per width.
 	measured map[measureKey]driver.Size
+	// oneLine is set for a text that may be laid out as one CTLine where
+	// it fits: no breaks, attachments, drawn decorations or line height.
+	// A table's cells are; a framesetter typesets the text again for each
+	// size asked and each frame made, and line is typeset once. flush is
+	// where its paragraph aligns the line (CTLineGetPenOffsetForFlush).
+	oneLine bool
+	flush   float64
+	line    uintptr
+	// lineWidth, lineHeight and ascent are line's, once it is made.
+	lineWidth, lineHeight, ascent float64
+}
+
+// oneLineFast lets texts on one line skip the framesetter; tests turn it
+// off to compare.
+var oneLineFast = true
+
+// flushOf is where a paragraph of st aligns a line: 0 at the left, 1 at
+// the right.
+func flushOf(st driver.TextStyle) float64 {
+	start, end := 0.0, 1.0
+	if st.RTL {
+		start, end = 1, 0
+	}
+	switch st.Align {
+	case driver.TextAlignCenter:
+		return 0.5
+	case driver.TextAlignEnd:
+		return end
+	}
+	return start
+}
+
+// framesetter is p's, made on first use.
+func (p *prepared) framesetter() uintptr {
+	if p.fs == 0 {
+		p.fs = ctFramesetterCreate(p.str)
+	}
+	return p.fs
+}
+
+// fitsOneLine reports whether p is a text on one line no wider than
+// width, making its line on first use.
+func (p *prepared) fitsOneLine(width float64) bool {
+	if !p.oneLine {
+		return false
+	}
+	if p.line == 0 {
+		var descent, leading float64
+		p.line = ctLineCreateWithAttrString(p.str)
+		// As a frame measures it, without its trailing spaces.
+		p.lineWidth = ctLineGetTypographicBounds(p.line, &p.ascent, &descent, &leading) - ctLineTrailingWhitespace(p.line)
+		// A frame puts a line's baseline on a whole point.
+		p.lineHeight = math.Round(p.ascent) + descent + leading
+	}
+	return p.lineWidth <= width
 }
 
 // measureKey is a wrap width. Auto is a NaN, which no map can key on, so
@@ -577,6 +643,9 @@ func (p *prepared) measure(maxWidth driver.Points) driver.Size {
 	if !maxWidth.IsAuto() {
 		w = float64(maxWidth)
 	}
+	if p.fitsOneLine(w) {
+		return driver.Size{Width: driver.Points(math.Ceil(p.lineWidth)), Height: driver.Points(math.Ceil(p.lineHeight))}
+	}
 	if p.maxLines > 0 {
 		frame := p.frame(CGSize{Width: w, Height: tall})
 		defer Release(frame)
@@ -585,7 +654,7 @@ func (p *prepared) measure(maxWidth driver.Points) driver.Size {
 			return driver.Size{Width: driver.Points(math.Ceil(size.Width)), Height: driver.Points(math.Ceil(size.Height))}
 		}
 	}
-	size := ctFramesetterSuggestSize(p.fs, 0, 0, 0, w, unbounded, 0)
+	size := ctFramesetterSuggestSize(p.framesetter(), 0, 0, 0, w, unbounded, 0)
 	return driver.Size{Width: driver.Points(math.Ceil(size.Width)), Height: driver.Points(math.Ceil(size.Height))}
 }
 
@@ -605,7 +674,7 @@ func firstLines(frame, lines uintptr, n int, frameHeight float64) CGSize {
 func (p *prepared) frame(size CGSize) uintptr {
 	path := rectPath(size)
 	defer cgPathRelease(path)
-	return ctFramesetterCreateFrame(p.fs, 0, 0, path, 0)
+	return ctFramesetterCreateFrame(p.framesetter(), 0, 0, path, 0)
 }
 
 // pathCacheLimit bounds the cache. Text boxes come in few sizes: a table's
@@ -642,6 +711,14 @@ func (p *prepared) layout(size driver.Size) *Layout {
 		return l
 	}
 	// A pixel of slack keeps the last line, which rounding could drop.
+	if width := float64(size.Width) + 0.5; p.fitsOneLine(width) {
+		// Drawn as the last line of a limited text is, where a frame of
+		// that width puts it.
+		l.truncated, l.shown = cfRetain(p.line), 1
+		h := float64(size.Height) + 1
+		l.origins = []CGPoint{{X: ctLinePenOffsetForFlush(p.line, p.flush, width), Y: h - math.Round(h-p.ascent)}}
+		return l
+	}
 	l.frame = p.frame(CGSize{Width: float64(size.Width) + 0.5, Height: float64(size.Height) + 1})
 	if p.maxLines <= 0 {
 		return l
@@ -709,7 +786,8 @@ func ellipsisToken(str uintptr) uintptr {
 func (p *prepared) Release() {
 	Release(p.fs)
 	Release(p.str)
-	p.fs, p.str = 0, 0
+	Release(p.line)
+	p.fs, p.str, p.line = 0, 0, 0
 }
 
 // Layout is text CoreText laid out on the engine goroutine, drawn on the

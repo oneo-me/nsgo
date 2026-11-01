@@ -94,6 +94,13 @@ type Tree struct {
 	// replacing holds, by element and component type, the fields an
 	// XFunc beside them replaces (twins.go).
 	replacing map[reflect.Type][]twin
+	// lscratch is where restyle compares a node's layout style: a local
+	// one would move to the heap at every restyle.
+	lscratch layout.Style
+	// lastItems is how many items the last commit sent, lastShared
+	// whether its batch was these items (CommitShared).
+	lastItems  int
+	lastShared bool
 }
 
 // report is a handler to run under owner after the commit.
@@ -170,6 +177,9 @@ type node struct {
 
 	frame       Bounds
 	layoutDirty bool
+	// synced is the count of its children's roundings syncFrames last
+	// took their frames after (layout.State.Rounds).
+	synced uint64
 	// lstate is what layout keeps for the node; lstyle its style mapped for
 	// layout, while lstyleOK.
 	lstate   layout.State
@@ -934,7 +944,8 @@ func (t *Tree) restyle(n *node) bool {
 	}
 	// Roots are placed by style the layout leaves out of theirs.
 	if n.lstyleOK && !n.isRoot && n.hoist == nil {
-		if l := n.layoutStyle(); reflect.DeepEqual(&l, &n.lstyle) {
+		t.lscratch = n.layoutStyle()
+		if reflect.DeepEqual(&t.lscratch, &n.lstyle) {
 			return false
 		}
 	}

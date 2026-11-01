@@ -20,9 +20,15 @@ func New(margin, ahead int) *Rows { return &Rows{margin: margin, ahead: ahead} }
 // Span is the rows to make with visible rows in view of count: the last
 // window while it covers them with half a viewport to spare, else the
 // visible rows, a viewport and a half more ahead the way they scrolled and
-// half a viewport behind.
+// half a viewport behind, or as many on one side as the other end leaves.
 func (w *Rows) Span(vStart, vEnd, count int) (int, int) {
 	page := vEnd - vStart
+	// Before the viewport has a size, the rows ahead stand in, and the
+	// window waits for the first real view: kept, it would be too short
+	// for it and move on the first scroll.
+	if page <= 0 {
+		return min(vStart, count), min(vStart+w.ahead, count)
+	}
 	margin := max(page/2, w.margin)
 	needStart, needEnd := max(vStart-margin, 0), min(vEnd+margin, count)
 	if w.start <= needStart && needEnd <= w.end && w.end <= count && w.end-w.start <= page*4+w.ahead*3 {
@@ -33,6 +39,18 @@ func (w *Rows) Span(vStart, vEnd, count int) (int, int) {
 	if vStart < w.first {
 		before, after = ahead, behind
 	}
-	w.start, w.end, w.first = min(max(vStart-before, 0), count), min(vEnd+after, count), vStart
+	// Cut at one end, the window takes the rows on the other: it keeps
+	// its length, so the slots made for it at the top are those it needs
+	// further down, and none is made on the first scroll.
+	start, end := vStart-before, vEnd+after
+	if start < 0 {
+		end -= start
+		start = 0
+	}
+	if end > count {
+		start = max(start-(end-count), 0)
+		end = count
+	}
+	w.start, w.end, w.first = start, end, vStart
 	return w.start, w.end
 }

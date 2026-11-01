@@ -197,7 +197,7 @@ func (s *surface) redrawGradients(v *view) {
 		return
 	}
 	css := decorCSS(&v.style, v.size)
-	setStyle(v.el, map[string]string{"background-image": css["background-image"],
+	v.css().set(map[string]string{"background-image": css["background-image"],
 		"mask-image": css["mask-image"], "-webkit-mask-image": css["-webkit-mask-image"]})
 }
 

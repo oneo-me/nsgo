@@ -538,6 +538,7 @@ func (t *Tree) layoutRoot(root *node, space Size, fill bool) {
 func (t *Tree) syncFrames(n *node) {
 	t.syncContent(n)
 	n.layoutDirty = false
+	n.synced = n.lstate.Rounds()
 	mirror := n.rtl && n.scroll != nil && n.scroll.config.Horizontal
 	for _, c := range n.flatChildren() {
 		l := &c.lstate.Rounded
@@ -558,21 +559,30 @@ func (t *Tree) syncFrames(n *node) {
 		}
 		// As NSH's frame walk does, a hidden subtree gets empty frames and
 		// content boxes, whatever its layout kept.
-		if hidden := n.hidden || c.style.Display == DisplayNone; hidden != c.hidden {
+		hidden := n.hidden || c.style.Display == DisplayNone
+		moved := hidden != c.hidden
+		if moved {
 			c.hidden = hidden
 			t.mark(c)
 		}
 		if c.hidden {
 			f = Bounds{}
 		}
-		t.setFrame(c, f)
+		moved = t.setFrame(c, f) || moved
+		// An absolute view is its subtree's containing block, so all of
+		// it is rounded through it: when layout rounded nothing under it
+		// since and it stays where it was, nothing under it moved.
+		if !moved && !c.layoutDirty && c.style.Position == Absolute && c.synced == c.lstate.Rounds() &&
+			!t.syncContent(c) {
+			continue
+		}
 		t.syncFrames(c)
 	}
 }
 
 // syncContent sets what n's layout decides inside it: where its text goes
-// and how far its content scrolls.
-func (t *Tree) syncContent(n *node) {
+// and how far its content scrolls. It reports whether that changed.
+func (t *Tree) syncContent(n *node) bool {
 	l := &n.lstate.Rounded
 	if n.hidden {
 		l = &layout.Layout{}
@@ -582,26 +592,33 @@ func (t *Tree) syncContent(n *node) {
 		if b := contentBox(l); b != n.text.box {
 			n.text.box = b
 			t.mark(n)
+			return true
 		}
 	case n.input != nil:
 		if b := contentBox(l); b != n.input.config.Content {
 			n.input.config.Content = b
 			t.mark(n)
+			return true
 		}
 	case n.scroll != nil:
 		if c := (Size{Width: Points(l.Size.Width + l.ScrollWidth()), Height: Points(l.Size.Height + l.ScrollHeight())}); c != n.scroll.content {
 			n.scroll.content = c
 			t.mark(n)
+			return true
 		}
 	}
+	return false
 }
 
-// setFrame sets n's frame, marking n when it moved or resized.
-func (t *Tree) setFrame(n *node, f Bounds) {
-	if f != n.frame {
-		n.frame = f
-		t.mark(n)
+// setFrame sets n's frame, marking n when it moved or resized, and
+// reports whether it did.
+func (t *Tree) setFrame(n *node, f Bounds) bool {
+	if f == n.frame {
+		return false
 	}
+	n.frame = f
+	t.mark(n)
+	return true
 }
 
 // contentBox is the box inside a layout's padding and border.

@@ -127,7 +127,7 @@ func (s *surface) configureScroll(v *view, c *driver.ScrollConfig) {
 	if c.Zooms() {
 		touch = "pan-x pan-y" // pinches are the view's
 	}
-	setStyle(v.el, map[string]string{"overflow-x": x, "overflow-y": y, "scrollbar-width": bar,
+	v.css().set(map[string]string{"overflow-x": x, "overflow-y": y, "scrollbar-width": bar,
 		"overscroll-behavior": overscroll, "touch-action": touch})
 	if !c.Zooms() {
 		sc.zoom = 1
@@ -209,7 +209,7 @@ func (v *view) snapMarkers() {
 			sc.markers = append(sc.markers, m)
 		}
 	}
-	setStyle(v.el, map[string]string{"scroll-snap-type": snap})
+	v.css().set1("scroll-snap-type", snap)
 }
 
 // offset returns the view's offset as UIKit's contentOffset: past the

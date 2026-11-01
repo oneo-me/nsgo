@@ -46,7 +46,24 @@ type State struct {
 	// more than maxAsked.
 	asked     []answer
 	askedOver bool
+
+	// performed is the pass (passes) that last laid the node's children
+	// out, writing their Unrounded layouts. Round snaps the children again
+	// only when that pass is not the one their Rounded layouts came of
+	// (kidsPerformed), or when the node's own position moved (kidsOrigin):
+	// a tree laid out from its caches but for one path rounds that path.
+	performed     uint64
+	kidsPerformed uint64
+	kidsOrigin    Point[float32]
+	kidsRounded   bool
+	// rounds counts the times Round snapped the children.
+	rounds uint64
 }
+
+// Rounds is how many times Round has snapped the children: what walks
+// the rounded tree need not go under a node whose count it saw, but for
+// what is rounded through another containing block.
+func (s *State) Rounds() uint64 { return s.rounds }
 
 // answer is what a leaf gave back for an input.
 type answer struct {

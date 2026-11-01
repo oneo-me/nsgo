@@ -103,7 +103,7 @@ func TestTableNav(t *testing.T) {
 func TestRowWindowStaysWhileItCovers(t *testing.T) {
 	w := window.New(4, 16)
 	for _, c := range [][5]int{{100, 140, 1000, 80, 200}, {110, 150, 1000, 80, 200}, {141, 181, 1000, 121, 241},
-		{100, 140, 1000, 40, 160}, {0, 40, 1000, 0, 60}} {
+		{100, 140, 1000, 40, 160}, {0, 40, 1000, 0, 120}, {960, 1000, 1000, 880, 1000}} {
 		if a, b := w.Span(c[0], c[1], c[2]); a != c[3] || b != c[4] {
 			t.Errorf("rows(%d..%d) = %d..%d, want %d..%d", c[0], c[1], a, b, c[3], c[4])
 		}

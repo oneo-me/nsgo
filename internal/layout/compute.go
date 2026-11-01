@@ -1,5 +1,7 @@
 package layout
 
+import "sync/atomic"
+
 // Compute lays out the tree under root in the available space, which is
 // usually the viewport, and stores every node's [State.Unrounded] layout.
 // Nodes whose cache still holds a result for their inputs are not laid out
@@ -9,6 +11,7 @@ package layout
 // block, which has the available size; out-of-flow boxes with no positioned
 // ancestor are positioned against it.
 func Compute(root Node, available Size[AvailableSpace]) {
+	passes.Add(1)
 	style := root.Style()
 	position := style.Position
 	direction := style.Direction
@@ -221,6 +224,9 @@ func computeNodeLayout(n Node, in layoutInput, bctx *blockContext) layoutOutput 
 	out, ok := st.cache.get(&in)
 	if !ok {
 		out = computeUncachedLayout(n, st, in, bctx)
+		if in.runMode == performLayout {
+			st.performed = passes.Load()
+		}
 	}
 	if in.runMode == performLayout {
 		st.lastIn, st.lastOut, st.hasLast = in, out.clone(), true
@@ -267,6 +273,7 @@ func computeHiddenLayout(n Node) layoutOutput {
 	st := n.LayoutState()
 	st.Invalidate()
 	st.Unrounded = Layout{}
+	st.performed = passes.Load()
 	for i, count := 0, n.ChildCount(); i < count; i++ {
 		computeChildLayout(n.Child(i), hiddenInput)
 	}
@@ -324,6 +331,18 @@ func performChildLayout(n Node, known, parentSize Size[Opt], available Size[Avai
 // rather than each size, so that adjacent boxes stay adjacent.
 func Round(root Node) { roundLayout(root, 0, 0) }
 
+// sameSnap reports whether children carried from a and from b snap to
+// the same pixels relative to them: a and b are equal, or whole points
+// both, as a box scrolled by whole points is (round(x+k) is round(x)+k).
+func sameSnap(a, b Point[float32]) bool {
+	whole := func(p Point[float32]) bool { return p.X == floor32(p.X) && p.Y == floor32(p.Y) }
+	return a == b || whole(a) && whole(b)
+}
+
+// passes counts layout passes (Compute, Relayout) across the process'
+// engines; a node keeps the pass that last laid its children out.
+var passes atomic.Uint64
+
 func roundLayout(n Node, cumulativeX, cumulativeY float32) {
 	st := n.LayoutState()
 	u := st.Unrounded
@@ -355,6 +374,15 @@ func roundLayout(n Node, cumulativeX, cumulativeY float32) {
 	l.ScrollableOverflow.Bottom = round(cumulativeY+o.Bottom) - round(cumulativeY)
 
 	st.Rounded = l
+
+	// The children's layouts and where they are carried from are those
+	// they were snapped with: their rounding stands.
+	origin := Point[float32]{cumulativeX, cumulativeY}
+	if st.kidsRounded && st.kidsPerformed == st.performed && sameSnap(st.kidsOrigin, origin) {
+		return
+	}
+	st.kidsRounded, st.kidsPerformed, st.kidsOrigin = true, st.performed, origin
+	st.rounds++
 
 	// In-flow children are rounded relative to this node. Out-of-flow ones
 	// are rounded through their containing block's hoisted list instead, so

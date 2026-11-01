@@ -26,7 +26,8 @@ const selectionCSS = `.nsgo-selection::selection, .nsgo-selection *::selection {
 func (s *surface) setSelection(v *view, p *driver.ViewProps) {
 	if v.kind == driver.KindText {
 		select_ := map[driver.Selectable]string{driver.SelectableOn: "text", driver.SelectableOff: "none"}[p.Selectable]
-		setStyle(v.inner, map[string]string{"user-select": select_, "-webkit-user-select": select_})
+		v.textCSS.set1("user-select", select_)
+		v.textCSS.set1("-webkit-user-select", select_)
 		v.selectable = p.Selectable
 		if p.SelectionColor != v.selColor {
 			v.selColor = p.SelectionColor
@@ -35,7 +36,7 @@ func (s *surface) setSelection(v *view, p *driver.ViewProps) {
 				v.inner.Get("classList").Call("remove", "nsgo-selection")
 			} else {
 				v.inner.Get("classList").Call("add", "nsgo-selection")
-				v.inner.Get("style").Call("setProperty", "--nsgo-selection", cssColor(p.SelectionColor))
+				v.textCSS.set1("--nsgo-selection", cssColor(p.SelectionColor))
 			}
 		}
 	}
@@ -45,7 +46,8 @@ func (s *surface) setSelection(v *view, p *driver.ViewProps) {
 		if v.area {
 			select_ = "text"
 		}
-		setStyle(v.el, map[string]string{"user-select": select_, "-webkit-user-select": select_})
+		v.css().set1("user-select", select_)
+		v.css().set1("-webkit-user-select", select_)
 	}
 }
 

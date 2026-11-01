@@ -12,6 +12,7 @@ The graph follows NSH's (Solid 1.9's scheduling): signals, memos, render effects
 - Go has no goroutine-local state, so code finds its graph through `cx *Scope`. While the graph runs code, what that code creates belongs to the innermost running owner, whichever `cx` it captured. Handlers run under the owner their element was built in.
 - The graph belongs to the engine goroutine and never locks. Other goroutines reach it with `Scope.Post`. `Scope.Context` is cancelled when the owner goes, so work started for a screen stops with it.
 - A reader and each source it read keep each other's index in their lists, so a computation that runs again unlinks in constant time however many read the same source: a table's thousand cells reading one signal.
+- A write marks everything downstream for checking, through memos that will compute what they had. What follows a fast signal, such as a scroll offset, and rarely changes is set from it by an effect into a signal of its own, which reaches no one while it holds: `DataTable`'s windows.
 - Timers go through the `Clock` interface. Tests inject a `ManualClock`.
 - A panic in app code is recovered and sent to the nearest `Catch` above the owner it happened under. With no `Catch`, the host reports it and the app keeps running.
 
@@ -75,7 +76,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 
 ## Commit
 
-`Tree.Commit` runs up to eight rounds. `OnLayout` handlers' changes go into the same batch. A commit costs what changed, not what the tree is: each change marks its node, `mark` for its parts and `markResolve` for its styles or content, and the walks below reach the marked nodes only, through the views they are emitted in (`dirtyKids`) and their shadow parents (`resolveKids`). What every node reads (the environment, the layout direction, the font scale, an accessory's ID) marks them all.
+`Tree.Commit` runs up to eight rounds. Its batch holds a copy of the items; `Tree.CommitShared` hands a platform that applies the batch within `Mount` the tree's own, until the next commit (`engine.SharedMounter`: the web, where copying a busy table's half megabyte a commit fed Go's collector on the page's thread). `OnLayout` handlers' changes go into the same batch. A commit costs what changed, not what the tree is: each change marks its node, `mark` for its parts and `markResolve` for its styles or content, and the walks below reach the marked nodes only, through the views they are emitted in (`dirtyKids`) and their shadow parents (`resolveKids`). What every node reads (the environment, the layout direction, the font scale, an accessory's ID) marks them all.
 
 1. **Resolve.** Inherit text styles into the marked nodes, and into every node under one whose inherited fields changed; prepare text whose content or style changed.
 2. **Layout.** CSS block, flexbox and grid from `internal/layout` over each view's native children; overlays and modals are layout roots of their own. Results stay cached until a node changes, and frames are rounded to whole points as Taffy does.
@@ -83,12 +84,13 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 
 Layout is incremental, as NSH's layout tree:
 
-- A change stops at a relayout boundary (`layout.Boundary`): an in-flow flex item of fixed points both ways that does not shrink, has an auto basis and is not aligned by its baseline.
-- A boundary is laid out again on its own with what its parent gave it last, and its parent only when its size, baselines or overflow changed (`layout.Relayout`).
+- A change stops at a relayout boundary (`layout.Boundary`): an in-flow flex item of fixed points both ways that does not shrink, has an auto basis and is not aligned by its baseline, or an absolute view of fixed points both ways placed by an inset on each axis. A size its containing block stretches is none: laid out on its own it would keep the block's last size.
+- A boundary is laid out again on its own with what its parent gave it last, and its parent only when its size, baselines or overflow changed (`layout.Relayout`); the overflow of a view that clips both ways never reaches its parent.
 - The deepest boundaries go first: an outer one laid out from its caches would leave an inner one's subtree as it was and clear its mark.
 - A restyled view is no boundary, and overlays and modals always mark the root's layout, which places them.
 - A text whose content changed lays nothing out when it measures as before for every input layout asked of it since its cache was cleared (`layout.MeasuresAsBefore`), or when only its colors changed.
 - Texts with attachments always lay out. A restyle lays a view out only when the layout style it maps to changed.
+- Rounding goes only under a node laid out again since its children were rounded, or carried from another place than whole points away from the last: a box scrolled by whole points rounds itself, not its subtree (`roundLayout`). Frames are taken again only under an absolute view that moved or whose children were rounded since (`syncFrames`): it is its subtree's containing block, so all of the subtree is rounded through it.
 
 Tests keep the marks honest: with `driver.CheckCommits`, which `nsgotest` and the core's tests set, each commit is followed by one that lays every node out anew and compares every node, and panics on what the first missed.
 

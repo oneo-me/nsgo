@@ -13,6 +13,14 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 )
 
+// SharedMounter is a Platform that applies each batch within Mount, on
+// the engine goroutine, as the web does: its batches are the tree's own
+// items, not copies (core.Tree.CommitShared).
+type SharedMounter interface {
+	Platform
+	MountsAtOnce()
+}
+
 // Platform is what a backend gives the engine.
 type Platform interface {
 	driver.TextEngine
@@ -286,15 +294,20 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 	// commit applies what changed and records what it cost when a monitor
 	// measures or a trace hears; start is when the wake-up that led here
 	// began.
+	// A test host's observer may keep a batch past the next commit.
+	commitTree := tree.Commit
+	if _, ok := p.(SharedMounter); ok && opts.Observe == nil {
+		commitTree = tree.CommitShared
+	}
 	commit := func(start time.Time) {
 		if perf == nil && trace == nil {
-			if b := tree.Commit(); b != nil {
+			if b := commitTree(); b != nil {
 				p.Mount(b)
 			}
 			return
 		}
 		coreStart := time.Now()
-		b := tree.Commit()
+		b := commitTree()
 		core := time.Since(coreStart)
 		if b != nil && trace != nil {
 			trace(b, core)

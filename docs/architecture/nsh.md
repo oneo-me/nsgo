@@ -84,7 +84,8 @@ NSGo tracks NSH's releases, never its `main`: `nsh/` is checked out at the lates
 2. Read `git log <old tag>..<new tag>` there and the pages of `nsh/docs/dev/` it changed.
 3. Compare the declarations NSH writes to `examples/gallery/.nsh/types/` when any `nsh` command runs on its gallery with those `tsx.WriteDeclarations` writes.
 4. Run NSH's apps as oracles, imports renamed: its gallery (`TestNSHGallery`), its gallery's and examples' `*.test.tsx`, and the cases of `tests/compat/`.
-5. Rewrite the roadmap from what these find, and update the subjects whose departures changed.
+5. Run the scenarios NSH's pages measure (`performance.md`, `data-table.md` and the other components' Performance sections, `web.md`) on NSH's build and on NSGo on one machine, each backend in turn, as [performance](performance.md#keeping-frames-cheap) does for the DataTable: matching the API leaves what a frame costs unchecked.
+6. Rewrite the roadmap from what these find, and update the subjects whose departures changed.
 
 ## Departures by subject
 

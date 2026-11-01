@@ -37,6 +37,18 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 | Signed packages | `signed-packages.md` | `nsgo keygen`, `certify`, `publish`, `verify` and `revoke` work; a Go, iOS and Android host verifies a package, runs it in `tsx.View`, and refuses tampered, revoked and older builds |
 | Capabilities and limits | `sandbox.md` | Every request a capability names (`fetch`, remote images, web views, `openUrl`, host calls) is refused without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
 
+## Performance against NSH's baselines
+
+NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). The DataTable keeps up with NSH's headless, in headless Chrome and on macOS, and its cells move with the content in each frame on every backend, as NSH's do only on the web.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, costs on Windows, Linux, iOS and Android what NSH's does there, and its cells move with the content in every frame there as on macOS and the web |
+| The web's collector | — | Scrolling the ticking DataTable in headless Chrome shows no task over 50 ms, as NSH's does: Go's collector still paused about 100 ms a few times in a 6 s fast scroll on 2026-11-01 |
+| New views' default items | `nsh/AGENTS.md` (Performance rules, 4) | A new view gets no item for a default style, empty props or an empty event mask, every backend starting views in that state: they were 2,646 of the 18,252 items opening the DataTable at 1200×800, and 1,427 of the gallery's 4,525 at start |
+| Wheel steps on the web | `nsh/crates/nsh-platform-web/web/nsh.js` | A mouse wheel's step scrolls a page as far as on NSH's: over the scaled DataTable NSGo's moved about twice as far on 2026-11-01 |
+| Styles as classes on the web | `web.md` (Styles as classes) | Visual styles reach the page as classes, as NSH's do, and the gallery's batches shrink by about as much (a third of the website's demos' first render) |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.
