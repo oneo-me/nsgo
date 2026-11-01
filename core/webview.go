@@ -8,8 +8,7 @@ import "github.com/oneo-me/nsgo/internal/driver"
 // Ref.PostMessage dispatches a MessageEvent on the page's window.
 type WebView struct {
 	Source WebSource
-	// SourceFunc, when set, replaces Source; the page loads again when it
-	// changes.
+	// The page loads again when SourceFunc's source changes.
 	SourceFunc func() WebSource
 	// InjectedJavaScript runs after each page loads, and
 	// InjectedJavaScriptBeforeContent before each page's own scripts.

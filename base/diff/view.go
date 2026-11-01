@@ -177,8 +177,7 @@ type DiffView struct {
 	// beside the line the pointer is over and the last selected one: lines
 	// are the selected ones when its line is one of them, else its line.
 	RenderAddAnnotation func(cx *core.Scope, lines LineRange) core.Node
-	// StylesFunc replaces Styles, again when what it reads changes;
-	// Classes go under both, and Class under Style.
+	// Classes go under Styles, and Class under Style.
 	Classes    Classes
 	Styles     Styles
 	StylesFunc func() Styles

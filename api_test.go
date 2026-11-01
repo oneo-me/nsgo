@@ -137,3 +137,46 @@ func TestPublicAPINamesNoInternalType(t *testing.T) {
 		}
 	}
 }
+
+// TestFuncFieldsBindTheirValue checks the components' rule for fields that
+// change: a field named XFunc is a func() T beside a field X of type T, so
+// a value is written plainly and bound by the same name with Func added.
+func TestFuncFieldsBindTheirValue(t *testing.T) {
+	if testing.Short() {
+		t.Skip("type-checks the component packages from source")
+	}
+	imp := importer.ForCompiler(token.NewFileSet(), "source", nil)
+	for _, rel := range []string{"core", "base", "base/textview", "base/editor", "base/diff", "mobile", "desktop"} {
+		pkg, err := imp.Import(modulePath + "/" + rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range pkg.Scope().Names() {
+			tn, ok := pkg.Scope().Lookup(name).(*types.TypeName)
+			if !ok || !tn.Exported() || tn.IsAlias() {
+				continue
+			}
+			st, ok := tn.Type().Underlying().(*types.Struct)
+			if !ok {
+				continue
+			}
+			fields := map[string]types.Type{}
+			for i := range st.NumFields() {
+				fields[st.Field(i).Name()] = st.Field(i).Type()
+			}
+			for i := range st.NumFields() {
+				f := st.Field(i)
+				base, ok := strings.CutSuffix(f.Name(), "Func")
+				if !f.Exported() || !ok || base == "" {
+					continue
+				}
+				sig, isFunc := f.Type().Underlying().(*types.Signature)
+				value, twin := fields[base]
+				if !isFunc || sig.Params().Len() != 0 || sig.Results().Len() != 1 || !twin ||
+					!types.Identical(sig.Results().At(0).Type(), value) {
+					t.Errorf("%s.%s.%s is not a func() of %s's type beside it", pkg.Name(), name, f.Name(), base)
+				}
+			}
+		}
+	}
+}

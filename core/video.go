@@ -11,7 +11,7 @@ import (
 // It plays unless Paused; Ref.Seek jumps to a time.
 type Video struct {
 	// Source is a URL, a file path or an "asset:" path in the app's
-	// resources; SourceFunc, when set, replaces it.
+	// resources.
 	Source     string
 	SourceFunc func() string
 	Paused     bool

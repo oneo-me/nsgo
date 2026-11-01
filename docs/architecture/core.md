@@ -19,7 +19,8 @@ The graph follows NSH's (Solid 1.9's scheduling): signals, memos, render effects
 
 Host elements (`View`, `Text`, `Scroll`, `List`, `Image`, `Canvas`, `Overlay`, ...) are structs with exported fields whose zero values are defaults, as in `http.Server`. Apps take `Input`, `Screen`, `InputAccessoryView` and `Modal` through `base.Input`, `base.NavPage`, `mobile.InputAccessoryView` and `base.Dialog`, as NSH's apps do. [Hosted views](native-views.md), [images](images.md), [canvas](canvas.md) and [shaders](shaders.md) cover their elements.
 
-- A field that can change takes a function (`StyleFunc`, `ContentFunc`, `Value`, `Disabled`), bound by one render effect per part.
+- A field that can change has a twin, its name with `Func` added: `XFunc func() T` beside `X T` is `X` again whenever what it reads changes, bound by one render effect per part. A `Style`, classes and `Uniforms` take `XFunc`'s over `X`'s (merged, after, by name); any other `XFunc` replaces `X`, and an element or a component of `core`, `base`, `mobile` or `desktop` that sets both panics as it mounts. `TestFuncFieldsBindTheirValue` holds the names to it.
+- A field with no static form takes only the function and keeps its name: `Disabled`, `Checked`, `Value`, `When`.
 - Styles compose with `Style.Merge`, and text fields inherit down the tree as in CSS.
 - State styles merge over the rest in NSH's order: `Checked`, `Indeterminate` and `Selected`, which the app sets, then `Hover`, `Focus` and `Active`, then `Disabled` over all; a `GroupStyle` follows its group's states first ([styles](styles.md)).
 - The engine tracks `Hover`, `Focus` and `Active` from the events it asks the platform to report. Windows and Linux hit-test hovers themselves (`internal/platform/hover`).

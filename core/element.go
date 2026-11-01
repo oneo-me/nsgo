@@ -34,13 +34,9 @@ type View struct {
 	// Class is Tailwind CSS classes ("flex-row gap-4 p-4 bg-white
 	// dark:bg-zinc-900"), meaning what they mean in Tailwind CSS 4, under
 	// Style; an unknown class is logged once.
-	Class string
-	// ClassFunc's classes follow Class's, again when what it reads
-	// changes.
+	Class     string
 	ClassFunc func() string
 	Style     Style
-	// StyleFunc's result is merged over Style, again when what it reads
-	// changes.
 	StyleFunc func() Style
 	Children  []Node
 
@@ -159,8 +155,7 @@ type View struct {
 	// button, and expanded while it returns true.
 	Expanded func() bool
 	Role     Role
-	// Label is what assistive technology reads; LabelFunc replaces it,
-	// again when what it reads changes.
+	// Label is what assistive technology reads.
 	Label     string
 	LabelFunc func() string
 	// Hint says what activating the element does, read after its label.
@@ -203,12 +198,10 @@ type PartStates struct {
 
 // Text is a run of text the engine lays out and the platform draws.
 type Text struct {
-	// Class is Tailwind CSS classes, as View's, and ClassFunc's follow
-	// them, again when what it reads changes.
-	Class     string
-	ClassFunc func() string
-	Content   string
-	// ContentFunc replaces Content, again when what it reads changes.
+	// Class is Tailwind CSS classes, as View's.
+	Class       string
+	ClassFunc   func() string
+	Content     string
 	ContentFunc func() string
 	Style       Style
 	StyleFunc   func() Style
@@ -230,9 +223,8 @@ type Text struct {
 	// Text's style. A span with OnPress is a link; a press on another
 	// span is the Text's OnPress.
 	Spans []Span
-	// SpansFunc replaces Spans, again when what it reads changes: runs of
-	// text, class and style only, as a code editor's rows recolor as their
-	// highlighting comes.
+	// SpansFunc's spans are runs of text, class and style only, as a code
+	// editor's rows recolor as their highlighting comes.
 	SpansFunc func() []Span
 	// Selectable lets the user select and copy the text; the highlight is
 	// the style's SelectionColor.
@@ -248,8 +240,7 @@ type Text struct {
 	OnTextLayout func(lines []TextLine)
 	Ref          *Ref
 	Role         Role
-	// Label replaces the text for assistive technology; LabelFunc
-	// replaces Label, again when what it reads changes.
+	// Label replaces the text for assistive technology.
 	Label     string
 	LabelFunc func() string
 	Hint      string
@@ -269,8 +260,6 @@ type Span struct {
 	ContentFunc func() string
 	// Style's text fields merge over the Text's. Its Background and
 	// CornerRadius draw behind the span's characters, a box per line.
-	// StyleFunc's result merges over Style, again when what it reads
-	// changes.
 	Style     Style
 	StyleFunc func() Style
 	OnPress   func(PressEvent)
@@ -376,8 +365,7 @@ type Scroll struct {
 	Horizontal    bool
 	HideIndicator bool
 	// Behavior is how it scrolls: paging, snapping, deceleration,
-	// bounces, insets and the keyboard; BehaviorFunc, when set, replaces
-	// it as it changes.
+	// bounces, insets and the keyboard.
 	Behavior     ScrollBehavior
 	BehaviorFunc func() ScrollBehavior
 	// ContentOffset is where it starts.
@@ -666,8 +654,8 @@ type Modal struct {
 	// IOS and Android hold the props only iOS, or only Android, has.
 	IOS     IOSModalProps
 	Android AndroidModalProps
-	// StatusBar, or StatusBarFunc, is set over the app's status bar while
-	// the modal is in the tree.
+	// StatusBar is set over the app's status bar while the modal is in
+	// the tree.
 	StatusBar     StatusBarSetting
 	StatusBarFunc func() StatusBarSetting
 	Style         Style
@@ -738,8 +726,8 @@ type Screen struct {
 	// Animation is how the screen enters and leaves (iOS slides it by
 	// default).
 	Animation ScreenAnimation
-	// StatusBar, or StatusBarFunc, is set over the app's status bar while
-	// the screen is in the tree and not popped.
+	// StatusBar is set over the app's status bar while the screen is in
+	// the tree and not popped.
 	StatusBar     StatusBarSetting
 	StatusBarFunc func() StatusBarSetting
 	// Class is Tailwind CSS classes, as View's.

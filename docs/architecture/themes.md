@@ -55,9 +55,9 @@ An embedding host's `core.Tokens` go over every theme's palette by the same role
 
 ## Gallery
 
-`examples/gallery` styles `base` and `core` with its own components (`look.go`, `kit.go`): `galleryTheme`, Onevra's with the gallery's roles in `Palette.Colors`, and buttons, cards, insets, badges, switches, segmented controls, meters, sheets and fields. They take the scope they are built in, so a subtree's theme reaches them, and read `colorsOf`, `tintsOf` and `finOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.text()`), and a method value (`colors.text`) is a color to hand on; `colors.now()` reads them all at once for a `Draw`, and `themed` holds a component's styles by part for its `StylesFunc`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build.
+`examples/gallery` styles `base` and `core` with its own components (`look.go`, `kit.go`): `galleryTheme`, Onevra's with the gallery's roles in `Palette.Colors`, and buttons, cards, insets, badges, switches, segmented controls, meters, sheets and fields. They take the scope they are built in, so a subtree's theme reaches them, and read `colorsOf`, `tintsOf` and `finOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.text()`), and a method value (`colors.text`) is a color to hand on; `colors.now()` reads them all at once for a `Draw`, and `themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build.
 
-Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffView` a `StylesFunc`), as `core.Span` has, so an app restyles them in place too.
+Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffView` a `StylesFunc`, `TextView` a `StyleOf`), as `core.Span` has, so an app restyles them in place too.
 
 ## Departures from NSH
 

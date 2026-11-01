@@ -437,8 +437,7 @@ type Editor struct {
 	// InlineCompletionDelay is how long typing pauses before
 	// OnInlineCompletionRequest asks: 300 ms when 0.
 	InlineCompletionDelay time.Duration
-	// StylesFunc replaces Styles, again when what it reads changes;
-	// Classes go under both, and Class under Style.
+	// Classes go under Styles, and Class under Style.
 	Classes    Classes
 	Styles     Styles
 	StylesFunc func() Styles

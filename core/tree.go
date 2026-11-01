@@ -91,6 +91,9 @@ type Tree struct {
 	// positional is set once a node has classes that follow its place
 	// among its siblings (first:, odd:).
 	positional bool
+	// replacing holds, by element and component type, the fields an
+	// XFunc beside them replaces (twins.go).
+	replacing map[reflect.Type][]twin
 }
 
 // report is a handler to run under owner after the commit.
@@ -769,6 +772,7 @@ func (t *Tree) node(id NodeID) *node {
 
 // mount appends what el builds under cx to parent's children.
 func (t *Tree) mount(cx *Scope, parent *node, el Node) {
+	t.checkTwins(el)
 	switch el := el.(type) {
 	case nil:
 	case View:

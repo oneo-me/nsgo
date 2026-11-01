@@ -11,12 +11,12 @@ import (
 )
 
 // readingStyles is the gallery's reading typography for every part of a
-// TextView, base having none, as its StyleFunc.
+// TextView, base having none, as its StyleOf.
 func readingStyles(cx *core.Scope) func(textview.Part) core.Style {
 	return partStyles(cx, func() textview.Styles { return readingParts(cx) })
 }
 
-// partStyles is a TextView's StyleFunc from styles by part, built again
+// partStyles is a TextView's StyleOf from styles by part, built again
 // when what build reads (the palette) changes.
 func partStyles(cx *core.Scope, build func() textview.Styles) func(textview.Part) core.Style {
 	styles := themed(cx, build)
@@ -160,7 +160,7 @@ func streamingCard(cx *core.Scope) core.Node {
 				caret = core.View{Style: core.Style{Margin: core.Edges{Left: 2}, Width: core.Pt(8), Height: core.Pt(16), CornerRadius: 2,
 					Animation: core.KeyframeAnimation{Keyframes: core.KeyframesPulse}}, StyleFunc: filled(colors.accent)}
 			}
-			return textview.TextView{MarkdownFunc: streamed.Get, StyleFunc: readingStyles(cx), Options: textview.Options{Streaming: on}, StreamingCaret: caret,
+			return textview.TextView{MarkdownFunc: streamed.Get, StyleOf: readingStyles(cx), Options: textview.Options{Streaming: on}, StreamingCaret: caret,
 				Selectable: true, Highlighter: highlight.New(cx), CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction, TestID: "streamed"}
 		}),
 		core.Dynamic(func(*core.Scope) core.Node {
@@ -177,7 +177,7 @@ func markdownCard(cx *core.Scope) core.Node {
 	pressed := core.NewSignal(cx, "nothing yet")
 	viewing := core.NewSignal(cx, textview.Image{})
 	return card(cx, cardProps{icon: iconText, title: "Markdown", subtitle: "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML"},
-		textview.TextView{Markdown: tvMarkdown, StyleFunc: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
+		textview.TextView{Markdown: tvMarkdown, StyleOf: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
 			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
 			OnLinkPress: func(e textview.LinkPressEvent) { pressed.Set(e.URL) }, OnImagePress: viewing.Set},
 		caption(cx, "Link pressed", pressed.Get),
@@ -188,7 +188,7 @@ func markdownCard(cx *core.Scope) core.Node {
 func htmlCard(cx *core.Scope) core.Node {
 	viewing := core.NewSignal(cx, textview.Image{})
 	return card(cx, cardProps{icon: iconText, title: "HTML", subtitle: "An article page: sections, figures, lists, tables, code"},
-		textview.TextView{HTML: tvHTML, StyleFunc: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), OnImagePress: viewing.Set, TestID: "html"},
+		textview.TextView{HTML: tvHTML, StyleOf: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), OnImagePress: viewing.Set, TestID: "html"},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	)
 }
@@ -243,7 +243,7 @@ func extensionsCard(cx *core.Scope) core.Node {
 		return core.RGB(0x059669)
 	}
 	return card(cx, cardProps{icon: iconComponents, title: "Extensions", subtitle: "Mentions, a chart block, a <Callout> tag, a :::note container"},
-		textview.TextView{Markdown: tvExtended, StyleFunc: readingStyles(cx),
+		textview.TextView{Markdown: tvExtended, StyleOf: readingStyles(cx),
 			Extensions: []textview.Extension{
 				{Name: "mention", Pattern: mentionPattern},
 				{Name: "chart", Language: "chart"},
@@ -261,7 +261,7 @@ func extensionsCard(cx *core.Scope) core.Node {
 					return core.View{Style: core.Style{Direction: core.Row, Gap: 12, CornerRadius: 12, Padding: core.All(12)},
 						StyleFunc: filled(func() core.Color { return alpha(emerald(), 0.1) }), Children: []core.Node{
 							text("✦", 15, regular, emerald),
-							core.View{Style: fill, Children: []core.Node{textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleFunc: readingStyles(cx)}}},
+							core.View{Style: fill, Children: []core.Node{textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleOf: readingStyles(cx)}}},
 						}}
 				}
 				lbl := node.Attributes["label"]
@@ -271,7 +271,7 @@ func extensionsCard(cx *core.Scope) core.Node {
 				return core.View{Style: core.Style{Gap: 4, CornerRadius: 12, BorderWidth: 1, Padding: core.All(12)},
 					StyleFunc: func() core.Style { return core.Style{BorderColor: alpha(sky(), 0.4)} }, Children: []core.Node{
 						core.Text{Content: lbl, Style: core.Style{FontSize: 12, FontWeight: semibold, TextTransform: core.TextTransformUppercase, LetterSpacing: 0.6}, StyleFunc: colored(sky)},
-						textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleFunc: readingStyles(cx)},
+						textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleOf: readingStyles(cx)},
 					}}
 			}},
 	)
@@ -288,8 +288,8 @@ func selectionAreaCard(cx *core.Scope) core.Node {
 	colors := colorsOf(cx)
 	return card(cx, cardProps{icon: iconText, title: "Selectable view", subtitle: "One selection across texts and TextViews"},
 		core.View{Selectable: true, Style: core.Style{Gap: 12}, Children: []core.Node{
-			textview.TextView{Markdown: tvQuestion, StyleFunc: readingStyles(cx)},
-			textview.TextView{Markdown: tvAnswer, StyleFunc: readingStyles(cx)},
+			textview.TextView{Markdown: tvQuestion, StyleOf: readingStyles(cx)},
+			textview.TextView{Markdown: tvAnswer, StyleOf: readingStyles(cx)},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
 				core.Text{Content: "Not selectable", Selectable: core.SelectableOff, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.faint)},
 				core.Text{Content: "A plain Text joins the selection too.", Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: colored(colors.text)},

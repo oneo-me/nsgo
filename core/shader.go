@@ -104,14 +104,11 @@ type Uniforms map[string]any
 // again when its size, its uniforms or the animated nodes they hold
 // change; a platform without a GPU path for shaders yet leaves it empty.
 type Shader struct {
-	Program  *ShaderProgram
-	Uniforms Uniforms
-	// UniformsFunc's values are set over Uniforms, again when what it
-	// reads changes.
+	Program      *ShaderProgram
+	Uniforms     Uniforms
 	UniformsFunc func() Uniforms
 	// Images are what the program's image0At to image3At read, in order,
-	// loaded as an Image loads its source; ImagesFunc's replace them,
-	// again when what it reads changes.
+	// loaded as an Image loads its source.
 	Images     []ImageSource
 	ImagesFunc func() []ImageSource
 	Style      Style

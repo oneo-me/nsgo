@@ -293,7 +293,7 @@ func chatMarkdown(md func() string, streaming func() bool) core.Node {
 					c = caret(cx)
 				}
 				return textview.TextView{MarkdownFunc: md, Options: textview.Options{Streaming: on}, StreamingCaret: c, Selectable: true, NoCodeBlockScrollbar: true,
-					StyleFunc: chatStyles(cx), Highlighter: hl, CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
+					StyleOf: chatStyles(cx), Highlighter: hl, CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
 					OnImagePress: func(im textview.Image) { used.Set(true); viewing.Set(im) }}
 			}),
 			core.Show{When: used.Get, Then: func(cx *core.Scope) core.Node {

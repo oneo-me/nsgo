@@ -59,13 +59,13 @@ Highlighting is its own package because chroma's lexers add about 4.5 MB to a bi
 
 ## Parts
 
-A node with several parts merges `StyleFunc`'s styles for each, then the app's `Styles` for each, later parts winning, so a typography passed as `StyleFunc` gives way to `Styles`. `Classes` go under both, each part's in the same order; an inline part's span takes the classes of the parts around it too.
+A node with several parts merges `StyleOf`'s styles for each, then the app's `Styles` for each, later parts winning, so a typography passed as `StyleOf` gives way to `Styles`. `Classes` go under both, each part's in the same order; an inline part's span takes the classes of the parts around it too.
 
 Where NSGo departs from NSH:
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| `classes` and `styles` objects by part's name | `Classes` and `Styles` maps and `StyleFunc` by `Part` | A part is a constant, so a typography is one function of it |
+| `classes` and `styles` objects by part's name | `Classes` and `Styles` maps and `StyleOf` by `Part` | A part is a constant, so a typography is one function of it |
 | Typography in `nsh/base`'s `TextView` | Typography from the app | `base` has no look |
 | `links="report"` or `"open"` | `OpenLinks` | Go's zero value is the default |
 | Alert icon | Alert title text, and `PartAlertContent` around its blocks | The title takes the alert's color while the blocks keep the text's |

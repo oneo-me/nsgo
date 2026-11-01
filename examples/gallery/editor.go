@@ -947,7 +947,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			}})
 		}
 		if card.markdown != "" {
-			docs := textview.TextView{Markdown: card.markdown, Selectable: true, StyleFunc: readingStyles(cx), Highlighter: highlight.New(cx)}
+			docs := textview.TextView{Markdown: card.markdown, Selectable: true, StyleOf: readingStyles(cx), Highlighter: highlight.New(cx)}
 			if len(card.diagnostics) > 0 {
 				children = append(children, core.View{StyleFunc: func() core.Style {
 					return core.Style{Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.border()}, Padding: core.Edges{Top: 8}}

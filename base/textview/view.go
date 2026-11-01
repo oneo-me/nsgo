@@ -19,16 +19,15 @@ import (
 // a document that grows at its end (a reply streaming in) builds only its
 // last block again.
 type TextView struct {
-	// Markdown is the document, read by Parse with Extensions;
-	// MarkdownFunc replaces it, again when what it reads changes.
+	// Markdown is the document, read by Parse with Extensions.
 	Markdown     string
 	MarkdownFunc func() string
 	// HTML is the document as HTML, read by ParseHTML with Extensions,
-	// when no Markdown is given; HTMLFunc replaces it.
+	// when no Markdown is given.
 	HTML     string
 	HTMLFunc func() string
 	// Document is the document as blocks the app made, when neither
-	// Markdown nor HTML is given; DocumentFunc replaces it.
+	// Markdown nor HTML is given.
 	Document     Document
 	DocumentFunc func() Document
 	// Extensions go after those Provide gives the views below it.
@@ -41,11 +40,11 @@ type TextView struct {
 	// cell), else on a line of its own after it.
 	StreamingCaret core.Node
 
-	// Styles style the parts; StyleFunc's result for a part goes under
+	// Styles style the parts; StyleOf's result for a part goes under
 	// them, again when what it reads changes, and Classes under both.
-	Classes   Classes
-	Styles    Styles
-	StyleFunc func(Part) core.Style
+	Classes Classes
+	Styles  Styles
+	StyleOf func(Part) core.Style
 	// Selectable makes the view a selectable view: one selection runs
 	// across its blocks, and on into the texts around inside an outer
 	// selectable view.
@@ -244,12 +243,12 @@ type renderer struct {
 	cx *core.Scope
 }
 
-// style merges the parts' styles: StyleFunc's for each, then Styles'.
+// style merges the parts' styles: StyleOf's for each, then Styles'.
 func (r *renderer) style(parts ...Part) core.Style {
 	var s core.Style
-	if r.tv.StyleFunc != nil {
+	if r.tv.StyleOf != nil {
 		for _, p := range parts {
-			s = s.Merge(r.tv.StyleFunc(p))
+			s = s.Merge(r.tv.StyleOf(p))
 		}
 	}
 	for _, p := range parts {

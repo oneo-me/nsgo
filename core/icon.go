@@ -17,9 +17,7 @@ import (
 // An icon is a decoration assistive technology does not see unless Label
 // names it.
 type Icon struct {
-	SVG *SVG
-	// SVGFunc replaces SVG, again when what it reads changes, so a list's
-	// cell can show the row's icon without being rebuilt.
+	SVG       *SVG
 	SVGFunc   func() *SVG
 	Style     Style
 	StyleFunc func() Style

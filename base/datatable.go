@@ -308,8 +308,7 @@ type DataTable struct {
 	Empty, LoadingView core.Node
 	Classes            DataTableClasses
 	Styles             DataTableStyles
-	// StylesFunc replaces Styles, again when what it reads changes.
-	StylesFunc func() DataTableStyles
+	StylesFunc         func() DataTableStyles
 	// Label is what screen readers call the table, a grid of column
 	// headers and cells.
 	Label     string

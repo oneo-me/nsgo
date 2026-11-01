@@ -58,8 +58,7 @@ type List struct {
 	// StickyHeaderIndices stick those rows to the viewport's start, at
 	// StickyHeaderOffset from it, while scrolled past, until the next one
 	// pushes them out; one column, not inverted. The platform pins them on
-	// every scroll. StickyHeaderIndicesFunc, when set, replaces them as
-	// they change.
+	// every scroll.
 	StickyHeaderIndices     []int
 	StickyHeaderIndicesFunc func() []int
 	StickyHeaderOffset      Points

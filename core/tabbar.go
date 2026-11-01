@@ -5,8 +5,7 @@ import "github.com/oneo-me/nsgo/internal/driver"
 // TabBar is the core's part of mobile.TabBar, which apps use: the
 // system's tab bar, a native component iOS and Android register.
 type TabBar struct {
-	Items []TabBarItem
-	// ItemsFunc replaces Items, again when what it reads changes.
+	Items     []TabBarItem
 	ItemsFunc func() []TabBarItem
 	// Selected is the selected tab's index; one past the tabs selects
 	// none. The bar shows the user's choice at once, as the system's does.
