@@ -436,6 +436,7 @@ func loadAppKit() {
 	registerCanvasNodes()
 	classMenuTarget = register("NsgoMenuTarget", objc.GetClass("NSObject"), nil, []objc.MethodDef{
 		{Cmd: selMenuChosen, Fn: menuChosen},
+		{Cmd: sel("validateMenuItem:"), Fn: validateMenu},
 	})
 }
 
@@ -1174,6 +1175,10 @@ func (s *surface) alert(a *driver.AlertConfig) {
 const pasteboardText = "public.utf8-plain-text"
 
 // Prepare implements core.TextEngine with CoreText.
+// RegisterFont implements driver.FontRegistrar: CoreText registers it for
+// the process.
+func (s *surface) RegisterFont(data []byte) error { return apple.RegisterFont(data) }
+
 func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 	return apple.TextEngine{}.Prepare(t)
 }

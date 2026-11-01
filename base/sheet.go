@@ -210,6 +210,8 @@ type sheetLayer struct {
 	label   string
 	testID  string
 	content []core.Node
+	// layer styles the overlay holding the backdrop and the panel.
+	layer part
 }
 
 func (l sheetLayer) node() core.Node {
@@ -257,7 +259,7 @@ func (l sheetLayer) node() core.Node {
 				}
 			}
 		}
-		return core.Overlay{Style: cover, PointerEvents: core.PointerEventsBoxNone, OnCancel: l.cancel,
-			Children: []core.Node{backdrop, panel}}
+		return core.Overlay{Class: l.layer.class, Style: cover.Merge(l.layer.style), StyleFunc: l.layer.fn,
+			PointerEvents: core.PointerEventsBoxNone, OnCancel: l.cancel, Children: []core.Node{backdrop, panel}}
 	}}
 }

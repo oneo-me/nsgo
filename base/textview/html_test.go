@@ -184,8 +184,8 @@ func TestHTMLMath(t *testing.T) {
 	checkHTML(t, `<p>Area <span class="katex"><math><semantics><mi>r</mi>`+
 		`<annotation encoding="application/x-tex">\pi r^2</annotation></semantics></math>`+
 		`<span class="katex-html" aria-hidden="true">πr2</span></span></p>`,
-		p(Text{"Area "}, Math{`\pi r^2`}))
-	checkHTML(t, `<math display="block"><annotation encoding="application/x-tex">x^2</annotation></math>`, Math{"x^2"})
+		p(Text{"Area "}, Math{TeX: `\pi r^2`}))
+	checkHTML(t, `<math display="block"><annotation encoding="application/x-tex">x^2</annotation></math>`, Math{TeX: "x^2"})
 }
 
 func TestHTMLFragments(t *testing.T) {

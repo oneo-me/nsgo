@@ -36,9 +36,12 @@ type chrome struct {
 	defaultMenu objc.ID // the menu bar the backend builds
 	menu        objc.ID // the app's menu bar
 	menuTarget  objc.ID
-	popup       objc.ID // the context menu shown last
-	tracking    bool    // whether a context menu tracks
-	nextPopups  []func()
+	// notInText are the IDs of the items whose shortcuts a field or a
+	// web view with the keyboard focus keeps (MenuEntry.NotInText).
+	notInText  map[uint32]bool
+	popup      objc.ID // the context menu shown last
+	tracking   bool    // whether a context menu tracks
+	nextPopups []func()
 }
 
 // The title bar's height and the traffic lights' width when AppKit
@@ -353,6 +356,7 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 		return
 	}
 	s.ensureMenuTarget()
+	clear(s.notInText)
 	bar := objc.ID(objc.GetClass("NSMenu")).Send(selNew)
 	for _, e := range entries {
 		if e.Separator {
@@ -464,6 +468,12 @@ func (s *surface) item(e driver.MenuEntry) objc.ID {
 	if action == selMenuChosen {
 		it.Send(selSetTarget, s.menuTarget)
 		it.Send(sel("setTag:"), int(e.ID))
+		if e.NotInText && key != "" {
+			if s.notInText == nil {
+				s.notInText = map[uint32]bool{}
+			}
+			s.notInText[e.ID] = true
+		}
 	}
 	if e.Checkable {
 		state := 0
@@ -545,6 +555,20 @@ func (s *surface) ensureMenuTarget() {
 		s.menuTarget = objc.ID(classMenuTarget).Send(selNew)
 		menuTargets[s.menuTarget] = s
 	}
+}
+
+// validateMenu disables an item whose shortcut a field with the keyboard
+// focus keeps while a key press looks for it, so AppKit hands the key to
+// the field; clicked, the item is enabled.
+func validateMenu(self objc.ID, _ objc.SEL, item objc.ID) bool {
+	s := menuTargets[self]
+	if s == nil || !s.notInText[uint32(objc.Send[int](item, sel("tag")))] {
+		return true
+	}
+	const keyDown = 10 // NSEventTypeKeyDown
+	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	e := nsApp.Send(sel("currentEvent"))
+	return e == 0 || objc.Send[uint](e, sel("type")) != keyDown || !s.editing()
 }
 
 // menuChosen reports a chosen menu item's ID to its surface.

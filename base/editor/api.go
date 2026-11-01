@@ -13,6 +13,7 @@
 package editor
 
 import (
+	"slices"
 	"time"
 
 	"github.com/oneo-me/nsgo/base/internal/syntax"
@@ -42,7 +43,7 @@ type Search struct {
 // primary selection is on (-1 for none) and the expression's error.
 type SearchResult struct {
 	Count, Current int
-	Err            string
+	Error          string
 }
 
 // Severity is how serious a diagnostic is.
@@ -57,21 +58,37 @@ const (
 
 // Diagnostic is a problem marked in the text, as a language server's: its
 // range, carried through edits until the app sets new ones, its severity's
-// part under its text, and with Unnecessary or Deprecated the
-// UnnecessaryText or DeprecatedText part over it. CodeDescription is the
-// URL of the page describing its Code (a lint rule's), and Related the
-// other places that tell about it: a hover hands both to the app's card.
+// part under its text, and with the tag TagUnnecessary or TagDeprecated
+// the UnnecessaryText or DeprecatedText part over it. CodeDescription is
+// the page describing its Code (a lint rule's), and RelatedInformation
+// the other places that tell about it: a hover hands both to the app's
+// card.
 type Diagnostic struct {
-	Range           Range
-	Severity        Severity
-	Message         string
-	Source          string
-	Code            string
-	CodeDescription string
-	Unnecessary     bool
-	Deprecated      bool
-	Related         []RelatedInformation
+	Range              Range
+	Severity           Severity
+	Message            string
+	Source             string
+	Code               string
+	CodeDescription    *CodeDescription
+	Tags               []DiagnosticTag
+	RelatedInformation []RelatedInformation
 }
+
+// CodeDescription is the page that describes a diagnostic's code.
+type CodeDescription struct{ Href string }
+
+// DiagnosticTag marks a diagnostic's text as a language server's tags do.
+type DiagnosticTag uint8
+
+const (
+	// TagUnnecessary is unused code, faded.
+	TagUnnecessary DiagnosticTag = iota + 1
+	// TagDeprecated is a deprecated name, struck through.
+	TagDeprecated
+)
+
+// Has reports whether d has tag.
+func (d *Diagnostic) Has(tag DiagnosticTag) bool { return slices.Contains(d.Tags, tag) }
 
 // RelatedInformation is another place that tells about a diagnostic (the
 // first definition of a name defined twice), and what it says there. Its
@@ -88,15 +105,28 @@ type Location struct {
 	Range Range
 }
 
-// TextEdit replaces Range of the text with Text.
-type TextEdit struct {
+// CompletionAcceptEvent is an accepted completion: the item, as the app
+// presented it, inserted.
+type CompletionAcceptEvent struct{ Item CompletionItem }
+
+// CodeActionRequest asks for the code actions at Range, the primary
+// selection start first, its caret at Position; Bounds is the caret's
+// box, where a menu opens, nil before the editor is laid out.
+type CodeActionRequest struct {
+	Range    Range
+	Position Position
+	Bounds   *Bounds
+}
+
+// Edit replaces Range of the text with Text.
+type Edit struct {
 	Range Range
 	Text  string
 }
 
-// Box is a box of the text: Bounds in the editor's box, its scrolling
+// Bounds is a box of the text: Bounds in the editor's box, its scrolling
 // applied, and Page in the root view, which an Overlay anchors to.
-type Box struct{ Bounds, Page core.Bounds }
+type Bounds struct{ Bounds, PageBounds core.Bounds }
 
 // Decoration styles a range of the text with Style, and the rows of its
 // lines behind the text with LineStyle; Kind, when set, colors its text as
@@ -108,7 +138,7 @@ type Decoration struct {
 	Class, LineClass string
 	Style            core.Style
 	LineStyle        core.Style
-	Kind             string
+	Token            string
 }
 
 // Highlighter is the app's highlighting of a language, in place of the
@@ -159,15 +189,19 @@ const (
 	CompletionInvoked
 )
 
-// CompletionRequest asks the app for completions at Position: Query is
-// the word before the caret. The app answers with Ref.PresentCompletions
-// and ID; an answer to an older request is dropped.
+// CompletionRequest asks the app for completions at Position, Offset in
+// UTF-16 code units: Query is the word before the caret, from QueryStart,
+// what an item without a Range replaces. The app answers with
+// Ref.PresentCompletions and ID; an answer to an older request is
+// dropped.
 type CompletionRequest struct {
-	ID        int
-	Position  Position
-	Query     string
-	Trigger   CompletionTrigger
-	Character string
+	ID         int
+	Offset     int
+	Position   Position
+	Query      string
+	QueryStart int
+	Trigger    CompletionTrigger
+	Character  string
 }
 
 // DefinitionTrigger is what asked for a definition.
@@ -183,11 +217,13 @@ const (
 	DefinitionKey
 )
 
-// DefinitionRequest asks the app where the word at Position is defined.
+// DefinitionRequest asks the app where the word at Position, Offset in
+// UTF-16 code units, is defined: Range is the word.
 type DefinitionRequest struct {
 	ID       int
 	Position Position
-	Word     Range
+	Offset   int
+	Range    Range
 	Trigger  DefinitionTrigger
 }
 
@@ -195,25 +231,25 @@ type DefinitionRequest struct {
 // UTF-16 offset in the text, its word, the pointer and the word's box on
 // its row in the root view, and the diagnostics there.
 type HoverEvent struct {
-	Position    Position
-	Offset      int
-	Word        Range
-	At          core.Point
-	Bounds      core.Bounds
-	Modifiers   core.Modifiers
-	Diagnostics []Diagnostic
+	Position     Position
+	Offset       int
+	Range        Range
+	PagePosition core.Point
+	PageBounds   core.Bounds
+	Modifiers    core.Modifiers
+	Diagnostics  []Diagnostic
 }
 
 // TextPressEvent is a press on a character, after the editor placed its
 // caret: its position and UTF-16 offset, its word, the pointer in the
 // root view, the modifiers and the presses counted at the place.
 type TextPressEvent struct {
-	Position  Position
-	Offset    int
-	Word      Range
-	At        core.Point
-	Modifiers core.Modifiers
-	Clicks    int
+	Position     Position
+	Offset       int
+	Range        Range
+	PagePosition core.Point
+	Modifiers    core.Modifiers
+	Clicks       int
 }
 
 // ContextMenuEvent asks for a menu: at Position in the text and At in the
@@ -390,10 +426,14 @@ type Editor struct {
 	Search                 func() Search
 	Diagnostics            func() []Diagnostic
 	Decorations            func() []Decoration
-	// CompletionTriggerCharacters ask for completions as they are typed
-	// ("." for members); a word character at a word's end does too while
-	// OnCompletionRequest is set.
-	CompletionTriggerCharacters string
+	// Completion asks for completions as typing goes (OnCompletionRequest)
+	// and for an inline completion once it pauses
+	// (OnInlineCompletionRequest); ShowCompletions asks without it.
+	Completion bool
+	// CompletionTriggerCharacters ask for completions as they are typed,
+	// with an empty query after them ("." for members, "::"); a word
+	// character at a word's end does too.
+	CompletionTriggerCharacters []string
 	// InlineCompletionDelay is how long typing pauses before
 	// OnInlineCompletionRequest asks: 300 ms when 0.
 	InlineCompletionDelay time.Duration
@@ -408,20 +448,23 @@ type Editor struct {
 	StyleFunc  func() core.Style
 	Ref        *Ref
 	TestID     string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 
 	OnSelectionChange   func([]Selection)
 	OnSearchChange      func(SearchResult)
 	OnFoldChange        func([]FoldRange)
 	OnFocus, OnBlur     func()
 	OnCompletionRequest func(CompletionRequest)
-	OnCompletionAccept  func(CompletionItem)
+	OnCompletionAccept  func(CompletionAcceptEvent)
 	// OnInlineCompletionRequest asks for an inline completion once typing
 	// pauses with no completion list showing.
 	OnInlineCompletionRequest func(InlineCompletionRequest)
 	OnDefinitionRequest       func(DefinitionRequest)
-	// OnCodeActionRequest receives the primary selection, for the app's
-	// menu of a language server's code actions.
-	OnCodeActionRequest func(Range)
+	// OnCodeActionRequest asks for the code actions at the primary
+	// selection, for the app's menu of a language server's.
+	OnCodeActionRequest func(CodeActionRequest)
 	OnHover             func(HoverEvent)
 	OnHoverEnd          func()
 	// OnTextPress receives a press on a character, after the caret moved.

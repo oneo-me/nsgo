@@ -46,7 +46,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 
 `Overlay` and `Modal` stay in the shadow tree where they are built, for their owner, context, inherited text and lifetime. Their native views are hoisted into their host: the nearest modal around them, or the root view. Each is a layout root of its own at the host's size, placed after the main layout.
 
-- An overlay with an anchor goes beside it as NSH's `place` does: the side asked unless only the opposite side fits or has more room, aligned along it, then clamped into the safe area.
+- An overlay with an anchor goes beside it as NSH's `place` does: the side asked unless only the opposite side fits or has more room, aligned along it, then clamped into the safe area. `OnPosition` reports the side, the frame and the room on that side, again when they change.
 - A modal provides the insets its content keeps clear of; a screen does too, without the top when it has a header. `Insets` reads them.
 - `EventBack` (Escape, the back button) goes to the topmost overlay that listens for cancel, else the topmost modal's `OnRequestClose`, else the `Scope.OnBackPress` handlers newest first, else the innermost stack that can pop.
 - A back gesture that begins (Android's predictive back, iOS's swipe) sends `EventBackStarted`; the core answers `ItemBackPreview` with the screen a back would pop and shows the one below. `EventBackCancelled` hides it again.
@@ -56,7 +56,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar. `Screen.IOS.HeaderRightSystemItem` with a `HeaderRight` asks iOS for UIKit's own bar button in its place, whose press iOS reports on `HeaderRight`'s first view that takes presses, as NSH's `headerRightSystemItem`.
 - `Header` is then not mounted; elsewhere it is the screen's first child.
 - iOS gives each screen a `UINavigationBar` of its own with a back item, Android a `Toolbar`; their back buttons and iOS's leading-edge swipe send `EventBack` with the screen's ID.
-- iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view.
+- iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view. `Screen.Animation` fades the screen instead or shows it at once (a push takes the pushed screen's, a pop the popped one's), and `HeaderClass` gives the system header its colors as classes (`bg-*`, `text-*`, `tint-*`) under `HeaderStyle`.
 - A hidden screen has no layout, so a batch that changes a stack first snapshots the screen it shows, and the slide moves that snapshot; the swipe back moves the screens themselves.
 - Each platform measures its bar with what it holds and reports it (`EventScreenHeader`), which replaces the environment's estimate.
 - A transparent header and a large title lay the content under them: each vertical scroll view whose top they cover gets that part as `ScrollConfig.HeaderInset`, added to its top content inset.

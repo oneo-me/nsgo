@@ -2,6 +2,8 @@
 
 `base` holds NSGo's built-in unstyled components, after NSH's `nsh-base` (`nsh/docs/dev/components.md`, `dock.md`): they own behavior, state and accessibility and take every style from the app. Read this before changing a component in `base`; [text view](textview.md) covers `base/textview`, and [editor](editor.md) `base/editor` and `base/diff`.
 
+A component whose root is a view of its own takes that view's `OnLayout` and `Tooltip`, as NSH's components take their host's.
+
 Each part a component styles takes Tailwind classes beside its style, as NSH's `class` and `popupClass` do: `Class` with `Style`, `PopupClass` with `PopupStyle`, `Classes` with `Styles`; `classes_test.go` holds every part to it. A part's class goes under its style and under what the component sets on the part itself (a sheet's place, a handle's 1-point line), as classes go under `Style` in `core`, where NSH puts an app's classes over the latter; important classes (`w-[3px]!`) go over both. Parts whose classes follow a state, a table's rows and cells and a toast's phases, take them through `core.View.ClassFunc`.
 
 ## Controls
@@ -103,3 +105,5 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 | --- | --- | --- |
 | `DockAreaApi` through a ref | `DockAreaRef`, bound as the area mounts | Go has no refs to components |
 | `movePanel`'s `index` and `activate`, `null` for no group | `DockTarget.Before`, the tab it goes before, and `NoActivate`; 0 for no group | Go's zero value is the default: last, displayed |
+| Nodes typed `split` or `tabs`, a region's `open` and `collapsible`, `panels` a list of options by `id` | One `DockNode` struct with `Tabs`, `DockRegion.Closed` and `NoCollapse`, `Panels` a map of `NoClose`, `NoZoom` and `Hidden` by key; `nsgo/base` gives NSH's shapes | Go has no unions, and its zero value allows everything, as a panel NSH's `panels` leaves out does |
+| `groupOf` and `zoomedGroup` give `null` for none | `GroupOf` and `ZoomedGroup` return an ID and whether there is one | Go's comma-ok result |

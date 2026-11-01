@@ -32,7 +32,8 @@ const (
 	kindScroll
 	kindInput
 	kindImage
-	kindRaw // a raw text node
+	kindFace // a Go component (face.go)
+	kindRaw  // a raw text node
 )
 
 // node is a node of the renderer.
@@ -56,6 +57,36 @@ type node struct {
 	style            core.Style
 	class, classList string
 	states           map[string]core.Style
+	// ref names the view, for the node's methods; horizontal says a list's
+	// axis.
+	ref        *core.Ref
+	horizontal bool
+	// platform holds the keys each platform object (ios={{…}}) set, which
+	// are cleared when it no longer has them.
+	platform map[string][]string
+	// values are a host element's props as set, to make them again when
+	// one is unset.
+	values map[string]goja.Value
+
+	// A face node's: what makes its component, its props, the region
+	// element its children go in, and whether the component was made.
+	name    string
+	face    face
+	props   *props
+	signals map[string]*core.Signal[goja.Value]
+	content *core.Element
+	mounted bool
+	// A scroll view's content view's (contentStyle, contentClass).
+	contentStyle core.Style
+	contentClass string
+}
+
+// box is the element n's children go in.
+func (n *node) box() *core.Element {
+	if n.content != nil {
+		return n.content
+	}
+	return n.elem
 }
 
 // value is n's JS object.
@@ -92,7 +123,10 @@ func (r *runtime) element(call goja.FunctionCall) goja.Value {
 
 // newElement makes a node of a host tag.
 func (r *runtime) newElement(tag string) *node {
-	n := &node{r: r}
+	if f, ok := hostFaces[tag]; ok {
+		return r.newFaceNode(tag, f, nil)
+	}
+	n := &node{r: r, ref: &core.Ref{}}
 	switch tag {
 	case "view":
 		n.kind = kindView
@@ -182,7 +216,10 @@ func (r *runtime) insertBefore(p, c, marker *node) {
 	case c.kind == kindRaw:
 		r.warn("text is shown only inside <Text>")
 	default:
-		p.elem.Insert(c.elem, r.nextElement(p, i+1))
+		if c.kind == kindFace {
+			r.mountFace(c)
+		}
+		p.box().Insert(c.elem, r.nextElement(p, i+1))
 		if c.kind == kindText {
 			r.textChanged(c)
 		}
@@ -211,7 +248,7 @@ func (r *runtime) removeChild(p, c *node) {
 	if p.kind == kindText {
 		r.textChanged(p)
 	} else if c.elem != nil {
-		p.elem.Remove(c.elem)
+		p.box().Remove(c.elem)
 	}
 }
 
@@ -235,7 +272,7 @@ func (r *runtime) textChanged(n *node) {
 		return
 	}
 	t := n.text
-	t.Style, t.Class = n.style, n.classes()
+	t.Style, t.Class, t.Ref = n.fullStyle(), n.classes(), n.ref
 	t.Spans = r.spans(n, nil, core.Style{}, "", nil)
 	n.elem.Set(t)
 }

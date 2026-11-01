@@ -45,6 +45,9 @@ type Checkbox struct {
 	Label     string
 	Hint      string
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -64,7 +67,7 @@ func (c Checkbox) Render(*core.Scope) core.Node {
 		mark = []core.Node{c.Indicator}
 	}
 	return core.View{Class: c.Class, Style: c.Style, StyleFunc: c.StyleFunc, Role: role, Label: c.Label, Hint: c.Hint,
-		TestID: c.TestID, Disabled: c.Disabled, Indeterminate: c.Indeterminate,
+		TestID: c.TestID, OnLayout: c.OnLayout, Tooltip: c.Tooltip, Disabled: c.Disabled, Indeterminate: c.Indeterminate,
 		Checked: func() bool { return is(c.Checked) && !is(c.Indeterminate) },
 		OnPress: func(core.PressEvent) {
 			if c.OnChange != nil {
@@ -92,11 +95,14 @@ type Radio struct {
 	Label     string
 	Hint      string
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
 func (r Radio) Render(*core.Scope) core.Node {
-	return core.View{Class: r.Class, Style: r.Style, StyleFunc: r.StyleFunc, Role: core.RoleRadio, Label: r.Label, Hint: r.Hint, TestID: r.TestID,
+	return core.View{Class: r.Class, Style: r.Style, StyleFunc: r.StyleFunc, Role: core.RoleRadio, Label: r.Label, Hint: r.Hint, TestID: r.TestID, OnLayout: r.OnLayout, Tooltip: r.Tooltip,
 		// Checked and selected both: some screen readers read one, some
 		// the other, as gpui-base's Radio states toggled and selected.
 		Disabled: r.Disabled, Checked: r.Checked, Selected: r.Checked,
@@ -117,11 +123,14 @@ type RadioGroup struct {
 	Children  []core.Node
 	Label     string
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
 func (g RadioGroup) Render(*core.Scope) core.Node {
-	return core.View{Class: g.Class, Style: g.Style, StyleFunc: g.StyleFunc, Role: core.RoleRadioGroup, Label: g.Label, TestID: g.TestID,
+	return core.View{Class: g.Class, Style: g.Style, StyleFunc: g.StyleFunc, Role: core.RoleRadioGroup, Label: g.Label, TestID: g.TestID, OnLayout: g.OnLayout, Tooltip: g.Tooltip,
 		Children: g.Children}
 }
 
@@ -147,6 +156,9 @@ type Switch struct {
 	Label          string
 	Hint           string
 	TestID         string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -155,7 +167,7 @@ func (s Switch) Render(*core.Scope) core.Node {
 	thumb := core.View{Class: s.ThumbClass, Style: s.ThumbStyle, StyleFunc: s.ThumbStyleFunc, PartStates: shows}
 	track := core.View{Class: s.TrackClass, Style: s.TrackStyle, StyleFunc: s.TrackStyleFunc, PartStates: shows,
 		Children: []core.Node{thumb}}
-	return core.View{Class: s.Class, Style: s.Style, StyleFunc: s.StyleFunc, Role: core.RoleSwitch, Label: s.Label, Hint: s.Hint, TestID: s.TestID,
+	return core.View{Class: s.Class, Style: s.Style, StyleFunc: s.StyleFunc, Role: core.RoleSwitch, Label: s.Label, Hint: s.Hint, TestID: s.TestID, OnLayout: s.OnLayout, Tooltip: s.Tooltip,
 		Disabled: s.Disabled, Checked: s.Checked,
 		OnPress: func(core.PressEvent) {
 			if s.OnChange != nil {
@@ -179,6 +191,9 @@ type Tab struct {
 	Label     string
 	Hint      string
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -187,7 +202,7 @@ func (t Tab) Render(*core.Scope) core.Node {
 	if press == nil {
 		press = func(core.PressEvent) {}
 	}
-	return core.View{Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, Role: core.RoleTab, Label: t.Label, Hint: t.Hint, TestID: t.TestID,
+	return core.View{Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, Role: core.RoleTab, Label: t.Label, Hint: t.Hint, TestID: t.TestID, OnLayout: t.OnLayout, Tooltip: t.Tooltip,
 		Disabled: t.Disabled, Selected: t.Selected, OnPress: press, Children: t.Children}
 }
 
@@ -200,11 +215,14 @@ type Tabs struct {
 	Children  []core.Node
 	Label     string
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
 func (t Tabs) Render(*core.Scope) core.Node {
-	return core.View{Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, Role: core.RoleTabList, Label: t.Label, TestID: t.TestID,
+	return core.View{Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, Role: core.RoleTabList, Label: t.Label, TestID: t.TestID, OnLayout: t.OnLayout, Tooltip: t.Tooltip,
 		Children: t.Children}
 }
 
@@ -221,6 +239,9 @@ type Collapsible struct {
 	StyleFunc func() core.Style
 	Children  []core.Node
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -237,7 +258,7 @@ func (c Collapsible) Render(cx *core.Scope) core.Node {
 			},
 			Children: []core.Node{c.Content}}
 	}}
-	return core.View{Class: c.Class, Style: c.Style, StyleFunc: c.StyleFunc, TestID: c.TestID,
+	return core.View{Class: c.Class, Style: c.Style, StyleFunc: c.StyleFunc, TestID: c.TestID, OnLayout: c.OnLayout, Tooltip: c.Tooltip,
 		Children: append(append([]core.Node(nil), c.Children...), content)}
 }
 
@@ -263,6 +284,9 @@ type Progress struct {
 	Children           []core.Node
 	Label              string
 	TestID             string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // progressMax is the range of Progress.Value, gpui-base's percentage.
@@ -292,7 +316,7 @@ func (p Progress) Render(*core.Scope) core.Node {
 		}
 		return s
 	}}
-	return core.View{Class: p.Class, Style: p.Style, StyleFunc: p.StyleFunc, Role: core.RoleProgressBar, Label: p.Label, TestID: p.TestID,
+	return core.View{Class: p.Class, Style: p.Style, StyleFunc: p.StyleFunc, Role: core.RoleProgressBar, Label: p.Label, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip,
 		Accessible: true,
 		AccessibilityValue: func() core.AccessibilityValue {
 			if is(p.Indeterminate) {

@@ -26,10 +26,11 @@ func TestEditorTypesAndEdits(t *testing.T) {
 		text := core.NewSignal(cx, sample)
 		return editor.Editor{
 			Ref: ref, TestID: "editor", Language: "go", Label: "Code",
-			Value:    text.Get,
-			OnChange: func(s string) { value = s; text.Set(s) },
-			Style:    core.Style{Width: core.Pt(400), Height: core.Pt(300)},
-			Styles:   editor.Styles{Caret: core.Style{Background: core.RGB(0x000000)}},
+			Value:      text.Get,
+			OnChange:   func(s string) { value = s; text.Set(s) },
+			Style:      core.Style{Width: core.Pt(400), Height: core.Pt(300)},
+			Styles:     editor.Styles{Caret: core.Style{Background: core.RGB(0x000000)}},
+			Completion: true,
 			OnCompletionRequest: func(r editor.CompletionRequest) {
 				requests = append(requests, r)
 				ref.PresentCompletions(r.ID, []editor.CompletionItem{{Label: "println"}, {Label: "print"}, {Label: "panic"}}, false)
@@ -173,8 +174,9 @@ func TestEditorInlineCompletionAndSelections(t *testing.T) {
 		text := core.NewSignal(cx, "say(\"hi\")\n")
 		return editor.Editor{
 			Ref: ref, Language: "go", Label: "Code",
-			Value:    text.Get,
-			OnChange: func(s string) { value = s; text.Set(s) },
+			Value:      text.Get,
+			OnChange:   func(s string) { value = s; text.Set(s) },
+			Completion: true,
 			OnInlineCompletionRequest: func(r editor.InlineCompletionRequest) {
 				asked = append(asked, r)
 				ref.PresentInlineCompletion(r.ID, "lo()")

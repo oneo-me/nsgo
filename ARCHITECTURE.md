@@ -20,8 +20,10 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base/textview/highlight` | `nsh-base`'s `highlight` feature | Code highlighting for `TextView` with chroma |
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting and the rows a virtualized view makes |
-| `tsx` | `nsh-js` | TSX apps on goja: the `nsgo` module's reactive API and the renderer of compiled JSX on `core.Element` ([TSX](docs/architecture/tsx.md)) |
-| `tsx/compiler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; `compiler.App` compiles an app's embedded sources as it starts |
+| `tsx` | `nsh-js` | TSX apps on goja: NSH's modules as `nsgo`, `nsgo/base`, `nsgo/mobile` and `nsgo/desktop`, the renderer of compiled JSX on `core.Element`, Go components by `tsx.Register`, web APIs, hot updates, limits and `.nsgo/types` ([TSX](docs/architecture/tsx.md)) |
+| `tsx/compiler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; `compiler.App` runs the bundle the tool compiled ahead, else compiles the embedded sources as it starts |
+| `tsx/textview`, `tsx/editor`, `tsx/diff` | — | Register `TextView`, `Editor` and `DiffView` in `nsgo/base` for the apps that import them |
+| `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
 | `icons/lucide` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon ([icons](docs/architecture/icons.md)) |
 | `nsgotest` | `nsh-testing` | App tests, headless or on a platform ([testing](docs/architecture/testing.md)) |
 | `internal/testhost` | `nsh-testing`'s agent | A backend's test host for `nsgotest`: the main thread, native input, screenshots |
@@ -35,7 +37,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
-| `cmd/nsgo` | `nsh-cli` | `nsgo init`, `dev`, `test` and `build` from an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` packages and signs Android apps in Go |
+| `cmd/nsgo` | `nsh-cli` | `nsgo init`, `dev`, `test`, `build` and `check` from an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` packages and signs Android apps in Go |
 | `tools/lucidegen` | — | Regenerates `icons/lucide` from a pinned Lucide checkout |
 
 ## Platforms
@@ -82,7 +84,8 @@ Packages import only downward; `layering_test.go` checks it on every target:
 - What animates runs on the platform's frame clock, which stops when idle: the engine sends transitions and animated values once, never a commit per frame ([animation](docs/architecture/animation.md)).
 - The reactive graph belongs to the engine goroutine and never locks; other goroutines reach it through `Scope.Post`.
 - Text is prepared and laid out on the engine side through a platform `TextEngine`; the main thread only draws the result.
-- One engine is one app with no global state, so a host app embeds several.
+- One engine is one app with no global state, so a host app embeds several. What `tsx.Register` registers is the process's configuration, made before apps start.
+- `tsx/tsxtest` drives TSX apps through `nsgotest`, the one package that imports both, and `cmd/nsgo` links `tsx/compiler` to compile TSX ahead.
 - Layout (`internal/layout`) ports Taffy 0.15's algorithms step by step and passes every Taffy fixture that applies to NSH's features.
 
 ## Tool
@@ -90,7 +93,8 @@ Packages import only downward; `layering_test.go` checks it on every target:
 `nsgo` is the only build entry point; it shells out to `go`, and to Xcode's `xcrun`, `xcodebuild`, `codesign` and `simctl` for Apple targets ([tool](docs/architecture/tool.md)).
 
 - Targets name an OS and an architecture (`macos_arm64`, `windows_x64`), so each package holds one binary.
-- Hot reload watches the directories of `go list -deps`, NSGo's included, and keeps the last good build running on a failure.
+- Hot reload watches the directories of `go list -deps`, NSGo's included, and keeps the last good build running on a failure; a change of a TSX app's sources alone updates the running app with no Go build.
+- A TSX app's bundles are compiled ahead and added to its package through `go -overlay`, so packages ship no compiler.
 
 ## Core flows
 

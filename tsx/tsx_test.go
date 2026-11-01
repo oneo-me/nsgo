@@ -214,3 +214,15 @@ mount(App);`)
 		t.Errorf("texts %q", texts)
 	}
 }
+
+func TestAsyncGeneratorsAreLowered(t *testing.T) {
+	app := run(t, `import { mount, signal, Text } from "nsgo";
+async function* count() { yield 1; yield 2; }
+function App() {
+	const total = signal(0);
+	(async () => { for await (const n of count()) total.set(total() + n); })();
+	return <Text testID="t">{() => "total " + total()}</Text>;
+}
+mount(App);`)
+	app.WaitFor("text:total 3", time.Second)
+}

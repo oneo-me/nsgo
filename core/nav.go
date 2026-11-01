@@ -26,6 +26,7 @@ type screenNode struct {
 	native            bool
 	title             string
 	headerStyle       Style
+	headerClass       Style // HeaderClass's, under headerStyle
 	left, right, view *node // the header views
 	// header is the area the system header covers from the top; pad what
 	// the content is laid out below.
@@ -61,6 +62,7 @@ func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 		}
 	}
 	n.screen = sn
+	t.setClasses(n, s.Class)
 	t.bindStyle(cx, n, fill.Merge(s.Style), s.StyleFunc)
 	n.props = driver.ViewProps{Label: s.Title, TestID: s.TestID}
 	if s.TitleFunc != nil {
@@ -73,6 +75,16 @@ func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 	if s.HeaderStyleFunc != nil {
 		cx.renderEffect(func() {
 			sn.headerStyle = s.HeaderStyle.Merge(s.HeaderStyleFunc())
+			t.touch(n)
+		})
+	}
+	if s.HeaderClass != "" {
+		cx.renderEffect(func() {
+			env := t.classEnv(n)
+			l := env.tw.classes(s.HeaderClass)
+			reportUnknown(l)
+			normal, important, _ := l.resolve(&env)
+			sn.headerClass = mergeStyles(normal, important)
 			t.touch(n)
 		})
 	}
@@ -254,9 +266,10 @@ func (t *Tree) screenConfig(n *node) driver.ScreenConfig {
 		BackHidden:        s.HeaderBackHidden,
 		NoPopOnSwipe:      s.NoPopOnSwipe,
 		NoPopOnBack:       s.NoPopOnBack,
-		Background:        sn.headerStyle.Background,
-		TitleColor:        sn.headerStyle.Color,
-		TintColor:         sn.headerStyle.TintColor,
+		Background:        cmpOr(sn.headerStyle.Background, sn.headerClass.Background),
+		TitleColor:        cmpOr(sn.headerStyle.Color, sn.headerClass.Color),
+		TintColor:         cmpOr(sn.headerStyle.TintColor, sn.headerClass.TintColor),
+		Animation:         s.Animation,
 		Left:              headerID(sn.left),
 		Right:             headerID(sn.right),
 		TitleView:         headerID(sn.view),

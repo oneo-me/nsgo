@@ -40,7 +40,7 @@ final class Text {
         }
     }
 
-    /** The app's fonts by family; written before any text, then only read. */
+    /** The app's fonts by family: those it starts with, then those it registers as it runs. */
     private static final java.util.Map<String, java.util.List<Face>> fonts = new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Adds a face of the app's fonts under its family. */

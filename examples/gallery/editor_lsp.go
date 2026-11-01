@@ -50,7 +50,7 @@ func (l *lineSpan) has(line int) bool { return l != nil && l.start <= line && li
 type lspAction struct {
 	title   string
 	kind    string // quickfix, refactor or source
-	edits   []editor.TextEdit
+	edits   []editor.Edit
 	command editor.Command
 }
 
@@ -665,15 +665,18 @@ func (m *lspModel) lint() []lspProblem {
 	lines, code := m.lines, m.code
 	byLine := make([][]lspProblem, len(lines))
 	problem := func(rng editor.Range, severity editor.Severity, message, source, code string, fixes []lspAction, unnecessary bool) {
-		d := editor.Diagnostic{Range: rng, Severity: severity, Message: message, Source: source, Code: code, Unnecessary: unnecessary}
+		d := editor.Diagnostic{Range: rng, Severity: severity, Message: message, Source: source, Code: code}
+		if unnecessary {
+			d.Tags = []editor.DiagnosticTag{editor.TagUnnecessary}
+		}
 		// ESLint's rules each have a page.
 		if source == "eslint" && code != "" {
-			d.CodeDescription = "https://eslint.org/docs/latest/rules/" + code
+			d.CodeDescription = &editor.CodeDescription{Href: "https://eslint.org/docs/latest/rules/" + code}
 		}
 		byLine[rng.Start.Line] = append(byLine[rng.Start.Line], lspProblem{d, fixes})
 	}
 	replace := func(title string, rng editor.Range, by string) lspAction {
-		return lspAction{title: title, kind: "quickfix", edits: []editor.TextEdit{{Range: rng, Text: by}}}
+		return lspAction{title: title, kind: "quickfix", edits: []editor.Edit{{Range: rng, Text: by}}}
 	}
 	var functions []string
 	functionNames := func() []string {
@@ -696,7 +699,7 @@ func (m *lspModel) lint() []lspProblem {
 			start := t[2]
 			before := len(strings.TrimRight(lines[line][:t[0]], " \t"))
 			problem(m.span(line, start, len(lines[line])), editor.SeverityInfo, lines[line][t[2]:t[3]], "todo", "",
-				[]lspAction{{title: "Remove the TODO comment", kind: "quickfix", edits: []editor.TextEdit{{Range: m.span(line, before, len(lines[line]))}}}}, false)
+				[]lspAction{{title: "Remove the TODO comment", kind: "quickfix", edits: []editor.Edit{{Range: m.span(line, before, len(lines[line]))}}}}, false)
 		}
 		// var instead of let or const.
 		for _, v := range varKwRe.FindAllStringIndex(code[line], -1) {
@@ -786,11 +789,13 @@ func (m *lspModel) lint() []lspProblem {
 		}
 		problem(s.rng, editor.SeverityWarning, fmt.Sprintf("'%s' is declared but its value is never read.", s.name), "ts", "6133",
 			[]lspAction{{title: fmt.Sprintf("Remove unused declaration '%s'", s.name), kind: "quickfix",
-				edits: []editor.TextEdit{{Range: editor.Range{Start: editor.Position{Line: line}, End: next}}}}}, true)
+				edits: []editor.Edit{{Range: editor.Range{Start: editor.Position{Line: line}, End: next}}}}}, true)
 	}
 	var out []lspProblem
 	for _, here := range byLine {
-		sort.SliceStable(here, func(i, j int) bool { return here[i].diagnostic.Range.Start.Column < here[j].diagnostic.Range.Start.Column })
+		sort.SliceStable(here, func(i, j int) bool {
+			return here[i].diagnostic.Range.Start.Column < here[j].diagnostic.Range.Start.Column
+		})
 		out = append(out, here...)
 	}
 	return out
@@ -990,8 +995,12 @@ var inlineRules = []struct {
 	make func(m *lspModel, before string, enclosing *lspSymbol) string
 }{
 	{regexp.MustCompile(`^\s*function\s+[A-Za-z_$][\w$]*$`), func(*lspModel, string, *lspSymbol) string { return "(order: Order): number {\n  return 0;\n}" }},
-	{regexp.MustCompile(`^\s*for\s?$`), func(_ *lspModel, before string, _ *lspSymbol) string { return space(before) + "(const item of order.items) {" }},
-	{regexp.MustCompile(`^\s*if\s?$`), func(_ *lspModel, before string, _ *lspSymbol) string { return space(before) + `(order.coupon === "SAVE10") {` }},
+	{regexp.MustCompile(`^\s*for\s?$`), func(_ *lspModel, before string, _ *lspSymbol) string {
+		return space(before) + "(const item of order.items) {"
+	}},
+	{regexp.MustCompile(`^\s*if\s?$`), func(_ *lspModel, before string, _ *lspSymbol) string {
+		return space(before) + `(order.coupon === "SAVE10") {`
+	}},
 	{regexp.MustCompile(`\bconsole\.$`), func(*lspModel, string, *lspSymbol) string { return "log(label);" }},
 	{regexp.MustCompile(`^\s*receipt\.$`), func(*lspModel, string, *lspSymbol) string { return "add(label);" }},
 	{regexp.MustCompile(`^\s*//\s*TODO$`), func(*lspModel, string, *lspSymbol) string { return ": " }},

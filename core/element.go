@@ -62,10 +62,13 @@ type View struct {
 	// OnContextMenu receives a secondary click in the view.
 	OnContextMenu func(ContextMenuEvent)
 	// OnTouch hears the fingers on the surface while one that went down
-	// on the view or inside it is down; Responder makes the view take part
-	// in the touch responder.
-	OnTouch   func(TouchEvent)
-	Responder *Responder
+	// on the view or inside it is down, from the innermost view out, after
+	// OnTouchCapture from the outermost in, as the DOM's events capture
+	// and bubble; TouchEvent.StopPropagation ends the round. Responder
+	// makes the view take part in the touch responder.
+	OnTouch        func(TouchEvent)
+	OnTouchCapture func(TouchEvent)
+	Responder      *Responder
 	// NoFocus keeps a view that takes presses out of the keyboard
 	// focus's Tab stops on macOS and the web: a backdrop that closes a
 	// popover, rows a list moves through with the arrow keys.
@@ -235,8 +238,11 @@ type Text struct {
 	// the style's SelectionColor.
 	Selectable Selectable
 
-	OnPress  func(PressEvent)
-	OnLayout func(Bounds)
+	OnPress func(PressEvent)
+	// OnLongPress runs when the text is held, after DelayLongPress's
+	// 500 ms.
+	OnLongPress func(PressEvent)
+	OnLayout    func(Bounds)
 	// OnTextLayout receives the text's lines each time it is laid out
 	// anew, after the commit.
 	OnTextLayout func(lines []TextLine)
@@ -395,6 +401,10 @@ type Scroll struct {
 	OnScrollDragEnd   func(ScrollEvent)
 	OnMomentumStart   func(ScrollEvent)
 	OnMomentumEnd     func(ScrollEvent)
+	// OnScrollEnd hears it come to rest: a drag that set nothing in
+	// motion ended, or a glide, a snap, an animated scroll or the wheel's
+	// turns did.
+	OnScrollEnd func(ScrollEvent)
 	// OnRefresh makes it refreshable: pulling the content down past its
 	// top calls it and shows the platform's spinner while Refreshing
 	// returns true. Set Refreshing in OnRefresh, clear it when done.
@@ -446,6 +456,15 @@ func (r *Ref) Bounds() (Bounds, bool) {
 		return Bounds{}, false
 	}
 	return r.t.surfaceBounds(r.n), true
+}
+
+// Frame returns the element's frame in its parent after the last commit,
+// as OnLayout receives it, and false while it is not mounted.
+func (r *Ref) Frame() (Bounds, bool) {
+	if r.n == nil || r.n.deleted {
+		return Bounds{}, false
+	}
+	return r.n.frame, true
 }
 
 // Focus moves keyboard focus to the element, a text field.
@@ -598,15 +617,28 @@ type Overlay struct {
 	OnPressOutside func(at Point)
 	// OnCancel receives Escape or back while it is the topmost overlay
 	// that listens.
-	OnCancel   func()
-	OnPosition func(Placement)
-	Role       Role
-	Label      string
-	TestID     string
+	OnCancel func()
+	// OnPosition reports where an anchored overlay went, again when it
+	// moves or its room changes.
+	OnPosition func(OverlayPosition)
+	// Ref names the overlay's view: its bounds.
+	Ref    *Ref
+	Role   Role
+	Label  string
+	TestID string
 }
 
 // Render implements Node.
 func (o Overlay) Render(*Scope) Node { return o }
+
+// OverlayPosition is where an anchored overlay went: the side of its
+// anchor, its frame in its host and the room on that side inside the
+// safe area less its margin, what a menu may grow to.
+type OverlayPosition struct {
+	Placement Placement
+	Bounds    Bounds
+	Available Size
+}
 
 // Placement is the side of its anchor an overlay goes on.
 type Placement uint8
@@ -699,13 +731,22 @@ type Screen struct {
 	HeaderBackTitle string
 	HeaderStyle     Style
 	HeaderStyleFunc func() Style
+	// HeaderClass gives the system header its colors as classes: bg-*,
+	// text-* for the title, tint-* for the buttons. HeaderStyle wins over
+	// them.
+	HeaderClass string
+	// Animation is how the screen enters and leaves (iOS slides it by
+	// default).
+	Animation ScreenAnimation
 	// StatusBar, or StatusBarFunc, is set over the app's status bar while
 	// the screen is in the tree and not popped.
 	StatusBar     StatusBarSetting
 	StatusBarFunc func() StatusBarSetting
-	Style         Style
-	StyleFunc     func() Style
-	Children      []Node
+	// Class is Tailwind CSS classes, as View's.
+	Class     string
+	Style     Style
+	StyleFunc func() Style
+	Children  []Node
 	// NoPopOnBack keeps the screen when back is pressed.
 	NoPopOnBack bool
 	// NoPopOnSwipe turns off iOS's swipe from the leading edge back to

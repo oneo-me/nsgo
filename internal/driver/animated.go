@@ -152,8 +152,11 @@ type Animation struct {
 	Steps []*Animation
 	// Delay is Delay's wait and Stagger's interval.
 	Delay time.Duration
-	// Iterations is Loop's count; 0 repeats forever.
+	// Iterations is Loop's count; 0 repeats forever. NoReset starts each
+	// iteration where the last ended, rather than with its values back
+	// at their start.
 	Iterations int
+	NoReset    bool
 }
 
 // AnimationKind is what an Animation does.

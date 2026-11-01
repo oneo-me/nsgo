@@ -209,6 +209,7 @@ type message struct {
 	at      *driver.Event // a press to hit test
 	tokens  *core.Tokens
 	fn      func()
+	fonts   bool
 }
 
 // Trace, when set, hears each commit's batch, before the platform, and
@@ -346,6 +347,8 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 				tree.PressAt(*m.at)
 			case m.tokens != nil:
 				tree.SetTokens(*m.tokens)
+			case m.fonts:
+				tree.FontsChanged()
 			default:
 				tree.Dispatch(m.event)
 			}
@@ -375,6 +378,7 @@ func (e *Engine) push(m message) {
 		case m.frame && q.frame,
 			m.env != nil && q.env != nil,
 			m.tokens != nil && q.tokens != nil,
+			m.fonts && q.fonts,
 			m.event.Mergeable() && q.event.Mergeable() && q.event.Kind == m.event.Kind && q.event.ID == m.event.ID:
 			*q = m
 			merged = true
@@ -472,6 +476,10 @@ func (e *Engine) SetTokens(t core.Tokens) { e.push(message{tokens: &t}) }
 // Modifiers and click Count, for platforms that draw their own views and
 // leave hit testing to the engine.
 func (e *Engine) PressAt(ev driver.Event) { e.push(message{at: &ev}) }
+
+// FontsChanged prepares the app's text again, for fonts the platform
+// loaded after they were registered (driver.FontRegistrar).
+func (e *Engine) FontsChanged() { e.push(message{fonts: true}) }
 
 // Close stops the app, disposing its graph, and waits for the engine
 // goroutine to exit. It must not be called from the engine goroutine.

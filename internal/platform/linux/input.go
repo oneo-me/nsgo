@@ -781,7 +781,7 @@ func itoa(n int) string {
 // menuShortcut runs the menu item bound to key, if any.
 func (w *window) menuShortcut(key string) bool {
 	ref, ok := w.chrome.keys[key]
-	if !ok {
+	if !ok || ref.notInText && (w.focus != nil || w.focusedWeb() != nil) {
 		return false
 	}
 	return w.menuChosen(ref)

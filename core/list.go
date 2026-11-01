@@ -105,15 +105,20 @@ type List struct {
 	OnScrollDragEnd     func(ScrollEvent)
 	OnMomentumStart     func(ScrollEvent)
 	OnMomentumEnd       func(ScrollEvent)
-	OnRefresh           func()
-	Refreshing          func() bool
-	PullValue           *AnimatedValue
-	OffsetValues        AnimatedXY
-	OnLayout            func(Bounds)
-	Style               Style
-	StyleFunc           func() Style
-	Ref                 *Ref
-	TestID              string
+	// OnScrollEnd hears the list come to rest, as Scroll's.
+	OnScrollEnd  func(ScrollEvent)
+	OnRefresh    func()
+	Refreshing   func() bool
+	PullValue    *AnimatedValue
+	OffsetValues AnimatedXY
+	OnLayout     func(Bounds)
+	// Class is Tailwind CSS classes, as View's; its padding, as the
+	// style's, is the content's.
+	Class     string
+	Style     Style
+	StyleFunc func() Style
+	Ref       *Ref
+	TestID    string
 }
 
 // Render implements Node.
@@ -312,9 +317,11 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 	var v *node
 	if st.parent {
 		v = t.newNode(driver.KindView, parent, cx)
+		t.setClasses(v, l.Class)
 		t.bindStyle(cx, v, Style{Overflow: Hidden}.Merge(l.Style), l.StyleFunc)
 	} else {
 		v = t.newNode(driver.KindScroll, parent, cx)
+		t.setClasses(v, l.Class)
 		t.bindStyle(cx, v, scrollDefaults.Merge(l.Style), l.StyleFunc)
 	}
 	ln.view = v
@@ -331,7 +338,7 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 		t.bindScrollSpec(cx, v, scrollSpec{behavior: l.Behavior, behaviorFunc: l.BehaviorFunc,
 			refreshing: l.Refreshing, onRefresh: l.OnRefresh, onScroll: l.OnScroll, throttle: l.ScrollEventThrottle,
 			onDragStart: l.OnScrollDragStart, onDragEnd: l.OnScrollDragEnd,
-			onMomentum: l.OnMomentumStart, onMomentumEnd: l.OnMomentumEnd})
+			onMomentum: l.OnMomentumStart, onMomentumEnd: l.OnMomentumEnd, onScrollEnd: l.OnScrollEnd})
 		t.bindScroll(cx, v, l.OffsetValues, l.PullValue)
 	}
 	if l.ContentOffset != (Point{}) {

@@ -20,23 +20,23 @@ func TestTextViewBuildsBlocks(t *testing.T) {
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
 		return textview.TextView{Markdown: doc, Selectable: true, TestID: "doc",
 			Extensions:  []textview.Extension{{Name: "callout", Container: "callout"}},
-			OnLinkPress: func(url string) { pressed = append(pressed, url) },
+			OnLinkPress: func(e textview.LinkPressEvent) { pressed = append(pressed, e.URL) },
 			Highlighter: func(c textview.CodeBlock) []textview.Highlight {
 				return []textview.Highlight{{Start: 0, End: 1, Style: core.Style{Color: core.RGB(0xff0000)}}, {Start: 0, End: 2}}
 			},
 			RenderCustom: func(cx *core.Scope, node textview.Custom) core.Node {
 				return core.Text{Content: "custom " + node.Name, TestID: "custom"}
 			},
-			CodeBlockActions: []string{textview.CopyAction},
+			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction}},
 			RenderCodeBlockAction: func(cx *core.Scope, a textview.CodeBlockAction) core.Node {
 				return core.Text{ContentFunc: func() string {
 					if a.Done() {
 						return "copied"
 					}
-					return a.Name
+					return a.ID
 				}}
 			},
-			OnCodeBlockAction: func(name string, code textview.CodeBlock) { pressed = append(pressed, name+" "+code.Code) },
+			OnCodeBlockAction: func(e textview.CodeActionEvent) { pressed = append(pressed, e.ID+" "+e.Code.Code) },
 		}
 	})
 	if !app.Find("id:doc").Props.SelectionArea {
@@ -164,8 +164,8 @@ func TestTextViewRendersFormulasAndInlineNodes(t *testing.T) {
 		return textview.TextView{
 			Markdown:   "Energy $E=mc^2$ and ![dot](dot.png) and @ada.\n\n$$\nx^2\n$$",
 			Extensions: []textview.Extension{{Name: "mention", Pattern: regexp.MustCompile(`@(\w+)`)}},
-			RenderMath: func(cx *core.Scope, m textview.Math, display bool) core.Node {
-				shown = append(shown, fmt.Sprint(m.TeX, " ", display))
+			RenderMath: func(cx *core.Scope, m textview.Math) core.Node {
+				shown = append(shown, fmt.Sprint(m.TeX, " ", m.Display))
 				return core.View{TestID: "math " + m.TeX, Style: core.Style{Width: core.Pt(10), Height: core.Pt(10)}}
 			},
 			RenderCustom: func(cx *core.Scope, node textview.Custom) core.Node {
@@ -192,7 +192,7 @@ func TestTextViewReportsImagePressesAndOpensLinksThatLeave(t *testing.T) {
 				"[a section](#title) and [a page](docs/page.md) ![inline](c.png).",
 			OpenLinks:    true,
 			Classes:      textview.Classes{textview.PartImage: "size-10"},
-			OnLinkPress:  func(url string) { links = append(links, url) },
+			OnLinkPress:  func(e textview.LinkPressEvent) { links = append(links, e.URL) },
 			OnImagePress: func(im textview.Image) { images = append(images, im.Alt) },
 		}
 	})

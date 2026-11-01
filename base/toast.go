@@ -110,6 +110,9 @@ type Toast struct {
 	StyleFunc        func() core.Style
 	Children         []core.Node
 	TestID           string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -167,7 +170,7 @@ func (t Toast) Render(cx *core.Scope) core.Node {
 	}
 
 	startingClass, endingClass, swipingClass := important(t.StartingClass), important(t.EndingClass), important(t.SwipingClass)
-	return core.View{Role: core.RoleAlert, Label: t.Label, TestID: t.TestID, Class: t.Class,
+	return core.View{Role: core.RoleAlert, Label: t.Label, TestID: t.TestID, Tooltip: t.Tooltip, Class: t.Class,
 		// The state's classes win over Class and Style, as its styles do
 		// and as CSS's state selectors do by their specificity.
 		ClassFunc: func() string {
@@ -197,7 +200,12 @@ func (t Toast) Render(cx *core.Scope) core.Node {
 			}
 			return s.Merge(core.Style{Animated: &core.AnimatedStyle{TranslateX: x, TranslateY: y}})
 		},
-		OnLayout: func(b core.Bounds) { size = b.Size },
+		OnLayout: func(b core.Bounds) {
+			size = b.Size
+			if t.OnLayout != nil {
+				t.OnLayout(b)
+			}
+		},
 		OnTouch: func(e core.TouchEvent) {
 			if e.Phase == core.TouchStart && len(e.Touches) > 0 {
 				down = e.Touches[0].PagePosition

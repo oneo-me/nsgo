@@ -260,7 +260,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 			}
 			tn.style = ts
 			tn.stale = false
-			if tn.prepared == nil || !at.Equal(&tn.text) {
+			if tn.prepared == nil || !at.Equal(&tn.text) || tn.fonts != t.fonts {
 				if tn.prepared != nil {
 					tn.prepared.Release()
 				}
@@ -268,8 +268,8 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 				// that measures as before, lays nothing out: only its own
 				// lines change. Attachments are placed by them.
 				h := t.measures.hash(&at)
-				same := tn.prepared != nil && h == tn.hash
-				tn.text, tn.hash = at, h
+				same := tn.prepared != nil && h == tn.hash && tn.fonts == t.fonts
+				tn.text, tn.hash, tn.fonts = at, h, t.fonts
 				tn.prepared = t.text.Prepare(&at)
 				tn.minWidth = -1
 				tn.resent = true
@@ -535,6 +535,7 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.image != nil:
 		im := n.image
 		c := im.config
+		c.ResizeMode = resolveMode(cmpOr(c.ResizeMode, n.classResizeMode()), Cover)
 		c.Position = n.style.ObjectPosition
 		c.Source = t.pickScale(c.Source)
 		c.Placeholder = t.pickScale(c.Placeholder)
@@ -567,8 +568,10 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.native != nil:
 		t.emitNative(n)
 	case n.video != nil:
-		if vn := n.video; first || vn.config != vn.sent {
-			c := vn.config
+		vn := n.video
+		c := vn.config
+		c.ResizeMode = resolveMode(cmpOr(c.ResizeMode, n.classResizeMode()), Contain)
+		if first || c != vn.sent {
 			vn.sent = c
 			add(driver.MountItem{Kind: driver.ItemVideo, ID: n.id, Video: &c})
 		}

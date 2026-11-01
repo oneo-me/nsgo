@@ -541,6 +541,11 @@ func bind() {
 
 	// Pango.
 	purego.RegisterLibFunc(&pangoCairoFontMapNew, pangocairoLib, "pango_cairo_font_map_new")
+	purego.RegisterLibFunc(&pangoCairoFontMapGetDefault, pangocairoLib, "pango_cairo_font_map_get_default")
+	// Pango's fontconfig font maps, the default one among them.
+	if ft2, err := purego.Dlopen("libpangoft2-1.0.so.0", purego.RTLD_NOW|purego.RTLD_GLOBAL); err == nil {
+		purego.RegisterLibFunc(&pangoFcFontMapConfigChanged, ft2, "pango_fc_font_map_config_changed")
+	}
 	purego.RegisterLibFunc(&pangoFontMapCreateContext, pangoLib, "pango_font_map_create_context")
 	purego.RegisterLibFunc(&pangoFontMapUnref, pangoLib, "g_object_unref") // PangoFontMap is a GObject
 	purego.RegisterLibFunc(&pangoLayoutNew, pangoLib, "pango_layout_new")

@@ -39,6 +39,15 @@ type TouchEvent struct {
 	// Time is since an arbitrary origin.
 	Time    time.Duration
 	Touches []Touch
+	stopped *bool
+}
+
+// StopPropagation keeps the views after this one on the path from
+// hearing the event.
+func (e TouchEvent) StopPropagation() {
+	if e.stopped != nil {
+		*e.stopped = true
+	}
 }
 
 // PanGesture follows the centroid of the fingers down, since the first
@@ -148,11 +157,16 @@ func (r *Responder) panClaim() (TouchClaim, bool) {
 type Responder struct {
 	// Claims are asked in order.
 	Claims []TouchClaim
-	// Keep refuses to hand the touches to a view that claims them later.
-	Keep bool
+	// Keep refuses to hand the touches to a view that claims them later;
+	// OnTerminationRequest, when set, is asked instead each time one does.
+	Keep                 bool
+	OnTerminationRequest func(ResponderEvent) bool
 	// OnGrant: the view became the responder. OnReject: it claimed, but
 	// the responder kept the touches.
 	OnGrant, OnReject func(ResponderEvent)
+	// BlockNative, when set, decides after OnGrant whether the scroll
+	// views around stop taking the touches, over the claim's LetNative.
+	BlockNative func(ResponderEvent) bool
 	// OnStart, OnMove and OnEnd follow the fingers while it is the
 	// responder.
 	OnStart, OnMove, OnEnd func(ResponderEvent)
@@ -179,7 +193,7 @@ type touchState struct {
 
 // hearsTouches reports whether n listens to touches.
 func (n *node) hearsTouches() bool {
-	return n.h.touch != nil || n.responder != nil
+	return n.h.touch != nil || n.h.touchCapture != nil || n.responder != nil
 }
 
 // alive reports whether n is still mounted.
@@ -241,11 +255,20 @@ func (t *Tree) touched(ev driver.Event) {
 	if len(path) == 0 && s.responder == nil {
 		return
 	}
-	for _, n := range path {
-		if n.h.touch != nil && n.alive() {
+	// Capture from the outermost view in, then bubble out.
+	stopped := false
+	hear := func(n *node, f func(TouchEvent)) {
+		if f != nil && n.alive() && !stopped {
 			local := t.localTouches(n, &e)
-			t.within(n.owner, func() { n.h.touch(local) })
+			local.stopped = &stopped
+			t.within(n.owner, func() { f(local) })
 		}
+	}
+	for i := len(path) - 1; i >= 0; i-- {
+		hear(path[i], path[i].h.touchCapture)
+	}
+	for _, n := range path {
+		hear(n, n.h.touch)
 	}
 	switch e.Phase {
 	case TouchStart:
@@ -324,6 +347,22 @@ func (t *Tree) respond(n *node, fn func(ResponderEvent), about Touch, e *TouchEv
 	}
 }
 
+// keeps reports whether responder r refuses to hand the touches over:
+// it Keeps them, or its OnTerminationRequest says no.
+func (t *Tree) keeps(r *node, about Touch, e *TouchEvent) bool {
+	if r.responder.Keep {
+		return true
+	}
+	ask := r.responder.OnTerminationRequest
+	if ask == nil {
+		return false
+	}
+	ev := t.responderEvent(r, about, e)
+	allow := true
+	t.within(r.owner, func() { allow = ask(ev) })
+	return !allow
+}
+
 // negotiate asks the views of path whether one claims the touches as they
 // start or move: the views around both the finger and the responder, the
 // responder left out; captures from the outermost in, then the others
@@ -360,7 +399,7 @@ func (t *Tree) negotiate(move bool, path []*node, about Touch, e *TouchEvent) {
 		return
 	}
 	if r != nil {
-		if r.responder.Keep {
+		if t.keeps(r, about, e) {
 			t.respond(wanting, wanting.responder.OnReject, about, e)
 			return
 		}
@@ -378,7 +417,7 @@ func (t *Tree) panActivated(n *node) {
 		return
 	}
 	if r := s.responder; r.alive() {
-		if r.responder.Keep {
+		if t.keeps(r, s.about, &s.last) {
 			t.respond(n, n.responder.OnReject, s.about, &s.last)
 			return
 		}
@@ -434,6 +473,10 @@ func (t *Tree) grant(n *node, block bool, about Touch, e *TouchEvent) {
 	s.gesture = beginGesture(e)
 	t.setState(n, statePressed, true)
 	t.respond(n, n.responder.OnGrant, about, e)
+	if f := n.responder.BlockNative; f != nil && n.alive() {
+		ev := t.responderEvent(n, about, e)
+		t.within(n.owner, func() { block = f(ev) })
+	}
 	if block {
 		t.blockNative(n)
 	} else {

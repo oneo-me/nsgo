@@ -226,7 +226,8 @@ func dockDemo(cx *core.Scope) core.Node {
 				if zoomed.GetUntracked() != "" {
 					area.ToggleZoom(0)
 				} else {
-					area.ToggleZoom(area.GroupOf(current))
+					g, _ := area.GroupOf(current)
+					area.ToggleZoom(g)
 				}
 			}),
 			tool(cx, "Reset the layout", "Reset", nil, func() { layout.Set(initialDock()) }),
@@ -242,9 +243,9 @@ func dockDemo(cx *core.Scope) core.Node {
 					CornerRadius: radiusInset, BorderCurve: core.BorderCurveContinuous})
 			}, Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
 				panels := map[string]base.DockPanelOptions{}
-				if closing.Get() {
+				if !closing.Get() {
 					for k := range dockTitles {
-						panels[k] = base.DockPanelOptions{Closable: true}
+						panels[k] = base.DockPanelOptions{NoClose: true}
 					}
 				}
 				return core.Func(func(cx *core.Scope) core.Node {

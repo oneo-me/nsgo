@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gosmallcaps"
 
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -33,10 +34,29 @@ func TestRegisteredFontsLayOut(t *testing.T) {
 		defer p.Release()
 		return p.Measure(driver.Auto).Width
 	}
-	// Families are cached once looked up: measure each the first time.
 	RegisterFonts([]string{"fonts/smallcaps.ttf"})
 	fallback := width("Go Smallcaps Unregistered")
 	if got := width("Go Smallcaps"); got <= fallback*1.05 {
 		t.Fatalf("Go Smallcaps measures %v, the system's font %v: not its own glyphs", got, fallback)
+	}
+}
+
+// TestAFontRegisteredLaterReplacesItsFallback registers a font after its
+// family was looked up, as a TSX module's import does as the app runs:
+// text prepared after it lays out in it, not in the fallback found first.
+func TestAFontRegisteredLaterReplacesItsFallback(t *testing.T) {
+	width := func() driver.Points {
+		p := TextEngine{}.Prepare(&driver.AttributedText{Text: "iiiiiiii",
+			Style: driver.TextStyle{Font: driver.Font{Family: "Go Mono", Size: 20, Weight: 400}, Color: driver.RGB(0)}})
+		defer p.Release()
+		return p.Measure(driver.Auto).Width
+	}
+	before := width()
+	if err := RegisterFont(gomono.TTF); err != nil {
+		t.Fatal(err)
+	}
+	// Monospaced, its i is as wide as any letter, wider than a fallback's.
+	if after := width(); after <= before*1.2 {
+		t.Fatalf("Go Mono measures %v after it registered, %v before: still the fallback", after, before)
 	}
 }

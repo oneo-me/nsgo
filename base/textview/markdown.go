@@ -632,7 +632,7 @@ func (r *reader) inline(out []Inline, n ast.Node) []Inline {
 	case *ast.CodeSpan:
 		out = append(out, Code{r.text(n)})
 	case *mathInline:
-		out = append(out, Math{n.tex})
+		out = append(out, Math{TeX: n.tex})
 	case *ast.Emphasis:
 		if n.Level >= 2 {
 			out = append(out, Strong{r.children(n)})

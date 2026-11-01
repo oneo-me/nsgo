@@ -63,6 +63,28 @@ func (r *runtime) installTimers() {
 	_ = r.vm.Set("setInterval", set(true))
 	_ = r.vm.Set("clearTimeout", clear)
 	_ = r.vm.Set("clearInterval", clear)
+	frames := map[int64]func(){}
+	_ = r.vm.Set("requestAnimationFrame", r.function(func(call goja.FunctionCall) goja.Value {
+		fn := arg(call, 0)
+		r.timers.next++
+		id := r.timers.next
+		start := r.cx.Now()
+		r.cx.Run(func() {
+			frames[id] = r.cx.RequestAnimationFrame(func(at time.Time) {
+				delete(frames, id)
+				r.call(fn, r.vm.ToValue(float64(at.Sub(start).Microseconds())/1000))
+			})
+		})
+		return r.vm.ToValue(id)
+	}))
+	_ = r.vm.Set("cancelAnimationFrame", r.function(func(call goja.FunctionCall) goja.Value {
+		id := arg(call, 0).ToInteger()
+		if stop := frames[id]; stop != nil {
+			stop()
+			delete(frames, id)
+		}
+		return goja.Undefined()
+	}))
 	_ = r.vm.Set("queueMicrotask", r.function(func(call goja.FunctionCall) goja.Value {
 		fn := arg(call, 0)
 		p, resolve, _ := r.vm.NewPromise()

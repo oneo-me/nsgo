@@ -97,7 +97,7 @@ Package `desktop` is NSH's `nsh/desktop`: native controls, an app-drawn title ba
 
 ## Menus
 
-`SetApplicationMenu` and `PopupMenu` send menus as data, handlers replaced by IDs that come back in `EventMenu`. Role items are the platform's own and are never reported. The default menu returns when the owner that set the menu goes.
+`SetApplicationMenu` and `PopupMenu` send menus as data, handlers replaced by IDs that come back in `EventMenu`. Role items are the platform's own and are never reported. The default menu returns when the owner that set the menu goes. An item's `When` resolves to `MenuEntry.NotInText`, as a key binding's does: Windows and Linux leave such a shortcut to a focused input in their key path, and macOS disables the item while a key press looks for its key equivalent with a field focused (`validateMenuItem:`), so AppKit hands the key to the field.
 
 - `SetMenuBar(MenuBarAutoHide)` hides the bar Windows and Linux draw until Alt is pressed and released alone, which is kept from Windows' menu mode. Alt with a mnemonic or F10 shows it for the menu they open; a press in the window or a closed menu hides it.
 - `PopupMenu` shows one context menu at a time at a point in the root's points, and answers `EventMenuClosed`. Its items stay choosable until another menu replaces it, since GTK may activate an item after the popover closed.

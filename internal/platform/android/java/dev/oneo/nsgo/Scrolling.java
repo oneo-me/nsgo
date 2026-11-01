@@ -437,6 +437,7 @@ final class Scrolling {
                         if (!flung) {
                             event(Protocol.EVENT_SCROLL_DRAG_END);
                             settle(0);
+                            if (!momentum) event(Protocol.EVENT_SCROLL_END);
                         }
                     }
                     if (tap) tapped(e);
@@ -466,6 +467,7 @@ final class Scrolling {
                 event(Protocol.EVENT_SCROLL_DRAG_END);
             }
             settle(velocity / 1000f / density);
+            if (!momentum) event(Protocol.EVENT_SCROLL_END);
         }
 
         /** The user let go at v points per millisecond: a snap, a glide or nothing. */
@@ -536,12 +538,14 @@ final class Scrolling {
             view.postOnAnimation(motion);
         }
 
+        /** A glide, a snap or an eased scroll ran to its end: the view is at rest. */
         private void finish() {
             motion = null;
             if (momentum) {
                 momentum = false;
                 event(Protocol.EVENT_MOMENTUM_END);
             }
+            event(Protocol.EVENT_SCROLL_END);
         }
 
         /** Shows the spinner, or the app's indicator, and its room above the content, or takes them away. */
@@ -942,6 +946,8 @@ final class Scrolling {
                             momentum = true;
                             event(Protocol.EVENT_MOMENTUM_START);
                             postInvalidateOnAnimation();
+                        } else {
+                            event(Protocol.EVENT_SCROLL_END);
                         }
                     }
                     return true;
@@ -954,8 +960,10 @@ final class Scrolling {
             if (flinger.computeScrollOffset()) {
                 moveTo(flinger.getCurrX(), flinger.getCurrY());
                 postInvalidateOnAnimation();
-            } else {
+            } else if (momentum) {
+                // The fling ran to its end: at rest.
                 endMomentum();
+                event(Protocol.EVENT_SCROLL_END);
             }
         }
 

@@ -698,6 +698,10 @@ func watcherBegan(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
 }
 
 // Prepare implements core.TextEngine with CoreText.
+// RegisterFont implements driver.FontRegistrar: CoreText registers it for
+// the process.
+func (s *surface) RegisterFont(data []byte) error { return apple.RegisterFont(data) }
+
 func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 	return apple.TextEngine{}.Prepare(t)
 }

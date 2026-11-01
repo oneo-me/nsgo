@@ -335,9 +335,11 @@ func (a *App) DragScroll(selector string, offset driver.Point, velocity float32)
 	a.settle(v)
 }
 
-// settle has the snapping diff clamps that follow scroll view v settle,
-// as platforms do when it comes to rest.
+// settle follows scroll view v coming to rest, as platforms do: it
+// reports EventScrollEnd and the snapping diff clamps that follow v
+// settle.
 func (a *App) settle(v *View) {
+	a.scrollEvent(v, driver.EventScrollEnd)
 	a.anim.Settle(v.ID)
 	a.animate()
 }

@@ -33,8 +33,13 @@ type Button struct {
 	StyleFunc func() core.Style
 	Label     string
 	// Hint says what pressing the button does, for assistive technology.
-	Hint     string
-	TestID   string
+	Hint string
+	// Tooltip shows above the button once the pointer rests over it on
+	// desktops, as core.View's.
+	Tooltip core.Node
+	TestID  string
+	// OnLayout is its view's, as a core.View's.
+	OnLayout func(core.Bounds)
 	Children []core.Node
 }
 
@@ -58,7 +63,8 @@ func (b Button) Render(*core.Scope) core.Node {
 		Expanded:    b.Expanded,
 		Role:        role,
 		Label:       b.Label,
+		Tooltip:     b.Tooltip,
 		Hint:        b.Hint,
-		TestID:      b.TestID,
+		TestID:      b.TestID, OnLayout: b.OnLayout,
 	}
 }

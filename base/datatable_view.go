@@ -43,7 +43,7 @@ func (p DataTable) Render(cx *core.Scope) core.Node {
 	font := t.font()
 	root := core.Style{Overflow: core.Hidden, FontSize: font.Size, FontFamily: font.Family}.Merge(p.Style)
 	return core.View{
-		Role: core.RoleGrid, Label: p.Label, TestID: p.TestID, Class: p.Class, Style: root, StyleFunc: p.StyleFunc,
+		Role: core.RoleGrid, Label: p.Label, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip, Class: joinClasses(p.Classes.Root, p.Class), Style: root, StyleFunc: p.StyleFunc,
 		Children: []core.Node{core.View{
 			// The frame is the padding box: the layers lie in it, and its
 			// size is the viewport's.

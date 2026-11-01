@@ -206,8 +206,14 @@ func diffDemo(cx *core.Scope) core.Node {
 			tool(cx, "One column", "Unified", unified.Get, toggle(unified)),
 			tool(cx, "Soft wrap", "Wrap", wrap.Get, toggle(wrap)),
 			core.View{Style: core.Style{Width: core.Pt(360)}, Children: []core.Node{segmented(modes, inline.Get, inline.Set, true)}},
-			tool(cx, "Previous change", "↑", nil, func() { last.Set(fmt.Sprintf("Change %d", ref.PreviousHunk()+1)) }),
-			tool(cx, "Next change", "↓", nil, func() { last.Set(fmt.Sprintf("Change %d", ref.NextHunk()+1)) }),
+			tool(cx, "Previous change", "↑", nil, func() {
+				i, _ := ref.PreviousHunk()
+				last.Set(fmt.Sprintf("Change %d", i+1))
+			}),
+			tool(cx, "Next change", "↓", nil, func() {
+				i, _ := ref.NextHunk()
+				last.Set(fmt.Sprintf("Change %d", i+1))
+			}),
 			tool(cx, "Expand every line", "Expand", nil, ref.ExpandAll),
 			tool(cx, "Collapse unchanged lines", "Collapse", nil, ref.CollapseAll),
 			tool(cx, "Start again", "Reset", nil, func() { oldText.Set(diffOld); newText.Set(diffNew) }),
@@ -268,9 +274,9 @@ func diffDemo(cx *core.Scope) core.Node {
 						}
 					},
 					OnStatsChange: stats.Set,
-					OnChange:      func(o, n string) { oldText.Set(o); newText.Set(n) },
-					OnLineNumberPress: func(side diff.Side, line int) {
-						last.Set(fmt.Sprintf("Line %d of the %s text", line, map[diff.Side]string{diff.Old: "old", diff.New: "new"}[side]))
+					OnChange:      func(c diff.Change) { oldText.Set(c.OldValue); newText.Set(c.NewValue) },
+					OnLineNumberPress: func(l diff.Line) {
+						last.Set(fmt.Sprintf("Line %d of the %s text", l.Line, map[diff.Side]string{diff.Old: "old", diff.New: "new"}[l.Side]))
 					},
 					OnFileToggle: func(f diff.File) { last.Set(fmt.Sprintf("%s collapsed: %v", f.Path, f.Collapsed)) },
 					RenderHunkActions: func(cx *core.Scope, h diff.Hunk) core.Node {

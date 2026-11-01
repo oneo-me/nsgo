@@ -211,11 +211,6 @@ func buildIOSFramework(ctx context.Context, p *project, dir string) error {
 	if err := os.WriteFile(export, []byte(embedExport), 0o644); err != nil {
 		return err
 	}
-	overlay := filepath.Join(tmp, "overlay.json")
-	added := filepath.Join(p.Dir, "nsgo_embed_export.go")
-	if err := os.WriteFile(overlay, fmt.Appendf(nil, `{"Replace":{%q:%q}}`, added, export), 0o644); err != nil {
-		return err
-	}
 	module := embedModule(p)
 	header := strings.ReplaceAll(embedHeader, "{{name}}", p.Name)
 	args := []string{"-create-xcframework"}
@@ -241,14 +236,16 @@ func buildIOSFramework(ctx context.Context, p *project, dir string) error {
 			lib := filepath.Join(slice, arch, "lib"+module+".a")
 			env := []string{"GOOS=" + sl.goos, "GOARCH=" + arch, "CGO_ENABLED=1",
 				"CC=" + clang + " " + flags, "CGO_CFLAGS=" + flags, "CGO_LDFLAGS=" + flags}
-			tags, ldflags := "nsgoembed", []string(nil)
+			tags, ldflags := []string{"nsgoembed"}, []string(nil)
 			if sl.catalyst {
 				// AppKit's threads drop the signal stack Go's preemption
 				// signal needs, so goroutines are preempted only where
 				// they yield, as GODEBUG=asyncpreemptoff=1 has it.
-				tags, ldflags = "ios,nsgoembed", []string{"-X=runtime.godebugDefault=asyncpreemptoff=1"}
+				tags, ldflags = []string{"ios", "nsgoembed"}, []string{"-X=runtime.godebugDefault=asyncpreemptoff=1"}
 			}
-			if err := goBuildWith(ctx, p, lib, env, []string{"-buildmode=c-archive", "-overlay", overlay, "-tags", tags}, ldflags...); err != nil {
+			extra := buildExtra{flags: []string{"-buildmode=c-archive"}, tags: tags,
+				files: map[string]string{"nsgo_embed_export.go": export}}
+			if err := goBuildWith(ctx, p, lib, env, extra, ldflags...); err != nil {
 				return err
 			}
 			// cgo's header declares Go's types too; the host needs only ours.

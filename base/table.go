@@ -15,11 +15,15 @@ type Table struct {
 	StyleFunc func() core.Style
 	Children  []core.Node
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
 func (t Table) Render(*core.Scope) core.Node {
-	return core.View{Role: core.RoleTable, Label: t.Label, Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, Children: t.Children, TestID: t.TestID}
+	return core.View{Role: core.RoleTable, Label: t.Label, Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, Children: t.Children, TestID: t.TestID,
+		OnLayout: t.OnLayout, Tooltip: t.Tooltip}
 }
 
 // TablePart holds a part of a Table: Children, styled by Class, Style and
@@ -30,6 +34,9 @@ type TablePart struct {
 	StyleFunc func() core.Style
 	Children  []core.Node
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 func (p TablePart) view(role core.Role, row bool) core.Node {
@@ -37,7 +44,8 @@ func (p TablePart) view(role core.Role, row bool) core.Node {
 	if row && s.Direction == 0 {
 		s.Direction = core.Row
 	}
-	return core.View{Role: role, Class: p.Class, Style: s, StyleFunc: p.StyleFunc, Children: p.Children, TestID: p.TestID}
+	return core.View{Role: role, Class: p.Class, Style: s, StyleFunc: p.StyleFunc, Children: p.Children, TestID: p.TestID,
+		OnLayout: p.OnLayout, Tooltip: p.Tooltip}
 }
 
 // TableHeader is a Table's header group: the rows of column headers.

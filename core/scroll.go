@@ -43,6 +43,7 @@ type scrollSpec struct {
 	onDragEnd     func(ScrollEvent)
 	onMomentum    func(ScrollEvent)
 	onMomentumEnd func(ScrollEvent)
+	onScrollEnd   func(ScrollEvent)
 	// Zooming, for Scroll only.
 	minZoom, maxZoom, zoom float32
 	zoomFunc               func() float32
@@ -160,6 +161,8 @@ func (t *Tree) dispatchScroll(n *node, ev driver.Event) {
 		call(sc.on.onMomentum)
 	case driver.EventMomentumEnd:
 		call(sc.on.onMomentumEnd)
+	case driver.EventScrollEnd:
+		call(sc.on.onScrollEnd)
 	case driver.EventRefresh:
 		// The platform shows its spinner as the pull ends; the next
 		// config tells it whether the app keeps it.
@@ -185,6 +188,7 @@ func (sc *scrollNode) events() driver.EventMask {
 	bit(driver.EventScrollDragEnd, sc.on.onDragEnd != nil)
 	bit(driver.EventMomentumStart, sc.on.onMomentum != nil)
 	bit(driver.EventMomentumEnd, sc.on.onMomentumEnd != nil)
+	bit(driver.EventScrollEnd, sc.on.onScrollEnd != nil)
 	bit(driver.EventRefresh, sc.on.onRefresh != nil)
 	return m
 }

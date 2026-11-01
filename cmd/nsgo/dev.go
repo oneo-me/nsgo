@@ -80,6 +80,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		if p.Web.Host != "" {
 			dirs = append(dirs, p.resolve(p.Web.Host))
 		}
+		dirs, sources := splitSources(dirs)
 		fingerprint := scan(dirs)
 		progress := begin("building %s", p.Dev.Target)
 		err = s.build(ctx, p)
@@ -123,7 +124,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 			srv.send("reload", "")
 		}
 		first = false
-		if reason := waitForChange(ctx, p, srv, dirs, fingerprint, exited); reason != nil {
+		if reason := waitForChange(ctx, p, srv, dirs, sources, fingerprint, exited); reason != nil {
 			return *reason
 		}
 		// The flags and the rest of nsgo.yaml may have changed too.
@@ -149,9 +150,13 @@ func (p *project) prepareDev(opts devOptions) {
 // for, or with hot reload a watched file changed. It returns the error
 // dev ends with when the run is over: ctx done, or the app exited when it
 // does not hot reload.
-func waitForChange(ctx context.Context, p *project, srv *devServer, dirs []string, fingerprint string, exited chan error) *error {
+//
+// A change of the app's TSX alone builds no Go: its bundles are compiled
+// again and the running apps load them (compiler.App under nsgodev).
+func waitForChange(ctx context.Context, p *project, srv *devServer, dirs, sources []string, fingerprint string, exited chan error) *error {
 	tick := time.NewTicker(300 * time.Millisecond)
 	defer tick.Stop()
+	tsx := scan(sources)
 	for {
 		select {
 		case <-ctx.Done():
@@ -165,13 +170,61 @@ func waitForChange(ctx context.Context, p *project, srv *devServer, dirs []strin
 			}
 			exited = nil
 		case <-tick.C:
-			if p.hotReload() && scan(dirs) != fingerprint {
+			if !p.hotReload() {
+				continue
+			}
+			if scan(dirs) != fingerprint {
 				// Let the editor finish writing.
 				time.Sleep(100 * time.Millisecond)
 				return nil
 			}
+			if now := scan(sources); now != tsx {
+				time.Sleep(100 * time.Millisecond)
+				tsx = scan(sources)
+				reloadBundles(p, srv)
+			}
 		}
 	}
+}
+
+// reloadBundles compiles the app's TSX again and sends the running apps
+// the bundles, or the failure to show over them.
+func reloadBundles(p *project, srv *devServer) {
+	progress := begin("compiling TSX")
+	bundles, err := compileBundles(p.Dir, true)
+	if err != nil {
+		progress.fail()
+		srv.send("error", strings.TrimSpace(err.Error()))
+		report(err)
+		return
+	}
+	srv.setBundles(bundles)
+	progress.done("reloaded TSX", "")
+	srv.send("ok", "")
+	for entry := range bundles {
+		srv.send("bundle", entry)
+	}
+}
+
+// bundleSource reports whether a file is one a TSX bundle compiles from.
+func bundleSource(name string) bool {
+	switch filepath.Ext(name) {
+	case ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json":
+		return true
+	}
+	return false
+}
+
+// splitSources takes the files a TSX bundle compiles from out of dirs.
+func splitSources(dirs []string) (rest, sources []string) {
+	for _, d := range dirs {
+		if info, err := os.Stat(d); err == nil && !info.IsDir() && bundleSource(d) {
+			sources = append(sources, d)
+		} else {
+			rest = append(rest, d)
+		}
+	}
+	return rest, sources
 }
 
 // readReloadKey asks for a new build when the terminal sends r and
@@ -199,6 +252,14 @@ type devServer struct {
 	clients map[chan string]bool
 	last    string // the last error event, for apps that connect later
 	files   string
+	bundles map[string]string // the latest TSX bundles, by entry
+}
+
+// setBundles keeps the latest TSX bundles, which /_nsgo/bundle serves.
+func (s *devServer) setBundles(b map[string]string) {
+	s.mu.Lock()
+	s.bundles = b
+	s.mu.Unlock()
 }
 
 // startDevServer listens on port, or the next free one after it; 0 takes
@@ -217,6 +278,18 @@ func startDevServer(port int) (*devServer, error) {
 	s := &devServer{port: ln.Addr().(*net.TCPAddr).Port, mux: http.NewServeMux(), reloads: make(chan struct{}, 1),
 		clients: map[chan string]bool{}}
 	s.mux.HandleFunc("/_nsgo/events", s.events)
+	s.mux.HandleFunc("/_nsgo/bundle", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		code, ok := s.bundles[r.URL.Query().Get("entry")]
+		s.mu.Unlock()
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		io.WriteString(w, code)
+	})
 	s.mux.HandleFunc("/_nsgo/reload", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "POST to reload", http.StatusMethodNotAllowed)
@@ -280,11 +353,15 @@ func (s *devServer) lanURLs() []string {
 }
 
 // send tells every client kind: "error" with a failed build's output,
-// "ok" once a build succeeds, "reload" for web pages to load it.
+// "ok" once a build succeeds, "reload" for web pages to load it, and
+// "bundle" with a TSX entry whose new bundle /_nsgo/bundle serves.
 func (s *devServer) send(kind, text string) {
 	msg := kind
-	if kind == "error" {
+	switch kind {
+	case "error":
 		msg += " " + strconv.Quote(text)
+	case "bundle":
+		msg += " " + text
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()

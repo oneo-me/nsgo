@@ -198,6 +198,8 @@ type (
 	MenuRole = driver.MenuRole
 	// ModalAnimation is how a modal appears.
 	ModalAnimation = driver.ModalAnimation
+	// ScreenAnimation is how a screen of a stack enters and leaves.
+	ScreenAnimation = driver.ScreenAnimation
 	// ModalPresentation is how a modal covers the screen on iOS.
 	ModalPresentation = driver.ModalPresentation
 	// Modifiers are the modifier keys held during an event.
@@ -817,9 +819,13 @@ const (
 )
 
 const (
-	ModalSlide = driver.ModalSlide
-	ModalFade  = driver.ModalFade
-	ModalNone  = driver.ModalNone
+	ScreenDefault = driver.ScreenDefault
+	ScreenSlide   = driver.ScreenSlide
+	ScreenFade    = driver.ScreenFade
+	ScreenNone    = driver.ScreenNone
+	ModalSlide    = driver.ModalSlide
+	ModalFade     = driver.ModalFade
+	ModalNone     = driver.ModalNone
 )
 
 const (

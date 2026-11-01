@@ -15,7 +15,9 @@ func ltrLine(start, end int, y Points) CaretLine {
 	return l
 }
 
-func rangeBox(x, y, w Points) Bounds { return Bounds{Origin: Point{X: x, Y: y}, Size: Size{Width: w, Height: 20}} }
+func rangeBox(x, y, w Points) Bounds {
+	return Bounds{Origin: Point{X: x, Y: y}, Size: Size{Width: w, Height: 20}}
+}
 
 func TestCaretLayoutsHitTestByLineAndAffinity(t *testing.T) {
 	// "abcd" wrapped after its 4th character, then "efgh".

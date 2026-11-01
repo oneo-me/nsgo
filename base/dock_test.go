@@ -32,7 +32,7 @@ func dockApp(t *testing.T, width core.Points, layouts *[]base.DockLayout, events
 				Center: base.DockSplit(base.Horizontal, base.DockTabs("editor", "notes"), base.DockTabs("preview")),
 				Left:   &base.DockRegion{Root: base.DockTabs("files"), Size: 200},
 			},
-			Panels: map[string]base.DockPanelOptions{"notes": {Closable: true}},
+			Panels: map[string]base.DockPanelOptions{"editor": {NoClose: true}, "preview": {NoClose: true}, "files": {NoClose: true}},
 			RenderPanel: func(cx *core.Scope, key string) core.Node {
 				return core.View{TestID: "panel-" + key, Style: core.Style{FlexGrow: 1},
 					Children: []core.Node{base.Input{TestID: "input-" + key}}}
@@ -97,9 +97,9 @@ func TestDockAreaShowsItsRegionsAndRearrangesThem(t *testing.T) {
 	if events[len(events)-1] != "left closed" {
 		t.Errorf("events %q", events)
 	}
-	ref.ToggleZoom(ref.GroupOf("preview"))
+	ref.ToggleZoom(group(ref, "preview"))
 	app.Settle()
-	if app.Exists("id:panel-preview") == app.Exists("id:panel-editor") || ref.ZoomedGroup() != ref.GroupOf("preview") {
+	if app.Exists("id:panel-preview") == app.Exists("id:panel-editor") || zoomed(ref) != group(ref, "preview") {
 		t.Error("zooming shows more than one group")
 	}
 	ref.ToggleZoom(0)
@@ -167,9 +167,9 @@ func TestDockPanelsKeepTheirStateAsTheyMove(t *testing.T) {
 		t.Fatalf("the editor did not move into the dock: %+v", last.Left.Root)
 	}
 	kept("moved into a dock")
-	ref.ToggleZoom(ref.GroupOf("editor"))
+	ref.ToggleZoom(group(ref, "editor"))
 	app.Settle()
-	ref.ToggleZoom(ref.GroupOf("editor"))
+	ref.ToggleZoom(group(ref, "editor"))
 	app.Settle()
 	kept("zoomed and back")
 
@@ -190,8 +190,8 @@ func TestDockAreaRefEditsTheLayout(t *testing.T) {
 	var events []string
 	app, ref := dockApp(t, 1000, &layouts, &events)
 	app.Type("id:input-editor", "kept")
-	left, right := ref.GroupOf("editor"), ref.GroupOf("preview")
-	if left == 0 || right == 0 || left == right || ref.GroupOf("missing") != 0 {
+	left, right := group(ref, "editor"), group(ref, "preview")
+	if left == 0 || right == 0 || left == right || group(ref, "missing") != 0 {
 		t.Fatalf("groups %v %v", left, right)
 	}
 	last := func() base.DockLayout { return layouts[len(layouts)-1] }
@@ -213,7 +213,7 @@ func TestDockAreaRefEditsTheLayout(t *testing.T) {
 	if c := last().Center.Children[0]; c.Tabs || c.Axis != base.Vertical || c.Children[1].Panels[0] != "notes" {
 		t.Fatalf("split below: %+v", c)
 	}
-	ref.MovePanel("files", base.DockTarget{Group: ref.GroupOf("notes"), Side: core.PlaceRight, Size: 120})
+	ref.MovePanel("files", base.DockTarget{Group: group(ref, "notes"), Side: core.PlaceRight, Size: 120})
 	app.Settle()
 	if c := last().Center.Children[0].Children[1]; c.Tabs || c.Axis != base.Horizontal || c.Sizes[1] != 120 || last().Left != nil && len(last().Left.Root.Panels) != 0 {
 		t.Fatalf("split right of notes at 120: %+v, left %+v", c, last().Left)
@@ -225,7 +225,7 @@ func TestDockAreaRefEditsTheLayout(t *testing.T) {
 	}
 	ref.RemovePanel("editor") // not closable, removed all the same
 	app.Settle()
-	if ref.GroupOf("editor") != 0 || events[len(events)-1] != "remove editor" {
+	if group(ref, "editor") != 0 || events[len(events)-1] != "remove editor" {
 		t.Errorf("removing: events %q", events)
 	}
 	ref.AddPanel("terminal", base.DockBottom, 150)
@@ -240,7 +240,7 @@ func TestDockAreaRefEditsTheLayout(t *testing.T) {
 	}
 	ref.AddPanel("preview", base.DockBottom, 0)
 	app.Settle()
-	if b := last().Bottom; !slices.Equal(b.Root.Panels, []string{"terminal", "preview"}) || ref.GroupOf("preview") != ref.GroupOf("terminal") {
+	if b := last().Bottom; !slices.Equal(b.Root.Panels, []string{"terminal", "preview"}) || group(ref, "preview") != group(ref, "terminal") {
 		t.Errorf("a held panel added to a dock moves there: %+v", b.Root)
 	}
 }
@@ -286,4 +286,16 @@ func TestDockPanelsKeepTheirStateAcrossTheCompactPresentation(t *testing.T) {
 	app.Resize(1000, 600)
 	app.Settle()
 	kept("back at full width")
+}
+
+// group is the tab group holding key, 0 for none.
+func group(ref *base.DockAreaRef, key string) uint64 {
+	g, _ := ref.GroupOf(key)
+	return g
+}
+
+// zoomed is the zoomed tab group, 0 for none.
+func zoomed(ref *base.DockAreaRef) uint64 {
+	g, _ := ref.ZoomedGroup()
+	return g
 }

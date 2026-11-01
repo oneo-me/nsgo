@@ -200,7 +200,7 @@ func (t *Tree) setText(cx *Scope, n *node, v Text) {
 	}
 	n.base = base
 	t.setClasses(n, v.Class)
-	n.h = handlers{press: v.OnPress, layout: v.OnLayout}
+	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
 		Selectable: v.Selectable}
 	if n.props.Role == RoleNone {
@@ -298,7 +298,7 @@ func (t *Tree) setScroll(n *node, v Scroll) {
 	}
 	t.bindScrollSpec(nil, n, scrollSpec{behavior: behavior, offset: offset, onRefresh: v.OnRefresh,
 		onScroll: v.OnScroll, throttle: v.ScrollEventThrottle, onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
-		onMomentum: v.OnMomentumStart, onMomentumEnd: v.OnMomentumEnd, minZoom: v.MinZoomScale,
+		onMomentum: v.OnMomentumStart, onMomentumEnd: v.OnMomentumEnd, onScrollEnd: v.OnScrollEnd, minZoom: v.MinZoomScale,
 		maxZoom: v.MaxZoomScale, zoom: zoom, noBouncesZoom: v.NoBouncesZoom, noPinch: v.NoPinchZoom,
 		centerContent: v.CenterContent})
 	sc.config.Refreshing = read(v.Refreshing)
@@ -362,7 +362,7 @@ func (t *Tree) setImage(n *node, v Image) {
 	if src.Size != n.image.config.Source.Size {
 		t.markLayout(n)
 	}
-	n.image.config = driver.ImageConfig{Source: src, Placeholder: v.Placeholder, ResizeMode: resolveMode(v.ResizeMode, Cover),
+	n.image.config = driver.ImageConfig{Source: src, Placeholder: v.Placeholder, ResizeMode: v.ResizeMode,
 		BlurRadius: v.BlurRadius, FadeDuration: v.FadeDuration}
 	t.restyled(n)
 }

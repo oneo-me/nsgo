@@ -14,7 +14,7 @@ import (
 // Edit applies edits, ranges of the text as it is, as one step undo takes
 // back; one overlapping an earlier one is skipped. The selections move
 // with the text around them. Code actions and formatting edits go here.
-func (r *Ref) Edit(edits []TextEdit) {
+func (r *Ref) Edit(edits []Edit) {
 	e := r.e
 	if e == nil || e.p.ReadOnly || len(edits) == 0 {
 		return
@@ -125,7 +125,7 @@ func (r *Ref) FoldRange(f FoldRange) {
 func (r *Ref) ScrollToLine(line int) { r.RevealPosition(Position{Line: line}, false) }
 
 // RangeBounds returns the boxes of rng, one per row it covers.
-func (r *Ref) RangeBounds(rng Range) []Box {
+func (r *Ref) RangeBounds(rng Range) []Bounds {
 	e := r.e
 	if e == nil {
 		return nil
@@ -134,7 +134,7 @@ func (r *Ref) RangeBounds(rng Range) []Box {
 	if b.less(a) {
 		a, b = b, a
 	}
-	var out []Box
+	var out []Bounds
 	for _, x := range e.rowRects(a, b, 0, e.st.disp.count(), nil, "", nil) {
 		if box, ok := e.boxOf(x); ok {
 			out = append(out, box)
@@ -256,19 +256,19 @@ func (e *ed) caretsOutOf(folds []foldRange) {
 
 // boxOf is rect x of the rows' box in the editor, its scrolling applied,
 // and in the root view; ok is false before the editor is laid out.
-func (e *ed) boxOf(x rect) (Box, bool) {
+func (e *ed) boxOf(x rect) (Bounds, bool) {
 	page, ok := e.box.Bounds()
 	if !ok {
-		return Box{}, false
+		return Bounds{}, false
 	}
 	sx := float32(e.scrollX.GetUntracked())
 	if e.p.SoftWrap {
 		sx = 0
 	}
 	size := core.Size{Width: core.Points(x.w), Height: core.Points(x.h)}
-	return Box{
-		Bounds: core.Bounds{Origin: core.Point{X: core.Points(e.gutterWidth() + x.x - sx), Y: core.Points(x.y - float32(e.scrollY.GetUntracked()))}, Size: size},
-		Page:   core.Bounds{Origin: core.Point{X: page.Origin.X + core.Points(x.x), Y: page.Origin.Y + core.Points(x.y)}, Size: size},
+	return Bounds{
+		Bounds:     core.Bounds{Origin: core.Point{X: core.Points(e.gutterWidth() + x.x - sx), Y: core.Points(x.y - float32(e.scrollY.GetUntracked()))}, Size: size},
+		PageBounds: core.Bounds{Origin: core.Point{X: page.Origin.X + core.Points(x.x), Y: page.Origin.Y + core.Points(x.y)}, Size: size},
 	}, true
 }
 
@@ -300,6 +300,6 @@ func (e *ed) textPress(pt, page core.Point, mods core.Modifiers, clicks int) {
 		return
 	}
 	a, b := e.st.lang.wordAt(e.st.line(p.line), p.col)
-	e.p.OnTextPress(TextPressEvent{Position: e.position(p), Offset: e.offset(p), Word: e.rangeOf(span{pos{p.line, a}, pos{p.line, b}}),
-		At: page, Modifiers: mods, Clicks: max(clicks, 1)})
+	e.p.OnTextPress(TextPressEvent{Position: e.position(p), Offset: e.offset(p), Range: e.rangeOf(span{pos{p.line, a}, pos{p.line, b}}),
+		PagePosition: page, Modifiers: mods, Clicks: max(clicks, 1)})
 }

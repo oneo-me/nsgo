@@ -34,7 +34,12 @@ func script(name, src string) export {
 	}}
 }
 
-func init() { moduleTable["nsgo"] = append(moduleTable["nsgo"], envExports...) }
+func init() {
+	moduleTable["nsgo"] = append(moduleTable["nsgo"], envExports...)
+	moduleTable["nsgo"] = append(moduleTable["nsgo"], animatedExports...)
+	moduleTable["nsgo"] = append(moduleTable["nsgo"], canvasExports...)
+	moduleTable["nsgo"] = append(moduleTable["nsgo"], serviceExports...)
+}
 
 var moduleTable = map[string][]export{
 	"nsgo": {
@@ -51,12 +56,21 @@ var moduleTable = map[string][]export{
 		host("View", "view"),
 		host("Text", "text"),
 		host("Scroll", "scroll"),
-		host("Image", "image"),
+		{"Image", (*runtime).imageModule},
+		host("Overlay", "overlay"),
+		host("WebView", "webview"),
+		host("Video", "video"),
+		fn("List", (*runtime).list),
+		{"PanResponder", (*runtime).panResponder},
 	},
 	"nsgo/base": {
 		host("Input", "input"),
+		faceExport("Dialog", dialogFace),
 	},
 	"nsgo:rt": {
+		fn("list", (*runtime).list),
+		fn("setup", (*runtime).setup),
+		fn("registerFont", (*runtime).registerFont),
 		fn("element", (*runtime).element),
 		fn("text", (*runtime).textNode),
 		fn("append", (*runtime).append),

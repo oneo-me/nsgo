@@ -134,6 +134,7 @@ func behaviorMethods() []objc.MethodDef {
 		{Cmd: sel("scrollViewWillEndDragging:withVelocity:targetContentOffset:"), Fn: scrollWillEndDrag},
 		{Cmd: sel("scrollViewDidEndDragging:willDecelerate:"), Fn: scrollDidEndDrag},
 		{Cmd: sel("scrollViewDidEndDecelerating:"), Fn: scrollDidEndGlide},
+		{Cmd: sel("scrollViewDidEndScrollingAnimation:"), Fn: scrollDidEndAnimation},
 		{Cmd: sel("viewForZoomingInScrollView:"), Fn: zoomView},
 		{Cmd: sel("scrollViewDidZoom:"), Fn: scrollDidZoom},
 		{Cmd: selRefreshed, Fn: scrollRefreshed},
@@ -394,8 +395,8 @@ func subviews(view objc.ID) []objc.ID {
 
 // scrollEvent reports kind on scroll view v at its offset and zoom.
 func (v *view) scrollEvent(kind driver.EventKind) {
-	if kind == driver.EventScrollDragEnd || kind == driver.EventMomentumEnd {
-		// At rest, unless a glide follows, which scrolls on.
+	if kind == driver.EventScrollEnd {
+		// At rest: the values that snap as a scroll ends settle.
 		s := v.surface
 		s.animator.Settle(v.id)
 		if s.animator.Running() {
@@ -471,6 +472,8 @@ func scrollDidEndDrag(self objc.ID, _ objc.SEL, _ objc.ID, decelerate bool) {
 		v.scrollEvent(driver.EventScrollDragEnd)
 		if decelerate {
 			v.scrollEvent(driver.EventMomentumStart)
+		} else {
+			v.scrollEvent(driver.EventScrollEnd)
 		}
 	}
 }
@@ -478,6 +481,15 @@ func scrollDidEndDrag(self objc.ID, _ objc.SEL, _ objc.ID, decelerate bool) {
 func scrollDidEndGlide(self objc.ID, _ objc.SEL, _ objc.ID) {
 	if v := scrollView(self); v != nil {
 		v.scrollEvent(driver.EventMomentumEnd)
+		v.scrollEvent(driver.EventScrollEnd)
+	}
+}
+
+// scrollDidEndAnimation follows an animated scroll the core asked for
+// coming to rest.
+func scrollDidEndAnimation(self objc.ID, _ objc.SEL, _ objc.ID) {
+	if v := scrollView(self); v != nil {
+		v.scrollEvent(driver.EventScrollEnd)
 	}
 }
 

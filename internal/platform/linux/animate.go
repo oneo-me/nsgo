@@ -197,6 +197,7 @@ func (w *window) step(v *view, now time.Time) bool {
 			if s.momentum {
 				w.scrollEvent(v, driver.EventMomentumEnd)
 			}
+			w.restScroll(v)
 		} else {
 			p := float64(elapsed) / float64(scrollDuration)
 			at := driver.Point{

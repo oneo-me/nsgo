@@ -305,9 +305,13 @@ func (a *App) apply(b *driver.MountBatch) {
 			} else {
 				v.Offset = v.clamp(it.Point)
 			}
-			// A platform reports where a scroll lands.
+			// A platform reports where a scroll lands, and that an animated
+			// one came to rest.
 			id, at, n := it.ID, v.Offset, v.Applied
 			a.post(driver.Event{Kind: driver.EventScroll, ID: id, Point: at, Count: n})
+			if it.Animated && v.Events.Has(driver.EventScrollEnd) {
+				a.post(driver.Event{Kind: driver.EventScrollEnd, ID: id, Point: at, Count: n})
+			}
 		case driver.ItemStickyCells:
 			v.Sticky = it.Sticky
 		case driver.ItemSetClipboard:

@@ -66,3 +66,33 @@ func TestParseTheme(t *testing.T) {
 		t.Fatal("a bad color parsed")
 	}
 }
+
+// TestShadcnThemesNameTokens reads a shadcn/ui theme file, as NSH's apps
+// name theirs, and classes name its colors.
+func TestShadcnThemesNameTokens(t *testing.T) {
+	th, err := ParseTheme([]byte(`{"cssVars": {
+		"theme": {"radius": "12px", "brand-fill": "#c8f26d"},
+		"light": {"brand": "#4f6e0c", "muted-foreground": "#5f636a", "ring": "var(--brand)",
+			"brand-tint": "color-mix(in srgb, var(--brand) 10%, transparent)"},
+		"dark": {"brand": "#c8f26d"}}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if th.Radius != 12 || th.Tokens["radius"] != "12px" {
+		t.Errorf("radius %v, tokens %v", th.Radius, th.Tokens)
+	}
+	if c, _ := th.Light.Color("ring"); c != RGB(0x4f6e0c) {
+		t.Errorf("light ring %#x", c)
+	}
+	if c, _ := th.Dark.Color("ring"); c != RGB(0xc8f26d) {
+		t.Errorf("dark ring follows dark's brand: %#x", c)
+	}
+	if c, _ := th.Light.Color("brand-tint"); c != RGBA(0x4f6e0c, 0.1) {
+		t.Errorf("brand-tint %#x", c)
+	}
+	env := classEnv{palette: &th.Light}
+	s, _, _ := parseClasses("bg-brand text-muted-foreground/50 border-(--brand-fill)").resolve(&env)
+	if s.Background != RGB(0x4f6e0c) || s.Color != RGBA(0x5f636a, 0.5) || s.BorderColor != RGB(0xc8f26d) {
+		t.Errorf("classes %#x %#x %#x", s.Background, s.Color, s.BorderColor)
+	}
+}

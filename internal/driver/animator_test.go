@@ -66,6 +66,21 @@ func TestAnimatorSpringDecaySequenceAndLoop(t *testing.T) {
 	}
 }
 
+func TestALoopWithoutResetGoesOnFromWhereItEnded(t *testing.T) {
+	a := NewAnimator(func(Event) {})
+	a.Apply([]AnimationOp{{Kind: AnimCreateValue, Node: 1}})
+	// A timing to 1 from wherever the value is: a second iteration that
+	// starts at 1 stays there.
+	loop := &Animation{Kind: AnimationLoop, Iterations: 2, NoReset: true, Steps: []*Animation{
+		{Kind: AnimationTiming, Value: 1, To: 1, Timing: TimingConfig{Duration: 100 * time.Millisecond}}}}
+	a.Apply([]AnimationOp{{Kind: AnimStart, ID: 1, Animation: loop}})
+	a.Step(0)
+	a.Step(150 * time.Millisecond)
+	if v := a.nodes[1].value; math.Abs(v-1) > 1e-9 {
+		t.Fatalf("second iteration at %v, want it to go on from 1", v)
+	}
+}
+
 func TestInterpolationExtrapolates(t *testing.T) {
 	r := Interpolation{Input: []float64{0, 1}, Output: []float64{0, 10}, Extrapolate: ExtrapolateExtend,
 		ExtrapolateLeft: ExtrapolateClamp}

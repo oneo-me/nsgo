@@ -1,6 +1,7 @@
 package textview
 
 import (
+	"cmp"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -55,7 +56,7 @@ type TextView struct {
 	// OnLinkPress receives a pressed link's URL: a heading's anchor is
 	// "#<anchor>", a footnote reference "#footnote-<label>". Nothing opens
 	// a URL unless OpenLinks; the app decides.
-	OnLinkPress func(url string)
+	OnLinkPress func(LinkPressEvent)
 	// OpenLinks also opens a pressed link to another site or app (a URL
 	// with a scheme: https:, mailto:) outside the app with Scope.OpenURL,
 	// after OnLinkPress; anchors are only reported.
@@ -69,21 +70,21 @@ type TextView struct {
 	RenderCustom func(cx *core.Scope, node Custom) core.Node
 	// CustomSpan shows a custom node in text as a span.
 	CustomSpan func(node Custom) core.Span
-	// RenderMath shows a formula, display when it is a block of its own
-	// ($$…$$ on lines of its own), else as an attachment in its text.
+	// RenderMath shows a formula: a block of its own when its Display is
+	// set ($$…$$ on lines of its own), else as an attachment in its text.
 	// Without it a formula shows its TeX in PartMath or PartMathBlock.
-	RenderMath func(cx *core.Scope, math Math, display bool) core.Node
+	RenderMath func(cx *core.Scope, math Math) core.Node
 	// RenderCodeBlock shows a code block in place of the default: the code
 	// in a horizontal scroll view.
 	RenderCodeBlock func(cx *core.Scope, code CodeBlock) core.Node
 	// CodeBlockActions are buttons over each code block's top right
 	// corner, in PartCodeBlockHeader, each a PartCodeBlockAction showing
-	// RenderCodeBlockAction (its name as text without it). CopyAction
-	// copies the code, and reports itself done for 1.6 seconds; a press on
-	// any reports OnCodeBlockAction.
-	CodeBlockActions      []string
+	// RenderCodeBlockAction (its label, else its ID, as text without it).
+	// CopyAction copies the code, and reports itself done for 1.6
+	// seconds; a press on any reports OnCodeBlockAction.
+	CodeBlockActions      []CodeAction
 	RenderCodeBlockAction func(cx *core.Scope, action CodeBlockAction) core.Node
-	OnCodeBlockAction     func(action string, code CodeBlock)
+	OnCodeBlockAction     func(CodeActionEvent)
 	// RenderTableActions shows content above each table, in
 	// PartTableActions.
 	RenderTableActions func(cx *core.Scope, table Table) core.Node
@@ -95,6 +96,9 @@ type TextView struct {
 	// paragraph, a block; in a line of text, an attachment.
 	RenderImage func(cx *core.Scope, image Image) core.Node
 	TestID      string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Highlighter colors code: byte ranges of the code with their styles, in
@@ -163,7 +167,7 @@ func (tv TextView) Render(cx *core.Scope) core.Node {
 	return core.View{
 		StyleFunc:  func() core.Style { return r.style(PartRoot) },
 		Selectable: tv.Selectable,
-		TestID:     tv.TestID,
+		TestID:     tv.TestID, OnLayout: tv.OnLayout, Tooltip: tv.Tooltip,
 		Children: []core.Node{
 			core.Each(rows, func(r row) rowKey { return rowKey{r.index, r.block.Kind()} },
 				func(cx *core.Scope, item func() row, index func() int) core.Node {
@@ -198,16 +202,30 @@ func (tv TextView) document() Document {
 	return tv.Document
 }
 
-// CopyAction is the code block action that copies the code.
+// CopyAction is the ID of the code block action that copies the code.
 const CopyAction = "copy"
+
+// CodeAction is an action of the code blocks: its ID, CopyAction or the
+// app's, and what screen readers say for it, its ID when empty.
+type CodeAction struct{ ID, Label string }
+
+// CodeActionEvent is a press on a code block's action.
+type CodeActionEvent struct {
+	ID   string
+	Code CodeBlock
+}
+
+// LinkPressEvent is a press on a link: its URL, "#<anchor>" for a
+// heading of the document, "#footnote-<label>" for a footnote.
+type LinkPressEvent struct{ URL string }
 
 // copiedFor is how long the copy action reports itself done.
 const copiedFor = 1600 * time.Millisecond
 
 // CodeBlockAction is what RenderCodeBlockAction gets about an action.
 type CodeBlockAction struct {
-	Name string
-	Code CodeBlock
+	ID, Label string
+	Code      CodeBlock
 	// Done reports, tracked, that the action just ran: the copy action's
 	// check, for 1.6 seconds.
 	Done func() bool
@@ -344,7 +362,8 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 		return after(r.details(cx, b, depth))
 	case Math:
 		if r.tv.RenderMath != nil {
-			return after(r.tv.RenderMath(cx, b, true))
+			b.Display = true
+			return after(r.tv.RenderMath(cx, b))
 		}
 		if caret {
 			return core.Text{Spans: r.caretSpans([]core.Span{{Content: b.TeX}}, true), Class: r.class(PartMathBlock), StyleFunc: func() core.Style { return r.style(PartMathBlock) }}
@@ -472,8 +491,8 @@ func (r *renderer) code(cx *core.Scope, c CodeBlock, caret bool) core.Node {
 		Class: r.class(PartCodeBlockScroll), StyleFunc: func() core.Style { return r.style(PartCodeBlockScroll) }, Children: []core.Node{code}}}
 	if len(r.tv.CodeBlockActions) > 0 {
 		actions := make([]core.Node, len(r.tv.CodeBlockActions))
-		for i, name := range r.tv.CodeBlockActions {
-			actions[i] = r.codeAction(cx, name, c)
+		for i, a := range r.tv.CodeBlockActions {
+			actions[i] = r.codeAction(cx, a, c)
 		}
 		children = append(children, core.View{
 			Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Right: core.Pt(0), Direction: core.Row},
@@ -485,15 +504,17 @@ func (r *renderer) code(cx *core.Scope, c CodeBlock, caret bool) core.Node {
 }
 
 // codeAction is a code block's action button.
-func (r *renderer) codeAction(cx *core.Scope, name string, c CodeBlock) core.Node {
+func (r *renderer) codeAction(cx *core.Scope, action CodeAction, c CodeBlock) core.Node {
 	done := core.NewSignal(cx, false)
 	var stop func() bool
-	a := CodeBlockAction{Name: name, Code: c, Done: done.Get}
-	var content core.Node = core.Text{Content: name}
+	name := action.ID
+	label := cmp.Or(action.Label, name)
+	a := CodeBlockAction{ID: name, Label: action.Label, Code: c, Done: done.Get}
+	var content core.Node = core.Text{Content: label}
 	if r.tv.RenderCodeBlockAction != nil {
 		content = r.tv.RenderCodeBlockAction(cx, a)
 	}
-	return core.View{Class: r.class(PartCodeBlockAction), StyleFunc: func() core.Style { return r.style(PartCodeBlockAction) }, Role: core.RoleButton, Label: name,
+	return core.View{Class: r.class(PartCodeBlockAction), StyleFunc: func() core.Style { return r.style(PartCodeBlockAction) }, Role: core.RoleButton, Label: label,
 		OnPress: func(core.PressEvent) {
 			if name == CopyAction {
 				cx.SetClipboard(c.Code)
@@ -504,7 +525,7 @@ func (r *renderer) codeAction(cx *core.Scope, name string, c CodeBlock) core.Nod
 				stop = cx.AfterFunc(copiedFor, func() { done.Set(false) })
 			}
 			if r.tv.OnCodeBlockAction != nil {
-				r.tv.OnCodeBlockAction(name, c)
+				r.tv.OnCodeBlockAction(CodeActionEvent{ID: name, Code: c})
 			}
 		},
 		Children: []core.Node{content}}
@@ -687,7 +708,7 @@ func (r *renderer) spans(out []core.Span, content []Inline, style func() core.St
 			out = append(out, core.Span{Content: in.Text, Class: inner(PartKeyboard), StyleFunc: under(PartKeyboard), OnPress: link})
 		case Math:
 			if render := r.tv.RenderMath; render != nil {
-				out = append(out, core.Span{Attachment: core.Func(func(cx *core.Scope) core.Node { return render(cx, in, false) })})
+				out = append(out, core.Span{Attachment: core.Func(func(cx *core.Scope) core.Node { return render(cx, in) })})
 			} else {
 				out = append(out, core.Span{Content: in.TeX, Class: inner(PartMath), StyleFunc: under(PartMath), OnPress: link})
 			}
@@ -734,7 +755,7 @@ func (r *renderer) press(link string) func(core.PressEvent) {
 	}
 	return func(core.PressEvent) {
 		if r.tv.OnLinkPress != nil {
-			r.tv.OnLinkPress(link)
+			r.tv.OnLinkPress(LinkPressEvent{URL: link})
 		}
 		if open {
 			r.cx.OpenURL(link, nil)

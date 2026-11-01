@@ -78,7 +78,7 @@ func TestPress(t *testing.T) {
 }
 ```
 
-An app can also be written in TSX and styled with Tailwind CSS classes: the package embeds its sources, which `tsx/compiler` compiles as the app starts, with no Node. `examples/tsx` is one.
+An app can also be written in TSX, as an NSH app is with its imports naming `nsgo`, and styled with Tailwind CSS classes: the package embeds its sources, which the tool compiles ahead into its builds, and `go run` and `go test` compile as the app starts, with no Node. `examples/tsx` is one.
 
 ```go
 //go:embed *.tsx
@@ -102,6 +102,8 @@ function App() {
 mount(App);
 ```
 
+TSX imports `base`'s components from `nsgo/base`, and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props. A `tsconfig.json` extending `.nsgo/tsconfig.json` lets `go tool nsgo check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
+
 Beside the package, `nsgo.yaml` names the app and its targets:
 
 ```yaml
@@ -110,6 +112,7 @@ id: dev.oneo.nsgo.hello
 version: 0.1.0
 build_number: 1         # CFBundleVersion and Android's versionCode; else from version
 # appearance: dark      # light or dark whatever the system's
+# theme: theme.json     # a TSX app's theme: NSGo's or a shadcn/ui one
 window: { width: 420, height: 560 }
 icon:
   apple: assets/AppIcon.icon  # macOS and iOS, or an .icns for macOS
@@ -137,13 +140,13 @@ Add the tool to your module once; `go tool nsgo` then runs it without installing
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` runs the app once, or with `dev.hot_reload` rebuilds and restarts it on each change. A failed build shows over the running app; Command or Control+R in the app, or `r` and Return in the terminal, builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
+`go tool nsgo dev` runs the app once, or with `dev.hot_reload` rebuilds and restarts it on each change; a change of TSX alone updates the running app in place, keeping the state of what did not change. A failed build shows over the running app; Command or Control+R in the app, or `r` and Return in the terminal, builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
 
 `go tool nsgo build` writes a stripped release package per target: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site. `-run` starts the one built for this machine, or installs it on an iPhone, simulator or Android device, which `-device` picks.
 
 `-embed` packages the app for an iOS or Android app of your own instead: an XCFramework (of dynamic frameworks with `-dynamic`) or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`. The host is the page's, or the module `nsgo.yaml`'s `web.host` names. See `examples/embed-*`.
 
-`go tool nsgo test` runs the app's tests with a line per test; `-run` filters them, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
+`go tool nsgo test` runs the app's tests, its `*.test.tsx` among them, with a line per test; `-run` filters them, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
 
 Flags replace the `nsgo.yaml` values they name, such as `-target`, `-version` or `-output`; `dev` and `build` take `-device` for an iPhone, simulator or Android device, `build` `-team` to sign the iPhone's package, and `dev` `-port` for its server. `-h` lists every flag.
 

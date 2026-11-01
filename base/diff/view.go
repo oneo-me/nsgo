@@ -187,10 +187,13 @@ type DiffView struct {
 	StyleFunc  func() core.Style
 	Ref        *Ref
 	TestID     string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 
 	// OnChange receives the texts after a change was reverted or kept.
-	OnChange          func(old, new string)
-	OnLineNumberPress func(side Side, line int)
+	OnChange          func(Change)
+	OnLineNumberPress func(Line)
 	// OnLineSelectionChange receives the lines selected on the numbers, nil
 	// for none: a press selects a line, a Shift-press extends to it, and a
 	// mouse drag over the numbers selects those it goes over.
@@ -344,7 +347,7 @@ func (p DiffView) Render(cx *core.Scope) core.Node {
 	return core.View{
 		Class:     p.Class,
 		Style:     merge(core.Style{Overflow: core.Hidden, FontFamily: v.font.Family, FontSize: v.font.Size}, p.Style),
-		StyleFunc: p.StyleFunc, TestID: p.TestID,
+		StyleFunc: p.StyleFunc, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip,
 		Children: []core.Node{core.Scroll{
 			Ref: v.vs, TestID: "diff-scroll",
 			Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
@@ -1036,7 +1039,7 @@ func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 				press(ev)
 			}
 			if line := r.lineOf(sd); line >= 0 && v.p.OnLineNumberPress != nil {
-				v.p.OnLineNumberPress(sd, v.number(sd, line))
+				v.p.OnLineNumberPress(Line{Side: sd, Line: v.number(sd, line)})
 			}
 		},
 	}
@@ -1514,21 +1517,34 @@ func (r *Ref) GoToHunk(i int) {
 }
 
 // NextHunk scrolls the next change to the top and returns its index,
-// after the last the first; -1 for none. It goes on from the change gone
-// to while the view stays there, else from the top of the view.
-func (r *Ref) NextHunk() int { return r.step(1) }
+// after the last the first; false without changes. It goes on from the
+// change gone to while the view stays there, else from the top of the
+// view.
+func (r *Ref) NextHunk() (int, bool) { return found(r.step(1)) }
 
 // PreviousHunk scrolls the previous change to the top and returns its
 // index, before the first the last.
-func (r *Ref) PreviousHunk() int { return r.step(-1) }
+func (r *Ref) PreviousHunk() (int, bool) { return found(r.step(-1)) }
 
 // CurrentHunk returns the change gone to while the view stays there,
-// else the one at the top of the view or the first in view; -1 for none.
-func (r *Ref) CurrentHunk() int {
+// else the one at the top of the view or the first in view; false for
+// none in view.
+func (r *Ref) CurrentHunk() (int, bool) {
 	if r.v == nil {
-		return -1
+		return -1, false
 	}
-	return r.v.currentHunk()
+	return found(r.v.currentHunk())
+}
+
+func found(i int) (int, bool) { return i, i >= 0 }
+
+// Change is the texts after a change was reverted or kept.
+type Change struct{ OldValue, NewValue string }
+
+// Line is a line number pressed: Line of Side, from 0.
+type Line struct {
+	Side Side
+	Line int
 }
 
 func (r *Ref) step(d int) int {
@@ -1571,7 +1587,7 @@ func (r *Ref) RevertHunk(i int) {
 	if v := r.v; v != nil && i >= 0 && i < len(v.m.hunks) && v.p.OnChange != nil {
 		o, n := v.m.revert(v.m.hunks[i])
 		v.load(o, n, "")
-		v.p.OnChange(o, n)
+		v.p.OnChange(Change{OldValue: o, NewValue: n})
 	}
 }
 
@@ -1581,7 +1597,7 @@ func (r *Ref) AcceptHunk(i int) {
 	if v := r.v; v != nil && i >= 0 && i < len(v.m.hunks) && v.p.OnChange != nil {
 		o, n := v.m.accept(v.m.hunks[i])
 		v.load(o, n, "")
-		v.p.OnChange(o, n)
+		v.p.OnChange(Change{OldValue: o, NewValue: n})
 	}
 }
 

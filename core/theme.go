@@ -3,6 +3,10 @@ package core
 import (
 	"fmt"
 	"maps"
+	"regexp"
+	"slices"
+	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 )
@@ -57,6 +61,18 @@ func (p *Palette) Color(name string) (Color, bool) {
 	return c, ok
 }
 
+// ColorNames are the names Color takes: the roles' and Colors', sorted.
+func (p *Palette) ColorNames() []string {
+	names := slices.Collect(maps.Keys(paletteRoles))
+	for n := range p.Colors {
+		if paletteRoles[n] == nil {
+			names = append(names, n)
+		}
+	}
+	slices.Sort(names)
+	return names
+}
+
 // SetColor sets the role named name, as Color names it.
 func (p *Palette) SetColor(name string, c Color) {
 	if f := paletteRoles[name]; f != nil {
@@ -67,7 +83,15 @@ func (p *Palette) SetColor(name string, c Color) {
 		p.Colors = map[string]Color{}
 	}
 	p.Colors[name] = c
+	if _, known := themeColors.LoadOrStore(name, struct{}{}); !known {
+		// Classes parsed before it was a color name read it now.
+		classCache.Clear()
+	}
 }
+
+// themeColors are the names of colors themes added to their palettes,
+// which classes name: bg-inset, text-muted-foreground.
+var themeColors sync.Map
 
 // clone returns p with a Colors of its own.
 func (p Palette) clone() Palette {
@@ -83,12 +107,20 @@ type Theme struct {
 	Light, Dark Palette
 	Radius      Points
 	Sans, Mono  string
+	// Tokens are the theme's design tokens that are no colors, by name:
+	// lengths ("12px") and font families, as a shadcn/ui theme file's
+	// theme section names them.
+	Tokens map[string]string
+	// Tailwind is the Tailwind theme the subtree's classes resolve
+	// against; nil is Tailwind's default.
+	Tailwind *Tailwind
 }
 
 // Clone returns a copy of t that shares nothing with it.
 func (t *Theme) Clone() *Theme {
 	c := *t
 	c.Light, c.Dark = t.Light.clone(), t.Dark.clone()
+	c.Tokens = maps.Clone(t.Tokens)
 	return &c
 }
 
@@ -96,7 +128,7 @@ func (t *Theme) Clone() *Theme {
 // sets one: warm neutrals with a terracotta accent, lifted in dark.
 func DefaultTheme() *Theme {
 	text, dark := RGB(0x33332f), RGB(0xeeeae2)
-	return &Theme{
+	t := &Theme{
 		Light: Palette{
 			Background: RGB(0xfcfbf9), Surface: RGB(0xfefefd), SurfaceHover: RGB(0xeceae4), SurfacePressed: RGB(0xd9d7d2),
 			Border: RGB(0xdeded5), Text: text, TextMuted: RGB(0x72726a),
@@ -113,6 +145,44 @@ func DefaultTheme() *Theme {
 		},
 		Radius: 8,
 	}
+	for name, c := range shadcnLight {
+		if paletteRoles[name] == nil {
+			t.Light.SetColor(name, c)
+		}
+	}
+	for name, c := range shadcnDark {
+		if paletteRoles[name] == nil {
+			t.Dark.SetColor(name, c)
+		}
+	}
+	return t
+}
+
+// shadcnLight and shadcnDark are shadcn/ui's neutral tokens, NSH's
+// defaults, which a theme file replaces. Those that name a role of
+// Onevra's (background, border, accent) keep Onevra's.
+var shadcnLight = map[string]Color{
+	"foreground": RGB(0x0a0a0a), "card": RGB(0xffffff), "card-foreground": RGB(0x0a0a0a), "popover": RGB(0xffffff),
+	"popover-foreground": RGB(0x0a0a0a), "primary": RGB(0x171717), "primary-foreground": RGB(0xfafafa),
+	"secondary": RGB(0xf5f5f5), "secondary-foreground": RGB(0x171717), "muted": RGB(0xf5f5f5),
+	"muted-foreground": RGB(0x737373), "accent-foreground": RGB(0x171717), "destructive": RGB(0xe7000b),
+	"input": RGB(0xe5e5e5), "ring": RGB(0xa1a1a1), "chart-1": RGB(0xf54900), "chart-2": RGB(0x009689),
+	"chart-3": RGB(0x104e64), "chart-4": RGB(0xffb900), "chart-5": RGB(0xfe9a00), "sidebar": RGB(0xfafafa),
+	"sidebar-foreground": RGB(0x0a0a0a), "sidebar-primary": RGB(0x171717), "sidebar-primary-foreground": RGB(0xfafafa),
+	"sidebar-accent": RGB(0xf5f5f5), "sidebar-accent-foreground": RGB(0x171717), "sidebar-border": RGB(0xe5e5e5),
+	"sidebar-ring": RGB(0xa1a1a1),
+}
+
+var shadcnDark = map[string]Color{
+	"foreground": RGB(0xfafafa), "card": RGB(0x171717), "card-foreground": RGB(0xfafafa), "popover": RGB(0x171717),
+	"popover-foreground": RGB(0xfafafa), "primary": RGB(0xe5e5e5), "primary-foreground": RGB(0x171717),
+	"secondary": RGB(0x262626), "secondary-foreground": RGB(0xfafafa), "muted": RGB(0x262626),
+	"muted-foreground": RGB(0xa1a1a1), "accent-foreground": RGB(0xfafafa), "destructive": RGB(0xff6467),
+	"input": RGBA(0xffffff, 0.15), "ring": RGB(0x737373), "chart-1": RGB(0x1447e6), "chart-2": RGB(0x00bc7d),
+	"chart-3": RGB(0xfe9a00), "chart-4": RGB(0xad46ff), "chart-5": RGB(0xff2056), "sidebar": RGB(0x171717),
+	"sidebar-foreground": RGB(0xfafafa), "sidebar-primary": RGB(0x1447e6), "sidebar-primary-foreground": RGB(0xfafafa),
+	"sidebar-accent": RGB(0x262626), "sidebar-accent-foreground": RGB(0xfafafa), "sidebar-border": RGBA(0xffffff, 0.1),
+	"sidebar-ring": RGB(0x737373),
 }
 
 // ParseTheme reads a theme file over DefaultTheme: radius, sans and
@@ -125,13 +195,25 @@ func DefaultTheme() *Theme {
 //	  inset: "#f2efea"
 //	dark:
 //	  accent: "#ed986e"
+//
+// It reads a shadcn/ui theme file too, as NSH's apps name theirs: the
+// CSS variables of cssVars' theme, light and dark sections, where a
+// value may name another (var(--brand)) and dark's go over light's. A
+// variable that is a color is a role of the palettes; the others are
+// Tokens, radius and font-sans and font-mono setting Radius, Sans and
+// Mono too.
 func ParseTheme(data []byte) (*Theme, error) {
 	var f struct {
-		Radius *float32          `yaml:"radius"`
-		Sans   string            `yaml:"sans"`
-		Mono   string            `yaml:"mono"`
-		Light  map[string]string `yaml:"light"`
-		Dark   map[string]string `yaml:"dark"`
+		Radius  *float32          `yaml:"radius"`
+		Sans    string            `yaml:"sans"`
+		Mono    string            `yaml:"mono"`
+		Light   map[string]string `yaml:"light"`
+		Dark    map[string]string `yaml:"dark"`
+		CSSVars struct {
+			Theme map[string]string `yaml:"theme"`
+			Light map[string]string `yaml:"light"`
+			Dark  map[string]string `yaml:"dark"`
+		} `yaml:"cssVars"`
 	}
 	if err := yaml.Unmarshal(data, &f); err != nil {
 		return nil, fmt.Errorf("core: theme: %w", err)
@@ -159,7 +241,85 @@ func ParseTheme(data []byte) (*Theme, error) {
 			m.p.SetColor(name, c)
 		}
 	}
+	if v := f.CSSVars; len(v.Theme)+len(v.Light)+len(v.Dark) > 0 {
+		if err := t.readVars(v.Theme, v.Light, v.Dark); err != nil {
+			return nil, err
+		}
+	}
 	return t, nil
+}
+
+// readVars sets t from a shadcn/ui theme's CSS variables.
+func (t *Theme) readVars(theme, light, dark map[string]string) error {
+	lightVars := maps.Clone(theme)
+	if lightVars == nil {
+		lightVars = map[string]string{}
+	}
+	maps.Copy(lightVars, light)
+	darkVars := maps.Clone(lightVars)
+	maps.Copy(darkVars, dark)
+	for _, a := range []struct {
+		p    *Palette
+		vars map[string]string
+	}{{&t.Light, lightVars}, {&t.Dark, darkVars}} {
+		for name := range a.vars {
+			v, err := resolveVar(a.vars, name, 0)
+			if err != nil {
+				return fmt.Errorf("core: theme: --%s: %w", name, err)
+			}
+			if c, err := ParseColor(v); err == nil {
+				a.p.SetColor(name, c)
+				continue
+			}
+			if a.p == &t.Light {
+				if t.Tokens == nil {
+					t.Tokens = map[string]string{}
+				}
+				t.Tokens[name] = v
+			}
+		}
+	}
+	if r, ok := t.Tokens["radius"]; ok {
+		var px float32
+		if _, err := fmt.Sscanf(strings.TrimSuffix(r, "px"), "%g", &px); err == nil {
+			t.Radius = Points(px)
+		}
+	}
+	if s, ok := t.Tokens["font-sans"]; ok {
+		t.Sans = s
+	}
+	if m, ok := t.Tokens["font-mono"]; ok {
+		t.Mono = m
+	}
+	return nil
+}
+
+// varRef finds var(--name) and var(--name, fallback).
+var varRef = regexp.MustCompile(`var\(--([A-Za-z0-9_-]+)(?:\s*,\s*([^()]*))?\)`)
+
+// resolveVar is variable name's value with the variables it names
+// replaced by theirs.
+func resolveVar(vars map[string]string, name string, depth int) (string, error) {
+	if depth > 16 {
+		return "", fmt.Errorf("variables name each other")
+	}
+	v, ok := vars[name]
+	if !ok {
+		return "", fmt.Errorf("no variable --%s", name)
+	}
+	var err error
+	out := varRef.ReplaceAllStringFunc(v, func(m string) string {
+		g := varRef.FindStringSubmatch(m)
+		r, e := resolveVar(vars, g[1], depth+1)
+		if e != nil {
+			if g[2] != "" {
+				return g[2]
+			}
+			err = e
+		}
+		return r
+	})
+	return out, err
 }
 
 // scopeTheme and scopeAppearance key the scope values SetTheme and

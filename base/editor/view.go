@@ -76,7 +76,7 @@ func (p Editor) Render(cx *core.Scope) core.Node {
 		Class:     p.Class,
 		Style:     merge(core.Style{Overflow: core.Hidden, FontFamily: e.font.Family, FontSize: e.font.Size}, p.Style),
 		StyleFunc: styleFunc,
-		TestID:    p.TestID,
+		TestID:    p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip,
 		Children: []core.Node{
 			core.Scroll{
 				Ref: e.vs, TestID: "editor-scroll",
@@ -533,7 +533,7 @@ func (e *ed) rowSpans(row int) []core.Span {
 		if m.from.line > d.line {
 			break
 		}
-		if m.to.line < d.line || m.diag == nil && m.deco.Style.IsZero() && m.deco.Class == "" && m.deco.Kind == "" {
+		if m.to.line < d.line || m.diag == nil && m.deco.Style.IsZero() && m.deco.Class == "" && m.deco.Token == "" {
 			continue
 		}
 		marks = append(marks, m)
@@ -565,7 +565,7 @@ func (e *ed) rowSpans(row int) []core.Span {
 			if (from.line < d.line || from.col <= a) && (to.line > d.line || b <= to.col) {
 				switch {
 				case m.deco != nil:
-					if k := syntax.KindNamed(m.deco.Kind); k != syntax.Plain {
+					if k := syntax.KindNamed(m.deco.Token); k != syntax.Plain {
 						style = palette[k]
 					}
 					style = merge(style, m.deco.Style)
@@ -613,10 +613,10 @@ func (e *ed) diagStyle(d *Diagnostic) core.Style {
 	default:
 		st = s().DiagnosticHint
 	}
-	if d.Unnecessary {
+	if d.Has(TagUnnecessary) {
 		st = merge(st, s().UnnecessaryText)
 	}
-	if d.Deprecated {
+	if d.Has(TagDeprecated) {
 		st = merge(st, s().DeprecatedText)
 	}
 	return st
@@ -626,10 +626,10 @@ func (e *ed) diagClass(d *Diagnostic) string {
 	c := &e.p.Classes
 	class := [...]string{SeverityError: c.DiagnosticError, SeverityWarning: c.DiagnosticWarning, SeverityInfo: c.DiagnosticInfo,
 		SeverityHint: c.DiagnosticHint}[min(d.Severity, SeverityHint)]
-	if d.Unnecessary {
+	if d.Has(TagUnnecessary) {
 		class = joinClasses(class, c.UnnecessaryText)
 	}
-	if d.Deprecated {
+	if d.Has(TagDeprecated) {
 		class = joinClasses(class, c.DeprecatedText)
 	}
 	return class
@@ -1128,9 +1128,9 @@ func (r *Ref) GoToLine(line int) {
 
 // CaretBounds returns the primary caret's box; ok is false before the
 // editor is laid out.
-func (r *Ref) CaretBounds() (b Box, ok bool) {
+func (r *Ref) CaretBounds() (b Bounds, ok bool) {
 	if r.e == nil {
-		return Box{}, false
+		return Bounds{}, false
 	}
 	h := r.e.st.primary().head
 	return r.e.boxOf(rect{x: r.e.xOf(h), y: float32(r.e.st.disp.rowOf(h)) * r.e.lh, w: 1, h: r.e.lh})

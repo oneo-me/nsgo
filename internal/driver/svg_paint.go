@@ -50,6 +50,9 @@ func parseSVGColor(v string) (c Color, ok bool, err error) {
 		return c, err == nil, err
 	}
 	lower := strings.ToLower(v)
+	if open := strings.IndexByte(lower, '('); open > 0 && strings.HasSuffix(lower, ")") && strings.TrimSpace(lower[:open]) == "color-mix" {
+		return cssColorMix(lower[open+1 : len(lower)-1])
+	}
 	if open := strings.IndexByte(lower, '('); open > 0 && strings.HasSuffix(lower, ")") {
 		args := strings.FieldsFunc(lower[open+1:len(lower)-1], func(r rune) bool {
 			return r == ',' || r == '/' || r == ' ' || r == '\t' || r == '\n' || r == '\r'
@@ -59,6 +62,10 @@ func parseSVGColor(v string) (c Color, ok bool, err error) {
 			return cssRGB(args)
 		case "hsl", "hsla":
 			return cssHSL(args)
+		case "oklab":
+			return cssOklab(args, ColorSpaceOklab)
+		case "oklch":
+			return cssOklab(args, ColorSpaceOklch)
 		}
 		return 0, false, nil
 	}
@@ -773,4 +780,115 @@ func ParseColor(s string) (Color, error) {
 		err = fmt.Errorf("driver: %q is no CSS color", s)
 	}
 	return c, err
+}
+
+// cssOklab reads oklab(L a b [/ alpha]) or oklch(L C H [/ alpha]): L a
+// number from 0 to 1 or a percentage, a and b or C numbers (a percentage
+// of 0.4), H in degrees.
+func cssOklab(args []string, space ColorSpace) (Color, bool, error) {
+	if len(args) != 3 && len(args) != 4 {
+		return 0, false, nil
+	}
+	var v [3]float64
+	for i := range 3 {
+		a := strings.TrimSuffix(args[i], "deg")
+		pct := strings.HasSuffix(a, "%")
+		n, err := strconv.ParseFloat(strings.TrimSuffix(a, "%"), 64)
+		if err != nil {
+			if a == "none" {
+				continue
+			}
+			return 0, false, nil
+		}
+		if pct {
+			n /= 100
+			if i > 0 {
+				n *= 0.4
+			}
+		}
+		v[i] = n
+	}
+	alpha := 1.0
+	if len(args) == 4 {
+		a, ok := cssChannel(args[3], 1)
+		if !ok {
+			return 0, false, nil
+		}
+		alpha = a
+	}
+	r, g, b := fromSpace(v, space)
+	clamp := func(x float64) float64 { return math.Min(math.Max(x, 0), 1) }
+	return packColor([4]float64{clamp(r), clamp(g), clamp(b), clamp(alpha)}), true, nil
+}
+
+// cssColorMix reads color-mix()'s arguments: "in <space>, <color> [p%],
+// <color> [p%]", as CSS Color 5 mixes them.
+func cssColorMix(args string) (Color, bool, error) {
+	var parts []string
+	depth, start := 0, 0
+	for i, c := range args {
+		switch c {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ',':
+			if depth == 0 {
+				parts = append(parts, strings.TrimSpace(args[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	parts = append(parts, strings.TrimSpace(args[start:]))
+	if len(parts) != 3 || !strings.HasPrefix(parts[0], "in ") {
+		return 0, false, nil
+	}
+	method := strings.Fields(parts[0])
+	space := map[string]ColorSpace{"srgb": ColorSpaceSRGB, "srgb-linear": ColorSpaceLinearSRGB,
+		"oklab": ColorSpaceOklab, "oklch": ColorSpaceOklch, "xyz": ColorSpaceLinearSRGB,
+		"xyz-d65": ColorSpaceLinearSRGB, "hsl": ColorSpaceSRGB, "hwb": ColorSpaceSRGB, "lab": ColorSpaceOklab,
+		"lch": ColorSpaceOklch}
+	sp, ok := space[method[1]]
+	if !ok {
+		return 0, false, nil
+	}
+	read := func(p string) (Color, float64, bool, bool) {
+		pct, has := 0.0, false
+		if i := strings.LastIndexByte(p, ' '); i > 0 && strings.HasSuffix(p, "%") && !strings.HasSuffix(p, ")") {
+			n, err := strconv.ParseFloat(strings.TrimSuffix(p[i+1:], "%"), 64)
+			if err != nil {
+				return 0, 0, false, false
+			}
+			pct, has, p = n/100, true, strings.TrimSpace(p[:i])
+		}
+		c, ok, err := parseSVGColor(p)
+		if err != nil || !ok {
+			return 0, 0, false, false
+		}
+		return c, pct, has, true
+	}
+	c1, p1, has1, ok1 := read(parts[1])
+	c2, p2, has2, ok2 := read(parts[2])
+	if !ok1 || !ok2 {
+		return 0, false, nil
+	}
+	switch {
+	case !has1 && !has2:
+		p1, p2 = 0.5, 0.5
+	case !has2:
+		p2 = 1 - p1
+	case !has1:
+		p1 = 1 - p2
+	}
+	sum := p1 + p2
+	if sum <= 0 {
+		return 0, false, nil
+	}
+	c := MixColors(c1, c2, float32(p2/sum), sp)
+	if sum < 1 {
+		_, _, _, a := c.Components()
+		r, g, b, _ := c.Components()
+		c = packColor([4]float64{r, g, b, a * sum})
+	}
+	return c, true, nil
 }

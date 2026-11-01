@@ -74,6 +74,9 @@ const (
 	msgCarets = 12
 	// msgWantFrame asks for msgFrame at the next Choreographer frame.
 	msgWantFrame = 13
+	// msgFontData is a font the app registers as it runs, its bytes with
+	// its face's family, weight and slant, before the text that uses it.
+	msgFontData = 14
 
 	// Java to Go.
 	msgStart       = 1
@@ -1411,6 +1414,28 @@ func (s *surface) sendFonts(paths []string) {
 			w.flags(f.face.Italic)
 		}
 	})
+}
+
+// RegisterFont implements driver.FontRegistrar: Java makes a Typeface of
+// it before it prepares the text sent after it.
+func (s *surface) RegisterFont(data []byte) error {
+	faces, err := fontfile.Describe(data)
+	if err != nil {
+		return err
+	}
+	if len(faces) == 0 {
+		return errors.New("no faces")
+	}
+	// Typeface reads a collection's first face.
+	f := faces[0]
+	s.send(msgFontData, func(w *writer) {
+		w.str(f.Family)
+		w.u16(uint16(f.Weight))
+		w.flags(f.Italic)
+		w.u32(uint32(len(data)))
+		w.buf = append(w.buf, data...)
+	})
+	return nil
 }
 
 // loadCanvasImages loads the images d draws that no canvas asked for

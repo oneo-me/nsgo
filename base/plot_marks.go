@@ -161,8 +161,9 @@ func reach(points []core.Point, curve PlotCurve, height float32) float32 {
 
 // markLayer is a mark's view: it fills the plot, takes no pointer (the
 // plot follows it) and holds the mark's paint style.
-func markLayer(p part, children ...core.Node) core.Node {
+func markLayer(p part, testID string, children ...core.Node) core.Node {
 	return core.View{
+		TestID:        testID,
 		Class:         p.class,
 		Style:         core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)}.Merge(p.style),
 		StyleFunc:     p.fn,
@@ -230,6 +231,7 @@ type PlotLine struct {
 	Class     string
 	Style     core.Style
 	StyleFunc func() core.Style
+	TestID    string
 }
 
 // Render implements core.Node.
@@ -284,7 +286,7 @@ func (l PlotLine) Render(cx *core.Scope) core.Node {
 			}
 		}))
 	}
-	return markLayer(part{l.Class, l.Style, l.StyleFunc}, children...)
+	return markLayer(part{l.Class, l.Style, l.StyleFunc}, l.TestID, children...)
 }
 
 // PlotArea is a series of a Plot drawn as the region between its line and
@@ -324,6 +326,7 @@ type PlotArea struct {
 	Class     string
 	Style     core.Style
 	StyleFunc func() core.Style
+	TestID    string
 }
 
 // Render implements core.Node.
@@ -413,7 +416,7 @@ func (a PlotArea) Render(cx *core.Scope) core.Node {
 		trace(d, points, a.Curve)
 		d.Stroke()
 	}))
-	return markLayer(part{a.Class, a.Style, a.StyleFunc}, children...)
+	return markLayer(part{a.Class, a.Style, a.StyleFunc}, a.TestID, children...)
 }
 
 // PlotGrid is lines across a Plot, as gpui-base's Grid: vertical at the
@@ -427,6 +430,7 @@ type PlotGrid struct {
 	Class     string
 	Style     core.Style
 	StyleFunc func() core.Style
+	TestID    string
 }
 
 // Render implements core.Node.
@@ -438,7 +442,7 @@ func (g PlotGrid) Render(cx *core.Scope) core.Node {
 		}
 		return f()
 	}
-	return markLayer(part{g.Class, g.Style, g.StyleFunc}, markCanvas(plot, func() float32 { return strokeRoom }, part{},
+	return markLayer(part{g.Class, g.Style, g.StyleFunc}, g.TestID, markCanvas(plot, func() float32 { return strokeRoom }, part{},
 		func(d *core.Drawing, plot *plotState, _ float32) {
 			d.StrokeFromView(core.PaintCurrentColor).LineWidthFromView().LineDashFromView().BeginPath()
 			if plot == nil {

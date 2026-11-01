@@ -16,9 +16,17 @@ The server finds the app through `NSGO_DEV_SERVER`, which the simulator gets as 
 
 The web target is served from the same server; its page shows the overlay itself and loads each build. `r` and Return in the terminal build again too. Without hot reload, a run ends with the app; a failed first build ends it. `-release` builds as `nsgo build` does, keeping `dev.fps`'s monitor, for measuring. `-trace` builds with `-X nsgo.devTrace=1`: the dev client sets `engine.Trace` for every engine of the process and posts each commit to `/_nsgo/trace`, printed as `nsgo test -trace` prints a batch (`driver.WriteTrace`), labeled by its number, with the app's output. The web page's Go finds the server at the page's origin and leaves build failures to the page. `-device` picks a simulator by name or UDID, booting it, or an adb serial or an emulator's AVD name.
 
+## TSX apps
+
+The tool finds a package's TSX entries in its `compiler.App(src, "App.tsx")` calls (`bundle.go`), compiles each with `tsx/compiler` from the app's directory and adds the bundles to the package with a file calling `compiler.Bundled`, through `go -overlay`, built with the `nsgo_bundled` tag, which leaves the compiler out. The overlay names the package's directory as `$PWD` spells it and by its real path, since `go` names the files by either. `nsgo dev` compiles hot bundles ([TSX](tsx.md#developing)) and watches the files they compile from apart from the Go ones: a change of them alone compiles the TSX again and sends `bundle <entry>` over `/_nsgo/events`, which `/_nsgo/bundle?entry=` serves, with no Go build; a failed compile shows as a failed build does.
+
+## Checking
+
+`nsgo check` (`check.go`) runs `go vet ./...`, writes the declarations of the modules the app's TSX imports to `.nsgo/types`, with `.nsgo/tsconfig.json`, and runs TypeScript 7's checker (`tsgo`, a pinned version of `github.com/microsoft/typescript-go` that `go run` builds and caches) on the app's `tsconfig.json`, which extends it. The declarations come from the app's own program: the tool builds its main package with a file, added through the overlay, whose `init` runs after the package's others, so after every `tsx.Register`, writes them and exits before `main`. It checks with `go list` that the file is in the package before it builds, so the app itself never runs.
+
 ## Tests
 
-`nsgo test` (`test.go`) runs `go test -json` and prints a line per test, a failure's output under it, a tally, and with `-junit` a JUnit report, a suite per package. `-run` filters; `-trace` sets `NSGO_TEST_TRACE`, under which `nsgotest` prints each batch under its step with its items and the commit's time.
+`nsgo test` (`test.go`) runs `go test -json` and prints a line per test, with a test running the package's `*.test.tsx` files (`tsxtest.Run`) added through the overlay when it has any, a failure's output under it, a tally, and with `-junit` a JUnit report, a suite per package. `-run` filters; `-trace` sets `NSGO_TEST_TRACE`, under which `nsgotest` prints each batch under its step with its items and the commit's time.
 
 `-target` runs the tests on a platform, a process per test ([testing](testing.md#on-a-platform)): macOS, Windows and Linux on this machine, the web in a headless Chrome, Chromium or Edge it finds (or `NSGO_BROWSER`) over the DevTools protocol (`cdp.go`, on `x/net/websocket`), the simulator through `simctl launch`, and Android through `am start` with the test in an intent extra and its output read back from the device's log.
 

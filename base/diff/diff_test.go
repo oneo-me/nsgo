@@ -116,7 +116,7 @@ func TestDiffViewShowsChangesAndSeparators(t *testing.T) {
 		return DiffView{
 			Ref: ref, OldValue: func() string { return oldText }, NewValue: func() string { return newText },
 			OnStatsChange: func(s Stats) { stats = s },
-			OnChange:      func(o, n string) {},
+			OnChange:      func(Change) {},
 			Style:         core.Style{Width: core.Pt(600), Height: core.Pt(400)},
 		}
 	})
@@ -270,21 +270,21 @@ func TestDiffViewDrawsTheAppsSeparatorsAndHeaders(t *testing.T) {
 	if app.Exists("text:sep 1 of 3") {
 		t.Error("the gap still shows a separator after expanding all of it")
 	}
-	if h := ref.CurrentHunk(); h != 0 {
+	if h := hunkOf(ref.CurrentHunk()); h != 0 {
 		t.Errorf("current change %d at the top, want 0", h)
 	}
 	// From the top, the first change below it; then on from the change
 	// gone to.
-	if h := ref.NextHunk(); h != 0 {
+	if h := hunkOf(ref.NextHunk()); h != 0 {
 		t.Errorf("next change from the top %d, want 0", h)
 	}
-	if h := ref.NextHunk(); h != 1 || ref.CurrentHunk() != 1 {
-		t.Errorf("next change %d, current %d, want 1", h, ref.CurrentHunk())
+	if h := hunkOf(ref.NextHunk()); h != 1 || hunkOf(ref.CurrentHunk()) != 1 {
+		t.Errorf("next change %d, current %d, want 1", h, hunkOf(ref.CurrentHunk()))
 	}
-	if h := ref.NextHunk(); h != 0 {
+	if h := hunkOf(ref.NextHunk()); h != 0 {
 		t.Errorf("after the last change %d, want the first", h)
 	}
-	if h := ref.PreviousHunk(); h != 1 {
+	if h := hunkOf(ref.PreviousHunk()); h != 1 {
 		t.Errorf("before the first change %d, want the last", h)
 	}
 }
@@ -318,4 +318,12 @@ func TestDiffViewDrawsTheAppsFileHeaders(t *testing.T) {
 	if !app.Exists("text:1 new.txt open") || !app.Exists("text:two") || len(toggled) != 2 {
 		t.Errorf("expanding: %q, toggles %d", app.Texts(), len(toggled))
 	}
+}
+
+// hunkOf is a change's index, -1 for none.
+func hunkOf(i int, ok bool) int {
+	if !ok {
+		return -1
+	}
+	return i
 }

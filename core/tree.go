@@ -77,6 +77,9 @@ type Tree struct {
 	boundaries []*node
 	canvases   []*node
 	measures   measureCache
+	// fonts counts the fonts registered as the app runs: text prepared
+	// with fewer is prepared again.
+	fonts uint32
 	// edgeBars are the views that are bars over a scroll view's side, and
 	// edgeScrolls the scroll views they last reached into.
 	edgeBars, edgeScrolls []*node
@@ -193,7 +196,7 @@ type handlers struct {
 	press, longPress, pressDown, pressUp func(PressEvent)
 	hoverIn, hoverOut, focus, blur       func()
 	hoverMove                            func(HoverEvent)
-	touch                                func(TouchEvent)
+	touch, touchCapture                  func(TouchEvent)
 	contextMenu                          func(ContextMenuEvent)
 	change, submit                       func(string)
 	scroll, pressOutside, mouseMove      func(Point)
@@ -211,6 +214,8 @@ type handlers struct {
 }
 
 type textNode struct {
+	// fonts is the tree's fonts it was prepared with.
+	fonts     uint32
 	content   string
 	maxLines  int
 	ellipsize EllipsizeMode
@@ -1044,7 +1049,7 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 func (t *Tree) setViewParts(n *node, v View) {
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, pressDown: v.OnPressDown, pressUp: v.OnPressUp,
 		hoverIn: v.OnHoverIn, hoverOut: v.OnHoverOut, hoverMove: v.OnHoverMove, mouseMove: v.OnMouseMove,
-		layout: v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch,
+		layout: v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
 		pan: v.OnPan, pinch: v.OnPinch, rotation: v.OnRotation,
 		fileEnter: v.OnFileDragEnter, fileLeave: v.OnFileDragLeave, fileDrop: v.OnFileDrop,
 		focus: v.OnFocus, blur: v.OnBlur}
@@ -1122,7 +1127,7 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	n := t.newNode(driver.KindText, parent, cx)
 	t.bindClasses(cx, n, v.Class, v.ClassFunc)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
-	n.h = handlers{press: v.OnPress, layout: v.OnLayout}
+	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
 		Selectable: v.Selectable}
 	if n.props.Role == RoleNone {
@@ -1194,7 +1199,7 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 					own = old.cls.base
 				}
 				same = spans[i].Content == old.content && (old.cls == nil) == (spans[i].Class == "") &&
-					(old.cls == nil || old.cls.list == parseClasses(spans[i].Class)) && reflect.DeepEqual(spans[i].Style, own)
+					(old.cls == nil || old.cls.list.class == spans[i].Class) && reflect.DeepEqual(spans[i].Style, own)
 			}
 			if same {
 				return
@@ -1270,7 +1275,7 @@ func (t *Tree) mountScroll(cx *Scope, parent *node, v Scroll) {
 	t.bindScrollSpec(cx, n, scrollSpec{behavior: v.Behavior, behaviorFunc: v.BehaviorFunc, offset: v.ContentOffset,
 		refreshing: v.Refreshing, onRefresh: v.OnRefresh, onScroll: v.OnScroll, throttle: v.ScrollEventThrottle,
 		onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
-		onMomentum: v.OnMomentumStart, onMomentumEnd: v.OnMomentumEnd,
+		onMomentum: v.OnMomentumStart, onMomentumEnd: v.OnMomentumEnd, onScrollEnd: v.OnScrollEnd,
 		minZoom: v.MinZoomScale, maxZoom: v.MaxZoomScale, zoom: v.ZoomScale, zoomFunc: v.ZoomScaleFunc,
 		noBouncesZoom: v.NoBouncesZoom, noPinch: v.NoPinchZoom, centerContent: v.CenterContent})
 	t.bindScroll(cx, n, v.OffsetValues, v.PullValue)
@@ -1593,7 +1598,8 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		if h.loadError != nil {
 			t.within(n.owner, func() { h.loadError(errors.New(ev.Text)) })
 		}
-	case driver.EventScrollDragStart, driver.EventScrollDragEnd, driver.EventMomentumStart, driver.EventMomentumEnd, driver.EventRefresh:
+	case driver.EventScrollDragStart, driver.EventScrollDragEnd, driver.EventMomentumStart, driver.EventMomentumEnd,
+		driver.EventScrollEnd, driver.EventRefresh:
 		if n.scroll != nil {
 			t.scrolled(n, ev)
 			t.dispatchScroll(n, ev)

@@ -270,8 +270,8 @@ var clipOverflow = func() func() string {
 
 // scrollEvent reports kind on scroll view v at its offset and zoom.
 func (s *surface) scrollEvent(v *view, kind driver.EventKind) {
-	if kind == driver.EventScrollDragEnd || kind == driver.EventMomentumEnd {
-		// At rest, unless a glide follows, which scrolls on.
+	if kind == driver.EventScrollEnd {
+		// At rest: the values that snap as a scroll ends settle.
 		s.animator.Settle(v.id)
 		if s.animator.Running() {
 			s.startTicking()
@@ -314,6 +314,7 @@ func (s *surface) scrollEnded(v *view) {
 		sc.momentum = false
 		s.scrollEvent(v, driver.EventMomentumEnd)
 	}
+	s.scrollEvent(v, driver.EventScrollEnd)
 }
 
 // scrollBarDown follows a mouse press on the view's scroll bar, outside

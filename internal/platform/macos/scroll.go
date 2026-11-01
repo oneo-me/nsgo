@@ -613,9 +613,10 @@ func (v *view) emit(kind driver.EventKind) {
 	v.report(driver.Event{Kind: kind, Point: v.reported(), Value: v.zoomValue(), Count: v.sc.applied})
 }
 
-// scrollEnded follows the view coming to rest: the values that snap as a
-// scroll ends settle.
+// scrollEnded follows the view coming to rest: it reports EventScrollEnd,
+// and the values that snap as a scroll ends settle.
 func (v *view) scrollEnded() {
+	v.emit(driver.EventScrollEnd)
 	s := v.surface
 	s.animator.Settle(v.id)
 	if s.animator.Running() {

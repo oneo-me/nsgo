@@ -211,23 +211,65 @@ func goArch(arch string) string {
 
 // goBuild builds the project's main package to out.
 func goBuild(ctx context.Context, p *project, out string, env []string, ldflags ...string) error {
-	return goBuildWith(ctx, p, out, env, nil, ldflags...)
+	return goBuildWith(ctx, p, out, env, buildExtra{}, ldflags...)
 }
 
-// goBuildWith is goBuild with flags of its own for go build.
-func goBuildWith(ctx context.Context, p *project, out string, env, flags []string, ldflags ...string) error {
-	args := append([]string{"build"}, flags...)
+// buildExtra is what a build adds to go build: flags, build tags and
+// files the overlay adds to the main package, by name.
+type buildExtra struct {
+	flags []string
+	tags  []string
+	files map[string]string
+}
+
+// goBuildWith is goBuild with extra's flags, tags and files. A TSX app's
+// bundles, compiled ahead, go in through the overlay too, and it builds
+// without the compiler.
+func goBuildWith(ctx context.Context, p *project, out string, env []string, extra buildExtra, ldflags ...string) error {
+	args := append([]string{"build"}, extra.flags...)
 	args = append(args, "-ldflags", p.ldflags(ldflags...), "-o", out)
+	tags := extra.tags
+	files := map[string]string{}
+	for k, v := range extra.files {
+		files[k] = v
+	}
 	if p.testBinary {
 		// nsgo test -target: the package's tests, with the backend's test
 		// host, in place of the app.
-		args = []string{"test", "-c", "-tags", "nsgotest", "-ldflags", p.ldflags(ldflags...), "-o", out}
+		args = []string{"test", "-c", "-ldflags", p.ldflags(ldflags...), "-o", out}
+		tags = append(tags, "nsgotest")
+		tsxTest, err := p.tsxTestFile()
+		if err != nil {
+			return err
+		}
+		if tsxTest != "" {
+			files["zz_nsgo_tsx_test.go"] = tsxTest
+		}
+	} else {
+		bundle, err := p.bundleFile()
+		if err != nil {
+			return err
+		}
+		if bundle != "" {
+			files["zz_nsgo_bundle.go"] = bundle
+			tags = append(tags, "nsgo_bundled")
+		}
 	}
 	if p.Release {
 		args = append(args, "-trimpath", "-buildvcs=false")
 	}
 	if p.Dev.Client {
-		args = append(args, "-tags", "nsgodev")
+		tags = append(tags, "nsgodev")
+	}
+	if len(tags) > 0 {
+		args = append(args, "-tags", strings.Join(tags, ","))
+	}
+	if len(files) > 0 {
+		ov, err := p.overlay(files)
+		if err != nil {
+			return err
+		}
+		args = append(args, "-overlay", ov)
 	}
 	cmd := exec.CommandContext(ctx, "go", append(args, ".")...)
 	cmd.Dir = p.Dir

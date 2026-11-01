@@ -221,6 +221,8 @@ type DataTableStyles struct {
 // as DataTableStyles names them, each under its part's style; a state's
 // part follows the part it follows.
 type DataTableClasses struct {
+	// Root is the table's box, under its Class.
+	Root                                                     string
 	Header, GroupCell, HeaderCell, HeaderContent             string
 	HeaderCellDragging, HeaderCellSorted, HeaderCellSelected string
 	SortIndicator, SortAscending, SortDescending             string
@@ -316,6 +318,9 @@ type DataTable struct {
 	StyleFunc func() core.Style
 	Ref       *DataTableRef
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 
 	OnSelectionChange func(DataTableSelection)
 	OnRowPress        func(DataTablePress)

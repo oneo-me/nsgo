@@ -149,7 +149,13 @@ func writeSpec(w *writer, a *driver.Animation) {
 	w.f64(d.Max)
 	w.f64(d.Bounce)
 	w.u64(uint64(a.Delay))
-	w.u32(uint32(int32(a.Iterations)))
+	// A loop's iterations, its NoReset in the top bit.
+	// Below 1 is forever, which 0 says.
+	iterations := uint32(min(max(a.Iterations, 0), 1<<31-1))
+	if a.NoReset {
+		iterations |= 1 << 31
+	}
+	w.u32(iterations)
 	w.u32(uint32(len(a.Steps)))
 	for _, st := range a.Steps {
 		writeSpec(w, st)

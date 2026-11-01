@@ -174,6 +174,10 @@ const (
 	// EventBackCancelled says the back gesture EventBackStarted announced
 	// was given up.
 	EventBackCancelled
+	// EventScrollEnd says a scroll view came to rest: a drag that set
+	// nothing in motion ended, or a glide, a snap, an animated scroll or
+	// the wheel's turns did; with the offset as EventScroll's.
+	EventScrollEnd
 )
 
 // EventMask is a set of event kinds.

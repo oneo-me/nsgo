@@ -343,6 +343,10 @@ type MenuEntry struct {
 	Checked   bool
 	Separator bool
 	Items     []MenuEntry
+	// NotInText leaves the shortcut to a text input or a web view with
+	// the keyboard focus: the key goes to it rather than choosing the
+	// item.
+	NotInText bool
 }
 
 // StorageOp says what a StorageChange does.

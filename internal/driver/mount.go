@@ -446,6 +446,8 @@ type ScreenConfig struct {
 	// HeaderHeight is the area the header covers from the screen's top:
 	// the bar and the part of the status bar the screen reaches under.
 	HeaderHeight Points
+	// Animation is how the screen enters and leaves.
+	Animation ScreenAnimation
 }
 
 // HeaderSystemItem is a button iOS draws in a navigation bar in UIKit's
@@ -670,6 +672,15 @@ type TextEngine interface {
 	Prepare(text *AttributedText) PreparedText
 }
 
+// FontRegistrar is a TextEngine that registers fonts as the app runs, as
+// a TSX module's imports do: RegisterFont makes the families of the font
+// file data (TrueType, OpenType or a collection) available to the text
+// it prepares from then on. A platform that loads a font later tells the
+// engine (FontsChanged), which prepares its text again.
+type FontRegistrar interface {
+	RegisterFont(data []byte) error
+}
+
 // PreparedText is text a TextEngine shaped.
 type PreparedText interface {
 	// Measure returns the size of the text wrapped at maxWidth (Auto: no
@@ -795,6 +806,18 @@ const (
 	OrientationLandscapeRight
 
 	OrientationLandscape = OrientationLandscapeLeft | OrientationLandscapeRight
+)
+
+// ScreenAnimation is how a screen of a stack enters and leaves: a push
+// takes the pushed screen's, a pop the popped one's. ScreenDefault is the
+// platform's, a slide where it animates screens.
+type ScreenAnimation uint8
+
+const (
+	ScreenDefault ScreenAnimation = iota
+	ScreenSlide
+	ScreenFade
+	ScreenNone
 )
 
 // ModalAnimation is how a modal appears.

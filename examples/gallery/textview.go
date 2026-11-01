@@ -161,7 +161,7 @@ func streamingCard(cx *core.Scope) core.Node {
 					Animation: core.KeyframeAnimation{Keyframes: core.KeyframesPulse}}, StyleFunc: filled(colors.accent)}
 			}
 			return textview.TextView{MarkdownFunc: streamed.Get, StyleFunc: readingStyles(cx), Options: textview.Options{Streaming: on}, StreamingCaret: caret,
-				Selectable: true, Highlighter: highlight.New(cx), CodeBlockActions: []string{textview.CopyAction}, RenderCodeBlockAction: copyAction, TestID: "streamed"}
+				Selectable: true, Highlighter: highlight.New(cx), CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction, TestID: "streamed"}
 		}),
 		core.Dynamic(func(*core.Scope) core.Node {
 			l := "Stream it"
@@ -178,8 +178,8 @@ func markdownCard(cx *core.Scope) core.Node {
 	viewing := core.NewSignal(cx, textview.Image{})
 	return card(cx, cardProps{icon: iconText, title: "Markdown", subtitle: "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML"},
 		textview.TextView{Markdown: tvMarkdown, StyleFunc: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
-			CodeBlockActions: []string{textview.CopyAction}, RenderCodeBlockAction: copyAction,
-			OnLinkPress: pressed.Set, OnImagePress: viewing.Set},
+			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
+			OnLinkPress: func(e textview.LinkPressEvent) { pressed.Set(e.URL) }, OnImagePress: viewing.Set},
 		caption(cx, "Link pressed", pressed.Get),
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	)

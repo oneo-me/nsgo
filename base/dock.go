@@ -96,12 +96,16 @@ type DockArea struct {
 	// Ref, when set, is bound to the area's methods.
 	Ref    *DockAreaRef
 	TestID string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
-// DockPanelOptions are what a panel allows.
+// DockPanelOptions are what a panel allows; a panel Panels does not
+// list allows everything.
 type DockPanelOptions struct {
-	Closable bool
-	NoZoom   bool
+	NoClose bool
+	NoZoom  bool
 	// Hidden keeps the panel's tab out of its tab bar.
 	Hidden bool
 }
@@ -110,6 +114,8 @@ type DockPanelOptions struct {
 type DockTab struct {
 	Key   string
 	Group uint64
+	// Index is its place among its group's shown tabs.
+	Index func() int
 	// Selected reports whether it is its group's displayed tab, Zoomed
 	// whether its group is zoomed in.
 	Selected, Zoomed func() bool
@@ -122,14 +128,20 @@ type DockTab struct {
 type DockInfo struct {
 	Placement DockPlacement
 	Open      func() bool
-	Toggle    func()
+	// Size is its size across its edge, Collapsible whether dragging it
+	// below PanelMinSize closes it.
+	Size        func() core.Points
+	Collapsible func() bool
+	Toggle      func()
 }
 
 // DockDropIndicator is where a drag would land: into Group, or in a new
-// group on Side of it.
+// group on Side of it. Index is the slot in Group's tab bar a drop on
+// the bar goes to, -1 elsewhere.
 type DockDropIndicator struct {
 	Group uint64
 	Side  core.Placement
+	Index int
 }
 
 // DockTarget is where DockAreaRef.MovePanel puts a panel: into tab
@@ -255,24 +267,26 @@ func (r *DockAreaRef) ToggleZoom(group uint64) {
 	}
 }
 
-// ZoomedGroup returns the zoomed tab group's ID, 0 for none.
-func (r *DockAreaRef) ZoomedGroup() uint64 {
+// ZoomedGroup returns the zoomed tab group's ID, and whether one is.
+func (r *DockAreaRef) ZoomedGroup() (uint64, bool) {
 	if r.a == nil {
-		return 0
+		return 0, false
 	}
-	return r.a.zoom.GetUntracked()
+	g := r.a.zoom.GetUntracked()
+	return g, g != 0
 }
 
-// GroupOf returns the ID of the tab group holding panel key, 0 for none.
-func (r *DockAreaRef) GroupOf(key string) uint64 {
+// GroupOf returns the ID of the tab group holding panel key, and
+// whether one does.
+func (r *DockAreaRef) GroupOf(key string) (uint64, bool) {
 	if r.a == nil {
-		return 0
+		return 0, false
 	}
 	l := r.a.untracked()
 	if _, g := regionOf(&l, key); g != nil {
-		return g.ID
+		return g.ID, true
 	}
-	return 0
+	return 0, false
 }
 
 // The width below which an area is compact, Material 3's compact class;
@@ -369,10 +383,13 @@ func (d DockArea) Render(cx *core.Scope) core.Node {
 		return core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), MinHeight: core.Pt(0)}
 	}
 	full := func() bool { return !a.compact() }
-	return core.View{Ref: a.ref, Class: d.Class, Style: d.Style, StyleFunc: root, TestID: d.TestID,
+	return core.View{Ref: a.ref, Class: d.Class, Style: d.Style, StyleFunc: root, TestID: d.TestID, Tooltip: d.Tooltip,
 		OnLayout: func(b core.Bounds) {
 			if b.Size != a.size.GetUntracked() {
 				a.size.Set(b.Size)
+			}
+			if d.OnLayout != nil {
+				d.OnLayout(b)
 			}
 		},
 		Children: []core.Node{
@@ -684,7 +701,7 @@ func (a *dockArea) movable(key string) bool {
 }
 
 func (a *dockArea) close(key string) {
-	if !a.options(key).Closable || !a.movable(key) {
+	if a.options(key).NoClose || !a.movable(key) {
 		return
 	}
 	a.edit(func(l *DockLayout) bool {
@@ -956,7 +973,9 @@ func (a *dockArea) group(cx *core.Scope, region DockPlacement, id uint64) core.N
 		return n.Panels[n.Active]
 	}
 	bar := tabBar(part{a.p.TabBarClass, a.p.TabBarStyle, a.p.TabBarStyleFunc}, g.bar, core.Each(tabs.Get, func(k string) string { return k },
-		func(cx *core.Scope, key func() string, _ func() int) core.Node { return a.tab(cx, g, id, key()) }))
+		func(cx *core.Scope, key func() string, index func() int) core.Node {
+			return a.tab(cx, g, id, key(), index)
+		}))
 	content := core.View{Ref: g.content, Class: a.p.ContentClass,
 		Style: core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), MinHeight: core.Pt(0),
 			Overflow: core.Hidden}.Merge(a.p.ContentStyle),
@@ -1002,7 +1021,26 @@ func tabBar(p part, ref *core.Ref, tabs core.Node) core.Node {
 
 // tab is panel key's tab in group id's bar: a press displays it, a drag
 // moves it (a pointer's after 4 points, a finger's after a long press).
-func (a *dockArea) tab(cx *core.Scope, g *dockGroup, group uint64, key string) core.Node {
+// tabIndex is panel key's place among its group's shown tabs.
+func (a *dockArea) tabIndex(key string) int {
+	l := a.untracked()
+	_, n := regionOf(&l, key)
+	if n == nil {
+		return 0
+	}
+	i := 0
+	for _, k := range n.Panels {
+		if k == key {
+			return i
+		}
+		if !a.options(k).Hidden {
+			i++
+		}
+	}
+	return 0
+}
+
+func (a *dockArea) tab(cx *core.Scope, g *dockGroup, group uint64, key string, index func() int) core.Node {
 	ref := new(core.Ref)
 	g.tabs[key] = ref
 	cx.Cleanup(func() {
@@ -1022,9 +1060,9 @@ func (a *dockArea) tab(cx *core.Scope, g *dockGroup, group uint64, key string) c
 		}
 		return true
 	}
-	info := DockTab{Key: key, Group: group, Selected: selected,
+	info := DockTab{Key: key, Group: group, Index: index, Selected: selected,
 		Zoomed:   func() bool { return a.zoom.Get() == group && group != 0 },
-		Closable: a.options(key).Closable, Close: func() { a.close(key) }}
+		Closable: !a.options(key).NoClose, Close: func() { a.close(key) }}
 	var label core.Node = core.Text{Content: key}
 	if a.p.RenderTab != nil {
 		label = a.p.RenderTab(cx, info)
@@ -1267,7 +1305,11 @@ func (a *dockArea) indicator() core.Node {
 				Style: core.Style{FlexGrow: 1}.Merge(a.p.DropIndicatorStyle), StyleFunc: a.p.DropIndicatorStyleFunc}
 			if f := a.p.RenderDropIndicator; f != nil {
 				t := d().target
-				mark = f(cx, DockDropIndicator{Group: t.node, Side: t.side})
+				index := t.index
+				if t.split {
+					index = -1
+				}
+				mark = f(cx, DockDropIndicator{Group: t.node, Side: t.side, Index: index})
 			}
 			return core.Overlay{StyleFunc: func() core.Style { return at(d().bounds) }, PointerEvents: core.PointerEventsNone,
 				Children: []core.Node{mark}}
@@ -1275,7 +1317,7 @@ func (a *dockArea) indicator() core.Node {
 		nodes := core.Group{drop}
 		if f := a.p.RenderDragPreview; f != nil {
 			first := d()
-			preview := f(cx, DockTab{Key: first.panel, Group: first.group,
+			preview := f(cx, DockTab{Key: first.panel, Group: first.group, Index: func() int { return a.tabIndex(first.panel) },
 				Selected: func() bool { return true }, Zoomed: func() bool { return false }})
 			nodes = append(nodes, core.Overlay{PointerEvents: core.PointerEventsNone,
 				StyleFunc: func() core.Style {
@@ -1305,6 +1347,12 @@ func (a *dockArea) center(cx *core.Scope) core.Node {
 // dockInfo is what RenderDock gets about dock p.
 func (a *dockArea) dockInfo(p DockPlacement) DockInfo {
 	return DockInfo{Placement: p, Open: func() bool { return a.shown(p) },
+		Size: func() core.Points { return a.dockSize(p) },
+		Collapsible: func() bool {
+			l := a.layout()
+			r := l.Region(p)
+			return r == nil || !r.NoCollapse
+		},
 		Toggle: func() { a.setDockOpen(p, !core.Untracked(a.cx, func() bool { return a.shown(p) })) }}
 }
 

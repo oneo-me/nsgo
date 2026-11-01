@@ -24,8 +24,10 @@ type WebView struct {
 	// BackForwardGestures lets swipes go back and forward where the
 	// platform has them (iOS, macOS trackpads).
 	BackForwardGestures bool
-	Style               Style
-	StyleFunc           func() Style
+	// Class is Tailwind CSS classes, as View's.
+	Class     string
+	Style     Style
+	StyleFunc func() Style
 
 	// OnLoadStart, OnLoad and OnNavigationStateChange receive the page's
 	// state as it starts loading, finishes and navigates.
@@ -71,6 +73,7 @@ type webNode struct {
 
 func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 	n := t.newNode(driver.KindWeb, parent, cx)
+	t.setClasses(n, w.Class)
 	t.bindStyle(cx, n, w.Style, w.StyleFunc)
 	t.setRef(n, w.Ref)
 	n.h = handlers{layout: w.OnLayout}

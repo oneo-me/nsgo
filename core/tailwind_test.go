@@ -342,3 +342,29 @@ func TestSpanClassesGoUnderTheirStyleFuncAndSpansFunc(t *testing.T) {
 		t.Errorf("ClassFunc on a text: weight %v", s.FontWeight)
 	}
 }
+
+// TestArbitraryShadowsOffsetsAndTextShadows covers the utilities NSH's
+// gallery writes beyond the theme's shadows.
+func TestArbitraryShadowsOffsetsAndTextShadows(t *testing.T) {
+	env := classEnv{}
+	s, _, _ := resolveFor(t, "shadow-[0_6px_20px_rgba(20,20,10,0.08)] inset-shadow-[0_1px_0_#ffffff]", env)
+	if len(s.Shadows) != 2 || !s.Shadows[0].Inset || s.Shadows[0].Color != RGB(0xffffff) ||
+		s.Shadows[1].Blur != 20 || s.Shadows[1].Offset.Y != 6 {
+		t.Errorf("shadows %+v", s.Shadows)
+	}
+	// A color replaces the layer's, alpha too, as Tailwind's
+	// --tw-inset-shadow-color does.
+	s, _, _ = resolveFor(t, "inset-shadow-sm inset-shadow-black/10", env)
+	if len(s.Shadows) != 1 || s.Shadows[0].Color != RGBA(0, 0.1) {
+		t.Errorf("tinted inset shadow %+v", s.Shadows)
+	}
+	s, _, _ = resolveFor(t, "ring-2 ring-red-500 ring-offset-2", env)
+	if len(s.Shadows) != 2 || s.Shadows[0].Spread != 2 || s.Shadows[0].Color != RGB(0xffffff) ||
+		s.Shadows[1].Spread != 4 || s.Shadows[1].Color != tailwindPalette["red"][5] {
+		t.Errorf("ring with an offset %+v", s.Shadows)
+	}
+	s, _, _ = resolveFor(t, "text-shadow-md caret-blue-500", env)
+	if s.TextShadowRadius != 4 || s.TextShadowOffset.Y != 2 || s.SelectionColor != tailwindPalette["blue"][5] {
+		t.Errorf("text shadow %v %v, caret %#x", s.TextShadowRadius, s.TextShadowOffset, s.SelectionColor)
+	}
+}

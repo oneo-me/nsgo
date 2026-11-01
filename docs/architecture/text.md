@@ -46,6 +46,8 @@ The family `FontMonospace` is each platform's fixed-pitch font: CoreText's user 
 | Linux | fontconfig's `FcConfigAppFontAddFile`, before GTK starts |
 | Android | `Typeface.createFromAsset`, kept by family; a style takes the nearest face and synthesizes the rest |
 
+`Scope.RegisterFont` registers a font's bytes as the app runs, as a TSX module's import does: the backend's text engine is a `driver.FontRegistrar`, and the tree prepares every text again, a text prepared before the font came once more though its string is the same, and inputs measure their lines again. Apple registers the bytes with CoreText and drops the fonts it looked up; Windows makes its collection again with them; Linux and Android write them to the cache, fontconfig adding the file and Pango's font maps made again or told, Java making a `Typeface` of it; the web adds a `FontFace`, which loads after the call, so the engine prepares the text again once it has (`Engine.FontsChanged`).
+
 `Text.Spans` style byte ranges over the text's style; offsets are UTF-8 bytes, Go's own, and platforms convert them. `Text.SpansFunc` gives runs of text, class and style again when what it reads changes, prepared again only when they differ: an editor's row recolors as its highlighting arrives. `Scope.MeasureText` measures a text in a font as a canvas does, for a column fitted to its text or a monospaced font's advance. A press on a span with a handler comes back with the byte offset under the point.
 
 - A span's `Background` and `CornerRadius` become its `TextBackground`: drawing only, a box per line from the font's ascent to its descent, rounded on every line, behind the selection and the glyphs. Hanging spaces at a line's end are not painted.

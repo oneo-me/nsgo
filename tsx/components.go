@@ -11,22 +11,27 @@ import (
 // The rest of NSH's renderer (dom.rs): refs, spreads, the primitives as
 // components, ErrorBoundary and context.
 
-// ref is `ref(target, node, name)`: a signal is set to the node and a
-// function called with it, reporting true; a name means the target is a
-// binding that cannot be assigned, so it must be one of those.
+// ref is `ref(target, value, name)`: a signal is set to the value, a
+// node or a component's own ref, and a function called with it,
+// reporting true; a name means the target is a binding that cannot be
+// assigned, so it must be one of those.
 func (r *runtime) ref(call goja.FunctionCall) goja.Value {
 	target, name := arg(call, 0), arg(call, 2)
-	n := r.mustNode(arg(call, 1))
-	return r.vm.ToValue(r.applyRef(target, n, stringOf(name)))
+	return r.vm.ToValue(r.applyRefValue(target, arg(call, 1), stringOf(name)))
 }
 
 // applyRef gives target node n: a signal's set, or a call.
 func (r *runtime) applyRef(target goja.Value, n *node, name string) bool {
+	return r.applyRefValue(target, n.value(), name)
+}
+
+// applyRefValue gives target v: a signal's set, or a call.
+func (r *runtime) applyRefValue(target, v goja.Value, name string) bool {
 	if o, ok := target.(*goja.Object); ok && isFunction(o) {
 		if set := o.Get("set"); isFunction(set) {
-			r.call(set, n.value())
+			r.call(set, v)
 		} else {
-			r.call(o, n.value())
+			r.call(o, v)
 		}
 		return true
 	}

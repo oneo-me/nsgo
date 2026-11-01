@@ -433,6 +433,7 @@ final class Animator {
         Spec[] steps;
         long delay;
         int iterations;
+        boolean noReset;
 
         static Spec read(DataInputStream in) throws IOException {
             Spec s = new Spec();
@@ -453,7 +454,10 @@ final class Animator {
             s.max = in.readDouble();
             s.bounce = in.readDouble();
             s.delay = in.readLong();
-            s.iterations = in.readInt();
+            int iterations = in.readInt();
+            // A loop's NoReset is the word's top bit.
+            s.noReset = iterations < 0;
+            s.iterations = iterations & 0x7fffffff;
             s.steps = new Spec[in.readInt()];
             for (int i = 0; i < s.steps.length; i++) s.steps[i] = read(in);
             return s;
@@ -1075,7 +1079,7 @@ final class Animator {
                 return p;
             }
             case LOOP: {
-                Loop l = new Loop(an.iterations);
+                Loop l = new Loop(an.iterations, an.noReset);
                 if (an.steps.length > 0) l.body = build(an.steps[0]);
                 return l;
             }
@@ -1378,20 +1382,24 @@ final class Animator {
     private static final class Loop extends Step {
         Step body;
         final int n;
+        final boolean noReset;
         int i;
         final List<Integer> ids = new ArrayList<>();
         final List<Double> initial = new ArrayList<>();
 
-        Loop(int n) {
+        Loop(int n, boolean noReset) {
             this.n = n;
+            this.noReset = noReset;
         }
 
         private void startAt(Animator a, double at) {
-            for (int k = 0; k < ids.size(); k++) {
-                ANode v = a.value(ids.get(k));
-                if (v != null) v.value = initial.get(k);
+            if (!noReset) {
+                for (int k = 0; k < ids.size(); k++) {
+                    ANode v = a.value(ids.get(k));
+                    if (v != null) v.value = initial.get(k);
+                }
+                a.touch();
             }
-            a.touch();
             body.start(a, at);
         }
 

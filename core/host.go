@@ -287,6 +287,9 @@ func (a *hostApp) deliver(ev hostEvent) {
 	}
 }
 
+// HasHost reports whether a host embeds the app, to answer its calls.
+func (cx *Scope) HasHost() bool { return cx.rt.host != nil }
+
 // HostParams returns the parameters the embedding host gave the app
 // before it started (Host.SetParams): an empty map without a host or
 // any.

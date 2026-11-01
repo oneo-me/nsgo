@@ -40,8 +40,10 @@ type Video struct {
 	// AudioSessionMixWithOthers. Changing it on Android opens the source
 	// again.
 	AudioSession AudioSession
-	Style        Style
-	StyleFunc    func() Style
+	// Class is Tailwind CSS classes, as View's.
+	Class     string
+	Style     Style
+	StyleFunc func() Style
 
 	// OnLoadStart is called when a source starts opening, and OnLoad once
 	// its duration and size are known.
@@ -86,13 +88,14 @@ type videoNode struct {
 
 func (t *Tree) mountVideo(cx *Scope, parent *node, v Video) {
 	n := t.newNode(driver.KindVideo, parent, cx)
+	t.setClasses(n, v.Class)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	t.setRef(n, v.Ref)
 	n.h = handlers{press: v.OnPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Label: v.Label, TestID: v.TestID}
 	vn := &videoNode{
 		config: driver.VideoConfig{Source: v.Source, Paused: v.Paused, Muted: v.Muted, Volume: videoVolume(v.Volume),
-			Rate: videoRate(v.Rate), Repeat: v.Repeat, ResizeMode: resolveMode(v.ResizeMode, Contain), Controls: v.Controls,
+			Rate: videoRate(v.Rate), Repeat: v.Repeat, ResizeMode: v.ResizeMode, Controls: v.Controls,
 			ProgressInterval: videoInterval(v.ProgressInterval), AudioSession: v.AudioSession},
 		loadStart: v.OnLoadStart, load: v.OnLoad, progress: v.OnProgress, end: v.OnEnd,
 		buffer: v.OnBuffer, loadError: v.OnError,
@@ -121,7 +124,7 @@ func (t *Tree) mountVideo(cx *Scope, parent *node, v Video) {
 		bind(func(c *driver.VideoConfig) { c.Volume = videoVolume(f()) })
 	}
 	if f := v.ResizeModeFunc; f != nil {
-		bind(func(c *driver.VideoConfig) { c.ResizeMode = resolveMode(f(), Contain) })
+		bind(func(c *driver.VideoConfig) { c.ResizeMode = f() })
 	}
 	if f := v.RateFunc; f != nil {
 		bind(func(c *driver.VideoConfig) { c.Rate = videoRate(f()) })

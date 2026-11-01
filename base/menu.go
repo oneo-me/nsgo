@@ -166,6 +166,9 @@ type Menu struct {
 	Children []core.Node
 	Label    string
 	TestID   string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -178,7 +181,7 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 		align = core.AlignStart
 	}
 	return core.Group{
-		core.View{Ref: anchor, Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, Label: m.Label, TestID: m.TestID, Role: core.RoleButton,
+		core.View{Ref: anchor, Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, Label: m.Label, TestID: m.TestID, OnLayout: m.OnLayout, Tooltip: m.Tooltip, Role: core.RoleButton,
 			Expanded: st.open,
 			OnPress:  func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
 			Children: []core.Node{m.Trigger}},
@@ -214,6 +217,9 @@ type ContextMenu struct {
 	Trigger           core.Node
 	Children          []core.Node
 	TestID            string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -237,7 +243,7 @@ func (m ContextMenu) Render(cx *core.Scope) core.Node {
 		}
 	}
 	return core.Group{
-		core.View{Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, TestID: m.TestID,
+		core.View{Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, TestID: m.TestID, OnLayout: m.OnLayout, Tooltip: m.Tooltip,
 			OnContextMenu: func(e core.ContextMenuEvent) { open(e.PagePosition, ReasonContextMenu) },
 			// Observed, never claimed: the trigger's presses go on.
 			OnTouch: func(e core.TouchEvent) {
@@ -283,6 +289,9 @@ type MenuItem struct {
 	Children        []core.Node
 	Label           string
 	TestID          string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -295,7 +304,7 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 		children = []core.Node{core.Show{When: menu.shown, Then: func(*core.Scope) core.Node { return core.Group(i.Children) }}}
 	}
 	return core.View{Class: i.Class, Style: i.Style, StyleFunc: merged(i.StyleFunc, menu.hiddenUnlessShown()),
-		Role: core.RoleMenuItem, Label: i.Label, TestID: i.TestID, Disabled: i.Disabled, Children: children,
+		Role: core.RoleMenuItem, Label: i.Label, TestID: i.TestID, OnLayout: i.OnLayout, Tooltip: i.Tooltip, Disabled: i.Disabled, Children: children,
 		// Over another item, a submenu of its level closes.
 		OnHoverIn: func() {
 			if menu != nil && !menu.sheet {
@@ -328,12 +337,17 @@ type MenuSeparator struct {
 	Class     string
 	Style     core.Style
 	StyleFunc func() core.Style
+	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
 func (s MenuSeparator) Render(cx *core.Scope) core.Node {
 	menu := menuKey.Use(cx)
-	return core.View{Class: s.Class, Style: s.Style, StyleFunc: merged(s.StyleFunc, menu.hiddenUnlessShown()), NoFocus: true}
+	return core.View{Class: s.Class, Style: s.Style, StyleFunc: merged(s.StyleFunc, menu.hiddenUnlessShown()), NoFocus: true,
+		TestID: s.TestID, OnLayout: s.OnLayout, Tooltip: s.Tooltip}
 }
 
 // Submenu is an item that opens more items: on desktops a popup beside
@@ -362,6 +376,9 @@ type Submenu struct {
 	Children  []core.Node
 	Label     string
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -369,7 +386,7 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 	menu := menuKey.Use(cx)
 	trigger := func(press func(), hover func(), expanded func() bool, ref *core.Ref, style func() core.Style) core.View {
 		return core.View{Ref: ref, Class: s.Class, Style: s.Style, StyleFunc: merged(s.StyleFunc, style),
-			Role: core.RoleMenuItem, Label: s.Label, TestID: s.TestID, Disabled: s.Disabled, Expanded: expanded,
+			Role: core.RoleMenuItem, Label: s.Label, TestID: s.TestID, OnLayout: s.OnLayout, Tooltip: s.Tooltip, Disabled: s.Disabled, Expanded: expanded,
 			OnPress: func(core.PressEvent) {
 				if press != nil {
 					press()

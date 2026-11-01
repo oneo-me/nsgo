@@ -1136,7 +1136,7 @@ func (a *Animator) build(an *Animation) astep {
 		}
 		return p
 	case AnimationLoop:
-		l := &aloop{n: an.Iterations}
+		l := &aloop{n: an.Iterations, noReset: an.NoReset}
 		if len(an.Steps) > 0 {
 			l.body = a.build(an.Steps[0])
 		}
@@ -1444,17 +1444,20 @@ func (p *apar) step(a *Animator, now float64) (bool, float64) {
 type aloop struct {
 	body    astep
 	n, i    int
+	noReset bool
 	initial []float64
 	ids     []uint32
 }
 
 func (l *aloop) startAt(a *Animator, at float64) {
-	for k, id := range l.ids {
-		if n := a.value(id); n != nil {
-			n.value = l.initial[k]
+	if !l.noReset {
+		for k, id := range l.ids {
+			if n := a.value(id); n != nil {
+				n.value = l.initial[k]
+			}
 		}
+		a.touch()
 	}
-	a.touch()
 	l.body.start(a, at)
 }
 

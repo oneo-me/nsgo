@@ -133,8 +133,9 @@ type chrome struct {
 
 // menuRef is a menu item's ID and role.
 type menuRef struct {
-	id   uint32
-	role driver.MenuRole
+	id        uint32
+	role      driver.MenuRole
+	notInText bool
 }
 
 // hidden reports whether the system title bar is hidden now.
@@ -177,7 +178,7 @@ func (w *window) menuKeys(entries []driver.MenuEntry) {
 		default:
 			if k := shortcutOf(e); k != "" && !e.Role.EditsText() {
 				if _, taken := w.chrome.keys[k]; !taken {
-					w.chrome.keys[k] = menuRef{e.ID, e.Role}
+					w.chrome.keys[k] = menuRef{e.ID, e.Role, e.NotInText}
 				}
 			}
 		}

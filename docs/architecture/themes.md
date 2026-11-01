@@ -43,6 +43,12 @@ dark:
 
 Values are CSS colors. JSON is YAML, so a theme exported as JSON reads too.
 
+It reads a shadcn/ui theme file too, as NSH's apps write theirs: the CSS variables of `cssVars`' `theme`, `light` and `dark` sections, where a value may name another (`var(--brand)`) and dark's go over light's. A variable that is a color is a role of the palettes, which classes name (`bg-muted-foreground`); the others are `Theme.Tokens` (`radius-card: 16px`), `radius`, `font-sans` and `font-mono` setting `Radius`, `Sans` and `Mono` too. `DefaultTheme` holds shadcn/ui's neutral tokens under their names, but those that name Onevra's roles (`background`, `border`, `accent`), so NSH's apps without a theme of their own still resolve them. A TSX app names its theme file in `nsgo.yaml`'s `theme`, and TSX's `token(name)` reads a color or a token of it.
+
+## Tailwind
+
+`Theme.Tailwind` extends Tailwind's default theme for the classes of the theme's subtree, as NSH's `nsh.json` `tailwind` does: `core.ParseTailwind` reads its colors (with shades and `DEFAULT`), spacing, rem, breakpoints, containers, font families, sizes and weights, tracking, leading, radii, shadows, inset and drop shadows, blurs, perspectives, aspect ratios and easings, an entry of a known name replacing the default's and an unknown key an error. Each class string is parsed once per Tailwind theme. A TSX app writes it under `nsgo.yaml`'s `tailwind`, which the compiler checks, so a mistake fails the build. Classes also read the theme's lengths as variables: `rounded-(--radius)`, `text-(length:--font-size)`, and `font-(family-name:--font-mono)` its families.
+
 ## Hosts
 
 An embedding host's `core.Tokens` go over every theme's palette by the same role names: `Values` in both appearances, `Dark` over them where a subtree shows dark. A value that is no color is dropped.
@@ -57,7 +63,9 @@ Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffVie
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| shadcn's roles from `nsh.json`, as Tailwind tokens | Onevra's roles as typed fields of a Go value, plus named ones, which classes name in kebab case | Go code reads the fields; the user picked Onevra's palette |
+| shadcn's roles from `nsh.json`, as Tailwind tokens | Onevra's roles as typed fields of a Go value, plus named ones (shadcn/ui's among them), which classes name in kebab case | Go code reads the fields; the user picked Onevra's palette |
 | One theme per engine | A theme and an appearance per subtree | Apps can theme a sidebar or panel apart |
 | `examples/nsh-gallery-ui`, a layer apart | The gallery's own files | Only the gallery uses it |
 | A theme file in `nsh.json` | `ParseTheme` over an embedded file | Go embeds files itself; the tool stays out of it |
+| `nsh.json`'s `tailwind`, one per engine | `Theme.Tailwind`, per subtree; `nsgo.yaml`'s `tailwind` for TSX | It travels with the theme a subtree takes |
+| `env()` variables of any edge on any side | Each side's own edge's | `PaddingEnv` holds one term per side ([styles](styles.md)) |

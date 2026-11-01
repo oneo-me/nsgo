@@ -25,6 +25,7 @@ final class Protocol {
     static final int HOST_CALL = 11;
     static final int CARETS = 12;
     static final int WANT_FRAME = 13;
+    static final int FONT_DATA = 14;
 
     // Java to Go.
     static final int START = 1;
@@ -180,6 +181,7 @@ final class Protocol {
     static final int EVENT_PICK = 56;
     static final int EVENT_BACK_STARTED = 58;
     static final int EVENT_BACK_CANCELLED = 59;
+    static final int EVENT_SCROLL_END = 60;
 
     // core.PointerEvents.
     static final int POINTER_EVENTS_NONE = 1;

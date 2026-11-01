@@ -426,6 +426,7 @@ func (w *window) tick() {
 				if sc.momentum {
 					w.scrollEvent(v, driver.EventMomentumEnd)
 				}
+				w.restScroll(v)
 			}
 		}
 		_, keyframed := v.keyframe()

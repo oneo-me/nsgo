@@ -179,3 +179,37 @@ func TestSpansFuncRestylesTheText(t *testing.T) {
 		t.Fatal("unchanged spans sent the text again")
 	}
 }
+
+// fontEngine measures text as ApproxTextEngine does, twice as wide once
+// a font registered, as a platform's would with the font's glyphs.
+type fontEngine struct{ registered *bool }
+
+func (e fontEngine) Prepare(t *driver.AttributedText) driver.PreparedText {
+	if *e.registered {
+		t.Style.Font.Size *= 2
+	}
+	return ApproxTextEngine{}.Prepare(t)
+}
+
+func (e fontEngine) RegisterFont([]byte) error { *e.registered = true; return nil }
+
+func TestARegisteredFontPreparesTheTextAgain(t *testing.T) {
+	registered := false
+	var scope *Scope
+	h := newHost(t, Size{Width: 400, Height: 400}, nil)
+	h.tree = NewTree(h.root, fontEngine{&registered})
+	h.tree.Resize(Size{Width: 400, Height: 400})
+	h.tree.Mount(func(cx *Scope) Node {
+		scope = cx
+		return View{Style: Style{AlignItems: AlignStart}, Children: []Node{Text{TestID: "t", Content: "hello"}}}
+	})
+	h.commit()
+	before := h.find("t").frame.Size.Width
+	if err := scope.RegisterFont([]byte("font")); err != nil {
+		t.Fatal(err)
+	}
+	h.commit()
+	if after := h.find("t").frame.Size.Width; after <= before*1.5 {
+		t.Errorf("the text is %v wide after the font registered, %v before: not prepared again", after, before)
+	}
+}

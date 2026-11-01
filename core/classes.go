@@ -30,7 +30,9 @@ func (t *Tree) setClasses(n *node, class string) {
 		}
 		class = " "
 	}
-	l := parseClasses(class)
+	var tw *tailwindTheme
+	Untracked(n.owner, func() bool { tw = n.owner.Theme().tailwind(); return true })
+	l := tw.classes(class)
 	if n.cls != nil && n.cls.list == l {
 		return
 	}
@@ -120,6 +122,10 @@ func (t *Tree) followEnv(n *node) {
 				return
 			}
 			c.env = env
+			if c.list.tw != env.tw {
+				c.list = env.tw.classes(c.list.class)
+				reportUnknown(c.list)
+			}
 			t.resolveClasses(n)
 			t.resolveSpanClasses(n)
 			if t.restyle(n) {
@@ -136,7 +142,7 @@ func (t *Tree) classEnv(n *node) classEnv {
 	e := o.Env()
 	pal := o.Palette()
 	return classEnv{dark: o.Dark(), window: e.Window(), rtl: e.RTL(), reduce: e.ReduceMotion(), os: e.OS(),
-		palette: &pal}
+		palette: &pal, tw: o.Theme().tailwind(), theme: o.Theme()}
 }
 
 // resolveClasses resolves n's classes for their environment and n's
@@ -311,6 +317,15 @@ func sides(a, b Edges) Edges {
 		Left: cmpOr(b.Left, a.Left)}
 }
 
+// classResizeMode is the fit n's classes give an image or a video
+// (object-contain), 0 without one: the element's own wins.
+func (n *node) classResizeMode() ResizeMode {
+	if n.cls == nil {
+		return 0
+	}
+	return n.cls.props.resizeMode
+}
+
 // textLimits returns text n's line limit and how it ellipsizes: its own,
 // else its classes'.
 func (n *node) textLimits() (int, EllipsizeMode) {
@@ -339,11 +354,11 @@ func (t *Tree) spanStyle(n *node, class string, style Style) (Style, *spanClasse
 	if class == "" {
 		return style, nil
 	}
-	l := parseClasses(class)
-	reportUnknown(l)
-	sc := &spanClasses{list: l, base: style}
 	var env classEnv
 	Untracked(n.owner, func() bool { env = t.classEnv(n); return true })
+	l := env.tw.classes(class)
+	reportUnknown(l)
+	sc := &spanClasses{list: l, base: style}
 	return sc.resolve(&env), sc
 }
 
@@ -375,7 +390,12 @@ func (t *Tree) resolveSpanClasses(n *node) {
 	changed := false
 	for i := range n.text.spans {
 		sp := &n.text.spans[i]
-		if sp.cls != nil && sp.cls.list.env {
+		if sp.cls != nil && sp.cls.list.tw != env.tw {
+			sp.cls.list = env.tw.classes(sp.cls.list.class)
+			reportUnknown(sp.cls.list)
+			sp.style = sp.cls.resolve(&env)
+			changed = true
+		} else if sp.cls != nil && sp.cls.list.env {
 			sp.style = sp.cls.resolve(&env)
 			changed = true
 		}

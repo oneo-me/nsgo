@@ -224,9 +224,17 @@ func Stagger(interval time.Duration, steps ...*Animation) *Animation {
 func Delay(d time.Duration) *Animation { return &Animation{Kind: AnimationDelay, Delay: d} }
 
 // Loop runs a again each time it ends, with its values back at their
-// start, iterations times; forever when 0.
+// start, iterations times; forever when 0. LoopOn starts each iteration
+// where the last ended.
 func Loop(a *Animation, iterations int) *Animation {
 	return &Animation{Kind: AnimationLoop, Steps: []*Animation{a}, Iterations: iterations}
+}
+
+// LoopOn is Loop without putting the values back before each iteration.
+func LoopOn(a *Animation, iterations int) *Animation {
+	l := Loop(a, iterations)
+	l.NoReset = true
+	return l
 }
 
 // AnimationRun is an animation StartAnimation runs on the platform.

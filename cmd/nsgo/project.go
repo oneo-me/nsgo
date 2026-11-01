@@ -61,6 +61,13 @@ type project struct {
 		Client bool `yaml:"-"`
 		Trace  bool `yaml:"-"`
 	} `yaml:"dev"`
+	// Theme is a TSX app's theme file, relative to nsgo.yaml: a theme
+	// core.ParseTheme reads, NSGo's or a shadcn/ui one, which the
+	// compiler gives the app before it mounts.
+	Theme string `yaml:"theme"`
+	// Tailwind extends Tailwind's default theme for a TSX app's classes,
+	// as core.ParseTailwind reads it; the compiler checks it.
+	Tailwind yaml.Node `yaml:"tailwind"`
 	// Web is the web target's: Host is a JS module, relative to
 	// nsgo.yaml and inside its directory, whose createHost(player) gives
 	// the app's page its host.
@@ -199,7 +206,7 @@ func (p *project) ldflags(extra ...string) string {
 		flags += fmt.Sprintf(" -X %s.appearance=%s", pkg, p.Appearance)
 	}
 	if p.devURL != "" {
-		flags += fmt.Sprintf(" -X '%s.devServer=%s'", pkg, p.devURL)
+		flags += fmt.Sprintf(" -X '%s.devServer=%s' -X '%s.devServer=%s'", pkg, p.devURL, compilerPath, p.devURL)
 	}
 	if p.Dev.Client && p.Dev.Trace {
 		flags += fmt.Sprintf(" -X %s.devTrace=1", pkg)

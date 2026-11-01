@@ -154,6 +154,7 @@ func (w *window) touchUp() bool {
 		w.scrollEvent(v, driver.EventMomentumStart)
 		w.glide(v, &m, true)
 	} else {
+		w.restScroll(v)
 		w.spin(v)
 	}
 	return true
@@ -181,6 +182,7 @@ func (w *window) glide(v *view, m *scrollbar.Motion, momentum bool) {
 			if momentum {
 				w.scrollEvent(v, driver.EventMomentumEnd)
 			}
+			w.restScroll(v)
 			w.spin(v)
 		}
 		return !done

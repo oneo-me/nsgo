@@ -27,7 +27,7 @@ On the web each app is a Go program of its own, and a page shows several. `nsgo 
 
 ## The host channel
 
-`core.Host` is the view's one object for the host's side, in Go for desktop hosts and behind the iOS and Android faces. The app side is `Scope.HostParams`, `OnHostEvent`, `CallHost` and `PostHost`.
+`core.Host` is the view's one object for the host's side, in Go for desktop hosts and behind the iOS and Android faces. The app side is `Scope.HasHost`, `HostParams`, `OnHostEvent`, `CallHost` and `PostHost`, which TSX's `host` reaches.
 
 - Parameters are read as the app starts and fixed for its life; later requests are events.
 - `Send` never waits. While no app runs the channel keeps events for the next one; a stopping app leaves what it had not taken there.

@@ -204,6 +204,49 @@ func CheckURL(u string) error {
 	return nil
 }
 
+// RegisterFont registers the font file data (TrueType, OpenType or a
+// collection) with the platform, so text finds its families as a Style's
+// FontFamily names them, as nsgo.Fonts' are, and prepares the text shown
+// again: call it before the text that uses it shows. Without a platform
+// that registers fonts as the app runs (a headless test's) it does
+// nothing.
+func (cx *Scope) RegisterFont(data []byte) error {
+	t := cx.rt.tree
+	if t == nil {
+		return nil
+	}
+	fr, ok := t.text.(driver.FontRegistrar)
+	if !ok {
+		return nil
+	}
+	if err := fr.RegisterFont(data); err != nil {
+		return err
+	}
+	t.FontsChanged()
+	return nil
+}
+
+// FontsChanged prepares every text again, with fonts the platform made
+// available since it was prepared.
+func (t *Tree) FontsChanged() {
+	t.fonts++
+	for _, n := range t.nodes {
+		if n == nil || n.deleted {
+			continue
+		}
+		switch {
+		case n.text != nil:
+			n.text.stale = true
+			t.markLayout(n)
+		case n.input != nil:
+			n.input.lineH = 0
+			t.markLayout(n)
+		}
+	}
+	t.measures = newMeasureCache()
+	t.markAll()
+}
+
 // OpenURL opens u outside the app: a web page in the browser, a mailto:
 // or tel: link in its app, any scheme another app registered. An
 // embedding host's handler (Host.HandleOpenURL) takes it first. done,

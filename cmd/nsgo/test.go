@@ -68,6 +68,17 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 		// Traces print as the tests run; -v keeps go test from hiding them.
 		args = append(args, "-v", "-count=1")
 	}
+	tsxTest, err := p.tsxTestFile()
+	if err != nil {
+		return err
+	}
+	if tsxTest != "" {
+		ov, err := p.overlay(map[string]string{"zz_nsgo_tsx_test.go": tsxTest})
+		if err != nil {
+			return err
+		}
+		args = append(args, "-overlay", ov)
+	}
 	args = append(args, opts.args...)
 	if !hasPackage(opts.args) {
 		args = append(args, "./...")

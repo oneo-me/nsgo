@@ -23,7 +23,7 @@ func (t *Tree) mountImage(cx *Scope, parent *node, v Image) {
 		progress: v.OnProgress, load: v.OnLoad, loadError: v.OnError}
 	n.props = driver.ViewProps{Role: RoleImage, Label: v.Label, TestID: v.TestID}
 	n.image = &imageNode{config: driver.ImageConfig{Source: v.Source, Placeholder: v.Placeholder,
-		ResizeMode: resolveMode(v.ResizeMode, Cover), BlurRadius: v.BlurRadius, FadeDuration: v.FadeDuration}}
+		ResizeMode: v.ResizeMode, BlurRadius: v.BlurRadius, FadeDuration: v.FadeDuration}}
 	if v.SourceFunc != nil {
 		cx.renderEffect(func() {
 			src := v.SourceFunc()

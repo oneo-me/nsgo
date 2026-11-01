@@ -485,6 +485,9 @@ public class NsgoView extends FrameLayout {
                     case Protocol.FONTS:
                         fonts(message);
                         break;
+                    case Protocol.FONT_DATA:
+                        fontData(message);
+                        break;
                     case Protocol.TEST:
                         if (agent != null) agent.handle(message);
                         break;
@@ -752,6 +755,32 @@ public class NsgoView extends FrameLayout {
             } catch (RuntimeException e) {
                 Log.w(TAG, "font " + path + ": " + e);
             }
+        }
+    }
+
+    /**
+     * Registers a font the app sends as it runs: Typeface reads files, so
+     * its bytes go to the cache first, named by their hash.
+     */
+    private void fontData(DataInputStream in) throws IOException {
+        String family = Protocol.readString(in);
+        int weight = in.readUnsignedShort();
+        boolean italic = in.readUnsignedByte() != 0;
+        byte[] data = new byte[in.readInt()];
+        in.readFully(data);
+        try {
+            java.io.File dir = new java.io.File(getContext().getCacheDir(), "nsgo-fonts");
+            if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot make " + dir);
+            java.io.File file = new java.io.File(dir, Integer.toHexString(java.util.Arrays.hashCode(data)) + "-"
+                    + data.length + ".font");
+            if (!file.isFile()) {
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                    out.write(data);
+                }
+            }
+            Text.register(family, weight, italic, android.graphics.Typeface.createFromFile(file));
+        } catch (IOException | RuntimeException e) {
+            Log.w(TAG, "font " + family + ": " + e);
         }
     }
 
@@ -3631,8 +3660,8 @@ public class NsgoView extends FrameLayout {
         return new Scrolling.Host() {
             @Override
             public void scrollEvent(int kind, float x, float y, float zoom) {
-                if (kind == Protocol.EVENT_SCROLL_DRAG_END || kind == Protocol.EVENT_MOMENTUM_END) {
-                    // At rest, unless a glide follows, which scrolls on.
+                if (kind == Protocol.EVENT_SCROLL_END) {
+                    // At rest: the values that snap as a scroll ends settle.
                     animator.settle(n.id);
                     if (animator.running()) startTicking();
                 }

@@ -386,3 +386,23 @@ func TestExitAppLeavesAsBackDoes(t *testing.T) {
 		t.Errorf("ExitApp sent %v, want one ItemBackUnhandled", k)
 	}
 }
+
+func TestScreenHeaderClassAndAnimation(t *testing.T) {
+	h := newPhone(t, phone, func(cx *Scope) Node {
+		return Stack{Style: Style{FlexGrow: 1}, Children: []Node{
+			Screen{Title: "Home", TestID: "Home", HeaderClass: "bg-white dark:bg-black text-red-500 tint-blue-500",
+				HeaderStyle: Style{Color: RGB(0x00ff00)}, Animation: ScreenFade},
+		}}
+	})
+	c := screenItems(h.commit())[h.find("Home").id]
+	if c.Background != RGB(0xffffff) || c.TitleColor != RGB(0x00ff00) || c.TintColor != tailwindPalette["blue"][5] ||
+		c.Animation != ScreenFade {
+		t.Errorf("header %+v: the classes' colors under HeaderStyle, and the animation", c)
+	}
+	env := phone
+	env.Dark = true
+	h.tree.SetEnvironment(env)
+	if c := screenItems(h.commit())[h.find("Home").id]; c.Background != RGB(0) {
+		t.Errorf("dark header %#x", c.Background)
+	}
+}

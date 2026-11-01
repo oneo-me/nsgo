@@ -17,7 +17,7 @@ type hoistNode struct {
 	modal   *Modal
 	// fixed is a view hoisted while its position is Fixed.
 	fixed  bool
-	placed Placement
+	placed OverlayPosition
 	// reported is a modal's size and insets when the platform presents
 	// it at a size of its own (EventModalSize); dismissed says the
 	// platform closed it, as when a sheet is swiped away.
@@ -71,6 +71,7 @@ func (t *Tree) mountOverlay(cx *Scope, parent *node, o Overlay) {
 	t.hoist(n, h)
 	t.setClasses(n, o.Class)
 	t.bindStyle(cx, n, o.Style, o.StyleFunc)
+	t.setRef(n, o.Ref)
 	if o.AnchorBounds != nil && o.Anchor == nil {
 		cx.renderEffect(func() {
 			b := o.AnchorBounds()
@@ -258,12 +259,14 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 		if want == PlaceDefault {
 			want = PlaceBottom
 		}
-		origin, side = place(anchor, size, area, want, o.Align, o.Offset, rtl)
-		if side != n.hoist.placed && o.OnPosition != nil {
+		var room Size
+		origin, side, room = place(anchor, size, area, want, o.Align, o.Offset, rtl)
+		pos := OverlayPosition{Placement: side, Bounds: Bounds{Origin: origin, Size: size}, Available: room}
+		if pos != n.hoist.placed && o.OnPosition != nil {
 			f := o.OnPosition
-			t.after(n, func() { f(side) })
+			t.after(n, func() { f(pos) })
 		}
-		n.hoist.placed = side
+		n.hoist.placed = pos
 	}
 	t.setFrame(n, Bounds{Origin: origin, Size: size})
 }
@@ -359,11 +362,11 @@ func (t *Tree) surfaceBounds(n *node) Bounds {
 // on the side asked unless it does not fit there and the opposite side
 // fits or has more room, aligned along that side, then clamped into area.
 // In right-to-left layouts start and end swap for top and bottom.
-func place(anchor Bounds, size Size, area Bounds, side Placement, align Align, offset Points, rtl bool) (Point, Placement) {
+func place(anchor Bounds, size Size, area Bounds, side Placement, align Align, offset Points, rtl bool) (Point, Placement, Size) {
 	aLeft, aTop := anchor.Origin.X, anchor.Origin.Y
 	aRight, aBottom := aLeft+anchor.Size.Width, aTop+anchor.Size.Height
 	lo, hi := area.Origin, Point{X: area.Origin.X + area.Size.Width, Y: area.Origin.Y + area.Size.Height}
-	room := func(p Placement) Points {
+	roomOn := func(p Placement) Points {
 		switch p {
 		case PlaceTop:
 			return aTop - offset - lo.Y
@@ -381,7 +384,7 @@ func place(anchor Bounds, size Size, area Bounds, side Placement, align Align, o
 		return size.Width
 	}
 	opposite := map[Placement]Placement{PlaceTop: PlaceBottom, PlaceBottom: PlaceTop, PlaceLeft: PlaceRight, PlaceRight: PlaceLeft}[side]
-	if room(side) < need(side) && (room(opposite) >= need(opposite) || room(opposite) > room(side)) {
+	if roomOn(side) < need(side) && (roomOn(opposite) >= need(opposite) || roomOn(opposite) > roomOn(side)) {
 		side = opposite
 	}
 	along := func(a0, a1, length Points, swap bool) Points {
@@ -410,7 +413,11 @@ func place(anchor Bounds, size Size, area Bounds, side Placement, align Align, o
 	}
 	p.X = max(min(p.X, hi.X-size.Width), lo.X)
 	p.Y = max(min(p.Y, hi.Y-size.Height), lo.Y)
-	return p, side
+	room := Size{Width: area.Size.Width, Height: max(roomOn(side), 0)}
+	if side == PlaceLeft || side == PlaceRight {
+		room = Size{Width: max(roomOn(side), 0), Height: area.Size.Height}
+	}
+	return p, side, room
 }
 
 // back routes Escape or back: the topmost overlay listening for cancel,

@@ -77,6 +77,42 @@ func (n *Nav[R]) Replace(route R) {
 // SetRoutes replaces every route.
 func (n *Nav[R]) SetRoutes(routes ...R) { n.entries.Set(n.wrap(routes)) }
 
+// SetRoutesKeeping replaces every route, a route same says is one there
+// already keeping its page, the first such one in order.
+func (n *Nav[R]) SetRoutesKeeping(same func(a, b R) bool, routes ...R) {
+	n.entries.Update(func(es []navEntry[R]) []navEntry[R] {
+		used := make([]bool, len(es))
+		out := make([]navEntry[R], 0, len(routes))
+		for _, r := range routes {
+			kept := false
+			for i, e := range es {
+				if !used[i] && same(e.route, r) {
+					used[i], kept = true, true
+					out = append(out, e)
+					break
+				}
+			}
+			if !kept {
+				out = append(out, n.wrap([]R{r})...)
+			}
+		}
+		return out
+	})
+}
+
+// Remove takes away the routes match reports, with their pages.
+func (n *Nav[R]) Remove(match func(R) bool) {
+	n.entries.Update(func(es []navEntry[R]) []navEntry[R] {
+		out := es[:0:0]
+		for _, e := range es {
+			if !match(e.route) {
+				out = append(out, e)
+			}
+		}
+		return out
+	})
+}
+
 // Stack renders the routes as a stack of pages, one each. A page the
 // user pops goes from the routes before its OnDismiss runs.
 func (n *Nav[R]) Stack(style core.Style, page func(cx *core.Scope, route R, depth func() int) NavPage) core.Node {

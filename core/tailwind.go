@@ -2,6 +2,7 @@ package core
 
 import (
 	"cmp"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -158,15 +159,81 @@ type classProps struct {
 	ringWidth          Points
 	ringColor          Color
 	hasRing, ringInset bool
-	shadows            []BoxShadow
-	hasShadow          bool
-	shadowColor        Color
-	insetShadows       []BoxShadow
-	filters            []filterPart
-	backdrop           []filterPart
-	gradient           gradientParts
-	trackingEm         float32
-	hasTracking        bool
+	// insetRingWidth is inset-ring-*'s, inside the view's edge.
+	insetRingWidth Points
+	insetRingColor Color
+	hasInsetRing   bool
+	// flexRow is set by flex: a row unless a direction is set.
+	flexRow bool
+	// shadowAlpha is shadow-*/n's: the alpha every layer takes, of its
+	// color; dropAlpha and textShadowAlpha the same for drop and text
+	// shadows. 0 keeps the layers' own.
+	shadowAlpha, dropAlpha, textShadowAlpha float32
+	// dropColor is drop-shadow-<color>'s.
+	dropColor Color
+	// resizeMode is object-*'s fit, for images and videos.
+	resizeMode ResizeMode
+	// outlineStyle is outline-solid's and the like, whatever their place.
+	outlineStyle BorderStyle
+	// leading is set by leading-*, which wins over a text size's own
+	// line height, as Tailwind's var(--tw-leading) does.
+	leading bool
+	// state is set on a state's props: what it leaves unset is the
+	// view's.
+	state            bool
+	shadows          []BoxShadow
+	hasShadow        bool
+	shadowColor      Color
+	insetShadows     []BoxShadow
+	insetShadowColor Color
+	// ringOffset is ring-offset-*'s width, a solid band of
+	// ringOffsetColor (white without one) between the view and its ring.
+	ringOffset      Points
+	ringOffsetColor Color
+	// textShadow is text-shadow-*'s, textShadowColor its color.
+	textShadow      *BoxShadow
+	textShadowColor Color
+	filters         []filterPart
+	backdrop        []filterPart
+	gradient        gradientParts
+	trackingEm      float32
+	hasTracking     bool
+}
+
+// currentMark is the color a -current utility sets, its alpha the
+// modifier's: finish replaces it with the view's text color, as CSS's
+// currentColor is whatever color the view ends up with. A field that is
+// currentColor when unset takes 0 when the text color is inherited.
+const currentMark Color = 0x01020300
+
+func isCurrent(c Color) bool { return c&^0xff == currentMark }
+
+// resolveCurrent replaces the -current colors of s and p.
+func (p *classProps) resolveCurrent(s *Style) {
+	text := s.Color
+	cur := func(c *Color, zeroIsCurrent bool) {
+		if !isCurrent(*c) {
+			return
+		}
+		alpha := float32(*c&0xff) / 255
+		switch {
+		case text != 0:
+			*c = withAlpha(text, alpha)
+		case zeroIsCurrent:
+			*c = 0
+		default:
+			*c = withAlpha(RGB(0), alpha)
+		}
+	}
+	for _, c := range []*Color{&s.BorderColor, &s.BorderColors.Top, &s.BorderColors.Right, &s.BorderColors.Bottom,
+		&s.BorderColors.Left, &s.OutlineColor, &s.TextDecorationColor, &p.ringColor, &p.insetRingColor} {
+		cur(c, true)
+	}
+	for _, c := range []*Color{&s.Background, &s.SelectionColor, &s.PlaceholderColor, &s.TintColor, &p.shadowColor,
+		&p.insetShadowColor, &p.ringOffsetColor, &p.textShadowColor, &p.dropColor, &p.gradient.from.color,
+		&p.gradient.via.color, &p.gradient.to.color} {
+		cur(c, false)
+	}
 }
 
 // filterPart is one filter function a utility sets.
@@ -198,12 +265,33 @@ type gradientParts struct {
 	corner        GradientCorner
 	set, none     bool
 	from, via, to gradientStop
+	// arbitrary is set by an arbitrary angle: bg-linear-[25deg].
+	arbitrary bool
 }
 
 type gradientStop struct {
 	color Color
 	at    Length
 	set   bool
+	// legacy is set by an arbitrary color CSS mixes in sRGB: #f00, rgb().
+	legacy bool
+}
+
+// inherit fills what a state's gradient leaves unset with the view's: a
+// state that changes one stop keeps the rest.
+func (g *gradientParts) inherit(base gradientParts) {
+	if !g.from.set && !g.via.set && !g.to.set || g.set || g.none {
+		return
+	}
+	kind, from, via, to := base, g.from, g.via, g.to
+	*g = kind
+	for _, st := range []struct{ dst, src *gradientStop }{{&g.from, &from}, {&g.via, &via}, {&g.to, &to}} {
+		if st.src.set {
+			*st.dst = *st.src
+		} else if st.src.at != (Length{}) {
+			st.dst.at = st.src.at
+		}
+	}
 }
 
 // filterOrder is the order Tailwind applies filter functions in.
@@ -213,33 +301,84 @@ var filterOrder = []FilterKind{FilterBlur, FilterBrightness, FilterContrast, Fil
 // finish builds the fields of s that several utilities make: its
 // shadows (rings under shadows), filters, gradient and letter spacing.
 func (p *classProps) finish(s *Style) {
-	if p.hasRing || p.hasShadow || p.insetShadows != nil {
+	// tint gives a shadow layer color c, alpha too, as Tailwind's
+	// --tw-shadow-color does, at alpha when a size's modifier sets one.
+	tint := func(sh BoxShadow, c Color, alpha float32) BoxShadow {
+		switch {
+		case c != 0 && alpha > 0:
+			sh.Color = withAlpha(c, alpha)
+		case c != 0:
+			sh.Color = c
+		case alpha > 0:
+			sh.Color = withAlpha(sh.Color|0xff, alpha)
+		}
+		return sh
+	}
+	if p.flexRow && s.Direction == 0 {
+		s.Direction = Row
+	}
+	switch {
+	case p.outlineStyle == BorderNone:
+		s.OutlineWidth, s.OutlineStyle = 0, BorderNone
+	case p.outlineStyle != 0:
+		s.OutlineStyle = p.outlineStyle
+		if s.OutlineWidth == 0 && !p.state {
+			// A style alone is CSS's initial medium width.
+			s.OutlineWidth = 3
+		}
+	case s.OutlineWidth != 0 && !p.state:
+		s.OutlineStyle = BorderSolid
+	}
+	p.resolveCurrent(s)
+	if p.hasRing || p.hasShadow || p.insetShadows != nil || p.hasInsetRing {
 		var out []BoxShadow
-		out = append(out, p.insetShadows...)
+		for _, sh := range p.insetShadows {
+			out = append(out, tint(sh, p.insetShadowColor, 0))
+		}
+		if p.hasInsetRing {
+			out = append(out, BoxShadow{Spread: p.insetRingWidth, Color: cmpOr(p.insetRingColor, cmpOr(s.Color, RGB(0))),
+				Inset: true})
+		}
 		if p.hasRing {
 			c := p.ringColor
 			if c == 0 {
 				c = cmpOr(s.Color, RGB(0))
 			}
-			out = append(out, BoxShadow{Spread: p.ringWidth, Color: c, Inset: p.ringInset})
+			if p.ringOffset > 0 && !p.ringInset {
+				oc := p.ringOffsetColor
+				if oc == 0 {
+					oc = RGB(0xffffff)
+				}
+				out = append(out, BoxShadow{Spread: p.ringOffset, Color: oc})
+			}
+			spread := p.ringWidth
+			if !p.ringInset {
+				spread += p.ringOffset
+			}
+			out = append(out, BoxShadow{Spread: spread, Color: c, Inset: p.ringInset})
 		}
 		for _, sh := range p.shadows {
-			if p.shadowColor != 0 {
-				sh.Color = withAlpha(p.shadowColor&^0xff|0xff, float32(sh.Color&0xff)/255*float32(p.shadowColor&0xff)/255)
-			}
-			out = append(out, sh)
+			out = append(out, tint(sh, p.shadowColor, p.shadowAlpha))
 		}
 		if out == nil {
 			out = []BoxShadow{}
 		}
 		s.Shadows = out
 	}
+	if sh := p.textShadow; sh != nil {
+		t := tint(*sh, p.textShadowColor, p.textShadowAlpha)
+		s.TextShadowColor, s.TextShadowOffset, s.TextShadowRadius = t.Color, t.Offset, t.Blur
+	}
 	build := func(parts []filterPart) []Filter {
 		var out []Filter
 		for _, k := range filterOrder {
 			for _, f := range parts {
 				if f.kind == k {
-					out = append(out, Filter{Kind: f.kind, Amount: f.amount, Shadow: f.shadow})
+					sh := f.shadow
+					if k == FilterDropShadow {
+						sh = tint(sh, p.dropColor, p.dropAlpha)
+					}
+					out = append(out, Filter{Kind: f.kind, Amount: f.amount, Shadow: sh})
 				}
 			}
 		}
@@ -271,7 +410,13 @@ func (p *classProps) finish(s *Style) {
 			stops = append(stops, ColorStop{Color: g.via.color, At: cmpOr(g.via.at, Pct(50))})
 		}
 		stops = append(stops, ColorStop{Color: to.color, At: cmpOr(to.at, Pct(100))})
-		s.Gradients = []Gradient{{Kind: g.kind, Angle: g.angle, ToCorner: g.corner, Stops: stops}}
+		gr := Gradient{Kind: g.kind, Angle: g.angle, ToCorner: g.corner, Stops: stops}
+		// Tailwind writes in oklab but at an arbitrary angle, where CSS
+		// mixes legacy colors in sRGB.
+		if g.arbitrary && (!g.from.set || g.from.legacy) && (!g.via.set || g.via.legacy) && (!g.to.set || g.to.legacy) {
+			gr.Space = ColorSpaceSRGB
+		}
+		s.Gradients = []Gradient{gr}
 	}
 	if p.hasTracking {
 		s.LetterSpacing = Points(p.trackingEm) * cmpOr(s.FontSize, DefaultFontSize)
@@ -287,6 +432,8 @@ type classRule struct {
 
 // classList is a parsed class string.
 type classList struct {
+	tw    *tailwindTheme
+	class string
 	rules []classRule
 	// env is set when the rules depend on the environment: the
 	// appearance, the window, the direction, the platform, the motion
@@ -312,24 +459,37 @@ type classEnv struct {
 	os       OS
 	position uint8
 	palette  *Palette
+	tw       *tailwindTheme
+	// theme gives the tokens classes name as variables: rounded-(--radius).
+	theme *Theme
 	// fontSize is what em-based utilities (tracking-*) measure against.
 	fontSize Points
 }
 
-var classCache sync.Map // string → *classList
+var classCache sync.Map // classSource → *classList
 
-// parseClasses parses a class string, once per distinct string.
-func parseClasses(s string) *classList {
-	if v, ok := classCache.Load(s); ok {
+// classSource is a class string and the Tailwind theme it is read with.
+type classSource struct {
+	tw    *tailwindTheme
+	class string
+}
+
+// parseClasses parses a class string for Tailwind's default theme.
+func parseClasses(s string) *classList { return defaultTailwind.classes(s) }
+
+// classes parses a class string, once per distinct string.
+func (t *tailwindTheme) classes(s string) *classList {
+	key := classSource{t, s}
+	if v, ok := classCache.Load(key); ok {
 		return v.(*classList)
 	}
-	l := defaultTailwind.parse(s)
-	classCache.Store(s, l)
+	l := t.parse(s)
+	classCache.Store(key, l)
 	return l
 }
 
 func (t *tailwindTheme) parse(s string) *classList {
-	l := &classList{}
+	l := &classList{tw: t, class: s}
 	for _, token := range strings.Fields(s) {
 		if !t.parseToken(l, token) {
 			l.unknown = append(l.unknown, token)
@@ -404,7 +564,7 @@ func (t *tailwindTheme) parseToken(l *classList, token string) bool {
 	if decls == nil {
 		return false
 	}
-	if (cond.placeholder || cond.selection) && !colorOnly(utility) {
+	if (cond.placeholder || cond.selection) && !colorOnly(utility, cond.placeholder) {
 		return false
 	}
 	l.rules = append(l.rules, classRule{cond: cond, decls: decls, rank: rank, important: important})
@@ -416,8 +576,14 @@ func (t *tailwindTheme) parseToken(l *classList, token string) bool {
 }
 
 // colorOnly reports whether a utility under placeholder: or selection:
-// sets the one color the pseudo-element has.
-func colorOnly(u string) bool { return strings.HasPrefix(u, "text-") || strings.HasPrefix(u, "bg-") }
+// sets the one color the pseudo-element has: a placeholder's text color,
+// a selection's background.
+func colorOnly(u string, placeholder bool) bool {
+	if placeholder {
+		return strings.HasPrefix(u, "text-")
+	}
+	return strings.HasPrefix(u, "bg-")
+}
 
 // ignoredUtility reports utilities whose CSS is a rendering hint or what
 // every native view already is: accepted, doing nothing.
@@ -427,7 +593,8 @@ func ignoredUtility(u string) bool {
 		"will-change-auto", "will-change-scroll", "will-change-contents", "will-change-transform", "box-border":
 		return true
 	}
-	return false
+	_, ok := arbitrary(strings.TrimPrefix(u, "will-change-"))
+	return ok && strings.HasPrefix(u, "will-change-")
 }
 
 // variant applies variant v to cond and returns its place.
@@ -540,6 +707,7 @@ func (t *tailwindTheme) variant(v string, c *classCond) (classKey, bool) {
 		name = strings.TrimPrefix(v, "min-")
 	}
 	var width Points
+	named := int64(0)
 	if a, ok := arbitrary(name); ok {
 		w, ok := t.length(a)
 		if !ok {
@@ -547,6 +715,9 @@ func (t *tailwindTheme) variant(v string, c *classCond) (classKey, bool) {
 		}
 		width = w
 	} else {
+		// Tailwind sorts a theme's breakpoints, in rem, after arbitrary
+		// ones, in px.
+		named = 1 << 40
 		i := slices.IndexFunc(t.breakpoints, func(b breakpoint) bool { return b.name == name })
 		if i < 0 {
 			return classKey{}, false
@@ -558,7 +729,7 @@ func (t *tailwindTheme) variant(v string, c *classCond) (classKey, bool) {
 		if c.maxWidth == 0 || width < c.maxWidth {
 			c.maxWidth = width
 		}
-		return classKey{order: rankMax, value: -thousandths}, true
+		return classKey{order: rankMax, value: named - thousandths}, true
 	}
 	c.minWidth = maxPoints(c.minWidth, width)
 	return classKey{order: rankMin, value: thousandths}, true
@@ -581,8 +752,8 @@ func arbitrary(s string) (string, bool) {
 	return "", false
 }
 
-// length reads a CSS length as points: px, rem, em (of 16), pt or a bare
-// number.
+// length reads a CSS length as points: px, rem and em (of the theme's
+// rem), pt, or 0.
 func (t *tailwindTheme) length(s string) (Points, bool) {
 	s = strings.TrimSpace(s)
 	scale := float64(1)
@@ -594,10 +765,15 @@ func (t *tailwindTheme) length(s string) (Points, bool) {
 	case strings.HasSuffix(s, "em"):
 		s, scale = s[:len(s)-2], float64(t.rem)
 	case strings.HasSuffix(s, "pt"):
-		s = s[:len(s)-2]
+		s, scale = s[:len(s)-2], 4.0/3
+	default:
+		// A length needs a unit, as in CSS, but for 0.
+		if s != "0" {
+			return 0, false
+		}
 	}
 	f, err := strconv.ParseFloat(s, 32)
-	if err != nil {
+	if err != nil || math.IsInf(f, 0) || math.IsNaN(f) {
 		return 0, false
 	}
 	return Points(f * scale), true
@@ -622,7 +798,7 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 		if c := parts[s]; c != nil {
 			return c
 		}
-		c := &classProps{lines: -1}
+		c := &classProps{lines: -1, state: s != &normal && s != &important}
 		parts[s] = c
 		order = append(order, s)
 		return c
@@ -647,8 +823,10 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 				d(&s, &sp, env)
 			}
 			if c.placeholder {
+				sp.resolveCurrent(&s)
 				set(&base.PlaceholderColor, s.Color)
 			} else {
+				sp.resolveCurrent(&s)
 				set(&base.SelectionColor, s.Background)
 			}
 			continue
@@ -674,7 +852,20 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 		}
 	}
 	for _, s := range order {
+		if s != &normal && s != &important {
+			parts[s].gradient.inherit(parts[&normal].gradient)
+		}
 		parts[s].finish(s)
+	}
+	// A state's background shows over the view's gradient, as feedback:
+	// the state hides it unless it has one of its own.
+	if len(normal.Gradients) > 0 {
+		for _, st := range []*Style{normal.Hover, normal.Focus, normal.Active, normal.Selected, normal.Checked,
+			normal.Indeterminate, normal.Disabled} {
+			if st != nil && st.Background != 0 && st.Gradients == nil {
+				st.Gradients = []Gradient{}
+			}
+		}
 	}
 	// The view's props: the important classes' over the others'.
 	p = *parts[&normal]

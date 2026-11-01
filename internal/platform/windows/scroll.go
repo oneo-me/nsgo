@@ -17,9 +17,6 @@ import (
 
 // scrollEvent reports kind on scroll view v at its offset, if it listens.
 func (w *window) scrollEvent(v *view, kind driver.EventKind) {
-	if kind == driver.EventScrollDragEnd || kind == driver.EventMomentumEnd {
-		w.restScroll(v)
-	}
 	if v.events.Has(kind) {
 		w.engine.Dispatch(driver.Event{Kind: kind, ID: v.id, Point: v.offset, Count: v.applied})
 	}
@@ -53,9 +50,11 @@ func (w *window) wheelTurned(v *view, d driver.Points) {
 	})
 }
 
-// restScroll has the snapping diff clamps that follow v settle, as v
-// comes to rest.
+// restScroll follows v coming to rest, after a drag that set nothing in
+// motion, a glide, a snap, an animated scroll or the wheel: it reports
+// EventScrollEnd, and the snapping diff clamps that follow v settle.
 func (w *window) restScroll(v *view) {
+	w.scrollEvent(v, driver.EventScrollEnd)
 	w.animator.Settle(v.id)
 	if w.animator.Running() {
 		w.startClock()
@@ -74,6 +73,7 @@ func (w *window) settle(v *view, velocity float32) {
 	if w.env.ReduceMotion {
 		w.scrollTo(v, to)
 		w.scrollEvent(v, driver.EventMomentumEnd)
+		w.restScroll(v)
 		return
 	}
 	v.scrolling = &scrolling{from: v.offset, to: to, start: time.Now(), momentum: true}

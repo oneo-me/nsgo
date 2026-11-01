@@ -128,6 +128,9 @@ type Popover struct {
 	Children       []core.Node
 	Label          string
 	TestID         string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // Render implements core.Node.
@@ -138,7 +141,7 @@ func (p Popover) Render(cx *core.Scope) core.Node {
 	anchor := new(core.Ref)
 	outside := func() { st.cancel(ReasonPressOutside, p.NoCloseOnPressOutside) }
 	return core.Group{
-		core.View{Ref: anchor, Class: p.Class, Style: p.Style, StyleFunc: p.StyleFunc, Label: p.Label, TestID: p.TestID, Role: core.RoleButton,
+		core.View{Ref: anchor, Class: p.Class, Style: p.Style, StyleFunc: p.StyleFunc, Label: p.Label, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip, Role: core.RoleButton,
 			Expanded: st.open,
 			OnPress:  func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
 			Children: []core.Node{p.Trigger}},
@@ -314,6 +317,11 @@ type Sheet struct {
 	PopupClass        string
 	PopupStyle        core.Style
 	PopupStyleFunc    func() core.Style
+	// Class and Style style the layer that holds the backdrop and the
+	// panel, which covers the root view.
+	Class     string
+	Style     core.Style
+	StyleFunc func() core.Style
 	// Children are the content, made on each opening.
 	Children []core.Node
 	Label    string
@@ -336,7 +344,8 @@ func (s Sheet) Render(cx *core.Scope) core.Node {
 		swipe:         s.CloseOnSwipe && side == core.PlaceBottom,
 		swiped:        func() { st.cancel(ReasonSwipe, false) },
 		cancel:        func() { st.cancel(ReasonCancel, s.NoCloseOnEscape) },
-		role:          core.RoleDialog, label: s.Label, testID: s.TestID, content: s.Children}.node()
+		role:          core.RoleDialog, label: s.Label, testID: s.TestID, content: s.Children,
+		layer: part{s.Class, s.Style, s.StyleFunc}}.node()
 }
 
 // part is the class and styles the app gives one of a component's parts.

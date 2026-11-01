@@ -3,6 +3,7 @@
 package web
 
 import (
+	"errors"
 	"log"
 	"strconv"
 	"syscall/js"
@@ -75,4 +76,43 @@ func registerFonts(paths []string) {
 	for _, f := range funcs {
 		f.Release()
 	}
+}
+
+// RegisterFont implements driver.FontRegistrar: the document's fonts
+// take it as a FontFace, which loads after this returns, so its text is
+// prepared again once it has.
+func (s *surface) RegisterFont(data []byte) error {
+	faces, err := fontfile.Describe(data)
+	if err != nil {
+		return err
+	}
+	if len(faces) == 0 {
+		return errors.New("no faces")
+	}
+	g := js.Global()
+	buf := g.Get("Uint8Array").New(len(data))
+	js.CopyBytesToJS(buf, data)
+	f := faces[0]
+	style := "normal"
+	if f.Italic {
+		style = "italic"
+	}
+	face := g.Get("FontFace").New(f.Family, buf.Get("buffer"), map[string]any{"weight": strconv.Itoa(f.Weight), "style": style})
+	var loaded, failed js.Func
+	done := func() { loaded.Release(); failed.Release() }
+	loaded = js.FuncOf(func(js.Value, []js.Value) any {
+		g.Get("document").Get("fonts").Call("add", face)
+		done()
+		s.engine.FontsChanged()
+		return nil
+	})
+	failed = js.FuncOf(func(_ js.Value, args []js.Value) any {
+		if len(args) > 0 {
+			log.Printf("nsgo: font %s: %s", f.Family, args[0].Call("toString").String())
+		}
+		done()
+		return nil
+	})
+	face.Call("load").Call("then", loaded, failed)
+	return nil
 }

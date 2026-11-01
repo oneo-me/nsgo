@@ -1,3 +1,5 @@
+//go:build !nsgo_bundled
+
 package compiler
 
 import (

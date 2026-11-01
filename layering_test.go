@@ -47,12 +47,14 @@ var layers = []struct {
 	{"mobile", []string{"core"}},
 	{"desktop", []string{"core"}},
 	{"icons/", []string{"core"}},
+	// The TSX test runner drives apps through nsgotest.
+	{"tsx/tsxtest", []string{"core", "internal/driver", "nsgotest", "tsx", "tsx/"}},
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
 	{"examples/", []string{"", "core", "base/", "mobile", "desktop", "icons/", "nsgotest", "tsx/", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
-	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime"}},
+	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/"}},
 	{"tools/", []string{"core"}},
 }
 

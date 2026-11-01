@@ -344,7 +344,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	matches := func() string {
 		r := result.Get()
 		switch {
-		case r.Err != "":
+		case r.Error != "":
 			return "Invalid pattern"
 		case query.Get() == "":
 			return ""
@@ -615,7 +615,7 @@ func editorDemo(cx *core.Scope) core.Node {
 						}
 						return editor.Search{Query: q, CaseSensitive: caseSensitive.Get(), WholeWord: wholeWord.Get(), Regex: regex.Get()}
 					},
-					CompletionTriggerCharacters: ".", InlineCompletionDelay: 150 * time.Millisecond,
+					CompletionTriggerCharacters: []string{"."}, InlineCompletionDelay: 150 * time.Millisecond,
 					OnChange: func(v string) {
 						texts[lang] = v
 						if lsp {
@@ -642,7 +642,7 @@ func editorDemo(cx *core.Scope) core.Node {
 								hover.Set(nil)
 								return
 							}
-							card := &editorHover{anchor: e.Bounds, diagnostics: e.Diagnostics}
+							card := &editorHover{anchor: e.PageBounds, diagnostics: e.Diagnostics}
 							if h != nil {
 								card.markdown = h.markdown
 							}
@@ -671,19 +671,20 @@ func editorDemo(cx *core.Scope) core.Node {
 							// older request).
 							if r.Trigger == editor.DefinitionHover {
 								if t != nil {
-									ref.PresentDefinitionLink(r.ID, r.Word)
+									ref.PresentDefinitionLink(r.ID, r.Range)
 								}
 								return
 							}
 							showDefinition(t)
 						})
 					},
-					OnCodeActionRequest: func(rng editor.Range) {
+					OnCodeActionRequest: func(req editor.CodeActionRequest) {
+						rng := req.Range
 						box, ok := ref.CaretBounds()
 						if !ok {
 							return
 						}
-						anchor := core.Point{X: box.Page.Origin.X, Y: box.Page.Origin.Y + box.Page.Size.Height}
+						anchor := core.Point{X: box.PageBounds.Origin.X, Y: box.PageBounds.Origin.Y + box.PageBounds.Size.Height}
 						actions := codeActions(rng, problems.GetUntracked())
 						later(cx, 20*time.Millisecond, func() {
 							if desktop.IsAvailable(cx) {
@@ -693,11 +694,12 @@ func editorDemo(cx *core.Scope) core.Node {
 							}
 						})
 					},
-					OnCompletionAccept: func(it editor.CompletionItem) { last.Set("Completed " + it.Label) },
+					OnCompletionAccept: func(e editor.CompletionAcceptEvent) { last.Set("Completed " + e.Item.Label) },
 					StylesFunc:         editorStyles(cx),
 					StyleFunc:          func() core.Style { return core.Style{FlexGrow: 1, Color: colors.text()} },
 				}
 				if lsp {
+					e.Completion = true
 					e.OnCompletionRequest = func(r editor.CompletionRequest) {
 						var latency time.Duration
 						lspAsk(cx, server, 0, func(m *lspModel) []editor.CompletionItem {
@@ -915,8 +917,8 @@ func editorDemo(cx *core.Scope) core.Node {
 		for _, d := range card.diagnostics {
 			meta := []core.Node{core.Text{Content: d.Source, Style: core.Style{FontSize: 12}, StyleFunc: colored(colors.muted)}}
 			switch {
-			case d.Code != "" && d.CodeDescription != "":
-				href := d.CodeDescription
+			case d.Code != "" && d.CodeDescription != nil:
+				href := d.CodeDescription.Href
 				meta = append(meta, base.Button{Label: "Open the description of " + d.Code, OnPress: func(core.PressEvent) { openRule(href) },
 					Style: core.Style{CornerRadius: 2, Active: &core.Style{Opacity: core.Alpha(0.7)}},
 					Children: []core.Node{core.Text{Content: d.Code, Style: core.Style{FontSize: 12, TextDecoration: core.TextDecorationUnderline},

@@ -161,8 +161,9 @@ type chrome struct {
 
 // menuRef is a menu item's ID and role.
 type menuRef struct {
-	id   uint32
-	role driver.MenuRole
+	id        uint32
+	role      driver.MenuRole
+	notInText bool
 }
 
 // hidden reports whether the title bar is hidden now: full screen has
@@ -643,7 +644,7 @@ func (w *window) menuKeys(entries []driver.MenuEntry) {
 		default:
 			if k := shortcutOf(e); k != "" && !e.Role.EditsText() {
 				if _, taken := w.chrome.keys[k]; !taken {
-					w.chrome.keys[k] = menuRef{e.ID, e.Role}
+					w.chrome.keys[k] = menuRef{e.ID, e.Role, e.NotInText}
 				}
 			}
 		}
@@ -716,7 +717,7 @@ func (w *window) appendMenuTo(menu uintptr, entries []driver.MenuEntry, refs *[]
 			if e.Checked {
 				flags |= mfChecked
 			}
-			*refs = append(*refs, menuRef{e.ID, e.Role})
+			*refs = append(*refs, menuRef{e.ID, e.Role, e.NotInText})
 			appendMenuW.Call(menu, flags, uintptr(len(*refs)), uintptr(unsafe.Pointer(wide(label))))
 		}
 		lastSeparator = false
@@ -763,6 +764,9 @@ func (w *window) menuCommand(command uint16) {
 // there is one.
 func (w *window) menuShortcut(key string) bool {
 	ref, ok := w.chrome.keys[key]
+	if ok && ref.notInText && w.editing() {
+		return false // the field's or the page's key
+	}
 	if ok {
 		w.chooseMenu(ref)
 	}

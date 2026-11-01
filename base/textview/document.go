@@ -178,7 +178,12 @@ type Details struct {
 // Math is a formula written in TeX, a block of its own or inline in
 // text. HTML gives one for MathML with a TeX annotation, as KaTeX and
 // MathJax write it.
-type Math struct{ TeX string }
+type Math struct {
+	TeX string
+	// Display is set on a formula that is a block of its own, as
+	// RenderMath gets it.
+	Display bool
+}
 
 // Footnote is a footnote of a document: its label ("1", "note"), its
 // number from 1 and its blocks.

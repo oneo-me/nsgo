@@ -74,12 +74,9 @@ type faceKey struct {
 var (
 	facesMu sync.Mutex
 	faces   = map[faceKey]faceMetrics{}
-	// systemFonts is the font collection text looks families up in: the
-	// system's, with the app's fonts when it registered any, or nil.
-	systemFonts = sync.OnceValue(func() *comObject {
-		if appFonts != nil {
-			return appFonts
-		}
+	// theSystemFonts is DirectWrite's collection of the system's fonts, or
+	// nil.
+	theSystemFonts = sync.OnceValue(func() *comObject {
 		f := dwriteFactory()
 		if f == nil {
 			return nil
@@ -152,6 +149,20 @@ func fontStyle(italic bool) uintptr {
 	return dwStyleNormal
 }
 
+// systemFonts is the font collection text looks families up in, held for
+// the caller, which releases it: the system's, with the app's fonts when
+// it registered any, or nil.
+func systemFonts() *comObject {
+	if c := fontCollection(); c != nil {
+		return c
+	}
+	c := theSystemFonts()
+	if c != nil {
+		c.addRef()
+	}
+	return c
+}
+
 // metricsOf returns the metrics of the face font is set in, the default
 // family's when the system has no such family.
 func metricsOf(font driver.Font) faceMetrics {
@@ -163,6 +174,7 @@ func metricsOf(font driver.Font) faceMetrics {
 	}
 	m := defaultFaceMetrics
 	if c := systemFonts(); c != nil {
+		defer c.release()
 		var index uint32
 		var exists int32
 		name := wide(key.family)
@@ -205,7 +217,12 @@ func textFormat(font driver.Font) *comObject {
 		return nil
 	}
 	var format *comObject
-	if failed(f.callF(dwCreateTextFormat, 1<<5, uintptr(unsafe.Pointer(wide(fontName(font.Family)))), appFonts.ptr(),
+	fonts := fontCollection()
+	if fonts != nil {
+		// The format holds the collection itself.
+		defer fonts.release()
+	}
+	if failed(f.callF(dwCreateTextFormat, 1<<5, uintptr(unsafe.Pointer(wide(fontName(font.Family)))), fonts.ptr(),
 		fontWeight(font.Weight), fontStyle(font.Italic), dwStretchNormal, f32(max(float32(font.Size), 0.1)),
 		uintptr(unsafe.Pointer(wide(""))), uintptr(unsafe.Pointer(&format)))) {
 		return nil

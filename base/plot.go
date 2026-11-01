@@ -122,6 +122,8 @@ type Plot struct {
 	StyleFunc     func() core.Style
 	Children      []core.Node
 	TestID        string
+	// OnLayout is its view's, as a core.View's.
+	OnLayout func(core.Bounds)
 }
 
 // plotKey is the plot a mark is in.
@@ -465,6 +467,9 @@ func (p Plot) Render(cx *core.Scope) core.Node {
 		OnLayout: func(b core.Bounds) {
 			size.Set(b.Size)
 			place.plotIs(b.Size)
+			if p.OnLayout != nil {
+				p.OnLayout(b)
+			}
 		},
 		OnHoverMove: func(e core.HoverEvent) {
 			if p.NoHover {

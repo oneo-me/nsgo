@@ -312,6 +312,18 @@ func TestMenuKeysSkipEditingRolesAndKeepTheFirst(t *testing.T) {
 	}
 }
 
+func TestMenuShortcutsLeaveFieldsTheirKeys(t *testing.T) {
+	w := &window{chrome: chrome{keys: map[string]menuRef{}}}
+	w.menuKeys([]driver.MenuEntry{{Label: "Run", Shortcut: "mod+r", NotInText: true}})
+	if ref := w.chrome.keys["mod+r"]; !ref.notInText {
+		t.Fatalf("mod+r = %+v", ref)
+	}
+	w.focus = &view{}
+	if w.menuShortcut("mod+r") {
+		t.Fatal("the menu took a focused field's key")
+	}
+}
+
 func TestMenuHelpers(t *testing.T) {
 	for _, r := range []driver.MenuRole{driver.MenuAbout, driver.MenuHide, driver.MenuHideOthers, driver.MenuShowAll} {
 		if !unsupported(r) {

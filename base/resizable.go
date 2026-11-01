@@ -86,6 +86,9 @@ type ResizablePanelGroup struct {
 	// HandleLabel names the handles for assistive technology.
 	HandleLabel string
 	TestID      string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 // ResizeHandleState is how far the pointer has gone with a handle. A
@@ -142,6 +145,9 @@ type ResizablePanel struct {
 	StyleFunc func() core.Style
 	Children  []core.Node
 	TestID    string
+	// OnLayout and Tooltip are its view's, as a core.View's.
+	OnLayout func(core.Bounds)
+	Tooltip  core.Node
 }
 
 func (p *ResizablePanel) limits() (lo, hi core.Points) {
@@ -393,12 +399,15 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 			children = append(children, core.Show{When: func() bool { return slices.Index(shown.Get(), i) > 0 },
 				Then: func(cx *core.Scope) core.Node { return handle(cx, i) }})
 		}
-		children = append(children, core.View{Class: p.Class, Style: p.Style, StyleFunc: panelStyle(i), TestID: p.TestID,
+		children = append(children, core.View{Class: p.Class, Style: p.Style, StyleFunc: panelStyle(i), TestID: p.TestID, Tooltip: p.Tooltip,
 			OnLayout: func(b core.Bounds) {
 				if horizontal {
 					measured[i] = b.Size.Width
 				} else {
 					measured[i] = b.Size.Height
+				}
+				if p.OnLayout != nil {
+					p.OnLayout(b)
 				}
 			},
 			Children: p.Children})
@@ -413,7 +422,7 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 		}
 		return out
 	}
-	return core.View{Class: g.Class, Style: g.Style, StyleFunc: style, TestID: g.TestID,
+	return core.View{Class: g.Class, Style: g.Style, StyleFunc: style, TestID: g.TestID, Tooltip: g.Tooltip,
 		OnLayout: func(b core.Bounds) {
 			size := b.Size.Width
 			if !horizontal {
@@ -421,6 +430,9 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 			}
 			if size != length.GetUntracked() {
 				length.Set(size)
+			}
+			if g.OnLayout != nil {
+				g.OnLayout(b)
 			}
 		},
 		Children: children}

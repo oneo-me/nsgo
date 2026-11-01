@@ -30,7 +30,7 @@ func TestRefEditsAsOneStepAndFoldsByNesting(t *testing.T) {
 			Style: core.Style{Width: core.Pt(400), Height: core.Pt(300)}}
 	})
 	ref.SetSelections([]Selection{{Anchor: Position{2, 2}, Head: Position{2, 3}}})
-	ref.Edit([]TextEdit{
+	ref.Edit([]Edit{
 		{Range: Range{Position{0, 5}, Position{0, 6}}, Text: "alpha"},
 		{Range: Range{Position{0, 5}, Position{0, 7}}, Text: "skipped"},
 		{Range: Range{Position{2, 2}, Position{2, 3}}, Text: "yy"},
@@ -91,7 +91,7 @@ func TestRefConvertsAndMeasures(t *testing.T) {
 		t.Errorf("past the end is %+v", p)
 	}
 	boxes := ref.RangeBounds(Range{Position{1, 0}, Position{2, 3}})
-	if len(boxes) != 2 || boxes[0].Bounds.Origin.Y != core.Points(e.lh) || boxes[1].Page.Origin.Y != boxes[1].Bounds.Origin.Y+10 {
+	if len(boxes) != 2 || boxes[0].Bounds.Origin.Y != core.Points(e.lh) || boxes[1].PageBounds.Origin.Y != boxes[1].Bounds.Origin.Y+10 {
 		t.Fatalf("boxes %+v", boxes)
 	}
 	if b, ok := ref.CaretBounds(); !ok || b.Bounds.Size.Height != core.Points(e.lh) {
@@ -113,7 +113,7 @@ func TestRefConvertsAndMeasures(t *testing.T) {
 	e.pressDown(core.Point{X: core.Points(pad + 2.5*e.charW), Y: core.Points(2.5 * e.lh)}, 1, core.Modifiers{})
 	e.textPress(core.Point{X: core.Points(pad + 2.5*e.charW), Y: core.Points(2.5 * e.lh)}, core.Point{}, core.Modifiers{}, 1)
 	e.textPress(core.Point{X: core.Points(pad + 40*e.charW), Y: core.Points(2.5 * e.lh)}, core.Point{}, core.Modifiers{}, 1)
-	if len(presses) != 1 || presses[0].Position != (Position{2, 2}) || presses[0].Offset != 13 || presses[0].Word.End != (Position{2, 6}) {
+	if len(presses) != 1 || presses[0].Position != (Position{2, 2}) || presses[0].Offset != 13 || presses[0].Range.End != (Position{2, 6}) {
 		t.Errorf("presses %+v, want the third character of line 2 alone", presses)
 	}
 }
@@ -125,7 +125,9 @@ func TestCommandsOfWordsParagraphsAndCase(t *testing.T) {
 		return Editor{Ref: ref, DefaultValue: "one two one\n\nthree one\nfour\n\nfive", OnChange: func(s string) { value = s },
 			Style: core.Style{Width: core.Pt(400), Height: core.Pt(300)}}
 	})
-	at := func(line, col int) { ref.SetSelections([]Selection{{Anchor: Position{line, col}, Head: Position{line, col}}}) }
+	at := func(line, col int) {
+		ref.SetSelections([]Selection{{Anchor: Position{line, col}, Head: Position{line, col}}})
+	}
 	at(2, 7)
 	ref.Run(SelectWord)
 	if got := ref.SelectedText(); got != "one" {

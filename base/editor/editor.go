@@ -389,9 +389,9 @@ func (e *ed) typeText(text string) {
 	e.waitInline()
 	r, _ := utf8.DecodeLastRuneInString(text)
 	switch {
-	case e.p.OnCompletionRequest == nil:
-	case strings.ContainsRune(e.p.CompletionTriggerCharacters, r):
-		e.requestCompletion(CompletionCharacter, string(r))
+	case e.p.OnCompletionRequest == nil || !e.p.Completion:
+	case e.typedTrigger() != "":
+		e.requestCompletion(CompletionCharacter, e.typedTrigger())
 	case e.st.lang.wordChar(r) && e.comp.id == 0:
 		h := e.st.primary().head
 		l := e.st.line(h.line)
@@ -658,7 +658,11 @@ func (e *ed) run(c Command) {
 	case ShowCodeActions:
 		if e.p.OnCodeActionRequest != nil {
 			p := s.primary()
-			e.p.OnCodeActionRequest(e.rangeOf(span{p.start(), p.end()}))
+			req := CodeActionRequest{Range: e.rangeOf(span{p.start(), p.end()}), Position: e.position(p.head)}
+			if b, ok := (&Ref{e}).CaretBounds(); ok {
+				req.Bounds = &b
+			}
+			e.p.OnCodeActionRequest(req)
 		}
 	case ExpandSelection:
 		e.expandSelections()
@@ -986,7 +990,7 @@ func (e *ed) setSearch(q Search) {
 	if q.Query != "" {
 		re, err := compile(q)
 		if err != nil {
-			result.Err = err.Error()
+			result.Error = err.Error()
 		}
 		e.re = re
 	}
@@ -1151,6 +1155,20 @@ func (e *ed) folds() []FoldRange {
 	return out
 }
 
+// typedTrigger is the trigger of CompletionTriggerCharacters the text
+// before the primary caret ends in, the longest; "" for none.
+func (e *ed) typedTrigger() string {
+	h := e.st.primary().head
+	before := e.st.line(h.line)[:h.col]
+	found := ""
+	for _, t := range e.p.CompletionTriggerCharacters {
+		if t != "" && len(t) > len(found) && strings.HasSuffix(before, t) {
+			found = t
+		}
+	}
+	return found
+}
+
 // requestCompletion asks the app for completions at the primary caret.
 func (e *ed) requestCompletion(trigger CompletionTrigger, char string) {
 	if e.p.OnCompletionRequest == nil {
@@ -1164,8 +1182,8 @@ func (e *ed) requestCompletion(trigger CompletionTrigger, char string) {
 	e.nextID++
 	e.comp = completion{id: e.nextID, start: pos{h.line, a}}
 	e.compRev.Update(inc)
-	e.p.OnCompletionRequest(CompletionRequest{ID: e.nextID, Position: e.position(h), Query: e.st.line(h.line)[a:h.col],
-		Trigger: trigger, Character: char})
+	e.p.OnCompletionRequest(CompletionRequest{ID: e.nextID, Offset: e.offset(h), Position: e.position(h),
+		Query: e.st.line(h.line)[a:h.col], QueryStart: e.offset(pos{h.line, a}), Trigger: trigger, Character: char})
 }
 
 // checkCompletion ends the session when the caret left its word.
@@ -1331,7 +1349,7 @@ func (e *ed) accept(item CompletionItem) {
 		return changes
 	})
 	if e.p.OnCompletionAccept != nil {
-		e.p.OnCompletionAccept(item)
+		e.p.OnCompletionAccept(CompletionAcceptEvent{Item: item})
 	}
 }
 
@@ -1348,7 +1366,8 @@ func (e *ed) requestDefinition(p pos, trigger DefinitionTrigger) {
 	e.nextID++
 	e.defID = e.nextID
 	e.hoverWord = span{pos{p.line, a}, pos{p.line, b}}
-	e.p.OnDefinitionRequest(DefinitionRequest{ID: e.nextID, Position: e.position(p), Word: e.rangeOf(e.hoverWord), Trigger: trigger})
+	e.p.OnDefinitionRequest(DefinitionRequest{ID: e.nextID, Position: e.position(p), Offset: e.offset(p),
+		Range: e.rangeOf(e.hoverWord), Trigger: trigger})
 }
 
 func (e *ed) hideLink() {
@@ -1392,9 +1411,9 @@ func (e *ed) pointer(pt core.Point, page core.Point, mods core.Modifiers) {
 		var bounds core.Bounds
 		if rs := e.rowRects(word.from, word.to, e.st.disp.rowOf(word.from), e.st.disp.rowOf(word.from)+1, nil, "", nil); len(rs) > 0 {
 			b, _ := e.boxOf(rs[0])
-			bounds = b.Page
+			bounds = b.PageBounds
 		}
-		e.p.OnHover(HoverEvent{Position: e.position(p), Offset: e.offset(p), Word: e.rangeOf(word), At: page, Bounds: bounds,
+		e.p.OnHover(HoverEvent{Position: e.position(p), Offset: e.offset(p), Range: e.rangeOf(word), PagePosition: page, PageBounds: bounds,
 			Modifiers: mods, Diagnostics: diags})
 	})
 }
@@ -1586,7 +1605,7 @@ func isWordStart(r rune) bool { return unicode.IsLetter(r) || r == '_' }
 // waitInline asks for an inline completion once typing pauses: one wait,
 // whatever the number of keystrokes.
 func (e *ed) waitInline() {
-	if e.p.OnInlineCompletionRequest == nil {
+	if e.p.OnInlineCompletionRequest == nil || !e.p.Completion {
 		return
 	}
 	if e.inlineStop != nil {

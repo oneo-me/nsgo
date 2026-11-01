@@ -1,9 +1,5 @@
-// Package compiler compiles TSX apps into the scripts the tsx package
-// runs, as NSH's bundler does (nsh-bundler): esbuild strips TypeScript,
-// lowers syntax goja lacks and bundles the app's modules into one script,
-// and jsx.go compiles the JSX into calls of the renderer, as NSH's
-// compiler does. Imports of NSGo's modules (nsgo, nsgo/*, nsgo:rt) stay,
-// as require calls the runtime answers. No Node is needed.
+//go:build !nsgo_bundled
+
 package compiler
 
 import (
@@ -12,59 +8,122 @@ import (
 	"io/fs"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/evanw/esbuild/pkg/api"
 	"github.com/go-sourcemap/sourcemap"
+	"gopkg.in/yaml.v3"
 
 	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
 )
 
-// App returns the app whose TSX entry is entry in fsys, for nsgo.Run and
-// nsgotest.Start: it compiles the app as it starts, then runs it.
-//
-//	//go:embed *.tsx
-//	var src embed.FS
-//
-//	func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
-func App(fsys fs.FS, entry string) func(cx *core.Scope) core.Node {
-	return func(cx *core.Scope) core.Node {
-		code, err := Compile(fsys, entry)
-		if err != nil {
-			panic(err)
-		}
-		return tsx.App(entry, code)(cx)
-	}
-}
+// compileAtStart compiles an app's TSX as it starts, without a bundle
+// compiled ahead.
+func compileAtStart(fsys fs.FS, entry string) (string, error) { return Compile(fsys, entry) }
+
+// gojaLacks are the features goja does not run, which esbuild lowers.
+var gojaLacks = map[string]bool{"async-generator": false, "for-await": false, "dynamic-import": false}
 
 // Compile compiles the app whose entry is entry in fsys, and the modules
 // it imports, into one script with its source map inline.
-func Compile(fsys fs.FS, entry string) (string, error) {
+func Compile(fsys fs.FS, entry string) (string, error) { return build(fsys, entry, false) }
+
+// CompileHot compiles the app as Compile does, for hot updates: a newer
+// bundle run in the VM of an older one (tsx.Hot) runs again only the
+// modules whose code changed and renders their components' instances
+// again, so the rest of the app keeps its state.
+func CompileHot(fsys fs.FS, entry string) (string, error) { return build(fsys, entry, true) }
+
+func build(fsys fs.FS, entry string, hot bool) (string, error) {
 	entry = path.Clean(entry)
+	plugins := []api.Plugin{appPlugin(fsys)}
+	entryPoint := entry
+	if hot {
+		// The entry is a module too, run again only when it changes.
+		entryPoint = hotEntry
+		plugins = append([]api.Plugin{hotPlugin(entry)}, plugins...)
+	}
 	result := api.Build(api.BuildOptions{
-		EntryPoints: []string{entry},
+		EntryPoints: []string{entryPoint},
 		Bundle:      true,
 		Write:       false,
 		Format:      api.FormatIIFE,
 		Platform:    api.PlatformNeutral,
 		Target:      api.ES2020,
+		Supported:   gojaLacks,
 		Sourcemap:   api.SourceMapInline,
 		Outfile:     "bundle.js",
 		Charset:     api.CharsetUTF8,
 		LogLevel:    api.LogLevelSilent,
-		Plugins:     []api.Plugin{appPlugin(fsys)},
+		Plugins:     plugins,
 	})
 	if len(result.Errors) > 0 {
 		return "", messages(result.Errors)
 	}
+	setup, err := setupScript(fsys, entry)
+	if err != nil {
+		return "", err
+	}
 	for _, f := range result.OutputFiles {
 		if strings.HasSuffix(f.Path, ".js") {
-			return string(f.Contents), nil
+			code := string(f.Contents)
+			if hot {
+				if code, err = hotModules(code); err != nil {
+					return "", err
+				}
+				setup = hotRuntime + setup
+			}
+			return setup + code, nil
 		}
 	}
 	return "", errors.New("compiler: esbuild wrote no script")
+}
+
+// setupScript is what runs before the app: the theme file and the
+// Tailwind theme nsgo.yaml beside the entry names, given to the runtime
+// ("" without either). It is one line, so the source map's lines stay
+// the app's.
+func setupScript(fsys fs.FS, entry string) (string, error) {
+	dir := path.Dir(entry)
+	data, err := fs.ReadFile(fsys, path.Join(dir, "nsgo.yaml"))
+	if err != nil {
+		return "", nil
+	}
+	var config struct {
+		Theme    string    `yaml:"theme"`
+		Tailwind yaml.Node `yaml:"tailwind"`
+	}
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return "", fmt.Errorf("nsgo.yaml: %w", err)
+	}
+	var opts []string
+	if config.Theme != "" {
+		theme, err := fs.ReadFile(fsys, path.Join(dir, config.Theme))
+		if err != nil {
+			return "", fmt.Errorf("nsgo.yaml: theme: %w", err)
+		}
+		if _, err := core.ParseTheme(theme); err != nil {
+			return "", fmt.Errorf("nsgo.yaml: theme: %w", err)
+		}
+		opts = append(opts, "theme: "+strconv.Quote(string(theme)))
+	}
+	if !config.Tailwind.IsZero() {
+		tw, err := yaml.Marshal(&config.Tailwind)
+		if err != nil {
+			return "", fmt.Errorf("nsgo.yaml: tailwind: %w", err)
+		}
+		// Checked here, so a mistake fails the build.
+		if _, err := core.ParseTailwind(tw); err != nil {
+			return "", fmt.Errorf("nsgo.yaml: %w", err)
+		}
+		opts = append(opts, "tailwind: "+strconv.Quote(string(tw)))
+	}
+	if len(opts) == 0 {
+		return "", nil
+	}
+	return fmt.Sprintf("require(\"nsgo:rt\").setup({ %s });", strings.Join(opts, ", ")), nil
 }
 
 // isNative reports whether an import names one of NSGo's modules, which
@@ -90,8 +149,12 @@ func appPlugin(fsys fs.FS) api.Plugin {
 				p = path.Clean(args.Path)
 			case strings.HasPrefix(args.Path, "./") || strings.HasPrefix(args.Path, "../"):
 				p = path.Join(path.Dir(args.Importer), args.Path)
+			case !strings.HasPrefix(args.Path, "/"):
+				// A bare specifier names a module the runtime serves:
+				// NSGo's, or one an app registered (tsx.Register).
+				return api.OnResolveResult{Path: args.Path, External: true}, nil
 			default:
-				return api.OnResolveResult{}, fmt.Errorf("cannot import %q: an app imports its own files and NSGo's modules (nsgo, nsgo/base, ...)", args.Path)
+				return api.OnResolveResult{}, fmt.Errorf("cannot import %q: an app imports its own files by relative paths", args.Path)
 			}
 			if resolved, ok := resolve(fsys, p); ok {
 				return api.OnResolveResult{Path: resolved, Namespace: "app"}, nil
@@ -104,6 +167,13 @@ func appPlugin(fsys fs.FS) api.Plugin {
 				return api.OnLoadResult{}, err
 			}
 			src := string(data)
+			if isAsset(args.Path) {
+				code, err := assetModule(args.Path, data)
+				if err != nil {
+					return api.OnLoadResult{}, err
+				}
+				return api.OnLoadResult{Contents: &code, Loader: api.LoaderJS}, nil
+			}
 			if strings.HasSuffix(args.Path, ".json") {
 				return api.OnLoadResult{Contents: &src, Loader: api.LoaderJSON}, nil
 			}
@@ -166,6 +236,7 @@ func Transform(file, src string) (string, error) {
 		JSXFragment: jsxFragment,
 		Format:      api.FormatCommonJS,
 		Target:      api.ES2020,
+		Supported:   gojaLacks,
 		Sourcemap:   api.SourceMapExternal,
 		Sourcefile:  file,
 		Charset:     api.CharsetUTF8,

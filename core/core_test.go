@@ -655,11 +655,14 @@ func TestEnvironment(t *testing.T) {
 func TestPlaceFlipsAndClamps(t *testing.T) {
 	area := Bounds{Size: Size{Width: 100, Height: 100}}
 	anchor := Bounds{Origin: Point{X: 40, Y: 80}, Size: Size{Width: 20, Height: 10}}
-	p, side := place(anchor, Size{Width: 30, Height: 30}, area, PlaceBottom, 0, 4, false)
+	p, side, room := place(anchor, Size{Width: 30, Height: 30}, area, PlaceBottom, 0, 4, false)
 	if side != PlaceTop || p != (Point{X: 35, Y: 46}) {
 		t.Errorf("no room below: %v %v, want flipped above at {35 46}", p, side)
 	}
-	p, _ = place(Bounds{Origin: Point{X: 90, Y: 10}, Size: Size{Width: 10, Height: 10}}, Size{Width: 30, Height: 10}, area, PlaceBottom, AlignStart, 0, false)
+	if room != (Size{Width: 100, Height: 76}) {
+		t.Errorf("room above %v, want 100×76", room)
+	}
+	p, _, _ = place(Bounds{Origin: Point{X: 90, Y: 10}, Size: Size{Width: 10, Height: 10}}, Size{Width: 30, Height: 10}, area, PlaceBottom, AlignStart, 0, false)
 	if p.X != 70 {
 		t.Errorf("x = %v, want clamped to 70", p.X)
 	}

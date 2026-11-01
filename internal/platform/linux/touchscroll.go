@@ -140,6 +140,8 @@ func (w *window) touchUp() bool {
 		v.glide = &m
 		w.scrollEvent(v, driver.EventMomentumStart)
 		w.animate(v)
+	} else {
+		w.restScroll(v)
 	}
 	return true
 }
@@ -157,6 +159,7 @@ func (w *window) stepGlide(v *view, now time.Time) bool {
 	if done {
 		v.glide = nil
 		w.scrollEvent(v, driver.EventMomentumEnd)
+		w.restScroll(v)
 	}
 	return !done || v.refreshing
 }

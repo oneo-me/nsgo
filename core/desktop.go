@@ -72,9 +72,25 @@ type MenuItem struct {
 	Checked   bool
 	Separator bool
 	Items     []MenuItem
+	// When says whether the shortcut chooses the item while a text input
+	// or a web view has the keyboard focus.
+	When MenuWhen
 	// OnSelect runs when the item is chosen, by a click or its shortcut.
 	OnSelect func()
 }
+
+// MenuWhen says when a menu item's shortcut chooses it while a text
+// input or a web view has the keyboard focus.
+type MenuWhen uint8
+
+const (
+	// MenuAlways chooses it there too.
+	MenuAlways MenuWhen = iota
+	// MenuAuto leaves the input the keys it uses itself (EditsText).
+	MenuAuto
+	// MenuNotEditing never chooses it there.
+	MenuNotEditing
+)
 
 type menuAction struct {
 	owner *Scope
@@ -166,6 +182,11 @@ func (t *Tree) menuEntries(items []MenuItem, owner *Scope, actions map[uint32]me
 		if e.Shortcut != "" {
 			e.Shortcut = driver.NormalizeKey(e.Shortcut)
 		}
+		shortcut := e.Shortcut
+		if shortcut == "" && it.Role != MenuRoleNone {
+			shortcut = driver.NormalizeKey(it.Role.Shortcut(false))
+		}
+		e.NotInText = it.When == MenuNotEditing || it.When == MenuAuto && shortcut != "" && EditsText(shortcut)
 		if len(it.Items) > 0 {
 			e.Items = t.menuEntries(it.Items, owner, actions)
 		}

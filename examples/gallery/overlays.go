@@ -57,7 +57,7 @@ func overlaysDemo(cx *core.Scope) core.Node {
 				core.Show{When: open.Get, Then: func(*core.Scope) core.Node {
 					return core.Overlay{Anchor: anchor, Placement: core.PlaceBottom, Align: core.AlignStart, Offset: 6, Margin: 8,
 						OnPressOutside: func(core.Point) { open.Set(false) }, OnCancel: func() { open.Set(false) },
-						OnPosition: func(p core.Placement) { last.Set("overlay at " + placementName(p)) },
+						OnPosition: func(p core.OverlayPosition) { last.Set("overlay at " + placementName(p.Placement)) },
 						StyleFunc:  popupStyle(cx), TestID: "overlay",
 						Children: []core.Node{core.Text{Content: "Outside the clipped box, on top of the page.",
 							Style: core.Style{FontSize: 14, Padding: core.All(6)}, StyleFunc: colored(colors.text)}}}

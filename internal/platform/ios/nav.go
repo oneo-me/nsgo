@@ -515,6 +515,9 @@ type slide struct {
 	// swipe follows the finger; popped says it let the top screen go.
 	swipe, popped bool
 	ended         bool
+	// fade crossfades the top screen in or out instead of moving it
+	// (ScreenFade).
+	fade bool
 }
 
 // stackChange is a stack whose screens a batch changes: the screen it
@@ -609,10 +612,18 @@ func (s *surface) slideScreens(c stackChange, now *view) {
 	sl := &slide{stack: c.stack, top: now, snap: c.snap}
 	from, to := 1.0, 0.0
 	pop := slices.Contains(c.under, now)
+	// A push takes the pushed screen's animation, a pop the popped one's.
+	anim := screenAnimation(now)
 	if pop {
 		sl.top, sl.below = nil, now
 		from, to = 0, 1
+		anim = screenAnimation(c.was)
 	}
+	if anim == driver.ScreenNone {
+		s.dropSnapshot(c.snap)
+		return
+	}
+	sl.fade = anim == driver.ScreenFade
 	if s.slideWidth(sl) == 0 {
 		s.dropSnapshot(c.snap)
 		return
@@ -626,6 +637,14 @@ func (s *surface) slideScreens(c stackChange, now *view) {
 	}
 	s.startSlide(sl)
 	s.animateSlide(sl, from, to, slideSeconds)
+}
+
+// screenAnimation is how screen v enters and leaves.
+func screenAnimation(v *view) driver.ScreenAnimation {
+	if v == nil || v.bar == nil {
+		return driver.ScreenDefault
+	}
+	return v.bar.config.Animation
 }
 
 // slideViews returns the views of the screens of sl still there, the top
@@ -683,16 +702,22 @@ func (s *surface) placeSlide(sl *slide, p float64) {
 // over where the batches put them, so they keep changing as they slide.
 func (s *surface) animateSlide(sl *slide, from, to, seconds float64) {
 	sl.stack.native.Send(sel("setUserInteractionEnabled:"), false)
-	sl.dim.Send(sel("setAlpha:"), (1-to)*dimmed)
 	w := s.slideWidth(sl)
 	top, below := s.slideViews(sl)
 	tx := objc.ID(objc.GetClass("CATransaction"))
 	tx.Send(sel("begin"))
 	done := objc.NewBlock(func(objc.Block) { s.endSlide(sl) })
 	tx.Send(sel("setCompletionBlock:"), done)
-	slideLayer(top, "transform.translation.x", from*w, to*w, seconds, true)
-	slideLayer(below, "transform.translation.x", -(1-from)*w*parallax, -(1-to)*w*parallax, seconds, true)
-	slideLayer(sl.dim, "opacity", (1-from)*dimmed, (1-to)*dimmed, seconds, false)
+	if sl.fade {
+		// Off is transparent: the top screen fades in over the one below,
+		// or out of it.
+		slideLayer(top, "opacity", 1-from, 1-to, seconds, false)
+	} else {
+		sl.dim.Send(sel("setAlpha:"), (1-to)*dimmed)
+		slideLayer(top, "transform.translation.x", from*w, to*w, seconds, true)
+		slideLayer(below, "transform.translation.x", -(1-from)*w*parallax, -(1-to)*w*parallax, seconds, true)
+		slideLayer(sl.dim, "opacity", (1-from)*dimmed, (1-to)*dimmed, seconds, false)
+	}
 	tx.Send(sel("commit"))
 	done.Release()
 }

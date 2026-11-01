@@ -287,6 +287,14 @@ func (a *App) Settle() {
 	}
 }
 
+// Post runs fn on the test's goroutine as the next step or wait settles:
+// what another goroutine hands the test, as a stubbed request does.
+func (a *App) Post(fn func()) {
+	a.mu.Lock()
+	a.posts = append(a.posts, fn)
+	a.mu.Unlock()
+}
+
 // settleLimit is how long of the clock's time a step waits for the app
 // to be quiet.
 const settleLimit = 2 * time.Second

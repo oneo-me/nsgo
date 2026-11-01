@@ -78,7 +78,7 @@ func TestPress(t *testing.T) {
 }
 ```
 
-应用也可以用 TSX 编写，并用 Tailwind CSS 类名设置样式：包内嵌入源码，由 `tsx/compiler` 在应用启动时编译，不需要 Node。`examples/tsx` 就是这样一个应用。
+应用也可以用 TSX 编写（与 NSH 应用的写法相同，只需把导入改为 `nsgo`），并用 Tailwind CSS 类名设置样式：包内嵌入源码，工具在构建时预先编译进包中，`go run` 和 `go test` 则在应用启动时编译，不需要 Node。`examples/tsx` 就是这样一个应用。
 
 ```go
 //go:embed *.tsx
@@ -102,6 +102,8 @@ function App() {
 mount(App);
 ```
 
+TSX 从 `nsgo/base` 导入 `base` 的组件；应用注册自己的 Go 组件后也能导入它们：`tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` 之后，`import { Badge } from "app/native"` 会把 `Badge` 的字段当作 props。放一个继承 `.nsgo/tsconfig.json` 的 `tsconfig.json`，`go tool nsgo check` 就会检查应用并对 TSX 做类型检查；旁边用 `nsgo/test` 编写的 `*.test.tsx` 文件会和 Go 测试一起运行。
+
 在包旁边放一个 `nsgo.yaml`，写明应用名称和目标平台：
 
 ```yaml
@@ -110,6 +112,7 @@ id: dev.oneo.nsgo.hello
 version: 0.1.0
 build_number: 1         # CFBundleVersion 和 Android 的 versionCode；否则取自 version
 # appearance: dark      # 无论系统设置，固定为 light 或 dark
+# theme: theme.json     # TSX 应用的主题：NSGo 的或 shadcn/ui 的
 window: { width: 420, height: 560 }
 icon:
   apple: assets/AppIcon.icon  # macOS 和 iOS，或 macOS 的 .icns
@@ -137,13 +140,13 @@ build:
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` 运行一次应用，开启 `dev.hot_reload` 后则在每次修改时重新编译并重启。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R，或在终端输入 `r` 并回车，会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
+`go tool nsgo dev` 运行一次应用，开启 `dev.hot_reload` 后则在每次修改时重新编译并重启；只改动 TSX 时会就地更新正在运行的应用，未改动部分的状态保持不变。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R，或在终端输入 `r` 并回车，会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
 
 `go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站。`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。
 
 `-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示。Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用网站中的 `nsgo.js`。宿主由网页提供，或是 `nsgo.yaml` 的 `web.host` 指定的模块。参见 `examples/embed-*`。
 
-`go tool nsgo test` 运行应用的测试，每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
+`go tool nsgo test` 运行应用的测试（包括 `*.test.tsx`），每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
 
 参数会覆盖它们对应的 `nsgo.yaml` 值，例如 `-target`、`-version` 或 `-output`；dev 和 build 都接受 `-device` 选择 iPhone、模拟器或 Android 设备，build 的 `-team` 为 iPhone 的包签名，dev 的 `-port` 指定其服务器端口。`-h` 会列出全部参数。
 

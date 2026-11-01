@@ -132,3 +132,31 @@ func TestAViewWhosePanActivatesBecomesTheResponder(t *testing.T) {
 		t.Fatalf("log %q, want %q", log, want)
 	}
 }
+
+func TestCaptureRunsFirstAndAResponderMayLetNativeDragsGo(t *testing.T) {
+	var heard []string
+	note := func(s string, stop bool) func(TouchEvent) {
+		return func(e TouchEvent) {
+			heard = append(heard, s)
+			if stop {
+				e.StopPropagation()
+			}
+		}
+	}
+	h := newHost(t, Size{Width: 200, Height: 200}, func(cx *Scope) Node {
+		return View{OnTouchCapture: note("outer capture", false), OnTouch: note("outer", false),
+			Children: []Node{View{TestID: "inner", Style: Style{Height: Pt(50)}, OnTouchCapture: note("inner capture", false),
+				OnTouch:   note("inner", true),
+				Responder: &Responder{Claims: []TouchClaim{{}}, BlockNative: func(ResponderEvent) bool { return false }}}}}
+	})
+	h.commit()
+	h.tree.Dispatch(finger(GestureBegan, Point{X: 20, Y: 20}, 0))
+	if want := []string{"outer capture", "inner capture", "inner"}; !slices.Equal(heard, want) {
+		t.Errorf("heard %q, want %q", heard, want)
+	}
+	for _, it := range h.commit().Items {
+		if it.Kind == driver.ItemBlockNative && it.ID != 0 {
+			t.Error("a responder whose BlockNative says no blocked the scroll views")
+		}
+	}
+}

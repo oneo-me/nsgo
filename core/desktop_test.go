@@ -161,3 +161,28 @@ func TestCursorStyleReachesTheView(t *testing.T) {
 		t.Fatalf("cursor name = %q, want its CSS name", got)
 	}
 }
+
+func TestMenuWhenLeavesInputsTheirKeys(t *testing.T) {
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		cx.SetApplicationMenu([]MenuItem{{Label: "Edit", Items: []MenuItem{
+			{Label: "Find", Shortcut: "mod+f", When: MenuAuto},
+			{Label: "Select line", Shortcut: "mod+a", When: MenuAuto},
+			{Label: "Run", Shortcut: "mod+r", When: MenuNotEditing},
+			{Label: "Save", Shortcut: "mod+s"},
+		}}})
+		return View{}
+	})
+	var menu []MenuEntry
+	for _, it := range h.commit().Items {
+		if it.Kind == driver.ItemMenu {
+			menu = it.Menu
+		}
+	}
+	var got []bool
+	for _, e := range menu[0].Items {
+		got = append(got, e.NotInText)
+	}
+	if !slices.Equal(got, []bool{false, true, true, false}) {
+		t.Errorf("NotInText = %v: auto leaves select all, notEditing every key", got)
+	}
+}

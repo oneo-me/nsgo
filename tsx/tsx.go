@@ -30,6 +30,35 @@ func App(name, src string) func(cx *core.Scope) core.Node {
 	}
 }
 
+// Hot returns the app of a hot bundle (compiler.CompileHot), as App
+// does, and what runs a newer one in the same VM: the modules whose code
+// changed run again and their components' instances render again, while
+// the rest of the app keeps its state. update runs on the engine
+// goroutine, as from Scope.Post.
+func Hot(name, src string) (app func(cx *core.Scope) core.Node, update func(src string)) {
+	var r *runtime
+	app = func(cx *core.Scope) core.Node {
+		r = newRuntime(cx)
+		if _, err := r.vm.RunScript(name, src); err != nil {
+			panic(err)
+		}
+		return r.root.elem
+	}
+	update = func(src string) {
+		if r == nil {
+			return
+		}
+		r.cx.Run(func() {
+			r.within(r.limits.Load, func() {
+				if _, err := r.vm.RunScript(name, src); err != nil {
+					panic(err)
+				}
+			})
+		})
+	}
+	return app, update
+}
+
 // runtime is one VM and what NSH keeps per context: the module table,
 // the graph's scope and the renderer's root.
 type runtime struct {
@@ -40,14 +69,32 @@ type runtime struct {
 	// warned holds the warnings given, each given once.
 	warned map[string]bool
 	timers timers
+	anim   animClasses
+	// canvasClasses are Path2D and CanvasGradient.
+	canvasClasses canvasClasses
+	// platforms are the platform objects (ios={{…}}) that apply here.
+	platforms []string
+	// web is what web.js gives back; base is the URL relative URLs
+	// resolve against.
+	web  *goja.Object
+	base string
+	// limits are the sandbox's; depth counts the calls into JS under way,
+	// the outermost of which has the time budget.
+	limits Limits
+	depth  int
 }
 
 func newRuntime(cx *core.Scope) *runtime {
 	r := &runtime{vm: goja.New(), cx: cx, modules: map[string]*goja.Object{}, warned: map[string]bool{}}
 	r.root = &node{r: r, kind: kindRegion, elem: core.NewElement(cx, nil)}
+	r.vm.SetFieldNameMapper(goja.UncapFieldNameMapper())
 	r.vm.Set("require", r.require)
 	r.installGlobals()
 	r.installTimers()
+	r.installAnimated()
+	r.installCanvas()
+	r.base = "asset:/"
+	r.installWeb()
 	return r
 }
 
@@ -57,6 +104,9 @@ func (r *runtime) require(name string) goja.Value {
 		return m
 	}
 	exports, ok := moduleTable[name]
+	if more, has := registeredExports(name); has {
+		exports, ok = append(append([]export(nil), exports...), more...), true
+	}
 	if !ok {
 		panic(r.vm.NewTypeError("nsgo: no module %q", name))
 	}
@@ -85,7 +135,9 @@ func (r *runtime) call(fn goja.Value, args ...goja.Value) goja.Value {
 	if !ok {
 		panic(r.vm.NewTypeError("nsgo: %s is not a function", fn))
 	}
-	v, err := f(goja.Undefined(), args...)
+	var v goja.Value
+	var err error
+	r.within(r.limits.Call, func() { v, err = f(goja.Undefined(), args...) })
 	if err != nil {
 		panic(err)
 	}
