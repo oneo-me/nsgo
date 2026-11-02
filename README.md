@@ -120,7 +120,7 @@ icon:
   png: assets/Icon.png        # every other target
 dev:
   target: native        # native, web, ios, ios_simulator or android
-  hot_reload: true      # false runs once and exits with the app
+  hot_reload: true      # false builds once, watching no files
   fps: false            # true shows the performance monitor (macOS, iOS, Windows, Linux); -fps overrides it
   # icon: { png: assets/Icon-dev.png }  # replaces icon's files in dev's builds; defaults to assets/*-dev.*
 build:

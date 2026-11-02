@@ -120,7 +120,7 @@ icon:
   png: assets/Icon.png        # 其他所有目标
 dev:
   target: native        # native、web、ios、ios_simulator 或 android
-  hot_reload: true      # false 时只运行一次，随应用退出
+  hot_reload: true      # false 时只构建一次，不监听文件
   fps: false            # true 时显示性能监视器（macOS、iOS、Windows、Linux）；-fps 可覆盖
   # icon: { png: assets/Icon-dev.png }  # 在 dev 构建中替换 icon 的文件；默认取 assets/*-dev.*
 build:

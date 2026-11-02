@@ -48,11 +48,10 @@ type devOptions struct {
 
 // dev builds and runs the app, with a dev server its builds connect to:
 // a failed build shows over the app, and Command or Control+R in the app
-// builds and starts it again. Without
-// nsgo.yaml's hot reload it exits once the app does; with it, it rebuilds
-// and restarts the app whenever a Go file it compiles from, go.mod,
-// nsgo.yaml or a catalog changes, and keeps the running app when a build
-// fails.
+// builds and starts it again. It exits once the app does. With nsgo.yaml's
+// hot reload it rebuilds and restarts the app whenever a Go file it
+// compiles from, go.mod, nsgo.yaml or a catalog changes, and keeps the
+// running app when a build fails.
 func dev(ctx context.Context, p *project, opts devOptions) error {
 	p.prepareDev(opts)
 	srv, err := startDevServer(opts.port)
@@ -167,8 +166,7 @@ func (p *project) prepareDev(opts devOptions) {
 
 // waitForChange returns nil once dev should build again: a reload asked
 // for, or with hot reload a watched file changed. It returns the error
-// dev ends with when the run is over: ctx done, or the app exited when it
-// does not hot reload.
+// dev ends with when the run is over: ctx done, or the app exited.
 //
 // A change of the app's TSX alone builds no Go: its bundles are compiled
 // again and the running apps load them (compiler.App under nsgodev).
@@ -184,10 +182,7 @@ func waitForChange(ctx context.Context, p *project, srv *devServer, dirs, source
 		case <-srv.reloads:
 			return nil
 		case err := <-exited:
-			if !p.hotReload() {
-				return &err
-			}
-			exited = nil
+			return &err
 		case <-tick.C:
 			if !p.hotReload() {
 				continue
