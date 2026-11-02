@@ -30,6 +30,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 	"github.com/oneo-me/nsgo/tsx"
+	"github.com/oneo-me/nsgo/tsx/bundler"
 	"github.com/oneo-me/nsgo/tsx/compiler"
 )
 
@@ -70,7 +71,7 @@ type runner struct {
 }
 
 func runFile(t *testing.T, fsys fs.FS, file string) {
-	code, err := compiler.Compile(fsys, file)
+	code, err := bundler.Compile(fsys, file)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/compiler"
+	"github.com/oneo-me/nsgo/tsx/bundler"
 )
 
 // A TSX app's bundles: the tool compiles each entry its main package
@@ -77,7 +77,7 @@ func tsxEntries(dir string) ([]string, error) {
 }
 
 // compileBundles compiles the app's TSX entries, by entry; hot ones for
-// nsgo dev, which updates them in place (compiler.CompileHot).
+// nsgo dev, which updates them in place (bundler.CompileHot).
 func compileBundles(dir string, hot bool) (map[string]string, error) {
 	entries, err := tsxEntries(dir)
 	if err != nil {
@@ -85,9 +85,9 @@ func compileBundles(dir string, hot bool) (map[string]string, error) {
 	}
 	out := map[string]string{}
 	for _, e := range entries {
-		compile := compiler.Compile
+		compile := bundler.Compile
 		if hot {
-			compile = compiler.CompileHot
+			compile = bundler.CompileHot
 		}
 		code, err := compile(os.DirFS(dir), e)
 		if err != nil {

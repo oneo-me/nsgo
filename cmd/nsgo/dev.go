@@ -75,12 +75,16 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	first, hinted := true, false
 	for {
 		// The catalogs' code first, which the build and the files watched
-		// may need.
-		catalogErr := p.prepareCatalogs(ctx, ".", false)
-		dirs, err := sourceDirs(ctx, p.Dir)
-		if err != nil {
-			return err
+		// may need. One listing serves both, listed again when the
+		// catalogs' new code may import more.
+		pkgs, catalogErr := goPackages(ctx, p.Dir, true, ".")
+		if catalogErr == nil {
+			var wrote bool
+			if wrote, catalogErr = p.writeCatalogs(ctx, pkgs, false); wrote {
+				pkgs, _ = goPackages(ctx, p.Dir, true, ".")
+			}
 		}
+		dirs := sourceDirs(p.Dir, pkgs)
 		if p.Web.Host != "" {
 			dirs = append(dirs, p.resolve(p.Web.Host))
 		}
@@ -457,20 +461,18 @@ func sessionFor(p *project, opts devOptions) (session, error) {
 // sourceDirs lists the project's directory and those of every non-standard
 // package it compiles, NSGo's own included, and the files they embed: a
 // TSX app's sources.
-func sourceDirs(ctx context.Context, dir string) ([]string, error) {
-	cmd := exec.CommandContext(ctx, "go", "list", "-deps", "-f",
-		"{{if not .Standard}}{{.Dir}}{{range .EmbedFiles}} {{$.Dir}}/{{.}}{{end}}{{end}}", ".")
-	cmd.Dir = dir
-	out, err := cmd.Output()
-	if err != nil {
-		// A project that does not compile still has its own files to watch.
-		return []string{dir}, nil
-	}
+func sourceDirs(dir string, pkgs []goPackage) []string {
 	dirs := []string{dir}
-	for _, d := range strings.Fields(string(out)) {
-		dirs = append(dirs, d)
+	for _, g := range pkgs {
+		if g.standard || g.dir == "" {
+			continue
+		}
+		dirs = append(dirs, g.dir)
+		for _, e := range g.embeds {
+			dirs = append(dirs, filepath.Join(g.dir, e))
+		}
 	}
-	return dirs, nil
+	return dirs
 }
 
 // scan returns a fingerprint of the watched files' names, sizes and times:

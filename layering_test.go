@@ -51,12 +51,16 @@ var layers = []struct {
 	{"icons/", []string{"core"}},
 	// The TSX test runner drives apps through nsgotest.
 	{"tsx/tsxtest", []string{"core", "internal/driver", "nsgotest", "tsx", "tsx/"}},
-	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx"}},
+	// The nsgo tool links the bundler, so it reaches no runtime.
+	{"tsx/bundler", []string{"core", "internal/driver"}},
+	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
 	{"examples/", []string{"", "core", "base/", "mobile", "desktop", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
-	{"cmd/", []string{"core", "cmd/", "i18n", "internal/platform/android/runtime", "tsx/"}},
+	// The nsgo tool links no component or runtime, so changing them does
+	// not build it again; it writes TSX declarations by running the app.
+	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/bundler"}},
 	{"tools/", []string{"core"}},
 }
 

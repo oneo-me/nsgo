@@ -3,11 +3,14 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -210,37 +213,104 @@ func writeIOSIcon(ctx context.Context, p *project, app string, simulator bool) (
 
 // compileIcon runs actool on an Icon Composer .icon or an asset catalog
 // holding AppIcon, writing Assets.car and the platform's icon files into
-// out, and returns the Info.plist entries actool says name them.
+// out, and returns the Info.plist entries actool says name them. actool
+// takes seconds, so the user's cache keeps its output by actool's
+// version, the arguments and the input's files, and builds after the
+// first copy it.
 func compileIcon(ctx context.Context, input, out, platform, minimum string) (string, error) {
 	name := "AppIcon"
 	if filepath.Ext(input) == ".icon" {
 		name = strings.TrimSuffix(filepath.Base(input), ".icon")
 	}
-	tmp, err := os.MkdirTemp("", "nsgo-icon-")
-	if err != nil {
-		return "", err
-	}
-	defer os.RemoveAll(tmp)
-	partial := filepath.Join(tmp, "Info.plist")
-	args := []string{"actool", input, "--compile", out, "--platform", platform,
-		"--minimum-deployment-target", minimum, "--app-icon", name, "--output-partial-info-plist", partial}
+	args := []string{"--platform", platform, "--minimum-deployment-target", minimum, "--app-icon", name}
 	if platform != "macosx" {
 		args = append(args, "--target-device", "iphone", "--target-device", "ipad")
 	}
-	if err := run(ctx, "xcrun", args...); err != nil {
+	version, err := output(ctx, "xcrun", "actool", "--version")
+	if err != nil {
 		return "", fmt.Errorf("the icon needs Xcode's actool: %w", err)
 	}
-	data, err := os.ReadFile(partial)
+	sum := sha256.New()
+	fmt.Fprintf(sum, "%s\n%q\n", version, args)
+	err = filepath.WalkDir(input, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		fmt.Fprintf(sum, "%q %d\n", strings.TrimPrefix(path, input), len(data))
+		sum.Write(data)
+		return err
+	})
 	if err != nil {
 		return "", err
 	}
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(cache, "nsgo", "icons", hex.EncodeToString(sum.Sum(nil)[:16]))
+	if _, err := os.Stat(dir); err != nil {
+		if err := runActool(ctx, input, dir, args); err != nil {
+			return "", err
+		}
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "Info.plist"))
+	if err != nil {
+		return "", err
+	}
+	files := filepath.Join(dir, "files")
+	return plistEntries(string(data)), filepath.WalkDir(files, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(out, strings.TrimPrefix(path, files))
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	})
+}
+
+// runActool compiles input into dir: the icon files in files, and the
+// partial Info.plist naming them.
+func runActool(ctx context.Context, input, dir string, args []string) error {
+	if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.MkdirTemp(filepath.Dir(dir), "tmp-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+	partial := filepath.Join(tmp, "Info.plist")
+	args = append([]string{"actool", input, "--compile", filepath.Join(tmp, "files"),
+		"--output-partial-info-plist", partial}, args...)
+	if err := os.MkdirAll(filepath.Join(tmp, "files"), 0o755); err != nil {
+		return err
+	}
+	if err := run(ctx, "xcrun", args...); err != nil {
+		return fmt.Errorf("the icon needs Xcode's actool: %w", err)
+	}
+	data, err := os.ReadFile(partial)
+	if err != nil {
+		return err
+	}
 	// actool reports problems in its output and still succeeds; an icon
 	// it could not compile leaves the plist empty.
-	entries := plistEntries(string(data))
-	if entries == "" {
-		return "", fmt.Errorf("actool compiled no icon from %s", rel(input))
+	if plistEntries(string(data)) == "" {
+		return fmt.Errorf("actool compiled no icon from %s", rel(input))
 	}
-	return entries, nil
+	// Another build may have filled dir meanwhile, with the same files.
+	if err := os.Rename(tmp, dir); err != nil {
+		if _, statErr := os.Stat(dir); statErr != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // plistEntries returns the keys and values of a plist's top dictionary.

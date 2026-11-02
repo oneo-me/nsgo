@@ -10,9 +10,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
 )
 
 // nsgo check: the catalogs and their code, go vet, then TypeScript's checker on the app's TSX against
@@ -55,13 +52,17 @@ func check(ctx context.Context, p *project) error {
 // typesInit is the file the tool adds to the app's main package, through
 // go's -overlay, to write the declarations of the modules its TSX
 // imports: run last of the package's init functions, after every
-// tsx.Register, it writes them and ends the program before main.
+// tsx.Register, it writes them, with the names token() reads from the
+// app's theme file (nsgo.yaml's theme) over the default theme's, and ends
+// the program before main, so the tool links no tsx.
 const typesInit = `package main
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/tsx"
 )
 
@@ -70,7 +71,25 @@ func init() {
 	if dir == "" {
 		return
 	}
-	if err := tsx.WriteDeclarations(dir); err != nil {
+	write := func() error {
+		if err := tsx.WriteDeclarations(dir); err != nil {
+			return err
+		}
+		file := os.Getenv("NSGO_THEME")
+		if file == "" {
+			return nil
+		}
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("nsgo.yaml: theme: %w", err)
+		}
+		theme, err := core.ParseTheme(data)
+		if err != nil {
+			return fmt.Errorf("nsgo.yaml: theme: %w", err)
+		}
+		return os.WriteFile(filepath.Join(dir, "types", "nsgo", "tokens.d.ts"), []byte(tsx.TokenDeclarations(theme)), 0o644)
+	}
+	if err := write(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -129,27 +148,13 @@ func generateTypes(ctx context.Context, p *project) error {
 	cmd := exec.CommandContext(ctx, bin)
 	cmd.Dir = p.Dir
 	cmd.Env = append(os.Environ(), "NSGO_TYPES="+dir)
+	if p.Theme != "" {
+		cmd.Env = append(cmd.Env, "NSGO_THEME="+filepath.Join(p.Dir, p.Theme))
+	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("writing types failed: %w\n%s", err, strings.TrimSpace(string(out)))
 	}
-	return writeTokens(p, dir)
-}
-
-// writeTokens declares the names token() reads from the app's theme file
-// (nsgo.yaml's theme), over the default theme's the program wrote.
-func writeTokens(p *project, dir string) error {
-	if p.Theme == "" {
-		return nil
-	}
-	data, err := os.ReadFile(filepath.Join(p.Dir, p.Theme))
-	if err != nil {
-		return fmt.Errorf("nsgo.yaml: theme: %w", err)
-	}
-	theme, err := core.ParseTheme(data)
-	if err != nil {
-		return fmt.Errorf("nsgo.yaml: theme: %w", err)
-	}
-	return os.WriteFile(filepath.Join(dir, "types", "nsgo", "tokens.d.ts"), []byte(tsx.TokenDeclarations(theme)), 0o644)
+	return nil
 }
 
 // goTool runs go with args in dir, its output shown only on a failure.

@@ -7,8 +7,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
-	"github.com/oneo-me/nsgo/i18n"
+	"golang.org/x/text/feature/plural"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 )
@@ -433,30 +434,47 @@ func checkPluralCases(m *catalogMessage, lang, path string, ds *diags) {
 }
 
 // pluralCategories returns the categories lang's plural rules put
-// numbers in, found by trying numbers on them.
+// numbers in, found by trying numbers on them once per language and kind:
+// every message of every catalog asks. The numbers are as i18n's
+// Cardinal and Ordinal see them, written without trailing zeros, but
+// the tool reads the rules itself, so it links no engine.
 func pluralCategories(lang string, ordinal bool) map[string]bool {
+	type kind struct {
+		lang    string
+		ordinal bool
+	}
+	if has, ok := pluralCategoryCache.Load(kind{lang, ordinal}); ok {
+		return has.(map[string]bool)
+	}
+	rules, tag := plural.Cardinal, language.Make(lang)
+	if ordinal {
+		rules = plural.Ordinal
+	}
+	names := [...]string{plural.Other: "other", plural.Zero: "zero", plural.One: "one", plural.Two: "two", plural.Few: "few", plural.Many: "many"}
 	has := map[string]bool{}
-	try := func(n float64) {
-		if ordinal {
-			has[i18n.Ordinal(lang, n).String()] = true
-		} else {
-			has[i18n.Cardinal(lang, n).String()] = true
-		}
-	}
+	// try tries the number i.f, f having v digits.
+	try := func(i, v, f int) { has[names[rules.MatchPlural(tag, i, v, v, f, f)]] = true }
 	for n := 0; n <= 1000; n++ {
-		try(float64(n))
+		try(n, 0, 0)
 	}
-	for _, n := range []float64{1e4, 1e5, 1e6, 1e7, 1e9} {
-		try(n)
+	for _, n := range []int{1e4, 1e5, 1e6, 1e7, 1e9} {
+		try(n, 0, 0)
 	}
 	if !ordinal {
+		// Tenths below 30 and hundredths below 3, those ending in 0
+		// tried with fewer digits already.
 		for n := 1; n < 300; n++ {
-			try(float64(n) / 10)
-			try(float64(n) / 100)
+			if n%10 != 0 {
+				try(n/10, 1, n%10)
+				try(n/100, 2, n%100)
+			}
 		}
 	}
+	pluralCategoryCache.Store(kind{lang, ordinal}, has)
 	return has
 }
+
+var pluralCategoryCache sync.Map
 
 // reservedNames are what a package of catalogs declares besides its
 // messages.

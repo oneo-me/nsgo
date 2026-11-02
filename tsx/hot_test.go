@@ -6,7 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/nsgotest"
 	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/tsx/compiler"
+	"github.com/oneo-me/nsgo/tsx/bundler"
 )
 
 // TestHotUpdatesKeepState edits a component: it renders again with the
@@ -24,7 +24,7 @@ export function Counter() { return <Text testID="count" onPress={() => count.set
 		"greeting.tsx": {Data: []byte(`import { Text } from "nsgo";
 export function Greeting() { return <Text>Hello</Text>; }`)},
 	}
-	first, err := compiler.CompileHot(files, "App.tsx")
+	first, err := bundler.CompileHot(files, "App.tsx")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ export function Greeting() { return <Text>Hello</Text>; }`)},
 	}
 	files["greeting.tsx"] = &fstest.MapFile{Data: []byte(`import { Text } from "nsgo";
 export function Greeting() { return <Text>Hello again</Text>; }`)}
-	next, err := compiler.CompileHot(files, "App.tsx")
+	next, err := bundler.CompileHot(files, "App.tsx")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ export function Greeting() { return <Text>Hello again</Text>; }`)}
 import { Counter } from "./counter";
 import { Greeting } from "./greeting";
 mount(() => <View><Text>Title</Text><Counter /><Greeting /></View>);`)}
-	next, err = compiler.CompileHot(files, "App.tsx")
+	next, err = bundler.CompileHot(files, "App.tsx")
 	if err != nil {
 		t.Fatal(err)
 	}

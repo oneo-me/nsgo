@@ -20,7 +20,8 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting and the rows a virtualized view makes |
 | `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
-| `tsx/compiler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler |
+| `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler |
+| `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, or compiles it as it starts |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
 | `i18n`, `*/locales` | — (MyGo's `i18n`) | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |

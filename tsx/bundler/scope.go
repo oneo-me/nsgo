@@ -1,6 +1,4 @@
-//go:build !nsgo_bundled
-
-package compiler
+package bundler
 
 import (
 	"github.com/dop251/goja/ast"

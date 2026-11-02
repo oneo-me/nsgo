@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/oneo-me/nsgo/tsx/bundler"
 )
 
 // TestDevServerBundlesReplaceTheApp serves a bundle as nsgo dev does
 // after a save: the running app becomes it, with no build.
 func TestDevServerBundlesReplaceTheApp(t *testing.T) {
-	next, err := Compile(fstest.MapFS{"App.tsx": {Data: []byte(`import { mount, Text } from "nsgo";
+	next, err := bundler.Compile(fstest.MapFS{"App.tsx": {Data: []byte(`import { mount, Text } from "nsgo";
 mount(() => <Text>Second</Text>);`)}}, "App.tsx")
 	if err != nil {
 		t.Fatal(err)

@@ -44,12 +44,15 @@ func (cs *catalogSet) add(dir, importPath, source string, app bool) *catalog {
 // goPackage is a package go list reports.
 type goPackage struct {
 	importPath, dir string
-	main            bool // in the main module
+	main            bool     // in the main module
+	standard        bool     // in the standard library
+	embeds          []string // the files it embeds, relative to dir
 }
 
 // goPackages lists pkgs, from dir, with -deps their dependencies too.
 func goPackages(ctx context.Context, dir string, deps bool, pkgs ...string) ([]goPackage, error) {
-	args := []string{"list", "-e", "-f", "{{.ImportPath}}\t{{.Dir}}\t{{if .Module}}{{.Module.Main}}{{end}}"}
+	args := []string{"list", "-e", "-f",
+		"{{.ImportPath}}\t{{.Dir}}\t{{if .Module}}{{.Module.Main}}{{end}}\t{{.Standard}}{{range .EmbedFiles}}\t{{.}}{{end}}"}
 	if deps {
 		args = append(args, "-deps")
 	}
@@ -65,8 +68,8 @@ func goPackages(ctx context.Context, dir string, deps bool, pkgs ...string) ([]g
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		f := strings.Split(line, "\t")
 		// A package without Go files yet has no directory.
-		if len(f) == 3 {
-			list = append(list, goPackage{importPath: f[0], dir: f[1], main: f[2] == "true"})
+		if len(f) >= 4 {
+			list = append(list, goPackage{importPath: f[0], dir: f[1], main: f[2] == "true", standard: f[3] == "true", embeds: f[4:]})
 		}
 	}
 	return list, nil
@@ -159,11 +162,11 @@ func matches(lang string, langs []string) bool {
 	return conf >= language.High
 }
 
-// write writes each writable catalog's generated code, or with check
-// only reports the ones out of date.
-func (cs *catalogSet) write(check bool) error {
+// write writes each writable catalog's generated code, reporting whether
+// it wrote any, or with check only reports the ones out of date.
+func (cs *catalogSet) write(check bool) (wrote bool, err error) {
 	if err := cs.ds.err(); err != nil {
-		return err
+		return false, err
 	}
 	var stale []string
 	for _, c := range cs.order {
@@ -172,7 +175,7 @@ func (cs *catalogSet) write(check bool) error {
 		}
 		code, err := c.generate()
 		if err != nil {
-			return err
+			return wrote, err
 		}
 		path := filepath.Join(c.dir, genFile)
 		if old, err := os.ReadFile(path); err == nil && bytes.Equal(old, code) {
@@ -183,14 +186,15 @@ func (cs *catalogSet) write(check bool) error {
 			continue
 		}
 		if err := os.WriteFile(path, code, 0o644); err != nil {
-			return err
+			return wrote, err
 		}
+		wrote = true
 		done("wrote %s", rel(path))
 	}
 	if len(stale) > 0 {
-		return fmt.Errorf("out of date: %s; nsgo dev, build, test or i18n writes them", strings.Join(stale, ", "))
+		return wrote, fmt.Errorf("out of date: %s; nsgo dev, build, test or i18n writes them", strings.Join(stale, ", "))
 	}
-	return nil
+	return wrote, nil
 }
 
 // prepareCatalogs checks the catalogs of the packages pattern names and
@@ -198,16 +202,23 @@ func (cs *catalogSet) write(check bool) error {
 // catalogs (nsgo.yaml's i18n) and every package of catalogs the packages
 // compile. With check it only reports what is out of date.
 func (p *project) prepareCatalogs(ctx context.Context, pattern string, check bool) error {
-	cs := newCatalogSet(ctx)
 	pkgs, err := goPackages(ctx, p.Dir, true, pattern)
 	if err != nil {
 		return err
 	}
+	_, err = p.writeCatalogs(ctx, pkgs, check)
+	return err
+}
+
+// writeCatalogs is prepareCatalogs on packages listed already, with their
+// dependencies, reporting whether it wrote any code.
+func (p *project) writeCatalogs(ctx context.Context, pkgs []goPackage, check bool) (bool, error) {
+	cs := newCatalogSet(ctx)
 	var app *catalog
 	if p.I18n.Dir != "" && hasCatalogs(p.I18n.Dir) {
 		importPath, err := importPathOf(p.I18n.Dir)
 		if err != nil {
-			return err
+			return false, err
 		}
 		app = cs.add(p.I18n.Dir, importPath, p.I18n.Source, true)
 		cs.writable[app] = true
@@ -216,7 +227,7 @@ func (p *project) prepareCatalogs(ctx context.Context, pattern string, check boo
 		}
 	}
 	for _, g := range pkgs {
-		if g.dir == "" || app != nil && g.importPath == app.importPath {
+		if g.dir == "" || g.standard || app != nil && g.importPath == app.importPath {
 			continue
 		}
 		if source, isApp, ok := generatedCatalog(g.dir); ok {
@@ -225,7 +236,7 @@ func (p *project) prepareCatalogs(ctx context.Context, pattern string, check boo
 		}
 	}
 	if len(cs.order) == 0 {
-		return nil
+		return false, nil
 	}
 	cs.resolve()
 	cs.checkCoverage(app)
@@ -263,7 +274,8 @@ func generateCatalog(ctx context.Context, dir, source string) error {
 	cs.writable[c] = true
 	cs.resolve()
 	cs.ds.printWarnings()
-	return cs.write(false)
+	_, err = cs.write(false)
+	return err
 }
 
 // importPathOf returns the import path of the package in dir, by its

@@ -1,6 +1,6 @@
 # TSX and dynamic delivery
 
-NSGo runs TSX apps on NSH's design: they import `nsgo`, `nsgo/base`, `nsgo/mobile`, `nsgo/desktop` and `nsgo/test`, have NSH's props, events, style keys, Tailwind classes and behavior, and compile with `tsx/compiler`. Each part is a Go port of its NSH counterpart, so what NSH adds ports the same way (decided by the user, 2026-10-28); an NSH app runs once its imports name `nsgo` in place of `nsh`. `TestNSHGallery` checks it: NSH's gallery, imports renamed, opens every demo headless but those that run processes. The [roadmap](../roadmap.md#tsx-and-dynamic-delivery) orders what is left.
+NSGo runs TSX apps on NSH's design: they import `nsgo`, `nsgo/base`, `nsgo/mobile`, `nsgo/desktop` and `nsgo/test`, have NSH's props, events, style keys, Tailwind classes and behavior, and compile with `tsx/bundler`. Each part is a Go port of its NSH counterpart, so what NSH adds ports the same way (decided by the user, 2026-10-28); an NSH app runs once its imports name `nsgo` in place of `nsh`. `TestNSHGallery` checks it: NSH's gallery, imports renamed, opens every demo headless but those that run processes. The [roadmap](../roadmap.md#tsx-and-dynamic-delivery) orders what is left.
 
 An app embeds its sources and names its entry; the `nsgo` tool compiles it ahead for its builds, and `go run` and `go test` compile it as it starts:
 
@@ -17,7 +17,7 @@ func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 
 | NSH | NSGo | Part |
 | --- | --- | --- |
-| `nsh-bundler`: Oxc, `jsx.rs`, rolldown, `hot.rs` | `tsx/compiler`: esbuild, `jsx.go`, `hot.go` | TSX to one script; asset imports; hot bundles |
+| `nsh-bundler`: Oxc, `jsx.rs`, rolldown, `hot.rs` | `tsx/bundler`: esbuild, `jsx.go`, `hot.go` | TSX to one script; asset imports; hot bundles |
 | `nsh-js` `reactive.rs`, `resource.rs` | `tsx/reactive.go`, `services.go` | `signal`, `computed`, `effect`, `batch`, `untracked`, `cleanup`, `resource` |
 | `nsh-js` `dom.rs`, `list.rs` | `tsx/dom.go`, `components.go`, `face.go`, `elements.go` | `nsgo:rt`, what compiled JSX calls; the primitives |
 | `nsh-js` `protocol.rs`, `nsh-core` `style.rs` | `tsx/protocol.go`, `hostprops.go`, `stylekeys.go`, `css.go` | Props and style objects decoded into `core`'s values |
@@ -54,7 +54,7 @@ What goja lacks, and the answer:
 
 ## Compiling
 
-`tsx/compiler` compiles with esbuild's Go API, so no Node is needed:
+`tsx/bundler` compiles with esbuild's Go API, so no Node is needed, and imports no runtime, so the tool that links it builds again only when `core` or the bundler changes:
 
 - Each module goes through esbuild's transform: TypeScript stripped, syntax lowered to ES2020 and what goja lacks, JSX in its classic form (`__jsx(tag, props, ...children)`, with React's whitespace rules), as CommonJS.
 - `jsx.go`, a port of `jsx.rs`, reads that with goja's parser and writes each call as NSH's compiler does: host elements made in place (`element`, `prop`, `bindProp`, `append`, `insert`), components called with getters for what changes, `If` and `Each` as `cond` and `each`. Its source map is composed with esbuild's.
@@ -117,7 +117,7 @@ The primitives that are not `core.Element`s (`Overlay`, `WebView`, `Video`, `Lis
 
 ## Developing
 
-Under `nsgo dev` the tool compiles TSX ahead for hot updates (`compiler.CompileHot`), and a save that changes only the bundle's files compiles it again and sends it over `/_nsgo/events`, with no Go build. `compiler.App`, built with the dev client, follows the server and runs the new bundle in the same VM (`tsx.Hot`):
+Under `nsgo dev` the tool compiles TSX ahead for hot updates (`bundler.CompileHot`), and a save that changes only the bundle's files compiles it again and sends it over `/_nsgo/events`, with no Go build. `compiler.App`, built with the dev client, follows the server and runs the new bundle in the same VM (`tsx.Hot`):
 
 - A hot bundle's modules go through a registry (`hot.go`), which esbuild's module wrapper calls: a module runs again only when its code changed, and its importers get a facade of its current exports, in which components are proxies.
 - A proxy's instances render the component's newest code, so an edit renders the changed components again; the modules it did not change keep their state, and their components' instances too.

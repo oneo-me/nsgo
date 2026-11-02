@@ -1,4 +1,4 @@
-// Package tsx runs TSX apps: bundles of what tsx/compiler emits, on the
+// Package tsx runs TSX apps: bundles of what tsx/bundler emits, on the
 // goja JavaScript engine, rendered by core as Go apps are. It is a port
 // of NSH's nsh-js: reactive.go of reactive.rs, dom.go of dom.rs,
 // protocol.go of protocol.rs and modules.go of modules.rs, so a change
@@ -30,7 +30,7 @@ func App(name, src string) func(cx *core.Scope) core.Node {
 	}
 }
 
-// Hot returns the app of a hot bundle (compiler.CompileHot), as App
+// Hot returns the app of a hot bundle (bundler.CompileHot), as App
 // does, and what runs a newer one in the same VM: the modules whose code
 // changed run again and their components' instances render again, while
 // the rest of the app keeps its state. update runs on the engine

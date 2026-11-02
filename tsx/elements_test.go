@@ -15,6 +15,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 	"github.com/oneo-me/nsgo/tsx"
+	"github.com/oneo-me/nsgo/tsx/bundler"
 	"github.com/oneo-me/nsgo/tsx/compiler"
 )
 
@@ -414,13 +415,13 @@ mount(() => <View testID="box" class="bg-brand-500 w-2 h-2" />);`)},
 		t.Errorf("the box is %#x, %v wide", v.Style.Background, v.Frame.Size.Width)
 	}
 	fsys["nsgo.yaml"] = &fstest.MapFile{Data: []byte("name: T\ntailwind:\n  colours: {}\n")}
-	if _, err := compiler.Compile(fsys, "App.tsx"); err == nil || !strings.Contains(err.Error(), "colours") {
+	if _, err := bundler.Compile(fsys, "App.tsx"); err == nil || !strings.Contains(err.Error(), "colours") {
 		t.Errorf("an unknown key compiles: %v", err)
 	}
 }
 
 func TestSandboxLimitsCutRunawayScripts(t *testing.T) {
-	code, err := compiler.Compile(fstest.MapFS{"App.tsx": {Data: []byte(`import { mount, signal, Text } from "nsgo";
+	code, err := bundler.Compile(fstest.MapFS{"App.tsx": {Data: []byte(`import { mount, signal, Text } from "nsgo";
 let made = "no";
 try { made = String(new Function("return 1")()); } catch (e) { made = "refused"; }
 let frozen = "no";
@@ -527,7 +528,7 @@ func TestFontImportsAreTheirFamiliesAndRegister(t *testing.T) {
 import family from "./go.ttf";
 mount(() => <Text testID="t" style={{ fontFamily: family }}>{family}</Text>);`)},
 	}
-	code, err := compiler.Compile(fsys, "App.tsx")
+	code, err := bundler.Compile(fsys, "App.tsx")
 	if err != nil {
 		t.Fatal(err)
 	}

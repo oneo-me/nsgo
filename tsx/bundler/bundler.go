@@ -1,6 +1,13 @@
-//go:build !nsgo_bundled
-
-package compiler
+// Package bundler compiles TSX apps into the scripts the tsx package
+// runs, as NSH's bundler does (nsh-bundler): esbuild strips TypeScript,
+// lowers syntax goja lacks and bundles the app's modules into one script,
+// and jsx.go compiles the JSX into calls of the renderer, as NSH's
+// compiler does. Imports of NSGo's modules (nsgo, nsgo/*, nsgo:rt) stay,
+// as require calls the runtime answers. No Node is needed.
+//
+// The nsgo tool links it, so it imports from NSGo only core and
+// internal/driver, never the runtime (layering_test.go).
+package bundler
 
 import (
 	"errors"
@@ -18,10 +25,6 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 )
-
-// compileAtStart compiles an app's TSX as it starts, without a bundle
-// compiled ahead.
-func compileAtStart(fsys fs.FS, entry string) (string, error) { return Compile(fsys, entry) }
 
 // gojaLacks are the features goja does not run, which esbuild lowers.
 var gojaLacks = map[string]bool{"async-generator": false, "for-await": false, "dynamic-import": false}

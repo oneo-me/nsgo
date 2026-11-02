@@ -1,6 +1,4 @@
-//go:build !nsgo_bundled
-
-package compiler
+package bundler
 
 import (
 	"bytes"
@@ -20,7 +18,7 @@ import (
 	"golang.org/x/image/font/sfnt"
 	_ "golang.org/x/image/webp"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/internal/driver"
 )
 
 // Assets a module imports (NSH's plugin.rs): an image is an ImageAsset,
@@ -55,7 +53,7 @@ func assetModule(p string, data []byte) (string, error) {
 	}
 	var w, h float64
 	if ext == ".svg" {
-		svg, err := core.ParseSVG(data)
+		svg, err := driver.ParseSVG(data)
 		if err != nil {
 			return "", fmt.Errorf("%s: %w", p, err)
 		}
