@@ -11,6 +11,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // motionTones are the tones of the demos' dots and tiles.
@@ -38,6 +39,7 @@ func ease(kind core.EasingKind, mode core.EaseMode) core.Easing {
 // hero is an orbit, pulsing rings and a breathing core: three loops,
 // started once.
 func hero(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	spin := core.NewAnimatedValue(cx, 0)
@@ -92,14 +94,14 @@ func hero(cx *core.Scope) core.Node {
 				}}
 		}, Children: []core.Node{ui.Icon(ui.IconAnimation, 22, colors.OnAccent)}},
 	)
-	return ui.Card{Icon: ui.IconAnimation, Title: "Native motion", Description: "Three loops, started once, run on the UI thread", Children: []core.Node{
+	return ui.Card{Icon: ui.IconAnimation, Title: tr.AnimNativeMotion(), Description: tr.AnimThreeLoopsStartedOnceRun(), Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(s + 8), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(s), Height: core.Pt(s)}, Children: stage},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			ui.APILine{Label: "Orbits, one turn in 3.2 s", Names: "Loop"},
-			ui.APILine{Label: "Rings, 0.8 s apart", Names: "Stagger"},
-			ui.APILine{Label: "Core, in and out", Names: "Sequence"},
+			ui.APILine{Label: tr.AnimOrbitsOneTurnIn3(), Names: "Loop"},
+			ui.APILine{Label: tr.AnimRings08SApart(), Names: "Stagger"},
+			ui.APILine{Label: tr.AnimCoreInAndOut(), Names: "Sequence"},
 		}},
 	}}
 }
@@ -164,6 +166,7 @@ func chipTab(cx *core.Scope, label string, active func() bool, onPress func()) c
 // easingPlot is one curve plotted, with a dot that rides it: x runs
 // linearly, y with the curve, both on the platform.
 func easingPlot(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	selected := core.NewSignal(cx, len(easingCurves)-3)
@@ -231,16 +234,17 @@ func easingPlot(cx *core.Scope) core.Node {
 	for i, c := range easingCurves {
 		chips = append(chips, chipTab(cx, c.name, func() bool { return selected.Get() == i }, func() { selected.Set(i); play() }))
 	}
-	return ui.Card{Icon: ui.IconSpark, Title: "Easing", Description: "Curves are data, evaluated natively", Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(196)}, Draw: draw, Label: "Easing curve"},
+	return ui.Card{Icon: ui.IconSpark, Title: tr.AnimEasing(), Description: tr.AnimCurvesAreDataEvaluatedNatively(), Children: []core.Node{
+		core.Canvas{Style: core.Style{Height: core.Pt(196)}, Draw: draw, Label: tr.AnimEasingCurve()},
 		core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
-			base.Tabs{Label: "Curves", Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
-		ui.Button{Text: "Play", Icon: ui.IconPlay, OnPress: play},
+			base.Tabs{Label: tr.AnimCurves(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
+		ui.Button{Text: tr.AnimPlay(), Icon: ui.IconPlay, OnPress: play},
 	}}
 }
 
 // easingRace is every curve at once: ten timings in one Parallel.
 func easingRace(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	var dots []*core.AnimatedValue
@@ -280,13 +284,13 @@ func easingRace(cx *core.Scope) core.Node {
 			lane,
 		}})
 	}
-	return ui.Card{Icon: ui.IconLists, Title: "Side by side", Description: "Ten timings started together", Actions: []core.Node{ui.Badge{Text: "1.2 s"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconLists, Title: tr.AnimSideBySide(), Description: tr.AnimTenTimingsStartedTogether(), Actions: []core.Node{ui.Badge{Text: "1.2 s"}}, Children: []core.Node{
 		core.View{Style: core.Style{Gap: 2}, Children: rows},
-		ui.APILine{Label: "One group, one start", Names: "Parallel"},
+		ui.APILine{Label: tr.AnimOneGroupOneStart(), Names: "Parallel"},
 		core.Dynamic(func(*core.Scope) core.Node {
-			l := "Play"
+			l := tr.AnimPlay()
 			if there.Get() {
-				l = "Reverse"
+				l = tr.AnimReverse()
 			}
 			return ui.Button{Text: l, Variant: ui.ButtonSecondary, Icon: ui.IconPlay, OnPress: play}
 		}),
@@ -296,6 +300,7 @@ func easingRace(cx *core.Scope) core.Node {
 // composition is Sequence, Parallel, Stagger and Loop, with stop and
 // reset.
 func composition(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	tones := motionTones(cx)
@@ -339,12 +344,12 @@ func composition(cx *core.Scope) core.Node {
 	})
 	run := func(name string, a *core.Animation) func() {
 		return func() {
-			st.Set(state{name + " running", ui.ToneInfo})
+			st.Set(state{name + tr.AnimRunning(), ui.ToneInfo})
 			runs = append(runs, cx.StartAnimation(a, func(finished bool) {
 				if finished {
-					st.Set(state{name + " finished", ui.ToneAccent})
+					st.Set(state{name + tr.AnimFinished(), ui.ToneAccent})
 				} else {
-					st.Set(state{name + " stopped", ui.ToneWarn})
+					st.Set(state{name + tr.AnimStopped(), ui.ToneWarn})
 				}
 			}))
 		}
@@ -356,7 +361,7 @@ func composition(cx *core.Scope) core.Node {
 				Shadows: fin.Knob().Shadows, Animated: &core.AnimatedStyle{Opacity: fade, TranslateY: ys[i], Rotate: ui.Lerp(spin, 0, float64(i+1)*36)}}
 		}})
 	}
-	return ui.Card{Icon: ui.IconComponents, Title: "Composition", Description: "Each step starts as the last one ends", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconComponents, Title: tr.AnimComposition(), Description: tr.AnimEachStepStartsAsThe(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(116), Direction: core.Row, JustifyContent: core.JustifyCenter, AlignItems: core.AlignEnd, Gap: 12, Padding: core.Edges{Bottom: 14}},
 			Children: append([]core.Node{core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
 				return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(14),
@@ -368,12 +373,12 @@ func composition(cx *core.Scope) core.Node {
 			ui.Cell{Child: ui.Button{Text: "Loop", Variant: ui.ButtonSecondary, OnPress: run("loop", pulse)}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: "Stop", Variant: ui.ButtonGhost, Icon: ui.IconPause, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimStop(), Variant: ui.ButtonGhost, Icon: ui.IconPause, OnPress: func() {
 				for _, r := range runs {
 					r.Stop()
 				}
 			}}},
-			ui.Cell{Child: ui.Button{Text: "Reset", Variant: ui.ButtonGhost, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimReset(), Variant: ui.ButtonGhost, OnPress: func() {
 				for _, r := range runs {
 					r.Reset()
 				}
@@ -383,13 +388,13 @@ func composition(cx *core.Scope) core.Node {
 }
 
 var springKinds = []struct {
-	label              string
+	label              func(locales.Messages) string
 	stiffness, damping float64
 	tone               ui.Tone
 }{
-	{"Gentle", 120, 14, ui.ToneInfo},
-	{"Wobbly", 180, 8, ui.ToneWarn},
-	{"Stiff", 400, 30, ui.ToneAccent},
+	{locales.Messages.AnimGentle, 120, 14, ui.ToneInfo},
+	{locales.Messages.AnimWobbly, 180, 8, ui.ToneWarn},
+	{locales.Messages.AnimStiff, 400, 30, ui.ToneAccent},
 }
 
 const springTime = 1800 * time.Millisecond
@@ -397,6 +402,7 @@ const springTime = 1800 * time.Millisecond
 // springs are springs with different settings, released together; the
 // plot's dots are the springs themselves.
 func springs(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	xs := make([]*core.AnimatedValue, len(springKinds))
@@ -469,7 +475,7 @@ func springs(cx *core.Scope) core.Node {
 	}
 	var legends, tracks []core.Node
 	for i, s := range springKinds {
-		legends = append(legends, ui.Legend{Color: s.tone.Shade(cx), Label: s.label, Value: label(fmt.Sprintf("%.0f / %.0f", s.stiffness, s.damping))})
+		legends = append(legends, ui.Legend{Color: s.tone.Shade(cx), Label: s.label(locales.For(cx)), Value: label(fmt.Sprintf("%.0f / %.0f", s.stiffness, s.damping))})
 		track := core.View{StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(28), JustifyContent: core.JustifyCenter, CornerRadius: 14, Background: colors.Background(), Shadows: fin.Track().Shadows}
 		},
@@ -482,11 +488,11 @@ func springs(cx *core.Scope) core.Node {
 		}
 		tracks = append(tracks, track)
 	}
-	return ui.Card{Icon: ui.IconPhysics, Title: "Springs", Description: "Stiffness and damping, mass 1", Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(150)}, Draw: draw, Label: "Spring responses"},
+	return ui.Card{Icon: ui.IconPhysics, Title: tr.AnimSprings(), Description: tr.AnimStiffnessAndDampingMass1(), Children: []core.Node{
+		core.Canvas{Style: core.Style{Height: core.Pt(150)}, Draw: draw, Label: tr.AnimSpringResponses()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 14, Wrap: core.Wrap}, Children: legends},
 		core.View{Style: core.Style{Gap: 8}, Children: tracks},
-		ui.Button{Text: "Release", OnPress: play},
+		ui.Button{Text: tr.AnimRelease(), OnPress: play},
 	}}
 }
 
@@ -518,6 +524,7 @@ func dialFace(cx *core.Scope, size core.Points) core.Node {
 // interpolations are colors, angles and scales from one value; outside
 // the range they extend or clamp.
 func interpolations(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	t := core.NewAnimatedValue(cx, 0)
@@ -527,7 +534,7 @@ func interpolations(cx *core.Scope) core.Node {
 		ui.Spring(cx, t, float64(v), core.SpringConfig{Stiffness: 140, Damping: 16})
 	}
 	const d core.Points = 128
-	return ui.Card{Icon: ui.IconStyles, Title: "Interpolation", Description: "One value drives color, angle and scale", Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("t = %d", at.Get()) }, Tone: ui.ToneAccent}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconStyles, Title: tr.AnimInterpolation(), Description: tr.AnimOneValueDrivesColorAngle(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("t = %d", at.Get()) }, Tone: ui.ToneAccent}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(d), Height: core.Pt(d)}, Children: []core.Node{
 				dialFace(cx, d),
@@ -559,9 +566,9 @@ func interpolations(cx *core.Scope) core.Node {
 		}},
 		ui.Segmented[int]{Options: []ui.Option[int]{{Value: 0, Label: "t = 0"}, {Value: 1, Label: "t = 1"}, {Value: 2, Label: "t = 2"}}, Value: at.Get, OnChange: goTo},
 		core.View{Style: core.Style{Gap: 6}, Children: []core.Node{
-			ui.Caption{Label: "Color through three stops", Note: label("at 0, 1 and 2")},
-			ui.Caption{Label: "Rotation keeps going past 1", Note: label("360° at 2")},
-			ui.Caption{Label: "Scale stops at 1.2", Note: label("clamp")},
+			ui.Caption{Label: tr.AnimColorThroughThreeStops(), Note: label(tr.AnimAt01And2())},
+			ui.Caption{Label: tr.AnimRotationKeepsGoingPast1(), Note: label(tr.Anim360At2())},
+			ui.Caption{Label: tr.AnimScaleStopsAt12(), Note: label("clamp")},
 		}},
 	}}
 }
@@ -570,6 +577,7 @@ func interpolations(cx *core.Scope) core.Node {
 // back as it scrolls down: DiffClamp of the scroll offset, on the
 // platform.
 func hidingHeader(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	scroll := core.NewAnimatedValue(cx, 0)
@@ -586,11 +594,11 @@ func hidingHeader(cx *core.Scope) core.Node {
 				CornerRadius: 12, Background: colors.Surface(), BorderWidth: 1, BorderColor: colors.Line()}
 		}, Children: []core.Node{
 			core.Text{Content: fmt.Sprintf("%02d", n), Style: core.Style{Width: core.Pt(24), FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
-			core.Text{Content: fmt.Sprintf("Row %d", n), Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: tr.NavRow(n), Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
 			core.View{Style: core.Style{Width: core.Pt(core.Points(40 + (n*37)%50)), Height: core.Pt(4), CornerRadius: 2}, StyleFunc: ui.Filled(bar)},
 		}})
 	}
-	return ui.Card{Icon: ui.IconScroll, Title: "Hiding header", Description: "Hides as the list scrolls up, returns as it scrolls down", Children: []core.Node{
+	return ui.Card{Icon: ui.IconScroll, Title: tr.AnimHidingHeader(), Description: tr.AnimHidesAsTheListScrolls(), Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(300), CornerRadius: ui.RadiusControl, Overflow: core.Hidden, Background: colors.Background(), Shadows: fin.Track().Shadows}
 		}, Children: []core.Node{
@@ -606,7 +614,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 					}})
 			}, Children: []core.Node{
 				ui.Icon(ui.IconSearch, 16, colors.Muted),
-				core.Text{Content: "Search", Style: core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: tr.AnimSearch(), Style: core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 				ui.API{Text: fmt.Sprintf("DiffClamp(0, %.0f)", h)},
 			}},
 		}},
@@ -616,6 +624,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 // layoutAnimation is layout changes animated by the platform in the next
 // commit: moves, inserts and removals.
 func layoutAnimation(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	column := core.NewSignal(cx, false)
 	preset := core.NewSignal(cx, "spring")
 	next := 6
@@ -626,8 +635,8 @@ func layoutAnimation(cx *core.Scope) core.Node {
 		fn()
 	}
 	tones := motionTones(cx)
-	return ui.Card{Icon: ui.IconMobile, Title: "Layout animation", Description: "Frames, inserts and removals of the next commit", Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("%d views", len(items.Get())) }}}, Children: []core.Node{
-		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: "Spring"}, {Value: "ease", Label: "Ease in out"}, {Value: "linear", Label: "Linear"}}, Value: preset.Get, OnChange: preset.Set, Small: true},
+	return ui.Card{Icon: ui.IconMobile, Title: tr.AnimLayoutAnimation(), Description: tr.AnimFramesInsertsAndRemovalsOf(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.AnimViews(len(items.Get())) }}}, Children: []core.Node{
+		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.AnimSpring()}, {Value: "ease", Label: tr.AnimEaseInOut()}, {Value: "linear", Label: tr.AnimLinear()}}, Value: preset.Get, OnChange: preset.Set, Small: true},
 		core.View{StyleFunc: func() core.Style {
 			d := core.Row
 			if column.Get() {
@@ -650,13 +659,13 @@ func layoutAnimation(cx *core.Scope) core.Node {
 		})}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 			ui.Cell{Child: core.Dynamic(func(*core.Scope) core.Node {
-				l := "Column"
+				l := tr.AnimColumn()
 				if column.Get() {
-					l = "Row"
+					l = tr.AnimRow()
 				}
 				return ui.Button{Text: l, OnPress: func() { change(func() { toggled(column) }) }}
 			})},
-			ui.Cell{Child: ui.Button{Text: "Shuffle", Variant: ui.ButtonSecondary, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimShuffle(), Variant: ui.ButtonSecondary, OnPress: func() {
 				change(func() {
 					items.Update(func(s []int) []int {
 						s = slices.Clone(s)
@@ -667,10 +676,10 @@ func layoutAnimation(cx *core.Scope) core.Node {
 			}}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: "Add", Variant: ui.ButtonSecondary, Icon: ui.IconPlus, Disabled: func() bool { return len(items.Get()) >= 8 }, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimAdd(), Variant: ui.ButtonSecondary, Icon: ui.IconPlus, Disabled: func() bool { return len(items.Get()) >= 8 }, OnPress: func() {
 				change(func() { items.Update(func(s []int) []int { return append(slices.Clone(s), next) }); next++ })
 			}}},
-			ui.Cell{Child: ui.Button{Text: "Remove", Variant: ui.ButtonGhost, Disabled: func() bool { return len(items.Get()) <= 1 }, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimRemove(), Variant: ui.ButtonGhost, Disabled: func() bool { return len(items.Get()) <= 1 }, OnPress: func() {
 				change(func() { items.Update(func(s []int) []int { return slices.Clone(s[1:]) }) })
 			}}},
 		}},
@@ -680,6 +689,7 @@ func layoutAnimation(cx *core.Scope) core.Node {
 // transitions are style changes the platform animates: no engine work
 // per frame.
 func transitions(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	moved := core.NewSignal(cx, false)
@@ -704,7 +714,7 @@ func transitions(cx *core.Scope) core.Node {
 			}},
 		}})
 	}
-	return ui.Card{Icon: ui.IconStyles, Title: "Transitions", Description: "A style's Transition animates its changes", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconStyles, Title: tr.AnimTransitions(), Description: tr.AnimAStyleSTransitionAnimates(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(96), AlignItems: core.AlignStart, JustifyContent: core.JustifyCenter}, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
 				s := core.Style{Width: core.Pt(64), Height: core.Pt(64), CornerRadius: 14, Background: colors.AccentFill(), Shadows: fin.Accent().Shadows,
@@ -718,8 +728,8 @@ func transitions(cx *core.Scope) core.Node {
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 2}, Children: lanes},
-		ui.APILine{Label: "Color, corners, transform and opacity", Names: "Style.Transition"},
-		ui.Button{Text: "Toggle", Variant: ui.ButtonSecondary, OnPress: func() { toggled(moved) }},
+		ui.APILine{Label: tr.AnimColorCornersTransformAndOpacity(), Names: "Style.Transition"},
+		ui.Button{Text: tr.AnimToggle(), Variant: ui.ButtonSecondary, OnPress: func() { toggled(moved) }},
 	}}
 }
 

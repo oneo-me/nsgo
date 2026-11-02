@@ -9,6 +9,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base/textview"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/i18n"
 	"github.com/oneo-me/nsgo/nsgotest"
 )
 
@@ -211,4 +212,18 @@ func TestTextViewReportsImagePressesAndOpensLinksThatLeave(t *testing.T) {
 	if want := "https://b.example|https://nsgo.dev|mailto:x@nsgo.dev"; strings.Join(app.OpenedURLs, "|") != want {
 		t.Errorf("opened %q, want the links that leave the document", app.OpenedURLs)
 	}
+}
+
+func TestTextViewAlertTitleFollowsLanguage(t *testing.T) {
+	i18n.SetApp(i18n.NewCatalog("en", "zh-Hans", "de"))
+	defer i18n.SetApp(nil)
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return textview.TextView{Markdown: "> [!WARNING]\n> Hot."}
+	}, nsgotest.Environment(core.Environment{Locale: "zh-CN"}))
+	app.Find("text:警告")
+	app.SetEnvironment(core.Environment{Locale: "en-US"})
+	app.Find("text:Warning")
+	// German is the app's, which the text view lacks: its source shows.
+	app.SetEnvironment(core.Environment{Locale: "de-DE"})
+	app.Find("text:Warning")
 }

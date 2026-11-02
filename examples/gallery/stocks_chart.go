@@ -7,11 +7,15 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 type period string
 
-var periods = []ui.Option[period]{{Value: "intraday", Label: "Intraday"}, {Value: "1m", Label: "1m"}, {Value: "5m", Label: "5m"}, {Value: "15m", Label: "15m"}, {Value: "1D", Label: "1D"}}
+// periods are the chart's periods, intraday named in tr's language.
+func periods(tr locales.Messages) []ui.Option[period] {
+	return []ui.Option[period]{{Value: "intraday", Label: tr.StocksIntraday()}, {Value: "1m", Label: "1m"}, {Value: "5m", Label: "5m"}, {Value: "15m", Label: "15m"}, {Value: "1D", Label: "1D"}}
+}
 
 // averages are the moving averages the candles show.
 func averages(cx *core.Scope) []struct {
@@ -77,12 +81,12 @@ func average(data []candle, i, n int) (float64, bool) {
 	return sum / float64(n), true
 }
 
-func candleLabel(c candle, p period) string {
+func candleLabel(tr locales.Messages, c candle, p period) string {
 	if p == "1D" {
 		if c.t == 0 {
-			return "Today"
+			return tr.StocksToday2()
 		}
-		return fmt.Sprintf("%.0fd ago", c.t)
+		return tr.StocksDaysAgo(int(c.t))
 	}
 	return marketTime(c.t, false)
 }
@@ -99,6 +103,7 @@ type chartFrame struct {
 // sideways for the crosshair; its lines move on the platform and the
 // readout floats beside it.
 func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Points) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	if height == 0 {
 		height = chartHeight
@@ -356,7 +361,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 				at    int
 				align core.TextAlign
 			}{{0, core.TextAlignStart}, {cnt / 2, core.TextAlignCenter}, {cnt - 1, core.TextAlignEnd}} {
-				d.SetTextAlign(k.align).FillText(candleLabel(dd[first+k.at], per.Get()), min(pw, max(0, X(first+k.at))), volTop+volH+5, f11)
+				d.SetTextAlign(k.align).FillText(candleLabel(tr, dd[first+k.at], per.Get()), min(pw, max(0, X(first+k.at))), volTop+volH+5, f11)
 			}
 		}
 
@@ -379,10 +384,10 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 		if intraday() {
 			return core.Group{
 				core.Dynamic(func(*core.Scope) core.Node {
-					return ui.Legend{Color: func() core.Color { return toneOf(cx, focus().c-prevClose()) }, Label: "Price", Value: func() string { return p(focus().c) }}
+					return ui.Legend{Color: func() core.Color { return toneOf(cx, focus().c-prevClose()) }, Label: tr.StocksPrice2(), Value: func() string { return p(focus().c) }}
 				}),
-				ui.Legend{Color: colors.Warn, Label: "Avg", Value: func() string { return p(focus().a) }},
-				ui.Legend{Color: colors.Faint, Label: "Vol", Value: func() string { return compactNumber(focus().v) }},
+				ui.Legend{Color: colors.Warn, Label: tr.StocksAvg(), Value: func() string { return p(focus().a) }},
+				ui.Legend{Color: colors.Faint, Label: tr.StocksVol(), Value: func() string { return compactNumber(focus().v) }},
 			}
 		}
 		var out core.Group
@@ -402,10 +407,10 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 	})
 
 	canvas := scrubbing(core.View{OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) }, Style: core.Style{Height: core.Pt(height)}, Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(height)}, Draw: draw, Label: s.code + " chart", TestID: "chart"},
+		core.Canvas{Style: core.Style{Height: core.Pt(height)}, Draw: draw, Label: s.code + tr.StocksChart(), TestID: "chart"},
 	}}, pick)
 	return core.View{Style: core.Style{Gap: 10}, Children: []core.Node{
-		ui.Segmented[period]{Options: periods, Value: per.Get, OnChange: per.Set, Small: true},
+		ui.Segmented[period]{Options: periods(tr), Value: per.Get, OnChange: per.Set, Small: true},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 14, RowGap: 6}, Children: []core.Node{legends}},
 		core.View{Style: core.Style{Height: core.Pt(height)}, Children: []core.Node{
 			canvas,
@@ -427,7 +432,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 						return core.Style{Position: core.Absolute, Top: core.Pt(chartTop + 2), Left: core.Pt(readoutLeft()), Width: core.Pt(140), Padding: core.All(10), Gap: 3,
 							CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: ui.Alpha(colors.Surface(), 0.94), BorderWidth: 1, BorderColor: colors.Border()}
 					}, Children: []core.Node{
-						ui.Textf(func() string { return candleLabel(focus(), per.Get()) }, 12, ui.Regular, colors.Muted),
+						ui.Textf(func() string { return candleLabel(tr, focus(), per.Get()) }, 12, ui.Regular, colors.Muted),
 						core.Text{Spans: []core.Span{
 							{ContentFunc: func() string { return p(focus().c) }},
 							{ContentFunc: func() string { return " " + signed((focus().c-prevClose())/prevClose()*100, 2) + "%" }, Style: core.Style{FontSize: 12, FontWeight: ui.Regular}},
@@ -435,7 +440,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 						core.Text{ContentFunc: func() string {
 							f := focus()
 							if intraday() {
-								return fmt.Sprintf("avg %s · vol %s", p(f.a), compactNumber(f.v))
+								return tr.StocksAvgVol(p(f.a), compactNumber(f.v))
 							}
 							return fmt.Sprintf("O %s H %s\nL %s V %s", p(f.o), p(f.h), p(f.l), compactNumber(f.v))
 						}, Style: core.Style{FontSize: 11, LineHeight: 15}, StyleFunc: ui.Colored(colors.Muted)},

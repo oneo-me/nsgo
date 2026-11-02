@@ -43,7 +43,9 @@ var layers = []struct {
 	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core"}, platformShared...)},
 	{"nsgotest", []string{"core", "internal/driver", "internal/testhost"}},
 	{"", []string{"core", "internal/engine", "internal/platform/"}},
-	{"base/", []string{"core", "base/"}},
+	// The code nsgo writes from catalogs runs on i18n.
+	{"i18n", []string{"core"}},
+	{"base/", []string{"core", "base/", "i18n"}},
 	{"mobile", []string{"core"}},
 	{"desktop", []string{"core"}},
 	{"icons/", []string{"core"}},
@@ -52,9 +54,9 @@ var layers = []struct {
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
-	{"examples/", []string{"", "core", "base/", "mobile", "desktop", "icons/", "nsgotest", "tsx/", "examples/"}},
+	{"examples/", []string{"", "core", "base/", "mobile", "desktop", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
-	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/"}},
+	{"cmd/", []string{"core", "cmd/", "i18n", "internal/platform/android/runtime", "tsx/"}},
 	{"tools/", []string{"core"}},
 }
 
@@ -69,7 +71,7 @@ var platformShared = []string{
 // portable lists the packages that build unchanged for every target: no
 // purego, syscall or unsafe.
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shaderir/", "internal/engine",
-	"internal/testhost", "base/", "mobile", "desktop", "icons/", "nsgotest", "tsx"}
+	"internal/testhost", "base/", "i18n", "mobile", "desktop", "icons/", "nsgotest", "tsx"}
 
 // layerTargets are the GOOS/GOARCH pairs the nsgo tool builds for.
 var layerTargets = [][2]string{

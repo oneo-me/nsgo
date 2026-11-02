@@ -55,10 +55,10 @@ func TestGroups(t *testing.T) {
 	app := startDesktop(t)
 	last := core.Points(-1)
 	for _, g := range groups {
-		root := app.Find("id:nav-group-" + g.title)
-		app.Find("id:nav-group-" + g.title + " >> id:nav-" + g.demos[0].name)
+		root := app.Find("id:nav-group-" + g.name)
+		app.Find("id:nav-group-" + g.name + " >> id:nav-" + g.demos[0].name)
 		if root.Frame.Origin.Y <= last {
-			t.Fatalf("the %s group is above the group before it", g.title)
+			t.Fatalf("the %s group is above the group before it", g.name)
 		}
 		last = root.Frame.Origin.Y
 	}
@@ -523,7 +523,7 @@ func TestEditor(t *testing.T) {
 	if app.Exists("id:find-bar") {
 		t.Error("Escape left the find bar open")
 	}
-	app.Press("label:Language")
+	app.Press("id:demo-Editor >> label:Language")
 	app.Press("text:Rust")
 	app.Find("text:fn word_counts(text: &str) -> Vec<(&str, usize)> {")
 	app.Find("text:Problems 1")
@@ -739,4 +739,58 @@ func looks(v *nsgotest.View, drawings bool) []string {
 	}
 	walk(v, "")
 	return out
+}
+
+// TestLanguageMenu chooses a language, which the menu says its words in,
+// base's components follow and the layout's direction too, and keeps it.
+func TestLanguageMenu(t *testing.T) {
+	app := startDesktop(t)
+	ltr := app.Find("id:language").Frame.Origin.X
+	app.Press("id:language")
+	app.Find("text:Follow system")
+	app.Press("text:العربية")
+	if got, _ := app.Storage().GetItem(languageKey); got != "ar" {
+		t.Errorf("kept %q, want ar", got)
+	}
+	// The sidebar's footer runs from the right: the menu, first, moves
+	// toward its end.
+	if rtl := app.Find("id:language").Frame.Origin.X; rtl >= ltr {
+		t.Errorf("the language button at %v right to left, %v left to right", rtl, ltr)
+	}
+	app.Press("id:language")
+	app.Press("text:اتباع النظام")
+	if _, ok := app.Storage().GetItem(languageKey); ok {
+		t.Error("following the system keeps a language")
+	}
+	if got := app.Find("id:language").Frame.Origin.X; got != ltr {
+		t.Errorf("back to the system's English, the button is at %v, was %v", got, ltr)
+	}
+}
+
+// TestLanguageRemembered starts in the language chosen last time.
+func TestLanguageRemembered(t *testing.T) {
+	app := startDesktop(t, nsgotest.Storage(map[string]string{languageKey: "zh-Hans"}))
+	app.Press("id:language")
+	app.Find("text:跟随系统")
+}
+
+// TestGalleryLanguages shows the gallery in the user's language: the
+// sidebar, a demo and base's own words.
+func TestGalleryLanguages(t *testing.T) {
+	for _, c := range []struct{ locale, nav, title, sort string }{
+		{"zh-CN", "控件", "立即生效的设置", "按ID排序"},
+		{"zh-TW", "控制元件", "立即生效的設定", "依ID排序"},
+		{"ar-EG", "عناصر التحكم", "إعدادات تسري فورًا", "الفرز حسب المعرّف"},
+	} {
+		t.Run(c.locale, func(t *testing.T) {
+			env := desktopEnv
+			env.Locale = c.locale
+			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
+			app.Find("id:nav-Controls >> text:" + c.nav)
+			open(app, "Controls")
+			app.Find("text:" + c.title)
+			open(app, "DataTable")
+			app.Find("label:" + c.sort)
+		})
+	}
 }

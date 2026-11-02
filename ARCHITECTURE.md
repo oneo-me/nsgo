@@ -22,6 +22,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
 | `tsx/compiler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
+| `i18n`, `*/locales` | — (MyGo's `i18n`) | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |
 | `nsgotest` | `nsh-testing` | App tests, headless or on a platform ([testing](docs/architecture/testing.md)) |
 | `internal/testhost` | `nsh-testing`'s agent | A backend's test host for `nsgotest`: the main thread, native input, screenshots |
@@ -70,11 +71,12 @@ Packages import only downward; `layering_test.go` checks it on every target:
                           internal/driver
 ```
 
-- Apps import `nsgo`, `core`, `base`, `mobile`, `desktop`, `icons`, `tsx` and `nsgotest` only, native components included; `core` and `nsgotest` alias the internal types their API reaches (`TestPublicAPINamesNoInternalType`).
+- Apps import `nsgo`, `core`, `base`, `mobile`, `desktop`, `i18n`, `icons`, `tsx` and `nsgotest` only, native components included; `core` and `nsgotest` alias the internal types their API reaches (`TestPublicAPINamesNoInternalType`).
 - `internal/driver` is the protocol and imports from the module only `internal/shaderir`, for the shader programs it carries. Backends import it and `internal/engine`, never `core`, and never the shader compiler (`internal/shader`), which only `core` links.
 - `core` imports only `internal/driver`, `internal/layout` and the shader compiler (`internal/shader`, `internal/shaderir`).
+- `i18n` imports only `core`, and `base`'s packages import it for their catalogs.
 - `internal/engine` runs one app on `core` and defines `engine.Platform`, which backends implement. `nsgotest` is the headless backend, without the engine, and on a platform drives a backend's test host.
-- `core`, `base`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine` build unchanged for every target: no purego, `syscall` or `unsafe`. No package has cgo files or hand-written C.
+- `core`, `base`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine` build unchanged for every target: no purego, `syscall` or `unsafe`. No package has cgo files or hand-written C.
 - Each API has one home, and `base`'s components have no look ([principles](AGENTS.md#principles), [components](AGENTS.md#components)).
 - The main thread never waits for the engine, but up to 16 ms on macOS for a resized window's layout; the engine never touches main-thread-only UI objects.
 - What animates runs on the platform's frame clock, which stops when idle: the engine sends transitions and animated values once, never a commit per frame ([animation](docs/architecture/animation.md)).
@@ -90,6 +92,7 @@ Packages import only downward; `layering_test.go` checks it on every target:
 
 - Targets name an OS and an architecture (`macos_arm64`, `windows_x64`), so each package holds one binary.
 - A TSX app's bundles are compiled ahead into its package, so packages ship no compiler.
+- A package's catalogs compile to Go committed beside them, so apps parse no catalog and `go build` needs no tool.
 
 ## Core flows
 
@@ -128,6 +131,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Components](docs/architecture/components.md) | A component in `base`: controls, popups, resizable panels or the dock |
 | [Text view](docs/architecture/textview.md) | `TextView`, its parsers, parts or highlighting |
 | [Editor](docs/architecture/editor.md) | `Editor`, `DiffView` or their highlighting |
+| [Languages](docs/architecture/languages.md) | `i18n`, a package's catalogs or the code `nsgo` writes from them |
 | [Icons](docs/architecture/icons.md) | SVG parsing, `core.Icon` or the Lucide pack |
 | [Performance](docs/architecture/performance.md) | The performance monitor, a frame clock or a per-frame path |
 | [Embedding](docs/architecture/embedding.md) | `nsgo.NewView`, the host channel or `-embed` packages |

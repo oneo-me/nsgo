@@ -104,8 +104,12 @@ func (t *Tree) commitRound() {
 		t.fontScale = scale
 		t.fullRound = true
 	}
-	if rtl := t.root.Env().rtl.GetUntracked(); rtl != t.rtl {
-		t.setRTL(rtl)
+	if rtl := t.root.Env().rtl.GetUntracked(); rtl != t.rtl || !t.directionSent {
+		if rtl != t.rtl {
+			t.setRTL(rtl)
+		}
+		t.directionSent = true
+		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemDirection, RTL: rtl})
 	}
 	live := t.stacks[:0]
 	for _, s := range t.stacks {

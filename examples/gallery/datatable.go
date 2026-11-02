@@ -10,6 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // base's DataTable over a million stocks of sixty columns the app does
@@ -104,26 +105,27 @@ func openingQuote(id int) *stockQuote {
 	return q
 }
 
-var stockColumns = func() []base.DataTableColumn {
+// stockColumns are the table's columns, titled in tr's language.
+func stockColumns(tr locales.Messages) []base.DataTableColumn {
 	right := func(key, title string) base.DataTableColumn {
 		return base.DataTableColumn{Key: key, Title: title, Width: 110, Align: base.AlignEndColumn}
 	}
 	cols := []base.DataTableColumn{
-		{Key: "id", Title: "ID", Width: 90, Align: base.AlignEndColumn, Fixed: true, Sortable: true},
-		{Key: "symbol", Title: "Symbol", Width: 110, Fixed: true},
-		{Key: "name", Title: "Name", Width: 150},
-		{Key: "market", Title: "Market", Width: 80},
-		right("price", "Price"), right("change", "Chg"), right("percent", "Chg%"), right("volume", "Volume"),
-		right("turnover", "Turnover"), right("cap", "Market Cap"), right("ttm", "TTM"), right("bid", "Bid"),
-		right("bidVolume", "Bid Vol"), right("ask", "Ask"), right("askVolume", "Ask Vol"), right("open", "Open"),
-		right("prevClose", "Prev Close"), right("high", "High"), right("low", "Low"), right("ratio", "Bid/Ask"),
-		right("ranking", "5m Ranking"),
+		{Key: "id", Title: tr.TableId(), Width: 90, Align: base.AlignEndColumn, Fixed: true, Sortable: true},
+		{Key: "symbol", Title: tr.TableSymbol(), Width: 110, Fixed: true},
+		{Key: "name", Title: tr.TableName(), Width: 150},
+		{Key: "market", Title: tr.TableMarket(), Width: 80},
+		right("price", tr.TablePrice()), right("change", tr.TableChg()), right("percent", tr.TableChg2()), right("volume", tr.TableVolume()),
+		right("turnover", tr.TableTurnover()), right("cap", tr.TableMarketCap()), right("ttm", tr.TableTtm()), right("bid", tr.TableBid()),
+		right("bidVolume", tr.TableBidVol()), right("ask", tr.TableAsk()), right("askVolume", tr.TableAskVol()), right("open", tr.TableOpen()),
+		right("prevClose", tr.TablePrevClose()), right("high", tr.TableHigh()), right("low", tr.TableLow()), right("ratio", tr.TableBidAsk()),
+		right("ranking", tr.Table5mRanking()),
 	}
 	for i := range indicators {
-		cols = append(cols, right(fmt.Sprint("x", i+1), fmt.Sprint("Indicator ", i+1)))
+		cols = append(cols, right(fmt.Sprint("x", i+1), tr.TableIndicator(i+1)))
 	}
 	return cols
-}()
+}
 
 // toned are the columns whose rises and falls take colors.
 func toned(key string) bool {
@@ -198,6 +200,7 @@ func tableParts(cx *core.Scope) base.DataTableStyles {
 // column sortable, rows, cells or columns selected, columns resized and
 // moved.
 func dataTableDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	mode := core.NewSignal(cx, "row")
 	sort := core.NewSignal(cx, base.DataTableSort{})
@@ -293,8 +296,9 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	// the table follows without resetting their widths or order.
 	columnsNow := func() []base.DataTableColumn {
 		up, down := colors.Up(), colors.Down()
-		columns := make([]base.DataTableColumn, len(stockColumns))
-		for i, c := range stockColumns {
+		titled := stockColumns(tr)
+		columns := make([]base.DataTableColumn, len(titled))
+		for i, c := range titled {
 			c.FitPadding = 16
 			if toned(c.Key) {
 				c.PositiveStyle, c.NegativeStyle = core.Style{Color: up}, core.Style{Color: down}
@@ -308,13 +312,13 @@ func dataTableDemo(cx *core.Scope) core.Node {
 		s := selection.Get()
 		switch {
 		case s.Row >= 0 && s.Column >= 0:
-			return fmt.Sprintf("Cell row %d, %s", s.Row+1, columns[s.Column].Title)
+			return tr.TableCellRow(itoa(s.Row+1), columns[s.Column].Title)
 		case s.Row >= 0:
-			return fmt.Sprintf("Row %d", s.Row+1)
+			return tr.TableRow(itoa(s.Row + 1))
 		case s.Column >= 0:
-			return "Column " + columns[s.Column].Title
+			return tr.TableColumn() + columns[s.Column].Title
 		}
-		return "Nothing selected"
+		return tr.TableNothingSelected()
 	}
 	status := func(fn func() string, c func() core.Color) core.Node {
 		return core.Text{ContentFunc: fn, Style: core.Style{FontFamily: ui.Mono, FontSize: 12}, StyleFunc: ui.Colored(c)}
@@ -326,9 +330,9 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	onOff := func(name string, on *core.Signal[bool]) func() string {
 		return func() string {
 			if on.Get() {
-				return name + " on"
+				return name + tr.TableOn()
 			}
-			return name + " off"
+			return name + tr.TableOff()
 		}
 	}
 	toggle := func(s *core.Signal[bool]) func() { return func() { s.Set(!s.GetUntracked()) } }
@@ -337,27 +341,29 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(260)}, Children: []core.Node{
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "row", Label: "Rows"}, {Value: "cell", Label: "Cells"}}, Value: mode.Get, OnChange: func(v string) { mode.Set(v); selection.Set(base.NoTableSelection) }, Small: true},
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "row", Label: tr.TableRows()}, {Value: "cell", Label: tr.TableCells()}}, Value: mode.Get, OnChange: func(v string) { mode.Set(v); selection.Set(base.NoTableSelection) }, Small: true},
 			}},
 			core.Dynamic(func(cx *core.Scope) core.Node {
-				return ui.Tool{Label: "Toggle live updates", Text: onOff("Live", live)(), OnPress: toggle(live)}
+				tr := locales.For(cx)
+				return ui.Tool{Label: tr.TableToggleLiveUpdates(), Text: onOff(tr.TableLive(), live)(), OnPress: toggle(live)}
 			}),
 			core.Dynamic(func(cx *core.Scope) core.Node {
-				return ui.Tool{Label: "Toggle stripes", Text: onOff("Stripes", stripe)(), OnPress: toggle(stripe)}
+				tr := locales.For(cx)
+				return ui.Tool{Label: tr.TableToggleStripes(), Text: onOff(tr.TableStripes(), stripe)(), OnPress: toggle(stripe)}
 			}),
-			ui.Tool{Label: "Go to row 500000", Text: "Row 500,000", OnPress: func() { table.ScrollToRow(499_999, false) }},
-			ui.Tool{Label: "Go to Indicator 30", Text: "Indicator 30", OnPress: func() { table.ScrollToColumn("x30", false) }},
+			ui.Tool{Label: tr.TableGoToRow500000(), Text: tr.TableRow500000(), OnPress: func() { table.ScrollToRow(499_999, false) }},
+			ui.Tool{Label: tr.TableGoToIndicator30(), Text: tr.TableIndicator30(), OnPress: func() { table.ScrollToColumn("x30", false) }},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 			status(describe, colors.Text),
 			status(func() string {
 				v := visible.Get()
-				return fmt.Sprintf("rows %d–%d of %s", v[0]+1, v[1], visitors(stockRows))
+				return tr.TableRowsOf(itoa(v[0]+1), itoa(v[1]), visitors(stockRows))
 			}, colors.Muted),
-			status(func() string { return fmt.Sprintf("%d columns · tick %d", len(columns), ticks.Get()) }, colors.Muted),
+			status(func() string { return tr.TableColumnsTick(len(columns), ticks.Get()) }, colors.Muted),
 		}},
 		base.DataTable{
-			Ref: table, TestID: "table", Label: "Stocks",
+			Ref: table, TestID: "table", Label: tr.TableStocks(),
 			Columns:  columnsNow,
 			RowCount: func() int { return stockRows },
 			Text: func(row, col int) string {
@@ -395,9 +401,10 @@ func dataTableDemo(cx *core.Scope) core.Node {
 // website shows it: the parts give screen readers a table, the styles its
 // look.
 func tableCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	invoices := [][4]string{{"INV001", "Paid", "Card", "$250.00"}, {"INV002", "Pending", "Transfer", "$150.00"},
-		{"INV003", "Unpaid", "Card", "$350.00"}, {"INV004", "Paid", "Cash", "$450.00"}}
+	invoices := [][4]string{{"INV001", tr.TablePaid(), tr.TableCard(), "$250.00"}, {"INV002", tr.TablePending(), tr.TableTransfer(), "$150.00"},
+		{"INV003", tr.TableUnpaid(), tr.TableCard(), "$350.00"}, {"INV004", tr.TablePaid(), tr.TableCash(), "$450.00"}}
 	widths := []core.Length{core.Pt(84), {}, core.Pt(84), core.Pt(84)}
 	line := core.Style{Borders: core.Edges{Bottom: 1}}
 	lineColor := func() core.Style { return core.Style{BorderColor: colors.Line()} }
@@ -429,18 +436,18 @@ func tableCard(cx *core.Scope) core.Node {
 		}})
 	}
 	var head []core.Node
-	for i, title := range []string{"Invoice", "Status", "Method", "Amount"} {
+	for i, title := range []string{tr.TableInvoice(), tr.TableStatus(), tr.TableMethod(), tr.TableAmount()} {
 		head = append(head, cell(i, true, i == 3, title))
 	}
-	return ui.Card{Icon: ui.IconLists, Title: "Table", Description: "A few rows the app writes out, with a table's roles", Children: []core.Node{
-		base.Table{Label: "Recent invoices", Children: []core.Node{
+	return ui.Card{Icon: ui.IconLists, Title: tr.TableTable(), Description: tr.TableAFewRowsTheApp(), Children: []core.Node{
+		base.Table{Label: tr.TableRecentInvoices(), Children: []core.Node{
 			base.TableHeader{Children: []core.Node{base.TableRow{Style: line, StyleFunc: lineColor, Children: head}}},
 			base.TableBody{Children: body},
 			base.TableFooter{Children: []core.Node{base.TableRow{Children: []core.Node{
-				cell(0, true, false, "Total"), cell(1, false, false, ""), cell(2, false, false, ""), cell(3, false, true, "$1,200.00"),
+				cell(0, true, false, tr.TableTotal()), cell(1, false, false, ""), cell(2, false, false, ""), cell(3, false, true, "$1,200.00"),
 			}}}},
 			base.TableCaption{Style: core.Style{Padding: core.Symmetric(8, 12)}, Children: []core.Node{
-				core.Text{Content: "A list of your recent invoices.", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+				core.Text{Content: tr.TableAListOfYourRecent(), Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
 		}},
 	}}

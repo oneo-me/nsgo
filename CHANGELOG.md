@@ -17,6 +17,7 @@
 - Add embedding in other apps with `nsgo.NewView` on desktops, `nsgo build -embed` frameworks for iOS devices, simulators and Catalyst and for Android, and several web apps on one page through a loader, with a channel to the host that a page or the app's host module answers on the web.
 - Add `nsgotest` for app tests that act as a user does, headless or on every platform with its native input, menus and screenshots, the test's own clock and clipboard.
 - Add the `nsgo` tool, which creates, runs with hot reload and commit traces, tests, type-checks, packages and signs apps for stores from `nsgo.yaml`, reporting each step and each package's build time and size.
+- Add message catalogs in YAML that each package owns, checked and compiled to Go by the `nsgo` tool, with plurals, selects and numbers in the language the app shows, which it may choose and lays out in the direction of, and languages an app supplies to `base` and other packages.
 - Add themes in light and dark, Onevra's by default, that a subtree can replace, force into one appearance or give a Tailwind theme of its own, read from YAML or shadcn/ui theme files and overridden by an embedding host.
-- Add NSH's gallery translated to Go, with a demo of every element, component and service, its editor talking to a simulated language server.
+- Add NSH's gallery translated to Go, with a demo of every element, component and service, its editor talking to a simulated language server, in English, Chinese and Arabic.
 - Add a React home page whose live gallery runs the gallery's WebAssembly build, reporting its download, compilation and start progress.

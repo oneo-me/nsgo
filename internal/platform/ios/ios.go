@@ -134,6 +134,9 @@ type surface struct {
 	alerts map[uint32]shownAlert
 	// appearance is the one the app forces, or the system's.
 	appearance driver.Appearance
+	// rtl is the app's direction (driver.ItemDirection), which its
+	// navigation slides and swipes back in.
+	rtl bool
 	// stickyBound are the scroll views with sticky cells whose insets
 	// follow animated values.
 	stickyBound map[*view]bool
@@ -771,6 +774,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemSaveFile:
 			s.saveFile(*it.Save, it.Count)
+			continue
+		case driver.ItemDirection:
+			s.rtl = it.RTL
 			continue
 		case driver.ItemAppearance:
 			s.appearance = it.Appearance

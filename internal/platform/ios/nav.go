@@ -461,7 +461,7 @@ func (s *surface) setSwipeBack(v *view) {
 	if b.edge != 0 {
 		const left, right = 2, 8
 		edge := left
-		if s.env.RTL {
+		if s.rtl {
 			edge = right
 		}
 		b.edge.Send(sel("setEdges:"), edge)
@@ -666,7 +666,7 @@ func (s *surface) slideViews(sl *slide) (top, below objc.ID) {
 // right to left.
 func (s *surface) slideWidth(sl *slide) float64 {
 	w := objc.Send[apple.CGRect](sl.stack.native, selBounds).Size.Width
-	if s.env.RTL {
+	if s.rtl {
 		return -w
 	}
 	return w
@@ -811,7 +811,7 @@ func edgeSwiped(self objc.ID, _ objc.SEL, r objc.ID) {
 	up := self.Send(selSuperview)
 	w := objc.Send[apple.CGRect](self, selBounds).Size.Width
 	sign := 1.0
-	if s.env.RTL {
+	if s.rtl {
 		sign = -1
 	}
 	p := min(max(objc.Send[apple.CGPoint](r, sel("translationInView:"), up).X*sign/max(w, 1), 0), 1)

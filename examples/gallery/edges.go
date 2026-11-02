@@ -6,6 +6,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // edgeMessages are the feed the edge effects demo scrolls.
@@ -29,6 +30,7 @@ var edgeMessages = []struct {
 // view's edge effects set apart from the messages scrolling under them:
 // iOS 26's own, elsewhere a blur that grows toward the edge, or frosts it.
 func edgeEffects(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	effect := core.NewSignal(cx, core.EdgeEffectSoft)
 	scroll := &core.Ref{}
@@ -67,16 +69,16 @@ func edgeEffects(cx *core.Scope) core.Node {
 					Children: []core.Node{core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 60, Right: 12, Bottom: 68, Left: 12}}, Children: rows}}}
 			}),
 			bar(core.SideTop,
-				core.View{Style: core.Style{FlexGrow: 1}, Children: []core.Node{ui.Text("Inbox", 22, ui.Semibold, colors.Text)}},
-				ui.RoundButton{Icon: ui.IconSearch, Label: "Search", Variant: ui.ButtonSecondary, Size: 36, OnPress: func() {}},
+				core.View{Style: core.Style{FlexGrow: 1}, Children: []core.Node{ui.Text(tr.EdgesInbox(), 22, ui.Semibold, colors.Text)}},
+				ui.RoundButton{Icon: ui.IconSearch, Label: tr.EdgesSearch(), Variant: ui.ButtonSecondary, Size: 36, OnPress: func() {}},
 			),
 			bar(core.SideBottom,
-				ui.RoundButton{Icon: ui.IconStar, Label: "Starred", Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
-				ui.RoundButton{Icon: ui.IconPlus, Label: "New message", Variant: ui.ButtonAccent, Size: 40, OnPress: func() {}},
-				ui.RoundButton{Icon: ui.IconBell, Label: "Notifications", Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
+				ui.RoundButton{Icon: ui.IconStar, Label: tr.EdgesStarred(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
+				ui.RoundButton{Icon: ui.IconPlus, Label: tr.EdgesNewMessage(), Variant: ui.ButtonAccent, Size: 40, OnPress: func() {}},
+				ui.RoundButton{Icon: ui.IconBell, Label: tr.EdgesNotifications(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
 			),
 		}},
-		ui.Segmented[core.EdgeEffect]{Options: []ui.Option[core.EdgeEffect]{{Value: core.EdgeEffectSoft, Label: "Soft"}, {Value: core.EdgeEffectHard, Label: "Hard"},
-			{Value: core.EdgeEffectHidden, Label: "Hidden"}}, Value: effect.Get, OnChange: effect.Set, Small: true},
+		ui.Segmented[core.EdgeEffect]{Options: []ui.Option[core.EdgeEffect]{{Value: core.EdgeEffectSoft, Label: tr.EdgesSoft()}, {Value: core.EdgeEffectHard, Label: tr.EdgesHard()},
+			{Value: core.EdgeEffectHidden, Label: tr.EdgesHidden()}}, Value: effect.Get, OnChange: effect.Set, Small: true},
 	}}
 }

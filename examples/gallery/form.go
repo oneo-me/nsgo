@@ -12,6 +12,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // fieldProps are a labelled input's: api names the property it shows,
@@ -188,8 +189,7 @@ func strength(p string) int {
 }
 
 var (
-	strengthLabel = []string{"Empty", "Weak", "Fair", "Good", "Strong"}
-	strengthTone  = []ui.Tone{ui.ToneNeutral, ui.ToneDanger, ui.ToneWarn, ui.ToneInfo, ui.ToneUp}
+	strengthTone = []ui.Tone{ui.ToneNeutral, ui.ToneDanger, ui.ToneWarn, ui.ToneInfo, ui.ToneUp}
 )
 
 // formDemo is an account form in a scroll view: the focused input stays
@@ -197,6 +197,7 @@ var (
 // dragging the form can hide the keyboard; leaving a field or submitting
 // checks it.
 func formDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	name, email, password := core.NewSignal(cx, ""), core.NewSignal(cx, ""), core.NewSignal(cx, "")
@@ -228,7 +229,7 @@ func formDemo(cx *core.Scope) core.Node {
 
 	nameError := func() string {
 		if touched.Get()["name"] && strings.TrimSpace(name.Get()) == "" {
-			return "Enter your name"
+			return tr.FormEnterYourName()
 		}
 		return ""
 	}
@@ -237,13 +238,13 @@ func formDemo(cx *core.Scope) core.Node {
 			return ""
 		}
 		if email.Get() != "" {
-			return "That address needs an @ and a domain"
+			return tr.FormThatAddressNeedsAnAnd()
 		}
-		return "Enter your e-mail"
+		return tr.FormEnterYourEMail()
 	}
 	passwordError := func() string {
 		if touched.Get()["password"] && len([]rune(password.Get())) < 8 {
-			return "Use at least 8 characters"
+			return tr.FormUseAtLeast8Characters()
 		}
 		return ""
 	}
@@ -260,17 +261,18 @@ func formDemo(cx *core.Scope) core.Node {
 		cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)
 		switch issues {
 		case 0:
-			result.Set(status{ui.ToneUp, fmt.Sprintf("Account created for %s <%s>", name.GetUntracked(), email.GetUntracked())})
+			result.Set(status{ui.ToneUp, tr.FormAccountCreated(name.GetUntracked(), email.GetUntracked())})
 		case 1:
-			result.Set(status{ui.ToneDanger, "1 field needs attention"})
+			result.Set(status{ui.ToneDanger, tr.Form1FieldNeedsAttention()})
 		default:
-			result.Set(status{ui.ToneDanger, fmt.Sprintf("%d fields need attention", issues)})
+			result.Set(status{ui.ToneDanger, tr.FormFieldsNeedAttention(issues)})
 		}
 	}
 
 	keyboard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		modeName := map[core.KeyboardDismissMode]string{core.KeyboardDismissNone: "none", core.KeyboardDismissOnDrag: "on-drag", core.KeyboardDismissInteractive: "interactive"}
-		return ui.Card{Icon: ui.IconForm, Title: "Keyboard", Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		return ui.Card{Icon: ui.IconForm, Title: tr.FormKeyboard(), Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			h := env.KeyboardHeight()
 			t := ui.ToneNeutral
 			if h > 0 {
@@ -278,35 +280,38 @@ func formDemo(cx *core.Scope) core.Node {
 			}
 			return ui.Badge{Text: fmt.Sprintf("%d pt", int(h+0.5)), Tone: t}
 		})}, Children: []core.Node{
-			ui.Segmented[core.KeyboardDismissMode]{Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: "None"}, {Value: core.KeyboardDismissOnDrag, Label: "On drag"},
-				{Value: core.KeyboardDismissInteractive, Label: "Interactive"}}, Value: mode.Get, OnChange: mode.Set},
-			ui.Caption{Label: ui.Hint(cx, "Drag the form with the keyboard up", "Desktops have no on-screen keyboard to dismiss"), Note: func() string { return modeName[mode.Get()] }},
+			ui.Segmented[core.KeyboardDismissMode]{Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: tr.FormNone()}, {Value: core.KeyboardDismissOnDrag, Label: tr.FormOnDrag()},
+				{Value: core.KeyboardDismissInteractive, Label: tr.FormInteractive()}}, Value: mode.Get, OnChange: mode.Set},
+			ui.Caption{Label: ui.Hint(cx, tr.FormDragTheFormWithThe(), tr.FormDesktopsHaveNoOnScreen()), Note: func() string { return modeName[mode.Get()] }},
 		}}
 	}
 
 	account := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: "Account", Note: "AutoComplete", Children: []core.Node{
-			formField(fieldProps{label: "Name", next: refs[1], err: nameError},
+		return ui.Section{Title: tr.FormAccount(), Note: "AutoComplete", Children: []core.Node{
+			formField(fieldProps{label: tr.FormName(), next: refs[1], err: nameError},
 				base.Input{Ref: refs[0], Value: name.Get, OnChange: name.Set, OnBlur: touch("name"), AutoCapitalize: core.AutoCapitalizeWords,
 					AutoComplete: core.AutoCompleteName, Placeholder: "Ada Lovelace", TestID: "name"}),
-			formField(fieldProps{label: "E-mail", api: "KeyboardEmail", next: refs[2], err: emailError},
+			formField(fieldProps{label: tr.FormEMail(), api: "KeyboardEmail", next: refs[2], err: emailError},
 				base.Input{Ref: refs[1], Value: email.Get, OnChange: email.Set, OnBlur: touch("email"), KeyboardType: core.KeyboardEmail,
 					AutoCapitalize: core.AutoCapitalizeNone, NoAutoCorrect: true, AutoComplete: core.AutoCompleteEmail, Placeholder: "ada@example.com", TestID: "email"}),
 			core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-				formField(fieldProps{label: "Password", api: "Masked", next: refs[3], err: passwordError},
+				formField(fieldProps{label: tr.FormPassword(), api: "Masked", next: refs[3], err: passwordError},
 					base.Input{Ref: refs[2], Value: password.Get, OnChange: func(v string) {
 						if strength(v) != core.Untracked(cx, score) {
 							cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)
 						}
 						password.Set(v)
-					}, OnBlur: touch("password"), Masked: true, AutoComplete: core.AutoCompleteNewPassword, Placeholder: "At least 8 characters", TestID: "password"}),
+					}, OnBlur: touch("password"), Masked: true, AutoComplete: core.AutoCompleteNewPassword, Placeholder: tr.FormAtLeast8Characters(), TestID: "password"}),
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 					core.View{Style: fill, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 						s := score()
 						return ui.Meter{Value: func() float64 { return float64(s) / 4 }, Tone: strengthTone[s]}
 					})}},
-					core.Text{ContentFunc: func() string { return strengthLabel[score()] }, StyleFunc: func() core.Style {
+					core.Text{ContentFunc: func() string {
+						return []string{tr.FormEmpty(), tr.FormWeak(), tr.FormFair(), tr.FormGood(), tr.FormStrong()}[score()]
+					}, StyleFunc: func() core.Style {
 						c := colors.Faint()
 						if s := score(); s > 0 {
 							c = strengthTone[s].Color(cx)
@@ -315,77 +320,82 @@ func formDemo(cx *core.Scope) core.Node {
 					}},
 				}},
 			}},
-			formField(fieldProps{label: "Phone", api: "KeyboardPhone", next: refs[4]},
+			formField(fieldProps{label: tr.FormPhone(), api: "KeyboardPhone", next: refs[4]},
 				base.Input{Ref: refs[3], KeyboardType: core.KeyboardPhone, AutoComplete: core.AutoCompleteTel, Placeholder: "+1 555 0100"}),
-			formField(fieldProps{label: "Website", api: "KeyboardURL", next: refs[5]},
+			formField(fieldProps{label: tr.FormWebsite(), api: "KeyboardURL", next: refs[5]},
 				base.Input{Ref: refs[4], KeyboardType: core.KeyboardURL, AutoCapitalize: core.AutoCapitalizeNone, NoAutoCorrect: true, Placeholder: "https://"}),
 		}}
 	}
 
 	numbers := func(cx *core.Scope) core.Node {
-		return ui.Section{Title: "Numbers", Note: "KeyboardType", Children: []core.Node{
+		tr := locales.For(cx)
+		return ui.Section{Title: tr.FormNumbers(), Note: "KeyboardType", Children: []core.Node{
 			pair(
-				formField(fieldProps{label: "Age", hint: label("3 digits"), next: refs[6]},
+				formField(fieldProps{label: tr.FormAge(), hint: label(tr.Form3Digits()), next: refs[6]},
 					base.Input{Ref: refs[5], KeyboardType: core.KeyboardNumber, MaxLength: 3, Placeholder: "36"}),
-				formField(fieldProps{label: "Amount", api: "KeyboardDecimal", prefix: "$", next: refs[7]},
+				formField(fieldProps{label: tr.FormAmount(), api: "KeyboardDecimal", prefix: "$", next: refs[7]},
 					base.Input{Ref: refs[6], KeyboardType: core.KeyboardDecimal, Placeholder: "0.00"}),
 			),
-			formField(fieldProps{label: "Offset", hint: label("dark keyboard (iOS)")},
+			formField(fieldProps{label: tr.FormOffset(), hint: label(tr.FormDarkKeyboardIos())},
 				base.Input{IOS: core.IOSInputProps{KeyboardAppearance: core.KeyboardAppearanceDark}, Placeholder: "-12.5"}),
-			formField(fieldProps{label: "Verification code", hint: func() string { return fmt.Sprintf("%d/6", len(code.Get())) }, next: refs[8]},
+			formField(fieldProps{label: tr.FormVerificationCode(), hint: func() string { return fmt.Sprintf("%d/6", len(code.Get())) }, next: refs[8]},
 				base.Input{Ref: refs[7], TestID: "code", Value: code.Get, OnChange: code.Set, KeyboardType: core.KeyboardNumber, MaxLength: 6, Placeholder: "······",
 					Style: core.Style{LetterSpacing: 10, FontSize: 22, FontWeight: ui.Medium, TextAlign: core.TextAlignCenter}}),
 		}}
 	}
 
 	shipping := func(cx *core.Scope) core.Node {
-		return ui.Section{Title: "Shipping address", Note: "scrolls into view", Children: []core.Node{
-			formField(fieldProps{label: "Street", next: refs[9]}, base.Input{Ref: refs[8], AutoComplete: core.AutoCompleteStreetAddress, Placeholder: "12 Analytical Way"}),
+		tr := locales.For(cx)
+		return ui.Section{Title: tr.FormShippingAddress(), Note: tr.FormScrollsIntoView(), Children: []core.Node{
+			formField(fieldProps{label: tr.FormStreet(), next: refs[9]}, base.Input{Ref: refs[8], AutoComplete: core.AutoCompleteStreetAddress, Placeholder: "12 Analytical Way"}),
 			pair(
-				formField(fieldProps{label: "City", next: refs[10]}, base.Input{Ref: refs[9], AutoComplete: core.AutoCompleteCity, Placeholder: "London"}),
-				formField(fieldProps{label: "Postal code", next: refs[11]}, base.Input{Ref: refs[10], AutoCapitalize: core.AutoCapitalizeCharacters,
+				formField(fieldProps{label: tr.FormCity(), next: refs[10]}, base.Input{Ref: refs[9], AutoComplete: core.AutoCompleteCity, Placeholder: "London"}),
+				formField(fieldProps{label: tr.FormPostalCode(), next: refs[11]}, base.Input{Ref: refs[10], AutoCapitalize: core.AutoCapitalizeCharacters,
 					AutoComplete: core.AutoCompletePostalCode, Placeholder: "SW1A 1AA"}),
 			),
-			formField(fieldProps{label: "Country", next: refs[12]}, base.Input{Ref: refs[11], AutoComplete: core.AutoCompleteCountry, Placeholder: "United Kingdom"}),
+			formField(fieldProps{label: tr.FormCountry(), next: refs[12]}, base.Input{Ref: refs[11], AutoComplete: core.AutoCompleteCountry, Placeholder: "United Kingdom"}),
 		}}
 	}
 
 	selection := func(cx *core.Scope) core.Node {
-		return ui.Section{Title: "Selection and keys", Note: "OnSelectionChange", Children: []core.Node{selectionDemo()}}
+		tr := locales.For(cx)
+		return ui.Section{Title: tr.FormSelectionAndKeys(), Note: "OnSelectionChange", Children: []core.Node{selectionDemo()}}
 	}
 
 	textCard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: "Text", Note: "Input options", Children: []core.Node{
-			formField(fieldProps{label: "Controlled", hint: label("Uppercased as you type"), next: refs[13]},
-				base.Input{Ref: refs[12], TestID: "shout", Value: shout.Get, OnChange: func(t string) { shout.Set(strings.ToUpper(t)) }, Placeholder: "TYPE IN LOWER CASE"}),
-			formField(fieldProps{label: "Read only", api: "Readonly"}, base.Input{Value: label("Not editable"), Readonly: true}),
-			formField(fieldProps{label: "Custom colors", api: "PlaceholderColor, SelectionColor", next: refs[14]},
-				base.Input{Ref: refs[13], Placeholder: "A blue placeholder, an amber selection",
+		return ui.Section{Title: tr.FormText(), Note: tr.FormInputOptions(), Children: []core.Node{
+			formField(fieldProps{label: tr.FormControlled(), hint: label(tr.FormUppercasedAsYouType()), next: refs[13]},
+				base.Input{Ref: refs[12], TestID: "shout", Value: shout.Get, OnChange: func(t string) { shout.Set(strings.ToUpper(t)) }, Placeholder: tr.FormTypeInLowerCase()}),
+			formField(fieldProps{label: tr.FormReadOnly(), api: "Readonly"}, base.Input{Value: label(tr.FormNotEditable()), Readonly: true}),
+			formField(fieldProps{label: tr.FormCustomColors(), api: "PlaceholderColor, SelectionColor", next: refs[14]},
+				base.Input{Ref: refs[13], Placeholder: tr.FormABluePlaceholderAnAmber(),
 					StyleFunc: func() core.Style { return core.Style{PlaceholderColor: colors.Info(), SelectionColor: colors.Warn()} }}),
 			core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-				formField(fieldProps{label: "Notes", hint: func() string { return fmt.Sprintf("%d/280", len([]rune(notes.Get()))) }},
-					base.Input{Ref: refs[14], Multiline: true, MaxLength: 280, Value: notes.Get, OnChange: notes.Set, Placeholder: "Return adds a line",
+				formField(fieldProps{label: tr.FormNotes(), hint: func() string { return fmt.Sprintf("%d/280", len([]rune(notes.Get()))) }},
+					base.Input{Ref: refs[14], Multiline: true, MaxLength: 280, Value: notes.Get, OnChange: notes.Set, Placeholder: tr.FormReturnAddsALine(),
 						Style: core.Style{MinHeight: core.Pt(100)}}),
 				ui.Meter{Value: func() float64 { return float64(len([]rune(notes.Get()))) / 280 }, Tone: ui.ToneAccent},
 			}},
 			autoGrow(),
-			formField(fieldProps{label: "No caret", api: "HideCaret"}, base.Input{HideCaret: true, DefaultValue: "No caret here"}),
+			formField(fieldProps{label: tr.FormNoCaret(), api: "HideCaret"}, base.Input{HideCaret: true, DefaultValue: tr.FormNoCaretHere()}),
 		}}
 	}
 
 	submitCard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		tints := ui.TintsOf(cx)
-		return ui.Card{Icon: ui.IconCheck, Title: "Create the account", Description: "Submitting checks every field", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		return ui.Card{Icon: ui.IconCheck, Title: tr.FormCreateTheAccount(), Description: tr.FormSubmittingChecksEveryField(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			r := result.Get()
 			switch {
 			case r.text == "":
 				return core.Group{}
 			case r.t == ui.ToneUp:
-				return ui.Badge{Text: "Sent", Tone: ui.ToneUp}
+				return ui.Badge{Text: tr.FormSent(), Tone: ui.ToneUp}
 			}
-			return ui.Badge{Text: "Check", Tone: ui.ToneDanger}
+			return ui.Badge{Text: tr.FormCheck(), Tone: ui.ToneDanger}
 		})}, Children: []core.Node{
 			core.Show{When: func() bool { return result.Get().text != "" }, Then: func(*core.Scope) core.Node {
 				return core.Dynamic(func(*core.Scope) core.Node {
@@ -401,34 +411,35 @@ func formDemo(cx *core.Scope) core.Node {
 					}}
 				})
 			}},
-			pair(ui.Button{Text: "Submit", OnPress: submit}, ui.Button{Text: "Hide keyboard", Variant: ui.ButtonSecondary, OnPress: cx.DismissKeyboard}),
+			pair(ui.Button{Text: tr.FormSubmit(), OnPress: submit}, ui.Button{Text: tr.FormHideKeyboard(), Variant: ui.ButtonSecondary, OnPress: cx.DismissKeyboard}),
 		}}
 	}
 
 	more := func(cx *core.Scope) core.Node {
-		return ui.Card{Title: "More keyboards", Description: "Sheets and bars that ride on the keyboard", Flush: true, Children: []core.Node{
+		tr := locales.For(cx)
+		return ui.Card{Title: tr.FormMoreKeyboards(), Description: tr.FormSheetsAndBarsThatRide(), Flush: true, Children: []core.Node{
 			ui.Inset{Exact: true, Children: []core.Node{
-				ui.LinkRow{Icon: ui.IconComponents, Title: "Inputs in a sheet", Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconText, Title: "A message bar at the bottom", Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
+				ui.LinkRow{Icon: ui.IconComponents, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
+				ui.LinkRow{Divided: true, Icon: ui.IconText, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
 			}},
 		}}
 	}
 
 	var fields []core.Node
-	for _, l := range []string{"First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh"} {
-		fields = append(fields, formField(fieldProps{label: l}, base.Input{Placeholder: l + " field"}))
+	for _, l := range []string{tr.FormFirst(), tr.FormSecond(), tr.FormThird(), tr.FormFourth(), tr.FormFifth(), tr.FormSixth(), tr.FormSeventh()} {
+		fields = append(fields, formField(fieldProps{label: l}, base.Input{Placeholder: l + tr.FormField()}))
 	}
 	dialog := base.Dialog{Open: sheetOpen.Get, Presentation: core.ModalPageSheet, OnOpenChange: func(o bool, _ base.Reason) { sheetOpen.Set(o) },
-		PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch}, Label: "A sheet",
+		PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch}, Label: tr.FormASheet(),
 		Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 			core.Scroll{Style: core.Style{FlexGrow: 1}, Behavior: core.ScrollBehavior{KeyboardDismissMode: core.KeyboardDismissInteractive}, Children: []core.Node{
 				core.View{Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, Gap: 16}, Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Edges{Top: 8, Left: 4}}, Children: []core.Node{
 						core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-							core.Text{Content: "A sheet", Style: core.Style{FontSize: 24, FontWeight: ui.Bold, LetterSpacing: -0.4}, StyleFunc: ui.Colored(colors.Text)},
-							ui.Text("Its inputs stay above the keyboard too", 13, ui.Regular, colors.Muted),
+							core.Text{Content: tr.FormASheet(), Style: core.Style{FontSize: 24, FontWeight: ui.Bold, LetterSpacing: -0.4}, StyleFunc: ui.Colored(colors.Text)},
+							ui.Text(tr.FormItsInputsStayAboveThe(), 13, ui.Regular, colors.Muted),
 						}},
-						ui.Button{Text: "Done", Variant: ui.ButtonSecondary, OnPress: func() { sheetOpen.Set(false) }},
+						ui.Button{Text: tr.FormDone(), Variant: ui.ButtonSecondary, OnPress: func() { sheetOpen.Set(false) }},
 					}},
 					ui.Inset{Children: fields},
 				}},
@@ -443,10 +454,11 @@ func formDemo(cx *core.Scope) core.Node {
 // (OnContentSizeChange), up to 5 lines.
 func autoGrow() core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		height := core.NewSignal(cx, core.Points(0))
 		size := core.NewSignal(cx, "–")
-		return formField(fieldProps{label: "Grows with its text", hint: size.Get},
-			base.Input{Multiline: true, Placeholder: "Type several lines",
+		return formField(fieldProps{label: tr.FormGrowsWithItsText(), hint: size.Get},
+			base.Input{Multiline: true, Placeholder: tr.FormTypeSeveralLines(),
 				OnContentSizeChange: func(s core.Size) {
 					size.Set(fmt.Sprintf("%d×%d", int(s.Width+0.5), int(s.Height+0.5)))
 					height.Set(min(s.Height, 110))
@@ -463,12 +475,13 @@ type message struct {
 // messageBar is an input pinned to the bottom, outside any scroll view:
 // it rides on the keyboard.
 func messageBar(cx *core.Scope) base.NavPage {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	env := cx.Env()
 	messages := core.NewSignalFunc(cx, []message{
-		{false, "The bar below sits outside the scroll view."},
-		{false, "Bottom padding of EnvKeyboard lifts it with the keyboard. Say something."},
+		{false, tr.FormTheBarBelowSitsOutside()},
+		{false, tr.FormBottomPaddingOfEnvkeyboardLifts()},
 	}, slices.Equal)
 	draft := core.NewSignal(cx, "")
 	send := func() {
@@ -479,10 +492,10 @@ func messageBar(cx *core.Scope) base.NavPage {
 		messages.Update(func(m []message) []message { return append(slices.Clone(m), message{true, d}) })
 		draft.Set("")
 	}
-	return screen(cx, "Message bar", nil, core.View{Style: core.Style{FlexGrow: 1, PaddingEnv: core.EnvEdges{Bottom: core.EnvKeyboard}}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
+	return screen(cx, tr.FormMessageBar(), nil, core.View{Style: core.Style{FlexGrow: 1, PaddingEnv: core.EnvEdges{Bottom: core.EnvKeyboard}}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 		core.Scroll{Style: core.Style{FlexGrow: 1}, Behavior: core.ScrollBehavior{KeyboardDismissMode: core.KeyboardDismissInteractive}, Children: []core.Node{
 			core.View{Style: core.Style{Padding: core.All(16), Gap: 8}, Children: []core.Node{
-				core.Text{Content: "Today", Style: core.Style{AlignSelf: core.AlignCenter, FontSize: 12, FontWeight: ui.Medium, Padding: core.Edges{Bottom: 8}}, StyleFunc: ui.Colored(colors.Faint)},
+				core.Text{Content: tr.FormToday(), Style: core.Style{AlignSelf: core.AlignCenter, FontSize: 12, FontWeight: ui.Medium, Padding: core.Edges{Bottom: 8}}, StyleFunc: ui.Colored(colors.Faint)},
 				core.Each(messages.Get, func(m message) message { return m }, func(cx *core.Scope, m func() message, _ func() int) core.Node {
 					msg := core.Untracked(cx, m)
 					return ui.Appear{Children: []core.Node{bubble(cx, msg)}}
@@ -499,12 +512,12 @@ func messageBar(cx *core.Scope) base.NavPage {
 				Background: colors.Surface(), Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Border()}}
 		}, Children: []core.Node{
 			base.Input{Value: draft.Get, OnChange: draft.Set, OnSubmit: func(string) { send() }, SubmitBehavior: core.SubmitBehaviorSubmit,
-				Placeholder: "Message", ReturnKeyType: core.ReturnKeySend, TestID: "message",
+				Placeholder: tr.FormMessage(), ReturnKeyType: core.ReturnKeySend, TestID: "message",
 				StyleFunc: func() core.Style {
 					return fin.Inset().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44),
 						Padding: core.Symmetric(0, 16), FontSize: 15, Color: colors.Text(), Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 22})
 				}},
-			ui.RoundButton{Icon: ui.IconArrowUp, Label: "Send", OnPress: send},
+			ui.RoundButton{Icon: ui.IconArrowUp, Label: tr.FormSend(), OnPress: send},
 		}},
 	}})
 }
@@ -535,9 +548,10 @@ func bubble(cx *core.Scope, m message) core.Node {
 // Ref.SetSelection.
 func selectionDemo() core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
-		value := core.NewSignal(cx, "Select part of this text")
+		value := core.NewSignal(cx, tr.FormSelectPartOfThisText())
 		rng := core.NewSignal(cx, core.TextRange{})
 		keys := core.NewSignalFunc(cx, []string(nil), slices.Equal)
 		sel := core.NewSignal(cx, core.TextRange{})
@@ -553,7 +567,7 @@ func selectionDemo() core.Node {
 			return string(u[r.Start:r.End])
 		}
 		return core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
-			formField(fieldProps{label: "Text", hint: func() string { r := rng.Get(); return fmt.Sprintf("%d–%d", r.Start, r.End) }},
+			formField(fieldProps{label: tr.FormText(), hint: func() string { r := rng.Get(); return fmt.Sprintf("%d–%d", r.Start, r.End) }},
 				base.Input{Ref: input, Value: value.Get, OnChange: value.Set, SelectedRange: sel.Get, OnSelectionChange: rng.Set, TestID: "selection",
 					OnKeyPress: func(k string) {
 						keys.Update(func(ks []string) []string {
@@ -561,12 +575,12 @@ func selectionDemo() core.Node {
 							return ks[max(0, len(ks)-8):]
 						})
 					}, AutoComplete: core.AutoCompleteOff}),
-			ui.Caption{Label: "Selected", Note: func() string { return fmt.Sprintf("%q", selected()) }},
+			ui.Caption{Label: tr.FormSelected(), Note: func() string { return fmt.Sprintf("%q", selected()) }},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 6, MinHeight: core.Pt(28)}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					ks := keys.Get()
 					if len(ks) == 0 {
-						return ui.Text("Keys you press show here", 13, ui.Regular, colors.Faint)
+						return ui.Text(tr.FormKeysYouPressShowHere(), 13, ui.Regular, colors.Faint)
 					}
 					var chips []core.Node
 					for _, k := range ks {
@@ -583,10 +597,10 @@ func selectionDemo() core.Node {
 				}),
 			}},
 			pair(
-				ui.Button{Text: "Select all", OnPress: func() { sel.Set(core.TextRange{Start: 0, End: core.UTF16Len(value.GetUntracked())}) }},
-				ui.Button{Text: "Caret to start", Variant: ui.ButtonSecondary, OnPress: func() { input.SetSelection(0, 0) }},
+				ui.Button{Text: tr.FormSelectAll(), OnPress: func() { sel.Set(core.TextRange{Start: 0, End: core.UTF16Len(value.GetUntracked())}) }},
+				ui.Button{Text: tr.FormCaretToStart(), Variant: ui.ButtonSecondary, OnPress: func() { input.SetSelection(0, 0) }},
 			),
-			formField(fieldProps{label: "One-time code", api: "AutoCompleteOneTimeCode"},
+			formField(fieldProps{label: tr.FormOneTimeCode(), api: "AutoCompleteOneTimeCode"},
 				base.Input{KeyboardType: core.KeyboardNumber, AutoComplete: core.AutoCompleteOneTimeCode, MaxLength: 6, Placeholder: "123456"}),
 		}}
 	})

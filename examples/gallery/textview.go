@@ -10,6 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // readingStyles is the gallery's reading typography for every part of a
@@ -95,11 +96,12 @@ func readingParts(cx *core.Scope) textview.Styles {
 
 // copyAction labels a code block's copy button, Copied while it is done.
 func copyAction(cx *core.Scope, a textview.CodeBlockAction) core.Node {
+	tr := locales.For(cx)
 	return core.Text{ContentFunc: func() string {
 		if a.Done() {
-			return "Copied"
+			return tr.TextviewCopied()
 		}
-		return "Copy code"
+		return tr.TextviewCopyCode()
 	}}
 }
 
@@ -127,6 +129,7 @@ func streamTokens(s string) []string {
 }
 
 func streamingCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	streamed := core.NewSignal(cx, "")
 	streaming := core.NewSignal(cx, false)
 	var stop func()
@@ -153,8 +156,9 @@ func streamingCard(cx *core.Scope) core.Node {
 			i++
 		})
 	}
-	return ui.Card{Icon: ui.IconChat, Title: "Streaming", Description: "A reply as an AI model writes it, with a caret", Children: []core.Node{
+	return ui.Card{Icon: ui.IconChat, Title: tr.TextviewStreaming(), Description: tr.TextviewAReplyAsAnAi(), Children: []core.Node{
 		core.Dynamic(func(cx *core.Scope) core.Node {
+			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			on := streaming.Get()
 			var caret core.Node
@@ -163,12 +167,12 @@ func streamingCard(cx *core.Scope) core.Node {
 					Animation: core.KeyframeAnimation{Keyframes: core.KeyframesPulse}}, StyleFunc: ui.Filled(colors.Accent)}
 			}
 			return textview.TextView{MarkdownFunc: streamed.Get, StyleOf: readingStyles(cx), Options: textview.Options{Streaming: on}, StreamingCaret: caret,
-				Selectable: true, Highlighter: highlight.New(cx), CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction, TestID: "streamed"}
+				Selectable: true, Highlighter: highlight.New(cx), CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: tr.TextviewCopyCode()}}, RenderCodeBlockAction: copyAction, TestID: "streamed"}
 		}),
 		core.Dynamic(func(*core.Scope) core.Node {
-			l := "Stream it"
+			l := tr.TextviewStreamIt()
 			if streaming.Get() {
-				l = "Streaming…"
+				l = tr.TextviewStreaming2()
 			}
 			return ui.Button{Text: l, Icon: ui.IconPlay, Variant: ui.ButtonSecondary, Disabled: streaming.Get, OnPress: play}
 		}),
@@ -176,20 +180,22 @@ func streamingCard(cx *core.Scope) core.Node {
 }
 
 func markdownCard(cx *core.Scope) core.Node {
-	pressed := core.NewSignal(cx, "nothing yet")
+	tr := locales.For(cx)
+	pressed := core.NewSignal(cx, tr.TextviewNothingYet())
 	viewing := core.NewSignal(cx, textview.Image{})
-	return ui.Card{Icon: ui.IconText, Title: "Markdown", Description: "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML", Children: []core.Node{
+	return ui.Card{Icon: ui.IconText, Title: tr.TextviewMarkdown(), Description: tr.TextviewCommonmarkAndGithubSTables(), Children: []core.Node{
 		textview.TextView{Markdown: tvMarkdown, StyleOf: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
-			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
+			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: tr.TextviewCopyCode()}}, RenderCodeBlockAction: copyAction,
 			OnLinkPress: func(e textview.LinkPressEvent) { pressed.Set(e.URL) }, OnImagePress: viewing.Set},
-		ui.Caption{Label: "Link pressed", Note: pressed.Get},
+		ui.Caption{Label: tr.TextviewLinkPressed(), Note: pressed.Get},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	}}
 }
 
 func htmlCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	viewing := core.NewSignal(cx, textview.Image{})
-	return ui.Card{Icon: ui.IconText, Title: "HTML", Description: "An article page: sections, figures, lists, tables, code", Children: []core.Node{
+	return ui.Card{Icon: ui.IconText, Title: tr.TextviewHtml(), Description: tr.TextviewAnArticlePageSectionsFigures(), Children: []core.Node{
 		textview.TextView{HTML: tvHTML, StyleOf: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), OnImagePress: viewing.Set, TestID: "html"},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	}}
@@ -232,6 +238,7 @@ func chartBlock(cx *core.Scope, source string) core.Node {
 }
 
 func extensionsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	sky := func() core.Color {
 		if cx.Dark() {
 			return core.RGB(0x7dd3fc)
@@ -244,7 +251,7 @@ func extensionsCard(cx *core.Scope) core.Node {
 		}
 		return core.RGB(0x059669)
 	}
-	return ui.Card{Icon: ui.IconComponents, Title: "Extensions", Description: "Mentions, a chart block, a <Callout> tag, a :::note container", Children: []core.Node{
+	return ui.Card{Icon: ui.IconComponents, Title: tr.TextviewExtensions(), Description: tr.TextviewMentionsAChartBlockA(), Children: []core.Node{
 		textview.TextView{Markdown: tvExtended, StyleOf: readingStyles(cx),
 			Extensions: []textview.Extension{
 				{Name: "mention", Pattern: mentionPattern},
@@ -287,17 +294,18 @@ const (
 // selectionAreaCard is two documents and a plain text that select as one,
 // around a label that stays out.
 func selectionAreaCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	return ui.Card{Icon: ui.IconText, Title: "Selectable view", Description: "One selection across texts and TextViews", Children: []core.Node{
+	return ui.Card{Icon: ui.IconText, Title: tr.TextviewSelectableView(), Description: tr.TextviewOneSelectionAcrossTextsAnd(), Children: []core.Node{
 		core.View{Selectable: true, Style: core.Style{Gap: 12}, Children: []core.Node{
 			textview.TextView{Markdown: tvQuestion, StyleOf: readingStyles(cx)},
 			textview.TextView{Markdown: tvAnswer, StyleOf: readingStyles(cx)},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-				core.Text{Content: "Not selectable", Selectable: core.SelectableOff, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
-				core.Text{Content: "A plain Text joins the selection too.", Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: tr.TextviewNotSelectable(), Selectable: core.SelectableOff, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
+				core.Text{Content: tr.TextviewAPlainTextJoinsThe(), Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
 			}},
 		}},
-		ui.Caption{Label: ui.Hint(cx, "Long press, then move the handles from the question into the answer", "Drag from the question into the answer")},
+		ui.Caption{Label: ui.Hint(cx, tr.TextviewLongPressThenMoveThe(), tr.TextviewDragFromTheQuestionInto())},
 	}}
 }
 

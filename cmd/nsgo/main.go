@@ -7,6 +7,7 @@
 //	nsgo test  [-run R] [-junit F] [-trace] [-target T] [dir] [-- go test flags]
 //	                                                      run the app's tests headless or on a platform
 //	nsgo check [dir]                                     vet the app and type-check its TSX
+//	nsgo i18n  [-source L] [dir]                         check catalogs and write their Go code
 //
 // dir is the app's directory, holding nsgo.yaml and its main package; it
 // defaults to the current directory. Flags replace the nsgo.yaml values
@@ -19,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 )
 
@@ -88,6 +90,22 @@ func main() {
 		if p, err = load(fs.Arg(0)); err == nil {
 			err = check(ctx, p)
 		}
+	case "i18n":
+		fs := flag.NewFlagSet("i18n", flag.ExitOnError)
+		source := fs.String("source", "", "the `language` a library's catalogs are written in (default: as their code says, else en)")
+		fs.Parse(args)
+		dir := fs.Arg(0)
+		if dir == "" {
+			dir = "."
+		}
+		if _, statErr := os.Stat(filepath.Join(dir, "nsgo.yaml")); statErr == nil {
+			var p *project
+			if p, err = load(dir); err == nil {
+				err = p.prepareCatalogs(ctx, ".", false)
+			}
+		} else {
+			err = generateCatalog(ctx, dir, *source)
+		}
 	default:
 		usage()
 	}
@@ -104,6 +122,7 @@ func usage() {
   nsgo build [-target all|macos_arm64,windows_x64,linux_x64,ios,web,...] [-output DIR] [-open] [-run [-device D]] [dir]
   nsgo test  [-run REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android] [dir] [-- go test flags]
   nsgo check [dir]
+  nsgo i18n  [-source L] [dir]
 
 dev and build take -name, -id, -version, -width and -height, which replace
 nsgo.yaml's values, and -h lists every flag.`)

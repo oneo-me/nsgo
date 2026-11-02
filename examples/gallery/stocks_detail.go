@@ -8,12 +8,14 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // dayRange is where the last price sits in the day, in one line: the
 // low–high span filled, the previous close marked, the last price a knob
 // that springs on the platform.
 func dayRange(cx *core.Scope, s *stock) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	q := s.quote.Get
 	x := core.NewAnimatedValue(cx, 0)
@@ -44,7 +46,7 @@ func dayRange(cx *core.Scope, s *stock) core.Node {
 	p := func(v float64) string { return priceText(v, s) }
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 		ui.Tabular(ui.Textf(func() string { return "L " + p(q().low) }, 12, ui.Regular, colors.Muted)),
-		core.View{OnLayout: func(b core.Bounds) { width = b.Size.Width; place() }, LabelFunc: func() string { return fmt.Sprintf("Day range %s to %s", p(q().low), p(q().high)) },
+		core.View{OnLayout: func(b core.Bounds) { width = b.Size.Width; place() }, LabelFunc: func() string { return tr.StocksDayRange(p(q().low), p(q().high)) },
 			Style: core.Style{FlexGrow: 1, FlexShrink: 1, Height: core.Pt(16), JustifyContent: core.JustifyCenter}, Children: []core.Node{
 				core.View{Style: core.Style{Height: core.Pt(4), CornerRadius: 2}, StyleFunc: ui.Filled(colors.Raised)},
 				core.View{StyleFunc: func() core.Style {
@@ -67,6 +69,7 @@ func dayRange(cx *core.Scope, s *stock) core.Node {
 // quoteBlock is a big figure, a direction arrow that turns over on the
 // platform, the day's range and figures.
 func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	q := s.quote.Get
 	change := func() float64 { qq := q(); return qq.last - qq.prevClose }
@@ -97,7 +100,7 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 	sectorName := ""
 	for _, sc := range sectors {
 		if sc.id == s.sector {
-			sectorName = sc.label
+			sectorName = sc.label(locales.For(cx))
 		}
 	}
 	decimals := 2
@@ -124,19 +127,19 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 			core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 0, 180)}}, Children: []core.Node{ui.Icon(ui.IconArrowUp, 20, func() core.Color { return toneOf(cx, change()) })}},
 			core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignEnd, Gap: 1}, Children: []core.Node{
 				core.Text{ContentFunc: func() string { return signed(percentOf(q()), 2) + "%" }, StyleFunc: toneStyle(15, ui.Semibold)},
-				core.Text{ContentFunc: func() string { return signed(change(), decimals) + " today" }, StyleFunc: toneStyle(12, ui.Regular)},
+				core.Text{ContentFunc: func() string { return signed(change(), decimals) + tr.StocksToday() }, StyleFunc: toneStyle(12, ui.Regular)},
 			}},
 		}},
 		dayRange(cx, s),
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap}, Children: []core.Node{
-			ui.Stat{Label: "Open", Value: func() string { return p(q().open) }, Width: w},
-			ui.Stat{Label: "Prev close", Value: func() string { return p(q().prevClose) }, Width: w},
-			ui.Stat{Label: "Avg price", Value: func() string { qq := q(); return p(qq.turnover / math.Max(qq.volume, 1)) }, Width: w},
-			ui.Stat{Label: "Amplitude", Value: func() string { qq := q(); return fmt.Sprintf("%.2f%%", (qq.high-qq.low)/qq.prevClose*100) }, Width: w},
-			ui.Stat{Label: "Volume", Value: func() string { return compactNumber(q().volume) }, Width: w},
-			ui.Stat{Label: "Turnover", Value: func() string { return compactNumber(q().turnover) }, Width: w},
-			ui.Stat{Label: "120d high", Value: label(p(yearHi)), Width: w},
-			ui.Stat{Label: "120d low", Value: label(p(yearLo)), Width: w},
+			ui.Stat{Label: tr.StocksOpen(), Value: func() string { return p(q().open) }, Width: w},
+			ui.Stat{Label: tr.StocksPrevClose(), Value: func() string { return p(q().prevClose) }, Width: w},
+			ui.Stat{Label: tr.StocksAvgPrice(), Value: func() string { qq := q(); return p(qq.turnover / math.Max(qq.volume, 1)) }, Width: w},
+			ui.Stat{Label: tr.StocksAmplitude(), Value: func() string { qq := q(); return fmt.Sprintf("%.2f%%", (qq.high-qq.low)/qq.prevClose*100) }, Width: w},
+			ui.Stat{Label: tr.StocksVolume(), Value: func() string { return compactNumber(q().volume) }, Width: w},
+			ui.Stat{Label: tr.StocksTurnover(), Value: func() string { return compactNumber(q().turnover) }, Width: w},
+			ui.Stat{Label: tr.Stocks120dHigh(), Value: label(p(yearHi)), Width: w},
+			ui.Stat{Label: tr.Stocks120dLow(), Value: label(p(yearLo)), Width: w},
 		}},
 	}}
 }
@@ -146,6 +149,7 @@ var horizons = []int{5, 20, 60, 120}
 // rangesBlock is ranges over 5 to 120 days as dumbbells, low to high, the
 // last price a line across them and the previous close dashed.
 func rangesBlock(cx *core.Scope, m *market, s *stock) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	type rng struct {
 		n      int
@@ -195,14 +199,15 @@ func rangesBlock(cx *core.Scope, m *market, s *stock) core.Node {
 		bottom := float32(len(horizons)) * 34
 		d.SetStrokeColor(c.Faint).SetLineWidth(1).SetLineDash(3, 4).BeginPath().MoveTo(X(q.prevClose), 0).LineTo(X(q.prevClose), bottom).Stroke().SetLineDash()
 		d.SetStrokeColor(c.Accent).SetLineWidth(2).BeginPath().MoveTo(X(q.last), 0).LineTo(X(q.last), bottom).Stroke()
-		d.SetFillColor(c.Accent).SetTextAlign(core.TextAlignCenter).FillText("last "+priceText(q.last, s), max(left+30, min(w-40, X(q.last))), bottom+8, f)
+		d.SetFillColor(c.Accent).SetTextAlign(core.TextAlignCenter).FillText(tr.StocksLast()+priceText(q.last, s), max(left+30, min(w-40, X(q.last))), bottom+8, f)
 	}
-	return block(cx, "Ranges", label("low → high · each second"), nil, false,
-		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(len(horizons)*34 + 16))}, Draw: draw, Label: "Price ranges"})
+	return block(cx, tr.StocksRanges(), label(tr.StocksLowHighEachSecond()), nil, false,
+		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(len(horizons)*34 + 16))}, Draw: draw, Label: tr.StocksPriceRanges()})
 }
 
 // pauseButton pauses and resumes the market.
 func pauseButton(cx *core.Scope, m *market) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	return core.Dynamic(func(*core.Scope) core.Node {
@@ -218,9 +223,9 @@ func pauseButton(cx *core.Scope, m *market) core.Node {
 			}
 			return s
 		}
-		name, tint, lbl := ui.IconPlay, colors.OnAccent, "Resume the market"
+		name, tint, lbl := ui.IconPlay, colors.OnAccent, tr.StocksResumeTheMarket()
 		if run {
-			name, tint, lbl = ui.IconPause, colors.Muted, "Pause the market"
+			name, tint, lbl = ui.IconPause, colors.Muted, tr.StocksPauseTheMarket()
 		}
 		return ui.Press{OnPress: func() {
 			if m.running.GetUntracked() {
@@ -247,6 +252,7 @@ func stockScreen(m *market, s *stock) func(cx *core.Scope) base.NavPage {
 // while split holds, puts the book, the tape, depth and flow in a column
 // right of the quote, chart and ranges.
 func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	env := cx.Env()
@@ -259,7 +265,7 @@ func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool
 	footer := func() core.Node {
 		return core.Text{ContentFunc: func() string {
 			st := m.stats.Get()
-			return fmt.Sprintf("simulated · %.2f ms engine/tick · %.0f quotes/s", st[0], st[1])
+			return tr.StocksSimulatedStats(fmt.Sprintf("%.2f", st[0]), fmt.Sprintf("%.0f", st[1]))
 		}, StyleFunc: func() core.Style {
 			return core.Style{Padding: core.Edges{Top: 8, Right: 16, Bottom: 96 + env.SafeArea().Bottom, Left: 16}, FontSize: 12, FontVariant: core.FontTabularNums, Color: colors.Faint()}
 		}}
@@ -318,7 +324,7 @@ func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool
 	if wide {
 		// A card in the window on desktops: Escape or a click outside
 		// closes it.
-		sheetNode = base.Dialog{Open: open.Get, Presentation: core.ModalFormSheet, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: "Order ticket",
+		sheetNode = base.Dialog{Open: open.Get, Presentation: core.ModalFormSheet, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: tr.StocksOrderTicket(),
 			BackdropStyle: core.Style{Background: ui.Black(0.4)},
 			PopupStyleFunc: func() core.Style {
 				return core.Style{Width: core.Pt(420), MaxWidth: core.Pct(100), Padding: core.All(20), CornerRadius: ui.RadiusCard, Background: colors.Surface(), Shadows: fin.Menu().Shadows}
@@ -341,8 +347,8 @@ func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool
 					return core.Style{FontSize: 12, FontVariant: core.FontTabularNums, Color: toneOf(cx, percentOf(s.quote.Get()))}
 				}},
 			}},
-			ui.Cell{Child: ui.Button{Text: "Sell", Variant: ui.ButtonSecondary, OnPress: func() { trade("sell") }}},
-			ui.Cell{Child: ui.Button{Text: "Buy", OnPress: func() { trade("buy") }}},
+			ui.Cell{Child: ui.Button{Text: tr.StocksSell(), Variant: ui.ButtonSecondary, OnPress: func() { trade("sell") }}},
+			ui.Cell{Child: ui.Button{Text: tr.StocksBuy(), OnPress: func() { trade("buy") }}},
 		}},
 		bn.view,
 		sheetNode,

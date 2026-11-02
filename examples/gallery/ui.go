@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // The gallery's shell: its layouts, demo pages and headers, and helpers
@@ -45,14 +45,6 @@ func clampInt(v, lo, hi int) int {
 
 func clamp(v, lo, hi float64) float64 { return math.Min(math.Max(v, lo), hi) }
 
-// count formats n with a unit, plural past one.
-func count(n int, unit string) string {
-	if n == 1 {
-		return "1 " + unit
-	}
-	return fmt.Sprintf("%d %ss", n, unit)
-}
-
 // themeToggle switches the app between light and dark, whatever the
 // system shows: an icon button, as a toolbar's.
 func themeToggle(cx *core.Scope) core.Node {
@@ -74,6 +66,7 @@ func barThemeToggle(cx *core.Scope) core.Node {
 // toggleFace is a theme toggle's icon and label: the appearance it
 // switches to.
 func toggleFace(cx *core.Scope) (name func() ui.IconName, label func() string) {
+	tr := locales.For(cx)
 	name = func() ui.IconName {
 		if cx.Dark() {
 			return ui.IconSun
@@ -82,9 +75,9 @@ func toggleFace(cx *core.Scope) (name func() ui.IconName, label func() string) {
 	}
 	label = func() string {
 		if cx.Dark() {
-			return "Light appearance"
+			return tr.UiLightAppearance()
 		}
-		return "Dark appearance"
+		return tr.UiDarkAppearance()
 	}
 	return name, label
 }
@@ -217,6 +210,7 @@ type pageHeaderProps struct {
 // web): a back button while the page is above another, the title and
 // right. Phones show their system header with the screen's title instead.
 func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tint := p.tint
 	if tint == nil {
@@ -247,13 +241,13 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 					shell.nav.Pop(1)
 				}
 			},
-			Role: core.RoleButton, Label: "Back", HitSlop: core.All(6),
+			Role: core.RoleButton, Label: tr.UiBack(), HitSlop: core.All(6),
 			Style: core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2,
 				Padding: core.Edges{Left: 4, Right: 10}, CornerRadius: ui.RadiusControl, Cursor: core.CursorPointer},
 			StyleFunc: func() core.Style {
 				return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 			},
-			Children: []core.Node{ui.Icon(ui.IconBack, 18, tint), ui.Text("Back", 14, ui.Medium, tint)},
+			Children: []core.Node{ui.Icon(ui.IconBack, 18, tint), ui.Text(tr.UiBack(), 14, ui.Medium, tint)},
 		}
 	}})
 	center := p.center

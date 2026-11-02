@@ -1260,6 +1260,8 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.appearance = it.Appearance
 			s.applyAppearance()
 			continue
+		case driver.ItemDirection:
+			continue
 		case driver.ItemQuit:
 			if !s.embedded {
 				apple.OnMain(finish)

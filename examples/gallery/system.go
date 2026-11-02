@@ -13,6 +13,7 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // safeAreaDiagram is the window drawn to scale, with the safe area and
@@ -43,16 +44,17 @@ func safeAreaDiagram(cx *core.Scope) core.Node {
 }
 
 func environmentCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	inset := func(f func(core.Edges) core.Points) func() string {
 		return func() string { return itoa(int(f(env.SafeArea()) + 0.5)) }
 	}
-	return ui.Card{Icon: ui.IconSystem, Title: "Environment", Description: "Updates when the window, insets or keyboard change", Actions: []core.Node{ui.Badge{Text: "Live", Tone: ui.ToneUp}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconSystem, Title: tr.SystemEnvironment(), Description: tr.SystemUpdatesWhenTheWindowInsets(), Actions: []core.Node{ui.Badge{Text: tr.SystemLive(), Tone: ui.ToneUp}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16, AlignItems: core.AlignCenter}, Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 12}, Children: []core.Node{
 				core.View{Style: core.Style{Gap: 2}, Children: []core.Node{
-					ui.Text("Window", 12, ui.Regular, colors.Muted),
+					ui.Text(tr.SystemWindow(), 12, ui.Regular, colors.Muted),
 					ui.Figure{Value: func() string { w := env.Window(); return fmt.Sprintf("%d × %d", int(w.Width+0.5), int(w.Height+0.5)) }, Unit: "pt"},
 				}},
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
@@ -61,9 +63,9 @@ func environmentCard(cx *core.Scope) core.Node {
 						if env.KeyboardHeight() > 0 {
 							t = ui.ToneWarn
 						}
-						return ui.Stat{Label: "Keyboard", Value: func() string { return fmt.Sprintf("%d pt", int(env.KeyboardHeight()+0.5)) }, Tone: t, Width: core.Pct(50)}
+						return ui.Stat{Label: tr.SystemKeyboard(), Value: func() string { return fmt.Sprintf("%d pt", int(env.KeyboardHeight()+0.5)) }, Tone: t, Width: core.Pct(50)}
 					}),
-					ui.Stat{Label: "Font scale", Value: func() string {
+					ui.Stat{Label: tr.SystemFontScale(), Value: func() string {
 						s := env.FontScale()
 						if s == 0 {
 							s = 1
@@ -76,22 +78,22 @@ func environmentCard(cx *core.Scope) core.Node {
 		}},
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 		core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
-			ui.Caption{Label: "Safe area insets", Note: label("pt")},
+			ui.Caption{Label: tr.SystemSafeAreaInsets(), Note: label("pt")},
 			core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-				ui.Stat{Label: "Top", Value: inset(func(e core.Edges) core.Points { return e.Top }), Width: core.Pct(25)},
-				ui.Stat{Label: "Right", Value: inset(func(e core.Edges) core.Points { return e.Right }), Width: core.Pct(25)},
-				ui.Stat{Label: "Bottom", Value: inset(func(e core.Edges) core.Points { return e.Bottom }), Width: core.Pct(25)},
-				ui.Stat{Label: "Left", Value: inset(func(e core.Edges) core.Points { return e.Left }), Width: core.Pct(25)},
+				ui.Stat{Label: tr.SystemTop(), Value: inset(func(e core.Edges) core.Points { return e.Top }), Width: core.Pct(25)},
+				ui.Stat{Label: tr.SystemRight(), Value: inset(func(e core.Edges) core.Points { return e.Right }), Width: core.Pct(25)},
+				ui.Stat{Label: tr.SystemBottom(), Value: inset(func(e core.Edges) core.Points { return e.Bottom }), Width: core.Pct(25)},
+				ui.Stat{Label: tr.SystemLeft(), Value: inset(func(e core.Edges) core.Points { return e.Left }), Width: core.Pct(25)},
 			}},
 		}},
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 16}, Children: []core.Node{
-			ui.Legend{Color: colors.Info, Label: "Safe area"}, ui.Legend{Color: colors.Warn, Label: "Keyboard"}, ui.Spacer{},
+			ui.Legend{Color: colors.Info, Label: tr.SystemSafeArea()}, ui.Legend{Color: colors.Warn, Label: tr.SystemKeyboard()}, ui.Spacer{},
 			ui.Badge{TextFunc: func() string {
 				if env.Dark() {
-					return "Dark scheme"
+					return tr.SystemDarkScheme()
 				}
-				return "Light scheme"
+				return tr.SystemLightScheme()
 			}, ToneFunc: func() ui.Tone {
 				if env.Dark() {
 					return ui.ToneInfo
@@ -103,6 +105,7 @@ func environmentCard(cx *core.Scope) core.Node {
 }
 
 func statusBarCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	// Until one is picked, the content follows the appearance: light
 	// content on the dark page.
@@ -119,17 +122,17 @@ func statusBarCard(cx *core.Scope) core.Node {
 	pick := func(s core.StatusBarStyle) { picked.Set(true); chosen.Set(s) }
 	hidden, open := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	names := map[core.StatusBarStyle]string{core.StatusBarLight: "light", core.StatusBarDark: "dark", core.StatusBarAuto: "auto"}
-	return ui.Card{Icon: ui.IconMobile, Title: "Status bar", Description: "A dialog's StatusBar: over the page's while it is open", Children: []core.Node{
-		ui.Segmented[core.StatusBarStyle]{Options: []ui.Option[core.StatusBarStyle]{{Value: core.StatusBarLight, Label: "Light"}, {Value: core.StatusBarDark, Label: "Dark"}, {Value: core.StatusBarAuto, Label: "Auto"}}, Value: foreground, OnChange: pick},
+	return ui.Card{Icon: ui.IconMobile, Title: tr.SystemStatusBar(), Description: tr.SystemADialogSStatusbarOver(), Children: []core.Node{
+		ui.Segmented[core.StatusBarStyle]{Options: []ui.Option[core.StatusBarStyle]{{Value: core.StatusBarLight, Label: tr.SystemLight()}, {Value: core.StatusBarDark, Label: tr.SystemDark()}, {Value: core.StatusBarAuto, Label: tr.SystemAuto()}}, Value: foreground, OnChange: pick},
 		ui.Row{Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-				ui.Text("Hidden", 15, ui.Regular, colors.Text),
+				ui.Text(tr.SystemHidden(), 15, ui.Regular, colors.Text),
 				core.Text{ContentFunc: func() string { return fmt.Sprintf("Foreground: %s", names[foreground()]) }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
-			ui.Switch{Checked: hidden.Get, OnChange: hidden.Set, Label: "Hide the status bar"},
+			ui.Switch{Checked: hidden.Get, OnChange: hidden.Set, Label: tr.SystemHideTheStatusBar()},
 		}},
-		ui.Button{Text: "Preview", Icon: ui.IconMobile, OnPress: func() { open.Set(true) }},
-		base.Dialog{Open: open.Get, Animation: core.ModalFade, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: "Status bar preview",
+		ui.Button{Text: tr.SystemPreview(), Icon: ui.IconMobile, OnPress: func() { open.Set(true) }},
+		base.Dialog{Open: open.Get, Animation: core.ModalFade, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: tr.SystemStatusBarPreview(),
 			StatusBarFunc: func() core.StatusBarSetting {
 				h := core.ToggleOff
 				if hidden.Get() {
@@ -158,7 +161,7 @@ func statusBarCard(cx *core.Scope) core.Node {
 					}
 					return core.Style{FontSize: 13, Color: c, FontFamily: ui.Mono}
 				}},
-				ui.Button{Text: "Close", OnPress: func() { open.Set(false) }},
+				ui.Button{Text: tr.SystemClose(), OnPress: func() { open.Set(false) }},
 			}}}},
 	}}
 }
@@ -182,6 +185,7 @@ func actionRow(cx *core.Scope, first bool, name ui.IconName, tint func() core.Co
 }
 
 func dialogsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	type answer struct {
 		text string
@@ -201,56 +205,56 @@ func dialogsCard(cx *core.Scope) core.Node {
 		}
 		return l
 	}
-	return ui.Card{Icon: ui.IconBell, Title: "Alerts and sheets", Description: "AlertDialog · Toast", Flush: true, Children: []core.Node{
+	return ui.Card{Icon: ui.IconBell, Title: tr.SystemAlertsAndSheets(), Description: tr.SystemAlertdialogToast(), Flush: true, Children: []core.Node{
 		ui.Inset{Padding: 12, Exact: true, Children: []core.Node{
-			actionRow(cx, true, ui.IconCheck, colors.Up, "Alert", "One button", func() {
-				base.ShowAlertDialog(cx, base.AlertDialog{Title: "Saved", Description: "Your changes were saved.", Actions: []core.AlertAction{{Label: "OK"}}},
-					func(string) { show("OK", ui.ToneUp) })
+			actionRow(cx, true, ui.IconCheck, colors.Up, tr.SystemAlert(), tr.SystemOneButton(), func() {
+				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemSaved(), Description: tr.SystemYourChangesWereSaved(), Actions: []core.AlertAction{{Label: tr.SystemOk()}}},
+					func(string) { show(tr.SystemOk(), ui.ToneUp) })
 			}),
-			actionRow(cx, false, ui.IconBell, colors.Danger, "Confirm", "Cancel and destructive buttons", func() {
-				base.ShowAlertDialog(cx, base.AlertDialog{Title: "Delete the photo?", Description: "This cannot be undone.",
-					Actions:       []core.AlertAction{{Label: "Cancel", Role: core.AlertCancel}, {Label: "Delete", Role: core.AlertDestructive}},
+			actionRow(cx, false, ui.IconBell, colors.Danger, tr.SystemConfirm(), tr.SystemCancelAndDestructiveButtons(), func() {
+				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemDeleteThePhoto(), Description: tr.SystemThisCannotBeUndone(),
+					Actions:       []core.AlertAction{{Label: tr.SystemCancel(), Role: core.AlertCancel}, {Label: tr.SystemDelete(), Role: core.AlertDestructive}},
 					CloseOnEscape: core.ToggleOn, CloseOnBackdropPress: core.ToggleOn},
 					func(l string) {
 						t := ui.ToneNeutral
-						if l == "Delete" {
+						if l == tr.SystemDelete() {
 							t = ui.ToneDanger
 						}
 						show(or(l), t)
 					})
 			}),
-			actionRow(cx, false, ui.IconStar, colors.Info, "Three buttons", "Reports the label of the action pressed", func() {
-				base.ShowAlertDialog(cx, base.AlertDialog{Title: "Update available", Description: "Install it now?",
-					Actions: []core.AlertAction{{Label: "Later"}, {Label: "Never", Role: core.AlertCancel}, {Label: "Install"}}},
+			actionRow(cx, false, ui.IconStar, colors.Info, tr.SystemThreeButtons(), tr.SystemReportsTheLabelOfThe(), func() {
+				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemUpdateAvailable(), Description: tr.SystemInstallItNow(),
+					Actions: []core.AlertAction{{Label: tr.SystemLater()}, {Label: tr.SystemNever(), Role: core.AlertCancel}, {Label: tr.SystemInstall()}}},
 					func(l string) {
 						t := ui.ToneNeutral
-						if l == "Install" {
+						if l == tr.SystemInstall() {
 							t = ui.ToneInfo
 						}
 						show(or(l), t)
 					})
 			}),
-			actionRow(cx, false, ui.IconLists, colors.Accent, "Action sheet", "Title, cancel and destructive options", func() {
-				base.ShowAlertDialog(cx, base.AlertDialog{Title: "Share the photo", Presentation: base.AlertPresentActionSheet,
-					Actions: []core.AlertAction{{Label: "Cancel", Role: core.AlertCancel}, {Label: "Copy link"}, {Label: "Save"}, {Label: "Delete", Role: core.AlertDestructive}}},
+			actionRow(cx, false, ui.IconLists, colors.Accent, tr.SystemActionSheet(), tr.SystemTitleCancelAndDestructiveOptions(), func() {
+				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemShareThePhoto(), Presentation: base.AlertPresentActionSheet,
+					Actions: []core.AlertAction{{Label: tr.SystemCancel(), Role: core.AlertCancel}, {Label: tr.SystemCopyLink()}, {Label: tr.SystemSave()}, {Label: tr.SystemDelete(), Role: core.AlertDestructive}}},
 					func(l string) {
 						t := ui.ToneAccent
-						if l == "Delete" {
+						if l == tr.SystemDelete() {
 							t = ui.ToneDanger
 						}
 						show(or(l), t)
 					})
 			}),
-			actionRow(cx, false, ui.IconSpark, colors.Warn, "Toast", "base, every platform", func() {
-				toast(toastContent{title: "Hello from a toast", description: "base's ToastManager, styled by the gallery"})
+			actionRow(cx, false, ui.IconSpark, colors.Warn, tr.SystemToast(), tr.SystemBaseEveryPlatform(), func() {
+				toast(toastContent{title: tr.SystemHelloFromAToast(), description: tr.SystemBaseSToastmanagerStyledBy()})
 			}),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Edges{Top: 12, Right: 11, Bottom: 11, Left: 11}, MinHeight: core.Pt(44)}, Children: []core.Node{
-			core.Text{Content: "Answer", Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+			core.Text{Content: tr.SystemAnswer(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			core.Dynamic(func(*core.Scope) core.Node {
 				a := ans.Get()
 				if a.text == "" {
-					return ui.Text("None yet", 13, ui.Regular, colors.Faint)
+					return ui.Text(tr.SystemNoneYet(), 13, ui.Regular, colors.Faint)
 				}
 				return core.View{Style: core.Style{Animated: &core.AnimatedStyle{Scale: pop}}, Children: []core.Node{ui.Badge{Text: a.text, Tone: a.tone}}}
 			}),
@@ -259,6 +263,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 }
 
 func framesAndTimers(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fps, running, ticks := core.NewSignal(cx, 0), core.NewSignal(cx, false), core.NewSignal(cx, 0)
 	// The beat dot flashes once per tick; the fade runs on the platform.
@@ -297,10 +302,10 @@ func framesAndTimers(cx *core.Scope) core.Node {
 		beat.Set(1)
 		ui.Timing(cx, beat, 0, core.TimingConfig{Duration: ms(700), Easing: ease(core.EasingQuad, core.EaseModeOut)})
 	})
-	return ui.Card{Icon: ui.IconAnimation, Title: "Frames and timers", Description: "RequestAnimationFrame · AfterFunc", Children: []core.Node{
+	return ui.Card{Icon: ui.IconAnimation, Title: tr.SystemFramesAndTimers(), Description: tr.SystemRequestanimationframeAfterfunc(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Gap: 2}, Children: []core.Node{
-				ui.Text("Frame rate", 12, ui.Regular, colors.Muted),
+				ui.Text(tr.SystemFrameRate(), 12, ui.Regular, colors.Muted),
 				core.Dynamic(func(*core.Scope) core.Node {
 					if running.Get() {
 						return ui.Figure{Value: func() string { return itoa(fps.Get()) }, Unit: "fps", Note: label("live"), Tone: ui.ToneUp}
@@ -311,15 +316,15 @@ func framesAndTimers(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{Width: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 			core.View{Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Gap: 2}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: []core.Node{
-					ui.Text("Interval ticks", 12, ui.Regular, colors.Muted),
+					ui.Text(tr.SystemIntervalTicks(), 12, ui.Regular, colors.Muted),
 					core.View{Style: core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 3.5,
 						Animated: &core.AnimatedStyle{Opacity: ui.Lerp(beat, 0.25, 1), Scale: ui.Lerp(beat, 1, 1.6)}}, StyleFunc: ui.Filled(colors.Accent)},
 				}},
-				ui.Figure{Value: func() string { return itoa(ticks.Get()) }, Note: label("every 1 s"), Tone: ui.ToneAccent},
+				ui.Figure{Value: func() string { return itoa(ticks.Get()) }, Note: label(tr.SystemEvery1S()), Tone: ui.ToneAccent},
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			ui.Caption{Label: "Share of 120 fps", Note: func() string {
+			ui.Caption{Label: tr.SystemShareOf120Fps(), Note: func() string {
 				if !running.Get() {
 					return "–"
 				}
@@ -334,21 +339,22 @@ func framesAndTimers(cx *core.Scope) core.Node {
 		}},
 		core.Dynamic(func(*core.Scope) core.Node {
 			if running.Get() {
-				return ui.Button{Text: "Stop counting frames", Icon: ui.IconPause, OnPress: toggle}
+				return ui.Button{Text: tr.SystemStopCountingFrames(), Icon: ui.IconPause, OnPress: toggle}
 			}
-			return ui.Button{Text: "Count frames", Icon: ui.IconPlay, OnPress: toggle}
+			return ui.Button{Text: tr.SystemCountFrames(), Icon: ui.IconPlay, OnPress: toggle}
 		}),
 	}}
 }
 
 // shortcuts are app-level shortcuts, bound while the demo shows.
 func shortcuts(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	n, on, last := core.NewSignal(cx, 0), core.NewSignal(cx, false), core.NewSignal(cx, "")
 	cx.OnKey("mod+k", func() { n.Update(func(c int) int { return c + 1 }); last.Set("mod+k") })
 	cx.OnKey("mod+shift+l", func() { toggled(on); last.Set("mod+shift+l") })
 	cx.OnKeyWith("mod+backspace", core.KeyOptions{When: core.KeyNotEditing}, func() { n.Set(0); last.Set("mod+backspace") })
-	keys := [][2]string{{cx.KeyLabel("mod+k"), "Counts"}, {cx.KeyLabel("mod+shift+l"), "Switches the light"}, {cx.KeyLabel("mod+backspace"), "Resets (not while typing)"}}
+	keys := [][2]string{{cx.KeyLabel("mod+k"), tr.SystemCounts()}, {cx.KeyLabel("mod+shift+l"), tr.SystemSwitchesTheLight()}, {cx.KeyLabel("mod+backspace"), tr.SystemResetsNotWhileTyping()}}
 	var rows []core.Node
 	for i, k := range keys {
 		rows = append(rows, ui.Row{First: i == 0, Children: []core.Node{
@@ -356,17 +362,17 @@ func shortcuts(cx *core.Scope) core.Node {
 			core.Text{Content: k[1], Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
 		}})
 	}
-	return ui.Card{Icon: ui.IconBell, Title: "Keyboard shortcuts", Description: "Scope.OnKey · desktops and hardware keyboards", Children: []core.Node{
+	return ui.Card{Icon: ui.IconBell, Title: tr.SystemKeyboardShortcuts(), Description: tr.SystemScopeOnkeyDesktopsAndHardware(), Children: []core.Node{
 		core.View{Children: rows},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				if on.Get() {
-					return ui.Badge{Text: "Light on", Tone: ui.ToneUp}
+					return ui.Badge{Text: tr.SystemLightOn(), Tone: ui.ToneUp}
 				}
-				return ui.Badge{Text: "Light off"}
+				return ui.Badge{Text: tr.SystemLightOff()}
 			}),
 			core.View{Style: fill, Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-				ui.Textf(func() string { return fmt.Sprintf("Counted %d", n.Get()) }, 14, ui.Regular, colors.Muted),
+				ui.Textf(func() string { return tr.SystemCounted(n.Get()) }, 14, ui.Regular, colors.Muted),
 				ui.Spacer{},
 				ui.Textf(func() string {
 					if l := last.Get(); l != "" {
@@ -385,6 +391,7 @@ type jsonPost struct {
 }
 
 func networkCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	type result struct {
 		posts []jsonPost
@@ -424,11 +431,11 @@ func networkCard(cx *core.Scope) core.Node {
 			})
 		}()
 	}
-	return ui.Card{Icon: ui.IconSearch, Title: "Network and logs", Description: "net/http on a goroutine · log", Children: []core.Node{
+	return ui.Card{Icon: ui.IconSearch, Title: tr.SystemNetworkAndLogs(), Description: tr.SystemNetHttpOnAGoroutine(), Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			ps := res.Get().posts
 			if len(ps) == 0 {
-				return ui.Caption{Label: "Three posts from jsonplaceholder.typicode.com"}
+				return ui.Caption{Label: tr.SystemThreePostsFromJsonplaceholderTypicode()}
 			}
 			var rows []core.Node
 			for i, p := range ps {
@@ -456,7 +463,7 @@ func networkCard(cx *core.Scope) core.Node {
 			ui.Cell{Child: core.Dynamic(func(*core.Scope) core.Node {
 				l := "http.Get"
 				if loading.Get() {
-					l = "Loading…"
+					l = tr.SystemLoading()
 				}
 				return ui.Button{Text: l, Icon: ui.IconArrowDown, Disabled: loading.Get, OnPress: load}
 			})},
@@ -464,126 +471,128 @@ func networkCard(cx *core.Scope) core.Node {
 				log.Printf("hello from the gallery at %s", time.Now().Format(time.RFC3339))
 			}}},
 		}},
-		ui.Text("log.Printf shows in the terminal of nsgo dev.", 12, ui.Regular, colors.Faint),
+		ui.Text(tr.SystemLogPrintfShowsInThe(), 12, ui.Regular, colors.Faint),
 	}}
 }
 
 // windowCard is the desktop window's title bar, commands, frame and
 // level; phones and the web have no window to command.
 func windowCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	small := func(l string, fn func()) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
 	}
 	if !desktop.IsAvailable(cx) {
-		return ui.Card{Icon: ui.IconDock, Title: "Window", Description: "Title bar, commands, frame and level", Actions: []core.Node{ui.Badge{Text: "Desktop"}}, Children: []core.Node{
-			ui.Note{Text: "Window commands need a desktop window: run the gallery on macOS, Windows or Linux to try them."},
+		return ui.Card{Icon: ui.IconDock, Title: tr.SystemWindow(), Description: tr.SystemTitleBarCommandsFrameAnd(), Actions: []core.Node{ui.Badge{Text: tr.SystemDesktop()}}, Children: []core.Node{
+			ui.Note{Text: tr.SystemWindowCommandsNeedADesktop()},
 		}}
 	}
-	return ui.Card{Icon: ui.IconDock, Title: "Window", Description: "Title bar, commands, frame and level", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
-		ui.Caption{Label: "Title bar", Note: func() string {
+	return ui.Card{Icon: ui.IconDock, Title: tr.SystemWindow(), Description: tr.SystemTitleBarCommandsFrameAnd(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
+		ui.Caption{Label: tr.SystemTitleBar(), Note: func() string {
 			tb := desktop.TitleBar(cx)
 			if tb == (core.Edges{}) {
-				return "the system's"
+				return tr.SystemTheSystemS()
 			}
-			return fmt.Sprintf("%.0f pt, controls keep %.0f / %.0f pt", tb.Top, tb.Left, tb.Right)
+			return tr.SystemTitleBarInsets(float64(tb.Top), float64(tb.Left), float64(tb.Right))
 		}},
 		ui.Wrap{Children: []core.Node{
-			small("Hide title bar", func() { desktop.SetTitleBar(cx, desktop.TitleBarHidden, 40) }),
-			small("Show title bar", func() { desktop.SetTitleBar(cx, desktop.TitleBarDefault, 0) }),
+			small(tr.SystemHideTitleBar(), func() { desktop.SetTitleBar(cx, desktop.TitleBarHidden, 40) }),
+			small(tr.SystemShowTitleBar(), func() { desktop.SetTitleBar(cx, desktop.TitleBarDefault, 0) }),
 		}},
-		ui.Caption{Label: "Window controls"},
+		ui.Caption{Label: tr.SystemWindowControls()},
 		ui.Wrap{Children: []core.Node{
-			small("Default", func() { desktop.SetWindowControls(cx, desktop.WindowControls{}) }),
-			small("Traffic lights at 24, 10", func() {
+			small(tr.SystemDefault(), func() { desktop.SetWindowControls(cx, desktop.WindowControls{}) }),
+			small(tr.SystemTrafficLightsAt2410(), func() {
 				desktop.SetWindowControls(cx, desktop.WindowControls{TrafficLights: core.Point{X: 24, Y: 10}})
 			}),
-			small("Hidden", func() { desktop.SetWindowControls(cx, desktop.WindowControls{Hidden: true}) }),
+			small(tr.SystemHidden(), func() { desktop.SetWindowControls(cx, desktop.WindowControls{Hidden: true}) }),
 		}},
-		ui.Caption{Label: "Material", Note: func() string {
+		ui.Caption{Label: tr.SystemMaterial(), Note: func() string {
 			if desktop.ShowsMaterial(cx) {
-				return "shows behind the sidebar"
+				return tr.SystemShowsBehindTheSidebar()
 			}
 			return "none"
 		}},
 		ui.Wrap{Children: []core.Node{
-			small("None", func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialNone) }),
-			small("Sidebar", func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialSidebar) }),
-			small("Under window", func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialUnderWindow) }),
-			small("HUD", func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialHUD) }),
+			small(tr.SystemNone(), func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialNone) }),
+			small(tr.SystemSidebar(), func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialSidebar) }),
+			small(tr.SystemUnderWindow(), func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialUnderWindow) }),
+			small(tr.SystemHud(), func() { desktop.SetWindowMaterial(cx, desktop.WindowMaterialHUD) }),
 		}},
-		ui.Caption{Label: "Commands"},
-		ui.Wrap{Children: []core.Node{small("Minimize", cx.MinimizeWindow), small("Zoom", cx.ToggleMaximize), small("Full screen", cx.ToggleFullScreen),
-			small("Away for 2 s", func() { desktop.MinimizeWindow(cx); cx.AfterFunc(2*time.Second, func() { desktop.OrderFront(cx) }) })}},
-		ui.Caption{Label: "Frame and level"},
+		ui.Caption{Label: tr.SystemCommands()},
+		ui.Wrap{Children: []core.Node{small(tr.SystemMinimize(), cx.MinimizeWindow), small(tr.SystemZoom(), cx.ToggleMaximize), small(tr.SystemFullScreen(), cx.ToggleFullScreen),
+			small(tr.SystemAwayFor2S(), func() { desktop.MinimizeWindow(cx); cx.AfterFunc(2*time.Second, func() { desktop.OrderFront(cx) }) })}},
+		ui.Caption{Label: tr.SystemFrameAndLevel()},
 		ui.Wrap{Children: []core.Node{
 			small("640 × 480", func() { desktop.SetWindowFrame(cx, desktop.WindowFrame{Width: 640, Height: 480}) }),
-			small("Taller, animated", func() {
+			small(tr.SystemTallerAnimated(), func() {
 				desktop.SetWindowFrame(cx, desktop.WindowFrame{Height: env.Window().Height + 160, Animated: true})
 			}),
-			small("Move to 80, 80", func() { desktop.SetWindowFrame(cx, desktop.WindowFrame{X: 80, Y: 80, Move: true}) }),
+			small(tr.SystemMoveTo8080(), func() { desktop.SetWindowFrame(cx, desktop.WindowFrame{X: 80, Y: 80, Move: true}) }),
 		}},
 		ui.Wrap{Children: []core.Node{
-			small("Normal", func() { desktop.SetWindowLevel(cx, desktop.WindowLevelNormal) }),
-			small("Floating", func() { desktop.SetWindowLevel(cx, desktop.WindowLevelFloating) }),
-			small("Desktop", func() { desktop.SetWindowLevel(cx, desktop.WindowLevelDesktop) }),
+			small(tr.SystemNormal(), func() { desktop.SetWindowLevel(cx, desktop.WindowLevelNormal) }),
+			small(tr.SystemFloating(), func() { desktop.SetWindowLevel(cx, desktop.WindowLevelFloating) }),
+			small(tr.SystemDesktop(), func() { desktop.SetWindowLevel(cx, desktop.WindowLevelDesktop) }),
 		}},
 		core.View{Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOn}, StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(52), CornerRadius: ui.RadiusControl, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
 				Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifySpaceBetween, Padding: core.Symmetric(0, 14)}
 		}, Children: []core.Node{
-			ui.Text("Drag the window from here", 14, ui.Regular, colors.Muted),
-			core.View{Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff}, Children: []core.Node{small("Still pressable", func() {})}},
+			ui.Text(tr.SystemDragTheWindowFromHere(), 14, ui.Regular, colors.Muted),
+			core.View{Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff}, Children: []core.Node{small(tr.SystemStillPressable(), func() {})}},
 		}},
-		ui.Button{Text: "Quit", Variant: ui.ButtonSecondary, Color: colors.Danger, OnPress: cx.Quit},
+		ui.Button{Text: tr.SystemQuit(), Variant: ui.ButtonSecondary, Color: colors.Danger, OnPress: cx.Quit},
 	}}
 }
 
 // clipboardCard is text, images and files on the clipboard.
 func clipboardCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	clip := core.NewSignal(cx, "Hello from NSGo")
-	status := core.NewSignal(cx, "Nothing read yet")
+	clip := core.NewSignal(cx, tr.SystemHelloFromNsgo())
+	status := core.NewSignal(cx, tr.SystemNothingReadYet())
 	image := core.NewSignalFunc(cx, (*core.ClipboardImage)(nil), func(a, b *core.ClipboardImage) bool { return a == b })
 	small := func(l string, fn func()) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
 	}
-	return ui.Card{Icon: ui.IconCopy, Title: "Clipboard", Description: "Text, images and the files a file manager copied", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
-		ui.Input{Input: base.Input{Value: clip.Get, OnChange: clip.Set, Label: "Clipboard text"}},
+	return ui.Card{Icon: ui.IconCopy, Title: tr.SystemClipboard(), Description: tr.SystemTextImagesAndTheFiles(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
+		ui.Input{Input: base.Input{Value: clip.Get, OnChange: clip.Set, Label: tr.SystemClipboardText()}},
 		ui.Wrap{Children: []core.Node{
-			ui.Button{Text: "Copy text", Small: true, OnPress: func() { cx.SetClipboard(clip.GetUntracked()) }},
-			small("Paste text", func() { cx.ReadClipboard(func(s string) { status.Set("Text: " + s) }) }),
-			small("Copy logo", func() { cx.SetClipboardImage(logoPNG) }),
-			small("Paste image", func() {
+			ui.Button{Text: tr.SystemCopyText(), Small: true, OnPress: func() { cx.SetClipboard(clip.GetUntracked()) }},
+			small(tr.SystemPasteText(), func() { cx.ReadClipboard(func(s string) { status.Set(tr.SystemText() + s) }) }),
+			small(tr.SystemCopyLogo(), func() { cx.SetClipboardImage(logoPNG) }),
+			small(tr.SystemPasteImage(), func() {
 				cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) {
 					if !ok {
 						image.Set(nil)
-						status.Set("The clipboard holds no image")
+						status.Set(tr.SystemTheClipboardHoldsNoImage())
 						return
 					}
 					image.Set(&img)
-					status.Set(fmt.Sprintf("Image: %.0f × %.0f px, %d bytes of PNG", img.Size.Width, img.Size.Height, len(img.PNG)))
+					status.Set(tr.SystemClipboardImage(float64(img.Size.Width), float64(img.Size.Height), len(img.PNG)))
 				})
 			}),
-			small("Paste files", func() {
+			small(tr.SystemPasteFiles(), func() {
 				cx.ReadClipboardFiles(func(uris []string) {
 					if len(uris) == 0 {
-						status.Set("The clipboard holds no files")
+						status.Set(tr.SystemTheClipboardHoldsNoFiles())
 						return
 					}
-					status.Set("Files: " + strings.Join(uris, ", "))
+					status.Set(tr.SystemFiles() + strings.Join(uris, ", "))
 				})
 			}),
-			small("What is there?", func() {
+			small(tr.SystemWhatIsThere(), func() {
 				cx.HasClipboardText(func(t bool) {
-					cx.HasClipboardImage(func(i bool) { status.Set(fmt.Sprintf("Text: %v, image: %v", t, i)) })
+					cx.HasClipboardImage(func(i bool) { status.Set(tr.SystemClipboardHolds(yesNo(tr, t), yesNo(tr, i))) })
 				})
 			}),
 		}},
 		core.Text{ContentFunc: status.Get, TestID: "clipboard-status", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		core.Show{When: func() bool { return image.Get() != nil }, Then: func(*core.Scope) core.Node {
-			return core.Image{SourceFunc: func() core.ImageSource { return core.ImageSource{Data: image.Get().PNG} }, ResizeMode: core.Contain, Label: "Pasted image", TestID: "pasted-image",
+			return core.Image{SourceFunc: func() core.ImageSource { return core.ImageSource{Data: image.Get().PNG} }, ResizeMode: core.Contain, Label: tr.SystemPastedImage(), TestID: "pasted-image",
 				Style: imageFrame(cx, core.Style{Width: core.Pt(120), Height: core.Pt(120)}), StyleFunc: frameInk(cx)}
 		}},
 	}}
@@ -592,16 +601,17 @@ func clipboardCard(cx *core.Scope) core.Node {
 // servicesCard is opening links, the photo picker and the app's
 // appearance.
 func servicesCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
-	opened := core.NewSignal(cx, "Nothing opened yet")
+	opened := core.NewSignal(cx, tr.SystemNothingOpenedYet())
 	open := func(u string) func() {
 		return func() {
 			cx.OpenURL(u, func(ok bool) {
 				if ok {
-					opened.Set("Opened " + u)
+					opened.Set(tr.SystemOpened() + u)
 				} else {
-					opened.Set("Nothing opened " + u)
+					opened.Set(tr.SystemNothingOpened() + u)
 				}
 			})
 		}
@@ -614,23 +624,24 @@ func servicesCard(cx *core.Scope) core.Node {
 	small := func(l string, fn func()) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
 	}
-	names := map[core.Appearance]string{core.AppearanceSystem: "the system's", core.AppearanceLight: "light", core.AppearanceDark: "dark"}
-	return ui.Card{Icon: ui.IconSpark, Title: "Links, photos and appearance", Description: "OpenURL · PickImages · SetAppearance", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	names := map[core.Appearance]string{core.AppearanceSystem: tr.SystemTheSystemS(), core.AppearanceLight: "light", core.AppearanceDark: "dark"}
+	return ui.Card{Icon: ui.IconSpark, Title: tr.SystemLinksPhotosAndAppearance(), Description: tr.SystemOpenurlPickimagesSetappearance(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
 		ui.Caption{Label: "OpenURL"},
-		ui.Wrap{Children: []core.Node{small("The website", open("https://github.com/oneo-me/nsgo")), small("An email", open("mailto:hello@example.com?subject=Hello%20from%20NSGo")),
-			small("Refused URL", open("javascript:alert(1)"))}},
+		ui.Wrap{Children: []core.Node{small(tr.SystemTheWebsite(), open("https://github.com/oneo-me/nsgo")), small(tr.SystemAnEmail(), open("mailto:hello@example.com?subject=Hello%20from%20NSGo")),
+			small(tr.SystemRefusedUrl(), open("javascript:alert(1)"))}},
 		core.Text{ContentFunc: opened.Get, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 		ui.Caption{Label: "PickImages"},
-		ui.Wrap{Children: []core.Node{small("Pick a photo", pick(core.PickOptions{})), small("Up to 4, 800 px", pick(core.PickOptions{Multiple: true, Limit: 4, MaxDimension: 800}))}},
+		ui.Wrap{Children: []core.Node{small(tr.SystemPickAPhoto(), pick(core.PickOptions{})), small(tr.SystemUpTo4800Px(), pick(core.PickOptions{Multiple: true, Limit: 4, MaxDimension: 800}))}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
+			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			files := picked.Get()
 			if len(files) == 0 {
 				if asked.Get() {
-					return ui.Note{Text: "No photo picked"}
+					return ui.Note{Text: tr.SystemNoPhotoPicked()}
 				}
-				return ui.Note{Text: "HEIC arrives as JPEG, large photos scaled down when asked"}
+				return ui.Note{Text: tr.SystemHeicArrivesAsJpegLarge()}
 			}
 			var tiles []core.Node
 			for i, f := range files {
@@ -644,27 +655,28 @@ func servicesCard(cx *core.Scope) core.Node {
 			return ui.Wrap{Children: tiles}
 		}),
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
-		ui.Caption{Label: "SetAppearance", Note: func() string { return "forced: " + names[env.Appearance()] }},
-		ui.Wrap{Children: []core.Node{small("System", func() { cx.SetAppearance(core.AppearanceSystem) }), small("Light", func() { cx.SetAppearance(core.AppearanceLight) }),
-			small("Dark", func() { cx.SetAppearance(core.AppearanceDark) })}},
+		ui.Caption{Label: tr.SystemSetappearance(), Note: func() string { return tr.SystemForced() + names[env.Appearance()] }},
+		ui.Wrap{Children: []core.Node{small(tr.SystemSystem(), func() { cx.SetAppearance(core.AppearanceSystem) }), small(tr.SystemLight(), func() { cx.SetAppearance(core.AppearanceLight) }),
+			small(tr.SystemDark(), func() { cx.SetAppearance(core.AppearanceDark) })}},
 	}}
 }
 
 // filesCard is the system's file picker and save dialog.
 func filesCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	picked := core.NewSignalFunc(cx, []core.File(nil), func(a, b []core.File) bool { return false })
-	status := core.NewSignal(cx, "Files arrive on disk, copied into the app on iOS and Android")
+	status := core.NewSignal(cx, tr.SystemFilesArriveOnDiskCopied())
 	pick := func(o core.PickFilesOptions) func() {
 		return func() {
 			cx.PickFiles(o, func(files []core.File, err error) {
 				switch {
 				case err != nil:
-					status.Set("The pick failed: " + err.Error())
+					status.Set(tr.SystemThePickFailed() + err.Error())
 				case len(files) == 0:
-					status.Set("No file picked")
+					status.Set(tr.SystemNoFilePicked())
 				default:
-					status.Set(fmt.Sprintf("Picked %d", len(files)))
+					status.Set(tr.SystemPicked(len(files)))
 				}
 				picked.Set(files)
 			})
@@ -674,21 +686,21 @@ func filesCard(cx *core.Scope) core.Node {
 		cx.SaveFile(o, func(saved bool, err error) {
 			switch {
 			case err != nil:
-				status.Set("The save failed: " + err.Error())
+				status.Set(tr.SystemTheSaveFailed() + err.Error())
 			case saved:
-				status.Set("Saved " + o.Name)
+				status.Set(tr.SystemSaved2() + o.Name)
 			default:
-				status.Set("Nothing saved")
+				status.Set(tr.SystemNothingSaved())
 			}
 		})
 	}
 	small := func(l string, fn func()) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
 	}
-	return ui.Card{Icon: ui.IconAttach, Title: "Files", Description: "PickFiles · SaveFile", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconAttach, Title: tr.SystemFiles2(), Description: tr.SystemPickfilesSavefile(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
 		ui.Caption{Label: "PickFiles"},
-		ui.Wrap{Children: []core.Node{small("Pick a file", pick(core.PickFilesOptions{})),
-			small("PDFs and images", pick(core.PickFilesOptions{Multiple: true, Types: []string{"application/pdf", "image/*"}}))}},
+		ui.Wrap{Children: []core.Node{small(tr.SystemPickAFile(), pick(core.PickFilesOptions{})),
+			small(tr.SystemPdfsAndImages(), pick(core.PickFilesOptions{Multiple: true, Types: []string{"application/pdf", "image/*"}}))}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			colors := ui.ColorsOf(cx)
 			var rows []core.Node
@@ -700,13 +712,13 @@ func filesCard(cx *core.Scope) core.Node {
 		}),
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 		ui.Caption{Label: "SaveFile"},
-		ui.Wrap{Children: []core.Node{small("Save a text file", func() {
+		ui.Wrap{Children: []core.Node{small(tr.SystemSaveATextFile(), func() {
 			save(core.SaveOptions{Name: "Hello from NSGo.txt", Data: []byte("Hello from NSGo\n")})
-		}), small("Save the file picked", func() {
+		}), small(tr.SystemSaveTheFilePicked(), func() {
 			if files := picked.Get(); len(files) > 0 && files[0].Path != "" {
 				save(core.SaveOptions{Name: files[0].Name, Path: files[0].Path})
 			} else {
-				status.Set("Pick a file first")
+				status.Set(tr.SystemPickAFileFirst())
 			}
 		})}},
 		core.Text{ContentFunc: status.Get, TestID: "files-status", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
@@ -718,4 +730,12 @@ func filesCard(cx *core.Scope) core.Node {
 // window, the clipboard, links, photos, the appearance and files.
 func systemDemo(cx *core.Scope) core.Node {
 	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, filesCard)
+}
+
+// yesNo says whether in tr's language.
+func yesNo(tr locales.Messages, yes bool) string {
+	if yes {
+		return tr.CommonYes()
+	}
+	return tr.CommonNo()
 }

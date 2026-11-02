@@ -9,6 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // spinner is a ring that spins on the platform: the Spin keyframes.
@@ -76,6 +77,7 @@ func fileKind(name string) string {
 
 // fileChip is a file as a chip: an icon, the name and the size.
 func fileChip(cx *core.Scope, f fileRef, onRemove func()) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	right := core.Points(14)
@@ -91,7 +93,7 @@ func fileChip(cx *core.Scope, f fileRef, onRemove func()) core.Node {
 		}},
 	}
 	if onRemove != nil {
-		children = append(children, ui.Press{OnPress: onRemove, Label: "Remove file", Scale: 0.85, Children: []core.Node{
+		children = append(children, ui.Press{OnPress: onRemove, Label: tr.ChatRemoveFile(), Scale: 0.85, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(40), Height: core.Pt(44), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, Children: []core.Node{ui.Icon(ui.IconClose, 14, colors.Muted)}},
 		}})
 	}
@@ -112,21 +114,23 @@ func attachedPhoto(cx *core.Scope, src core.ImageSource, w, h core.Points) core.
 	}}
 }
 
-var toolStateLabel = map[toolState]string{toolPending: "Queued", toolRunning: "Running", toolDone: "Done", toolCancelled: "Stopped"}
+var toolStateLabel = map[toolState]func(locales.Messages) string{toolPending: locales.Messages.ChatQueued, toolRunning: locales.Messages.ChatRunning,
+	toolDone: locales.Messages.ChatDone, toolCancelled: locales.Messages.ChatStopped}
 var toolStateTone = map[toolState]ui.Tone{toolPending: ui.ToneNeutral, toolRunning: ui.ToneInfo, toolDone: ui.ToneUp, toolCancelled: ui.ToneWarn}
 
 // toolCard is a tool call: a header with its state, then its result once
 // done.
 func toolCard(cx *core.Scope, t func() chatTool) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	first := t()
-	name, title, detail := ui.IconTerminal, "Run code", first.lang+", sandboxed"
+	name, title, detail := ui.IconTerminal, tr.ChatRunCode(), first.lang+tr.ChatSandboxed()
 	switch first.kind {
 	case "search":
-		name, title, detail = ui.IconGlobe, "Web search", first.query
+		name, title, detail = ui.IconGlobe, tr.ChatWebSearch(), first.query
 	case "weather":
-		name, title, detail = ui.IconSun, "Weather", first.city
+		name, title, detail = ui.IconSun, tr.ChatWeather(), first.city
 	}
 	return core.View{StyleFunc: func() core.Style {
 		b := colors.Border()
@@ -155,9 +159,9 @@ func toolCard(cx *core.Scope, t func() chatTool) core.Node {
 					if st == toolPending {
 						tint = colors.Faint
 					}
-					return ui.HStack{Gap: 8, Children: []core.Node{spinner(cx, 14, tint), ui.Text(toolStateLabel[st], 13, ui.Regular, colors.Muted)}}
+					return ui.HStack{Gap: 8, Children: []core.Node{spinner(cx, 14, tint), ui.Text(toolStateLabel[st](tr), 13, ui.Regular, colors.Muted)}}
 				}
-				return ui.Badge{Text: toolStateLabel[st], Tone: toolStateTone[st]}
+				return ui.Badge{Text: toolStateLabel[st](tr), Tone: toolStateTone[st]}
 			}),
 		}},
 		toolBody(cx, t),
@@ -165,6 +169,7 @@ func toolCard(cx *core.Scope, t func() chatTool) core.Node {
 }
 
 func toolBody(cx *core.Scope, t func() chatTool) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	top := core.Style{Borders: core.Edges{Top: 1}}
 	topLine := func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} }
@@ -229,7 +234,7 @@ func toolBody(cx *core.Scope, t func() chatTool) core.Node {
 				return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Symmetric(0, 12), Height: core.Pt(44),
 					Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}}
 			}, Children: []core.Node{
-				ui.Text("Output", 13, ui.Regular, colors.Muted),
+				ui.Text(tr.ChatOutput(), 13, ui.Regular, colors.Muted),
 				core.Text{Content: c.output, Selectable: core.SelectableOn, Style: core.Style{FlexGrow: 1, FontFamily: ui.Mono, FontSize: 14}, StyleFunc: ui.Colored(colors.Up)},
 				ui.Text(fmt.Sprintf("exit 0 · %d ms", c.ms), 12, ui.Regular, colors.Faint),
 			}}
@@ -239,6 +244,7 @@ func toolBody(cx *core.Scope, t func() chatTool) core.Node {
 
 // errorRow is the reply's error: what went wrong and a Retry button.
 func errorRow(cx *core.Scope, message func() string, onRetry func()) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	return core.View{StyleFunc: func() core.Style {
@@ -247,11 +253,11 @@ func errorRow(cx *core.Scope, message func() string, onRetry func()) core.Node {
 	}, Children: []core.Node{
 		ui.Icon(ui.IconAlert, 18, colors.Danger),
 		core.Text{ContentFunc: message, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, LineHeight: 19}, StyleFunc: ui.Colored(colors.Text)},
-		ui.Press{OnPress: onRetry, Label: "Retry", Children: []core.Node{core.View{StyleFunc: func() core.Style {
+		ui.Press{OnPress: onRetry, Label: tr.ChatRetry(), Children: []core.Node{core.View{StyleFunc: func() core.Style {
 			return fin.Light().Over(core.Style{Height: core.Pt(36), Padding: core.Symmetric(0, 14), CornerRadius: 18,
 				Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Background: colors.Light()})
 		}, Children: []core.Node{
-			ui.Icon(ui.IconRegenerate, 14, colors.OnLight), ui.Text("Retry", 13, ui.Semibold, colors.OnLight),
+			ui.Icon(ui.IconRegenerate, 14, colors.OnLight), ui.Text(tr.ChatRetry(), 13, ui.Semibold, colors.OnLight),
 		}}}},
 	}}
 }
@@ -291,13 +297,14 @@ func chatMarkdown(md func() string, streaming func() bool) core.Node {
 		hl := highlight.New(cx)
 		return core.View{Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
+				tr := locales.For(cx)
 				on := streaming()
 				var c core.Node
 				if on {
 					c = caret(cx)
 				}
 				return textview.TextView{MarkdownFunc: md, Options: textview.Options{Streaming: on}, StreamingCaret: c, Selectable: true, NoCodeBlockScrollbar: true,
-					StyleOf: chatStyles(cx), Highlighter: hl, CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
+					StyleOf: chatStyles(cx), Highlighter: hl, CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: tr.ChatCopyCode()}}, RenderCodeBlockAction: copyAction,
 					OnImagePress: func(im textview.Image) { used.Set(true); viewing.Set(im) }}
 			}),
 			core.Show{When: used.Get, Then: func(cx *core.Scope) core.Node {

@@ -9,6 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // sectorBar is a sector's mean change as a bar diverging from the middle.
@@ -41,6 +42,7 @@ func sectorBar(cx *core.Scope, lbl string, change func() float64, scale func() f
 // breadthPanel is advancers against decliners across the composite and
 // the sectors' moves: what the strip opens to.
 func breadthPanel(cx *core.Scope, m *market) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	b := m.breadth.Get
 	means := core.NewMemoFunc(cx, func() []float64 {
@@ -67,7 +69,7 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 	}
 	var bars []core.Node
 	for i, sc := range sectors {
-		bars = append(bars, sectorBar(cx, sc.label, func() float64 { return means.Get()[i] }, scale))
+		bars = append(bars, sectorBar(cx, sc.label(locales.For(cx)), func() float64 { return means.Get()[i] }, scale))
 	}
 	segment := func(n func() int, c func() core.Color) core.Node {
 		return core.View{StyleFunc: func() core.Style { return core.Style{FlexGrow: float32(n()), Background: c()} }}
@@ -79,8 +81,8 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 			}},
 			core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d up", b().up) }, Style: core.Style{FlexGrow: 1, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Up)},
-				ui.Tabular(ui.Textf(func() string { return fmt.Sprintf("%d flat · %d issues", b().flat, issues) }, 12, ui.Regular, colors.Faint)),
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d down", b().down) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Down)},
+				ui.Tabular(ui.Textf(func() string { return tr.StocksFlatIssues(b().flat, issues) }, 12, ui.Regular, colors.Faint)),
+				core.Text{ContentFunc: func() string { return tr.StocksDownCount(b().down) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Down)},
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 2}, Children: bars},
@@ -91,6 +93,7 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 // composite and its change, the clock and pause. A press opens breadth
 // and sectors with a layout animation; the chevron turns on the platform.
 func marketStrip(cx *core.Scope, m *market) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	opened := core.NewSignal(cx, false)
 	turn := core.NewAnimatedValue(cx, 0)
@@ -106,9 +109,9 @@ func marketStrip(cx *core.Scope, m *market) core.Node {
 	}
 	return core.View{Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16), Height: core.Pt(56)}, Children: []core.Node{
-			core.View{OnPress: func(core.PressEvent) { toggle() }, Role: core.RoleButton, Label: "Breadth", Expanded: opened.Get,
+			core.View{OnPress: func(core.PressEvent) { toggle() }, Role: core.RoleButton, Label: tr.StocksBreadth(), Expanded: opened.Get,
 				Style: core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(56)}, Children: []core.Node{
-					core.Text{Content: "Composite", MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+					core.Text{Content: tr.StocksComposite(), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: ui.Semibold, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
 					core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
 						return core.Style{FontSize: 13, FontWeight: ui.Medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
@@ -288,6 +291,7 @@ const watchlistWidth = 380
 // layout animation. A stock opens its details, pushed on phones, beside
 // the list on desktops; leaving the demo stops the market.
 func stocksDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	wide := shell.desktop()
 	m := newMarket(cx)
@@ -351,10 +355,10 @@ func stocksDemo(cx *core.Scope) core.Node {
 	// Stable options, so the segments stay mounted; the counts follow the
 	// once-a-second counts.
 	options := []ui.Option[string]{
-		{Value: "all", Label: "All", Count: func() int { return len(m.stocks) }},
-		{Value: "gainers", Label: "Gainers", Count: func() int { return counts.Get()[0] }},
-		{Value: "losers", Label: "Losers", Count: func() int { return counts.Get()[1] }},
-		{Value: "active", Label: "Active"},
+		{Value: "all", Label: tr.StocksAll(), Count: func() int { return len(m.stocks) }},
+		{Value: "gainers", Label: tr.StocksGainers(), Count: func() int { return counts.Get()[0] }},
+		{Value: "losers", Label: tr.StocksLosers(), Count: func() int { return counts.Get()[1] }},
+		{Value: "active", Label: tr.StocksActive()},
 	}
 	// Desktop: the stock beside the list.
 	shown := core.NewSignal(cx, m.stocks[0])
@@ -374,12 +378,12 @@ func stocksDemo(cx *core.Scope) core.Node {
 					}, wide, func() bool { return wide && shown.Get() == st })
 				}),
 				core.Show{When: func() bool { return len(rows.Get()) == 0 }, Then: func(*core.Scope) core.Node {
-					return core.Text{Content: "Nothing here right now", Style: core.Style{Padding: core.Symmetric(32, 0), TextAlign: core.TextAlignCenter, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)}
+					return core.Text{Content: tr.StocksNothingHereRightNow(), Style: core.Style{Padding: core.Symmetric(32, 0), TextAlign: core.TextAlignCenter, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)}
 				}},
 			}},
 			core.Text{ContentFunc: func() string {
 				st := m.stats.Get()
-				return fmt.Sprintf("Simulated, fictional companies · tick 50 ms · %.2f ms engine/tick · %.0f quotes/s", st[0], st[1])
+				return tr.StocksSimulatedFooter(fmt.Sprintf("%.2f", st[0]), fmt.Sprintf("%.0f", st[1]))
 			}, Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, FontSize: 12, LineHeight: 17, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 	}}

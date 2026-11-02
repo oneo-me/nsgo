@@ -1,0 +1,3 @@
+sortBy:
+  message: "Sort by {column}"
+  description: What screen readers say of a data table column's sort button.

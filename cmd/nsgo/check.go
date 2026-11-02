@@ -15,7 +15,7 @@ import (
 	"github.com/oneo-me/nsgo/tsx"
 )
 
-// nsgo check: go vet, then TypeScript's checker on the app's TSX against
+// nsgo check: the catalogs and their code, go vet, then TypeScript's checker on the app's TSX against
 // the declarations its packages give (.nsgo/types).
 
 // tsgo is TypeScript 7's compiler, built from its Go sources and cached
@@ -23,7 +23,13 @@ import (
 const tsgo = "github.com/microsoft/typescript-go/cmd/tsgo@v0.0.0-20260820064610-89d5d5b2849a"
 
 func check(ctx context.Context, p *project) error {
-	s := begin("vetting")
+	s := begin("checking catalogs")
+	if err := p.prepareCatalogs(ctx, "./...", true); err != nil {
+		s.fail()
+		return err
+	}
+	s.done("checked catalogs", "")
+	s = begin("vetting")
 	if err := goTool(ctx, p.Dir, nil, "vet", "./..."); err != nil {
 		s.fail()
 		return err

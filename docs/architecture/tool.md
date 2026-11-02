@@ -20,9 +20,13 @@ The web target is served from the same server; its page shows the overlay itself
 
 The tool finds a package's TSX entries in its `compiler.App(src, "App.tsx")` calls (`bundle.go`), compiles each with `tsx/compiler` from the app's directory and adds the bundles to the package with a file calling `compiler.Bundled`, through `go -overlay`, built with the `nsgo_bundled` tag, which leaves the compiler out. The overlay names the package's directory as `$PWD` spells it and by its real path, since `go` names the files by either. `nsgo dev` compiles hot bundles ([TSX](tsx.md#developing)) and watches the files they compile from apart from the Go ones: a change of them alone compiles the TSX again and sends `bundle <entry>` over `/_nsgo/events`, which `/_nsgo/bundle?entry=` serves, with no Go build; a failed compile shows as a failed build does.
 
+## Catalogs
+
+`i18n.go`, `i18n_message.go`, `i18n_gen.go` and `i18n_build.go` check packages' catalogs and write their Go code ([languages](languages.md#the-tool)): `dev`, `build` and `test` before they compile, `check` without writing, and `nsgo i18n` for one directory. `dev` watches the YAML files of the directories it watches, and the app's catalogs before it imports them.
+
 ## Checking
 
-`nsgo check` (`check.go`) runs `go vet ./...`, writes the declarations of the modules the app's TSX imports to `.nsgo/types`, with `.nsgo/tsconfig.json`, and runs TypeScript 7's checker (`tsgo`, a pinned version of `github.com/microsoft/typescript-go` that `go run` builds and caches) on the app's `tsconfig.json`, which extends it. The declarations come from the app's own program: the tool builds its main package with a file, added through the overlay, whose `init` runs after the package's others, so after every `tsx.Register`, writes them and exits before `main`. It checks with `go list` that the file is in the package before it builds, so the app itself never runs.
+`nsgo check` (`check.go`) checks the catalogs, runs `go vet ./...`, writes the declarations of the modules the app's TSX imports to `.nsgo/types`, with `.nsgo/tsconfig.json`, and runs TypeScript 7's checker (`tsgo`, a pinned version of `github.com/microsoft/typescript-go` that `go run` builds and caches) on the app's `tsconfig.json`, which extends it. The declarations come from the app's own program: the tool builds its main package with a file, added through the overlay, whose `init` runs after the package's others, so after every `tsx.Register`, writes them and exits before `main`. It checks with `go list` that the file is in the package before it builds, so the app itself never runs.
 
 ## Tests
 

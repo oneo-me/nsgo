@@ -8,6 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // The viewer's deepest zoom and where a double tap zooms to, how close
@@ -29,7 +30,10 @@ const (
 // animated values on the platform's main thread, and only their ends
 // settle the result into bounds.
 func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) core.Node {
-	// The image stays while the dialog fades out.
+	tr :=
+		// The image stays while the dialog fades out.
+		locales.For(cx)
+
 	shown := core.NewSignal(cx, textview.Image{})
 	natural := core.NewSignal(cx, core.Size{})
 	viewport := core.NewSignal(cx, core.Size{})
@@ -103,7 +107,7 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 	}
 	grow := core.Interpolate(enter, core.Interpolation{Input: []float64{0, 1}, Output: []float64{0.9, 1}})
 	env := cx.Env()
-	return base.Dialog{Open: func() bool { return image().Src != "" }, Animation: core.ModalFade, Label: "Image",
+	return base.Dialog{Open: func() bool { return image().Src != "" }, Animation: core.ModalFade, Label: tr.ViewerImage(),
 		StatusBar: core.StatusBarSetting{Foreground: core.StatusBarLight},
 		OnOpenChange: func(open bool, _ base.Reason) {
 			if !open {
@@ -137,7 +141,7 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 						if alt := shown.Get().Alt; alt != "" {
 							return alt
 						}
-						return "Image"
+						return tr.ViewerImage()
 					},
 					StyleFunc: func() core.Style {
 						b := box()
@@ -156,7 +160,7 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 				core.View{StyleFunc: func() core.Style {
 					a := env.SafeArea()
 					return core.Style{Position: core.Absolute, Top: core.Pt(a.Top + 12), Right: core.Pt(a.Right + 12)}
-				}, Children: []core.Node{ui.Press{OnPress: onClose, Label: "Close", Scale: 0.9, HitSlop: 8, Children: []core.Node{
+				}, Children: []core.Node{ui.Press{OnPress: onClose, Label: tr.ViewerClose(), Scale: 0.9, HitSlop: 8, Children: []core.Node{
 					core.View{Style: core.Style{Width: core.Pt(36), Height: core.Pt(36), CornerRadius: 18, Background: ui.White(0.16),
 						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 						Children: []core.Node{viewerBar(45), viewerBar(-45)}},

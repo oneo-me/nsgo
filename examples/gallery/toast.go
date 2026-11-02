@@ -10,6 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // The gallery's toasts: toast(...) from anywhere, shown by the toaster the
@@ -122,6 +123,7 @@ func toast(c toastContent) { shell.toasts.show(c) }
 
 // item is one toast, the gallery's look.
 func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	first := core.Untracked(cx, e)
@@ -139,7 +141,7 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 			Children: []core.Node{core.Text{Content: c.action, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightMedium}, StyleFunc: ui.Colored(colors.OnLight)}}})
 	}
 	if c.close != "" {
-		children = append(children, core.View{Role: core.RoleButton, Label: "Close", OnPress: func(core.PressEvent) { t.dismiss(id) },
+		children = append(children, core.View{Role: core.RoleButton, Label: tr.ToastClose(), OnPress: func(core.PressEvent) { t.dismiss(id) },
 			Style:    core.Style{Width: core.Pt(24), Height: core.Pt(24), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 12},
 			Children: []core.Node{core.Text{Content: c.close, Style: core.Style{FontSize: 16}, StyleFunc: ui.Colored(colors.Muted)}}})
 	}

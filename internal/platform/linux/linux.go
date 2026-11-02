@@ -626,6 +626,8 @@ func (w *window) apply(b *driver.MountBatch) {
 				w.setAppearance(it.Appearance)
 			}
 			continue
+		case driver.ItemDirection:
+			continue
 		case driver.ItemQuit:
 			if !w.embedded {
 				w.close()

@@ -51,8 +51,9 @@ type devOptions struct {
 // a failed build shows over the app, and Command or Control+R in the app,
 // or r and Return in the terminal, builds and starts it again. Without
 // nsgo.yaml's hot reload it exits once the app does; with it, it rebuilds
-// and restarts the app whenever a Go file it compiles from, go.mod or
-// nsgo.yaml changes, and keeps the running app when a build fails.
+// and restarts the app whenever a Go file it compiles from, go.mod,
+// nsgo.yaml or a catalog changes, and keeps the running app when a build
+// fails.
 func dev(ctx context.Context, p *project, opts devOptions) error {
 	p.prepareDev(opts)
 	srv, err := startDevServer(opts.port)
@@ -73,6 +74,9 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	var exited chan error
 	first, hinted := true, false
 	for {
+		// The catalogs' code first, which the build and the files watched
+		// may need.
+		catalogErr := p.prepareCatalogs(ctx, ".", false)
 		dirs, err := sourceDirs(ctx, p.Dir)
 		if err != nil {
 			return err
@@ -80,10 +84,16 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		if p.Web.Host != "" {
 			dirs = append(dirs, p.resolve(p.Web.Host))
 		}
+		if hasCatalogs(p.I18n.Dir) {
+			dirs = append(dirs, p.I18n.Dir)
+		}
 		dirs, sources := splitSources(dirs)
 		fingerprint := scan(dirs)
 		progress := begin("building %s", p.Dev.Target)
-		err = s.build(ctx, p)
+		err = catalogErr
+		if err == nil {
+			err = s.build(ctx, p)
+		}
 		switch {
 		case ctx.Err() != nil:
 			progress.fail()
@@ -464,7 +474,8 @@ func sourceDirs(ctx context.Context, dir string) ([]string, error) {
 }
 
 // scan returns a fingerprint of the watched files' names, sizes and times:
-// the Go files of each directory, and each file listed.
+// the Go and YAML files of each directory (nsgo.yaml and catalogs), and
+// each file listed.
 func scan(dirs []string) string {
 	var b strings.Builder
 	for _, dir := range dirs {
@@ -475,7 +486,7 @@ func scan(dirs []string) string {
 		entries, _ := os.ReadDir(dir)
 		for _, e := range entries {
 			name := e.Name()
-			if e.IsDir() || !(strings.HasSuffix(name, ".go") || name == "go.mod" || name == "go.sum" || name == "nsgo.yaml") {
+			if e.IsDir() || !(strings.HasSuffix(name, ".go") || strings.HasSuffix(name, ".yaml") || name == "go.mod" || name == "go.sum") {
 				continue
 			}
 			if info, err := e.Info(); err == nil {

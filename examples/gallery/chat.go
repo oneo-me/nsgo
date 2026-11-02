@@ -12,6 +12,7 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 var featured = []struct {
@@ -36,6 +37,7 @@ type chatRun struct {
 // desktop layout adds a list of conversations on the left and keeps the
 // messages and the composer in a readable column.
 func chatDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	env := cx.Env()
@@ -317,7 +319,7 @@ func chatDemo(cx *core.Scope) core.Node {
 			messages.Update(func(ms []msg) []msg {
 				ms = slices.Clone(ms)
 				if len(ms) == 0 {
-					ms = append(ms, msg{kind: "date", id: nextID(), label: "Today"})
+					ms = append(ms, msg{kind: "date", id: nextID(), label: tr.ChatToday()})
 				}
 				return append(ms, user)
 			})
@@ -476,7 +478,7 @@ func chatDemo(cx *core.Scope) core.Node {
 				}}
 			}},
 			core.Show{When: func() bool { return m().waiting }, Then: func(*core.Scope) core.Node {
-				return ui.HStack{Gap: 6, Children: []core.Node{spinner(cx, 12, colors.Warn), ui.Text("Waiting for a connection", 12, ui.Regular, colors.Muted)}}
+				return ui.HStack{Gap: 6, Children: []core.Node{spinner(cx, 12, colors.Warn), ui.Text(tr.ChatWaitingForAConnection(), 12, ui.Regular, colors.Muted)}}
 			}},
 		}}
 	}
@@ -496,12 +498,12 @@ func chatDemo(cx *core.Scope) core.Node {
 		thinkingLabel := func() string {
 			if live() {
 				if thinking.Get() {
-					return fmt.Sprintf("Thinking… %d s", max(0, int(now.Get().Sub(run.thinkStart).Seconds())))
+					return tr.ChatThinking(max(0, int(now.Get().Sub(run.thinkStart).Seconds())))
 				}
-				return fmt.Sprintf("Thought for %d s", max(1, thinkSeconds.Get()))
+				return tr.ChatThoughtFor(max(1, thinkSeconds.Get()))
 			}
 			if r := m().reasoning; r != nil {
-				return fmt.Sprintf("Thought for %d s", r.seconds)
+				return tr.ChatThoughtFor(r.seconds)
 			}
 			return ""
 		}
@@ -528,11 +530,11 @@ func chatDemo(cx *core.Scope) core.Node {
 					}
 					return string(m().model)
 				}, Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Muted)},
-				core.Show{When: func() bool { return done() && m().status == "stopped" }, Then: func(*core.Scope) core.Node { return ui.Badge{Text: "Stopped", Tone: ui.ToneWarn} }},
+				core.Show{When: func() bool { return done() && m().status == "stopped" }, Then: func(*core.Scope) core.Node { return ui.Badge{Text: tr.ChatStopped(), Tone: ui.ToneWarn} }},
 			}},
 			core.Show{When: func() bool { _, ok, _ := reason(); return ok }, Then: func(*core.Scope) core.Node {
 				return core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-					ui.Press{Scale: 0.98, Label: "Reasoning", Selected: func() bool { _, _, o := reason(); return o }, OnPress: func() {
+					ui.Press{Scale: 0.98, Label: tr.ChatReasoning(), Selected: func() bool { _, _, o := reason(); return o }, OnPress: func() {
 						if core.Untracked(cx, live) {
 							return
 						}
@@ -580,11 +582,11 @@ func chatDemo(cx *core.Scope) core.Node {
 					if e := m().err; e != "" {
 						return e
 					}
-					return "Something went wrong."
+					return tr.ChatSomethingWentWrong()
 				}, func() { retry(core.Untracked(cx, m)) })
 			}},
 			core.Show{When: func() bool { return done() && m().status == "stopped" }, Then: func(*core.Scope) core.Node {
-				return ui.HStack{Gap: 8, Children: []core.Node{core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 2.5}, StyleFunc: ui.Filled(colors.Faint)}, ui.Text("You stopped this reply", 13, ui.Regular, colors.Faint)}}
+				return ui.HStack{Gap: 8, Children: []core.Node{core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 2.5}, StyleFunc: ui.Filled(colors.Faint)}, ui.Text(tr.ChatYouStoppedThisReply(), 13, ui.Regular, colors.Faint)}}
 			}},
 			core.Show{When: func() bool { return done() && m().status != "error" }, Then: func(*core.Scope) core.Node {
 				return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Margin: core.Edges{Left: -8, Top: -6}}, Children: []core.Node{
@@ -593,9 +595,9 @@ func chatDemo(cx *core.Scope) core.Node {
 							return ui.IconCheck
 						}
 						return ui.IconCopy
-					}, "Copy", func() bool { return copied.Get() == m().id }, ui.ToneUp, func() { mm := core.Untracked(cx, m); copyText(mm.id, mm.md) }),
-					actionButton(cx, func() ui.IconName { return ui.IconRegenerate }, "Regenerate", func() bool { return false }, ui.ToneAccent, func() { regenerate(core.Untracked(cx, m)) }),
-					actionButton(cx, func() ui.IconName { return ui.IconThumbUp }, "Good reply", func() bool { return m().rating == "up" }, ui.ToneAccent, func() {
+					}, tr.ChatCopy(), func() bool { return copied.Get() == m().id }, ui.ToneUp, func() { mm := core.Untracked(cx, m); copyText(mm.id, mm.md) }),
+					actionButton(cx, func() ui.IconName { return ui.IconRegenerate }, tr.ChatRegenerate(), func() bool { return false }, ui.ToneAccent, func() { regenerate(core.Untracked(cx, m)) }),
+					actionButton(cx, func() ui.IconName { return ui.IconThumbUp }, tr.ChatGoodReply(), func() bool { return m().rating == "up" }, ui.ToneAccent, func() {
 						update(core.Untracked(cx, m).id, func(x msg) msg {
 							if x.rating == "up" {
 								x.rating = ""
@@ -605,7 +607,7 @@ func chatDemo(cx *core.Scope) core.Node {
 							return x
 						})
 					}),
-					actionButton(cx, func() ui.IconName { return ui.IconThumbDown }, "Bad reply", func() bool { return m().rating == "down" }, ui.ToneDanger, func() {
+					actionButton(cx, func() ui.IconName { return ui.IconThumbDown }, tr.ChatBadReply(), func() bool { return m().rating == "down" }, ui.ToneDanger, func() {
 						update(core.Untracked(cx, m).id, func(x msg) msg {
 							if x.rating == "down" {
 								x.rating = ""
@@ -620,9 +622,9 @@ func chatDemo(cx *core.Scope) core.Node {
 		}}
 	}
 
-	emptyText := "A simulated assistant: every reply is scripted and streamed locally."
+	emptyText := tr.ChatASimulatedAssistantEveryReply()
 	if native {
-		emptyText = "Chat with your local Claude or Codex CLI. Sign in to the CLI in a terminal first."
+		emptyText = tr.ChatChatWithYourLocalClaude()
 	}
 	var featuredTiles []core.Node
 	for i, f := range featured {
@@ -642,7 +644,7 @@ func chatDemo(cx *core.Scope) core.Node {
 		return core.View{Style: column.Merge(core.Style{FlexGrow: 1, JustifyContent: core.JustifyCenter, Padding: core.Symmetric(24, 16), Gap: 24}), Children: []core.Node{
 			ui.Appear{Children: []core.Node{core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				ui.IconTile{Icon: ui.IconSpark, Size: 56},
-				ui.Text("How can I help?", 22, ui.Semibold, colors.Text),
+				ui.Text(tr.ChatHowCanIHelp(), 22, ui.Semibold, colors.Text),
 				core.Text{Content: emptyText, Style: core.Style{FontSize: 15, LineHeight: 21, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 12}, Children: featuredTiles},
@@ -654,7 +656,7 @@ func chatDemo(cx *core.Scope) core.Node {
 	for _, s := range scenarios {
 		chips = append(chips, chip{s.id, s.chip})
 	}
-	chips = append(chips, chip{"history", "Load a long conversation"})
+	chips = append(chips, chip{"history", tr.ChatLoadALongConversation()})
 
 	var menuRows []core.Node
 	// choosePhoto attaches a photo from the system's picker.
@@ -679,8 +681,8 @@ func chatDemo(cx *core.Scope) core.Node {
 			Children: []core.Node{ui.Icon(ui.IconAttach, 16, colors.Accent), core.Text{Content: label, Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)}}}
 	}
 	menuRows = append(menuRows,
-		attachRow("Choose a photo", choosePhoto),
-		attachRow("Attach a photo and a file", func() {
+		attachRow(tr.ChatChooseAPhoto(), choosePhoto),
+		attachRow(tr.ChatAttachAPhotoAndA(), func() {
 			attachment.Set(&chatAttachment{image: core.Src(chatPhoto), file: fileRef{"trip-notes.pdf", "2.4 MB"}})
 		}))
 	for _, c := range chips {
@@ -733,9 +735,9 @@ func chatDemo(cx *core.Scope) core.Node {
 
 	composerPlaceholder := func() string {
 		if native {
-			return "Message " + provider.Get()
+			return tr.ChatMessage() + provider.Get()
 		}
-		return "Message " + string(model.Get())
+		return tr.ChatMessage() + string(model.Get())
 	}
 	submitBehavior := core.SubmitBehaviorNewline
 	// Return sends on desktops, as chat apps there do (Shift+Return adds a
@@ -768,7 +770,7 @@ func chatDemo(cx *core.Scope) core.Node {
 				core.View{PointerEvents: core.PointerEventsBoxNone, Style: core.Style{Position: core.Absolute, Right: core.Pt(16), Bottom: core.Pt(12), Opacity: core.Alpha(0.001),
 					Animated: &core.AnimatedStyle{Opacity: jump, Scale: ui.Lerp(jump, 0.7, 1)}}, Children: []core.Node{
 					core.Show{When: func() bool { return !following.Get() }, Then: func(*core.Scope) core.Node {
-						return ui.RoundButton{Icon: ui.IconArrowDown, Label: "Jump to the latest message", Variant: ui.ButtonSecondary, OnPress: func() { toEnd(true) }}
+						return ui.RoundButton{Icon: ui.IconArrowDown, Label: tr.ChatJumpToTheLatestMessage(), Variant: ui.ButtonSecondary, OnPress: func() { toEnd(true) }}
 					}},
 					core.Show{When: streaming, Then: func(*core.Scope) core.Node {
 						return core.View{StyleFunc: func() core.Style {
@@ -782,9 +784,9 @@ func chatDemo(cx *core.Scope) core.Node {
 					Animated: &core.AnimatedStyle{Opacity: bannerValue, TranslateY: ui.Lerp(bannerValue, -64, 0)}}, Children: []core.Node{
 					core.Dynamic(func(*core.Scope) core.Node {
 						off := bannerKind.Get() == "offline"
-						t, name, title, detail := ui.ToneUp, ui.IconCheck, "Back online", "Sending your message."
+						t, name, title, detail := ui.ToneUp, ui.IconCheck, tr.ChatBackOnline(), tr.ChatSendingYourMessage()
 						if off {
-							t, name, title, detail = ui.ToneWarn, ui.IconOffline, "You're offline", "Your message sends when the connection returns."
+							t, name, title, detail = ui.ToneWarn, ui.IconOffline, tr.ChatYouReOffline(), tr.ChatYourMessageSendsWhenThe()
 						}
 						return core.View{StyleFunc: func() core.Style {
 							return fin.Menu().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(48), Padding: core.Symmetric(0, 14),
@@ -798,7 +800,7 @@ func chatDemo(cx *core.Scope) core.Node {
 				}},
 				// The + menu: attachments and the scenarios, to replay them.
 				core.Show{When: menuOpen.Get, Then: func(*core.Scope) core.Node {
-					return core.View{OnPress: func(core.PressEvent) { menuOpen.Set(false) }, NoFocus: true, Label: "Close the menu",
+					return core.View{OnPress: func(core.PressEvent) { menuOpen.Set(false) }, NoFocus: true, Label: tr.ChatCloseTheMenu(),
 						Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)}}
 				}},
 				core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0),
@@ -814,7 +816,7 @@ func chatDemo(cx *core.Scope) core.Node {
 					return fin.Menu().Over(core.Style{CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1,
 						Padding: core.Symmetric(6, 0), MaxHeight: core.Pt(460), Overflow: core.Hidden})
 				}, Children: []core.Node{
-					core.Text{Content: "ADD AND REPLAY", Style: core.Style{FontSize: 12, FontWeight: ui.Semibold, Padding: core.Edges{Top: 8, Right: 16, Bottom: 4, Left: 16}}, StyleFunc: ui.Colored(colors.Faint)},
+					core.Text{Content: tr.ChatAddAndReplay(), Style: core.Style{FontSize: 12, FontWeight: ui.Semibold, Padding: core.Edges{Top: 8, Right: 16, Bottom: 4, Left: 16}}, StyleFunc: ui.Colored(colors.Faint)},
 					core.Scroll{Style: core.Style{FlexShrink: 1}, Children: menuRows},
 				}}}},
 			}},
@@ -874,11 +876,11 @@ func chatDemo(cx *core.Scope) core.Node {
 								s.Transform.Rotate = 45
 							}
 							return s
-						}, Children: []core.Node{ui.RoundButton{Icon: ui.IconPlus, Label: "Add", Variant: ui.ButtonSecondary, OnPress: func() { toggled(menuOpen) }}}},
+						}, Children: []core.Node{ui.RoundButton{Icon: ui.IconPlus, Label: tr.ChatAdd(), Variant: ui.ButtonSecondary, OnPress: func() { toggled(menuOpen) }}}},
 						core.View{Style: fill, Children: []core.Node{picker}},
 						core.Dynamic(func(*core.Scope) core.Node {
 							if streaming() {
-								return ui.Press{OnPress: stop, Scale: 0.9, Label: "Stop generating", Children: []core.Node{
+								return ui.Press{OnPress: stop, Scale: 0.9, Label: tr.ChatStopGenerating(), Children: []core.Node{
 									core.View{StyleFunc: func() core.Style {
 										return fin.Light().Over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: 22, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 											Background: colors.Light()})
@@ -890,7 +892,7 @@ func chatDemo(cx *core.Scope) core.Node {
 									return core.Style{}
 								}
 								return core.Style{Opacity: core.Alpha(0.35)}
-							}, Children: []core.Node{ui.Press{OnPress: send, Disabled: func() bool { return !canSend() }, Scale: 0.92, Label: "Send", Children: []core.Node{
+							}, Children: []core.Node{ui.Press{OnPress: send, Disabled: func() bool { return !canSend() }, Scale: 0.92, Label: tr.ChatSend(), Children: []core.Node{
 								core.View{StyleFunc: func() core.Style {
 									return fin.Light().Over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: 22, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 										Background: colors.Light()})
@@ -925,7 +927,7 @@ func chatDemo(cx *core.Scope) core.Node {
 	var convs []core.Node
 	for _, c := range chips {
 		sel := func() bool { return current.Get() == c.id }
-		detail := "Weeks of messages, loaded at once"
+		detail := tr.ChatWeeksOfMessagesLoadedAt()
 		if s, ok := findScenario(c.id); ok {
 			detail = s.prompt
 		}
@@ -952,12 +954,12 @@ func chatDemo(cx *core.Scope) core.Node {
 			return core.Style{Width: core.Pt(280), MinWidth: core.Pt(280), Borders: core.Edges{Right: 1}, BorderColors: core.EdgeColors{Right: colors.Line()}}
 		}, Children: []core.Node{
 			core.View{Style: core.Style{Padding: core.All(12), Gap: 2}, Children: append([]core.Node{
-				ui.Press{OnPress: newChat, Label: "New chat", Children: []core.Node{core.View{StyleFunc: func() core.Style {
+				ui.Press{OnPress: newChat, Label: tr.ChatNewChat(), Children: []core.Node{core.View{StyleFunc: func() core.Style {
 					return fin.Raised().Over(core.Style{Height: core.Pt(40), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous,
 						Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(), Cursor: core.CursorPointer})
 				},
-					Children: []core.Node{ui.Icon(ui.IconPlus, 15, colors.Text), ui.Text("New chat", 14, ui.Semibold, colors.Text)}}}},
-				core.Text{Content: "CONVERSATIONS", Style: core.Style{FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.6, Padding: core.Edges{Top: 18, Right: 12, Bottom: 6, Left: 12}}, StyleFunc: ui.Colored(colors.Faint)},
+					Children: []core.Node{ui.Icon(ui.IconPlus, 15, colors.Text), ui.Text(tr.ChatNewChat(), 14, ui.Semibold, colors.Text)}}}},
+				core.Text{Content: tr.ChatConversations(), Style: core.Style{FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.6, Padding: core.Edges{Top: 18, Right: 12, Bottom: 6, Left: 12}}, StyleFunc: ui.Colored(colors.Faint)},
 			}, convs...)},
 		}},
 		pane,

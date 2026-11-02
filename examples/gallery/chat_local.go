@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
 	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // localReply runs one turn of a local CLI, Claude or Codex, on a goroutine:
@@ -17,6 +17,7 @@ import (
 // both on the engine. Credentials stay in the CLI's own login store. stop
 // ends the child.
 func localReply(cx *core.Scope, provider, prompt string, text func(chunk string), done func(err string)) (stop func()) {
+	tr := locales.For(cx)
 	command := "codex"
 	args := []string{"exec", "--json", "--skip-git-repo-check", "--ephemeral", "--sandbox", "read-only", "-"}
 	if provider == "Claude" {
@@ -29,7 +30,7 @@ func localReply(cx *core.Scope, provider, prompt string, text func(chunk string)
 	fail := func(why string) {
 		cx.Post(func() {
 			if !stopped {
-				done(fmt.Sprintf("%s: %s. Install %s on PATH and sign in with %s in a terminal, then retry.", provider, why, command, command))
+				done(tr.ChatInstallCli(provider, why, command))
 			}
 		})
 	}
@@ -88,7 +89,7 @@ func localReply(cx *core.Scope, provider, prompt string, text func(chunk string)
 							failure = strings.Join(e.Errors, "\n")
 						}
 						if failure == "" {
-							failure = "Claude could not complete this reply"
+							failure = tr.ChatClaudeCouldNotCompleteThis()
 						}
 					case !output:
 						chunk = e.Result
@@ -104,7 +105,7 @@ func localReply(cx *core.Scope, provider, prompt string, text func(chunk string)
 						failure = e.Error.Message
 					}
 					if failure == "" {
-						failure = "Codex could not complete this reply"
+						failure = tr.ChatCodexCouldNotCompleteThis()
 					}
 				}
 			}
@@ -128,7 +129,7 @@ func localReply(cx *core.Scope, provider, prompt string, text func(chunk string)
 			}
 			fail(why)
 		case !output:
-			fail("no reply")
+			fail(tr.ChatNoReply())
 		default:
 			cx.Post(func() {
 				if !stopped {

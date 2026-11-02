@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"math"
 	"slices"
 	"strings"
@@ -45,15 +46,18 @@ type sector string
 
 var sectors = []struct {
 	id    sector
-	label string
-}{{"tech", "Technology"}, {"health", "Health"}, {"finance", "Finance"}, {"consumer", "Consumer"}, {"industry", "Industrials"}, {"energy", "Energy"}}
+	label func(locales.Messages) string
+}{{"tech", locales.Messages.StocksTechnology}, {"health", locales.Messages.StocksHealth}, {"finance", locales.Messages.StocksFinance},
+	{"consumer", locales.Messages.StocksConsumer}, {"industry", locales.Messages.StocksIndustrials}, {"energy", locales.Messages.StocksEnergy}}
 
 // flowBuckets are the order size buckets of the trade flow, in shares,
 // inclusive upper bounds.
 var flowBuckets = []struct {
-	label, note string
-	max         float64
-}{{"Small", "≤ 500", 500}, {"Medium", "≤ 2K", 2000}, {"Large", "≤ 8K", blockSize - 1}, {"Block", "8K +", math.Inf(1)}}
+	label func(locales.Messages) string
+	note  string
+	max   float64
+}{{locales.Messages.StocksSmall, "≤ 500", 500}, {locales.Messages.StocksMedium, "≤ 2K", 2000}, {locales.Messages.StocksLarge, "≤ 8K", blockSize - 1},
+	{locales.Messages.StocksBlock2, "8K +", math.Inf(1)}}
 
 type quote struct {
 	last, open, high, low, prevClose, volume, turnover float64

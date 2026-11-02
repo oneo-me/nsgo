@@ -8,6 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 //go:embed assets/bounce.gif
@@ -74,6 +75,7 @@ func imageTile(cx *core.Scope, noteText string, isCode bool, height core.Points,
 }
 
 func resizeModes(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	modes := []struct {
 		name string
 		mode core.ResizeMode
@@ -89,26 +91,28 @@ func resizeModes(cx *core.Scope) core.Node {
 		}
 		rows = append(rows, core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: cells})
 	}
-	return ui.Card{Icon: ui.IconImage, Title: "Resize modes", Description: "A 2:1 image in square frames", Children: rows}
+	return ui.Card{Icon: ui.IconImage, Title: tr.ImagesResizeModes(), Description: tr.ImagesA21ImageIn(), Children: rows}
 }
 
 func imageCorners(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	sq := imageFrame(cx, core.Style{Width: core.Pt(88), Height: core.Pt(88)})
 	item := func(s core.Style, ink func() core.Style, name string) core.Node {
 		return core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			core.Image{Source: core.Src(widePhoto), Style: sq.Merge(s), StyleFunc: ink}, imageNote(cx, name, false)}}
 	}
-	return ui.Card{Icon: ui.IconStyles, Title: "Corners and borders", Description: "Radii per corner, borders on the image", Children: []core.Node{
+	return ui.Card{Icon: ui.IconStyles, Title: tr.ImagesCornersAndBorders(), Description: tr.ImagesRadiiPerCornerBordersOn(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
-			item(core.Style{CornerRadius: 44}, frameInk(cx), "Circle"),
-			item(core.Style{CornerRadius: 18, BorderWidth: 2}, func() core.Style { return frameInk(cx)().Merge(core.Style{BorderColor: colors.Accent()}) }, "Border"),
-			item(core.Style{CornerRadii: core.Corners{TopLeft: 40, BottomRight: 40}}, frameInk(cx), "Two corners"),
+			item(core.Style{CornerRadius: 44}, frameInk(cx), tr.ImagesCircle()),
+			item(core.Style{CornerRadius: 18, BorderWidth: 2}, func() core.Style { return frameInk(cx)().Merge(core.Style{BorderColor: colors.Accent()}) }, tr.ImagesBorder()),
+			item(core.Style{CornerRadii: core.Corners{TopLeft: 40, BottomRight: 40}}, frameInk(cx), tr.ImagesTwoCorners()),
 		}},
 	}}
 }
 
 func assetsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tile := func(name string, tint func() core.Color) core.Node {
 		var ink func() core.Style
@@ -117,9 +121,9 @@ func assetsCard(cx *core.Scope) core.Node {
 		}
 		return imageTile(cx, name, false, 0, core.Image{Source: logoSource(), Style: core.Style{Width: core.Pt(56), Height: core.Pt(56)}, StyleFunc: ink})
 	}
-	return ui.Card{Icon: ui.IconStar, Title: "Embedded images and tint", Description: "logo.png from go:embed, tinted natively", Children: []core.Node{
+	return ui.Card{Icon: ui.IconStar, Title: tr.ImagesEmbeddedImagesAndTint(), Description: tr.ImagesLogoPngFromGoEmbed(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
-			tile("Original", nil), tile("Accent", colors.Accent), tile("Info", colors.Info), tile("Danger", colors.Danger),
+			tile(tr.ImagesOriginal(), nil), tile(tr.ImagesAccent(), colors.Accent), tile(tr.ImagesInfo(), colors.Info), tile(tr.ImagesDanger(), colors.Danger),
 		}},
 	}}
 }
@@ -127,6 +131,7 @@ func assetsCard(cx *core.Scope) core.Node {
 // svgCard is SVG images: a one-color star tinted at three sizes and as
 // drawn, a two-color logo in two resize modes, and an SVG from a URL.
 func svgCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	star := core.ImageSource{Data: starSVG, Size: core.Size{Width: 24, Height: 24}}
 	mark := core.ImageSource{Data: markSVG, Size: core.Size{Width: 120, Height: 60}}
@@ -137,28 +142,29 @@ func svgCard(cx *core.Scope) core.Node {
 				return core.Style{Width: core.Pt(s), Height: core.Pt(s), TintColor: colors.Accent()}
 			}}))
 	}
-	sizes = append(sizes, imageTile(cx, "As drawn", false, 96, core.Image{Source: star, TestID: "svg-star-plain", Style: core.Style{Width: core.Pt(36), Height: core.Pt(36)}}))
+	sizes = append(sizes, imageTile(cx, tr.ImagesAsDrawn(), false, 96, core.Image{Source: star, TestID: "svg-star-plain", Style: core.Style{Width: core.Pt(36), Height: core.Pt(36)}}))
 	cell := func(child core.Node, n string, isCode bool) core.Node {
 		return core.View{Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Gap: 8}, Children: []core.Node{child, imageNote(cx, n, isCode)}}
 	}
-	return ui.Card{Icon: ui.IconStar, Title: "SVG images", Description: "star.svg, mark.svg and a remote SVG, sharp at every size", Children: []core.Node{
+	return ui.Card{Icon: ui.IconStar, Title: tr.ImagesSvgImages(), Description: tr.ImagesStarSvgMarkSvgAnd(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: sizes},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			cell(core.Image{Source: mark, ResizeMode: core.Contain, TestID: "svg-mark-contain", Style: imageFrame(cx, core.Style{Height: core.Pt(96)}), StyleFunc: frameInk(cx)}, "Contain", true),
 			cell(core.Image{Source: mark, ResizeMode: core.Cover, TestID: "svg-mark-cover", Style: imageFrame(cx, core.Style{Height: core.Pt(96)}), StyleFunc: frameInk(cx)}, "Cover", true),
-			cell(core.Image{Source: core.Src(remoteSVG), ResizeMode: core.Contain, TestID: "svg-remote", Style: imageFrame(cx, core.Style{Height: core.Pt(96)}), StyleFunc: frameInk(cx)}, "Remote", false),
+			cell(core.Image{Source: core.Src(remoteSVG), ResizeMode: core.Contain, TestID: "svg-remote", Style: imageFrame(cx, core.Style{Height: core.Pt(96)}), StyleFunc: frameInk(cx)}, tr.ImagesRemote(), false),
 		}},
 	}}
 }
 
 func animatedImages(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	gif := core.ImageSource{Data: bounceGIF, Size: core.Size{Width: 72, Height: 72}}
 	webp := core.ImageSource{Data: spinnerWebP, Size: core.Size{Width: 72, Height: 72}}
-	return ui.Card{Icon: ui.IconAnimation, Title: "Animated GIF and WebP", Description: "Decoded and played natively", Children: []core.Node{
+	return ui.Card{Icon: ui.IconAnimation, Title: tr.ImagesAnimatedGifAndWebp(), Description: tr.ImagesDecodedAndPlayedNatively(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			imageTile(cx, "bounce.gif", true, 96, core.Image{Source: gif, TestID: "gif"}),
 			imageTile(cx, "spinner.webp", true, 96, core.Image{Source: webp, TestID: "webp"}),
-			imageTile(cx, "Scaled, round", false, 96, core.Image{Source: gif, Style: core.Style{Width: core.Pt(48), Height: core.Pt(48), CornerRadius: 24}}),
+			imageTile(cx, tr.ImagesScaledRound(), false, 96, core.Image{Source: gif, Style: core.Style{Width: core.Pt(48), Height: core.Pt(48), CornerRadius: 24}}),
 		}},
 	}}
 }
@@ -166,6 +172,7 @@ func animatedImages(cx *core.Scope) core.Node {
 // placeholders are network images behind a placeholder, fading in;
 // Reload asks for images that are not cached yet.
 func placeholders(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	seed := core.NewSignal(cx, 1)
 	fades := []struct{ id, ms int }{{1043, 0}, {1080, 300}, {1069, 1000}}
 	var cells []core.Node
@@ -178,16 +185,17 @@ func placeholders(cx *core.Scope) core.Node {
 			imageNote(cx, fmt.Sprintf("%d ms", f.ms), false),
 		}})
 	}
-	return ui.Card{Icon: ui.IconPhotos, Title: "Placeholder and fade", Description: "A placeholder, then a fade", Actions: []core.Node{ui.Button{Text: "Reload", Variant: ui.ButtonSecondary, Small: true, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconPhotos, Title: tr.ImagesPlaceholderAndFade(), Description: tr.ImagesAPlaceholderThenAFade(), Actions: []core.Node{ui.Button{Text: tr.ImagesReload(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: cells},
-		ui.Caption{Label: "Loads", Note: func() string { return itoa(seed.Get()) }},
+		ui.Caption{Label: tr.ImagesLoads(), Note: func() string { return itoa(seed.Get()) }},
 	}}
 }
 
 func blurCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	var cells []core.Node
 	for _, r := range []core.Points{0, 2, 6, 16} {
-		n := "None"
+		n := tr.ImagesNone()
 		if r > 0 {
 			n = fmt.Sprintf("%.0f pt", r)
 		}
@@ -195,20 +203,21 @@ func blurCard(cx *core.Scope) core.Node {
 			core.Image{Source: core.Src(widePhoto), BlurRadius: r, Style: imageFrame(cx, core.Style{Height: core.Pt(76)}), StyleFunc: frameInk(cx)}, imageNote(cx, n, false),
 		}})
 	}
-	return ui.Card{Icon: ui.IconSpark, Title: "Blur radius", Description: "BlurRadius, applied while decoding", Children: []core.Node{
+	return ui.Card{Icon: ui.IconSpark, Title: tr.ImagesBlurRadius(), Description: tr.ImagesBlurradiusAppliedWhileDecoding(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: cells},
 	}}
 }
 
 func imageInfo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	big := photoURL(1018, 2400, 1600)
 	size, prefetched := core.NewSignal(cx, "—"), core.NewSignal(cx, "—")
 	progress := core.NewSignal(cx, 0.0)
-	status := core.NewSignal(cx, "not shown")
+	status := core.NewSignal(cx, tr.ImagesNotShown())
 	show := core.NewSignal(cx, false)
-	return ui.Card{Icon: ui.IconSearch, Title: "Size, prefetch, progress", Description: "ImageSize · PrefetchImage · OnProgress", Children: []core.Node{
+	return ui.Card{Icon: ui.IconSearch, Title: tr.ImagesSizePrefetchProgress(), Description: "ImageSize · PrefetchImage · OnProgress", Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: "Size", Variant: ui.ButtonSecondary, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.ImagesSize(), Variant: ui.ButtonSecondary, OnPress: func() {
 				cx.ImageSize(core.Src(big), func(px core.Size, err error) {
 					if err != nil {
 						size.Set(err.Error())
@@ -217,11 +226,11 @@ func imageInfo(cx *core.Scope) core.Node {
 					size.Set(fmt.Sprintf("%.0f×%.0f px", px.Width, px.Height))
 				})
 			}}},
-			ui.Cell{Child: ui.Button{Text: "Prefetch", Variant: ui.ButtonSecondary, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.ImagesPrefetch(), Variant: ui.ButtonSecondary, OnPress: func() {
 				prefetched.Set("loading…")
 				cx.PrefetchImage(core.Src(big), func(ok bool) {
 					if ok {
-						prefetched.Set("in the cache")
+						prefetched.Set(tr.ImagesInTheCache())
 					} else {
 						prefetched.Set("failed")
 					}
@@ -229,9 +238,9 @@ func imageInfo(cx *core.Scope) core.Node {
 			}}},
 			ui.Cell{Child: core.Dynamic(func(*core.Scope) core.Node {
 				if show.Get() {
-					return ui.Button{Text: "Hide", Variant: ui.ButtonSecondary, OnPress: func() { show.Set(false) }}
+					return ui.Button{Text: tr.ImagesHide(), Variant: ui.ButtonSecondary, OnPress: func() { show.Set(false) }}
 				}
-				return ui.Button{Text: "Show", Variant: ui.ButtonAccent, OnPress: func() { show.Set(true) }}
+				return ui.Button{Text: tr.ImagesShow(), Variant: ui.ButtonAccent, OnPress: func() { show.Set(true) }}
 			})},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
@@ -247,7 +256,7 @@ func imageInfo(cx *core.Scope) core.Node {
 			}),
 		}},
 		core.Show{When: show.Get, Else: func(*core.Scope) core.Node {
-			return imageNote(cx, "Prefetch, then show: no download, no progress", false)
+			return imageNote(cx, tr.ImagesPrefetchThenShowNoDownload(), false)
 		},
 			Then: func(*core.Scope) core.Node {
 				return ui.Appear{Children: []core.Node{core.Image{Source: core.Src(big), Style: imageFrame(cx, core.Style{Height: core.Pt(170)}), StyleFunc: frameInk(cx),
@@ -257,7 +266,7 @@ func imageInfo(cx *core.Scope) core.Node {
 					},
 					OnLoad: func(core.Size) {
 						if progress.GetUntracked() == 0 {
-							status.Set("loaded (no download)")
+							status.Set(tr.ImagesLoadedNoDownload())
 						} else {
 							status.Set("loaded")
 						}
@@ -268,12 +277,13 @@ func imageInfo(cx *core.Scope) core.Node {
 }
 
 func imageEvents(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	events := core.NewSignalFunc(cx, []string(nil), slices.Equal)
 	log := func(l string) { events.Update(func(e []string) []string { return append(slices.Clone(e), l) }) }
-	loaded, failed := core.NewSignal(cx, "…"), core.NewSignal(cx, "Loading…")
+	loaded, failed := core.NewSignal(cx, "…"), core.NewSignal(cx, tr.ImagesLoading())
 	thumb := imageFrame(cx, core.Style{Width: core.Pt(96), Height: core.Pt(64)})
-	return ui.Card{Icon: ui.IconBell, Title: "Events", Description: "Load start, load, error, load end", Children: []core.Node{
+	return ui.Card{Icon: ui.IconBell, Title: tr.ImagesEvents(), Description: tr.ImagesLoadStartLoadErrorLoad(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12, AlignItems: core.AlignCenter}, Children: []core.Node{
 			core.Image{Source: core.Src(photoURL(1084, 600, 400)), Style: thumb, StyleFunc: frameInk(cx),
 				OnLoadStart: func() { log("OnLoadStart") },
@@ -282,7 +292,7 @@ func imageEvents(cx *core.Scope) core.Node {
 				OnLoadEnd:   func() { log("OnLoadEnd") }},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 4}, Children: []core.Node{
 				ui.Text("picsum.photos", 15, ui.Regular, colors.Text),
-				ui.Textf(func() string { return "Loaded, " + loaded.Get() + " px" }, 13, ui.Regular, colors.Up),
+				ui.Textf(func() string { return tr.ImagesLoaded() + loaded.Get() + tr.ImagesPx() }, 13, ui.Regular, colors.Up),
 			}},
 		}},
 		core.View{StyleFunc: func() core.Style {
@@ -304,7 +314,7 @@ func imageEvents(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8, AlignItems: core.AlignCenter}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			e := events.Get()
 			if len(e) == 0 {
-				return imageNote(cx, "No load events yet", false)
+				return imageNote(cx, tr.ImagesNoLoadEventsYet(), false)
 			}
 			var badges []core.Node
 			for _, l := range e {

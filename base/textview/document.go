@@ -82,7 +82,8 @@ const (
 	AlertCaution
 )
 
-// String returns the alert's title: "Note", "Tip", ...
+// String returns the alert's title in English: "Note", "Tip", ... The
+// view says it in the language the app shows.
 func (a Alert) String() string {
 	switch a {
 	case AlertNote:

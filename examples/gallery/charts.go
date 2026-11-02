@@ -10,17 +10,19 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
-var chartDays = []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+// chartDayNames are the days of a week, short, in tr's language.
+func chartDayNames(tr locales.Messages) []string {
+	return []string{tr.ChartsMon(), tr.ChartsTue(), tr.ChartsWed(), tr.ChartsThu(), tr.ChartsFri(), tr.ChartsSat(), tr.ChartsSun()}
+}
 
 // chartWeeks are visitors per day of two weeks.
 var chartWeeks = [][]float64{
 	{1820, 2140, 1960, 2480, 2310, 1290, 1180},
 	{1910, 2260, 2390, 2650, 2520, 1420, 1330},
 }
-
-var chartWeekNames = []string{"Last week", "This week"}
 
 const (
 	// visitorsTop is the top of the visitors' y scale: a step above the
@@ -123,6 +125,8 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 // baseline; the tooltip floats in the room above the highest value and
 // stays within the plot's width at the first and last days.
 func chartsDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	chartDays, chartWeekNames := chartDayNames(tr), []string{tr.ChartsLastWeek(), tr.ChartsThisWeek()}
 	last := core.NewSignal(cx, "—")
 	pointer := shell.desktop()
 	gap := core.Points(12)
@@ -132,6 +136,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 	}
 
 	visitorsCard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
 		week := core.NewSignal(cx, 0)
@@ -165,17 +170,18 @@ func chartsDemo(cx *core.Scope) core.Node {
 		}
 		switchLabel := func() string {
 			if week.Get() == 0 {
-				return "Show this week"
+				return tr.ChartsShowThisWeek()
 			}
-			return "Show last week"
+			return tr.ChartsShowLastWeek()
 		}
-		return ui.Card{Icon: ui.IconStocks, Title: "Visitors", Description: "A week over the other, with hover, grid lines and motion", Children: []core.Node{
+		return ui.Card{Icon: ui.IconStocks, Title: tr.ChartsVisitors(), Description: tr.ChartsAWeekOverTheOther(), Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
+				tr := locales.For(cx)
 				day := chartDays[shown()]
 				if hover.Get() < 0 {
-					day += ", the last day"
+					day += tr.ChartsTheLastDay()
 				}
-				return ui.Caption{Label: day, Note: func() string { return visitors(rows()[shown()]) + " visitors" }}
+				return ui.Caption{Label: day, Note: func() string { return visitors(rows()[shown()]) + tr.ChartsVisitors2() }}
 			}),
 			core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
 				legendItem(cx, func() string { return chartWeekNames[week.Get()] }, false),
@@ -196,15 +202,14 @@ func chartsDemo(cx *core.Scope) core.Node {
 					},
 					LabelFunc: func() string {
 						r := rows()
-						return fmt.Sprintf("Visitors per day, from %s on Monday to %s on Sunday", visitors(r[0]), visitors(r[6]))
+						return tr.ChartsVisitorsPerDay(visitors(r[0]), visitors(r[6]))
 					},
 					AccessibilityValue: func() core.AccessibilityValue {
 						h := hover.Get()
 						if h < 0 {
 							return core.AccessibilityValue{}
 						}
-						return core.AccessibilityValue{Text: fmt.Sprintf("%s, %s visitors, %s %s", chartDays[h], visitors(rows()[h]),
-							visitors(other()[h]), strings.ToLower(chartWeekNames[1-week.Get()]))}
+						return core.AccessibilityValue{Text: tr.ChartsHoverValue(chartDays[h], visitors(rows()[h]), visitors(other()[h]), strings.ToLower(chartWeekNames[1-week.Get()]))}
 					},
 					CrossLineStyleFunc: func() core.Style { return core.Style{Width: core.Pt(1), Background: ui.Alpha(colors.Text(), 0.3)} },
 					// The dots' shape; each week's line gives its own its color.
@@ -221,11 +226,11 @@ func chartsDemo(cx *core.Scope) core.Node {
 					OnHoverChange: func(i int) {
 						hover.Set(i)
 						if i < 0 {
-							last.Set("Plot: left")
+							last.Set(tr.ChartsPlotLeft())
 							return
 						}
 						tip.Set(i)
-						last.Set(fmt.Sprintf("Plot: %s, %s", chartDays[i], visitors(rows()[i])))
+						last.Set(tr.ChartsPlotEvent(chartDays[i], visitors(rows()[i])))
 					},
 					Style: core.Style{FlexGrow: 1, Height: core.Pt(160)},
 					Children: []core.Node{
@@ -252,6 +257,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 				Children: days},
 			core.View{Style: core.Style{Direction: core.Row, AlignSelf: switchAlign},
 				Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
+					tr := locales.For(cx)
 					var flex float32
 					if !pointer {
 						flex = 1
@@ -260,9 +266,9 @@ func chartsDemo(cx *core.Scope) core.Node {
 						week.Set(1 - week.GetUntracked())
 						hover.Set(-1)
 						if week.GetUntracked() == 0 {
-							last.Set("Plot: last week")
+							last.Set(tr.ChartsPlotLastWeek())
 						} else {
-							last.Set("Plot: this week")
+							last.Set(tr.ChartsPlotThisWeek())
 						}
 					}}
 				})}},
@@ -270,7 +276,8 @@ func chartsDemo(cx *core.Scope) core.Node {
 	}
 
 	sparklines := func(cx *core.Scope) core.Node {
-		return ui.Card{Icon: ui.IconStocks, Title: "Sparklines", Description: "A plot per row of a list, drawn in as the row comes", Children: []core.Node{
+		tr := locales.For(cx)
+		return ui.Card{Icon: ui.IconStocks, Title: tr.ChartsSparklines(), Description: tr.ChartsAPlotPerRowOf(), Children: []core.Node{
 			core.List{TestID: "sparklines", Count: func() int { return len(tickers) }, Key: func(i int) any { return tickers[i].id },
 				EstimatedSize: 44, Style: core.Style{Height: core.Pt(44 * 6)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
@@ -325,8 +332,9 @@ func chartsDemo(cx *core.Scope) core.Node {
 	}
 
 	lastCard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconSystem, Title: "Last event", Children: []core.Node{
+		return ui.Card{Icon: ui.IconSystem, Title: tr.ChartsLastEvent(), Children: []core.Node{
 			core.Text{ContentFunc: last.Get, Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
 		}}
 	}

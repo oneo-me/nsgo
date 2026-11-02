@@ -4,6 +4,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // layoutDemo is the layout NSGo ports from Taffy: flexbox, wrapping,
@@ -40,6 +41,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 	}
 
 	rows := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		var justify []core.Node
 		for _, j := range []struct {
 			name string
@@ -49,8 +51,8 @@ func layoutDemo(cx *core.Scope) core.Node {
 				frame(core.Style{Direction: core.Row, JustifyContent: j.v}, box("A", core.Style{}), box("B", core.Style{}), box("C", core.Style{})))
 		}
 		justify = append(justify, ui.API{Text: "Column, AlignCenter"},
-			frame(core.Style{AlignItems: core.AlignCenter}, box("One", core.Style{}), box("Two, wider", core.Style{}), box("Three", core.Style{})))
-		return ui.Section{Title: "Row and column", Note: "Direction · JustifyContent", Children: justify}
+			frame(core.Style{AlignItems: core.AlignCenter}, box(tr.LayoutOne(), core.Style{}), box(tr.LayoutTwoWider(), core.Style{}), box(tr.LayoutThree(), core.Style{})))
+		return ui.Section{Title: tr.LayoutRowAndColumn(), Note: "Direction · JustifyContent", Children: justify}
 	}
 
 	wrapCard := func(cx *core.Scope) core.Node {
@@ -66,20 +68,22 @@ func layoutDemo(cx *core.Scope) core.Node {
 	}
 
 	grow := func(cx *core.Scope) core.Node {
-		return ui.Section{Title: "Grow and shrink", Note: "FlexGrow · FlexShrink · AutoMargin", Children: []core.Node{
+		tr := locales.For(cx)
+		return ui.Section{Title: tr.LayoutGrowAndShrink(), Note: "FlexGrow · FlexShrink · AutoMargin", Children: []core.Node{
 			frame(core.Style{Direction: core.Row}, box("1", core.Style{FlexGrow: 1}), box("2", core.Style{FlexGrow: 2}), box("3", core.Style{FlexGrow: 3})),
-			frame(core.Style{Direction: core.Row}, box("fixed 120", core.Style{Width: core.Pt(120)}), box("900 wide, shrinks to fit", core.Style{Width: core.Pt(900), FlexShrink: 1})),
-			frame(core.Style{Direction: core.Row}, box("Start", core.Style{}), box("pushed to the end", core.Style{AutoMargin: core.SideLeft})),
+			frame(core.Style{Direction: core.Row}, box(tr.LayoutFixed120(), core.Style{Width: core.Pt(120)}), box(tr.Layout900WideShrinksToFit(), core.Style{Width: core.Pt(900), FlexShrink: 1})),
+			frame(core.Style{Direction: core.Row}, box(tr.LayoutStart(), core.Style{}), box(tr.LayoutPushedToTheEnd(), core.Style{AutoMargin: core.SideLeft})),
 		}}
 	}
 
 	absolute := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: "Absolute positioning", Note: "Position: Absolute", Children: []core.Node{
+		return ui.Section{Title: tr.LayoutAbsolutePositioning(), Note: "Position: Absolute", Children: []core.Node{
 			frame(core.Style{Height: core.Pt(120)},
-				box("Top left", core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(8)}),
-				box("Bottom right", core.Style{Position: core.Absolute, Bottom: core.Pt(8), Right: core.Pt(8)}),
-				tintedBox("Centered", core.Style{Position: core.Absolute, Top: core.Pct(50), Left: core.Pct(50),
+				box(tr.LayoutTopLeft(), core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(8)}),
+				box(tr.LayoutBottomRight(), core.Style{Position: core.Absolute, Bottom: core.Pt(8), Right: core.Pt(8)}),
+				tintedBox(tr.LayoutCentered(), core.Style{Position: core.Absolute, Top: core.Pct(50), Left: core.Pct(50),
 					Transform: core.Transform{TranslateXPercent: -50, TranslateYPercent: -50}}),
 				core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(-6), Right: core.Pt(-6), Width: core.Pt(20), Height: core.Pt(20),
 					CornerRadius: 10, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, StyleFunc: ui.Filled(colors.Danger),
@@ -89,16 +93,17 @@ func layoutDemo(cx *core.Scope) core.Node {
 	}
 
 	grid := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		var cells []core.Node
 		for i := 1; i <= 7; i++ {
 			cells = append(cells, box(itoa(i), core.Style{Height: core.Pt(44)}))
 		}
-		return ui.Section{Title: "Grid", Note: "DisplayGrid", Children: []core.Node{
+		return ui.Section{Title: tr.LayoutGrid(), Note: "DisplayGrid", Children: []core.Node{
 			ui.API{Text: `GridTemplateColumns: "repeat(3, 1fr)"`},
 			core.View{Style: core.Style{Display: core.DisplayGrid, GridTemplateColumns: "repeat(3, 1fr)", GridAutoRows: "44px", Gap: 8}, Children: []core.Node{
-				tintedBox("span 2", core.Style{GridColumn: core.GridLines{Start: core.GridSpan(2)}}),
+				tintedBox(tr.LayoutSpan2(), core.Style{GridColumn: core.GridLines{Start: core.GridSpan(2)}}),
 				box("B", core.Style{}), box("C", core.Style{}),
-				tintedBox("2 rows", core.Style{GridRow: core.GridLines{Start: core.GridSpan(2)}}),
+				tintedBox(tr.Layout2Rows(), core.Style{GridRow: core.GridLines{Start: core.GridSpan(2)}}),
 				box("E", core.Style{}), box("F", core.Style{}), box("G", core.Style{}), box("H", core.Style{}),
 			}},
 			ui.API{Text: `"repeat(auto-fill, minmax(80px, 1fr))"`},
@@ -107,12 +112,13 @@ func layoutDemo(cx *core.Scope) core.Node {
 	}
 
 	positions := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
 		// Each group holds its rows, so its header stops at the group's
 		// end.
 		var groups []core.Node
-		for _, name := range []string{"Fruit", "Vegetables", "Grains"} {
+		for _, name := range []string{tr.LayoutFruit(), tr.LayoutVegetables(), tr.LayoutGrains()} {
 			g := []core.Node{core.View{StyleFunc: func() core.Style {
 				return core.Style{Position: core.Sticky, Top: core.Pt(0), Background: colors.Raised(), Padding: core.Symmetric(6, 10),
 					Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line()}}
@@ -124,38 +130,40 @@ func layoutDemo(cx *core.Scope) core.Node {
 			groups = append(groups, core.View{Children: g})
 		}
 		shown := core.NewSignal(cx, false)
-		return ui.Section{Title: "Static, sticky and fixed", Note: "Position", Children: []core.Node{
-			ui.Note{Text: "Static ignores insets and lets absolute views inside reach past it; Sticky pins a header while its group scrolls; Fixed places a view in the window, out of every scroll view."},
+		return ui.Section{Title: tr.LayoutStaticStickyAndFixed(), Note: "Position", Children: []core.Node{
+			ui.Note{Text: tr.LayoutStaticIgnoresInsetsAndLets()},
 			frame(core.Style{Height: core.Pt(80)},
 				core.View{Style: core.Style{Position: core.Static, Top: core.Pt(40), Padding: core.All(4)}, Children: []core.Node{
-					box("absolute, in the frame", core.Style{Position: core.Absolute, Bottom: core.Pt(4), Right: core.Pt(4)}),
+					box(tr.LayoutAbsoluteInTheFrame(), core.Style{Position: core.Absolute, Bottom: core.Pt(4), Right: core.Pt(4)}),
 				}},
 			),
 			core.Scroll{Style: surfaceBox(cx, 160).Merge(core.Style{Overflow: core.Hidden}), StyleFunc: surfaceInk(cx), Children: groups},
-			ui.Button{Text: "Show a fixed note", Variant: ui.ButtonSecondary, OnPress: func() { toggled(shown) }},
+			ui.Button{Text: tr.LayoutShowAFixedNote(), Variant: ui.ButtonSecondary, OnPress: func() { toggled(shown) }},
 			core.Show{When: shown.Get, Then: func(*core.Scope) core.Node {
 				return core.View{StyleFunc: func() core.Style {
 					return core.Style{Position: core.Fixed, Right: core.Pt(24), Bottom: core.Pt(24), Padding: core.Symmetric(10, 14),
 						Background: colors.Light(), CornerRadius: ui.RadiusControl, ZIndex: 10, Shadows: fin.Light().Shadows}
 				},
-					Children: []core.Node{ui.Text("Fixed to the window", 14, ui.Medium, colors.OnLight)}}
+					Children: []core.Node{ui.Text(tr.LayoutFixedToTheWindow(), 14, ui.Medium, colors.OnLight)}}
 			}},
 		}}
 	}
 
 	intrinsic := func(cx *core.Scope) core.Node {
-		return ui.Section{Title: "Intrinsic sizes", Note: "MinContent · MaxContent · FitContent", Children: []core.Node{
+		tr := locales.For(cx)
+		return ui.Section{Title: tr.LayoutIntrinsicSizes(), Note: "MinContent · MaxContent · FitContent", Children: []core.Node{
 			frame(core.Style{AlignItems: core.AlignStart},
-				tintedBox("min-content: each word on a line", core.Style{Width: core.MinContent}),
-				tintedBox("max-content: one line", core.Style{Width: core.MaxContent}),
-				tintedBox("fit-content: one line up to the width, then it wraps as the space runs out", core.Style{Width: core.FitContent}),
+				tintedBox(tr.LayoutMinContentEachWordOn(), core.Style{Width: core.MinContent}),
+				tintedBox(tr.LayoutMaxContentOneLine(), core.Style{Width: core.MaxContent}),
+				tintedBox(tr.LayoutFitContentOneLineUp(), core.Style{Width: core.FitContent}),
 			),
 		}}
 	}
 
 	stacking := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: "Stacking", Note: "ZIndex", Children: []core.Node{
+		return ui.Section{Title: tr.LayoutStacking(), Note: "ZIndex", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, Height: core.Pt(90)},
 				tintedBox("ZIndex 2", core.Style{Width: core.Pt(100), Height: core.Pt(60), ZIndex: 2}),
 				box("0", core.Style{Width: core.Pt(100), Height: core.Pt(60), Margin: core.Edges{Left: -30, Top: 20}}),
@@ -165,8 +173,9 @@ func layoutDemo(cx *core.Scope) core.Node {
 	}
 
 	direction := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: "Direction", Note: "LayoutDirection · WritingDirection", Children: []core.Node{
+		return ui.Section{Title: tr.LayoutDirection(), Note: "LayoutDirection · WritingDirection", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, LayoutDirection: core.DirectionRTL}, box("first", core.Style{}), box("second", core.Style{}), box("third", core.Style{})),
 			frame(core.Style{},
 				core.Text{Content: "שלום עולם, hello world", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
@@ -176,11 +185,12 @@ func layoutDemo(cx *core.Scope) core.Node {
 	}
 
 	block := func(cx *core.Scope) core.Node {
-		return ui.Section{Title: "Block", Note: "DisplayBlock", Children: []core.Node{
+		tr := locales.For(cx)
+		return ui.Section{Title: tr.LayoutBlock(), Note: "DisplayBlock", Children: []core.Node{
 			frame(core.Style{Display: core.DisplayBlock},
-				box("margin bottom 16", core.Style{Margin: core.Edges{Bottom: 16}}),
-				box("margin top 16: the gap stays 16", core.Style{Margin: core.Edges{Top: 16}}),
-				box("width 60%, centered by auto margins", core.Style{Width: core.Pct(60), AutoMargin: core.SidesHorizontal, Margin: core.Edges{Top: 8}}),
+				box(tr.LayoutMarginBottom16(), core.Style{Margin: core.Edges{Bottom: 16}}),
+				box(tr.LayoutMarginTop16TheGap(), core.Style{Margin: core.Edges{Top: 16}}),
+				box(tr.LayoutWidth60CenteredByAuto(), core.Style{Width: core.Pct(60), AutoMargin: core.SidesHorizontal, Margin: core.Edges{Top: 8}}),
 			),
 		}}
 	}

@@ -22,6 +22,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 `base` holds NSGo's built-in unstyled components; `nsh-base` is the reference for their behavior and names.
 
 - Each component takes the app's styles part by part and has no look. Themes and styled controls and variants belong to apps or a component library, never here.
+- A component says its own words through its package's catalogs (`locales/`), never string literals, in English and NSGo's other languages ([languages](docs/architecture/languages.md)).
 - Keep a component in the `base` package unless it links dependencies an app without it should not; then give it a package under `base`, as `base/textview` has.
 
 ## Working with the user

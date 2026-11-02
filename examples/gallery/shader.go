@@ -7,6 +7,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // signalField is Onevra's SignalField background on core.Shader: a sparse
@@ -157,6 +158,7 @@ func (f signalField) Render(cx *core.Scope) core.Node {
 // platform moves. NSH's gallery has no shaders; this page is NSGo's.
 func shaderDemo(cx *core.Scope) core.Node {
 	background := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		presses := core.NewSignal(cx, 0)
 		scale, intensity := core.NewSignal(cx, 1.0), core.NewSignal(cx, 1.0)
@@ -179,42 +181,48 @@ func shaderDemo(cx *core.Scope) core.Node {
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12, Padding: core.All(16)}
 			},
 			Children: []core.Node{
-				core.Text{Content: "Signal field", Role: core.RoleHeader, Style: core.Style{FontSize: 22, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
-				core.Text{Content: ui.Hint(cx, "Press anywhere on the field.", "Move the pointer over the field and press anywhere."),
+				core.Text{Content: tr.ShaderSignalField(), Role: core.RoleHeader, Style: core.Style{FontSize: 22, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: ui.Hint(cx, tr.ShaderPressAnywhereOnTheField(), tr.ShaderMoveThePointerOverThe()),
 					Style: core.Style{FontSize: 13, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
-				ui.Button{Text: "Start", Variant: ui.ButtonAccent, OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }},
-				ui.Textf(func() string { return fmt.Sprintf("Start pressed %d times", presses.Get()) }, 13, ui.Regular, colors.Faint),
+				ui.Button{Text: tr.ShaderStart(), Variant: ui.ButtonAccent, OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }},
+				ui.Textf(func() string { return tr.ShaderStartPressed(presses.Get()) }, 13, ui.Regular, colors.Faint),
 			},
 		}
-		return ui.Card{Icon: ui.IconShader, Title: "Background", Description: "A clock and ripples the platform runs; a glow at the pointer", Children: []core.Node{
+		return ui.Card{Icon: ui.IconShader, Title: tr.ShaderBackground(), Description: tr.ShaderAClockAndRipplesThe(), Children: []core.Node{
 			field,
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-				ui.Cell{Child: ui.Button{Text: "Scale", Variant: ui.ButtonSecondary, OnPress: cycle(scale, 1, 1.5, 0.75)}},
-				ui.Cell{Child: ui.Button{Text: "Intensity", Variant: ui.ButtonSecondary, OnPress: cycle(intensity, 1, 2, 0.5)}},
+				ui.Cell{Child: ui.Button{Text: tr.ShaderScale(), Variant: ui.ButtonSecondary, OnPress: cycle(scale, 1, 1.5, 0.75)}},
+				ui.Cell{Child: ui.Button{Text: tr.ShaderIntensity(), Variant: ui.ButtonSecondary, OnPress: cycle(intensity, 1, 2, 0.5)}},
 			}},
-			ui.Caption{Label: "Uniforms", Note: func() string { return fmt.Sprintf("Scale %.2g · Intensity %.2g", scale.Get(), intensity.Get()) }},
+			ui.Caption{Label: tr.ShaderUniforms(), Note: func() string {
+				return tr.ShaderScaleIntensity(fmt.Sprintf("%.2g", scale.Get()), fmt.Sprintf("%.2g", intensity.Get()))
+			}},
 		}}
 	}
 	images := func(cx *core.Scope) core.Node {
-		// A wave runs through the logo, read as the shader's image.
+		tr :=
+			// A wave runs through the logo, read as the shader's image.
+			locales.For(cx)
+
 		wave := core.NewAnimatedValue(cx, 0)
 		run := cx.StartAnimation(core.Loop(core.Timing(wave, 2*3.14159265, core.TimingConfig{Duration: 2 * time.Second}), 0), nil)
 		cx.Cleanup(run.Stop)
-		return ui.Card{Icon: ui.IconImage, Title: "Images", Description: "What image0At to image3At read, in the image's pixels", Children: []core.Node{
+		return ui.Card{Icon: ui.IconImage, Title: tr.ShaderImages(), Description: tr.ShaderWhatImage0atToImage3atRead(), Children: []core.Node{
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(8, 0)}, Children: []core.Node{
 				core.Shader{Program: rippleProgram, Images: []core.ImageSource{{Data: logoPNG}}, Uniforms: core.Uniforms{"Phase": wave},
-					Label: "Rippling logo", TestID: "image-shader",
+					Label: tr.ShaderRipplingLogo(), TestID: "image-shader",
 					Style: core.Style{Width: core.Pt(160), Height: core.Pt(160), CornerRadius: 12, Overflow: core.Hidden}},
 			}},
-			ui.APILine{Label: "Its rows wave with a phase the platform turns", Names: "Shader.Images"},
+			ui.APILine{Label: tr.ShaderItsRowsWaveWithA(), Names: "Shader.Images"},
 		}}
 	}
 	source := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconTerminal, Title: "The source", Description: "Go's syntax, checked and written as MSL, GLSL or HLSL", Children: []core.Node{
+		return ui.Card{Icon: ui.IconTerminal, Title: tr.ShaderTheSource(), Description: tr.ShaderGoSSyntaxCheckedAnd(), Children: []core.Node{
 			core.Scroll{Horizontal: true, Children: []core.Node{core.Text{Content: rippleSource,
 				Style: core.Style{FontFamily: ui.Mono, FontSize: 12, LineHeight: 18}, StyleFunc: ui.Colored(colors.Code)}}},
-			ui.APILine{Label: "Compiled once, as the program loads", Names: "MustCompileShader"},
+			ui.APILine{Label: tr.ShaderCompiledOnceAsTheProgram(), Names: "MustCompileShader"},
 		}}
 	}
 	return demoPage(cx, pageProps{}, background, images, source)

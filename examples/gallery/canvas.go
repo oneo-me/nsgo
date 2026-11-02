@@ -8,6 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 const tau = 2 * math.Pi
@@ -59,14 +60,16 @@ func cos32(a float64) float32 { return float32(math.Cos(a)) }
 func sin32(a float64) float32 { return float32(math.Sin(a)) }
 
 var dialPresets = []struct {
-	value, label string
-	load         float64
-}{{"idle", "Idle", 18}, {"cruise", "Cruise", 57}, {"peak", "Peak", 91}}
+	value string
+	label func(locales.Messages) string
+	load  float64
+}{{"idle", locales.Messages.CanvasIdle, 18}, {"cruise", locales.Messages.CanvasCruise, 57}, {"peak", locales.Messages.CanvasPeak, 91}}
 
 // dial is a tick ring, a hatched red zone, a gradient sweep and a needle,
 // all bound to one animated value: springing it moves the needle on the
 // platform's main thread.
 func dial(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	preset := core.NewSignal(cx, "cruise")
 	load := func() float64 {
@@ -140,7 +143,7 @@ func dial(cx *core.Scope) core.Node {
 		// The readout, drawn again only when the preset changes.
 		d.SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineAlphabetic).SetFillColor(c.Text).
 			FillText(fmt.Sprint(load()), cxp, cy+r*0.62, sans(40, ui.Semibold)).
-			SetFillColor(c.Faint).FillText("% load", cxp, cy+r*0.62+18, sans(11, ui.Regular))
+			SetFillColor(c.Faint).FillText(tr.CanvasLoad(), cxp, cy+r*0.62+18, sans(11, ui.Regular))
 		// The needle, rotated on the platform.
 		d.Save().Translate(cxp, cy).Rotate(0).Bind(core.ArgA, angle).SetShadow(shade, 0, 0, 6).SetFillColor(c.Text).
 			BeginPath().MoveTo(-14, -3).LineTo(r-18, 0).LineTo(-14, 3).ClosePath().Fill().Restore()
@@ -148,19 +151,19 @@ func dial(cx *core.Scope) core.Node {
 	}
 	var opts []ui.Option[string]
 	for _, p := range dialPresets {
-		opts = append(opts, ui.Option[string]{Value: p.value, Label: p.label})
+		opts = append(opts, ui.Option[string]{Value: p.value, Label: p.label(locales.For(cx))})
 	}
-	return ui.Card{Icon: ui.IconSpark, Title: "Turbine 3 load", Description: "Needle and sweep on one animated value", Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(230)}, Draw: draw, Label: "Load dial", TestID: "dial"},
+	return ui.Card{Icon: ui.IconSpark, Title: tr.CanvasTurbine3Load(), Description: tr.CanvasNeedleAndSweepOnOne(), Children: []core.Node{
+		core.Canvas{Style: core.Style{Height: core.Pt(230)}, Draw: draw, Label: tr.CanvasLoadDial(), TestID: "dial"},
 		ui.Segmented[string]{Options: opts, Value: preset.Get, OnChange: choose},
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				z := zone()
-				name := map[ui.Tone]string{ui.ToneDanger: "Redline", ui.ToneWarn: "High", ui.ToneUp: "Nominal"}[z]
-				return ui.Stat{Label: "Zone", Value: label(name), Tone: z, Width: core.Pct(33)}
+				name := map[ui.Tone]string{ui.ToneDanger: tr.CanvasRedline(), ui.ToneWarn: tr.CanvasHigh(), ui.ToneUp: tr.CanvasNominal()}[z]
+				return ui.Stat{Label: tr.CanvasZone(), Value: label(name), Tone: z, Width: core.Pct(33)}
 			}),
-			ui.Stat{Label: "Spool", Value: func() string { return thousands(int(load()*128)) + " rpm" }, Width: core.Pct(33)},
-			ui.Stat{Label: "Limit", Value: label("85 %"), Tone: ui.ToneDanger, Width: core.Pct(33)},
+			ui.Stat{Label: tr.CanvasSpool(), Value: func() string { return thousands(int(load()*128)) + tr.CanvasRpm() }, Width: core.Pct(33)},
+			ui.Stat{Label: tr.CanvasLimit(), Value: label("85 %"), Tone: ui.ToneDanger, Width: core.Pct(33)},
 		}},
 	}}
 }
@@ -178,6 +181,7 @@ func freshData(rand func() float64) []int {
 // window and labels measured with MeasureText; new data sweeps in on the
 // platform.
 func areaChart(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	data := core.NewSignalFunc(cx, freshData(seeded(7)), func(a, b []int) bool { return false })
 	sweep, replay := reveal(cx, 1100*time.Millisecond)
@@ -251,12 +255,12 @@ func areaChart(cx *core.Scope) core.Node {
 		// The average, with a pill label measured to fit.
 		mean := float64(avg())
 		dashed(d, left, y(mean), w0-right, y(mean), c.Muted)
-		l := fmt.Sprintf("avg %.0f", mean)
+		l := tr.CanvasAvg(mean)
 		lw := d.MeasureText(l, f) + 12
 		d.SetFillColor(c.Raised).BeginPath().RoundRect(w0-right-lw, y(mean)-9, lw, 18, 9).Fill()
 		d.SetFillColor(c.Text).SetTextBaseline(core.BaselineMiddle).FillText(l, w0-right-lw+6, y(mean), f)
 	}
-	return ui.Card{Icon: ui.IconStocks, Title: "Relay throughput", Description: "Area · average · hatching", Actions: []core.Node{ui.Button{Text: "New", Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+	return ui.Card{Icon: ui.IconStocks, Title: tr.CanvasRelayThroughput(), Description: tr.CanvasAreaAverageHatching(), Actions: []core.Node{ui.Button{Text: tr.CanvasNew(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
 		data.Set(freshData(func() float64 { return float64(time.Now().UnixNano()%1000) / 1000 }))
 		replay()
 	}}}, Children: []core.Node{
@@ -266,16 +270,17 @@ func areaChart(cx *core.Scope) core.Node {
 			if l < a {
 				t, sign = ui.ToneDown, "−"
 			}
-			return ui.Figure{Value: label(fmt.Sprintf("%d.%d", l, (l*7)%10)), Unit: "k/s", Note: label(fmt.Sprintf("%s%d vs. average", sign, max(l-a, a-l))), Tone: t}
+			return ui.Figure{Value: label(fmt.Sprintf("%d.%d", l, (l*7)%10)), Unit: "k/s", Note: label(tr.CanvasVsAverage(fmt.Sprintf("%s%d", sign, max(l-a, a-l)))), Tone: t}
 		}),
-		core.Canvas{Style: core.Style{Height: core.Pt(180)}, Draw: draw, Label: "Throughput chart"},
+		core.Canvas{Style: core.Style{Height: core.Pt(180)}, Draw: draw, Label: tr.CanvasThroughputChart()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
-			ui.Legend{Color: colors.Accent, Label: "Messages"}, ui.Legend{Color: colors.Muted, Label: "Average"}, ui.Legend{Color: colors.Warn, Label: "Deploy"},
+			ui.Legend{Color: colors.Accent, Label: tr.CanvasMessages()}, ui.Legend{Color: colors.Muted, Label: tr.CanvasAverage()}, ui.Legend{Color: colors.Warn, Label: tr.CanvasDeploy()},
 		}},
 	}}
 }
 
-var ridgeDays = []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+var ridgeDays = []func(locales.Messages) string{locales.Messages.CanvasMon, locales.Messages.CanvasTue, locales.Messages.CanvasWed,
+	locales.Messages.CanvasThu, locales.Messages.CanvasFri, locales.Messages.CanvasSat, locales.Messages.CanvasSun}
 
 var ridges = func() [][]float64 {
 	out := make([][]float64, len(ridgeDays))
@@ -304,13 +309,14 @@ var ridges = func() [][]float64 {
 // ridgeline is one smooth curve per day, overlapping, each a low-alpha
 // fill.
 func ridgeline(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	sweep, replay := reveal(cx, 1400*time.Millisecond)
 	draw := func(d *core.Drawing, size core.Size) {
 		c := colors.Now()
 		width, height := float32(size.Width), float32(size.Height)
 		f := sans(11, ui.Regular)
-		left := d.MeasureText("Mon", f) + 10
+		left := d.MeasureText(tr.CanvasMon(), f) + 10
 		const bottom = 18
 		step := (height - bottom - 30) / float32(len(ridgeDays)-1)
 		x := func(h float64) float32 { return left + float32(h/24)*(width-left) }
@@ -344,13 +350,13 @@ func ridgeline(cx *core.Scope) core.Node {
 		d.Restore()
 		d.SetFillColor(c.Muted)
 		for di, day := range ridgeDays {
-			d.FillText(day, 0, 30+float32(di)*step-2, f)
+			d.FillText(day(tr), 0, 30+float32(di)*step-2, f)
 		}
 	}
-	return ui.Card{Icon: ui.IconAnimation, Title: "Footfall by hour", Description: "Ridgeline, one curve a day", Actions: []core.Node{ui.Button{Text: "Replay", Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
-		ui.Caption{Label: "Gate B, last week", Note: label("Peak 12:00–14:00")},
-		core.Canvas{Style: core.Style{Height: core.Pt(210)}, Draw: draw, Label: "Footfall ridgeline"},
-		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{ui.Legend{Color: colors.Accent, Label: "Weekday"}, ui.Legend{Color: colors.Info, Label: "Weekend"}}},
+	return ui.Card{Icon: ui.IconAnimation, Title: tr.CanvasFootfallByHour(), Description: tr.CanvasRidgelineOneCurveADay(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+		ui.Caption{Label: tr.CanvasGateBLastWeek(), Note: label(tr.CanvasPeak12001400())},
+		core.Canvas{Style: core.Style{Height: core.Pt(210)}, Draw: draw, Label: tr.CanvasFootfallRidgeline()},
+		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{ui.Legend{Color: colors.Accent, Label: tr.CanvasWeekday()}, ui.Legend{Color: colors.Info, Label: tr.CanvasWeekend()}}},
 	}}
 }
 
@@ -364,6 +370,7 @@ func levels(cx *core.Scope) []core.Color {
 // dotMatrix is uptime per hour block, a pulse on the newest dot (a loop
 // on the platform).
 func dotMatrix(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	pulse := core.NewAnimatedValue(cx, 0)
 	run := cx.StartAnimation(core.Loop(core.Timing(pulse, 1, core.TimingConfig{Duration: ms(1400), Easing: ease(core.EasingQuad, core.EaseModeOut)}), 0), nil)
@@ -397,11 +404,11 @@ func dotMatrix(cx *core.Scope) core.Node {
 		swatches = append(swatches, core.View{Style: core.Style{Width: core.Pt(9), Height: core.Pt(9), CornerRadius: 2.5},
 			StyleFunc: ui.Filled(func() core.Color { return levels(cx)[i] })})
 	}
-	return ui.Card{Icon: ui.IconBell, Title: "Beacon uptime", Description: "Dot matrix, one column a day", Children: []core.Node{
-		ui.Figure{Value: label("99.94"), Unit: "%", Note: label("3 incidents"), Tone: ui.ToneDanger},
-		core.Canvas{Style: core.Style{Height: core.Pt(96)}, Draw: draw, Label: "Uptime matrix"},
-		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{ui.Text("Less", 13, ui.Regular, colors.Muted)}, swatches...),
-			core.Text{Content: "More", Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}, ui.Legend{Color: colors.Danger, Label: "Incident"})},
+	return ui.Card{Icon: ui.IconBell, Title: tr.CanvasBeaconUptime(), Description: tr.CanvasDotMatrixOneColumnA(), Children: []core.Node{
+		ui.Figure{Value: label("99.94"), Unit: "%", Note: label(tr.Canvas3Incidents()), Tone: ui.ToneDanger},
+		core.Canvas{Style: core.Style{Height: core.Pt(96)}, Draw: draw, Label: tr.CanvasUptimeMatrix()},
+		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{ui.Text(tr.CanvasLess(), 13, ui.Regular, colors.Muted)}, swatches...),
+			core.Text{Content: tr.CanvasMore(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}, ui.Legend{Color: colors.Danger, Label: tr.CanvasIncident()})},
 	}}
 }
 
@@ -413,6 +420,7 @@ var routesLatency = []struct {
 // dumbbell is before and after per row; the after dots travel on the
 // platform, one value staggered through each row's input range.
 func dumbbell(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	t, replay := reveal(cx, 1500*time.Millisecond)
 	draw := func(d *core.Drawing, size core.Size) {
@@ -454,10 +462,10 @@ func dumbbell(cx *core.Scope) core.Node {
 			d.SetFillColor(tn).FillText(l, width-d.MeasureText(l, f11), cy, f11)
 		}
 	}
-	return ui.Card{Icon: ui.IconPhysics, Title: "Route latency", Description: "Dumbbell, before → after", Actions: []core.Node{ui.Button{Text: "Replay", Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(30*len(routesLatency) + 24))}, Draw: draw, Label: "Route latency"},
+	return ui.Card{Icon: ui.IconPhysics, Title: tr.CanvasRouteLatency(), Description: tr.CanvasDumbbellBeforeAfter(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(30*len(routesLatency) + 24))}, Draw: draw, Label: tr.CanvasRouteLatency()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
-			ui.Legend{Color: colors.Muted, Label: "Before"}, ui.Legend{Color: colors.Accent, Label: "After"}, ui.Legend{Color: colors.Danger, Label: "Regressed"},
+			ui.Legend{Color: colors.Muted, Label: tr.CanvasBefore()}, ui.Legend{Color: colors.Accent, Label: tr.CanvasAfter()}, ui.Legend{Color: colors.Danger, Label: tr.CanvasRegressed()},
 		}},
 	}}
 }
@@ -465,6 +473,7 @@ func dumbbell(cx *core.Scope) core.Node {
 // clock is transforms, save and restore, and a second hand the platform
 // turns.
 func clock(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	seconds := core.NewAnimatedValue(cx, 0)
 	run := cx.StartAnimation(core.Loop(core.Timing(seconds, 60, core.TimingConfig{Duration: time.Minute}), 0), nil)
@@ -490,29 +499,31 @@ func clock(cx *core.Scope) core.Node {
 			SetStrokeColor(c.Accent).SetLineWidth(1.5).BeginPath().MoveTo(-14, 0).LineTo(r*0.8, 0).Stroke().Restore()
 		d.SetFillColor(c.Accent).BeginPath().Arc(0, 0, 4, 0, tau, false).Fill()
 	}
-	return ui.Card{Icon: ui.IconSearch, Title: "Transforms", Description: "Translate · Rotate · Save / Restore", Children: []core.Node{
+	return ui.Card{Icon: ui.IconSearch, Title: tr.CanvasTransforms(), Description: tr.CanvasTranslateRotateSaveRestore(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 16}, Children: []core.Node{
-			core.Canvas{Style: core.Style{Width: core.Pt(150), Height: core.Pt(150)}, Draw: draw, Label: "Clock"},
+			core.Canvas{Style: core.Style{Width: core.Pt(150), Height: core.Pt(150)}, Draw: draw, Label: tr.CanvasClock()},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
-				ui.Caption{Label: "Ticks", Note: label("60 rotations")}, ui.Caption{Label: "Hands", Note: label("Save, Restore")}, ui.Caption{Label: "Second hand", Note: label("A loop")},
+				ui.Caption{Label: tr.CanvasTicks(), Note: label(tr.Canvas60Rotations())}, ui.Caption{Label: tr.CanvasHands(), Note: label(tr.CanvasSaveRestore())}, ui.Caption{Label: tr.CanvasSecondHand(), Note: label(tr.CanvasALoop())},
 			}},
 		}},
 	}}
 }
 
 var pathGlyphs = []struct {
-	name, d string
-	tone    ui.Tone
-	stroke  bool
+	name   func(locales.Messages) string
+	d      string
+	tone   ui.Tone
+	stroke bool
 }{
-	{"Heart", "M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z", ui.ToneDanger, false},
-	{"Star", "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z", ui.ToneWarn, false},
-	{"Bolt", "M13 2L3 14h7l-1 8 10-12h-7z", ui.ToneInfo, false},
-	{"Check", "M20 6L9 17l-5-5", ui.ToneAccent, true},
+	{locales.Messages.CanvasHeart, "M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z", ui.ToneDanger, false},
+	{locales.Messages.CanvasStar, "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z", ui.ToneWarn, false},
+	{locales.Messages.CanvasBolt, "M13 2L3 14h7l-1 8 10-12h-7z", ui.ToneInfo, false},
+	{locales.Messages.CanvasCheck, "M20 6L9 17l-5-5", ui.ToneAccent, true},
 }
 
 // paths are SVG path data, parsed by core.
 func paths(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	var tiles []core.Node
@@ -523,7 +534,7 @@ func paths(cx *core.Scope) core.Node {
 				return fin.Raised().Over(core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 18, BorderCurve: core.BorderCurveContinuous, Background: colors.Raised(),
 					BorderWidth: 1, BorderColor: colors.Border(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 			}, Children: []core.Node{
-				core.Canvas{Style: core.Style{Width: core.Pt(30), Height: core.Pt(30)}, Label: g.name, Draw: func(d *core.Drawing, _ core.Size) {
+				core.Canvas{Style: core.Style{Width: core.Pt(30), Height: core.Pt(30)}, Label: g.name(locales.For(cx)), Draw: func(d *core.Drawing, _ core.Size) {
 					c := g.tone.Color(cx)
 					d.Scale(30.0/24, 30.0/24)
 					if g.stroke {
@@ -533,10 +544,10 @@ func paths(cx *core.Scope) core.Node {
 					}
 				}},
 			}},
-			ui.Text(g.name, 13, ui.Regular, colors.Muted),
+			ui.Text(g.name(locales.For(cx)), 13, ui.Regular, colors.Muted),
 		}})
 	}
-	return ui.Card{Icon: ui.IconStar, Title: "Paths", Description: "SVG path data, parsed by core", Children: []core.Node{
+	return ui.Card{Icon: ui.IconStar, Title: tr.CanvasPaths(), Description: tr.CanvasSvgPathDataParsedBy(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: tiles},
 	}}
 }
@@ -544,6 +555,7 @@ func paths(cx *core.Scope) core.Node {
 // compositing is clipping, shadows, DestinationOut, dashes and radial
 // gradients.
 func compositing(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	img := core.ImageSource{Data: logoPNG}
 	draw := func(d *core.Drawing, size core.Size) {
@@ -570,16 +582,17 @@ func compositing(cx *core.Scope) core.Node {
 			BeginPath().Arc(rx, cy, 38, 0, tau, false).Fill()
 		d.SetLineDash(5, 5).SetStrokeColor(c.Warn).SetLineWidth(1.5).BeginPath().Arc(rx, cy, 43, 0, tau, false).Stroke()
 	}
-	return ui.Card{Icon: ui.IconImage, Title: "Compositing", Description: "Clip, shadow, DestinationOut, dashes", Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(120)}, Draw: draw, Label: "Compositing"},
+	return ui.Card{Icon: ui.IconImage, Title: tr.CanvasCompositing(), Description: tr.CanvasClipShadowDestinationoutDashes(), Children: []core.Node{
+		core.Canvas{Style: core.Style{Height: core.Pt(120)}, Draw: draw, Label: tr.CanvasCompositing()},
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
-			ui.Text("Clipped image", 13, ui.Regular, colors.Muted), ui.Text("Cut-out", 13, ui.Regular, colors.Muted), ui.Text("Radial gradient", 13, ui.Regular, colors.Muted),
+			ui.Text(tr.CanvasClippedImage(), 13, ui.Regular, colors.Muted), ui.Text(tr.CanvasCutOut(), 13, ui.Regular, colors.Muted), ui.Text(tr.CanvasRadialGradient(), 13, ui.Regular, colors.Muted),
 		}},
 	}}
 }
 
 // sketch draws again from the engine on each move.
 func sketch(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	strokes := core.NewSignalFunc(cx, [][]core.Point(nil), func(a, b [][]core.Point) bool { return false })
 	draw := func(d *core.Drawing, size core.Size) {
@@ -594,7 +607,7 @@ func sketch(cx *core.Scope) core.Node {
 		}
 		all := strokes.Get()
 		if len(all) == 0 {
-			d.SetFillColor(c.Faint).SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineMiddle).FillText("Draw here", width/2, height/2, sans(14, ui.Regular))
+			d.SetFillColor(c.Faint).SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineMiddle).FillText(tr.CanvasDrawHere(), width/2, height/2, sans(14, ui.Regular))
 		}
 		d.SetStrokeColor(c.Accent).SetLineWidth(3).SetLineCap(core.CapRound).SetLineJoin(core.JoinRound)
 		for _, s := range all {
@@ -609,7 +622,7 @@ func sketch(cx *core.Scope) core.Node {
 			d.Stroke()
 		}
 	}
-	return ui.Card{Icon: ui.IconGestures, Title: "Sketch", Description: ui.Hint(cx, "Touch → draw from the engine", "Drag → draw from the engine"), Actions: []core.Node{ui.Button{Text: "Clear", Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconGestures, Title: tr.CanvasSketch(), Description: ui.Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
 		core.View{TestID: "sketch", Responder: &core.Responder{Claims: []core.TouchClaim{{}}, Keep: true,
 			OnGrant: func(e core.ResponderEvent) {
 				strokes.Update(func(s [][]core.Point) [][]core.Point { return append(s, []core.Point{e.Position}) })
@@ -623,13 +636,13 @@ func sketch(cx *core.Scope) core.Node {
 					return s
 				})
 			},
-		}, Children: []core.Node{core.Canvas{Style: core.Style{Height: core.Pt(200)}, Draw: draw, Label: "Sketch pad"}}},
-		ui.Caption{Label: "Strokes", Note: func() string {
+		}, Children: []core.Node{core.Canvas{Style: core.Style{Height: core.Pt(200)}, Draw: draw, Label: tr.CanvasSketchPad()}}},
+		ui.Caption{Label: tr.CanvasStrokes(), Note: func() string {
 			n := 0
 			for _, s := range strokes.Get() {
 				n += len(s)
 			}
-			return fmt.Sprintf("%d · %d points", len(strokes.Get()), n)
+			return tr.CanvasStrokesPoints(len(strokes.Get()), n)
 		}},
 	}}
 }
@@ -637,6 +650,7 @@ func sketch(cx *core.Scope) core.Node {
 // hitTests names each bar of a chart for assistive technology and tests,
 // and selects the bar a press lands in.
 func hitTests(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	values := []float32{0.5, 0.8, 0.35, 0.65}
 	selected := core.NewSignal(cx, -1)
@@ -655,7 +669,7 @@ func hitTests(cx *core.Scope) core.Node {
 			}
 			d.SetFillColor(fillC()).FillPath(shapes[i], core.NonZero)
 			d.Node(core.CanvasNode{Bounds: core.Bounds{Origin: core.Point{X: core.Points(x), Y: core.Points(h - 12 - bh)}, Size: core.Size{Width: core.Points(slot * 0.7), Height: core.Points(bh)}},
-				Role: core.RoleButton, Label: fmt.Sprintf("Bar %d, %.0f%%", i+1, v*100), TestID: fmt.Sprintf("bar-%d", i+1), Selected: selected.Get() == i})
+				Role: core.RoleButton, Label: tr.CanvasBarValue(i+1, float64(v)), TestID: fmt.Sprintf("bar-%d", i+1), Selected: selected.Get() == i})
 		}
 		last = d
 	}
@@ -668,11 +682,11 @@ func hitTests(cx *core.Scope) core.Node {
 		}
 		selected.Set(-1)
 	}
-	return ui.Card{Icon: ui.IconAccess, Title: "Nodes and hit tests", Description: "Bars screen readers see; a press selects the one PathContains finds", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
-		core.Canvas{Style: core.Style{Height: core.Pt(140)}, Draw: draw, OnPress: pressed, Label: "Selectable bars", TestID: "bars"},
-		ui.Caption{Label: "Selected", Note: func() string {
+	return ui.Card{Icon: ui.IconAccess, Title: tr.CanvasNodesAndHitTests(), Description: tr.CanvasBarsScreenReadersSeeA(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+		core.Canvas{Style: core.Style{Height: core.Pt(140)}, Draw: draw, OnPress: pressed, Label: tr.CanvasSelectableBars(), TestID: "bars"},
+		ui.Caption{Label: tr.CanvasSelected(), Note: func() string {
 			if s := selected.Get(); s >= 0 {
-				return fmt.Sprintf("Bar %d", s+1)
+				return tr.CanvasBar(s + 1)
 			}
 			return "none"
 		}},

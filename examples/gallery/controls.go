@@ -9,6 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // base's controls own presses, keys, the disabled state and what screen
@@ -159,18 +160,9 @@ type kind struct {
 	count int
 }
 
-var kinds = []kind{{"Photos", 1204}, {"Videos", 86}, {"Screenshots", 312}, {"Live Photos", 48}}
-
 type plan struct {
 	name, detail, price string
 	disabled            bool
-}
-
-var plans = []plan{
-	{"Free", "One device, 5 GB", "$0", false},
-	{"Plus", "Three devices, 200 GB", "$3 / mo", false},
-	{"Team", "A shared library, 2 TB", "$12 / mo", false},
-	{"Enterprise", "Set up by your organization", "—", true},
 }
 
 type tabSection struct {
@@ -179,19 +171,31 @@ type tabSection struct {
 	disabled bool
 }
 
-var tabSections = []tabSection{
-	{"Overview", [][2]string{{"Visitors", "12,480"}, {"Sign-ups", "342"}, {"Conversion", "2.74%"}}, false},
-	{"Activity", [][2]string{{"Deployed to production", "09:41"}, {"Invoice paid", "08:15"}, {"A member joined", "07:02"}}, false},
-	{"Members", [][2]string{{"Ada Lovelace", "Owner"}, {"Grace Hopper", "Admin"}, {"Alan Turing", "Member"}}, false},
-	{"Billing", nil, true},
+// controlsData is the demo's sample data in tr's language.
+func controlsData(tr locales.Messages) (kinds []kind, plans []plan, tabSections []tabSection, usage [][2]string) {
+	kinds = []kind{{tr.ControlsPhotos(), 1204}, {tr.ControlsVideos(), 86}, {tr.ControlsScreenshots(), 312}, {tr.ControlsLivePhotos(), 48}}
+	plans = []plan{
+		{tr.ControlsFree(), tr.ControlsOneDevice5Gb(), "$0", false},
+		{tr.ControlsPlus(), tr.ControlsThreeDevices200Gb(), tr.Controls3Mo(), false},
+		{tr.ControlsTeam(), tr.ControlsASharedLibrary2Tb(), tr.Controls12Mo(), false},
+		{tr.ControlsEnterprise(), tr.ControlsSetUpByYourOrganization(), "—", true},
+	}
+	tabSections = []tabSection{
+		{tr.ControlsOverview(), [][2]string{{tr.ControlsVisitors(), "12,480"}, {tr.ControlsSignUps(), "342"}, {tr.ControlsConversion(), "2.74%"}}, false},
+		{tr.ControlsActivity(), [][2]string{{tr.ControlsDeployedToProduction(), "09:41"}, {tr.ControlsInvoicePaid(), "08:15"}, {tr.ControlsAMemberJoined(), "07:02"}}, false},
+		{tr.ControlsMembers(), [][2]string{{"Ada Lovelace", tr.ControlsOwner()}, {"Grace Hopper", tr.ControlsAdmin()}, {"Alan Turing", tr.ControlsMember()}}, false},
+		{tr.ControlsBilling(), nil, true},
+	}
+	usage = [][2]string{{tr.ControlsPhotos(), "120 GB"}, {tr.ControlsApps(), "54 GB"}, {tr.ControlsSystem(), "38 GB"}}
+	return
 }
-
-var usage = [][2]string{{"Photos", "120 GB"}, {"Apps", "54 GB"}, {"System", "38 GB"}}
 
 // controlsDemo is base's Switch, Checkbox, Radio and RadioGroup, Tab and
 // Tabs, Collapsible and Progress in the settings, filters, pickers,
 // section switchers and disclosures apps use them for.
 func controlsDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	kinds, plans, tabSections, usage := controlsData(tr)
 	z := touchSizes
 	pointer := cx.Env().Desktop()
 	if pointer {
@@ -207,43 +211,45 @@ func controlsDemo(cx *core.Scope) core.Node {
 		return base.Switch{Checked: on.Get, Disabled: disabled, Label: label,
 			OnChange: func(v bool) {
 				on.Set(v)
-				last.Set(fmt.Sprintf("%s: %s", label, onOff(v)))
+				last.Set(fmt.Sprintf("%s: %s", label, onOff(tr, v)))
 			},
 			Style: s, StyleFunc: hoverPaint(cx, false), TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb,
 			Children: []core.Node{divider(cx, !first), z.labelled(cx, label, detail)}}
 	}
 
 	settings := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		notifications, badges := core.NewSignal(cx, true), core.NewSignal(cx, true)
 		haptics, lowData := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return ui.Card{Icon: ui.IconControls, Title: "Switch", Description: "Settings that take effect at once", Children: []core.Node{
+		return ui.Card{Icon: ui.IconControls, Title: tr.ControlsSwitch(), Description: tr.ControlsSettingsThatTakeEffectAt(), Children: []core.Node{
 			core.View{Children: []core.Node{
-				setting(cx, "Notifications", func() string {
+				setting(cx, tr.ControlsNotifications(), func() string {
 					if notifications.Get() {
-						return "Banners, sounds and badges"
+						return tr.ControlsBannersSoundsAndBadges()
 					}
-					return "Off"
+					return tr.ControlsOff()
 				}, notifications, nil, true),
-				setting(cx, "Badges", func() string {
+				setting(cx, tr.ControlsBadges(), func() string {
 					if notifications.Get() {
-						return "The unread count on the icon"
+						return tr.ControlsTheUnreadCountOnThe()
 					}
-					return "Turn on notifications first"
+					return tr.ControlsTurnOnNotificationsFirst()
 				}, badges, func() bool { return !notifications.Get() }, false),
-				setting(cx, "Haptics", func() string { return "A tap under the finger as values change" }, haptics, nil, false),
-				setting(cx, "Low data mode", func() string {
+				setting(cx, tr.ControlsHaptics(), func() string { return tr.ControlsATapUnderTheFinger() }, haptics, nil, false),
+				setting(cx, tr.ControlsLowDataMode(), func() string {
 					if lowData.Get() {
-						return "Images load at a lower quality"
+						return tr.ControlsImagesLoadAtALower()
 					}
-					return "Images load in full"
+					return tr.ControlsImagesLoadInFull()
 				}, lowData, nil, false),
 			}},
 		}}
 	}
 
 	filter := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		shown := core.NewSignalFunc(cx, []string{"Photos", "Videos", "Live Photos"}, slices.Equal)
+		shown := core.NewSignalFunc(cx, []string{tr.ControlsPhotos(), tr.ControlsVideos(), tr.ControlsLivePhotos()}, slices.Equal)
 		has := func(name string) bool { return slices.Contains(shown.Get(), name) }
 		all := func() bool { return len(shown.Get()) == len(kinds) }
 		boxMark := func() mark {
@@ -255,7 +261,7 @@ func controlsDemo(cx *core.Scope) core.Node {
 			}
 			return markNone
 		}
-		rows := []core.Node{base.Checkbox{Checked: all, Indeterminate: func() bool { return boxMark() == markDash }, Label: "Select all",
+		rows := []core.Node{base.Checkbox{Checked: all, Indeterminate: func() bool { return boxMark() == markDash }, Label: tr.ControlsSelectAll(),
 			OnChange: func(on bool) {
 				var names []string
 				if on {
@@ -264,10 +270,10 @@ func controlsDemo(cx *core.Scope) core.Node {
 					}
 				}
 				shown.Set(names)
-				last.Set(fmt.Sprintf("Select all: %v", on))
+				last.Set(fmt.Sprintf("%s: %s", tr.ControlsSelectAll(), onOff(tr, on)))
 			},
 			Style: z.hoverRow(cx, true, 0, false), StyleFunc: hoverPaint(cx, false), IndicatorStyleFunc: func() core.Style { return z.box(cx, boxMark()) }, Indicator: z.boxMark(cx, boxMark),
-			Children: []core.Node{core.Text{Content: "Select all", Style: core.Style{FlexGrow: 1, FontSize: z.label, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)}}}}
+			Children: []core.Node{core.Text{Content: tr.ControlsSelectAll(), Style: core.Style{FlexGrow: 1, FontSize: z.label, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)}}}}
 		for _, k := range kinds {
 			m := func() mark {
 				if has(k.name) {
@@ -284,7 +290,7 @@ func controlsDemo(cx *core.Scope) core.Node {
 						}
 					}
 					shown.Set(names)
-					last.Set(fmt.Sprintf("%s: %v", k.name, on))
+					last.Set(fmt.Sprintf("%s: %s", k.name, onOff(tr, on)))
 				},
 				// One level under "Select all": the boxes line up with its label.
 				Style: z.hoverRow(cx, false, z.control+z.gap, false), StyleFunc: hoverPaint(cx, false), IndicatorStyleFunc: func() core.Style { return z.box(cx, m()) }, Indicator: z.boxMark(cx, m),
@@ -301,25 +307,26 @@ func controlsDemo(cx *core.Scope) core.Node {
 			}
 			return n
 		}
-		return ui.Card{Icon: ui.IconControls, Title: "Checkbox", Description: "A filter: “Select all” shows a partial selection", Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("%d of %d", len(shown.Get()), len(kinds)) }}}, Children: []core.Node{
+		return ui.Card{Icon: ui.IconControls, Title: tr.ControlsCheckbox(), Description: tr.ControlsAFilterSelectAllShows(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.ControlsCountOf(len(shown.Get()), len(kinds)) }}}, Children: []core.Node{
 			core.View{Children: rows},
 			core.Text{ContentFunc: func() string {
 				if len(shown.Get()) == 0 {
-					return "Nothing to show"
+					return tr.ControlsNothingToShow()
 				}
-				return fmt.Sprintf("Showing %s items", thousands(total()))
+				return tr.ControlsShowingItems(total())
 			}, Style: core.Style{FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
 		}}
 	}
 
 	plansCard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		chosen := core.NewSignal(cx, "Plus")
+		chosen := core.NewSignal(cx, tr.ControlsPlus())
 		var radios []core.Node
 		for i, p := range plans {
 			on := func() bool { return chosen.Get() == p.name }
 			radios = append(radios, base.Radio{Checked: on, Disabled: func() bool { return p.disabled }, Label: p.name,
-				OnChange: func(bool) { chosen.Set(p.name); last.Set("Plan: " + p.name) },
+				OnChange: func(bool) { chosen.Set(p.name); last.Set(tr.ControlsPlan() + p.name) },
 				Style:    z.hoverRow(cx, i == 0, 0, p.disabled), StyleFunc: hoverPaint(cx, p.disabled),
 				Children: []core.Node{divider(cx, i != 0), z.ring(cx, on), z.labelled(cx, p.name, func() string { return p.detail }),
 					core.Text{Content: p.price, StyleFunc: func() core.Style {
@@ -336,14 +343,14 @@ func controlsDemo(cx *core.Scope) core.Node {
 		}
 		// The commit of the picker: under it on a phone, at its trailing
 		// edge with a pointer.
-		return ui.Card{Icon: ui.IconControls, Title: "Radio", Description: "A plan picker: one of a small set, all in view", Children: []core.Node{
-			base.RadioGroup{Label: "Plan", Children: radios},
+		return ui.Card{Icon: ui.IconControls, Title: tr.ControlsRadio(), Description: tr.ControlsAPlanPickerOneOf(), Children: []core.Node{
+			base.RadioGroup{Label: tr.ControlsPlan2(), Children: radios},
 			core.View{Style: core.Style{AlignItems: align}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				name := chosen.Get()
-				return ui.Button{Text: "Continue with " + name, Small: pointer, OnPress: func() {
+				return ui.Button{Text: tr.ControlsContinueWith() + name, Small: pointer, OnPress: func() {
 					for _, p := range plans {
 						if p.name == name {
-							last.Set(fmt.Sprintf("Continue: %s, %s", p.name, p.price))
+							last.Set(tr.ControlsContinueEvent(p.name, p.price))
 						}
 					}
 				}}
@@ -352,16 +359,17 @@ func controlsDemo(cx *core.Scope) core.Node {
 	}
 
 	sections := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
-		current := core.NewSignal(cx, "Overview")
+		current := core.NewSignal(cx, tr.ControlsOverview())
 		// The track's padding and border: a tab is a pill inside them.
 		pill := z.tabs - 2*(3+1)
 		var tabs []core.Node
 		for _, s := range tabSections {
 			selected := func() bool { return current.Get() == s.name }
 			tabs = append(tabs, base.Tab{Selected: selected, Disabled: func() bool { return s.disabled }, Label: s.name,
-				OnPress: func(core.PressEvent) { current.Set(s.name); last.Set("Tab: " + s.name) },
+				OnPress: func(core.PressEvent) { current.Set(s.name); last.Set(tr.ControlsTab() + s.name) },
 				StyleFunc: func() core.Style {
 					st := core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), CornerRadius: pill / 2, BorderWidth: 1, BorderColor: transparent,
 						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
@@ -382,8 +390,8 @@ func controlsDemo(cx *core.Scope) core.Node {
 					return core.Style{FontSize: 13, FontWeight: ui.Medium, Color: c()}
 				}}}})
 		}
-		return ui.Card{Icon: ui.IconControls, Title: "Tabs", Description: "A section switcher: the app shows the selected one", Children: []core.Node{
-			base.Tabs{Label: "Sections", StyleFunc: func() core.Style {
+		return ui.Card{Icon: ui.IconControls, Title: tr.ControlsTabs(), Description: tr.ControlsASectionSwitcherTheApp(), Children: []core.Node{
+			base.Tabs{Label: tr.ControlsSections(), StyleFunc: func() core.Style {
 				return core.Style{Height: core.Pt(z.tabs), Direction: core.Row, Gap: 2, Padding: core.All(3), CornerRadius: z.tabs / 2,
 					BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Inset(), Shadows: fin.Track().Shadows}
 			}, Children: tabs},
@@ -408,6 +416,7 @@ func controlsDemo(cx *core.Scope) core.Node {
 	}
 
 	disclosure := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		storage, advanced, originals := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
 		look := ui.NewSwitchLook(cx, originals.Get, z.small)
@@ -450,27 +459,28 @@ func controlsDemo(cx *core.Scope) core.Node {
 		}
 		keep := z.hoverRow(cx, false, z.gap, false)
 		keep.Direction = core.RowReverse
-		return ui.Card{Icon: ui.IconControls, Title: "Collapsible", Description: "Details under a summary, kept while collapsed", Children: []core.Node{
+		return ui.Card{Icon: ui.IconControls, Title: tr.ControlsCollapsible(), Description: tr.ControlsDetailsUnderASummaryKept(), Children: []core.Node{
 			core.View{Children: []core.Node{
 				base.Collapsible{Open: storage.Get,
 					Content:  core.View{Style: core.Style{Padding: core.Edges{Left: z.gap, Bottom: z.padding}}, Children: used},
-					Children: []core.Node{summary("Storage", "212 GB of 256 GB used", storage, true)}},
+					Children: []core.Node{summary(tr.ControlsStorage(), tr.Controls212GbOf256Gb(), storage, true)}},
 				base.Collapsible{Open: advanced.Get,
-					Content: base.Switch{Checked: originals.Get, Label: "Keep originals",
-						OnChange: func(on bool) { originals.Set(on); last.Set("Keep originals: " + onOff(on)) },
+					Content: base.Switch{Checked: originals.Get, Label: tr.ControlsKeepOriginals(),
+						OnChange: func(on bool) { originals.Set(on); last.Set(tr.ControlsKeepOriginals2() + onOff(tr, on)) },
 						Style:    keep, StyleFunc: hoverPaint(cx, false), TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb,
-						Children: []core.Node{divider(cx, true), z.labelled(cx, "Keep originals", func() string {
+						Children: []core.Node{divider(cx, true), z.labelled(cx, tr.ControlsKeepOriginals(), func() string {
 							if originals.Get() {
-								return "Edits are saved as copies"
+								return tr.ControlsEditsAreSavedAsCopies()
 							}
-							return "Edits replace the photo"
+							return tr.ControlsEditsReplaceThePhoto()
 						})}},
-					Children: []core.Node{summary("Advanced", "Options most people leave alone", advanced, false)}},
+					Children: []core.Node{summary(tr.ControlsAdvanced(), tr.ControlsOptionsMostPeopleLeaveAlone(), advanced, false)}},
 			}},
 		}}
 	}
 
 	transfers := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		sent, running := core.NewSignal(cx, 0), core.NewSignal(cx, false)
 		var timer func()
@@ -496,12 +506,12 @@ func controlsDemo(cx *core.Scope) core.Node {
 				sent.Set(0)
 			}
 			running.Set(true)
-			last.Set("Upload: started")
+			last.Set(tr.ControlsUploadStarted())
 			timer = every(cx, 300*time.Millisecond, func() {
 				sent.Set(min(100, sent.GetUntracked()+10))
 				if sent.GetUntracked() >= 100 {
 					stop()
-					last.Set("Upload: done")
+					last.Set(tr.ControlsUploadDone())
 				}
 			})
 		}
@@ -546,41 +556,41 @@ func controlsDemo(cx *core.Scope) core.Node {
 		if pointer {
 			flex, align = 0, core.AlignStart
 		}
-		return ui.Card{Icon: ui.IconControls, Title: "Progress", Description: "Transfers: the app owns the value", Children: []core.Node{
+		return ui.Card{Icon: ui.IconControls, Title: tr.ControlsProgress(), Description: tr.ControlsTransfersTheAppOwnsThe(), Children: []core.Node{
 			core.View{Children: []core.Node{
-				transfer("Upload", func() string {
+				transfer(tr.ControlsUpload(), func() string {
 					switch {
 					case sent.Get() >= 100:
-						return "24 photos sent"
+						return tr.Controls24PhotosSent()
 					case running.Get():
-						return "Sending 24 photos"
+						return tr.ControlsSending24Photos()
 					}
-					return "24 photos to send"
+					return tr.Controls24PhotosToSend()
 				}, sent.Get, false, true),
-				transfer("Backup", func() string { return "Preparing: its size is not known yet" }, func() int { return 0 }, true, false),
+				transfer(tr.ControlsBackup(), func() string { return tr.ControlsPreparingItsSizeIsNot() }, func() int { return 0 }, true, false),
 			}},
 			core.View{Style: core.Style{Direction: core.Row, Gap: z.gap, Margin: core.Edges{Top: z.padding}, AlignSelf: align}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
-					label := "Send"
+					label := tr.ControlsSend()
 					switch {
 					case running.Get():
-						label = "Pause"
+						label = tr.ControlsPause()
 					case sent.Get() >= 100:
-						label = "Send again"
+						label = tr.ControlsSendAgain()
 					}
 					return ui.Button{Text: label, Small: z.small, Flex: flex, OnPress: func() {
 						if running.GetUntracked() {
 							stop()
-							last.Set("Upload: paused")
+							last.Set(tr.ControlsUploadPaused())
 						} else {
 							start()
 						}
 					}}
 				}),
-				ui.Button{Text: "Reset", Variant: ui.ButtonSecondary, Small: z.small, Flex: flex, Disabled: func() bool { return sent.Get() == 0 }, OnPress: func() {
+				ui.Button{Text: tr.ControlsReset(), Variant: ui.ButtonSecondary, Small: z.small, Flex: flex, Disabled: func() bool { return sent.Get() == 0 }, OnPress: func() {
 					stop()
 					sent.Set(0)
-					last.Set("Upload: reset")
+					last.Set(tr.ControlsUploadReset())
 				}},
 			}},
 		}}
@@ -590,9 +600,9 @@ func controlsDemo(cx *core.Scope) core.Node {
 }
 
 // onOff is a setting's state in words.
-func onOff(on bool) string {
+func onOff(tr locales.Messages, on bool) string {
 	if on {
-		return "on"
+		return tr.CommonOn()
 	}
-	return "off"
+	return tr.CommonOff()
 }

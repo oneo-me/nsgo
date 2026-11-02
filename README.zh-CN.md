@@ -114,6 +114,7 @@ build_number: 1         # CFBundleVersion 和 Android 的 versionCode；否则�
 # appearance: dark      # 无论系统设置，固定为 light 或 dark
 # theme: theme.json     # TSX 应用的主题：NSGo 的或 shadcn/ui 的
 window: { width: 420, height: 560 }
+# i18n: { dir: locales, source: en }  # 应用的语言目录，及编写它所用的语言
 icon:
   apple: assets/AppIcon.icon  # macOS 和 iOS，或 macOS 的 .icns
   png: assets/Icon.png        # 其他所有目标
@@ -133,6 +134,8 @@ build:
 ```
 
 `nsgo.yaml` 旁边的 `resources/` 存放随应用发布的文件，`asset:` 图片从这里加载，`nsgo.Fonts("fonts/Brand.ttf")` 也从这里注册字体；`assets/` 存放不随应用发布的项目文件，例如图标。
+
+`locales/` 存放应用的文案，每种语言一个 YAML 文件（`en.yaml`、`de.yaml`），使用 ICU MessageFormat，由应用的包导入。`dev`、`build` 和 `test` 会检查它们，并在旁边为每条文案生成一个 Go 函数，例如 `locales.Greeting(cx, "Ada")`，以应用显示的语言输出，并随语言变化而更新；`cx.SetLocale("de")` 可以选定一种语言，布局方向随该语言的书写方向。`go tool nsgo i18n` 只生成这些函数。以包路径为键（例如 `github.com/oneo-me/nsgo/base/locales`）可以用该文件的语言为那个包补充文案，用于 NSGo 没有翻译的语言。
 
 在你的模块中添加一次该工具，之后用 `go tool nsgo` 运行，无需安装：
 

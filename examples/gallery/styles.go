@@ -6,6 +6,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // specimenStage is the stage every specimen stands on: the card's light,
@@ -73,6 +74,7 @@ func grid(children ...core.Node) core.Node {
 }
 
 func cornersCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	shapes := []struct {
@@ -80,11 +82,11 @@ func cornersCard(cx *core.Scope) core.Node {
 		style core.Style
 		paint func() core.Style
 	}{
-		{"Circular", core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 20}, ui.Filled(colors.Info)},
-		{"Continuous", core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 20, BorderCurve: core.BorderCurveContinuous}, ui.Filled(colors.Info)},
-		{"One corner", core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadii: core.Corners{TopLeft: 4, TopRight: 20, BottomRight: 20, BottomLeft: 20},
+		{tr.StylesCircular(), core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 20}, ui.Filled(colors.Info)},
+		{tr.StylesContinuous(), core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 20, BorderCurve: core.BorderCurveContinuous}, ui.Filled(colors.Info)},
+		{tr.StylesOneCorner(), core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadii: core.Corners{TopLeft: 4, TopRight: 20, BottomRight: 20, BottomLeft: 20},
 			BorderCurve: core.BorderCurveContinuous, BorderWidth: 2.5}, func() core.Style { return core.Style{BorderColor: colors.Accent()} }},
-		{"Pill", core.Style{Width: core.Pt(60), Height: core.Pt(28), CornerRadius: 14, BorderCurve: core.BorderCurveContinuous}, ui.Filled(colors.Up)},
+		{tr.StylesPill(), core.Style{Width: core.Pt(60), Height: core.Pt(28), CornerRadius: 14, BorderCurve: core.BorderCurveContinuous}, ui.Filled(colors.Up)},
 	}
 	var row []core.Node
 	for _, s := range shapes {
@@ -93,34 +95,35 @@ func cornersCard(cx *core.Scope) core.Node {
 			ui.Text(s.label, 12, ui.Regular, colors.Muted),
 		}})
 	}
-	return ui.Card{Icon: ui.IconStyles, Title: "Corners", Description: "CornerRadius · BorderCurve · per corner", Children: []core.Node{
+	return ui.Card{Icon: ui.IconStyles, Title: tr.StylesCorners(), Description: tr.StylesCornerradiusBordercurvePerCorner(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: row},
-		ui.Caption{Label: "Continuous corners ease into the edges", Note: label("Radius 20 pt")},
+		ui.Caption{Label: tr.StylesContinuousCornersEaseIntoThe(), Note: label(tr.StylesRadius20Pt())},
 		grid(
-			tile(cx, tileProps{label: "Top corners", code: "CornerRadii", note: "28 pt"},
+			tile(cx, tileProps{label: tr.StylesTopCorners(), code: "CornerRadii", note: tr.Styles28Pt()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadii: core.Corners{TopLeft: 28, TopRight: 28}, BorderWidth: 1.5, BorderColor: colors.Accent()})
 				},
-					Children: []core.Node{specimenLabel("28 pt", colors.Accent)}}),
-			tile(cx, tileProps{label: "Mixed radii", note: "44 · 6 · 28 · 0 pt, clockwise"},
+					Children: []core.Node{specimenLabel(tr.Styles28Pt(), colors.Accent)}}),
+			tile(cx, tileProps{label: tr.StylesMixedRadii(), note: tr.Styles446280Pt()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{Background: tints.Info(), CornerRadii: core.Corners{TopLeft: 44, TopRight: 6, BottomRight: 28}, BorderWidth: 2, BorderColor: colors.Info()})
 				},
-					Children: []core.Node{specimenLabel("Mixed", colors.Info)}}),
+					Children: []core.Node{specimenLabel(tr.StylesMixed(), colors.Info)}}),
 		),
 	}}
 }
 
 func bordersCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	return ui.Card{Icon: ui.IconComponents, Title: "Borders", Description: "Per side · dashed · dotted · outlines", Children: []core.Node{
+	return ui.Card{Icon: ui.IconComponents, Title: tr.StylesBorders(), Description: tr.StylesPerSideDashedDottedOutlines(), Children: []core.Node{
 		grid(
-			tile(cx, tileProps{label: "Per-side borders", note: "6 · 2 · 4 · 1 pt, clockwise"},
+			tile(cx, tileProps{label: tr.StylesPerSideBorders(), note: tr.Styles6241Pt()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{Borders: core.Edges{Top: 6, Right: 2, Bottom: 4, Left: 1},
 						BorderColors: core.EdgeColors{Top: colors.Danger(), Right: colors.Up(), Bottom: colors.Info(), Left: colors.Warn()}})
 				}}),
-			tile(cx, tileProps{label: "Dashed / dotted", code: "BorderStyle"},
+			tile(cx, tileProps{label: tr.StylesDashedDotted(), code: "BorderStyle"},
 				core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 					core.View{StyleFunc: func() core.Style {
 						return core.Style{Width: core.Pt(112), Height: core.Pt(28), CornerRadius: 8, BorderWidth: 1.5, BorderColor: colors.Info(), BorderStyle: core.BorderDashed}
@@ -129,11 +132,11 @@ func bordersCard(cx *core.Scope) core.Node {
 						return core.Style{Width: core.Pt(112), Height: core.Pt(28), CornerRadius: 8, BorderWidth: 3, BorderColor: colors.Warn(), BorderStyle: core.BorderDotted}
 					}},
 				}}),
-			tile(cx, tileProps{label: "Rings", code: "Ring", note: "Box shadows of no blur"},
+			tile(cx, tileProps{label: tr.StylesRings(), code: "Ring", note: tr.StylesBoxShadowsOfNoBlur()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 14, Shadows: []core.BoxShadow{core.Ring(3, colors.Surface()), core.Ring(5, colors.Accent())}})
 				}}),
-			tile(cx, tileProps{label: "Outline", code: "OutlineOffset", note: "Outside the border box"},
+			tile(cx, tileProps{label: tr.StylesOutline(), code: "OutlineOffset", note: tr.StylesOutsideTheBorderBox()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 14, OutlineWidth: 2, OutlineColor: colors.Info(), OutlineOffset: 4, OutlineStyle: core.BorderDashed})
 				}}),
@@ -144,6 +147,7 @@ func bordersCard(cx *core.Scope) core.Node {
 // shadowsCard is shadows that read on a dark page: colored glows rather
 // than black.
 func shadowsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	offsetBg := func() core.Color {
@@ -158,42 +162,43 @@ func shadowsCard(cx *core.Scope) core.Node {
 		}
 		return 0.22
 	}
-	return ui.Card{Icon: ui.IconSpark, Title: "Shadows and glow", Description: "ShadowColor · box shadows · text shadow", Children: []core.Node{
+	return ui.Card{Icon: ui.IconSpark, Title: tr.StylesShadowsAndGlow(), Description: tr.StylesShadowcolorBoxShadowsTextShadow(), Children: []core.Node{
 		grid(
-			tile(cx, tileProps{label: "Glow", code: "ShadowColor", note: "A colored shadow"},
+			tile(cx, tileProps{label: tr.StylesGlow(), code: "ShadowColor", note: tr.StylesAColoredShadow()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 16, BorderCurve: core.BorderCurveContinuous, Background: colors.AccentFill(),
 						ShadowColor: ui.Alpha(colors.AccentFill(), 0.55), ShadowRadius: 9, ShadowOffset: core.Point{Y: 6}})
-				}, Children: []core.Node{specimenLabel("Glow", colors.OnAccent)}}),
-			tile(cx, tileProps{label: "Offset shadow", code: "ShadowOffset", note: "4, 8 pt · radius 10"},
+				}, Children: []core.Node{specimenLabel(tr.StylesGlow(), colors.OnAccent)}}),
+			tile(cx, tileProps{label: tr.StylesOffsetShadow(), code: "ShadowOffset", note: tr.Styles48PtRadius10()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{Background: offsetBg(), CornerRadii: core.Corners{TopLeft: 30, BottomRight: 30}, BorderWidth: 1, BorderColor: colors.Info(),
 						ShadowColor: ui.Alpha(colors.Info(), 0.45), ShadowRadius: 5, ShadowOffset: core.Point{X: 4, Y: 8}})
-				}, Children: []core.Node{specimenLabel("Offset", colors.Info)}}),
-			tile(cx, tileProps{label: "Image corners", note: "Two radii and a shadow"},
+				}, Children: []core.Node{specimenLabel(tr.StylesOffset(), colors.Info)}}),
+			tile(cx, tileProps{label: tr.StylesImageCorners(), note: tr.StylesTwoRadiiAndAShadow()},
 				core.Image{Source: core.Src("https://picsum.photos/seed/nsh/300/220"), Style: core.Style{Width: core.Pt(112), Height: core.Pt(76),
 					CornerRadii: core.Corners{TopLeft: 28, BottomRight: 28}, ShadowRadius: 6, ShadowOffset: core.Point{Y: 8}},
 					StyleFunc: func() core.Style { return core.Style{Background: colors.Raised(), ShadowColor: ui.Black(shade())} }}),
-			tile(cx, tileProps{label: "Text shadow", code: "TextShadowColor"},
-				core.Text{Content: "Shadow", StyleFunc: func() core.Style {
+			tile(cx, tileProps{label: tr.StylesTextShadow(), code: "TextShadowColor"},
+				core.Text{Content: tr.StylesShadow(), StyleFunc: func() core.Style {
 					return core.Style{FontSize: 24, FontWeight: core.FontWeight(800), Color: colors.Text(), LetterSpacing: -0.5,
 						TextShadowColor: ui.Alpha(colors.Danger(), 0.9), TextShadowRadius: 4}
 				}}),
-			tile(cx, tileProps{label: "Text corners", note: "A span's background and radius"},
-				core.Text{Spans: []core.Span{{Content: " Text corners ", StyleFunc: func() core.Style { return core.Style{Background: tints.Up(), CornerRadius: 10} }}},
+			tile(cx, tileProps{label: tr.StylesTextCorners(), note: tr.StylesASpanSBackgroundAnd()},
+				core.Text{Spans: []core.Span{{Content: tr.StylesTextCorners2(), StyleFunc: func() core.Style { return core.Style{Background: tints.Up(), CornerRadius: 10} }}},
 					Style: core.Style{FontSize: 15, FontWeight: ui.Semibold, LineHeight: 30}, StyleFunc: ui.Colored(colors.Up)}),
-			tile(cx, tileProps{label: "Layered", code: "Shadows", note: "Two box shadows and an inset one"},
+			tile(cx, tileProps{label: tr.StylesLayered(), code: "Shadows", note: tr.StylesTwoBoxShadowsAndAn()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 16, Background: colors.Surface(), Shadows: []core.BoxShadow{
 						ui.Inner(0, -2, 6, ui.Alpha(colors.Accent(), 0.35)), ui.Shadow(0, 1, 2, 0, ui.Black(0.08)), ui.Shadow(0, 10, 24, -4, ui.Black(shade()))}})
 				},
-					Children: []core.Node{specimenLabel("Layered", colors.Text)}}),
+					Children: []core.Node{specimenLabel(tr.StylesLayered(), colors.Text)}}),
 		),
 	}}
 }
 
 // layersCard is clipping, stacking order and opacity, each a press away.
 func layersCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	clip := core.NewSignal(cx, true)
@@ -222,14 +227,14 @@ func layersCard(cx *core.Scope) core.Node {
 		}
 		return core.RGB(0xffffff)
 	}
-	return ui.Card{Icon: ui.IconLists, Title: "Clipping and layers", Description: "Overflow · ZIndex · Opacity", Actions: []core.Node{ui.Switch{Checked: clip.Get, OnChange: clip.Set, Label: "Clip"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconLists, Title: tr.StylesClippingAndLayers(), Description: tr.StylesOverflowZindexOpacity(), Actions: []core.Node{ui.Switch{Checked: clip.Get, OnChange: clip.Set, Label: tr.StylesClip()}}, Children: []core.Node{
 		grid(
 			tile(cx, tileProps{labelFn: func() string {
 				if clip.Get() {
-					return "Clipped"
+					return tr.StylesClipped()
 				}
-				return "Visible"
-			}, code: "Overflow: Hidden / Visible", note: ui.Hint(cx, "Tap to switch", "Click to switch"), onPress: func() { toggled(clip) }},
+				return tr.StylesVisible()
+			}, code: "Overflow: Hidden / Visible", note: ui.Hint(cx, tr.StylesTapToSwitch(), tr.StylesClickToSwitch()), onPress: func() { toggled(clip) }},
 				core.View{StyleFunc: func() core.Style {
 					o := core.Hidden
 					if !clip.Get() {
@@ -238,9 +243,9 @@ func layersCard(cx *core.Scope) core.Node {
 					return specimen(cx, core.Style{Background: tints.Warn(), CornerRadius: 22, BorderWidth: 1.5, BorderColor: colors.Warn(), Overflow: o})
 				}, Children: []core.Node{
 					core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(-26), Top: core.Pt(-26), Width: core.Pt(72), Height: core.Pt(72), CornerRadius: 36}, StyleFunc: ui.Filled(colors.Danger)},
-					specimenLabel(ui.Hint(cx, "Tap", "Click"), colors.Warn),
+					specimenLabel(ui.Hint(cx, tr.StylesTap(), tr.StylesClick()), colors.Warn),
 				}}),
-			tile(cx, tileProps{label: "Stacking order", code: "ZIndex", note: ui.Hint(cx, "Tap to raise the next", "Click to raise the next"), onPress: func() { front.Update(func(n int) int { return (n + 1) % 3 }) }},
+			tile(cx, tileProps{label: tr.StylesStackingOrder(), code: "ZIndex", note: ui.Hint(cx, tr.StylesTapToRaiseTheNext(), tr.StylesClickToRaiseTheNext()), onPress: func() { front.Update(func(n int) int { return (n + 1) % 3 }) }},
 				core.View{Style: core.Style{Width: core.Pt(130), Height: core.Pt(84)}, Children: cards}),
 		),
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
@@ -248,7 +253,7 @@ func layersCard(cx *core.Scope) core.Node {
 				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Animated: &core.AnimatedStyle{Opacity: opacity}}, StyleFunc: ui.Filled(colors.Info),
 				Children: []core.Node{ui.Textf(level.Get, 13, ui.Bold, onBlue)}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
-				ui.Caption{Label: "Opacity", Note: label("Animated natively")},
+				ui.Caption{Label: tr.StylesOpacity(), Note: label(tr.StylesAnimatedNatively())},
 				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "0.2", Label: "0.2"}, {Value: "0.45", Label: "0.45"}, {Value: "1", Label: "1"}}, Value: level.Get, OnChange: func(v string) {
 					level.Set(v)
 					to := map[string]float64{"0.2": 0.2, "0.45": 0.45, "1": 1}[v]
@@ -261,6 +266,7 @@ func layersCard(cx *core.Scope) core.Node {
 
 // flipCard is two faces back to back: each hides while turned away.
 func flipCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	angle := core.NewAnimatedValue(cx, 0)
 	flipped := false
@@ -290,14 +296,15 @@ func flipCard(cx *core.Scope) core.Node {
 	}
 	front := face(paint{core.RGB(0xeef2fc), core.RGB(0xf0f4fd), core.RGB(0xebf0fb), core.RGB(0xcdd8f3)},
 		paint{core.RGB(0x1a2134), core.RGB(0x1e263b), core.RGB(0x1a2134), core.RGB(0x2b3a5c)},
-		angle, "front", ui.ToneInfo, "0°", ui.Hint(cx, "Tap to flip", "Click to flip"), "A spring turns it on the UI thread")
+		angle, "front", ui.ToneInfo, "0°", ui.Hint(cx, tr.StylesTapToFlip(), tr.StylesClickToFlip()), tr.StylesASpringTurnsItOn())
 	back := face(paint{core.RGB(0xfbefe6), core.RGB(0xfcf2ea), core.RGB(0xfaebe0), core.RGB(0xf0cdb3)},
 		paint{core.RGB(0x2a1d14), core.RGB(0x2f2116), core.RGB(0x291c13), core.RGB(0x4e3423)},
-		core.Add(angle, core.Constant(180)), "back", ui.ToneAccent, "180°", "BackfaceHidden", "Each face hides while turned away")
-	return ui.Press{OnPress: flip, Scale: 0.98, Label: "Flip the card", Children: []core.Node{core.View{Style: core.Style{Height: core.Pt(132)}, Children: []core.Node{front, back}}}}
+		core.Add(angle, core.Constant(180)), "back", ui.ToneAccent, "180°", "BackfaceHidden", tr.StylesEachFaceHidesWhileTurned())
+	return ui.Press{OnPress: flip, Scale: 0.98, Label: tr.StylesFlipTheCard(), Children: []core.Node{core.View{Style: core.Style{Height: core.Pt(132)}, Children: []core.Node{front, back}}}}
 }
 
 func transformsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	// A slow sway on the platform, so the perspective reads as depth.
@@ -308,25 +315,25 @@ func transformsCard(cx *core.Scope) core.Node {
 		core.Timing(sway, -30, core.TimingConfig{Duration: ms(2200), Easing: sine}),
 	), 0), nil)
 	cx.Cleanup(run.Stop)
-	return ui.Card{Icon: ui.IconPhysics, Title: "3D transforms", Description: "Perspective · RotateX/Y · Skew · origin", Children: []core.Node{
+	return ui.Card{Icon: ui.IconPhysics, Title: tr.Styles3dTransforms(), Description: tr.StylesPerspectiveRotatexYSkewOrigin(), Children: []core.Node{
 		flipCard(cx),
 		grid(
-			tile(cx, tileProps{label: "Perspective", code: "RotateY", note: "Swaying, driven natively"},
+			tile(cx, tileProps{label: tr.StylesPerspective(), code: "RotateY", note: tr.StylesSwayingDrivenNatively()},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 14, Background: tints.Info(), BorderWidth: 1, BorderColor: colors.Info(),
 						Transform: core.Transform{Perspective: 400}, Animated: &core.AnimatedStyle{RotateY: sway}})
-				}, Children: []core.Node{specimenLabel("Y axis", colors.Info)}}),
-			tile(cx, tileProps{label: "Tilt", code: "RotateX: 40"},
+				}, Children: []core.Node{specimenLabel(tr.StylesYAxis(), colors.Info)}}),
+			tile(cx, tileProps{label: tr.StylesTilt(), code: "RotateX: 40"},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 14, Background: tints.Accent(), BorderWidth: 1, BorderColor: colors.Accent(),
 						Transform: core.Transform{Perspective: 400, RotateX: 40}})
-				}, Children: []core.Node{specimenLabel("X axis", colors.Accent)}}),
-			tile(cx, tileProps{label: "Skew", code: "SkewX: -12"},
+				}, Children: []core.Node{specimenLabel(tr.StylesXAxis(), colors.Accent)}}),
+			tile(cx, tileProps{label: tr.StylesSkew(), code: "SkewX: -12"},
 				core.View{StyleFunc: func() core.Style {
 					return specimen(cx, core.Style{CornerRadius: 10, Background: tints.Warn(), BorderWidth: 1, BorderColor: colors.Warn(),
 						Transform: core.Transform{SkewX: -12}})
-				}, Children: []core.Node{specimenLabel("Skew", colors.Warn)}}),
-			tile(cx, tileProps{label: "Origin", code: "TransformOrigin", note: "Top left · rotated 30°"},
+				}, Children: []core.Node{specimenLabel(tr.StylesSkew(), colors.Warn)}}),
+			tile(cx, tileProps{label: tr.StylesOrigin(), code: "TransformOrigin", note: tr.StylesTopLeftRotated30()},
 				core.View{Style: core.Style{Width: core.Pt(112), Height: core.Pt(84)}, Children: []core.Node{
 					core.View{StyleFunc: func() core.Style {
 						return core.Style{Position: core.Absolute, Left: core.Pt(30), Top: core.Pt(14), Width: core.Pt(54), Height: core.Pt(54), CornerRadius: 6,
@@ -346,6 +353,7 @@ func transformsCard(cx *core.Scope) core.Node {
 // numeralsCard is figures in their proportional and tabular widths, then
 // small capitals and oldstyle figures: the font's OpenType features.
 func numeralsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	figure := func(s string, v core.FontVariant) core.Node {
 		t := ui.Text(s, 22, ui.Medium, colors.Text)
@@ -365,15 +373,15 @@ func numeralsCard(cx *core.Scope) core.Node {
 		n.Style.FontFamily = ui.Mono
 		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{l, n}}
 	}
-	return ui.Card{Icon: ui.IconText, Title: "Numerals", Description: "FontVariant", Children: []core.Node{
+	return ui.Card{Icon: ui.IconText, Title: tr.StylesNumerals(), Description: "FontVariant", Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
-			column(ui.Text("Proportional", 12, ui.Regular, colors.Muted), 0),
+			column(ui.Text(tr.StylesProportional(), 12, ui.Regular, colors.Muted), 0),
 			core.View{Style: core.Style{Width: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 			column(tabular, core.FontTabularNums),
 		}},
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
-		feature("Small Caps", core.FontSmallCaps, "small-caps"),
-		feature("Oldstyle 1234567890", core.FontOldstyleNums, "oldstyle-nums"),
+		feature(tr.StylesSmallCaps(), core.FontSmallCaps, "small-caps"),
+		feature(tr.StylesOldstyle1234567890(), core.FontOldstyleNums, "oldstyle-nums"),
 	}}
 }
 
@@ -381,6 +389,7 @@ func numeralsCard(cx *core.Scope) core.Node {
 // layout: the app's language decides it, and LayoutDirection sets a
 // view's own.
 func rightToLeft(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	rtl := core.NewSignal(cx, false)
@@ -409,7 +418,7 @@ func rightToLeft(cx *core.Scope) core.Node {
 		chips = append(chips, chip(colors.Info, tints.Info, n))
 	}
 	monoNote := func(s string) func() string { return label(s) }
-	return ui.Card{Icon: ui.IconNav, Title: "Right to left", Description: "", Actions: []core.Node{ui.Button{Text: "Flip", Variant: ui.ButtonSecondary, Small: true, OnPress: func() { toggled(rtl) }}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconNav, Title: tr.StylesRightToLeft(), Description: "", Actions: []core.Node{ui.Button{Text: tr.StylesFlip(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { toggled(rtl) }}}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			d := core.DirectionLTR
 			if rtl.Get() {
@@ -424,12 +433,12 @@ func rightToLeft(cx *core.Scope) core.Node {
 				return "LayoutDirection: LTR"
 			}},
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: boxes},
-			core.Text{Content: "Text aligns to the start side; the first box has a start margin of 16 and a round top-start corner.",
+			core.Text{Content: tr.StylesTextAlignsToTheStart(),
 				Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Text)},
-			ui.Caption{Label: "Horizontal scroll view", Note: monoNote("Scroll")},
+			ui.Caption{Label: tr.StylesHorizontalScrollView(), Note: monoNote("Scroll")},
 			core.Scroll{Horizontal: true, HideIndicator: true, Style: core.Style{Height: core.Pt(40)}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, Gap: 6}, Children: chips}}},
-			ui.Caption{Label: "Horizontal list", Note: monoNote("List")},
+			ui.Caption{Label: tr.StylesHorizontalList(), Note: monoNote("List")},
 			core.List{Count: func() int { return 30 }, Horizontal: true, EstimatedSize: 46, HideIndicator: true, Gap: 6, Style: core.Style{Height: core.Pt(40)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
 					colors := ui.ColorsOf(cx)
@@ -440,26 +449,27 @@ func rightToLeft(cx *core.Scope) core.Node {
 						Children: []core.Node{ui.Textf(func() string { return itoa(r.Index() + 1) }, 13, ui.Regular, colors.Accent)}}
 				}},
 			core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
-			core.Text{Content: "TextAlignStart: the start side, right to left", Style: core.Style{FontSize: 13, TextAlign: core.TextAlignStart}, StyleFunc: ui.Colored(colors.Muted)},
+			core.Text{Content: tr.StylesTextalignstartTheStartSideRight(), Style: core.Style{FontSize: 13, TextAlign: core.TextAlignStart}, StyleFunc: ui.Colored(colors.Muted)},
 			core.Text{Content: "مرحبا بالعالم — WritingDirection RTL", Style: core.Style{FontSize: 13, WritingDirection: core.WritingRTL}, StyleFunc: ui.Colored(colors.Muted)},
 		}},
 	}}
 }
 
 func gradientsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	blue, yellow, pink := core.RGB(0x2563eb), core.RGB(0xfacc15), core.RGB(0xec4899)
-	return ui.Card{Icon: ui.IconStyles, Title: "Gradients", Description: "Linear, radial and conic, mixed in Oklab", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconStyles, Title: tr.StylesGradients(), Description: tr.StylesLinearRadialAndConicMixed(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		grid(
-			tile(cx, tileProps{label: "Linear", code: "LinearGradient(90, …)"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.LinearGradient(90, blue, pink)}})}),
-			tile(cx, tileProps{label: "To a corner", code: "ToTopRight"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14,
+			tile(cx, tileProps{label: tr.StylesLinear(), code: "LinearGradient(90, …)"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.LinearGradient(90, blue, pink)}})}),
+			tile(cx, tileProps{label: tr.StylesToACorner(), code: "ToTopRight"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14,
 				Gradients: []core.Gradient{{ToCorner: core.ToTopRight, Stops: []core.ColorStop{{Color: blue}, {Color: yellow}}}}})}),
-			tile(cx, tileProps{label: "Oklab", note: "No gray in the middle"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.LinearGradient(90, blue, yellow)}})}),
+			tile(cx, tileProps{label: tr.StylesOklab(), note: tr.StylesNoGrayInTheMiddle()}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.LinearGradient(90, blue, yellow)}})}),
 			tile(cx, tileProps{label: "sRGB", code: "ColorSpaceSRGB"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14,
 				Gradients: []core.Gradient{{Angle: 90, Space: core.ColorSpaceSRGB, Stops: []core.ColorStop{{Color: blue}, {Color: yellow}}}}})}),
-			tile(cx, tileProps{label: "Radial", code: "RadialGradient"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.RadialGradient(yellow, pink, blue)}})}),
-			tile(cx, tileProps{label: "Conic, repeating", code: "ConicGradient · Repeating"}, core.View{Style: core.Style{Gap: 8, Direction: core.Row}, Children: []core.Node{
+			tile(cx, tileProps{label: tr.StylesRadial(), code: "RadialGradient"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.RadialGradient(yellow, pink, blue)}})}),
+			tile(cx, tileProps{label: tr.StylesConicRepeating(), code: "ConicGradient · Repeating"}, core.View{Style: core.Style{Gap: 8, Direction: core.Row}, Children: []core.Node{
 				core.View{Style: core.Style{Width: core.Pt(64), Height: core.Pt(64), CornerRadius: 32, Gradients: []core.Gradient{core.ConicGradient(0, pink, yellow, blue, pink)}}},
 				core.View{StyleFunc: func() core.Style {
 					return core.Style{Width: core.Pt(64), Height: core.Pt(64), CornerRadius: 12, Gradients: []core.Gradient{{Angle: 45, Repeating: true, Space: core.ColorSpaceSRGB,
@@ -471,6 +481,7 @@ func gradientsCard(cx *core.Scope) core.Node {
 }
 
 func filtersCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	paint := []core.Gradient{core.LinearGradient(135, core.RGB(0xf43f5e), core.RGB(0xf59e0b), core.RGB(0x10b981), core.RGB(0x3b82f6))}
 	art := func(name string, f ...core.Filter) core.Node {
@@ -488,10 +499,10 @@ func filtersCard(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{Width: core.Pt(88), Height: core.Pt(60), CornerRadius: 12, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: s, Children: []core.Node{ui.Text(name, 12, ui.Semibold, colors.Text)}}
 	}
-	return ui.Card{Icon: ui.IconImage, Title: "Filters, backdrops and masks", Description: "Filters · BackdropFilters · Mask · BlendMode", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconImage, Title: tr.StylesFiltersBackdropsAndMasks(), Description: tr.StylesFiltersBackdropfiltersMaskBlendmode(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 10}, Children: []core.Node{
-			art("none"), art("grayscale", core.Grayscale(1)), art("sepia", core.Sepia(1)), art("hue 120°", core.HueRotate(120)),
-			art("invert", core.Invert(1)), art("blur 4", core.Blur(4)),
+			art("none"), art("grayscale", core.Grayscale(1)), art("sepia", core.Sepia(1)), art(tr.StylesHue120(), core.HueRotate(120)),
+			art("invert", core.Invert(1)), art(tr.StylesBlur4(), core.Blur(4)),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 10, Padding: core.All(12), CornerRadius: ui.RadiusControl}, StyleFunc: stripes, Children: []core.Node{
 			pane("frosted", func() core.Style {
@@ -509,6 +520,7 @@ func filtersCard(cx *core.Scope) core.Node {
 }
 
 func keyframesCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	dot := func(name string, k core.Keyframes, s func() core.Style) core.Node {
 		return core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8, Width: core.Pt(64)}, Children: []core.Node{
@@ -516,7 +528,7 @@ func keyframesCard(cx *core.Scope) core.Node {
 			ui.Text(name, 12, ui.Regular, colors.Muted),
 		}}
 	}
-	return ui.Card{Icon: ui.IconAnimation, Title: "Keyframes and group styles", Description: "Animation · GroupStyle", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconAnimation, Title: tr.StylesKeyframesAndGroupStyles(), Description: tr.StylesAnimationGroupstyle(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceAround}, Children: []core.Node{
 			dot("spin", core.KeyframesSpin, func() core.Style {
 				raised := colors.Raised()
@@ -526,7 +538,7 @@ func keyframesCard(cx *core.Scope) core.Node {
 			dot("pulse", core.KeyframesPulse, func() core.Style { return core.Style{Background: colors.Accent(), CornerRadius: 6} }),
 			dot("bounce", core.KeyframesBounce, func() core.Style { return core.Style{Background: colors.Accent(), CornerRadius: 16} }),
 		}},
-		core.View{OnPress: func(core.PressEvent) {}, Role: core.RoleButton, Label: "Hover this row",
+		core.View{OnPress: func(core.PressEvent) {}, Role: core.RoleButton, Label: tr.StylesHoverThisRow(),
 			StyleFunc: func() core.Style {
 				return core.Style{Group: "row", Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.All(12), CornerRadius: ui.RadiusControl,
 					BorderWidth: 1, BorderColor: colors.Line(), Hover: &core.Style{BorderColor: colors.Accent()}}
@@ -536,7 +548,7 @@ func keyframesCard(cx *core.Scope) core.Node {
 					return core.Style{Width: core.Pt(28), Height: core.Pt(28), CornerRadius: 14, Background: colors.Raised(), Transition: core.Transition{Duration: 150 * time.Millisecond},
 						GroupStyle: &core.GroupStyle{Name: "row", Hover: &core.Style{Background: colors.Accent()}, Active: &core.Style{Transform: core.Transform{Scale: 0.85}}}}
 				}},
-				core.Text{Content: ui.Hint(cx, "Press this row: its dot follows", "Hover this row: its dot and title follow"), StyleFunc: func() core.Style {
+				core.Text{Content: ui.Hint(cx, tr.StylesPressThisRowItsDot(), tr.StylesHoverThisRowItsDot()), StyleFunc: func() core.Style {
 					return core.Style{FontSize: 14, Color: colors.Muted(),
 						GroupStyle: &core.GroupStyle{Name: "row", Hover: &core.Style{Color: colors.Text()}}}
 				}},

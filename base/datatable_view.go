@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/oneo-me/nsgo/base/locales"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -1182,7 +1183,7 @@ func (t *dataTable) sortButton(def int, sorted *core.Memo[DataTableSort]) core.N
 		}
 	}
 	return core.View{
-		Role: core.RoleButton, Label: "Sort by " + t.title(def), TestID: "sort:" + t.column(def).Key, NoFocus: true,
+		Role: core.RoleButton, LabelFunc: func() string { return locales.SortBy(t.cx, t.title(def)) }, TestID: "sort:" + t.column(def).Key, NoFocus: true,
 		Style: core.Style{FlexShrink: 0, Width: px(sortWidth), Height: px(sortWidth), AlignItems: core.AlignCenter,
 			JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer},
 		Class:     t.p.Classes.SortIndicator,

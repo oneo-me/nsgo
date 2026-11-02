@@ -15,6 +15,7 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // base/editor's Editor draws its text, gutter, carets and matches itself
@@ -215,13 +216,6 @@ func (t *pageTimer) cancel() {
 
 func sameRange(a, b editor.Range) bool { return a == b }
 
-func plural(n int, word string) string {
-	if n == 1 || word == "info" {
-		return fmt.Sprintf("%d %s", n, word)
-	}
-	return fmt.Sprintf("%d %ss", n, word)
-}
-
 // editorDemo is base/editor's Editor, as NSH's gallery shows it: a sample
 // file per language in a DockArea, its problems in a bottom dock (resized
 // and hidden; a sheet at phone width) and a status line under them; the
@@ -234,6 +228,7 @@ func plural(n int, word string) string {
 // (Mod+.), the colors of hex literals, completion (as you type, after a
 // dot, Ctrl+Space) and inline completion (Tab).
 func editorDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	look := newMenuLook(cx)
 	pointer := core.Untracked(cx, cx.Env().Desktop)
@@ -334,12 +329,12 @@ func editorDemo(cx *core.Scope) core.Node {
 	caret := func() string {
 		sels := selections.Get()
 		if len(sels) == 0 {
-			return "Ln 1, Col 1"
+			return tr.EditorLn1Col1()
 		}
 		h := sels[len(sels)-1].Head
-		s := fmt.Sprintf("Ln %d, Col %d", h.Line+1, h.Column+1)
+		s := tr.EditorLnCol(h.Line+1, h.Column+1)
 		if len(sels) > 1 {
-			s += fmt.Sprintf(" · %d carets", len(sels))
+			s += " · " + tr.EditorCarets(len(sels))
 		}
 		return s
 	}
@@ -347,13 +342,13 @@ func editorDemo(cx *core.Scope) core.Node {
 		r := result.Get()
 		switch {
 		case r.Error != "":
-			return "Invalid pattern"
+			return tr.EditorInvalidPattern()
 		case query.Get() == "":
 			return ""
 		case r.Count == 0:
-			return "No results"
+			return tr.EditorNoResults()
 		case r.Current < 0:
-			return fmt.Sprintf("%d matches", r.Count)
+			return tr.EditorMatches(r.Count)
 		}
 		return fmt.Sprintf("%d of %d", r.Current+1, r.Count)
 	}
@@ -372,7 +367,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	}
 	showDefinition := func(t *lspTarget) {
 		if t == nil {
-			last.Set("No definition found")
+			last.Set(tr.EditorNoDefinitionFound())
 			return
 		}
 		p := t.rng.Start
@@ -381,7 +376,7 @@ func editorDemo(cx *core.Scope) core.Node {
 		lit := t.rng
 		flash.Set(&lit)
 		flashing.after(900*time.Millisecond, func() { flash.Set(nil) })
-		last.Set(fmt.Sprintf("Definition of %s at %d:%d", t.name, p.Line+1, p.Column+1))
+		last.Set(tr.EditorDefinitionAt(t.name, p.Line+1, p.Column+1))
 	}
 	definition := func(p editor.Position, then func(*lspTarget)) {
 		lspAsk(cx, server, 30*time.Millisecond, func(m *lspModel) *lspTarget { return m.definition(p) }, then)
@@ -417,21 +412,21 @@ func editorDemo(cx *core.Scope) core.Node {
 		run := func(c editor.Command) func() { return func() { ref.Run(c) } }
 		var items []desktop.MenuItem
 		if typescript() {
-			items = append(items, desktop.MenuItem{Label: "Go to Definition", Shortcut: "f12", OnSelect: func() { definition(p, showDefinition) }},
+			items = append(items, desktop.MenuItem{Label: tr.EditorGoToDefinition(), Shortcut: "f12", OnSelect: func() { definition(p, showDefinition) }},
 				desktop.MenuItem{Separator: true})
 		}
 		if len(fixes) > 0 {
 			items = append(append(items, menuItems(fixes)...), desktop.MenuItem{Separator: true})
 		}
 		items = append(items,
-			desktop.MenuItem{Label: "Cut", OnSelect: run(editor.Cut)},
-			desktop.MenuItem{Label: "Copy", OnSelect: run(editor.Copy)},
-			desktop.MenuItem{Label: "Paste", OnSelect: run(editor.Paste)},
-			desktop.MenuItem{Label: "Select All", OnSelect: run(editor.SelectAll)},
+			desktop.MenuItem{Label: tr.EditorCut(), OnSelect: run(editor.Cut)},
+			desktop.MenuItem{Label: tr.EditorCopy(), OnSelect: run(editor.Copy)},
+			desktop.MenuItem{Label: tr.EditorPaste(), OnSelect: run(editor.Paste)},
+			desktop.MenuItem{Label: tr.EditorSelectAll(), OnSelect: run(editor.SelectAll)},
 			desktop.MenuItem{Separator: true},
-			desktop.MenuItem{Label: "Toggle Comment", OnSelect: run(editor.ToggleComment)},
-			desktop.MenuItem{Label: "Fold All", OnSelect: run(editor.FoldAll)},
-			desktop.MenuItem{Label: "Unfold All", OnSelect: run(editor.UnfoldAll)})
+			desktop.MenuItem{Label: tr.EditorToggleComment(), OnSelect: run(editor.ToggleComment)},
+			desktop.MenuItem{Label: tr.EditorFoldAll(), OnSelect: run(editor.FoldAll)},
+			desktop.MenuItem{Label: tr.EditorUnfoldAll(), OnSelect: run(editor.UnfoldAll)})
 		desktop.PopupMenu(cx, items, at, nil)
 	}
 
@@ -454,7 +449,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	openRule := func(href string) {
 		cx.OpenURL(href, func(opened bool) {
 			if !opened {
-				last.Set("No app opens links")
+				last.Set(tr.EditorNoAppOpensLinks())
 			}
 		})
 	}
@@ -476,17 +471,17 @@ func editorDemo(cx *core.Scope) core.Node {
 	// The keys, as the options menu lists them.
 	tips := func() []string {
 		if !typescript() {
-			last := "Long-press to select"
+			last := tr.EditorLongPressToSelect()
 			if pointer {
-				last = "Right-click for commands"
+				last = tr.EditorRightClickForCommands()
 			}
-			return []string{key("mod+.") + " code actions", last}
+			return []string{key("mod+.") + tr.EditorCodeActions(), last}
 		}
-		out := []string{key("ctrl+space") + " completions (also as you type and after a dot)", "Tab takes the gray suggestion"}
+		out := []string{key("ctrl+space") + tr.EditorCompletionsAlsoAsYouType(), tr.EditorTabTakesTheGraySuggestion()}
 		if pointer {
-			out = append(out, "Hover for docs and problems", "Hold "+mod+" over a name to underline it")
+			out = append(out, tr.EditorHoverForDocsAndProblems(), tr.EditorHold()+mod+tr.EditorOverANameToUnderline())
 		}
-		return append(out, key("f12")+" or "+mod+"-click: go to definition", key("mod+.")+" code actions")
+		return append(out, key("f12")+tr.EditorOr()+mod+tr.EditorClickGoToDefinition(), key("mod+.")+tr.EditorCodeActions())
 	}
 
 	// The find bar opens with Mod+F (the selection, when there is one,
@@ -569,6 +564,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	// findBar is the find bar, while it is open: an overlay under the
 	// toolbar's end, over the editor's first lines; Escape closes it.
 	findBar := core.Show{When: finding.Get, Then: func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		env := cx.Env()
 		row := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2}
 		return core.Overlay{Anchor: toolbar, Placement: core.PlaceBottom, Align: core.AlignEnd, Offset: 4, Margin: 8, OnCancel: closeFind,
@@ -577,20 +573,20 @@ func editorDemo(cx *core.Scope) core.Node {
 					BorderColor: colors.Border(), Background: colors.Raised(), Padding: core.All(4)})
 			}, Children: []core.Node{
 				core.View{Style: row, Children: []core.Node{
-					field("Find", query, func() { ref.Run(editor.FindNext) }, true),
+					field(tr.EditorFind(), query, func() { ref.Run(editor.FindNext) }, true),
 					core.Text{ContentFunc: matches, MaxLines: 1, Style: core.Style{Padding: core.Symmetric(0, 4), FontFamily: ui.Mono, FontSize: 11},
 						StyleFunc: ui.Colored(colors.Muted)},
-					textTool("Match case", "Aa", caseSensitive.Get, func() { toggled(caseSensitive) }),
-					textTool("Whole word", "W", wholeWord.Get, func() { toggled(wholeWord) }),
-					textTool("Regular expression", ".*", regex.Get, func() { toggled(regex) }),
-					iconTool("Previous match", ui.IconArrowUp, nil, func() { ref.Run(editor.FindPrevious) }, false),
-					iconTool("Next match", ui.IconArrowDown, nil, func() { ref.Run(editor.FindNext) }, false),
-					iconTool("Close the find bar", ui.IconClose, nil, closeFind, false),
+					textTool(tr.EditorMatchCase(), "Aa", caseSensitive.Get, func() { toggled(caseSensitive) }),
+					textTool(tr.EditorWholeWord(), "W", wholeWord.Get, func() { toggled(wholeWord) }),
+					textTool(tr.EditorRegularExpression(), ".*", regex.Get, func() { toggled(regex) }),
+					iconTool(tr.EditorPreviousMatch(), ui.IconArrowUp, nil, func() { ref.Run(editor.FindPrevious) }, false),
+					iconTool(tr.EditorNextMatch(), ui.IconArrowDown, nil, func() { ref.Run(editor.FindNext) }, false),
+					iconTool(tr.EditorCloseTheFindBar(), ui.IconClose, nil, closeFind, false),
 				}},
 				core.View{Style: row, Children: []core.Node{
-					field("Replace", replacement, func() { ref.Replace(replacement.GetUntracked()) }, false),
-					iconTool("Replace", ui.IconReplace, nil, func() { ref.Replace(replacement.GetUntracked()) }, false),
-					iconTool("Replace all", ui.IconReplaceAll, nil, func() { last.Set(fmt.Sprintf("Replaced %d", ref.ReplaceAll(replacement.GetUntracked()))) }, false),
+					field(tr.EditorReplace(), replacement, func() { ref.Replace(replacement.GetUntracked()) }, false),
+					iconTool(tr.EditorReplace(), ui.IconReplace, nil, func() { ref.Replace(replacement.GetUntracked()) }, false),
+					iconTool(tr.EditorReplaceAll(), ui.IconReplaceAll, nil, func() { last.Set(tr.EditorReplaced(ref.ReplaceAll(replacement.GetUntracked()))) }, false),
 				}},
 			}}}}
 	}}
@@ -600,6 +596,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	source := func(cx *core.Scope) core.Node {
 		return core.View{StyleFunc: func() core.Style { return core.Style{FlexGrow: 1, Background: colors.Surface()} }, Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
+				tr := locales.For(cx)
 				colors := ui.ColorsOf(cx)
 				lang := language.Get()
 				lsp := lang == "typescript"
@@ -607,7 +604,7 @@ func editorDemo(cx *core.Scope) core.Node {
 				if !ok {
 					initial = editorSamples[lang].text
 				}
-				e := editor.Editor{Ref: ref, TestID: "editor", Label: lang + " source", DefaultValue: initial, Language: lang,
+				e := editor.Editor{Ref: ref, TestID: "editor", Label: lang + tr.EditorSource(), DefaultValue: initial, Language: lang,
 					SoftWrap: softWrap.Get(), NoLineNumbers: !lineNumbers.Get(),
 					Diagnostics: diagnostics, Decorations: decorations,
 					Search: func() editor.Search {
@@ -630,7 +627,7 @@ func editorDemo(cx *core.Scope) core.Node {
 						query.Set(v)
 						finding.Set(true)
 					},
-					OnLineNumberPress: func(line int) { last.Set(fmt.Sprintf("Line %d pressed", line+1)) },
+					OnLineNumberPress: func(line int) { last.Set(tr.EditorLinePressed(line + 1)) },
 					OnContextMenu:     func(e editor.ContextMenuEvent) { contextMenu(e.Position, e.At) },
 					OnHover: func(e editor.HoverEvent) {
 						closing.cancel()
@@ -696,7 +693,7 @@ func editorDemo(cx *core.Scope) core.Node {
 							}
 						})
 					},
-					OnCompletionAccept: func(e editor.CompletionAcceptEvent) { last.Set("Completed " + e.Item.Label) },
+					OnCompletionAccept: func(e editor.CompletionAcceptEvent) { last.Set(tr.EditorCompleted() + e.Item.Label) },
 					StylesFunc:         editorStyles(cx),
 					StyleFunc:          func() core.Style { return core.Style{FlexGrow: 1, Color: colors.Text()} },
 				}
@@ -732,9 +729,10 @@ func editorDemo(cx *core.Scope) core.Node {
 	// problemsList is the problems of the sample shown, a list of what is
 	// in view: pressing one puts the caret on it.
 	problemsList := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		return core.Show{When: func() bool { return len(problems.Get()) > 0 },
 			Else: func(*core.Scope) core.Node {
-				return core.Text{Content: "No problems", Style: core.Style{Padding: core.Symmetric(8, 12), FontSize: 12}, StyleFunc: ui.Colored(colors.Muted)}
+				return core.Text{Content: tr.EditorNoProblems(), Style: core.Style{Padding: core.Symmetric(8, 12), FontSize: 12}, StyleFunc: ui.Colored(colors.Muted)}
 			},
 			Then: func(cx *core.Scope) core.Node {
 				return core.List{Style: core.Style{FlexGrow: 1, Padding: core.Symmetric(4, 0)}, EstimatedSize: 24,
@@ -798,8 +796,8 @@ func editorDemo(cx *core.Scope) core.Node {
 		return core.Style{Height: core.Pt(40), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2, Padding: core.Symmetric(0, 6),
 			Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Border()}}
 	}, Children: []core.Node{
-		base.Menu{Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: "Language",
-			Trigger: menuTrigger("Language", ui.Icon(ui.IconCode, 16, colors.Muted),
+		base.Menu{Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: tr.EditorLanguage(),
+			Trigger: menuTrigger(tr.EditorLanguage(), ui.Icon(ui.IconCode, 16, colors.Muted),
 				core.Text{ContentFunc: func() string { return editorSamples[language.Get()].label }, Style: core.Style{FontSize: 12, FontWeight: ui.Medium},
 					StyleFunc: ui.Colored(colors.Text)}),
 			Children: func() []core.Node {
@@ -820,33 +818,40 @@ func editorDemo(cx *core.Scope) core.Node {
 				return out
 			}()},
 		ui.Spacer{},
-		iconTool("Find and replace", ui.IconSearch, finding.Get, func() {
+		iconTool(tr.EditorFindAndReplace(), ui.IconSearch, finding.Get, func() {
 			if finding.GetUntracked() {
 				closeFind()
 			} else {
 				openFind()
 			}
 		}, false),
-		base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: "Editor options",
-			Trigger: menuTrigger("Editor options", ui.Icon(ui.IconSliders, 16, colors.Muted)),
+		base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: tr.EditorEditorOptions(),
+			Trigger: menuTrigger(tr.EditorEditorOptions(), ui.Icon(ui.IconSliders, 16, colors.Muted)),
 			Children: []core.Node{
 				core.Func(func(cx *core.Scope) core.Node {
-					return item(cx, "Soft wrap", func() { toggled(softWrap) }, checked(softWrap.Get), "", true)
+					tr := locales.For(cx)
+					return item(cx, tr.EditorSoftWrap(), func() { toggled(softWrap) }, checked(softWrap.Get), "", true)
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
-					return item(cx, "Line numbers", func() { toggled(lineNumbers) }, checked(lineNumbers.Get), "", true)
+					tr := locales.For(cx)
+					return item(cx, tr.EditorLineNumbers(), func() { toggled(lineNumbers) }, checked(lineNumbers.Get), "", true)
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
-					return item(cx, "Problems", func() { area.ToggleDock(base.DockBottom) }, checked(problemsShown.Get), "", false)
+					tr := locales.For(cx)
+					return item(cx, tr.EditorProblems(), func() { area.ToggleDock(base.DockBottom) }, checked(problemsShown.Get), "", false)
 				}),
-				core.Func(func(cx *core.Scope) core.Node { return item(cx, "Find and Replace", openFind, nil, "mod+f", false) }),
+				core.Func(func(cx *core.Scope) core.Node {
+					tr := locales.For(cx)
+					return item(cx, tr.EditorFindAndReplace2(), openFind, nil, "mod+f", false)
+				}),
 				base.MenuSeparator{StyleFunc: func() core.Style {
 					return core.Style{Margin: core.Symmetric(4, 4), Height: core.Pt(1), Background: colors.Border()}
 				}},
 				core.Dynamic(func(cx *core.Scope) core.Node {
-					title := "Keys"
+					tr := locales.For(cx)
+					title := tr.EditorKeys()
 					if typescript() {
-						title = "TypeScript language server"
+						title = tr.EditorTypescriptLanguageServer()
 					}
 					nodes := []core.Node{core.Text{Content: strings.ToUpper(title), Style: core.Style{Padding: core.Edges{Top: 8, Right: 8, Bottom: 4, Left: 8},
 						FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.5}, StyleFunc: ui.Colored(colors.Muted)}}
@@ -870,7 +875,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			return core.Style{Direction: core.Row, Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Border()}}
 		},
 		ContentStyle: core.Style{FlexGrow: 1},
-		HandleLabel:  "Resize the problems", HandleStyleFunc: ui.HandleLine(cx),
+		HandleLabel:  tr.EditorResizeTheProblems(), HandleStyleFunc: ui.HandleLine(cx),
 		HandleThumbStyle: ui.HandleThumb(), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
 		DockStyleFunc: func() core.Style { return core.Style{Background: colors.Surface()} },
 		SheetStyleFunc: func() core.Style {
@@ -885,7 +890,7 @@ func editorDemo(cx *core.Scope) core.Node {
 						if tab.Key == "editor" {
 							return editorSamples[language.Get()].file
 						}
-						return fmt.Sprintf("Problems %d", len(problems.Get()))
+						return tr.EditorProblemsCount(len(problems.Get()))
 					}, Style: core.Style{FontSize: 12, FontWeight: ui.Medium}, StyleFunc: func() core.Style {
 						if tab.Selected() {
 							return core.Style{Color: colors.Text()}
@@ -910,6 +915,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	// it: the problems with their sources, codes (a link to the rule's
 	// page) and fixes, then the docs.
 	hoverCard := core.Dynamic(func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		card := hover.Get()
 		if card == nil {
 			return nil
@@ -921,7 +927,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			switch {
 			case d.Code != "" && d.CodeDescription != nil:
 				href := d.CodeDescription.Href
-				meta = append(meta, base.Button{Label: "Open the description of " + d.Code, OnPress: func(core.PressEvent) { openRule(href) },
+				meta = append(meta, base.Button{Label: tr.EditorOpenTheDescriptionOf() + d.Code, OnPress: func(core.PressEvent) { openRule(href) },
 					Style: core.Style{CornerRadius: 2, Active: &core.Style{Opacity: core.Alpha(0.7)}},
 					Children: []core.Node{core.Text{Content: d.Code, Style: core.Style{FontSize: 12, TextDecoration: core.TextDecorationUnderline},
 						StyleFunc: ui.Colored(colors.Info)}}})
@@ -1009,18 +1015,18 @@ func editorDemo(cx *core.Scope) core.Node {
 			Padding: core.Edges{Left: 10, Right: 4}, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Border()}}
 	}, Children: []core.Node{
 		status(caret, colors.Text, false),
-		status(func() string { return plural(count(editor.SeverityError), "error") }, colors.Danger, false),
-		status(func() string { return plural(count(editor.SeverityWarning), "warning") }, colors.Warn, false),
-		status(func() string { return plural(count(editor.SeverityInfo), "info") }, colors.Info, false),
+		status(func() string { return tr.EditorErrors(count(editor.SeverityError)) }, colors.Danger, false),
+		status(func() string { return tr.EditorWarnings(count(editor.SeverityWarning)) }, colors.Warn, false),
+		status(func() string { return tr.EditorInfos(count(editor.SeverityInfo)) }, colors.Info, false),
 		status(last.Get, colors.Muted, true),
 		ui.Spacer{},
 		status(func() string {
 			if typescript() && analyzing.Get() {
-				return "Analyzing…"
+				return tr.EditorAnalyzing()
 			}
 			return editorSamples[language.Get()].label
 		}, colors.Muted, true),
-		iconTool("Toggle problems", ui.IconProblems, problemsShown.Get, func() { area.ToggleDock(base.DockBottom) }, true),
+		iconTool(tr.EditorToggleProblems(), ui.IconProblems, problemsShown.Get, func() { area.ToggleDock(base.DockBottom) }, true),
 	}}
 
 	return core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{

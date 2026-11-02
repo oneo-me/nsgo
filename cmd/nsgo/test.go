@@ -57,6 +57,9 @@ type testRun struct {
 // runTests runs the app's tests headless, or on a target, printing a line
 // per test and failing when any failed.
 func runTests(ctx context.Context, p *project, opts testOptions) error {
+	if err := p.prepareCatalogs(ctx, "./...", false); err != nil {
+		return err
+	}
 	if opts.target != "" {
 		return runTargetTests(ctx, p, opts)
 	}

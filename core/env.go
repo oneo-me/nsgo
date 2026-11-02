@@ -1,22 +1,31 @@
 package core
 
-import "time"
+import (
+	"strings"
+	"sync/atomic"
+	"time"
+)
 
 // Env is the environment as signals, one per part, so a binding runs
 // again only when a part it read changes.
 type Env struct {
-	window                    *Signal[Size]
-	safe, titleBar            *Signal[Edges]
-	maximized                 *Signal[bool]
-	keyboard                  *Signal[Points]
-	keyboardDuration          *Signal[time.Duration]
-	dark, reduce, rtl, reader *Signal[bool]
-	fontScale, ratio          *Signal[float32]
-	locale                    *Signal[string]
-	os                        *Signal[OS]
-	version                   *Signal[OSVersion]
-	idiom                     *Signal[Idiom]
-	appearance                *Signal[Appearance]
+	window               *Signal[Size]
+	safe, titleBar       *Signal[Edges]
+	maximized            *Signal[bool]
+	keyboard             *Signal[Points]
+	keyboardDuration     *Signal[time.Duration]
+	dark, reduce, reader *Signal[bool]
+	fontScale, ratio     *Signal[float32]
+	// locale and systemRTL are the platform's or the host's; forced is
+	// the locale Scope.SetLocale forces.
+	locale, forced *Signal[string]
+	systemRTL      *Signal[bool]
+	language       *Memo[string]
+	rtl            *Memo[bool]
+	os             *Signal[OS]
+	version        *Signal[OSVersion]
+	idiom          *Signal[Idiom]
+	appearance     *Signal[Appearance]
 	// systemDark is the system's appearance, which a forced one hides.
 	systemDark bool
 	material   *Signal[WindowMaterial]
@@ -27,7 +36,7 @@ type Env struct {
 }
 
 func newEnv(cx *Scope) *Env {
-	return &Env{
+	e := &Env{
 		window:           NewSignal(cx, Size{}),
 		safe:             NewSignal(cx, Edges{}),
 		titleBar:         NewSignal(cx, Edges{}),
@@ -36,11 +45,12 @@ func newEnv(cx *Scope) *Env {
 		keyboardDuration: NewSignal(cx, 250*time.Millisecond),
 		dark:             NewSignal(cx, false),
 		reduce:           NewSignal(cx, false),
-		rtl:              NewSignal(cx, false),
+		systemRTL:        NewSignal(cx, false),
 		reader:           NewSignal(cx, false),
 		fontScale:        NewSignal(cx, float32(1)),
 		ratio:            NewSignal(cx, float32(1)),
 		locale:           NewSignal(cx, ""),
+		forced:           NewSignal(cx, ""),
 		os:               NewSignal(cx, OS("")),
 		version:          NewSignal(cx, OSVersion{}),
 		idiom:            NewSignal(cx, IdiomPhone),
@@ -49,6 +59,25 @@ func newEnv(cx *Scope) *Env {
 		material:         NewSignal(cx, WindowMaterialNone),
 		tokens:           NewSignalFunc(cx, hostColors{}, nil),
 	}
+	e.language = NewMemo(cx, func() string {
+		locale := e.Locale()
+		if match := languageMatch.Load(); match != nil {
+			return (*match)(locale)
+		}
+		return ""
+	})
+	// The app lays out in the direction of the language it shows, else of
+	// the locale it forces, else as the system does.
+	e.rtl = NewMemo(cx, func() bool {
+		if lang := e.language.Get(); lang != "" {
+			return rightToLeft(lang)
+		}
+		if forced := e.forced.Get(); forced != "" {
+			return rightToLeft(forced)
+		}
+		return e.systemRTL.Get()
+	})
+	return e
 }
 
 // Env returns the app's environment.
@@ -82,7 +111,7 @@ func (e *Env) set(v Environment) {
 	e.systemDark = v.Dark
 	e.dark.Set(e.shownDark())
 	e.reduce.Set(v.ReduceMotion)
-	e.rtl.Set(v.RTL)
+	e.systemRTL.Set(v.RTL)
 	e.reader.Set(v.ScreenReader)
 	e.fontScale.Set(v.FontScale)
 	e.ratio.Set(v.PixelRatio)
@@ -144,14 +173,72 @@ func (e *Env) ReduceMotion() bool { return e.reduce.Get() }
 // ScreenReader reports whether a screen reader is running.
 func (e *Env) ScreenReader() bool { return e.reader.Get() }
 
-// RTL reports whether the app lays out right to left.
+// RTL reports whether the app lays out right to left: as the language it
+// shows is written (Language), else the locale it forces, else as the
+// system lays out.
 func (e *Env) RTL() bool { return e.rtl.Get() }
 
 // PixelRatio returns device pixels per point.
 func (e *Env) PixelRatio() float32 { return e.ratio.Get() }
 
-// Locale returns the user's language tag.
-func (e *Env) Locale() string { return e.locale.Get() }
+// Locale returns the locale the app runs in, a BCP 47 tag: the one
+// Scope.SetLocale forces, else the embedding host's, else the user's.
+func (e *Env) Locale() string {
+	if forced := e.forced.Get(); forced != "" {
+		return forced
+	}
+	return e.locale.Get()
+}
+
+// Language returns the language the app shows: of its catalogs'
+// languages, the one that suits Locale best, as SetLanguageMatch says;
+// "" for an app without catalogs. Package i18n's Language, which apps use,
+// reads it.
+func (e *Env) Language() string { return e.language.Get() }
+
+var languageMatch atomic.Pointer[func(locale string) string]
+
+// SetLanguageMatch sets how the language the app shows follows its
+// locale: package i18n's SetApp sets its catalog's match, nil none. It is
+// set as the program initializes, for every app it runs.
+func SetLanguageMatch(match func(locale string) string) {
+	if match == nil {
+		languageMatch.Store(nil)
+		return
+	}
+	languageMatch.Store(&match)
+}
+
+// SetLocale makes the app run in locale, a BCP 47 tag, whatever the
+// user's or the host's: the language it shows, its formats and its
+// direction follow. "" follows theirs again. The app keeps the choice for
+// later launches itself, as in its storage.
+func (cx *Scope) SetLocale(locale string) {
+	cx.Env().forced.Set(locale)
+	if t := cx.rt.tree; t != nil {
+		t.changed = true
+	}
+}
+
+// rightToLeft reports whether lang, a BCP 47 tag, is written right to
+// left: by its script when it names one, else by its language.
+func rightToLeft(lang string) bool {
+	parts := strings.Split(strings.ReplaceAll(lang, "_", "-"), "-")
+	for _, p := range parts[1:] {
+		if len(p) == 4 {
+			switch strings.ToLower(p) {
+			case "arab", "hebr", "syrc", "thaa", "nkoo", "adlm", "rohg", "mand", "samr", "mend", "yezi":
+				return true
+			}
+			return false
+		}
+	}
+	switch strings.ToLower(parts[0]) {
+	case "ar", "arc", "ckb", "dv", "fa", "he", "iw", "ks", "ps", "sd", "syr", "ug", "ur", "yi", "lrc", "mzn", "glk":
+		return true
+	}
+	return false
+}
 
 // OS returns the operating system.
 func (e *Env) OS() OS { return e.os.Get() }

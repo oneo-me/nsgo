@@ -1,0 +1,15 @@
+alertNote:
+  message: Note
+  description: The title of a Markdown alert of information users should notice ("> [!NOTE]").
+alertTip:
+  message: Tip
+  description: The title of a Markdown alert of advice ("> [!TIP]").
+alertImportant:
+  message: Important
+  description: The title of a Markdown alert of what users need to know ("> [!IMPORTANT]").
+alertWarning:
+  message: Warning
+  description: The title of a Markdown alert of what needs attention at once ("> [!WARNING]").
+alertCaution:
+  message: Caution
+  description: The title of a Markdown alert of an action's risks ("> [!CAUTION]").

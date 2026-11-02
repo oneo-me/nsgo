@@ -49,6 +49,18 @@ NSH records what its hot paths cost (`data-table.md` (Performance), `performance
 | Wheel steps on the web | `nsh/crates/nsh-platform-web/web/nsh.js` | A mouse wheel's step scrolls a page as far as on NSH's: over the scaled DataTable NSGo's moved about twice as far on 2026-11-01 |
 | Styles as classes on the web | `web.md` (Styles as classes) | Visual styles reach the page as classes, as NSH's do, and the gallery's batches shrink by about as much (a third of the website's demos' first render) |
 
+## Languages
+
+What [languages](architecture/languages.md) still lacks of MyGo's design (`docs/i18n.md` in MyGo), which NSH does not have.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Dates and times | MyGo's `i18n.FormatDate` | Messages take `{d, date, short}`, `{d, time}` and skeletons, and `DateTime` placeholders, written by the language's CLDR patterns |
+| Native controls in the app's direction | MyGo's `MYGO_DIRECTION` | Native controls, system headers and Android's back gesture mirror as the app's language is written (`ItemDirection`), not as the system's: `semanticContentAttribute` on iOS, `setLayoutDirection` on Android, which needs `classes.dex` rebuilt, and their peers on the desktops and the web |
+| Pseudo locales | MyGo's `en-XA`, `ar-XB` | `nsgo dev -lang en-XA` shows accented, longer messages and `ar-XB` mirrored ones, so untranslated and cut text shows |
+| TSX messages | MyGo's generated `locales.ts` | A TSX app imports its catalogs' messages as typed functions that follow the app's language |
+| The app's name per language | MyGo's `mygo.appName` | Packages list the app under its name in each of its languages: `InfoPlist.strings`, Android's `strings.xml`, the web manifest |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

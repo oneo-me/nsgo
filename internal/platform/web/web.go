@@ -1235,6 +1235,8 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemAppearance:
 			s.setAppearance(it.Appearance)
 			continue
+		case driver.ItemDirection:
+			continue
 		case driver.ItemQuit, driver.ItemPopupMenu:
 			// No toasts; a page neither quits nor shows native menus, and
 			// the core never asks it to.

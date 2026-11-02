@@ -11,6 +11,7 @@ import (
 	"github.com/oneo-me/nsgo/mobile"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // hairline is one device pixel, in points.
@@ -25,6 +26,7 @@ func hairline(env *core.Env) core.Points {
 var tileTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
 
 func layoutAnimations(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	items := core.NewSignalFunc(cx, []int{1, 2, 3}, slices.Equal)
 	preset := core.NewSignal(cx, "spring")
 	next := 4
@@ -33,8 +35,8 @@ func layoutAnimations(cx *core.Scope) core.Node {
 		cx.AnimateLayout(presets[preset.GetUntracked()])
 		change()
 	}
-	return ui.Card{Icon: ui.IconAnimation, Title: "Layout animation", Description: "AnimateLayout, then change the tree", Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(len(items.Get())) }}}, Children: []core.Node{
-		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: "Spring"}, {Value: "ease", Label: "Ease"}, {Value: "linear", Label: "Linear"}}, Value: preset.Get, OnChange: preset.Set, Small: true},
+	return ui.Card{Icon: ui.IconAnimation, Title: tr.CompLayoutAnimation(), Description: tr.CompAnimatelayoutThenChangeTheTree(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(len(items.Get())) }}}, Children: []core.Node{
+		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.CompSpring()}, {Value: "ease", Label: tr.CompEase()}, {Value: "linear", Label: tr.CompLinear()}}, Value: preset.Get, OnChange: preset.Set, Small: true},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8, MinHeight: core.Pt(56)}, Children: []core.Node{
 			core.Each(items.Get, func(n int) int { return n }, func(cx *core.Scope, n func() int, _ func() int) core.Node {
 				t := tileTones[core.Untracked(cx, n)%len(tileTones)]
@@ -50,10 +52,10 @@ func layoutAnimations(cx *core.Scope) core.Node {
 			}),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: "Add", Icon: ui.IconPlus, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.CompAdd(), Icon: ui.IconPlus, OnPress: func() {
 				animate(func() { items.Update(func(s []int) []int { return append([]int{next}, s...) }); next++ })
 			}}},
-			ui.Cell{Child: ui.Button{Text: "Shuffle", Variant: ui.ButtonSecondary, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.CompShuffle(), Variant: ui.ButtonSecondary, OnPress: func() {
 				animate(func() {
 					items.Update(func(s []int) []int {
 						s = slices.Clone(s)
@@ -62,7 +64,7 @@ func layoutAnimations(cx *core.Scope) core.Node {
 					})
 				})
 			}}},
-			ui.Cell{Child: ui.Button{Text: "Remove", Variant: ui.ButtonSecondary, Disabled: func() bool { return len(items.Get()) == 0 }, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.CompRemove(), Variant: ui.ButtonSecondary, Disabled: func() bool { return len(items.Get()) == 0 }, OnPress: func() {
 				animate(func() { items.Update(func(s []int) []int { return slices.Clone(s[1:]) }) })
 			}}},
 		}},
@@ -70,12 +72,13 @@ func layoutAnimations(cx *core.Scope) core.Node {
 }
 
 func pressableSheet(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	open := core.NewSignal(cx, false)
 	env := cx.Env()
-	return ui.Card{Icon: ui.IconComponents, Title: "Sheet", Description: "A pressed state style opens it", Children: []core.Node{
-		core.View{OnPress: func(core.PressEvent) { open.Set(true) }, Role: core.RoleButton, Label: "Open a sheet",
+	return ui.Card{Icon: ui.IconComponents, Title: tr.CompSheet(), Description: tr.CompAPressedStateStyleOpens(), Children: []core.Node{
+		core.View{OnPress: func(core.PressEvent) { open.Set(true) }, Role: core.RoleButton, Label: tr.CompOpenASheet(),
 			StyleFunc: func() core.Style {
 				pressedFill := core.RGB(0xb84a15)
 				if cx.Dark() {
@@ -85,9 +88,9 @@ func pressableSheet(cx *core.Scope) core.Node {
 					Gap: 8, CornerRadius: 12, Background: colors.AccentFill(), Transition: core.Transition{Duration: 150e6},
 					Active: &core.Style{Transform: core.Transform{Scale: 0.97}, Background: pressedFill}}
 			},
-			Children: []core.Node{ui.Text("Open a sheet", 15, ui.Semibold, colors.OnAccent)}},
-		ui.Caption{Label: "Scales and darkens while pressed", Note: func() string { return "Active: scale 0.97" }},
-		base.Sheet{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: "A sheet",
+			Children: []core.Node{ui.Text(tr.CompOpenASheet(), 15, ui.Semibold, colors.OnAccent)}},
+		ui.Caption{Label: tr.CompScalesAndDarkensWhilePressed(), Note: func() string { return "Active: scale 0.97" }},
+		base.Sheet{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: tr.CompASheet(),
 			BackdropStyle: core.Style{Background: ui.Black(0.5)},
 			PopupStyleFunc: func() core.Style {
 				return core.Style{Gap: 16, Padding: core.Edges{Top: 20, Right: 20, Bottom: env.SafeArea().Bottom + 20, Left: 20},
@@ -95,12 +98,12 @@ func pressableSheet(cx *core.Scope) core.Node {
 			},
 			Children: []core.Node{
 				core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "Sheet", Tone: ui.ToneAccent}}},
-					core.Text{Content: "A sheet", Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
-					core.Text{Content: ui.Hint(cx, "Tap outside it or press back (Android) to close.", "Press Escape or click outside it to close."),
+					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: tr.CompSheet(), Tone: ui.ToneAccent}}},
+					core.Text{Content: tr.CompASheet(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{Content: ui.Hint(cx, tr.CompTapOutsideItOrPress(), tr.CompPressEscapeOrClickOutside()),
 						Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
-				ui.Button{Text: "Close", OnPress: func() { open.Set(false) }},
+				ui.Button{Text: tr.CompClose(), OnPress: func() { open.Set(false) }},
 			}},
 	}}
 }
@@ -129,9 +132,10 @@ func tileStyle(cx *core.Scope) core.Style {
 // pressFeedback is press feedback drawn by the platform: opacity, an
 // underlay; Disabled takes no presses.
 func pressFeedback(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
-	last := core.NewSignal(cx, "None yet")
+	last := core.NewSignal(cx, tr.CompNoneYet())
 	disabled := core.NewSignal(cx, false)
 	fade := func() core.Style { s := tileStyle(cx); s.Active = &core.Style{Opacity: core.Alpha(0.4)}; return s }
 	under := func() core.Style { s := tileStyle(cx); s.Active = &core.Style{Background: colors.Raised()}; return s }
@@ -140,51 +144,52 @@ func pressFeedback(cx *core.Scope) core.Node {
 		s.Active, s.Disabled = &core.Style{Background: tints.Danger()}, &core.Style{Opacity: core.Alpha(0.4)}
 		return s
 	}
-	return ui.Card{Icon: ui.IconGestures, Title: "Press feedback", Description: ui.Hint(cx, "Drawn natively while the finger is down", "Drawn natively while the button is down"), Children: []core.Node{
-		core.View{StyleFunc: fade, Role: core.RoleButton, OnPress: func(core.PressEvent) { last.Set("Fading tile") },
-			Children: []core.Node{pressTile(cx, label("Fades while pressed"), "Active: Opacity 0.4", nil)}},
-		core.View{StyleFunc: under, Role: core.RoleButton, OnPress: func(core.PressEvent) { last.Set("Underlay tile") },
-			Children: []core.Node{pressTile(cx, label("Lights up while pressed"), "Active: Background", nil)}},
-		core.View{StyleFunc: third, Role: core.RoleButton, Disabled: disabled.Get, OnPress: func(core.PressEvent) { last.Set("Enabled tile") },
+	return ui.Card{Icon: ui.IconGestures, Title: tr.CompPressFeedback(), Description: ui.Hint(cx, tr.CompDrawnNativelyWhileTheFinger(), tr.CompDrawnNativelyWhileTheButton()), Children: []core.Node{
+		core.View{StyleFunc: fade, Role: core.RoleButton, OnPress: func(core.PressEvent) { last.Set(tr.CompFadingTile()) },
+			Children: []core.Node{pressTile(cx, label(tr.CompFadesWhilePressed()), "Active: Opacity 0.4", nil)}},
+		core.View{StyleFunc: under, Role: core.RoleButton, OnPress: func(core.PressEvent) { last.Set(tr.CompUnderlayTile()) },
+			Children: []core.Node{pressTile(cx, label(tr.CompLightsUpWhilePressed()), "Active: Background", nil)}},
+		core.View{StyleFunc: third, Role: core.RoleButton, Disabled: disabled.Get, OnPress: func(core.PressEvent) { last.Set(tr.CompEnabledTile()) },
 			Children: []core.Node{pressTile(cx, func() string {
 				if disabled.Get() {
-					return "Takes no presses"
+					return tr.CompTakesNoPresses()
 				}
-				return "Enabled"
+				return tr.CompEnabled()
 			}, "Disabled + Disabled: Opacity 0.4", core.Dynamic(func(*core.Scope) core.Node {
 				if disabled.Get() {
-					return ui.Badge{Text: "Off"}
+					return ui.Badge{Text: tr.CompOff()}
 				}
-				return ui.Badge{Text: "On", Tone: ui.ToneUp}
+				return ui.Badge{Text: tr.CompOn(), Tone: ui.ToneUp}
 			}))}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-			core.View{Style: fill, Children: []core.Node{ui.Caption{Label: "Last pressed", Note: last.Get}}},
-			ui.Switch{Checked: disabled.Get, OnChange: disabled.Set, Label: "Disable the third tile"},
+			core.View{Style: fill, Children: []core.Node{ui.Caption{Label: tr.CompLastPressed(), Note: last.Get}}},
+			ui.Switch{Checked: disabled.Get, OnChange: disabled.Set, Label: tr.CompDisableTheThirdTile()},
 		}},
 	}}
 }
 
 func accessory(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	value := core.NewSignal(cx, "")
 	input := &core.Ref{}
 	env := cx.Env()
-	captionText := "The bar counts what you type"
+	captionText := tr.CompTheBarCountsWhatYou()
 	switch {
 	case env.Desktop():
-		captionText = "Desktops have no software keyboard"
+		captionText = tr.CompDesktopsHaveNoSoftwareKeyboard()
 	}
-	return ui.Card{Icon: ui.IconText, Title: "Input accessory", Description: "A bar over the software keyboard", Actions: []core.Node{ui.Badge{Text: "iOS · Android"}}, Children: []core.Node{
-		ui.Input{Input: base.Input{Ref: input, Value: value.Get, OnChange: value.Set, Placeholder: "Focus me", InputAccessoryViewID: "counter", TestID: "accessory-field"}},
+	return ui.Card{Icon: ui.IconText, Title: tr.CompInputAccessory(), Description: tr.CompABarOverTheSoftware(), Actions: []core.Node{ui.Badge{Text: "iOS · Android"}}, Children: []core.Node{
+		ui.Input{Input: base.Input{Ref: input, Value: value.Get, OnChange: value.Set, Placeholder: tr.CompFocusMe(), InputAccessoryViewID: "counter", TestID: "accessory-field"}},
 		ui.Caption{Label: captionText, Note: func() string { return `InputAccessoryViewID: "counter"` }},
 		mobile.InputAccessoryView{ID: "counter", TestID: "accessory-bar", StyleFunc: ui.Filled(colors.Surface), Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
 				return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(8, 16),
 					Borders: core.Edges{Top: hairline(env)}, BorderColors: core.EdgeColors{Top: colors.Border()}}
 			}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d characters", len([]rune(value.Get()))) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
-				ui.Button{Text: "Clear", Variant: ui.ButtonSecondary, OnPress: func() { value.Set("") }},
-				ui.Button{Text: "Done", OnPress: input.Blur},
+				core.Text{ContentFunc: func() string { return tr.CompCharacters(len([]rune(value.Get()))) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+				ui.Button{Text: tr.CompClear(), Variant: ui.ButtonSecondary, OnPress: func() { value.Set("") }},
+				ui.Button{Text: tr.CompDone(), OnPress: input.Blur},
 			}},
 		}},
 	}}
@@ -193,31 +198,34 @@ func accessory(cx *core.Scope) core.Node {
 // avoidingPage is a screen whose field at the bottom stays above the
 // keyboard.
 func avoidingPage(cx *core.Scope) base.NavPage {
+	tr := locales.For(cx)
 	margin := core.NewSignal(cx, false)
-	return screen(cx, "Keyboard inset", nil, core.Dynamic(func(cx *core.Scope) core.Node {
+	return screen(cx, tr.CompKeyboardInset(), nil, core.Dynamic(func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		tints := ui.TintsOf(cx)
 		m := margin.Get()
 		style := core.Style{FlexGrow: 1, PaddingEnv: core.EnvEdges{Bottom: core.EnvKeyboard}}
-		title, note := "padding", "PaddingEnv: EnvKeyboard. The tinted background stays under the keyboard."
+		title, note := "padding", tr.CompPaddingenvEnvkeyboardTheTintedBackground()
 		if m {
 			style.PaddingEnv, style.MarginEnv = core.EnvEdges{}, core.EnvEdges{Bottom: core.EnvKeyboard}
-			title, note = "margin", "MarginEnv: EnvKeyboard. The view shrinks: its background ends at the keyboard."
+			title, note = "margin", tr.CompMarginenvEnvkeyboardTheViewShrinks()
 		}
 		return core.View{Style: style, StyleFunc: ui.Filled(tints.Info), Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
-				ui.Card{Icon: ui.IconForm, Title: "Room: " + title, Description: "Focus the field at the bottom", Children: []core.Node{
+				ui.Card{Icon: ui.IconForm, Title: tr.CompRoom() + title, Description: tr.CompFocusTheFieldAtThe(), Children: []core.Node{
 					ui.Segmented[bool]{Options: []ui.Option[bool]{{Value: false, Label: "padding"}, {Value: true, Label: "margin"}}, Value: margin.Get, OnChange: margin.Set},
 					core.Text{Content: note, Style: core.Style{FontSize: 14, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Spacer{},
-				ui.Input{Input: base.Input{Placeholder: "Type here"}},
+				ui.Input{Input: base.Input{Placeholder: tr.CompTypeHere()}},
 			}},
 		}}
 	}))
 }
 
 func modalOptions(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	visible, translucent := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	bg := func() core.Color {
@@ -226,14 +234,14 @@ func modalOptions(cx *core.Scope) core.Node {
 		}
 		return core.RGB(0xf8ece3)
 	}
-	return ui.Card{Icon: ui.IconSystem, Title: "Dialog options", Description: "StatusBarTranslucent, orientations", Actions: []core.Node{ui.Switch{Checked: translucent.Get, OnChange: translucent.Set, Label: "StatusBarTranslucent"}}, Children: []core.Node{
-		core.Text{Content: "Android: translucent content reaches under the status bar. iOS: this dialog allows portrait and landscape.",
+	return ui.Card{Icon: ui.IconSystem, Title: tr.CompDialogOptions(), Description: tr.CompStatusbartranslucentOrientations(), Actions: []core.Node{ui.Switch{Checked: translucent.Get, OnChange: translucent.Set, Label: "StatusBarTranslucent"}}, Children: []core.Node{
+		core.Text{Content: tr.CompAndroidTranslucentContentReachesUnder(),
 			Style: core.Style{FontSize: 14, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 		ui.Caption{Label: "StatusBarTranslucent", Note: func() string { return fmt.Sprint(translucent.Get()) }},
-		ui.Button{Text: "Open the dialog", Variant: ui.ButtonSecondary, OnPress: func() { visible.Set(true) }},
+		ui.Button{Text: tr.CompOpenTheDialog(), Variant: ui.ButtonSecondary, OnPress: func() { visible.Set(true) }},
 		core.Dynamic(func(*core.Scope) core.Node {
 			t := translucent.Get()
-			return base.Dialog{Open: visible.Get, Animation: core.ModalSlide, Label: "A dialog",
+			return base.Dialog{Open: visible.Get, Animation: core.ModalSlide, Label: tr.CompADialog(),
 				Android:      core.AndroidModalProps{StatusBarTranslucent: t},
 				IOS:          core.IOSModalProps{SupportedOrientations: core.OrientationPortrait | core.OrientationLandscape},
 				OnOpenChange: func(o bool, _ base.Reason) { visible.Set(o) },
@@ -241,12 +249,12 @@ func modalOptions(cx *core.Scope) core.Node {
 				Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1}, StyleFunc: ui.Filled(bg), Children: []core.Node{
 					core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1, Padding: core.All(16), Gap: 12}, Children: []core.Node{
 						core.View{Style: core.Style{Direction: core.Row, Padding: core.Edges{Top: 8}}, Children: []core.Node{
-							ui.Badge{Text: map[bool]string{true: "translucent", false: "opaque bar"}[t], Tone: ui.ToneAccent}}},
-						core.Text{Content: "A dialog", Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
-						core.Text{Content: fmt.Sprintf("The olive background starts %s the status bar on Android.", map[bool]string{true: "under", false: "below"}[t]),
+							ui.Badge{Text: map[bool]string{true: "translucent", false: tr.CompOpaqueBar()}[t], Tone: ui.ToneAccent}}},
+						core.Text{Content: tr.CompADialog(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
+						core.Text{Content: map[bool]string{true: tr.CompOliveUnder(), false: tr.CompOliveBelow()}[t],
 							Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 						ui.Spacer{},
-						ui.Button{Text: "Close", OnPress: func() { visible.Set(false) }},
+						ui.Button{Text: tr.CompClose(), OnPress: func() { visible.Set(false) }},
 					}},
 				}}}}
 		}),
@@ -254,6 +262,7 @@ func modalOptions(cx *core.Scope) core.Node {
 }
 
 func platformInfo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	rows := func() [][2]string {
@@ -266,7 +275,7 @@ func platformInfo(cx *core.Scope) core.Node {
 			{"Env.OSVersion", env.OSVersion().String()},
 			{"Env.Idiom", idiomName(env.Idiom())},
 			{"Env.PixelRatio", fmt.Sprint(r)},
-			{"10.3 on whole pixels", fmt.Sprint(math.Round(10.3*float64(r)) / float64(r))},
+			{tr.Comp103OnWholePixels(), fmt.Sprint(math.Round(10.3*float64(r)) / float64(r))},
 			{"Env.ScreenReader", fmt.Sprint(env.ScreenReader())},
 			{"Env.ReduceMotion", fmt.Sprint(env.ReduceMotion())},
 			{"Env.Locale", env.Locale()},
@@ -274,7 +283,7 @@ func platformInfo(cx *core.Scope) core.Node {
 	}
 	announced := 0
 	target := &core.Ref{}
-	return ui.Card{Icon: ui.IconSpark, Title: "Platform", Description: "The environment, PixelRatio, Announce", Actions: []core.Node{ui.Badge{Text: osName(env.OS()), Tone: ui.ToneAccent}}, Children: []core.Node{
+	return ui.Card{Icon: ui.IconSpark, Title: tr.CompPlatform(), Description: tr.CompTheEnvironmentPixelratioAnnounce(), Actions: []core.Node{ui.Badge{Text: osName(env.OS()), Tone: ui.ToneAccent}}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			var nodes []core.Node
 			for i, r := range rows() {
@@ -286,15 +295,15 @@ func platformInfo(cx *core.Scope) core.Node {
 			return core.View{Children: nodes}
 		}),
 		core.View{StyleFunc: func() core.Style { return core.Style{Height: core.Pt(hairline(env)), Background: colors.Accent()} }},
-		ui.Caption{Label: "The line above is one device pixel tall", Note: func() string { return fmt.Sprintf("%.3f pt", hairline(env)) }},
+		ui.Caption{Label: tr.CompTheLineAboveIsOne(), Note: func() string { return fmt.Sprintf("%.3f pt", hairline(env)) }},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: "Announce", OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.CompAnnounce(), OnPress: func() {
 				announced++
-				cx.Announce(fmt.Sprintf("Announcement %d", announced))
+				cx.Announce(tr.CompAnnouncement(announced))
 			}}},
-			ui.Cell{Child: ui.Button{Text: "Focus the note", Variant: ui.ButtonSecondary, OnPress: target.SetAccessibilityFocus}},
+			ui.Cell{Child: ui.Button{Text: tr.CompFocusTheNote(), Variant: ui.ButtonSecondary, OnPress: target.SetAccessibilityFocus}},
 		}},
-		core.Text{Ref: target, Content: "With VoiceOver or TalkBack on, the buttons above speak and move the reader here.",
+		core.Text{Ref: target, Content: tr.CompWithVoiceoverOrTalkbackOn(),
 			Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Faint)},
 	}}
 }
@@ -318,8 +327,9 @@ func componentsDemo(cx *core.Scope) core.Node {
 	return demoPage(cx, pageProps{behavior: core.ScrollBehavior{KeyboardDismissMode: core.KeyboardDismissInteractive}},
 		pressFeedback, pressableSheet, layoutAnimations, accessory,
 		func(cx *core.Scope) core.Node {
-			return ui.Card{Title: "Keyboard avoidance", Description: "Content outside scroll views", Flush: true, Children: []core.Node{
-				ui.Inset{Exact: true, Children: []core.Node{ui.LinkRow{Icon: ui.IconForm, Title: "Keyboard inset", Note: "EnvKeyboard", OnPress: func() { shell.push(avoidingPage) }}}},
+			tr := locales.For(cx)
+			return ui.Card{Title: tr.CompKeyboardAvoidance(), Description: tr.CompContentOutsideScrollViews(), Flush: true, Children: []core.Node{
+				ui.Inset{Exact: true, Children: []core.Node{ui.LinkRow{Icon: ui.IconForm, Title: tr.CompKeyboardInset(), Note: "EnvKeyboard", OnPress: func() { shell.push(avoidingPage) }}}},
 			}}
 		},
 		modalOptions, platformInfo)

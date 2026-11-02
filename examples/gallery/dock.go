@@ -8,6 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // base.DockArea owns the workspace's behavior: tab drags into another
@@ -19,17 +20,18 @@ import (
 // the panel moves.
 
 // dockTitles are the panels' titles, by key.
-var dockTitles = map[string]string{"files": "Files", "readme": "README.md", "main": "main.go", "preview": "Preview", "terminal": "Terminal"}
+var dockTitles = map[string]func(locales.Messages) string{"files": locales.Messages.DockFiles, "readme": func(locales.Messages) string { return "README.md" },
+	"main": func(locales.Messages) string { return "main.go" }, "preview": locales.Messages.DockPreview, "terminal": locales.Messages.DockTerminal}
 
-func dockTitle(panel string) string {
+func dockTitle(tr locales.Messages, panel string) string {
 	if t, ok := dockTitles[panel]; ok {
-		return t
+		return t(tr)
 	}
 	return panel
 }
 
 // dockNames are the docks' names, by placement.
-var dockNames = map[base.DockPlacement]string{base.DockLeft: "Files", base.DockBottom: "Terminal"}
+var dockNames = map[base.DockPlacement]func(locales.Messages) string{base.DockLeft: locales.Messages.DockFiles, base.DockBottom: locales.Messages.DockTerminal}
 
 // initialDock is the workspace at first: two editor groups side by side,
 // the files on the left and a terminal under them.
@@ -47,17 +49,17 @@ func initialDock() base.DockLayout {
 
 // describeDock is a layout as a line of text: row(...) and column(...)
 // for splits, [a, b] for tab groups.
-func describeNode(n base.DockNode) string {
+func describeNode(tr locales.Messages, n base.DockNode) string {
 	if n.Tabs {
 		titles := make([]string, len(n.Panels))
 		for i, p := range n.Panels {
-			titles[i] = dockTitle(p)
+			titles[i] = dockTitle(tr, p)
 		}
 		return "[" + strings.Join(titles, ", ") + "]"
 	}
 	parts := make([]string, len(n.Children))
 	for i, c := range n.Children {
-		parts[i] = describeNode(c)
+		parts[i] = describeNode(tr, c)
 	}
 	axis := "row"
 	if n.Axis == base.Vertical {
@@ -66,15 +68,15 @@ func describeNode(n base.DockNode) string {
 	return axis + "(" + strings.Join(parts, " ") + ")"
 }
 
-func describeRegion(name string, r *base.DockRegion) string {
+func describeRegion(tr locales.Messages, name string, r *base.DockRegion) string {
 	if r == nil {
-		return name + ": none"
+		return tr.DockRegionNone(name)
 	}
-	state := "open"
+	state := tr.DockOpen()
 	if r.Closed {
-		state = "closed"
+		state = tr.DockClosedState()
 	}
-	return fmt.Sprintf("%s: %s %.0f pt, %s", name, describeNode(r.Root), r.Size, state)
+	return fmt.Sprintf("%s: %s %.0f pt, %s", name, describeNode(tr, r.Root), r.Size, state)
 }
 
 // firstSlot is the size of the center's first slot, when it is a split.
@@ -97,6 +99,7 @@ var dockSources = map[string][]string{
 // editorPanel is an editor: a count of its edits, which survives every
 // move, over its file's lines.
 func editorPanel(cx *core.Scope, panel string) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	edits := core.NewSignal(cx, 0)
@@ -109,13 +112,13 @@ func editorPanel(cx *core.Scope, panel string) core.Node {
 	}
 	return core.View{Style: core.Style{FlexGrow: 1, Gap: 16, Padding: core.All(16)}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-			base.Button{OnPress: func(core.PressEvent) { edits.Update(func(n int) int { return n + 1 }) }, Label: "Edit " + dockTitle(panel),
+			base.Button{OnPress: func(core.PressEvent) { edits.Update(func(n int) int { return n + 1 }) }, Label: tr.DockEdit() + dockTitle(tr, panel),
 				StyleFunc: func() core.Style {
 					return fin.Accent().Over(core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, CornerRadius: 8, Padding: core.Symmetric(0, 12),
 						Background: colors.AccentFill(), Transition: core.Transition{Duration: 150e6}, Active: &core.Style{Transform: core.Transform{Scale: 0.97}}})
 				},
-				Children: []core.Node{ui.Icon(ui.IconPlus, 14, colors.OnAccent), ui.Text("Edit", 13, ui.Semibold, colors.OnAccent)}},
-			ui.Textf(func() string { return fmt.Sprintf("%s: %s", dockTitle(panel), count(edits.Get(), "edit")) }, 14, ui.Regular, colors.Muted),
+				Children: []core.Node{ui.Icon(ui.IconPlus, 14, colors.OnAccent), ui.Text(tr.DockEdit2(), 13, ui.Semibold, colors.OnAccent)}},
+			ui.Textf(func() string { return tr.DockEdits(dockTitle(tr, panel), edits.Get()) }, 14, ui.Regular, colors.Muted),
 		}},
 		core.View{Style: core.Style{Gap: 4}, Children: lines},
 	}}
@@ -129,6 +132,7 @@ var dockFiles = []struct {
 
 // dockPanel is what a panel shows, by key.
 func dockPanel(cx *core.Scope, panel string) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	switch panel {
 	case "readme", "main":
@@ -153,7 +157,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 		return core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12, Padding: core.All(16)}, Children: []core.Node{
 			ui.IconTile{Icon: ui.IconSpark, Size: 40},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 2}, Children: []core.Node{
-				ui.Text("Live preview", 14, ui.Semibold, colors.Text), ui.Text("Follows the editor beside it", 12, ui.Regular, colors.Muted)}},
+				ui.Text(tr.DockLivePreview(), 14, ui.Semibold, colors.Text), ui.Text(tr.DockFollowsTheEditorBesideIt(), 12, ui.Regular, colors.Muted)}},
 		}}
 	}
 	monoText := func(s string, c func() core.Color) core.Node {
@@ -170,6 +174,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 // than 600 pt it shows one group at a time and presents a dock at a time,
 // as a drawer or a sheet over the editors.
 func dockDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	layout := core.NewSignalFunc(cx, initialDock(), func(a, b base.DockLayout) bool { return false })
@@ -196,11 +201,11 @@ func dockDemo(cx *core.Scope) core.Node {
 		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: gap})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			ui.Tool{Label: "Toggle files", Text: "Files", On: showLeft.Get, OnPress: func() { area.ToggleDock(base.DockLeft) }},
-			ui.Tool{Label: "Toggle terminal", Text: "Terminal", On: showBottom.Get, OnPress: func() { area.ToggleDock(base.DockBottom) }},
-			ui.Tool{Label: "Lock the layout", Text: "Lock", On: locked.Get, OnPress: func() { toggled(locked) }},
-			ui.Tool{Label: "Show close buttons", Text: "Close", On: closing.Get, OnPress: func() { toggled(closing) }},
-			ui.Tool{Label: "Zoom the group", Text: "Zoom", On: func() bool { return zoomed.Get() != "" }, OnPress: func() {
+			ui.Tool{Label: tr.DockToggleFiles(), Text: tr.DockFiles(), On: showLeft.Get, OnPress: func() { area.ToggleDock(base.DockLeft) }},
+			ui.Tool{Label: tr.DockToggleTerminal(), Text: tr.DockTerminal(), On: showBottom.Get, OnPress: func() { area.ToggleDock(base.DockBottom) }},
+			ui.Tool{Label: tr.DockLockTheLayout(), Text: tr.DockLock(), On: locked.Get, OnPress: func() { toggled(locked) }},
+			ui.Tool{Label: tr.DockShowCloseButtons(), Text: tr.DockClose(), On: closing.Get, OnPress: func() { toggled(closing) }},
+			ui.Tool{Label: tr.DockZoomTheGroup(), Text: tr.DockZoom(), On: func() bool { return zoomed.Get() != "" }, OnPress: func() {
 				if zoomed.GetUntracked() != "" {
 					area.ToggleZoom(0)
 				} else {
@@ -208,8 +213,8 @@ func dockDemo(cx *core.Scope) core.Node {
 					area.ToggleZoom(g)
 				}
 			}},
-			ui.Tool{Label: "Reset the layout", Text: "Reset", OnPress: func() { layout.Set(initialDock()) }},
-			core.Text{Content: ui.Hint(cx, "Hold a tab to reorder it", "Drag a tab onto another group, or to a group's edge to split it"),
+			ui.Tool{Label: tr.DockResetTheLayout(), Text: tr.DockReset(), OnPress: func() { layout.Set(initialDock()) }},
+			core.Text{Content: ui.Hint(cx, tr.DockHoldATabToReorder(), tr.DockDragATabOntoAnother()),
 				Style: core.Style{MinWidth: core.Pt(160), FlexGrow: 1, FlexShrink: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 		core.View{StyleFunc: func() core.Style {
@@ -231,30 +236,30 @@ func dockDemo(cx *core.Scope) core.Node {
 				})
 			})}},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 20, RowGap: 4, Padding: core.Edges{Top: 2, Right: 10, Bottom: 4, Left: 10}}, Children: []core.Node{
-				status(func() string { return "Center: " + describeNode(layout.Get().Center) }, true),
-				status(func() string { return "First slot: " + firstSlot(layout.Get().Center) }, false),
-				status(func() string { return describeRegion("Left", layout.Get().Left) }, false),
-				status(func() string { return describeRegion("Bottom", layout.Get().Bottom) }, false),
+				status(func() string { return tr.DockCenter() + describeNode(tr, layout.Get().Center) }, true),
+				status(func() string { return tr.DockFirstSlot() + firstSlot(layout.Get().Center) }, false),
+				status(func() string { return describeRegion(tr, tr.DockLeft(), layout.Get().Left) }, false),
+				status(func() string { return describeRegion(tr, tr.DockBottom(), layout.Get().Bottom) }, false),
 				status(func() string {
 					var names []string
 					if showLeft.Get() {
-						names = append(names, "Files")
+						names = append(names, tr.DockFiles())
 					}
 					if showBottom.Get() {
-						names = append(names, "Terminal")
+						names = append(names, tr.DockTerminal())
 					}
 					if len(names) == 0 {
-						return "Showing docks: none"
+						return tr.DockShowingDocksNone()
 					}
-					return "Showing docks: " + strings.Join(names, ", ")
+					return tr.DockShowingDocks() + strings.Join(names, ", ")
 				}, false),
 				status(func() string {
 					if z := zoomed.Get(); z != "" {
-						return "Zoomed: " + dockTitle(z)
+						return tr.DockZoomed() + dockTitle(tr, z)
 					}
-					return "Zoomed: none"
+					return tr.DockZoomedNone()
 				}, false),
-				status(func() string { return "Last event: " + last.Get() }, false),
+				status(func() string { return tr.DockLastEvent() + last.Get() }, false),
 			}},
 		}},
 	}}
@@ -262,14 +267,15 @@ func dockDemo(cx *core.Scope) core.Node {
 
 func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.DockLayout], locked *core.Signal[bool], last, zoomed *core.Signal[string],
 	showLeft, showBottom *core.Signal[bool], panels map[string]base.DockPanelOptions, pointer bool, current *string) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	return base.DockArea{Ref: area, TestID: "dock", Layout: layout.Get, OnLayoutChange: layout.Set, Locked: locked.Get, Panels: panels,
-		OnPanelRemove: func(p string) { last.Set("Closed " + dockTitle(p)) },
+		OnPanelRemove: func(p string) { last.Set(tr.DockClosed() + dockTitle(tr, p)) },
 		OnPanelActiveChange: func(p string, active bool) {
 			if active {
 				*current = p
-				last.Set("Showing " + dockTitle(p))
+				last.Set(tr.DockShowing() + dockTitle(tr, p))
 			}
 		},
 		OnZoomChange: zoomed.Set,
@@ -288,7 +294,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 		},
 		TabStyle:     core.Style{Group: "tab"},
 		ContentStyle: core.Style{FlexGrow: 1},
-		HandleLabel:  "Resize",
+		HandleLabel:  tr.DockResize(),
 		// A hairline that stays as it is; the thumb, a pill on it, grows
 		// in under the pointer and further while dragged.
 		HandleStyleFunc:  func() core.Style { return core.Style{Background: colors.Line()} },
@@ -310,8 +316,9 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 		// button fades in over the tab's end while the pointer is on it;
 		// a touch screen keeps it beside the shown tab's title.
 		RenderTab: func(cx *core.Scope, tab base.DockTab) core.Node {
+			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
-			children := []core.Node{core.Text{Content: dockTitle(tab.Key), MaxLines: 1, StyleFunc: func() core.Style {
+			children := []core.Node{core.Text{Content: dockTitle(tr, tab.Key), MaxLines: 1, StyleFunc: func() core.Style {
 				s := core.Style{MaxWidth: core.Pt(160), FontSize: 13, FontWeight: ui.Medium, Color: colors.Muted(), Transition: core.Transition{Duration: 150e6}}
 				if tab.Selected() {
 					s.Color = colors.Text()
@@ -336,7 +343,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 					return core.Style{Background: colors.Inset(), Hover: &core.Style{Background: colors.Raised()}}
 				}
 				children = append(children, core.Show{When: func() bool { return pointer || tab.Selected() }, Then: func(*core.Scope) core.Node {
-					return base.Button{OnPress: func(core.PressEvent) { area.ClosePanel(tab.Key) }, Label: "Close " + dockTitle(tab.Key), Style: closeStyle, StyleFunc: closeColors,
+					return base.Button{OnPress: func(core.PressEvent) { area.ClosePanel(tab.Key) }, Label: tr.DockClose2() + dockTitle(tr, tab.Key), Style: closeStyle, StyleFunc: closeColors,
 						Children: []core.Node{ui.Text("×", 13, ui.Regular, colors.Muted)}}
 				}})
 			}
@@ -348,8 +355,12 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 				Children: children}
 		},
 		RenderDock: func(cx *core.Scope, d base.DockInfo) core.Node {
+			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
-			name := dockNames[d.Placement]
+			name := ""
+			if f, ok := dockNames[d.Placement]; ok {
+				name = f(tr)
+			}
 			return core.View{StyleFunc: func() core.Style {
 				return core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Borders: core.Edges{Bottom: 1},
 					BorderColors: core.EdgeColors{Bottom: colors.Line()}, Padding: core.Edges{Left: 12, Right: 4}}
@@ -357,11 +368,11 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 				core.Text{Content: name, Style: core.Style{FlexGrow: 1, FontSize: 11, FontWeight: ui.Semibold, TextTransform: core.TextTransformUppercase, LetterSpacing: 0.8}, StyleFunc: ui.Colored(colors.Faint)},
 				// Toggled: at compact width that dismisses the drawer, in
 				// the full presentation it closes the open dock.
-				base.Button{OnPress: func(core.PressEvent) { area.ToggleDock(d.Placement) }, Label: "Hide " + name,
+				base.Button{OnPress: func(core.PressEvent) { area.ToggleDock(d.Placement) }, Label: tr.DockHide() + name,
 					StyleFunc: func() core.Style {
 						return core.Style{CornerRadius: 6, Padding: core.Symmetric(2, 8), Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Opacity: core.Alpha(0.7)}}
 					},
-					Children: []core.Node{ui.Text("Hide", 12, ui.Medium, colors.Muted)}},
+					Children: []core.Node{ui.Text(tr.DockHide2(), 12, ui.Medium, colors.Muted)}},
 			}}
 		},
 		RenderDragPreview: func(cx *core.Scope, tab base.DockTab) core.Node {
@@ -370,13 +381,14 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 			return core.View{StyleFunc: func() core.Style {
 				return fin.Raised().Over(core.Style{CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.Symmetric(6, 12), Background: colors.Raised()})
 			},
-				Children: []core.Node{ui.Text(dockTitle(tab.Key), 13, ui.Medium, colors.Text)}}
+				Children: []core.Node{ui.Text(dockTitle(tr, tab.Key), 13, ui.Medium, colors.Text)}}
 		},
 		RenderPanel: dockPanel,
 		RenderEmpty: func(cx *core.Scope) core.Node {
+			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			return core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 4}, Children: []core.Node{
-				ui.Text("Every editor is closed", 14, ui.Semibold, colors.Text), ui.Text("Reset brings them back", 12, ui.Regular, colors.Muted)}}
+				ui.Text(tr.DockEveryEditorIsClosed(), 14, ui.Semibold, colors.Text), ui.Text(tr.DockResetBringsThemBack(), 12, ui.Regular, colors.Muted)}}
 		},
 	}
 }

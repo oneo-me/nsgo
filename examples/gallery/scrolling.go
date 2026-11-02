@@ -9,6 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 var scrollTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
@@ -55,14 +56,15 @@ func backdrop(cx *core.Scope, t ui.Tone, seed float64) core.Node {
 }
 
 var pagerPages = []struct {
-	title, value, note string
-	tone               ui.Tone
+	title       func(locales.Messages) string
+	value, note string
+	tone        ui.Tone
 }{
-	{"Revenue", "48.2k", "+12 %", ui.ToneAccent},
-	{"Sessions", "9,410", "+3 %", ui.ToneInfo},
-	{"Latency", "142", "ms p95", ui.ToneWarn},
-	{"Uptime", "99.98", "%", ui.ToneUp},
-	{"Errors", "17", "−40 %", ui.ToneDanger},
+	{locales.Messages.ScrollRevenue, "48.2k", "+12 %", ui.ToneAccent},
+	{locales.Messages.ScrollSessions, "9,410", "+3 %", ui.ToneInfo},
+	{locales.Messages.ScrollLatency, "142", "ms p95", ui.ToneWarn},
+	{locales.Messages.ScrollUptime, "99.98", "%", ui.ToneUp},
+	{locales.Messages.ScrollErrors, "17", "−40 %", ui.ToneDanger},
 }
 
 // surfaceBox is a scroll view's box inside a section, surfaceInk its
@@ -82,6 +84,7 @@ func surfaceInk(cx *core.Scope) func() core.Style {
 // pager is full-width pages, one per fling; the indicator and the
 // parallax follow the offset on the platform.
 func pager(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	width := core.NewSignal(cx, core.Untracked(cx, cx.Env().Window).Width-72)
 	page := core.NewSignal(cx, 0)
@@ -108,7 +111,7 @@ func pager(cx *core.Scope) core.Node {
 							Opacity:    core.Interpolate(x, core.Interpolation{Input: rng, Output: []float64{0.1, 1, 0.1}, Extrapolate: core.ExtrapolateClamp}),
 							TranslateX: core.Interpolate(x, core.Interpolation{Input: rng, Output: []float64{-w * 0.35, 0, w * 0.35}, Extrapolate: core.ExtrapolateClamp}),
 						}}, Children: []core.Node{
-							ui.Text(fmt.Sprintf("%s · %d of %d", p.title, i+1, len(pagerPages)), 13, ui.Regular, colors.Muted),
+							ui.Text(tr.ScrollPageOf(p.title(tr), i+1, len(pagerPages)), 13, ui.Regular, colors.Muted),
 							ui.Figure{Value: label(p.value), Note: label(p.note), Tone: p.tone},
 						}},
 					}})
@@ -128,7 +131,7 @@ func pager(cx *core.Scope) core.Node {
 					Animated: &core.AnimatedStyle{TranslateX: core.Interpolate(x, core.Interpolation{Input: []float64{0, max(1, last*float64(width.Get()))},
 						Output: []float64{0, last * step}, Extrapolate: core.ExtrapolateClamp})}}
 			}})},
-			core.Text{ContentFunc: func() string { return fmt.Sprintf("Settled on page %d", page.Get()+1) },
+			core.Text{ContentFunc: func() string { return tr.ScrollSettledOnPage(page.Get() + 1) },
 				Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 	}}
@@ -137,6 +140,7 @@ func pager(cx *core.Scope) core.Node {
 // snapCards are cards that snap; a fling can pass several unless limited
 // to one.
 func snapCards(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	const size, gap = 220, 12
 	oneStep := core.NewSignal(cx, false)
 	align := core.NewSignal(cx, core.SnapCenter)
@@ -163,12 +167,12 @@ func snapCards(cx *core.Scope) core.Node {
 								core.Text{ContentFunc: func() string { return fmt.Sprintf("at %d pt", r.Index()*(size+gap)) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
 								core.Dynamic(func(*core.Scope) core.Node { return ui.Badge{Text: toneNames[t()], Tone: t()} }),
 							}},
-							ui.Textf(func() string { return fmt.Sprintf("Card %d", r.Index()+1) }, 24, ui.Semibold, colors.Text),
+							ui.Textf(func() string { return tr.ListsCard(r.Index() + 1) }, 24, ui.Semibold, colors.Text),
 						}}
 				}},
 		}},
 		ui.Segmented[core.SnapAlignment]{Options: []ui.Option[core.SnapAlignment]{{Value: core.SnapStart, Label: "start"}, {Value: core.SnapCenter, Label: "center"}, {Value: core.SnapEnd, Label: "end"}}, Value: align.Get, OnChange: align.Set, Small: true},
-		ui.SwitchRow{Label: "One card per fling", Code: "DisableIntervalMomentum", Checked: oneStep.Get, OnChange: oneStep.Set},
+		ui.SwitchRow{Label: tr.ScrollOneCardPerFling(), Code: "DisableIntervalMomentum", Checked: oneStep.Get, OnChange: oneStep.Set},
 	}}
 }
 
@@ -181,6 +185,7 @@ type logged struct {
 // scrollEvents is OnScroll, drag and momentum events, NoScroll, NoBounces
 // and ContentInset.
 func scrollEvents(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	offset := core.NewSignal(cx, core.ScrollEvent{})
 	seen := core.NewSignal(cx, false)
@@ -212,15 +217,15 @@ func scrollEvents(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd}, Children: []core.Node{
 			core.View{Style: fill, Children: []core.Node{ui.Figure{Value: func() string { return itoa(int(math.Round(float64(offset.Get().Offset.Y)))) }, Unit: "pt", Note: func() string {
 				if !seen.Get() {
-					return "Scroll the box"
+					return tr.ScrollScrollTheBox()
 				}
 				return fmt.Sprintf("/ %.0f", offset.Get().ContentSize.Height)
 			}, Tone: ui.ToneInfo}}},
 			ui.Textf(func() string {
 				if !seen.Get() {
-					return "viewport — pt"
+					return tr.ScrollViewportPt()
 				}
-				return fmt.Sprintf("viewport %.0f pt", offset.Get().Size.Height)
+				return tr.ScrollViewport(fmt.Sprintf("%.0f", offset.Get().Size.Height))
 			}, 13, ui.Regular, colors.Faint),
 		}},
 		ui.Meter{Value: progress, Tone: ui.ToneInfo},
@@ -233,15 +238,15 @@ func scrollEvents(cx *core.Scope) core.Node {
 				return b
 			},
 			OnScroll:          func(e core.ScrollEvent) { offset.Set(e); seen.Set(true) },
-			OnScrollDragStart: noteEvent("begin drag", ui.ToneAccent),
-			OnScrollDragEnd:   noteEvent("end drag", ui.ToneWarn),
-			OnMomentumStart:   noteEvent("momentum begin", ui.ToneInfo),
-			OnMomentumEnd:     noteEvent("momentum end", ui.ToneUp),
+			OnScrollDragStart: noteEvent(tr.ScrollBeginDrag(), ui.ToneAccent),
+			OnScrollDragEnd:   noteEvent(tr.ScrollEndDrag(), ui.ToneWarn),
+			OnMomentumStart:   noteEvent(tr.ScrollMomentumBegin(), ui.ToneInfo),
+			OnMomentumEnd:     noteEvent(tr.ScrollMomentumEnd(), ui.ToneUp),
 			Children:          []core.Node{core.View{Style: core.Style{Padding: core.Symmetric(6, 0)}, Children: rows}}},
 		core.View{Style: core.Style{Gap: 6, MinHeight: core.Pt(100)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			l := log.Get()
 			if len(l) == 0 {
-				return ui.Text("No drags yet", 13, ui.Regular, colors.Faint)
+				return ui.Text(tr.ScrollNoDragsYet(), 13, ui.Regular, colors.Faint)
 			}
 			var lines []core.Node
 			for i, e := range l {
@@ -254,15 +259,16 @@ func scrollEvents(cx *core.Scope) core.Node {
 			return core.Group(lines)
 		})}},
 		core.View{Children: []core.Node{
-			ui.SwitchRow{Label: "Scroll enabled", Code: "NoScroll", Checked: enabled.Get, OnChange: enabled.Set},
-			ui.SwitchRow{Label: "Bounces", Code: "NoBounces", Checked: bounces.Get, OnChange: bounces.Set},
-			ui.SwitchRow{Label: "Content inset", Note: "40 pt at the top and bottom", Checked: insetOn.Get, OnChange: insetOn.Set},
+			ui.SwitchRow{Label: tr.ScrollScrollEnabled(), Code: "NoScroll", Checked: enabled.Get, OnChange: enabled.Set},
+			ui.SwitchRow{Label: tr.ScrollBounces(), Code: "NoBounces", Checked: bounces.Get, OnChange: bounces.Set},
+			ui.SwitchRow{Label: tr.ScrollContentInset(), Note: tr.Scroll40PtAtTheTop(), Checked: insetOn.Get, OnChange: insetOn.Set},
 		}},
 	}}
 }
 
 // zoom is pinch to zoom on the platform; pressing a tile zooms in on it.
 func zoom(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	ref := &core.Ref{}
 	scale := core.NewSignal(cx, float32(1))
@@ -270,7 +276,7 @@ func zoom(cx *core.Scope) core.Node {
 	var tiles []core.Node
 	for i := range 24 {
 		t := scrollTones[(i*7)%len(scrollTones)]
-		tiles = append(tiles, core.View{Role: core.RoleButton, Label: fmt.Sprintf("Tile %d", i+1),
+		tiles = append(tiles, core.View{Role: core.RoleButton, Label: tr.ScrollTile(i + 1),
 			StyleFunc: func() core.Style {
 				return core.Style{Width: core.Pt(74), Height: core.Pt(50), CornerRadius: 10, BorderCurve: core.BorderCurveContinuous, Background: t.Tint(cx),
 					BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(6), JustifyContent: core.JustifySpaceBetween}
@@ -286,7 +292,7 @@ func zoom(cx *core.Scope) core.Node {
 			},
 			Children: []core.Node{
 				core.View{Style: core.Style{Width: core.Pt(12), Height: core.Pt(3), CornerRadius: 1.5}, StyleFunc: ui.Filled(t.Shade(cx))},
-				ui.Text(fmt.Sprintf("Tile %d", i+1), 11, ui.Regular, colors.Text),
+				ui.Text(tr.ScrollTile(i+1), 11, ui.Regular, colors.Text),
 			}})
 	}
 	zoomTo := func(s float32) func() { return func() { ref.ZoomTo(s, nil, true) } }
@@ -297,13 +303,13 @@ func zoom(cx *core.Scope) core.Node {
 				noteText, t := "fit", ui.ToneInfo
 				switch {
 				case s > 1.01:
-					noteText, t = "zoomed in", ui.ToneAccent
+					noteText, t = tr.ScrollZoomedIn(), ui.ToneAccent
 				case s < 0.99:
-					noteText = "zoomed out"
+					noteText = tr.ScrollZoomedOut()
 				}
 				return ui.Figure{Value: label(fmt.Sprintf("%.2f", s)), Unit: "×", Note: label(noteText), Tone: t}
 			})}},
-			ui.Text("0.5× to 5×", 13, ui.Regular, colors.Faint),
+			ui.Text(tr.Scroll05To5(), 13, ui.Regular, colors.Faint),
 		}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			// The scroll view takes NoBouncesZoom as it mounts.
@@ -317,7 +323,7 @@ func zoom(cx *core.Scope) core.Node {
 			ui.Cell{Child: ui.Button{Text: "1×", OnPress: zoomTo(1)}},
 			ui.Cell{Child: ui.Button{Text: "2×", Variant: ui.ButtonSecondary, OnPress: zoomTo(2)}},
 		}},
-		ui.SwitchRow{Label: "Bounces past the limits", Code: "NoBouncesZoom", Checked: bounces.Get, OnChange: bounces.Set},
+		ui.SwitchRow{Label: tr.ScrollBouncesPastTheLimits(), Code: "NoBouncesZoom", Checked: bounces.Get, OnChange: bounces.Set},
 	}}
 }
 
@@ -331,6 +337,7 @@ type post struct {
 // feed is new items arriving at the top while the rows on screen stay
 // where they are.
 func feed(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	next, freshCount := 0, 0
 	mk := func(label string, fresh bool) post {
 		p := post{next, label, fresh, scrollTones[next%len(scrollTones)]}
@@ -339,14 +346,14 @@ func feed(cx *core.Scope) core.Node {
 	}
 	var initial []post
 	for i := range 30 {
-		initial = append(initial, mk(fmt.Sprintf("Post %d", i+1), false))
+		initial = append(initial, mk(tr.ScrollPost(i+1), false))
 	}
 	posts := core.NewSignalFunc(cx, initial, slices.Equal)
 	addOnTop := func() {
 		var fresh []post
 		for range 3 {
 			freshCount++
-			fresh = append(fresh, mk(fmt.Sprintf("New %d", freshCount), true))
+			fresh = append(fresh, mk(tr.ScrollNew(freshCount), true))
 		}
 		posts.Update(func(p []post) []post { return append(fresh, p...) })
 	}
@@ -382,8 +389,8 @@ func feed(cx *core.Scope) core.Node {
 					}),
 				}}
 			}},
-		ui.Caption{Label: "Scroll down a little, then add", Note: func() string { return fmt.Sprintf("%d posts", len(posts.Get())) }},
-		ui.Button{Text: "Add 3 posts on top", Icon: ui.IconPlus, OnPress: addOnTop},
+		ui.Caption{Label: tr.ScrollScrollDownALittleThen(), Note: func() string { return tr.ScrollPosts(len(posts.Get())) }},
+		ui.Button{Text: tr.ScrollAdd3PostsOnTop(), Icon: ui.IconPlus, OnPress: addOnTop},
 	}}
 }
 
@@ -402,50 +409,57 @@ func scrollingDemo(cx *core.Scope) core.Node {
 	return demoPage(cx, pageProps{still: true, bottom: 16,
 		behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardShouldPersistTaps: taps.Get()} }},
 		func(cx *core.Scope) core.Node {
-			return ui.Section{Title: "Edge effects", Note: "Scroll under the bars", Children: []core.Node{ui.API{Text: "EdgeEffects · EdgeBar"}, edgeEffects(cx)}}
+			tr := locales.For(cx)
+			return ui.Section{Title: tr.ScrollEdgeEffects(), Note: tr.ScrollScrollUnderTheBars(), Children: []core.Node{ui.API{Text: "EdgeEffects · EdgeBar"}, edgeEffects(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return ui.Section{Title: "Paging", Note: "5 pages", Children: []core.Node{ui.API{Text: "Behavior.Paging · OffsetValues"}, pager(cx)}}
+			tr := locales.For(cx)
+			return ui.Section{Title: tr.ScrollPaging(), Note: tr.Scroll5Pages(), Children: []core.Node{ui.API{Text: "Behavior.Paging · OffsetValues"}, pager(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return ui.Section{Title: "Snapping", Note: "20 cards", Children: []core.Node{ui.API{Text: "SnapToInterval · SnapToAlignment"}, snapCards(cx)}}
+			tr := locales.For(cx)
+			return ui.Section{Title: tr.ScrollSnapping(), Note: tr.Scroll20Cards(), Children: []core.Node{ui.API{Text: "SnapToInterval · SnapToAlignment"}, snapCards(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return ui.Section{Title: "Zoom", Note: ui.Hint(cx, "Pinch or tap a tile", "Pinch on a touchpad or click a tile"), Children: []core.Node{ui.API{Text: "MaxZoomScale · Ref.ZoomTo"}, zoom(cx)}}
+			tr := locales.For(cx)
+			return ui.Section{Title: tr.ScrollZoom(), Note: ui.Hint(cx, tr.ScrollPinchOrTapATile(), tr.ScrollPinchOnATouchpadOr()), Children: []core.Node{ui.API{Text: "MaxZoomScale · Ref.ZoomTo"}, zoom(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return ui.Section{Title: "Events and behavior", Children: []core.Node{ui.API{Text: "OnScroll · OnScrollDragStart · OnMomentumEnd"}, scrollEvents(cx)}}
+			tr := locales.For(cx)
+			return ui.Section{Title: tr.ScrollEventsAndBehavior(), Children: []core.Node{ui.API{Text: "OnScroll · OnScrollDragStart · OnMomentumEnd"}, scrollEvents(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return ui.Section{Title: "Prepending keeps the position", Children: []core.Node{feed(cx)}}
+			tr := locales.For(cx)
+			return ui.Section{Title: tr.ScrollPrependingKeepsThePosition(), Children: []core.Node{feed(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
+			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			fin := ui.FinOf(cx)
-			return ui.Section{Title: "Taps with the keyboard up", Children: []core.Node{
+			return ui.Section{Title: tr.ScrollTapsWithTheKeyboardUp(), Children: []core.Node{
 				ui.API{Text: "KeyboardShouldPersistTaps"},
 				ui.Segmented[core.KeyboardTaps]{Options: []ui.Option[core.KeyboardTaps]{{Value: core.KeyboardTapsNever, Label: "never"}, {Value: core.KeyboardTapsHandled, Label: "handled"},
 					{Value: core.KeyboardTapsAlways, Label: "always"}}, Value: taps.Get, OnChange: taps.Set, Small: true},
 				core.Text{ContentFunc: func() string {
 					switch taps.Get() {
 					case core.KeyboardTapsHandled:
-						return "The button gets the tap and the keyboard stays; a tap on empty space hides it."
+						return tr.ScrollTheButtonGetsTheTap()
 					case core.KeyboardTapsAlways:
-						return "Taps never hide the keyboard."
+						return tr.ScrollTapsNeverHideTheKeyboard()
 					}
-					return "A tap outside the input only hides the keyboard; the button does not get it."
+					return tr.ScrollATapOutsideTheInput()
 				}, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
-				base.Input{Placeholder: ui.Hint(cx, "Type here, then tap the button", "Type here, then click the button"),
+				base.Input{Placeholder: ui.Hint(cx, tr.ScrollTypeHereThenTapThe(), tr.ScrollTypeHereThenClickThe()),
 					StyleFunc: func() core.Style {
 						return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(44), FontSize: 15, Color: colors.Text(),
 							Background: colors.Field(), BorderWidth: 1, BorderColor: colors.FieldBorder(), CornerRadius: ui.RadiusControl, Padding: core.Symmetric(0, 14)})
 					}},
-				ui.Press{OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }, Label: "Count a tap", Children: []core.Node{
+				ui.Press{OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }, Label: tr.ScrollCountATap(), Children: []core.Node{
 					core.View{StyleFunc: func() core.Style {
 						return fin.Light().Over(core.Style{Height: core.Pt(44), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Light(),
 							Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8})
 					}, Children: []core.Node{
-						ui.Text(ui.Hint(cx, "Tap me", "Click me"), 15, ui.Semibold, colors.OnLight),
+						ui.Text(ui.Hint(cx, tr.ScrollTapMe(), tr.ScrollClickMe()), 15, ui.Semibold, colors.OnLight),
 						ui.Textf(func() string { return itoa(presses.Get()) }, 15, ui.Regular, countColor),
 					}},
 				}},

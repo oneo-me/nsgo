@@ -8,6 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 const (
@@ -31,6 +32,7 @@ var feels = map[string]core.SpringConfig{
 // drag's velocity. A canvas draws a tether to it from the same animated
 // values, with no engine work per frame.
 func physicsDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	fin := ui.FinOf(cx)
@@ -154,10 +156,10 @@ func physicsDemo(cx *core.Scope) core.Node {
 			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				ui.IconTile{Icon: ui.IconPhysics, Size: 40},
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-					ui.Text("Drag and release", 17, ui.Semibold, colors.Text),
-					core.Text{Content: ui.Hint(cx, "Tap to pulse, long press to reset", "Click to pulse, press and hold to reset"), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+					ui.Text(tr.PhysicsDragAndRelease(), 17, ui.Semibold, colors.Text),
+					core.Text{Content: ui.Hint(cx, tr.PhysicsTapToPulseLongPress(), tr.PhysicsClickToPulsePressAnd()), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
-				ui.Badge{Text: "UI thread", Tone: ui.ToneAccent},
+				ui.Badge{Text: tr.PhysicsUiThread(), Tone: ui.ToneAccent},
 			}}}},
 			core.View{OnLayout: func(b core.Bounds) { stageSize.Set(b.Size) }, StyleFunc: st, Children: []core.Node{
 				tether,
@@ -174,7 +176,7 @@ func physicsDemo(cx *core.Scope) core.Node {
 							release(e)
 						}
 					},
-					OnPress: func(core.PressEvent) { pulse() }, OnLongPress: func(core.PressEvent) { reset() }, Role: core.RoleButton, Label: "Draggable card",
+					OnPress: func(core.PressEvent) { pulse() }, OnLongPress: func(core.PressEvent) { reset() }, Role: core.RoleButton, Label: tr.PhysicsDraggableCard(),
 					StyleFunc: func() core.Style {
 						return core.Style{Width: core.Pt(physicsCard), Height: core.Pt(physicsCard), CornerRadius: 30, BorderCurve: core.BorderCurveContinuous,
 							AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.AccentFill(),
@@ -188,42 +190,42 @@ func physicsDemo(cx *core.Scope) core.Node {
 								Rotate: core.Interpolate(x, core.Interpolation{Input: []float64{-200, 200}, Output: []float64{-14, 14}}),
 							}}
 					},
-					Children: []core.Node{ui.Icon(ui.IconGestures, 28, colors.OnAccent), ui.Text("Drag me", 15, ui.Bold, colors.OnAccent)}},
+					Children: []core.Node{ui.Icon(ui.IconGestures, 28, colors.OnAccent), ui.Text(tr.PhysicsDragMe(), 15, ui.Bold, colors.OnAccent)}},
 			}},
 			core.View{StyleFunc: func() core.Style { return ui.CardStyle(cx).Merge(core.Style{Padding: core.All(12), Gap: 12}) }, Children: []core.Node{
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: "Spring"}, {Value: "coast", Label: "Coast"}, {Value: "snap", Label: "Snap"}}, Value: mode.Get, OnChange: mode.Set},
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "soft", Label: "Soft"}, {Value: "bouncy", Label: "Bouncy"}, {Value: "firm", Label: "Firm"}}, Value: feel.Get, OnChange: feel.Set, Small: true},
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.PhysicsSpring()}, {Value: "coast", Label: tr.PhysicsCoast()}, {Value: "snap", Label: tr.PhysicsSnap()}}, Value: mode.Get, OnChange: mode.Set},
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "soft", Label: tr.PhysicsSoft()}, {Value: "bouncy", Label: tr.PhysicsBouncy()}, {Value: "firm", Label: tr.PhysicsFirm()}}, Value: feel.Get, OnChange: feel.Set, Small: true},
 				core.View{Style: core.Style{Direction: core.Row, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
-					ui.Stat{Label: "Releases", Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
+					ui.Stat{Label: tr.PhysicsReleases(), Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
 					core.Dynamic(func(*core.Scope) core.Node {
 						t := ui.ToneNeutral
 						if speed.Get() > 1500 {
 							t = ui.ToneWarn
 						}
-						return ui.Stat{Label: "Speed", Value: func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, Tone: t, Width: core.Pct(34)}
+						return ui.Stat{Label: tr.PhysicsSpeed(), Value: func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, Tone: t, Width: core.Pct(34)}
 					}),
 					core.Dynamic(func(*core.Scope) core.Node {
 						if mode.Get() == "snap" {
-							return ui.Stat{Label: "Corner", Value: corner.Get, Width: core.Pct(36)}
+							return ui.Stat{Label: tr.PhysicsCorner(), Value: corner.Get, Width: core.Pct(36)}
 						}
-						return ui.Stat{Label: "Spring", Value: func() string { f := feels[feel.Get()]; return fmt.Sprintf("%.0f / %.0f", f.Stiffness, f.Damping) }, Width: core.Pct(36)}
+						return ui.Stat{Label: tr.PhysicsSpring(), Value: func() string { f := feels[feel.Get()]; return fmt.Sprintf("%.0f / %.0f", f.Stiffness, f.Damping) }, Width: core.Pct(36)}
 					}),
 				}},
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
 					core.Text{ContentFunc: func() string {
 						switch mode.Get() {
 						case "coast":
-							return "Coasts to a stop, then springs home"
+							return tr.PhysicsCoastsToAStopThen()
 						case "snap":
-							return "Springs to the corner the fling points at"
+							return tr.PhysicsSpringsToTheCornerThe()
 						}
-						return "Springs home with the release velocity"
+						return tr.PhysicsSpringsHomeWithTheRelease()
 					}, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 					core.Text{ContentFunc: func() string {
 						if mode.Get() == "coast" {
-							return "Decay"
+							return tr.PhysicsDecay()
 						}
-						return "Spring"
+						return tr.PhysicsSpring()
 					}, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 				}},
 			}},

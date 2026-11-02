@@ -9,6 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 const diffOld = `package store
@@ -176,6 +177,7 @@ func diffParts(cx *core.Scope) diff.Styles {
 // the words changed marked, unchanged lines collapsed, changes navigated,
 // reverted and kept, and a patch of several files.
 func diffDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	oldText, newText := core.NewSignal(cx, diffOld), core.NewSignal(cx, diffNew)
@@ -198,27 +200,27 @@ func diffDemo(cx *core.Scope) core.Node {
 	small := func(label string, onPress func()) core.Node {
 		return ui.Button{Text: label, Variant: ui.ButtonSecondary, Small: true, OnPress: onPress}
 	}
-	modes := []ui.Option[diff.Inline]{{Value: diff.InlineWordAlt, Label: "Words"}, {Value: diff.InlineWord, Label: "Each word"},
-		{Value: diff.InlineChar, Label: "Characters"}, {Value: diff.InlineNone, Label: "None"}}
+	modes := []ui.Option[diff.Inline]{{Value: diff.InlineWordAlt, Label: tr.DiffWords()}, {Value: diff.InlineWord, Label: tr.DiffEachWord()},
+		{Value: diff.InlineChar, Label: tr.DiffCharacters()}, {Value: diff.InlineNone, Label: tr.DiffNone()}}
 	return core.View{StyleFunc: func() core.Style {
 		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: 12})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			ui.Tool{Label: "Show a patch", Text: "Patch", On: patch.Get, OnPress: toggle(patch)},
-			ui.Tool{Label: "One column", Text: "Unified", On: unified.Get, OnPress: toggle(unified)},
-			ui.Tool{Label: "Soft wrap", Text: "Wrap", On: wrap.Get, OnPress: toggle(wrap)},
+			ui.Tool{Label: tr.DiffShowAPatch(), Text: tr.DiffPatch(), On: patch.Get, OnPress: toggle(patch)},
+			ui.Tool{Label: tr.DiffOneColumn(), Text: tr.DiffUnified(), On: unified.Get, OnPress: toggle(unified)},
+			ui.Tool{Label: tr.DiffSoftWrap(), Text: tr.DiffWrap(), On: wrap.Get, OnPress: toggle(wrap)},
 			core.View{Style: core.Style{Width: core.Pt(360)}, Children: []core.Node{ui.Segmented[diff.Inline]{Options: modes, Value: inline.Get, OnChange: inline.Set, Small: true}}},
-			ui.Tool{Label: "Previous change", Text: "↑", OnPress: func() {
+			ui.Tool{Label: tr.DiffPreviousChange(), Text: "↑", OnPress: func() {
 				i, _ := ref.PreviousHunk()
-				last.Set(fmt.Sprintf("Change %d", i+1))
+				last.Set(tr.DiffChange(i + 1))
 			}},
-			ui.Tool{Label: "Next change", Text: "↓", OnPress: func() {
+			ui.Tool{Label: tr.DiffNextChange(), Text: "↓", OnPress: func() {
 				i, _ := ref.NextHunk()
-				last.Set(fmt.Sprintf("Change %d", i+1))
+				last.Set(tr.DiffChange(i + 1))
 			}},
-			ui.Tool{Label: "Expand every line", Text: "Expand", OnPress: ref.ExpandAll},
-			ui.Tool{Label: "Collapse unchanged lines", Text: "Collapse", OnPress: ref.CollapseAll},
-			ui.Tool{Label: "Start again", Text: "Reset", OnPress: func() { oldText.Set(diffOld); newText.Set(diffNew) }},
+			ui.Tool{Label: tr.DiffExpandEveryLine(), Text: tr.DiffExpand(), OnPress: ref.ExpandAll},
+			ui.Tool{Label: tr.DiffCollapseUnchangedLines(), Text: tr.DiffCollapse(), OnPress: ref.CollapseAll},
+			ui.Tool{Label: tr.DiffStartAgain(), Text: tr.DiffReset(), OnPress: func() { oldText.Set(diffOld); newText.Set(diffNew) }},
 		}},
 		core.View{StyleFunc: func() core.Style {
 			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: ui.RadiusInset,
@@ -236,6 +238,7 @@ func diffDemo(cx *core.Scope) core.Node {
 						return out
 					},
 					RenderAnnotation: func(cx *core.Scope, a diff.Annotation) core.Node {
+						tr := locales.For(cx)
 						colors := ui.ColorsOf(cx)
 						fin := ui.FinOf(cx)
 						var c comment
@@ -244,47 +247,49 @@ func diffDemo(cx *core.Scope) core.Node {
 								c = x
 							}
 						}
-						text := fmt.Sprintf("Comment on line %d", c.lines.Start+1)
+						text := tr.DiffCommentOnLine(c.lines.Start + 1)
 						if c.lines.End > c.lines.Start {
-							text = fmt.Sprintf("Comment on lines %d to %d", c.lines.Start+1, c.lines.End+1)
+							text = tr.DiffCommentOnLines(c.lines.Start+1, c.lines.End+1)
 						}
 						return core.View{StyleFunc: func() core.Style {
 							return fin.Raised().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(8),
 								CornerRadius: 6, BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Raised()})
 						}, Children: []core.Node{
 							core.Text{Content: text, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
-							small("Resolve", func() {
+							small(tr.DiffResolve(), func() {
 								comments.Set(slices.DeleteFunc(slices.Clone(comments.GetUntracked()), func(x comment) bool { return x.ID == a.ID }))
 							}),
 						}}
 					},
 					RenderAddAnnotation: func(cx *core.Scope, lines diff.LineRange) core.Node {
+						tr := locales.For(cx)
 						colors := ui.ColorsOf(cx)
-						return core.View{Role: core.RoleButton, Label: "Add a comment", Style: core.Style{Width: core.Pt(16), Height: core.Pt(16),
+						return core.View{Role: core.RoleButton, Label: tr.DiffAddAComment(), Style: core.Style{Width: core.Pt(16), Height: core.Pt(16),
 							CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer}, StyleFunc: ui.Filled(colors.Accent),
 							OnPress: func(core.PressEvent) {
 								list := comments.GetUntracked()
 								id := fmt.Sprint("c", len(list)+1)
 								comments.Set(append(slices.Clone(list), comment{diff.Annotation{ID: id, Side: lines.Side, Line: lines.End}, lines}))
-								last.Set("Commented")
+								last.Set(tr.DiffCommented())
 							},
 							Children: []core.Node{core.Text{Content: "+", Style: core.Style{FontSize: 12, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.OnAccent)}}}
 					},
 					OnLineSelectionChange: func(r *diff.LineRange) {
 						if r != nil {
-							last.Set(fmt.Sprintf("Lines %d to %d selected", r.Start+1, r.End+1))
+							last.Set(tr.DiffLinesSelected(r.Start+1, r.End+1))
 						}
 					},
 					OnStatsChange: stats.Set,
 					OnChange:      func(c diff.Change) { oldText.Set(c.OldValue); newText.Set(c.NewValue) },
 					OnLineNumberPress: func(l diff.Line) {
-						last.Set(fmt.Sprintf("Line %d of the %s text", l.Line, map[diff.Side]string{diff.Old: "old", diff.New: "new"}[l.Side]))
+						last.Set(map[diff.Side]string{diff.Old: tr.DiffLineOfOld(l.Line), diff.New: tr.DiffLineOfNew(l.Line)}[l.Side])
 					},
-					OnFileToggle: func(f diff.File) { last.Set(fmt.Sprintf("%s collapsed: %v", f.Path, f.Collapsed)) },
+					OnFileToggle: func(f diff.File) { last.Set(tr.DiffCollapsed(f.Path, onOff(tr, f.Collapsed))) },
 					RenderHunkActions: func(cx *core.Scope, h diff.Hunk) core.Node {
+						tr := locales.For(cx)
 						return core.View{Style: core.Style{Direction: core.Row, Gap: 4}, Children: []core.Node{
-							small("Revert", func() { ref.RevertHunk(h.Index); last.Set(fmt.Sprintf("Reverted change %d", h.Index+1)) }),
-							small("Keep", func() { ref.AcceptHunk(h.Index); last.Set(fmt.Sprintf("Kept change %d", h.Index+1)) }),
+							small(tr.DiffRevert(), func() { ref.RevertHunk(h.Index); last.Set(tr.DiffReverted(h.Index + 1)) }),
+							small(tr.DiffKeep(), func() { ref.AcceptHunk(h.Index); last.Set(tr.DiffKept(h.Index + 1)) }),
 						}}
 					},
 					StylesFunc: diffStyles(cx),
@@ -295,7 +300,7 @@ func diffDemo(cx *core.Scope) core.Node {
 					d.RenderHunkActions = nil
 					d.Patch = func() string { return diffPatch }
 					d.RenderSeparator = func(cx *core.Scope, s diff.Separator) core.Node {
-						label := fmt.Sprintf("%d lines", s.Lines)
+						label := tr.DiffLines(s.Lines)
 						if s.Header != "" {
 							label = "@@ " + strings.TrimSpace(s.Header)
 						}
@@ -312,7 +317,7 @@ func diffDemo(cx *core.Scope) core.Node {
 				s := stats.Get()
 				return []core.Span{{Content: fmt.Sprintf("+%d", s.Added), StyleFunc: ui.Colored(colors.Up)},
 					{Content: " "}, {Content: fmt.Sprintf("−%d", s.Deleted), StyleFunc: ui.Colored(colors.Down)},
-					{Content: fmt.Sprintf(" · %d changes", s.Hunks), StyleFunc: ui.Colored(colors.Muted)}}
+					{Content: " · " + tr.DiffChanges(s.Hunks), StyleFunc: ui.Colored(colors.Muted)}}
 			}},
 			core.Text{ContentFunc: last.Get, MaxLines: 1, Style: core.Style{FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		}},

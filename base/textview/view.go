@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/oneo-me/nsgo/base/textview/locales"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -343,7 +344,7 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 		alert := []Part{PartBlockquote, PartAlert, PartAlertNote + Part(b.Alert-AlertNote)}
 		return core.View{Class: r.class(alert...), StyleFunc: func() core.Style { return r.style(alert...) },
 			Children: []core.Node{
-				core.Text{Content: b.Alert.String(), Class: r.class(PartAlertTitle), StyleFunc: func() core.Style { return r.style(PartAlertTitle) }},
+				core.Text{ContentFunc: func() string { return alertTitle(cx, b.Alert) }, Class: r.class(PartAlertTitle), StyleFunc: func() core.Style { return r.style(PartAlertTitle) }},
 				core.View{Class: r.class(PartAlertContent), StyleFunc: func() core.Style { return r.style(PartAlertContent) }, Children: children},
 			}}
 	case List:
@@ -875,4 +876,22 @@ func (r *renderer) image(cx *core.Scope, im Image, url string) core.Node {
 		Class:   r.class(PartImage),
 		OnPress: press,
 	}
+}
+
+// alertTitle says a's title in the language the app shows under cx.
+func alertTitle(cx *core.Scope, a Alert) string {
+	m := locales.For(cx)
+	switch a {
+	case AlertNote:
+		return m.AlertNote()
+	case AlertTip:
+		return m.AlertTip()
+	case AlertImportant:
+		return m.AlertImportant()
+	case AlertWarning:
+		return m.AlertWarning()
+	case AlertCaution:
+		return m.AlertCaution()
+	}
+	return ""
 }

@@ -21,24 +21,28 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
+	"github.com/oneo-me/nsgo/i18n"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 //go:embed logo.png
 var logoPNG []byte
 
-// demo is an entry of the index.
+// demo is an entry of the index: name is its ID, in English, and title
+// and detail say it in a language.
 type demo struct {
-	name   string
-	detail string
-	icon   ui.IconName
-	screen func(cx *core.Scope) core.Node
+	name          string
+	title, detail func(locales.Messages) string
+	icon          ui.IconName
+	screen        func(cx *core.Scope) core.Node
 }
 
-// group is demos by what they show.
+// group is demos by what they show: name is its ID, in English.
 type group struct {
-	title string
+	name  string
+	title func(locales.Messages) string
 	demos []demo
 }
 
@@ -47,47 +51,47 @@ var groups []group
 
 func init() {
 	groups = []group{
-		{"Apps", []demo{
-			{"Stocks", "A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms", ui.IconStocks, stocksDemo},
-			{"AI Chat", "Streaming replies with reasoning, tools and attachments", ui.IconChat, chatDemo},
-			{"Photos", "A long recycled list: images, pull to refresh, paging", ui.IconPhotos, photosDemo},
+		{"Apps", locales.Messages.GroupApps, []demo{
+			{"Stocks", locales.Messages.DemoStocks, locales.Messages.DemoStocksDetail, ui.IconStocks, stocksDemo},
+			{"AI Chat", locales.Messages.DemoAIChat, locales.Messages.DemoAIChatDetail, ui.IconChat, chatDemo},
+			{"Photos", locales.Messages.DemoPhotos, locales.Messages.DemoPhotosDetail, ui.IconPhotos, photosDemo},
 		}},
-		{"Layout and lists", []demo{
-			{"Lists", "Columns, sticky sections, a chat, horizontal lists", ui.IconLists, listsDemo},
-			{"Scrolling", "Paging, snapping, zoom, scroll events, prepending, keyboard taps", ui.IconScroll, scrollingDemo},
-			{"Collapsing header", "A header that shrinks to a bar as the page scrolls, headings sticking below it", ui.IconScroll, collapsingDemo},
-			{"Layout", "Flexbox, wrapping, positioning, grid and block layout, direction", ui.IconLayout, layoutDemo},
-			{"Navigation", "Header options, modals, the back button, safe areas", ui.IconNav, navigationDemo},
-			{"Form", "Inputs, keyboard types, the keyboard over the content", ui.IconForm, formDemo},
-			{"Resizable", "Panels resized by dragging the lines between them, within their ranges", ui.IconSidebar, resizableDemo},
-			{"Dock", "A workspace of tabs dragged between groups and docks, split, closed, zoomed and resized", ui.IconDock, dockDemo},
+		{"Layout and lists", locales.Messages.GroupLayoutAndLists, []demo{
+			{"Lists", locales.Messages.DemoLists, locales.Messages.DemoListsDetail, ui.IconLists, listsDemo},
+			{"Scrolling", locales.Messages.DemoScrolling, locales.Messages.DemoScrollingDetail, ui.IconScroll, scrollingDemo},
+			{"Collapsing header", locales.Messages.DemoCollapsingHeader, locales.Messages.DemoCollapsingHeaderDetail, ui.IconScroll, collapsingDemo},
+			{"Layout", locales.Messages.DemoLayout, locales.Messages.DemoLayoutDetail, ui.IconLayout, layoutDemo},
+			{"Navigation", locales.Messages.DemoNavigation, locales.Messages.DemoNavigationDetail, ui.IconNav, navigationDemo},
+			{"Form", locales.Messages.DemoForm, locales.Messages.DemoFormDetail, ui.IconForm, formDemo},
+			{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, ui.IconSidebar, resizableDemo},
+			{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, ui.IconDock, dockDemo},
 		}},
-		{"Touch and motion", []demo{
-			{"Gestures", "Pinch, rotate, press states, hit slop, pointer events, dropped files", ui.IconGestures, gesturesDemo},
-			{"Physics", "Drags and springs on the UI thread", ui.IconPhysics, physicsDemo},
-			{"Animations", "Easing, sequence / parallel / stagger / loop, springs, interpolation", ui.IconAnimation, animationsDemo},
+		{"Touch and motion", locales.Messages.GroupTouchAndMotion, []demo{
+			{"Gestures", locales.Messages.DemoGestures, locales.Messages.DemoGesturesDetail, ui.IconGestures, gesturesDemo},
+			{"Physics", locales.Messages.DemoPhysics, locales.Messages.DemoPhysicsDetail, ui.IconPhysics, physicsDemo},
+			{"Animations", locales.Messages.DemoAnimations, locales.Messages.DemoAnimationsDetail, ui.IconAnimation, animationsDemo},
 		}},
-		{"Drawing and type", []demo{
-			{"Canvas", "2D drawing: paths, gradients, text, images, native animation", ui.IconCanvas, canvasDemo},
-			{"Charts", "A line and area plot with hover, grid lines and motion, sparklines in a list", ui.IconStocks, chartsDemo},
-			{"Shader", "Fragment shaders in Go's syntax, uniforms the platform animates", ui.IconShader, shaderDemo},
-			{"Styles", "Corners, borders, shadows, clipping, filters, 3D transforms", ui.IconStyles, stylesDemo},
-			{"Text", "Fonts, spans, inline views, decorations, truncation, languages", ui.IconText, textDemo},
-			{"Text View", "Markdown and HTML documents, extensions, streaming replies", ui.IconText, textViewDemo},
-			{"Editor", "Code with highlighting, several carets, folding, find and replace, diagnostics, completion and definitions", ui.IconText, editorDemo},
-			{"DataTable", "A million stocks of sixty columns, their quotes ticking every 33 ms, fixed columns, sorting, selection, resized and moved columns", ui.IconLists, dataTableDemo},
-			{"Diff", "Two texts side by side or unified, changes navigated, reverted and kept, a patch", ui.IconText, diffDemo},
-			{"Images", "Resize modes, tint, GIF, placeholders, blur, fade", ui.IconImage, imagesDemo},
+		{"Drawing and type", locales.Messages.GroupDrawingAndType, []demo{
+			{"Canvas", locales.Messages.DemoCanvas, locales.Messages.DemoCanvasDetail, ui.IconCanvas, canvasDemo},
+			{"Charts", locales.Messages.DemoCharts, locales.Messages.DemoChartsDetail, ui.IconStocks, chartsDemo},
+			{"Shader", locales.Messages.DemoShader, locales.Messages.DemoShaderDetail, ui.IconShader, shaderDemo},
+			{"Styles", locales.Messages.DemoStyles, locales.Messages.DemoStylesDetail, ui.IconStyles, stylesDemo},
+			{"Text", locales.Messages.DemoText, locales.Messages.DemoTextDetail, ui.IconText, textDemo},
+			{"Text View", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, ui.IconText, textViewDemo},
+			{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, ui.IconText, editorDemo},
+			{"DataTable", locales.Messages.DemoDataTable, locales.Messages.DemoDataTableDetail, ui.IconLists, dataTableDemo},
+			{"Diff", locales.Messages.DemoDiff, locales.Messages.DemoDiffDetail, ui.IconText, diffDemo},
+			{"Images", locales.Messages.DemoImages, locales.Messages.DemoImagesDetail, ui.IconImage, imagesDemo},
 		}},
-		{"Platform", []demo{
-			{"Components", "Press feedback, a sheet, layout animation, input accessory, dialog options", ui.IconComponents, componentsDemo},
-			{"Overlays", "Overlay, popovers, tooltips, sheets, toasts", ui.IconOverlays, overlaysDemo},
-			{"Menus", "A menu bar, submenus, checkable items, context menus on rows", ui.IconMenu, menusDemo},
-			{"Controls", "Switches in settings, a filter with select all, a plan picker, tabs, collapsible sections, progress bars, a table", ui.IconControls, controlsDemo},
-			{"Web and video", "Web views, video players and the app's own native views", ui.IconMedia, mediaDemo},
-			{"System", "Status bar, alerts, the window, environment, timers, the clipboard, fetch", ui.IconSystem, systemDemo},
-			{"Accessibility", "Labels, values, actions, groups, live regions and focus", ui.IconAccess, accessibilityDemo},
-			{"Storage", "A launch count, a note saved as you type, the stored keys", ui.IconStorage, storageDemo},
+		{"Platform", locales.Messages.GroupPlatform, []demo{
+			{"Components", locales.Messages.DemoComponents, locales.Messages.DemoComponentsDetail, ui.IconComponents, componentsDemo},
+			{"Overlays", locales.Messages.DemoOverlays, locales.Messages.DemoOverlaysDetail, ui.IconOverlays, overlaysDemo},
+			{"Menus", locales.Messages.DemoMenus, locales.Messages.DemoMenusDetail, ui.IconMenu, menusDemo},
+			{"Controls", locales.Messages.DemoControls, locales.Messages.DemoControlsDetail, ui.IconControls, controlsDemo},
+			{"Web and video", locales.Messages.DemoWebAndVideo, locales.Messages.DemoWebAndVideoDetail, ui.IconMedia, mediaDemo},
+			{"System", locales.Messages.DemoSystem, locales.Messages.DemoSystemDetail, ui.IconSystem, systemDemo},
+			{"Accessibility", locales.Messages.DemoAccessibility, locales.Messages.DemoAccessibilityDetail, ui.IconAccess, accessibilityDemo},
+			{"Storage", locales.Messages.DemoStorage, locales.Messages.DemoStorageDetail, ui.IconStorage, storageDemo},
 		}},
 	}
 }
@@ -112,15 +116,15 @@ func findDemo(name string) (demo, bool) {
 }
 
 // groupOf is the title of the group holding the demo named name.
-func groupOf(name string) string {
+func groupOf(tr locales.Messages, name string) string {
 	for _, g := range groups {
 		for _, d := range g.demos {
 			if d.name == name {
-				return g.title
+				return g.title(tr)
 			}
 		}
 	}
-	return "Gallery"
+	return tr.AppGallery()
 }
 
 // route is a screen of the navigation stack: the index (no demo, no
@@ -142,6 +146,8 @@ type gallery struct {
 	sidebarWidth *core.Signal[core.Points]
 	// chosen is the label of the last application menu item chosen.
 	chosen *core.Signal[string]
+	// language is the one chosen in the language menu, "" the system's.
+	language *core.Signal[string]
 	// wasDesktop is whether the desktop layout has been shown, for the
 	// switch back.
 	wasDesktop bool
@@ -203,7 +209,8 @@ func Root(cx *core.Scope) core.Node {
 		selected:     core.NewSignal(cx, first),
 		sidebarOpen:  core.NewSignal(cx, true),
 		sidebarWidth: core.NewSignal(cx, sidebarWidth),
-		chosen:       core.NewSignal(cx, "nothing yet"),
+		chosen:       core.NewSignal(cx, locales.For(cx).AppNothingYet()),
+		language:     core.NewSignal(cx, ""),
 		env:          env,
 		toasts:       newToaster(cx),
 	}
@@ -219,14 +226,18 @@ func Root(cx *core.Scope) core.Node {
 
 	hasWindow := desktop.IsAvailable(cx)
 	if hasWindow {
-		desktop.SetTitle(cx, "Gallery")
+		desktop.SetTitle(cx, locales.For(cx).AppGallery())
 		desktop.SetTitleBar(cx, desktop.TitleBarHidden, ui.HeaderHeight)
 	}
 	rememberDemo(cx, g)
-	cx.Effect(func() { desktop.SetApplicationMenu(cx, g.menu()) })
+	rememberLanguage(cx, g)
+	cx.Effect(func() { desktop.SetApplicationMenu(cx, g.menu(locales.For(cx))) })
 
 	return core.Dynamic(func(cx *core.Scope) core.Node {
 		wide := desktopLayout.Get()
+		// A new language builds the gallery again in it, as a new layout
+		// does, keeping what is open.
+		i18n.Language(cx)
 		// What the layout builds mounts untracked, outside this function.
 		return core.Func(func(cx *core.Scope) core.Node {
 			colors := ui.ColorsOf(cx)
@@ -246,6 +257,9 @@ func Root(cx *core.Scope) core.Node {
 		})
 	})
 }
+
+// headerActions lays out the buttons at the end of the index's header.
+var headerActions = core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4}
 
 // rememberDemo reopens the demo left open last time (selected on a
 // desktop, pushed on a phone), then keeps the key current: the demo shown,
@@ -297,7 +311,7 @@ func (g *gallery) titleBar(cx *core.Scope) core.Node {
 		},
 		Children: []core.Node{
 			logo(cx, 20),
-			core.Text{Content: "Gallery", MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: locales.For(cx).AppGallery(), MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Text("NSGo", 11, ui.Regular, colors.Muted),
 		}}
 }
@@ -307,6 +321,7 @@ func (g *gallery) toggleSidebar() { g.sidebarOpen.Update(func(open bool) bool { 
 
 // phone is the narrow layout: the index, demos pushed over it.
 func (g *gallery) phone(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	// Back from the desktop layout: the demo it showed stays open.
 	if g.wasDesktop {
 		g.nav.SetRoutes(route{}, route{demo: g.selected.GetUntracked()})
@@ -318,20 +333,23 @@ func (g *gallery) phone(cx *core.Scope) core.Node {
 			return r.page(cx)
 		case r.demo != "":
 			d, _ := findDemo(r.demo)
-			return base.NavPage{Title: d.name, TestID: "screen-" + d.name, HeaderStyleFunc: headerStyle(cx),
-				Header:    pageHeader(cx, pageHeaderProps{title: d.name}),
+			return base.NavPage{Title: d.title(tr), TestID: "screen-" + d.name, HeaderStyleFunc: headerStyle(cx),
+				Header:    pageHeader(cx, pageHeaderProps{title: d.title(tr)}),
 				StyleFunc: pageStyle(cx),
 				Children: []core.Node{core.View{Style: fillPage, StyleFunc: pageStyle(cx),
 					Children: []core.Node{core.Func(func(cx *core.Scope) core.Node { return d.screen(cx) })}}}}
 		}
-		return base.NavPage{Title: "Gallery", TestID: "index", HeaderStyleFunc: headerStyle(cx), HeaderRight: barThemeToggle(cx),
-			Header:   pageHeader(cx, pageHeaderProps{title: "Gallery", root: true, right: themeToggle(cx)}),
+		return base.NavPage{Title: tr.AppGallery(), TestID: "index", HeaderStyleFunc: headerStyle(cx),
+			HeaderRight: core.View{Style: headerActions, Children: []core.Node{g.languageMenu(cx), barThemeToggle(cx)}},
+			Header: pageHeader(cx, pageHeaderProps{title: tr.AppGallery(), root: true,
+				right: core.View{Style: headerActions, Children: []core.Node{g.languageMenu(cx), themeToggle(cx)}}}),
 			Children: []core.Node{g.home(cx)}}
 	})
 }
 
 // home is the phone layout's index of the demos by group.
 func (g *gallery) home(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	var nodes []core.Node
 	for i, grp := range groups {
@@ -339,9 +357,9 @@ func (g *gallery) home(cx *core.Scope) core.Node {
 		for j, d := range grp.demos {
 			rows = append(rows, demoRow(cx, d, j == 0, func() { g.nav.Push(route{demo: d.name}) }))
 		}
-		nodes = append(nodes, ui.Appear{Index: i + 1, Children: []core.Node{core.View{TestID: "group-" + grp.title, Style: core.Style{Gap: 8}, Children: []core.Node{
+		nodes = append(nodes, ui.Appear{Index: i + 1, Children: []core.Node{core.View{TestID: "group-" + grp.name, Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
-				core.Text{Content: grp.title, Role: core.RoleHeader, Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold,
+				core.Text{Content: grp.title(tr), Role: core.RoleHeader, Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold,
 					LetterSpacing: 0.4, TextTransform: core.TextTransformUppercase}, StyleFunc: ui.Colored(colors.Muted)},
 				core.Text{Content: itoa(len(grp.demos)), Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 			}},
@@ -356,12 +374,13 @@ func (g *gallery) home(cx *core.Scope) core.Node {
 
 // demoRow is a demo in the phone layout's index.
 func demoRow(cx *core.Scope, d demo, first bool, open func()) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	s := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 14, Padding: core.All(12)}
 	if !first {
 		s.Borders = core.Edges{Top: 1}
 	}
-	return ui.Press{OnPress: open, Scale: 0.98, Label: d.name, TestID: "nav-" + d.name, Children: []core.Node{
+	return ui.Press{OnPress: open, Scale: 0.98, Label: d.title(tr), TestID: "nav-" + d.name, Children: []core.Node{
 		core.View{Style: s, StyleFunc: func() core.Style {
 			if first {
 				return core.Style{}
@@ -370,8 +389,8 @@ func demoRow(cx *core.Scope, d demo, first bool, open func()) core.Node {
 		}, Children: []core.Node{
 			ui.IconTile{Icon: d.icon, Size: 38},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-				ui.Text(d.name, 16, ui.Medium, colors.Text),
-				core.Text{Content: d.detail, MaxLines: 2, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
+				ui.Text(d.title(tr), 16, ui.Medium, colors.Text),
+				core.Text{Content: d.detail(tr), MaxLines: 2, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
 			ui.Icon(ui.IconChevron, 16, colors.Faint),
 		}},
@@ -398,10 +417,11 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 	if !desktop.IsAvailable(cx) {
 		cx.OnKey("mod+b", g.toggleSidebar)
 	}
-	return ui.SidebarShell{TestID: "shell", Sidebar: []core.Node{g.sidebar()}, SidebarFooter: []core.Node{ui.Spacer{}, themeToggle(cx)},
-		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: "Toggle sidebar",
+	tr := locales.For(cx)
+	return ui.SidebarShell{TestID: "shell", Sidebar: []core.Node{g.sidebar(tr)}, SidebarFooter: []core.Node{ui.Spacer{}, g.languageMenu(cx), themeToggle(cx)},
+		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 200, MaxWidth: 360,
-		ResizeLabel: "Resize sidebar",
+		ResizeLabel: tr.AppResizeSidebar(),
 		Header:      []core.Node{g.demoTitle()}, Actions: []core.Node{g.demoGroup()},
 		Content: []core.Node{g.nav.Stack(fillPage, func(cx *core.Scope, r route, _ func() int) base.NavPage {
 			if r.page != nil {
@@ -412,14 +432,14 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 }
 
 // sidebar is the desktop layout's list of the demos by group.
-func (g *gallery) sidebar() core.Node {
+func (g *gallery) sidebar(tr locales.Messages) core.Node {
 	var sections []ui.SidebarSection
 	for _, grp := range groups {
 		var items []ui.SidebarItem
 		for _, d := range grp.demos {
-			items = append(items, ui.SidebarItem{ID: d.name, Text: d.name, Icon: d.icon, TestID: "nav-" + d.name})
+			items = append(items, ui.SidebarItem{ID: d.name, Text: d.title(tr), Icon: d.icon, TestID: "nav-" + d.name})
 		}
-		sections = append(sections, ui.SidebarSection{Title: grp.title, Items: items, TestID: "nav-group-" + grp.title})
+		sections = append(sections, ui.SidebarSection{Title: grp.title(tr), Items: items, TestID: "nav-group-" + grp.name})
 	}
 	return ui.Sidebar{TestID: "sidebar", Sections: sections, Selected: g.selected.Get, OnSelect: g.selectDemo}
 }
@@ -431,9 +451,10 @@ func (g *gallery) demoTitle() core.Node {
 		d, _ := findDemo(g.selected.Get())
 		return core.Func(func(cx *core.Scope) core.Node {
 			colors := ui.ColorsOf(cx)
-			title := ui.Text(d.name, 14, ui.Semibold, colors.Text)
+			tr := locales.For(cx)
+			title := ui.Text(d.title(tr), 14, ui.Semibold, colors.Text)
 			title.MaxLines, title.Role, title.TestID, title.Style.FlexShrink = 1, core.RoleHeader, "title", 0
-			detail := ui.Text(d.detail, 12, ui.Regular, colors.Muted)
+			detail := ui.Text(d.detail(tr), 12, ui.Regular, colors.Muted)
 			detail.MaxLines, detail.Style.FlexShrink = 1, 1
 			return ui.HStack{Gap: 8, Children: []core.Node{ui.Icon(d.icon, 16, colors.Accent), title, detail}}
 		})
@@ -444,7 +465,7 @@ func (g *gallery) demoTitle() core.Node {
 // header.
 func (g *gallery) demoGroup() core.Node {
 	return core.Dynamic(func(cx *core.Scope) core.Node {
-		return ui.Badge{Text: groupOf(g.selected.Get())}
+		return ui.Badge{Text: groupOf(locales.For(cx), g.selected.Get())}
 	})
 }
 
@@ -460,34 +481,34 @@ func (g *gallery) demoPane() core.Node {
 
 // menu is the application menu: the app menu and Edit of roles, View
 // (the sidebar and a demo each, with shortcuts) and Window.
-func (g *gallery) menu() []desktop.MenuItem {
+func (g *gallery) menu(tr locales.Messages) []desktop.MenuItem {
 	selected := g.selected.Get()
 	choose := func(label string, fn func()) func() {
 		return func() { g.chosen.Set(label); fn() }
 	}
 	view := []desktop.MenuItem{
-		{Label: "Show Sidebar", Shortcut: "mod+b", Checkable: true, Checked: g.sidebarOpen.Get(), OnSelect: choose("Show Sidebar", g.toggleSidebar)},
+		{Label: tr.AppShowSidebar(), Shortcut: "mod+b", Checkable: true, Checked: g.sidebarOpen.Get(), OnSelect: choose(tr.AppShowSidebar(), g.toggleSidebar)},
 		{Separator: true},
 	}
 	for i, d := range allDemos() {
-		item := desktop.MenuItem{Label: d.name, Checkable: true, Checked: d.name == selected, OnSelect: choose(d.name, func() { g.open(d.name) })}
+		item := desktop.MenuItem{Label: d.title(tr), Checkable: true, Checked: d.name == selected, OnSelect: choose(d.title(tr), func() { g.open(d.name) })}
 		if i < 9 {
 			item.Shortcut = "mod+" + itoa(i+1)
 		}
 		view = append(view, item)
 	}
 	return []desktop.MenuItem{
-		{Label: "Gallery", Items: []desktop.MenuItem{
+		{Label: tr.AppGallery(), Items: []desktop.MenuItem{
 			{Role: desktop.MenuAbout}, {Separator: true},
 			{Role: desktop.MenuHide}, {Role: desktop.MenuHideOthers}, {Role: desktop.MenuShowAll}, {Separator: true},
 			{Role: desktop.MenuQuit},
 		}},
-		{Label: "Edit", Items: []desktop.MenuItem{
+		{Label: tr.AppEdit(), Items: []desktop.MenuItem{
 			{Role: desktop.MenuUndo}, {Role: desktop.MenuRedo}, {Separator: true},
 			{Role: desktop.MenuCut}, {Role: desktop.MenuCopy}, {Role: desktop.MenuPaste}, {Role: desktop.MenuSelectAll},
 		}},
-		{Label: "View", Items: view},
-		{Label: "Window", Items: []desktop.MenuItem{
+		{Label: tr.AppView(), Items: view},
+		{Label: tr.AppWindow(), Items: []desktop.MenuItem{
 			{Role: desktop.MenuMinimize}, {Role: desktop.MenuZoom}, {Role: desktop.MenuToggleFullScreen}, {Separator: true},
 			{Role: desktop.MenuClose},
 		}},

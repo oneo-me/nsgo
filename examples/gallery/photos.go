@@ -7,6 +7,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 type photo struct {
@@ -45,9 +46,10 @@ func compact(n int) string {
 
 // photoRow is a photo in the phone layout's list.
 func photoRow(cx *core.Scope, p func() photo) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	return ui.Press{Scale: 0.985, Label: "Photo", Children: []core.Node{
+	return ui.Press{Scale: 0.985, Label: tr.PhotosPhoto(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16), Height: core.Pt(76)}, Children: []core.Node{
 			core.Image{SourceFunc: func() core.ImageSource { return core.Src(fmt.Sprintf("https://picsum.photos/seed/%d/112/112", p().id)) },
 				StyleFunc: func() core.Style {
@@ -68,22 +70,24 @@ func photoRow(cx *core.Scope, p func() photo) core.Node {
 
 // photoByline is a photo's tone dot, author and views.
 func photoByline(cx *core.Scope, p func() photo, size core.Points) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	return ui.HStack{Gap: 6, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			return core.Style{Width: core.Pt(6), Height: core.Pt(6), CornerRadius: 3, Background: p().tone.Color(cx)}
 		}},
 		core.Text{ContentFunc: func() string { return p().author }, Style: core.Style{FontSize: size}, StyleFunc: ui.Colored(colors.Muted)},
-		core.Text{ContentFunc: func() string { return fmt.Sprintf("· %s views", compact(p().views)) }, Style: core.Style{FontSize: size}, StyleFunc: ui.Colored(colors.Faint)},
+		core.Text{ContentFunc: func() string { return "· " + tr.PhotosViews(compact(p().views)) }, Style: core.Style{FontSize: size}, StyleFunc: ui.Colored(colors.Faint)},
 	}}
 }
 
 // photoTile is a photo in the desktop layout's grid: the picture over its
 // title and author, a fill under the pointer.
 func photoTile(cx *core.Scope, p func() photo) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	return ui.Press{Scale: 0.97, Label: "Photo", Children: []core.Node{
+	return ui.Press{Scale: 0.97, Label: tr.PhotosPhoto(), Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			return core.Style{Padding: core.All(6), Gap: 8, CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, Cursor: core.CursorPointer,
 				Hover: &core.Style{Background: colors.Surface()}}
@@ -108,6 +112,7 @@ func photoTile(cx *core.Scope, p func() photo) core.Node {
 // fit (at least 200 pt each) in the desktop layout, a list that recycles
 // its cells, pulls to refresh and loads pages as it nears its end.
 func photosDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	wide := shell.desktop()
@@ -140,20 +145,20 @@ func photosDemo(cx *core.Scope) core.Node {
 		if wide {
 			pad = core.Edges{Bottom: 16}
 		}
-		hintText := fmt.Sprintf("Pull to refresh. Scrolling to the end loads %d more.", photoPage)
+		hintText := tr.PhotosPullToRefresh(photoPage)
 		if desktopIdiom {
-			hintText = fmt.Sprintf("Scrolling to the end loads %d more.", photoPage)
+			hintText = tr.PhotosLoadsMore(photoPage)
 			if refreshKey != "" {
-				hintText = refreshKey + " refreshes. " + hintText
+				hintText = refreshKey + tr.PhotosRefreshes() + hintText
 			}
 		}
 		foot := []core.Node{ui.Icon(ui.IconArrowDown, 14, colors.Faint), core.Text{Content: hintText, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)}}
 		// The mouse does not pull scroll views down: desktops refresh here.
 		if desktopIdiom {
 			foot = append(foot, core.Dynamic(func(*core.Scope) core.Node {
-				label := "Refresh"
+				label := tr.PhotosRefresh()
 				if refreshing.Get() {
-					label = "Refreshing…"
+					label = tr.PhotosRefreshing()
 				}
 				return ui.Button{Text: label, Variant: ui.ButtonSecondary, Disabled: refreshing.Get, OnPress: refresh}
 			}))
@@ -171,24 +176,24 @@ func photosDemo(cx *core.Scope) core.Node {
 					},
 						Children: []core.Node{logo(cx, 24)}},
 					core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-						ui.Text("Photo stream", 17, ui.Semibold, colors.Text), ui.Text("A recycled list of remote images", 13, ui.Regular, colors.Muted)}},
-					ui.Badge{Text: "Remote", Tone: ui.ToneInfo},
+						ui.Text(tr.PhotosPhotoStream(), 17, ui.Semibold, colors.Text), ui.Text(tr.PhotosARecycledListOfRemote(), 13, ui.Regular, colors.Muted)}},
+					ui.Badge{Text: tr.PhotosRemote(), Tone: ui.ToneInfo},
 				}},
 				core.Text{Spans: []core.Span{
 					{ContentFunc: func() string { return thousands(len(photos.Get())) }},
-					{Content: " photos", Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Accent)},
+					{Content: tr.PhotosPhotos(), Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Accent)},
 				}, Style: core.Style{FontSize: 40, FontWeight: ui.Semibold, LetterSpacing: -1}, StyleFunc: ui.Colored(colors.Text)},
 				core.View{StyleFunc: func() core.Style {
 					return core.Style{Direction: core.Row, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}, Padding: core.Edges{Top: 10}}
 				}, Children: []core.Node{
-					ui.Stat{Label: "Pages", Value: func() string { return itoa((len(photos.Get()) + photoPage - 1) / photoPage) }, Width: core.Pct(33)},
-					ui.Stat{Label: "Per page", Value: label(itoa(photoPage)), Width: core.Pct(33)},
+					ui.Stat{Label: tr.PhotosPages(), Value: func() string { return itoa((len(photos.Get()) + photoPage - 1) / photoPage) }, Width: core.Pct(33)},
+					ui.Stat{Label: tr.PhotosPerPage(), Value: label(itoa(photoPage)), Width: core.Pct(33)},
 					core.Dynamic(func(*core.Scope) core.Node {
 						t := ui.ToneNeutral
 						if refreshes.Get() > 0 {
 							t = ui.ToneAccent
 						}
-						return ui.Stat{Label: "Refreshes", Value: func() string { return itoa(refreshes.Get()) }, Tone: t, Width: core.Pct(33)}
+						return ui.Stat{Label: tr.PhotosRefreshes2(), Value: func() string { return itoa(refreshes.Get()) }, Tone: t, Width: core.Pct(33)}
 					}),
 				}},
 			}},
@@ -196,7 +201,7 @@ func photosDemo(cx *core.Scope) core.Node {
 		}}
 	}
 	footer := func() core.Node {
-		return core.Text{Content: fmt.Sprintf("Loading %d more…", photoPage), Style: core.Style{TextAlign: core.TextAlignCenter, FontSize: 13, Padding: core.All(16)}, StyleFunc: ui.Colored(colors.Faint)}
+		return core.Text{Content: tr.PhotosLoadingMore(photoPage), Style: core.Style{TextAlign: core.TextAlignCenter, FontSize: 13, Padding: core.All(16)}, StyleFunc: ui.Colored(colors.Faint)}
 	}
 	at := func(r core.ListRow) func() photo {
 		return func() photo {
@@ -244,8 +249,8 @@ func photosDemo(cx *core.Scope) core.Node {
 					TranslateY: core.Interpolate(scrollY, core.Interpolation{Input: []float64{140, 190}, Output: []float64{-8, 0}, Extrapolate: core.ExtrapolateClamp}),
 				}}
 		}, Children: []core.Node{
-			core.Text{Content: "Photo stream", Style: core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
-			ui.Textf(func() string { return thousands(len(photos.Get())) + " photos" }, 13, ui.Regular, colors.Muted),
+			core.Text{Content: tr.PhotosPhotoStream(), Style: core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+			ui.Textf(func() string { return thousands(len(photos.Get())) + tr.PhotosPhotos() }, 13, ui.Regular, colors.Muted),
 		}},
 	}}
 }

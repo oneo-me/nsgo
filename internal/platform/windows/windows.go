@@ -803,6 +803,8 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemAppearance:
 			w.setAppearance(it.Appearance)
 			continue
+		case driver.ItemDirection:
+			continue
 		case driver.ItemQuit:
 			if w.embedded {
 				continue // the host's window stays

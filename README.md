@@ -114,6 +114,7 @@ build_number: 1         # CFBundleVersion and Android's versionCode; else from v
 # appearance: dark      # light or dark whatever the system's
 # theme: theme.json     # a TSX app's theme: NSGo's or a shadcn/ui one
 window: { width: 420, height: 560 }
+# i18n: { dir: locales, source: en }  # the app's catalogs and the language they are written in
 icon:
   apple: assets/AppIcon.icon  # macOS and iOS, or an .icns for macOS
   png: assets/Icon.png        # every other target
@@ -133,6 +134,8 @@ build:
 ```
 
 Beside `nsgo.yaml`, `resources/` holds files the app ships, where `asset:` images load from and `nsgo.Fonts("fonts/Brand.ttf")` registers fonts from; `assets/` holds project files that do not ship, such as the icons.
+
+`locales/` holds the app's messages, a YAML file per language (`en.yaml`, `de.yaml`) in ICU MessageFormat, which the package imports. `dev`, `build` and `test` check them and write a Go function per message beside them, such as `locales.Greeting(cx, "Ada")`, which says it in the language the app shows and follows it as it changes; `cx.SetLocale("de")` chooses one, and the layout runs in the direction it is written in. `go tool nsgo i18n` writes the functions alone. A key that names a package, such as `github.com/oneo-me/nsgo/base/locales`, gives that package's messages in the file's language, for languages NSGo is not translated to.
 
 Add the tool to your module once; `go tool nsgo` then runs it without installing:
 

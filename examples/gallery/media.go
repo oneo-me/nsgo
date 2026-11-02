@@ -8,6 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // inlinePage is an inline page in the gallery's colors, for the
@@ -48,6 +49,7 @@ func mediaFrame(cx *core.Scope, height core.Points, bg core.Color) core.Style {
 }
 
 func messaging(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	message := core.NewSignal(cx, "")
 	sent := core.NewSignal(cx, 0)
@@ -58,16 +60,16 @@ func messaging(cx *core.Scope) core.Node {
 		}
 		return s
 	}
-	return ui.Card{Icon: ui.IconMedia, Title: "Web view", Description: "Inline HTML, with messages both ways", Children: []core.Node{
+	return ui.Card{Icon: ui.IconMedia, Title: tr.MediaWebView(), Description: tr.MediaInlineHtmlWithMessagesBoth(), Children: []core.Node{
 		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: message.Set},
-		ui.Caption{Label: "From the page", Note: func() string { return or(message.Get()) }},
-		ui.Caption{Label: "To the page", Note: func() string {
+		ui.Caption{Label: tr.MediaFromThePage(), Note: func() string { return or(message.Get()) }},
+		ui.Caption{Label: tr.MediaToThePage(), Note: func() string {
 			if sent.Get() == 0 {
 				return "—"
 			}
 			return fmt.Sprintf("hi #%d", sent.Get())
 		}},
-		ui.Button{Text: "Post to the page", OnPress: func() {
+		ui.Button{Text: tr.MediaPostToThePage(), OnPress: func() {
 			sent.Set(int(time.Now().UnixMilli() % 1000))
 			web.PostMessage(fmt.Sprintf("hi #%d", sent.GetUntracked()))
 		}},
@@ -92,6 +94,7 @@ func navButton(cx *core.Scope, flip bool, enabled func() bool, label string, onP
 }
 
 func site(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	state := core.NewSignal(cx, core.WebNavigation{})
@@ -107,11 +110,11 @@ func site(cx *core.Scope) core.Node {
 		}
 		return u
 	}
-	return ui.Card{Icon: ui.IconSearch, Title: "A web site", Description: "Navigation state, back and forward", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Icon: ui.IconSearch, Title: tr.MediaAWebSite(), Description: tr.MediaNavigationStateBackAndForward(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if state.Get().Loading {
-			return ui.Badge{Text: "Loading", Tone: ui.ToneWarn}
+			return ui.Badge{Text: tr.MediaLoading(), Tone: ui.ToneWarn}
 		}
-		return ui.Badge{Text: "Loaded", Tone: ui.ToneUp}
+		return ui.Badge{Text: tr.MediaLoaded(), Tone: ui.ToneUp}
 	})}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			return fin.Track().Over(core.Style{Height: core.Pt(40), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 14),
@@ -128,10 +131,10 @@ func site(cx *core.Scope) core.Node {
 		}},
 		core.WebView{Ref: ref, Source: core.WebSrc("https://go.dev"), TestID: "site", StyleFunc: func() core.Style { return mediaFrame(cx, 340, colors.Inset()) }, OnNavigationStateChange: state.Set},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
-			navButton(cx, true, func() bool { return state.Get().CanGoBack }, "Back", ref.GoBack),
-			navButton(cx, false, func() bool { return state.Get().CanGoForward }, "Forward", ref.GoForward),
+			navButton(cx, true, func() bool { return state.Get().CanGoBack }, tr.MediaBack(), ref.GoBack),
+			navButton(cx, false, func() bool { return state.Get().CanGoForward }, tr.MediaForward(), ref.GoForward),
 			ui.Spacer{},
-			ui.Button{Text: "Reload", Variant: ui.ButtonSecondary, OnPress: ref.Reload},
+			ui.Button{Text: tr.MediaReload(), Variant: ui.ButtonSecondary, OnPress: ref.Reload},
 		}},
 	}}
 }
@@ -146,22 +149,23 @@ func clockText(d time.Duration) string {
 const flowerClip = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
 
 func player(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	controls := core.NewSignal(cx, "own")
 	paused, buffering, failed := core.NewSignal(cx, true), core.NewSignal(cx, false), core.NewSignal(cx, false)
 	pos, dur := core.NewSignal(cx, time.Duration(0)), core.NewSignal(cx, time.Duration(0))
 	fit := core.NewSignal(cx, core.Contain)
 	ref := &core.Ref{}
-	return ui.Card{Icon: ui.IconPlay, Title: "Video", Description: "The platform's player", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Icon: ui.IconPlay, Title: tr.MediaVideo(), Description: tr.MediaThePlatformSPlayer(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		switch {
 		case failed.Get():
-			return ui.Badge{Text: "Error", Tone: ui.ToneDanger}
+			return ui.Badge{Text: tr.MediaError(), Tone: ui.ToneDanger}
 		case buffering.Get():
-			return ui.Badge{Text: "Buffering", Tone: ui.ToneWarn}
+			return ui.Badge{Text: tr.MediaBuffering(), Tone: ui.ToneWarn}
 		case paused.Get():
-			return ui.Badge{Text: "Paused"}
+			return ui.Badge{Text: tr.MediaPaused()}
 		}
-		return ui.Badge{Text: "Playing", Tone: ui.ToneAccent}
+		return ui.Badge{Text: tr.MediaPlaying(), Tone: ui.ToneAccent}
 	})}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			// The platform's controls are fixed as the player mounts.
@@ -177,9 +181,9 @@ func player(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					if paused.Get() {
-						return ui.RoundButton{Icon: ui.IconPlay, Label: "Play", OnPress: func() { paused.Set(false) }}
+						return ui.RoundButton{Icon: ui.IconPlay, Label: tr.MediaPlay(), OnPress: func() { paused.Set(false) }}
 					}
-					return ui.RoundButton{Icon: ui.IconPause, Label: "Pause", OnPress: func() { paused.Set(true) }}
+					return ui.RoundButton{Icon: ui.IconPause, Label: tr.MediaPause(), OnPress: func() { paused.Set(true) }}
 				}),
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
 					ui.Meter{Value: func() float64 {
@@ -193,10 +197,10 @@ func player(cx *core.Scope) core.Node {
 						ui.Textf(func() string { return clockText(dur.Get()) }, 13, ui.Regular, colors.Faint),
 					}},
 				}},
-				ui.Button{Text: "Restart", Variant: ui.ButtonSecondary, OnPress: func() { ref.Seek(0) }},
+				ui.Button{Text: tr.MediaRestart(), Variant: ui.ButtonSecondary, OnPress: func() { ref.Seek(0) }},
 			}}
 		}},
-		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "own", Label: "Own controls"}, {Value: "system", Label: "System controls"}}, Value: controls.Get, OnChange: controls.Set},
+		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "own", Label: tr.MediaOwnControls()}, {Value: "system", Label: tr.MediaSystemControls()}}, Value: controls.Get, OnChange: controls.Set},
 		ui.Segmented[core.ResizeMode]{Options: []ui.Option[core.ResizeMode]{{Value: core.Contain, Label: "Contain"}, {Value: core.Cover, Label: "Cover"}, {Value: core.Stretch, Label: "Stretch"}}, Value: fit.Get, OnChange: fit.Set, Small: true},
 	}}
 }
@@ -204,17 +208,18 @@ func player(cx *core.Scope) core.Node {
 // nativeView is a platform view of the app's own, registered with
 // nsgo.Component and shown by a Native element: the platform's slider.
 func nativeView(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	value := core.NewSignal(cx, 0.4)
-	events := core.NewSignal(cx, "none yet")
+	events := core.NewSignal(cx, tr.MediaNoneYet())
 	slider := &core.Ref{}
 	_, ok := components[sliderComponent]
-	noteText := "This platform registers no slider, so the box stays empty."
+	noteText := tr.MediaThisPlatformRegistersNoSlider()
 	if ok {
-		noteText = "Dragging the platform's own slider reports change events; the buttons set its value and send it a command."
+		noteText = tr.MediaDraggingThePlatformSOwn()
 	}
-	return ui.Card{Icon: ui.IconControls, Title: "Native views", Description: "The app's own platform views in the tree", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
-		core.Native{Component: sliderComponent, Ref: slider, TestID: "native-slider", Label: "Native slider",
+	return ui.Card{Icon: ui.IconControls, Title: tr.MediaNativeViews(), Description: tr.MediaTheAppSOwnPlatform(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+		core.Native{Component: sliderComponent, Ref: slider, TestID: "native-slider", Label: tr.MediaNativeSlider(),
 			PropsFunc: func() map[string]any { return map[string]any{"value": value.Get()} },
 			OnEvent: func(name string, data any) {
 				if v, ok := data.(float64); ok && name == "change" {
@@ -224,11 +229,11 @@ func nativeView(cx *core.Scope) core.Node {
 			},
 			Style: core.Style{AlignSelf: core.AlignStretch, MinWidth: core.Pt(200), MinHeight: core.Pt(28)}},
 		ui.Note{Text: noteText},
-		ui.Caption{Label: "Value", Note: func() string { return fmt.Sprintf("%.2f", value.Get()) }},
-		core.Text{TestID: "native-value", ContentFunc: func() string { return "Last event: " + events.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
+		ui.Caption{Label: tr.MediaValue(), Note: func() string { return fmt.Sprintf("%.2f", value.Get()) }},
+		core.Text{TestID: "native-value", ContentFunc: func() string { return tr.MediaLastEvent() + events.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: "Set 0.8", Variant: ui.ButtonSecondary, OnPress: func() { value.Set(0.8) }}},
-			ui.Cell{Child: ui.Button{Text: "Reset command", Variant: ui.ButtonSecondary, OnPress: func() { slider.Command("reset", nil) }}},
+			ui.Cell{Child: ui.Button{Text: tr.MediaSet08(), Variant: ui.ButtonSecondary, OnPress: func() { value.Set(0.8) }}},
+			ui.Cell{Child: ui.Button{Text: tr.MediaResetCommand(), Variant: ui.ButtonSecondary, OnPress: func() { slider.Command("reset", nil) }}},
 		}},
 	}}
 }

@@ -33,6 +33,9 @@ func buildAll(ctx context.Context, p *project) error {
 	var total int64
 	started := time.Now()
 	header(p.Name, p.Version, strings.Join(buildTargets, ", "))
+	if err := p.prepareCatalogs(ctx, ".", false); err != nil {
+		return err
+	}
 	for _, target := range buildTargets {
 		dir := filepath.Join(p.Build.Output, fmt.Sprintf("%s-%s-%s", p.Name, p.Version, target))
 		if err := os.RemoveAll(dir); err != nil {

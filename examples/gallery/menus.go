@@ -10,6 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
 // The look of every menu here is the gallery's: base draws none.
@@ -181,6 +182,7 @@ type menuFile struct {
 // on touch screens sheets whose submenus take the place of their items.
 // Then the platform's own menus: the application menu and a popup menu.
 func menusDemo(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
 	l := newMenuLook(cx)
 	events := core.NewSignalFunc(cx, []string(nil), slices.Equal)
 	log := func(what string) {
@@ -188,9 +190,9 @@ func menusDemo(cx *core.Scope) core.Node {
 	}
 	changed := func(menu string) func(bool, base.Reason) {
 		return func(open bool, reason base.Reason) {
-			state := "closed"
+			state := tr.MenusClosed()
 			if open {
-				state = "opened"
+				state = tr.MenusOpened()
 			}
 			log(fmt.Sprintf("%s %s · %s", menu, state, reason))
 		}
@@ -207,14 +209,15 @@ func menusDemo(cx *core.Scope) core.Node {
 	}
 
 	menuBar := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		history, undone := core.NewSignalFunc(cx, []string(nil), slices.Equal), core.NewSignalFunc(cx, []string(nil), slices.Equal)
 		sidebar, statusBar := core.NewSignal(cx, true), core.NewSignal(cx, false)
-		zoom := core.NewSignal(cx, "Medium")
+		zoom := core.NewSignal(cx, tr.MenusMedium())
 		recent := core.NewSignalFunc(cx, []string{"Budget.numbers", "Roadmap.md", "Trip photos"}, slices.Equal)
 		act := func(what string) {
 			history.Update(func(h []string) []string { return append(slices.Clone(h), what) })
 			undone.Set(nil)
-			log("chose " + what)
+			log(tr.MenusChose() + what)
 		}
 		move := func(from, to *core.Signal[[]string], verb string) {
 			f := from.GetUntracked()
@@ -228,8 +231,8 @@ func menusDemo(cx *core.Scope) core.Node {
 		}
 		undo, redo := func() { move(history, undone, "undid") }, func() { move(undone, history, "redid") }
 		// The shortcuts the items show work without the menu too.
-		cx.OnKey("mod+alt+n", func() { act("New document") })
-		cx.OnKey("mod+alt+s", func() { act("Save") })
+		cx.OnKey("mod+alt+n", func() { act(tr.MenusNewDocument()) })
+		cx.OnKey("mod+alt+s", func() { act(tr.MenusSave()) })
 		cx.OnKey("mod+alt+z", undo)
 		cx.OnKey("mod+alt+shift+z", redo)
 		lastOf := func(s *core.Signal[[]string], verb string) func() string {
@@ -250,7 +253,7 @@ func menusDemo(cx *core.Scope) core.Node {
 			}
 		}
 		var sizes []core.Node
-		for _, size := range []string{"Small", "Medium", "Large"} {
+		for _, size := range []string{tr.MenusSmall(), tr.MenusMedium(), tr.MenusLarge()} {
 			sizes = append(sizes, l.item(cx, itemProps{label: label(size), keepOpen: true, onSelect: func() { zoom.Set(size) }, mark: func() mark {
 				if zoom.Get() == size {
 					return markDot
@@ -258,62 +261,64 @@ func menusDemo(cx *core.Scope) core.Node {
 				return markNone
 			}}))
 		}
-		return ui.Card{Icon: ui.IconLists, Title: "Menu bar", Description: ui.Hint(cx, "Each menu a sheet; submenus take its place", "Hover across submenus; the shortcuts work too"), Children: []core.Node{
+		return ui.Card{Icon: ui.IconLists, Title: tr.MenusMenuBar(), Description: ui.Hint(cx, tr.MenusEachMenuASheetSubmenus(), tr.MenusHoverAcrossSubmenusTheShortcuts()), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-				menu("File", chip(cx, label("File"), ""),
-					l.item(cx, itemProps{label: label("New document"), note: key("mod+alt+n"), onSelect: func() { act("New document") }}),
-					l.item(cx, itemProps{label: label("New window"), onSelect: func() { act("New window") }}),
-					l.submenu(cx, "Open recent", false,
+				menu(tr.MenusFile(), chip(cx, label(tr.MenusFile()), ""),
+					l.item(cx, itemProps{label: label(tr.MenusNewDocument()), note: key("mod+alt+n"), onSelect: func() { act(tr.MenusNewDocument()) }}),
+					l.item(cx, itemProps{label: label(tr.MenusNewWindow()), onSelect: func() { act(tr.MenusNewWindow()) }}),
+					l.submenu(cx, tr.MenusOpenRecent(), false,
 						core.Each(recent.Get, func(s string) string { return s }, func(cx *core.Scope, name func() string, _ func() int) core.Node {
-							return l.item(cx, itemProps{label: name, onSelect: func() { act("Open " + name()) }})
+							tr := locales.For(cx)
+							return l.item(cx, itemProps{label: name, onSelect: func() { act(tr.MenusOpen() + name()) }})
 						}),
 						separator(cx),
-						l.item(cx, itemProps{label: label("Clear recent"), disabled: empty(recent), onSelect: func() { recent.Set(nil) }}),
+						l.item(cx, itemProps{label: label(tr.MenusClearRecent()), disabled: empty(recent), onSelect: func() { recent.Set(nil) }}),
 					),
 					separator(cx),
-					l.item(cx, itemProps{label: label("Save"), note: key("mod+alt+s"), onSelect: func() { act("Save") }}),
-					l.submenu(cx, "Export as", false,
-						l.item(cx, itemProps{label: label("PDF"), onSelect: func() { act("Export PDF") }}),
-						l.submenu(cx, "Image", false,
-							l.item(cx, itemProps{label: label("PNG"), onSelect: func() { act("Export PNG") }}),
-							l.item(cx, itemProps{label: label("JPEG"), onSelect: func() { act("Export JPEG") }}),
-							l.item(cx, itemProps{label: label("WebP"), onSelect: func() { act("Export WebP") }}),
+					l.item(cx, itemProps{label: label(tr.MenusSave()), note: key("mod+alt+s"), onSelect: func() { act(tr.MenusSave()) }}),
+					l.submenu(cx, tr.MenusExportAs(), false,
+						l.item(cx, itemProps{label: label(tr.MenusPdf()), onSelect: func() { act(tr.MenusExportPdf()) }}),
+						l.submenu(cx, tr.MenusImage(), false,
+							l.item(cx, itemProps{label: label(tr.MenusPng()), onSelect: func() { act(tr.MenusExportPng()) }}),
+							l.item(cx, itemProps{label: label(tr.MenusJpeg()), onSelect: func() { act(tr.MenusExportJpeg()) }}),
+							l.item(cx, itemProps{label: label(tr.MenusWebp()), onSelect: func() { act(tr.MenusExportWebp()) }}),
 						),
-						l.submenu(cx, "Web page", true, l.item(cx, itemProps{label: label("HTML")})),
+						l.submenu(cx, tr.MenusWebPage(), true, l.item(cx, itemProps{label: label(tr.MenusHtml())})),
 					),
 					separator(cx),
-					l.item(cx, itemProps{label: label("Delete document"), danger: true, onSelect: func() { act("Delete document") }}),
+					l.item(cx, itemProps{label: label(tr.MenusDeleteDocument()), danger: true, onSelect: func() { act(tr.MenusDeleteDocument()) }}),
 				),
-				menu("Edit", chip(cx, label("Edit"), ""),
-					l.item(cx, itemProps{label: lastOf(history, "Undo"), note: key("mod+alt+z"), disabled: empty(history), onSelect: undo}),
-					l.item(cx, itemProps{label: lastOf(undone, "Redo"), note: key("mod+alt+shift+z"), disabled: empty(undone), onSelect: redo}),
+				menu(tr.MenusEdit(), chip(cx, label(tr.MenusEdit()), ""),
+					l.item(cx, itemProps{label: lastOf(history, tr.MenusUndo()), note: key("mod+alt+z"), disabled: empty(history), onSelect: undo}),
+					l.item(cx, itemProps{label: lastOf(undone, tr.MenusRedo()), note: key("mod+alt+shift+z"), disabled: empty(undone), onSelect: redo}),
 					separator(cx),
-					groupTitle(cx, "Clipboard"),
-					l.item(cx, itemProps{label: label("Cut"), onSelect: func() { act("Cut") }}),
-					l.item(cx, itemProps{label: label("Copy"), onSelect: func() { act("Copy") }}),
-					l.item(cx, itemProps{label: label("Paste"), onSelect: func() { act("Paste") }}),
+					groupTitle(cx, tr.MenusClipboard()),
+					l.item(cx, itemProps{label: label(tr.MenusCut()), onSelect: func() { act(tr.MenusCut()) }}),
+					l.item(cx, itemProps{label: label(tr.MenusCopy()), onSelect: func() { act(tr.MenusCopy()) }}),
+					l.item(cx, itemProps{label: label(tr.MenusPaste()), onSelect: func() { act(tr.MenusPaste()) }}),
 				),
-				menu("View", chip(cx, label("View"), ""), append([]core.Node{
-					groupTitle(cx, "Show"),
-					l.item(cx, itemProps{label: label("Sidebar"), mark: check(sidebar), keepOpen: true, onSelect: func() { toggled(sidebar) }}),
-					l.item(cx, itemProps{label: label("Status bar"), mark: check(statusBar), keepOpen: true, onSelect: func() { toggled(statusBar) }}),
+				menu(tr.MenusView(), chip(cx, label(tr.MenusView()), ""), append([]core.Node{
+					groupTitle(cx, tr.MenusShow()),
+					l.item(cx, itemProps{label: label(tr.MenusSidebar()), mark: check(sidebar), keepOpen: true, onSelect: func() { toggled(sidebar) }}),
+					l.item(cx, itemProps{label: label(tr.MenusStatusBar()), mark: check(statusBar), keepOpen: true, onSelect: func() { toggled(statusBar) }}),
 					separator(cx),
-					groupTitle(cx, "Zoom"),
+					groupTitle(cx, tr.MenusZoom()),
 				}, sizes...)...),
 			}},
 			ui.Caption{LabelFunc: func() string {
-				return fmt.Sprintf("Sidebar %s · status bar %s · zoom %s", onOff(sidebar.Get()), onOff(statusBar.Get()), zoom.Get())
+				return tr.MenusViewState(onOff(tr, sidebar.Get()), onOff(tr, statusBar.Get()), zoom.Get())
 			}},
 			ui.Caption{LabelFunc: func() string {
 				if h := history.Get(); len(h) > 0 {
-					return "Done: " + strings.Join(h, ", ")
+					return tr.MenusDone() + strings.Join(h, ", ")
 				}
-				return "Nothing done yet"
+				return tr.MenusNothingDoneYet()
 			}},
 		}}
 	}
 
 	rows := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		next := 5
 		files := core.NewSignalFunc(cx, []menuFile{{1, "Invoice March.pdf", false}, {2, "Holiday.jpg", true}, {3, "Notes.txt", false}, {4, "Slides.key", false}}, slices.Equal)
 		find := func(id int) menuFile {
@@ -327,14 +332,14 @@ func menusDemo(cx *core.Scope) core.Node {
 		actions := func(id int) []core.Node {
 			name := func() string { return find(id).name }
 			return []core.Node{
-				l.item(cx, itemProps{label: label("Open"), onSelect: func() { log("open " + name()) }}),
+				l.item(cx, itemProps{label: label(tr.MenusOpen2()), onSelect: func() { log(tr.MenusOpen3() + name()) }}),
 				l.item(cx, itemProps{label: func() string {
 					for _, f := range files.Get() {
 						if f.id == id && f.starred {
-							return "Unstar"
+							return tr.MenusUnstar()
 						}
 					}
-					return "Star"
+					return tr.MenusStar()
 				}, onSelect: func() {
 					files.Update(func(fs []menuFile) []menuFile {
 						out := slices.Clone(fs)
@@ -346,37 +351,38 @@ func menusDemo(cx *core.Scope) core.Node {
 						return out
 					})
 				}}),
-				l.item(cx, itemProps{label: label("Duplicate"), onSelect: func() {
+				l.item(cx, itemProps{label: label(tr.MenusDuplicate()), onSelect: func() {
 					f := find(id)
 					ext := ""
 					base := f.name
 					if i := strings.LastIndex(f.name, "."); i > 0 {
 						base, ext = f.name[:i], f.name[i:]
 					}
-					c := menuFile{id: next, name: base + " copy" + ext}
+					c := menuFile{id: next, name: base + tr.MenusCopy2() + ext}
 					next++
 					files.Update(func(fs []menuFile) []menuFile {
 						at := slices.IndexFunc(fs, func(x menuFile) bool { return x.id == id })
 						return slices.Insert(slices.Clone(fs), at+1, c)
 					})
 				}}),
-				l.submenu(cx, "Move to", false,
-					l.item(cx, itemProps{label: label("Documents"), onSelect: func() { log("moved " + name() + " to Documents") }}),
-					l.item(cx, itemProps{label: label("Archive"), onSelect: func() { log("moved " + name() + " to Archive") }}),
+				l.submenu(cx, tr.MenusMoveTo(), false,
+					l.item(cx, itemProps{label: label(tr.MenusDocuments()), onSelect: func() { log(tr.MenusMoved() + name() + tr.MenusToDocuments()) }}),
+					l.item(cx, itemProps{label: label(tr.MenusArchive()), onSelect: func() { log(tr.MenusMoved() + name() + tr.MenusToArchive()) }}),
 				),
 				separator(cx),
-				l.item(cx, itemProps{label: label("Delete"), danger: true, onSelect: func() {
+				l.item(cx, itemProps{label: label(tr.MenusDelete()), danger: true, onSelect: func() {
 					files.Update(func(fs []menuFile) []menuFile {
 						return slices.DeleteFunc(slices.Clone(fs), func(x menuFile) bool { return x.id == id })
 					})
 				}}),
 			}
 		}
-		return ui.Card{Icon: ui.IconPhotos, Title: "On the rows of a list", Description: ui.Hint(cx, "Hold a finger on a row, or press its ⋯", "Right click a row, or its ⋯ button"), Children: []core.Node{
-			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: "No files left"} },
+		return ui.Card{Icon: ui.IconPhotos, Title: tr.MenusOnTheRowsOfA(), Description: ui.Hint(cx, tr.MenusHoldAFingerOnA(), tr.MenusRightClickARowOr()), Children: []core.Node{
+			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.MenusNoFilesLeft()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Children: []core.Node{core.Each(files.Get, func(f menuFile) int { return f.id },
 						func(cx *core.Scope, file func() menuFile, i func() int) core.Node {
+							tr := locales.For(cx)
 							colors := ui.ColorsOf(cx)
 							id := core.Untracked(cx, file).id
 							starred := func() bool { return file().starred }
@@ -396,8 +402,8 @@ func menusDemo(cx *core.Scope) core.Node {
 									}),
 									core.Text{ContentFunc: func() string { return file().name }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
 									base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
-										Label: "Actions for " + core.Untracked(cx, file).name,
-										Trigger: core.View{Tooltip: core.Text{Content: "More actions"}, HitSlop: core.All(8),
+										Label: tr.MenusActionsFor() + core.Untracked(cx, file).name,
+										Trigger: core.View{Tooltip: core.Text{Content: tr.MenusMoreActions()}, HitSlop: core.All(8),
 											Style:    core.Style{Padding: core.Symmetric(0, 8), Height: core.Pt(28), JustifyContent: core.JustifyCenter, Active: &core.Style{Opacity: core.Alpha(0.5)}},
 											Children: []core.Node{ui.Text("⋯", 18, ui.Regular, colors.Muted)}},
 										Children: actions(id)},
@@ -409,18 +415,19 @@ func menusDemo(cx *core.Scope) core.Node {
 	}
 
 	placement := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		side := core.NewSignal(cx, core.PlaceBottom)
 		align := core.NewSignal(cx, core.AlignStart)
 		alignName := map[core.Align]string{core.AlignStart: "start", core.AlignCenter: "center", core.AlignEnd: "end"}
-		return ui.Card{Icon: ui.IconComponents, Title: "Where it goes", Description: ui.Hint(cx, "Phones show menus as sheets: try a desktop", "The side and alignment; it flips where there is no room"), Children: []core.Node{
-			ui.Segmented[core.Placement]{Options: []ui.Option[core.Placement]{{Value: core.PlaceTop, Label: "Top"}, {Value: core.PlaceBottom, Label: "Bottom"}, {Value: core.PlaceLeft, Label: "Left"}, {Value: core.PlaceRight, Label: "Right"}}, Value: side.Get, OnChange: side.Set, Small: true},
-			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: "Start"}, {Value: core.AlignCenter, Label: "Center"}, {Value: core.AlignEnd, Label: "End"}}, Value: align.Get, OnChange: align.Set, Small: true},
+		return ui.Card{Icon: ui.IconComponents, Title: tr.MenusWhereItGoes(), Description: ui.Hint(cx, tr.MenusPhonesShowMenusAsSheets(), tr.MenusTheSideAndAlignmentIt()), Children: []core.Node{
+			ui.Segmented[core.Placement]{Options: []ui.Option[core.Placement]{{Value: core.PlaceTop, Label: tr.MenusTop()}, {Value: core.PlaceBottom, Label: tr.MenusBottom()}, {Value: core.PlaceLeft, Label: tr.MenusLeft()}, {Value: core.PlaceRight, Label: tr.MenusRight()}}, Value: side.Get, OnChange: side.Set, Small: true},
+			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: tr.MenusStart()}, {Value: core.AlignCenter, Label: tr.MenusCenter()}, {Value: core.AlignEnd, Label: tr.MenusEnd()}}, Value: align.Get, OnChange: align.Set, Small: true},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(24, 0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				p, a := side.Get(), align.Get()
-				m := menu("Placed", chip(cx, label(placementName(p)+" · "+alignName[a]), ""),
-					l.item(cx, itemProps{label: label("One"), onSelect: func() { log("chose One") }}),
-					l.item(cx, itemProps{label: label("Two"), onSelect: func() { log("chose Two") }}),
-					l.item(cx, itemProps{label: label("Three"), onSelect: func() { log("chose Three") }}),
+				m := menu(tr.MenusPlaced(), chip(cx, label(placementName(p)+" · "+alignName[a]), ""),
+					l.item(cx, itemProps{label: label(tr.MenusOne()), onSelect: func() { log(tr.MenusChoseOne()) }}),
+					l.item(cx, itemProps{label: label(tr.MenusTwo()), onSelect: func() { log(tr.MenusChoseTwo()) }}),
+					l.item(cx, itemProps{label: label(tr.MenusThree()), onSelect: func() { log(tr.MenusChoseThree()) }}),
 				)
 				m.Placement, m.Align, m.Offset = p, a, 6
 				return m
@@ -429,6 +436,7 @@ func menusDemo(cx *core.Scope) core.Node {
 	}
 
 	longList := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		zone := core.NewSignal(cx, "UTC+8 Hong Kong")
 		var items []core.Node
 		for _, z := range zones {
@@ -443,85 +451,89 @@ func menusDemo(cx *core.Scope) core.Node {
 		if l.desktop {
 			maxHeight = 280
 		}
-		m := menu("Time zone", chip(cx, zone.Get, ui.IconSearch),
+		m := menu(tr.MenusTimeZone(), chip(cx, zone.Get, ui.IconSearch),
 			core.Scroll{Style: core.Style{MaxHeight: core.Pt(maxHeight)}, Children: []core.Node{core.View{Style: core.Style{Padding: core.All(6)}, Children: items}}})
 		m.PopupStyle.Padding = core.Edges{}
 		if !l.desktop {
 			m.PopupStyle.Padding = core.Edges{Bottom: 34}
 		}
-		return ui.Card{Icon: ui.IconScroll, Title: "A long menu", Description: "Twenty choices in a menu that scrolls", Children: []core.Node{m}}
+		return ui.Card{Icon: ui.IconScroll, Title: tr.MenusALongMenu(), Description: tr.MenusTwentyChoicesInAMenu(), Children: []core.Node{m}}
 	}
 
 	commands := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		open := core.NewSignal(cx, false)
 		cx.OnKey("mod+shift+p", func() { toggled(open) })
 		var right core.Node
 		if l.desktop {
 			right = ui.Badge{Text: cx.KeyLabel("mod+shift+p")}
 		}
-		m := menu("Commands", chip(cx, label("Commands"), ui.IconPlus),
-			groupTitle(cx, "Commands"),
-			l.item(cx, itemProps{label: label("New note"), onSelect: func() { log("ran New note") }}),
-			l.item(cx, itemProps{label: label("Toggle theme"), onSelect: func() { log("ran Toggle theme") }}),
-			l.item(cx, itemProps{label: label("Sync now"), onSelect: func() { log("ran Sync now") }}),
+		m := menu(tr.MenusCommands(), chip(cx, label(tr.MenusCommands()), ui.IconPlus),
+			groupTitle(cx, tr.MenusCommands()),
+			l.item(cx, itemProps{label: label(tr.MenusNewNote()), onSelect: func() { log(tr.MenusRanNewNote()) }}),
+			l.item(cx, itemProps{label: label(tr.MenusToggleTheme()), onSelect: func() { log(tr.MenusRanToggleTheme()) }}),
+			l.item(cx, itemProps{label: label(tr.MenusSyncNow()), onSelect: func() { log(tr.MenusRanSyncNow()) }}),
 		)
 		m.Open = open.Get
 		m.OnOpenChange = func(next bool, reason base.Reason) {
 			open.Set(next)
 			changed("commands")(next, reason)
 		}
-		return ui.Card{Icon: ui.IconSpark, Title: "Opened by the app", Description: "A controlled menu: a button or a shortcut opens it", Actions: []core.Node{right}, Children: []core.Node{
-			m, ui.Button{Text: "Open the commands", Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
+		return ui.Card{Icon: ui.IconSpark, Title: tr.MenusOpenedByTheApp(), Description: tr.MenusAControlledMenuAButton(), Actions: []core.Node{right}, Children: []core.Node{
+			m, ui.Button{Text: tr.MenusOpenTheCommands(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
 		}}
 	}
 
 	native := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		chosen := core.NewSignal(cx, "Nothing chosen yet")
+		chosen := core.NewSignal(cx, tr.MenusNothingChosenYet())
 		items := func() []desktop.MenuItem {
-			choose := func(s string) func() { return func() { chosen.Set("Chose " + s); log("native " + s) } }
+			choose := func(s string) func() { return func() { chosen.Set(tr.MenusChose2() + s); log(tr.MenusNative() + s) } }
 			return []desktop.MenuItem{
-				{Label: "Cut", Shortcut: "mod+x", OnSelect: choose("Cut")},
-				{Label: "Copy", Shortcut: "mod+c", OnSelect: choose("Copy")},
-				{Label: "Paste", Disabled: true},
+				{Label: tr.MenusCut(), Shortcut: "mod+x", OnSelect: choose(tr.MenusCut())},
+				{Label: tr.MenusCopy(), Shortcut: "mod+c", OnSelect: choose(tr.MenusCopy())},
+				{Label: tr.MenusPaste(), Disabled: true},
 				{Separator: true},
-				{Label: "Share", Items: []desktop.MenuItem{{Label: "Mail", OnSelect: choose("Mail")}, {Label: "Messages", OnSelect: choose("Messages")}}},
-				{Label: "Pinned", Checkable: true, Checked: true, OnSelect: choose("Pinned")},
+				{Label: tr.MenusShare(), Items: []desktop.MenuItem{{Label: tr.MenusMail(), OnSelect: choose(tr.MenusMail())}, {Label: tr.MenusMessages(), OnSelect: choose(tr.MenusMessages())}}},
+				{Label: tr.MenusPinned(), Checkable: true, Checked: true, OnSelect: choose(tr.MenusPinned())},
 			}
 		}
 		show := func(at core.Point) { desktop.PopupMenu(cx, items(), at, nil) }
-		return ui.Card{Icon: ui.IconMenu, Title: "The platform's menu", Description: "PopupMenu shows the system's own at a point", Actions: []core.Node{ui.Badge{Text: "Native", Tone: ui.ToneInfo}}, Children: []core.Node{
-			core.View{TestID: "popup-area", Role: core.RoleButton, Label: "Show the native menu",
+		return ui.Card{Icon: ui.IconMenu, Title: tr.MenusThePlatformSMenu(), Description: tr.MenusPopupmenuShowsTheSystemS(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: []core.Node{
+			core.View{TestID: "popup-area", Role: core.RoleButton, Label: tr.MenusShowTheNativeMenu(),
 				StyleFunc: func() core.Style {
 					return core.Style{Height: core.Pt(72), CornerRadius: ui.RadiusInset, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
 						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Background: colors.Pressed()}}
 				},
 				OnPress:       func(e core.PressEvent) { show(e.PagePosition) },
 				OnContextMenu: func(e core.ContextMenuEvent) { show(e.PagePosition) },
-				Children:      []core.Node{ui.Text(ui.Hint(cx, "Press here", "Right click or press here"), 14, ui.Regular, colors.Muted)}},
+				Children:      []core.Node{ui.Text(ui.Hint(cx, tr.MenusPressHere(), tr.MenusRightClickOrPressHere()), 14, ui.Regular, colors.Muted)}},
 			ui.Caption{LabelFunc: chosen.Get},
 		}}
 	}
 
 	appMenu := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		children := []core.Node{
-			ui.Note{Text: "SetApplicationMenu sets the menu bar on macOS, Windows and Linux: this gallery's has the roles the platform carries out (About, Hide, Undo … Select All, Minimize, Zoom) and a View menu that toggles the sidebar and opens each demo."},
-			ui.Caption{Label: "Last chosen", Note: shell.chosen.Get},
+			ui.Note{Text: tr.MenusSetapplicationmenuSetsTheMenuBar()},
+			ui.Caption{Label: tr.MenusLastChosen(), Note: shell.chosen.Get},
 		}
 		if env := cx.Env(); env.Desktop() && env.OS() != core.OSMacOS && env.OS() != core.OSWeb {
-			children = append(children, ui.Note{Text: "SetMenuBar hides the bar Windows and Linux draw until Alt is pressed alone."},
+			children = append(children, ui.Note{Text: tr.MenusSetmenubarHidesTheBarWindows()},
 				ui.HStack{Gap: 8, Children: []core.Node{
-					ui.Button{Text: "Always shown", Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }},
-					ui.Button{Text: "Auto-hide", Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
+					ui.Button{Text: tr.MenusAlwaysShown(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }},
+					ui.Button{Text: tr.MenusAutoHide(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
 				}})
 		}
-		return ui.Card{Icon: ui.IconMenu, Title: "The application menu", Description: "The system's menu bar, set by the app", Actions: []core.Node{ui.Badge{Text: "Native", Tone: ui.ToneInfo}}, Children: children}
+		return ui.Card{Icon: ui.IconMenu, Title: tr.MenusTheApplicationMenu(), Description: tr.MenusTheSystemSMenuBar(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: children}
 	}
 
 	eventsCard := func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconSystem, Title: "Events", Description: "OnOpenChange with its reason, and what was chosen", Children: []core.Node{
-			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: "Open a menu"} },
+		return ui.Card{Icon: ui.IconSystem, Title: tr.MenusEvents(), Description: tr.MenusOnopenchangeWithItsReasonAnd(), Children: []core.Node{
+			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.MenusOpenAMenu()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Style: core.Style{Gap: 4}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 						var lines []core.Node

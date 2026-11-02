@@ -68,6 +68,13 @@ type project struct {
 	// Tailwind extends Tailwind's default theme for a TSX app's classes,
 	// as core.ParseTailwind reads it; the compiler checks it.
 	Tailwind yaml.Node `yaml:"tailwind"`
+	// I18n is the app's catalogs: Dir, relative to nsgo.yaml, holds a
+	// YAML file per language, Source's with every message. Their
+	// languages are the ones the app shows.
+	I18n struct {
+		Dir    string `yaml:"dir"`
+		Source string `yaml:"source"`
+	} `yaml:"i18n"`
 	// Web is the web target's: Host is a JS module, relative to
 	// nsgo.yaml and inside its directory, whose createHost(player) gives
 	// the app's page its host.
@@ -155,6 +162,13 @@ func load(dir string) (*project, error) {
 		p.Build.Output = "dist"
 	}
 	p.Build.Output = p.resolve(p.Build.Output)
+	if p.I18n.Dir == "" {
+		p.I18n.Dir = "locales"
+	}
+	p.I18n.Dir = p.resolve(p.I18n.Dir)
+	if p.I18n.Source == "" {
+		p.I18n.Source = "en"
+	}
 	for _, path := range []*string{&p.Sign.Profile, &p.Sign.Keystore} {
 		if *path != "" {
 			*path = p.resolve(*path)
