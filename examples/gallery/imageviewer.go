@@ -6,6 +6,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/textview"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // The viewer's deepest zoom and where a double tap zooms to, how close
@@ -55,7 +57,7 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 			x.Set(0)
 			y.Set(0)
 			enter.Set(0)
-			spring(cx, enter, 1, settleSpring)
+			ui.Spring(cx, enter, 1, ui.SettleSpring)
 		})
 	})
 	// box is the image's box at 1×: its aspect fitted into the viewport.
@@ -76,9 +78,9 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 		at = place{scale: s,
 			x: clamp(next.x, max(0, (float64(b.Width)*s-float64(v.Width))/2)),
 			y: clamp(next.y, max(0, (float64(b.Height)*s-float64(v.Height))/2))}
-		spring(cx, scale, at.scale, settleSpring)
-		spring(cx, x, at.x, settleSpring)
-		spring(cx, y, at.y, settleSpring)
+		ui.Spring(cx, scale, at.scale, ui.SettleSpring)
+		ui.Spring(cx, x, at.x, ui.SettleSpring)
+		ui.Spring(cx, y, at.y, ui.SettleSpring)
 	}
 	// pressImage is a tap on the image: the second of two zooms in at the
 	// point, or out.
@@ -128,7 +130,7 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 				}
 				settle(place{scale: at.scale, x: float64(e.Values.X), y: float64(e.Values.Y)})
 			},
-			Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: black(0.92)},
+			Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: ui.Black(0.92)},
 			Children: []core.Node{
 				core.View{Role: core.RoleImage, OnPress: pressImage, NoFocus: true,
 					LabelFunc: func() string {
@@ -149,15 +151,16 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 						return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0),
 							Padding: core.Edges{Left: 24, Right: 24, Top: 32, Bottom: env.SafeArea().Bottom + 20}}
 					}, Children: []core.Node{core.Text{ContentFunc: func() string { return shown.Get().Alt },
-						Style: core.Style{FontSize: 14, LineHeight: 20, TextAlign: core.TextAlignCenter, Color: white(0.85)}}}}
+						Style: core.Style{FontSize: 14, LineHeight: 20, TextAlign: core.TextAlignCenter, Color: ui.White(0.85)}}}}
 				}},
 				core.View{StyleFunc: func() core.Style {
 					a := env.SafeArea()
 					return core.Style{Position: core.Absolute, Top: core.Pt(a.Top + 12), Right: core.Pt(a.Right + 12)}
-				}, Children: []core.Node{press(pressProps{onPress: onClose, label: "Close", scale: 0.9, hitSlop: 8},
-					core.View{Style: core.Style{Width: core.Pt(36), Height: core.Pt(36), CornerRadius: 18, Background: white(0.16),
+				}, Children: []core.Node{ui.Press{OnPress: onClose, Label: "Close", Scale: 0.9, HitSlop: 8, Children: []core.Node{
+					core.View{Style: core.Style{Width: core.Pt(36), Height: core.Pt(36), CornerRadius: 18, Background: ui.White(0.16),
 						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-						Children: []core.Node{viewerBar(45), viewerBar(-45)}})}},
+						Children: []core.Node{viewerBar(45), viewerBar(-45)}},
+				}}}},
 			}}},
 	}
 }

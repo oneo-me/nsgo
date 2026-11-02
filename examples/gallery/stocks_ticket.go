@@ -5,6 +5,8 @@ import (
 	"math"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 type side string
@@ -22,7 +24,7 @@ type banner struct {
 }
 
 func newBanner(cx *core.Scope) banner {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	t := core.NewAnimatedValue(cx, 0)
 	type msg struct {
 		title, detail string
@@ -50,21 +52,21 @@ func newBanner(cx *core.Scope) banner {
 		return core.RGB(0xa8a39a)
 	}
 	view := core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(10), Left: core.Pt(16), Right: core.Pt(16), Direction: core.Row,
-		AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(14), CornerRadius: radiusInset + 3, BorderCurve: core.BorderCurveContinuous, Opacity: core.Alpha(0.001),
+		AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(14), CornerRadius: ui.RadiusInset + 3, BorderCurve: core.BorderCurveContinuous, Opacity: core.Alpha(0.001),
 		Animated: &core.AnimatedStyle{
 			Opacity:    core.Interpolate(t, core.Interpolation{Input: []float64{0, 0.3, 1}, Output: []float64{0, 1, 1}}),
-			TranslateY: lerp(t, -90, 0), Scale: lerp(t, 0.92, 1),
-		}}, StyleFunc: filled(colors.light), Children: []core.Node{
+			TranslateY: ui.Lerp(t, -90, 0), Scale: ui.Lerp(t, 0.92, 1),
+		}}, StyleFunc: ui.Filled(colors.Light), Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
-			c := colors.up
+			c := colors.Up
 			if message.Get().side == "sell" {
-				c = colors.down
+				c = colors.Down
 			}
 			return core.Style{Width: core.Pt(34), Height: core.Pt(34), CornerRadius: 17, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: c()}
-		}, Children: []core.Node{icon(iconCheck, 18, check)}},
+		}, Children: []core.Node{ui.Icon(ui.IconCheck, 18, check)}},
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-			textf(func() string { return message.Get().title }, 15, semibold, colors.onLight),
-			core.Text{ContentFunc: func() string { return message.Get().detail }, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: colored(detailColor)},
+			ui.Textf(func() string { return message.Get().title }, 15, ui.Semibold, colors.OnLight),
+			core.Text{ContentFunc: func() string { return message.Get().detail }, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(detailColor)},
 		}},
 	}}
 	return banner{show: show, view: view}
@@ -72,14 +74,14 @@ func newBanner(cx *core.Scope) banner {
 
 // ticketLine is a line of the review: a label and a value.
 func ticketLine(cx *core.Scope, lbl string, value func() string, strong bool) core.Node {
-	colors := colorsOf(cx)
-	size, weight := core.Points(14), regular
+	colors := ui.ColorsOf(cx)
+	size, weight := core.Points(14), ui.Regular
 	if strong {
-		size, weight = 17, semibold
+		size, weight = 17, ui.Semibold
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, MinHeight: core.Pt(24)}, Children: []core.Node{
-		core.Text{Content: lbl, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.muted)},
-		tabular(textf(value, size, weight, colors.text)),
+		core.Text{Content: lbl, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+		ui.Tabular(ui.Textf(value, size, weight, colors.Text)),
 	}}
 }
 
@@ -87,9 +89,9 @@ func ticketLine(cx *core.Scope, lbl string, value func() string, strong bool) co
 // price stepper, quantity chips and the estimated cost; reviewing expands
 // the ticket and placing calls onPlaced. Nothing is sent anywhere.
 func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], onPlaced func(title, detail string, s side)) core.Node {
-	colors := colorsOf(cx)
-	tints := tintsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	tints := ui.TintsOf(cx)
+	fin := ui.FinOf(cx)
 	limit := core.NewSignal(cx, core.Untracked(cx, s.quote.Get).last)
 	quantity := core.NewSignal(cx, 500.0)
 	review := core.NewSignal(cx, false)
@@ -115,9 +117,9 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 	}
 	tone := func() core.Color {
 		if sd.Get() == "buy" {
-			return colors.up()
+			return colors.Up()
 		}
-		return colors.down()
+		return colors.Down()
 	}
 	verb := func() string {
 		if sd.Get() == "buy" {
@@ -125,12 +127,13 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 		}
 		return "Sell"
 	}
-	stepper := func(name iconName, lbl string, by float64) core.Node {
-		return press(pressProps{onPress: func() { nudge(by) }, label: lbl},
+	stepper := func(name ui.IconName, lbl string, by float64) core.Node {
+		return ui.Press{OnPress: func() { nudge(by) }, Label: lbl, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
-				return fin.pill().over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: radiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, BorderWidth: 1})
+				return fin.Pill().Over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: ui.RadiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, BorderWidth: 1})
 			},
-				Children: []core.Node{icon(name, 18, colors.text)}})
+				Children: []core.Node{ui.Icon(name, 18, colors.Text)}},
+		}}
 	}
 	var chips []core.Node
 	for _, q := range quantities {
@@ -139,47 +142,48 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 		if q >= 1000 {
 			lbl = fmt.Sprintf("%.0fK", q/1000)
 		}
-		chips = append(chips, cell(press(pressProps{onPress: func() { quantity.Set(q) }, label: fmt.Sprintf("%.0f shares", q), selected: on},
+		chips = append(chips, ui.Cell{Child: ui.Press{OnPress: func() { quantity.Set(q) }, Label: fmt.Sprintf("%.0f shares", q), Selected: on, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
-				s := core.Style{Height: core.Pt(44), CornerRadius: radiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, BorderWidth: 1,
-					Background: colors.raised(), BorderColor: colors.border()}
+				s := core.Style{Height: core.Pt(44), CornerRadius: ui.RadiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, BorderWidth: 1,
+					Background: colors.Raised(), BorderColor: colors.Border()}
 				if on() {
-					s.Background, s.BorderColor = tints.accent(), colors.accent()
+					s.Background, s.BorderColor = tints.Accent(), colors.Accent()
 				}
 				return s
 			}, Children: []core.Node{core.Text{Content: lbl, StyleFunc: func() core.Style {
-				c := colors.text
+				c := colors.Text
 				if on() {
-					c = colors.accent
+					c = colors.Accent
 				}
-				return core.Style{FontSize: 14, FontWeight: semibold, Color: c()}
-			}}}})))
+				return core.Style{FontSize: 14, FontWeight: ui.Semibold, Color: c()}
+			}}}},
+		}}})
 	}
 	return core.View{Style: core.Style{Gap: 16, Padding: core.Edges{Top: 4}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-			core.Text{ContentFunc: func() string { return verb() + " " + s.code }, Style: core.Style{FlexGrow: 1, FontSize: 20, FontWeight: semibold}, StyleFunc: colored(colors.text)},
-			tabular(text("simulated · nothing is sent", 12, regular, colors.faint)),
+			core.Text{ContentFunc: func() string { return verb() + " " + s.code }, Style: core.Style{FlexGrow: 1, FontSize: 20, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+			ui.Tabular(ui.Text("simulated · nothing is sent", 12, ui.Regular, colors.Faint)),
 		}},
-		segmented([]option[side]{{value: "buy", label: "Buy"}, {value: "sell", label: "Sell"}}, sd.Get, sd.Set, false),
+		ui.Segmented[side]{Options: []ui.Option[side]{{Value: "buy", Label: "Buy"}, {Value: "sell", Label: "Sell"}}, Value: sd.Get, OnChange: sd.Set},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline}, Children: []core.Node{
-				core.Text{Content: "Limit price", Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.muted)},
+				core.Text{Content: "Limit price", Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
 				core.Text{ContentFunc: func() string { return "use last " + p(s.quote.Get().last) }, Role: core.RoleButton,
-					OnPress: func(core.PressEvent) { limit.Set(s.quote.GetUntracked().last) }, Style: core.Style{FontSize: 13, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.accent)},
+					OnPress: func(core.PressEvent) { limit.Set(s.quote.GetUntracked().last) }, Style: core.Style{FontSize: 13, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Accent)},
 			}},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
-				stepper(iconMinus, "Lower the price", -1),
+				stepper(ui.IconMinus, "Lower the price", -1),
 				core.View{StyleFunc: func() core.Style {
-					return core.Style{FlexGrow: 1, Height: core.Pt(44), CornerRadius: radiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-						Background: colors.inset(), BorderWidth: 1, BorderColor: colors.border()}
-				}, Children: []core.Node{textf(func() string { return p(limit.Get()) }, 20, semibold, colors.text)}},
-				stepper(iconPlus, "Raise the price", 1),
+					return core.Style{FlexGrow: 1, Height: core.Pt(44), CornerRadius: ui.RadiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
+						Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border()}
+				}, Children: []core.Node{ui.Textf(func() string { return p(limit.Get()) }, 20, ui.Semibold, colors.Text)}},
+				stepper(ui.IconPlus, "Raise the price", 1),
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline}, Children: []core.Node{
-				core.Text{Content: "Quantity", Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.muted)},
-				textf(func() string { return grouped(quantity.Get(), 0) + " sh" }, 13, regular, colors.faint),
+				core.Text{Content: "Quantity", Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+				ui.Textf(func() string { return grouped(quantity.Get(), 0) + " sh" }, 13, ui.Regular, colors.Faint),
 			}},
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: chips},
 		}},
@@ -190,43 +194,43 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 						return "Estimated cost"
 					}
 					return "Estimated proceeds"
-				}, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.muted)},
-				textf(func() string { return grouped(cost(), 2) }, 22, semibold, colors.text),
+				}, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+				ui.Textf(func() string { return grouped(cost(), 2) }, 22, ui.Semibold, colors.Text),
 			}},
-			core.View{Style: core.Style{Height: core.Pt(6), CornerRadius: 3, Overflow: core.Hidden}, StyleFunc: filled(colors.raised), Children: []core.Node{
+			core.View{Style: core.Style{Height: core.Pt(6), CornerRadius: 3, Overflow: core.Hidden}, StyleFunc: ui.Filled(colors.Raised), Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
 					c := tone()
 					if cost() > buyingPower {
-						c = colors.danger()
+						c = colors.Danger()
 					}
 					return core.Style{Width: core.Pct(float32(math.Min(100, cost()/buyingPower*100))), Height: core.Pt(6), CornerRadius: 3, Background: c}
 				}},
 			}},
-			textf(func() string {
+			ui.Textf(func() string {
 				return fmt.Sprintf("%.1f%% of %s buying power", cost()/buyingPower*100, grouped(buyingPower, 0))
-			}, 12, regular, colors.faint),
+			}, 12, ui.Regular, colors.Faint),
 		}},
 		core.Show{When: review.Get,
 			Else: func(*core.Scope) core.Node {
 				return core.Dynamic(func(*core.Scope) core.Node {
 					v := verb()
-					return button(buttonProps{label: "Review " + lower(v)}, func() { expand(true) })
+					return ui.Button{Text: "Review " + lower(v), OnPress: func() { expand(true) }}
 				})
 			},
 			Then: func(*core.Scope) core.Node {
 				return core.View{StyleFunc: func() core.Style {
-					bg := tints.up
+					bg := tints.Up
 					if sd.Get() == "sell" {
-						bg = tints.down
+						bg = tints.Down
 					}
-					return core.Style{Gap: 12, Padding: core.All(14), CornerRadius: radiusInset, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, BorderColor: tone(), Background: bg()}
+					return core.Style{Gap: 12, Padding: core.All(14), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, BorderColor: tone(), Background: bg()}
 				}, Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 						core.Text{ContentFunc: func() string { return fmt.Sprintf("%s %s %s", verb(), grouped(quantity.Get(), 0), s.code) },
 							StyleFunc: func() core.Style {
-								return core.Style{FlexGrow: 1, FontSize: 15, FontWeight: semibold, Color: tone()}
+								return core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold, Color: tone()}
 							}},
-						text("LIMIT · DAY", 12, regular, colors.muted),
+						ui.Text("LIMIT · DAY", 12, ui.Regular, colors.Muted),
 					}},
 					core.View{Style: core.Style{Gap: 2}, Children: []core.Node{
 						ticketLine(cx, "Limit", func() string { return p(limit.Get()) }, false),
@@ -239,13 +243,13 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 						}, true),
 					}},
 					core.View{Style: core.Style{Direction: core.Row, Gap: 10}, Children: []core.Node{
-						button(buttonProps{label: "Edit", variant: secondary, flex: 1}, func() { expand(false) }),
+						ui.Button{Text: "Edit", Variant: ui.ButtonSecondary, Flex: 1, OnPress: func() { expand(false) }},
 						core.View{Style: core.Style{FlexGrow: 2, FlexShrink: 2, FlexBasis: core.Pt(0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 							v := verb()
-							return button(buttonProps{label: "Place " + lower(v) + " order"}, func() {
+							return ui.Button{Text: "Place " + lower(v) + " order", OnPress: func() {
 								onPlaced(v+" order placed", fmt.Sprintf("%s %s at %s · simulated", grouped(quantity.GetUntracked(), 0), s.code, p(limit.GetUntracked())), sd.GetUntracked())
 								expand(false)
-							})
+							}}
 						})}},
 					}},
 				}}

@@ -8,6 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // The look of every menu here is the gallery's: base draws none.
@@ -30,18 +32,18 @@ func newMenuLook(cx *core.Scope) menuLook {
 // surface is the popup on desktops, the sheet at the bottom on touch
 // screens, for a PopupStyleFunc.
 func (l menuLook) surface(cx *core.Scope) func() core.Style {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	return func() core.Style {
 		if l.desktop {
-			return finOf(cx).raised().over(core.Style{Background: colors.raised(), CornerRadius: radiusInset, BorderWidth: 1, BorderColor: colors.border(),
+			return ui.FinOf(cx).Raised().Over(core.Style{Background: colors.Raised(), CornerRadius: ui.RadiusInset, BorderWidth: 1, BorderColor: colors.Border(),
 				Padding: core.All(6), MinWidth: core.Pt(220)})
 		}
-		return core.Style{Background: colors.surface(), CornerRadii: core.Corners{TopLeft: 20, TopRight: 20},
+		return core.Style{Background: colors.Surface(), CornerRadii: core.Corners{TopLeft: 20, TopRight: 20},
 			Padding: core.Edges{Top: 10, Right: 10, Bottom: 34, Left: 10}}
 	}
 }
 
-func (menuLook) backdrop() core.Style { return core.Style{Background: black(0.45)} }
+func (menuLook) backdrop() core.Style { return core.Style{Background: ui.Black(0.45)} }
 
 // itemHovered and itemPressed are an item under the pointer and pressed:
 // an orange tint with a hairline of it, read in a StyleFunc.
@@ -80,26 +82,26 @@ func (l menuLook) rowStyle() core.Style {
 }
 
 func (l menuLook) item(cx *core.Scope, p itemProps) core.Node {
-	colors := colorsOf(cx)
-	fg := colors.text
+	colors := ui.ColorsOf(cx)
+	fg := colors.Text
 	if p.danger {
-		fg = colors.danger
+		fg = colors.Danger
 	}
 	s := l.rowStyle()
 	s.Disabled = &core.Style{Opacity: core.Alpha(0.35)}
 	states := func() core.Style { return core.Style{Hover: itemHovered(cx), Active: itemPressed(cx)} }
-	children := []core.Node{core.Text{ContentFunc: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: colored(fg)}}
+	children := []core.Node{core.Text{ContentFunc: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: ui.Colored(fg)}}
 	if p.note != "" {
-		children = append(children, core.Text{Content: p.note, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.faint)})
+		children = append(children, ui.API{Text: p.note})
 	}
 	if p.mark != nil {
 		children = append(children, core.View{Style: core.Style{Width: core.Pt(16), AlignItems: core.AlignCenter}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				switch p.mark() {
 				case markCheck:
-					return icon(iconCheck, 14, colors.accent)
+					return ui.Icon(ui.IconCheck, 14, colors.Accent)
 				case markDot:
-					return core.View{Style: core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 4}, StyleFunc: filled(colors.accent)}
+					return core.View{Style: core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 4}, StyleFunc: ui.Filled(colors.Accent)}
 				}
 				return core.Group{}
 			}),
@@ -114,7 +116,7 @@ func label(s string) func() string { return func() string { return s } }
 // submenu is the row that opens a submenu, and the row a sheet shows to
 // come back.
 func (l menuLook) submenu(cx *core.Scope, name string, disabled bool, children ...core.Node) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	row := l.rowStyle()
 	row.Gap = 0
 	if disabled {
@@ -124,38 +126,38 @@ func (l menuLook) submenu(cx *core.Scope, name string, disabled bool, children .
 	back.Gap = 6
 	return base.Submenu{Disabled: func() bool { return disabled }, Label: name,
 		Trigger: core.View{Style: row, StyleFunc: func() core.Style { return core.Style{Hover: itemHovered(cx), Active: itemPressed(cx)} }, Children: []core.Node{
-			core.Text{Content: name, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: colored(colors.text)},
-			icon(iconChevron, 14, colors.faint),
+			core.Text{Content: name, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
+			ui.Icon(ui.IconChevron, 14, colors.Faint),
 		}},
-		Back:     core.View{Style: back, StyleFunc: func() core.Style { return core.Style{Active: itemPressed(cx)} }, Children: []core.Node{icon(iconBack, 14, colors.accent), text(name, 14, semibold, colors.accent)}},
+		Back:     core.View{Style: back, StyleFunc: func() core.Style { return core.Style{Active: itemPressed(cx)} }, Children: []core.Node{ui.Icon(ui.IconBack, 14, colors.Accent), ui.Text(name, 14, ui.Semibold, colors.Accent)}},
 		Children: children}
 }
 
 // groupTitle is a group's title: not an item, nothing to press.
 func groupTitle(cx *core.Scope, s string) core.Node {
-	colors := colorsOf(cx)
-	return core.Text{Content: s, Style: core.Style{FontSize: 11, FontWeight: semibold, LetterSpacing: 0.6,
-		TextTransform: core.TextTransformUppercase, Padding: core.Edges{Top: 8, Right: 8, Bottom: 4, Left: 8}}, StyleFunc: colored(colors.faint)}
+	colors := ui.ColorsOf(cx)
+	return core.Text{Content: s, Style: core.Style{FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.6,
+		TextTransform: core.TextTransformUppercase, Padding: core.Edges{Top: 8, Right: 8, Bottom: 4, Left: 8}}, StyleFunc: ui.Colored(colors.Faint)}
 }
 
 func separator(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	return base.MenuSeparator{Style: core.Style{Height: core.Pt(1), Margin: core.Symmetric(4, 4)}, StyleFunc: filled(colors.line)}
+	colors := ui.ColorsOf(cx)
+	return base.MenuSeparator{Style: core.Style{Height: core.Pt(1), Margin: core.Symmetric(4, 4)}, StyleFunc: ui.Filled(colors.Line)}
 }
 
 // chip is a pressable that opens a menu.
-func chip(cx *core.Scope, label func() string, name iconName) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+func chip(cx *core.Scope, label func() string, name ui.IconName) core.Node {
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	children := []core.Node{}
 	if name != "" {
-		children = append(children, icon(name, 14, colors.muted))
+		children = append(children, ui.Icon(name, 14, colors.Muted))
 	}
-	children = append(children, textf(label, 14, medium, colors.text))
+	children = append(children, ui.Textf(label, 14, ui.Medium, colors.Text))
 	return core.View{StyleFunc: func() core.Style {
-		return fin.raised().over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, AlignSelf: core.AlignStart,
-			Padding: core.Symmetric(0, 12), Height: core.Pt(34), JustifyContent: core.JustifyCenter, CornerRadius: radiusControl, Background: colors.raised(),
-			Active: &core.Style{Background: colors.border()}, Hover: &core.Style{Background: colors.border()}})
+		return fin.Raised().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, AlignSelf: core.AlignStart,
+			Padding: core.Symmetric(0, 12), Height: core.Pt(34), JustifyContent: core.JustifyCenter, CornerRadius: ui.RadiusControl, Background: colors.Raised(),
+			Active: &core.Style{Background: colors.Border()}, Hover: &core.Style{Background: colors.Border()}})
 	}, Children: children}
 }
 
@@ -256,7 +258,7 @@ func menusDemo(cx *core.Scope) core.Node {
 				return markNone
 			}}))
 		}
-		return card(cx, cardProps{icon: iconLists, title: "Menu bar", subtitle: hint(cx, "Each menu a sheet; submenus take its place", "Hover across submenus; the shortcuts work too")},
+		return ui.Card{Icon: ui.IconLists, Title: "Menu bar", Description: ui.Hint(cx, "Each menu a sheet; submenus take its place", "Hover across submenus; the shortcuts work too"), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 				menu("File", chip(cx, label("File"), ""),
 					l.item(cx, itemProps{label: label("New document"), note: key("mod+alt+n"), onSelect: func() { act("New document") }}),
@@ -299,16 +301,16 @@ func menusDemo(cx *core.Scope) core.Node {
 					groupTitle(cx, "Zoom"),
 				}, sizes...)...),
 			}},
-			captionf(cx, func() string {
+			ui.Caption{LabelFunc: func() string {
 				return fmt.Sprintf("Sidebar %s · status bar %s · zoom %s", onOff(sidebar.Get()), onOff(statusBar.Get()), zoom.Get())
-			}),
-			captionf(cx, func() string {
+			}},
+			ui.Caption{LabelFunc: func() string {
 				if h := history.Get(); len(h) > 0 {
 					return "Done: " + strings.Join(h, ", ")
 				}
 				return "Nothing done yet"
-			}),
-		)
+			}},
+		}}
 	}
 
 	rows := func(cx *core.Scope) core.Node {
@@ -370,51 +372,49 @@ func menusDemo(cx *core.Scope) core.Node {
 				}}),
 			}
 		}
-		return card(cx, cardProps{icon: iconPhotos, title: "On the rows of a list", subtitle: hint(cx, "Hold a finger on a row, or press its ⋯", "Right click a row, or its ⋯ button")},
-			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return caption(cx, "No files left", nil) },
+		return ui.Card{Icon: ui.IconPhotos, Title: "On the rows of a list", Description: ui.Hint(cx, "Hold a finger on a row, or press its ⋯", "Right click a row, or its ⋯ button"), Children: []core.Node{
+			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: "No files left"} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Children: []core.Node{core.Each(files.Get, func(f menuFile) int { return f.id },
 						func(cx *core.Scope, file func() menuFile, i func() int) core.Node {
-							colors := colorsOf(cx)
+							colors := ui.ColorsOf(cx)
 							id := core.Untracked(cx, file).id
 							starred := func() bool { return file().starred }
 							return base.ContextMenu{Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(), OnOpenChange: changed(core.Untracked(cx, file).name),
 								Trigger: core.View{StyleFunc: func() core.Style {
 									s := core.Style{MinHeight: core.Pt(48), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}
 									if i() != 0 {
-										s.Borders, s.BorderColors = core.Edges{Top: 1}, core.EdgeColors{Top: colors.line()}
+										s.Borders, s.BorderColors = core.Edges{Top: 1}, core.EdgeColors{Top: colors.Line()}
 									}
 									return s
 								}, Children: []core.Node{
 									core.Dynamic(func(*core.Scope) core.Node {
 										if starred() {
-											return icon(iconStar, 16, colors.accent)
+											return ui.Icon(ui.IconStar, 16, colors.Accent)
 										}
-										return icon(iconText, 16, colors.muted)
+										return ui.Icon(ui.IconText, 16, colors.Muted)
 									}),
-									core.Text{ContentFunc: func() string { return file().name }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: colored(colors.text)},
+									core.Text{ContentFunc: func() string { return file().name }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
 									base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
 										Label: "Actions for " + core.Untracked(cx, file).name,
 										Trigger: core.View{Tooltip: core.Text{Content: "More actions"}, HitSlop: core.All(8),
 											Style:    core.Style{Padding: core.Symmetric(0, 8), Height: core.Pt(28), JustifyContent: core.JustifyCenter, Active: &core.Style{Opacity: core.Alpha(0.5)}},
-											Children: []core.Node{text("⋯", 18, regular, colors.muted)}},
+											Children: []core.Node{ui.Text("⋯", 18, ui.Regular, colors.Muted)}},
 										Children: actions(id)},
 								}},
 								Children: actions(id)}
 						})}}
 				}},
-		)
+		}}
 	}
 
 	placement := func(cx *core.Scope) core.Node {
 		side := core.NewSignal(cx, core.PlaceBottom)
 		align := core.NewSignal(cx, core.AlignStart)
 		alignName := map[core.Align]string{core.AlignStart: "start", core.AlignCenter: "center", core.AlignEnd: "end"}
-		return card(cx, cardProps{icon: iconComponents, title: "Where it goes", subtitle: hint(cx, "Phones show menus as sheets: try a desktop", "The side and alignment; it flips where there is no room")},
-			segmented([]option[core.Placement]{{value: core.PlaceTop, label: "Top"}, {value: core.PlaceBottom, label: "Bottom"}, {value: core.PlaceLeft, label: "Left"}, {value: core.PlaceRight, label: "Right"}},
-				side.Get, side.Set, true),
-			segmented([]option[core.Align]{{value: core.AlignStart, label: "Start"}, {value: core.AlignCenter, label: "Center"}, {value: core.AlignEnd, label: "End"}},
-				align.Get, align.Set, true),
+		return ui.Card{Icon: ui.IconComponents, Title: "Where it goes", Description: ui.Hint(cx, "Phones show menus as sheets: try a desktop", "The side and alignment; it flips where there is no room"), Children: []core.Node{
+			ui.Segmented[core.Placement]{Options: []ui.Option[core.Placement]{{Value: core.PlaceTop, Label: "Top"}, {Value: core.PlaceBottom, Label: "Bottom"}, {Value: core.PlaceLeft, Label: "Left"}, {Value: core.PlaceRight, Label: "Right"}}, Value: side.Get, OnChange: side.Set, Small: true},
+			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: "Start"}, {Value: core.AlignCenter, Label: "Center"}, {Value: core.AlignEnd, Label: "End"}}, Value: align.Get, OnChange: align.Set, Small: true},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(24, 0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				p, a := side.Get(), align.Get()
 				m := menu("Placed", chip(cx, label(placementName(p)+" · "+alignName[a]), ""),
@@ -425,7 +425,7 @@ func menusDemo(cx *core.Scope) core.Node {
 				m.Placement, m.Align, m.Offset = p, a, 6
 				return m
 			})}},
-		)
+		}}
 	}
 
 	longList := func(cx *core.Scope) core.Node {
@@ -443,13 +443,13 @@ func menusDemo(cx *core.Scope) core.Node {
 		if l.desktop {
 			maxHeight = 280
 		}
-		m := menu("Time zone", chip(cx, zone.Get, iconSearch),
+		m := menu("Time zone", chip(cx, zone.Get, ui.IconSearch),
 			core.Scroll{Style: core.Style{MaxHeight: core.Pt(maxHeight)}, Children: []core.Node{core.View{Style: core.Style{Padding: core.All(6)}, Children: items}}})
 		m.PopupStyle.Padding = core.Edges{}
 		if !l.desktop {
 			m.PopupStyle.Padding = core.Edges{Bottom: 34}
 		}
-		return card(cx, cardProps{icon: iconScroll, title: "A long menu", subtitle: "Twenty choices in a menu that scrolls"}, m)
+		return ui.Card{Icon: ui.IconScroll, Title: "A long menu", Description: "Twenty choices in a menu that scrolls", Children: []core.Node{m}}
 	}
 
 	commands := func(cx *core.Scope) core.Node {
@@ -457,9 +457,9 @@ func menusDemo(cx *core.Scope) core.Node {
 		cx.OnKey("mod+shift+p", func() { toggled(open) })
 		var right core.Node
 		if l.desktop {
-			right = badge(cx, cx.KeyLabel("mod+shift+p"), toneNeutral)
+			right = ui.Badge{Text: cx.KeyLabel("mod+shift+p")}
 		}
-		m := menu("Commands", chip(cx, label("Commands"), iconPlus),
+		m := menu("Commands", chip(cx, label("Commands"), ui.IconPlus),
 			groupTitle(cx, "Commands"),
 			l.item(cx, itemProps{label: label("New note"), onSelect: func() { log("ran New note") }}),
 			l.item(cx, itemProps{label: label("Toggle theme"), onSelect: func() { log("ran Toggle theme") }}),
@@ -470,12 +470,13 @@ func menusDemo(cx *core.Scope) core.Node {
 			open.Set(next)
 			changed("commands")(next, reason)
 		}
-		return card(cx, cardProps{icon: iconSpark, title: "Opened by the app", subtitle: "A controlled menu: a button or a shortcut opens it", right: right},
-			m, button(buttonProps{label: "Open the commands", variant: secondary}, func() { open.Set(true) }))
+		return ui.Card{Icon: ui.IconSpark, Title: "Opened by the app", Description: "A controlled menu: a button or a shortcut opens it", Actions: []core.Node{right}, Children: []core.Node{
+			m, ui.Button{Text: "Open the commands", Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
+		}}
 	}
 
 	native := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
+		colors := ui.ColorsOf(cx)
 		chosen := core.NewSignal(cx, "Nothing chosen yet")
 		items := func() []desktop.MenuItem {
 			choose := func(s string) func() { return func() { chosen.Set("Chose " + s); log("native " + s) } }
@@ -489,52 +490,52 @@ func menusDemo(cx *core.Scope) core.Node {
 			}
 		}
 		show := func(at core.Point) { desktop.PopupMenu(cx, items(), at, nil) }
-		return card(cx, cardProps{icon: iconMenu, title: "The platform's menu", subtitle: "PopupMenu shows the system's own at a point", right: badge(cx, "Native", toneInfo)},
+		return ui.Card{Icon: ui.IconMenu, Title: "The platform's menu", Description: "PopupMenu shows the system's own at a point", Actions: []core.Node{ui.Badge{Text: "Native", Tone: ui.ToneInfo}}, Children: []core.Node{
 			core.View{TestID: "popup-area", Role: core.RoleButton, Label: "Show the native menu",
 				StyleFunc: func() core.Style {
-					return core.Style{Height: core.Pt(72), CornerRadius: radiusInset, Background: colors.raised(), BorderWidth: 1, BorderColor: colors.border(),
-						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Background: colors.pressed()}}
+					return core.Style{Height: core.Pt(72), CornerRadius: ui.RadiusInset, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
+						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Background: colors.Pressed()}}
 				},
 				OnPress:       func(e core.PressEvent) { show(e.PagePosition) },
 				OnContextMenu: func(e core.ContextMenuEvent) { show(e.PagePosition) },
-				Children:      []core.Node{text(hint(cx, "Press here", "Right click or press here"), 14, regular, colors.muted)}},
-			captionf(cx, chosen.Get),
-		)
+				Children:      []core.Node{ui.Text(ui.Hint(cx, "Press here", "Right click or press here"), 14, ui.Regular, colors.Muted)}},
+			ui.Caption{LabelFunc: chosen.Get},
+		}}
 	}
 
 	appMenu := func(cx *core.Scope) core.Node {
 		children := []core.Node{
-			note(cx, "SetApplicationMenu sets the menu bar on macOS, Windows and Linux: this gallery's has the roles the platform carries out (About, Hide, Undo … Select All, Minimize, Zoom) and a View menu that toggles the sidebar and opens each demo."),
-			caption(cx, "Last chosen", shell.chosen.Get),
+			ui.Note{Text: "SetApplicationMenu sets the menu bar on macOS, Windows and Linux: this gallery's has the roles the platform carries out (About, Hide, Undo … Select All, Minimize, Zoom) and a View menu that toggles the sidebar and opens each demo."},
+			ui.Caption{Label: "Last chosen", Note: shell.chosen.Get},
 		}
 		if env := cx.Env(); env.Desktop() && env.OS() != core.OSMacOS && env.OS() != core.OSWeb {
-			children = append(children, note(cx, "SetMenuBar hides the bar Windows and Linux draw until Alt is pressed alone."),
-				hrow(8,
-					button(buttonProps{label: "Always shown", variant: secondary, small: true}, func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }),
-					button(buttonProps{label: "Auto-hide", variant: secondary, small: true}, func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }),
-				))
+			children = append(children, ui.Note{Text: "SetMenuBar hides the bar Windows and Linux draw until Alt is pressed alone."},
+				ui.HStack{Gap: 8, Children: []core.Node{
+					ui.Button{Text: "Always shown", Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }},
+					ui.Button{Text: "Auto-hide", Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
+				}})
 		}
-		return card(cx, cardProps{icon: iconMenu, title: "The application menu", subtitle: "The system's menu bar, set by the app", right: badge(cx, "Native", toneInfo)}, children...)
+		return ui.Card{Icon: ui.IconMenu, Title: "The application menu", Description: "The system's menu bar, set by the app", Actions: []core.Node{ui.Badge{Text: "Native", Tone: ui.ToneInfo}}, Children: children}
 	}
 
 	eventsCard := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return card(cx, cardProps{icon: iconSystem, title: "Events", subtitle: "OnOpenChange with its reason, and what was chosen"},
-			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return caption(cx, "Open a menu", nil) },
+		colors := ui.ColorsOf(cx)
+		return ui.Card{Icon: ui.IconSystem, Title: "Events", Description: "OnOpenChange with its reason, and what was chosen", Children: []core.Node{
+			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: "Open a menu"} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Style: core.Style{Gap: 4}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 						var lines []core.Node
 						for i, e := range events.Get() {
-							c := colors.faint
+							c := colors.Faint
 							if i == 0 {
-								c = colors.text
+								c = colors.Text
 							}
-							lines = append(lines, core.Text{Content: e, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(c)})
+							lines = append(lines, core.Text{Content: e, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(c)})
 						}
 						return core.View{Style: core.Style{Gap: 4}, Children: lines}
 					})}}
 				}},
-		)
+		}}
 	}
 
 	return demoPage(cx, pageProps{}, menuBar, rows, placement, longList, commands, native, appMenu, eventsCard)

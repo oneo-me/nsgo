@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // inlinePage is an inline page in the gallery's colors, for the
 // appearance shown; as in NSH, a page source that reads it loads again
 // when they change.
 func inlinePage(cx *core.Scope) string {
-	colors := colorsOf(cx).now()
+	colors := ui.ColorsOf(cx).Now()
 	isDark := cx.Dark()
 	hex := func(c core.Color) string {
 		r, g, b, a := c.Components()
@@ -25,11 +27,11 @@ func inlinePage(cx *core.Scope) string {
 	return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; padding: 16px; background: ` + hex(colors.inset) + `; color: ` + hex(colors.text) + `; font-family: -apple-system, system-ui, sans-serif; font-size: 15px; line-height: 1.4; }
+  body { margin: 0; padding: 16px; background: ` + hex(colors.Inset) + `; color: ` + hex(colors.Text) + `; font-family: -apple-system, system-ui, sans-serif; font-size: 15px; line-height: 1.4; }
   h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
-  p { margin: 0 0 12px; color: ` + hex(colors.muted) + `; font-size: 15px; }
-  button { height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, #d6f78a 0%, #c1ea5c 100%); color: ` + hex(colors.onAccent) + `; font-family: inherit; font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,` + fmt.Sprint(shine) + `); }
-  #got { margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid ` + hex(colors.border) + `; color: ` + hex(colors.muted) + `; font-size: 15px; }
+  p { margin: 0 0 12px; color: ` + hex(colors.Muted) + `; font-size: 15px; }
+  button { height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, #d6f78a 0%, #c1ea5c 100%); color: ` + hex(colors.OnAccent) + `; font-family: inherit; font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,` + fmt.Sprint(shine) + `); }
+  #got { margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid ` + hex(colors.Border) + `; color: ` + hex(colors.Muted) + `; font-size: 15px; }
 </style></head>
 <body>
 <h3>An inline page</h3>
@@ -42,11 +44,11 @@ func inlinePage(cx *core.Scope) string {
 
 // mediaFrame is a media view's frame, for a StyleFunc.
 func mediaFrame(cx *core.Scope, height core.Points, bg core.Color) core.Style {
-	return core.Style{Height: core.Pt(height), CornerRadius: radiusControl, Overflow: core.Hidden, BorderWidth: 1, BorderColor: colorsOf(cx).border(), Background: bg}
+	return core.Style{Height: core.Pt(height), CornerRadius: ui.RadiusControl, Overflow: core.Hidden, BorderWidth: 1, BorderColor: ui.ColorsOf(cx).Border(), Background: bg}
 }
 
 func messaging(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	message := core.NewSignal(cx, "")
 	sent := core.NewSignal(cx, 0)
 	web := &core.Ref{}
@@ -56,41 +58,42 @@ func messaging(cx *core.Scope) core.Node {
 		}
 		return s
 	}
-	return card(cx, cardProps{icon: iconMedia, title: "Web view", subtitle: "Inline HTML, with messages both ways"},
-		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.inset()) }, OnMessage: message.Set},
-		caption(cx, "From the page", func() string { return or(message.Get()) }),
-		caption(cx, "To the page", func() string {
+	return ui.Card{Icon: ui.IconMedia, Title: "Web view", Description: "Inline HTML, with messages both ways", Children: []core.Node{
+		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: message.Set},
+		ui.Caption{Label: "From the page", Note: func() string { return or(message.Get()) }},
+		ui.Caption{Label: "To the page", Note: func() string {
 			if sent.Get() == 0 {
 				return "—"
 			}
 			return fmt.Sprintf("hi #%d", sent.Get())
-		}),
-		button(buttonProps{label: "Post to the page"}, func() {
+		}},
+		ui.Button{Text: "Post to the page", OnPress: func() {
 			sent.Set(int(time.Now().UnixMilli() % 1000))
 			web.PostMessage(fmt.Sprintf("hi #%d", sent.GetUntracked()))
-		}),
-	)
+		}},
+	}}
 }
 
 // navButton is a round icon button, 44 pt.
 func navButton(cx *core.Scope, flip bool, enabled func() bool, label string, onPress func()) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	s := func() core.Style {
-		s := fin.raised().over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: 22, Background: colors.raised(), BorderWidth: 1, BorderColor: colors.border(),
+		s := fin.Raised().Over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: 22, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
 			AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 		if flip {
 			s.Transform.Rotate = 180
 		}
 		return s
 	}
-	return press(pressProps{onPress: onPress, disabled: func() bool { return !enabled() }, label: label, hitSlop: 4},
-		core.View{StyleFunc: s, Children: []core.Node{icon(iconChevron, 18, colors.text)}})
+	return ui.Press{OnPress: onPress, Disabled: func() bool { return !enabled() }, Label: label, HitSlop: 4, Children: []core.Node{
+		core.View{StyleFunc: s, Children: []core.Node{ui.Icon(ui.IconChevron, 18, colors.Text)}},
+	}}
 }
 
 func site(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	state := core.NewSignal(cx, core.WebNavigation{})
 	ref := &core.Ref{}
 	host := func() string {
@@ -104,34 +107,33 @@ func site(cx *core.Scope) core.Node {
 		}
 		return u
 	}
-	return card(cx, cardProps{icon: iconSearch, title: "A web site", subtitle: "Navigation state, back and forward",
-		right: core.Dynamic(func(*core.Scope) core.Node {
-			if state.Get().Loading {
-				return badge(cx, "Loading", toneWarn)
-			}
-			return badge(cx, "Loaded", toneUp)
-		})},
+	return ui.Card{Icon: ui.IconSearch, Title: "A web site", Description: "Navigation state, back and forward", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		if state.Get().Loading {
+			return ui.Badge{Text: "Loading", Tone: ui.ToneWarn}
+		}
+		return ui.Badge{Text: "Loaded", Tone: ui.ToneUp}
+	})}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
-			return fin.track().over(core.Style{Height: core.Pt(40), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 14),
-				CornerRadius: 20, Background: colors.inset(), BorderWidth: 1, BorderColor: colors.border()})
+			return fin.Track().Over(core.Style{Height: core.Pt(40), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 14),
+				CornerRadius: 20, Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border()})
 		}, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
-				c := colors.up
+				c := colors.Up
 				if state.Get().Loading {
-					c = colors.warn
+					c = colors.Warn
 				}
 				return core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 3.5, Background: c()}
 			}},
-			core.Text{ContentFunc: host, MaxLines: 1, EllipsizeMode: core.EllipsizeMiddle, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: colored(colors.muted)},
+			core.Text{ContentFunc: host, MaxLines: 1, EllipsizeMode: core.EllipsizeMiddle, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Muted)},
 		}},
-		core.WebView{Ref: ref, Source: core.WebSrc("https://go.dev"), TestID: "site", StyleFunc: func() core.Style { return mediaFrame(cx, 340, colors.inset()) }, OnNavigationStateChange: state.Set},
+		core.WebView{Ref: ref, Source: core.WebSrc("https://go.dev"), TestID: "site", StyleFunc: func() core.Style { return mediaFrame(cx, 340, colors.Inset()) }, OnNavigationStateChange: state.Set},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 			navButton(cx, true, func() bool { return state.Get().CanGoBack }, "Back", ref.GoBack),
 			navButton(cx, false, func() bool { return state.Get().CanGoForward }, "Forward", ref.GoForward),
-			spacer(),
-			button(buttonProps{label: "Reload", variant: secondary}, ref.Reload),
+			ui.Spacer{},
+			ui.Button{Text: "Reload", Variant: ui.ButtonSecondary, OnPress: ref.Reload},
 		}},
-	)
+	}}
 }
 
 // clockText is a duration as minutes and seconds.
@@ -144,24 +146,23 @@ func clockText(d time.Duration) string {
 const flowerClip = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
 
 func player(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	controls := core.NewSignal(cx, "own")
 	paused, buffering, failed := core.NewSignal(cx, true), core.NewSignal(cx, false), core.NewSignal(cx, false)
 	pos, dur := core.NewSignal(cx, time.Duration(0)), core.NewSignal(cx, time.Duration(0))
 	fit := core.NewSignal(cx, core.Contain)
 	ref := &core.Ref{}
-	return card(cx, cardProps{icon: iconPlay, title: "Video", subtitle: "The platform's player",
-		right: core.Dynamic(func(*core.Scope) core.Node {
-			switch {
-			case failed.Get():
-				return badge(cx, "Error", toneDanger)
-			case buffering.Get():
-				return badge(cx, "Buffering", toneWarn)
-			case paused.Get():
-				return badge(cx, "Paused", toneNeutral)
-			}
-			return badge(cx, "Playing", toneAccent)
-		})},
+	return ui.Card{Icon: ui.IconPlay, Title: "Video", Description: "The platform's player", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		switch {
+		case failed.Get():
+			return ui.Badge{Text: "Error", Tone: ui.ToneDanger}
+		case buffering.Get():
+			return ui.Badge{Text: "Buffering", Tone: ui.ToneWarn}
+		case paused.Get():
+			return ui.Badge{Text: "Paused"}
+		}
+		return ui.Badge{Text: "Playing", Tone: ui.ToneAccent}
+	})}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			// The platform's controls are fixed as the player mounts.
 			sys := controls.Get() == "system"
@@ -176,34 +177,34 @@ func player(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					if paused.Get() {
-						return roundButton(cx, iconPlay, "Play", primary, 0, func() { paused.Set(false) })
+						return ui.RoundButton{Icon: ui.IconPlay, Label: "Play", OnPress: func() { paused.Set(false) }}
 					}
-					return roundButton(cx, iconPause, "Pause", primary, 0, func() { paused.Set(true) })
+					return ui.RoundButton{Icon: ui.IconPause, Label: "Pause", OnPress: func() { paused.Set(true) }}
 				}),
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
-					meter(cx, func() float64 {
+					ui.Meter{Value: func() float64 {
 						if d := dur.Get(); d > 0 {
 							return float64(pos.Get()) / float64(d)
 						}
 						return 0
-					}, toneAccent, -1),
+					}, Tone: ui.ToneAccent},
 					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-						core.Text{ContentFunc: func() string { return clockText(pos.Get()) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: colored(colors.muted)},
-						textf(func() string { return clockText(dur.Get()) }, 13, regular, colors.faint),
+						core.Text{ContentFunc: func() string { return clockText(pos.Get()) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+						ui.Textf(func() string { return clockText(dur.Get()) }, 13, ui.Regular, colors.Faint),
 					}},
 				}},
-				button(buttonProps{label: "Restart", variant: secondary}, func() { ref.Seek(0) }),
+				ui.Button{Text: "Restart", Variant: ui.ButtonSecondary, OnPress: func() { ref.Seek(0) }},
 			}}
 		}},
-		segmented([]option[string]{{value: "own", label: "Own controls"}, {value: "system", label: "System controls"}}, controls.Get, controls.Set, false),
-		segmented([]option[core.ResizeMode]{{value: core.Contain, label: "Contain"}, {value: core.Cover, label: "Cover"}, {value: core.Stretch, label: "Stretch"}}, fit.Get, fit.Set, true),
-	)
+		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "own", Label: "Own controls"}, {Value: "system", Label: "System controls"}}, Value: controls.Get, OnChange: controls.Set},
+		ui.Segmented[core.ResizeMode]{Options: []ui.Option[core.ResizeMode]{{Value: core.Contain, Label: "Contain"}, {Value: core.Cover, Label: "Cover"}, {Value: core.Stretch, Label: "Stretch"}}, Value: fit.Get, OnChange: fit.Set, Small: true},
+	}}
 }
 
 // nativeView is a platform view of the app's own, registered with
 // nsgo.Component and shown by a Native element: the platform's slider.
 func nativeView(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	value := core.NewSignal(cx, 0.4)
 	events := core.NewSignal(cx, "none yet")
 	slider := &core.Ref{}
@@ -212,7 +213,7 @@ func nativeView(cx *core.Scope) core.Node {
 	if ok {
 		noteText = "Dragging the platform's own slider reports change events; the buttons set its value and send it a command."
 	}
-	return card(cx, cardProps{icon: iconControls, title: "Native views", subtitle: "The app's own platform views in the tree", right: badge(cx, "NSGo", toneNeutral)},
+	return ui.Card{Icon: ui.IconControls, Title: "Native views", Description: "The app's own platform views in the tree", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.Native{Component: sliderComponent, Ref: slider, TestID: "native-slider", Label: "Native slider",
 			PropsFunc: func() map[string]any { return map[string]any{"value": value.Get()} },
 			OnEvent: func(name string, data any) {
@@ -222,14 +223,14 @@ func nativeView(cx *core.Scope) core.Node {
 				events.Set(fmt.Sprintf("%s %v", name, data))
 			},
 			Style: core.Style{AlignSelf: core.AlignStretch, MinWidth: core.Pt(200), MinHeight: core.Pt(28)}},
-		note(cx, noteText),
-		caption(cx, "Value", func() string { return fmt.Sprintf("%.2f", value.Get()) }),
-		core.Text{TestID: "native-value", ContentFunc: func() string { return "Last event: " + events.Get() }, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.muted)},
+		ui.Note{Text: noteText},
+		ui.Caption{Label: "Value", Note: func() string { return fmt.Sprintf("%.2f", value.Get()) }},
+		core.Text{TestID: "native-value", ContentFunc: func() string { return "Last event: " + events.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			cell(button(buttonProps{label: "Set 0.8", variant: secondary}, func() { value.Set(0.8) })),
-			cell(button(buttonProps{label: "Reset command", variant: secondary}, func() { slider.Command("reset", nil) })),
+			ui.Cell{Child: ui.Button{Text: "Set 0.8", Variant: ui.ButtonSecondary, OnPress: func() { value.Set(0.8) }}},
+			ui.Cell{Child: ui.Button{Text: "Reset command", Variant: ui.ButtonSecondary, OnPress: func() { slider.Command("reset", nil) }}},
 		}},
-	)
+	}}
 }
 
 // mediaDemo is the platform's hosted views: a web view with messages both

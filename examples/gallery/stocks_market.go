@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // A simulated market: fictional companies whose prices walk every 50 ms.
@@ -616,15 +618,15 @@ func signed(v float64, decimals int) string {
 // percentOf is the change against the previous close, in percent.
 func percentOf(q quote) float64 { return (q.last - q.prevClose) / q.prevClose * 100 }
 
-// toneOf is the rising, falling or flat color, read where colorsOf's
+// toneOf is the rising, falling or flat color, read where ui.ColorsOf's
 // colors are.
 func toneOf(cx *core.Scope, v float64) core.Color {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	switch {
 	case v > 0:
-		return colors.up()
+		return colors.Up()
 	case v < 0:
-		return colors.down()
+		return colors.Down()
 	}
-	return colors.muted()
+	return colors.Muted()
 }

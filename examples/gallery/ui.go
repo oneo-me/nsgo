@@ -9,16 +9,17 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // The gallery's shell: its layouts, demo pages and headers, and helpers
-// its demos share. Its look and components are look.go's and kit.go's.
+// its demos share. Its look and components are examples/gallery-ui's.
 
 // The layouts' sizes.
 const (
-	// sidebarWidth is the width of the desktop layout's sidebar.
-	sidebarWidth core.Points = 264
+	// sidebarWidth is the width the desktop layout's sidebar starts at.
+	sidebarWidth core.Points = 240
 	// desktopWidth is the narrowest window that takes the desktop layout
 	// on desktops; tabletWidth on other devices (an iPad in landscape).
 	desktopWidth core.Points = 700
@@ -27,36 +28,14 @@ const (
 
 // Shared styles.
 var (
-	row     = core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}
-	wrapRow = core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}
-	fill    = core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)}
+	row  = core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}
+	fill = core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)}
 )
 
-// hint is instructions for the device's input: touch on phones and
-// tablets, pointer on desktops.
-func hint(cx *core.Scope, touch, pointer string) string {
-	if cx.Env().Desktop() {
-		return pointer
-	}
-	return touch
-}
-
-// bindRefresh is desktops' way to refresh what phones pull down: Ctrl+R /
-// Cmd+R calls refresh while the calling component shows. Browsers keep the
-// key to reload the page. It returns the key's label, or "" where it is
-// not bound.
-func bindRefresh(cx *core.Scope, refresh func()) string {
-	if !desktop.IsAvailable(cx) {
-		return ""
-	}
-	cx.OnKey("mod+r", refresh)
-	return cx.KeyLabel("mod+r")
-}
-
 // columnsFor is how many columns at least min pt wide fit in width, with
-// gap between them and 24 pt gutters: 1 to max.
+// gap between them and 16 pt gutters: 1 to max.
 func columnsFor(min core.Points, max int, width core.Points, gap core.Points) int {
-	n := int(math.Floor(float64((width - 48 + gap) / (min + gap))))
+	n := int(math.Floor(float64((width - 32 + gap) / (min + gap))))
 	return clampInt(n, 1, max)
 }
 
@@ -74,22 +53,11 @@ func count(n int, unit string) string {
 	return fmt.Sprintf("%d %ss", n, unit)
 }
 
-// hrow lays nodes out in a row with a gap.
-func hrow(gap core.Points, nodes ...core.Node) core.Node {
-	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: gap}, Children: nodes}
-}
-
-// wrap lays nodes out in a row that wraps.
-func wrap(nodes ...core.Node) core.Node { return core.View{Style: wrapRow, Children: nodes} }
-
-// spacer takes the free space of a row.
-func spacer() core.Node { return core.View{Style: core.Style{FlexGrow: 1}} }
-
 // themeToggle switches the app between light and dark, whatever the
-// system shows.
+// system shows: an icon button, as a toolbar's.
 func themeToggle(cx *core.Scope) core.Node {
 	name, label := toggleFace(cx)
-	return roundButtonf(cx, name, label, secondary, 34, func() { flipAppearance(cx) })
+	return ui.IconButton{IconFunc: name, LabelFunc: label, Size: 30, OnPress: func() { flipAppearance(cx) }}
 }
 
 // barThemeToggle is the theme toggle in the system's bar (iOS, Android),
@@ -97,19 +65,20 @@ func themeToggle(cx *core.Scope) core.Node {
 // icon alone.
 func barThemeToggle(cx *core.Scope) core.Node {
 	name, label := toggleFace(cx)
-	return press(pressProps{onPress: func() { flipAppearance(cx) }, scale: 0.92, labelFunc: label},
+	return ui.Press{OnPress: func() { flipAppearance(cx) }, Scale: 0.92, LabelFunc: label, Children: []core.Node{
 		core.View{Style: core.Style{Width: core.Pt(34), Height: core.Pt(34), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-			Children: []core.Node{iconOf(name, 18, colorsOf(cx).text)}})
+			Children: []core.Node{ui.IconOf(name, 18, ui.ColorsOf(cx).Text)}},
+	}}
 }
 
 // toggleFace is a theme toggle's icon and label: the appearance it
 // switches to.
-func toggleFace(cx *core.Scope) (name func() iconName, label func() string) {
-	name = func() iconName {
+func toggleFace(cx *core.Scope) (name func() ui.IconName, label func() string) {
+	name = func() ui.IconName {
 		if cx.Dark() {
-			return iconSun
+			return ui.IconSun
 		}
-		return iconMoon
+		return ui.IconMoon
 	}
 	label = func() string {
 		if cx.Dark() {
@@ -155,7 +124,7 @@ type cardFunc func(cx *core.Scope) core.Node
 type pageProps struct {
 	// columns is the most columns on a desktop (default 2).
 	columns int
-	// bottom is the space under the last card on phones (default 40).
+	// bottom is the space under the last card on phones (default 32).
 	bottom core.Points
 	// still keeps the cards from fading in.
 	still    bool
@@ -168,21 +137,21 @@ type pageProps struct {
 }
 
 // demoPage is a demo's page of cards, each fading in after the one
-// before. On phones one column on 16 pt gutters; in the desktop layout the
+// before. On phones one column on 12 pt gutters; in the desktop layout the
 // cards are dealt left to right into as many columns as fit the pane (at
-// least 380 pt each), on 24 pt gutters.
+// least 320 pt each), on 16 pt gutters.
 func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	build := func(i int, c cardFunc) core.Node {
 		node := core.Func(func(cx *core.Scope) core.Node { return c(cx) })
 		if p.still {
 			return node
 		}
-		return appear(i, false, node)
+		return ui.Appear{Index: i, Children: []core.Node{node}}
 	}
 	bottom := p.bottom
 	if bottom == 0 {
-		bottom = 40
+		bottom = 32
 	}
 	most := p.columns
 	if most == 0 {
@@ -194,7 +163,7 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 		for i, c := range cards {
 			nodes = append(nodes, build(i, c))
 		}
-		body = core.View{Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: bottom, Left: 16}, Gap: 16}, Children: nodes}
+		body = core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 12, Bottom: bottom, Left: 12}, Gap: 12}, Children: nodes}
 	} else {
 		// The cards are built once and move between the columns, which
 		// are built again when their number changes.
@@ -202,7 +171,7 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 		for i, c := range cards {
 			held[i] = core.NewHolder(cx, func(*core.Scope) core.Node { return build(i, c) })
 		}
-		columns := core.NewMemo(cx, func() int { return columnsFor(380, most, shell.paneWidth(), 20) })
+		columns := core.NewMemo(cx, func() int { return columnsFor(320, most, shell.paneWidth(), 12) })
 		body = core.Dynamic(func(cx *core.Scope) core.Node {
 			n := columns.Get()
 			return core.Func(func(cx *core.Scope) core.Node {
@@ -214,16 +183,16 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 							nodes = append(nodes, h.Place())
 						}
 					}
-					cols = append(cols, core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), Gap: 20}, Children: nodes})
+					cols = append(cols, core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), Gap: 12}, Children: nodes})
 				}
-				return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, Gap: 20,
-					Padding: core.Edges{Top: 24, Right: 24, Bottom: 48, Left: 24}, Width: core.Pct(100),
-					MaxWidth: core.Pt(core.Points(n)*560 + 48), AlignSelf: core.AlignCenter}, Children: cols}
+				return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, Gap: 12,
+					Padding: core.Edges{Top: 16, Right: 16, Bottom: 32, Left: 16}, Width: core.Pct(100),
+					MaxWidth: core.Pt(core.Points(n)*560 + 32), AlignSelf: core.AlignCenter}, Children: cols}
 			})
 		})
 	}
 	return core.Scroll{Ref: p.ref, TestID: "demo-scroll", Behavior: p.behavior, BehaviorFunc: p.behaviorFunc, Style: core.Style{FlexGrow: 1, FlexShrink: 1},
-		StyleFunc: func() core.Style { return core.Style{Background: colors.background()} },
+		StyleFunc: func() core.Style { return core.Style{Background: colors.Background()} },
 		Children:  append([]core.Node{body}, p.after...)}
 }
 
@@ -248,20 +217,20 @@ type pageHeaderProps struct {
 // web): a back button while the page is above another, the title and
 // right. Phones show their system header with the screen's title instead.
 func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	tint := p.tint
 	if tint == nil {
-		tint = colors.accent
+		tint = colors.Accent
 	}
 	back := func() bool { return p.left == nil && !p.root && shell.nav.Depth() > 0 }
 	style := func() core.Style {
-		s := core.Style{Height: core.Pt(52), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 12)}
+		s := core.Style{Height: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 12)}
 		switch {
 		case p.transparent:
 		case p.background != nil:
 			s.Background = p.background()
 		default:
-			s.Background, s.Borders, s.BorderColors = colors.background(), core.Edges{Bottom: 1}, core.EdgeColors{Bottom: colors.line()}
+			s.Background, s.Borders, s.BorderColors = colors.Background(), core.Edges{Bottom: 1}, core.EdgeColors{Bottom: colors.Line()}
 		}
 		return s
 	}
@@ -280,16 +249,16 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 			},
 			Role: core.RoleButton, Label: "Back", HitSlop: core.All(6),
 			Style: core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2,
-				Padding: core.Edges{Left: 4, Right: 10}, CornerRadius: radiusControl, Cursor: core.CursorPointer},
+				Padding: core.Edges{Left: 4, Right: 10}, CornerRadius: ui.RadiusControl, Cursor: core.CursorPointer},
 			StyleFunc: func() core.Style {
-				return core.Style{Hover: &core.Style{Background: colors.hover()}, Active: &core.Style{Background: colors.pressed()}}
+				return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 			},
-			Children: []core.Node{icon(iconBack, 18, tint), text("Back", 14, medium, tint)},
+			Children: []core.Node{ui.Icon(ui.IconBack, 18, tint), ui.Text("Back", 14, ui.Medium, tint)},
 		}
 	}})
 	center := p.center
 	if center == nil {
-		title := text(p.title, 17, semibold, colors.text)
+		title := ui.Text(p.title, 17, ui.Semibold, colors.Text)
 		title.MaxLines, title.Role, title.Style.FlexGrow, title.Style.FlexShrink = 1, core.RoleHeader, 1, 1
 		center = title
 	}
@@ -309,15 +278,15 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 // headerStyle is the system header's colors on every page (iOS,
 // Android), for a HeaderStyleFunc.
 func headerStyle(cx *core.Scope) func() core.Style {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	return func() core.Style {
-		return core.Style{Background: colors.background(), Color: colors.text(), TintColor: colors.accent()}
+		return core.Style{Background: colors.Background(), Color: colors.Text(), TintColor: colors.Accent()}
 	}
 }
 
 // pageStyle is a page's background, for a StyleFunc.
 func pageStyle(cx *core.Scope) func() core.Style {
-	return func() core.Style { return core.Style{Background: colorsOf(cx).background()} }
+	return func() core.Style { return core.Style{Background: ui.ColorsOf(cx).Background()} }
 }
 
 // screen is a page a demo pushes: the system header on phones, the app's

@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // livePulse is a pulse that loops on the platform while running: 0 to 1
@@ -12,7 +14,7 @@ func livePulse(cx *core.Scope, running func() bool) *core.AnimatedValue {
 	cx.Effect(func() {
 		if running() {
 			if run == nil {
-				run = cx.StartAnimation(core.Loop(core.Timing(v, 1, core.TimingConfig{Duration: ms(1400), Easing: easeOutCubic}), 0), nil)
+				run = cx.StartAnimation(core.Loop(core.Timing(v, 1, core.TimingConfig{Duration: ms(1400), Easing: ui.EaseOutCubic}), 0), nil)
 			}
 			return
 		}
@@ -20,22 +22,22 @@ func livePulse(cx *core.Scope, running func() bool) *core.AnimatedValue {
 			run.Stop()
 			run = nil
 		}
-		timing(cx, v, 0, core.TimingConfig{Duration: ms(200)})
+		ui.Timing(cx, v, 0, core.TimingConfig{Duration: ms(200)})
 	})
 	return v
 }
 
 // liveDot is a dot with a ring that pulses while the market runs.
 func liveDot(cx *core.Scope, running func() bool, size core.Points) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	p := livePulse(cx, running)
 	return core.View{Style: core.Style{Width: core.Pt(size * 2.5), Height: core.Pt(size * 2.5), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, Children: []core.Node{
 		core.View{Style: core.Style{Position: core.Absolute, Width: core.Pt(size), Height: core.Pt(size), CornerRadius: size / 2,
-			Animated: &core.AnimatedStyle{Opacity: lerp(p, 0.55, 0), Scale: lerp(p, 1, 2.5)}}, StyleFunc: filled(colors.accent)},
+			Animated: &core.AnimatedStyle{Opacity: ui.Lerp(p, 0.55, 0), Scale: ui.Lerp(p, 1, 2.5)}}, StyleFunc: ui.Filled(colors.Accent)},
 		core.View{StyleFunc: func() core.Style {
-			c := colors.faint
+			c := colors.Faint
 			if running() {
-				c = colors.accent
+				c = colors.Accent
 			}
 			return core.Style{Width: core.Pt(size), Height: core.Pt(size), CornerRadius: size / 2, Background: c()}
 		}},
@@ -80,12 +82,12 @@ func hline(d *core.Drawing, x0, x1, y float32, c core.Color, dash ...float32) {
 }
 
 // gridColor is the charts' grid lines: the hairline color, a step darker
-// on the light page. Read it where colorsOf's colors are.
+// on the light page. Read it where ui.ColorsOf's colors are.
 func gridColor(cx *core.Scope) core.Color {
 	if cx.Dark() {
-		return colorsOf(cx).line()
+		return ui.ColorsOf(cx).Line()
 	}
-	return colorsOf(cx).border()
+	return ui.ColorsOf(cx).Border()
 }
 
 // springBar is a bar that grows from one edge of its track to share
@@ -107,7 +109,7 @@ func springBar(share func() float64, c func() core.Color, fromRight bool, height
 			}
 			to := dir * (1 - s) * float64(width)
 			if placed {
-				spring(cx, x, to, core.SpringConfig{Stiffness: 180, Damping: 22})
+				ui.Spring(cx, x, to, core.SpringConfig{Stiffness: 180, Damping: 22})
 			} else {
 				x.Set(to)
 			}
@@ -123,7 +125,7 @@ func springBar(share func() float64, c func() core.Color, fromRight bool, height
 		return core.View{OnLayout: func(b core.Bounds) { width = b.Size.Width; place() },
 			Style: core.Style{Height: core.Pt(height), Overflow: core.Hidden, CornerRadius: radius}, Children: []core.Node{
 				core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), CornerRadius: radius,
-					Animated: &core.AnimatedStyle{TranslateX: x}}, StyleFunc: filled(c)},
+					Animated: &core.AnimatedStyle{TranslateX: x}}, StyleFunc: ui.Filled(c)},
 			}}
 	})
 }
@@ -160,32 +162,32 @@ func (c *calmRange) reset() { c.set = false }
 // control) on the right, the content below, a hairline above all but the
 // first.
 func block(cx *core.Scope, title string, noteFn func() string, right core.Node, first bool, children ...core.Node) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	s := core.Style{Padding: core.Symmetric(14, 16), Gap: 10}
 	if !first {
 		s.Borders = core.Edges{Top: 1}
 	}
 	var nodes []core.Node
 	if title != "" {
-		head := []core.Node{core.Text{Content: title, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15, FontWeight: semibold}, StyleFunc: colored(colors.text)}}
+		head := []core.Node{core.Text{Content: title, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)}}
 		if noteFn != nil {
-			head = append(head, textf(noteFn, 12, regular, colors.faint))
+			head = append(head, ui.Textf(noteFn, 12, ui.Regular, colors.Faint))
 		}
 		if right != nil {
 			head = append(head, right)
 		}
 		nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(22)}, Children: head})
 	}
-	return core.View{Style: s, StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.line()}} },
+	return core.View{Style: s, StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} },
 		Children: append(nodes, children...)}
 }
 
 // head is a quiet header for columns: SYMBOL, LAST.
 func head(cx *core.Scope, label string, width core.Points, grow float32, align core.TextAlign) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	s := core.Style{FlexGrow: grow, FlexShrink: grow, TextAlign: align, FontSize: 11, LetterSpacing: 0.6}
 	if width > 0 {
 		s.Width = core.Pt(width)
 	}
-	return core.Text{Content: label, Style: s, StyleFunc: colored(colors.faint)}
+	return core.Text{Content: label, Style: s, StyleFunc: ui.Colored(colors.Faint)}
 }

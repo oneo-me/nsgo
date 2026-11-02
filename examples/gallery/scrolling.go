@@ -7,40 +7,20 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
-var scrollTones = []tone{toneAccent, toneInfo, toneWarn, toneUp, toneDanger}
-
-// switchRow is a switch with its label; code names the option it sets.
-func switchRow(cx *core.Scope, label, codeText, noteText string, value func() bool, onChange func(bool)) core.Node {
-	colors := colorsOf(cx)
-	titles := []core.Node{text(label, 15, regular, colors.text)}
-	if codeText != "" {
-		titles = append(titles, core.Text{Content: codeText, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.faint)})
-	}
-	if noteText != "" {
-		titles = append(titles, text(noteText, 13, regular, colors.faint))
-	}
-	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(48)}, Children: []core.Node{
-		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles},
-		toggle(value, onChange, label),
-	}}
-}
-
-// api is the APIs a section shows, as code.
-func api(cx *core.Scope, names string) core.Node {
-	colors := colorsOf(cx)
-	return core.Text{Content: names, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.faint)}
-}
+var scrollTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
 
 // backdrop is a dot matrix with a low-alpha area and a dashed reference
 // line: a page's backdrop.
-func backdrop(cx *core.Scope, t tone, seed float64) core.Node {
-	colors := colorsOf(cx)
-	dots, faint := colors.border, colors.faint
+func backdrop(cx *core.Scope, t ui.Tone, seed float64) core.Node {
+	colors := ui.ColorsOf(cx)
+	dots, faint := colors.Border, colors.Faint
 	return core.Canvas{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
 		Draw: func(d *core.Drawing, size core.Size) {
-			c, tint := t.color(cx), t.tint(cx)
+			c, tint := t.Color(cx), t.Tint(cx)
 			w, h := float32(size.Width), float32(size.Height)
 			d.SetFillColor(dots())
 			for x := float32(10); x < w; x += 12 {
@@ -76,33 +56,33 @@ func backdrop(cx *core.Scope, t tone, seed float64) core.Node {
 
 var pagerPages = []struct {
 	title, value, note string
-	tone               tone
+	tone               ui.Tone
 }{
-	{"Revenue", "48.2k", "+12 %", toneAccent},
-	{"Sessions", "9,410", "+3 %", toneInfo},
-	{"Latency", "142", "ms p95", toneWarn},
-	{"Uptime", "99.98", "%", toneUp},
-	{"Errors", "17", "−40 %", toneDanger},
+	{"Revenue", "48.2k", "+12 %", ui.ToneAccent},
+	{"Sessions", "9,410", "+3 %", ui.ToneInfo},
+	{"Latency", "142", "ms p95", ui.ToneWarn},
+	{"Uptime", "99.98", "%", ui.ToneUp},
+	{"Errors", "17", "−40 %", ui.ToneDanger},
 }
 
 // surfaceBox is a scroll view's box inside a section, surfaceInk its
 // colors.
 func surfaceBox(cx *core.Scope, height core.Points) core.Style {
-	return core.Style{Height: core.Pt(height), CornerRadius: radiusControl, BorderWidth: 1}
+	return core.Style{Height: core.Pt(height), CornerRadius: ui.RadiusControl, BorderWidth: 1}
 }
 
 // surfaceInk is a surface box's colors, for its StyleFunc.
 func surfaceInk(cx *core.Scope) func() core.Style {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	return func() core.Style {
-		return core.Style{Background: colors.surface(), Shadows: finOf(cx).card().shadows, BorderColor: colors.line()}
+		return core.Style{Background: colors.Surface(), Shadows: ui.FinOf(cx).Card().Shadows, BorderColor: colors.Line()}
 	}
 }
 
 // pager is full-width pages, one per fling; the indicator and the
 // parallax follow the offset on the platform.
 func pager(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	width := core.NewSignal(cx, core.Untracked(cx, cx.Env().Window).Width-72)
 	page := core.NewSignal(cx, 0)
 	x := core.NewAnimatedValue(cx, 0)
@@ -128,8 +108,8 @@ func pager(cx *core.Scope) core.Node {
 							Opacity:    core.Interpolate(x, core.Interpolation{Input: rng, Output: []float64{0.1, 1, 0.1}, Extrapolate: core.ExtrapolateClamp}),
 							TranslateX: core.Interpolate(x, core.Interpolation{Input: rng, Output: []float64{-w * 0.35, 0, w * 0.35}, Extrapolate: core.ExtrapolateClamp}),
 						}}, Children: []core.Node{
-							text(fmt.Sprintf("%s · %d of %d", p.title, i+1, len(pagerPages)), 13, regular, colors.muted),
-							figure(cx, label(p.value), "", label(p.note), p.tone),
+							ui.Text(fmt.Sprintf("%s · %d of %d", p.title, i+1, len(pagerPages)), 13, ui.Regular, colors.Muted),
+							ui.Figure{Value: label(p.value), Note: label(p.note), Tone: p.tone},
 						}},
 					}})
 				}
@@ -139,17 +119,17 @@ func pager(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{Direction: core.Row, Gap: step - 8}, Children: append(func() []core.Node {
 				var dots []core.Node
 				for range pagerPages {
-					dots = append(dots, core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4}, StyleFunc: filled(colors.raised)})
+					dots = append(dots, core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4}, StyleFunc: ui.Filled(colors.Raised)})
 				}
 				return dots
 			}(), core.View{StyleFunc: func() core.Style {
 				last := float64(len(pagerPages) - 1)
-				return core.Style{Position: core.Absolute, Left: core.Pt(0), Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4, Background: colors.accent(),
+				return core.Style{Position: core.Absolute, Left: core.Pt(0), Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4, Background: colors.Accent(),
 					Animated: &core.AnimatedStyle{TranslateX: core.Interpolate(x, core.Interpolation{Input: []float64{0, max(1, last*float64(width.Get()))},
 						Output: []float64{0, last * step}, Extrapolate: core.ExtrapolateClamp})}}
 			}})},
 			core.Text{ContentFunc: func() string { return fmt.Sprintf("Settled on page %d", page.Get()+1) },
-				Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: colored(colors.faint)},
+				Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 	}}
 }
@@ -168,46 +148,45 @@ func snapCards(cx *core.Scope) core.Node {
 				},
 				Style: core.Style{Height: core.Pt(128), Padding: core.Symmetric(0, 14)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
-					colors := colorsOf(cx)
-					fin := finOf(cx)
-					t := func() tone { return scrollTones[r.Index()%len(scrollTones)] }
+					colors := ui.ColorsOf(cx)
+					fin := ui.FinOf(cx)
+					t := func() ui.Tone { return scrollTones[r.Index()%len(scrollTones)] }
 					return core.View{StyleFunc: func() core.Style {
-						return fin.raised().over(core.Style{Width: core.Pt(size), Height: core.Pt(128), CornerRadius: 18, BorderCurve: core.BorderCurveContinuous,
-							Background: colors.raised(), BorderWidth: 1, BorderColor: colors.border(), Padding: core.All(16), JustifyContent: core.JustifySpaceBetween, Overflow: core.Hidden})
+						return fin.Raised().Over(core.Style{Width: core.Pt(size), Height: core.Pt(128), CornerRadius: 18, BorderCurve: core.BorderCurveContinuous,
+							Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(16), JustifyContent: core.JustifySpaceBetween, Overflow: core.Hidden})
 					},
 						Children: []core.Node{
 							core.View{StyleFunc: func() core.Style {
-								return core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Bottom: core.Pt(0), Width: core.Pt(3), Background: t().color(cx)}
+								return core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Bottom: core.Pt(0), Width: core.Pt(3), Background: t().Color(cx)}
 							}},
 							core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter}, Children: []core.Node{
-								core.Text{ContentFunc: func() string { return fmt.Sprintf("at %d pt", r.Index()*(size+gap)) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: colored(colors.faint)},
-								core.Dynamic(func(*core.Scope) core.Node { return badge(cx, toneNames[t()], t()) }),
+								core.Text{ContentFunc: func() string { return fmt.Sprintf("at %d pt", r.Index()*(size+gap)) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
+								core.Dynamic(func(*core.Scope) core.Node { return ui.Badge{Text: toneNames[t()], Tone: t()} }),
 							}},
-							textf(func() string { return fmt.Sprintf("Card %d", r.Index()+1) }, 24, semibold, colors.text),
+							ui.Textf(func() string { return fmt.Sprintf("Card %d", r.Index()+1) }, 24, ui.Semibold, colors.Text),
 						}}
 				}},
 		}},
-		segmented([]option[core.SnapAlignment]{{value: core.SnapStart, label: "start"}, {value: core.SnapCenter, label: "center"}, {value: core.SnapEnd, label: "end"}},
-			align.Get, align.Set, true),
-		switchRow(cx, "One card per fling", "DisableIntervalMomentum", "", oneStep.Get, oneStep.Set),
+		ui.Segmented[core.SnapAlignment]{Options: []ui.Option[core.SnapAlignment]{{Value: core.SnapStart, Label: "start"}, {Value: core.SnapCenter, Label: "center"}, {Value: core.SnapEnd, Label: "end"}}, Value: align.Get, OnChange: align.Set, Small: true},
+		ui.SwitchRow{Label: "One card per fling", Code: "DisableIntervalMomentum", Checked: oneStep.Get, OnChange: oneStep.Set},
 	}}
 }
 
 type logged struct {
 	name string
 	y    int
-	tone tone
+	tone ui.Tone
 }
 
 // scrollEvents is OnScroll, drag and momentum events, NoScroll, NoBounces
 // and ContentInset.
 func scrollEvents(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	offset := core.NewSignal(cx, core.ScrollEvent{})
 	seen := core.NewSignal(cx, false)
 	log := core.NewSignalFunc(cx, []logged(nil), slices.Equal)
 	enabled, bounces, insetOn := core.NewSignal(cx, true), core.NewSignal(cx, true), core.NewSignal(cx, false)
-	noteEvent := func(name string, t tone) func(core.ScrollEvent) {
+	noteEvent := func(name string, t ui.Tone) func(core.ScrollEvent) {
 		return func(e core.ScrollEvent) {
 			log.Update(func(l []logged) []logged {
 				out := append([]logged{{name, int(math.Round(float64(e.Offset.Y))), t}}, l...)
@@ -225,26 +204,26 @@ func scrollEvents(cx *core.Scope) core.Node {
 	var rows []core.Node
 	for i := 1; i <= 30; i++ {
 		rows = append(rows, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Height: core.Pt(32), Padding: core.Symmetric(0, 12)}, Children: []core.Node{
-			core.Text{Content: itoa(i), Style: core.Style{Width: core.Pt(24), FontSize: 12, TextAlign: core.TextAlignEnd}, StyleFunc: colored(colors.faint)},
-			core.View{Style: core.Style{Height: core.Pt(4), CornerRadius: 2, Width: core.Pct(float32(20 + (i*37)%70))}, StyleFunc: filled(colors.raised)},
+			core.Text{Content: itoa(i), Style: core.Style{Width: core.Pt(24), FontSize: 12, TextAlign: core.TextAlignEnd}, StyleFunc: ui.Colored(colors.Faint)},
+			core.View{Style: core.Style{Height: core.Pt(4), CornerRadius: 2, Width: core.Pct(float32(20 + (i*37)%70))}, StyleFunc: ui.Filled(colors.Raised)},
 		}})
 	}
 	return core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd}, Children: []core.Node{
-			core.View{Style: fill, Children: []core.Node{figure(cx, func() string { return itoa(int(math.Round(float64(offset.Get().Offset.Y)))) }, "pt", func() string {
+			core.View{Style: fill, Children: []core.Node{ui.Figure{Value: func() string { return itoa(int(math.Round(float64(offset.Get().Offset.Y)))) }, Unit: "pt", Note: func() string {
 				if !seen.Get() {
 					return "Scroll the box"
 				}
 				return fmt.Sprintf("/ %.0f", offset.Get().ContentSize.Height)
-			}, toneInfo)}},
-			textf(func() string {
+			}, Tone: ui.ToneInfo}}},
+			ui.Textf(func() string {
 				if !seen.Get() {
 					return "viewport — pt"
 				}
 				return fmt.Sprintf("viewport %.0f pt", offset.Get().Size.Height)
-			}, 13, regular, colors.faint),
+			}, 13, ui.Regular, colors.Faint),
 		}},
-		meter(cx, progress, toneInfo, -1),
+		ui.Meter{Value: progress, Tone: ui.ToneInfo},
 		core.Scroll{TestID: "events-scroll", Style: surfaceBox(cx, 180), StyleFunc: surfaceInk(cx),
 			BehaviorFunc: func() core.ScrollBehavior {
 				b := core.ScrollBehavior{NoScroll: !enabled.Get(), NoBounces: !bounces.Get()}
@@ -254,37 +233,37 @@ func scrollEvents(cx *core.Scope) core.Node {
 				return b
 			},
 			OnScroll:          func(e core.ScrollEvent) { offset.Set(e); seen.Set(true) },
-			OnScrollDragStart: noteEvent("begin drag", toneAccent),
-			OnScrollDragEnd:   noteEvent("end drag", toneWarn),
-			OnMomentumStart:   noteEvent("momentum begin", toneInfo),
-			OnMomentumEnd:     noteEvent("momentum end", toneUp),
+			OnScrollDragStart: noteEvent("begin drag", ui.ToneAccent),
+			OnScrollDragEnd:   noteEvent("end drag", ui.ToneWarn),
+			OnMomentumStart:   noteEvent("momentum begin", ui.ToneInfo),
+			OnMomentumEnd:     noteEvent("momentum end", ui.ToneUp),
 			Children:          []core.Node{core.View{Style: core.Style{Padding: core.Symmetric(6, 0)}, Children: rows}}},
 		core.View{Style: core.Style{Gap: 6, MinHeight: core.Pt(100)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			l := log.Get()
 			if len(l) == 0 {
-				return text("No drags yet", 13, regular, colors.faint)
+				return ui.Text("No drags yet", 13, ui.Regular, colors.Faint)
 			}
 			var lines []core.Node
 			for i, e := range l {
 				lines = append(lines, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(20), Opacity: core.Alpha(1 - float32(i)*0.16)}, Children: []core.Node{
-					core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 2.5}, StyleFunc: filled(e.tone.shade(cx))},
-					core.Text{Content: e.name, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: colored(colors.muted)},
-					text(fmt.Sprintf("at %d pt", e.y), 13, regular, colors.faint),
+					core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 2.5}, StyleFunc: ui.Filled(e.tone.Shade(cx))},
+					core.Text{Content: e.name, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+					ui.Text(fmt.Sprintf("at %d pt", e.y), 13, ui.Regular, colors.Faint),
 				}})
 			}
 			return core.Group(lines)
 		})}},
 		core.View{Children: []core.Node{
-			switchRow(cx, "Scroll enabled", "NoScroll", "", enabled.Get, enabled.Set),
-			switchRow(cx, "Bounces", "NoBounces", "", bounces.Get, bounces.Set),
-			switchRow(cx, "Content inset", "", "40 pt at the top and bottom", insetOn.Get, insetOn.Set),
+			ui.SwitchRow{Label: "Scroll enabled", Code: "NoScroll", Checked: enabled.Get, OnChange: enabled.Set},
+			ui.SwitchRow{Label: "Bounces", Code: "NoBounces", Checked: bounces.Get, OnChange: bounces.Set},
+			ui.SwitchRow{Label: "Content inset", Note: "40 pt at the top and bottom", Checked: insetOn.Get, OnChange: insetOn.Set},
 		}},
 	}}
 }
 
 // zoom is pinch to zoom on the platform; pressing a tile zooms in on it.
 func zoom(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	ref := &core.Ref{}
 	scale := core.NewSignal(cx, float32(1))
 	bounces := core.NewSignal(cx, true)
@@ -293,8 +272,8 @@ func zoom(cx *core.Scope) core.Node {
 		t := scrollTones[(i*7)%len(scrollTones)]
 		tiles = append(tiles, core.View{Role: core.RoleButton, Label: fmt.Sprintf("Tile %d", i+1),
 			StyleFunc: func() core.Style {
-				return core.Style{Width: core.Pt(74), Height: core.Pt(50), CornerRadius: 10, BorderCurve: core.BorderCurveContinuous, Background: t.tint(cx),
-					BorderWidth: 1, BorderColor: colors.border(), Padding: core.All(6), JustifyContent: core.JustifySpaceBetween}
+				return core.Style{Width: core.Pt(74), Height: core.Pt(50), CornerRadius: 10, BorderCurve: core.BorderCurveContinuous, Background: t.Tint(cx),
+					BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(6), JustifyContent: core.JustifySpaceBetween}
 			},
 			OnPress: func(core.PressEvent) {
 				// The tile's middle, in the content's unzoomed points.
@@ -306,8 +285,8 @@ func zoom(cx *core.Scope) core.Node {
 				ref.ZoomTo(to, &at, true)
 			},
 			Children: []core.Node{
-				core.View{Style: core.Style{Width: core.Pt(12), Height: core.Pt(3), CornerRadius: 1.5}, StyleFunc: filled(t.shade(cx))},
-				text(fmt.Sprintf("Tile %d", i+1), 11, regular, colors.text),
+				core.View{Style: core.Style{Width: core.Pt(12), Height: core.Pt(3), CornerRadius: 1.5}, StyleFunc: ui.Filled(t.Shade(cx))},
+				ui.Text(fmt.Sprintf("Tile %d", i+1), 11, ui.Regular, colors.Text),
 			}})
 	}
 	zoomTo := func(s float32) func() { return func() { ref.ZoomTo(s, nil, true) } }
@@ -315,16 +294,16 @@ func zoom(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd}, Children: []core.Node{
 			core.View{Style: fill, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				s := scale.Get()
-				noteText, t := "fit", toneInfo
+				noteText, t := "fit", ui.ToneInfo
 				switch {
 				case s > 1.01:
-					noteText, t = "zoomed in", toneAccent
+					noteText, t = "zoomed in", ui.ToneAccent
 				case s < 0.99:
 					noteText = "zoomed out"
 				}
-				return figure(cx, label(fmt.Sprintf("%.2f", s)), "×", label(noteText), t)
+				return ui.Figure{Value: label(fmt.Sprintf("%.2f", s)), Unit: "×", Note: label(noteText), Tone: t}
 			})}},
-			text("0.5× to 5×", 13, regular, colors.faint),
+			ui.Text("0.5× to 5×", 13, ui.Regular, colors.Faint),
 		}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			// The scroll view takes NoBouncesZoom as it mounts.
@@ -334,11 +313,11 @@ func zoom(cx *core.Scope) core.Node {
 				Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Padding: core.All(6), Gap: 6, Width: core.Pt(332)}, Children: tiles}}}
 		}),
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			cell(button(buttonProps{label: "0.5×", variant: secondary}, zoomTo(0.5))),
-			cell(button(buttonProps{label: "1×"}, zoomTo(1))),
-			cell(button(buttonProps{label: "2×", variant: secondary}, zoomTo(2))),
+			ui.Cell{Child: ui.Button{Text: "0.5×", Variant: ui.ButtonSecondary, OnPress: zoomTo(0.5)}},
+			ui.Cell{Child: ui.Button{Text: "1×", OnPress: zoomTo(1)}},
+			ui.Cell{Child: ui.Button{Text: "2×", Variant: ui.ButtonSecondary, OnPress: zoomTo(2)}},
 		}},
-		switchRow(cx, "Bounces past the limits", "NoBouncesZoom", "", bounces.Get, bounces.Set),
+		ui.SwitchRow{Label: "Bounces past the limits", Code: "NoBouncesZoom", Checked: bounces.Get, OnChange: bounces.Set},
 	}}
 }
 
@@ -346,7 +325,7 @@ type post struct {
 	id    int
 	label string
 	fresh bool
-	tone  tone
+	tone  ui.Tone
 }
 
 // feed is new items arriving at the top while the rows on screen stay
@@ -375,36 +354,36 @@ func feed(cx *core.Scope) core.Node {
 		core.List{TestID: "feed", Count: func() int { return len(posts.Get()) }, Key: func(i int) any { return posts.GetUntracked()[i].id }, EstimatedSize: 48,
 			Style: surfaceBox(cx, 240), StyleFunc: surfaceInk(cx),
 			Row: func(cx *core.Scope, r core.ListRow) core.Node {
-				colors := colorsOf(cx)
+				colors := ui.ColorsOf(cx)
 				p := func() post { return posts.Get()[r.Index()] }
 				return core.View{StyleFunc: func() core.Style {
 					return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Height: core.Pt(48), Padding: core.Symmetric(0, 14),
-						Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.line()}}
+						Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line()}}
 				}, Children: []core.Node{
 					core.View{StyleFunc: func() core.Style {
-						c := colors.raised
+						c := colors.Raised
 						if p().fresh {
-							c = colors.accent
+							c = colors.Accent
 						}
 						return core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4, Background: c()}
 					}},
 					core.Text{ContentFunc: func() string { return p().label }, StyleFunc: func() core.Style {
-						c := colors.muted
+						c := colors.Muted
 						if p().fresh {
-							c = colors.text
+							c = colors.Text
 						}
 						return core.Style{FlexGrow: 1, FontSize: 15, Color: c()}
 					}},
 					core.Dynamic(func(*core.Scope) core.Node {
 						if p().fresh {
-							return badge(cx, "new", toneAccent)
+							return ui.Badge{Text: "new", Tone: ui.ToneAccent}
 						}
-						return text(fmt.Sprintf("#%d", p().id), 13, regular, colors.faint)
+						return ui.Text(fmt.Sprintf("#%d", p().id), 13, ui.Regular, colors.Faint)
 					}),
 				}}
 			}},
-		caption(cx, "Scroll down a little, then add", func() string { return fmt.Sprintf("%d posts", len(posts.Get())) }),
-		button(buttonProps{label: "Add 3 posts on top", icon: iconPlus}, addOnTop),
+		ui.Caption{Label: "Scroll down a little, then add", Note: func() string { return fmt.Sprintf("%d posts", len(posts.Get())) }},
+		ui.Button{Text: "Add 3 posts on top", Icon: ui.IconPlus, OnPress: addOnTop},
 	}}
 }
 
@@ -423,28 +402,30 @@ func scrollingDemo(cx *core.Scope) core.Node {
 	return demoPage(cx, pageProps{still: true, bottom: 16,
 		behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardShouldPersistTaps: taps.Get()} }},
 		func(cx *core.Scope) core.Node {
-			return section(cx, "Edge effects", "Scroll under the bars", api(cx, "EdgeEffects · EdgeBar"), edgeEffects(cx))
+			return ui.Section{Title: "Edge effects", Note: "Scroll under the bars", Children: []core.Node{ui.API{Text: "EdgeEffects · EdgeBar"}, edgeEffects(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return section(cx, "Paging", "5 pages", api(cx, "Behavior.Paging · OffsetValues"), pager(cx))
+			return ui.Section{Title: "Paging", Note: "5 pages", Children: []core.Node{ui.API{Text: "Behavior.Paging · OffsetValues"}, pager(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return section(cx, "Snapping", "20 cards", api(cx, "SnapToInterval · SnapToAlignment"), snapCards(cx))
+			return ui.Section{Title: "Snapping", Note: "20 cards", Children: []core.Node{ui.API{Text: "SnapToInterval · SnapToAlignment"}, snapCards(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return section(cx, "Zoom", hint(cx, "Pinch or tap a tile", "Pinch on a touchpad or click a tile"), api(cx, "MaxZoomScale · Ref.ZoomTo"), zoom(cx))
+			return ui.Section{Title: "Zoom", Note: ui.Hint(cx, "Pinch or tap a tile", "Pinch on a touchpad or click a tile"), Children: []core.Node{ui.API{Text: "MaxZoomScale · Ref.ZoomTo"}, zoom(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
-			return section(cx, "Events and behavior", "", api(cx, "OnScroll · OnScrollDragStart · OnMomentumEnd"), scrollEvents(cx))
+			return ui.Section{Title: "Events and behavior", Children: []core.Node{ui.API{Text: "OnScroll · OnScrollDragStart · OnMomentumEnd"}, scrollEvents(cx)}}
 		},
-		func(cx *core.Scope) core.Node { return section(cx, "Prepending keeps the position", "", feed(cx)) },
 		func(cx *core.Scope) core.Node {
-			colors := colorsOf(cx)
-			fin := finOf(cx)
-			return section(cx, "Taps with the keyboard up", "",
-				api(cx, "KeyboardShouldPersistTaps"),
-				segmented([]option[core.KeyboardTaps]{{value: core.KeyboardTapsNever, label: "never"}, {value: core.KeyboardTapsHandled, label: "handled"},
-					{value: core.KeyboardTapsAlways, label: "always"}}, taps.Get, taps.Set, true),
+			return ui.Section{Title: "Prepending keeps the position", Children: []core.Node{feed(cx)}}
+		},
+		func(cx *core.Scope) core.Node {
+			colors := ui.ColorsOf(cx)
+			fin := ui.FinOf(cx)
+			return ui.Section{Title: "Taps with the keyboard up", Children: []core.Node{
+				ui.API{Text: "KeyboardShouldPersistTaps"},
+				ui.Segmented[core.KeyboardTaps]{Options: []ui.Option[core.KeyboardTaps]{{Value: core.KeyboardTapsNever, Label: "never"}, {Value: core.KeyboardTapsHandled, Label: "handled"},
+					{Value: core.KeyboardTapsAlways, Label: "always"}}, Value: taps.Get, OnChange: taps.Set, Small: true},
 				core.Text{ContentFunc: func() string {
 					switch taps.Get() {
 					case core.KeyboardTapsHandled:
@@ -453,22 +434,23 @@ func scrollingDemo(cx *core.Scope) core.Node {
 						return "Taps never hide the keyboard."
 					}
 					return "A tap outside the input only hides the keyboard; the button does not get it."
-				}, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: colored(colors.muted)},
-				base.Input{Placeholder: hint(cx, "Type here, then tap the button", "Type here, then click the button"),
+				}, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
+				base.Input{Placeholder: ui.Hint(cx, "Type here, then tap the button", "Type here, then click the button"),
 					StyleFunc: func() core.Style {
-						return fin.field().over(core.Style{PlaceholderColor: colors.faint(), SelectionColor: colors.accent(), Height: core.Pt(44), FontSize: 15, Color: colors.text(),
-							Background: colors.field(), BorderWidth: 1, BorderColor: colors.fieldBorder(), CornerRadius: radiusControl, Padding: core.Symmetric(0, 14)})
+						return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(44), FontSize: 15, Color: colors.Text(),
+							Background: colors.Field(), BorderWidth: 1, BorderColor: colors.FieldBorder(), CornerRadius: ui.RadiusControl, Padding: core.Symmetric(0, 14)})
 					}},
-				press(pressProps{onPress: func() { presses.Update(func(n int) int { return n + 1 }) }, label: "Count a tap"},
+				ui.Press{OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }, Label: "Count a tap", Children: []core.Node{
 					core.View{StyleFunc: func() core.Style {
-						return fin.light().over(core.Style{Height: core.Pt(44), CornerRadius: radiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.light(),
+						return fin.Light().Over(core.Style{Height: core.Pt(44), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Light(),
 							Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8})
 					}, Children: []core.Node{
-						text(hint(cx, "Tap me", "Click me"), 15, semibold, colors.onLight),
-						textf(func() string { return itoa(presses.Get()) }, 15, regular, countColor),
-					}}),
+						ui.Text(ui.Hint(cx, "Tap me", "Click me"), 15, ui.Semibold, colors.OnLight),
+						ui.Textf(func() string { return itoa(presses.Get()) }, 15, ui.Regular, countColor),
+					}},
+				}},
 				core.View{Style: core.Style{Height: core.Pt(300)}},
-			)
+			}}
 		},
 	)
 }

@@ -10,6 +10,8 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // fieldProps are a labelled input's: api names the property it shows,
@@ -27,8 +29,8 @@ type fieldProps struct {
 // message in (layout animation) and shakes the field.
 func formField(p fieldProps, in base.Input) core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		fin := finOf(cx)
+		colors := ui.ColorsOf(cx)
+		fin := ui.FinOf(cx)
 		focus := core.NewAnimatedValue(cx, 0)
 		shake := core.NewAnimatedValue(cx, 0)
 		errText := p.err
@@ -59,20 +61,20 @@ func formField(p fieldProps, in base.Input) core.Node {
 		}
 		onFocus, onBlur := in.OnFocus, in.OnBlur
 		in.OnFocus = func() {
-			timing(cx, focus, 1, core.TimingConfig{Duration: 160 * time.Millisecond})
+			ui.Timing(cx, focus, 1, core.TimingConfig{Duration: 160 * time.Millisecond})
 			if onFocus != nil {
 				onFocus()
 			}
 		}
 		in.OnBlur = func() {
-			timing(cx, focus, 0, core.TimingConfig{Duration: 220 * time.Millisecond})
+			ui.Timing(cx, focus, 0, core.TimingConfig{Duration: 220 * time.Millisecond})
 			if onBlur != nil {
 				onBlur()
 			}
 		}
-		fg := colors.text
+		fg := colors.Text
 		if in.Readonly {
-			fg = colors.muted
+			fg = colors.Muted
 		}
 		box := core.Style{Height: core.Pt(46)}
 		if in.Multiline {
@@ -86,7 +88,7 @@ func formField(p fieldProps, in base.Input) core.Node {
 		in.Style = in.Style.Merge(own)
 		// The field's colors, under what the app's own StyleFunc gives.
 		in.StyleFunc = func() core.Style {
-			s := core.Style{Color: fg(), PlaceholderColor: colors.faint(), SelectionColor: colors.accent()}
+			s := core.Style{Color: fg(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent()}
 			if ownColor := own; ownColor.Color != 0 {
 				s.Color = ownColor.Color
 			}
@@ -96,26 +98,26 @@ func formField(p fieldProps, in base.Input) core.Node {
 			return s
 		}
 
-		head := []core.Node{core.Text{Content: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: medium}, StyleFunc: colored(colors.muted)}}
+		head := []core.Node{core.Text{Content: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Muted)}}
 		if p.api != "" {
-			head = append(head, core.Text{Content: p.api, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.faint)})
+			head = append(head, ui.API{Text: p.api})
 		}
 		if p.hint != nil {
-			head = append(head, textf(p.hint, 13, regular, colors.faint))
+			head = append(head, ui.Textf(p.hint, 13, ui.Regular, colors.Faint))
 		}
 		var well []core.Node
 		if p.prefix != "" {
-			well = append(well, core.Text{Content: p.prefix, Style: core.Style{Padding: core.Edges{Left: 14}, FontSize: 15}, StyleFunc: colored(colors.muted)})
+			well = append(well, core.Text{Content: p.prefix, Style: core.Style{Padding: core.Edges{Left: 14}, FontSize: 15}, StyleFunc: ui.Colored(colors.Muted)})
 		}
 		well = append(well, in, core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
-			c := colors.accent
+			c := colors.Accent
 			if errText() != "" {
-				c = colors.danger
+				c = colors.Danger
 			}
 			// Around the field's border: its radius plus the 1 pt it
 			// reaches out.
 			return core.Style{Position: core.Absolute, Top: core.Pt(-1), Left: core.Pt(-1), Right: core.Pt(-1), Bottom: core.Pt(-1),
-				CornerRadius: radiusControl + 1, BorderCurve: core.BorderCurveContinuous, BorderWidth: 2, BorderColor: c(),
+				CornerRadius: ui.RadiusControl + 1, BorderCurve: core.BorderCurveContinuous, BorderWidth: 2, BorderColor: c(),
 				Animated: &core.AnimatedStyle{Opacity: focus}}
 		}})
 		align := core.AlignCenter
@@ -126,25 +128,25 @@ func formField(p fieldProps, in base.Input) core.Node {
 		return core.View{Style: core.Style{Gap: 6, Animated: &core.AnimatedStyle{TranslateX: shake}}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: head},
 			core.View{StyleFunc: func() core.Style {
-				border := colors.fieldBorder
+				border := colors.FieldBorder
 				switch {
 				case errText() != "":
-					border = colors.danger
+					border = colors.Danger
 				case readonly:
-					border = colors.line
+					border = colors.Line
 				}
-				s := core.Style{Direction: core.Row, AlignItems: align, CornerRadius: radiusControl, BorderCurve: core.BorderCurveContinuous,
-					BorderWidth: 1, BorderColor: border(), Background: colors.field()}
+				s := core.Style{Direction: core.Row, AlignItems: align, CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous,
+					BorderWidth: 1, BorderColor: border(), Background: colors.Field()}
 				// Recessed while editable; a read-only field lies flat.
 				if !readonly {
-					s.Shadows = fin.field().shadows
+					s.Shadows = fin.Field().Shadows
 				}
 				return s
 			}, Children: well},
 			core.Show{When: func() bool { return errText() != "" }, Then: func(*core.Scope) core.Node {
 				return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 7}, Children: []core.Node{
-					core.View{Style: core.Style{Width: core.Pt(6), Height: core.Pt(6), CornerRadius: 3}, StyleFunc: filled(colors.danger)},
-					core.Text{ContentFunc: errText, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: colored(colors.danger)},
+					core.View{Style: core.Style{Width: core.Pt(6), Height: core.Pt(6), CornerRadius: 3}, StyleFunc: ui.Filled(colors.Danger)},
+					core.Text{ContentFunc: errText, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Danger)},
 				}}
 			}},
 		}}
@@ -153,19 +155,7 @@ func formField(p fieldProps, in base.Input) core.Node {
 
 // pair is two nodes side by side, equal widths.
 func pair(a, b core.Node) core.Node {
-	return core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{cell(a), cell(b)}}
-}
-
-// linkRowFirst is linkRow with a hairline above all but the first.
-func linkRowFirst(cx *core.Scope, first bool, name iconName, title, noteText string, onPress func()) core.Node {
-	colors := colorsOf(cx)
-	if first {
-		return linkRow(cx, name, title, noteText, onPress)
-	}
-	return core.View{StyleFunc: func() core.Style {
-		return core.Style{Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.line()}}
-	},
-		Children: []core.Node{linkRow(cx, name, title, noteText, onPress)}}
+	return core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{ui.Cell{Child: a}, ui.Cell{Child: b}}}
 }
 
 var emailPattern = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
@@ -199,7 +189,7 @@ func strength(p string) int {
 
 var (
 	strengthLabel = []string{"Empty", "Weak", "Fair", "Good", "Strong"}
-	strengthTone  = []tone{toneNeutral, toneDanger, toneWarn, toneInfo, toneUp}
+	strengthTone  = []ui.Tone{ui.ToneNeutral, ui.ToneDanger, ui.ToneWarn, ui.ToneInfo, ui.ToneUp}
 )
 
 // formDemo is an account form in a scroll view: the focused input stays
@@ -207,13 +197,13 @@ var (
 // dragging the form can hide the keyboard; leaving a field or submitting
 // checks it.
 func formDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	name, email, password := core.NewSignal(cx, ""), core.NewSignal(cx, ""), core.NewSignal(cx, "")
 	code, shout, notes := core.NewSignal(cx, ""), core.NewSignal(cx, ""), core.NewSignal(cx, "")
 	mode := core.NewSignal(cx, core.KeyboardDismissOnDrag)
 	type status struct {
-		t    tone
+		t    ui.Tone
 		text string
 	}
 	result := core.NewSignal(cx, status{})
@@ -270,34 +260,33 @@ func formDemo(cx *core.Scope) core.Node {
 		cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)
 		switch issues {
 		case 0:
-			result.Set(status{toneUp, fmt.Sprintf("Account created for %s <%s>", name.GetUntracked(), email.GetUntracked())})
+			result.Set(status{ui.ToneUp, fmt.Sprintf("Account created for %s <%s>", name.GetUntracked(), email.GetUntracked())})
 		case 1:
-			result.Set(status{toneDanger, "1 field needs attention"})
+			result.Set(status{ui.ToneDanger, "1 field needs attention"})
 		default:
-			result.Set(status{toneDanger, fmt.Sprintf("%d fields need attention", issues)})
+			result.Set(status{ui.ToneDanger, fmt.Sprintf("%d fields need attention", issues)})
 		}
 	}
 
 	keyboard := func(cx *core.Scope) core.Node {
 		modeName := map[core.KeyboardDismissMode]string{core.KeyboardDismissNone: "none", core.KeyboardDismissOnDrag: "on-drag", core.KeyboardDismissInteractive: "interactive"}
-		return card(cx, cardProps{icon: iconForm, title: "Keyboard", subtitle: "KeyboardDismissMode while dragging",
-			right: core.Dynamic(func(*core.Scope) core.Node {
-				h := env.KeyboardHeight()
-				t := toneNeutral
-				if h > 0 {
-					t = toneAccent
-				}
-				return badge(cx, fmt.Sprintf("%d pt", int(h+0.5)), t)
-			})},
-			segmented([]option[core.KeyboardDismissMode]{{value: core.KeyboardDismissNone, label: "None"}, {value: core.KeyboardDismissOnDrag, label: "On drag"},
-				{value: core.KeyboardDismissInteractive, label: "Interactive"}}, mode.Get, mode.Set, false),
-			caption(cx, hint(cx, "Drag the form with the keyboard up", "Desktops have no on-screen keyboard to dismiss"), func() string { return modeName[mode.Get()] }),
-		)
+		return ui.Card{Icon: ui.IconForm, Title: "Keyboard", Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+			h := env.KeyboardHeight()
+			t := ui.ToneNeutral
+			if h > 0 {
+				t = ui.ToneAccent
+			}
+			return ui.Badge{Text: fmt.Sprintf("%d pt", int(h+0.5)), Tone: t}
+		})}, Children: []core.Node{
+			ui.Segmented[core.KeyboardDismissMode]{Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: "None"}, {Value: core.KeyboardDismissOnDrag, Label: "On drag"},
+				{Value: core.KeyboardDismissInteractive, Label: "Interactive"}}, Value: mode.Get, OnChange: mode.Set},
+			ui.Caption{Label: ui.Hint(cx, "Drag the form with the keyboard up", "Desktops have no on-screen keyboard to dismiss"), Note: func() string { return modeName[mode.Get()] }},
+		}}
 	}
 
 	account := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return section(cx, "Account", "AutoComplete",
+		colors := ui.ColorsOf(cx)
+		return ui.Section{Title: "Account", Note: "AutoComplete", Children: []core.Node{
 			formField(fieldProps{label: "Name", next: refs[1], err: nameError},
 				base.Input{Ref: refs[0], Value: name.Get, OnChange: name.Set, OnBlur: touch("name"), AutoCapitalize: core.AutoCapitalizeWords,
 					AutoComplete: core.AutoCompleteName, Placeholder: "Ada Lovelace", TestID: "name"}),
@@ -315,14 +304,14 @@ func formDemo(cx *core.Scope) core.Node {
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 					core.View{Style: fill, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 						s := score()
-						return meter(cx, func() float64 { return float64(s) / 4 }, strengthTone[s], -1)
+						return ui.Meter{Value: func() float64 { return float64(s) / 4 }, Tone: strengthTone[s]}
 					})}},
 					core.Text{ContentFunc: func() string { return strengthLabel[score()] }, StyleFunc: func() core.Style {
-						c := colors.faint()
+						c := colors.Faint()
 						if s := score(); s > 0 {
-							c = strengthTone[s].color(cx)
+							c = strengthTone[s].Color(cx)
 						}
-						return core.Style{Width: core.Pt(52), TextAlign: core.TextAlignEnd, FontSize: 13, FontWeight: medium, Color: c}
+						return core.Style{Width: core.Pt(52), TextAlign: core.TextAlignEnd, FontSize: 13, FontWeight: ui.Medium, Color: c}
 					}},
 				}},
 			}},
@@ -330,11 +319,11 @@ func formDemo(cx *core.Scope) core.Node {
 				base.Input{Ref: refs[3], KeyboardType: core.KeyboardPhone, AutoComplete: core.AutoCompleteTel, Placeholder: "+1 555 0100"}),
 			formField(fieldProps{label: "Website", api: "KeyboardURL", next: refs[5]},
 				base.Input{Ref: refs[4], KeyboardType: core.KeyboardURL, AutoCapitalize: core.AutoCapitalizeNone, NoAutoCorrect: true, Placeholder: "https://"}),
-		)
+		}}
 	}
 
 	numbers := func(cx *core.Scope) core.Node {
-		return section(cx, "Numbers", "KeyboardType",
+		return ui.Section{Title: "Numbers", Note: "KeyboardType", Children: []core.Node{
 			pair(
 				formField(fieldProps{label: "Age", hint: label("3 digits"), next: refs[6]},
 					base.Input{Ref: refs[5], KeyboardType: core.KeyboardNumber, MaxLength: 3, Placeholder: "36"}),
@@ -345,12 +334,12 @@ func formDemo(cx *core.Scope) core.Node {
 				base.Input{IOS: core.IOSInputProps{KeyboardAppearance: core.KeyboardAppearanceDark}, Placeholder: "-12.5"}),
 			formField(fieldProps{label: "Verification code", hint: func() string { return fmt.Sprintf("%d/6", len(code.Get())) }, next: refs[8]},
 				base.Input{Ref: refs[7], TestID: "code", Value: code.Get, OnChange: code.Set, KeyboardType: core.KeyboardNumber, MaxLength: 6, Placeholder: "······",
-					Style: core.Style{LetterSpacing: 10, FontSize: 22, FontWeight: medium, TextAlign: core.TextAlignCenter}}),
-		)
+					Style: core.Style{LetterSpacing: 10, FontSize: 22, FontWeight: ui.Medium, TextAlign: core.TextAlignCenter}}),
+		}}
 	}
 
 	shipping := func(cx *core.Scope) core.Node {
-		return section(cx, "Shipping address", "scrolls into view",
+		return ui.Section{Title: "Shipping address", Note: "scrolls into view", Children: []core.Node{
 			formField(fieldProps{label: "Street", next: refs[9]}, base.Input{Ref: refs[8], AutoComplete: core.AutoCompleteStreetAddress, Placeholder: "12 Analytical Way"}),
 			pair(
 				formField(fieldProps{label: "City", next: refs[10]}, base.Input{Ref: refs[9], AutoComplete: core.AutoCompleteCity, Placeholder: "London"}),
@@ -358,71 +347,71 @@ func formDemo(cx *core.Scope) core.Node {
 					AutoComplete: core.AutoCompletePostalCode, Placeholder: "SW1A 1AA"}),
 			),
 			formField(fieldProps{label: "Country", next: refs[12]}, base.Input{Ref: refs[11], AutoComplete: core.AutoCompleteCountry, Placeholder: "United Kingdom"}),
-		)
+		}}
 	}
 
 	selection := func(cx *core.Scope) core.Node {
-		return section(cx, "Selection and keys", "OnSelectionChange", selectionDemo())
+		return ui.Section{Title: "Selection and keys", Note: "OnSelectionChange", Children: []core.Node{selectionDemo()}}
 	}
 
 	textCard := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return section(cx, "Text", "Input options",
+		colors := ui.ColorsOf(cx)
+		return ui.Section{Title: "Text", Note: "Input options", Children: []core.Node{
 			formField(fieldProps{label: "Controlled", hint: label("Uppercased as you type"), next: refs[13]},
 				base.Input{Ref: refs[12], TestID: "shout", Value: shout.Get, OnChange: func(t string) { shout.Set(strings.ToUpper(t)) }, Placeholder: "TYPE IN LOWER CASE"}),
 			formField(fieldProps{label: "Read only", api: "Readonly"}, base.Input{Value: label("Not editable"), Readonly: true}),
 			formField(fieldProps{label: "Custom colors", api: "PlaceholderColor, SelectionColor", next: refs[14]},
 				base.Input{Ref: refs[13], Placeholder: "A blue placeholder, an amber selection",
-					StyleFunc: func() core.Style { return core.Style{PlaceholderColor: colors.info(), SelectionColor: colors.warn()} }}),
+					StyleFunc: func() core.Style { return core.Style{PlaceholderColor: colors.Info(), SelectionColor: colors.Warn()} }}),
 			core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 				formField(fieldProps{label: "Notes", hint: func() string { return fmt.Sprintf("%d/280", len([]rune(notes.Get()))) }},
 					base.Input{Ref: refs[14], Multiline: true, MaxLength: 280, Value: notes.Get, OnChange: notes.Set, Placeholder: "Return adds a line",
 						Style: core.Style{MinHeight: core.Pt(100)}}),
-				meter(cx, func() float64 { return float64(len([]rune(notes.Get()))) / 280 }, toneAccent, -1),
+				ui.Meter{Value: func() float64 { return float64(len([]rune(notes.Get()))) / 280 }, Tone: ui.ToneAccent},
 			}},
 			autoGrow(),
 			formField(fieldProps{label: "No caret", api: "HideCaret"}, base.Input{HideCaret: true, DefaultValue: "No caret here"}),
-		)
+		}}
 	}
 
 	submitCard := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		tints := tintsOf(cx)
-		return card(cx, cardProps{icon: iconCheck, title: "Create the account", subtitle: "Submitting checks every field",
-			right: core.Dynamic(func(*core.Scope) core.Node {
-				r := result.Get()
-				switch {
-				case r.text == "":
-					return core.Group{}
-				case r.t == toneUp:
-					return badge(cx, "Sent", toneUp)
-				}
-				return badge(cx, "Check", toneDanger)
-			})},
+		colors := ui.ColorsOf(cx)
+		tints := ui.TintsOf(cx)
+		return ui.Card{Icon: ui.IconCheck, Title: "Create the account", Description: "Submitting checks every field", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+			r := result.Get()
+			switch {
+			case r.text == "":
+				return core.Group{}
+			case r.t == ui.ToneUp:
+				return ui.Badge{Text: "Sent", Tone: ui.ToneUp}
+			}
+			return ui.Badge{Text: "Check", Tone: ui.ToneDanger}
+		})}, Children: []core.Node{
 			core.Show{When: func() bool { return result.Get().text != "" }, Then: func(*core.Scope) core.Node {
 				return core.Dynamic(func(*core.Scope) core.Node {
 					r := result.Get()
-					fg, bg, name := colors.danger, tints.danger, iconBell
-					if r.t == toneUp {
-						fg, bg, name = colors.up, tints.up, iconCheck
+					fg, bg, name := colors.Danger, tints.Danger, ui.IconBell
+					if r.t == ui.ToneUp {
+						fg, bg, name = colors.Up, tints.Up, ui.IconCheck
 					}
 					return core.View{TestID: "form-status", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(12),
-						CornerRadius: radiusControl}, StyleFunc: filled(bg), Children: []core.Node{
-						icon(name, 16, fg),
-						core.Text{Content: r.text, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, LineHeight: 19}, StyleFunc: colored(fg)},
+						CornerRadius: ui.RadiusControl}, StyleFunc: ui.Filled(bg), Children: []core.Node{
+						ui.Icon(name, 16, fg),
+						core.Text{Content: r.text, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, LineHeight: 19}, StyleFunc: ui.Colored(fg)},
 					}}
 				})
 			}},
-			pair(button(buttonProps{label: "Submit"}, submit), button(buttonProps{label: "Hide keyboard", variant: secondary}, cx.DismissKeyboard)),
-		)
+			pair(ui.Button{Text: "Submit", OnPress: submit}, ui.Button{Text: "Hide keyboard", Variant: ui.ButtonSecondary, OnPress: cx.DismissKeyboard}),
+		}}
 	}
 
 	more := func(cx *core.Scope) core.Node {
-		return card(cx, cardProps{title: "More keyboards", subtitle: "Sheets and bars that ride on the keyboard", flush: true},
-			inset(cx, insetProps{exact: true},
-				linkRowFirst(cx, true, iconComponents, "Inputs in a sheet", "Presentation: ModalPageSheet", func() { sheetOpen.Set(true) }),
-				linkRowFirst(cx, false, iconText, "A message bar at the bottom", "PaddingEnv: EnvKeyboard", func() { shell.push(messageBar) }),
-			))
+		return ui.Card{Title: "More keyboards", Description: "Sheets and bars that ride on the keyboard", Flush: true, Children: []core.Node{
+			ui.Inset{Exact: true, Children: []core.Node{
+				ui.LinkRow{Icon: ui.IconComponents, Title: "Inputs in a sheet", Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
+				ui.LinkRow{Divided: true, Icon: ui.IconText, Title: "A message bar at the bottom", Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
+			}},
+		}}
 	}
 
 	var fields []core.Node
@@ -431,17 +420,17 @@ func formDemo(cx *core.Scope) core.Node {
 	}
 	dialog := base.Dialog{Open: sheetOpen.Get, Presentation: core.ModalPageSheet, OnOpenChange: func(o bool, _ base.Reason) { sheetOpen.Set(o) },
 		PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch}, Label: "A sheet",
-		Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: filled(colors.background), Children: []core.Node{
+		Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 			core.Scroll{Style: core.Style{FlexGrow: 1}, Behavior: core.ScrollBehavior{KeyboardDismissMode: core.KeyboardDismissInteractive}, Children: []core.Node{
 				core.View{Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, Gap: 16}, Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Edges{Top: 8, Left: 4}}, Children: []core.Node{
 						core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-							core.Text{Content: "A sheet", Style: core.Style{FontSize: 24, FontWeight: bold, LetterSpacing: -0.4}, StyleFunc: colored(colors.text)},
-							text("Its inputs stay above the keyboard too", 13, regular, colors.muted),
+							core.Text{Content: "A sheet", Style: core.Style{FontSize: 24, FontWeight: ui.Bold, LetterSpacing: -0.4}, StyleFunc: ui.Colored(colors.Text)},
+							ui.Text("Its inputs stay above the keyboard too", 13, ui.Regular, colors.Muted),
 						}},
-						button(buttonProps{label: "Done", variant: secondary}, func() { sheetOpen.Set(false) }),
+						ui.Button{Text: "Done", Variant: ui.ButtonSecondary, OnPress: func() { sheetOpen.Set(false) }},
 					}},
-					inset(cx, insetProps{}, fields...),
+					ui.Inset{Children: fields},
 				}},
 			}},
 		}}}}
@@ -474,8 +463,8 @@ type message struct {
 // messageBar is an input pinned to the bottom, outside any scroll view:
 // it rides on the keyboard.
 func messageBar(cx *core.Scope) base.NavPage {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	env := cx.Env()
 	messages := core.NewSignalFunc(cx, []message{
 		{false, "The bar below sits outside the scroll view."},
@@ -490,13 +479,13 @@ func messageBar(cx *core.Scope) base.NavPage {
 		messages.Update(func(m []message) []message { return append(slices.Clone(m), message{true, d}) })
 		draft.Set("")
 	}
-	return screen(cx, "Message bar", nil, core.View{Style: core.Style{FlexGrow: 1, PaddingEnv: core.EnvEdges{Bottom: core.EnvKeyboard}}, StyleFunc: filled(colors.background), Children: []core.Node{
+	return screen(cx, "Message bar", nil, core.View{Style: core.Style{FlexGrow: 1, PaddingEnv: core.EnvEdges{Bottom: core.EnvKeyboard}}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 		core.Scroll{Style: core.Style{FlexGrow: 1}, Behavior: core.ScrollBehavior{KeyboardDismissMode: core.KeyboardDismissInteractive}, Children: []core.Node{
 			core.View{Style: core.Style{Padding: core.All(16), Gap: 8}, Children: []core.Node{
-				core.Text{Content: "Today", Style: core.Style{AlignSelf: core.AlignCenter, FontSize: 12, FontWeight: medium, Padding: core.Edges{Bottom: 8}}, StyleFunc: colored(colors.faint)},
+				core.Text{Content: "Today", Style: core.Style{AlignSelf: core.AlignCenter, FontSize: 12, FontWeight: ui.Medium, Padding: core.Edges{Bottom: 8}}, StyleFunc: ui.Colored(colors.Faint)},
 				core.Each(messages.Get, func(m message) message { return m }, func(cx *core.Scope, m func() message, _ func() int) core.Node {
 					msg := core.Untracked(cx, m)
-					return appear(0, false, bubble(cx, msg))
+					return ui.Appear{Children: []core.Node{bubble(cx, msg)}}
 				}),
 			}},
 		}},
@@ -507,15 +496,15 @@ func messageBar(cx *core.Scope) base.NavPage {
 				bottom += env.SafeArea().Bottom
 			}
 			return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Edges{Top: 8, Right: 16, Bottom: bottom, Left: 16},
-				Background: colors.surface(), Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.border()}}
+				Background: colors.Surface(), Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Border()}}
 		}, Children: []core.Node{
 			base.Input{Value: draft.Get, OnChange: draft.Set, OnSubmit: func(string) { send() }, SubmitBehavior: core.SubmitBehaviorSubmit,
 				Placeholder: "Message", ReturnKeyType: core.ReturnKeySend, TestID: "message",
 				StyleFunc: func() core.Style {
-					return fin.inset().over(core.Style{PlaceholderColor: colors.faint(), SelectionColor: colors.accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44),
-						Padding: core.Symmetric(0, 16), FontSize: 15, Color: colors.text(), Background: colors.inset(), BorderWidth: 1, BorderColor: colors.border(), CornerRadius: 22})
+					return fin.Inset().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44),
+						Padding: core.Symmetric(0, 16), FontSize: 15, Color: colors.Text(), Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 22})
 				}},
-			roundButton(cx, iconArrowUp, "Send", primary, 0, send),
+			ui.RoundButton{Icon: ui.IconArrowUp, Label: "Send", OnPress: send},
 		}},
 	}})
 }
@@ -523,31 +512,31 @@ func messageBar(cx *core.Scope) base.NavPage {
 // bubble is a chat message: orange on the right for mine, raised on the
 // left for theirs.
 func bubble(cx *core.Scope, m message) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
-	fg := colors.text
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
+	fg := colors.Text
 	if m.mine {
-		fg = colors.onAccent
+		fg = colors.OnAccent
 	}
 	return core.View{StyleFunc: func() core.Style {
 		s := core.Style{AlignSelf: core.AlignStart, MaxWidth: core.Pct(80), Padding: core.Symmetric(10, 14), CornerRadii: core.Corners{TopLeft: 18, TopRight: 18, BottomRight: 18, BottomLeft: 6},
-			BorderCurve: core.BorderCurveContinuous, Background: colors.raised()}
+			BorderCurve: core.BorderCurveContinuous, Background: colors.Raised()}
 		if m.mine {
-			s = fin.accent().over(s)
-			s.AlignSelf, s.Background, s.CornerRadii = core.AlignEnd, colors.accentFill(), core.Corners{TopLeft: 18, TopRight: 18, BottomRight: 6, BottomLeft: 18}
+			s = fin.Accent().Over(s)
+			s.AlignSelf, s.Background, s.CornerRadii = core.AlignEnd, colors.AccentFill(), core.Corners{TopLeft: 18, TopRight: 18, BottomRight: 6, BottomLeft: 18}
 		} else {
-			s = fin.raised().over(s)
+			s = fin.Raised().Over(s)
 		}
 		return s
-	}, Children: []core.Node{core.Text{Content: m.text, Style: core.Style{FontSize: 15, LineHeight: 20}, StyleFunc: colored(fg)}}}
+	}, Children: []core.Node{core.Text{Content: m.text, Style: core.Style{FontSize: 15, LineHeight: 20}, StyleFunc: ui.Colored(fg)}}}
 }
 
 // selectionDemo is OnSelectionChange, OnKeyPress, SelectedRange and
 // Ref.SetSelection.
 func selectionDemo() core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		fin := finOf(cx)
+		colors := ui.ColorsOf(cx)
+		fin := ui.FinOf(cx)
 		value := core.NewSignal(cx, "Select part of this text")
 		rng := core.NewSignal(cx, core.TextRange{})
 		keys := core.NewSignalFunc(cx, []string(nil), slices.Equal)
@@ -572,12 +561,12 @@ func selectionDemo() core.Node {
 							return ks[max(0, len(ks)-8):]
 						})
 					}, AutoComplete: core.AutoCompleteOff}),
-			caption(cx, "Selected", func() string { return fmt.Sprintf("%q", selected()) }),
+			ui.Caption{Label: "Selected", Note: func() string { return fmt.Sprintf("%q", selected()) }},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 6, MinHeight: core.Pt(28)}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					ks := keys.Get()
 					if len(ks) == 0 {
-						return text("Keys you press show here", 13, regular, colors.faint)
+						return ui.Text("Keys you press show here", 13, ui.Regular, colors.Faint)
 					}
 					var chips []core.Node
 					for _, k := range ks {
@@ -585,17 +574,17 @@ func selectionDemo() core.Node {
 							k = "␣"
 						}
 						chips = append(chips, core.View{StyleFunc: func() core.Style {
-							return fin.raised().over(core.Style{MinWidth: core.Pt(28), Height: core.Pt(28), Padding: core.Symmetric(0, 8), CornerRadius: 7,
-								AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: colors.raised(), BorderWidth: 1, BorderColor: colors.border()})
+							return fin.Raised().Over(core.Style{MinWidth: core.Pt(28), Height: core.Pt(28), Padding: core.Symmetric(0, 8), CornerRadius: 7,
+								AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border()})
 						},
-							Children: []core.Node{text(k, 13, regular, colors.text)}})
+							Children: []core.Node{ui.Text(k, 13, ui.Regular, colors.Text)}})
 					}
 					return core.Group(chips)
 				}),
 			}},
 			pair(
-				button(buttonProps{label: "Select all"}, func() { sel.Set(core.TextRange{Start: 0, End: core.UTF16Len(value.GetUntracked())}) }),
-				button(buttonProps{label: "Caret to start", variant: secondary}, func() { input.SetSelection(0, 0) }),
+				ui.Button{Text: "Select all", OnPress: func() { sel.Set(core.TextRange{Start: 0, End: core.UTF16Len(value.GetUntracked())}) }},
+				ui.Button{Text: "Caret to start", Variant: ui.ButtonSecondary, OnPress: func() { input.SetSelection(0, 0) }},
 			),
 			formField(fieldProps{label: "One-time code", api: "AutoCompleteOneTimeCode"},
 				base.Input{KeyboardType: core.KeyboardNumber, AutoComplete: core.AutoCompleteOneTimeCode, MaxLength: 6, Placeholder: "123456"}),

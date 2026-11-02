@@ -6,26 +6,28 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // popupStyle is the popups' look: the gallery's, as base draws none.
 func popupStyle(cx *core.Scope) func() core.Style {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	return func() core.Style {
-		return finOf(cx).raised().over(core.Style{Background: colors.raised(), CornerRadius: radiusInset, BorderWidth: 1, BorderColor: colors.border(),
+		return ui.FinOf(cx).Raised().Over(core.Style{Background: colors.Raised(), CornerRadius: ui.RadiusInset, BorderWidth: 1, BorderColor: colors.Border(),
 			Padding: core.All(6), MinWidth: core.Pt(180)})
 	}
 }
 
 // trigger is a pressable chip that opens a popup.
 func trigger(cx *core.Scope, label func() string) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	return core.View{StyleFunc: func() core.Style {
-		return fin.raised().over(core.Style{AlignSelf: core.AlignStart, Padding: core.Symmetric(0, 14), Height: core.Pt(36),
-			JustifyContent: core.JustifyCenter, CornerRadius: radiusControl, Background: colors.raised(), Active: &core.Style{Background: colors.border()}})
+		return fin.Raised().Over(core.Style{AlignSelf: core.AlignStart, Padding: core.Symmetric(0, 14), Height: core.Pt(36),
+			JustifyContent: core.JustifyCenter, CornerRadius: ui.RadiusControl, Background: colors.Raised(), Active: &core.Style{Background: colors.Border()}})
 	},
-		Children: []core.Node{textf(label, 14, medium, colors.text)}}
+		Children: []core.Node{ui.Textf(label, 14, ui.Medium, colors.Text)}}
 }
 
 // placementName is a placement as the demos report it.
@@ -41,12 +43,12 @@ func overlaysDemo(cx *core.Scope) core.Node {
 	last := core.NewSignal(cx, "—")
 
 	primitive := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
+		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
 		anchor := &core.Ref{}
-		return card(cx, cardProps{icon: iconOverlays, title: "Overlay", subtitle: "A box that clips its content, with an overlay anchored inside it", right: badge(cx, "core", toneNeutral)},
-			core.View{Style: core.Style{Height: core.Pt(56), Overflow: core.Hidden, CornerRadius: radiusInset,
-				JustifyContent: core.JustifyCenter, Padding: core.Symmetric(0, 12)}, StyleFunc: filled(colors.inset), Children: []core.Node{
+		return ui.Card{Icon: ui.IconOverlays, Title: "Overlay", Description: "A box that clips its content, with an overlay anchored inside it", Actions: []core.Node{ui.Badge{Text: "core"}}, Children: []core.Node{
+			core.View{Style: core.Style{Height: core.Pt(56), Overflow: core.Hidden, CornerRadius: ui.RadiusInset,
+				JustifyContent: core.JustifyCenter, Padding: core.Symmetric(0, 12)}, StyleFunc: ui.Filled(colors.Inset), Children: []core.Node{
 				core.View{Ref: anchor, OnPress: func(core.PressEvent) { toggled(open) }, Role: core.RoleButton, Style: core.Style{AlignSelf: core.AlignStart},
 					Children: []core.Node{trigger(cx, func() string {
 						if open.Get() {
@@ -60,16 +62,16 @@ func overlaysDemo(cx *core.Scope) core.Node {
 						OnPosition: func(p core.OverlayPosition) { last.Set("overlay at " + placementName(p.Placement)) },
 						StyleFunc:  popupStyle(cx), TestID: "overlay",
 						Children: []core.Node{core.Text{Content: "Outside the clipped box, on top of the page.",
-							Style: core.Style{FontSize: 14, Padding: core.All(6)}, StyleFunc: colored(colors.text)}}}
+							Style: core.Style{FontSize: 14, Padding: core.All(6)}, StyleFunc: ui.Colored(colors.Text)}}}
 				}},
 			}},
-			caption(cx, "Scroll the page: it follows its anchor", nil),
-		)
+			ui.Caption{Label: "Scroll the page: it follows its anchor"},
+		}}
 	}
 
 	popovers := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return card(cx, cardProps{icon: iconOverlays, title: "Popover", subtitle: "Anchored to its trigger on every device"},
+		colors := ui.ColorsOf(cx)
+		return ui.Card{Icon: ui.IconOverlays, Title: "Popover", Description: "Anchored to its trigger on every device", Children: []core.Node{
 			base.Popover{Offset: 6, Margin: 8, PopupStyleFunc: popupStyle(cx), Label: "Show the popover",
 				OnOpenChange: func(open bool, reason base.Reason) {
 					state := "closed"
@@ -80,23 +82,23 @@ func overlaysDemo(cx *core.Scope) core.Node {
 				},
 				Trigger: trigger(cx, func() string { return "Show the popover" }),
 				Children: []core.Node{core.View{Style: core.Style{Padding: core.All(8), Gap: 4, MaxWidth: core.Pt(260)}, Children: []core.Node{
-					text("Popover", 15, semibold, colors.text),
-					text("A press outside, Escape or back closes it.", 13, regular, colors.muted),
+					ui.Text("Popover", 15, ui.Semibold, colors.Text),
+					ui.Text("A press outside, Escape or back closes it.", 13, ui.Regular, colors.Muted),
 				}}}},
-		)
+		}}
 	}
 
 	tooltips := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
+		colors := ui.ColorsOf(cx)
 		hoveredOpen, pinned := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return card(cx, cardProps{icon: iconText, title: "Tooltip", subtitle: hint(cx, "Tooltips follow a pointer: pin one to see it", "Rest the pointer on a button")},
+		return ui.Card{Icon: ui.IconText, Title: "Tooltip", Description: ui.Hint(cx, "Tooltips follow a pointer: pin one to see it", "Rest the pointer on a button"), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
 				// A view's Tooltip: the platform's bubble with the defaults.
 				core.View{Tooltip: core.Text{Content: "Saves the document", StyleFunc: func() core.Style {
-					return core.Style{FontSize: 12, Color: colors.background(),
-						Background: colors.text(), CornerRadius: 6, Padding: core.Symmetric(4, 8)}
+					return core.Style{FontSize: 12, Color: colors.Background(),
+						Background: colors.Text(), CornerRadius: 6, Padding: core.Symmetric(4, 8)}
 				}},
-					Children: []core.Node{button(buttonProps{label: "Save", variant: secondary}, func() { last.Set("pressed Save") })}},
+					Children: []core.Node{ui.Button{Text: "Save", Variant: ui.ButtonSecondary, OnPress: func() { last.Set("pressed Save") }}}},
 				// base.Tooltip: the bubble is the app's, and it reports.
 				base.Tooltip{Open: func() bool { return pinned.Get() || hoveredOpen.Get() },
 					OnOpenChange: func(open bool, reason base.Reason) {
@@ -108,24 +110,24 @@ func overlaysDemo(cx *core.Scope) core.Node {
 						last.Set("tooltip " + state + " (" + reason.String() + ")")
 					},
 					Placement: core.PlaceBottom, Delay: 300e6,
-					PopupStyle: core.Style{CornerRadius: 6, Padding: core.Symmetric(4, 8)}, PopupStyleFunc: filled(colors.text),
+					PopupStyle: core.Style{CornerRadius: 6, Padding: core.Symmetric(4, 8)}, PopupStyleFunc: ui.Filled(colors.Text),
 					Trigger: core.Dynamic(func(*core.Scope) core.Node {
 						label := "Pin the tooltip"
 						if pinned.Get() {
 							label = "Unpin the tooltip"
 						}
-						return button(buttonProps{label: label, variant: secondary}, func() { toggled(pinned) })
+						return ui.Button{Text: label, Variant: ui.ButtonSecondary, OnPress: func() { toggled(pinned) }}
 					}),
-					Children: []core.Node{text("Shown while pinned or hovered", 12, regular, colors.background)}},
+					Children: []core.Node{ui.Text("Shown while pinned or hovered", 12, ui.Regular, colors.Background)}},
 			}},
-		)
+		}}
 	}
 
 	sheets := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
+		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
-		return card(cx, cardProps{icon: iconOverlays, title: "Sheet", subtitle: "A panel at the bottom, over a backdrop"},
-			button(buttonProps{label: "Show the sheet", variant: secondary}, func() { open.Set(true) }),
+		return ui.Card{Icon: ui.IconOverlays, Title: "Sheet", Description: "A panel at the bottom, over a backdrop", Children: []core.Node{
+			ui.Button{Text: "Show the sheet", Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
 			base.Sheet{Open: open.Get, Label: "Sheet",
 				OnOpenChange: func(next bool, reason base.Reason) {
 					open.Set(next)
@@ -136,26 +138,26 @@ func overlaysDemo(cx *core.Scope) core.Node {
 					last.Set("sheet " + state + " (" + reason.String() + ")")
 				},
 				PopupStyle: core.Style{CornerRadii: core.Corners{TopLeft: 20, TopRight: 20},
-					Padding: core.Edges{Top: 12, Right: 12, Bottom: 32, Left: 12}, Gap: 2}, PopupStyleFunc: filled(colors.surface),
-				BackdropStyle: core.Style{Background: black(0.45)},
+					Padding: core.Edges{Top: 12, Right: 12, Bottom: 32, Left: 12}, Gap: 2}, PopupStyleFunc: ui.Filled(colors.Surface),
+				BackdropStyle: core.Style{Background: ui.Black(0.45)},
 				Children: []core.Node{core.View{Style: core.Style{Padding: core.All(12), Gap: 12}, Children: []core.Node{
-					text("Sheet", 17, semibold, colors.text),
-					text("The backdrop, Escape and back close it.", 14, regular, colors.muted),
-					button(buttonProps{label: "Done"}, func() { open.Set(false) }),
+					ui.Text("Sheet", 17, ui.Semibold, colors.Text),
+					ui.Text("The backdrop, Escape and back close it.", 14, ui.Regular, colors.Muted),
+					ui.Button{Text: "Done", OnPress: func() { open.Set(false) }},
 				}}}},
-		)
+		}}
 	}
 
 	toasts := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
+		colors := ui.ColorsOf(cx)
 		count := 0
-		return card(cx, cardProps{icon: iconSystem, title: "Toast", subtitle: "The gallery's toasts, on ToastManager, ToastStack and Toast"},
+		return ui.Card{Icon: ui.IconSystem, Title: "Toast", Description: "The gallery's toasts, on ToastManager, ToastStack and Toast", Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
-				button(buttonProps{label: "Copy the link", variant: secondary}, func() {
+				ui.Button{Text: "Copy the link", Variant: ui.ButtonSecondary, OnPress: func() {
 					count++
 					toast(toastContent{title: "Copied", description: fmt.Sprintf("The link is on the clipboard (%d)", count)})
-				}),
-				button(buttonProps{label: "Delete the draft", variant: secondary}, func() {
+				}},
+				ui.Button{Text: "Delete the draft", Variant: ui.ButtonSecondary, OnPress: func() {
 					toast(toastContent{id: "draft", title: "Draft deleted", action: "Undo", close: "×", duration: 8 * time.Second,
 						done: func(answer string) {
 							if answer == "Undo" {
@@ -164,11 +166,11 @@ func overlaysDemo(cx *core.Scope) core.Node {
 								last.Set("toast: gone")
 							}
 						}})
-				}),
-				button(buttonProps{label: "Dismiss all", variant: secondary}, func() { shell.toasts.dismiss("") }),
+				}},
+				ui.Button{Text: "Dismiss all", Variant: ui.ButtonSecondary, OnPress: func() { shell.toasts.dismiss("") }},
 			}},
-			text("Swipe one away; the pointer on one stops its time", 13, regular, colors.muted),
-		)
+			ui.Text("Swipe one away; the pointer on one stops its time", 13, ui.Regular, colors.Muted),
+		}}
 	}
 
 	return demoPage(cx, pageProps{}, primitive, popovers, tooltips, sheets, toasts, lastEventCard(last))
@@ -177,8 +179,9 @@ func overlaysDemo(cx *core.Scope) core.Node {
 // lastEventCard shows the last thing a demo reported.
 func lastEventCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return card(cx, cardProps{icon: iconSystem, title: "Last event"},
-			core.Text{ContentFunc: last.Get, TestID: "last-event", Style: core.Style{FontSize: 13, FontFamily: mono}, StyleFunc: colored(colors.text)})
+		colors := ui.ColorsOf(cx)
+		return ui.Card{Icon: ui.IconSystem, Title: "Last event", Children: []core.Node{
+			core.Text{ContentFunc: last.Get, TestID: "last-event", Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
+		}}
 	}
 }

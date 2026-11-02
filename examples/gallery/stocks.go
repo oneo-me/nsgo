@@ -7,28 +7,30 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // sectorBar is a sector's mean change as a bar diverging from the middle.
 func sectorBar(cx *core.Scope, lbl string, change func() float64, scale func() float64) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	share := func() float64 { return math.Min(1, math.Abs(change())/scale()) }
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Height: core.Pt(22)}, Children: []core.Node{
-		core.Text{Content: lbl, MaxLines: 1, Style: core.Style{Width: core.Pt(84), FontSize: 13}, StyleFunc: colored(colors.muted)},
+		core.Text{Content: lbl, MaxLines: 1, Style: core.Style{Width: core.Pt(84), FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, AlignItems: core.AlignCenter}, Children: []core.Node{
 			core.View{Style: fill, Children: []core.Node{springBar(func() float64 {
 				if change() < 0 {
 					return share()
 				}
 				return 0
-			}, colors.down, true, 8, 2)}},
-			core.View{Style: core.Style{Width: core.Pt(1), Height: core.Pt(14)}, StyleFunc: filled(colors.border)},
+			}, colors.Down, true, 8, 2)}},
+			core.View{Style: core.Style{Width: core.Pt(1), Height: core.Pt(14)}, StyleFunc: ui.Filled(colors.Border)},
 			core.View{Style: fill, Children: []core.Node{springBar(func() float64 {
 				if change() > 0 {
 					return share()
 				}
 				return 0
-			}, colors.up, false, 8, 2)}},
+			}, colors.Up, false, 8, 2)}},
 		}},
 		core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
 			return core.Style{Width: core.Pt(56), TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
@@ -39,7 +41,7 @@ func sectorBar(cx *core.Scope, lbl string, change func() float64, scale func() f
 // breadthPanel is advancers against decliners across the composite and
 // the sectors' moves: what the strip opens to.
 func breadthPanel(cx *core.Scope, m *market) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	b := m.breadth.Get
 	means := core.NewMemoFunc(cx, func() []float64 {
 		m.pulse.Get()
@@ -73,12 +75,12 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 	return core.View{Style: core.Style{Padding: core.Edges{Right: 16, Bottom: 14, Left: 16}, Gap: 10}, Children: []core.Node{
 		core.View{Style: core.Style{Gap: 6}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Height: core.Pt(6), CornerRadius: 3, Overflow: core.Hidden, Gap: 2}, Children: []core.Node{
-				segment(func() int { return b().up }, colors.up), segment(func() int { return b().flat }, colors.faint), segment(func() int { return b().down }, colors.down),
+				segment(func() int { return b().up }, colors.Up), segment(func() int { return b().flat }, colors.Faint), segment(func() int { return b().down }, colors.Down),
 			}},
 			core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d up", b().up) }, Style: core.Style{FlexGrow: 1, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.up)},
-				tabular(textf(func() string { return fmt.Sprintf("%d flat · %d issues", b().flat, issues) }, 12, regular, colors.faint)),
-				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d down", b().down) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.down)},
+				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d up", b().up) }, Style: core.Style{FlexGrow: 1, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Up)},
+				ui.Tabular(ui.Textf(func() string { return fmt.Sprintf("%d flat · %d issues", b().flat, issues) }, 12, ui.Regular, colors.Faint)),
+				core.Text{ContentFunc: func() string { return fmt.Sprintf("%d down", b().down) }, Style: core.Style{FlexGrow: 1, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Down)},
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 2}, Children: bars},
@@ -89,7 +91,7 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 // composite and its change, the clock and pause. A press opens breadth
 // and sectors with a layout animation; the chevron turns on the platform.
 func marketStrip(cx *core.Scope, m *market) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	opened := core.NewSignal(cx, false)
 	turn := core.NewAnimatedValue(cx, 0)
 	change := func() float64 { return (m.composite.Get() - indexBase) / indexBase * 100 }
@@ -100,20 +102,20 @@ func marketStrip(cx *core.Scope, m *market) core.Node {
 		if opened.GetUntracked() {
 			to = 1
 		}
-		spring(cx, turn, to, settleSpring)
+		ui.Spring(cx, turn, to, ui.SettleSpring)
 	}
 	return core.View{Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16), Height: core.Pt(56)}, Children: []core.Node{
 			core.View{OnPress: func(core.PressEvent) { toggle() }, Role: core.RoleButton, Label: "Breadth", Expanded: opened.Get,
 				Style: core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(56)}, Children: []core.Node{
-					core.Text{Content: "Composite", MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
-					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: semibold, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.text)},
+					core.Text{Content: "Composite", MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: ui.Semibold, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
 					core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
-						return core.Style{FontSize: 13, FontWeight: medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
+						return core.Style{FontSize: 13, FontWeight: ui.Medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 					}},
-					core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: lerp(turn, 90, -90)}}, Children: []core.Node{icon(iconChevron, 12, colors.faint)}},
+					core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 90, -90)}}, Children: []core.Node{ui.Icon(ui.IconChevron, 12, colors.Faint)}},
 				}},
-			tabular(textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, regular, colors.faint)),
+			ui.Tabular(ui.Textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, ui.Regular, colors.Faint)),
 			pauseButton(cx, m),
 		}},
 		core.Show{When: opened.Get, Then: func(cx *core.Scope) core.Node { return breadthPanel(cx, m) }},
@@ -141,10 +143,10 @@ const (
 // dot at the newest point that rings on each change. The y range eases
 // instead of jumping.
 func sparkline(cx *core.Scope, s *stock) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	scale := &calmRange{rate: 0.1}
 	rv := core.NewAnimatedValue(cx, 1)
-	ringRadius, haloAlpha, strokeAlpha := lerp(rv, 3, ring), lerp(rv, 0.35, 0), lerp(rv, 0.9, 0)
+	ringRadius, haloAlpha, strokeAlpha := ui.Lerp(rv, 3, ring), ui.Lerp(rv, 0.35, 0), ui.Lerp(rv, 0.9, 0)
 	seen := core.Untracked(cx, s.quote.Get).changedAt
 	var fired time.Time
 	cx.Effect(func() {
@@ -159,10 +161,10 @@ func sparkline(cx *core.Scope, s *stock) core.Node {
 		}
 		fired = time.Now()
 		rv.Set(0)
-		timing(cx, rv, 1, core.TimingConfig{Duration: ms(700), Easing: easeOutCubic})
+		ui.Timing(cx, rv, 1, core.TimingConfig{Duration: ms(700), Easing: ui.EaseOutCubic})
 	})
 	ys := make([]float64, 0, sparkPoints)
-	muted := colors.muted
+	muted := colors.Muted
 	draw := func(d *core.Drawing, size core.Size) {
 		minutes := s.minutes.Get()
 		q := s.quote.Get()
@@ -212,7 +214,7 @@ func sparkline(cx *core.Scope, s *stock) core.Node {
 		for _, v := range ys {
 			top = min(top, Y(v))
 		}
-		d.SetFillGradient(core.CanvasLinear(0, top, 0, bottom, core.GradientStop{Offset: 0, Color: alpha(tone, 0.22)}, core.GradientStop{Offset: 1, Color: alpha(tone, 0)}))
+		d.SetFillGradient(core.CanvasLinear(0, top, 0, bottom, core.GradientStop{Offset: 0, Color: ui.Alpha(tone, 0.22)}, core.GradientStop{Offset: 1, Color: ui.Alpha(tone, 0)}))
 		d.BeginPath()
 		curve()
 		d.LineTo(X(n-1), bottom).LineTo(X(0), bottom).ClosePath().Fill()
@@ -222,7 +224,7 @@ func sparkline(cx *core.Scope, s *stock) core.Node {
 			SetFillGradient(core.CanvasLinear(left, 0, fadeTo, 0, core.GradientStop{Offset: 0, Color: core.RGBA(0, 1)}, core.GradientStop{Offset: 1, Color: core.RGBA(0, 0)})).
 			FillRect(0, 0, fadeTo, h).SetComposite(core.CompositeSourceOver)
 		// The previous close, dotted.
-		d.SetStrokeColor(alpha(muted(), 0.4)).SetLineWidth(1).SetLineDash(1, 3).BeginPath().MoveTo(left, Y(q.prevClose)).LineTo(right, Y(q.prevClose)).Stroke().SetLineDash()
+		d.SetStrokeColor(ui.Alpha(muted(), 0.4)).SetLineWidth(1).SetLineDash(1, 3).BeginPath().MoveTo(left, Y(q.prevClose)).LineTo(right, Y(q.prevClose)).Stroke().SetLineDash()
 		d.BeginPath()
 		curve()
 		d.SetStrokeColor(tone).SetLineWidth(1.75).SetLineJoin(core.JoinRound).SetLineCap(core.CapRound).Stroke()
@@ -241,7 +243,7 @@ func sparkline(cx *core.Scope, s *stock) core.Node {
 // price and its change. In the desktop layout the row shown beside the
 // list is active, and the others light up under the pointer.
 func stockRow(cx *core.Scope, s *stock, first func() bool, onPress func(), wide bool, active func() bool) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	q := s.quote.Get
 	change := func() float64 { return percentOf(q()) }
 	st := core.Style{Height: core.Pt(64), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16)}
@@ -249,29 +251,29 @@ func stockRow(cx *core.Scope, s *stock, first func() bool, onPress func(), wide 
 		st.Cursor = core.CursorPointer
 	}
 	states := func() core.Style {
-		s := core.Style{Active: &core.Style{Background: colors.surface()}}
+		s := core.Style{Active: &core.Style{Background: colors.Surface()}}
 		if wide {
-			s.Hover, s.Selected = &core.Style{Background: colors.surface()}, &core.Style{Background: colors.pressed()}
+			s.Hover, s.Selected = &core.Style{Background: colors.Surface()}, &core.Style{Background: colors.Pressed()}
 		}
 		return s
 	}
 	return core.View{OnPress: func(core.PressEvent) { onPress() }, Role: core.RoleButton, Label: s.name, Selected: active, TestID: "stock-" + s.code,
 		Style: st, StyleFunc: states, Children: []core.Node{
 			core.Show{When: active, Then: func(*core.Scope) core.Node {
-				return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(14), Bottom: core.Pt(14), Left: core.Pt(0), Width: core.Pt(3), CornerRadius: 1.5}, StyleFunc: filled(colors.accent)}
+				return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(14), Bottom: core.Pt(14), Left: core.Pt(0), Width: core.Pt(3), CornerRadius: 1.5}, StyleFunc: ui.Filled(colors.Accent)}
 			}},
 			core.Show{When: func() bool { return !first() }, Then: func(*core.Scope) core.Node {
-				return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(16), Right: core.Pt(0), Height: core.Pt(1)}, StyleFunc: filled(colors.line)}
+				return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(16), Right: core.Pt(0), Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
 			}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 3}, Children: []core.Node{
-				core.Text{Content: s.code, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: semibold}, StyleFunc: colored(colors.text)},
-				core.Text{Content: s.name, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
+				core.Text{Content: s.code, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: s.name, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
 			sparkline(cx, s),
 			core.View{Style: core.Style{Width: core.Pt(84), AlignItems: core.AlignEnd, Gap: 3}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return priceText(q().last, s) }, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: semibold, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.text)},
+				core.Text{ContentFunc: func() string { return priceText(q().last, s) }, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: ui.Semibold, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, MaxLines: 1, StyleFunc: func() core.Style {
-					return core.Style{FontSize: 13, FontWeight: medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
+					return core.Style{FontSize: 13, FontWeight: ui.Medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 				}},
 			}},
 		}}
@@ -286,7 +288,7 @@ const watchlistWidth = 380
 // layout animation. A stock opens its details, pushed on phones, beside
 // the list on desktops; leaving the demo stops the market.
 func stocksDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	wide := shell.desktop()
 	m := newMarket(cx)
 	m.start()
@@ -348,17 +350,17 @@ func stocksDemo(cx *core.Scope) core.Node {
 	})
 	// Stable options, so the segments stay mounted; the counts follow the
 	// once-a-second counts.
-	options := []option[string]{
-		{value: "all", label: "All", count: func() int { return len(m.stocks) }},
-		{value: "gainers", label: "Gainers", count: func() int { return counts.Get()[0] }},
-		{value: "losers", label: "Losers", count: func() int { return counts.Get()[1] }},
-		{value: "active", label: "Active"},
+	options := []ui.Option[string]{
+		{Value: "all", Label: "All", Count: func() int { return len(m.stocks) }},
+		{Value: "gainers", Label: "Gainers", Count: func() int { return counts.Get()[0] }},
+		{Value: "losers", Label: "Losers", Count: func() int { return counts.Get()[1] }},
+		{Value: "active", Label: "Active"},
 	}
 	// Desktop: the stock beside the list.
 	shown := core.NewSignal(cx, m.stocks[0])
-	watchlist := core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.background()}) }, Children: []core.Node{
+	watchlist := core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{
 		marketStrip(cx, m),
-		core.View{Style: core.Style{Padding: core.Edges{Right: 16, Bottom: 6, Left: 16}}, Children: []core.Node{segmented(options, filter.Get, filter.Set, true)}},
+		core.View{Style: core.Style{Padding: core.Edges{Right: 16, Bottom: 6, Left: 16}}, Children: []core.Node{ui.Segmented[string]{Options: options, Value: filter.Get, OnChange: filter.Set, Small: true}}},
 		core.Scroll{Style: core.Style{FlexGrow: 1}, TestID: "watchlist", Children: []core.Node{
 			core.View{Children: []core.Node{
 				core.Each(rows.Get, func(s *stock) string { return s.code }, func(cx *core.Scope, s func() *stock, i func() int) core.Node {
@@ -372,13 +374,13 @@ func stocksDemo(cx *core.Scope) core.Node {
 					}, wide, func() bool { return wide && shown.Get() == st })
 				}),
 				core.Show{When: func() bool { return len(rows.Get()) == 0 }, Then: func(*core.Scope) core.Node {
-					return core.Text{Content: "Nothing here right now", Style: core.Style{Padding: core.Symmetric(32, 0), TextAlign: core.TextAlignCenter, FontSize: 14}, StyleFunc: colored(colors.muted)}
+					return core.Text{Content: "Nothing here right now", Style: core.Style{Padding: core.Symmetric(32, 0), TextAlign: core.TextAlignCenter, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)}
 				}},
 			}},
 			core.Text{ContentFunc: func() string {
 				st := m.stats.Get()
 				return fmt.Sprintf("Simulated, fictional companies · tick 50 ms · %.2f ms engine/tick · %.0f quotes/s", st[0], st[1])
-			}, Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, FontSize: 12, LineHeight: 17, FontVariant: core.FontTabularNums}, StyleFunc: colored(colors.faint)},
+			}, Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, FontSize: 12, LineHeight: 17, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 	}}
 	if !wide {
@@ -388,10 +390,10 @@ func stocksDemo(cx *core.Scope) core.Node {
 	// room.
 	split := core.NewMemo(cx, func() bool { return shell.paneWidth()-watchlistWidth >= 860 })
 	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Direction: core.Row, Background: colors.background()})
+		return fillPage.Merge(core.Style{Direction: core.Row, Background: colors.Background()})
 	}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
-			return core.Style{Width: core.Pt(watchlistWidth), Borders: core.Edges{Right: 1}, BorderColors: core.EdgeColors{Right: colors.line()}}
+			return core.Style{Width: core.Pt(watchlistWidth), Borders: core.Edges{Right: 1}, BorderColors: core.EdgeColors{Right: colors.Line()}}
 		}, Children: []core.Node{watchlist}},
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)}, Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
 			st := shown.Get()

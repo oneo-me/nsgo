@@ -7,6 +7,8 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // The ready-made motions, a staggered entrance, keyframes and an aurora:
@@ -20,8 +22,8 @@ var motionKinds = []struct {
 // presetTile is one preset on a little card of its own: a tap plays it.
 // Exits come back after a moment; loops play until tapped again.
 func presetTile(cx *core.Scope, p core.MotionPreset, tone func() core.Color, onPlay func(string)) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	m := core.NewMotion(cx, nil)
 	looping := core.NewSignal(cx, false)
 	var run *core.AnimationRun
@@ -63,24 +65,24 @@ func presetTile(cx *core.Scope, p core.MotionPreset, tone func() core.Color, onP
 	return base.Button{OnPress: func(core.PressEvent) { press() }, Label: p.Name(),
 		Style: core.Style{FlexBasis: core.Pct(30), FlexGrow: 1, CornerRadius: 14, Active: &core.Style{Transform: core.Transform{Scale: 0.97}}},
 		Children: []core.Node{core.View{StyleFunc: func() core.Style {
-			border := colors.border()
+			border := colors.Border()
 			if looping.Get() {
 				border = tone()
 			}
-			return fin.raised().over(core.Style{Height: core.Pt(92), CornerRadius: 14, BorderCurve: core.BorderCurveContinuous, AlignItems: core.AlignCenter,
-				JustifyContent: core.JustifyCenter, Gap: 12, Background: colors.raised(), BorderWidth: 1, BorderColor: border})
+			return fin.Raised().Over(core.Style{Height: core.Pt(92), CornerRadius: 14, BorderCurve: core.BorderCurveContinuous, AlignItems: core.AlignCenter,
+				JustifyContent: core.JustifyCenter, Gap: 12, Background: colors.Raised(), BorderWidth: 1, BorderColor: border})
 		}, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
-				return fin.knob().over(core.Style{Width: core.Pt(32), Height: core.Pt(32), CornerRadius: 9, BorderCurve: core.BorderCurveContinuous,
+				return fin.Knob().Over(core.Style{Width: core.Pt(32), Height: core.Pt(32), CornerRadius: 9, BorderCurve: core.BorderCurveContinuous,
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: tone(), Perspective: 300, Animated: m.Style()})
 			},
-				Children: []core.Node{core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 5, Opacity: core.Alpha(0.85)}, StyleFunc: filled(onTone(cx))}}},
+				Children: []core.Node{core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 5, Opacity: core.Alpha(0.85)}, StyleFunc: ui.Filled(onTone(cx))}}},
 			core.Text{Content: p.Name(), MaxLines: 1, StyleFunc: func() core.Style {
-				c := colors.muted()
+				c := colors.Muted()
 				if looping.Get() {
-					c = colors.text()
+					c = colors.Text()
 				}
-				return core.Style{FontSize: 12, FontFamily: mono, Color: c}
+				return core.Style{FontSize: 12, FontFamily: ui.Mono, Color: c}
 			}},
 		}}}}
 }
@@ -109,8 +111,7 @@ func motionPresets(cx *core.Scope) core.Node {
 			status.Set("tap a tile")
 		}))
 	}
-	return card(cx, cardProps{icon: iconSpark, title: "Motion presets", subtitle: fmt.Sprintf("%d ready-made motions, played natively", len(core.MotionPresets())),
-		right: badgef(cx, status.Get, toneAccent, false)},
+	return ui.Card{Icon: ui.IconSpark, Title: "Motion presets", Description: fmt.Sprintf("%d ready-made motions, played natively", len(core.MotionPresets())), Actions: []core.Node{ui.Badge{TextFunc: status.Get, Tone: ui.ToneAccent}}, Children: []core.Node{
 		core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
 			base.Tabs{Label: "Kinds", Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
@@ -124,10 +125,10 @@ func motionPresets(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: tiles}
 		}),
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			apiLine(cx, "Channels for a view", "NewMotion"),
-			apiLine(cx, "A preset", "Motion.Play(Shake.Spec())"),
+			ui.APILine{Label: "Channels for a view", Names: "NewMotion"},
+			ui.APILine{Label: "A preset", Names: "Motion.Play(Shake.Spec())"},
 		}},
-	)
+	}}
 }
 
 var staggerBars = []float32{0.5, 0.78, 0.42, 1, 0.62, 0.88, 0.55}
@@ -153,10 +154,10 @@ func staggerBar(cx *core.Scope, height float32, tone func() core.Color, delay in
 	capSpec.Timing.Delay = ms(delay + 220)
 	bar, capm := core.NewMotion(cx, &barSpec), core.NewMotion(cx, &capSpec)
 	return core.View{Style: core.Style{FlexGrow: 1, Height: core.Pct(100), JustifyContent: core.JustifyEnd, AlignItems: core.AlignCenter, Gap: 6}, Children: []core.Node{
-		core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 5, Animated: capm.Style()}, StyleFunc: filled(tone)},
+		core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 5, Animated: capm.Style()}, StyleFunc: ui.Filled(tone)},
 		core.View{Style: core.Style{AlignSelf: core.AlignStretch, Height: core.Pct(height * 78), CornerRadius: 10, BorderCurve: core.BorderCurveContinuous,
 			Animated: bar.Style()}, StyleFunc: func() core.Style {
-			return core.Style{Gradients: []core.Gradient{core.LinearGradient(180, tone(), alpha(tone(), 0.35))}}
+			return core.Style{Gradients: []core.Gradient{core.LinearGradient(180, tone(), ui.Alpha(tone(), 0.35))}}
 		}},
 	}}
 }
@@ -170,8 +171,7 @@ func staggeredEntrance(cx *core.Scope) core.Node {
 		from.Set(origin)
 		wave.Update(func(w int) int { return w + 1 })
 	}
-	return card(cx, cardProps{icon: iconLists, title: "Staggered entrance", subtitle: "NewMotion(enter with a delay) per item", right: badge(cx, "70 ms apart", toneNeutral)},
-		// A new wave makes new items: each enters with a motion of its own.
+	return ui.Card{Icon: ui.IconLists, Title: "Staggered entrance", Description: "NewMotion(enter with a delay) per item", Actions: []core.Node{ui.Badge{Text: "70 ms apart"}}, Children: []core.Node{
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			wave.Get()
 			origin := from.Get()
@@ -187,8 +187,8 @@ func staggeredEntrance(cx *core.Scope) core.Node {
 			chipTab(cx, "Center", func() bool { return from.Get() == 1 }, func() { replay(1) }),
 			chipTab(cx, "Last", func() bool { return from.Get() == 2 }, func() { replay(2) }),
 		}},
-		button(buttonProps{label: "Replay", variant: secondary, icon: iconPlay}, func() { replay(from.GetUntracked()) }),
-	)
+		ui.Button{Text: "Replay", Variant: ui.ButtonSecondary, Icon: ui.IconPlay, OnPress: func() { replay(from.GetUntracked()) }},
+	}}
 }
 
 const (
@@ -208,9 +208,9 @@ func shadowAt(k int) core.Points {
 // keyframesMotions is sprites and ticks with steps, and a like made of
 // chained motions.
 func keyframesMotions(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	tints := tintsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	tints := ui.TintsOf(cx)
+	fin := ui.FinOf(cx)
 	sprite, tick := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
 	cx.StartAnimation(core.Parallel(
 		core.ValueKeyframes(sprite, core.KeyframeTiming{Duration: ms(1600), Easing: core.StepsEasing(phases, core.JumpEnd), Iterations: core.Forever},
@@ -257,14 +257,14 @@ func keyframesMotions(cx *core.Scope) core.Node {
 		cx.StartAnimation(core.ValueKeyframes(charge, core.KeyframeTiming{Duration: ms(1500), Easing: core.StepsEasing(5, core.JumpEnd)}, core.Stops(0, 1)...), nil)
 	}
 	caption := func(s string) core.Node {
-		return core.Text{Content: s, Style: core.Style{FontSize: 11, FontFamily: mono}, StyleFunc: colored(colors.faint)}
+		return core.Text{Content: s, Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)}
 	}
 
 	var frames []core.Node
 	for k := range phases {
-		frames = append(frames, core.View{Style: core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, Overflow: core.Hidden}, StyleFunc: filled(colors.warn),
+		frames = append(frames, core.View{Style: core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, Overflow: core.Hidden}, StyleFunc: ui.Filled(colors.Warn),
 			Children: []core.Node{core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(shadowAt(k)), Top: core.Pt(0), Width: core.Pt(moon), Height: core.Pt(moon),
-				CornerRadius: moon / 2}, StyleFunc: filled(colors.raised)}}})
+				CornerRadius: moon / 2}, StyleFunc: ui.Filled(colors.Raised)}}})
 	}
 	dial := []core.Node{}
 	for k := range 12 {
@@ -275,34 +275,34 @@ func keyframesMotions(cx *core.Scope) core.Node {
 		dial = append(dial, core.View{PointerEvents: core.PointerEventsNone,
 			Style: core.Style{Position: core.Absolute, Left: core.Pt(moon/2 - 2.25), Top: core.Pt(2), Width: core.Pt(1.5), Height: core.Pt(moon - 7),
 				Transform: core.Transform{Rotate: float32(k * 30)}},
-			Children: []core.Node{core.View{Style: core.Style{Height: core.Pt(mark)}, StyleFunc: filled(colors.faint)}}})
+			Children: []core.Node{core.View{Style: core.Style{Height: core.Pt(mark)}, StyleFunc: ui.Filled(colors.Faint)}}})
 	}
 	dial = append(dial, core.View{PointerEvents: core.PointerEventsNone,
 		Style: core.Style{Position: core.Absolute, Left: core.Pt(moon/2 - 2.75), Top: core.Pt(7), Width: core.Pt(2.5), Height: core.Pt(moon - 17),
 			Animated: &core.AnimatedStyle{Rotate: tick}},
-		Children: []core.Node{core.View{Style: core.Style{Height: core.Pt((moon - 17) / 2), CornerRadius: 1.25}, StyleFunc: filled(colors.accent)}}})
+		Children: []core.Node{core.View{Style: core.Style{Height: core.Pt((moon - 17) / 2), CornerRadius: 1.25}, StyleFunc: ui.Filled(colors.Accent)}}})
 	var segments []core.Node
 	for k := range 5 {
 		s := core.Style{FlexGrow: 1}
 		var sf func() core.Style
 		if k > 0 {
 			s.Borders = core.Edges{Left: 2}
-			sf = func() core.Style { return core.Style{BorderColors: core.EdgeColors{Left: colors.surface()}} }
+			sf = func() core.Style { return core.Style{BorderColors: core.EdgeColors{Left: colors.Surface()}} }
 		}
 		segments = append(segments, core.View{Style: s, StyleFunc: sf})
 	}
 
-	return card(cx, cardProps{icon: iconAnimation, title: "Keyframes", subtitle: "Steps, keyframes with easings of their own, chained motions"},
+	return ui.Card{Icon: ui.IconAnimation, Title: "Keyframes", Description: "Steps, keyframes with easings of their own, chained motions", Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, JustifyContent: core.JustifySpaceAround}, Children: []core.Node{
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-				core.View{Style: core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, Overflow: core.Hidden}, StyleFunc: filled(colors.raised), Children: []core.Node{
+				core.View{Style: core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, Overflow: core.Hidden}, StyleFunc: ui.Filled(colors.Raised), Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row, Width: core.Pt(moon * phases), Animated: &core.AnimatedStyle{TranslateX: sprite}}, Children: frames},
 				}},
 				caption("steps(8)"),
 			}},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
-					return core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, BorderWidth: 1.5, BorderColor: colors.border(), Background: colors.raised()}
+					return core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, BorderWidth: 1.5, BorderColor: colors.Border(), Background: colors.Raised()}
 				},
 					Children: dial},
 				caption("steps(12)"),
@@ -310,53 +310,53 @@ func keyframesMotions(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 				base.Button{OnPress: func(core.PressEvent) { like() }, Label: "Like", Selected: liked.Get, Style: core.Style{CornerRadius: moon / 2}, Children: []core.Node{
 					core.View{StyleFunc: func() core.Style {
-						bg, border := colors.raised(), colors.border()
+						bg, border := colors.Raised(), colors.Border()
 						if liked.Get() {
-							bg, border = tints.warn(), colors.warn()
+							bg, border = tints.Warn(), colors.Warn()
 						}
 						return core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 							Background: bg, BorderWidth: 1, BorderColor: border}
 					}, Children: []core.Node{
-						core.View{Style: core.Style{Animated: heart.Style()}, Children: []core.Node{icon(iconStar, 24, func() core.Color {
+						core.View{Style: core.Style{Animated: heart.Style()}, Children: []core.Node{ui.Icon(ui.IconStar, 24, func() core.Color {
 							if liked.Get() {
-								return colors.warn()
+								return colors.Warn()
 							}
-							return colors.muted()
+							return colors.Muted()
 						})}},
 					}},
 				}},
 				core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(-4), Right: core.Pt(-10), Animated: bubble.Style()},
-					Children: []core.Node{text("+1", 13, bold, colors.warn)}},
+					Children: []core.Node{ui.Text("+1", 13, ui.Bold, colors.Warn)}},
 				core.Text{ContentFunc: func() string { return strconv.Itoa(count.Get()) + " likes" },
-					Style: core.Style{FontSize: 11, FontFamily: mono}, StyleFunc: colored(colors.faint)},
+					Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 			}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 			core.View{OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) },
 				StyleFunc: func() core.Style {
-					return core.Style{FlexGrow: 1, Height: core.Pt(22), CornerRadius: 7, Overflow: core.Hidden, Background: colors.background(), Shadows: fin.track().shadows}
+					return core.Style{FlexGrow: 1, Height: core.Pt(22), CornerRadius: 7, Overflow: core.Hidden, Background: colors.Background(), Shadows: fin.Track().Shadows}
 				},
 				Children: []core.Node{
 					core.Dynamic(func(*core.Scope) core.Node {
 						w := float64(width.Get())
 						return core.View{StyleFunc: func() core.Style {
 							return core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0), Width: core.Pt(core.Points(w)),
-								Gradients: []core.Gradient{core.LinearGradient(90, colors.up(), colors.accent())},
+								Gradients: []core.Gradient{core.LinearGradient(90, colors.Up(), colors.Accent())},
 								Animated:  &core.AnimatedStyle{TranslateX: core.Add(core.Mul(charge, core.Constant(w)), core.Constant(-w))}}
 						}}
 					}),
 					core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0),
 						Direction: core.Row}, Children: segments},
 				}},
-			button(buttonProps{label: "Charge", small: true, variant: secondary}, charging),
+			ui.Button{Text: "Charge", Small: true, Variant: ui.ButtonSecondary, OnPress: charging},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			apiLine(cx, "A sprite sheet, frame by frame", "StepsEasing(8)"),
-			apiLine(cx, "+1: three stops, one with its easing", "StopAt(…).Eased(…)"),
-			apiLine(cx, "Like: pop in, then a heartbeat", "Play(…, done)"),
-			apiLine(cx, "Charge in five jumps", "ValueKeyframes"),
+			ui.APILine{Label: "A sprite sheet, frame by frame", Names: "StepsEasing(8)"},
+			ui.APILine{Label: "+1: three stops, one with its easing", Names: "StopAt(…).Eased(…)"},
+			ui.APILine{Label: "Like: pop in, then a heartbeat", Names: "Play(…, done)"},
+			ui.APILine{Label: "Charge in five jumps", Names: "ValueKeyframes"},
 		}},
-	)
+	}}
 }
 
 // auroraBlob is where a blob rests, its colors in each appearance and the
@@ -403,7 +403,7 @@ func aurora(cx *core.Scope) core.Node {
 					c, blend = core.RGB(b.dark), core.BlendScreen
 				}
 				g := core.Gradient{Kind: core.GradientRadial, Circle: true, Stops: []core.ColorStop{
-					{Color: alpha(c, 0.9), At: core.Pct(0)}, {Color: alpha(c, 0.5), At: core.Pct(40)}, {Color: alpha(c, 0), At: core.Pct(70)}}}
+					{Color: ui.Alpha(c, 0.9), At: core.Pct(0)}, {Color: ui.Alpha(c, 0.5), At: core.Pct(40)}, {Color: ui.Alpha(c, 0), At: core.Pct(70)}}}
 				return core.Style{Gradients: []core.Gradient{g}, BlendMode: blend}
 			}})
 	}
@@ -411,23 +411,24 @@ func aurora(cx *core.Scope) core.Node {
 		Padding: core.All(20), JustifyContent: core.JustifyEnd, Gap: 6}, Children: []core.Node{
 		core.View{Style: core.Style{AlignSelf: core.AlignStart, Padding: core.Symmetric(0, 10), Height: core.Pt(24), CornerRadius: 12, JustifyContent: core.JustifyCenter,
 			BorderWidth: 1}, StyleFunc: func() core.Style {
-			glass := alpha(core.RGB(0xffffff), 0.55)
+			glass := ui.Alpha(core.RGB(0xffffff), 0.55)
 			if cx.Dark() {
-				glass = alpha(core.RGB(0xffffff), 0.12)
+				glass = ui.Alpha(core.RGB(0xffffff), 0.12)
 			}
-			return core.Style{Background: glass, BorderColor: alpha(ink(), 0.12)}
+			return core.Style{Background: glass, BorderColor: ui.Alpha(ink(), 0.12)}
 		}, Children: []core.Node{
-			core.Text{Content: "4 × NewMotion", Style: core.Style{FontSize: 11, FontFamily: mono}, StyleFunc: colored(ink)}}},
-		core.Text{Content: "Aurora", Style: core.Style{FontSize: 34, FontWeight: bold, LetterSpacing: -0.8}, StyleFunc: colored(ink)},
+			core.Text{Content: "4 × NewMotion", Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(ink)}}},
+		core.Text{Content: "Aurora", Style: core.Style{FontSize: 34, FontWeight: ui.Bold, LetterSpacing: -0.8}, StyleFunc: ui.Colored(ink)},
 		core.Text{Content: "Each light drifts on its own loop, there and back", Style: core.Style{FontSize: 14},
-			StyleFunc: colored(func() core.Color { return alpha(ink(), 0.7) })},
+			StyleFunc: ui.Colored(func() core.Color { return ui.Alpha(ink(), 0.7) })},
 	}})
-	return card(cx, cardProps{icon: iconStyles, title: "Aurora", subtitle: "Blurred gradients on looping motions", flush: true},
-		core.View{Style: core.Style{Height: core.Pt(260), CornerRadius: radiusInset, BorderCurve: core.BorderCurveContinuous, Overflow: core.Hidden},
+	return ui.Card{Icon: ui.IconStyles, Title: "Aurora", Description: "Blurred gradients on looping motions", Flush: true, Children: []core.Node{
+		core.View{Style: core.Style{Height: core.Pt(260), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous, Overflow: core.Hidden},
 			StyleFunc: func() core.Style {
 				if cx.Dark() {
 					return core.Style{Background: core.RGB(0x0a0716)}
 				}
 				return core.Style{Background: core.RGB(0xfff8f3)}
-			}, Children: blobs})
+			}, Children: blobs},
+	}}
 }

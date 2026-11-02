@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 const (
@@ -31,7 +33,7 @@ type collapsingRow struct {
 // below the bar; only the rows near the screen exist, and the footer
 // after it lies past its full length.
 func collapsingDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	var rows []collapsingRow
 	var weeks []int
 	for week := 1; week <= 20; week++ {
@@ -56,10 +58,10 @@ func collapsingDemo(cx *core.Scope) core.Node {
 		} else {
 			s.Left = core.Pt(left)
 		}
-		return core.View{Style: s, StyleFunc: filled(colors.onAccent)}
+		return core.View{Style: s, StyleFunc: ui.Filled(colors.OnAccent)}
 	}
 	header := core.View{TestID: "header", Style: core.Style{Position: core.Sticky, Top: core.Pt(-collapsingRange), Height: core.Pt(collapsingOpen),
-		Overflow: core.Hidden}, StyleFunc: filled(colors.accentFill), Children: []core.Node{
+		Overflow: core.Hidden}, StyleFunc: ui.Filled(colors.AccentFill), Children: []core.Node{
 		core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Height: core.Pt(collapsingOpen),
 			TransformOrigin: core.ObjectPosition{X: core.PositionCenter, Y: core.PositionEnd},
 			Animated: &core.AnimatedStyle{
@@ -69,47 +71,47 @@ func collapsingDemo(cx *core.Scope) core.Node {
 			fill(24, 36, 120, false, 0.14),
 			fill(70, 48, 72, true, 0.1),
 		}},
-		core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Animated: &core.AnimatedStyle{Opacity: collapsed}}, StyleFunc: filled(colors.accentFill)},
+		core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Animated: &core.AnimatedStyle{Opacity: collapsed}}, StyleFunc: ui.Filled(colors.AccentFill)},
 		// Shown while open, above the bar's strip: it fades as the header
 		// collapses.
-		core.Text{Content: "160 entries, by week", Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Bottom: core.Pt(collapsingBar - 4), FontSize: 15, Animated: &core.AnimatedStyle{Opacity: lerp(collapsed, [2]float64{0, 0.5}, [2]float64{0.8, 0})}}, StyleFunc: colored(colors.onAccent)},
+		core.Text{Content: "160 entries, by week", Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Bottom: core.Pt(collapsingBar - 4), FontSize: 15, Animated: &core.AnimatedStyle{Opacity: lerp(collapsed, [2]float64{0, 0.5}, [2]float64{0.8, 0})}}, StyleFunc: ui.Colored(colors.OnAccent)},
 		// The title, centered in the header's last bar's height: the bar it
 		// collapses to. It shrinks to the bar's size around its left edge.
 		core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(0), Height: core.Pt(collapsingBar),
 			JustifyContent: core.JustifyCenter}, Children: []core.Node{
-			core.Text{Content: "Recent", Style: core.Style{AlignSelf: core.AlignStart, FontSize: 30, FontWeight: bold,
+			core.Text{Content: "Recent", Style: core.Style{AlignSelf: core.AlignStart, FontSize: 30, FontWeight: ui.Bold,
 				TransformOrigin: core.ObjectPosition{X: core.PositionStart, Y: core.PositionCenter},
-				Animated:        &core.AnimatedStyle{Scale: lerp(collapsed, [2]float64{0, 1}, [2]float64{1, 0.62})}}, StyleFunc: colored(colors.onAccent)},
+				Animated:        &core.AnimatedStyle{Scale: lerp(collapsed, [2]float64{0, 1}, [2]float64{1, 0.62})}}, StyleFunc: ui.Colored(colors.OnAccent)},
 		}},
 	}}
 	list := core.List{Viewport: core.ListViewportParent, Count: func() int { return len(rows) }, EstimatedSize: 52,
 		StickyHeaderIndices: weeks, StickyHeaderOffset: collapsingBar,
 		Row: func(cx *core.Scope, r core.ListRow) core.Node {
-			colors := colorsOf(cx)
+			colors := ui.ColorsOf(cx)
 			row := func() collapsingRow { return rows[r.Index()] }
 			// A cell shows a heading now and an entry later: Show switches
 			// with the row it shows.
 			return core.Show{When: func() bool { return row().week > 0 },
 				Then: func(*core.Scope) core.Node {
-					return core.View{Style: core.Style{Height: core.Pt(34), JustifyContent: core.JustifyCenter, Padding: core.Symmetric(0, 16)}, StyleFunc: filled(colors.inset),
-						Children: []core.Node{textf(func() string { return fmt.Sprintf("Week %d", row().week) }, 13, bold, colors.accent)}}
+					return core.View{Style: core.Style{Height: core.Pt(34), JustifyContent: core.JustifyCenter, Padding: core.Symmetric(0, 16)}, StyleFunc: ui.Filled(colors.Inset),
+						Children: []core.Node{ui.Textf(func() string { return fmt.Sprintf("Week %d", row().week) }, 13, ui.Bold, colors.Accent)}}
 				},
 				Else: func(*core.Scope) core.Node {
 					return core.View{StyleFunc: func() core.Style {
 						return core.Style{Height: core.Pt(52), Direction: core.Row, AlignItems: core.AlignCenter, Padding: core.Symmetric(0, 16),
-							Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.line()}}
+							Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line()}}
 					}, Children: []core.Node{
-						core.Text{ContentFunc: func() string { return row().title }, Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: colored(colors.text)},
-						core.Text{ContentFunc: func() string { return row().detail }, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
+						core.Text{ContentFunc: func() string { return row().title }, Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+						core.Text{ContentFunc: func() string { return row().detail }, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 					}}
 				}}
 		}}
 	footer := core.View{TestID: "footer", Style: core.Style{AlignItems: core.AlignCenter, Gap: 6, Padding: core.Edges{Top: 32, Right: 16, Bottom: 48, Left: 16}},
 		Children: []core.Node{
-			text("That's all 160 entries", 15, semibold, colors.text),
+			ui.Text("That's all 160 entries", 15, ui.Semibold, colors.Text),
 			core.Text{Content: "A footer after the list: the list keeps only the rows near the screen, at its full length in the page.",
-				Style: core.Style{FontSize: 13, TextAlign: core.TextAlignCenter}, StyleFunc: colored(colors.muted)},
+				Style: core.Style{FontSize: 13, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
 		}}
-	return core.Scroll{TestID: "page", OffsetValues: core.AnimatedXY{Y: scroll}, Style: core.Style{FlexGrow: 1}, StyleFunc: filled(colors.background),
+	return core.Scroll{TestID: "page", OffsetValues: core.AnimatedXY{Y: scroll}, Style: core.Style{FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background),
 		Children: []core.Node{header, list, footer}}
 }

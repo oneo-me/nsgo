@@ -8,6 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base/textview"
 	"github.com/oneo-me/nsgo/base/textview/highlight"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // readingStyles is the gallery's reading typography for every part of a
@@ -19,75 +21,75 @@ func readingStyles(cx *core.Scope) func(textview.Part) core.Style {
 // partStyles is a TextView's StyleOf from styles by part, built again
 // when what build reads (the palette) changes.
 func partStyles(cx *core.Scope, build func() textview.Styles) func(textview.Part) core.Style {
-	styles := themed(cx, build)
+	styles := ui.Themed(cx, build)
 	return func(p textview.Part) core.Style { return styles()[p] }
 }
 
 // readingParts are the reading typography's styles by part, read where
 // colorsOf's colors are.
 func readingParts(cx *core.Scope) textview.Styles {
-	colors := colorsOf(cx).now()
-	codeFont := core.Style{FontFamily: mono, FontSize: 13}
+	colors := ui.ColorsOf(cx).Now()
+	codeFont := core.Style{FontFamily: ui.Mono, FontSize: 13}
 	alert := func(c core.Color) core.Style {
-		return core.Style{Gap: 4, Padding: core.Symmetric(8, 12), Borders: core.Edges{Left: 3}, BorderColors: core.EdgeColors{Left: c}, CornerRadius: 4, Background: alpha(c, 0.08)}
+		return core.Style{Gap: 4, Padding: core.Symmetric(8, 12), Borders: core.Edges{Left: 3}, BorderColors: core.EdgeColors{Left: c}, CornerRadius: 4, Background: ui.Alpha(c, 0.08)}
 	}
 	return textview.Styles{
-		textview.PartRoot:              {Gap: 12, Color: colors.text, FontSize: 15, LineHeight: 23},
-		textview.PartHeading:           {FontWeight: semibold, Margin: core.Edges{Top: 6}, Color: colors.text},
+		textview.PartRoot:              {Gap: 12, Color: colors.Text, FontSize: 15, LineHeight: 23},
+		textview.PartHeading:           {FontWeight: ui.Semibold, Margin: core.Edges{Top: 6}, Color: colors.Text},
 		textview.PartHeading1:          {FontSize: 26, LineHeight: 32, LetterSpacing: -0.4},
-		textview.PartHeading2:          {FontSize: 20, LineHeight: 26, Padding: core.Edges{Bottom: 6}, Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.line}},
+		textview.PartHeading2:          {FontSize: 20, LineHeight: 26, Padding: core.Edges{Bottom: 6}, Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line}},
 		textview.PartHeading3:          {FontSize: 17, LineHeight: 23},
 		textview.PartHeading4:          {FontSize: 15, LineHeight: 21},
-		textview.PartLink:              {Color: colors.accent, TextDecoration: core.TextDecorationUnderline, TextDecorationColor: alpha(colors.accent, 0.4)},
-		textview.PartStrong:            {FontWeight: semibold},
+		textview.PartLink:              {Color: colors.Accent, TextDecoration: core.TextDecorationUnderline, TextDecorationColor: ui.Alpha(colors.Accent, 0.4)},
+		textview.PartStrong:            {FontWeight: ui.Semibold},
 		textview.PartEmphasis:          {FontStyle: core.FontStyleItalic},
-		textview.PartStrikethrough:     {TextDecoration: core.TextDecorationLineThrough, Color: colors.muted},
+		textview.PartStrikethrough:     {TextDecoration: core.TextDecorationLineThrough, Color: colors.Muted},
 		textview.PartUnderline:         {TextDecoration: core.TextDecorationUnderline},
-		textview.PartMark:              {Background: alpha(colors.warn, 0.25)},
-		textview.PartSmall:             {FontSize: 12, Color: colors.muted},
+		textview.PartMark:              {Background: ui.Alpha(colors.Warn, 0.25)},
+		textview.PartSmall:             {FontSize: 12, Color: colors.Muted},
 		textview.PartSuperscript:       {FontSize: 11},
 		textview.PartSubscript:         {FontSize: 11},
-		textview.PartCode:              codeFont.Merge(core.Style{Background: colors.raised, CornerRadius: 4, Color: colors.code}),
-		textview.PartKeyboard:          codeFont.Merge(core.Style{FontSize: 12, Background: colors.raised, CornerRadius: 4, Color: colors.text}),
-		textview.PartBlockquote:        {Gap: 4, Padding: core.Edges{Left: 12}, Borders: core.Edges{Left: 3}, BorderColors: core.EdgeColors{Left: colors.border}, Color: colors.muted},
-		textview.PartAlert:             alert(colors.info),
-		textview.PartAlertNote:         alert(colors.info),
-		textview.PartAlertTip:          alert(colors.up),
+		textview.PartCode:              codeFont.Merge(core.Style{Background: colors.Raised, CornerRadius: 4, Color: colors.Code}),
+		textview.PartKeyboard:          codeFont.Merge(core.Style{FontSize: 12, Background: colors.Raised, CornerRadius: 4, Color: colors.Text}),
+		textview.PartBlockquote:        {Gap: 4, Padding: core.Edges{Left: 12}, Borders: core.Edges{Left: 3}, BorderColors: core.EdgeColors{Left: colors.Border}, Color: colors.Muted},
+		textview.PartAlert:             alert(colors.Info),
+		textview.PartAlertNote:         alert(colors.Info),
+		textview.PartAlertTip:          alert(colors.Up),
 		textview.PartAlertImportant:    alert(core.RGB(0x8b5cf6)),
-		textview.PartAlertWarning:      alert(colors.warn),
-		textview.PartAlertCaution:      alert(colors.danger),
-		textview.PartAlertTitle:        {FontWeight: semibold},
+		textview.PartAlertWarning:      alert(colors.Warn),
+		textview.PartAlertCaution:      alert(colors.Danger),
+		textview.PartAlertTitle:        {FontWeight: ui.Semibold},
 		textview.PartAlertContent:      {Gap: 4},
 		textview.PartList:              {Gap: 4},
 		textview.PartListItem:          {Direction: core.Row, Gap: 8},
-		textview.PartListMarker:        {Color: colors.muted, MinWidth: core.Pt(14)},
-		textview.PartTaskMarker:        {Width: core.Pt(16), Height: core.Pt(16), CornerRadius: 4, BorderWidth: 1, BorderColor: colors.fieldBorder, Background: colors.field, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Margin: core.Edges{Top: 3}},
-		textview.PartTaskMarkerChecked: {Background: colors.accentFill, BorderColor: colors.accentFill, Color: colors.onAccent, FontSize: 11},
-		textview.PartTaskDone:          {Color: colors.muted},
+		textview.PartListMarker:        {Color: colors.Muted, MinWidth: core.Pt(14)},
+		textview.PartTaskMarker:        {Width: core.Pt(16), Height: core.Pt(16), CornerRadius: 4, BorderWidth: 1, BorderColor: colors.FieldBorder, Background: colors.Field, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Margin: core.Edges{Top: 3}},
+		textview.PartTaskMarkerChecked: {Background: colors.AccentFill, BorderColor: colors.AccentFill, Color: colors.OnAccent, FontSize: 11},
+		textview.PartTaskDone:          {Color: colors.Muted},
 		textview.PartListItemContent:   {FlexGrow: 1, FlexShrink: 1, Gap: 4},
-		textview.PartCodeBlock:         {Background: colors.inset, CornerRadius: radiusControl, BorderWidth: 1, BorderColor: colors.line},
+		textview.PartCodeBlock:         {Background: colors.Inset, CornerRadius: ui.RadiusControl, BorderWidth: 1, BorderColor: colors.Line},
 		textview.PartCodeBlockScroll:   {Padding: core.Symmetric(10, 12)},
-		textview.PartCodeBlockCode:     codeFont.Merge(core.Style{LineHeight: 19, Color: colors.code}),
+		textview.PartCodeBlockCode:     codeFont.Merge(core.Style{LineHeight: 19, Color: colors.Code}),
 		textview.PartCodeBlockHeader:   {Padding: core.All(4)},
-		textview.PartCodeBlockAction:   {Padding: core.Symmetric(2, 8), CornerRadius: 6, Background: colors.raised, BorderWidth: 1, BorderColor: colors.border, FontSize: 12, Color: colors.muted, Hover: &core.Style{Color: colors.text}},
-		textview.PartImage:             {CornerRadius: radiusControl},
+		textview.PartCodeBlockAction:   {Padding: core.Symmetric(2, 8), CornerRadius: 6, Background: colors.Raised, BorderWidth: 1, BorderColor: colors.Border, FontSize: 12, Color: colors.Muted, Hover: &core.Style{Color: colors.Text}},
+		textview.PartImage:             {CornerRadius: ui.RadiusControl},
 		textview.PartTable:             {Gap: 6},
 		textview.PartTableActions:      {Direction: core.Row, JustifyContent: core.JustifyEnd},
-		textview.PartTableScroll:       {CornerRadius: 8, BorderWidth: 1, BorderColor: colors.line},
-		textview.PartTableRow:          {Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.line}},
-		textview.PartTableHead:         {Background: colors.raised},
+		textview.PartTableScroll:       {CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Line},
+		textview.PartTableRow:          {Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line}},
+		textview.PartTableHead:         {Background: colors.Raised},
 		textview.PartTableCell:         {Padding: core.Symmetric(6, 10)},
-		textview.PartTableHeaderCell:   {FontWeight: semibold},
-		textview.PartRule:              {Height: core.Pt(1), Background: colors.line, Margin: core.Symmetric(4, 0)},
+		textview.PartTableHeaderCell:   {FontWeight: ui.Semibold},
+		textview.PartRule:              {Height: core.Pt(1), Background: colors.Line, Margin: core.Symmetric(4, 0)},
 		textview.PartMath:              codeFont.Merge(core.Style{Color: core.RGB(0x8b5cf6)}),
 		textview.PartMathBlock:         codeFont.Merge(core.Style{Color: core.RGB(0x8b5cf6), Background: core.RGBA(0x8b5cf6, 0.1), CornerRadius: 8, Padding: core.Symmetric(8, 12), AlignItems: core.AlignCenter}),
-		textview.PartDetails:           {Gap: 6, Padding: core.All(10), CornerRadius: radiusControl, BorderWidth: 1, BorderColor: colors.line},
-		textview.PartSummary:           {FontWeight: semibold, Direction: core.Row, Gap: 6},
-		textview.PartSummaryMarker:     {Color: colors.muted},
-		textview.PartFootnotes:         {Gap: 4, Padding: core.Edges{Top: 8}, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.line}, FontSize: 13, Color: colors.muted},
+		textview.PartDetails:           {Gap: 6, Padding: core.All(10), CornerRadius: ui.RadiusControl, BorderWidth: 1, BorderColor: colors.Line},
+		textview.PartSummary:           {FontWeight: ui.Semibold, Direction: core.Row, Gap: 6},
+		textview.PartSummaryMarker:     {Color: colors.Muted},
+		textview.PartFootnotes:         {Gap: 4, Padding: core.Edges{Top: 8}, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line}, FontSize: 13, Color: colors.Muted},
 		textview.PartFootnote:          {Direction: core.Row, Gap: 6},
-		textview.PartFootnoteLabel:     {Color: colors.faint},
-		textview.PartFootnoteReference: {Color: colors.accent, FontSize: 11},
+		textview.PartFootnoteLabel:     {Color: colors.Faint},
+		textview.PartFootnoteReference: {Color: colors.Accent, FontSize: 11},
 	}
 }
 
@@ -151,14 +153,14 @@ func streamingCard(cx *core.Scope) core.Node {
 			i++
 		})
 	}
-	return card(cx, cardProps{icon: iconChat, title: "Streaming", subtitle: "A reply as an AI model writes it, with a caret"},
+	return ui.Card{Icon: ui.IconChat, Title: "Streaming", Description: "A reply as an AI model writes it, with a caret", Children: []core.Node{
 		core.Dynamic(func(cx *core.Scope) core.Node {
-			colors := colorsOf(cx)
+			colors := ui.ColorsOf(cx)
 			on := streaming.Get()
 			var caret core.Node
 			if on {
 				caret = core.View{Style: core.Style{Margin: core.Edges{Left: 2}, Width: core.Pt(8), Height: core.Pt(16), CornerRadius: 2,
-					Animation: core.KeyframeAnimation{Keyframes: core.KeyframesPulse}}, StyleFunc: filled(colors.accent)}
+					Animation: core.KeyframeAnimation{Keyframes: core.KeyframesPulse}}, StyleFunc: ui.Filled(colors.Accent)}
 			}
 			return textview.TextView{MarkdownFunc: streamed.Get, StyleOf: readingStyles(cx), Options: textview.Options{Streaming: on}, StreamingCaret: caret,
 				Selectable: true, Highlighter: highlight.New(cx), CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction, TestID: "streamed"}
@@ -168,34 +170,34 @@ func streamingCard(cx *core.Scope) core.Node {
 			if streaming.Get() {
 				l = "Streaming…"
 			}
-			return button(buttonProps{label: l, icon: iconPlay, variant: secondary, disabled: streaming.Get}, play)
+			return ui.Button{Text: l, Icon: ui.IconPlay, Variant: ui.ButtonSecondary, Disabled: streaming.Get, OnPress: play}
 		}),
-	)
+	}}
 }
 
 func markdownCard(cx *core.Scope) core.Node {
 	pressed := core.NewSignal(cx, "nothing yet")
 	viewing := core.NewSignal(cx, textview.Image{})
-	return card(cx, cardProps{icon: iconText, title: "Markdown", subtitle: "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML"},
+	return ui.Card{Icon: ui.IconText, Title: "Markdown", Description: "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML", Children: []core.Node{
 		textview.TextView{Markdown: tvMarkdown, StyleOf: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
 			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: "Copy code"}}, RenderCodeBlockAction: copyAction,
 			OnLinkPress: func(e textview.LinkPressEvent) { pressed.Set(e.URL) }, OnImagePress: viewing.Set},
-		caption(cx, "Link pressed", pressed.Get),
+		ui.Caption{Label: "Link pressed", Note: pressed.Get},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
-	)
+	}}
 }
 
 func htmlCard(cx *core.Scope) core.Node {
 	viewing := core.NewSignal(cx, textview.Image{})
-	return card(cx, cardProps{icon: iconText, title: "HTML", subtitle: "An article page: sections, figures, lists, tables, code"},
+	return ui.Card{Icon: ui.IconText, Title: "HTML", Description: "An article page: sections, figures, lists, tables, code", Children: []core.Node{
 		textview.TextView{HTML: tvHTML, StyleOf: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), OnImagePress: viewing.Set, TestID: "html"},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
-	)
+	}}
 }
 
 // chartBlock is a tiny bar chart of a ```chart block's lines ("Mon 12").
 func chartBlock(cx *core.Scope, source string) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	type bar struct {
 		label string
 		value float64
@@ -219,13 +221,13 @@ func chartBlock(cx *core.Scope, source string) core.Node {
 	var cols []core.Node
 	for _, b := range bars {
 		cols = append(cols, core.View{Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), AlignItems: core.AlignCenter, Gap: 4}, Children: []core.Node{
-			core.View{Style: core.Style{Width: core.Pct(100), CornerRadius: 6, Height: core.Pt(core.Points(b.value / most * 64))}, StyleFunc: filled(colors.accent)},
-			text(b.label, 11, regular, colors.muted),
+			core.View{Style: core.Style{Width: core.Pct(100), CornerRadius: 6, Height: core.Pt(core.Points(b.value / most * 64))}, StyleFunc: ui.Filled(colors.Accent)},
+			ui.Text(b.label, 11, ui.Regular, colors.Muted),
 		}})
 	}
 	return core.View{StyleFunc: func() core.Style {
-		return core.Style{Height: core.Pt(112), Direction: core.Row, AlignItems: core.AlignEnd, Gap: 8, CornerRadius: 12, BorderWidth: 1, BorderColor: colors.border(),
-			Background: colors.inset(), Padding: core.All(12)}
+		return core.Style{Height: core.Pt(112), Direction: core.Row, AlignItems: core.AlignEnd, Gap: 8, CornerRadius: 12, BorderWidth: 1, BorderColor: colors.Border(),
+			Background: colors.Inset(), Padding: core.All(12)}
 	}, Children: cols}
 }
 
@@ -242,7 +244,7 @@ func extensionsCard(cx *core.Scope) core.Node {
 		}
 		return core.RGB(0x059669)
 	}
-	return card(cx, cardProps{icon: iconComponents, title: "Extensions", subtitle: "Mentions, a chart block, a <Callout> tag, a :::note container"},
+	return ui.Card{Icon: ui.IconComponents, Title: "Extensions", Description: "Mentions, a chart block, a <Callout> tag, a :::note container", Children: []core.Node{
 		textview.TextView{Markdown: tvExtended, StyleOf: readingStyles(cx),
 			Extensions: []textview.Extension{
 				{Name: "mention", Pattern: mentionPattern},
@@ -254,13 +256,13 @@ func extensionsCard(cx *core.Scope) core.Node {
 				switch node.Name {
 				case "mention":
 					return core.View{Style: core.Style{CornerRadius: 10, Padding: core.Symmetric(0, 8), Transform: core.Transform{TranslateY: 4}},
-						StyleFunc: filled(func() core.Color { return alpha(sky(), 0.15) }), Children: []core.Node{text("@"+node.Attributes["1"], 14, medium, sky)}}
+						StyleFunc: ui.Filled(func() core.Color { return ui.Alpha(sky(), 0.15) }), Children: []core.Node{ui.Text("@"+node.Attributes["1"], 14, ui.Medium, sky)}}
 				case "chart":
 					return chartBlock(cx, node.Text)
 				case "callout":
 					return core.View{Style: core.Style{Direction: core.Row, Gap: 12, CornerRadius: 12, Padding: core.All(12)},
-						StyleFunc: filled(func() core.Color { return alpha(emerald(), 0.1) }), Children: []core.Node{
-							text("✦", 15, regular, emerald),
+						StyleFunc: ui.Filled(func() core.Color { return ui.Alpha(emerald(), 0.1) }), Children: []core.Node{
+							ui.Text("✦", 15, ui.Regular, emerald),
 							core.View{Style: fill, Children: []core.Node{textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleOf: readingStyles(cx)}}},
 						}}
 				}
@@ -269,12 +271,12 @@ func extensionsCard(cx *core.Scope) core.Node {
 					lbl = node.Name
 				}
 				return core.View{Style: core.Style{Gap: 4, CornerRadius: 12, BorderWidth: 1, Padding: core.All(12)},
-					StyleFunc: func() core.Style { return core.Style{BorderColor: alpha(sky(), 0.4)} }, Children: []core.Node{
-						core.Text{Content: lbl, Style: core.Style{FontSize: 12, FontWeight: semibold, TextTransform: core.TextTransformUppercase, LetterSpacing: 0.6}, StyleFunc: colored(sky)},
+					StyleFunc: func() core.Style { return core.Style{BorderColor: ui.Alpha(sky(), 0.4)} }, Children: []core.Node{
+						core.Text{Content: lbl, Style: core.Style{FontSize: 12, FontWeight: ui.Semibold, TextTransform: core.TextTransformUppercase, LetterSpacing: 0.6}, StyleFunc: ui.Colored(sky)},
 						textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleOf: readingStyles(cx)},
 					}}
 			}},
-	)
+	}}
 }
 
 const (
@@ -285,18 +287,18 @@ const (
 // selectionAreaCard is two documents and a plain text that select as one,
 // around a label that stays out.
 func selectionAreaCard(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	return card(cx, cardProps{icon: iconText, title: "Selectable view", subtitle: "One selection across texts and TextViews"},
+	colors := ui.ColorsOf(cx)
+	return ui.Card{Icon: ui.IconText, Title: "Selectable view", Description: "One selection across texts and TextViews", Children: []core.Node{
 		core.View{Selectable: true, Style: core.Style{Gap: 12}, Children: []core.Node{
 			textview.TextView{Markdown: tvQuestion, StyleOf: readingStyles(cx)},
 			textview.TextView{Markdown: tvAnswer, StyleOf: readingStyles(cx)},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-				core.Text{Content: "Not selectable", Selectable: core.SelectableOff, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.faint)},
-				core.Text{Content: "A plain Text joins the selection too.", Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: colored(colors.text)},
+				core.Text{Content: "Not selectable", Selectable: core.SelectableOff, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
+				core.Text{Content: "A plain Text joins the selection too.", Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
 			}},
 		}},
-		caption(cx, hint(cx, "Long press, then move the handles from the question into the answer", "Drag from the question into the answer"), nil),
-	)
+		ui.Caption{Label: ui.Hint(cx, "Long press, then move the handles from the question into the answer", "Drag from the question into the answer")},
+	}}
 }
 
 // textViewDemo is base/textview's TextView: Markdown and HTML documents,

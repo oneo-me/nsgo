@@ -15,6 +15,8 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.
@@ -81,7 +83,7 @@ func TestEveryDemoBuilds(t *testing.T) {
 	env.Dark = true
 	wide.SetEnvironment(env)
 	wide.Find("id:demo-" + allDemos()[len(allDemos())-1].name)
-	if got := wide.Find("id:sidebar").Style.Background; got != galleryTheme().Dark.Colors["inset"] {
+	if got := wide.Find("id:shell").Style.Background; got != ui.Theme().Dark.Colors["inset"] {
 		t.Fatalf("sidebar = %x, want the dark inset", got)
 	}
 }

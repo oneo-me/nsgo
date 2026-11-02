@@ -8,6 +8,8 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // The gallery's toasts: toast(...) from anywhere, shown by the toaster the
@@ -120,26 +122,26 @@ func toast(c toastContent) { shell.toasts.show(c) }
 
 // item is one toast, the gallery's look.
 func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	first := core.Untracked(cx, e)
 	id, c := first.ID, first.Value
 	label := strings.Join(slices.DeleteFunc([]string{c.title, c.description}, func(s string) bool { return s == "" }), ". ")
-	texts := []core.Node{core.Text{Content: c.title, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightSemibold}, StyleFunc: colored(colors.text)}}
+	texts := []core.Node{core.Text{Content: c.title, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightSemibold}, StyleFunc: ui.Colored(colors.Text)}}
 	if c.description != "" {
-		texts = append(texts, core.Text{Content: c.description, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)})
+		texts = append(texts, core.Text{Content: c.description, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)})
 	}
 	children := []core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: texts}}
 	if c.action != "" {
 		children = append(children, core.View{Role: core.RoleButton, Label: c.action, OnPress: func(core.PressEvent) { t.choose(id, c.action) },
 			Style: core.Style{Padding: core.Edges{Left: 10, Right: 10}, Height: core.Pt(28), JustifyContent: core.JustifyCenter,
-				CornerRadius: radiusControl, Active: &core.Style{Opacity: core.Alpha(0.7)}}, StyleFunc: filled(colors.light),
-			Children: []core.Node{core.Text{Content: c.action, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightMedium}, StyleFunc: colored(colors.onLight)}}})
+				CornerRadius: ui.RadiusControl, Active: &core.Style{Opacity: core.Alpha(0.7)}}, StyleFunc: ui.Filled(colors.Light),
+			Children: []core.Node{core.Text{Content: c.action, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightMedium}, StyleFunc: ui.Colored(colors.OnLight)}}})
 	}
 	if c.close != "" {
 		children = append(children, core.View{Role: core.RoleButton, Label: "Close", OnPress: func(core.PressEvent) { t.dismiss(id) },
 			Style:    core.Style{Width: core.Pt(24), Height: core.Pt(24), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 12},
-			Children: []core.Node{core.Text{Content: c.close, Style: core.Style{FontSize: 16}, StyleFunc: colored(colors.muted)}}})
+			Children: []core.Node{core.Text{Content: c.close, Style: core.Style{FontSize: 16}, StyleFunc: ui.Colored(colors.Muted)}}})
 	}
 	fade := core.Transition{Duration: ms(200), Easing: core.EaseOut}
 	return base.Toast{TestID: id, Label: label,
@@ -149,9 +151,9 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 		EndingStyle:      core.Style{Opacity: core.Alpha(0), Transform: core.Transform{Scale: 0.95}},
 		SwipingStyle:     core.Style{Transition: core.Transition{}},
 		StyleFunc: func() core.Style {
-			return fin.raised().over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12,
-				Padding: core.Edges{Top: 12, Right: 14, Bottom: 12, Left: 14}, CornerRadius: radiusInset, BorderCurve: core.BorderCurveContinuous,
-				BorderWidth: 1, BorderColor: colors.border(), Background: colors.raised(), Transition: fade})
+			return fin.Raised().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12,
+				Padding: core.Edges{Top: 12, Right: 14, Bottom: 12, Left: 14}, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
+				BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Raised(), Transition: fade})
 		},
 		Children: children}
 }

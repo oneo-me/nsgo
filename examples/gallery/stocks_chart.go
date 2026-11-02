@@ -5,22 +5,24 @@ import (
 	"math"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 type period string
 
-var periods = []option[period]{{value: "intraday", label: "Intraday"}, {value: "1m", label: "1m"}, {value: "5m", label: "5m"}, {value: "15m", label: "15m"}, {value: "1D", label: "1D"}}
+var periods = []ui.Option[period]{{Value: "intraday", Label: "Intraday"}, {Value: "1m", Label: "1m"}, {Value: "5m", Label: "5m"}, {Value: "15m", Label: "15m"}, {Value: "1D", Label: "1D"}}
 
 // averages are the moving averages the candles show.
 func averages(cx *core.Scope) []struct {
 	n int
 	c func() core.Color
 } {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	return []struct {
 		n int
 		c func() core.Color
-	}{{5, colors.accent}, {10, colors.info}, {20, colors.warn}}
+	}{{5, colors.Accent}, {10, colors.Info}, {20, colors.Warn}}
 }
 
 // bodies are candle bodies in points by period.
@@ -97,7 +99,7 @@ type chartFrame struct {
 // sideways for the crosshair; its lines move on the platform and the
 // readout floats beside it.
 func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Points) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	if height == 0 {
 		height = chartHeight
 	}
@@ -106,7 +108,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 	width := core.NewSignal(cx, core.Points(0))
 	live := livePulse(cx, running)
 	// The live point's ring, built once: redraws reuse the same nodes.
-	ringAlpha, ringRadius := lerp(live, 0.45, 0), lerp(live, 3, 13)
+	ringAlpha, ringRadius := ui.Lerp(live, 0.45, 0), ui.Lerp(live, 3, 13)
 	// The minutes are one slice changed in place: every run is a change.
 	data := core.NewMemoFunc(cx, func() []candle { return candlesOf(s, per.Get()) }, func(a, b []candle) bool { return false })
 	step := func() float32 { return bodies[per.Get()] + 2 }
@@ -140,7 +142,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 	pick := func(x core.Points) {
 		if x < 0 {
 			cursor.Set(-1)
-			timing(cx, shown, 0, core.TimingConfig{Duration: ms(180)})
+			ui.Timing(cx, shown, 0, core.TimingConfig{Duration: ms(180)})
 			return
 		}
 		cx.Untrack(func() {
@@ -158,7 +160,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 			}
 			i := max(first, min(len(d)-1, raw))
 			if cursor.Get() < 0 {
-				timing(cx, shown, 1, core.TimingConfig{Duration: ms(140)})
+				ui.Timing(cx, shown, 1, core.TimingConfig{Duration: ms(140)})
 			}
 			cursor.Set(i)
 			cxv.Set(float64(X(i)))
@@ -193,7 +195,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 	}
 
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
+		c := colors.Now()
 		grid := gridColor(cx)
 		dd := data.Get()
 		first, n := view()
@@ -226,7 +228,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 		f := &chartFrame{first: first, count: n, lo: rlo, hi: rhi, mainH: mainH, volTop: volTop, volH: volH, pw: pw}
 		frame = f
 		Y := func(v float64) float32 { return chartTop + float32((f.hi-v)/(f.hi-f.lo))*mainH }
-		f11 := sans(11, regular)
+		f11 := sans(11, ui.Regular)
 
 		// The grid and the price axis, in percent from the close intraday.
 		d.SetTextBaseline(core.BaselineMiddle).SetLineWidth(1)
@@ -238,7 +240,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 			if intraday() {
 				lbl = signed((v-prevClose())/prevClose()*100, 2) + "%"
 			}
-			d.SetFillColor(c.faint).SetTextAlign(core.TextAlignEnd).FillText(lbl, w, y, f11)
+			d.SetFillColor(c.Faint).SetTextAlign(core.TextAlignEnd).FillText(lbl, w, y, f11)
 		}
 		d.SetStrokeColor(grid).BeginPath().MoveTo(0, volTop+volH).LineTo(pw, volTop+volH).Stroke()
 
@@ -247,9 +249,9 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 			last := dd[len(dd)-1].c
 			tone := toneOf(cx, last-prevClose())
 			stockHatch(d, now+4, chartTop, pw-now-4, mainH, grid, 7)
-			hline(d, 0, pw, Y(prevClose()), c.faint)
+			hline(d, 0, pw, Y(prevClose()), c.Faint)
 			// The price area and line.
-			d.SetFillGradient(core.CanvasLinear(0, chartTop, 0, chartTop+mainH, core.GradientStop{Offset: 0, Color: alpha(tone, 0.26)}, core.GradientStop{Offset: 1, Color: alpha(tone, 0)}))
+			d.SetFillGradient(core.CanvasLinear(0, chartTop, 0, chartTop+mainH, core.GradientStop{Offset: 0, Color: ui.Alpha(tone, 0.26)}, core.GradientStop{Offset: 1, Color: ui.Alpha(tone, 0)}))
 			d.BeginPath().MoveTo(X(0), chartTop+mainH)
 			for i, cd := range dd {
 				d.LineTo(X(i), Y(cd.c))
@@ -273,7 +275,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 					d.LineTo(X(i), Y(cd.a))
 				}
 			}
-			d.SetStrokeColor(c.warn).SetLineWidth(1.1).Stroke()
+			d.SetStrokeColor(c.Warn).SetLineWidth(1.1).Stroke()
 			// Volume.
 			vw := max(1, pw/float32(span())-0.8)
 			vmax := 0.0
@@ -285,18 +287,18 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 			}
 			for i, cd := range dd {
 				vh := float32(cd.v/vmax) * volH
-				col := c.down
+				col := c.Down
 				if cd.c >= cd.o {
-					col = c.up
+					col = c.Up
 				}
-				d.SetFillColor(alpha(col, 0.6)).FillRect(X(i)-vw/2, volTop+volH-vh, vw, vh)
+				d.SetFillColor(ui.Alpha(col, 0.6)).FillRect(X(i)-vw/2, volTop+volH-vh, vw, vh)
 			}
 			// The live point, pulsing on the platform.
 			ly := Y(last)
 			d.SetFillColor(tone).SetAlpha(0.45).Bind(core.ArgA, ringAlpha).BeginPath().Arc(now, ly, 3, 0, tau, false).Bind(core.ArgR, ringRadius).Fill()
 			d.SetAlpha(1).BeginPath().Arc(now, ly, 3, 0, tau, false).Fill()
 			// The open, the middle and the end of the span.
-			d.SetFillColor(c.faint).SetTextBaseline(core.BaselineTop)
+			d.SetFillColor(c.Faint).SetTextBaseline(core.BaselineTop)
 			for _, k := range []struct {
 				at    float32
 				align core.TextAlign
@@ -315,20 +317,20 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 			for i := first; i < end; i++ {
 				cd := dd[i]
 				x := X(i)
-				col := c.down
+				col := c.Down
 				if cd.c >= cd.o {
-					col = c.up
+					col = c.Up
 				}
 				d.SetStrokeColor(col).SetLineWidth(1).BeginPath().MoveTo(x, Y(cd.h)).LineTo(x, Y(cd.l)).Stroke()
 				top := Y(math.Max(cd.o, cd.c))
 				bh := max(1, Y(math.Min(cd.o, cd.c))-top)
 				if cd.c >= cd.o {
-					d.SetFillColor(c.inset).FillRect(x-body/2, top, body, bh).StrokeRect(x-body/2+0.5, top+0.5, body-1, max(0, bh-1))
+					d.SetFillColor(c.Inset).FillRect(x-body/2, top, body, bh).StrokeRect(x-body/2+0.5, top+0.5, body-1, max(0, bh-1))
 				} else {
 					d.SetFillColor(col).FillRect(x-body/2, top, body, bh)
 				}
 				vh := float32(cd.v/vmax) * volH
-				d.SetFillColor(alpha(col, 0.5)).FillRect(x-body/2, volTop+volH-vh, body, vh)
+				d.SetFillColor(ui.Alpha(col, 0.5)).FillRect(x-body/2, volTop+volH-vh, body, vh)
 			}
 			d.SetLineWidth(1.2).SetLineJoin(core.JoinRound)
 			for _, a := range averages(cx) {
@@ -348,7 +350,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 				}
 				d.Stroke()
 			}
-			d.SetFillColor(c.faint).SetTextBaseline(core.BaselineTop)
+			d.SetFillColor(c.Faint).SetTextBaseline(core.BaselineTop)
 			cnt := end - first
 			for _, k := range []struct {
 				at    int
@@ -367,25 +369,25 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 		}
 		tone := toneOf(cx, last-ref)
 		if !intraday() {
-			hline(d, 0, pw, ly, alpha(tone, 0.7), 3, 3)
+			hline(d, 0, pw, ly, ui.Alpha(tone, 0.7), 3, 3)
 		}
 		d.SetFillColor(tone).BeginPath().RoundRect(pw+2, ly-9, chartRight-2, 18, 5).Fill()
-		d.SetFillColor(c.inset).SetTextAlign(core.TextAlignEnd).SetTextBaseline(core.BaselineMiddle).FillText(p(last), w-4, ly, sans(11, semibold))
+		d.SetFillColor(c.Inset).SetTextAlign(core.TextAlignEnd).SetTextBaseline(core.BaselineMiddle).FillText(p(last), w-4, ly, sans(11, ui.Semibold))
 	}
 
 	legends := core.Dynamic(func(*core.Scope) core.Node {
 		if intraday() {
 			return core.Group{
 				core.Dynamic(func(*core.Scope) core.Node {
-					return legend(cx, func() core.Color { return toneOf(cx, focus().c-prevClose()) }, "Price", func() string { return p(focus().c) })
+					return ui.Legend{Color: func() core.Color { return toneOf(cx, focus().c-prevClose()) }, Label: "Price", Value: func() string { return p(focus().c) }}
 				}),
-				legend(cx, colors.warn, "Avg", func() string { return p(focus().a) }),
-				legend(cx, colors.faint, "Vol", func() string { return compactNumber(focus().v) }),
+				ui.Legend{Color: colors.Warn, Label: "Avg", Value: func() string { return p(focus().a) }},
+				ui.Legend{Color: colors.Faint, Label: "Vol", Value: func() string { return compactNumber(focus().v) }},
 			}
 		}
 		var out core.Group
 		for _, a := range averages(cx) {
-			out = append(out, legend(cx, a.c, fmt.Sprintf("MA%d", a.n), func() string {
+			out = append(out, ui.Legend{Color: a.c, Label: fmt.Sprintf("MA%d", a.n), Value: func() string {
 				i := cursor.Get()
 				if i < 0 {
 					i = len(data.Get()) - 1
@@ -394,7 +396,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 					return p(v)
 				}
 				return "–"
-			}))
+			}})
 		}
 		return out
 	})
@@ -403,7 +405,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 		core.Canvas{Style: core.Style{Height: core.Pt(height)}, Draw: draw, Label: s.code + " chart", TestID: "chart"},
 	}}, pick)
 	return core.View{Style: core.Style{Gap: 10}, Children: []core.Node{
-		segmented(periods, per.Get, per.Set, true),
+		ui.Segmented[period]{Options: periods, Value: per.Get, OnChange: per.Set, Small: true},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 14, RowGap: 6}, Children: []core.Node{legends}},
 		core.View{Style: core.Style{Height: core.Pt(height)}, Children: []core.Node{
 			canvas,
@@ -411,32 +413,32 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 			core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0),
 				Animated: &core.AnimatedStyle{Opacity: shown}}, Children: []core.Node{
 				core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(chartTop), Bottom: core.Pt(chartBottom), Left: core.Pt(0), Width: core.Pt(1),
-					Animated: &core.AnimatedStyle{TranslateX: cxv}}, StyleFunc: filled(colors.muted)},
+					Animated: &core.AnimatedStyle{TranslateX: cxv}}, StyleFunc: ui.Filled(colors.Muted)},
 				core.View{StyleFunc: func() core.Style {
-					return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(chartRight), Top: core.Pt(0), Height: core.Pt(1), Background: alpha(colors.muted(), 0.6),
+					return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(chartRight), Top: core.Pt(0), Height: core.Pt(1), Background: ui.Alpha(colors.Muted(), 0.6),
 						Animated: &core.AnimatedStyle{TranslateY: cyv}}
 				}},
 				core.View{StyleFunc: func() core.Style {
-					return core.Style{Position: core.Absolute, Top: core.Pt(-4), Left: core.Pt(-4), Width: core.Pt(9), Height: core.Pt(9), CornerRadius: 4.5, Background: colors.text(),
-						BorderWidth: 2, BorderColor: colors.inset(), Animated: &core.AnimatedStyle{TranslateX: cxv, TranslateY: cyv}}
+					return core.Style{Position: core.Absolute, Top: core.Pt(-4), Left: core.Pt(-4), Width: core.Pt(9), Height: core.Pt(9), CornerRadius: 4.5, Background: colors.Text(),
+						BorderWidth: 2, BorderColor: colors.Inset(), Animated: &core.AnimatedStyle{TranslateX: cxv, TranslateY: cyv}}
 				}},
 				core.Show{When: func() bool { return cursor.Get() >= 0 }, Then: func(*core.Scope) core.Node {
 					return core.View{StyleFunc: func() core.Style {
 						return core.Style{Position: core.Absolute, Top: core.Pt(chartTop + 2), Left: core.Pt(readoutLeft()), Width: core.Pt(140), Padding: core.All(10), Gap: 3,
-							CornerRadius: radiusControl, BorderCurve: core.BorderCurveContinuous, Background: alpha(colors.surface(), 0.94), BorderWidth: 1, BorderColor: colors.border()}
+							CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: ui.Alpha(colors.Surface(), 0.94), BorderWidth: 1, BorderColor: colors.Border()}
 					}, Children: []core.Node{
-						textf(func() string { return candleLabel(focus(), per.Get()) }, 12, regular, colors.muted),
+						ui.Textf(func() string { return candleLabel(focus(), per.Get()) }, 12, ui.Regular, colors.Muted),
 						core.Text{Spans: []core.Span{
 							{ContentFunc: func() string { return p(focus().c) }},
-							{ContentFunc: func() string { return " " + signed((focus().c-prevClose())/prevClose()*100, 2) + "%" }, Style: core.Style{FontSize: 12, FontWeight: regular}},
-						}, Style: core.Style{FontSize: 17, FontWeight: semibold}, StyleFunc: colored(colors.text)},
+							{ContentFunc: func() string { return " " + signed((focus().c-prevClose())/prevClose()*100, 2) + "%" }, Style: core.Style{FontSize: 12, FontWeight: ui.Regular}},
+						}, Style: core.Style{FontSize: 17, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 						core.Text{ContentFunc: func() string {
 							f := focus()
 							if intraday() {
 								return fmt.Sprintf("avg %s · vol %s", p(f.a), compactNumber(f.v))
 							}
 							return fmt.Sprintf("O %s H %s\nL %s V %s", p(f.o), p(f.h), p(f.l), compactNumber(f.v))
-						}, Style: core.Style{FontSize: 11, LineHeight: 15}, StyleFunc: colored(colors.muted)},
+						}, Style: core.Style{FontSize: 11, LineHeight: 15}, StyleFunc: ui.Colored(colors.Muted)},
 					}}
 				}},
 			}},

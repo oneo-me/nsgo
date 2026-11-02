@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 const tau = 2 * math.Pi
@@ -47,7 +49,7 @@ func reveal(cx *core.Scope, d time.Duration) (*core.AnimatedValue, func()) {
 	t := core.NewAnimatedValue(cx, 0)
 	replay := func() {
 		t.Set(0)
-		timing(cx, t, 1, core.TimingConfig{Duration: d, Easing: easeOutCubic})
+		ui.Timing(cx, t, 1, core.TimingConfig{Duration: d, Easing: ui.EaseOutCubic})
 	}
 	replay()
 	return t, replay
@@ -65,7 +67,7 @@ var dialPresets = []struct {
 // all bound to one animated value: springing it moves the needle on the
 // platform's main thread.
 func dial(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	preset := core.NewSignal(cx, "cruise")
 	load := func() float64 {
 		for _, p := range dialPresets {
@@ -76,27 +78,27 @@ func dial(cx *core.Scope) core.Node {
 		return 0
 	}
 	needle := core.NewAnimatedValue(cx, 0)
-	spring(cx, needle, core.Untracked(cx, load), core.SpringConfig{Stiffness: 90, Damping: 9})
+	ui.Spring(cx, needle, core.Untracked(cx, load), core.SpringConfig{Stiffness: 90, Damping: 9})
 	choose := func(p string) {
 		preset.Set(p)
-		spring(cx, needle, core.Untracked(cx, load), core.SpringConfig{Stiffness: 140, Damping: 11})
+		ui.Spring(cx, needle, core.Untracked(cx, load), core.SpringConfig{Stiffness: 140, Damping: 11})
 	}
 	a0, a1 := 0.75*math.Pi, 2.25*math.Pi
 	angle := core.Interpolate(needle, core.Interpolation{Input: []float64{0, 100}, Output: []float64{a0, a1}, Extrapolate: core.ExtrapolateExtend})
-	zone := func() tone {
+	zone := func() ui.Tone {
 		switch l := load(); {
 		case l >= 85:
-			return toneDanger
+			return ui.ToneDanger
 		case l >= 60:
-			return toneWarn
+			return ui.ToneWarn
 		}
-		return toneUp
+		return ui.ToneUp
 	}
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
-		shade := paper(0.3)
+		c := colors.Now()
+		shade := ui.Paper(0.3)
 		if cx.Dark() {
-			shade = black(0.6)
+			shade = ui.Black(0.6)
 		}
 		w, h := float32(size.Width), float32(size.Height)
 		cxp, cy := w/2, h*0.54
@@ -105,8 +107,8 @@ func dial(cx *core.Scope) core.Node {
 		// The red zone: an annular sector, hatched.
 		d.Save().BeginPath().Arc(cxp, cy, r+2, float32(at(85)), float32(a1), false).Arc(cxp, cy, r-20, float32(a1), float32(at(85)), true).ClosePath().Clip()
 		zx, zy, zw, zh := cxp+0.6*r, cy-0.2*r, 0.4*r+4, r
-		d.SetFillColor(alpha(c.danger, 0.08)).FillRect(zx, zy, zw, zh)
-		hatchClip(d, zx, zy, zw, zh, alpha(c.danger, 0.55), 5)
+		d.SetFillColor(ui.Alpha(c.Danger, 0.08)).FillRect(zx, zy, zw, zh)
+		hatchClip(d, zx, zy, zw, zh, ui.Alpha(c.Danger, 0.55), 5)
 		d.Restore()
 		// The tick ring.
 		d.SetLineCap(core.CapRound)
@@ -114,53 +116,53 @@ func dial(cx *core.Scope) core.Node {
 			a := at(float64(i * 2))
 			major := i%10 == 0
 			in := r - 8
-			col, lw := c.faint, float32(1)
+			col, lw := c.Faint, float32(1)
 			if major {
-				in, col, lw = r-14, c.muted, 2
+				in, col, lw = r-14, c.Muted, 2
 			}
 			if i*2 >= 85 {
-				col = c.danger
+				col = c.Danger
 			}
 			d.SetStrokeColor(col).SetLineWidth(lw).BeginPath().MoveTo(cxp+cos32(a)*in, cy+sin32(a)*in).LineTo(cxp+cos32(a)*r, cy+sin32(a)*r).Stroke()
 			if major {
-				d.SetFillColor(c.faint).SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineMiddle).
-					FillText(itoa(i*2), cxp+cos32(a)*(r-28), cy+sin32(a)*(r-28), sans(11, regular))
+				d.SetFillColor(c.Faint).SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineMiddle).
+					FillText(itoa(i*2), cxp+cos32(a)*(r-28), cy+sin32(a)*(r-28), sans(11, ui.Regular))
 			}
 		}
 		// The sweep: a track, then a conic gradient arc ending at the
 		// needle.
 		sr := r + 12
-		d.SetLineWidth(5).SetLineCap(core.CapRound).SetStrokeColor(c.raised).BeginPath().Arc(cxp, cy, sr, float32(a0), float32(a1), false).Stroke()
+		d.SetLineWidth(5).SetLineCap(core.CapRound).SetStrokeColor(c.Raised).BeginPath().Arc(cxp, cy, sr, float32(a0), float32(a1), false).Stroke()
 		d.SetStrokeGradient(core.CanvasConic(float32(a0-0.2), cxp, cy,
-			core.GradientStop{Offset: 0, Color: c.info}, core.GradientStop{Offset: 0.45, Color: c.accent},
-			core.GradientStop{Offset: 0.75, Color: c.warn}, core.GradientStop{Offset: 0.8, Color: c.danger}))
+			core.GradientStop{Offset: 0, Color: c.Info}, core.GradientStop{Offset: 0.45, Color: c.Accent},
+			core.GradientStop{Offset: 0.75, Color: c.Warn}, core.GradientStop{Offset: 0.8, Color: c.Danger}))
 		d.BeginPath().Arc(cxp, cy, sr, float32(a0), float32(a0), false).Bind(core.ArgA1, angle).Stroke()
 		// The readout, drawn again only when the preset changes.
-		d.SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineAlphabetic).SetFillColor(c.text).
-			FillText(fmt.Sprint(load()), cxp, cy+r*0.62, sans(40, semibold)).
-			SetFillColor(c.faint).FillText("% load", cxp, cy+r*0.62+18, sans(11, regular))
+		d.SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineAlphabetic).SetFillColor(c.Text).
+			FillText(fmt.Sprint(load()), cxp, cy+r*0.62, sans(40, ui.Semibold)).
+			SetFillColor(c.Faint).FillText("% load", cxp, cy+r*0.62+18, sans(11, ui.Regular))
 		// The needle, rotated on the platform.
-		d.Save().Translate(cxp, cy).Rotate(0).Bind(core.ArgA, angle).SetShadow(shade, 0, 0, 6).SetFillColor(c.text).
+		d.Save().Translate(cxp, cy).Rotate(0).Bind(core.ArgA, angle).SetShadow(shade, 0, 0, 6).SetFillColor(c.Text).
 			BeginPath().MoveTo(-14, -3).LineTo(r-18, 0).LineTo(-14, 3).ClosePath().Fill().Restore()
-		d.SetFillColor(c.raised).SetStrokeColor(c.text).SetLineWidth(2).BeginPath().Arc(cxp, cy, 7, 0, tau, false).Fill().Stroke()
+		d.SetFillColor(c.Raised).SetStrokeColor(c.Text).SetLineWidth(2).BeginPath().Arc(cxp, cy, 7, 0, tau, false).Fill().Stroke()
 	}
-	var opts []option[string]
+	var opts []ui.Option[string]
 	for _, p := range dialPresets {
-		opts = append(opts, option[string]{value: p.value, label: p.label})
+		opts = append(opts, ui.Option[string]{Value: p.value, Label: p.label})
 	}
-	return card(cx, cardProps{icon: iconSpark, title: "Turbine 3 load", subtitle: "Needle and sweep on one animated value"},
+	return ui.Card{Icon: ui.IconSpark, Title: "Turbine 3 load", Description: "Needle and sweep on one animated value", Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(230)}, Draw: draw, Label: "Load dial", TestID: "dial"},
-		segmented(opts, preset.Get, choose, false),
+		ui.Segmented[string]{Options: opts, Value: preset.Get, OnChange: choose},
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				z := zone()
-				name := map[tone]string{toneDanger: "Redline", toneWarn: "High", toneUp: "Nominal"}[z]
-				return stat(cx, "Zone", label(name), z, core.Pct(33))
+				name := map[ui.Tone]string{ui.ToneDanger: "Redline", ui.ToneWarn: "High", ui.ToneUp: "Nominal"}[z]
+				return ui.Stat{Label: "Zone", Value: label(name), Tone: z, Width: core.Pct(33)}
 			}),
-			stat(cx, "Spool", func() string { return thousands(int(load()*128)) + " rpm" }, toneNeutral, core.Pct(33)),
-			stat(cx, "Limit", label("85 %"), toneDanger, core.Pct(33)),
+			ui.Stat{Label: "Spool", Value: func() string { return thousands(int(load()*128)) + " rpm" }, Width: core.Pct(33)},
+			ui.Stat{Label: "Limit", Value: label("85 %"), Tone: ui.ToneDanger, Width: core.Pct(33)},
 		}},
-	)
+	}}
 }
 
 func freshData(rand func() float64) []int {
@@ -176,7 +178,7 @@ func freshData(rand func() float64) []int {
 // window and labels measured with MeasureText; new data sweeps in on the
 // platform.
 func areaChart(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	data := core.NewSignalFunc(cx, freshData(seeded(7)), func(a, b []int) bool { return false })
 	sweep, replay := reveal(cx, 1100*time.Millisecond)
 	last := func() int { d := data.Get(); return d[len(d)-1] }
@@ -188,10 +190,10 @@ func areaChart(cx *core.Scope) core.Node {
 		return int(math.Round(float64(sum) / float64(len(data.Get()))))
 	}
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
+		c := colors.Now()
 		values := data.Get()
 		w0, h0 := float32(size.Width), float32(size.Height)
-		f := sans(11, regular)
+		f := sans(11, ui.Regular)
 		labelW := d.MeasureText("100", f)
 		left, right, top, bottom := labelW+8, float32(4), float32(16), float32(20)
 		w, h := w0-left-right, h0-top-bottom
@@ -200,18 +202,18 @@ func areaChart(cx *core.Scope) core.Node {
 		// Grid and labels.
 		d.SetTextBaseline(core.BaselineMiddle)
 		for _, v := range []float64{0, 50, 100} {
-			dashed(d, left, y(v), w0-right, y(v), c.line)
+			dashed(d, left, y(v), w0-right, y(v), c.Line)
 			l := fmt.Sprint(v)
-			d.SetFillColor(c.faint).FillText(l, left-8-d.MeasureText(l, f), y(v), f)
+			d.SetFillColor(c.Faint).FillText(l, left-8-d.MeasureText(l, f), y(v), f)
 		}
 		// The deploy window: hatched.
 		wx, ww := x(9), x(11)-x(9)
 		d.Save().BeginPath().Rect(wx, top, ww, h).Clip()
-		hatchClip(d, wx, top, ww, h, alpha(c.warn, 0.28), 6)
+		hatchClip(d, wx, top, ww, h, ui.Alpha(c.Warn, 0.28), 6)
 		d.Restore()
-		d.SetFillColor(c.warn).SetTextBaseline(core.BaselineAlphabetic).FillText("deploy", wx+2, top-4, f)
+		d.SetFillColor(c.Warn).SetTextBaseline(core.BaselineAlphabetic).FillText("deploy", wx+2, top-4, f)
 		// Day labels.
-		d.SetFillColor(c.faint)
+		d.SetFillColor(c.Faint)
 		for _, i := range []int{0, 7, 13} {
 			l := fmt.Sprintf("d-%d", 13-i)
 			if i == 13 {
@@ -223,7 +225,7 @@ func areaChart(cx *core.Scope) core.Node {
 		// Everything the data draws sweeps in left to right (a clip the
 		// platform animates).
 		d.Save().BeginPath().Rect(left-6, 0, 0, h0).Bind(core.ArgW, core.Mul(sweep, core.Constant(w+12))).Clip()
-		d.SetFillGradient(core.CanvasLinear(0, top, 0, top+h, core.GradientStop{Offset: 0, Color: alpha(c.accent, 0.26)}, core.GradientStop{Offset: 1, Color: alpha(c.accent, 0)}))
+		d.SetFillGradient(core.CanvasLinear(0, top, 0, top+h, core.GradientStop{Offset: 0, Color: ui.Alpha(c.Accent, 0.26)}, core.GradientStop{Offset: 1, Color: ui.Alpha(c.Accent, 0)}))
 		d.BeginPath().MoveTo(x(0), y(float64(values[0])))
 		for i, v := range values[1:] {
 			d.LineTo(x(i+1), y(float64(v)))
@@ -237,41 +239,40 @@ func areaChart(cx *core.Scope) core.Node {
 				d.LineTo(x(i), y(float64(v)))
 			}
 		}
-		d.SetStrokeColor(c.accent).SetLineWidth(2).SetLineJoin(core.JoinRound).Stroke()
+		d.SetStrokeColor(c.Accent).SetLineWidth(2).SetLineJoin(core.JoinRound).Stroke()
 		for i, v := range values {
 			r := float32(2.5)
 			if i == len(values)-1 {
 				r = 4.5
 			}
-			d.BeginPath().Arc(x(i), y(float64(v)), r, 0, tau, false).SetFillColor(c.inset).Fill().SetStrokeColor(c.accent).SetLineWidth(1.5).Stroke()
+			d.BeginPath().Arc(x(i), y(float64(v)), r, 0, tau, false).SetFillColor(c.Inset).Fill().SetStrokeColor(c.Accent).SetLineWidth(1.5).Stroke()
 		}
 		d.Restore()
 		// The average, with a pill label measured to fit.
 		mean := float64(avg())
-		dashed(d, left, y(mean), w0-right, y(mean), c.muted)
+		dashed(d, left, y(mean), w0-right, y(mean), c.Muted)
 		l := fmt.Sprintf("avg %.0f", mean)
 		lw := d.MeasureText(l, f) + 12
-		d.SetFillColor(c.raised).BeginPath().RoundRect(w0-right-lw, y(mean)-9, lw, 18, 9).Fill()
-		d.SetFillColor(c.text).SetTextBaseline(core.BaselineMiddle).FillText(l, w0-right-lw+6, y(mean), f)
+		d.SetFillColor(c.Raised).BeginPath().RoundRect(w0-right-lw, y(mean)-9, lw, 18, 9).Fill()
+		d.SetFillColor(c.Text).SetTextBaseline(core.BaselineMiddle).FillText(l, w0-right-lw+6, y(mean), f)
 	}
-	return card(cx, cardProps{icon: iconStocks, title: "Relay throughput", subtitle: "Area · average · hatching",
-		right: button(buttonProps{label: "New", variant: secondary, small: true}, func() {
-			data.Set(freshData(func() float64 { return float64(time.Now().UnixNano()%1000) / 1000 }))
-			replay()
-		})},
+	return ui.Card{Icon: ui.IconStocks, Title: "Relay throughput", Description: "Area · average · hatching", Actions: []core.Node{ui.Button{Text: "New", Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+		data.Set(freshData(func() float64 { return float64(time.Now().UnixNano()%1000) / 1000 }))
+		replay()
+	}}}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			l, a := last(), avg()
-			t, sign := toneUp, "+"
+			t, sign := ui.ToneUp, "+"
 			if l < a {
-				t, sign = toneDown, "−"
+				t, sign = ui.ToneDown, "−"
 			}
-			return figure(cx, label(fmt.Sprintf("%d.%d", l, (l*7)%10)), "k/s", label(fmt.Sprintf("%s%d vs. average", sign, max(l-a, a-l))), t)
+			return ui.Figure{Value: label(fmt.Sprintf("%d.%d", l, (l*7)%10)), Unit: "k/s", Note: label(fmt.Sprintf("%s%d vs. average", sign, max(l-a, a-l))), Tone: t}
 		}),
 		core.Canvas{Style: core.Style{Height: core.Pt(180)}, Draw: draw, Label: "Throughput chart"},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
-			legend(cx, colors.accent, "Messages", nil), legend(cx, colors.muted, "Average", nil), legend(cx, colors.warn, "Deploy", nil),
+			ui.Legend{Color: colors.Accent, Label: "Messages"}, ui.Legend{Color: colors.Muted, Label: "Average"}, ui.Legend{Color: colors.Warn, Label: "Deploy"},
 		}},
-	)
+	}}
 }
 
 var ridgeDays = []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
@@ -303,20 +304,20 @@ var ridges = func() [][]float64 {
 // ridgeline is one smooth curve per day, overlapping, each a low-alpha
 // fill.
 func ridgeline(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	sweep, replay := reveal(cx, 1400*time.Millisecond)
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
+		c := colors.Now()
 		width, height := float32(size.Width), float32(size.Height)
-		f := sans(11, regular)
+		f := sans(11, ui.Regular)
 		left := d.MeasureText("Mon", f) + 10
 		const bottom = 18
 		step := (height - bottom - 30) / float32(len(ridgeDays)-1)
 		x := func(h float64) float32 { return left + float32(h/24)*(width-left) }
 		// Peak window and hour labels.
-		dashed(d, x(12), 0, x(12), height-bottom, c.border)
-		dashed(d, x(14), 0, x(14), height-bottom, c.border)
-		d.SetFillColor(c.faint).SetTextBaseline(core.BaselineAlphabetic)
+		dashed(d, x(12), 0, x(12), height-bottom, c.Border)
+		dashed(d, x(14), 0, x(14), height-bottom, c.Border)
+		d.SetFillColor(c.Faint).SetTextBaseline(core.BaselineAlphabetic)
 		for _, h := range []int{0, 6, 12, 18, 24} {
 			l := fmt.Sprintf("%02d", h)
 			lw := d.MeasureText(l, f)
@@ -333,43 +334,42 @@ func ridgeline(cx *core.Scope) core.Node {
 			}
 			d.LineTo(x(24), y(series[24])).LineTo(x(24), base).ClosePath()
 			// Occlude the ridge behind, then a low-alpha fill and the line.
-			d.SetFillColor(c.inset).Fill()
-			fillC, line := alpha(c.accent, 0.1+float32(di)*0.025), c.accent
+			d.SetFillColor(c.Inset).Fill()
+			fillC, line := ui.Alpha(c.Accent, 0.1+float32(di)*0.025), c.Accent
 			if di >= 5 {
-				fillC, line = alpha(c.info, 0.18), c.info
+				fillC, line = ui.Alpha(c.Info, 0.18), c.Info
 			}
 			d.SetFillColor(fillC).Fill().SetStrokeColor(line).SetLineWidth(1.25).Stroke()
 		}
 		d.Restore()
-		d.SetFillColor(c.muted)
+		d.SetFillColor(c.Muted)
 		for di, day := range ridgeDays {
 			d.FillText(day, 0, 30+float32(di)*step-2, f)
 		}
 	}
-	return card(cx, cardProps{icon: iconAnimation, title: "Footfall by hour", subtitle: "Ridgeline, one curve a day",
-		right: button(buttonProps{label: "Replay", variant: secondary, small: true}, replay)},
-		caption(cx, "Gate B, last week", label("Peak 12:00–14:00")),
+	return ui.Card{Icon: ui.IconAnimation, Title: "Footfall by hour", Description: "Ridgeline, one curve a day", Actions: []core.Node{ui.Button{Text: "Replay", Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+		ui.Caption{Label: "Gate B, last week", Note: label("Peak 12:00–14:00")},
 		core.Canvas{Style: core.Style{Height: core.Pt(210)}, Draw: draw, Label: "Footfall ridgeline"},
-		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{legend(cx, colors.accent, "Weekday", nil), legend(cx, colors.info, "Weekend", nil)}},
-	)
+		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{ui.Legend{Color: colors.Accent, Label: "Weekday"}, ui.Legend{Color: colors.Info, Label: "Weekend"}}},
+	}}
 }
 
-// levels are the dot levels, from none to full, read where colorsOf's
+// levels are the dot levels, from none to full, read where ui.ColorsOf's
 // colors are.
 func levels(cx *core.Scope) []core.Color {
-	c := colorsOf(cx).now()
-	return []core.Color{c.raised, alpha(c.accent, 0.22), alpha(c.accent, 0.45), alpha(c.accent, 0.7), c.accent}
+	c := ui.ColorsOf(cx).Now()
+	return []core.Color{c.Raised, ui.Alpha(c.Accent, 0.22), ui.Alpha(c.Accent, 0.45), ui.Alpha(c.Accent, 0.7), c.Accent}
 }
 
 // dotMatrix is uptime per hour block, a pulse on the newest dot (a loop
 // on the platform).
 func dotMatrix(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	pulse := core.NewAnimatedValue(cx, 0)
 	run := cx.StartAnimation(core.Loop(core.Timing(pulse, 1, core.TimingConfig{Duration: ms(1400), Easing: ease(core.EasingQuad, core.EaseModeOut)}), 0), nil)
 	cx.Cleanup(run.Stop)
 	draw := func(d *core.Drawing, size core.Size) {
-		c, lv := colors.now(), levels(cx)
+		c, lv := colors.Now(), levels(cx)
 		width, height := float32(size.Width), float32(size.Height)
 		const rows, gap = 7, 12.5
 		cols := int(width / gap)
@@ -382,27 +382,27 @@ func dotMatrix(cx *core.Scope) core.Node {
 				incident := (col == 6 && r == 2) || (col == 17 && r == 5) || (col == cols-4 && r == 3)
 				fillC := lv[min(4, int(math.Floor(n*n*5+float64(col)/float64(cols)*1.6)))]
 				if incident {
-					fillC = c.danger
+					fillC = c.Danger
 				}
 				lastX, lastY = ox+float32(col)*gap, oy+float32(r)*gap
 				d.SetFillColor(fillC).BeginPath().Arc(lastX, lastY, 3.6, 0, tau, false).Fill()
 			}
 		}
 		// The pulse: radius and alpha follow the loop.
-		d.Save().SetAlpha(0.9).Bind(core.ArgA, lerp(pulse, 0.9, 0)).SetStrokeColor(c.accent).SetLineWidth(1.5).
-			BeginPath().Arc(lastX, lastY, 4, 0, tau, false).Bind(core.ArgR, lerp(pulse, 4, 11)).Stroke().Restore()
+		d.Save().SetAlpha(0.9).Bind(core.ArgA, ui.Lerp(pulse, 0.9, 0)).SetStrokeColor(c.Accent).SetLineWidth(1.5).
+			BeginPath().Arc(lastX, lastY, 4, 0, tau, false).Bind(core.ArgR, ui.Lerp(pulse, 4, 11)).Stroke().Restore()
 	}
 	var swatches []core.Node
 	for i := range len(levels(cx)) {
 		swatches = append(swatches, core.View{Style: core.Style{Width: core.Pt(9), Height: core.Pt(9), CornerRadius: 2.5},
-			StyleFunc: filled(func() core.Color { return levels(cx)[i] })})
+			StyleFunc: ui.Filled(func() core.Color { return levels(cx)[i] })})
 	}
-	return card(cx, cardProps{icon: iconBell, title: "Beacon uptime", subtitle: "Dot matrix, one column a day"},
-		figure(cx, label("99.94"), "%", label("3 incidents"), toneDanger),
+	return ui.Card{Icon: ui.IconBell, Title: "Beacon uptime", Description: "Dot matrix, one column a day", Children: []core.Node{
+		ui.Figure{Value: label("99.94"), Unit: "%", Note: label("3 incidents"), Tone: ui.ToneDanger},
 		core.Canvas{Style: core.Style{Height: core.Pt(96)}, Draw: draw, Label: "Uptime matrix"},
-		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{text("Less", 13, regular, colors.muted)}, swatches...),
-			core.Text{Content: "More", Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: colored(colors.muted)}, legend(cx, colors.danger, "Incident", nil))},
-	)
+		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{ui.Text("Less", 13, ui.Regular, colors.Muted)}, swatches...),
+			core.Text{Content: "More", Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}, ui.Legend{Color: colors.Danger, Label: "Incident"})},
+	}}
 }
 
 var routesLatency = []struct {
@@ -413,12 +413,12 @@ var routesLatency = []struct {
 // dumbbell is before and after per row; the after dots travel on the
 // platform, one value staggered through each row's input range.
 func dumbbell(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	t, replay := reveal(cx, 1500*time.Millisecond)
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
+		c := colors.Now()
 		width, height := float32(size.Width), float32(size.Height)
-		f13, f11 := sans(13, regular), sans(11, regular)
+		f13, f11 := sans(13, ui.Regular), sans(11, ui.Regular)
 		var left float32
 		for _, r := range routesLatency {
 			left = max(left, d.MeasureText(r.name, f13))
@@ -429,22 +429,22 @@ func dumbbell(cx *core.Scope) core.Node {
 		x := func(v float64) float32 { return left + float32(v/most)*(width-left-right) }
 		d.SetTextBaseline(core.BaselineAlphabetic)
 		for _, v := range []float64{0, 100, 200} {
-			dashed(d, x(v), 0, x(v), height-18, c.line)
+			dashed(d, x(v), 0, x(v), height-18, c.Line)
 			l := fmt.Sprint(v)
-			d.SetFillColor(c.faint).FillText(l, x(v)-d.MeasureText(l, f11)/2, height-3, f11)
+			d.SetFillColor(c.Faint).FillText(l, x(v)-d.MeasureText(l, f11)/2, height-3, f11)
 		}
 		for i, r := range routesLatency {
 			cy := 15 + float32(i)*30
 			start := float64(i) * 0.07
 			after := core.Interpolate(t, core.Interpolation{Input: []float64{start, start + 0.6}, Output: []float64{float64(x(r.before)), float64(x(r.after))}, Extrapolate: core.ExtrapolateClamp})
 			worse := r.after > r.before
-			tn, bar := c.accent, alpha(c.accent, 0.45)
+			tn, bar := c.Accent, ui.Alpha(c.Accent, 0.45)
 			if worse {
-				tn, bar = c.danger, alpha(c.danger, 0.5)
+				tn, bar = c.Danger, ui.Alpha(c.Danger, 0.5)
 			}
-			d.SetFillColor(c.muted).SetTextBaseline(core.BaselineMiddle).FillText(r.name, 0, cy, f13)
+			d.SetFillColor(c.Muted).SetTextBaseline(core.BaselineMiddle).FillText(r.name, 0, cy, f13)
 			d.SetStrokeColor(bar).SetLineWidth(3).SetLineCap(core.CapRound).BeginPath().MoveTo(x(r.before), cy).LineTo(x(r.before), cy).Bind(core.ArgX, after).Stroke()
-			d.SetFillColor(c.inset).SetStrokeColor(c.muted).SetLineWidth(1.5).BeginPath().Arc(x(r.before), cy, 4.5, 0, tau, false).Fill().Stroke()
+			d.SetFillColor(c.Inset).SetStrokeColor(c.Muted).SetLineWidth(1.5).BeginPath().Arc(x(r.before), cy, 4.5, 0, tau, false).Fill().Stroke()
 			d.SetFillColor(tn).BeginPath().Arc(x(r.before), cy, 5.5, 0, tau, false).Bind(core.ArgX, after).Fill()
 			pct := int(math.Round((r.after - r.before) / r.before * 100))
 			l := fmt.Sprintf("%d%%", pct)
@@ -454,78 +454,77 @@ func dumbbell(cx *core.Scope) core.Node {
 			d.SetFillColor(tn).FillText(l, width-d.MeasureText(l, f11), cy, f11)
 		}
 	}
-	return card(cx, cardProps{icon: iconPhysics, title: "Route latency", subtitle: "Dumbbell, before → after",
-		right: button(buttonProps{label: "Replay", variant: secondary, small: true}, replay)},
+	return ui.Card{Icon: ui.IconPhysics, Title: "Route latency", Description: "Dumbbell, before → after", Actions: []core.Node{ui.Button{Text: "Replay", Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(30*len(routesLatency) + 24))}, Draw: draw, Label: "Route latency"},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
-			legend(cx, colors.muted, "Before", nil), legend(cx, colors.accent, "After", nil), legend(cx, colors.danger, "Regressed", nil),
+			ui.Legend{Color: colors.Muted, Label: "Before"}, ui.Legend{Color: colors.Accent, Label: "After"}, ui.Legend{Color: colors.Danger, Label: "Regressed"},
 		}},
-	)
+	}}
 }
 
 // clock is transforms, save and restore, and a second hand the platform
 // turns.
 func clock(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	seconds := core.NewAnimatedValue(cx, 0)
 	run := cx.StartAnimation(core.Loop(core.Timing(seconds, 60, core.TimingConfig{Duration: time.Minute}), 0), nil)
 	cx.Cleanup(run.Stop)
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
+		c := colors.Now()
 		r := float32(size.Width) / 2
 		d.Translate(r, r)
-		d.SetFillColor(c.surface).SetStrokeColor(c.border).SetLineWidth(1.5).BeginPath().Arc(0, 0, r-2, 0, tau, false).Fill().Stroke()
+		d.SetFillColor(c.Surface).SetStrokeColor(c.Border).SetLineWidth(1.5).BeginPath().Arc(0, 0, r-2, 0, tau, false).Fill().Stroke()
 		for i := range 60 {
-			col, lw, l := c.faint, float32(1), float32(12)
+			col, lw, l := c.Faint, float32(1), float32(12)
 			if i%5 == 0 {
-				col, lw, l = c.muted, 2, 17
+				col, lw, l = c.Muted, 2, 17
 			}
 			d.Save().Rotate(float32(i)/60*tau).SetStrokeColor(col).SetLineWidth(lw).BeginPath().MoveTo(r-8, 0).LineTo(r-l, 0).Stroke().Restore()
 		}
 		hand := func(angle float64, length, w float32) {
-			d.Save().Rotate(float32(angle-math.Pi/2)).SetStrokeColor(c.text).SetLineWidth(w).SetLineCap(core.CapRound).BeginPath().MoveTo(-8, 0).LineTo(length, 0).Stroke().Restore()
+			d.Save().Rotate(float32(angle-math.Pi/2)).SetStrokeColor(c.Text).SetLineWidth(w).SetLineCap(core.CapRound).BeginPath().MoveTo(-8, 0).LineTo(length, 0).Stroke().Restore()
 		}
 		hand(10.0/12*tau, r*0.48, 4.5)
 		hand(10.0/60*tau, r*0.7, 3)
 		d.Save().Rotate(0).Bind(core.ArgA, core.Mul(seconds, core.Constant(tau/60))).Rotate(-math.Pi/2).
-			SetStrokeColor(c.accent).SetLineWidth(1.5).BeginPath().MoveTo(-14, 0).LineTo(r*0.8, 0).Stroke().Restore()
-		d.SetFillColor(c.accent).BeginPath().Arc(0, 0, 4, 0, tau, false).Fill()
+			SetStrokeColor(c.Accent).SetLineWidth(1.5).BeginPath().MoveTo(-14, 0).LineTo(r*0.8, 0).Stroke().Restore()
+		d.SetFillColor(c.Accent).BeginPath().Arc(0, 0, 4, 0, tau, false).Fill()
 	}
-	return card(cx, cardProps{icon: iconSearch, title: "Transforms", subtitle: "Translate · Rotate · Save / Restore"},
+	return ui.Card{Icon: ui.IconSearch, Title: "Transforms", Description: "Translate · Rotate · Save / Restore", Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 16}, Children: []core.Node{
 			core.Canvas{Style: core.Style{Width: core.Pt(150), Height: core.Pt(150)}, Draw: draw, Label: "Clock"},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
-				caption(cx, "Ticks", label("60 rotations")), caption(cx, "Hands", label("Save, Restore")), caption(cx, "Second hand", label("A loop")),
+				ui.Caption{Label: "Ticks", Note: label("60 rotations")}, ui.Caption{Label: "Hands", Note: label("Save, Restore")}, ui.Caption{Label: "Second hand", Note: label("A loop")},
 			}},
 		}},
-	)
+	}}
 }
 
 var pathGlyphs = []struct {
 	name, d string
-	tone    tone
+	tone    ui.Tone
 	stroke  bool
 }{
-	{"Heart", "M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z", toneDanger, false},
-	{"Star", "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z", toneWarn, false},
-	{"Bolt", "M13 2L3 14h7l-1 8 10-12h-7z", toneInfo, false},
-	{"Check", "M20 6L9 17l-5-5", toneAccent, true},
+	{"Heart", "M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z", ui.ToneDanger, false},
+	{"Star", "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z", ui.ToneWarn, false},
+	{"Bolt", "M13 2L3 14h7l-1 8 10-12h-7z", ui.ToneInfo, false},
+	{"Check", "M20 6L9 17l-5-5", ui.ToneAccent, true},
 }
 
 // paths are SVG path data, parsed by core.
 func paths(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	var tiles []core.Node
 	for _, g := range pathGlyphs {
 		p := core.MustParsePath(g.d)
 		tiles = append(tiles, core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
-				return fin.raised().over(core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 18, BorderCurve: core.BorderCurveContinuous, Background: colors.raised(),
-					BorderWidth: 1, BorderColor: colors.border(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
+				return fin.Raised().Over(core.Style{Width: core.Pt(60), Height: core.Pt(60), CornerRadius: 18, BorderCurve: core.BorderCurveContinuous, Background: colors.Raised(),
+					BorderWidth: 1, BorderColor: colors.Border(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 			}, Children: []core.Node{
 				core.Canvas{Style: core.Style{Width: core.Pt(30), Height: core.Pt(30)}, Label: g.name, Draw: func(d *core.Drawing, _ core.Size) {
-					c := g.tone.color(cx)
+					c := g.tone.Color(cx)
 					d.Scale(30.0/24, 30.0/24)
 					if g.stroke {
 						d.SetStrokeColor(c).SetLineWidth(2.5).SetLineCap(core.CapRound).SetLineJoin(core.JoinRound).StrokePath(p)
@@ -534,59 +533,60 @@ func paths(cx *core.Scope) core.Node {
 					}
 				}},
 			}},
-			text(g.name, 13, regular, colors.muted),
+			ui.Text(g.name, 13, ui.Regular, colors.Muted),
 		}})
 	}
-	return card(cx, cardProps{icon: iconStar, title: "Paths", subtitle: "SVG path data, parsed by core"},
-		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: tiles})
+	return ui.Card{Icon: ui.IconStar, Title: "Paths", Description: "SVG path data, parsed by core", Children: []core.Node{
+		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: tiles},
+	}}
 }
 
 // compositing is clipping, shadows, DestinationOut, dashes and radial
 // gradients.
 func compositing(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	img := core.ImageSource{Data: logoPNG}
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
-		shade := paper(0.25)
+		c := colors.Now()
+		shade := ui.Paper(0.25)
 		if cx.Dark() {
-			shade = black(0.7)
+			shade = ui.Black(0.7)
 		}
 		width, height := float32(size.Width), float32(size.Height)
 		cy := height / 2
 		// An image clipped to a circle, with a ring.
-		d.Save().BeginPath().Arc(46, cy, 42, 0, tau, false).Clip().SetFillColor(c.raised).FillRect(0, 0, 92, height).DrawImageIn(img, 10, cy-36, 72, 72).Restore()
-		d.SetStrokeColor(c.border).SetLineWidth(1.5).BeginPath().Arc(46, cy, 42, 0, tau, false).Stroke()
+		d.Save().BeginPath().Arc(46, cy, 42, 0, tau, false).Clip().SetFillColor(c.Raised).FillRect(0, 0, 92, height).DrawImageIn(img, 10, cy-36, 72, 72).Restore()
+		d.SetStrokeColor(c.Border).SetLineWidth(1.5).BeginPath().Arc(46, cy, 42, 0, tau, false).Stroke()
 		// A shadowed card with a hole punched through.
 		mid := width / 2
 		d.Save().SetShadow(shade, 0, 6, 14).
-			SetFillGradient(core.CanvasLinear(mid-46, 0, mid+46, height, core.GradientStop{Offset: 0, Color: c.accentFill}, core.GradientStop{Offset: 1, Color: core.RGB(0xb84a15)})).
+			SetFillGradient(core.CanvasLinear(mid-46, 0, mid+46, height, core.GradientStop{Offset: 0, Color: c.AccentFill}, core.GradientStop{Offset: 1, Color: core.RGB(0xb84a15)})).
 			BeginPath().RoundRect(mid-46, cy-40, 92, 80, 16).Fill().Restore()
 		d.SetComposite(core.CompositeDestinationOut).BeginPath().Arc(mid, cy, 18, 0, tau, false).Fill().SetComposite(core.CompositeSourceOver)
 		// A radial gradient with a dashed outline.
 		rx := width - 46
 		d.SetFillGradient(core.CanvasRadial(rx-10, cy-12, 4, rx, cy, 40,
-			core.GradientStop{Offset: 0, Color: core.RGB(0xffe2a8)}, core.GradientStop{Offset: 0.55, Color: c.warn}, core.GradientStop{Offset: 1, Color: alpha(c.danger, 0.2)})).
+			core.GradientStop{Offset: 0, Color: core.RGB(0xffe2a8)}, core.GradientStop{Offset: 0.55, Color: c.Warn}, core.GradientStop{Offset: 1, Color: ui.Alpha(c.Danger, 0.2)})).
 			BeginPath().Arc(rx, cy, 38, 0, tau, false).Fill()
-		d.SetLineDash(5, 5).SetStrokeColor(c.warn).SetLineWidth(1.5).BeginPath().Arc(rx, cy, 43, 0, tau, false).Stroke()
+		d.SetLineDash(5, 5).SetStrokeColor(c.Warn).SetLineWidth(1.5).BeginPath().Arc(rx, cy, 43, 0, tau, false).Stroke()
 	}
-	return card(cx, cardProps{icon: iconImage, title: "Compositing", subtitle: "Clip, shadow, DestinationOut, dashes"},
+	return ui.Card{Icon: ui.IconImage, Title: "Compositing", Description: "Clip, shadow, DestinationOut, dashes", Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(120)}, Draw: draw, Label: "Compositing"},
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
-			text("Clipped image", 13, regular, colors.muted), text("Cut-out", 13, regular, colors.muted), text("Radial gradient", 13, regular, colors.muted),
+			ui.Text("Clipped image", 13, ui.Regular, colors.Muted), ui.Text("Cut-out", 13, ui.Regular, colors.Muted), ui.Text("Radial gradient", 13, ui.Regular, colors.Muted),
 		}},
-	)
+	}}
 }
 
 // sketch draws again from the engine on each move.
 func sketch(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	strokes := core.NewSignalFunc(cx, [][]core.Point(nil), func(a, b [][]core.Point) bool { return false })
 	draw := func(d *core.Drawing, size core.Size) {
-		c := colors.now()
+		c := colors.Now()
 		width, height := float32(size.Width), float32(size.Height)
 		// A dot grid to draw on.
-		d.SetFillColor(c.border)
+		d.SetFillColor(c.Border)
 		for x := float32(8); x < width; x += 16 {
 			for y := float32(8); y < height; y += 16 {
 				d.FillRect(x-0.75, y-0.75, 1.5, 1.5)
@@ -594,9 +594,9 @@ func sketch(cx *core.Scope) core.Node {
 		}
 		all := strokes.Get()
 		if len(all) == 0 {
-			d.SetFillColor(c.faint).SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineMiddle).FillText("Draw here", width/2, height/2, sans(14, regular))
+			d.SetFillColor(c.Faint).SetTextAlign(core.TextAlignCenter).SetTextBaseline(core.BaselineMiddle).FillText("Draw here", width/2, height/2, sans(14, ui.Regular))
 		}
-		d.SetStrokeColor(c.accent).SetLineWidth(3).SetLineCap(core.CapRound).SetLineJoin(core.JoinRound)
+		d.SetStrokeColor(c.Accent).SetLineWidth(3).SetLineCap(core.CapRound).SetLineJoin(core.JoinRound)
 		for _, s := range all {
 			d.BeginPath()
 			for i, p := range s {
@@ -609,9 +609,7 @@ func sketch(cx *core.Scope) core.Node {
 			d.Stroke()
 		}
 	}
-	return card(cx, cardProps{icon: iconGestures, title: "Sketch", subtitle: hint(cx, "Touch → draw from the engine", "Drag → draw from the engine"),
-		right: button(buttonProps{label: "Clear", variant: secondary, small: true, disabled: func() bool { return len(strokes.Get()) == 0 }}, func() { strokes.Set(nil) })},
-		// Keep the touches: the scroll view around must not take them.
+	return ui.Card{Icon: ui.IconGestures, Title: "Sketch", Description: ui.Hint(cx, "Touch → draw from the engine", "Drag → draw from the engine"), Actions: []core.Node{ui.Button{Text: "Clear", Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
 		core.View{TestID: "sketch", Responder: &core.Responder{Claims: []core.TouchClaim{{}}, Keep: true,
 			OnGrant: func(e core.ResponderEvent) {
 				strokes.Update(func(s [][]core.Point) [][]core.Point { return append(s, []core.Point{e.Position}) })
@@ -626,25 +624,25 @@ func sketch(cx *core.Scope) core.Node {
 				})
 			},
 		}, Children: []core.Node{core.Canvas{Style: core.Style{Height: core.Pt(200)}, Draw: draw, Label: "Sketch pad"}}},
-		caption(cx, "Strokes", func() string {
+		ui.Caption{Label: "Strokes", Note: func() string {
 			n := 0
 			for _, s := range strokes.Get() {
 				n += len(s)
 			}
 			return fmt.Sprintf("%d · %d points", len(strokes.Get()), n)
-		}),
-	)
+		}},
+	}}
 }
 
 // hitTests names each bar of a chart for assistive technology and tests,
 // and selects the bar a press lands in.
 func hitTests(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	values := []float32{0.5, 0.8, 0.35, 0.65}
 	selected := core.NewSignal(cx, -1)
 	var last *core.Drawing
 	shapes := make([]*core.Path, len(values))
-	lineC, accentC := colors.raised, colors.accent
+	lineC, accentC := colors.Raised, colors.Accent
 	draw := func(d *core.Drawing, size core.Size) {
 		w, h := float32(size.Width), float32(size.Height)
 		slot := w / float32(len(values))
@@ -670,15 +668,15 @@ func hitTests(cx *core.Scope) core.Node {
 		}
 		selected.Set(-1)
 	}
-	return card(cx, cardProps{icon: iconAccess, title: "Nodes and hit tests", subtitle: "Bars screen readers see; a press selects the one PathContains finds", right: badge(cx, "NSGo", toneNeutral)},
+	return ui.Card{Icon: ui.IconAccess, Title: "Nodes and hit tests", Description: "Bars screen readers see; a press selects the one PathContains finds", Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(140)}, Draw: draw, OnPress: pressed, Label: "Selectable bars", TestID: "bars"},
-		caption(cx, "Selected", func() string {
+		ui.Caption{Label: "Selected", Note: func() string {
 			if s := selected.Get(); s >= 0 {
 				return fmt.Sprintf("Bar %d", s+1)
 			}
 			return "none"
-		}),
-	)
+		}},
+	}}
 }
 
 // canvasDemo is core.Canvas: a 2D context recorded on the engine and

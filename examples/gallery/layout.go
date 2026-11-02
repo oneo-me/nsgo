@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // layoutDemo is the layout NSGo ports from Taffy: flexbox, wrapping,
@@ -9,13 +11,13 @@ import (
 // direction and block layout. NSH's gallery has no page of its own for
 // it; this one is in its look.
 func layoutDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	tints := tintsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	tints := ui.TintsOf(cx)
+	fin := ui.FinOf(cx)
 	// paintedBox is a box of style, its colors fill's (raised when nil).
 	paintedBox := func(label string, style core.Style, fill func() core.Style) core.Node {
 		return core.View{StyleFunc: func() core.Style {
-			s := fin.raised().over(core.Style{Background: colors.raised(), BorderWidth: 1, BorderColor: colors.border(), CornerRadius: 8,
+			s := fin.Raised().Over(core.Style{Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 8,
 				Padding: core.Symmetric(8, 12), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}).Merge(style)
 			// A box of another color drops the raised gradient over it.
 			if fill != nil {
@@ -23,16 +25,16 @@ func layoutDemo(cx *core.Scope) core.Node {
 				s.Gradients = nil
 			}
 			return s
-		}, Children: []core.Node{text(label, 13, medium, colors.text)}}
+		}, Children: []core.Node{ui.Text(label, 13, ui.Medium, colors.Text)}}
 	}
 	box := func(label string, style core.Style) core.Node { return paintedBox(label, style, nil) }
 	tinted := func() core.Style {
-		return core.Style{Background: tints.accent(), BorderColor: alpha(colors.accent(), 0.4)}
+		return core.Style{Background: tints.Accent(), BorderColor: ui.Alpha(colors.Accent(), 0.4)}
 	}
 	tintedBox := func(label string, style core.Style) core.Node { return paintedBox(label, style, tinted) }
 	frame := func(style core.Style, children ...core.Node) core.Node {
 		return core.View{StyleFunc: func() core.Style {
-			return core.Style{Background: colors.surface(), BorderWidth: 1, BorderColor: colors.line(), CornerRadius: 10,
+			return core.Style{Background: colors.Surface(), BorderWidth: 1, BorderColor: colors.Line(), CornerRadius: 10,
 				Padding: core.All(8), Gap: 8}.Merge(style)
 		}, Children: children}
 	}
@@ -43,12 +45,12 @@ func layoutDemo(cx *core.Scope) core.Node {
 			name string
 			v    core.Justify
 		}{{"JustifyStart", core.JustifyStart}, {"JustifyCenter", core.JustifyCenter}, {"JustifySpaceBetween", core.JustifySpaceBetween}, {"JustifySpaceEvenly", core.JustifySpaceEvenly}} {
-			justify = append(justify, api(cx, j.name),
+			justify = append(justify, ui.API{Text: j.name},
 				frame(core.Style{Direction: core.Row, JustifyContent: j.v}, box("A", core.Style{}), box("B", core.Style{}), box("C", core.Style{})))
 		}
-		justify = append(justify, api(cx, "Column, AlignCenter"),
+		justify = append(justify, ui.API{Text: "Column, AlignCenter"},
 			frame(core.Style{AlignItems: core.AlignCenter}, box("One", core.Style{}), box("Two, wider", core.Style{}), box("Three", core.Style{})))
-		return section(cx, "Row and column", "Direction · JustifyContent", justify...)
+		return ui.Section{Title: "Row and column", Note: "Direction · JustifyContent", Children: justify}
 	}
 
 	wrapCard := func(cx *core.Scope) core.Node {
@@ -60,29 +62,30 @@ func layoutDemo(cx *core.Scope) core.Node {
 				chips = append(chips, box(w, core.Style{CornerRadius: 14}))
 			}
 		}
-		return section(cx, "Wrap", "Wrap", frame(core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, chips...))
+		return ui.Section{Title: "Wrap", Note: "Wrap", Children: []core.Node{frame(core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, chips...)}}
 	}
 
 	grow := func(cx *core.Scope) core.Node {
-		return section(cx, "Grow and shrink", "FlexGrow · FlexShrink · AutoMargin",
+		return ui.Section{Title: "Grow and shrink", Note: "FlexGrow · FlexShrink · AutoMargin", Children: []core.Node{
 			frame(core.Style{Direction: core.Row}, box("1", core.Style{FlexGrow: 1}), box("2", core.Style{FlexGrow: 2}), box("3", core.Style{FlexGrow: 3})),
 			frame(core.Style{Direction: core.Row}, box("fixed 120", core.Style{Width: core.Pt(120)}), box("900 wide, shrinks to fit", core.Style{Width: core.Pt(900), FlexShrink: 1})),
 			frame(core.Style{Direction: core.Row}, box("Start", core.Style{}), box("pushed to the end", core.Style{AutoMargin: core.SideLeft})),
-		)
+		}}
 	}
 
 	absolute := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return section(cx, "Absolute positioning", "Position: Absolute",
+		colors := ui.ColorsOf(cx)
+		return ui.Section{Title: "Absolute positioning", Note: "Position: Absolute", Children: []core.Node{
 			frame(core.Style{Height: core.Pt(120)},
 				box("Top left", core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(8)}),
 				box("Bottom right", core.Style{Position: core.Absolute, Bottom: core.Pt(8), Right: core.Pt(8)}),
 				tintedBox("Centered", core.Style{Position: core.Absolute, Top: core.Pct(50), Left: core.Pct(50),
 					Transform: core.Transform{TranslateXPercent: -50, TranslateYPercent: -50}}),
 				core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(-6), Right: core.Pt(-6), Width: core.Pt(20), Height: core.Pt(20),
-					CornerRadius: 10, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, StyleFunc: filled(colors.danger),
-					Children: []core.Node{text("3", 11, bold, fixed(core.RGB(0xffffff)))}},
-			))
+					CornerRadius: 10, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, StyleFunc: ui.Filled(colors.Danger),
+					Children: []core.Node{ui.Text("3", 11, ui.Bold, ui.Fixed(core.RGB(0xffffff)))}},
+			),
+		}}
 	}
 
 	grid := func(cx *core.Scope) core.Node {
@@ -90,92 +93,96 @@ func layoutDemo(cx *core.Scope) core.Node {
 		for i := 1; i <= 7; i++ {
 			cells = append(cells, box(itoa(i), core.Style{Height: core.Pt(44)}))
 		}
-		return section(cx, "Grid", "DisplayGrid",
-			api(cx, `GridTemplateColumns: "repeat(3, 1fr)"`),
+		return ui.Section{Title: "Grid", Note: "DisplayGrid", Children: []core.Node{
+			ui.API{Text: `GridTemplateColumns: "repeat(3, 1fr)"`},
 			core.View{Style: core.Style{Display: core.DisplayGrid, GridTemplateColumns: "repeat(3, 1fr)", GridAutoRows: "44px", Gap: 8}, Children: []core.Node{
 				tintedBox("span 2", core.Style{GridColumn: core.GridLines{Start: core.GridSpan(2)}}),
 				box("B", core.Style{}), box("C", core.Style{}),
 				tintedBox("2 rows", core.Style{GridRow: core.GridLines{Start: core.GridSpan(2)}}),
 				box("E", core.Style{}), box("F", core.Style{}), box("G", core.Style{}), box("H", core.Style{}),
 			}},
-			api(cx, `"repeat(auto-fill, minmax(80px, 1fr))"`),
+			ui.API{Text: `"repeat(auto-fill, minmax(80px, 1fr))"`},
 			core.View{Style: core.Style{Display: core.DisplayGrid, GridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", Gap: 8}, Children: cells},
-		)
+		}}
 	}
 
 	positions := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		fin := finOf(cx)
+		colors := ui.ColorsOf(cx)
+		fin := ui.FinOf(cx)
 		// Each group holds its rows, so its header stops at the group's
 		// end.
 		var groups []core.Node
 		for _, name := range []string{"Fruit", "Vegetables", "Grains"} {
 			g := []core.Node{core.View{StyleFunc: func() core.Style {
-				return core.Style{Position: core.Sticky, Top: core.Pt(0), Background: colors.raised(), Padding: core.Symmetric(6, 10),
-					Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.line()}}
+				return core.Style{Position: core.Sticky, Top: core.Pt(0), Background: colors.Raised(), Padding: core.Symmetric(6, 10),
+					Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line()}}
 			},
-				Children: []core.Node{text(name, 13, semibold, colors.accent)}}}
+				Children: []core.Node{ui.Text(name, 13, ui.Semibold, colors.Accent)}}}
 			for i := 1; i <= 4; i++ {
-				g = append(g, core.Text{Content: name + " " + itoa(i), Style: core.Style{Padding: core.Symmetric(7, 10), FontSize: 14}, StyleFunc: colored(colors.text)})
+				g = append(g, core.Text{Content: name + " " + itoa(i), Style: core.Style{Padding: core.Symmetric(7, 10), FontSize: 14}, StyleFunc: ui.Colored(colors.Text)})
 			}
 			groups = append(groups, core.View{Children: g})
 		}
 		shown := core.NewSignal(cx, false)
-		return section(cx, "Static, sticky and fixed", "Position",
-			note(cx, "Static ignores insets and lets absolute views inside reach past it; Sticky pins a header while its group scrolls; Fixed places a view in the window, out of every scroll view."),
+		return ui.Section{Title: "Static, sticky and fixed", Note: "Position", Children: []core.Node{
+			ui.Note{Text: "Static ignores insets and lets absolute views inside reach past it; Sticky pins a header while its group scrolls; Fixed places a view in the window, out of every scroll view."},
 			frame(core.Style{Height: core.Pt(80)},
 				core.View{Style: core.Style{Position: core.Static, Top: core.Pt(40), Padding: core.All(4)}, Children: []core.Node{
 					box("absolute, in the frame", core.Style{Position: core.Absolute, Bottom: core.Pt(4), Right: core.Pt(4)}),
 				}},
 			),
 			core.Scroll{Style: surfaceBox(cx, 160).Merge(core.Style{Overflow: core.Hidden}), StyleFunc: surfaceInk(cx), Children: groups},
-			button(buttonProps{label: "Show a fixed note", variant: secondary}, func() { toggled(shown) }),
+			ui.Button{Text: "Show a fixed note", Variant: ui.ButtonSecondary, OnPress: func() { toggled(shown) }},
 			core.Show{When: shown.Get, Then: func(*core.Scope) core.Node {
 				return core.View{StyleFunc: func() core.Style {
 					return core.Style{Position: core.Fixed, Right: core.Pt(24), Bottom: core.Pt(24), Padding: core.Symmetric(10, 14),
-						Background: colors.light(), CornerRadius: radiusControl, ZIndex: 10, Shadows: fin.light().shadows}
+						Background: colors.Light(), CornerRadius: ui.RadiusControl, ZIndex: 10, Shadows: fin.Light().Shadows}
 				},
-					Children: []core.Node{text("Fixed to the window", 14, medium, colors.onLight)}}
+					Children: []core.Node{ui.Text("Fixed to the window", 14, ui.Medium, colors.OnLight)}}
 			}},
-		)
+		}}
 	}
 
 	intrinsic := func(cx *core.Scope) core.Node {
-		return section(cx, "Intrinsic sizes", "MinContent · MaxContent · FitContent",
+		return ui.Section{Title: "Intrinsic sizes", Note: "MinContent · MaxContent · FitContent", Children: []core.Node{
 			frame(core.Style{AlignItems: core.AlignStart},
 				tintedBox("min-content: each word on a line", core.Style{Width: core.MinContent}),
 				tintedBox("max-content: one line", core.Style{Width: core.MaxContent}),
 				tintedBox("fit-content: one line up to the width, then it wraps as the space runs out", core.Style{Width: core.FitContent}),
-			))
+			),
+		}}
 	}
 
 	stacking := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return section(cx, "Stacking", "ZIndex",
+		colors := ui.ColorsOf(cx)
+		return ui.Section{Title: "Stacking", Note: "ZIndex", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, Height: core.Pt(90)},
 				tintedBox("ZIndex 2", core.Style{Width: core.Pt(100), Height: core.Pt(60), ZIndex: 2}),
 				box("0", core.Style{Width: core.Pt(100), Height: core.Pt(60), Margin: core.Edges{Left: -30, Top: 20}}),
-				paintedBox("ZIndex 1", core.Style{Width: core.Pt(100), Height: core.Pt(60), Margin: core.Edges{Left: -30}, ZIndex: 1}, filled(colors.inset)),
-			))
+				paintedBox("ZIndex 1", core.Style{Width: core.Pt(100), Height: core.Pt(60), Margin: core.Edges{Left: -30}, ZIndex: 1}, ui.Filled(colors.Inset)),
+			),
+		}}
 	}
 
 	direction := func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
-		return section(cx, "Direction", "LayoutDirection · WritingDirection",
+		colors := ui.ColorsOf(cx)
+		return ui.Section{Title: "Direction", Note: "LayoutDirection · WritingDirection", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, LayoutDirection: core.DirectionRTL}, box("first", core.Style{}), box("second", core.Style{}), box("third", core.Style{})),
 			frame(core.Style{},
-				core.Text{Content: "שלום עולם, hello world", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: colored(colors.text)},
-				core.Text{Content: "Hello world, שלום עולם", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: colored(colors.text)},
-			))
+				core.Text{Content: "שלום עולם, hello world", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: "Hello world, שלום עולם", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+			),
+		}}
 	}
 
 	block := func(cx *core.Scope) core.Node {
-		return section(cx, "Block", "DisplayBlock",
+		return ui.Section{Title: "Block", Note: "DisplayBlock", Children: []core.Node{
 			frame(core.Style{Display: core.DisplayBlock},
 				box("margin bottom 16", core.Style{Margin: core.Edges{Bottom: 16}}),
 				box("margin top 16: the gap stays 16", core.Style{Margin: core.Edges{Top: 16}}),
 				box("width 60%, centered by auto margins", core.Style{Width: core.Pct(60), AutoMargin: core.SidesHorizontal, Margin: core.Edges{Top: 8}}),
-			))
+			),
+		}}
 	}
 
 	return demoPage(cx, pageProps{}, rows, wrapCard, grow, absolute, grid, positions, intrinsic, stacking, direction, block)

@@ -8,6 +8,8 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 // base's DataTable over a million stocks of sixty columns the app does
@@ -157,37 +159,37 @@ type stockPageRows struct {
 // tableStyles is the gallery's table look, base having none, as its
 // StylesFunc.
 func tableStyles(cx *core.Scope) func() base.DataTableStyles {
-	return themed(cx, func() base.DataTableStyles { return tableParts(cx) })
+	return ui.Themed(cx, func() base.DataTableStyles { return tableParts(cx) })
 }
 
-// tableParts are the table's styles, read where colorsOf's colors are.
+// tableParts are the table's styles, read where ui.ColorsOf's colors are.
 func tableParts(cx *core.Scope) base.DataTableStyles {
-	colors := colorsOf(cx).now()
-	selected := &core.Style{Color: colors.text, Opacity: core.Alpha(1)}
-	chevron := core.Style{Color: colors.muted, Opacity: core.Alpha(0.6), Selected: selected}
+	colors := ui.ColorsOf(cx).Now()
+	selected := &core.Style{Color: colors.Text, Opacity: core.Alpha(1)}
+	chevron := core.Style{Color: colors.Muted, Opacity: core.Alpha(0.6), Selected: selected}
 	return base.DataTableStyles{
-		Header:             core.Style{Background: alpha(colors.inset, 0.5), Color: colors.muted, Borders: core.Edges{Bottom: 1}, BorderColor: colors.border},
+		Header:             core.Style{Background: ui.Alpha(colors.Inset, 0.5), Color: colors.Muted, Borders: core.Edges{Bottom: 1}, BorderColor: colors.Border},
 		HeaderCell:         core.Style{Padding: core.Edges{Left: 8, Right: 4}},
 		HeaderContent:      core.Style{Gap: 4},
-		HeaderCellSelected: core.Style{Background: alpha(colors.accent, 0.10)},
+		HeaderCellSelected: core.Style{Background: ui.Alpha(colors.Accent, 0.10)},
 		HeaderCellDragging: core.Style{Opacity: core.Alpha(0.5)},
-		GroupCell:          core.Style{Borders: core.Edges{Bottom: 1, Right: 1}, BorderColor: colors.border, Padding: core.Symmetric(0, 8)},
-		SortIndicator:      core.Style{CornerRadius: 4, Color: colors.muted, Hover: &core.Style{Background: alpha(colors.text, 0.10)}},
+		GroupCell:          core.Style{Borders: core.Edges{Bottom: 1, Right: 1}, BorderColor: colors.Border, Padding: core.Symmetric(0, 8)},
+		SortIndicator:      core.Style{CornerRadius: 4, Color: colors.Muted, Hover: &core.Style{Background: ui.Alpha(colors.Text, 0.10)}},
 		SortAscending:      chevron,
 		SortDescending:     chevron,
-		ResizeHandle:       core.Style{Background: colors.border},
-		MoveIndicator:      core.Style{Background: colors.accent},
-		Row:                core.Style{Borders: core.Edges{Bottom: 1}, BorderColor: alpha(colors.border, 0.6)},
-		RowOdd:             core.Style{Background: alpha(colors.inset, 0.35)},
-		RowHover:           core.Style{Background: alpha(colors.inset, 0.6)},
-		RowSelected:        core.Style{Background: alpha(colors.accent, 0.12)},
-		RowActive:          core.Style{Background: alpha(colors.inset, 0.6)},
+		ResizeHandle:       core.Style{Background: colors.Border},
+		MoveIndicator:      core.Style{Background: colors.Accent},
+		Row:                core.Style{Borders: core.Edges{Bottom: 1}, BorderColor: ui.Alpha(colors.Border, 0.6)},
+		RowOdd:             core.Style{Background: ui.Alpha(colors.Inset, 0.35)},
+		RowHover:           core.Style{Background: ui.Alpha(colors.Inset, 0.6)},
+		RowSelected:        core.Style{Background: ui.Alpha(colors.Accent, 0.12)},
+		RowActive:          core.Style{Background: ui.Alpha(colors.Inset, 0.6)},
 		Cell:               core.Style{Padding: core.Symmetric(0, 8)},
-		CellSelected:       core.Style{BorderWidth: 1, BorderColor: colors.accent},
-		CellColumnSelected: core.Style{Background: alpha(colors.accent, 0.08)},
-		CellActive:         core.Style{BorderWidth: 1, BorderColor: alpha(colors.accent, 0.5)},
-		RowHeader:          core.Style{Color: colors.muted},
-		FixedEdge:          core.Style{Background: colors.border},
+		CellSelected:       core.Style{BorderWidth: 1, BorderColor: colors.Accent},
+		CellColumnSelected: core.Style{Background: ui.Alpha(colors.Accent, 0.08)},
+		CellActive:         core.Style{BorderWidth: 1, BorderColor: ui.Alpha(colors.Accent, 0.5)},
+		RowHeader:          core.Style{Color: colors.Muted},
+		FixedEdge:          core.Style{Background: colors.Border},
 	}
 }
 
@@ -196,7 +198,7 @@ func tableParts(cx *core.Scope) base.DataTableStyles {
 // column sortable, rows, cells or columns selected, columns resized and
 // moved.
 func dataTableDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	mode := core.NewSignal(cx, "row")
 	sort := core.NewSignal(cx, base.DataTableSort{})
 	page := core.NewSignalFunc(cx, stockPageRows{}, func(a, b stockPageRows) bool { return false })
@@ -290,7 +292,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	// The columns color their rises and falls in the palette shown, which
 	// the table follows without resetting their widths or order.
 	columnsNow := func() []base.DataTableColumn {
-		up, down := colors.up(), colors.down()
+		up, down := colors.Up(), colors.Down()
 		columns := make([]base.DataTableColumn, len(stockColumns))
 		for i, c := range stockColumns {
 			c.FitPadding = 16
@@ -315,7 +317,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 		return "Nothing selected"
 	}
 	status := func(fn func() string, c func() core.Color) core.Node {
-		return core.Text{ContentFunc: fn, Style: core.Style{FontFamily: mono, FontSize: 12}, StyleFunc: colored(c)}
+		return core.Text{ContentFunc: fn, Style: core.Style{FontFamily: ui.Mono, FontSize: 12}, StyleFunc: ui.Colored(c)}
 	}
 	pad := core.Points(16)
 	if shell.desktop() {
@@ -331,29 +333,28 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	}
 	toggle := func(s *core.Signal[bool]) func() { return func() { s.Set(!s.GetUntracked()) } }
 	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Background: colors.background(), Padding: core.All(pad), Gap: 12})
+		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: 12})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(260)}, Children: []core.Node{
-				segmented([]option[string]{{value: "row", label: "Rows"}, {value: "cell", label: "Cells"}}, mode.Get,
-					func(v string) { mode.Set(v); selection.Set(base.NoTableSelection) }, true),
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "row", Label: "Rows"}, {Value: "cell", Label: "Cells"}}, Value: mode.Get, OnChange: func(v string) { mode.Set(v); selection.Set(base.NoTableSelection) }, Small: true},
 			}},
 			core.Dynamic(func(cx *core.Scope) core.Node {
-				return tool(cx, "Toggle live updates", onOff("Live", live)(), nil, toggle(live))
+				return ui.Tool{Label: "Toggle live updates", Text: onOff("Live", live)(), OnPress: toggle(live)}
 			}),
 			core.Dynamic(func(cx *core.Scope) core.Node {
-				return tool(cx, "Toggle stripes", onOff("Stripes", stripe)(), nil, toggle(stripe))
+				return ui.Tool{Label: "Toggle stripes", Text: onOff("Stripes", stripe)(), OnPress: toggle(stripe)}
 			}),
-			tool(cx, "Go to row 500000", "Row 500,000", nil, func() { table.ScrollToRow(499_999, false) }),
-			tool(cx, "Go to Indicator 30", "Indicator 30", nil, func() { table.ScrollToColumn("x30", false) }),
+			ui.Tool{Label: "Go to row 500000", Text: "Row 500,000", OnPress: func() { table.ScrollToRow(499_999, false) }},
+			ui.Tool{Label: "Go to Indicator 30", Text: "Indicator 30", OnPress: func() { table.ScrollToColumn("x30", false) }},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-			status(describe, colors.text),
+			status(describe, colors.Text),
 			status(func() string {
 				v := visible.Get()
 				return fmt.Sprintf("rows %d–%d of %s", v[0]+1, v[1], visitors(stockRows))
-			}, colors.muted),
-			status(func() string { return fmt.Sprintf("%d columns · tick %d", len(columns), ticks.Get()) }, colors.muted),
+			}, colors.Muted),
+			status(func() string { return fmt.Sprintf("%d columns · tick %d", len(columns), ticks.Get()) }, colors.Muted),
 		}},
 		base.DataTable{
 			Ref: table, TestID: "table", Label: "Stocks",
@@ -373,7 +374,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 			StylesFunc: tableStyles(cx),
 			StyleFunc: func() core.Style {
 				return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: 8, BorderWidth: 1,
-					BorderColor: colors.border(), Background: colors.background(), Color: colors.text()}
+					BorderColor: colors.Border(), Background: colors.Background(), Color: colors.Text()}
 			},
 			OnSortChange: func(next base.DataTableSort) {
 				sort.Set(next)
@@ -394,12 +395,12 @@ func dataTableDemo(cx *core.Scope) core.Node {
 // website shows it: the parts give screen readers a table, the styles its
 // look.
 func tableCard(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
+	colors := ui.ColorsOf(cx)
 	invoices := [][4]string{{"INV001", "Paid", "Card", "$250.00"}, {"INV002", "Pending", "Transfer", "$150.00"},
 		{"INV003", "Unpaid", "Card", "$350.00"}, {"INV004", "Paid", "Cash", "$450.00"}}
 	widths := []core.Length{core.Pt(84), {}, core.Pt(84), core.Pt(84)}
 	line := core.Style{Borders: core.Edges{Bottom: 1}}
-	lineColor := func() core.Style { return core.Style{BorderColor: colors.line()} }
+	lineColor := func() core.Style { return core.Style{BorderColor: colors.Line()} }
 	cell := func(i int, head, end bool, s string) core.Node {
 		st := core.Style{Padding: core.Symmetric(10, 12)}
 		if i == 1 {
@@ -411,11 +412,11 @@ func tableCard(cx *core.Scope) core.Node {
 		if end {
 			align = core.TextAlignEnd
 		}
-		c, w := colors.text, regular
+		c, w := colors.Text, ui.Regular
 		if head {
-			c, w = colors.muted, medium
+			c, w = colors.Muted, ui.Medium
 		}
-		content := []core.Node{core.Text{Content: s, Style: core.Style{FontSize: 14, FontWeight: w, TextAlign: align}, StyleFunc: colored(c)}}
+		content := []core.Node{core.Text{Content: s, Style: core.Style{FontSize: 14, FontWeight: w, TextAlign: align}, StyleFunc: ui.Colored(c)}}
 		if head {
 			return base.TableHead{Style: st, Children: content}
 		}
@@ -431,7 +432,7 @@ func tableCard(cx *core.Scope) core.Node {
 	for i, title := range []string{"Invoice", "Status", "Method", "Amount"} {
 		head = append(head, cell(i, true, i == 3, title))
 	}
-	return card(cx, cardProps{icon: iconLists, title: "Table", subtitle: "A few rows the app writes out, with a table's roles"},
+	return ui.Card{Icon: ui.IconLists, Title: "Table", Description: "A few rows the app writes out, with a table's roles", Children: []core.Node{
 		base.Table{Label: "Recent invoices", Children: []core.Node{
 			base.TableHeader{Children: []core.Node{base.TableRow{Style: line, StyleFunc: lineColor, Children: head}}},
 			base.TableBody{Children: body},
@@ -439,7 +440,8 @@ func tableCard(cx *core.Scope) core.Node {
 				cell(0, true, false, "Total"), cell(1, false, false, ""), cell(2, false, false, ""), cell(3, false, true, "$1,200.00"),
 			}}}},
 			base.TableCaption{Style: core.Style{Padding: core.Symmetric(8, 12)}, Children: []core.Node{
-				core.Text{Content: "A list of your recent invoices.", Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
+				core.Text{Content: "A list of your recent invoices.", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
-		}})
+		}},
+	}}
 }

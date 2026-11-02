@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 const (
@@ -29,9 +31,9 @@ var feels = map[string]core.SpringConfig{
 // drag's velocity. A canvas draws a tether to it from the same animated
 // values, with no engine work per frame.
 func physicsDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	tints := tintsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	tints := ui.TintsOf(cx)
+	fin := ui.FinOf(cx)
 	env := cx.Env()
 	x, y := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
 	pressed, lift := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
@@ -43,14 +45,14 @@ func physicsDemo(cx *core.Scope) core.Node {
 	settle := func(v *core.AnimatedValue, to, velocity float64) {
 		c := feels[feel.GetUntracked()]
 		c.Velocity = velocity
-		spring(cx, v, to, c)
+		ui.Spring(cx, v, to, c)
 	}
 	corners := func() core.Point {
 		s := stageSize.Get()
 		return core.Point{X: max(0, s.Width/2-physicsCard/2-14), Y: max(0, s.Height/2-physicsCard/2-14)}
 	}
 	release := func(e core.PanEvent) {
-		spring(cx, lift, 0, core.SpringConfig{Stiffness: 300, Damping: 24})
+		ui.Spring(cx, lift, 0, core.SpringConfig{Stiffness: 300, Damping: 24})
 		releases.Update(func(n int) int { return n + 1 })
 		vx, vy := float64(e.Velocity.X), float64(e.Velocity.Y)
 		speed.Set(int(math.Round(math.Hypot(vx, vy))))
@@ -103,7 +105,7 @@ func physicsDemo(cx *core.Scope) core.Node {
 		settle(y, 0, 0)
 	}
 
-	line, border, faint, accent := colors.line, colors.border, colors.faint, colors.accent
+	line, border, faint, accent := colors.Line, colors.Border, colors.Faint, colors.Accent
 	tether := core.Canvas{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
 		Draw: func(d *core.Drawing, size core.Size) {
 			w, h := float32(size.Width), float32(size.Height)
@@ -133,8 +135,8 @@ func physicsDemo(cx *core.Scope) core.Node {
 
 	body := func(short bool) core.Node {
 		st := func() core.Style {
-			st := fin.inset().over(core.Style{Overflow: core.Hidden, CornerRadius: radiusCard, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, BorderColor: colors.border(),
-				Background: colors.inset(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
+			st := fin.Inset().Over(core.Style{Overflow: core.Hidden, CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, BorderColor: colors.Border(),
+				Background: colors.Inset(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 			if short {
 				st.Height = core.Pt(shortStage)
 			} else {
@@ -149,25 +151,25 @@ func physicsDemo(cx *core.Scope) core.Node {
 			page = pageStyle(cx)
 		}
 		return core.View{Style: outer, StyleFunc: page, Children: []core.Node{
-			appear(0, false, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-				iconTile(cx, iconPhysics, 40),
+			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
+				ui.IconTile{Icon: ui.IconPhysics, Size: 40},
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-					text("Drag and release", 17, semibold, colors.text),
-					core.Text{Content: hint(cx, "Tap to pulse, long press to reset", "Click to pulse, press and hold to reset"), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: colored(colors.muted)},
+					ui.Text("Drag and release", 17, ui.Semibold, colors.Text),
+					core.Text{Content: ui.Hint(cx, "Tap to pulse, long press to reset", "Click to pulse, press and hold to reset"), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
-				badge(cx, "UI thread", toneAccent),
-			}}),
+				ui.Badge{Text: "UI thread", Tone: ui.ToneAccent},
+			}}}},
 			core.View{OnLayout: func(b core.Bounds) { stageSize.Set(b.Size) }, StyleFunc: st, Children: []core.Node{
 				tether,
 				core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
 					return core.Style{Position: core.Absolute, Width: core.Pt(physicsCard), Height: core.Pt(physicsCard), CornerRadius: 30,
-						Background: tints.accent(), Animated: &core.AnimatedStyle{Opacity: lift, TranslateX: x, TranslateY: y, Scale: lerp(lift, 1, 1.32)}}
+						Background: tints.Accent(), Animated: &core.AnimatedStyle{Opacity: lift, TranslateX: x, TranslateY: y, Scale: ui.Lerp(lift, 1, 1.32)}}
 				}},
 				core.View{PanValues: core.AnimatedXY{X: x, Y: y}, TestID: "physics-card",
 					OnPan: func(e core.PanEvent) {
 						switch e.Phase {
 						case core.GestureBegan:
-							spring(cx, lift, 1, core.SpringConfig{Stiffness: 400, Damping: 26})
+							ui.Spring(cx, lift, 1, core.SpringConfig{Stiffness: 400, Damping: 26})
 						case core.GestureEnded, core.GestureCancelled:
 							release(e)
 						}
@@ -175,36 +177,36 @@ func physicsDemo(cx *core.Scope) core.Node {
 					OnPress: func(core.PressEvent) { pulse() }, OnLongPress: func(core.PressEvent) { reset() }, Role: core.RoleButton, Label: "Draggable card",
 					StyleFunc: func() core.Style {
 						return core.Style{Width: core.Pt(physicsCard), Height: core.Pt(physicsCard), CornerRadius: 30, BorderCurve: core.BorderCurveContinuous,
-							AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.accentFill(),
+							AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.AccentFill(),
 							// The accent's highlight and glow; the color itself
 							// animates.
-							Shadows: fin.accent().shadows,
+							Shadows: fin.Accent().Shadows,
 							Animated: &core.AnimatedStyle{
-								Background: core.Interpolate(pressed, core.Interpolation{Input: []float64{0, 1}, Colors: []core.Color{colors.accentFill(), colors.info()}}),
+								Background: core.Interpolate(pressed, core.Interpolation{Input: []float64{0, 1}, Colors: []core.Color{colors.AccentFill(), colors.Info()}}),
 								TranslateX: x, TranslateY: y,
-								Scale:  core.Mul(lerp(pressed, 1, 1.12), lerp(lift, 1, 1.06)),
+								Scale:  core.Mul(ui.Lerp(pressed, 1, 1.12), ui.Lerp(lift, 1, 1.06)),
 								Rotate: core.Interpolate(x, core.Interpolation{Input: []float64{-200, 200}, Output: []float64{-14, 14}}),
 							}}
 					},
-					Children: []core.Node{icon(iconGestures, 28, colors.onAccent), text("Drag me", 15, bold, colors.onAccent)}},
+					Children: []core.Node{ui.Icon(ui.IconGestures, 28, colors.OnAccent), ui.Text("Drag me", 15, ui.Bold, colors.OnAccent)}},
 			}},
-			core.View{StyleFunc: func() core.Style { return cardStyle(cx).Merge(core.Style{Padding: core.All(12), Gap: 12}) }, Children: []core.Node{
-				segmented([]option[string]{{value: "spring", label: "Spring"}, {value: "coast", label: "Coast"}, {value: "snap", label: "Snap"}}, mode.Get, mode.Set, false),
-				segmented([]option[string]{{value: "soft", label: "Soft"}, {value: "bouncy", label: "Bouncy"}, {value: "firm", label: "Firm"}}, feel.Get, feel.Set, true),
+			core.View{StyleFunc: func() core.Style { return ui.CardStyle(cx).Merge(core.Style{Padding: core.All(12), Gap: 12}) }, Children: []core.Node{
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: "Spring"}, {Value: "coast", Label: "Coast"}, {Value: "snap", Label: "Snap"}}, Value: mode.Get, OnChange: mode.Set},
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "soft", Label: "Soft"}, {Value: "bouncy", Label: "Bouncy"}, {Value: "firm", Label: "Firm"}}, Value: feel.Get, OnChange: feel.Set, Small: true},
 				core.View{Style: core.Style{Direction: core.Row, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
-					stat(cx, "Releases", func() string { return itoa(releases.Get()) }, toneNeutral, core.Pct(30)),
+					ui.Stat{Label: "Releases", Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
 					core.Dynamic(func(*core.Scope) core.Node {
-						t := toneNeutral
+						t := ui.ToneNeutral
 						if speed.Get() > 1500 {
-							t = toneWarn
+							t = ui.ToneWarn
 						}
-						return stat(cx, "Speed", func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, t, core.Pct(34))
+						return ui.Stat{Label: "Speed", Value: func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, Tone: t, Width: core.Pct(34)}
 					}),
 					core.Dynamic(func(*core.Scope) core.Node {
 						if mode.Get() == "snap" {
-							return stat(cx, "Corner", corner.Get, toneNeutral, core.Pct(36))
+							return ui.Stat{Label: "Corner", Value: corner.Get, Width: core.Pct(36)}
 						}
-						return stat(cx, "Spring", func() string { f := feels[feel.Get()]; return fmt.Sprintf("%.0f / %.0f", f.Stiffness, f.Damping) }, toneNeutral, core.Pct(36))
+						return ui.Stat{Label: "Spring", Value: func() string { f := feels[feel.Get()]; return fmt.Sprintf("%.0f / %.0f", f.Stiffness, f.Damping) }, Width: core.Pct(36)}
 					}),
 				}},
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
@@ -216,13 +218,13 @@ func physicsDemo(cx *core.Scope) core.Node {
 							return "Springs to the corner the fling points at"
 						}
 						return "Springs home with the release velocity"
-					}, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: colored(colors.muted)},
+					}, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 					core.Text{ContentFunc: func() string {
 						if mode.Get() == "coast" {
 							return "Decay"
 						}
 						return "Spring"
-					}, Style: core.Style{FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.faint)},
+					}, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 				}},
 			}},
 		}}
@@ -230,9 +232,9 @@ func physicsDemo(cx *core.Scope) core.Node {
 	// Short windows scroll, with a stage of fixed height; the rest fills.
 	short := core.NewMemo(cx, func() bool { return env.Window().Height < shortWindow })
 	return core.Dynamic(func(cx *core.Scope) core.Node {
-		colors := colorsOf(cx)
+		colors := ui.ColorsOf(cx)
 		if short.Get() {
-			return core.Scroll{Style: core.Style{FlexGrow: 1}, StyleFunc: filled(colors.background), Children: []core.Node{body(true)}}
+			return core.Scroll{Style: core.Style{FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{body(true)}}
 		}
 		return body(false)
 	})

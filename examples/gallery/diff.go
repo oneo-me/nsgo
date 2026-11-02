@@ -7,6 +7,8 @@ import (
 
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/core"
+
+	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 )
 
 const diffOld = `package store
@@ -143,28 +145,28 @@ rename to store_test.go
 // diffStyles is the gallery's diff look, base having none, for its
 // StylesFunc.
 func diffStyles(cx *core.Scope) func() diff.Styles {
-	return themed(cx, func() diff.Styles { return diffParts(cx) })
+	return ui.Themed(cx, func() diff.Styles { return diffParts(cx) })
 }
 
-// diffParts are the diff's styles, read where colorsOf's colors are.
+// diffParts are the diff's styles, read where ui.ColorsOf's colors are.
 func diffParts(cx *core.Scope) diff.Styles {
-	colors := colorsOf(cx).now()
-	added, deleted := colors.up, colors.down
+	colors := ui.ColorsOf(cx).Now()
+	added, deleted := colors.Up, colors.Down
 	return diff.Styles{
-		Side:             core.Style{Borders: core.Edges{Right: 1}, BorderColor: colors.line},
-		LineNumber:       core.Style{Color: colors.faint, FontSize: 12},
-		LineAdded:        core.Style{Background: alpha(added, 0.12)},
-		LineDeleted:      core.Style{Background: alpha(deleted, 0.12)},
-		Filler:           core.Style{Background: alpha(colors.inset, 0.5)},
-		WordAdded:        core.Style{Background: alpha(added, 0.30)},
-		WordDeleted:      core.Style{Background: alpha(deleted, 0.30)},
+		Side:             core.Style{Borders: core.Edges{Right: 1}, BorderColor: colors.Line},
+		LineNumber:       core.Style{Color: colors.Faint, FontSize: 12},
+		LineAdded:        core.Style{Background: ui.Alpha(added, 0.12)},
+		LineDeleted:      core.Style{Background: ui.Alpha(deleted, 0.12)},
+		Filler:           core.Style{Background: ui.Alpha(colors.Inset, 0.5)},
+		WordAdded:        core.Style{Background: ui.Alpha(added, 0.30)},
+		WordDeleted:      core.Style{Background: ui.Alpha(deleted, 0.30)},
 		IndicatorAdded:   core.Style{Background: added, Color: added},
 		IndicatorDeleted: core.Style{Background: deleted, Color: deleted},
-		Content:          core.Style{Color: colors.text},
-		Separator:        core.Style{Background: colors.inset, Color: colors.muted, Padding: core.Symmetric(0, 12), Cursor: core.CursorPointer},
-		FileHeader: core.Style{Background: colors.raised, Color: colors.text, Padding: core.Symmetric(0, 12), Borders: core.Edges{Bottom: 1},
-			BorderColor: colors.border, Cursor: core.CursorPointer},
-		LineSelected:  core.Style{Background: alpha(colors.accent, 0.18)},
+		Content:          core.Style{Color: colors.Text},
+		Separator:        core.Style{Background: colors.Inset, Color: colors.Muted, Padding: core.Symmetric(0, 12), Cursor: core.CursorPointer},
+		FileHeader: core.Style{Background: colors.Raised, Color: colors.Text, Padding: core.Symmetric(0, 12), Borders: core.Edges{Bottom: 1},
+			BorderColor: colors.Border, Cursor: core.CursorPointer},
+		LineSelected:  core.Style{Background: ui.Alpha(colors.Accent, 0.18)},
 		Annotation:    core.Style{Padding: core.Symmetric(6, 12)},
 		AddAnnotation: core.Style{Padding: core.Edges{Right: 2}},
 	}
@@ -174,8 +176,8 @@ func diffParts(cx *core.Scope) diff.Styles {
 // the words changed marked, unchanged lines collapsed, changes navigated,
 // reverted and kept, and a patch of several files.
 func diffDemo(cx *core.Scope) core.Node {
-	colors := colorsOf(cx)
-	fin := finOf(cx)
+	colors := ui.ColorsOf(cx)
+	fin := ui.FinOf(cx)
 	oldText, newText := core.NewSignal(cx, diffOld), core.NewSignal(cx, diffNew)
 	unified, patch, wrap := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
 	// The review's comments, under the lines they are on.
@@ -194,36 +196,36 @@ func diffDemo(cx *core.Scope) core.Node {
 	}
 	toggle := func(s *core.Signal[bool]) func() { return func() { s.Set(!s.GetUntracked()) } }
 	small := func(label string, onPress func()) core.Node {
-		return button(buttonProps{label: label, variant: secondary, small: true}, onPress)
+		return ui.Button{Text: label, Variant: ui.ButtonSecondary, Small: true, OnPress: onPress}
 	}
-	modes := []option[diff.Inline]{{value: diff.InlineWordAlt, label: "Words"}, {value: diff.InlineWord, label: "Each word"},
-		{value: diff.InlineChar, label: "Characters"}, {value: diff.InlineNone, label: "None"}}
+	modes := []ui.Option[diff.Inline]{{Value: diff.InlineWordAlt, Label: "Words"}, {Value: diff.InlineWord, Label: "Each word"},
+		{Value: diff.InlineChar, Label: "Characters"}, {Value: diff.InlineNone, Label: "None"}}
 	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Background: colors.background(), Padding: core.All(pad), Gap: 12})
+		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: 12})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			tool(cx, "Show a patch", "Patch", patch.Get, toggle(patch)),
-			tool(cx, "One column", "Unified", unified.Get, toggle(unified)),
-			tool(cx, "Soft wrap", "Wrap", wrap.Get, toggle(wrap)),
-			core.View{Style: core.Style{Width: core.Pt(360)}, Children: []core.Node{segmented(modes, inline.Get, inline.Set, true)}},
-			tool(cx, "Previous change", "↑", nil, func() {
+			ui.Tool{Label: "Show a patch", Text: "Patch", On: patch.Get, OnPress: toggle(patch)},
+			ui.Tool{Label: "One column", Text: "Unified", On: unified.Get, OnPress: toggle(unified)},
+			ui.Tool{Label: "Soft wrap", Text: "Wrap", On: wrap.Get, OnPress: toggle(wrap)},
+			core.View{Style: core.Style{Width: core.Pt(360)}, Children: []core.Node{ui.Segmented[diff.Inline]{Options: modes, Value: inline.Get, OnChange: inline.Set, Small: true}}},
+			ui.Tool{Label: "Previous change", Text: "↑", OnPress: func() {
 				i, _ := ref.PreviousHunk()
 				last.Set(fmt.Sprintf("Change %d", i+1))
-			}),
-			tool(cx, "Next change", "↓", nil, func() {
+			}},
+			ui.Tool{Label: "Next change", Text: "↓", OnPress: func() {
 				i, _ := ref.NextHunk()
 				last.Set(fmt.Sprintf("Change %d", i+1))
-			}),
-			tool(cx, "Expand every line", "Expand", nil, ref.ExpandAll),
-			tool(cx, "Collapse unchanged lines", "Collapse", nil, ref.CollapseAll),
-			tool(cx, "Start again", "Reset", nil, func() { oldText.Set(diffOld); newText.Set(diffNew) }),
+			}},
+			ui.Tool{Label: "Expand every line", Text: "Expand", OnPress: ref.ExpandAll},
+			ui.Tool{Label: "Collapse unchanged lines", Text: "Collapse", OnPress: ref.CollapseAll},
+			ui.Tool{Label: "Start again", Text: "Reset", OnPress: func() { oldText.Set(diffOld); newText.Set(diffNew) }},
 		}},
 		core.View{StyleFunc: func() core.Style {
-			return fin.card().over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: radiusInset,
-				BorderWidth: 1, BorderColor: colors.border(), Background: colors.surface(), Overflow: core.Hidden})
+			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: ui.RadiusInset,
+				BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(), Overflow: core.Hidden})
 		}, Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
-				colors := colorsOf(cx)
+				colors := ui.ColorsOf(cx)
 				d := diff.DiffView{
 					Ref: ref, TestID: "diff", Language: "go", Unified: unified.Get(), Inline: inline.Get(), SoftWrap: wrap.Get(),
 					Annotations: func() []diff.Annotation {
@@ -234,8 +236,8 @@ func diffDemo(cx *core.Scope) core.Node {
 						return out
 					},
 					RenderAnnotation: func(cx *core.Scope, a diff.Annotation) core.Node {
-						colors := colorsOf(cx)
-						fin := finOf(cx)
+						colors := ui.ColorsOf(cx)
+						fin := ui.FinOf(cx)
 						var c comment
 						for _, x := range comments.GetUntracked() {
 							if x.ID == a.ID {
@@ -247,26 +249,26 @@ func diffDemo(cx *core.Scope) core.Node {
 							text = fmt.Sprintf("Comment on lines %d to %d", c.lines.Start+1, c.lines.End+1)
 						}
 						return core.View{StyleFunc: func() core.Style {
-							return fin.raised().over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(8),
-								CornerRadius: 6, BorderWidth: 1, BorderColor: colors.border(), Background: colors.raised()})
+							return fin.Raised().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(8),
+								CornerRadius: 6, BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Raised()})
 						}, Children: []core.Node{
-							core.Text{Content: text, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: colored(colors.text)},
+							core.Text{Content: text, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 							small("Resolve", func() {
 								comments.Set(slices.DeleteFunc(slices.Clone(comments.GetUntracked()), func(x comment) bool { return x.ID == a.ID }))
 							}),
 						}}
 					},
 					RenderAddAnnotation: func(cx *core.Scope, lines diff.LineRange) core.Node {
-						colors := colorsOf(cx)
+						colors := ui.ColorsOf(cx)
 						return core.View{Role: core.RoleButton, Label: "Add a comment", Style: core.Style{Width: core.Pt(16), Height: core.Pt(16),
-							CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer}, StyleFunc: filled(colors.accent),
+							CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer}, StyleFunc: ui.Filled(colors.Accent),
 							OnPress: func(core.PressEvent) {
 								list := comments.GetUntracked()
 								id := fmt.Sprint("c", len(list)+1)
 								comments.Set(append(slices.Clone(list), comment{diff.Annotation{ID: id, Side: lines.Side, Line: lines.End}, lines}))
 								last.Set("Commented")
 							},
-							Children: []core.Node{core.Text{Content: "+", Style: core.Style{FontSize: 12, FontWeight: semibold}, StyleFunc: colored(colors.onAccent)}}}
+							Children: []core.Node{core.Text{Content: "+", Style: core.Style{FontSize: 12, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.OnAccent)}}}
 					},
 					OnLineSelectionChange: func(r *diff.LineRange) {
 						if r != nil {
@@ -286,7 +288,7 @@ func diffDemo(cx *core.Scope) core.Node {
 						}}
 					},
 					StylesFunc: diffStyles(cx),
-					StyleFunc:  func() core.Style { return core.Style{FlexGrow: 1, Color: colors.text()} },
+					StyleFunc:  func() core.Style { return core.Style{FlexGrow: 1, Color: colors.Text()} },
 				}
 				if patch.Get() {
 					d.Language = ""
@@ -297,7 +299,7 @@ func diffDemo(cx *core.Scope) core.Node {
 						if s.Header != "" {
 							label = "@@ " + strings.TrimSpace(s.Header)
 						}
-						return core.Text{Content: label, MaxLines: 1, Style: core.Style{FontFamily: mono, FontSize: 11}, StyleFunc: colored(colorsOf(cx).muted)}
+						return core.Text{Content: label, MaxLines: 1, Style: core.Style{FontFamily: ui.Mono, FontSize: 11}, StyleFunc: ui.Colored(ui.ColorsOf(cx).Muted)}
 					}
 				} else {
 					d.OldValue, d.NewValue = oldText.Get, newText.Get
@@ -306,13 +308,13 @@ func diffDemo(cx *core.Scope) core.Node {
 			}),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16, AlignItems: core.AlignCenter}, Children: []core.Node{
-			core.Text{Style: core.Style{FontSize: 12, FontFamily: mono}, SpansFunc: func() []core.Span {
+			core.Text{Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, SpansFunc: func() []core.Span {
 				s := stats.Get()
-				return []core.Span{{Content: fmt.Sprintf("+%d", s.Added), StyleFunc: colored(colors.up)},
-					{Content: " "}, {Content: fmt.Sprintf("−%d", s.Deleted), StyleFunc: colored(colors.down)},
-					{Content: fmt.Sprintf(" · %d changes", s.Hunks), StyleFunc: colored(colors.muted)}}
+				return []core.Span{{Content: fmt.Sprintf("+%d", s.Added), StyleFunc: ui.Colored(colors.Up)},
+					{Content: " "}, {Content: fmt.Sprintf("−%d", s.Deleted), StyleFunc: ui.Colored(colors.Down)},
+					{Content: fmt.Sprintf(" · %d changes", s.Hunks), StyleFunc: ui.Colored(colors.Muted)}}
 			}},
-			core.Text{ContentFunc: last.Get, MaxLines: 1, Style: core.Style{FlexShrink: 1, FontSize: 12, FontFamily: mono}, StyleFunc: colored(colors.muted)},
+			core.Text{ContentFunc: last.Get, MaxLines: 1, Style: core.Style{FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		}},
 	}}
 }
