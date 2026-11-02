@@ -287,8 +287,18 @@ func (v *view) restyle() {
 			vs.Opacity *= float32(p)
 		}
 	}
-	layer := v.native.Send(selLayer)
-	apple.StyleLayer(layer, &vs, v.native)
+	v.styleLayer(&vs)
+}
+
+// styleLayer draws vs with v's layer, only what changed since it was
+// last drawn when that is all an animation moves.
+func (v *view) styleLayer(vs *driver.ViewStyle) {
+	var shown *driver.ViewStyle
+	if v.styled {
+		shown = &v.drawn
+	}
+	apple.RestyleLayer(v.native.Send(selLayer), shown, vs, v.native)
+	v.drawn, v.styled = *vs, true
 	v.transform = vs.Transform
 }
 

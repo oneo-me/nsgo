@@ -156,7 +156,18 @@ func (v *view) restyle() {
 			vs.Opacity *= float32(p)
 		}
 	}
-	apple.StyleLayer(v.native.Send(selLayer), &vs, 0)
+	v.styleLayer(&vs)
+}
+
+// styleLayer draws vs with v's layer, only what changed since it was
+// last drawn when that is all an animation moves.
+func (v *view) styleLayer(vs *driver.ViewStyle) {
+	var shown *driver.ViewStyle
+	if v.styled {
+		shown = &v.drawn
+	}
+	apple.RestyleLayer(v.native.Send(selLayer), shown, vs, 0)
+	v.drawn, v.styled = *vs, true
 }
 
 func (v *view) animatesStyle() bool {
@@ -214,6 +225,10 @@ func (v *view) place(f driver.Bounds) {
 	v.native.Send(sel("setBounds:"), b)
 	v.native.Send(sel("setCenter:"), apple.CGPoint{X: float64(f.Origin.X + v.shift.X + f.Size.Width/2),
 		Y: float64(f.Origin.Y + v.shift.Y + f.Size.Height/2)})
+	if v.styled && v.drawn.Transform != (driver.Transform{}) {
+		// Its origin is a point of the old size.
+		apple.SetTransform(v.native.Send(selLayer), v.drawn.Transform)
+	}
 	apple.LayoutDecor(v.native.Send(selLayer))
 	if v.componentView != 0 {
 		v.componentView.Send(selSetFrame, apple.Rect(0, 0, float64(f.Size.Width), float64(f.Size.Height)))

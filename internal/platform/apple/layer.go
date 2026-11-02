@@ -103,6 +103,39 @@ func StyleLayer(layer objc.ID, vs *driver.ViewStyle, view objc.ID) {
 	}
 }
 
+// RestyleLayer draws vs with a layer that shows shown, the style
+// StyleLayer last drew there (nil for none). When the two differ only in
+// opacity and transform, as an animation's frames do, it sets just those:
+// drawing every property again remade its colors, shadow, filters and
+// gradients each frame, and the window server drew them all again.
+func RestyleLayer(layer objc.ID, shown, vs *driver.ViewStyle, view objc.ID) {
+	if shown == nil || vs.Transition.Duration > 0 || !onlyMoves(shown, vs) {
+		StyleLayer(layer, vs, view)
+		return
+	}
+	if vs.Opacity != shown.Opacity {
+		layer.Send(selSetOpacity, vs.Opacity)
+	}
+	if vs.Transform != shown.Transform {
+		SetTransform(layer, vs.Transform)
+	}
+	if d := decors[layer]; d != nil {
+		d.vs.Opacity, d.vs.Transform = vs.Opacity, vs.Transform
+	}
+}
+
+// onlyMoves reports whether b differs from a in its opacity and transform
+// alone. An opacity under filters is drawn with them on iOS (layoutFilters).
+func onlyMoves(a, b *driver.ViewStyle) bool {
+	x, y := *a, *b
+	x.Transform, y.Transform = driver.Transform{}, driver.Transform{}
+	if x.Effects != nil && len(x.Effects.Filters) > 0 {
+		return x == y
+	}
+	x.Opacity, y.Opacity = 0, 0
+	return x == y
+}
+
 // layerShadow returns the shadow a view's layer casts of what it draws:
 // its widest drop shadow, as NSH's Apple backends draw, else its React
 // Native shadow, whose radius is half a box shadow's blur.

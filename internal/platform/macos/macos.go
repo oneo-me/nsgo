@@ -121,6 +121,9 @@ type view struct {
 	shift    driver.Point // a sticky cell's, from frame
 	style    driver.ViewStyle
 	animated driver.AnimatedValues
+	// drawn is the style its layer was last drawn with, once styled.
+	drawn  driver.ViewStyle
+	styled bool
 
 	component     driver.NativeComponent // a native view's
 	componentView objc.ID
@@ -1336,8 +1339,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			if v.animatesStyle() {
 				v.restyle()
 			} else {
-				apple.StyleLayer(v.native.Send(selLayer), it.ViewStyle, v.native)
-				v.transform = it.ViewStyle.Transform
+				v.styleLayer(it.ViewStyle)
 			}
 			v.setBackdrop(it.ViewStyle)
 			v.native.Send(selSetHidden, it.ViewStyle.Hidden)
