@@ -66,6 +66,7 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 	if err != nil {
 		return "", err
 	}
+	stage("packaging the APK")
 	key, err := releaseKey(p)
 	if err != nil {
 		return "", err

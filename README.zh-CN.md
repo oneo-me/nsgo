@@ -120,7 +120,7 @@ icon:
   png: assets/Icon.png        # 其他所有目标
 dev:
   target: native        # native、web、ios、ios_simulator 或 android
-  hot_reload: false     # true 时保存后重新编译并重启
+  hot_reload: true      # false 时只运行一次，随应用退出
   fps: false            # true 时显示性能监视器（macOS、iOS、Windows、Linux）；-fps 可覆盖
   # icon: { png: assets/Icon-dev.png }  # 在 dev 构建中替换 icon 的文件；默认取 assets/*-dev.*
 build:
@@ -143,7 +143,7 @@ build:
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` 运行一次应用，开启 `dev.hot_reload` 后则在每次修改时重新编译并重启；只改动 TSX 时会就地更新正在运行的应用，未改动部分的状态保持不变。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R，或在终端输入 `r` 并回车，会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
+`go tool nsgo dev` 运行应用，并在每次修改时重新编译并重启；设置 `dev.hot_reload: false` 时只运行一次；只改动 TSX 时会就地更新正在运行的应用，未改动部分的状态保持不变。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R 会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
 
 `go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站。`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。
 

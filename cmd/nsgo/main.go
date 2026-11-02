@@ -1,7 +1,7 @@
 // Command nsgo develops and builds NSGo apps.
 //
 //	nsgo init  [-name N] [-module M] [dir]               write a new app
-//	nsgo dev   [-target T] [-hot-reload] [-trace] [flags] [dir]
+//	nsgo dev   [-target T] [-hot-reload=false] [-trace] [flags] [dir]
 //	                                                      run the app and rebuild it on changes
 //	nsgo build [-target all|T,...] [flags] [dir]         build packages for nsgo.yaml's targets or all platforms
 //	nsgo test  [-run R] [-junit F] [-trace] [-target T] [dir] [-- go test flags]
@@ -118,7 +118,7 @@ func main() {
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage:
   nsgo init  [-name N] [-module M] [dir]
-  nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload] [-release] [-trace] [-device D] [-port N] [-open=false] [dir]
+  nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload=false] [-release] [-trace] [-device D] [-port N] [-open=false] [dir]
   nsgo build [-target all|macos_arm64,windows_x64,linux_x64,ios,web,...] [-output DIR] [-open] [-run [-device D]] [dir]
   nsgo test  [-run REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android] [dir] [-- go test flags]
   nsgo check [dir]

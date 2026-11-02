@@ -50,7 +50,7 @@ type project struct {
 		// Icon replaces Icon in nsgo dev's builds, field by field.
 		Icon icons `yaml:"icon"`
 		// HotReload rebuilds and restarts the app when a watched file
-		// changes; it defaults to false.
+		// changes; it defaults to true.
 		HotReload *bool `yaml:"hot_reload"`
 		// FPS shows the performance monitor over dev's builds; it
 		// defaults to false.
@@ -115,10 +115,11 @@ func (p *project) openOutput() bool {
 	return p.Build.Open != nil && *p.Build.Open
 }
 
-// hotReload reports whether nsgo dev rebuilds the app on changes; without
-// it, dev runs the app once and exits when the app does.
+// hotReload reports whether nsgo dev rebuilds the app on changes, unless
+// dev.hot_reload turns it off; without it, dev runs the app once and exits
+// when the app does.
 func (p *project) hotReload() bool {
-	return p.Dev.HotReload != nil && *p.Dev.HotReload
+	return p.Dev.HotReload == nil || *p.Dev.HotReload
 }
 
 func load(dir string) (*project, error) {

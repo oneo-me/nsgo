@@ -11,7 +11,7 @@ func TestHotReload(t *testing.T) {
 		yaml string
 		want bool
 	}{
-		{"", false},
+		{"", true},
 		{"  hot_reload: true\n", true},
 		{"  hot_reload: false\n", false},
 	} {

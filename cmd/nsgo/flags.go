@@ -111,7 +111,7 @@ type devFlags struct {
 func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	f := &devFlags{overrides: bindOverrides(fs)}
 	f.target = stringFlag(fs, "target", "`target` to use: native, web, ios, ios_simulator or android (a device or emulator; default: nsgo.yaml's dev.target)")
-	f.hotReload = boolFlag(fs, "hot-reload", "rebuild and restart on changes (default: nsgo.yaml's dev.hot_reload)")
+	f.hotReload = boolFlag(fs, "hot-reload", "rebuild and restart on changes (default: nsgo.yaml's dev.hot_reload, else true)")
 	f.fps = boolFlag(fs, "fps", "show the performance monitor (default: nsgo.yaml's dev.fps)")
 	fs.IntVar(&f.port, "port", 8080, "the dev server's `port`, which serves the web target; the next free one when taken")
 	fs.BoolVar(&f.open, "open", true, "open the web target in the browser")

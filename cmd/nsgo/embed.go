@@ -296,6 +296,7 @@ func buildIOSFramework(ctx context.Context, p *project, dir string) error {
 		}
 		args = append(args, "-framework", fw)
 	}
+	stage("making the XCFramework")
 	framework := filepath.Join(dir, module+".xcframework")
 	os.RemoveAll(framework)
 	if err := run(ctx, "xcodebuild", append(args, "-output", framework)...); err != nil {
@@ -417,6 +418,7 @@ func buildAndroidAAR(ctx context.Context, p *project, dir, goarch string) error 
 	if err != nil {
 		return err
 	}
+	stage("packaging the AAR")
 	f, err := os.Create(filepath.Join(dir, p.Name+".aar"))
 	if err != nil {
 		return err

@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 )
@@ -87,7 +86,7 @@ func TestReportPrintsTheToolOutputBelowTheError(t *testing.T) {
 	got := captureStderr(t, func() {
 		report(errors.New("macos_arm64: go build failed\n# gallery\napp.go:3: undefined: x"))
 	})
-	want := "error macos_arm64: go build failed\n  # gallery\n  app.go:3: undefined: x\n"
+	want := "  error macos_arm64: go build failed\n    # gallery\n    app.go:3: undefined: x\n"
 	if got != want {
 		t.Fatalf("report wrote %q, want %q", got, want)
 	}
@@ -95,10 +94,7 @@ func TestReportPrintsTheToolOutputBelowTheError(t *testing.T) {
 
 func TestReportPrintsOneLineErrors(t *testing.T) {
 	got := captureStderr(t, func() { report(errors.New("nsgo.yaml: name is required")) })
-	if want := "error nsgo.yaml: name is required\n"; got != want {
+	if want := "  error nsgo.yaml: name is required\n"; got != want {
 		t.Fatalf("report wrote %q, want %q", got, want)
-	}
-	if strings.Contains(got, "  ") {
-		t.Errorf("a one-line error indented a second line: %q", got)
 	}
 }

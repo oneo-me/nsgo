@@ -192,13 +192,13 @@ func (r *testRun) event(ev testEvent) {
 // print shows one finished test: a line, and a failure's output.
 func (r *testRun) print(t *testResult) {
 	mark := map[string]string{"pass": "✓", "fail": "✗", "skip": "-"}[t.Status]
-	fmt.Fprintf(r.out, "%s %s (%s)\n", mark, t.Name, t.Elapsed.Round(time.Millisecond))
+	fmt.Fprintf(r.out, "%s%s %s (%s)\n", margin, mark, t.Name, t.Elapsed.Round(time.Millisecond))
 	if t.Status == "fail" && !strings.Contains(t.Name, "/") {
 		for _, line := range strings.Split(strings.TrimRight(t.Output, "\n"), "\n") {
 			if strings.HasPrefix(line, "=== ") || strings.HasPrefix(line, "--- ") {
 				continue
 			}
-			fmt.Fprintf(r.out, "    %s\n", strings.TrimPrefix(line, "    "))
+			fmt.Fprintf(r.out, "%s    %s\n", margin, strings.TrimPrefix(line, "    "))
 		}
 	}
 }
@@ -231,10 +231,10 @@ func (r *testRun) finish(opts testOptions, waitErr error) error {
 		// crashed outside a test.
 		if pkg.Status == "fail" && !r.anyFailed(name) {
 			pkgFailed = true
-			fmt.Fprintf(r.out, "✗ %s\n%s", name, indent(pkg.Output))
+			fmt.Fprintf(r.out, "%s✗ %s\n%s", margin, name, indent(pkg.Output))
 		}
 	}
-	fmt.Fprintf(r.out, "%d passed, %d failed, %d skipped\n", passed, failed, skipped)
+	fmt.Fprintf(r.out, "%s%d passed, %d failed, %d skipped\n", margin, passed, failed, skipped)
 	if opts.junit != "" {
 		if err := writeJUnit(opts.junit, r.results, r.packages); err != nil {
 			return err
@@ -267,7 +267,7 @@ func (r *testRun) anyFailed(pkg string) bool {
 func indent(s string) string {
 	var b strings.Builder
 	for _, line := range strings.Split(strings.TrimRight(s, "\n"), "\n") {
-		b.WriteString("    " + line + "\n")
+		b.WriteString(margin + "    " + line + "\n")
 	}
 	return b.String()
 }

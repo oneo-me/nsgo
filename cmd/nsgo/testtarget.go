@@ -77,7 +77,7 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 		r.results = append(r.results, t)
 		r.print(t)
 		for _, s := range saved {
-			fmt.Fprintf(r.out, "  → %s\n", rel(s))
+			fmt.Fprintf(r.out, "%s  → %s\n", margin, rel(s))
 		}
 	}
 	return r.finish(opts, nil)

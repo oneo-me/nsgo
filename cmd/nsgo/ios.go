@@ -40,6 +40,7 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	if err := goBuild(ctx, p, filepath.Join(app, p.Name), env, "-extldflags=-Wl,-w"); err != nil {
 		return "", err
 	}
+	stage("bundling the app")
 	// An iOS bundle's root is its resource directory; a resources
 	// directory there would read as a macOS bundle's and fail signing.
 	if err := copyResources(p, app); err != nil {
@@ -53,6 +54,7 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 		return "", err
 	}
 	if simulator {
+		stage("signing")
 		return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 	}
 	return app, nil

@@ -46,6 +46,8 @@ func TestDevFlagsApply(t *testing.T) {
 		Version: "1.0.0",
 	}
 	p.Dev.Target = "native"
+	off := false
+	p.Dev.HotReload = &off
 	p.Window.Width, p.Window.Height = 420, 560
 
 	f.apply(p)

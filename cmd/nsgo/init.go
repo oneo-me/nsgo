@@ -70,8 +70,8 @@ window:
 dev:
   # native: this machine's backend; web: the browser; ios: a connected iPhone; ios_simulator; android: a connected device or emulator.
   target: native
-  # false, the default, runs once and exits with the app; true rebuilds on save.
-  hot_reload: false
+  # true, the default, rebuilds and restarts on save; false runs once and exits with the app.
+  hot_reload: true
   # true shows the performance monitor (macOS).
   fps: false
 

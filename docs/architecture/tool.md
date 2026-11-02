@@ -4,9 +4,9 @@
 
 ## Output
 
-Every command prints one line per step and the details only when a step fails, as NSH's CLI does (`nsh/crates/nsh-cli/src/ui.rs`, `nsh/docs/dev/tooling.md` "Output"): `✓` a step that finished, `→` where to find something, `•` what a device or server did, `warn` and `error` for problems. On a terminal a step that takes a while shows a spinner in its line, and colors are used unless `NO_COLOR` is set; redirected, only the result lines appear. All of it is stderr.
+Every command prints one line per step and the details only when a step fails, as NSH's CLI does (`nsh/crates/nsh-cli/src/ui.rs`, `nsh/docs/dev/tooling.md` "Output"): `✓` a step that finished, `→` where to find something, `•` what a device or server did, `warn` and `error` for problems. The tool's lines are indented two spaces, so the app's own lines stand apart. On a terminal a step that takes a while shows a spinner in its line with what it does at the moment (`stage`: compiling TSX, compiling Go, signing…), and colors are used unless `NO_COLOR` is set; redirected, only the result lines appear. All of it is stderr.
 
-`nsgo build` and `nsgo dev` start with the NSGo version the tool was built from, the app's name and version and the targets, then what they do. `nsgo build` times each package and measures its directory, so each target's line reads `✓ built macos_arm64 (1.4s, 23.4 MB)`, and a build of several targets ends with their number, time and total size. `nsgo dev` reports each build's time, what it started and whether it watches for changes. A tool's output, Go's or Xcode's, appears indented under `error` only when it fails.
+`nsgo build` and `nsgo dev` start with the NSGo version the tool was built from, the app's name and version and the targets, then what they do. `nsgo build` times each package and measures its directory, so each target's line reads `✓ built macos_arm64 (1.4s, 23.4 MB)`, numbered as `[2/5]` in a build of several targets, which ends with their number, time and total size. `nsgo dev` reports each build's time, the app's start and whether it watches for changes, which it does unless `dev.hot_reload` is false. A tool's output, Go's or Xcode's, appears indented under `error` only when it fails.
 
 ## Dev loop
 
@@ -14,7 +14,7 @@ Every command prints one line per step and the details only when a step fails, a
 
 The server finds the app through `NSGO_DEV_SERVER`, which the simulator gets as `SIMCTL_CHILD_`; Android and iPhones, which pass no environment, get it with `-ldflags -X`, Android at `127.0.0.1` through `adb reverse`, removed when the run ends, an iPhone at the Mac's LAN address.
 
-The web target is served from the same server; its page shows the overlay itself and loads each build. `r` and Return in the terminal build again too. Without hot reload, a run ends with the app; a failed first build ends it. `-release` builds as `nsgo build` does, keeping `dev.fps`'s monitor, for measuring. `-trace` builds with `-X nsgo.devTrace=1`: the dev client sets `engine.Trace` for every engine of the process and posts each commit to `/_nsgo/trace`, printed as `nsgo test -trace` prints a batch (`driver.WriteTrace`), labeled by its number, with the app's output. The web page's Go finds the server at the page's origin and leaves build failures to the page. `-device` picks a simulator by name or UDID, booting it, or an adb serial or an emulator's AVD name.
+The web target is served from the same server; its page shows the overlay itself and loads each build. Without hot reload, a run ends with the app; a failed first build ends it. `-release` builds as `nsgo build` does, keeping `dev.fps`'s monitor, for measuring. `-trace` builds with `-X nsgo.devTrace=1`: the dev client sets `engine.Trace` for every engine of the process and posts each commit to `/_nsgo/trace`, printed as `nsgo test -trace` prints a batch (`driver.WriteTrace`), labeled by its number, with the app's output. The web page's Go finds the server at the page's origin and leaves build failures to the page. `-device` picks a simulator by name or UDID, booting it, or an adb serial or an emulator's AVD name.
 
 ## TSX apps
 

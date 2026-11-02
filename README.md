@@ -120,7 +120,7 @@ icon:
   png: assets/Icon.png        # every other target
 dev:
   target: native        # native, web, ios, ios_simulator or android
-  hot_reload: false     # true rebuilds and restarts on save
+  hot_reload: true      # false runs once and exits with the app
   fps: false            # true shows the performance monitor (macOS, iOS, Windows, Linux); -fps overrides it
   # icon: { png: assets/Icon-dev.png }  # replaces icon's files in dev's builds; defaults to assets/*-dev.*
 build:
@@ -143,7 +143,7 @@ Add the tool to your module once; `go tool nsgo` then runs it without installing
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` runs the app once, or with `dev.hot_reload` rebuilds and restarts it on each change; a change of TSX alone updates the running app in place, keeping the state of what did not change. A failed build shows over the running app; Command or Control+R in the app, or `r` and Return in the terminal, builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
+`go tool nsgo dev` runs the app and rebuilds and restarts it on each change, or with `dev.hot_reload: false` runs it once; a change of TSX alone updates the running app in place, keeping the state of what did not change. A failed build shows over the running app; Command or Control+R in the app builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
 
 `go tool nsgo build` writes a stripped release package per target: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site. `-run` starts the one built for this machine, or installs it on an iPhone, simulator or Android device, which `-device` picks.
 

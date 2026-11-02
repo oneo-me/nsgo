@@ -4,12 +4,14 @@ package main
 // (nsh/crates/nsh-cli/src/ui.rs, nsh/docs/dev/tooling.md "Output"): one
 // line per step, and the details only when a step fails.
 //
+//   - The tool's lines are indented by margin, so the app's own lines,
+//     printed as they are, stand apart from them.
 //   - ✓ a step that finished, → where to find something, • what a server
 //     or device did, warn and error for problems; plain lines are the app's
 //     own output.
 //   - A step that takes a while shows a spinner in its line on a terminal,
-//     replaced by its ✓ line, or cleared when it fails and the error
-//     follows.
+//     with what it does at the moment (stage), replaced by its ✓ line, or
+//     cleared when it fails and the error follows.
 //   - Colors on terminals unless NO_COLOR is set; redirected, only the
 //     result lines appear.
 //   - All of it is stderr, so stdout stays free for what a command prints.
@@ -117,10 +119,15 @@ func builtVersion(v string) string {
 	return v
 }
 
+// margin indents the tool's lines.
+const margin = "  "
+
 // header titles a command's output: which NSGo built it, the app's name
-// and version, then what it builds.
+// and version, then what it builds, set apart by blank lines.
 func header(name, version, what string) {
-	emit(headerLine(toolVersion(), name, version, what))
+	emit("")
+	line(headerLine(toolVersion(), name, version, what))
+	emit("")
 }
 
 func headerLine(tool, name, version, what string) string {
@@ -137,32 +144,32 @@ func headerLine(tool, name, version, what string) string {
 
 // done prints "✓ message": a step that finished.
 func done(format string, args ...any) {
-	emit(green("✓") + " " + fmt.Sprintf(format, args...))
+	line(green("✓") + " " + fmt.Sprintf(format, args...))
 }
 
 // note prints "→ message": where to find something.
 func note(format string, args ...any) {
-	emit(cyan("→") + " " + fmt.Sprintf(format, args...))
+	line(cyan("→") + " " + fmt.Sprintf(format, args...))
 }
 
 // event prints "• message": what a server or device did.
 func event(format string, args ...any) {
-	emit(cyan("•") + " " + fmt.Sprintf(format, args...))
+	line(cyan("•") + " " + fmt.Sprintf(format, args...))
 }
 
 // detail prints a line under the one above, dimmed.
 func detail(format string, args ...any) {
-	emit("  " + dim(fmt.Sprintf(format, args...)))
+	line("  " + dim(fmt.Sprintf(format, args...)))
 }
 
 // warn prints "warn message": a problem that does not end the command.
 func warn(format string, args ...any) {
-	emit(yellow("warn") + " " + fmt.Sprintf(format, args...))
+	line(yellow("warn") + " " + fmt.Sprintf(format, args...))
 }
 
 // fail prints "error message": why the command ends.
 func fail(format string, args ...any) {
-	emit(red("error") + " " + fmt.Sprintf(format, args...))
+	line(red("error") + " " + fmt.Sprintf(format, args...))
 }
 
 // plain prints a line as it is: an app's or a test's own output.
@@ -178,8 +185,8 @@ func report(err error) {
 	if rest = strings.TrimRight(rest, "\n"); rest == "" {
 		return
 	}
-	for _, line := range strings.Split(rest, "\n") {
-		emit("  " + line)
+	for _, l := range strings.Split(rest, "\n") {
+		line("  " + l)
 	}
 }
 
@@ -219,6 +226,9 @@ func (c *console) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
+// line writes one of the tool's lines, indented by margin.
+func line(text string) { emit(margin + text) }
+
 // emit writes a whole line above the running step's spinner.
 func emit(text string) {
 	out.Lock()
@@ -251,9 +261,12 @@ func (o *screen) draw() {
 	if len(label) > 64 {
 		label = append(label[:63], '…')
 	}
-	line := fmt.Sprintf("%s %s", cyan(spinnerFrames[o.frame%len(spinnerFrames)]), string(label))
+	line := fmt.Sprintf("%s%s %s", margin, cyan(spinnerFrames[o.frame%len(spinnerFrames)]), string(label))
 	if elapsed := time.Since(s.start); elapsed >= time.Second {
 		line += " " + dim(fmt.Sprintf("%ds", int(elapsed.Seconds())))
+	}
+	if s.stage != "" {
+		line += " " + dim("· "+s.stage)
 	}
 	// Clear the line and leave the cursor at its start: the next line
 	// replaces it.
@@ -288,6 +301,7 @@ func spin() {
 // clears it, since the error printed next says what went wrong.
 type Step struct {
 	label string
+	stage string
 	start time.Time
 }
 
@@ -302,6 +316,21 @@ func begin(format string, args ...any) *Step {
 		spin()
 	}
 	return s
+}
+
+// stage says what the running step does at the moment, such as "compiling
+// Go", after its label in the spinner. Without a terminal it does nothing.
+func stage(format string, args ...any) {
+	if !terminalOf().tty {
+		return
+	}
+	out.Lock()
+	defer out.Unlock()
+	if len(out.steps) == 0 {
+		return
+	}
+	out.steps[len(out.steps)-1].stage = fmt.Sprintf(format, args...)
+	out.draw()
 }
 
 // done ends the step with "✓ message (time, note)", without the note when

@@ -36,7 +36,7 @@ func buildAll(ctx context.Context, p *project) error {
 	if err := p.prepareCatalogs(ctx, ".", false); err != nil {
 		return err
 	}
-	for _, target := range buildTargets {
+	for i, target := range buildTargets {
 		dir := filepath.Join(p.Build.Output, fmt.Sprintf("%s-%s-%s", p.Name, p.Version, target))
 		if err := os.RemoveAll(dir); err != nil {
 			return err
@@ -44,7 +44,12 @@ func buildAll(ctx context.Context, p *project) error {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
-		progress := begin("building %s", target)
+		// Several targets are counted: [2/5] building ios.
+		count := ""
+		if len(buildTargets) > 1 {
+			count = fmt.Sprintf("[%d/%d] ", i+1, len(buildTargets))
+		}
+		progress := begin("%sbuilding %s", count, target)
 		if err := buildTarget(ctx, p, target, dir); err != nil {
 			progress.fail()
 			os.RemoveAll(dir)
@@ -52,8 +57,8 @@ func buildAll(ctx context.Context, p *project) error {
 		}
 		size := dirSize(dir)
 		total += size
-		progress.done(fmt.Sprintf("built %s", target), formatSize(size))
-		note("%s", rel(dir))
+		progress.done(fmt.Sprintf("%sbuilt %s", count, target), formatSize(size))
+		detail("→ %s", rel(dir))
 	}
 	buildSummary(p, len(buildTargets), total, time.Since(started))
 	if p.openOutput() {
@@ -189,6 +194,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := signForStore(ctx, p, app); err != nil {
 			return err
 		}
+		stage("packaging the IPA")
 		return writeIPA(app, filepath.Join(dir, p.Name+".ipa"))
 	case "ios_simulator":
 		_, err := buildIOSApp(ctx, p, dir, true)
@@ -249,6 +255,7 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 			files["zz_nsgo_tsx_test.go"] = tsxTest
 		}
 	} else {
+		stage("compiling TSX")
 		bundle, err := p.bundleFile()
 		if err != nil {
 			return err
@@ -267,6 +274,7 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}
+	stage("compiling Go")
 	if len(files) > 0 {
 		ov, err := p.overlay(files)
 		if err != nil {
@@ -310,6 +318,7 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err := goBuild(ctx, p, bin, []string{"GOOS=darwin", "GOARCH=" + arch, "CGO_ENABLED=0"}); err != nil {
 		return "", err
 	}
+	stage("bundling the app")
 	resources := filepath.Join(app, "Contents", "Resources")
 	if err := copyResources(p, resources); err != nil {
 		return "", err
@@ -324,6 +333,7 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist, icon); err != nil {
 		return "", err
 	}
+	stage("signing")
 	return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 }
 
@@ -340,6 +350,7 @@ func buildWindows(ctx context.Context, p *project, dir, arch string) error {
 	if err != nil {
 		return err
 	}
+	stage("copying resources")
 	return copyResources(p, dir)
 }
 
@@ -349,6 +360,7 @@ func buildLinux(ctx context.Context, p *project, dir, arch string) error {
 		[]string{"GOOS=linux", "GOARCH=" + arch, "CGO_ENABLED=0"}); err != nil {
 		return err
 	}
+	stage("copying resources")
 	if err := copyResources(p, dir); err != nil {
 		return err
 	}
@@ -366,6 +378,7 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	if err := goBuild(ctx, p, wasm, []string{"GOOS=js", "GOARCH=wasm"}); err != nil {
 		return err
 	}
+	stage("writing the site")
 	goroot, err := output(ctx, "go", "env", "GOROOT")
 	if err != nil {
 		return err

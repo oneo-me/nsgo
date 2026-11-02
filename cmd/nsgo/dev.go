@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -48,8 +47,8 @@ type devOptions struct {
 }
 
 // dev builds and runs the app, with a dev server its builds connect to:
-// a failed build shows over the app, and Command or Control+R in the app,
-// or r and Return in the terminal, builds and starts it again. Without
+// a failed build shows over the app, and Command or Control+R in the app
+// builds and starts it again. Without
 // nsgo.yaml's hot reload it exits once the app does; with it, it rebuilds
 // and restarts the app whenever a Go file it compiles from, go.mod,
 // nsgo.yaml or a catalog changes, and keeps the running app when a build
@@ -66,7 +65,6 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	if err != nil {
 		return err
 	}
-	go readReloadKey(ctx, srv)
 
 	stop := func() {}
 	defer func() { stop() }()
@@ -74,9 +72,11 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	var exited chan error
 	first, hinted := true, false
 	for {
+		progress := begin("building %s", p.Dev.Target)
 		// The catalogs' code first, which the build and the files watched
 		// may need. One listing serves both, listed again when the
 		// catalogs' new code may import more.
+		stage("generating catalogs")
 		pkgs, catalogErr := goPackages(ctx, p.Dir, true, ".")
 		if catalogErr == nil {
 			var wrote bool
@@ -84,6 +84,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 				pkgs, _ = goPackages(ctx, p.Dir, true, ".")
 			}
 		}
+		stage("finding sources")
 		dirs := sourceDirs(p.Dir, pkgs)
 		if p.Web.Host != "" {
 			dirs = append(dirs, p.resolve(p.Web.Host))
@@ -93,7 +94,6 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		}
 		dirs, sources := splitSources(dirs)
 		fingerprint := scan(dirs)
-		progress := begin("building %s", p.Dev.Target)
 		err = catalogErr
 		if err == nil {
 			err = s.build(ctx, p)
@@ -109,28 +109,33 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 			progress.fail()
 			srv.send("error", strings.TrimSpace(err.Error()))
 			report(err)
-			detail("waiting for changes (r and Return builds again)")
+			detail("waiting for changes")
 		default:
 			progress.done(fmt.Sprintf("built %s", p.Dev.Target), "")
 			stop()
 			stop, exited = func() {}, nil
+			// The web target only serves; the others start an app, which
+			// may boot, install and launch on a device first.
+			var starting *Step
+			if p.Dev.Target != "web" {
+				starting = begin("starting the app")
+			}
 			if next, err := s.start(ctx, p); err != nil {
+				if starting != nil {
+					starting.fail()
+				}
 				fail("run failed: %v", err)
 			} else {
+				if starting != nil {
+					starting.done("started the app", "")
+				}
 				stop = next.stop
 				if next.wait != nil {
 					exited = make(chan error, 1)
 					go func(wait func(context.Context) error, done chan error) { done <- wait(ctx) }(next.wait, exited)
 				}
-				if p.Dev.Target != "web" {
-					event("running")
-				}
-				if !hinted {
-					if p.hotReload() {
-						detail("watching for changes (r and Return builds again)")
-					} else {
-						detail("r and Return builds again")
-					}
+				if !hinted && p.hotReload() {
+					detail("watching for changes · Control+C stops")
 					hinted = true
 				}
 			}
@@ -239,17 +244,6 @@ func splitSources(dirs []string) (rest, sources []string) {
 		}
 	}
 	return rest, sources
-}
-
-// readReloadKey asks for a new build when the terminal sends r and
-// Return.
-func readReloadKey(ctx context.Context, srv *devServer) {
-	sc := bufio.NewScanner(os.Stdin)
-	for sc.Scan() && ctx.Err() == nil {
-		if strings.TrimSpace(sc.Text()) == "r" {
-			srv.reload()
-		}
-	}
 }
 
 // devServer is what dev's builds connect to: it streams build results to
