@@ -233,6 +233,9 @@ type MountItem struct {
 	Size   Size     // ItemScrollContent
 	Value  string   // ItemInputValue
 	Count  uint32   // ItemInputValue
+	// Transition, when set, moves an ItemFrame's view from where it shows
+	// to Frame, as a batch's LayoutAnimation Update does, which wins.
+	Transition *LayoutTransition
 	// Point and Animated are ItemScrollTo's.
 	Point    Point
 	Animated bool

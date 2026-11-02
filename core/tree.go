@@ -39,6 +39,7 @@ type Tree struct {
 	moves       []move
 	items       []driver.MountItem
 	laidOut     []*node
+	transits    []*node // nodes whose next frame their layout transition moves
 	reports     []report
 	stacks      []*node
 	lists       []*node
@@ -187,6 +188,7 @@ type node struct {
 	lstate   layout.State
 	lstyle   layout.Style
 	lstyleOK bool
+	transit  bool  // in Tree.transits
 	queued   bool  // a boundary waiting in Tree.boundaries
 	rtl      bool  // laid out right to left
 	isRoot   bool  // a layout root: the root view, an overlay or a modal
@@ -952,6 +954,12 @@ func (t *Tree) restyle(n *node) bool {
 		}
 	}
 	n.lstyleOK = false
+	// A style transition moves the frame its own change gives n, as CSS
+	// transitions a changed width; a parent's resize alone does not.
+	if n.created && !n.transit && n.style.Transition.Properties&TransitionLayout != 0 && n.style.Transition.Duration > 0 {
+		n.transit = true
+		t.transits = append(t.transits, n)
+	}
 	return true
 }
 

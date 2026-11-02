@@ -958,6 +958,7 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.u32(uint32(it.Before))
 		case driver.ItemFrame:
 			w.bounds(it.Frame)
+			writeLayoutTransition(w, it.Transition)
 		case driver.ItemViewStyle:
 			v := it.ViewStyle
 			w.u32(uint32(v.Background))

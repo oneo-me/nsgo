@@ -862,7 +862,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
 		case driver.ItemFrame:
-			s.setFrame(v, it.Frame, lb)
+			s.setFrame(v, it, lb)
 			if v.sc != nil && v.hasEdges() {
 				v.placeEdges()
 			}

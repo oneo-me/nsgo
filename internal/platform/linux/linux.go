@@ -706,7 +706,7 @@ func (w *window) apply(b *driver.MountBatch) {
 			v.overflow = it.Frame
 		case driver.ItemFrame:
 			old := v.shownFrame().Size
-			w.framed(v, it.Frame, lb)
+			w.framed(v, it, lb)
 			resized := v.shownFrame().Size != old
 			w.moved(v)
 			if resized && v.widget != 0 {

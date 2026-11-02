@@ -200,6 +200,54 @@ func TestAnimatedValuesBindAndRunOnAnAnimator(t *testing.T) {
 	}
 }
 
+func TestLayoutTransitionMovesTheFrameItsStyleChanges(t *testing.T) {
+	var full *Signal[bool]
+	h := newHost(t, Size{Width: 300, Height: 300}, func(cx *Scope) Node {
+		full = NewSignal(cx, false)
+		return View{Children: []Node{View{TestID: "bar", StyleFunc: func() Style {
+			s := Style{Width: Pct(20), Height: Pt(10),
+				Transition: Transition{Duration: 200 * time.Millisecond, Easing: EaseOut, Properties: TransitionLayout}}
+			if full.Get() {
+				s.Width = Pct(100)
+			}
+			return s
+		}}}}
+	})
+	bar := h.find("bar").id
+	frame := func(b *driver.MountBatch) *driver.MountItem {
+		for i := range b.Items {
+			if it := &b.Items[i]; it.Kind == driver.ItemFrame && it.ID == bar {
+				return it
+			}
+		}
+		t.Fatal("no frame for the bar")
+		return nil
+	}
+	if it := frame(h.commit()); it.Transition != nil {
+		t.Fatalf("a new view moved: %+v", it.Transition)
+	}
+	full.Set(true)
+	it := frame(h.commit())
+	want := driver.LayoutTransition{Curve: driver.LayoutBezier, Bezier: EaseOut, Duration: 200 * time.Millisecond}
+	if it.Frame.Size.Width != 300 || it.Transition == nil || *it.Transition != want {
+		t.Fatalf("frame %v transition %+v", it.Frame, it.Transition)
+	}
+	// The parent's resize alone moves it at once, as CSS's percentage
+	// width does not transition when its container grows.
+	h.tree.Resize(Size{Width: 400, Height: 300})
+	if it := frame(h.commit()); it.Frame.Size.Width != 400 || it.Transition != nil {
+		t.Fatalf("resized %v transition %+v", it.Frame, it.Transition)
+	}
+	full.Set(false)
+	if it := frame(h.commit()); it.Transition == nil {
+		t.Fatal("shrinking did not move")
+	}
+	h.tree.Resize(Size{Width: 300, Height: 300})
+	if it := frame(h.commit()); it.Transition != nil {
+		t.Fatalf("a later resize moved: %+v", it.Transition)
+	}
+}
+
 func TestLayoutAnimationRidesTheNextBatch(t *testing.T) {
 	var wide *Signal[bool]
 	var cx0 *Scope
@@ -238,5 +286,32 @@ func TestLayoutAnimationRidesTheNextBatch(t *testing.T) {
 	}
 	if p, done := LayoutSpringPreset.Update.At(700 * time.Millisecond); !over || p != 1 || !done {
 		t.Fatalf("spring: overshot %v, end %v %v", over, p, done)
+	}
+}
+
+func TestProjectDecayIsWhereDecayStops(t *testing.T) {
+	for _, c := range []DecayConfig{{Velocity: 1200}, {Velocity: -800, Deceleration: 0.99},
+		{Velocity: 3000, Clamp: true, Min: 0, Max: 400}} {
+		samples := SampleDecay(50, c)
+		end := samples[len(samples)-1]
+		if got := ProjectDecay(50, c); math.Abs(got-end) > 1 {
+			t.Errorf("%+v: projected %v, decay stops at %v", c, got, end)
+		}
+	}
+}
+
+func TestRubberBandClamp(t *testing.T) {
+	if got := RubberBandClamp(50, 0, 100, 300); got != 50 {
+		t.Errorf("inside: %v", got)
+	}
+	past := RubberBandClamp(160, 0, 100, 300)
+	if past <= 100 || past >= 160 {
+		t.Errorf("past the end: %v", past)
+	}
+	if far := RubberBandClamp(1e9, 0, 100, 300); far >= 400 || far <= past {
+		t.Errorf("far past: %v", far)
+	}
+	if before := RubberBandClamp(-60, 0, 100, 300); math.Abs(before+past-100) > 1e-9 {
+		t.Errorf("before the start: %v, want %v", before, -(past - 100))
 	}
 }

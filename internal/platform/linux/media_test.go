@@ -371,6 +371,39 @@ func TestAnimatorDrawsOnTheFrameClock(t *testing.T) {
 	w.onLoop(t, func() { dragEndCallback(0, 50, 0, w.handle) })
 }
 
+// TestLayoutTransitionWidensAView widens a bar whose style transitions
+// layout and looks half way: its right edge is between its widths.
+func TestLayoutTransitionWidensAView(t *testing.T) {
+	if testing.Short() {
+		t.Skip("opens a window")
+	}
+	title := "nsgo-native-" + t.Name()
+	app := func(cx *core.Scope) core.Node {
+		full := core.NewSignal(cx, false)
+		cx.SetTitle(title)
+		return core.View{Style: core.Style{Width: driver.Pt(360), Height: driver.Pt(240), Background: driver.RGB(0xffffff)},
+			Children: []core.Node{
+				core.View{StyleFunc: func() core.Style {
+					s := abs(0, 0, 40, 20, driver.RGB(0xff0000))
+					if full.Get() {
+						s.Width = driver.Pt(240)
+					}
+					s.Transition = driver.Transition{Duration: 1500 * time.Millisecond, Properties: driver.TransitionLayout}
+					return s
+				}},
+				core.View{TestID: "widen", Style: abs(0, 100, 20, 20, driver.RGB(0x000000)),
+					OnPress: func(core.PressEvent) { full.Set(true) }},
+			}}
+	}
+	w := startTestWindow(t, app, Options{Title: title, Width: 360, Height: 240})
+	waitForTitle(t, w, title)
+	red := func(p pixels, x int) bool { return isColor(p.at(x, 10), 0xff0000) }
+	waitPixels(t, w, "the narrow bar", func(p pixels) bool { return red(p, 30) && !red(p, 60) })
+	w.pressView(t, "widen")
+	waitPixels(t, w, "the bar half way", func(p pixels) bool { return red(p, 100) && !red(p, 220) })
+	waitPixels(t, w, "the wide bar", func(p pixels) bool { return red(p, 235) && !red(p, 250) })
+}
+
 // TestLayoutAnimationMovesShowsAndRetiresViews animates one commit's
 // frame change, insertion and removal, each checked half way.
 func TestLayoutAnimationMovesShowsAndRetiresViews(t *testing.T) {

@@ -287,6 +287,8 @@ type LayoutTransition struct {
 	Curve LayoutCurve
 	// Damping is LayoutSpring's damping ratio, from 0 to 1.
 	Damping float32
+	// Bezier is LayoutBezier's curve.
+	Bezier Curve
 	// Property is what appearing and disappearing views animate.
 	Property LayoutProperty
 	Duration time.Duration
@@ -306,6 +308,8 @@ const (
 	// LayoutKeyboard is the software keyboard's own curve, timed from
 	// when the keyboard started to move where the platform knows it.
 	LayoutKeyboard
+	// LayoutBezier follows Bezier, a style transition's easing.
+	LayoutBezier
 )
 
 // KeyboardCurve is UIKit's keyboard curve, as near as a cubic Bézier
@@ -346,6 +350,8 @@ func (tr *LayoutTransition) At(elapsed time.Duration) (float64, bool) {
 		return layoutSpring(float64(tr.Damping), x), false
 	case LayoutKeyboard:
 		return KeyboardCurve.At(x), false
+	case LayoutBezier:
+		return tr.Bezier.At(x), false
 	}
 	return x, false
 }

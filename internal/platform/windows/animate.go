@@ -97,19 +97,25 @@ func frameOf(v *view) driver.Bounds {
 	return v.frame
 }
 
-// setFrame gives v its new frame, which a batch's Update animates to
-// from the one v shows when v existed before the batch.
-func (w *window) setFrame(v *view, f driver.Bounds, lb *layoutBatch) {
+// setFrame gives v the item's frame, which a batch's Update or the
+// item's own transition animates to from the one v shows when v existed
+// before the batch.
+func (w *window) setFrame(v *view, it *driver.MountItem, lb *layoutBatch) {
 	old := frameOf(v)
+	f := it.Frame
 	v.laid = f
 	f.Origin.X += v.shift.X
 	f.Origin.Y += v.shift.Y
 	v.frame = f
-	if lb == nil || lb.anim.Update == nil || lb.created[v] || old == (driver.Bounds{}) || old == f {
+	tr, start := it.Transition, time.Now()
+	if lb != nil && lb.anim.Update != nil && !lb.created[v] {
+		tr, start = lb.anim.Update, lb.now
+	}
+	if tr == nil || old == (driver.Bounds{}) || old == f {
 		v.moving = nil
 		return
 	}
-	v.moving = &moving{from: old, start: lb.now, tr: *lb.anim.Update, shown: old}
+	v.moving = &moving{from: old, start: start, tr: *tr, shown: old}
 	w.animate(v)
 }
 

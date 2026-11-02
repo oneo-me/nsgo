@@ -5,7 +5,8 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
- * One phase of a batch's LayoutAnimation, as core.LayoutTransition: its
+ * One phase of a batch's LayoutAnimation, or a frame's own transition, as
+ * core.LayoutTransition: its
  * progress over time, the same as core's At, durations in nanoseconds.
  */
 final class LayoutTransition {
@@ -16,12 +17,15 @@ final class LayoutTransition {
     static final int EASE_IN_OUT = 3;
     static final int SPRING = 4;
     static final int KEYBOARD = 5;
+    static final int BEZIER = 6;
     // What appearing and disappearing views animate, as core.LayoutProperty.
     static final int OPACITY = 0;
     static final int SCALE = 1;
 
     int curve, property;
     float damping;
+    /** BEZIER's control points: x1, y1, x2, y2. */
+    float[] bezier;
     long duration, delay;
     /**
      * On the keyboard's curve, the IME's interpolator, and how far the
@@ -49,12 +53,13 @@ final class LayoutTransition {
         ahead = now - k.start;
     }
 
-    /** Reads a phase as android.go's writeLayoutAnimation writes it: null for none. */
+    /** Reads a transition as protocol.go's writeLayoutTransition writes it: null for none. */
     static LayoutTransition read(DataInputStream in) throws IOException {
         if (in.readUnsignedByte() == 0) return null;
         LayoutTransition t = new LayoutTransition();
         t.curve = in.readUnsignedByte();
         t.damping = in.readFloat();
+        t.bezier = new float[] {in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()};
         t.property = in.readUnsignedByte();
         t.duration = in.readLong();
         t.delay = in.readLong();
@@ -73,6 +78,7 @@ final class LayoutTransition {
             case EASE_OUT: return Animator.bezier(0, 0, 0.58f, 1, x);
             case EASE_IN_OUT: return Animator.bezier(0.42f, 0, 0.58f, 1, x);
             case SPRING: return spring(damping, x);
+            case BEZIER: return Animator.bezier(bezier[0], bezier[1], bezier[2], bezier[3], x);
             // The IME's own interpolator, else InsetsController's.
             case KEYBOARD: return ime != null ? ime.getInterpolation((float) x) : Animator.bezier(0.2f, 0, 0, 1, x);
             default: return x;

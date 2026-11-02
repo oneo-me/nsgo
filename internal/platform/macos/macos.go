@@ -1318,7 +1318,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			}
 			s.appear(v, lb, it.Parent)
 		case driver.ItemFrame:
-			s.setFrame(v, it.Frame, lb)
+			s.setFrame(v, it, lb)
 			if v.kind == driver.KindText {
 				invalidateTextCursor(v)
 			}

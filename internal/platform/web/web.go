@@ -1363,12 +1363,12 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			case v.track.Truthy():
 				s.dom.flush()
 				s.placeTrack(v)
-			case s.dom.ok && lb == nil:
+			case s.dom.ok && lb == nil && it.Transition == nil:
 				s.dom.frame(opFrame, v.id, it.Frame, v.placed, !v.placedOK)
 				v.placed, v.placedOK = it.Frame, true
 			default:
 				s.dom.flush()
-				s.moveFrame(v, it.Frame, lb)
+				s.moveFrame(v, it, lb)
 				v.place(it.Frame)
 			}
 			v.framed = true

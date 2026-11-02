@@ -295,7 +295,9 @@ func screen(cx *core.Scope, title string, right core.Node, children ...core.Node
 // itoa formats an integer.
 func itoa(n int) string { return strconv.Itoa(n) }
 
-// every calls fn every d until the scope ends or stop is called.
+// every calls fn every d until cx ends or stop is called. It starts
+// under cx, as later does, so a press handler that remakes its own button
+// (Send becoming Pause) does not end it.
 func every(cx *core.Scope, d time.Duration, fn func()) (stop func()) {
 	stopped := false
 	var cancel func() bool
@@ -309,14 +311,18 @@ func every(cx *core.Scope, d time.Duration, fn func()) (stop func()) {
 			cancel = cx.AfterFunc(d, tick)
 		}
 	}
-	cancel = cx.AfterFunc(d, tick)
 	stop = func() {
 		stopped = true
 		if cancel != nil {
 			cancel()
 		}
 	}
-	cx.Cleanup(stop)
+	cx.Post(func() {
+		if !stopped {
+			cx.Cleanup(stop)
+			cancel = cx.AfterFunc(d, tick)
+		}
+	})
 	return stop
 }
 

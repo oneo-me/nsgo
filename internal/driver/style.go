@@ -136,8 +136,14 @@ type Transition struct {
 	Duration time.Duration
 	Delay    time.Duration
 	Easing   Curve
-	// Properties lists what animates; every property when 0.
+	// Properties lists what animates; every property but
+	// TransitionLayout when 0.
 	Properties TransitionProperty
+}
+
+// Layout returns how t moves a view's frame (TransitionLayout).
+func (t Transition) Layout() *LayoutTransition {
+	return &LayoutTransition{Curve: LayoutBezier, Bezier: t.Easing, Duration: t.Duration, Delay: t.Delay}
 }
 
 // TransitionProperty is a set of animatable properties.
@@ -149,6 +155,10 @@ const (
 	TransitionTransform
 	TransitionBorder
 	TransitionShadow
+	// TransitionLayout moves and resizes the view from where it shows
+	// when a change to its own style changes its frame. Its children take
+	// their new frames inside it at once.
+	TransitionLayout
 )
 
 // Curve is an easing curve: CSS's cubic Bézier from (0,0) to (1,1)

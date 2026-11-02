@@ -35,17 +35,24 @@ func writeLayoutAnimation(w *writer, a *driver.LayoutAnimation) {
 	}
 	w.byte(1)
 	for _, tr := range [...]*driver.LayoutTransition{a.Create, a.Update, a.Delete} {
-		if tr == nil {
-			w.byte(0)
-			continue
-		}
-		w.byte(1)
-		w.byte(byte(tr.Curve))
-		w.float(tr.Damping)
-		w.byte(byte(tr.Property))
-		w.u64(uint64(tr.Duration))
-		w.u64(uint64(tr.Delay))
+		writeLayoutTransition(w, tr)
 	}
+}
+
+// writeLayoutTransition writes a layout animation's phase or a frame's
+// transition: whether there is one, then what LayoutTransition.read reads.
+func writeLayoutTransition(w *writer, tr *driver.LayoutTransition) {
+	if tr == nil {
+		w.byte(0)
+		return
+	}
+	w.byte(1)
+	w.byte(byte(tr.Curve))
+	w.float(tr.Damping)
+	w.floats(tr.Bezier.X1, tr.Bezier.Y1, tr.Bezier.X2, tr.Bezier.Y2)
+	w.byte(byte(tr.Property))
+	w.u64(uint64(tr.Duration))
+	w.u64(uint64(tr.Delay))
 }
 
 // writeAnimation writes an ItemAnimation's ops as Animator.readOp reads

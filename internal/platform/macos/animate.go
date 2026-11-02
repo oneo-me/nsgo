@@ -309,9 +309,10 @@ type layoutBatch struct {
 	deleted map[objc.ID]bool // natives of views the batch deleted
 }
 
-// setFrame moves v, animating from where it shows now when the batch
-// animates layout.
-func (s *surface) setFrame(v *view, f driver.Bounds, lb *layoutBatch) {
+// setFrame moves v to the item's frame, animating from where it shows now when
+// the batch animates layout or the item carries a transition.
+func (s *surface) setFrame(v *view, it *driver.MountItem, lb *layoutBatch) {
+	f := it.Frame
 	m := s.motions[v]
 	target := v.frame
 	if m != nil && m.frame != nil {
@@ -320,13 +321,17 @@ func (s *surface) setFrame(v *view, f driver.Bounds, lb *layoutBatch) {
 	if f == target && v.framed {
 		return
 	}
-	if lb != nil && lb.anim.Update != nil && !lb.created[v.id] && v.framed {
+	tr := it.Transition
+	if lb != nil && lb.anim.Update != nil && !lb.created[v.id] {
+		tr = lb.anim.Update
+	}
+	if tr != nil && v.framed {
 		from := v.frame
 		if m == nil {
 			m = &motion{}
 			s.motions[v] = m
 		}
-		m.from, m.to, m.frame, m.start = from, f, lb.anim.Update, s.clock()
+		m.from, m.to, m.frame, m.start = from, f, tr, s.clock()
 		s.startTicking()
 		return
 	}

@@ -1219,7 +1219,7 @@ type Translation struct {
 	AnimRemove                                   func() string
 	AnimTransitions                              func() string
 	AnimAStyleSTransitionAnimates                func() string
-	AnimColorCornersTransformAndOpacity          func() string
+	AnimColorCornersTransformOpacityAndFrame     func() string
 	AnimToggle                                   func() string
 	AnimGentle                                   func() string
 	AnimWobbly                                   func() string
@@ -3066,7 +3066,7 @@ var texts = map[string][]string{
 		"Remove",
 		"Transitions",
 		"A style's Transition animates its changes",
-		"Color, corners, transform and opacity",
+		"Color, corners, transform, opacity and frame",
 		"Toggle",
 		"Gentle",
 		"Wobbly",
@@ -4842,7 +4842,7 @@ var texts = map[string][]string{
 		"إزالة",
 		"الانتقالات",
 		"Transition في النمط يحرّك تغييراته",
-		"اللون والزوايا والتحويل والعتامة",
+		"اللون والزوايا والتحويل والعتامة والإطار",
 		"تبديل",
 		"لطيف",
 		"متذبذب",
@@ -6618,7 +6618,7 @@ var texts = map[string][]string{
 		"移除",
 		"过渡",
 		"样式的 Transition 为它的变化添加动画",
-		"颜色、圆角、变换和不透明度",
+		"颜色、圆角、变换、不透明度和位置尺寸",
 		"切换",
 		"柔和",
 		"摇晃",
@@ -8394,7 +8394,7 @@ var texts = map[string][]string{
 		"移除",
 		"過渡",
 		"樣式的 Transition 為它的變化新增動畫",
-		"顏色、圓角、變換和不透明度",
+		"顏色、圓角、變換、不透明度和位置尺寸",
 		"切換",
 		"柔和",
 		"搖晃",
@@ -12559,8 +12559,8 @@ func Supply(lang string, t Translation) {
 	if t.AnimAStyleSTransitionAnimates != nil {
 		st[1115] = t.AnimAStyleSTransitionAnimates()
 	}
-	if t.AnimColorCornersTransformAndOpacity != nil {
-		st[1116] = t.AnimColorCornersTransformAndOpacity()
+	if t.AnimColorCornersTransformOpacityAndFrame != nil {
+		st[1116] = t.AnimColorCornersTransformOpacityAndFrame()
 	}
 	if t.AnimToggle != nil {
 		st[1117] = t.AnimToggle()
@@ -25017,15 +25017,15 @@ func AnimAStyleSTransitionAnimates(cx *core.Scope) string {
 // in the language of msgs.
 func (msgs Messages) AnimAStyleSTransitionAnimates() string { return msgs.text(1115) }
 
-// AnimColorCornersTransformAndOpacity says "Color, corners, transform and opacity"
+// AnimColorCornersTransformOpacityAndFrame says "Color, corners, transform, opacity and frame"
 // in the language the app shows under cx.
-func AnimColorCornersTransformAndOpacity(cx *core.Scope) string {
-	return For(cx).AnimColorCornersTransformAndOpacity()
+func AnimColorCornersTransformOpacityAndFrame(cx *core.Scope) string {
+	return For(cx).AnimColorCornersTransformOpacityAndFrame()
 }
 
-// AnimColorCornersTransformAndOpacity says "Color, corners, transform and opacity"
+// AnimColorCornersTransformOpacityAndFrame says "Color, corners, transform, opacity and frame"
 // in the language of msgs.
-func (msgs Messages) AnimColorCornersTransformAndOpacity() string { return msgs.text(1116) }
+func (msgs Messages) AnimColorCornersTransformOpacityAndFrame() string { return msgs.text(1116) }
 
 // AnimToggle says "Toggle"
 // in the language the app shows under cx.

@@ -992,6 +992,39 @@ func TestLayoutAnimationKeepsRemovedViewsDrawnApartFromTheirIDs(t *testing.T) {
 	}
 }
 
+// TestFrameTransitionMovesOnlyItsView moves a view by its frame item's
+// own transition, and lets a batch's Update win over it.
+func TestFrameTransitionMovesOnlyItsView(t *testing.T) {
+	w := &window{animator: driver.NewAnimator(func(driver.Event) {}), drops: map[*view]bool{}, hosts: map[*component]bool{}}
+	frame := func(id driver.NodeID, width driver.Points, tr *driver.LayoutTransition) driver.MountItem {
+		return driver.MountItem{Kind: driver.ItemFrame, ID: id, Frame: driver.Bounds{Size: driver.Size{Width: width, Height: 10}},
+			Transition: tr}
+	}
+	w.apply(&driver.MountBatch{Root: 1, Items: []driver.MountItem{
+		{Kind: driver.ItemCreate, ID: 1, View: driver.KindView},
+		{Kind: driver.ItemCreate, ID: 2, View: driver.KindView},
+		{Kind: driver.ItemCreate, ID: 3, View: driver.KindView},
+		{Kind: driver.ItemInsert, ID: 2, Parent: 1},
+		{Kind: driver.ItemInsert, ID: 3, Parent: 1},
+		frame(1, 300, nil), frame(2, 20, nil), frame(3, 20, nil),
+	}})
+	bar, other := w.views[2], w.views[3]
+	own := driver.Transition{Duration: time.Second, Easing: driver.EaseOut}.Layout()
+	w.apply(&driver.MountBatch{Root: 1, Items: []driver.MountItem{frame(2, 200, own), frame(3, 200, nil)}})
+	switch {
+	case bar.moving == nil || bar.moving.tr != *own || frameOf(bar).Size.Width != 20 || bar.frame.Size.Width != 200:
+		t.Fatalf("the bar moves %+v from %v", bar.moving, frameOf(bar))
+	case other.moving != nil || frameOf(other).Size.Width != 200:
+		t.Fatal("a frame without a transition animated")
+	}
+	update := &driver.LayoutTransition{Duration: 2 * time.Second}
+	w.apply(&driver.MountBatch{Root: 1, LayoutAnimation: &driver.LayoutAnimation{Update: update},
+		Items: []driver.MountItem{frame(2, 100, own)}})
+	if bar.moving == nil || bar.moving.tr != *update {
+		t.Fatalf("the batch's Update did not win: %+v", bar.moving)
+	}
+}
+
 func TestTextLayoutsHitTestTheirCharacters(t *testing.T) {
 	w := testWindow()
 	style := driver.TextStyle{Font: driver.Font{Family: "Segoe UI", Size: 16}, Color: driver.RGB(0)}

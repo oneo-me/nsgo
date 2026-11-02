@@ -311,6 +311,41 @@ func springDefaults(c SpringConfig) SpringConfig {
 	return c
 }
 
+// ProjectDecay returns where Decay with c brings a value from from to
+// rest: where a fling released at c.Velocity lands, to snap from before
+// it starts. A clamped one stops at the bound it passes, whatever its
+// bounce.
+func ProjectDecay(from float64, c DecayConfig) float64 {
+	c = decayDefaults(c)
+	// Decay's speed falls as exp(-(1-Deceleration)·t), t in
+	// milliseconds, so it covers its speed over that rate in all.
+	to := from + c.Velocity/1000/(1-c.Deceleration)
+	if c.Clamp {
+		to = min(max(to, c.Min), c.Max)
+	}
+	return to
+}
+
+// RubberBandClamp resists x past lo and hi as a scroll view's edge
+// resists a drag, with UIKit's constant: past a bound it moves less the
+// farther it goes, never more than dimension, the size of what moves.
+func RubberBandClamp(x, lo, hi, dimension float64) float64 {
+	const c = 0.55
+	band := func(over float64) float64 {
+		if dimension <= 0 {
+			return 0
+		}
+		return (1 - 1/(over*c/dimension+1)) * dimension
+	}
+	switch {
+	case x < lo:
+		return lo - band(lo-x)
+	case x > hi:
+		return hi + band(x-hi)
+	}
+	return x
+}
+
 func decayDefaults(c DecayConfig) DecayConfig {
 	if c.Deceleration <= 0 || c.Deceleration >= 1 {
 		c.Deceleration = 0.998

@@ -92,7 +92,7 @@ func (t *tailwindTheme) keyword(u string) (classDecl, bool) {
 		"transition-transform":
 		props := map[string]TransitionProperty{
 			"transition":           TransitionOpacity | TransitionBackground | TransitionTransform | TransitionBorder | TransitionShadow,
-			"transition-all":       TransitionOpacity | TransitionBackground | TransitionTransform | TransitionBorder | TransitionShadow,
+			"transition-all":       TransitionOpacity | TransitionBackground | TransitionTransform | TransitionBorder | TransitionShadow | TransitionLayout,
 			"transition-colors":    TransitionBackground | TransitionBorder,
 			"transition-opacity":   TransitionOpacity,
 			"transition-shadow":    TransitionShadow,

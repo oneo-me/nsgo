@@ -844,6 +844,7 @@ const (
 	TransitionTransform  = driver.TransitionTransform
 	TransitionBorder     = driver.TransitionBorder
 	TransitionShadow     = driver.TransitionShadow
+	TransitionLayout     = driver.TransitionLayout
 )
 
 const (

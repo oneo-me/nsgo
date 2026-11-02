@@ -883,7 +883,7 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
 		case driver.ItemFrame:
-			w.setFrame(v, it.Frame, lb)
+			w.setFrame(v, it, lb)
 			if v.kind == driver.KindScroll {
 				rescroll = append(rescroll, v)
 			}

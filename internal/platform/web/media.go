@@ -107,6 +107,10 @@ func timing(tr *driver.LayoutTransition) map[string]any {
 		easing = "ease-out"
 	case driver.LayoutEaseInEaseOut, driver.LayoutKeyboard:
 		easing = "ease-in-out"
+	case driver.LayoutBezier:
+		if c := tr.Bezier; c != (driver.Curve{}) {
+			easing = fmt.Sprintf("cubic-bezier(%g, %g, %g, %g)", c.X1, c.Y1, c.X2, c.Y2)
+		}
 	case driver.LayoutSpring:
 		curve := *tr
 		curve.Delay, curve.Duration = 0, time.Second
@@ -121,11 +125,17 @@ func timing(tr *driver.LayoutTransition) map[string]any {
 		"easing": easing, "fill": "backwards"}
 }
 
-// moveFrame animates v from where it shows to frame f.
-func (s *surface) moveFrame(v *view, f driver.Bounds, lb *layoutBatch) {
-	if lb == nil || lb.anim.Update == nil || lb.created[v.id] || !v.framed {
+// moveFrame animates v from where it shows to the item's frame, when the
+// batch animates layout or the item carries a transition.
+func (s *surface) moveFrame(v *view, it *driver.MountItem, lb *layoutBatch) {
+	tr := it.Transition
+	if lb != nil && lb.anim.Update != nil && !lb.created[v.id] {
+		tr = lb.anim.Update
+	}
+	if tr == nil || !v.framed {
 		return
 	}
+	f := it.Frame
 	// Where it shows: mid animation, the computed style's.
 	cs := js.Global().Call("getComputedStyle", v.el)
 	from := map[string]any{"left": cs.Get("left").String(), "top": cs.Get("top").String(),
@@ -134,7 +144,7 @@ func (s *surface) moveFrame(v *view, f driver.Bounds, lb *layoutBatch) {
 		v.layoutAnim.Call("cancel")
 	}
 	to := map[string]any{"left": px(f.Origin.X), "top": px(f.Origin.Y), "width": px(f.Size.Width), "height": px(f.Size.Height)}
-	v.layoutAnim = v.el.Call("animate", []any{from, to}, timing(lb.anim.Update))
+	v.layoutAnim = v.el.Call("animate", []any{from, to}, timing(tr))
 }
 
 // appear animates a view the batch created into view.

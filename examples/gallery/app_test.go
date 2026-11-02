@@ -165,6 +165,14 @@ func TestControls(t *testing.T) {
 	app.Find("text:Grace Hopper")
 	app.Press("id:demo-Controls >> role:button Storage")
 	app.Find("text:120 GB")
+	// Send becomes Pause as the transfer starts, which must not end it.
+	app.Press("role:button Send")
+	app.Advance(time.Second)
+	if now := app.Find("role:progressbar Upload").Props.Value.Now; now < 30 {
+		t.Fatalf("the upload stands at %v%% after a second", now)
+	}
+	app.Press("role:button Pause")
+	app.Find("role:button Send")
 }
 
 func TestForm(t *testing.T) {

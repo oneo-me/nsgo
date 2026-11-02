@@ -527,6 +527,8 @@ func controlsDemo(cx *core.Scope) core.Node {
 				IndicatorStyleFunc: func() core.Style {
 					s := core.Style{Height: core.Pt(6), CornerRadius: 3, Background: colors.Accent()}
 					if !indeterminate {
+						// The width follows each step of the transfer.
+						s.Transition = core.Transition{Duration: 300 * time.Millisecond, Easing: core.EaseOut, Properties: core.TransitionLayout}
 						return s
 					}
 					s.Width = core.Pct(100.0 / 3)

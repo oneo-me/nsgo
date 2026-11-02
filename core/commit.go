@@ -145,6 +145,11 @@ func (t *Tree) commitRound() {
 	t.emitAccessories()
 	t.emitHeaderViews()
 	t.emit(t.view)
+	for _, n := range t.transits {
+		n.transit = false
+	}
+	clear(t.transits)
+	t.transits = t.transits[:0]
 	t.emitMoves()
 	t.emitAnimation()
 	if t.keysChanged {
@@ -487,7 +492,11 @@ func (t *Tree) emit(n *node) bool {
 	}
 	if self && (first || n.frame != n.sent.frame) {
 		n.sent.frame = n.frame
-		t.items = append(t.items, driver.MountItem{Kind: driver.ItemFrame, ID: n.id, Frame: n.frame})
+		it := driver.MountItem{Kind: driver.ItemFrame, ID: n.id, Frame: n.frame}
+		if n.transit && !first && !t.root.Env().reduce.GetUntracked() {
+			it.Transition = n.style.Transition.Layout()
+		}
+		t.items = append(t.items, it)
 		if n.h.layout != nil {
 			t.laidOut = append(t.laidOut, n)
 		}

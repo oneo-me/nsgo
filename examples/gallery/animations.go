@@ -705,7 +705,7 @@ func transitions(cx *core.Scope) core.Node {
 				core.View{Style: core.Style{Height: core.Pt(2), CornerRadius: 1}, StyleFunc: ui.Filled(colors.Raised)},
 				core.View{StyleFunc: func() core.Style {
 					s := core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Width: core.Pt(12), Height: core.Pt(12), CornerRadius: 6, Background: colors.Accent(),
-						Shadows: fin.Knob().Shadows, Transition: core.Transition{Duration: ms(900), Easing: c.curve}}
+						Shadows: fin.Knob().Shadows, Transition: core.Transition{Duration: ms(900), Easing: c.curve, Properties: core.TransitionLayout}}
 					if moved.Get() {
 						s.Left = core.Pct(90)
 					}
@@ -728,7 +728,7 @@ func transitions(cx *core.Scope) core.Node {
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 2}, Children: lanes},
-		ui.APILine{Label: tr.AnimColorCornersTransformAndOpacity(), Names: "Style.Transition"},
+		ui.APILine{Label: tr.AnimColorCornersTransformOpacityAndFrame(), Names: "Style.Transition · TransitionLayout"},
 		ui.Button{Text: tr.AnimToggle(), Variant: ui.ButtonSecondary, OnPress: func() { toggled(moved) }},
 	}}
 }

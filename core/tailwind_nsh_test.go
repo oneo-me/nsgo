@@ -375,6 +375,8 @@ func TestNSHTransitionsAndAnimations(t *testing.T) {
 	want(t, "colors", tr.Properties&TransitionBackground != 0, true)
 	want(t, "not transform", tr.Properties&TransitionTransform != 0, false)
 	want(t, "transition", styled(t, "transition").Transition.Duration, 150*time.Millisecond)
+	want(t, "transition leaves layout", styled(t, "transition").Transition.Properties&TransitionLayout != 0, false)
+	want(t, "transition-all moves layout", styled(t, "transition-all").Transition.Properties&TransitionLayout != 0, true)
 	want(t, "animate-spin", styled(t, "animate-spin").Animation.Keyframes, KeyframesSpin)
 }
 

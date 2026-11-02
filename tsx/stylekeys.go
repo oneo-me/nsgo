@@ -641,12 +641,17 @@ var transitionNames = map[string]core.TransitionProperty{
 	"scale": core.TransitionTransform, "rotate": core.TransitionTransform, "box-shadow": core.TransitionShadow,
 	"boxShadow": core.TransitionShadow, "shadow": core.TransitionShadow, "border-radius": core.TransitionBorder,
 	"borderRadius": core.TransitionBorder, "border-width": core.TransitionBorder, "borderWidth": core.TransitionBorder,
+	"width": core.TransitionLayout, "height": core.TransitionLayout, "min-width": core.TransitionLayout,
+	"minWidth": core.TransitionLayout, "max-width": core.TransitionLayout, "maxWidth": core.TransitionLayout,
+	"min-height": core.TransitionLayout, "minHeight": core.TransitionLayout, "max-height": core.TransitionLayout,
+	"maxHeight": core.TransitionLayout, "inset": core.TransitionLayout, "top": core.TransitionLayout,
+	"right": core.TransitionLayout, "bottom": core.TransitionLayout, "left": core.TransitionLayout,
 }
 
 // transitionProperties reads a transition-property list.
 func transitionProperties(s string) core.TransitionProperty {
 	colors := core.TransitionBackground | core.TransitionBorder
-	all := colors | core.TransitionOpacity | core.TransitionShadow | core.TransitionTransform
+	all := colors | core.TransitionOpacity | core.TransitionShadow | core.TransitionTransform | core.TransitionLayout
 	var p core.TransitionProperty
 	for _, name := range strings.Split(s, ",") {
 		switch name = strings.TrimSpace(name); name {

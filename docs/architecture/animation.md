@@ -2,6 +2,8 @@
 
 Style transitions, animated values and layout animations run on the platform's main thread, stepped by its own frame clock, so a running animation costs the engine nothing per frame. They follow NSH's `docs/dev/animation.md`. Read this before changing `core/animated.go`, `internal/driver/animated.go`, `internal/driver/animator.go` or a backend's frame clock.
 
+Layout runs in the engine, so the frame clock moves only what a platform draws without it: a transition of drawn properties and an animated value never change a view's frame. A view's size and position animate as a [layout animation](#layout-animation), of a whole commit or of one view's own changes.
+
 ## Frames
 
 `Scope.RequestAnimationFrame(fn)` calls fn once, on the graph's goroutine, when the next display frame begins, with the frame's time from the graph clock, as timers do. stop cancels the wait, and a callback whose owner is disposed does not run; registering again from fn is the loop that runs every frame, as `requestAnimationFrame`'s does. `Scope.Animate` steps this way, so an app draws at the display's rate without a timer of its own.
@@ -25,6 +27,7 @@ The app builds a graph once: `AnimatedValue`s, nodes derived with `Interpolate` 
 - `View.PanValues` has drags move values by their translation, `PinchValue` scales a value by a pinch and `RotationValue` turns one by a rotation, each from where the value was as the gesture began, so a gesture grabs a value an animation is moving (`Animator.Gesture`). A pan's start and end report the values in `PanEvent.Values`, to snap from. `Scroll.OffsetValues` follows a scroll view's offset. Each moves in the frame the pointer or the content does.
 - Nodes also drive a `Shader`'s uniform lanes and a `Canvas`'s drawing arguments, which the backend draws again when one changes ([shaders](shaders.md), [canvas](canvas.md)).
 - Values are released with the owner that made them; derived nodes with the owner running when they were made.
+- `ProjectDecay` returns where a decay brings a value to rest, to choose the point a released drag snaps to, and `RubberBandClamp` resists a value past its bounds as a scroll view's edge does. Both are plain functions for handlers, not nodes.
 
 The graph travels as `ItemAnimation`, after the batch's views. Each backend keeps a `driver.Animator`, applies the ops, steps it once a frame while a run is live and draws what `Changed` reports with `AnimatedValues.Apply` over the view's style. Finished runs and reads come back as `EventAnimation`.
 
@@ -45,6 +48,7 @@ A display link runs only in the run loop mode object it is given: Foundation's `
 - Update: a view that existed before the batch moves and resizes from the frame it shows, mid-animation included, to its new one. Springs fit into the duration as UIKit's do.
 - Create: the top view of each subtree the batch inserts fades in, or grows from its center.
 - Delete: the top view of each subtree the batch deletes keeps drawing where it was while it fades or shrinks away, its ID already free for reuse. Views it holds go with it.
+- A view whose style's `Transition` lists `TransitionLayout` (`transition-all`; TSX's `transitionProperty` `all`, `width`, `height`, `inset` and their kin) moves and resizes the same way, on its transition's timing and easing, when a change to its own style gives it a new frame. Its `ItemFrame` carries the `LayoutTransition`; a batch's `Update` wins. Its parent's resize alone moves it at once, as CSS transitions a percentage width only when the width changes. What it holds and its siblings take their new frames at once, so it suits a view nothing follows, such as a progress bar's indicator; a section that opens and pushes what is below it wants `AnimateLayout`.
 - Reduced motion turns layout animations off. Web Animations play them on the web, springs sampled into CSS `linear()`.
 - `LayoutKeyboard` is the software keyboard's curve, which a style's `EnvKeyboard` terms animate on: UIKit's as a Bézier, timed from the keyboard notification on iOS however late the batch arrives, and on Android the IME's `WindowInsetsAnimation`: its interpolator and duration, from where its motion already is.
 
@@ -55,3 +59,4 @@ A display link runs only in the run loop mode object it is given: Foundation's `
 | `createAnimatedValue`, nodes as `Copy` handles | `*AnimatedValue` and `AnimatedNode` values, released with their owner | Go's garbage collector and owners |
 | Optional velocities | `Velocity` 0 keeps the value's current velocity | Zero values are defaults |
 | `Easing` as data decoded in Rust | `Easing` values with a `Kind` and `Mode`; zero is linear | Zero values are defaults |
+| A transition's properties are drawn ones; `width` and the like are unknown | `TransitionLayout` moves the frame a view's own style change sets | A component animates its own size without animating the rest of the commit |

@@ -274,3 +274,16 @@ func TestSamplersRunTheDrivers(t *testing.T) {
 		t.Fatalf("easing samples %v", e)
 	}
 }
+
+func TestLayoutBezierFollowsItsCurve(t *testing.T) {
+	tr := Transition{Duration: 200 * time.Millisecond, Delay: 100 * time.Millisecond, Easing: EaseOut}.Layout()
+	if p, done := tr.At(50 * time.Millisecond); p != 0 || done {
+		t.Errorf("in the delay: %v %v", p, done)
+	}
+	if p, _ := tr.At(200 * time.Millisecond); math.Abs(p-EaseOut.At(0.5)) > 1e-9 {
+		t.Errorf("halfway %v, want %v", p, EaseOut.At(0.5))
+	}
+	if p, done := tr.At(300 * time.Millisecond); p != 1 || !done {
+		t.Errorf("end %v %v", p, done)
+	}
+}

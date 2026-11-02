@@ -1643,7 +1643,8 @@ public class NsgoView extends FrameLayout {
                 if (n.embedded != null) n.embedded.destroy();
                 break;
             case Protocol.ITEM_FRAME:
-                setFrame(n, new float[] {in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()});
+                setFrame(n, new float[] {in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()},
+                        LayoutTransition.read(in));
                 break;
             case Protocol.ITEM_OVERFLOW: {
                 float[] area = {in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()};
@@ -2143,14 +2144,24 @@ public class NsgoView extends FrameLayout {
      * Moves n to frame f in points; under a layout animation's Update a
      * node that showed before the batch moves there from where it shows.
      */
-    private void setFrame(Node n, float[] f) {
+    /**
+     * Moves n to frame f, animating from where it shows with the batch's
+     * Update, else with the item's own transition when it has one.
+     */
+    private void setFrame(Node n, float[] f, LayoutTransition own) {
         float[] target = n.motion != null ? n.to : n.frame;
         if (target != null && Arrays.equals(target, f)) return;
-        if (layoutUpdate != null && n.frame != null && !created.contains(n.id) && n != accessoryShown) {
+        LayoutTransition motion = own;
+        long start = System.nanoTime();
+        if (layoutUpdate != null && !created.contains(n.id)) {
+            motion = layoutUpdate;
+            start = batchTime;
+        }
+        if (motion != null && n.frame != null && n != accessoryShown) {
             n.from = n.frame.clone();
             n.to = f;
-            n.motion = layoutUpdate;
-            n.motionStart = batchTime;
+            n.motion = motion;
+            n.motionStart = start;
             moving.add(n);
             startTicking();
             return;

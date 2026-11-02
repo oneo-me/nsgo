@@ -101,15 +101,21 @@ func (w *window) present(v *view) {
 // modals come and go on their own.
 func animatesLayout(v *view) bool { return v.kind != driver.KindModal }
 
-// framed applies a frame to v, from the frame it shows now to it with
-// lb's Update when it existed before the commit, else at once.
-func (w *window) framed(v *view, frame driver.Bounds, lb *layoutBatch) {
+// framed applies the item's frame to v, from the frame it shows now to
+// it with lb's Update when it existed before the commit, or with the
+// item's own transition, else at once.
+func (w *window) framed(v *view, it *driver.MountItem, lb *layoutBatch) {
 	old := v.shownFrame()
+	frame := it.Frame
 	v.laid = frame
 	frame.Origin.X += v.shift.X
 	frame.Origin.Y += v.shift.Y
 	v.frame = frame
-	if lb == nil || lb.anim.Update == nil || lb.created[v.id] || !animatesLayout(v) || old == frame {
+	tr, start := it.Transition, time.Now()
+	if lb != nil && lb.anim.Update != nil && !lb.created[v.id] {
+		tr, start = lb.anim.Update, lb.at
+	}
+	if tr == nil || !animatesLayout(v) || old == frame {
 		if v.layout != nil && v.layout.move != nil {
 			v.layout.move = nil
 			w.dropLayout(v)
@@ -117,7 +123,7 @@ func (w *window) framed(v *view, frame driver.Bounds, lb *layoutBatch) {
 		return
 	}
 	l := w.layoutOf(v)
-	l.move, l.moveStart, l.from, l.shown = lb.anim.Update, lb.at, old, old
+	l.move, l.moveStart, l.from, l.shown = tr, start, old, old
 }
 
 // inserted starts v appearing when the commit made it and inserted it
