@@ -34,7 +34,7 @@ func init() {
 			if size == 0 {
 				size = 2 * base.PanelMinSize
 			}
-			return map[string]any{"layout": r.Root, "size": float64(size), "open": !r.Closed, "collapsible": !r.NoCollapse}
+			return map[string]any{"layout": r.Root, "size": js32(size), "open": !r.Closed, "collapsible": !r.NoCollapse}
 		},
 		func(m map[string]any) base.DockRegion {
 			r := base.DockRegion{Size: core.Points(jsNumber(m["size"])), Closed: m["open"] == false,
@@ -51,7 +51,7 @@ func init() {
 		}, nil)
 	Shape("DockInfo", `export interface DockInfo { placement: DockPlacement; open: boolean; size: number; collapsible: boolean }`,
 		func(d base.DockInfo) map[string]any {
-			return map[string]any{"placement": d.Placement, "open": call(d.Open), "size": float64(call(d.Size)),
+			return map[string]any{"placement": d.Placement, "open": call(d.Open), "size": js32(call(d.Size)),
 				"collapsible": call(d.Collapsible)}
 		}, nil)
 	Shape("DockDropIndicator", `export interface DockDropIndicator { group: number; side?: Placement; index?: number }`,
@@ -133,7 +133,7 @@ func encodeDockNode(n base.DockNode) map[string]any {
 	sizes := make([]any, len(n.Children))
 	for i := range sizes {
 		if i < len(n.Sizes) && n.Sizes[i] > 0 {
-			sizes[i] = float64(n.Sizes[i])
+			sizes[i] = js32(n.Sizes[i])
 		}
 	}
 	m["type"], m["axis"], m["children"], m["sizes"] = "split", n.Axis, append([]base.DockNode{}, n.Children...), sizes

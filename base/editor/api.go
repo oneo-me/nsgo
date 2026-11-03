@@ -449,10 +449,12 @@ type Editor struct {
 	// InlineCompletionDelay is how long typing pauses before
 	// OnInlineCompletionRequest asks: 300 ms when 0.
 	InlineCompletionDelay time.Duration
-	// Classes go under Styles, and Class under Style.
+	// Classes go under Styles, and Class under Style. Under goes under
+	// both, part by part: a look passed whole, as TSX's NSH look.
 	Classes    Classes
 	Styles     Styles
 	StylesFunc func() Styles
+	Under      Styles
 	Label      string
 	Class      string
 	Style      core.Style

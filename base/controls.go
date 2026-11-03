@@ -320,7 +320,7 @@ func (p Progress) Render(*core.Scope) core.Node {
 		Accessible: true,
 		AccessibilityValue: func() core.AccessibilityValue {
 			if is(p.Indeterminate) {
-				return core.AccessibilityValue{}
+				return core.AccessibilityValue{Min: 0, Max: progressMax, NoNow: true}
 			}
 			return core.AccessibilityValue{Min: 0, Max: progressMax, Now: value()}
 		},

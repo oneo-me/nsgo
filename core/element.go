@@ -328,8 +328,12 @@ type Input struct {
 	// InputAccessoryViewID names the InputAccessoryView shown above the
 	// software keyboard while the field has focus.
 	InputAccessoryViewID string
-	Style                Style
-	StyleFunc            func() Style
+	// NoFontScaling and MaxFontSizeMultiplier limit the user's text size
+	// setting for the field's text, as Text's do.
+	NoFontScaling         bool
+	MaxFontSizeMultiplier float32
+	Style                 Style
+	StyleFunc             func() Style
 
 	OnChange func(text string)
 	// OnSubmit runs on Return, as SubmitBehavior says.
@@ -459,6 +463,22 @@ func (r *Ref) Bounds() (Bounds, bool) {
 		return Bounds{}, false
 	}
 	return r.t.surfaceBounds(r.n), true
+}
+
+// Measure calls done with the element's frame in its parent and in the
+// surface once the changes made so far are laid out, after the next
+// commit; ok is false while it is not mounted.
+func (r *Ref) Measure(done func(frame, page Bounds, ok bool)) {
+	if r.n == nil || r.n.deleted {
+		done(Bounds{}, Bounds{}, false)
+		return
+	}
+	r.t.after(r.n, func() {
+		frame, ok := r.Frame()
+		page, _ := r.Bounds()
+		done(frame, page, ok)
+	})
+	r.t.changed = true
 }
 
 // Frame returns the element's frame in its parent after the last commit,
@@ -664,8 +684,11 @@ type Modal struct {
 	// ignore it and cover the host.
 	Presentation ModalPresentation
 	// NoCloseOnSwipe keeps an iOS sheet from being swiped away; the swipe
-	// still asks to close it ("swipe").
-	NoCloseOnSwipe bool
+	// still asks to close it ("swipe"). NoCloseOnEscape and
+	// NoCloseOnBackdropPress say a dialog over it stays on those, which
+	// its component decides (base.Dialog).
+	NoCloseOnSwipe                          bool
+	NoCloseOnEscape, NoCloseOnBackdropPress bool
 	// IOS and Android hold the props only iOS, or only Android, has.
 	IOS     IOSModalProps
 	Android AndroidModalProps
@@ -673,17 +696,23 @@ type Modal struct {
 	// the tree.
 	StatusBar     StatusBarSetting
 	StatusBarFunc func() StatusBarSetting
-	Style         Style
-	StyleFunc     func() Style
-	Children      []Node
+	// Class is Tailwind CSS classes, as View's.
+	Class     string
+	Style     Style
+	StyleFunc func() Style
+	Children  []Node
 	// OnRequestClose receives Escape or back ("cancel") while the modal is
 	// the topmost, and an iOS sheet's swipe ("swipe"); the app decides
 	// whether to remove it. A sheet swiped away has left the screen
 	// already and stays hidden until the app removes it.
 	OnRequestClose func(reason string)
-	Role           Role
-	Label          string
-	TestID         string
+	// OnShown and OnDismissed receive the platform's reports that it
+	// finished presenting the modal and taking it away, where it makes
+	// them (EventModalShown, EventModalDismissed).
+	OnShown, OnDismissed func()
+	Role                 Role
+	Label                string
+	TestID               string
 }
 
 // Render implements Node.

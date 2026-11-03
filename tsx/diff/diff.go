@@ -19,4 +19,10 @@ func init() {
 		tsx.Enum(map[string]diff.Side{"new": diff.New, "old": diff.Old}),
 	)
 	tsx.Required[diff.Change]("OldValue", "NewValue")
+	// NSH's lines count from 0, Go's from 1.
+	tsx.Shape("DiffHunk", `export interface DiffHunk { index: number; oldStart: number; oldLines: number; newStart: number; newLines: number; file: number }`,
+		func(h diff.Hunk) map[string]any {
+			return map[string]any{"index": h.Index, "oldStart": max(h.OldStart-1, 0), "oldLines": h.OldLines,
+				"newStart": max(h.NewStart-1, 0), "newLines": h.NewLines, "file": h.File}
+		}, nil)
 }

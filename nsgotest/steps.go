@@ -152,15 +152,15 @@ func (a *App) pressOutside(v *View, at driver.Point) {
 	}
 }
 
-// touchAt reports finger 0 at the surface point at, as platforms report
-// it while a view listens to touches; elapsed is the time since it went
-// down.
-func (a *App) touchAt(phase driver.GesturePhase, at driver.Point, elapsed time.Duration) {
+// touchAt reports finger id (0 without one) at the surface point at, as
+// platforms report it while a view listens to touches; elapsed is the
+// time since it went down.
+func (a *App) touchAt(phase driver.GesturePhase, at driver.Point, elapsed time.Duration, id ...int) {
 	if !a.listensToTouches() {
 		return
 	}
 	a.dispatch(driver.Event{Kind: driver.EventTouch, Phase: phase, Time: elapsed,
-		Touches: []driver.Touch{{PagePosition: at, Changed: true}}})
+		Touches: []driver.Touch{{ID: append(id, 0)[0], PagePosition: at, Changed: true}}})
 }
 
 func (a *App) listensToTouches() bool {
@@ -484,7 +484,7 @@ func (a *App) edit(v *View, text string) {
 	a.dispatch(driver.Event{Kind: driver.EventChangeText, ID: v.ID, Text: text, Count: a.edits[v.ID]})
 	end := driver.UTF16Len(text)
 	a.moveSelection(v, driver.TextRange{Start: end, End: end})
-	if v.Events.Has(driver.EventCaretMove) {
+	if v.Events.Has(driver.EventCaretMove) && !a.noCaretMoves {
 		at, size := v.caret()
 		a.dispatch(driver.Event{Kind: driver.EventCaretMove, ID: v.ID, Point: at, Size: size})
 	}

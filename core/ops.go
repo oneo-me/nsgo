@@ -143,6 +143,13 @@ func (t *Tree) place(c, p, at *node) {
 	t.markResolve(c)
 	t.markLayout(c)
 	t.rehost(c)
+	// What follows a group's states may have a group around it now.
+	if c.style.GroupStyle != nil {
+		if t.restyle(c) {
+			t.markLayout(c)
+		}
+	}
+	t.restyleFollowers(c)
 }
 
 // detach takes n out of its parent's children.
@@ -162,6 +169,7 @@ func (t *Tree) setView(n *node, v View) {
 	}
 	n.base = base
 	t.setViewParts(n, v)
+	t.rebind(n, boundValues{pan: v.PanValues, pinch: v.PinchValue, rotation: v.RotationValue})
 	class := v.Class
 	if v.ClassFunc != nil {
 		class = joinClasses(class, v.ClassFunc())
@@ -281,8 +289,8 @@ func (t *Tree) setScroll(n *node, v Scroll) {
 	}
 	n.props = driver.ViewProps{TestID: v.TestID}
 	t.setRef(n, v.Ref)
+	t.rebind(n, boundValues{scroll: v.OffsetValues, pull: v.PullValue})
 	sc := n.scroll
-	first := sc.zoom == 0 // bindScrollSpec sets it
 	sc.config.Horizontal, sc.config.HideIndicator = v.Horizontal, v.HideIndicator
 	sc.effects = v.EdgeEffects
 	behavior := v.Behavior
@@ -293,9 +301,13 @@ func (t *Tree) setScroll(n *node, v Scroll) {
 	if v.ZoomScaleFunc != nil {
 		zoom = v.ZoomScaleFunc()
 	}
+	// ContentOffset is where it starts: props an element receives one at
+	// a time before it shows may bring it after the first.
 	offset := v.ContentOffset
-	if !first {
+	if n.created || offset == sc.start {
 		offset = Point{}
+	} else {
+		sc.start = offset
 	}
 	t.bindScrollSpec(nil, n, scrollSpec{behavior: behavior, offset: offset, onRefresh: v.OnRefresh,
 		onScroll: v.OnScroll, throttle: v.ScrollEventThrottle, onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
@@ -320,10 +332,16 @@ func (t *Tree) setInput(n *node, v Input) {
 	t.setRef(n, v.Ref)
 	in := n.input
 	if in == nil {
-		in = &inputNode{value: v.DefaultValue, autoFocus: v.AutoFocus}
+		in = &inputNode{}
 		n.input = in
 	}
+	if !n.created {
+		// Props an element receives one at a time before it shows may
+		// bring these after the first.
+		in.value, in.autoFocus = v.DefaultValue, v.AutoFocus
+	}
 	in.accessory = v.InputAccessoryViewID
+	in.noScale, in.maxScale = v.NoFontScaling, v.MaxFontSizeMultiplier
 	in.selection, in.keyPress, in.composition = v.OnSelectionChange, v.OnKeyPress, v.OnCompositionChange
 	in.contentSize, in.caret, in.paste = v.OnContentSizeChange, v.OnCaretMove, v.OnPaste
 	in.config = driver.InputConfig{Placeholder: v.Placeholder, Masked: v.Masked, Readonly: v.Readonly,
@@ -371,11 +389,40 @@ func (t *Tree) setImage(n *node, v Image) {
 // restyled merges n's style again after its parts changed and marks
 // what follows from it.
 func (t *Tree) restyled(n *node) {
+	t.followEnvTerms(n)
 	if t.restyle(n) {
 		t.markLayout(n)
 	}
 	t.syncPosition(n)
 	t.mark(n)
+}
+
+// followEnvTerms reads, tracked, the env() terms of element n's style,
+// as bindStyle does for a Node's: once one uses them, an effect of its
+// owner reads them again as they change.
+func (t *Tree) followEnvTerms(n *node) {
+	if n.envBound {
+		t.readEnv(n.owner, n, &n.base)
+		return
+	}
+	if sa, kb := n.base.envUses(); !sa && !kb {
+		n.env = nil
+		return
+	}
+	n.envBound = true
+	first := true
+	t.within(n.owner, func() {
+		n.owner.renderEffect(func() {
+			t.readEnv(n.owner, n, &n.base)
+			if first {
+				first = false
+				return
+			}
+			if t.restyle(n) {
+				t.markLayout(n)
+			}
+		})
+	})
 }
 
 func read(fn func() bool) bool { return fn != nil && fn() }

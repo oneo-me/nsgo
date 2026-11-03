@@ -179,7 +179,7 @@ var keywords = map[string]func(s *Style){
 	"transform-none": func(s *Style) {
 		// transform: none; translate, rotate and scale are properties of
 		// their own.
-		s.Transform.RotateX, s.Transform.RotateY, s.Transform.SkewX, s.Transform.SkewY = 0, 0, 0, 0
+		s.Transform.RotateX, s.Transform.RotateY, s.Transform.RotateZ, s.Transform.SkewX, s.Transform.SkewY = 0, 0, 0, 0, 0
 	},
 	"translate-none": func(s *Style) {
 		s.Transform.TranslateX, s.Transform.TranslateY = 0, 0
@@ -858,6 +858,7 @@ func init() {
 		{"scale-", true, scale(func(t *Transform, f float32) { t.Scale = f })},
 		{"rotate-x-", true, degrees(func(t *Transform, d float32) { t.RotateX = d })},
 		{"rotate-y-", true, degrees(func(t *Transform, d float32) { t.RotateY = d })},
+		{"rotate-z-", true, degrees(func(t *Transform, d float32) { t.RotateZ = d })},
 		{"rotate-", true, degrees(func(t *Transform, d float32) { t.Rotate = d })},
 		{"skew-x-", true, degrees(func(t *Transform, d float32) { t.SkewX = d })},
 		{"skew-y-", true, degrees(func(t *Transform, d float32) { t.SkewY = d })},
@@ -1461,7 +1462,8 @@ var blendModes = map[string]BlendMode{"normal": BlendNormal, "multiply": BlendMu
 	"overlay": BlendOverlay, "darken": BlendDarken, "lighten": BlendLighten, "color-dodge": BlendColorDodge,
 	"color-burn": BlendColorBurn, "hard-light": BlendHardLight, "soft-light": BlendSoftLight,
 	"difference": BlendDifference, "exclusion": BlendExclusion, "hue": BlendHue, "saturation": BlendSaturation,
-	"color": BlendColor, "luminosity": BlendLuminosity, "plus-lighter": BlendPlusLighter}
+	"color": BlendColor, "luminosity": BlendLuminosity, "plus-lighter": BlendPlusLighter,
+	"plus-darker": BlendPlusDarker}
 
 // font parses font-*: a weight, a family, or an arbitrary one of them.
 func (t *tailwindTheme) font(v string, _ bool) (classDecl, bool) {
@@ -1733,7 +1735,7 @@ func border(setWidth func(s *Style, w Points), setColor func(s *Style, c Color))
 		if w, ok := width(v); ok {
 			return set1(func(s *Style) { setWidth(s, w) }), false
 		}
-		return t.colorDecl(v, setColor)
+		return t.colorDecl(v, func(s *Style, c Color) { setColor(s, SetColor(c)) })
 	}
 }
 

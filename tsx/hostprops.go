@@ -2,6 +2,7 @@ package tsx
 
 import (
 	"github.com/dop251/goja"
+	"strconv"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -45,7 +46,7 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 	case "accessibilityValue":
 		o := r.options(v)
 		av := core.AccessibilityValue{Min: float32(o.float("min", 0)), Max: float32(o.float("max", 0)),
-			Now: float32(o.float("now", 0)), Text: o.str("text", "")}
+			Now: float32(o.float("now", 0)), NoNow: !o.has("now"), Text: o.str("text", "")}
 		p.AccessibilityValue = func() core.AccessibilityValue { return av }
 	case "accessibilityElementsHidden":
 		p.AccessibilityElementsHidden = boolFunc(v.ToBoolean())
@@ -167,6 +168,8 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 				p.Android.Ripple.Color = r.color("ripple", c)
 			}
 		}
+	case "elevation":
+		p.Android.Elevation = points(v)
 	case "windowDrag":
 		p.Desktop.WindowDrag = core.WindowDragOff
 		if v.ToBoolean() {
@@ -201,15 +204,15 @@ func (r *runtime) gestures(n *node, v *core.View) {
 			}
 			o := r.vm.NewObject()
 			_ = o.Set("cancelled", e.Phase == core.GestureCancelled)
-			_ = o.Set("translationX", float64(e.Translation.X))
-			_ = o.Set("translationY", float64(e.Translation.Y))
-			_ = o.Set("velocityX", float64(e.Velocity.X))
-			_ = o.Set("velocityY", float64(e.Velocity.Y))
+			_ = o.Set("translationX", js32(e.Translation.X))
+			_ = o.Set("translationY", js32(e.Translation.Y))
+			_ = o.Set("velocityX", js32(e.Velocity.X))
+			_ = o.Set("velocityY", js32(e.Velocity.Y))
 			if v.PanValues.X != nil {
-				_ = o.Set("valueX", float64(e.Values.X))
+				_ = o.Set("valueX", js32(e.Values.X))
 			}
 			if v.PanValues.Y != nil {
-				_ = o.Set("valueY", float64(e.Values.Y))
+				_ = o.Set("valueY", js32(e.Values.Y))
 			}
 			r.call(h, o)
 		}
@@ -231,8 +234,8 @@ func (r *runtime) gestures(n *node, v *core.View) {
 				return
 			}
 			o := r.vm.NewObject()
-			_ = o.Set(key, float64(e.Value))
-			_ = o.Set("velocity", float64(e.Velocity))
+			_ = o.Set(key, js32(e.Value))
+			_ = o.Set("velocity", js32(e.Velocity))
 			r.call(h, o)
 		}
 	}
@@ -291,10 +294,10 @@ func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
 					o := r.vm.NewObject()
 					_ = o.Set("text", l.Text)
 					_ = o.Set("bounds", r.bounds(l.Bounds))
-					_ = o.Set("ascender", float64(l.Ascender))
-					_ = o.Set("descender", float64(l.Descender))
-					_ = o.Set("capHeight", float64(l.CapHeight))
-					_ = o.Set("xHeight", float64(l.XHeight))
+					_ = o.Set("ascender", js32(l.Ascender))
+					_ = o.Set("descender", js32(l.Descender))
+					_ = o.Set("capHeight", js32(l.CapHeight))
+					_ = o.Set("xHeight", js32(l.XHeight))
 					out[i] = o
 				}
 				e := r.vm.NewObject()
@@ -468,7 +471,7 @@ func (r *runtime) scrollEvent(e core.ScrollEvent) *goja.Object {
 	_ = o.Set("offset", r.point(e.Offset))
 	_ = o.Set("contentSize", r.size(e.ContentSize))
 	_ = o.Set("size", r.size(e.Size))
-	_ = o.Set("zoomScale", float64(e.ZoomScale))
+	_ = o.Set("zoomScale", js32(e.ZoomScale))
 	return o
 }
 
@@ -513,6 +516,10 @@ func (r *runtime) inputProp(p *core.Input, name string, v goja.Value) bool {
 		p.DefaultValue = stringOf(v)
 	case "placeholder":
 		p.Placeholder = stringOf(v)
+	case "allowFontScaling":
+		p.NoFontScaling = !v.ToBoolean()
+	case "maxFontSizeMultiplier":
+		p.MaxFontSizeMultiplier = float32(v.ToFloat())
 	case "masked":
 		p.Masked = v.ToBoolean()
 	case "multiline":
@@ -625,7 +632,8 @@ func (r *runtime) inputProp(p *core.Input, name string, v goja.Value) bool {
 			p.OnPaste = func(pe core.PasteEvent) {
 				e := r.vm.NewObject()
 				_ = e.Set("text", pe.Text)
-				_ = e.Set("uris", pe.URIs)
+				// An array, empty without any.
+				_ = e.Set("uris", append([]string{}, pe.URIs...))
 				files := make([]any, len(pe.Files))
 				for i, f := range pe.Files {
 					files[i] = r.pastedFile(f)
@@ -702,10 +710,18 @@ func (r *runtime) imageProp(p *core.Image, name string, v goja.Value) bool {
 func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 	o, ok := v.(*goja.Object)
 	if !ok {
-		return core.ImageSource{URI: stringOf(v)}
+		src := core.ImageSource{URI: stringOf(v)}
+		// A blob: URL's bytes go to the platform, which cannot read it.
+		if b, ok := r.blobs[src.URI]; ok {
+			src.Data = b.bytes
+		}
+		return src
 	}
 	op := opts{o}
 	src := core.ImageSource{URI: op.str("url", op.str("uri", ""))}
+	if b, ok := r.blobs[src.URI]; ok {
+		src.Data = b.bytes
+	}
 	if s, ok := o.Get("size").(*goja.Object); ok {
 		src.Size = r.sizeOf(s)
 	} else if op.has("width") && op.has("height") {
@@ -717,6 +733,14 @@ func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 			fs[i] = float32(s.ToFloat())
 		}
 		src.Scales = core.ScalesOf(fs...)
+	}
+	if vs, ok := o.Get("variants").(*goja.Object); ok {
+		src.Variants = map[float32]string{}
+		for _, k := range vs.Keys() {
+			if s, err := strconv.ParseFloat(k, 32); err == nil {
+				src.Variants[float32(s)] = vs.Get(k).String()
+			}
+		}
 	}
 	return src
 }
@@ -773,15 +797,15 @@ func (r *runtime) edges(v goja.Value) core.Edges {
 
 func (r *runtime) size(s core.Size) *goja.Object {
 	o := r.vm.NewObject()
-	_ = o.Set("width", float64(s.Width))
-	_ = o.Set("height", float64(s.Height))
+	_ = o.Set("width", js32(s.Width))
+	_ = o.Set("height", js32(s.Height))
 	return o
 }
 
 func (r *runtime) point(p core.Point) *goja.Object {
 	o := r.vm.NewObject()
-	_ = o.Set("x", float64(p.X))
-	_ = o.Set("y", float64(p.Y))
+	_ = o.Set("x", js32(p.X))
+	_ = o.Set("y", js32(p.Y))
 	return o
 }
 

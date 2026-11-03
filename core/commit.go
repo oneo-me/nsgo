@@ -220,7 +220,13 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 		}
 		if rtl != n.rtl {
 			n.rtl = rtl
-			if n.env != nil {
+			// Physical classes (ml-*) follow the node's direction, which
+			// its ancestors' styles may set apart from the app's.
+			if c := n.cls; c != nil && c.list.env && c.env.rtl != rtl {
+				c.env.rtl = rtl
+				t.resolveClasses(n)
+				t.restyle(n)
+			} else if n.env != nil {
 				t.restyle(n)
 			}
 			n.lstyleOK = false
@@ -286,7 +292,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 					spanStyle.RTL = ts.RTL
 					at.Spans = append(at.Spans, driver.TextSpan{Start: start, End: b.Len(),
 						Style: spanStyle, Link: sp.press != nil,
-						Background: driver.TextBackground{Color: sp.style.Background, Radius: sp.style.CornerRadius}})
+						Background: driver.TextBackground{Color: currentIn(sp.style.Background, spanStyle.Color), Radius: sp.style.CornerRadius}})
 				}
 				at.Text = b.String()
 			}
@@ -313,7 +319,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 	case n.input != nil:
 		in := n.input
 		in.config.PlaceholderColor, in.config.SelectionColor = inherited.PlaceholderColor, inherited.SelectionColor
-		ts := t.scaled(inherited.textStyle())
+		ts := scaleText(inherited.textStyle(), fontMultiplier(t.fontScale, in.noScale, in.maxScale))
 		ts.RTL = n.textRTL(inherited, in.value)
 		if ts != in.config.Style || in.lineH == 0 {
 			in.config.Style = ts
@@ -554,7 +560,7 @@ func (t *Tree) emitParts(n *node) bool {
 		}
 	case n.input != nil:
 		in := n.input
-		in.config.Accessory = t.accessoryFor(in.accessory)
+		in.config.Accessory, in.config.AccessoryID = t.accessoryFor(in.accessory), in.accessory
 		if first || in.config != n.sent.input {
 			c := in.config
 			n.sent.input = c
@@ -583,7 +589,9 @@ func (t *Tree) emitParts(n *node) bool {
 		if first {
 			m := n.hoist.modal
 			add(driver.MountItem{Kind: driver.ItemModal, ID: n.id, Modal: &driver.ModalConfig{Animation: m.Animation, Presentation: m.Presentation,
-				NoCloseOnSwipe: m.NoCloseOnSwipe, Orientations: m.IOS.SupportedOrientations}})
+				NoCloseOnSwipe: m.NoCloseOnSwipe, Orientations: m.IOS.SupportedOrientations,
+				NoCloseOnEscape: m.NoCloseOnEscape, NoCloseOnBackdropPress: m.NoCloseOnBackdropPress,
+				StatusBarTranslucent: m.Android.StatusBarTranslucent}})
 		}
 	case n.canvas != nil:
 		if cn := n.canvas; cn.fresh && cn.drawing != nil {
@@ -683,7 +691,8 @@ func (t *Tree) emitText(n *node) {
 		}
 	}
 	t.items = append(t.items, driver.MountItem{Kind: driver.ItemText, ID: n.id, Text: &driver.TextContent{
-		Text: text.Text, Layout: l, Content: box, Style: text.Style, Spans: text.Spans,
+		Text: text.Text, Layout: l, Content: box, Style: text.Style, Spans: text.Spans, Shadow: text.Shadow,
+		MaxLines: text.MaxLines, Ellipsize: text.Ellipsize,
 	}})
 }
 
@@ -747,7 +756,7 @@ func fitStyle(ts driver.TextStyle, scale float32) driver.TextStyle {
 
 func (n *node) viewStyle() driver.ViewStyle {
 	vs := n.style.viewStyle(n.frame.Size, n.color, n.rtl)
-	vs.Material = n.material
+	vs.Material, vs.Elevation = n.material, n.elevation
 	if n.canvas != nil && n.canvas.drawing != nil && n.canvas.drawing.HasBackground() {
 		// Its drawing fills its shapes with the background.
 		vs.Background = 0

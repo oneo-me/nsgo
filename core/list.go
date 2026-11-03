@@ -1064,7 +1064,11 @@ func pinRange(n *node) (*node, StickyCell, bool) {
 		inset, viewport = n.style.Left, sv.frame.Size.Width
 	}
 	at := inset.Resolve(viewport)
-	if at.IsAuto() {
+	animatedInset := n.style.Animated != nil && n.style.Animated.StickyInset != nil
+	if at.IsAuto() && animatedInset {
+		// The animated inset alone: the platform reads it from its node.
+		at = 0
+	} else if at.IsAuto() {
 		return nil, StickyCell{}, false
 	}
 	// The parent's content box, in the scroll view's content.
@@ -1081,8 +1085,8 @@ func pinRange(n *node) (*node, StickyCell, bool) {
 	size := main(Point{X: n.frame.Size.Width, Y: n.frame.Size.Height})
 	travel := max(end-start-size, 0)
 	c := StickyCell{Cell: n.id, Start: start - at, End: start - at + travel}
-	if a := n.style.Animated; a != nil && a.StickyInset != nil {
-		c.Node, c.Inset = a.StickyInset.AnimatedNodeID(), at
+	if animatedInset {
+		c.Node, c.Inset = n.style.Animated.StickyInset.AnimatedNodeID(), at
 	}
 	return sv, c, true
 }

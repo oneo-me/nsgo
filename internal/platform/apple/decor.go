@@ -793,18 +793,19 @@ func UsesFilters(vs *driver.ViewStyle) bool {
 // filter on macOS, its name on iOS; nil for normal.
 func blendFilter(b driver.BlendMode) objc.ID {
 	names := [...]string{"", "multiply", "screen", "overlay", "darken", "lighten", "colorDodge", "colorBurn",
-		"hardLight", "softLight", "difference", "exclusion", "hue", "saturation", "color", "luminosity", "plusL"}
+		"hardLight", "softLight", "difference", "exclusion", "hue", "saturation", "color", "luminosity", "plusL", "plusD"}
 	if b == 0 || int(b) >= len(names) {
 		return 0
 	}
 	name := names[b]
 	if runtime.GOOS == "ios" {
-		if b == driver.BlendPlusLighter {
-			return NSString("plusL")
+		if b == driver.BlendPlusLighter || b == driver.BlendPlusDarker {
+			return NSString(name)
 		}
 		return NSString(name + "BlendMode")
 	}
-	ci := map[driver.BlendMode]string{driver.BlendPlusLighter: "CIAdditionCompositing"}[b]
+	ci := map[driver.BlendMode]string{driver.BlendPlusLighter: "CIAdditionCompositing",
+		driver.BlendPlusDarker: "CILinearBurnBlendMode"}[b]
 	if ci == "" {
 		ci = "CI" + string(name[0]-'a'+'A') + name[1:] + "BlendMode"
 	}

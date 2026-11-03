@@ -6,17 +6,7 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, wit
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). All pass but what needs the standard modules NSGo leaves out and one test that reads QuickJS's wording of a `TypeError`; `.nsgo/types` exports the type names `.nsh/types` does, and NSH's gallery type-checks against it as against NSH's own.
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| The compat cases | `compatibility.md` (Scripts), `nsh/tests/compat/` | `TestNSHCompat` runs every step of the scripts, NSH's text forms of `style`, `prop`, `event`, `touch` and `state` steps included (about 600 not run on 2026-11-03), and `compatFailing` lists only the cases that need the standard modules: 42 of 122 cases passed the steps run, the first causes below |
-
-The compat cases first fail on these:
-
-- Steps that stand in for a platform's events (`event`, `touch`, `state`) leave the cases that read them unchecked: `events-*`, most of `base-*`.
-- Layout: frames differ, or views the steps name do not show, in `layout-box`, `layout-direction`, `layout-flex`, `layout-grid` and `layout-tailwind`, and a text's width in the `base-*` controls differs by a few points.
-- Modules: `TextView.parse`, `URL.createObjectURL`, `nativeModule("nsh/base")`, and what the `web-*` cases check of `Blob`, encodings, events, streams, timers and `URL`.
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). All of them pass but what needs the standard modules NSGo leaves out and one gallery test that reads QuickJS's wording of a `TypeError`: 105 of the 122 compat cases ran every step of their scripts on 2026-11-03, and the other 17 belong to the apps that import those modules. `.nsgo/types` exports the type names `.nsh/types` does, and NSH's gallery type-checks against it as against NSH's own.
 
 ## TSX and dynamic delivery
 
@@ -73,6 +63,7 @@ These items wait for community contributions, and a change to one backend record
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Folder picks on phones and the web | — | `PickDirectories` answers with folders the app reads on iOS (`UIDocumentPickerViewController` for `.folder`, kept in its security scope), Android (`ACTION_OPEN_DOCUMENT_TREE`, which grants a tree URI, not a path) and the web (`showDirectoryPicker`, or `<input webkitdirectory>`), which need a `Directory` that opens what it holds without a path, as `File.Open` does |
+| Modal reports | `elements.md` (`<Dialog>`) | Every backend reports a modal shown once it is presented and gone once it is dismissed (`EventModalShown`, `EventModalDismissed`), and the insets a screen keeps clear of (`EventScreenInsets`), so `Dialog`'s `OnOpen` and `OnClose` follow the platform instead of the animation's timer |
 | Real file drags | `file-drop.md` | A real drag from Finder and from a Linux file manager is checked to reach a view, as one from Explorer is |
 | Long presses on Android spans | `text.md` (nested texts) | A long press on a text's span reaches the span's `OnLongPress` on Android, as it does on the other backends: the runtime's Java reports the character under it, which needs `classes.dex` rebuilt |
 | Ink past a text's box | `styles.md` (text) | A text's decoration lines and shadow that reach past its box are checked to draw on Android, Windows and Linux, as they do on Apple and the web |

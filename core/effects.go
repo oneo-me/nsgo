@@ -126,6 +126,7 @@ const (
 	BlendColor       = driver.BlendColor
 	BlendLuminosity  = driver.BlendLuminosity
 	BlendPlusLighter = driver.BlendPlusLighter
+	BlendPlusDarker  = driver.BlendPlusDarker
 )
 
 const (
@@ -163,6 +164,16 @@ var (
 // currentColor. It is the one color value set aside: it never draws as
 // itself.
 const CurrentColor Color = 0x00000001
+
+// Transparent is a color that draws nothing but, unlike 0, is set: a
+// border Transparent colors draws none, where one left 0 draws in the
+// text color.
+const Transparent Color = 0x00000100
+
+// SetColor returns c as a style field takes a color the app set:
+// Transparent when c is fully transparent black, 0, which would leave the
+// field unset.
+func SetColor(c Color) Color { return cmpOr(c, Transparent) }
 
 // AllCorners returns corners of the same radius.
 func AllCorners(r Points) Corners { return driver.AllCorners(r) }

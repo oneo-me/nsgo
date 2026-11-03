@@ -10,6 +10,7 @@
 package bundler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -84,9 +85,9 @@ func build(fsys fs.FS, entry string, hot bool) (string, error) {
 	return "", errors.New("compiler: esbuild wrote no script")
 }
 
-// setupScript is what runs before the app: the theme file and the
-// Tailwind theme nsgo.yaml beside the entry names, given to the runtime
-// ("" without either). It is one line, so the source map's lines stay
+// setupScript is what runs before the app: the theme file, the Tailwind
+// theme and the default status bar nsgo.yaml beside the entry names,
+// given to the runtime ("" without any). It is one line, so the source map's lines stay
 // the app's.
 func setupScript(fsys fs.FS, entry string) (string, error) {
 	dir := path.Dir(entry)
@@ -95,8 +96,9 @@ func setupScript(fsys fs.FS, entry string) (string, error) {
 		return "", nil
 	}
 	var config struct {
-		Theme    string    `yaml:"theme"`
-		Tailwind yaml.Node `yaml:"tailwind"`
+		Theme     string    `yaml:"theme"`
+		Tailwind  yaml.Node `yaml:"tailwind"`
+		StatusBar yaml.Node `yaml:"status_bar"`
 	}
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return "", fmt.Errorf("nsgo.yaml: %w", err)
@@ -122,6 +124,22 @@ func setupScript(fsys fs.FS, entry string) (string, error) {
 			return "", fmt.Errorf("nsgo.yaml: %w", err)
 		}
 		opts = append(opts, "tailwind: "+strconv.Quote(string(tw)))
+	}
+	if !config.StatusBar.IsZero() {
+		var sb struct {
+			Foreground string `yaml:"foreground" json:"foreground,omitempty"`
+			Hidden     *bool  `yaml:"hidden" json:"hidden,omitempty"`
+		}
+		if err := config.StatusBar.Decode(&sb); err != nil {
+			return "", fmt.Errorf("nsgo.yaml: status_bar: %w", err)
+		}
+		switch sb.Foreground {
+		case "", "auto", "light", "dark":
+		default:
+			return "", fmt.Errorf("nsgo.yaml: status_bar: foreground is auto, light or dark, not %q", sb.Foreground)
+		}
+		js, _ := json.Marshal(sb)
+		opts = append(opts, "statusBar: "+string(js))
 	}
 	if len(opts) == 0 {
 		return "", nil
@@ -172,7 +190,7 @@ func appPlugin(fsys fs.FS) api.Plugin {
 			}
 			src := string(data)
 			if isAsset(args.Path) {
-				code, err := assetModule(args.Path, data)
+				code, err := assetModule(fsys, args.Path, data)
 				if err != nil {
 					return api.OnLoadResult{}, err
 				}

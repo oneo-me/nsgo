@@ -9,6 +9,7 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io/fs"
 	"mime"
 	"path"
 	"regexp"
@@ -39,8 +40,11 @@ func isAsset(p string) bool {
 // density is the pixel density a file's name gives: logo@2x.png is 2.
 var densityRE = regexp.MustCompile(`@([0-9.]+)x\.[A-Za-z]+$`)
 
-// assetModule is the module of asset p.
-func assetModule(p string, data []byte) (string, error) {
+// assetModule is the module of asset p, read from fsys: its data: URL,
+// its size in points and, for a raster image with density variants
+// beside it (logo@2x.png, logo@3x.png), their scales and data: URLs, of
+// which the core mounts the one for the screen's pixel ratio.
+func assetModule(fsys fs.FS, p string, data []byte) (string, error) {
 	ext := strings.ToLower(path.Ext(p))
 	if fontExts[ext] {
 		family, err := fontFamily(data)
@@ -76,10 +80,23 @@ func assetModule(p string, data []byte) (string, error) {
 	if ext == ".svg" {
 		kind = "image/svg+xml"
 	}
-	asset, _ := json.Marshal(map[string]any{
-		"url":  "data:" + kind + ";base64," + base64.StdEncoding.EncodeToString(data),
-		"size": map[string]float64{"width": w, "height": h},
-	})
+	dataURL := func(b []byte) string { return "data:" + kind + ";base64," + base64.StdEncoding.EncodeToString(b) }
+	m := map[string]any{"url": dataURL(data), "size": map[string]float64{"width": w, "height": h}}
+	if ext != ".svg" && !densityRE.MatchString(p) {
+		scales, variants := []float32{1}, map[string]string{}
+		base := strings.TrimSuffix(p, path.Ext(p))
+		for _, s := range driver.ImageScaleValues[1:] {
+			name := base + "@" + strconv.FormatFloat(float64(s), 'g', -1, 32) + "x" + path.Ext(p)
+			if b, err := fs.ReadFile(fsys, name); err == nil {
+				scales = append(scales, s)
+				variants[strconv.FormatFloat(float64(s), 'g', -1, 32)] = dataURL(b)
+			}
+		}
+		if len(scales) > 1 {
+			m["scales"], m["variants"] = scales, variants
+		}
+	}
+	asset, _ := json.Marshal(m)
 	return "export default " + string(asset) + ";\n", nil
 }
 

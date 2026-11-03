@@ -16,6 +16,8 @@ type AndroidViewProps struct {
 	// Ripple spreads from the touch while the view is pressed; it shows
 	// on views that take presses. Keep one value for the view's life.
 	Ripple *Ripple
+	// Elevation lifts the view, which casts the system's shadow below it.
+	Elevation Points
 }
 
 // DesktopViewProps are a View's props only the desktops have.

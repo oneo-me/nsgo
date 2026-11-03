@@ -6,8 +6,10 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"strconv"
@@ -15,6 +17,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/dop251/goja"
+	"golang.org/x/net/idna"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -132,7 +135,7 @@ func (r *runtime) webNatives() *goja.Object {
 		return r.vm.ToValue(base64.StdEncoding.EncodeToString(b))
 	})
 	set("formEncode", func(call goja.FunctionCall) goja.Value {
-		return r.vm.ToValue(url.QueryEscape(arg(call, 0).String()))
+		return r.vm.ToValue(formEncode(arg(call, 0).String()))
 	})
 	set("formDecode", func(call goja.FunctionCall) goja.Value {
 		s := arg(call, 0).String()
@@ -152,6 +155,8 @@ func (r *runtime) webNatives() *goja.Object {
 		}
 		return r.urlParts(u)
 	})
+	// A setter's URL is normalized again: a host lowercased, a default
+	// port dropped, a path encoded.
 	set("setURL", func(call goja.FunctionCall) goja.Value {
 		u, ok := parseURL(arg(call, 0).String(), "")
 		if !ok {
@@ -196,11 +201,44 @@ func (r *runtime) webNatives() *goja.Object {
 		case "hash":
 			u.Fragment, u.RawFragment = strings.TrimPrefix(v, "#"), ""
 		}
+		u, ok = normalizeURL(u)
+		if !ok {
+			return goja.Null()
+		}
 		return r.urlParts(u)
 	})
 	set("baseURL", func(goja.FunctionCall) goja.Value { return r.vm.ToValue(r.base) })
+	set("blobURL", func(call goja.FunctionCall) goja.Value {
+		r.blobSeq++
+		url := fmt.Sprintf("blob:nsgo/%d", r.blobSeq)
+		if r.blobs == nil {
+			r.blobs = map[string]blobEntry{}
+		}
+		r.blobs[url] = blobEntry{bytes.Clone(r.bytes(arg(call, 0))), arg(call, 1).String()}
+		return r.vm.ToValue(url)
+	})
+	set("revokeBlobURL", func(call goja.FunctionCall) goja.Value {
+		delete(r.blobs, arg(call, 0).String())
+		return goja.Undefined()
+	})
+	set("blobOf", func(call goja.FunctionCall) goja.Value {
+		b, ok := r.blobs[arg(call, 0).String()]
+		if !ok {
+			return goja.Null()
+		}
+		o := r.vm.NewObject()
+		_ = o.Set("bytes", r.vm.NewArrayBuffer(bytes.Clone(b.bytes)))
+		_ = o.Set("type", b.typ)
+		return o
+	})
 	set("fetch", r.fetch)
 	return n
+}
+
+// blobEntry is what a blob: URL names: a blob's bytes and type.
+type blobEntry struct {
+	bytes []byte
+	typ   string
 }
 
 // bytes reads an ArrayBuffer or a view of one.
@@ -236,28 +274,177 @@ func parseURL(s, base string) (*url.URL, bool) {
 		if err != nil {
 			return nil, false
 		}
-		u := b.ResolveReference(ref)
-		return normalizeURL(u), true
+		return normalizeURL(b.ResolveReference(ref))
 	}
 	u, err := url.Parse(s)
 	if err != nil || u.Scheme == "" {
 		return nil, false
 	}
-	return normalizeURL(u), true
+	return normalizeURL(u)
 }
 
-func normalizeURL(u *url.URL) *url.URL {
+// normalizeURL gives u the form WHATWG URLs serialize: its scheme
+// lowercase, a special scheme's host as the host parser leaves it (IDNA,
+// IPv4 and IPv6 forms), no default port, its path without dot segments,
+// and its query's spaces and quotes encoded. It reports false for a host
+// that does not parse.
+func normalizeURL(u *url.URL) (*url.URL, bool) {
 	u.Scheme = strings.ToLower(u.Scheme)
-	if port, ok := special[u.Scheme]; ok {
-		u.Host = strings.ToLower(u.Host)
-		if u.Port() == port && port != "" {
-			u.Host = u.Hostname()
+	port, isSpecial := special[u.Scheme]
+	if isSpecial && (u.Host != "" || u.Scheme != "file") {
+		host, ok := whatwgHost(u.Hostname(), strings.HasPrefix(u.Host, "["))
+		if !ok {
+			return nil, false
 		}
-		if u.Path == "" && u.Opaque == "" {
-			u.Path = "/"
+		if p := u.Port(); p != "" && p != port {
+			host += ":" + p
+		}
+		u.Host = host
+	}
+	if isSpecial && u.Path == "" && u.Opaque == "" {
+		u.Path = "/"
+	}
+	if u.Opaque == "" && u.Path != "" {
+		u.Path, u.RawPath = removeDotSegments(u.Path), ""
+	}
+	u.RawQuery = encodeQuery(u.RawQuery, isSpecial)
+	return u, true
+}
+
+// whatwgHost parses a special URL's host: an IPv6 address in brackets,
+// in its shortest form; an IPv4 address in any of the forms WHATWG
+// reads (0x7f.1); else a domain, through IDNA's lookup mapping.
+func whatwgHost(h string, bracketed bool) (string, bool) {
+	if bracketed {
+		a, err := netip.ParseAddr(h)
+		if err != nil || !a.Is6() {
+			return "", false
+		}
+		return "[" + a.String() + "]", true
+	}
+	if d, err := url.PathUnescape(h); err == nil {
+		h = d
+	}
+	ascii, err := idna.Lookup.ToASCII(h)
+	if err != nil {
+		return "", false
+	}
+	if ip, ok, isIP := whatwgIPv4(ascii); isIP {
+		return ip, ok
+	}
+	return ascii, ascii != ""
+}
+
+// whatwgIPv4 reads host as WHATWG's IPv4 parser does when its last label
+// is a number: up to four parts, each decimal, octal (0 first) or hex
+// (0x first), the last filling the bytes the others leave. isIP is false
+// for a host that is a domain.
+func whatwgIPv4(host string) (ip string, ok, isIP bool) {
+	parts := strings.Split(strings.TrimSuffix(host, "."), ".")
+	number := func(s string) (uint64, bool) {
+		base := 10
+		switch {
+		case strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X"):
+			s, base = s[2:], 16
+		case len(s) > 1 && s[0] == '0':
+			s, base = s[1:], 8
+		}
+		if s == "" {
+			return 0, true
+		}
+		n, err := strconv.ParseUint(s, base, 64)
+		return n, err == nil
+	}
+	if _, isNum := number(parts[len(parts)-1]); !isNum {
+		return "", false, false
+	}
+	if len(parts) > 4 {
+		return "", false, true
+	}
+	var nums []uint64
+	for _, p := range parts {
+		n, ok := number(p)
+		if !ok || p == "" {
+			return "", false, true
+		}
+		nums = append(nums, n)
+	}
+	last := nums[len(nums)-1]
+	if last >= 1<<(8*(5-len(nums))) {
+		return "", false, true
+	}
+	addr := last
+	for i, n := range nums[:len(nums)-1] {
+		if n > 255 {
+			return "", false, true
+		}
+		addr += n << (8 * (3 - i))
+	}
+	return fmt.Sprintf("%d.%d.%d.%d", addr>>24&255, addr>>16&255, addr>>8&255, addr&255), true, true
+}
+
+// removeDotSegments resolves a path's . and .. segments, as RFC 3986's
+// algorithm does: /a/b/../c is /a/c.
+func removeDotSegments(p string) string {
+	if !strings.Contains(p, ".") {
+		return p
+	}
+	var out []string
+	segs := strings.Split(p, "/")
+	for i, s := range segs {
+		last := i == len(segs)-1
+		switch s {
+		case ".":
+			if last {
+				out = append(out, "")
+			}
+		case "..":
+			if len(out) > 1 {
+				out = out[:len(out)-1]
+			}
+			if last {
+				out = append(out, "")
+			}
+		default:
+			out = append(out, s)
 		}
 	}
-	return u
+	return strings.Join(out, "/")
+}
+
+// encodeQuery percent-encodes what WHATWG's query percent-encode set
+// holds: controls, space, quotes, <, > and, in a special URL, '; and
+// what is not ASCII.
+func encodeQuery(q string, special bool) string {
+	var b strings.Builder
+	for i := 0; i < len(q); i++ {
+		c := q[i]
+		if c <= 0x20 || c >= 0x7f || c == '"' || c == '<' || c == '>' || special && c == '\'' {
+			fmt.Fprintf(&b, "%%%02X", c)
+		} else {
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
+}
+
+// formEncode is application/x-www-form-urlencoded's serializer: spaces
+// as +, letters, digits and *-._ as they are, other bytes of the UTF-8
+// percent-encoded.
+func formEncode(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c == ' ':
+			b.WriteByte('+')
+		case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || strings.IndexByte("*-._", c) >= 0:
+			b.WriteByte(c)
+		default:
+			fmt.Fprintf(&b, "%%%02X", c)
+		}
+	}
+	return b.String()
 }
 
 func (r *runtime) urlParts(u *url.URL) *goja.Object {

@@ -28,10 +28,13 @@ type screenNode struct {
 	headerStyle       Style
 	headerClass       Style // HeaderClass's, under headerStyle
 	left, right, view *node // the header views
+	bar               *node // Header, unused under a native header
 	// header is the area the system header covers from the top; pad what
 	// the content is laid out below.
 	header, pad Points
 	top         *Signal[Points] // header, for a transparent header's insets
+	// reported are the insets the platform reported, nil before it does.
+	reported *Signal[*Edges]
 	// measured is the bar the platform measured, 0 before it does.
 	measured Points
 	sent     driver.ScreenConfig
@@ -53,8 +56,13 @@ var fill = Style{Position: Absolute, Top: Pt(0), Right: Pt(0), Bottom: Pt(0), Le
 
 func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 	n := t.newNode(driver.KindView, parent, cx)
+	// iOS and Android draw the header; elsewhere a platform does where it
+	// reports a header's height.
+	env := t.root.Env()
+	os := Untracked(cx, env.OS)
 	sn := &screenNode{screen: &s, title: s.Title, headerStyle: s.HeaderStyle,
-		native: t.root.Env().headers[0] > 0, top: NewSignal(cx, Points(0))}
+		native: env.headers[0] > 0 || os == OSIOS || os == OSAndroid, top: NewSignal(cx, Points(0)),
+		reported: NewSignal[*Edges](cx, nil)}
 	for p := parent; p != nil; p = p.parent {
 		if p.isStack {
 			sn.stack = p
@@ -105,6 +113,9 @@ func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 		sn.left = t.mountHeaderView(cx, n, s.HeaderLeft)
 		sn.right = t.mountHeaderView(cx, n, s.HeaderRight)
 		sn.view = t.mountHeaderView(cx, n, s.HeaderTitle)
+		// The header a platform without a native one shows, made as NSH
+		// makes it, which the system header leaves unused.
+		sn.bar = t.mountHeaderView(cx, n, s.Header)
 	} else if s.Header != nil {
 		header = true
 		t.mount(cx, n, s.Header)
@@ -113,6 +124,9 @@ func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 	// bottom only; under a transparent one, of the header too.
 	inner := cx.Child()
 	insets := func() Edges {
+		if r := sn.reported.Get(); r != nil {
+			return *r
+		}
 		in := cx.Env().SafeArea()
 		switch {
 		case header:
@@ -275,6 +289,7 @@ func (t *Tree) screenConfig(n *node) driver.ScreenConfig {
 		HeaderTransparent: s.HeaderTransparent,
 		LargeTitle:        s.HeaderLargeTitle,
 		BackHidden:        s.HeaderBackHidden,
+		OwnBackTitle:      s.HeaderBackTitle,
 		NoPopOnSwipe:      s.NoPopOnSwipe,
 		NoPopOnBack:       s.NoPopOnBack,
 		Background:        cmpOr(sn.headerStyle.Background, sn.headerClass.Background),
@@ -284,6 +299,7 @@ func (t *Tree) screenConfig(n *node) driver.ScreenConfig {
 		Left:              headerID(sn.left),
 		Right:             headerID(sn.right),
 		TitleView:         headerID(sn.view),
+		Header:            headerID(sn.bar),
 		HeaderHeight:      sn.header,
 	}
 	if c.Right != 0 {

@@ -135,17 +135,25 @@ type node struct {
 	color Color
 	h     handlers
 	props driver.ViewProps
-	// material is a view's IOS.BackdropMaterial.
-	material driver.BackdropMaterial
+	// bound are the animated values its gestures and scrolling set, as
+	// an element last bound them (rebind).
+	bound *boundValues
+	// material is a view's IOS.BackdropMaterial, elevation its
+	// Android.Elevation.
+	material  driver.BackdropMaterial
+	elevation Points
 	// appearance is what its subtree forces (Scope.SetSubtreeAppearance).
 	appearance Appearance
 	env        *envValues // what its padding's and margin's terms come to
-	text       *textNode
-	input      *inputNode
-	scroll     *scrollNode
-	image      *imageNode
-	hoist      *hoistNode // an overlay's or a modal's
-	hosted     []*node    // the overlays and modals this root view or modal hosts
+	// envBound is set once an element's terms are read in an effect of
+	// their own (followEnvTerms).
+	envBound bool
+	text     *textNode
+	input    *inputNode
+	scroll   *scrollNode
+	image    *imageNode
+	hoist    *hoistNode // an overlay's or a modal's
+	hosted   []*node    // the overlays and modals this root view or modal hosts
 	// hidden is set, as the last layout found, for a node DisplayNone
 	// hides: its own or a shadow ancestor's, across hoisting too.
 	hidden bool
@@ -357,11 +365,17 @@ func (tn *textNode) release() {
 // fontMultiplier is what the user's text size setting, scale, multiplies
 // the text's sizes by.
 func (tn *textNode) fontMultiplier(scale float32) float32 {
-	if tn.noScale {
+	return fontMultiplier(scale, tn.noScale, tn.maxScale)
+}
+
+// fontMultiplier is what scale, the user's text size setting, multiplies
+// a text's sizes by when noScale keeps them or maxScale caps it.
+func fontMultiplier(scale float32, noScale bool, maxScale float32) float32 {
+	if noScale {
 		return 1
 	}
-	if tn.maxScale >= 1 {
-		return min(scale, tn.maxScale)
+	if maxScale >= 1 {
+		return min(scale, maxScale)
 	}
 	return scale
 }
@@ -392,6 +406,9 @@ type inputNode struct {
 	accessory string // the InputAccessoryView's ID
 	lineH     Points
 	lineFor   driver.TextStyle
+	// noScale and maxScale limit the user's text size setting.
+	noScale  bool
+	maxScale float32
 
 	selection   func(TextRange)
 	keyPress    func(string)
@@ -419,6 +436,8 @@ type scrollNode struct {
 	// offset is the reported offset with the scrolls the platform had not
 	// applied yet replayed over it.
 	offset Point
+	// start is the ContentOffset it was sent before it first showed.
+	start  Point
 	zoom   float32 // the last reported
 	on     scrollSpec
 	resend bool // EventRefresh came: send the config again
@@ -934,13 +953,26 @@ func (t *Tree) restyle(n *node) bool {
 	if n.dyn != nil {
 		dyn = *n.dyn
 	}
-	merged := n.withClasses(n.base.Merge(dyn))
+	own := n.base.Merge(dyn)
+	if p.Disabled {
+		// A disabled view's own state styles wait, but disabled's; its
+		// classes' variants, which merge next, still apply (NSH's
+		// state_style).
+		own.Hover, own.Focus, own.Active, own.Selected, own.Checked, own.Indeterminate = nil, nil, nil, nil, nil, nil
+	}
+	merged := n.withClasses(own)
 	var g groupState
 	if gs := merged.GroupStyle; gs != nil {
 		g = n.groupState(gs.Name)
 	}
 	z, sticky := n.stackRank()
 	n.style = merged.withStates(n.states, p, g)
+	if p.Disabled {
+		// The platform still follows the states a disabled view's own
+		// styles wait for, which the event mask reads.
+		full := n.withClasses(n.base.Merge(dyn))
+		n.style.Hover, n.style.Focus, n.style.Active = full.Hover, full.Focus, full.Active
+	}
 	n.applyEnv()
 	if z2, sticky2 := n.stackRank(); z2 != z || sticky2 != sticky {
 		if parent := n.nativeParent(); parent != nil {
@@ -1006,6 +1038,12 @@ func (t *Tree) restyleGroup(n *node) {
 	if n.style.Group == "" {
 		return
 	}
+	t.restyleFollowers(n)
+}
+
+// restyleFollowers restyles the nodes inside n that follow a group's
+// states.
+func (t *Tree) restyleFollowers(n *node) {
 	var walk func(c *node)
 	walk = func(c *node) {
 		for _, k := range c.children {
@@ -1087,7 +1125,7 @@ func (t *Tree) setViewParts(n *node, v View) {
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
 		WindowDrag: v.Desktop.WindowDrag, SelectionArea: v.Selectable, PointerEvents: v.PointerEvents, HitSlop: v.HitSlop,
 		DelayLongPress: v.DelayLongPress, NoFocus: v.NoFocus, Ripple: v.Android.Ripple}
-	n.material = v.IOS.BackdropMaterial
+	n.material, n.elevation = v.IOS.BackdropMaterial, v.Android.Elevation
 	if v.EdgeBar.Scroll != nil {
 		bar := v.EdgeBar
 		n.edgeBar = &bar
@@ -1095,9 +1133,7 @@ func (t *Tree) setViewParts(n *node, v View) {
 	}
 	_, panClaim := v.Responder.panClaim()
 	n.panning = v.OnPan != nil || v.PanValues != (AnimatedXY{}) || panClaim
-	if n.panning {
-		n.props.PanActivation, n.props.PanScrollHandoff = v.PanActivation, v.PanScrollHandoff
-	}
+	n.props.PanActivation, n.props.PanScrollHandoff = v.PanActivation, v.PanScrollHandoff
 	n.pinching, n.rotating = v.OnPinch != nil || v.PinchValue != nil, v.OnRotation != nil || v.RotationValue != nil
 	t.setRef(n, v.Ref)
 }
@@ -1253,7 +1289,8 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 	t.setRef(n, v.Ref)
 	in := &inputNode{valueFn: v.Value, value: v.DefaultValue, autoFocus: v.AutoFocus, accessory: v.InputAccessoryViewID,
 		selection: v.OnSelectionChange, keyPress: v.OnKeyPress, composition: v.OnCompositionChange,
-		contentSize: v.OnContentSizeChange, caret: v.OnCaretMove, paste: v.OnPaste}
+		contentSize: v.OnContentSizeChange, caret: v.OnCaretMove, paste: v.OnPaste,
+		noScale: v.NoFontScaling, maxScale: v.MaxFontSizeMultiplier}
 	in.config = driver.InputConfig{Placeholder: v.Placeholder, Masked: v.Masked, Readonly: v.Readonly, KeyboardType: v.KeyboardType,
 		Multiline: v.Multiline, MaxLength: max(v.MaxLength, 0), SubmitBehavior: v.SubmitBehavior, ReturnKey: v.ReturnKeyType,
 		AutoCapitalize: v.AutoCapitalize, NoAutoCorrect: v.NoAutoCorrect, AutoComplete: v.AutoComplete,
@@ -1390,9 +1427,20 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		t.touched(ev)
 		return
 	case driver.EventBack:
-		if n := t.node(ev.ID); n != nil && n.screen != nil {
+		n := t.node(ev.ID)
+		// Escape on a view of an overlay is that overlay's.
+		var overlay *node
+		for p := n; p != nil && overlay == nil; p = p.parent {
+			if p.h.cancel != nil {
+				overlay = p
+			}
+		}
+		switch {
+		case n != nil && n.screen != nil:
 			t.backFrom(n)
-		} else {
+		case overlay != nil:
+			t.within(overlay.owner, overlay.h.cancel)
+		default:
 			t.back()
 		}
 		t.peek(nil, nil)
@@ -1413,7 +1461,15 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			t.screenHeader(n, Points(ev.Value))
 		}
 		return
-	case driver.EventRequestClose, driver.EventModalSize:
+	case driver.EventScreenInsets:
+		if n := t.node(ev.ID); n != nil && n.screen != nil {
+			if r := n.screen.reported.GetUntracked(); r == nil || *r != ev.Insets {
+				in := ev.Insets
+				t.within(n.owner, func() { n.screen.reported.Set(&in) })
+			}
+		}
+		return
+	case driver.EventRequestClose, driver.EventModalSize, driver.EventModalShown, driver.EventModalDismissed:
 		if n := t.node(ev.ID); n != nil && n.hoist != nil && n.hoist.modal != nil {
 			t.modalEvent(n, ev)
 		}
@@ -1569,10 +1625,8 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		if in := n.input; in != nil && in.caret != nil {
 			b := Bounds{Origin: ev.Point, Size: ev.Size}
 			page := b
-			if b.Size != (Size{}) {
-				o := t.surfaceBounds(n).Origin
-				page.Origin = Point{X: o.X + b.Origin.X, Y: o.Y + b.Origin.Y}
-			}
+			o := t.surfaceBounds(n).Origin
+			page.Origin = Point{X: o.X + b.Origin.X, Y: o.Y + b.Origin.Y}
 			t.within(n.owner, func() { in.caret(CaretEvent{Bounds: b, PageBounds: page}) })
 		}
 	case driver.EventPaste:
@@ -1846,7 +1900,7 @@ func (n *node) events() driver.EventMask {
 	group := s.Group != ""
 	// Presses a view follows only for its styles go to a view around it
 	// that takes them, as a press on a button's face is the button's.
-	pressStyled := (s.Active != nil || group) && !n.insidePressable()
+	pressStyled := (s.Active != nil || group) && (n.takesPresses() || !n.insidePressable())
 	bit(driver.EventPress, h.press != nil)
 	bit(driver.EventLongPress, h.longPress != nil)
 	// A press hides the tooltip of a view that takes presses.

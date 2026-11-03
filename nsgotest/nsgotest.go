@@ -78,6 +78,31 @@ func Host(h *core.Host) Option {
 	return func(a *App) { a.host = h }
 }
 
+// TextEngine measures and lays out the app's text with e instead of
+// core.ApproxTextEngine, as a test that checks frames another headless
+// runner computed needs its measurements.
+func TextEngine(e driver.TextEngine) Option {
+	return func(a *App) { a.textEngine = e }
+}
+
+// Offscreen has selectors match every view mounted and not hidden, also
+// one outside the window or clipped away, as NSH's headless runs act.
+func Offscreen() Option {
+	return func(a *App) { a.offscreen = true }
+}
+
+// PendingAlerts leaves the alerts the app shows unanswered unless the
+// test answers them, as NSH's headless runs present none.
+func PendingAlerts() Option {
+	return func(a *App) { a.pendingAlerts = true }
+}
+
+// NoCaretMoves keeps typing from reporting where the caret moves, as
+// NSH's headless model types: a test reports caret moves itself.
+func NoCaretMoves() Option {
+	return func(a *App) { a.noCaretMoves = true }
+}
+
 // ManualFrames keeps steps from taking display frames: the animations a
 // step starts move only as Advance moves the clock, so a test can look at
 // them on the way.
@@ -196,6 +221,16 @@ type App struct {
 	manualFrames bool
 	// host is the embedding host's channel, nil without one.
 	host *core.Host
+	// bound are the views' gesture and scroll bindings.
+	bound map[driver.NodeID]*Bindings
+	// offscreen has selectors match views outside the window too.
+	offscreen bool
+	// pendingAlerts leaves alerts unanswered between steps.
+	pendingAlerts bool
+	// noCaretMoves keeps typing from reporting caret moves.
+	noCaretMoves bool
+	// textEngine measures text; core.ApproxTextEngine when nil.
+	textEngine driver.TextEngine
 	// lastPress and lastPressAt are the view pressed last and when;
 	// clicks counts the presses of it in a row.
 	lastPress   driver.NodeID
@@ -252,7 +287,11 @@ func Start(t testing.TB, app func(cx *core.Scope) core.Node, opts ...Option) *Ap
 		a.posts = append(a.posts, func() { a.tree.Dispatch(ev) })
 		a.mu.Unlock()
 	})
-	a.tree = core.NewTree(a.root, core.ApproxTextEngine{})
+	var engine driver.TextEngine = core.ApproxTextEngine{}
+	if a.textEngine != nil {
+		engine = a.textEngine
+	}
+	a.tree = core.NewTree(a.root, engine)
 	a.tree.Resize(a.size)
 	if a.env != nil {
 		a.tree.SetEnvironment(*a.env)
@@ -319,7 +358,7 @@ const settleLimit = 2 * time.Second
 func (a *App) step(format string, args ...any) {
 	a.t.Helper()
 	a.stepName = fmt.Sprintf(format, args...)
-	for len(a.alerts) > 0 {
+	for len(a.alerts) > 0 && !a.pendingAlerts {
 		index, err := defaultAnswer(a.alerts[0])
 		if err != nil {
 			a.t.Fatalf("nsgotest: %v", err)
@@ -486,6 +525,34 @@ func (a *App) Resize(width, height driver.Points) {
 	}
 	a.tree.Resize(a.size)
 	a.Settle()
+}
+
+// FindMounted returns the one view selector matches among every view
+// mounted, shown or not: hidden, empty, scrolled away or clipped, as a
+// test reading what the platform received of a view finds it.
+func (a *App) FindMounted(selector string) *View {
+	a.t.Helper()
+	vs := a.QueryMounted(selector)
+	switch len(vs) {
+	case 0:
+		a.t.Fatalf("nsgotest: no view matches %q\n%s", selector, a.Dump())
+	case 1:
+		return vs[0]
+	default:
+		a.t.Fatalf("nsgotest: %d views match %q\n%s", len(vs), selector, a.Dump())
+	}
+	return nil
+}
+
+// QueryMounted returns the views selector matches among every view
+// mounted, shown or not, in tree order.
+func (a *App) QueryMounted(selector string) []*View {
+	a.t.Helper()
+	sel, err := parseSelector(selector)
+	if err != nil {
+		a.t.Fatalf("nsgotest: %v", err)
+	}
+	return a.resolveIn(sel, a.mounted())
 }
 
 // Find returns the one visible view selector matches.

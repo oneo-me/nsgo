@@ -106,6 +106,10 @@ func (t Transform) Matrix(origin Point) Matrix3D {
 		s, c := math.Sincos(float64(t.RotateY) * math.Pi / 180)
 		m = m.Mul(Matrix3D{c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1})
 	}
+	if t.RotateZ != 0 {
+		s, c := math.Sincos(float64(t.RotateZ) * math.Pi / 180)
+		m = m.Mul(Matrix3D{c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1})
+	}
 	if t.SkewX != 0 || t.SkewY != 0 {
 		m = m.Mul(Matrix3D{1, math.Tan(float64(t.SkewY) * math.Pi / 180), 0, 0,
 			math.Tan(float64(t.SkewX) * math.Pi / 180), 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1})

@@ -471,6 +471,48 @@ func (t *Tree) bindScroll(cx *Scope, n *node, xy AnimatedXY, pull *AnimatedValue
 	t.anim.add(driver.AnimationOp{Kind: driver.AnimBindScroll, View: n.id, X: xy.idX(), Y: xy.idY()})
 }
 
+// boundValues are the animated values a view's gestures and scrolling
+// set.
+type boundValues struct {
+	pan, scroll           AnimatedXY
+	pinch, rotation, pull *AnimatedValue
+}
+
+// rebind binds the values an element's props give view n, sending only
+// what changed since its last props: 0 unbinds.
+func (t *Tree) rebind(n *node, b boundValues) {
+	old := n.bound
+	if old == nil {
+		old = &boundValues{}
+	}
+	id := func(v *AnimatedValue) uint32 {
+		if v == nil {
+			return 0
+		}
+		return v.id
+	}
+	if b.pan != old.pan {
+		t.anim.add(driver.AnimationOp{Kind: driver.AnimBindPan, View: n.id, X: b.pan.idX(), Y: b.pan.idY()})
+	}
+	if b.pinch != old.pinch {
+		t.anim.add(driver.AnimationOp{Kind: driver.AnimBindPinch, View: n.id, Node: id(b.pinch)})
+	}
+	if b.rotation != old.rotation {
+		t.anim.add(driver.AnimationOp{Kind: driver.AnimBindRotation, View: n.id, Node: id(b.rotation)})
+	}
+	if b.pull != old.pull {
+		t.anim.add(driver.AnimationOp{Kind: driver.AnimBindPull, View: n.id, Node: id(b.pull)})
+	}
+	if b.scroll != old.scroll {
+		t.anim.add(driver.AnimationOp{Kind: driver.AnimBindScroll, View: n.id, X: b.scroll.idX(), Y: b.scroll.idY()})
+	}
+	if b == (boundValues{}) {
+		n.bound = nil
+	} else {
+		n.bound = &b
+	}
+}
+
 func (xy AnimatedXY) idX() uint32 {
 	if xy.X == nil {
 		return 0

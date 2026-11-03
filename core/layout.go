@@ -270,7 +270,7 @@ func (n *node) layoutStyle() layout.Style {
 		// Its insets are where it sticks, not offsets.
 		l.Inset = layout.Rect[layout.Length]{}
 	}
-	l.Margin = edgesLayout(s.Margin)
+	l.Margin = edgesLayout(s.Margin, s.MarginPercent)
 	for _, side := range [...]struct {
 		bit Sides
 		dst *layout.Length
@@ -279,12 +279,12 @@ func (n *node) layoutStyle() layout.Style {
 			*side.dst = layout.Auto
 		}
 	}
-	l.Padding = edgesLayout(s.Padding)
+	l.Padding = edgesLayout(s.Padding, s.PaddingPercent)
 	if sc := n.screen; sc != nil && sc.pad > 0 {
 		// The content goes below the system header.
 		l.Padding.Top = layout.Px(float32(s.Padding.Top + sc.pad))
 	}
-	l.Border = edgesLayout(s.borders())
+	l.Border = edgesLayout(s.borders(), 0)
 	rowGap, colGap := s.Gap, s.Gap
 	if s.RowGap != 0 {
 		rowGap = s.RowGap
@@ -418,9 +418,15 @@ func lengthMinLayout(l Length) layout.Length {
 	return sizeLayout(l)
 }
 
-func edgesLayout(e Edges) layout.Rect[layout.Length] {
-	return layout.Rect[layout.Length]{Left: layout.Px(float32(e.Left)), Right: layout.Px(float32(e.Right)),
-		Top: layout.Px(float32(e.Top)), Bottom: layout.Px(float32(e.Bottom))}
+func edgesLayout(e Edges, percent Sides) layout.Rect[layout.Length] {
+	length := func(p Points, side Sides) layout.Length {
+		if percent&side != 0 {
+			return layout.Percent(float32(p) / 100)
+		}
+		return layout.Px(float32(p))
+	}
+	return layout.Rect[layout.Length]{Left: length(e.Left, SideLeft), Right: length(e.Right, SideRight),
+		Top: length(e.Top, SideTop), Bottom: length(e.Bottom, SideBottom)}
 }
 
 func (o Overflow) layout() layout.Overflow {

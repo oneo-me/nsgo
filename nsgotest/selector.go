@@ -3,6 +3,7 @@ package nsgotest
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -298,7 +299,62 @@ func (a *App) resolve(sel *selector) []*View { return a.resolveWith(sel, false) 
 
 // resolveWith is resolve, with unsized images when unsized.
 func (a *App) resolveWith(sel *selector, unsized bool) []*View {
-	layers := a.byLayerWith(unsized)
+	if a.offscreen {
+		var shown []*View
+		for _, v := range a.mounted() {
+			hidden := false
+			for p := v; p != nil && !hidden; p = p.Parent {
+				hidden = p.Style.Hidden
+			}
+			if !hidden {
+				shown = append(shown, v)
+			}
+		}
+		return a.resolveIn(sel, shown)
+	}
+	return a.resolveIn(sel, a.byLayerWith(unsized))
+}
+
+// mounted returns every view mounted, shown or not, in tree order: the
+// root's tree, then the trees the platform places itself.
+func (a *App) mounted() []*View {
+	var out []*View
+	seen := map[*View]bool{}
+	var visit func(v *View)
+	visit = func(v *View) {
+		if seen[v] {
+			return
+		}
+		seen[v] = true
+		out = append(out, v)
+		for _, k := range v.Children {
+			visit(k)
+		}
+	}
+	if r := a.views[a.rootID]; r != nil {
+		visit(r)
+	}
+	// The roots the platform places: header views and the keyboard's
+	// bar; an element taken out of the tree is no root.
+	var loose []*View
+	for _, v := range a.views {
+		ids := []driver.NodeID{v.Screen.Left, v.Screen.Right, v.Screen.TitleView, v.Screen.Header, v.Input.Accessory}
+		for _, id := range ids {
+			if r := a.views[id]; id != 0 && r != nil && r.Parent == nil && !seen[r] && !slices.Contains(loose, r) {
+				loose = append(loose, r)
+			}
+		}
+	}
+	slices.SortFunc(loose, func(x, y *View) int { return int(x.ID) - int(y.ID) })
+	for _, v := range loose {
+		visit(v)
+	}
+	return out
+}
+
+// resolveIn returns the views of layers sel matches, each part looking
+// inside what the one before matched.
+func (a *App) resolveIn(sel *selector, layers []*View) []*View {
 	var scope []*View
 	for i, p := range sel.parts {
 		var found []*View

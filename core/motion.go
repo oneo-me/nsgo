@@ -37,6 +37,10 @@ func StopAt(offset, value float64) KeyframeStop {
 	return KeyframeStop{Value: value, offset: offset, placed: true}
 }
 
+// Offset returns where s is in an iteration, from 0 to 1, and whether it
+// was placed there rather than spread evenly.
+func (s KeyframeStop) Offset() (float64, bool) { return s.offset, s.placed }
+
 // Eased returns s with e curving the segment from it to the next stop.
 func (s KeyframeStop) Eased(e Easing) KeyframeStop {
 	s.easing = &e

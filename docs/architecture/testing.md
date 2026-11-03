@@ -4,11 +4,11 @@
 
 ## The model
 
-Every batch goes to a model of the native views (`nsgotest/model.go`), which queries read and steps act on: frames, styles, props, texts with their spans, inputs, scroll offsets, canvas nodes as child views, and what the app asked the platform for. Headless, the app runs on `core.ApproxTextEngine` and a `core.ManualClock`; frames run only as the clock moves.
+Every batch goes to a model of the native views (`nsgotest/model.go`), which queries read and steps act on: frames, styles, props, texts with their spans, shadows and line limits, inputs, scroll offsets, the animated values gestures and scrolling drive (`Bound`, `AnimatedValue`), canvas nodes as child views, and what the app asked the platform for. Headless, the app runs on `core.ApproxTextEngine`, or the engine `TextEngine` gives, and a `core.ManualClock`; frames run only as the clock moves.
 
 Selectors (`nsgotest/selector.go`) name what a user sees, as Playwright's: `id:`, `label:`, `text:` (a substring, or a field's text or its placeholder while empty; in quotes, `text:"Save"`, the whole text or a span's), `role:<role> <name>`, `view:<node>`, and a bare string as a test ID, else a label, else a whole text. `label:`, `text:` and a role's name take `/regexp/flags`.
 
-A view shows when it has an area that nothing hides or clips: `Style.Clip`, a scroll view the user cannot scroll and the window clip; a scrollable view shows all its content after its start; modals show over the window, and header views and the keyboard's bar where the platform puts them. Matches come by layer, the topmost modal's first.
+A view shows when it has an area that nothing hides or clips: `Style.Clip`, a scroll view the user cannot scroll and the window clip; a scrollable view shows all its content after its start; modals show over the window, and header views and the keyboard's bar where the platform puts them. Matches come by layer, the topmost modal's first. `QueryMounted` and `FindMounted` match among every view mounted instead, shown or not, in tree order, for a test reading what the platform received of one.
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
@@ -23,13 +23,18 @@ Steps (`steps.go`, `pointer.go`) act as a user does and send what a platform sen
 - `Press`: a touch down and up when a view listens to touches, presses outside the overlays it is not in, then PressDown, PressUp and Press, on the match's middle (a text in a button is pressed on the text, also on targets); a canvas node presses the view under its middle, and a text's span takes `Index`. Presses of one view within 500 ms of clock time count up in `Clicks`, and a press takes the keyboard focus off pressable views.
 - `LongPress`: PressDown, the view's `DelayLongPress` (500 ms) of clock time, LongPress and PressUp.
 - `Type`, `Clear`, `Submit`, `KeyPress`: the field takes the focus, then a key and an edit per character within `MaxLength`; a line break in a single line is the return key, as `SubmitBehavior` resolves it.
-- `Drag`: a finger lands, rests 100 ms, moves 10 points a frame through its path and lifts; the press under it is cancelled once it moves 8 points.
+- `Drag`: a finger lands, rests 100 ms, moves 10 points a frame through its path and lifts; the press under it is cancelled once it moves 8 points. `Touch` puts finger 1 down for a test to `Move`, `Lift`, `LiftAt` or `Cancel` a step at a time, a frame apart.
 - Past the slop the innermost pan a drag activates takes it, else the scroll view it runs along that can move that way, unless the touch responder blocked native drags.
 - `Scroll`: drags a scroll view by a distance, 10 points a frame. `ScrollTo`, `DragScroll`, `Pan`, `Pinch` and `Rotate` report a platform's own gestures.
 - `Hover` and `HoverOut`: the views from the match out with hover events replace those hovered before.
+- `Report` sends an event as the platform would, for one no step makes. `NoCaretMoves` keeps typing from reporting the caret, as NSH's headless model types.
 - `Key`: a keymap binding, `mod` being Command in Apple environments and Control elsewhere; else, in a macOS or web environment, Tab and Shift+Tab move the keyboard focus between editable fields and pressable views not `NoFocus`, in tree order, and Return or Space press the pressable it is on; else the focused field takes a character (shifted as the US layout does), Backspace or Return; else Escape goes back. A key nothing takes does nothing, as on a device.
 
 Each step then takes frames while an animation that ends runs or a list binds the rows it paces ([lists](scrolling.md#lists)), for at most 2 seconds of clock time. Frames the app requests itself do not hold a step, since its own loops may never end; `ManualFrames` keeps steps from taking frames at all, for tests that look at animations on the way. `Advance` moves the clock a frame at a time; `FastForward` jumps it, running each due timer once.
+
+## NSH's compat cases
+
+`TestNSHCompat` (`tsx/nshcompat_test.go`) runs `nsh/tests/compat/`'s scripts on the model, each case on an app of its own, reading every step as `nsh-compat` defines it ([compatibility](../../nsh/docs/dev/compatibility.md)): `style` and `prop` steps compare NSH's text forms with what NSGo hands its platforms, through the shape NSGo gives a value where it differs from NSH's (a gradient resolved against the box, a transform as a matrix with its parent's perspective, a shadow's opacity in its color, an asset as the `data:` URL a bundle carries); `event`, `touch` and `state` steps report what a platform would. Texts measure as NSH's headless engine measures them, 0.55 of the font size a character, and steps read views whether they show or not, as NSH's runner does. Where NSGo's components nest their parts differently, a step that counts NSH's wrapper views (`parent:parent:parent:`) is replaced by one that reaches the same part on NSGo, or left out where no selector can (`compatDepartures`). `NSGO_COMPAT_ALL=1` lists every `expect` a case misses, with what the app logged.
 
 ## On a platform
 

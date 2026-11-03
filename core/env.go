@@ -268,9 +268,14 @@ var insetsKey = NewKey[func() Edges]("insets", nil)
 
 // Insets returns what content under cx must keep clear of: the insets of
 // the nearest screen or modal, or the surface's safe area.
-func Insets(cx *Scope) Edges {
+func Insets(cx *Scope) Edges { return InsetsFunc(cx)() }
+
+// InsetsFunc returns what reads Insets of cx's place, found now and
+// tracked as it is called, wherever that is.
+func InsetsFunc(cx *Scope) func() Edges {
 	if f := insetsKey.Use(cx); f != nil {
-		return f()
+		return f
 	}
-	return cx.Env().SafeArea()
+	env := cx.Env()
+	return env.SafeArea
 }

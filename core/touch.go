@@ -193,7 +193,7 @@ type touchState struct {
 
 // hearsTouches reports whether n listens to touches.
 func (n *node) hearsTouches() bool {
-	return n.h.touch != nil || n.h.touchCapture != nil || n.responder != nil
+	return n.h.touch != nil || n.h.touchCapture != nil || n.responder != nil || n.tip != nil
 }
 
 // alive reports whether n is still mounted.
@@ -227,7 +227,12 @@ func (t *Tree) touched(ev driver.Event) {
 				continue
 			}
 			delete(s.paths, p.ID)
-			if path := t.touchPath(p.PagePosition); len(path) > 0 {
+			path := t.touchPath(p.PagePosition)
+			if n := t.node(ev.ID); n != nil {
+				// A platform that names the view a finger went down on.
+				path = t.pathFrom(n)
+			}
+			if len(path) > 0 {
 				s.paths[p.ID] = path
 			}
 		}
@@ -254,6 +259,14 @@ func (t *Tree) touched(ev driver.Event) {
 	defer t.forgetLifted(&e)
 	if len(path) == 0 && s.responder == nil {
 		return
+	}
+	// A finger down hides the tooltips of the views it is on.
+	if e.Phase == TouchStart {
+		for _, n := range path {
+			if n.tip != nil && n.alive() {
+				t.within(n.owner, n.tip.hide)
+			}
+		}
 	}
 	// Capture from the outermost view in, then bubble out.
 	stopped := false
@@ -299,8 +312,13 @@ func (t *Tree) touched(ev driver.Event) {
 // under p, in surface points, innermost first.
 func (t *Tree) touchPath(p Point) []*node {
 	id, _ := hitWith(t.view, p, func(*node) bool { return true })
+	return t.pathFrom(t.node(id))
+}
+
+// pathFrom is the views from n out that hear touches.
+func (t *Tree) pathFrom(n *node) []*node {
 	var path []*node
-	for n := t.node(id); n != nil; n = n.nativeParent() {
+	for ; n != nil; n = n.nativeParent() {
 		if n.hearsTouches() {
 			path = append(path, n)
 		}

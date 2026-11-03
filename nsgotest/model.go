@@ -26,6 +26,11 @@ type View struct {
 	// spans', which SpanStyle reads.
 	TextStyle driver.TextStyle
 	Spans     []driver.TextSpan
+	// TextShadow is drawn behind a text's glyphs; MaxLines and Ellipsize
+	// cut its lines.
+	TextShadow driver.TextShadow
+	MaxLines   int
+	Ellipsize  driver.EllipsizeMode
 	// Hovered says the mouse is over the view, as Hover left it.
 	Hovered bool
 	Input   driver.InputConfig
@@ -103,6 +108,30 @@ func (v *View) StickyShift(id driver.NodeID) driver.Points {
 		}
 	}
 	return 0
+}
+
+// Bindings are the animated values, by node, a view's gestures and
+// scrolling set; 0 is none.
+type Bindings struct {
+	PanX, PanY, ScrollX, ScrollY, Pinch, Rotation, Pull uint32
+}
+
+// Bound returns the animated values the gestures or the scrolling of
+// the view selector matches set (AnimBindPan, ...), which AnimatedValue
+// reads.
+func (a *App) Bound(selector string) Bindings {
+	a.t.Helper()
+	if b := a.bound[a.Find(selector).ID]; b != nil {
+		return *b
+	}
+	return Bindings{}
+}
+
+// AnimatedValue returns animated value node's value as the platform's
+// animator has it.
+func (a *App) AnimatedValue(node uint32) float64 {
+	v, _, _ := a.anim.Value(node)
+	return v
 }
 
 // NativeCommand is a command a native view received.
@@ -231,7 +260,8 @@ func (a *App) apply(b *driver.MountBatch) {
 		case driver.ItemEvents:
 			v.Events = it.Events
 		case driver.ItemText:
-			v.Text, v.TextStyle, v.Spans = it.Text.Text, it.Text.Style, it.Text.Spans
+			v.Text, v.TextStyle, v.Spans, v.TextShadow = it.Text.Text, it.Text.Style, it.Text.Spans, it.Text.Shadow
+			v.MaxLines, v.Ellipsize = it.Text.MaxLines, it.Text.Ellipsize
 		case driver.ItemInput:
 			v.Input = *it.Input
 		case driver.ItemInputValue:
@@ -288,6 +318,28 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.drawCanvas(v, it.Drawing)
 		case driver.ItemAnimation:
 			a.anim.Apply(it.Animation)
+			for _, op := range it.Animation {
+				if a.bound == nil {
+					a.bound = map[driver.NodeID]*Bindings{}
+				}
+				b := a.bound[op.View]
+				if b == nil {
+					b = &Bindings{}
+					a.bound[op.View] = b
+				}
+				switch op.Kind {
+				case driver.AnimBindPan:
+					b.PanX, b.PanY = op.X, op.Y
+				case driver.AnimBindScroll:
+					b.ScrollX, b.ScrollY = op.X, op.Y
+				case driver.AnimBindPinch:
+					b.Pinch = op.Node
+				case driver.AnimBindRotation:
+					b.Rotation = op.Node
+				case driver.AnimBindPull:
+					b.Pull = op.Node
+				}
+			}
 		case driver.ItemFocus:
 			for _, o := range a.views {
 				if o != v {

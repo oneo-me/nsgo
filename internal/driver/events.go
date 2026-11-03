@@ -145,8 +145,9 @@ const (
 	// EventTouch reports the fingers on the surface (Touches, with their
 	// PagePosition and Changed) as one goes down (Phase GestureBegan),
 	// moves (GestureChanged), lifts (GestureEnded) or the system takes
-	// them (GestureCancelled), at Time. Platforms send it, with no ID,
-	// while a view's mask has it; a mouse is finger 0.
+	// them (GestureCancelled), at Time. Platforms send it while a view's
+	// mask has it, with no ID, or with the ID of the view a finger went
+	// down on, which then starts its path; a mouse is finger 0.
 	EventTouch
 	// EventCaretMove is where a focused input's caret is: Point and Size
 	// in the input's view.
@@ -183,6 +184,13 @@ const (
 	// []Directory), none when the user cancelled, and ItemSaveFile Count
 	// with whether the file was saved (Finished); Text is what failed.
 	EventFiles
+	// EventModalShown and EventModalDismissed report that the platform
+	// finished presenting modal ID and taking it away, where it says so.
+	EventModalShown
+	EventModalDismissed
+	// EventScreenInsets reports what covers screen ID's content (Insets):
+	// its header and the system's bars, where the platform measures them.
+	EventScreenInsets
 )
 
 // EventMask is a set of event kinds.

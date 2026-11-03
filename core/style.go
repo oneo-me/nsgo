@@ -62,6 +62,9 @@ type Style struct {
 	// space, centering a node between two of them.
 	AutoMargin Sides
 	Padding    Edges
+	// MarginPercent and PaddingPercent mark the sides whose Margin and
+	// Padding are percentages of the containing block's width, as CSS's.
+	MarginPercent, PaddingPercent Sides
 	// PaddingEnv and MarginEnv add the safe area's insets or the software
 	// keyboard's height to the padding and margin on their edges.
 	PaddingEnv, MarginEnv EnvEdges
@@ -94,6 +97,8 @@ type Style struct {
 	// set, gives each side's width to layout instead.
 	BorderWidth Points
 	Borders     Edges
+	// BorderColor is the border's color, the text color while 0, as CSS's
+	// currentColor: Transparent draws none.
 	BorderColor Color
 	// BorderColors, when set, colors each side; a side left 0 takes
 	// BorderColor.
@@ -152,6 +157,9 @@ type Style struct {
 	// TransformOrigin is where Transform acts: its zero value is the
 	// center, and its percentages are of the node's size.
 	TransformOrigin ObjectPosition
+	// TransformOriginZ moves the origin toward the viewer, CSS's third
+	// transform-origin value.
+	TransformOriginZ Points
 	// Perspective is the depth children's rotations out of their plane
 	// are seen from, at this node's center, as CSS's perspective.
 	Perspective Points
@@ -187,9 +195,13 @@ type Style struct {
 	LineHeight         Points
 	LineHeightMultiple float32
 	LineHeightEm       float32
-	LetterSpacing      Points
-	TextAlign          TextAlign
-	TextDecoration     TextDecoration
+	// LetterSpacing is the room added after each character;
+	// LetterSpacingEm is one in multiples of the font size, resolved
+	// where it is set, as LineHeightEm. The one set last wins.
+	LetterSpacing   Points
+	LetterSpacingEm float32
+	TextAlign       TextAlign
+	TextDecoration  TextDecoration
 	// TextDecorationStyle draws the decoration's lines solid, double,
 	// dotted, dashed or wavy; TextDecorationColor colors them, the text's
 	// color when 0.
@@ -246,7 +258,9 @@ type Style struct {
 	// State styles merge over the rest while the node is in the state, in
 	// NSH's order of precedence, lowest first: checked, indeterminate and
 	// selected, which the app sets, then hovered, focused (text fields) and
-	// pressed, which the platform reports, then disabled over all.
+	// pressed, which the platform reports, then disabled over all. While
+	// the node is disabled only Disabled applies of its own, as NSH's
+	// state styles; its classes' variants (checked:, hover:, ...) apply.
 	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled *Style
 }
 
@@ -566,9 +580,13 @@ func (s Style) Merge(o Style) Style {
 	set(&s.Left, o.Left)
 	set(&s.LayoutDirection, o.LayoutDirection)
 	set(&s.ZIndex, o.ZIndex)
-	set(&s.Margin, o.Margin)
+	if o.Margin != (Edges{}) || o.MarginPercent != 0 {
+		s.Margin, s.MarginPercent = o.Margin, o.MarginPercent
+	}
 	set(&s.AutoMargin, o.AutoMargin)
-	set(&s.Padding, o.Padding)
+	if o.Padding != (Edges{}) || o.PaddingPercent != 0 {
+		s.Padding, s.PaddingPercent = o.Padding, o.PaddingPercent
+	}
 	set(&s.PaddingEnv, o.PaddingEnv)
 	set(&s.MarginEnv, o.MarginEnv)
 	set(&s.Gap, o.Gap)
@@ -615,6 +633,7 @@ func (s Style) Merge(o Style) Style {
 	set(&s.VerticalAlign, o.VerticalAlign)
 	set(&s.Transform, o.Transform)
 	set(&s.TransformOrigin, o.TransformOrigin)
+	set(&s.TransformOriginZ, o.TransformOriginZ)
 	set(&s.Perspective, o.Perspective)
 	set(&s.BackfaceHidden, o.BackfaceHidden)
 	set(&s.Transition, o.Transition)
@@ -659,7 +678,8 @@ func (s Style) withStates(states uint8, p driver.ViewProps, g groupState) Style 
 		if st.Background != 0 && st.Gradients == nil {
 			out.Gradients = nil
 		}
-		out = out.Merge(*st)
+		// Side by side, as a class's state variant sets one side.
+		out = mergeStyles(out, *st)
 	}
 	if gs := s.GroupStyle; gs != nil {
 		merge(g.checked, gs.Checked)
@@ -692,7 +712,9 @@ func (s *Style) mergeText(o Style) {
 	if o.LineHeight != 0 || o.LineHeightMultiple != 0 || o.LineHeightEm != 0 {
 		s.LineHeight, s.LineHeightMultiple, s.LineHeightEm = o.LineHeight, o.LineHeightMultiple, o.LineHeightEm
 	}
-	set(&s.LetterSpacing, o.LetterSpacing)
+	if o.LetterSpacing != 0 || o.LetterSpacingEm != 0 {
+		s.LetterSpacing, s.LetterSpacingEm = o.LetterSpacing, o.LetterSpacingEm
+	}
 	set(&s.TextAlign, o.TextAlign)
 	set(&s.TextDecoration, o.TextDecoration)
 	set(&s.TextDecorationStyle, o.TextDecorationStyle)
@@ -756,6 +778,7 @@ type textFields struct {
 	TextAlignVertical                TextAlignVertical
 	PlaceholderColor                 Color
 	LineHeightMultiple, LineHeightEm float32
+	LetterSpacingEm                  float32
 	WhiteSpace                       WhiteSpace
 	UserSelect                       UserSelect
 	WritingDirection                 WritingDirection
@@ -779,7 +802,9 @@ func (s *Style) inherit(parent textFields) textFields {
 	if s.LineHeight != 0 || s.LineHeightMultiple != 0 || s.LineHeightEm != 0 {
 		t.LineHeight, t.LineHeightMultiple, t.LineHeightEm = s.LineHeight, s.LineHeightMultiple, s.LineHeightEm
 	}
-	set(&t.LetterSpacing, s.LetterSpacing)
+	if s.LetterSpacing != 0 || s.LetterSpacingEm != 0 {
+		t.LetterSpacing, t.LetterSpacingEm = s.LetterSpacing, s.LetterSpacingEm
+	}
 	set(&t.TextAlign, s.TextAlign)
 	set(&t.TextDecoration, s.TextDecoration)
 	set(&t.TextDecorationStyle, s.TextDecorationStyle)
@@ -810,6 +835,9 @@ func (s *Style) inherit(parent textFields) textFields {
 			size = DefaultFontSize
 		}
 		t.LineHeight, t.LineHeightEm = Points(t.LineHeightEm)*size, 0
+	}
+	if t.LetterSpacingEm != 0 {
+		t.LetterSpacing, t.LetterSpacingEm = Points(t.LetterSpacingEm)*cmpOr(t.FontSize, DefaultFontSize), 0
 	}
 	return t
 }
@@ -855,6 +883,7 @@ func (s *textFields) textShadow() driver.TextShadow {
 // textStyle resolves inherited text fields into what a text engine needs.
 func (s *textFields) textStyle() driver.TextStyle {
 	t := driver.TextStyle{
+		Transform: uint8(s.TextTransform),
 		Font: Font{
 			Family: s.FontFamily,
 			Size:   s.FontSize,
@@ -892,10 +921,10 @@ func (s *textFields) textStyle() driver.TextStyle {
 		if p, ok := em(s.TextDecorationThickness); ok {
 			t.DecorationThickness = max(p, 0)
 		}
-		if t.Decoration&TextDecorationUnderline != 0 {
-			if p, ok := em(s.TextUnderlineOffset); ok {
-				t.UnderlineOffset = Pt(p)
-			}
+		// The offset goes with any line: an underline nested inside a
+		// struck text inherits it.
+		if p, ok := em(s.TextUnderlineOffset); ok {
+			t.UnderlineOffset = Pt(p)
 		}
 	}
 	if s.LineHeightMultiple > 0 {
@@ -916,18 +945,20 @@ func (s *textFields) textStyle() driver.TextStyle {
 // viewStyle is what platforms draw for a view of size whose text color
 // is color, laid out right to left when rtl.
 func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
-	cc := func(c Color) Color {
-		if c == CurrentColor {
+	cc := func(c Color) Color { return currentIn(c, color) }
+	// A border's color is the text color until set, as CSS's.
+	border := func(c Color, width Points) Color {
+		if c == 0 && width > 0 {
 			return color
 		}
-		return c
+		return cc(c)
 	}
 	v := driver.ViewStyle{
 		Background:        cc(s.Background),
 		CornerRadius:      s.CornerRadius,
 		ContinuousCorners: s.BorderCurve == BorderCurveContinuous,
 		BorderWidth:       s.BorderWidth,
-		BorderColor:       cc(s.BorderColor),
+		BorderColor:       border(s.BorderColor, s.BorderWidth),
 		Opacity:           s.Opacity.Value(),
 		Clip:              s.clips(),
 		ShadowColor:       cc(s.ShadowColor),
@@ -956,9 +987,8 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 	}
 	if s.Borders != (Edges{}) || s.BorderColors != (EdgeColors{}) {
 		w, c := s.borders(), s.BorderColors.Or(s.BorderColor)
-		for _, side := range []*Color{&c.Top, &c.Right, &c.Bottom, &c.Left} {
-			*side = cc(*side)
-		}
+		c.Top, c.Right, c.Bottom, c.Left = border(c.Top, w.Top), border(c.Right, w.Right), border(c.Bottom, w.Bottom),
+			border(c.Left, w.Left)
 		if rtl {
 			w.Left, w.Right = w.Right, w.Left
 			c.Left, c.Right = c.Right, c.Left
@@ -995,6 +1025,7 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 		at := s.TransformOrigin.Place(size, Size{})
 		v.Origin = Point{X: at.X - size.Width/2, Y: at.Y - size.Height/2}
 	}
+	v.OriginZ = s.TransformOriginZ
 	v.Effects = s.effects(size, cc)
 	return v
 }

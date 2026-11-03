@@ -31,10 +31,10 @@ var envExports = []export{
 		return goja.Undefined()
 	}),
 	{"fontScale", func(r *runtime) goja.Value {
-		return r.envAccessor(func(e *core.Env) any { return float64(e.FontScale()) })
+		return r.envAccessor(func(e *core.Env) any { return js32(e.FontScale()) })
 	}},
 	{"pixelRatio", func(r *runtime) goja.Value {
-		return r.envAccessor(func(e *core.Env) any { return float64(e.PixelRatio()) })
+		return r.envAccessor(func(e *core.Env) any { return js32(e.PixelRatio()) })
 	}},
 	{"locale", func(r *runtime) goja.Value { return r.envAccessor(func(e *core.Env) any { return e.Locale() }) }},
 	{"reduceMotion", func(r *runtime) goja.Value {
@@ -43,8 +43,10 @@ var envExports = []export{
 	{"screenReaderEnabled", func(r *runtime) goja.Value {
 		return r.envAccessor(func(e *core.Env) any { return e.ScreenReader() })
 	}},
+	// The insets of the nearest page or dialog, or the safe area.
 	fn("safeAreaInsets", func(r *runtime, _ goja.FunctionCall) goja.Value {
-		return r.accessor(func() goja.Value { return r.edgesValue(r.cx.Env().SafeArea()) })
+		insets := core.InsetsFunc(r.cx)
+		return r.accessor(func() goja.Value { return r.edgesValue(insets()) })
 	}),
 	{"platform", (*runtime).platform},
 }
@@ -89,9 +91,9 @@ func (r *runtime) platform() goja.Value {
 
 func (r *runtime) edgesValue(e core.Edges) *goja.Object {
 	o := r.vm.NewObject()
-	_ = o.Set("top", float64(e.Top))
-	_ = o.Set("right", float64(e.Right))
-	_ = o.Set("bottom", float64(e.Bottom))
-	_ = o.Set("left", float64(e.Left))
+	_ = o.Set("top", js32(e.Top))
+	_ = o.Set("right", js32(e.Right))
+	_ = o.Set("bottom", js32(e.Bottom))
+	_ = o.Set("left", js32(e.Left))
 	return o
 }

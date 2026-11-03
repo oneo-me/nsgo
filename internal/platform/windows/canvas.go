@@ -62,6 +62,9 @@ var compositeModes = [...]uint32{
 // D2D1_BLEND_MODE of each blend CompositeOp, from CompositeMultiply.
 var blendModes = [...]uint32{0, 1, 11, 2, 3, 9, 5, 13, 12, 18, 19, 20, 21, 22, 23}
 
+// d2dBlendLinearBurn is D2D1_BLEND_MODE_LINEAR_BURN, CSS's plus-darker.
+const d2dBlendLinearBurn = 6
+
 // canvasState is what Save and Restore keep.
 type canvasState struct {
 	ctm                  matrix // the drawing's transform, to the view's points

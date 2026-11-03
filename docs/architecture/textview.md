@@ -66,7 +66,7 @@ Where NSGo departs from NSH:
 | NSH | NSGo | Why |
 | --- | --- | --- |
 | `classes` and `styles` objects by part's name | `Classes` and `Styles` maps and `StyleOf` by `Part` | A part is a constant, so a typography is one function of it |
-| Typography in `nsh/base`'s `TextView` | Typography from the app | `base` has no look |
+| Typography in `nsh/base`'s `TextView` | Typography from the app in Go; TSX's `TextView` presets NSH's | `base` has no look; TSX apps are written for NSH's |
 | `links="report"` or `"open"` | `OpenLinks` | Go's zero value is the default |
 | Alert icon | Alert title text, and `PartAlertContent` around its blocks | The title takes the alert's color while the blocks keep the text's |
 | `renderCustom` for inline nodes | `RenderCustom` as an attachment, or `CustomSpan` returning a span | A span keeps a link's press and the text's selection |

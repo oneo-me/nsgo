@@ -10,6 +10,8 @@ type (
 	// AnimatedValues are the bound properties of a view, as the animator last
 	// evaluated them.
 	AnimatedValues = driver.AnimatedValues
+	// Event is what a platform reports (App.Report).
+	Event = driver.Event
 	// EventKind is what a platform reports about a view.
 	EventKind = driver.EventKind
 	// EventMask is a set of event kinds.

@@ -68,8 +68,8 @@ func TestFontVariantAndDecorationLines(t *testing.T) {
 	if v := h.find("own").text.style.Font.Variant; v != FontTabularNums {
 		t.Errorf("own variant = %v, want tabular figures alone", v)
 	}
-	if s := h.find("normal").text.style; s.Font.Variant != 0 || !s.UnderlineOffset.IsAuto() {
-		t.Errorf("normal: variant %v, offset %v; want none, and no offset without an underline", s.Font.Variant,
+	if s := h.find("normal").text.style; s.Font.Variant != 0 || s.UnderlineOffset != Pt(0) {
+		t.Errorf("normal: variant %v, offset %v; want none, and the offset with a line through", s.Font.Variant,
 			s.UnderlineOffset)
 	}
 }

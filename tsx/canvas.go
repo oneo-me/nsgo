@@ -110,6 +110,9 @@ func (c *context2D) num(v goja.Value) (float32, core.AnimatedNode) {
 func (c *context2D) newContextObject() *goja.Object {
 	r := c.r
 	o := r.vm.NewObject()
+	if cls := r.canvasClasses.context; cls != nil {
+		_ = o.SetPrototype(cls.Get("prototype").(*goja.Object))
+	}
 	_ = o.SetSymbol(canvasKey, c)
 	method := func(name string, f func(call goja.FunctionCall) goja.Value) {
 		_ = o.Set(name, r.function(f))
@@ -241,7 +244,7 @@ func (c *context2D) newContextObject() *goja.Object {
 	method("getLineDash", func(goja.FunctionCall) goja.Value {
 		out := make([]any, len(c.st.dash))
 		for i, d := range c.st.dash {
-			out[i] = float64(d)
+			out[i] = js32(d)
 		}
 		return r.vm.NewArray(out...)
 	})
@@ -306,9 +309,9 @@ func (c *context2D) newContextObject() *goja.Object {
 	method("measureText", func(call goja.FunctionCall) goja.Value {
 		m := c.d.TextMetrics(arg(call, 0).String(), c.font())
 		out := r.vm.NewObject()
-		_ = out.Set("width", float64(m.Width))
-		_ = out.Set("fontBoundingBoxAscent", float64(m.Ascent))
-		_ = out.Set("fontBoundingBoxDescent", float64(m.Descent))
+		_ = out.Set("width", js32(m.Width))
+		_ = out.Set("fontBoundingBoxAscent", js32(m.Ascent))
+		_ = out.Set("fontBoundingBoxDescent", js32(m.Descent))
 		return out
 	})
 	method("isPointInPath", func(call goja.FunctionCall) goja.Value {
@@ -372,7 +375,7 @@ func (c *context2D) newContextObject() *goja.Object {
 	num := func(p *float64, arg core.DrawArg, apply func(x float32)) (func() goja.Value, func(goja.Value)) {
 		return func() goja.Value { return r.vm.ToValue(*p) }, func(v goja.Value) {
 			x, n := c.num(v)
-			*p = float64(x)
+			*p = js32(x)
 			apply(x)
 			if n != nil {
 				c.d.Bind(arg, n)
@@ -426,10 +429,10 @@ func (c *context2D) newContextObject() *goja.Object {
 	prop("textBaseline", g, s)
 	canvas := r.vm.NewObject()
 	_ = canvas.DefineAccessorProperty("width", r.function(func(goja.FunctionCall) goja.Value {
-		return r.vm.ToValue(float64(c.size.Width))
+		return r.vm.ToValue(js32(c.size.Width))
 	}), nil, goja.FLAG_FALSE, goja.FLAG_TRUE)
 	_ = canvas.DefineAccessorProperty("height", r.function(func(goja.FunctionCall) goja.Value {
-		return r.vm.ToValue(float64(c.size.Height))
+		return r.vm.ToValue(js32(c.size.Height))
 	}), nil, goja.FLAG_FALSE, goja.FLAG_TRUE)
 	_ = o.Set("canvas", canvas)
 	return o
@@ -586,11 +589,15 @@ var compositeOps = map[string]core.CompositeOp{"source-over": core.CompositeSour
 
 // canvasClasses are Path2D, CanvasRenderingContext2D and CanvasGradient.
 type canvasClasses struct {
-	path, gradient *goja.Object
+	path, gradient, context *goja.Object
 }
 
 func (r *runtime) installCanvas() {
 	vm := r.vm
+	// A context comes from a Canvas's draw; its class is for instanceof.
+	r.canvasClasses.context = vm.ToValue(func(goja.ConstructorCall) *goja.Object {
+		panic(vm.NewTypeError("nsgo: a CanvasRenderingContext2D is a Canvas's draw's"))
+	}).(*goja.Object)
 	path := vm.ToValue(func(call goja.ConstructorCall) *goja.Object {
 		p := &core.Path{}
 		switch a := call.Argument(0); {
@@ -702,9 +709,5 @@ var canvasExports = []export{
 	fn("Canvas", (*runtime).canvas),
 	{"Path2D", func(r *runtime) goja.Value { return r.canvasClasses.path }},
 	{"CanvasGradient", func(r *runtime) goja.Value { return r.canvasClasses.gradient }},
-	{"CanvasRenderingContext2D", func(r *runtime) goja.Value {
-		return r.function(func(goja.FunctionCall) goja.Value {
-			panic(r.vm.NewTypeError("nsgo: a CanvasRenderingContext2D is a Canvas's draw's"))
-		})
-	}},
+	{"CanvasRenderingContext2D", func(r *runtime) goja.Value { return r.canvasClasses.context }},
 }

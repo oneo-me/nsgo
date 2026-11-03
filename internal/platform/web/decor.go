@@ -40,8 +40,8 @@ func decorCSS(vs *driver.ViewStyle, size driver.Size) map[string]string {
 	if vs.BlendMode != driver.BlendNormal {
 		style["mix-blend-mode"] = vs.BlendMode.Name()
 	}
-	if o := vs.Origin; o != (driver.Point{}) {
-		style["transform-origin"] = fmt.Sprintf("calc(50%% + %s) calc(50%% + %s)", px(o.X), px(o.Y))
+	if o := vs.Origin; o != (driver.Point{}) || vs.OriginZ != 0 {
+		style["transform-origin"] = fmt.Sprintf("calc(50%% + %s) calc(50%% + %s) %s", px(o.X), px(o.Y), px(vs.OriginZ))
 	}
 	if vs.ContinuousCorners {
 		style["corner-shape"] = "squircle"

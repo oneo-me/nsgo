@@ -19,7 +19,8 @@ func MixStyles(from, to ViewStyle, t float64, props TransitionProperty) ViewStyl
 			TranslateX: mixPoints(a.TranslateX, b.TranslateX, t), TranslateY: mixPoints(a.TranslateY, b.TranslateY, t),
 			Scale: mixScale(a.Scale, b.Scale, t), ScaleX: mixScale(a.ScaleX, b.ScaleX, t), ScaleY: mixScale(a.ScaleY, b.ScaleY, t),
 			Rotate: mixFloat(a.Rotate, b.Rotate, t), RotateX: mixFloat(a.RotateX, b.RotateX, t), RotateY: mixFloat(a.RotateY, b.RotateY, t),
-			SkewX: mixFloat(a.SkewX, b.SkewX, t), SkewY: mixFloat(a.SkewY, b.SkewY, t),
+			RotateZ: mixFloat(a.RotateZ, b.RotateZ, t),
+			SkewX:   mixFloat(a.SkewX, b.SkewX, t), SkewY: mixFloat(a.SkewY, b.SkewY, t),
 			Perspective: mixPoints(a.Perspective, b.Perspective, t),
 		}
 		out.Origin = Point{X: mixPoints(from.Origin.X, to.Origin.X, t), Y: mixPoints(from.Origin.Y, to.Origin.Y, t)}

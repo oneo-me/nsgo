@@ -57,20 +57,21 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - A popped screen reports `OnDismiss` and stays hidden until the app removes it; the last screen never pops.
 - Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar.
 - `Screen.IOS.HeaderRightSystemItem` with a `HeaderRight` asks iOS for UIKit's own bar button in its place, as NSH's `headerRightSystemItem`. iOS reports its press on `HeaderRight`'s first view that takes presses.
-- `Header` is then not mounted; elsewhere it is the screen's first child.
+- `Header` is then mounted as a root of its own that the native header leaves unused (`ScreenConfig.Header`), as NSH makes it; elsewhere it is the screen's first child.
 - iOS gives each screen a `UINavigationBar` of its own with a back item, Android a `Toolbar`; their back buttons and iOS's leading-edge swipe send `EventBack` with the screen's ID.
 - iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view.
 - `Screen.Animation` fades the screen instead or shows it at once: a push takes the pushed screen's, a pop the popped one's.
 - `HeaderClass` gives the system header its colors as classes (`bg-*`, `text-*`, `tint-*`) under `HeaderStyle`.
 - A hidden screen has no layout, so a batch that changes a stack first snapshots the screen it shows, and the slide moves that snapshot; the swipe back moves the screens themselves.
-- Each platform measures its bar with what it holds and reports it (`EventScreenHeader`), which replaces the environment's estimate.
+- Each platform measures its bar with what it holds and reports it (`EventScreenHeader`), which replaces the environment's estimate; the insets a screen reports (`EventScreenInsets`) replace those the core derives.
 - A transparent header and a large title lay the content under them: each vertical scroll view whose top they cover gets that part as `ScrollConfig.HeaderInset`, added to its top content inset.
 - iOS collapses a large title into the bar once its scroll view scrolled half the title's row under it, and brings it back above that, as UIKit's navigation controller does.
 - `mobile.TabBar` is the system's tab bar, a native component iOS (`UITabBar`) and Android (a Material 3 navigation bar drawn by the runtime's `TabBar.java`) register themselves; elsewhere it shows nothing.
 - iOS presents a modal with `ModalPageSheet` or `ModalFormSheet` as a sheet view controller, which reports its size (`EventModalSize`) and its swipes (`EventRequestClose`, "swipe"); a swiped sheet stays hidden until the app removes it.
+- `EventModalShown` and `EventModalDismissed` (`Modal.OnShown`, `OnDismissed`) are a platform's reports that a modal finished presenting or going away. No backend sends them yet, so base's `Dialog` reports its open and close once the modal's animation would have ended.
 - `IOS.SupportedOrientations` goes to the controllers' `supportedInterfaceOrientations`. On Android a modal over the surface starts below the status bar unless `Android.StatusBarTranslucent`.
 - `EventPressOutside` reports presses outside an overlay, ignoring those on its anchor or on overlays above it.
-- A view's `Tooltip` is a hint overlay above it that the core shows after half a second of hover on desktops; `Overlay.PointerEvents` keeps it from taking the pointer.
+- A view's `Tooltip` is a hint overlay above it that the core shows after half a second of hover on desktops, and hides when a finger or pointer goes down on the view; `Overlay.PointerEvents` keeps it from taking the pointer.
 - A `mobile.InputAccessoryView` is a layout root as wide as the surface and as tall as its content, which no view holds: its views are sent before the tree's, and an input's `InputConfig.Accessory` names it.
 - iOS makes it the field's `inputAccessoryView`; Android shows it above the keyboard while the field has focus; other platforms leave it unmounted.
 

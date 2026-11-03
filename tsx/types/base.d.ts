@@ -38,6 +38,7 @@ export interface DialogProps extends DialogHostProps {
   class?: string;
   backdropStyle?: StyleProp<ViewStyle>;
   backdropClass?: string;
+  backdropTestID?: string;
   accessibilityLabel?: string;
   children?: JSX.Element;
   ios?: IOSDialogHostProps;

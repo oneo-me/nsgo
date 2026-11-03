@@ -127,6 +127,16 @@ func Omit(fields ...string) Option {
 	}
 }
 
+// Preset sets field to value in every element of the component and
+// leaves it out of its TSX face, as a Go function a face gives a TSX
+// component: Preset("StyleOf", typography).
+func Preset(field string, value any) Option {
+	return func(s *faceSpec) {
+		s.custom[field] = func(_ *props, v reflect.Value) { v.Set(reflect.ValueOf(value)) }
+		s.decls[field] = nil
+	}
+}
+
 // custom sets field with set, for props whose shape is not its field's,
 // declared as decls ("data?: readonly unknown[]").
 func custom(field string, set func(p *props, v reflect.Value), decls ...string) Option {
@@ -174,6 +184,59 @@ func RegisterFunctions(module string, funcs map[string]any) {
 		}
 		registeredFuncs[module] = append(registeredFuncs[module], registeredFunc{name, t})
 		registered[module] = append(registered[module], export{name, func(r *runtime) goja.Value { return r.vm.ToValue(fn) }})
+	}
+}
+
+// RegisterStatics gives component, which Register made importable from
+// module, static functions, as NSH's TextView.parse: each value of funcs
+// is a func, called with JS's arguments read as its parameters' types
+// and its results given back as the component's props and events cross.
+func RegisterStatics(module, component string, funcs map[string]any) {
+	registryMu.Lock()
+	defer registryMu.Unlock()
+	for name, fn := range funcs {
+		if reflect.TypeOf(fn) == nil || reflect.TypeOf(fn).Kind() != reflect.Func {
+			panic(fmt.Sprintf("tsx: RegisterStatics: %s.%s.%s is no func", module, component, name))
+		}
+		statics[module] = append(statics[module], static{component, name, reflect.ValueOf(fn)})
+	}
+}
+
+// static is a component's static function.
+type static struct {
+	component, name string
+	fn              reflect.Value
+}
+
+var statics = map[string][]static{}
+
+// addStatics sets module m's components' static functions.
+func (r *runtime) addStatics(module string, m *goja.Object) {
+	registryMu.Lock()
+	list := statics[module]
+	registryMu.Unlock()
+	for _, s := range list {
+		c, ok := m.Get(s.component).(*goja.Object)
+		if !ok {
+			continue
+		}
+		ft := s.fn.Type()
+		_ = c.Set(s.name, r.function(func(call goja.FunctionCall) goja.Value {
+			in := make([]reflect.Value, ft.NumIn())
+			for i := range in {
+				t := ft.In(i)
+				if ft.IsVariadic() && i == ft.NumIn()-1 {
+					t = t.Elem()
+					var rest []reflect.Value
+					for j := i; j < len(call.Arguments); j++ {
+						rest = append(rest, r.decode(call.Arguments[j], t))
+					}
+					return r.results(s.fn.Call(append(in[:i], rest...)), ft, nil)
+				}
+				in[i] = r.decode(call.Argument(i), t)
+			}
+			return r.results(s.fn.Call(in), ft, nil)
+		}))
 	}
 }
 

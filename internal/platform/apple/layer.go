@@ -216,11 +216,13 @@ func SetTransform(layer objc.ID, t driver.Transform) {
 	anchor := objc.Send[CGPoint](layer, sel("anchorPoint"))
 	ax, ay := anchor.X*size.Width, anchor.Y*size.Height
 	origin := driver.Point{X: driver.Points(size.Width / 2), Y: driver.Points(size.Height / 2)}
+	var z float64
 	if d := decors[layer]; d != nil {
 		origin.X += d.vs.Origin.X
 		origin.Y += d.vs.Origin.Y
+		z = float64(d.vs.OriginZ)
 	}
-	m := toCA(driver.Translate3D(-ax, -ay, 0).Mul(t.Matrix(origin)).Mul(driver.Translate3D(ax, ay, 0)))
+	m := toCA(driver.Translate3D(-ax, -ay, z).Mul(t.Matrix(origin)).Mul(driver.Translate3D(ax, ay, -z)))
 	if m == (transform3D{M11: 1, M22: 1, M33: 1, M44: 1}) {
 		delete(held, layer)
 	} else {

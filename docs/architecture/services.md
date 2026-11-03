@@ -131,7 +131,7 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 - GTK flags no repeats, so Linux counts a key pressed again before its release; UIKit reports a held key once, so iOS repeats a binding on a timer.
 - iOS and Android match a hardware keyboard too. `KeyLabel` names a binding as the platform shows it (⇧⌘L, Ctrl+Shift+L), `Environment.AppleKeyboard` telling the web on Apple platforms.
 - An alert's `Sheet` presents its actions as an action sheet, and `Cancelable` lets Escape, back and a press outside close it with -1 ([components](components.md#popups)).
-- The status bar layers as NSH's `status_bar.rs`: `SetStatusBar` patches the app's default, and each screen's or modal's `StatusBar` is over it while shown. The latest wins field by field; iOS and Android apply the result.
+- The status bar layers as NSH's `status_bar.rs`: `SetStatusBar` patches the app's default, and each screen's or modal's `StatusBar` is over it while shown. The latest wins field by field; iOS and Android apply the result. A TSX app's default is `nsgo.yaml`'s `status_bar` (`foreground`, `hidden`), as NSH's `nsh.json` `statusBar`.
 
 ## Where NSGo departs from NSH
 

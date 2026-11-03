@@ -142,7 +142,7 @@ func (w *window) snapshotView(v *view, snap uintptr) {
 }
 
 // gskBlends are GSK's blend modes in driver.BlendMode's order, normal
-// first; GSK has no plus-lighter, which stays normal.
+// first; GSK has no plus-lighter or plus-darker, which stay normal.
 var gskBlends = [...]int32{
 	driver.BlendMultiply: 1, driver.BlendScreen: 2, driver.BlendOverlay: 3, driver.BlendDarken: 4,
 	driver.BlendLighten: 5, driver.BlendColorDodge: 6, driver.BlendColorBurn: 7, driver.BlendHardLight: 8,

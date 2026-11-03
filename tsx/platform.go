@@ -25,9 +25,9 @@ func init() {
 			return r.accessor(func() goja.Value {
 				e := desktop.TitleBar(r.cx)
 				o := r.vm.NewObject()
-				_ = o.Set("height", float64(e.Top))
-				_ = o.Set("left", float64(e.Left))
-				_ = o.Set("right", float64(e.Right))
+				_ = o.Set("height", js32(e.Top))
+				_ = o.Set("left", js32(e.Left))
+				_ = o.Set("right", js32(e.Right))
 				return o
 			})
 		}},

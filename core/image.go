@@ -122,11 +122,15 @@ func ScalesOf(scales ...float32) ImageScales {
 func (t *Tree) pickScale(s ImageSource) ImageSource {
 	scales := s.Scales
 	s.Scales = 0
-	if scales == 0 || !strings.HasPrefix(s.URI, "asset:") || strings.ContainsAny(s.URI, "?#") {
+	if scales == 0 || s.Variants == nil && (!strings.HasPrefix(s.URI, "asset:") || strings.ContainsAny(s.URI, "?#")) {
 		return s
 	}
 	pick := scales.Pick(t.root.Env().ratio.GetUntracked())
 	if pick == 1 {
+		return s
+	}
+	if uri, ok := s.Variants[pick]; ok {
+		s.URI, s.Variants = uri, nil
 		return s
 	}
 	name := strings.LastIndexByte(s.URI, '/') + 1

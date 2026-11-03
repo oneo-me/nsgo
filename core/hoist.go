@@ -90,6 +90,7 @@ func (t *Tree) mountOverlay(cx *Scope, parent *node, o Overlay) {
 func (t *Tree) mountModal(cx *Scope, parent *node, m Modal) {
 	n := t.newNode(driver.KindModal, parent, cx)
 	t.hoist(n, &hoistNode{modal: &m, reported: NewSignal[*modalSize](cx, nil)})
+	t.setClasses(n, m.Class)
 	t.bindStyle(cx, n, m.Style, m.StyleFunc)
 	n.props = driver.ViewProps{Role: m.Role, Label: m.Label, TestID: m.TestID}
 	if n.props.Role == RoleNone {
@@ -192,6 +193,18 @@ func (t *Tree) modalInsets(n *node) Edges {
 // presents it at, or a request to close it.
 func (t *Tree) modalEvent(n *node, ev driver.Event) {
 	h := n.hoist
+	switch f := h.modal.OnShown; ev.Kind {
+	case driver.EventModalShown:
+		if f != nil {
+			t.within(n.owner, f)
+		}
+		return
+	case driver.EventModalDismissed:
+		if f := h.modal.OnDismissed; f != nil {
+			t.within(n.owner, f)
+		}
+		return
+	}
 	if ev.Kind == driver.EventModalSize {
 		r := &modalSize{ev.Size, ev.Insets}
 		if old := h.reported.GetUntracked(); old == nil || *old != *r {

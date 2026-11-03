@@ -59,10 +59,12 @@ func TestScreenSystemHeader(t *testing.T) {
 		}}
 	})
 	b := h.commit()
+	// Header is made, as NSH makes it, but held as a header view the
+	// system header leaves unused, never in the screen's content.
 	for _, id := range []string{"drawn-Home", "drawn-Detail"} {
 		for _, n := range h.tree.nodes {
-			if n != nil && !n.deleted && n.props.TestID == id {
-				t.Errorf("%s mounted: the system header replaces Header", id)
+			if n != nil && !n.deleted && n.props.TestID == id && (n.parent == nil || !n.parent.headerView) {
+				t.Errorf("%s is in the screen: the system header replaces Header", id)
 			}
 		}
 	}
@@ -70,7 +72,7 @@ func TestScreenSystemHeader(t *testing.T) {
 	c, ok := screenItems(b)[detail.id]
 	want := driver.ScreenConfig{Title: "Detail", CanGoBack: true, BackTitle: "Back to Home",
 		Background: RGB(0x0a141e), TitleColor: RGB(0xffffff), TintColor: RGB(0x0000ff),
-		Right: action.parent.id, HeaderHeight: 84}
+		Right: action.parent.id, HeaderHeight: 84, Header: h.find("drawn-Detail").parent.id}
 	if !ok || c != want {
 		t.Errorf("detail's header = %+v, want %+v", c, want)
 	}

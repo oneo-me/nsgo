@@ -124,10 +124,10 @@ func isBool(v goja.Value) bool {
 func (r *runtime) touchPoint(id int, at, page core.Point, ms float64) *goja.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("identifier", id)
-	_ = o.Set("locationX", float64(at.X))
-	_ = o.Set("locationY", float64(at.Y))
-	_ = o.Set("pageX", float64(page.X))
-	_ = o.Set("pageY", float64(page.Y))
+	_ = o.Set("locationX", js32(at.X))
+	_ = o.Set("locationY", js32(at.Y))
+	_ = o.Set("pageX", js32(page.X))
+	_ = o.Set("pageY", js32(page.Y))
 	_ = o.Set("target", 0)
 	_ = o.Set("timestamp", ms)
 	return o
@@ -183,15 +183,15 @@ func (r *runtime) responderEvent(e core.ResponderEvent) *goja.Object {
 func (r *runtime) gestureState(e core.ResponderEvent, stateID int) *goja.Object {
 	g := e.Gesture
 	o := r.vm.NewObject()
-	_ = o.Set("moveX", float64(g.Position.X))
-	_ = o.Set("moveY", float64(g.Position.Y))
-	_ = o.Set("x0", float64(g.Origin.X))
-	_ = o.Set("y0", float64(g.Origin.Y))
-	_ = o.Set("dx", float64(g.Delta.X))
-	_ = o.Set("dy", float64(g.Delta.Y))
+	_ = o.Set("moveX", js32(g.Position.X))
+	_ = o.Set("moveY", js32(g.Position.Y))
+	_ = o.Set("x0", js32(g.Origin.X))
+	_ = o.Set("y0", js32(g.Origin.Y))
+	_ = o.Set("dx", js32(g.Delta.X))
+	_ = o.Set("dy", js32(g.Delta.Y))
 	// Points per millisecond, as React Native's.
-	_ = o.Set("vx", float64(g.Velocity.X)/1000)
-	_ = o.Set("vy", float64(g.Velocity.Y)/1000)
+	_ = o.Set("vx", js32(g.Velocity.X)/1000)
+	_ = o.Set("vy", js32(g.Velocity.Y)/1000)
 	_ = o.Set("numberActiveTouches", g.Touches)
 	_ = o.Set("stateID", stateID)
 	return o

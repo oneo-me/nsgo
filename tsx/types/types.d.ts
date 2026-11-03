@@ -355,7 +355,16 @@ export interface TextProps extends CommonProps, TextHostProps {
   style?: StyleProp<TextStyle>;
 }
 
-export interface ImageAsset { url: string; size: Size; scales?: number[] }
+export interface ImageAsset {
+  url: string;
+  /** Its size in points. */
+  size: Size;
+  /** The pixel densities it ships in, 1 being the imported file: `[1, 2, 3]` when `logo@2x.png` and
+   * `logo@3x.png` sit next to `logo.png`. The image loads the one for the screen's pixel ratio. */
+  scales?: number[];
+  /** The URLs of the densities past 1, by density, which the bundle carries. */
+  variants?: Record<string, string>;
+}
 export type ResizeMode = "cover" | "contain" | "stretch" | "center" | "scale-down";
 
 /** An image's own props. */

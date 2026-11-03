@@ -15,6 +15,9 @@ func init() {
 		tsx.Enum(map[string]editor.DefinitionTrigger{"hover": editor.DefinitionHover, "key": editor.DefinitionKey, "press": editor.DefinitionPress}),
 		tsx.Enum(map[string]editor.Severity{"error": editor.SeverityError, "hint": editor.SeverityHint, "info": editor.SeverityInfo, "warning": editor.SeverityWarning}),
 		tsx.Enum(map[string]editor.DiagnosticTag{"unnecessary": editor.TagUnnecessary, "deprecated": editor.TagDeprecated}),
+		// TSX apps edit in NSH's look of diagnostics, under their own
+		// classes and styles; Go's Editor takes the app's.
+		tsx.Preset("Under", look),
 	)
 	tsx.Required[editor.CompletionItem]("Label")
 	tsx.Required[editor.Diagnostic]("Message")
@@ -46,3 +49,21 @@ export interface EditorContextMenuEvent { position: EditorPosition; x: number; y
 			return m
 		}, nil)
 }
+
+// look is NSH's Editor's look of diagnostics (nsh-base's editor/view.rs):
+// a wavy line under the text in the severity's color, faded unnecessary
+// code and struck deprecated code.
+var look = func() editor.Styles {
+	mark := func(c core.Color) core.Style {
+		return core.Style{TextDecoration: core.TextDecorationUnderline, TextDecorationStyle: core.DecorationWavy,
+			TextDecorationColor: c, TextDecorationThickness: core.Pt(1)}
+	}
+	return editor.Styles{
+		DiagnosticError:   mark(core.RGB(0xe7000b)),
+		DiagnosticWarning: mark(core.RGB(0xd97706)),
+		DiagnosticInfo:    mark(core.RGB(0x2563eb)),
+		DiagnosticHint:    mark(core.RGB(0x737373)),
+		UnnecessaryText:   core.Style{Color: core.RGB(0x737373)},
+		DeprecatedText:    core.Style{TextDecoration: core.TextDecorationLineThrough},
+	}
+}()

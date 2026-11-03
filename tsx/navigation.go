@@ -56,8 +56,24 @@ func (r *runtime) createNavStack(call goja.FunctionCall) goja.Value {
 		nav.SetRoutesKeeping(strictEquals, r.arrayItems(arg(call, 0))...)
 	})
 	set("remove", func(call goja.FunctionCall) {
+		// The topmost of the pages of route, as NSH's remove.
 		route := arg(call, 0)
-		nav.Remove(func(v goja.Value) bool { return v.StrictEquals(route) })
+		count := 0
+		r.cx.Untrack(func() {
+			for _, v := range nav.Routes() {
+				if v.StrictEquals(route) {
+					count++
+				}
+			}
+		})
+		seen := 0
+		nav.Remove(func(v goja.Value) bool {
+			if v.StrictEquals(route) {
+				seen++
+				return seen == count
+			}
+			return false
+		})
 	})
 	return o
 }
@@ -76,8 +92,11 @@ func (r *runtime) navOf(v goja.Value) *base.Nav[goja.Value] {
 func navStackFace(p *props) core.Node {
 	r := p.r
 	nav := r.navOf(p.get("state"))
-	// A stack fills its parent.
-	style := core.Style{FlexGrow: 1}.Merge(p.style())
+	// A stack fills its parent unless its style sizes it.
+	style := p.style()
+	if style.Height.IsAuto() && style.FlexGrow == 0 {
+		style.FlexGrow = 1
+	}
 	if c := p.class(); c != "" {
 		// The stack takes no classes: they style a view around it.
 		return core.View{Class: c, Style: core.Style{FlexGrow: 1}, Children: []core.Node{r.navStack(p, nav, style)}}
@@ -88,7 +107,7 @@ func navStackFace(p *props) core.Node {
 
 func (r *runtime) navStack(p *props, nav *base.Nav[goja.Value], style core.Style) core.Node {
 	render := p.peek("children")
-	return nav.Stack(style, func(cx *core.Scope, route goja.Value, depth func() int) base.NavPage {
+	stack := nav.Stack(style, func(cx *core.Scope, route goja.Value, depth func() int) base.NavPage {
 		index := r.accessor(func() goja.Value { return r.vm.ToValue(depth()) })
 		var out goja.Value
 		cx.Run(func() { out = r.call(render, route, index) })
@@ -98,6 +117,11 @@ func (r *runtime) navStack(p *props, nav *base.Nav[goja.Value], style core.Style
 		// What the function rendered, in a page around it.
 		return base.NavPage{Children: []core.Node{r.region(func() goja.Value { return out })}}
 	})
+	if st, ok := stack.(core.Stack); ok {
+		st.TestID = p.str("testID")
+		return st
+	}
+	return stack
 }
 
 // page is a NavPage's call: what builds its screen.
@@ -119,7 +143,9 @@ var headerItems = map[string]core.HeaderSystemItem{"add": core.HeaderItemAdd, "d
 	"search": core.HeaderItemSearch, "share": core.HeaderItemShare, "trash": core.HeaderItemTrash,
 	"save": core.HeaderItemSave, "cancel": core.HeaderItemCancel}
 
-var screenAnimations = map[string]core.ScreenAnimation{"slide": core.ScreenSlide, "fade": core.ScreenFade,
+// screenAnimations are NSH's: "slide" is the platform's push, as the
+// default.
+var screenAnimations = map[string]core.ScreenAnimation{"slide": core.ScreenDefault, "fade": core.ScreenFade,
 	"none": core.ScreenNone}
 
 // navPage is NavPage(props): a page its stack reads.

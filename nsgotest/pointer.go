@@ -37,9 +37,12 @@ type finger struct {
 	pressed         bool    // press heard PressDown
 	cancelled       bool    // it moved away from press
 	mode            dragMode
-	view            *View        // the pan's or scroll view's
-	from            driver.Point // the scroll view's offset when it took the drag
-	grabbed         driver.Point // where the finger was then
+	view            *View         // the pan's or scroll view's
+	id              int           // its Touch.ID: 0 for Drag's, as a mouse's
+	t0              time.Duration // when it went down, which reports count from
+	downAt          time.Time     // when it went down, on the clock
+	from            driver.Point  // the scroll view's offset when it took the drag
+	grabbed         driver.Point  // where the finger was then
 	moved           bool
 }
 
@@ -67,7 +70,7 @@ func (a *App) Drag(selector string, path ...driver.Point) {
 		a.done()
 		return
 	}
-	f := &finger{start: start, at: start, last: start, reporting: a.listensToTouches()}
+	f := &finger{start: start, at: start, last: start, reporting: a.listensToTouches(), downAt: a.Clock.Now()}
 	for p := v; p != nil; p = p.Parent {
 		f.chain = append(f.chain, p)
 	}
@@ -81,6 +84,7 @@ func (a *App) Drag(selector string, path ...driver.Point) {
 		inScroll = inScroll || p != v && p.Kind == driver.KindScroll && !p.Scroll.Behavior.NoScroll
 	}
 	a.touchAt(driver.GestureBegan, start, 0)
+	a.pressOutside(v, start)
 	// Inside a scroll view a touch presses only once it rests.
 	if !inScroll {
 		a.pressIn(f)
@@ -103,6 +107,97 @@ func (a *App) Drag(selector string, path ...driver.Point) {
 	a.done()
 }
 
+// Finger is a finger a test puts down with Touch and moves a step at a
+// time, as Drag does in one: the views listening to touches hear it,
+// presses and the touch responder follow it, and past the slop a pan or
+// a scroll view may take it.
+type Finger struct {
+	a    *App
+	f    *finger
+	view *View
+	// origin is where the view's top left corner is on the surface.
+	origin driver.Point
+}
+
+// Touch puts a finger down at at, in the coordinates of the view selector
+// names, and reports it there.
+func (a *App) Touch(selector string, at driver.Point) *Finger {
+	a.t.Helper()
+	a.step("touch(%s, %v)", selector, at)
+	v := a.pick(selector, "view", func(m *View) (*View, bool) { return m, true })
+	b := v.surfaceFrame()
+	start := driver.Point{X: b.Origin.X + at.X, Y: b.Origin.Y + at.Y}
+	f := &finger{start: start, at: start, last: start, reporting: a.listensToTouches(), id: 1, downAt: a.Clock.Now(),
+		t0: a.Clock.Now().Sub(a.start)}
+	for p := v; p != nil; p = p.Parent {
+		f.chain = append(f.chain, p)
+	}
+	a.blocked = false
+	for _, p := range f.chain {
+		if f.press == nil && (pressable(p) || p.Events.Has(driver.EventLongPress)) && !v.disabled(p) {
+			f.press = p
+		}
+	}
+	// It names the view it went down on, as a platform that knows.
+	if f.reporting {
+		a.dispatch(driver.Event{Kind: driver.EventTouch, ID: v.ID, Phase: driver.GestureBegan, Time: f.t0,
+			Touches: []driver.Touch{{ID: f.id, PagePosition: start, Changed: true}}})
+	}
+	a.pressOutside(v, start)
+	a.pressIn(f)
+	a.done()
+	return &Finger{a: a, f: f, view: v, origin: b.Origin}
+}
+
+// Move moves the finger to at, in the coordinates of the view it went
+// down on, a display frame later.
+func (g *Finger) Move(at driver.Point) {
+	g.a.t.Helper()
+	g.a.step("move(%v)", at)
+	g.a.frame(g.f)
+	g.a.fingerMoved(g.f, driver.Point{X: g.origin.X + at.X, Y: g.origin.Y + at.Y})
+	g.a.done()
+}
+
+// Lift lifts the finger, where it is: a tap where it went down presses.
+func (g *Finger) Lift() {
+	g.a.t.Helper()
+	g.a.step("lift")
+	g.a.frame(g.f)
+	g.a.fingerLifted(g.f)
+	g.a.done()
+}
+
+// LiftAt lifts the finger at at, in the coordinates of the view it went
+// down on, a display frame later, with no move reported on the way.
+func (g *Finger) LiftAt(at driver.Point) {
+	g.a.t.Helper()
+	g.a.step("lift(%v)", at)
+	g.a.frame(g.f)
+	f := g.f
+	f.last, f.at = f.at, driver.Point{X: g.origin.X + at.X, Y: g.origin.Y + at.Y}
+	g.a.fingerLifted(f)
+	g.a.done()
+}
+
+// Cancel ends the finger as the system does when it takes the touches:
+// no press.
+func (g *Finger) Cancel() {
+	g.a.t.Helper()
+	g.a.step("cancel")
+	f := g.f
+	if f.reporting {
+		g.a.touchAt(driver.GestureCancelled, f.at, f.t0+f.elapsed, f.id)
+	}
+	if f.pressed && !f.cancelled {
+		f.cancelled = true
+		ev := g.a.pressEvent(f.press, f.start)
+		ev.Kind = driver.EventPressUp
+		g.a.send(f.press, ev)
+	}
+	g.a.done()
+}
+
 // frame takes one display frame of a gesture.
 func (a *App) frame(f *finger) {
 	a.elapse(driver.FrameInterval)
@@ -120,11 +215,10 @@ func (a *App) pressIn(f *finger) {
 
 func (a *App) fingerMoved(f *finger, at driver.Point) {
 	f.last, f.at = f.at, at
-	first := !f.moved
 	f.moved = true
 	t := driver.Point{X: at.X - f.start.X, Y: at.Y - f.start.Y}
 	if f.reporting {
-		a.touchAt(driver.GestureChanged, at, f.elapsed)
+		a.touchAt(driver.GestureChanged, at, f.t0+f.elapsed, f.id)
 	}
 	distance := driver.Points(math.Hypot(float64(t.X), float64(t.Y)))
 	if f.pressed && !f.cancelled && distance > pressSlop {
@@ -133,9 +227,9 @@ func (a *App) fingerMoved(f *finger, at driver.Point) {
 		ev.Kind = driver.EventPressUp
 		a.send(f.press, ev)
 	}
-	// The touch responder hears the first move first: it may take the
-	// drag before anything native starts.
-	if f.mode == dragIdle && !(f.reporting && first) {
+	// The touch responder heard the move above: a claim blocks native
+	// drags before one starts.
+	if f.mode == dragIdle {
 		a.startDrag(f, t)
 	}
 	switch f.mode {
@@ -171,7 +265,7 @@ func (a *App) startDrag(f *finger, t driver.Point) {
 			driver.Points(math.Hypot(float64(t.X), float64(t.Y))) >= driver.DefaultPanSlop && a.canScroll(v, t) {
 			if f.reporting {
 				// The scroll view takes the touches over.
-				a.touchAt(driver.GestureCancelled, f.at, f.elapsed)
+				a.touchAt(driver.GestureCancelled, f.at, f.t0+f.elapsed, f.id)
 				f.reporting = false
 			}
 			f.mode, f.view, f.from, f.grabbed = dragScroll, v, v.Offset, f.at
@@ -268,7 +362,7 @@ func (a *App) pullValue(v *View) {
 
 func (a *App) fingerLifted(f *finger) {
 	if f.reporting {
-		a.touchAt(driver.GestureEnded, f.at, f.elapsed)
+		a.touchAt(driver.GestureEnded, f.at, f.t0+f.elapsed, f.id)
 	}
 	switch f.mode {
 	case dragPan:
@@ -288,6 +382,30 @@ func (a *App) fingerLifted(f *finger) {
 		a.settle(v)
 	}
 	if f.pressed && !f.cancelled {
+		// Held past a long press's delay, it long-presses the view that
+		// hears it, if one does, and presses nothing.
+		delay := f.press.Props.DelayLongPress
+		var long *View
+		for _, p := range f.chain {
+			if p.Events.Has(driver.EventLongPress) && !p.disabled(nil) {
+				long, delay = p, p.Props.DelayLongPress
+				break
+			}
+		}
+		if delay <= 0 {
+			delay = defaultLongPress
+		}
+		if a.Clock.Now().Sub(f.downAt) >= delay {
+			if long != nil {
+				ev := a.pressEvent(long, f.start)
+				ev.Kind = driver.EventLongPress
+				a.send(long, ev)
+			}
+			ev := a.pressEvent(f.press, f.start)
+			ev.Kind = driver.EventPressUp
+			a.send(f.press, ev)
+			return
+		}
 		// A finger that lifts where it landed taps, and taps count up as
 		// presses do.
 		a.countClick(f.press)

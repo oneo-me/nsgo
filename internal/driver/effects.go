@@ -210,11 +210,13 @@ const (
 	BlendColor
 	BlendLuminosity
 	BlendPlusLighter
+	// BlendPlusDarker is a linear burn: the sum of the colors less white.
+	BlendPlusDarker
 )
 
 var blendNames = [...]string{"normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge",
 	"color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color",
-	"luminosity", "plus-lighter"}
+	"luminosity", "plus-lighter", "plus-darker"}
 
 // Name returns the blend mode's CSS name.
 func (b BlendMode) Name() string {

@@ -617,7 +617,12 @@ func (e *ed) diagStyle(d *Diagnostic) core.Style {
 		st = merge(st, s().UnnecessaryText)
 	}
 	if d.Has(TagDeprecated) {
+		// Its line joins the severity's, as one decoration.
+		lines := st.TextDecoration
 		st = merge(st, s().DeprecatedText)
+		if lines&^core.TextDecorationNone != 0 && st.TextDecoration&^core.TextDecorationNone != 0 {
+			st.TextDecoration |= lines &^ core.TextDecorationNone
+		}
 	}
 	return st
 }

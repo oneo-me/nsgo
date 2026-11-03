@@ -122,6 +122,9 @@ func (t *Tree) followEnv(n *node) {
 				return
 			}
 			c.env = env
+			if n.created {
+				c.env.rtl = n.rtl
+			}
 			if c.list.tw != env.tw {
 				c.list = env.tw.classes(c.list.class)
 				reportUnknown(c.list)
@@ -237,7 +240,7 @@ func (n *node) withClasses(style Style) Style {
 				if sp.reverseX {
 					side = &m.Left
 				}
-				if *side == 0 {
+				if *side == 0 || sp.spaceImportant {
 					*side = sp.spaceX
 				}
 			}
@@ -246,7 +249,7 @@ func (n *node) withClasses(style Style) Style {
 				if sp.reverseY {
 					side = &m.Top
 				}
-				if *side == 0 {
+				if *side == 0 || sp.spaceImportant {
 					*side = sp.spaceY
 				}
 			}

@@ -151,7 +151,9 @@ type classProps struct {
 	pointerEvents PointerEvents
 	// spaceX and spaceY are space-x-* and space-y-*: the margins the view
 	// gives its children but the last.
-	spaceX, spaceY       Points
+	spaceX, spaceY Points
+	// spaceImportant is set for space-*!, which wins over margins.
+	spaceImportant       bool
 	hasSpaceX, hasSpaceY bool
 	reverseX, reverseY   bool
 
@@ -208,6 +210,18 @@ const currentMark Color = 0x01020300
 
 func isCurrent(c Color) bool { return c&^0xff == currentMark }
 
+// currentIn returns c with CurrentColor, or a -current utility's mark,
+// replaced by color, the mark's alpha applied.
+func currentIn(c, color Color) Color {
+	switch {
+	case c == CurrentColor:
+		return color
+	case isCurrent(c):
+		return withAlpha(color, float32(c&0xff)/255)
+	}
+	return c
+}
+
 // resolveCurrent replaces the -current colors of s and p.
 func (p *classProps) resolveCurrent(s *Style) {
 	text := s.Color
@@ -229,7 +243,14 @@ func (p *classProps) resolveCurrent(s *Style) {
 		&s.BorderColors.Left, &s.OutlineColor, &s.TextDecorationColor, &p.ringColor, &p.insetRingColor} {
 		cur(c, true)
 	}
-	for _, c := range []*Color{&s.Background, &s.SelectionColor, &s.PlaceholderColor, &s.TintColor, &p.shadowColor,
+	// A background or a tint keeps its mark without a text color here:
+	// the view's style resolves it in the color the view inherits
+	// (currentIn).
+	if text != 0 {
+		cur(&s.Background, false)
+		cur(&s.TintColor, false)
+	}
+	for _, c := range []*Color{&s.SelectionColor, &s.PlaceholderColor, &p.shadowColor,
 		&p.insetShadowColor, &p.ringOffsetColor, &p.textShadowColor, &p.dropColor, &p.gradient.from.color,
 		&p.gradient.via.color, &p.gradient.to.color} {
 		cur(c, false)
@@ -571,7 +592,7 @@ func (t *tailwindTheme) parseToken(l *classList, token string) bool {
 	l.env = l.env || env || cond.dark != either || cond.landscape != either || cond.rtl != either ||
 		cond.reduceMotion != either || cond.minWidth != 0 || cond.maxWidth != 0 || cond.platform != ""
 	l.positional = l.positional || cond.position != 0
-	l.spacing = l.spacing || strings.HasPrefix(utility, "space-")
+	l.spacing = l.spacing || strings.HasPrefix(strings.TrimPrefix(utility, "-"), "space-")
 	return true
 }
 
@@ -874,6 +895,16 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 	}
 	if ip := parts[&important]; ip.pointerEvents != 0 {
 		p.pointerEvents = ip.pointerEvents
+	}
+	// Important spacing wins over the children's own margins.
+	if ip := parts[&important]; ip.hasSpaceX || ip.hasSpaceY {
+		if ip.hasSpaceX {
+			p.spaceX, p.hasSpaceX, p.reverseX = ip.spaceX, true, ip.reverseX || p.reverseX
+		}
+		if ip.hasSpaceY {
+			p.spaceY, p.hasSpaceY, p.reverseY = ip.spaceY, true, ip.reverseY || p.reverseY
+		}
+		p.spaceImportant = true
 	}
 	return normal, important, p
 }

@@ -20,7 +20,7 @@ import (
 )
 
 // nshImports are the imports of NSH's modules, renamed to NSGo's.
-var nshImports = regexp.MustCompile(`(from |import\()"nsh(/[^"]*)?"`)
+var nshImports = regexp.MustCompile(`(from |import\(|nativeModule[^(\n]*\()"nsh(/[^"]*)?"`)
 
 // nshGallery is NSH's gallery (nsh/examples/gallery, with the styled UI
 // it shares) with its imports renamed, at app/ and nsh-gallery-ui/, and
@@ -142,8 +142,11 @@ func nshApp(t *testing.T, root string) fstest.MapFS {
 		switch {
 		case rel == "nsh.json":
 			var config struct {
-				Name string
-				Web  struct{ Host string }
+				Name      string
+				Web       struct{ Host string }
+				StatusBar map[string]any
+				Theme     map[string]any
+				Tailwind  map[string]any
 			}
 			if err := json.Unmarshal(data, &config); err != nil {
 				return err
@@ -151,6 +154,19 @@ func nshApp(t *testing.T, root string) fstest.MapFS {
 			yaml := "name: " + config.Name + "\n"
 			if config.Web.Host != "" {
 				yaml += "web:\n  host: " + config.Web.Host + "\n"
+			}
+			if config.StatusBar != nil {
+				sb, _ := json.Marshal(config.StatusBar) // JSON is YAML
+				yaml += "status_bar: " + string(sb) + "\n"
+			}
+			if config.Tailwind != nil {
+				tw, _ := json.Marshal(config.Tailwind)
+				yaml += "tailwind: " + string(tw) + "\n"
+			}
+			if config.Theme != nil {
+				theme, _ := json.Marshal(config.Theme)
+				fsys["theme.yaml"] = &fstest.MapFile{Data: theme}
+				yaml += "theme: theme.yaml\n"
 			}
 			fsys["nsgo.yaml"] = &fstest.MapFile{Data: []byte(yaml)}
 		case strings.HasSuffix(p, ".ts") || strings.HasSuffix(p, ".tsx"):

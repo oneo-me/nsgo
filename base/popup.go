@@ -44,6 +44,9 @@ type popup struct {
 	onOpen   func()
 	onClose  func()
 	onCancel func()
+	// userClosed, for a controlled dialog, is set while the user closed
+	// it and the app has not set Open false since.
+	userClosed *core.Signal[bool]
 }
 
 func newPopup(cx *core.Scope, open func() bool, def bool, onChange func(bool, Reason), onOpen, onClose func()) *popup {
@@ -82,6 +85,9 @@ func (p *popup) set(open bool, r Reason) {
 	}
 	if p.own != nil {
 		p.own.Set(open)
+	}
+	if p.userClosed != nil && !open {
+		p.userClosed.Set(true)
 	}
 	if p.onChange != nil {
 		p.onChange(open, r)
@@ -212,7 +218,11 @@ func (t Tooltip) Render(cx *core.Scope) core.Node {
 // Hint implements core.HintTooltip: given as a view's Tooltip, the
 // tooltip shows against that view, Trigger left out.
 func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool)) {
-	st := newPopup(cx, t.Open, t.DefaultOpen, t.OnOpenChange, t.OnOpen, t.OnClose)
+	st := newPopup(cx, t.Open, t.DefaultOpen && !t.Disabled, t.OnOpenChange, t.OnOpen, t.OnClose)
+	if t.Disabled {
+		// A disabled tooltip never shows.
+		st.open = func() bool { return false }
+	}
 	st.lifecycle(cx, st.open)
 	delay := t.Delay
 	if delay == 0 {
@@ -244,9 +254,21 @@ func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool
 			stop = cx.AfterFunc(delay, func() { stop = nil; st.set(true, ReasonHover) })
 		}
 	}
+	// An element's tooltip has no trigger of its own: Class and Style
+	// style the popup, under PopupClass and PopupStyle.
+	class, style, fn := joinClasses(t.Class, t.PopupClass), t.Style.Merge(t.PopupStyle), t.PopupStyleFunc
+	if t.StyleFunc != nil {
+		fn = func() core.Style {
+			s := t.StyleFunc()
+			if t.PopupStyleFunc != nil {
+				s = s.Merge(t.PopupStyleFunc())
+			}
+			return s
+		}
+	}
 	return core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
 		return core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
-			Class: t.PopupClass, Style: t.PopupStyle, StyleFunc: t.PopupStyleFunc, Children: t.Children,
+			Class: class, Style: style, StyleFunc: fn, Children: t.Children,
 			Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}
 	}}, hover
 }
@@ -274,27 +296,76 @@ type Dialog struct {
 	StatusBar      core.StatusBarSetting
 	StatusBarFunc  func() core.StatusBarSetting
 	// BackdropClass, BackdropStyle or BackdropStyleFunc, when set, draws a
-	// backdrop whose press asks to close.
+	// backdrop whose press asks to close; BackdropTestID names it.
 	BackdropClass     string
 	BackdropStyle     core.Style
 	BackdropStyleFunc func() core.Style
+	BackdropTestID    string
 	PopupClass        string
 	PopupStyle        core.Style
 	PopupStyleFunc    func() core.Style
-	Children          []core.Node
-	Label             string
-	TestID            string
+	// LayerClass and LayerStyle style the layer that holds the backdrop
+	// and the popup, over its default, which centers the popup.
+	LayerClass string
+	LayerStyle core.Style
+	Children   []core.Node
+	Label      string
+	TestID     string
 }
 
 // Render implements core.Node.
 func (d Dialog) Render(cx *core.Scope) core.Node {
 	st := newPopup(cx, d.Open, d.DefaultOpen, d.OnOpenChange, d.OnOpen, d.OnClose)
 	st.onCancel = d.OnCancel
-	st.lifecycle(cx, st.open)
+	if d.Open != nil {
+		// Closed by the user, it stays closed while Open stays true, until
+		// the app sets it false and true again.
+		st.userClosed = core.NewSignal(cx, false)
+		cx.Effect(func() {
+			if !d.Open() {
+				st.userClosed.Set(false)
+			}
+		})
+		st.open = func() bool { return d.Open() && !st.userClosed.Get() }
+	}
+	// The platform presents the modal: OnOpen and OnClose follow once its
+	// animation would have ended, or as soon as a platform reports it
+	// shown or gone.
+	var stop func() bool
+	report := func(open bool) func() {
+		return func() {
+			if stop != nil {
+				stop()
+				stop = nil
+			}
+			if f := map[bool]func(){true: d.OnOpen, false: d.OnClose}[open]; f != nil {
+				cx.Untrack(f)
+			}
+		}
+	}
+	was := false
+	cx.Effect(func() {
+		open := st.open()
+		if open == was {
+			return
+		}
+		was = open
+		if stop != nil {
+			stop()
+			stop = nil
+		}
+		if wait := d.Animation.Duration(); wait > 0 {
+			stop = cx.AfterFunc(wait, report(open))
+			return
+		}
+		report(open)()
+	})
 	m := core.Modal{Animation: d.Animation, Presentation: d.Presentation, NoCloseOnSwipe: d.NoCloseOnSwipe,
-		IOS: d.IOS, Android: d.Android, StatusBar: d.StatusBar, StatusBarFunc: d.StatusBarFunc,
-		Style: core.Style{JustifyContent: core.JustifyCenter, AlignItems: core.AlignCenter}}
-	return modalLayer(st, m, part{d.BackdropClass, d.BackdropStyle, d.BackdropStyleFunc}, d.NoCloseOnBackdropPress,
+		NoCloseOnEscape: d.NoCloseOnEscape, NoCloseOnBackdropPress: d.NoCloseOnBackdropPress,
+		IOS: d.IOS, Android: d.Android, StatusBar: d.StatusBar, StatusBarFunc: d.StatusBarFunc, Class: d.LayerClass,
+		OnShown: report(true), OnDismissed: report(false),
+		Style: core.Style{JustifyContent: core.JustifyCenter, AlignItems: core.AlignCenter}.Merge(d.LayerStyle)}
+	return modalLayer(st, m, part{d.BackdropClass, d.BackdropStyle, d.BackdropStyleFunc}, d.BackdropTestID, d.NoCloseOnBackdropPress,
 		d.NoCloseOnEscape, part{d.PopupClass, d.PopupStyle, d.PopupStyleFunc}, d.Children, d.Label, d.TestID)
 }
 
@@ -387,13 +458,14 @@ var cover = core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0
 
 // modalLayer shows m, holding the backdrop and the popup, while st is
 // open.
-func modalLayer(st *popup, m core.Modal, backdrop part, keepOnBackdrop, keepOnEscape bool, popup part,
+func modalLayer(st *popup, m core.Modal, backdrop part, backdropID string, keepOnBackdrop, keepOnEscape bool, popup part,
 	children []core.Node, label, testID string) core.Node {
 	return core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
 		var nodes []core.Node
 		if backdrop.set() {
 			nodes = append(nodes, core.View{Class: backdrop.class, Style: fill.Merge(backdrop.style), StyleFunc: backdrop.fn,
-				OnPress: func(core.PressEvent) { st.cancel(ReasonBackdropPress, keepOnBackdrop) }, NoFocus: true})
+				OnPress: func(core.PressEvent) { st.cancel(ReasonBackdropPress, keepOnBackdrop) }, NoFocus: true,
+				TestID: backdropID})
 		}
 		nodes = append(nodes, core.View{Class: popup.class, Style: popup.style, StyleFunc: popup.fn, Role: core.RoleDialog,
 			Label: label, TestID: testID, Children: children})

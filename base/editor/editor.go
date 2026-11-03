@@ -1,7 +1,9 @@
 package editor
 
 import (
+	"cmp"
 	"github.com/oneo-me/nsgo/base/internal/syntax"
+	"reflect"
 	"regexp"
 	"slices"
 	"sort"
@@ -93,6 +95,8 @@ type ed struct {
 	comp      completion
 	compSel   int
 	nextID    int
+	// nextInline numbers the inline completion requests apart.
+	nextInline int
 	// The pending definition request and the hover.
 	defID     int
 	hoverWord span
@@ -129,7 +133,7 @@ func newEd(cx *core.Scope, p Editor) *ed {
 	if p.Value != nil {
 		text = core.Untracked(cx, p.Value)
 	}
-	e := &ed{p: p, cx: cx, st: newState(text), reported: text, looks: stylesMemo(cx, p.Styles, p.StylesFunc),
+	e := &ed{p: p, cx: cx, st: newState(text), reported: text, looks: stylesMemo(cx, p.Under, p.Styles, p.StylesFunc),
 		textRev: core.NewSignal(cx, 0), selRev: core.NewSignal(cx, 0), hlRev: core.NewSignal(cx, 0),
 		marksRev: core.NewSignal(cx, 0), compRev: core.NewSignal(cx, 0),
 		scrollX: core.NewSignal(cx, core.Points(0)), scrollY: core.NewSignal(cx, core.Points(0)),
@@ -1157,11 +1161,13 @@ func (e *ed) foldsChanged() {
 	}
 }
 
+// folds are the folded ranges in the order of their lines, as NSH's.
 func (e *ed) folds() []FoldRange {
 	out := make([]FoldRange, len(e.st.folded))
 	for i, f := range e.st.folded {
 		out[i] = FoldRange{f.start, f.end}
 	}
+	slices.SortStableFunc(out, func(a, b FoldRange) int { return cmp.Or(a.StartLine-b.StartLine, a.EndLine-b.EndLine) })
 	return out
 }
 
@@ -1663,8 +1669,9 @@ func (e *ed) waitInline() {
 		if e.comp.shown && e.comp.id != 0 {
 			return
 		}
-		e.nextID++
-		e.inlineID = e.nextID
+		// Inline requests count apart from the list's, as NSH's.
+		e.nextInline++
+		e.inlineID = e.nextInline
 		h := e.st.primary().head
 		e.p.OnInlineCompletionRequest(InlineCompletionRequest{ID: e.inlineID, Offset: e.offset(h), Position: e.position(h)})
 	})
@@ -1707,14 +1714,26 @@ func (e *ed) offset(p pos) int {
 
 // stylesMemo holds the parts' styles: styles, or what fn returns as it
 // changes. Reading it is tracked, so a part's style follows.
-func stylesMemo(cx *core.Scope, styles Styles, fn func() Styles) *core.Memo[*Styles] {
+func stylesMemo(cx *core.Scope, under, styles Styles, fn func() Styles) *core.Memo[*Styles] {
 	return core.NewMemoFunc(cx, func() *Styles {
-		if fn == nil {
-			return &styles
+		s := styles
+		if fn != nil {
+			s = fn()
 		}
-		s := fn()
+		s = underStyles(under, s)
 		return &s
 	}, nil)
+}
+
+// underStyles is s over under, part by part.
+func underStyles(under, s Styles) Styles {
+	u, o := reflect.ValueOf(&under).Elem(), reflect.ValueOf(&s).Elem()
+	for i := range o.NumField() {
+		if st, ok := u.Field(i).Interface().(core.Style); ok {
+			o.Field(i).Set(reflect.ValueOf(st.Merge(o.Field(i).Interface().(core.Style))))
+		}
+	}
+	return s
 }
 
 // styles are the parts' styles, read where a part is styled.

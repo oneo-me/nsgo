@@ -1038,7 +1038,7 @@ func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 				press(ev)
 			}
 			if line := r.lineOf(sd); line >= 0 && v.p.OnLineNumberPress != nil {
-				v.p.OnLineNumberPress(Line{Side: sd, Line: v.number(sd, line)})
+				v.p.OnLineNumberPress(Line{Side: sd, Line: v.index(sd, line)})
 			}
 		},
 	}
@@ -1236,6 +1236,19 @@ func (v *dv) number(side Side, at int) int {
 		}
 	}
 	return at + 1
+}
+
+// index is line at of side as Line counts it: from 0 in its file.
+func (v *dv) index(side Side, at int) int {
+	for _, s := range v.segs {
+		if side == Old && at >= s.oldAt && at < s.oldAt+s.oldLen {
+			return at - s.oldAt
+		}
+		if side == New && at >= s.newAt && at < s.newAt+s.newLen {
+			return at - s.newAt
+		}
+	}
+	return at
 }
 
 // spans is bytes from to to of a line in runs of one token and one inline

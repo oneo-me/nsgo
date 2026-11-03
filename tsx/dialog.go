@@ -31,6 +31,7 @@ func dialogFace(p *props) core.Node {
 		PopupClass:     p.class(),
 		PopupStyleFunc: p.style,
 		BackdropClass:  p.str("backdropClass"),
+		BackdropTestID: p.str("backdropTestID"),
 		Children:       p.children(),
 		Label:          p.str("accessibilityLabel"),
 		TestID:         p.str("testID"),
@@ -38,8 +39,14 @@ func dialogFace(p *props) core.Node {
 		OnClose:        p.on("onClose"),
 		OnCancel:       p.on("onCancel"),
 	}
+	// NSH's layer lays the popup out as a column's child, the app's style
+	// placing it.
+	d.LayerStyle = core.Style{JustifyContent: core.JustifyStart, AlignItems: core.AlignStretch}
 	if p.has("open") {
 		d.Open = func() bool { return p.bool("open") }
+	} else {
+		// NSH's dialog shows unless open is false.
+		d.DefaultOpen = true
 	}
 	if p.has("backdropStyle") {
 		d.BackdropStyleFunc = func() core.Style { return r.style(p.get("backdropStyle")) }

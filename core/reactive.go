@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"sync/atomic"
 	"time"
 )
 
@@ -254,7 +255,21 @@ func (cx *Scope) Post(fn func()) {
 // owner is disposed first or stop is called.
 func (cx *Scope) AfterFunc(d time.Duration, fn func()) (stop func() bool) {
 	o := cx.current()
-	stop = cx.rt.clock.AfterFunc(d, func() { o.Post(fn) })
+	// The call is posted when the time comes: stopping it before it runs
+	// cancels it there too, as a timer an earlier one clears.
+	var stopped, ran atomic.Bool
+	clockStop := cx.rt.clock.AfterFunc(d, func() {
+		o.Post(func() {
+			if !stopped.Load() {
+				ran.Store(true)
+				fn()
+			}
+		})
+	})
+	stop = func() bool {
+		clockStop()
+		return !stopped.Swap(true) && !ran.Load()
+	}
 	o.addCleanup(func() { stop() })
 	return stop
 }

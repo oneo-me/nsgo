@@ -980,9 +980,14 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.u32(uint32(c.Bottom))
 			w.u32(uint32(c.Left))
 			w.float(v.Opacity)
-			// Android draws shadows from elevation, which has no offset.
-			w.u32(uint32(v.ShadowColor))
-			w.points(v.ShadowRadius)
+			// Android draws shadows from elevation, which has no offset:
+			// the view's own, cast in the system's black, else its style's.
+			shadow, radius := v.ShadowColor, v.ShadowRadius
+			if v.Elevation > 0 && (shadow&0xff == 0 || radius <= 0) {
+				shadow, radius = driver.RGB(0), v.Elevation
+			}
+			w.u32(uint32(shadow))
+			w.points(radius)
 			w.u32(uint32(v.TintColor))
 			// The scales as they are, 0 unset, for Java to combine with
 			// animated ones as core.Transform.Scales does.
@@ -990,7 +995,9 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.points(tr.TranslateX)
 			w.points(tr.TranslateY)
 			w.floats(tr.Scale, tr.ScaleX, tr.ScaleY)
-			w.float(tr.Rotate)
+			// Android turns a view in its plane once: RotateZ joins Rotate,
+			// which is exact unless RotateX or RotateY tilt it between.
+			w.float(tr.Rotate + tr.RotateZ)
 			tn := v.Transition
 			w.u32(uint32(max(tn.Duration.Milliseconds(), 0)))
 			w.u32(uint32(max(tn.Delay.Milliseconds(), 0)))
@@ -1586,7 +1593,12 @@ func writeDecor(w *writer, v *driver.ViewStyle) {
 	w.points(v.Origin.X)
 	w.points(v.Origin.Y)
 	w.points(v.ChildPerspective)
-	w.byte(byte(v.BlendMode))
+	// Android has no plus-darker, which stays normal.
+	blend := v.BlendMode
+	if blend == driver.BlendPlusDarker {
+		blend = driver.BlendNormal
+	}
+	w.byte(byte(blend))
 	e := v.Effects
 	if e == nil {
 		e = &driver.Effects{}

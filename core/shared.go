@@ -289,6 +289,25 @@ type (
 	// TextDecorationStyle is how a text's decoration lines are drawn; the zero
 	// value is solid.
 	TextDecorationStyle = driver.TextDecorationStyle
+	// TextEngine shapes, measures and lays out text: a platform's, or
+	// ApproxTextEngine's without one. PreparedText is what it shapes from
+	// an AttributedText, a TextLayout what it lays out to draw.
+	TextEngine     = driver.TextEngine
+	PreparedText   = driver.PreparedText
+	TextLayout     = driver.TextLayout
+	AttributedText = driver.AttributedText
+	// TextAttachment is a view inside a text, which FontExtent's font
+	// around it places on its line.
+	TextAttachment = driver.TextAttachment
+	FontExtent     = driver.FontExtent
+	// TextShadow is a shadow behind a text's glyphs.
+	TextShadow = driver.TextShadow
+	// TextStyle is a text's resolved style, TextSpan a byte range of it
+	// styled over it, and TextBackground what a span draws behind its
+	// characters.
+	TextStyle      = driver.TextStyle
+	TextSpan       = driver.TextSpan
+	TextBackground = driver.TextBackground
 	// TextLine is a line of laid-out text, as Text.OnTextLayout reports it.
 	TextLine = driver.TextLine
 	// TextRange is a selection in a text field, in UTF-16 units as the

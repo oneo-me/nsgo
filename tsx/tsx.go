@@ -71,6 +71,9 @@ type runtime struct {
 	warned map[string]bool
 	timers timers
 	anim   animClasses
+	// blobs are the blob: URLs URL.createObjectURL made, until revoked.
+	blobs   map[string]blobEntry
+	blobSeq int
 	// canvasClasses are Path2D and CanvasGradient.
 	canvasClasses canvasClasses
 	// platforms are the platform objects (ios={{…}}) that apply here.
@@ -147,6 +150,7 @@ func (r *runtime) require(name string) goja.Value {
 	for _, e := range exports {
 		_ = m.Set(e.name, e.make(r))
 	}
+	r.addStatics(name, m)
 	r.modules[name] = m
 	return m
 }

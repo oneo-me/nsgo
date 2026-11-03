@@ -242,7 +242,7 @@ func listFace(p *props) core.Node {
 		LoadMoreAtStartThreshold: float32(p.float("loadMoreAtStartThreshold")),
 		Viewport:                 listViewports[p.str("viewport")],
 		BehaviorFunc:             func() core.ScrollBehavior { return r.scrollBehavior(p.get) },
-		OnScroll:                 r.scrollHandler(p.handler("onScroll")),
+		OnScroll:                 r.scrollEventHandler(p.get("onScroll")),
 		ScrollEventThrottle:      time.Duration(p.float("scrollEventThrottle") * float64(time.Millisecond)),
 		OnScrollDragStart:        r.scrollHandler(p.handler("onScrollDragStart")),
 		OnScrollDragEnd:          r.scrollHandler(p.handler("onScrollDragEnd")),

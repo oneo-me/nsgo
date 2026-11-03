@@ -104,6 +104,10 @@ type Transform struct {
 	// out of its plane around the horizontal and vertical axes, which
 	// shows depth only with a Perspective, its own or its parent's.
 	Rotate, RotateX, RotateY float32
+	// RotateZ turns the view in its plane after RotateX and RotateY: the
+	// transform property's rotateZ, where Rotate is CSS's rotate property,
+	// which goes before them.
+	RotateZ float32
 	// SkewX and SkewY slant the view along each axis, in degrees.
 	SkewX, SkewY float32
 	// Perspective is the distance the view is seen from, for its own

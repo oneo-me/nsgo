@@ -6,6 +6,9 @@ type AccessibilityValue struct {
 	// Min, Max and Now are a range, when Max is above Min: a slider's or
 	// a progress bar's.
 	Min, Max, Now float32
+	// NoNow leaves a range without its current value, as an indeterminate
+	// progress bar's.
+	NoNow bool
 	// Text is read instead of Now, or alone without a range.
 	Text string
 }

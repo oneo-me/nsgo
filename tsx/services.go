@@ -51,7 +51,7 @@ var serviceExports = []export{
 		return r.accessor(func() goja.Value {
 			e := r.cx.Env()
 			o := r.vm.NewObject()
-			_ = o.Set("height", float64(e.KeyboardHeight()))
+			_ = o.Set("height", js32(e.KeyboardHeight()))
 			_ = o.Set("duration", float64(e.KeyboardDuration().Milliseconds()))
 			return o
 		})
@@ -307,7 +307,8 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 		info := r.vm.NewObject()
 		_ = info.Set("signal", ctl.Get("signal"))
 		_ = info.Set("refetching", refetching)
-		if state.GetUntracked() == "ready" {
+		// A load over a value refreshes it; without one it is pending.
+		if defined(value.GetUntracked()) {
 			state.Set("refreshing")
 		} else {
 			state.Set("pending")
@@ -315,6 +316,10 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 		settle := func(v goja.Value, failed bool) {
 			if mine != run {
 				return
+			}
+			// A load that ended is not aborted by the next.
+			if abort == ctl {
+				abort = nil
 			}
 			r.cx.Batch(func() {
 				if failed {
@@ -391,11 +396,21 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 		}
 		return goja.Undefined()
 	}))
+	// The owner's end aborts the load still running.
+	r.cx.Cleanup(func() {
+		run++
+		if abort != nil {
+			ctl := abort
+			abort = nil
+			r.call2(ctl.ToObject(r.vm).Get("abort"), ctl)
+		}
+	})
 	_ = read.Set("mutate", r.function(func(c goja.FunctionCall) goja.Value {
 		v := arg(c, 0)
 		run++
 		r.cx.Batch(func() {
 			value.Set(v)
+			errv.Set(goja.Undefined())
 			state.Set("ready")
 		})
 		return v
@@ -416,16 +431,14 @@ func (r *runtime) call2(fn, this goja.Value, args ...goja.Value) goja.Value {
 	return v
 }
 
-// nativeModule is nativeModule(specifier): the exports of the module the
-// app's Go code registered as specifier (Register), as an import gives
-// them, which the app types itself. Without one it throws a
-// ReferenceError naming it.
+// nativeModule is nativeModule(specifier): the exports of the module
+// specifier names, NSGo's own or one the app's Go code registered
+// (Register), the object an import gives, which the app types itself.
+// Without one it throws a ReferenceError naming it.
 func (r *runtime) nativeModule(call goja.FunctionCall) goja.Value {
 	name := arg(call, 0).String()
-	if _, builtIn := moduleTable[name]; builtIn {
-		panic(r.vm.NewGoError(fmt.Errorf("nativeModule: %q is NSGo's own module; import it", name)))
-	}
-	if _, ok := registeredExports(name); !ok {
+	_, builtIn := moduleTable[name]
+	if _, ok := registeredExports(name); !ok && !builtIn {
 		ref, _ := r.vm.RunString("ReferenceError")
 		ctor, _ := goja.AssertConstructor(ref)
 		e, _ := ctor(nil, r.vm.ToValue(fmt.Sprintf("nativeModule: no module %q is registered", name)))
@@ -504,6 +517,9 @@ func (r *runtime) registerFont(call goja.FunctionCall) goja.Value {
 // app's.
 func (r *runtime) setup(call goja.FunctionCall) goja.Value {
 	o := r.options(arg(call, 0))
+	if sb := o.get("statusBar"); defined(sb) {
+		r.cx.SetStatusBar(r.statusBar(sb))
+	}
 	theme, tw := o.str("theme", ""), o.str("tailwind", "")
 	if theme == "" && tw == "" {
 		return goja.Undefined()
@@ -539,7 +555,7 @@ func (r *runtime) token(call goja.FunctionCall) goja.Value {
 		return goja.Undefined()
 	}
 	if l, ok := cssLength(v); ok {
-		return r.vm.ToValue(float64(l))
+		return r.vm.ToValue(js32(l))
 	}
 	return r.vm.ToValue(v)
 }

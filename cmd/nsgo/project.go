@@ -68,6 +68,10 @@ type project struct {
 	// Tailwind extends Tailwind's default theme for a TSX app's classes,
 	// as core.ParseTailwind reads it; the compiler checks it.
 	Tailwind yaml.Node `yaml:"tailwind"`
+	// StatusBar is a TSX app's default status bar on iOS and Android,
+	// under its pages' and dialogs': foreground (auto, light or dark) and
+	// hidden.
+	StatusBar yaml.Node `yaml:"status_bar"`
 	// I18n is the app's catalogs: Dir, relative to nsgo.yaml, holds a
 	// YAML file per language, Source's with every message. Their
 	// languages are the ones the app shows.

@@ -176,6 +176,9 @@ type TextStyle struct {
 	// UnderlineOffset is how far below the baseline an underline's top
 	// is; auto is where the font puts it.
 	UnderlineOffset Length
+	// Transform is the core's TextTransform, which it applied to the
+	// text already: platforms draw the text as given, tests read it.
+	Transform uint8
 }
 
 // EllipsizeMode is where a text cut by its line limit loses the rest.

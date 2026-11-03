@@ -47,7 +47,7 @@ Highlighting stays off the engine goroutine: a job lexes a snapshot of up to 200
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| A default look from the theme's tokens | No look but the highlighting's palette: `Classes` and `Styles` give every part, a field each | `base` has no look; themes are the app's |
+| A default look from the theme's tokens | No look but the highlighting's palette: `Classes` and `Styles` give every part, a field each; TSX's `Editor` presets NSH's diagnostics under them (`Under`) | `base` has no look; themes are the app's, and TSX apps are written for NSH's |
 | `ropey` | Lines in chunks | Lines are what every part reads; chunks bound an edit's work |
 | `register_language` and `register_highlighter`, kept per engine | A `Highlighter` prop: a function from a language's name to the app's highlighter | A prop needs no registry, and an engine holds no state beside its app |
 | syntect's state kept every 16 lines | chroma from a line at column 0 before the change, until its tokens meet the old ones | chroma keeps no state to resume from |

@@ -241,16 +241,16 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 	case "borderLeftWidth", "borderStartWidth":
 		s.Borders.Left = points(v)
 	case "borderColor":
-		s.BorderColor = r.color(key, v)
+		s.BorderColor = core.SetColor(r.color(key, v))
 		s.BorderColors = core.AllColors(s.BorderColor)
 	case "borderTopColor":
-		s.BorderColors.Top = r.color(key, v)
+		s.BorderColors.Top = core.SetColor(r.color(key, v))
 	case "borderRightColor", "borderEndColor":
-		s.BorderColors.Right = r.color(key, v)
+		s.BorderColors.Right = core.SetColor(r.color(key, v))
 	case "borderBottomColor":
-		s.BorderColors.Bottom = r.color(key, v)
+		s.BorderColors.Bottom = core.SetColor(r.color(key, v))
 	case "borderLeftColor", "borderStartColor":
-		s.BorderColors.Left = r.color(key, v)
+		s.BorderColors.Left = core.SetColor(r.color(key, v))
 	case "borderStyle":
 		s.BorderStyle = pick(r, key, v, borderStyles)
 	case "outlineWidth":
@@ -316,7 +316,11 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		r.transform(s, v)
 	case "transformOrigin":
 		origin := v.String()
+		s.TransformOriginZ = 0
 		if items := r.arrayItems(v); items != nil {
+			if len(items) > 2 {
+				s.TransformOriginZ = points(items[2])
+			}
 			parts := make([]string, len(items))
 			for i, it := range items {
 				parts[i] = it.String()
@@ -325,6 +329,12 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 				}
 			}
 			origin = strings.Join(parts[:min(len(parts), 2)], " ")
+		}
+		if f := strings.Fields(origin); len(f) == 3 {
+			// x y z: the depth is a length.
+			z, ok := cssLength(f[2])
+			r.check(key, v, ok)
+			origin, s.TransformOriginZ = f[0]+" "+f[1], z
 		}
 		p, ok := cssObjectPosition(origin)
 		r.check(key, v, ok)
@@ -393,9 +403,17 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.FontStyle = pick(r, key, v, map[string]core.FontStyle{"normal": core.FontStyleNormal,
 			"italic": core.FontStyleItalic})
 	case "lineHeight":
-		s.LineHeight = points(v)
+		if em, ok := emOf(v); ok {
+			s.LineHeight, s.LineHeightEm = 0, em
+		} else {
+			s.LineHeight, s.LineHeightEm = points(v), 0
+		}
 	case "letterSpacing":
-		s.LetterSpacing = points(v)
+		if em, ok := emOf(v); ok {
+			s.LetterSpacing, s.LetterSpacingEm = 0, em
+		} else {
+			s.LetterSpacing, s.LetterSpacingEm = points(v), 0
+		}
 	case "textAlign":
 		s.TextAlign = pick(r, key, v, map[string]core.TextAlign{"left": core.TextAlignStart, "auto": core.TextAlignStart,
 			"center": core.TextAlignCenter, "right": core.TextAlignEnd, "justify": core.TextAlignJustify})
@@ -576,12 +594,16 @@ func (r *runtime) degrees(v goja.Value) float32 {
 func (r *runtime) edge(s *core.Style, key string, v goja.Value, margin bool, sides core.Sides) {
 	var amount core.Points
 	env := core.EnvNone
-	auto := false
+	auto, percent := false, false
 	if str, ok := v.Export().(string); ok {
 		str = strings.TrimSpace(str)
 		switch {
 		case str == "auto" && margin:
 			auto = true
+		case strings.HasSuffix(str, "%"):
+			f, ok := cssNumber(strings.TrimSuffix(str, "%"))
+			r.check(key, v, ok)
+			amount, percent = core.Points(f), true
 		case strings.Contains(str, "env("):
 			var ok bool
 			env, amount, ok = envTerm(str)
@@ -594,15 +616,20 @@ func (r *runtime) edge(s *core.Style, key string, v goja.Value, margin bool, sid
 	} else {
 		amount = points(v)
 	}
-	edges, envs := &s.Padding, &s.PaddingEnv
+	edges, envs, pct := &s.Padding, &s.PaddingEnv, &s.PaddingPercent
 	if margin {
-		edges, envs = &s.Margin, &s.MarginEnv
+		edges, envs, pct = &s.Margin, &s.MarginEnv, &s.MarginPercent
 	}
 	set := func(side core.Sides, e *core.Points, ev *core.EnvInset) {
 		if sides&side == 0 {
 			return
 		}
 		*e, *ev = amount, env
+		if percent {
+			*pct |= side
+		} else {
+			*pct &^= side
+		}
 		if margin {
 			if auto {
 				s.AutoMargin |= side
@@ -706,7 +733,7 @@ var blendModes = map[string]core.BlendMode{"normal": core.BlendNormal, "multiply
 	"hard-light": core.BlendHardLight, "soft-light": core.BlendSoftLight, "difference": core.BlendDifference,
 	"exclusion": core.BlendExclusion, "hue": core.BlendHue, "saturation": core.BlendSaturation,
 	"color": core.BlendColor, "luminosity": core.BlendLuminosity, "plus-lighter": core.BlendPlusLighter,
-	"plus-darker": core.BlendNormal}
+	"plus-darker": core.BlendPlusDarker}
 
 // cursors are the cursors by CSS name; the others are auto.
 var cursors = map[string]core.Cursor{"auto": core.CursorAuto, "default": core.CursorDefault,
@@ -741,6 +768,20 @@ func pick[T any](r *runtime, key string, v goja.Value, values map[string]T) T {
 		r.warn("style key %q has no value %q", key, v.String())
 	}
 	return t
+}
+
+// emOf reads a length in em, "0.1em", of the element's font size.
+func emOf(v goja.Value) (float32, bool) {
+	str, ok := v.Export().(string)
+	if !ok {
+		return 0, false
+	}
+	n, ok := strings.CutSuffix(strings.TrimSpace(str), "em")
+	if !ok || strings.HasSuffix(n, "r") {
+		return 0, false
+	}
+	f, ok := cssNumber(n)
+	return float32(f), ok
 }
 
 func points(v goja.Value) core.Points {

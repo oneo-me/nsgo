@@ -49,6 +49,7 @@ var enumOptions = []Option{
 		"longPress": base.ReasonLongPress}),
 	Enum(map[string]base.AlertPresentation{"alert": base.AlertPresentAlert,
 		"actionSheet": base.AlertPresentActionSheet}),
+	Enum(roles),
 }
 
 func init() {
@@ -102,7 +103,7 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 	shapeNone(base.NoTableSelection)
 	Shape("DataTableContextMenu", `export interface DataTableContextMenu { row?: number | null; column?: number | null; x: number; y: number }`,
 		func(e base.DataTableContextMenu) map[string]any {
-			m := map[string]any{"x": float64(e.At.X), "y": float64(e.At.Y)}
+			m := map[string]any{"x": js32(e.At.X), "y": js32(e.At.Y)}
 			if e.Row >= 0 {
 				m["row"] = e.Row
 			}
@@ -170,6 +171,17 @@ var baseRenames = []Option{
 		"onVisibleRowsChange?: (range: DataTableRange) => void"),
 	custom("OnVisibleColumnsChange", rangeHandler("onVisibleColumnsChange"),
 		"onVisibleColumnsChange?: (range: DataTableRange) => void"),
+	custom("OnHoverChange", func(p *props, v reflect.Value) {
+		if h := p.handler("onHoverChange"); h != nil {
+			v.Set(reflect.ValueOf(func(index int) {
+				if index < 0 {
+					h(goja.Null())
+				} else {
+					h(p.r.vm.ToValue(index))
+				}
+			}))
+		}
+	}, "onHoverChange?: (index: number | null) => void"),
 	custom("Y", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
 	custom("X", plotValues("x"), "data?: readonly any[]", plotAxis("x")),
 	custom("Y1", plotValues("y"), "data?: readonly any[]", plotAxis("y")),

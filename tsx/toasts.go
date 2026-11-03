@@ -53,6 +53,11 @@ func (r *runtime) alertDialog() goja.Value {
 				ids[label] = ao.str("id", "")
 			}
 		}
+		if len(d.Actions) == 0 {
+			p, _, reject := r.vm.NewPromise()
+			_ = reject(r.vm.NewTypeError("AlertDialog.show needs at least one of its actions"))
+			return r.vm.ToValue(p)
+		}
 		p, done := r.promise()
 		base.ShowAlertDialog(r.cx, d, func(label string) {
 			done(func() goja.Value {
@@ -122,6 +127,14 @@ func (r *runtime) toastManagerClass() goja.Value {
 		}
 		return r.vm.NewArray(out...)
 	}
+	// strings is a JS array of ids, empty without any.
+	strings := func(ids []string) goja.Value {
+		out := make([]any, len(ids))
+		for i, id := range ids {
+			out[i] = id
+		}
+		return r.vm.NewArray(out...)
+	}
 	method("push", func(m *toastManager, call goja.FunctionCall) goja.Value {
 		timeout := millis(r.options(arg(call, 2)).float("timeout", 4000))
 		old, ok := m.Push(arg(call, 0).String(), arg(call, 1), timeout, now())
@@ -134,14 +147,14 @@ func (r *runtime) toastManagerClass() goja.Value {
 		return r.vm.ToValue(m.Dismiss(arg(call, 0).String(), now()))
 	})
 	method("dismissAll", func(m *toastManager, call goja.FunctionCall) goja.Value {
-		return r.vm.ToValue(m.DismissAll(now()))
+		return strings(m.DismissAll(now()))
 	})
 	method("advance", func(m *toastManager, call goja.FunctionCall) goja.Value {
 		a := m.Advance(now(), arg(call, 0).ToBoolean())
 		o := r.vm.NewObject()
 		_ = o.Set("changed", a.Changed)
-		_ = o.Set("presented", r.vm.ToValue(a.Presented))
-		_ = o.Set("ending", r.vm.ToValue(a.Ending))
+		_ = o.Set("presented", strings(a.Presented))
+		_ = o.Set("ending", strings(a.Ending))
 		_ = o.Set("removed", entries(a.Removed))
 		return o
 	})
@@ -168,10 +181,14 @@ func (r *runtime) toastManagerClass() goja.Value {
 // toastStackFace lays out its children's toasts.
 func toastStackFace(p *props) core.Node {
 	r := p.r
+	// The children made again only as what they read changes, as <Each>
+	// keeps its rows: made at each read, they would be other nodes, which
+	// the stack could not match.
+	children := core.NewMemoFunc(r.cx, func() goja.Value { return p.get("children") }, nil)
 	return base.ToastStack[goja.Value, any]{
 		Toasts: func() []goja.Value {
 			var out []goja.Value
-			for _, it := range r.resolve(p.get("children"), nil, 0) {
+			for _, it := range r.resolve(children.Get(), nil, 0) {
 				if it.node != nil {
 					out = append(out, it.node.value())
 				}

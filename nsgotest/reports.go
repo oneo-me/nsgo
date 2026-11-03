@@ -26,6 +26,17 @@ func (a *App) AccessibilityAction(selector, name string) {
 	}
 }
 
+// Report sends ev as the platform reports it and settles: an event the
+// steps here do not make. Platforms report most kinds only to views whose
+// Events ask for them, which the test checks.
+func (a *App) Report(ev driver.Event) {
+	a.t.Helper()
+	if ev.ID != 0 && a.views[ev.ID] == nil {
+		a.t.Fatalf("nsgotest: no view %d to report %v to", ev.ID, ev.Kind)
+	}
+	a.dispatch(ev)
+}
+
 // Pan drags the view selector matches, or the one around it with a pan,
 // through each translation in turn, then lets go.
 func (a *App) Pan(selector string, translations ...driver.Point) {

@@ -1670,7 +1670,8 @@ func unborder(el js.Value, b driver.Edges) {
 }
 
 // transformCSS is t around the view's transform origin, in its order:
-// perspective, translate, rotate, rotateX, rotateY, skew, then scale.
+// perspective, translate, rotate, rotateX, rotateY, rotateZ, skew, then
+// scale.
 func transformCSS(t driver.Transform) string {
 	if t == (driver.Transform{}) {
 		return ""
@@ -1683,6 +1684,9 @@ func transformCSS(t driver.Transform) string {
 	fmt.Fprintf(&b, "translate(%s, %s) rotate(%gdeg)", px(t.TranslateX), px(t.TranslateY), t.Rotate)
 	if !t.Flat() {
 		fmt.Fprintf(&b, " rotateX(%gdeg) rotateY(%gdeg)", t.RotateX, t.RotateY)
+	}
+	if t.RotateZ != 0 {
+		fmt.Fprintf(&b, " rotate(%gdeg)", t.RotateZ)
 	}
 	if t.SkewX != 0 || t.SkewY != 0 {
 		fmt.Fprintf(&b, " skew(%gdeg, %gdeg)", t.SkewX, t.SkewY)
@@ -1735,9 +1739,9 @@ func (s *surface) present(v *view) {
 	}
 	switch anim {
 	case driver.ModalSlide:
-		animate(v.el, map[string]any{"transform": "translateY(100%)"}, 300, "cubic-bezier(0.2, 0.8, 0.2, 1)")
+		animate(v.el, map[string]any{"transform": "translateY(100%)"}, int(driver.ModalSlide.Duration().Milliseconds()), "cubic-bezier(0.2, 0.8, 0.2, 1)")
 	case driver.ModalFade:
-		animate(v.el, map[string]any{"opacity": 0}, 200, "ease-out")
+		animate(v.el, map[string]any{"opacity": 0}, int(driver.ModalFade.Duration().Milliseconds()), "ease-out")
 	}
 }
 
@@ -1884,6 +1888,9 @@ func setViewProps(v *view, p *driver.ViewProps) {
 	if val := p.Value; val.IsRange() {
 		f := func(x float32) string { return strconv.FormatFloat(float64(x), 'g', -1, 32) }
 		lo, hi, now = f(val.Min), f(val.Max), f(val.Now)
+		if val.NoNow {
+			now = ""
+		}
 	}
 	setAttr(el, "aria-valuemin", lo)
 	setAttr(el, "aria-valuemax", hi)

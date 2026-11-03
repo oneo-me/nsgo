@@ -306,6 +306,14 @@ func (r *Ref) SelectedLines() (LineRange, bool) {
 func (r *Ref) SetSelectedLines(lines *LineRange) {
 	if r.v != nil {
 		if lines != nil {
+			// Held to the side's lines, as NSH's.
+			n := len(r.v.m.new)
+			if lines.Side == Old {
+				n = len(r.v.m.old)
+			}
+			l := *lines
+			l.Start, l.End = min(max(l.Start, 0), max(n-1, 0)), min(max(l.End, 0), max(n-1, 0))
+			lines = &l
 			r.v.anchor = lines.Start
 		}
 		r.v.setSelection(lines, false)

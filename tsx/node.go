@@ -1,6 +1,7 @@
 package tsx
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/dop251/goja"
@@ -107,22 +108,25 @@ func (n *node) ScrollToEnd(options goja.Value) {
 // are laid out, or null when the view is not in the tree.
 func (n *node) Measure() *goja.Promise {
 	p, resolve, _ := n.r.vm.NewPromise()
-	n.r.cx.Post(func() {
-		var frame, page core.Bounds
-		ok := n.ref != nil
-		if ok {
-			frame, ok = n.ref.Frame()
-			page, _ = n.ref.Bounds()
-		}
-		if !ok {
-			_ = resolve(goja.Null())
-			return
-		}
-		o := n.r.vm.NewObject()
-		_ = o.Set("bounds", n.r.bounds(frame))
-		_ = o.Set("pagePosition", n.r.point(page.Origin))
-		_ = resolve(o)
-	})
+	answer := func(frame, page core.Bounds, ok bool) {
+		n.r.inJS(func() {
+			if !ok {
+				_ = resolve(goja.Null())
+				return
+			}
+			o := n.r.vm.NewObject()
+			_ = o.Set("bounds", n.r.bounds(frame))
+			_ = o.Set("pagePosition", n.r.point(page.Origin))
+			_ = resolve(o)
+		})
+	}
+	if _, mounted := n.ref.Frame(); !mounted {
+		// The node is not in the tree yet, as in its ref callback: ask
+		// once this turn ends.
+		n.r.cx.Post(func() { n.ref.Measure(answer) })
+		return p
+	}
+	n.ref.Measure(answer)
 	return p
 }
 
@@ -221,4 +225,11 @@ func (r *runtime) bounds(b core.Bounds) *goja.Object {
 	_ = o.Set("origin", r.point(b.Origin))
 	_ = o.Set("size", r.size(b.Size))
 	return o
+}
+
+// js32 is f as JS reads it: the number its shortest decimal writes, 1.1
+// for float32(1.1), not the 1.100000023841858 float64(f) would give.
+func js32[T ~float32](f T) float64 {
+	v, _ := strconv.ParseFloat(strconv.FormatFloat(float64(f), 'g', -1, 32), 64)
+	return v
 }

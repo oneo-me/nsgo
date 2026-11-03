@@ -373,8 +373,10 @@ type ViewStyle struct {
 	// origin without moving its children's frames; hit testing follows
 	// it. The core has resolved its percentages.
 	Transform Transform
-	// Origin is where the transform acts, from the view's center.
-	Origin Point
+	// Origin is where the transform acts, from the view's center, and
+	// OriginZ how far toward the viewer.
+	Origin  Point
+	OriginZ Points
 	// BackfaceHidden hides the view while its rotations turn its back to
 	// the viewer.
 	BackfaceHidden bool
@@ -385,7 +387,10 @@ type ViewStyle struct {
 	BlendMode        BlendMode
 	// Material and Glass are how iOS draws a backdrop blur.
 	Material BackdropMaterial
-	Glass    GlassEffect
+	// Elevation is Android's: how high the view floats, which casts the
+	// system's shadow under it where the style casts none.
+	Elevation Points
+	Glass     GlassEffect
 	// Effects are shadows, gradients, filters and masks, nil without any.
 	Effects *Effects
 	// Transition, when it has a duration, animates the change from the
@@ -414,7 +419,11 @@ func (vs *ViewStyle) Rounded() bool { return vs.CornerRadius > 0 || vs.Corners !
 // Matrix returns the view's transform for a box of size, around its
 // origin.
 func (vs *ViewStyle) Matrix(size Size) Matrix3D {
-	return vs.Transform.Matrix(Point{X: size.Width/2 + vs.Origin.X, Y: size.Height/2 + vs.Origin.Y})
+	m := vs.Transform.Matrix(Point{X: size.Width/2 + vs.Origin.X, Y: size.Height/2 + vs.Origin.Y})
+	if z := float64(vs.OriginZ); z != 0 {
+		m = Translate3D(0, 0, z).Mul(m).Mul(Translate3D(0, 0, -z))
+	}
+	return m
 }
 
 // ImageConfig is an image view's source and look.
@@ -438,6 +447,12 @@ type ModalConfig struct {
 	Presentation   ModalPresentation
 	NoCloseOnSwipe bool
 	Orientations   Orientation
+	// NoCloseOnEscape and NoCloseOnBackdropPress are the app's: the
+	// core and base keep the modal on those, and tests read them, as
+	// StatusBarTranslucent, Android's, which the core lays the modal out
+	// by.
+	NoCloseOnEscape, NoCloseOnBackdropPress bool
+	StatusBarTranslucent                    bool
 }
 
 // ScreenConfig is a screen's system header, which the platform draws
@@ -453,6 +468,10 @@ type ScreenConfig struct {
 	CanGoBack  bool
 	BackHidden bool
 	BackTitle  string
+	// OwnBackTitle is the screen's own HeaderBackTitle: the label of the
+	// back button to it on the screen above, which that screen's
+	// BackTitle shows.
+	OwnBackTitle string
 	// NoPopOnSwipe turns the swipe back off, as NoPopOnBack does with the
 	// back button's popping: a press still reports EventBack.
 	NoPopOnSwipe bool
@@ -463,6 +482,9 @@ type ScreenConfig struct {
 	// Left, Right and TitleView are the header views, each a layout root
 	// at its content's size that no view holds, or 0.
 	Left, Right, TitleView NodeID
+	// Header is the screen's own header, which a platform without a
+	// native one would show; the native header leaves it unused.
+	Header NodeID
 	// RightSystemItem, with a Right view, is the UIKit button iOS shows
 	// in Right's place; a press on it presses Right's first view that
 	// takes presses.
@@ -500,11 +522,14 @@ type TextContent struct {
 	Layout TextLayout
 	// Content is where Layout goes in the view: inside padding and border.
 	Content Bounds
-	// Style and Spans are the text's resolved style and its spans', as
-	// it was prepared, for tests to read; platforms draw Layout and read
+	// Style, Spans, Shadow, MaxLines and Ellipsize are the text's, as it
+	// was prepared, for tests to read; platforms draw Layout and read
 	// Spans' links for presses.
-	Style TextStyle
-	Spans []TextSpan
+	Style     TextStyle
+	Spans     []TextSpan
+	Shadow    TextShadow
+	MaxLines  int
+	Ellipsize EllipsizeMode
 }
 
 // InputConfig is a text field's look and behavior.
@@ -518,8 +543,10 @@ type InputConfig struct {
 	// Content is where the text goes in the view: inside padding and border.
 	Content Bounds
 	// Accessory is the InputAccessoryView that rides above the keyboard
-	// while the field has focus, or 0.
-	Accessory NodeID
+	// while the field has focus, or 0; AccessoryID is the ID the field
+	// names it by, which tests read.
+	Accessory   NodeID
+	AccessoryID string
 	// Multiline takes several lines in a multi-line control.
 	Multiline bool
 	// MaxLength caps what the user enters, in UTF-16 units; 0 sets none.
@@ -748,6 +775,9 @@ type ImageSource struct {
 	// a@2x.png, ...): the core mounts the one for the screen's pixel
 	// ratio. Empty for a single file.
 	Scales ImageScales
+	// Variants, for a source whose variants are not asset: files (a TSX
+	// bundle's data: URLs), are the URIs of the scales past 1x by scale.
+	Variants map[float32]string
 }
 
 // Density returns the pixels a point of the image s names has: the
@@ -852,6 +882,19 @@ const (
 	ModalFade
 	ModalNone
 )
+
+// Duration is how long a modal takes to appear or go with a, as the
+// platforms present it: what its component waits before it reports the
+// modal shown or gone.
+func (a ModalAnimation) Duration() time.Duration {
+	switch a {
+	case ModalSlide:
+		return 300 * time.Millisecond
+	case ModalFade:
+		return 200 * time.Millisecond
+	}
+	return 0
+}
 
 // Same reports whether a and b show the same image the same way.
 func (a ImageConfig) Same(b ImageConfig) bool {

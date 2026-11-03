@@ -149,9 +149,12 @@ func (p *painter) drawBlended(mode driver.BlendMode, world matrix, area rectF, r
 		return true
 	}
 	clsid, value := &clsidBlend, uint32(0)
-	if mode == driver.BlendPlusLighter {
+	switch mode {
+	case driver.BlendPlusLighter:
 		clsid, value = &clsidComposite, compositeModes[driver.CompositeLighter]
-	} else {
+	case driver.BlendPlusDarker:
+		value = d2dBlendLinearBurn
+	default:
 		value = blendModes[mode-driver.BlendMultiply]
 	}
 	var e, out *comObject

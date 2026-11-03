@@ -35,6 +35,8 @@ type animClasses struct {
 	nodeProto, valProto *goja.Object
 	nodeClass, valClass *goja.Object
 	compProto           *goja.Object
+	// clamps are the diffClamp nodes made, by their arguments.
+	clamps map[diffClampKey]goja.Value
 }
 
 func (r *runtime) installAnimated() {
@@ -206,11 +208,32 @@ func (r *runtime) operand(v goja.Value) core.AnimatedNode {
 	return core.Constant(v.ToFloat())
 }
 
+// diffClamp gives the node that clamps n's changes to lo and hi, one per
+// input, bounds and snapping, as NSH's graph shares them: the
+// Animated.diffClamp and the method of the same arguments are one node.
 func (r *runtime) diffClamp(n core.AnimatedNode, lo, hi, options goja.Value) goja.Value {
-	if r.options(options).bool("snap", false) {
-		return r.wrapNode(core.SnappingDiffClamp(n, lo.ToFloat(), hi.ToFloat()))
+	snap := r.options(options).bool("snap", false)
+	key := diffClampKey{n, lo.ToFloat(), hi.ToFloat(), snap}
+	if v, ok := r.anim.clamps[key]; ok {
+		return v
 	}
-	return r.wrapNode(core.DiffClamp(n, lo.ToFloat(), hi.ToFloat()))
+	var v goja.Value
+	if snap {
+		v = r.wrapNode(core.SnappingDiffClamp(n, key.lo, key.hi))
+	} else {
+		v = r.wrapNode(core.DiffClamp(n, key.lo, key.hi))
+	}
+	if r.anim.clamps == nil {
+		r.anim.clamps = map[diffClampKey]goja.Value{}
+	}
+	r.anim.clamps[key] = v
+	return v
+}
+
+type diffClampKey struct {
+	in     core.AnimatedNode
+	lo, hi float64
+	snap   bool
 }
 
 // readValue is a promise of v's value on the platform.
@@ -857,9 +880,14 @@ func (r *runtime) motions() goja.Value {
 		for _, t := range spec.Tracks {
 			for name, c := range motionChannels {
 				if c == t.Channel {
+					// Each stop as an app writes one: { value, offset? }.
 					values := make([]any, len(t.Stops))
 					for i, s := range t.Stops {
-						values[i] = s.Value
+						stop := map[string]any{"value": s.Value}
+						if at, placed := s.Offset(); placed {
+							stop["offset"] = at
+						}
+						values[i] = stop
 					}
 					_ = frames.Set(name, values)
 				}
