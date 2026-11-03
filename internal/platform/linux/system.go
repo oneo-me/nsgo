@@ -19,43 +19,47 @@ import (
 )
 
 // The services GTK performs: the clipboard's images and files, opening
-// URLs (GtkUriLauncher), the photo and file pickers and the save dialog
-// (GtkFileDialog), context menus (GtkPopoverMenu), the app's appearance
+// URLs (GtkUriLauncher), the photo, file and folder pickers and the save
+// dialog (GtkFileDialog), context menus (GtkPopoverMenu), the app's appearance
 // and the menu bar that hides.
 
 var (
-	gBytesNew                      func(data unsafe.Pointer, size uintptr) uintptr
-	gdkTextureNewFromBytes         func(bytes uintptr, err uintptr) uintptr
-	gdkClipboardSetTexture         func(clip, texture uintptr)
-	gtkURILauncherNew              func(uri *byte) uintptr
-	gtkURILauncherLaunch           func(launcher, parent, cancellable, callback, data uintptr)
-	gtkURILauncherLaunchFinish     func(launcher, result, err uintptr) int32
-	gtkFileDialogNew               func() uintptr
-	gtkFileDialogSetModal          func(dialog uintptr, modal int32)
-	gtkFileDialogSetDefaultFilter  func(dialog, filter uintptr)
-	gtkFileDialogOpen              func(dialog, parent, cancellable, callback, data uintptr)
-	gtkFileDialogOpenFinish        func(dialog, result, err uintptr) uintptr
-	gtkFileDialogOpenMultiple      func(dialog, parent, cancellable, callback, data uintptr)
-	gtkFileDialogOpenMultipleFinsh func(dialog, result, err uintptr) uintptr
-	gtkFileFilterNew               func() uintptr
-	gtkFileFilterSetName           func(filter uintptr, name *byte)
-	gtkFileFilterAddSuffix         func(filter uintptr, suffix *byte)
-	gtkFileFilterAddMIMEType       func(filter uintptr, mime *byte)
-	gtkFileDialogSetInitialName    func(dialog uintptr, name *byte)
-	gtkFileDialogSave              func(dialog, parent, cancellable, callback, data uintptr)
-	gtkFileDialogSaveFinish        func(dialog, result, err uintptr) uintptr
-	gtkDialogErrorQuark            func() uint32
-	gListModelGetNItems            func(model uintptr) uint32
-	gListModelGetItem              func(model uintptr, i uint32) uintptr
-	gtkPopoverMenuNewFromModel     func(model uintptr) uintptr
-	gtkPopoverSetPointingTo        func(popover uintptr, rect *gdkRectangle)
-	gtkPopoverSetHasArrow          func(popover uintptr, on int32)
-	gtkPopoverSetPosition          func(popover uintptr, position int32)
-	gtkPopoverPopup                func(popover uintptr)
-	gtkPopoverPopdown              func(popover uintptr)
-	gObjectSetBool                 func(object uintptr, name *byte, value int32, end uintptr)
-	gtkGetMinorVersion             func() uint32
-	cbAsync, cbPopoverClosed       uintptr
+	gBytesNew                                func(data unsafe.Pointer, size uintptr) uintptr
+	gdkTextureNewFromBytes                   func(bytes uintptr, err uintptr) uintptr
+	gdkClipboardSetTexture                   func(clip, texture uintptr)
+	gtkURILauncherNew                        func(uri *byte) uintptr
+	gtkURILauncherLaunch                     func(launcher, parent, cancellable, callback, data uintptr)
+	gtkURILauncherLaunchFinish               func(launcher, result, err uintptr) int32
+	gtkFileDialogNew                         func() uintptr
+	gtkFileDialogSetModal                    func(dialog uintptr, modal int32)
+	gtkFileDialogSetDefaultFilter            func(dialog, filter uintptr)
+	gtkFileDialogOpen                        func(dialog, parent, cancellable, callback, data uintptr)
+	gtkFileDialogOpenFinish                  func(dialog, result, err uintptr) uintptr
+	gtkFileDialogOpenMultiple                func(dialog, parent, cancellable, callback, data uintptr)
+	gtkFileDialogOpenMultipleFinsh           func(dialog, result, err uintptr) uintptr
+	gtkFileDialogSelectFolder                func(dialog, parent, cancellable, callback, data uintptr)
+	gtkFileDialogSelectFolderFinish          func(dialog, result, err uintptr) uintptr
+	gtkFileDialogSelectMultipleFolders       func(dialog, parent, cancellable, callback, data uintptr)
+	gtkFileDialogSelectMultipleFoldersFinish func(dialog, result, err uintptr) uintptr
+	gtkFileFilterNew                         func() uintptr
+	gtkFileFilterSetName                     func(filter uintptr, name *byte)
+	gtkFileFilterAddSuffix                   func(filter uintptr, suffix *byte)
+	gtkFileFilterAddMIMEType                 func(filter uintptr, mime *byte)
+	gtkFileDialogSetInitialName              func(dialog uintptr, name *byte)
+	gtkFileDialogSave                        func(dialog, parent, cancellable, callback, data uintptr)
+	gtkFileDialogSaveFinish                  func(dialog, result, err uintptr) uintptr
+	gtkDialogErrorQuark                      func() uint32
+	gListModelGetNItems                      func(model uintptr) uint32
+	gListModelGetItem                        func(model uintptr, i uint32) uintptr
+	gtkPopoverMenuNewFromModel               func(model uintptr) uintptr
+	gtkPopoverSetPointingTo                  func(popover uintptr, rect *gdkRectangle)
+	gtkPopoverSetHasArrow                    func(popover uintptr, on int32)
+	gtkPopoverSetPosition                    func(popover uintptr, position int32)
+	gtkPopoverPopup                          func(popover uintptr)
+	gtkPopoverPopdown                        func(popover uintptr)
+	gObjectSetBool                           func(object uintptr, name *byte, value int32, end uintptr)
+	gtkGetMinorVersion                       func() uint32
+	cbAsync, cbPopoverClosed                 uintptr
 
 	// asyncs are the callbacks of the asynchronous calls in flight, by
 	// the data their C callback gets.
@@ -82,6 +86,10 @@ func bindSystem() {
 	gtk(&gtkFileDialogOpenFinish, "gtk_file_dialog_open_finish")
 	gtk(&gtkFileDialogOpenMultiple, "gtk_file_dialog_open_multiple")
 	gtk(&gtkFileDialogOpenMultipleFinsh, "gtk_file_dialog_open_multiple_finish")
+	gtk(&gtkFileDialogSelectFolder, "gtk_file_dialog_select_folder")
+	gtk(&gtkFileDialogSelectFolderFinish, "gtk_file_dialog_select_folder_finish")
+	gtk(&gtkFileDialogSelectMultipleFolders, "gtk_file_dialog_select_multiple_folders")
+	gtk(&gtkFileDialogSelectMultipleFoldersFinish, "gtk_file_dialog_select_multiple_folders_finish")
 	gtk(&gtkFileFilterNew, "gtk_file_filter_new")
 	gtk(&gtkFileFilterSetName, "gtk_file_filter_set_name")
 	gtk(&gtkFileFilterAddSuffix, "gtk_file_filter_add_suffix")
@@ -244,7 +252,7 @@ func (w *window) pickImages(r driver.PickRequest, id uint32) {
 	}
 	gtkFileDialogSetDefaultFilter(dialog, filter)
 	gObjectUnref(filter)
-	w.openDialog(dialog, r.Limit > 1, func(paths []string, _ error) {
+	w.openDialog(dialog, r.Limit > 1, false, func(paths []string, _ error) {
 		go func() {
 			files := picked.ReadFiles(r, paths)
 			w.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: id, Data: files})
@@ -273,7 +281,7 @@ func (w *window) pickFiles(r driver.FilesRequest, id uint32) {
 		gtkFileDialogSetDefaultFilter(dialog, filter)
 		gObjectUnref(filter)
 	}
-	w.openDialog(dialog, r.Limit > 1, func(paths []string, err error) {
+	w.openDialog(dialog, r.Limit > 1, false, func(paths []string, err error) {
 		ev := driver.Event{Kind: driver.EventFiles, Count: id}
 		if err != nil {
 			ev.Text = err.Error()
@@ -283,6 +291,28 @@ func (w *window) pickFiles(r driver.FilesRequest, id uint32) {
 			files = append(files, driver.File{Path: p})
 		}
 		ev.Data = files
+		w.engine.Dispatch(ev)
+	})
+}
+
+// pickDirectories shows GtkFileDialog for folders and answers with
+// their paths.
+func (w *window) pickDirectories(r driver.DirectoriesRequest, id uint32) {
+	dialog := gtkFileDialogNew()
+	if dialog == 0 {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: "no file dialog"})
+		return
+	}
+	w.openDialog(dialog, r.Limit > 1, true, func(paths []string, err error) {
+		ev := driver.Event{Kind: driver.EventFiles, Count: id}
+		if err != nil {
+			ev.Text = err.Error()
+		}
+		var dirs []driver.Directory
+		for _, p := range paths {
+			dirs = append(dirs, driver.Directory{Path: p})
+		}
+		ev.Data = dirs
 		w.engine.Dispatch(ev)
 	})
 }
@@ -325,20 +355,26 @@ func (w *window) saveFile(r driver.SaveRequest, id uint32) {
 	}))
 }
 
-// openDialog shows dialog, modal, for one file or several and calls done
-// with the paths chosen: none when the user cancelled, err when it
-// failed.
-func (w *window) openDialog(dialog uintptr, multiple bool, done func(paths []string, err error)) {
+// openDialog shows dialog, modal, for one file or folder or several and
+// calls done with the paths chosen: none when the user cancelled, err
+// when it failed.
+func (w *window) openDialog(dialog uintptr, multiple, folders bool, done func(paths []string, err error)) {
 	gtkFileDialogSetModal(dialog, 1)
 	finish := func(paths []string, gerr uintptr) {
 		gObjectUnref(dialog)
 		done(paths, dialogError(gerr))
 	}
+	open, openFinish := gtkFileDialogOpen, gtkFileDialogOpenFinish
+	openMultiple, openMultipleFinish := gtkFileDialogOpenMultiple, gtkFileDialogOpenMultipleFinsh
+	if folders {
+		open, openFinish = gtkFileDialogSelectFolder, gtkFileDialogSelectFolderFinish
+		openMultiple, openMultipleFinish = gtkFileDialogSelectMultipleFolders, gtkFileDialogSelectMultipleFoldersFinish
+	}
 	if multiple {
-		gtkFileDialogOpenMultiple(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
+		openMultiple(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
 			var paths []string
 			var gerr uintptr
-			if list := gtkFileDialogOpenMultipleFinsh(source, result, uintptr(unsafe.Pointer(&gerr))); list != 0 {
+			if list := openMultipleFinish(source, result, uintptr(unsafe.Pointer(&gerr))); list != 0 {
 				for i := range gListModelGetNItems(list) {
 					if file := gListModelGetItem(list, i); file != 0 {
 						if p := filePath(file); p != "" {
@@ -353,10 +389,10 @@ func (w *window) openDialog(dialog uintptr, multiple bool, done func(paths []str
 		}))
 		return
 	}
-	gtkFileDialogOpen(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
+	open(dialog, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
 		var paths []string
 		var gerr uintptr
-		if file := gtkFileDialogOpenFinish(source, result, uintptr(unsafe.Pointer(&gerr))); file != 0 {
+		if file := openFinish(source, result, uintptr(unsafe.Pointer(&gerr))); file != 0 {
 			if p := filePath(file); p != "" {
 				paths = append(paths, p)
 			}

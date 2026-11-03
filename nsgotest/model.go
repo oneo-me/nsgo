@@ -339,6 +339,13 @@ func (a *App) apply(b *driver.MountBatch) {
 				files = a.PickFiles(*it.Files)
 			}
 			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Data: files})
+		case driver.ItemPickDirectories:
+			a.DirectoryPicks = append(a.DirectoryPicks, *it.Directories)
+			var dirs []driver.Directory
+			if a.PickDirectories != nil {
+				dirs = a.PickDirectories(*it.Directories)
+			}
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Data: dirs})
 		case driver.ItemSaveFile:
 			a.Saves = append(a.Saves, *it.Save)
 			ev := driver.Event{Kind: driver.EventFiles, Count: it.Count}

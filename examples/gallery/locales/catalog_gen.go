@@ -518,6 +518,8 @@ type Translation struct {
 	SystemPickfilesSavefile                      func() string
 	SystemPickAFile                              func() string
 	SystemPdfsAndImages                          func() string
+	SystemPickAFolder                            func() string
+	SystemNoFolderPicked                         func() string
 	SystemSaveATextFile                          func() string
 	SystemSaveTheFilePicked                      func() string
 	SystemPickAFileFirst                         func() string
@@ -2430,6 +2432,8 @@ const (
 	textSystemPickfilesSavefile
 	textSystemPickAFile
 	textSystemPdfsAndImages
+	textSystemPickAFolder
+	textSystemNoFolderPicked
 	textSystemSaveATextFile
 	textSystemSaveTheFilePicked
 	textSystemPickAFileFirst
@@ -4240,6 +4244,8 @@ var texts = map[string]*[numTexts]string{
 		"PickFiles · SaveFile",
 		"Pick a file",
 		"PDFs and images",
+		"Pick a folder",
+		"No folder picked",
 		"Save a text file",
 		"Save the file picked",
 		"Pick a file first",
@@ -6045,6 +6051,8 @@ var texts = map[string]*[numTexts]string{
 		"PickFiles · SaveFile",
 		"اختر ملفًا",
 		"ملفات PDF والصور",
+		"اختر مجلدًا",
+		"لم يُختر مجلد",
 		"حفظ ملف نصي",
 		"حفظ الملف المختار",
 		"اختر ملفًا أولًا",
@@ -7850,6 +7858,8 @@ var texts = map[string]*[numTexts]string{
 		"PickFiles · SaveFile",
 		"选取文件",
 		"PDF 和图片",
+		"选取文件夹",
+		"未选取文件夹",
 		"保存一个文本文件",
 		"保存选取的文件",
 		"请先选取文件",
@@ -9655,6 +9665,8 @@ var texts = map[string]*[numTexts]string{
 		"PickFiles · SaveFile",
 		"選取檔案",
 		"PDF 和圖片",
+		"選取資料夾",
+		"未選取資料夾",
 		"儲存一個文本檔案",
 		"儲存選取的檔案",
 		"請先選取檔案",
@@ -12408,6 +12420,12 @@ func Supply(lang string, t Translation) {
 	}
 	if t.SystemPdfsAndImages != nil {
 		st[textSystemPdfsAndImages] = t.SystemPdfsAndImages()
+	}
+	if t.SystemPickAFolder != nil {
+		st[textSystemPickAFolder] = t.SystemPickAFolder()
+	}
+	if t.SystemNoFolderPicked != nil {
+		st[textSystemNoFolderPicked] = t.SystemNoFolderPicked()
 	}
 	if t.SystemSaveATextFile != nil {
 		st[textSystemSaveATextFile] = t.SystemSaveATextFile()
@@ -20707,6 +20725,22 @@ func SystemPdfsAndImages(cx *core.Scope) string { return For(cx).SystemPdfsAndIm
 // SystemPdfsAndImages says "PDFs and images"
 // in the language of msgs.
 func (msgs Messages) SystemPdfsAndImages() string { return msgs.text(textSystemPdfsAndImages) }
+
+// SystemPickAFolder says "Pick a folder"
+// in the language the app shows under cx.
+func SystemPickAFolder(cx *core.Scope) string { return For(cx).SystemPickAFolder() }
+
+// SystemPickAFolder says "Pick a folder"
+// in the language of msgs.
+func (msgs Messages) SystemPickAFolder() string { return msgs.text(textSystemPickAFolder) }
+
+// SystemNoFolderPicked says "No folder picked"
+// in the language the app shows under cx.
+func SystemNoFolderPicked(cx *core.Scope) string { return For(cx).SystemNoFolderPicked() }
+
+// SystemNoFolderPicked says "No folder picked"
+// in the language of msgs.
+func (msgs Messages) SystemNoFolderPicked() string { return msgs.text(textSystemNoFolderPicked) }
 
 // SystemSaveATextFile says "Save a text file"
 // in the language the app shows under cx.

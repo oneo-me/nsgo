@@ -118,6 +118,11 @@ type App struct {
 	// the user cancels.
 	FilePicks []driver.FilesRequest
 	PickFiles func(r driver.FilesRequest) []driver.File
+	// DirectoryPicks are the folder picks the app asked for, oldest
+	// first. PickDirectories answers each with the folders the user
+	// picks; with none the user cancels.
+	DirectoryPicks  []driver.DirectoriesRequest
+	PickDirectories func(r driver.DirectoriesRequest) []driver.Directory
 	// Saves are the saves the app asked for, oldest first. SaveFile
 	// answers each with the path the user saves to, where the file is
 	// written; with none, or "", the user cancels.

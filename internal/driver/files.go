@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-// The system's file picker and save dialog, which NSH has not: the user
-// picks files of any type, which reach the app as files on disk, or
-// chooses where a file the app made goes. The platform answers both
-// with EventFiles.
+// The system's file and folder pickers and save dialog, which NSH has
+// not: the user picks files of any type or folders, which reach the app
+// as paths on disk, or chooses where a file the app made goes. The
+// platform answers each with EventFiles.
 
 // FilesRequest is a file pick as the platform carries it out.
 type FilesRequest struct {
@@ -54,6 +54,25 @@ func (f File) Open() (io.ReadCloser, error) {
 	}
 	return os.Open(f.Path)
 }
+
+// DirectoriesRequest is a folder pick as the platform carries it out.
+type DirectoriesRequest struct {
+	// Limit is the most folders the user picks: 1 for a single pick, at
+	// most MaxPicked.
+	Limit int
+}
+
+// Directory is a folder the user picked.
+type Directory struct {
+	// Name is its name as the user saw it.
+	Name string
+	// Path is where it is on disk.
+	Path string
+}
+
+// NoDirectoryPicker is what a platform without a folder picker answers
+// ItemPickDirectories with.
+const NoDirectoryPicker = "this platform has no folder picker"
 
 // SaveRequest is a save as the platform carries it out: the file the
 // dialog suggests and what goes in it, the file at Path or else Data.
@@ -146,6 +165,20 @@ func FinishFiles(r FilesRequest, files []File) []File {
 		}
 	}
 	return files
+}
+
+// FinishDirectories returns dirs as the app gets them: at most r.Limit,
+// each with a name.
+func FinishDirectories(r DirectoriesRequest, dirs []Directory) []Directory {
+	if n := max(r.Limit, 1); len(dirs) > n {
+		dirs = dirs[:n]
+	}
+	for i := range dirs {
+		if d := &dirs[i]; d.Name == "" {
+			d.Name = filepath.Base(d.Path)
+		}
+	}
+	return dirs
 }
 
 // fileTypes are the media types of common extensions, so every platform

@@ -218,6 +218,41 @@ func TestPickFiles(t *testing.T) {
 	}
 }
 
+func TestPickDirectories(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	var got []Directory
+	var gotErr error
+	answered := 0
+	pick := func(dirs []Directory, err error) { got, gotErr = dirs, err; answered++ }
+	cx.PickDirectories(PickDirectoriesOptions{Multiple: true, Limit: 2}, pick)
+	it := command(h.commit(), driver.ItemPickDirectories)
+	if it == nil || it.Directories.Limit != 2 {
+		t.Fatalf("pick = %+v", it)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Data: []driver.Directory{
+		{Path: filepath.Join("home", "photos")}, {Name: "Music", Path: "/m"}, {Path: "/third"}}})
+	if answered != 1 || gotErr != nil || len(got) != 2 || got[0].Name != "photos" || got[1].Name != "Music" {
+		t.Fatalf("dirs = %+v, %v", got, gotErr)
+	}
+	cx.PickDirectories(PickDirectoriesOptions{Limit: 5}, pick)
+	it = command(h.commit(), driver.ItemPickDirectories)
+	if it.Directories.Limit != 1 {
+		t.Fatalf("a single pick = %+v", it.Directories)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count})
+	if answered != 2 || gotErr != nil || got != nil {
+		t.Fatalf("a cancelled pick answers %+v, %v", got, gotErr)
+	}
+	cx.PickDirectories(PickDirectoriesOptions{}, pick)
+	it = command(h.commit(), driver.ItemPickDirectories)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
+	if gotErr == nil || gotErr.Error() != driver.NoDirectoryPicker || got != nil {
+		t.Fatalf("a failed pick answers %+v, %v", got, gotErr)
+	}
+}
+
 func TestSaveFile(t *testing.T) {
 	var cx *Scope
 	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })

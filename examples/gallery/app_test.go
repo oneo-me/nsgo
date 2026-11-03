@@ -391,6 +391,14 @@ func TestSystem(t *testing.T) {
 	if got := app.Find("id:picked-file-0").Text; got != "report.pdf · application/pdf · 0 KB" {
 		t.Fatalf("picked file = %q", got)
 	}
+	app.PickDirectories = func(core.DirectoriesRequest) []core.Directory { return []core.Directory{{Path: dir}} }
+	app.Press("role:button Pick a folder")
+	if got := app.Find("id:picked-folder-0").Text; app.DirectoryPicks[0].Limit != 1 || got != filepath.Base(dir)+" · "+dir {
+		t.Fatalf("picked folder = %q, pick %+v", got, app.DirectoryPicks[0])
+	}
+	app.PickDirectories = nil
+	app.Press("role:button Pick a folder")
+	app.Find("text:No folder picked")
 	saved := filepath.Join(dir, "copy.pdf")
 	app.SaveFile = func(core.SaveRequest) string { return saved }
 	app.Press("role:button Save the file picked")

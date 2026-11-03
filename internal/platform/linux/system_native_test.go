@@ -288,6 +288,21 @@ func TestFileDialogsReachGTK(t *testing.T) {
 	if s := next("the pick"); s != "notes.txt text/plain 5 true <nil>" {
 		t.Errorf("picked %q", s)
 	}
+	folder := filepath.Join(dir, "photos")
+	os.Mkdir(folder, 0o755)
+	cx.Post(func() {
+		cx.PickDirectories(core.PickDirectoriesOptions{}, func(dirs []core.Directory, err error) {
+			var parts []string
+			for _, d := range dirs {
+				parts = append(parts, fmt.Sprintf("%s %v", d.Name, d.Path == folder))
+			}
+			status <- fmt.Sprint(strings.Join(parts, ","), " ", err)
+		})
+	})
+	answer(folder)
+	if s := next("the folder pick"); s != "photos true <nil>" {
+		t.Errorf("picked %q", s)
+	}
 	copied := filepath.Join(dir, "copy.txt")
 	cx.Post(func() {
 		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })

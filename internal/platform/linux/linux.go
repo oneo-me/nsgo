@@ -610,6 +610,9 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemPickFiles:
 			w.pickFiles(*it.Files, it.Count)
 			continue
+		case driver.ItemPickDirectories:
+			w.pickDirectories(*it.Directories, it.Count)
+			continue
 		case driver.ItemSaveFile:
 			w.saveFile(*it.Save, it.Count)
 			continue

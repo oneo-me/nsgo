@@ -290,6 +290,23 @@ func (w *window) pickFiles(r driver.FilesRequest, id uint32) {
 	})
 }
 
+// pickDirectories queues a pick of folders.
+func (w *window) pickDirectories(r driver.DirectoriesRequest, id uint32) {
+	w.queueDialog(func() {
+		paths, err := w.folderDialog(r.Limit)
+		ev := driver.Event{Kind: driver.EventFiles, Count: id}
+		if err != nil {
+			ev.Text = err.Error()
+		}
+		var dirs []driver.Directory
+		for _, p := range paths {
+			dirs = append(dirs, driver.Directory{Path: p})
+		}
+		ev.Data = dirs
+		w.engine.Dispatch(ev)
+	})
+}
+
 // saveFile queues a save: the save dialog suggests r's name, and the
 // file is written where the user chose on a goroutine.
 func (w *window) saveFile(r driver.SaveRequest, id uint32) {
@@ -392,6 +409,80 @@ func (w *window) openDialog(name []uint16, exts []string, limit int) ([]string, 
 		if len(paths) < max(limit, 1) {
 			paths = append(paths, dir+`\`+name)
 		}
+	}
+	return paths, nil
+}
+
+var (
+	clsidFileOpenDialog = parseGUID("DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7")
+	iidFileOpenDialog   = parseGUID("D57C7288-D4AD-4768-BE02-9D969532D960")
+)
+
+// IFileOpenDialog's methods, from IModalWindow's and IFileDialog's, and
+// those of the shell items it answers with.
+const (
+	fileDialogShow       = 3
+	fileDialogSetOptions = 9
+	fileDialogGetOptions = 10
+	fileDialogGetResults = 27
+	itemArrayGetCount    = 7
+	itemArrayGetItemAt   = 8
+	shellItemGetName     = 5
+
+	fosNoChangeDir      = 0x8
+	fosPickFolders      = 0x20
+	fosForceFileSystem  = 0x40
+	fosAllowMultiSelect = 0x200
+	fosPathMustExist    = 0x800
+	sigdnFileSysPath    = 0x80058000
+	hresultCancelled    = 0x800704C7 // HRESULT_FROM_WIN32(ERROR_CANCELLED)
+)
+
+// folderDialog returns the paths of the folders chosen in Windows' open
+// dialog for folders (IFileOpenDialog), at most limit; none when it was
+// cancelled. The comdlg32 dialogs pick only files.
+func (w *window) folderDialog(limit int) ([]string, error) {
+	if err := initCOM(); err != nil {
+		return nil, err
+	}
+	var dialog *comObject
+	if hr, _, _ := coCreateInstance.Call(uintptr(unsafe.Pointer(&clsidFileOpenDialog)), 0, clsctxInprocServer,
+		uintptr(unsafe.Pointer(&iidFileOpenDialog)), uintptr(unsafe.Pointer(&dialog))); failed(hr) || dialog == nil {
+		return nil, hresultError("no folder dialog", hr)
+	}
+	defer dialog.release()
+	var options uint32
+	dialog.call(fileDialogGetOptions, uintptr(unsafe.Pointer(&options)))
+	options |= fosPickFolders | fosForceFileSystem | fosPathMustExist | fosNoChangeDir
+	if limit > 1 {
+		options |= fosAllowMultiSelect
+	}
+	dialog.call(fileDialogSetOptions, uintptr(options))
+	if hr := dialog.call(fileDialogShow, w.owner()); uint32(hr) == hresultCancelled {
+		return nil, nil
+	} else if failed(hr) {
+		return nil, hresultError("folder dialog", hr)
+	}
+	var items *comObject
+	if hr := dialog.call(fileDialogGetResults, uintptr(unsafe.Pointer(&items))); failed(hr) || items == nil {
+		return nil, hresultError("no folders chosen", hr)
+	}
+	defer items.release()
+	var n uint32
+	items.call(itemArrayGetCount, uintptr(unsafe.Pointer(&n)))
+	var paths []string
+	for i := range min(int(n), max(limit, 1)) {
+		var item *comObject
+		if failed(items.call(itemArrayGetItemAt, uintptr(i), uintptr(unsafe.Pointer(&item)))) || item == nil {
+			continue
+		}
+		var name *uint16
+		if !failed(item.call(shellItemGetName, sigdnFileSysPath, uintptr(unsafe.Pointer(&name)))) {
+			if p := takeString(name); p != "" {
+				paths = append(paths, p)
+			}
+		}
+		item.release()
 	}
 	return paths, nil
 }

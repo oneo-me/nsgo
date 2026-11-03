@@ -165,6 +165,29 @@ func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
 	done.Release()
 }
 
+// pickDirectories shows an open panel as a sheet on the window for
+// folders and answers with their paths.
+func (s *surface) pickDirectories(r driver.DirectoriesRequest, id uint32) {
+	panel := objc.ID(objc.GetClass("NSOpenPanel")).Send(sel("openPanel"))
+	panel.Send(sel("setCanChooseFiles:"), false)
+	panel.Send(sel("setCanChooseDirectories:"), true)
+	panel.Send(sel("setCanCreateDirectories:"), true)
+	panel.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
+	panel.Send(sel("retain"))
+	done := objc.NewBlock(func(_ objc.Block, response int) {
+		defer panel.Send(selRelease)
+		var dirs []driver.Directory
+		if response == 1 { // NSModalResponseOK
+			apple.ForEach(panel.Send(sel("URLs")), func(u objc.ID) {
+				dirs = append(dirs, driver.Directory{Path: apple.GoString(u.Send(sel("path")))})
+			})
+		}
+		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Data: dirs})
+	})
+	panel.Send(sel("beginSheetModalForWindow:completionHandler:"), s.window, done)
+	done.Release()
+}
+
 // saveFile shows a save panel as a sheet on the window for the file r
 // suggests, then saves it where the user chose off the main thread.
 func (s *surface) saveFile(r driver.SaveRequest, id uint32) {

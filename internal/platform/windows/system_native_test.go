@@ -183,6 +183,21 @@ func TestServicesReachTheSystem(t *testing.T) {
 	if s := <-status; s != "notes.txt text/plain 5 true <nil>" {
 		t.Errorf("picked %q", s)
 	}
+	folder := filepath.Join(filepath.Dir(shot), "photos")
+	os.Mkdir(folder, 0o755)
+	cx.Post(func() {
+		cx.PickDirectories(core.PickDirectoriesOptions{}, func(dirs []core.Directory, err error) {
+			var parts []string
+			for _, d := range dirs {
+				parts = append(parts, fmt.Sprintf("%s %v", d.Name, d.Path == folder))
+			}
+			status <- fmt.Sprint(strings.Join(parts, ","), " ", err)
+		})
+	})
+	answerFolderDialog(t, hwnd, folder)
+	if s := <-status; s != "photos true <nil>" {
+		t.Errorf("picked %q", s)
+	}
 	copied := filepath.Join(filepath.Dir(shot), "copy.txt")
 	cx.Post(func() {
 		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
@@ -464,6 +479,24 @@ func answerFileDialog(t *testing.T, hwnd uintptr, path string) {
 	dlg, field := fileDialog(t, hwnd)
 	sendMessage.Call(field, wmSetText, 0, uintptr(unsafe.Pointer(wide(path))))
 	postMessageW.Call(dlg, wmCommand, idOK, 0)
+}
+
+// answerFolderDialog types path into the folder dialog hwnd shows and
+// presses Select Folder until it closes: a press may first open the
+// folder typed, and the next picks the folder open.
+func answerFolderDialog(t *testing.T, hwnd uintptr, path string) {
+	t.Helper()
+	const idOK = 1
+	isWindow := user32.NewProc("IsWindow")
+	dlg, _ := fileDialog(t, hwnd)
+	answerFileDialog(t, hwnd, path)
+	for range 5 {
+		time.Sleep(time.Second)
+		if open, _, _ := isWindow.Call(dlg); open == 0 {
+			return
+		}
+		postMessageW.Call(dlg, wmCommand, idOK, 0)
+	}
 }
 
 // cancelFileDialog presses Cancel in the dialog hwnd shows.

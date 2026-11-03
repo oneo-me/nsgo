@@ -682,6 +682,20 @@ func filesCard(cx *core.Scope) core.Node {
 			})
 		}
 	}
+	folders := core.NewSignalFunc(cx, []core.Directory(nil), func(a, b []core.Directory) bool { return false })
+	pickFolders := func() {
+		cx.PickDirectories(core.PickDirectoriesOptions{}, func(dirs []core.Directory, err error) {
+			switch {
+			case err != nil:
+				status.Set(tr.SystemThePickFailed() + err.Error())
+			case len(dirs) == 0:
+				status.Set(tr.SystemNoFolderPicked())
+			default:
+				status.Set(tr.SystemPicked(len(dirs)))
+			}
+			folders.Set(dirs)
+		})
+	}
 	save := func(o core.SaveOptions) {
 		cx.SaveFile(o, func(saved bool, err error) {
 			switch {
@@ -707,6 +721,17 @@ func filesCard(cx *core.Scope) core.Node {
 			for i, f := range picked.Get() {
 				rows = append(rows, core.Text{Content: fmt.Sprintf("%s · %s · %d KB", f.Name, f.MIME, (f.Size+512)/1024),
 					TestID: fmt.Sprintf("picked-file-%d", i), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)})
+			}
+			return core.View{Style: core.Style{Gap: 4}, Children: rows}
+		}),
+		ui.Caption{Label: "PickDirectories"},
+		ui.Wrap{Children: []core.Node{small(tr.SystemPickAFolder(), pickFolders)}},
+		core.Dynamic(func(cx *core.Scope) core.Node {
+			colors := ui.ColorsOf(cx)
+			var rows []core.Node
+			for i, d := range folders.Get() {
+				rows = append(rows, core.Text{Content: d.Name + " · " + d.Path,
+					TestID: fmt.Sprintf("picked-folder-%d", i), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)})
 			}
 			return core.View{Style: core.Style{Gap: 4}, Children: rows}
 		}),

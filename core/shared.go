@@ -354,6 +354,12 @@ type (
 	// FilesRequest is a file pick as the platform carries it out,
 	// PickFilesOptions resolved.
 	FilesRequest = driver.FilesRequest
+	// Directory is a folder the user picked: its name and where it is on
+	// disk.
+	Directory = driver.Directory
+	// DirectoriesRequest is a folder pick as the platform carries it out,
+	// PickDirectoriesOptions resolved.
+	DirectoriesRequest = driver.DirectoriesRequest
 	// SaveRequest is a save as the platform carries it out, SaveOptions
 	// resolved.
 	SaveRequest = driver.SaveRequest
@@ -406,8 +412,8 @@ const (
 	PickCurrent    = driver.PickCurrent
 )
 
-// MaxPicked is the most images or files one PickImages or PickFiles
-// answers with.
+// MaxPicked is the most images, files or folders one PickImages,
+// PickFiles or PickDirectories answers with.
 const MaxPicked = driver.MaxPicked
 
 // MaxClipboardImage is the most bytes of a PNG ReadClipboardImage gives.

@@ -179,7 +179,8 @@ const (
 	// the wheel's turns did; with the offset as EventScroll's.
 	EventScrollEnd
 	// EventFiles answers ItemPickFiles Count with the files picked (Data,
-	// a []File), none when the user cancelled, and ItemSaveFile Count
+	// a []File), ItemPickDirectories Count with the folders picked (a
+	// []Directory), none when the user cancelled, and ItemSaveFile Count
 	// with whether the file was saved (Finished); Text is what failed.
 	EventFiles
 )

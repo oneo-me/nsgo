@@ -724,10 +724,14 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	for _, l := range loads {
 		go s.load(l)
 	}
-	// Go loads the images Java shows, so it answers ImageSize too.
+	// Go loads the images Java shows, so it answers ImageSize too, and
+	// folder picks, which Java has no picker for.
 	for i := range b.Items {
-		if it := b.Items[i]; it.Kind == driver.ItemImageInfo {
+		switch it := b.Items[i]; it.Kind {
+		case driver.ItemImageInfo:
 			go s.engine.Dispatch(imageload.Info(&it, imagedecode.Size))
+		case driver.ItemPickDirectories:
+			go s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
 		}
 	}
 }

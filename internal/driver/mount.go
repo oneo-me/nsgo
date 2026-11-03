@@ -219,6 +219,9 @@ const (
 	// first commit and when it changes. Platforms whose own motion
 	// follows a direction, as iOS's navigation, take it.
 	ItemDirection
+	// ItemPickDirectories shows the system's folder picker for
+	// Directories; the platform answers with EventFiles carrying Count.
+	ItemPickDirectories
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -278,9 +281,11 @@ type MountItem struct {
 	Screen    *ScreenConfig
 	// Pick is ItemPickImages' request.
 	Pick *PickRequest
-	// Files is ItemPickFiles' request, Save ItemSaveFile's.
-	Files *FilesRequest
-	Save  *SaveRequest
+	// Files is ItemPickFiles' request, Save ItemSaveFile's and
+	// Directories ItemPickDirectories'.
+	Files       *FilesRequest
+	Save        *SaveRequest
+	Directories *DirectoriesRequest
 }
 
 // StickyCell is a sticky list cell and its travel, in its scroll view's

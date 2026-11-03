@@ -305,15 +305,20 @@ type PickOptions struct {
 
 // request is o as the platform carries it out.
 func (o PickOptions) request() driver.PickRequest {
-	r := driver.PickRequest{Limit: 1, MaxDimension: max(o.MaxDimension, 0), Quality: min(max(o.Quality, 0), 1),
-		Format: o.Format}
-	if o.Multiple {
-		r.Limit = driver.MaxPicked
-		if o.Limit > 0 {
-			r.Limit = min(o.Limit, driver.MaxPicked)
-		}
+	return driver.PickRequest{Limit: pickLimit(o.Multiple, o.Limit), MaxDimension: max(o.MaxDimension, 0),
+		Quality: min(max(o.Quality, 0), 1), Format: o.Format}
+}
+
+// pickLimit is the most a pick answers with: 1 for a single pick, else
+// limit, up to MaxPicked (0: MaxPicked).
+func pickLimit(multiple bool, limit int) int {
+	switch {
+	case !multiple:
+		return 1
+	case limit > 0:
+		return min(limit, driver.MaxPicked)
 	}
-	return r
+	return driver.MaxPicked
 }
 
 // PickImages shows the system's photo picker and calls done with the
@@ -348,13 +353,7 @@ type PickFilesOptions struct {
 
 // request is o as the platform carries it out.
 func (o PickFilesOptions) request() driver.FilesRequest {
-	r := driver.FilesRequest{Limit: 1}
-	if o.Multiple {
-		r.Limit = driver.MaxPicked
-		if o.Limit > 0 {
-			r.Limit = min(o.Limit, driver.MaxPicked)
-		}
-	}
+	r := driver.FilesRequest{Limit: pickLimit(o.Multiple, o.Limit)}
 	for _, t := range o.Types {
 		t = strings.ToLower(strings.TrimSpace(t))
 		switch {
@@ -393,6 +392,40 @@ func (cx *Scope) PickFiles(o PickFilesOptions, done func(files []File, err error
 		}
 		files, _ := ev.Data.([]driver.File)
 		done(driver.FinishFiles(r, files), nil)
+	})
+}
+
+// PickDirectoriesOptions say how PickDirectories picks folders.
+type PickDirectoriesOptions struct {
+	// Multiple lets the user pick several folders, at most Limit (0: up
+	// to MaxPicked).
+	Multiple bool
+	Limit    int
+}
+
+// PickDirectories shows the system's folder picker and calls done with
+// the folders the user picked, or none when they cancelled; err says
+// what failed. Each is the user's own folder on disk: NSOpenPanel on
+// macOS, IFileOpenDialog on Windows and GtkFileDialog, through the
+// desktop portal where there is one, on Linux. The pickers need no
+// permission. iOS, Android and the web have none yet and answer with an
+// error.
+func (cx *Scope) PickDirectories(o PickDirectoriesOptions, done func(dirs []Directory, err error)) {
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	r := driver.DirectoriesRequest{Limit: pickLimit(o.Multiple, o.Limit)}
+	t.request(cx, driver.MountItem{Kind: driver.ItemPickDirectories, Directories: &r}, func(ev driver.Event) {
+		if done == nil {
+			return
+		}
+		if ev.Text != "" {
+			done(nil, errors.New(ev.Text))
+			return
+		}
+		dirs, _ := ev.Data.([]driver.Directory)
+		done(driver.FinishDirectories(r, dirs), nil)
 	})
 }
 

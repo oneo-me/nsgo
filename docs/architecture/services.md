@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file picks and saves, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
 
 ## Requests and answers
 
@@ -8,7 +8,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles` and `SaveFile`, and it records the appearance, quits and the context menu shown.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories` and `SaveFile`, and it records the appearance, quits and the context menu shown.
 
 ## Clipboard
 
@@ -68,16 +68,17 @@ Windows checks the registry first because the shell asks the user for an app for
 
 - A picked `File` is on disk: the user's own on desktops, a copy in the app's storage on iOS and Android (`Temporary`) that the app deletes. The web has no disk, so `File.Open` reads the file's `Blob` a slice at a time. `FinishFiles` fills names, sizes, modification times and types.
 - `SaveFile` copies the file at `SaveOptions.Path`, or `Data` where it names none. Desktops write through a temporary file beside the destination (`SaveRequest.SaveTo`), so a write that fails leaves nothing where the user chose. iOS and Android save only files on disk, so `Data` and a name other than the file's are staged in a directory that is removed once the dialog answers (`SaveRequest.Stage`).
-- `done` tells a cancel from a failure: no files or `saved == false` with a nil error, against the error the platform reported.
+- `PickDirectories` picks folders apart from files, so a caller that wants files gets no folders to filter out. A `Directory` is the user's folder on disk, with its name and path.
+- `done` tells a cancel from a failure: no files or folders, or `saved == false`, with a nil error, against the error the platform reported.
 
-| Target | Picker | Save dialog |
-| --- | --- | --- |
-| macOS | An `NSOpenPanel` sheet with `UTType`s | An `NSSavePanel` sheet, keeping the name's extension |
-| iOS | `UIDocumentPickerViewController` copying into the app's `tmp` | The same, exporting a copy of the staged file |
-| Android | `ACTION_OPEN_DOCUMENT`; Java copies each document into the cache's `nsgo-files` | `ACTION_CREATE_DOCUMENT`; Java copies the file in and deletes the document when that fails |
-| Windows | `GetOpenFileNameW` | `GetSaveFileNameW`, asking before replacing a file |
-| Linux | `GtkFileDialog`, filtering by MIME type and suffix | `GtkFileDialog`'s save |
-| Web | `<input type=file>` | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
+| Target | Picker | Folder picker | Save dialog |
+| --- | --- | --- | --- |
+| macOS | An `NSOpenPanel` sheet with `UTType`s | An `NSOpenPanel` sheet for directories | An `NSSavePanel` sheet, keeping the name's extension |
+| iOS | `UIDocumentPickerViewController` copying into the app's `tmp` | None: an error ([roadmap](../roadmap.md#finish-the-existing-platforms)) | The same, exporting a copy of the staged file |
+| Android | `ACTION_OPEN_DOCUMENT`; Java copies each document into the cache's `nsgo-files` | None: an error | `ACTION_CREATE_DOCUMENT`; Java copies the file in and deletes the document when that fails |
+| Windows | `GetOpenFileNameW` | `IFileOpenDialog` with `FOS_PICKFOLDERS`, which comdlg32 has no peer of | `GetSaveFileNameW`, asking before replacing a file |
+| Linux | `GtkFileDialog`, filtering by MIME type and suffix | `GtkFileDialog`'s folder selection | `GtkFileDialog`'s save |
+| Web | `<input type=file>` | None: an error | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
 
 ## Appearance and quitting
 
