@@ -138,8 +138,14 @@ type Decoration struct {
 	Class, LineClass string
 	Style            core.Style
 	LineStyle        core.Style
-	Token            string
+	// Token colors the range as the highlighting colors a token of its
+	// kind.
+	Token TokenKind
 }
+
+// TokenKind is a kind of token the highlighting colors: comment,
+// keyword, string, number, title, attr, built or deletion.
+type TokenKind string
 
 // Highlighter is the app's highlighting of a language, in place of the
 // built-in one: a tree-sitter grammar, a parser of the app's. It runs off
@@ -170,12 +176,18 @@ type FoldRange struct{ StartLine, EndLine int }
 // (from the query's start to the caret when nil); FilterText and SortText
 // filter and order it; Documentation shows beside the list.
 type CompletionItem struct {
-	Label, Kind, Detail  string
+	Label                string
+	Kind                 CompletionKind
+	Detail               string
 	InsertText           string
 	FilterText, SortText string
 	Documentation        string
 	Range                *Range
 }
+
+// CompletionKind is what a completion item is, as the Language Server
+// Protocol names its kinds: method, function, variable, class, keyword...
+type CompletionKind string
 
 // CompletionTrigger is what asked for completions.
 type CompletionTrigger uint8

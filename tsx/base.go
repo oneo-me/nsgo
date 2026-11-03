@@ -58,6 +58,8 @@ func init() {
 	Optional[core.AccessibilityValue]("Min", "Max", "Now")
 	Optional[base.DataTableColumn]("Width", "MinWidth", "MaxWidth", "FitPadding")
 	Fields[base.DataTableColumn](map[string]string{"NoResize": "resizable", "NoMove": "movable", "NoSelect": "selectable"})
+	Required[base.DataTableDump]("Headers", "Rows")
+	Required[base.DataTableColumnMove]("Key", "From", "To", "Order")
 	// NSH's sort names its direction.
 	Shape("DataTableSort", `export type DataTableSortDirection = "ascending" | "descending";
 export interface DataTableSort { key: string; direction?: DataTableSortDirection }`,
@@ -71,6 +73,44 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 			key, _ := m["key"].(string)
 			return base.DataTableSort{Key: key, Descending: m["direction"] == "descending"}
 		})
+	// NSH's selection leaves out what it does not select; null selects
+	// nothing.
+	Shape("DataTableSelection", `export interface DataTableSelection { row?: number | null; column?: number | null }`,
+		func(s base.DataTableSelection) map[string]any {
+			if s.Row < 0 && s.Column < 0 {
+				return nil
+			}
+			m := map[string]any{}
+			if s.Row >= 0 {
+				m["row"] = s.Row
+			}
+			if s.Column >= 0 {
+				m["column"] = s.Column
+			}
+			return m
+		},
+		func(m map[string]any) base.DataTableSelection {
+			s := base.NoTableSelection
+			if m["row"] != nil {
+				s.Row = int(jsNumber(m["row"]))
+			}
+			if m["column"] != nil {
+				s.Column = int(jsNumber(m["column"]))
+			}
+			return s
+		})
+	shapeNone(base.NoTableSelection)
+	Shape("DataTableContextMenu", `export interface DataTableContextMenu { row?: number | null; column?: number | null; x: number; y: number }`,
+		func(e base.DataTableContextMenu) map[string]any {
+			m := map[string]any{"x": float64(e.At.X), "y": float64(e.At.Y)}
+			if e.Row >= 0 {
+				m["row"] = e.Row
+			}
+			if e.Column >= 0 {
+				m["column"] = e.Column
+			}
+			return m
+		}, nil)
 	registerPart("nsgo/base", "ResizablePanel", base.ResizablePanel{}, enumOptions...)
 	Register("nsgo/base", map[string]core.Node{
 		"Button":              base.Button{},
@@ -125,11 +165,11 @@ var baseRenames = []Option{
 		if h := p.handler("onDoublePress"); h != nil {
 			v.Set(reflect.ValueOf(func(row, column int) { h(p.r.target(row, column)) }))
 		}
-	}, "onDoublePress?: (target: { row: number; column: number }) => void"),
+	}, "onDoublePress?: (target: DataTableTarget) => void"),
 	custom("OnVisibleRowsChange", rangeHandler("onVisibleRowsChange"),
-		"onVisibleRowsChange?: (range: { start: number; end: number }) => void"),
+		"onVisibleRowsChange?: (range: DataTableRange) => void"),
 	custom("OnVisibleColumnsChange", rangeHandler("onVisibleColumnsChange"),
-		"onVisibleColumnsChange?: (range: { start: number; end: number }) => void"),
+		"onVisibleColumnsChange?: (range: DataTableRange) => void"),
 	custom("Y", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
 	custom("X", plotValues("x"), "data?: readonly any[]", plotAxis("x")),
 	custom("Y1", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
@@ -138,11 +178,15 @@ var baseRenames = []Option{
 			v.Set(reflect.ValueOf(func() float64 { return p.float("y0") }))
 		}
 	}, "y0?: number"),
-	custom("XScale", plotScale("xScale"), "xScale?: "+scaleTS),
-	custom("YScale", plotScale("yScale"), "yScale?: "+scaleTS),
+	typed("XScale", custom("XScale", plotScale("xScale"), "xScale?: Scale"), reflect.TypeFor[base.PlotScale]()),
+	typed("YScale", custom("YScale", plotScale("yScale"), "yScale?: Scale"), reflect.TypeFor[base.PlotScale]()),
 }
 
-const scaleTS = `{ type: "point" } | { type: "linear"; domain?: [number, number] }`
+func init() {
+	// A plot's scale as NSH's declares it; plotScale reads it.
+	Shape("Scale", `export type Scale = { type: "point" } | { type: "linear"; domain?: [number, number] };`,
+		func(base.PlotScale) map[string]any { return nil }, nil)
+}
 
 // plotAxis declares a plot's axis: a row's key, a function of a row and
 // its index, or the values.
@@ -150,11 +194,16 @@ func plotAxis(axis string) string {
 	return axis + "?: string | ((row: any, index: number) => number) | readonly number[]"
 }
 
-// target is { row, column }.
+// target is { row, column }, leaving out the one that is -1, as NSH's
+// DataTableTarget does.
 func (r *runtime) target(row, column int) *goja.Object {
 	o := r.vm.NewObject()
-	_ = o.Set("row", row)
-	_ = o.Set("column", column)
+	if row >= 0 {
+		_ = o.Set("row", row)
+	}
+	if column >= 0 {
+		_ = o.Set("column", column)
+	}
 	return o
 }
 
@@ -173,14 +222,11 @@ func rangeHandler(prop string) func(p *props, v reflect.Value) {
 
 // tableRow is row of a DataTable's data, whose first row is dataStart.
 func tableRow(p *props, row int) goja.Value {
-	items := p.r.arrayItems(p.get("data"))
-	if i := row - p.int("dataStart"); i >= 0 && i < len(items) {
-		return items[i]
-	}
-	return nil
+	return p.r.item(p.get("data"), row-p.int("dataStart"))
 }
 
-// tableText is a cell's text: its row's value under its column's key.
+// tableText is a cell's text: its row's value under its column's key,
+// or at its column's place in a row that is an array.
 func tableText(p *props, v reflect.Value) {
 	if !p.has("data") {
 		return
@@ -190,12 +236,14 @@ func tableText(p *props, v reflect.Value) {
 		if column < 0 || column >= len(cols) {
 			return ""
 		}
-		key := stringOf(p.r.options(cols[column]).get("key"))
 		o, ok := tableRow(p, row).(*goja.Object)
 		if !ok {
 			return ""
 		}
-		return stringOf(o.Get(key))
+		if p.r.isArray(o) {
+			return stringOf(p.r.item(o, column))
+		}
+		return stringOf(o.Get(stringOf(p.r.options(cols[column]).get("key"))))
 	}))
 }
 
@@ -212,10 +260,11 @@ func tableRowClass(p *props, v reflect.Value) {
 	if !p.has("rowClasses") {
 		return
 	}
+	// Row dataStart + i takes rowClasses[i], as data's.
 	v.Set(reflect.ValueOf(func(row int) string {
 		items := p.r.arrayItems(p.get("rowClasses"))
-		if row >= 0 && row < len(items) {
-			return stringOf(items[row])
+		if i := row - p.int("dataStart"); i >= 0 && i < len(items) {
+			return stringOf(items[i])
 		}
 		return ""
 	}))

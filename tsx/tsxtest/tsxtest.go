@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -68,6 +69,49 @@ type runner struct {
 	dir  string
 	t    *testing.T
 	reg  *goja.Object
+	// apps are the apps the tests opened, whose failures outside a step
+	// fail the test running.
+	apps []*appTB
+}
+
+// A stepFailure is what a step that cannot be taken panics with, for
+// the step's promise to reject with.
+type stepFailure struct{ msg string }
+
+// appTB is the testing.TB an app runs with: what fails a step panics with
+// a stepFailure, and what the app reports failed waits for the next step,
+// which rejects with it, or for the test's end.
+type appTB struct {
+	testing.TB
+	failed []string
+}
+
+func (t *appTB) Fatalf(format string, args ...any) { panic(stepFailure{fmt.Sprintf(format, args...)}) }
+func (t *appTB) Fatal(args ...any)                 { panic(stepFailure{fmt.Sprint(args...)}) }
+func (t *appTB) FailNow()                          { panic(stepFailure{"the step failed"}) }
+func (t *appTB) Errorf(format string, args ...any) {
+	t.failed = append(t.failed, fmt.Sprintf(format, args...))
+}
+func (t *appTB) Error(args ...any) { t.failed = append(t.failed, fmt.Sprint(args...)) }
+
+// try runs a step, returning why it failed: what it panicked with, or
+// what the app reported failed meanwhile.
+func (t *appTB) try(step func()) (err error) {
+	defer func() {
+		if v := recover(); v != nil {
+			f, ok := v.(stepFailure)
+			if !ok {
+				panic(v)
+			}
+			err = errors.New(f.msg)
+		}
+		if err == nil && len(t.failed) > 0 {
+			err = errors.New(strings.Join(t.failed, "\n"))
+		}
+		t.failed = nil
+	}()
+	step()
+	return nil
 }
 
 func runFile(t *testing.T, fsys fs.FS, file string) {
@@ -106,6 +150,24 @@ func runFile(t *testing.T, fsys fs.FS, file string) {
 		return goja.Undefined()
 	})
 	_ = r.vm.Set("console", console)
+	// The web's base64 functions, which tests write fixtures with.
+	_ = r.vm.Set("atob", func(s string) string {
+		b, err := base64.RawStdEncoding.DecodeString(strings.TrimRight(strings.Join(strings.Fields(s), ""), "="))
+		if err != nil {
+			panic(r.vm.NewTypeError("atob: %v", err))
+		}
+		return latin1(b)
+	})
+	_ = r.vm.Set("btoa", func(s string) string {
+		b := make([]byte, 0, len(s))
+		for _, c := range s {
+			if c > 0xff {
+				panic(r.vm.NewTypeError("btoa: a character past Latin-1"))
+			}
+			b = append(b, byte(c))
+		}
+		return base64.StdEncoding.EncodeToString(b)
+	})
 	if _, err := r.vm.RunScript(file, code); err != nil {
 		t.Fatal(err)
 	}
@@ -131,6 +193,12 @@ func runFile(t *testing.T, fsys fs.FS, file string) {
 			}
 			r.t = t
 			p, _ := call("run", r.vm.ToValue(i)).Export().(*goja.Promise)
+			for _, a := range r.apps {
+				for _, f := range a.failed {
+					t.Error(f)
+				}
+				a.failed = nil
+			}
 			switch {
 			case p == nil:
 			case p.State() == goja.PromiseStateRejected:
@@ -140,6 +208,25 @@ func runFile(t *testing.T, fsys fs.FS, file string) {
 			}
 		})
 	}
+}
+
+// latin1 is b read as Latin-1, a character per byte, as atob gives it.
+func latin1(b []byte) string {
+	r := make([]rune, len(b))
+	for i, c := range b {
+		r[i] = rune(c)
+	}
+	return string(r)
+}
+
+// jsError is err as a JS Error, with the stack of the test's call.
+func (r *runner) jsError(err error) *goja.Object {
+	ctor, _ := goja.AssertConstructor(r.vm.Get("Error"))
+	o, cerr := ctor(nil, r.vm.ToValue(err.Error()))
+	if cerr != nil {
+		return r.vm.NewGoError(err)
+	}
+	return o
 }
 
 // describe is what a test threw, with its stack.
@@ -203,30 +290,35 @@ func (r *runner) open(call goja.FunctionCall) goja.Value {
 	if envSet {
 		opts = append(opts, nsgotest.Environment(env))
 	}
+	// The embedding app: the test's, else the page's host module.
+	tb := &appTB{TB: r.t}
+	var app *nsgotest.App
+	var th *testHost
 	if v := opt("host"); v != nil {
-		h := core.NewHost()
-		ho := v.ToObject(r.vm)
-		if params, ok := ho.Get("params").(*goja.Object); ok {
-			_ = h.SetParams(params.Export().(map[string]any))
+		th = r.playHost(v.ToObject(r.vm), func() *nsgotest.App { return app })
+		opts = append(opts, nsgotest.Host(th.h))
+	} else if nsgotest.Target() == "" {
+		module, err := webHost(r.fsys, entry)
+		if err != nil {
+			panic(r.jsError(err))
 		}
-		if handlers, ok := ho.Get("handlers").(*goja.Object); ok {
-			for _, name := range handlers.Keys() {
-				hv := handlers.Get(name)
-				h.Handle(name, func(c *core.HostCall) {
-					if fn, ok := goja.AssertFunction(hv); ok {
-						res, err := fn(goja.Undefined(), r.vm.ToValue(c.Data))
-						if err != nil {
-							c.Reject(err)
-							return
-						}
-						c.Resolve(res.Export())
-						return
-					}
-					c.Resolve(hv.Export())
-				})
+		if module != "" {
+			th = &testHost{h: core.NewHost()}
+			opts = append(opts, nsgotest.Host(th.h), func(a *nsgotest.App) {
+				if err := pageHost(r.fsys, module, a, th.h); err != nil {
+					tb.Fatalf("%v", err)
+				}
+			})
+		}
+	}
+	if c, ok := opt("clock").(*goja.Object); ok {
+		if at := c.Get("time"); at != nil && !goja.IsUndefined(at) && !goja.IsNull(at) {
+			wall := time.UnixMilli(at.ToInteger())
+			if d, ok := at.Export().(time.Time); ok {
+				wall = d
 			}
+			opts = append(opts, func(a *nsgotest.App) { a.Clock.SetWallTime(wall) })
 		}
-		opts = append(opts, nsgotest.Host(h))
 	}
 	if v := opt("clipboard"); v != nil {
 		text := v.String()
@@ -253,9 +345,13 @@ func (r *runner) open(call goja.FunctionCall) goja.Value {
 			}
 		}
 	}
-	app := nsgotest.Start(r.t, tsx.WithFetcher(compiler.App(r.fsys, entry), net.fetch), opts...)
-	p, resolve, _ := r.vm.NewPromise()
-	_ = resolve(r.app(app, env, net))
+	r.apps = append(r.apps, tb)
+	p, resolve, reject := r.vm.NewPromise()
+	if err := tb.try(func() { app = nsgotest.Start(tb, tsx.WithFetcher(compiler.App(r.fsys, entry), net.fetch), opts...) }); err != nil {
+		_ = reject(r.jsError(err))
+	} else {
+		_ = resolve(r.app(app, tb, env, net, th, opt("clock") != nil))
+	}
 	return r.vm.ToValue(p)
 }
 
@@ -443,33 +539,75 @@ func (n *network) fetch(req *http.Request) (*http.Response, error) {
 	return nil, fmt.Errorf("nsgo/test: no route of open's network for %s %s", req.Method, req.URL)
 }
 
-// selector is NSH's selector as nsgotest reads it: role:button[Save] is
-// role:button Save.
+// selector is NSH's selector as nsgotest reads it: text:Save, a whole
+// text, is text:"Save", and role:button[Save] is role:button "Save".
 var roleName = regexp.MustCompile(`^role:([a-z]+)\[(.*)\]$`)
 
 func selector(s string) string {
-	if m := roleName.FindStringSubmatch(s); m != nil {
-		return "role:" + m[1] + " " + m[2]
+	parts := strings.Split(s, " >> ")
+	for i, p := range parts {
+		p = strings.TrimSpace(p)
+		if m := roleName.FindStringSubmatch(p); m != nil {
+			name := m[2]
+			if !strings.HasPrefix(name, "/") {
+				name = `"` + name + `"`
+			}
+			parts[i] = "role:" + m[1] + " " + name
+		} else if t, ok := strings.CutPrefix(p, "text:"); ok && !strings.HasPrefix(t, "/") {
+			parts[i] = `text:"` + t + `"`
+		}
 	}
-	return s
+	return strings.Join(parts, " >> ")
 }
 
 // app is a JS App over an nsgotest app.
-func (r *runner) app(a *nsgotest.App, env driver.Environment, net *network) *goja.Object {
+func (r *runner) app(a *nsgotest.App, tb *appTB, env driver.Environment, net *network, th *testHost, manual bool) *goja.Object {
 	o := r.vm.NewObject()
-	done := func() goja.Value {
-		p, resolve, _ := r.vm.NewPromise()
-		_ = resolve(goja.Undefined())
+	// until settles until cond holds, failing after timeout of real time.
+	// Without open's clock the app's time passes meanwhile, a frame at a
+	// time, as the system's clock that NSH's app runs on then moves.
+	until := func(timeout time.Duration, cond func() bool) {
+		if manual || nsgotest.Target() != "" {
+			a.WaitUntil(timeout, cond)
+			return
+		}
+		deadline := time.Now().Add(timeout)
+		for {
+			a.Settle()
+			if cond() {
+				return
+			}
+			if time.Now().After(deadline) {
+				tb.Fatalf("nsgotest: the condition did not hold after %v\n%s", timeout, a.Dump())
+			}
+			a.Advance(driver.FrameInterval)
+			time.Sleep(time.Millisecond)
+		}
+	}
+	// step runs f as a step: a promise that resolves once the app is
+	// quiet, or rejects with why the step could not be taken or what the
+	// app threw.
+	step := func(f func()) goja.Value {
+		p, resolve, reject := r.vm.NewPromise()
+		if err := tb.try(f); err != nil {
+			_ = reject(r.jsError(err))
+		} else {
+			_ = resolve(goja.Undefined())
+		}
 		return r.vm.ToValue(p)
 	}
 	act := func(name string, f func(call goja.FunctionCall)) {
-		_ = o.Set(name, func(call goja.FunctionCall) goja.Value {
-			f(call)
-			return done()
-		})
+		_ = o.Set(name, func(call goja.FunctionCall) goja.Value { return step(func() { f(call) }) })
 	}
+	// read reads the app now, throwing what fails.
 	read := func(name string, f func(call goja.FunctionCall) any) {
-		_ = o.Set(name, func(call goja.FunctionCall) goja.Value { return r.vm.ToValue(f(call)) })
+		_ = o.Set(name, func(call goja.FunctionCall) goja.Value {
+			var v any
+			if err := tb.try(func() { v = f(call) }); err != nil {
+				panic(r.jsError(err))
+			}
+			return r.vm.ToValue(v)
+		})
 	}
 	sel := func(call goja.FunctionCall) string { return selector(call.Argument(0).String()) }
 	ms := func(v goja.Value) time.Duration { return time.Duration(v.ToFloat() * float64(time.Millisecond)) }
@@ -512,14 +650,14 @@ func (r *runner) app(a *nsgotest.App, env driver.Environment, net *network) *goj
 			state = fmt.Sprint(o.Get("state"))
 		}
 		if state == "gone" {
-			a.WaitForGone(sel(c), timeout(c.Argument(1)))
+			until(timeout(c.Argument(1)), func() bool { return !a.Exists(sel(c)) })
 		} else {
-			a.WaitFor(sel(c), timeout(c.Argument(1)))
+			until(timeout(c.Argument(1)), func() bool { return a.Exists(sel(c)) })
 		}
 	})
 	act("waitUntil", func(c goja.FunctionCall) {
 		cond, _ := goja.AssertFunction(c.Argument(0))
-		a.WaitUntil(timeout(c.Argument(1)), func() bool {
+		until(timeout(c.Argument(1)), func() bool {
 			v, err := cond(goja.Undefined())
 			return err == nil && v.ToBoolean()
 		})
@@ -540,7 +678,7 @@ func (r *runner) app(a *nsgotest.App, env driver.Environment, net *network) *goj
 	})
 	read("count", func(c goja.FunctionCall) any { return len(a.Query(sel(c))) })
 	read("shows", func(c goja.FunctionCall) any { return a.Exists(sel(c)) })
-	read("enabled", func(c goja.FunctionCall) any { return !a.Find(sel(c)).Props.Disabled })
+	read("enabled", func(c goja.FunctionCall) any { return a.Enabled(sel(c)) })
 	read("texts", func(goja.FunctionCall) any { return a.Texts() })
 	read("value", func(c goja.FunctionCall) any {
 		if !a.Exists(sel(c)) {
@@ -593,11 +731,16 @@ func (r *runner) app(a *nsgotest.App, env driver.Environment, net *network) *goj
 		return menuEntries(a.PopupMenu, "", false, []map[string]any{})
 	})
 	read("spanStyle", func(c goja.FunctionCall) any {
-		s := a.SpanStyle(sel(c))
+		sp := a.Span(sel(c))
+		s := sp.Style
 		hex := func(c driver.Color) string { return fmt.Sprintf("#%08x", uint32(c)) }
-		return map[string]any{"color": hex(s.Color), "fontSize": float64(s.Font.Size), "fontWeight": float64(s.Font.Weight),
+		out := map[string]any{"color": hex(s.Color), "fontSize": float64(s.Font.Size), "fontWeight": float64(s.Font.Weight),
 			"italic": s.Font.Italic, "underline": s.Decoration&driver.TextDecorationUnderline != 0,
-			"lineThrough": s.Decoration&driver.TextDecorationLineThrough != 0}
+			"lineThrough": s.Decoration&driver.TextDecorationLineThrough != 0, "backgroundColor": nil}
+		if bg := sp.Background.Color; bg != 0 {
+			out["backgroundColor"] = hex(bg)
+		}
+		return out
 	})
 	read("onDialog", func(c goja.FunctionCall) any {
 		h, ok := goja.AssertFunction(c.Argument(0))
@@ -654,21 +797,61 @@ func (r *runner) app(a *nsgotest.App, env driver.Environment, net *network) *goj
 	})
 	keyboard := r.vm.NewObject()
 	_ = keyboard.Set("press", func(c goja.FunctionCall) goja.Value {
-		a.Key(c.Argument(0).String())
-		return done()
+		return step(func() { a.Key(c.Argument(0).String()) })
 	})
 	_ = o.Set("keyboard", keyboard)
 	clock := r.vm.NewObject()
 	_ = clock.Set("runFor", func(c goja.FunctionCall) goja.Value {
-		a.Advance(ms(c.Argument(0)))
-		return done()
+		return step(func() { a.Advance(ms(c.Argument(0))) })
 	})
 	_ = clock.Set("fastForward", func(c goja.FunctionCall) goja.Value {
-		a.FastForward(ms(c.Argument(0)))
-		return done()
+		return step(func() { a.FastForward(ms(c.Argument(0))) })
+	})
+	_ = clock.Set("setSystemTime", func(c goja.FunctionCall) goja.Value {
+		at := c.Argument(0)
+		if d, ok := at.Export().(time.Time); ok {
+			a.Clock.SetWallTime(d)
+		} else {
+			a.Clock.SetWallTime(time.UnixMilli(at.ToInteger()))
+		}
+		return goja.Undefined()
 	})
 	_ = o.Set("clock", clock)
+	// host is the embedding app the test plays: its events to the app,
+	// and the calls and posts of the names open's host handles.
+	host := r.vm.NewObject()
+	_ = host.Set("send", func(c goja.FunctionCall) goja.Value {
+		return step(func() {
+			if th == nil {
+				tb.Fatalf("nsgo/test: the app has no host: open it with one (open's host)")
+			}
+			if err := th.h.Send(c.Argument(0).String(), exportData(c.Argument(1))); err != nil {
+				tb.Fatalf("nsgo/test: host.send: %v", err)
+			}
+			a.Settle()
+		})
+	})
+	messages := func(list func() []map[string]any) func(goja.FunctionCall) goja.Value {
+		return func(goja.FunctionCall) goja.Value {
+			out := []map[string]any{}
+			if th != nil {
+				out = append(out, list()...)
+			}
+			return r.vm.ToValue(out)
+		}
+	}
+	_ = host.Set("calls", messages(func() []map[string]any { return th.calls }))
+	_ = host.Set("posts", messages(func() []map[string]any { return th.posts }))
+	_ = o.Set("host", host)
 	return o
+}
+
+// exportData is a value a test sends the app: undefined is null.
+func exportData(v goja.Value) any {
+	if v == nil || goja.IsUndefined(v) || goja.IsNull(v) {
+		return nil
+	}
+	return v.Export()
 }
 
 // dialog is a Dialog as a test reads it.

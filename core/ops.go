@@ -65,6 +65,9 @@ func (e *Element) Set(props Node) {
 		switch v := props.(type) {
 		case View:
 			t.setView(n, v)
+			if v.Tooltip != nil && n.tip == nil {
+				t.mountTooltip(e.owner, n, v.Tooltip)
+			}
 		case Text:
 			t.setText(e.owner, n, v)
 		case Scroll:
@@ -202,7 +205,7 @@ func (t *Tree) setText(cx *Scope, n *node, v Text) {
 	t.setClasses(n, v.Class)
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
-		Selectable: v.Selectable}
+		Selectable: v.Selectable, PointerEvents: v.PointerEvents}
 	if n.props.Role == RoleNone {
 		n.props.Role = RoleText
 	}
@@ -251,10 +254,8 @@ func (t *Tree) setText(cx *Scope, n *node, v Text) {
 			s = sp.ContentFunc()
 		}
 		style, cls := t.spanStyle(n, sp.Class, style)
-		tn.spans = append(tn.spans, spanNode{content: s, style: style, press: sp.OnPress, cls: cls})
-		if sp.OnPress != nil && n.h.press == nil {
-			n.h.press = func(PressEvent) {} // presses come with the offset of the span
-		}
+		tn.spans = append(tn.spans, spanNode{content: s, style: style, press: sp.OnPress, long: sp.OnLongPress, cls: cls})
+		t.listenForSpan(n, sp)
 	}
 	tn.content, tn.maxLines, tn.ellipsize = content, v.MaxLines, v.EllipsizeMode
 	tn.noScale, tn.maxScale = v.NoFontScaling, v.MaxFontSizeMultiplier

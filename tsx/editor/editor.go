@@ -22,7 +22,18 @@ func init() {
 	tsx.Required[editor.CodeDescription]("Href")
 	tsx.Required[editor.Search]("Query")
 	tsx.Required[editor.Edit]("Text")
-	tsx.Optional[editor.SearchResult]("Current")
+	// NSH's: no current match is null, and no error none.
+	tsx.Shape("EditorSearchResult", `export interface EditorSearchResult { count: number; current?: number | null; error?: string | null }`,
+		func(r editor.SearchResult) map[string]any {
+			m := map[string]any{"count": r.Count, "current": nil, "error": nil}
+			if r.Current >= 0 {
+				m["current"] = r.Current
+			}
+			if r.Error != "" {
+				m["error"] = r.Error
+			}
+			return m
+		}, nil)
 	// NSH's: the pointer as x and y, and the touch selection as a rect.
 	tsx.Shape("EditorContextMenuEvent", `export interface EditorRect { x: number; y: number; width: number; height: number }
 export interface EditorContextMenuEvent { position: EditorPosition; x: number; y: number; selection?: EditorRect | null }`,

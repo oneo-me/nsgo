@@ -504,6 +504,13 @@ func (a *App) Exists(selector string) bool {
 	return len(a.Query(selector)) > 0
 }
 
+// Enabled reports whether the one view selector matches takes input:
+// neither it nor a view around it is disabled, and an input is editable.
+func (a *App) Enabled(selector string) bool {
+	a.t.Helper()
+	return !a.Find(selector).disabled(nil)
+}
+
 // Query returns the visible views selector matches, the topmost modal's
 // first, then the rest in tree order.
 func (a *App) Query(selector string) []*View {
@@ -532,6 +539,14 @@ func (a *App) Texts() []string {
 // span sets it over the text's.
 func (a *App) SpanStyle(selector string) driver.TextStyle {
 	a.t.Helper()
+	return a.Span(selector).Style
+}
+
+// Span returns the span of the characters selector names in a text, as
+// SpanStyle finds them: its style and what it draws behind them; the
+// text's own style where no span sets one.
+func (a *App) Span(selector string) driver.TextSpan {
+	a.t.Helper()
 	sel, err := parseSelector(selector)
 	if err != nil {
 		a.t.Fatalf("nsgotest: %v", err)
@@ -554,10 +569,10 @@ func (a *App) SpanStyle(selector string) driver.TextStyle {
 	}
 	for _, sp := range v.Spans {
 		if at >= sp.Start && at < sp.End {
-			return sp.Style
+			return sp
 		}
 	}
-	return v.TextStyle
+	return driver.TextSpan{Start: 0, End: len(v.Text), Style: v.TextStyle}
 }
 
 // Alerts returns the alerts shown and not answered yet, oldest first.

@@ -235,7 +235,7 @@ function App() {
 	</View>;
 }
 mount(App);`, nsgotest.Size(1000, 700))
-	for _, want := range []string{"readme0x", "main1*x", "preview0*", "files0*x", "panel main", "panel preview", "tabs 120"} {
+	for _, want := range []string{"readme0x", "main1*x", "preview0*", "files0*", "panel main", "panel preview", "tabs 120"} {
 		if !app.Exists("text:" + want) {
 			t.Errorf("no %q among %q", want, app.Texts())
 		}

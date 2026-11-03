@@ -200,9 +200,20 @@ type Tooltip struct {
 
 // Render implements core.Node.
 func (t Tooltip) Render(cx *core.Scope) core.Node {
+	anchor := new(core.Ref)
+	tip, hover := t.Hint(cx, anchor)
+	return core.Group{
+		core.View{Ref: anchor, Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, TestID: t.TestID,
+			OnHoverIn: func() { hover(true) }, OnHoverOut: func() { hover(false) }, Children: []core.Node{t.Trigger}},
+		tip,
+	}
+}
+
+// Hint implements core.HintTooltip: given as a view's Tooltip, the
+// tooltip shows against that view, Trigger left out.
+func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool)) {
 	st := newPopup(cx, t.Open, t.DefaultOpen, t.OnOpenChange, t.OnOpen, t.OnClose)
 	st.lifecycle(cx, st.open)
-	anchor := new(core.Ref)
 	delay := t.Delay
 	if delay == 0 {
 		delay = 500 * time.Millisecond
@@ -219,26 +230,25 @@ func (t Tooltip) Render(cx *core.Scope) core.Node {
 		margin = 4
 	}
 	var stop func() bool
-	return core.Group{
-		core.View{Ref: anchor, Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, TestID: t.TestID,
-			OnHoverIn: func() {
-				if !t.Disabled && cx.Env().Desktop() {
-					stop = cx.AfterFunc(delay, func() { st.set(true, ReasonHover) })
-				}
-			},
-			OnHoverOut: func() {
-				if stop != nil {
-					stop()
-				}
-				st.set(false, ReasonHover)
-			},
-			Children: []core.Node{t.Trigger}},
-		core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
-			return core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
-				Class: t.PopupClass, Style: t.PopupStyle, StyleFunc: t.PopupStyleFunc, Children: t.Children,
-				Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}
-		}},
+	// The pointer resting on the trigger asks to open, on desktops, and
+	// leaving it to close.
+	hover := func(on bool) {
+		if stop != nil {
+			stop()
+			stop = nil
+		}
+		switch {
+		case !on:
+			st.set(false, ReasonHover)
+		case !t.Disabled && cx.Env().Desktop():
+			stop = cx.AfterFunc(delay, func() { stop = nil; st.set(true, ReasonHover) })
+		}
 	}
+	return core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
+		return core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
+			Class: t.PopupClass, Style: t.PopupStyle, StyleFunc: t.PopupStyleFunc, Children: t.Children,
+			Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}
+	}}, hover
 }
 
 // Dialog is a modal layer over the app: an optional backdrop and a

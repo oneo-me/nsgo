@@ -1,6 +1,7 @@
 package nsgotest
 
 import (
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -33,7 +34,7 @@ func (a *App) pressTarget(selector string) (v *View, at driver.Point, index int)
 			a.t.Fatalf("nsgotest: nothing pressable under %q\n%s", selector, a.Dump())
 		}
 		if v.disabled(nil) {
-			a.t.Fatalf("nsgotest: %q is a disabled pressable view\n%s", selector, a.Dump())
+			a.t.Fatalf("nsgotest: %q is disabled: a pressable view that takes no input\n%s", selector, a.Dump())
 		}
 		return v, at, 0
 	}
@@ -68,6 +69,8 @@ func (a *App) charsAt(selector string, v *View) int {
 	p := sel.parts[len(sel.parts)-1]
 	switch {
 	case p.kind != "text" && p.kind != "":
+	case !p.text.matches(v.Text) && v.spanAt(p.text) >= 0:
+		return v.spanAt(p.text)
 	case p.text.re != nil:
 		if loc := p.text.re.FindStringIndex(v.Text); loc != nil {
 			return loc[0]
@@ -257,13 +260,19 @@ func (a *App) half(selector string, kind driver.EventKind) {
 func (a *App) LongPress(selector string) {
 	a.t.Helper()
 	a.step("longPress(%s)", selector)
+	var match *View
 	v := a.pick(selector, "pressable view", func(m *View) (*View, bool) {
 		t := m.upTo(func(v *View) bool {
 			return v.Events.Has(driver.EventLongPress) || pressable(v) || v.Events.Has(driver.EventTouch)
 		})
+		match = m
 		return t, t != nil && !m.disabled(t)
 	})
 	_, at := v.center()
+	index := 0
+	if v == match && v.Kind == driver.KindText && len(v.Spans) > 0 {
+		index = a.charsAt(selector, v)
+	}
 	if a.target != nil {
 		at = a.target.reveal(v)
 	}
@@ -279,7 +288,7 @@ func (a *App) LongPress(selector string) {
 	a.touchAt(driver.GestureBegan, at, 0)
 	a.pressOutside(v, at)
 	ev := a.pressEvent(v, at)
-	ev.Kind = driver.EventPressDown
+	ev.Kind, ev.Index = driver.EventPressDown, index
 	a.send(v, ev)
 	a.elapse(hold)
 	ev.Kind = driver.EventLongPress
@@ -567,7 +576,8 @@ func (a *App) Compose(selector, text string) {
 // macOS or web environment, Tab and Shift+Tab move the keyboard focus
 // between fields and pressable views, and Return or Space press the
 // pressable view it is on; else the focused field takes a character,
-// Backspace or Enter; else Escape goes back.
+// Backspace or Enter; else Escape goes back. A key nothing takes does
+// nothing, as on a device.
 func (a *App) Key(key string) {
 	a.t.Helper()
 	a.step("key(%s)", key)
@@ -577,9 +587,10 @@ func (a *App) Key(key string) {
 		return
 	}
 	k := driver.NormalizeKey(key)
+	names := a.keyNames(k)
 	for _, b := range a.Keymap {
-		if b == k {
-			a.dispatch(driver.Event{Kind: driver.EventKey, Text: k})
+		if slices.Contains(names, b) {
+			a.dispatch(driver.Event{Kind: driver.EventKey, Text: b})
 			a.done()
 			return
 		}
@@ -603,20 +614,75 @@ func (a *App) Key(key string) {
 			}
 		}
 	}
-	for _, v := range a.views {
-		if v.Focused && v.Kind == driver.KindInput && !v.Input.Readonly && !v.Input.Disabled &&
-			(key == "Enter" || key == "Backspace" || utf8.RuneCountInString(key) == 1) {
-			a.typeKey(v, key)
-			a.done()
-			return
-		}
+	// The focused field takes the keys that edit it, a character shifted
+	// as the US layout shifts it.
+	name, shift := k, false
+	if rest, ok := strings.CutPrefix(k, "shift+"); ok {
+		name, shift = rest, true
 	}
-	if key == "Escape" {
-		a.dispatch(driver.Event{Kind: driver.EventBack, ID: a.rootID})
+	for _, v := range a.views {
+		if !v.Focused || v.Kind != driver.KindInput || v.Input.Readonly || v.Input.Disabled || strings.Contains(name, "+") {
+			continue
+		}
+		typed := key[len(key)-len(name):]
+		switch {
+		case name == "enter" && !shift:
+			typed = "Enter"
+		case name == "backspace" && !shift:
+			typed = "Backspace"
+		case name == "space":
+			typed = " "
+		case utf8.RuneCountInString(typed) != 1:
+			continue
+		case shift:
+			typed = shifted(typed)
+		}
+		a.typeKey(v, typed)
 		a.done()
 		return
 	}
-	a.t.Fatalf("nsgotest: nothing takes the key %q; the keymap binds %v", key, a.Keymap)
+	if k == "escape" {
+		a.dispatch(driver.Event{Kind: driver.EventBack, ID: a.rootID})
+	}
+	a.done()
+}
+
+// shifted is what the key typing c types with Shift on the US layout.
+func shifted(c string) string {
+	const plain, shift = "`1234567890-=[]\\;',./", "~!@#$%^&*()_+{}|:\"<>?"
+	if i := strings.Index(plain, c); i >= 0 && len(c) == 1 {
+		return shift[i : i+1]
+	}
+	return strings.ToUpper(c)
+}
+
+// keyNames are the names a press of normalized key k matches bindings
+// by, as a platform's: "mod" is Command on Apple platforms and Control
+// elsewhere, whichever of the two the key names.
+func (a *App) keyNames(k string) []string {
+	cmd := "ctrl"
+	if a.env != nil && (a.env.OS == driver.OSMacOS || a.env.OS == driver.OSIOS) {
+		cmd = "meta"
+	}
+	parts := strings.Split(k, "+")
+	mods, name := parts[:len(parts)-1], parts[len(parts)-1]
+	swap := func(from, to string) string {
+		out := []string{}
+		for _, m := range mods {
+			if m == from {
+				m = to
+			}
+			out = append(out, m)
+		}
+		return driver.NormalizeKey(strings.Join(append(out, name), "+"))
+	}
+	switch {
+	case slices.Contains(mods, "mod"):
+		return []string{k, swap("mod", cmd)}
+	case slices.Contains(mods, cmd):
+		return []string{k, swap(cmd, "mod")}
+	}
+	return []string{k}
 }
 
 // tabs says whether Tab moves the keyboard focus between pressable views

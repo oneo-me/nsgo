@@ -2,6 +2,7 @@ package tsx
 
 import (
 	"github.com/dop251/goja"
+	"slices"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -99,7 +100,16 @@ func (p *props) peek(name string) goja.Value {
 	return core.Untracked(p.r.cx, func() goja.Value { return p.get(name) })
 }
 
-func (p *props) has(name string) bool { return defined(p.get(name)) }
+// has reports whether prop name is set, untracked: a component reads
+// what it needs of a prop as it renders, not to know that it is set. A
+// key the JSX gave is set, whatever it reads now (sort={sort()} while
+// sort() is undefined).
+func (p *props) has(name string) bool {
+	if p.obj != nil && slices.Contains(p.obj.Keys(), name) {
+		return true
+	}
+	return core.Untracked(p.r.cx, func() bool { return defined(p.get(name)) })
+}
 
 func (p *props) str(name string) string { return stringOf(p.get(name)) }
 
@@ -216,6 +226,23 @@ func (r *runtime) region(get func() goja.Value) *core.Element {
 	n := &node{r: r, kind: kindRegion, elem: core.NewElement(r.cx, nil)}
 	r.insertValue(n, r.accessor(get), nil)
 	return n.elem
+}
+
+// faceTooltip is a <Tooltip> given as an element's tooltip: the hint
+// overlay itself (core.HintTooltip), which its open state shows.
+type faceTooltip struct{ n *node }
+
+// Render implements core.Node.
+func (f faceTooltip) Render(*core.Scope) core.Node { return f.n.elem }
+
+// Hint implements core.HintTooltip.
+func (f faceTooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(bool)) {
+	f.n.props.cx = cx
+	if h, ok := f.n.face(f.n.props).(core.HintTooltip); ok {
+		return h.Hint(cx, anchor)
+	}
+	f.n.r.mountFace(f.n)
+	return f.n.elem, func(bool) {}
 }
 
 // handler returns a caller of prop name's current function, nil when it

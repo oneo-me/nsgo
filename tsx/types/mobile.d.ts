@@ -9,7 +9,12 @@ export declare function InputAccessoryView(props: InputAccessoryViewProps): YNod
 export interface TabBarItem { title: string; icon?: string | null }
 export interface TabBarProps { items?: TabBarItem[]; selectedIndex?: number; onChange?: (index: number) => void; style?: StyleProp<ViewStyle>; testID?: string }
 export declare function TabBar(props: TabBarProps): JSX.Element;
-export declare const BackHandler: {
-  onBackPress(listener: () => boolean | void): () => void;
+export interface BackHandlerModule {
+  /** Leaves the app. */
   exitApp(): void;
-};
+}
+export interface BackListeners {
+  /** Listens to the back button: `listener` returns true when it handled the press; the newest listener runs first. The returned function stops listening. */
+  onBackPress(listener: () => boolean | void): () => void;
+}
+export declare const BackHandler: BackHandlerModule & BackListeners;

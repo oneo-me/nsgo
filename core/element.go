@@ -182,9 +182,19 @@ type View struct {
 	LiveRegion LiveRegion
 	// Tooltip shows above the view, 4 points away, once the pointer has
 	// rested on it for half a second on desktops, until the pointer leaves
-	// or presses; it never takes the pointer. Touch screens show none.
+	// or presses; it never takes the pointer. Touch screens show none. A
+	// HintTooltip (base.Tooltip) decides itself when and where it shows.
 	Tooltip Node
 	TestID  string
+}
+
+// A HintTooltip is a View's Tooltip that decides itself when it shows,
+// as base.Tooltip does: Hint mounts it against the view anchor names,
+// and hover tells it as the pointer comes onto the view (true) and
+// leaves it or presses (false).
+type HintTooltip interface {
+	Node
+	Hint(cx *Scope, anchor *Ref) (tip Node, hover func(on bool))
 }
 
 // Render implements Node.
@@ -229,6 +239,8 @@ type Text struct {
 	// Selectable lets the user select and copy the text; the highlight is
 	// the style's SelectionColor.
 	Selectable Selectable
+	// PointerEvents says whether the text takes the pointer, as View's.
+	PointerEvents PointerEvents
 
 	OnPress func(PressEvent)
 	// OnLongPress runs when the text is held, after DelayLongPress's
@@ -262,7 +274,10 @@ type Span struct {
 	// CornerRadius draw behind the span's characters, a box per line.
 	Style     Style
 	StyleFunc func() Style
-	OnPress   func(PressEvent)
+	// OnPress and OnLongPress take the presses on the span's characters,
+	// over the Text's.
+	OnPress     func(PressEvent)
+	OnLongPress func(PressEvent)
 	// Attachment, when set, is a view in the text's lines in place of
 	// Content: laid out at its content size, it wraps with the words
 	// around it and takes its own presses. Style is then its view's
@@ -735,11 +750,14 @@ type Screen struct {
 	Style     Style
 	StyleFunc func() Style
 	Children  []Node
-	// NoPopOnBack keeps the screen when back is pressed.
-	NoPopOnBack bool
+	// NoPopOnBack keeps the screen when back is pressed;
+	// NoPopOnBackFunc, when set, says so as the graph changes.
+	NoPopOnBack     bool
+	NoPopOnBackFunc func() bool
 	// NoPopOnSwipe turns off iOS's swipe from the leading edge back to
-	// the screen below.
-	NoPopOnSwipe bool
+	// the screen below; NoPopOnSwipeFunc, when set, as the graph changes.
+	NoPopOnSwipe     bool
+	NoPopOnSwipeFunc func() bool
 	// OnBackPress receives every back press while the screen is on top.
 	OnBackPress func()
 	// OnDismiss reports that the user popped the screen; remove it.

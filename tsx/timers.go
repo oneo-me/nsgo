@@ -3,6 +3,7 @@ package tsx
 import (
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"time"
 
@@ -68,11 +69,11 @@ func (r *runtime) installTimers() {
 		fn := arg(call, 0)
 		r.timers.next++
 		id := r.timers.next
-		start := r.cx.Now()
 		r.cx.Run(func() {
+			// The frame's time, on performance.now()'s clock.
 			frames[id] = r.cx.RequestAnimationFrame(func(at time.Time) {
 				delete(frames, id)
-				r.call(fn, r.vm.ToValue(float64(at.Sub(start).Microseconds())/1000))
+				r.call(fn, r.vm.ToValue(r.millis(at)))
 			})
 		})
 		return r.vm.ToValue(id)
@@ -106,6 +107,13 @@ func (r *runtime) installTimers() {
 		}))
 	}
 	_ = r.vm.Set("console", console)
+}
+
+// millis is at as performance.now() reads it: milliseconds since the
+// VM's start, in 1024ths, which a float holds exactly, so the time
+// between two readings is exact too (a second of frames is 1000).
+func (r *runtime) millis(at time.Time) float64 {
+	return math.Round(float64(at.Sub(r.origin))/float64(time.Millisecond)*1024) / 1024
 }
 
 // display is how console shows a value: strings as they are, objects as

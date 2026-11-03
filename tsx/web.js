@@ -67,17 +67,24 @@
       if (list) this._listeners.set(type, list.filter((l) => l.listener !== listener));
     }
     dispatchEvent(event) {
-      event.target = event.currentTarget = this;
-      const handler = this["on" + event.type];
-      const list = [...(this._listeners.get(event.type) ?? [])];
-      if (typeof handler === "function") handler.call(this, event);
-      for (const l of list) {
-        if (event._stop) break;
-        if (l.once) this.removeEventListener(event.type, l.listener);
-        if (typeof l.listener === "function") l.listener.call(this, event);
-        else l.listener.handleEvent(event);
+      // An event in dispatch is not dispatched again, as the DOM has it.
+      if (event._dispatching) throw new DOMException("The event is already being dispatched", "InvalidStateError");
+      event._dispatching = true;
+      try {
+        event.target = event.currentTarget = this;
+        const handler = this["on" + event.type];
+        const list = [...(this._listeners.get(event.type) ?? [])];
+        if (typeof handler === "function") handler.call(this, event);
+        for (const l of list) {
+          if (event._stop) break;
+          if (l.once) this.removeEventListener(event.type, l.listener);
+          if (typeof l.listener === "function") l.listener.call(this, event);
+          else l.listener.handleEvent(event);
+        }
+      } finally {
+        event._dispatching = false;
+        event.currentTarget = null;
       }
-      event.currentTarget = null;
       return !event.defaultPrevented;
     }
   }

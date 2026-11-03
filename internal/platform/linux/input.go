@@ -300,6 +300,10 @@ func (w *window) startLongPress(at driver.Point) {
 	ev.Kind, ev.ID, ev.Page = driver.EventLongPress, v.id, at
 	if b, ok := w.surfaceBounds(v); ok {
 		ev.Point = driver.Point{X: at.X - b.Origin.X, Y: at.Y - b.Origin.Y}
+		// A long press on a text's span is the span's.
+		if l, ok := v.text.(*textLayout); ok && v.kind == driver.KindText {
+			ev.Index = l.indexAt(ev.Point.X-v.content.Origin.X, ev.Point.Y-v.content.Origin.Y)
+		}
 	}
 	time.AfterFunc(delay, func() {
 		w.post(func() {

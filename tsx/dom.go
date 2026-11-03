@@ -273,23 +273,26 @@ func (r *runtime) textChanged(n *node) {
 	}
 	t := n.text
 	t.Style, t.Class, t.Ref = n.fullStyle(), n.classes(), n.ref
-	t.Spans = r.spans(n, nil, core.Style{}, "", nil)
+	t.Spans = r.spans(n, nil, core.Style{}, "", nil, nil)
 	n.elem.Set(t)
 }
 
 // spans appends the spans of text n's children, styled over style and
-// class.
-func (r *runtime) spans(n *node, out []core.Span, style core.Style, class string, press func(core.PressEvent)) []core.Span {
+// class, pressed with the nearest press and long press around them.
+func (r *runtime) spans(n *node, out []core.Span, style core.Style, class string, press, long func(core.PressEvent)) []core.Span {
 	for _, c := range n.children {
 		switch c.kind {
 		case kindRaw:
-			out = append(out, core.Span{Content: c.raw, Style: style, Class: class, OnPress: press})
+			out = append(out, core.Span{Content: c.raw, Style: style, Class: class, OnPress: press, OnLongPress: long})
 		case kindText:
-			p := press
+			p, l := press, long
 			if c.text.OnPress != nil {
 				p = c.text.OnPress
 			}
-			out = r.spans(c, out, style.Merge(c.style), strings.TrimSpace(class+" "+c.classes()), p)
+			if c.text.OnLongPress != nil {
+				l = c.text.OnLongPress
+			}
+			out = r.spans(c, out, style.Merge(c.style), strings.TrimSpace(class+" "+c.classes()), p, l)
 		default:
 			out = append(out, core.Span{Attachment: c.elem})
 		}
@@ -483,6 +486,18 @@ func (r *runtime) isArray(v goja.Value) bool {
 }
 
 // arrayItems returns the values of an array, none for other values.
+// item is item i of array v, nil past its end or when v is no array.
+func (r *runtime) item(v goja.Value, i int) goja.Value {
+	if !r.isArray(v) || i < 0 {
+		return nil
+	}
+	o := v.(*goja.Object)
+	if int64(i) >= o.Get("length").ToInteger() {
+		return nil
+	}
+	return o.Get(strconv.Itoa(i))
+}
+
 func (r *runtime) arrayItems(v goja.Value) []goja.Value {
 	if !r.isArray(v) {
 		return nil

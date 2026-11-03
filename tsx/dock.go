@@ -47,7 +47,7 @@ func init() {
 	Shape("DockTab", `export interface DockTab { panel: string; group: number; index: number; active: boolean; closable: boolean; zoomed: boolean }`,
 		func(t base.DockTab) map[string]any {
 			return map[string]any{"panel": t.Key, "group": t.Group, "index": call(t.Index), "active": call(t.Selected),
-				"closable": t.Closable, "zoomed": call(t.Zoomed)}
+				"closable": call(t.Closable), "zoomed": call(t.Zoomed)}
 		}, nil)
 	Shape("DockInfo", `export interface DockInfo { placement: DockPlacement; open: boolean; size: number; collapsible: boolean }`,
 		func(d base.DockInfo) map[string]any {

@@ -31,6 +31,8 @@ type ManualClock struct {
 	mu     sync.Mutex
 	now    time.Time
 	timers []*manualTimer
+	// wall is how far the wall time is set from now (SetWallTime).
+	wall time.Duration
 }
 
 type manualTimer struct {
@@ -46,6 +48,22 @@ func (c *ManualClock) Now() time.Time {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.now
+}
+
+// SetWallTime sets the wall time the app reads (Scope.WallTime, a TSX
+// app's Date) to t, moving no timer: the clock's own time goes on.
+func (c *ManualClock) SetWallTime(t time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.wall = t.Sub(c.now)
+}
+
+// WallTime is the wall time the app reads: Now, unless SetWallTime set
+// it apart.
+func (c *ManualClock) WallTime() time.Time {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.now.Add(c.wall)
 }
 
 func (c *ManualClock) AfterFunc(d time.Duration, f func()) func() bool {
@@ -125,3 +143,12 @@ func slicesDeleteStopped(ts []*manualTimer) []*manualTimer {
 // Now returns the time on the graph's clock: the system's, or a test's
 // manual clock.
 func (cx *Scope) Now() time.Time { return cx.rt.clock.Now() }
+
+// WallTime returns the date and time the app shows: Now, unless a test's
+// clock set its wall time apart (ManualClock.SetWallTime).
+func (cx *Scope) WallTime() time.Time {
+	if w, ok := cx.rt.clock.(interface{ WallTime() time.Time }); ok {
+		return w.WallTime()
+	}
+	return cx.rt.clock.Now()
+}

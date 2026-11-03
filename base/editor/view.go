@@ -565,7 +565,7 @@ func (e *ed) rowSpans(row int) []core.Span {
 			if (from.line < d.line || from.col <= a) && (to.line > d.line || b <= to.col) {
 				switch {
 				case m.deco != nil:
-					if k := syntax.KindNamed(m.deco.Token); k != syntax.Plain {
+					if k := syntax.KindNamed(string(m.deco.Token)); k != syntax.Plain {
 						style = palette[k]
 					}
 					style = merge(style, m.deco.Style)
@@ -782,7 +782,7 @@ func (e *ed) completionList() core.Node {
 				OnPressDown: func(core.PressEvent) { it, _ := item(); e.accept(it) },
 				NoFocus:     true,
 				Children: []core.Node{
-					core.Text{ContentFunc: func() string { it, _ := item(); return it.Kind }, MaxLines: 1, Class: c.CompletionKind,
+					core.Text{ContentFunc: func() string { it, _ := item(); return string(it.Kind) }, MaxLines: 1, Class: c.CompletionKind,
 						StyleFunc: func() core.Style { return s().CompletionKind }},
 					core.Text{MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1}, SpansFunc: func() []core.Span {
 						it, hits := item()

@@ -116,6 +116,17 @@ func Flag(field, prop, on, choices string) Option {
 	return custom(field, func(p *props, v reflect.Value) { v.SetBool(p.str(prop) == on) }, prop+"?: "+choices)
 }
 
+// Omit leaves fields out of a Go component's TSX face: what JS has no use
+// for, as a Go function of Go values.
+func Omit(fields ...string) Option {
+	return func(s *faceSpec) {
+		for _, f := range fields {
+			s.custom[f] = func(*props, reflect.Value) {}
+			s.decls[f] = nil
+		}
+	}
+}
+
 // custom sets field with set, for props whose shape is not its field's,
 // declared as decls ("data?: readonly unknown[]").
 func custom(field string, set func(p *props, v reflect.Value), decls ...string) Option {
@@ -172,6 +183,18 @@ type shape struct {
 	name, decl string
 	encode     func(any) map[string]any
 	decode     func(map[string]any) any
+	// none, when set, is what null and undefined read as.
+	none any
+}
+
+// shapeNone has null and undefined read as v, a Shape's value that
+// means none where T's zero value means something.
+func shapeNone[T any](v T) {
+	shapeMu.Lock()
+	defer shapeMu.Unlock()
+	s := shapes[reflect.TypeFor[T]()]
+	s.none = v
+	shapes[reflect.TypeFor[T]()] = s
 }
 
 var (
@@ -323,6 +346,7 @@ var (
 	valueType     = reflect.TypeFor[*core.AnimatedValue]()
 	animNodeType  = reflect.TypeFor[core.AnimatedNode]()
 	durationType  = reflect.TypeFor[time.Duration]()
+	timingType    = reflect.TypeFor[core.TimingConfig]()
 	colorType     = reflect.TypeFor[core.Color]()
 	pointsType    = reflect.TypeFor[core.Points]()
 	lengthType    = reflect.TypeFor[core.Length]()
@@ -614,6 +638,9 @@ func renderSetter(t reflect.Type, prop string) func(p *props, v reflect.Value) {
 func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 	out := reflect.New(t).Elem()
 	if !defined(v) {
+		if s, ok := shapeOf(t); ok && s.none != nil {
+			out.Set(reflect.ValueOf(s.none))
+		}
 		return out
 	}
 	if s, ok := shapeOf(t); ok && s.decode != nil {
@@ -910,8 +937,7 @@ func (r *runtime) results(out []reflect.Value, ft reflect.Type, names []string) 
 
 // resultNames name the results of ref methods that return several, which
 // JS gets as an object.
-var resultNames = map[string][]string{"VisibleRows": {"start", "end"}, "VisibleColumns": {"start", "end"},
-	"MenuTarget": {"row", "column"}}
+var resultNames = map[string][]string{"VisibleRows": {"start", "end"}, "VisibleColumns": {"start", "end"}}
 
 // refObject is a component's ref as JS sees it: its methods, their
 // arguments read as their types, and what they return in a promise, a

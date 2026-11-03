@@ -28,12 +28,24 @@ type part struct {
 }
 
 // textMatch is the text a matcher wants: a substring (text:), the whole
-// text, spaces around it aside (label:, bare), or a regular expression's
-// match.
+// text, spaces around it aside (label:, bare, a quoted text:), or a
+// regular expression's match.
 type textMatch struct {
 	want  string
 	whole bool
 	re    *regexp.Regexp
+	// quoted is set for a text in quotes, which is whole wherever it is
+	// read.
+	quoted bool
+}
+
+// within reports whether s, the texts in a view, hold the text: as a
+// substring unless it is quoted or a regular expression.
+func (m textMatch) within(s string) bool {
+	if m.re == nil && !m.quoted {
+		return strings.Contains(s, m.want)
+	}
+	return m.matches(s)
 }
 
 func (m textMatch) matches(s string) bool {
@@ -47,9 +59,13 @@ func (m textMatch) matches(s string) bool {
 }
 
 // parseText reads a matcher's text: /pattern/flags is a regular
-// expression, with JavaScript's i, m and s flags; anything else is
+// expression, with JavaScript's i, m and s flags, and "text" in quotes
+// the whole text, as Playwright's text="..." is; anything else is
 // literal.
 func parseText(s string, whole bool, source string) (textMatch, error) {
+	if len(s) >= 2 && strings.HasPrefix(s, `"`) && strings.HasSuffix(s, `"`) {
+		return textMatch{want: strings.TrimSpace(s[1 : len(s)-1]), whole: true, quoted: true}, nil
+	}
 	if rest, ok := strings.CutPrefix(s, "/"); ok {
 		if end := strings.LastIndex(rest, "/"); end >= 0 {
 			pattern, flags := rest[:end], rest[end+1:]
@@ -314,8 +330,7 @@ func (a *App) resolveWith(sel *selector, unsized bool) []*View {
 		case "role":
 			match(func(v *View) bool {
 				return v.Props.Role != driver.RoleNone && roleName(v.Props.Role) == p.role &&
-					(!p.named || p.text.matches(v.Props.Label) || p.text.re == nil && strings.Contains(v.textWithin(), p.text.want) ||
-						p.text.re != nil && p.text.re.MatchString(v.textWithin()))
+					(!p.named || p.text.matches(v.Props.Label) || p.text.within(v.textWithin()))
 			})
 		case "view":
 			match(func(v *View) bool { return v.ID == p.view })
@@ -347,11 +362,25 @@ func (v *View) showsText(m textMatch) bool {
 	case v.Node != nil:
 		return m.matches(v.Node.Label)
 	case v.Kind == driver.KindText:
-		return m.matches(v.Text)
+		return m.matches(v.Text) || v.spanAt(m) >= 0
 	case v.Kind == driver.KindInput:
 		return v.Text != "" && m.matches(v.Text) || v.Text == "" && v.Input.Placeholder != "" && m.matches(v.Input.Placeholder)
 	}
 	return false
+}
+
+// spanAt returns the start of the first of text view v's spans that
+// reads what a whole or regular expression's m wants, or -1.
+func (v *View) spanAt(m textMatch) int {
+	if m.re == nil && !m.whole {
+		return -1
+	}
+	for _, sp := range v.Spans {
+		if sp.Start >= 0 && sp.Start < sp.End && sp.End <= len(v.Text) && m.matches(v.Text[sp.Start:sp.End]) {
+			return sp.Start
+		}
+	}
+	return -1
 }
 
 func (v *View) textWithin() string {
@@ -454,7 +483,7 @@ func (a *App) pick(selector, what string, target func(*View) (*View, bool)) *Vie
 		a.t.Fatalf("nsgotest: %q matches %d %ss: say which (%q), or look inside a view around it (\"id:list >> %s\")\n%s",
 			selector, len(out), what, selector+" >> nth=0", selector, a.Dump())
 	case off > 0:
-		a.t.Fatalf("nsgotest: %q is a disabled %s\n%s", selector, what, a.Dump())
+		a.t.Fatalf("nsgotest: %q is disabled: a %s that takes no input\n%s", selector, what, a.Dump())
 	default:
 		a.t.Fatalf("nsgotest: no %s matches %q\n%s", what, selector, a.Dump())
 	}

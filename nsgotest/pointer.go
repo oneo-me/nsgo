@@ -288,8 +288,11 @@ func (a *App) fingerLifted(f *finger) {
 		a.settle(v)
 	}
 	if f.pressed && !f.cancelled {
+		// A finger that lifts where it landed taps, and taps count up as
+		// presses do.
+		a.countClick(f.press)
 		ev := a.pressEvent(f.press, f.start)
-		ev.Kind = driver.EventPressUp
+		ev.Kind, ev.Count = driver.EventPressUp, a.clicks
 		a.send(f.press, ev)
 		ev.Kind = driver.EventPress
 		a.send(f.press, ev)

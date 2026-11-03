@@ -67,6 +67,10 @@ func (w *window) pressEvent(kind driver.EventKind) {
 	ev.Kind, ev.ID, ev.Page = kind, p.v.id, p.at
 	if b, ok := w.surfaceBounds(p.v); ok {
 		ev.Point = driver.Point{X: p.at.X - b.Origin.X, Y: p.at.Y - b.Origin.Y}
+		// A long press on a text's span is the span's.
+		if l, ok := textOf(p.v); ok {
+			ev.Index = l.indexAt(float32(ev.Point.X-p.v.content.Origin.X), float32(ev.Point.Y-p.v.content.Origin.Y))
+		}
 	}
 	w.engine.Dispatch(ev)
 }

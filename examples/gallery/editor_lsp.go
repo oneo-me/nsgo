@@ -893,11 +893,11 @@ var (
 	newBeforeRe    = regexp.MustCompile(`\bnew\s+$`)
 )
 
-func completionKind(kind string) string {
+func completionKind(kind string) editor.CompletionKind {
 	if kind == "parameter" {
 		return "variable"
 	}
-	return kind
+	return editor.CompletionKind(kind)
 }
 
 // completion is the items at a request's position, and the latency of

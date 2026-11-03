@@ -123,6 +123,9 @@ type node struct {
 	owner    *Scope
 
 	responder *Responder // a view's part in the touch responder
+	// tip is the tooltip's: what shows it as the pointer comes onto the
+	// view, and hides it as the pointer leaves or presses.
+	tip *tooltipHooks
 
 	base   Style
 	dyn    *Style // the StyleFunc's, kept once and updated in place
@@ -367,6 +370,7 @@ type spanNode struct {
 	content string
 	style   Style
 	press   func(PressEvent)
+	long    func(PressEvent)
 	attach  *node        // the view of an attachment
 	cls     *spanClasses // its classes, when it has any
 }
@@ -1109,6 +1113,12 @@ func (t *Tree) mountTooltip(cx *Scope, n *node, tip Node) {
 		t.setRef(n, &Ref{})
 	}
 	anchor := n.ref
+	if h, ok := tip.(HintTooltip); ok {
+		hint, hover := h.Hint(cx, anchor)
+		n.tip = &tooltipHooks{show: func() { hover(true) }, hide: func() { hover(false) }}
+		t.mount(cx, n, hint)
+		return
+	}
 	shown := NewSignal(cx, false)
 	var stop func() bool
 	hide := func() {
@@ -1118,35 +1128,21 @@ func (t *Tree) mountTooltip(cx *Scope, n *node, tip Node) {
 		}
 		shown.Set(false)
 	}
-	in, out := n.h.hoverIn, n.h.hoverOut
-	n.h.hoverIn = func() {
-		if in != nil {
-			in()
-		}
+	n.tip = &tooltipHooks{show: func() {
 		if cx.Env().Desktop() && stop == nil {
 			stop = cx.AfterFunc(tooltipDelay, func() { stop = nil; shown.Set(true) })
 		}
-	}
-	n.h.hoverOut = func() {
-		if out != nil {
-			out()
-		}
-		hide()
-	}
-	// A press hides it, where the view takes presses already.
-	if down := n.h.pressDown; down != nil || n.h.press != nil {
-		n.h.pressDown = func(e PressEvent) {
-			if down != nil {
-				down(e)
-			}
-			hide()
-		}
-	}
+	}, hide: hide}
 	t.mount(cx, n, Show{When: shown.Get, Then: func(*Scope) Node {
 		return Overlay{Anchor: anchor, Placement: PlaceTop, Offset: 4, Margin: 4, PointerEvents: PointerEventsNone,
 			Children: []Node{tip}}
 	}})
 }
+
+// tooltipHooks are what a view's tooltip hears of the pointer: show as
+// it comes onto the view, hide as it leaves or, where the view takes
+// presses already, presses.
+type tooltipHooks struct{ show, hide func() }
 
 func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	n := t.newNode(driver.KindText, parent, cx)
@@ -1154,7 +1150,7 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
-		Selectable: v.Selectable}
+		Selectable: v.Selectable, PointerEvents: v.PointerEvents}
 	if n.props.Role == RoleNone {
 		n.props.Role = RoleText
 	}
@@ -1176,10 +1172,8 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 			continue
 		}
 		style, cls := t.spanStyle(n, sp.Class, sp.Style)
-		n.text.spans = append(n.text.spans, spanNode{content: sp.Content, style: style, press: sp.OnPress, cls: cls})
-		if sp.OnPress != nil && n.h.press == nil {
-			n.h.press = func(PressEvent) {} // presses come with the offset of the span
-		}
+		n.text.spans = append(n.text.spans, spanNode{content: sp.Content, style: style, press: sp.OnPress, long: sp.OnLongPress, cls: cls})
+		t.listenForSpan(n, sp)
 		if sp.ContentFunc != nil {
 			cx.renderEffect(func() {
 				if s := sp.ContentFunc(); s != n.text.spans[i].content {
@@ -1486,9 +1480,16 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		}
 		press(h.press)
 	case driver.EventLongPress:
-		if !n.props.Disabled {
-			press(h.longPress)
+		if n.props.Disabled {
+			break
 		}
+		if tn := n.text; tn != nil && len(tn.spans) > 0 {
+			if sp := tn.spanAt(ev.Index); sp != nil && sp.long != nil {
+				press(sp.long)
+				break
+			}
+		}
+		press(h.longPress)
 	case driver.EventAccessibilityAction:
 		if h.action != nil && !n.props.Disabled {
 			t.within(n.owner, func() { h.action(ev.Text) })
@@ -1496,15 +1497,24 @@ func (t *Tree) Dispatch(ev driver.Event) {
 	case driver.EventPressDown:
 		t.setState(n, statePressed, !n.props.Disabled)
 		press(h.pressDown)
+		if n.tip != nil {
+			call(n.tip.hide)
+		}
 	case driver.EventPressUp:
 		t.setState(n, statePressed, false)
 		press(h.pressUp)
 	case driver.EventHoverIn:
 		t.setState(n, stateHovered, true)
 		call(h.hoverIn)
+		if n.tip != nil {
+			call(n.tip.show)
+		}
 	case driver.EventHoverOut:
 		t.setState(n, stateHovered, false)
 		call(h.hoverOut)
+		if n.tip != nil {
+			call(n.tip.hide)
+		}
 	case driver.EventHoverMove:
 		if h.hoverMove != nil {
 			t.within(n.owner, func() { h.hoverMove(HoverEvent{ev.Point, ev.Page, ev.Modifiers}) })
@@ -1651,6 +1661,17 @@ func (t *Tree) Dispatch(ev driver.Event) {
 }
 
 // spanAt returns the span holding byte offset i of the text.
+// listenForSpan has text n listen to the presses span sp takes, which
+// come with the offset of the span.
+func (t *Tree) listenForSpan(n *node, sp Span) {
+	if sp.OnPress != nil && n.h.press == nil {
+		n.h.press = func(PressEvent) {}
+	}
+	if sp.OnLongPress != nil && n.h.longPress == nil {
+		n.h.longPress = func(PressEvent) {}
+	}
+}
+
 func (tn *textNode) spanAt(i int) *spanNode {
 	for k, sp := range tn.text.Spans {
 		if i >= sp.Start && i < sp.End && k < len(tn.spans) {
@@ -1828,10 +1849,11 @@ func (n *node) events() driver.EventMask {
 	pressStyled := (s.Active != nil || group) && !n.insidePressable()
 	bit(driver.EventPress, h.press != nil)
 	bit(driver.EventLongPress, h.longPress != nil)
-	bit(driver.EventPressDown, h.pressDown != nil || pressStyled)
+	// A press hides the tooltip of a view that takes presses.
+	bit(driver.EventPressDown, h.pressDown != nil || pressStyled || n.tip != nil && h.press != nil)
 	bit(driver.EventPressUp, h.pressUp != nil || pressStyled)
-	bit(driver.EventHoverIn, h.hoverIn != nil || s.Hover != nil || group)
-	bit(driver.EventHoverOut, h.hoverOut != nil || s.Hover != nil || group)
+	bit(driver.EventHoverIn, h.hoverIn != nil || s.Hover != nil || group || n.tip != nil)
+	bit(driver.EventHoverOut, h.hoverOut != nil || s.Hover != nil || group || n.tip != nil)
 	bit(driver.EventHoverMove, h.hoverMove != nil)
 	bit(driver.EventMouseMove, h.mouseMove != nil)
 	bit(driver.EventTouch, n.hearsTouches())

@@ -1,6 +1,6 @@
 // The element and JSX types of nsgo: styles, props, events and nodes.
 
-import type { AnimatedNode, AnimatedValue, ViewabilityConfig } from "./index";
+import type { AnimatedNode, AnimatedValue, ViewabilityConfig, ViewToken } from "./index";
 import type { StatusBar } from "./base";
 
 /** A style, or a list of styles (nested lists included) merged left to
@@ -12,7 +12,7 @@ export type DimensionValue = number | `${number}%` | "auto";
 export type LengthValue = number | `${number}%`;
 export type EnvValue = `env(${string})` | `calc(${string})`;
 type Animatable<T> = T | AnimatedNode;
-type Align = "flex-start" | "flex-end" | "center" | "stretch" | "baseline" | "start" | "end" | "self-start" | "self-end" | "normal";
+type FlexAlign = "flex-start" | "flex-end" | "center" | "stretch" | "baseline" | "start" | "end" | "self-start" | "self-end" | "normal";
 type Distribute = "flex-start" | "flex-end" | "center" | "stretch" | "space-between" | "space-around" | "space-evenly" | "start" | "end" | "normal";
 type Time = number | `${number}ms` | `${number}s`;
 type TimingFunction = "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | `cubic-bezier(${string})`;
@@ -43,11 +43,11 @@ export interface LayoutStyle {
   flexShrink?: number;
   flexBasis?: SizeValue;
   justifyContent?: Distribute;
-  alignItems?: Align;
-  alignSelf?: Align | "auto";
+  alignItems?: FlexAlign;
+  alignSelf?: FlexAlign | "auto";
   alignContent?: Distribute;
-  justifyItems?: Align;
-  justifySelf?: Align | "auto";
+  justifyItems?: FlexAlign;
+  justifySelf?: FlexAlign | "auto";
   width?: SizeValue;
   height?: SizeValue;
   minWidth?: LengthValue;
@@ -305,10 +305,17 @@ export interface HostProps {
   onBlur?: () => void;
 }
 
+export type BackdropMaterial = "ultraThin" | "thin" | "regular" | "thick" | "chrome";
+export type LiveRegion = "none" | "polite" | "assertive";
+export type PointerEvents = "auto" | "none" | "box-none" | "box-only";
+export type RecursiveArray<T> = readonly (T | RecursiveArray<T>)[];
 /** Props of one platform (`ios={{…}}`, …), ignored elsewhere. */
-export interface IOSProps { backdropMaterial?: "ultraThin" | "thin" | "regular" | "thick" | "chrome" }
-export interface AndroidProps { ripple?: { color?: ColorValue; borderless?: boolean; radius?: number; foreground?: boolean } }
-export interface DesktopProps { windowDrag?: boolean }
+export interface IOSHostProps { backdropMaterial?: BackdropMaterial }
+export interface AndroidHostProps { ripple?: { color?: ColorValue; borderless?: boolean; radius?: number; foreground?: boolean } }
+export interface DesktopHostProps { windowDrag?: boolean }
+export interface IOSProps extends IOSHostProps {}
+export interface AndroidProps extends AndroidHostProps {}
+export interface DesktopProps extends DesktopHostProps {}
 export interface WebProps {}
 
 export interface CommonProps extends TouchProps, HostProps, StateStyleProps {
@@ -320,19 +327,23 @@ export interface CommonProps extends TouchProps, HostProps, StateStyleProps {
   web?: WebProps & Record<string, unknown>;
 }
 
-export interface ViewProps extends CommonProps {
-  style?: StyleProp<ViewStyle>;
+/** A view's own props. */
+export interface ViewHostProps {
   selectable?: boolean;
   /** As accessibilityState's: for checkedStyle and checked: classes. */
   checked?: boolean;
   /** As accessibilityState's: for selectedStyle and selected: classes. */
   selected?: boolean;
 }
+export interface ViewProps extends CommonProps, ViewHostProps {
+  style?: StyleProp<ViewStyle>;
+}
 
-export interface TextProps extends CommonProps {
-  style?: StyleProp<TextStyle>;
+export type EllipsizeMode = "tail" | "head" | "middle" | "clip";
+/** A text's own props. */
+export interface TextHostProps {
   numberOfLines?: number;
-  ellipsizeMode?: "tail" | "head" | "middle" | "clip";
+  ellipsizeMode?: EllipsizeMode;
   allowFontScaling?: boolean;
   maxFontSizeMultiplier?: number;
   selectable?: boolean;
@@ -340,12 +351,15 @@ export interface TextProps extends CommonProps {
   minimumFontScale?: number;
   onTextLayout?: (e: { lines: TextLayoutLine[] }) => void;
 }
+export interface TextProps extends CommonProps, TextHostProps {
+  style?: StyleProp<TextStyle>;
+}
 
 export interface ImageAsset { url: string; size: Size; scales?: number[] }
 export type ResizeMode = "cover" | "contain" | "stretch" | "center" | "scale-down";
 
-export interface ImageProps extends CommonProps {
-  style?: StyleProp<ImageStyle>;
+/** An image's own props. */
+export interface ImageHostProps {
   src?: string | ImageAsset;
   resizeMode?: ResizeMode;
   placeholder?: string | ImageAsset;
@@ -358,18 +372,24 @@ export interface ImageProps extends CommonProps {
   onError?: (e: { message: string }) => void;
   onLoadEnd?: () => void;
 }
+export interface ImageProps extends CommonProps, ImageHostProps {
+  style?: StyleProp<ImageStyle>;
+}
 
-export interface ScrollingProps {
+export type SnapAlignment = "start" | "center" | "end";
+export type KeyboardDismissMode = "none" | "on-drag" | "interactive";
+/** What scroll views and lists share. */
+export interface ScrollingHostProps {
   pagingEnabled?: boolean;
   snapToInterval?: number;
   snapToOffsets?: number[];
-  snapToAlignment?: "start" | "center" | "end";
+  snapToAlignment?: SnapAlignment;
   decelerationRate?: "normal" | "fast" | number;
   bounces?: boolean;
   contentInset?: Partial<Edges>;
   contentOffset?: Partial<Point>;
   keyboardShouldPersistTaps?: "never" | "always" | "handled" | boolean;
-  keyboardDismissMode?: "none" | "on-drag" | "interactive";
+  keyboardDismissMode?: KeyboardDismissMode;
   scrollEventThrottle?: number;
   disableIntervalMomentum?: boolean;
   refreshIndicator?: { height: number };
@@ -389,8 +409,8 @@ export interface ScrollingProps {
   onRefresh?: () => void;
 }
 
-export interface ScrollProps extends CommonProps, ScrollingProps {
-  style?: StyleProp<ViewStyle>;
+/** A scroll view's own props. */
+export interface ScrollHostProps {
   /** The style of a view around the content, which scrolls with it: flexGrow: 1 makes it at least as tall as the viewport. Without it or contentClass the children are the scroll view's own. */
   contentStyle?: StyleProp<ViewStyle>;
   /** The classes of the content's view. */
@@ -402,48 +422,68 @@ export interface ScrollProps extends CommonProps, ScrollingProps {
   zoomable?: boolean;
   centerContent?: boolean;
 }
-
-export interface OverlayProps extends CommonProps {
+export interface ScrollProps extends CommonProps, ScrollingHostProps, ScrollHostProps {
   style?: StyleProp<ViewStyle>;
+}
+
+/** Where an overlay goes beside its anchor, and how it lines up with it. */
+export type Placement = "top" | "bottom" | "left" | "right";
+export type Align = "start" | "center" | "end";
+/** An overlay's own props. */
+export interface OverlayHostProps {
   anchor?: YNode | Point | Bounds | null;
-  placement?: "top" | "bottom" | "left" | "right";
-  align?: "start" | "center" | "end";
+  placement?: Placement;
+  align?: Align;
   offset?: number;
   margin?: number;
   onPressOutside?: (e: { pagePosition: Point }) => void;
   onCancel?: () => void;
   onPosition?: (e: OverlayPosition) => void;
 }
+export interface OverlayProps extends CommonProps, OverlayHostProps {
+  style?: StyleProp<ViewStyle>;
+}
 
-export interface ListProps<T> extends Omit<ViewProps, "children">, ScrollingProps {
-  each: readonly T[];
-  header?: (() => JSX.Element) | JSX.Element;
-  footer?: (() => JSX.Element) | JSX.Element;
-  empty?: (() => JSX.Element) | JSX.Element;
-  separator?: (() => JSX.Element) | JSX.Element;
+/** A list's header, footer, empty view or separator. */
+export type ListSlot = (() => JSX.Element) | JSX.Element;
+export type ListViewport = "own" | "parent";
+/** A list's content's paddings and gaps. */
+export interface ListContentStyle { padding?: number; paddingHorizontal?: number; paddingVertical?: number; paddingTop?: number; paddingRight?: number; paddingBottom?: number; paddingLeft?: number; gap?: number; rowGap?: number; columnGap?: number }
+/** A list's own props but its items'. */
+export interface ListHostProps {
+  header?: ListSlot;
+  footer?: ListSlot;
+  empty?: ListSlot;
+  separator?: ListSlot;
   estimatedItemSize?: number;
   numColumns?: number;
   inverted?: boolean;
   maintainVisibleContentPosition?: { autoscrollToBottomThreshold?: number };
   stickyHeaderIndices?: number[];
   stickyHeaderOffset?: number | AnimatedNode;
-  viewport?: "own" | "parent";
+  viewport?: ListViewport;
   /** The content's paddings and gaps. */
-  contentStyle?: { padding?: number; paddingHorizontal?: number; paddingVertical?: number; paddingTop?: number; paddingRight?: number; paddingBottom?: number; paddingLeft?: number; gap?: number; rowGap?: number; columnGap?: number };
+  contentStyle?: ListContentStyle;
   /** The content's classes: paddings and gaps. */
   contentClass?: string;
   viewabilityConfig?: ViewabilityConfig;
   initialScrollIndex?: number;
-  keyExtractor?: (item: T, index: number) => string;
-  onViewableItemsChange?: (info: { viewableItems: { item: T; key: string; index: number; isViewable: boolean }[]; changed: { item: T; key: string; index: number; isViewable: boolean }[] }) => void;
   onLoadMore?: () => void;
   loadMoreThreshold?: number;
   onLoadMoreAtStart?: () => void;
   loadMoreAtStartThreshold?: number;
+}
+export interface ListProps<T> extends Omit<ViewProps, "children">, ScrollingHostProps, ListHostProps {
+  each: readonly T[];
+  keyExtractor?: (item: T, index: number) => string;
+  onViewableItemsChange?: (info: { viewableItems: ViewToken<T>[]; changed: ViewToken<T>[] }) => void;
   children: (item: () => T, index: () => number) => JSX.Element;
 }
+/** What a list of items takes. */
+export type ListItemsProps<T> = Pick<ListProps<T>, "each" | "children" | "keyExtractor" | "stickyHeaderIndices" | "initialScrollIndex" | "onViewableItemsChange" | "viewabilityConfig" | "refreshing" | "onRefresh" | "onLoadMore" | "loadMoreThreshold" | "header" | "footer" | "empty">;
 
-export interface WebViewProps extends Omit<ViewProps, "children"> {
+/** A web view's own props. */
+export interface WebViewHostProps {
   src?: string;
   html?: string;
   baseUrl?: string;
@@ -459,8 +499,16 @@ export interface WebViewProps extends Omit<ViewProps, "children"> {
   onMessage?: (e: { data: string }) => void;
   onNavigationStateChange?: (e: WebViewNavigation) => void;
 }
+export interface IOSWebViewHostProps { allowsBackForwardNavigationGestures?: boolean }
+export interface DesktopWebViewHostProps { allowsBackForwardNavigationGestures?: boolean }
+export interface WebViewProps extends Omit<ViewProps, "children" | "ios" | "desktop">, WebViewHostProps {
+  ios?: IOSWebViewHostProps & IOSHostProps & Record<string, unknown>;
+  desktop?: DesktopWebViewHostProps & DesktopHostProps & Record<string, unknown>;
+}
 
-export interface VideoProps extends Omit<ViewProps, "children"> {
+export type AudioSession = "default" | "playback" | "mixWithOthers";
+/** A video's own props. */
+export interface VideoHostProps {
   src?: string;
   resizeMode?: ResizeMode;
   paused?: boolean;
@@ -470,7 +518,7 @@ export interface VideoProps extends Omit<ViewProps, "children"> {
   repeat?: boolean;
   controls?: boolean;
   progressUpdateInterval?: number;
-  audioSession?: "default" | "playback" | "mixWithOthers";
+  audioSession?: AudioSession;
   onLoadStart?: () => void;
   onProgress?: (e: { currentTime: number; duration: number }) => void;
   onLoad?: (e: { duration: number; size: Size }) => void;
@@ -478,6 +526,53 @@ export interface VideoProps extends Omit<ViewProps, "children"> {
   onEnd?: () => void;
   onBuffer?: (e: { isBuffering: boolean }) => void;
 }
+export interface VideoProps extends Omit<ViewProps, "children">, VideoHostProps {}
+
+// The base components' host props (nsgo/base's Input, Dialog, NavPage).
+export type KeyboardType = "default" | "number-pad" | "decimal-pad" | "numeric" | "numbers-and-punctuation" | "email-address" | "phone-pad" | "url";
+export type ReturnKeyType = "default" | "done" | "go" | "next" | "search" | "send";
+export type AutoCapitalize = "none" | "sentences" | "words" | "characters";
+export type SubmitBehavior = "submit" | "blurAndSubmit" | "newline";
+export type PasteBehavior = "insert" | "report";
+export type KeyboardAppearance = "default" | "light" | "dark";
+/** What a field asks the system to fill it in with, as HTML's autocomplete names it. */
+export type AutoComplete = "off" | "username" | "password" | "current-password" | "new-password" | "one-time-code" | "email" | "tel" | "name" | "given-name" | "family-name" | "nickname" | "organization" | "street-address" | "postal-code" | "country" | "cc-number" | "cc-exp" | "cc-csc" | (string & {});
+/** iOS's name of what a field holds. */
+export type TextContentType = "none" | "username" | "password" | "newPassword" | "oneTimeCode" | "emailAddress" | "telephoneNumber" | "name" | "givenName" | "familyName" | "nickname" | "organizationName" | "fullStreetAddress" | "postalCode" | "countryName" | "creditCardNumber" | (string & {});
+/** An input's own props. */
+export interface InputHostProps {
+  value?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  masked?: boolean;
+  keyboardType?: KeyboardType;
+  returnKeyType?: ReturnKeyType;
+  autoCapitalize?: AutoCapitalize;
+  autoCorrect?: boolean;
+  multiline?: boolean;
+  maxLength?: number;
+  readonly?: boolean;
+  submitBehavior?: SubmitBehavior;
+  pasteBehavior?: PasteBehavior;
+  autoFocus?: boolean;
+  caret?: boolean;
+  autoComplete?: AutoComplete;
+  selectedRange?: { start: number; end?: number };
+  keyboardAppearance?: KeyboardAppearance;
+  inputAccessoryViewID?: string;
+  textContentType?: AutoComplete | TextContentType;
+}
+export interface IOSInputHostProps { keyboardAppearance?: KeyboardAppearance; inputAccessoryViewID?: string; textContentType?: AutoComplete | TextContentType }
+export type ModalPresentation = "fullScreen" | "pageSheet" | "formSheet";
+/** A dialog's own props. */
+export interface DialogHostProps { statusBar?: StatusBar; presentation?: ModalPresentation; closeOnEscape?: boolean; closeOnBackdropPress?: boolean; closeOnSwipe?: boolean }
+export interface IOSDialogHostProps { supportedOrientations?: ("portrait" | "portrait-upside-down" | "landscape" | "landscape-left" | "landscape-right")[] }
+export interface AndroidDialogHostProps { statusBarTranslucent?: boolean }
+export type ScreenAnimation = "default" | "slide" | "fade" | "none";
+export type HeaderSystemItem = "add" | "done" | "close" | "edit" | "compose" | "search" | "share" | "trash" | "save" | "cancel";
+/** A page's own props. */
+export interface NavPageHostProps { title?: string; headerVisible?: boolean; headerLargeTitle?: boolean; headerTransparent?: boolean; headerBackTitle?: string; headerBackVisible?: boolean; popOnSwipe?: boolean; popOnBack?: boolean; animation?: ScreenAnimation; statusBar?: StatusBar }
+export interface IOSNavPageHostProps { headerRightSystemItem?: HeaderSystemItem }
 
 /** A node: what an element is, with its view's methods. */
 export interface YNode {

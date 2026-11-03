@@ -99,8 +99,11 @@ func (a *App) ChooseMenu(path ...string) {
 				found = &items[k]
 			}
 		}
-		if found == nil || found.Disabled {
+		if found == nil {
 			a.t.Fatalf("nsgotest: no menu item %q", path[:i+1])
+		}
+		if found.Disabled {
+			a.t.Fatalf("nsgotest: the menu item %q is disabled", path[:i+1])
 		}
 		if i == len(path)-1 {
 			if found.ID == 0 {
@@ -134,8 +137,11 @@ func (a *App) ChoosePopup(path ...string) {
 				found = &items[k]
 			}
 		}
-		if found == nil || found.Disabled {
+		if found == nil {
 			a.t.Fatalf("nsgotest: no context menu item %q", path[:i+1])
+		}
+		if found.Disabled {
+			a.t.Fatalf("nsgotest: the context menu item %q is disabled", path[:i+1])
 		}
 		if i == len(path)-1 {
 			if a.target != nil {

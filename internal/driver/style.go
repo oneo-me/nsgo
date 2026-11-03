@@ -197,9 +197,10 @@ func (c Curve) At(x float64) float64 {
 	return bez((lo+hi)/2, y1, y2)
 }
 
-// FrameInterval is a frame at 60 Hz: what an app assumes where the
-// display's own pace is unknown.
-const FrameInterval = time.Second / 60
+// FrameInterval is a frame at 60 Hz, in whole microseconds as NSH's:
+// what an app assumes where the display's own pace is unknown. Sixty of
+// them reach a second, so a second of frames counts 60.
+const FrameInterval = 16667 * time.Microsecond
 
 // Cursor is the pointer's look over a view (cursor). Auto leaves the
 // look to the view under it or its nearest ancestor that names one; a

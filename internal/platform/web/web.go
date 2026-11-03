@@ -2306,6 +2306,8 @@ func (s *surface) pointerDown(e js.Value) {
 	s.press.view = v
 	s.press.at = s.pointer(v, driver.EventPressDown, e)
 	s.press.at.Count = uint32(s.clicks.down(s.press.at.Page))
+	// A long press on a text's span is the span's.
+	s.press.at.Index = s.textIndex(v, e)
 	s.pressed(v, driver.EventPressDown)
 	if v.events.Has(driver.EventLongPress) {
 		delay := longPressDelay

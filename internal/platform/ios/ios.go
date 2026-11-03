@@ -1275,6 +1275,8 @@ func touchesBegan(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
 	touch := touches.Send(selAnyObject)
 	v.pressAt = v.pointer(driver.EventPressDown, touch, event)
 	v.pressAt.Count = uint32(max(objc.Send[int](touch, sel("tapCount")), 1))
+	// A long press on a text's span is the span's.
+	v.pressAt.Index = v.indexAt(objc.Send[apple.CGPoint](touch, selLocationInView, self))
 	v.pressed(driver.EventPressDown)
 	if v.events.Has(driver.EventLongPress) {
 		e, long := v.surface.engine, v.pressAt
@@ -1309,16 +1311,21 @@ func touchesEnded(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
 	pressed := v.pressing.Swap(false)
 	v.pressed(driver.EventPressUp)
 	if pressed && !v.longFired.Load() && v.within(p, b) {
-		index := -1
-		if v.layout != nil {
-			box := v.box
-			index = v.layout.IndexAt(p, apple.Rect(float64(box.Origin.X), float64(box.Origin.Y),
-				float64(box.Size.Width), float64(box.Size.Height)))
-		}
 		e := v.pressAt
-		e.Kind, e.Index = driver.EventPress, index
+		e.Kind, e.Index = driver.EventPress, v.indexAt(p)
 		v.report(e)
 	}
+}
+
+// indexAt returns the byte offset of the character at p in a text view,
+// for presses on its links, or -1.
+func (v *view) indexAt(p apple.CGPoint) int {
+	if v.layout == nil {
+		return -1
+	}
+	box := v.box
+	return v.layout.IndexAt(p, apple.Rect(float64(box.Origin.X), float64(box.Origin.Y),
+		float64(box.Size.Width), float64(box.Size.Height)))
 }
 
 // UIKeyboardHIDUsage codes of the keys core.NormalizeKey names.

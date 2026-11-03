@@ -327,26 +327,24 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 				}
 				return s
 			}}}
-			if tab.Closable {
-				closeStyle := core.Style{Width: core.Pt(20), Height: core.Pt(20), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 6,
-					Margin: core.Edges{Right: -6}, Active: &core.Style{Opacity: core.Alpha(0.7)}}
-				if pointer {
-					closeStyle = core.Style{Position: core.Absolute, Right: core.Pt(4), Top: core.Pt(8), Width: core.Pt(20), Height: core.Pt(20),
-						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 6,
-						Opacity: core.Alpha(0.001), Transition: core.Transition{Duration: 150e6},
-						GroupStyle: &core.GroupStyle{Name: "tab", Hover: &core.Style{Opacity: core.Alpha(1)}}}
-				}
-				closeColors := func() core.Style {
-					if !pointer {
-						return core.Style{}
-					}
-					return core.Style{Background: colors.Inset(), Hover: &core.Style{Background: colors.Raised()}}
-				}
-				children = append(children, core.Show{When: func() bool { return pointer || tab.Selected() }, Then: func(*core.Scope) core.Node {
-					return base.Button{OnPress: func(core.PressEvent) { area.ClosePanel(tab.Key) }, Label: tr.DockClose2() + dockTitle(tr, tab.Key), Style: closeStyle, StyleFunc: closeColors,
-						Children: []core.Node{ui.Text("×", 13, ui.Regular, colors.Muted)}}
-				}})
+			closeStyle := core.Style{Width: core.Pt(20), Height: core.Pt(20), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 6,
+				Margin: core.Edges{Right: -6}, Active: &core.Style{Opacity: core.Alpha(0.7)}}
+			if pointer {
+				closeStyle = core.Style{Position: core.Absolute, Right: core.Pt(4), Top: core.Pt(8), Width: core.Pt(20), Height: core.Pt(20),
+					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 6,
+					Opacity: core.Alpha(0.001), Transition: core.Transition{Duration: 150e6},
+					GroupStyle: &core.GroupStyle{Name: "tab", Hover: &core.Style{Opacity: core.Alpha(1)}}}
 			}
+			closeColors := func() core.Style {
+				if !pointer {
+					return core.Style{}
+				}
+				return core.Style{Background: colors.Inset(), Hover: &core.Style{Background: colors.Raised()}}
+			}
+			children = append(children, core.Show{When: func() bool { return tab.Closable() && (pointer || tab.Selected()) }, Then: func(*core.Scope) core.Node {
+				return base.Button{OnPress: func(core.PressEvent) { area.ClosePanel(tab.Key) }, Label: tr.DockClose2() + dockTitle(tr, tab.Key), Style: closeStyle, StyleFunc: closeColors,
+					Children: []core.Node{ui.Text("×", 13, ui.Regular, colors.Muted)}}
+			}})
 			children = append(children, core.Show{When: tab.Selected, Then: func(*core.Scope) core.Node {
 				return core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Bottom: core.Pt(0), Left: core.Pt(12), Right: core.Pt(12),
 					Height: core.Pt(2), CornerRadius: 1}, StyleFunc: ui.Filled(colors.Accent)}

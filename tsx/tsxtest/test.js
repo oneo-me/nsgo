@@ -58,7 +58,7 @@
         return {
           async toThrow(pattern) {
             try {
-              await value;
+              await (typeof value === "function" ? value() : value);
             } catch (e) {
               if (matches(String(e?.message ?? e), pattern)) return;
               throw new Error(`expected a rejection matching ${show(pattern)}, got ${show(e?.message ?? e)}`);

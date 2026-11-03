@@ -83,14 +83,16 @@ type ed struct {
 	reported string
 	version  int
 	// Search.
-	search  Search
-	re      *regexp.Regexp
-	matches []span
-	scope   []span
-	marks   []mark
-	comp    completion
-	compSel int
-	nextID  int
+	search Search
+	re     *regexp.Regexp
+	// searchErr is why the search's query is no expression.
+	searchErr string
+	matches   []span
+	scope     []span
+	marks     []mark
+	comp      completion
+	compSel   int
+	nextID    int
 	// The pending definition request and the hover.
 	defID     int
 	hoverWord span
@@ -301,6 +303,7 @@ func (e *ed) changed(changes []change, report bool) {
 		e.reported = e.st.r().text()
 	}
 	e.reportSelection()
+	e.reportSearch()
 }
 
 func (e *ed) reportSelection() {
@@ -338,6 +341,7 @@ func (e *ed) selMoved() {
 		e.grown = nil
 	}
 	e.reportSelection()
+	e.reportSearch()
 }
 
 // measure takes the widest line, every line up to measureAll.
@@ -987,17 +991,26 @@ func (e *ed) setSearch(q Search) {
 	if !q.InSelection {
 		e.scope = nil
 	}
+	e.searchErr = ""
 	if q.Query != "" {
 		re, err := compile(q)
 		if err != nil {
-			result.Error = err.Error()
+			e.searchErr = err.Error()
 		}
 		e.re = re
 	}
 	e.findMatches()
 	if e.p.OnSearchChange != nil {
-		result.Count, result.Current = len(e.matches), e.currentMatch()
+		result.Count, result.Current, result.Error = len(e.matches), e.currentMatch(), e.searchErr
 		e.p.OnSearchChange(result)
+	}
+}
+
+// reportSearch reports the matches of the search after an edit or a
+// move, as NSH's editor does, while there is a query.
+func (e *ed) reportSearch() {
+	if e.search.Query != "" && e.p.OnSearchChange != nil {
+		e.p.OnSearchChange(SearchResult{Count: len(e.matches), Current: e.currentMatch(), Error: e.searchErr})
 	}
 }
 
@@ -1032,9 +1045,6 @@ func (e *ed) findStep(next bool) {
 	m := e.matches[i]
 	e.st.setSels([]selection{{anchor: m.from, head: m.to, goal: -1}})
 	e.moved()
-	if e.p.OnSearchChange != nil {
-		e.p.OnSearchChange(SearchResult{Count: len(e.matches), Current: i})
-	}
 }
 
 // replace replaces the current match with with and selects the next.
@@ -1232,12 +1242,13 @@ func (e *ed) query() string {
 // filtered is the items matching the query, best first: prefix matches,
 // then the most compact subsequence, then their sort text.
 func (e *ed) filtered() ([]CompletionItem, [][]int) {
-	q := strings.ToLower(e.query())
+	typed := e.query()
+	q := strings.ToLower(typed)
 	type scored struct {
-		item   CompletionItem
-		prefix bool
-		gaps   int
-		hits   []int
+		item                    CompletionItem
+		prefix                  bool
+		gaps, first, caseMisses int
+		hits                    []int
 	}
 	var list []scored
 	for _, it := range e.comp.items {
@@ -1245,24 +1256,41 @@ func (e *ed) filtered() ([]CompletionItem, [][]int) {
 		if text == "" {
 			text = it.Label
 		}
-		hits, gaps, ok := subsequence(strings.ToLower(text), q)
+		lower := strings.ToLower(text)
+		hits, gaps, ok := subsequence(lower, q)
 		if !ok {
 			continue
+		}
+		first, misses := 0, 0
+		if len(hits) > 0 {
+			first = utf8.RuneCountInString(lower[:hits[0]])
+			misses = caseMisses(text, typed, hits)
 		}
 		if it.FilterText != "" {
 			hits, _, _ = subsequence(strings.ToLower(it.Label), q)
 		}
-		list = append(list, scored{it, strings.HasPrefix(strings.ToLower(text), q), gaps, hits})
+		list = append(list, scored{it, strings.HasPrefix(lower, q), gaps, first, misses, hits})
 	}
+	// As NSH's: prefixes first, then the most compact matches, the
+	// earliest, those in the query's case (rec puts receipt before
+	// Receipt), then by sortText in any case.
 	sort.SliceStable(list, func(i, j int) bool {
 		a, b := list[i], list[j]
-		if a.prefix != b.prefix {
+		switch {
+		case a.prefix != b.prefix:
 			return a.prefix
-		}
-		if a.gaps != b.gaps {
+		case a.gaps != b.gaps:
 			return a.gaps < b.gaps
+		case a.first != b.first:
+			return a.first < b.first
+		case a.caseMisses != b.caseMisses:
+			return a.caseMisses < b.caseMisses
 		}
-		return strings.ToLower(sortText(a.item)) < strings.ToLower(sortText(b.item))
+		ka, kb := sortText(a.item), sortText(b.item)
+		if la, lb := strings.ToLower(ka), strings.ToLower(kb); la != lb {
+			return la < lb
+		}
+		return ka < kb
 	})
 	items := make([]CompletionItem, len(list))
 	hits := make([][]int, len(list))
@@ -1270,6 +1298,21 @@ func (e *ed) filtered() ([]CompletionItem, [][]int) {
 		items[i], hits[i] = s.item, s.hits
 	}
 	return items, hits
+}
+
+// caseMisses counts the characters of text at hits, byte offsets of its
+// lowercased form, in another case than typed's.
+func caseMisses(text, typed string, hits []int) int {
+	n := 0
+	for i, c := range []rune(typed) {
+		if i >= len(hits) || hits[i] >= len(text) {
+			break
+		}
+		if r, _ := utf8.DecodeRuneInString(text[hits[i]:]); r != c {
+			n++
+		}
+	}
+	return n
 }
 
 func sortText(it CompletionItem) string {

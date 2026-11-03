@@ -2,30 +2,15 @@
 // first; the Go components after them are declared from their types.
 
 import type { Accessor, Easing } from "./index";
-import type { CommonProps, JSX, StyleProp, TextStyle, ViewStyle, YNode } from "./types";
+import type {
+  AndroidDialogHostProps, ColorValue, CommonProps, DialogHostProps, InputHostProps, IOSDialogHostProps, IOSInputHostProps,
+  IOSNavPageHostProps, IOSProps, JSX, NavPageHostProps, StyleProp, TextStyle, ViewStyle, YNode,
+} from "./types";
 
-export interface InputProps extends CommonProps {
+export interface IOSInputProps extends IOSProps, IOSInputHostProps {}
+export interface InputProps extends Omit<CommonProps, "ios">, InputHostProps {
   style?: StyleProp<TextStyle>;
-  value?: string;
-  defaultValue?: string;
-  placeholder?: string;
-  masked?: boolean;
-  keyboardType?: "default" | "number-pad" | "decimal-pad" | "numeric" | "numbers-and-punctuation" | "email-address" | "phone-pad" | "url";
-  returnKeyType?: "default" | "done" | "go" | "next" | "search" | "send";
-  autoCapitalize?: "none" | "sentences" | "words" | "characters";
-  autoCorrect?: boolean;
-  multiline?: boolean;
-  maxLength?: number;
-  readonly?: boolean;
-  submitBehavior?: "submit" | "blurAndSubmit" | "newline";
-  pasteBehavior?: "insert" | "report";
-  autoFocus?: boolean;
-  caret?: boolean;
-  autoComplete?: string;
-  selectedRange?: { start: number; end?: number };
-  keyboardAppearance?: "default" | "light" | "dark";
-  inputAccessoryViewID?: string;
-  textContentType?: string;
+  ios?: IOSInputProps & Record<string, unknown>;
   onChange?: (text: string) => void;
   onSubmit?: (e: { text: string }) => void;
   onSelectionChange?: (e: { start: number; end: number }) => void;
@@ -41,15 +26,10 @@ export type StatusBarForeground = "auto" | "light" | "dark";
 export interface StatusBar { foreground?: StatusBarForeground; hidden?: boolean; animated?: boolean }
 
 export type DialogChangeReason = "cancel" | "backdropPress" | "swipe";
-export interface DialogProps {
+export interface DialogProps extends DialogHostProps {
   testID?: string;
   open?: boolean;
   animation?: "slide" | "fade" | "none";
-  presentation?: "fullScreen" | "pageSheet" | "formSheet";
-  closeOnEscape?: boolean;
-  closeOnBackdropPress?: boolean;
-  closeOnSwipe?: boolean;
-  statusBar?: StatusBar;
   onOpen?: () => void;
   onClose?: () => void;
   onCancel?: () => void;
@@ -60,8 +40,8 @@ export interface DialogProps {
   backdropClass?: string;
   accessibilityLabel?: string;
   children?: JSX.Element;
-  ios?: { supportedOrientations?: ("portrait" | "portrait-upside-down" | "landscape" | "landscape-left" | "landscape-right")[] };
-  android?: { statusBarTranslucent?: boolean };
+  ios?: IOSDialogHostProps;
+  android?: AndroidDialogHostProps;
 }
 export declare function Dialog(props: DialogProps): JSX.Element;
 
@@ -83,53 +63,46 @@ export interface NavStackProps<R> {
   children: (route: R, index: Accessor<number>) => JSX.Element;
 }
 export declare function NavStack<R>(props: NavStackProps<R>): YNode;
-export interface NavPageProps {
+/** The colors of a page's system header. */
+export interface HeaderStyle { backgroundColor?: ColorValue; color?: ColorValue; tintColor?: ColorValue }
+export interface NavPageProps extends NavPageHostProps {
   testID?: string;
-  title?: string;
   header?: JSX.Element;
   headerLeft?: JSX.Element;
   headerRight?: JSX.Element;
   headerTitle?: JSX.Element;
-  headerVisible?: boolean;
-  headerLargeTitle?: boolean;
-  headerTransparent?: boolean;
-  headerBackTitle?: string;
-  headerBackVisible?: boolean;
-  headerStyle?: { backgroundColor?: string; color?: string; tintColor?: string };
+  headerStyle?: HeaderStyle;
   /** The system header's colors as classes: bg-*, text-* for the title, tint-* for the buttons; headerStyle wins over them. */
   headerClass?: string;
-  /** How the page enters and leaves. */
-  animation?: "default" | "slide" | "fade" | "none";
-  popOnSwipe?: boolean;
-  popOnBack?: boolean;
-  statusBar?: StatusBar;
   onDismiss?: () => void;
   onBackPress?: () => void;
   style?: StyleProp<ViewStyle>;
   class?: string;
   children?: JSX.Element;
-  ios?: { headerRightSystemItem?: "add" | "done" | "close" | "edit" | "compose" | "search" | "share" | "trash" | "save" | "cancel" };
+  ios?: IOSNavPageHostProps;
 }
 export declare function NavPage(props: NavPageProps): YNode;
 
-export interface AlertDialogAction { label: string; role?: "default" | "cancel" | "destructive"; id?: string | null }
+export type AlertDialogRole = "default" | "cancel" | "destructive";
+export type AlertDialogPresentation = "alert" | "actionSheet";
+export interface AlertDialogAction { label: string; role?: AlertDialogRole; id?: string | null }
 export interface AlertDialogOptions {
   title?: string | null;
   description?: string | null;
   actions: AlertDialogAction[];
-  presentation?: "alert" | "actionSheet";
+  presentation?: AlertDialogPresentation;
   closeOnEscape?: boolean | null;
   closeOnBackdropPress?: boolean | null;
 }
-export declare const AlertDialog: { show(options: AlertDialogOptions): Promise<string | null> };
+export interface AlertDialogModule { show(options: AlertDialogOptions): Promise<string | null> }
+export declare const AlertDialog: AlertDialogModule;
 
-export type ToastTransitionStatus = "starting" | "present" | "ending";
 export interface ToastEntry { id: string; value: unknown; status: ToastTransitionStatus }
 export interface ToastAdvance { changed: boolean; presented: string[]; ending: string[]; removed: ToastEntry[] }
 export interface ToastMotion { duration?: number | null; exitDuration?: number | null; collapsedPeek?: number | null; expandedGap?: number | null; collapsedScaleStep?: number | null; collapsedVisible?: number | null }
 export declare class ToastManager {
   constructor(motion?: ToastMotion | null);
-  push(id: string, value: unknown, options?: { timeout?: number | null } | null): unknown | null;
+  push(id: string, value: unknown, options?: ToastOptions | null): unknown | null;
   dismiss(id: string): boolean;
   dismissAll(): string[];
   advance(paused?: boolean | null): ToastAdvance;
@@ -140,9 +113,13 @@ export declare class ToastManager {
   isEmpty(): boolean;
   dispose(): void;
 }
+/** How long a toast shows, in milliseconds; null keeps it. */
+export interface ToastOptions { timeout?: number | null }
+/** Where toasts stack on the screen. */
+export type Anchor = "topLeft" | "topCenter" | "topRight" | "bottomLeft" | "bottomCenter" | "bottomRight" | "leftCenter" | "rightCenter";
 export interface ToastStackProps {
   motion?: ToastMotion;
-  placement?: "topLeft" | "topCenter" | "topRight" | "bottomLeft" | "bottomCenter" | "bottomRight" | "leftCenter" | "rightCenter";
+  placement?: Anchor;
   closeOnEscape?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   onCancel?: () => void;
@@ -168,3 +145,12 @@ export interface ResizablePanelProps {
 export declare function ResizablePanel(props: ResizablePanelProps): JSX.Element;
 
 export type { Easing };
+
+/** The rows or columns of a DataTable in view, from start to before end. */
+export interface DataTableRange { start: number; end: number }
+/** A cell, a row (no column) or a column (no row) of a DataTable. */
+export interface DataTableTarget { row?: number | null; column?: number | null }
+/** How a DiffView shows its texts: side by side, or one above the other. */
+export type DiffLayout = "split" | "unified";
+/** What a press on a TextView's link does: reported to onLinkPress, or opened. */
+export type TextViewLinks = "report" | "open";

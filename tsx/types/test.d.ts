@@ -1,16 +1,37 @@
 // The nsgo/test module: an app's tests in TSX, which nsgo test runs
 // headless or on a platform.
 
+/** The manual clock `open` gives the app (`clock: {}`). */
+export interface ClockOptions {
+  /** Its wall time at the start (`Date.now()`): a `Date` or milliseconds since the Unix epoch. */
+  time?: Date | number | null;
+}
+/** The system's appearance. */
+export type ColorScheme = "light" | "dark";
+/** The platform a headless app is opened as. */
+export type Platform = "ios" | "android" | "macos" | "windows" | "linux" | "web";
+/** Safe area insets in points. */
+export interface SafeArea { top?: number; right?: number; bottom?: number; left?: number }
+/** The embedding app a test plays (`open`'s `host`). */
+export interface HostOptions {
+  /** What the app reads as `host.params`. */
+  params?: Record<string, unknown> | null;
+  /** The handlers of the app's `host.call` and `host.post`, by name: a value answers every call; a function gets the data and returns the answer, or a promise of it, and what it throws rejects the call. A call of a name not listed fails; a post of one is dropped. */
+  handlers?: Record<string, unknown | ((data: unknown) => unknown)> | null;
+}
 export interface OpenOptions {
   storage?: Record<string, string> | null;
   width?: number | null;
   height?: number | null;
-  safeArea?: { top?: number; right?: number; bottom?: number; left?: number } | null;
-  colorScheme?: "light" | "dark" | null;
+  safeArea?: SafeArea | null;
+  colorScheme?: ColorScheme | null;
   locale?: string | null;
   reducedMotion?: boolean | null;
-  platform?: "ios" | "android" | "macos" | "windows" | "linux" | "web" | null;
-  host?: { params?: Record<string, unknown> | null; handlers?: Record<string, unknown | ((data: unknown) => unknown)> | null } | null;
+  platform?: Platform | null;
+  /** A manual clock: the app's time moves only as the test moves it (`app.clock`). Without one, its time passes as the test waits. */
+  clock?: ClockOptions | null;
+  /** The embedding app the test plays; without one, the page's host module nsgo.yaml's `web.host` names answers the app headless. */
+  host?: HostOptions | null;
   /** What requests get, by "<METHOD> <URL>" (a bare URL is a GET; * matches any text): a response, or a function of the request giving one, which runs as a step waits; a request none lists fails. "live": the network. */
   network?: "live" | Record<string, StubResponse | ((request: StubRequest) => StubResponse | Promise<StubResponse>)> | null;
   /** The text on the clipboard at the start. */
@@ -34,9 +55,17 @@ export interface PickFile { name: string; /** Its media type; none: read from it
 /** An action of the context menu the app shows; a submenu's after its label ("Share > Mail"). */
 export interface MenuEntry { label: string; disabled: boolean; checked?: boolean }
 /** The style of a span as the app resolved it; colors are #rrggbbaa. */
-export interface SpanStyle { color: string; fontSize: number; fontWeight: number; italic: boolean; underline: boolean; lineThrough: boolean }
-export interface WaitOptions { timeout?: number | null; state?: "shown" | "gone" | null }
+export interface SpanStyle { color: string; backgroundColor?: string | null; fontSize: number; fontWeight: number; italic: boolean; underline: boolean; lineThrough: boolean }
+/** What a wait waits for. */
+export type WaitState = "shown" | "gone";
+export interface WaitOptions { timeout?: number | null; state?: WaitState | null }
 export interface Dialog { title?: string | null; message?: string | null; buttons: string[]; cancelable: boolean; sheet: boolean }
+/** How far a drag moves the finger, in points. */
+export interface DragBy { x?: number; y?: number }
+/** What a test pastes: what the clipboard holds as the user pastes. */
+export interface PasteContent { text?: string | null; uris?: string[] | null }
+/** A call or a post the app made to the embedding app the test plays. */
+export interface HostMessage { name: string; data: unknown }
 export declare function test(name: string, body: () => void | Promise<void>): void;
 export declare namespace test {
   function skip(name: string, body: () => void | Promise<void>): void;
@@ -54,17 +83,19 @@ export declare function beforeEach(body: () => void | Promise<void>): void;
 export declare function afterEach(body: () => void | Promise<void>): void;
 export declare function open(entry: string, options?: OpenOptions | null): Promise<App>;
 export declare function expect(value: unknown): Expectation;
-export interface App {
+/** The app a test opened. A step resolves once the app is quiet and rejects, with what is on screen, when it cannot be taken or the app threw. */
+export declare class App {
+  private constructor();
   press(selector: string): Promise<void>;
   longPress(selector: string): Promise<void>;
   type(selector: string, text: string): Promise<void>;
   submit(selector: string): Promise<void>;
   clear(selector: string): Promise<void>;
   scroll(selector: string, distance: number): Promise<void>;
-  drag(selector: string, by: { x?: number; y?: number }): Promise<void>;
+  drag(selector: string, by: DragBy): Promise<void>;
   rightClick(selector: string): Promise<void>;
   hover(selector: string): Promise<void>;
-  paste(selector: string, content: { text?: string | null; uris?: string[] | null }): Promise<void>;
+  paste(selector: string, content: PasteContent): Promise<void>;
   /** Chooses an action of the context menu showing; a submenu's after its label ("Share > Mail"). */
   chooseMenuItem(label: string): Promise<void>;
   closeMenu(): Promise<void>;
@@ -73,7 +104,7 @@ export interface App {
   waitFor(selector: string, options?: WaitOptions | null): Promise<void>;
   waitUntil(condition: () => boolean, options?: WaitOptions | null): Promise<void>;
   setViewport(width: number, height: number): Promise<void>;
-  setColorScheme(scheme: "light" | "dark"): Promise<void>;
+  setColorScheme(scheme: ColorScheme): Promise<void>;
   screenshot(path?: string | null): Promise<void>;
   count(selector: string): number;
   shows(selector: string): boolean;
@@ -99,12 +130,45 @@ export interface App {
   requests(): StubRequest[];
   /** The style of the characters a selector ending in text: names. */
   spanStyle(selector: string): SpanStyle;
-  readonly keyboard: { press(keys: string): Promise<void> };
-  readonly clock: { runFor(ms: number): Promise<void>; fastForward(ms: number): Promise<void> };
+  readonly keyboard: Keyboard;
+  readonly clock: Clock;
+  readonly host: AppHost;
 }
-export interface Expectation {
+/** The embedding app the test plays for an app: its events to the app and what the app sent it. */
+export declare class AppHost {
+  private constructor();
+  /** Sends event `name` with `data` to the app, and resolves once the app is quiet. */
+  send(name: string, data?: unknown | null): Promise<void>;
+  /** The app's calls of the names `open`'s `host.handlers` lists, in order. */
+  calls(): HostMessage[];
+  /** The app's posts of the names `open`'s `host.handlers` lists, in order. */
+  posts(): HostMessage[];
+}
+/** The app's clock, which the test moves. */
+export declare class Clock {
+  private constructor();
+  /** Moves the clock by `ms` milliseconds, a display frame at a time. */
+  runFor(ms: number): Promise<void>;
+  /** Moves the clock by `ms` milliseconds at once: the timers due meanwhile run once each. */
+  fastForward(ms: number): Promise<void>;
+  /** Sets the wall time (`Date.now()`, `new Date()`) to `time`, moving no timer. */
+  setSystemTime(time: Date | number): void;
+}
+/** The app's hardware keyboard. */
+export declare class Keyboard {
+  private constructor();
+  /** Presses `keys`, a keystroke as keymaps name it ("mod+k", "shift+/", "escape"). */
+  press(keys: string): Promise<void>;
+}
+/** The checks of what a promise rejects with. */
+export declare class Rejection {
+  private constructor();
+  toThrow(message?: string | RegExp | null): Promise<void>;
+}
+export declare class Expectation {
+  private constructor();
   readonly not: Expectation;
-  readonly rejects: { toThrow(message?: string | RegExp | null): Promise<void> };
+  readonly rejects: Rejection;
   toBe(expected: unknown): void;
   toEqual(expected: unknown): void;
   toContain(item: unknown): void;

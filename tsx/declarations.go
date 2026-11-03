@@ -183,7 +183,25 @@ var typePrefixes = map[string]string{
 // have.
 var typeRenames = map[string]string{"DockLayout": "DockAreaLayout", "Reason": "OpenChangeReason",
 	"EditorSeverity": "EditorDiagnosticSeverity", "EditorRelatedInformation": "EditorDiagnosticRelatedInformation",
-	"DiffExpansion": "DiffExpand", "DiffClasses": "DiffViewClasses", "DiffStyles": "DiffViewStyles"}
+	"DiffExpansion": "DiffExpand", "DiffClasses": "DiffViewClasses", "DiffStyles": "DiffViewStyles",
+	"CoreAlign": "Align", "CorePlacement": "Placement", "PlotCurve": "Curve",
+	"EditorCodeDescription": "EditorDiagnosticCodeDescription", "ToastStatus": "ToastTransitionStatus",
+	"AccessibilityValue": "PlotAccessibilityValue", "CoreAccessibilityValue": "PlotAccessibilityValue",
+	"EditorTokenKind": "EditorToken", "TextViewOptions": "MarkdownOptions", "TextViewExtension": "MarkdownExtension",
+	"TextViewCustom": "TextViewCustomNode"}
+
+// inlineTypes are the types NSH declares in place rather than by name.
+var inlineTypes = map[string]bool{"TextViewColumnAlign": true, "TextViewTableCell": true, "TextViewCodeBlockAction": true}
+
+// namedMembers are the members of unions declared by name in them, as
+// NSH's are ({ type: "table" } & TextViewTable); the others are in place.
+var namedMembers = map[string]bool{"TextViewCodeBlock": true, "TextViewTable": true, "TextViewCustomNode": true,
+	"TextViewImage": true}
+
+// mapNames are the maps by an enum's names NSH declares as interfaces of
+// those names, by key type and value: TextView's classes and styles.
+var mapNames = map[string]string{"TextViewPart string": "TextViewClasses",
+	"TextViewPart StyleProp<TextStyle>": "TextViewStyles"}
 
 // typeName is the name a named type is declared under.
 func typeName(t reflect.Type) string {
@@ -340,6 +358,8 @@ func (d *declarer) ts(t reflect.Type) string {
 		return "AnimatedNode"
 	case easingType:
 		return "Easing"
+	case timingType:
+		return "{ duration?: number; easing?: Easing; delay?: number }"
 	case regexpType:
 		return "string | RegExp"
 	case pressType:
@@ -349,7 +369,11 @@ func (d *declarer) ts(t reflect.Type) string {
 	}
 	enumMu.RLock()
 	names, isEnum := enums[t]
+	members, isUnion := unions[t]
 	enumMu.RUnlock()
+	if isUnion {
+		return d.union(t, members)
+	}
 	if isEnum {
 		keys := make([]string, 0, len(names))
 		for k := range names {
@@ -357,7 +381,7 @@ func (d *declarer) ts(t reflect.Type) string {
 		}
 		sort.Strings(keys)
 		union := strings.Join(keys, " | ")
-		if t.Name() == "" {
+		if t.Name() == "" || inlineTypes[typeName(t)] {
 			return union
 		}
 		// A named enum is a type of its own the app may name.
@@ -391,10 +415,16 @@ func (d *declarer) ts(t reflect.Type) string {
 	case reflect.Slice, reflect.Array:
 		return "(" + d.ts(t.Elem()) + ")[]"
 	case reflect.Map:
+		if name, ok := mapNames[typeName(t.Key())+" "+d.ts(t.Elem())]; ok {
+			return d.mapInterface(t, name)
+		}
 		return "Partial<Record<" + d.ts(t.Key()) + ", " + d.ts(t.Elem()) + ">>"
 	case reflect.Pointer:
 		return d.ts(t.Elem()) + " | null"
 	case reflect.Struct:
+		if inlineTypes[typeName(t)] {
+			return d.inlineStruct(t)
+		}
 		return d.structName(t)
 	case reflect.Func:
 		out := "void"
@@ -449,6 +479,16 @@ func (d *declarer) structDecl(t reflect.Type) {
 	// Built apart: its fields' types may declare others in extras.
 	var b strings.Builder
 	fmt.Fprintf(&b, "export interface %s {\n", d.named[t])
+	for _, f := range d.fields(t) {
+		fmt.Fprintf(&b, "  %s;\n", f)
+	}
+	b.WriteString("}\n\n")
+	d.extras.WriteString(b.String())
+}
+
+// fields are the declarations of struct t's fields ("label?: string").
+func (d *declarer) fields(t reflect.Type) []string {
+	var out []string
 	given := strings.HasSuffix(t.Name(), "Event") || strings.HasSuffix(t.Name(), "Request")
 	for _, f := range reflect.VisibleFields(t) {
 		if f.IsExported() && !f.Anonymous {
@@ -460,11 +500,80 @@ func (d *declarer) structDecl(t reflect.Type) {
 			if negated {
 				opt = "?"
 			}
-			fmt.Fprintf(&b, "  %s%s: %s;\n", name, opt, d.ts(f.Type))
+			out = append(out, fmt.Sprintf("%s%s: %s", name, opt, d.ts(f.Type)))
 		}
+	}
+	return out
+}
+
+// inlineStruct is struct t's object type in place.
+func (d *declarer) inlineStruct(t reflect.Type) string {
+	return "{ " + strings.Join(d.fields(t), "; ") + " }"
+}
+
+// union declares interface t, whose members carry their type tag, as a
+// union of the members' objects.
+func (d *declarer) union(t reflect.Type, members map[string]reflect.Type) string {
+	if n, ok := d.named[t]; ok {
+		return n
+	}
+	n := typeName(t)
+	d.named[t] = n
+	tags := make([]string, 0, len(members))
+	for tag := range members {
+		tags = append(tags, tag)
+	}
+	sort.Strings(tags)
+	var b strings.Builder
+	fmt.Fprintf(&b, "export type %s =\n", n)
+	for i, tag := range tags {
+		m := members[tag]
+		for m.Kind() == reflect.Pointer {
+			m = m.Elem()
+		}
+		head := fmt.Sprintf("{ type: %q }", tag)
+		switch {
+		case m.Kind() != reflect.Struct:
+		case namedMembers[typeName(m)]:
+			head = "(" + head + " & " + d.ts(m) + ")"
+		case len(d.fields(m)) > 0:
+			head = fmt.Sprintf("{ type: %q; %s }", tag, strings.Join(d.fields(m), "; "))
+		}
+		sep := ""
+		if i == len(tags)-1 {
+			sep = ";"
+		}
+		fmt.Fprintf(&b, "  | %s%s\n", head, sep)
+	}
+	b.WriteString("\n")
+	d.extras.WriteString(b.String())
+	return n
+}
+
+// mapInterface declares map t, by an enum's names, as an interface of
+// those names.
+func (d *declarer) mapInterface(t reflect.Type, name string) string {
+	if n, ok := d.named[t]; ok {
+		return n
+	}
+	d.named[t] = name
+	enumMu.RLock()
+	names := enums[t.Key()]
+	enumMu.RUnlock()
+	keys := make([]string, 0, len(names))
+	for k := range names {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	value := d.ts(t.Elem())
+	var b strings.Builder
+	fmt.Fprintf(&b, "export interface %s {\n", name)
+	for _, k := range keys {
+		fmt.Fprintf(&b, "  %s?: %s;\n", k, value)
 	}
 	b.WriteString("}\n\n")
 	d.extras.WriteString(b.String())
+	return name
 }
 
 // fieldRequired reports whether struct t's field f is declared required:
@@ -590,6 +699,13 @@ func (d *declarer) refType(t reflect.Type) string {
 			}
 		case outs == 1:
 			res = "Promise<" + d.ts(ft.Out(0)) + ">"
+		case outs > 1 && len(resultNames[m.Name]) == outs:
+			// An object of the results, as results gives it.
+			var fs []string
+			for j, name := range resultNames[m.Name] {
+				fs = append(fs, name+": "+d.ts(ft.Out(j)))
+			}
+			res = "Promise<{ " + strings.Join(fs, "; ") + " }>"
 		case outs > 1:
 			res = "Promise<unknown>"
 		}

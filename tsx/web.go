@@ -87,9 +87,8 @@ func (r *runtime) pastedFile(f core.PastedFile) goja.Value {
 func (r *runtime) webNatives() *goja.Object {
 	n := r.vm.NewObject()
 	set := func(name string, f func(call goja.FunctionCall) goja.Value) { _ = n.Set(name, r.function(f)) }
-	start := r.cx.Now()
 	set("now", func(goja.FunctionCall) goja.Value {
-		return r.vm.ToValue(float64(r.cx.Now().Sub(start).Microseconds()) / 1000)
+		return r.vm.ToValue(r.millis(r.cx.Now()))
 	})
 	set("utf8Encode", func(call goja.FunctionCall) goja.Value {
 		return r.vm.ToValue(r.vm.NewArrayBuffer([]byte(arg(call, 0).String())))
@@ -312,7 +311,11 @@ func (r *runtime) fetch(call goja.FunctionCall) goja.Value {
 		body = bytes.Clone(r.bytes(b))
 	}
 	redirect, done, fail := arg(call, 4).String(), arg(call, 5), arg(call, 6)
-	ctx, cancel := context.WithCancel(r.cx.Context())
+	// A request belongs to the app, not to the owner that sent it: only
+	// its AbortSignal, or the app's end, cancels it.
+	var ctx context.Context
+	var cancel context.CancelFunc
+	r.cx.Run(func() { ctx, cancel = context.WithCancel(r.cx.Context()) })
 	answer := func(fn func()) { r.cx.Post(func() { r.inJS(fn) }) }
 	fetcher := fetcherKey.Use(r.cx)
 	go func() {

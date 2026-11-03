@@ -72,6 +72,17 @@ func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 			t.touch(n)
 		})
 	}
+	if s.NoPopOnBackFunc != nil || s.NoPopOnSwipeFunc != nil {
+		cx.renderEffect(func() {
+			if s.NoPopOnBackFunc != nil {
+				sn.screen.NoPopOnBack = s.NoPopOnBackFunc()
+			}
+			if s.NoPopOnSwipeFunc != nil {
+				sn.screen.NoPopOnSwipe = s.NoPopOnSwipeFunc()
+			}
+			t.touch(n)
+		})
+	}
 	if s.HeaderStyleFunc != nil {
 		cx.renderEffect(func() {
 			sn.headerStyle = s.HeaderStyle.Merge(s.HeaderStyleFunc())

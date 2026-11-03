@@ -6,22 +6,17 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, wit
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, as `TestNSHGallery` runs NSH's gallery. Every gallery demo opens headless with no prop or style key left undecoded; what the apps' tests check still fails in places.
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). All pass but what needs the standard modules NSGo leaves out and one test that reads QuickJS's wording of a `TypeError`; `.nsgo/types` exports the type names `.nsh/types` does, and NSH's gallery type-checks against it as against NSH's own.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| The gallery's tests | `nsh/examples/gallery/tests/`, `tooling.md` (Headless runs) | A Go test runs NSH's gallery tests headless, and all pass but those of the standard modules (47 of 116 passed on 2026-11-01). The first causes seen are below the table |
-| The examples | `nsh/examples/counter`, `hopper`, `desktop`, `embedded`, `host-echo` | Each opens headless and passes its `App.test.tsx`: `<Text>` takes `pointerEvents`, `app.host` has `send`, `calls` and `posts`, and a headless run runs the page's `web.host` module |
-| The compat cases | `compatibility.md`, `nsh/tests/compat/` | A Go test runs the 286 cases of `tests/compat/cases/` with their scripts (`tap`, `expect`, `frame`, `style`, `prop`, `event`, `touch`, ...), and every case passes but the standard modules' |
-| The declared types | `native-pipeline.md` (Types) | `.nsgo/types` exports every type name NSH's `.nsh/types` does, about 130 missing on 2026-11-01 (`ListHostProps`, `ToastOptions`, `TextViewBlock`, `WindowFrame`, `AppHost`, ...), and none NSH lacks (`CoreAlign`, `CorePlacement`) |
+| The compat cases | `compatibility.md` (Scripts), `nsh/tests/compat/` | `TestNSHCompat` runs every step of the scripts, NSH's text forms of `style`, `prop`, `event`, `touch` and `state` steps included (about 600 not run on 2026-11-03), and `compatFailing` lists only the cases that need the standard modules: 42 of 122 cases passed the steps run, the first causes below |
 
-The gallery's tests first fail on these differences:
+The compat cases first fail on these:
 
-- `nsgo/test` reads `text:` as a substring and `waitFor` as exactly one match, where NSH's `text:` matches a whole text and `waitFor` holds for any match. Following NSH reverses a departure [testing](architecture/testing.md#the-model) records, for TSX tests only.
-- The tests' VM has no `atob`, and the clock has no `setSystemTime`.
-- A `fetch` the network refuses fails the app instead of rejecting, and `AbortController.abort` throws.
-- An import of a directory (`".."`) finds no module.
-- A key step takes only `Escape` for going back, not NSH's `escape`, and choosing a disabled menu item resolves where NSH's rejects.
+- Steps that stand in for a platform's events (`event`, `touch`, `state`) leave the cases that read them unchecked: `events-*`, most of `base-*`.
+- Layout: frames differ, or views the steps name do not show, in `layout-box`, `layout-direction`, `layout-flex`, `layout-grid` and `layout-tailwind`, and a text's width in the `base-*` controls differs by a few points.
+- Modules: `TextView.parse`, `URL.createObjectURL`, `nativeModule("nsh/base")`, and what the `web-*` cases check of `Blob`, encodings, events, streams, timers and `URL`.
 
 ## TSX and dynamic delivery
 
@@ -78,6 +73,7 @@ These items wait for community contributions, and a change to one backend record
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Real file drags | `file-drop.md` | A real drag from Finder and from a Linux file manager is checked to reach a view, as one from Explorer is |
+| Long presses on Android spans | `text.md` (nested texts) | A long press on a text's span reaches the span's `OnLongPress` on Android, as it does on the other backends: the runtime's Java reports the character under it, which needs `classes.dex` rebuilt |
 | Ink past a text's box | `styles.md` (text) | A text's decoration lines and shadow that reach past its box are checked to draw on Android, Windows and Linux, as they do on Apple and the web |
 | Android blurs | `styles.md` (`backdropFilter`) | From Android 12, a backdrop filter blurs what the view's parent drew under it through a `RenderNode` and a `RenderEffect`, and a scroll view's soft and hard edges ([scrolling](architecture/scrolling.md#edge-effects)) blur the content under its bars |
 | Progressive edges before iOS 26 | — | Before iOS 26 a soft scroll edge blurs by a radius that grows toward the side through a `CABackdropLayer`'s variable blur, as macOS's does ([scrolling](architecture/scrolling.md#edge-effects)), rather than fading in an even blur |

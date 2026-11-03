@@ -300,7 +300,7 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 		run++
 		mine := run
 		if abort != nil {
-			r.call(abort.ToObject(r.vm).Get("abort"))
+			r.call2(abort.ToObject(r.vm).Get("abort"), abort)
 		}
 		ctl, _ := r.vm.New(r.vm.Get("AbortController"))
 		abort = ctl
@@ -374,12 +374,9 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 			core.Untracked(r.cx, func() bool { load(src, false); return true })
 		})
 	}
-	read := r.accessor(func() goja.Value {
-		if state.Get() == "errored" {
-			panic(errv.GetUntracked())
-		}
-		return value.Get()
-	})
+	// It reads the latest value, failed or not, as NSH's does: error()
+	// says why a load failed.
+	read := r.accessor(func() goja.Value { return value.Get() })
 	_ = read.Set("loading", r.function(func(goja.FunctionCall) goja.Value {
 		s := state.Get()
 		return r.vm.ToValue(s == "pending" || s == "refreshing")

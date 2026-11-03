@@ -119,7 +119,10 @@ type DockTab struct {
 	// Selected reports whether it is its group's displayed tab, Zoomed
 	// whether its group is zoomed in.
 	Selected, Zoomed func() bool
-	Closable         bool
+	// Closable reports whether the area would close it: the panel may
+	// close, the area is not locked, and it is not the last panel of a
+	// group with nothing beside it.
+	Closable func() bool
 	// Close closes the panel, where it may.
 	Close func()
 }
@@ -684,7 +687,23 @@ func (a *dockArea) movable(key string) bool {
 		return false
 	}
 	l := a.untracked()
-	region, g := regionOf(&l, key)
+	return a.leaves(&l, key)
+}
+
+// closable reports whether the area would close panel key, tracked: as
+// it may move it, zoomed or not, and the panel may close.
+func (a *dockArea) closable(key string) bool {
+	if a.options(key).NoClose || a.locked() {
+		return false
+	}
+	l := a.layout()
+	return a.leaves(&l, key)
+}
+
+// leaves reports whether panel key may leave its place in l: it is
+// there, and its group keeps a panel or has others beside it.
+func (a *dockArea) leaves(l *DockLayout, key string) bool {
+	region, g := regionOf(l, key)
 	if g == nil {
 		return false
 	}
@@ -1062,7 +1081,7 @@ func (a *dockArea) tab(cx *core.Scope, g *dockGroup, group uint64, key string, i
 	}
 	info := DockTab{Key: key, Group: group, Index: index, Selected: selected,
 		Zoomed:   func() bool { return a.zoom.Get() == group && group != 0 },
-		Closable: !a.options(key).NoClose, Close: func() { a.close(key) }}
+		Closable: func() bool { return a.closable(key) }, Close: func() { a.close(key) }}
 	var label core.Node = core.Text{Content: key}
 	if a.p.RenderTab != nil {
 		label = a.p.RenderTab(cx, info)

@@ -34,7 +34,7 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 
 - `Sheet` and a phone's menus are overlays, not modals: `sheetMotion` (`sheet.go`) ports NSH's `SheetMotion`. The panel's translation and the backdrop's opacity are animated nodes of one `fade` value and the panel's measured size, so they run on the platform's frame clock; the parts leave the tree when the motion out ends, or after its time where no end is reported.
 - With `CloseOnSwipe` a bottom sheet's `PanValues` move a drag value; a release past 30% of its height or 800 points a second asks to close (`ReasonSwipe`), else it comes back. On iOS the panel's pan hands off from the scroll view the drag starts in (`View.PanScrollHandoff`): the drag scrolls it back to its top first, and what goes on past that moves the sheet while the scroll view stays pinned there. Elsewhere the scroll view keeps the drag.
-- `View.Tooltip` is the short form: the core shows the node above the view, 4 points away, after half a second of hover on desktops. Tooltips never take the pointer (`Overlay.PointerEvents`).
+- `View.Tooltip` is the short form: the core shows the node above the view, 4 points away, after half a second of hover on desktops. A `Tooltip` given there is the hint itself, as NSH's: it shows against the view when its own open state says, the core telling it of the pointer (`core.HintTooltip`), so an app opens it on touch screens too. Tooltips never take the pointer (`Overlay.PointerEvents`).
 - `Dialog` stays a `core.Modal` the platform presents; `AlertDialog` is the system's alert, or with `AlertPresentActionSheet` its action sheet: `UIAlertController`'s (a popover anchored at the bottom on iPad, with an unshown cancel action for a tap outside), a list dialog on Android, stacked buttons with the cancel one last on macOS, the web and Windows.
 
 ## Toasts
@@ -86,12 +86,12 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 
 ## Resizable panels
 
-`ResizablePanelGroup` ports `gpui-base`'s sizing (`resizeState`, tested as NSH tests it): a drag grows the panel before its handle by taking from the panels after it, nearest first, as far as their minimums allow, and shrinking below a minimum takes from the panels before.
+`ResizablePanelGroup` ports `gpui-base`'s sizing (`resizeState`, tested as NSH tests it), filling its container unless the app sizes it: a drag grows the panel before its handle by taking from the panels after it, nearest first, as far as their minimums allow, and shrinking below a minimum takes from the panels before.
 
 - Panels are a slice, not children registering through a context as NSH's do: Go lists them statically, and `Visible` hides one. `Axis` is NSH's: `Horizontal` side by side, `Vertical` stacked.
 - Each panel's flex basis, grow, shrink and limits come from the size it wants: what a drag gave it, else `Size`. Unsized panels share the rest with a basis of 0; when every panel has a size they grow in proportion. Minimums shrink by one ratio when the group is too short for them.
 - A handle is a 9-point band between two panels (`handleBandNode`) whose negative margins give its thickness back, so it takes no room yet lies over the boundary inside the group, above its neighbours: macOS gives a view its cursor and tracks the pointer only within what its parents show. Touch screens add a 10-point slop each side. `ResizeHandle` is the same band on a container's edge, its line on the edge.
-- Drags resize on a state made from the panels' laid out sizes as they start, and only their end, or a screen reader's 10-point step, reports `OnResize`.
+- Drags resize on a state made from the panels' laid out sizes as they start, and only their end, or a screen reader's 10-point step, reports `OnResize`. A press on the band, which no pan took, is a drag that did not move, as NSH's handle reports one from the pointer going down: two in a row fit a `DataTable`'s column.
 - Each handle follows the pointer's progression itself (`ResizeHandleState`): hover makes it hovered, a touch going down pressed, its native pan dragging, the pan's or touch's end idle, since a drag leaves the band within a point. `RenderHandle` renders inside the line in a `Dynamic` of that state, so a drag draws it three times, and `ResizeHandle` reports it with `OnStateChange`.
 
 ## Dock

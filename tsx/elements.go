@@ -313,7 +313,15 @@ func listFace(p *props) core.Node {
 	l.Row = func(cx *core.Scope, row core.ListRow) core.Node {
 		render := p.peek("children")
 		index := r.accessor(func() goja.Value { return r.vm.ToValue(row.Index()) })
-		it := r.accessor(func() goja.Value { return item(row.Index()) })
+		// A row the list is about to take away keeps its last item, as
+		// its bindings may read it once more as the items shrink.
+		last := goja.Undefined()
+		it := r.accessor(func() goja.Value {
+			if i := row.Index(); i >= 0 && i < len(items.Get()) {
+				last = item(i)
+			}
+			return last
+		})
 		return r.region(func() goja.Value { return r.call(render, it, index) })
 	}
 	listSlot := func(name string) core.Node {

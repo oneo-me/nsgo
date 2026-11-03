@@ -71,7 +71,11 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 	case "accessibilityLiveRegion":
 		p.LiveRegion = liveRegions[stringOf(v)]
 	case "tooltip":
-		p.Tooltip = r.region(func() goja.Value { return v })
+		if n := r.nodeOf(v); n != nil && n.kind == kindFace && n.name == "Tooltip" && n.face != nil {
+			p.Tooltip = faceTooltip{n}
+		} else {
+			p.Tooltip = r.region(func() goja.Value { return v })
+		}
 	case "focusable":
 		p.NoFocus = !v.ToBoolean()
 	case "disabled":
@@ -242,6 +246,8 @@ var liveRegions = map[string]core.LiveRegion{"none": core.LiveRegionNone, "polit
 // textProp sets a prop of a <Text>, reporting whether it has it.
 func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
 	switch name {
+	case "pointerEvents":
+		p.PointerEvents = pointerEvents[stringOf(v)]
 	case "testID":
 		p.TestID = stringOf(v)
 	case "accessibilityLabel":

@@ -150,7 +150,8 @@ func appPlugin(fsys fs.FS) api.Plugin {
 			switch {
 			case args.Kind == api.ResolveEntryPoint:
 				p = path.Clean(args.Path)
-			case strings.HasPrefix(args.Path, "./") || strings.HasPrefix(args.Path, "../"):
+			case args.Path == "." || args.Path == ".." || strings.HasPrefix(args.Path, "./") || strings.HasPrefix(args.Path, "../"):
+				// A directory ("..") imports its index.
 				p = path.Join(path.Dir(args.Importer), args.Path)
 			case !strings.HasPrefix(args.Path, "/"):
 				// A bare specifier names a module the runtime serves:
@@ -244,6 +245,9 @@ func Transform(file, src string) (string, error) {
 		Sourcefile:  file,
 		Charset:     api.CharsetUTF8,
 		LogLevel:    api.LogLevelSilent,
+		// A module's URL is its file's in the app, as NSH's compiler
+		// resolves it.
+		Define: map[string]string{"import.meta.url": strconv.Quote("file:///" + strings.TrimPrefix(file, "/"))},
 	})
 	if len(r.Errors) > 0 {
 		return "", messages(r.Errors)

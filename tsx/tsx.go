@@ -11,6 +11,7 @@ package tsx
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/dop251/goja"
 
@@ -82,12 +83,44 @@ type runtime struct {
 	// the outermost of which has the time budget.
 	limits Limits
 	depth  int
+	// origin is when performance.now() and frames' times count from.
+	origin time.Time
+}
+
+// maxCallStack is how deep JS calls nest in any app.
+const maxCallStack = 10000
+
+// continuations runs promise reactions untracked (goja's
+// AsyncContextTracker).
+type continuations struct {
+	cx     *core.Scope
+	resume []func()
+}
+
+func (c *continuations) Grab() any { return nil }
+
+func (c *continuations) Resumed(any) { c.resume = append(c.resume, c.cx.PauseTracking()) }
+
+func (c *continuations) Exited() {
+	n := len(c.resume) - 1
+	c.resume[n]()
+	c.resume = c.resume[:n]
 }
 
 func newRuntime(cx *core.Scope) *runtime {
-	r := &runtime{vm: goja.New(), cx: cx, modules: map[string]*goja.Object{}, warned: map[string]bool{}}
+	r := &runtime{vm: goja.New(), cx: cx, modules: map[string]*goja.Object{}, warned: map[string]bool{}, origin: cx.Now()}
 	r.root = &node{r: r, kind: kindRegion, elem: core.NewElement(cx, nil)}
 	r.vm.SetFieldNameMapper(goja.UncapFieldNameMapper())
+	// A runaway recursion throws a RangeError rather than overflowing the
+	// goroutine's stack, which would end the process; Sandboxed's limits
+	// set it lower.
+	r.vm.SetMaxCallStackSize(maxCallStack)
+	// Date reads the app's clock, a test's manual one included.
+	r.vm.SetTimeSource(cx.WallTime)
+	// Promise continuations run as the outermost JS call returns, which
+	// may be an effect's: what they read is not the effect's, as in NSH,
+	// whose VM runs them after the effect.
+	r.vm.SetAsyncContextTracker(&continuations{cx: cx})
 	r.vm.Set("require", r.require)
 	r.installGlobals()
 	r.installTimers()

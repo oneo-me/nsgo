@@ -457,13 +457,14 @@ func (r *DataTableRef) Blur() {
 	}
 }
 
-// MenuTarget returns what the last context menu was asked for at, row and
-// column, -1 for none; false when no mark is shown.
-func (r *DataTableRef) MenuTarget() (row, column int, ok bool) {
+// MenuTarget returns what the last context menu was asked for at: a
+// cell, a row or a column, as a selection names them; false when no mark
+// is shown.
+func (r *DataTableRef) MenuTarget() (DataTableSelection, bool) {
 	if r.t == nil || !r.t.st.active {
-		return -1, -1, false
+		return NoTableSelection, false
 	}
-	return r.t.st.activeRow, r.t.st.activeCol, true
+	return DataTableSelection{Row: r.t.st.activeRow, Column: r.t.st.activeCol}, true
 }
 
 // ClearMenuTarget drops the context menu's mark, as the app's menu closes.

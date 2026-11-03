@@ -1,6 +1,8 @@
 package tsx
 
 import (
+	"errors"
+
 	"github.com/dop251/goja"
 )
 
@@ -21,6 +23,10 @@ func (r *runtime) host() goja.Value {
 	set("call", func(call goja.FunctionCall) goja.Value {
 		p, resolve, reject := r.vm.NewPromise()
 		name, data := arg(call, 0).String(), exportJSON(arg(call, 1))
+		if !r.cx.HasHost() {
+			_ = reject(r.vm.NewGoError(errors.New("nsgo/host: this platform has no host")))
+			return r.vm.ToValue(p)
+		}
 		done := func(result any, err error) {
 			r.inJS(func() {
 				if err != nil {

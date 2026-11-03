@@ -1819,6 +1819,8 @@ func mouseDown(self objc.ID, cmd objc.SEL, event objc.ID) {
 	v.longFired.Store(false)
 	v.pressAt = v.pointer(driver.EventPressDown, event)
 	v.pressAt.Count = uint32(max(objc.Send[int](event, sel("clickCount")), 1))
+	// A long press on a text's span is the span's.
+	v.pressAt.Index = v.indexAt(objc.Send[apple.CGPoint](self, selConvertPoint, objc.Send[apple.CGPoint](event, selLocationInWindow), objc.ID(0)))
 	v.pressed(driver.EventPressDown)
 	if v.events.Has(driver.EventLongPress) {
 		e, long := v.surface.engine, v.pressAt

@@ -4,6 +4,7 @@ import (
 	"math"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -422,7 +423,8 @@ func (g ResizablePanelGroup) Render(cx *core.Scope) core.Node {
 		}
 		return out
 	}
-	return core.View{Class: g.Class, Style: g.Style, StyleFunc: style, TestID: g.TestID, Tooltip: g.Tooltip,
+	// It fills its container, as NSH's does, unless the app sizes it.
+	return core.View{Class: strings.TrimSpace("size-full " + g.Class), Style: g.Style, StyleFunc: style, TestID: g.TestID, Tooltip: g.Tooltip,
 		OnLayout: func(b core.Bounds) {
 			size := b.Size.Width
 			if !horizontal {
@@ -603,7 +605,17 @@ func handleBandNode(h handleBandSpec) core.Node {
 				}
 			}
 		},
-		Role: core.RoleAdjustable, Label: h.label, TestID: h.testID,
+		// A press, a pointer that lifts without a drag, is a drag that
+		// did not move, as NSH's handle reports one from the pointer going
+		// down: a DataTable fits a column on two of them.
+		OnPress: func(core.PressEvent) {
+			if !off() {
+				h.onPan(core.PanEvent{Phase: core.GestureBegan})
+				h.onPan(core.PanEvent{Phase: core.GestureEnded})
+			}
+		},
+		NoFocus: true,
+		Role:    core.RoleAdjustable, Label: h.label, TestID: h.testID,
 		AccessibilityActions: handleActions, OnAccessibilityAction: h.onStep, AccessibilityValue: h.value,
 		Children: parts,
 	}

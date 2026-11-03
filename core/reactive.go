@@ -269,6 +269,17 @@ func (cx *Scope) Untrack(fn func()) {
 	fn()
 }
 
+// PauseTracking stops subscribing the running computation to what is
+// read until resume is called: for code that runs within a computation
+// without belonging to it, as a promise's continuation the tsx package's
+// VM runs as a JS call returns.
+func (cx *Scope) PauseTracking() (resume func()) {
+	rt := cx.rt
+	prev := rt.observer
+	rt.observer = nil
+	return func() { rt.observer = prev }
+}
+
 // Untracked returns fn's result without subscribing the running
 // computation to what it reads.
 func Untracked[T any](cx *Scope, fn func() T) (v T) {

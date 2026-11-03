@@ -48,7 +48,8 @@ What goja lacks, and the answer:
 
 - **ES modules, async generators, `for await`, `import()`**: esbuild lowers them; imports of NSGo's modules become `require` of the modules the runtime makes.
 - **Bytecode**: none to save, so bundles carry source, compiled as they load.
-- **A heap limit**: JS allocates from Go's heap. Time (`Runtime.Interrupt`), stack (`SetMaxCallStackSize`) and NSH's quotas are enforceable; memory is not ([sandbox](#sandbox)).
+- **A heap limit**: JS allocates from Go's heap. Time (`Runtime.Interrupt`), stack (`SetMaxCallStackSize`, 10 000 calls in every app so a runaway recursion throws rather than ending the process) and NSH's quotas are enforceable; memory is not ([sandbox](#sandbox)).
+- **A turn after the effects**: goja runs promise continuations as the outermost JS call returns, which may be an effect's, so they run untracked (`AsyncContextTracker`), as QuickJS's run after the effect in NSH.
 - **`Intl` and locale methods**: goja has none (its `toLocaleString` reads a radix), so `intl.go` gives `Intl.NumberFormat`, `PluralRules` and `Collator` CLDR's data through `golang.org/x/text`, dates in English, and patches `Number`, `Date` and `String`'s locale methods.
 - **Speed**: slower than QuickJS on pure JS, so NSH's first performance rule matters more: only the app's code is JS.
 
@@ -56,10 +57,10 @@ What goja lacks, and the answer:
 
 `tsx/bundler` compiles with esbuild's Go API, so no Node is needed, and imports no runtime, so the tool that links it builds again only when `core` or the bundler changes:
 
-- Each module goes through esbuild's transform: TypeScript stripped, syntax lowered to ES2020 and what goja lacks, JSX in its classic form (`__jsx(tag, props, ...children)`, with React's whitespace rules), as CommonJS.
+- Each module goes through esbuild's transform: TypeScript stripped, syntax lowered to ES2020 and what goja lacks, JSX in its classic form (`__jsx(tag, props, ...children)`, with React's whitespace rules), as CommonJS, and `import.meta.url` its file's `file:` URL.
 - `jsx.go`, a port of `jsx.rs`, reads that with goja's parser and writes each call as NSH's compiler does: host elements made in place (`element`, `prop`, `bindProp`, `append`, `insert`), components called with getters for what changes, `If` and `Each` as `cond` and `each`. Its source map is composed with esbuild's.
 - Tags and refs resolve through the module's scopes (`scope.go`), TypeScript's `declare`d names among them, as Oxc's scopes resolve them for NSH.
-- esbuild bundles the modules from an `fs.FS` into one script with its source map inline. A bare import is a module the runtime serves (NSGo's, or one an app registered) and stays a `require`; an app imports its own files by relative paths, and JSON.
+- esbuild bundles the modules from an `fs.FS` into one script with its source map inline. A bare import is a module the runtime serves (NSGo's, or one an app registered) and stays a `require`; an app imports its own files by relative paths, a directory's (`".."`) its index, and JSON.
 - An imported image is an `ImageAsset` (`{ url, size }`): its size in points read as it compiles (an `@2x` file at half its pixels), its bytes inlined as a `data:` URL, so it ships on every target. An imported font is its family name, its bytes inlined and registered as its module runs, before the app mounts (`Scope.RegisterFont`).
 - `nsgo.yaml` beside the entry names the app's `theme` ([themes](themes.md#theme-files)) and extends Tailwind's under `tailwind` ([themes](themes.md#tailwind)); the bundle's first line hands both to the runtime (`nsgo:rt`'s `setup`). The tool reads both from the app's directory; compiled as it starts, the app embeds them too.
 - NSH's compiler tests are its tests (`jsx_test.go`), with its errors: lowercase tags, unknown tags with the import to write, text outside `<Text>`.
