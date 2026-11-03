@@ -363,9 +363,6 @@ func (v *view) place(f driver.Bounds) {
 		apple.SetTransform(v.native.Send(selLayer), v.transform)
 	}
 	apple.LayoutDecor(v.native.Send(selLayer))
-	if v.style.Cursor != driver.CursorAuto {
-		invalidateCursor(v)
-	}
 	if resized {
 		v.sizeContent()
 		if v.sc != nil {

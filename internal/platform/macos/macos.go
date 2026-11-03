@@ -70,9 +70,9 @@ type view struct {
 	native  objc.ID
 	content objc.ID // where children go: native, or a scroll view's container
 	events  driver.EventMask
-	// mouseIn says the mouse is over the view, as its tracking area last
-	// told.
-	mouseIn bool
+	// over says the view reported the mouse over it: in its tracking
+	// area, and no view above covers it there.
+	over bool
 	// backdrop is the view's backdrop blur, Liquid Glass when glass.
 	backdrop objc.ID
 	glass    bool
@@ -175,6 +175,7 @@ type surface struct {
 	batches          queue.Batches
 	views            []*view            // index is NodeID
 	movers           map[*view]struct{} // views following mouse moves
+	inside           map[*view]struct{} // views whose tracking areas hold the mouse
 	root             driver.NodeID      // the root view's, which the batches name
 	// mouse is finger 0 of the views' touches; touched is the last
 	// NSEvent reported, which AppKit passes up the views.
@@ -234,6 +235,8 @@ type surface struct {
 	dragTarget  *view           // the view files are dragged over
 	dragFiles   bool            // whether the drag carries files
 	applying    bool            // whether batches are applying
+	// repick says a batch may have changed what is under the mouse.
+	repick bool
 
 	// The gestures in progress.
 	pan             *panTrack
@@ -335,7 +338,7 @@ func loadAppKit() {
 		{Cmd: sel("mouseEntered:"), Fn: mouseEntered},
 		{Cmd: sel("mouseMoved:"), Fn: mouseMoved},
 		{Cmd: sel("mouseExited:"), Fn: mouseExited},
-		{Cmd: sel("resetCursorRects"), Fn: resetCursorRects},
+		{Cmd: sel("cursorUpdate:"), Fn: cursorUpdate},
 		// A click on an inactive window is the app's, as NSH's views take
 		// it: AppKit activates the window, then delivers the press.
 		{Cmd: sel("acceptsFirstMouse:"), Fn: func(objc.ID, objc.SEL, objc.ID) bool { return true }},
@@ -657,12 +660,20 @@ func openWindow(app engine.App, opts Options, test *testWindow) *surface {
 // host's view.
 func newSurface(opts Options, embedded bool) *surface {
 	s := &surface{epoch: time.Now(), motions: map[*view]*motion{}, movers: map[*view]struct{}{},
+		inside:     map[*view]struct{}{},
 		components: opts.Components, embedded: embedded, appearance: opts.Appearance}
 	s.defaultMenu, s.appName = defaultMenu, opts.Title
 	s.native = objc.ID(classSurface).Send(selAlloc).Send(sel("initWithFrame:"),
 		apple.Rect(0, 0, float64(opts.Width), float64(opts.Height)))
 	s.native.Send(selSetWantsLayer, true)
 	views[s.native] = &view{surface: s}
+	// Moves over the whole surface set the cursor (updateCursor), and
+	// AppKit asks for it as the mouse comes in.
+	const mouseMoved, cursorUpdate, activeInActiveApp, inVisibleRect = 0x02, 0x04, 0x40, 0x200
+	area := objc.ID(objc.GetClass("NSTrackingArea")).Send(selAlloc).Send(sel("initWithRect:options:owner:userInfo:"),
+		apple.Rect(0, 0, 0, 0), uint(mouseMoved|cursorUpdate|activeInActiveApp|inVisibleRect), s.native, objc.ID(0))
+	s.native.Send(sel("addTrackingArea:"), area)
+	area.Send(selRelease)
 	s.animator = driver.NewAnimator(func(e driver.Event) { s.engine.Dispatch(e) })
 	s.acceptFiles()
 	surfaces[s] = true
@@ -945,8 +956,10 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 	case typeFlagsChanged:
 		s.modifiersChanged(event)
 	case typeMouseMoved:
-		// The hovers the move reports follow where the content shows.
+		// The hovers the move reports and the cursor follow where the
+		// content shows.
 		s.commitPending()
+		s.pick(objc.Send[apple.CGPoint](event, selLocationInWindow), true)
 	case typeScrollWheel:
 		if len(s.armed) > 0 && s.wheelStarts(event) {
 			s.commitPending()
@@ -979,6 +992,7 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 			return 0
 		}
 	case typeLeftUp:
+		s.pick(objc.Send[apple.CGPoint](event, selLocationInWindow), true)
 		if s.releaseScrolls() || s.selectUp() {
 			return 0
 		}
@@ -1295,6 +1309,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 		switch it.Kind {
 		case driver.ItemDelete:
 			v.up = nil
+			s.repick = true
 			kept := s.vanish(v, lb)
 			s.delete(v, kept)
 			if v.kind == driver.KindModal {
@@ -1302,6 +1317,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			}
 		case driver.ItemRemove:
 			v.up = nil
+			s.repick = true
 			v.native.Send(selRemoveFromSuperview)
 		case driver.ItemInsert:
 			v.up = s.views[it.Parent]
@@ -1312,11 +1328,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 				const below = -1
 				parent.Send(selAddSubviewPositioned, v.native, below, s.views[it.Before].native)
 			}
-			if v.kind == driver.KindText {
-				invalidateTextCursor(v)
-			} else if v.style.Cursor != driver.CursorAuto {
-				invalidateCursor(v)
-			}
+			s.repick = true
 			if v.kind == driver.KindModal && !v.presented {
 				v.presented = true
 				s.presenting = append(s.presenting, v)
@@ -1325,17 +1337,14 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.appear(v, lb, it.Parent)
 		case driver.ItemFrame:
 			s.setFrame(v, it, lb)
-			if v.kind == driver.KindText {
-				invalidateTextCursor(v)
-			}
+			s.repick = true
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
 		case driver.ItemViewStyle:
-			cursor := v.style.Cursor
-			v.style = *it.ViewStyle
-			if cursor != v.style.Cursor {
-				invalidateCursor(v)
+			if v.style.Cursor != it.ViewStyle.Cursor || v.style.Hidden != it.ViewStyle.Hidden {
+				s.repick = true
 			}
+			v.style = *it.ViewStyle
 			if apple.UsesFilters(it.ViewStyle) {
 				v.native.Send(sel("setLayerUsesCoreImageFilters:"), true)
 			}
@@ -1404,9 +1413,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			p := it.ViewProps
 			v.windowDrag, v.activation, v.area, v.selectable = p.WindowDrag, p.PanActivation, p.SelectionArea, p.Selectable
 			v.disabled = p.Disabled
-			if v.kind == driver.KindText {
-				invalidateTextCursor(v)
-			}
+			s.repick = true
 			if v.selColor != p.SelectionColor {
 				v.selColor = p.SelectionColor
 				v.redraw()
@@ -1414,11 +1421,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemEvents:
 			v.setEvents(it.Events)
 			v.updateAccessibility()
-			if v.kind == driver.KindText {
-				invalidateTextCursor(v)
-			} else {
-				invalidateCursor(v)
-			}
+			s.repick = true
 		case driver.ItemAccessibilityLabel:
 			v.setLabel(it.Value)
 		case driver.ItemAccessibilityFocus:
@@ -1460,6 +1463,10 @@ func (s *surface) apply(b *driver.MountBatch) {
 	s.finish()
 	s.revisit()
 	s.refreshSelection()
+	if s.repick {
+		s.repick = false
+		s.pick(objc.Send[apple.CGPoint](s.window, sel("mouseLocationOutsideOfEventStream")), false)
+	}
 	apple.WithoutAnimation(func() {
 		if lb != nil {
 			s.stepMotions(s.clock())
@@ -1579,6 +1586,7 @@ func (s *surface) delete(v *view, kept bool) {
 	}
 	v.native.Send(selRelease)
 	delete(s.movers, v)
+	delete(s.inside, v)
 	s.views[v.id] = nil
 }
 
@@ -1884,53 +1892,110 @@ func rightMouseDown(self objc.ID, cmd objc.SEL, event objc.ID) {
 	v.report(v.pointer(driver.EventContextMenu, event))
 }
 
-// resetCursorRects gives the view its style's cursor, the I-beam over a
-// text a press selects, or none to inherit its parent's.
-func resetCursorRects(self objc.ID, cmd objc.SEL) {
-	apple.Super(self, cmd)
-	v := views[self]
-	if v == nil {
-		return
-	}
-	cursor := v.style.Cursor
-	if cursor == driver.CursorAuto && v.selects() {
-		cursor = driver.CursorText
-	}
-	if cursor != driver.CursorAuto {
-		self.Send(sel("addCursorRect:cursor:"), objc.Send[apple.CGRect](self, selBounds), nsCursor(cursor))
-	}
-	// AppKit takes the cursor from the view hitTest: returns, which for a
-	// text in a pressable view is the pressable: it shows their I-beams.
-	if v.native == self && v.kind != driver.KindText && v.pressable() {
-		v.textCursors(self)
+// cursorUpdate sets the cursor of the view under the mouse, which
+// AppKit's default, the arrow, would replace as it asks for the cursor
+// after views move or come.
+func cursorUpdate(self objc.ID, _ objc.SEL, _ objc.ID) {
+	if v := views[self]; v != nil && v.surface.window != 0 {
+		v.surface.pick(objc.Send[apple.CGPoint](v.surface.window, sel("mouseLocationOutsideOfEventStream")), false)
 	}
 }
 
-// textCursors adds the I-beams of the selecting texts in n to pressable
-// v's cursor rects, down to the views hitTest: returns themselves.
-func (v *view) textCursors(n objc.ID) {
-	for _, c := range apple.Subviews(n) {
-		w := views[c]
-		if w == nil || w.native != c {
-			v.textCursors(c)
+// pick follows what is under the mouse at loc, a point of the window:
+// the views hovered and the cursor. AppKit's tracking areas and cursor
+// rects would find a view through the overlays above it; the hit test
+// does not.
+func (s *surface) pick(loc apple.CGPoint, always bool) {
+	up := s.native.Send(selSuperview)
+	if s.window == 0 || up == 0 {
+		return
+	}
+	hit := s.hitAt(loc)
+	for v := range s.inside {
+		switch over := covers(v, hit); {
+		case over && !v.over:
+			v.dispatch(driver.EventHoverIn)
+		case !over && v.over:
+			v.dispatch(driver.EventHoverOut)
+		default:
 			continue
 		}
-		switch {
-		case w.pressable() || w.kind == driver.KindScroll || w.events.Has(driver.EventPan):
-		case w.kind == driver.KindText:
-			if w.style.Cursor == driver.CursorAuto && w.selects() {
-				r := objc.Send[apple.CGRect](v.native, sel("convertRect:fromView:"), objc.Send[apple.CGRect](c, selBounds), c)
-				v.native.Send(sel("addCursorRect:cursor:"), r, nsCursor(driver.CursorText))
-			}
-		default:
-			v.textCursors(c)
+		v.over = !v.over
+	}
+	s.updateCursor(hit, up, always)
+}
+
+// hitAt returns the deepest view at loc, a point of the window, that
+// takes the pointer.
+func (s *surface) hitAt(loc apple.CGPoint) objc.ID {
+	up := s.native.Send(selSuperview)
+	if up == 0 {
+		return 0
+	}
+	rawHit = true
+	hit := s.native.Send(sel("hitTest:"), objc.Send[apple.CGPoint](up, selConvertPoint, loc, objc.ID(0)))
+	rawHit = false
+	return hit
+}
+
+// covers reports whether the mouse is over v, hit being the view under it.
+func covers(v *view, hit objc.ID) bool {
+	return hit != 0 && objc.Send[bool](hit, sel("isDescendantOf:"), v.native)
+}
+
+// updateCursor shows the cursor over hit, as Windows answers
+// WM_SETCURSOR. A move sets it always, as the pointer may come from
+// another app or the window's edge; otherwise it is set only when the app
+// shows another, as -[NSCursor set] costs milliseconds with a customized
+// pointer, and not while a button is down: a drag keeps the cursor it
+// began with.
+func (s *surface) updateCursor(hit, up objc.ID, always bool) {
+	if !always {
+		app := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+		if !objc.Send[bool](app, sel("isActive")) ||
+			objc.Send[uint](objc.ID(objc.GetClass("NSEvent")), sel("pressedMouseButtons")) != 0 {
+			return
 		}
 	}
+	cursor, own := cursorAt(hit, up)
+	if !own {
+		return
+	}
+	c := nsCursor(cursor)
+	if always || objc.ID(objc.GetClass("NSCursor")).Send(sel("currentCursor")) != c {
+		c.Send(sel("set"))
+	}
+}
+
+// cursorAt returns the cursor over hit, a view in up: the nearest view's
+// from hit up that names one, or the I-beam over a text a press selects.
+// own is false off the surface and over the views that show their own:
+// inputs' editors, web views, players and native components.
+func cursorAt(hit, up objc.ID) (cursor driver.Cursor, own bool) {
+	if hit == 0 {
+		return driver.CursorAuto, false
+	}
+	for n := hit; n != 0 && n != up; n = n.Send(selSuperview) {
+		v := views[n]
+		switch {
+		case v == nil:
+		case v.native != n:
+			if v.kind == driver.KindInput || v.kind == driver.KindWeb || v.kind == driver.KindVideo {
+				return driver.CursorAuto, false
+			}
+		case v.kind == driver.KindNative && n != hit:
+			return driver.CursorAuto, false
+		case v.style.Cursor != driver.CursorAuto:
+			return v.style.Cursor, true
+		case v.selects():
+			return driver.CursorText, true
+		}
+	}
+	return driver.CursorAuto, true
 }
 
 // selects reports whether a press on text v selects, as areaAt finds:
 // it is in an area, or selectable on its own, with no gesture between.
-// Its ancestors are in place by the time AppKit asks for cursor rects.
 func (v *view) selects() bool {
 	if v.kind != driver.KindText || v.selectable == driver.SelectableOff {
 		return false
@@ -1944,25 +2009,6 @@ func (v *view) selects() bool {
 		}
 	}
 	return v.selectable == driver.SelectableOn
-}
-
-// invalidateCursor makes the window ask for the view's cursor rects again.
-func invalidateCursor(v *view) {
-	if w := v.native.Send(selWindow); w != 0 {
-		w.Send(sel("invalidateCursorRectsForView:"), v.native)
-	}
-}
-
-// invalidateTextCursor makes the window ask again for a text's cursor
-// rects and those of the pressable view showing its I-beam.
-func invalidateTextCursor(v *view) {
-	invalidateCursor(v)
-	for n := v.up; n != nil; n = n.up {
-		if n.pressable() {
-			invalidateCursor(n)
-			return
-		}
-	}
 }
 
 // nsCursor is the AppKit cursor of c. AppKit has no public wait, progress,
@@ -2007,15 +2053,25 @@ func invisibleCursor() objc.ID {
 	return invisibleNS
 }
 
-func mouseEntered(self objc.ID, _ objc.SEL, _ objc.ID) {
-	if v := views[self]; v != nil {
-		defer v.surface.measuring(false)()
-		if v.native == self {
-			v.mouseIn = true
-		}
-		if v.sc != nil && v.native == self {
-			v.hovered()
-		}
+// mouseEntered reports the mouse coming into v's tracking area as a
+// hover, unless a view above covers v there; a test's event, nil, is
+// under the views it enters.
+func mouseEntered(self objc.ID, _ objc.SEL, event objc.ID) {
+	v := views[self]
+	if v == nil {
+		return
+	}
+	defer v.surface.measuring(false)()
+	if v.native != self {
+		v.dispatch(driver.EventHoverIn)
+		return
+	}
+	v.surface.inside[v] = struct{}{}
+	if v.sc != nil {
+		v.hovered()
+	}
+	if !v.over && (event == 0 || covers(v, v.surface.hitAt(objc.Send[apple.CGPoint](event, selLocationInWindow)))) {
+		v.over = true
 		v.dispatch(driver.EventHoverIn)
 	}
 }
@@ -2028,7 +2084,7 @@ func (s *surface) modifiersChanged(event objc.ID) {
 	mods := apple.Modifiers(objc.Send[uint](event, sel("modifierFlags")))
 	loc := objc.Send[apple.CGPoint](s.window, sel("mouseLocationOutsideOfEventStream"))
 	for v := range s.movers {
-		if !v.mouseIn || !v.events.Has(driver.EventHoverMove) {
+		if !v.over || !v.events.Has(driver.EventHoverMove) {
 			continue
 		}
 		p := objc.Send[apple.CGPoint](v.native, selConvertPoint, loc, objc.ID(0))
@@ -2038,8 +2094,8 @@ func (s *surface) modifiersChanged(event objc.ID) {
 }
 
 // mouseMoved reports a move with no button down to the view whose
-// tracking area it crossed. It goes no further up the responder chain,
-// since the views around follow their own areas.
+// tracking area it crossed, while it is over the view. It goes no further
+// up the responder chain, since the views around follow their own areas.
 func mouseMoved(self objc.ID, _ objc.SEL, event objc.ID) {
 	v := views[self]
 	if v == nil || v.native != self {
@@ -2048,6 +2104,9 @@ func mouseMoved(self objc.ID, _ objc.SEL, event objc.ID) {
 	defer v.surface.measuring(false)()
 	if v.sc != nil {
 		v.hovered()
+	}
+	if !v.over {
+		return
 	}
 	if v.events.Has(driver.EventHoverMove) {
 		v.report(v.pointer(driver.EventHoverMove, event))
@@ -2094,11 +2153,18 @@ func (s *surface) dragMoved(event objc.ID) {
 }
 
 func mouseExited(self objc.ID, _ objc.SEL, _ objc.ID) {
-	if v := views[self]; v != nil {
-		defer v.surface.measuring(false)()
-		if v.native == self {
-			v.mouseIn = false
-		}
+	v := views[self]
+	if v == nil {
+		return
+	}
+	defer v.surface.measuring(false)()
+	if v.native != self {
+		v.dispatch(driver.EventHoverOut)
+		return
+	}
+	delete(v.surface.inside, v)
+	if v.over {
+		v.over = false
 		v.dispatch(driver.EventHoverOut)
 	}
 }
