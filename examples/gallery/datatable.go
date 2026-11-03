@@ -397,6 +397,9 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	}}
 }
 
+// tableDemo is base's Table.
+func tableDemo(cx *core.Scope) core.Node { return demoPage(cx, pageProps{}, tableCard) }
+
 // tableCard is base's Table around a few rows the app writes out, as NSH's
 // website shows it: the parts give screen readers a table, the styles its
 // look.

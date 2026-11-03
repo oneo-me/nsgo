@@ -35,14 +35,23 @@ func placementName(p core.Placement) string {
 	return [...]string{"default", "bottom", "top", "left", "right"}[p]
 }
 
-// overlaysDemo is core.Overlay, which shows its children on top of the
-// screen whatever clips them, and base's popups built on it: a popover, a
-// tooltip (and the Tooltip every view has) and a sheet. Menus have a demo
-// of their own.
-func overlaysDemo(cx *core.Scope) core.Node {
-	last := core.NewSignal(cx, "—")
+// eventsDemo is a demo of cards that report what happened, above the last
+// event they reported.
+func eventsDemo(cards ...func(last *core.Signal[string]) cardFunc) func(cx *core.Scope) core.Node {
+	return func(cx *core.Scope) core.Node {
+		last := core.NewSignal(cx, "—")
+		var fns []cardFunc
+		for _, card := range cards {
+			fns = append(fns, card(last))
+		}
+		return demoPage(cx, pageProps{}, append(fns, lastEventCard(last))...)
+	}
+}
 
-	primitive := func(cx *core.Scope) core.Node {
+// overlayCard is core.Overlay: its children on top of the screen whatever
+// clips them, anchored to an element; base's popups are built on it.
+func overlayCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
@@ -69,8 +78,11 @@ func overlaysDemo(cx *core.Scope) core.Node {
 			ui.Caption{Label: tr.OverlayScrollThePageItFollows()},
 		}}
 	}
+}
 
-	popovers := func(cx *core.Scope) core.Node {
+// popoverCard is base.Popover, a panel anchored to its trigger.
+func popoverCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		return ui.Card{Icon: ui.IconOverlays, Title: tr.OverlayPopover(), Description: tr.OverlayAnchoredToItsTriggerOn(), Children: []core.Node{
@@ -89,8 +101,12 @@ func overlaysDemo(cx *core.Scope) core.Node {
 				}}}},
 		}}
 	}
+}
 
-	tooltips := func(cx *core.Scope) core.Node {
+// tooltipCard is a view's Tooltip, the platform's bubble, and
+// base.Tooltip, the app's, which reports.
+func tooltipCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		hoveredOpen, pinned := core.NewSignal(cx, false), core.NewSignal(cx, false)
@@ -125,8 +141,11 @@ func overlaysDemo(cx *core.Scope) core.Node {
 			}},
 		}}
 	}
+}
 
-	sheets := func(cx *core.Scope) core.Node {
+// sheetCard is base.Sheet, a panel at the bottom over a backdrop.
+func sheetCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
@@ -151,8 +170,12 @@ func overlaysDemo(cx *core.Scope) core.Node {
 				}}}},
 		}}
 	}
+}
 
-	toasts := func(cx *core.Scope) core.Node {
+// toastCard is the gallery's toasts, on base's ToastManager, ToastStack
+// and Toast.
+func toastCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		count := 0
@@ -177,8 +200,6 @@ func overlaysDemo(cx *core.Scope) core.Node {
 			ui.Text(tr.OverlaySwipeOneAwayThePointer(), 13, ui.Regular, colors.Muted),
 		}}
 	}
-
-	return demoPage(cx, pageProps{}, primitive, popovers, tooltips, sheets, toasts, lastEventCard(last))
 }
 
 // lastEventCard shows the last thing a demo reported.

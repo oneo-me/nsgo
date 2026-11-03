@@ -7,9 +7,10 @@
 //
 // It translates NSH's examples/gallery demo by demo, and departs from it
 // where NSGo differs: icons are Lucide's (core.Icon) rather than glyphs
-// drawn in canvases; NSH's Tailwind and standard-module demos have no NSGo counterpart, while
-// Layout, Shader and Accessibility show what NSGo has beyond NSH's
-// gallery.
+// drawn in canvases; NSH's Tailwind and standard-module demos have no
+// NSGo counterpart, while Layout, Table and Accessibility show what NSGo
+// has beyond NSH's gallery. Its index is laid out as NSH's after the 0.3.0
+// release, a demo per element, listing the components NSGo has.
 package main
 
 import (
@@ -46,52 +47,69 @@ type group struct {
 	demos []demo
 }
 
-// groups are set in init because demos list them.
+// groups are the demos: the apps built on NSGo, core's primitives from the
+// simplest, base's components by name, styling, motion and the platform's
+// services, as NSH's gallery lists them after its 0.3.0 release. They are
+// set in init because demos list them.
 var groups []group
 
 func init() {
+	primitives := []demo{
+		{"Text", locales.Messages.DemoText, locales.Messages.DemoTextDetail, ui.IconText, textDemo},
+		{"Image", locales.Messages.DemoImage, locales.Messages.DemoImageDetail, ui.IconImage, imagesDemo},
+		{"Scroll", locales.Messages.DemoScroll, locales.Messages.DemoScrollDetail, ui.IconScroll, scrollingDemo},
+		{"List", locales.Messages.DemoList, locales.Messages.DemoListDetail, ui.IconLists, listsDemo},
+		{"Canvas", locales.Messages.DemoCanvas, locales.Messages.DemoCanvasDetail, ui.IconCanvas, canvasDemo},
+		{"Shader", locales.Messages.DemoShader, locales.Messages.DemoShaderDetail, ui.IconShader, shaderDemo},
+		{"WebView and Video", locales.Messages.DemoWebViewAndVideo, locales.Messages.DemoWebViewAndVideoDetail, ui.IconMedia, mediaDemo},
+		{"Overlay", locales.Messages.DemoOverlay, locales.Messages.DemoOverlayDetail, ui.IconOverlays, eventsDemo(overlayCard)},
+	}
+	components := []demo{
+		{"Checkbox", locales.Messages.DemoCheckbox, locales.Messages.DemoCheckboxDetail, ui.IconCheckbox, controlsDemo(controls.filter)},
+		{"Collapsible", locales.Messages.DemoCollapsible, locales.Messages.DemoCollapsibleDetail, ui.IconCollapsible, controlsDemo(controls.disclosure)},
+		{"DataTable", locales.Messages.DemoDataTable, locales.Messages.DemoDataTableDetail, ui.IconTable, dataTableDemo},
+		{"DiffView", locales.Messages.DemoDiffView, locales.Messages.DemoDiffViewDetail, ui.IconDiff, diffDemo},
+		{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, ui.IconDock, dockDemo},
+		{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, ui.IconCode, editorDemo},
+		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, ui.IconForm, formDemo},
+		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, ui.IconMenu, menusDemo},
+		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, ui.IconNav, navigationDemo},
+		{"Plot", locales.Messages.DemoPlot, locales.Messages.DemoPlotDetail, ui.IconChart, chartsDemo},
+		{"Popover", locales.Messages.DemoPopover, locales.Messages.DemoPopoverDetail, ui.IconPopover, eventsDemo(popoverCard)},
+		{"Progress", locales.Messages.DemoProgress, locales.Messages.DemoProgressDetail, ui.IconProgress, controlsDemo(controls.transfers)},
+		{"Radio", locales.Messages.DemoRadio, locales.Messages.DemoRadioDetail, ui.IconRadio, controlsDemo(controls.plansCard)},
+		{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, ui.IconSidebar, resizableDemo},
+		{"Sheet", locales.Messages.DemoSheet, locales.Messages.DemoSheetDetail, ui.IconSheet, eventsDemo(sheetCard)},
+		{"Switch", locales.Messages.DemoSwitch, locales.Messages.DemoSwitchDetail, ui.IconSwitch, controlsDemo(controls.settings)},
+		{"Table", locales.Messages.DemoTable, locales.Messages.DemoTableDetail, ui.IconTable, tableDemo},
+		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, ui.IconTabs, controlsDemo(controls.sections)},
+		{"TextView", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, ui.IconFileText, textViewDemo},
+		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, ui.IconBell, eventsDemo(toastCard)},
+		{"Tooltip", locales.Messages.DemoTooltip, locales.Messages.DemoTooltipDetail, ui.IconTooltip, eventsDemo(tooltipCard)},
+	}
 	groups = []group{
 		{"Apps", locales.Messages.GroupApps, []demo{
 			{"Stocks", locales.Messages.DemoStocks, locales.Messages.DemoStocksDetail, ui.IconStocks, stocksDemo},
 			{"AI Chat", locales.Messages.DemoAIChat, locales.Messages.DemoAIChatDetail, ui.IconChat, chatDemo},
 			{"Photos", locales.Messages.DemoPhotos, locales.Messages.DemoPhotosDetail, ui.IconPhotos, photosDemo},
 		}},
-		{"Layout and lists", locales.Messages.GroupLayoutAndLists, []demo{
-			{"Lists", locales.Messages.DemoLists, locales.Messages.DemoListsDetail, ui.IconLists, listsDemo},
-			{"Scrolling", locales.Messages.DemoScrolling, locales.Messages.DemoScrollingDetail, ui.IconScroll, scrollingDemo},
-			{"Collapsing header", locales.Messages.DemoCollapsingHeader, locales.Messages.DemoCollapsingHeaderDetail, ui.IconScroll, collapsingDemo},
+		{"Primitives", locales.Messages.GroupPrimitives, primitives},
+		{"Components", locales.Messages.GroupComponents, components},
+		{"Styling", locales.Messages.GroupStyling, []demo{
+			{"Styles", locales.Messages.DemoStyles, locales.Messages.DemoStylesDetail, ui.IconStyles, stylesDemo},
 			{"Layout", locales.Messages.DemoLayout, locales.Messages.DemoLayoutDetail, ui.IconLayout, layoutDemo},
-			{"Navigation", locales.Messages.DemoNavigation, locales.Messages.DemoNavigationDetail, ui.IconNav, navigationDemo},
-			{"Form", locales.Messages.DemoForm, locales.Messages.DemoFormDetail, ui.IconForm, formDemo},
-			{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, ui.IconSidebar, resizableDemo},
-			{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, ui.IconDock, dockDemo},
+			{"Patterns", locales.Messages.DemoPatterns, locales.Messages.DemoPatternsDetail, ui.IconComponents, componentsDemo},
 		}},
-		{"Touch and motion", locales.Messages.GroupTouchAndMotion, []demo{
+		{"Motion", locales.Messages.GroupMotion, []demo{
+			{"Animations", locales.Messages.DemoAnimations, locales.Messages.DemoAnimationsDetail, ui.IconAnimation, animationsDemo},
 			{"Gestures", locales.Messages.DemoGestures, locales.Messages.DemoGesturesDetail, ui.IconGestures, gesturesDemo},
 			{"Physics", locales.Messages.DemoPhysics, locales.Messages.DemoPhysicsDetail, ui.IconPhysics, physicsDemo},
-			{"Animations", locales.Messages.DemoAnimations, locales.Messages.DemoAnimationsDetail, ui.IconAnimation, animationsDemo},
-		}},
-		{"Drawing and type", locales.Messages.GroupDrawingAndType, []demo{
-			{"Canvas", locales.Messages.DemoCanvas, locales.Messages.DemoCanvasDetail, ui.IconCanvas, canvasDemo},
-			{"Charts", locales.Messages.DemoCharts, locales.Messages.DemoChartsDetail, ui.IconStocks, chartsDemo},
-			{"Shader", locales.Messages.DemoShader, locales.Messages.DemoShaderDetail, ui.IconShader, shaderDemo},
-			{"Styles", locales.Messages.DemoStyles, locales.Messages.DemoStylesDetail, ui.IconStyles, stylesDemo},
-			{"Text", locales.Messages.DemoText, locales.Messages.DemoTextDetail, ui.IconText, textDemo},
-			{"Text View", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, ui.IconText, textViewDemo},
-			{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, ui.IconText, editorDemo},
-			{"DataTable", locales.Messages.DemoDataTable, locales.Messages.DemoDataTableDetail, ui.IconLists, dataTableDemo},
-			{"Diff", locales.Messages.DemoDiff, locales.Messages.DemoDiffDetail, ui.IconText, diffDemo},
-			{"Images", locales.Messages.DemoImages, locales.Messages.DemoImagesDetail, ui.IconImage, imagesDemo},
+			{"Collapsing header", locales.Messages.DemoCollapsingHeader, locales.Messages.DemoCollapsingHeaderDetail, ui.IconHeader, collapsingDemo},
 		}},
 		{"Platform", locales.Messages.GroupPlatform, []demo{
-			{"Components", locales.Messages.DemoComponents, locales.Messages.DemoComponentsDetail, ui.IconComponents, componentsDemo},
-			{"Overlays", locales.Messages.DemoOverlays, locales.Messages.DemoOverlaysDetail, ui.IconOverlays, overlaysDemo},
-			{"Menus", locales.Messages.DemoMenus, locales.Messages.DemoMenusDetail, ui.IconMenu, menusDemo},
-			{"Controls", locales.Messages.DemoControls, locales.Messages.DemoControlsDetail, ui.IconControls, controlsDemo},
-			{"Web and video", locales.Messages.DemoWebAndVideo, locales.Messages.DemoWebAndVideoDetail, ui.IconMedia, mediaDemo},
 			{"System", locales.Messages.DemoSystem, locales.Messages.DemoSystemDetail, ui.IconSystem, systemDemo},
-			{"Accessibility", locales.Messages.DemoAccessibility, locales.Messages.DemoAccessibilityDetail, ui.IconAccess, accessibilityDemo},
 			{"Storage", locales.Messages.DemoStorage, locales.Messages.DemoStorageDetail, ui.IconStorage, storageDemo},
+			{"Accessibility", locales.Messages.DemoAccessibility, locales.Messages.DemoAccessibilityDetail, ui.IconAccess, accessibilityDemo},
 		}},
 	}
 }

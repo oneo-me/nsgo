@@ -91,17 +91,17 @@ func TestEveryDemoBuilds(t *testing.T) {
 // TestLayoutsKeepTheDemo moves between the layouts with a demo open.
 func TestLayoutsKeepTheDemo(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Controls")
+	open(app, "Switch")
 	app.Resize(400, 800)
-	app.Find("id:screen-Controls")
+	app.Find("id:screen-Switch")
 	app.Back()
-	app.Press("id:nav-Form")
+	app.Press("id:nav-Input")
 	app.Resize(1200, 800)
-	if got := app.Find("id:title").Text; got != "Form" {
-		t.Fatalf("title = %q after widening, want Form", got)
+	if got := app.Find("id:title").Text; got != "Input" {
+		t.Fatalf("title = %q after widening, want Input", got)
 	}
-	if got, _ := app.Storage().GetItem(lastDemo); got != "Form" {
-		t.Fatalf("remembered %q, want Form", got)
+	if got, _ := app.Storage().GetItem(lastDemo); got != "Input" {
+		t.Fatalf("remembered %q, want Input", got)
 	}
 }
 
@@ -109,7 +109,7 @@ func TestLayoutsKeepTheDemo(t *testing.T) {
 // they show, when the pane narrows to one column.
 func TestResizeKeepsTheCards(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Controls")
+	open(app, "Switch")
 	app.Press("role:switch Notifications")
 	app.Resize(900, 800)
 	if !app.Find("role:switch Badges").Props.Disabled {
@@ -118,8 +118,8 @@ func TestResizeKeepsTheCards(t *testing.T) {
 }
 
 func TestPhoneRestoresDemo(t *testing.T) {
-	app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Storage(map[string]string{lastDemo: "Controls"}))
-	app.Find("id:screen-Controls")
+	app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Storage(map[string]string{lastDemo: "Switch"}))
+	app.Find("id:screen-Switch")
 	app.Back()
 	app.Find("id:home")
 	if _, ok := app.Storage().GetItem(lastDemo); ok {
@@ -141,31 +141,37 @@ func TestSidebarToggles(t *testing.T) {
 
 func TestApplicationMenu(t *testing.T) {
 	app := startDesktop(t)
-	app.ChooseMenu("View", "Menus")
-	app.Find("id:demo-Menus")
+	app.ChooseMenu("View", "Menu")
+	app.Find("id:demo-Menu")
 	if app.Menu[0].Items[0].Role != desktop.MenuAbout {
 		t.Fatalf("app menu starts with %+v", app.Menu[0].Items[0])
 	}
 }
 
+// TestControls uses each of base's controls on its own demo.
 func TestControls(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Controls")
+	open(app, "Switch")
 	app.Press("role:switch Notifications")
 	app.Find("text:Notifications: off")
 	if !app.Find("role:switch Badges").Props.Disabled {
 		t.Fatal("Badges stays enabled without notifications")
 	}
+	open(app, "Checkbox")
 	app.Press("role:checkbox Select all")
 	app.Find("text:Showing 1,650 items")
+	open(app, "Radio")
 	app.Press("role:radio Team")
 	app.Press("role:button Continue with Team")
 	app.Find("text:Continue: Team, $12 / mo")
+	open(app, "Tabs")
 	app.Press("role:tab Members")
 	app.Find("text:Grace Hopper")
-	app.Press("id:demo-Controls >> role:button Storage")
+	open(app, "Collapsible")
+	app.Press("id:demo-Collapsible >> role:button Storage")
 	app.Find("text:120 GB")
 	// Send becomes Pause as the transfer starts, which must not end it.
+	open(app, "Progress")
 	app.Press("role:button Send")
 	app.Advance(time.Second)
 	if now := app.Find("role:progressbar Upload").Props.Value.Now; now < 30 {
@@ -177,7 +183,7 @@ func TestControls(t *testing.T) {
 
 func TestForm(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Form")
+	open(app, "Input")
 	app.Press("role:button Submit")
 	app.Find("text:3 fields need attention")
 	app.Find("text:Enter your name")
@@ -210,7 +216,7 @@ func TestStorage(t *testing.T) {
 
 func TestMenus(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Menus")
+	open(app, "Menu")
 	// On the chip's text, as a pointer presses it.
 	app.Press("text:File")
 	app.Press("text:New document")
@@ -229,7 +235,7 @@ func TestMenus(t *testing.T) {
 // context menu and chooses an item of its submenu there.
 func TestNativePopupMenu(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Menus")
+	open(app, "Menu")
 	app.RightClick("id:popup-area")
 	app.ChoosePopup("Share", "Mail")
 	app.Find("text:Chose Mail")
@@ -293,7 +299,7 @@ func TestChatRetriesAFailure(t *testing.T) {
 
 func TestListsAndScrolling(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Lists")
+	open(app, "List")
 	app.Find("id:grid")
 	app.Press("role:tab More")
 	app.Scroll("id:more", 200)
@@ -306,7 +312,7 @@ func TestListsAndScrolling(t *testing.T) {
 	app.Press("role:tab Page")
 	app.Scroll("id:page", 400)
 
-	open(app, "Scrolling")
+	open(app, "Scroll")
 	app.Press("role:button Add 3 posts on top")
 	app.Find("text:New 3")
 	app.Find("text:33 posts")
@@ -327,7 +333,7 @@ func TestGesturesAndFileDrop(t *testing.T) {
 
 func TestMedia(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Web and video")
+	open(app, "WebView and Video")
 	app.PostMessage("id:bridge", "hello from the page")
 	app.Find("text:hello from the page")
 	app.Play("id:player", core.VideoInfo{Duration: 5 * time.Second, Size: core.Size{Width: 640, Height: 360}})
@@ -417,7 +423,7 @@ func TestAccessibility(t *testing.T) {
 
 func TestToasts(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Overlays")
+	open(app, "Toast")
 	app.Press("role:button Delete the draft")
 	app.Find("id:draft >> text:Draft deleted")
 	app.Press("role:button Undo")
@@ -449,7 +455,7 @@ func TestCollapsingHeader(t *testing.T) {
 // sparklines, a plot per row of a list.
 func TestCharts(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Charts")
+	open(app, "Plot")
 	app.Find("text:Sun, the last day")
 	plot := "role:image Visitors per day, from 1,820 on Monday to 1,180 on Sunday"
 	app.Find(plot)
@@ -488,10 +494,10 @@ func TestDataTable(t *testing.T) {
 	app.Find("text:Cell row 500000, Name")
 }
 
-// TestTable finds the invoices' table and its roles on Controls.
+// TestTable finds the invoices' table and its roles.
 func TestTable(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Controls")
+	open(app, "Table")
 	app.Find("role:table Recent invoices")
 	if n := len(app.Query("role:columnheader")); n < 4 {
 		t.Fatalf("%d column headers, want the invoices' 4 and the total", n)
@@ -541,7 +547,7 @@ func TestEditor(t *testing.T) {
 // TestDiff counts the changes, reverts one and shows the patch.
 func TestDiff(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Diff")
+	open(app, "DiffView")
 	app.Find("text:var ErrNotFound")
 	app.Find("text:· 7 changes")
 	app.Press("role:button Revert >> nth=0")
@@ -588,7 +594,7 @@ func TestPhoneAppearanceRestylesInPlace(t *testing.T) {
 	phone := core.Environment{OS: core.OSIOS, Idiom: core.IdiomPhone, Locale: "en-US"}
 	dark := phone
 	dark.Dark = true
-	for _, demo := range []string{"", "Controls"} {
+	for _, demo := range []string{"", "Switch"} {
 		start := func(env core.Environment) (*nsgotest.App, string) {
 			app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Environment(env))
 			if demo == "" {
@@ -786,17 +792,17 @@ func TestLanguageRemembered(t *testing.T) {
 // sidebar, a demo and base's own words.
 func TestGalleryLanguages(t *testing.T) {
 	for _, c := range []struct{ locale, nav, title, sort string }{
-		{"zh-CN", "控件", "立即生效的设置", "按ID排序"},
-		{"zh-TW", "控制元件", "立即生效的設定", "依ID排序"},
-		{"ar-EG", "عناصر التحكم", "إعدادات تسري فورًا", "الفرز حسب المعرّف"},
+		{"zh-CN", "开关", "立即生效的设置", "按ID排序"},
+		{"zh-TW", "開關", "立即生效的設定", "依ID排序"},
+		{"ar-EG", "مفتاح التبديل", "إعدادات تسري فورًا", "الفرز حسب المعرّف"},
 	} {
 		t.Run(c.locale, func(t *testing.T) {
 			env := desktopEnv
 			env.Locale = c.locale
 			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
-			app.Find("id:nav-Controls >> text:" + c.nav)
-			open(app, "Controls")
-			app.Find("text:" + c.title)
+			app.Find("id:nav-Switch >> text:" + c.nav)
+			open(app, "Switch")
+			app.Find("id:demo-Switch >> text:" + c.title)
 			open(app, "DataTable")
 			app.Find("label:" + c.sort)
 		})
@@ -808,7 +814,7 @@ func TestGalleryLanguages(t *testing.T) {
 func TestSidebarResizes(t *testing.T) {
 	app := startDesktop(t)
 	// Stocks keeps drawing, which spaces presses past a double click.
-	open(app, "Form")
+	open(app, "Input")
 	width := func() driver.Points { return app.Find("id:sidebar-slot").Frame.Size.Width }
 	// The band is 3 points across, its line on the sidebar's last point.
 	band := app.Find("id:sidebar-resize")
@@ -823,5 +829,32 @@ func TestSidebarResizes(t *testing.T) {
 	app.Press("id:sidebar-resize >> role:adjustable")
 	if w := width(); w != sidebarWidth {
 		t.Fatalf("the sidebar is %v wide after a double click, want %v", w, sidebarWidth)
+	}
+}
+
+// TestSidebarKeys tabs to the sidebar, one stop, whose arrows move the
+// selection through the demos.
+func TestSidebarKeys(t *testing.T) {
+	app := startDesktop(t)
+	for range 4 {
+		if app.Find("id:sidebar").Children[0].Focused {
+			break
+		}
+		app.Key("tab")
+	}
+	if !app.Find("id:sidebar").Children[0].Focused {
+		t.Fatal("tab does not reach the sidebar")
+	}
+	app.Key("down")
+	if got := app.Find("id:title").Text; got != "AI Chat" {
+		t.Fatalf("down from Stocks selected %q, want AI Chat", got)
+	}
+	app.Key("end")
+	if got, want := app.Find("id:title").Text, allDemos()[len(allDemos())-1].name; got != want {
+		t.Fatalf("end selected %q, want %q", got, want)
+	}
+	app.Key("home")
+	if got := app.Find("id:title").Text; got != "Stocks" {
+		t.Fatalf("home selected %q, want Stocks", got)
 	}
 }
