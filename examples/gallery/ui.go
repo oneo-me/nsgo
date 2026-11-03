@@ -19,7 +19,7 @@ import (
 // The layouts' sizes.
 const (
 	// sidebarWidth is the width the desktop layout's sidebar starts at.
-	sidebarWidth core.Points = 240
+	sidebarWidth core.Points = 220
 	// desktopWidth is the narrowest window that takes the desktop layout
 	// on desktops; tabletWidth on other devices (an iPad in landscape).
 	desktopWidth core.Points = 700

@@ -33,11 +33,11 @@ const (
 	PanelMaxSize core.Points = math.MaxFloat32
 )
 
-// A handle's band is 9 points across, its line in the middle, and takes
+// A handle's band is 3 points across, its line in the middle, and takes
 // 10 points more either side on touch screens; screen readers move it 10
 // points a step.
 const (
-	handleBand  core.Points = 9
+	handleBand  core.Points = 3
 	handleSlop  core.Points = 10
 	handleStep  core.Points = 10
 	handleGroup             = "resize-handle"
@@ -462,8 +462,10 @@ type handleBandSpec struct {
 	disabled    func() bool
 	onPan       func(core.PanEvent)
 	onStep      func(string)
-	value       func() core.AccessibilityValue
-	touch       bool
+	// onDoublePress, when set, hears a second press in a row.
+	onDoublePress func()
+	value         func() core.AccessibilityValue
+	touch         bool
 	// state follows the pointer's progression with the band; content is
 	// the app's, inside the line.
 	state   *core.Signal[ResizeHandleState]
@@ -483,7 +485,7 @@ const (
 	HandleTrailing
 )
 
-// handleBandNode is a handle: a band 9 points across with the resize
+// handleBandNode is a handle: a band 3 points across with the resize
 // cursor, its line in the middle, or on the edge of the container it
 // hugs from inside. Between two panels it takes no room: negative
 // margins give back its thickness, so the band lies over the boundary
@@ -608,10 +610,14 @@ func handleBandNode(h handleBandSpec) core.Node {
 		// A press, a pointer that lifts without a drag, is a drag that
 		// did not move, as NSH's handle reports one from the pointer going
 		// down: a DataTable fits a column on two of them.
-		OnPress: func(core.PressEvent) {
-			if !off() {
-				h.onPan(core.PanEvent{Phase: core.GestureBegan})
-				h.onPan(core.PanEvent{Phase: core.GestureEnded})
+		OnPress: func(e core.PressEvent) {
+			if off() {
+				return
+			}
+			h.onPan(core.PanEvent{Phase: core.GestureBegan})
+			h.onPan(core.PanEvent{Phase: core.GestureEnded})
+			if e.Clicks == 2 && h.onDoublePress != nil {
+				h.onDoublePress()
 			}
 		},
 		NoFocus: true,
@@ -627,17 +633,19 @@ var handleActions = []core.AccessibilityAction{{Name: core.ActionIncrement}, {Na
 // ResizeHandle is a handle's band on its own, on a container's edge
 // (Edge) or straddling a boundary: it reports a drag, and the app
 // resizes what it edges. Screen readers' steps report as a drag of 10
-// points.
+// points. OnDoublePress hears a double click or tap, which apps take to
+// restore what it edges to its default size.
 type ResizeHandle struct {
 	// Axis is the axis it moves along.
 	Axis Axis
 	Edge HandleEdge
 	// OnDragStart, OnDragMove and OnDragEnd follow a drag, with its
 	// offset along Axis since it started.
-	OnDragStart func()
-	OnDragMove  func(offset core.Points)
-	OnDragEnd   func(offset core.Points)
-	Disabled    func() bool
+	OnDragStart   func()
+	OnDragMove    func(offset core.Points)
+	OnDragEnd     func(offset core.Points)
+	OnDoublePress func()
+	Disabled      func() bool
 	// OnStateChange follows the pointer's progression with the handle.
 	OnStateChange func(ResizeHandleState)
 	// Value is what assistive technology says the handle is at.
@@ -720,7 +728,7 @@ func (r ResizeHandle) Render(cx *core.Scope) core.Node {
 	}
 	return handleBandNode(handleBandSpec{horizontal: horizontal, edge: r.Edge, line: part{r.Class, r.Style, r.StyleFunc},
 		thumb: part{r.ThumbClass, r.ThumbStyle, r.ThumbStyleFunc}, label: r.Label, testID: r.TestID, disabled: r.Disabled, onPan: pan, onStep: step,
-		value: r.Value, touch: !core.Untracked(cx, cx.Env().Desktop), state: state, content: r.content()})
+		onDoublePress: r.OnDoublePress, value: r.Value, touch: !core.Untracked(cx, cx.Env().Desktop), state: state, content: r.content()})
 }
 
 func (r ResizeHandle) content() core.Node {

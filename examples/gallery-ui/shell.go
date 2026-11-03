@@ -217,19 +217,15 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		core.View{Style: fillRest, Children: s.Content},
 	}}
 
-	// The handle hugs the sidebar's edge; a double click restores the
-	// default width.
+	// The handle's band, 3 points across, centers its line on the
+	// sidebar's last point; a double click restores the default width.
 	var start core.Points
-	handle := core.View{TestID: "sidebar-resize", Disabled: closed, OnPress: func(e core.PressEvent) {
-		if e.Clicks == 2 {
-			resize(def)
-		}
-	}, StyleFunc: func() core.Style {
-		st := core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Width: core.Pt(9), ZIndex: 1}
+	handle := core.View{TestID: "sidebar-resize", Disabled: closed, StyleFunc: func() core.Style {
+		st := core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Width: core.Pt(3), ZIndex: 1}
 		if open() {
-			st.Left = core.Pt(width() - 5)
+			st.Left = core.Pt(width() - 2)
 		} else {
-			st.Left = core.Pt(-5)
+			st.Left = core.Pt(-2)
 		}
 		if !shown.Get() {
 			st.Visibility = core.VisibilityHidden
@@ -239,11 +235,12 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		Value: func() core.AccessibilityValue {
 			return core.AccessibilityValue{Now: float32(chosen()), Min: float32(lo), Max: float32(min(hi, env.Window().Width))}
 		},
-		OnDragStart: func() { start = chosen() },
-		OnDragMove:  func(d core.Points) { resize(min(start+d, env.Window().Width-12)) },
-		OnDragEnd:   func(d core.Points) { resize(min(start+d, env.Window().Width-12)) },
-		Style:       core.Style{Margin: core.Edges{Left: 4}}, StyleFunc: HandleLine(cx),
-		ThumbStyle: HandleThumb(), ThumbStyleFunc: HandleThumbColor(cx)}}}
+		OnDragStart:   func() { start = chosen() },
+		OnDragMove:    func(d core.Points) { resize(min(start+d, env.Window().Width-12)) },
+		OnDragEnd:     func(d core.Points) { resize(min(start+d, env.Window().Width-12)) },
+		OnDoublePress: func() { resize(def) },
+		Style:         core.Style{Margin: core.Edges{Left: 1}}, StyleFunc: HandleLine(cx),
+		ThumbStyle: HandleThumb(cx), ThumbStyleFunc: HandleThumbColor(cx)}}}
 
 	children := []core.Node{core.View{Style: fillRest.Merge(core.Style{Direction: core.Row}), Children: []core.Node{slot, content}}, handle}
 	if toggle != nil {

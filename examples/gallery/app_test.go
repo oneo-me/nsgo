@@ -802,3 +802,26 @@ func TestGalleryLanguages(t *testing.T) {
 		})
 	}
 }
+
+// TestSidebarResizes drags the sidebar's edge and restores its default
+// width on a double click.
+func TestSidebarResizes(t *testing.T) {
+	app := startDesktop(t)
+	// Stocks keeps drawing, which spaces presses past a double click.
+	open(app, "Form")
+	width := func() driver.Points { return app.Find("id:sidebar-slot").Frame.Size.Width }
+	// The band is 3 points across, its line on the sidebar's last point.
+	band := app.Find("id:sidebar-resize")
+	if line := band.Frame.Origin.X + band.Children[0].Children[0].Frame.Origin.X; band.Frame.Size.Width != 3 || line != sidebarWidth-1 {
+		t.Fatalf("the band is %v, its line at %v, want 3 wide with the line at %v", band.Frame, line, sidebarWidth-1)
+	}
+	app.Drag("id:sidebar-resize >> role:adjustable", driver.Point{X: 60})
+	if w := width(); w != sidebarWidth+60 {
+		t.Fatalf("the sidebar is %v wide after a drag of 60, want %v", w, sidebarWidth+60)
+	}
+	app.Press("id:sidebar-resize >> role:adjustable")
+	app.Press("id:sidebar-resize >> role:adjustable")
+	if w := width(); w != sidebarWidth {
+		t.Fatalf("the sidebar is %v wide after a double click, want %v", w, sidebarWidth)
+	}
+}

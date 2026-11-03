@@ -298,7 +298,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 		// A hairline that stays as it is; the thumb, a pill on it, grows
 		// in under the pointer and further while dragged.
 		HandleStyleFunc:  func() core.Style { return core.Style{Background: colors.Line()} },
-		HandleThumbStyle: ui.HandleThumb(), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
+		HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
 		DockStyleFunc: func() core.Style { return core.Style{Background: colors.Inset()} },
 		DropIndicatorStyleFunc: func() core.Style {
 			return core.Style{CornerRadius: 8, BorderWidth: 2, BorderColor: colors.Accent(), Background: tints.Accent()}

@@ -876,7 +876,7 @@ func editorDemo(cx *core.Scope) core.Node {
 		},
 		ContentStyle: core.Style{FlexGrow: 1},
 		HandleLabel:  tr.EditorResizeTheProblems(), HandleStyleFunc: ui.HandleLine(cx),
-		HandleThumbStyle: ui.HandleThumb(), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
+		HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
 		DockStyleFunc: func() core.Style { return core.Style{Background: colors.Surface()} },
 		SheetStyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(288), CornerRadii: core.Corners{TopLeft: 16, TopRight: 16}, Borders: core.Edges{Top: 1},

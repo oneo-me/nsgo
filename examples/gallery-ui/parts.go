@@ -207,10 +207,14 @@ func (f Input) Render(cx *core.Scope) core.Node {
 	return in
 }
 
-// HandleThumb is the thumb of a resize handle, as gpui-component draws
-// it: none at rest, so the hairlines stay quiet; a faint pill grows in
-// under the pointer, and a long solid one while pressed or dragged.
-func HandleThumb() core.Style {
+// HandleThumb is the thumb of a resize handle on phones, as
+// gpui-component draws it: none at rest, so the hairlines stay quiet; a
+// long solid pill while pressed or dragged. Elsewhere handles have none,
+// the pointer's resize cursor showing where to drag.
+func HandleThumb(cx *core.Scope) core.Style {
+	if !phone(cx) {
+		return core.Style{}
+	}
 	return core.Style{Height: core.Pt(44), Width: core.Pt(3), CornerRadius: 1.5, Opacity: core.Alpha(0.001),
 		Transform:  core.Transform{ScaleY: 0.001},
 		Transition: core.Transition{Duration: 150 * time.Millisecond, Easing: core.EaseOut},
@@ -220,9 +224,17 @@ func HandleThumb() core.Style {
 		}}
 }
 
-// HandleThumbColor is the thumb's color, for a ThumbStyleFunc.
-func HandleThumbColor(cx *core.Scope) func() core.Style { return Filled(ColorsOf(cx).Muted) }
+// HandleThumbColor is the thumb's color, for a ThumbStyleFunc: none
+// where HandleThumb is none.
+func HandleThumbColor(cx *core.Scope) func() core.Style {
+	if !phone(cx) {
+		return nil
+	}
+	return Filled(ColorsOf(cx).Muted)
+}
 
-// HandleLine is a handle's line, which stays as it is: its thumb shows
-// where to drag. It is a StyleFunc.
+// phone reports whether the device is a phone.
+func phone(cx *core.Scope) bool { return core.Untracked(cx, cx.Env().Idiom) == core.IdiomPhone }
+
+// HandleLine is a handle's line, which stays as it is. It is a StyleFunc.
 func HandleLine(cx *core.Scope) func() core.Style { return Filled(ColorsOf(cx).Border) }

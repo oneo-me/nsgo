@@ -39,8 +39,8 @@ func TestResizablePanelsShareTheGroupAndResizeByDragsAndSteps(t *testing.T) {
 	}
 	// The band lies over the boundary within the group, where platforms
 	// give it its cursor and track the pointer, and takes no room.
-	if f := handle.Frame; f.Origin.X != 196 || f.Size.Width != 9 || handle.Parent.Props.TestID != "group" {
-		t.Errorf("the band is at %v in %q, want 9 points over the boundary at 200, in the group", f, handle.Parent.Props.TestID)
+	if f := handle.Frame; f.Origin.X != 199 || f.Size.Width != 3 || handle.Parent.Props.TestID != "group" {
+		t.Errorf("the band is at %v in %q, want 3 points over the boundary at 200, in the group", f, handle.Parent.Props.TestID)
 	}
 	if handle.Style.Cursor != core.CursorColResize {
 		t.Errorf("the band's cursor is %v, want the column resize cursor", handle.Style.Cursor)
@@ -84,7 +84,7 @@ func TestResizeHandleReportsItsDrag(t *testing.T) {
 				OnDragEnd:  func(d core.Points) { log = append(log, -d) }},
 		}}
 	})
-	if f := app.Find("id:edge"); f.Frame.Origin.X != 191 || f.Frame.Size.Width != 9 || f.Children[0].Frame.Origin.X != 8 {
+	if f := app.Find("id:edge"); f.Frame.Origin.X != 197 || f.Frame.Size.Width != 3 || f.Children[0].Frame.Origin.X != 2 {
 		t.Errorf("the band at %v, its line at %v, want hugging the trailing edge from inside, the line on it",
 			f.Frame, f.Children[0].Frame)
 	}
@@ -115,7 +115,7 @@ func TestVerticalPanelsHaveRowResizeHandles(t *testing.T) {
 			Panels: []base.ResizablePanel{{TestID: "top"}, {TestID: "bottom"}}}
 	})
 	h := app.Find("id:group-handle-0")
-	if h.Style.Cursor != core.CursorRowResize || h.Frame.Origin.Y != 196 || h.Frame.Size.Height != 9 {
+	if h.Style.Cursor != core.CursorRowResize || h.Frame.Origin.Y != 199 || h.Frame.Size.Height != 3 {
 		t.Errorf("handle %v with cursor %v", h.Frame, h.Style.Cursor)
 	}
 	app.Pan("id:group-handle-0", core.Point{Y: 40})

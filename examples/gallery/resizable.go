@@ -62,13 +62,13 @@ func resizableDemo(cx *core.Scope) core.Node {
 			return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(240), Overflow: core.Hidden, CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Border(),
 				Background: colors.Background()}
 		}, Children: []core.Node{
-			base.ResizablePanelGroup{TestID: "panels", HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(), HandleThumbStyleFunc: ui.HandleThumbColor(cx), HandleLabel: tr.ResizableResizeTheSidebar(),
+			base.ResizablePanelGroup{TestID: "panels", HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx), HandleLabel: tr.ResizableResizeTheSidebar(),
 				Style:    core.Style{FlexGrow: 1},
 				OnResize: func(s []core.Points) { last.Set(tr.ResizableRow() + roundSizes(s)) },
 				Panels: []base.ResizablePanel{
 					{Size: sidebar.Get, MinSize: 120, MaxSize: 360, OnResize: sidebar.Set, StyleFunc: ui.Filled(colors.Raised),
 						Children: []core.Node{pane(cx, tr.ResizableFiles(), tr.Resizable120To360Pt(), func() string { return tr.ResizableSidebarPt(fmt.Sprintf("%.0f", sidebar.Get())) })}},
-					{MinSize: 160, Children: []core.Node{base.ResizablePanelGroup{Axis: base.Vertical, HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
+					{MinSize: 160, Children: []core.Node{base.ResizablePanelGroup{Axis: base.Vertical, HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
 						HandleLabel: tr.ResizableResizeTheConsole(), Style: core.Style{FlexGrow: 1},
 						OnResize: func(s []core.Points) { last.Set(tr.ResizableColumn() + roundSizes(s)) },
 						Panels: []base.ResizablePanel{
