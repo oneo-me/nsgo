@@ -545,7 +545,7 @@ func setter(t reflect.Type, prop string) func(p *props, v reflect.Value) {
 	case t.Kind() == reflect.Func && t.NumIn() == 0 && t.NumOut() == 1:
 		out := t.Out(0)
 		return func(p *props, v reflect.Value) {
-			if !p.has(prop) {
+			if !defined(p.peek(prop)) {
 				return
 			}
 			r := p.r
