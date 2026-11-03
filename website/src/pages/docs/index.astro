@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import { docUrl, getDocs } from '../../lib/docs';
+
+const docs = await getDocs();
+const description = 'Guides and tutorials for building with NSGo.';
+---
+
+<BaseLayout title="Documentation — NSGo" description={description}>
+  <DocsLayout title="Documentation" description={description} docs={docs}>
+    {docs.length > 0 ? (
+      <ul class="docs-index">
+        {docs.map((doc) => (
+          <li>
+            <a href={docUrl(doc.id)}>{doc.data.title}</a>
+            {doc.data.description && <p>{doc.data.description}</p>}
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="docs-empty">Tutorials for building with NSGo are on their way.</p>
+    )}
+  </DocsLayout>
+</BaseLayout>

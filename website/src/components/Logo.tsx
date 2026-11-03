@@ -1,5 +1,5 @@
-import darkLogo from '../assets/logo-dark.svg';
-import lightLogo from '../assets/logo-light.svg';
+import darkLogo from '../assets/logo-dark.svg?url';
+import lightLogo from '../assets/logo-light.svg?url';
 import type { Theme } from '../hooks/useTheme';
 
 export function Logo({

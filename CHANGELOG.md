@@ -20,4 +20,4 @@
 - Add message catalogs in YAML that each package owns, checked and compiled to Go by the `nsgo` tool, with plurals, selects and numbers in the language the app shows, which it may choose and lays out in the direction of, and languages an app supplies to `base` and other packages.
 - Add themes in light and dark, Onevra's by default, that a subtree can replace, force into one appearance or give a Tailwind theme of its own, read from YAML or shadcn/ui theme files and overridden by an embedding host.
 - Add NSH's gallery translated to Go, with a demo of every element, component and service, its editor talking to a simulated language server, in English, Chinese and Arabic.
-- Add a React home page whose live gallery runs the gallery's WebAssembly build, reporting its download, compilation and start progress.
+- Add an Astro site with a React home page and Markdown docs whose live gallery runs the gallery's WebAssembly build, reporting its download, compilation and start progress.

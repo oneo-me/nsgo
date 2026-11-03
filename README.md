@@ -186,7 +186,7 @@ git -C nsh checkout "$(git -C nsh describe --tags --abbrev=0)"
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md) before changing code.
 
-The website at <https://oneo-me.github.io/nsgo/> is a React home page whose live gallery runs the gallery's WebAssembly build. Run it from `website/` with `bun install` and `bun run dev`, or build it with `bun run build`; the [Website workflow](.github/workflows/website.yml) publishes `website/dist` to GitHub Pages. The website needs [Bun](https://bun.com) 1.4 or later.
+The website at <https://oneo-me.github.io/nsgo/> is an Astro site with a React home page and a Markdown docs section; its live gallery runs the gallery's WebAssembly build. Run it from `website/` with `bun install` and `bun run dev` at <http://localhost:4321/nsgo/>, or build it with `bun run build`; the [Website workflow](.github/workflows/website.yml) publishes `website/dist` to GitHub Pages. The website needs [Bun](https://bun.com) 1.4 or later.
 
 ## License
 

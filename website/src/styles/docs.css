@@ -1,0 +1,422 @@
+/* Docs pages and prose. Tokens come from styles.css. */
+
+.docs-header__actions {
+  margin-left: auto;
+}
+
+.docs-logo {
+  display: none;
+}
+
+html[data-theme='dark'] .docs-logo--dark,
+html[data-theme='light'] .docs-logo--light {
+  display: block;
+}
+
+/* Layout ------------------------------------------------------------- */
+
+.docs__grid {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 190px;
+  gap: 44px;
+  align-items: start;
+  padding: 48px 0 96px;
+}
+
+.docs__grid[data-toc='false'] {
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.docs__sidebar {
+  position: sticky;
+  top: calc(var(--nav-height) + 28px);
+  font-size: 13px;
+}
+
+.docs__sidebar-title {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.docs__sidebar ul {
+  display: grid;
+  gap: 2px;
+}
+
+.docs__sidebar li a {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 7px;
+  color: var(--muted);
+  line-height: 1.4;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.docs__sidebar li a:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.docs__sidebar li a[aria-current='page'] {
+  background: var(--raised);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.docs__main {
+  min-width: 0;
+  max-width: 760px;
+}
+
+.docs__toc {
+  position: sticky;
+  top: calc(var(--nav-height) + 28px);
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+  font-size: 12.5px;
+}
+
+.docs__toc > p {
+  margin: 0 0 10px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.docs__toc ul {
+  display: grid;
+  gap: 4px;
+}
+
+.docs__toc a {
+  display: block;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.docs__toc a:hover {
+  color: var(--text);
+}
+
+.docs__toc-item--3 a {
+  padding-left: 12px;
+}
+
+/* Prose -------------------------------------------------------------- */
+
+.docs-prose > h1 {
+  font-size: clamp(30px, 6vw, 40px);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.docs__lead {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.docs-prose h2,
+.docs-prose h3,
+.docs-prose h4 {
+  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  scroll-margin-top: calc(var(--nav-height) + 24px);
+}
+
+.docs-prose h2 {
+  margin: 44px 0 14px;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.docs-prose h3 {
+  margin: 32px 0 10px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.docs-prose h4 {
+  margin: 24px 0 8px;
+  font-size: 15px;
+}
+
+.docs-prose p,
+.docs-prose ul,
+.docs-prose ol,
+.docs-prose blockquote,
+.docs-prose table,
+.docs-prose pre {
+  margin: 0 0 18px;
+}
+
+.docs-prose p {
+  line-height: 1.7;
+}
+
+.docs-prose ul {
+  padding-left: 1.3em;
+  list-style: disc;
+}
+
+.docs-prose ol {
+  padding-left: 1.4em;
+  list-style: decimal;
+}
+
+.docs-prose li {
+  margin: 6px 0;
+  line-height: 1.7;
+}
+
+.docs-prose li > ul,
+.docs-prose li > ol {
+  margin: 6px 0 0;
+}
+
+.docs-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.docs-prose a:hover {
+  text-decoration-color: currentColor;
+}
+
+.docs-prose :not(pre) > code {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--inset);
+  color: var(--code-text);
+  font-size: 0.88em;
+}
+
+.docs-prose pre {
+  overflow-x: auto;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--code-bg);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.docs-prose pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.docs-prose blockquote {
+  padding-left: 16px;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+}
+
+.docs-prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.docs-prose hr {
+  margin: 32px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.docs-prose img,
+.docs-prose video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.docs-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.docs-prose th,
+.docs-prose td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.docs-prose th {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.docs-prose td {
+  color: var(--muted);
+}
+
+/* Shiki's CSS-variables theme uses these prefixed names under Astro. */
+:root {
+  --astro-code-foreground: var(--code-text);
+  --astro-code-background: var(--code-bg);
+  --astro-code-token-constant: var(--code-number);
+  --astro-code-token-string: var(--code-string);
+  --astro-code-token-comment: var(--code-comment);
+  --astro-code-token-keyword: var(--code-keyword);
+  --astro-code-token-parameter: var(--code-property);
+  --astro-code-token-function: var(--code-function);
+  --astro-code-token-string-expression: var(--code-string);
+  --astro-code-token-punctuation: var(--code-punctuation);
+  --astro-code-token-link: var(--code-function);
+}
+
+/* Index and pager ---------------------------------------------------- */
+
+.docs-index {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.docs-index li {
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.docs-index a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.docs-index a:hover {
+  text-decoration: underline;
+}
+
+.docs-index p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.docs-empty {
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.docs__pager {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.docs__pager-link {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.docs__pager-link:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.docs__pager-link span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.docs__pager-link strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.docs__pager-link--next {
+  grid-column: 2;
+  text-align: right;
+}
+
+/* Responsive --------------------------------------------------------- */
+
+@media (max-width: 1120px) {
+  .docs__grid,
+  .docs__grid[data-toc='false'] {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  .docs__toc {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .docs__grid,
+  .docs__grid[data-toc='false'] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 28px 0 64px;
+  }
+
+  .docs__sidebar {
+    position: static;
+  }
+
+  .docs__sidebar-title {
+    margin-bottom: 8px;
+  }
+
+  .docs__sidebar ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .docs__sidebar li a {
+    padding: 5px 9px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+  }
+
+  .docs__pager {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .docs__pager-link--next {
+    grid-column: 1;
+    text-align: left;
+  }
+}

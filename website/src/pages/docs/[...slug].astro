@@ -1,0 +1,30 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import { docNeighbours, getDocs, type Doc } from '../../lib/docs';
+
+export async function getStaticPaths() {
+  const docs = await getDocs();
+  return docs.map((doc) => ({ params: { slug: doc.id }, props: { doc, docs } }));
+}
+
+const { doc, docs } = Astro.props as { doc: Doc; docs: Doc[] };
+const { Content, headings } = await render(doc);
+const { prev, next } = docNeighbours(docs, doc.id);
+const description = doc.data.description ?? 'Guides and tutorials for building with NSGo.';
+---
+
+<BaseLayout title={`${doc.data.title} — NSGo`} description={description}>
+  <DocsLayout
+    title={doc.data.title}
+    description={doc.data.description}
+    docs={docs}
+    current={doc.id}
+    headings={headings}
+    prev={prev}
+    next={next}
+  >
+    <Content />
+  </DocsLayout>
+</BaseLayout>
