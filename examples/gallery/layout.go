@@ -125,7 +125,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 			},
 				Children: []core.Node{ui.Text(name, 13, ui.Semibold, colors.Accent)}}}
 			for i := 1; i <= 4; i++ {
-				g = append(g, core.Text{Content: name + " " + itoa(i), Style: core.Style{Padding: core.Symmetric(7, 10), FontSize: 14}, StyleFunc: ui.Colored(colors.Text)})
+				g = append(g, core.Text{Content: name + " " + itoa(i), Style: core.Style{Padding: core.Symmetric(7, 10), FontSize: 13}, StyleFunc: ui.Colored(colors.Text)})
 			}
 			groups = append(groups, core.View{Children: g})
 		}
@@ -144,7 +144,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 					return core.Style{Position: core.Fixed, Right: core.Pt(24), Bottom: core.Pt(24), Padding: core.Symmetric(10, 14),
 						Background: colors.Light(), CornerRadius: ui.RadiusControl, ZIndex: 10, Shadows: fin.Light().Shadows}
 				},
-					Children: []core.Node{ui.Text(tr.LayoutFixedToTheWindow(), 14, ui.Medium, colors.OnLight)}}
+					Children: []core.Node{ui.Text(tr.LayoutFixedToTheWindow(), 13, ui.Medium, colors.OnLight)}}
 			}},
 		}}
 	}
@@ -178,8 +178,8 @@ func layoutDemo(cx *core.Scope) core.Node {
 		return ui.Section{Title: tr.LayoutDirection(), Note: "LayoutDirection · WritingDirection", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, LayoutDirection: core.DirectionRTL}, box("first", core.Style{}), box("second", core.Style{}), box("third", core.Style{})),
 			frame(core.Style{},
-				core.Text{Content: "שלום עולם, hello world", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
-				core.Text{Content: "Hello world, שלום עולם", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: "שלום עולם, hello world", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: "Hello world, שלום עולם", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			),
 		}}
 	}

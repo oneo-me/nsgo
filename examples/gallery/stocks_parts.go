@@ -169,7 +169,7 @@ func block(cx *core.Scope, title string, noteFn func() string, right core.Node, 
 	}
 	var nodes []core.Node
 	if title != "" {
-		head := []core.Node{core.Text{Content: title, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)}}
+		head := []core.Node{core.Text{Content: title, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)}}
 		if noteFn != nil {
 			head = append(head, ui.Textf(noteFn, 12, ui.Regular, colors.Faint))
 		}

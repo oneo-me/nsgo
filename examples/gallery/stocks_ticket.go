@@ -66,7 +66,7 @@ func newBanner(cx *core.Scope) banner {
 			return core.Style{Width: core.Pt(34), Height: core.Pt(34), CornerRadius: 17, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: c()}
 		}, Children: []core.Node{ui.Icon(ui.IconCheck, 18, check)}},
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-			ui.Textf(func() string { return message.Get().title }, 15, ui.Semibold, colors.OnLight),
+			ui.Textf(func() string { return message.Get().title }, 13, ui.Semibold, colors.OnLight),
 			core.Text{ContentFunc: func() string { return message.Get().detail }, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(detailColor)},
 		}},
 	}}
@@ -81,7 +81,7 @@ func ticketLine(cx *core.Scope, lbl string, value func() string, strong bool) co
 		size, weight = 17, ui.Semibold
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, MinHeight: core.Pt(24)}, Children: []core.Node{
-		core.Text{Content: lbl, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+		core.Text{Content: lbl, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		ui.Tabular(ui.Textf(value, size, weight, colors.Text)),
 	}}
 }
@@ -157,7 +157,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 				if on() {
 					c = colors.Accent
 				}
-				return core.Style{FontSize: 14, FontWeight: ui.Semibold, Color: c()}
+				return core.Style{FontSize: 13, FontWeight: ui.Semibold, Color: c()}
 			}}}},
 		}}})
 	}
@@ -169,7 +169,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 		ui.Segmented[side]{Options: []ui.Option[side]{{Value: "buy", Label: tr.StocksBuy()}, {Value: "sell", Label: tr.StocksSell()}}, Value: sd.Get, OnChange: sd.Set},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline}, Children: []core.Node{
-				core.Text{Content: tr.StocksLimitPrice(), Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+				core.Text{Content: tr.StocksLimitPrice(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				core.Text{ContentFunc: func() string { return tr.StocksUseLast() + p(s.quote.Get().last) }, Role: core.RoleButton,
 					OnPress: func(core.PressEvent) { limit.Set(s.quote.GetUntracked().last) }, Style: core.Style{FontSize: 13, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Accent)},
 			}},
@@ -184,7 +184,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline}, Children: []core.Node{
-				core.Text{Content: tr.StocksQuantity(), Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+				core.Text{Content: tr.StocksQuantity(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				ui.Textf(func() string { return grouped(quantity.Get(), 0) + tr.StocksSh() }, 13, ui.Regular, colors.Faint),
 			}},
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: chips},
@@ -196,7 +196,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 						return tr.StocksEstimatedCost()
 					}
 					return tr.StocksEstimatedProceeds()
-				}, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+				}, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				ui.Textf(func() string { return grouped(cost(), 2) }, 22, ui.Semibold, colors.Text),
 			}},
 			core.View{Style: core.Style{Height: core.Pt(6), CornerRadius: 3, Overflow: core.Hidden}, StyleFunc: ui.Filled(colors.Raised), Children: []core.Node{
@@ -230,7 +230,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 					core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 						core.Text{ContentFunc: func() string { return fmt.Sprintf("%s %s %s", verb(), grouped(quantity.Get(), 0), s.code) },
 							StyleFunc: func() core.Style {
-								return core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold, Color: tone()}
+								return core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold, Color: tone()}
 							}},
 						ui.Text(tr.StocksLimitDay(), 12, ui.Regular, colors.Muted),
 					}},

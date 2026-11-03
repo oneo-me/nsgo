@@ -82,7 +82,7 @@ func formField(p fieldProps, in base.Input) core.Node {
 			box = core.Style{MinHeight: core.Pt(46), Padding: core.Edges{Top: 13, Bottom: 13}}
 		}
 		own, ownFunc := in.Style, in.StyleFunc
-		in.Style = core.Style{FlexGrow: 1, FlexShrink: 1, Padding: core.Symmetric(0, 14), FontSize: 15}.Merge(box)
+		in.Style = core.Style{FlexGrow: 1, FlexShrink: 1, Padding: core.Symmetric(0, 14), FontSize: 13}.Merge(box)
 		if in.Multiline {
 			in.Style.Padding = core.Edges{Top: 13, Right: 14, Bottom: 13, Left: 14}
 		}
@@ -108,7 +108,7 @@ func formField(p fieldProps, in base.Input) core.Node {
 		}
 		var well []core.Node
 		if p.prefix != "" {
-			well = append(well, core.Text{Content: p.prefix, Style: core.Style{Padding: core.Edges{Left: 14}, FontSize: 15}, StyleFunc: ui.Colored(colors.Muted)})
+			well = append(well, core.Text{Content: p.prefix, Style: core.Style{Padding: core.Edges{Left: 14}, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)})
 		}
 		well = append(well, in, core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
 			c := colors.Accent
@@ -408,7 +408,7 @@ func formDemo(cx *core.Scope) core.Node {
 					return core.View{TestID: "form-status", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(12),
 						CornerRadius: ui.RadiusControl}, StyleFunc: ui.Filled(bg), Children: []core.Node{
 						ui.Icon(name, 16, fg),
-						core.Text{Content: r.text, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, LineHeight: 19}, StyleFunc: ui.Colored(fg)},
+						core.Text{Content: r.text, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, LineHeight: 19}, StyleFunc: ui.Colored(fg)},
 					}}
 				})
 			}},
@@ -514,7 +514,7 @@ func messageBar(cx *core.Scope) base.NavPage {
 				Placeholder: tr.FormMessage(), ReturnKeyType: core.ReturnKeySend, TestID: "message",
 				StyleFunc: func() core.Style {
 					return fin.Inset().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44),
-						Padding: core.Symmetric(0, 16), FontSize: 15, Color: colors.Text(), Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 22})
+						Padding: core.Symmetric(0, 16), FontSize: 13, Color: colors.Text(), Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 22})
 				}},
 			ui.RoundButton{Icon: ui.IconArrowUp, Label: tr.FormSend(), OnPress: send},
 		}},
@@ -540,7 +540,7 @@ func bubble(cx *core.Scope, m message) core.Node {
 			s = fin.Raised().Over(s)
 		}
 		return s
-	}, Children: []core.Node{core.Text{Content: m.text, Style: core.Style{FontSize: 15, LineHeight: 20}, StyleFunc: ui.Colored(fg)}}}
+	}, Children: []core.Node{core.Text{Content: m.text, Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(fg)}}}
 }
 
 // selectionDemo is OnSelectionChange, OnKeyPress, SelectedRange and

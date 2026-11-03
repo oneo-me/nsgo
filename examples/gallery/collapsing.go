@@ -76,7 +76,7 @@ func collapsingDemo(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Animated: &core.AnimatedStyle{Opacity: collapsed}}, StyleFunc: ui.Filled(colors.AccentFill)},
 		// Shown while open, above the bar's strip: it fades as the header
 		// collapses.
-		core.Text{Content: tr.Collapsing160EntriesByWeek(), Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Bottom: core.Pt(collapsingBar - 4), FontSize: 15, Animated: &core.AnimatedStyle{Opacity: lerp(collapsed, [2]float64{0, 0.5}, [2]float64{0.8, 0})}}, StyleFunc: ui.Colored(colors.OnAccent)},
+		core.Text{Content: tr.Collapsing160EntriesByWeek(), Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Bottom: core.Pt(collapsingBar - 4), FontSize: 13, Animated: &core.AnimatedStyle{Opacity: lerp(collapsed, [2]float64{0, 0.5}, [2]float64{0.8, 0})}}, StyleFunc: ui.Colored(colors.OnAccent)},
 		// The title, centered in the header's last bar's height: the bar it
 		// collapses to. It shrinks to the bar's size around its left edge.
 		core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(0), Height: core.Pt(collapsingBar),
@@ -103,14 +103,14 @@ func collapsingDemo(cx *core.Scope) core.Node {
 						return core.Style{Height: core.Pt(52), Direction: core.Row, AlignItems: core.AlignCenter, Padding: core.Symmetric(0, 16),
 							Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line()}}
 					}, Children: []core.Node{
-						core.Text{ContentFunc: func() string { return row().title }, Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+						core.Text{ContentFunc: func() string { return row().title }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 						core.Text{ContentFunc: func() string { return row().detail }, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 					}}
 				}}
 		}}
 	footer := core.View{TestID: "footer", Style: core.Style{AlignItems: core.AlignCenter, Gap: 6, Padding: core.Edges{Top: 32, Right: 16, Bottom: 48, Left: 16}},
 		Children: []core.Node{
-			ui.Text(tr.CollapsingThatSAll160Entries(), 15, ui.Semibold, colors.Text),
+			ui.Text(tr.CollapsingThatSAll160Entries(), 13, ui.Semibold, colors.Text),
 			core.Text{Content: tr.CollapsingAFooterAfterTheList(),
 				Style: core.Style{FontSize: 13, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
 		}}

@@ -35,7 +35,7 @@ func navPage(cx *core.Scope, intro string, children ...core.Node) core.Node {
 	colors := ui.ColorsOf(cx)
 	return core.Scroll{Style: core.Style{FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 		core.View{Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, Gap: 16}, Children: []core.Node{
-			ui.Appear{Children: []core.Node{core.Text{Content: intro, Style: core.Style{FontSize: 15, LineHeight: 21, Padding: core.Symmetric(0, 4)}, StyleFunc: ui.Colored(colors.Muted)}}},
+			ui.Appear{Children: []core.Node{core.Text{Content: intro, Style: core.Style{FontSize: 13, LineHeight: 21, Padding: core.Symmetric(0, 4)}, StyleFunc: ui.Colored(colors.Muted)}}},
 			ui.Appear{Index: 1, Children: []core.Node{ui.Section{Title: tr.NavSafeArea(), Note: tr.NavInsets(), Children: []core.Node{insetsRow(cx)}}}},
 			ui.Appear{Index: 2, Children: []core.Node{core.View{Style: core.Style{Gap: 16}, Children: children}}},
 		}},
@@ -52,7 +52,7 @@ func largeTitlePage(cx *core.Scope) base.NavPage {
 			s.Borders = core.Edges{Top: 1}
 		}
 		rows = append(rows, core.View{Style: s, StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} }, Children: []core.Node{
-			core.Text{Content: tr.NavRow(i), Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: tr.NavRow(i), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Text(fmt.Sprintf("%d pt", i*48), 13, ui.Regular, colors.Faint),
 		}})
 	}
@@ -85,7 +85,7 @@ func transparentPage(cx *core.Scope) base.NavPage {
 			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderTransparent", Tone: ui.ToneAccent}}},
 				core.Text{Content: tr.NavContentUnderTheHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
-				core.Text{Content: tr.NavTheCirclesStartAtThe(), Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
+				core.Text{Content: tr.NavTheCirclesStartAtThe(), Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
 			ui.Appear{Index: 1, Children: []core.Node{ui.Inset{Children: []core.Node{insetsRow(cx)}}}},
 		}}}}
@@ -99,19 +99,19 @@ func customHeaderPage(cx *core.Scope) base.NavPage {
 	// the app's (desktops, the web) each mount their own.
 	left := func() core.Node {
 		return core.Text{Content: tr.NavClose(), OnPress: func(core.PressEvent) { shell.nav.Pop(1) }, Role: core.RoleButton,
-			Style: core.Style{FontSize: 17, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.OnAccent)}
+			Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.OnAccent)}
 	}
 	center := func() core.Node {
 		return ui.HStack{Gap: 7, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(10), CornerRadius: 5}, StyleFunc: ui.Filled(colors.OnAccent)},
-			ui.Text(tr.NavCustomTitle(), 17, ui.Bold, colors.OnAccent),
+			ui.Text(tr.NavCustomTitle(), 15, ui.Bold, colors.OnAccent),
 		}}
 	}
 	right := func() core.Node {
 		return core.View{OnPress: func(core.PressEvent) { likes.Update(func(n int) int { return n + 1 }) }, Role: core.RoleButton, Label: tr.NavStar(), HitSlop: core.All(10),
 			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 5}, Children: []core.Node{
 				ui.Icon(ui.IconStar, 18, colors.OnAccent),
-				ui.Textf(func() string { return itoa(likes.Get()) }, 17, ui.Semibold, colors.OnAccent),
+				ui.Textf(func() string { return itoa(likes.Get()) }, 15, ui.Semibold, colors.OnAccent),
 			}}
 	}
 	return base.NavPage{Title: tr.NavCustom(), HeaderStyleFunc: func() core.Style {
@@ -193,7 +193,7 @@ func headerlessPage(cx *core.Scope) base.NavPage {
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderHidden", Tone: ui.ToneAccent}}},
 				core.Text{Content: tr.NavNoHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: tr.NavTheScreenOwnsTheWhole(),
-					Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
+					Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
 			ui.Appear{Index: 1, Children: []core.Node{ui.Section{Title: tr.NavSafeArea(), Note: "PaddingEnv: EnvSafeArea", Children: []core.Node{insetsRow(cx)}}}},
 			ui.Spacer{},
@@ -254,7 +254,7 @@ func modalBody(cx *core.Scope, title, noteText func() string, body func() string
 			core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 8, Right: 4, Left: 4}}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{TextFunc: noteText, Tone: ui.ToneAccent}}},
 				core.Text{ContentFunc: title, Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
-				core.Text{ContentFunc: body, Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
+				core.Text{ContentFunc: body, Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
 			ui.Section{Title: tr.NavSafeArea(), Note: tr.NavTheModalS(), Children: []core.Node{insetsRow(cx)}},
 			ui.Spacer{},
@@ -346,7 +346,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 						Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Line()}
 				}, Children: []core.Node{
 					ui.IconTile{Icon: m.icon, Size: 32},
-					core.View{Style: core.Style{Gap: 2}, Children: []core.Node{ui.Text(m.title, 15, ui.Medium, colors.Text), ui.Text(m.note, 13, ui.Regular, colors.Faint)}},
+					core.View{Style: core.Style{Gap: 2}, Children: []core.Node{ui.Text(m.title, 13, ui.Medium, colors.Text), ui.Text(m.note, 13, ui.Regular, colors.Faint)}},
 				}},
 			}})
 		}
@@ -427,7 +427,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 				Children: []core.Node{core.View{Style: core.Style{AlignSelf: core.AlignStretch, MaxWidth: core.Pt(480), Animated: &core.AnimatedStyle{Opacity: pop, Scale: ui.Lerp(pop, 0.9, 1)}},
 					Children: []core.Node{ui.Card{Title: tr.NavADialog(), Description: "Animation: ModalFade", Children: []core.Node{
 						core.Text{Content: tr.NavADialogOwnsNoLook(),
-							Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
+							Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 						core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 							ui.Button{Text: tr.NavCancel(), Variant: ui.ButtonSecondary, Flex: 1, OnPress: closeModal},
 							ui.Button{Text: tr.NavOk(), Flex: 1, OnPress: closeModal},

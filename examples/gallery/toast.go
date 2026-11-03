@@ -129,7 +129,7 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 	first := core.Untracked(cx, e)
 	id, c := first.ID, first.Value
 	label := strings.Join(slices.DeleteFunc([]string{c.title, c.description}, func(s string) bool { return s == "" }), ". ")
-	texts := []core.Node{core.Text{Content: c.title, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightSemibold}, StyleFunc: ui.Colored(colors.Text)}}
+	texts := []core.Node{core.Text{Content: c.title, Style: core.Style{FontSize: 13, FontWeight: core.FontWeightSemibold}, StyleFunc: ui.Colored(colors.Text)}}
 	if c.description != "" {
 		texts = append(texts, core.Text{Content: c.description, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)})
 	}
@@ -138,7 +138,7 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 		children = append(children, core.View{Role: core.RoleButton, Label: c.action, OnPress: func(core.PressEvent) { t.choose(id, c.action) },
 			Style: core.Style{Padding: core.Edges{Left: 10, Right: 10}, Height: core.Pt(28), JustifyContent: core.JustifyCenter,
 				CornerRadius: ui.RadiusControl, Active: &core.Style{Opacity: core.Alpha(0.7)}}, StyleFunc: ui.Filled(colors.Light),
-			Children: []core.Node{core.Text{Content: c.action, Style: core.Style{FontSize: 14, FontWeight: core.FontWeightMedium}, StyleFunc: ui.Colored(colors.OnLight)}}})
+			Children: []core.Node{core.Text{Content: c.action, Style: core.Style{FontSize: 13, FontWeight: core.FontWeightMedium}, StyleFunc: ui.Colored(colors.OnLight)}}})
 	}
 	if c.close != "" {
 		children = append(children, core.View{Role: core.RoleButton, Label: tr.ToastClose(), OnPress: func(core.PressEvent) { t.dismiss(id) },

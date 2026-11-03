@@ -436,7 +436,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 						core.Text{Spans: []core.Span{
 							{ContentFunc: func() string { return p(focus().c) }},
 							{ContentFunc: func() string { return " " + signed((focus().c-prevClose())/prevClose()*100, 2) + "%" }, Style: core.Style{FontSize: 12, FontWeight: ui.Regular}},
-						}, Style: core.Style{FontSize: 17, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+						}, Style: core.Style{FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 						core.Text{ContentFunc: func() string {
 							f := focus()
 							if intraday() {

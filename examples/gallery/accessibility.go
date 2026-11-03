@@ -58,7 +58,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 			base.Button{Label: tr.A11yShippingDetails(), Expanded: open.Get, TestID: "a11y-disclosure", OnPress: func(core.PressEvent) { toggled(open) },
 				Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(44), Active: &core.Style{Opacity: core.Alpha(0.7)}},
 				Children: []core.Node{
-					core.Text{Content: tr.A11yShippingDetails(), Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{Content: tr.A11yShippingDetails(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 					core.View{StyleFunc: func() core.Style {
 						s := core.Style{Transition: core.Transition{Duration: ms(150), Properties: core.TransitionTransform}}
 						if open.Get() {
@@ -87,7 +87,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 				StyleFunc: func() core.Style {
 					return fin.Raised().Over(core.Style{Background: colors.Raised(), CornerRadius: ui.RadiusControl, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(12), Gap: 4})
 				},
-				Children: []core.Node{ui.Text("Ana", 15, ui.Semibold, colors.Text), ui.Text(tr.A11yLunchOnFriday(), 15, ui.Regular, colors.Muted)}},
+				Children: []core.Node{ui.Text("Ana", 13, ui.Semibold, colors.Text), ui.Text(tr.A11yLunchOnFriday(), 13, ui.Regular, colors.Muted)}},
 			ui.Caption{Label: tr.A11yLastAction(), Note: last.Get},
 			ui.APILine{Label: tr.A11yCustomOnesActivateEscapeAnd(), Names: "AccessibilityActions"},
 		}}
@@ -104,8 +104,8 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 					return fin.Raised().Over(core.Style{Background: colors.Raised(), CornerRadius: ui.RadiusControl, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(12), Gap: 4})
 				},
 				Children: []core.Node{
-					ui.Text(tr.A11yApples(), 15, ui.Semibold, colors.Text),
-					ui.Textf(func() string { return tr.A11yAKilo(fmt.Sprintf("$%d.%02d", price.Get()/100, price.Get()%100)) }, 15, ui.Regular, colors.Muted),
+					ui.Text(tr.A11yApples(), 13, ui.Semibold, colors.Text),
+					ui.Textf(func() string { return tr.A11yAKilo(fmt.Sprintf("$%d.%02d", price.Get()/100, price.Get()%100)) }, 13, ui.Regular, colors.Muted),
 				}},
 			ui.Button{Text: tr.A11yChangeThePrice(), Variant: ui.ButtonSecondary, OnPress: func() { price.Update(func(p int) int { return p + 15 }) }},
 		}}
@@ -117,7 +117,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		h := core.NewSignal(cx, true)
 		return ui.Card{Title: tr.A11yHiddenElements(), Description: tr.A11yDecorationScreenReadersSkip(), Children: []core.Node{
 			core.View{AccessibilityElementsHidden: h.Get, TestID: "a11y-hidden", Style: core.Style{AlignItems: core.AlignCenter},
-				Children: []core.Node{ui.Text(tr.A11yDecoration(), 15, ui.Regular, colors.Faint)}},
+				Children: []core.Node{ui.Text(tr.A11yDecoration(), 13, ui.Regular, colors.Faint)}},
 			ui.SwitchRow{Label: tr.A11yHideTheDecoration(), Code: "AccessibilityElementsHidden", Checked: h.Get, OnChange: h.Set},
 		}}
 	}
@@ -128,7 +128,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		added := core.NewSignal(cx, 0)
 		return ui.Card{Title: tr.A11yLiveRegions(), Description: tr.A11yChangesAnnouncedWithoutMovingFocus(), Children: []core.Node{
 			core.Text{LiveRegion: core.LiveRegionPolite, TestID: "a11y-live", ContentFunc: func() string { return tr.A11yInTheBasket(added.Get()) },
-				Style: core.Style{FontSize: 17, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Text)},
+				Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Button{Text: tr.A11yAddToBasket(), Icon: ui.IconPlus, OnPress: func() { added.Update(func(n int) int { return n + 1 }) }},
 			ui.APILine{Label: tr.A11yAnnouncedAsItChanges(), Names: "LiveRegionPolite"},
 		}}
@@ -140,7 +140,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		result := &core.Ref{}
 		return ui.Card{Title: tr.A11yFocus(), Description: tr.A11yMovingTheScreenReaderAs(), Children: []core.Node{
 			ui.Button{Text: tr.A11ySearchApples(), Variant: ui.ButtonSecondary, TestID: "a11y-search", OnPress: result.SetAccessibilityFocus},
-			core.Text{Ref: result, Content: tr.A11y3ResultsForApples(), TestID: "a11y-result", Style: core.Style{FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Ref: result, Content: tr.A11y3ResultsForApples(), TestID: "a11y-result", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			ui.APILine{Label: tr.A11yMovesTheReaderHere(), Names: "Ref.SetAccessibilityFocus"},
 		}}
 	}

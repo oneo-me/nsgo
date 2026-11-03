@@ -60,7 +60,7 @@ func photoRow(cx *core.Scope, p func() photo) core.Node {
 				return core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 4, AlignSelf: core.AlignStretch, JustifyContent: core.JustifyCenter,
 					Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line()}}
 			}, Children: []core.Node{
-				core.Text{ContentFunc: func() string { return p().title }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{ContentFunc: func() string { return p().title }, MaxLines: 1, Style: core.Style{FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 				photoByline(cx, p, 13),
 			}},
 			ui.Textf(func() string { return fmt.Sprintf("#%d", p().id) }, 13, ui.Regular, colors.Faint),
@@ -99,7 +99,7 @@ func photoTile(cx *core.Scope, p func() photo) core.Node {
 				}},
 			core.View{Style: core.Style{Gap: 3, Padding: core.Edges{Right: 4, Bottom: 4, Left: 4}}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-					core.Text{ContentFunc: func() string { return p().title }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{ContentFunc: func() string { return p().title }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 					ui.Textf(func() string { return fmt.Sprintf("#%d", p().id) }, 12, ui.Regular, colors.Faint),
 				}},
 				photoByline(cx, p, 12),
@@ -176,12 +176,12 @@ func photosDemo(cx *core.Scope) core.Node {
 					},
 						Children: []core.Node{logo(cx, 24)}},
 					core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-						ui.Text(tr.PhotosPhotoStream(), 17, ui.Semibold, colors.Text), ui.Text(tr.PhotosARecycledListOfRemote(), 13, ui.Regular, colors.Muted)}},
+						ui.Text(tr.PhotosPhotoStream(), 15, ui.Semibold, colors.Text), ui.Text(tr.PhotosARecycledListOfRemote(), 13, ui.Regular, colors.Muted)}},
 					ui.Badge{Text: tr.PhotosRemote(), Tone: ui.ToneInfo},
 				}},
 				core.Text{Spans: []core.Span{
 					{ContentFunc: func() string { return thousands(len(photos.Get())) }},
-					{Content: tr.PhotosPhotos(), Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Accent)},
+					{Content: tr.PhotosPhotos(), Style: core.Style{FontSize: 13, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Accent)},
 				}, Style: core.Style{FontSize: 40, FontWeight: ui.Semibold, LetterSpacing: -1}, StyleFunc: ui.Colored(colors.Text)},
 				core.View{StyleFunc: func() core.Style {
 					return core.Style{Direction: core.Row, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}, Padding: core.Edges{Top: 10}}
@@ -249,7 +249,7 @@ func photosDemo(cx *core.Scope) core.Node {
 					TranslateY: core.Interpolate(scrollY, core.Interpolation{Input: []float64{140, 190}, Output: []float64{-8, 0}, Extrapolate: core.ExtrapolateClamp}),
 				}}
 		}, Children: []core.Node{
-			core.Text{Content: tr.PhotosPhotoStream(), Style: core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: tr.PhotosPhotoStream(), Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Textf(func() string { return thousands(len(photos.Get())) + tr.PhotosPhotos() }, 13, ui.Regular, colors.Muted),
 		}},
 	}}

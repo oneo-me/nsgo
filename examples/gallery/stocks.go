@@ -112,7 +112,7 @@ func marketStrip(cx *core.Scope, m *market) core.Node {
 			core.View{OnPress: func(core.PressEvent) { toggle() }, Role: core.RoleButton, Label: tr.StocksBreadth(), Expanded: opened.Get,
 				Style: core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(56)}, Children: []core.Node{
 					core.Text{Content: tr.StocksComposite(), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
-					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 15, FontWeight: ui.Semibold, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{ContentFunc: func() string { return grouped(m.composite.Get(), 2) }, MaxLines: 1, Style: core.Style{FontSize: 13, FontWeight: ui.Semibold, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
 					core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
 						return core.Style{FontSize: 13, FontWeight: ui.Medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 					}},
@@ -378,7 +378,7 @@ func stocksDemo(cx *core.Scope) core.Node {
 					}, wide, func() bool { return wide && shown.Get() == st })
 				}),
 				core.Show{When: func() bool { return len(rows.Get()) == 0 }, Then: func(*core.Scope) core.Node {
-					return core.Text{Content: tr.StocksNothingHereRightNow(), Style: core.Style{Padding: core.Symmetric(32, 0), TextAlign: core.TextAlignCenter, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)}
+					return core.Text{Content: tr.StocksNothingHereRightNow(), Style: core.Style{Padding: core.Symmetric(32, 0), TextAlign: core.TextAlignCenter, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}
 				}},
 			}},
 			core.Text{ContentFunc: func() string {

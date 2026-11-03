@@ -26,7 +26,7 @@ type controlSizes struct {
 }
 
 var (
-	pointerSizes = controlSizes{row: 40, padding: 6, gap: 10, label: 14, detail: 12, control: 16, corner: 5, check: 12, dash: 8, dot: 6, tabs: 30, line: 32, small: true}
+	pointerSizes = controlSizes{row: 36, padding: 6, gap: 10, label: 13, detail: 12, control: 16, corner: 5, check: 12, dash: 8, dot: 6, tabs: 30, line: 32, small: true}
 	touchSizes   = controlSizes{row: 56, padding: 8, gap: 12, label: 15, detail: 13, control: 22, corner: 7, check: 16, dash: 10, dot: 8, tabs: 40, line: 44}
 )
 
@@ -336,7 +336,7 @@ func (c controls) filter(cx *core.Scope) core.Node {
 				return tr.ControlsNothingToShow()
 			}
 			return tr.ControlsShowingItems(total())
-		}, Style: core.Style{FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+		}, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 	}}
 }
 

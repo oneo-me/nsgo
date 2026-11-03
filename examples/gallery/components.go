@@ -48,7 +48,7 @@ func layoutAnimations(cx *core.Scope) core.Node {
 					}
 					return core.Style{Background: t.Tint(cx), Shadows: []core.BoxShadow{highlight}}
 				},
-					Children: []core.Node{core.Text{ContentFunc: func() string { return itoa(n()) }, Style: core.Style{FontSize: 17, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(t.Shade(cx))}}}
+					Children: []core.Node{core.Text{ContentFunc: func() string { return itoa(n()) }, Style: core.Style{FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(t.Shade(cx))}}}
 			}),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
@@ -88,7 +88,7 @@ func pressableSheet(cx *core.Scope) core.Node {
 					Gap: 8, CornerRadius: 12, Background: colors.AccentFill(), Transition: core.Transition{Duration: 150e6},
 					Active: &core.Style{Transform: core.Transform{Scale: 0.97}, Background: pressedFill}}
 			},
-			Children: []core.Node{ui.Text(tr.CompOpenASheet(), 15, ui.Semibold, colors.OnAccent)}},
+			Children: []core.Node{ui.Text(tr.CompOpenASheet(), 13, ui.Semibold, colors.OnAccent)}},
 		ui.Caption{Label: tr.CompScalesAndDarkensWhilePressed(), Note: func() string { return "Active: scale 0.97" }},
 		base.Sheet{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: tr.CompASheet(),
 			BackdropStyle: core.Style{Background: ui.Black(0.5)},
@@ -101,7 +101,7 @@ func pressableSheet(cx *core.Scope) core.Node {
 					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: tr.CompSheet(), Tone: ui.ToneAccent}}},
 					core.Text{Content: tr.CompASheet(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 					core.Text{Content: ui.Hint(cx, tr.CompTapOutsideItOrPress(), tr.CompPressEscapeOrClickOutside()),
-						Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
+						Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Button{Text: tr.CompClose(), OnPress: func() { open.Set(false) }},
 			}},
@@ -112,7 +112,7 @@ func pressableSheet(cx *core.Scope) core.Node {
 func pressTile(cx *core.Scope, title func() string, noteText string, right core.Node) core.Node {
 	colors := ui.ColorsOf(cx)
 	children := []core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-		ui.Textf(title, 15, ui.Regular, colors.Text),
+		ui.Textf(title, 13, ui.Regular, colors.Text),
 		ui.API{Text: noteText},
 	}}}
 	if right != nil {
@@ -215,7 +215,7 @@ func avoidingPage(cx *core.Scope) base.NavPage {
 			core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
 				ui.Card{Title: tr.CompRoom() + title, Description: tr.CompFocusTheFieldAtThe(), Children: []core.Node{
 					ui.Segmented[bool]{Options: []ui.Option[bool]{{Value: false, Label: "padding"}, {Value: true, Label: "margin"}}, Value: margin.Get, OnChange: margin.Set},
-					core.Text{Content: note, Style: core.Style{FontSize: 14, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
+					core.Text{Content: note, Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Spacer{},
 				ui.Input{Input: base.Input{Placeholder: tr.CompTypeHere()}},
@@ -236,7 +236,7 @@ func modalOptions(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.CompDialogOptions(), Description: tr.CompStatusbartranslucentOrientations(), Actions: []core.Node{ui.Switch{Checked: translucent.Get, OnChange: translucent.Set, Label: "StatusBarTranslucent"}}, Children: []core.Node{
 		core.Text{Content: tr.CompAndroidTranslucentContentReachesUnder(),
-			Style: core.Style{FontSize: 14, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
+			Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 		ui.Caption{Label: "StatusBarTranslucent", Note: func() string { return fmt.Sprint(translucent.Get()) }},
 		ui.Button{Text: tr.CompOpenTheDialog(), Variant: ui.ButtonSecondary, OnPress: func() { visible.Set(true) }},
 		core.Dynamic(func(*core.Scope) core.Node {
@@ -252,7 +252,7 @@ func modalOptions(cx *core.Scope) core.Node {
 							ui.Badge{Text: map[bool]string{true: "translucent", false: tr.CompOpaqueBar()}[t], Tone: ui.ToneAccent}}},
 						core.Text{Content: tr.CompADialog(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 						core.Text{Content: map[bool]string{true: tr.CompOliveUnder(), false: tr.CompOliveBelow()}[t],
-							Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
+							Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 						ui.Spacer{},
 						ui.Button{Text: tr.CompClose(), OnPress: func() { visible.Set(false) }},
 					}},
@@ -289,7 +289,7 @@ func platformInfo(cx *core.Scope) core.Node {
 			for i, r := range rows() {
 				nodes = append(nodes, ui.Row{First: i == 0, Children: []core.Node{
 					core.Text{Content: r[0], MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
-					core.Text{Content: r[1], MaxLines: 1, Style: core.Style{FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{Content: r[1], MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 				}})
 			}
 			return core.View{Children: nodes}

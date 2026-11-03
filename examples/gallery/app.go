@@ -478,11 +478,11 @@ func (g *gallery) demoTitle() core.Node {
 		return core.Func(func(cx *core.Scope) core.Node {
 			colors := ui.ColorsOf(cx)
 			tr := locales.For(cx)
-			group := ui.Text(groupOf(tr, name), 13, ui.Regular, colors.Muted)
+			group := ui.Text(groupOf(tr, name), 13, ui.Bold, colors.Text)
 			group.MaxLines = 1
-			title := ui.Text(d.title(tr), 13, ui.Semibold, colors.Text)
+			title := ui.Text(d.title(tr), 13, ui.Bold, colors.Text)
 			title.MaxLines, title.Role, title.TestID, title.Style.FlexShrink = 1, core.RoleHeader, "title", 1
-			return ui.HStack{Gap: 6, Children: []core.Node{group, ui.Text("/", 13, ui.Regular, colors.Faint), title}}
+			return ui.HStack{Gap: 4, Children: []core.Node{group, ui.Text("/", 13, ui.Bold, colors.Text), title}}
 		})
 	})
 }

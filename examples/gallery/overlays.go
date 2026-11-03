@@ -27,7 +27,7 @@ func trigger(cx *core.Scope, label func() string) core.Node {
 		return fin.Raised().Over(core.Style{AlignSelf: core.AlignStart, Padding: core.Symmetric(0, 14), Height: core.Pt(36),
 			JustifyContent: core.JustifyCenter, CornerRadius: ui.RadiusControl, Background: colors.Raised(), Active: &core.Style{Background: colors.Border()}})
 	},
-		Children: []core.Node{ui.Textf(label, 14, ui.Medium, colors.Text)}}
+		Children: []core.Node{ui.Textf(label, 13, ui.Medium, colors.Text)}}
 }
 
 // placementName is a placement as the demos report it.
@@ -72,7 +72,7 @@ func overlayCard(last *core.Signal[string]) cardFunc {
 						OnPosition: func(p core.OverlayPosition) { last.Set(tr.OverlayOverlayAt() + placementName(p.Placement)) },
 						StyleFunc:  popupStyle(cx), TestID: "overlay",
 						Children: []core.Node{core.Text{Content: tr.OverlayOutsideTheClippedBoxOn(),
-							Style: core.Style{FontSize: 14, Padding: core.All(6)}, StyleFunc: ui.Colored(colors.Text)}}}
+							Style: core.Style{FontSize: 13, Padding: core.All(6)}, StyleFunc: ui.Colored(colors.Text)}}}
 				}},
 			}},
 			ui.Caption{Label: tr.OverlayScrollThePageItFollows()},
@@ -96,7 +96,7 @@ func popoverCard(last *core.Signal[string]) cardFunc {
 				},
 				Trigger: trigger(cx, func() string { return tr.OverlayShowThePopover() }),
 				Children: []core.Node{core.View{Style: core.Style{Padding: core.All(8), Gap: 4, MaxWidth: core.Pt(260)}, Children: []core.Node{
-					ui.Text(tr.OverlayPopover(), 15, ui.Semibold, colors.Text),
+					ui.Text(tr.OverlayPopover(), 13, ui.Semibold, colors.Text),
 					ui.Text(tr.OverlayAPressOutsideEscapeOr(), 13, ui.Regular, colors.Muted),
 				}}}},
 		}}
@@ -164,8 +164,8 @@ func sheetCard(last *core.Signal[string]) cardFunc {
 					Padding: core.Edges{Top: 12, Right: 12, Bottom: 32, Left: 12}, Gap: 2}, PopupStyleFunc: ui.Filled(colors.Surface),
 				BackdropStyle: core.Style{Background: ui.Black(0.45)},
 				Children: []core.Node{core.View{Style: core.Style{Padding: core.All(12), Gap: 12}, Children: []core.Node{
-					ui.Text(tr.OverlaySheet(), 17, ui.Semibold, colors.Text),
-					ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 14, ui.Regular, colors.Muted),
+					ui.Text(tr.OverlaySheet(), 15, ui.Semibold, colors.Text),
+					ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 13, ui.Regular, colors.Muted),
 					ui.Button{Text: tr.OverlayDone(), OnPress: func() { open.Set(false) }},
 				}}}},
 		}}

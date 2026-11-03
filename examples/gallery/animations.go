@@ -594,7 +594,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 				CornerRadius: 12, Background: colors.Surface(), BorderWidth: 1, BorderColor: colors.Line()}
 		}, Children: []core.Node{
 			core.Text{Content: fmt.Sprintf("%02d", n), Style: core.Style{Width: core.Pt(24), FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
-			core.Text{Content: tr.NavRow(n), Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: tr.NavRow(n), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			core.View{Style: core.Style{Width: core.Pt(core.Points(40 + (n*37)%50)), Height: core.Pt(4), CornerRadius: 2}, StyleFunc: ui.Filled(bar)},
 		}})
 	}
@@ -614,7 +614,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 					}})
 			}, Children: []core.Node{
 				ui.Icon(ui.IconSearch, 16, colors.Muted),
-				core.Text{Content: tr.AnimSearch(), Style: core.Style{FlexGrow: 1, FontSize: 15, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: tr.AnimSearch(), Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 				ui.API{Text: fmt.Sprintf("DiffClamp(0, %.0f)", h)},
 			}},
 		}},

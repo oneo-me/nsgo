@@ -156,7 +156,7 @@ func physicsDemo(cx *core.Scope) core.Node {
 			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				ui.IconTile{Icon: ui.IconPhysics, Size: 40},
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-					ui.Text(tr.PhysicsDragAndRelease(), 17, ui.Semibold, colors.Text),
+					ui.Text(tr.PhysicsDragAndRelease(), 15, ui.Semibold, colors.Text),
 					core.Text{Content: ui.Hint(cx, tr.PhysicsTapToPulseLongPress(), tr.PhysicsClickToPulsePressAnd()), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Badge{Text: tr.PhysicsUiThread(), Tone: ui.ToneAccent},
@@ -190,7 +190,7 @@ func physicsDemo(cx *core.Scope) core.Node {
 								Rotate: core.Interpolate(x, core.Interpolation{Input: []float64{-200, 200}, Output: []float64{-14, 14}}),
 							}}
 					},
-					Children: []core.Node{ui.Icon(ui.IconGestures, 28, colors.OnAccent), ui.Text(tr.PhysicsDragMe(), 15, ui.Bold, colors.OnAccent)}},
+					Children: []core.Node{ui.Icon(ui.IconGestures, 28, colors.OnAccent), ui.Text(tr.PhysicsDragMe(), 13, ui.Bold, colors.OnAccent)}},
 			}},
 			core.View{StyleFunc: func() core.Style { return ui.CardStyle(cx).Merge(core.Style{Padding: core.All(12), Gap: 12}) }, Children: []core.Node{
 				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.PhysicsSpring()}, {Value: "coast", Label: tr.PhysicsCoast()}, {Value: "snap", Label: tr.PhysicsSnap()}}, Value: mode.Get, OnChange: mode.Set},

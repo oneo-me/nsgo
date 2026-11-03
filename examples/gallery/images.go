@@ -292,7 +292,7 @@ func imageEvents(cx *core.Scope) core.Node {
 				OnError:     func(err error) { loaded.Set(err.Error()) },
 				OnLoadEnd:   func() { log("OnLoadEnd") }},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 4}, Children: []core.Node{
-				ui.Text("picsum.photos", 15, ui.Regular, colors.Text),
+				ui.Text("picsum.photos", 13, ui.Regular, colors.Text),
 				ui.Textf(func() string { return tr.ImagesLoaded() + loaded.Get() + tr.ImagesPx() }, 13, ui.Regular, colors.Up),
 			}},
 		}},
@@ -308,7 +308,7 @@ func imageEvents(cx *core.Scope) core.Node {
 				ui.Text("×", 20, ui.Regular, colors.Danger),
 			}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 4}, Children: []core.Node{
-				ui.Text("example.invalid", 15, ui.Regular, colors.Text),
+				ui.Text("example.invalid", 13, ui.Regular, colors.Text),
 				core.Text{ContentFunc: failed.Get, MaxLines: 3, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Danger)},
 			}},
 		}},

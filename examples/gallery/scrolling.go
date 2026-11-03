@@ -379,7 +379,7 @@ func feed(cx *core.Scope) core.Node {
 						if p().fresh {
 							c = colors.Text
 						}
-						return core.Style{FlexGrow: 1, FontSize: 15, Color: c()}
+						return core.Style{FlexGrow: 1, FontSize: 13, Color: c()}
 					}},
 					core.Dynamic(func(*core.Scope) core.Node {
 						if p().fresh {
@@ -451,7 +451,7 @@ func scrollingDemo(cx *core.Scope) core.Node {
 				}, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
 				base.Input{Placeholder: ui.Hint(cx, tr.ScrollTypeHereThenTapThe(), tr.ScrollTypeHereThenClickThe()),
 					StyleFunc: func() core.Style {
-						return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(44), FontSize: 15, Color: colors.Text(),
+						return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(44), FontSize: 13, Color: colors.Text(),
 							Background: colors.Field(), BorderWidth: 1, BorderColor: colors.FieldBorder(), CornerRadius: ui.RadiusControl, Padding: core.Symmetric(0, 14)})
 					}},
 				ui.Press{OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }, Label: tr.ScrollCountATap(), Children: []core.Node{
@@ -459,8 +459,8 @@ func scrollingDemo(cx *core.Scope) core.Node {
 						return fin.Light().Over(core.Style{Height: core.Pt(44), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Light(),
 							Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8})
 					}, Children: []core.Node{
-						ui.Text(ui.Hint(cx, tr.ScrollTapMe(), tr.ScrollClickMe()), 15, ui.Semibold, colors.OnLight),
-						ui.Textf(func() string { return itoa(presses.Get()) }, 15, ui.Regular, countColor),
+						ui.Text(ui.Hint(cx, tr.ScrollTapMe(), tr.ScrollClickMe()), 13, ui.Semibold, colors.OnLight),
+						ui.Textf(func() string { return itoa(presses.Get()) }, 13, ui.Regular, countColor),
 					}},
 				}},
 				core.View{Style: core.Style{Height: core.Pt(300)}},

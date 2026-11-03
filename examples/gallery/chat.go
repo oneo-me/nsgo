@@ -474,7 +474,7 @@ func chatDemo(cx *core.Scope) core.Node {
 					return core.Style{MaxWidth: core.Pct(82), Padding: core.Symmetric(10, 14), CornerRadii: core.Corners{TopLeft: 20, TopRight: 20, BottomRight: 6, BottomLeft: 20},
 						BorderCurve: core.BorderCurveContinuous, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border()}
 				}, Children: []core.Node{
-					core.Text{ContentFunc: func() string { return m().text }, Selectable: core.SelectableOn, Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{ContentFunc: func() string { return m().text }, Selectable: core.SelectableOn, Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Text)},
 				}}
 			}},
 			core.Show{When: func() bool { return m().waiting }, Then: func(*core.Scope) core.Node {
@@ -554,7 +554,7 @@ func chatDemo(cx *core.Scope) core.Node {
 							}
 							return ui.Icon(ui.IconBrain, 16, colors.Muted)
 						}),
-						ui.Textf(thinkingLabel, 14, ui.Regular, colors.Muted),
+						ui.Textf(thinkingLabel, 13, ui.Regular, colors.Muted),
 						core.View{StyleFunc: func() core.Style {
 							s := core.Style{Transition: core.Transition{Duration: ms(220), Easing: core.EaseOut, Properties: core.TransitionTransform}}
 							if _, _, o := reason(); !o {
@@ -567,7 +567,7 @@ func chatDemo(cx *core.Scope) core.Node {
 						return core.View{Style: core.Style{Direction: core.Row, Gap: 12, Padding: core.Edges{Left: 7}}, Children: []core.Node{
 							core.View{Style: core.Style{Width: core.Pt(2), CornerRadius: 1}, StyleFunc: ui.Filled(colors.Border)},
 							core.Text{ContentFunc: func() string { t, _, _ := reason(); return t }, Selectable: core.SelectableOn,
-								Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
+								Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 						}}
 					}},
 				}}
@@ -635,7 +635,7 @@ func chatDemo(cx *core.Scope) core.Node {
 					return fin.Card().Over(core.Style{MinHeight: core.Pt(104), Padding: core.All(12), Gap: 8, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
 						Background: colors.Surface(), BorderWidth: 1, BorderColor: colors.Border()})
 				}, Children: []core.Node{
-					ui.Icon(f.icon, 18, colors.Accent), ui.Text(s.chip, 14, ui.Semibold, colors.Text), ui.Text(f.note, 12, ui.Regular, colors.Muted),
+					ui.Icon(f.icon, 18, colors.Accent), ui.Text(s.chip, 13, ui.Semibold, colors.Text), ui.Text(f.note, 12, ui.Regular, colors.Muted),
 				}},
 			}}}},
 		}})
@@ -645,7 +645,7 @@ func chatDemo(cx *core.Scope) core.Node {
 			ui.Appear{Children: []core.Node{core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				ui.IconTile{Icon: ui.IconSpark, Size: 56},
 				ui.Text(tr.ChatHowCanIHelp(), 22, ui.Semibold, colors.Text),
-				core.Text{Content: emptyText, Style: core.Style{FontSize: 15, LineHeight: 21, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
+				core.Text{Content: emptyText, Style: core.Style{FontSize: 13, LineHeight: 21, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 12}, Children: featuredTiles},
 		}}
@@ -678,7 +678,7 @@ func chatDemo(cx *core.Scope) core.Node {
 			StyleFunc: func() core.Style {
 				return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Height: core.Pt(48), Padding: core.Symmetric(0, 16), Active: &core.Style{Background: ui.Alpha(colors.Text(), 0.06)}}
 			},
-			Children: []core.Node{ui.Icon(ui.IconAttach, 16, colors.Accent), core.Text{Content: label, Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)}}}
+			Children: []core.Node{ui.Icon(ui.IconAttach, 16, colors.Accent), core.Text{Content: label, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)}}}
 	}
 	menuRows = append(menuRows,
 		attachRow(tr.ChatChooseAPhoto(), choosePhoto),
@@ -690,7 +690,7 @@ func chatDemo(cx *core.Scope) core.Node {
 			StyleFunc: func() core.Style {
 				return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Height: core.Pt(48), Padding: core.Symmetric(0, 16), Active: &core.Style{Background: ui.Alpha(colors.Text(), 0.06)}}
 			},
-			Children: []core.Node{ui.Icon(ui.IconRegenerate, 16, colors.Muted), core.Text{Content: c.label, Style: core.Style{FlexGrow: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)}}})
+			Children: []core.Node{ui.Icon(ui.IconRegenerate, 16, colors.Muted), core.Text{Content: c.label, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)}}})
 	}
 
 	conversation := func(*core.Scope) core.Node {
@@ -794,7 +794,7 @@ func chatDemo(cx *core.Scope) core.Node {
 						}, Children: []core.Node{
 							core.View{Style: core.Style{Width: core.Pt(28), Height: core.Pt(28), CornerRadius: 14, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 								StyleFunc: ui.Filled(func() core.Color { return t.Tint(cx) }), Children: []core.Node{ui.Icon(name, 15, t.Shade(cx))}},
-							core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{ui.Text(title, 14, ui.Semibold, colors.Text), ui.Text(detail, 13, ui.Regular, colors.Muted)}},
+							core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{ui.Text(title, 13, ui.Semibold, colors.Text), ui.Text(detail, 13, ui.Regular, colors.Muted)}},
 						}}
 					}),
 				}},
@@ -866,7 +866,7 @@ func chatDemo(cx *core.Scope) core.Node {
 						Placeholder: core.Untracked(cx, composerPlaceholder), OnFocus: func() { menuOpen.Set(false) },
 						OnContentSizeChange: func(s core.Size) { inputHeight.Set(min(100, max(20, s.Height))) },
 						StyleFunc: func() core.Style {
-							return core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(inputHeight.Get() + 20), FontSize: 15, LineHeight: 20,
+							return core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(inputHeight.Get() + 20), FontSize: 13, LineHeight: 20,
 								Color: colors.Text(), Padding: core.Symmetric(10, 10)}
 						}},
 					core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
@@ -942,7 +942,7 @@ func chatDemo(cx *core.Scope) core.Node {
 					if sel() {
 						w = ui.Semibold
 					}
-					return core.Style{FontSize: 14, FontWeight: w, Color: colors.Text()}
+					return core.Style{FontSize: 13, FontWeight: w, Color: colors.Text()}
 				}},
 				core.Text{Content: detail, MaxLines: 1, Style: core.Style{FontSize: 12}, StyleFunc: ui.Colored(colors.Muted)},
 			}})
@@ -958,7 +958,7 @@ func chatDemo(cx *core.Scope) core.Node {
 					return fin.Raised().Over(core.Style{Height: core.Pt(40), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous,
 						Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(), Cursor: core.CursorPointer})
 				},
-					Children: []core.Node{ui.Icon(ui.IconPlus, 15, colors.Text), ui.Text(tr.ChatNewChat(), 14, ui.Semibold, colors.Text)}}}},
+					Children: []core.Node{ui.Icon(ui.IconPlus, 15, colors.Text), ui.Text(tr.ChatNewChat(), 13, ui.Semibold, colors.Text)}}}},
 				core.Text{Content: tr.ChatConversations(), Style: core.Style{FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.6, Padding: core.Edges{Top: 18, Right: 12, Bottom: 6, Left: 12}}, StyleFunc: ui.Colored(colors.Faint)},
 			}, convs...)},
 		}},

@@ -424,7 +424,7 @@ func aurora(cx *core.Scope) core.Node {
 		}, Children: []core.Node{
 			core.Text{Content: "4 × NewMotion", Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(ink)}}},
 		core.Text{Content: tr.AnimAurora(), Style: core.Style{FontSize: 34, FontWeight: ui.Bold, LetterSpacing: -0.8}, StyleFunc: ui.Colored(ink)},
-		core.Text{Content: tr.AnimEachLightDriftsOnIts(), Style: core.Style{FontSize: 14},
+		core.Text{Content: tr.AnimEachLightDriftsOnIts(), Style: core.Style{FontSize: 13},
 			StyleFunc: ui.Colored(func() core.Color { return ui.Alpha(ink(), 0.7) })},
 	}})
 	return ui.Card{Title: tr.AnimAurora(), Description: tr.AnimBlurredGradientsOnLoopingMotions(), Flush: true, Children: []core.Node{

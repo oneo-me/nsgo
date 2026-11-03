@@ -35,12 +35,12 @@ func readingParts(cx *core.Scope) textview.Styles {
 		return core.Style{Gap: 4, Padding: core.Symmetric(8, 12), Borders: core.Edges{Left: 3}, BorderColors: core.EdgeColors{Left: c}, CornerRadius: 4, Background: ui.Alpha(c, 0.08)}
 	}
 	return textview.Styles{
-		textview.PartRoot:              {Gap: 12, Color: colors.Text, FontSize: 15, LineHeight: 23},
+		textview.PartRoot:              {Gap: 12, Color: colors.Text, FontSize: 13, LineHeight: 23},
 		textview.PartHeading:           {FontWeight: ui.Semibold, Margin: core.Edges{Top: 6}, Color: colors.Text},
 		textview.PartHeading1:          {FontSize: 26, LineHeight: 32, LetterSpacing: -0.4},
 		textview.PartHeading2:          {FontSize: 20, LineHeight: 26, Padding: core.Edges{Bottom: 6}, Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Line}},
-		textview.PartHeading3:          {FontSize: 17, LineHeight: 23},
-		textview.PartHeading4:          {FontSize: 15, LineHeight: 21},
+		textview.PartHeading3:          {FontSize: 15, LineHeight: 23},
+		textview.PartHeading4:          {FontSize: 13, LineHeight: 21},
 		textview.PartLink:              {Color: colors.Accent, TextDecoration: core.TextDecorationUnderline, TextDecorationColor: ui.Alpha(colors.Accent, 0.4)},
 		textview.PartStrong:            {FontWeight: ui.Semibold},
 		textview.PartEmphasis:          {FontStyle: core.FontStyleItalic},
@@ -263,13 +263,13 @@ func extensionsCard(cx *core.Scope) core.Node {
 				switch node.Name {
 				case "mention":
 					return core.View{Style: core.Style{CornerRadius: 10, Padding: core.Symmetric(0, 8), Transform: core.Transform{TranslateY: 4}},
-						StyleFunc: ui.Filled(func() core.Color { return ui.Alpha(sky(), 0.15) }), Children: []core.Node{ui.Text("@"+node.Attributes["1"], 14, ui.Medium, sky)}}
+						StyleFunc: ui.Filled(func() core.Color { return ui.Alpha(sky(), 0.15) }), Children: []core.Node{ui.Text("@"+node.Attributes["1"], 13, ui.Medium, sky)}}
 				case "chart":
 					return chartBlock(cx, node.Text)
 				case "callout":
 					return core.View{Style: core.Style{Direction: core.Row, Gap: 12, CornerRadius: 12, Padding: core.All(12)},
 						StyleFunc: ui.Filled(func() core.Color { return ui.Alpha(emerald(), 0.1) }), Children: []core.Node{
-							ui.Text("✦", 15, ui.Regular, emerald),
+							ui.Text("✦", 13, ui.Regular, emerald),
 							core.View{Style: fill, Children: []core.Node{textview.TextView{Document: textview.Document{Blocks: node.Children}, StyleOf: readingStyles(cx)}}},
 						}}
 				}
@@ -302,7 +302,7 @@ func selectionAreaCard(cx *core.Scope) core.Node {
 			textview.TextView{Markdown: tvAnswer, StyleOf: readingStyles(cx)},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
 				core.Text{Content: tr.TextviewNotSelectable(), Selectable: core.SelectableOff, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
-				core.Text{Content: tr.TextviewAPlainTextJoinsThe(), Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+				core.Text{Content: tr.TextviewAPlainTextJoinsThe(), Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			}},
 		}},
 		ui.Caption{Label: ui.Hint(cx, tr.TextviewLongPressThenMoveThe(), tr.TextviewDragFromTheQuestionInto())},

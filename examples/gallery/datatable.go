@@ -426,7 +426,7 @@ func tableCard(cx *core.Scope) core.Node {
 		if head {
 			c, w = colors.Muted, ui.Medium
 		}
-		content := []core.Node{core.Text{Content: s, Style: core.Style{FontSize: 14, FontWeight: w, TextAlign: align}, StyleFunc: ui.Colored(c)}}
+		content := []core.Node{core.Text{Content: s, Style: core.Style{FontSize: 13, FontWeight: w, TextAlign: align}, StyleFunc: ui.Colored(c)}}
 		if head {
 			return base.TableHead{Style: st, Children: content}
 		}

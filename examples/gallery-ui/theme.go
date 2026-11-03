@@ -6,10 +6,10 @@
 // composes base and core and is maintained with the gallery, not
 // published as an API.
 //
-// The look is Onevra's palette: a warm page, cards with an inset surface
-// and one orange accent, the logo's. Sizes are for phones: 44 pt touch
-// targets and 15 pt body text on compact 12 pt gutters; the gallery's
-// desktop layout keeps them and puts more side by side.
+// The look is Onevra's gallery: a warm page, demos on flat bordered cards
+// under bold titles, flat bordered controls 28 pt tall
+// in 13 pt text, 8 pt corners and one terracotta accent. On touch screens
+// controls keep that look and take presses 44 pt across.
 //
 // Components are structs with a Render method, as Onexa's are: the app
 // sets the fields and handles changes. Each reads its colors where it is
@@ -127,19 +127,22 @@ func Themed[T any](cx *core.Scope, build func() T) func() T {
 func Fixed(c core.Color) func() core.Color { return func() core.Color { return c } }
 
 // Theme returns the gallery's theme: Onevra's (core.DefaultTheme), with
-// the roles the gallery adds in Palette.Colors.
+// the roles the gallery adds in Palette.Colors, each derived from Onevra's
+// as its components derive theirs: insets and tracks recess with the
+// text's color, fields and hairlines take the border, Light is the
+// inverse of the page.
 func Theme() *core.Theme {
 	t := core.DefaultTheme()
 	t.Light.Colors = map[string]core.Color{
-		"inset": core.RGB(0xf2efea), "raised": core.RGB(0xfcfbf9), "field": core.RGB(0xebe8e1), "fieldBorder": core.RGB(0xd3cfc6),
-		"line": core.RGB(0xe5e1d9), "faint": core.RGB(0xa29e95), "accentFill": core.RGB(0xd4581b),
-		"light": core.RGB(0x2d2b27), "onLight": core.RGB(0xffffff), "track": core.RGB(0xe5e1d9), "knob": core.RGB(0xffffff),
+		"inset": core.RGB(0xf2f1ee), "raised": core.RGB(0xfefefd), "field": core.RGB(0xfdfdfc), "fieldBorder": core.RGB(0xdeded5),
+		"line": core.RGB(0xe6e5de), "faint": core.RGB(0xa29e95), "accentFill": core.RGB(0xbd481b),
+		"light": core.RGB(0x33332f), "onLight": core.RGB(0xfcfbf9), "track": core.RGB(0xc4c4bc), "knob": core.RGB(0xffffff),
 		"code": core.RGB(0x3a3631), "info": core.RGB(0x3d63d1), "down": core.RGB(0xb4444c),
 	}
 	t.Dark.Colors = map[string]core.Color{
-		"inset": core.RGB(0x151412), "raised": core.RGB(0x2e2b27), "field": core.RGB(0x151412), "fieldBorder": core.RGB(0x3b3732),
-		"line": core.RGB(0x2e2b27), "faint": core.RGB(0x6a645b), "accentFill": core.RGB(0xed986e),
-		"light": core.RGB(0xeeeae2), "onLight": core.RGB(0x1f1d1a), "track": core.RGB(0x2e2b27), "knob": core.RGB(0xa39c90),
+		"inset": core.RGB(0x2a2825), "raised": core.RGB(0x36332e), "field": core.RGB(0x262421), "fieldBorder": core.RGB(0x504b43),
+		"line": core.RGB(0x3d3933), "faint": core.RGB(0x857e73), "accentFill": core.RGB(0xed986e),
+		"light": core.RGB(0xeeeae2), "onLight": core.RGB(0x211f1c), "track": core.RGB(0x68635b), "knob": core.RGB(0xf7f5f1),
 		"code": core.RGB(0xe2dcd2), "info": core.RGB(0x7ea8ff), "down": core.RGB(0xe58f95),
 	}
 	return t
@@ -216,6 +219,15 @@ func Alpha(c core.Color, a float32) core.Color {
 	return core.RGBA(uint32(r*255+0.5)<<16|uint32(g*255+0.5)<<8|uint32(b*255+0.5), a)
 }
 
+// Mix is a mixed with b by t, from 0 (a) to 1 (b), alpha included.
+func Mix(a, b core.Color, t float32) core.Color {
+	ar, ag, ab, aa := a.Components()
+	br, bg, bb, ba := b.Components()
+	f := float64(t)
+	m := func(x, y float64) uint32 { return uint32((x+(y-x)*f)*255 + 0.5) }
+	return core.RGBA(m(ar, br)<<16|m(ag, bg)<<8|m(ab, bb), float32(aa+(ba-aa)*f))
+}
+
 // Finish is a surface's light and depth: a gradient over its color, its
 // shadows, a rim and, for glass, a blur of what is behind.
 type Finish struct {
@@ -234,18 +246,10 @@ func (f Finish) Style() core.Style {
 // Over merges the finish into s, keeping what s sets.
 func (f Finish) Over(s core.Style) core.Style { return f.Style().Merge(s) }
 
-// finishes are gentle top-to-bottom gradients, a highlight along top edges
-// and soft shadows, so cards, controls and buttons read as surfaces.
+// finishes are Onevra's: flat surfaces, a hairline shadow under raised
+// controls and the knob, and a soft one under what floats.
 type finishes struct {
 	card, inset, field, raised, light, accent, track, knob, pill, chip, glass, menu Finish
-}
-
-func grad(from, to uint32) []core.Gradient {
-	return []core.Gradient{core.LinearGradient(180, core.RGB(from), core.RGB(to))}
-}
-
-func gradA(stops ...core.Color) []core.Gradient {
-	return []core.Gradient{core.LinearGradient(180, stops...)}
 }
 
 // Shadow is one of CSS's box-shadow layers: x, y, blur, spread, color.
@@ -266,40 +270,26 @@ func White(a float32) core.Color { return core.RGBA(0xffffff, a) }
 
 func Paper(a float32) core.Color { return core.RGBA(0x1e1408, a) }
 
+func shadows(s ...core.BoxShadow) []core.BoxShadow { return s }
+
 var darkFinishes = finishes{
-	card:   Finish{Gradients: grad(0x24221f, 0x211f1c), Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.04)), Shadow(0, 16, 36, -20, Black(0.75))}},
-	inset:  Finish{Shadows: []core.BoxShadow{Inner(0, 1, 3, Black(0.55))}},
-	field:  Finish{Shadows: []core.BoxShadow{Inner(0, 1, 2, Black(0.55))}},
-	raised: Finish{Gradients: grad(0x33302b, 0x2e2b27), Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.07)), Shadow(0, 1, 1, 0, Black(0.4)), Shadow(0, 6, 14, -7, Black(0.7))}},
-	light:  Finish{Gradients: grad(0xfbf9f5, 0xe6e1d8), Shadows: []core.BoxShadow{Inner(0, 1, 0, core.RGB(0xffffff)), Shadow(0, 1, 1, 0, Black(0.4)), Shadow(0, 8, 18, -8, Black(0.75))}},
-	accent: Finish{Gradients: grad(0xf3a982, 0xe98f62), Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.45)), Shadow(0, 1, 1, 0, Black(0.4)), Shadow(0, 8, 20, -9, core.RGBA(0xed986e, 0.4))}},
-	track:  Finish{Shadows: []core.BoxShadow{Inner(0, 1, 2, Black(0.5))}},
-	knob:   Finish{Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.35)), Shadow(0, 2, 6, 0, Black(0.45))}},
-	pill: Finish{Background: core.RGB(0x33302b), Gradients: grad(0x37342f, 0x322f2a),
-		Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.08)), Shadow(0, 1, 1, 0, Black(0.4)), Shadow(0, 6, 14, -7, Black(0.7))}, Border: White(0.08)},
-	chip: Finish{Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.07)), Inner(0, -1, 0, Black(0.18))}},
-	glass: Finish{Background: core.RGBA(0x1e1c19, 0.62), Gradients: gradA(White(0.04), White(0.019)),
-		Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.09)), Shadow(0, -8, 24, 0, Black(0.28))}, Border: White(0.07), Backdrop: []core.Filter{core.Blur(20)}},
-	menu: Finish{Background: core.RGBA(0x282522, 0.82), Gradients: gradA(White(0.043), White(0.024), White(0.018)),
-		Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.11)), Inner(0, -1, 0, Black(0.25)), Shadow(0, 12, 32, 0, Black(0.42))}, Border: White(0.08), Backdrop: []core.Filter{core.Blur(24)}},
+	raised: Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.2)))},
+	knob:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.35)))},
+	pill:   Finish{Background: core.RGB(0x36332e), Border: core.RGB(0x36332e), Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.4)))},
+	glass: Finish{Background: core.RGBA(0x211f1c, 0.92), Border: core.RGB(0x504b43),
+		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(20)}},
+	menu: Finish{Background: core.RGBA(0x211f1c, 0.92), Border: core.RGB(0x504b43),
+		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(24)}},
 }
 
 var lightFinishes = finishes{
-	card:   Finish{Gradients: grad(0xffffff, 0xfdfcfa), Shadows: []core.BoxShadow{Inner(0, 1, 0, core.RGB(0xffffff)), Shadow(0, 1, 1, 0, Paper(0.04)), Shadow(0, 14, 32, -18, Paper(0.2))}},
-	inset:  Finish{Shadows: []core.BoxShadow{Inner(0, 1, 2, Paper(0.07))}},
-	field:  Finish{Shadows: []core.BoxShadow{Inner(0, 1, 2, Paper(0.09))}},
-	raised: Finish{Gradients: grad(0xffffff, 0xf7f5f0), Shadows: []core.BoxShadow{Inner(0, 1, 0, core.RGB(0xffffff)), Shadow(0, 1, 1, 0, Paper(0.06)), Shadow(0, 5, 12, -6, Paper(0.18))}},
-	light:  Finish{Gradients: grad(0x3a3834, 0x262420), Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.16)), Shadow(0, 1, 1, 0, Paper(0.2)), Shadow(0, 7, 14, -7, Paper(0.5))}},
-	accent: Finish{Gradients: grad(0xe06526, 0xc9521a), Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.3)), Shadow(0, 1, 1, 0, core.RGBA(0x8a340c, 0.2)), Shadow(0, 7, 14, -7, core.RGBA(0xc9521a, 0.5))}},
-	track:  Finish{Shadows: []core.BoxShadow{Inner(0, 1, 2, Paper(0.08))}},
-	knob:   Finish{Shadows: []core.BoxShadow{Inner(0, 1, 0, core.RGB(0xffffff)), Shadow(0, 1, 4, 0, Paper(0.28))}},
-	pill: Finish{Background: core.RGB(0xffffff), Gradients: grad(0xffffff, 0xf7f5f0),
-		Shadows: []core.BoxShadow{Inner(0, 1, 0, core.RGB(0xffffff)), Shadow(0, 1, 1, 0, Paper(0.06)), Shadow(0, 5, 12, -6, Paper(0.18))}, Border: Paper(0.14)},
-	chip: Finish{Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.65)), Inner(0, -1, 0, Paper(0.04))}},
-	glass: Finish{Background: core.RGBA(0xfbfaf7, 0.66), Gradients: gradA(White(0.472), White(0.227)),
-		Shadows: []core.BoxShadow{Inner(0, 1, 0, White(0.9)), Shadow(0, -6, 20, 0, Paper(0.06))}, Border: Paper(0.07), Backdrop: []core.Filter{core.Blur(20)}},
-	menu: Finish{Background: core.RGBA(0xffffff, 0.84), Gradients: gradA(White(0.497), White(0.287), White(0.217)),
-		Shadows: []core.BoxShadow{Inner(0, 1, 0, core.RGB(0xffffff)), Inner(0, -1, 0, Paper(0.05)), Shadow(0, 12, 32, 0, Paper(0.12))}, Border: Paper(0.08), Backdrop: []core.Filter{core.Blur(24)}},
+	raised: Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.07)))},
+	knob:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.2)))},
+	pill:   Finish{Background: core.RGB(0xfefefd), Border: core.RGB(0xfefefd), Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.14)))},
+	glass: Finish{Background: core.RGBA(0xfcfbf9, 0.92), Border: core.RGB(0xdeded5),
+		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(20)}},
+	menu: Finish{Background: core.RGBA(0xfcfbf9, 0.92), Border: core.RGB(0xdeded5),
+		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(24)}},
 }
 
 // Tone names a color role for badges, figures and meters.
@@ -376,9 +366,9 @@ const Mono = core.FontMonospace
 
 // Corner radii.
 const (
-	RadiusCard    core.Points = 16
-	RadiusInset   core.Points = 12
-	RadiusControl core.Points = 10
+	RadiusCard    core.Points = 12
+	RadiusInset   core.Points = 8
+	RadiusControl core.Points = 8
 )
 
 // The motion every control shares: quick, slightly springy.
@@ -387,6 +377,7 @@ var (
 	SettleSpring = core.SpringConfig{Stiffness: 320, Damping: 30}
 	EaseOutCubic = core.Easing{Kind: core.EasingCubic, Mode: core.EaseModeOut}
 	enterTiming  = core.TimingConfig{Duration: 420 * time.Millisecond, Easing: EaseOutCubic}
+	switchTiming = core.TimingConfig{Duration: 200 * time.Millisecond, Easing: core.Easing{Kind: core.EasingCubic, Mode: core.EaseModeInOut}}
 )
 
 // Spring and Timing start an animation of v on the platform.

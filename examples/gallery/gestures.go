@@ -210,7 +210,7 @@ func touchPad(cx *core.Scope) core.Node {
 		}, StyleFunc: centered(cx, 150), Children: []core.Node{
 			dots(cx),
 			core.Show{When: func() bool { return len(fingers.Get()) == 0 }, Then: func(*core.Scope) core.Node {
-				return ui.Text(ui.Hint(cx, tr.GestTouchHereTryTwoFingers(), tr.GestPressAndDragHereWith()), 14, ui.Regular, colors.Muted)
+				return ui.Text(ui.Hint(cx, tr.GestTouchHereTryTwoFingers(), tr.GestPressAndDragHereWith()), 13, ui.Regular, colors.Muted)
 			}},
 			core.Each(fingers.Get, func(f finger) int { return f.id }, func(cx *core.Scope, f func() finger, _ func() int) core.Node {
 				colors := ui.ColorsOf(cx)
@@ -282,7 +282,7 @@ func pressEvents(cx *core.Scope) core.Node {
 				return fin.Light().Over(core.Style{Height: core.Pt(64), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Light(),
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Opacity: core.Alpha(0.55)}})
 			},
-			Children: []core.Node{ui.Text(ui.Hint(cx, tr.GestTapHoldOrSlideOff(), tr.GestClickHoldOrSlideOff()), 15, ui.Semibold, colors.OnLight)}},
+			Children: []core.Node{ui.Text(ui.Hint(cx, tr.GestTapHoldOrSlideOff(), tr.GestClickHoldOrSlideOff()), 13, ui.Semibold, colors.OnLight)}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 6}, Children: chips},
 		core.Text{ContentFunc: func() string {
 			if l := log.Get(); len(l) > 0 {
@@ -297,14 +297,14 @@ func pressEvents(cx *core.Scope) core.Node {
 					return fin.Raised().Over(core.Style{FlexGrow: 1, Height: core.Pt(56), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Raised(),
 						BorderWidth: 1, BorderColor: colors.Border(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 2, Active: &core.Style{Background: colors.Border()}})
 				},
-				Children: []core.Node{ui.Text(tr.GestRipple(), 14, ui.Regular, colors.Text), ui.Text(tr.GestLongPressAfter250Ms(), 12, ui.Regular, colors.Faint)}},
+				Children: []core.Node{ui.Text(tr.GestRipple(), 13, ui.Regular, colors.Text), ui.Text(tr.GestLongPressAfter250Ms(), 12, ui.Regular, colors.Faint)}},
 			core.View{Role: core.RoleButton, Label: tr.GestStar(), OnPress: func(core.PressEvent) { fire("borderless") },
 				Android:  core.AndroidViewProps{Ripple: &core.Ripple{Borderless: true, Radius: 40}},
 				Style:    core.Style{Width: core.Pt(56), Height: core.Pt(56), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Opacity: core.Alpha(0.4)}},
 				Children: []core.Node{ui.Icon(ui.IconStar, 24, colors.Warn)}},
 		}},
 		core.Text{Content: tr.GestPressableTextDimmedWhilePressed(), OnPress: func(core.PressEvent) { fire("text") }, Role: core.RoleLink,
-			Style: core.Style{AlignSelf: core.AlignStart, FontSize: 15, Padding: core.Symmetric(12, 0)}, StyleFunc: ui.Colored(colors.Accent)},
+			Style: core.Style{AlignSelf: core.AlignStart, FontSize: 13, Padding: core.Symmetric(12, 0)}, StyleFunc: ui.Colored(colors.Accent)},
 	}}
 }
 
@@ -360,7 +360,7 @@ func pointerEventsCard(cx *core.Scope) core.Node {
 				core.View{StyleFunc: func() core.Style {
 					return core.Style{FlexGrow: 1, CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: tints.Up(), BorderWidth: 1, BorderColor: colors.Up(),
 						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}
-				}, Children: []core.Node{ui.Text(tr.GestButtonUnderAnOverlay(), 15, ui.Semibold, colors.Up)}},
+				}, Children: []core.Node{ui.Text(tr.GestButtonUnderAnOverlay(), 13, ui.Semibold, colors.Up)}},
 			}},
 			core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
 				Children: []core.Node{core.Canvas{Style: core.Style{FlexGrow: 1}, Draw: func(d *core.Drawing, size core.Size) {
@@ -402,7 +402,7 @@ func hover(cx *core.Scope) core.Node {
 				}
 				p := at.Get()
 				return tr.GestPointerAt(fmt.Sprintf("%.0f, %.0f", p.X, p.Y))
-			}, 14, ui.Regular, colors.Muted)}},
+			}, 13, ui.Regular, colors.Muted)}},
 		ui.APILine{Label: tr.GestInMoveAndOut(), Names: "OnHoverIn · OnHoverMove · OnHoverOut"},
 	}}
 }
@@ -430,7 +430,7 @@ func fileDrop(cx *core.Scope) core.Node {
 					return tr.GestReleaseToDrop()
 				}
 				return ui.Hint(cx, tr.GestDesktopsAndTheWebTake(), tr.GestDropFilesHere())
-			}, 14, ui.Regular, colors.Muted)}},
+			}, 13, ui.Regular, colors.Muted)}},
 		core.Text{TestID: "dropped", ContentFunc: func() string {
 			uris := dropped.Get()
 			if len(uris) == 0 {
@@ -481,7 +481,7 @@ func accessibleRows(cx *core.Scope) core.Node {
 					}
 					return ui.IconTile{Icon: it.icon, Size: 34}
 				}),
-				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{ui.Text(it.label, 15, ui.Regular, colors.Text), ui.Text(it.hint, 12, ui.Regular, colors.Muted)}},
+				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{ui.Text(it.label, 13, ui.Regular, colors.Text), ui.Text(it.hint, 12, ui.Regular, colors.Muted)}},
 				core.Text{Content: "button", Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 			}}}})
 	}

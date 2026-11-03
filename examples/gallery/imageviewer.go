@@ -155,7 +155,7 @@ func imageViewer(cx *core.Scope, image func() textview.Image, onClose func()) co
 						return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0),
 							Padding: core.Edges{Left: 24, Right: 24, Top: 32, Bottom: env.SafeArea().Bottom + 20}}
 					}, Children: []core.Node{core.Text{ContentFunc: func() string { return shown.Get().Alt },
-						Style: core.Style{FontSize: 14, LineHeight: 20, TextAlign: core.TextAlignCenter, Color: ui.White(0.85)}}}}
+						Style: core.Style{FontSize: 13, LineHeight: 20, TextAlign: core.TextAlignCenter, Color: ui.White(0.85)}}}}
 				}},
 				core.View{StyleFunc: func() core.Style {
 					a := env.SafeArea()

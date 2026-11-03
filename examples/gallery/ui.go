@@ -247,12 +247,12 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 			StyleFunc: func() core.Style {
 				return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 			},
-			Children: []core.Node{ui.Icon(ui.IconBack, 18, tint), ui.Text(tr.UiBack(), 14, ui.Medium, tint)},
+			Children: []core.Node{ui.Icon(ui.IconBack, 18, tint), ui.Text(tr.UiBack(), 13, ui.Medium, tint)},
 		}
 	}})
 	center := p.center
 	if center == nil {
-		title := ui.Text(p.title, 17, ui.Semibold, colors.Text)
+		title := ui.Text(p.title, 15, ui.Semibold, colors.Text)
 		title.MaxLines, title.Role, title.Style.FlexGrow, title.Style.FlexShrink = 1, core.RoleHeader, 1, 1
 		center = title
 	}

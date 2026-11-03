@@ -91,7 +91,7 @@ func (l menuLook) item(cx *core.Scope, p itemProps) core.Node {
 	s := l.rowStyle()
 	s.Disabled = &core.Style{Opacity: core.Alpha(0.35)}
 	states := func() core.Style { return core.Style{Hover: itemHovered(cx), Active: itemPressed(cx)} }
-	children := []core.Node{core.Text{ContentFunc: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: ui.Colored(fg)}}
+	children := []core.Node{core.Text{ContentFunc: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(fg)}}
 	if p.note != "" {
 		children = append(children, ui.API{Text: p.note})
 	}
@@ -127,10 +127,10 @@ func (l menuLook) submenu(cx *core.Scope, name string, disabled bool, children .
 	back.Gap = 6
 	return base.Submenu{Disabled: func() bool { return disabled }, Label: name,
 		Trigger: core.View{Style: row, StyleFunc: func() core.Style { return core.Style{Hover: itemHovered(cx), Active: itemPressed(cx)} }, Children: []core.Node{
-			core.Text{Content: name, Style: core.Style{FlexGrow: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: name, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Icon(ui.IconChevron, 14, colors.Faint),
 		}},
-		Back:     core.View{Style: back, StyleFunc: func() core.Style { return core.Style{Active: itemPressed(cx)} }, Children: []core.Node{ui.Icon(ui.IconBack, 14, colors.Accent), ui.Text(name, 14, ui.Semibold, colors.Accent)}},
+		Back:     core.View{Style: back, StyleFunc: func() core.Style { return core.Style{Active: itemPressed(cx)} }, Children: []core.Node{ui.Icon(ui.IconBack, 14, colors.Accent), ui.Text(name, 13, ui.Semibold, colors.Accent)}},
 		Children: children}
 }
 
@@ -154,7 +154,7 @@ func chip(cx *core.Scope, label func() string, name ui.IconName) core.Node {
 	if name != "" {
 		children = append(children, ui.Icon(name, 14, colors.Muted))
 	}
-	children = append(children, ui.Textf(label, 14, ui.Medium, colors.Text))
+	children = append(children, ui.Textf(label, 13, ui.Medium, colors.Text))
 	return core.View{StyleFunc: func() core.Style {
 		return fin.Raised().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, AlignSelf: core.AlignStart,
 			Padding: core.Symmetric(0, 12), Height: core.Pt(34), JustifyContent: core.JustifyCenter, CornerRadius: ui.RadiusControl, Background: colors.Raised(),
@@ -400,7 +400,7 @@ func menusDemo(cx *core.Scope) core.Node {
 										}
 										return ui.Icon(ui.IconText, 16, colors.Muted)
 									}),
-									core.Text{ContentFunc: func() string { return file().name }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
+									core.Text{ContentFunc: func() string { return file().name }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 									base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
 										Label: tr.MenusActionsFor() + core.Untracked(cx, file).name,
 										Trigger: core.View{Tooltip: core.Text{Content: tr.MenusMoreActions()}, HitSlop: core.All(8),
@@ -508,7 +508,7 @@ func menusDemo(cx *core.Scope) core.Node {
 				},
 				OnPress:       func(e core.PressEvent) { show(e.PagePosition) },
 				OnContextMenu: func(e core.ContextMenuEvent) { show(e.PagePosition) },
-				Children:      []core.Node{ui.Text(ui.Hint(cx, tr.MenusPressHere(), tr.MenusRightClickOrPressHere()), 14, ui.Regular, colors.Muted)}},
+				Children:      []core.Node{ui.Text(ui.Hint(cx, tr.MenusPressHere(), tr.MenusRightClickOrPressHere()), 13, ui.Regular, colors.Muted)}},
 			ui.Caption{LabelFunc: chosen.Get},
 		}}
 	}

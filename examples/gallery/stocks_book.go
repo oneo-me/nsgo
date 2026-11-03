@@ -151,14 +151,14 @@ func levelRow(cx *core.Scope, s *stock, lvl func() (level, bool), total func() f
 			return "–"
 		}, StyleFunc: func() core.Style {
 			l, _ := lvl()
-			return core.Style{FlexGrow: 1, FontSize: 14, FontVariant: core.FontTabularNums, Color: toneOf(cx, l.price-s.quote.Get().prevClose)}
+			return core.Style{FlexGrow: 1, FontSize: 13, FontVariant: core.FontTabularNums, Color: toneOf(cx, l.price-s.quote.Get().prevClose)}
 		}},
 		core.Text{ContentFunc: func() string {
 			if l, ok := lvl(); ok {
 				return compactNumber(l.size)
 			}
 			return ""
-		}, Style: core.Style{Width: core.Pt(64), TextAlign: core.TextAlignEnd, FontSize: 14, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
+		}, Style: core.Style{Width: core.Pt(64), TextAlign: core.TextAlignEnd, FontSize: 13, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Text)},
 		core.Text{ContentFunc: func() string { return compactNumber(total()) }, Style: core.Style{Width: core.Pt(64), Padding: core.Edges{Right: 6}, TextAlign: core.TextAlignEnd, FontSize: 12, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Faint)},
 	}}
 }

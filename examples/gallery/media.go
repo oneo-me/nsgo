@@ -127,7 +127,7 @@ func site(cx *core.Scope) core.Node {
 				}
 				return core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 3.5, Background: c()}
 			}},
-			core.Text{ContentFunc: host, MaxLines: 1, EllipsizeMode: core.EllipsizeMiddle, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Muted)},
+			core.Text{ContentFunc: host, MaxLines: 1, EllipsizeMode: core.EllipsizeMiddle, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		}},
 		core.WebView{Ref: ref, Source: core.WebSrc("https://go.dev"), TestID: "site", StyleFunc: func() core.Style { return mediaFrame(cx, 340, colors.Inset()) }, OnNavigationStateChange: state.Set},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{

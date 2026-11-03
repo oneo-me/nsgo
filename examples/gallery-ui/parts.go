@@ -97,14 +97,14 @@ type SwitchRow struct {
 // Render implements core.Node.
 func (r SwitchRow) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	titles := []core.Node{Text(r.Label, 15, Regular, colors.Text)}
+	titles := []core.Node{Text(r.Label, 13, Regular, colors.Text)}
 	if r.Code != "" {
 		titles = append(titles, API{Text: r.Code})
 	}
 	if r.Note != "" {
-		titles = append(titles, Text(r.Note, 13, Regular, colors.Faint))
+		titles = append(titles, Text(r.Note, 12, Regular, colors.Muted))
 	}
-	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(44)}, Children: []core.Node{
+	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(rowHeight(cx))}, Children: []core.Node{
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles},
 		Switch{Checked: r.Checked, OnChange: r.OnChange, Label: r.Label},
 	}}
@@ -122,15 +122,18 @@ type LinkRow struct {
 // Render implements core.Node.
 func (r LinkRow) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	row := Press{OnPress: r.OnPress, Scale: 0.98, Label: r.Title, Children: []core.Node{
-		core.View{Style: core.Style{MinHeight: core.Pt(52), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Symmetric(6, 8)}, Children: []core.Node{
-			IconTile{Icon: r.Icon, Size: 32},
-			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-				Text(r.Title, 15, Medium, colors.Text),
-				core.Text{Content: r.Note, MaxLines: 1, Style: core.Style{FontSize: 12, FontFamily: Mono}, StyleFunc: Colored(colors.Faint)},
+	row := Press{OnPress: r.OnPress, Scale: 0.98, Label: r.Title, Style: core.Style{Group: "row", Cursor: core.CursorPointer}, Children: []core.Node{
+		core.View{Style: core.Style{MinHeight: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Symmetric(6, 8), CornerRadius: RadiusControl},
+			StyleFunc: func() core.Style {
+				return core.Style{GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}}}
+			}, Children: []core.Node{
+				IconTile{Icon: r.Icon, Size: 28},
+				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
+					Text(r.Title, 13, Medium, colors.Text),
+					core.Text{Content: r.Note, MaxLines: 1, Style: core.Style{FontSize: 12, FontFamily: Mono}, StyleFunc: Colored(colors.Faint)},
+				}},
+				Icon(IconChevron, 14, colors.Faint),
 			}},
-			Icon(IconChevron, 14, colors.Faint),
-		}},
 	}}
 	if !r.Divided {
 		return row
@@ -140,9 +143,9 @@ func (r LinkRow) Render(cx *core.Scope) core.Node {
 	}, Children: []core.Node{row}}
 }
 
-// Tool is a toolbar's button, 32 pt tall: its Text after a dot that
-// lights with the accent while On, when On is set. Label is what
-// assistive technology reads.
+// Tool is Onevra's toolbar button, a raised capsule 28 pt tall: its Text
+// after a dot that lights with the accent while On, when On is set. Label
+// is what assistive technology reads.
 type Tool struct {
 	Label, Text string
 	On          func() bool
@@ -163,23 +166,24 @@ func (t Tool) Render(cx *core.Scope) core.Node {
 			return core.Style{Width: core.Pt(6), Height: core.Pt(6), CornerRadius: 3, Background: c()}
 		}})
 	}
-	children = append(children, Text(t.Text, 13, Semibold, colors.Text))
+	children = append(children, Text(t.Text, 13, Regular, colors.Text))
 	return base.Button{OnPress: func(core.PressEvent) { t.OnPress() }, Selected: t.On, Label: t.Label,
 		StyleFunc: func() core.Style {
-			return fin.Raised().Over(core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Border(),
-				Padding: core.Symmetric(0, 12), Background: colors.Raised(), Transition: core.Transition{Duration: 150e6}, Active: &core.Style{Transform: core.Transform{Scale: 0.97}}})
+			return fin.Raised().Over(core.Style{Height: core.Pt(ButtonHeight), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8,
+				CornerRadius: ButtonHeight / 2, BorderWidth: 1, BorderColor: Alpha(colors.Border(), 0.8), Cursor: core.CursorPointer,
+				Padding: core.Symmetric(0, 12), Background: colors.Raised(), Transition: core.Transition{Duration: 150e6},
+				Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}})
 		},
 		Children: children}
 }
 
-// Input is a base.Input styled as a field of its own, 44 pt tall, its
-// rim the accent while focused.
+// Input is a base.Input styled as Onevra's text box, 28 pt tall: its rim
+// darker under the pointer and the accent while focused.
 type Input struct{ Input base.Input }
 
 // Render implements core.Node.
 func (f Input) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	fin := FinOf(cx)
 	in := f.Input
 	focused := core.NewSignal(cx, false)
 	onFocus, onBlur := in.OnFocus, in.OnBlur
@@ -200,9 +204,10 @@ func (f Input) Render(cx *core.Scope) core.Node {
 		if focused.Get() {
 			border = colors.Accent
 		}
-		return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(44),
-			Padding: core.Symmetric(0, 12), FontSize: 15, Color: colors.Text(), Background: colors.Field(),
-			BorderWidth: 1, BorderColor: border(), CornerRadius: RadiusControl})
+		return core.Style{PlaceholderColor: colors.Faint(), SelectionColor: cx.Palette().Selection, Height: core.Pt(ButtonHeight),
+			Padding: core.Symmetric(0, 10), FontSize: 13, Color: colors.Text(), Background: colors.Field(),
+			BorderWidth: 1, BorderColor: border(), CornerRadius: RadiusControl,
+			Hover: &core.Style{BorderColor: Mix(colors.FieldBorder(), colors.Text(), 0.25)}}
 	}
 	return in
 }

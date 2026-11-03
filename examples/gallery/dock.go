@@ -118,7 +118,7 @@ func editorPanel(cx *core.Scope, panel string) core.Node {
 						Background: colors.AccentFill(), Transition: core.Transition{Duration: 150e6}, Active: &core.Style{Transform: core.Transform{Scale: 0.97}}})
 				},
 				Children: []core.Node{ui.Icon(ui.IconPlus, 14, colors.OnAccent), ui.Text(tr.DockEdit2(), 13, ui.Semibold, colors.OnAccent)}},
-			ui.Textf(func() string { return tr.DockEdits(dockTitle(tr, panel), edits.Get()) }, 14, ui.Regular, colors.Muted),
+			ui.Textf(func() string { return tr.DockEdits(dockTitle(tr, panel), edits.Get()) }, 13, ui.Regular, colors.Muted),
 		}},
 		core.View{Style: core.Style{Gap: 4}, Children: lines},
 	}}
@@ -157,7 +157,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 		return core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12, Padding: core.All(16)}, Children: []core.Node{
 			ui.IconTile{Icon: ui.IconSpark, Size: 40},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 2}, Children: []core.Node{
-				ui.Text(tr.DockLivePreview(), 14, ui.Semibold, colors.Text), ui.Text(tr.DockFollowsTheEditorBesideIt(), 12, ui.Regular, colors.Muted)}},
+				ui.Text(tr.DockLivePreview(), 13, ui.Semibold, colors.Text), ui.Text(tr.DockFollowsTheEditorBesideIt(), 12, ui.Regular, colors.Muted)}},
 		}}
 	}
 	monoText := func(s string, c func() core.Color) core.Node {
@@ -386,7 +386,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			return core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 4}, Children: []core.Node{
-				ui.Text(tr.DockEveryEditorIsClosed(), 14, ui.Semibold, colors.Text), ui.Text(tr.DockResetBringsThemBack(), 12, ui.Regular, colors.Muted)}}
+				ui.Text(tr.DockEveryEditorIsClosed(), 13, ui.Semibold, colors.Text), ui.Text(tr.DockResetBringsThemBack(), 12, ui.Regular, colors.Muted)}}
 		},
 	}
 }

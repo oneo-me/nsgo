@@ -43,9 +43,9 @@ func edgeEffects(cx *core.Scope) core.Node {
 			Children: []core.Node{
 				core.View{Style: core.Style{Width: core.Pt(36), Height: core.Pt(36), CornerRadius: 18, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 					StyleFunc: func() core.Style { return core.Style{Background: colors.Surface()} },
-					Children:  []core.Node{ui.Text(m.from[:1], 15, ui.Semibold, m.tone.Shade(cx))}},
+					Children:  []core.Node{ui.Text(m.from[:1], 13, ui.Semibold, m.tone.Shade(cx))}},
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-					ui.Text(m.from, 15, ui.Semibold, onTone),
+					ui.Text(m.from, 13, ui.Semibold, onTone),
 					ui.Text(fmt.Sprintf("%s · %d", m.line, i+1), 13, ui.Regular, onTone),
 				}},
 			}})

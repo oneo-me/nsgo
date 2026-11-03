@@ -115,7 +115,7 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 	w := core.Pct(25)
 	return core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 16, Bottom: 14, Left: 16}, Gap: 10}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			core.Text{Content: s.name, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Muted)},
+			core.Text{Content: s.name, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			ui.Text(sectorName, 13, ui.Regular, colors.Faint),
 			liveDot(cx, m.running.Get, 6),
 			ui.Tabular(ui.Textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, ui.Regular, colors.Muted)),
@@ -342,7 +342,7 @@ func stockView(cx *core.Scope, m *market, s *stock, wide bool, split func() bool
 				Padding: core.Edges{Top: 10, Right: 16, Bottom: 10 + env.SafeArea().Bottom, Left: 16}, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: fin.Glass().Border}})
 		}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(92), Gap: 1}, Children: []core.Node{
-				ui.Tabular(ui.Textf(func() string { return priceText(s.quote.Get().last, s) }, 15, ui.Semibold, colors.Text)),
+				ui.Tabular(ui.Textf(func() string { return priceText(s.quote.Get().last, s) }, 13, ui.Semibold, colors.Text)),
 				core.Text{ContentFunc: func() string { return signed(percentOf(s.quote.Get()), 2) + "%" }, StyleFunc: func() core.Style {
 					return core.Style{FontSize: 12, FontVariant: core.FontTabularNums, Color: toneOf(cx, percentOf(s.quote.Get()))}
 				}},

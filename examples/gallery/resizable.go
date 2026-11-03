@@ -22,7 +22,7 @@ func roundSizes(sizes []core.Points) string {
 // pane is a panel's title and what it does.
 func pane(cx *core.Scope, title, detail string, size func() string) core.Node {
 	colors := ui.ColorsOf(cx)
-	children := []core.Node{ui.Text(title, 14, ui.Semibold, colors.Text), ui.Text(detail, 12, ui.Regular, colors.Muted)}
+	children := []core.Node{ui.Text(title, 13, ui.Semibold, colors.Text), ui.Text(detail, 12, ui.Regular, colors.Muted)}
 	if size != nil {
 		children = append(children, core.Text{ContentFunc: size, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)})
 	}
@@ -50,7 +50,7 @@ func resizableDemo(cx *core.Scope) core.Node {
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			core.Text{Content: ui.Hint(cx, tr.ResizableDragALineBetweenTwo(), tr.ResizableDragALineBetweenTwo2()),
-				Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14}, StyleFunc: ui.Colored(colors.Muted)},
+				Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			base.Button{OnPress: func(core.PressEvent) { toggled(shown) }, Selected: shown.Get, Label: tr.ResizableConsole(),
 				StyleFunc: func() core.Style {
 					return core.Style{CornerRadius: 6, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.Symmetric(6, 12),

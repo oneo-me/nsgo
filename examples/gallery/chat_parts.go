@@ -88,7 +88,7 @@ func fileChip(cx *core.Scope, f fileRef, onRemove func()) core.Node {
 		core.View{Style: core.Style{Width: core.Pt(30), Height: core.Pt(30), CornerRadius: 8, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: ui.Filled(func() core.Color { return ui.ToneDanger.Tint(cx) }), Children: []core.Node{ui.Icon(ui.IconFileText, 16, colors.Danger)}},
 		core.View{Style: core.Style{Gap: 1}, Children: []core.Node{
-			core.Text{Content: f.name, MaxLines: 1, Style: core.Style{FontSize: 14, MaxWidth: core.Pt(170)}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: f.name, MaxLines: 1, Style: core.Style{FontSize: 13, MaxWidth: core.Pt(170)}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Text(strings.ToUpper(fileKind(f.name))+" · "+f.size, 12, ui.Regular, colors.Muted),
 		}},
 	}
@@ -149,7 +149,7 @@ func toolCard(cx *core.Scope, t func() chatTool) core.Node {
 					Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border()})
 			}, Children: []core.Node{ui.Icon(name, 16, colors.Text)}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{
-				ui.Text(title, 14, ui.Semibold, colors.Text),
+				ui.Text(title, 13, ui.Semibold, colors.Text),
 				core.Text{Content: detail, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
 			core.Dynamic(func(*core.Scope) core.Node {
@@ -184,7 +184,7 @@ func toolBody(cx *core.Scope, t func() chatTool) core.Node {
 						StyleFunc: ui.Filled(func() core.Color { return s.tone.Tint(cx) }),
 						Children:  []core.Node{ui.Text(strings.ToUpper(s.site[:1]), 12, ui.Bold, s.tone.Shade(cx))}},
 					core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{
-						core.Text{Content: s.title, MaxLines: 1, Style: core.Style{FontSize: 14}, StyleFunc: ui.Colored(colors.Text)},
+						core.Text{Content: s.title, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 						ui.Text(s.site, 12, ui.Regular, colors.Faint),
 					}},
 					ui.Text(itoa(i+1), 12, ui.Regular, colors.Faint),
@@ -210,7 +210,7 @@ func toolBody(cx *core.Scope, t func() chatTool) core.Node {
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd, Gap: 12}, Children: []core.Node{
 					core.Text{Content: fmt.Sprintf("%d°", w.temp), Style: core.Style{FontSize: 40, FontWeight: ui.Semibold, LetterSpacing: -1}, StyleFunc: ui.Colored(colors.Text)},
 					core.View{Style: core.Style{FlexGrow: 1, Padding: core.Edges{Bottom: 7}, Gap: 2}, Children: []core.Node{
-						ui.Text(w.condition, 15, ui.Regular, colors.Text),
+						ui.Text(w.condition, 13, ui.Regular, colors.Text),
 						ui.Text(fmt.Sprintf("H %d°  L %d°", w.high, w.low), 13, ui.Regular, colors.Muted),
 					}},
 				}},
@@ -235,7 +235,7 @@ func toolBody(cx *core.Scope, t func() chatTool) core.Node {
 					Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}}
 			}, Children: []core.Node{
 				ui.Text(tr.ChatOutput(), 13, ui.Regular, colors.Muted),
-				core.Text{Content: c.output, Selectable: core.SelectableOn, Style: core.Style{FlexGrow: 1, FontFamily: ui.Mono, FontSize: 14}, StyleFunc: ui.Colored(colors.Up)},
+				core.Text{Content: c.output, Selectable: core.SelectableOn, Style: core.Style{FlexGrow: 1, FontFamily: ui.Mono, FontSize: 13}, StyleFunc: ui.Colored(colors.Up)},
 				ui.Text(fmt.Sprintf("exit 0 · %d ms", c.ms), 12, ui.Regular, colors.Faint),
 			}}
 		}},
@@ -252,7 +252,7 @@ func errorRow(cx *core.Scope, message func() string, onRetry func()) core.Node {
 			Background: ui.ToneDanger.Tint(cx), BorderWidth: 1, BorderColor: ui.Alpha(colors.Danger(), 0.32)}
 	}, Children: []core.Node{
 		ui.Icon(ui.IconAlert, 18, colors.Danger),
-		core.Text{ContentFunc: message, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 14, LineHeight: 19}, StyleFunc: ui.Colored(colors.Text)},
+		core.Text{ContentFunc: message, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, LineHeight: 19}, StyleFunc: ui.Colored(colors.Text)},
 		ui.Press{OnPress: onRetry, Label: tr.ChatRetry(), Children: []core.Node{core.View{StyleFunc: func() core.Style {
 			return fin.Light().Over(core.Style{Height: core.Pt(36), Padding: core.Symmetric(0, 14), CornerRadius: 18,
 				Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Background: colors.Light()})
@@ -277,10 +277,10 @@ func avatar(cx *core.Scope) core.Node {
 func chatStyles(cx *core.Scope) func(textview.Part) core.Style {
 	return partStyles(cx, func() textview.Styles {
 		s := readingParts(cx)
-		s[textview.PartRoot] = core.Style{Gap: 12, FontSize: 15, LineHeight: 22, Color: ui.ColorsOf(cx).Text()}
+		s[textview.PartRoot] = core.Style{Gap: 12, FontSize: 13, LineHeight: 22, Color: ui.ColorsOf(cx).Text()}
 		s[textview.PartHeading1] = core.Style{FontSize: 20, LineHeight: 26}
-		s[textview.PartHeading2] = core.Style{FontSize: 17, LineHeight: 22}
-		s[textview.PartHeading3] = core.Style{FontSize: 15, LineHeight: 22}
+		s[textview.PartHeading2] = core.Style{FontSize: 15, LineHeight: 22}
+		s[textview.PartHeading3] = core.Style{FontSize: 13, LineHeight: 22}
 		return s
 	})
 }

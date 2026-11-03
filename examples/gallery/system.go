@@ -126,7 +126,7 @@ func statusBarCard(cx *core.Scope) core.Node {
 		ui.Segmented[core.StatusBarStyle]{Options: []ui.Option[core.StatusBarStyle]{{Value: core.StatusBarLight, Label: tr.SystemLight()}, {Value: core.StatusBarDark, Label: tr.SystemDark()}, {Value: core.StatusBarAuto, Label: tr.SystemAuto()}}, Value: foreground, OnChange: pick},
 		ui.Row{Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
-				ui.Text(tr.SystemHidden(), 15, ui.Regular, colors.Text),
+				ui.Text(tr.SystemHidden(), 13, ui.Regular, colors.Text),
 				core.Text{ContentFunc: func() string { return fmt.Sprintf("Foreground: %s", names[foreground()]) }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
 			ui.Switch{Checked: hidden.Get, OnChange: hidden.Set, Label: tr.SystemHideTheStatusBar()},
@@ -178,7 +178,7 @@ func actionRow(cx *core.Scope, first bool, name ui.IconName, tint func() core.Co
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 			}, Children: []core.Node{ui.Icon(name, 17, tint)}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1, Padding: core.Symmetric(8, 0)}, Children: []core.Node{
-				ui.Text(title, 15, ui.Regular, colors.Text), ui.Text(detail, 12, ui.Regular, colors.Muted)}},
+				ui.Text(title, 13, ui.Regular, colors.Text), ui.Text(detail, 12, ui.Regular, colors.Muted)}},
 			ui.Icon(ui.IconChevron, 14, colors.Faint),
 		}},
 	}}
@@ -358,8 +358,8 @@ func shortcuts(cx *core.Scope) core.Node {
 	var rows []core.Node
 	for i, k := range keys {
 		rows = append(rows, ui.Row{First: i == 0, Children: []core.Node{
-			core.Text{Content: k[0], Style: core.Style{Width: core.Pt(120), FontSize: 14, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Accent)},
-			core.Text{Content: k[1], Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+			core.Text{Content: k[0], Style: core.Style{Width: core.Pt(120), FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Accent)},
+			core.Text{Content: k[1], Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 		}})
 	}
 	return ui.Card{Title: tr.SystemKeyboardShortcuts(), Description: tr.SystemScopeOnkeyDesktopsAndHardware(), Children: []core.Node{
@@ -372,7 +372,7 @@ func shortcuts(cx *core.Scope) core.Node {
 				return ui.Badge{Text: tr.SystemLightOff()}
 			}),
 			core.View{Style: fill, Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-				ui.Textf(func() string { return tr.SystemCounted(n.Get()) }, 14, ui.Regular, colors.Muted),
+				ui.Textf(func() string { return tr.SystemCounted(n.Get()) }, 13, ui.Regular, colors.Muted),
 				ui.Spacer{},
 				ui.Textf(func() string {
 					if l := last.Get(); l != "" {
@@ -441,7 +441,7 @@ func networkCard(cx *core.Scope) core.Node {
 			for i, p := range ps {
 				rows = append(rows, ui.Appear{Index: i, Children: []core.Node{ui.Row{First: i == 0, Children: []core.Node{
 					ui.Text(fmt.Sprintf("#%d", p.ID), 13, ui.Regular, colors.Accent),
-					core.Text{Content: p.Title, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+					core.Text{Content: p.Title, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 				}}}})
 			}
 			return core.View{Children: rows}
@@ -541,7 +541,7 @@ func windowCard(cx *core.Scope) core.Node {
 			return core.Style{Height: core.Pt(52), CornerRadius: ui.RadiusControl, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
 				Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifySpaceBetween, Padding: core.Symmetric(0, 14)}
 		}, Children: []core.Node{
-			ui.Text(tr.SystemDragTheWindowFromHere(), 14, ui.Regular, colors.Muted),
+			ui.Text(tr.SystemDragTheWindowFromHere(), 13, ui.Regular, colors.Muted),
 			core.View{Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff}, Children: []core.Node{small(tr.SystemStillPressable(), func() {})}},
 		}},
 		ui.Button{Text: tr.SystemQuit(), Variant: ui.ButtonSecondary, Color: colors.Danger, OnPress: cx.Quit},

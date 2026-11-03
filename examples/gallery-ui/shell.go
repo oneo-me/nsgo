@@ -288,7 +288,7 @@ type Sidebar struct {
 func (s Sidebar) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	desk := core.Untracked(cx, cx.Env().Desktop)
-	height := core.Points(30)
+	height := core.Points(32)
 	if !desk {
 		height = 40
 	}
@@ -370,7 +370,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 	for _, sec := range s.Sections {
 		var nodes []core.Node
 		if sec.Title != "" {
-			title := Text(sec.Title, 11, Semibold, colors.Muted)
+			title := Text(sec.Title, 11, Bold, colors.Muted)
 			title.Role, title.MaxLines = core.RoleHeader, 1
 			title.Style.Padding = core.Edges{Top: 4, Right: 8, Bottom: 2, Left: 8}
 			nodes = append(nodes, title)
@@ -394,7 +394,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 	return core.Scroll{Ref: scroll, TestID: s.TestID, Style: fillRest, OnScroll: func(e core.ScrollEvent) { offset = e.Offset.Y },
 		Children: []core.Node{core.View{Ref: content, OnPress: func(core.PressEvent) {},
 			OnFocus: func() { focused.Set(true) }, OnBlur: func() { focused.Set(false) },
-			Style: core.Style{Padding: core.Edges{Right: 8, Bottom: 8, Left: 8}, Gap: 12}, Children: append(sections, keys)}}}
+			Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 12, Left: 12}, Gap: 12}, Children: append(sections, keys)}}}
 }
 
 // IconButton is a square icon button with no fill at rest, Size points

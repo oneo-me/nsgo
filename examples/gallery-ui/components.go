@@ -52,8 +52,8 @@ func (n Note) Render(cx *core.Scope) core.Node {
 	if fn == nil {
 		fn = constant(n.Text)
 	}
-	t := Textf(fn, 13, Regular, ColorsOf(cx).Muted)
-	t.Style.LineHeight = 18
+	t := Textf(fn, 12, Regular, ColorsOf(cx).Muted)
+	t.Style.LineHeight = 17
 	return t
 }
 
@@ -149,17 +149,17 @@ func (t IconTile) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	size := t.Size
 	return core.View{StyleFunc: func() core.Style {
-		return FinOf(cx).Raised().Over(core.Style{
-			Width: core.Pt(size), Height: core.Pt(size), CornerRadius: size * 0.3, BorderCurve: core.BorderCurveContinuous,
+		return core.Style{
+			Width: core.Pt(size), Height: core.Pt(size), CornerRadius: size * 0.25, BorderCurve: core.BorderCurveContinuous,
 			BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Raised(),
 			AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-		})
-	}, Children: []core.Node{Icon(t.Icon, size*0.5, colors.Text)}}
+		}
+	}, Children: []core.Node{Icon(t.Icon, size*0.5, colors.Accent)}}
 }
 
-// Card is a demo's container: a header on the page of a Title, a
-// Description and Actions at its end, then a surface holding the Children
-// and an optional Footer.
+// Card is a demo's container: a header on the page of a bold Title, a
+// Description and Actions at its end, then a flat bordered surface holding
+// the Children and an optional Footer.
 type Card struct {
 	Title       string
 	Description string
@@ -175,15 +175,12 @@ type Card struct {
 	Style core.Style
 }
 
-// CardStyle is a card's surface, read in a StyleFunc.
+// CardStyle is a card's surface, flat as Onevra's are, read in a
+// StyleFunc.
 func CardStyle(cx *core.Scope) core.Style {
 	colors := ColorsOf(cx)
-	shadows := []core.BoxShadow{Shadow(0, 1, 2, 0, Paper(0.04)), Shadow(0, 4, 12, -4, Paper(0.08))}
-	if cx.Dark() {
-		shadows = []core.BoxShadow{Shadow(0, 1, 2, 0, Black(0.3)), Shadow(0, 6, 16, -6, Black(0.45))}
-	}
-	return core.Style{Background: colors.Surface(), CornerRadius: RadiusInset, BorderCurve: core.BorderCurveContinuous,
-		BorderWidth: 1, BorderColor: colors.Border(), Shadows: shadows}
+	return core.Style{Background: colors.Surface(), CornerRadius: RadiusCard, BorderCurve: core.BorderCurveContinuous,
+		BorderWidth: 1, BorderColor: colors.Border()}
 }
 
 // Render implements core.Node.
@@ -191,7 +188,7 @@ func (c Card) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	var head core.Node
 	if c.Title != "" {
-		title := Text(c.Title, 13, Semibold, colors.Text)
+		title := Text(c.Title, 13, Bold, colors.Text)
 		title.Role = core.RoleHeader
 		titles := []core.Node{title}
 		if c.Description != "" {
@@ -205,8 +202,8 @@ func (c Card) Render(cx *core.Scope) core.Node {
 	return panel(cx, panelProps{head: head, flush: c.Flush, children: c.Children, footer: c.Footer, style: c.Style})
 }
 
-// Section is a titled card of controls, the demos' sections: a heading
-// with a quieter Note, or what NoteFunc returns, after it.
+// Section is a titled card of controls, the demos' sections: a bold
+// heading with a quieter Note, or what NoteFunc returns, after it.
 type Section struct {
 	Title    string
 	Note     string
@@ -221,7 +218,7 @@ func (s Section) Render(cx *core.Scope) core.Node {
 	if note == nil {
 		note = constant(s.Note)
 	}
-	heading := Text(s.Title, 13, Semibold, colors.Text)
+	heading := Text(s.Title, 13, Bold, colors.Text)
 	heading.Role, heading.Style.FlexGrow, heading.Style.FlexShrink = core.RoleHeader, 1, 1
 	head := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(0, 2)},
 		Children: []core.Node{heading, Textf(note, 12, Regular, colors.Faint)}}
@@ -242,7 +239,7 @@ type panelProps struct {
 // inner corners.
 func panel(cx *core.Scope, p panelProps) core.Node {
 	colors := ColorsOf(cx)
-	const inner = RadiusInset - 1
+	const inner = RadiusCard - 1
 	var parts []core.Node
 	if len(p.children) > 0 {
 		body := core.Style{Gap: 12, Padding: core.All(14)}
@@ -271,8 +268,8 @@ func panel(cx *core.Scope, p panelProps) core.Node {
 	return core.View{TestID: p.testID, Style: core.Style{Gap: 8}, Children: []core.Node{p.head, surface}}
 }
 
-// Inset is the darker surface demos set apart. Zero Gap and Padding take
-// 10 pt gaps and 12 pt padding, unless Exact takes them as given.
+// Inset is the recessed surface demos set apart. Zero Gap and Padding
+// take 10 pt gaps and 12 pt padding, unless Exact takes them as given.
 type Inset struct {
 	Gap, Padding core.Points
 	Exact        bool
@@ -293,7 +290,7 @@ func (in Inset) Render(cx *core.Scope) core.Node {
 	}
 	return core.View{StyleFunc: func() core.Style {
 		return core.Style{Background: colors.Inset(), CornerRadius: RadiusInset, BorderCurve: core.BorderCurveContinuous,
-			BorderWidth: 1, BorderColor: colors.Line(), Padding: core.All(padding), Gap: gap}
+			Padding: core.All(padding), Gap: gap}
 	}, Children: in.Children}
 }
 
@@ -312,14 +309,14 @@ func (c Caption) Render(cx *core.Scope) core.Node {
 	if label == nil {
 		label = constant(c.Label)
 	}
-	l := Textf(label, 14, Regular, colors.Muted)
+	l := Textf(label, 13, Regular, colors.Muted)
 	if c.Note == nil && c.LabelFunc != nil {
 		return l
 	}
 	l.Style.FlexGrow, l.Style.FlexShrink = 1, 1
 	children := []core.Node{l}
 	if c.Note != nil {
-		children = append(children, Textf(c.Note, 13, Regular, colors.Faint))
+		children = append(children, Textf(c.Note, 12, Regular, colors.Faint))
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: children}
 }
@@ -347,9 +344,9 @@ func (f Figure) Render(cx *core.Scope) core.Node {
 		StyleFunc: func() core.Style { return core.Style{Color: colors.Text()} }}
 }
 
-// Badge is a small label in a tinted capsule: Text, or what TextFunc
-// returns, in Tone, or the one ToneFunc returns. Outline draws only its
-// rim.
+// Badge is a small label in a tinted capsule, as Onevra's: Text, or what
+// TextFunc returns, in Tone, or the one ToneFunc returns. Outline draws
+// only its rim.
 type Badge struct {
 	Text     string
 	TextFunc func() string
@@ -360,6 +357,7 @@ type Badge struct {
 
 // Render implements core.Node.
 func (b Badge) Render(cx *core.Scope) core.Node {
+	colors := ColorsOf(cx)
 	label := b.TextFunc
 	if label == nil {
 		label = constant(b.Text)
@@ -368,14 +366,25 @@ func (b Badge) Render(cx *core.Scope) core.Node {
 	if tone == nil {
 		tone = func() Tone { return b.Tone }
 	}
-	fg := func() core.Color { return tone().Foreground(cx)() }
-	return core.View{Style: core.Style{Padding: core.Symmetric(0, 10), Height: core.Pt(26), CornerRadius: 13, JustifyContent: core.JustifyCenter, BorderWidth: 1},
+	// A tinted tone's text leans to the text's color, and its rim to the
+	// page's, as Onevra's badges do.
+	fg := func() core.Color {
+		if tone() == ToneNeutral {
+			return colors.Text()
+		}
+		return Mix(tone().Color(cx), colors.Text(), 0.3)
+	}
+	return core.View{Style: core.Style{Padding: core.Symmetric(2, 8), AlignSelf: core.AlignStart, CornerRadius: 12, JustifyContent: core.JustifyCenter, BorderWidth: 1},
 		StyleFunc: func() core.Style {
+			t := tone()
 			if b.Outline {
-				return core.Style{BorderColor: tone().Color(cx)}
+				return core.Style{BorderColor: Mix(colors.Background(), t.Color(cx), 0.5)}
 			}
-			return core.Style{Background: tone().Tint(cx), Shadows: FinOf(cx).Chip().Shadows, BorderColor: Alpha(fg(), 0.1)}
-		}, Children: []core.Node{Textf(label, 12, Medium, fg)}}
+			if t == ToneNeutral {
+				return core.Style{Background: colors.Surface(), BorderColor: colors.Border()}
+			}
+			return core.Style{Background: Mix(colors.Background(), t.Color(cx), 0.12), BorderColor: Mix(colors.Background(), t.Color(cx), 0.3)}
+		}, Children: []core.Node{Textf(label, 11, Medium, fg)}}
 }
 
 // Stat is a label above a value in its Tone, for grids of figures.
@@ -390,7 +399,7 @@ type Stat struct {
 func (s Stat) Render(cx *core.Scope) core.Node {
 	return core.View{Style: core.Style{Width: s.Width, Gap: 3, Padding: core.Symmetric(4, 0)}, Children: []core.Node{
 		Text(s.Label, 12, Regular, ColorsOf(cx).Muted),
-		Textf(s.Value, 15, Regular, s.Tone.Foreground(cx)),
+		Textf(s.Value, 14, Medium, s.Tone.Foreground(cx)),
 	}}
 }
 
@@ -425,14 +434,14 @@ type Row struct {
 // Render implements core.Node.
 func (r Row) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	v := core.View{Style: core.Style{MinHeight: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10},
+	v := core.View{Style: core.Style{MinHeight: core.Pt(rowHeight(cx)), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10},
 		StyleFunc: func() core.Style {
 			var s core.Style
 			if !r.First {
 				s.Borders, s.BorderColors = core.Edges{Top: 1}, core.EdgeColors{Top: colors.Line()}
 			}
 			if r.OnPress != nil {
-				s.Active = &core.Style{Background: colors.Raised()}
+				s.Active = &core.Style{Background: colors.Hover()}
 			}
 			return s
 		}, Children: r.Children}
@@ -442,24 +451,46 @@ func (r Row) Render(cx *core.Scope) core.Node {
 	return v
 }
 
-// ButtonVariant is a button's look.
+// ButtonVariant is a button's look, one of Onevra's.
 type ButtonVariant uint8
 
 const (
-	// ButtonPrimary is light on the dark page and dark on the light one:
-	// the main action. It is the default.
+	// ButtonPrimary is the inverse of the page: the text's color with the
+	// page's on it. It is the default.
 	ButtonPrimary ButtonVariant = iota
-	// ButtonSecondary is a raised, bordered action.
+	// ButtonSecondary is a quiet fill of the text's color.
 	ButtonSecondary
-	// ButtonAccent is filled with the accent.
+	// ButtonAccent is filled with the accent, Onevra's primary.
 	ButtonAccent
-	// ButtonGhost is only a rim.
+	// ButtonGhost is only a rim, Onevra's outline.
 	ButtonGhost
 )
 
-// Button is a button 44 pt tall, or 32 pt Small for pointer-sized
-// surfaces: Text with an optional leading Icon. base.Button gives the
-// behavior; the look is the gallery's.
+// touch reports whether the device takes touches rather than a pointer:
+// its controls keep their look and take presses 44 pt across.
+func touch(cx *core.Scope) bool { return !core.Untracked(cx, cx.Env().Desktop) }
+
+// rowHeight is a row's height: 36 pt, or 44 pt for a finger.
+func rowHeight(cx *core.Scope) core.Points {
+	if touch(cx) {
+		return 44
+	}
+	return 36
+}
+
+// slop is the room to press that a control height points tall needs on
+// every side for a finger, as a margin it takes back.
+func slop(cx *core.Scope, height core.Points) core.Style {
+	if !touch(cx) || height >= 44 {
+		return core.Style{}
+	}
+	d := (44 - height) / 2
+	return core.Style{Margin: core.Symmetric(-d, 0), Padding: core.Symmetric(d, 0)}
+}
+
+// Button is Onevra's button, 28 pt tall: Text with an optional leading
+// Icon. base.Button gives the behavior; the look is the gallery's. Small
+// is the same button, kept for callers that ask for a dense one.
 type Button struct {
 	Text    string
 	Variant ButtonVariant
@@ -474,15 +505,12 @@ type Button struct {
 	OnPress func()
 }
 
+// ButtonHeight is a button's height.
+const ButtonHeight core.Points = 28
+
 // Render implements core.Node.
 func (b Button) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	scale := core.NewAnimatedValue(cx, 1)
-	r := RadiusControl
-	height, padding, gap, font, iconSize := core.Points(44), core.Points(18), core.Points(8), core.Points(15), core.Points(16)
-	if b.Small {
-		r, height, padding, gap, font, iconSize = 8, 32, 12, 6, 13, 14
-	}
 	fg := colors.Text
 	switch {
 	case b.Color != nil:
@@ -492,46 +520,52 @@ func (b Button) Render(cx *core.Scope) core.Node {
 	case b.Variant == ButtonAccent:
 		fg = colors.OnAccent
 	}
-	face := func() core.Style {
-		fin := FinOf(cx)
-		bg, f := colors.Raised(), fin.Raised()
+	// fill is the face at rest, under the pointer and held down.
+	fill := func() (rest, hover, pressed, border core.Color) {
+		text := colors.Text()
 		switch {
 		case b.Color != nil:
-			bg, f = b.Color(), Finish{}
+			c := b.Color()
+			return c, Mix(c, Black(1), 0.12), Mix(c, Black(1), 0.25), c
 		case b.Variant == ButtonPrimary:
-			bg, f = colors.Light(), fin.Light()
+			c := colors.Light()
+			return c, Mix(c, colors.Background(), 0.12), Mix(c, colors.Background(), 0.25), c
 		case b.Variant == ButtonAccent:
-			bg, f = colors.AccentFill(), fin.Accent()
-		case b.Variant == ButtonGhost:
-			bg, f = 0, Finish{}
+			p := cx.Palette()
+			return p.Accent, p.AccentHover, p.AccentPressed, p.Accent
+		case b.Variant == ButtonSecondary:
+			// Over the card it sits on, as Onevra's is over the page.
+			bg := colors.Surface()
+			return Mix(bg, text, 0.08), Mix(bg, text, 0.12), Mix(bg, text, 0.18), Mix(bg, text, 0.08)
 		}
-		s := f.Over(core.Style{Height: core.Pt(height), Padding: core.Symmetric(0, padding), CornerRadius: r, BorderCurve: core.BorderCurveContinuous,
-			Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: gap, Background: bg})
-		if b.Variant == ButtonSecondary || b.Variant == ButtonGhost {
-			s.BorderWidth, s.BorderColor = 1, colors.Border()
-		}
-		return s
+		return 0, colors.Hover(), colors.Pressed(), colors.Border()
 	}
 	var children []core.Node
 	if b.Icon != "" {
-		children = append(children, Icon(b.Icon, iconSize, fg))
+		children = append(children, Icon(b.Icon, 14, fg))
 	}
-	children = append(children, Text(b.Text, font, Semibold, fg))
+	children = append(children, Text(b.Text, 13, Regular, fg))
+	face := func() core.Style {
+		rest, hover, pressed, border := fill()
+		return core.Style{Height: core.Pt(ButtonHeight), Padding: core.Symmetric(0, 14), CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
+			Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 6,
+			Background: rest, BorderWidth: 1, BorderColor: border,
+			GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: hover}, Active: &core.Style{Background: pressed}}}
+	}
 	return base.Button{
-		OnPress:     func(core.PressEvent) { b.OnPress() },
-		OnPressDown: func(core.PressEvent) { Spring(cx, scale, 0.97, pressSpring) },
-		OnPressUp:   func(core.PressEvent) { Spring(cx, scale, 1, pressSpring) },
-		Disabled:    b.Disabled, Label: b.Text, TestID: b.TestID,
-		Style: core.Style{FlexGrow: b.Flex, FlexShrink: b.Flex, CornerRadius: r, Animated: &core.AnimatedStyle{Scale: scale},
-			Hover: &core.Style{Opacity: core.Alpha(0.88)}, Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
+		OnPress:  func(core.PressEvent) { b.OnPress() },
+		Disabled: b.Disabled, Label: b.Text, TestID: b.TestID,
+		Style: core.Style{Group: "button", FlexGrow: b.Flex, FlexShrink: b.Flex, CornerRadius: RadiusControl, Cursor: core.CursorPointer,
+			Disabled: &core.Style{Opacity: core.Alpha(0.4)}}.Merge(slop(cx, ButtonHeight)),
 		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
 		Children:  []core.Node{core.View{StyleFunc: face, Children: children}},
 	}
 }
 
-// RoundButton is a round icon button, 44 pt unless Size says otherwise:
-// light as ButtonPrimary, the default, and dark otherwise. IconFunc and
-// LabelFunc replace Icon and Label.
+// RoundButton is a round icon button, 32 pt unless Size says otherwise:
+// the inverse of the page as ButtonPrimary, the default, and Onevra's
+// raised toolbar face otherwise. IconFunc and LabelFunc replace Icon and
+// Label.
 type RoundButton struct {
 	Icon      IconName
 	IconFunc  func() IconName
@@ -547,7 +581,7 @@ func (b RoundButton) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	size := b.Size
 	if size == 0 {
-		size = 44
+		size = 32
 	}
 	name := b.IconFunc
 	if name == nil {
@@ -565,21 +599,21 @@ func (b RoundButton) Render(cx *core.Scope) core.Node {
 	face := func() core.Style {
 		s := core.Style{Width: core.Pt(size), Height: core.Pt(size), CornerRadius: size / 2, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}
 		if primary {
-			s = FinOf(cx).Light().Over(s)
 			s.Background = colors.Light()
 		} else {
-			s = FinOf(cx).Pill().Over(s)
-			s.BorderWidth = 1
+			s = FinOf(cx).Raised().Over(s)
+			s.Background, s.BorderWidth, s.BorderColor = colors.Raised(), 1, colors.Border()
+			s.GroupStyle = &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 		}
 		return s
 	}
-	return Press{OnPress: b.OnPress, Scale: 0.92, LabelFunc: label,
-		Children: []core.Node{core.View{StyleFunc: face, Children: []core.Node{IconOf(name, size*0.42, fg)}}}}
+	return Press{OnPress: b.OnPress, Scale: 0.96, LabelFunc: label, HitSlop: max(0, (44-size)/2), Style: core.Style{Group: "button", Cursor: core.CursorPointer},
+		Children: []core.Node{core.View{StyleFunc: face, Children: []core.Node{IconOf(name, size*0.45, fg)}}}}
 }
 
-// Switch is an on and off switch in the gallery's look: base.Switch, the
-// knob springing across and the track changing color on the platform.
-// Label is what assistive technology reads.
+// Switch is an on and off switch in Onevra's look: base.Switch, the knob
+// sliding across and the track changing color on the platform. Label is
+// what assistive technology reads.
 type Switch struct {
 	Checked  func() bool
 	OnChange func(bool)
@@ -589,34 +623,36 @@ type Switch struct {
 // Render implements core.Node.
 func (s Switch) Render(cx *core.Scope) core.Node {
 	look := NewSwitchLook(cx, s.Checked, false)
-	// 8 pt more to press on every side, without taking more room.
+	// More to press on every side, without taking more room.
 	return base.Switch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label,
-		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8)},
+		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8), Cursor: core.CursorPointer},
 		TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb}
 }
 
-// SwitchLook is the gallery's switch as the styles of base.Switch's
-// parts: a track that turns orange and a knob that springs across, both
-// on the platform.
+// SwitchLook is Onevra's switch as the styles of base.Switch's parts: a
+// track that turns to the accent and a capsule knob that slides across,
+// both on the platform.
 type SwitchLook struct {
 	Track, Thumb func() core.Style
 }
 
-// NewSwitchLook makes a switch's look, 50 × 30 or, small, 38 × 22 for
-// pointer-sized rows. on is the value the app owns; the knob follows it.
+// NewSwitchLook makes a switch's look, 40 × 20 or, small, 30 × 16 for
+// dense rows. on is the value the app owns; the knob follows it.
 func NewSwitchLook(cx *core.Scope, on func() bool, small bool) SwitchLook {
 	colors := ColorsOf(cx)
-	width, height, pad, knob := core.Points(50), core.Points(30), core.Points(3), core.Points(22)
+	width, height, pad := core.Points(40), core.Points(20), core.Points(2)
 	if small {
-		width, height, pad, knob = 38, 22, 2, 16
+		width, height = 30, 16
 	}
+	knobH := height - 2*pad
+	knobW := knobH * 1.3
 	start := 0.0
 	shown := core.Untracked(cx, on)
 	if shown {
 		start = 1
 	}
 	t := core.NewAnimatedValue(cx, start)
-	x := Lerp(t, 0, float64(width-2-2*pad-knob))
+	x := Lerp(t, 0, float64(width-2*pad-knobW))
 	env := cx.Env()
 	cx.Effect(func() {
 		next := on()
@@ -632,27 +668,16 @@ func NewSwitchLook(cx *core.Scope, on func() bool, small bool) SwitchLook {
 		if env.ReduceMotion() {
 			t.Set(to)
 		} else {
-			Spring(cx, t, to, SettleSpring)
+			Timing(cx, t, to, switchTiming)
 		}
 	})
 	track := func() core.Style {
-		return FinOf(cx).Track().Over(core.Style{Width: core.Pt(width), Height: core.Pt(height), CornerRadius: height / 2, Padding: core.All(pad),
-			BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Track(),
-			Animated: &core.AnimatedStyle{Background: core.Interpolate(t, core.Interpolation{Input: []float64{0, 1}, Colors: []core.Color{colors.Track(), colors.AccentFill()}})}})
+		return core.Style{Width: core.Pt(width), Height: core.Pt(height), CornerRadius: height / 2, Padding: core.All(pad), Background: colors.Track(),
+			Animated: &core.AnimatedStyle{Background: core.Interpolate(t, core.Interpolation{Input: []float64{0, 1}, Colors: []core.Color{colors.Track(), colors.AccentFill()}})}}
 	}
 	return SwitchLook{Track: track, Thumb: func() core.Style {
-		knobShadows := FinOf(cx).Knob().Shadows
-		if cx.Dark() {
-			knobShadows = []core.BoxShadow{Inner(0, 1, 0, White(0.2)), Shadow(0, 1, 3, 0, Black(0.4))}
-		}
-		bg := colors.Knob()
-		if on() {
-			bg = colors.OnAccent()
-		}
-		return core.Style{Width: core.Pt(knob), Height: core.Pt(knob), CornerRadius: knob / 2, Background: bg,
-			// A drop of glass: a specular top over the knob's color.
-			Gradients: gradA(White(0.202), White(0.098)), Shadows: knobShadows,
-			Animated: &core.AnimatedStyle{TranslateX: x}}
+		return core.Style{Width: core.Pt(knobW), Height: core.Pt(knobH), CornerRadius: knobH / 2, Background: colors.Knob(),
+			Shadows: FinOf(cx).Knob().Shadows, Animated: &core.AnimatedStyle{TranslateX: x}}
 	}}
 }
 
@@ -664,9 +689,10 @@ type Option[T comparable] struct {
 	Count func() int
 }
 
-// Segmented is equal segments with an indicator that springs to the
-// selected one, 40 pt tall or 32 pt Small: base.Tabs, a tab per segment,
-// in the gallery's look.
+// Segmented is Onevra's segmented control: equal segments in a recessed
+// capsule, the selected one on a raised thumb that slides to it, 28 pt
+// tall: base.Tabs, a tab per segment, in the gallery's look. Small is the
+// same control.
 type Segmented[T comparable] struct {
 	Options  []Option[T]
 	Value    func() T
@@ -688,60 +714,52 @@ func (sc Segmented[T]) Render(cx *core.Scope) core.Node {
 		}
 		return 0
 	}
-	// The track's border and padding: the indicator is placed inside the
-	// border, so the segments share what is left of the measured width
-	// after both.
-	const border, pad = 1, 3
-	segment := func() core.Points { return (width.Get() - 2*(border+pad)) / core.Points(max(1, len(sc.Options))) }
-	height := core.Points(40)
-	if sc.Small {
-		height = 32
-	}
-	// The first placement jumps; later ones spring.
+	// The track's padding: the segments share what is left of the
+	// measured width.
+	const pad = 2
+	segment := func() core.Points { return (width.Get() - 2*pad) / core.Points(max(1, len(sc.Options))) }
+	height := ButtonHeight + 2*pad
+	// The first placement jumps; later ones slide.
 	placed := false
+	env := cx.Env()
 	cx.Effect(func() {
 		to := float64(core.Points(index()) * segment())
 		if width.Get() <= 0 {
 			return
 		}
-		if placed {
+		if placed && !env.ReduceMotion() {
 			Spring(cx, x, to, SettleSpring)
 		} else {
 			x.Set(to)
 		}
 		placed = true
 	})
-	font := core.Points(14)
-	if sc.Small {
-		font = 13
-	}
 	children := []core.Node{core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
 		return FinOf(cx).Pill().Over(core.Style{Position: core.Absolute, Top: core.Pt(pad), Left: core.Pt(pad), Bottom: core.Pt(pad),
-			Width: core.Pt(max(0, segment())), CornerRadius: (height - 2*(border+pad)) / 2, BorderWidth: 1,
+			Width: core.Pt(max(0, segment())), CornerRadius: (height - 2*pad) / 2,
 			Animated: &core.AnimatedStyle{TranslateX: x}})
 	}}}
 	for _, o := range sc.Options {
 		selected := func() bool { return sc.Value() == o.Value }
 		label := []core.Node{core.Text{Content: o.Label, MaxLines: 1, StyleFunc: func() core.Style {
-			c := colors.Muted()
+			c, w := Alpha(colors.Text(), 0.6), Regular
 			if selected() {
-				c = colors.Text()
+				c, w = colors.Text(), Semibold
 			}
-			return core.Style{FontSize: font, FontWeight: Medium, Color: c}
+			return core.Style{FontSize: 13, FontWeight: w, Color: c}
 		}}}
 		if o.Count != nil {
 			label = append(label, Textf(func() string { return fmt.Sprint(o.Count()) }, 12, Regular, colors.Faint))
 		}
 		children = append(children, base.Tab{Selected: selected, OnPress: func(core.PressEvent) { sc.OnChange(o.Value) }, Label: o.Label,
-			Style:    core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 5},
+			Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 5,
+				Padding: core.Symmetric(0, 12), Cursor: core.CursorPointer},
 			Children: label})
 	}
 	return core.View{OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) }, Children: []core.Node{base.Tabs{
-		Style: core.Style{Height: core.Pt(height), Direction: core.Row, Padding: core.All(pad), CornerRadius: height / 2, BorderWidth: border},
-		StyleFunc: func() core.Style {
-			return core.Style{Background: colors.Inset(), Shadows: FinOf(cx).Track().Shadows, BorderColor: colors.Border()}
-		},
-		Children: children,
+		Style:     core.Style{Height: core.Pt(height), Direction: core.Row, Padding: core.All(pad), CornerRadius: height / 2},
+		StyleFunc: func() core.Style { return core.Style{Background: Alpha(colors.Text(), 0.06)} },
+		Children:  children,
 	}}}
 }
 
@@ -763,7 +781,7 @@ func (m Meter) Render(cx *core.Scope) core.Node {
 		children = append(children, core.View{Style: core.Style{Position: core.Absolute, Left: core.Pct(float32(m.Marker * 100)), Top: core.Pt(-3),
 			Width: core.Pt(2), Height: core.Pt(12), CornerRadius: 1}, StyleFunc: Filled(colors.Text)})
 	}
-	return core.View{Style: core.Style{Height: core.Pt(6), CornerRadius: 3}, StyleFunc: Filled(colors.Raised), Children: children}
+	return core.View{Style: core.Style{Height: core.Pt(6), CornerRadius: 3}, StyleFunc: Filled(colors.Border), Children: children}
 }
 
 // Sheet is a panel at the bottom over a dimmed backdrop while Open
@@ -792,19 +810,19 @@ func (s Sheet) Render(cx *core.Scope) core.Node {
 				CornerRadii: core.Corners{TopLeft: 16, TopRight: 16}, Background: colors.Surface()}
 		},
 		Children: append([]core.Node{core.View{Style: core.Style{Width: core.Pt(36), Height: core.Pt(5), CornerRadius: 3, AlignSelf: core.AlignCenter},
-			StyleFunc: Filled(colors.Raised)}}, s.Children...),
+			StyleFunc: Filled(colors.Border)}}, s.Children...),
 	}
 }
 
-// Field is an Input in its well: the field's color, a rim and an inner
-// shadow; the input's own style sets its size and padding.
+// Field is an Input in Onevra's text box: the field's color and a rim;
+// the input's own style sets its size and padding.
 type Field struct{ Input base.Input }
 
 // Render implements core.Node.
 func (f Field) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	in := f.Input
-	in.Style = core.Style{FontSize: 15}.Merge(in.Style)
+	in.Style = core.Style{FontSize: 13}.Merge(in.Style)
 	own := in.StyleFunc
 	in.StyleFunc = func() core.Style {
 		s := core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent()}
@@ -814,7 +832,7 @@ func (f Field) Render(cx *core.Scope) core.Node {
 		return s
 	}
 	return core.View{StyleFunc: func() core.Style {
-		return FinOf(cx).Field().Over(core.Style{CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
-			BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()})
+		return core.Style{CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
+			BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()}
 	}, Children: []core.Node{in}}
 }
