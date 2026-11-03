@@ -57,7 +57,7 @@ func largeTitlePage(cx *core.Scope) base.NavPage {
 		}})
 	}
 	s := screen(cx, tr.NavLargeTitle(), nil, navPage(cx, tr.NavIosTheTitleShrinksInto(),
-		ui.Card{Flush: true, Children: []core.Node{ui.Inset{Exact: true, Children: rows}}}))
+		ui.Card{Flush: true, Children: rows}))
 	s.HeaderLargeTitle = true
 	return s
 }
@@ -167,7 +167,7 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 		Children: []core.Node{navPage(cx, ui.Hint(cx,
 			tr.NavTypeSomethingThenGoBack(),
 			tr.NavTypeSomethingThenGoBack2()),
-			ui.Card{Icon: ui.IconForm, Title: tr.NavDraft(), Description: "NoPopOnBack + OnBackPress", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+			ui.Card{Title: tr.NavDraft(), Description: "NoPopOnBack + OnBackPress", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				if draft.Get() != "" {
 					return ui.Badge{Text: tr.NavGuarded(), Tone: ui.ToneWarn}
 				}
@@ -229,7 +229,7 @@ func deepPage(depth int) func(cx *core.Scope) base.NavPage {
 		}
 		title := tr.NavLevel(depth)
 		return screen(cx, title, nil, navPage(cx, tr.NavEveryPushIsANative(),
-			ui.Card{Icon: ui.IconNav, Title: title, Description: tr.NavDeep(depth), Children: []core.Node{
+			ui.Card{Title: title, Description: tr.NavDeep(depth), Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, Children: levels},
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 					ui.Button{Text: tr.NavDeeper(), Icon: ui.IconPlus, Flex: 1, OnPress: func() { shell.push(deepPage(depth + 1)) }},
@@ -321,45 +321,42 @@ func navigationDemo(cx *core.Scope) core.Node {
 
 	stack := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Icon: ui.IconNav, Title: tr.NavNativeStack(), Description: tr.NavHeadersTransitionsTheSafeArea(), Actions: []core.Node{ui.Badge{Text: platformName}}, Children: []core.Node{insetsRow(cx)}}
+		return ui.Card{Title: tr.NavNativeStack(), Description: tr.NavHeadersTransitionsTheSafeArea(), Actions: []core.Node{ui.Badge{Text: platformName}}, Children: []core.Node{insetsRow(cx)}}
 	}
 	pages := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return ui.Card{Title: tr.NavPages(), Description: tr.NavScreenOptionsPushedWithNav(), Flush: true, Children: []core.Node{
-			ui.Inset{Exact: true, Children: []core.Node{
-				ui.LinkRow{Icon: ui.IconText, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconStyles, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconStar, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconMobile, Title: tr.NavNoHeader(), Note: "HeaderHidden", OnPress: func() { shell.push(headerlessPage) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconGestures, Title: tr.NavNoSwipeBack(), Note: "NoPopOnSwipe", OnPress: func() { shell.push(lockedPage) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconForm, Title: tr.NavUnsavedChanges(), Note: "NoPopOnBack + OnBackPress", OnPress: func() { shell.push(unsavedPage) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconLists, Title: tr.NavADeepStack(), Note: "Push / PopToRoot", OnPress: func() { shell.push(deepPage(1)) }},
-			}},
+			ui.LinkRow{Icon: ui.IconText, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconStyles, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconStar, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconMobile, Title: tr.NavNoHeader(), Note: "HeaderHidden", OnPress: func() { shell.push(headerlessPage) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconGestures, Title: tr.NavNoSwipeBack(), Note: "NoPopOnSwipe", OnPress: func() { shell.push(lockedPage) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconForm, Title: tr.NavUnsavedChanges(), Note: "NoPopOnBack + OnBackPress", OnPress: func() { shell.push(unsavedPage) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconLists, Title: tr.NavADeepStack(), Note: "Push / PopToRoot", OnPress: func() { shell.push(deepPage(1)) }},
 		}}
 	}
 	modalsCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		fin := ui.FinOf(cx)
 		var tiles []core.Node
 		for _, m := range modals {
 			tiles = append(tiles, ui.Press{OnPress: func() { open.Set(m.key) }, Label: m.title, Style: core.Style{Width: core.Pct(48.5)}, Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
-					return fin.Inset().Over(core.Style{MinHeight: core.Pt(100), Padding: core.All(12), Gap: 12, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
-						Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Line()})
+					return core.Style{MinHeight: core.Pt(100), Padding: core.All(12), Gap: 12, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
+						Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Line()}
 				}, Children: []core.Node{
 					ui.IconTile{Icon: m.icon, Size: 32},
 					core.View{Style: core.Style{Gap: 2}, Children: []core.Node{ui.Text(m.title, 15, ui.Medium, colors.Text), ui.Text(m.note, 13, ui.Regular, colors.Faint)}},
 				}},
 			}})
 		}
-		return ui.Card{Title: tr.NavModals(), Description: tr.NavPresentationStylesAndTransitions(), Flush: true, Children: []core.Node{
+		return ui.Card{Title: tr.NavModals(), Description: tr.NavPresentationStylesAndTransitions(), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, JustifyContent: core.JustifySpaceBetween, RowGap: 8}, Children: tiles},
 		}}
 	}
 	backCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Icon: ui.IconSystem, Title: tr.NavBackButton(), Description: ui.Hint(cx, tr.NavOnbackpressTheBackButtonAnd(), tr.NavOnbackpressEscapeTheMouseS()), Actions: []core.Node{ui.Switch{Checked: intercept.Get, OnChange: intercept.Set, Label: tr.NavInterceptTheBackButton()}}, Children: []core.Node{
+		return ui.Card{Title: tr.NavBackButton(), Description: ui.Hint(cx, tr.NavOnbackpressTheBackButtonAnd(), tr.NavOnbackpressEscapeTheMouseS()), Actions: []core.Node{ui.Switch{Checked: intercept.Get, OnChange: intercept.Set, Label: tr.NavInterceptTheBackButton()}}, Children: []core.Node{
 			ui.Figure{Value: func() string { return itoa(backs.Get()) }, Note: func() string {
 				unit := "presses"
 				if backs.Get() == 1 {
@@ -428,7 +425,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 		}, Label: tr.NavADialog(), PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch},
 			Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, Background: ui.Black(0.62), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Padding: core.All(16)},
 				Children: []core.Node{core.View{Style: core.Style{AlignSelf: core.AlignStretch, MaxWidth: core.Pt(480), Animated: &core.AnimatedStyle{Opacity: pop, Scale: ui.Lerp(pop, 0.9, 1)}},
-					Children: []core.Node{ui.Card{Icon: ui.IconBell, Title: tr.NavADialog(), Description: "Animation: ModalFade", Children: []core.Node{
+					Children: []core.Node{ui.Card{Title: tr.NavADialog(), Description: "Animation: ModalFade", Children: []core.Node{
 						core.Text{Content: tr.NavADialogOwnsNoLook(),
 							Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 						core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{

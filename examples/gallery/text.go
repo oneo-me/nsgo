@@ -50,7 +50,7 @@ func linksCard(cx *core.Scope) core.Node {
 	set := func(s string) func(core.PressEvent) { return func(core.PressEvent) { tapped.Set(s) } }
 	b := bodyStyle
 	b.FontSize, b.LineHeight = 16, 25
-	return ui.Card{Icon: ui.IconText, Title: tr.TextSpansAndLinks(), Description: tr.TextSpansWithPressesOfTheir(), Children: []core.Node{
+	return ui.Card{Title: tr.TextSpansAndLinks(), Description: tr.TextSpansWithPressesOfTheir(), Children: []core.Node{
 		core.Text{OnPress: set(tr.TextTheSentenceNotALink()), Style: b, StyleFunc: bodyInk(cx), TestID: "links", Spans: []core.Span{
 			{Content: tr.TextByContinuingYouAgreeTo()},
 			{Content: tr.TextTermsOfService(), StyleFunc: linkStyle(cx), OnPress: set(tr.TextTermsOfService())},
@@ -62,6 +62,7 @@ func linksCard(cx *core.Scope) core.Node {
 			{Content: tr.TextToo(), Style: core.Style{FontWeight: ui.Bold}},
 			{Content: "."},
 		}},
+	}, Footer: []core.Node{
 		ui.Caption{Label: tr.TextPressed(), Note: tapped.Get},
 	}}
 }
@@ -74,7 +75,7 @@ func inlineCard(cx *core.Scope) core.Node {
 	likes := core.NewSignal(cx, 3)
 	b := bodyStyle
 	b.FontSize, b.LineHeight = 16, 28
-	return ui.Card{Icon: ui.IconImage, Title: tr.TextInlineViewsAndImages(), Description: tr.TextTheyWrapWithTheLine(), Children: []core.Node{
+	return ui.Card{Title: tr.TextInlineViewsAndImages(), Description: tr.TextTheyWrapWithTheLine(), Children: []core.Node{
 		core.Text{Style: b, StyleFunc: bodyInk(cx), Spans: []core.Span{
 			{Content: tr.TextMadeWith()},
 			{Attachment: core.Image{Source: core.ImageSource{Data: logoPNG}, Style: core.Style{Width: core.Pt(18), Height: core.Pt(18), CornerRadius: 5}}},
@@ -115,7 +116,7 @@ func fontsCard(cx *core.Scope) core.Node {
 		}
 		return ui.Paper(0.22)
 	}
-	return ui.Card{Icon: ui.IconStyles, Title: tr.TextType(), Description: tr.TextCustomFontsWeightsStylesSpacing(), Children: []core.Node{
+	return ui.Card{Title: tr.TextType(), Description: tr.TextCustomFontsWeightsStylesSpacing(), Children: []core.Node{
 		specimenRow(cx, tr.TextCustomFonts(), "nsgo.Fonts", true,
 			core.Text{Content: tr.TextCustomFonts(), Style: core.Style{FontFamily: "Pacifico", FontSize: 34, LineHeight: 52}, StyleFunc: ui.Colored(colors.Accent)},
 			core.Text{Spans: []core.Span{{Content: "Go Smallcaps "}, {Content: "and its italic", Style: core.Style{FontStyle: core.FontStyleItalic}}},
@@ -167,7 +168,7 @@ func scalingCard(cx *core.Scope) core.Node {
 	env := cx.Env()
 	b := bodyStyle
 	b.FontSize = 17
-	return ui.Card{Icon: ui.IconSearch, Title: tr.TextSystemTextSize(), Description: tr.TextEnvFontscaleAndItsLimits(), Actions: []core.Node{ui.Textf(func() string {
+	return ui.Card{Title: tr.TextSystemTextSize(), Description: tr.TextEnvFontscaleAndItsLimits(), Actions: []core.Node{ui.Textf(func() string {
 		s := env.FontScale()
 		if s == 0 {
 			s = 1
@@ -186,7 +187,7 @@ func truncationCard(cx *core.Scope) core.Node {
 	b := bodyStyle
 	centered := b
 	centered.TextAlign = core.TextAlignCenter
-	return ui.Card{Icon: ui.IconLists, Title: tr.TextTruncation(), Description: tr.TextMaxlinesAndEllipsizemode(), Children: []core.Node{
+	return ui.Card{Title: tr.TextTruncation(), Description: tr.TextMaxlinesAndEllipsizemode(), Children: []core.Node{
 		specimenRow(cx, tr.TextTwoLinesTail(), "MaxLines: 2", true, core.Text{Content: lorem, MaxLines: 2, Style: b, StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextOneLineHead(), "EllipsizeHead", false, core.Text{Content: lorem, MaxLines: 1, EllipsizeMode: core.EllipsizeHead, Style: b, StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextOneLineMiddle(), "EllipsizeMiddle", false, core.Text{Content: lorem, MaxLines: 1, EllipsizeMode: core.EllipsizeMiddle, Style: b, StyleFunc: bodyInk(cx)}),
@@ -204,7 +205,7 @@ const (
 func cjkCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	b := bodyStyle
-	return ui.Card{Icon: ui.IconText, Title: tr.TextChineseAndJapanese(), Description: tr.TextLinesBreakBetweenCharactersNever(), Children: []core.Node{
+	return ui.Card{Title: tr.TextChineseAndJapanese(), Description: tr.TextLinesBreakBetweenCharactersNever(), Children: []core.Node{
 		specimenRow(cx, tr.TextChineseParagraph(), "", true, core.Text{Content: chineseText, Style: b, StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextJapaneseKanaKanjiAndLatin(), "", false, core.Text{Content: japaneseText, Style: b, StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextTwoLinesTail(), "MaxLines: 2", false, core.Text{Content: chineseText, MaxLines: 2, Style: b, StyleFunc: bodyInk(cx)}),
@@ -217,7 +218,7 @@ func rtlTextCard(cx *core.Scope) core.Node {
 	b := bodyStyle
 	rtl := b
 	rtl.WritingDirection = core.WritingRTL
-	return ui.Card{Icon: ui.IconText, Title: tr.TextRightToLeft(), Description: tr.TextArabicAndHebrewMixedWith(), Children: []core.Node{
+	return ui.Card{Title: tr.TextRightToLeft(), Description: tr.TextArabicAndHebrewMixedWith(), Children: []core.Node{
 		specimenRow(cx, tr.TextArabicParagraph(), "WritingRTL", true, core.Text{Content: arabicText, Style: rtl, StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextArabicEnglishAndNumbersIn(), "", false, core.Text{Content: "تم شحن الطلب رقم 4521 عبر DHL في 12 مارس، والتسليم خلال 3 أيام.", Style: b, StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextHebrew(), "", false, core.Text{Content: "שלום! הגרסה 2.0 של NSGo זמינה עכשיו (גם ב-Linux).", Style: b, StyleFunc: bodyInk(cx)}),
@@ -230,7 +231,7 @@ func alignmentCard(cx *core.Scope) core.Node {
 	const sentence = "Short, aligned in its box"
 	const paragraph = "Justified text spreads the spaces of every line across the box, except on the last line of a paragraph, which stays at its start."
 	aligned := func(a core.TextAlign) core.Style { s := bodyStyle; s.TextAlign = a; return s }
-	return ui.Card{Icon: ui.IconLists, Title: tr.TextAlignment(), Description: tr.TextTextalignInLeftToRight(), Children: []core.Node{
+	return ui.Card{Title: tr.TextAlignment(), Description: tr.TextTextalignInLeftToRight(), Children: []core.Node{
 		specimenRow(cx, tr.TextStart(), "TextAlignStart", true, core.Text{Content: sentence, Style: aligned(core.TextAlignStart), StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextCenter(), "TextAlignCenter", false, core.Text{Content: sentence, Style: aligned(core.TextAlignCenter), StyleFunc: bodyInk(cx)}),
 		specimenRow(cx, tr.TextEnd(), "TextAlignEnd", false, core.Text{Content: sentence, Style: aligned(core.TextAlignEnd), StyleFunc: bodyInk(cx)}),
@@ -247,7 +248,7 @@ func selectionCard(cx *core.Scope) core.Node {
 	ink := func() core.Style {
 		return core.Style{Color: colors.Text(), SelectionColor: ui.Alpha(colors.Accent(), 0.35)}
 	}
-	return ui.Card{Icon: ui.IconText, Title: tr.TextSelection(), Description: ui.Hint(cx, tr.TextLongPressToSelect(), tr.TextDragOrDoubleOrTriple()), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Title: tr.TextSelection(), Description: ui.Hint(cx, tr.TextLongPressToSelect(), tr.TextDragOrDoubleOrTriple()), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		specimenRow(cx, tr.TextOnItsOwn(), "SelectableOn", true, core.Text{Content: tr.TextThisTextSelectsOnIts(), Selectable: core.SelectableOn, Style: b, StyleFunc: ink}),
 		specimenRow(cx, tr.TextAcrossTexts(), "View.Selectable", false,
 			core.View{Selectable: true, Style: core.Style{Gap: 8}, Children: []core.Node{

@@ -156,7 +156,7 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 		for i, c := range cards {
 			nodes = append(nodes, build(i, c))
 		}
-		body = core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 12, Bottom: bottom, Left: 12}, Gap: 12}, Children: nodes}
+		body = core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 12, Bottom: bottom, Left: 12}, Gap: 20}, Children: nodes}
 	} else {
 		// The cards are built once and move between the columns, which
 		// are built again when their number changes.
@@ -176,7 +176,7 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 							nodes = append(nodes, h.Place())
 						}
 					}
-					cols = append(cols, core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), Gap: 12}, Children: nodes})
+					cols = append(cols, core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), Gap: 20}, Children: nodes})
 				}
 				return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, Gap: 12,
 					Padding: core.Edges{Top: 16, Right: 16, Bottom: 32, Left: 16}, Width: core.Pct(100),

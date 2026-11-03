@@ -272,7 +272,7 @@ func formDemo(cx *core.Scope) core.Node {
 	keyboard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		modeName := map[core.KeyboardDismissMode]string{core.KeyboardDismissNone: "none", core.KeyboardDismissOnDrag: "on-drag", core.KeyboardDismissInteractive: "interactive"}
-		return ui.Card{Icon: ui.IconForm, Title: tr.FormKeyboard(), Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		return ui.Card{Title: tr.FormKeyboard(), Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			h := env.KeyboardHeight()
 			t := ui.ToneNeutral
 			if h > 0 {
@@ -282,6 +282,7 @@ func formDemo(cx *core.Scope) core.Node {
 		})}, Children: []core.Node{
 			ui.Segmented[core.KeyboardDismissMode]{Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: tr.FormNone()}, {Value: core.KeyboardDismissOnDrag, Label: tr.FormOnDrag()},
 				{Value: core.KeyboardDismissInteractive, Label: tr.FormInteractive()}}, Value: mode.Get, OnChange: mode.Set},
+		}, Footer: []core.Node{
 			ui.Caption{Label: ui.Hint(cx, tr.FormDragTheFormWithThe(), tr.FormDesktopsHaveNoOnScreen()), Note: func() string { return modeName[mode.Get()] }},
 		}}
 	}
@@ -387,7 +388,7 @@ func formDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		tints := ui.TintsOf(cx)
-		return ui.Card{Icon: ui.IconCheck, Title: tr.FormCreateTheAccount(), Description: tr.FormSubmittingChecksEveryField(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		return ui.Card{Title: tr.FormCreateTheAccount(), Description: tr.FormSubmittingChecksEveryField(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			r := result.Get()
 			switch {
 			case r.text == "":
@@ -418,10 +419,8 @@ func formDemo(cx *core.Scope) core.Node {
 	more := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return ui.Card{Title: tr.FormMoreKeyboards(), Description: tr.FormSheetsAndBarsThatRide(), Flush: true, Children: []core.Node{
-			ui.Inset{Exact: true, Children: []core.Node{
-				ui.LinkRow{Icon: ui.IconComponents, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
-				ui.LinkRow{Divided: true, Icon: ui.IconText, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
-			}},
+			ui.LinkRow{Icon: ui.IconComponents, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
+			ui.LinkRow{Divided: true, Icon: ui.IconText, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
 		}}
 	}
 

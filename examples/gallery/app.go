@@ -440,7 +440,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 200, MaxWidth: 360,
 		ResizeLabel: tr.AppResizeSidebar(),
-		Header:      []core.Node{g.demoTitle()}, Actions: []core.Node{g.demoGroup()},
+		Header:      []core.Node{g.demoTitle()},
 		Content: []core.Node{g.nav.Stack(fillPage, func(cx *core.Scope, r route, _ func() int) base.NavPage {
 			if r.page != nil {
 				return r.page(cx)
@@ -462,28 +462,21 @@ func (g *gallery) sidebar(tr locales.Messages) core.Node {
 	return ui.Sidebar{TestID: "sidebar", Sections: sections, Selected: g.selected.Get, OnSelect: g.selectDemo}
 }
 
-// demoTitle is the selected demo's name and what it shows, in the
+// demoTitle is the selected demo's group and name, as a path, in the
 // content's header.
 func (g *gallery) demoTitle() core.Node {
 	return core.Dynamic(func(cx *core.Scope) core.Node {
-		d, _ := findDemo(g.selected.Get())
+		name := g.selected.Get()
+		d, _ := findDemo(name)
 		return core.Func(func(cx *core.Scope) core.Node {
 			colors := ui.ColorsOf(cx)
 			tr := locales.For(cx)
-			title := ui.Text(d.title(tr), 14, ui.Semibold, colors.Text)
-			title.MaxLines, title.Role, title.TestID, title.Style.FlexShrink = 1, core.RoleHeader, "title", 0
-			detail := ui.Text(d.detail(tr), 12, ui.Regular, colors.Muted)
-			detail.MaxLines, detail.Style.FlexShrink = 1, 1
-			return ui.HStack{Gap: 8, Children: []core.Node{ui.Icon(d.icon, 16, colors.Accent), title, detail}}
+			group := ui.Text(groupOf(tr, name), 13, ui.Regular, colors.Muted)
+			group.MaxLines = 1
+			title := ui.Text(d.title(tr), 13, ui.Semibold, colors.Text)
+			title.MaxLines, title.Role, title.TestID, title.Style.FlexShrink = 1, core.RoleHeader, "title", 1
+			return ui.HStack{Gap: 6, Children: []core.Node{group, ui.Text("/", 13, ui.Regular, colors.Faint), title}}
 		})
-	})
-}
-
-// demoGroup is the selected demo's group, at the end of the content's
-// header.
-func (g *gallery) demoGroup() core.Node {
-	return core.Dynamic(func(cx *core.Scope) core.Node {
-		return ui.Badge{Text: groupOf(locales.For(cx), g.selected.Get())}
 	})
 }
 

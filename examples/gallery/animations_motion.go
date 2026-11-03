@@ -113,7 +113,7 @@ func motionPresets(cx *core.Scope) core.Node {
 			status.Set(tr.AnimTapATile())
 		}))
 	}
-	return ui.Card{Icon: ui.IconSpark, Title: tr.AnimMotionPresets(), Description: tr.AnimReadyMadeMotions(len(core.MotionPresets())), Actions: []core.Node{ui.Badge{TextFunc: status.Get, Tone: ui.ToneAccent}}, Children: []core.Node{
+	return ui.Card{Title: tr.AnimMotionPresets(), Description: tr.AnimReadyMadeMotions(len(core.MotionPresets())), Actions: []core.Node{ui.Badge{TextFunc: status.Get, Tone: ui.ToneAccent}}, Children: []core.Node{
 		core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
 			base.Tabs{Label: tr.AnimKinds(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
@@ -174,7 +174,7 @@ func staggeredEntrance(cx *core.Scope) core.Node {
 		from.Set(origin)
 		wave.Update(func(w int) int { return w + 1 })
 	}
-	return ui.Card{Icon: ui.IconLists, Title: tr.AnimStaggeredEntrance(), Description: tr.AnimNewmotionEnterWithADelay(), Actions: []core.Node{ui.Badge{Text: tr.Anim70MsApart()}}, Children: []core.Node{
+	return ui.Card{Title: tr.AnimStaggeredEntrance(), Description: tr.AnimNewmotionEnterWithADelay(), Actions: []core.Node{ui.Badge{Text: tr.Anim70MsApart()}}, Children: []core.Node{
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			wave.Get()
 			origin := from.Get()
@@ -296,7 +296,7 @@ func keyframesMotions(cx *core.Scope) core.Node {
 		segments = append(segments, core.View{Style: s, StyleFunc: sf})
 	}
 
-	return ui.Card{Icon: ui.IconAnimation, Title: tr.AnimKeyframes(), Description: tr.AnimStepsKeyframesWithEasingsOf(), Children: []core.Node{
+	return ui.Card{Title: tr.AnimKeyframes(), Description: tr.AnimStepsKeyframesWithEasingsOf(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, JustifyContent: core.JustifySpaceAround}, Children: []core.Node{
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 				core.View{Style: core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, Overflow: core.Hidden}, StyleFunc: ui.Filled(colors.Raised), Children: []core.Node{
@@ -427,8 +427,8 @@ func aurora(cx *core.Scope) core.Node {
 		core.Text{Content: tr.AnimEachLightDriftsOnIts(), Style: core.Style{FontSize: 14},
 			StyleFunc: ui.Colored(func() core.Color { return ui.Alpha(ink(), 0.7) })},
 	}})
-	return ui.Card{Icon: ui.IconStyles, Title: tr.AnimAurora(), Description: tr.AnimBlurredGradientsOnLoopingMotions(), Flush: true, Children: []core.Node{
-		core.View{Style: core.Style{Height: core.Pt(260), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous, Overflow: core.Hidden},
+	return ui.Card{Title: tr.AnimAurora(), Description: tr.AnimBlurredGradientsOnLoopingMotions(), Flush: true, Children: []core.Node{
+		core.View{Style: core.Style{Height: core.Pt(260), Overflow: core.Hidden},
 			StyleFunc: func() core.Style {
 				if cx.Dark() {
 					return core.Style{Background: core.RGB(0x0a0716)}

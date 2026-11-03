@@ -95,7 +95,7 @@ func cornersCard(cx *core.Scope) core.Node {
 			ui.Text(s.label, 12, ui.Regular, colors.Muted),
 		}})
 	}
-	return ui.Card{Icon: ui.IconStyles, Title: tr.StylesCorners(), Description: tr.StylesCornerradiusBordercurvePerCorner(), Children: []core.Node{
+	return ui.Card{Title: tr.StylesCorners(), Description: tr.StylesCornerradiusBordercurvePerCorner(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: row},
 		ui.Caption{Label: tr.StylesContinuousCornersEaseIntoThe(), Note: label(tr.StylesRadius20Pt())},
 		grid(
@@ -116,7 +116,7 @@ func cornersCard(cx *core.Scope) core.Node {
 func bordersCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	return ui.Card{Icon: ui.IconComponents, Title: tr.StylesBorders(), Description: tr.StylesPerSideDashedDottedOutlines(), Children: []core.Node{
+	return ui.Card{Title: tr.StylesBorders(), Description: tr.StylesPerSideDashedDottedOutlines(), Children: []core.Node{
 		grid(
 			tile(cx, tileProps{label: tr.StylesPerSideBorders(), note: tr.Styles6241Pt()},
 				core.View{StyleFunc: func() core.Style {
@@ -162,7 +162,7 @@ func shadowsCard(cx *core.Scope) core.Node {
 		}
 		return 0.22
 	}
-	return ui.Card{Icon: ui.IconSpark, Title: tr.StylesShadowsAndGlow(), Description: tr.StylesShadowcolorBoxShadowsTextShadow(), Children: []core.Node{
+	return ui.Card{Title: tr.StylesShadowsAndGlow(), Description: tr.StylesShadowcolorBoxShadowsTextShadow(), Children: []core.Node{
 		grid(
 			tile(cx, tileProps{label: tr.StylesGlow(), code: "ShadowColor", note: tr.StylesAColoredShadow()},
 				core.View{StyleFunc: func() core.Style {
@@ -227,7 +227,7 @@ func layersCard(cx *core.Scope) core.Node {
 		}
 		return core.RGB(0xffffff)
 	}
-	return ui.Card{Icon: ui.IconLists, Title: tr.StylesClippingAndLayers(), Description: tr.StylesOverflowZindexOpacity(), Actions: []core.Node{ui.Switch{Checked: clip.Get, OnChange: clip.Set, Label: tr.StylesClip()}}, Children: []core.Node{
+	return ui.Card{Title: tr.StylesClippingAndLayers(), Description: tr.StylesOverflowZindexOpacity(), Actions: []core.Node{ui.Switch{Checked: clip.Get, OnChange: clip.Set, Label: tr.StylesClip()}}, Children: []core.Node{
 		grid(
 			tile(cx, tileProps{labelFn: func() string {
 				if clip.Get() {
@@ -315,7 +315,7 @@ func transformsCard(cx *core.Scope) core.Node {
 		core.Timing(sway, -30, core.TimingConfig{Duration: ms(2200), Easing: sine}),
 	), 0), nil)
 	cx.Cleanup(run.Stop)
-	return ui.Card{Icon: ui.IconPhysics, Title: tr.Styles3dTransforms(), Description: tr.StylesPerspectiveRotatexYSkewOrigin(), Children: []core.Node{
+	return ui.Card{Title: tr.Styles3dTransforms(), Description: tr.StylesPerspectiveRotatexYSkewOrigin(), Children: []core.Node{
 		flipCard(cx),
 		grid(
 			tile(cx, tileProps{label: tr.StylesPerspective(), code: "RotateY", note: tr.StylesSwayingDrivenNatively()},
@@ -373,7 +373,7 @@ func numeralsCard(cx *core.Scope) core.Node {
 		n.Style.FontFamily = ui.Mono
 		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{l, n}}
 	}
-	return ui.Card{Icon: ui.IconText, Title: tr.StylesNumerals(), Description: "FontVariant", Children: []core.Node{
+	return ui.Card{Title: tr.StylesNumerals(), Description: "FontVariant", Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			column(ui.Text(tr.StylesProportional(), 12, ui.Regular, colors.Muted), 0),
 			core.View{Style: core.Style{Width: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
@@ -418,7 +418,7 @@ func rightToLeft(cx *core.Scope) core.Node {
 		chips = append(chips, chip(colors.Info, tints.Info, n))
 	}
 	monoNote := func(s string) func() string { return label(s) }
-	return ui.Card{Icon: ui.IconNav, Title: tr.StylesRightToLeft(), Description: "", Actions: []core.Node{ui.Button{Text: tr.StylesFlip(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { toggled(rtl) }}}, Children: []core.Node{
+	return ui.Card{Title: tr.StylesRightToLeft(), Description: "", Actions: []core.Node{ui.Button{Text: tr.StylesFlip(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { toggled(rtl) }}}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			d := core.DirectionLTR
 			if rtl.Get() {
@@ -460,7 +460,7 @@ func gradientsCard(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	blue, yellow, pink := core.RGB(0x2563eb), core.RGB(0xfacc15), core.RGB(0xec4899)
-	return ui.Card{Icon: ui.IconStyles, Title: tr.StylesGradients(), Description: tr.StylesLinearRadialAndConicMixed(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Title: tr.StylesGradients(), Description: tr.StylesLinearRadialAndConicMixed(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		grid(
 			tile(cx, tileProps{label: tr.StylesLinear(), code: "LinearGradient(90, …)"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14, Gradients: []core.Gradient{core.LinearGradient(90, blue, pink)}})}),
 			tile(cx, tileProps{label: tr.StylesToACorner(), code: "ToTopRight"}, core.View{StyleFunc: specimenOf(cx, core.Style{CornerRadius: 14,
@@ -499,7 +499,7 @@ func filtersCard(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{Width: core.Pt(88), Height: core.Pt(60), CornerRadius: 12, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: s, Children: []core.Node{ui.Text(name, 12, ui.Semibold, colors.Text)}}
 	}
-	return ui.Card{Icon: ui.IconImage, Title: tr.StylesFiltersBackdropsAndMasks(), Description: tr.StylesFiltersBackdropfiltersMaskBlendmode(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Title: tr.StylesFiltersBackdropsAndMasks(), Description: tr.StylesFiltersBackdropfiltersMaskBlendmode(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 10}, Children: []core.Node{
 			art("none"), art("grayscale", core.Grayscale(1)), art("sepia", core.Sepia(1)), art(tr.StylesHue120(), core.HueRotate(120)),
 			art("invert", core.Invert(1)), art(tr.StylesBlur4(), core.Blur(4)),
@@ -528,7 +528,7 @@ func keyframesCard(cx *core.Scope) core.Node {
 			ui.Text(name, 12, ui.Regular, colors.Muted),
 		}}
 	}
-	return ui.Card{Icon: ui.IconAnimation, Title: tr.StylesKeyframesAndGroupStyles(), Description: tr.StylesAnimationGroupstyle(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Title: tr.StylesKeyframesAndGroupStyles(), Description: tr.StylesAnimationGroupstyle(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceAround}, Children: []core.Node{
 			dot("spin", core.KeyframesSpin, func() core.Style {
 				raised := colors.Raised()

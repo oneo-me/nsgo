@@ -60,7 +60,7 @@ func messaging(cx *core.Scope) core.Node {
 		}
 		return s
 	}
-	return ui.Card{Icon: ui.IconMedia, Title: tr.MediaWebView(), Description: tr.MediaInlineHtmlWithMessagesBoth(), Children: []core.Node{
+	return ui.Card{Title: tr.MediaWebView(), Description: tr.MediaInlineHtmlWithMessagesBoth(), Children: []core.Node{
 		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: message.Set},
 		ui.Caption{Label: tr.MediaFromThePage(), Note: func() string { return or(message.Get()) }},
 		ui.Caption{Label: tr.MediaToThePage(), Note: func() string {
@@ -110,7 +110,7 @@ func site(cx *core.Scope) core.Node {
 		}
 		return u
 	}
-	return ui.Card{Icon: ui.IconSearch, Title: tr.MediaAWebSite(), Description: tr.MediaNavigationStateBackAndForward(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Title: tr.MediaAWebSite(), Description: tr.MediaNavigationStateBackAndForward(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if state.Get().Loading {
 			return ui.Badge{Text: tr.MediaLoading(), Tone: ui.ToneWarn}
 		}
@@ -156,7 +156,7 @@ func player(cx *core.Scope) core.Node {
 	pos, dur := core.NewSignal(cx, time.Duration(0)), core.NewSignal(cx, time.Duration(0))
 	fit := core.NewSignal(cx, core.Contain)
 	ref := &core.Ref{}
-	return ui.Card{Icon: ui.IconPlay, Title: tr.MediaVideo(), Description: tr.MediaThePlatformSPlayer(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Title: tr.MediaVideo(), Description: tr.MediaThePlatformSPlayer(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		switch {
 		case failed.Get():
 			return ui.Badge{Text: tr.MediaError(), Tone: ui.ToneDanger}
@@ -218,7 +218,7 @@ func nativeView(cx *core.Scope) core.Node {
 	if ok {
 		noteText = tr.MediaDraggingThePlatformSOwn()
 	}
-	return ui.Card{Icon: ui.IconControls, Title: tr.MediaNativeViews(), Description: tr.MediaTheAppSOwnPlatform(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Title: tr.MediaNativeViews(), Description: tr.MediaTheAppSOwnPlatform(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.Native{Component: sliderComponent, Ref: slider, TestID: "native-slider", Label: tr.MediaNativeSlider(),
 			PropsFunc: func() map[string]any { return map[string]any{"value": value.Get()} },
 			OnEvent: func(name string, data any) {

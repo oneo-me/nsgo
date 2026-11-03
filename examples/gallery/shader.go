@@ -188,7 +188,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 				ui.Textf(func() string { return tr.ShaderStartPressed(presses.Get()) }, 13, ui.Regular, colors.Faint),
 			},
 		}
-		return ui.Card{Icon: ui.IconShader, Title: tr.ShaderBackground(), Description: tr.ShaderAClockAndRipplesThe(), Children: []core.Node{
+		return ui.Card{Title: tr.ShaderBackground(), Description: tr.ShaderAClockAndRipplesThe(), Children: []core.Node{
 			field,
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 				ui.Cell{Child: ui.Button{Text: tr.ShaderScale(), Variant: ui.ButtonSecondary, OnPress: cycle(scale, 1, 1.5, 0.75)}},
@@ -207,7 +207,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 		wave := core.NewAnimatedValue(cx, 0)
 		run := cx.StartAnimation(core.Loop(core.Timing(wave, 2*3.14159265, core.TimingConfig{Duration: 2 * time.Second}), 0), nil)
 		cx.Cleanup(run.Stop)
-		return ui.Card{Icon: ui.IconImage, Title: tr.ShaderImages(), Description: tr.ShaderWhatImage0atToImage3atRead(), Children: []core.Node{
+		return ui.Card{Title: tr.ShaderImages(), Description: tr.ShaderWhatImage0atToImage3atRead(), Children: []core.Node{
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(8, 0)}, Children: []core.Node{
 				core.Shader{Program: rippleProgram, Images: []core.ImageSource{{Data: logoPNG}}, Uniforms: core.Uniforms{"Phase": wave},
 					Label: tr.ShaderRipplingLogo(), TestID: "image-shader",
@@ -219,7 +219,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 	source := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconTerminal, Title: tr.ShaderTheSource(), Description: tr.ShaderGoSSyntaxCheckedAnd(), Children: []core.Node{
+		return ui.Card{Title: tr.ShaderTheSource(), Description: tr.ShaderGoSSyntaxCheckedAnd(), Children: []core.Node{
 			core.Scroll{Horizontal: true, Children: []core.Node{core.Text{Content: rippleSource,
 				Style: core.Style{FontFamily: ui.Mono, FontSize: 12, LineHeight: 18}, StyleFunc: ui.Colored(colors.Code)}}},
 			ui.APILine{Label: tr.ShaderCompiledOnceAsTheProgram(), Names: "MustCompileShader"},

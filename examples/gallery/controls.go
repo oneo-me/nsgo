@@ -238,7 +238,7 @@ func (c controls) settings(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	notifications, badges := core.NewSignal(cx, true), core.NewSignal(cx, true)
 	haptics, lowData := core.NewSignal(cx, false), core.NewSignal(cx, false)
-	return ui.Card{Icon: ui.IconControls, Title: tr.ControlsSwitch(), Description: tr.ControlsSettingsThatTakeEffectAt(), Children: []core.Node{
+	return ui.Card{Title: tr.ControlsSwitch(), Description: tr.ControlsSettingsThatTakeEffectAt(), Children: []core.Node{
 		core.View{Children: []core.Node{
 			c.setting(cx, tr.ControlsNotifications(), func() string {
 				if notifications.Get() {
@@ -329,7 +329,7 @@ func (c controls) filter(cx *core.Scope) core.Node {
 		}
 		return n
 	}
-	return ui.Card{Icon: ui.IconControls, Title: tr.ControlsCheckbox(), Description: tr.ControlsAFilterSelectAllShows(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.ControlsCountOf(len(shown.Get()), len(kinds)) }}}, Children: []core.Node{
+	return ui.Card{Title: tr.ControlsCheckbox(), Description: tr.ControlsAFilterSelectAllShows(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.ControlsCountOf(len(shown.Get()), len(kinds)) }}}, Children: []core.Node{
 		core.View{Children: rows},
 		core.Text{ContentFunc: func() string {
 			if len(shown.Get()) == 0 {
@@ -370,7 +370,7 @@ func (c controls) plansCard(cx *core.Scope) core.Node {
 	}
 	// The commit of the picker: under it on a phone, at its trailing
 	// edge with a pointer.
-	return ui.Card{Icon: ui.IconControls, Title: tr.ControlsRadio(), Description: tr.ControlsAPlanPickerOneOf(), Children: []core.Node{
+	return ui.Card{Title: tr.ControlsRadio(), Description: tr.ControlsAPlanPickerOneOf(), Children: []core.Node{
 		base.RadioGroup{Label: tr.ControlsPlan2(), Children: radios},
 		core.View{Style: core.Style{AlignItems: align}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			name := chosen.Get()
@@ -421,7 +421,7 @@ func (c controls) sections(cx *core.Scope) core.Node {
 				return core.Style{FontSize: 13, FontWeight: ui.Medium, Color: c()}
 			}}}})
 	}
-	return ui.Card{Icon: ui.IconControls, Title: tr.ControlsTabs(), Description: tr.ControlsASectionSwitcherTheApp(), Children: []core.Node{
+	return ui.Card{Title: tr.ControlsTabs(), Description: tr.ControlsASectionSwitcherTheApp(), Children: []core.Node{
 		base.Tabs{Label: tr.ControlsSections(), StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(z.tabs), Direction: core.Row, Gap: 2, Padding: core.All(3), CornerRadius: z.tabs / 2,
 				BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Inset(), Shadows: fin.Track().Shadows}
@@ -494,7 +494,7 @@ func (c controls) disclosure(cx *core.Scope) core.Node {
 	}
 	keep := z.hoverRow(cx, false, z.gap, false)
 	keep.Direction = core.RowReverse
-	return ui.Card{Icon: ui.IconControls, Title: tr.ControlsCollapsible(), Description: tr.ControlsDetailsUnderASummaryKept(), Children: []core.Node{
+	return ui.Card{Title: tr.ControlsCollapsible(), Description: tr.ControlsDetailsUnderASummaryKept(), Children: []core.Node{
 		core.View{Children: []core.Node{
 			base.Collapsible{Open: storage.Get,
 				Content:  core.View{Style: core.Style{Padding: core.Edges{Left: z.gap, Bottom: z.padding}}, Children: used},
@@ -598,7 +598,7 @@ func (c controls) transfers(cx *core.Scope) core.Node {
 	if pointer {
 		flex, align = 0, core.AlignStart
 	}
-	return ui.Card{Icon: ui.IconControls, Title: tr.ControlsProgress(), Description: tr.ControlsTransfersTheAppOwnsThe(), Children: []core.Node{
+	return ui.Card{Title: tr.ControlsProgress(), Description: tr.ControlsTransfersTheAppOwnsThe(), Children: []core.Node{
 		core.View{Children: []core.Node{
 			transfer(tr.ControlsUpload(), func() string {
 				switch {

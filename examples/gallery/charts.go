@@ -174,7 +174,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 			}
 			return tr.ChartsShowLastWeek()
 		}
-		return ui.Card{Icon: ui.IconStocks, Title: tr.ChartsVisitors(), Description: tr.ChartsAWeekOverTheOther(), Children: []core.Node{
+		return ui.Card{Title: tr.ChartsVisitors(), Description: tr.ChartsAWeekOverTheOther(), Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
 				tr := locales.For(cx)
 				day := chartDays[shown()]
@@ -277,7 +277,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 
 	sparklines := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Icon: ui.IconStocks, Title: tr.ChartsSparklines(), Description: tr.ChartsAPlotPerRowOf(), Children: []core.Node{
+		return ui.Card{Title: tr.ChartsSparklines(), Description: tr.ChartsAPlotPerRowOf(), Children: []core.Node{
 			core.List{TestID: "sparklines", Count: func() int { return len(tickers) }, Key: func(i int) any { return tickers[i].id },
 				EstimatedSize: 44, Style: core.Style{Height: core.Pt(44 * 6)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
@@ -334,7 +334,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 	lastCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconSystem, Title: tr.ChartsLastEvent(), Children: []core.Node{
+		return ui.Card{Title: tr.ChartsLastEvent(), Children: []core.Node{
 			core.Text{ContentFunc: last.Get, Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
 		}}
 	}

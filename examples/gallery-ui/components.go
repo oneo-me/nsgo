@@ -157,56 +157,121 @@ func (t IconTile) Render(cx *core.Scope) core.Node {
 	}, Children: []core.Node{Icon(t.Icon, size*0.5, colors.Text)}}
 }
 
-// Card is a card: a header of an optional Icon, a Title, a Description
-// and Actions at its end, then the Children on an inset surface.
+// Card is a demo's container: a header on the page of a Title, a
+// Description and Actions at its end, then a surface holding the Children
+// and an optional Footer.
 type Card struct {
-	Icon        IconName
 	Title       string
 	Description string
-	Actions     []core.Node
-	// Flush shows the children bare instead of on an inset.
-	Flush    bool
+	// Actions end the header (a switch, a small button, a value).
+	Actions  []core.Node
 	Children []core.Node
-	// Style merges over the card's.
+	// Footer follows the children on its own line: a status or a caption.
+	Footer []core.Node
+	// Flush lays the children edge to edge, without the surface's padding
+	// and gaps (rows, a full-bleed stage).
+	Flush bool
+	// Style merges over the surface's.
 	Style core.Style
 }
 
-// CardStyle is a card's style, read in a StyleFunc.
+// CardStyle is a card's surface, read in a StyleFunc.
 func CardStyle(cx *core.Scope) core.Style {
 	colors := ColorsOf(cx)
-	return FinOf(cx).Card().Over(core.Style{Background: colors.Surface(), CornerRadius: RadiusCard, BorderCurve: core.BorderCurveContinuous,
-		BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(4)})
+	shadows := []core.BoxShadow{Shadow(0, 1, 2, 0, Paper(0.04)), Shadow(0, 4, 12, -4, Paper(0.08))}
+	if cx.Dark() {
+		shadows = []core.BoxShadow{Shadow(0, 1, 2, 0, Black(0.3)), Shadow(0, 6, 16, -6, Black(0.45))}
+	}
+	return core.Style{Background: colors.Surface(), CornerRadius: RadiusInset, BorderCurve: core.BorderCurveContinuous,
+		BorderWidth: 1, BorderColor: colors.Border(), Shadows: shadows}
 }
 
 // Render implements core.Node.
 func (c Card) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	var nodes []core.Node
+	var head core.Node
 	if c.Title != "" {
-		var head []core.Node
-		if c.Icon != "" {
-			head = append(head, IconTile{Icon: c.Icon, Size: 32})
-		}
-		titles := []core.Node{Text(c.Title, 15, Semibold, colors.Text)}
+		title := Text(c.Title, 13, Semibold, colors.Text)
+		title.Role = core.RoleHeader
+		titles := []core.Node{title}
 		if c.Description != "" {
 			description := Text(c.Description, 12, Regular, colors.Muted)
 			description.MaxLines = 2
 			titles = append(titles, description)
 		}
-		head = append(head, core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles})
-		head = append(head, c.Actions...)
-		nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10,
-			Padding: core.Symmetric(7, 9)}, Children: head})
+		nodes := append([]core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles}}, c.Actions...)
+		head = core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd, Gap: 10, Padding: core.Symmetric(0, 2)}, Children: nodes}
 	}
-	if c.Flush {
-		nodes = append(nodes, c.Children...)
-	} else {
-		nodes = append(nodes, Inset{Children: c.Children})
-	}
-	return core.View{StyleFunc: func() core.Style { return CardStyle(cx).Merge(c.Style) }, Children: nodes}
+	return panel(cx, panelProps{head: head, flush: c.Flush, children: c.Children, footer: c.Footer, style: c.Style})
 }
 
-// Inset is the darker surface inside a card. Zero Gap and Padding take
+// Section is a titled card of controls, the demos' sections: a heading
+// with a quieter Note, or what NoteFunc returns, after it.
+type Section struct {
+	Title    string
+	Note     string
+	NoteFunc func() string
+	Children []core.Node
+}
+
+// Render implements core.Node.
+func (s Section) Render(cx *core.Scope) core.Node {
+	colors := ColorsOf(cx)
+	note := s.NoteFunc
+	if note == nil {
+		note = constant(s.Note)
+	}
+	heading := Text(s.Title, 13, Semibold, colors.Text)
+	heading.Role, heading.Style.FlexGrow, heading.Style.FlexShrink = core.RoleHeader, 1, 1
+	head := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(0, 2)},
+		Children: []core.Node{heading, Textf(note, 12, Regular, colors.Faint)}}
+	return panel(cx, panelProps{testID: "section-" + s.Title, head: head, children: s.Children})
+}
+
+type panelProps struct {
+	testID   string
+	head     core.Node
+	flush    bool
+	children []core.Node
+	footer   []core.Node
+	style    core.Style
+}
+
+// panel is a card: the head on the page, then the surface with the body
+// and the footer after a hairline. A flush body clips to the surface's
+// inner corners.
+func panel(cx *core.Scope, p panelProps) core.Node {
+	colors := ColorsOf(cx)
+	const inner = RadiusInset - 1
+	var parts []core.Node
+	if len(p.children) > 0 {
+		body := core.Style{Gap: 12, Padding: core.All(14)}
+		if p.flush {
+			r := core.Corners{TopLeft: inner, TopRight: inner}
+			if len(p.footer) == 0 {
+				r.BottomLeft, r.BottomRight = inner, inner
+			}
+			body = core.Style{Overflow: core.Hidden, CornerRadii: r, BorderCurve: core.BorderCurveContinuous}
+		}
+		parts = append(parts, core.View{Style: body, Children: p.children})
+	}
+	if len(p.footer) > 0 {
+		s := core.Style{Gap: 6, Padding: core.Symmetric(10, 14)}
+		if len(parts) > 0 {
+			s.Borders = core.Edges{Top: 1}
+		}
+		parts = append(parts, core.View{Style: s,
+			StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} }, Children: p.footer})
+	}
+	surface := core.View{StyleFunc: func() core.Style { return CardStyle(cx).Merge(p.style) }, Children: parts}
+	if p.head == nil {
+		surface.TestID = p.testID
+		return surface
+	}
+	return core.View{TestID: p.testID, Style: core.Style{Gap: 8}, Children: []core.Node{p.head, surface}}
+}
+
+// Inset is the darker surface demos set apart. Zero Gap and Padding take
 // 10 pt gaps and 12 pt padding, unless Exact takes them as given.
 type Inset struct {
 	Gap, Padding core.Points
@@ -227,34 +292,9 @@ func (in Inset) Render(cx *core.Scope) core.Node {
 		}
 	}
 	return core.View{StyleFunc: func() core.Style {
-		return FinOf(cx).Inset().Over(core.Style{Background: colors.Inset(), CornerRadius: RadiusInset, BorderCurve: core.BorderCurveContinuous,
-			BorderWidth: 1, BorderColor: colors.Line(), Padding: core.All(padding), Gap: gap})
+		return core.Style{Background: colors.Inset(), CornerRadius: RadiusInset, BorderCurve: core.BorderCurveContinuous,
+			BorderWidth: 1, BorderColor: colors.Line(), Padding: core.All(padding), Gap: gap}
 	}, Children: in.Children}
-}
-
-// Section is a titled card of controls, the demos' sections: a heading
-// with a quieter Note, or what NoteFunc returns, after it.
-type Section struct {
-	Title    string
-	Note     string
-	NoteFunc func() string
-	Children []core.Node
-}
-
-// Render implements core.Node.
-func (s Section) Render(cx *core.Scope) core.Node {
-	colors := ColorsOf(cx)
-	note := s.NoteFunc
-	if note == nil {
-		note = constant(s.Note)
-	}
-	heading := Text(s.Title, 15, Semibold, colors.Text)
-	heading.Role, heading.Style.FlexGrow, heading.Style.FlexShrink = core.RoleHeader, 1, 1
-	return core.View{TestID: "section-" + s.Title, StyleFunc: func() core.Style { return CardStyle(cx) }, Children: []core.Node{
-		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(8, 9)},
-			Children: []core.Node{heading, Textf(note, 13, Regular, colors.Faint)}},
-		Inset{Children: s.Children},
-	}}
 }
 
 // Caption is a Label, or what LabelFunc returns, on the left and a

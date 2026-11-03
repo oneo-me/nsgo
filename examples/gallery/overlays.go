@@ -56,7 +56,7 @@ func overlayCard(last *core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
 		anchor := &core.Ref{}
-		return ui.Card{Icon: ui.IconOverlays, Title: tr.OverlayOverlay(), Description: tr.OverlayABoxThatClipsIts(), Actions: []core.Node{ui.Badge{Text: "core"}}, Children: []core.Node{
+		return ui.Card{Title: tr.OverlayOverlay(), Description: tr.OverlayABoxThatClipsIts(), Actions: []core.Node{ui.Badge{Text: "core"}}, Children: []core.Node{
 			core.View{Style: core.Style{Height: core.Pt(56), Overflow: core.Hidden, CornerRadius: ui.RadiusInset,
 				JustifyContent: core.JustifyCenter, Padding: core.Symmetric(0, 12)}, StyleFunc: ui.Filled(colors.Inset), Children: []core.Node{
 				core.View{Ref: anchor, OnPress: func(core.PressEvent) { toggled(open) }, Role: core.RoleButton, Style: core.Style{AlignSelf: core.AlignStart},
@@ -85,7 +85,7 @@ func popoverCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconOverlays, Title: tr.OverlayPopover(), Description: tr.OverlayAnchoredToItsTriggerOn(), Children: []core.Node{
+		return ui.Card{Title: tr.OverlayPopover(), Description: tr.OverlayAnchoredToItsTriggerOn(), Children: []core.Node{
 			base.Popover{Offset: 6, Margin: 8, PopupStyleFunc: popupStyle(cx), Label: tr.OverlayShowThePopover(),
 				OnOpenChange: func(open bool, reason base.Reason) {
 					state := "closed"
@@ -110,7 +110,7 @@ func tooltipCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		hoveredOpen, pinned := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return ui.Card{Icon: ui.IconText, Title: tr.OverlayTooltip(), Description: ui.Hint(cx, tr.OverlayTooltipsFollowAPointerPin(), tr.OverlayRestThePointerOnA()), Children: []core.Node{
+		return ui.Card{Title: tr.OverlayTooltip(), Description: ui.Hint(cx, tr.OverlayTooltipsFollowAPointerPin(), tr.OverlayRestThePointerOnA()), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
 				// A view's Tooltip: the platform's bubble with the defaults.
 				core.View{Tooltip: core.Text{Content: tr.OverlaySavesTheDocument(), StyleFunc: func() core.Style {
@@ -149,7 +149,7 @@ func sheetCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
-		return ui.Card{Icon: ui.IconOverlays, Title: tr.OverlaySheet(), Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
+		return ui.Card{Title: tr.OverlaySheet(), Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
 			ui.Button{Text: tr.OverlayShowTheSheet(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
 			base.Sheet{Open: open.Get, Label: tr.OverlaySheet(),
 				OnOpenChange: func(next bool, reason base.Reason) {
@@ -179,7 +179,7 @@ func toastCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		count := 0
-		return ui.Card{Icon: ui.IconSystem, Title: tr.OverlayToast(), Description: tr.OverlayTheGallerySToastsOn(), Children: []core.Node{
+		return ui.Card{Title: tr.OverlayToast(), Description: tr.OverlayTheGallerySToastsOn(), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
 				ui.Button{Text: tr.OverlayCopyTheLink(), Variant: ui.ButtonSecondary, OnPress: func() {
 					count++
@@ -207,7 +207,7 @@ func lastEventCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconSystem, Title: tr.OverlayLastEvent(), Children: []core.Node{
+		return ui.Card{Title: tr.OverlayLastEvent(), Children: []core.Node{
 			core.Text{ContentFunc: last.Get, TestID: "last-event", Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
 		}}
 	}

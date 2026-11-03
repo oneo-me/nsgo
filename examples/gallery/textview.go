@@ -156,7 +156,7 @@ func streamingCard(cx *core.Scope) core.Node {
 			i++
 		})
 	}
-	return ui.Card{Icon: ui.IconChat, Title: tr.TextviewStreaming(), Description: tr.TextviewAReplyAsAnAi(), Children: []core.Node{
+	return ui.Card{Title: tr.TextviewStreaming(), Description: tr.TextviewAReplyAsAnAi(), Children: []core.Node{
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
@@ -183,7 +183,7 @@ func markdownCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	pressed := core.NewSignal(cx, tr.TextviewNothingYet())
 	viewing := core.NewSignal(cx, textview.Image{})
-	return ui.Card{Icon: ui.IconText, Title: tr.TextviewMarkdown(), Description: tr.TextviewCommonmarkAndGithubSTables(), Children: []core.Node{
+	return ui.Card{Title: tr.TextviewMarkdown(), Description: tr.TextviewCommonmarkAndGithubSTables(), Children: []core.Node{
 		textview.TextView{Markdown: tvMarkdown, StyleOf: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
 			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: tr.TextviewCopyCode()}}, RenderCodeBlockAction: copyAction,
 			OnLinkPress: func(e textview.LinkPressEvent) { pressed.Set(e.URL) }, OnImagePress: viewing.Set},
@@ -195,7 +195,7 @@ func markdownCard(cx *core.Scope) core.Node {
 func htmlCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	viewing := core.NewSignal(cx, textview.Image{})
-	return ui.Card{Icon: ui.IconText, Title: tr.TextviewHtml(), Description: tr.TextviewAnArticlePageSectionsFigures(), Children: []core.Node{
+	return ui.Card{Title: tr.TextviewHtml(), Description: tr.TextviewAnArticlePageSectionsFigures(), Children: []core.Node{
 		textview.TextView{HTML: tvHTML, StyleOf: readingStyles(cx), Selectable: true, Highlighter: highlight.New(cx), OnImagePress: viewing.Set, TestID: "html"},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	}}
@@ -251,7 +251,7 @@ func extensionsCard(cx *core.Scope) core.Node {
 		}
 		return core.RGB(0x059669)
 	}
-	return ui.Card{Icon: ui.IconComponents, Title: tr.TextviewExtensions(), Description: tr.TextviewMentionsAChartBlockA(), Children: []core.Node{
+	return ui.Card{Title: tr.TextviewExtensions(), Description: tr.TextviewMentionsAChartBlockA(), Children: []core.Node{
 		textview.TextView{Markdown: tvExtended, StyleOf: readingStyles(cx),
 			Extensions: []textview.Extension{
 				{Name: "mention", Pattern: mentionPattern},
@@ -296,7 +296,7 @@ const (
 func selectionAreaCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	return ui.Card{Icon: ui.IconText, Title: tr.TextviewSelectableView(), Description: tr.TextviewOneSelectionAcrossTextsAnd(), Children: []core.Node{
+	return ui.Card{Title: tr.TextviewSelectableView(), Description: tr.TextviewOneSelectionAcrossTextsAnd(), Children: []core.Node{
 		core.View{Selectable: true, Style: core.Style{Gap: 12}, Children: []core.Node{
 			textview.TextView{Markdown: tvQuestion, StyleOf: readingStyles(cx)},
 			textview.TextView{Markdown: tvAnswer, StyleOf: readingStyles(cx)},

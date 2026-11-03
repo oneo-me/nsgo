@@ -261,7 +261,7 @@ func menusDemo(cx *core.Scope) core.Node {
 				return markNone
 			}}))
 		}
-		return ui.Card{Icon: ui.IconLists, Title: tr.MenusMenuBar(), Description: ui.Hint(cx, tr.MenusEachMenuASheetSubmenus(), tr.MenusHoverAcrossSubmenusTheShortcuts()), Children: []core.Node{
+		return ui.Card{Title: tr.MenusMenuBar(), Description: ui.Hint(cx, tr.MenusEachMenuASheetSubmenus(), tr.MenusHoverAcrossSubmenusTheShortcuts()), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 				menu(tr.MenusFile(), chip(cx, label(tr.MenusFile()), ""),
 					l.item(cx, itemProps{label: label(tr.MenusNewDocument()), note: key("mod+alt+n"), onSelect: func() { act(tr.MenusNewDocument()) }}),
@@ -377,7 +377,7 @@ func menusDemo(cx *core.Scope) core.Node {
 				}}),
 			}
 		}
-		return ui.Card{Icon: ui.IconPhotos, Title: tr.MenusOnTheRowsOfA(), Description: ui.Hint(cx, tr.MenusHoldAFingerOnA(), tr.MenusRightClickARowOr()), Children: []core.Node{
+		return ui.Card{Title: tr.MenusOnTheRowsOfA(), Description: ui.Hint(cx, tr.MenusHoldAFingerOnA(), tr.MenusRightClickARowOr()), Children: []core.Node{
 			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.MenusNoFilesLeft()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Children: []core.Node{core.Each(files.Get, func(f menuFile) int { return f.id },
@@ -419,7 +419,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		side := core.NewSignal(cx, core.PlaceBottom)
 		align := core.NewSignal(cx, core.AlignStart)
 		alignName := map[core.Align]string{core.AlignStart: "start", core.AlignCenter: "center", core.AlignEnd: "end"}
-		return ui.Card{Icon: ui.IconComponents, Title: tr.MenusWhereItGoes(), Description: ui.Hint(cx, tr.MenusPhonesShowMenusAsSheets(), tr.MenusTheSideAndAlignmentIt()), Children: []core.Node{
+		return ui.Card{Title: tr.MenusWhereItGoes(), Description: ui.Hint(cx, tr.MenusPhonesShowMenusAsSheets(), tr.MenusTheSideAndAlignmentIt()), Children: []core.Node{
 			ui.Segmented[core.Placement]{Options: []ui.Option[core.Placement]{{Value: core.PlaceTop, Label: tr.MenusTop()}, {Value: core.PlaceBottom, Label: tr.MenusBottom()}, {Value: core.PlaceLeft, Label: tr.MenusLeft()}, {Value: core.PlaceRight, Label: tr.MenusRight()}}, Value: side.Get, OnChange: side.Set, Small: true},
 			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: tr.MenusStart()}, {Value: core.AlignCenter, Label: tr.MenusCenter()}, {Value: core.AlignEnd, Label: tr.MenusEnd()}}, Value: align.Get, OnChange: align.Set, Small: true},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(24, 0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
@@ -457,7 +457,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		if !l.desktop {
 			m.PopupStyle.Padding = core.Edges{Bottom: 34}
 		}
-		return ui.Card{Icon: ui.IconScroll, Title: tr.MenusALongMenu(), Description: tr.MenusTwentyChoicesInAMenu(), Children: []core.Node{m}}
+		return ui.Card{Title: tr.MenusALongMenu(), Description: tr.MenusTwentyChoicesInAMenu(), Children: []core.Node{m}}
 	}
 
 	commands := func(cx *core.Scope) core.Node {
@@ -479,7 +479,7 @@ func menusDemo(cx *core.Scope) core.Node {
 			open.Set(next)
 			changed("commands")(next, reason)
 		}
-		return ui.Card{Icon: ui.IconSpark, Title: tr.MenusOpenedByTheApp(), Description: tr.MenusAControlledMenuAButton(), Actions: []core.Node{right}, Children: []core.Node{
+		return ui.Card{Title: tr.MenusOpenedByTheApp(), Description: tr.MenusAControlledMenuAButton(), Actions: []core.Node{right}, Children: []core.Node{
 			m, ui.Button{Text: tr.MenusOpenTheCommands(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
 		}}
 	}
@@ -500,7 +500,7 @@ func menusDemo(cx *core.Scope) core.Node {
 			}
 		}
 		show := func(at core.Point) { desktop.PopupMenu(cx, items(), at, nil) }
-		return ui.Card{Icon: ui.IconMenu, Title: tr.MenusThePlatformSMenu(), Description: tr.MenusPopupmenuShowsTheSystemS(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: []core.Node{
+		return ui.Card{Title: tr.MenusThePlatformSMenu(), Description: tr.MenusPopupmenuShowsTheSystemS(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: []core.Node{
 			core.View{TestID: "popup-area", Role: core.RoleButton, Label: tr.MenusShowTheNativeMenu(),
 				StyleFunc: func() core.Style {
 					return core.Style{Height: core.Pt(72), CornerRadius: ui.RadiusInset, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
@@ -526,13 +526,13 @@ func menusDemo(cx *core.Scope) core.Node {
 					ui.Button{Text: tr.MenusAutoHide(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
 				}})
 		}
-		return ui.Card{Icon: ui.IconMenu, Title: tr.MenusTheApplicationMenu(), Description: tr.MenusTheSystemSMenuBar(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: children}
+		return ui.Card{Title: tr.MenusTheApplicationMenu(), Description: tr.MenusTheSystemSMenuBar(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: children}
 	}
 
 	eventsCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Icon: ui.IconSystem, Title: tr.MenusEvents(), Description: tr.MenusOnopenchangeWithItsReasonAnd(), Children: []core.Node{
+		return ui.Card{Title: tr.MenusEvents(), Description: tr.MenusOnopenchangeWithItsReasonAnd(), Children: []core.Node{
 			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.MenusOpenAMenu()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Style: core.Style{Gap: 4}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
