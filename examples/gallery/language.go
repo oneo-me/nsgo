@@ -7,8 +7,8 @@ import (
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 )
 
-// languageKey keeps the language chosen in the gallery's menu; without
-// it the gallery follows the system's.
+// languageKey keeps the language chosen in the gallery's settings;
+// without it the gallery follows the system's.
 const languageKey = "language"
 
 // rememberLanguage shows the language chosen last time.
@@ -30,42 +30,47 @@ func (g *gallery) setLanguage(cx *core.Scope, lang string) {
 	}
 }
 
-// languageMenu chooses the language the gallery shows: the system's, or
-// one of its catalogs', each named in itself. The gallery's own texts
-// stay English but the menu's; base's follow, and Arabic lays it out
+// languageName is lang named in itself, "" the system's choice in the
+// language shown.
+func languageName(cx *core.Scope, lang string) string {
+	if lang == "" {
+		return locales.LanguageSystem(cx)
+	}
+	return locales.In(lang).LanguageName()
+}
+
+// languageSelect chooses the language the gallery shows: the system's,
+// or one of its catalogs', each named in itself. Its button shows the
+// choice; base's components follow it, and Arabic lays the gallery out
 // right to left.
-func (g *gallery) languageMenu(cx *core.Scope) core.Node {
+func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	l := newMenuLook(cx)
-	item := func(name func() string, lang string) core.Node {
-		return l.item(cx, itemProps{label: name, onSelect: func() { g.setLanguage(cx, lang) }, mark: func() mark {
+	item := func(lang string) core.Node {
+		return l.item(cx, itemProps{label: label(languageName(cx, lang)), onSelect: func() { g.setLanguage(cx, lang) }, mark: func() mark {
 			if g.language.Get() == lang {
 				return markCheck
 			}
 			return markNone
 		}})
 	}
-	items := []core.Node{
-		core.Text{ContentFunc: func() string { return locales.Language(cx) }, Style: core.Style{FontSize: 11, FontWeight: ui.Semibold,
-			LetterSpacing: 0.6, TextTransform: core.TextTransformUppercase, Padding: core.Edges{Top: 8, Right: 8, Bottom: 4, Left: 8}},
-			StyleFunc: ui.Colored(colors.Faint)},
-		item(func() string { return locales.LanguageSystem(cx) }, ""),
-		separator(cx),
-	}
+	items := []core.Node{item(""), separator(cx)}
 	for _, lang := range locales.Catalog.Languages() {
-		items = append(items, item(label(locales.In(lang).LanguageName()), lang))
+		items = append(items, item(lang))
 	}
-	// The trigger's label is a string: the menu is made again in a new
-	// language.
-	return core.Dynamic(func(cx *core.Scope) core.Node {
-		return base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
-			Label: locales.Language(cx), TestID: "language",
-			Style: core.Style{Width: core.Pt(30), Height: core.Pt(30), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-				CornerRadius: 8, Cursor: core.CursorPointer},
-			StyleFunc: func() core.Style {
-				return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: ui.FocusRing(cx, -2)}
-			},
-			Trigger:  ui.Icon(ui.IconGlobe, 18, colors.Muted),
-			Children: items}
-	})
+	name := ui.Textf(func() string { return languageName(cx, g.language.Get()) }, 13, ui.Medium, colors.Text)
+	name.MaxLines = 1
+	return base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
+		Label: locales.Language(cx), TestID: "language",
+		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Height: core.Pt(32), MinWidth: core.Pt(140),
+			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderWidth: 1, Cursor: core.CursorPointer},
+		StyleFunc: func() core.Style {
+			return core.Style{Background: colors.Raised(), BorderColor: colors.Border(), Hover: &core.Style{Background: colors.Hover()},
+				Active: &core.Style{Background: colors.Pressed()}, Focus: ui.FocusRing(cx, -2)}
+		},
+		Trigger: core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, FlexGrow: 1}, Children: []core.Node{
+			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)}, Children: []core.Node{name}},
+			ui.Icon(ui.IconCaretDown, 14, colors.Faint),
+		}},
+		Children: items}
 }

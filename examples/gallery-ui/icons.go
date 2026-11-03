@@ -90,6 +90,7 @@ const (
 	IconTabs        IconName = "tabs"
 	IconTooltip     IconName = "tooltip"
 	IconHeader      IconName = "header"
+	IconSettings    IconName = "settings"
 )
 
 var glyphs = map[IconName]func() *core.SVG{
@@ -171,6 +172,7 @@ var glyphs = map[IconName]func() *core.SVG{
 	IconTabs:        lucide.NotebookTabs,
 	IconTooltip:     lucide.MessageSquareText,
 	IconHeader:      lucide.PanelTop,
+	IconSettings:    lucide.Settings,
 }
 
 // Icon draws a glyph size points square in the tint, which it follows.

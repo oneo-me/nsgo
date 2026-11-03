@@ -755,35 +755,55 @@ func looks(v *nsgotest.View, drawings bool) []string {
 	return out
 }
 
-// TestLanguageMenu chooses a language, which the menu says its words in,
-// base's components follow and the layout's direction too, and keeps it.
-func TestLanguageMenu(t *testing.T) {
+// TestLanguageSetting chooses a language in the settings, which the
+// setting says its words in, base's components follow and the layout's
+// direction too, and keeps it.
+func TestLanguageSetting(t *testing.T) {
 	app := startDesktop(t)
-	ltr := app.Find("id:language").Frame.Origin.X
+	ltr := app.Find("id:settings").Frame.Origin.X
+	app.Press("id:settings")
+	app.Find("id:settings-dialog")
 	app.Press("id:language")
-	app.Find("text:Follow system")
+	app.Find("text:简体中文")
 	app.Press("text:العربية")
 	if got, _ := app.Storage().GetItem(languageKey); got != "ar" {
 		t.Errorf("kept %q, want ar", got)
 	}
-	// The sidebar's footer runs from the right: the menu, first, moves
-	// toward its end.
-	if rtl := app.Find("id:language").Frame.Origin.X; rtl >= ltr {
-		t.Errorf("the language button at %v right to left, %v left to right", rtl, ltr)
+	// The settings stay open in the new language.
+	app.Find("text:الإعدادات")
+	// The sidebar's footer runs from the right: the settings button,
+	// first, moves toward its end.
+	if rtl := app.Find("id:settings").Frame.Origin.X; rtl <= ltr {
+		t.Errorf("the settings button at %v right to left, %v left to right", rtl, ltr)
 	}
 	app.Press("id:language")
 	app.Press("text:اتباع النظام")
 	if _, ok := app.Storage().GetItem(languageKey); ok {
 		t.Error("following the system keeps a language")
 	}
-	if got := app.Find("id:language").Frame.Origin.X; got != ltr {
+	if got := app.Find("id:settings").Frame.Origin.X; got != ltr {
 		t.Errorf("back to the system's English, the button is at %v, was %v", got, ltr)
 	}
+	app.Press("id:settings-close")
+	app.WaitForGone("id:settings-dialog", time.Second)
+}
+
+// TestSettingsSearch finds the language setting by a language's name and
+// says when nothing matches.
+func TestSettingsSearch(t *testing.T) {
+	app := startDesktop(t)
+	app.Press("id:settings")
+	app.Type("id:settings-search", "简体")
+	app.Find("text:Results")
+	app.Find("id:settings-general-language")
+	app.Type("id:settings-search", "nothing like it")
+	app.Find("text:No settings match.")
 }
 
 // TestLanguageRemembered starts in the language chosen last time.
 func TestLanguageRemembered(t *testing.T) {
 	app := startDesktop(t, nsgotest.Storage(map[string]string{languageKey: "zh-Hans"}))
+	app.Press("id:settings")
 	app.Press("id:language")
 	app.Find("text:跟随系统")
 }

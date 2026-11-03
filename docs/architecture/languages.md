@@ -50,7 +50,7 @@ The code is committed beside the catalogs, so `go build` and `go test` need no t
 
 `core.Env.Locale` is the locale the app runs in: the one `cx.SetLocale` forces, else the one an embedding host sets (`View.SetLocale`), else the user's. `core.Env.Language`, which `i18n.Language(cx)` reads, is the language the app shows: of the app catalog's languages, the one that suits the locale best by `x/text`'s matcher (`zh-Hant` for `zh-TW`, `de` for `de-CH`), with high confidence or not at all, else the source. `i18n.SetApp` gives the core that match (`core.SetLanguageMatch`), as the program initializes; an app without catalogs has no language, which `i18n` reads as English. Every other catalog matches the language among its own and the supplied ones, so an app in English alone shows `base` in English to a Chinese reader, as AppKit does.
 
-`SetLocale` changes all of it at once, and `""` follows the host's or the user's again; the app keeps the choice in its storage, as the gallery's language menu does (`examples/gallery/language.go`).
+`SetLocale` changes all of it at once, and `""` follows the host's or the user's again; the app keeps the choice in its storage, as the gallery's language setting does (`examples/gallery/language.go`).
 
 The app lays out in the direction its language is written in (`core.Env.RTL`): right to left in Arabic or Hebrew whatever the system's, by the tag's script, else its language. Without catalogs it follows the locale it forces, else the system. The core sends the direction to the platform as `ItemDirection` on the first commit and when it changes; iOS's navigation slides and swipes back in it. Native controls and Android's back gesture still mirror as the system does ([roadmap](../roadmap.md#languages)).
 

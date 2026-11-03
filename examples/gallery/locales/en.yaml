@@ -1,12 +1,22 @@
 languageName:
   message: English
-  description: This language's name in itself, as the language menu lists it.
+  description: This language's name in itself, as the language setting lists it.
 language:
   message: Language
-  description: The language menu's button and title.
+  description: The language setting's title.
 languageSystem:
   message: Follow system
-  description: The language menu's item that shows the system's language.
+  description: The language setting's choice that follows the system's language.
+settings:
+  message: Settings
+  description: The settings button's name and the settings' title.
+settingsSearch: Search settings
+settingsSearchPlaceholder: Search
+settingsResults: Results
+settingsEmpty: No settings match.
+settingsClose: Close settings
+settingsGeneral: General
+settingsLanguageDetail: The language the gallery and NSGo's components speak, and the direction they read in.
 appGallery: Gallery
 groupApps: "Apps"
 groupPrimitives: "Primitives"

@@ -1,6 +1,14 @@
 languageName: 繁體中文
 language: 語言
 languageSystem: 跟隨系統
+settings: 設定
+settingsSearch: 搜尋設定
+settingsSearchPlaceholder: 搜尋
+settingsResults: 搜尋結果
+settingsEmpty: 沒有相符的設定。
+settingsClose: 關閉設定
+settingsGeneral: 一般
+settingsLanguageDetail: 示例庫和 NSGo 元件使用的語言，以及閱讀方向。
 appGallery: "範例集"
 groupApps: "應用"
 groupPrimitives: "基礎元素"

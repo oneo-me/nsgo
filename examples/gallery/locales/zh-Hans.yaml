@@ -1,6 +1,14 @@
 languageName: 简体中文
 language: 语言
 languageSystem: 跟随系统
+settings: 设置
+settingsSearch: 搜索设置
+settingsSearchPlaceholder: 搜索
+settingsResults: 搜索结果
+settingsEmpty: 没有匹配的设置。
+settingsClose: 关闭设置
+settingsGeneral: 通用
+settingsLanguageDetail: 示例库和 NSGo 组件使用的语言，以及阅读方向。
 appGallery: "示例库"
 groupApps: "应用"
 groupPrimitives: "基础元素"

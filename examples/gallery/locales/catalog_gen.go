@@ -64,6 +64,14 @@ type Translation struct {
 	LanguageName                                 func() string
 	Language                                     func() string
 	LanguageSystem                               func() string
+	Settings                                     func() string
+	SettingsSearch                               func() string
+	SettingsSearchPlaceholder                    func() string
+	SettingsResults                              func() string
+	SettingsEmpty                                func() string
+	SettingsClose                                func() string
+	SettingsGeneral                              func() string
+	SettingsLanguageDetail                       func() string
 	AppGallery                                   func() string
 	GroupApps                                    func() string
 	GroupPrimitives                              func() string
@@ -1974,6 +1982,14 @@ var texts = map[string][]string{
 		"English",
 		"Language",
 		"Follow system",
+		"Settings",
+		"Search settings",
+		"Search",
+		"Results",
+		"No settings match.",
+		"Close settings",
+		"General",
+		"The language the gallery and NSGo's components speak, and the direction they read in.",
 		"Gallery",
 		"Apps",
 		"Primitives",
@@ -3771,6 +3787,14 @@ var texts = map[string][]string{
 		"العربية",
 		"اللغة",
 		"اتباع النظام",
+		"الإعدادات",
+		"البحث في الإعدادات",
+		"بحث",
+		"النتائج",
+		"لا توجد إعدادات مطابقة.",
+		"إغلاق الإعدادات",
+		"عام",
+		"اللغة التي يعرضها المعرض ومكونات NSGo، واتجاه قراءتها.",
 		"المعرض",
 		"التطبيقات",
 		"العناصر الأساسية",
@@ -5568,6 +5592,14 @@ var texts = map[string][]string{
 		"简体中文",
 		"语言",
 		"跟随系统",
+		"设置",
+		"搜索设置",
+		"搜索",
+		"搜索结果",
+		"没有匹配的设置。",
+		"关闭设置",
+		"通用",
+		"示例库和 NSGo 组件使用的语言，以及阅读方向。",
 		"示例库",
 		"应用",
 		"基础元素",
@@ -7365,6 +7397,14 @@ var texts = map[string][]string{
 		"繁體中文",
 		"語言",
 		"跟隨系統",
+		"設定",
+		"搜尋設定",
+		"搜尋",
+		"搜尋結果",
+		"沒有相符的設定。",
+		"關閉設定",
+		"一般",
+		"示例庫和 NSGo 元件使用的語言，以及閱讀方向。",
 		"範例集",
 		"應用",
 		"基礎元素",
@@ -9187,7 +9227,7 @@ func Supply(lang string, t Translation) {
 	s := supplied[lang]
 	st := suppliedTexts[lang]
 	if st == nil {
-		st = make([]string, 1795)
+		st = make([]string, 1803)
 		suppliedTexts[lang] = st
 	}
 	if t.LanguageName != nil {
@@ -9199,548 +9239,572 @@ func Supply(lang string, t Translation) {
 	if t.LanguageSystem != nil {
 		st[2] = t.LanguageSystem()
 	}
+	if t.Settings != nil {
+		st[3] = t.Settings()
+	}
+	if t.SettingsSearch != nil {
+		st[4] = t.SettingsSearch()
+	}
+	if t.SettingsSearchPlaceholder != nil {
+		st[5] = t.SettingsSearchPlaceholder()
+	}
+	if t.SettingsResults != nil {
+		st[6] = t.SettingsResults()
+	}
+	if t.SettingsEmpty != nil {
+		st[7] = t.SettingsEmpty()
+	}
+	if t.SettingsClose != nil {
+		st[8] = t.SettingsClose()
+	}
+	if t.SettingsGeneral != nil {
+		st[9] = t.SettingsGeneral()
+	}
+	if t.SettingsLanguageDetail != nil {
+		st[10] = t.SettingsLanguageDetail()
+	}
 	if t.AppGallery != nil {
-		st[3] = t.AppGallery()
+		st[11] = t.AppGallery()
 	}
 	if t.GroupApps != nil {
-		st[4] = t.GroupApps()
+		st[12] = t.GroupApps()
 	}
 	if t.GroupPrimitives != nil {
-		st[5] = t.GroupPrimitives()
+		st[13] = t.GroupPrimitives()
 	}
 	if t.GroupComponents != nil {
-		st[6] = t.GroupComponents()
+		st[14] = t.GroupComponents()
 	}
 	if t.GroupStyling != nil {
-		st[7] = t.GroupStyling()
+		st[15] = t.GroupStyling()
 	}
 	if t.GroupMotion != nil {
-		st[8] = t.GroupMotion()
+		st[16] = t.GroupMotion()
 	}
 	if t.GroupPlatform != nil {
-		st[9] = t.GroupPlatform()
+		st[17] = t.GroupPlatform()
 	}
 	if t.DemoStocks != nil {
-		st[10] = t.DemoStocks()
+		st[18] = t.DemoStocks()
 	}
 	if t.DemoStocksDetail != nil {
-		st[11] = t.DemoStocksDetail()
+		st[19] = t.DemoStocksDetail()
 	}
 	if t.DemoAIChat != nil {
-		st[12] = t.DemoAIChat()
+		st[20] = t.DemoAIChat()
 	}
 	if t.DemoAIChatDetail != nil {
-		st[13] = t.DemoAIChatDetail()
+		st[21] = t.DemoAIChatDetail()
 	}
 	if t.DemoPhotos != nil {
-		st[14] = t.DemoPhotos()
+		st[22] = t.DemoPhotos()
 	}
 	if t.DemoPhotosDetail != nil {
-		st[15] = t.DemoPhotosDetail()
+		st[23] = t.DemoPhotosDetail()
 	}
 	if t.DemoText != nil {
-		st[16] = t.DemoText()
+		st[24] = t.DemoText()
 	}
 	if t.DemoTextDetail != nil {
-		st[17] = t.DemoTextDetail()
+		st[25] = t.DemoTextDetail()
 	}
 	if t.DemoImage != nil {
-		st[18] = t.DemoImage()
+		st[26] = t.DemoImage()
 	}
 	if t.DemoImageDetail != nil {
-		st[19] = t.DemoImageDetail()
+		st[27] = t.DemoImageDetail()
 	}
 	if t.DemoScroll != nil {
-		st[20] = t.DemoScroll()
+		st[28] = t.DemoScroll()
 	}
 	if t.DemoScrollDetail != nil {
-		st[21] = t.DemoScrollDetail()
+		st[29] = t.DemoScrollDetail()
 	}
 	if t.DemoList != nil {
-		st[22] = t.DemoList()
+		st[30] = t.DemoList()
 	}
 	if t.DemoListDetail != nil {
-		st[23] = t.DemoListDetail()
+		st[31] = t.DemoListDetail()
 	}
 	if t.DemoCanvas != nil {
-		st[24] = t.DemoCanvas()
+		st[32] = t.DemoCanvas()
 	}
 	if t.DemoCanvasDetail != nil {
-		st[25] = t.DemoCanvasDetail()
+		st[33] = t.DemoCanvasDetail()
 	}
 	if t.DemoShader != nil {
-		st[26] = t.DemoShader()
+		st[34] = t.DemoShader()
 	}
 	if t.DemoShaderDetail != nil {
-		st[27] = t.DemoShaderDetail()
+		st[35] = t.DemoShaderDetail()
 	}
 	if t.DemoWebViewAndVideo != nil {
-		st[28] = t.DemoWebViewAndVideo()
+		st[36] = t.DemoWebViewAndVideo()
 	}
 	if t.DemoWebViewAndVideoDetail != nil {
-		st[29] = t.DemoWebViewAndVideoDetail()
+		st[37] = t.DemoWebViewAndVideoDetail()
 	}
 	if t.DemoOverlay != nil {
-		st[30] = t.DemoOverlay()
+		st[38] = t.DemoOverlay()
 	}
 	if t.DemoOverlayDetail != nil {
-		st[31] = t.DemoOverlayDetail()
+		st[39] = t.DemoOverlayDetail()
 	}
 	if t.DemoCheckbox != nil {
-		st[32] = t.DemoCheckbox()
+		st[40] = t.DemoCheckbox()
 	}
 	if t.DemoCheckboxDetail != nil {
-		st[33] = t.DemoCheckboxDetail()
+		st[41] = t.DemoCheckboxDetail()
 	}
 	if t.DemoCollapsible != nil {
-		st[34] = t.DemoCollapsible()
+		st[42] = t.DemoCollapsible()
 	}
 	if t.DemoCollapsibleDetail != nil {
-		st[35] = t.DemoCollapsibleDetail()
+		st[43] = t.DemoCollapsibleDetail()
 	}
 	if t.DemoDataTable != nil {
-		st[36] = t.DemoDataTable()
+		st[44] = t.DemoDataTable()
 	}
 	if t.DemoDataTableDetail != nil {
-		st[37] = t.DemoDataTableDetail()
+		st[45] = t.DemoDataTableDetail()
 	}
 	if t.DemoDiffView != nil {
-		st[38] = t.DemoDiffView()
+		st[46] = t.DemoDiffView()
 	}
 	if t.DemoDiffViewDetail != nil {
-		st[39] = t.DemoDiffViewDetail()
+		st[47] = t.DemoDiffViewDetail()
 	}
 	if t.DemoDock != nil {
-		st[40] = t.DemoDock()
+		st[48] = t.DemoDock()
 	}
 	if t.DemoDockDetail != nil {
-		st[41] = t.DemoDockDetail()
+		st[49] = t.DemoDockDetail()
 	}
 	if t.DemoEditor != nil {
-		st[42] = t.DemoEditor()
+		st[50] = t.DemoEditor()
 	}
 	if t.DemoEditorDetail != nil {
-		st[43] = t.DemoEditorDetail()
+		st[51] = t.DemoEditorDetail()
 	}
 	if t.DemoInput != nil {
-		st[44] = t.DemoInput()
+		st[52] = t.DemoInput()
 	}
 	if t.DemoInputDetail != nil {
-		st[45] = t.DemoInputDetail()
+		st[53] = t.DemoInputDetail()
 	}
 	if t.DemoMenu != nil {
-		st[46] = t.DemoMenu()
+		st[54] = t.DemoMenu()
 	}
 	if t.DemoMenuDetail != nil {
-		st[47] = t.DemoMenuDetail()
+		st[55] = t.DemoMenuDetail()
 	}
 	if t.DemoNavStack != nil {
-		st[48] = t.DemoNavStack()
+		st[56] = t.DemoNavStack()
 	}
 	if t.DemoNavStackDetail != nil {
-		st[49] = t.DemoNavStackDetail()
+		st[57] = t.DemoNavStackDetail()
 	}
 	if t.DemoPlot != nil {
-		st[50] = t.DemoPlot()
+		st[58] = t.DemoPlot()
 	}
 	if t.DemoPlotDetail != nil {
-		st[51] = t.DemoPlotDetail()
+		st[59] = t.DemoPlotDetail()
 	}
 	if t.DemoPopover != nil {
-		st[52] = t.DemoPopover()
+		st[60] = t.DemoPopover()
 	}
 	if t.DemoPopoverDetail != nil {
-		st[53] = t.DemoPopoverDetail()
+		st[61] = t.DemoPopoverDetail()
 	}
 	if t.DemoProgress != nil {
-		st[54] = t.DemoProgress()
+		st[62] = t.DemoProgress()
 	}
 	if t.DemoProgressDetail != nil {
-		st[55] = t.DemoProgressDetail()
+		st[63] = t.DemoProgressDetail()
 	}
 	if t.DemoRadio != nil {
-		st[56] = t.DemoRadio()
+		st[64] = t.DemoRadio()
 	}
 	if t.DemoRadioDetail != nil {
-		st[57] = t.DemoRadioDetail()
+		st[65] = t.DemoRadioDetail()
 	}
 	if t.DemoResizable != nil {
-		st[58] = t.DemoResizable()
+		st[66] = t.DemoResizable()
 	}
 	if t.DemoResizableDetail != nil {
-		st[59] = t.DemoResizableDetail()
+		st[67] = t.DemoResizableDetail()
 	}
 	if t.DemoSheet != nil {
-		st[60] = t.DemoSheet()
+		st[68] = t.DemoSheet()
 	}
 	if t.DemoSheetDetail != nil {
-		st[61] = t.DemoSheetDetail()
+		st[69] = t.DemoSheetDetail()
 	}
 	if t.DemoSwitch != nil {
-		st[62] = t.DemoSwitch()
+		st[70] = t.DemoSwitch()
 	}
 	if t.DemoSwitchDetail != nil {
-		st[63] = t.DemoSwitchDetail()
+		st[71] = t.DemoSwitchDetail()
 	}
 	if t.DemoTable != nil {
-		st[64] = t.DemoTable()
+		st[72] = t.DemoTable()
 	}
 	if t.DemoTableDetail != nil {
-		st[65] = t.DemoTableDetail()
+		st[73] = t.DemoTableDetail()
 	}
 	if t.DemoTabs != nil {
-		st[66] = t.DemoTabs()
+		st[74] = t.DemoTabs()
 	}
 	if t.DemoTabsDetail != nil {
-		st[67] = t.DemoTabsDetail()
+		st[75] = t.DemoTabsDetail()
 	}
 	if t.DemoTextView != nil {
-		st[68] = t.DemoTextView()
+		st[76] = t.DemoTextView()
 	}
 	if t.DemoTextViewDetail != nil {
-		st[69] = t.DemoTextViewDetail()
+		st[77] = t.DemoTextViewDetail()
 	}
 	if t.DemoToast != nil {
-		st[70] = t.DemoToast()
+		st[78] = t.DemoToast()
 	}
 	if t.DemoToastDetail != nil {
-		st[71] = t.DemoToastDetail()
+		st[79] = t.DemoToastDetail()
 	}
 	if t.DemoTooltip != nil {
-		st[72] = t.DemoTooltip()
+		st[80] = t.DemoTooltip()
 	}
 	if t.DemoTooltipDetail != nil {
-		st[73] = t.DemoTooltipDetail()
+		st[81] = t.DemoTooltipDetail()
 	}
 	if t.DemoStyles != nil {
-		st[74] = t.DemoStyles()
+		st[82] = t.DemoStyles()
 	}
 	if t.DemoStylesDetail != nil {
-		st[75] = t.DemoStylesDetail()
+		st[83] = t.DemoStylesDetail()
 	}
 	if t.DemoLayout != nil {
-		st[76] = t.DemoLayout()
+		st[84] = t.DemoLayout()
 	}
 	if t.DemoLayoutDetail != nil {
-		st[77] = t.DemoLayoutDetail()
+		st[85] = t.DemoLayoutDetail()
 	}
 	if t.DemoPatterns != nil {
-		st[78] = t.DemoPatterns()
+		st[86] = t.DemoPatterns()
 	}
 	if t.DemoPatternsDetail != nil {
-		st[79] = t.DemoPatternsDetail()
+		st[87] = t.DemoPatternsDetail()
 	}
 	if t.DemoAnimations != nil {
-		st[80] = t.DemoAnimations()
+		st[88] = t.DemoAnimations()
 	}
 	if t.DemoAnimationsDetail != nil {
-		st[81] = t.DemoAnimationsDetail()
+		st[89] = t.DemoAnimationsDetail()
 	}
 	if t.DemoGestures != nil {
-		st[82] = t.DemoGestures()
+		st[90] = t.DemoGestures()
 	}
 	if t.DemoGesturesDetail != nil {
-		st[83] = t.DemoGesturesDetail()
+		st[91] = t.DemoGesturesDetail()
 	}
 	if t.DemoPhysics != nil {
-		st[84] = t.DemoPhysics()
+		st[92] = t.DemoPhysics()
 	}
 	if t.DemoPhysicsDetail != nil {
-		st[85] = t.DemoPhysicsDetail()
+		st[93] = t.DemoPhysicsDetail()
 	}
 	if t.DemoCollapsingHeader != nil {
-		st[86] = t.DemoCollapsingHeader()
+		st[94] = t.DemoCollapsingHeader()
 	}
 	if t.DemoCollapsingHeaderDetail != nil {
-		st[87] = t.DemoCollapsingHeaderDetail()
+		st[95] = t.DemoCollapsingHeaderDetail()
 	}
 	if t.DemoSystem != nil {
-		st[88] = t.DemoSystem()
+		st[96] = t.DemoSystem()
 	}
 	if t.DemoSystemDetail != nil {
-		st[89] = t.DemoSystemDetail()
+		st[97] = t.DemoSystemDetail()
 	}
 	if t.DemoStorage != nil {
-		st[90] = t.DemoStorage()
+		st[98] = t.DemoStorage()
 	}
 	if t.DemoStorageDetail != nil {
-		st[91] = t.DemoStorageDetail()
+		st[99] = t.DemoStorageDetail()
 	}
 	if t.DemoAccessibility != nil {
-		st[92] = t.DemoAccessibility()
+		st[100] = t.DemoAccessibility()
 	}
 	if t.DemoAccessibilityDetail != nil {
-		st[93] = t.DemoAccessibilityDetail()
+		st[101] = t.DemoAccessibilityDetail()
 	}
 	if t.AppNothingYet != nil {
-		st[94] = t.AppNothingYet()
+		st[102] = t.AppNothingYet()
 	}
 	if t.AppToggleSidebar != nil {
-		st[95] = t.AppToggleSidebar()
+		st[103] = t.AppToggleSidebar()
 	}
 	if t.AppResizeSidebar != nil {
-		st[96] = t.AppResizeSidebar()
+		st[104] = t.AppResizeSidebar()
 	}
 	if t.AppShowSidebar != nil {
-		st[97] = t.AppShowSidebar()
+		st[105] = t.AppShowSidebar()
 	}
 	if t.AppEdit != nil {
-		st[98] = t.AppEdit()
+		st[106] = t.AppEdit()
 	}
 	if t.AppView != nil {
-		st[99] = t.AppView()
+		st[107] = t.AppView()
 	}
 	if t.AppWindow != nil {
-		st[100] = t.AppWindow()
+		st[108] = t.AppWindow()
 	}
 	if t.ControlsPhotos != nil {
-		st[101] = t.ControlsPhotos()
+		st[109] = t.ControlsPhotos()
 	}
 	if t.ControlsVideos != nil {
-		st[102] = t.ControlsVideos()
+		st[110] = t.ControlsVideos()
 	}
 	if t.ControlsLivePhotos != nil {
-		st[103] = t.ControlsLivePhotos()
+		st[111] = t.ControlsLivePhotos()
 	}
 	if t.ControlsPlus != nil {
-		st[104] = t.ControlsPlus()
+		st[112] = t.ControlsPlus()
 	}
 	if t.ControlsOverview != nil {
-		st[105] = t.ControlsOverview()
+		st[113] = t.ControlsOverview()
 	}
 	if t.ControlsSwitch != nil {
-		st[106] = t.ControlsSwitch()
+		st[114] = t.ControlsSwitch()
 	}
 	if t.ControlsSettingsThatTakeEffectAt != nil {
-		st[107] = t.ControlsSettingsThatTakeEffectAt()
+		st[115] = t.ControlsSettingsThatTakeEffectAt()
 	}
 	if t.ControlsNotifications != nil {
-		st[108] = t.ControlsNotifications()
+		st[116] = t.ControlsNotifications()
 	}
 	if t.ControlsBannersSoundsAndBadges != nil {
-		st[109] = t.ControlsBannersSoundsAndBadges()
+		st[117] = t.ControlsBannersSoundsAndBadges()
 	}
 	if t.ControlsOff != nil {
-		st[110] = t.ControlsOff()
+		st[118] = t.ControlsOff()
 	}
 	if t.ControlsBadges != nil {
-		st[111] = t.ControlsBadges()
+		st[119] = t.ControlsBadges()
 	}
 	if t.ControlsTheUnreadCountOnThe != nil {
-		st[112] = t.ControlsTheUnreadCountOnThe()
+		st[120] = t.ControlsTheUnreadCountOnThe()
 	}
 	if t.ControlsTurnOnNotificationsFirst != nil {
-		st[113] = t.ControlsTurnOnNotificationsFirst()
+		st[121] = t.ControlsTurnOnNotificationsFirst()
 	}
 	if t.ControlsHaptics != nil {
-		st[114] = t.ControlsHaptics()
+		st[122] = t.ControlsHaptics()
 	}
 	if t.ControlsATapUnderTheFinger != nil {
-		st[115] = t.ControlsATapUnderTheFinger()
+		st[123] = t.ControlsATapUnderTheFinger()
 	}
 	if t.ControlsLowDataMode != nil {
-		st[116] = t.ControlsLowDataMode()
+		st[124] = t.ControlsLowDataMode()
 	}
 	if t.ControlsImagesLoadAtALower != nil {
-		st[117] = t.ControlsImagesLoadAtALower()
+		st[125] = t.ControlsImagesLoadAtALower()
 	}
 	if t.ControlsImagesLoadInFull != nil {
-		st[118] = t.ControlsImagesLoadInFull()
+		st[126] = t.ControlsImagesLoadInFull()
 	}
 	if t.ControlsSelectAll != nil {
-		st[119] = t.ControlsSelectAll()
+		st[127] = t.ControlsSelectAll()
 	}
 	if t.ControlsCheckbox != nil {
-		st[120] = t.ControlsCheckbox()
+		st[128] = t.ControlsCheckbox()
 	}
 	if t.ControlsAFilterSelectAllShows != nil {
-		st[121] = t.ControlsAFilterSelectAllShows()
+		st[129] = t.ControlsAFilterSelectAllShows()
 	}
 	if t.ControlsNothingToShow != nil {
-		st[122] = t.ControlsNothingToShow()
+		st[130] = t.ControlsNothingToShow()
 	}
 	if t.ControlsPlan != nil {
-		st[123] = t.ControlsPlan()
+		st[131] = t.ControlsPlan()
 	}
 	if t.ControlsRadio != nil {
-		st[124] = t.ControlsRadio()
+		st[132] = t.ControlsRadio()
 	}
 	if t.ControlsAPlanPickerOneOf != nil {
-		st[125] = t.ControlsAPlanPickerOneOf()
+		st[133] = t.ControlsAPlanPickerOneOf()
 	}
 	if t.ControlsPlan2 != nil {
-		st[126] = t.ControlsPlan2()
+		st[134] = t.ControlsPlan2()
 	}
 	if t.ControlsContinueWith != nil {
-		st[127] = t.ControlsContinueWith()
+		st[135] = t.ControlsContinueWith()
 	}
 	if t.ControlsTab != nil {
-		st[128] = t.ControlsTab()
+		st[136] = t.ControlsTab()
 	}
 	if t.ControlsTabs != nil {
-		st[129] = t.ControlsTabs()
+		st[137] = t.ControlsTabs()
 	}
 	if t.ControlsASectionSwitcherTheApp != nil {
-		st[130] = t.ControlsASectionSwitcherTheApp()
+		st[138] = t.ControlsASectionSwitcherTheApp()
 	}
 	if t.ControlsSections != nil {
-		st[131] = t.ControlsSections()
+		st[139] = t.ControlsSections()
 	}
 	if t.ControlsCollapsible != nil {
-		st[132] = t.ControlsCollapsible()
+		st[140] = t.ControlsCollapsible()
 	}
 	if t.ControlsDetailsUnderASummaryKept != nil {
-		st[133] = t.ControlsDetailsUnderASummaryKept()
+		st[141] = t.ControlsDetailsUnderASummaryKept()
 	}
 	if t.ControlsStorage != nil {
-		st[134] = t.ControlsStorage()
+		st[142] = t.ControlsStorage()
 	}
 	if t.Controls212GbOf256Gb != nil {
-		st[135] = t.Controls212GbOf256Gb()
+		st[143] = t.Controls212GbOf256Gb()
 	}
 	if t.ControlsKeepOriginals != nil {
-		st[136] = t.ControlsKeepOriginals()
+		st[144] = t.ControlsKeepOriginals()
 	}
 	if t.ControlsKeepOriginals2 != nil {
-		st[137] = t.ControlsKeepOriginals2()
+		st[145] = t.ControlsKeepOriginals2()
 	}
 	if t.ControlsEditsAreSavedAsCopies != nil {
-		st[138] = t.ControlsEditsAreSavedAsCopies()
+		st[146] = t.ControlsEditsAreSavedAsCopies()
 	}
 	if t.ControlsEditsReplaceThePhoto != nil {
-		st[139] = t.ControlsEditsReplaceThePhoto()
+		st[147] = t.ControlsEditsReplaceThePhoto()
 	}
 	if t.ControlsAdvanced != nil {
-		st[140] = t.ControlsAdvanced()
+		st[148] = t.ControlsAdvanced()
 	}
 	if t.ControlsOptionsMostPeopleLeaveAlone != nil {
-		st[141] = t.ControlsOptionsMostPeopleLeaveAlone()
+		st[149] = t.ControlsOptionsMostPeopleLeaveAlone()
 	}
 	if t.ControlsUploadStarted != nil {
-		st[142] = t.ControlsUploadStarted()
+		st[150] = t.ControlsUploadStarted()
 	}
 	if t.ControlsUploadDone != nil {
-		st[143] = t.ControlsUploadDone()
+		st[151] = t.ControlsUploadDone()
 	}
 	if t.ControlsProgress != nil {
-		st[144] = t.ControlsProgress()
+		st[152] = t.ControlsProgress()
 	}
 	if t.ControlsTransfersTheAppOwnsThe != nil {
-		st[145] = t.ControlsTransfersTheAppOwnsThe()
+		st[153] = t.ControlsTransfersTheAppOwnsThe()
 	}
 	if t.ControlsUpload != nil {
-		st[146] = t.ControlsUpload()
+		st[154] = t.ControlsUpload()
 	}
 	if t.Controls24PhotosSent != nil {
-		st[147] = t.Controls24PhotosSent()
+		st[155] = t.Controls24PhotosSent()
 	}
 	if t.ControlsSending24Photos != nil {
-		st[148] = t.ControlsSending24Photos()
+		st[156] = t.ControlsSending24Photos()
 	}
 	if t.Controls24PhotosToSend != nil {
-		st[149] = t.Controls24PhotosToSend()
+		st[157] = t.Controls24PhotosToSend()
 	}
 	if t.ControlsBackup != nil {
-		st[150] = t.ControlsBackup()
+		st[158] = t.ControlsBackup()
 	}
 	if t.ControlsPreparingItsSizeIsNot != nil {
-		st[151] = t.ControlsPreparingItsSizeIsNot()
+		st[159] = t.ControlsPreparingItsSizeIsNot()
 	}
 	if t.ControlsSend != nil {
-		st[152] = t.ControlsSend()
+		st[160] = t.ControlsSend()
 	}
 	if t.ControlsPause != nil {
-		st[153] = t.ControlsPause()
+		st[161] = t.ControlsPause()
 	}
 	if t.ControlsSendAgain != nil {
-		st[154] = t.ControlsSendAgain()
+		st[162] = t.ControlsSendAgain()
 	}
 	if t.ControlsUploadPaused != nil {
-		st[155] = t.ControlsUploadPaused()
+		st[163] = t.ControlsUploadPaused()
 	}
 	if t.ControlsReset != nil {
-		st[156] = t.ControlsReset()
+		st[164] = t.ControlsReset()
 	}
 	if t.ControlsUploadReset != nil {
-		st[157] = t.ControlsUploadReset()
+		st[165] = t.ControlsUploadReset()
 	}
 	if t.ControlsScreenshots != nil {
-		st[158] = t.ControlsScreenshots()
+		st[166] = t.ControlsScreenshots()
 	}
 	if t.ControlsFree != nil {
-		st[159] = t.ControlsFree()
+		st[167] = t.ControlsFree()
 	}
 	if t.ControlsOneDevice5Gb != nil {
-		st[160] = t.ControlsOneDevice5Gb()
+		st[168] = t.ControlsOneDevice5Gb()
 	}
 	if t.ControlsThreeDevices200Gb != nil {
-		st[161] = t.ControlsThreeDevices200Gb()
+		st[169] = t.ControlsThreeDevices200Gb()
 	}
 	if t.Controls3Mo != nil {
-		st[162] = t.Controls3Mo()
+		st[170] = t.Controls3Mo()
 	}
 	if t.ControlsTeam != nil {
-		st[163] = t.ControlsTeam()
+		st[171] = t.ControlsTeam()
 	}
 	if t.ControlsASharedLibrary2Tb != nil {
-		st[164] = t.ControlsASharedLibrary2Tb()
+		st[172] = t.ControlsASharedLibrary2Tb()
 	}
 	if t.Controls12Mo != nil {
-		st[165] = t.Controls12Mo()
+		st[173] = t.Controls12Mo()
 	}
 	if t.ControlsEnterprise != nil {
-		st[166] = t.ControlsEnterprise()
+		st[174] = t.ControlsEnterprise()
 	}
 	if t.ControlsSetUpByYourOrganization != nil {
-		st[167] = t.ControlsSetUpByYourOrganization()
+		st[175] = t.ControlsSetUpByYourOrganization()
 	}
 	if t.ControlsVisitors != nil {
-		st[168] = t.ControlsVisitors()
+		st[176] = t.ControlsVisitors()
 	}
 	if t.ControlsSignUps != nil {
-		st[169] = t.ControlsSignUps()
+		st[177] = t.ControlsSignUps()
 	}
 	if t.ControlsConversion != nil {
-		st[170] = t.ControlsConversion()
+		st[178] = t.ControlsConversion()
 	}
 	if t.ControlsActivity != nil {
-		st[171] = t.ControlsActivity()
+		st[179] = t.ControlsActivity()
 	}
 	if t.ControlsDeployedToProduction != nil {
-		st[172] = t.ControlsDeployedToProduction()
+		st[180] = t.ControlsDeployedToProduction()
 	}
 	if t.ControlsInvoicePaid != nil {
-		st[173] = t.ControlsInvoicePaid()
+		st[181] = t.ControlsInvoicePaid()
 	}
 	if t.ControlsAMemberJoined != nil {
-		st[174] = t.ControlsAMemberJoined()
+		st[182] = t.ControlsAMemberJoined()
 	}
 	if t.ControlsMembers != nil {
-		st[175] = t.ControlsMembers()
+		st[183] = t.ControlsMembers()
 	}
 	if t.ControlsOwner != nil {
-		st[176] = t.ControlsOwner()
+		st[184] = t.ControlsOwner()
 	}
 	if t.ControlsAdmin != nil {
-		st[177] = t.ControlsAdmin()
+		st[185] = t.ControlsAdmin()
 	}
 	if t.ControlsMember != nil {
-		st[178] = t.ControlsMember()
+		st[186] = t.ControlsMember()
 	}
 	if t.ControlsBilling != nil {
-		st[179] = t.ControlsBilling()
+		st[187] = t.ControlsBilling()
 	}
 	if t.ControlsApps != nil {
-		st[180] = t.ControlsApps()
+		st[188] = t.ControlsApps()
 	}
 	if t.ControlsSystem != nil {
-		st[181] = t.ControlsSystem()
+		st[189] = t.ControlsSystem()
 	}
 	if t.CommonOn != nil {
-		st[182] = t.CommonOn()
+		st[190] = t.CommonOn()
 	}
 	if t.CommonOff != nil {
-		st[183] = t.CommonOff()
+		st[191] = t.CommonOff()
 	}
 	if t.ControlsCountOf != nil {
 		s.ControlsCountOf = t.ControlsCountOf
@@ -9752,799 +9816,799 @@ func Supply(lang string, t Translation) {
 		s.ControlsContinueEvent = t.ControlsContinueEvent
 	}
 	if t.MenusMedium != nil {
-		st[184] = t.MenusMedium()
+		st[192] = t.MenusMedium()
 	}
 	if t.MenusChose != nil {
-		st[185] = t.MenusChose()
+		st[193] = t.MenusChose()
 	}
 	if t.MenusNewDocument != nil {
-		st[186] = t.MenusNewDocument()
+		st[194] = t.MenusNewDocument()
 	}
 	if t.MenusSave != nil {
-		st[187] = t.MenusSave()
+		st[195] = t.MenusSave()
 	}
 	if t.MenusSmall != nil {
-		st[188] = t.MenusSmall()
+		st[196] = t.MenusSmall()
 	}
 	if t.MenusLarge != nil {
-		st[189] = t.MenusLarge()
+		st[197] = t.MenusLarge()
 	}
 	if t.MenusMenuBar != nil {
-		st[190] = t.MenusMenuBar()
+		st[198] = t.MenusMenuBar()
 	}
 	if t.MenusEachMenuASheetSubmenus != nil {
-		st[191] = t.MenusEachMenuASheetSubmenus()
+		st[199] = t.MenusEachMenuASheetSubmenus()
 	}
 	if t.MenusHoverAcrossSubmenusTheShortcuts != nil {
-		st[192] = t.MenusHoverAcrossSubmenusTheShortcuts()
+		st[200] = t.MenusHoverAcrossSubmenusTheShortcuts()
 	}
 	if t.MenusFile != nil {
-		st[193] = t.MenusFile()
+		st[201] = t.MenusFile()
 	}
 	if t.MenusNewWindow != nil {
-		st[194] = t.MenusNewWindow()
+		st[202] = t.MenusNewWindow()
 	}
 	if t.MenusOpenRecent != nil {
-		st[195] = t.MenusOpenRecent()
+		st[203] = t.MenusOpenRecent()
 	}
 	if t.MenusOpen != nil {
-		st[196] = t.MenusOpen()
+		st[204] = t.MenusOpen()
 	}
 	if t.MenusClearRecent != nil {
-		st[197] = t.MenusClearRecent()
+		st[205] = t.MenusClearRecent()
 	}
 	if t.MenusExportAs != nil {
-		st[198] = t.MenusExportAs()
+		st[206] = t.MenusExportAs()
 	}
 	if t.MenusPdf != nil {
-		st[199] = t.MenusPdf()
+		st[207] = t.MenusPdf()
 	}
 	if t.MenusExportPdf != nil {
-		st[200] = t.MenusExportPdf()
+		st[208] = t.MenusExportPdf()
 	}
 	if t.MenusImage != nil {
-		st[201] = t.MenusImage()
+		st[209] = t.MenusImage()
 	}
 	if t.MenusPng != nil {
-		st[202] = t.MenusPng()
+		st[210] = t.MenusPng()
 	}
 	if t.MenusExportPng != nil {
-		st[203] = t.MenusExportPng()
+		st[211] = t.MenusExportPng()
 	}
 	if t.MenusJpeg != nil {
-		st[204] = t.MenusJpeg()
+		st[212] = t.MenusJpeg()
 	}
 	if t.MenusExportJpeg != nil {
-		st[205] = t.MenusExportJpeg()
+		st[213] = t.MenusExportJpeg()
 	}
 	if t.MenusWebp != nil {
-		st[206] = t.MenusWebp()
+		st[214] = t.MenusWebp()
 	}
 	if t.MenusExportWebp != nil {
-		st[207] = t.MenusExportWebp()
+		st[215] = t.MenusExportWebp()
 	}
 	if t.MenusWebPage != nil {
-		st[208] = t.MenusWebPage()
+		st[216] = t.MenusWebPage()
 	}
 	if t.MenusHtml != nil {
-		st[209] = t.MenusHtml()
+		st[217] = t.MenusHtml()
 	}
 	if t.MenusDeleteDocument != nil {
-		st[210] = t.MenusDeleteDocument()
+		st[218] = t.MenusDeleteDocument()
 	}
 	if t.MenusEdit != nil {
-		st[211] = t.MenusEdit()
+		st[219] = t.MenusEdit()
 	}
 	if t.MenusUndo != nil {
-		st[212] = t.MenusUndo()
+		st[220] = t.MenusUndo()
 	}
 	if t.MenusRedo != nil {
-		st[213] = t.MenusRedo()
+		st[221] = t.MenusRedo()
 	}
 	if t.MenusClipboard != nil {
-		st[214] = t.MenusClipboard()
+		st[222] = t.MenusClipboard()
 	}
 	if t.MenusCut != nil {
-		st[215] = t.MenusCut()
+		st[223] = t.MenusCut()
 	}
 	if t.MenusCopy != nil {
-		st[216] = t.MenusCopy()
+		st[224] = t.MenusCopy()
 	}
 	if t.MenusPaste != nil {
-		st[217] = t.MenusPaste()
+		st[225] = t.MenusPaste()
 	}
 	if t.MenusView != nil {
-		st[218] = t.MenusView()
+		st[226] = t.MenusView()
 	}
 	if t.MenusShow != nil {
-		st[219] = t.MenusShow()
+		st[227] = t.MenusShow()
 	}
 	if t.MenusSidebar != nil {
-		st[220] = t.MenusSidebar()
+		st[228] = t.MenusSidebar()
 	}
 	if t.MenusStatusBar != nil {
-		st[221] = t.MenusStatusBar()
+		st[229] = t.MenusStatusBar()
 	}
 	if t.MenusZoom != nil {
-		st[222] = t.MenusZoom()
+		st[230] = t.MenusZoom()
 	}
 	if t.MenusDone != nil {
-		st[223] = t.MenusDone()
+		st[231] = t.MenusDone()
 	}
 	if t.MenusNothingDoneYet != nil {
-		st[224] = t.MenusNothingDoneYet()
+		st[232] = t.MenusNothingDoneYet()
 	}
 	if t.MenusOpen2 != nil {
-		st[225] = t.MenusOpen2()
+		st[233] = t.MenusOpen2()
 	}
 	if t.MenusOpen3 != nil {
-		st[226] = t.MenusOpen3()
+		st[234] = t.MenusOpen3()
 	}
 	if t.MenusUnstar != nil {
-		st[227] = t.MenusUnstar()
+		st[235] = t.MenusUnstar()
 	}
 	if t.MenusStar != nil {
-		st[228] = t.MenusStar()
+		st[236] = t.MenusStar()
 	}
 	if t.MenusDuplicate != nil {
-		st[229] = t.MenusDuplicate()
+		st[237] = t.MenusDuplicate()
 	}
 	if t.MenusCopy2 != nil {
-		st[230] = t.MenusCopy2()
+		st[238] = t.MenusCopy2()
 	}
 	if t.MenusMoveTo != nil {
-		st[231] = t.MenusMoveTo()
+		st[239] = t.MenusMoveTo()
 	}
 	if t.MenusDocuments != nil {
-		st[232] = t.MenusDocuments()
+		st[240] = t.MenusDocuments()
 	}
 	if t.MenusMoved != nil {
-		st[233] = t.MenusMoved()
+		st[241] = t.MenusMoved()
 	}
 	if t.MenusToDocuments != nil {
-		st[234] = t.MenusToDocuments()
+		st[242] = t.MenusToDocuments()
 	}
 	if t.MenusArchive != nil {
-		st[235] = t.MenusArchive()
+		st[243] = t.MenusArchive()
 	}
 	if t.MenusToArchive != nil {
-		st[236] = t.MenusToArchive()
+		st[244] = t.MenusToArchive()
 	}
 	if t.MenusDelete != nil {
-		st[237] = t.MenusDelete()
+		st[245] = t.MenusDelete()
 	}
 	if t.MenusOnTheRowsOfA != nil {
-		st[238] = t.MenusOnTheRowsOfA()
+		st[246] = t.MenusOnTheRowsOfA()
 	}
 	if t.MenusHoldAFingerOnA != nil {
-		st[239] = t.MenusHoldAFingerOnA()
+		st[247] = t.MenusHoldAFingerOnA()
 	}
 	if t.MenusRightClickARowOr != nil {
-		st[240] = t.MenusRightClickARowOr()
+		st[248] = t.MenusRightClickARowOr()
 	}
 	if t.MenusNoFilesLeft != nil {
-		st[241] = t.MenusNoFilesLeft()
+		st[249] = t.MenusNoFilesLeft()
 	}
 	if t.MenusActionsFor != nil {
-		st[242] = t.MenusActionsFor()
+		st[250] = t.MenusActionsFor()
 	}
 	if t.MenusMoreActions != nil {
-		st[243] = t.MenusMoreActions()
+		st[251] = t.MenusMoreActions()
 	}
 	if t.MenusWhereItGoes != nil {
-		st[244] = t.MenusWhereItGoes()
+		st[252] = t.MenusWhereItGoes()
 	}
 	if t.MenusPhonesShowMenusAsSheets != nil {
-		st[245] = t.MenusPhonesShowMenusAsSheets()
+		st[253] = t.MenusPhonesShowMenusAsSheets()
 	}
 	if t.MenusTheSideAndAlignmentIt != nil {
-		st[246] = t.MenusTheSideAndAlignmentIt()
+		st[254] = t.MenusTheSideAndAlignmentIt()
 	}
 	if t.MenusTop != nil {
-		st[247] = t.MenusTop()
+		st[255] = t.MenusTop()
 	}
 	if t.MenusBottom != nil {
-		st[248] = t.MenusBottom()
+		st[256] = t.MenusBottom()
 	}
 	if t.MenusLeft != nil {
-		st[249] = t.MenusLeft()
+		st[257] = t.MenusLeft()
 	}
 	if t.MenusRight != nil {
-		st[250] = t.MenusRight()
+		st[258] = t.MenusRight()
 	}
 	if t.MenusStart != nil {
-		st[251] = t.MenusStart()
+		st[259] = t.MenusStart()
 	}
 	if t.MenusCenter != nil {
-		st[252] = t.MenusCenter()
+		st[260] = t.MenusCenter()
 	}
 	if t.MenusEnd != nil {
-		st[253] = t.MenusEnd()
+		st[261] = t.MenusEnd()
 	}
 	if t.MenusPlaced != nil {
-		st[254] = t.MenusPlaced()
+		st[262] = t.MenusPlaced()
 	}
 	if t.MenusOne != nil {
-		st[255] = t.MenusOne()
+		st[263] = t.MenusOne()
 	}
 	if t.MenusChoseOne != nil {
-		st[256] = t.MenusChoseOne()
+		st[264] = t.MenusChoseOne()
 	}
 	if t.MenusTwo != nil {
-		st[257] = t.MenusTwo()
+		st[265] = t.MenusTwo()
 	}
 	if t.MenusChoseTwo != nil {
-		st[258] = t.MenusChoseTwo()
+		st[266] = t.MenusChoseTwo()
 	}
 	if t.MenusThree != nil {
-		st[259] = t.MenusThree()
+		st[267] = t.MenusThree()
 	}
 	if t.MenusChoseThree != nil {
-		st[260] = t.MenusChoseThree()
+		st[268] = t.MenusChoseThree()
 	}
 	if t.MenusTimeZone != nil {
-		st[261] = t.MenusTimeZone()
+		st[269] = t.MenusTimeZone()
 	}
 	if t.MenusALongMenu != nil {
-		st[262] = t.MenusALongMenu()
+		st[270] = t.MenusALongMenu()
 	}
 	if t.MenusTwentyChoicesInAMenu != nil {
-		st[263] = t.MenusTwentyChoicesInAMenu()
+		st[271] = t.MenusTwentyChoicesInAMenu()
 	}
 	if t.MenusCommands != nil {
-		st[264] = t.MenusCommands()
+		st[272] = t.MenusCommands()
 	}
 	if t.MenusNewNote != nil {
-		st[265] = t.MenusNewNote()
+		st[273] = t.MenusNewNote()
 	}
 	if t.MenusRanNewNote != nil {
-		st[266] = t.MenusRanNewNote()
+		st[274] = t.MenusRanNewNote()
 	}
 	if t.MenusToggleTheme != nil {
-		st[267] = t.MenusToggleTheme()
+		st[275] = t.MenusToggleTheme()
 	}
 	if t.MenusRanToggleTheme != nil {
-		st[268] = t.MenusRanToggleTheme()
+		st[276] = t.MenusRanToggleTheme()
 	}
 	if t.MenusSyncNow != nil {
-		st[269] = t.MenusSyncNow()
+		st[277] = t.MenusSyncNow()
 	}
 	if t.MenusRanSyncNow != nil {
-		st[270] = t.MenusRanSyncNow()
+		st[278] = t.MenusRanSyncNow()
 	}
 	if t.MenusOpenedByTheApp != nil {
-		st[271] = t.MenusOpenedByTheApp()
+		st[279] = t.MenusOpenedByTheApp()
 	}
 	if t.MenusAControlledMenuAButton != nil {
-		st[272] = t.MenusAControlledMenuAButton()
+		st[280] = t.MenusAControlledMenuAButton()
 	}
 	if t.MenusOpenTheCommands != nil {
-		st[273] = t.MenusOpenTheCommands()
+		st[281] = t.MenusOpenTheCommands()
 	}
 	if t.MenusNothingChosenYet != nil {
-		st[274] = t.MenusNothingChosenYet()
+		st[282] = t.MenusNothingChosenYet()
 	}
 	if t.MenusChose2 != nil {
-		st[275] = t.MenusChose2()
+		st[283] = t.MenusChose2()
 	}
 	if t.MenusNative != nil {
-		st[276] = t.MenusNative()
+		st[284] = t.MenusNative()
 	}
 	if t.MenusShare != nil {
-		st[277] = t.MenusShare()
+		st[285] = t.MenusShare()
 	}
 	if t.MenusMail != nil {
-		st[278] = t.MenusMail()
+		st[286] = t.MenusMail()
 	}
 	if t.MenusMessages != nil {
-		st[279] = t.MenusMessages()
+		st[287] = t.MenusMessages()
 	}
 	if t.MenusPinned != nil {
-		st[280] = t.MenusPinned()
+		st[288] = t.MenusPinned()
 	}
 	if t.MenusThePlatformSMenu != nil {
-		st[281] = t.MenusThePlatformSMenu()
+		st[289] = t.MenusThePlatformSMenu()
 	}
 	if t.MenusPopupmenuShowsTheSystemS != nil {
-		st[282] = t.MenusPopupmenuShowsTheSystemS()
+		st[290] = t.MenusPopupmenuShowsTheSystemS()
 	}
 	if t.MenusNative2 != nil {
-		st[283] = t.MenusNative2()
+		st[291] = t.MenusNative2()
 	}
 	if t.MenusShowTheNativeMenu != nil {
-		st[284] = t.MenusShowTheNativeMenu()
+		st[292] = t.MenusShowTheNativeMenu()
 	}
 	if t.MenusPressHere != nil {
-		st[285] = t.MenusPressHere()
+		st[293] = t.MenusPressHere()
 	}
 	if t.MenusRightClickOrPressHere != nil {
-		st[286] = t.MenusRightClickOrPressHere()
+		st[294] = t.MenusRightClickOrPressHere()
 	}
 	if t.MenusSetapplicationmenuSetsTheMenuBar != nil {
-		st[287] = t.MenusSetapplicationmenuSetsTheMenuBar()
+		st[295] = t.MenusSetapplicationmenuSetsTheMenuBar()
 	}
 	if t.MenusLastChosen != nil {
-		st[288] = t.MenusLastChosen()
+		st[296] = t.MenusLastChosen()
 	}
 	if t.MenusSetmenubarHidesTheBarWindows != nil {
-		st[289] = t.MenusSetmenubarHidesTheBarWindows()
+		st[297] = t.MenusSetmenubarHidesTheBarWindows()
 	}
 	if t.MenusAlwaysShown != nil {
-		st[290] = t.MenusAlwaysShown()
+		st[298] = t.MenusAlwaysShown()
 	}
 	if t.MenusAutoHide != nil {
-		st[291] = t.MenusAutoHide()
+		st[299] = t.MenusAutoHide()
 	}
 	if t.MenusTheApplicationMenu != nil {
-		st[292] = t.MenusTheApplicationMenu()
+		st[300] = t.MenusTheApplicationMenu()
 	}
 	if t.MenusTheSystemSMenuBar != nil {
-		st[293] = t.MenusTheSystemSMenuBar()
+		st[301] = t.MenusTheSystemSMenuBar()
 	}
 	if t.MenusEvents != nil {
-		st[294] = t.MenusEvents()
+		st[302] = t.MenusEvents()
 	}
 	if t.MenusOnopenchangeWithItsReasonAnd != nil {
-		st[295] = t.MenusOnopenchangeWithItsReasonAnd()
+		st[303] = t.MenusOnopenchangeWithItsReasonAnd()
 	}
 	if t.MenusOpenAMenu != nil {
-		st[296] = t.MenusOpenAMenu()
+		st[304] = t.MenusOpenAMenu()
 	}
 	if t.MenusOpened != nil {
-		st[297] = t.MenusOpened()
+		st[305] = t.MenusOpened()
 	}
 	if t.MenusClosed != nil {
-		st[298] = t.MenusClosed()
+		st[306] = t.MenusClosed()
 	}
 	if t.MenusViewState != nil {
 		s.MenusViewState = t.MenusViewState
 	}
 	if t.SystemEnvironment != nil {
-		st[299] = t.SystemEnvironment()
+		st[307] = t.SystemEnvironment()
 	}
 	if t.SystemUpdatesWhenTheWindowInsets != nil {
-		st[300] = t.SystemUpdatesWhenTheWindowInsets()
+		st[308] = t.SystemUpdatesWhenTheWindowInsets()
 	}
 	if t.SystemLive != nil {
-		st[301] = t.SystemLive()
+		st[309] = t.SystemLive()
 	}
 	if t.SystemWindow != nil {
-		st[302] = t.SystemWindow()
+		st[310] = t.SystemWindow()
 	}
 	if t.SystemKeyboard != nil {
-		st[303] = t.SystemKeyboard()
+		st[311] = t.SystemKeyboard()
 	}
 	if t.SystemFontScale != nil {
-		st[304] = t.SystemFontScale()
+		st[312] = t.SystemFontScale()
 	}
 	if t.SystemSafeAreaInsets != nil {
-		st[305] = t.SystemSafeAreaInsets()
+		st[313] = t.SystemSafeAreaInsets()
 	}
 	if t.SystemTop != nil {
-		st[306] = t.SystemTop()
+		st[314] = t.SystemTop()
 	}
 	if t.SystemRight != nil {
-		st[307] = t.SystemRight()
+		st[315] = t.SystemRight()
 	}
 	if t.SystemBottom != nil {
-		st[308] = t.SystemBottom()
+		st[316] = t.SystemBottom()
 	}
 	if t.SystemLeft != nil {
-		st[309] = t.SystemLeft()
+		st[317] = t.SystemLeft()
 	}
 	if t.SystemSafeArea != nil {
-		st[310] = t.SystemSafeArea()
+		st[318] = t.SystemSafeArea()
 	}
 	if t.SystemDarkScheme != nil {
-		st[311] = t.SystemDarkScheme()
+		st[319] = t.SystemDarkScheme()
 	}
 	if t.SystemLightScheme != nil {
-		st[312] = t.SystemLightScheme()
+		st[320] = t.SystemLightScheme()
 	}
 	if t.SystemStatusBar != nil {
-		st[313] = t.SystemStatusBar()
+		st[321] = t.SystemStatusBar()
 	}
 	if t.SystemADialogSStatusbarOver != nil {
-		st[314] = t.SystemADialogSStatusbarOver()
+		st[322] = t.SystemADialogSStatusbarOver()
 	}
 	if t.SystemLight != nil {
-		st[315] = t.SystemLight()
+		st[323] = t.SystemLight()
 	}
 	if t.SystemDark != nil {
-		st[316] = t.SystemDark()
+		st[324] = t.SystemDark()
 	}
 	if t.SystemAuto != nil {
-		st[317] = t.SystemAuto()
+		st[325] = t.SystemAuto()
 	}
 	if t.SystemHidden != nil {
-		st[318] = t.SystemHidden()
+		st[326] = t.SystemHidden()
 	}
 	if t.SystemHideTheStatusBar != nil {
-		st[319] = t.SystemHideTheStatusBar()
+		st[327] = t.SystemHideTheStatusBar()
 	}
 	if t.SystemPreview != nil {
-		st[320] = t.SystemPreview()
+		st[328] = t.SystemPreview()
 	}
 	if t.SystemStatusBarPreview != nil {
-		st[321] = t.SystemStatusBarPreview()
+		st[329] = t.SystemStatusBarPreview()
 	}
 	if t.SystemClose != nil {
-		st[322] = t.SystemClose()
+		st[330] = t.SystemClose()
 	}
 	if t.SystemAlertsAndSheets != nil {
-		st[323] = t.SystemAlertsAndSheets()
+		st[331] = t.SystemAlertsAndSheets()
 	}
 	if t.SystemAlertdialogToast != nil {
-		st[324] = t.SystemAlertdialogToast()
+		st[332] = t.SystemAlertdialogToast()
 	}
 	if t.SystemAlert != nil {
-		st[325] = t.SystemAlert()
+		st[333] = t.SystemAlert()
 	}
 	if t.SystemOneButton != nil {
-		st[326] = t.SystemOneButton()
+		st[334] = t.SystemOneButton()
 	}
 	if t.SystemSaved != nil {
-		st[327] = t.SystemSaved()
+		st[335] = t.SystemSaved()
 	}
 	if t.SystemYourChangesWereSaved != nil {
-		st[328] = t.SystemYourChangesWereSaved()
+		st[336] = t.SystemYourChangesWereSaved()
 	}
 	if t.SystemOk != nil {
-		st[329] = t.SystemOk()
+		st[337] = t.SystemOk()
 	}
 	if t.SystemConfirm != nil {
-		st[330] = t.SystemConfirm()
+		st[338] = t.SystemConfirm()
 	}
 	if t.SystemCancelAndDestructiveButtons != nil {
-		st[331] = t.SystemCancelAndDestructiveButtons()
+		st[339] = t.SystemCancelAndDestructiveButtons()
 	}
 	if t.SystemDeleteThePhoto != nil {
-		st[332] = t.SystemDeleteThePhoto()
+		st[340] = t.SystemDeleteThePhoto()
 	}
 	if t.SystemThisCannotBeUndone != nil {
-		st[333] = t.SystemThisCannotBeUndone()
+		st[341] = t.SystemThisCannotBeUndone()
 	}
 	if t.SystemCancel != nil {
-		st[334] = t.SystemCancel()
+		st[342] = t.SystemCancel()
 	}
 	if t.SystemDelete != nil {
-		st[335] = t.SystemDelete()
+		st[343] = t.SystemDelete()
 	}
 	if t.SystemThreeButtons != nil {
-		st[336] = t.SystemThreeButtons()
+		st[344] = t.SystemThreeButtons()
 	}
 	if t.SystemReportsTheLabelOfThe != nil {
-		st[337] = t.SystemReportsTheLabelOfThe()
+		st[345] = t.SystemReportsTheLabelOfThe()
 	}
 	if t.SystemUpdateAvailable != nil {
-		st[338] = t.SystemUpdateAvailable()
+		st[346] = t.SystemUpdateAvailable()
 	}
 	if t.SystemInstallItNow != nil {
-		st[339] = t.SystemInstallItNow()
+		st[347] = t.SystemInstallItNow()
 	}
 	if t.SystemLater != nil {
-		st[340] = t.SystemLater()
+		st[348] = t.SystemLater()
 	}
 	if t.SystemNever != nil {
-		st[341] = t.SystemNever()
+		st[349] = t.SystemNever()
 	}
 	if t.SystemInstall != nil {
-		st[342] = t.SystemInstall()
+		st[350] = t.SystemInstall()
 	}
 	if t.SystemActionSheet != nil {
-		st[343] = t.SystemActionSheet()
+		st[351] = t.SystemActionSheet()
 	}
 	if t.SystemTitleCancelAndDestructiveOptions != nil {
-		st[344] = t.SystemTitleCancelAndDestructiveOptions()
+		st[352] = t.SystemTitleCancelAndDestructiveOptions()
 	}
 	if t.SystemShareThePhoto != nil {
-		st[345] = t.SystemShareThePhoto()
+		st[353] = t.SystemShareThePhoto()
 	}
 	if t.SystemCopyLink != nil {
-		st[346] = t.SystemCopyLink()
+		st[354] = t.SystemCopyLink()
 	}
 	if t.SystemSave != nil {
-		st[347] = t.SystemSave()
+		st[355] = t.SystemSave()
 	}
 	if t.SystemToast != nil {
-		st[348] = t.SystemToast()
+		st[356] = t.SystemToast()
 	}
 	if t.SystemBaseEveryPlatform != nil {
-		st[349] = t.SystemBaseEveryPlatform()
+		st[357] = t.SystemBaseEveryPlatform()
 	}
 	if t.SystemHelloFromAToast != nil {
-		st[350] = t.SystemHelloFromAToast()
+		st[358] = t.SystemHelloFromAToast()
 	}
 	if t.SystemBaseSToastmanagerStyledBy != nil {
-		st[351] = t.SystemBaseSToastmanagerStyledBy()
+		st[359] = t.SystemBaseSToastmanagerStyledBy()
 	}
 	if t.SystemAnswer != nil {
-		st[352] = t.SystemAnswer()
+		st[360] = t.SystemAnswer()
 	}
 	if t.SystemNoneYet != nil {
-		st[353] = t.SystemNoneYet()
+		st[361] = t.SystemNoneYet()
 	}
 	if t.SystemFramesAndTimers != nil {
-		st[354] = t.SystemFramesAndTimers()
+		st[362] = t.SystemFramesAndTimers()
 	}
 	if t.SystemRequestanimationframeAfterfunc != nil {
-		st[355] = t.SystemRequestanimationframeAfterfunc()
+		st[363] = t.SystemRequestanimationframeAfterfunc()
 	}
 	if t.SystemFrameRate != nil {
-		st[356] = t.SystemFrameRate()
+		st[364] = t.SystemFrameRate()
 	}
 	if t.SystemIntervalTicks != nil {
-		st[357] = t.SystemIntervalTicks()
+		st[365] = t.SystemIntervalTicks()
 	}
 	if t.SystemEvery1S != nil {
-		st[358] = t.SystemEvery1S()
+		st[366] = t.SystemEvery1S()
 	}
 	if t.SystemShareOf120Fps != nil {
-		st[359] = t.SystemShareOf120Fps()
+		st[367] = t.SystemShareOf120Fps()
 	}
 	if t.SystemStopCountingFrames != nil {
-		st[360] = t.SystemStopCountingFrames()
+		st[368] = t.SystemStopCountingFrames()
 	}
 	if t.SystemCountFrames != nil {
-		st[361] = t.SystemCountFrames()
+		st[369] = t.SystemCountFrames()
 	}
 	if t.SystemCounts != nil {
-		st[362] = t.SystemCounts()
+		st[370] = t.SystemCounts()
 	}
 	if t.SystemSwitchesTheLight != nil {
-		st[363] = t.SystemSwitchesTheLight()
+		st[371] = t.SystemSwitchesTheLight()
 	}
 	if t.SystemResetsNotWhileTyping != nil {
-		st[364] = t.SystemResetsNotWhileTyping()
+		st[372] = t.SystemResetsNotWhileTyping()
 	}
 	if t.SystemKeyboardShortcuts != nil {
-		st[365] = t.SystemKeyboardShortcuts()
+		st[373] = t.SystemKeyboardShortcuts()
 	}
 	if t.SystemScopeOnkeyDesktopsAndHardware != nil {
-		st[366] = t.SystemScopeOnkeyDesktopsAndHardware()
+		st[374] = t.SystemScopeOnkeyDesktopsAndHardware()
 	}
 	if t.SystemLightOn != nil {
-		st[367] = t.SystemLightOn()
+		st[375] = t.SystemLightOn()
 	}
 	if t.SystemLightOff != nil {
-		st[368] = t.SystemLightOff()
+		st[376] = t.SystemLightOff()
 	}
 	if t.SystemNetworkAndLogs != nil {
-		st[369] = t.SystemNetworkAndLogs()
+		st[377] = t.SystemNetworkAndLogs()
 	}
 	if t.SystemNetHttpOnAGoroutine != nil {
-		st[370] = t.SystemNetHttpOnAGoroutine()
+		st[378] = t.SystemNetHttpOnAGoroutine()
 	}
 	if t.SystemThreePostsFromJsonplaceholderTypicode != nil {
-		st[371] = t.SystemThreePostsFromJsonplaceholderTypicode()
+		st[379] = t.SystemThreePostsFromJsonplaceholderTypicode()
 	}
 	if t.SystemLoading != nil {
-		st[372] = t.SystemLoading()
+		st[380] = t.SystemLoading()
 	}
 	if t.SystemLogPrintfShowsInThe != nil {
-		st[373] = t.SystemLogPrintfShowsInThe()
+		st[381] = t.SystemLogPrintfShowsInThe()
 	}
 	if t.SystemTitleBarCommandsFrameAnd != nil {
-		st[374] = t.SystemTitleBarCommandsFrameAnd()
+		st[382] = t.SystemTitleBarCommandsFrameAnd()
 	}
 	if t.SystemDesktop != nil {
-		st[375] = t.SystemDesktop()
+		st[383] = t.SystemDesktop()
 	}
 	if t.SystemWindowCommandsNeedADesktop != nil {
-		st[376] = t.SystemWindowCommandsNeedADesktop()
+		st[384] = t.SystemWindowCommandsNeedADesktop()
 	}
 	if t.SystemNsgo != nil {
-		st[377] = t.SystemNsgo()
+		st[385] = t.SystemNsgo()
 	}
 	if t.SystemTitleBar != nil {
-		st[378] = t.SystemTitleBar()
+		st[386] = t.SystemTitleBar()
 	}
 	if t.SystemTheSystemS != nil {
-		st[379] = t.SystemTheSystemS()
+		st[387] = t.SystemTheSystemS()
 	}
 	if t.SystemHideTitleBar != nil {
-		st[380] = t.SystemHideTitleBar()
+		st[388] = t.SystemHideTitleBar()
 	}
 	if t.SystemShowTitleBar != nil {
-		st[381] = t.SystemShowTitleBar()
+		st[389] = t.SystemShowTitleBar()
 	}
 	if t.SystemWindowControls != nil {
-		st[382] = t.SystemWindowControls()
+		st[390] = t.SystemWindowControls()
 	}
 	if t.SystemDefault != nil {
-		st[383] = t.SystemDefault()
+		st[391] = t.SystemDefault()
 	}
 	if t.SystemTrafficLightsAt2410 != nil {
-		st[384] = t.SystemTrafficLightsAt2410()
+		st[392] = t.SystemTrafficLightsAt2410()
 	}
 	if t.SystemMaterial != nil {
-		st[385] = t.SystemMaterial()
+		st[393] = t.SystemMaterial()
 	}
 	if t.SystemShowsBehindTheSidebar != nil {
-		st[386] = t.SystemShowsBehindTheSidebar()
+		st[394] = t.SystemShowsBehindTheSidebar()
 	}
 	if t.SystemNone != nil {
-		st[387] = t.SystemNone()
+		st[395] = t.SystemNone()
 	}
 	if t.SystemSidebar != nil {
-		st[388] = t.SystemSidebar()
+		st[396] = t.SystemSidebar()
 	}
 	if t.SystemUnderWindow != nil {
-		st[389] = t.SystemUnderWindow()
+		st[397] = t.SystemUnderWindow()
 	}
 	if t.SystemHud != nil {
-		st[390] = t.SystemHud()
+		st[398] = t.SystemHud()
 	}
 	if t.SystemCommands != nil {
-		st[391] = t.SystemCommands()
+		st[399] = t.SystemCommands()
 	}
 	if t.SystemMinimize != nil {
-		st[392] = t.SystemMinimize()
+		st[400] = t.SystemMinimize()
 	}
 	if t.SystemZoom != nil {
-		st[393] = t.SystemZoom()
+		st[401] = t.SystemZoom()
 	}
 	if t.SystemFullScreen != nil {
-		st[394] = t.SystemFullScreen()
+		st[402] = t.SystemFullScreen()
 	}
 	if t.SystemAwayFor2S != nil {
-		st[395] = t.SystemAwayFor2S()
+		st[403] = t.SystemAwayFor2S()
 	}
 	if t.SystemFrameAndLevel != nil {
-		st[396] = t.SystemFrameAndLevel()
+		st[404] = t.SystemFrameAndLevel()
 	}
 	if t.SystemTallerAnimated != nil {
-		st[397] = t.SystemTallerAnimated()
+		st[405] = t.SystemTallerAnimated()
 	}
 	if t.SystemMoveTo8080 != nil {
-		st[398] = t.SystemMoveTo8080()
+		st[406] = t.SystemMoveTo8080()
 	}
 	if t.SystemNormal != nil {
-		st[399] = t.SystemNormal()
+		st[407] = t.SystemNormal()
 	}
 	if t.SystemFloating != nil {
-		st[400] = t.SystemFloating()
+		st[408] = t.SystemFloating()
 	}
 	if t.SystemDragTheWindowFromHere != nil {
-		st[401] = t.SystemDragTheWindowFromHere()
+		st[409] = t.SystemDragTheWindowFromHere()
 	}
 	if t.SystemStillPressable != nil {
-		st[402] = t.SystemStillPressable()
+		st[410] = t.SystemStillPressable()
 	}
 	if t.SystemQuit != nil {
-		st[403] = t.SystemQuit()
+		st[411] = t.SystemQuit()
 	}
 	if t.SystemHelloFromNsgo != nil {
-		st[404] = t.SystemHelloFromNsgo()
+		st[412] = t.SystemHelloFromNsgo()
 	}
 	if t.SystemNothingReadYet != nil {
-		st[405] = t.SystemNothingReadYet()
+		st[413] = t.SystemNothingReadYet()
 	}
 	if t.SystemClipboard != nil {
-		st[406] = t.SystemClipboard()
+		st[414] = t.SystemClipboard()
 	}
 	if t.SystemTextImagesAndTheFiles != nil {
-		st[407] = t.SystemTextImagesAndTheFiles()
+		st[415] = t.SystemTextImagesAndTheFiles()
 	}
 	if t.SystemClipboardText != nil {
-		st[408] = t.SystemClipboardText()
+		st[416] = t.SystemClipboardText()
 	}
 	if t.SystemCopyText != nil {
-		st[409] = t.SystemCopyText()
+		st[417] = t.SystemCopyText()
 	}
 	if t.SystemPasteText != nil {
-		st[410] = t.SystemPasteText()
+		st[418] = t.SystemPasteText()
 	}
 	if t.SystemText != nil {
-		st[411] = t.SystemText()
+		st[419] = t.SystemText()
 	}
 	if t.SystemCopyLogo != nil {
-		st[412] = t.SystemCopyLogo()
+		st[420] = t.SystemCopyLogo()
 	}
 	if t.SystemPasteImage != nil {
-		st[413] = t.SystemPasteImage()
+		st[421] = t.SystemPasteImage()
 	}
 	if t.SystemTheClipboardHoldsNoImage != nil {
-		st[414] = t.SystemTheClipboardHoldsNoImage()
+		st[422] = t.SystemTheClipboardHoldsNoImage()
 	}
 	if t.SystemPasteFiles != nil {
-		st[415] = t.SystemPasteFiles()
+		st[423] = t.SystemPasteFiles()
 	}
 	if t.SystemTheClipboardHoldsNoFiles != nil {
-		st[416] = t.SystemTheClipboardHoldsNoFiles()
+		st[424] = t.SystemTheClipboardHoldsNoFiles()
 	}
 	if t.SystemFiles != nil {
-		st[417] = t.SystemFiles()
+		st[425] = t.SystemFiles()
 	}
 	if t.SystemWhatIsThere != nil {
-		st[418] = t.SystemWhatIsThere()
+		st[426] = t.SystemWhatIsThere()
 	}
 	if t.SystemPastedImage != nil {
-		st[419] = t.SystemPastedImage()
+		st[427] = t.SystemPastedImage()
 	}
 	if t.SystemNothingOpenedYet != nil {
-		st[420] = t.SystemNothingOpenedYet()
+		st[428] = t.SystemNothingOpenedYet()
 	}
 	if t.SystemOpened != nil {
-		st[421] = t.SystemOpened()
+		st[429] = t.SystemOpened()
 	}
 	if t.SystemNothingOpened != nil {
-		st[422] = t.SystemNothingOpened()
+		st[430] = t.SystemNothingOpened()
 	}
 	if t.SystemLinksPhotosAndAppearance != nil {
-		st[423] = t.SystemLinksPhotosAndAppearance()
+		st[431] = t.SystemLinksPhotosAndAppearance()
 	}
 	if t.SystemOpenurlPickimagesSetappearance != nil {
-		st[424] = t.SystemOpenurlPickimagesSetappearance()
+		st[432] = t.SystemOpenurlPickimagesSetappearance()
 	}
 	if t.SystemTheWebsite != nil {
-		st[425] = t.SystemTheWebsite()
+		st[433] = t.SystemTheWebsite()
 	}
 	if t.SystemAnEmail != nil {
-		st[426] = t.SystemAnEmail()
+		st[434] = t.SystemAnEmail()
 	}
 	if t.SystemRefusedUrl != nil {
-		st[427] = t.SystemRefusedUrl()
+		st[435] = t.SystemRefusedUrl()
 	}
 	if t.SystemPickAPhoto != nil {
-		st[428] = t.SystemPickAPhoto()
+		st[436] = t.SystemPickAPhoto()
 	}
 	if t.SystemUpTo4800Px != nil {
-		st[429] = t.SystemUpTo4800Px()
+		st[437] = t.SystemUpTo4800Px()
 	}
 	if t.SystemNoPhotoPicked != nil {
-		st[430] = t.SystemNoPhotoPicked()
+		st[438] = t.SystemNoPhotoPicked()
 	}
 	if t.SystemHeicArrivesAsJpegLarge != nil {
-		st[431] = t.SystemHeicArrivesAsJpegLarge()
+		st[439] = t.SystemHeicArrivesAsJpegLarge()
 	}
 	if t.SystemSetappearance != nil {
-		st[432] = t.SystemSetappearance()
+		st[440] = t.SystemSetappearance()
 	}
 	if t.SystemForced != nil {
-		st[433] = t.SystemForced()
+		st[441] = t.SystemForced()
 	}
 	if t.SystemSystem != nil {
-		st[434] = t.SystemSystem()
+		st[442] = t.SystemSystem()
 	}
 	if t.SystemFilesArriveOnDiskCopied != nil {
-		st[435] = t.SystemFilesArriveOnDiskCopied()
+		st[443] = t.SystemFilesArriveOnDiskCopied()
 	}
 	if t.SystemThePickFailed != nil {
-		st[436] = t.SystemThePickFailed()
+		st[444] = t.SystemThePickFailed()
 	}
 	if t.SystemNoFilePicked != nil {
-		st[437] = t.SystemNoFilePicked()
+		st[445] = t.SystemNoFilePicked()
 	}
 	if t.SystemTheSaveFailed != nil {
-		st[438] = t.SystemTheSaveFailed()
+		st[446] = t.SystemTheSaveFailed()
 	}
 	if t.SystemSaved2 != nil {
-		st[439] = t.SystemSaved2()
+		st[447] = t.SystemSaved2()
 	}
 	if t.SystemNothingSaved != nil {
-		st[440] = t.SystemNothingSaved()
+		st[448] = t.SystemNothingSaved()
 	}
 	if t.SystemFiles2 != nil {
-		st[441] = t.SystemFiles2()
+		st[449] = t.SystemFiles2()
 	}
 	if t.SystemPickfilesSavefile != nil {
-		st[442] = t.SystemPickfilesSavefile()
+		st[450] = t.SystemPickfilesSavefile()
 	}
 	if t.SystemPickAFile != nil {
-		st[443] = t.SystemPickAFile()
+		st[451] = t.SystemPickAFile()
 	}
 	if t.SystemPdfsAndImages != nil {
-		st[444] = t.SystemPdfsAndImages()
+		st[452] = t.SystemPdfsAndImages()
 	}
 	if t.SystemSaveATextFile != nil {
-		st[445] = t.SystemSaveATextFile()
+		st[453] = t.SystemSaveATextFile()
 	}
 	if t.SystemSaveTheFilePicked != nil {
-		st[446] = t.SystemSaveTheFilePicked()
+		st[454] = t.SystemSaveTheFilePicked()
 	}
 	if t.SystemPickAFileFirst != nil {
-		st[447] = t.SystemPickAFileFirst()
+		st[455] = t.SystemPickAFileFirst()
 	}
 	if t.SystemCounted != nil {
 		s.SystemCounted = t.SystemCounted
@@ -10562,175 +10626,175 @@ func Supply(lang string, t Translation) {
 		s.SystemPicked = t.SystemPicked
 	}
 	if t.CommonYes != nil {
-		st[448] = t.CommonYes()
+		st[456] = t.CommonYes()
 	}
 	if t.CommonNo != nil {
-		st[449] = t.CommonNo()
+		st[457] = t.CommonNo()
 	}
 	if t.ListsViewableItemsAtLeastHalf != nil {
-		st[450] = t.ListsViewableItemsAtLeastHalf()
+		st[458] = t.ListsViewableItemsAtLeastHalf()
 	}
 	if t.ListsJumpTo60 != nil {
-		st[451] = t.ListsJumpTo60()
+		st[459] = t.ListsJumpTo60()
 	}
 	if t.ListsEnd != nil {
-		st[452] = t.ListsEnd()
+		st[460] = t.ListsEnd()
 	}
 	if t.ListsEndOfTheList != nil {
-		st[453] = t.ListsEndOfTheList()
+		st[461] = t.ListsEndOfTheList()
 	}
 	if t.ListsReleaseRoom != nil {
-		st[454] = t.ListsReleaseRoom()
+		st[462] = t.ListsReleaseRoom()
 	}
 	if t.ListsMessage != nil {
-		st[455] = t.ListsMessage()
+		st[463] = t.ListsMessage()
 	}
 	if t.ListsSend != nil {
-		st[456] = t.ListsSend()
+		st[464] = t.ListsSend()
 	}
 	if t.ListsThisWeek != nil {
-		st[457] = t.ListsThisWeek()
+		st[465] = t.ListsThisWeek()
 	}
 	if t.ListsRefreshing != nil {
-		st[458] = t.ListsRefreshing()
+		st[466] = t.ListsRefreshing()
 	}
 	if t.ListsPullThePageDown != nil {
-		st[459] = t.ListsPullThePageDown()
+		st[467] = t.ListsPullThePageDown()
 	}
 	if t.ListsRefreshOr != nil {
-		st[460] = t.ListsRefreshOr()
+		st[468] = t.ListsRefreshOr()
 	}
 	if t.ListsRefreshBelow != nil {
-		st[461] = t.ListsRefreshBelow()
+		st[469] = t.ListsRefreshBelow()
 	}
 	if t.ListsAnIndicatorTheAppDraws != nil {
-		st[462] = t.ListsAnIndicatorTheAppDraws()
+		st[470] = t.ListsAnIndicatorTheAppDraws()
 	}
 	if t.ListsTheSystemSpinnerOnA != nil {
-		st[463] = t.ListsTheSystemSpinnerOnA()
+		st[471] = t.ListsTheSystemSpinnerOnA()
 	}
 	if t.ListsSystemSpinner != nil {
-		st[464] = t.ListsSystemSpinner()
+		st[472] = t.ListsSystemSpinner()
 	}
 	if t.ListsCustomIndicator != nil {
-		st[465] = t.ListsCustomIndicator()
+		st[473] = t.ListsCustomIndicator()
 	}
 	if t.ListsRefresh != nil {
-		st[466] = t.ListsRefresh()
+		st[474] = t.ListsRefresh()
 	}
 	if t.ListsMoreListFeatures != nil {
-		st[467] = t.ListsMoreListFeatures()
+		st[475] = t.ListsMoreListFeatures()
 	}
 	if t.ListsPullToRefresh != nil {
-		st[468] = t.ListsPullToRefresh()
+		st[476] = t.ListsPullToRefresh()
 	}
 	if t.ListsHorizontalScrollView != nil {
-		st[469] = t.ListsHorizontalScrollView()
+		st[477] = t.ListsHorizontalScrollView()
 	}
 	if t.ListsRange != nil {
-		st[470] = t.ListsRange()
+		st[478] = t.ListsRange()
 	}
 	if t.ListsHorizontalList != nil {
-		st[471] = t.ListsHorizontalList()
+		st[479] = t.ListsHorizontalList()
 	}
 	if t.Lists1000RecycledCards != nil {
-		st[472] = t.Lists1000RecycledCards()
+		st[480] = t.Lists1000RecycledCards()
 	}
 	if t.ListsAnEmptyList != nil {
-		st[473] = t.ListsAnEmptyList()
+		st[481] = t.ListsAnEmptyList()
 	}
 	if t.ListsAdd != nil {
-		st[474] = t.ListsAdd()
+		st[482] = t.ListsAdd()
 	}
 	if t.ListsClear != nil {
-		st[475] = t.ListsClear()
+		st[483] = t.ListsClear()
 	}
 	if t.ListsNothingHereYetTapAdd != nil {
-		st[476] = t.ListsNothingHereYetTapAdd()
+		st[484] = t.ListsNothingHereYetTapAdd()
 	}
 	if t.ListsNothingHereYetClickAdd != nil {
-		st[477] = t.ListsNothingHereYetClickAdd()
+		st[485] = t.ListsNothingHereYetClickAdd()
 	}
 	if t.ListsEmpty != nil {
-		st[478] = t.ListsEmpty()
+		st[486] = t.ListsEmpty()
 	}
 	if t.ListsWhileEmptySeparatorsBetweenRows != nil {
-		st[479] = t.ListsWhileEmptySeparatorsBetweenRows()
+		st[487] = t.ListsWhileEmptySeparatorsBetweenRows()
 	}
 	if t.ListsInThePage != nil {
-		st[480] = t.ListsInThePage()
+		st[488] = t.ListsInThePage()
 	}
 	if t.ListsTheListIsAsTall != nil {
-		st[481] = t.ListsTheListIsAsTall()
+		st[489] = t.ListsTheListIsAsTall()
 	}
 	if t.ListsOnePageTwoLists != nil {
-		st[482] = t.ListsOnePageTwoLists()
+		st[490] = t.ListsOnePageTwoLists()
 	}
 	if t.ListsTheListsBelowLieIn != nil {
-		st[483] = t.ListsTheListsBelowLieIn()
+		st[491] = t.ListsTheListsBelowLieIn()
 	}
 	if t.ListsRecent150 != nil {
-		st[484] = t.ListsRecent150()
+		st[492] = t.ListsRecent150()
 	}
 	if t.ListsEndOfRecent != nil {
-		st[485] = t.ListsEndOfRecent()
+		st[493] = t.ListsEndOfRecent()
 	}
 	if t.ListsRecent != nil {
-		st[486] = t.ListsRecent()
+		st[494] = t.ListsRecent()
 	}
 	if t.Lists200Rows != nil {
-		st[487] = t.Lists200Rows()
+		st[495] = t.Lists200Rows()
 	}
 	if t.ListsArchive != nil {
-		st[488] = t.ListsArchive()
+		st[496] = t.ListsArchive()
 	}
 	if t.ListsLoadingMore != nil {
-		st[489] = t.ListsLoadingMore()
+		st[497] = t.ListsLoadingMore()
 	}
 	if t.ListsEndOfTheArchive != nil {
-		st[490] = t.ListsEndOfTheArchive()
+		st[498] = t.ListsEndOfTheArchive()
 	}
 	if t.ListsArchived != nil {
-		st[491] = t.ListsArchived()
+		st[499] = t.ListsArchived()
 	}
 	if t.ListsRecentAndArchived != nil {
-		st[492] = t.ListsRecentAndArchived()
+		st[500] = t.ListsRecentAndArchived()
 	}
 	if t.ListsHidesAsYouScrollDown != nil {
-		st[493] = t.ListsHidesAsYouScrollDown()
+		st[501] = t.ListsHidesAsYouScrollDown()
 	}
 	if t.ListsGrid != nil {
-		st[494] = t.ListsGrid()
+		st[502] = t.ListsGrid()
 	}
 	if t.ListsSections != nil {
-		st[495] = t.ListsSections()
+		st[503] = t.ListsSections()
 	}
 	if t.ListsChat != nil {
-		st[496] = t.ListsChat()
+		st[504] = t.ListsChat()
 	}
 	if t.ListsPage != nil {
-		st[497] = t.ListsPage()
+		st[505] = t.ListsPage()
 	}
 	if t.ListsMore != nil {
-		st[498] = t.ListsMore()
+		st[506] = t.ListsMore()
 	}
 	if t.ListsToday != nil {
-		st[499] = t.ListsToday()
+		st[507] = t.ListsToday()
 	}
 	if t.ListsYesterday != nil {
-		st[500] = t.ListsYesterday()
+		st[508] = t.ListsYesterday()
 	}
 	if t.ListsThisMonth != nil {
-		st[501] = t.ListsThisMonth()
+		st[509] = t.ListsThisMonth()
 	}
 	if t.ListsThisYear != nil {
-		st[502] = t.ListsThisYear()
+		st[510] = t.ListsThisYear()
 	}
 	if t.ListsAllTime != nil {
-		st[503] = t.ListsAllTime()
+		st[511] = t.ListsAllTime()
 	}
 	if t.ListsCustom != nil {
-		st[504] = t.ListsCustom()
+		st[512] = t.ListsCustom()
 	}
 	if t.ListsVisible != nil {
 		s.ListsVisible = t.ListsVisible
@@ -10754,547 +10818,547 @@ func Supply(lang string, t Translation) {
 		s.ListsRows = t.ListsRows
 	}
 	if t.StylesCircular != nil {
-		st[505] = t.StylesCircular()
+		st[513] = t.StylesCircular()
 	}
 	if t.StylesContinuous != nil {
-		st[506] = t.StylesContinuous()
+		st[514] = t.StylesContinuous()
 	}
 	if t.StylesOneCorner != nil {
-		st[507] = t.StylesOneCorner()
+		st[515] = t.StylesOneCorner()
 	}
 	if t.StylesPill != nil {
-		st[508] = t.StylesPill()
+		st[516] = t.StylesPill()
 	}
 	if t.StylesCorners != nil {
-		st[509] = t.StylesCorners()
+		st[517] = t.StylesCorners()
 	}
 	if t.StylesCornerradiusBordercurvePerCorner != nil {
-		st[510] = t.StylesCornerradiusBordercurvePerCorner()
+		st[518] = t.StylesCornerradiusBordercurvePerCorner()
 	}
 	if t.StylesContinuousCornersEaseIntoThe != nil {
-		st[511] = t.StylesContinuousCornersEaseIntoThe()
+		st[519] = t.StylesContinuousCornersEaseIntoThe()
 	}
 	if t.StylesRadius20Pt != nil {
-		st[512] = t.StylesRadius20Pt()
+		st[520] = t.StylesRadius20Pt()
 	}
 	if t.StylesTopCorners != nil {
-		st[513] = t.StylesTopCorners()
+		st[521] = t.StylesTopCorners()
 	}
 	if t.Styles28Pt != nil {
-		st[514] = t.Styles28Pt()
+		st[522] = t.Styles28Pt()
 	}
 	if t.StylesMixedRadii != nil {
-		st[515] = t.StylesMixedRadii()
+		st[523] = t.StylesMixedRadii()
 	}
 	if t.Styles446280Pt != nil {
-		st[516] = t.Styles446280Pt()
+		st[524] = t.Styles446280Pt()
 	}
 	if t.StylesMixed != nil {
-		st[517] = t.StylesMixed()
+		st[525] = t.StylesMixed()
 	}
 	if t.StylesBorders != nil {
-		st[518] = t.StylesBorders()
+		st[526] = t.StylesBorders()
 	}
 	if t.StylesPerSideDashedDottedOutlines != nil {
-		st[519] = t.StylesPerSideDashedDottedOutlines()
+		st[527] = t.StylesPerSideDashedDottedOutlines()
 	}
 	if t.StylesPerSideBorders != nil {
-		st[520] = t.StylesPerSideBorders()
+		st[528] = t.StylesPerSideBorders()
 	}
 	if t.Styles6241Pt != nil {
-		st[521] = t.Styles6241Pt()
+		st[529] = t.Styles6241Pt()
 	}
 	if t.StylesDashedDotted != nil {
-		st[522] = t.StylesDashedDotted()
+		st[530] = t.StylesDashedDotted()
 	}
 	if t.StylesRings != nil {
-		st[523] = t.StylesRings()
+		st[531] = t.StylesRings()
 	}
 	if t.StylesBoxShadowsOfNoBlur != nil {
-		st[524] = t.StylesBoxShadowsOfNoBlur()
+		st[532] = t.StylesBoxShadowsOfNoBlur()
 	}
 	if t.StylesOutline != nil {
-		st[525] = t.StylesOutline()
+		st[533] = t.StylesOutline()
 	}
 	if t.StylesOutsideTheBorderBox != nil {
-		st[526] = t.StylesOutsideTheBorderBox()
+		st[534] = t.StylesOutsideTheBorderBox()
 	}
 	if t.StylesShadowsAndGlow != nil {
-		st[527] = t.StylesShadowsAndGlow()
+		st[535] = t.StylesShadowsAndGlow()
 	}
 	if t.StylesShadowcolorBoxShadowsTextShadow != nil {
-		st[528] = t.StylesShadowcolorBoxShadowsTextShadow()
+		st[536] = t.StylesShadowcolorBoxShadowsTextShadow()
 	}
 	if t.StylesGlow != nil {
-		st[529] = t.StylesGlow()
+		st[537] = t.StylesGlow()
 	}
 	if t.StylesAColoredShadow != nil {
-		st[530] = t.StylesAColoredShadow()
+		st[538] = t.StylesAColoredShadow()
 	}
 	if t.StylesOffsetShadow != nil {
-		st[531] = t.StylesOffsetShadow()
+		st[539] = t.StylesOffsetShadow()
 	}
 	if t.Styles48PtRadius10 != nil {
-		st[532] = t.Styles48PtRadius10()
+		st[540] = t.Styles48PtRadius10()
 	}
 	if t.StylesOffset != nil {
-		st[533] = t.StylesOffset()
+		st[541] = t.StylesOffset()
 	}
 	if t.StylesImageCorners != nil {
-		st[534] = t.StylesImageCorners()
+		st[542] = t.StylesImageCorners()
 	}
 	if t.StylesTwoRadiiAndAShadow != nil {
-		st[535] = t.StylesTwoRadiiAndAShadow()
+		st[543] = t.StylesTwoRadiiAndAShadow()
 	}
 	if t.StylesTextShadow != nil {
-		st[536] = t.StylesTextShadow()
+		st[544] = t.StylesTextShadow()
 	}
 	if t.StylesShadow != nil {
-		st[537] = t.StylesShadow()
+		st[545] = t.StylesShadow()
 	}
 	if t.StylesTextCorners != nil {
-		st[538] = t.StylesTextCorners()
+		st[546] = t.StylesTextCorners()
 	}
 	if t.StylesASpanSBackgroundAnd != nil {
-		st[539] = t.StylesASpanSBackgroundAnd()
+		st[547] = t.StylesASpanSBackgroundAnd()
 	}
 	if t.StylesTextCorners2 != nil {
-		st[540] = t.StylesTextCorners2()
+		st[548] = t.StylesTextCorners2()
 	}
 	if t.StylesLayered != nil {
-		st[541] = t.StylesLayered()
+		st[549] = t.StylesLayered()
 	}
 	if t.StylesTwoBoxShadowsAndAn != nil {
-		st[542] = t.StylesTwoBoxShadowsAndAn()
+		st[550] = t.StylesTwoBoxShadowsAndAn()
 	}
 	if t.StylesClippingAndLayers != nil {
-		st[543] = t.StylesClippingAndLayers()
+		st[551] = t.StylesClippingAndLayers()
 	}
 	if t.StylesOverflowZindexOpacity != nil {
-		st[544] = t.StylesOverflowZindexOpacity()
+		st[552] = t.StylesOverflowZindexOpacity()
 	}
 	if t.StylesClip != nil {
-		st[545] = t.StylesClip()
+		st[553] = t.StylesClip()
 	}
 	if t.StylesClipped != nil {
-		st[546] = t.StylesClipped()
+		st[554] = t.StylesClipped()
 	}
 	if t.StylesVisible != nil {
-		st[547] = t.StylesVisible()
+		st[555] = t.StylesVisible()
 	}
 	if t.StylesTapToSwitch != nil {
-		st[548] = t.StylesTapToSwitch()
+		st[556] = t.StylesTapToSwitch()
 	}
 	if t.StylesClickToSwitch != nil {
-		st[549] = t.StylesClickToSwitch()
+		st[557] = t.StylesClickToSwitch()
 	}
 	if t.StylesTap != nil {
-		st[550] = t.StylesTap()
+		st[558] = t.StylesTap()
 	}
 	if t.StylesClick != nil {
-		st[551] = t.StylesClick()
+		st[559] = t.StylesClick()
 	}
 	if t.StylesStackingOrder != nil {
-		st[552] = t.StylesStackingOrder()
+		st[560] = t.StylesStackingOrder()
 	}
 	if t.StylesTapToRaiseTheNext != nil {
-		st[553] = t.StylesTapToRaiseTheNext()
+		st[561] = t.StylesTapToRaiseTheNext()
 	}
 	if t.StylesClickToRaiseTheNext != nil {
-		st[554] = t.StylesClickToRaiseTheNext()
+		st[562] = t.StylesClickToRaiseTheNext()
 	}
 	if t.StylesOpacity != nil {
-		st[555] = t.StylesOpacity()
+		st[563] = t.StylesOpacity()
 	}
 	if t.StylesAnimatedNatively != nil {
-		st[556] = t.StylesAnimatedNatively()
+		st[564] = t.StylesAnimatedNatively()
 	}
 	if t.StylesTapToFlip != nil {
-		st[557] = t.StylesTapToFlip()
+		st[565] = t.StylesTapToFlip()
 	}
 	if t.StylesClickToFlip != nil {
-		st[558] = t.StylesClickToFlip()
+		st[566] = t.StylesClickToFlip()
 	}
 	if t.StylesASpringTurnsItOn != nil {
-		st[559] = t.StylesASpringTurnsItOn()
+		st[567] = t.StylesASpringTurnsItOn()
 	}
 	if t.StylesEachFaceHidesWhileTurned != nil {
-		st[560] = t.StylesEachFaceHidesWhileTurned()
+		st[568] = t.StylesEachFaceHidesWhileTurned()
 	}
 	if t.StylesFlipTheCard != nil {
-		st[561] = t.StylesFlipTheCard()
+		st[569] = t.StylesFlipTheCard()
 	}
 	if t.Styles3dTransforms != nil {
-		st[562] = t.Styles3dTransforms()
+		st[570] = t.Styles3dTransforms()
 	}
 	if t.StylesPerspectiveRotatexYSkewOrigin != nil {
-		st[563] = t.StylesPerspectiveRotatexYSkewOrigin()
+		st[571] = t.StylesPerspectiveRotatexYSkewOrigin()
 	}
 	if t.StylesPerspective != nil {
-		st[564] = t.StylesPerspective()
+		st[572] = t.StylesPerspective()
 	}
 	if t.StylesSwayingDrivenNatively != nil {
-		st[565] = t.StylesSwayingDrivenNatively()
+		st[573] = t.StylesSwayingDrivenNatively()
 	}
 	if t.StylesYAxis != nil {
-		st[566] = t.StylesYAxis()
+		st[574] = t.StylesYAxis()
 	}
 	if t.StylesTilt != nil {
-		st[567] = t.StylesTilt()
+		st[575] = t.StylesTilt()
 	}
 	if t.StylesXAxis != nil {
-		st[568] = t.StylesXAxis()
+		st[576] = t.StylesXAxis()
 	}
 	if t.StylesSkew != nil {
-		st[569] = t.StylesSkew()
+		st[577] = t.StylesSkew()
 	}
 	if t.StylesOrigin != nil {
-		st[570] = t.StylesOrigin()
+		st[578] = t.StylesOrigin()
 	}
 	if t.StylesTopLeftRotated30 != nil {
-		st[571] = t.StylesTopLeftRotated30()
+		st[579] = t.StylesTopLeftRotated30()
 	}
 	if t.StylesNumerals != nil {
-		st[572] = t.StylesNumerals()
+		st[580] = t.StylesNumerals()
 	}
 	if t.StylesProportional != nil {
-		st[573] = t.StylesProportional()
+		st[581] = t.StylesProportional()
 	}
 	if t.StylesSmallCaps != nil {
-		st[574] = t.StylesSmallCaps()
+		st[582] = t.StylesSmallCaps()
 	}
 	if t.StylesOldstyle1234567890 != nil {
-		st[575] = t.StylesOldstyle1234567890()
+		st[583] = t.StylesOldstyle1234567890()
 	}
 	if t.StylesRightToLeft != nil {
-		st[576] = t.StylesRightToLeft()
+		st[584] = t.StylesRightToLeft()
 	}
 	if t.StylesFlip != nil {
-		st[577] = t.StylesFlip()
+		st[585] = t.StylesFlip()
 	}
 	if t.StylesTextAlignsToTheStart != nil {
-		st[578] = t.StylesTextAlignsToTheStart()
+		st[586] = t.StylesTextAlignsToTheStart()
 	}
 	if t.StylesHorizontalScrollView != nil {
-		st[579] = t.StylesHorizontalScrollView()
+		st[587] = t.StylesHorizontalScrollView()
 	}
 	if t.StylesHorizontalList != nil {
-		st[580] = t.StylesHorizontalList()
+		st[588] = t.StylesHorizontalList()
 	}
 	if t.StylesTextalignstartTheStartSideRight != nil {
-		st[581] = t.StylesTextalignstartTheStartSideRight()
+		st[589] = t.StylesTextalignstartTheStartSideRight()
 	}
 	if t.StylesGradients != nil {
-		st[582] = t.StylesGradients()
+		st[590] = t.StylesGradients()
 	}
 	if t.StylesLinearRadialAndConicMixed != nil {
-		st[583] = t.StylesLinearRadialAndConicMixed()
+		st[591] = t.StylesLinearRadialAndConicMixed()
 	}
 	if t.StylesLinear != nil {
-		st[584] = t.StylesLinear()
+		st[592] = t.StylesLinear()
 	}
 	if t.StylesToACorner != nil {
-		st[585] = t.StylesToACorner()
+		st[593] = t.StylesToACorner()
 	}
 	if t.StylesOklab != nil {
-		st[586] = t.StylesOklab()
+		st[594] = t.StylesOklab()
 	}
 	if t.StylesNoGrayInTheMiddle != nil {
-		st[587] = t.StylesNoGrayInTheMiddle()
+		st[595] = t.StylesNoGrayInTheMiddle()
 	}
 	if t.StylesRadial != nil {
-		st[588] = t.StylesRadial()
+		st[596] = t.StylesRadial()
 	}
 	if t.StylesConicRepeating != nil {
-		st[589] = t.StylesConicRepeating()
+		st[597] = t.StylesConicRepeating()
 	}
 	if t.StylesFiltersBackdropsAndMasks != nil {
-		st[590] = t.StylesFiltersBackdropsAndMasks()
+		st[598] = t.StylesFiltersBackdropsAndMasks()
 	}
 	if t.StylesFiltersBackdropfiltersMaskBlendmode != nil {
-		st[591] = t.StylesFiltersBackdropfiltersMaskBlendmode()
+		st[599] = t.StylesFiltersBackdropfiltersMaskBlendmode()
 	}
 	if t.StylesHue120 != nil {
-		st[592] = t.StylesHue120()
+		st[600] = t.StylesHue120()
 	}
 	if t.StylesBlur4 != nil {
-		st[593] = t.StylesBlur4()
+		st[601] = t.StylesBlur4()
 	}
 	if t.StylesKeyframesAndGroupStyles != nil {
-		st[594] = t.StylesKeyframesAndGroupStyles()
+		st[602] = t.StylesKeyframesAndGroupStyles()
 	}
 	if t.StylesAnimationGroupstyle != nil {
-		st[595] = t.StylesAnimationGroupstyle()
+		st[603] = t.StylesAnimationGroupstyle()
 	}
 	if t.StylesHoverThisRow != nil {
-		st[596] = t.StylesHoverThisRow()
+		st[604] = t.StylesHoverThisRow()
 	}
 	if t.StylesPressThisRowItsDot != nil {
-		st[597] = t.StylesPressThisRowItsDot()
+		st[605] = t.StylesPressThisRowItsDot()
 	}
 	if t.StylesHoverThisRowItsDot != nil {
-		st[598] = t.StylesHoverThisRowItsDot()
+		st[606] = t.StylesHoverThisRowItsDot()
 	}
 	if t.NavTop != nil {
-		st[599] = t.NavTop()
+		st[607] = t.NavTop()
 	}
 	if t.NavBottom != nil {
-		st[600] = t.NavBottom()
+		st[608] = t.NavBottom()
 	}
 	if t.NavLeft != nil {
-		st[601] = t.NavLeft()
+		st[609] = t.NavLeft()
 	}
 	if t.NavRight != nil {
-		st[602] = t.NavRight()
+		st[610] = t.NavRight()
 	}
 	if t.NavSafeArea != nil {
-		st[603] = t.NavSafeArea()
+		st[611] = t.NavSafeArea()
 	}
 	if t.NavInsets != nil {
-		st[604] = t.NavInsets()
+		st[612] = t.NavInsets()
 	}
 	if t.NavLargeTitle != nil {
-		st[605] = t.NavLargeTitle()
+		st[613] = t.NavLargeTitle()
 	}
 	if t.NavIosTheTitleShrinksInto != nil {
-		st[606] = t.NavIosTheTitleShrinksInto()
+		st[614] = t.NavIosTheTitleShrinksInto()
 	}
 	if t.NavTransparent != nil {
-		st[607] = t.NavTransparent()
+		st[615] = t.NavTransparent()
 	}
 	if t.NavContentUnderTheHeader != nil {
-		st[608] = t.NavContentUnderTheHeader()
+		st[616] = t.NavContentUnderTheHeader()
 	}
 	if t.NavTheCirclesStartAtThe != nil {
-		st[609] = t.NavTheCirclesStartAtThe()
+		st[617] = t.NavTheCirclesStartAtThe()
 	}
 	if t.NavClose != nil {
-		st[610] = t.NavClose()
+		st[618] = t.NavClose()
 	}
 	if t.NavCustomTitle != nil {
-		st[611] = t.NavCustomTitle()
+		st[619] = t.NavCustomTitle()
 	}
 	if t.NavStar != nil {
-		st[612] = t.NavStar()
+		st[620] = t.NavStar()
 	}
 	if t.NavCustom != nil {
-		st[613] = t.NavCustom()
+		st[621] = t.NavCustom()
 	}
 	if t.NavTheHeaderSItemsAre != nil {
-		st[614] = t.NavTheHeaderSItemsAre()
+		st[622] = t.NavTheHeaderSItemsAre()
 	}
 	if t.NavHeader != nil {
-		st[615] = t.NavHeader()
+		st[623] = t.NavHeader()
 	}
 	if t.NavNoSwipeBack != nil {
-		st[616] = t.NavNoSwipeBack()
+		st[624] = t.NavNoSwipeBack()
 	}
 	if t.NavTheBackGestureIsOff != nil {
-		st[617] = t.NavTheBackGestureIsOff()
+		st[625] = t.NavTheBackGestureIsOff()
 	}
 	if t.NavTheBackGestureIsOff2 != nil {
-		st[618] = t.NavTheBackGestureIsOff2()
+		st[626] = t.NavTheBackGestureIsOff2()
 	}
 	if t.NavLeaving != nil {
-		st[619] = t.NavLeaving()
+		st[627] = t.NavLeaving()
 	}
 	if t.NavSwipeBack != nil {
-		st[620] = t.NavSwipeBack()
+		st[628] = t.NavSwipeBack()
 	}
 	if t.NavOff != nil {
-		st[621] = t.NavOff()
+		st[629] = t.NavOff()
 	}
 	if t.NavBackButtons != nil {
-		st[622] = t.NavBackButtons()
+		st[630] = t.NavBackButtons()
 	}
 	if t.NavOn != nil {
-		st[623] = t.NavOn()
+		st[631] = t.NavOn()
 	}
 	if t.NavDiscardYourChanges != nil {
-		st[624] = t.NavDiscardYourChanges()
+		st[632] = t.NavDiscardYourChanges()
 	}
 	if t.NavKeepEditing != nil {
-		st[625] = t.NavKeepEditing()
+		st[633] = t.NavKeepEditing()
 	}
 	if t.NavDiscard != nil {
-		st[626] = t.NavDiscard()
+		st[634] = t.NavDiscard()
 	}
 	if t.NavUnsavedChanges != nil {
-		st[627] = t.NavUnsavedChanges()
+		st[635] = t.NavUnsavedChanges()
 	}
 	if t.NavTypeSomethingThenGoBack != nil {
-		st[628] = t.NavTypeSomethingThenGoBack()
+		st[636] = t.NavTypeSomethingThenGoBack()
 	}
 	if t.NavTypeSomethingThenGoBack2 != nil {
-		st[629] = t.NavTypeSomethingThenGoBack2()
+		st[637] = t.NavTypeSomethingThenGoBack2()
 	}
 	if t.NavDraft != nil {
-		st[630] = t.NavDraft()
+		st[638] = t.NavDraft()
 	}
 	if t.NavGuarded != nil {
-		st[631] = t.NavGuarded()
+		st[639] = t.NavGuarded()
 	}
 	if t.NavEmpty != nil {
-		st[632] = t.NavEmpty()
+		st[640] = t.NavEmpty()
 	}
 	if t.NavADraft != nil {
-		st[633] = t.NavADraft()
+		st[641] = t.NavADraft()
 	}
 	if t.NavNothingToLoseBackPops != nil {
-		st[634] = t.NavNothingToLoseBackPops()
+		st[642] = t.NavNothingToLoseBackPops()
 	}
 	if t.NavNoHeader != nil {
-		st[635] = t.NavNoHeader()
+		st[643] = t.NavNoHeader()
 	}
 	if t.NavTheScreenOwnsTheWhole != nil {
-		st[636] = t.NavTheScreenOwnsTheWhole()
+		st[644] = t.NavTheScreenOwnsTheWhole()
 	}
 	if t.NavBack != nil {
-		st[637] = t.NavBack()
+		st[645] = t.NavBack()
 	}
 	if t.NavEveryPushIsANative != nil {
-		st[638] = t.NavEveryPushIsANative()
+		st[646] = t.NavEveryPushIsANative()
 	}
 	if t.NavDeeper != nil {
-		st[639] = t.NavDeeper()
+		st[647] = t.NavDeeper()
 	}
 	if t.NavToTheIndex != nil {
-		st[640] = t.NavToTheIndex()
+		st[648] = t.NavToTheIndex()
 	}
 	if t.NavTheModalS != nil {
-		st[641] = t.NavTheModalS()
+		st[649] = t.NavTheModalS()
 	}
 	if t.NavFullScreen != nil {
-		st[642] = t.NavFullScreen()
+		st[650] = t.NavFullScreen()
 	}
 	if t.NavSlidesUp != nil {
-		st[643] = t.NavSlidesUp()
+		st[651] = t.NavSlidesUp()
 	}
 	if t.NavPageSheet != nil {
-		st[644] = t.NavPageSheet()
+		st[652] = t.NavPageSheet()
 	}
 	if t.NavIosSheet != nil {
-		st[645] = t.NavIosSheet()
+		st[653] = t.NavIosSheet()
 	}
 	if t.NavATallCenteredCard != nil {
-		st[646] = t.NavATallCenteredCard()
+		st[654] = t.NavATallCenteredCard()
 	}
 	if t.NavFormSheet != nil {
-		st[647] = t.NavFormSheet()
+		st[655] = t.NavFormSheet()
 	}
 	if t.NavIosCentered != nil {
-		st[648] = t.NavIosCentered()
+		st[656] = t.NavIosCentered()
 	}
 	if t.NavASmallerCenteredCard != nil {
-		st[649] = t.NavASmallerCenteredCard()
+		st[657] = t.NavASmallerCenteredCard()
 	}
 	if t.NavFade != nil {
-		st[650] = t.NavFade()
+		st[658] = t.NavFade()
 	}
 	if t.NavFadesIn != nil {
-		st[651] = t.NavFadesIn()
+		st[659] = t.NavFadesIn()
 	}
 	if t.NavDialog != nil {
-		st[652] = t.NavDialog()
+		st[660] = t.NavDialog()
 	}
 	if t.NavSeeThrough != nil {
-		st[653] = t.NavSeeThrough()
+		st[661] = t.NavSeeThrough()
 	}
 	if t.NavKeptOpen != nil {
-		st[654] = t.NavKeptOpen()
+		st[662] = t.NavKeptOpen()
 	}
 	if t.NavNoSwipeToClose != nil {
-		st[655] = t.NavNoSwipeToClose()
+		st[663] = t.NavNoSwipeToClose()
 	}
 	if t.NavEscapeDoesNotClose != nil {
-		st[656] = t.NavEscapeDoesNotClose()
+		st[664] = t.NavEscapeDoesNotClose()
 	}
 	if t.NavNativeViews != nil {
-		st[657] = t.NavNativeViews()
+		st[665] = t.NavNativeViews()
 	}
 	if t.NavNativeStack != nil {
-		st[658] = t.NavNativeStack()
+		st[666] = t.NavNativeStack()
 	}
 	if t.NavHeadersTransitionsTheSafeArea != nil {
-		st[659] = t.NavHeadersTransitionsTheSafeArea()
+		st[667] = t.NavHeadersTransitionsTheSafeArea()
 	}
 	if t.NavPages != nil {
-		st[660] = t.NavPages()
+		st[668] = t.NavPages()
 	}
 	if t.NavScreenOptionsPushedWithNav != nil {
-		st[661] = t.NavScreenOptionsPushedWithNav()
+		st[669] = t.NavScreenOptionsPushedWithNav()
 	}
 	if t.NavTransparentHeader != nil {
-		st[662] = t.NavTransparentHeader()
+		st[670] = t.NavTransparentHeader()
 	}
 	if t.NavCustomHeaderItems != nil {
-		st[663] = t.NavCustomHeaderItems()
+		st[671] = t.NavCustomHeaderItems()
 	}
 	if t.NavADeepStack != nil {
-		st[664] = t.NavADeepStack()
+		st[672] = t.NavADeepStack()
 	}
 	if t.NavModals != nil {
-		st[665] = t.NavModals()
+		st[673] = t.NavModals()
 	}
 	if t.NavPresentationStylesAndTransitions != nil {
-		st[666] = t.NavPresentationStylesAndTransitions()
+		st[674] = t.NavPresentationStylesAndTransitions()
 	}
 	if t.NavBackButton != nil {
-		st[667] = t.NavBackButton()
+		st[675] = t.NavBackButton()
 	}
 	if t.NavOnbackpressTheBackButtonAnd != nil {
-		st[668] = t.NavOnbackpressTheBackButtonAnd()
+		st[676] = t.NavOnbackpressTheBackButtonAnd()
 	}
 	if t.NavOnbackpressEscapeTheMouseS != nil {
-		st[669] = t.NavOnbackpressEscapeTheMouseS()
+		st[677] = t.NavOnbackpressEscapeTheMouseS()
 	}
 	if t.NavInterceptTheBackButton != nil {
-		st[670] = t.NavInterceptTheBackButton()
+		st[678] = t.NavInterceptTheBackButton()
 	}
 	if t.NavCaught != nil {
-		st[671] = t.NavCaught()
+		st[679] = t.NavCaught()
 	}
 	if t.NavPopped != nil {
-		st[672] = t.NavPopped()
+		st[680] = t.NavPopped()
 	}
 	if t.NavTheHandlerReturnsTrueBack != nil {
-		st[673] = t.NavTheHandlerReturnsTrueBack()
+		st[681] = t.NavTheHandlerReturnsTrueBack()
 	}
 	if t.NavOffTheBackButtonPops != nil {
-		st[674] = t.NavOffTheBackButtonPops()
+		st[682] = t.NavOffTheBackButtonPops()
 	}
 	if t.NavOffEscapePopsThisScreen != nil {
-		st[675] = t.NavOffEscapePopsThisScreen()
+		st[683] = t.NavOffEscapePopsThisScreen()
 	}
 	if t.NavCloseWithTheButtonThe != nil {
-		st[676] = t.NavCloseWithTheButtonThe()
+		st[684] = t.NavCloseWithTheButtonThe()
 	}
 	if t.NavCloseWithTheButtonEscape != nil {
-		st[677] = t.NavCloseWithTheButtonEscape()
+		st[685] = t.NavCloseWithTheButtonEscape()
 	}
 	if t.NavCloseWithTheButtonOr != nil {
-		st[678] = t.NavCloseWithTheButtonOr()
+		st[686] = t.NavCloseWithTheButtonOr()
 	}
 	if t.NavCloseWithTheButtonOr2 != nil {
-		st[679] = t.NavCloseWithTheButtonOr2()
+		st[687] = t.NavCloseWithTheButtonOr2()
 	}
 	if t.NavSwipingItDownIosAnd != nil {
-		st[680] = t.NavSwipingItDownIosAnd()
+		st[688] = t.NavSwipingItDownIosAnd()
 	}
 	if t.NavEscapeAndClicksOutside != nil {
-		st[681] = t.NavEscapeAndClicksOutside()
+		st[689] = t.NavEscapeAndClicksOutside()
 	}
 	if t.NavADialog != nil {
-		st[682] = t.NavADialog()
+		st[690] = t.NavADialog()
 	}
 	if t.NavADialogOwnsNoLook != nil {
-		st[683] = t.NavADialogOwnsNoLook()
+		st[691] = t.NavADialogOwnsNoLook()
 	}
 	if t.NavCancel != nil {
-		st[684] = t.NavCancel()
+		st[692] = t.NavCancel()
 	}
 	if t.NavOk != nil {
-		st[685] = t.NavOk()
+		st[693] = t.NavOk()
 	}
 	if t.NavRow != nil {
 		s.NavRow = t.NavRow
@@ -11312,259 +11376,259 @@ func Supply(lang string, t Translation) {
 		s.NavOnlyCallOnCancel = t.NavOnlyCallOnCancel
 	}
 	if t.FormEnterYourName != nil {
-		st[686] = t.FormEnterYourName()
+		st[694] = t.FormEnterYourName()
 	}
 	if t.FormThatAddressNeedsAnAnd != nil {
-		st[687] = t.FormThatAddressNeedsAnAnd()
+		st[695] = t.FormThatAddressNeedsAnAnd()
 	}
 	if t.FormEnterYourEMail != nil {
-		st[688] = t.FormEnterYourEMail()
+		st[696] = t.FormEnterYourEMail()
 	}
 	if t.FormUseAtLeast8Characters != nil {
-		st[689] = t.FormUseAtLeast8Characters()
+		st[697] = t.FormUseAtLeast8Characters()
 	}
 	if t.Form1FieldNeedsAttention != nil {
-		st[690] = t.Form1FieldNeedsAttention()
+		st[698] = t.Form1FieldNeedsAttention()
 	}
 	if t.FormKeyboard != nil {
-		st[691] = t.FormKeyboard()
+		st[699] = t.FormKeyboard()
 	}
 	if t.FormNone != nil {
-		st[692] = t.FormNone()
+		st[700] = t.FormNone()
 	}
 	if t.FormOnDrag != nil {
-		st[693] = t.FormOnDrag()
+		st[701] = t.FormOnDrag()
 	}
 	if t.FormInteractive != nil {
-		st[694] = t.FormInteractive()
+		st[702] = t.FormInteractive()
 	}
 	if t.FormDragTheFormWithThe != nil {
-		st[695] = t.FormDragTheFormWithThe()
+		st[703] = t.FormDragTheFormWithThe()
 	}
 	if t.FormDesktopsHaveNoOnScreen != nil {
-		st[696] = t.FormDesktopsHaveNoOnScreen()
+		st[704] = t.FormDesktopsHaveNoOnScreen()
 	}
 	if t.FormAccount != nil {
-		st[697] = t.FormAccount()
+		st[705] = t.FormAccount()
 	}
 	if t.FormName != nil {
-		st[698] = t.FormName()
+		st[706] = t.FormName()
 	}
 	if t.FormEMail != nil {
-		st[699] = t.FormEMail()
+		st[707] = t.FormEMail()
 	}
 	if t.FormPassword != nil {
-		st[700] = t.FormPassword()
+		st[708] = t.FormPassword()
 	}
 	if t.FormAtLeast8Characters != nil {
-		st[701] = t.FormAtLeast8Characters()
+		st[709] = t.FormAtLeast8Characters()
 	}
 	if t.FormPhone != nil {
-		st[702] = t.FormPhone()
+		st[710] = t.FormPhone()
 	}
 	if t.FormWebsite != nil {
-		st[703] = t.FormWebsite()
+		st[711] = t.FormWebsite()
 	}
 	if t.FormNumbers != nil {
-		st[704] = t.FormNumbers()
+		st[712] = t.FormNumbers()
 	}
 	if t.FormAge != nil {
-		st[705] = t.FormAge()
+		st[713] = t.FormAge()
 	}
 	if t.Form3Digits != nil {
-		st[706] = t.Form3Digits()
+		st[714] = t.Form3Digits()
 	}
 	if t.FormAmount != nil {
-		st[707] = t.FormAmount()
+		st[715] = t.FormAmount()
 	}
 	if t.FormOffset != nil {
-		st[708] = t.FormOffset()
+		st[716] = t.FormOffset()
 	}
 	if t.FormDarkKeyboardIos != nil {
-		st[709] = t.FormDarkKeyboardIos()
+		st[717] = t.FormDarkKeyboardIos()
 	}
 	if t.FormVerificationCode != nil {
-		st[710] = t.FormVerificationCode()
+		st[718] = t.FormVerificationCode()
 	}
 	if t.FormShippingAddress != nil {
-		st[711] = t.FormShippingAddress()
+		st[719] = t.FormShippingAddress()
 	}
 	if t.FormScrollsIntoView != nil {
-		st[712] = t.FormScrollsIntoView()
+		st[720] = t.FormScrollsIntoView()
 	}
 	if t.FormStreet != nil {
-		st[713] = t.FormStreet()
+		st[721] = t.FormStreet()
 	}
 	if t.FormCity != nil {
-		st[714] = t.FormCity()
+		st[722] = t.FormCity()
 	}
 	if t.FormPostalCode != nil {
-		st[715] = t.FormPostalCode()
+		st[723] = t.FormPostalCode()
 	}
 	if t.FormCountry != nil {
-		st[716] = t.FormCountry()
+		st[724] = t.FormCountry()
 	}
 	if t.FormSelectionAndKeys != nil {
-		st[717] = t.FormSelectionAndKeys()
+		st[725] = t.FormSelectionAndKeys()
 	}
 	if t.FormText != nil {
-		st[718] = t.FormText()
+		st[726] = t.FormText()
 	}
 	if t.FormInputOptions != nil {
-		st[719] = t.FormInputOptions()
+		st[727] = t.FormInputOptions()
 	}
 	if t.FormControlled != nil {
-		st[720] = t.FormControlled()
+		st[728] = t.FormControlled()
 	}
 	if t.FormUppercasedAsYouType != nil {
-		st[721] = t.FormUppercasedAsYouType()
+		st[729] = t.FormUppercasedAsYouType()
 	}
 	if t.FormTypeInLowerCase != nil {
-		st[722] = t.FormTypeInLowerCase()
+		st[730] = t.FormTypeInLowerCase()
 	}
 	if t.FormReadOnly != nil {
-		st[723] = t.FormReadOnly()
+		st[731] = t.FormReadOnly()
 	}
 	if t.FormNotEditable != nil {
-		st[724] = t.FormNotEditable()
+		st[732] = t.FormNotEditable()
 	}
 	if t.FormCustomColors != nil {
-		st[725] = t.FormCustomColors()
+		st[733] = t.FormCustomColors()
 	}
 	if t.FormABluePlaceholderAnAmber != nil {
-		st[726] = t.FormABluePlaceholderAnAmber()
+		st[734] = t.FormABluePlaceholderAnAmber()
 	}
 	if t.FormNotes != nil {
-		st[727] = t.FormNotes()
+		st[735] = t.FormNotes()
 	}
 	if t.FormReturnAddsALine != nil {
-		st[728] = t.FormReturnAddsALine()
+		st[736] = t.FormReturnAddsALine()
 	}
 	if t.FormNoCaret != nil {
-		st[729] = t.FormNoCaret()
+		st[737] = t.FormNoCaret()
 	}
 	if t.FormNoCaretHere != nil {
-		st[730] = t.FormNoCaretHere()
+		st[738] = t.FormNoCaretHere()
 	}
 	if t.FormCreateTheAccount != nil {
-		st[731] = t.FormCreateTheAccount()
+		st[739] = t.FormCreateTheAccount()
 	}
 	if t.FormSubmittingChecksEveryField != nil {
-		st[732] = t.FormSubmittingChecksEveryField()
+		st[740] = t.FormSubmittingChecksEveryField()
 	}
 	if t.FormSent != nil {
-		st[733] = t.FormSent()
+		st[741] = t.FormSent()
 	}
 	if t.FormCheck != nil {
-		st[734] = t.FormCheck()
+		st[742] = t.FormCheck()
 	}
 	if t.FormSubmit != nil {
-		st[735] = t.FormSubmit()
+		st[743] = t.FormSubmit()
 	}
 	if t.FormHideKeyboard != nil {
-		st[736] = t.FormHideKeyboard()
+		st[744] = t.FormHideKeyboard()
 	}
 	if t.FormMoreKeyboards != nil {
-		st[737] = t.FormMoreKeyboards()
+		st[745] = t.FormMoreKeyboards()
 	}
 	if t.FormSheetsAndBarsThatRide != nil {
-		st[738] = t.FormSheetsAndBarsThatRide()
+		st[746] = t.FormSheetsAndBarsThatRide()
 	}
 	if t.FormInputsInASheet != nil {
-		st[739] = t.FormInputsInASheet()
+		st[747] = t.FormInputsInASheet()
 	}
 	if t.FormAMessageBarAtThe != nil {
-		st[740] = t.FormAMessageBarAtThe()
+		st[748] = t.FormAMessageBarAtThe()
 	}
 	if t.FormFirst != nil {
-		st[741] = t.FormFirst()
+		st[749] = t.FormFirst()
 	}
 	if t.FormSecond != nil {
-		st[742] = t.FormSecond()
+		st[750] = t.FormSecond()
 	}
 	if t.FormThird != nil {
-		st[743] = t.FormThird()
+		st[751] = t.FormThird()
 	}
 	if t.FormFourth != nil {
-		st[744] = t.FormFourth()
+		st[752] = t.FormFourth()
 	}
 	if t.FormFifth != nil {
-		st[745] = t.FormFifth()
+		st[753] = t.FormFifth()
 	}
 	if t.FormSixth != nil {
-		st[746] = t.FormSixth()
+		st[754] = t.FormSixth()
 	}
 	if t.FormSeventh != nil {
-		st[747] = t.FormSeventh()
+		st[755] = t.FormSeventh()
 	}
 	if t.FormField != nil {
-		st[748] = t.FormField()
+		st[756] = t.FormField()
 	}
 	if t.FormASheet != nil {
-		st[749] = t.FormASheet()
+		st[757] = t.FormASheet()
 	}
 	if t.FormItsInputsStayAboveThe != nil {
-		st[750] = t.FormItsInputsStayAboveThe()
+		st[758] = t.FormItsInputsStayAboveThe()
 	}
 	if t.FormDone != nil {
-		st[751] = t.FormDone()
+		st[759] = t.FormDone()
 	}
 	if t.FormGrowsWithItsText != nil {
-		st[752] = t.FormGrowsWithItsText()
+		st[760] = t.FormGrowsWithItsText()
 	}
 	if t.FormTypeSeveralLines != nil {
-		st[753] = t.FormTypeSeveralLines()
+		st[761] = t.FormTypeSeveralLines()
 	}
 	if t.FormTheBarBelowSitsOutside != nil {
-		st[754] = t.FormTheBarBelowSitsOutside()
+		st[762] = t.FormTheBarBelowSitsOutside()
 	}
 	if t.FormBottomPaddingOfEnvkeyboardLifts != nil {
-		st[755] = t.FormBottomPaddingOfEnvkeyboardLifts()
+		st[763] = t.FormBottomPaddingOfEnvkeyboardLifts()
 	}
 	if t.FormMessageBar != nil {
-		st[756] = t.FormMessageBar()
+		st[764] = t.FormMessageBar()
 	}
 	if t.FormToday != nil {
-		st[757] = t.FormToday()
+		st[765] = t.FormToday()
 	}
 	if t.FormMessage != nil {
-		st[758] = t.FormMessage()
+		st[766] = t.FormMessage()
 	}
 	if t.FormSend != nil {
-		st[759] = t.FormSend()
+		st[767] = t.FormSend()
 	}
 	if t.FormSelectPartOfThisText != nil {
-		st[760] = t.FormSelectPartOfThisText()
+		st[768] = t.FormSelectPartOfThisText()
 	}
 	if t.FormSelected != nil {
-		st[761] = t.FormSelected()
+		st[769] = t.FormSelected()
 	}
 	if t.FormKeysYouPressShowHere != nil {
-		st[762] = t.FormKeysYouPressShowHere()
+		st[770] = t.FormKeysYouPressShowHere()
 	}
 	if t.FormSelectAll != nil {
-		st[763] = t.FormSelectAll()
+		st[771] = t.FormSelectAll()
 	}
 	if t.FormCaretToStart != nil {
-		st[764] = t.FormCaretToStart()
+		st[772] = t.FormCaretToStart()
 	}
 	if t.FormOneTimeCode != nil {
-		st[765] = t.FormOneTimeCode()
+		st[773] = t.FormOneTimeCode()
 	}
 	if t.FormEmpty != nil {
-		st[766] = t.FormEmpty()
+		st[774] = t.FormEmpty()
 	}
 	if t.FormWeak != nil {
-		st[767] = t.FormWeak()
+		st[775] = t.FormWeak()
 	}
 	if t.FormFair != nil {
-		st[768] = t.FormFair()
+		st[776] = t.FormFair()
 	}
 	if t.FormGood != nil {
-		st[769] = t.FormGood()
+		st[777] = t.FormGood()
 	}
 	if t.FormStrong != nil {
-		st[770] = t.FormStrong()
+		st[778] = t.FormStrong()
 	}
 	if t.FormAccountCreated != nil {
 		s.FormAccountCreated = t.FormAccountCreated
@@ -11573,481 +11637,481 @@ func Supply(lang string, t Translation) {
 		s.FormFieldsNeedAttention = t.FormFieldsNeedAttention
 	}
 	if t.TextNothingYet != nil {
-		st[771] = t.TextNothingYet()
+		st[779] = t.TextNothingYet()
 	}
 	if t.TextSpansAndLinks != nil {
-		st[772] = t.TextSpansAndLinks()
+		st[780] = t.TextSpansAndLinks()
 	}
 	if t.TextSpansWithPressesOfTheir != nil {
-		st[773] = t.TextSpansWithPressesOfTheir()
+		st[781] = t.TextSpansWithPressesOfTheir()
 	}
 	if t.TextTheSentenceNotALink != nil {
-		st[774] = t.TextTheSentenceNotALink()
+		st[782] = t.TextTheSentenceNotALink()
 	}
 	if t.TextByContinuingYouAgreeTo != nil {
-		st[775] = t.TextByContinuingYouAgreeTo()
+		st[783] = t.TextByContinuingYouAgreeTo()
 	}
 	if t.TextTermsOfService != nil {
-		st[776] = t.TextTermsOfService()
+		st[784] = t.TextTermsOfService()
 	}
 	if t.TextAndThe != nil {
-		st[777] = t.TextAndThe()
+		st[785] = t.TextAndThe()
 	}
 	if t.TextPrivacyPolicy != nil {
-		st[778] = t.TextPrivacyPolicy()
+		st[786] = t.TextPrivacyPolicy()
 	}
 	if t.TextWhichMention != nil {
-		st[779] = t.TextWhichMention()
+		st[787] = t.TextWhichMention()
 	}
 	if t.TextBold != nil {
-		st[780] = t.TextBold()
+		st[788] = t.TextBold()
 	}
 	if t.TextALinkInsideBoldText != nil {
-		st[781] = t.TextALinkInsideBoldText()
+		st[789] = t.TextALinkInsideBoldText()
 	}
 	if t.TextToo != nil {
-		st[782] = t.TextToo()
+		st[790] = t.TextToo()
 	}
 	if t.TextPressed != nil {
-		st[783] = t.TextPressed()
+		st[791] = t.TextPressed()
 	}
 	if t.TextInlineViewsAndImages != nil {
-		st[784] = t.TextInlineViewsAndImages()
+		st[792] = t.TextInlineViewsAndImages()
 	}
 	if t.TextTheyWrapWithTheLine != nil {
-		st[785] = t.TextTheyWrapWithTheLine()
+		st[793] = t.TextTheyWrapWithTheLine()
 	}
 	if t.TextMadeWith != nil {
-		st[786] = t.TextMadeWith()
+		st[794] = t.TextMadeWith()
 	}
 	if t.TextNsgoStatus != nil {
-		st[787] = t.TextNsgoStatus()
+		st[795] = t.TextNsgoStatus()
 	}
 	if t.TextLive != nil {
-		st[788] = t.TextLive()
+		st[796] = t.TextLive()
 	}
 	if t.TextAndAButtonInsideThe != nil {
-		st[789] = t.TextAndAButtonInsideThe()
+		st[797] = t.TextAndAButtonInsideThe()
 	}
 	if t.TextLike != nil {
-		st[790] = t.TextLike()
+		st[798] = t.TextLike()
 	}
 	if t.TextThatTakesPressesOfIts != nil {
-		st[791] = t.TextThatTakesPressesOfIts()
+		st[799] = t.TextThatTakesPressesOfIts()
 	}
 	if t.TextType != nil {
-		st[792] = t.TextType()
+		st[800] = t.TextType()
 	}
 	if t.TextCustomFontsWeightsStylesSpacing != nil {
-		st[793] = t.TextCustomFontsWeightsStylesSpacing()
+		st[801] = t.TextCustomFontsWeightsStylesSpacing()
 	}
 	if t.TextCustomFonts != nil {
-		st[794] = t.TextCustomFonts()
+		st[802] = t.TextCustomFonts()
 	}
 	if t.TextWeightStyleSpacing != nil {
-		st[795] = t.TextWeightStyleSpacing()
+		st[803] = t.TextWeightStyleSpacing()
 	}
 	if t.TextLight != nil {
-		st[796] = t.TextLight()
+		st[804] = t.TextLight()
 	}
 	if t.TextBold2 != nil {
-		st[797] = t.TextBold2()
+		st[805] = t.TextBold2()
 	}
 	if t.TextItalic != nil {
-		st[798] = t.TextItalic()
+		st[806] = t.TextItalic()
 	}
 	if t.TextBoth != nil {
-		st[799] = t.TextBoth()
+		st[807] = t.TextBoth()
 	}
 	if t.TextSpaced != nil {
-		st[800] = t.TextSpaced()
+		st[808] = t.TextSpaced()
 	}
 	if t.TextDecorations != nil {
-		st[801] = t.TextDecorations()
+		st[809] = t.TextDecorations()
 	}
 	if t.TextUnderline != nil {
-		st[802] = t.TextUnderline()
+		st[810] = t.TextUnderline()
 	}
 	if t.TextStrikethrough != nil {
-		st[803] = t.TextStrikethrough()
+		st[811] = t.TextStrikethrough()
 	}
 	if t.TextWavy != nil {
-		st[804] = t.TextWavy()
+		st[812] = t.TextWavy()
 	}
 	if t.TextTransforms != nil {
-		st[805] = t.TextTransforms()
+		st[813] = t.TextTransforms()
 	}
 	if t.TextShadows != nil {
-		st[806] = t.TextShadows()
+		st[814] = t.TextShadows()
 	}
 	if t.TextGlow != nil {
-		st[807] = t.TextGlow()
+		st[815] = t.TextGlow()
 	}
 	if t.TextDropShadow != nil {
-		st[808] = t.TextDropShadow()
+		st[816] = t.TextDropShadow()
 	}
 	if t.TextSystemTextSize != nil {
-		st[809] = t.TextSystemTextSize()
+		st[817] = t.TextSystemTextSize()
 	}
 	if t.TextEnvFontscaleAndItsLimits != nil {
-		st[810] = t.TextEnvFontscaleAndItsLimits()
+		st[818] = t.TextEnvFontscaleAndItsLimits()
 	}
 	if t.TextDefault != nil {
-		st[811] = t.TextDefault()
+		st[819] = t.TextDefault()
 	}
 	if t.TextScalesWithTheSystemSetting != nil {
-		st[812] = t.TextScalesWithTheSystemSetting()
+		st[820] = t.TextScalesWithTheSystemSetting()
 	}
 	if t.TextFixed != nil {
-		st[813] = t.TextFixed()
+		st[821] = t.TextFixed()
 	}
 	if t.TextFixedSize != nil {
-		st[814] = t.TextFixedSize()
+		st[822] = t.TextFixedSize()
 	}
 	if t.TextCapped != nil {
-		st[815] = t.TextCapped()
+		st[823] = t.TextCapped()
 	}
 	if t.TextAtMost12 != nil {
-		st[816] = t.TextAtMost12()
+		st[824] = t.TextAtMost12()
 	}
 	if t.TextTruncation != nil {
-		st[817] = t.TextTruncation()
+		st[825] = t.TextTruncation()
 	}
 	if t.TextMaxlinesAndEllipsizemode != nil {
-		st[818] = t.TextMaxlinesAndEllipsizemode()
+		st[826] = t.TextMaxlinesAndEllipsizemode()
 	}
 	if t.TextTwoLinesTail != nil {
-		st[819] = t.TextTwoLinesTail()
+		st[827] = t.TextTwoLinesTail()
 	}
 	if t.TextOneLineHead != nil {
-		st[820] = t.TextOneLineHead()
+		st[828] = t.TextOneLineHead()
 	}
 	if t.TextOneLineMiddle != nil {
-		st[821] = t.TextOneLineMiddle()
+		st[829] = t.TextOneLineMiddle()
 	}
 	if t.TextOneLineClip != nil {
-		st[822] = t.TextOneLineClip()
+		st[830] = t.TextOneLineClip()
 	}
 	if t.TextCenteredThreeLines != nil {
-		st[823] = t.TextCenteredThreeLines()
+		st[831] = t.TextCenteredThreeLines()
 	}
 	if t.TextChineseAndJapanese != nil {
-		st[824] = t.TextChineseAndJapanese()
+		st[832] = t.TextChineseAndJapanese()
 	}
 	if t.TextLinesBreakBetweenCharactersNever != nil {
-		st[825] = t.TextLinesBreakBetweenCharactersNever()
+		st[833] = t.TextLinesBreakBetweenCharactersNever()
 	}
 	if t.TextChineseParagraph != nil {
-		st[826] = t.TextChineseParagraph()
+		st[834] = t.TextChineseParagraph()
 	}
 	if t.TextJapaneseKanaKanjiAndLatin != nil {
-		st[827] = t.TextJapaneseKanaKanjiAndLatin()
+		st[835] = t.TextJapaneseKanaKanjiAndLatin()
 	}
 	if t.TextRightToLeft != nil {
-		st[828] = t.TextRightToLeft()
+		st[836] = t.TextRightToLeft()
 	}
 	if t.TextArabicAndHebrewMixedWith != nil {
-		st[829] = t.TextArabicAndHebrewMixedWith()
+		st[837] = t.TextArabicAndHebrewMixedWith()
 	}
 	if t.TextArabicParagraph != nil {
-		st[830] = t.TextArabicParagraph()
+		st[838] = t.TextArabicParagraph()
 	}
 	if t.TextArabicEnglishAndNumbersIn != nil {
-		st[831] = t.TextArabicEnglishAndNumbersIn()
+		st[839] = t.TextArabicEnglishAndNumbersIn()
 	}
 	if t.TextHebrew != nil {
-		st[832] = t.TextHebrew()
+		st[840] = t.TextHebrew()
 	}
 	if t.TextOneLineTail != nil {
-		st[833] = t.TextOneLineTail()
+		st[841] = t.TextOneLineTail()
 	}
 	if t.TextAlignment != nil {
-		st[834] = t.TextAlignment()
+		st[842] = t.TextAlignment()
 	}
 	if t.TextTextalignInLeftToRight != nil {
-		st[835] = t.TextTextalignInLeftToRight()
+		st[843] = t.TextTextalignInLeftToRight()
 	}
 	if t.TextStart != nil {
-		st[836] = t.TextStart()
+		st[844] = t.TextStart()
 	}
 	if t.TextCenter != nil {
-		st[837] = t.TextCenter()
+		st[845] = t.TextCenter()
 	}
 	if t.TextEnd != nil {
-		st[838] = t.TextEnd()
+		st[846] = t.TextEnd()
 	}
 	if t.TextJustify != nil {
-		st[839] = t.TextJustify()
+		st[847] = t.TextJustify()
 	}
 	if t.TextJustifyChinese != nil {
-		st[840] = t.TextJustifyChinese()
+		st[848] = t.TextJustifyChinese()
 	}
 	if t.TextStartInArabic != nil {
-		st[841] = t.TextStartInArabic()
+		st[849] = t.TextStartInArabic()
 	}
 	if t.TextSelection != nil {
-		st[842] = t.TextSelection()
+		st[850] = t.TextSelection()
 	}
 	if t.TextLongPressToSelect != nil {
-		st[843] = t.TextLongPressToSelect()
+		st[851] = t.TextLongPressToSelect()
 	}
 	if t.TextDragOrDoubleOrTriple != nil {
-		st[844] = t.TextDragOrDoubleOrTriple()
+		st[852] = t.TextDragOrDoubleOrTriple()
 	}
 	if t.TextOnItsOwn != nil {
-		st[845] = t.TextOnItsOwn()
+		st[853] = t.TextOnItsOwn()
 	}
 	if t.TextThisTextSelectsOnIts != nil {
-		st[846] = t.TextThisTextSelectsOnIts()
+		st[854] = t.TextThisTextSelectsOnIts()
 	}
 	if t.TextAcrossTexts != nil {
-		st[847] = t.TextAcrossTexts()
+		st[855] = t.TextAcrossTexts()
 	}
 	if t.TextASelectableViewSelectsAcross != nil {
-		st[848] = t.TextASelectableViewSelectsAcross()
+		st[856] = t.TextASelectableViewSelectsAcross()
 	}
 	if t.TextStartInOneEndIn != nil {
-		st[849] = t.TextStartInOneEndIn()
+		st[857] = t.TextStartInOneEndIn()
 	}
 	if t.TextThisOneStaysOutOf != nil {
-		st[850] = t.TextThisOneStaysOutOf()
+		st[858] = t.TextThisOneStaysOutOf()
 	}
 	if t.CanvasLoad != nil {
-		st[851] = t.CanvasLoad()
+		st[859] = t.CanvasLoad()
 	}
 	if t.CanvasTurbine3Load != nil {
-		st[852] = t.CanvasTurbine3Load()
+		st[860] = t.CanvasTurbine3Load()
 	}
 	if t.CanvasNeedleAndSweepOnOne != nil {
-		st[853] = t.CanvasNeedleAndSweepOnOne()
+		st[861] = t.CanvasNeedleAndSweepOnOne()
 	}
 	if t.CanvasLoadDial != nil {
-		st[854] = t.CanvasLoadDial()
+		st[862] = t.CanvasLoadDial()
 	}
 	if t.CanvasRedline != nil {
-		st[855] = t.CanvasRedline()
+		st[863] = t.CanvasRedline()
 	}
 	if t.CanvasHigh != nil {
-		st[856] = t.CanvasHigh()
+		st[864] = t.CanvasHigh()
 	}
 	if t.CanvasNominal != nil {
-		st[857] = t.CanvasNominal()
+		st[865] = t.CanvasNominal()
 	}
 	if t.CanvasZone != nil {
-		st[858] = t.CanvasZone()
+		st[866] = t.CanvasZone()
 	}
 	if t.CanvasSpool != nil {
-		st[859] = t.CanvasSpool()
+		st[867] = t.CanvasSpool()
 	}
 	if t.CanvasRpm != nil {
-		st[860] = t.CanvasRpm()
+		st[868] = t.CanvasRpm()
 	}
 	if t.CanvasLimit != nil {
-		st[861] = t.CanvasLimit()
+		st[869] = t.CanvasLimit()
 	}
 	if t.CanvasRelayThroughput != nil {
-		st[862] = t.CanvasRelayThroughput()
+		st[870] = t.CanvasRelayThroughput()
 	}
 	if t.CanvasAreaAverageHatching != nil {
-		st[863] = t.CanvasAreaAverageHatching()
+		st[871] = t.CanvasAreaAverageHatching()
 	}
 	if t.CanvasNew != nil {
-		st[864] = t.CanvasNew()
+		st[872] = t.CanvasNew()
 	}
 	if t.CanvasThroughputChart != nil {
-		st[865] = t.CanvasThroughputChart()
+		st[873] = t.CanvasThroughputChart()
 	}
 	if t.CanvasMessages != nil {
-		st[866] = t.CanvasMessages()
+		st[874] = t.CanvasMessages()
 	}
 	if t.CanvasAverage != nil {
-		st[867] = t.CanvasAverage()
+		st[875] = t.CanvasAverage()
 	}
 	if t.CanvasDeploy != nil {
-		st[868] = t.CanvasDeploy()
+		st[876] = t.CanvasDeploy()
 	}
 	if t.CanvasMon != nil {
-		st[869] = t.CanvasMon()
+		st[877] = t.CanvasMon()
 	}
 	if t.CanvasFootfallByHour != nil {
-		st[870] = t.CanvasFootfallByHour()
+		st[878] = t.CanvasFootfallByHour()
 	}
 	if t.CanvasRidgelineOneCurveADay != nil {
-		st[871] = t.CanvasRidgelineOneCurveADay()
+		st[879] = t.CanvasRidgelineOneCurveADay()
 	}
 	if t.CanvasReplay != nil {
-		st[872] = t.CanvasReplay()
+		st[880] = t.CanvasReplay()
 	}
 	if t.CanvasGateBLastWeek != nil {
-		st[873] = t.CanvasGateBLastWeek()
+		st[881] = t.CanvasGateBLastWeek()
 	}
 	if t.CanvasPeak12001400 != nil {
-		st[874] = t.CanvasPeak12001400()
+		st[882] = t.CanvasPeak12001400()
 	}
 	if t.CanvasFootfallRidgeline != nil {
-		st[875] = t.CanvasFootfallRidgeline()
+		st[883] = t.CanvasFootfallRidgeline()
 	}
 	if t.CanvasWeekday != nil {
-		st[876] = t.CanvasWeekday()
+		st[884] = t.CanvasWeekday()
 	}
 	if t.CanvasWeekend != nil {
-		st[877] = t.CanvasWeekend()
+		st[885] = t.CanvasWeekend()
 	}
 	if t.CanvasBeaconUptime != nil {
-		st[878] = t.CanvasBeaconUptime()
+		st[886] = t.CanvasBeaconUptime()
 	}
 	if t.CanvasDotMatrixOneColumnA != nil {
-		st[879] = t.CanvasDotMatrixOneColumnA()
+		st[887] = t.CanvasDotMatrixOneColumnA()
 	}
 	if t.Canvas3Incidents != nil {
-		st[880] = t.Canvas3Incidents()
+		st[888] = t.Canvas3Incidents()
 	}
 	if t.CanvasUptimeMatrix != nil {
-		st[881] = t.CanvasUptimeMatrix()
+		st[889] = t.CanvasUptimeMatrix()
 	}
 	if t.CanvasLess != nil {
-		st[882] = t.CanvasLess()
+		st[890] = t.CanvasLess()
 	}
 	if t.CanvasMore != nil {
-		st[883] = t.CanvasMore()
+		st[891] = t.CanvasMore()
 	}
 	if t.CanvasIncident != nil {
-		st[884] = t.CanvasIncident()
+		st[892] = t.CanvasIncident()
 	}
 	if t.CanvasRouteLatency != nil {
-		st[885] = t.CanvasRouteLatency()
+		st[893] = t.CanvasRouteLatency()
 	}
 	if t.CanvasDumbbellBeforeAfter != nil {
-		st[886] = t.CanvasDumbbellBeforeAfter()
+		st[894] = t.CanvasDumbbellBeforeAfter()
 	}
 	if t.CanvasBefore != nil {
-		st[887] = t.CanvasBefore()
+		st[895] = t.CanvasBefore()
 	}
 	if t.CanvasAfter != nil {
-		st[888] = t.CanvasAfter()
+		st[896] = t.CanvasAfter()
 	}
 	if t.CanvasRegressed != nil {
-		st[889] = t.CanvasRegressed()
+		st[897] = t.CanvasRegressed()
 	}
 	if t.CanvasTransforms != nil {
-		st[890] = t.CanvasTransforms()
+		st[898] = t.CanvasTransforms()
 	}
 	if t.CanvasTranslateRotateSaveRestore != nil {
-		st[891] = t.CanvasTranslateRotateSaveRestore()
+		st[899] = t.CanvasTranslateRotateSaveRestore()
 	}
 	if t.CanvasClock != nil {
-		st[892] = t.CanvasClock()
+		st[900] = t.CanvasClock()
 	}
 	if t.CanvasTicks != nil {
-		st[893] = t.CanvasTicks()
+		st[901] = t.CanvasTicks()
 	}
 	if t.Canvas60Rotations != nil {
-		st[894] = t.Canvas60Rotations()
+		st[902] = t.Canvas60Rotations()
 	}
 	if t.CanvasHands != nil {
-		st[895] = t.CanvasHands()
+		st[903] = t.CanvasHands()
 	}
 	if t.CanvasSaveRestore != nil {
-		st[896] = t.CanvasSaveRestore()
+		st[904] = t.CanvasSaveRestore()
 	}
 	if t.CanvasSecondHand != nil {
-		st[897] = t.CanvasSecondHand()
+		st[905] = t.CanvasSecondHand()
 	}
 	if t.CanvasALoop != nil {
-		st[898] = t.CanvasALoop()
+		st[906] = t.CanvasALoop()
 	}
 	if t.CanvasPaths != nil {
-		st[899] = t.CanvasPaths()
+		st[907] = t.CanvasPaths()
 	}
 	if t.CanvasSvgPathDataParsedBy != nil {
-		st[900] = t.CanvasSvgPathDataParsedBy()
+		st[908] = t.CanvasSvgPathDataParsedBy()
 	}
 	if t.CanvasCompositing != nil {
-		st[901] = t.CanvasCompositing()
+		st[909] = t.CanvasCompositing()
 	}
 	if t.CanvasClipShadowDestinationoutDashes != nil {
-		st[902] = t.CanvasClipShadowDestinationoutDashes()
+		st[910] = t.CanvasClipShadowDestinationoutDashes()
 	}
 	if t.CanvasClippedImage != nil {
-		st[903] = t.CanvasClippedImage()
+		st[911] = t.CanvasClippedImage()
 	}
 	if t.CanvasCutOut != nil {
-		st[904] = t.CanvasCutOut()
+		st[912] = t.CanvasCutOut()
 	}
 	if t.CanvasRadialGradient != nil {
-		st[905] = t.CanvasRadialGradient()
+		st[913] = t.CanvasRadialGradient()
 	}
 	if t.CanvasDrawHere != nil {
-		st[906] = t.CanvasDrawHere()
+		st[914] = t.CanvasDrawHere()
 	}
 	if t.CanvasSketch != nil {
-		st[907] = t.CanvasSketch()
+		st[915] = t.CanvasSketch()
 	}
 	if t.CanvasTouchDrawFromTheEngine != nil {
-		st[908] = t.CanvasTouchDrawFromTheEngine()
+		st[916] = t.CanvasTouchDrawFromTheEngine()
 	}
 	if t.CanvasDragDrawFromTheEngine != nil {
-		st[909] = t.CanvasDragDrawFromTheEngine()
+		st[917] = t.CanvasDragDrawFromTheEngine()
 	}
 	if t.CanvasClear != nil {
-		st[910] = t.CanvasClear()
+		st[918] = t.CanvasClear()
 	}
 	if t.CanvasSketchPad != nil {
-		st[911] = t.CanvasSketchPad()
+		st[919] = t.CanvasSketchPad()
 	}
 	if t.CanvasStrokes != nil {
-		st[912] = t.CanvasStrokes()
+		st[920] = t.CanvasStrokes()
 	}
 	if t.CanvasNodesAndHitTests != nil {
-		st[913] = t.CanvasNodesAndHitTests()
+		st[921] = t.CanvasNodesAndHitTests()
 	}
 	if t.CanvasBarsScreenReadersSeeA != nil {
-		st[914] = t.CanvasBarsScreenReadersSeeA()
+		st[922] = t.CanvasBarsScreenReadersSeeA()
 	}
 	if t.CanvasSelectableBars != nil {
-		st[915] = t.CanvasSelectableBars()
+		st[923] = t.CanvasSelectableBars()
 	}
 	if t.CanvasSelected != nil {
-		st[916] = t.CanvasSelected()
+		st[924] = t.CanvasSelected()
 	}
 	if t.CanvasIdle != nil {
-		st[917] = t.CanvasIdle()
+		st[925] = t.CanvasIdle()
 	}
 	if t.CanvasCruise != nil {
-		st[918] = t.CanvasCruise()
+		st[926] = t.CanvasCruise()
 	}
 	if t.CanvasPeak != nil {
-		st[919] = t.CanvasPeak()
+		st[927] = t.CanvasPeak()
 	}
 	if t.CanvasTue != nil {
-		st[920] = t.CanvasTue()
+		st[928] = t.CanvasTue()
 	}
 	if t.CanvasWed != nil {
-		st[921] = t.CanvasWed()
+		st[929] = t.CanvasWed()
 	}
 	if t.CanvasThu != nil {
-		st[922] = t.CanvasThu()
+		st[930] = t.CanvasThu()
 	}
 	if t.CanvasFri != nil {
-		st[923] = t.CanvasFri()
+		st[931] = t.CanvasFri()
 	}
 	if t.CanvasSat != nil {
-		st[924] = t.CanvasSat()
+		st[932] = t.CanvasSat()
 	}
 	if t.CanvasSun != nil {
-		st[925] = t.CanvasSun()
+		st[933] = t.CanvasSun()
 	}
 	if t.CanvasHeart != nil {
-		st[926] = t.CanvasHeart()
+		st[934] = t.CanvasHeart()
 	}
 	if t.CanvasStar != nil {
-		st[927] = t.CanvasStar()
+		st[935] = t.CanvasStar()
 	}
 	if t.CanvasBolt != nil {
-		st[928] = t.CanvasBolt()
+		st[936] = t.CanvasBolt()
 	}
 	if t.CanvasCheck != nil {
-		st[929] = t.CanvasCheck()
+		st[937] = t.CanvasCheck()
 	}
 	if t.CanvasAvg != nil {
 		s.CanvasAvg = t.CanvasAvg
@@ -12065,157 +12129,157 @@ func Supply(lang string, t Translation) {
 		s.CanvasBar = t.CanvasBar
 	}
 	if t.TableColumn != nil {
-		st[930] = t.TableColumn()
+		st[938] = t.TableColumn()
 	}
 	if t.TableNothingSelected != nil {
-		st[931] = t.TableNothingSelected()
+		st[939] = t.TableNothingSelected()
 	}
 	if t.TableOn != nil {
-		st[932] = t.TableOn()
+		st[940] = t.TableOn()
 	}
 	if t.TableOff != nil {
-		st[933] = t.TableOff()
+		st[941] = t.TableOff()
 	}
 	if t.TableRows != nil {
-		st[934] = t.TableRows()
+		st[942] = t.TableRows()
 	}
 	if t.TableCells != nil {
-		st[935] = t.TableCells()
+		st[943] = t.TableCells()
 	}
 	if t.TableToggleLiveUpdates != nil {
-		st[936] = t.TableToggleLiveUpdates()
+		st[944] = t.TableToggleLiveUpdates()
 	}
 	if t.TableLive != nil {
-		st[937] = t.TableLive()
+		st[945] = t.TableLive()
 	}
 	if t.TableToggleStripes != nil {
-		st[938] = t.TableToggleStripes()
+		st[946] = t.TableToggleStripes()
 	}
 	if t.TableStripes != nil {
-		st[939] = t.TableStripes()
+		st[947] = t.TableStripes()
 	}
 	if t.TableGoToRow500000 != nil {
-		st[940] = t.TableGoToRow500000()
+		st[948] = t.TableGoToRow500000()
 	}
 	if t.TableRow500000 != nil {
-		st[941] = t.TableRow500000()
+		st[949] = t.TableRow500000()
 	}
 	if t.TableGoToIndicator30 != nil {
-		st[942] = t.TableGoToIndicator30()
+		st[950] = t.TableGoToIndicator30()
 	}
 	if t.TableIndicator30 != nil {
-		st[943] = t.TableIndicator30()
+		st[951] = t.TableIndicator30()
 	}
 	if t.TableStocks != nil {
-		st[944] = t.TableStocks()
+		st[952] = t.TableStocks()
 	}
 	if t.TablePaid != nil {
-		st[945] = t.TablePaid()
+		st[953] = t.TablePaid()
 	}
 	if t.TableCard != nil {
-		st[946] = t.TableCard()
+		st[954] = t.TableCard()
 	}
 	if t.TablePending != nil {
-		st[947] = t.TablePending()
+		st[955] = t.TablePending()
 	}
 	if t.TableTransfer != nil {
-		st[948] = t.TableTransfer()
+		st[956] = t.TableTransfer()
 	}
 	if t.TableUnpaid != nil {
-		st[949] = t.TableUnpaid()
+		st[957] = t.TableUnpaid()
 	}
 	if t.TableCash != nil {
-		st[950] = t.TableCash()
+		st[958] = t.TableCash()
 	}
 	if t.TableInvoice != nil {
-		st[951] = t.TableInvoice()
+		st[959] = t.TableInvoice()
 	}
 	if t.TableStatus != nil {
-		st[952] = t.TableStatus()
+		st[960] = t.TableStatus()
 	}
 	if t.TableMethod != nil {
-		st[953] = t.TableMethod()
+		st[961] = t.TableMethod()
 	}
 	if t.TableAmount != nil {
-		st[954] = t.TableAmount()
+		st[962] = t.TableAmount()
 	}
 	if t.TableTable != nil {
-		st[955] = t.TableTable()
+		st[963] = t.TableTable()
 	}
 	if t.TableAFewRowsTheApp != nil {
-		st[956] = t.TableAFewRowsTheApp()
+		st[964] = t.TableAFewRowsTheApp()
 	}
 	if t.TableRecentInvoices != nil {
-		st[957] = t.TableRecentInvoices()
+		st[965] = t.TableRecentInvoices()
 	}
 	if t.TableTotal != nil {
-		st[958] = t.TableTotal()
+		st[966] = t.TableTotal()
 	}
 	if t.TableAListOfYourRecent != nil {
-		st[959] = t.TableAListOfYourRecent()
+		st[967] = t.TableAListOfYourRecent()
 	}
 	if t.TableId != nil {
-		st[960] = t.TableId()
+		st[968] = t.TableId()
 	}
 	if t.TableSymbol != nil {
-		st[961] = t.TableSymbol()
+		st[969] = t.TableSymbol()
 	}
 	if t.TableName != nil {
-		st[962] = t.TableName()
+		st[970] = t.TableName()
 	}
 	if t.TableMarket != nil {
-		st[963] = t.TableMarket()
+		st[971] = t.TableMarket()
 	}
 	if t.TablePrice != nil {
-		st[964] = t.TablePrice()
+		st[972] = t.TablePrice()
 	}
 	if t.TableChg != nil {
-		st[965] = t.TableChg()
+		st[973] = t.TableChg()
 	}
 	if t.TableChg2 != nil {
-		st[966] = t.TableChg2()
+		st[974] = t.TableChg2()
 	}
 	if t.TableVolume != nil {
-		st[967] = t.TableVolume()
+		st[975] = t.TableVolume()
 	}
 	if t.TableTurnover != nil {
-		st[968] = t.TableTurnover()
+		st[976] = t.TableTurnover()
 	}
 	if t.TableMarketCap != nil {
-		st[969] = t.TableMarketCap()
+		st[977] = t.TableMarketCap()
 	}
 	if t.TableTtm != nil {
-		st[970] = t.TableTtm()
+		st[978] = t.TableTtm()
 	}
 	if t.TableBid != nil {
-		st[971] = t.TableBid()
+		st[979] = t.TableBid()
 	}
 	if t.TableBidVol != nil {
-		st[972] = t.TableBidVol()
+		st[980] = t.TableBidVol()
 	}
 	if t.TableAsk != nil {
-		st[973] = t.TableAsk()
+		st[981] = t.TableAsk()
 	}
 	if t.TableAskVol != nil {
-		st[974] = t.TableAskVol()
+		st[982] = t.TableAskVol()
 	}
 	if t.TableOpen != nil {
-		st[975] = t.TableOpen()
+		st[983] = t.TableOpen()
 	}
 	if t.TablePrevClose != nil {
-		st[976] = t.TablePrevClose()
+		st[984] = t.TablePrevClose()
 	}
 	if t.TableHigh != nil {
-		st[977] = t.TableHigh()
+		st[985] = t.TableHigh()
 	}
 	if t.TableLow != nil {
-		st[978] = t.TableLow()
+		st[986] = t.TableLow()
 	}
 	if t.TableBidAsk != nil {
-		st[979] = t.TableBidAsk()
+		st[987] = t.TableBidAsk()
 	}
 	if t.Table5mRanking != nil {
-		st[980] = t.Table5mRanking()
+		st[988] = t.Table5mRanking()
 	}
 	if t.TableIndicator != nil {
 		s.TableIndicator = t.TableIndicator
@@ -12233,148 +12297,148 @@ func Supply(lang string, t Translation) {
 		s.TableColumnsTick = t.TableColumnsTick
 	}
 	if t.EditorLn1Col1 != nil {
-		st[981] = t.EditorLn1Col1()
+		st[989] = t.EditorLn1Col1()
 	}
 	if t.EditorInvalidPattern != nil {
-		st[982] = t.EditorInvalidPattern()
+		st[990] = t.EditorInvalidPattern()
 	}
 	if t.EditorNoResults != nil {
-		st[983] = t.EditorNoResults()
+		st[991] = t.EditorNoResults()
 	}
 	if t.EditorNoDefinitionFound != nil {
-		st[984] = t.EditorNoDefinitionFound()
+		st[992] = t.EditorNoDefinitionFound()
 	}
 	if t.EditorGoToDefinition != nil {
-		st[985] = t.EditorGoToDefinition()
+		st[993] = t.EditorGoToDefinition()
 	}
 	if t.EditorCut != nil {
-		st[986] = t.EditorCut()
+		st[994] = t.EditorCut()
 	}
 	if t.EditorCopy != nil {
-		st[987] = t.EditorCopy()
+		st[995] = t.EditorCopy()
 	}
 	if t.EditorPaste != nil {
-		st[988] = t.EditorPaste()
+		st[996] = t.EditorPaste()
 	}
 	if t.EditorSelectAll != nil {
-		st[989] = t.EditorSelectAll()
+		st[997] = t.EditorSelectAll()
 	}
 	if t.EditorToggleComment != nil {
-		st[990] = t.EditorToggleComment()
+		st[998] = t.EditorToggleComment()
 	}
 	if t.EditorFoldAll != nil {
-		st[991] = t.EditorFoldAll()
+		st[999] = t.EditorFoldAll()
 	}
 	if t.EditorUnfoldAll != nil {
-		st[992] = t.EditorUnfoldAll()
+		st[1000] = t.EditorUnfoldAll()
 	}
 	if t.EditorNoAppOpensLinks != nil {
-		st[993] = t.EditorNoAppOpensLinks()
+		st[1001] = t.EditorNoAppOpensLinks()
 	}
 	if t.EditorLongPressToSelect != nil {
-		st[994] = t.EditorLongPressToSelect()
+		st[1002] = t.EditorLongPressToSelect()
 	}
 	if t.EditorRightClickForCommands != nil {
-		st[995] = t.EditorRightClickForCommands()
+		st[1003] = t.EditorRightClickForCommands()
 	}
 	if t.EditorCodeActions != nil {
-		st[996] = t.EditorCodeActions()
+		st[1004] = t.EditorCodeActions()
 	}
 	if t.EditorCompletionsAlsoAsYouType != nil {
-		st[997] = t.EditorCompletionsAlsoAsYouType()
+		st[1005] = t.EditorCompletionsAlsoAsYouType()
 	}
 	if t.EditorTabTakesTheGraySuggestion != nil {
-		st[998] = t.EditorTabTakesTheGraySuggestion()
+		st[1006] = t.EditorTabTakesTheGraySuggestion()
 	}
 	if t.EditorHoverForDocsAndProblems != nil {
-		st[999] = t.EditorHoverForDocsAndProblems()
+		st[1007] = t.EditorHoverForDocsAndProblems()
 	}
 	if t.EditorHold != nil {
-		st[1000] = t.EditorHold()
+		st[1008] = t.EditorHold()
 	}
 	if t.EditorOverANameToUnderline != nil {
-		st[1001] = t.EditorOverANameToUnderline()
+		st[1009] = t.EditorOverANameToUnderline()
 	}
 	if t.EditorOr != nil {
-		st[1002] = t.EditorOr()
+		st[1010] = t.EditorOr()
 	}
 	if t.EditorClickGoToDefinition != nil {
-		st[1003] = t.EditorClickGoToDefinition()
+		st[1011] = t.EditorClickGoToDefinition()
 	}
 	if t.EditorFind != nil {
-		st[1004] = t.EditorFind()
+		st[1012] = t.EditorFind()
 	}
 	if t.EditorMatchCase != nil {
-		st[1005] = t.EditorMatchCase()
+		st[1013] = t.EditorMatchCase()
 	}
 	if t.EditorWholeWord != nil {
-		st[1006] = t.EditorWholeWord()
+		st[1014] = t.EditorWholeWord()
 	}
 	if t.EditorRegularExpression != nil {
-		st[1007] = t.EditorRegularExpression()
+		st[1015] = t.EditorRegularExpression()
 	}
 	if t.EditorPreviousMatch != nil {
-		st[1008] = t.EditorPreviousMatch()
+		st[1016] = t.EditorPreviousMatch()
 	}
 	if t.EditorNextMatch != nil {
-		st[1009] = t.EditorNextMatch()
+		st[1017] = t.EditorNextMatch()
 	}
 	if t.EditorCloseTheFindBar != nil {
-		st[1010] = t.EditorCloseTheFindBar()
+		st[1018] = t.EditorCloseTheFindBar()
 	}
 	if t.EditorReplace != nil {
-		st[1011] = t.EditorReplace()
+		st[1019] = t.EditorReplace()
 	}
 	if t.EditorReplaceAll != nil {
-		st[1012] = t.EditorReplaceAll()
+		st[1020] = t.EditorReplaceAll()
 	}
 	if t.EditorSource != nil {
-		st[1013] = t.EditorSource()
+		st[1021] = t.EditorSource()
 	}
 	if t.EditorCompleted != nil {
-		st[1014] = t.EditorCompleted()
+		st[1022] = t.EditorCompleted()
 	}
 	if t.EditorNoProblems != nil {
-		st[1015] = t.EditorNoProblems()
+		st[1023] = t.EditorNoProblems()
 	}
 	if t.EditorLanguage != nil {
-		st[1016] = t.EditorLanguage()
+		st[1024] = t.EditorLanguage()
 	}
 	if t.EditorFindAndReplace != nil {
-		st[1017] = t.EditorFindAndReplace()
+		st[1025] = t.EditorFindAndReplace()
 	}
 	if t.EditorEditorOptions != nil {
-		st[1018] = t.EditorEditorOptions()
+		st[1026] = t.EditorEditorOptions()
 	}
 	if t.EditorSoftWrap != nil {
-		st[1019] = t.EditorSoftWrap()
+		st[1027] = t.EditorSoftWrap()
 	}
 	if t.EditorLineNumbers != nil {
-		st[1020] = t.EditorLineNumbers()
+		st[1028] = t.EditorLineNumbers()
 	}
 	if t.EditorProblems != nil {
-		st[1021] = t.EditorProblems()
+		st[1029] = t.EditorProblems()
 	}
 	if t.EditorFindAndReplace2 != nil {
-		st[1022] = t.EditorFindAndReplace2()
+		st[1030] = t.EditorFindAndReplace2()
 	}
 	if t.EditorKeys != nil {
-		st[1023] = t.EditorKeys()
+		st[1031] = t.EditorKeys()
 	}
 	if t.EditorTypescriptLanguageServer != nil {
-		st[1024] = t.EditorTypescriptLanguageServer()
+		st[1032] = t.EditorTypescriptLanguageServer()
 	}
 	if t.EditorResizeTheProblems != nil {
-		st[1025] = t.EditorResizeTheProblems()
+		st[1033] = t.EditorResizeTheProblems()
 	}
 	if t.EditorOpenTheDescriptionOf != nil {
-		st[1026] = t.EditorOpenTheDescriptionOf()
+		st[1034] = t.EditorOpenTheDescriptionOf()
 	}
 	if t.EditorAnalyzing != nil {
-		st[1027] = t.EditorAnalyzing()
+		st[1035] = t.EditorAnalyzing()
 	}
 	if t.EditorToggleProblems != nil {
-		st[1028] = t.EditorToggleProblems()
+		st[1036] = t.EditorToggleProblems()
 	}
 	if t.EditorLnCol != nil {
 		s.EditorLnCol = t.EditorLnCol
@@ -12398,637 +12462,637 @@ func Supply(lang string, t Translation) {
 		s.EditorProblemsCount = t.EditorProblemsCount
 	}
 	if t.CompLayoutAnimation != nil {
-		st[1029] = t.CompLayoutAnimation()
+		st[1037] = t.CompLayoutAnimation()
 	}
 	if t.CompAnimatelayoutThenChangeTheTree != nil {
-		st[1030] = t.CompAnimatelayoutThenChangeTheTree()
+		st[1038] = t.CompAnimatelayoutThenChangeTheTree()
 	}
 	if t.CompSpring != nil {
-		st[1031] = t.CompSpring()
+		st[1039] = t.CompSpring()
 	}
 	if t.CompEase != nil {
-		st[1032] = t.CompEase()
+		st[1040] = t.CompEase()
 	}
 	if t.CompLinear != nil {
-		st[1033] = t.CompLinear()
+		st[1041] = t.CompLinear()
 	}
 	if t.CompAdd != nil {
-		st[1034] = t.CompAdd()
+		st[1042] = t.CompAdd()
 	}
 	if t.CompShuffle != nil {
-		st[1035] = t.CompShuffle()
+		st[1043] = t.CompShuffle()
 	}
 	if t.CompRemove != nil {
-		st[1036] = t.CompRemove()
+		st[1044] = t.CompRemove()
 	}
 	if t.CompSheet != nil {
-		st[1037] = t.CompSheet()
+		st[1045] = t.CompSheet()
 	}
 	if t.CompAPressedStateStyleOpens != nil {
-		st[1038] = t.CompAPressedStateStyleOpens()
+		st[1046] = t.CompAPressedStateStyleOpens()
 	}
 	if t.CompOpenASheet != nil {
-		st[1039] = t.CompOpenASheet()
+		st[1047] = t.CompOpenASheet()
 	}
 	if t.CompScalesAndDarkensWhilePressed != nil {
-		st[1040] = t.CompScalesAndDarkensWhilePressed()
+		st[1048] = t.CompScalesAndDarkensWhilePressed()
 	}
 	if t.CompASheet != nil {
-		st[1041] = t.CompASheet()
+		st[1049] = t.CompASheet()
 	}
 	if t.CompTapOutsideItOrPress != nil {
-		st[1042] = t.CompTapOutsideItOrPress()
+		st[1050] = t.CompTapOutsideItOrPress()
 	}
 	if t.CompPressEscapeOrClickOutside != nil {
-		st[1043] = t.CompPressEscapeOrClickOutside()
+		st[1051] = t.CompPressEscapeOrClickOutside()
 	}
 	if t.CompClose != nil {
-		st[1044] = t.CompClose()
+		st[1052] = t.CompClose()
 	}
 	if t.CompNoneYet != nil {
-		st[1045] = t.CompNoneYet()
+		st[1053] = t.CompNoneYet()
 	}
 	if t.CompPressFeedback != nil {
-		st[1046] = t.CompPressFeedback()
+		st[1054] = t.CompPressFeedback()
 	}
 	if t.CompDrawnNativelyWhileTheFinger != nil {
-		st[1047] = t.CompDrawnNativelyWhileTheFinger()
+		st[1055] = t.CompDrawnNativelyWhileTheFinger()
 	}
 	if t.CompDrawnNativelyWhileTheButton != nil {
-		st[1048] = t.CompDrawnNativelyWhileTheButton()
+		st[1056] = t.CompDrawnNativelyWhileTheButton()
 	}
 	if t.CompFadingTile != nil {
-		st[1049] = t.CompFadingTile()
+		st[1057] = t.CompFadingTile()
 	}
 	if t.CompFadesWhilePressed != nil {
-		st[1050] = t.CompFadesWhilePressed()
+		st[1058] = t.CompFadesWhilePressed()
 	}
 	if t.CompUnderlayTile != nil {
-		st[1051] = t.CompUnderlayTile()
+		st[1059] = t.CompUnderlayTile()
 	}
 	if t.CompLightsUpWhilePressed != nil {
-		st[1052] = t.CompLightsUpWhilePressed()
+		st[1060] = t.CompLightsUpWhilePressed()
 	}
 	if t.CompEnabledTile != nil {
-		st[1053] = t.CompEnabledTile()
+		st[1061] = t.CompEnabledTile()
 	}
 	if t.CompTakesNoPresses != nil {
-		st[1054] = t.CompTakesNoPresses()
+		st[1062] = t.CompTakesNoPresses()
 	}
 	if t.CompEnabled != nil {
-		st[1055] = t.CompEnabled()
+		st[1063] = t.CompEnabled()
 	}
 	if t.CompOff != nil {
-		st[1056] = t.CompOff()
+		st[1064] = t.CompOff()
 	}
 	if t.CompOn != nil {
-		st[1057] = t.CompOn()
+		st[1065] = t.CompOn()
 	}
 	if t.CompLastPressed != nil {
-		st[1058] = t.CompLastPressed()
+		st[1066] = t.CompLastPressed()
 	}
 	if t.CompDisableTheThirdTile != nil {
-		st[1059] = t.CompDisableTheThirdTile()
+		st[1067] = t.CompDisableTheThirdTile()
 	}
 	if t.CompTheBarCountsWhatYou != nil {
-		st[1060] = t.CompTheBarCountsWhatYou()
+		st[1068] = t.CompTheBarCountsWhatYou()
 	}
 	if t.CompDesktopsHaveNoSoftwareKeyboard != nil {
-		st[1061] = t.CompDesktopsHaveNoSoftwareKeyboard()
+		st[1069] = t.CompDesktopsHaveNoSoftwareKeyboard()
 	}
 	if t.CompInputAccessory != nil {
-		st[1062] = t.CompInputAccessory()
+		st[1070] = t.CompInputAccessory()
 	}
 	if t.CompABarOverTheSoftware != nil {
-		st[1063] = t.CompABarOverTheSoftware()
+		st[1071] = t.CompABarOverTheSoftware()
 	}
 	if t.CompFocusMe != nil {
-		st[1064] = t.CompFocusMe()
+		st[1072] = t.CompFocusMe()
 	}
 	if t.CompClear != nil {
-		st[1065] = t.CompClear()
+		st[1073] = t.CompClear()
 	}
 	if t.CompDone != nil {
-		st[1066] = t.CompDone()
+		st[1074] = t.CompDone()
 	}
 	if t.CompKeyboardInset != nil {
-		st[1067] = t.CompKeyboardInset()
+		st[1075] = t.CompKeyboardInset()
 	}
 	if t.CompPaddingenvEnvkeyboardTheTintedBackground != nil {
-		st[1068] = t.CompPaddingenvEnvkeyboardTheTintedBackground()
+		st[1076] = t.CompPaddingenvEnvkeyboardTheTintedBackground()
 	}
 	if t.CompMarginenvEnvkeyboardTheViewShrinks != nil {
-		st[1069] = t.CompMarginenvEnvkeyboardTheViewShrinks()
+		st[1077] = t.CompMarginenvEnvkeyboardTheViewShrinks()
 	}
 	if t.CompRoom != nil {
-		st[1070] = t.CompRoom()
+		st[1078] = t.CompRoom()
 	}
 	if t.CompFocusTheFieldAtThe != nil {
-		st[1071] = t.CompFocusTheFieldAtThe()
+		st[1079] = t.CompFocusTheFieldAtThe()
 	}
 	if t.CompTypeHere != nil {
-		st[1072] = t.CompTypeHere()
+		st[1080] = t.CompTypeHere()
 	}
 	if t.CompDialogOptions != nil {
-		st[1073] = t.CompDialogOptions()
+		st[1081] = t.CompDialogOptions()
 	}
 	if t.CompStatusbartranslucentOrientations != nil {
-		st[1074] = t.CompStatusbartranslucentOrientations()
+		st[1082] = t.CompStatusbartranslucentOrientations()
 	}
 	if t.CompAndroidTranslucentContentReachesUnder != nil {
-		st[1075] = t.CompAndroidTranslucentContentReachesUnder()
+		st[1083] = t.CompAndroidTranslucentContentReachesUnder()
 	}
 	if t.CompOpenTheDialog != nil {
-		st[1076] = t.CompOpenTheDialog()
+		st[1084] = t.CompOpenTheDialog()
 	}
 	if t.CompADialog != nil {
-		st[1077] = t.CompADialog()
+		st[1085] = t.CompADialog()
 	}
 	if t.CompOpaqueBar != nil {
-		st[1078] = t.CompOpaqueBar()
+		st[1086] = t.CompOpaqueBar()
 	}
 	if t.Comp103OnWholePixels != nil {
-		st[1079] = t.Comp103OnWholePixels()
+		st[1087] = t.Comp103OnWholePixels()
 	}
 	if t.CompPlatform != nil {
-		st[1080] = t.CompPlatform()
+		st[1088] = t.CompPlatform()
 	}
 	if t.CompTheEnvironmentPixelratioAnnounce != nil {
-		st[1081] = t.CompTheEnvironmentPixelratioAnnounce()
+		st[1089] = t.CompTheEnvironmentPixelratioAnnounce()
 	}
 	if t.CompTheLineAboveIsOne != nil {
-		st[1082] = t.CompTheLineAboveIsOne()
+		st[1090] = t.CompTheLineAboveIsOne()
 	}
 	if t.CompAnnounce != nil {
-		st[1083] = t.CompAnnounce()
+		st[1091] = t.CompAnnounce()
 	}
 	if t.CompFocusTheNote != nil {
-		st[1084] = t.CompFocusTheNote()
+		st[1092] = t.CompFocusTheNote()
 	}
 	if t.CompWithVoiceoverOrTalkbackOn != nil {
-		st[1085] = t.CompWithVoiceoverOrTalkbackOn()
+		st[1093] = t.CompWithVoiceoverOrTalkbackOn()
 	}
 	if t.CompKeyboardAvoidance != nil {
-		st[1086] = t.CompKeyboardAvoidance()
+		st[1094] = t.CompKeyboardAvoidance()
 	}
 	if t.CompContentOutsideScrollViews != nil {
-		st[1087] = t.CompContentOutsideScrollViews()
+		st[1095] = t.CompContentOutsideScrollViews()
 	}
 	if t.CompCharacters != nil {
 		s.CompCharacters = t.CompCharacters
 	}
 	if t.CompOliveUnder != nil {
-		st[1088] = t.CompOliveUnder()
+		st[1096] = t.CompOliveUnder()
 	}
 	if t.CompOliveBelow != nil {
-		st[1089] = t.CompOliveBelow()
+		st[1097] = t.CompOliveBelow()
 	}
 	if t.CompAnnouncement != nil {
 		s.CompAnnouncement = t.CompAnnouncement
 	}
 	if t.AnimNativeMotion != nil {
-		st[1090] = t.AnimNativeMotion()
+		st[1098] = t.AnimNativeMotion()
 	}
 	if t.AnimThreeLoopsStartedOnceRun != nil {
-		st[1091] = t.AnimThreeLoopsStartedOnceRun()
+		st[1099] = t.AnimThreeLoopsStartedOnceRun()
 	}
 	if t.AnimOrbitsOneTurnIn3 != nil {
-		st[1092] = t.AnimOrbitsOneTurnIn3()
+		st[1100] = t.AnimOrbitsOneTurnIn3()
 	}
 	if t.AnimRings08SApart != nil {
-		st[1093] = t.AnimRings08SApart()
+		st[1101] = t.AnimRings08SApart()
 	}
 	if t.AnimCoreInAndOut != nil {
-		st[1094] = t.AnimCoreInAndOut()
+		st[1102] = t.AnimCoreInAndOut()
 	}
 	if t.AnimEasing != nil {
-		st[1095] = t.AnimEasing()
+		st[1103] = t.AnimEasing()
 	}
 	if t.AnimCurvesAreDataEvaluatedNatively != nil {
-		st[1096] = t.AnimCurvesAreDataEvaluatedNatively()
+		st[1104] = t.AnimCurvesAreDataEvaluatedNatively()
 	}
 	if t.AnimEasingCurve != nil {
-		st[1097] = t.AnimEasingCurve()
+		st[1105] = t.AnimEasingCurve()
 	}
 	if t.AnimCurves != nil {
-		st[1098] = t.AnimCurves()
+		st[1106] = t.AnimCurves()
 	}
 	if t.AnimPlay != nil {
-		st[1099] = t.AnimPlay()
+		st[1107] = t.AnimPlay()
 	}
 	if t.AnimSideBySide != nil {
-		st[1100] = t.AnimSideBySide()
+		st[1108] = t.AnimSideBySide()
 	}
 	if t.AnimTenTimingsStartedTogether != nil {
-		st[1101] = t.AnimTenTimingsStartedTogether()
+		st[1109] = t.AnimTenTimingsStartedTogether()
 	}
 	if t.AnimOneGroupOneStart != nil {
-		st[1102] = t.AnimOneGroupOneStart()
+		st[1110] = t.AnimOneGroupOneStart()
 	}
 	if t.AnimReverse != nil {
-		st[1103] = t.AnimReverse()
+		st[1111] = t.AnimReverse()
 	}
 	if t.AnimRunning != nil {
-		st[1104] = t.AnimRunning()
+		st[1112] = t.AnimRunning()
 	}
 	if t.AnimFinished != nil {
-		st[1105] = t.AnimFinished()
+		st[1113] = t.AnimFinished()
 	}
 	if t.AnimStopped != nil {
-		st[1106] = t.AnimStopped()
+		st[1114] = t.AnimStopped()
 	}
 	if t.AnimComposition != nil {
-		st[1107] = t.AnimComposition()
+		st[1115] = t.AnimComposition()
 	}
 	if t.AnimEachStepStartsAsThe != nil {
-		st[1108] = t.AnimEachStepStartsAsThe()
+		st[1116] = t.AnimEachStepStartsAsThe()
 	}
 	if t.AnimStop != nil {
-		st[1109] = t.AnimStop()
+		st[1117] = t.AnimStop()
 	}
 	if t.AnimReset != nil {
-		st[1110] = t.AnimReset()
+		st[1118] = t.AnimReset()
 	}
 	if t.AnimSprings != nil {
-		st[1111] = t.AnimSprings()
+		st[1119] = t.AnimSprings()
 	}
 	if t.AnimStiffnessAndDampingMass1 != nil {
-		st[1112] = t.AnimStiffnessAndDampingMass1()
+		st[1120] = t.AnimStiffnessAndDampingMass1()
 	}
 	if t.AnimSpringResponses != nil {
-		st[1113] = t.AnimSpringResponses()
+		st[1121] = t.AnimSpringResponses()
 	}
 	if t.AnimRelease != nil {
-		st[1114] = t.AnimRelease()
+		st[1122] = t.AnimRelease()
 	}
 	if t.AnimInterpolation != nil {
-		st[1115] = t.AnimInterpolation()
+		st[1123] = t.AnimInterpolation()
 	}
 	if t.AnimOneValueDrivesColorAngle != nil {
-		st[1116] = t.AnimOneValueDrivesColorAngle()
+		st[1124] = t.AnimOneValueDrivesColorAngle()
 	}
 	if t.AnimColorThroughThreeStops != nil {
-		st[1117] = t.AnimColorThroughThreeStops()
+		st[1125] = t.AnimColorThroughThreeStops()
 	}
 	if t.AnimAt01And2 != nil {
-		st[1118] = t.AnimAt01And2()
+		st[1126] = t.AnimAt01And2()
 	}
 	if t.AnimRotationKeepsGoingPast1 != nil {
-		st[1119] = t.AnimRotationKeepsGoingPast1()
+		st[1127] = t.AnimRotationKeepsGoingPast1()
 	}
 	if t.Anim360At2 != nil {
-		st[1120] = t.Anim360At2()
+		st[1128] = t.Anim360At2()
 	}
 	if t.AnimScaleStopsAt12 != nil {
-		st[1121] = t.AnimScaleStopsAt12()
+		st[1129] = t.AnimScaleStopsAt12()
 	}
 	if t.AnimHidingHeader != nil {
-		st[1122] = t.AnimHidingHeader()
+		st[1130] = t.AnimHidingHeader()
 	}
 	if t.AnimHidesAsTheListScrolls != nil {
-		st[1123] = t.AnimHidesAsTheListScrolls()
+		st[1131] = t.AnimHidesAsTheListScrolls()
 	}
 	if t.AnimSearch != nil {
-		st[1124] = t.AnimSearch()
+		st[1132] = t.AnimSearch()
 	}
 	if t.AnimLayoutAnimation != nil {
-		st[1125] = t.AnimLayoutAnimation()
+		st[1133] = t.AnimLayoutAnimation()
 	}
 	if t.AnimFramesInsertsAndRemovalsOf != nil {
-		st[1126] = t.AnimFramesInsertsAndRemovalsOf()
+		st[1134] = t.AnimFramesInsertsAndRemovalsOf()
 	}
 	if t.AnimSpring != nil {
-		st[1127] = t.AnimSpring()
+		st[1135] = t.AnimSpring()
 	}
 	if t.AnimEaseInOut != nil {
-		st[1128] = t.AnimEaseInOut()
+		st[1136] = t.AnimEaseInOut()
 	}
 	if t.AnimLinear != nil {
-		st[1129] = t.AnimLinear()
+		st[1137] = t.AnimLinear()
 	}
 	if t.AnimColumn != nil {
-		st[1130] = t.AnimColumn()
+		st[1138] = t.AnimColumn()
 	}
 	if t.AnimRow != nil {
-		st[1131] = t.AnimRow()
+		st[1139] = t.AnimRow()
 	}
 	if t.AnimShuffle != nil {
-		st[1132] = t.AnimShuffle()
+		st[1140] = t.AnimShuffle()
 	}
 	if t.AnimAdd != nil {
-		st[1133] = t.AnimAdd()
+		st[1141] = t.AnimAdd()
 	}
 	if t.AnimRemove != nil {
-		st[1134] = t.AnimRemove()
+		st[1142] = t.AnimRemove()
 	}
 	if t.AnimTransitions != nil {
-		st[1135] = t.AnimTransitions()
+		st[1143] = t.AnimTransitions()
 	}
 	if t.AnimAStyleSTransitionAnimates != nil {
-		st[1136] = t.AnimAStyleSTransitionAnimates()
+		st[1144] = t.AnimAStyleSTransitionAnimates()
 	}
 	if t.AnimColorCornersTransformOpacityAndFrame != nil {
-		st[1137] = t.AnimColorCornersTransformOpacityAndFrame()
+		st[1145] = t.AnimColorCornersTransformOpacityAndFrame()
 	}
 	if t.AnimToggle != nil {
-		st[1138] = t.AnimToggle()
+		st[1146] = t.AnimToggle()
 	}
 	if t.AnimGentle != nil {
-		st[1139] = t.AnimGentle()
+		st[1147] = t.AnimGentle()
 	}
 	if t.AnimWobbly != nil {
-		st[1140] = t.AnimWobbly()
+		st[1148] = t.AnimWobbly()
 	}
 	if t.AnimStiff != nil {
-		st[1141] = t.AnimStiff()
+		st[1149] = t.AnimStiff()
 	}
 	if t.AnimViews != nil {
 		s.AnimViews = t.AnimViews
 	}
 	if t.AnimTapATile != nil {
-		st[1142] = t.AnimTapATile()
+		st[1150] = t.AnimTapATile()
 	}
 	if t.AnimMotionPresets != nil {
-		st[1143] = t.AnimMotionPresets()
+		st[1151] = t.AnimMotionPresets()
 	}
 	if t.AnimKinds != nil {
-		st[1144] = t.AnimKinds()
+		st[1152] = t.AnimKinds()
 	}
 	if t.AnimChannelsForAView != nil {
-		st[1145] = t.AnimChannelsForAView()
+		st[1153] = t.AnimChannelsForAView()
 	}
 	if t.AnimAPreset != nil {
-		st[1146] = t.AnimAPreset()
+		st[1154] = t.AnimAPreset()
 	}
 	if t.AnimStaggeredEntrance != nil {
-		st[1147] = t.AnimStaggeredEntrance()
+		st[1155] = t.AnimStaggeredEntrance()
 	}
 	if t.AnimNewmotionEnterWithADelay != nil {
-		st[1148] = t.AnimNewmotionEnterWithADelay()
+		st[1156] = t.AnimNewmotionEnterWithADelay()
 	}
 	if t.Anim70MsApart != nil {
-		st[1149] = t.Anim70MsApart()
+		st[1157] = t.Anim70MsApart()
 	}
 	if t.AnimOrigin != nil {
-		st[1150] = t.AnimOrigin()
+		st[1158] = t.AnimOrigin()
 	}
 	if t.AnimFromFirst != nil {
-		st[1151] = t.AnimFromFirst()
+		st[1159] = t.AnimFromFirst()
 	}
 	if t.AnimCenter != nil {
-		st[1152] = t.AnimCenter()
+		st[1160] = t.AnimCenter()
 	}
 	if t.AnimLast != nil {
-		st[1153] = t.AnimLast()
+		st[1161] = t.AnimLast()
 	}
 	if t.AnimReplay != nil {
-		st[1154] = t.AnimReplay()
+		st[1162] = t.AnimReplay()
 	}
 	if t.AnimKeyframes != nil {
-		st[1155] = t.AnimKeyframes()
+		st[1163] = t.AnimKeyframes()
 	}
 	if t.AnimStepsKeyframesWithEasingsOf != nil {
-		st[1156] = t.AnimStepsKeyframesWithEasingsOf()
+		st[1164] = t.AnimStepsKeyframesWithEasingsOf()
 	}
 	if t.AnimLike != nil {
-		st[1157] = t.AnimLike()
+		st[1165] = t.AnimLike()
 	}
 	if t.AnimLikes != nil {
-		st[1158] = t.AnimLikes()
+		st[1166] = t.AnimLikes()
 	}
 	if t.AnimCharge != nil {
-		st[1159] = t.AnimCharge()
+		st[1167] = t.AnimCharge()
 	}
 	if t.AnimASpriteSheetFrameBy != nil {
-		st[1160] = t.AnimASpriteSheetFrameBy()
+		st[1168] = t.AnimASpriteSheetFrameBy()
 	}
 	if t.Anim1ThreeStopsOneWith != nil {
-		st[1161] = t.Anim1ThreeStopsOneWith()
+		st[1169] = t.Anim1ThreeStopsOneWith()
 	}
 	if t.AnimLikePopInThenA != nil {
-		st[1162] = t.AnimLikePopInThenA()
+		st[1170] = t.AnimLikePopInThenA()
 	}
 	if t.AnimChargeInFiveJumps != nil {
-		st[1163] = t.AnimChargeInFiveJumps()
+		st[1171] = t.AnimChargeInFiveJumps()
 	}
 	if t.AnimAurora != nil {
-		st[1164] = t.AnimAurora()
+		st[1172] = t.AnimAurora()
 	}
 	if t.AnimEachLightDriftsOnIts != nil {
-		st[1165] = t.AnimEachLightDriftsOnIts()
+		st[1173] = t.AnimEachLightDriftsOnIts()
 	}
 	if t.AnimBlurredGradientsOnLoopingMotions != nil {
-		st[1166] = t.AnimBlurredGradientsOnLoopingMotions()
+		st[1174] = t.AnimBlurredGradientsOnLoopingMotions()
 	}
 	if t.AnimEnter != nil {
-		st[1167] = t.AnimEnter()
+		st[1175] = t.AnimEnter()
 	}
 	if t.AnimExit != nil {
-		st[1168] = t.AnimExit()
+		st[1176] = t.AnimExit()
 	}
 	if t.AnimAttention != nil {
-		st[1169] = t.AnimAttention()
+		st[1177] = t.AnimAttention()
 	}
 	if t.AnimLoop != nil {
-		st[1170] = t.AnimLoop()
+		st[1178] = t.AnimLoop()
 	}
 	if t.AnimReadyMadeMotions != nil {
 		s.AnimReadyMadeMotions = t.AnimReadyMadeMotions
 	}
 	if t.GestPanPinchAndRotation != nil {
-		st[1171] = t.GestPanPinchAndRotation()
+		st[1179] = t.GestPanPinchAndRotation()
 	}
 	if t.GestThreeRecognizersOnOneView != nil {
-		st[1172] = t.GestThreeRecognizersOnOneView()
+		st[1180] = t.GestThreeRecognizersOnOneView()
 	}
 	if t.GestDrag != nil {
-		st[1173] = t.GestDrag()
+		st[1181] = t.GestDrag()
 	}
 	if t.GestScale != nil {
-		st[1174] = t.GestScale()
+		st[1182] = t.GestScale()
 	}
 	if t.GestAngle != nil {
-		st[1175] = t.GestAngle()
+		st[1183] = t.GestAngle()
 	}
 	if t.GestPinchAndRotateWithTwo != nil {
-		st[1176] = t.GestPinchAndRotateWithTwo()
+		st[1184] = t.GestPinchAndRotateWithTwo()
 	}
 	if t.GestDragWithTheMousePinch != nil {
-		st[1177] = t.GestDragWithTheMousePinch()
+		st[1185] = t.GestDragWithTheMousePinch()
 	}
 	if t.GestReset != nil {
-		st[1178] = t.GestReset()
+		st[1186] = t.GestReset()
 	}
 	if t.GestIdle != nil {
-		st[1179] = t.GestIdle()
+		st[1187] = t.GestIdle()
 	}
 	if t.GestTouchResponder != nil {
-		st[1180] = t.GestTouchResponder()
+		st[1188] = t.GestTouchResponder()
 	}
 	if t.GestPositionsGoThroughTheEngine != nil {
-		st[1181] = t.GestPositionsGoThroughTheEngine()
+		st[1189] = t.GestPositionsGoThroughTheEngine()
 	}
 	if t.GestDragging != nil {
-		st[1182] = t.GestDragging()
+		st[1190] = t.GestDragging()
 	}
 	if t.GestTakenOver != nil {
-		st[1183] = t.GestTakenOver()
+		st[1191] = t.GestTakenOver()
 	}
 	if t.GestPosition != nil {
-		st[1184] = t.GestPosition()
+		st[1192] = t.GestPosition()
 	}
 	if t.GestCenter != nil {
-		st[1185] = t.GestCenter()
+		st[1193] = t.GestCenter()
 	}
 	if t.GestTouchEvents != nil {
-		st[1186] = t.GestTouchEvents()
+		st[1194] = t.GestTouchEvents()
 	}
 	if t.GestStartMoveEndAndCancel != nil {
-		st[1187] = t.GestStartMoveEndAndCancel()
+		st[1195] = t.GestStartMoveEndAndCancel()
 	}
 	if t.GestStartMoveEndAndCancel2 != nil {
-		st[1188] = t.GestStartMoveEndAndCancel2()
+		st[1196] = t.GestStartMoveEndAndCancel2()
 	}
 	if t.GestTouchHereTryTwoFingers != nil {
-		st[1189] = t.GestTouchHereTryTwoFingers()
+		st[1197] = t.GestTouchHereTryTwoFingers()
 	}
 	if t.GestPressAndDragHereWith != nil {
-		st[1190] = t.GestPressAndDragHereWith()
+		st[1198] = t.GestPressAndDragHereWith()
 	}
 	if t.GestNoTouchesYet != nil {
-		st[1191] = t.GestNoTouchesYet()
+		st[1199] = t.GestNoTouchesYet()
 	}
 	if t.GestPressEvents != nil {
-		st[1192] = t.GestPressEvents()
+		st[1200] = t.GestPressEvents()
 	}
 	if t.GestInPressLongPressAnd != nil {
-		st[1193] = t.GestInPressLongPressAnd()
+		st[1201] = t.GestInPressLongPressAnd()
 	}
 	if t.GestTapHoldOrSlideOff != nil {
-		st[1194] = t.GestTapHoldOrSlideOff()
+		st[1202] = t.GestTapHoldOrSlideOff()
 	}
 	if t.GestClickHoldOrSlideOff != nil {
-		st[1195] = t.GestClickHoldOrSlideOff()
+		st[1203] = t.GestClickHoldOrSlideOff()
 	}
 	if t.GestNoEventsYet != nil {
-		st[1196] = t.GestNoEventsYet()
+		st[1204] = t.GestNoEventsYet()
 	}
 	if t.GestRipple != nil {
-		st[1197] = t.GestRipple()
+		st[1205] = t.GestRipple()
 	}
 	if t.GestFastLongPress != nil {
-		st[1198] = t.GestFastLongPress()
+		st[1206] = t.GestFastLongPress()
 	}
 	if t.GestLongPressAfter250Ms != nil {
-		st[1199] = t.GestLongPressAfter250Ms()
+		st[1207] = t.GestLongPressAfter250Ms()
 	}
 	if t.GestStar != nil {
-		st[1200] = t.GestStar()
+		st[1208] = t.GestStar()
 	}
 	if t.GestPressableTextDimmedWhilePressed != nil {
-		st[1201] = t.GestPressableTextDimmedWhilePressed()
+		st[1209] = t.GestPressableTextDimmedWhilePressed()
 	}
 	if t.GestHitSlop != nil {
-		st[1202] = t.GestHitSlop()
+		st[1210] = t.GestHitSlop()
 	}
 	if t.GestA12PtDotThat != nil {
-		st[1203] = t.GestA12PtDotThat()
+		st[1211] = t.GestA12PtDotThat()
 	}
 	if t.GestA12PtDotThat2 != nil {
-		st[1204] = t.GestA12PtDotThat2()
+		st[1212] = t.GestA12PtDotThat2()
 	}
 	if t.GestTinyDot != nil {
-		st[1205] = t.GestTinyDot()
+		st[1213] = t.GestTinyDot()
 	}
 	if t.GestTheDashedRingIsThe != nil {
-		st[1206] = t.GestTheDashedRingIsThe()
+		st[1214] = t.GestTheDashedRingIsThe()
 	}
 	if t.GestTheDashedRingIsThe2 != nil {
-		st[1207] = t.GestTheDashedRingIsThe2()
+		st[1215] = t.GestTheDashedRingIsThe2()
 	}
 	if t.GestPointerEvents != nil {
-		st[1208] = t.GestPointerEvents()
+		st[1216] = t.GestPointerEvents()
 	}
 	if t.GestAnOverlayThatLetsTaps != nil {
-		st[1209] = t.GestAnOverlayThatLetsTaps()
+		st[1217] = t.GestAnOverlayThatLetsTaps()
 	}
 	if t.GestAnOverlayThatLetsClicks != nil {
-		st[1210] = t.GestAnOverlayThatLetsClicks()
+		st[1218] = t.GestAnOverlayThatLetsClicks()
 	}
 	if t.GestButtonUnderAnOverlay != nil {
-		st[1211] = t.GestButtonUnderAnOverlay()
+		st[1219] = t.GestButtonUnderAnOverlay()
 	}
 	if t.GestTapsOnTheHatchedBand != nil {
-		st[1212] = t.GestTapsOnTheHatchedBand()
+		st[1220] = t.GestTapsOnTheHatchedBand()
 	}
 	if t.GestClicksOnTheHatchedBand != nil {
-		st[1213] = t.GestClicksOnTheHatchedBand()
+		st[1221] = t.GestClicksOnTheHatchedBand()
 	}
 	if t.GestHover != nil {
-		st[1214] = t.GestHover()
+		st[1222] = t.GestHover()
 	}
 	if t.GestAPointerOverAView != nil {
-		st[1215] = t.GestAPointerOverAView()
+		st[1223] = t.GestAPointerOverAView()
 	}
 	if t.GestTheMouseOverAView != nil {
-		st[1216] = t.GestTheMouseOverAView()
+		st[1224] = t.GestTheMouseOverAView()
 	}
 	if t.GestOver != nil {
-		st[1217] = t.GestOver()
+		st[1225] = t.GestOver()
 	}
 	if t.GestAway != nil {
-		st[1218] = t.GestAway()
+		st[1226] = t.GestAway()
 	}
 	if t.GestPointerAway != nil {
-		st[1219] = t.GestPointerAway()
+		st[1227] = t.GestPointerAway()
 	}
 	if t.GestInMoveAndOut != nil {
-		st[1220] = t.GestInMoveAndOut()
+		st[1228] = t.GestInMoveAndOut()
 	}
 	if t.GestDroppedFiles != nil {
-		st[1221] = t.GestDroppedFiles()
+		st[1229] = t.GestDroppedFiles()
 	}
 	if t.GestFilesDraggedInFromOther != nil {
-		st[1222] = t.GestFilesDraggedInFromOther()
+		st[1230] = t.GestFilesDraggedInFromOther()
 	}
 	if t.GestDropFilesHere != nil {
-		st[1223] = t.GestDropFilesHere()
+		st[1231] = t.GestDropFilesHere()
 	}
 	if t.GestReleaseToDrop != nil {
-		st[1224] = t.GestReleaseToDrop()
+		st[1232] = t.GestReleaseToDrop()
 	}
 	if t.GestDesktopsAndTheWebTake != nil {
-		st[1225] = t.GestDesktopsAndTheWebTake()
+		st[1233] = t.GestDesktopsAndTheWebTake()
 	}
 	if t.GestNothingDroppedYet != nil {
-		st[1226] = t.GestNothingDroppedYet()
+		st[1234] = t.GestNothingDroppedYet()
 	}
 	if t.GestOnTheWebBlobUrls != nil {
-		st[1227] = t.GestOnTheWebBlobUrls()
+		st[1235] = t.GestOnTheWebBlobUrls()
 	}
 	if t.GestPlay != nil {
-		st[1228] = t.GestPlay()
+		st[1236] = t.GestPlay()
 	}
 	if t.GestStartsTheSong != nil {
-		st[1229] = t.GestStartsTheSong()
+		st[1237] = t.GestStartsTheSong()
 	}
 	if t.GestLike != nil {
-		st[1230] = t.GestLike()
+		st[1238] = t.GestLike()
 	}
 	if t.GestAddsToFavorites != nil {
-		st[1231] = t.GestAddsToFavorites()
+		st[1239] = t.GestAddsToFavorites()
 	}
 	if t.GestNotify != nil {
-		st[1232] = t.GestNotify()
+		st[1240] = t.GestNotify()
 	}
 	if t.GestTurnsOnAlerts != nil {
-		st[1233] = t.GestTurnsOnAlerts()
+		st[1241] = t.GestTurnsOnAlerts()
 	}
 	if t.GestAccessibility != nil {
-		st[1234] = t.GestAccessibility()
+		st[1242] = t.GestAccessibility()
 	}
 	if t.GestRolesLabelsAndHintsFor != nil {
-		st[1235] = t.GestRolesLabelsAndHintsFor()
+		st[1243] = t.GestRolesLabelsAndHintsFor()
 	}
 	if t.GestDown != nil {
 		s.GestDown = t.GestDown
@@ -13043,484 +13107,484 @@ func Supply(lang string, t Translation) {
 		s.GestPointerAt = t.GestPointerAt
 	}
 	if t.LayoutOne != nil {
-		st[1236] = t.LayoutOne()
+		st[1244] = t.LayoutOne()
 	}
 	if t.LayoutTwoWider != nil {
-		st[1237] = t.LayoutTwoWider()
+		st[1245] = t.LayoutTwoWider()
 	}
 	if t.LayoutThree != nil {
-		st[1238] = t.LayoutThree()
+		st[1246] = t.LayoutThree()
 	}
 	if t.LayoutRowAndColumn != nil {
-		st[1239] = t.LayoutRowAndColumn()
+		st[1247] = t.LayoutRowAndColumn()
 	}
 	if t.LayoutGrowAndShrink != nil {
-		st[1240] = t.LayoutGrowAndShrink()
+		st[1248] = t.LayoutGrowAndShrink()
 	}
 	if t.LayoutFixed120 != nil {
-		st[1241] = t.LayoutFixed120()
+		st[1249] = t.LayoutFixed120()
 	}
 	if t.Layout900WideShrinksToFit != nil {
-		st[1242] = t.Layout900WideShrinksToFit()
+		st[1250] = t.Layout900WideShrinksToFit()
 	}
 	if t.LayoutStart != nil {
-		st[1243] = t.LayoutStart()
+		st[1251] = t.LayoutStart()
 	}
 	if t.LayoutPushedToTheEnd != nil {
-		st[1244] = t.LayoutPushedToTheEnd()
+		st[1252] = t.LayoutPushedToTheEnd()
 	}
 	if t.LayoutAbsolutePositioning != nil {
-		st[1245] = t.LayoutAbsolutePositioning()
+		st[1253] = t.LayoutAbsolutePositioning()
 	}
 	if t.LayoutTopLeft != nil {
-		st[1246] = t.LayoutTopLeft()
+		st[1254] = t.LayoutTopLeft()
 	}
 	if t.LayoutBottomRight != nil {
-		st[1247] = t.LayoutBottomRight()
+		st[1255] = t.LayoutBottomRight()
 	}
 	if t.LayoutCentered != nil {
-		st[1248] = t.LayoutCentered()
+		st[1256] = t.LayoutCentered()
 	}
 	if t.LayoutGrid != nil {
-		st[1249] = t.LayoutGrid()
+		st[1257] = t.LayoutGrid()
 	}
 	if t.LayoutSpan2 != nil {
-		st[1250] = t.LayoutSpan2()
+		st[1258] = t.LayoutSpan2()
 	}
 	if t.Layout2Rows != nil {
-		st[1251] = t.Layout2Rows()
+		st[1259] = t.Layout2Rows()
 	}
 	if t.LayoutFruit != nil {
-		st[1252] = t.LayoutFruit()
+		st[1260] = t.LayoutFruit()
 	}
 	if t.LayoutVegetables != nil {
-		st[1253] = t.LayoutVegetables()
+		st[1261] = t.LayoutVegetables()
 	}
 	if t.LayoutGrains != nil {
-		st[1254] = t.LayoutGrains()
+		st[1262] = t.LayoutGrains()
 	}
 	if t.LayoutStaticStickyAndFixed != nil {
-		st[1255] = t.LayoutStaticStickyAndFixed()
+		st[1263] = t.LayoutStaticStickyAndFixed()
 	}
 	if t.LayoutStaticIgnoresInsetsAndLets != nil {
-		st[1256] = t.LayoutStaticIgnoresInsetsAndLets()
+		st[1264] = t.LayoutStaticIgnoresInsetsAndLets()
 	}
 	if t.LayoutAbsoluteInTheFrame != nil {
-		st[1257] = t.LayoutAbsoluteInTheFrame()
+		st[1265] = t.LayoutAbsoluteInTheFrame()
 	}
 	if t.LayoutShowAFixedNote != nil {
-		st[1258] = t.LayoutShowAFixedNote()
+		st[1266] = t.LayoutShowAFixedNote()
 	}
 	if t.LayoutFixedToTheWindow != nil {
-		st[1259] = t.LayoutFixedToTheWindow()
+		st[1267] = t.LayoutFixedToTheWindow()
 	}
 	if t.LayoutIntrinsicSizes != nil {
-		st[1260] = t.LayoutIntrinsicSizes()
+		st[1268] = t.LayoutIntrinsicSizes()
 	}
 	if t.LayoutMinContentEachWordOn != nil {
-		st[1261] = t.LayoutMinContentEachWordOn()
+		st[1269] = t.LayoutMinContentEachWordOn()
 	}
 	if t.LayoutMaxContentOneLine != nil {
-		st[1262] = t.LayoutMaxContentOneLine()
+		st[1270] = t.LayoutMaxContentOneLine()
 	}
 	if t.LayoutFitContentOneLineUp != nil {
-		st[1263] = t.LayoutFitContentOneLineUp()
+		st[1271] = t.LayoutFitContentOneLineUp()
 	}
 	if t.LayoutStacking != nil {
-		st[1264] = t.LayoutStacking()
+		st[1272] = t.LayoutStacking()
 	}
 	if t.LayoutDirection != nil {
-		st[1265] = t.LayoutDirection()
+		st[1273] = t.LayoutDirection()
 	}
 	if t.LayoutBlock != nil {
-		st[1266] = t.LayoutBlock()
+		st[1274] = t.LayoutBlock()
 	}
 	if t.LayoutMarginBottom16 != nil {
-		st[1267] = t.LayoutMarginBottom16()
+		st[1275] = t.LayoutMarginBottom16()
 	}
 	if t.LayoutMarginTop16TheGap != nil {
-		st[1268] = t.LayoutMarginTop16TheGap()
+		st[1276] = t.LayoutMarginTop16TheGap()
 	}
 	if t.LayoutWidth60CenteredByAuto != nil {
-		st[1269] = t.LayoutWidth60CenteredByAuto()
+		st[1277] = t.LayoutWidth60CenteredByAuto()
 	}
 	if t.ImagesResizeModes != nil {
-		st[1270] = t.ImagesResizeModes()
+		st[1278] = t.ImagesResizeModes()
 	}
 	if t.ImagesA21ImageIn != nil {
-		st[1271] = t.ImagesA21ImageIn()
+		st[1279] = t.ImagesA21ImageIn()
 	}
 	if t.ImagesCornersAndBorders != nil {
-		st[1272] = t.ImagesCornersAndBorders()
+		st[1280] = t.ImagesCornersAndBorders()
 	}
 	if t.ImagesRadiiPerCornerBordersOn != nil {
-		st[1273] = t.ImagesRadiiPerCornerBordersOn()
+		st[1281] = t.ImagesRadiiPerCornerBordersOn()
 	}
 	if t.ImagesCircle != nil {
-		st[1274] = t.ImagesCircle()
+		st[1282] = t.ImagesCircle()
 	}
 	if t.ImagesBorder != nil {
-		st[1275] = t.ImagesBorder()
+		st[1283] = t.ImagesBorder()
 	}
 	if t.ImagesTwoCorners != nil {
-		st[1276] = t.ImagesTwoCorners()
+		st[1284] = t.ImagesTwoCorners()
 	}
 	if t.ImagesEmbeddedImagesAndTint != nil {
-		st[1277] = t.ImagesEmbeddedImagesAndTint()
+		st[1285] = t.ImagesEmbeddedImagesAndTint()
 	}
 	if t.ImagesLogoPngFromGoEmbed != nil {
-		st[1278] = t.ImagesLogoPngFromGoEmbed()
+		st[1286] = t.ImagesLogoPngFromGoEmbed()
 	}
 	if t.ImagesOriginal != nil {
-		st[1279] = t.ImagesOriginal()
+		st[1287] = t.ImagesOriginal()
 	}
 	if t.ImagesAccent != nil {
-		st[1280] = t.ImagesAccent()
+		st[1288] = t.ImagesAccent()
 	}
 	if t.ImagesInfo != nil {
-		st[1281] = t.ImagesInfo()
+		st[1289] = t.ImagesInfo()
 	}
 	if t.ImagesDanger != nil {
-		st[1282] = t.ImagesDanger()
+		st[1290] = t.ImagesDanger()
 	}
 	if t.ImagesAsDrawn != nil {
-		st[1283] = t.ImagesAsDrawn()
+		st[1291] = t.ImagesAsDrawn()
 	}
 	if t.ImagesSvgImages != nil {
-		st[1284] = t.ImagesSvgImages()
+		st[1292] = t.ImagesSvgImages()
 	}
 	if t.ImagesStarSvgMarkSvgAnd != nil {
-		st[1285] = t.ImagesStarSvgMarkSvgAnd()
+		st[1293] = t.ImagesStarSvgMarkSvgAnd()
 	}
 	if t.ImagesRemote != nil {
-		st[1286] = t.ImagesRemote()
+		st[1294] = t.ImagesRemote()
 	}
 	if t.ImagesAnimatedGifAndWebp != nil {
-		st[1287] = t.ImagesAnimatedGifAndWebp()
+		st[1295] = t.ImagesAnimatedGifAndWebp()
 	}
 	if t.ImagesDecodedAndPlayedNatively != nil {
-		st[1288] = t.ImagesDecodedAndPlayedNatively()
+		st[1296] = t.ImagesDecodedAndPlayedNatively()
 	}
 	if t.ImagesScaledRound != nil {
-		st[1289] = t.ImagesScaledRound()
+		st[1297] = t.ImagesScaledRound()
 	}
 	if t.ImagesPlaceholderAndFade != nil {
-		st[1290] = t.ImagesPlaceholderAndFade()
+		st[1298] = t.ImagesPlaceholderAndFade()
 	}
 	if t.ImagesAPlaceholderThenAFade != nil {
-		st[1291] = t.ImagesAPlaceholderThenAFade()
+		st[1299] = t.ImagesAPlaceholderThenAFade()
 	}
 	if t.ImagesReload != nil {
-		st[1292] = t.ImagesReload()
+		st[1300] = t.ImagesReload()
 	}
 	if t.ImagesLoads != nil {
-		st[1293] = t.ImagesLoads()
+		st[1301] = t.ImagesLoads()
 	}
 	if t.ImagesNone != nil {
-		st[1294] = t.ImagesNone()
+		st[1302] = t.ImagesNone()
 	}
 	if t.ImagesBlurRadius != nil {
-		st[1295] = t.ImagesBlurRadius()
+		st[1303] = t.ImagesBlurRadius()
 	}
 	if t.ImagesBlurradiusAppliedWhileDecoding != nil {
-		st[1296] = t.ImagesBlurradiusAppliedWhileDecoding()
+		st[1304] = t.ImagesBlurradiusAppliedWhileDecoding()
 	}
 	if t.ImagesNotShown != nil {
-		st[1297] = t.ImagesNotShown()
+		st[1305] = t.ImagesNotShown()
 	}
 	if t.ImagesSizePrefetchProgress != nil {
-		st[1298] = t.ImagesSizePrefetchProgress()
+		st[1306] = t.ImagesSizePrefetchProgress()
 	}
 	if t.ImagesSize != nil {
-		st[1299] = t.ImagesSize()
+		st[1307] = t.ImagesSize()
 	}
 	if t.ImagesPrefetch != nil {
-		st[1300] = t.ImagesPrefetch()
+		st[1308] = t.ImagesPrefetch()
 	}
 	if t.ImagesInTheCache != nil {
-		st[1301] = t.ImagesInTheCache()
+		st[1309] = t.ImagesInTheCache()
 	}
 	if t.ImagesHide != nil {
-		st[1302] = t.ImagesHide()
+		st[1310] = t.ImagesHide()
 	}
 	if t.ImagesShow != nil {
-		st[1303] = t.ImagesShow()
+		st[1311] = t.ImagesShow()
 	}
 	if t.ImagesPrefetchThenShowNoDownload != nil {
-		st[1304] = t.ImagesPrefetchThenShowNoDownload()
+		st[1312] = t.ImagesPrefetchThenShowNoDownload()
 	}
 	if t.ImagesLoadedNoDownload != nil {
-		st[1305] = t.ImagesLoadedNoDownload()
+		st[1313] = t.ImagesLoadedNoDownload()
 	}
 	if t.ImagesLoading != nil {
-		st[1306] = t.ImagesLoading()
+		st[1314] = t.ImagesLoading()
 	}
 	if t.ImagesEvents != nil {
-		st[1307] = t.ImagesEvents()
+		st[1315] = t.ImagesEvents()
 	}
 	if t.ImagesLoadStartLoadErrorLoad != nil {
-		st[1308] = t.ImagesLoadStartLoadErrorLoad()
+		st[1316] = t.ImagesLoadStartLoadErrorLoad()
 	}
 	if t.ImagesLoaded != nil {
-		st[1309] = t.ImagesLoaded()
+		st[1317] = t.ImagesLoaded()
 	}
 	if t.ImagesPx != nil {
-		st[1310] = t.ImagesPx()
+		st[1318] = t.ImagesPx()
 	}
 	if t.ImagesNoLoadEventsYet != nil {
-		st[1311] = t.ImagesNoLoadEventsYet()
+		st[1319] = t.ImagesNoLoadEventsYet()
 	}
 	if t.StocksBreadth != nil {
-		st[1312] = t.StocksBreadth()
+		st[1320] = t.StocksBreadth()
 	}
 	if t.StocksComposite != nil {
-		st[1313] = t.StocksComposite()
+		st[1321] = t.StocksComposite()
 	}
 	if t.StocksAll != nil {
-		st[1314] = t.StocksAll()
+		st[1322] = t.StocksAll()
 	}
 	if t.StocksGainers != nil {
-		st[1315] = t.StocksGainers()
+		st[1323] = t.StocksGainers()
 	}
 	if t.StocksLosers != nil {
-		st[1316] = t.StocksLosers()
+		st[1324] = t.StocksLosers()
 	}
 	if t.StocksActive != nil {
-		st[1317] = t.StocksActive()
+		st[1325] = t.StocksActive()
 	}
 	if t.StocksNothingHereRightNow != nil {
-		st[1318] = t.StocksNothingHereRightNow()
+		st[1326] = t.StocksNothingHereRightNow()
 	}
 	if t.StocksMid != nil {
-		st[1319] = t.StocksMid()
+		st[1327] = t.StocksMid()
 	}
 	if t.StocksDepth != nil {
-		st[1320] = t.StocksDepth()
+		st[1328] = t.StocksDepth()
 	}
 	if t.StocksDepthChart != nil {
-		st[1321] = t.StocksDepthChart()
+		st[1329] = t.StocksDepthChart()
 	}
 	if t.StocksBids != nil {
-		st[1322] = t.StocksBids()
+		st[1330] = t.StocksBids()
 	}
 	if t.StocksAsks != nil {
-		st[1323] = t.StocksAsks()
+		st[1331] = t.StocksAsks()
 	}
 	if t.StocksImbalance != nil {
-		st[1324] = t.StocksImbalance()
+		st[1332] = t.StocksImbalance()
 	}
 	if t.StocksOrderBook != nil {
-		st[1325] = t.StocksOrderBook()
+		st[1333] = t.StocksOrderBook()
 	}
 	if t.StocksLevels != nil {
-		st[1326] = t.StocksLevels()
+		st[1334] = t.StocksLevels()
 	}
 	if t.StocksSpread != nil {
-		st[1327] = t.StocksSpread()
+		st[1335] = t.StocksSpread()
 	}
 	if t.StocksLvl != nil {
-		st[1328] = t.StocksLvl()
+		st[1336] = t.StocksLvl()
 	}
 	if t.StocksPrice != nil {
-		st[1329] = t.StocksPrice()
+		st[1337] = t.StocksPrice()
 	}
 	if t.StocksSize != nil {
-		st[1330] = t.StocksSize()
+		st[1338] = t.StocksSize()
 	}
 	if t.StocksTotal != nil {
-		st[1331] = t.StocksTotal()
+		st[1339] = t.StocksTotal()
 	}
 	if t.StocksBlock != nil {
-		st[1332] = t.StocksBlock()
+		st[1340] = t.StocksBlock()
 	}
 	if t.StocksTimeSales != nil {
-		st[1333] = t.StocksTimeSales()
+		st[1341] = t.StocksTimeSales()
 	}
 	if t.StocksBlocks != nil {
-		st[1334] = t.StocksBlocks()
+		st[1342] = t.StocksBlocks()
 	}
 	if t.StocksAtAsk != nil {
-		st[1335] = t.StocksAtAsk()
+		st[1343] = t.StocksAtAsk()
 	}
 	if t.StocksAtBid != nil {
-		st[1336] = t.StocksAtBid()
+		st[1344] = t.StocksAtBid()
 	}
 	if t.StocksBlocks2 != nil {
-		st[1337] = t.StocksBlocks2()
+		st[1345] = t.StocksBlocks2()
 	}
 	if t.StocksTime != nil {
-		st[1338] = t.StocksTime()
+		st[1346] = t.StocksTime()
 	}
 	if t.StocksRecentTrades != nil {
-		st[1339] = t.StocksRecentTrades()
+		st[1347] = t.StocksRecentTrades()
 	}
 	if t.StocksTradeFlow != nil {
-		st[1340] = t.StocksTradeFlow()
+		st[1348] = t.StocksTradeFlow()
 	}
 	if t.StocksSoldBought != nil {
-		st[1341] = t.StocksSoldBought()
+		st[1349] = t.StocksSoldBought()
 	}
 	if t.StocksNet != nil {
-		st[1342] = t.StocksNet()
+		st[1350] = t.StocksNet()
 	}
 	if t.StocksLargeOrders != nil {
-		st[1343] = t.StocksLargeOrders()
+		st[1351] = t.StocksLargeOrders()
 	}
 	if t.StocksBuy != nil {
-		st[1344] = t.StocksBuy()
+		st[1352] = t.StocksBuy()
 	}
 	if t.StocksSell != nil {
-		st[1345] = t.StocksSell()
+		st[1353] = t.StocksSell()
 	}
 	if t.StocksSimulatedNothingIsSent != nil {
-		st[1346] = t.StocksSimulatedNothingIsSent()
+		st[1354] = t.StocksSimulatedNothingIsSent()
 	}
 	if t.StocksLimitPrice != nil {
-		st[1347] = t.StocksLimitPrice()
+		st[1355] = t.StocksLimitPrice()
 	}
 	if t.StocksUseLast != nil {
-		st[1348] = t.StocksUseLast()
+		st[1356] = t.StocksUseLast()
 	}
 	if t.StocksLowerThePrice != nil {
-		st[1349] = t.StocksLowerThePrice()
+		st[1357] = t.StocksLowerThePrice()
 	}
 	if t.StocksRaiseThePrice != nil {
-		st[1350] = t.StocksRaiseThePrice()
+		st[1358] = t.StocksRaiseThePrice()
 	}
 	if t.StocksQuantity != nil {
-		st[1351] = t.StocksQuantity()
+		st[1359] = t.StocksQuantity()
 	}
 	if t.StocksSh != nil {
-		st[1352] = t.StocksSh()
+		st[1360] = t.StocksSh()
 	}
 	if t.StocksEstimatedCost != nil {
-		st[1353] = t.StocksEstimatedCost()
+		st[1361] = t.StocksEstimatedCost()
 	}
 	if t.StocksEstimatedProceeds != nil {
-		st[1354] = t.StocksEstimatedProceeds()
+		st[1362] = t.StocksEstimatedProceeds()
 	}
 	if t.StocksReview != nil {
-		st[1355] = t.StocksReview()
+		st[1363] = t.StocksReview()
 	}
 	if t.StocksLimitDay != nil {
-		st[1356] = t.StocksLimitDay()
+		st[1364] = t.StocksLimitDay()
 	}
 	if t.StocksLimit != nil {
-		st[1357] = t.StocksLimit()
+		st[1365] = t.StocksLimit()
 	}
 	if t.StocksFeesEst != nil {
-		st[1358] = t.StocksFeesEst()
+		st[1366] = t.StocksFeesEst()
 	}
 	if t.StocksTotal2 != nil {
-		st[1359] = t.StocksTotal2()
+		st[1367] = t.StocksTotal2()
 	}
 	if t.StocksEdit != nil {
-		st[1360] = t.StocksEdit()
+		st[1368] = t.StocksEdit()
 	}
 	if t.StocksPlace != nil {
-		st[1361] = t.StocksPlace()
+		st[1369] = t.StocksPlace()
 	}
 	if t.StocksOrder != nil {
-		st[1362] = t.StocksOrder()
+		st[1370] = t.StocksOrder()
 	}
 	if t.StocksOrderPlaced != nil {
-		st[1363] = t.StocksOrderPlaced()
+		st[1371] = t.StocksOrderPlaced()
 	}
 	if t.StocksToday != nil {
-		st[1364] = t.StocksToday()
+		st[1372] = t.StocksToday()
 	}
 	if t.StocksOpen != nil {
-		st[1365] = t.StocksOpen()
+		st[1373] = t.StocksOpen()
 	}
 	if t.StocksPrevClose != nil {
-		st[1366] = t.StocksPrevClose()
+		st[1374] = t.StocksPrevClose()
 	}
 	if t.StocksAvgPrice != nil {
-		st[1367] = t.StocksAvgPrice()
+		st[1375] = t.StocksAvgPrice()
 	}
 	if t.StocksAmplitude != nil {
-		st[1368] = t.StocksAmplitude()
+		st[1376] = t.StocksAmplitude()
 	}
 	if t.StocksVolume != nil {
-		st[1369] = t.StocksVolume()
+		st[1377] = t.StocksVolume()
 	}
 	if t.StocksTurnover != nil {
-		st[1370] = t.StocksTurnover()
+		st[1378] = t.StocksTurnover()
 	}
 	if t.Stocks120dHigh != nil {
-		st[1371] = t.Stocks120dHigh()
+		st[1379] = t.Stocks120dHigh()
 	}
 	if t.Stocks120dLow != nil {
-		st[1372] = t.Stocks120dLow()
+		st[1380] = t.Stocks120dLow()
 	}
 	if t.StocksLast != nil {
-		st[1373] = t.StocksLast()
+		st[1381] = t.StocksLast()
 	}
 	if t.StocksRanges != nil {
-		st[1374] = t.StocksRanges()
+		st[1382] = t.StocksRanges()
 	}
 	if t.StocksLowHighEachSecond != nil {
-		st[1375] = t.StocksLowHighEachSecond()
+		st[1383] = t.StocksLowHighEachSecond()
 	}
 	if t.StocksPriceRanges != nil {
-		st[1376] = t.StocksPriceRanges()
+		st[1384] = t.StocksPriceRanges()
 	}
 	if t.StocksResumeTheMarket != nil {
-		st[1377] = t.StocksResumeTheMarket()
+		st[1385] = t.StocksResumeTheMarket()
 	}
 	if t.StocksPauseTheMarket != nil {
-		st[1378] = t.StocksPauseTheMarket()
+		st[1386] = t.StocksPauseTheMarket()
 	}
 	if t.StocksOrderTicket != nil {
-		st[1379] = t.StocksOrderTicket()
+		st[1387] = t.StocksOrderTicket()
 	}
 	if t.StocksPrice2 != nil {
-		st[1380] = t.StocksPrice2()
+		st[1388] = t.StocksPrice2()
 	}
 	if t.StocksAvg != nil {
-		st[1381] = t.StocksAvg()
+		st[1389] = t.StocksAvg()
 	}
 	if t.StocksVol != nil {
-		st[1382] = t.StocksVol()
+		st[1390] = t.StocksVol()
 	}
 	if t.StocksChart != nil {
-		st[1383] = t.StocksChart()
+		st[1391] = t.StocksChart()
 	}
 	if t.StocksTechnology != nil {
-		st[1384] = t.StocksTechnology()
+		st[1392] = t.StocksTechnology()
 	}
 	if t.StocksHealth != nil {
-		st[1385] = t.StocksHealth()
+		st[1393] = t.StocksHealth()
 	}
 	if t.StocksFinance != nil {
-		st[1386] = t.StocksFinance()
+		st[1394] = t.StocksFinance()
 	}
 	if t.StocksConsumer != nil {
-		st[1387] = t.StocksConsumer()
+		st[1395] = t.StocksConsumer()
 	}
 	if t.StocksIndustrials != nil {
-		st[1388] = t.StocksIndustrials()
+		st[1396] = t.StocksIndustrials()
 	}
 	if t.StocksEnergy != nil {
-		st[1389] = t.StocksEnergy()
+		st[1397] = t.StocksEnergy()
 	}
 	if t.StocksSmall != nil {
-		st[1390] = t.StocksSmall()
+		st[1398] = t.StocksSmall()
 	}
 	if t.StocksMedium != nil {
-		st[1391] = t.StocksMedium()
+		st[1399] = t.StocksMedium()
 	}
 	if t.StocksLarge != nil {
-		st[1392] = t.StocksLarge()
+		st[1400] = t.StocksLarge()
 	}
 	if t.StocksBlock2 != nil {
-		st[1393] = t.StocksBlock2()
+		st[1401] = t.StocksBlock2()
 	}
 	if t.StocksIntraday != nil {
-		st[1394] = t.StocksIntraday()
+		st[1402] = t.StocksIntraday()
 	}
 	if t.StocksToday2 != nil {
-		st[1395] = t.StocksToday2()
+		st[1403] = t.StocksToday2()
 	}
 	if t.StocksDaysAgo != nil {
 		s.StocksDaysAgo = t.StocksDaysAgo
@@ -13562,136 +13626,136 @@ func Supply(lang string, t Translation) {
 		s.StocksPlacedDetail = t.StocksPlacedDetail
 	}
 	if t.ChatToday != nil {
-		st[1396] = t.ChatToday()
+		st[1404] = t.ChatToday()
 	}
 	if t.ChatWaitingForAConnection != nil {
-		st[1397] = t.ChatWaitingForAConnection()
+		st[1405] = t.ChatWaitingForAConnection()
 	}
 	if t.ChatStopped != nil {
-		st[1398] = t.ChatStopped()
+		st[1406] = t.ChatStopped()
 	}
 	if t.ChatReasoning != nil {
-		st[1399] = t.ChatReasoning()
+		st[1407] = t.ChatReasoning()
 	}
 	if t.ChatSomethingWentWrong != nil {
-		st[1400] = t.ChatSomethingWentWrong()
+		st[1408] = t.ChatSomethingWentWrong()
 	}
 	if t.ChatYouStoppedThisReply != nil {
-		st[1401] = t.ChatYouStoppedThisReply()
+		st[1409] = t.ChatYouStoppedThisReply()
 	}
 	if t.ChatCopy != nil {
-		st[1402] = t.ChatCopy()
+		st[1410] = t.ChatCopy()
 	}
 	if t.ChatRegenerate != nil {
-		st[1403] = t.ChatRegenerate()
+		st[1411] = t.ChatRegenerate()
 	}
 	if t.ChatGoodReply != nil {
-		st[1404] = t.ChatGoodReply()
+		st[1412] = t.ChatGoodReply()
 	}
 	if t.ChatBadReply != nil {
-		st[1405] = t.ChatBadReply()
+		st[1413] = t.ChatBadReply()
 	}
 	if t.ChatASimulatedAssistantEveryReply != nil {
-		st[1406] = t.ChatASimulatedAssistantEveryReply()
+		st[1414] = t.ChatASimulatedAssistantEveryReply()
 	}
 	if t.ChatChatWithYourLocalClaude != nil {
-		st[1407] = t.ChatChatWithYourLocalClaude()
+		st[1415] = t.ChatChatWithYourLocalClaude()
 	}
 	if t.ChatHowCanIHelp != nil {
-		st[1408] = t.ChatHowCanIHelp()
+		st[1416] = t.ChatHowCanIHelp()
 	}
 	if t.ChatLoadALongConversation != nil {
-		st[1409] = t.ChatLoadALongConversation()
+		st[1417] = t.ChatLoadALongConversation()
 	}
 	if t.ChatChooseAPhoto != nil {
-		st[1410] = t.ChatChooseAPhoto()
+		st[1418] = t.ChatChooseAPhoto()
 	}
 	if t.ChatAttachAPhotoAndA != nil {
-		st[1411] = t.ChatAttachAPhotoAndA()
+		st[1419] = t.ChatAttachAPhotoAndA()
 	}
 	if t.ChatMessage != nil {
-		st[1412] = t.ChatMessage()
+		st[1420] = t.ChatMessage()
 	}
 	if t.ChatJumpToTheLatestMessage != nil {
-		st[1413] = t.ChatJumpToTheLatestMessage()
+		st[1421] = t.ChatJumpToTheLatestMessage()
 	}
 	if t.ChatBackOnline != nil {
-		st[1414] = t.ChatBackOnline()
+		st[1422] = t.ChatBackOnline()
 	}
 	if t.ChatSendingYourMessage != nil {
-		st[1415] = t.ChatSendingYourMessage()
+		st[1423] = t.ChatSendingYourMessage()
 	}
 	if t.ChatYouReOffline != nil {
-		st[1416] = t.ChatYouReOffline()
+		st[1424] = t.ChatYouReOffline()
 	}
 	if t.ChatYourMessageSendsWhenThe != nil {
-		st[1417] = t.ChatYourMessageSendsWhenThe()
+		st[1425] = t.ChatYourMessageSendsWhenThe()
 	}
 	if t.ChatCloseTheMenu != nil {
-		st[1418] = t.ChatCloseTheMenu()
+		st[1426] = t.ChatCloseTheMenu()
 	}
 	if t.ChatAddAndReplay != nil {
-		st[1419] = t.ChatAddAndReplay()
+		st[1427] = t.ChatAddAndReplay()
 	}
 	if t.ChatAdd != nil {
-		st[1420] = t.ChatAdd()
+		st[1428] = t.ChatAdd()
 	}
 	if t.ChatStopGenerating != nil {
-		st[1421] = t.ChatStopGenerating()
+		st[1429] = t.ChatStopGenerating()
 	}
 	if t.ChatSend != nil {
-		st[1422] = t.ChatSend()
+		st[1430] = t.ChatSend()
 	}
 	if t.ChatWeeksOfMessagesLoadedAt != nil {
-		st[1423] = t.ChatWeeksOfMessagesLoadedAt()
+		st[1431] = t.ChatWeeksOfMessagesLoadedAt()
 	}
 	if t.ChatNewChat != nil {
-		st[1424] = t.ChatNewChat()
+		st[1432] = t.ChatNewChat()
 	}
 	if t.ChatConversations != nil {
-		st[1425] = t.ChatConversations()
+		st[1433] = t.ChatConversations()
 	}
 	if t.ChatRemoveFile != nil {
-		st[1426] = t.ChatRemoveFile()
+		st[1434] = t.ChatRemoveFile()
 	}
 	if t.ChatRunCode != nil {
-		st[1427] = t.ChatRunCode()
+		st[1435] = t.ChatRunCode()
 	}
 	if t.ChatSandboxed != nil {
-		st[1428] = t.ChatSandboxed()
+		st[1436] = t.ChatSandboxed()
 	}
 	if t.ChatWebSearch != nil {
-		st[1429] = t.ChatWebSearch()
+		st[1437] = t.ChatWebSearch()
 	}
 	if t.ChatWeather != nil {
-		st[1430] = t.ChatWeather()
+		st[1438] = t.ChatWeather()
 	}
 	if t.ChatOutput != nil {
-		st[1431] = t.ChatOutput()
+		st[1439] = t.ChatOutput()
 	}
 	if t.ChatRetry != nil {
-		st[1432] = t.ChatRetry()
+		st[1440] = t.ChatRetry()
 	}
 	if t.ChatCopyCode != nil {
-		st[1433] = t.ChatCopyCode()
+		st[1441] = t.ChatCopyCode()
 	}
 	if t.ChatClaudeCouldNotCompleteThis != nil {
-		st[1434] = t.ChatClaudeCouldNotCompleteThis()
+		st[1442] = t.ChatClaudeCouldNotCompleteThis()
 	}
 	if t.ChatCodexCouldNotCompleteThis != nil {
-		st[1435] = t.ChatCodexCouldNotCompleteThis()
+		st[1443] = t.ChatCodexCouldNotCompleteThis()
 	}
 	if t.ChatNoReply != nil {
-		st[1436] = t.ChatNoReply()
+		st[1444] = t.ChatNoReply()
 	}
 	if t.ChatQueued != nil {
-		st[1437] = t.ChatQueued()
+		st[1445] = t.ChatQueued()
 	}
 	if t.ChatRunning != nil {
-		st[1438] = t.ChatRunning()
+		st[1446] = t.ChatRunning()
 	}
 	if t.ChatDone != nil {
-		st[1439] = t.ChatDone()
+		st[1447] = t.ChatDone()
 	}
 	if t.ChatInstallCli != nil {
 		s.ChatInstallCli = t.ChatInstallCli
@@ -13703,574 +13767,574 @@ func Supply(lang string, t Translation) {
 		s.ChatThoughtFor = t.ChatThoughtFor
 	}
 	if t.DockFiles != nil {
-		st[1440] = t.DockFiles()
+		st[1448] = t.DockFiles()
 	}
 	if t.DockTerminal != nil {
-		st[1441] = t.DockTerminal()
+		st[1449] = t.DockTerminal()
 	}
 	if t.DockEdit != nil {
-		st[1442] = t.DockEdit()
+		st[1450] = t.DockEdit()
 	}
 	if t.DockEdit2 != nil {
-		st[1443] = t.DockEdit2()
+		st[1451] = t.DockEdit2()
 	}
 	if t.DockLivePreview != nil {
-		st[1444] = t.DockLivePreview()
+		st[1452] = t.DockLivePreview()
 	}
 	if t.DockFollowsTheEditorBesideIt != nil {
-		st[1445] = t.DockFollowsTheEditorBesideIt()
+		st[1453] = t.DockFollowsTheEditorBesideIt()
 	}
 	if t.DockToggleFiles != nil {
-		st[1446] = t.DockToggleFiles()
+		st[1454] = t.DockToggleFiles()
 	}
 	if t.DockToggleTerminal != nil {
-		st[1447] = t.DockToggleTerminal()
+		st[1455] = t.DockToggleTerminal()
 	}
 	if t.DockLockTheLayout != nil {
-		st[1448] = t.DockLockTheLayout()
+		st[1456] = t.DockLockTheLayout()
 	}
 	if t.DockLock != nil {
-		st[1449] = t.DockLock()
+		st[1457] = t.DockLock()
 	}
 	if t.DockShowCloseButtons != nil {
-		st[1450] = t.DockShowCloseButtons()
+		st[1458] = t.DockShowCloseButtons()
 	}
 	if t.DockClose != nil {
-		st[1451] = t.DockClose()
+		st[1459] = t.DockClose()
 	}
 	if t.DockZoomTheGroup != nil {
-		st[1452] = t.DockZoomTheGroup()
+		st[1460] = t.DockZoomTheGroup()
 	}
 	if t.DockZoom != nil {
-		st[1453] = t.DockZoom()
+		st[1461] = t.DockZoom()
 	}
 	if t.DockResetTheLayout != nil {
-		st[1454] = t.DockResetTheLayout()
+		st[1462] = t.DockResetTheLayout()
 	}
 	if t.DockReset != nil {
-		st[1455] = t.DockReset()
+		st[1463] = t.DockReset()
 	}
 	if t.DockHoldATabToReorder != nil {
-		st[1456] = t.DockHoldATabToReorder()
+		st[1464] = t.DockHoldATabToReorder()
 	}
 	if t.DockDragATabOntoAnother != nil {
-		st[1457] = t.DockDragATabOntoAnother()
+		st[1465] = t.DockDragATabOntoAnother()
 	}
 	if t.DockCenter != nil {
-		st[1458] = t.DockCenter()
+		st[1466] = t.DockCenter()
 	}
 	if t.DockFirstSlot != nil {
-		st[1459] = t.DockFirstSlot()
+		st[1467] = t.DockFirstSlot()
 	}
 	if t.DockLeft != nil {
-		st[1460] = t.DockLeft()
+		st[1468] = t.DockLeft()
 	}
 	if t.DockBottom != nil {
-		st[1461] = t.DockBottom()
+		st[1469] = t.DockBottom()
 	}
 	if t.DockShowingDocksNone != nil {
-		st[1462] = t.DockShowingDocksNone()
+		st[1470] = t.DockShowingDocksNone()
 	}
 	if t.DockShowingDocks != nil {
-		st[1463] = t.DockShowingDocks()
+		st[1471] = t.DockShowingDocks()
 	}
 	if t.DockZoomed != nil {
-		st[1464] = t.DockZoomed()
+		st[1472] = t.DockZoomed()
 	}
 	if t.DockZoomedNone != nil {
-		st[1465] = t.DockZoomedNone()
+		st[1473] = t.DockZoomedNone()
 	}
 	if t.DockLastEvent != nil {
-		st[1466] = t.DockLastEvent()
+		st[1474] = t.DockLastEvent()
 	}
 	if t.DockClosed != nil {
-		st[1467] = t.DockClosed()
+		st[1475] = t.DockClosed()
 	}
 	if t.DockShowing != nil {
-		st[1468] = t.DockShowing()
+		st[1476] = t.DockShowing()
 	}
 	if t.DockResize != nil {
-		st[1469] = t.DockResize()
+		st[1477] = t.DockResize()
 	}
 	if t.DockClose2 != nil {
-		st[1470] = t.DockClose2()
+		st[1478] = t.DockClose2()
 	}
 	if t.DockHide != nil {
-		st[1471] = t.DockHide()
+		st[1479] = t.DockHide()
 	}
 	if t.DockHide2 != nil {
-		st[1472] = t.DockHide2()
+		st[1480] = t.DockHide2()
 	}
 	if t.DockEveryEditorIsClosed != nil {
-		st[1473] = t.DockEveryEditorIsClosed()
+		st[1481] = t.DockEveryEditorIsClosed()
 	}
 	if t.DockResetBringsThemBack != nil {
-		st[1474] = t.DockResetBringsThemBack()
+		st[1482] = t.DockResetBringsThemBack()
 	}
 	if t.ScrollOneCardPerFling != nil {
-		st[1475] = t.ScrollOneCardPerFling()
+		st[1483] = t.ScrollOneCardPerFling()
 	}
 	if t.ScrollScrollTheBox != nil {
-		st[1476] = t.ScrollScrollTheBox()
+		st[1484] = t.ScrollScrollTheBox()
 	}
 	if t.ScrollViewportPt != nil {
-		st[1477] = t.ScrollViewportPt()
+		st[1485] = t.ScrollViewportPt()
 	}
 	if t.ScrollBeginDrag != nil {
-		st[1478] = t.ScrollBeginDrag()
+		st[1486] = t.ScrollBeginDrag()
 	}
 	if t.ScrollEndDrag != nil {
-		st[1479] = t.ScrollEndDrag()
+		st[1487] = t.ScrollEndDrag()
 	}
 	if t.ScrollMomentumBegin != nil {
-		st[1480] = t.ScrollMomentumBegin()
+		st[1488] = t.ScrollMomentumBegin()
 	}
 	if t.ScrollMomentumEnd != nil {
-		st[1481] = t.ScrollMomentumEnd()
+		st[1489] = t.ScrollMomentumEnd()
 	}
 	if t.ScrollNoDragsYet != nil {
-		st[1482] = t.ScrollNoDragsYet()
+		st[1490] = t.ScrollNoDragsYet()
 	}
 	if t.ScrollScrollEnabled != nil {
-		st[1483] = t.ScrollScrollEnabled()
+		st[1491] = t.ScrollScrollEnabled()
 	}
 	if t.ScrollBounces != nil {
-		st[1484] = t.ScrollBounces()
+		st[1492] = t.ScrollBounces()
 	}
 	if t.ScrollContentInset != nil {
-		st[1485] = t.ScrollContentInset()
+		st[1493] = t.ScrollContentInset()
 	}
 	if t.Scroll40PtAtTheTop != nil {
-		st[1486] = t.Scroll40PtAtTheTop()
+		st[1494] = t.Scroll40PtAtTheTop()
 	}
 	if t.ScrollZoomedIn != nil {
-		st[1487] = t.ScrollZoomedIn()
+		st[1495] = t.ScrollZoomedIn()
 	}
 	if t.ScrollZoomedOut != nil {
-		st[1488] = t.ScrollZoomedOut()
+		st[1496] = t.ScrollZoomedOut()
 	}
 	if t.Scroll05To5 != nil {
-		st[1489] = t.Scroll05To5()
+		st[1497] = t.Scroll05To5()
 	}
 	if t.ScrollBouncesPastTheLimits != nil {
-		st[1490] = t.ScrollBouncesPastTheLimits()
+		st[1498] = t.ScrollBouncesPastTheLimits()
 	}
 	if t.ScrollScrollDownALittleThen != nil {
-		st[1491] = t.ScrollScrollDownALittleThen()
+		st[1499] = t.ScrollScrollDownALittleThen()
 	}
 	if t.ScrollAdd3PostsOnTop != nil {
-		st[1492] = t.ScrollAdd3PostsOnTop()
+		st[1500] = t.ScrollAdd3PostsOnTop()
 	}
 	if t.ScrollEdgeEffects != nil {
-		st[1493] = t.ScrollEdgeEffects()
+		st[1501] = t.ScrollEdgeEffects()
 	}
 	if t.ScrollScrollUnderTheBars != nil {
-		st[1494] = t.ScrollScrollUnderTheBars()
+		st[1502] = t.ScrollScrollUnderTheBars()
 	}
 	if t.ScrollPaging != nil {
-		st[1495] = t.ScrollPaging()
+		st[1503] = t.ScrollPaging()
 	}
 	if t.Scroll5Pages != nil {
-		st[1496] = t.Scroll5Pages()
+		st[1504] = t.Scroll5Pages()
 	}
 	if t.ScrollSnapping != nil {
-		st[1497] = t.ScrollSnapping()
+		st[1505] = t.ScrollSnapping()
 	}
 	if t.Scroll20Cards != nil {
-		st[1498] = t.Scroll20Cards()
+		st[1506] = t.Scroll20Cards()
 	}
 	if t.ScrollZoom != nil {
-		st[1499] = t.ScrollZoom()
+		st[1507] = t.ScrollZoom()
 	}
 	if t.ScrollPinchOrTapATile != nil {
-		st[1500] = t.ScrollPinchOrTapATile()
+		st[1508] = t.ScrollPinchOrTapATile()
 	}
 	if t.ScrollPinchOnATouchpadOr != nil {
-		st[1501] = t.ScrollPinchOnATouchpadOr()
+		st[1509] = t.ScrollPinchOnATouchpadOr()
 	}
 	if t.ScrollEventsAndBehavior != nil {
-		st[1502] = t.ScrollEventsAndBehavior()
+		st[1510] = t.ScrollEventsAndBehavior()
 	}
 	if t.ScrollPrependingKeepsThePosition != nil {
-		st[1503] = t.ScrollPrependingKeepsThePosition()
+		st[1511] = t.ScrollPrependingKeepsThePosition()
 	}
 	if t.ScrollTapsWithTheKeyboardUp != nil {
-		st[1504] = t.ScrollTapsWithTheKeyboardUp()
+		st[1512] = t.ScrollTapsWithTheKeyboardUp()
 	}
 	if t.ScrollTheButtonGetsTheTap != nil {
-		st[1505] = t.ScrollTheButtonGetsTheTap()
+		st[1513] = t.ScrollTheButtonGetsTheTap()
 	}
 	if t.ScrollTapsNeverHideTheKeyboard != nil {
-		st[1506] = t.ScrollTapsNeverHideTheKeyboard()
+		st[1514] = t.ScrollTapsNeverHideTheKeyboard()
 	}
 	if t.ScrollATapOutsideTheInput != nil {
-		st[1507] = t.ScrollATapOutsideTheInput()
+		st[1515] = t.ScrollATapOutsideTheInput()
 	}
 	if t.ScrollTypeHereThenTapThe != nil {
-		st[1508] = t.ScrollTypeHereThenTapThe()
+		st[1516] = t.ScrollTypeHereThenTapThe()
 	}
 	if t.ScrollTypeHereThenClickThe != nil {
-		st[1509] = t.ScrollTypeHereThenClickThe()
+		st[1517] = t.ScrollTypeHereThenClickThe()
 	}
 	if t.ScrollCountATap != nil {
-		st[1510] = t.ScrollCountATap()
+		st[1518] = t.ScrollCountATap()
 	}
 	if t.ScrollTapMe != nil {
-		st[1511] = t.ScrollTapMe()
+		st[1519] = t.ScrollTapMe()
 	}
 	if t.ScrollClickMe != nil {
-		st[1512] = t.ScrollClickMe()
+		st[1520] = t.ScrollClickMe()
 	}
 	if t.OverlayOverlay != nil {
-		st[1513] = t.OverlayOverlay()
+		st[1521] = t.OverlayOverlay()
 	}
 	if t.OverlayABoxThatClipsIts != nil {
-		st[1514] = t.OverlayABoxThatClipsIts()
+		st[1522] = t.OverlayABoxThatClipsIts()
 	}
 	if t.OverlayClose != nil {
-		st[1515] = t.OverlayClose()
+		st[1523] = t.OverlayClose()
 	}
 	if t.OverlayOpenTheOverlay != nil {
-		st[1516] = t.OverlayOpenTheOverlay()
+		st[1524] = t.OverlayOpenTheOverlay()
 	}
 	if t.OverlayOverlayAt != nil {
-		st[1517] = t.OverlayOverlayAt()
+		st[1525] = t.OverlayOverlayAt()
 	}
 	if t.OverlayOutsideTheClippedBoxOn != nil {
-		st[1518] = t.OverlayOutsideTheClippedBoxOn()
+		st[1526] = t.OverlayOutsideTheClippedBoxOn()
 	}
 	if t.OverlayScrollThePageItFollows != nil {
-		st[1519] = t.OverlayScrollThePageItFollows()
+		st[1527] = t.OverlayScrollThePageItFollows()
 	}
 	if t.OverlayPopover != nil {
-		st[1520] = t.OverlayPopover()
+		st[1528] = t.OverlayPopover()
 	}
 	if t.OverlayAnchoredToItsTriggerOn != nil {
-		st[1521] = t.OverlayAnchoredToItsTriggerOn()
+		st[1529] = t.OverlayAnchoredToItsTriggerOn()
 	}
 	if t.OverlayShowThePopover != nil {
-		st[1522] = t.OverlayShowThePopover()
+		st[1530] = t.OverlayShowThePopover()
 	}
 	if t.OverlayPopover2 != nil {
-		st[1523] = t.OverlayPopover2()
+		st[1531] = t.OverlayPopover2()
 	}
 	if t.OverlayAPressOutsideEscapeOr != nil {
-		st[1524] = t.OverlayAPressOutsideEscapeOr()
+		st[1532] = t.OverlayAPressOutsideEscapeOr()
 	}
 	if t.OverlayTooltip != nil {
-		st[1525] = t.OverlayTooltip()
+		st[1533] = t.OverlayTooltip()
 	}
 	if t.OverlayTooltipsFollowAPointerPin != nil {
-		st[1526] = t.OverlayTooltipsFollowAPointerPin()
+		st[1534] = t.OverlayTooltipsFollowAPointerPin()
 	}
 	if t.OverlayRestThePointerOnA != nil {
-		st[1527] = t.OverlayRestThePointerOnA()
+		st[1535] = t.OverlayRestThePointerOnA()
 	}
 	if t.OverlaySavesTheDocument != nil {
-		st[1528] = t.OverlaySavesTheDocument()
+		st[1536] = t.OverlaySavesTheDocument()
 	}
 	if t.OverlaySave != nil {
-		st[1529] = t.OverlaySave()
+		st[1537] = t.OverlaySave()
 	}
 	if t.OverlayPressedSave != nil {
-		st[1530] = t.OverlayPressedSave()
+		st[1538] = t.OverlayPressedSave()
 	}
 	if t.OverlayTooltip2 != nil {
-		st[1531] = t.OverlayTooltip2()
+		st[1539] = t.OverlayTooltip2()
 	}
 	if t.OverlayPinTheTooltip != nil {
-		st[1532] = t.OverlayPinTheTooltip()
+		st[1540] = t.OverlayPinTheTooltip()
 	}
 	if t.OverlayUnpinTheTooltip != nil {
-		st[1533] = t.OverlayUnpinTheTooltip()
+		st[1541] = t.OverlayUnpinTheTooltip()
 	}
 	if t.OverlayShownWhilePinnedOrHovered != nil {
-		st[1534] = t.OverlayShownWhilePinnedOrHovered()
+		st[1542] = t.OverlayShownWhilePinnedOrHovered()
 	}
 	if t.OverlaySheet != nil {
-		st[1535] = t.OverlaySheet()
+		st[1543] = t.OverlaySheet()
 	}
 	if t.OverlayAPanelAtTheBottom != nil {
-		st[1536] = t.OverlayAPanelAtTheBottom()
+		st[1544] = t.OverlayAPanelAtTheBottom()
 	}
 	if t.OverlayShowTheSheet != nil {
-		st[1537] = t.OverlayShowTheSheet()
+		st[1545] = t.OverlayShowTheSheet()
 	}
 	if t.OverlaySheet2 != nil {
-		st[1538] = t.OverlaySheet2()
+		st[1546] = t.OverlaySheet2()
 	}
 	if t.OverlayTheBackdropEscapeAndBack != nil {
-		st[1539] = t.OverlayTheBackdropEscapeAndBack()
+		st[1547] = t.OverlayTheBackdropEscapeAndBack()
 	}
 	if t.OverlayDone != nil {
-		st[1540] = t.OverlayDone()
+		st[1548] = t.OverlayDone()
 	}
 	if t.OverlayToast != nil {
-		st[1541] = t.OverlayToast()
+		st[1549] = t.OverlayToast()
 	}
 	if t.OverlayTheGallerySToastsOn != nil {
-		st[1542] = t.OverlayTheGallerySToastsOn()
+		st[1550] = t.OverlayTheGallerySToastsOn()
 	}
 	if t.OverlayCopyTheLink != nil {
-		st[1543] = t.OverlayCopyTheLink()
+		st[1551] = t.OverlayCopyTheLink()
 	}
 	if t.OverlayCopied != nil {
-		st[1544] = t.OverlayCopied()
+		st[1552] = t.OverlayCopied()
 	}
 	if t.OverlayDeleteTheDraft != nil {
-		st[1545] = t.OverlayDeleteTheDraft()
+		st[1553] = t.OverlayDeleteTheDraft()
 	}
 	if t.OverlayDraftDeleted != nil {
-		st[1546] = t.OverlayDraftDeleted()
+		st[1554] = t.OverlayDraftDeleted()
 	}
 	if t.OverlayUndo != nil {
-		st[1547] = t.OverlayUndo()
+		st[1555] = t.OverlayUndo()
 	}
 	if t.OverlayToastUndone != nil {
-		st[1548] = t.OverlayToastUndone()
+		st[1556] = t.OverlayToastUndone()
 	}
 	if t.OverlayToastGone != nil {
-		st[1549] = t.OverlayToastGone()
+		st[1557] = t.OverlayToastGone()
 	}
 	if t.OverlayDismissAll != nil {
-		st[1550] = t.OverlayDismissAll()
+		st[1558] = t.OverlayDismissAll()
 	}
 	if t.OverlaySwipeOneAwayThePointer != nil {
-		st[1551] = t.OverlaySwipeOneAwayThePointer()
+		st[1559] = t.OverlaySwipeOneAwayThePointer()
 	}
 	if t.OverlayLastEvent != nil {
-		st[1552] = t.OverlayLastEvent()
+		st[1560] = t.OverlayLastEvent()
 	}
 	if t.MediaWebView != nil {
-		st[1553] = t.MediaWebView()
+		st[1561] = t.MediaWebView()
 	}
 	if t.MediaInlineHtmlWithMessagesBoth != nil {
-		st[1554] = t.MediaInlineHtmlWithMessagesBoth()
+		st[1562] = t.MediaInlineHtmlWithMessagesBoth()
 	}
 	if t.MediaFromThePage != nil {
-		st[1555] = t.MediaFromThePage()
+		st[1563] = t.MediaFromThePage()
 	}
 	if t.MediaToThePage != nil {
-		st[1556] = t.MediaToThePage()
+		st[1564] = t.MediaToThePage()
 	}
 	if t.MediaPostToThePage != nil {
-		st[1557] = t.MediaPostToThePage()
+		st[1565] = t.MediaPostToThePage()
 	}
 	if t.MediaAWebSite != nil {
-		st[1558] = t.MediaAWebSite()
+		st[1566] = t.MediaAWebSite()
 	}
 	if t.MediaNavigationStateBackAndForward != nil {
-		st[1559] = t.MediaNavigationStateBackAndForward()
+		st[1567] = t.MediaNavigationStateBackAndForward()
 	}
 	if t.MediaLoading != nil {
-		st[1560] = t.MediaLoading()
+		st[1568] = t.MediaLoading()
 	}
 	if t.MediaLoaded != nil {
-		st[1561] = t.MediaLoaded()
+		st[1569] = t.MediaLoaded()
 	}
 	if t.MediaBack != nil {
-		st[1562] = t.MediaBack()
+		st[1570] = t.MediaBack()
 	}
 	if t.MediaForward != nil {
-		st[1563] = t.MediaForward()
+		st[1571] = t.MediaForward()
 	}
 	if t.MediaReload != nil {
-		st[1564] = t.MediaReload()
+		st[1572] = t.MediaReload()
 	}
 	if t.MediaVideo != nil {
-		st[1565] = t.MediaVideo()
+		st[1573] = t.MediaVideo()
 	}
 	if t.MediaThePlatformSPlayer != nil {
-		st[1566] = t.MediaThePlatformSPlayer()
+		st[1574] = t.MediaThePlatformSPlayer()
 	}
 	if t.MediaError != nil {
-		st[1567] = t.MediaError()
+		st[1575] = t.MediaError()
 	}
 	if t.MediaBuffering != nil {
-		st[1568] = t.MediaBuffering()
+		st[1576] = t.MediaBuffering()
 	}
 	if t.MediaPaused != nil {
-		st[1569] = t.MediaPaused()
+		st[1577] = t.MediaPaused()
 	}
 	if t.MediaPlaying != nil {
-		st[1570] = t.MediaPlaying()
+		st[1578] = t.MediaPlaying()
 	}
 	if t.MediaPlay != nil {
-		st[1571] = t.MediaPlay()
+		st[1579] = t.MediaPlay()
 	}
 	if t.MediaPause != nil {
-		st[1572] = t.MediaPause()
+		st[1580] = t.MediaPause()
 	}
 	if t.MediaRestart != nil {
-		st[1573] = t.MediaRestart()
+		st[1581] = t.MediaRestart()
 	}
 	if t.MediaOwnControls != nil {
-		st[1574] = t.MediaOwnControls()
+		st[1582] = t.MediaOwnControls()
 	}
 	if t.MediaSystemControls != nil {
-		st[1575] = t.MediaSystemControls()
+		st[1583] = t.MediaSystemControls()
 	}
 	if t.MediaNoneYet != nil {
-		st[1576] = t.MediaNoneYet()
+		st[1584] = t.MediaNoneYet()
 	}
 	if t.MediaThisPlatformRegistersNoSlider != nil {
-		st[1577] = t.MediaThisPlatformRegistersNoSlider()
+		st[1585] = t.MediaThisPlatformRegistersNoSlider()
 	}
 	if t.MediaDraggingThePlatformSOwn != nil {
-		st[1578] = t.MediaDraggingThePlatformSOwn()
+		st[1586] = t.MediaDraggingThePlatformSOwn()
 	}
 	if t.MediaNativeViews != nil {
-		st[1579] = t.MediaNativeViews()
+		st[1587] = t.MediaNativeViews()
 	}
 	if t.MediaTheAppSOwnPlatform != nil {
-		st[1580] = t.MediaTheAppSOwnPlatform()
+		st[1588] = t.MediaTheAppSOwnPlatform()
 	}
 	if t.MediaNativeSlider != nil {
-		st[1581] = t.MediaNativeSlider()
+		st[1589] = t.MediaNativeSlider()
 	}
 	if t.MediaValue != nil {
-		st[1582] = t.MediaValue()
+		st[1590] = t.MediaValue()
 	}
 	if t.MediaLastEvent != nil {
-		st[1583] = t.MediaLastEvent()
+		st[1591] = t.MediaLastEvent()
 	}
 	if t.MediaSet08 != nil {
-		st[1584] = t.MediaSet08()
+		st[1592] = t.MediaSet08()
 	}
 	if t.MediaResetCommand != nil {
-		st[1585] = t.MediaResetCommand()
+		st[1593] = t.MediaResetCommand()
 	}
 	if t.A11yValuesAndHints != nil {
-		st[1586] = t.A11yValuesAndHints()
+		st[1594] = t.A11yValuesAndHints()
 	}
 	if t.A11yAnAdjustableElementSwipeUp != nil {
-		st[1587] = t.A11yAnAdjustableElementSwipeUp()
+		st[1595] = t.A11yAnAdjustableElementSwipeUp()
 	}
 	if t.A11yQuantity != nil {
-		st[1588] = t.A11yQuantity()
+		st[1596] = t.A11yQuantity()
 	}
 	if t.A11ySwipeUpOrDownTo != nil {
-		st[1589] = t.A11ySwipeUpOrDownTo()
+		st[1597] = t.A11ySwipeUpOrDownTo()
 	}
 	if t.A11yFewer != nil {
-		st[1590] = t.A11yFewer()
+		st[1598] = t.A11yFewer()
 	}
 	if t.A11yMore != nil {
-		st[1591] = t.A11yMore()
+		st[1599] = t.A11yMore()
 	}
 	if t.A11yARangeValueAndThe != nil {
-		st[1592] = t.A11yARangeValueAndThe()
+		st[1600] = t.A11yARangeValueAndThe()
 	}
 	if t.A11yExpandedState != nil {
-		st[1593] = t.A11yExpandedState()
+		st[1601] = t.A11yExpandedState()
 	}
 	if t.A11yScreenReadersSayWhetherIt != nil {
-		st[1594] = t.A11yScreenReadersSayWhetherIt()
+		st[1602] = t.A11yScreenReadersSayWhetherIt()
 	}
 	if t.A11yShippingDetails != nil {
-		st[1595] = t.A11yShippingDetails()
+		st[1603] = t.A11yShippingDetails()
 	}
 	if t.A11yShipsInTwoDaysFrom != nil {
-		st[1596] = t.A11yShipsInTwoDaysFrom()
+		st[1604] = t.A11yShipsInTwoDaysFrom()
 	}
 	if t.A11yADisclosure != nil {
-		st[1597] = t.A11yADisclosure()
+		st[1605] = t.A11yADisclosure()
 	}
 	if t.A11yNoneYet != nil {
-		st[1598] = t.A11yNoneYet()
+		st[1606] = t.A11yNoneYet()
 	}
 	if t.A11yActions != nil {
-		st[1599] = t.A11yActions()
+		st[1607] = t.A11yActions()
 	}
 	if t.A11yInTheScreenReaderS != nil {
-		st[1600] = t.A11yInTheScreenReaderS()
+		st[1608] = t.A11yInTheScreenReaderS()
 	}
 	if t.A11yArchive != nil {
-		st[1601] = t.A11yArchive()
+		st[1609] = t.A11yArchive()
 	}
 	if t.A11yFlag != nil {
-		st[1602] = t.A11yFlag()
+		st[1610] = t.A11yFlag()
 	}
 	if t.A11yLunchOnFriday != nil {
-		st[1603] = t.A11yLunchOnFriday()
+		st[1611] = t.A11yLunchOnFriday()
 	}
 	if t.A11yLastAction != nil {
-		st[1604] = t.A11yLastAction()
+		st[1612] = t.A11yLastAction()
 	}
 	if t.A11yCustomOnesActivateEscapeAnd != nil {
-		st[1605] = t.A11yCustomOnesActivateEscapeAnd()
+		st[1613] = t.A11yCustomOnesActivateEscapeAnd()
 	}
 	if t.A11yGroupedElements != nil {
-		st[1606] = t.A11yGroupedElements()
+		st[1614] = t.A11yGroupedElements()
 	}
 	if t.A11yOneElementLabelledWithThe != nil {
-		st[1607] = t.A11yOneElementLabelledWithThe()
+		st[1615] = t.A11yOneElementLabelledWithThe()
 	}
 	if t.A11yApples != nil {
-		st[1608] = t.A11yApples()
+		st[1616] = t.A11yApples()
 	}
 	if t.A11yChangeThePrice != nil {
-		st[1609] = t.A11yChangeThePrice()
+		st[1617] = t.A11yChangeThePrice()
 	}
 	if t.A11yHiddenElements != nil {
-		st[1610] = t.A11yHiddenElements()
+		st[1618] = t.A11yHiddenElements()
 	}
 	if t.A11yDecorationScreenReadersSkip != nil {
-		st[1611] = t.A11yDecorationScreenReadersSkip()
+		st[1619] = t.A11yDecorationScreenReadersSkip()
 	}
 	if t.A11yDecoration != nil {
-		st[1612] = t.A11yDecoration()
+		st[1620] = t.A11yDecoration()
 	}
 	if t.A11yHideTheDecoration != nil {
-		st[1613] = t.A11yHideTheDecoration()
+		st[1621] = t.A11yHideTheDecoration()
 	}
 	if t.A11yLiveRegions != nil {
-		st[1614] = t.A11yLiveRegions()
+		st[1622] = t.A11yLiveRegions()
 	}
 	if t.A11yChangesAnnouncedWithoutMovingFocus != nil {
-		st[1615] = t.A11yChangesAnnouncedWithoutMovingFocus()
+		st[1623] = t.A11yChangesAnnouncedWithoutMovingFocus()
 	}
 	if t.A11yAddToBasket != nil {
-		st[1616] = t.A11yAddToBasket()
+		st[1624] = t.A11yAddToBasket()
 	}
 	if t.A11yAnnouncedAsItChanges != nil {
-		st[1617] = t.A11yAnnouncedAsItChanges()
+		st[1625] = t.A11yAnnouncedAsItChanges()
 	}
 	if t.A11yFocus != nil {
-		st[1618] = t.A11yFocus()
+		st[1626] = t.A11yFocus()
 	}
 	if t.A11yMovingTheScreenReaderAs != nil {
-		st[1619] = t.A11yMovingTheScreenReaderAs()
+		st[1627] = t.A11yMovingTheScreenReaderAs()
 	}
 	if t.A11ySearchApples != nil {
-		st[1620] = t.A11ySearchApples()
+		st[1628] = t.A11ySearchApples()
 	}
 	if t.A11y3ResultsForApples != nil {
-		st[1621] = t.A11y3ResultsForApples()
+		st[1629] = t.A11y3ResultsForApples()
 	}
 	if t.A11yMovesTheReaderHere != nil {
-		st[1622] = t.A11yMovesTheReaderHere()
+		st[1630] = t.A11yMovesTheReaderHere()
 	}
 	if t.DockPreview != nil {
-		st[1623] = t.DockPreview()
+		st[1631] = t.DockPreview()
 	}
 	if t.ScrollRevenue != nil {
-		st[1624] = t.ScrollRevenue()
+		st[1632] = t.ScrollRevenue()
 	}
 	if t.ScrollSessions != nil {
-		st[1625] = t.ScrollSessions()
+		st[1633] = t.ScrollSessions()
 	}
 	if t.ScrollLatency != nil {
-		st[1626] = t.ScrollLatency()
+		st[1634] = t.ScrollLatency()
 	}
 	if t.ScrollMsP95 != nil {
-		st[1627] = t.ScrollMsP95()
+		st[1635] = t.ScrollMsP95()
 	}
 	if t.ScrollUptime != nil {
-		st[1628] = t.ScrollUptime()
+		st[1636] = t.ScrollUptime()
 	}
 	if t.ScrollErrors != nil {
-		st[1629] = t.ScrollErrors()
+		st[1637] = t.ScrollErrors()
 	}
 	if t.DockEdits != nil {
 		s.DockEdits = t.DockEdits
@@ -14282,10 +14346,10 @@ func Supply(lang string, t Translation) {
 		s.DockRegionNone = t.DockRegionNone
 	}
 	if t.DockOpen != nil {
-		st[1630] = t.DockOpen()
+		st[1638] = t.DockOpen()
 	}
 	if t.DockClosedState != nil {
-		st[1631] = t.DockClosedState()
+		st[1639] = t.DockClosedState()
 	}
 	if t.OverlayLinkOnClipboard != nil {
 		s.OverlayLinkOnClipboard = t.OverlayLinkOnClipboard
@@ -14318,241 +14382,241 @@ func Supply(lang string, t Translation) {
 		s.ScrollPosts = t.ScrollPosts
 	}
 	if t.ChartsShowThisWeek != nil {
-		st[1632] = t.ChartsShowThisWeek()
+		st[1640] = t.ChartsShowThisWeek()
 	}
 	if t.ChartsShowLastWeek != nil {
-		st[1633] = t.ChartsShowLastWeek()
+		st[1641] = t.ChartsShowLastWeek()
 	}
 	if t.ChartsVisitors != nil {
-		st[1634] = t.ChartsVisitors()
+		st[1642] = t.ChartsVisitors()
 	}
 	if t.ChartsAWeekOverTheOther != nil {
-		st[1635] = t.ChartsAWeekOverTheOther()
+		st[1643] = t.ChartsAWeekOverTheOther()
 	}
 	if t.ChartsTheLastDay != nil {
-		st[1636] = t.ChartsTheLastDay()
+		st[1644] = t.ChartsTheLastDay()
 	}
 	if t.ChartsVisitors2 != nil {
-		st[1637] = t.ChartsVisitors2()
+		st[1645] = t.ChartsVisitors2()
 	}
 	if t.ChartsPlotLeft != nil {
-		st[1638] = t.ChartsPlotLeft()
+		st[1646] = t.ChartsPlotLeft()
 	}
 	if t.ChartsPlotLastWeek != nil {
-		st[1639] = t.ChartsPlotLastWeek()
+		st[1647] = t.ChartsPlotLastWeek()
 	}
 	if t.ChartsPlotThisWeek != nil {
-		st[1640] = t.ChartsPlotThisWeek()
+		st[1648] = t.ChartsPlotThisWeek()
 	}
 	if t.ChartsSparklines != nil {
-		st[1641] = t.ChartsSparklines()
+		st[1649] = t.ChartsSparklines()
 	}
 	if t.ChartsAPlotPerRowOf != nil {
-		st[1642] = t.ChartsAPlotPerRowOf()
+		st[1650] = t.ChartsAPlotPerRowOf()
 	}
 	if t.ChartsLastEvent != nil {
-		st[1643] = t.ChartsLastEvent()
+		st[1651] = t.ChartsLastEvent()
 	}
 	if t.EdgesInbox != nil {
-		st[1644] = t.EdgesInbox()
+		st[1652] = t.EdgesInbox()
 	}
 	if t.EdgesSearch != nil {
-		st[1645] = t.EdgesSearch()
+		st[1653] = t.EdgesSearch()
 	}
 	if t.EdgesStarred != nil {
-		st[1646] = t.EdgesStarred()
+		st[1654] = t.EdgesStarred()
 	}
 	if t.EdgesNewMessage != nil {
-		st[1647] = t.EdgesNewMessage()
+		st[1655] = t.EdgesNewMessage()
 	}
 	if t.EdgesNotifications != nil {
-		st[1648] = t.EdgesNotifications()
+		st[1656] = t.EdgesNotifications()
 	}
 	if t.EdgesSoft != nil {
-		st[1649] = t.EdgesSoft()
+		st[1657] = t.EdgesSoft()
 	}
 	if t.EdgesHard != nil {
-		st[1650] = t.EdgesHard()
+		st[1658] = t.EdgesHard()
 	}
 	if t.EdgesHidden != nil {
-		st[1651] = t.EdgesHidden()
+		st[1659] = t.EdgesHidden()
 	}
 	if t.ShaderIntensity != nil {
-		st[1652] = t.ShaderIntensity()
+		st[1660] = t.ShaderIntensity()
 	}
 	if t.ShaderScale != nil {
-		st[1653] = t.ShaderScale()
+		st[1661] = t.ShaderScale()
 	}
 	if t.ShaderSignalField != nil {
-		st[1654] = t.ShaderSignalField()
+		st[1662] = t.ShaderSignalField()
 	}
 	if t.ShaderPressAnywhereOnTheField != nil {
-		st[1655] = t.ShaderPressAnywhereOnTheField()
+		st[1663] = t.ShaderPressAnywhereOnTheField()
 	}
 	if t.ShaderMoveThePointerOverThe != nil {
-		st[1656] = t.ShaderMoveThePointerOverThe()
+		st[1664] = t.ShaderMoveThePointerOverThe()
 	}
 	if t.ShaderStart != nil {
-		st[1657] = t.ShaderStart()
+		st[1665] = t.ShaderStart()
 	}
 	if t.ShaderBackground != nil {
-		st[1658] = t.ShaderBackground()
+		st[1666] = t.ShaderBackground()
 	}
 	if t.ShaderAClockAndRipplesThe != nil {
-		st[1659] = t.ShaderAClockAndRipplesThe()
+		st[1667] = t.ShaderAClockAndRipplesThe()
 	}
 	if t.ShaderUniforms != nil {
-		st[1660] = t.ShaderUniforms()
+		st[1668] = t.ShaderUniforms()
 	}
 	if t.ShaderImages != nil {
-		st[1661] = t.ShaderImages()
+		st[1669] = t.ShaderImages()
 	}
 	if t.ShaderWhatImage0atToImage3atRead != nil {
-		st[1662] = t.ShaderWhatImage0atToImage3atRead()
+		st[1670] = t.ShaderWhatImage0atToImage3atRead()
 	}
 	if t.ShaderRipplingLogo != nil {
-		st[1663] = t.ShaderRipplingLogo()
+		st[1671] = t.ShaderRipplingLogo()
 	}
 	if t.ShaderItsRowsWaveWithA != nil {
-		st[1664] = t.ShaderItsRowsWaveWithA()
+		st[1672] = t.ShaderItsRowsWaveWithA()
 	}
 	if t.ShaderTheSource != nil {
-		st[1665] = t.ShaderTheSource()
+		st[1673] = t.ShaderTheSource()
 	}
 	if t.ShaderGoSSyntaxCheckedAnd != nil {
-		st[1666] = t.ShaderGoSSyntaxCheckedAnd()
+		st[1674] = t.ShaderGoSSyntaxCheckedAnd()
 	}
 	if t.ShaderCompiledOnceAsTheProgram != nil {
-		st[1667] = t.ShaderCompiledOnceAsTheProgram()
+		st[1675] = t.ShaderCompiledOnceAsTheProgram()
 	}
 	if t.PhotosPhoto != nil {
-		st[1668] = t.PhotosPhoto()
+		st[1676] = t.PhotosPhoto()
 	}
 	if t.PhotosRefreshes != nil {
-		st[1669] = t.PhotosRefreshes()
+		st[1677] = t.PhotosRefreshes()
 	}
 	if t.PhotosRefresh != nil {
-		st[1670] = t.PhotosRefresh()
+		st[1678] = t.PhotosRefresh()
 	}
 	if t.PhotosRefreshing != nil {
-		st[1671] = t.PhotosRefreshing()
+		st[1679] = t.PhotosRefreshing()
 	}
 	if t.PhotosPhotoStream != nil {
-		st[1672] = t.PhotosPhotoStream()
+		st[1680] = t.PhotosPhotoStream()
 	}
 	if t.PhotosARecycledListOfRemote != nil {
-		st[1673] = t.PhotosARecycledListOfRemote()
+		st[1681] = t.PhotosARecycledListOfRemote()
 	}
 	if t.PhotosRemote != nil {
-		st[1674] = t.PhotosRemote()
+		st[1682] = t.PhotosRemote()
 	}
 	if t.PhotosPhotos != nil {
-		st[1675] = t.PhotosPhotos()
+		st[1683] = t.PhotosPhotos()
 	}
 	if t.PhotosPages != nil {
-		st[1676] = t.PhotosPages()
+		st[1684] = t.PhotosPages()
 	}
 	if t.PhotosPerPage != nil {
-		st[1677] = t.PhotosPerPage()
+		st[1685] = t.PhotosPerPage()
 	}
 	if t.PhotosRefreshes2 != nil {
-		st[1678] = t.PhotosRefreshes2()
+		st[1686] = t.PhotosRefreshes2()
 	}
 	if t.DiffWords != nil {
-		st[1679] = t.DiffWords()
+		st[1687] = t.DiffWords()
 	}
 	if t.DiffEachWord != nil {
-		st[1680] = t.DiffEachWord()
+		st[1688] = t.DiffEachWord()
 	}
 	if t.DiffCharacters != nil {
-		st[1681] = t.DiffCharacters()
+		st[1689] = t.DiffCharacters()
 	}
 	if t.DiffNone != nil {
-		st[1682] = t.DiffNone()
+		st[1690] = t.DiffNone()
 	}
 	if t.DiffShowAPatch != nil {
-		st[1683] = t.DiffShowAPatch()
+		st[1691] = t.DiffShowAPatch()
 	}
 	if t.DiffPatch != nil {
-		st[1684] = t.DiffPatch()
+		st[1692] = t.DiffPatch()
 	}
 	if t.DiffOneColumn != nil {
-		st[1685] = t.DiffOneColumn()
+		st[1693] = t.DiffOneColumn()
 	}
 	if t.DiffUnified != nil {
-		st[1686] = t.DiffUnified()
+		st[1694] = t.DiffUnified()
 	}
 	if t.DiffSoftWrap != nil {
-		st[1687] = t.DiffSoftWrap()
+		st[1695] = t.DiffSoftWrap()
 	}
 	if t.DiffWrap != nil {
-		st[1688] = t.DiffWrap()
+		st[1696] = t.DiffWrap()
 	}
 	if t.DiffPreviousChange != nil {
-		st[1689] = t.DiffPreviousChange()
+		st[1697] = t.DiffPreviousChange()
 	}
 	if t.DiffNextChange != nil {
-		st[1690] = t.DiffNextChange()
+		st[1698] = t.DiffNextChange()
 	}
 	if t.DiffExpandEveryLine != nil {
-		st[1691] = t.DiffExpandEveryLine()
+		st[1699] = t.DiffExpandEveryLine()
 	}
 	if t.DiffExpand != nil {
-		st[1692] = t.DiffExpand()
+		st[1700] = t.DiffExpand()
 	}
 	if t.DiffCollapseUnchangedLines != nil {
-		st[1693] = t.DiffCollapseUnchangedLines()
+		st[1701] = t.DiffCollapseUnchangedLines()
 	}
 	if t.DiffCollapse != nil {
-		st[1694] = t.DiffCollapse()
+		st[1702] = t.DiffCollapse()
 	}
 	if t.DiffStartAgain != nil {
-		st[1695] = t.DiffStartAgain()
+		st[1703] = t.DiffStartAgain()
 	}
 	if t.DiffReset != nil {
-		st[1696] = t.DiffReset()
+		st[1704] = t.DiffReset()
 	}
 	if t.DiffResolve != nil {
-		st[1697] = t.DiffResolve()
+		st[1705] = t.DiffResolve()
 	}
 	if t.DiffAddAComment != nil {
-		st[1698] = t.DiffAddAComment()
+		st[1706] = t.DiffAddAComment()
 	}
 	if t.DiffCommented != nil {
-		st[1699] = t.DiffCommented()
+		st[1707] = t.DiffCommented()
 	}
 	if t.DiffRevert != nil {
-		st[1700] = t.DiffRevert()
+		st[1708] = t.DiffRevert()
 	}
 	if t.DiffKeep != nil {
-		st[1701] = t.DiffKeep()
+		st[1709] = t.DiffKeep()
 	}
 	if t.ChartsMon != nil {
-		st[1702] = t.ChartsMon()
+		st[1710] = t.ChartsMon()
 	}
 	if t.ChartsTue != nil {
-		st[1703] = t.ChartsTue()
+		st[1711] = t.ChartsTue()
 	}
 	if t.ChartsWed != nil {
-		st[1704] = t.ChartsWed()
+		st[1712] = t.ChartsWed()
 	}
 	if t.ChartsThu != nil {
-		st[1705] = t.ChartsThu()
+		st[1713] = t.ChartsThu()
 	}
 	if t.ChartsFri != nil {
-		st[1706] = t.ChartsFri()
+		st[1714] = t.ChartsFri()
 	}
 	if t.ChartsSat != nil {
-		st[1707] = t.ChartsSat()
+		st[1715] = t.ChartsSat()
 	}
 	if t.ChartsSun != nil {
-		st[1708] = t.ChartsSun()
+		st[1716] = t.ChartsSun()
 	}
 	if t.ChartsLastWeek != nil {
-		st[1709] = t.ChartsLastWeek()
+		st[1717] = t.ChartsLastWeek()
 	}
 	if t.ChartsThisWeek != nil {
-		st[1710] = t.ChartsThisWeek()
+		st[1718] = t.ChartsThisWeek()
 	}
 	if t.ChartsVisitorsPerDay != nil {
 		s.ChartsVisitorsPerDay = t.ChartsVisitorsPerDay
@@ -14615,256 +14679,256 @@ func Supply(lang string, t Translation) {
 		s.DiffChanges = t.DiffChanges
 	}
 	if t.TextviewCopied != nil {
-		st[1711] = t.TextviewCopied()
+		st[1719] = t.TextviewCopied()
 	}
 	if t.TextviewCopyCode != nil {
-		st[1712] = t.TextviewCopyCode()
+		st[1720] = t.TextviewCopyCode()
 	}
 	if t.TextviewStreaming != nil {
-		st[1713] = t.TextviewStreaming()
+		st[1721] = t.TextviewStreaming()
 	}
 	if t.TextviewAReplyAsAnAi != nil {
-		st[1714] = t.TextviewAReplyAsAnAi()
+		st[1722] = t.TextviewAReplyAsAnAi()
 	}
 	if t.TextviewStreamIt != nil {
-		st[1715] = t.TextviewStreamIt()
+		st[1723] = t.TextviewStreamIt()
 	}
 	if t.TextviewStreaming2 != nil {
-		st[1716] = t.TextviewStreaming2()
+		st[1724] = t.TextviewStreaming2()
 	}
 	if t.TextviewNothingYet != nil {
-		st[1717] = t.TextviewNothingYet()
+		st[1725] = t.TextviewNothingYet()
 	}
 	if t.TextviewMarkdown != nil {
-		st[1718] = t.TextviewMarkdown()
+		st[1726] = t.TextviewMarkdown()
 	}
 	if t.TextviewCommonmarkAndGithubSTables != nil {
-		st[1719] = t.TextviewCommonmarkAndGithubSTables()
+		st[1727] = t.TextviewCommonmarkAndGithubSTables()
 	}
 	if t.TextviewLinkPressed != nil {
-		st[1720] = t.TextviewLinkPressed()
+		st[1728] = t.TextviewLinkPressed()
 	}
 	if t.TextviewHtml != nil {
-		st[1721] = t.TextviewHtml()
+		st[1729] = t.TextviewHtml()
 	}
 	if t.TextviewAnArticlePageSectionsFigures != nil {
-		st[1722] = t.TextviewAnArticlePageSectionsFigures()
+		st[1730] = t.TextviewAnArticlePageSectionsFigures()
 	}
 	if t.TextviewExtensions != nil {
-		st[1723] = t.TextviewExtensions()
+		st[1731] = t.TextviewExtensions()
 	}
 	if t.TextviewMentionsAChartBlockA != nil {
-		st[1724] = t.TextviewMentionsAChartBlockA()
+		st[1732] = t.TextviewMentionsAChartBlockA()
 	}
 	if t.TextviewSelectableView != nil {
-		st[1725] = t.TextviewSelectableView()
+		st[1733] = t.TextviewSelectableView()
 	}
 	if t.TextviewOneSelectionAcrossTextsAnd != nil {
-		st[1726] = t.TextviewOneSelectionAcrossTextsAnd()
+		st[1734] = t.TextviewOneSelectionAcrossTextsAnd()
 	}
 	if t.TextviewNotSelectable != nil {
-		st[1727] = t.TextviewNotSelectable()
+		st[1735] = t.TextviewNotSelectable()
 	}
 	if t.TextviewAPlainTextJoinsThe != nil {
-		st[1728] = t.TextviewAPlainTextJoinsThe()
+		st[1736] = t.TextviewAPlainTextJoinsThe()
 	}
 	if t.TextviewLongPressThenMoveThe != nil {
-		st[1729] = t.TextviewLongPressThenMoveThe()
+		st[1737] = t.TextviewLongPressThenMoveThe()
 	}
 	if t.TextviewDragFromTheQuestionInto != nil {
-		st[1730] = t.TextviewDragFromTheQuestionInto()
+		st[1738] = t.TextviewDragFromTheQuestionInto()
 	}
 	if t.StorageClearTheStorage != nil {
-		st[1731] = t.StorageClearTheStorage()
+		st[1739] = t.StorageClearTheStorage()
 	}
 	if t.StorageRemovesEveryKeyTheGallery != nil {
-		st[1732] = t.StorageRemovesEveryKeyTheGallery()
+		st[1740] = t.StorageRemovesEveryKeyTheGallery()
 	}
 	if t.StorageCancel != nil {
-		st[1733] = t.StorageCancel()
+		st[1741] = t.StorageCancel()
 	}
 	if t.StorageClear != nil {
-		st[1734] = t.StorageClear()
+		st[1742] = t.StorageClear()
 	}
 	if t.StorageLaunches != nil {
-		st[1735] = t.StorageLaunches()
+		st[1743] = t.StorageLaunches()
 	}
 	if t.StorageCountedEachTimeThisDemo != nil {
-		st[1736] = t.StorageCountedEachTimeThisDemo()
+		st[1744] = t.StorageCountedEachTimeThisDemo()
 	}
 	if t.StorageKept != nil {
-		st[1737] = t.StorageKept()
+		st[1745] = t.StorageKept()
 	}
 	if t.StorageNote != nil {
-		st[1738] = t.StorageNote()
+		st[1746] = t.StorageNote()
 	}
 	if t.StorageSavedAsYouTypeBack != nil {
-		st[1739] = t.StorageSavedAsYouTypeBack()
+		st[1747] = t.StorageSavedAsYouTypeBack()
 	}
 	if t.StorageWriteSomethingThenComeBack != nil {
-		st[1740] = t.StorageWriteSomethingThenComeBack()
+		st[1748] = t.StorageWriteSomethingThenComeBack()
 	}
 	if t.StorageSaved != nil {
-		st[1741] = t.StorageSaved()
+		st[1749] = t.StorageSaved()
 	}
 	if t.StorageNotSaved != nil {
-		st[1742] = t.StorageNotSaved()
+		st[1750] = t.StorageNotSaved()
 	}
 	if t.StorageStoredKeys != nil {
-		st[1743] = t.StorageStoredKeys()
+		st[1751] = t.StorageStoredKeys()
 	}
 	if t.StorageKeysAndEachValueS != nil {
-		st[1744] = t.StorageKeysAndEachValueS()
+		st[1752] = t.StorageKeysAndEachValueS()
 	}
 	if t.StorageNothingStored != nil {
-		st[1745] = t.StorageNothingStored()
+		st[1753] = t.StorageNothingStored()
 	}
 	if t.StorageClearAll != nil {
-		st[1746] = t.StorageClearAll()
+		st[1754] = t.StorageClearAll()
 	}
 	if t.StorageTheDataStaysOnThis != nil {
-		st[1747] = t.StorageTheDataStaysOnThis()
+		st[1755] = t.StorageTheDataStaysOnThis()
 	}
 	if t.StorageNoneOnThisTarget != nil {
-		st[1748] = t.StorageNoneOnThisTarget()
+		st[1756] = t.StorageNoneOnThisTarget()
 	}
 	if t.StorageAppDirectories != nil {
-		st[1749] = t.StorageAppDirectories()
+		st[1757] = t.StorageAppDirectories()
 	}
 	if t.StorageDatadirAndCachedirNamedBy != nil {
-		st[1750] = t.StorageDatadirAndCachedirNamedBy()
+		st[1758] = t.StorageDatadirAndCachedirNamedBy()
 	}
 	if t.StorageData != nil {
-		st[1751] = t.StorageData()
+		st[1759] = t.StorageData()
 	}
 	if t.StorageCache != nil {
-		st[1752] = t.StorageCache()
+		st[1760] = t.StorageCache()
 	}
 	if t.PhysicsDragAndRelease != nil {
-		st[1753] = t.PhysicsDragAndRelease()
+		st[1761] = t.PhysicsDragAndRelease()
 	}
 	if t.PhysicsTapToPulseLongPress != nil {
-		st[1754] = t.PhysicsTapToPulseLongPress()
+		st[1762] = t.PhysicsTapToPulseLongPress()
 	}
 	if t.PhysicsClickToPulsePressAnd != nil {
-		st[1755] = t.PhysicsClickToPulsePressAnd()
+		st[1763] = t.PhysicsClickToPulsePressAnd()
 	}
 	if t.PhysicsUiThread != nil {
-		st[1756] = t.PhysicsUiThread()
+		st[1764] = t.PhysicsUiThread()
 	}
 	if t.PhysicsDraggableCard != nil {
-		st[1757] = t.PhysicsDraggableCard()
+		st[1765] = t.PhysicsDraggableCard()
 	}
 	if t.PhysicsDragMe != nil {
-		st[1758] = t.PhysicsDragMe()
+		st[1766] = t.PhysicsDragMe()
 	}
 	if t.PhysicsSpring != nil {
-		st[1759] = t.PhysicsSpring()
+		st[1767] = t.PhysicsSpring()
 	}
 	if t.PhysicsCoast != nil {
-		st[1760] = t.PhysicsCoast()
+		st[1768] = t.PhysicsCoast()
 	}
 	if t.PhysicsSnap != nil {
-		st[1761] = t.PhysicsSnap()
+		st[1769] = t.PhysicsSnap()
 	}
 	if t.PhysicsSoft != nil {
-		st[1762] = t.PhysicsSoft()
+		st[1770] = t.PhysicsSoft()
 	}
 	if t.PhysicsBouncy != nil {
-		st[1763] = t.PhysicsBouncy()
+		st[1771] = t.PhysicsBouncy()
 	}
 	if t.PhysicsFirm != nil {
-		st[1764] = t.PhysicsFirm()
+		st[1772] = t.PhysicsFirm()
 	}
 	if t.PhysicsReleases != nil {
-		st[1765] = t.PhysicsReleases()
+		st[1773] = t.PhysicsReleases()
 	}
 	if t.PhysicsSpeed != nil {
-		st[1766] = t.PhysicsSpeed()
+		st[1774] = t.PhysicsSpeed()
 	}
 	if t.PhysicsCorner != nil {
-		st[1767] = t.PhysicsCorner()
+		st[1775] = t.PhysicsCorner()
 	}
 	if t.PhysicsCoastsToAStopThen != nil {
-		st[1768] = t.PhysicsCoastsToAStopThen()
+		st[1776] = t.PhysicsCoastsToAStopThen()
 	}
 	if t.PhysicsSpringsToTheCornerThe != nil {
-		st[1769] = t.PhysicsSpringsToTheCornerThe()
+		st[1777] = t.PhysicsSpringsToTheCornerThe()
 	}
 	if t.PhysicsSpringsHomeWithTheRelease != nil {
-		st[1770] = t.PhysicsSpringsHomeWithTheRelease()
+		st[1778] = t.PhysicsSpringsHomeWithTheRelease()
 	}
 	if t.PhysicsDecay != nil {
-		st[1771] = t.PhysicsDecay()
+		st[1779] = t.PhysicsDecay()
 	}
 	if t.ResizableDragALineBetweenTwo != nil {
-		st[1772] = t.ResizableDragALineBetweenTwo()
+		st[1780] = t.ResizableDragALineBetweenTwo()
 	}
 	if t.ResizableDragALineBetweenTwo2 != nil {
-		st[1773] = t.ResizableDragALineBetweenTwo2()
+		st[1781] = t.ResizableDragALineBetweenTwo2()
 	}
 	if t.ResizableConsole != nil {
-		st[1774] = t.ResizableConsole()
+		st[1782] = t.ResizableConsole()
 	}
 	if t.ResizableResizeTheSidebar != nil {
-		st[1775] = t.ResizableResizeTheSidebar()
+		st[1783] = t.ResizableResizeTheSidebar()
 	}
 	if t.ResizableRow != nil {
-		st[1776] = t.ResizableRow()
+		st[1784] = t.ResizableRow()
 	}
 	if t.ResizableFiles != nil {
-		st[1777] = t.ResizableFiles()
+		st[1785] = t.ResizableFiles()
 	}
 	if t.Resizable120To360Pt != nil {
-		st[1778] = t.Resizable120To360Pt()
+		st[1786] = t.Resizable120To360Pt()
 	}
 	if t.ResizableResizeTheConsole != nil {
-		st[1779] = t.ResizableResizeTheConsole()
+		st[1787] = t.ResizableResizeTheConsole()
 	}
 	if t.ResizableColumn != nil {
-		st[1780] = t.ResizableColumn()
+		st[1788] = t.ResizableColumn()
 	}
 	if t.ResizableEditor != nil {
-		st[1781] = t.ResizableEditor()
+		st[1789] = t.ResizableEditor()
 	}
 	if t.ResizableTakesTheRoomTheOthers != nil {
-		st[1782] = t.ResizableTakesTheRoomTheOthers()
+		st[1790] = t.ResizableTakesTheRoomTheOthers()
 	}
 	if t.ResizableHiddenItKeepsItsSize != nil {
-		st[1783] = t.ResizableHiddenItKeepsItsSize()
+		st[1791] = t.ResizableHiddenItKeepsItsSize()
 	}
 	if t.ResizableLastResize != nil {
-		st[1784] = t.ResizableLastResize()
+		st[1792] = t.ResizableLastResize()
 	}
 	if t.Collapsing160EntriesByWeek != nil {
-		st[1785] = t.Collapsing160EntriesByWeek()
+		st[1793] = t.Collapsing160EntriesByWeek()
 	}
 	if t.CollapsingRecent != nil {
-		st[1786] = t.CollapsingRecent()
+		st[1794] = t.CollapsingRecent()
 	}
 	if t.CollapsingThatSAll160Entries != nil {
-		st[1787] = t.CollapsingThatSAll160Entries()
+		st[1795] = t.CollapsingThatSAll160Entries()
 	}
 	if t.CollapsingAFooterAfterTheList != nil {
-		st[1788] = t.CollapsingAFooterAfterTheList()
+		st[1796] = t.CollapsingAFooterAfterTheList()
 	}
 	if t.UiLightAppearance != nil {
-		st[1789] = t.UiLightAppearance()
+		st[1797] = t.UiLightAppearance()
 	}
 	if t.UiDarkAppearance != nil {
-		st[1790] = t.UiDarkAppearance()
+		st[1798] = t.UiDarkAppearance()
 	}
 	if t.UiBack != nil {
-		st[1791] = t.UiBack()
+		st[1799] = t.UiBack()
 	}
 	if t.ViewerImage != nil {
-		st[1792] = t.ViewerImage()
+		st[1800] = t.ViewerImage()
 	}
 	if t.ViewerClose != nil {
-		st[1793] = t.ViewerClose()
+		st[1801] = t.ViewerClose()
 	}
 	if t.ToastClose != nil {
-		st[1794] = t.ToastClose()
+		st[1802] = t.ToastClose()
 	}
 	if t.EditorErrors != nil {
 		s.EditorErrors = t.EditorErrors
@@ -14903,7 +14967,7 @@ func Supply(lang string, t Translation) {
 // LanguageName says "English"
 // in the language the app shows under cx.
 //
-// This language's name in itself, as the language menu lists it.
+// This language's name in itself, as the language setting lists it.
 func LanguageName(cx *core.Scope) string { return For(cx).LanguageName() }
 
 // LanguageName says "English"
@@ -14913,7 +14977,7 @@ func (msgs Messages) LanguageName() string { return msgs.text(0) }
 // Language says "Language"
 // in the language the app shows under cx.
 //
-// The language menu's button and title.
+// The language setting's title.
 func Language(cx *core.Scope) string { return For(cx).Language() }
 
 // Language says "Language"
@@ -14923,12 +14987,78 @@ func (msgs Messages) Language() string { return msgs.text(1) }
 // LanguageSystem says "Follow system"
 // in the language the app shows under cx.
 //
-// The language menu's item that shows the system's language.
+// The language setting's choice that follows the system's language.
 func LanguageSystem(cx *core.Scope) string { return For(cx).LanguageSystem() }
 
 // LanguageSystem says "Follow system"
 // in the language of msgs.
 func (msgs Messages) LanguageSystem() string { return msgs.text(2) }
+
+// Settings says "Settings"
+// in the language the app shows under cx.
+//
+// The settings button's name and the settings' title.
+func Settings(cx *core.Scope) string { return For(cx).Settings() }
+
+// Settings says "Settings"
+// in the language of msgs.
+func (msgs Messages) Settings() string { return msgs.text(3) }
+
+// SettingsSearch says "Search settings"
+// in the language the app shows under cx.
+func SettingsSearch(cx *core.Scope) string { return For(cx).SettingsSearch() }
+
+// SettingsSearch says "Search settings"
+// in the language of msgs.
+func (msgs Messages) SettingsSearch() string { return msgs.text(4) }
+
+// SettingsSearchPlaceholder says "Search"
+// in the language the app shows under cx.
+func SettingsSearchPlaceholder(cx *core.Scope) string { return For(cx).SettingsSearchPlaceholder() }
+
+// SettingsSearchPlaceholder says "Search"
+// in the language of msgs.
+func (msgs Messages) SettingsSearchPlaceholder() string { return msgs.text(5) }
+
+// SettingsResults says "Results"
+// in the language the app shows under cx.
+func SettingsResults(cx *core.Scope) string { return For(cx).SettingsResults() }
+
+// SettingsResults says "Results"
+// in the language of msgs.
+func (msgs Messages) SettingsResults() string { return msgs.text(6) }
+
+// SettingsEmpty says "No settings match."
+// in the language the app shows under cx.
+func SettingsEmpty(cx *core.Scope) string { return For(cx).SettingsEmpty() }
+
+// SettingsEmpty says "No settings match."
+// in the language of msgs.
+func (msgs Messages) SettingsEmpty() string { return msgs.text(7) }
+
+// SettingsClose says "Close settings"
+// in the language the app shows under cx.
+func SettingsClose(cx *core.Scope) string { return For(cx).SettingsClose() }
+
+// SettingsClose says "Close settings"
+// in the language of msgs.
+func (msgs Messages) SettingsClose() string { return msgs.text(8) }
+
+// SettingsGeneral says "General"
+// in the language the app shows under cx.
+func SettingsGeneral(cx *core.Scope) string { return For(cx).SettingsGeneral() }
+
+// SettingsGeneral says "General"
+// in the language of msgs.
+func (msgs Messages) SettingsGeneral() string { return msgs.text(9) }
+
+// SettingsLanguageDetail says "The language the gallery and NSGo's components speak, and the direction they read in."
+// in the language the app shows under cx.
+func SettingsLanguageDetail(cx *core.Scope) string { return For(cx).SettingsLanguageDetail() }
+
+// SettingsLanguageDetail says "The language the gallery and NSGo's components speak, and the direction they read in."
+// in the language of msgs.
+func (msgs Messages) SettingsLanguageDetail() string { return msgs.text(10) }
 
 // AppGallery says "Gallery"
 // in the language the app shows under cx.
@@ -14936,7 +15066,7 @@ func AppGallery(cx *core.Scope) string { return For(cx).AppGallery() }
 
 // AppGallery says "Gallery"
 // in the language of msgs.
-func (msgs Messages) AppGallery() string { return msgs.text(3) }
+func (msgs Messages) AppGallery() string { return msgs.text(11) }
 
 // GroupApps says "Apps"
 // in the language the app shows under cx.
@@ -14944,7 +15074,7 @@ func GroupApps(cx *core.Scope) string { return For(cx).GroupApps() }
 
 // GroupApps says "Apps"
 // in the language of msgs.
-func (msgs Messages) GroupApps() string { return msgs.text(4) }
+func (msgs Messages) GroupApps() string { return msgs.text(12) }
 
 // GroupPrimitives says "Primitives"
 // in the language the app shows under cx.
@@ -14952,7 +15082,7 @@ func GroupPrimitives(cx *core.Scope) string { return For(cx).GroupPrimitives() }
 
 // GroupPrimitives says "Primitives"
 // in the language of msgs.
-func (msgs Messages) GroupPrimitives() string { return msgs.text(5) }
+func (msgs Messages) GroupPrimitives() string { return msgs.text(13) }
 
 // GroupComponents says "Components"
 // in the language the app shows under cx.
@@ -14960,7 +15090,7 @@ func GroupComponents(cx *core.Scope) string { return For(cx).GroupComponents() }
 
 // GroupComponents says "Components"
 // in the language of msgs.
-func (msgs Messages) GroupComponents() string { return msgs.text(6) }
+func (msgs Messages) GroupComponents() string { return msgs.text(14) }
 
 // GroupStyling says "Styling"
 // in the language the app shows under cx.
@@ -14968,7 +15098,7 @@ func GroupStyling(cx *core.Scope) string { return For(cx).GroupStyling() }
 
 // GroupStyling says "Styling"
 // in the language of msgs.
-func (msgs Messages) GroupStyling() string { return msgs.text(7) }
+func (msgs Messages) GroupStyling() string { return msgs.text(15) }
 
 // GroupMotion says "Motion"
 // in the language the app shows under cx.
@@ -14976,7 +15106,7 @@ func GroupMotion(cx *core.Scope) string { return For(cx).GroupMotion() }
 
 // GroupMotion says "Motion"
 // in the language of msgs.
-func (msgs Messages) GroupMotion() string { return msgs.text(8) }
+func (msgs Messages) GroupMotion() string { return msgs.text(16) }
 
 // GroupPlatform says "Platform"
 // in the language the app shows under cx.
@@ -14984,7 +15114,7 @@ func GroupPlatform(cx *core.Scope) string { return For(cx).GroupPlatform() }
 
 // GroupPlatform says "Platform"
 // in the language of msgs.
-func (msgs Messages) GroupPlatform() string { return msgs.text(9) }
+func (msgs Messages) GroupPlatform() string { return msgs.text(17) }
 
 // DemoStocks says "Stocks"
 // in the language the app shows under cx.
@@ -14992,7 +15122,7 @@ func DemoStocks(cx *core.Scope) string { return For(cx).DemoStocks() }
 
 // DemoStocks says "Stocks"
 // in the language of msgs.
-func (msgs Messages) DemoStocks() string { return msgs.text(10) }
+func (msgs Messages) DemoStocks() string { return msgs.text(18) }
 
 // DemoStocksDetail says "A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms"
 // in the language the app shows under cx.
@@ -15000,7 +15130,7 @@ func DemoStocksDetail(cx *core.Scope) string { return For(cx).DemoStocksDetail()
 
 // DemoStocksDetail says "A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms"
 // in the language of msgs.
-func (msgs Messages) DemoStocksDetail() string { return msgs.text(11) }
+func (msgs Messages) DemoStocksDetail() string { return msgs.text(19) }
 
 // DemoAIChat says "AI Chat"
 // in the language the app shows under cx.
@@ -15008,7 +15138,7 @@ func DemoAIChat(cx *core.Scope) string { return For(cx).DemoAIChat() }
 
 // DemoAIChat says "AI Chat"
 // in the language of msgs.
-func (msgs Messages) DemoAIChat() string { return msgs.text(12) }
+func (msgs Messages) DemoAIChat() string { return msgs.text(20) }
 
 // DemoAIChatDetail says "Streaming replies with reasoning, tools and attachments"
 // in the language the app shows under cx.
@@ -15016,7 +15146,7 @@ func DemoAIChatDetail(cx *core.Scope) string { return For(cx).DemoAIChatDetail()
 
 // DemoAIChatDetail says "Streaming replies with reasoning, tools and attachments"
 // in the language of msgs.
-func (msgs Messages) DemoAIChatDetail() string { return msgs.text(13) }
+func (msgs Messages) DemoAIChatDetail() string { return msgs.text(21) }
 
 // DemoPhotos says "Photos"
 // in the language the app shows under cx.
@@ -15024,7 +15154,7 @@ func DemoPhotos(cx *core.Scope) string { return For(cx).DemoPhotos() }
 
 // DemoPhotos says "Photos"
 // in the language of msgs.
-func (msgs Messages) DemoPhotos() string { return msgs.text(14) }
+func (msgs Messages) DemoPhotos() string { return msgs.text(22) }
 
 // DemoPhotosDetail says "A long recycled list: images, pull to refresh, paging"
 // in the language the app shows under cx.
@@ -15032,7 +15162,7 @@ func DemoPhotosDetail(cx *core.Scope) string { return For(cx).DemoPhotosDetail()
 
 // DemoPhotosDetail says "A long recycled list: images, pull to refresh, paging"
 // in the language of msgs.
-func (msgs Messages) DemoPhotosDetail() string { return msgs.text(15) }
+func (msgs Messages) DemoPhotosDetail() string { return msgs.text(23) }
 
 // DemoText says "Text"
 // in the language the app shows under cx.
@@ -15040,7 +15170,7 @@ func DemoText(cx *core.Scope) string { return For(cx).DemoText() }
 
 // DemoText says "Text"
 // in the language of msgs.
-func (msgs Messages) DemoText() string { return msgs.text(16) }
+func (msgs Messages) DemoText() string { return msgs.text(24) }
 
 // DemoTextDetail says "Fonts, spans, inline views, decorations, truncation, languages"
 // in the language the app shows under cx.
@@ -15048,7 +15178,7 @@ func DemoTextDetail(cx *core.Scope) string { return For(cx).DemoTextDetail() }
 
 // DemoTextDetail says "Fonts, spans, inline views, decorations, truncation, languages"
 // in the language of msgs.
-func (msgs Messages) DemoTextDetail() string { return msgs.text(17) }
+func (msgs Messages) DemoTextDetail() string { return msgs.text(25) }
 
 // DemoImage says "Image"
 // in the language the app shows under cx.
@@ -15056,7 +15186,7 @@ func DemoImage(cx *core.Scope) string { return For(cx).DemoImage() }
 
 // DemoImage says "Image"
 // in the language of msgs.
-func (msgs Messages) DemoImage() string { return msgs.text(18) }
+func (msgs Messages) DemoImage() string { return msgs.text(26) }
 
 // DemoImageDetail says "Resize modes, tint, GIF, placeholders, blur, fade"
 // in the language the app shows under cx.
@@ -15064,7 +15194,7 @@ func DemoImageDetail(cx *core.Scope) string { return For(cx).DemoImageDetail() }
 
 // DemoImageDetail says "Resize modes, tint, GIF, placeholders, blur, fade"
 // in the language of msgs.
-func (msgs Messages) DemoImageDetail() string { return msgs.text(19) }
+func (msgs Messages) DemoImageDetail() string { return msgs.text(27) }
 
 // DemoScroll says "Scroll"
 // in the language the app shows under cx.
@@ -15072,7 +15202,7 @@ func DemoScroll(cx *core.Scope) string { return For(cx).DemoScroll() }
 
 // DemoScroll says "Scroll"
 // in the language of msgs.
-func (msgs Messages) DemoScroll() string { return msgs.text(20) }
+func (msgs Messages) DemoScroll() string { return msgs.text(28) }
 
 // DemoScrollDetail says "Paging, snapping, zoom, scroll events, prepending, keyboard taps"
 // in the language the app shows under cx.
@@ -15080,7 +15210,7 @@ func DemoScrollDetail(cx *core.Scope) string { return For(cx).DemoScrollDetail()
 
 // DemoScrollDetail says "Paging, snapping, zoom, scroll events, prepending, keyboard taps"
 // in the language of msgs.
-func (msgs Messages) DemoScrollDetail() string { return msgs.text(21) }
+func (msgs Messages) DemoScrollDetail() string { return msgs.text(29) }
 
 // DemoList says "List"
 // in the language the app shows under cx.
@@ -15088,7 +15218,7 @@ func DemoList(cx *core.Scope) string { return For(cx).DemoList() }
 
 // DemoList says "List"
 // in the language of msgs.
-func (msgs Messages) DemoList() string { return msgs.text(22) }
+func (msgs Messages) DemoList() string { return msgs.text(30) }
 
 // DemoListDetail says "Columns, sticky sections, a chat, horizontal lists"
 // in the language the app shows under cx.
@@ -15096,7 +15226,7 @@ func DemoListDetail(cx *core.Scope) string { return For(cx).DemoListDetail() }
 
 // DemoListDetail says "Columns, sticky sections, a chat, horizontal lists"
 // in the language of msgs.
-func (msgs Messages) DemoListDetail() string { return msgs.text(23) }
+func (msgs Messages) DemoListDetail() string { return msgs.text(31) }
 
 // DemoCanvas says "Canvas"
 // in the language the app shows under cx.
@@ -15104,7 +15234,7 @@ func DemoCanvas(cx *core.Scope) string { return For(cx).DemoCanvas() }
 
 // DemoCanvas says "Canvas"
 // in the language of msgs.
-func (msgs Messages) DemoCanvas() string { return msgs.text(24) }
+func (msgs Messages) DemoCanvas() string { return msgs.text(32) }
 
 // DemoCanvasDetail says "2D drawing: paths, gradients, text, images, native animation"
 // in the language the app shows under cx.
@@ -15112,7 +15242,7 @@ func DemoCanvasDetail(cx *core.Scope) string { return For(cx).DemoCanvasDetail()
 
 // DemoCanvasDetail says "2D drawing: paths, gradients, text, images, native animation"
 // in the language of msgs.
-func (msgs Messages) DemoCanvasDetail() string { return msgs.text(25) }
+func (msgs Messages) DemoCanvasDetail() string { return msgs.text(33) }
 
 // DemoShader says "Shader"
 // in the language the app shows under cx.
@@ -15120,7 +15250,7 @@ func DemoShader(cx *core.Scope) string { return For(cx).DemoShader() }
 
 // DemoShader says "Shader"
 // in the language of msgs.
-func (msgs Messages) DemoShader() string { return msgs.text(26) }
+func (msgs Messages) DemoShader() string { return msgs.text(34) }
 
 // DemoShaderDetail says "Fragment shaders in Go's syntax, uniforms the platform animates"
 // in the language the app shows under cx.
@@ -15128,7 +15258,7 @@ func DemoShaderDetail(cx *core.Scope) string { return For(cx).DemoShaderDetail()
 
 // DemoShaderDetail says "Fragment shaders in Go's syntax, uniforms the platform animates"
 // in the language of msgs.
-func (msgs Messages) DemoShaderDetail() string { return msgs.text(27) }
+func (msgs Messages) DemoShaderDetail() string { return msgs.text(35) }
 
 // DemoWebViewAndVideo says "WebView and Video"
 // in the language the app shows under cx.
@@ -15136,7 +15266,7 @@ func DemoWebViewAndVideo(cx *core.Scope) string { return For(cx).DemoWebViewAndV
 
 // DemoWebViewAndVideo says "WebView and Video"
 // in the language of msgs.
-func (msgs Messages) DemoWebViewAndVideo() string { return msgs.text(28) }
+func (msgs Messages) DemoWebViewAndVideo() string { return msgs.text(36) }
 
 // DemoWebViewAndVideoDetail says "Web views, video players and the app's own native views"
 // in the language the app shows under cx.
@@ -15144,7 +15274,7 @@ func DemoWebViewAndVideoDetail(cx *core.Scope) string { return For(cx).DemoWebVi
 
 // DemoWebViewAndVideoDetail says "Web views, video players and the app's own native views"
 // in the language of msgs.
-func (msgs Messages) DemoWebViewAndVideoDetail() string { return msgs.text(29) }
+func (msgs Messages) DemoWebViewAndVideoDetail() string { return msgs.text(37) }
 
 // DemoOverlay says "Overlay"
 // in the language the app shows under cx.
@@ -15152,7 +15282,7 @@ func DemoOverlay(cx *core.Scope) string { return For(cx).DemoOverlay() }
 
 // DemoOverlay says "Overlay"
 // in the language of msgs.
-func (msgs Messages) DemoOverlay() string { return msgs.text(30) }
+func (msgs Messages) DemoOverlay() string { return msgs.text(38) }
 
 // DemoOverlayDetail says "Content on top of the screen, outside the box that clips it"
 // in the language the app shows under cx.
@@ -15160,7 +15290,7 @@ func DemoOverlayDetail(cx *core.Scope) string { return For(cx).DemoOverlayDetail
 
 // DemoOverlayDetail says "Content on top of the screen, outside the box that clips it"
 // in the language of msgs.
-func (msgs Messages) DemoOverlayDetail() string { return msgs.text(31) }
+func (msgs Messages) DemoOverlayDetail() string { return msgs.text(39) }
 
 // DemoCheckbox says "Checkbox"
 // in the language the app shows under cx.
@@ -15168,7 +15298,7 @@ func DemoCheckbox(cx *core.Scope) string { return For(cx).DemoCheckbox() }
 
 // DemoCheckbox says "Checkbox"
 // in the language of msgs.
-func (msgs Messages) DemoCheckbox() string { return msgs.text(32) }
+func (msgs Messages) DemoCheckbox() string { return msgs.text(40) }
 
 // DemoCheckboxDetail says "A filter whose “Select all” shows a partial selection"
 // in the language the app shows under cx.
@@ -15176,7 +15306,7 @@ func DemoCheckboxDetail(cx *core.Scope) string { return For(cx).DemoCheckboxDeta
 
 // DemoCheckboxDetail says "A filter whose “Select all” shows a partial selection"
 // in the language of msgs.
-func (msgs Messages) DemoCheckboxDetail() string { return msgs.text(33) }
+func (msgs Messages) DemoCheckboxDetail() string { return msgs.text(41) }
 
 // DemoCollapsible says "Collapsible"
 // in the language the app shows under cx.
@@ -15184,7 +15314,7 @@ func DemoCollapsible(cx *core.Scope) string { return For(cx).DemoCollapsible() }
 
 // DemoCollapsible says "Collapsible"
 // in the language of msgs.
-func (msgs Messages) DemoCollapsible() string { return msgs.text(34) }
+func (msgs Messages) DemoCollapsible() string { return msgs.text(42) }
 
 // DemoCollapsibleDetail says "Details under a summary, kept while collapsed"
 // in the language the app shows under cx.
@@ -15192,7 +15322,7 @@ func DemoCollapsibleDetail(cx *core.Scope) string { return For(cx).DemoCollapsib
 
 // DemoCollapsibleDetail says "Details under a summary, kept while collapsed"
 // in the language of msgs.
-func (msgs Messages) DemoCollapsibleDetail() string { return msgs.text(35) }
+func (msgs Messages) DemoCollapsibleDetail() string { return msgs.text(43) }
 
 // DemoDataTable says "DataTable"
 // in the language the app shows under cx.
@@ -15200,7 +15330,7 @@ func DemoDataTable(cx *core.Scope) string { return For(cx).DemoDataTable() }
 
 // DemoDataTable says "DataTable"
 // in the language of msgs.
-func (msgs Messages) DemoDataTable() string { return msgs.text(36) }
+func (msgs Messages) DemoDataTable() string { return msgs.text(44) }
 
 // DemoDataTableDetail says "A million stocks of sixty columns, their quotes ticking every 33 ms, fixed columns, sorting, selection, resized and moved columns"
 // in the language the app shows under cx.
@@ -15208,7 +15338,7 @@ func DemoDataTableDetail(cx *core.Scope) string { return For(cx).DemoDataTableDe
 
 // DemoDataTableDetail says "A million stocks of sixty columns, their quotes ticking every 33 ms, fixed columns, sorting, selection, resized and moved columns"
 // in the language of msgs.
-func (msgs Messages) DemoDataTableDetail() string { return msgs.text(37) }
+func (msgs Messages) DemoDataTableDetail() string { return msgs.text(45) }
 
 // DemoDiffView says "DiffView"
 // in the language the app shows under cx.
@@ -15216,7 +15346,7 @@ func DemoDiffView(cx *core.Scope) string { return For(cx).DemoDiffView() }
 
 // DemoDiffView says "DiffView"
 // in the language of msgs.
-func (msgs Messages) DemoDiffView() string { return msgs.text(38) }
+func (msgs Messages) DemoDiffView() string { return msgs.text(46) }
 
 // DemoDiffViewDetail says "Two texts side by side or unified, changes navigated, reverted and kept, a patch"
 // in the language the app shows under cx.
@@ -15224,7 +15354,7 @@ func DemoDiffViewDetail(cx *core.Scope) string { return For(cx).DemoDiffViewDeta
 
 // DemoDiffViewDetail says "Two texts side by side or unified, changes navigated, reverted and kept, a patch"
 // in the language of msgs.
-func (msgs Messages) DemoDiffViewDetail() string { return msgs.text(39) }
+func (msgs Messages) DemoDiffViewDetail() string { return msgs.text(47) }
 
 // DemoDock says "Dock"
 // in the language the app shows under cx.
@@ -15232,7 +15362,7 @@ func DemoDock(cx *core.Scope) string { return For(cx).DemoDock() }
 
 // DemoDock says "Dock"
 // in the language of msgs.
-func (msgs Messages) DemoDock() string { return msgs.text(40) }
+func (msgs Messages) DemoDock() string { return msgs.text(48) }
 
 // DemoDockDetail says "A workspace of tabs dragged between groups and docks, split, closed, zoomed and resized"
 // in the language the app shows under cx.
@@ -15240,7 +15370,7 @@ func DemoDockDetail(cx *core.Scope) string { return For(cx).DemoDockDetail() }
 
 // DemoDockDetail says "A workspace of tabs dragged between groups and docks, split, closed, zoomed and resized"
 // in the language of msgs.
-func (msgs Messages) DemoDockDetail() string { return msgs.text(41) }
+func (msgs Messages) DemoDockDetail() string { return msgs.text(49) }
 
 // DemoEditor says "Editor"
 // in the language the app shows under cx.
@@ -15248,7 +15378,7 @@ func DemoEditor(cx *core.Scope) string { return For(cx).DemoEditor() }
 
 // DemoEditor says "Editor"
 // in the language of msgs.
-func (msgs Messages) DemoEditor() string { return msgs.text(42) }
+func (msgs Messages) DemoEditor() string { return msgs.text(50) }
 
 // DemoEditorDetail says "Code with highlighting, several carets, folding, find and replace, diagnostics, completion and definitions"
 // in the language the app shows under cx.
@@ -15256,7 +15386,7 @@ func DemoEditorDetail(cx *core.Scope) string { return For(cx).DemoEditorDetail()
 
 // DemoEditorDetail says "Code with highlighting, several carets, folding, find and replace, diagnostics, completion and definitions"
 // in the language of msgs.
-func (msgs Messages) DemoEditorDetail() string { return msgs.text(43) }
+func (msgs Messages) DemoEditorDetail() string { return msgs.text(51) }
 
 // DemoInput says "Input"
 // in the language the app shows under cx.
@@ -15264,7 +15394,7 @@ func DemoInput(cx *core.Scope) string { return For(cx).DemoInput() }
 
 // DemoInput says "Input"
 // in the language of msgs.
-func (msgs Messages) DemoInput() string { return msgs.text(44) }
+func (msgs Messages) DemoInput() string { return msgs.text(52) }
 
 // DemoInputDetail says "Inputs, keyboard types, the keyboard over the content"
 // in the language the app shows under cx.
@@ -15272,7 +15402,7 @@ func DemoInputDetail(cx *core.Scope) string { return For(cx).DemoInputDetail() }
 
 // DemoInputDetail says "Inputs, keyboard types, the keyboard over the content"
 // in the language of msgs.
-func (msgs Messages) DemoInputDetail() string { return msgs.text(45) }
+func (msgs Messages) DemoInputDetail() string { return msgs.text(53) }
 
 // DemoMenu says "Menu"
 // in the language the app shows under cx.
@@ -15280,7 +15410,7 @@ func DemoMenu(cx *core.Scope) string { return For(cx).DemoMenu() }
 
 // DemoMenu says "Menu"
 // in the language of msgs.
-func (msgs Messages) DemoMenu() string { return msgs.text(46) }
+func (msgs Messages) DemoMenu() string { return msgs.text(54) }
 
 // DemoMenuDetail says "A menu bar, submenus, checkable items, context menus on rows"
 // in the language the app shows under cx.
@@ -15288,7 +15418,7 @@ func DemoMenuDetail(cx *core.Scope) string { return For(cx).DemoMenuDetail() }
 
 // DemoMenuDetail says "A menu bar, submenus, checkable items, context menus on rows"
 // in the language of msgs.
-func (msgs Messages) DemoMenuDetail() string { return msgs.text(47) }
+func (msgs Messages) DemoMenuDetail() string { return msgs.text(55) }
 
 // DemoNavStack says "NavStack"
 // in the language the app shows under cx.
@@ -15296,7 +15426,7 @@ func DemoNavStack(cx *core.Scope) string { return For(cx).DemoNavStack() }
 
 // DemoNavStack says "NavStack"
 // in the language of msgs.
-func (msgs Messages) DemoNavStack() string { return msgs.text(48) }
+func (msgs Messages) DemoNavStack() string { return msgs.text(56) }
 
 // DemoNavStackDetail says "Header options, modals, the back button, safe areas"
 // in the language the app shows under cx.
@@ -15304,7 +15434,7 @@ func DemoNavStackDetail(cx *core.Scope) string { return For(cx).DemoNavStackDeta
 
 // DemoNavStackDetail says "Header options, modals, the back button, safe areas"
 // in the language of msgs.
-func (msgs Messages) DemoNavStackDetail() string { return msgs.text(49) }
+func (msgs Messages) DemoNavStackDetail() string { return msgs.text(57) }
 
 // DemoPlot says "Plot"
 // in the language the app shows under cx.
@@ -15312,7 +15442,7 @@ func DemoPlot(cx *core.Scope) string { return For(cx).DemoPlot() }
 
 // DemoPlot says "Plot"
 // in the language of msgs.
-func (msgs Messages) DemoPlot() string { return msgs.text(50) }
+func (msgs Messages) DemoPlot() string { return msgs.text(58) }
 
 // DemoPlotDetail says "A line and area plot with hover, grid lines and motion, sparklines in a list"
 // in the language the app shows under cx.
@@ -15320,7 +15450,7 @@ func DemoPlotDetail(cx *core.Scope) string { return For(cx).DemoPlotDetail() }
 
 // DemoPlotDetail says "A line and area plot with hover, grid lines and motion, sparklines in a list"
 // in the language of msgs.
-func (msgs Messages) DemoPlotDetail() string { return msgs.text(51) }
+func (msgs Messages) DemoPlotDetail() string { return msgs.text(59) }
 
 // DemoPopover says "Popover"
 // in the language the app shows under cx.
@@ -15328,7 +15458,7 @@ func DemoPopover(cx *core.Scope) string { return For(cx).DemoPopover() }
 
 // DemoPopover says "Popover"
 // in the language of msgs.
-func (msgs Messages) DemoPopover() string { return msgs.text(52) }
+func (msgs Messages) DemoPopover() string { return msgs.text(60) }
 
 // DemoPopoverDetail says "A panel anchored to its trigger; a press outside, Escape or back closes it"
 // in the language the app shows under cx.
@@ -15336,7 +15466,7 @@ func DemoPopoverDetail(cx *core.Scope) string { return For(cx).DemoPopoverDetail
 
 // DemoPopoverDetail says "A panel anchored to its trigger; a press outside, Escape or back closes it"
 // in the language of msgs.
-func (msgs Messages) DemoPopoverDetail() string { return msgs.text(53) }
+func (msgs Messages) DemoPopoverDetail() string { return msgs.text(61) }
 
 // DemoProgress says "Progress"
 // in the language the app shows under cx.
@@ -15344,7 +15474,7 @@ func DemoProgress(cx *core.Scope) string { return For(cx).DemoProgress() }
 
 // DemoProgress says "Progress"
 // in the language of msgs.
-func (msgs Messages) DemoProgress() string { return msgs.text(54) }
+func (msgs Messages) DemoProgress() string { return msgs.text(62) }
 
 // DemoProgressDetail says "A transfer the app drives, and one of unknown size"
 // in the language the app shows under cx.
@@ -15352,7 +15482,7 @@ func DemoProgressDetail(cx *core.Scope) string { return For(cx).DemoProgressDeta
 
 // DemoProgressDetail says "A transfer the app drives, and one of unknown size"
 // in the language of msgs.
-func (msgs Messages) DemoProgressDetail() string { return msgs.text(55) }
+func (msgs Messages) DemoProgressDetail() string { return msgs.text(63) }
 
 // DemoRadio says "Radio"
 // in the language the app shows under cx.
@@ -15360,7 +15490,7 @@ func DemoRadio(cx *core.Scope) string { return For(cx).DemoRadio() }
 
 // DemoRadio says "Radio"
 // in the language of msgs.
-func (msgs Messages) DemoRadio() string { return msgs.text(56) }
+func (msgs Messages) DemoRadio() string { return msgs.text(64) }
 
 // DemoRadioDetail says "A plan picker: one of a small set, a disabled plan"
 // in the language the app shows under cx.
@@ -15368,7 +15498,7 @@ func DemoRadioDetail(cx *core.Scope) string { return For(cx).DemoRadioDetail() }
 
 // DemoRadioDetail says "A plan picker: one of a small set, a disabled plan"
 // in the language of msgs.
-func (msgs Messages) DemoRadioDetail() string { return msgs.text(57) }
+func (msgs Messages) DemoRadioDetail() string { return msgs.text(65) }
 
 // DemoResizable says "Resizable"
 // in the language the app shows under cx.
@@ -15376,7 +15506,7 @@ func DemoResizable(cx *core.Scope) string { return For(cx).DemoResizable() }
 
 // DemoResizable says "Resizable"
 // in the language of msgs.
-func (msgs Messages) DemoResizable() string { return msgs.text(58) }
+func (msgs Messages) DemoResizable() string { return msgs.text(66) }
 
 // DemoResizableDetail says "Panels resized by dragging the lines between them, within their ranges"
 // in the language the app shows under cx.
@@ -15384,7 +15514,7 @@ func DemoResizableDetail(cx *core.Scope) string { return For(cx).DemoResizableDe
 
 // DemoResizableDetail says "Panels resized by dragging the lines between them, within their ranges"
 // in the language of msgs.
-func (msgs Messages) DemoResizableDetail() string { return msgs.text(59) }
+func (msgs Messages) DemoResizableDetail() string { return msgs.text(67) }
 
 // DemoSheet says "Sheet"
 // in the language the app shows under cx.
@@ -15392,7 +15522,7 @@ func DemoSheet(cx *core.Scope) string { return For(cx).DemoSheet() }
 
 // DemoSheet says "Sheet"
 // in the language of msgs.
-func (msgs Messages) DemoSheet() string { return msgs.text(60) }
+func (msgs Messages) DemoSheet() string { return msgs.text(68) }
 
 // DemoSheetDetail says "A panel at the bottom, over a backdrop; the backdrop, Escape or back closes it"
 // in the language the app shows under cx.
@@ -15400,7 +15530,7 @@ func DemoSheetDetail(cx *core.Scope) string { return For(cx).DemoSheetDetail() }
 
 // DemoSheetDetail says "A panel at the bottom, over a backdrop; the backdrop, Escape or back closes it"
 // in the language of msgs.
-func (msgs Messages) DemoSheetDetail() string { return msgs.text(61) }
+func (msgs Messages) DemoSheetDetail() string { return msgs.text(69) }
 
 // DemoSwitch says "Switch"
 // in the language the app shows under cx.
@@ -15408,7 +15538,7 @@ func DemoSwitch(cx *core.Scope) string { return For(cx).DemoSwitch() }
 
 // DemoSwitch says "Switch"
 // in the language of msgs.
-func (msgs Messages) DemoSwitch() string { return msgs.text(62) }
+func (msgs Messages) DemoSwitch() string { return msgs.text(70) }
 
 // DemoSwitchDetail says "Settings that take effect at once, one that needs another on"
 // in the language the app shows under cx.
@@ -15416,7 +15546,7 @@ func DemoSwitchDetail(cx *core.Scope) string { return For(cx).DemoSwitchDetail()
 
 // DemoSwitchDetail says "Settings that take effect at once, one that needs another on"
 // in the language of msgs.
-func (msgs Messages) DemoSwitchDetail() string { return msgs.text(63) }
+func (msgs Messages) DemoSwitchDetail() string { return msgs.text(71) }
 
 // DemoTable says "Table"
 // in the language the app shows under cx.
@@ -15424,7 +15554,7 @@ func DemoTable(cx *core.Scope) string { return For(cx).DemoTable() }
 
 // DemoTable says "Table"
 // in the language of msgs.
-func (msgs Messages) DemoTable() string { return msgs.text(64) }
+func (msgs Messages) DemoTable() string { return msgs.text(72) }
 
 // DemoTableDetail says "A few rows the app writes out, with a table's roles"
 // in the language the app shows under cx.
@@ -15432,7 +15562,7 @@ func DemoTableDetail(cx *core.Scope) string { return For(cx).DemoTableDetail() }
 
 // DemoTableDetail says "A few rows the app writes out, with a table's roles"
 // in the language of msgs.
-func (msgs Messages) DemoTableDetail() string { return msgs.text(65) }
+func (msgs Messages) DemoTableDetail() string { return msgs.text(73) }
 
 // DemoTabs says "Tabs"
 // in the language the app shows under cx.
@@ -15440,7 +15570,7 @@ func DemoTabs(cx *core.Scope) string { return For(cx).DemoTabs() }
 
 // DemoTabs says "Tabs"
 // in the language of msgs.
-func (msgs Messages) DemoTabs() string { return msgs.text(66) }
+func (msgs Messages) DemoTabs() string { return msgs.text(74) }
 
 // DemoTabsDetail says "A section switcher, a disabled tab"
 // in the language the app shows under cx.
@@ -15448,7 +15578,7 @@ func DemoTabsDetail(cx *core.Scope) string { return For(cx).DemoTabsDetail() }
 
 // DemoTabsDetail says "A section switcher, a disabled tab"
 // in the language of msgs.
-func (msgs Messages) DemoTabsDetail() string { return msgs.text(67) }
+func (msgs Messages) DemoTabsDetail() string { return msgs.text(75) }
 
 // DemoTextView says "TextView"
 // in the language the app shows under cx.
@@ -15456,7 +15586,7 @@ func DemoTextView(cx *core.Scope) string { return For(cx).DemoTextView() }
 
 // DemoTextView says "TextView"
 // in the language of msgs.
-func (msgs Messages) DemoTextView() string { return msgs.text(68) }
+func (msgs Messages) DemoTextView() string { return msgs.text(76) }
 
 // DemoTextViewDetail says "Markdown and HTML documents, extensions, streaming replies"
 // in the language the app shows under cx.
@@ -15464,7 +15594,7 @@ func DemoTextViewDetail(cx *core.Scope) string { return For(cx).DemoTextViewDeta
 
 // DemoTextViewDetail says "Markdown and HTML documents, extensions, streaming replies"
 // in the language of msgs.
-func (msgs Messages) DemoTextViewDetail() string { return msgs.text(69) }
+func (msgs Messages) DemoTextViewDetail() string { return msgs.text(77) }
 
 // DemoToast says "Toast"
 // in the language the app shows under cx.
@@ -15472,7 +15602,7 @@ func DemoToast(cx *core.Scope) string { return For(cx).DemoToast() }
 
 // DemoToast says "Toast"
 // in the language of msgs.
-func (msgs Messages) DemoToast() string { return msgs.text(70) }
+func (msgs Messages) DemoToast() string { return msgs.text(78) }
 
 // DemoToastDetail says "Notes that close by themselves, by their action, back or a swipe"
 // in the language the app shows under cx.
@@ -15480,7 +15610,7 @@ func DemoToastDetail(cx *core.Scope) string { return For(cx).DemoToastDetail() }
 
 // DemoToastDetail says "Notes that close by themselves, by their action, back or a swipe"
 // in the language of msgs.
-func (msgs Messages) DemoToastDetail() string { return msgs.text(71) }
+func (msgs Messages) DemoToastDetail() string { return msgs.text(79) }
 
 // DemoTooltip says "Tooltip"
 // in the language the app shows under cx.
@@ -15488,7 +15618,7 @@ func DemoTooltip(cx *core.Scope) string { return For(cx).DemoTooltip() }
 
 // DemoTooltip says "Tooltip"
 // in the language of msgs.
-func (msgs Messages) DemoTooltip() string { return msgs.text(72) }
+func (msgs Messages) DemoTooltip() string { return msgs.text(80) }
 
 // DemoTooltipDetail says "A label while the pointer rests on an element, or pinned by the app"
 // in the language the app shows under cx.
@@ -15496,7 +15626,7 @@ func DemoTooltipDetail(cx *core.Scope) string { return For(cx).DemoTooltipDetail
 
 // DemoTooltipDetail says "A label while the pointer rests on an element, or pinned by the app"
 // in the language of msgs.
-func (msgs Messages) DemoTooltipDetail() string { return msgs.text(73) }
+func (msgs Messages) DemoTooltipDetail() string { return msgs.text(81) }
 
 // DemoStyles says "Styles"
 // in the language the app shows under cx.
@@ -15504,7 +15634,7 @@ func DemoStyles(cx *core.Scope) string { return For(cx).DemoStyles() }
 
 // DemoStyles says "Styles"
 // in the language of msgs.
-func (msgs Messages) DemoStyles() string { return msgs.text(74) }
+func (msgs Messages) DemoStyles() string { return msgs.text(82) }
 
 // DemoStylesDetail says "Corners, borders, shadows, clipping, filters, 3D transforms"
 // in the language the app shows under cx.
@@ -15512,7 +15642,7 @@ func DemoStylesDetail(cx *core.Scope) string { return For(cx).DemoStylesDetail()
 
 // DemoStylesDetail says "Corners, borders, shadows, clipping, filters, 3D transforms"
 // in the language of msgs.
-func (msgs Messages) DemoStylesDetail() string { return msgs.text(75) }
+func (msgs Messages) DemoStylesDetail() string { return msgs.text(83) }
 
 // DemoLayout says "Layout"
 // in the language the app shows under cx.
@@ -15520,7 +15650,7 @@ func DemoLayout(cx *core.Scope) string { return For(cx).DemoLayout() }
 
 // DemoLayout says "Layout"
 // in the language of msgs.
-func (msgs Messages) DemoLayout() string { return msgs.text(76) }
+func (msgs Messages) DemoLayout() string { return msgs.text(84) }
 
 // DemoLayoutDetail says "Flexbox, wrapping, positioning, grid and block layout, direction"
 // in the language the app shows under cx.
@@ -15528,7 +15658,7 @@ func DemoLayoutDetail(cx *core.Scope) string { return For(cx).DemoLayoutDetail()
 
 // DemoLayoutDetail says "Flexbox, wrapping, positioning, grid and block layout, direction"
 // in the language of msgs.
-func (msgs Messages) DemoLayoutDetail() string { return msgs.text(77) }
+func (msgs Messages) DemoLayoutDetail() string { return msgs.text(85) }
 
 // DemoPatterns says "Patterns"
 // in the language the app shows under cx.
@@ -15536,7 +15666,7 @@ func DemoPatterns(cx *core.Scope) string { return For(cx).DemoPatterns() }
 
 // DemoPatterns says "Patterns"
 // in the language of msgs.
-func (msgs Messages) DemoPatterns() string { return msgs.text(78) }
+func (msgs Messages) DemoPatterns() string { return msgs.text(86) }
 
 // DemoPatternsDetail says "Press feedback, a sheet, layout animation, input accessory, dialog options"
 // in the language the app shows under cx.
@@ -15544,7 +15674,7 @@ func DemoPatternsDetail(cx *core.Scope) string { return For(cx).DemoPatternsDeta
 
 // DemoPatternsDetail says "Press feedback, a sheet, layout animation, input accessory, dialog options"
 // in the language of msgs.
-func (msgs Messages) DemoPatternsDetail() string { return msgs.text(79) }
+func (msgs Messages) DemoPatternsDetail() string { return msgs.text(87) }
 
 // DemoAnimations says "Animations"
 // in the language the app shows under cx.
@@ -15552,7 +15682,7 @@ func DemoAnimations(cx *core.Scope) string { return For(cx).DemoAnimations() }
 
 // DemoAnimations says "Animations"
 // in the language of msgs.
-func (msgs Messages) DemoAnimations() string { return msgs.text(80) }
+func (msgs Messages) DemoAnimations() string { return msgs.text(88) }
 
 // DemoAnimationsDetail says "Easing, sequence / parallel / stagger / loop, springs, interpolation"
 // in the language the app shows under cx.
@@ -15560,7 +15690,7 @@ func DemoAnimationsDetail(cx *core.Scope) string { return For(cx).DemoAnimations
 
 // DemoAnimationsDetail says "Easing, sequence / parallel / stagger / loop, springs, interpolation"
 // in the language of msgs.
-func (msgs Messages) DemoAnimationsDetail() string { return msgs.text(81) }
+func (msgs Messages) DemoAnimationsDetail() string { return msgs.text(89) }
 
 // DemoGestures says "Gestures"
 // in the language the app shows under cx.
@@ -15568,7 +15698,7 @@ func DemoGestures(cx *core.Scope) string { return For(cx).DemoGestures() }
 
 // DemoGestures says "Gestures"
 // in the language of msgs.
-func (msgs Messages) DemoGestures() string { return msgs.text(82) }
+func (msgs Messages) DemoGestures() string { return msgs.text(90) }
 
 // DemoGesturesDetail says "Pinch, rotate, press states, hit slop, pointer events, dropped files"
 // in the language the app shows under cx.
@@ -15576,7 +15706,7 @@ func DemoGesturesDetail(cx *core.Scope) string { return For(cx).DemoGesturesDeta
 
 // DemoGesturesDetail says "Pinch, rotate, press states, hit slop, pointer events, dropped files"
 // in the language of msgs.
-func (msgs Messages) DemoGesturesDetail() string { return msgs.text(83) }
+func (msgs Messages) DemoGesturesDetail() string { return msgs.text(91) }
 
 // DemoPhysics says "Physics"
 // in the language the app shows under cx.
@@ -15584,7 +15714,7 @@ func DemoPhysics(cx *core.Scope) string { return For(cx).DemoPhysics() }
 
 // DemoPhysics says "Physics"
 // in the language of msgs.
-func (msgs Messages) DemoPhysics() string { return msgs.text(84) }
+func (msgs Messages) DemoPhysics() string { return msgs.text(92) }
 
 // DemoPhysicsDetail says "Drags and springs on the UI thread"
 // in the language the app shows under cx.
@@ -15592,7 +15722,7 @@ func DemoPhysicsDetail(cx *core.Scope) string { return For(cx).DemoPhysicsDetail
 
 // DemoPhysicsDetail says "Drags and springs on the UI thread"
 // in the language of msgs.
-func (msgs Messages) DemoPhysicsDetail() string { return msgs.text(85) }
+func (msgs Messages) DemoPhysicsDetail() string { return msgs.text(93) }
 
 // DemoCollapsingHeader says "Collapsing header"
 // in the language the app shows under cx.
@@ -15600,7 +15730,7 @@ func DemoCollapsingHeader(cx *core.Scope) string { return For(cx).DemoCollapsing
 
 // DemoCollapsingHeader says "Collapsing header"
 // in the language of msgs.
-func (msgs Messages) DemoCollapsingHeader() string { return msgs.text(86) }
+func (msgs Messages) DemoCollapsingHeader() string { return msgs.text(94) }
 
 // DemoCollapsingHeaderDetail says "A header that shrinks to a bar as the page scrolls, headings sticking below it"
 // in the language the app shows under cx.
@@ -15608,7 +15738,7 @@ func DemoCollapsingHeaderDetail(cx *core.Scope) string { return For(cx).DemoColl
 
 // DemoCollapsingHeaderDetail says "A header that shrinks to a bar as the page scrolls, headings sticking below it"
 // in the language of msgs.
-func (msgs Messages) DemoCollapsingHeaderDetail() string { return msgs.text(87) }
+func (msgs Messages) DemoCollapsingHeaderDetail() string { return msgs.text(95) }
 
 // DemoSystem says "System"
 // in the language the app shows under cx.
@@ -15616,7 +15746,7 @@ func DemoSystem(cx *core.Scope) string { return For(cx).DemoSystem() }
 
 // DemoSystem says "System"
 // in the language of msgs.
-func (msgs Messages) DemoSystem() string { return msgs.text(88) }
+func (msgs Messages) DemoSystem() string { return msgs.text(96) }
 
 // DemoSystemDetail says "Status bar, alerts, the window, environment, timers, the clipboard, fetch"
 // in the language the app shows under cx.
@@ -15624,7 +15754,7 @@ func DemoSystemDetail(cx *core.Scope) string { return For(cx).DemoSystemDetail()
 
 // DemoSystemDetail says "Status bar, alerts, the window, environment, timers, the clipboard, fetch"
 // in the language of msgs.
-func (msgs Messages) DemoSystemDetail() string { return msgs.text(89) }
+func (msgs Messages) DemoSystemDetail() string { return msgs.text(97) }
 
 // DemoStorage says "Storage"
 // in the language the app shows under cx.
@@ -15632,7 +15762,7 @@ func DemoStorage(cx *core.Scope) string { return For(cx).DemoStorage() }
 
 // DemoStorage says "Storage"
 // in the language of msgs.
-func (msgs Messages) DemoStorage() string { return msgs.text(90) }
+func (msgs Messages) DemoStorage() string { return msgs.text(98) }
 
 // DemoStorageDetail says "A launch count, a note saved as you type, the stored keys"
 // in the language the app shows under cx.
@@ -15640,7 +15770,7 @@ func DemoStorageDetail(cx *core.Scope) string { return For(cx).DemoStorageDetail
 
 // DemoStorageDetail says "A launch count, a note saved as you type, the stored keys"
 // in the language of msgs.
-func (msgs Messages) DemoStorageDetail() string { return msgs.text(91) }
+func (msgs Messages) DemoStorageDetail() string { return msgs.text(99) }
 
 // DemoAccessibility says "Accessibility"
 // in the language the app shows under cx.
@@ -15648,7 +15778,7 @@ func DemoAccessibility(cx *core.Scope) string { return For(cx).DemoAccessibility
 
 // DemoAccessibility says "Accessibility"
 // in the language of msgs.
-func (msgs Messages) DemoAccessibility() string { return msgs.text(92) }
+func (msgs Messages) DemoAccessibility() string { return msgs.text(100) }
 
 // DemoAccessibilityDetail says "Labels, values, actions, groups, live regions and focus"
 // in the language the app shows under cx.
@@ -15656,7 +15786,7 @@ func DemoAccessibilityDetail(cx *core.Scope) string { return For(cx).DemoAccessi
 
 // DemoAccessibilityDetail says "Labels, values, actions, groups, live regions and focus"
 // in the language of msgs.
-func (msgs Messages) DemoAccessibilityDetail() string { return msgs.text(93) }
+func (msgs Messages) DemoAccessibilityDetail() string { return msgs.text(101) }
 
 // AppNothingYet says "nothing yet"
 // in the language the app shows under cx.
@@ -15664,7 +15794,7 @@ func AppNothingYet(cx *core.Scope) string { return For(cx).AppNothingYet() }
 
 // AppNothingYet says "nothing yet"
 // in the language of msgs.
-func (msgs Messages) AppNothingYet() string { return msgs.text(94) }
+func (msgs Messages) AppNothingYet() string { return msgs.text(102) }
 
 // AppToggleSidebar says "Toggle sidebar"
 // in the language the app shows under cx.
@@ -15672,7 +15802,7 @@ func AppToggleSidebar(cx *core.Scope) string { return For(cx).AppToggleSidebar()
 
 // AppToggleSidebar says "Toggle sidebar"
 // in the language of msgs.
-func (msgs Messages) AppToggleSidebar() string { return msgs.text(95) }
+func (msgs Messages) AppToggleSidebar() string { return msgs.text(103) }
 
 // AppResizeSidebar says "Resize sidebar"
 // in the language the app shows under cx.
@@ -15680,7 +15810,7 @@ func AppResizeSidebar(cx *core.Scope) string { return For(cx).AppResizeSidebar()
 
 // AppResizeSidebar says "Resize sidebar"
 // in the language of msgs.
-func (msgs Messages) AppResizeSidebar() string { return msgs.text(96) }
+func (msgs Messages) AppResizeSidebar() string { return msgs.text(104) }
 
 // AppShowSidebar says "Show Sidebar"
 // in the language the app shows under cx.
@@ -15688,7 +15818,7 @@ func AppShowSidebar(cx *core.Scope) string { return For(cx).AppShowSidebar() }
 
 // AppShowSidebar says "Show Sidebar"
 // in the language of msgs.
-func (msgs Messages) AppShowSidebar() string { return msgs.text(97) }
+func (msgs Messages) AppShowSidebar() string { return msgs.text(105) }
 
 // AppEdit says "Edit"
 // in the language the app shows under cx.
@@ -15696,7 +15826,7 @@ func AppEdit(cx *core.Scope) string { return For(cx).AppEdit() }
 
 // AppEdit says "Edit"
 // in the language of msgs.
-func (msgs Messages) AppEdit() string { return msgs.text(98) }
+func (msgs Messages) AppEdit() string { return msgs.text(106) }
 
 // AppView says "View"
 // in the language the app shows under cx.
@@ -15704,7 +15834,7 @@ func AppView(cx *core.Scope) string { return For(cx).AppView() }
 
 // AppView says "View"
 // in the language of msgs.
-func (msgs Messages) AppView() string { return msgs.text(99) }
+func (msgs Messages) AppView() string { return msgs.text(107) }
 
 // AppWindow says "Window"
 // in the language the app shows under cx.
@@ -15712,7 +15842,7 @@ func AppWindow(cx *core.Scope) string { return For(cx).AppWindow() }
 
 // AppWindow says "Window"
 // in the language of msgs.
-func (msgs Messages) AppWindow() string { return msgs.text(100) }
+func (msgs Messages) AppWindow() string { return msgs.text(108) }
 
 // ControlsPhotos says "Photos"
 // in the language the app shows under cx.
@@ -15720,7 +15850,7 @@ func ControlsPhotos(cx *core.Scope) string { return For(cx).ControlsPhotos() }
 
 // ControlsPhotos says "Photos"
 // in the language of msgs.
-func (msgs Messages) ControlsPhotos() string { return msgs.text(101) }
+func (msgs Messages) ControlsPhotos() string { return msgs.text(109) }
 
 // ControlsVideos says "Videos"
 // in the language the app shows under cx.
@@ -15728,7 +15858,7 @@ func ControlsVideos(cx *core.Scope) string { return For(cx).ControlsVideos() }
 
 // ControlsVideos says "Videos"
 // in the language of msgs.
-func (msgs Messages) ControlsVideos() string { return msgs.text(102) }
+func (msgs Messages) ControlsVideos() string { return msgs.text(110) }
 
 // ControlsLivePhotos says "Live Photos"
 // in the language the app shows under cx.
@@ -15736,7 +15866,7 @@ func ControlsLivePhotos(cx *core.Scope) string { return For(cx).ControlsLivePhot
 
 // ControlsLivePhotos says "Live Photos"
 // in the language of msgs.
-func (msgs Messages) ControlsLivePhotos() string { return msgs.text(103) }
+func (msgs Messages) ControlsLivePhotos() string { return msgs.text(111) }
 
 // ControlsPlus says "Plus"
 // in the language the app shows under cx.
@@ -15744,7 +15874,7 @@ func ControlsPlus(cx *core.Scope) string { return For(cx).ControlsPlus() }
 
 // ControlsPlus says "Plus"
 // in the language of msgs.
-func (msgs Messages) ControlsPlus() string { return msgs.text(104) }
+func (msgs Messages) ControlsPlus() string { return msgs.text(112) }
 
 // ControlsOverview says "Overview"
 // in the language the app shows under cx.
@@ -15752,7 +15882,7 @@ func ControlsOverview(cx *core.Scope) string { return For(cx).ControlsOverview()
 
 // ControlsOverview says "Overview"
 // in the language of msgs.
-func (msgs Messages) ControlsOverview() string { return msgs.text(105) }
+func (msgs Messages) ControlsOverview() string { return msgs.text(113) }
 
 // ControlsSwitch says "Switch"
 // in the language the app shows under cx.
@@ -15760,7 +15890,7 @@ func ControlsSwitch(cx *core.Scope) string { return For(cx).ControlsSwitch() }
 
 // ControlsSwitch says "Switch"
 // in the language of msgs.
-func (msgs Messages) ControlsSwitch() string { return msgs.text(106) }
+func (msgs Messages) ControlsSwitch() string { return msgs.text(114) }
 
 // ControlsSettingsThatTakeEffectAt says "Settings that take effect at once"
 // in the language the app shows under cx.
@@ -15770,7 +15900,7 @@ func ControlsSettingsThatTakeEffectAt(cx *core.Scope) string {
 
 // ControlsSettingsThatTakeEffectAt says "Settings that take effect at once"
 // in the language of msgs.
-func (msgs Messages) ControlsSettingsThatTakeEffectAt() string { return msgs.text(107) }
+func (msgs Messages) ControlsSettingsThatTakeEffectAt() string { return msgs.text(115) }
 
 // ControlsNotifications says "Notifications"
 // in the language the app shows under cx.
@@ -15778,7 +15908,7 @@ func ControlsNotifications(cx *core.Scope) string { return For(cx).ControlsNotif
 
 // ControlsNotifications says "Notifications"
 // in the language of msgs.
-func (msgs Messages) ControlsNotifications() string { return msgs.text(108) }
+func (msgs Messages) ControlsNotifications() string { return msgs.text(116) }
 
 // ControlsBannersSoundsAndBadges says "Banners, sounds and badges"
 // in the language the app shows under cx.
@@ -15788,7 +15918,7 @@ func ControlsBannersSoundsAndBadges(cx *core.Scope) string {
 
 // ControlsBannersSoundsAndBadges says "Banners, sounds and badges"
 // in the language of msgs.
-func (msgs Messages) ControlsBannersSoundsAndBadges() string { return msgs.text(109) }
+func (msgs Messages) ControlsBannersSoundsAndBadges() string { return msgs.text(117) }
 
 // ControlsOff says "Off"
 // in the language the app shows under cx.
@@ -15796,7 +15926,7 @@ func ControlsOff(cx *core.Scope) string { return For(cx).ControlsOff() }
 
 // ControlsOff says "Off"
 // in the language of msgs.
-func (msgs Messages) ControlsOff() string { return msgs.text(110) }
+func (msgs Messages) ControlsOff() string { return msgs.text(118) }
 
 // ControlsBadges says "Badges"
 // in the language the app shows under cx.
@@ -15804,7 +15934,7 @@ func ControlsBadges(cx *core.Scope) string { return For(cx).ControlsBadges() }
 
 // ControlsBadges says "Badges"
 // in the language of msgs.
-func (msgs Messages) ControlsBadges() string { return msgs.text(111) }
+func (msgs Messages) ControlsBadges() string { return msgs.text(119) }
 
 // ControlsTheUnreadCountOnThe says "The unread count on the icon"
 // in the language the app shows under cx.
@@ -15812,7 +15942,7 @@ func ControlsTheUnreadCountOnThe(cx *core.Scope) string { return For(cx).Control
 
 // ControlsTheUnreadCountOnThe says "The unread count on the icon"
 // in the language of msgs.
-func (msgs Messages) ControlsTheUnreadCountOnThe() string { return msgs.text(112) }
+func (msgs Messages) ControlsTheUnreadCountOnThe() string { return msgs.text(120) }
 
 // ControlsTurnOnNotificationsFirst says "Turn on notifications first"
 // in the language the app shows under cx.
@@ -15822,7 +15952,7 @@ func ControlsTurnOnNotificationsFirst(cx *core.Scope) string {
 
 // ControlsTurnOnNotificationsFirst says "Turn on notifications first"
 // in the language of msgs.
-func (msgs Messages) ControlsTurnOnNotificationsFirst() string { return msgs.text(113) }
+func (msgs Messages) ControlsTurnOnNotificationsFirst() string { return msgs.text(121) }
 
 // ControlsHaptics says "Haptics"
 // in the language the app shows under cx.
@@ -15830,7 +15960,7 @@ func ControlsHaptics(cx *core.Scope) string { return For(cx).ControlsHaptics() }
 
 // ControlsHaptics says "Haptics"
 // in the language of msgs.
-func (msgs Messages) ControlsHaptics() string { return msgs.text(114) }
+func (msgs Messages) ControlsHaptics() string { return msgs.text(122) }
 
 // ControlsATapUnderTheFinger says "A tap under the finger as values change"
 // in the language the app shows under cx.
@@ -15838,7 +15968,7 @@ func ControlsATapUnderTheFinger(cx *core.Scope) string { return For(cx).Controls
 
 // ControlsATapUnderTheFinger says "A tap under the finger as values change"
 // in the language of msgs.
-func (msgs Messages) ControlsATapUnderTheFinger() string { return msgs.text(115) }
+func (msgs Messages) ControlsATapUnderTheFinger() string { return msgs.text(123) }
 
 // ControlsLowDataMode says "Low data mode"
 // in the language the app shows under cx.
@@ -15846,7 +15976,7 @@ func ControlsLowDataMode(cx *core.Scope) string { return For(cx).ControlsLowData
 
 // ControlsLowDataMode says "Low data mode"
 // in the language of msgs.
-func (msgs Messages) ControlsLowDataMode() string { return msgs.text(116) }
+func (msgs Messages) ControlsLowDataMode() string { return msgs.text(124) }
 
 // ControlsImagesLoadAtALower says "Images load at a lower quality"
 // in the language the app shows under cx.
@@ -15854,7 +15984,7 @@ func ControlsImagesLoadAtALower(cx *core.Scope) string { return For(cx).Controls
 
 // ControlsImagesLoadAtALower says "Images load at a lower quality"
 // in the language of msgs.
-func (msgs Messages) ControlsImagesLoadAtALower() string { return msgs.text(117) }
+func (msgs Messages) ControlsImagesLoadAtALower() string { return msgs.text(125) }
 
 // ControlsImagesLoadInFull says "Images load in full"
 // in the language the app shows under cx.
@@ -15862,7 +15992,7 @@ func ControlsImagesLoadInFull(cx *core.Scope) string { return For(cx).ControlsIm
 
 // ControlsImagesLoadInFull says "Images load in full"
 // in the language of msgs.
-func (msgs Messages) ControlsImagesLoadInFull() string { return msgs.text(118) }
+func (msgs Messages) ControlsImagesLoadInFull() string { return msgs.text(126) }
 
 // ControlsSelectAll says "Select all"
 // in the language the app shows under cx.
@@ -15870,7 +16000,7 @@ func ControlsSelectAll(cx *core.Scope) string { return For(cx).ControlsSelectAll
 
 // ControlsSelectAll says "Select all"
 // in the language of msgs.
-func (msgs Messages) ControlsSelectAll() string { return msgs.text(119) }
+func (msgs Messages) ControlsSelectAll() string { return msgs.text(127) }
 
 // ControlsCheckbox says "Checkbox"
 // in the language the app shows under cx.
@@ -15878,7 +16008,7 @@ func ControlsCheckbox(cx *core.Scope) string { return For(cx).ControlsCheckbox()
 
 // ControlsCheckbox says "Checkbox"
 // in the language of msgs.
-func (msgs Messages) ControlsCheckbox() string { return msgs.text(120) }
+func (msgs Messages) ControlsCheckbox() string { return msgs.text(128) }
 
 // ControlsAFilterSelectAllShows says "A filter: “Select all” shows a partial selection"
 // in the language the app shows under cx.
@@ -15888,7 +16018,7 @@ func ControlsAFilterSelectAllShows(cx *core.Scope) string {
 
 // ControlsAFilterSelectAllShows says "A filter: “Select all” shows a partial selection"
 // in the language of msgs.
-func (msgs Messages) ControlsAFilterSelectAllShows() string { return msgs.text(121) }
+func (msgs Messages) ControlsAFilterSelectAllShows() string { return msgs.text(129) }
 
 // ControlsNothingToShow says "Nothing to show"
 // in the language the app shows under cx.
@@ -15896,7 +16026,7 @@ func ControlsNothingToShow(cx *core.Scope) string { return For(cx).ControlsNothi
 
 // ControlsNothingToShow says "Nothing to show"
 // in the language of msgs.
-func (msgs Messages) ControlsNothingToShow() string { return msgs.text(122) }
+func (msgs Messages) ControlsNothingToShow() string { return msgs.text(130) }
 
 // ControlsPlan says "Plan: "
 // in the language the app shows under cx.
@@ -15904,7 +16034,7 @@ func ControlsPlan(cx *core.Scope) string { return For(cx).ControlsPlan() }
 
 // ControlsPlan says "Plan: "
 // in the language of msgs.
-func (msgs Messages) ControlsPlan() string { return msgs.text(123) }
+func (msgs Messages) ControlsPlan() string { return msgs.text(131) }
 
 // ControlsRadio says "Radio"
 // in the language the app shows under cx.
@@ -15912,7 +16042,7 @@ func ControlsRadio(cx *core.Scope) string { return For(cx).ControlsRadio() }
 
 // ControlsRadio says "Radio"
 // in the language of msgs.
-func (msgs Messages) ControlsRadio() string { return msgs.text(124) }
+func (msgs Messages) ControlsRadio() string { return msgs.text(132) }
 
 // ControlsAPlanPickerOneOf says "A plan picker: one of a small set, all in view"
 // in the language the app shows under cx.
@@ -15920,7 +16050,7 @@ func ControlsAPlanPickerOneOf(cx *core.Scope) string { return For(cx).ControlsAP
 
 // ControlsAPlanPickerOneOf says "A plan picker: one of a small set, all in view"
 // in the language of msgs.
-func (msgs Messages) ControlsAPlanPickerOneOf() string { return msgs.text(125) }
+func (msgs Messages) ControlsAPlanPickerOneOf() string { return msgs.text(133) }
 
 // ControlsPlan2 says "Plan"
 // in the language the app shows under cx.
@@ -15928,7 +16058,7 @@ func ControlsPlan2(cx *core.Scope) string { return For(cx).ControlsPlan2() }
 
 // ControlsPlan2 says "Plan"
 // in the language of msgs.
-func (msgs Messages) ControlsPlan2() string { return msgs.text(126) }
+func (msgs Messages) ControlsPlan2() string { return msgs.text(134) }
 
 // ControlsContinueWith says "Continue with "
 // in the language the app shows under cx.
@@ -15936,7 +16066,7 @@ func ControlsContinueWith(cx *core.Scope) string { return For(cx).ControlsContin
 
 // ControlsContinueWith says "Continue with "
 // in the language of msgs.
-func (msgs Messages) ControlsContinueWith() string { return msgs.text(127) }
+func (msgs Messages) ControlsContinueWith() string { return msgs.text(135) }
 
 // ControlsTab says "Tab: "
 // in the language the app shows under cx.
@@ -15944,7 +16074,7 @@ func ControlsTab(cx *core.Scope) string { return For(cx).ControlsTab() }
 
 // ControlsTab says "Tab: "
 // in the language of msgs.
-func (msgs Messages) ControlsTab() string { return msgs.text(128) }
+func (msgs Messages) ControlsTab() string { return msgs.text(136) }
 
 // ControlsTabs says "Tabs"
 // in the language the app shows under cx.
@@ -15952,7 +16082,7 @@ func ControlsTabs(cx *core.Scope) string { return For(cx).ControlsTabs() }
 
 // ControlsTabs says "Tabs"
 // in the language of msgs.
-func (msgs Messages) ControlsTabs() string { return msgs.text(129) }
+func (msgs Messages) ControlsTabs() string { return msgs.text(137) }
 
 // ControlsASectionSwitcherTheApp says "A section switcher: the app shows the selected one"
 // in the language the app shows under cx.
@@ -15962,7 +16092,7 @@ func ControlsASectionSwitcherTheApp(cx *core.Scope) string {
 
 // ControlsASectionSwitcherTheApp says "A section switcher: the app shows the selected one"
 // in the language of msgs.
-func (msgs Messages) ControlsASectionSwitcherTheApp() string { return msgs.text(130) }
+func (msgs Messages) ControlsASectionSwitcherTheApp() string { return msgs.text(138) }
 
 // ControlsSections says "Sections"
 // in the language the app shows under cx.
@@ -15970,7 +16100,7 @@ func ControlsSections(cx *core.Scope) string { return For(cx).ControlsSections()
 
 // ControlsSections says "Sections"
 // in the language of msgs.
-func (msgs Messages) ControlsSections() string { return msgs.text(131) }
+func (msgs Messages) ControlsSections() string { return msgs.text(139) }
 
 // ControlsCollapsible says "Collapsible"
 // in the language the app shows under cx.
@@ -15978,7 +16108,7 @@ func ControlsCollapsible(cx *core.Scope) string { return For(cx).ControlsCollaps
 
 // ControlsCollapsible says "Collapsible"
 // in the language of msgs.
-func (msgs Messages) ControlsCollapsible() string { return msgs.text(132) }
+func (msgs Messages) ControlsCollapsible() string { return msgs.text(140) }
 
 // ControlsDetailsUnderASummaryKept says "Details under a summary, kept while collapsed"
 // in the language the app shows under cx.
@@ -15988,7 +16118,7 @@ func ControlsDetailsUnderASummaryKept(cx *core.Scope) string {
 
 // ControlsDetailsUnderASummaryKept says "Details under a summary, kept while collapsed"
 // in the language of msgs.
-func (msgs Messages) ControlsDetailsUnderASummaryKept() string { return msgs.text(133) }
+func (msgs Messages) ControlsDetailsUnderASummaryKept() string { return msgs.text(141) }
 
 // ControlsStorage says "Storage"
 // in the language the app shows under cx.
@@ -15996,7 +16126,7 @@ func ControlsStorage(cx *core.Scope) string { return For(cx).ControlsStorage() }
 
 // ControlsStorage says "Storage"
 // in the language of msgs.
-func (msgs Messages) ControlsStorage() string { return msgs.text(134) }
+func (msgs Messages) ControlsStorage() string { return msgs.text(142) }
 
 // Controls212GbOf256Gb says "212 GB of 256 GB used"
 // in the language the app shows under cx.
@@ -16004,7 +16134,7 @@ func Controls212GbOf256Gb(cx *core.Scope) string { return For(cx).Controls212GbO
 
 // Controls212GbOf256Gb says "212 GB of 256 GB used"
 // in the language of msgs.
-func (msgs Messages) Controls212GbOf256Gb() string { return msgs.text(135) }
+func (msgs Messages) Controls212GbOf256Gb() string { return msgs.text(143) }
 
 // ControlsKeepOriginals says "Keep originals"
 // in the language the app shows under cx.
@@ -16012,7 +16142,7 @@ func ControlsKeepOriginals(cx *core.Scope) string { return For(cx).ControlsKeepO
 
 // ControlsKeepOriginals says "Keep originals"
 // in the language of msgs.
-func (msgs Messages) ControlsKeepOriginals() string { return msgs.text(136) }
+func (msgs Messages) ControlsKeepOriginals() string { return msgs.text(144) }
 
 // ControlsKeepOriginals2 says "Keep originals: "
 // in the language the app shows under cx.
@@ -16020,7 +16150,7 @@ func ControlsKeepOriginals2(cx *core.Scope) string { return For(cx).ControlsKeep
 
 // ControlsKeepOriginals2 says "Keep originals: "
 // in the language of msgs.
-func (msgs Messages) ControlsKeepOriginals2() string { return msgs.text(137) }
+func (msgs Messages) ControlsKeepOriginals2() string { return msgs.text(145) }
 
 // ControlsEditsAreSavedAsCopies says "Edits are saved as copies"
 // in the language the app shows under cx.
@@ -16030,7 +16160,7 @@ func ControlsEditsAreSavedAsCopies(cx *core.Scope) string {
 
 // ControlsEditsAreSavedAsCopies says "Edits are saved as copies"
 // in the language of msgs.
-func (msgs Messages) ControlsEditsAreSavedAsCopies() string { return msgs.text(138) }
+func (msgs Messages) ControlsEditsAreSavedAsCopies() string { return msgs.text(146) }
 
 // ControlsEditsReplaceThePhoto says "Edits replace the photo"
 // in the language the app shows under cx.
@@ -16040,7 +16170,7 @@ func ControlsEditsReplaceThePhoto(cx *core.Scope) string {
 
 // ControlsEditsReplaceThePhoto says "Edits replace the photo"
 // in the language of msgs.
-func (msgs Messages) ControlsEditsReplaceThePhoto() string { return msgs.text(139) }
+func (msgs Messages) ControlsEditsReplaceThePhoto() string { return msgs.text(147) }
 
 // ControlsAdvanced says "Advanced"
 // in the language the app shows under cx.
@@ -16048,7 +16178,7 @@ func ControlsAdvanced(cx *core.Scope) string { return For(cx).ControlsAdvanced()
 
 // ControlsAdvanced says "Advanced"
 // in the language of msgs.
-func (msgs Messages) ControlsAdvanced() string { return msgs.text(140) }
+func (msgs Messages) ControlsAdvanced() string { return msgs.text(148) }
 
 // ControlsOptionsMostPeopleLeaveAlone says "Options most people leave alone"
 // in the language the app shows under cx.
@@ -16058,7 +16188,7 @@ func ControlsOptionsMostPeopleLeaveAlone(cx *core.Scope) string {
 
 // ControlsOptionsMostPeopleLeaveAlone says "Options most people leave alone"
 // in the language of msgs.
-func (msgs Messages) ControlsOptionsMostPeopleLeaveAlone() string { return msgs.text(141) }
+func (msgs Messages) ControlsOptionsMostPeopleLeaveAlone() string { return msgs.text(149) }
 
 // ControlsUploadStarted says "Upload: started"
 // in the language the app shows under cx.
@@ -16066,7 +16196,7 @@ func ControlsUploadStarted(cx *core.Scope) string { return For(cx).ControlsUploa
 
 // ControlsUploadStarted says "Upload: started"
 // in the language of msgs.
-func (msgs Messages) ControlsUploadStarted() string { return msgs.text(142) }
+func (msgs Messages) ControlsUploadStarted() string { return msgs.text(150) }
 
 // ControlsUploadDone says "Upload: done"
 // in the language the app shows under cx.
@@ -16074,7 +16204,7 @@ func ControlsUploadDone(cx *core.Scope) string { return For(cx).ControlsUploadDo
 
 // ControlsUploadDone says "Upload: done"
 // in the language of msgs.
-func (msgs Messages) ControlsUploadDone() string { return msgs.text(143) }
+func (msgs Messages) ControlsUploadDone() string { return msgs.text(151) }
 
 // ControlsProgress says "Progress"
 // in the language the app shows under cx.
@@ -16082,7 +16212,7 @@ func ControlsProgress(cx *core.Scope) string { return For(cx).ControlsProgress()
 
 // ControlsProgress says "Progress"
 // in the language of msgs.
-func (msgs Messages) ControlsProgress() string { return msgs.text(144) }
+func (msgs Messages) ControlsProgress() string { return msgs.text(152) }
 
 // ControlsTransfersTheAppOwnsThe says "Transfers: the app owns the value"
 // in the language the app shows under cx.
@@ -16092,7 +16222,7 @@ func ControlsTransfersTheAppOwnsThe(cx *core.Scope) string {
 
 // ControlsTransfersTheAppOwnsThe says "Transfers: the app owns the value"
 // in the language of msgs.
-func (msgs Messages) ControlsTransfersTheAppOwnsThe() string { return msgs.text(145) }
+func (msgs Messages) ControlsTransfersTheAppOwnsThe() string { return msgs.text(153) }
 
 // ControlsUpload says "Upload"
 // in the language the app shows under cx.
@@ -16100,7 +16230,7 @@ func ControlsUpload(cx *core.Scope) string { return For(cx).ControlsUpload() }
 
 // ControlsUpload says "Upload"
 // in the language of msgs.
-func (msgs Messages) ControlsUpload() string { return msgs.text(146) }
+func (msgs Messages) ControlsUpload() string { return msgs.text(154) }
 
 // Controls24PhotosSent says "24 photos sent"
 // in the language the app shows under cx.
@@ -16108,7 +16238,7 @@ func Controls24PhotosSent(cx *core.Scope) string { return For(cx).Controls24Phot
 
 // Controls24PhotosSent says "24 photos sent"
 // in the language of msgs.
-func (msgs Messages) Controls24PhotosSent() string { return msgs.text(147) }
+func (msgs Messages) Controls24PhotosSent() string { return msgs.text(155) }
 
 // ControlsSending24Photos says "Sending 24 photos"
 // in the language the app shows under cx.
@@ -16116,7 +16246,7 @@ func ControlsSending24Photos(cx *core.Scope) string { return For(cx).ControlsSen
 
 // ControlsSending24Photos says "Sending 24 photos"
 // in the language of msgs.
-func (msgs Messages) ControlsSending24Photos() string { return msgs.text(148) }
+func (msgs Messages) ControlsSending24Photos() string { return msgs.text(156) }
 
 // Controls24PhotosToSend says "24 photos to send"
 // in the language the app shows under cx.
@@ -16124,7 +16254,7 @@ func Controls24PhotosToSend(cx *core.Scope) string { return For(cx).Controls24Ph
 
 // Controls24PhotosToSend says "24 photos to send"
 // in the language of msgs.
-func (msgs Messages) Controls24PhotosToSend() string { return msgs.text(149) }
+func (msgs Messages) Controls24PhotosToSend() string { return msgs.text(157) }
 
 // ControlsBackup says "Backup"
 // in the language the app shows under cx.
@@ -16132,7 +16262,7 @@ func ControlsBackup(cx *core.Scope) string { return For(cx).ControlsBackup() }
 
 // ControlsBackup says "Backup"
 // in the language of msgs.
-func (msgs Messages) ControlsBackup() string { return msgs.text(150) }
+func (msgs Messages) ControlsBackup() string { return msgs.text(158) }
 
 // ControlsPreparingItsSizeIsNot says "Preparing: its size is not known yet"
 // in the language the app shows under cx.
@@ -16142,7 +16272,7 @@ func ControlsPreparingItsSizeIsNot(cx *core.Scope) string {
 
 // ControlsPreparingItsSizeIsNot says "Preparing: its size is not known yet"
 // in the language of msgs.
-func (msgs Messages) ControlsPreparingItsSizeIsNot() string { return msgs.text(151) }
+func (msgs Messages) ControlsPreparingItsSizeIsNot() string { return msgs.text(159) }
 
 // ControlsSend says "Send"
 // in the language the app shows under cx.
@@ -16150,7 +16280,7 @@ func ControlsSend(cx *core.Scope) string { return For(cx).ControlsSend() }
 
 // ControlsSend says "Send"
 // in the language of msgs.
-func (msgs Messages) ControlsSend() string { return msgs.text(152) }
+func (msgs Messages) ControlsSend() string { return msgs.text(160) }
 
 // ControlsPause says "Pause"
 // in the language the app shows under cx.
@@ -16158,7 +16288,7 @@ func ControlsPause(cx *core.Scope) string { return For(cx).ControlsPause() }
 
 // ControlsPause says "Pause"
 // in the language of msgs.
-func (msgs Messages) ControlsPause() string { return msgs.text(153) }
+func (msgs Messages) ControlsPause() string { return msgs.text(161) }
 
 // ControlsSendAgain says "Send again"
 // in the language the app shows under cx.
@@ -16166,7 +16296,7 @@ func ControlsSendAgain(cx *core.Scope) string { return For(cx).ControlsSendAgain
 
 // ControlsSendAgain says "Send again"
 // in the language of msgs.
-func (msgs Messages) ControlsSendAgain() string { return msgs.text(154) }
+func (msgs Messages) ControlsSendAgain() string { return msgs.text(162) }
 
 // ControlsUploadPaused says "Upload: paused"
 // in the language the app shows under cx.
@@ -16174,7 +16304,7 @@ func ControlsUploadPaused(cx *core.Scope) string { return For(cx).ControlsUpload
 
 // ControlsUploadPaused says "Upload: paused"
 // in the language of msgs.
-func (msgs Messages) ControlsUploadPaused() string { return msgs.text(155) }
+func (msgs Messages) ControlsUploadPaused() string { return msgs.text(163) }
 
 // ControlsReset says "Reset"
 // in the language the app shows under cx.
@@ -16182,7 +16312,7 @@ func ControlsReset(cx *core.Scope) string { return For(cx).ControlsReset() }
 
 // ControlsReset says "Reset"
 // in the language of msgs.
-func (msgs Messages) ControlsReset() string { return msgs.text(156) }
+func (msgs Messages) ControlsReset() string { return msgs.text(164) }
 
 // ControlsUploadReset says "Upload: reset"
 // in the language the app shows under cx.
@@ -16190,7 +16320,7 @@ func ControlsUploadReset(cx *core.Scope) string { return For(cx).ControlsUploadR
 
 // ControlsUploadReset says "Upload: reset"
 // in the language of msgs.
-func (msgs Messages) ControlsUploadReset() string { return msgs.text(157) }
+func (msgs Messages) ControlsUploadReset() string { return msgs.text(165) }
 
 // ControlsScreenshots says "Screenshots"
 // in the language the app shows under cx.
@@ -16198,7 +16328,7 @@ func ControlsScreenshots(cx *core.Scope) string { return For(cx).ControlsScreens
 
 // ControlsScreenshots says "Screenshots"
 // in the language of msgs.
-func (msgs Messages) ControlsScreenshots() string { return msgs.text(158) }
+func (msgs Messages) ControlsScreenshots() string { return msgs.text(166) }
 
 // ControlsFree says "Free"
 // in the language the app shows under cx.
@@ -16206,7 +16336,7 @@ func ControlsFree(cx *core.Scope) string { return For(cx).ControlsFree() }
 
 // ControlsFree says "Free"
 // in the language of msgs.
-func (msgs Messages) ControlsFree() string { return msgs.text(159) }
+func (msgs Messages) ControlsFree() string { return msgs.text(167) }
 
 // ControlsOneDevice5Gb says "One device, 5 GB"
 // in the language the app shows under cx.
@@ -16214,7 +16344,7 @@ func ControlsOneDevice5Gb(cx *core.Scope) string { return For(cx).ControlsOneDev
 
 // ControlsOneDevice5Gb says "One device, 5 GB"
 // in the language of msgs.
-func (msgs Messages) ControlsOneDevice5Gb() string { return msgs.text(160) }
+func (msgs Messages) ControlsOneDevice5Gb() string { return msgs.text(168) }
 
 // ControlsThreeDevices200Gb says "Three devices, 200 GB"
 // in the language the app shows under cx.
@@ -16222,7 +16352,7 @@ func ControlsThreeDevices200Gb(cx *core.Scope) string { return For(cx).ControlsT
 
 // ControlsThreeDevices200Gb says "Three devices, 200 GB"
 // in the language of msgs.
-func (msgs Messages) ControlsThreeDevices200Gb() string { return msgs.text(161) }
+func (msgs Messages) ControlsThreeDevices200Gb() string { return msgs.text(169) }
 
 // Controls3Mo says "$3 / mo"
 // in the language the app shows under cx.
@@ -16230,7 +16360,7 @@ func Controls3Mo(cx *core.Scope) string { return For(cx).Controls3Mo() }
 
 // Controls3Mo says "$3 / mo"
 // in the language of msgs.
-func (msgs Messages) Controls3Mo() string { return msgs.text(162) }
+func (msgs Messages) Controls3Mo() string { return msgs.text(170) }
 
 // ControlsTeam says "Team"
 // in the language the app shows under cx.
@@ -16238,7 +16368,7 @@ func ControlsTeam(cx *core.Scope) string { return For(cx).ControlsTeam() }
 
 // ControlsTeam says "Team"
 // in the language of msgs.
-func (msgs Messages) ControlsTeam() string { return msgs.text(163) }
+func (msgs Messages) ControlsTeam() string { return msgs.text(171) }
 
 // ControlsASharedLibrary2Tb says "A shared library, 2 TB"
 // in the language the app shows under cx.
@@ -16246,7 +16376,7 @@ func ControlsASharedLibrary2Tb(cx *core.Scope) string { return For(cx).ControlsA
 
 // ControlsASharedLibrary2Tb says "A shared library, 2 TB"
 // in the language of msgs.
-func (msgs Messages) ControlsASharedLibrary2Tb() string { return msgs.text(164) }
+func (msgs Messages) ControlsASharedLibrary2Tb() string { return msgs.text(172) }
 
 // Controls12Mo says "$12 / mo"
 // in the language the app shows under cx.
@@ -16254,7 +16384,7 @@ func Controls12Mo(cx *core.Scope) string { return For(cx).Controls12Mo() }
 
 // Controls12Mo says "$12 / mo"
 // in the language of msgs.
-func (msgs Messages) Controls12Mo() string { return msgs.text(165) }
+func (msgs Messages) Controls12Mo() string { return msgs.text(173) }
 
 // ControlsEnterprise says "Enterprise"
 // in the language the app shows under cx.
@@ -16262,7 +16392,7 @@ func ControlsEnterprise(cx *core.Scope) string { return For(cx).ControlsEnterpri
 
 // ControlsEnterprise says "Enterprise"
 // in the language of msgs.
-func (msgs Messages) ControlsEnterprise() string { return msgs.text(166) }
+func (msgs Messages) ControlsEnterprise() string { return msgs.text(174) }
 
 // ControlsSetUpByYourOrganization says "Set up by your organization"
 // in the language the app shows under cx.
@@ -16272,7 +16402,7 @@ func ControlsSetUpByYourOrganization(cx *core.Scope) string {
 
 // ControlsSetUpByYourOrganization says "Set up by your organization"
 // in the language of msgs.
-func (msgs Messages) ControlsSetUpByYourOrganization() string { return msgs.text(167) }
+func (msgs Messages) ControlsSetUpByYourOrganization() string { return msgs.text(175) }
 
 // ControlsVisitors says "Visitors"
 // in the language the app shows under cx.
@@ -16280,7 +16410,7 @@ func ControlsVisitors(cx *core.Scope) string { return For(cx).ControlsVisitors()
 
 // ControlsVisitors says "Visitors"
 // in the language of msgs.
-func (msgs Messages) ControlsVisitors() string { return msgs.text(168) }
+func (msgs Messages) ControlsVisitors() string { return msgs.text(176) }
 
 // ControlsSignUps says "Sign-ups"
 // in the language the app shows under cx.
@@ -16288,7 +16418,7 @@ func ControlsSignUps(cx *core.Scope) string { return For(cx).ControlsSignUps() }
 
 // ControlsSignUps says "Sign-ups"
 // in the language of msgs.
-func (msgs Messages) ControlsSignUps() string { return msgs.text(169) }
+func (msgs Messages) ControlsSignUps() string { return msgs.text(177) }
 
 // ControlsConversion says "Conversion"
 // in the language the app shows under cx.
@@ -16296,7 +16426,7 @@ func ControlsConversion(cx *core.Scope) string { return For(cx).ControlsConversi
 
 // ControlsConversion says "Conversion"
 // in the language of msgs.
-func (msgs Messages) ControlsConversion() string { return msgs.text(170) }
+func (msgs Messages) ControlsConversion() string { return msgs.text(178) }
 
 // ControlsActivity says "Activity"
 // in the language the app shows under cx.
@@ -16304,7 +16434,7 @@ func ControlsActivity(cx *core.Scope) string { return For(cx).ControlsActivity()
 
 // ControlsActivity says "Activity"
 // in the language of msgs.
-func (msgs Messages) ControlsActivity() string { return msgs.text(171) }
+func (msgs Messages) ControlsActivity() string { return msgs.text(179) }
 
 // ControlsDeployedToProduction says "Deployed to production"
 // in the language the app shows under cx.
@@ -16314,7 +16444,7 @@ func ControlsDeployedToProduction(cx *core.Scope) string {
 
 // ControlsDeployedToProduction says "Deployed to production"
 // in the language of msgs.
-func (msgs Messages) ControlsDeployedToProduction() string { return msgs.text(172) }
+func (msgs Messages) ControlsDeployedToProduction() string { return msgs.text(180) }
 
 // ControlsInvoicePaid says "Invoice paid"
 // in the language the app shows under cx.
@@ -16322,7 +16452,7 @@ func ControlsInvoicePaid(cx *core.Scope) string { return For(cx).ControlsInvoice
 
 // ControlsInvoicePaid says "Invoice paid"
 // in the language of msgs.
-func (msgs Messages) ControlsInvoicePaid() string { return msgs.text(173) }
+func (msgs Messages) ControlsInvoicePaid() string { return msgs.text(181) }
 
 // ControlsAMemberJoined says "A member joined"
 // in the language the app shows under cx.
@@ -16330,7 +16460,7 @@ func ControlsAMemberJoined(cx *core.Scope) string { return For(cx).ControlsAMemb
 
 // ControlsAMemberJoined says "A member joined"
 // in the language of msgs.
-func (msgs Messages) ControlsAMemberJoined() string { return msgs.text(174) }
+func (msgs Messages) ControlsAMemberJoined() string { return msgs.text(182) }
 
 // ControlsMembers says "Members"
 // in the language the app shows under cx.
@@ -16338,7 +16468,7 @@ func ControlsMembers(cx *core.Scope) string { return For(cx).ControlsMembers() }
 
 // ControlsMembers says "Members"
 // in the language of msgs.
-func (msgs Messages) ControlsMembers() string { return msgs.text(175) }
+func (msgs Messages) ControlsMembers() string { return msgs.text(183) }
 
 // ControlsOwner says "Owner"
 // in the language the app shows under cx.
@@ -16346,7 +16476,7 @@ func ControlsOwner(cx *core.Scope) string { return For(cx).ControlsOwner() }
 
 // ControlsOwner says "Owner"
 // in the language of msgs.
-func (msgs Messages) ControlsOwner() string { return msgs.text(176) }
+func (msgs Messages) ControlsOwner() string { return msgs.text(184) }
 
 // ControlsAdmin says "Admin"
 // in the language the app shows under cx.
@@ -16354,7 +16484,7 @@ func ControlsAdmin(cx *core.Scope) string { return For(cx).ControlsAdmin() }
 
 // ControlsAdmin says "Admin"
 // in the language of msgs.
-func (msgs Messages) ControlsAdmin() string { return msgs.text(177) }
+func (msgs Messages) ControlsAdmin() string { return msgs.text(185) }
 
 // ControlsMember says "Member"
 // in the language the app shows under cx.
@@ -16362,7 +16492,7 @@ func ControlsMember(cx *core.Scope) string { return For(cx).ControlsMember() }
 
 // ControlsMember says "Member"
 // in the language of msgs.
-func (msgs Messages) ControlsMember() string { return msgs.text(178) }
+func (msgs Messages) ControlsMember() string { return msgs.text(186) }
 
 // ControlsBilling says "Billing"
 // in the language the app shows under cx.
@@ -16370,7 +16500,7 @@ func ControlsBilling(cx *core.Scope) string { return For(cx).ControlsBilling() }
 
 // ControlsBilling says "Billing"
 // in the language of msgs.
-func (msgs Messages) ControlsBilling() string { return msgs.text(179) }
+func (msgs Messages) ControlsBilling() string { return msgs.text(187) }
 
 // ControlsApps says "Apps"
 // in the language the app shows under cx.
@@ -16378,7 +16508,7 @@ func ControlsApps(cx *core.Scope) string { return For(cx).ControlsApps() }
 
 // ControlsApps says "Apps"
 // in the language of msgs.
-func (msgs Messages) ControlsApps() string { return msgs.text(180) }
+func (msgs Messages) ControlsApps() string { return msgs.text(188) }
 
 // ControlsSystem says "System"
 // in the language the app shows under cx.
@@ -16386,7 +16516,7 @@ func ControlsSystem(cx *core.Scope) string { return For(cx).ControlsSystem() }
 
 // ControlsSystem says "System"
 // in the language of msgs.
-func (msgs Messages) ControlsSystem() string { return msgs.text(181) }
+func (msgs Messages) ControlsSystem() string { return msgs.text(189) }
 
 // CommonOn says "on"
 // in the language the app shows under cx.
@@ -16394,7 +16524,7 @@ func CommonOn(cx *core.Scope) string { return For(cx).CommonOn() }
 
 // CommonOn says "on"
 // in the language of msgs.
-func (msgs Messages) CommonOn() string { return msgs.text(182) }
+func (msgs Messages) CommonOn() string { return msgs.text(190) }
 
 // CommonOff says "off"
 // in the language the app shows under cx.
@@ -16402,7 +16532,7 @@ func CommonOff(cx *core.Scope) string { return For(cx).CommonOff() }
 
 // CommonOff says "off"
 // in the language of msgs.
-func (msgs Messages) CommonOff() string { return msgs.text(183) }
+func (msgs Messages) CommonOff() string { return msgs.text(191) }
 
 // ControlsCountOf says "{shown, number} of {total, number}"
 // in the language the app shows under cx.
@@ -16498,7 +16628,7 @@ func MenusMedium(cx *core.Scope) string { return For(cx).MenusMedium() }
 
 // MenusMedium says "Medium"
 // in the language of msgs.
-func (msgs Messages) MenusMedium() string { return msgs.text(184) }
+func (msgs Messages) MenusMedium() string { return msgs.text(192) }
 
 // MenusChose says "chose "
 // in the language the app shows under cx.
@@ -16506,7 +16636,7 @@ func MenusChose(cx *core.Scope) string { return For(cx).MenusChose() }
 
 // MenusChose says "chose "
 // in the language of msgs.
-func (msgs Messages) MenusChose() string { return msgs.text(185) }
+func (msgs Messages) MenusChose() string { return msgs.text(193) }
 
 // MenusNewDocument says "New document"
 // in the language the app shows under cx.
@@ -16514,7 +16644,7 @@ func MenusNewDocument(cx *core.Scope) string { return For(cx).MenusNewDocument()
 
 // MenusNewDocument says "New document"
 // in the language of msgs.
-func (msgs Messages) MenusNewDocument() string { return msgs.text(186) }
+func (msgs Messages) MenusNewDocument() string { return msgs.text(194) }
 
 // MenusSave says "Save"
 // in the language the app shows under cx.
@@ -16522,7 +16652,7 @@ func MenusSave(cx *core.Scope) string { return For(cx).MenusSave() }
 
 // MenusSave says "Save"
 // in the language of msgs.
-func (msgs Messages) MenusSave() string { return msgs.text(187) }
+func (msgs Messages) MenusSave() string { return msgs.text(195) }
 
 // MenusSmall says "Small"
 // in the language the app shows under cx.
@@ -16530,7 +16660,7 @@ func MenusSmall(cx *core.Scope) string { return For(cx).MenusSmall() }
 
 // MenusSmall says "Small"
 // in the language of msgs.
-func (msgs Messages) MenusSmall() string { return msgs.text(188) }
+func (msgs Messages) MenusSmall() string { return msgs.text(196) }
 
 // MenusLarge says "Large"
 // in the language the app shows under cx.
@@ -16538,7 +16668,7 @@ func MenusLarge(cx *core.Scope) string { return For(cx).MenusLarge() }
 
 // MenusLarge says "Large"
 // in the language of msgs.
-func (msgs Messages) MenusLarge() string { return msgs.text(189) }
+func (msgs Messages) MenusLarge() string { return msgs.text(197) }
 
 // MenusMenuBar says "Menu bar"
 // in the language the app shows under cx.
@@ -16546,7 +16676,7 @@ func MenusMenuBar(cx *core.Scope) string { return For(cx).MenusMenuBar() }
 
 // MenusMenuBar says "Menu bar"
 // in the language of msgs.
-func (msgs Messages) MenusMenuBar() string { return msgs.text(190) }
+func (msgs Messages) MenusMenuBar() string { return msgs.text(198) }
 
 // MenusEachMenuASheetSubmenus says "Each menu a sheet; submenus take its place"
 // in the language the app shows under cx.
@@ -16554,7 +16684,7 @@ func MenusEachMenuASheetSubmenus(cx *core.Scope) string { return For(cx).MenusEa
 
 // MenusEachMenuASheetSubmenus says "Each menu a sheet; submenus take its place"
 // in the language of msgs.
-func (msgs Messages) MenusEachMenuASheetSubmenus() string { return msgs.text(191) }
+func (msgs Messages) MenusEachMenuASheetSubmenus() string { return msgs.text(199) }
 
 // MenusHoverAcrossSubmenusTheShortcuts says "Hover across submenus; the shortcuts work too"
 // in the language the app shows under cx.
@@ -16564,7 +16694,7 @@ func MenusHoverAcrossSubmenusTheShortcuts(cx *core.Scope) string {
 
 // MenusHoverAcrossSubmenusTheShortcuts says "Hover across submenus; the shortcuts work too"
 // in the language of msgs.
-func (msgs Messages) MenusHoverAcrossSubmenusTheShortcuts() string { return msgs.text(192) }
+func (msgs Messages) MenusHoverAcrossSubmenusTheShortcuts() string { return msgs.text(200) }
 
 // MenusFile says "File"
 // in the language the app shows under cx.
@@ -16572,7 +16702,7 @@ func MenusFile(cx *core.Scope) string { return For(cx).MenusFile() }
 
 // MenusFile says "File"
 // in the language of msgs.
-func (msgs Messages) MenusFile() string { return msgs.text(193) }
+func (msgs Messages) MenusFile() string { return msgs.text(201) }
 
 // MenusNewWindow says "New window"
 // in the language the app shows under cx.
@@ -16580,7 +16710,7 @@ func MenusNewWindow(cx *core.Scope) string { return For(cx).MenusNewWindow() }
 
 // MenusNewWindow says "New window"
 // in the language of msgs.
-func (msgs Messages) MenusNewWindow() string { return msgs.text(194) }
+func (msgs Messages) MenusNewWindow() string { return msgs.text(202) }
 
 // MenusOpenRecent says "Open recent"
 // in the language the app shows under cx.
@@ -16588,7 +16718,7 @@ func MenusOpenRecent(cx *core.Scope) string { return For(cx).MenusOpenRecent() }
 
 // MenusOpenRecent says "Open recent"
 // in the language of msgs.
-func (msgs Messages) MenusOpenRecent() string { return msgs.text(195) }
+func (msgs Messages) MenusOpenRecent() string { return msgs.text(203) }
 
 // MenusOpen says "Open "
 // in the language the app shows under cx.
@@ -16596,7 +16726,7 @@ func MenusOpen(cx *core.Scope) string { return For(cx).MenusOpen() }
 
 // MenusOpen says "Open "
 // in the language of msgs.
-func (msgs Messages) MenusOpen() string { return msgs.text(196) }
+func (msgs Messages) MenusOpen() string { return msgs.text(204) }
 
 // MenusClearRecent says "Clear recent"
 // in the language the app shows under cx.
@@ -16604,7 +16734,7 @@ func MenusClearRecent(cx *core.Scope) string { return For(cx).MenusClearRecent()
 
 // MenusClearRecent says "Clear recent"
 // in the language of msgs.
-func (msgs Messages) MenusClearRecent() string { return msgs.text(197) }
+func (msgs Messages) MenusClearRecent() string { return msgs.text(205) }
 
 // MenusExportAs says "Export as"
 // in the language the app shows under cx.
@@ -16612,7 +16742,7 @@ func MenusExportAs(cx *core.Scope) string { return For(cx).MenusExportAs() }
 
 // MenusExportAs says "Export as"
 // in the language of msgs.
-func (msgs Messages) MenusExportAs() string { return msgs.text(198) }
+func (msgs Messages) MenusExportAs() string { return msgs.text(206) }
 
 // MenusPdf says "PDF"
 // in the language the app shows under cx.
@@ -16620,7 +16750,7 @@ func MenusPdf(cx *core.Scope) string { return For(cx).MenusPdf() }
 
 // MenusPdf says "PDF"
 // in the language of msgs.
-func (msgs Messages) MenusPdf() string { return msgs.text(199) }
+func (msgs Messages) MenusPdf() string { return msgs.text(207) }
 
 // MenusExportPdf says "Export PDF"
 // in the language the app shows under cx.
@@ -16628,7 +16758,7 @@ func MenusExportPdf(cx *core.Scope) string { return For(cx).MenusExportPdf() }
 
 // MenusExportPdf says "Export PDF"
 // in the language of msgs.
-func (msgs Messages) MenusExportPdf() string { return msgs.text(200) }
+func (msgs Messages) MenusExportPdf() string { return msgs.text(208) }
 
 // MenusImage says "Image"
 // in the language the app shows under cx.
@@ -16636,7 +16766,7 @@ func MenusImage(cx *core.Scope) string { return For(cx).MenusImage() }
 
 // MenusImage says "Image"
 // in the language of msgs.
-func (msgs Messages) MenusImage() string { return msgs.text(201) }
+func (msgs Messages) MenusImage() string { return msgs.text(209) }
 
 // MenusPng says "PNG"
 // in the language the app shows under cx.
@@ -16644,7 +16774,7 @@ func MenusPng(cx *core.Scope) string { return For(cx).MenusPng() }
 
 // MenusPng says "PNG"
 // in the language of msgs.
-func (msgs Messages) MenusPng() string { return msgs.text(202) }
+func (msgs Messages) MenusPng() string { return msgs.text(210) }
 
 // MenusExportPng says "Export PNG"
 // in the language the app shows under cx.
@@ -16652,7 +16782,7 @@ func MenusExportPng(cx *core.Scope) string { return For(cx).MenusExportPng() }
 
 // MenusExportPng says "Export PNG"
 // in the language of msgs.
-func (msgs Messages) MenusExportPng() string { return msgs.text(203) }
+func (msgs Messages) MenusExportPng() string { return msgs.text(211) }
 
 // MenusJpeg says "JPEG"
 // in the language the app shows under cx.
@@ -16660,7 +16790,7 @@ func MenusJpeg(cx *core.Scope) string { return For(cx).MenusJpeg() }
 
 // MenusJpeg says "JPEG"
 // in the language of msgs.
-func (msgs Messages) MenusJpeg() string { return msgs.text(204) }
+func (msgs Messages) MenusJpeg() string { return msgs.text(212) }
 
 // MenusExportJpeg says "Export JPEG"
 // in the language the app shows under cx.
@@ -16668,7 +16798,7 @@ func MenusExportJpeg(cx *core.Scope) string { return For(cx).MenusExportJpeg() }
 
 // MenusExportJpeg says "Export JPEG"
 // in the language of msgs.
-func (msgs Messages) MenusExportJpeg() string { return msgs.text(205) }
+func (msgs Messages) MenusExportJpeg() string { return msgs.text(213) }
 
 // MenusWebp says "WebP"
 // in the language the app shows under cx.
@@ -16676,7 +16806,7 @@ func MenusWebp(cx *core.Scope) string { return For(cx).MenusWebp() }
 
 // MenusWebp says "WebP"
 // in the language of msgs.
-func (msgs Messages) MenusWebp() string { return msgs.text(206) }
+func (msgs Messages) MenusWebp() string { return msgs.text(214) }
 
 // MenusExportWebp says "Export WebP"
 // in the language the app shows under cx.
@@ -16684,7 +16814,7 @@ func MenusExportWebp(cx *core.Scope) string { return For(cx).MenusExportWebp() }
 
 // MenusExportWebp says "Export WebP"
 // in the language of msgs.
-func (msgs Messages) MenusExportWebp() string { return msgs.text(207) }
+func (msgs Messages) MenusExportWebp() string { return msgs.text(215) }
 
 // MenusWebPage says "Web page"
 // in the language the app shows under cx.
@@ -16692,7 +16822,7 @@ func MenusWebPage(cx *core.Scope) string { return For(cx).MenusWebPage() }
 
 // MenusWebPage says "Web page"
 // in the language of msgs.
-func (msgs Messages) MenusWebPage() string { return msgs.text(208) }
+func (msgs Messages) MenusWebPage() string { return msgs.text(216) }
 
 // MenusHtml says "HTML"
 // in the language the app shows under cx.
@@ -16700,7 +16830,7 @@ func MenusHtml(cx *core.Scope) string { return For(cx).MenusHtml() }
 
 // MenusHtml says "HTML"
 // in the language of msgs.
-func (msgs Messages) MenusHtml() string { return msgs.text(209) }
+func (msgs Messages) MenusHtml() string { return msgs.text(217) }
 
 // MenusDeleteDocument says "Delete document"
 // in the language the app shows under cx.
@@ -16708,7 +16838,7 @@ func MenusDeleteDocument(cx *core.Scope) string { return For(cx).MenusDeleteDocu
 
 // MenusDeleteDocument says "Delete document"
 // in the language of msgs.
-func (msgs Messages) MenusDeleteDocument() string { return msgs.text(210) }
+func (msgs Messages) MenusDeleteDocument() string { return msgs.text(218) }
 
 // MenusEdit says "Edit"
 // in the language the app shows under cx.
@@ -16716,7 +16846,7 @@ func MenusEdit(cx *core.Scope) string { return For(cx).MenusEdit() }
 
 // MenusEdit says "Edit"
 // in the language of msgs.
-func (msgs Messages) MenusEdit() string { return msgs.text(211) }
+func (msgs Messages) MenusEdit() string { return msgs.text(219) }
 
 // MenusUndo says "Undo"
 // in the language the app shows under cx.
@@ -16724,7 +16854,7 @@ func MenusUndo(cx *core.Scope) string { return For(cx).MenusUndo() }
 
 // MenusUndo says "Undo"
 // in the language of msgs.
-func (msgs Messages) MenusUndo() string { return msgs.text(212) }
+func (msgs Messages) MenusUndo() string { return msgs.text(220) }
 
 // MenusRedo says "Redo"
 // in the language the app shows under cx.
@@ -16732,7 +16862,7 @@ func MenusRedo(cx *core.Scope) string { return For(cx).MenusRedo() }
 
 // MenusRedo says "Redo"
 // in the language of msgs.
-func (msgs Messages) MenusRedo() string { return msgs.text(213) }
+func (msgs Messages) MenusRedo() string { return msgs.text(221) }
 
 // MenusClipboard says "Clipboard"
 // in the language the app shows under cx.
@@ -16740,7 +16870,7 @@ func MenusClipboard(cx *core.Scope) string { return For(cx).MenusClipboard() }
 
 // MenusClipboard says "Clipboard"
 // in the language of msgs.
-func (msgs Messages) MenusClipboard() string { return msgs.text(214) }
+func (msgs Messages) MenusClipboard() string { return msgs.text(222) }
 
 // MenusCut says "Cut"
 // in the language the app shows under cx.
@@ -16748,7 +16878,7 @@ func MenusCut(cx *core.Scope) string { return For(cx).MenusCut() }
 
 // MenusCut says "Cut"
 // in the language of msgs.
-func (msgs Messages) MenusCut() string { return msgs.text(215) }
+func (msgs Messages) MenusCut() string { return msgs.text(223) }
 
 // MenusCopy says "Copy"
 // in the language the app shows under cx.
@@ -16756,7 +16886,7 @@ func MenusCopy(cx *core.Scope) string { return For(cx).MenusCopy() }
 
 // MenusCopy says "Copy"
 // in the language of msgs.
-func (msgs Messages) MenusCopy() string { return msgs.text(216) }
+func (msgs Messages) MenusCopy() string { return msgs.text(224) }
 
 // MenusPaste says "Paste"
 // in the language the app shows under cx.
@@ -16764,7 +16894,7 @@ func MenusPaste(cx *core.Scope) string { return For(cx).MenusPaste() }
 
 // MenusPaste says "Paste"
 // in the language of msgs.
-func (msgs Messages) MenusPaste() string { return msgs.text(217) }
+func (msgs Messages) MenusPaste() string { return msgs.text(225) }
 
 // MenusView says "View"
 // in the language the app shows under cx.
@@ -16772,7 +16902,7 @@ func MenusView(cx *core.Scope) string { return For(cx).MenusView() }
 
 // MenusView says "View"
 // in the language of msgs.
-func (msgs Messages) MenusView() string { return msgs.text(218) }
+func (msgs Messages) MenusView() string { return msgs.text(226) }
 
 // MenusShow says "Show"
 // in the language the app shows under cx.
@@ -16780,7 +16910,7 @@ func MenusShow(cx *core.Scope) string { return For(cx).MenusShow() }
 
 // MenusShow says "Show"
 // in the language of msgs.
-func (msgs Messages) MenusShow() string { return msgs.text(219) }
+func (msgs Messages) MenusShow() string { return msgs.text(227) }
 
 // MenusSidebar says "Sidebar"
 // in the language the app shows under cx.
@@ -16788,7 +16918,7 @@ func MenusSidebar(cx *core.Scope) string { return For(cx).MenusSidebar() }
 
 // MenusSidebar says "Sidebar"
 // in the language of msgs.
-func (msgs Messages) MenusSidebar() string { return msgs.text(220) }
+func (msgs Messages) MenusSidebar() string { return msgs.text(228) }
 
 // MenusStatusBar says "Status bar"
 // in the language the app shows under cx.
@@ -16796,7 +16926,7 @@ func MenusStatusBar(cx *core.Scope) string { return For(cx).MenusStatusBar() }
 
 // MenusStatusBar says "Status bar"
 // in the language of msgs.
-func (msgs Messages) MenusStatusBar() string { return msgs.text(221) }
+func (msgs Messages) MenusStatusBar() string { return msgs.text(229) }
 
 // MenusZoom says "Zoom"
 // in the language the app shows under cx.
@@ -16804,7 +16934,7 @@ func MenusZoom(cx *core.Scope) string { return For(cx).MenusZoom() }
 
 // MenusZoom says "Zoom"
 // in the language of msgs.
-func (msgs Messages) MenusZoom() string { return msgs.text(222) }
+func (msgs Messages) MenusZoom() string { return msgs.text(230) }
 
 // MenusDone says "Done: "
 // in the language the app shows under cx.
@@ -16812,7 +16942,7 @@ func MenusDone(cx *core.Scope) string { return For(cx).MenusDone() }
 
 // MenusDone says "Done: "
 // in the language of msgs.
-func (msgs Messages) MenusDone() string { return msgs.text(223) }
+func (msgs Messages) MenusDone() string { return msgs.text(231) }
 
 // MenusNothingDoneYet says "Nothing done yet"
 // in the language the app shows under cx.
@@ -16820,7 +16950,7 @@ func MenusNothingDoneYet(cx *core.Scope) string { return For(cx).MenusNothingDon
 
 // MenusNothingDoneYet says "Nothing done yet"
 // in the language of msgs.
-func (msgs Messages) MenusNothingDoneYet() string { return msgs.text(224) }
+func (msgs Messages) MenusNothingDoneYet() string { return msgs.text(232) }
 
 // MenusOpen2 says "Open"
 // in the language the app shows under cx.
@@ -16828,7 +16958,7 @@ func MenusOpen2(cx *core.Scope) string { return For(cx).MenusOpen2() }
 
 // MenusOpen2 says "Open"
 // in the language of msgs.
-func (msgs Messages) MenusOpen2() string { return msgs.text(225) }
+func (msgs Messages) MenusOpen2() string { return msgs.text(233) }
 
 // MenusOpen3 says "open "
 // in the language the app shows under cx.
@@ -16836,7 +16966,7 @@ func MenusOpen3(cx *core.Scope) string { return For(cx).MenusOpen3() }
 
 // MenusOpen3 says "open "
 // in the language of msgs.
-func (msgs Messages) MenusOpen3() string { return msgs.text(226) }
+func (msgs Messages) MenusOpen3() string { return msgs.text(234) }
 
 // MenusUnstar says "Unstar"
 // in the language the app shows under cx.
@@ -16844,7 +16974,7 @@ func MenusUnstar(cx *core.Scope) string { return For(cx).MenusUnstar() }
 
 // MenusUnstar says "Unstar"
 // in the language of msgs.
-func (msgs Messages) MenusUnstar() string { return msgs.text(227) }
+func (msgs Messages) MenusUnstar() string { return msgs.text(235) }
 
 // MenusStar says "Star"
 // in the language the app shows under cx.
@@ -16852,7 +16982,7 @@ func MenusStar(cx *core.Scope) string { return For(cx).MenusStar() }
 
 // MenusStar says "Star"
 // in the language of msgs.
-func (msgs Messages) MenusStar() string { return msgs.text(228) }
+func (msgs Messages) MenusStar() string { return msgs.text(236) }
 
 // MenusDuplicate says "Duplicate"
 // in the language the app shows under cx.
@@ -16860,7 +16990,7 @@ func MenusDuplicate(cx *core.Scope) string { return For(cx).MenusDuplicate() }
 
 // MenusDuplicate says "Duplicate"
 // in the language of msgs.
-func (msgs Messages) MenusDuplicate() string { return msgs.text(229) }
+func (msgs Messages) MenusDuplicate() string { return msgs.text(237) }
 
 // MenusCopy2 says " copy"
 // in the language the app shows under cx.
@@ -16868,7 +16998,7 @@ func MenusCopy2(cx *core.Scope) string { return For(cx).MenusCopy2() }
 
 // MenusCopy2 says " copy"
 // in the language of msgs.
-func (msgs Messages) MenusCopy2() string { return msgs.text(230) }
+func (msgs Messages) MenusCopy2() string { return msgs.text(238) }
 
 // MenusMoveTo says "Move to"
 // in the language the app shows under cx.
@@ -16876,7 +17006,7 @@ func MenusMoveTo(cx *core.Scope) string { return For(cx).MenusMoveTo() }
 
 // MenusMoveTo says "Move to"
 // in the language of msgs.
-func (msgs Messages) MenusMoveTo() string { return msgs.text(231) }
+func (msgs Messages) MenusMoveTo() string { return msgs.text(239) }
 
 // MenusDocuments says "Documents"
 // in the language the app shows under cx.
@@ -16884,7 +17014,7 @@ func MenusDocuments(cx *core.Scope) string { return For(cx).MenusDocuments() }
 
 // MenusDocuments says "Documents"
 // in the language of msgs.
-func (msgs Messages) MenusDocuments() string { return msgs.text(232) }
+func (msgs Messages) MenusDocuments() string { return msgs.text(240) }
 
 // MenusMoved says "moved "
 // in the language the app shows under cx.
@@ -16892,7 +17022,7 @@ func MenusMoved(cx *core.Scope) string { return For(cx).MenusMoved() }
 
 // MenusMoved says "moved "
 // in the language of msgs.
-func (msgs Messages) MenusMoved() string { return msgs.text(233) }
+func (msgs Messages) MenusMoved() string { return msgs.text(241) }
 
 // MenusToDocuments says " to Documents"
 // in the language the app shows under cx.
@@ -16900,7 +17030,7 @@ func MenusToDocuments(cx *core.Scope) string { return For(cx).MenusToDocuments()
 
 // MenusToDocuments says " to Documents"
 // in the language of msgs.
-func (msgs Messages) MenusToDocuments() string { return msgs.text(234) }
+func (msgs Messages) MenusToDocuments() string { return msgs.text(242) }
 
 // MenusArchive says "Archive"
 // in the language the app shows under cx.
@@ -16908,7 +17038,7 @@ func MenusArchive(cx *core.Scope) string { return For(cx).MenusArchive() }
 
 // MenusArchive says "Archive"
 // in the language of msgs.
-func (msgs Messages) MenusArchive() string { return msgs.text(235) }
+func (msgs Messages) MenusArchive() string { return msgs.text(243) }
 
 // MenusToArchive says " to Archive"
 // in the language the app shows under cx.
@@ -16916,7 +17046,7 @@ func MenusToArchive(cx *core.Scope) string { return For(cx).MenusToArchive() }
 
 // MenusToArchive says " to Archive"
 // in the language of msgs.
-func (msgs Messages) MenusToArchive() string { return msgs.text(236) }
+func (msgs Messages) MenusToArchive() string { return msgs.text(244) }
 
 // MenusDelete says "Delete"
 // in the language the app shows under cx.
@@ -16924,7 +17054,7 @@ func MenusDelete(cx *core.Scope) string { return For(cx).MenusDelete() }
 
 // MenusDelete says "Delete"
 // in the language of msgs.
-func (msgs Messages) MenusDelete() string { return msgs.text(237) }
+func (msgs Messages) MenusDelete() string { return msgs.text(245) }
 
 // MenusOnTheRowsOfA says "On the rows of a list"
 // in the language the app shows under cx.
@@ -16932,7 +17062,7 @@ func MenusOnTheRowsOfA(cx *core.Scope) string { return For(cx).MenusOnTheRowsOfA
 
 // MenusOnTheRowsOfA says "On the rows of a list"
 // in the language of msgs.
-func (msgs Messages) MenusOnTheRowsOfA() string { return msgs.text(238) }
+func (msgs Messages) MenusOnTheRowsOfA() string { return msgs.text(246) }
 
 // MenusHoldAFingerOnA says "Hold a finger on a row, or press its ⋯"
 // in the language the app shows under cx.
@@ -16940,7 +17070,7 @@ func MenusHoldAFingerOnA(cx *core.Scope) string { return For(cx).MenusHoldAFinge
 
 // MenusHoldAFingerOnA says "Hold a finger on a row, or press its ⋯"
 // in the language of msgs.
-func (msgs Messages) MenusHoldAFingerOnA() string { return msgs.text(239) }
+func (msgs Messages) MenusHoldAFingerOnA() string { return msgs.text(247) }
 
 // MenusRightClickARowOr says "Right click a row, or its ⋯ button"
 // in the language the app shows under cx.
@@ -16948,7 +17078,7 @@ func MenusRightClickARowOr(cx *core.Scope) string { return For(cx).MenusRightCli
 
 // MenusRightClickARowOr says "Right click a row, or its ⋯ button"
 // in the language of msgs.
-func (msgs Messages) MenusRightClickARowOr() string { return msgs.text(240) }
+func (msgs Messages) MenusRightClickARowOr() string { return msgs.text(248) }
 
 // MenusNoFilesLeft says "No files left"
 // in the language the app shows under cx.
@@ -16956,7 +17086,7 @@ func MenusNoFilesLeft(cx *core.Scope) string { return For(cx).MenusNoFilesLeft()
 
 // MenusNoFilesLeft says "No files left"
 // in the language of msgs.
-func (msgs Messages) MenusNoFilesLeft() string { return msgs.text(241) }
+func (msgs Messages) MenusNoFilesLeft() string { return msgs.text(249) }
 
 // MenusActionsFor says "Actions for "
 // in the language the app shows under cx.
@@ -16964,7 +17094,7 @@ func MenusActionsFor(cx *core.Scope) string { return For(cx).MenusActionsFor() }
 
 // MenusActionsFor says "Actions for "
 // in the language of msgs.
-func (msgs Messages) MenusActionsFor() string { return msgs.text(242) }
+func (msgs Messages) MenusActionsFor() string { return msgs.text(250) }
 
 // MenusMoreActions says "More actions"
 // in the language the app shows under cx.
@@ -16972,7 +17102,7 @@ func MenusMoreActions(cx *core.Scope) string { return For(cx).MenusMoreActions()
 
 // MenusMoreActions says "More actions"
 // in the language of msgs.
-func (msgs Messages) MenusMoreActions() string { return msgs.text(243) }
+func (msgs Messages) MenusMoreActions() string { return msgs.text(251) }
 
 // MenusWhereItGoes says "Where it goes"
 // in the language the app shows under cx.
@@ -16980,7 +17110,7 @@ func MenusWhereItGoes(cx *core.Scope) string { return For(cx).MenusWhereItGoes()
 
 // MenusWhereItGoes says "Where it goes"
 // in the language of msgs.
-func (msgs Messages) MenusWhereItGoes() string { return msgs.text(244) }
+func (msgs Messages) MenusWhereItGoes() string { return msgs.text(252) }
 
 // MenusPhonesShowMenusAsSheets says "Phones show menus as sheets: try a desktop"
 // in the language the app shows under cx.
@@ -16990,7 +17120,7 @@ func MenusPhonesShowMenusAsSheets(cx *core.Scope) string {
 
 // MenusPhonesShowMenusAsSheets says "Phones show menus as sheets: try a desktop"
 // in the language of msgs.
-func (msgs Messages) MenusPhonesShowMenusAsSheets() string { return msgs.text(245) }
+func (msgs Messages) MenusPhonesShowMenusAsSheets() string { return msgs.text(253) }
 
 // MenusTheSideAndAlignmentIt says "The side and alignment; it flips where there is no room"
 // in the language the app shows under cx.
@@ -16998,7 +17128,7 @@ func MenusTheSideAndAlignmentIt(cx *core.Scope) string { return For(cx).MenusThe
 
 // MenusTheSideAndAlignmentIt says "The side and alignment; it flips where there is no room"
 // in the language of msgs.
-func (msgs Messages) MenusTheSideAndAlignmentIt() string { return msgs.text(246) }
+func (msgs Messages) MenusTheSideAndAlignmentIt() string { return msgs.text(254) }
 
 // MenusTop says "Top"
 // in the language the app shows under cx.
@@ -17006,7 +17136,7 @@ func MenusTop(cx *core.Scope) string { return For(cx).MenusTop() }
 
 // MenusTop says "Top"
 // in the language of msgs.
-func (msgs Messages) MenusTop() string { return msgs.text(247) }
+func (msgs Messages) MenusTop() string { return msgs.text(255) }
 
 // MenusBottom says "Bottom"
 // in the language the app shows under cx.
@@ -17014,7 +17144,7 @@ func MenusBottom(cx *core.Scope) string { return For(cx).MenusBottom() }
 
 // MenusBottom says "Bottom"
 // in the language of msgs.
-func (msgs Messages) MenusBottom() string { return msgs.text(248) }
+func (msgs Messages) MenusBottom() string { return msgs.text(256) }
 
 // MenusLeft says "Left"
 // in the language the app shows under cx.
@@ -17022,7 +17152,7 @@ func MenusLeft(cx *core.Scope) string { return For(cx).MenusLeft() }
 
 // MenusLeft says "Left"
 // in the language of msgs.
-func (msgs Messages) MenusLeft() string { return msgs.text(249) }
+func (msgs Messages) MenusLeft() string { return msgs.text(257) }
 
 // MenusRight says "Right"
 // in the language the app shows under cx.
@@ -17030,7 +17160,7 @@ func MenusRight(cx *core.Scope) string { return For(cx).MenusRight() }
 
 // MenusRight says "Right"
 // in the language of msgs.
-func (msgs Messages) MenusRight() string { return msgs.text(250) }
+func (msgs Messages) MenusRight() string { return msgs.text(258) }
 
 // MenusStart says "Start"
 // in the language the app shows under cx.
@@ -17038,7 +17168,7 @@ func MenusStart(cx *core.Scope) string { return For(cx).MenusStart() }
 
 // MenusStart says "Start"
 // in the language of msgs.
-func (msgs Messages) MenusStart() string { return msgs.text(251) }
+func (msgs Messages) MenusStart() string { return msgs.text(259) }
 
 // MenusCenter says "Center"
 // in the language the app shows under cx.
@@ -17046,7 +17176,7 @@ func MenusCenter(cx *core.Scope) string { return For(cx).MenusCenter() }
 
 // MenusCenter says "Center"
 // in the language of msgs.
-func (msgs Messages) MenusCenter() string { return msgs.text(252) }
+func (msgs Messages) MenusCenter() string { return msgs.text(260) }
 
 // MenusEnd says "End"
 // in the language the app shows under cx.
@@ -17054,7 +17184,7 @@ func MenusEnd(cx *core.Scope) string { return For(cx).MenusEnd() }
 
 // MenusEnd says "End"
 // in the language of msgs.
-func (msgs Messages) MenusEnd() string { return msgs.text(253) }
+func (msgs Messages) MenusEnd() string { return msgs.text(261) }
 
 // MenusPlaced says "Placed"
 // in the language the app shows under cx.
@@ -17062,7 +17192,7 @@ func MenusPlaced(cx *core.Scope) string { return For(cx).MenusPlaced() }
 
 // MenusPlaced says "Placed"
 // in the language of msgs.
-func (msgs Messages) MenusPlaced() string { return msgs.text(254) }
+func (msgs Messages) MenusPlaced() string { return msgs.text(262) }
 
 // MenusOne says "One"
 // in the language the app shows under cx.
@@ -17070,7 +17200,7 @@ func MenusOne(cx *core.Scope) string { return For(cx).MenusOne() }
 
 // MenusOne says "One"
 // in the language of msgs.
-func (msgs Messages) MenusOne() string { return msgs.text(255) }
+func (msgs Messages) MenusOne() string { return msgs.text(263) }
 
 // MenusChoseOne says "chose One"
 // in the language the app shows under cx.
@@ -17078,7 +17208,7 @@ func MenusChoseOne(cx *core.Scope) string { return For(cx).MenusChoseOne() }
 
 // MenusChoseOne says "chose One"
 // in the language of msgs.
-func (msgs Messages) MenusChoseOne() string { return msgs.text(256) }
+func (msgs Messages) MenusChoseOne() string { return msgs.text(264) }
 
 // MenusTwo says "Two"
 // in the language the app shows under cx.
@@ -17086,7 +17216,7 @@ func MenusTwo(cx *core.Scope) string { return For(cx).MenusTwo() }
 
 // MenusTwo says "Two"
 // in the language of msgs.
-func (msgs Messages) MenusTwo() string { return msgs.text(257) }
+func (msgs Messages) MenusTwo() string { return msgs.text(265) }
 
 // MenusChoseTwo says "chose Two"
 // in the language the app shows under cx.
@@ -17094,7 +17224,7 @@ func MenusChoseTwo(cx *core.Scope) string { return For(cx).MenusChoseTwo() }
 
 // MenusChoseTwo says "chose Two"
 // in the language of msgs.
-func (msgs Messages) MenusChoseTwo() string { return msgs.text(258) }
+func (msgs Messages) MenusChoseTwo() string { return msgs.text(266) }
 
 // MenusThree says "Three"
 // in the language the app shows under cx.
@@ -17102,7 +17232,7 @@ func MenusThree(cx *core.Scope) string { return For(cx).MenusThree() }
 
 // MenusThree says "Three"
 // in the language of msgs.
-func (msgs Messages) MenusThree() string { return msgs.text(259) }
+func (msgs Messages) MenusThree() string { return msgs.text(267) }
 
 // MenusChoseThree says "chose Three"
 // in the language the app shows under cx.
@@ -17110,7 +17240,7 @@ func MenusChoseThree(cx *core.Scope) string { return For(cx).MenusChoseThree() }
 
 // MenusChoseThree says "chose Three"
 // in the language of msgs.
-func (msgs Messages) MenusChoseThree() string { return msgs.text(260) }
+func (msgs Messages) MenusChoseThree() string { return msgs.text(268) }
 
 // MenusTimeZone says "Time zone"
 // in the language the app shows under cx.
@@ -17118,7 +17248,7 @@ func MenusTimeZone(cx *core.Scope) string { return For(cx).MenusTimeZone() }
 
 // MenusTimeZone says "Time zone"
 // in the language of msgs.
-func (msgs Messages) MenusTimeZone() string { return msgs.text(261) }
+func (msgs Messages) MenusTimeZone() string { return msgs.text(269) }
 
 // MenusALongMenu says "A long menu"
 // in the language the app shows under cx.
@@ -17126,7 +17256,7 @@ func MenusALongMenu(cx *core.Scope) string { return For(cx).MenusALongMenu() }
 
 // MenusALongMenu says "A long menu"
 // in the language of msgs.
-func (msgs Messages) MenusALongMenu() string { return msgs.text(262) }
+func (msgs Messages) MenusALongMenu() string { return msgs.text(270) }
 
 // MenusTwentyChoicesInAMenu says "Twenty choices in a menu that scrolls"
 // in the language the app shows under cx.
@@ -17134,7 +17264,7 @@ func MenusTwentyChoicesInAMenu(cx *core.Scope) string { return For(cx).MenusTwen
 
 // MenusTwentyChoicesInAMenu says "Twenty choices in a menu that scrolls"
 // in the language of msgs.
-func (msgs Messages) MenusTwentyChoicesInAMenu() string { return msgs.text(263) }
+func (msgs Messages) MenusTwentyChoicesInAMenu() string { return msgs.text(271) }
 
 // MenusCommands says "Commands"
 // in the language the app shows under cx.
@@ -17142,7 +17272,7 @@ func MenusCommands(cx *core.Scope) string { return For(cx).MenusCommands() }
 
 // MenusCommands says "Commands"
 // in the language of msgs.
-func (msgs Messages) MenusCommands() string { return msgs.text(264) }
+func (msgs Messages) MenusCommands() string { return msgs.text(272) }
 
 // MenusNewNote says "New note"
 // in the language the app shows under cx.
@@ -17150,7 +17280,7 @@ func MenusNewNote(cx *core.Scope) string { return For(cx).MenusNewNote() }
 
 // MenusNewNote says "New note"
 // in the language of msgs.
-func (msgs Messages) MenusNewNote() string { return msgs.text(265) }
+func (msgs Messages) MenusNewNote() string { return msgs.text(273) }
 
 // MenusRanNewNote says "ran New note"
 // in the language the app shows under cx.
@@ -17158,7 +17288,7 @@ func MenusRanNewNote(cx *core.Scope) string { return For(cx).MenusRanNewNote() }
 
 // MenusRanNewNote says "ran New note"
 // in the language of msgs.
-func (msgs Messages) MenusRanNewNote() string { return msgs.text(266) }
+func (msgs Messages) MenusRanNewNote() string { return msgs.text(274) }
 
 // MenusToggleTheme says "Toggle theme"
 // in the language the app shows under cx.
@@ -17166,7 +17296,7 @@ func MenusToggleTheme(cx *core.Scope) string { return For(cx).MenusToggleTheme()
 
 // MenusToggleTheme says "Toggle theme"
 // in the language of msgs.
-func (msgs Messages) MenusToggleTheme() string { return msgs.text(267) }
+func (msgs Messages) MenusToggleTheme() string { return msgs.text(275) }
 
 // MenusRanToggleTheme says "ran Toggle theme"
 // in the language the app shows under cx.
@@ -17174,7 +17304,7 @@ func MenusRanToggleTheme(cx *core.Scope) string { return For(cx).MenusRanToggleT
 
 // MenusRanToggleTheme says "ran Toggle theme"
 // in the language of msgs.
-func (msgs Messages) MenusRanToggleTheme() string { return msgs.text(268) }
+func (msgs Messages) MenusRanToggleTheme() string { return msgs.text(276) }
 
 // MenusSyncNow says "Sync now"
 // in the language the app shows under cx.
@@ -17182,7 +17312,7 @@ func MenusSyncNow(cx *core.Scope) string { return For(cx).MenusSyncNow() }
 
 // MenusSyncNow says "Sync now"
 // in the language of msgs.
-func (msgs Messages) MenusSyncNow() string { return msgs.text(269) }
+func (msgs Messages) MenusSyncNow() string { return msgs.text(277) }
 
 // MenusRanSyncNow says "ran Sync now"
 // in the language the app shows under cx.
@@ -17190,7 +17320,7 @@ func MenusRanSyncNow(cx *core.Scope) string { return For(cx).MenusRanSyncNow() }
 
 // MenusRanSyncNow says "ran Sync now"
 // in the language of msgs.
-func (msgs Messages) MenusRanSyncNow() string { return msgs.text(270) }
+func (msgs Messages) MenusRanSyncNow() string { return msgs.text(278) }
 
 // MenusOpenedByTheApp says "Opened by the app"
 // in the language the app shows under cx.
@@ -17198,7 +17328,7 @@ func MenusOpenedByTheApp(cx *core.Scope) string { return For(cx).MenusOpenedByTh
 
 // MenusOpenedByTheApp says "Opened by the app"
 // in the language of msgs.
-func (msgs Messages) MenusOpenedByTheApp() string { return msgs.text(271) }
+func (msgs Messages) MenusOpenedByTheApp() string { return msgs.text(279) }
 
 // MenusAControlledMenuAButton says "A controlled menu: a button or a shortcut opens it"
 // in the language the app shows under cx.
@@ -17206,7 +17336,7 @@ func MenusAControlledMenuAButton(cx *core.Scope) string { return For(cx).MenusAC
 
 // MenusAControlledMenuAButton says "A controlled menu: a button or a shortcut opens it"
 // in the language of msgs.
-func (msgs Messages) MenusAControlledMenuAButton() string { return msgs.text(272) }
+func (msgs Messages) MenusAControlledMenuAButton() string { return msgs.text(280) }
 
 // MenusOpenTheCommands says "Open the commands"
 // in the language the app shows under cx.
@@ -17214,7 +17344,7 @@ func MenusOpenTheCommands(cx *core.Scope) string { return For(cx).MenusOpenTheCo
 
 // MenusOpenTheCommands says "Open the commands"
 // in the language of msgs.
-func (msgs Messages) MenusOpenTheCommands() string { return msgs.text(273) }
+func (msgs Messages) MenusOpenTheCommands() string { return msgs.text(281) }
 
 // MenusNothingChosenYet says "Nothing chosen yet"
 // in the language the app shows under cx.
@@ -17222,7 +17352,7 @@ func MenusNothingChosenYet(cx *core.Scope) string { return For(cx).MenusNothingC
 
 // MenusNothingChosenYet says "Nothing chosen yet"
 // in the language of msgs.
-func (msgs Messages) MenusNothingChosenYet() string { return msgs.text(274) }
+func (msgs Messages) MenusNothingChosenYet() string { return msgs.text(282) }
 
 // MenusChose2 says "Chose "
 // in the language the app shows under cx.
@@ -17230,7 +17360,7 @@ func MenusChose2(cx *core.Scope) string { return For(cx).MenusChose2() }
 
 // MenusChose2 says "Chose "
 // in the language of msgs.
-func (msgs Messages) MenusChose2() string { return msgs.text(275) }
+func (msgs Messages) MenusChose2() string { return msgs.text(283) }
 
 // MenusNative says "native "
 // in the language the app shows under cx.
@@ -17238,7 +17368,7 @@ func MenusNative(cx *core.Scope) string { return For(cx).MenusNative() }
 
 // MenusNative says "native "
 // in the language of msgs.
-func (msgs Messages) MenusNative() string { return msgs.text(276) }
+func (msgs Messages) MenusNative() string { return msgs.text(284) }
 
 // MenusShare says "Share"
 // in the language the app shows under cx.
@@ -17246,7 +17376,7 @@ func MenusShare(cx *core.Scope) string { return For(cx).MenusShare() }
 
 // MenusShare says "Share"
 // in the language of msgs.
-func (msgs Messages) MenusShare() string { return msgs.text(277) }
+func (msgs Messages) MenusShare() string { return msgs.text(285) }
 
 // MenusMail says "Mail"
 // in the language the app shows under cx.
@@ -17254,7 +17384,7 @@ func MenusMail(cx *core.Scope) string { return For(cx).MenusMail() }
 
 // MenusMail says "Mail"
 // in the language of msgs.
-func (msgs Messages) MenusMail() string { return msgs.text(278) }
+func (msgs Messages) MenusMail() string { return msgs.text(286) }
 
 // MenusMessages says "Messages"
 // in the language the app shows under cx.
@@ -17262,7 +17392,7 @@ func MenusMessages(cx *core.Scope) string { return For(cx).MenusMessages() }
 
 // MenusMessages says "Messages"
 // in the language of msgs.
-func (msgs Messages) MenusMessages() string { return msgs.text(279) }
+func (msgs Messages) MenusMessages() string { return msgs.text(287) }
 
 // MenusPinned says "Pinned"
 // in the language the app shows under cx.
@@ -17270,7 +17400,7 @@ func MenusPinned(cx *core.Scope) string { return For(cx).MenusPinned() }
 
 // MenusPinned says "Pinned"
 // in the language of msgs.
-func (msgs Messages) MenusPinned() string { return msgs.text(280) }
+func (msgs Messages) MenusPinned() string { return msgs.text(288) }
 
 // MenusThePlatformSMenu says "The platform's menu"
 // in the language the app shows under cx.
@@ -17278,7 +17408,7 @@ func MenusThePlatformSMenu(cx *core.Scope) string { return For(cx).MenusThePlatf
 
 // MenusThePlatformSMenu says "The platform's menu"
 // in the language of msgs.
-func (msgs Messages) MenusThePlatformSMenu() string { return msgs.text(281) }
+func (msgs Messages) MenusThePlatformSMenu() string { return msgs.text(289) }
 
 // MenusPopupmenuShowsTheSystemS says "PopupMenu shows the system's own at a point"
 // in the language the app shows under cx.
@@ -17288,7 +17418,7 @@ func MenusPopupmenuShowsTheSystemS(cx *core.Scope) string {
 
 // MenusPopupmenuShowsTheSystemS says "PopupMenu shows the system's own at a point"
 // in the language of msgs.
-func (msgs Messages) MenusPopupmenuShowsTheSystemS() string { return msgs.text(282) }
+func (msgs Messages) MenusPopupmenuShowsTheSystemS() string { return msgs.text(290) }
 
 // MenusNative2 says "Native"
 // in the language the app shows under cx.
@@ -17296,7 +17426,7 @@ func MenusNative2(cx *core.Scope) string { return For(cx).MenusNative2() }
 
 // MenusNative2 says "Native"
 // in the language of msgs.
-func (msgs Messages) MenusNative2() string { return msgs.text(283) }
+func (msgs Messages) MenusNative2() string { return msgs.text(291) }
 
 // MenusShowTheNativeMenu says "Show the native menu"
 // in the language the app shows under cx.
@@ -17304,7 +17434,7 @@ func MenusShowTheNativeMenu(cx *core.Scope) string { return For(cx).MenusShowThe
 
 // MenusShowTheNativeMenu says "Show the native menu"
 // in the language of msgs.
-func (msgs Messages) MenusShowTheNativeMenu() string { return msgs.text(284) }
+func (msgs Messages) MenusShowTheNativeMenu() string { return msgs.text(292) }
 
 // MenusPressHere says "Press here"
 // in the language the app shows under cx.
@@ -17312,7 +17442,7 @@ func MenusPressHere(cx *core.Scope) string { return For(cx).MenusPressHere() }
 
 // MenusPressHere says "Press here"
 // in the language of msgs.
-func (msgs Messages) MenusPressHere() string { return msgs.text(285) }
+func (msgs Messages) MenusPressHere() string { return msgs.text(293) }
 
 // MenusRightClickOrPressHere says "Right click or press here"
 // in the language the app shows under cx.
@@ -17320,7 +17450,7 @@ func MenusRightClickOrPressHere(cx *core.Scope) string { return For(cx).MenusRig
 
 // MenusRightClickOrPressHere says "Right click or press here"
 // in the language of msgs.
-func (msgs Messages) MenusRightClickOrPressHere() string { return msgs.text(286) }
+func (msgs Messages) MenusRightClickOrPressHere() string { return msgs.text(294) }
 
 // MenusSetapplicationmenuSetsTheMenuBar says "SetApplicationMenu sets the menu bar on macOS, Windows and Linux: this gallery's has the roles the platform carries out (About, Hide, Undo … Select All, Minimize, Zoom) and a View menu that toggles the sidebar and opens each demo."
 // in the language the app shows under cx.
@@ -17330,7 +17460,7 @@ func MenusSetapplicationmenuSetsTheMenuBar(cx *core.Scope) string {
 
 // MenusSetapplicationmenuSetsTheMenuBar says "SetApplicationMenu sets the menu bar on macOS, Windows and Linux: this gallery's has the roles the platform carries out (About, Hide, Undo … Select All, Minimize, Zoom) and a View menu that toggles the sidebar and opens each demo."
 // in the language of msgs.
-func (msgs Messages) MenusSetapplicationmenuSetsTheMenuBar() string { return msgs.text(287) }
+func (msgs Messages) MenusSetapplicationmenuSetsTheMenuBar() string { return msgs.text(295) }
 
 // MenusLastChosen says "Last chosen"
 // in the language the app shows under cx.
@@ -17338,7 +17468,7 @@ func MenusLastChosen(cx *core.Scope) string { return For(cx).MenusLastChosen() }
 
 // MenusLastChosen says "Last chosen"
 // in the language of msgs.
-func (msgs Messages) MenusLastChosen() string { return msgs.text(288) }
+func (msgs Messages) MenusLastChosen() string { return msgs.text(296) }
 
 // MenusSetmenubarHidesTheBarWindows says "SetMenuBar hides the bar Windows and Linux draw until Alt is pressed alone."
 // in the language the app shows under cx.
@@ -17348,7 +17478,7 @@ func MenusSetmenubarHidesTheBarWindows(cx *core.Scope) string {
 
 // MenusSetmenubarHidesTheBarWindows says "SetMenuBar hides the bar Windows and Linux draw until Alt is pressed alone."
 // in the language of msgs.
-func (msgs Messages) MenusSetmenubarHidesTheBarWindows() string { return msgs.text(289) }
+func (msgs Messages) MenusSetmenubarHidesTheBarWindows() string { return msgs.text(297) }
 
 // MenusAlwaysShown says "Always shown"
 // in the language the app shows under cx.
@@ -17356,7 +17486,7 @@ func MenusAlwaysShown(cx *core.Scope) string { return For(cx).MenusAlwaysShown()
 
 // MenusAlwaysShown says "Always shown"
 // in the language of msgs.
-func (msgs Messages) MenusAlwaysShown() string { return msgs.text(290) }
+func (msgs Messages) MenusAlwaysShown() string { return msgs.text(298) }
 
 // MenusAutoHide says "Auto-hide"
 // in the language the app shows under cx.
@@ -17364,7 +17494,7 @@ func MenusAutoHide(cx *core.Scope) string { return For(cx).MenusAutoHide() }
 
 // MenusAutoHide says "Auto-hide"
 // in the language of msgs.
-func (msgs Messages) MenusAutoHide() string { return msgs.text(291) }
+func (msgs Messages) MenusAutoHide() string { return msgs.text(299) }
 
 // MenusTheApplicationMenu says "The application menu"
 // in the language the app shows under cx.
@@ -17372,7 +17502,7 @@ func MenusTheApplicationMenu(cx *core.Scope) string { return For(cx).MenusTheApp
 
 // MenusTheApplicationMenu says "The application menu"
 // in the language of msgs.
-func (msgs Messages) MenusTheApplicationMenu() string { return msgs.text(292) }
+func (msgs Messages) MenusTheApplicationMenu() string { return msgs.text(300) }
 
 // MenusTheSystemSMenuBar says "The system's menu bar, set by the app"
 // in the language the app shows under cx.
@@ -17380,7 +17510,7 @@ func MenusTheSystemSMenuBar(cx *core.Scope) string { return For(cx).MenusTheSyst
 
 // MenusTheSystemSMenuBar says "The system's menu bar, set by the app"
 // in the language of msgs.
-func (msgs Messages) MenusTheSystemSMenuBar() string { return msgs.text(293) }
+func (msgs Messages) MenusTheSystemSMenuBar() string { return msgs.text(301) }
 
 // MenusEvents says "Events"
 // in the language the app shows under cx.
@@ -17388,7 +17518,7 @@ func MenusEvents(cx *core.Scope) string { return For(cx).MenusEvents() }
 
 // MenusEvents says "Events"
 // in the language of msgs.
-func (msgs Messages) MenusEvents() string { return msgs.text(294) }
+func (msgs Messages) MenusEvents() string { return msgs.text(302) }
 
 // MenusOnopenchangeWithItsReasonAnd says "OnOpenChange with its reason, and what was chosen"
 // in the language the app shows under cx.
@@ -17398,7 +17528,7 @@ func MenusOnopenchangeWithItsReasonAnd(cx *core.Scope) string {
 
 // MenusOnopenchangeWithItsReasonAnd says "OnOpenChange with its reason, and what was chosen"
 // in the language of msgs.
-func (msgs Messages) MenusOnopenchangeWithItsReasonAnd() string { return msgs.text(295) }
+func (msgs Messages) MenusOnopenchangeWithItsReasonAnd() string { return msgs.text(303) }
 
 // MenusOpenAMenu says "Open a menu"
 // in the language the app shows under cx.
@@ -17406,7 +17536,7 @@ func MenusOpenAMenu(cx *core.Scope) string { return For(cx).MenusOpenAMenu() }
 
 // MenusOpenAMenu says "Open a menu"
 // in the language of msgs.
-func (msgs Messages) MenusOpenAMenu() string { return msgs.text(296) }
+func (msgs Messages) MenusOpenAMenu() string { return msgs.text(304) }
 
 // MenusOpened says "opened"
 // in the language the app shows under cx.
@@ -17414,7 +17544,7 @@ func MenusOpened(cx *core.Scope) string { return For(cx).MenusOpened() }
 
 // MenusOpened says "opened"
 // in the language of msgs.
-func (msgs Messages) MenusOpened() string { return msgs.text(297) }
+func (msgs Messages) MenusOpened() string { return msgs.text(305) }
 
 // MenusClosed says "closed"
 // in the language the app shows under cx.
@@ -17422,7 +17552,7 @@ func MenusClosed(cx *core.Scope) string { return For(cx).MenusClosed() }
 
 // MenusClosed says "closed"
 // in the language of msgs.
-func (msgs Messages) MenusClosed() string { return msgs.text(298) }
+func (msgs Messages) MenusClosed() string { return msgs.text(306) }
 
 // MenusViewState says "Sidebar {sidebar} · status bar {statusBar} · zoom {zoom}"
 // in the language the app shows under cx.
@@ -17456,7 +17586,7 @@ func SystemEnvironment(cx *core.Scope) string { return For(cx).SystemEnvironment
 
 // SystemEnvironment says "Environment"
 // in the language of msgs.
-func (msgs Messages) SystemEnvironment() string { return msgs.text(299) }
+func (msgs Messages) SystemEnvironment() string { return msgs.text(307) }
 
 // SystemUpdatesWhenTheWindowInsets says "Updates when the window, insets or keyboard change"
 // in the language the app shows under cx.
@@ -17466,7 +17596,7 @@ func SystemUpdatesWhenTheWindowInsets(cx *core.Scope) string {
 
 // SystemUpdatesWhenTheWindowInsets says "Updates when the window, insets or keyboard change"
 // in the language of msgs.
-func (msgs Messages) SystemUpdatesWhenTheWindowInsets() string { return msgs.text(300) }
+func (msgs Messages) SystemUpdatesWhenTheWindowInsets() string { return msgs.text(308) }
 
 // SystemLive says "Live"
 // in the language the app shows under cx.
@@ -17474,7 +17604,7 @@ func SystemLive(cx *core.Scope) string { return For(cx).SystemLive() }
 
 // SystemLive says "Live"
 // in the language of msgs.
-func (msgs Messages) SystemLive() string { return msgs.text(301) }
+func (msgs Messages) SystemLive() string { return msgs.text(309) }
 
 // SystemWindow says "Window"
 // in the language the app shows under cx.
@@ -17482,7 +17612,7 @@ func SystemWindow(cx *core.Scope) string { return For(cx).SystemWindow() }
 
 // SystemWindow says "Window"
 // in the language of msgs.
-func (msgs Messages) SystemWindow() string { return msgs.text(302) }
+func (msgs Messages) SystemWindow() string { return msgs.text(310) }
 
 // SystemKeyboard says "Keyboard"
 // in the language the app shows under cx.
@@ -17490,7 +17620,7 @@ func SystemKeyboard(cx *core.Scope) string { return For(cx).SystemKeyboard() }
 
 // SystemKeyboard says "Keyboard"
 // in the language of msgs.
-func (msgs Messages) SystemKeyboard() string { return msgs.text(303) }
+func (msgs Messages) SystemKeyboard() string { return msgs.text(311) }
 
 // SystemFontScale says "Font scale"
 // in the language the app shows under cx.
@@ -17498,7 +17628,7 @@ func SystemFontScale(cx *core.Scope) string { return For(cx).SystemFontScale() }
 
 // SystemFontScale says "Font scale"
 // in the language of msgs.
-func (msgs Messages) SystemFontScale() string { return msgs.text(304) }
+func (msgs Messages) SystemFontScale() string { return msgs.text(312) }
 
 // SystemSafeAreaInsets says "Safe area insets"
 // in the language the app shows under cx.
@@ -17506,7 +17636,7 @@ func SystemSafeAreaInsets(cx *core.Scope) string { return For(cx).SystemSafeArea
 
 // SystemSafeAreaInsets says "Safe area insets"
 // in the language of msgs.
-func (msgs Messages) SystemSafeAreaInsets() string { return msgs.text(305) }
+func (msgs Messages) SystemSafeAreaInsets() string { return msgs.text(313) }
 
 // SystemTop says "Top"
 // in the language the app shows under cx.
@@ -17514,7 +17644,7 @@ func SystemTop(cx *core.Scope) string { return For(cx).SystemTop() }
 
 // SystemTop says "Top"
 // in the language of msgs.
-func (msgs Messages) SystemTop() string { return msgs.text(306) }
+func (msgs Messages) SystemTop() string { return msgs.text(314) }
 
 // SystemRight says "Right"
 // in the language the app shows under cx.
@@ -17522,7 +17652,7 @@ func SystemRight(cx *core.Scope) string { return For(cx).SystemRight() }
 
 // SystemRight says "Right"
 // in the language of msgs.
-func (msgs Messages) SystemRight() string { return msgs.text(307) }
+func (msgs Messages) SystemRight() string { return msgs.text(315) }
 
 // SystemBottom says "Bottom"
 // in the language the app shows under cx.
@@ -17530,7 +17660,7 @@ func SystemBottom(cx *core.Scope) string { return For(cx).SystemBottom() }
 
 // SystemBottom says "Bottom"
 // in the language of msgs.
-func (msgs Messages) SystemBottom() string { return msgs.text(308) }
+func (msgs Messages) SystemBottom() string { return msgs.text(316) }
 
 // SystemLeft says "Left"
 // in the language the app shows under cx.
@@ -17538,7 +17668,7 @@ func SystemLeft(cx *core.Scope) string { return For(cx).SystemLeft() }
 
 // SystemLeft says "Left"
 // in the language of msgs.
-func (msgs Messages) SystemLeft() string { return msgs.text(309) }
+func (msgs Messages) SystemLeft() string { return msgs.text(317) }
 
 // SystemSafeArea says "Safe area"
 // in the language the app shows under cx.
@@ -17546,7 +17676,7 @@ func SystemSafeArea(cx *core.Scope) string { return For(cx).SystemSafeArea() }
 
 // SystemSafeArea says "Safe area"
 // in the language of msgs.
-func (msgs Messages) SystemSafeArea() string { return msgs.text(310) }
+func (msgs Messages) SystemSafeArea() string { return msgs.text(318) }
 
 // SystemDarkScheme says "Dark scheme"
 // in the language the app shows under cx.
@@ -17554,7 +17684,7 @@ func SystemDarkScheme(cx *core.Scope) string { return For(cx).SystemDarkScheme()
 
 // SystemDarkScheme says "Dark scheme"
 // in the language of msgs.
-func (msgs Messages) SystemDarkScheme() string { return msgs.text(311) }
+func (msgs Messages) SystemDarkScheme() string { return msgs.text(319) }
 
 // SystemLightScheme says "Light scheme"
 // in the language the app shows under cx.
@@ -17562,7 +17692,7 @@ func SystemLightScheme(cx *core.Scope) string { return For(cx).SystemLightScheme
 
 // SystemLightScheme says "Light scheme"
 // in the language of msgs.
-func (msgs Messages) SystemLightScheme() string { return msgs.text(312) }
+func (msgs Messages) SystemLightScheme() string { return msgs.text(320) }
 
 // SystemStatusBar says "Status bar"
 // in the language the app shows under cx.
@@ -17570,7 +17700,7 @@ func SystemStatusBar(cx *core.Scope) string { return For(cx).SystemStatusBar() }
 
 // SystemStatusBar says "Status bar"
 // in the language of msgs.
-func (msgs Messages) SystemStatusBar() string { return msgs.text(313) }
+func (msgs Messages) SystemStatusBar() string { return msgs.text(321) }
 
 // SystemADialogSStatusbarOver says "A dialog's StatusBar: over the page's while it is open"
 // in the language the app shows under cx.
@@ -17578,7 +17708,7 @@ func SystemADialogSStatusbarOver(cx *core.Scope) string { return For(cx).SystemA
 
 // SystemADialogSStatusbarOver says "A dialog's StatusBar: over the page's while it is open"
 // in the language of msgs.
-func (msgs Messages) SystemADialogSStatusbarOver() string { return msgs.text(314) }
+func (msgs Messages) SystemADialogSStatusbarOver() string { return msgs.text(322) }
 
 // SystemLight says "Light"
 // in the language the app shows under cx.
@@ -17586,7 +17716,7 @@ func SystemLight(cx *core.Scope) string { return For(cx).SystemLight() }
 
 // SystemLight says "Light"
 // in the language of msgs.
-func (msgs Messages) SystemLight() string { return msgs.text(315) }
+func (msgs Messages) SystemLight() string { return msgs.text(323) }
 
 // SystemDark says "Dark"
 // in the language the app shows under cx.
@@ -17594,7 +17724,7 @@ func SystemDark(cx *core.Scope) string { return For(cx).SystemDark() }
 
 // SystemDark says "Dark"
 // in the language of msgs.
-func (msgs Messages) SystemDark() string { return msgs.text(316) }
+func (msgs Messages) SystemDark() string { return msgs.text(324) }
 
 // SystemAuto says "Auto"
 // in the language the app shows under cx.
@@ -17602,7 +17732,7 @@ func SystemAuto(cx *core.Scope) string { return For(cx).SystemAuto() }
 
 // SystemAuto says "Auto"
 // in the language of msgs.
-func (msgs Messages) SystemAuto() string { return msgs.text(317) }
+func (msgs Messages) SystemAuto() string { return msgs.text(325) }
 
 // SystemHidden says "Hidden"
 // in the language the app shows under cx.
@@ -17610,7 +17740,7 @@ func SystemHidden(cx *core.Scope) string { return For(cx).SystemHidden() }
 
 // SystemHidden says "Hidden"
 // in the language of msgs.
-func (msgs Messages) SystemHidden() string { return msgs.text(318) }
+func (msgs Messages) SystemHidden() string { return msgs.text(326) }
 
 // SystemHideTheStatusBar says "Hide the status bar"
 // in the language the app shows under cx.
@@ -17618,7 +17748,7 @@ func SystemHideTheStatusBar(cx *core.Scope) string { return For(cx).SystemHideTh
 
 // SystemHideTheStatusBar says "Hide the status bar"
 // in the language of msgs.
-func (msgs Messages) SystemHideTheStatusBar() string { return msgs.text(319) }
+func (msgs Messages) SystemHideTheStatusBar() string { return msgs.text(327) }
 
 // SystemPreview says "Preview"
 // in the language the app shows under cx.
@@ -17626,7 +17756,7 @@ func SystemPreview(cx *core.Scope) string { return For(cx).SystemPreview() }
 
 // SystemPreview says "Preview"
 // in the language of msgs.
-func (msgs Messages) SystemPreview() string { return msgs.text(320) }
+func (msgs Messages) SystemPreview() string { return msgs.text(328) }
 
 // SystemStatusBarPreview says "Status bar preview"
 // in the language the app shows under cx.
@@ -17634,7 +17764,7 @@ func SystemStatusBarPreview(cx *core.Scope) string { return For(cx).SystemStatus
 
 // SystemStatusBarPreview says "Status bar preview"
 // in the language of msgs.
-func (msgs Messages) SystemStatusBarPreview() string { return msgs.text(321) }
+func (msgs Messages) SystemStatusBarPreview() string { return msgs.text(329) }
 
 // SystemClose says "Close"
 // in the language the app shows under cx.
@@ -17642,7 +17772,7 @@ func SystemClose(cx *core.Scope) string { return For(cx).SystemClose() }
 
 // SystemClose says "Close"
 // in the language of msgs.
-func (msgs Messages) SystemClose() string { return msgs.text(322) }
+func (msgs Messages) SystemClose() string { return msgs.text(330) }
 
 // SystemAlertsAndSheets says "Alerts and sheets"
 // in the language the app shows under cx.
@@ -17650,7 +17780,7 @@ func SystemAlertsAndSheets(cx *core.Scope) string { return For(cx).SystemAlertsA
 
 // SystemAlertsAndSheets says "Alerts and sheets"
 // in the language of msgs.
-func (msgs Messages) SystemAlertsAndSheets() string { return msgs.text(323) }
+func (msgs Messages) SystemAlertsAndSheets() string { return msgs.text(331) }
 
 // SystemAlertdialogToast says "AlertDialog · Toast"
 // in the language the app shows under cx.
@@ -17658,7 +17788,7 @@ func SystemAlertdialogToast(cx *core.Scope) string { return For(cx).SystemAlertd
 
 // SystemAlertdialogToast says "AlertDialog · Toast"
 // in the language of msgs.
-func (msgs Messages) SystemAlertdialogToast() string { return msgs.text(324) }
+func (msgs Messages) SystemAlertdialogToast() string { return msgs.text(332) }
 
 // SystemAlert says "Alert"
 // in the language the app shows under cx.
@@ -17666,7 +17796,7 @@ func SystemAlert(cx *core.Scope) string { return For(cx).SystemAlert() }
 
 // SystemAlert says "Alert"
 // in the language of msgs.
-func (msgs Messages) SystemAlert() string { return msgs.text(325) }
+func (msgs Messages) SystemAlert() string { return msgs.text(333) }
 
 // SystemOneButton says "One button"
 // in the language the app shows under cx.
@@ -17674,7 +17804,7 @@ func SystemOneButton(cx *core.Scope) string { return For(cx).SystemOneButton() }
 
 // SystemOneButton says "One button"
 // in the language of msgs.
-func (msgs Messages) SystemOneButton() string { return msgs.text(326) }
+func (msgs Messages) SystemOneButton() string { return msgs.text(334) }
 
 // SystemSaved says "Saved"
 // in the language the app shows under cx.
@@ -17682,7 +17812,7 @@ func SystemSaved(cx *core.Scope) string { return For(cx).SystemSaved() }
 
 // SystemSaved says "Saved"
 // in the language of msgs.
-func (msgs Messages) SystemSaved() string { return msgs.text(327) }
+func (msgs Messages) SystemSaved() string { return msgs.text(335) }
 
 // SystemYourChangesWereSaved says "Your changes were saved."
 // in the language the app shows under cx.
@@ -17690,7 +17820,7 @@ func SystemYourChangesWereSaved(cx *core.Scope) string { return For(cx).SystemYo
 
 // SystemYourChangesWereSaved says "Your changes were saved."
 // in the language of msgs.
-func (msgs Messages) SystemYourChangesWereSaved() string { return msgs.text(328) }
+func (msgs Messages) SystemYourChangesWereSaved() string { return msgs.text(336) }
 
 // SystemOk says "OK"
 // in the language the app shows under cx.
@@ -17698,7 +17828,7 @@ func SystemOk(cx *core.Scope) string { return For(cx).SystemOk() }
 
 // SystemOk says "OK"
 // in the language of msgs.
-func (msgs Messages) SystemOk() string { return msgs.text(329) }
+func (msgs Messages) SystemOk() string { return msgs.text(337) }
 
 // SystemConfirm says "Confirm"
 // in the language the app shows under cx.
@@ -17706,7 +17836,7 @@ func SystemConfirm(cx *core.Scope) string { return For(cx).SystemConfirm() }
 
 // SystemConfirm says "Confirm"
 // in the language of msgs.
-func (msgs Messages) SystemConfirm() string { return msgs.text(330) }
+func (msgs Messages) SystemConfirm() string { return msgs.text(338) }
 
 // SystemCancelAndDestructiveButtons says "Cancel and destructive buttons"
 // in the language the app shows under cx.
@@ -17716,7 +17846,7 @@ func SystemCancelAndDestructiveButtons(cx *core.Scope) string {
 
 // SystemCancelAndDestructiveButtons says "Cancel and destructive buttons"
 // in the language of msgs.
-func (msgs Messages) SystemCancelAndDestructiveButtons() string { return msgs.text(331) }
+func (msgs Messages) SystemCancelAndDestructiveButtons() string { return msgs.text(339) }
 
 // SystemDeleteThePhoto says "Delete the photo?"
 // in the language the app shows under cx.
@@ -17724,7 +17854,7 @@ func SystemDeleteThePhoto(cx *core.Scope) string { return For(cx).SystemDeleteTh
 
 // SystemDeleteThePhoto says "Delete the photo?"
 // in the language of msgs.
-func (msgs Messages) SystemDeleteThePhoto() string { return msgs.text(332) }
+func (msgs Messages) SystemDeleteThePhoto() string { return msgs.text(340) }
 
 // SystemThisCannotBeUndone says "This cannot be undone."
 // in the language the app shows under cx.
@@ -17732,7 +17862,7 @@ func SystemThisCannotBeUndone(cx *core.Scope) string { return For(cx).SystemThis
 
 // SystemThisCannotBeUndone says "This cannot be undone."
 // in the language of msgs.
-func (msgs Messages) SystemThisCannotBeUndone() string { return msgs.text(333) }
+func (msgs Messages) SystemThisCannotBeUndone() string { return msgs.text(341) }
 
 // SystemCancel says "Cancel"
 // in the language the app shows under cx.
@@ -17740,7 +17870,7 @@ func SystemCancel(cx *core.Scope) string { return For(cx).SystemCancel() }
 
 // SystemCancel says "Cancel"
 // in the language of msgs.
-func (msgs Messages) SystemCancel() string { return msgs.text(334) }
+func (msgs Messages) SystemCancel() string { return msgs.text(342) }
 
 // SystemDelete says "Delete"
 // in the language the app shows under cx.
@@ -17748,7 +17878,7 @@ func SystemDelete(cx *core.Scope) string { return For(cx).SystemDelete() }
 
 // SystemDelete says "Delete"
 // in the language of msgs.
-func (msgs Messages) SystemDelete() string { return msgs.text(335) }
+func (msgs Messages) SystemDelete() string { return msgs.text(343) }
 
 // SystemThreeButtons says "Three buttons"
 // in the language the app shows under cx.
@@ -17756,7 +17886,7 @@ func SystemThreeButtons(cx *core.Scope) string { return For(cx).SystemThreeButto
 
 // SystemThreeButtons says "Three buttons"
 // in the language of msgs.
-func (msgs Messages) SystemThreeButtons() string { return msgs.text(336) }
+func (msgs Messages) SystemThreeButtons() string { return msgs.text(344) }
 
 // SystemReportsTheLabelOfThe says "Reports the label of the action pressed"
 // in the language the app shows under cx.
@@ -17764,7 +17894,7 @@ func SystemReportsTheLabelOfThe(cx *core.Scope) string { return For(cx).SystemRe
 
 // SystemReportsTheLabelOfThe says "Reports the label of the action pressed"
 // in the language of msgs.
-func (msgs Messages) SystemReportsTheLabelOfThe() string { return msgs.text(337) }
+func (msgs Messages) SystemReportsTheLabelOfThe() string { return msgs.text(345) }
 
 // SystemUpdateAvailable says "Update available"
 // in the language the app shows under cx.
@@ -17772,7 +17902,7 @@ func SystemUpdateAvailable(cx *core.Scope) string { return For(cx).SystemUpdateA
 
 // SystemUpdateAvailable says "Update available"
 // in the language of msgs.
-func (msgs Messages) SystemUpdateAvailable() string { return msgs.text(338) }
+func (msgs Messages) SystemUpdateAvailable() string { return msgs.text(346) }
 
 // SystemInstallItNow says "Install it now?"
 // in the language the app shows under cx.
@@ -17780,7 +17910,7 @@ func SystemInstallItNow(cx *core.Scope) string { return For(cx).SystemInstallItN
 
 // SystemInstallItNow says "Install it now?"
 // in the language of msgs.
-func (msgs Messages) SystemInstallItNow() string { return msgs.text(339) }
+func (msgs Messages) SystemInstallItNow() string { return msgs.text(347) }
 
 // SystemLater says "Later"
 // in the language the app shows under cx.
@@ -17788,7 +17918,7 @@ func SystemLater(cx *core.Scope) string { return For(cx).SystemLater() }
 
 // SystemLater says "Later"
 // in the language of msgs.
-func (msgs Messages) SystemLater() string { return msgs.text(340) }
+func (msgs Messages) SystemLater() string { return msgs.text(348) }
 
 // SystemNever says "Never"
 // in the language the app shows under cx.
@@ -17796,7 +17926,7 @@ func SystemNever(cx *core.Scope) string { return For(cx).SystemNever() }
 
 // SystemNever says "Never"
 // in the language of msgs.
-func (msgs Messages) SystemNever() string { return msgs.text(341) }
+func (msgs Messages) SystemNever() string { return msgs.text(349) }
 
 // SystemInstall says "Install"
 // in the language the app shows under cx.
@@ -17804,7 +17934,7 @@ func SystemInstall(cx *core.Scope) string { return For(cx).SystemInstall() }
 
 // SystemInstall says "Install"
 // in the language of msgs.
-func (msgs Messages) SystemInstall() string { return msgs.text(342) }
+func (msgs Messages) SystemInstall() string { return msgs.text(350) }
 
 // SystemActionSheet says "Action sheet"
 // in the language the app shows under cx.
@@ -17812,7 +17942,7 @@ func SystemActionSheet(cx *core.Scope) string { return For(cx).SystemActionSheet
 
 // SystemActionSheet says "Action sheet"
 // in the language of msgs.
-func (msgs Messages) SystemActionSheet() string { return msgs.text(343) }
+func (msgs Messages) SystemActionSheet() string { return msgs.text(351) }
 
 // SystemTitleCancelAndDestructiveOptions says "Title, cancel and destructive options"
 // in the language the app shows under cx.
@@ -17822,7 +17952,7 @@ func SystemTitleCancelAndDestructiveOptions(cx *core.Scope) string {
 
 // SystemTitleCancelAndDestructiveOptions says "Title, cancel and destructive options"
 // in the language of msgs.
-func (msgs Messages) SystemTitleCancelAndDestructiveOptions() string { return msgs.text(344) }
+func (msgs Messages) SystemTitleCancelAndDestructiveOptions() string { return msgs.text(352) }
 
 // SystemShareThePhoto says "Share the photo"
 // in the language the app shows under cx.
@@ -17830,7 +17960,7 @@ func SystemShareThePhoto(cx *core.Scope) string { return For(cx).SystemShareTheP
 
 // SystemShareThePhoto says "Share the photo"
 // in the language of msgs.
-func (msgs Messages) SystemShareThePhoto() string { return msgs.text(345) }
+func (msgs Messages) SystemShareThePhoto() string { return msgs.text(353) }
 
 // SystemCopyLink says "Copy link"
 // in the language the app shows under cx.
@@ -17838,7 +17968,7 @@ func SystemCopyLink(cx *core.Scope) string { return For(cx).SystemCopyLink() }
 
 // SystemCopyLink says "Copy link"
 // in the language of msgs.
-func (msgs Messages) SystemCopyLink() string { return msgs.text(346) }
+func (msgs Messages) SystemCopyLink() string { return msgs.text(354) }
 
 // SystemSave says "Save"
 // in the language the app shows under cx.
@@ -17846,7 +17976,7 @@ func SystemSave(cx *core.Scope) string { return For(cx).SystemSave() }
 
 // SystemSave says "Save"
 // in the language of msgs.
-func (msgs Messages) SystemSave() string { return msgs.text(347) }
+func (msgs Messages) SystemSave() string { return msgs.text(355) }
 
 // SystemToast says "Toast"
 // in the language the app shows under cx.
@@ -17854,7 +17984,7 @@ func SystemToast(cx *core.Scope) string { return For(cx).SystemToast() }
 
 // SystemToast says "Toast"
 // in the language of msgs.
-func (msgs Messages) SystemToast() string { return msgs.text(348) }
+func (msgs Messages) SystemToast() string { return msgs.text(356) }
 
 // SystemBaseEveryPlatform says "base, every platform"
 // in the language the app shows under cx.
@@ -17862,7 +17992,7 @@ func SystemBaseEveryPlatform(cx *core.Scope) string { return For(cx).SystemBaseE
 
 // SystemBaseEveryPlatform says "base, every platform"
 // in the language of msgs.
-func (msgs Messages) SystemBaseEveryPlatform() string { return msgs.text(349) }
+func (msgs Messages) SystemBaseEveryPlatform() string { return msgs.text(357) }
 
 // SystemHelloFromAToast says "Hello from a toast"
 // in the language the app shows under cx.
@@ -17870,7 +18000,7 @@ func SystemHelloFromAToast(cx *core.Scope) string { return For(cx).SystemHelloFr
 
 // SystemHelloFromAToast says "Hello from a toast"
 // in the language of msgs.
-func (msgs Messages) SystemHelloFromAToast() string { return msgs.text(350) }
+func (msgs Messages) SystemHelloFromAToast() string { return msgs.text(358) }
 
 // SystemBaseSToastmanagerStyledBy says "base's ToastManager, styled by the gallery"
 // in the language the app shows under cx.
@@ -17880,7 +18010,7 @@ func SystemBaseSToastmanagerStyledBy(cx *core.Scope) string {
 
 // SystemBaseSToastmanagerStyledBy says "base's ToastManager, styled by the gallery"
 // in the language of msgs.
-func (msgs Messages) SystemBaseSToastmanagerStyledBy() string { return msgs.text(351) }
+func (msgs Messages) SystemBaseSToastmanagerStyledBy() string { return msgs.text(359) }
 
 // SystemAnswer says "Answer"
 // in the language the app shows under cx.
@@ -17888,7 +18018,7 @@ func SystemAnswer(cx *core.Scope) string { return For(cx).SystemAnswer() }
 
 // SystemAnswer says "Answer"
 // in the language of msgs.
-func (msgs Messages) SystemAnswer() string { return msgs.text(352) }
+func (msgs Messages) SystemAnswer() string { return msgs.text(360) }
 
 // SystemNoneYet says "None yet"
 // in the language the app shows under cx.
@@ -17896,7 +18026,7 @@ func SystemNoneYet(cx *core.Scope) string { return For(cx).SystemNoneYet() }
 
 // SystemNoneYet says "None yet"
 // in the language of msgs.
-func (msgs Messages) SystemNoneYet() string { return msgs.text(353) }
+func (msgs Messages) SystemNoneYet() string { return msgs.text(361) }
 
 // SystemFramesAndTimers says "Frames and timers"
 // in the language the app shows under cx.
@@ -17904,7 +18034,7 @@ func SystemFramesAndTimers(cx *core.Scope) string { return For(cx).SystemFramesA
 
 // SystemFramesAndTimers says "Frames and timers"
 // in the language of msgs.
-func (msgs Messages) SystemFramesAndTimers() string { return msgs.text(354) }
+func (msgs Messages) SystemFramesAndTimers() string { return msgs.text(362) }
 
 // SystemRequestanimationframeAfterfunc says "RequestAnimationFrame · AfterFunc"
 // in the language the app shows under cx.
@@ -17914,7 +18044,7 @@ func SystemRequestanimationframeAfterfunc(cx *core.Scope) string {
 
 // SystemRequestanimationframeAfterfunc says "RequestAnimationFrame · AfterFunc"
 // in the language of msgs.
-func (msgs Messages) SystemRequestanimationframeAfterfunc() string { return msgs.text(355) }
+func (msgs Messages) SystemRequestanimationframeAfterfunc() string { return msgs.text(363) }
 
 // SystemFrameRate says "Frame rate"
 // in the language the app shows under cx.
@@ -17922,7 +18052,7 @@ func SystemFrameRate(cx *core.Scope) string { return For(cx).SystemFrameRate() }
 
 // SystemFrameRate says "Frame rate"
 // in the language of msgs.
-func (msgs Messages) SystemFrameRate() string { return msgs.text(356) }
+func (msgs Messages) SystemFrameRate() string { return msgs.text(364) }
 
 // SystemIntervalTicks says "Interval ticks"
 // in the language the app shows under cx.
@@ -17930,7 +18060,7 @@ func SystemIntervalTicks(cx *core.Scope) string { return For(cx).SystemIntervalT
 
 // SystemIntervalTicks says "Interval ticks"
 // in the language of msgs.
-func (msgs Messages) SystemIntervalTicks() string { return msgs.text(357) }
+func (msgs Messages) SystemIntervalTicks() string { return msgs.text(365) }
 
 // SystemEvery1S says "every 1 s"
 // in the language the app shows under cx.
@@ -17938,7 +18068,7 @@ func SystemEvery1S(cx *core.Scope) string { return For(cx).SystemEvery1S() }
 
 // SystemEvery1S says "every 1 s"
 // in the language of msgs.
-func (msgs Messages) SystemEvery1S() string { return msgs.text(358) }
+func (msgs Messages) SystemEvery1S() string { return msgs.text(366) }
 
 // SystemShareOf120Fps says "Share of 120 fps"
 // in the language the app shows under cx.
@@ -17946,7 +18076,7 @@ func SystemShareOf120Fps(cx *core.Scope) string { return For(cx).SystemShareOf12
 
 // SystemShareOf120Fps says "Share of 120 fps"
 // in the language of msgs.
-func (msgs Messages) SystemShareOf120Fps() string { return msgs.text(359) }
+func (msgs Messages) SystemShareOf120Fps() string { return msgs.text(367) }
 
 // SystemStopCountingFrames says "Stop counting frames"
 // in the language the app shows under cx.
@@ -17954,7 +18084,7 @@ func SystemStopCountingFrames(cx *core.Scope) string { return For(cx).SystemStop
 
 // SystemStopCountingFrames says "Stop counting frames"
 // in the language of msgs.
-func (msgs Messages) SystemStopCountingFrames() string { return msgs.text(360) }
+func (msgs Messages) SystemStopCountingFrames() string { return msgs.text(368) }
 
 // SystemCountFrames says "Count frames"
 // in the language the app shows under cx.
@@ -17962,7 +18092,7 @@ func SystemCountFrames(cx *core.Scope) string { return For(cx).SystemCountFrames
 
 // SystemCountFrames says "Count frames"
 // in the language of msgs.
-func (msgs Messages) SystemCountFrames() string { return msgs.text(361) }
+func (msgs Messages) SystemCountFrames() string { return msgs.text(369) }
 
 // SystemCounts says "Counts"
 // in the language the app shows under cx.
@@ -17970,7 +18100,7 @@ func SystemCounts(cx *core.Scope) string { return For(cx).SystemCounts() }
 
 // SystemCounts says "Counts"
 // in the language of msgs.
-func (msgs Messages) SystemCounts() string { return msgs.text(362) }
+func (msgs Messages) SystemCounts() string { return msgs.text(370) }
 
 // SystemSwitchesTheLight says "Switches the light"
 // in the language the app shows under cx.
@@ -17978,7 +18108,7 @@ func SystemSwitchesTheLight(cx *core.Scope) string { return For(cx).SystemSwitch
 
 // SystemSwitchesTheLight says "Switches the light"
 // in the language of msgs.
-func (msgs Messages) SystemSwitchesTheLight() string { return msgs.text(363) }
+func (msgs Messages) SystemSwitchesTheLight() string { return msgs.text(371) }
 
 // SystemResetsNotWhileTyping says "Resets (not while typing)"
 // in the language the app shows under cx.
@@ -17986,7 +18116,7 @@ func SystemResetsNotWhileTyping(cx *core.Scope) string { return For(cx).SystemRe
 
 // SystemResetsNotWhileTyping says "Resets (not while typing)"
 // in the language of msgs.
-func (msgs Messages) SystemResetsNotWhileTyping() string { return msgs.text(364) }
+func (msgs Messages) SystemResetsNotWhileTyping() string { return msgs.text(372) }
 
 // SystemKeyboardShortcuts says "Keyboard shortcuts"
 // in the language the app shows under cx.
@@ -17994,7 +18124,7 @@ func SystemKeyboardShortcuts(cx *core.Scope) string { return For(cx).SystemKeybo
 
 // SystemKeyboardShortcuts says "Keyboard shortcuts"
 // in the language of msgs.
-func (msgs Messages) SystemKeyboardShortcuts() string { return msgs.text(365) }
+func (msgs Messages) SystemKeyboardShortcuts() string { return msgs.text(373) }
 
 // SystemScopeOnkeyDesktopsAndHardware says "Scope.OnKey · desktops and hardware keyboards"
 // in the language the app shows under cx.
@@ -18004,7 +18134,7 @@ func SystemScopeOnkeyDesktopsAndHardware(cx *core.Scope) string {
 
 // SystemScopeOnkeyDesktopsAndHardware says "Scope.OnKey · desktops and hardware keyboards"
 // in the language of msgs.
-func (msgs Messages) SystemScopeOnkeyDesktopsAndHardware() string { return msgs.text(366) }
+func (msgs Messages) SystemScopeOnkeyDesktopsAndHardware() string { return msgs.text(374) }
 
 // SystemLightOn says "Light on"
 // in the language the app shows under cx.
@@ -18012,7 +18142,7 @@ func SystemLightOn(cx *core.Scope) string { return For(cx).SystemLightOn() }
 
 // SystemLightOn says "Light on"
 // in the language of msgs.
-func (msgs Messages) SystemLightOn() string { return msgs.text(367) }
+func (msgs Messages) SystemLightOn() string { return msgs.text(375) }
 
 // SystemLightOff says "Light off"
 // in the language the app shows under cx.
@@ -18020,7 +18150,7 @@ func SystemLightOff(cx *core.Scope) string { return For(cx).SystemLightOff() }
 
 // SystemLightOff says "Light off"
 // in the language of msgs.
-func (msgs Messages) SystemLightOff() string { return msgs.text(368) }
+func (msgs Messages) SystemLightOff() string { return msgs.text(376) }
 
 // SystemNetworkAndLogs says "Network and logs"
 // in the language the app shows under cx.
@@ -18028,7 +18158,7 @@ func SystemNetworkAndLogs(cx *core.Scope) string { return For(cx).SystemNetworkA
 
 // SystemNetworkAndLogs says "Network and logs"
 // in the language of msgs.
-func (msgs Messages) SystemNetworkAndLogs() string { return msgs.text(369) }
+func (msgs Messages) SystemNetworkAndLogs() string { return msgs.text(377) }
 
 // SystemNetHttpOnAGoroutine says "net/http on a goroutine · log"
 // in the language the app shows under cx.
@@ -18036,7 +18166,7 @@ func SystemNetHttpOnAGoroutine(cx *core.Scope) string { return For(cx).SystemNet
 
 // SystemNetHttpOnAGoroutine says "net/http on a goroutine · log"
 // in the language of msgs.
-func (msgs Messages) SystemNetHttpOnAGoroutine() string { return msgs.text(370) }
+func (msgs Messages) SystemNetHttpOnAGoroutine() string { return msgs.text(378) }
 
 // SystemThreePostsFromJsonplaceholderTypicode says "Three posts from jsonplaceholder.typicode.com"
 // in the language the app shows under cx.
@@ -18046,7 +18176,7 @@ func SystemThreePostsFromJsonplaceholderTypicode(cx *core.Scope) string {
 
 // SystemThreePostsFromJsonplaceholderTypicode says "Three posts from jsonplaceholder.typicode.com"
 // in the language of msgs.
-func (msgs Messages) SystemThreePostsFromJsonplaceholderTypicode() string { return msgs.text(371) }
+func (msgs Messages) SystemThreePostsFromJsonplaceholderTypicode() string { return msgs.text(379) }
 
 // SystemLoading says "Loading…"
 // in the language the app shows under cx.
@@ -18054,7 +18184,7 @@ func SystemLoading(cx *core.Scope) string { return For(cx).SystemLoading() }
 
 // SystemLoading says "Loading…"
 // in the language of msgs.
-func (msgs Messages) SystemLoading() string { return msgs.text(372) }
+func (msgs Messages) SystemLoading() string { return msgs.text(380) }
 
 // SystemLogPrintfShowsInThe says "log.Printf shows in the terminal of nsgo dev."
 // in the language the app shows under cx.
@@ -18062,7 +18192,7 @@ func SystemLogPrintfShowsInThe(cx *core.Scope) string { return For(cx).SystemLog
 
 // SystemLogPrintfShowsInThe says "log.Printf shows in the terminal of nsgo dev."
 // in the language of msgs.
-func (msgs Messages) SystemLogPrintfShowsInThe() string { return msgs.text(373) }
+func (msgs Messages) SystemLogPrintfShowsInThe() string { return msgs.text(381) }
 
 // SystemTitleBarCommandsFrameAnd says "Title bar, commands, frame and level"
 // in the language the app shows under cx.
@@ -18072,7 +18202,7 @@ func SystemTitleBarCommandsFrameAnd(cx *core.Scope) string {
 
 // SystemTitleBarCommandsFrameAnd says "Title bar, commands, frame and level"
 // in the language of msgs.
-func (msgs Messages) SystemTitleBarCommandsFrameAnd() string { return msgs.text(374) }
+func (msgs Messages) SystemTitleBarCommandsFrameAnd() string { return msgs.text(382) }
 
 // SystemDesktop says "Desktop"
 // in the language the app shows under cx.
@@ -18080,7 +18210,7 @@ func SystemDesktop(cx *core.Scope) string { return For(cx).SystemDesktop() }
 
 // SystemDesktop says "Desktop"
 // in the language of msgs.
-func (msgs Messages) SystemDesktop() string { return msgs.text(375) }
+func (msgs Messages) SystemDesktop() string { return msgs.text(383) }
 
 // SystemWindowCommandsNeedADesktop says "Window commands need a desktop window: run the gallery on macOS, Windows or Linux to try them."
 // in the language the app shows under cx.
@@ -18090,7 +18220,7 @@ func SystemWindowCommandsNeedADesktop(cx *core.Scope) string {
 
 // SystemWindowCommandsNeedADesktop says "Window commands need a desktop window: run the gallery on macOS, Windows or Linux to try them."
 // in the language of msgs.
-func (msgs Messages) SystemWindowCommandsNeedADesktop() string { return msgs.text(376) }
+func (msgs Messages) SystemWindowCommandsNeedADesktop() string { return msgs.text(384) }
 
 // SystemNsgo says "NSGo"
 // in the language the app shows under cx.
@@ -18098,7 +18228,7 @@ func SystemNsgo(cx *core.Scope) string { return For(cx).SystemNsgo() }
 
 // SystemNsgo says "NSGo"
 // in the language of msgs.
-func (msgs Messages) SystemNsgo() string { return msgs.text(377) }
+func (msgs Messages) SystemNsgo() string { return msgs.text(385) }
 
 // SystemTitleBar says "Title bar"
 // in the language the app shows under cx.
@@ -18106,7 +18236,7 @@ func SystemTitleBar(cx *core.Scope) string { return For(cx).SystemTitleBar() }
 
 // SystemTitleBar says "Title bar"
 // in the language of msgs.
-func (msgs Messages) SystemTitleBar() string { return msgs.text(378) }
+func (msgs Messages) SystemTitleBar() string { return msgs.text(386) }
 
 // SystemTheSystemS says "the system's"
 // in the language the app shows under cx.
@@ -18114,7 +18244,7 @@ func SystemTheSystemS(cx *core.Scope) string { return For(cx).SystemTheSystemS()
 
 // SystemTheSystemS says "the system's"
 // in the language of msgs.
-func (msgs Messages) SystemTheSystemS() string { return msgs.text(379) }
+func (msgs Messages) SystemTheSystemS() string { return msgs.text(387) }
 
 // SystemHideTitleBar says "Hide title bar"
 // in the language the app shows under cx.
@@ -18122,7 +18252,7 @@ func SystemHideTitleBar(cx *core.Scope) string { return For(cx).SystemHideTitleB
 
 // SystemHideTitleBar says "Hide title bar"
 // in the language of msgs.
-func (msgs Messages) SystemHideTitleBar() string { return msgs.text(380) }
+func (msgs Messages) SystemHideTitleBar() string { return msgs.text(388) }
 
 // SystemShowTitleBar says "Show title bar"
 // in the language the app shows under cx.
@@ -18130,7 +18260,7 @@ func SystemShowTitleBar(cx *core.Scope) string { return For(cx).SystemShowTitleB
 
 // SystemShowTitleBar says "Show title bar"
 // in the language of msgs.
-func (msgs Messages) SystemShowTitleBar() string { return msgs.text(381) }
+func (msgs Messages) SystemShowTitleBar() string { return msgs.text(389) }
 
 // SystemWindowControls says "Window controls"
 // in the language the app shows under cx.
@@ -18138,7 +18268,7 @@ func SystemWindowControls(cx *core.Scope) string { return For(cx).SystemWindowCo
 
 // SystemWindowControls says "Window controls"
 // in the language of msgs.
-func (msgs Messages) SystemWindowControls() string { return msgs.text(382) }
+func (msgs Messages) SystemWindowControls() string { return msgs.text(390) }
 
 // SystemDefault says "Default"
 // in the language the app shows under cx.
@@ -18146,7 +18276,7 @@ func SystemDefault(cx *core.Scope) string { return For(cx).SystemDefault() }
 
 // SystemDefault says "Default"
 // in the language of msgs.
-func (msgs Messages) SystemDefault() string { return msgs.text(383) }
+func (msgs Messages) SystemDefault() string { return msgs.text(391) }
 
 // SystemTrafficLightsAt2410 says "Traffic lights at 24, 10"
 // in the language the app shows under cx.
@@ -18154,7 +18284,7 @@ func SystemTrafficLightsAt2410(cx *core.Scope) string { return For(cx).SystemTra
 
 // SystemTrafficLightsAt2410 says "Traffic lights at 24, 10"
 // in the language of msgs.
-func (msgs Messages) SystemTrafficLightsAt2410() string { return msgs.text(384) }
+func (msgs Messages) SystemTrafficLightsAt2410() string { return msgs.text(392) }
 
 // SystemMaterial says "Material"
 // in the language the app shows under cx.
@@ -18162,7 +18292,7 @@ func SystemMaterial(cx *core.Scope) string { return For(cx).SystemMaterial() }
 
 // SystemMaterial says "Material"
 // in the language of msgs.
-func (msgs Messages) SystemMaterial() string { return msgs.text(385) }
+func (msgs Messages) SystemMaterial() string { return msgs.text(393) }
 
 // SystemShowsBehindTheSidebar says "shows behind the sidebar"
 // in the language the app shows under cx.
@@ -18170,7 +18300,7 @@ func SystemShowsBehindTheSidebar(cx *core.Scope) string { return For(cx).SystemS
 
 // SystemShowsBehindTheSidebar says "shows behind the sidebar"
 // in the language of msgs.
-func (msgs Messages) SystemShowsBehindTheSidebar() string { return msgs.text(386) }
+func (msgs Messages) SystemShowsBehindTheSidebar() string { return msgs.text(394) }
 
 // SystemNone says "None"
 // in the language the app shows under cx.
@@ -18178,7 +18308,7 @@ func SystemNone(cx *core.Scope) string { return For(cx).SystemNone() }
 
 // SystemNone says "None"
 // in the language of msgs.
-func (msgs Messages) SystemNone() string { return msgs.text(387) }
+func (msgs Messages) SystemNone() string { return msgs.text(395) }
 
 // SystemSidebar says "Sidebar"
 // in the language the app shows under cx.
@@ -18186,7 +18316,7 @@ func SystemSidebar(cx *core.Scope) string { return For(cx).SystemSidebar() }
 
 // SystemSidebar says "Sidebar"
 // in the language of msgs.
-func (msgs Messages) SystemSidebar() string { return msgs.text(388) }
+func (msgs Messages) SystemSidebar() string { return msgs.text(396) }
 
 // SystemUnderWindow says "Under window"
 // in the language the app shows under cx.
@@ -18194,7 +18324,7 @@ func SystemUnderWindow(cx *core.Scope) string { return For(cx).SystemUnderWindow
 
 // SystemUnderWindow says "Under window"
 // in the language of msgs.
-func (msgs Messages) SystemUnderWindow() string { return msgs.text(389) }
+func (msgs Messages) SystemUnderWindow() string { return msgs.text(397) }
 
 // SystemHud says "HUD"
 // in the language the app shows under cx.
@@ -18202,7 +18332,7 @@ func SystemHud(cx *core.Scope) string { return For(cx).SystemHud() }
 
 // SystemHud says "HUD"
 // in the language of msgs.
-func (msgs Messages) SystemHud() string { return msgs.text(390) }
+func (msgs Messages) SystemHud() string { return msgs.text(398) }
 
 // SystemCommands says "Commands"
 // in the language the app shows under cx.
@@ -18210,7 +18340,7 @@ func SystemCommands(cx *core.Scope) string { return For(cx).SystemCommands() }
 
 // SystemCommands says "Commands"
 // in the language of msgs.
-func (msgs Messages) SystemCommands() string { return msgs.text(391) }
+func (msgs Messages) SystemCommands() string { return msgs.text(399) }
 
 // SystemMinimize says "Minimize"
 // in the language the app shows under cx.
@@ -18218,7 +18348,7 @@ func SystemMinimize(cx *core.Scope) string { return For(cx).SystemMinimize() }
 
 // SystemMinimize says "Minimize"
 // in the language of msgs.
-func (msgs Messages) SystemMinimize() string { return msgs.text(392) }
+func (msgs Messages) SystemMinimize() string { return msgs.text(400) }
 
 // SystemZoom says "Zoom"
 // in the language the app shows under cx.
@@ -18226,7 +18356,7 @@ func SystemZoom(cx *core.Scope) string { return For(cx).SystemZoom() }
 
 // SystemZoom says "Zoom"
 // in the language of msgs.
-func (msgs Messages) SystemZoom() string { return msgs.text(393) }
+func (msgs Messages) SystemZoom() string { return msgs.text(401) }
 
 // SystemFullScreen says "Full screen"
 // in the language the app shows under cx.
@@ -18234,7 +18364,7 @@ func SystemFullScreen(cx *core.Scope) string { return For(cx).SystemFullScreen()
 
 // SystemFullScreen says "Full screen"
 // in the language of msgs.
-func (msgs Messages) SystemFullScreen() string { return msgs.text(394) }
+func (msgs Messages) SystemFullScreen() string { return msgs.text(402) }
 
 // SystemAwayFor2S says "Away for 2 s"
 // in the language the app shows under cx.
@@ -18242,7 +18372,7 @@ func SystemAwayFor2S(cx *core.Scope) string { return For(cx).SystemAwayFor2S() }
 
 // SystemAwayFor2S says "Away for 2 s"
 // in the language of msgs.
-func (msgs Messages) SystemAwayFor2S() string { return msgs.text(395) }
+func (msgs Messages) SystemAwayFor2S() string { return msgs.text(403) }
 
 // SystemFrameAndLevel says "Frame and level"
 // in the language the app shows under cx.
@@ -18250,7 +18380,7 @@ func SystemFrameAndLevel(cx *core.Scope) string { return For(cx).SystemFrameAndL
 
 // SystemFrameAndLevel says "Frame and level"
 // in the language of msgs.
-func (msgs Messages) SystemFrameAndLevel() string { return msgs.text(396) }
+func (msgs Messages) SystemFrameAndLevel() string { return msgs.text(404) }
 
 // SystemTallerAnimated says "Taller, animated"
 // in the language the app shows under cx.
@@ -18258,7 +18388,7 @@ func SystemTallerAnimated(cx *core.Scope) string { return For(cx).SystemTallerAn
 
 // SystemTallerAnimated says "Taller, animated"
 // in the language of msgs.
-func (msgs Messages) SystemTallerAnimated() string { return msgs.text(397) }
+func (msgs Messages) SystemTallerAnimated() string { return msgs.text(405) }
 
 // SystemMoveTo8080 says "Move to 80, 80"
 // in the language the app shows under cx.
@@ -18266,7 +18396,7 @@ func SystemMoveTo8080(cx *core.Scope) string { return For(cx).SystemMoveTo8080()
 
 // SystemMoveTo8080 says "Move to 80, 80"
 // in the language of msgs.
-func (msgs Messages) SystemMoveTo8080() string { return msgs.text(398) }
+func (msgs Messages) SystemMoveTo8080() string { return msgs.text(406) }
 
 // SystemNormal says "Normal"
 // in the language the app shows under cx.
@@ -18274,7 +18404,7 @@ func SystemNormal(cx *core.Scope) string { return For(cx).SystemNormal() }
 
 // SystemNormal says "Normal"
 // in the language of msgs.
-func (msgs Messages) SystemNormal() string { return msgs.text(399) }
+func (msgs Messages) SystemNormal() string { return msgs.text(407) }
 
 // SystemFloating says "Floating"
 // in the language the app shows under cx.
@@ -18282,7 +18412,7 @@ func SystemFloating(cx *core.Scope) string { return For(cx).SystemFloating() }
 
 // SystemFloating says "Floating"
 // in the language of msgs.
-func (msgs Messages) SystemFloating() string { return msgs.text(400) }
+func (msgs Messages) SystemFloating() string { return msgs.text(408) }
 
 // SystemDragTheWindowFromHere says "Drag the window from here"
 // in the language the app shows under cx.
@@ -18290,7 +18420,7 @@ func SystemDragTheWindowFromHere(cx *core.Scope) string { return For(cx).SystemD
 
 // SystemDragTheWindowFromHere says "Drag the window from here"
 // in the language of msgs.
-func (msgs Messages) SystemDragTheWindowFromHere() string { return msgs.text(401) }
+func (msgs Messages) SystemDragTheWindowFromHere() string { return msgs.text(409) }
 
 // SystemStillPressable says "Still pressable"
 // in the language the app shows under cx.
@@ -18298,7 +18428,7 @@ func SystemStillPressable(cx *core.Scope) string { return For(cx).SystemStillPre
 
 // SystemStillPressable says "Still pressable"
 // in the language of msgs.
-func (msgs Messages) SystemStillPressable() string { return msgs.text(402) }
+func (msgs Messages) SystemStillPressable() string { return msgs.text(410) }
 
 // SystemQuit says "Quit"
 // in the language the app shows under cx.
@@ -18306,7 +18436,7 @@ func SystemQuit(cx *core.Scope) string { return For(cx).SystemQuit() }
 
 // SystemQuit says "Quit"
 // in the language of msgs.
-func (msgs Messages) SystemQuit() string { return msgs.text(403) }
+func (msgs Messages) SystemQuit() string { return msgs.text(411) }
 
 // SystemHelloFromNsgo says "Hello from NSGo"
 // in the language the app shows under cx.
@@ -18314,7 +18444,7 @@ func SystemHelloFromNsgo(cx *core.Scope) string { return For(cx).SystemHelloFrom
 
 // SystemHelloFromNsgo says "Hello from NSGo"
 // in the language of msgs.
-func (msgs Messages) SystemHelloFromNsgo() string { return msgs.text(404) }
+func (msgs Messages) SystemHelloFromNsgo() string { return msgs.text(412) }
 
 // SystemNothingReadYet says "Nothing read yet"
 // in the language the app shows under cx.
@@ -18322,7 +18452,7 @@ func SystemNothingReadYet(cx *core.Scope) string { return For(cx).SystemNothingR
 
 // SystemNothingReadYet says "Nothing read yet"
 // in the language of msgs.
-func (msgs Messages) SystemNothingReadYet() string { return msgs.text(405) }
+func (msgs Messages) SystemNothingReadYet() string { return msgs.text(413) }
 
 // SystemClipboard says "Clipboard"
 // in the language the app shows under cx.
@@ -18330,7 +18460,7 @@ func SystemClipboard(cx *core.Scope) string { return For(cx).SystemClipboard() }
 
 // SystemClipboard says "Clipboard"
 // in the language of msgs.
-func (msgs Messages) SystemClipboard() string { return msgs.text(406) }
+func (msgs Messages) SystemClipboard() string { return msgs.text(414) }
 
 // SystemTextImagesAndTheFiles says "Text, images and the files a file manager copied"
 // in the language the app shows under cx.
@@ -18338,7 +18468,7 @@ func SystemTextImagesAndTheFiles(cx *core.Scope) string { return For(cx).SystemT
 
 // SystemTextImagesAndTheFiles says "Text, images and the files a file manager copied"
 // in the language of msgs.
-func (msgs Messages) SystemTextImagesAndTheFiles() string { return msgs.text(407) }
+func (msgs Messages) SystemTextImagesAndTheFiles() string { return msgs.text(415) }
 
 // SystemClipboardText says "Clipboard text"
 // in the language the app shows under cx.
@@ -18346,7 +18476,7 @@ func SystemClipboardText(cx *core.Scope) string { return For(cx).SystemClipboard
 
 // SystemClipboardText says "Clipboard text"
 // in the language of msgs.
-func (msgs Messages) SystemClipboardText() string { return msgs.text(408) }
+func (msgs Messages) SystemClipboardText() string { return msgs.text(416) }
 
 // SystemCopyText says "Copy text"
 // in the language the app shows under cx.
@@ -18354,7 +18484,7 @@ func SystemCopyText(cx *core.Scope) string { return For(cx).SystemCopyText() }
 
 // SystemCopyText says "Copy text"
 // in the language of msgs.
-func (msgs Messages) SystemCopyText() string { return msgs.text(409) }
+func (msgs Messages) SystemCopyText() string { return msgs.text(417) }
 
 // SystemPasteText says "Paste text"
 // in the language the app shows under cx.
@@ -18362,7 +18492,7 @@ func SystemPasteText(cx *core.Scope) string { return For(cx).SystemPasteText() }
 
 // SystemPasteText says "Paste text"
 // in the language of msgs.
-func (msgs Messages) SystemPasteText() string { return msgs.text(410) }
+func (msgs Messages) SystemPasteText() string { return msgs.text(418) }
 
 // SystemText says "Text: "
 // in the language the app shows under cx.
@@ -18370,7 +18500,7 @@ func SystemText(cx *core.Scope) string { return For(cx).SystemText() }
 
 // SystemText says "Text: "
 // in the language of msgs.
-func (msgs Messages) SystemText() string { return msgs.text(411) }
+func (msgs Messages) SystemText() string { return msgs.text(419) }
 
 // SystemCopyLogo says "Copy logo"
 // in the language the app shows under cx.
@@ -18378,7 +18508,7 @@ func SystemCopyLogo(cx *core.Scope) string { return For(cx).SystemCopyLogo() }
 
 // SystemCopyLogo says "Copy logo"
 // in the language of msgs.
-func (msgs Messages) SystemCopyLogo() string { return msgs.text(412) }
+func (msgs Messages) SystemCopyLogo() string { return msgs.text(420) }
 
 // SystemPasteImage says "Paste image"
 // in the language the app shows under cx.
@@ -18386,7 +18516,7 @@ func SystemPasteImage(cx *core.Scope) string { return For(cx).SystemPasteImage()
 
 // SystemPasteImage says "Paste image"
 // in the language of msgs.
-func (msgs Messages) SystemPasteImage() string { return msgs.text(413) }
+func (msgs Messages) SystemPasteImage() string { return msgs.text(421) }
 
 // SystemTheClipboardHoldsNoImage says "The clipboard holds no image"
 // in the language the app shows under cx.
@@ -18396,7 +18526,7 @@ func SystemTheClipboardHoldsNoImage(cx *core.Scope) string {
 
 // SystemTheClipboardHoldsNoImage says "The clipboard holds no image"
 // in the language of msgs.
-func (msgs Messages) SystemTheClipboardHoldsNoImage() string { return msgs.text(414) }
+func (msgs Messages) SystemTheClipboardHoldsNoImage() string { return msgs.text(422) }
 
 // SystemPasteFiles says "Paste files"
 // in the language the app shows under cx.
@@ -18404,7 +18534,7 @@ func SystemPasteFiles(cx *core.Scope) string { return For(cx).SystemPasteFiles()
 
 // SystemPasteFiles says "Paste files"
 // in the language of msgs.
-func (msgs Messages) SystemPasteFiles() string { return msgs.text(415) }
+func (msgs Messages) SystemPasteFiles() string { return msgs.text(423) }
 
 // SystemTheClipboardHoldsNoFiles says "The clipboard holds no files"
 // in the language the app shows under cx.
@@ -18414,7 +18544,7 @@ func SystemTheClipboardHoldsNoFiles(cx *core.Scope) string {
 
 // SystemTheClipboardHoldsNoFiles says "The clipboard holds no files"
 // in the language of msgs.
-func (msgs Messages) SystemTheClipboardHoldsNoFiles() string { return msgs.text(416) }
+func (msgs Messages) SystemTheClipboardHoldsNoFiles() string { return msgs.text(424) }
 
 // SystemFiles says "Files: "
 // in the language the app shows under cx.
@@ -18422,7 +18552,7 @@ func SystemFiles(cx *core.Scope) string { return For(cx).SystemFiles() }
 
 // SystemFiles says "Files: "
 // in the language of msgs.
-func (msgs Messages) SystemFiles() string { return msgs.text(417) }
+func (msgs Messages) SystemFiles() string { return msgs.text(425) }
 
 // SystemWhatIsThere says "What is there?"
 // in the language the app shows under cx.
@@ -18430,7 +18560,7 @@ func SystemWhatIsThere(cx *core.Scope) string { return For(cx).SystemWhatIsThere
 
 // SystemWhatIsThere says "What is there?"
 // in the language of msgs.
-func (msgs Messages) SystemWhatIsThere() string { return msgs.text(418) }
+func (msgs Messages) SystemWhatIsThere() string { return msgs.text(426) }
 
 // SystemPastedImage says "Pasted image"
 // in the language the app shows under cx.
@@ -18438,7 +18568,7 @@ func SystemPastedImage(cx *core.Scope) string { return For(cx).SystemPastedImage
 
 // SystemPastedImage says "Pasted image"
 // in the language of msgs.
-func (msgs Messages) SystemPastedImage() string { return msgs.text(419) }
+func (msgs Messages) SystemPastedImage() string { return msgs.text(427) }
 
 // SystemNothingOpenedYet says "Nothing opened yet"
 // in the language the app shows under cx.
@@ -18446,7 +18576,7 @@ func SystemNothingOpenedYet(cx *core.Scope) string { return For(cx).SystemNothin
 
 // SystemNothingOpenedYet says "Nothing opened yet"
 // in the language of msgs.
-func (msgs Messages) SystemNothingOpenedYet() string { return msgs.text(420) }
+func (msgs Messages) SystemNothingOpenedYet() string { return msgs.text(428) }
 
 // SystemOpened says "Opened "
 // in the language the app shows under cx.
@@ -18454,7 +18584,7 @@ func SystemOpened(cx *core.Scope) string { return For(cx).SystemOpened() }
 
 // SystemOpened says "Opened "
 // in the language of msgs.
-func (msgs Messages) SystemOpened() string { return msgs.text(421) }
+func (msgs Messages) SystemOpened() string { return msgs.text(429) }
 
 // SystemNothingOpened says "Nothing opened "
 // in the language the app shows under cx.
@@ -18462,7 +18592,7 @@ func SystemNothingOpened(cx *core.Scope) string { return For(cx).SystemNothingOp
 
 // SystemNothingOpened says "Nothing opened "
 // in the language of msgs.
-func (msgs Messages) SystemNothingOpened() string { return msgs.text(422) }
+func (msgs Messages) SystemNothingOpened() string { return msgs.text(430) }
 
 // SystemLinksPhotosAndAppearance says "Links, photos and appearance"
 // in the language the app shows under cx.
@@ -18472,7 +18602,7 @@ func SystemLinksPhotosAndAppearance(cx *core.Scope) string {
 
 // SystemLinksPhotosAndAppearance says "Links, photos and appearance"
 // in the language of msgs.
-func (msgs Messages) SystemLinksPhotosAndAppearance() string { return msgs.text(423) }
+func (msgs Messages) SystemLinksPhotosAndAppearance() string { return msgs.text(431) }
 
 // SystemOpenurlPickimagesSetappearance says "OpenURL · PickImages · SetAppearance"
 // in the language the app shows under cx.
@@ -18482,7 +18612,7 @@ func SystemOpenurlPickimagesSetappearance(cx *core.Scope) string {
 
 // SystemOpenurlPickimagesSetappearance says "OpenURL · PickImages · SetAppearance"
 // in the language of msgs.
-func (msgs Messages) SystemOpenurlPickimagesSetappearance() string { return msgs.text(424) }
+func (msgs Messages) SystemOpenurlPickimagesSetappearance() string { return msgs.text(432) }
 
 // SystemTheWebsite says "The website"
 // in the language the app shows under cx.
@@ -18490,7 +18620,7 @@ func SystemTheWebsite(cx *core.Scope) string { return For(cx).SystemTheWebsite()
 
 // SystemTheWebsite says "The website"
 // in the language of msgs.
-func (msgs Messages) SystemTheWebsite() string { return msgs.text(425) }
+func (msgs Messages) SystemTheWebsite() string { return msgs.text(433) }
 
 // SystemAnEmail says "An email"
 // in the language the app shows under cx.
@@ -18498,7 +18628,7 @@ func SystemAnEmail(cx *core.Scope) string { return For(cx).SystemAnEmail() }
 
 // SystemAnEmail says "An email"
 // in the language of msgs.
-func (msgs Messages) SystemAnEmail() string { return msgs.text(426) }
+func (msgs Messages) SystemAnEmail() string { return msgs.text(434) }
 
 // SystemRefusedUrl says "Refused URL"
 // in the language the app shows under cx.
@@ -18506,7 +18636,7 @@ func SystemRefusedUrl(cx *core.Scope) string { return For(cx).SystemRefusedUrl()
 
 // SystemRefusedUrl says "Refused URL"
 // in the language of msgs.
-func (msgs Messages) SystemRefusedUrl() string { return msgs.text(427) }
+func (msgs Messages) SystemRefusedUrl() string { return msgs.text(435) }
 
 // SystemPickAPhoto says "Pick a photo"
 // in the language the app shows under cx.
@@ -18514,7 +18644,7 @@ func SystemPickAPhoto(cx *core.Scope) string { return For(cx).SystemPickAPhoto()
 
 // SystemPickAPhoto says "Pick a photo"
 // in the language of msgs.
-func (msgs Messages) SystemPickAPhoto() string { return msgs.text(428) }
+func (msgs Messages) SystemPickAPhoto() string { return msgs.text(436) }
 
 // SystemUpTo4800Px says "Up to 4, 800 px"
 // in the language the app shows under cx.
@@ -18522,7 +18652,7 @@ func SystemUpTo4800Px(cx *core.Scope) string { return For(cx).SystemUpTo4800Px()
 
 // SystemUpTo4800Px says "Up to 4, 800 px"
 // in the language of msgs.
-func (msgs Messages) SystemUpTo4800Px() string { return msgs.text(429) }
+func (msgs Messages) SystemUpTo4800Px() string { return msgs.text(437) }
 
 // SystemNoPhotoPicked says "No photo picked"
 // in the language the app shows under cx.
@@ -18530,7 +18660,7 @@ func SystemNoPhotoPicked(cx *core.Scope) string { return For(cx).SystemNoPhotoPi
 
 // SystemNoPhotoPicked says "No photo picked"
 // in the language of msgs.
-func (msgs Messages) SystemNoPhotoPicked() string { return msgs.text(430) }
+func (msgs Messages) SystemNoPhotoPicked() string { return msgs.text(438) }
 
 // SystemHeicArrivesAsJpegLarge says "HEIC arrives as JPEG, large photos scaled down when asked"
 // in the language the app shows under cx.
@@ -18540,7 +18670,7 @@ func SystemHeicArrivesAsJpegLarge(cx *core.Scope) string {
 
 // SystemHeicArrivesAsJpegLarge says "HEIC arrives as JPEG, large photos scaled down when asked"
 // in the language of msgs.
-func (msgs Messages) SystemHeicArrivesAsJpegLarge() string { return msgs.text(431) }
+func (msgs Messages) SystemHeicArrivesAsJpegLarge() string { return msgs.text(439) }
 
 // SystemSetappearance says "SetAppearance"
 // in the language the app shows under cx.
@@ -18548,7 +18678,7 @@ func SystemSetappearance(cx *core.Scope) string { return For(cx).SystemSetappear
 
 // SystemSetappearance says "SetAppearance"
 // in the language of msgs.
-func (msgs Messages) SystemSetappearance() string { return msgs.text(432) }
+func (msgs Messages) SystemSetappearance() string { return msgs.text(440) }
 
 // SystemForced says "forced: "
 // in the language the app shows under cx.
@@ -18556,7 +18686,7 @@ func SystemForced(cx *core.Scope) string { return For(cx).SystemForced() }
 
 // SystemForced says "forced: "
 // in the language of msgs.
-func (msgs Messages) SystemForced() string { return msgs.text(433) }
+func (msgs Messages) SystemForced() string { return msgs.text(441) }
 
 // SystemSystem says "System"
 // in the language the app shows under cx.
@@ -18564,7 +18694,7 @@ func SystemSystem(cx *core.Scope) string { return For(cx).SystemSystem() }
 
 // SystemSystem says "System"
 // in the language of msgs.
-func (msgs Messages) SystemSystem() string { return msgs.text(434) }
+func (msgs Messages) SystemSystem() string { return msgs.text(442) }
 
 // SystemFilesArriveOnDiskCopied says "Files arrive on disk, copied into the app on iOS and Android"
 // in the language the app shows under cx.
@@ -18574,7 +18704,7 @@ func SystemFilesArriveOnDiskCopied(cx *core.Scope) string {
 
 // SystemFilesArriveOnDiskCopied says "Files arrive on disk, copied into the app on iOS and Android"
 // in the language of msgs.
-func (msgs Messages) SystemFilesArriveOnDiskCopied() string { return msgs.text(435) }
+func (msgs Messages) SystemFilesArriveOnDiskCopied() string { return msgs.text(443) }
 
 // SystemThePickFailed says "The pick failed: "
 // in the language the app shows under cx.
@@ -18582,7 +18712,7 @@ func SystemThePickFailed(cx *core.Scope) string { return For(cx).SystemThePickFa
 
 // SystemThePickFailed says "The pick failed: "
 // in the language of msgs.
-func (msgs Messages) SystemThePickFailed() string { return msgs.text(436) }
+func (msgs Messages) SystemThePickFailed() string { return msgs.text(444) }
 
 // SystemNoFilePicked says "No file picked"
 // in the language the app shows under cx.
@@ -18590,7 +18720,7 @@ func SystemNoFilePicked(cx *core.Scope) string { return For(cx).SystemNoFilePick
 
 // SystemNoFilePicked says "No file picked"
 // in the language of msgs.
-func (msgs Messages) SystemNoFilePicked() string { return msgs.text(437) }
+func (msgs Messages) SystemNoFilePicked() string { return msgs.text(445) }
 
 // SystemTheSaveFailed says "The save failed: "
 // in the language the app shows under cx.
@@ -18598,7 +18728,7 @@ func SystemTheSaveFailed(cx *core.Scope) string { return For(cx).SystemTheSaveFa
 
 // SystemTheSaveFailed says "The save failed: "
 // in the language of msgs.
-func (msgs Messages) SystemTheSaveFailed() string { return msgs.text(438) }
+func (msgs Messages) SystemTheSaveFailed() string { return msgs.text(446) }
 
 // SystemSaved2 says "Saved "
 // in the language the app shows under cx.
@@ -18606,7 +18736,7 @@ func SystemSaved2(cx *core.Scope) string { return For(cx).SystemSaved2() }
 
 // SystemSaved2 says "Saved "
 // in the language of msgs.
-func (msgs Messages) SystemSaved2() string { return msgs.text(439) }
+func (msgs Messages) SystemSaved2() string { return msgs.text(447) }
 
 // SystemNothingSaved says "Nothing saved"
 // in the language the app shows under cx.
@@ -18614,7 +18744,7 @@ func SystemNothingSaved(cx *core.Scope) string { return For(cx).SystemNothingSav
 
 // SystemNothingSaved says "Nothing saved"
 // in the language of msgs.
-func (msgs Messages) SystemNothingSaved() string { return msgs.text(440) }
+func (msgs Messages) SystemNothingSaved() string { return msgs.text(448) }
 
 // SystemFiles2 says "Files"
 // in the language the app shows under cx.
@@ -18622,7 +18752,7 @@ func SystemFiles2(cx *core.Scope) string { return For(cx).SystemFiles2() }
 
 // SystemFiles2 says "Files"
 // in the language of msgs.
-func (msgs Messages) SystemFiles2() string { return msgs.text(441) }
+func (msgs Messages) SystemFiles2() string { return msgs.text(449) }
 
 // SystemPickfilesSavefile says "PickFiles · SaveFile"
 // in the language the app shows under cx.
@@ -18630,7 +18760,7 @@ func SystemPickfilesSavefile(cx *core.Scope) string { return For(cx).SystemPickf
 
 // SystemPickfilesSavefile says "PickFiles · SaveFile"
 // in the language of msgs.
-func (msgs Messages) SystemPickfilesSavefile() string { return msgs.text(442) }
+func (msgs Messages) SystemPickfilesSavefile() string { return msgs.text(450) }
 
 // SystemPickAFile says "Pick a file"
 // in the language the app shows under cx.
@@ -18638,7 +18768,7 @@ func SystemPickAFile(cx *core.Scope) string { return For(cx).SystemPickAFile() }
 
 // SystemPickAFile says "Pick a file"
 // in the language of msgs.
-func (msgs Messages) SystemPickAFile() string { return msgs.text(443) }
+func (msgs Messages) SystemPickAFile() string { return msgs.text(451) }
 
 // SystemPdfsAndImages says "PDFs and images"
 // in the language the app shows under cx.
@@ -18646,7 +18776,7 @@ func SystemPdfsAndImages(cx *core.Scope) string { return For(cx).SystemPdfsAndIm
 
 // SystemPdfsAndImages says "PDFs and images"
 // in the language of msgs.
-func (msgs Messages) SystemPdfsAndImages() string { return msgs.text(444) }
+func (msgs Messages) SystemPdfsAndImages() string { return msgs.text(452) }
 
 // SystemSaveATextFile says "Save a text file"
 // in the language the app shows under cx.
@@ -18654,7 +18784,7 @@ func SystemSaveATextFile(cx *core.Scope) string { return For(cx).SystemSaveAText
 
 // SystemSaveATextFile says "Save a text file"
 // in the language of msgs.
-func (msgs Messages) SystemSaveATextFile() string { return msgs.text(445) }
+func (msgs Messages) SystemSaveATextFile() string { return msgs.text(453) }
 
 // SystemSaveTheFilePicked says "Save the file picked"
 // in the language the app shows under cx.
@@ -18662,7 +18792,7 @@ func SystemSaveTheFilePicked(cx *core.Scope) string { return For(cx).SystemSaveT
 
 // SystemSaveTheFilePicked says "Save the file picked"
 // in the language of msgs.
-func (msgs Messages) SystemSaveTheFilePicked() string { return msgs.text(446) }
+func (msgs Messages) SystemSaveTheFilePicked() string { return msgs.text(454) }
 
 // SystemPickAFileFirst says "Pick a file first"
 // in the language the app shows under cx.
@@ -18670,7 +18800,7 @@ func SystemPickAFileFirst(cx *core.Scope) string { return For(cx).SystemPickAFil
 
 // SystemPickAFileFirst says "Pick a file first"
 // in the language of msgs.
-func (msgs Messages) SystemPickAFileFirst() string { return msgs.text(447) }
+func (msgs Messages) SystemPickAFileFirst() string { return msgs.text(455) }
 
 // SystemCounted says "Counted {n, number}"
 // in the language the app shows under cx.
@@ -18804,7 +18934,7 @@ func CommonYes(cx *core.Scope) string { return For(cx).CommonYes() }
 
 // CommonYes says "yes"
 // in the language of msgs.
-func (msgs Messages) CommonYes() string { return msgs.text(448) }
+func (msgs Messages) CommonYes() string { return msgs.text(456) }
 
 // CommonNo says "no"
 // in the language the app shows under cx.
@@ -18812,7 +18942,7 @@ func CommonNo(cx *core.Scope) string { return For(cx).CommonNo() }
 
 // CommonNo says "no"
 // in the language of msgs.
-func (msgs Messages) CommonNo() string { return msgs.text(449) }
+func (msgs Messages) CommonNo() string { return msgs.text(457) }
 
 // ListsViewableItemsAtLeastHalf says "Viewable items (at least half shown)"
 // in the language the app shows under cx.
@@ -18822,7 +18952,7 @@ func ListsViewableItemsAtLeastHalf(cx *core.Scope) string {
 
 // ListsViewableItemsAtLeastHalf says "Viewable items (at least half shown)"
 // in the language of msgs.
-func (msgs Messages) ListsViewableItemsAtLeastHalf() string { return msgs.text(450) }
+func (msgs Messages) ListsViewableItemsAtLeastHalf() string { return msgs.text(458) }
 
 // ListsJumpTo60 says "Jump to 60"
 // in the language the app shows under cx.
@@ -18830,7 +18960,7 @@ func ListsJumpTo60(cx *core.Scope) string { return For(cx).ListsJumpTo60() }
 
 // ListsJumpTo60 says "Jump to 60"
 // in the language of msgs.
-func (msgs Messages) ListsJumpTo60() string { return msgs.text(451) }
+func (msgs Messages) ListsJumpTo60() string { return msgs.text(459) }
 
 // ListsEnd says "End"
 // in the language the app shows under cx.
@@ -18838,7 +18968,7 @@ func ListsEnd(cx *core.Scope) string { return For(cx).ListsEnd() }
 
 // ListsEnd says "End"
 // in the language of msgs.
-func (msgs Messages) ListsEnd() string { return msgs.text(452) }
+func (msgs Messages) ListsEnd() string { return msgs.text(460) }
 
 // ListsEndOfTheList says "End of the list"
 // in the language the app shows under cx.
@@ -18846,7 +18976,7 @@ func ListsEndOfTheList(cx *core.Scope) string { return For(cx).ListsEndOfTheList
 
 // ListsEndOfTheList says "End of the list"
 // in the language of msgs.
-func (msgs Messages) ListsEndOfTheList() string { return msgs.text(453) }
+func (msgs Messages) ListsEndOfTheList() string { return msgs.text(461) }
 
 // ListsReleaseRoom says "Release room"
 // in the language the app shows under cx.
@@ -18854,7 +18984,7 @@ func ListsReleaseRoom(cx *core.Scope) string { return For(cx).ListsReleaseRoom()
 
 // ListsReleaseRoom says "Release room"
 // in the language of msgs.
-func (msgs Messages) ListsReleaseRoom() string { return msgs.text(454) }
+func (msgs Messages) ListsReleaseRoom() string { return msgs.text(462) }
 
 // ListsMessage says "Message"
 // in the language the app shows under cx.
@@ -18862,7 +18992,7 @@ func ListsMessage(cx *core.Scope) string { return For(cx).ListsMessage() }
 
 // ListsMessage says "Message"
 // in the language of msgs.
-func (msgs Messages) ListsMessage() string { return msgs.text(455) }
+func (msgs Messages) ListsMessage() string { return msgs.text(463) }
 
 // ListsSend says "Send"
 // in the language the app shows under cx.
@@ -18870,7 +19000,7 @@ func ListsSend(cx *core.Scope) string { return For(cx).ListsSend() }
 
 // ListsSend says "Send"
 // in the language of msgs.
-func (msgs Messages) ListsSend() string { return msgs.text(456) }
+func (msgs Messages) ListsSend() string { return msgs.text(464) }
 
 // ListsThisWeek says "This week"
 // in the language the app shows under cx.
@@ -18878,7 +19008,7 @@ func ListsThisWeek(cx *core.Scope) string { return For(cx).ListsThisWeek() }
 
 // ListsThisWeek says "This week"
 // in the language of msgs.
-func (msgs Messages) ListsThisWeek() string { return msgs.text(457) }
+func (msgs Messages) ListsThisWeek() string { return msgs.text(465) }
 
 // ListsRefreshing says "Refreshing…"
 // in the language the app shows under cx.
@@ -18886,7 +19016,7 @@ func ListsRefreshing(cx *core.Scope) string { return For(cx).ListsRefreshing() }
 
 // ListsRefreshing says "Refreshing…"
 // in the language of msgs.
-func (msgs Messages) ListsRefreshing() string { return msgs.text(458) }
+func (msgs Messages) ListsRefreshing() string { return msgs.text(466) }
 
 // ListsPullThePageDown says "Pull the page down"
 // in the language the app shows under cx.
@@ -18894,7 +19024,7 @@ func ListsPullThePageDown(cx *core.Scope) string { return For(cx).ListsPullThePa
 
 // ListsPullThePageDown says "Pull the page down"
 // in the language of msgs.
-func (msgs Messages) ListsPullThePageDown() string { return msgs.text(459) }
+func (msgs Messages) ListsPullThePageDown() string { return msgs.text(467) }
 
 // ListsRefreshOr says "Refresh or "
 // in the language the app shows under cx.
@@ -18902,7 +19032,7 @@ func ListsRefreshOr(cx *core.Scope) string { return For(cx).ListsRefreshOr() }
 
 // ListsRefreshOr says "Refresh or "
 // in the language of msgs.
-func (msgs Messages) ListsRefreshOr() string { return msgs.text(460) }
+func (msgs Messages) ListsRefreshOr() string { return msgs.text(468) }
 
 // ListsRefreshBelow says "Refresh below"
 // in the language the app shows under cx.
@@ -18910,7 +19040,7 @@ func ListsRefreshBelow(cx *core.Scope) string { return For(cx).ListsRefreshBelow
 
 // ListsRefreshBelow says "Refresh below"
 // in the language of msgs.
-func (msgs Messages) ListsRefreshBelow() string { return msgs.text(461) }
+func (msgs Messages) ListsRefreshBelow() string { return msgs.text(469) }
 
 // ListsAnIndicatorTheAppDraws says "An indicator the app draws, from PullValue"
 // in the language the app shows under cx.
@@ -18918,7 +19048,7 @@ func ListsAnIndicatorTheAppDraws(cx *core.Scope) string { return For(cx).ListsAn
 
 // ListsAnIndicatorTheAppDraws says "An indicator the app draws, from PullValue"
 // in the language of msgs.
-func (msgs Messages) ListsAnIndicatorTheAppDraws() string { return msgs.text(462) }
+func (msgs Messages) ListsAnIndicatorTheAppDraws() string { return msgs.text(470) }
 
 // ListsTheSystemSpinnerOnA says "The system spinner on a plain scroll view"
 // in the language the app shows under cx.
@@ -18926,7 +19056,7 @@ func ListsTheSystemSpinnerOnA(cx *core.Scope) string { return For(cx).ListsTheSy
 
 // ListsTheSystemSpinnerOnA says "The system spinner on a plain scroll view"
 // in the language of msgs.
-func (msgs Messages) ListsTheSystemSpinnerOnA() string { return msgs.text(463) }
+func (msgs Messages) ListsTheSystemSpinnerOnA() string { return msgs.text(471) }
 
 // ListsSystemSpinner says "System spinner"
 // in the language the app shows under cx.
@@ -18934,7 +19064,7 @@ func ListsSystemSpinner(cx *core.Scope) string { return For(cx).ListsSystemSpinn
 
 // ListsSystemSpinner says "System spinner"
 // in the language of msgs.
-func (msgs Messages) ListsSystemSpinner() string { return msgs.text(464) }
+func (msgs Messages) ListsSystemSpinner() string { return msgs.text(472) }
 
 // ListsCustomIndicator says "Custom indicator"
 // in the language the app shows under cx.
@@ -18942,7 +19072,7 @@ func ListsCustomIndicator(cx *core.Scope) string { return For(cx).ListsCustomInd
 
 // ListsCustomIndicator says "Custom indicator"
 // in the language of msgs.
-func (msgs Messages) ListsCustomIndicator() string { return msgs.text(465) }
+func (msgs Messages) ListsCustomIndicator() string { return msgs.text(473) }
 
 // ListsRefresh says "Refresh"
 // in the language the app shows under cx.
@@ -18950,7 +19080,7 @@ func ListsRefresh(cx *core.Scope) string { return For(cx).ListsRefresh() }
 
 // ListsRefresh says "Refresh"
 // in the language of msgs.
-func (msgs Messages) ListsRefresh() string { return msgs.text(466) }
+func (msgs Messages) ListsRefresh() string { return msgs.text(474) }
 
 // ListsMoreListFeatures says "More list features"
 // in the language the app shows under cx.
@@ -18958,7 +19088,7 @@ func ListsMoreListFeatures(cx *core.Scope) string { return For(cx).ListsMoreList
 
 // ListsMoreListFeatures says "More list features"
 // in the language of msgs.
-func (msgs Messages) ListsMoreListFeatures() string { return msgs.text(467) }
+func (msgs Messages) ListsMoreListFeatures() string { return msgs.text(475) }
 
 // ListsPullToRefresh says "Pull to refresh"
 // in the language the app shows under cx.
@@ -18966,7 +19096,7 @@ func ListsPullToRefresh(cx *core.Scope) string { return For(cx).ListsPullToRefre
 
 // ListsPullToRefresh says "Pull to refresh"
 // in the language of msgs.
-func (msgs Messages) ListsPullToRefresh() string { return msgs.text(468) }
+func (msgs Messages) ListsPullToRefresh() string { return msgs.text(476) }
 
 // ListsHorizontalScrollView says "Horizontal scroll view"
 // in the language the app shows under cx.
@@ -18974,7 +19104,7 @@ func ListsHorizontalScrollView(cx *core.Scope) string { return For(cx).ListsHori
 
 // ListsHorizontalScrollView says "Horizontal scroll view"
 // in the language of msgs.
-func (msgs Messages) ListsHorizontalScrollView() string { return msgs.text(469) }
+func (msgs Messages) ListsHorizontalScrollView() string { return msgs.text(477) }
 
 // ListsRange says "Range"
 // in the language the app shows under cx.
@@ -18982,7 +19112,7 @@ func ListsRange(cx *core.Scope) string { return For(cx).ListsRange() }
 
 // ListsRange says "Range"
 // in the language of msgs.
-func (msgs Messages) ListsRange() string { return msgs.text(470) }
+func (msgs Messages) ListsRange() string { return msgs.text(478) }
 
 // ListsHorizontalList says "Horizontal list"
 // in the language the app shows under cx.
@@ -18990,7 +19120,7 @@ func ListsHorizontalList(cx *core.Scope) string { return For(cx).ListsHorizontal
 
 // ListsHorizontalList says "Horizontal list"
 // in the language of msgs.
-func (msgs Messages) ListsHorizontalList() string { return msgs.text(471) }
+func (msgs Messages) ListsHorizontalList() string { return msgs.text(479) }
 
 // Lists1000RecycledCards says "1,000 recycled cards"
 // in the language the app shows under cx.
@@ -18998,7 +19128,7 @@ func Lists1000RecycledCards(cx *core.Scope) string { return For(cx).Lists1000Rec
 
 // Lists1000RecycledCards says "1,000 recycled cards"
 // in the language of msgs.
-func (msgs Messages) Lists1000RecycledCards() string { return msgs.text(472) }
+func (msgs Messages) Lists1000RecycledCards() string { return msgs.text(480) }
 
 // ListsAnEmptyList says "An empty list"
 // in the language the app shows under cx.
@@ -19006,7 +19136,7 @@ func ListsAnEmptyList(cx *core.Scope) string { return For(cx).ListsAnEmptyList()
 
 // ListsAnEmptyList says "An empty list"
 // in the language of msgs.
-func (msgs Messages) ListsAnEmptyList() string { return msgs.text(473) }
+func (msgs Messages) ListsAnEmptyList() string { return msgs.text(481) }
 
 // ListsAdd says "Add"
 // in the language the app shows under cx.
@@ -19014,7 +19144,7 @@ func ListsAdd(cx *core.Scope) string { return For(cx).ListsAdd() }
 
 // ListsAdd says "Add"
 // in the language of msgs.
-func (msgs Messages) ListsAdd() string { return msgs.text(474) }
+func (msgs Messages) ListsAdd() string { return msgs.text(482) }
 
 // ListsClear says "Clear"
 // in the language the app shows under cx.
@@ -19022,7 +19152,7 @@ func ListsClear(cx *core.Scope) string { return For(cx).ListsClear() }
 
 // ListsClear says "Clear"
 // in the language of msgs.
-func (msgs Messages) ListsClear() string { return msgs.text(475) }
+func (msgs Messages) ListsClear() string { return msgs.text(483) }
 
 // ListsNothingHereYetTapAdd says "Nothing here yet: tap Add"
 // in the language the app shows under cx.
@@ -19030,7 +19160,7 @@ func ListsNothingHereYetTapAdd(cx *core.Scope) string { return For(cx).ListsNoth
 
 // ListsNothingHereYetTapAdd says "Nothing here yet: tap Add"
 // in the language of msgs.
-func (msgs Messages) ListsNothingHereYetTapAdd() string { return msgs.text(476) }
+func (msgs Messages) ListsNothingHereYetTapAdd() string { return msgs.text(484) }
 
 // ListsNothingHereYetClickAdd says "Nothing here yet: click Add"
 // in the language the app shows under cx.
@@ -19038,7 +19168,7 @@ func ListsNothingHereYetClickAdd(cx *core.Scope) string { return For(cx).ListsNo
 
 // ListsNothingHereYetClickAdd says "Nothing here yet: click Add"
 // in the language of msgs.
-func (msgs Messages) ListsNothingHereYetClickAdd() string { return msgs.text(477) }
+func (msgs Messages) ListsNothingHereYetClickAdd() string { return msgs.text(485) }
 
 // ListsEmpty says "Empty"
 // in the language the app shows under cx.
@@ -19046,7 +19176,7 @@ func ListsEmpty(cx *core.Scope) string { return For(cx).ListsEmpty() }
 
 // ListsEmpty says "Empty"
 // in the language of msgs.
-func (msgs Messages) ListsEmpty() string { return msgs.text(478) }
+func (msgs Messages) ListsEmpty() string { return msgs.text(486) }
 
 // ListsWhileEmptySeparatorsBetweenRows says " while empty, separators between rows; changes animate with "
 // in the language the app shows under cx.
@@ -19056,7 +19186,7 @@ func ListsWhileEmptySeparatorsBetweenRows(cx *core.Scope) string {
 
 // ListsWhileEmptySeparatorsBetweenRows says " while empty, separators between rows; changes animate with "
 // in the language of msgs.
-func (msgs Messages) ListsWhileEmptySeparatorsBetweenRows() string { return msgs.text(479) }
+func (msgs Messages) ListsWhileEmptySeparatorsBetweenRows() string { return msgs.text(487) }
 
 // ListsInThePage says ". In the page ("
 // in the language the app shows under cx.
@@ -19064,7 +19194,7 @@ func ListsInThePage(cx *core.Scope) string { return For(cx).ListsInThePage() }
 
 // ListsInThePage says ". In the page ("
 // in the language of msgs.
-func (msgs Messages) ListsInThePage() string { return msgs.text(480) }
+func (msgs Messages) ListsInThePage() string { return msgs.text(488) }
 
 // ListsTheListIsAsTall says "), the list is as tall as its rows."
 // in the language the app shows under cx.
@@ -19072,7 +19202,7 @@ func ListsTheListIsAsTall(cx *core.Scope) string { return For(cx).ListsTheListIs
 
 // ListsTheListIsAsTall says "), the list is as tall as its rows."
 // in the language of msgs.
-func (msgs Messages) ListsTheListIsAsTall() string { return msgs.text(481) }
+func (msgs Messages) ListsTheListIsAsTall() string { return msgs.text(489) }
 
 // ListsOnePageTwoLists says "One page, two lists"
 // in the language the app shows under cx.
@@ -19080,7 +19210,7 @@ func ListsOnePageTwoLists(cx *core.Scope) string { return For(cx).ListsOnePageTw
 
 // ListsOnePageTwoLists says "One page, two lists"
 // in the language of msgs.
-func (msgs Messages) ListsOnePageTwoLists() string { return msgs.text(482) }
+func (msgs Messages) ListsOnePageTwoLists() string { return msgs.text(490) }
 
 // ListsTheListsBelowLieIn says "The lists below lie in the page at their full length, and the page scrolls them with this header: only the rows near its viewport exist, in recycled cells."
 // in the language the app shows under cx.
@@ -19088,7 +19218,7 @@ func ListsTheListsBelowLieIn(cx *core.Scope) string { return For(cx).ListsTheLis
 
 // ListsTheListsBelowLieIn says "The lists below lie in the page at their full length, and the page scrolls them with this header: only the rows near its viewport exist, in recycled cells."
 // in the language of msgs.
-func (msgs Messages) ListsTheListsBelowLieIn() string { return msgs.text(483) }
+func (msgs Messages) ListsTheListsBelowLieIn() string { return msgs.text(491) }
 
 // ListsRecent150 says "Recent 150"
 // in the language the app shows under cx.
@@ -19096,7 +19226,7 @@ func ListsRecent150(cx *core.Scope) string { return For(cx).ListsRecent150() }
 
 // ListsRecent150 says "Recent 150"
 // in the language of msgs.
-func (msgs Messages) ListsRecent150() string { return msgs.text(484) }
+func (msgs Messages) ListsRecent150() string { return msgs.text(492) }
 
 // ListsEndOfRecent says "End of recent"
 // in the language the app shows under cx.
@@ -19104,7 +19234,7 @@ func ListsEndOfRecent(cx *core.Scope) string { return For(cx).ListsEndOfRecent()
 
 // ListsEndOfRecent says "End of recent"
 // in the language of msgs.
-func (msgs Messages) ListsEndOfRecent() string { return msgs.text(485) }
+func (msgs Messages) ListsEndOfRecent() string { return msgs.text(493) }
 
 // ListsRecent says "Recent"
 // in the language the app shows under cx.
@@ -19112,7 +19242,7 @@ func ListsRecent(cx *core.Scope) string { return For(cx).ListsRecent() }
 
 // ListsRecent says "Recent"
 // in the language of msgs.
-func (msgs Messages) ListsRecent() string { return msgs.text(486) }
+func (msgs Messages) ListsRecent() string { return msgs.text(494) }
 
 // Lists200Rows says "200 rows"
 // in the language the app shows under cx.
@@ -19120,7 +19250,7 @@ func Lists200Rows(cx *core.Scope) string { return For(cx).Lists200Rows() }
 
 // Lists200Rows says "200 rows"
 // in the language of msgs.
-func (msgs Messages) Lists200Rows() string { return msgs.text(487) }
+func (msgs Messages) Lists200Rows() string { return msgs.text(495) }
 
 // ListsArchive says "Archive"
 // in the language the app shows under cx.
@@ -19128,7 +19258,7 @@ func ListsArchive(cx *core.Scope) string { return For(cx).ListsArchive() }
 
 // ListsArchive says "Archive"
 // in the language of msgs.
-func (msgs Messages) ListsArchive() string { return msgs.text(488) }
+func (msgs Messages) ListsArchive() string { return msgs.text(496) }
 
 // ListsLoadingMore says "Loading more…"
 // in the language the app shows under cx.
@@ -19136,7 +19266,7 @@ func ListsLoadingMore(cx *core.Scope) string { return For(cx).ListsLoadingMore()
 
 // ListsLoadingMore says "Loading more…"
 // in the language of msgs.
-func (msgs Messages) ListsLoadingMore() string { return msgs.text(489) }
+func (msgs Messages) ListsLoadingMore() string { return msgs.text(497) }
 
 // ListsEndOfTheArchive says "End of the archive"
 // in the language the app shows under cx.
@@ -19144,7 +19274,7 @@ func ListsEndOfTheArchive(cx *core.Scope) string { return For(cx).ListsEndOfTheA
 
 // ListsEndOfTheArchive says "End of the archive"
 // in the language of msgs.
-func (msgs Messages) ListsEndOfTheArchive() string { return msgs.text(490) }
+func (msgs Messages) ListsEndOfTheArchive() string { return msgs.text(498) }
 
 // ListsArchived says "Archived"
 // in the language the app shows under cx.
@@ -19152,7 +19282,7 @@ func ListsArchived(cx *core.Scope) string { return For(cx).ListsArchived() }
 
 // ListsArchived says "Archived"
 // in the language of msgs.
-func (msgs Messages) ListsArchived() string { return msgs.text(491) }
+func (msgs Messages) ListsArchived() string { return msgs.text(499) }
 
 // ListsRecentAndArchived says "Recent and archived"
 // in the language the app shows under cx.
@@ -19160,7 +19290,7 @@ func ListsRecentAndArchived(cx *core.Scope) string { return For(cx).ListsRecentA
 
 // ListsRecentAndArchived says "Recent and archived"
 // in the language of msgs.
-func (msgs Messages) ListsRecentAndArchived() string { return msgs.text(492) }
+func (msgs Messages) ListsRecentAndArchived() string { return msgs.text(500) }
 
 // ListsHidesAsYouScrollDown says "hides as you scroll down"
 // in the language the app shows under cx.
@@ -19168,7 +19298,7 @@ func ListsHidesAsYouScrollDown(cx *core.Scope) string { return For(cx).ListsHide
 
 // ListsHidesAsYouScrollDown says "hides as you scroll down"
 // in the language of msgs.
-func (msgs Messages) ListsHidesAsYouScrollDown() string { return msgs.text(493) }
+func (msgs Messages) ListsHidesAsYouScrollDown() string { return msgs.text(501) }
 
 // ListsGrid says "Grid"
 // in the language the app shows under cx.
@@ -19176,7 +19306,7 @@ func ListsGrid(cx *core.Scope) string { return For(cx).ListsGrid() }
 
 // ListsGrid says "Grid"
 // in the language of msgs.
-func (msgs Messages) ListsGrid() string { return msgs.text(494) }
+func (msgs Messages) ListsGrid() string { return msgs.text(502) }
 
 // ListsSections says "Sections"
 // in the language the app shows under cx.
@@ -19184,7 +19314,7 @@ func ListsSections(cx *core.Scope) string { return For(cx).ListsSections() }
 
 // ListsSections says "Sections"
 // in the language of msgs.
-func (msgs Messages) ListsSections() string { return msgs.text(495) }
+func (msgs Messages) ListsSections() string { return msgs.text(503) }
 
 // ListsChat says "Chat"
 // in the language the app shows under cx.
@@ -19192,7 +19322,7 @@ func ListsChat(cx *core.Scope) string { return For(cx).ListsChat() }
 
 // ListsChat says "Chat"
 // in the language of msgs.
-func (msgs Messages) ListsChat() string { return msgs.text(496) }
+func (msgs Messages) ListsChat() string { return msgs.text(504) }
 
 // ListsPage says "Page"
 // in the language the app shows under cx.
@@ -19200,7 +19330,7 @@ func ListsPage(cx *core.Scope) string { return For(cx).ListsPage() }
 
 // ListsPage says "Page"
 // in the language of msgs.
-func (msgs Messages) ListsPage() string { return msgs.text(497) }
+func (msgs Messages) ListsPage() string { return msgs.text(505) }
 
 // ListsMore says "More"
 // in the language the app shows under cx.
@@ -19208,7 +19338,7 @@ func ListsMore(cx *core.Scope) string { return For(cx).ListsMore() }
 
 // ListsMore says "More"
 // in the language of msgs.
-func (msgs Messages) ListsMore() string { return msgs.text(498) }
+func (msgs Messages) ListsMore() string { return msgs.text(506) }
 
 // ListsToday says "Today"
 // in the language the app shows under cx.
@@ -19216,7 +19346,7 @@ func ListsToday(cx *core.Scope) string { return For(cx).ListsToday() }
 
 // ListsToday says "Today"
 // in the language of msgs.
-func (msgs Messages) ListsToday() string { return msgs.text(499) }
+func (msgs Messages) ListsToday() string { return msgs.text(507) }
 
 // ListsYesterday says "Yesterday"
 // in the language the app shows under cx.
@@ -19224,7 +19354,7 @@ func ListsYesterday(cx *core.Scope) string { return For(cx).ListsYesterday() }
 
 // ListsYesterday says "Yesterday"
 // in the language of msgs.
-func (msgs Messages) ListsYesterday() string { return msgs.text(500) }
+func (msgs Messages) ListsYesterday() string { return msgs.text(508) }
 
 // ListsThisMonth says "This month"
 // in the language the app shows under cx.
@@ -19232,7 +19362,7 @@ func ListsThisMonth(cx *core.Scope) string { return For(cx).ListsThisMonth() }
 
 // ListsThisMonth says "This month"
 // in the language of msgs.
-func (msgs Messages) ListsThisMonth() string { return msgs.text(501) }
+func (msgs Messages) ListsThisMonth() string { return msgs.text(509) }
 
 // ListsThisYear says "This year"
 // in the language the app shows under cx.
@@ -19240,7 +19370,7 @@ func ListsThisYear(cx *core.Scope) string { return For(cx).ListsThisYear() }
 
 // ListsThisYear says "This year"
 // in the language of msgs.
-func (msgs Messages) ListsThisYear() string { return msgs.text(502) }
+func (msgs Messages) ListsThisYear() string { return msgs.text(510) }
 
 // ListsAllTime says "All time"
 // in the language the app shows under cx.
@@ -19248,7 +19378,7 @@ func ListsAllTime(cx *core.Scope) string { return For(cx).ListsAllTime() }
 
 // ListsAllTime says "All time"
 // in the language of msgs.
-func (msgs Messages) ListsAllTime() string { return msgs.text(503) }
+func (msgs Messages) ListsAllTime() string { return msgs.text(511) }
 
 // ListsCustom says "Custom"
 // in the language the app shows under cx.
@@ -19256,7 +19386,7 @@ func ListsCustom(cx *core.Scope) string { return For(cx).ListsCustom() }
 
 // ListsCustom says "Custom"
 // in the language of msgs.
-func (msgs Messages) ListsCustom() string { return msgs.text(504) }
+func (msgs Messages) ListsCustom() string { return msgs.text(512) }
 
 // ListsVisible says "{count, number} visible"
 // in the language the app shows under cx.
@@ -19481,7 +19611,7 @@ func StylesCircular(cx *core.Scope) string { return For(cx).StylesCircular() }
 
 // StylesCircular says "Circular"
 // in the language of msgs.
-func (msgs Messages) StylesCircular() string { return msgs.text(505) }
+func (msgs Messages) StylesCircular() string { return msgs.text(513) }
 
 // StylesContinuous says "Continuous"
 // in the language the app shows under cx.
@@ -19489,7 +19619,7 @@ func StylesContinuous(cx *core.Scope) string { return For(cx).StylesContinuous()
 
 // StylesContinuous says "Continuous"
 // in the language of msgs.
-func (msgs Messages) StylesContinuous() string { return msgs.text(506) }
+func (msgs Messages) StylesContinuous() string { return msgs.text(514) }
 
 // StylesOneCorner says "One corner"
 // in the language the app shows under cx.
@@ -19497,7 +19627,7 @@ func StylesOneCorner(cx *core.Scope) string { return For(cx).StylesOneCorner() }
 
 // StylesOneCorner says "One corner"
 // in the language of msgs.
-func (msgs Messages) StylesOneCorner() string { return msgs.text(507) }
+func (msgs Messages) StylesOneCorner() string { return msgs.text(515) }
 
 // StylesPill says "Pill"
 // in the language the app shows under cx.
@@ -19505,7 +19635,7 @@ func StylesPill(cx *core.Scope) string { return For(cx).StylesPill() }
 
 // StylesPill says "Pill"
 // in the language of msgs.
-func (msgs Messages) StylesPill() string { return msgs.text(508) }
+func (msgs Messages) StylesPill() string { return msgs.text(516) }
 
 // StylesCorners says "Corners"
 // in the language the app shows under cx.
@@ -19513,7 +19643,7 @@ func StylesCorners(cx *core.Scope) string { return For(cx).StylesCorners() }
 
 // StylesCorners says "Corners"
 // in the language of msgs.
-func (msgs Messages) StylesCorners() string { return msgs.text(509) }
+func (msgs Messages) StylesCorners() string { return msgs.text(517) }
 
 // StylesCornerradiusBordercurvePerCorner says "CornerRadius · BorderCurve · per corner"
 // in the language the app shows under cx.
@@ -19523,7 +19653,7 @@ func StylesCornerradiusBordercurvePerCorner(cx *core.Scope) string {
 
 // StylesCornerradiusBordercurvePerCorner says "CornerRadius · BorderCurve · per corner"
 // in the language of msgs.
-func (msgs Messages) StylesCornerradiusBordercurvePerCorner() string { return msgs.text(510) }
+func (msgs Messages) StylesCornerradiusBordercurvePerCorner() string { return msgs.text(518) }
 
 // StylesContinuousCornersEaseIntoThe says "Continuous corners ease into the edges"
 // in the language the app shows under cx.
@@ -19533,7 +19663,7 @@ func StylesContinuousCornersEaseIntoThe(cx *core.Scope) string {
 
 // StylesContinuousCornersEaseIntoThe says "Continuous corners ease into the edges"
 // in the language of msgs.
-func (msgs Messages) StylesContinuousCornersEaseIntoThe() string { return msgs.text(511) }
+func (msgs Messages) StylesContinuousCornersEaseIntoThe() string { return msgs.text(519) }
 
 // StylesRadius20Pt says "Radius 20 pt"
 // in the language the app shows under cx.
@@ -19541,7 +19671,7 @@ func StylesRadius20Pt(cx *core.Scope) string { return For(cx).StylesRadius20Pt()
 
 // StylesRadius20Pt says "Radius 20 pt"
 // in the language of msgs.
-func (msgs Messages) StylesRadius20Pt() string { return msgs.text(512) }
+func (msgs Messages) StylesRadius20Pt() string { return msgs.text(520) }
 
 // StylesTopCorners says "Top corners"
 // in the language the app shows under cx.
@@ -19549,7 +19679,7 @@ func StylesTopCorners(cx *core.Scope) string { return For(cx).StylesTopCorners()
 
 // StylesTopCorners says "Top corners"
 // in the language of msgs.
-func (msgs Messages) StylesTopCorners() string { return msgs.text(513) }
+func (msgs Messages) StylesTopCorners() string { return msgs.text(521) }
 
 // Styles28Pt says "28 pt"
 // in the language the app shows under cx.
@@ -19557,7 +19687,7 @@ func Styles28Pt(cx *core.Scope) string { return For(cx).Styles28Pt() }
 
 // Styles28Pt says "28 pt"
 // in the language of msgs.
-func (msgs Messages) Styles28Pt() string { return msgs.text(514) }
+func (msgs Messages) Styles28Pt() string { return msgs.text(522) }
 
 // StylesMixedRadii says "Mixed radii"
 // in the language the app shows under cx.
@@ -19565,7 +19695,7 @@ func StylesMixedRadii(cx *core.Scope) string { return For(cx).StylesMixedRadii()
 
 // StylesMixedRadii says "Mixed radii"
 // in the language of msgs.
-func (msgs Messages) StylesMixedRadii() string { return msgs.text(515) }
+func (msgs Messages) StylesMixedRadii() string { return msgs.text(523) }
 
 // Styles446280Pt says "44 · 6 · 28 · 0 pt, clockwise"
 // in the language the app shows under cx.
@@ -19573,7 +19703,7 @@ func Styles446280Pt(cx *core.Scope) string { return For(cx).Styles446280Pt() }
 
 // Styles446280Pt says "44 · 6 · 28 · 0 pt, clockwise"
 // in the language of msgs.
-func (msgs Messages) Styles446280Pt() string { return msgs.text(516) }
+func (msgs Messages) Styles446280Pt() string { return msgs.text(524) }
 
 // StylesMixed says "Mixed"
 // in the language the app shows under cx.
@@ -19581,7 +19711,7 @@ func StylesMixed(cx *core.Scope) string { return For(cx).StylesMixed() }
 
 // StylesMixed says "Mixed"
 // in the language of msgs.
-func (msgs Messages) StylesMixed() string { return msgs.text(517) }
+func (msgs Messages) StylesMixed() string { return msgs.text(525) }
 
 // StylesBorders says "Borders"
 // in the language the app shows under cx.
@@ -19589,7 +19719,7 @@ func StylesBorders(cx *core.Scope) string { return For(cx).StylesBorders() }
 
 // StylesBorders says "Borders"
 // in the language of msgs.
-func (msgs Messages) StylesBorders() string { return msgs.text(518) }
+func (msgs Messages) StylesBorders() string { return msgs.text(526) }
 
 // StylesPerSideDashedDottedOutlines says "Per side · dashed · dotted · outlines"
 // in the language the app shows under cx.
@@ -19599,7 +19729,7 @@ func StylesPerSideDashedDottedOutlines(cx *core.Scope) string {
 
 // StylesPerSideDashedDottedOutlines says "Per side · dashed · dotted · outlines"
 // in the language of msgs.
-func (msgs Messages) StylesPerSideDashedDottedOutlines() string { return msgs.text(519) }
+func (msgs Messages) StylesPerSideDashedDottedOutlines() string { return msgs.text(527) }
 
 // StylesPerSideBorders says "Per-side borders"
 // in the language the app shows under cx.
@@ -19607,7 +19737,7 @@ func StylesPerSideBorders(cx *core.Scope) string { return For(cx).StylesPerSideB
 
 // StylesPerSideBorders says "Per-side borders"
 // in the language of msgs.
-func (msgs Messages) StylesPerSideBorders() string { return msgs.text(520) }
+func (msgs Messages) StylesPerSideBorders() string { return msgs.text(528) }
 
 // Styles6241Pt says "6 · 2 · 4 · 1 pt, clockwise"
 // in the language the app shows under cx.
@@ -19615,7 +19745,7 @@ func Styles6241Pt(cx *core.Scope) string { return For(cx).Styles6241Pt() }
 
 // Styles6241Pt says "6 · 2 · 4 · 1 pt, clockwise"
 // in the language of msgs.
-func (msgs Messages) Styles6241Pt() string { return msgs.text(521) }
+func (msgs Messages) Styles6241Pt() string { return msgs.text(529) }
 
 // StylesDashedDotted says "Dashed / dotted"
 // in the language the app shows under cx.
@@ -19623,7 +19753,7 @@ func StylesDashedDotted(cx *core.Scope) string { return For(cx).StylesDashedDott
 
 // StylesDashedDotted says "Dashed / dotted"
 // in the language of msgs.
-func (msgs Messages) StylesDashedDotted() string { return msgs.text(522) }
+func (msgs Messages) StylesDashedDotted() string { return msgs.text(530) }
 
 // StylesRings says "Rings"
 // in the language the app shows under cx.
@@ -19631,7 +19761,7 @@ func StylesRings(cx *core.Scope) string { return For(cx).StylesRings() }
 
 // StylesRings says "Rings"
 // in the language of msgs.
-func (msgs Messages) StylesRings() string { return msgs.text(523) }
+func (msgs Messages) StylesRings() string { return msgs.text(531) }
 
 // StylesBoxShadowsOfNoBlur says "Box shadows of no blur"
 // in the language the app shows under cx.
@@ -19639,7 +19769,7 @@ func StylesBoxShadowsOfNoBlur(cx *core.Scope) string { return For(cx).StylesBoxS
 
 // StylesBoxShadowsOfNoBlur says "Box shadows of no blur"
 // in the language of msgs.
-func (msgs Messages) StylesBoxShadowsOfNoBlur() string { return msgs.text(524) }
+func (msgs Messages) StylesBoxShadowsOfNoBlur() string { return msgs.text(532) }
 
 // StylesOutline says "Outline"
 // in the language the app shows under cx.
@@ -19647,7 +19777,7 @@ func StylesOutline(cx *core.Scope) string { return For(cx).StylesOutline() }
 
 // StylesOutline says "Outline"
 // in the language of msgs.
-func (msgs Messages) StylesOutline() string { return msgs.text(525) }
+func (msgs Messages) StylesOutline() string { return msgs.text(533) }
 
 // StylesOutsideTheBorderBox says "Outside the border box"
 // in the language the app shows under cx.
@@ -19655,7 +19785,7 @@ func StylesOutsideTheBorderBox(cx *core.Scope) string { return For(cx).StylesOut
 
 // StylesOutsideTheBorderBox says "Outside the border box"
 // in the language of msgs.
-func (msgs Messages) StylesOutsideTheBorderBox() string { return msgs.text(526) }
+func (msgs Messages) StylesOutsideTheBorderBox() string { return msgs.text(534) }
 
 // StylesShadowsAndGlow says "Shadows and glow"
 // in the language the app shows under cx.
@@ -19663,7 +19793,7 @@ func StylesShadowsAndGlow(cx *core.Scope) string { return For(cx).StylesShadowsA
 
 // StylesShadowsAndGlow says "Shadows and glow"
 // in the language of msgs.
-func (msgs Messages) StylesShadowsAndGlow() string { return msgs.text(527) }
+func (msgs Messages) StylesShadowsAndGlow() string { return msgs.text(535) }
 
 // StylesShadowcolorBoxShadowsTextShadow says "ShadowColor · box shadows · text shadow"
 // in the language the app shows under cx.
@@ -19673,7 +19803,7 @@ func StylesShadowcolorBoxShadowsTextShadow(cx *core.Scope) string {
 
 // StylesShadowcolorBoxShadowsTextShadow says "ShadowColor · box shadows · text shadow"
 // in the language of msgs.
-func (msgs Messages) StylesShadowcolorBoxShadowsTextShadow() string { return msgs.text(528) }
+func (msgs Messages) StylesShadowcolorBoxShadowsTextShadow() string { return msgs.text(536) }
 
 // StylesGlow says "Glow"
 // in the language the app shows under cx.
@@ -19681,7 +19811,7 @@ func StylesGlow(cx *core.Scope) string { return For(cx).StylesGlow() }
 
 // StylesGlow says "Glow"
 // in the language of msgs.
-func (msgs Messages) StylesGlow() string { return msgs.text(529) }
+func (msgs Messages) StylesGlow() string { return msgs.text(537) }
 
 // StylesAColoredShadow says "A colored shadow"
 // in the language the app shows under cx.
@@ -19689,7 +19819,7 @@ func StylesAColoredShadow(cx *core.Scope) string { return For(cx).StylesAColored
 
 // StylesAColoredShadow says "A colored shadow"
 // in the language of msgs.
-func (msgs Messages) StylesAColoredShadow() string { return msgs.text(530) }
+func (msgs Messages) StylesAColoredShadow() string { return msgs.text(538) }
 
 // StylesOffsetShadow says "Offset shadow"
 // in the language the app shows under cx.
@@ -19697,7 +19827,7 @@ func StylesOffsetShadow(cx *core.Scope) string { return For(cx).StylesOffsetShad
 
 // StylesOffsetShadow says "Offset shadow"
 // in the language of msgs.
-func (msgs Messages) StylesOffsetShadow() string { return msgs.text(531) }
+func (msgs Messages) StylesOffsetShadow() string { return msgs.text(539) }
 
 // Styles48PtRadius10 says "4, 8 pt · radius 10"
 // in the language the app shows under cx.
@@ -19705,7 +19835,7 @@ func Styles48PtRadius10(cx *core.Scope) string { return For(cx).Styles48PtRadius
 
 // Styles48PtRadius10 says "4, 8 pt · radius 10"
 // in the language of msgs.
-func (msgs Messages) Styles48PtRadius10() string { return msgs.text(532) }
+func (msgs Messages) Styles48PtRadius10() string { return msgs.text(540) }
 
 // StylesOffset says "Offset"
 // in the language the app shows under cx.
@@ -19713,7 +19843,7 @@ func StylesOffset(cx *core.Scope) string { return For(cx).StylesOffset() }
 
 // StylesOffset says "Offset"
 // in the language of msgs.
-func (msgs Messages) StylesOffset() string { return msgs.text(533) }
+func (msgs Messages) StylesOffset() string { return msgs.text(541) }
 
 // StylesImageCorners says "Image corners"
 // in the language the app shows under cx.
@@ -19721,7 +19851,7 @@ func StylesImageCorners(cx *core.Scope) string { return For(cx).StylesImageCorne
 
 // StylesImageCorners says "Image corners"
 // in the language of msgs.
-func (msgs Messages) StylesImageCorners() string { return msgs.text(534) }
+func (msgs Messages) StylesImageCorners() string { return msgs.text(542) }
 
 // StylesTwoRadiiAndAShadow says "Two radii and a shadow"
 // in the language the app shows under cx.
@@ -19729,7 +19859,7 @@ func StylesTwoRadiiAndAShadow(cx *core.Scope) string { return For(cx).StylesTwoR
 
 // StylesTwoRadiiAndAShadow says "Two radii and a shadow"
 // in the language of msgs.
-func (msgs Messages) StylesTwoRadiiAndAShadow() string { return msgs.text(535) }
+func (msgs Messages) StylesTwoRadiiAndAShadow() string { return msgs.text(543) }
 
 // StylesTextShadow says "Text shadow"
 // in the language the app shows under cx.
@@ -19737,7 +19867,7 @@ func StylesTextShadow(cx *core.Scope) string { return For(cx).StylesTextShadow()
 
 // StylesTextShadow says "Text shadow"
 // in the language of msgs.
-func (msgs Messages) StylesTextShadow() string { return msgs.text(536) }
+func (msgs Messages) StylesTextShadow() string { return msgs.text(544) }
 
 // StylesShadow says "Shadow"
 // in the language the app shows under cx.
@@ -19745,7 +19875,7 @@ func StylesShadow(cx *core.Scope) string { return For(cx).StylesShadow() }
 
 // StylesShadow says "Shadow"
 // in the language of msgs.
-func (msgs Messages) StylesShadow() string { return msgs.text(537) }
+func (msgs Messages) StylesShadow() string { return msgs.text(545) }
 
 // StylesTextCorners says "Text corners"
 // in the language the app shows under cx.
@@ -19753,7 +19883,7 @@ func StylesTextCorners(cx *core.Scope) string { return For(cx).StylesTextCorners
 
 // StylesTextCorners says "Text corners"
 // in the language of msgs.
-func (msgs Messages) StylesTextCorners() string { return msgs.text(538) }
+func (msgs Messages) StylesTextCorners() string { return msgs.text(546) }
 
 // StylesASpanSBackgroundAnd says "A span's background and radius"
 // in the language the app shows under cx.
@@ -19761,7 +19891,7 @@ func StylesASpanSBackgroundAnd(cx *core.Scope) string { return For(cx).StylesASp
 
 // StylesASpanSBackgroundAnd says "A span's background and radius"
 // in the language of msgs.
-func (msgs Messages) StylesASpanSBackgroundAnd() string { return msgs.text(539) }
+func (msgs Messages) StylesASpanSBackgroundAnd() string { return msgs.text(547) }
 
 // StylesTextCorners2 says " Text corners "
 // in the language the app shows under cx.
@@ -19769,7 +19899,7 @@ func StylesTextCorners2(cx *core.Scope) string { return For(cx).StylesTextCorner
 
 // StylesTextCorners2 says " Text corners "
 // in the language of msgs.
-func (msgs Messages) StylesTextCorners2() string { return msgs.text(540) }
+func (msgs Messages) StylesTextCorners2() string { return msgs.text(548) }
 
 // StylesLayered says "Layered"
 // in the language the app shows under cx.
@@ -19777,7 +19907,7 @@ func StylesLayered(cx *core.Scope) string { return For(cx).StylesLayered() }
 
 // StylesLayered says "Layered"
 // in the language of msgs.
-func (msgs Messages) StylesLayered() string { return msgs.text(541) }
+func (msgs Messages) StylesLayered() string { return msgs.text(549) }
 
 // StylesTwoBoxShadowsAndAn says "Two box shadows and an inset one"
 // in the language the app shows under cx.
@@ -19785,7 +19915,7 @@ func StylesTwoBoxShadowsAndAn(cx *core.Scope) string { return For(cx).StylesTwoB
 
 // StylesTwoBoxShadowsAndAn says "Two box shadows and an inset one"
 // in the language of msgs.
-func (msgs Messages) StylesTwoBoxShadowsAndAn() string { return msgs.text(542) }
+func (msgs Messages) StylesTwoBoxShadowsAndAn() string { return msgs.text(550) }
 
 // StylesClippingAndLayers says "Clipping and layers"
 // in the language the app shows under cx.
@@ -19793,7 +19923,7 @@ func StylesClippingAndLayers(cx *core.Scope) string { return For(cx).StylesClipp
 
 // StylesClippingAndLayers says "Clipping and layers"
 // in the language of msgs.
-func (msgs Messages) StylesClippingAndLayers() string { return msgs.text(543) }
+func (msgs Messages) StylesClippingAndLayers() string { return msgs.text(551) }
 
 // StylesOverflowZindexOpacity says "Overflow · ZIndex · Opacity"
 // in the language the app shows under cx.
@@ -19801,7 +19931,7 @@ func StylesOverflowZindexOpacity(cx *core.Scope) string { return For(cx).StylesO
 
 // StylesOverflowZindexOpacity says "Overflow · ZIndex · Opacity"
 // in the language of msgs.
-func (msgs Messages) StylesOverflowZindexOpacity() string { return msgs.text(544) }
+func (msgs Messages) StylesOverflowZindexOpacity() string { return msgs.text(552) }
 
 // StylesClip says "Clip"
 // in the language the app shows under cx.
@@ -19809,7 +19939,7 @@ func StylesClip(cx *core.Scope) string { return For(cx).StylesClip() }
 
 // StylesClip says "Clip"
 // in the language of msgs.
-func (msgs Messages) StylesClip() string { return msgs.text(545) }
+func (msgs Messages) StylesClip() string { return msgs.text(553) }
 
 // StylesClipped says "Clipped"
 // in the language the app shows under cx.
@@ -19817,7 +19947,7 @@ func StylesClipped(cx *core.Scope) string { return For(cx).StylesClipped() }
 
 // StylesClipped says "Clipped"
 // in the language of msgs.
-func (msgs Messages) StylesClipped() string { return msgs.text(546) }
+func (msgs Messages) StylesClipped() string { return msgs.text(554) }
 
 // StylesVisible says "Visible"
 // in the language the app shows under cx.
@@ -19825,7 +19955,7 @@ func StylesVisible(cx *core.Scope) string { return For(cx).StylesVisible() }
 
 // StylesVisible says "Visible"
 // in the language of msgs.
-func (msgs Messages) StylesVisible() string { return msgs.text(547) }
+func (msgs Messages) StylesVisible() string { return msgs.text(555) }
 
 // StylesTapToSwitch says "Tap to switch"
 // in the language the app shows under cx.
@@ -19833,7 +19963,7 @@ func StylesTapToSwitch(cx *core.Scope) string { return For(cx).StylesTapToSwitch
 
 // StylesTapToSwitch says "Tap to switch"
 // in the language of msgs.
-func (msgs Messages) StylesTapToSwitch() string { return msgs.text(548) }
+func (msgs Messages) StylesTapToSwitch() string { return msgs.text(556) }
 
 // StylesClickToSwitch says "Click to switch"
 // in the language the app shows under cx.
@@ -19841,7 +19971,7 @@ func StylesClickToSwitch(cx *core.Scope) string { return For(cx).StylesClickToSw
 
 // StylesClickToSwitch says "Click to switch"
 // in the language of msgs.
-func (msgs Messages) StylesClickToSwitch() string { return msgs.text(549) }
+func (msgs Messages) StylesClickToSwitch() string { return msgs.text(557) }
 
 // StylesTap says "Tap"
 // in the language the app shows under cx.
@@ -19849,7 +19979,7 @@ func StylesTap(cx *core.Scope) string { return For(cx).StylesTap() }
 
 // StylesTap says "Tap"
 // in the language of msgs.
-func (msgs Messages) StylesTap() string { return msgs.text(550) }
+func (msgs Messages) StylesTap() string { return msgs.text(558) }
 
 // StylesClick says "Click"
 // in the language the app shows under cx.
@@ -19857,7 +19987,7 @@ func StylesClick(cx *core.Scope) string { return For(cx).StylesClick() }
 
 // StylesClick says "Click"
 // in the language of msgs.
-func (msgs Messages) StylesClick() string { return msgs.text(551) }
+func (msgs Messages) StylesClick() string { return msgs.text(559) }
 
 // StylesStackingOrder says "Stacking order"
 // in the language the app shows under cx.
@@ -19865,7 +19995,7 @@ func StylesStackingOrder(cx *core.Scope) string { return For(cx).StylesStackingO
 
 // StylesStackingOrder says "Stacking order"
 // in the language of msgs.
-func (msgs Messages) StylesStackingOrder() string { return msgs.text(552) }
+func (msgs Messages) StylesStackingOrder() string { return msgs.text(560) }
 
 // StylesTapToRaiseTheNext says "Tap to raise the next"
 // in the language the app shows under cx.
@@ -19873,7 +20003,7 @@ func StylesTapToRaiseTheNext(cx *core.Scope) string { return For(cx).StylesTapTo
 
 // StylesTapToRaiseTheNext says "Tap to raise the next"
 // in the language of msgs.
-func (msgs Messages) StylesTapToRaiseTheNext() string { return msgs.text(553) }
+func (msgs Messages) StylesTapToRaiseTheNext() string { return msgs.text(561) }
 
 // StylesClickToRaiseTheNext says "Click to raise the next"
 // in the language the app shows under cx.
@@ -19881,7 +20011,7 @@ func StylesClickToRaiseTheNext(cx *core.Scope) string { return For(cx).StylesCli
 
 // StylesClickToRaiseTheNext says "Click to raise the next"
 // in the language of msgs.
-func (msgs Messages) StylesClickToRaiseTheNext() string { return msgs.text(554) }
+func (msgs Messages) StylesClickToRaiseTheNext() string { return msgs.text(562) }
 
 // StylesOpacity says "Opacity"
 // in the language the app shows under cx.
@@ -19889,7 +20019,7 @@ func StylesOpacity(cx *core.Scope) string { return For(cx).StylesOpacity() }
 
 // StylesOpacity says "Opacity"
 // in the language of msgs.
-func (msgs Messages) StylesOpacity() string { return msgs.text(555) }
+func (msgs Messages) StylesOpacity() string { return msgs.text(563) }
 
 // StylesAnimatedNatively says "Animated natively"
 // in the language the app shows under cx.
@@ -19897,7 +20027,7 @@ func StylesAnimatedNatively(cx *core.Scope) string { return For(cx).StylesAnimat
 
 // StylesAnimatedNatively says "Animated natively"
 // in the language of msgs.
-func (msgs Messages) StylesAnimatedNatively() string { return msgs.text(556) }
+func (msgs Messages) StylesAnimatedNatively() string { return msgs.text(564) }
 
 // StylesTapToFlip says "Tap to flip"
 // in the language the app shows under cx.
@@ -19905,7 +20035,7 @@ func StylesTapToFlip(cx *core.Scope) string { return For(cx).StylesTapToFlip() }
 
 // StylesTapToFlip says "Tap to flip"
 // in the language of msgs.
-func (msgs Messages) StylesTapToFlip() string { return msgs.text(557) }
+func (msgs Messages) StylesTapToFlip() string { return msgs.text(565) }
 
 // StylesClickToFlip says "Click to flip"
 // in the language the app shows under cx.
@@ -19913,7 +20043,7 @@ func StylesClickToFlip(cx *core.Scope) string { return For(cx).StylesClickToFlip
 
 // StylesClickToFlip says "Click to flip"
 // in the language of msgs.
-func (msgs Messages) StylesClickToFlip() string { return msgs.text(558) }
+func (msgs Messages) StylesClickToFlip() string { return msgs.text(566) }
 
 // StylesASpringTurnsItOn says "A spring turns it on the UI thread"
 // in the language the app shows under cx.
@@ -19921,7 +20051,7 @@ func StylesASpringTurnsItOn(cx *core.Scope) string { return For(cx).StylesASprin
 
 // StylesASpringTurnsItOn says "A spring turns it on the UI thread"
 // in the language of msgs.
-func (msgs Messages) StylesASpringTurnsItOn() string { return msgs.text(559) }
+func (msgs Messages) StylesASpringTurnsItOn() string { return msgs.text(567) }
 
 // StylesEachFaceHidesWhileTurned says "Each face hides while turned away"
 // in the language the app shows under cx.
@@ -19931,7 +20061,7 @@ func StylesEachFaceHidesWhileTurned(cx *core.Scope) string {
 
 // StylesEachFaceHidesWhileTurned says "Each face hides while turned away"
 // in the language of msgs.
-func (msgs Messages) StylesEachFaceHidesWhileTurned() string { return msgs.text(560) }
+func (msgs Messages) StylesEachFaceHidesWhileTurned() string { return msgs.text(568) }
 
 // StylesFlipTheCard says "Flip the card"
 // in the language the app shows under cx.
@@ -19939,7 +20069,7 @@ func StylesFlipTheCard(cx *core.Scope) string { return For(cx).StylesFlipTheCard
 
 // StylesFlipTheCard says "Flip the card"
 // in the language of msgs.
-func (msgs Messages) StylesFlipTheCard() string { return msgs.text(561) }
+func (msgs Messages) StylesFlipTheCard() string { return msgs.text(569) }
 
 // Styles3dTransforms says "3D transforms"
 // in the language the app shows under cx.
@@ -19947,7 +20077,7 @@ func Styles3dTransforms(cx *core.Scope) string { return For(cx).Styles3dTransfor
 
 // Styles3dTransforms says "3D transforms"
 // in the language of msgs.
-func (msgs Messages) Styles3dTransforms() string { return msgs.text(562) }
+func (msgs Messages) Styles3dTransforms() string { return msgs.text(570) }
 
 // StylesPerspectiveRotatexYSkewOrigin says "Perspective · RotateX/Y · Skew · origin"
 // in the language the app shows under cx.
@@ -19957,7 +20087,7 @@ func StylesPerspectiveRotatexYSkewOrigin(cx *core.Scope) string {
 
 // StylesPerspectiveRotatexYSkewOrigin says "Perspective · RotateX/Y · Skew · origin"
 // in the language of msgs.
-func (msgs Messages) StylesPerspectiveRotatexYSkewOrigin() string { return msgs.text(563) }
+func (msgs Messages) StylesPerspectiveRotatexYSkewOrigin() string { return msgs.text(571) }
 
 // StylesPerspective says "Perspective"
 // in the language the app shows under cx.
@@ -19965,7 +20095,7 @@ func StylesPerspective(cx *core.Scope) string { return For(cx).StylesPerspective
 
 // StylesPerspective says "Perspective"
 // in the language of msgs.
-func (msgs Messages) StylesPerspective() string { return msgs.text(564) }
+func (msgs Messages) StylesPerspective() string { return msgs.text(572) }
 
 // StylesSwayingDrivenNatively says "Swaying, driven natively"
 // in the language the app shows under cx.
@@ -19973,7 +20103,7 @@ func StylesSwayingDrivenNatively(cx *core.Scope) string { return For(cx).StylesS
 
 // StylesSwayingDrivenNatively says "Swaying, driven natively"
 // in the language of msgs.
-func (msgs Messages) StylesSwayingDrivenNatively() string { return msgs.text(565) }
+func (msgs Messages) StylesSwayingDrivenNatively() string { return msgs.text(573) }
 
 // StylesYAxis says "Y axis"
 // in the language the app shows under cx.
@@ -19981,7 +20111,7 @@ func StylesYAxis(cx *core.Scope) string { return For(cx).StylesYAxis() }
 
 // StylesYAxis says "Y axis"
 // in the language of msgs.
-func (msgs Messages) StylesYAxis() string { return msgs.text(566) }
+func (msgs Messages) StylesYAxis() string { return msgs.text(574) }
 
 // StylesTilt says "Tilt"
 // in the language the app shows under cx.
@@ -19989,7 +20119,7 @@ func StylesTilt(cx *core.Scope) string { return For(cx).StylesTilt() }
 
 // StylesTilt says "Tilt"
 // in the language of msgs.
-func (msgs Messages) StylesTilt() string { return msgs.text(567) }
+func (msgs Messages) StylesTilt() string { return msgs.text(575) }
 
 // StylesXAxis says "X axis"
 // in the language the app shows under cx.
@@ -19997,7 +20127,7 @@ func StylesXAxis(cx *core.Scope) string { return For(cx).StylesXAxis() }
 
 // StylesXAxis says "X axis"
 // in the language of msgs.
-func (msgs Messages) StylesXAxis() string { return msgs.text(568) }
+func (msgs Messages) StylesXAxis() string { return msgs.text(576) }
 
 // StylesSkew says "Skew"
 // in the language the app shows under cx.
@@ -20005,7 +20135,7 @@ func StylesSkew(cx *core.Scope) string { return For(cx).StylesSkew() }
 
 // StylesSkew says "Skew"
 // in the language of msgs.
-func (msgs Messages) StylesSkew() string { return msgs.text(569) }
+func (msgs Messages) StylesSkew() string { return msgs.text(577) }
 
 // StylesOrigin says "Origin"
 // in the language the app shows under cx.
@@ -20013,7 +20143,7 @@ func StylesOrigin(cx *core.Scope) string { return For(cx).StylesOrigin() }
 
 // StylesOrigin says "Origin"
 // in the language of msgs.
-func (msgs Messages) StylesOrigin() string { return msgs.text(570) }
+func (msgs Messages) StylesOrigin() string { return msgs.text(578) }
 
 // StylesTopLeftRotated30 says "Top left · rotated 30°"
 // in the language the app shows under cx.
@@ -20021,7 +20151,7 @@ func StylesTopLeftRotated30(cx *core.Scope) string { return For(cx).StylesTopLef
 
 // StylesTopLeftRotated30 says "Top left · rotated 30°"
 // in the language of msgs.
-func (msgs Messages) StylesTopLeftRotated30() string { return msgs.text(571) }
+func (msgs Messages) StylesTopLeftRotated30() string { return msgs.text(579) }
 
 // StylesNumerals says "Numerals"
 // in the language the app shows under cx.
@@ -20029,7 +20159,7 @@ func StylesNumerals(cx *core.Scope) string { return For(cx).StylesNumerals() }
 
 // StylesNumerals says "Numerals"
 // in the language of msgs.
-func (msgs Messages) StylesNumerals() string { return msgs.text(572) }
+func (msgs Messages) StylesNumerals() string { return msgs.text(580) }
 
 // StylesProportional says "Proportional"
 // in the language the app shows under cx.
@@ -20037,7 +20167,7 @@ func StylesProportional(cx *core.Scope) string { return For(cx).StylesProportion
 
 // StylesProportional says "Proportional"
 // in the language of msgs.
-func (msgs Messages) StylesProportional() string { return msgs.text(573) }
+func (msgs Messages) StylesProportional() string { return msgs.text(581) }
 
 // StylesSmallCaps says "Small Caps"
 // in the language the app shows under cx.
@@ -20045,7 +20175,7 @@ func StylesSmallCaps(cx *core.Scope) string { return For(cx).StylesSmallCaps() }
 
 // StylesSmallCaps says "Small Caps"
 // in the language of msgs.
-func (msgs Messages) StylesSmallCaps() string { return msgs.text(574) }
+func (msgs Messages) StylesSmallCaps() string { return msgs.text(582) }
 
 // StylesOldstyle1234567890 says "Oldstyle 1234567890"
 // in the language the app shows under cx.
@@ -20053,7 +20183,7 @@ func StylesOldstyle1234567890(cx *core.Scope) string { return For(cx).StylesOlds
 
 // StylesOldstyle1234567890 says "Oldstyle 1234567890"
 // in the language of msgs.
-func (msgs Messages) StylesOldstyle1234567890() string { return msgs.text(575) }
+func (msgs Messages) StylesOldstyle1234567890() string { return msgs.text(583) }
 
 // StylesRightToLeft says "Right to left"
 // in the language the app shows under cx.
@@ -20061,7 +20191,7 @@ func StylesRightToLeft(cx *core.Scope) string { return For(cx).StylesRightToLeft
 
 // StylesRightToLeft says "Right to left"
 // in the language of msgs.
-func (msgs Messages) StylesRightToLeft() string { return msgs.text(576) }
+func (msgs Messages) StylesRightToLeft() string { return msgs.text(584) }
 
 // StylesFlip says "Flip"
 // in the language the app shows under cx.
@@ -20069,7 +20199,7 @@ func StylesFlip(cx *core.Scope) string { return For(cx).StylesFlip() }
 
 // StylesFlip says "Flip"
 // in the language of msgs.
-func (msgs Messages) StylesFlip() string { return msgs.text(577) }
+func (msgs Messages) StylesFlip() string { return msgs.text(585) }
 
 // StylesTextAlignsToTheStart says "Text aligns to the start side; the first box has a start margin of 16 and a round top-start corner."
 // in the language the app shows under cx.
@@ -20077,7 +20207,7 @@ func StylesTextAlignsToTheStart(cx *core.Scope) string { return For(cx).StylesTe
 
 // StylesTextAlignsToTheStart says "Text aligns to the start side; the first box has a start margin of 16 and a round top-start corner."
 // in the language of msgs.
-func (msgs Messages) StylesTextAlignsToTheStart() string { return msgs.text(578) }
+func (msgs Messages) StylesTextAlignsToTheStart() string { return msgs.text(586) }
 
 // StylesHorizontalScrollView says "Horizontal scroll view"
 // in the language the app shows under cx.
@@ -20085,7 +20215,7 @@ func StylesHorizontalScrollView(cx *core.Scope) string { return For(cx).StylesHo
 
 // StylesHorizontalScrollView says "Horizontal scroll view"
 // in the language of msgs.
-func (msgs Messages) StylesHorizontalScrollView() string { return msgs.text(579) }
+func (msgs Messages) StylesHorizontalScrollView() string { return msgs.text(587) }
 
 // StylesHorizontalList says "Horizontal list"
 // in the language the app shows under cx.
@@ -20093,7 +20223,7 @@ func StylesHorizontalList(cx *core.Scope) string { return For(cx).StylesHorizont
 
 // StylesHorizontalList says "Horizontal list"
 // in the language of msgs.
-func (msgs Messages) StylesHorizontalList() string { return msgs.text(580) }
+func (msgs Messages) StylesHorizontalList() string { return msgs.text(588) }
 
 // StylesTextalignstartTheStartSideRight says "TextAlignStart: the start side, right to left"
 // in the language the app shows under cx.
@@ -20103,7 +20233,7 @@ func StylesTextalignstartTheStartSideRight(cx *core.Scope) string {
 
 // StylesTextalignstartTheStartSideRight says "TextAlignStart: the start side, right to left"
 // in the language of msgs.
-func (msgs Messages) StylesTextalignstartTheStartSideRight() string { return msgs.text(581) }
+func (msgs Messages) StylesTextalignstartTheStartSideRight() string { return msgs.text(589) }
 
 // StylesGradients says "Gradients"
 // in the language the app shows under cx.
@@ -20111,7 +20241,7 @@ func StylesGradients(cx *core.Scope) string { return For(cx).StylesGradients() }
 
 // StylesGradients says "Gradients"
 // in the language of msgs.
-func (msgs Messages) StylesGradients() string { return msgs.text(582) }
+func (msgs Messages) StylesGradients() string { return msgs.text(590) }
 
 // StylesLinearRadialAndConicMixed says "Linear, radial and conic, mixed in Oklab"
 // in the language the app shows under cx.
@@ -20121,7 +20251,7 @@ func StylesLinearRadialAndConicMixed(cx *core.Scope) string {
 
 // StylesLinearRadialAndConicMixed says "Linear, radial and conic, mixed in Oklab"
 // in the language of msgs.
-func (msgs Messages) StylesLinearRadialAndConicMixed() string { return msgs.text(583) }
+func (msgs Messages) StylesLinearRadialAndConicMixed() string { return msgs.text(591) }
 
 // StylesLinear says "Linear"
 // in the language the app shows under cx.
@@ -20129,7 +20259,7 @@ func StylesLinear(cx *core.Scope) string { return For(cx).StylesLinear() }
 
 // StylesLinear says "Linear"
 // in the language of msgs.
-func (msgs Messages) StylesLinear() string { return msgs.text(584) }
+func (msgs Messages) StylesLinear() string { return msgs.text(592) }
 
 // StylesToACorner says "To a corner"
 // in the language the app shows under cx.
@@ -20137,7 +20267,7 @@ func StylesToACorner(cx *core.Scope) string { return For(cx).StylesToACorner() }
 
 // StylesToACorner says "To a corner"
 // in the language of msgs.
-func (msgs Messages) StylesToACorner() string { return msgs.text(585) }
+func (msgs Messages) StylesToACorner() string { return msgs.text(593) }
 
 // StylesOklab says "Oklab"
 // in the language the app shows under cx.
@@ -20145,7 +20275,7 @@ func StylesOklab(cx *core.Scope) string { return For(cx).StylesOklab() }
 
 // StylesOklab says "Oklab"
 // in the language of msgs.
-func (msgs Messages) StylesOklab() string { return msgs.text(586) }
+func (msgs Messages) StylesOklab() string { return msgs.text(594) }
 
 // StylesNoGrayInTheMiddle says "No gray in the middle"
 // in the language the app shows under cx.
@@ -20153,7 +20283,7 @@ func StylesNoGrayInTheMiddle(cx *core.Scope) string { return For(cx).StylesNoGra
 
 // StylesNoGrayInTheMiddle says "No gray in the middle"
 // in the language of msgs.
-func (msgs Messages) StylesNoGrayInTheMiddle() string { return msgs.text(587) }
+func (msgs Messages) StylesNoGrayInTheMiddle() string { return msgs.text(595) }
 
 // StylesRadial says "Radial"
 // in the language the app shows under cx.
@@ -20161,7 +20291,7 @@ func StylesRadial(cx *core.Scope) string { return For(cx).StylesRadial() }
 
 // StylesRadial says "Radial"
 // in the language of msgs.
-func (msgs Messages) StylesRadial() string { return msgs.text(588) }
+func (msgs Messages) StylesRadial() string { return msgs.text(596) }
 
 // StylesConicRepeating says "Conic, repeating"
 // in the language the app shows under cx.
@@ -20169,7 +20299,7 @@ func StylesConicRepeating(cx *core.Scope) string { return For(cx).StylesConicRep
 
 // StylesConicRepeating says "Conic, repeating"
 // in the language of msgs.
-func (msgs Messages) StylesConicRepeating() string { return msgs.text(589) }
+func (msgs Messages) StylesConicRepeating() string { return msgs.text(597) }
 
 // StylesFiltersBackdropsAndMasks says "Filters, backdrops and masks"
 // in the language the app shows under cx.
@@ -20179,7 +20309,7 @@ func StylesFiltersBackdropsAndMasks(cx *core.Scope) string {
 
 // StylesFiltersBackdropsAndMasks says "Filters, backdrops and masks"
 // in the language of msgs.
-func (msgs Messages) StylesFiltersBackdropsAndMasks() string { return msgs.text(590) }
+func (msgs Messages) StylesFiltersBackdropsAndMasks() string { return msgs.text(598) }
 
 // StylesFiltersBackdropfiltersMaskBlendmode says "Filters · BackdropFilters · Mask · BlendMode"
 // in the language the app shows under cx.
@@ -20189,7 +20319,7 @@ func StylesFiltersBackdropfiltersMaskBlendmode(cx *core.Scope) string {
 
 // StylesFiltersBackdropfiltersMaskBlendmode says "Filters · BackdropFilters · Mask · BlendMode"
 // in the language of msgs.
-func (msgs Messages) StylesFiltersBackdropfiltersMaskBlendmode() string { return msgs.text(591) }
+func (msgs Messages) StylesFiltersBackdropfiltersMaskBlendmode() string { return msgs.text(599) }
 
 // StylesHue120 says "hue 120°"
 // in the language the app shows under cx.
@@ -20197,7 +20327,7 @@ func StylesHue120(cx *core.Scope) string { return For(cx).StylesHue120() }
 
 // StylesHue120 says "hue 120°"
 // in the language of msgs.
-func (msgs Messages) StylesHue120() string { return msgs.text(592) }
+func (msgs Messages) StylesHue120() string { return msgs.text(600) }
 
 // StylesBlur4 says "blur 4"
 // in the language the app shows under cx.
@@ -20205,7 +20335,7 @@ func StylesBlur4(cx *core.Scope) string { return For(cx).StylesBlur4() }
 
 // StylesBlur4 says "blur 4"
 // in the language of msgs.
-func (msgs Messages) StylesBlur4() string { return msgs.text(593) }
+func (msgs Messages) StylesBlur4() string { return msgs.text(601) }
 
 // StylesKeyframesAndGroupStyles says "Keyframes and group styles"
 // in the language the app shows under cx.
@@ -20215,7 +20345,7 @@ func StylesKeyframesAndGroupStyles(cx *core.Scope) string {
 
 // StylesKeyframesAndGroupStyles says "Keyframes and group styles"
 // in the language of msgs.
-func (msgs Messages) StylesKeyframesAndGroupStyles() string { return msgs.text(594) }
+func (msgs Messages) StylesKeyframesAndGroupStyles() string { return msgs.text(602) }
 
 // StylesAnimationGroupstyle says "Animation · GroupStyle"
 // in the language the app shows under cx.
@@ -20223,7 +20353,7 @@ func StylesAnimationGroupstyle(cx *core.Scope) string { return For(cx).StylesAni
 
 // StylesAnimationGroupstyle says "Animation · GroupStyle"
 // in the language of msgs.
-func (msgs Messages) StylesAnimationGroupstyle() string { return msgs.text(595) }
+func (msgs Messages) StylesAnimationGroupstyle() string { return msgs.text(603) }
 
 // StylesHoverThisRow says "Hover this row"
 // in the language the app shows under cx.
@@ -20231,7 +20361,7 @@ func StylesHoverThisRow(cx *core.Scope) string { return For(cx).StylesHoverThisR
 
 // StylesHoverThisRow says "Hover this row"
 // in the language of msgs.
-func (msgs Messages) StylesHoverThisRow() string { return msgs.text(596) }
+func (msgs Messages) StylesHoverThisRow() string { return msgs.text(604) }
 
 // StylesPressThisRowItsDot says "Press this row: its dot follows"
 // in the language the app shows under cx.
@@ -20239,7 +20369,7 @@ func StylesPressThisRowItsDot(cx *core.Scope) string { return For(cx).StylesPres
 
 // StylesPressThisRowItsDot says "Press this row: its dot follows"
 // in the language of msgs.
-func (msgs Messages) StylesPressThisRowItsDot() string { return msgs.text(597) }
+func (msgs Messages) StylesPressThisRowItsDot() string { return msgs.text(605) }
 
 // StylesHoverThisRowItsDot says "Hover this row: its dot and title follow"
 // in the language the app shows under cx.
@@ -20247,7 +20377,7 @@ func StylesHoverThisRowItsDot(cx *core.Scope) string { return For(cx).StylesHove
 
 // StylesHoverThisRowItsDot says "Hover this row: its dot and title follow"
 // in the language of msgs.
-func (msgs Messages) StylesHoverThisRowItsDot() string { return msgs.text(598) }
+func (msgs Messages) StylesHoverThisRowItsDot() string { return msgs.text(606) }
 
 // NavTop says "Top"
 // in the language the app shows under cx.
@@ -20255,7 +20385,7 @@ func NavTop(cx *core.Scope) string { return For(cx).NavTop() }
 
 // NavTop says "Top"
 // in the language of msgs.
-func (msgs Messages) NavTop() string { return msgs.text(599) }
+func (msgs Messages) NavTop() string { return msgs.text(607) }
 
 // NavBottom says "Bottom"
 // in the language the app shows under cx.
@@ -20263,7 +20393,7 @@ func NavBottom(cx *core.Scope) string { return For(cx).NavBottom() }
 
 // NavBottom says "Bottom"
 // in the language of msgs.
-func (msgs Messages) NavBottom() string { return msgs.text(600) }
+func (msgs Messages) NavBottom() string { return msgs.text(608) }
 
 // NavLeft says "Left"
 // in the language the app shows under cx.
@@ -20271,7 +20401,7 @@ func NavLeft(cx *core.Scope) string { return For(cx).NavLeft() }
 
 // NavLeft says "Left"
 // in the language of msgs.
-func (msgs Messages) NavLeft() string { return msgs.text(601) }
+func (msgs Messages) NavLeft() string { return msgs.text(609) }
 
 // NavRight says "Right"
 // in the language the app shows under cx.
@@ -20279,7 +20409,7 @@ func NavRight(cx *core.Scope) string { return For(cx).NavRight() }
 
 // NavRight says "Right"
 // in the language of msgs.
-func (msgs Messages) NavRight() string { return msgs.text(602) }
+func (msgs Messages) NavRight() string { return msgs.text(610) }
 
 // NavSafeArea says "Safe area"
 // in the language the app shows under cx.
@@ -20287,7 +20417,7 @@ func NavSafeArea(cx *core.Scope) string { return For(cx).NavSafeArea() }
 
 // NavSafeArea says "Safe area"
 // in the language of msgs.
-func (msgs Messages) NavSafeArea() string { return msgs.text(603) }
+func (msgs Messages) NavSafeArea() string { return msgs.text(611) }
 
 // NavInsets says "Insets"
 // in the language the app shows under cx.
@@ -20295,7 +20425,7 @@ func NavInsets(cx *core.Scope) string { return For(cx).NavInsets() }
 
 // NavInsets says "Insets"
 // in the language of msgs.
-func (msgs Messages) NavInsets() string { return msgs.text(604) }
+func (msgs Messages) NavInsets() string { return msgs.text(612) }
 
 // NavLargeTitle says "Large title"
 // in the language the app shows under cx.
@@ -20303,7 +20433,7 @@ func NavLargeTitle(cx *core.Scope) string { return For(cx).NavLargeTitle() }
 
 // NavLargeTitle says "Large title"
 // in the language of msgs.
-func (msgs Messages) NavLargeTitle() string { return msgs.text(605) }
+func (msgs Messages) NavLargeTitle() string { return msgs.text(613) }
 
 // NavIosTheTitleShrinksInto says "iOS: the title shrinks into the bar as the content scrolls."
 // in the language the app shows under cx.
@@ -20311,7 +20441,7 @@ func NavIosTheTitleShrinksInto(cx *core.Scope) string { return For(cx).NavIosThe
 
 // NavIosTheTitleShrinksInto says "iOS: the title shrinks into the bar as the content scrolls."
 // in the language of msgs.
-func (msgs Messages) NavIosTheTitleShrinksInto() string { return msgs.text(606) }
+func (msgs Messages) NavIosTheTitleShrinksInto() string { return msgs.text(614) }
 
 // NavTransparent says "Transparent"
 // in the language the app shows under cx.
@@ -20319,7 +20449,7 @@ func NavTransparent(cx *core.Scope) string { return For(cx).NavTransparent() }
 
 // NavTransparent says "Transparent"
 // in the language of msgs.
-func (msgs Messages) NavTransparent() string { return msgs.text(607) }
+func (msgs Messages) NavTransparent() string { return msgs.text(615) }
 
 // NavContentUnderTheHeader says "Content under the header"
 // in the language the app shows under cx.
@@ -20327,7 +20457,7 @@ func NavContentUnderTheHeader(cx *core.Scope) string { return For(cx).NavContent
 
 // NavContentUnderTheHeader says "Content under the header"
 // in the language of msgs.
-func (msgs Messages) NavContentUnderTheHeader() string { return msgs.text(608) }
+func (msgs Messages) NavContentUnderTheHeader() string { return msgs.text(616) }
 
 // NavTheCirclesStartAtThe says "The circles start at the top of the screen; the bar and its back button float over them."
 // in the language the app shows under cx.
@@ -20335,7 +20465,7 @@ func NavTheCirclesStartAtThe(cx *core.Scope) string { return For(cx).NavTheCircl
 
 // NavTheCirclesStartAtThe says "The circles start at the top of the screen; the bar and its back button float over them."
 // in the language of msgs.
-func (msgs Messages) NavTheCirclesStartAtThe() string { return msgs.text(609) }
+func (msgs Messages) NavTheCirclesStartAtThe() string { return msgs.text(617) }
 
 // NavClose says "Close"
 // in the language the app shows under cx.
@@ -20343,7 +20473,7 @@ func NavClose(cx *core.Scope) string { return For(cx).NavClose() }
 
 // NavClose says "Close"
 // in the language of msgs.
-func (msgs Messages) NavClose() string { return msgs.text(610) }
+func (msgs Messages) NavClose() string { return msgs.text(618) }
 
 // NavCustomTitle says "Custom title"
 // in the language the app shows under cx.
@@ -20351,7 +20481,7 @@ func NavCustomTitle(cx *core.Scope) string { return For(cx).NavCustomTitle() }
 
 // NavCustomTitle says "Custom title"
 // in the language of msgs.
-func (msgs Messages) NavCustomTitle() string { return msgs.text(611) }
+func (msgs Messages) NavCustomTitle() string { return msgs.text(619) }
 
 // NavStar says "Star"
 // in the language the app shows under cx.
@@ -20359,7 +20489,7 @@ func NavStar(cx *core.Scope) string { return For(cx).NavStar() }
 
 // NavStar says "Star"
 // in the language of msgs.
-func (msgs Messages) NavStar() string { return msgs.text(612) }
+func (msgs Messages) NavStar() string { return msgs.text(620) }
 
 // NavCustom says "Custom"
 // in the language the app shows under cx.
@@ -20367,7 +20497,7 @@ func NavCustom(cx *core.Scope) string { return For(cx).NavCustom() }
 
 // NavCustom says "Custom"
 // in the language of msgs.
-func (msgs Messages) NavCustom() string { return msgs.text(613) }
+func (msgs Messages) NavCustom() string { return msgs.text(621) }
 
 // NavTheHeaderSItemsAre says "The header's items are views: the star on the right counts presses and updates the header."
 // in the language the app shows under cx.
@@ -20375,7 +20505,7 @@ func NavTheHeaderSItemsAre(cx *core.Scope) string { return For(cx).NavTheHeaderS
 
 // NavTheHeaderSItemsAre says "The header's items are views: the star on the right counts presses and updates the header."
 // in the language of msgs.
-func (msgs Messages) NavTheHeaderSItemsAre() string { return msgs.text(614) }
+func (msgs Messages) NavTheHeaderSItemsAre() string { return msgs.text(622) }
 
 // NavHeader says "Header"
 // in the language the app shows under cx.
@@ -20383,7 +20513,7 @@ func NavHeader(cx *core.Scope) string { return For(cx).NavHeader() }
 
 // NavHeader says "Header"
 // in the language of msgs.
-func (msgs Messages) NavHeader() string { return msgs.text(615) }
+func (msgs Messages) NavHeader() string { return msgs.text(623) }
 
 // NavNoSwipeBack says "No swipe back"
 // in the language the app shows under cx.
@@ -20391,7 +20521,7 @@ func NavNoSwipeBack(cx *core.Scope) string { return For(cx).NavNoSwipeBack() }
 
 // NavNoSwipeBack says "No swipe back"
 // in the language of msgs.
-func (msgs Messages) NavNoSwipeBack() string { return msgs.text(616) }
+func (msgs Messages) NavNoSwipeBack() string { return msgs.text(624) }
 
 // NavTheBackGestureIsOff says "The back gesture is off on this screen: no swipe on iOS. The back buttons still work."
 // in the language the app shows under cx.
@@ -20399,7 +20529,7 @@ func NavTheBackGestureIsOff(cx *core.Scope) string { return For(cx).NavTheBackGe
 
 // NavTheBackGestureIsOff says "The back gesture is off on this screen: no swipe on iOS. The back buttons still work."
 // in the language of msgs.
-func (msgs Messages) NavTheBackGestureIsOff() string { return msgs.text(617) }
+func (msgs Messages) NavTheBackGestureIsOff() string { return msgs.text(625) }
 
 // NavTheBackGestureIsOff2 says "The back gesture is off on this screen (touch screens only). The back button and Escape still work."
 // in the language the app shows under cx.
@@ -20407,7 +20537,7 @@ func NavTheBackGestureIsOff2(cx *core.Scope) string { return For(cx).NavTheBackG
 
 // NavTheBackGestureIsOff2 says "The back gesture is off on this screen (touch screens only). The back button and Escape still work."
 // in the language of msgs.
-func (msgs Messages) NavTheBackGestureIsOff2() string { return msgs.text(618) }
+func (msgs Messages) NavTheBackGestureIsOff2() string { return msgs.text(626) }
 
 // NavLeaving says "Leaving"
 // in the language the app shows under cx.
@@ -20415,7 +20545,7 @@ func NavLeaving(cx *core.Scope) string { return For(cx).NavLeaving() }
 
 // NavLeaving says "Leaving"
 // in the language of msgs.
-func (msgs Messages) NavLeaving() string { return msgs.text(619) }
+func (msgs Messages) NavLeaving() string { return msgs.text(627) }
 
 // NavSwipeBack says "Swipe back"
 // in the language the app shows under cx.
@@ -20423,7 +20553,7 @@ func NavSwipeBack(cx *core.Scope) string { return For(cx).NavSwipeBack() }
 
 // NavSwipeBack says "Swipe back"
 // in the language of msgs.
-func (msgs Messages) NavSwipeBack() string { return msgs.text(620) }
+func (msgs Messages) NavSwipeBack() string { return msgs.text(628) }
 
 // NavOff says "Off"
 // in the language the app shows under cx.
@@ -20431,7 +20561,7 @@ func NavOff(cx *core.Scope) string { return For(cx).NavOff() }
 
 // NavOff says "Off"
 // in the language of msgs.
-func (msgs Messages) NavOff() string { return msgs.text(621) }
+func (msgs Messages) NavOff() string { return msgs.text(629) }
 
 // NavBackButtons says "Back buttons"
 // in the language the app shows under cx.
@@ -20439,7 +20569,7 @@ func NavBackButtons(cx *core.Scope) string { return For(cx).NavBackButtons() }
 
 // NavBackButtons says "Back buttons"
 // in the language of msgs.
-func (msgs Messages) NavBackButtons() string { return msgs.text(622) }
+func (msgs Messages) NavBackButtons() string { return msgs.text(630) }
 
 // NavOn says "On"
 // in the language the app shows under cx.
@@ -20447,7 +20577,7 @@ func NavOn(cx *core.Scope) string { return For(cx).NavOn() }
 
 // NavOn says "On"
 // in the language of msgs.
-func (msgs Messages) NavOn() string { return msgs.text(623) }
+func (msgs Messages) NavOn() string { return msgs.text(631) }
 
 // NavDiscardYourChanges says "Discard your changes?"
 // in the language the app shows under cx.
@@ -20455,7 +20585,7 @@ func NavDiscardYourChanges(cx *core.Scope) string { return For(cx).NavDiscardYou
 
 // NavDiscardYourChanges says "Discard your changes?"
 // in the language of msgs.
-func (msgs Messages) NavDiscardYourChanges() string { return msgs.text(624) }
+func (msgs Messages) NavDiscardYourChanges() string { return msgs.text(632) }
 
 // NavKeepEditing says "Keep editing"
 // in the language the app shows under cx.
@@ -20463,7 +20593,7 @@ func NavKeepEditing(cx *core.Scope) string { return For(cx).NavKeepEditing() }
 
 // NavKeepEditing says "Keep editing"
 // in the language of msgs.
-func (msgs Messages) NavKeepEditing() string { return msgs.text(625) }
+func (msgs Messages) NavKeepEditing() string { return msgs.text(633) }
 
 // NavDiscard says "Discard"
 // in the language the app shows under cx.
@@ -20471,7 +20601,7 @@ func NavDiscard(cx *core.Scope) string { return For(cx).NavDiscard() }
 
 // NavDiscard says "Discard"
 // in the language of msgs.
-func (msgs Messages) NavDiscard() string { return msgs.text(626) }
+func (msgs Messages) NavDiscard() string { return msgs.text(634) }
 
 // NavUnsavedChanges says "Unsaved changes"
 // in the language the app shows under cx.
@@ -20479,7 +20609,7 @@ func NavUnsavedChanges(cx *core.Scope) string { return For(cx).NavUnsavedChanges
 
 // NavUnsavedChanges says "Unsaved changes"
 // in the language of msgs.
-func (msgs Messages) NavUnsavedChanges() string { return msgs.text(627) }
+func (msgs Messages) NavUnsavedChanges() string { return msgs.text(635) }
 
 // NavTypeSomethingThenGoBack says "Type something, then go back (header button, swipe, Android back): the screen asks first."
 // in the language the app shows under cx.
@@ -20487,7 +20617,7 @@ func NavTypeSomethingThenGoBack(cx *core.Scope) string { return For(cx).NavTypeS
 
 // NavTypeSomethingThenGoBack says "Type something, then go back (header button, swipe, Android back): the screen asks first."
 // in the language of msgs.
-func (msgs Messages) NavTypeSomethingThenGoBack() string { return msgs.text(628) }
+func (msgs Messages) NavTypeSomethingThenGoBack() string { return msgs.text(636) }
 
 // NavTypeSomethingThenGoBack2 says "Type something, then go back (header button, Escape, the mouse's back button): the screen asks first."
 // in the language the app shows under cx.
@@ -20495,7 +20625,7 @@ func NavTypeSomethingThenGoBack2(cx *core.Scope) string { return For(cx).NavType
 
 // NavTypeSomethingThenGoBack2 says "Type something, then go back (header button, Escape, the mouse's back button): the screen asks first."
 // in the language of msgs.
-func (msgs Messages) NavTypeSomethingThenGoBack2() string { return msgs.text(629) }
+func (msgs Messages) NavTypeSomethingThenGoBack2() string { return msgs.text(637) }
 
 // NavDraft says "Draft"
 // in the language the app shows under cx.
@@ -20503,7 +20633,7 @@ func NavDraft(cx *core.Scope) string { return For(cx).NavDraft() }
 
 // NavDraft says "Draft"
 // in the language of msgs.
-func (msgs Messages) NavDraft() string { return msgs.text(630) }
+func (msgs Messages) NavDraft() string { return msgs.text(638) }
 
 // NavGuarded says "Guarded"
 // in the language the app shows under cx.
@@ -20511,7 +20641,7 @@ func NavGuarded(cx *core.Scope) string { return For(cx).NavGuarded() }
 
 // NavGuarded says "Guarded"
 // in the language of msgs.
-func (msgs Messages) NavGuarded() string { return msgs.text(631) }
+func (msgs Messages) NavGuarded() string { return msgs.text(639) }
 
 // NavEmpty says "Empty"
 // in the language the app shows under cx.
@@ -20519,7 +20649,7 @@ func NavEmpty(cx *core.Scope) string { return For(cx).NavEmpty() }
 
 // NavEmpty says "Empty"
 // in the language of msgs.
-func (msgs Messages) NavEmpty() string { return msgs.text(632) }
+func (msgs Messages) NavEmpty() string { return msgs.text(640) }
 
 // NavADraft says "A draft"
 // in the language the app shows under cx.
@@ -20527,7 +20657,7 @@ func NavADraft(cx *core.Scope) string { return For(cx).NavADraft() }
 
 // NavADraft says "A draft"
 // in the language of msgs.
-func (msgs Messages) NavADraft() string { return msgs.text(633) }
+func (msgs Messages) NavADraft() string { return msgs.text(641) }
 
 // NavNothingToLoseBackPops says "Nothing to lose: back pops"
 // in the language the app shows under cx.
@@ -20535,7 +20665,7 @@ func NavNothingToLoseBackPops(cx *core.Scope) string { return For(cx).NavNothing
 
 // NavNothingToLoseBackPops says "Nothing to lose: back pops"
 // in the language of msgs.
-func (msgs Messages) NavNothingToLoseBackPops() string { return msgs.text(634) }
+func (msgs Messages) NavNothingToLoseBackPops() string { return msgs.text(642) }
 
 // NavNoHeader says "No header"
 // in the language the app shows under cx.
@@ -20543,7 +20673,7 @@ func NavNoHeader(cx *core.Scope) string { return For(cx).NavNoHeader() }
 
 // NavNoHeader says "No header"
 // in the language of msgs.
-func (msgs Messages) NavNoHeader() string { return msgs.text(635) }
+func (msgs Messages) NavNoHeader() string { return msgs.text(643) }
 
 // NavTheScreenOwnsTheWhole says "The screen owns the whole surface; padding of EnvSafeArea keeps it clear of the status bar and the home indicator."
 // in the language the app shows under cx.
@@ -20551,7 +20681,7 @@ func NavTheScreenOwnsTheWhole(cx *core.Scope) string { return For(cx).NavTheScre
 
 // NavTheScreenOwnsTheWhole says "The screen owns the whole surface; padding of EnvSafeArea keeps it clear of the status bar and the home indicator."
 // in the language of msgs.
-func (msgs Messages) NavTheScreenOwnsTheWhole() string { return msgs.text(636) }
+func (msgs Messages) NavTheScreenOwnsTheWhole() string { return msgs.text(644) }
 
 // NavBack says "Back"
 // in the language the app shows under cx.
@@ -20559,7 +20689,7 @@ func NavBack(cx *core.Scope) string { return For(cx).NavBack() }
 
 // NavBack says "Back"
 // in the language of msgs.
-func (msgs Messages) NavBack() string { return msgs.text(637) }
+func (msgs Messages) NavBack() string { return msgs.text(645) }
 
 // NavEveryPushIsANative says "Every push is a native screen; PopToRoot unwinds them all at once."
 // in the language the app shows under cx.
@@ -20567,7 +20697,7 @@ func NavEveryPushIsANative(cx *core.Scope) string { return For(cx).NavEveryPushI
 
 // NavEveryPushIsANative says "Every push is a native screen; PopToRoot unwinds them all at once."
 // in the language of msgs.
-func (msgs Messages) NavEveryPushIsANative() string { return msgs.text(638) }
+func (msgs Messages) NavEveryPushIsANative() string { return msgs.text(646) }
 
 // NavDeeper says "Deeper"
 // in the language the app shows under cx.
@@ -20575,7 +20705,7 @@ func NavDeeper(cx *core.Scope) string { return For(cx).NavDeeper() }
 
 // NavDeeper says "Deeper"
 // in the language of msgs.
-func (msgs Messages) NavDeeper() string { return msgs.text(639) }
+func (msgs Messages) NavDeeper() string { return msgs.text(647) }
 
 // NavToTheIndex says "To the index"
 // in the language the app shows under cx.
@@ -20583,7 +20713,7 @@ func NavToTheIndex(cx *core.Scope) string { return For(cx).NavToTheIndex() }
 
 // NavToTheIndex says "To the index"
 // in the language of msgs.
-func (msgs Messages) NavToTheIndex() string { return msgs.text(640) }
+func (msgs Messages) NavToTheIndex() string { return msgs.text(648) }
 
 // NavTheModalS says "the modal's"
 // in the language the app shows under cx.
@@ -20591,7 +20721,7 @@ func NavTheModalS(cx *core.Scope) string { return For(cx).NavTheModalS() }
 
 // NavTheModalS says "the modal's"
 // in the language of msgs.
-func (msgs Messages) NavTheModalS() string { return msgs.text(641) }
+func (msgs Messages) NavTheModalS() string { return msgs.text(649) }
 
 // NavFullScreen says "Full screen"
 // in the language the app shows under cx.
@@ -20599,7 +20729,7 @@ func NavFullScreen(cx *core.Scope) string { return For(cx).NavFullScreen() }
 
 // NavFullScreen says "Full screen"
 // in the language of msgs.
-func (msgs Messages) NavFullScreen() string { return msgs.text(642) }
+func (msgs Messages) NavFullScreen() string { return msgs.text(650) }
 
 // NavSlidesUp says "Slides up"
 // in the language the app shows under cx.
@@ -20607,7 +20737,7 @@ func NavSlidesUp(cx *core.Scope) string { return For(cx).NavSlidesUp() }
 
 // NavSlidesUp says "Slides up"
 // in the language of msgs.
-func (msgs Messages) NavSlidesUp() string { return msgs.text(643) }
+func (msgs Messages) NavSlidesUp() string { return msgs.text(651) }
 
 // NavPageSheet says "Page sheet"
 // in the language the app shows under cx.
@@ -20615,7 +20745,7 @@ func NavPageSheet(cx *core.Scope) string { return For(cx).NavPageSheet() }
 
 // NavPageSheet says "Page sheet"
 // in the language of msgs.
-func (msgs Messages) NavPageSheet() string { return msgs.text(644) }
+func (msgs Messages) NavPageSheet() string { return msgs.text(652) }
 
 // NavIosSheet says "iOS sheet"
 // in the language the app shows under cx.
@@ -20623,7 +20753,7 @@ func NavIosSheet(cx *core.Scope) string { return For(cx).NavIosSheet() }
 
 // NavIosSheet says "iOS sheet"
 // in the language of msgs.
-func (msgs Messages) NavIosSheet() string { return msgs.text(645) }
+func (msgs Messages) NavIosSheet() string { return msgs.text(653) }
 
 // NavATallCenteredCard says "A tall centered card"
 // in the language the app shows under cx.
@@ -20631,7 +20761,7 @@ func NavATallCenteredCard(cx *core.Scope) string { return For(cx).NavATallCenter
 
 // NavATallCenteredCard says "A tall centered card"
 // in the language of msgs.
-func (msgs Messages) NavATallCenteredCard() string { return msgs.text(646) }
+func (msgs Messages) NavATallCenteredCard() string { return msgs.text(654) }
 
 // NavFormSheet says "Form sheet"
 // in the language the app shows under cx.
@@ -20639,7 +20769,7 @@ func NavFormSheet(cx *core.Scope) string { return For(cx).NavFormSheet() }
 
 // NavFormSheet says "Form sheet"
 // in the language of msgs.
-func (msgs Messages) NavFormSheet() string { return msgs.text(647) }
+func (msgs Messages) NavFormSheet() string { return msgs.text(655) }
 
 // NavIosCentered says "iOS, centered"
 // in the language the app shows under cx.
@@ -20647,7 +20777,7 @@ func NavIosCentered(cx *core.Scope) string { return For(cx).NavIosCentered() }
 
 // NavIosCentered says "iOS, centered"
 // in the language of msgs.
-func (msgs Messages) NavIosCentered() string { return msgs.text(648) }
+func (msgs Messages) NavIosCentered() string { return msgs.text(656) }
 
 // NavASmallerCenteredCard says "A smaller centered card"
 // in the language the app shows under cx.
@@ -20655,7 +20785,7 @@ func NavASmallerCenteredCard(cx *core.Scope) string { return For(cx).NavASmaller
 
 // NavASmallerCenteredCard says "A smaller centered card"
 // in the language of msgs.
-func (msgs Messages) NavASmallerCenteredCard() string { return msgs.text(649) }
+func (msgs Messages) NavASmallerCenteredCard() string { return msgs.text(657) }
 
 // NavFade says "Fade"
 // in the language the app shows under cx.
@@ -20663,7 +20793,7 @@ func NavFade(cx *core.Scope) string { return For(cx).NavFade() }
 
 // NavFade says "Fade"
 // in the language of msgs.
-func (msgs Messages) NavFade() string { return msgs.text(650) }
+func (msgs Messages) NavFade() string { return msgs.text(658) }
 
 // NavFadesIn says "Fades in"
 // in the language the app shows under cx.
@@ -20671,7 +20801,7 @@ func NavFadesIn(cx *core.Scope) string { return For(cx).NavFadesIn() }
 
 // NavFadesIn says "Fades in"
 // in the language of msgs.
-func (msgs Messages) NavFadesIn() string { return msgs.text(651) }
+func (msgs Messages) NavFadesIn() string { return msgs.text(659) }
 
 // NavDialog says "Dialog"
 // in the language the app shows under cx.
@@ -20679,7 +20809,7 @@ func NavDialog(cx *core.Scope) string { return For(cx).NavDialog() }
 
 // NavDialog says "Dialog"
 // in the language of msgs.
-func (msgs Messages) NavDialog() string { return msgs.text(652) }
+func (msgs Messages) NavDialog() string { return msgs.text(660) }
 
 // NavSeeThrough says "See-through"
 // in the language the app shows under cx.
@@ -20687,7 +20817,7 @@ func NavSeeThrough(cx *core.Scope) string { return For(cx).NavSeeThrough() }
 
 // NavSeeThrough says "See-through"
 // in the language of msgs.
-func (msgs Messages) NavSeeThrough() string { return msgs.text(653) }
+func (msgs Messages) NavSeeThrough() string { return msgs.text(661) }
 
 // NavKeptOpen says "Kept open"
 // in the language the app shows under cx.
@@ -20695,7 +20825,7 @@ func NavKeptOpen(cx *core.Scope) string { return For(cx).NavKeptOpen() }
 
 // NavKeptOpen says "Kept open"
 // in the language of msgs.
-func (msgs Messages) NavKeptOpen() string { return msgs.text(654) }
+func (msgs Messages) NavKeptOpen() string { return msgs.text(662) }
 
 // NavNoSwipeToClose says "No swipe to close"
 // in the language the app shows under cx.
@@ -20703,7 +20833,7 @@ func NavNoSwipeToClose(cx *core.Scope) string { return For(cx).NavNoSwipeToClose
 
 // NavNoSwipeToClose says "No swipe to close"
 // in the language of msgs.
-func (msgs Messages) NavNoSwipeToClose() string { return msgs.text(655) }
+func (msgs Messages) NavNoSwipeToClose() string { return msgs.text(663) }
 
 // NavEscapeDoesNotClose says "Escape does not close"
 // in the language the app shows under cx.
@@ -20711,7 +20841,7 @@ func NavEscapeDoesNotClose(cx *core.Scope) string { return For(cx).NavEscapeDoes
 
 // NavEscapeDoesNotClose says "Escape does not close"
 // in the language of msgs.
-func (msgs Messages) NavEscapeDoesNotClose() string { return msgs.text(656) }
+func (msgs Messages) NavEscapeDoesNotClose() string { return msgs.text(664) }
 
 // NavNativeViews says "Native views"
 // in the language the app shows under cx.
@@ -20719,7 +20849,7 @@ func NavNativeViews(cx *core.Scope) string { return For(cx).NavNativeViews() }
 
 // NavNativeViews says "Native views"
 // in the language of msgs.
-func (msgs Messages) NavNativeViews() string { return msgs.text(657) }
+func (msgs Messages) NavNativeViews() string { return msgs.text(665) }
 
 // NavNativeStack says "Native stack"
 // in the language the app shows under cx.
@@ -20727,7 +20857,7 @@ func NavNativeStack(cx *core.Scope) string { return For(cx).NavNativeStack() }
 
 // NavNativeStack says "Native stack"
 // in the language of msgs.
-func (msgs Messages) NavNativeStack() string { return msgs.text(658) }
+func (msgs Messages) NavNativeStack() string { return msgs.text(666) }
 
 // NavHeadersTransitionsTheSafeArea says "Headers, transitions, the safe area"
 // in the language the app shows under cx.
@@ -20737,7 +20867,7 @@ func NavHeadersTransitionsTheSafeArea(cx *core.Scope) string {
 
 // NavHeadersTransitionsTheSafeArea says "Headers, transitions, the safe area"
 // in the language of msgs.
-func (msgs Messages) NavHeadersTransitionsTheSafeArea() string { return msgs.text(659) }
+func (msgs Messages) NavHeadersTransitionsTheSafeArea() string { return msgs.text(667) }
 
 // NavPages says "Pages"
 // in the language the app shows under cx.
@@ -20745,7 +20875,7 @@ func NavPages(cx *core.Scope) string { return For(cx).NavPages() }
 
 // NavPages says "Pages"
 // in the language of msgs.
-func (msgs Messages) NavPages() string { return msgs.text(660) }
+func (msgs Messages) NavPages() string { return msgs.text(668) }
 
 // NavScreenOptionsPushedWithNav says "Screen options, pushed with Nav.Push"
 // in the language the app shows under cx.
@@ -20755,7 +20885,7 @@ func NavScreenOptionsPushedWithNav(cx *core.Scope) string {
 
 // NavScreenOptionsPushedWithNav says "Screen options, pushed with Nav.Push"
 // in the language of msgs.
-func (msgs Messages) NavScreenOptionsPushedWithNav() string { return msgs.text(661) }
+func (msgs Messages) NavScreenOptionsPushedWithNav() string { return msgs.text(669) }
 
 // NavTransparentHeader says "Transparent header"
 // in the language the app shows under cx.
@@ -20763,7 +20893,7 @@ func NavTransparentHeader(cx *core.Scope) string { return For(cx).NavTransparent
 
 // NavTransparentHeader says "Transparent header"
 // in the language of msgs.
-func (msgs Messages) NavTransparentHeader() string { return msgs.text(662) }
+func (msgs Messages) NavTransparentHeader() string { return msgs.text(670) }
 
 // NavCustomHeaderItems says "Custom header items"
 // in the language the app shows under cx.
@@ -20771,7 +20901,7 @@ func NavCustomHeaderItems(cx *core.Scope) string { return For(cx).NavCustomHeade
 
 // NavCustomHeaderItems says "Custom header items"
 // in the language of msgs.
-func (msgs Messages) NavCustomHeaderItems() string { return msgs.text(663) }
+func (msgs Messages) NavCustomHeaderItems() string { return msgs.text(671) }
 
 // NavADeepStack says "A deep stack"
 // in the language the app shows under cx.
@@ -20779,7 +20909,7 @@ func NavADeepStack(cx *core.Scope) string { return For(cx).NavADeepStack() }
 
 // NavADeepStack says "A deep stack"
 // in the language of msgs.
-func (msgs Messages) NavADeepStack() string { return msgs.text(664) }
+func (msgs Messages) NavADeepStack() string { return msgs.text(672) }
 
 // NavModals says "Modals"
 // in the language the app shows under cx.
@@ -20787,7 +20917,7 @@ func NavModals(cx *core.Scope) string { return For(cx).NavModals() }
 
 // NavModals says "Modals"
 // in the language of msgs.
-func (msgs Messages) NavModals() string { return msgs.text(665) }
+func (msgs Messages) NavModals() string { return msgs.text(673) }
 
 // NavPresentationStylesAndTransitions says "Presentation styles and transitions"
 // in the language the app shows under cx.
@@ -20797,7 +20927,7 @@ func NavPresentationStylesAndTransitions(cx *core.Scope) string {
 
 // NavPresentationStylesAndTransitions says "Presentation styles and transitions"
 // in the language of msgs.
-func (msgs Messages) NavPresentationStylesAndTransitions() string { return msgs.text(666) }
+func (msgs Messages) NavPresentationStylesAndTransitions() string { return msgs.text(674) }
 
 // NavBackButton says "Back button"
 // in the language the app shows under cx.
@@ -20805,7 +20935,7 @@ func NavBackButton(cx *core.Scope) string { return For(cx).NavBackButton() }
 
 // NavBackButton says "Back button"
 // in the language of msgs.
-func (msgs Messages) NavBackButton() string { return msgs.text(667) }
+func (msgs Messages) NavBackButton() string { return msgs.text(675) }
 
 // NavOnbackpressTheBackButtonAnd says "OnBackPress: the back button and gesture"
 // in the language the app shows under cx.
@@ -20815,7 +20945,7 @@ func NavOnbackpressTheBackButtonAnd(cx *core.Scope) string {
 
 // NavOnbackpressTheBackButtonAnd says "OnBackPress: the back button and gesture"
 // in the language of msgs.
-func (msgs Messages) NavOnbackpressTheBackButtonAnd() string { return msgs.text(668) }
+func (msgs Messages) NavOnbackpressTheBackButtonAnd() string { return msgs.text(676) }
 
 // NavOnbackpressEscapeTheMouseS says "OnBackPress: Escape, the mouse's back button"
 // in the language the app shows under cx.
@@ -20825,7 +20955,7 @@ func NavOnbackpressEscapeTheMouseS(cx *core.Scope) string {
 
 // NavOnbackpressEscapeTheMouseS says "OnBackPress: Escape, the mouse's back button"
 // in the language of msgs.
-func (msgs Messages) NavOnbackpressEscapeTheMouseS() string { return msgs.text(669) }
+func (msgs Messages) NavOnbackpressEscapeTheMouseS() string { return msgs.text(677) }
 
 // NavInterceptTheBackButton says "Intercept the back button"
 // in the language the app shows under cx.
@@ -20833,7 +20963,7 @@ func NavInterceptTheBackButton(cx *core.Scope) string { return For(cx).NavInterc
 
 // NavInterceptTheBackButton says "Intercept the back button"
 // in the language of msgs.
-func (msgs Messages) NavInterceptTheBackButton() string { return msgs.text(670) }
+func (msgs Messages) NavInterceptTheBackButton() string { return msgs.text(678) }
 
 // NavCaught says " caught"
 // in the language the app shows under cx.
@@ -20841,7 +20971,7 @@ func NavCaught(cx *core.Scope) string { return For(cx).NavCaught() }
 
 // NavCaught says " caught"
 // in the language of msgs.
-func (msgs Messages) NavCaught() string { return msgs.text(671) }
+func (msgs Messages) NavCaught() string { return msgs.text(679) }
 
 // NavPopped says " popped"
 // in the language the app shows under cx.
@@ -20849,7 +20979,7 @@ func NavPopped(cx *core.Scope) string { return For(cx).NavPopped() }
 
 // NavPopped says " popped"
 // in the language of msgs.
-func (msgs Messages) NavPopped() string { return msgs.text(672) }
+func (msgs Messages) NavPopped() string { return msgs.text(680) }
 
 // NavTheHandlerReturnsTrueBack says "The handler returns true: back presses stay on this screen."
 // in the language the app shows under cx.
@@ -20859,7 +20989,7 @@ func NavTheHandlerReturnsTrueBack(cx *core.Scope) string {
 
 // NavTheHandlerReturnsTrueBack says "The handler returns true: back presses stay on this screen."
 // in the language of msgs.
-func (msgs Messages) NavTheHandlerReturnsTrueBack() string { return msgs.text(673) }
+func (msgs Messages) NavTheHandlerReturnsTrueBack() string { return msgs.text(681) }
 
 // NavOffTheBackButtonPops says "Off: the back button pops this screen."
 // in the language the app shows under cx.
@@ -20867,7 +20997,7 @@ func NavOffTheBackButtonPops(cx *core.Scope) string { return For(cx).NavOffTheBa
 
 // NavOffTheBackButtonPops says "Off: the back button pops this screen."
 // in the language of msgs.
-func (msgs Messages) NavOffTheBackButtonPops() string { return msgs.text(674) }
+func (msgs Messages) NavOffTheBackButtonPops() string { return msgs.text(682) }
 
 // NavOffEscapePopsThisScreen says "Off: Escape pops this screen, or the app's last screen does nothing."
 // in the language the app shows under cx.
@@ -20875,7 +21005,7 @@ func NavOffEscapePopsThisScreen(cx *core.Scope) string { return For(cx).NavOffEs
 
 // NavOffEscapePopsThisScreen says "Off: Escape pops this screen, or the app's last screen does nothing."
 // in the language of msgs.
-func (msgs Messages) NavOffEscapePopsThisScreen() string { return msgs.text(675) }
+func (msgs Messages) NavOffEscapePopsThisScreen() string { return msgs.text(683) }
 
 // NavCloseWithTheButtonThe says "Close with the button, the back button (Android) or a swipe down (iOS sheets): it closes on the platform, then tells the app."
 // in the language the app shows under cx.
@@ -20883,7 +21013,7 @@ func NavCloseWithTheButtonThe(cx *core.Scope) string { return For(cx).NavCloseWi
 
 // NavCloseWithTheButtonThe says "Close with the button, the back button (Android) or a swipe down (iOS sheets): it closes on the platform, then tells the app."
 // in the language of msgs.
-func (msgs Messages) NavCloseWithTheButtonThe() string { return msgs.text(676) }
+func (msgs Messages) NavCloseWithTheButtonThe() string { return msgs.text(684) }
 
 // NavCloseWithTheButtonEscape says "Close with the button, Escape or a click outside the card."
 // in the language the app shows under cx.
@@ -20891,7 +21021,7 @@ func NavCloseWithTheButtonEscape(cx *core.Scope) string { return For(cx).NavClos
 
 // NavCloseWithTheButtonEscape says "Close with the button, Escape or a click outside the card."
 // in the language of msgs.
-func (msgs Messages) NavCloseWithTheButtonEscape() string { return msgs.text(677) }
+func (msgs Messages) NavCloseWithTheButtonEscape() string { return msgs.text(685) }
 
 // NavCloseWithTheButtonOr says "Close with the button or the back button (Android): it closes on the platform, then tells the app."
 // in the language the app shows under cx.
@@ -20899,7 +21029,7 @@ func NavCloseWithTheButtonOr(cx *core.Scope) string { return For(cx).NavCloseWit
 
 // NavCloseWithTheButtonOr says "Close with the button or the back button (Android): it closes on the platform, then tells the app."
 // in the language of msgs.
-func (msgs Messages) NavCloseWithTheButtonOr() string { return msgs.text(678) }
+func (msgs Messages) NavCloseWithTheButtonOr() string { return msgs.text(686) }
 
 // NavCloseWithTheButtonOr2 says "Close with the button or Escape."
 // in the language the app shows under cx.
@@ -20907,7 +21037,7 @@ func NavCloseWithTheButtonOr2(cx *core.Scope) string { return For(cx).NavCloseWi
 
 // NavCloseWithTheButtonOr2 says "Close with the button or Escape."
 // in the language of msgs.
-func (msgs Messages) NavCloseWithTheButtonOr2() string { return msgs.text(679) }
+func (msgs Messages) NavCloseWithTheButtonOr2() string { return msgs.text(687) }
 
 // NavSwipingItDownIosAnd says "Swiping it down (iOS) and back (Android)"
 // in the language the app shows under cx.
@@ -20915,7 +21045,7 @@ func NavSwipingItDownIosAnd(cx *core.Scope) string { return For(cx).NavSwipingIt
 
 // NavSwipingItDownIosAnd says "Swiping it down (iOS) and back (Android)"
 // in the language of msgs.
-func (msgs Messages) NavSwipingItDownIosAnd() string { return msgs.text(680) }
+func (msgs Messages) NavSwipingItDownIosAnd() string { return msgs.text(688) }
 
 // NavEscapeAndClicksOutside says "Escape and clicks outside"
 // in the language the app shows under cx.
@@ -20923,7 +21053,7 @@ func NavEscapeAndClicksOutside(cx *core.Scope) string { return For(cx).NavEscape
 
 // NavEscapeAndClicksOutside says "Escape and clicks outside"
 // in the language of msgs.
-func (msgs Messages) NavEscapeAndClicksOutside() string { return msgs.text(681) }
+func (msgs Messages) NavEscapeAndClicksOutside() string { return msgs.text(689) }
 
 // NavADialog says "A dialog"
 // in the language the app shows under cx.
@@ -20931,7 +21061,7 @@ func NavADialog(cx *core.Scope) string { return For(cx).NavADialog() }
 
 // NavADialog says "A dialog"
 // in the language of msgs.
-func (msgs Messages) NavADialog() string { return msgs.text(682) }
+func (msgs Messages) NavADialog() string { return msgs.text(690) }
 
 // NavADialogOwnsNoLook says "A dialog owns no look: what is behind it shows through, and the card springs in on the platform."
 // in the language the app shows under cx.
@@ -20939,7 +21069,7 @@ func NavADialogOwnsNoLook(cx *core.Scope) string { return For(cx).NavADialogOwns
 
 // NavADialogOwnsNoLook says "A dialog owns no look: what is behind it shows through, and the card springs in on the platform."
 // in the language of msgs.
-func (msgs Messages) NavADialogOwnsNoLook() string { return msgs.text(683) }
+func (msgs Messages) NavADialogOwnsNoLook() string { return msgs.text(691) }
 
 // NavCancel says "Cancel"
 // in the language the app shows under cx.
@@ -20947,7 +21077,7 @@ func NavCancel(cx *core.Scope) string { return For(cx).NavCancel() }
 
 // NavCancel says "Cancel"
 // in the language of msgs.
-func (msgs Messages) NavCancel() string { return msgs.text(684) }
+func (msgs Messages) NavCancel() string { return msgs.text(692) }
 
 // NavOk says "OK"
 // in the language the app shows under cx.
@@ -20955,7 +21085,7 @@ func NavOk(cx *core.Scope) string { return For(cx).NavOk() }
 
 // NavOk says "OK"
 // in the language of msgs.
-func (msgs Messages) NavOk() string { return msgs.text(685) }
+func (msgs Messages) NavOk() string { return msgs.text(693) }
 
 // NavRow says "Row {n, number}"
 // in the language the app shows under cx.
@@ -21095,7 +21225,7 @@ func FormEnterYourName(cx *core.Scope) string { return For(cx).FormEnterYourName
 
 // FormEnterYourName says "Enter your name"
 // in the language of msgs.
-func (msgs Messages) FormEnterYourName() string { return msgs.text(686) }
+func (msgs Messages) FormEnterYourName() string { return msgs.text(694) }
 
 // FormThatAddressNeedsAnAnd says "That address needs an @ and a domain"
 // in the language the app shows under cx.
@@ -21103,7 +21233,7 @@ func FormThatAddressNeedsAnAnd(cx *core.Scope) string { return For(cx).FormThatA
 
 // FormThatAddressNeedsAnAnd says "That address needs an @ and a domain"
 // in the language of msgs.
-func (msgs Messages) FormThatAddressNeedsAnAnd() string { return msgs.text(687) }
+func (msgs Messages) FormThatAddressNeedsAnAnd() string { return msgs.text(695) }
 
 // FormEnterYourEMail says "Enter your e-mail"
 // in the language the app shows under cx.
@@ -21111,7 +21241,7 @@ func FormEnterYourEMail(cx *core.Scope) string { return For(cx).FormEnterYourEMa
 
 // FormEnterYourEMail says "Enter your e-mail"
 // in the language of msgs.
-func (msgs Messages) FormEnterYourEMail() string { return msgs.text(688) }
+func (msgs Messages) FormEnterYourEMail() string { return msgs.text(696) }
 
 // FormUseAtLeast8Characters says "Use at least 8 characters"
 // in the language the app shows under cx.
@@ -21119,7 +21249,7 @@ func FormUseAtLeast8Characters(cx *core.Scope) string { return For(cx).FormUseAt
 
 // FormUseAtLeast8Characters says "Use at least 8 characters"
 // in the language of msgs.
-func (msgs Messages) FormUseAtLeast8Characters() string { return msgs.text(689) }
+func (msgs Messages) FormUseAtLeast8Characters() string { return msgs.text(697) }
 
 // Form1FieldNeedsAttention says "1 field needs attention"
 // in the language the app shows under cx.
@@ -21127,7 +21257,7 @@ func Form1FieldNeedsAttention(cx *core.Scope) string { return For(cx).Form1Field
 
 // Form1FieldNeedsAttention says "1 field needs attention"
 // in the language of msgs.
-func (msgs Messages) Form1FieldNeedsAttention() string { return msgs.text(690) }
+func (msgs Messages) Form1FieldNeedsAttention() string { return msgs.text(698) }
 
 // FormKeyboard says "Keyboard"
 // in the language the app shows under cx.
@@ -21135,7 +21265,7 @@ func FormKeyboard(cx *core.Scope) string { return For(cx).FormKeyboard() }
 
 // FormKeyboard says "Keyboard"
 // in the language of msgs.
-func (msgs Messages) FormKeyboard() string { return msgs.text(691) }
+func (msgs Messages) FormKeyboard() string { return msgs.text(699) }
 
 // FormNone says "None"
 // in the language the app shows under cx.
@@ -21143,7 +21273,7 @@ func FormNone(cx *core.Scope) string { return For(cx).FormNone() }
 
 // FormNone says "None"
 // in the language of msgs.
-func (msgs Messages) FormNone() string { return msgs.text(692) }
+func (msgs Messages) FormNone() string { return msgs.text(700) }
 
 // FormOnDrag says "On drag"
 // in the language the app shows under cx.
@@ -21151,7 +21281,7 @@ func FormOnDrag(cx *core.Scope) string { return For(cx).FormOnDrag() }
 
 // FormOnDrag says "On drag"
 // in the language of msgs.
-func (msgs Messages) FormOnDrag() string { return msgs.text(693) }
+func (msgs Messages) FormOnDrag() string { return msgs.text(701) }
 
 // FormInteractive says "Interactive"
 // in the language the app shows under cx.
@@ -21159,7 +21289,7 @@ func FormInteractive(cx *core.Scope) string { return For(cx).FormInteractive() }
 
 // FormInteractive says "Interactive"
 // in the language of msgs.
-func (msgs Messages) FormInteractive() string { return msgs.text(694) }
+func (msgs Messages) FormInteractive() string { return msgs.text(702) }
 
 // FormDragTheFormWithThe says "Drag the form with the keyboard up"
 // in the language the app shows under cx.
@@ -21167,7 +21297,7 @@ func FormDragTheFormWithThe(cx *core.Scope) string { return For(cx).FormDragTheF
 
 // FormDragTheFormWithThe says "Drag the form with the keyboard up"
 // in the language of msgs.
-func (msgs Messages) FormDragTheFormWithThe() string { return msgs.text(695) }
+func (msgs Messages) FormDragTheFormWithThe() string { return msgs.text(703) }
 
 // FormDesktopsHaveNoOnScreen says "Desktops have no on-screen keyboard to dismiss"
 // in the language the app shows under cx.
@@ -21175,7 +21305,7 @@ func FormDesktopsHaveNoOnScreen(cx *core.Scope) string { return For(cx).FormDesk
 
 // FormDesktopsHaveNoOnScreen says "Desktops have no on-screen keyboard to dismiss"
 // in the language of msgs.
-func (msgs Messages) FormDesktopsHaveNoOnScreen() string { return msgs.text(696) }
+func (msgs Messages) FormDesktopsHaveNoOnScreen() string { return msgs.text(704) }
 
 // FormAccount says "Account"
 // in the language the app shows under cx.
@@ -21183,7 +21313,7 @@ func FormAccount(cx *core.Scope) string { return For(cx).FormAccount() }
 
 // FormAccount says "Account"
 // in the language of msgs.
-func (msgs Messages) FormAccount() string { return msgs.text(697) }
+func (msgs Messages) FormAccount() string { return msgs.text(705) }
 
 // FormName says "Name"
 // in the language the app shows under cx.
@@ -21191,7 +21321,7 @@ func FormName(cx *core.Scope) string { return For(cx).FormName() }
 
 // FormName says "Name"
 // in the language of msgs.
-func (msgs Messages) FormName() string { return msgs.text(698) }
+func (msgs Messages) FormName() string { return msgs.text(706) }
 
 // FormEMail says "E-mail"
 // in the language the app shows under cx.
@@ -21199,7 +21329,7 @@ func FormEMail(cx *core.Scope) string { return For(cx).FormEMail() }
 
 // FormEMail says "E-mail"
 // in the language of msgs.
-func (msgs Messages) FormEMail() string { return msgs.text(699) }
+func (msgs Messages) FormEMail() string { return msgs.text(707) }
 
 // FormPassword says "Password"
 // in the language the app shows under cx.
@@ -21207,7 +21337,7 @@ func FormPassword(cx *core.Scope) string { return For(cx).FormPassword() }
 
 // FormPassword says "Password"
 // in the language of msgs.
-func (msgs Messages) FormPassword() string { return msgs.text(700) }
+func (msgs Messages) FormPassword() string { return msgs.text(708) }
 
 // FormAtLeast8Characters says "At least 8 characters"
 // in the language the app shows under cx.
@@ -21215,7 +21345,7 @@ func FormAtLeast8Characters(cx *core.Scope) string { return For(cx).FormAtLeast8
 
 // FormAtLeast8Characters says "At least 8 characters"
 // in the language of msgs.
-func (msgs Messages) FormAtLeast8Characters() string { return msgs.text(701) }
+func (msgs Messages) FormAtLeast8Characters() string { return msgs.text(709) }
 
 // FormPhone says "Phone"
 // in the language the app shows under cx.
@@ -21223,7 +21353,7 @@ func FormPhone(cx *core.Scope) string { return For(cx).FormPhone() }
 
 // FormPhone says "Phone"
 // in the language of msgs.
-func (msgs Messages) FormPhone() string { return msgs.text(702) }
+func (msgs Messages) FormPhone() string { return msgs.text(710) }
 
 // FormWebsite says "Website"
 // in the language the app shows under cx.
@@ -21231,7 +21361,7 @@ func FormWebsite(cx *core.Scope) string { return For(cx).FormWebsite() }
 
 // FormWebsite says "Website"
 // in the language of msgs.
-func (msgs Messages) FormWebsite() string { return msgs.text(703) }
+func (msgs Messages) FormWebsite() string { return msgs.text(711) }
 
 // FormNumbers says "Numbers"
 // in the language the app shows under cx.
@@ -21239,7 +21369,7 @@ func FormNumbers(cx *core.Scope) string { return For(cx).FormNumbers() }
 
 // FormNumbers says "Numbers"
 // in the language of msgs.
-func (msgs Messages) FormNumbers() string { return msgs.text(704) }
+func (msgs Messages) FormNumbers() string { return msgs.text(712) }
 
 // FormAge says "Age"
 // in the language the app shows under cx.
@@ -21247,7 +21377,7 @@ func FormAge(cx *core.Scope) string { return For(cx).FormAge() }
 
 // FormAge says "Age"
 // in the language of msgs.
-func (msgs Messages) FormAge() string { return msgs.text(705) }
+func (msgs Messages) FormAge() string { return msgs.text(713) }
 
 // Form3Digits says "3 digits"
 // in the language the app shows under cx.
@@ -21255,7 +21385,7 @@ func Form3Digits(cx *core.Scope) string { return For(cx).Form3Digits() }
 
 // Form3Digits says "3 digits"
 // in the language of msgs.
-func (msgs Messages) Form3Digits() string { return msgs.text(706) }
+func (msgs Messages) Form3Digits() string { return msgs.text(714) }
 
 // FormAmount says "Amount"
 // in the language the app shows under cx.
@@ -21263,7 +21393,7 @@ func FormAmount(cx *core.Scope) string { return For(cx).FormAmount() }
 
 // FormAmount says "Amount"
 // in the language of msgs.
-func (msgs Messages) FormAmount() string { return msgs.text(707) }
+func (msgs Messages) FormAmount() string { return msgs.text(715) }
 
 // FormOffset says "Offset"
 // in the language the app shows under cx.
@@ -21271,7 +21401,7 @@ func FormOffset(cx *core.Scope) string { return For(cx).FormOffset() }
 
 // FormOffset says "Offset"
 // in the language of msgs.
-func (msgs Messages) FormOffset() string { return msgs.text(708) }
+func (msgs Messages) FormOffset() string { return msgs.text(716) }
 
 // FormDarkKeyboardIos says "dark keyboard (iOS)"
 // in the language the app shows under cx.
@@ -21279,7 +21409,7 @@ func FormDarkKeyboardIos(cx *core.Scope) string { return For(cx).FormDarkKeyboar
 
 // FormDarkKeyboardIos says "dark keyboard (iOS)"
 // in the language of msgs.
-func (msgs Messages) FormDarkKeyboardIos() string { return msgs.text(709) }
+func (msgs Messages) FormDarkKeyboardIos() string { return msgs.text(717) }
 
 // FormVerificationCode says "Verification code"
 // in the language the app shows under cx.
@@ -21287,7 +21417,7 @@ func FormVerificationCode(cx *core.Scope) string { return For(cx).FormVerificati
 
 // FormVerificationCode says "Verification code"
 // in the language of msgs.
-func (msgs Messages) FormVerificationCode() string { return msgs.text(710) }
+func (msgs Messages) FormVerificationCode() string { return msgs.text(718) }
 
 // FormShippingAddress says "Shipping address"
 // in the language the app shows under cx.
@@ -21295,7 +21425,7 @@ func FormShippingAddress(cx *core.Scope) string { return For(cx).FormShippingAdd
 
 // FormShippingAddress says "Shipping address"
 // in the language of msgs.
-func (msgs Messages) FormShippingAddress() string { return msgs.text(711) }
+func (msgs Messages) FormShippingAddress() string { return msgs.text(719) }
 
 // FormScrollsIntoView says "scrolls into view"
 // in the language the app shows under cx.
@@ -21303,7 +21433,7 @@ func FormScrollsIntoView(cx *core.Scope) string { return For(cx).FormScrollsInto
 
 // FormScrollsIntoView says "scrolls into view"
 // in the language of msgs.
-func (msgs Messages) FormScrollsIntoView() string { return msgs.text(712) }
+func (msgs Messages) FormScrollsIntoView() string { return msgs.text(720) }
 
 // FormStreet says "Street"
 // in the language the app shows under cx.
@@ -21311,7 +21441,7 @@ func FormStreet(cx *core.Scope) string { return For(cx).FormStreet() }
 
 // FormStreet says "Street"
 // in the language of msgs.
-func (msgs Messages) FormStreet() string { return msgs.text(713) }
+func (msgs Messages) FormStreet() string { return msgs.text(721) }
 
 // FormCity says "City"
 // in the language the app shows under cx.
@@ -21319,7 +21449,7 @@ func FormCity(cx *core.Scope) string { return For(cx).FormCity() }
 
 // FormCity says "City"
 // in the language of msgs.
-func (msgs Messages) FormCity() string { return msgs.text(714) }
+func (msgs Messages) FormCity() string { return msgs.text(722) }
 
 // FormPostalCode says "Postal code"
 // in the language the app shows under cx.
@@ -21327,7 +21457,7 @@ func FormPostalCode(cx *core.Scope) string { return For(cx).FormPostalCode() }
 
 // FormPostalCode says "Postal code"
 // in the language of msgs.
-func (msgs Messages) FormPostalCode() string { return msgs.text(715) }
+func (msgs Messages) FormPostalCode() string { return msgs.text(723) }
 
 // FormCountry says "Country"
 // in the language the app shows under cx.
@@ -21335,7 +21465,7 @@ func FormCountry(cx *core.Scope) string { return For(cx).FormCountry() }
 
 // FormCountry says "Country"
 // in the language of msgs.
-func (msgs Messages) FormCountry() string { return msgs.text(716) }
+func (msgs Messages) FormCountry() string { return msgs.text(724) }
 
 // FormSelectionAndKeys says "Selection and keys"
 // in the language the app shows under cx.
@@ -21343,7 +21473,7 @@ func FormSelectionAndKeys(cx *core.Scope) string { return For(cx).FormSelectionA
 
 // FormSelectionAndKeys says "Selection and keys"
 // in the language of msgs.
-func (msgs Messages) FormSelectionAndKeys() string { return msgs.text(717) }
+func (msgs Messages) FormSelectionAndKeys() string { return msgs.text(725) }
 
 // FormText says "Text"
 // in the language the app shows under cx.
@@ -21351,7 +21481,7 @@ func FormText(cx *core.Scope) string { return For(cx).FormText() }
 
 // FormText says "Text"
 // in the language of msgs.
-func (msgs Messages) FormText() string { return msgs.text(718) }
+func (msgs Messages) FormText() string { return msgs.text(726) }
 
 // FormInputOptions says "Input options"
 // in the language the app shows under cx.
@@ -21359,7 +21489,7 @@ func FormInputOptions(cx *core.Scope) string { return For(cx).FormInputOptions()
 
 // FormInputOptions says "Input options"
 // in the language of msgs.
-func (msgs Messages) FormInputOptions() string { return msgs.text(719) }
+func (msgs Messages) FormInputOptions() string { return msgs.text(727) }
 
 // FormControlled says "Controlled"
 // in the language the app shows under cx.
@@ -21367,7 +21497,7 @@ func FormControlled(cx *core.Scope) string { return For(cx).FormControlled() }
 
 // FormControlled says "Controlled"
 // in the language of msgs.
-func (msgs Messages) FormControlled() string { return msgs.text(720) }
+func (msgs Messages) FormControlled() string { return msgs.text(728) }
 
 // FormUppercasedAsYouType says "Uppercased as you type"
 // in the language the app shows under cx.
@@ -21375,7 +21505,7 @@ func FormUppercasedAsYouType(cx *core.Scope) string { return For(cx).FormUpperca
 
 // FormUppercasedAsYouType says "Uppercased as you type"
 // in the language of msgs.
-func (msgs Messages) FormUppercasedAsYouType() string { return msgs.text(721) }
+func (msgs Messages) FormUppercasedAsYouType() string { return msgs.text(729) }
 
 // FormTypeInLowerCase says "TYPE IN LOWER CASE"
 // in the language the app shows under cx.
@@ -21383,7 +21513,7 @@ func FormTypeInLowerCase(cx *core.Scope) string { return For(cx).FormTypeInLower
 
 // FormTypeInLowerCase says "TYPE IN LOWER CASE"
 // in the language of msgs.
-func (msgs Messages) FormTypeInLowerCase() string { return msgs.text(722) }
+func (msgs Messages) FormTypeInLowerCase() string { return msgs.text(730) }
 
 // FormReadOnly says "Read only"
 // in the language the app shows under cx.
@@ -21391,7 +21521,7 @@ func FormReadOnly(cx *core.Scope) string { return For(cx).FormReadOnly() }
 
 // FormReadOnly says "Read only"
 // in the language of msgs.
-func (msgs Messages) FormReadOnly() string { return msgs.text(723) }
+func (msgs Messages) FormReadOnly() string { return msgs.text(731) }
 
 // FormNotEditable says "Not editable"
 // in the language the app shows under cx.
@@ -21399,7 +21529,7 @@ func FormNotEditable(cx *core.Scope) string { return For(cx).FormNotEditable() }
 
 // FormNotEditable says "Not editable"
 // in the language of msgs.
-func (msgs Messages) FormNotEditable() string { return msgs.text(724) }
+func (msgs Messages) FormNotEditable() string { return msgs.text(732) }
 
 // FormCustomColors says "Custom colors"
 // in the language the app shows under cx.
@@ -21407,7 +21537,7 @@ func FormCustomColors(cx *core.Scope) string { return For(cx).FormCustomColors()
 
 // FormCustomColors says "Custom colors"
 // in the language of msgs.
-func (msgs Messages) FormCustomColors() string { return msgs.text(725) }
+func (msgs Messages) FormCustomColors() string { return msgs.text(733) }
 
 // FormABluePlaceholderAnAmber says "A blue placeholder, an amber selection"
 // in the language the app shows under cx.
@@ -21415,7 +21545,7 @@ func FormABluePlaceholderAnAmber(cx *core.Scope) string { return For(cx).FormABl
 
 // FormABluePlaceholderAnAmber says "A blue placeholder, an amber selection"
 // in the language of msgs.
-func (msgs Messages) FormABluePlaceholderAnAmber() string { return msgs.text(726) }
+func (msgs Messages) FormABluePlaceholderAnAmber() string { return msgs.text(734) }
 
 // FormNotes says "Notes"
 // in the language the app shows under cx.
@@ -21423,7 +21553,7 @@ func FormNotes(cx *core.Scope) string { return For(cx).FormNotes() }
 
 // FormNotes says "Notes"
 // in the language of msgs.
-func (msgs Messages) FormNotes() string { return msgs.text(727) }
+func (msgs Messages) FormNotes() string { return msgs.text(735) }
 
 // FormReturnAddsALine says "Return adds a line"
 // in the language the app shows under cx.
@@ -21431,7 +21561,7 @@ func FormReturnAddsALine(cx *core.Scope) string { return For(cx).FormReturnAddsA
 
 // FormReturnAddsALine says "Return adds a line"
 // in the language of msgs.
-func (msgs Messages) FormReturnAddsALine() string { return msgs.text(728) }
+func (msgs Messages) FormReturnAddsALine() string { return msgs.text(736) }
 
 // FormNoCaret says "No caret"
 // in the language the app shows under cx.
@@ -21439,7 +21569,7 @@ func FormNoCaret(cx *core.Scope) string { return For(cx).FormNoCaret() }
 
 // FormNoCaret says "No caret"
 // in the language of msgs.
-func (msgs Messages) FormNoCaret() string { return msgs.text(729) }
+func (msgs Messages) FormNoCaret() string { return msgs.text(737) }
 
 // FormNoCaretHere says "No caret here"
 // in the language the app shows under cx.
@@ -21447,7 +21577,7 @@ func FormNoCaretHere(cx *core.Scope) string { return For(cx).FormNoCaretHere() }
 
 // FormNoCaretHere says "No caret here"
 // in the language of msgs.
-func (msgs Messages) FormNoCaretHere() string { return msgs.text(730) }
+func (msgs Messages) FormNoCaretHere() string { return msgs.text(738) }
 
 // FormCreateTheAccount says "Create the account"
 // in the language the app shows under cx.
@@ -21455,7 +21585,7 @@ func FormCreateTheAccount(cx *core.Scope) string { return For(cx).FormCreateTheA
 
 // FormCreateTheAccount says "Create the account"
 // in the language of msgs.
-func (msgs Messages) FormCreateTheAccount() string { return msgs.text(731) }
+func (msgs Messages) FormCreateTheAccount() string { return msgs.text(739) }
 
 // FormSubmittingChecksEveryField says "Submitting checks every field"
 // in the language the app shows under cx.
@@ -21465,7 +21595,7 @@ func FormSubmittingChecksEveryField(cx *core.Scope) string {
 
 // FormSubmittingChecksEveryField says "Submitting checks every field"
 // in the language of msgs.
-func (msgs Messages) FormSubmittingChecksEveryField() string { return msgs.text(732) }
+func (msgs Messages) FormSubmittingChecksEveryField() string { return msgs.text(740) }
 
 // FormSent says "Sent"
 // in the language the app shows under cx.
@@ -21473,7 +21603,7 @@ func FormSent(cx *core.Scope) string { return For(cx).FormSent() }
 
 // FormSent says "Sent"
 // in the language of msgs.
-func (msgs Messages) FormSent() string { return msgs.text(733) }
+func (msgs Messages) FormSent() string { return msgs.text(741) }
 
 // FormCheck says "Check"
 // in the language the app shows under cx.
@@ -21481,7 +21611,7 @@ func FormCheck(cx *core.Scope) string { return For(cx).FormCheck() }
 
 // FormCheck says "Check"
 // in the language of msgs.
-func (msgs Messages) FormCheck() string { return msgs.text(734) }
+func (msgs Messages) FormCheck() string { return msgs.text(742) }
 
 // FormSubmit says "Submit"
 // in the language the app shows under cx.
@@ -21489,7 +21619,7 @@ func FormSubmit(cx *core.Scope) string { return For(cx).FormSubmit() }
 
 // FormSubmit says "Submit"
 // in the language of msgs.
-func (msgs Messages) FormSubmit() string { return msgs.text(735) }
+func (msgs Messages) FormSubmit() string { return msgs.text(743) }
 
 // FormHideKeyboard says "Hide keyboard"
 // in the language the app shows under cx.
@@ -21497,7 +21627,7 @@ func FormHideKeyboard(cx *core.Scope) string { return For(cx).FormHideKeyboard()
 
 // FormHideKeyboard says "Hide keyboard"
 // in the language of msgs.
-func (msgs Messages) FormHideKeyboard() string { return msgs.text(736) }
+func (msgs Messages) FormHideKeyboard() string { return msgs.text(744) }
 
 // FormMoreKeyboards says "More keyboards"
 // in the language the app shows under cx.
@@ -21505,7 +21635,7 @@ func FormMoreKeyboards(cx *core.Scope) string { return For(cx).FormMoreKeyboards
 
 // FormMoreKeyboards says "More keyboards"
 // in the language of msgs.
-func (msgs Messages) FormMoreKeyboards() string { return msgs.text(737) }
+func (msgs Messages) FormMoreKeyboards() string { return msgs.text(745) }
 
 // FormSheetsAndBarsThatRide says "Sheets and bars that ride on the keyboard"
 // in the language the app shows under cx.
@@ -21513,7 +21643,7 @@ func FormSheetsAndBarsThatRide(cx *core.Scope) string { return For(cx).FormSheet
 
 // FormSheetsAndBarsThatRide says "Sheets and bars that ride on the keyboard"
 // in the language of msgs.
-func (msgs Messages) FormSheetsAndBarsThatRide() string { return msgs.text(738) }
+func (msgs Messages) FormSheetsAndBarsThatRide() string { return msgs.text(746) }
 
 // FormInputsInASheet says "Inputs in a sheet"
 // in the language the app shows under cx.
@@ -21521,7 +21651,7 @@ func FormInputsInASheet(cx *core.Scope) string { return For(cx).FormInputsInAShe
 
 // FormInputsInASheet says "Inputs in a sheet"
 // in the language of msgs.
-func (msgs Messages) FormInputsInASheet() string { return msgs.text(739) }
+func (msgs Messages) FormInputsInASheet() string { return msgs.text(747) }
 
 // FormAMessageBarAtThe says "A message bar at the bottom"
 // in the language the app shows under cx.
@@ -21529,7 +21659,7 @@ func FormAMessageBarAtThe(cx *core.Scope) string { return For(cx).FormAMessageBa
 
 // FormAMessageBarAtThe says "A message bar at the bottom"
 // in the language of msgs.
-func (msgs Messages) FormAMessageBarAtThe() string { return msgs.text(740) }
+func (msgs Messages) FormAMessageBarAtThe() string { return msgs.text(748) }
 
 // FormFirst says "First"
 // in the language the app shows under cx.
@@ -21537,7 +21667,7 @@ func FormFirst(cx *core.Scope) string { return For(cx).FormFirst() }
 
 // FormFirst says "First"
 // in the language of msgs.
-func (msgs Messages) FormFirst() string { return msgs.text(741) }
+func (msgs Messages) FormFirst() string { return msgs.text(749) }
 
 // FormSecond says "Second"
 // in the language the app shows under cx.
@@ -21545,7 +21675,7 @@ func FormSecond(cx *core.Scope) string { return For(cx).FormSecond() }
 
 // FormSecond says "Second"
 // in the language of msgs.
-func (msgs Messages) FormSecond() string { return msgs.text(742) }
+func (msgs Messages) FormSecond() string { return msgs.text(750) }
 
 // FormThird says "Third"
 // in the language the app shows under cx.
@@ -21553,7 +21683,7 @@ func FormThird(cx *core.Scope) string { return For(cx).FormThird() }
 
 // FormThird says "Third"
 // in the language of msgs.
-func (msgs Messages) FormThird() string { return msgs.text(743) }
+func (msgs Messages) FormThird() string { return msgs.text(751) }
 
 // FormFourth says "Fourth"
 // in the language the app shows under cx.
@@ -21561,7 +21691,7 @@ func FormFourth(cx *core.Scope) string { return For(cx).FormFourth() }
 
 // FormFourth says "Fourth"
 // in the language of msgs.
-func (msgs Messages) FormFourth() string { return msgs.text(744) }
+func (msgs Messages) FormFourth() string { return msgs.text(752) }
 
 // FormFifth says "Fifth"
 // in the language the app shows under cx.
@@ -21569,7 +21699,7 @@ func FormFifth(cx *core.Scope) string { return For(cx).FormFifth() }
 
 // FormFifth says "Fifth"
 // in the language of msgs.
-func (msgs Messages) FormFifth() string { return msgs.text(745) }
+func (msgs Messages) FormFifth() string { return msgs.text(753) }
 
 // FormSixth says "Sixth"
 // in the language the app shows under cx.
@@ -21577,7 +21707,7 @@ func FormSixth(cx *core.Scope) string { return For(cx).FormSixth() }
 
 // FormSixth says "Sixth"
 // in the language of msgs.
-func (msgs Messages) FormSixth() string { return msgs.text(746) }
+func (msgs Messages) FormSixth() string { return msgs.text(754) }
 
 // FormSeventh says "Seventh"
 // in the language the app shows under cx.
@@ -21585,7 +21715,7 @@ func FormSeventh(cx *core.Scope) string { return For(cx).FormSeventh() }
 
 // FormSeventh says "Seventh"
 // in the language of msgs.
-func (msgs Messages) FormSeventh() string { return msgs.text(747) }
+func (msgs Messages) FormSeventh() string { return msgs.text(755) }
 
 // FormField says " field"
 // in the language the app shows under cx.
@@ -21593,7 +21723,7 @@ func FormField(cx *core.Scope) string { return For(cx).FormField() }
 
 // FormField says " field"
 // in the language of msgs.
-func (msgs Messages) FormField() string { return msgs.text(748) }
+func (msgs Messages) FormField() string { return msgs.text(756) }
 
 // FormASheet says "A sheet"
 // in the language the app shows under cx.
@@ -21601,7 +21731,7 @@ func FormASheet(cx *core.Scope) string { return For(cx).FormASheet() }
 
 // FormASheet says "A sheet"
 // in the language of msgs.
-func (msgs Messages) FormASheet() string { return msgs.text(749) }
+func (msgs Messages) FormASheet() string { return msgs.text(757) }
 
 // FormItsInputsStayAboveThe says "Its inputs stay above the keyboard too"
 // in the language the app shows under cx.
@@ -21609,7 +21739,7 @@ func FormItsInputsStayAboveThe(cx *core.Scope) string { return For(cx).FormItsIn
 
 // FormItsInputsStayAboveThe says "Its inputs stay above the keyboard too"
 // in the language of msgs.
-func (msgs Messages) FormItsInputsStayAboveThe() string { return msgs.text(750) }
+func (msgs Messages) FormItsInputsStayAboveThe() string { return msgs.text(758) }
 
 // FormDone says "Done"
 // in the language the app shows under cx.
@@ -21617,7 +21747,7 @@ func FormDone(cx *core.Scope) string { return For(cx).FormDone() }
 
 // FormDone says "Done"
 // in the language of msgs.
-func (msgs Messages) FormDone() string { return msgs.text(751) }
+func (msgs Messages) FormDone() string { return msgs.text(759) }
 
 // FormGrowsWithItsText says "Grows with its text"
 // in the language the app shows under cx.
@@ -21625,7 +21755,7 @@ func FormGrowsWithItsText(cx *core.Scope) string { return For(cx).FormGrowsWithI
 
 // FormGrowsWithItsText says "Grows with its text"
 // in the language of msgs.
-func (msgs Messages) FormGrowsWithItsText() string { return msgs.text(752) }
+func (msgs Messages) FormGrowsWithItsText() string { return msgs.text(760) }
 
 // FormTypeSeveralLines says "Type several lines"
 // in the language the app shows under cx.
@@ -21633,7 +21763,7 @@ func FormTypeSeveralLines(cx *core.Scope) string { return For(cx).FormTypeSevera
 
 // FormTypeSeveralLines says "Type several lines"
 // in the language of msgs.
-func (msgs Messages) FormTypeSeveralLines() string { return msgs.text(753) }
+func (msgs Messages) FormTypeSeveralLines() string { return msgs.text(761) }
 
 // FormTheBarBelowSitsOutside says "The bar below sits outside the scroll view."
 // in the language the app shows under cx.
@@ -21641,7 +21771,7 @@ func FormTheBarBelowSitsOutside(cx *core.Scope) string { return For(cx).FormTheB
 
 // FormTheBarBelowSitsOutside says "The bar below sits outside the scroll view."
 // in the language of msgs.
-func (msgs Messages) FormTheBarBelowSitsOutside() string { return msgs.text(754) }
+func (msgs Messages) FormTheBarBelowSitsOutside() string { return msgs.text(762) }
 
 // FormBottomPaddingOfEnvkeyboardLifts says "Bottom padding of EnvKeyboard lifts it with the keyboard. Say something."
 // in the language the app shows under cx.
@@ -21651,7 +21781,7 @@ func FormBottomPaddingOfEnvkeyboardLifts(cx *core.Scope) string {
 
 // FormBottomPaddingOfEnvkeyboardLifts says "Bottom padding of EnvKeyboard lifts it with the keyboard. Say something."
 // in the language of msgs.
-func (msgs Messages) FormBottomPaddingOfEnvkeyboardLifts() string { return msgs.text(755) }
+func (msgs Messages) FormBottomPaddingOfEnvkeyboardLifts() string { return msgs.text(763) }
 
 // FormMessageBar says "Message bar"
 // in the language the app shows under cx.
@@ -21659,7 +21789,7 @@ func FormMessageBar(cx *core.Scope) string { return For(cx).FormMessageBar() }
 
 // FormMessageBar says "Message bar"
 // in the language of msgs.
-func (msgs Messages) FormMessageBar() string { return msgs.text(756) }
+func (msgs Messages) FormMessageBar() string { return msgs.text(764) }
 
 // FormToday says "Today"
 // in the language the app shows under cx.
@@ -21667,7 +21797,7 @@ func FormToday(cx *core.Scope) string { return For(cx).FormToday() }
 
 // FormToday says "Today"
 // in the language of msgs.
-func (msgs Messages) FormToday() string { return msgs.text(757) }
+func (msgs Messages) FormToday() string { return msgs.text(765) }
 
 // FormMessage says "Message"
 // in the language the app shows under cx.
@@ -21675,7 +21805,7 @@ func FormMessage(cx *core.Scope) string { return For(cx).FormMessage() }
 
 // FormMessage says "Message"
 // in the language of msgs.
-func (msgs Messages) FormMessage() string { return msgs.text(758) }
+func (msgs Messages) FormMessage() string { return msgs.text(766) }
 
 // FormSend says "Send"
 // in the language the app shows under cx.
@@ -21683,7 +21813,7 @@ func FormSend(cx *core.Scope) string { return For(cx).FormSend() }
 
 // FormSend says "Send"
 // in the language of msgs.
-func (msgs Messages) FormSend() string { return msgs.text(759) }
+func (msgs Messages) FormSend() string { return msgs.text(767) }
 
 // FormSelectPartOfThisText says "Select part of this text"
 // in the language the app shows under cx.
@@ -21691,7 +21821,7 @@ func FormSelectPartOfThisText(cx *core.Scope) string { return For(cx).FormSelect
 
 // FormSelectPartOfThisText says "Select part of this text"
 // in the language of msgs.
-func (msgs Messages) FormSelectPartOfThisText() string { return msgs.text(760) }
+func (msgs Messages) FormSelectPartOfThisText() string { return msgs.text(768) }
 
 // FormSelected says "Selected"
 // in the language the app shows under cx.
@@ -21699,7 +21829,7 @@ func FormSelected(cx *core.Scope) string { return For(cx).FormSelected() }
 
 // FormSelected says "Selected"
 // in the language of msgs.
-func (msgs Messages) FormSelected() string { return msgs.text(761) }
+func (msgs Messages) FormSelected() string { return msgs.text(769) }
 
 // FormKeysYouPressShowHere says "Keys you press show here"
 // in the language the app shows under cx.
@@ -21707,7 +21837,7 @@ func FormKeysYouPressShowHere(cx *core.Scope) string { return For(cx).FormKeysYo
 
 // FormKeysYouPressShowHere says "Keys you press show here"
 // in the language of msgs.
-func (msgs Messages) FormKeysYouPressShowHere() string { return msgs.text(762) }
+func (msgs Messages) FormKeysYouPressShowHere() string { return msgs.text(770) }
 
 // FormSelectAll says "Select all"
 // in the language the app shows under cx.
@@ -21715,7 +21845,7 @@ func FormSelectAll(cx *core.Scope) string { return For(cx).FormSelectAll() }
 
 // FormSelectAll says "Select all"
 // in the language of msgs.
-func (msgs Messages) FormSelectAll() string { return msgs.text(763) }
+func (msgs Messages) FormSelectAll() string { return msgs.text(771) }
 
 // FormCaretToStart says "Caret to start"
 // in the language the app shows under cx.
@@ -21723,7 +21853,7 @@ func FormCaretToStart(cx *core.Scope) string { return For(cx).FormCaretToStart()
 
 // FormCaretToStart says "Caret to start"
 // in the language of msgs.
-func (msgs Messages) FormCaretToStart() string { return msgs.text(764) }
+func (msgs Messages) FormCaretToStart() string { return msgs.text(772) }
 
 // FormOneTimeCode says "One-time code"
 // in the language the app shows under cx.
@@ -21731,7 +21861,7 @@ func FormOneTimeCode(cx *core.Scope) string { return For(cx).FormOneTimeCode() }
 
 // FormOneTimeCode says "One-time code"
 // in the language of msgs.
-func (msgs Messages) FormOneTimeCode() string { return msgs.text(765) }
+func (msgs Messages) FormOneTimeCode() string { return msgs.text(773) }
 
 // FormEmpty says "Empty"
 // in the language the app shows under cx.
@@ -21739,7 +21869,7 @@ func FormEmpty(cx *core.Scope) string { return For(cx).FormEmpty() }
 
 // FormEmpty says "Empty"
 // in the language of msgs.
-func (msgs Messages) FormEmpty() string { return msgs.text(766) }
+func (msgs Messages) FormEmpty() string { return msgs.text(774) }
 
 // FormWeak says "Weak"
 // in the language the app shows under cx.
@@ -21747,7 +21877,7 @@ func FormWeak(cx *core.Scope) string { return For(cx).FormWeak() }
 
 // FormWeak says "Weak"
 // in the language of msgs.
-func (msgs Messages) FormWeak() string { return msgs.text(767) }
+func (msgs Messages) FormWeak() string { return msgs.text(775) }
 
 // FormFair says "Fair"
 // in the language the app shows under cx.
@@ -21755,7 +21885,7 @@ func FormFair(cx *core.Scope) string { return For(cx).FormFair() }
 
 // FormFair says "Fair"
 // in the language of msgs.
-func (msgs Messages) FormFair() string { return msgs.text(768) }
+func (msgs Messages) FormFair() string { return msgs.text(776) }
 
 // FormGood says "Good"
 // in the language the app shows under cx.
@@ -21763,7 +21893,7 @@ func FormGood(cx *core.Scope) string { return For(cx).FormGood() }
 
 // FormGood says "Good"
 // in the language of msgs.
-func (msgs Messages) FormGood() string { return msgs.text(769) }
+func (msgs Messages) FormGood() string { return msgs.text(777) }
 
 // FormStrong says "Strong"
 // in the language the app shows under cx.
@@ -21771,7 +21901,7 @@ func FormStrong(cx *core.Scope) string { return For(cx).FormStrong() }
 
 // FormStrong says "Strong"
 // in the language of msgs.
-func (msgs Messages) FormStrong() string { return msgs.text(770) }
+func (msgs Messages) FormStrong() string { return msgs.text(778) }
 
 // FormAccountCreated says "Account created for {name} <{email}>"
 // in the language the app shows under cx.
@@ -21840,7 +21970,7 @@ func TextNothingYet(cx *core.Scope) string { return For(cx).TextNothingYet() }
 
 // TextNothingYet says "nothing yet"
 // in the language of msgs.
-func (msgs Messages) TextNothingYet() string { return msgs.text(771) }
+func (msgs Messages) TextNothingYet() string { return msgs.text(779) }
 
 // TextSpansAndLinks says "Spans and links"
 // in the language the app shows under cx.
@@ -21848,7 +21978,7 @@ func TextSpansAndLinks(cx *core.Scope) string { return For(cx).TextSpansAndLinks
 
 // TextSpansAndLinks says "Spans and links"
 // in the language of msgs.
-func (msgs Messages) TextSpansAndLinks() string { return msgs.text(772) }
+func (msgs Messages) TextSpansAndLinks() string { return msgs.text(780) }
 
 // TextSpansWithPressesOfTheir says "Spans with presses of their own"
 // in the language the app shows under cx.
@@ -21856,7 +21986,7 @@ func TextSpansWithPressesOfTheir(cx *core.Scope) string { return For(cx).TextSpa
 
 // TextSpansWithPressesOfTheir says "Spans with presses of their own"
 // in the language of msgs.
-func (msgs Messages) TextSpansWithPressesOfTheir() string { return msgs.text(773) }
+func (msgs Messages) TextSpansWithPressesOfTheir() string { return msgs.text(781) }
 
 // TextTheSentenceNotALink says "the sentence (not a link)"
 // in the language the app shows under cx.
@@ -21864,7 +21994,7 @@ func TextTheSentenceNotALink(cx *core.Scope) string { return For(cx).TextTheSent
 
 // TextTheSentenceNotALink says "the sentence (not a link)"
 // in the language of msgs.
-func (msgs Messages) TextTheSentenceNotALink() string { return msgs.text(774) }
+func (msgs Messages) TextTheSentenceNotALink() string { return msgs.text(782) }
 
 // TextByContinuingYouAgreeTo says "By continuing you agree to the "
 // in the language the app shows under cx.
@@ -21872,7 +22002,7 @@ func TextByContinuingYouAgreeTo(cx *core.Scope) string { return For(cx).TextByCo
 
 // TextByContinuingYouAgreeTo says "By continuing you agree to the "
 // in the language of msgs.
-func (msgs Messages) TextByContinuingYouAgreeTo() string { return msgs.text(775) }
+func (msgs Messages) TextByContinuingYouAgreeTo() string { return msgs.text(783) }
 
 // TextTermsOfService says "Terms of service"
 // in the language the app shows under cx.
@@ -21880,7 +22010,7 @@ func TextTermsOfService(cx *core.Scope) string { return For(cx).TextTermsOfServi
 
 // TextTermsOfService says "Terms of service"
 // in the language of msgs.
-func (msgs Messages) TextTermsOfService() string { return msgs.text(776) }
+func (msgs Messages) TextTermsOfService() string { return msgs.text(784) }
 
 // TextAndThe says " and the "
 // in the language the app shows under cx.
@@ -21888,7 +22018,7 @@ func TextAndThe(cx *core.Scope) string { return For(cx).TextAndThe() }
 
 // TextAndThe says " and the "
 // in the language of msgs.
-func (msgs Messages) TextAndThe() string { return msgs.text(777) }
+func (msgs Messages) TextAndThe() string { return msgs.text(785) }
 
 // TextPrivacyPolicy says "Privacy policy"
 // in the language the app shows under cx.
@@ -21896,7 +22026,7 @@ func TextPrivacyPolicy(cx *core.Scope) string { return For(cx).TextPrivacyPolicy
 
 // TextPrivacyPolicy says "Privacy policy"
 // in the language of msgs.
-func (msgs Messages) TextPrivacyPolicy() string { return msgs.text(778) }
+func (msgs Messages) TextPrivacyPolicy() string { return msgs.text(786) }
 
 // TextWhichMention says ", which mention "
 // in the language the app shows under cx.
@@ -21904,7 +22034,7 @@ func TextWhichMention(cx *core.Scope) string { return For(cx).TextWhichMention()
 
 // TextWhichMention says ", which mention "
 // in the language of msgs.
-func (msgs Messages) TextWhichMention() string { return msgs.text(779) }
+func (msgs Messages) TextWhichMention() string { return msgs.text(787) }
 
 // TextBold says "bold "
 // in the language the app shows under cx.
@@ -21912,7 +22042,7 @@ func TextBold(cx *core.Scope) string { return For(cx).TextBold() }
 
 // TextBold says "bold "
 // in the language of msgs.
-func (msgs Messages) TextBold() string { return msgs.text(780) }
+func (msgs Messages) TextBold() string { return msgs.text(788) }
 
 // TextALinkInsideBoldText says "a link inside bold text"
 // in the language the app shows under cx.
@@ -21920,7 +22050,7 @@ func TextALinkInsideBoldText(cx *core.Scope) string { return For(cx).TextALinkIn
 
 // TextALinkInsideBoldText says "a link inside bold text"
 // in the language of msgs.
-func (msgs Messages) TextALinkInsideBoldText() string { return msgs.text(781) }
+func (msgs Messages) TextALinkInsideBoldText() string { return msgs.text(789) }
 
 // TextToo says " too"
 // in the language the app shows under cx.
@@ -21928,7 +22058,7 @@ func TextToo(cx *core.Scope) string { return For(cx).TextToo() }
 
 // TextToo says " too"
 // in the language of msgs.
-func (msgs Messages) TextToo() string { return msgs.text(782) }
+func (msgs Messages) TextToo() string { return msgs.text(790) }
 
 // TextPressed says "Pressed"
 // in the language the app shows under cx.
@@ -21936,7 +22066,7 @@ func TextPressed(cx *core.Scope) string { return For(cx).TextPressed() }
 
 // TextPressed says "Pressed"
 // in the language of msgs.
-func (msgs Messages) TextPressed() string { return msgs.text(783) }
+func (msgs Messages) TextPressed() string { return msgs.text(791) }
 
 // TextInlineViewsAndImages says "Inline views and images"
 // in the language the app shows under cx.
@@ -21944,7 +22074,7 @@ func TextInlineViewsAndImages(cx *core.Scope) string { return For(cx).TextInline
 
 // TextInlineViewsAndImages says "Inline views and images"
 // in the language of msgs.
-func (msgs Messages) TextInlineViewsAndImages() string { return msgs.text(784) }
+func (msgs Messages) TextInlineViewsAndImages() string { return msgs.text(792) }
 
 // TextTheyWrapWithTheLine says "They wrap with the line"
 // in the language the app shows under cx.
@@ -21952,7 +22082,7 @@ func TextTheyWrapWithTheLine(cx *core.Scope) string { return For(cx).TextTheyWra
 
 // TextTheyWrapWithTheLine says "They wrap with the line"
 // in the language of msgs.
-func (msgs Messages) TextTheyWrapWithTheLine() string { return msgs.text(785) }
+func (msgs Messages) TextTheyWrapWithTheLine() string { return msgs.text(793) }
 
 // TextMadeWith says "Made with "
 // in the language the app shows under cx.
@@ -21960,7 +22090,7 @@ func TextMadeWith(cx *core.Scope) string { return For(cx).TextMadeWith() }
 
 // TextMadeWith says "Made with "
 // in the language of msgs.
-func (msgs Messages) TextMadeWith() string { return msgs.text(786) }
+func (msgs Messages) TextMadeWith() string { return msgs.text(794) }
 
 // TextNsgoStatus says " NSGo. Status "
 // in the language the app shows under cx.
@@ -21968,7 +22098,7 @@ func TextNsgoStatus(cx *core.Scope) string { return For(cx).TextNsgoStatus() }
 
 // TextNsgoStatus says " NSGo. Status "
 // in the language of msgs.
-func (msgs Messages) TextNsgoStatus() string { return msgs.text(787) }
+func (msgs Messages) TextNsgoStatus() string { return msgs.text(795) }
 
 // TextLive says "LIVE"
 // in the language the app shows under cx.
@@ -21976,7 +22106,7 @@ func TextLive(cx *core.Scope) string { return For(cx).TextLive() }
 
 // TextLive says "LIVE"
 // in the language of msgs.
-func (msgs Messages) TextLive() string { return msgs.text(788) }
+func (msgs Messages) TextLive() string { return msgs.text(796) }
 
 // TextAndAButtonInsideThe says " and a button inside the sentence "
 // in the language the app shows under cx.
@@ -21984,7 +22114,7 @@ func TextAndAButtonInsideThe(cx *core.Scope) string { return For(cx).TextAndABut
 
 // TextAndAButtonInsideThe says " and a button inside the sentence "
 // in the language of msgs.
-func (msgs Messages) TextAndAButtonInsideThe() string { return msgs.text(789) }
+func (msgs Messages) TextAndAButtonInsideThe() string { return msgs.text(797) }
 
 // TextLike says "Like"
 // in the language the app shows under cx.
@@ -21992,7 +22122,7 @@ func TextLike(cx *core.Scope) string { return For(cx).TextLike() }
 
 // TextLike says "Like"
 // in the language of msgs.
-func (msgs Messages) TextLike() string { return msgs.text(790) }
+func (msgs Messages) TextLike() string { return msgs.text(798) }
 
 // TextThatTakesPressesOfIts says " that takes presses of its own."
 // in the language the app shows under cx.
@@ -22000,7 +22130,7 @@ func TextThatTakesPressesOfIts(cx *core.Scope) string { return For(cx).TextThatT
 
 // TextThatTakesPressesOfIts says " that takes presses of its own."
 // in the language of msgs.
-func (msgs Messages) TextThatTakesPressesOfIts() string { return msgs.text(791) }
+func (msgs Messages) TextThatTakesPressesOfIts() string { return msgs.text(799) }
 
 // TextType says "Type"
 // in the language the app shows under cx.
@@ -22008,7 +22138,7 @@ func TextType(cx *core.Scope) string { return For(cx).TextType() }
 
 // TextType says "Type"
 // in the language of msgs.
-func (msgs Messages) TextType() string { return msgs.text(792) }
+func (msgs Messages) TextType() string { return msgs.text(800) }
 
 // TextCustomFontsWeightsStylesSpacing says "Custom fonts, weights, styles, spacing"
 // in the language the app shows under cx.
@@ -22018,7 +22148,7 @@ func TextCustomFontsWeightsStylesSpacing(cx *core.Scope) string {
 
 // TextCustomFontsWeightsStylesSpacing says "Custom fonts, weights, styles, spacing"
 // in the language of msgs.
-func (msgs Messages) TextCustomFontsWeightsStylesSpacing() string { return msgs.text(793) }
+func (msgs Messages) TextCustomFontsWeightsStylesSpacing() string { return msgs.text(801) }
 
 // TextCustomFonts says "Custom fonts"
 // in the language the app shows under cx.
@@ -22026,7 +22156,7 @@ func TextCustomFonts(cx *core.Scope) string { return For(cx).TextCustomFonts() }
 
 // TextCustomFonts says "Custom fonts"
 // in the language of msgs.
-func (msgs Messages) TextCustomFonts() string { return msgs.text(794) }
+func (msgs Messages) TextCustomFonts() string { return msgs.text(802) }
 
 // TextWeightStyleSpacing says "Weight, style, spacing"
 // in the language the app shows under cx.
@@ -22034,7 +22164,7 @@ func TextWeightStyleSpacing(cx *core.Scope) string { return For(cx).TextWeightSt
 
 // TextWeightStyleSpacing says "Weight, style, spacing"
 // in the language of msgs.
-func (msgs Messages) TextWeightStyleSpacing() string { return msgs.text(795) }
+func (msgs Messages) TextWeightStyleSpacing() string { return msgs.text(803) }
 
 // TextLight says "Light "
 // in the language the app shows under cx.
@@ -22042,7 +22172,7 @@ func TextLight(cx *core.Scope) string { return For(cx).TextLight() }
 
 // TextLight says "Light "
 // in the language of msgs.
-func (msgs Messages) TextLight() string { return msgs.text(796) }
+func (msgs Messages) TextLight() string { return msgs.text(804) }
 
 // TextBold2 says "Bold "
 // in the language the app shows under cx.
@@ -22050,7 +22180,7 @@ func TextBold2(cx *core.Scope) string { return For(cx).TextBold2() }
 
 // TextBold2 says "Bold "
 // in the language of msgs.
-func (msgs Messages) TextBold2() string { return msgs.text(797) }
+func (msgs Messages) TextBold2() string { return msgs.text(805) }
 
 // TextItalic says "Italic "
 // in the language the app shows under cx.
@@ -22058,7 +22188,7 @@ func TextItalic(cx *core.Scope) string { return For(cx).TextItalic() }
 
 // TextItalic says "Italic "
 // in the language of msgs.
-func (msgs Messages) TextItalic() string { return msgs.text(798) }
+func (msgs Messages) TextItalic() string { return msgs.text(806) }
 
 // TextBoth says "Both "
 // in the language the app shows under cx.
@@ -22066,7 +22196,7 @@ func TextBoth(cx *core.Scope) string { return For(cx).TextBoth() }
 
 // TextBoth says "Both "
 // in the language of msgs.
-func (msgs Messages) TextBoth() string { return msgs.text(799) }
+func (msgs Messages) TextBoth() string { return msgs.text(807) }
 
 // TextSpaced says "Spaced"
 // in the language the app shows under cx.
@@ -22074,7 +22204,7 @@ func TextSpaced(cx *core.Scope) string { return For(cx).TextSpaced() }
 
 // TextSpaced says "Spaced"
 // in the language of msgs.
-func (msgs Messages) TextSpaced() string { return msgs.text(800) }
+func (msgs Messages) TextSpaced() string { return msgs.text(808) }
 
 // TextDecorations says "Decorations"
 // in the language the app shows under cx.
@@ -22082,7 +22212,7 @@ func TextDecorations(cx *core.Scope) string { return For(cx).TextDecorations() }
 
 // TextDecorations says "Decorations"
 // in the language of msgs.
-func (msgs Messages) TextDecorations() string { return msgs.text(801) }
+func (msgs Messages) TextDecorations() string { return msgs.text(809) }
 
 // TextUnderline says "Underline"
 // in the language the app shows under cx.
@@ -22090,7 +22220,7 @@ func TextUnderline(cx *core.Scope) string { return For(cx).TextUnderline() }
 
 // TextUnderline says "Underline"
 // in the language of msgs.
-func (msgs Messages) TextUnderline() string { return msgs.text(802) }
+func (msgs Messages) TextUnderline() string { return msgs.text(810) }
 
 // TextStrikethrough says "Strikethrough"
 // in the language the app shows under cx.
@@ -22098,7 +22228,7 @@ func TextStrikethrough(cx *core.Scope) string { return For(cx).TextStrikethrough
 
 // TextStrikethrough says "Strikethrough"
 // in the language of msgs.
-func (msgs Messages) TextStrikethrough() string { return msgs.text(803) }
+func (msgs Messages) TextStrikethrough() string { return msgs.text(811) }
 
 // TextWavy says "Wavy"
 // in the language the app shows under cx.
@@ -22106,7 +22236,7 @@ func TextWavy(cx *core.Scope) string { return For(cx).TextWavy() }
 
 // TextWavy says "Wavy"
 // in the language of msgs.
-func (msgs Messages) TextWavy() string { return msgs.text(804) }
+func (msgs Messages) TextWavy() string { return msgs.text(812) }
 
 // TextTransforms says "Transforms"
 // in the language the app shows under cx.
@@ -22114,7 +22244,7 @@ func TextTransforms(cx *core.Scope) string { return For(cx).TextTransforms() }
 
 // TextTransforms says "Transforms"
 // in the language of msgs.
-func (msgs Messages) TextTransforms() string { return msgs.text(805) }
+func (msgs Messages) TextTransforms() string { return msgs.text(813) }
 
 // TextShadows says "Shadows"
 // in the language the app shows under cx.
@@ -22122,7 +22252,7 @@ func TextShadows(cx *core.Scope) string { return For(cx).TextShadows() }
 
 // TextShadows says "Shadows"
 // in the language of msgs.
-func (msgs Messages) TextShadows() string { return msgs.text(806) }
+func (msgs Messages) TextShadows() string { return msgs.text(814) }
 
 // TextGlow says "Glow"
 // in the language the app shows under cx.
@@ -22130,7 +22260,7 @@ func TextGlow(cx *core.Scope) string { return For(cx).TextGlow() }
 
 // TextGlow says "Glow"
 // in the language of msgs.
-func (msgs Messages) TextGlow() string { return msgs.text(807) }
+func (msgs Messages) TextGlow() string { return msgs.text(815) }
 
 // TextDropShadow says "Drop shadow"
 // in the language the app shows under cx.
@@ -22138,7 +22268,7 @@ func TextDropShadow(cx *core.Scope) string { return For(cx).TextDropShadow() }
 
 // TextDropShadow says "Drop shadow"
 // in the language of msgs.
-func (msgs Messages) TextDropShadow() string { return msgs.text(808) }
+func (msgs Messages) TextDropShadow() string { return msgs.text(816) }
 
 // TextSystemTextSize says "System text size"
 // in the language the app shows under cx.
@@ -22146,7 +22276,7 @@ func TextSystemTextSize(cx *core.Scope) string { return For(cx).TextSystemTextSi
 
 // TextSystemTextSize says "System text size"
 // in the language of msgs.
-func (msgs Messages) TextSystemTextSize() string { return msgs.text(809) }
+func (msgs Messages) TextSystemTextSize() string { return msgs.text(817) }
 
 // TextEnvFontscaleAndItsLimits says "Env.FontScale and its limits"
 // in the language the app shows under cx.
@@ -22156,7 +22286,7 @@ func TextEnvFontscaleAndItsLimits(cx *core.Scope) string {
 
 // TextEnvFontscaleAndItsLimits says "Env.FontScale and its limits"
 // in the language of msgs.
-func (msgs Messages) TextEnvFontscaleAndItsLimits() string { return msgs.text(810) }
+func (msgs Messages) TextEnvFontscaleAndItsLimits() string { return msgs.text(818) }
 
 // TextDefault says "Default"
 // in the language the app shows under cx.
@@ -22164,7 +22294,7 @@ func TextDefault(cx *core.Scope) string { return For(cx).TextDefault() }
 
 // TextDefault says "Default"
 // in the language of msgs.
-func (msgs Messages) TextDefault() string { return msgs.text(811) }
+func (msgs Messages) TextDefault() string { return msgs.text(819) }
 
 // TextScalesWithTheSystemSetting says "Scales with the system setting"
 // in the language the app shows under cx.
@@ -22174,7 +22304,7 @@ func TextScalesWithTheSystemSetting(cx *core.Scope) string {
 
 // TextScalesWithTheSystemSetting says "Scales with the system setting"
 // in the language of msgs.
-func (msgs Messages) TextScalesWithTheSystemSetting() string { return msgs.text(812) }
+func (msgs Messages) TextScalesWithTheSystemSetting() string { return msgs.text(820) }
 
 // TextFixed says "Fixed"
 // in the language the app shows under cx.
@@ -22182,7 +22312,7 @@ func TextFixed(cx *core.Scope) string { return For(cx).TextFixed() }
 
 // TextFixed says "Fixed"
 // in the language of msgs.
-func (msgs Messages) TextFixed() string { return msgs.text(813) }
+func (msgs Messages) TextFixed() string { return msgs.text(821) }
 
 // TextFixedSize says "Fixed size"
 // in the language the app shows under cx.
@@ -22190,7 +22320,7 @@ func TextFixedSize(cx *core.Scope) string { return For(cx).TextFixedSize() }
 
 // TextFixedSize says "Fixed size"
 // in the language of msgs.
-func (msgs Messages) TextFixedSize() string { return msgs.text(814) }
+func (msgs Messages) TextFixedSize() string { return msgs.text(822) }
 
 // TextCapped says "Capped"
 // in the language the app shows under cx.
@@ -22198,7 +22328,7 @@ func TextCapped(cx *core.Scope) string { return For(cx).TextCapped() }
 
 // TextCapped says "Capped"
 // in the language of msgs.
-func (msgs Messages) TextCapped() string { return msgs.text(815) }
+func (msgs Messages) TextCapped() string { return msgs.text(823) }
 
 // TextAtMost12 says "At most 1.2×"
 // in the language the app shows under cx.
@@ -22206,7 +22336,7 @@ func TextAtMost12(cx *core.Scope) string { return For(cx).TextAtMost12() }
 
 // TextAtMost12 says "At most 1.2×"
 // in the language of msgs.
-func (msgs Messages) TextAtMost12() string { return msgs.text(816) }
+func (msgs Messages) TextAtMost12() string { return msgs.text(824) }
 
 // TextTruncation says "Truncation"
 // in the language the app shows under cx.
@@ -22214,7 +22344,7 @@ func TextTruncation(cx *core.Scope) string { return For(cx).TextTruncation() }
 
 // TextTruncation says "Truncation"
 // in the language of msgs.
-func (msgs Messages) TextTruncation() string { return msgs.text(817) }
+func (msgs Messages) TextTruncation() string { return msgs.text(825) }
 
 // TextMaxlinesAndEllipsizemode says "MaxLines and EllipsizeMode"
 // in the language the app shows under cx.
@@ -22224,7 +22354,7 @@ func TextMaxlinesAndEllipsizemode(cx *core.Scope) string {
 
 // TextMaxlinesAndEllipsizemode says "MaxLines and EllipsizeMode"
 // in the language of msgs.
-func (msgs Messages) TextMaxlinesAndEllipsizemode() string { return msgs.text(818) }
+func (msgs Messages) TextMaxlinesAndEllipsizemode() string { return msgs.text(826) }
 
 // TextTwoLinesTail says "Two lines, tail"
 // in the language the app shows under cx.
@@ -22232,7 +22362,7 @@ func TextTwoLinesTail(cx *core.Scope) string { return For(cx).TextTwoLinesTail()
 
 // TextTwoLinesTail says "Two lines, tail"
 // in the language of msgs.
-func (msgs Messages) TextTwoLinesTail() string { return msgs.text(819) }
+func (msgs Messages) TextTwoLinesTail() string { return msgs.text(827) }
 
 // TextOneLineHead says "One line, head"
 // in the language the app shows under cx.
@@ -22240,7 +22370,7 @@ func TextOneLineHead(cx *core.Scope) string { return For(cx).TextOneLineHead() }
 
 // TextOneLineHead says "One line, head"
 // in the language of msgs.
-func (msgs Messages) TextOneLineHead() string { return msgs.text(820) }
+func (msgs Messages) TextOneLineHead() string { return msgs.text(828) }
 
 // TextOneLineMiddle says "One line, middle"
 // in the language the app shows under cx.
@@ -22248,7 +22378,7 @@ func TextOneLineMiddle(cx *core.Scope) string { return For(cx).TextOneLineMiddle
 
 // TextOneLineMiddle says "One line, middle"
 // in the language of msgs.
-func (msgs Messages) TextOneLineMiddle() string { return msgs.text(821) }
+func (msgs Messages) TextOneLineMiddle() string { return msgs.text(829) }
 
 // TextOneLineClip says "One line, clip"
 // in the language the app shows under cx.
@@ -22256,7 +22386,7 @@ func TextOneLineClip(cx *core.Scope) string { return For(cx).TextOneLineClip() }
 
 // TextOneLineClip says "One line, clip"
 // in the language of msgs.
-func (msgs Messages) TextOneLineClip() string { return msgs.text(822) }
+func (msgs Messages) TextOneLineClip() string { return msgs.text(830) }
 
 // TextCenteredThreeLines says "Centered, three lines"
 // in the language the app shows under cx.
@@ -22264,7 +22394,7 @@ func TextCenteredThreeLines(cx *core.Scope) string { return For(cx).TextCentered
 
 // TextCenteredThreeLines says "Centered, three lines"
 // in the language of msgs.
-func (msgs Messages) TextCenteredThreeLines() string { return msgs.text(823) }
+func (msgs Messages) TextCenteredThreeLines() string { return msgs.text(831) }
 
 // TextChineseAndJapanese says "Chinese and Japanese"
 // in the language the app shows under cx.
@@ -22272,7 +22402,7 @@ func TextChineseAndJapanese(cx *core.Scope) string { return For(cx).TextChineseA
 
 // TextChineseAndJapanese says "Chinese and Japanese"
 // in the language of msgs.
-func (msgs Messages) TextChineseAndJapanese() string { return msgs.text(824) }
+func (msgs Messages) TextChineseAndJapanese() string { return msgs.text(832) }
 
 // TextLinesBreakBetweenCharactersNever says "Lines break between characters, never before closing punctuation"
 // in the language the app shows under cx.
@@ -22282,7 +22412,7 @@ func TextLinesBreakBetweenCharactersNever(cx *core.Scope) string {
 
 // TextLinesBreakBetweenCharactersNever says "Lines break between characters, never before closing punctuation"
 // in the language of msgs.
-func (msgs Messages) TextLinesBreakBetweenCharactersNever() string { return msgs.text(825) }
+func (msgs Messages) TextLinesBreakBetweenCharactersNever() string { return msgs.text(833) }
 
 // TextChineseParagraph says "Chinese paragraph"
 // in the language the app shows under cx.
@@ -22290,7 +22420,7 @@ func TextChineseParagraph(cx *core.Scope) string { return For(cx).TextChinesePar
 
 // TextChineseParagraph says "Chinese paragraph"
 // in the language of msgs.
-func (msgs Messages) TextChineseParagraph() string { return msgs.text(826) }
+func (msgs Messages) TextChineseParagraph() string { return msgs.text(834) }
 
 // TextJapaneseKanaKanjiAndLatin says "Japanese: kana, kanji and Latin"
 // in the language the app shows under cx.
@@ -22300,7 +22430,7 @@ func TextJapaneseKanaKanjiAndLatin(cx *core.Scope) string {
 
 // TextJapaneseKanaKanjiAndLatin says "Japanese: kana, kanji and Latin"
 // in the language of msgs.
-func (msgs Messages) TextJapaneseKanaKanjiAndLatin() string { return msgs.text(827) }
+func (msgs Messages) TextJapaneseKanaKanjiAndLatin() string { return msgs.text(835) }
 
 // TextRightToLeft says "Right to left"
 // in the language the app shows under cx.
@@ -22308,7 +22438,7 @@ func TextRightToLeft(cx *core.Scope) string { return For(cx).TextRightToLeft() }
 
 // TextRightToLeft says "Right to left"
 // in the language of msgs.
-func (msgs Messages) TextRightToLeft() string { return msgs.text(828) }
+func (msgs Messages) TextRightToLeft() string { return msgs.text(836) }
 
 // TextArabicAndHebrewMixedWith says "Arabic and Hebrew, mixed with Latin text and numbers"
 // in the language the app shows under cx.
@@ -22318,7 +22448,7 @@ func TextArabicAndHebrewMixedWith(cx *core.Scope) string {
 
 // TextArabicAndHebrewMixedWith says "Arabic and Hebrew, mixed with Latin text and numbers"
 // in the language of msgs.
-func (msgs Messages) TextArabicAndHebrewMixedWith() string { return msgs.text(829) }
+func (msgs Messages) TextArabicAndHebrewMixedWith() string { return msgs.text(837) }
 
 // TextArabicParagraph says "Arabic paragraph"
 // in the language the app shows under cx.
@@ -22326,7 +22456,7 @@ func TextArabicParagraph(cx *core.Scope) string { return For(cx).TextArabicParag
 
 // TextArabicParagraph says "Arabic paragraph"
 // in the language of msgs.
-func (msgs Messages) TextArabicParagraph() string { return msgs.text(830) }
+func (msgs Messages) TextArabicParagraph() string { return msgs.text(838) }
 
 // TextArabicEnglishAndNumbersIn says "Arabic, English and numbers in one line"
 // in the language the app shows under cx.
@@ -22336,7 +22466,7 @@ func TextArabicEnglishAndNumbersIn(cx *core.Scope) string {
 
 // TextArabicEnglishAndNumbersIn says "Arabic, English and numbers in one line"
 // in the language of msgs.
-func (msgs Messages) TextArabicEnglishAndNumbersIn() string { return msgs.text(831) }
+func (msgs Messages) TextArabicEnglishAndNumbersIn() string { return msgs.text(839) }
 
 // TextHebrew says "Hebrew"
 // in the language the app shows under cx.
@@ -22344,7 +22474,7 @@ func TextHebrew(cx *core.Scope) string { return For(cx).TextHebrew() }
 
 // TextHebrew says "Hebrew"
 // in the language of msgs.
-func (msgs Messages) TextHebrew() string { return msgs.text(832) }
+func (msgs Messages) TextHebrew() string { return msgs.text(840) }
 
 // TextOneLineTail says "One line, tail"
 // in the language the app shows under cx.
@@ -22352,7 +22482,7 @@ func TextOneLineTail(cx *core.Scope) string { return For(cx).TextOneLineTail() }
 
 // TextOneLineTail says "One line, tail"
 // in the language of msgs.
-func (msgs Messages) TextOneLineTail() string { return msgs.text(833) }
+func (msgs Messages) TextOneLineTail() string { return msgs.text(841) }
 
 // TextAlignment says "Alignment"
 // in the language the app shows under cx.
@@ -22360,7 +22490,7 @@ func TextAlignment(cx *core.Scope) string { return For(cx).TextAlignment() }
 
 // TextAlignment says "Alignment"
 // in the language of msgs.
-func (msgs Messages) TextAlignment() string { return msgs.text(834) }
+func (msgs Messages) TextAlignment() string { return msgs.text(842) }
 
 // TextTextalignInLeftToRight says "TextAlign in left-to-right and right-to-left text"
 // in the language the app shows under cx.
@@ -22368,7 +22498,7 @@ func TextTextalignInLeftToRight(cx *core.Scope) string { return For(cx).TextText
 
 // TextTextalignInLeftToRight says "TextAlign in left-to-right and right-to-left text"
 // in the language of msgs.
-func (msgs Messages) TextTextalignInLeftToRight() string { return msgs.text(835) }
+func (msgs Messages) TextTextalignInLeftToRight() string { return msgs.text(843) }
 
 // TextStart says "Start"
 // in the language the app shows under cx.
@@ -22376,7 +22506,7 @@ func TextStart(cx *core.Scope) string { return For(cx).TextStart() }
 
 // TextStart says "Start"
 // in the language of msgs.
-func (msgs Messages) TextStart() string { return msgs.text(836) }
+func (msgs Messages) TextStart() string { return msgs.text(844) }
 
 // TextCenter says "Center"
 // in the language the app shows under cx.
@@ -22384,7 +22514,7 @@ func TextCenter(cx *core.Scope) string { return For(cx).TextCenter() }
 
 // TextCenter says "Center"
 // in the language of msgs.
-func (msgs Messages) TextCenter() string { return msgs.text(837) }
+func (msgs Messages) TextCenter() string { return msgs.text(845) }
 
 // TextEnd says "End"
 // in the language the app shows under cx.
@@ -22392,7 +22522,7 @@ func TextEnd(cx *core.Scope) string { return For(cx).TextEnd() }
 
 // TextEnd says "End"
 // in the language of msgs.
-func (msgs Messages) TextEnd() string { return msgs.text(838) }
+func (msgs Messages) TextEnd() string { return msgs.text(846) }
 
 // TextJustify says "Justify"
 // in the language the app shows under cx.
@@ -22400,7 +22530,7 @@ func TextJustify(cx *core.Scope) string { return For(cx).TextJustify() }
 
 // TextJustify says "Justify"
 // in the language of msgs.
-func (msgs Messages) TextJustify() string { return msgs.text(839) }
+func (msgs Messages) TextJustify() string { return msgs.text(847) }
 
 // TextJustifyChinese says "Justify, Chinese"
 // in the language the app shows under cx.
@@ -22408,7 +22538,7 @@ func TextJustifyChinese(cx *core.Scope) string { return For(cx).TextJustifyChine
 
 // TextJustifyChinese says "Justify, Chinese"
 // in the language of msgs.
-func (msgs Messages) TextJustifyChinese() string { return msgs.text(840) }
+func (msgs Messages) TextJustifyChinese() string { return msgs.text(848) }
 
 // TextStartInArabic says "Start, in Arabic"
 // in the language the app shows under cx.
@@ -22416,7 +22546,7 @@ func TextStartInArabic(cx *core.Scope) string { return For(cx).TextStartInArabic
 
 // TextStartInArabic says "Start, in Arabic"
 // in the language of msgs.
-func (msgs Messages) TextStartInArabic() string { return msgs.text(841) }
+func (msgs Messages) TextStartInArabic() string { return msgs.text(849) }
 
 // TextSelection says "Selection"
 // in the language the app shows under cx.
@@ -22424,7 +22554,7 @@ func TextSelection(cx *core.Scope) string { return For(cx).TextSelection() }
 
 // TextSelection says "Selection"
 // in the language of msgs.
-func (msgs Messages) TextSelection() string { return msgs.text(842) }
+func (msgs Messages) TextSelection() string { return msgs.text(850) }
 
 // TextLongPressToSelect says "Long press to select"
 // in the language the app shows under cx.
@@ -22432,7 +22562,7 @@ func TextLongPressToSelect(cx *core.Scope) string { return For(cx).TextLongPress
 
 // TextLongPressToSelect says "Long press to select"
 // in the language of msgs.
-func (msgs Messages) TextLongPressToSelect() string { return msgs.text(843) }
+func (msgs Messages) TextLongPressToSelect() string { return msgs.text(851) }
 
 // TextDragOrDoubleOrTriple says "Drag, or double or triple click"
 // in the language the app shows under cx.
@@ -22440,7 +22570,7 @@ func TextDragOrDoubleOrTriple(cx *core.Scope) string { return For(cx).TextDragOr
 
 // TextDragOrDoubleOrTriple says "Drag, or double or triple click"
 // in the language of msgs.
-func (msgs Messages) TextDragOrDoubleOrTriple() string { return msgs.text(844) }
+func (msgs Messages) TextDragOrDoubleOrTriple() string { return msgs.text(852) }
 
 // TextOnItsOwn says "On its own"
 // in the language the app shows under cx.
@@ -22448,7 +22578,7 @@ func TextOnItsOwn(cx *core.Scope) string { return For(cx).TextOnItsOwn() }
 
 // TextOnItsOwn says "On its own"
 // in the language of msgs.
-func (msgs Messages) TextOnItsOwn() string { return msgs.text(845) }
+func (msgs Messages) TextOnItsOwn() string { return msgs.text(853) }
 
 // TextThisTextSelectsOnIts says "This text selects on its own."
 // in the language the app shows under cx.
@@ -22456,7 +22586,7 @@ func TextThisTextSelectsOnIts(cx *core.Scope) string { return For(cx).TextThisTe
 
 // TextThisTextSelectsOnIts says "This text selects on its own."
 // in the language of msgs.
-func (msgs Messages) TextThisTextSelectsOnIts() string { return msgs.text(846) }
+func (msgs Messages) TextThisTextSelectsOnIts() string { return msgs.text(854) }
 
 // TextAcrossTexts says "Across texts"
 // in the language the app shows under cx.
@@ -22464,7 +22594,7 @@ func TextAcrossTexts(cx *core.Scope) string { return For(cx).TextAcrossTexts() }
 
 // TextAcrossTexts says "Across texts"
 // in the language of msgs.
-func (msgs Messages) TextAcrossTexts() string { return msgs.text(847) }
+func (msgs Messages) TextAcrossTexts() string { return msgs.text(855) }
 
 // TextASelectableViewSelectsAcross says "A selectable view selects across its texts, as a web page does."
 // in the language the app shows under cx.
@@ -22474,7 +22604,7 @@ func TextASelectableViewSelectsAcross(cx *core.Scope) string {
 
 // TextASelectableViewSelectsAcross says "A selectable view selects across its texts, as a web page does."
 // in the language of msgs.
-func (msgs Messages) TextASelectableViewSelectsAcross() string { return msgs.text(848) }
+func (msgs Messages) TextASelectableViewSelectsAcross() string { return msgs.text(856) }
 
 // TextStartInOneEndIn says "Start in one, end in another; copy them as one."
 // in the language the app shows under cx.
@@ -22482,7 +22612,7 @@ func TextStartInOneEndIn(cx *core.Scope) string { return For(cx).TextStartInOneE
 
 // TextStartInOneEndIn says "Start in one, end in another; copy them as one."
 // in the language of msgs.
-func (msgs Messages) TextStartInOneEndIn() string { return msgs.text(849) }
+func (msgs Messages) TextStartInOneEndIn() string { return msgs.text(857) }
 
 // TextThisOneStaysOutOf says "This one stays out of the selection."
 // in the language the app shows under cx.
@@ -22490,7 +22620,7 @@ func TextThisOneStaysOutOf(cx *core.Scope) string { return For(cx).TextThisOneSt
 
 // TextThisOneStaysOutOf says "This one stays out of the selection."
 // in the language of msgs.
-func (msgs Messages) TextThisOneStaysOutOf() string { return msgs.text(850) }
+func (msgs Messages) TextThisOneStaysOutOf() string { return msgs.text(858) }
 
 // CanvasLoad says "% load"
 // in the language the app shows under cx.
@@ -22498,7 +22628,7 @@ func CanvasLoad(cx *core.Scope) string { return For(cx).CanvasLoad() }
 
 // CanvasLoad says "% load"
 // in the language of msgs.
-func (msgs Messages) CanvasLoad() string { return msgs.text(851) }
+func (msgs Messages) CanvasLoad() string { return msgs.text(859) }
 
 // CanvasTurbine3Load says "Turbine 3 load"
 // in the language the app shows under cx.
@@ -22506,7 +22636,7 @@ func CanvasTurbine3Load(cx *core.Scope) string { return For(cx).CanvasTurbine3Lo
 
 // CanvasTurbine3Load says "Turbine 3 load"
 // in the language of msgs.
-func (msgs Messages) CanvasTurbine3Load() string { return msgs.text(852) }
+func (msgs Messages) CanvasTurbine3Load() string { return msgs.text(860) }
 
 // CanvasNeedleAndSweepOnOne says "Needle and sweep on one animated value"
 // in the language the app shows under cx.
@@ -22514,7 +22644,7 @@ func CanvasNeedleAndSweepOnOne(cx *core.Scope) string { return For(cx).CanvasNee
 
 // CanvasNeedleAndSweepOnOne says "Needle and sweep on one animated value"
 // in the language of msgs.
-func (msgs Messages) CanvasNeedleAndSweepOnOne() string { return msgs.text(853) }
+func (msgs Messages) CanvasNeedleAndSweepOnOne() string { return msgs.text(861) }
 
 // CanvasLoadDial says "Load dial"
 // in the language the app shows under cx.
@@ -22522,7 +22652,7 @@ func CanvasLoadDial(cx *core.Scope) string { return For(cx).CanvasLoadDial() }
 
 // CanvasLoadDial says "Load dial"
 // in the language of msgs.
-func (msgs Messages) CanvasLoadDial() string { return msgs.text(854) }
+func (msgs Messages) CanvasLoadDial() string { return msgs.text(862) }
 
 // CanvasRedline says "Redline"
 // in the language the app shows under cx.
@@ -22530,7 +22660,7 @@ func CanvasRedline(cx *core.Scope) string { return For(cx).CanvasRedline() }
 
 // CanvasRedline says "Redline"
 // in the language of msgs.
-func (msgs Messages) CanvasRedline() string { return msgs.text(855) }
+func (msgs Messages) CanvasRedline() string { return msgs.text(863) }
 
 // CanvasHigh says "High"
 // in the language the app shows under cx.
@@ -22538,7 +22668,7 @@ func CanvasHigh(cx *core.Scope) string { return For(cx).CanvasHigh() }
 
 // CanvasHigh says "High"
 // in the language of msgs.
-func (msgs Messages) CanvasHigh() string { return msgs.text(856) }
+func (msgs Messages) CanvasHigh() string { return msgs.text(864) }
 
 // CanvasNominal says "Nominal"
 // in the language the app shows under cx.
@@ -22546,7 +22676,7 @@ func CanvasNominal(cx *core.Scope) string { return For(cx).CanvasNominal() }
 
 // CanvasNominal says "Nominal"
 // in the language of msgs.
-func (msgs Messages) CanvasNominal() string { return msgs.text(857) }
+func (msgs Messages) CanvasNominal() string { return msgs.text(865) }
 
 // CanvasZone says "Zone"
 // in the language the app shows under cx.
@@ -22554,7 +22684,7 @@ func CanvasZone(cx *core.Scope) string { return For(cx).CanvasZone() }
 
 // CanvasZone says "Zone"
 // in the language of msgs.
-func (msgs Messages) CanvasZone() string { return msgs.text(858) }
+func (msgs Messages) CanvasZone() string { return msgs.text(866) }
 
 // CanvasSpool says "Spool"
 // in the language the app shows under cx.
@@ -22562,7 +22692,7 @@ func CanvasSpool(cx *core.Scope) string { return For(cx).CanvasSpool() }
 
 // CanvasSpool says "Spool"
 // in the language of msgs.
-func (msgs Messages) CanvasSpool() string { return msgs.text(859) }
+func (msgs Messages) CanvasSpool() string { return msgs.text(867) }
 
 // CanvasRpm says " rpm"
 // in the language the app shows under cx.
@@ -22570,7 +22700,7 @@ func CanvasRpm(cx *core.Scope) string { return For(cx).CanvasRpm() }
 
 // CanvasRpm says " rpm"
 // in the language of msgs.
-func (msgs Messages) CanvasRpm() string { return msgs.text(860) }
+func (msgs Messages) CanvasRpm() string { return msgs.text(868) }
 
 // CanvasLimit says "Limit"
 // in the language the app shows under cx.
@@ -22578,7 +22708,7 @@ func CanvasLimit(cx *core.Scope) string { return For(cx).CanvasLimit() }
 
 // CanvasLimit says "Limit"
 // in the language of msgs.
-func (msgs Messages) CanvasLimit() string { return msgs.text(861) }
+func (msgs Messages) CanvasLimit() string { return msgs.text(869) }
 
 // CanvasRelayThroughput says "Relay throughput"
 // in the language the app shows under cx.
@@ -22586,7 +22716,7 @@ func CanvasRelayThroughput(cx *core.Scope) string { return For(cx).CanvasRelayTh
 
 // CanvasRelayThroughput says "Relay throughput"
 // in the language of msgs.
-func (msgs Messages) CanvasRelayThroughput() string { return msgs.text(862) }
+func (msgs Messages) CanvasRelayThroughput() string { return msgs.text(870) }
 
 // CanvasAreaAverageHatching says "Area · average · hatching"
 // in the language the app shows under cx.
@@ -22594,7 +22724,7 @@ func CanvasAreaAverageHatching(cx *core.Scope) string { return For(cx).CanvasAre
 
 // CanvasAreaAverageHatching says "Area · average · hatching"
 // in the language of msgs.
-func (msgs Messages) CanvasAreaAverageHatching() string { return msgs.text(863) }
+func (msgs Messages) CanvasAreaAverageHatching() string { return msgs.text(871) }
 
 // CanvasNew says "New"
 // in the language the app shows under cx.
@@ -22602,7 +22732,7 @@ func CanvasNew(cx *core.Scope) string { return For(cx).CanvasNew() }
 
 // CanvasNew says "New"
 // in the language of msgs.
-func (msgs Messages) CanvasNew() string { return msgs.text(864) }
+func (msgs Messages) CanvasNew() string { return msgs.text(872) }
 
 // CanvasThroughputChart says "Throughput chart"
 // in the language the app shows under cx.
@@ -22610,7 +22740,7 @@ func CanvasThroughputChart(cx *core.Scope) string { return For(cx).CanvasThrough
 
 // CanvasThroughputChart says "Throughput chart"
 // in the language of msgs.
-func (msgs Messages) CanvasThroughputChart() string { return msgs.text(865) }
+func (msgs Messages) CanvasThroughputChart() string { return msgs.text(873) }
 
 // CanvasMessages says "Messages"
 // in the language the app shows under cx.
@@ -22618,7 +22748,7 @@ func CanvasMessages(cx *core.Scope) string { return For(cx).CanvasMessages() }
 
 // CanvasMessages says "Messages"
 // in the language of msgs.
-func (msgs Messages) CanvasMessages() string { return msgs.text(866) }
+func (msgs Messages) CanvasMessages() string { return msgs.text(874) }
 
 // CanvasAverage says "Average"
 // in the language the app shows under cx.
@@ -22626,7 +22756,7 @@ func CanvasAverage(cx *core.Scope) string { return For(cx).CanvasAverage() }
 
 // CanvasAverage says "Average"
 // in the language of msgs.
-func (msgs Messages) CanvasAverage() string { return msgs.text(867) }
+func (msgs Messages) CanvasAverage() string { return msgs.text(875) }
 
 // CanvasDeploy says "Deploy"
 // in the language the app shows under cx.
@@ -22634,7 +22764,7 @@ func CanvasDeploy(cx *core.Scope) string { return For(cx).CanvasDeploy() }
 
 // CanvasDeploy says "Deploy"
 // in the language of msgs.
-func (msgs Messages) CanvasDeploy() string { return msgs.text(868) }
+func (msgs Messages) CanvasDeploy() string { return msgs.text(876) }
 
 // CanvasMon says "Mon"
 // in the language the app shows under cx.
@@ -22642,7 +22772,7 @@ func CanvasMon(cx *core.Scope) string { return For(cx).CanvasMon() }
 
 // CanvasMon says "Mon"
 // in the language of msgs.
-func (msgs Messages) CanvasMon() string { return msgs.text(869) }
+func (msgs Messages) CanvasMon() string { return msgs.text(877) }
 
 // CanvasFootfallByHour says "Footfall by hour"
 // in the language the app shows under cx.
@@ -22650,7 +22780,7 @@ func CanvasFootfallByHour(cx *core.Scope) string { return For(cx).CanvasFootfall
 
 // CanvasFootfallByHour says "Footfall by hour"
 // in the language of msgs.
-func (msgs Messages) CanvasFootfallByHour() string { return msgs.text(870) }
+func (msgs Messages) CanvasFootfallByHour() string { return msgs.text(878) }
 
 // CanvasRidgelineOneCurveADay says "Ridgeline, one curve a day"
 // in the language the app shows under cx.
@@ -22658,7 +22788,7 @@ func CanvasRidgelineOneCurveADay(cx *core.Scope) string { return For(cx).CanvasR
 
 // CanvasRidgelineOneCurveADay says "Ridgeline, one curve a day"
 // in the language of msgs.
-func (msgs Messages) CanvasRidgelineOneCurveADay() string { return msgs.text(871) }
+func (msgs Messages) CanvasRidgelineOneCurveADay() string { return msgs.text(879) }
 
 // CanvasReplay says "Replay"
 // in the language the app shows under cx.
@@ -22666,7 +22796,7 @@ func CanvasReplay(cx *core.Scope) string { return For(cx).CanvasReplay() }
 
 // CanvasReplay says "Replay"
 // in the language of msgs.
-func (msgs Messages) CanvasReplay() string { return msgs.text(872) }
+func (msgs Messages) CanvasReplay() string { return msgs.text(880) }
 
 // CanvasGateBLastWeek says "Gate B, last week"
 // in the language the app shows under cx.
@@ -22674,7 +22804,7 @@ func CanvasGateBLastWeek(cx *core.Scope) string { return For(cx).CanvasGateBLast
 
 // CanvasGateBLastWeek says "Gate B, last week"
 // in the language of msgs.
-func (msgs Messages) CanvasGateBLastWeek() string { return msgs.text(873) }
+func (msgs Messages) CanvasGateBLastWeek() string { return msgs.text(881) }
 
 // CanvasPeak12001400 says "Peak 12:00–14:00"
 // in the language the app shows under cx.
@@ -22682,7 +22812,7 @@ func CanvasPeak12001400(cx *core.Scope) string { return For(cx).CanvasPeak120014
 
 // CanvasPeak12001400 says "Peak 12:00–14:00"
 // in the language of msgs.
-func (msgs Messages) CanvasPeak12001400() string { return msgs.text(874) }
+func (msgs Messages) CanvasPeak12001400() string { return msgs.text(882) }
 
 // CanvasFootfallRidgeline says "Footfall ridgeline"
 // in the language the app shows under cx.
@@ -22690,7 +22820,7 @@ func CanvasFootfallRidgeline(cx *core.Scope) string { return For(cx).CanvasFootf
 
 // CanvasFootfallRidgeline says "Footfall ridgeline"
 // in the language of msgs.
-func (msgs Messages) CanvasFootfallRidgeline() string { return msgs.text(875) }
+func (msgs Messages) CanvasFootfallRidgeline() string { return msgs.text(883) }
 
 // CanvasWeekday says "Weekday"
 // in the language the app shows under cx.
@@ -22698,7 +22828,7 @@ func CanvasWeekday(cx *core.Scope) string { return For(cx).CanvasWeekday() }
 
 // CanvasWeekday says "Weekday"
 // in the language of msgs.
-func (msgs Messages) CanvasWeekday() string { return msgs.text(876) }
+func (msgs Messages) CanvasWeekday() string { return msgs.text(884) }
 
 // CanvasWeekend says "Weekend"
 // in the language the app shows under cx.
@@ -22706,7 +22836,7 @@ func CanvasWeekend(cx *core.Scope) string { return For(cx).CanvasWeekend() }
 
 // CanvasWeekend says "Weekend"
 // in the language of msgs.
-func (msgs Messages) CanvasWeekend() string { return msgs.text(877) }
+func (msgs Messages) CanvasWeekend() string { return msgs.text(885) }
 
 // CanvasBeaconUptime says "Beacon uptime"
 // in the language the app shows under cx.
@@ -22714,7 +22844,7 @@ func CanvasBeaconUptime(cx *core.Scope) string { return For(cx).CanvasBeaconUpti
 
 // CanvasBeaconUptime says "Beacon uptime"
 // in the language of msgs.
-func (msgs Messages) CanvasBeaconUptime() string { return msgs.text(878) }
+func (msgs Messages) CanvasBeaconUptime() string { return msgs.text(886) }
 
 // CanvasDotMatrixOneColumnA says "Dot matrix, one column a day"
 // in the language the app shows under cx.
@@ -22722,7 +22852,7 @@ func CanvasDotMatrixOneColumnA(cx *core.Scope) string { return For(cx).CanvasDot
 
 // CanvasDotMatrixOneColumnA says "Dot matrix, one column a day"
 // in the language of msgs.
-func (msgs Messages) CanvasDotMatrixOneColumnA() string { return msgs.text(879) }
+func (msgs Messages) CanvasDotMatrixOneColumnA() string { return msgs.text(887) }
 
 // Canvas3Incidents says "3 incidents"
 // in the language the app shows under cx.
@@ -22730,7 +22860,7 @@ func Canvas3Incidents(cx *core.Scope) string { return For(cx).Canvas3Incidents()
 
 // Canvas3Incidents says "3 incidents"
 // in the language of msgs.
-func (msgs Messages) Canvas3Incidents() string { return msgs.text(880) }
+func (msgs Messages) Canvas3Incidents() string { return msgs.text(888) }
 
 // CanvasUptimeMatrix says "Uptime matrix"
 // in the language the app shows under cx.
@@ -22738,7 +22868,7 @@ func CanvasUptimeMatrix(cx *core.Scope) string { return For(cx).CanvasUptimeMatr
 
 // CanvasUptimeMatrix says "Uptime matrix"
 // in the language of msgs.
-func (msgs Messages) CanvasUptimeMatrix() string { return msgs.text(881) }
+func (msgs Messages) CanvasUptimeMatrix() string { return msgs.text(889) }
 
 // CanvasLess says "Less"
 // in the language the app shows under cx.
@@ -22746,7 +22876,7 @@ func CanvasLess(cx *core.Scope) string { return For(cx).CanvasLess() }
 
 // CanvasLess says "Less"
 // in the language of msgs.
-func (msgs Messages) CanvasLess() string { return msgs.text(882) }
+func (msgs Messages) CanvasLess() string { return msgs.text(890) }
 
 // CanvasMore says "More"
 // in the language the app shows under cx.
@@ -22754,7 +22884,7 @@ func CanvasMore(cx *core.Scope) string { return For(cx).CanvasMore() }
 
 // CanvasMore says "More"
 // in the language of msgs.
-func (msgs Messages) CanvasMore() string { return msgs.text(883) }
+func (msgs Messages) CanvasMore() string { return msgs.text(891) }
 
 // CanvasIncident says "Incident"
 // in the language the app shows under cx.
@@ -22762,7 +22892,7 @@ func CanvasIncident(cx *core.Scope) string { return For(cx).CanvasIncident() }
 
 // CanvasIncident says "Incident"
 // in the language of msgs.
-func (msgs Messages) CanvasIncident() string { return msgs.text(884) }
+func (msgs Messages) CanvasIncident() string { return msgs.text(892) }
 
 // CanvasRouteLatency says "Route latency"
 // in the language the app shows under cx.
@@ -22770,7 +22900,7 @@ func CanvasRouteLatency(cx *core.Scope) string { return For(cx).CanvasRouteLaten
 
 // CanvasRouteLatency says "Route latency"
 // in the language of msgs.
-func (msgs Messages) CanvasRouteLatency() string { return msgs.text(885) }
+func (msgs Messages) CanvasRouteLatency() string { return msgs.text(893) }
 
 // CanvasDumbbellBeforeAfter says "Dumbbell, before → after"
 // in the language the app shows under cx.
@@ -22778,7 +22908,7 @@ func CanvasDumbbellBeforeAfter(cx *core.Scope) string { return For(cx).CanvasDum
 
 // CanvasDumbbellBeforeAfter says "Dumbbell, before → after"
 // in the language of msgs.
-func (msgs Messages) CanvasDumbbellBeforeAfter() string { return msgs.text(886) }
+func (msgs Messages) CanvasDumbbellBeforeAfter() string { return msgs.text(894) }
 
 // CanvasBefore says "Before"
 // in the language the app shows under cx.
@@ -22786,7 +22916,7 @@ func CanvasBefore(cx *core.Scope) string { return For(cx).CanvasBefore() }
 
 // CanvasBefore says "Before"
 // in the language of msgs.
-func (msgs Messages) CanvasBefore() string { return msgs.text(887) }
+func (msgs Messages) CanvasBefore() string { return msgs.text(895) }
 
 // CanvasAfter says "After"
 // in the language the app shows under cx.
@@ -22794,7 +22924,7 @@ func CanvasAfter(cx *core.Scope) string { return For(cx).CanvasAfter() }
 
 // CanvasAfter says "After"
 // in the language of msgs.
-func (msgs Messages) CanvasAfter() string { return msgs.text(888) }
+func (msgs Messages) CanvasAfter() string { return msgs.text(896) }
 
 // CanvasRegressed says "Regressed"
 // in the language the app shows under cx.
@@ -22802,7 +22932,7 @@ func CanvasRegressed(cx *core.Scope) string { return For(cx).CanvasRegressed() }
 
 // CanvasRegressed says "Regressed"
 // in the language of msgs.
-func (msgs Messages) CanvasRegressed() string { return msgs.text(889) }
+func (msgs Messages) CanvasRegressed() string { return msgs.text(897) }
 
 // CanvasTransforms says "Transforms"
 // in the language the app shows under cx.
@@ -22810,7 +22940,7 @@ func CanvasTransforms(cx *core.Scope) string { return For(cx).CanvasTransforms()
 
 // CanvasTransforms says "Transforms"
 // in the language of msgs.
-func (msgs Messages) CanvasTransforms() string { return msgs.text(890) }
+func (msgs Messages) CanvasTransforms() string { return msgs.text(898) }
 
 // CanvasTranslateRotateSaveRestore says "Translate · Rotate · Save / Restore"
 // in the language the app shows under cx.
@@ -22820,7 +22950,7 @@ func CanvasTranslateRotateSaveRestore(cx *core.Scope) string {
 
 // CanvasTranslateRotateSaveRestore says "Translate · Rotate · Save / Restore"
 // in the language of msgs.
-func (msgs Messages) CanvasTranslateRotateSaveRestore() string { return msgs.text(891) }
+func (msgs Messages) CanvasTranslateRotateSaveRestore() string { return msgs.text(899) }
 
 // CanvasClock says "Clock"
 // in the language the app shows under cx.
@@ -22828,7 +22958,7 @@ func CanvasClock(cx *core.Scope) string { return For(cx).CanvasClock() }
 
 // CanvasClock says "Clock"
 // in the language of msgs.
-func (msgs Messages) CanvasClock() string { return msgs.text(892) }
+func (msgs Messages) CanvasClock() string { return msgs.text(900) }
 
 // CanvasTicks says "Ticks"
 // in the language the app shows under cx.
@@ -22836,7 +22966,7 @@ func CanvasTicks(cx *core.Scope) string { return For(cx).CanvasTicks() }
 
 // CanvasTicks says "Ticks"
 // in the language of msgs.
-func (msgs Messages) CanvasTicks() string { return msgs.text(893) }
+func (msgs Messages) CanvasTicks() string { return msgs.text(901) }
 
 // Canvas60Rotations says "60 rotations"
 // in the language the app shows under cx.
@@ -22844,7 +22974,7 @@ func Canvas60Rotations(cx *core.Scope) string { return For(cx).Canvas60Rotations
 
 // Canvas60Rotations says "60 rotations"
 // in the language of msgs.
-func (msgs Messages) Canvas60Rotations() string { return msgs.text(894) }
+func (msgs Messages) Canvas60Rotations() string { return msgs.text(902) }
 
 // CanvasHands says "Hands"
 // in the language the app shows under cx.
@@ -22852,7 +22982,7 @@ func CanvasHands(cx *core.Scope) string { return For(cx).CanvasHands() }
 
 // CanvasHands says "Hands"
 // in the language of msgs.
-func (msgs Messages) CanvasHands() string { return msgs.text(895) }
+func (msgs Messages) CanvasHands() string { return msgs.text(903) }
 
 // CanvasSaveRestore says "Save, Restore"
 // in the language the app shows under cx.
@@ -22860,7 +22990,7 @@ func CanvasSaveRestore(cx *core.Scope) string { return For(cx).CanvasSaveRestore
 
 // CanvasSaveRestore says "Save, Restore"
 // in the language of msgs.
-func (msgs Messages) CanvasSaveRestore() string { return msgs.text(896) }
+func (msgs Messages) CanvasSaveRestore() string { return msgs.text(904) }
 
 // CanvasSecondHand says "Second hand"
 // in the language the app shows under cx.
@@ -22868,7 +22998,7 @@ func CanvasSecondHand(cx *core.Scope) string { return For(cx).CanvasSecondHand()
 
 // CanvasSecondHand says "Second hand"
 // in the language of msgs.
-func (msgs Messages) CanvasSecondHand() string { return msgs.text(897) }
+func (msgs Messages) CanvasSecondHand() string { return msgs.text(905) }
 
 // CanvasALoop says "A loop"
 // in the language the app shows under cx.
@@ -22876,7 +23006,7 @@ func CanvasALoop(cx *core.Scope) string { return For(cx).CanvasALoop() }
 
 // CanvasALoop says "A loop"
 // in the language of msgs.
-func (msgs Messages) CanvasALoop() string { return msgs.text(898) }
+func (msgs Messages) CanvasALoop() string { return msgs.text(906) }
 
 // CanvasPaths says "Paths"
 // in the language the app shows under cx.
@@ -22884,7 +23014,7 @@ func CanvasPaths(cx *core.Scope) string { return For(cx).CanvasPaths() }
 
 // CanvasPaths says "Paths"
 // in the language of msgs.
-func (msgs Messages) CanvasPaths() string { return msgs.text(899) }
+func (msgs Messages) CanvasPaths() string { return msgs.text(907) }
 
 // CanvasSvgPathDataParsedBy says "SVG path data, parsed by core"
 // in the language the app shows under cx.
@@ -22892,7 +23022,7 @@ func CanvasSvgPathDataParsedBy(cx *core.Scope) string { return For(cx).CanvasSvg
 
 // CanvasSvgPathDataParsedBy says "SVG path data, parsed by core"
 // in the language of msgs.
-func (msgs Messages) CanvasSvgPathDataParsedBy() string { return msgs.text(900) }
+func (msgs Messages) CanvasSvgPathDataParsedBy() string { return msgs.text(908) }
 
 // CanvasCompositing says "Compositing"
 // in the language the app shows under cx.
@@ -22900,7 +23030,7 @@ func CanvasCompositing(cx *core.Scope) string { return For(cx).CanvasCompositing
 
 // CanvasCompositing says "Compositing"
 // in the language of msgs.
-func (msgs Messages) CanvasCompositing() string { return msgs.text(901) }
+func (msgs Messages) CanvasCompositing() string { return msgs.text(909) }
 
 // CanvasClipShadowDestinationoutDashes says "Clip, shadow, DestinationOut, dashes"
 // in the language the app shows under cx.
@@ -22910,7 +23040,7 @@ func CanvasClipShadowDestinationoutDashes(cx *core.Scope) string {
 
 // CanvasClipShadowDestinationoutDashes says "Clip, shadow, DestinationOut, dashes"
 // in the language of msgs.
-func (msgs Messages) CanvasClipShadowDestinationoutDashes() string { return msgs.text(902) }
+func (msgs Messages) CanvasClipShadowDestinationoutDashes() string { return msgs.text(910) }
 
 // CanvasClippedImage says "Clipped image"
 // in the language the app shows under cx.
@@ -22918,7 +23048,7 @@ func CanvasClippedImage(cx *core.Scope) string { return For(cx).CanvasClippedIma
 
 // CanvasClippedImage says "Clipped image"
 // in the language of msgs.
-func (msgs Messages) CanvasClippedImage() string { return msgs.text(903) }
+func (msgs Messages) CanvasClippedImage() string { return msgs.text(911) }
 
 // CanvasCutOut says "Cut-out"
 // in the language the app shows under cx.
@@ -22926,7 +23056,7 @@ func CanvasCutOut(cx *core.Scope) string { return For(cx).CanvasCutOut() }
 
 // CanvasCutOut says "Cut-out"
 // in the language of msgs.
-func (msgs Messages) CanvasCutOut() string { return msgs.text(904) }
+func (msgs Messages) CanvasCutOut() string { return msgs.text(912) }
 
 // CanvasRadialGradient says "Radial gradient"
 // in the language the app shows under cx.
@@ -22934,7 +23064,7 @@ func CanvasRadialGradient(cx *core.Scope) string { return For(cx).CanvasRadialGr
 
 // CanvasRadialGradient says "Radial gradient"
 // in the language of msgs.
-func (msgs Messages) CanvasRadialGradient() string { return msgs.text(905) }
+func (msgs Messages) CanvasRadialGradient() string { return msgs.text(913) }
 
 // CanvasDrawHere says "Draw here"
 // in the language the app shows under cx.
@@ -22942,7 +23072,7 @@ func CanvasDrawHere(cx *core.Scope) string { return For(cx).CanvasDrawHere() }
 
 // CanvasDrawHere says "Draw here"
 // in the language of msgs.
-func (msgs Messages) CanvasDrawHere() string { return msgs.text(906) }
+func (msgs Messages) CanvasDrawHere() string { return msgs.text(914) }
 
 // CanvasSketch says "Sketch"
 // in the language the app shows under cx.
@@ -22950,7 +23080,7 @@ func CanvasSketch(cx *core.Scope) string { return For(cx).CanvasSketch() }
 
 // CanvasSketch says "Sketch"
 // in the language of msgs.
-func (msgs Messages) CanvasSketch() string { return msgs.text(907) }
+func (msgs Messages) CanvasSketch() string { return msgs.text(915) }
 
 // CanvasTouchDrawFromTheEngine says "Touch → draw from the engine"
 // in the language the app shows under cx.
@@ -22960,7 +23090,7 @@ func CanvasTouchDrawFromTheEngine(cx *core.Scope) string {
 
 // CanvasTouchDrawFromTheEngine says "Touch → draw from the engine"
 // in the language of msgs.
-func (msgs Messages) CanvasTouchDrawFromTheEngine() string { return msgs.text(908) }
+func (msgs Messages) CanvasTouchDrawFromTheEngine() string { return msgs.text(916) }
 
 // CanvasDragDrawFromTheEngine says "Drag → draw from the engine"
 // in the language the app shows under cx.
@@ -22968,7 +23098,7 @@ func CanvasDragDrawFromTheEngine(cx *core.Scope) string { return For(cx).CanvasD
 
 // CanvasDragDrawFromTheEngine says "Drag → draw from the engine"
 // in the language of msgs.
-func (msgs Messages) CanvasDragDrawFromTheEngine() string { return msgs.text(909) }
+func (msgs Messages) CanvasDragDrawFromTheEngine() string { return msgs.text(917) }
 
 // CanvasClear says "Clear"
 // in the language the app shows under cx.
@@ -22976,7 +23106,7 @@ func CanvasClear(cx *core.Scope) string { return For(cx).CanvasClear() }
 
 // CanvasClear says "Clear"
 // in the language of msgs.
-func (msgs Messages) CanvasClear() string { return msgs.text(910) }
+func (msgs Messages) CanvasClear() string { return msgs.text(918) }
 
 // CanvasSketchPad says "Sketch pad"
 // in the language the app shows under cx.
@@ -22984,7 +23114,7 @@ func CanvasSketchPad(cx *core.Scope) string { return For(cx).CanvasSketchPad() }
 
 // CanvasSketchPad says "Sketch pad"
 // in the language of msgs.
-func (msgs Messages) CanvasSketchPad() string { return msgs.text(911) }
+func (msgs Messages) CanvasSketchPad() string { return msgs.text(919) }
 
 // CanvasStrokes says "Strokes"
 // in the language the app shows under cx.
@@ -22992,7 +23122,7 @@ func CanvasStrokes(cx *core.Scope) string { return For(cx).CanvasStrokes() }
 
 // CanvasStrokes says "Strokes"
 // in the language of msgs.
-func (msgs Messages) CanvasStrokes() string { return msgs.text(912) }
+func (msgs Messages) CanvasStrokes() string { return msgs.text(920) }
 
 // CanvasNodesAndHitTests says "Nodes and hit tests"
 // in the language the app shows under cx.
@@ -23000,7 +23130,7 @@ func CanvasNodesAndHitTests(cx *core.Scope) string { return For(cx).CanvasNodesA
 
 // CanvasNodesAndHitTests says "Nodes and hit tests"
 // in the language of msgs.
-func (msgs Messages) CanvasNodesAndHitTests() string { return msgs.text(913) }
+func (msgs Messages) CanvasNodesAndHitTests() string { return msgs.text(921) }
 
 // CanvasBarsScreenReadersSeeA says "Bars screen readers see; a press selects the one PathContains finds"
 // in the language the app shows under cx.
@@ -23008,7 +23138,7 @@ func CanvasBarsScreenReadersSeeA(cx *core.Scope) string { return For(cx).CanvasB
 
 // CanvasBarsScreenReadersSeeA says "Bars screen readers see; a press selects the one PathContains finds"
 // in the language of msgs.
-func (msgs Messages) CanvasBarsScreenReadersSeeA() string { return msgs.text(914) }
+func (msgs Messages) CanvasBarsScreenReadersSeeA() string { return msgs.text(922) }
 
 // CanvasSelectableBars says "Selectable bars"
 // in the language the app shows under cx.
@@ -23016,7 +23146,7 @@ func CanvasSelectableBars(cx *core.Scope) string { return For(cx).CanvasSelectab
 
 // CanvasSelectableBars says "Selectable bars"
 // in the language of msgs.
-func (msgs Messages) CanvasSelectableBars() string { return msgs.text(915) }
+func (msgs Messages) CanvasSelectableBars() string { return msgs.text(923) }
 
 // CanvasSelected says "Selected"
 // in the language the app shows under cx.
@@ -23024,7 +23154,7 @@ func CanvasSelected(cx *core.Scope) string { return For(cx).CanvasSelected() }
 
 // CanvasSelected says "Selected"
 // in the language of msgs.
-func (msgs Messages) CanvasSelected() string { return msgs.text(916) }
+func (msgs Messages) CanvasSelected() string { return msgs.text(924) }
 
 // CanvasIdle says "Idle"
 // in the language the app shows under cx.
@@ -23032,7 +23162,7 @@ func CanvasIdle(cx *core.Scope) string { return For(cx).CanvasIdle() }
 
 // CanvasIdle says "Idle"
 // in the language of msgs.
-func (msgs Messages) CanvasIdle() string { return msgs.text(917) }
+func (msgs Messages) CanvasIdle() string { return msgs.text(925) }
 
 // CanvasCruise says "Cruise"
 // in the language the app shows under cx.
@@ -23040,7 +23170,7 @@ func CanvasCruise(cx *core.Scope) string { return For(cx).CanvasCruise() }
 
 // CanvasCruise says "Cruise"
 // in the language of msgs.
-func (msgs Messages) CanvasCruise() string { return msgs.text(918) }
+func (msgs Messages) CanvasCruise() string { return msgs.text(926) }
 
 // CanvasPeak says "Peak"
 // in the language the app shows under cx.
@@ -23048,7 +23178,7 @@ func CanvasPeak(cx *core.Scope) string { return For(cx).CanvasPeak() }
 
 // CanvasPeak says "Peak"
 // in the language of msgs.
-func (msgs Messages) CanvasPeak() string { return msgs.text(919) }
+func (msgs Messages) CanvasPeak() string { return msgs.text(927) }
 
 // CanvasTue says "Tue"
 // in the language the app shows under cx.
@@ -23056,7 +23186,7 @@ func CanvasTue(cx *core.Scope) string { return For(cx).CanvasTue() }
 
 // CanvasTue says "Tue"
 // in the language of msgs.
-func (msgs Messages) CanvasTue() string { return msgs.text(920) }
+func (msgs Messages) CanvasTue() string { return msgs.text(928) }
 
 // CanvasWed says "Wed"
 // in the language the app shows under cx.
@@ -23064,7 +23194,7 @@ func CanvasWed(cx *core.Scope) string { return For(cx).CanvasWed() }
 
 // CanvasWed says "Wed"
 // in the language of msgs.
-func (msgs Messages) CanvasWed() string { return msgs.text(921) }
+func (msgs Messages) CanvasWed() string { return msgs.text(929) }
 
 // CanvasThu says "Thu"
 // in the language the app shows under cx.
@@ -23072,7 +23202,7 @@ func CanvasThu(cx *core.Scope) string { return For(cx).CanvasThu() }
 
 // CanvasThu says "Thu"
 // in the language of msgs.
-func (msgs Messages) CanvasThu() string { return msgs.text(922) }
+func (msgs Messages) CanvasThu() string { return msgs.text(930) }
 
 // CanvasFri says "Fri"
 // in the language the app shows under cx.
@@ -23080,7 +23210,7 @@ func CanvasFri(cx *core.Scope) string { return For(cx).CanvasFri() }
 
 // CanvasFri says "Fri"
 // in the language of msgs.
-func (msgs Messages) CanvasFri() string { return msgs.text(923) }
+func (msgs Messages) CanvasFri() string { return msgs.text(931) }
 
 // CanvasSat says "Sat"
 // in the language the app shows under cx.
@@ -23088,7 +23218,7 @@ func CanvasSat(cx *core.Scope) string { return For(cx).CanvasSat() }
 
 // CanvasSat says "Sat"
 // in the language of msgs.
-func (msgs Messages) CanvasSat() string { return msgs.text(924) }
+func (msgs Messages) CanvasSat() string { return msgs.text(932) }
 
 // CanvasSun says "Sun"
 // in the language the app shows under cx.
@@ -23096,7 +23226,7 @@ func CanvasSun(cx *core.Scope) string { return For(cx).CanvasSun() }
 
 // CanvasSun says "Sun"
 // in the language of msgs.
-func (msgs Messages) CanvasSun() string { return msgs.text(925) }
+func (msgs Messages) CanvasSun() string { return msgs.text(933) }
 
 // CanvasHeart says "Heart"
 // in the language the app shows under cx.
@@ -23104,7 +23234,7 @@ func CanvasHeart(cx *core.Scope) string { return For(cx).CanvasHeart() }
 
 // CanvasHeart says "Heart"
 // in the language of msgs.
-func (msgs Messages) CanvasHeart() string { return msgs.text(926) }
+func (msgs Messages) CanvasHeart() string { return msgs.text(934) }
 
 // CanvasStar says "Star"
 // in the language the app shows under cx.
@@ -23112,7 +23242,7 @@ func CanvasStar(cx *core.Scope) string { return For(cx).CanvasStar() }
 
 // CanvasStar says "Star"
 // in the language of msgs.
-func (msgs Messages) CanvasStar() string { return msgs.text(927) }
+func (msgs Messages) CanvasStar() string { return msgs.text(935) }
 
 // CanvasBolt says "Bolt"
 // in the language the app shows under cx.
@@ -23120,7 +23250,7 @@ func CanvasBolt(cx *core.Scope) string { return For(cx).CanvasBolt() }
 
 // CanvasBolt says "Bolt"
 // in the language of msgs.
-func (msgs Messages) CanvasBolt() string { return msgs.text(928) }
+func (msgs Messages) CanvasBolt() string { return msgs.text(936) }
 
 // CanvasCheck says "Check"
 // in the language the app shows under cx.
@@ -23128,7 +23258,7 @@ func CanvasCheck(cx *core.Scope) string { return For(cx).CanvasCheck() }
 
 // CanvasCheck says "Check"
 // in the language of msgs.
-func (msgs Messages) CanvasCheck() string { return msgs.text(929) }
+func (msgs Messages) CanvasCheck() string { return msgs.text(937) }
 
 // CanvasAvg says "avg {mean, number, integer}"
 // in the language the app shows under cx.
@@ -23271,7 +23401,7 @@ func TableColumn(cx *core.Scope) string { return For(cx).TableColumn() }
 
 // TableColumn says "Column "
 // in the language of msgs.
-func (msgs Messages) TableColumn() string { return msgs.text(930) }
+func (msgs Messages) TableColumn() string { return msgs.text(938) }
 
 // TableNothingSelected says "Nothing selected"
 // in the language the app shows under cx.
@@ -23279,7 +23409,7 @@ func TableNothingSelected(cx *core.Scope) string { return For(cx).TableNothingSe
 
 // TableNothingSelected says "Nothing selected"
 // in the language of msgs.
-func (msgs Messages) TableNothingSelected() string { return msgs.text(931) }
+func (msgs Messages) TableNothingSelected() string { return msgs.text(939) }
 
 // TableOn says " on"
 // in the language the app shows under cx.
@@ -23287,7 +23417,7 @@ func TableOn(cx *core.Scope) string { return For(cx).TableOn() }
 
 // TableOn says " on"
 // in the language of msgs.
-func (msgs Messages) TableOn() string { return msgs.text(932) }
+func (msgs Messages) TableOn() string { return msgs.text(940) }
 
 // TableOff says " off"
 // in the language the app shows under cx.
@@ -23295,7 +23425,7 @@ func TableOff(cx *core.Scope) string { return For(cx).TableOff() }
 
 // TableOff says " off"
 // in the language of msgs.
-func (msgs Messages) TableOff() string { return msgs.text(933) }
+func (msgs Messages) TableOff() string { return msgs.text(941) }
 
 // TableRows says "Rows"
 // in the language the app shows under cx.
@@ -23303,7 +23433,7 @@ func TableRows(cx *core.Scope) string { return For(cx).TableRows() }
 
 // TableRows says "Rows"
 // in the language of msgs.
-func (msgs Messages) TableRows() string { return msgs.text(934) }
+func (msgs Messages) TableRows() string { return msgs.text(942) }
 
 // TableCells says "Cells"
 // in the language the app shows under cx.
@@ -23311,7 +23441,7 @@ func TableCells(cx *core.Scope) string { return For(cx).TableCells() }
 
 // TableCells says "Cells"
 // in the language of msgs.
-func (msgs Messages) TableCells() string { return msgs.text(935) }
+func (msgs Messages) TableCells() string { return msgs.text(943) }
 
 // TableToggleLiveUpdates says "Toggle live updates"
 // in the language the app shows under cx.
@@ -23319,7 +23449,7 @@ func TableToggleLiveUpdates(cx *core.Scope) string { return For(cx).TableToggleL
 
 // TableToggleLiveUpdates says "Toggle live updates"
 // in the language of msgs.
-func (msgs Messages) TableToggleLiveUpdates() string { return msgs.text(936) }
+func (msgs Messages) TableToggleLiveUpdates() string { return msgs.text(944) }
 
 // TableLive says "Live"
 // in the language the app shows under cx.
@@ -23327,7 +23457,7 @@ func TableLive(cx *core.Scope) string { return For(cx).TableLive() }
 
 // TableLive says "Live"
 // in the language of msgs.
-func (msgs Messages) TableLive() string { return msgs.text(937) }
+func (msgs Messages) TableLive() string { return msgs.text(945) }
 
 // TableToggleStripes says "Toggle stripes"
 // in the language the app shows under cx.
@@ -23335,7 +23465,7 @@ func TableToggleStripes(cx *core.Scope) string { return For(cx).TableToggleStrip
 
 // TableToggleStripes says "Toggle stripes"
 // in the language of msgs.
-func (msgs Messages) TableToggleStripes() string { return msgs.text(938) }
+func (msgs Messages) TableToggleStripes() string { return msgs.text(946) }
 
 // TableStripes says "Stripes"
 // in the language the app shows under cx.
@@ -23343,7 +23473,7 @@ func TableStripes(cx *core.Scope) string { return For(cx).TableStripes() }
 
 // TableStripes says "Stripes"
 // in the language of msgs.
-func (msgs Messages) TableStripes() string { return msgs.text(939) }
+func (msgs Messages) TableStripes() string { return msgs.text(947) }
 
 // TableGoToRow500000 says "Go to row 500000"
 // in the language the app shows under cx.
@@ -23351,7 +23481,7 @@ func TableGoToRow500000(cx *core.Scope) string { return For(cx).TableGoToRow5000
 
 // TableGoToRow500000 says "Go to row 500000"
 // in the language of msgs.
-func (msgs Messages) TableGoToRow500000() string { return msgs.text(940) }
+func (msgs Messages) TableGoToRow500000() string { return msgs.text(948) }
 
 // TableRow500000 says "Row 500,000"
 // in the language the app shows under cx.
@@ -23359,7 +23489,7 @@ func TableRow500000(cx *core.Scope) string { return For(cx).TableRow500000() }
 
 // TableRow500000 says "Row 500,000"
 // in the language of msgs.
-func (msgs Messages) TableRow500000() string { return msgs.text(941) }
+func (msgs Messages) TableRow500000() string { return msgs.text(949) }
 
 // TableGoToIndicator30 says "Go to Indicator 30"
 // in the language the app shows under cx.
@@ -23367,7 +23497,7 @@ func TableGoToIndicator30(cx *core.Scope) string { return For(cx).TableGoToIndic
 
 // TableGoToIndicator30 says "Go to Indicator 30"
 // in the language of msgs.
-func (msgs Messages) TableGoToIndicator30() string { return msgs.text(942) }
+func (msgs Messages) TableGoToIndicator30() string { return msgs.text(950) }
 
 // TableIndicator30 says "Indicator 30"
 // in the language the app shows under cx.
@@ -23375,7 +23505,7 @@ func TableIndicator30(cx *core.Scope) string { return For(cx).TableIndicator30()
 
 // TableIndicator30 says "Indicator 30"
 // in the language of msgs.
-func (msgs Messages) TableIndicator30() string { return msgs.text(943) }
+func (msgs Messages) TableIndicator30() string { return msgs.text(951) }
 
 // TableStocks says "Stocks"
 // in the language the app shows under cx.
@@ -23383,7 +23513,7 @@ func TableStocks(cx *core.Scope) string { return For(cx).TableStocks() }
 
 // TableStocks says "Stocks"
 // in the language of msgs.
-func (msgs Messages) TableStocks() string { return msgs.text(944) }
+func (msgs Messages) TableStocks() string { return msgs.text(952) }
 
 // TablePaid says "Paid"
 // in the language the app shows under cx.
@@ -23391,7 +23521,7 @@ func TablePaid(cx *core.Scope) string { return For(cx).TablePaid() }
 
 // TablePaid says "Paid"
 // in the language of msgs.
-func (msgs Messages) TablePaid() string { return msgs.text(945) }
+func (msgs Messages) TablePaid() string { return msgs.text(953) }
 
 // TableCard says "Card"
 // in the language the app shows under cx.
@@ -23399,7 +23529,7 @@ func TableCard(cx *core.Scope) string { return For(cx).TableCard() }
 
 // TableCard says "Card"
 // in the language of msgs.
-func (msgs Messages) TableCard() string { return msgs.text(946) }
+func (msgs Messages) TableCard() string { return msgs.text(954) }
 
 // TablePending says "Pending"
 // in the language the app shows under cx.
@@ -23407,7 +23537,7 @@ func TablePending(cx *core.Scope) string { return For(cx).TablePending() }
 
 // TablePending says "Pending"
 // in the language of msgs.
-func (msgs Messages) TablePending() string { return msgs.text(947) }
+func (msgs Messages) TablePending() string { return msgs.text(955) }
 
 // TableTransfer says "Transfer"
 // in the language the app shows under cx.
@@ -23415,7 +23545,7 @@ func TableTransfer(cx *core.Scope) string { return For(cx).TableTransfer() }
 
 // TableTransfer says "Transfer"
 // in the language of msgs.
-func (msgs Messages) TableTransfer() string { return msgs.text(948) }
+func (msgs Messages) TableTransfer() string { return msgs.text(956) }
 
 // TableUnpaid says "Unpaid"
 // in the language the app shows under cx.
@@ -23423,7 +23553,7 @@ func TableUnpaid(cx *core.Scope) string { return For(cx).TableUnpaid() }
 
 // TableUnpaid says "Unpaid"
 // in the language of msgs.
-func (msgs Messages) TableUnpaid() string { return msgs.text(949) }
+func (msgs Messages) TableUnpaid() string { return msgs.text(957) }
 
 // TableCash says "Cash"
 // in the language the app shows under cx.
@@ -23431,7 +23561,7 @@ func TableCash(cx *core.Scope) string { return For(cx).TableCash() }
 
 // TableCash says "Cash"
 // in the language of msgs.
-func (msgs Messages) TableCash() string { return msgs.text(950) }
+func (msgs Messages) TableCash() string { return msgs.text(958) }
 
 // TableInvoice says "Invoice"
 // in the language the app shows under cx.
@@ -23439,7 +23569,7 @@ func TableInvoice(cx *core.Scope) string { return For(cx).TableInvoice() }
 
 // TableInvoice says "Invoice"
 // in the language of msgs.
-func (msgs Messages) TableInvoice() string { return msgs.text(951) }
+func (msgs Messages) TableInvoice() string { return msgs.text(959) }
 
 // TableStatus says "Status"
 // in the language the app shows under cx.
@@ -23447,7 +23577,7 @@ func TableStatus(cx *core.Scope) string { return For(cx).TableStatus() }
 
 // TableStatus says "Status"
 // in the language of msgs.
-func (msgs Messages) TableStatus() string { return msgs.text(952) }
+func (msgs Messages) TableStatus() string { return msgs.text(960) }
 
 // TableMethod says "Method"
 // in the language the app shows under cx.
@@ -23455,7 +23585,7 @@ func TableMethod(cx *core.Scope) string { return For(cx).TableMethod() }
 
 // TableMethod says "Method"
 // in the language of msgs.
-func (msgs Messages) TableMethod() string { return msgs.text(953) }
+func (msgs Messages) TableMethod() string { return msgs.text(961) }
 
 // TableAmount says "Amount"
 // in the language the app shows under cx.
@@ -23463,7 +23593,7 @@ func TableAmount(cx *core.Scope) string { return For(cx).TableAmount() }
 
 // TableAmount says "Amount"
 // in the language of msgs.
-func (msgs Messages) TableAmount() string { return msgs.text(954) }
+func (msgs Messages) TableAmount() string { return msgs.text(962) }
 
 // TableTable says "Table"
 // in the language the app shows under cx.
@@ -23471,7 +23601,7 @@ func TableTable(cx *core.Scope) string { return For(cx).TableTable() }
 
 // TableTable says "Table"
 // in the language of msgs.
-func (msgs Messages) TableTable() string { return msgs.text(955) }
+func (msgs Messages) TableTable() string { return msgs.text(963) }
 
 // TableAFewRowsTheApp says "A few rows the app writes out, with a table's roles"
 // in the language the app shows under cx.
@@ -23479,7 +23609,7 @@ func TableAFewRowsTheApp(cx *core.Scope) string { return For(cx).TableAFewRowsTh
 
 // TableAFewRowsTheApp says "A few rows the app writes out, with a table's roles"
 // in the language of msgs.
-func (msgs Messages) TableAFewRowsTheApp() string { return msgs.text(956) }
+func (msgs Messages) TableAFewRowsTheApp() string { return msgs.text(964) }
 
 // TableRecentInvoices says "Recent invoices"
 // in the language the app shows under cx.
@@ -23487,7 +23617,7 @@ func TableRecentInvoices(cx *core.Scope) string { return For(cx).TableRecentInvo
 
 // TableRecentInvoices says "Recent invoices"
 // in the language of msgs.
-func (msgs Messages) TableRecentInvoices() string { return msgs.text(957) }
+func (msgs Messages) TableRecentInvoices() string { return msgs.text(965) }
 
 // TableTotal says "Total"
 // in the language the app shows under cx.
@@ -23495,7 +23625,7 @@ func TableTotal(cx *core.Scope) string { return For(cx).TableTotal() }
 
 // TableTotal says "Total"
 // in the language of msgs.
-func (msgs Messages) TableTotal() string { return msgs.text(958) }
+func (msgs Messages) TableTotal() string { return msgs.text(966) }
 
 // TableAListOfYourRecent says "A list of your recent invoices."
 // in the language the app shows under cx.
@@ -23503,7 +23633,7 @@ func TableAListOfYourRecent(cx *core.Scope) string { return For(cx).TableAListOf
 
 // TableAListOfYourRecent says "A list of your recent invoices."
 // in the language of msgs.
-func (msgs Messages) TableAListOfYourRecent() string { return msgs.text(959) }
+func (msgs Messages) TableAListOfYourRecent() string { return msgs.text(967) }
 
 // TableId says "ID"
 // in the language the app shows under cx.
@@ -23511,7 +23641,7 @@ func TableId(cx *core.Scope) string { return For(cx).TableId() }
 
 // TableId says "ID"
 // in the language of msgs.
-func (msgs Messages) TableId() string { return msgs.text(960) }
+func (msgs Messages) TableId() string { return msgs.text(968) }
 
 // TableSymbol says "Symbol"
 // in the language the app shows under cx.
@@ -23519,7 +23649,7 @@ func TableSymbol(cx *core.Scope) string { return For(cx).TableSymbol() }
 
 // TableSymbol says "Symbol"
 // in the language of msgs.
-func (msgs Messages) TableSymbol() string { return msgs.text(961) }
+func (msgs Messages) TableSymbol() string { return msgs.text(969) }
 
 // TableName says "Name"
 // in the language the app shows under cx.
@@ -23527,7 +23657,7 @@ func TableName(cx *core.Scope) string { return For(cx).TableName() }
 
 // TableName says "Name"
 // in the language of msgs.
-func (msgs Messages) TableName() string { return msgs.text(962) }
+func (msgs Messages) TableName() string { return msgs.text(970) }
 
 // TableMarket says "Market"
 // in the language the app shows under cx.
@@ -23535,7 +23665,7 @@ func TableMarket(cx *core.Scope) string { return For(cx).TableMarket() }
 
 // TableMarket says "Market"
 // in the language of msgs.
-func (msgs Messages) TableMarket() string { return msgs.text(963) }
+func (msgs Messages) TableMarket() string { return msgs.text(971) }
 
 // TablePrice says "Price"
 // in the language the app shows under cx.
@@ -23543,7 +23673,7 @@ func TablePrice(cx *core.Scope) string { return For(cx).TablePrice() }
 
 // TablePrice says "Price"
 // in the language of msgs.
-func (msgs Messages) TablePrice() string { return msgs.text(964) }
+func (msgs Messages) TablePrice() string { return msgs.text(972) }
 
 // TableChg says "Chg"
 // in the language the app shows under cx.
@@ -23551,7 +23681,7 @@ func TableChg(cx *core.Scope) string { return For(cx).TableChg() }
 
 // TableChg says "Chg"
 // in the language of msgs.
-func (msgs Messages) TableChg() string { return msgs.text(965) }
+func (msgs Messages) TableChg() string { return msgs.text(973) }
 
 // TableChg2 says "Chg%"
 // in the language the app shows under cx.
@@ -23559,7 +23689,7 @@ func TableChg2(cx *core.Scope) string { return For(cx).TableChg2() }
 
 // TableChg2 says "Chg%"
 // in the language of msgs.
-func (msgs Messages) TableChg2() string { return msgs.text(966) }
+func (msgs Messages) TableChg2() string { return msgs.text(974) }
 
 // TableVolume says "Volume"
 // in the language the app shows under cx.
@@ -23567,7 +23697,7 @@ func TableVolume(cx *core.Scope) string { return For(cx).TableVolume() }
 
 // TableVolume says "Volume"
 // in the language of msgs.
-func (msgs Messages) TableVolume() string { return msgs.text(967) }
+func (msgs Messages) TableVolume() string { return msgs.text(975) }
 
 // TableTurnover says "Turnover"
 // in the language the app shows under cx.
@@ -23575,7 +23705,7 @@ func TableTurnover(cx *core.Scope) string { return For(cx).TableTurnover() }
 
 // TableTurnover says "Turnover"
 // in the language of msgs.
-func (msgs Messages) TableTurnover() string { return msgs.text(968) }
+func (msgs Messages) TableTurnover() string { return msgs.text(976) }
 
 // TableMarketCap says "Market Cap"
 // in the language the app shows under cx.
@@ -23583,7 +23713,7 @@ func TableMarketCap(cx *core.Scope) string { return For(cx).TableMarketCap() }
 
 // TableMarketCap says "Market Cap"
 // in the language of msgs.
-func (msgs Messages) TableMarketCap() string { return msgs.text(969) }
+func (msgs Messages) TableMarketCap() string { return msgs.text(977) }
 
 // TableTtm says "TTM"
 // in the language the app shows under cx.
@@ -23591,7 +23721,7 @@ func TableTtm(cx *core.Scope) string { return For(cx).TableTtm() }
 
 // TableTtm says "TTM"
 // in the language of msgs.
-func (msgs Messages) TableTtm() string { return msgs.text(970) }
+func (msgs Messages) TableTtm() string { return msgs.text(978) }
 
 // TableBid says "Bid"
 // in the language the app shows under cx.
@@ -23599,7 +23729,7 @@ func TableBid(cx *core.Scope) string { return For(cx).TableBid() }
 
 // TableBid says "Bid"
 // in the language of msgs.
-func (msgs Messages) TableBid() string { return msgs.text(971) }
+func (msgs Messages) TableBid() string { return msgs.text(979) }
 
 // TableBidVol says "Bid Vol"
 // in the language the app shows under cx.
@@ -23607,7 +23737,7 @@ func TableBidVol(cx *core.Scope) string { return For(cx).TableBidVol() }
 
 // TableBidVol says "Bid Vol"
 // in the language of msgs.
-func (msgs Messages) TableBidVol() string { return msgs.text(972) }
+func (msgs Messages) TableBidVol() string { return msgs.text(980) }
 
 // TableAsk says "Ask"
 // in the language the app shows under cx.
@@ -23615,7 +23745,7 @@ func TableAsk(cx *core.Scope) string { return For(cx).TableAsk() }
 
 // TableAsk says "Ask"
 // in the language of msgs.
-func (msgs Messages) TableAsk() string { return msgs.text(973) }
+func (msgs Messages) TableAsk() string { return msgs.text(981) }
 
 // TableAskVol says "Ask Vol"
 // in the language the app shows under cx.
@@ -23623,7 +23753,7 @@ func TableAskVol(cx *core.Scope) string { return For(cx).TableAskVol() }
 
 // TableAskVol says "Ask Vol"
 // in the language of msgs.
-func (msgs Messages) TableAskVol() string { return msgs.text(974) }
+func (msgs Messages) TableAskVol() string { return msgs.text(982) }
 
 // TableOpen says "Open"
 // in the language the app shows under cx.
@@ -23631,7 +23761,7 @@ func TableOpen(cx *core.Scope) string { return For(cx).TableOpen() }
 
 // TableOpen says "Open"
 // in the language of msgs.
-func (msgs Messages) TableOpen() string { return msgs.text(975) }
+func (msgs Messages) TableOpen() string { return msgs.text(983) }
 
 // TablePrevClose says "Prev Close"
 // in the language the app shows under cx.
@@ -23639,7 +23769,7 @@ func TablePrevClose(cx *core.Scope) string { return For(cx).TablePrevClose() }
 
 // TablePrevClose says "Prev Close"
 // in the language of msgs.
-func (msgs Messages) TablePrevClose() string { return msgs.text(976) }
+func (msgs Messages) TablePrevClose() string { return msgs.text(984) }
 
 // TableHigh says "High"
 // in the language the app shows under cx.
@@ -23647,7 +23777,7 @@ func TableHigh(cx *core.Scope) string { return For(cx).TableHigh() }
 
 // TableHigh says "High"
 // in the language of msgs.
-func (msgs Messages) TableHigh() string { return msgs.text(977) }
+func (msgs Messages) TableHigh() string { return msgs.text(985) }
 
 // TableLow says "Low"
 // in the language the app shows under cx.
@@ -23655,7 +23785,7 @@ func TableLow(cx *core.Scope) string { return For(cx).TableLow() }
 
 // TableLow says "Low"
 // in the language of msgs.
-func (msgs Messages) TableLow() string { return msgs.text(978) }
+func (msgs Messages) TableLow() string { return msgs.text(986) }
 
 // TableBidAsk says "Bid/Ask"
 // in the language the app shows under cx.
@@ -23663,7 +23793,7 @@ func TableBidAsk(cx *core.Scope) string { return For(cx).TableBidAsk() }
 
 // TableBidAsk says "Bid/Ask"
 // in the language of msgs.
-func (msgs Messages) TableBidAsk() string { return msgs.text(979) }
+func (msgs Messages) TableBidAsk() string { return msgs.text(987) }
 
 // Table5mRanking says "5m Ranking"
 // in the language the app shows under cx.
@@ -23671,7 +23801,7 @@ func Table5mRanking(cx *core.Scope) string { return For(cx).Table5mRanking() }
 
 // Table5mRanking says "5m Ranking"
 // in the language of msgs.
-func (msgs Messages) Table5mRanking() string { return msgs.text(980) }
+func (msgs Messages) Table5mRanking() string { return msgs.text(988) }
 
 // TableIndicator says "Indicator {n, number}"
 // in the language the app shows under cx.
@@ -23816,7 +23946,7 @@ func EditorLn1Col1(cx *core.Scope) string { return For(cx).EditorLn1Col1() }
 
 // EditorLn1Col1 says "Ln 1, Col 1"
 // in the language of msgs.
-func (msgs Messages) EditorLn1Col1() string { return msgs.text(981) }
+func (msgs Messages) EditorLn1Col1() string { return msgs.text(989) }
 
 // EditorInvalidPattern says "Invalid pattern"
 // in the language the app shows under cx.
@@ -23824,7 +23954,7 @@ func EditorInvalidPattern(cx *core.Scope) string { return For(cx).EditorInvalidP
 
 // EditorInvalidPattern says "Invalid pattern"
 // in the language of msgs.
-func (msgs Messages) EditorInvalidPattern() string { return msgs.text(982) }
+func (msgs Messages) EditorInvalidPattern() string { return msgs.text(990) }
 
 // EditorNoResults says "No results"
 // in the language the app shows under cx.
@@ -23832,7 +23962,7 @@ func EditorNoResults(cx *core.Scope) string { return For(cx).EditorNoResults() }
 
 // EditorNoResults says "No results"
 // in the language of msgs.
-func (msgs Messages) EditorNoResults() string { return msgs.text(983) }
+func (msgs Messages) EditorNoResults() string { return msgs.text(991) }
 
 // EditorNoDefinitionFound says "No definition found"
 // in the language the app shows under cx.
@@ -23840,7 +23970,7 @@ func EditorNoDefinitionFound(cx *core.Scope) string { return For(cx).EditorNoDef
 
 // EditorNoDefinitionFound says "No definition found"
 // in the language of msgs.
-func (msgs Messages) EditorNoDefinitionFound() string { return msgs.text(984) }
+func (msgs Messages) EditorNoDefinitionFound() string { return msgs.text(992) }
 
 // EditorGoToDefinition says "Go to Definition"
 // in the language the app shows under cx.
@@ -23848,7 +23978,7 @@ func EditorGoToDefinition(cx *core.Scope) string { return For(cx).EditorGoToDefi
 
 // EditorGoToDefinition says "Go to Definition"
 // in the language of msgs.
-func (msgs Messages) EditorGoToDefinition() string { return msgs.text(985) }
+func (msgs Messages) EditorGoToDefinition() string { return msgs.text(993) }
 
 // EditorCut says "Cut"
 // in the language the app shows under cx.
@@ -23856,7 +23986,7 @@ func EditorCut(cx *core.Scope) string { return For(cx).EditorCut() }
 
 // EditorCut says "Cut"
 // in the language of msgs.
-func (msgs Messages) EditorCut() string { return msgs.text(986) }
+func (msgs Messages) EditorCut() string { return msgs.text(994) }
 
 // EditorCopy says "Copy"
 // in the language the app shows under cx.
@@ -23864,7 +23994,7 @@ func EditorCopy(cx *core.Scope) string { return For(cx).EditorCopy() }
 
 // EditorCopy says "Copy"
 // in the language of msgs.
-func (msgs Messages) EditorCopy() string { return msgs.text(987) }
+func (msgs Messages) EditorCopy() string { return msgs.text(995) }
 
 // EditorPaste says "Paste"
 // in the language the app shows under cx.
@@ -23872,7 +24002,7 @@ func EditorPaste(cx *core.Scope) string { return For(cx).EditorPaste() }
 
 // EditorPaste says "Paste"
 // in the language of msgs.
-func (msgs Messages) EditorPaste() string { return msgs.text(988) }
+func (msgs Messages) EditorPaste() string { return msgs.text(996) }
 
 // EditorSelectAll says "Select All"
 // in the language the app shows under cx.
@@ -23880,7 +24010,7 @@ func EditorSelectAll(cx *core.Scope) string { return For(cx).EditorSelectAll() }
 
 // EditorSelectAll says "Select All"
 // in the language of msgs.
-func (msgs Messages) EditorSelectAll() string { return msgs.text(989) }
+func (msgs Messages) EditorSelectAll() string { return msgs.text(997) }
 
 // EditorToggleComment says "Toggle Comment"
 // in the language the app shows under cx.
@@ -23888,7 +24018,7 @@ func EditorToggleComment(cx *core.Scope) string { return For(cx).EditorToggleCom
 
 // EditorToggleComment says "Toggle Comment"
 // in the language of msgs.
-func (msgs Messages) EditorToggleComment() string { return msgs.text(990) }
+func (msgs Messages) EditorToggleComment() string { return msgs.text(998) }
 
 // EditorFoldAll says "Fold All"
 // in the language the app shows under cx.
@@ -23896,7 +24026,7 @@ func EditorFoldAll(cx *core.Scope) string { return For(cx).EditorFoldAll() }
 
 // EditorFoldAll says "Fold All"
 // in the language of msgs.
-func (msgs Messages) EditorFoldAll() string { return msgs.text(991) }
+func (msgs Messages) EditorFoldAll() string { return msgs.text(999) }
 
 // EditorUnfoldAll says "Unfold All"
 // in the language the app shows under cx.
@@ -23904,7 +24034,7 @@ func EditorUnfoldAll(cx *core.Scope) string { return For(cx).EditorUnfoldAll() }
 
 // EditorUnfoldAll says "Unfold All"
 // in the language of msgs.
-func (msgs Messages) EditorUnfoldAll() string { return msgs.text(992) }
+func (msgs Messages) EditorUnfoldAll() string { return msgs.text(1000) }
 
 // EditorNoAppOpensLinks says "No app opens links"
 // in the language the app shows under cx.
@@ -23912,7 +24042,7 @@ func EditorNoAppOpensLinks(cx *core.Scope) string { return For(cx).EditorNoAppOp
 
 // EditorNoAppOpensLinks says "No app opens links"
 // in the language of msgs.
-func (msgs Messages) EditorNoAppOpensLinks() string { return msgs.text(993) }
+func (msgs Messages) EditorNoAppOpensLinks() string { return msgs.text(1001) }
 
 // EditorLongPressToSelect says "Long-press to select"
 // in the language the app shows under cx.
@@ -23920,7 +24050,7 @@ func EditorLongPressToSelect(cx *core.Scope) string { return For(cx).EditorLongP
 
 // EditorLongPressToSelect says "Long-press to select"
 // in the language of msgs.
-func (msgs Messages) EditorLongPressToSelect() string { return msgs.text(994) }
+func (msgs Messages) EditorLongPressToSelect() string { return msgs.text(1002) }
 
 // EditorRightClickForCommands says "Right-click for commands"
 // in the language the app shows under cx.
@@ -23928,7 +24058,7 @@ func EditorRightClickForCommands(cx *core.Scope) string { return For(cx).EditorR
 
 // EditorRightClickForCommands says "Right-click for commands"
 // in the language of msgs.
-func (msgs Messages) EditorRightClickForCommands() string { return msgs.text(995) }
+func (msgs Messages) EditorRightClickForCommands() string { return msgs.text(1003) }
 
 // EditorCodeActions says " code actions"
 // in the language the app shows under cx.
@@ -23936,7 +24066,7 @@ func EditorCodeActions(cx *core.Scope) string { return For(cx).EditorCodeActions
 
 // EditorCodeActions says " code actions"
 // in the language of msgs.
-func (msgs Messages) EditorCodeActions() string { return msgs.text(996) }
+func (msgs Messages) EditorCodeActions() string { return msgs.text(1004) }
 
 // EditorCompletionsAlsoAsYouType says " completions (also as you type and after a dot)"
 // in the language the app shows under cx.
@@ -23946,7 +24076,7 @@ func EditorCompletionsAlsoAsYouType(cx *core.Scope) string {
 
 // EditorCompletionsAlsoAsYouType says " completions (also as you type and after a dot)"
 // in the language of msgs.
-func (msgs Messages) EditorCompletionsAlsoAsYouType() string { return msgs.text(997) }
+func (msgs Messages) EditorCompletionsAlsoAsYouType() string { return msgs.text(1005) }
 
 // EditorTabTakesTheGraySuggestion says "Tab takes the gray suggestion"
 // in the language the app shows under cx.
@@ -23956,7 +24086,7 @@ func EditorTabTakesTheGraySuggestion(cx *core.Scope) string {
 
 // EditorTabTakesTheGraySuggestion says "Tab takes the gray suggestion"
 // in the language of msgs.
-func (msgs Messages) EditorTabTakesTheGraySuggestion() string { return msgs.text(998) }
+func (msgs Messages) EditorTabTakesTheGraySuggestion() string { return msgs.text(1006) }
 
 // EditorHoverForDocsAndProblems says "Hover for docs and problems"
 // in the language the app shows under cx.
@@ -23966,7 +24096,7 @@ func EditorHoverForDocsAndProblems(cx *core.Scope) string {
 
 // EditorHoverForDocsAndProblems says "Hover for docs and problems"
 // in the language of msgs.
-func (msgs Messages) EditorHoverForDocsAndProblems() string { return msgs.text(999) }
+func (msgs Messages) EditorHoverForDocsAndProblems() string { return msgs.text(1007) }
 
 // EditorHold says "Hold "
 // in the language the app shows under cx.
@@ -23974,7 +24104,7 @@ func EditorHold(cx *core.Scope) string { return For(cx).EditorHold() }
 
 // EditorHold says "Hold "
 // in the language of msgs.
-func (msgs Messages) EditorHold() string { return msgs.text(1000) }
+func (msgs Messages) EditorHold() string { return msgs.text(1008) }
 
 // EditorOverANameToUnderline says " over a name to underline it"
 // in the language the app shows under cx.
@@ -23982,7 +24112,7 @@ func EditorOverANameToUnderline(cx *core.Scope) string { return For(cx).EditorOv
 
 // EditorOverANameToUnderline says " over a name to underline it"
 // in the language of msgs.
-func (msgs Messages) EditorOverANameToUnderline() string { return msgs.text(1001) }
+func (msgs Messages) EditorOverANameToUnderline() string { return msgs.text(1009) }
 
 // EditorOr says " or "
 // in the language the app shows under cx.
@@ -23990,7 +24120,7 @@ func EditorOr(cx *core.Scope) string { return For(cx).EditorOr() }
 
 // EditorOr says " or "
 // in the language of msgs.
-func (msgs Messages) EditorOr() string { return msgs.text(1002) }
+func (msgs Messages) EditorOr() string { return msgs.text(1010) }
 
 // EditorClickGoToDefinition says "-click: go to definition"
 // in the language the app shows under cx.
@@ -23998,7 +24128,7 @@ func EditorClickGoToDefinition(cx *core.Scope) string { return For(cx).EditorCli
 
 // EditorClickGoToDefinition says "-click: go to definition"
 // in the language of msgs.
-func (msgs Messages) EditorClickGoToDefinition() string { return msgs.text(1003) }
+func (msgs Messages) EditorClickGoToDefinition() string { return msgs.text(1011) }
 
 // EditorFind says "Find"
 // in the language the app shows under cx.
@@ -24006,7 +24136,7 @@ func EditorFind(cx *core.Scope) string { return For(cx).EditorFind() }
 
 // EditorFind says "Find"
 // in the language of msgs.
-func (msgs Messages) EditorFind() string { return msgs.text(1004) }
+func (msgs Messages) EditorFind() string { return msgs.text(1012) }
 
 // EditorMatchCase says "Match case"
 // in the language the app shows under cx.
@@ -24014,7 +24144,7 @@ func EditorMatchCase(cx *core.Scope) string { return For(cx).EditorMatchCase() }
 
 // EditorMatchCase says "Match case"
 // in the language of msgs.
-func (msgs Messages) EditorMatchCase() string { return msgs.text(1005) }
+func (msgs Messages) EditorMatchCase() string { return msgs.text(1013) }
 
 // EditorWholeWord says "Whole word"
 // in the language the app shows under cx.
@@ -24022,7 +24152,7 @@ func EditorWholeWord(cx *core.Scope) string { return For(cx).EditorWholeWord() }
 
 // EditorWholeWord says "Whole word"
 // in the language of msgs.
-func (msgs Messages) EditorWholeWord() string { return msgs.text(1006) }
+func (msgs Messages) EditorWholeWord() string { return msgs.text(1014) }
 
 // EditorRegularExpression says "Regular expression"
 // in the language the app shows under cx.
@@ -24030,7 +24160,7 @@ func EditorRegularExpression(cx *core.Scope) string { return For(cx).EditorRegul
 
 // EditorRegularExpression says "Regular expression"
 // in the language of msgs.
-func (msgs Messages) EditorRegularExpression() string { return msgs.text(1007) }
+func (msgs Messages) EditorRegularExpression() string { return msgs.text(1015) }
 
 // EditorPreviousMatch says "Previous match"
 // in the language the app shows under cx.
@@ -24038,7 +24168,7 @@ func EditorPreviousMatch(cx *core.Scope) string { return For(cx).EditorPreviousM
 
 // EditorPreviousMatch says "Previous match"
 // in the language of msgs.
-func (msgs Messages) EditorPreviousMatch() string { return msgs.text(1008) }
+func (msgs Messages) EditorPreviousMatch() string { return msgs.text(1016) }
 
 // EditorNextMatch says "Next match"
 // in the language the app shows under cx.
@@ -24046,7 +24176,7 @@ func EditorNextMatch(cx *core.Scope) string { return For(cx).EditorNextMatch() }
 
 // EditorNextMatch says "Next match"
 // in the language of msgs.
-func (msgs Messages) EditorNextMatch() string { return msgs.text(1009) }
+func (msgs Messages) EditorNextMatch() string { return msgs.text(1017) }
 
 // EditorCloseTheFindBar says "Close the find bar"
 // in the language the app shows under cx.
@@ -24054,7 +24184,7 @@ func EditorCloseTheFindBar(cx *core.Scope) string { return For(cx).EditorCloseTh
 
 // EditorCloseTheFindBar says "Close the find bar"
 // in the language of msgs.
-func (msgs Messages) EditorCloseTheFindBar() string { return msgs.text(1010) }
+func (msgs Messages) EditorCloseTheFindBar() string { return msgs.text(1018) }
 
 // EditorReplace says "Replace"
 // in the language the app shows under cx.
@@ -24062,7 +24192,7 @@ func EditorReplace(cx *core.Scope) string { return For(cx).EditorReplace() }
 
 // EditorReplace says "Replace"
 // in the language of msgs.
-func (msgs Messages) EditorReplace() string { return msgs.text(1011) }
+func (msgs Messages) EditorReplace() string { return msgs.text(1019) }
 
 // EditorReplaceAll says "Replace all"
 // in the language the app shows under cx.
@@ -24070,7 +24200,7 @@ func EditorReplaceAll(cx *core.Scope) string { return For(cx).EditorReplaceAll()
 
 // EditorReplaceAll says "Replace all"
 // in the language of msgs.
-func (msgs Messages) EditorReplaceAll() string { return msgs.text(1012) }
+func (msgs Messages) EditorReplaceAll() string { return msgs.text(1020) }
 
 // EditorSource says " source"
 // in the language the app shows under cx.
@@ -24078,7 +24208,7 @@ func EditorSource(cx *core.Scope) string { return For(cx).EditorSource() }
 
 // EditorSource says " source"
 // in the language of msgs.
-func (msgs Messages) EditorSource() string { return msgs.text(1013) }
+func (msgs Messages) EditorSource() string { return msgs.text(1021) }
 
 // EditorCompleted says "Completed "
 // in the language the app shows under cx.
@@ -24086,7 +24216,7 @@ func EditorCompleted(cx *core.Scope) string { return For(cx).EditorCompleted() }
 
 // EditorCompleted says "Completed "
 // in the language of msgs.
-func (msgs Messages) EditorCompleted() string { return msgs.text(1014) }
+func (msgs Messages) EditorCompleted() string { return msgs.text(1022) }
 
 // EditorNoProblems says "No problems"
 // in the language the app shows under cx.
@@ -24094,7 +24224,7 @@ func EditorNoProblems(cx *core.Scope) string { return For(cx).EditorNoProblems()
 
 // EditorNoProblems says "No problems"
 // in the language of msgs.
-func (msgs Messages) EditorNoProblems() string { return msgs.text(1015) }
+func (msgs Messages) EditorNoProblems() string { return msgs.text(1023) }
 
 // EditorLanguage says "Language"
 // in the language the app shows under cx.
@@ -24102,7 +24232,7 @@ func EditorLanguage(cx *core.Scope) string { return For(cx).EditorLanguage() }
 
 // EditorLanguage says "Language"
 // in the language of msgs.
-func (msgs Messages) EditorLanguage() string { return msgs.text(1016) }
+func (msgs Messages) EditorLanguage() string { return msgs.text(1024) }
 
 // EditorFindAndReplace says "Find and replace"
 // in the language the app shows under cx.
@@ -24110,7 +24240,7 @@ func EditorFindAndReplace(cx *core.Scope) string { return For(cx).EditorFindAndR
 
 // EditorFindAndReplace says "Find and replace"
 // in the language of msgs.
-func (msgs Messages) EditorFindAndReplace() string { return msgs.text(1017) }
+func (msgs Messages) EditorFindAndReplace() string { return msgs.text(1025) }
 
 // EditorEditorOptions says "Editor options"
 // in the language the app shows under cx.
@@ -24118,7 +24248,7 @@ func EditorEditorOptions(cx *core.Scope) string { return For(cx).EditorEditorOpt
 
 // EditorEditorOptions says "Editor options"
 // in the language of msgs.
-func (msgs Messages) EditorEditorOptions() string { return msgs.text(1018) }
+func (msgs Messages) EditorEditorOptions() string { return msgs.text(1026) }
 
 // EditorSoftWrap says "Soft wrap"
 // in the language the app shows under cx.
@@ -24126,7 +24256,7 @@ func EditorSoftWrap(cx *core.Scope) string { return For(cx).EditorSoftWrap() }
 
 // EditorSoftWrap says "Soft wrap"
 // in the language of msgs.
-func (msgs Messages) EditorSoftWrap() string { return msgs.text(1019) }
+func (msgs Messages) EditorSoftWrap() string { return msgs.text(1027) }
 
 // EditorLineNumbers says "Line numbers"
 // in the language the app shows under cx.
@@ -24134,7 +24264,7 @@ func EditorLineNumbers(cx *core.Scope) string { return For(cx).EditorLineNumbers
 
 // EditorLineNumbers says "Line numbers"
 // in the language of msgs.
-func (msgs Messages) EditorLineNumbers() string { return msgs.text(1020) }
+func (msgs Messages) EditorLineNumbers() string { return msgs.text(1028) }
 
 // EditorProblems says "Problems"
 // in the language the app shows under cx.
@@ -24142,7 +24272,7 @@ func EditorProblems(cx *core.Scope) string { return For(cx).EditorProblems() }
 
 // EditorProblems says "Problems"
 // in the language of msgs.
-func (msgs Messages) EditorProblems() string { return msgs.text(1021) }
+func (msgs Messages) EditorProblems() string { return msgs.text(1029) }
 
 // EditorFindAndReplace2 says "Find and Replace"
 // in the language the app shows under cx.
@@ -24150,7 +24280,7 @@ func EditorFindAndReplace2(cx *core.Scope) string { return For(cx).EditorFindAnd
 
 // EditorFindAndReplace2 says "Find and Replace"
 // in the language of msgs.
-func (msgs Messages) EditorFindAndReplace2() string { return msgs.text(1022) }
+func (msgs Messages) EditorFindAndReplace2() string { return msgs.text(1030) }
 
 // EditorKeys says "Keys"
 // in the language the app shows under cx.
@@ -24158,7 +24288,7 @@ func EditorKeys(cx *core.Scope) string { return For(cx).EditorKeys() }
 
 // EditorKeys says "Keys"
 // in the language of msgs.
-func (msgs Messages) EditorKeys() string { return msgs.text(1023) }
+func (msgs Messages) EditorKeys() string { return msgs.text(1031) }
 
 // EditorTypescriptLanguageServer says "TypeScript language server"
 // in the language the app shows under cx.
@@ -24168,7 +24298,7 @@ func EditorTypescriptLanguageServer(cx *core.Scope) string {
 
 // EditorTypescriptLanguageServer says "TypeScript language server"
 // in the language of msgs.
-func (msgs Messages) EditorTypescriptLanguageServer() string { return msgs.text(1024) }
+func (msgs Messages) EditorTypescriptLanguageServer() string { return msgs.text(1032) }
 
 // EditorResizeTheProblems says "Resize the problems"
 // in the language the app shows under cx.
@@ -24176,7 +24306,7 @@ func EditorResizeTheProblems(cx *core.Scope) string { return For(cx).EditorResiz
 
 // EditorResizeTheProblems says "Resize the problems"
 // in the language of msgs.
-func (msgs Messages) EditorResizeTheProblems() string { return msgs.text(1025) }
+func (msgs Messages) EditorResizeTheProblems() string { return msgs.text(1033) }
 
 // EditorOpenTheDescriptionOf says "Open the description of "
 // in the language the app shows under cx.
@@ -24184,7 +24314,7 @@ func EditorOpenTheDescriptionOf(cx *core.Scope) string { return For(cx).EditorOp
 
 // EditorOpenTheDescriptionOf says "Open the description of "
 // in the language of msgs.
-func (msgs Messages) EditorOpenTheDescriptionOf() string { return msgs.text(1026) }
+func (msgs Messages) EditorOpenTheDescriptionOf() string { return msgs.text(1034) }
 
 // EditorAnalyzing says "Analyzing…"
 // in the language the app shows under cx.
@@ -24192,7 +24322,7 @@ func EditorAnalyzing(cx *core.Scope) string { return For(cx).EditorAnalyzing() }
 
 // EditorAnalyzing says "Analyzing…"
 // in the language of msgs.
-func (msgs Messages) EditorAnalyzing() string { return msgs.text(1027) }
+func (msgs Messages) EditorAnalyzing() string { return msgs.text(1035) }
 
 // EditorToggleProblems says "Toggle problems"
 // in the language the app shows under cx.
@@ -24200,7 +24330,7 @@ func EditorToggleProblems(cx *core.Scope) string { return For(cx).EditorTogglePr
 
 // EditorToggleProblems says "Toggle problems"
 // in the language of msgs.
-func (msgs Messages) EditorToggleProblems() string { return msgs.text(1028) }
+func (msgs Messages) EditorToggleProblems() string { return msgs.text(1036) }
 
 // EditorLnCol says "Ln {line, number}, Col {column, number}"
 // in the language the app shows under cx.
@@ -24398,7 +24528,7 @@ func CompLayoutAnimation(cx *core.Scope) string { return For(cx).CompLayoutAnima
 
 // CompLayoutAnimation says "Layout animation"
 // in the language of msgs.
-func (msgs Messages) CompLayoutAnimation() string { return msgs.text(1029) }
+func (msgs Messages) CompLayoutAnimation() string { return msgs.text(1037) }
 
 // CompAnimatelayoutThenChangeTheTree says "AnimateLayout, then change the tree"
 // in the language the app shows under cx.
@@ -24408,7 +24538,7 @@ func CompAnimatelayoutThenChangeTheTree(cx *core.Scope) string {
 
 // CompAnimatelayoutThenChangeTheTree says "AnimateLayout, then change the tree"
 // in the language of msgs.
-func (msgs Messages) CompAnimatelayoutThenChangeTheTree() string { return msgs.text(1030) }
+func (msgs Messages) CompAnimatelayoutThenChangeTheTree() string { return msgs.text(1038) }
 
 // CompSpring says "Spring"
 // in the language the app shows under cx.
@@ -24416,7 +24546,7 @@ func CompSpring(cx *core.Scope) string { return For(cx).CompSpring() }
 
 // CompSpring says "Spring"
 // in the language of msgs.
-func (msgs Messages) CompSpring() string { return msgs.text(1031) }
+func (msgs Messages) CompSpring() string { return msgs.text(1039) }
 
 // CompEase says "Ease"
 // in the language the app shows under cx.
@@ -24424,7 +24554,7 @@ func CompEase(cx *core.Scope) string { return For(cx).CompEase() }
 
 // CompEase says "Ease"
 // in the language of msgs.
-func (msgs Messages) CompEase() string { return msgs.text(1032) }
+func (msgs Messages) CompEase() string { return msgs.text(1040) }
 
 // CompLinear says "Linear"
 // in the language the app shows under cx.
@@ -24432,7 +24562,7 @@ func CompLinear(cx *core.Scope) string { return For(cx).CompLinear() }
 
 // CompLinear says "Linear"
 // in the language of msgs.
-func (msgs Messages) CompLinear() string { return msgs.text(1033) }
+func (msgs Messages) CompLinear() string { return msgs.text(1041) }
 
 // CompAdd says "Add"
 // in the language the app shows under cx.
@@ -24440,7 +24570,7 @@ func CompAdd(cx *core.Scope) string { return For(cx).CompAdd() }
 
 // CompAdd says "Add"
 // in the language of msgs.
-func (msgs Messages) CompAdd() string { return msgs.text(1034) }
+func (msgs Messages) CompAdd() string { return msgs.text(1042) }
 
 // CompShuffle says "Shuffle"
 // in the language the app shows under cx.
@@ -24448,7 +24578,7 @@ func CompShuffle(cx *core.Scope) string { return For(cx).CompShuffle() }
 
 // CompShuffle says "Shuffle"
 // in the language of msgs.
-func (msgs Messages) CompShuffle() string { return msgs.text(1035) }
+func (msgs Messages) CompShuffle() string { return msgs.text(1043) }
 
 // CompRemove says "Remove"
 // in the language the app shows under cx.
@@ -24456,7 +24586,7 @@ func CompRemove(cx *core.Scope) string { return For(cx).CompRemove() }
 
 // CompRemove says "Remove"
 // in the language of msgs.
-func (msgs Messages) CompRemove() string { return msgs.text(1036) }
+func (msgs Messages) CompRemove() string { return msgs.text(1044) }
 
 // CompSheet says "Sheet"
 // in the language the app shows under cx.
@@ -24464,7 +24594,7 @@ func CompSheet(cx *core.Scope) string { return For(cx).CompSheet() }
 
 // CompSheet says "Sheet"
 // in the language of msgs.
-func (msgs Messages) CompSheet() string { return msgs.text(1037) }
+func (msgs Messages) CompSheet() string { return msgs.text(1045) }
 
 // CompAPressedStateStyleOpens says "A pressed state style opens it"
 // in the language the app shows under cx.
@@ -24472,7 +24602,7 @@ func CompAPressedStateStyleOpens(cx *core.Scope) string { return For(cx).CompAPr
 
 // CompAPressedStateStyleOpens says "A pressed state style opens it"
 // in the language of msgs.
-func (msgs Messages) CompAPressedStateStyleOpens() string { return msgs.text(1038) }
+func (msgs Messages) CompAPressedStateStyleOpens() string { return msgs.text(1046) }
 
 // CompOpenASheet says "Open a sheet"
 // in the language the app shows under cx.
@@ -24480,7 +24610,7 @@ func CompOpenASheet(cx *core.Scope) string { return For(cx).CompOpenASheet() }
 
 // CompOpenASheet says "Open a sheet"
 // in the language of msgs.
-func (msgs Messages) CompOpenASheet() string { return msgs.text(1039) }
+func (msgs Messages) CompOpenASheet() string { return msgs.text(1047) }
 
 // CompScalesAndDarkensWhilePressed says "Scales and darkens while pressed"
 // in the language the app shows under cx.
@@ -24490,7 +24620,7 @@ func CompScalesAndDarkensWhilePressed(cx *core.Scope) string {
 
 // CompScalesAndDarkensWhilePressed says "Scales and darkens while pressed"
 // in the language of msgs.
-func (msgs Messages) CompScalesAndDarkensWhilePressed() string { return msgs.text(1040) }
+func (msgs Messages) CompScalesAndDarkensWhilePressed() string { return msgs.text(1048) }
 
 // CompASheet says "A sheet"
 // in the language the app shows under cx.
@@ -24498,7 +24628,7 @@ func CompASheet(cx *core.Scope) string { return For(cx).CompASheet() }
 
 // CompASheet says "A sheet"
 // in the language of msgs.
-func (msgs Messages) CompASheet() string { return msgs.text(1041) }
+func (msgs Messages) CompASheet() string { return msgs.text(1049) }
 
 // CompTapOutsideItOrPress says "Tap outside it or press back (Android) to close."
 // in the language the app shows under cx.
@@ -24506,7 +24636,7 @@ func CompTapOutsideItOrPress(cx *core.Scope) string { return For(cx).CompTapOuts
 
 // CompTapOutsideItOrPress says "Tap outside it or press back (Android) to close."
 // in the language of msgs.
-func (msgs Messages) CompTapOutsideItOrPress() string { return msgs.text(1042) }
+func (msgs Messages) CompTapOutsideItOrPress() string { return msgs.text(1050) }
 
 // CompPressEscapeOrClickOutside says "Press Escape or click outside it to close."
 // in the language the app shows under cx.
@@ -24516,7 +24646,7 @@ func CompPressEscapeOrClickOutside(cx *core.Scope) string {
 
 // CompPressEscapeOrClickOutside says "Press Escape or click outside it to close."
 // in the language of msgs.
-func (msgs Messages) CompPressEscapeOrClickOutside() string { return msgs.text(1043) }
+func (msgs Messages) CompPressEscapeOrClickOutside() string { return msgs.text(1051) }
 
 // CompClose says "Close"
 // in the language the app shows under cx.
@@ -24524,7 +24654,7 @@ func CompClose(cx *core.Scope) string { return For(cx).CompClose() }
 
 // CompClose says "Close"
 // in the language of msgs.
-func (msgs Messages) CompClose() string { return msgs.text(1044) }
+func (msgs Messages) CompClose() string { return msgs.text(1052) }
 
 // CompNoneYet says "None yet"
 // in the language the app shows under cx.
@@ -24532,7 +24662,7 @@ func CompNoneYet(cx *core.Scope) string { return For(cx).CompNoneYet() }
 
 // CompNoneYet says "None yet"
 // in the language of msgs.
-func (msgs Messages) CompNoneYet() string { return msgs.text(1045) }
+func (msgs Messages) CompNoneYet() string { return msgs.text(1053) }
 
 // CompPressFeedback says "Press feedback"
 // in the language the app shows under cx.
@@ -24540,7 +24670,7 @@ func CompPressFeedback(cx *core.Scope) string { return For(cx).CompPressFeedback
 
 // CompPressFeedback says "Press feedback"
 // in the language of msgs.
-func (msgs Messages) CompPressFeedback() string { return msgs.text(1046) }
+func (msgs Messages) CompPressFeedback() string { return msgs.text(1054) }
 
 // CompDrawnNativelyWhileTheFinger says "Drawn natively while the finger is down"
 // in the language the app shows under cx.
@@ -24550,7 +24680,7 @@ func CompDrawnNativelyWhileTheFinger(cx *core.Scope) string {
 
 // CompDrawnNativelyWhileTheFinger says "Drawn natively while the finger is down"
 // in the language of msgs.
-func (msgs Messages) CompDrawnNativelyWhileTheFinger() string { return msgs.text(1047) }
+func (msgs Messages) CompDrawnNativelyWhileTheFinger() string { return msgs.text(1055) }
 
 // CompDrawnNativelyWhileTheButton says "Drawn natively while the button is down"
 // in the language the app shows under cx.
@@ -24560,7 +24690,7 @@ func CompDrawnNativelyWhileTheButton(cx *core.Scope) string {
 
 // CompDrawnNativelyWhileTheButton says "Drawn natively while the button is down"
 // in the language of msgs.
-func (msgs Messages) CompDrawnNativelyWhileTheButton() string { return msgs.text(1048) }
+func (msgs Messages) CompDrawnNativelyWhileTheButton() string { return msgs.text(1056) }
 
 // CompFadingTile says "Fading tile"
 // in the language the app shows under cx.
@@ -24568,7 +24698,7 @@ func CompFadingTile(cx *core.Scope) string { return For(cx).CompFadingTile() }
 
 // CompFadingTile says "Fading tile"
 // in the language of msgs.
-func (msgs Messages) CompFadingTile() string { return msgs.text(1049) }
+func (msgs Messages) CompFadingTile() string { return msgs.text(1057) }
 
 // CompFadesWhilePressed says "Fades while pressed"
 // in the language the app shows under cx.
@@ -24576,7 +24706,7 @@ func CompFadesWhilePressed(cx *core.Scope) string { return For(cx).CompFadesWhil
 
 // CompFadesWhilePressed says "Fades while pressed"
 // in the language of msgs.
-func (msgs Messages) CompFadesWhilePressed() string { return msgs.text(1050) }
+func (msgs Messages) CompFadesWhilePressed() string { return msgs.text(1058) }
 
 // CompUnderlayTile says "Underlay tile"
 // in the language the app shows under cx.
@@ -24584,7 +24714,7 @@ func CompUnderlayTile(cx *core.Scope) string { return For(cx).CompUnderlayTile()
 
 // CompUnderlayTile says "Underlay tile"
 // in the language of msgs.
-func (msgs Messages) CompUnderlayTile() string { return msgs.text(1051) }
+func (msgs Messages) CompUnderlayTile() string { return msgs.text(1059) }
 
 // CompLightsUpWhilePressed says "Lights up while pressed"
 // in the language the app shows under cx.
@@ -24592,7 +24722,7 @@ func CompLightsUpWhilePressed(cx *core.Scope) string { return For(cx).CompLights
 
 // CompLightsUpWhilePressed says "Lights up while pressed"
 // in the language of msgs.
-func (msgs Messages) CompLightsUpWhilePressed() string { return msgs.text(1052) }
+func (msgs Messages) CompLightsUpWhilePressed() string { return msgs.text(1060) }
 
 // CompEnabledTile says "Enabled tile"
 // in the language the app shows under cx.
@@ -24600,7 +24730,7 @@ func CompEnabledTile(cx *core.Scope) string { return For(cx).CompEnabledTile() }
 
 // CompEnabledTile says "Enabled tile"
 // in the language of msgs.
-func (msgs Messages) CompEnabledTile() string { return msgs.text(1053) }
+func (msgs Messages) CompEnabledTile() string { return msgs.text(1061) }
 
 // CompTakesNoPresses says "Takes no presses"
 // in the language the app shows under cx.
@@ -24608,7 +24738,7 @@ func CompTakesNoPresses(cx *core.Scope) string { return For(cx).CompTakesNoPress
 
 // CompTakesNoPresses says "Takes no presses"
 // in the language of msgs.
-func (msgs Messages) CompTakesNoPresses() string { return msgs.text(1054) }
+func (msgs Messages) CompTakesNoPresses() string { return msgs.text(1062) }
 
 // CompEnabled says "Enabled"
 // in the language the app shows under cx.
@@ -24616,7 +24746,7 @@ func CompEnabled(cx *core.Scope) string { return For(cx).CompEnabled() }
 
 // CompEnabled says "Enabled"
 // in the language of msgs.
-func (msgs Messages) CompEnabled() string { return msgs.text(1055) }
+func (msgs Messages) CompEnabled() string { return msgs.text(1063) }
 
 // CompOff says "Off"
 // in the language the app shows under cx.
@@ -24624,7 +24754,7 @@ func CompOff(cx *core.Scope) string { return For(cx).CompOff() }
 
 // CompOff says "Off"
 // in the language of msgs.
-func (msgs Messages) CompOff() string { return msgs.text(1056) }
+func (msgs Messages) CompOff() string { return msgs.text(1064) }
 
 // CompOn says "On"
 // in the language the app shows under cx.
@@ -24632,7 +24762,7 @@ func CompOn(cx *core.Scope) string { return For(cx).CompOn() }
 
 // CompOn says "On"
 // in the language of msgs.
-func (msgs Messages) CompOn() string { return msgs.text(1057) }
+func (msgs Messages) CompOn() string { return msgs.text(1065) }
 
 // CompLastPressed says "Last pressed"
 // in the language the app shows under cx.
@@ -24640,7 +24770,7 @@ func CompLastPressed(cx *core.Scope) string { return For(cx).CompLastPressed() }
 
 // CompLastPressed says "Last pressed"
 // in the language of msgs.
-func (msgs Messages) CompLastPressed() string { return msgs.text(1058) }
+func (msgs Messages) CompLastPressed() string { return msgs.text(1066) }
 
 // CompDisableTheThirdTile says "Disable the third tile"
 // in the language the app shows under cx.
@@ -24648,7 +24778,7 @@ func CompDisableTheThirdTile(cx *core.Scope) string { return For(cx).CompDisable
 
 // CompDisableTheThirdTile says "Disable the third tile"
 // in the language of msgs.
-func (msgs Messages) CompDisableTheThirdTile() string { return msgs.text(1059) }
+func (msgs Messages) CompDisableTheThirdTile() string { return msgs.text(1067) }
 
 // CompTheBarCountsWhatYou says "The bar counts what you type"
 // in the language the app shows under cx.
@@ -24656,7 +24786,7 @@ func CompTheBarCountsWhatYou(cx *core.Scope) string { return For(cx).CompTheBarC
 
 // CompTheBarCountsWhatYou says "The bar counts what you type"
 // in the language of msgs.
-func (msgs Messages) CompTheBarCountsWhatYou() string { return msgs.text(1060) }
+func (msgs Messages) CompTheBarCountsWhatYou() string { return msgs.text(1068) }
 
 // CompDesktopsHaveNoSoftwareKeyboard says "Desktops have no software keyboard"
 // in the language the app shows under cx.
@@ -24666,7 +24796,7 @@ func CompDesktopsHaveNoSoftwareKeyboard(cx *core.Scope) string {
 
 // CompDesktopsHaveNoSoftwareKeyboard says "Desktops have no software keyboard"
 // in the language of msgs.
-func (msgs Messages) CompDesktopsHaveNoSoftwareKeyboard() string { return msgs.text(1061) }
+func (msgs Messages) CompDesktopsHaveNoSoftwareKeyboard() string { return msgs.text(1069) }
 
 // CompInputAccessory says "Input accessory"
 // in the language the app shows under cx.
@@ -24674,7 +24804,7 @@ func CompInputAccessory(cx *core.Scope) string { return For(cx).CompInputAccesso
 
 // CompInputAccessory says "Input accessory"
 // in the language of msgs.
-func (msgs Messages) CompInputAccessory() string { return msgs.text(1062) }
+func (msgs Messages) CompInputAccessory() string { return msgs.text(1070) }
 
 // CompABarOverTheSoftware says "A bar over the software keyboard"
 // in the language the app shows under cx.
@@ -24682,7 +24812,7 @@ func CompABarOverTheSoftware(cx *core.Scope) string { return For(cx).CompABarOve
 
 // CompABarOverTheSoftware says "A bar over the software keyboard"
 // in the language of msgs.
-func (msgs Messages) CompABarOverTheSoftware() string { return msgs.text(1063) }
+func (msgs Messages) CompABarOverTheSoftware() string { return msgs.text(1071) }
 
 // CompFocusMe says "Focus me"
 // in the language the app shows under cx.
@@ -24690,7 +24820,7 @@ func CompFocusMe(cx *core.Scope) string { return For(cx).CompFocusMe() }
 
 // CompFocusMe says "Focus me"
 // in the language of msgs.
-func (msgs Messages) CompFocusMe() string { return msgs.text(1064) }
+func (msgs Messages) CompFocusMe() string { return msgs.text(1072) }
 
 // CompClear says "Clear"
 // in the language the app shows under cx.
@@ -24698,7 +24828,7 @@ func CompClear(cx *core.Scope) string { return For(cx).CompClear() }
 
 // CompClear says "Clear"
 // in the language of msgs.
-func (msgs Messages) CompClear() string { return msgs.text(1065) }
+func (msgs Messages) CompClear() string { return msgs.text(1073) }
 
 // CompDone says "Done"
 // in the language the app shows under cx.
@@ -24706,7 +24836,7 @@ func CompDone(cx *core.Scope) string { return For(cx).CompDone() }
 
 // CompDone says "Done"
 // in the language of msgs.
-func (msgs Messages) CompDone() string { return msgs.text(1066) }
+func (msgs Messages) CompDone() string { return msgs.text(1074) }
 
 // CompKeyboardInset says "Keyboard inset"
 // in the language the app shows under cx.
@@ -24714,7 +24844,7 @@ func CompKeyboardInset(cx *core.Scope) string { return For(cx).CompKeyboardInset
 
 // CompKeyboardInset says "Keyboard inset"
 // in the language of msgs.
-func (msgs Messages) CompKeyboardInset() string { return msgs.text(1067) }
+func (msgs Messages) CompKeyboardInset() string { return msgs.text(1075) }
 
 // CompPaddingenvEnvkeyboardTheTintedBackground says "PaddingEnv: EnvKeyboard. The tinted background stays under the keyboard."
 // in the language the app shows under cx.
@@ -24724,7 +24854,7 @@ func CompPaddingenvEnvkeyboardTheTintedBackground(cx *core.Scope) string {
 
 // CompPaddingenvEnvkeyboardTheTintedBackground says "PaddingEnv: EnvKeyboard. The tinted background stays under the keyboard."
 // in the language of msgs.
-func (msgs Messages) CompPaddingenvEnvkeyboardTheTintedBackground() string { return msgs.text(1068) }
+func (msgs Messages) CompPaddingenvEnvkeyboardTheTintedBackground() string { return msgs.text(1076) }
 
 // CompMarginenvEnvkeyboardTheViewShrinks says "MarginEnv: EnvKeyboard. The view shrinks: its background ends at the keyboard."
 // in the language the app shows under cx.
@@ -24734,7 +24864,7 @@ func CompMarginenvEnvkeyboardTheViewShrinks(cx *core.Scope) string {
 
 // CompMarginenvEnvkeyboardTheViewShrinks says "MarginEnv: EnvKeyboard. The view shrinks: its background ends at the keyboard."
 // in the language of msgs.
-func (msgs Messages) CompMarginenvEnvkeyboardTheViewShrinks() string { return msgs.text(1069) }
+func (msgs Messages) CompMarginenvEnvkeyboardTheViewShrinks() string { return msgs.text(1077) }
 
 // CompRoom says "Room: "
 // in the language the app shows under cx.
@@ -24742,7 +24872,7 @@ func CompRoom(cx *core.Scope) string { return For(cx).CompRoom() }
 
 // CompRoom says "Room: "
 // in the language of msgs.
-func (msgs Messages) CompRoom() string { return msgs.text(1070) }
+func (msgs Messages) CompRoom() string { return msgs.text(1078) }
 
 // CompFocusTheFieldAtThe says "Focus the field at the bottom"
 // in the language the app shows under cx.
@@ -24750,7 +24880,7 @@ func CompFocusTheFieldAtThe(cx *core.Scope) string { return For(cx).CompFocusThe
 
 // CompFocusTheFieldAtThe says "Focus the field at the bottom"
 // in the language of msgs.
-func (msgs Messages) CompFocusTheFieldAtThe() string { return msgs.text(1071) }
+func (msgs Messages) CompFocusTheFieldAtThe() string { return msgs.text(1079) }
 
 // CompTypeHere says "Type here"
 // in the language the app shows under cx.
@@ -24758,7 +24888,7 @@ func CompTypeHere(cx *core.Scope) string { return For(cx).CompTypeHere() }
 
 // CompTypeHere says "Type here"
 // in the language of msgs.
-func (msgs Messages) CompTypeHere() string { return msgs.text(1072) }
+func (msgs Messages) CompTypeHere() string { return msgs.text(1080) }
 
 // CompDialogOptions says "Dialog options"
 // in the language the app shows under cx.
@@ -24766,7 +24896,7 @@ func CompDialogOptions(cx *core.Scope) string { return For(cx).CompDialogOptions
 
 // CompDialogOptions says "Dialog options"
 // in the language of msgs.
-func (msgs Messages) CompDialogOptions() string { return msgs.text(1073) }
+func (msgs Messages) CompDialogOptions() string { return msgs.text(1081) }
 
 // CompStatusbartranslucentOrientations says "StatusBarTranslucent, orientations"
 // in the language the app shows under cx.
@@ -24776,7 +24906,7 @@ func CompStatusbartranslucentOrientations(cx *core.Scope) string {
 
 // CompStatusbartranslucentOrientations says "StatusBarTranslucent, orientations"
 // in the language of msgs.
-func (msgs Messages) CompStatusbartranslucentOrientations() string { return msgs.text(1074) }
+func (msgs Messages) CompStatusbartranslucentOrientations() string { return msgs.text(1082) }
 
 // CompAndroidTranslucentContentReachesUnder says "Android: translucent content reaches under the status bar. iOS: this dialog allows portrait and landscape."
 // in the language the app shows under cx.
@@ -24786,7 +24916,7 @@ func CompAndroidTranslucentContentReachesUnder(cx *core.Scope) string {
 
 // CompAndroidTranslucentContentReachesUnder says "Android: translucent content reaches under the status bar. iOS: this dialog allows portrait and landscape."
 // in the language of msgs.
-func (msgs Messages) CompAndroidTranslucentContentReachesUnder() string { return msgs.text(1075) }
+func (msgs Messages) CompAndroidTranslucentContentReachesUnder() string { return msgs.text(1083) }
 
 // CompOpenTheDialog says "Open the dialog"
 // in the language the app shows under cx.
@@ -24794,7 +24924,7 @@ func CompOpenTheDialog(cx *core.Scope) string { return For(cx).CompOpenTheDialog
 
 // CompOpenTheDialog says "Open the dialog"
 // in the language of msgs.
-func (msgs Messages) CompOpenTheDialog() string { return msgs.text(1076) }
+func (msgs Messages) CompOpenTheDialog() string { return msgs.text(1084) }
 
 // CompADialog says "A dialog"
 // in the language the app shows under cx.
@@ -24802,7 +24932,7 @@ func CompADialog(cx *core.Scope) string { return For(cx).CompADialog() }
 
 // CompADialog says "A dialog"
 // in the language of msgs.
-func (msgs Messages) CompADialog() string { return msgs.text(1077) }
+func (msgs Messages) CompADialog() string { return msgs.text(1085) }
 
 // CompOpaqueBar says "opaque bar"
 // in the language the app shows under cx.
@@ -24810,7 +24940,7 @@ func CompOpaqueBar(cx *core.Scope) string { return For(cx).CompOpaqueBar() }
 
 // CompOpaqueBar says "opaque bar"
 // in the language of msgs.
-func (msgs Messages) CompOpaqueBar() string { return msgs.text(1078) }
+func (msgs Messages) CompOpaqueBar() string { return msgs.text(1086) }
 
 // Comp103OnWholePixels says "10.3 on whole pixels"
 // in the language the app shows under cx.
@@ -24818,7 +24948,7 @@ func Comp103OnWholePixels(cx *core.Scope) string { return For(cx).Comp103OnWhole
 
 // Comp103OnWholePixels says "10.3 on whole pixels"
 // in the language of msgs.
-func (msgs Messages) Comp103OnWholePixels() string { return msgs.text(1079) }
+func (msgs Messages) Comp103OnWholePixels() string { return msgs.text(1087) }
 
 // CompPlatform says "Platform"
 // in the language the app shows under cx.
@@ -24826,7 +24956,7 @@ func CompPlatform(cx *core.Scope) string { return For(cx).CompPlatform() }
 
 // CompPlatform says "Platform"
 // in the language of msgs.
-func (msgs Messages) CompPlatform() string { return msgs.text(1080) }
+func (msgs Messages) CompPlatform() string { return msgs.text(1088) }
 
 // CompTheEnvironmentPixelratioAnnounce says "The environment, PixelRatio, Announce"
 // in the language the app shows under cx.
@@ -24836,7 +24966,7 @@ func CompTheEnvironmentPixelratioAnnounce(cx *core.Scope) string {
 
 // CompTheEnvironmentPixelratioAnnounce says "The environment, PixelRatio, Announce"
 // in the language of msgs.
-func (msgs Messages) CompTheEnvironmentPixelratioAnnounce() string { return msgs.text(1081) }
+func (msgs Messages) CompTheEnvironmentPixelratioAnnounce() string { return msgs.text(1089) }
 
 // CompTheLineAboveIsOne says "The line above is one device pixel tall"
 // in the language the app shows under cx.
@@ -24844,7 +24974,7 @@ func CompTheLineAboveIsOne(cx *core.Scope) string { return For(cx).CompTheLineAb
 
 // CompTheLineAboveIsOne says "The line above is one device pixel tall"
 // in the language of msgs.
-func (msgs Messages) CompTheLineAboveIsOne() string { return msgs.text(1082) }
+func (msgs Messages) CompTheLineAboveIsOne() string { return msgs.text(1090) }
 
 // CompAnnounce says "Announce"
 // in the language the app shows under cx.
@@ -24852,7 +24982,7 @@ func CompAnnounce(cx *core.Scope) string { return For(cx).CompAnnounce() }
 
 // CompAnnounce says "Announce"
 // in the language of msgs.
-func (msgs Messages) CompAnnounce() string { return msgs.text(1083) }
+func (msgs Messages) CompAnnounce() string { return msgs.text(1091) }
 
 // CompFocusTheNote says "Focus the note"
 // in the language the app shows under cx.
@@ -24860,7 +24990,7 @@ func CompFocusTheNote(cx *core.Scope) string { return For(cx).CompFocusTheNote()
 
 // CompFocusTheNote says "Focus the note"
 // in the language of msgs.
-func (msgs Messages) CompFocusTheNote() string { return msgs.text(1084) }
+func (msgs Messages) CompFocusTheNote() string { return msgs.text(1092) }
 
 // CompWithVoiceoverOrTalkbackOn says "With VoiceOver or TalkBack on, the buttons above speak and move the reader here."
 // in the language the app shows under cx.
@@ -24870,7 +25000,7 @@ func CompWithVoiceoverOrTalkbackOn(cx *core.Scope) string {
 
 // CompWithVoiceoverOrTalkbackOn says "With VoiceOver or TalkBack on, the buttons above speak and move the reader here."
 // in the language of msgs.
-func (msgs Messages) CompWithVoiceoverOrTalkbackOn() string { return msgs.text(1085) }
+func (msgs Messages) CompWithVoiceoverOrTalkbackOn() string { return msgs.text(1093) }
 
 // CompKeyboardAvoidance says "Keyboard avoidance"
 // in the language the app shows under cx.
@@ -24878,7 +25008,7 @@ func CompKeyboardAvoidance(cx *core.Scope) string { return For(cx).CompKeyboardA
 
 // CompKeyboardAvoidance says "Keyboard avoidance"
 // in the language of msgs.
-func (msgs Messages) CompKeyboardAvoidance() string { return msgs.text(1086) }
+func (msgs Messages) CompKeyboardAvoidance() string { return msgs.text(1094) }
 
 // CompContentOutsideScrollViews says "Content outside scroll views"
 // in the language the app shows under cx.
@@ -24888,7 +25018,7 @@ func CompContentOutsideScrollViews(cx *core.Scope) string {
 
 // CompContentOutsideScrollViews says "Content outside scroll views"
 // in the language of msgs.
-func (msgs Messages) CompContentOutsideScrollViews() string { return msgs.text(1087) }
+func (msgs Messages) CompContentOutsideScrollViews() string { return msgs.text(1095) }
 
 // CompCharacters says "{count, plural, one {# character} other {# characters}}"
 // in the language the app shows under cx.
@@ -24929,7 +25059,7 @@ func CompOliveUnder(cx *core.Scope) string { return For(cx).CompOliveUnder() }
 
 // CompOliveUnder says "The olive background starts under the status bar on Android."
 // in the language of msgs.
-func (msgs Messages) CompOliveUnder() string { return msgs.text(1088) }
+func (msgs Messages) CompOliveUnder() string { return msgs.text(1096) }
 
 // CompOliveBelow says "The olive background starts below the status bar on Android."
 // in the language the app shows under cx.
@@ -24937,7 +25067,7 @@ func CompOliveBelow(cx *core.Scope) string { return For(cx).CompOliveBelow() }
 
 // CompOliveBelow says "The olive background starts below the status bar on Android."
 // in the language of msgs.
-func (msgs Messages) CompOliveBelow() string { return msgs.text(1089) }
+func (msgs Messages) CompOliveBelow() string { return msgs.text(1097) }
 
 // CompAnnouncement says "Announcement {n, number}"
 // in the language the app shows under cx.
@@ -24969,7 +25099,7 @@ func AnimNativeMotion(cx *core.Scope) string { return For(cx).AnimNativeMotion()
 
 // AnimNativeMotion says "Native motion"
 // in the language of msgs.
-func (msgs Messages) AnimNativeMotion() string { return msgs.text(1090) }
+func (msgs Messages) AnimNativeMotion() string { return msgs.text(1098) }
 
 // AnimThreeLoopsStartedOnceRun says "Three loops, started once, run on the UI thread"
 // in the language the app shows under cx.
@@ -24979,7 +25109,7 @@ func AnimThreeLoopsStartedOnceRun(cx *core.Scope) string {
 
 // AnimThreeLoopsStartedOnceRun says "Three loops, started once, run on the UI thread"
 // in the language of msgs.
-func (msgs Messages) AnimThreeLoopsStartedOnceRun() string { return msgs.text(1091) }
+func (msgs Messages) AnimThreeLoopsStartedOnceRun() string { return msgs.text(1099) }
 
 // AnimOrbitsOneTurnIn3 says "Orbits, one turn in 3.2 s"
 // in the language the app shows under cx.
@@ -24987,7 +25117,7 @@ func AnimOrbitsOneTurnIn3(cx *core.Scope) string { return For(cx).AnimOrbitsOneT
 
 // AnimOrbitsOneTurnIn3 says "Orbits, one turn in 3.2 s"
 // in the language of msgs.
-func (msgs Messages) AnimOrbitsOneTurnIn3() string { return msgs.text(1092) }
+func (msgs Messages) AnimOrbitsOneTurnIn3() string { return msgs.text(1100) }
 
 // AnimRings08SApart says "Rings, 0.8 s apart"
 // in the language the app shows under cx.
@@ -24995,7 +25125,7 @@ func AnimRings08SApart(cx *core.Scope) string { return For(cx).AnimRings08SApart
 
 // AnimRings08SApart says "Rings, 0.8 s apart"
 // in the language of msgs.
-func (msgs Messages) AnimRings08SApart() string { return msgs.text(1093) }
+func (msgs Messages) AnimRings08SApart() string { return msgs.text(1101) }
 
 // AnimCoreInAndOut says "Core, in and out"
 // in the language the app shows under cx.
@@ -25003,7 +25133,7 @@ func AnimCoreInAndOut(cx *core.Scope) string { return For(cx).AnimCoreInAndOut()
 
 // AnimCoreInAndOut says "Core, in and out"
 // in the language of msgs.
-func (msgs Messages) AnimCoreInAndOut() string { return msgs.text(1094) }
+func (msgs Messages) AnimCoreInAndOut() string { return msgs.text(1102) }
 
 // AnimEasing says "Easing"
 // in the language the app shows under cx.
@@ -25011,7 +25141,7 @@ func AnimEasing(cx *core.Scope) string { return For(cx).AnimEasing() }
 
 // AnimEasing says "Easing"
 // in the language of msgs.
-func (msgs Messages) AnimEasing() string { return msgs.text(1095) }
+func (msgs Messages) AnimEasing() string { return msgs.text(1103) }
 
 // AnimCurvesAreDataEvaluatedNatively says "Curves are data, evaluated natively"
 // in the language the app shows under cx.
@@ -25021,7 +25151,7 @@ func AnimCurvesAreDataEvaluatedNatively(cx *core.Scope) string {
 
 // AnimCurvesAreDataEvaluatedNatively says "Curves are data, evaluated natively"
 // in the language of msgs.
-func (msgs Messages) AnimCurvesAreDataEvaluatedNatively() string { return msgs.text(1096) }
+func (msgs Messages) AnimCurvesAreDataEvaluatedNatively() string { return msgs.text(1104) }
 
 // AnimEasingCurve says "Easing curve"
 // in the language the app shows under cx.
@@ -25029,7 +25159,7 @@ func AnimEasingCurve(cx *core.Scope) string { return For(cx).AnimEasingCurve() }
 
 // AnimEasingCurve says "Easing curve"
 // in the language of msgs.
-func (msgs Messages) AnimEasingCurve() string { return msgs.text(1097) }
+func (msgs Messages) AnimEasingCurve() string { return msgs.text(1105) }
 
 // AnimCurves says "Curves"
 // in the language the app shows under cx.
@@ -25037,7 +25167,7 @@ func AnimCurves(cx *core.Scope) string { return For(cx).AnimCurves() }
 
 // AnimCurves says "Curves"
 // in the language of msgs.
-func (msgs Messages) AnimCurves() string { return msgs.text(1098) }
+func (msgs Messages) AnimCurves() string { return msgs.text(1106) }
 
 // AnimPlay says "Play"
 // in the language the app shows under cx.
@@ -25045,7 +25175,7 @@ func AnimPlay(cx *core.Scope) string { return For(cx).AnimPlay() }
 
 // AnimPlay says "Play"
 // in the language of msgs.
-func (msgs Messages) AnimPlay() string { return msgs.text(1099) }
+func (msgs Messages) AnimPlay() string { return msgs.text(1107) }
 
 // AnimSideBySide says "Side by side"
 // in the language the app shows under cx.
@@ -25053,7 +25183,7 @@ func AnimSideBySide(cx *core.Scope) string { return For(cx).AnimSideBySide() }
 
 // AnimSideBySide says "Side by side"
 // in the language of msgs.
-func (msgs Messages) AnimSideBySide() string { return msgs.text(1100) }
+func (msgs Messages) AnimSideBySide() string { return msgs.text(1108) }
 
 // AnimTenTimingsStartedTogether says "Ten timings started together"
 // in the language the app shows under cx.
@@ -25063,7 +25193,7 @@ func AnimTenTimingsStartedTogether(cx *core.Scope) string {
 
 // AnimTenTimingsStartedTogether says "Ten timings started together"
 // in the language of msgs.
-func (msgs Messages) AnimTenTimingsStartedTogether() string { return msgs.text(1101) }
+func (msgs Messages) AnimTenTimingsStartedTogether() string { return msgs.text(1109) }
 
 // AnimOneGroupOneStart says "One group, one start"
 // in the language the app shows under cx.
@@ -25071,7 +25201,7 @@ func AnimOneGroupOneStart(cx *core.Scope) string { return For(cx).AnimOneGroupOn
 
 // AnimOneGroupOneStart says "One group, one start"
 // in the language of msgs.
-func (msgs Messages) AnimOneGroupOneStart() string { return msgs.text(1102) }
+func (msgs Messages) AnimOneGroupOneStart() string { return msgs.text(1110) }
 
 // AnimReverse says "Reverse"
 // in the language the app shows under cx.
@@ -25079,7 +25209,7 @@ func AnimReverse(cx *core.Scope) string { return For(cx).AnimReverse() }
 
 // AnimReverse says "Reverse"
 // in the language of msgs.
-func (msgs Messages) AnimReverse() string { return msgs.text(1103) }
+func (msgs Messages) AnimReverse() string { return msgs.text(1111) }
 
 // AnimRunning says " running"
 // in the language the app shows under cx.
@@ -25087,7 +25217,7 @@ func AnimRunning(cx *core.Scope) string { return For(cx).AnimRunning() }
 
 // AnimRunning says " running"
 // in the language of msgs.
-func (msgs Messages) AnimRunning() string { return msgs.text(1104) }
+func (msgs Messages) AnimRunning() string { return msgs.text(1112) }
 
 // AnimFinished says " finished"
 // in the language the app shows under cx.
@@ -25095,7 +25225,7 @@ func AnimFinished(cx *core.Scope) string { return For(cx).AnimFinished() }
 
 // AnimFinished says " finished"
 // in the language of msgs.
-func (msgs Messages) AnimFinished() string { return msgs.text(1105) }
+func (msgs Messages) AnimFinished() string { return msgs.text(1113) }
 
 // AnimStopped says " stopped"
 // in the language the app shows under cx.
@@ -25103,7 +25233,7 @@ func AnimStopped(cx *core.Scope) string { return For(cx).AnimStopped() }
 
 // AnimStopped says " stopped"
 // in the language of msgs.
-func (msgs Messages) AnimStopped() string { return msgs.text(1106) }
+func (msgs Messages) AnimStopped() string { return msgs.text(1114) }
 
 // AnimComposition says "Composition"
 // in the language the app shows under cx.
@@ -25111,7 +25241,7 @@ func AnimComposition(cx *core.Scope) string { return For(cx).AnimComposition() }
 
 // AnimComposition says "Composition"
 // in the language of msgs.
-func (msgs Messages) AnimComposition() string { return msgs.text(1107) }
+func (msgs Messages) AnimComposition() string { return msgs.text(1115) }
 
 // AnimEachStepStartsAsThe says "Each step starts as the last one ends"
 // in the language the app shows under cx.
@@ -25119,7 +25249,7 @@ func AnimEachStepStartsAsThe(cx *core.Scope) string { return For(cx).AnimEachSte
 
 // AnimEachStepStartsAsThe says "Each step starts as the last one ends"
 // in the language of msgs.
-func (msgs Messages) AnimEachStepStartsAsThe() string { return msgs.text(1108) }
+func (msgs Messages) AnimEachStepStartsAsThe() string { return msgs.text(1116) }
 
 // AnimStop says "Stop"
 // in the language the app shows under cx.
@@ -25127,7 +25257,7 @@ func AnimStop(cx *core.Scope) string { return For(cx).AnimStop() }
 
 // AnimStop says "Stop"
 // in the language of msgs.
-func (msgs Messages) AnimStop() string { return msgs.text(1109) }
+func (msgs Messages) AnimStop() string { return msgs.text(1117) }
 
 // AnimReset says "Reset"
 // in the language the app shows under cx.
@@ -25135,7 +25265,7 @@ func AnimReset(cx *core.Scope) string { return For(cx).AnimReset() }
 
 // AnimReset says "Reset"
 // in the language of msgs.
-func (msgs Messages) AnimReset() string { return msgs.text(1110) }
+func (msgs Messages) AnimReset() string { return msgs.text(1118) }
 
 // AnimSprings says "Springs"
 // in the language the app shows under cx.
@@ -25143,7 +25273,7 @@ func AnimSprings(cx *core.Scope) string { return For(cx).AnimSprings() }
 
 // AnimSprings says "Springs"
 // in the language of msgs.
-func (msgs Messages) AnimSprings() string { return msgs.text(1111) }
+func (msgs Messages) AnimSprings() string { return msgs.text(1119) }
 
 // AnimStiffnessAndDampingMass1 says "Stiffness and damping, mass 1"
 // in the language the app shows under cx.
@@ -25153,7 +25283,7 @@ func AnimStiffnessAndDampingMass1(cx *core.Scope) string {
 
 // AnimStiffnessAndDampingMass1 says "Stiffness and damping, mass 1"
 // in the language of msgs.
-func (msgs Messages) AnimStiffnessAndDampingMass1() string { return msgs.text(1112) }
+func (msgs Messages) AnimStiffnessAndDampingMass1() string { return msgs.text(1120) }
 
 // AnimSpringResponses says "Spring responses"
 // in the language the app shows under cx.
@@ -25161,7 +25291,7 @@ func AnimSpringResponses(cx *core.Scope) string { return For(cx).AnimSpringRespo
 
 // AnimSpringResponses says "Spring responses"
 // in the language of msgs.
-func (msgs Messages) AnimSpringResponses() string { return msgs.text(1113) }
+func (msgs Messages) AnimSpringResponses() string { return msgs.text(1121) }
 
 // AnimRelease says "Release"
 // in the language the app shows under cx.
@@ -25169,7 +25299,7 @@ func AnimRelease(cx *core.Scope) string { return For(cx).AnimRelease() }
 
 // AnimRelease says "Release"
 // in the language of msgs.
-func (msgs Messages) AnimRelease() string { return msgs.text(1114) }
+func (msgs Messages) AnimRelease() string { return msgs.text(1122) }
 
 // AnimInterpolation says "Interpolation"
 // in the language the app shows under cx.
@@ -25177,7 +25307,7 @@ func AnimInterpolation(cx *core.Scope) string { return For(cx).AnimInterpolation
 
 // AnimInterpolation says "Interpolation"
 // in the language of msgs.
-func (msgs Messages) AnimInterpolation() string { return msgs.text(1115) }
+func (msgs Messages) AnimInterpolation() string { return msgs.text(1123) }
 
 // AnimOneValueDrivesColorAngle says "One value drives color, angle and scale"
 // in the language the app shows under cx.
@@ -25187,7 +25317,7 @@ func AnimOneValueDrivesColorAngle(cx *core.Scope) string {
 
 // AnimOneValueDrivesColorAngle says "One value drives color, angle and scale"
 // in the language of msgs.
-func (msgs Messages) AnimOneValueDrivesColorAngle() string { return msgs.text(1116) }
+func (msgs Messages) AnimOneValueDrivesColorAngle() string { return msgs.text(1124) }
 
 // AnimColorThroughThreeStops says "Color through three stops"
 // in the language the app shows under cx.
@@ -25195,7 +25325,7 @@ func AnimColorThroughThreeStops(cx *core.Scope) string { return For(cx).AnimColo
 
 // AnimColorThroughThreeStops says "Color through three stops"
 // in the language of msgs.
-func (msgs Messages) AnimColorThroughThreeStops() string { return msgs.text(1117) }
+func (msgs Messages) AnimColorThroughThreeStops() string { return msgs.text(1125) }
 
 // AnimAt01And2 says "at 0, 1 and 2"
 // in the language the app shows under cx.
@@ -25203,7 +25333,7 @@ func AnimAt01And2(cx *core.Scope) string { return For(cx).AnimAt01And2() }
 
 // AnimAt01And2 says "at 0, 1 and 2"
 // in the language of msgs.
-func (msgs Messages) AnimAt01And2() string { return msgs.text(1118) }
+func (msgs Messages) AnimAt01And2() string { return msgs.text(1126) }
 
 // AnimRotationKeepsGoingPast1 says "Rotation keeps going past 1"
 // in the language the app shows under cx.
@@ -25211,7 +25341,7 @@ func AnimRotationKeepsGoingPast1(cx *core.Scope) string { return For(cx).AnimRot
 
 // AnimRotationKeepsGoingPast1 says "Rotation keeps going past 1"
 // in the language of msgs.
-func (msgs Messages) AnimRotationKeepsGoingPast1() string { return msgs.text(1119) }
+func (msgs Messages) AnimRotationKeepsGoingPast1() string { return msgs.text(1127) }
 
 // Anim360At2 says "360° at 2"
 // in the language the app shows under cx.
@@ -25219,7 +25349,7 @@ func Anim360At2(cx *core.Scope) string { return For(cx).Anim360At2() }
 
 // Anim360At2 says "360° at 2"
 // in the language of msgs.
-func (msgs Messages) Anim360At2() string { return msgs.text(1120) }
+func (msgs Messages) Anim360At2() string { return msgs.text(1128) }
 
 // AnimScaleStopsAt12 says "Scale stops at 1.2"
 // in the language the app shows under cx.
@@ -25227,7 +25357,7 @@ func AnimScaleStopsAt12(cx *core.Scope) string { return For(cx).AnimScaleStopsAt
 
 // AnimScaleStopsAt12 says "Scale stops at 1.2"
 // in the language of msgs.
-func (msgs Messages) AnimScaleStopsAt12() string { return msgs.text(1121) }
+func (msgs Messages) AnimScaleStopsAt12() string { return msgs.text(1129) }
 
 // AnimHidingHeader says "Hiding header"
 // in the language the app shows under cx.
@@ -25235,7 +25365,7 @@ func AnimHidingHeader(cx *core.Scope) string { return For(cx).AnimHidingHeader()
 
 // AnimHidingHeader says "Hiding header"
 // in the language of msgs.
-func (msgs Messages) AnimHidingHeader() string { return msgs.text(1122) }
+func (msgs Messages) AnimHidingHeader() string { return msgs.text(1130) }
 
 // AnimHidesAsTheListScrolls says "Hides as the list scrolls up, returns as it scrolls down"
 // in the language the app shows under cx.
@@ -25243,7 +25373,7 @@ func AnimHidesAsTheListScrolls(cx *core.Scope) string { return For(cx).AnimHides
 
 // AnimHidesAsTheListScrolls says "Hides as the list scrolls up, returns as it scrolls down"
 // in the language of msgs.
-func (msgs Messages) AnimHidesAsTheListScrolls() string { return msgs.text(1123) }
+func (msgs Messages) AnimHidesAsTheListScrolls() string { return msgs.text(1131) }
 
 // AnimSearch says "Search"
 // in the language the app shows under cx.
@@ -25251,7 +25381,7 @@ func AnimSearch(cx *core.Scope) string { return For(cx).AnimSearch() }
 
 // AnimSearch says "Search"
 // in the language of msgs.
-func (msgs Messages) AnimSearch() string { return msgs.text(1124) }
+func (msgs Messages) AnimSearch() string { return msgs.text(1132) }
 
 // AnimLayoutAnimation says "Layout animation"
 // in the language the app shows under cx.
@@ -25259,7 +25389,7 @@ func AnimLayoutAnimation(cx *core.Scope) string { return For(cx).AnimLayoutAnima
 
 // AnimLayoutAnimation says "Layout animation"
 // in the language of msgs.
-func (msgs Messages) AnimLayoutAnimation() string { return msgs.text(1125) }
+func (msgs Messages) AnimLayoutAnimation() string { return msgs.text(1133) }
 
 // AnimFramesInsertsAndRemovalsOf says "Frames, inserts and removals of the next commit"
 // in the language the app shows under cx.
@@ -25269,7 +25399,7 @@ func AnimFramesInsertsAndRemovalsOf(cx *core.Scope) string {
 
 // AnimFramesInsertsAndRemovalsOf says "Frames, inserts and removals of the next commit"
 // in the language of msgs.
-func (msgs Messages) AnimFramesInsertsAndRemovalsOf() string { return msgs.text(1126) }
+func (msgs Messages) AnimFramesInsertsAndRemovalsOf() string { return msgs.text(1134) }
 
 // AnimSpring says "Spring"
 // in the language the app shows under cx.
@@ -25277,7 +25407,7 @@ func AnimSpring(cx *core.Scope) string { return For(cx).AnimSpring() }
 
 // AnimSpring says "Spring"
 // in the language of msgs.
-func (msgs Messages) AnimSpring() string { return msgs.text(1127) }
+func (msgs Messages) AnimSpring() string { return msgs.text(1135) }
 
 // AnimEaseInOut says "Ease in out"
 // in the language the app shows under cx.
@@ -25285,7 +25415,7 @@ func AnimEaseInOut(cx *core.Scope) string { return For(cx).AnimEaseInOut() }
 
 // AnimEaseInOut says "Ease in out"
 // in the language of msgs.
-func (msgs Messages) AnimEaseInOut() string { return msgs.text(1128) }
+func (msgs Messages) AnimEaseInOut() string { return msgs.text(1136) }
 
 // AnimLinear says "Linear"
 // in the language the app shows under cx.
@@ -25293,7 +25423,7 @@ func AnimLinear(cx *core.Scope) string { return For(cx).AnimLinear() }
 
 // AnimLinear says "Linear"
 // in the language of msgs.
-func (msgs Messages) AnimLinear() string { return msgs.text(1129) }
+func (msgs Messages) AnimLinear() string { return msgs.text(1137) }
 
 // AnimColumn says "Column"
 // in the language the app shows under cx.
@@ -25301,7 +25431,7 @@ func AnimColumn(cx *core.Scope) string { return For(cx).AnimColumn() }
 
 // AnimColumn says "Column"
 // in the language of msgs.
-func (msgs Messages) AnimColumn() string { return msgs.text(1130) }
+func (msgs Messages) AnimColumn() string { return msgs.text(1138) }
 
 // AnimRow says "Row"
 // in the language the app shows under cx.
@@ -25309,7 +25439,7 @@ func AnimRow(cx *core.Scope) string { return For(cx).AnimRow() }
 
 // AnimRow says "Row"
 // in the language of msgs.
-func (msgs Messages) AnimRow() string { return msgs.text(1131) }
+func (msgs Messages) AnimRow() string { return msgs.text(1139) }
 
 // AnimShuffle says "Shuffle"
 // in the language the app shows under cx.
@@ -25317,7 +25447,7 @@ func AnimShuffle(cx *core.Scope) string { return For(cx).AnimShuffle() }
 
 // AnimShuffle says "Shuffle"
 // in the language of msgs.
-func (msgs Messages) AnimShuffle() string { return msgs.text(1132) }
+func (msgs Messages) AnimShuffle() string { return msgs.text(1140) }
 
 // AnimAdd says "Add"
 // in the language the app shows under cx.
@@ -25325,7 +25455,7 @@ func AnimAdd(cx *core.Scope) string { return For(cx).AnimAdd() }
 
 // AnimAdd says "Add"
 // in the language of msgs.
-func (msgs Messages) AnimAdd() string { return msgs.text(1133) }
+func (msgs Messages) AnimAdd() string { return msgs.text(1141) }
 
 // AnimRemove says "Remove"
 // in the language the app shows under cx.
@@ -25333,7 +25463,7 @@ func AnimRemove(cx *core.Scope) string { return For(cx).AnimRemove() }
 
 // AnimRemove says "Remove"
 // in the language of msgs.
-func (msgs Messages) AnimRemove() string { return msgs.text(1134) }
+func (msgs Messages) AnimRemove() string { return msgs.text(1142) }
 
 // AnimTransitions says "Transitions"
 // in the language the app shows under cx.
@@ -25341,7 +25471,7 @@ func AnimTransitions(cx *core.Scope) string { return For(cx).AnimTransitions() }
 
 // AnimTransitions says "Transitions"
 // in the language of msgs.
-func (msgs Messages) AnimTransitions() string { return msgs.text(1135) }
+func (msgs Messages) AnimTransitions() string { return msgs.text(1143) }
 
 // AnimAStyleSTransitionAnimates says "A style's Transition animates its changes"
 // in the language the app shows under cx.
@@ -25351,7 +25481,7 @@ func AnimAStyleSTransitionAnimates(cx *core.Scope) string {
 
 // AnimAStyleSTransitionAnimates says "A style's Transition animates its changes"
 // in the language of msgs.
-func (msgs Messages) AnimAStyleSTransitionAnimates() string { return msgs.text(1136) }
+func (msgs Messages) AnimAStyleSTransitionAnimates() string { return msgs.text(1144) }
 
 // AnimColorCornersTransformOpacityAndFrame says "Color, corners, transform, opacity and frame"
 // in the language the app shows under cx.
@@ -25361,7 +25491,7 @@ func AnimColorCornersTransformOpacityAndFrame(cx *core.Scope) string {
 
 // AnimColorCornersTransformOpacityAndFrame says "Color, corners, transform, opacity and frame"
 // in the language of msgs.
-func (msgs Messages) AnimColorCornersTransformOpacityAndFrame() string { return msgs.text(1137) }
+func (msgs Messages) AnimColorCornersTransformOpacityAndFrame() string { return msgs.text(1145) }
 
 // AnimToggle says "Toggle"
 // in the language the app shows under cx.
@@ -25369,7 +25499,7 @@ func AnimToggle(cx *core.Scope) string { return For(cx).AnimToggle() }
 
 // AnimToggle says "Toggle"
 // in the language of msgs.
-func (msgs Messages) AnimToggle() string { return msgs.text(1138) }
+func (msgs Messages) AnimToggle() string { return msgs.text(1146) }
 
 // AnimGentle says "Gentle"
 // in the language the app shows under cx.
@@ -25377,7 +25507,7 @@ func AnimGentle(cx *core.Scope) string { return For(cx).AnimGentle() }
 
 // AnimGentle says "Gentle"
 // in the language of msgs.
-func (msgs Messages) AnimGentle() string { return msgs.text(1139) }
+func (msgs Messages) AnimGentle() string { return msgs.text(1147) }
 
 // AnimWobbly says "Wobbly"
 // in the language the app shows under cx.
@@ -25385,7 +25515,7 @@ func AnimWobbly(cx *core.Scope) string { return For(cx).AnimWobbly() }
 
 // AnimWobbly says "Wobbly"
 // in the language of msgs.
-func (msgs Messages) AnimWobbly() string { return msgs.text(1140) }
+func (msgs Messages) AnimWobbly() string { return msgs.text(1148) }
 
 // AnimStiff says "Stiff"
 // in the language the app shows under cx.
@@ -25393,7 +25523,7 @@ func AnimStiff(cx *core.Scope) string { return For(cx).AnimStiff() }
 
 // AnimStiff says "Stiff"
 // in the language of msgs.
-func (msgs Messages) AnimStiff() string { return msgs.text(1141) }
+func (msgs Messages) AnimStiff() string { return msgs.text(1149) }
 
 // AnimViews says "{count, plural, one {# view} other {# views}}"
 // in the language the app shows under cx.
@@ -25434,7 +25564,7 @@ func AnimTapATile(cx *core.Scope) string { return For(cx).AnimTapATile() }
 
 // AnimTapATile says "tap a tile"
 // in the language of msgs.
-func (msgs Messages) AnimTapATile() string { return msgs.text(1142) }
+func (msgs Messages) AnimTapATile() string { return msgs.text(1150) }
 
 // AnimMotionPresets says "Motion presets"
 // in the language the app shows under cx.
@@ -25442,7 +25572,7 @@ func AnimMotionPresets(cx *core.Scope) string { return For(cx).AnimMotionPresets
 
 // AnimMotionPresets says "Motion presets"
 // in the language of msgs.
-func (msgs Messages) AnimMotionPresets() string { return msgs.text(1143) }
+func (msgs Messages) AnimMotionPresets() string { return msgs.text(1151) }
 
 // AnimKinds says "Kinds"
 // in the language the app shows under cx.
@@ -25450,7 +25580,7 @@ func AnimKinds(cx *core.Scope) string { return For(cx).AnimKinds() }
 
 // AnimKinds says "Kinds"
 // in the language of msgs.
-func (msgs Messages) AnimKinds() string { return msgs.text(1144) }
+func (msgs Messages) AnimKinds() string { return msgs.text(1152) }
 
 // AnimChannelsForAView says "Channels for a view"
 // in the language the app shows under cx.
@@ -25458,7 +25588,7 @@ func AnimChannelsForAView(cx *core.Scope) string { return For(cx).AnimChannelsFo
 
 // AnimChannelsForAView says "Channels for a view"
 // in the language of msgs.
-func (msgs Messages) AnimChannelsForAView() string { return msgs.text(1145) }
+func (msgs Messages) AnimChannelsForAView() string { return msgs.text(1153) }
 
 // AnimAPreset says "A preset"
 // in the language the app shows under cx.
@@ -25466,7 +25596,7 @@ func AnimAPreset(cx *core.Scope) string { return For(cx).AnimAPreset() }
 
 // AnimAPreset says "A preset"
 // in the language of msgs.
-func (msgs Messages) AnimAPreset() string { return msgs.text(1146) }
+func (msgs Messages) AnimAPreset() string { return msgs.text(1154) }
 
 // AnimStaggeredEntrance says "Staggered entrance"
 // in the language the app shows under cx.
@@ -25474,7 +25604,7 @@ func AnimStaggeredEntrance(cx *core.Scope) string { return For(cx).AnimStaggered
 
 // AnimStaggeredEntrance says "Staggered entrance"
 // in the language of msgs.
-func (msgs Messages) AnimStaggeredEntrance() string { return msgs.text(1147) }
+func (msgs Messages) AnimStaggeredEntrance() string { return msgs.text(1155) }
 
 // AnimNewmotionEnterWithADelay says "NewMotion(enter with a delay) per item"
 // in the language the app shows under cx.
@@ -25484,7 +25614,7 @@ func AnimNewmotionEnterWithADelay(cx *core.Scope) string {
 
 // AnimNewmotionEnterWithADelay says "NewMotion(enter with a delay) per item"
 // in the language of msgs.
-func (msgs Messages) AnimNewmotionEnterWithADelay() string { return msgs.text(1148) }
+func (msgs Messages) AnimNewmotionEnterWithADelay() string { return msgs.text(1156) }
 
 // Anim70MsApart says "70 ms apart"
 // in the language the app shows under cx.
@@ -25492,7 +25622,7 @@ func Anim70MsApart(cx *core.Scope) string { return For(cx).Anim70MsApart() }
 
 // Anim70MsApart says "70 ms apart"
 // in the language of msgs.
-func (msgs Messages) Anim70MsApart() string { return msgs.text(1149) }
+func (msgs Messages) Anim70MsApart() string { return msgs.text(1157) }
 
 // AnimOrigin says "Origin"
 // in the language the app shows under cx.
@@ -25500,7 +25630,7 @@ func AnimOrigin(cx *core.Scope) string { return For(cx).AnimOrigin() }
 
 // AnimOrigin says "Origin"
 // in the language of msgs.
-func (msgs Messages) AnimOrigin() string { return msgs.text(1150) }
+func (msgs Messages) AnimOrigin() string { return msgs.text(1158) }
 
 // AnimFromFirst says "From first"
 // in the language the app shows under cx.
@@ -25508,7 +25638,7 @@ func AnimFromFirst(cx *core.Scope) string { return For(cx).AnimFromFirst() }
 
 // AnimFromFirst says "From first"
 // in the language of msgs.
-func (msgs Messages) AnimFromFirst() string { return msgs.text(1151) }
+func (msgs Messages) AnimFromFirst() string { return msgs.text(1159) }
 
 // AnimCenter says "Center"
 // in the language the app shows under cx.
@@ -25516,7 +25646,7 @@ func AnimCenter(cx *core.Scope) string { return For(cx).AnimCenter() }
 
 // AnimCenter says "Center"
 // in the language of msgs.
-func (msgs Messages) AnimCenter() string { return msgs.text(1152) }
+func (msgs Messages) AnimCenter() string { return msgs.text(1160) }
 
 // AnimLast says "Last"
 // in the language the app shows under cx.
@@ -25524,7 +25654,7 @@ func AnimLast(cx *core.Scope) string { return For(cx).AnimLast() }
 
 // AnimLast says "Last"
 // in the language of msgs.
-func (msgs Messages) AnimLast() string { return msgs.text(1153) }
+func (msgs Messages) AnimLast() string { return msgs.text(1161) }
 
 // AnimReplay says "Replay"
 // in the language the app shows under cx.
@@ -25532,7 +25662,7 @@ func AnimReplay(cx *core.Scope) string { return For(cx).AnimReplay() }
 
 // AnimReplay says "Replay"
 // in the language of msgs.
-func (msgs Messages) AnimReplay() string { return msgs.text(1154) }
+func (msgs Messages) AnimReplay() string { return msgs.text(1162) }
 
 // AnimKeyframes says "Keyframes"
 // in the language the app shows under cx.
@@ -25540,7 +25670,7 @@ func AnimKeyframes(cx *core.Scope) string { return For(cx).AnimKeyframes() }
 
 // AnimKeyframes says "Keyframes"
 // in the language of msgs.
-func (msgs Messages) AnimKeyframes() string { return msgs.text(1155) }
+func (msgs Messages) AnimKeyframes() string { return msgs.text(1163) }
 
 // AnimStepsKeyframesWithEasingsOf says "Steps, keyframes with easings of their own, chained motions"
 // in the language the app shows under cx.
@@ -25550,7 +25680,7 @@ func AnimStepsKeyframesWithEasingsOf(cx *core.Scope) string {
 
 // AnimStepsKeyframesWithEasingsOf says "Steps, keyframes with easings of their own, chained motions"
 // in the language of msgs.
-func (msgs Messages) AnimStepsKeyframesWithEasingsOf() string { return msgs.text(1156) }
+func (msgs Messages) AnimStepsKeyframesWithEasingsOf() string { return msgs.text(1164) }
 
 // AnimLike says "Like"
 // in the language the app shows under cx.
@@ -25558,7 +25688,7 @@ func AnimLike(cx *core.Scope) string { return For(cx).AnimLike() }
 
 // AnimLike says "Like"
 // in the language of msgs.
-func (msgs Messages) AnimLike() string { return msgs.text(1157) }
+func (msgs Messages) AnimLike() string { return msgs.text(1165) }
 
 // AnimLikes says " likes"
 // in the language the app shows under cx.
@@ -25566,7 +25696,7 @@ func AnimLikes(cx *core.Scope) string { return For(cx).AnimLikes() }
 
 // AnimLikes says " likes"
 // in the language of msgs.
-func (msgs Messages) AnimLikes() string { return msgs.text(1158) }
+func (msgs Messages) AnimLikes() string { return msgs.text(1166) }
 
 // AnimCharge says "Charge"
 // in the language the app shows under cx.
@@ -25574,7 +25704,7 @@ func AnimCharge(cx *core.Scope) string { return For(cx).AnimCharge() }
 
 // AnimCharge says "Charge"
 // in the language of msgs.
-func (msgs Messages) AnimCharge() string { return msgs.text(1159) }
+func (msgs Messages) AnimCharge() string { return msgs.text(1167) }
 
 // AnimASpriteSheetFrameBy says "A sprite sheet, frame by frame"
 // in the language the app shows under cx.
@@ -25582,7 +25712,7 @@ func AnimASpriteSheetFrameBy(cx *core.Scope) string { return For(cx).AnimASprite
 
 // AnimASpriteSheetFrameBy says "A sprite sheet, frame by frame"
 // in the language of msgs.
-func (msgs Messages) AnimASpriteSheetFrameBy() string { return msgs.text(1160) }
+func (msgs Messages) AnimASpriteSheetFrameBy() string { return msgs.text(1168) }
 
 // Anim1ThreeStopsOneWith says "+1: three stops, one with its easing"
 // in the language the app shows under cx.
@@ -25590,7 +25720,7 @@ func Anim1ThreeStopsOneWith(cx *core.Scope) string { return For(cx).Anim1ThreeSt
 
 // Anim1ThreeStopsOneWith says "+1: three stops, one with its easing"
 // in the language of msgs.
-func (msgs Messages) Anim1ThreeStopsOneWith() string { return msgs.text(1161) }
+func (msgs Messages) Anim1ThreeStopsOneWith() string { return msgs.text(1169) }
 
 // AnimLikePopInThenA says "Like: pop in, then a heartbeat"
 // in the language the app shows under cx.
@@ -25598,7 +25728,7 @@ func AnimLikePopInThenA(cx *core.Scope) string { return For(cx).AnimLikePopInThe
 
 // AnimLikePopInThenA says "Like: pop in, then a heartbeat"
 // in the language of msgs.
-func (msgs Messages) AnimLikePopInThenA() string { return msgs.text(1162) }
+func (msgs Messages) AnimLikePopInThenA() string { return msgs.text(1170) }
 
 // AnimChargeInFiveJumps says "Charge in five jumps"
 // in the language the app shows under cx.
@@ -25606,7 +25736,7 @@ func AnimChargeInFiveJumps(cx *core.Scope) string { return For(cx).AnimChargeInF
 
 // AnimChargeInFiveJumps says "Charge in five jumps"
 // in the language of msgs.
-func (msgs Messages) AnimChargeInFiveJumps() string { return msgs.text(1163) }
+func (msgs Messages) AnimChargeInFiveJumps() string { return msgs.text(1171) }
 
 // AnimAurora says "Aurora"
 // in the language the app shows under cx.
@@ -25614,7 +25744,7 @@ func AnimAurora(cx *core.Scope) string { return For(cx).AnimAurora() }
 
 // AnimAurora says "Aurora"
 // in the language of msgs.
-func (msgs Messages) AnimAurora() string { return msgs.text(1164) }
+func (msgs Messages) AnimAurora() string { return msgs.text(1172) }
 
 // AnimEachLightDriftsOnIts says "Each light drifts on its own loop, there and back"
 // in the language the app shows under cx.
@@ -25622,7 +25752,7 @@ func AnimEachLightDriftsOnIts(cx *core.Scope) string { return For(cx).AnimEachLi
 
 // AnimEachLightDriftsOnIts says "Each light drifts on its own loop, there and back"
 // in the language of msgs.
-func (msgs Messages) AnimEachLightDriftsOnIts() string { return msgs.text(1165) }
+func (msgs Messages) AnimEachLightDriftsOnIts() string { return msgs.text(1173) }
 
 // AnimBlurredGradientsOnLoopingMotions says "Blurred gradients on looping motions"
 // in the language the app shows under cx.
@@ -25632,7 +25762,7 @@ func AnimBlurredGradientsOnLoopingMotions(cx *core.Scope) string {
 
 // AnimBlurredGradientsOnLoopingMotions says "Blurred gradients on looping motions"
 // in the language of msgs.
-func (msgs Messages) AnimBlurredGradientsOnLoopingMotions() string { return msgs.text(1166) }
+func (msgs Messages) AnimBlurredGradientsOnLoopingMotions() string { return msgs.text(1174) }
 
 // AnimEnter says "Enter"
 // in the language the app shows under cx.
@@ -25640,7 +25770,7 @@ func AnimEnter(cx *core.Scope) string { return For(cx).AnimEnter() }
 
 // AnimEnter says "Enter"
 // in the language of msgs.
-func (msgs Messages) AnimEnter() string { return msgs.text(1167) }
+func (msgs Messages) AnimEnter() string { return msgs.text(1175) }
 
 // AnimExit says "Exit"
 // in the language the app shows under cx.
@@ -25648,7 +25778,7 @@ func AnimExit(cx *core.Scope) string { return For(cx).AnimExit() }
 
 // AnimExit says "Exit"
 // in the language of msgs.
-func (msgs Messages) AnimExit() string { return msgs.text(1168) }
+func (msgs Messages) AnimExit() string { return msgs.text(1176) }
 
 // AnimAttention says "Attention"
 // in the language the app shows under cx.
@@ -25656,7 +25786,7 @@ func AnimAttention(cx *core.Scope) string { return For(cx).AnimAttention() }
 
 // AnimAttention says "Attention"
 // in the language of msgs.
-func (msgs Messages) AnimAttention() string { return msgs.text(1169) }
+func (msgs Messages) AnimAttention() string { return msgs.text(1177) }
 
 // AnimLoop says "Loop"
 // in the language the app shows under cx.
@@ -25664,7 +25794,7 @@ func AnimLoop(cx *core.Scope) string { return For(cx).AnimLoop() }
 
 // AnimLoop says "Loop"
 // in the language of msgs.
-func (msgs Messages) AnimLoop() string { return msgs.text(1170) }
+func (msgs Messages) AnimLoop() string { return msgs.text(1178) }
 
 // AnimReadyMadeMotions says "{count, plural, one {# ready-made motion} other {# ready-made motions}}, played natively"
 // in the language the app shows under cx.
@@ -25708,7 +25838,7 @@ func GestPanPinchAndRotation(cx *core.Scope) string { return For(cx).GestPanPinc
 
 // GestPanPinchAndRotation says "Pan, pinch and rotation"
 // in the language of msgs.
-func (msgs Messages) GestPanPinchAndRotation() string { return msgs.text(1171) }
+func (msgs Messages) GestPanPinchAndRotation() string { return msgs.text(1179) }
 
 // GestThreeRecognizersOnOneView says "Three recognizers on one view, driven natively"
 // in the language the app shows under cx.
@@ -25718,7 +25848,7 @@ func GestThreeRecognizersOnOneView(cx *core.Scope) string {
 
 // GestThreeRecognizersOnOneView says "Three recognizers on one view, driven natively"
 // in the language of msgs.
-func (msgs Messages) GestThreeRecognizersOnOneView() string { return msgs.text(1172) }
+func (msgs Messages) GestThreeRecognizersOnOneView() string { return msgs.text(1180) }
 
 // GestDrag says "Drag"
 // in the language the app shows under cx.
@@ -25726,7 +25856,7 @@ func GestDrag(cx *core.Scope) string { return For(cx).GestDrag() }
 
 // GestDrag says "Drag"
 // in the language of msgs.
-func (msgs Messages) GestDrag() string { return msgs.text(1173) }
+func (msgs Messages) GestDrag() string { return msgs.text(1181) }
 
 // GestScale says "Scale"
 // in the language the app shows under cx.
@@ -25734,7 +25864,7 @@ func GestScale(cx *core.Scope) string { return For(cx).GestScale() }
 
 // GestScale says "Scale"
 // in the language of msgs.
-func (msgs Messages) GestScale() string { return msgs.text(1174) }
+func (msgs Messages) GestScale() string { return msgs.text(1182) }
 
 // GestAngle says "Angle"
 // in the language the app shows under cx.
@@ -25742,7 +25872,7 @@ func GestAngle(cx *core.Scope) string { return For(cx).GestAngle() }
 
 // GestAngle says "Angle"
 // in the language of msgs.
-func (msgs Messages) GestAngle() string { return msgs.text(1175) }
+func (msgs Messages) GestAngle() string { return msgs.text(1183) }
 
 // GestPinchAndRotateWithTwo says "Pinch and rotate with two fingers (Option-drag in the simulator)."
 // in the language the app shows under cx.
@@ -25750,7 +25880,7 @@ func GestPinchAndRotateWithTwo(cx *core.Scope) string { return For(cx).GestPinch
 
 // GestPinchAndRotateWithTwo says "Pinch and rotate with two fingers (Option-drag in the simulator)."
 // in the language of msgs.
-func (msgs Messages) GestPinchAndRotateWithTwo() string { return msgs.text(1176) }
+func (msgs Messages) GestPinchAndRotateWithTwo() string { return msgs.text(1184) }
 
 // GestDragWithTheMousePinch says "Drag with the mouse; pinch and rotate on a touchpad or a touch screen."
 // in the language the app shows under cx.
@@ -25758,7 +25888,7 @@ func GestDragWithTheMousePinch(cx *core.Scope) string { return For(cx).GestDragW
 
 // GestDragWithTheMousePinch says "Drag with the mouse; pinch and rotate on a touchpad or a touch screen."
 // in the language of msgs.
-func (msgs Messages) GestDragWithTheMousePinch() string { return msgs.text(1177) }
+func (msgs Messages) GestDragWithTheMousePinch() string { return msgs.text(1185) }
 
 // GestReset says "Reset"
 // in the language the app shows under cx.
@@ -25766,7 +25896,7 @@ func GestReset(cx *core.Scope) string { return For(cx).GestReset() }
 
 // GestReset says "Reset"
 // in the language of msgs.
-func (msgs Messages) GestReset() string { return msgs.text(1178) }
+func (msgs Messages) GestReset() string { return msgs.text(1186) }
 
 // GestIdle says "Idle"
 // in the language the app shows under cx.
@@ -25774,7 +25904,7 @@ func GestIdle(cx *core.Scope) string { return For(cx).GestIdle() }
 
 // GestIdle says "Idle"
 // in the language of msgs.
-func (msgs Messages) GestIdle() string { return msgs.text(1179) }
+func (msgs Messages) GestIdle() string { return msgs.text(1187) }
 
 // GestTouchResponder says "Touch responder"
 // in the language the app shows under cx.
@@ -25782,7 +25912,7 @@ func GestTouchResponder(cx *core.Scope) string { return For(cx).GestTouchRespond
 
 // GestTouchResponder says "Touch responder"
 // in the language of msgs.
-func (msgs Messages) GestTouchResponder() string { return msgs.text(1180) }
+func (msgs Messages) GestTouchResponder() string { return msgs.text(1188) }
 
 // GestPositionsGoThroughTheEngine says "Positions go through the engine; the page does not scroll"
 // in the language the app shows under cx.
@@ -25792,7 +25922,7 @@ func GestPositionsGoThroughTheEngine(cx *core.Scope) string {
 
 // GestPositionsGoThroughTheEngine says "Positions go through the engine; the page does not scroll"
 // in the language of msgs.
-func (msgs Messages) GestPositionsGoThroughTheEngine() string { return msgs.text(1181) }
+func (msgs Messages) GestPositionsGoThroughTheEngine() string { return msgs.text(1189) }
 
 // GestDragging says "Dragging"
 // in the language the app shows under cx.
@@ -25800,7 +25930,7 @@ func GestDragging(cx *core.Scope) string { return For(cx).GestDragging() }
 
 // GestDragging says "Dragging"
 // in the language of msgs.
-func (msgs Messages) GestDragging() string { return msgs.text(1182) }
+func (msgs Messages) GestDragging() string { return msgs.text(1190) }
 
 // GestTakenOver says "Taken over"
 // in the language the app shows under cx.
@@ -25808,7 +25938,7 @@ func GestTakenOver(cx *core.Scope) string { return For(cx).GestTakenOver() }
 
 // GestTakenOver says "Taken over"
 // in the language of msgs.
-func (msgs Messages) GestTakenOver() string { return msgs.text(1183) }
+func (msgs Messages) GestTakenOver() string { return msgs.text(1191) }
 
 // GestPosition says "Position"
 // in the language the app shows under cx.
@@ -25816,7 +25946,7 @@ func GestPosition(cx *core.Scope) string { return For(cx).GestPosition() }
 
 // GestPosition says "Position"
 // in the language of msgs.
-func (msgs Messages) GestPosition() string { return msgs.text(1184) }
+func (msgs Messages) GestPosition() string { return msgs.text(1192) }
 
 // GestCenter says "Center"
 // in the language the app shows under cx.
@@ -25824,7 +25954,7 @@ func GestCenter(cx *core.Scope) string { return For(cx).GestCenter() }
 
 // GestCenter says "Center"
 // in the language of msgs.
-func (msgs Messages) GestCenter() string { return msgs.text(1185) }
+func (msgs Messages) GestCenter() string { return msgs.text(1193) }
 
 // GestTouchEvents says "Touch events"
 // in the language the app shows under cx.
@@ -25832,7 +25962,7 @@ func GestTouchEvents(cx *core.Scope) string { return For(cx).GestTouchEvents() }
 
 // GestTouchEvents says "Touch events"
 // in the language of msgs.
-func (msgs Messages) GestTouchEvents() string { return msgs.text(1186) }
+func (msgs Messages) GestTouchEvents() string { return msgs.text(1194) }
 
 // GestStartMoveEndAndCancel says "Start, move, end and cancel, for every finger"
 // in the language the app shows under cx.
@@ -25840,7 +25970,7 @@ func GestStartMoveEndAndCancel(cx *core.Scope) string { return For(cx).GestStart
 
 // GestStartMoveEndAndCancel says "Start, move, end and cancel, for every finger"
 // in the language of msgs.
-func (msgs Messages) GestStartMoveEndAndCancel() string { return msgs.text(1187) }
+func (msgs Messages) GestStartMoveEndAndCancel() string { return msgs.text(1195) }
 
 // GestStartMoveEndAndCancel2 says "Start, move, end and cancel, for the mouse and every finger"
 // in the language the app shows under cx.
@@ -25848,7 +25978,7 @@ func GestStartMoveEndAndCancel2(cx *core.Scope) string { return For(cx).GestStar
 
 // GestStartMoveEndAndCancel2 says "Start, move, end and cancel, for the mouse and every finger"
 // in the language of msgs.
-func (msgs Messages) GestStartMoveEndAndCancel2() string { return msgs.text(1188) }
+func (msgs Messages) GestStartMoveEndAndCancel2() string { return msgs.text(1196) }
 
 // GestTouchHereTryTwoFingers says "Touch here, try two fingers"
 // in the language the app shows under cx.
@@ -25856,7 +25986,7 @@ func GestTouchHereTryTwoFingers(cx *core.Scope) string { return For(cx).GestTouc
 
 // GestTouchHereTryTwoFingers says "Touch here, try two fingers"
 // in the language of msgs.
-func (msgs Messages) GestTouchHereTryTwoFingers() string { return msgs.text(1189) }
+func (msgs Messages) GestTouchHereTryTwoFingers() string { return msgs.text(1197) }
 
 // GestPressAndDragHereWith says "Press and drag here with the mouse"
 // in the language the app shows under cx.
@@ -25864,7 +25994,7 @@ func GestPressAndDragHereWith(cx *core.Scope) string { return For(cx).GestPressA
 
 // GestPressAndDragHereWith says "Press and drag here with the mouse"
 // in the language of msgs.
-func (msgs Messages) GestPressAndDragHereWith() string { return msgs.text(1190) }
+func (msgs Messages) GestPressAndDragHereWith() string { return msgs.text(1198) }
 
 // GestNoTouchesYet says "No touches yet"
 // in the language the app shows under cx.
@@ -25872,7 +26002,7 @@ func GestNoTouchesYet(cx *core.Scope) string { return For(cx).GestNoTouchesYet()
 
 // GestNoTouchesYet says "No touches yet"
 // in the language of msgs.
-func (msgs Messages) GestNoTouchesYet() string { return msgs.text(1191) }
+func (msgs Messages) GestNoTouchesYet() string { return msgs.text(1199) }
 
 // GestPressEvents says "Press events"
 // in the language the app shows under cx.
@@ -25880,7 +26010,7 @@ func GestPressEvents(cx *core.Scope) string { return For(cx).GestPressEvents() }
 
 // GestPressEvents says "Press events"
 // in the language of msgs.
-func (msgs Messages) GestPressEvents() string { return msgs.text(1192) }
+func (msgs Messages) GestPressEvents() string { return msgs.text(1200) }
 
 // GestInPressLongPressAnd says "In, press, long press and out; native feedback"
 // in the language the app shows under cx.
@@ -25888,7 +26018,7 @@ func GestInPressLongPressAnd(cx *core.Scope) string { return For(cx).GestInPress
 
 // GestInPressLongPressAnd says "In, press, long press and out; native feedback"
 // in the language of msgs.
-func (msgs Messages) GestInPressLongPressAnd() string { return msgs.text(1193) }
+func (msgs Messages) GestInPressLongPressAnd() string { return msgs.text(1201) }
 
 // GestTapHoldOrSlideOff says "Tap, hold, or slide off"
 // in the language the app shows under cx.
@@ -25896,7 +26026,7 @@ func GestTapHoldOrSlideOff(cx *core.Scope) string { return For(cx).GestTapHoldOr
 
 // GestTapHoldOrSlideOff says "Tap, hold, or slide off"
 // in the language of msgs.
-func (msgs Messages) GestTapHoldOrSlideOff() string { return msgs.text(1194) }
+func (msgs Messages) GestTapHoldOrSlideOff() string { return msgs.text(1202) }
 
 // GestClickHoldOrSlideOff says "Click, hold, or slide off"
 // in the language the app shows under cx.
@@ -25904,7 +26034,7 @@ func GestClickHoldOrSlideOff(cx *core.Scope) string { return For(cx).GestClickHo
 
 // GestClickHoldOrSlideOff says "Click, hold, or slide off"
 // in the language of msgs.
-func (msgs Messages) GestClickHoldOrSlideOff() string { return msgs.text(1195) }
+func (msgs Messages) GestClickHoldOrSlideOff() string { return msgs.text(1203) }
 
 // GestNoEventsYet says "No events yet"
 // in the language the app shows under cx.
@@ -25912,7 +26042,7 @@ func GestNoEventsYet(cx *core.Scope) string { return For(cx).GestNoEventsYet() }
 
 // GestNoEventsYet says "No events yet"
 // in the language of msgs.
-func (msgs Messages) GestNoEventsYet() string { return msgs.text(1196) }
+func (msgs Messages) GestNoEventsYet() string { return msgs.text(1204) }
 
 // GestRipple says "Ripple"
 // in the language the app shows under cx.
@@ -25920,7 +26050,7 @@ func GestRipple(cx *core.Scope) string { return For(cx).GestRipple() }
 
 // GestRipple says "Ripple"
 // in the language of msgs.
-func (msgs Messages) GestRipple() string { return msgs.text(1197) }
+func (msgs Messages) GestRipple() string { return msgs.text(1205) }
 
 // GestFastLongPress says "fast long press"
 // in the language the app shows under cx.
@@ -25928,7 +26058,7 @@ func GestFastLongPress(cx *core.Scope) string { return For(cx).GestFastLongPress
 
 // GestFastLongPress says "fast long press"
 // in the language of msgs.
-func (msgs Messages) GestFastLongPress() string { return msgs.text(1198) }
+func (msgs Messages) GestFastLongPress() string { return msgs.text(1206) }
 
 // GestLongPressAfter250Ms says "Long press after 250 ms"
 // in the language the app shows under cx.
@@ -25936,7 +26066,7 @@ func GestLongPressAfter250Ms(cx *core.Scope) string { return For(cx).GestLongPre
 
 // GestLongPressAfter250Ms says "Long press after 250 ms"
 // in the language of msgs.
-func (msgs Messages) GestLongPressAfter250Ms() string { return msgs.text(1199) }
+func (msgs Messages) GestLongPressAfter250Ms() string { return msgs.text(1207) }
 
 // GestStar says "Star"
 // in the language the app shows under cx.
@@ -25944,7 +26074,7 @@ func GestStar(cx *core.Scope) string { return For(cx).GestStar() }
 
 // GestStar says "Star"
 // in the language of msgs.
-func (msgs Messages) GestStar() string { return msgs.text(1200) }
+func (msgs Messages) GestStar() string { return msgs.text(1208) }
 
 // GestPressableTextDimmedWhilePressed says "Pressable text, dimmed while pressed"
 // in the language the app shows under cx.
@@ -25954,7 +26084,7 @@ func GestPressableTextDimmedWhilePressed(cx *core.Scope) string {
 
 // GestPressableTextDimmedWhilePressed says "Pressable text, dimmed while pressed"
 // in the language of msgs.
-func (msgs Messages) GestPressableTextDimmedWhilePressed() string { return msgs.text(1201) }
+func (msgs Messages) GestPressableTextDimmedWhilePressed() string { return msgs.text(1209) }
 
 // GestHitSlop says "Hit slop"
 // in the language the app shows under cx.
@@ -25962,7 +26092,7 @@ func GestHitSlop(cx *core.Scope) string { return For(cx).GestHitSlop() }
 
 // GestHitSlop says "Hit slop"
 // in the language of msgs.
-func (msgs Messages) GestHitSlop() string { return msgs.text(1202) }
+func (msgs Messages) GestHitSlop() string { return msgs.text(1210) }
 
 // GestA12PtDotThat says "A 12 pt dot that takes taps 30 pt around it"
 // in the language the app shows under cx.
@@ -25970,7 +26100,7 @@ func GestA12PtDotThat(cx *core.Scope) string { return For(cx).GestA12PtDotThat()
 
 // GestA12PtDotThat says "A 12 pt dot that takes taps 30 pt around it"
 // in the language of msgs.
-func (msgs Messages) GestA12PtDotThat() string { return msgs.text(1203) }
+func (msgs Messages) GestA12PtDotThat() string { return msgs.text(1211) }
 
 // GestA12PtDotThat2 says "A 12 pt dot that takes clicks 30 pt around it"
 // in the language the app shows under cx.
@@ -25978,7 +26108,7 @@ func GestA12PtDotThat2(cx *core.Scope) string { return For(cx).GestA12PtDotThat2
 
 // GestA12PtDotThat2 says "A 12 pt dot that takes clicks 30 pt around it"
 // in the language of msgs.
-func (msgs Messages) GestA12PtDotThat2() string { return msgs.text(1204) }
+func (msgs Messages) GestA12PtDotThat2() string { return msgs.text(1212) }
 
 // GestTinyDot says "Tiny dot"
 // in the language the app shows under cx.
@@ -25986,7 +26116,7 @@ func GestTinyDot(cx *core.Scope) string { return For(cx).GestTinyDot() }
 
 // GestTinyDot says "Tiny dot"
 // in the language of msgs.
-func (msgs Messages) GestTinyDot() string { return msgs.text(1205) }
+func (msgs Messages) GestTinyDot() string { return msgs.text(1213) }
 
 // GestTheDashedRingIsThe says "The dashed ring is the touch area"
 // in the language the app shows under cx.
@@ -25994,7 +26124,7 @@ func GestTheDashedRingIsThe(cx *core.Scope) string { return For(cx).GestTheDashe
 
 // GestTheDashedRingIsThe says "The dashed ring is the touch area"
 // in the language of msgs.
-func (msgs Messages) GestTheDashedRingIsThe() string { return msgs.text(1206) }
+func (msgs Messages) GestTheDashedRingIsThe() string { return msgs.text(1214) }
 
 // GestTheDashedRingIsThe2 says "The dashed ring is the click area"
 // in the language the app shows under cx.
@@ -26002,7 +26132,7 @@ func GestTheDashedRingIsThe2(cx *core.Scope) string { return For(cx).GestTheDash
 
 // GestTheDashedRingIsThe2 says "The dashed ring is the click area"
 // in the language of msgs.
-func (msgs Messages) GestTheDashedRingIsThe2() string { return msgs.text(1207) }
+func (msgs Messages) GestTheDashedRingIsThe2() string { return msgs.text(1215) }
 
 // GestPointerEvents says "Pointer events"
 // in the language the app shows under cx.
@@ -26010,7 +26140,7 @@ func GestPointerEvents(cx *core.Scope) string { return For(cx).GestPointerEvents
 
 // GestPointerEvents says "Pointer events"
 // in the language of msgs.
-func (msgs Messages) GestPointerEvents() string { return msgs.text(1208) }
+func (msgs Messages) GestPointerEvents() string { return msgs.text(1216) }
 
 // GestAnOverlayThatLetsTaps says "An overlay that lets taps through"
 // in the language the app shows under cx.
@@ -26018,7 +26148,7 @@ func GestAnOverlayThatLetsTaps(cx *core.Scope) string { return For(cx).GestAnOve
 
 // GestAnOverlayThatLetsTaps says "An overlay that lets taps through"
 // in the language of msgs.
-func (msgs Messages) GestAnOverlayThatLetsTaps() string { return msgs.text(1209) }
+func (msgs Messages) GestAnOverlayThatLetsTaps() string { return msgs.text(1217) }
 
 // GestAnOverlayThatLetsClicks says "An overlay that lets clicks through"
 // in the language the app shows under cx.
@@ -26026,7 +26156,7 @@ func GestAnOverlayThatLetsClicks(cx *core.Scope) string { return For(cx).GestAnO
 
 // GestAnOverlayThatLetsClicks says "An overlay that lets clicks through"
 // in the language of msgs.
-func (msgs Messages) GestAnOverlayThatLetsClicks() string { return msgs.text(1210) }
+func (msgs Messages) GestAnOverlayThatLetsClicks() string { return msgs.text(1218) }
 
 // GestButtonUnderAnOverlay says "Button under an overlay"
 // in the language the app shows under cx.
@@ -26034,7 +26164,7 @@ func GestButtonUnderAnOverlay(cx *core.Scope) string { return For(cx).GestButton
 
 // GestButtonUnderAnOverlay says "Button under an overlay"
 // in the language of msgs.
-func (msgs Messages) GestButtonUnderAnOverlay() string { return msgs.text(1211) }
+func (msgs Messages) GestButtonUnderAnOverlay() string { return msgs.text(1219) }
 
 // GestTapsOnTheHatchedBand says "Taps on the hatched band reach the button"
 // in the language the app shows under cx.
@@ -26042,7 +26172,7 @@ func GestTapsOnTheHatchedBand(cx *core.Scope) string { return For(cx).GestTapsOn
 
 // GestTapsOnTheHatchedBand says "Taps on the hatched band reach the button"
 // in the language of msgs.
-func (msgs Messages) GestTapsOnTheHatchedBand() string { return msgs.text(1212) }
+func (msgs Messages) GestTapsOnTheHatchedBand() string { return msgs.text(1220) }
 
 // GestClicksOnTheHatchedBand says "Clicks on the hatched band reach the button"
 // in the language the app shows under cx.
@@ -26050,7 +26180,7 @@ func GestClicksOnTheHatchedBand(cx *core.Scope) string { return For(cx).GestClic
 
 // GestClicksOnTheHatchedBand says "Clicks on the hatched band reach the button"
 // in the language of msgs.
-func (msgs Messages) GestClicksOnTheHatchedBand() string { return msgs.text(1213) }
+func (msgs Messages) GestClicksOnTheHatchedBand() string { return msgs.text(1221) }
 
 // GestHover says "Hover"
 // in the language the app shows under cx.
@@ -26058,7 +26188,7 @@ func GestHover(cx *core.Scope) string { return For(cx).GestHover() }
 
 // GestHover says "Hover"
 // in the language of msgs.
-func (msgs Messages) GestHover() string { return msgs.text(1214) }
+func (msgs Messages) GestHover() string { return msgs.text(1222) }
 
 // GestAPointerOverAView says "A pointer over a view: iPad, desktops"
 // in the language the app shows under cx.
@@ -26066,7 +26196,7 @@ func GestAPointerOverAView(cx *core.Scope) string { return For(cx).GestAPointerO
 
 // GestAPointerOverAView says "A pointer over a view: iPad, desktops"
 // in the language of msgs.
-func (msgs Messages) GestAPointerOverAView() string { return msgs.text(1215) }
+func (msgs Messages) GestAPointerOverAView() string { return msgs.text(1223) }
 
 // GestTheMouseOverAView says "The mouse over a view"
 // in the language the app shows under cx.
@@ -26074,7 +26204,7 @@ func GestTheMouseOverAView(cx *core.Scope) string { return For(cx).GestTheMouseO
 
 // GestTheMouseOverAView says "The mouse over a view"
 // in the language of msgs.
-func (msgs Messages) GestTheMouseOverAView() string { return msgs.text(1216) }
+func (msgs Messages) GestTheMouseOverAView() string { return msgs.text(1224) }
 
 // GestOver says "Over"
 // in the language the app shows under cx.
@@ -26082,7 +26212,7 @@ func GestOver(cx *core.Scope) string { return For(cx).GestOver() }
 
 // GestOver says "Over"
 // in the language of msgs.
-func (msgs Messages) GestOver() string { return msgs.text(1217) }
+func (msgs Messages) GestOver() string { return msgs.text(1225) }
 
 // GestAway says "Away"
 // in the language the app shows under cx.
@@ -26090,7 +26220,7 @@ func GestAway(cx *core.Scope) string { return For(cx).GestAway() }
 
 // GestAway says "Away"
 // in the language of msgs.
-func (msgs Messages) GestAway() string { return msgs.text(1218) }
+func (msgs Messages) GestAway() string { return msgs.text(1226) }
 
 // GestPointerAway says "Pointer away"
 // in the language the app shows under cx.
@@ -26098,7 +26228,7 @@ func GestPointerAway(cx *core.Scope) string { return For(cx).GestPointerAway() }
 
 // GestPointerAway says "Pointer away"
 // in the language of msgs.
-func (msgs Messages) GestPointerAway() string { return msgs.text(1219) }
+func (msgs Messages) GestPointerAway() string { return msgs.text(1227) }
 
 // GestInMoveAndOut says "In, move and out"
 // in the language the app shows under cx.
@@ -26106,7 +26236,7 @@ func GestInMoveAndOut(cx *core.Scope) string { return For(cx).GestInMoveAndOut()
 
 // GestInMoveAndOut says "In, move and out"
 // in the language of msgs.
-func (msgs Messages) GestInMoveAndOut() string { return msgs.text(1220) }
+func (msgs Messages) GestInMoveAndOut() string { return msgs.text(1228) }
 
 // GestDroppedFiles says "Dropped files"
 // in the language the app shows under cx.
@@ -26114,7 +26244,7 @@ func GestDroppedFiles(cx *core.Scope) string { return For(cx).GestDroppedFiles()
 
 // GestDroppedFiles says "Dropped files"
 // in the language of msgs.
-func (msgs Messages) GestDroppedFiles() string { return msgs.text(1221) }
+func (msgs Messages) GestDroppedFiles() string { return msgs.text(1229) }
 
 // GestFilesDraggedInFromOther says "Files dragged in from other apps, as file: URLs"
 // in the language the app shows under cx.
@@ -26122,7 +26252,7 @@ func GestFilesDraggedInFromOther(cx *core.Scope) string { return For(cx).GestFil
 
 // GestFilesDraggedInFromOther says "Files dragged in from other apps, as file: URLs"
 // in the language of msgs.
-func (msgs Messages) GestFilesDraggedInFromOther() string { return msgs.text(1222) }
+func (msgs Messages) GestFilesDraggedInFromOther() string { return msgs.text(1230) }
 
 // GestDropFilesHere says "Drop files here"
 // in the language the app shows under cx.
@@ -26130,7 +26260,7 @@ func GestDropFilesHere(cx *core.Scope) string { return For(cx).GestDropFilesHere
 
 // GestDropFilesHere says "Drop files here"
 // in the language of msgs.
-func (msgs Messages) GestDropFilesHere() string { return msgs.text(1223) }
+func (msgs Messages) GestDropFilesHere() string { return msgs.text(1231) }
 
 // GestReleaseToDrop says "Release to drop"
 // in the language the app shows under cx.
@@ -26138,7 +26268,7 @@ func GestReleaseToDrop(cx *core.Scope) string { return For(cx).GestReleaseToDrop
 
 // GestReleaseToDrop says "Release to drop"
 // in the language of msgs.
-func (msgs Messages) GestReleaseToDrop() string { return msgs.text(1224) }
+func (msgs Messages) GestReleaseToDrop() string { return msgs.text(1232) }
 
 // GestDesktopsAndTheWebTake says "Desktops and the web take dropped files"
 // in the language the app shows under cx.
@@ -26146,7 +26276,7 @@ func GestDesktopsAndTheWebTake(cx *core.Scope) string { return For(cx).GestDeskt
 
 // GestDesktopsAndTheWebTake says "Desktops and the web take dropped files"
 // in the language of msgs.
-func (msgs Messages) GestDesktopsAndTheWebTake() string { return msgs.text(1225) }
+func (msgs Messages) GestDesktopsAndTheWebTake() string { return msgs.text(1233) }
 
 // GestNothingDroppedYet says "Nothing dropped yet"
 // in the language the app shows under cx.
@@ -26154,7 +26284,7 @@ func GestNothingDroppedYet(cx *core.Scope) string { return For(cx).GestNothingDr
 
 // GestNothingDroppedYet says "Nothing dropped yet"
 // in the language of msgs.
-func (msgs Messages) GestNothingDroppedYet() string { return msgs.text(1226) }
+func (msgs Messages) GestNothingDroppedYet() string { return msgs.text(1234) }
 
 // GestOnTheWebBlobUrls says "On the web, blob: URLs named by their fragment"
 // in the language the app shows under cx.
@@ -26162,7 +26292,7 @@ func GestOnTheWebBlobUrls(cx *core.Scope) string { return For(cx).GestOnTheWebBl
 
 // GestOnTheWebBlobUrls says "On the web, blob: URLs named by their fragment"
 // in the language of msgs.
-func (msgs Messages) GestOnTheWebBlobUrls() string { return msgs.text(1227) }
+func (msgs Messages) GestOnTheWebBlobUrls() string { return msgs.text(1235) }
 
 // GestPlay says "Play"
 // in the language the app shows under cx.
@@ -26170,7 +26300,7 @@ func GestPlay(cx *core.Scope) string { return For(cx).GestPlay() }
 
 // GestPlay says "Play"
 // in the language of msgs.
-func (msgs Messages) GestPlay() string { return msgs.text(1228) }
+func (msgs Messages) GestPlay() string { return msgs.text(1236) }
 
 // GestStartsTheSong says "Starts the song"
 // in the language the app shows under cx.
@@ -26178,7 +26308,7 @@ func GestStartsTheSong(cx *core.Scope) string { return For(cx).GestStartsTheSong
 
 // GestStartsTheSong says "Starts the song"
 // in the language of msgs.
-func (msgs Messages) GestStartsTheSong() string { return msgs.text(1229) }
+func (msgs Messages) GestStartsTheSong() string { return msgs.text(1237) }
 
 // GestLike says "Like"
 // in the language the app shows under cx.
@@ -26186,7 +26316,7 @@ func GestLike(cx *core.Scope) string { return For(cx).GestLike() }
 
 // GestLike says "Like"
 // in the language of msgs.
-func (msgs Messages) GestLike() string { return msgs.text(1230) }
+func (msgs Messages) GestLike() string { return msgs.text(1238) }
 
 // GestAddsToFavorites says "Adds to favorites"
 // in the language the app shows under cx.
@@ -26194,7 +26324,7 @@ func GestAddsToFavorites(cx *core.Scope) string { return For(cx).GestAddsToFavor
 
 // GestAddsToFavorites says "Adds to favorites"
 // in the language of msgs.
-func (msgs Messages) GestAddsToFavorites() string { return msgs.text(1231) }
+func (msgs Messages) GestAddsToFavorites() string { return msgs.text(1239) }
 
 // GestNotify says "Notify"
 // in the language the app shows under cx.
@@ -26202,7 +26332,7 @@ func GestNotify(cx *core.Scope) string { return For(cx).GestNotify() }
 
 // GestNotify says "Notify"
 // in the language of msgs.
-func (msgs Messages) GestNotify() string { return msgs.text(1232) }
+func (msgs Messages) GestNotify() string { return msgs.text(1240) }
 
 // GestTurnsOnAlerts says "Turns on alerts"
 // in the language the app shows under cx.
@@ -26210,7 +26340,7 @@ func GestTurnsOnAlerts(cx *core.Scope) string { return For(cx).GestTurnsOnAlerts
 
 // GestTurnsOnAlerts says "Turns on alerts"
 // in the language of msgs.
-func (msgs Messages) GestTurnsOnAlerts() string { return msgs.text(1233) }
+func (msgs Messages) GestTurnsOnAlerts() string { return msgs.text(1241) }
 
 // GestAccessibility says "Accessibility"
 // in the language the app shows under cx.
@@ -26218,7 +26348,7 @@ func GestAccessibility(cx *core.Scope) string { return For(cx).GestAccessibility
 
 // GestAccessibility says "Accessibility"
 // in the language of msgs.
-func (msgs Messages) GestAccessibility() string { return msgs.text(1234) }
+func (msgs Messages) GestAccessibility() string { return msgs.text(1242) }
 
 // GestRolesLabelsAndHintsFor says "Roles, labels and hints for screen readers"
 // in the language the app shows under cx.
@@ -26226,7 +26356,7 @@ func GestRolesLabelsAndHintsFor(cx *core.Scope) string { return For(cx).GestRole
 
 // GestRolesLabelsAndHintsFor says "Roles, labels and hints for screen readers"
 // in the language of msgs.
-func (msgs Messages) GestRolesLabelsAndHintsFor() string { return msgs.text(1235) }
+func (msgs Messages) GestRolesLabelsAndHintsFor() string { return msgs.text(1243) }
 
 // GestDown says "{count, number} down"
 // in the language the app shows under cx.
@@ -26341,7 +26471,7 @@ func LayoutOne(cx *core.Scope) string { return For(cx).LayoutOne() }
 
 // LayoutOne says "One"
 // in the language of msgs.
-func (msgs Messages) LayoutOne() string { return msgs.text(1236) }
+func (msgs Messages) LayoutOne() string { return msgs.text(1244) }
 
 // LayoutTwoWider says "Two, wider"
 // in the language the app shows under cx.
@@ -26349,7 +26479,7 @@ func LayoutTwoWider(cx *core.Scope) string { return For(cx).LayoutTwoWider() }
 
 // LayoutTwoWider says "Two, wider"
 // in the language of msgs.
-func (msgs Messages) LayoutTwoWider() string { return msgs.text(1237) }
+func (msgs Messages) LayoutTwoWider() string { return msgs.text(1245) }
 
 // LayoutThree says "Three"
 // in the language the app shows under cx.
@@ -26357,7 +26487,7 @@ func LayoutThree(cx *core.Scope) string { return For(cx).LayoutThree() }
 
 // LayoutThree says "Three"
 // in the language of msgs.
-func (msgs Messages) LayoutThree() string { return msgs.text(1238) }
+func (msgs Messages) LayoutThree() string { return msgs.text(1246) }
 
 // LayoutRowAndColumn says "Row and column"
 // in the language the app shows under cx.
@@ -26365,7 +26495,7 @@ func LayoutRowAndColumn(cx *core.Scope) string { return For(cx).LayoutRowAndColu
 
 // LayoutRowAndColumn says "Row and column"
 // in the language of msgs.
-func (msgs Messages) LayoutRowAndColumn() string { return msgs.text(1239) }
+func (msgs Messages) LayoutRowAndColumn() string { return msgs.text(1247) }
 
 // LayoutGrowAndShrink says "Grow and shrink"
 // in the language the app shows under cx.
@@ -26373,7 +26503,7 @@ func LayoutGrowAndShrink(cx *core.Scope) string { return For(cx).LayoutGrowAndSh
 
 // LayoutGrowAndShrink says "Grow and shrink"
 // in the language of msgs.
-func (msgs Messages) LayoutGrowAndShrink() string { return msgs.text(1240) }
+func (msgs Messages) LayoutGrowAndShrink() string { return msgs.text(1248) }
 
 // LayoutFixed120 says "fixed 120"
 // in the language the app shows under cx.
@@ -26381,7 +26511,7 @@ func LayoutFixed120(cx *core.Scope) string { return For(cx).LayoutFixed120() }
 
 // LayoutFixed120 says "fixed 120"
 // in the language of msgs.
-func (msgs Messages) LayoutFixed120() string { return msgs.text(1241) }
+func (msgs Messages) LayoutFixed120() string { return msgs.text(1249) }
 
 // Layout900WideShrinksToFit says "900 wide, shrinks to fit"
 // in the language the app shows under cx.
@@ -26389,7 +26519,7 @@ func Layout900WideShrinksToFit(cx *core.Scope) string { return For(cx).Layout900
 
 // Layout900WideShrinksToFit says "900 wide, shrinks to fit"
 // in the language of msgs.
-func (msgs Messages) Layout900WideShrinksToFit() string { return msgs.text(1242) }
+func (msgs Messages) Layout900WideShrinksToFit() string { return msgs.text(1250) }
 
 // LayoutStart says "Start"
 // in the language the app shows under cx.
@@ -26397,7 +26527,7 @@ func LayoutStart(cx *core.Scope) string { return For(cx).LayoutStart() }
 
 // LayoutStart says "Start"
 // in the language of msgs.
-func (msgs Messages) LayoutStart() string { return msgs.text(1243) }
+func (msgs Messages) LayoutStart() string { return msgs.text(1251) }
 
 // LayoutPushedToTheEnd says "pushed to the end"
 // in the language the app shows under cx.
@@ -26405,7 +26535,7 @@ func LayoutPushedToTheEnd(cx *core.Scope) string { return For(cx).LayoutPushedTo
 
 // LayoutPushedToTheEnd says "pushed to the end"
 // in the language of msgs.
-func (msgs Messages) LayoutPushedToTheEnd() string { return msgs.text(1244) }
+func (msgs Messages) LayoutPushedToTheEnd() string { return msgs.text(1252) }
 
 // LayoutAbsolutePositioning says "Absolute positioning"
 // in the language the app shows under cx.
@@ -26413,7 +26543,7 @@ func LayoutAbsolutePositioning(cx *core.Scope) string { return For(cx).LayoutAbs
 
 // LayoutAbsolutePositioning says "Absolute positioning"
 // in the language of msgs.
-func (msgs Messages) LayoutAbsolutePositioning() string { return msgs.text(1245) }
+func (msgs Messages) LayoutAbsolutePositioning() string { return msgs.text(1253) }
 
 // LayoutTopLeft says "Top left"
 // in the language the app shows under cx.
@@ -26421,7 +26551,7 @@ func LayoutTopLeft(cx *core.Scope) string { return For(cx).LayoutTopLeft() }
 
 // LayoutTopLeft says "Top left"
 // in the language of msgs.
-func (msgs Messages) LayoutTopLeft() string { return msgs.text(1246) }
+func (msgs Messages) LayoutTopLeft() string { return msgs.text(1254) }
 
 // LayoutBottomRight says "Bottom right"
 // in the language the app shows under cx.
@@ -26429,7 +26559,7 @@ func LayoutBottomRight(cx *core.Scope) string { return For(cx).LayoutBottomRight
 
 // LayoutBottomRight says "Bottom right"
 // in the language of msgs.
-func (msgs Messages) LayoutBottomRight() string { return msgs.text(1247) }
+func (msgs Messages) LayoutBottomRight() string { return msgs.text(1255) }
 
 // LayoutCentered says "Centered"
 // in the language the app shows under cx.
@@ -26437,7 +26567,7 @@ func LayoutCentered(cx *core.Scope) string { return For(cx).LayoutCentered() }
 
 // LayoutCentered says "Centered"
 // in the language of msgs.
-func (msgs Messages) LayoutCentered() string { return msgs.text(1248) }
+func (msgs Messages) LayoutCentered() string { return msgs.text(1256) }
 
 // LayoutGrid says "Grid"
 // in the language the app shows under cx.
@@ -26445,7 +26575,7 @@ func LayoutGrid(cx *core.Scope) string { return For(cx).LayoutGrid() }
 
 // LayoutGrid says "Grid"
 // in the language of msgs.
-func (msgs Messages) LayoutGrid() string { return msgs.text(1249) }
+func (msgs Messages) LayoutGrid() string { return msgs.text(1257) }
 
 // LayoutSpan2 says "span 2"
 // in the language the app shows under cx.
@@ -26453,7 +26583,7 @@ func LayoutSpan2(cx *core.Scope) string { return For(cx).LayoutSpan2() }
 
 // LayoutSpan2 says "span 2"
 // in the language of msgs.
-func (msgs Messages) LayoutSpan2() string { return msgs.text(1250) }
+func (msgs Messages) LayoutSpan2() string { return msgs.text(1258) }
 
 // Layout2Rows says "2 rows"
 // in the language the app shows under cx.
@@ -26461,7 +26591,7 @@ func Layout2Rows(cx *core.Scope) string { return For(cx).Layout2Rows() }
 
 // Layout2Rows says "2 rows"
 // in the language of msgs.
-func (msgs Messages) Layout2Rows() string { return msgs.text(1251) }
+func (msgs Messages) Layout2Rows() string { return msgs.text(1259) }
 
 // LayoutFruit says "Fruit"
 // in the language the app shows under cx.
@@ -26469,7 +26599,7 @@ func LayoutFruit(cx *core.Scope) string { return For(cx).LayoutFruit() }
 
 // LayoutFruit says "Fruit"
 // in the language of msgs.
-func (msgs Messages) LayoutFruit() string { return msgs.text(1252) }
+func (msgs Messages) LayoutFruit() string { return msgs.text(1260) }
 
 // LayoutVegetables says "Vegetables"
 // in the language the app shows under cx.
@@ -26477,7 +26607,7 @@ func LayoutVegetables(cx *core.Scope) string { return For(cx).LayoutVegetables()
 
 // LayoutVegetables says "Vegetables"
 // in the language of msgs.
-func (msgs Messages) LayoutVegetables() string { return msgs.text(1253) }
+func (msgs Messages) LayoutVegetables() string { return msgs.text(1261) }
 
 // LayoutGrains says "Grains"
 // in the language the app shows under cx.
@@ -26485,7 +26615,7 @@ func LayoutGrains(cx *core.Scope) string { return For(cx).LayoutGrains() }
 
 // LayoutGrains says "Grains"
 // in the language of msgs.
-func (msgs Messages) LayoutGrains() string { return msgs.text(1254) }
+func (msgs Messages) LayoutGrains() string { return msgs.text(1262) }
 
 // LayoutStaticStickyAndFixed says "Static, sticky and fixed"
 // in the language the app shows under cx.
@@ -26493,7 +26623,7 @@ func LayoutStaticStickyAndFixed(cx *core.Scope) string { return For(cx).LayoutSt
 
 // LayoutStaticStickyAndFixed says "Static, sticky and fixed"
 // in the language of msgs.
-func (msgs Messages) LayoutStaticStickyAndFixed() string { return msgs.text(1255) }
+func (msgs Messages) LayoutStaticStickyAndFixed() string { return msgs.text(1263) }
 
 // LayoutStaticIgnoresInsetsAndLets says "Static ignores insets and lets absolute views inside reach past it; Sticky pins a header while its group scrolls; Fixed places a view in the window, out of every scroll view."
 // in the language the app shows under cx.
@@ -26503,7 +26633,7 @@ func LayoutStaticIgnoresInsetsAndLets(cx *core.Scope) string {
 
 // LayoutStaticIgnoresInsetsAndLets says "Static ignores insets and lets absolute views inside reach past it; Sticky pins a header while its group scrolls; Fixed places a view in the window, out of every scroll view."
 // in the language of msgs.
-func (msgs Messages) LayoutStaticIgnoresInsetsAndLets() string { return msgs.text(1256) }
+func (msgs Messages) LayoutStaticIgnoresInsetsAndLets() string { return msgs.text(1264) }
 
 // LayoutAbsoluteInTheFrame says "absolute, in the frame"
 // in the language the app shows under cx.
@@ -26511,7 +26641,7 @@ func LayoutAbsoluteInTheFrame(cx *core.Scope) string { return For(cx).LayoutAbso
 
 // LayoutAbsoluteInTheFrame says "absolute, in the frame"
 // in the language of msgs.
-func (msgs Messages) LayoutAbsoluteInTheFrame() string { return msgs.text(1257) }
+func (msgs Messages) LayoutAbsoluteInTheFrame() string { return msgs.text(1265) }
 
 // LayoutShowAFixedNote says "Show a fixed note"
 // in the language the app shows under cx.
@@ -26519,7 +26649,7 @@ func LayoutShowAFixedNote(cx *core.Scope) string { return For(cx).LayoutShowAFix
 
 // LayoutShowAFixedNote says "Show a fixed note"
 // in the language of msgs.
-func (msgs Messages) LayoutShowAFixedNote() string { return msgs.text(1258) }
+func (msgs Messages) LayoutShowAFixedNote() string { return msgs.text(1266) }
 
 // LayoutFixedToTheWindow says "Fixed to the window"
 // in the language the app shows under cx.
@@ -26527,7 +26657,7 @@ func LayoutFixedToTheWindow(cx *core.Scope) string { return For(cx).LayoutFixedT
 
 // LayoutFixedToTheWindow says "Fixed to the window"
 // in the language of msgs.
-func (msgs Messages) LayoutFixedToTheWindow() string { return msgs.text(1259) }
+func (msgs Messages) LayoutFixedToTheWindow() string { return msgs.text(1267) }
 
 // LayoutIntrinsicSizes says "Intrinsic sizes"
 // in the language the app shows under cx.
@@ -26535,7 +26665,7 @@ func LayoutIntrinsicSizes(cx *core.Scope) string { return For(cx).LayoutIntrinsi
 
 // LayoutIntrinsicSizes says "Intrinsic sizes"
 // in the language of msgs.
-func (msgs Messages) LayoutIntrinsicSizes() string { return msgs.text(1260) }
+func (msgs Messages) LayoutIntrinsicSizes() string { return msgs.text(1268) }
 
 // LayoutMinContentEachWordOn says "min-content: each word on a line"
 // in the language the app shows under cx.
@@ -26543,7 +26673,7 @@ func LayoutMinContentEachWordOn(cx *core.Scope) string { return For(cx).LayoutMi
 
 // LayoutMinContentEachWordOn says "min-content: each word on a line"
 // in the language of msgs.
-func (msgs Messages) LayoutMinContentEachWordOn() string { return msgs.text(1261) }
+func (msgs Messages) LayoutMinContentEachWordOn() string { return msgs.text(1269) }
 
 // LayoutMaxContentOneLine says "max-content: one line"
 // in the language the app shows under cx.
@@ -26551,7 +26681,7 @@ func LayoutMaxContentOneLine(cx *core.Scope) string { return For(cx).LayoutMaxCo
 
 // LayoutMaxContentOneLine says "max-content: one line"
 // in the language of msgs.
-func (msgs Messages) LayoutMaxContentOneLine() string { return msgs.text(1262) }
+func (msgs Messages) LayoutMaxContentOneLine() string { return msgs.text(1270) }
 
 // LayoutFitContentOneLineUp says "fit-content: one line up to the width, then it wraps as the space runs out"
 // in the language the app shows under cx.
@@ -26559,7 +26689,7 @@ func LayoutFitContentOneLineUp(cx *core.Scope) string { return For(cx).LayoutFit
 
 // LayoutFitContentOneLineUp says "fit-content: one line up to the width, then it wraps as the space runs out"
 // in the language of msgs.
-func (msgs Messages) LayoutFitContentOneLineUp() string { return msgs.text(1263) }
+func (msgs Messages) LayoutFitContentOneLineUp() string { return msgs.text(1271) }
 
 // LayoutStacking says "Stacking"
 // in the language the app shows under cx.
@@ -26567,7 +26697,7 @@ func LayoutStacking(cx *core.Scope) string { return For(cx).LayoutStacking() }
 
 // LayoutStacking says "Stacking"
 // in the language of msgs.
-func (msgs Messages) LayoutStacking() string { return msgs.text(1264) }
+func (msgs Messages) LayoutStacking() string { return msgs.text(1272) }
 
 // LayoutDirection says "Direction"
 // in the language the app shows under cx.
@@ -26575,7 +26705,7 @@ func LayoutDirection(cx *core.Scope) string { return For(cx).LayoutDirection() }
 
 // LayoutDirection says "Direction"
 // in the language of msgs.
-func (msgs Messages) LayoutDirection() string { return msgs.text(1265) }
+func (msgs Messages) LayoutDirection() string { return msgs.text(1273) }
 
 // LayoutBlock says "Block"
 // in the language the app shows under cx.
@@ -26583,7 +26713,7 @@ func LayoutBlock(cx *core.Scope) string { return For(cx).LayoutBlock() }
 
 // LayoutBlock says "Block"
 // in the language of msgs.
-func (msgs Messages) LayoutBlock() string { return msgs.text(1266) }
+func (msgs Messages) LayoutBlock() string { return msgs.text(1274) }
 
 // LayoutMarginBottom16 says "margin bottom 16"
 // in the language the app shows under cx.
@@ -26591,7 +26721,7 @@ func LayoutMarginBottom16(cx *core.Scope) string { return For(cx).LayoutMarginBo
 
 // LayoutMarginBottom16 says "margin bottom 16"
 // in the language of msgs.
-func (msgs Messages) LayoutMarginBottom16() string { return msgs.text(1267) }
+func (msgs Messages) LayoutMarginBottom16() string { return msgs.text(1275) }
 
 // LayoutMarginTop16TheGap says "margin top 16: the gap stays 16"
 // in the language the app shows under cx.
@@ -26599,7 +26729,7 @@ func LayoutMarginTop16TheGap(cx *core.Scope) string { return For(cx).LayoutMargi
 
 // LayoutMarginTop16TheGap says "margin top 16: the gap stays 16"
 // in the language of msgs.
-func (msgs Messages) LayoutMarginTop16TheGap() string { return msgs.text(1268) }
+func (msgs Messages) LayoutMarginTop16TheGap() string { return msgs.text(1276) }
 
 // LayoutWidth60CenteredByAuto says "width 60%, centered by auto margins"
 // in the language the app shows under cx.
@@ -26607,7 +26737,7 @@ func LayoutWidth60CenteredByAuto(cx *core.Scope) string { return For(cx).LayoutW
 
 // LayoutWidth60CenteredByAuto says "width 60%, centered by auto margins"
 // in the language of msgs.
-func (msgs Messages) LayoutWidth60CenteredByAuto() string { return msgs.text(1269) }
+func (msgs Messages) LayoutWidth60CenteredByAuto() string { return msgs.text(1277) }
 
 // ImagesResizeModes says "Resize modes"
 // in the language the app shows under cx.
@@ -26615,7 +26745,7 @@ func ImagesResizeModes(cx *core.Scope) string { return For(cx).ImagesResizeModes
 
 // ImagesResizeModes says "Resize modes"
 // in the language of msgs.
-func (msgs Messages) ImagesResizeModes() string { return msgs.text(1270) }
+func (msgs Messages) ImagesResizeModes() string { return msgs.text(1278) }
 
 // ImagesA21ImageIn says "A 2:1 image in square frames"
 // in the language the app shows under cx.
@@ -26623,7 +26753,7 @@ func ImagesA21ImageIn(cx *core.Scope) string { return For(cx).ImagesA21ImageIn()
 
 // ImagesA21ImageIn says "A 2:1 image in square frames"
 // in the language of msgs.
-func (msgs Messages) ImagesA21ImageIn() string { return msgs.text(1271) }
+func (msgs Messages) ImagesA21ImageIn() string { return msgs.text(1279) }
 
 // ImagesCornersAndBorders says "Corners and borders"
 // in the language the app shows under cx.
@@ -26631,7 +26761,7 @@ func ImagesCornersAndBorders(cx *core.Scope) string { return For(cx).ImagesCorne
 
 // ImagesCornersAndBorders says "Corners and borders"
 // in the language of msgs.
-func (msgs Messages) ImagesCornersAndBorders() string { return msgs.text(1272) }
+func (msgs Messages) ImagesCornersAndBorders() string { return msgs.text(1280) }
 
 // ImagesRadiiPerCornerBordersOn says "Radii per corner, borders on the image"
 // in the language the app shows under cx.
@@ -26641,7 +26771,7 @@ func ImagesRadiiPerCornerBordersOn(cx *core.Scope) string {
 
 // ImagesRadiiPerCornerBordersOn says "Radii per corner, borders on the image"
 // in the language of msgs.
-func (msgs Messages) ImagesRadiiPerCornerBordersOn() string { return msgs.text(1273) }
+func (msgs Messages) ImagesRadiiPerCornerBordersOn() string { return msgs.text(1281) }
 
 // ImagesCircle says "Circle"
 // in the language the app shows under cx.
@@ -26649,7 +26779,7 @@ func ImagesCircle(cx *core.Scope) string { return For(cx).ImagesCircle() }
 
 // ImagesCircle says "Circle"
 // in the language of msgs.
-func (msgs Messages) ImagesCircle() string { return msgs.text(1274) }
+func (msgs Messages) ImagesCircle() string { return msgs.text(1282) }
 
 // ImagesBorder says "Border"
 // in the language the app shows under cx.
@@ -26657,7 +26787,7 @@ func ImagesBorder(cx *core.Scope) string { return For(cx).ImagesBorder() }
 
 // ImagesBorder says "Border"
 // in the language of msgs.
-func (msgs Messages) ImagesBorder() string { return msgs.text(1275) }
+func (msgs Messages) ImagesBorder() string { return msgs.text(1283) }
 
 // ImagesTwoCorners says "Two corners"
 // in the language the app shows under cx.
@@ -26665,7 +26795,7 @@ func ImagesTwoCorners(cx *core.Scope) string { return For(cx).ImagesTwoCorners()
 
 // ImagesTwoCorners says "Two corners"
 // in the language of msgs.
-func (msgs Messages) ImagesTwoCorners() string { return msgs.text(1276) }
+func (msgs Messages) ImagesTwoCorners() string { return msgs.text(1284) }
 
 // ImagesEmbeddedImagesAndTint says "Embedded images and tint"
 // in the language the app shows under cx.
@@ -26673,7 +26803,7 @@ func ImagesEmbeddedImagesAndTint(cx *core.Scope) string { return For(cx).ImagesE
 
 // ImagesEmbeddedImagesAndTint says "Embedded images and tint"
 // in the language of msgs.
-func (msgs Messages) ImagesEmbeddedImagesAndTint() string { return msgs.text(1277) }
+func (msgs Messages) ImagesEmbeddedImagesAndTint() string { return msgs.text(1285) }
 
 // ImagesLogoPngFromGoEmbed says "logo.png from go:embed, tinted natively"
 // in the language the app shows under cx.
@@ -26681,7 +26811,7 @@ func ImagesLogoPngFromGoEmbed(cx *core.Scope) string { return For(cx).ImagesLogo
 
 // ImagesLogoPngFromGoEmbed says "logo.png from go:embed, tinted natively"
 // in the language of msgs.
-func (msgs Messages) ImagesLogoPngFromGoEmbed() string { return msgs.text(1278) }
+func (msgs Messages) ImagesLogoPngFromGoEmbed() string { return msgs.text(1286) }
 
 // ImagesOriginal says "Original"
 // in the language the app shows under cx.
@@ -26689,7 +26819,7 @@ func ImagesOriginal(cx *core.Scope) string { return For(cx).ImagesOriginal() }
 
 // ImagesOriginal says "Original"
 // in the language of msgs.
-func (msgs Messages) ImagesOriginal() string { return msgs.text(1279) }
+func (msgs Messages) ImagesOriginal() string { return msgs.text(1287) }
 
 // ImagesAccent says "Accent"
 // in the language the app shows under cx.
@@ -26697,7 +26827,7 @@ func ImagesAccent(cx *core.Scope) string { return For(cx).ImagesAccent() }
 
 // ImagesAccent says "Accent"
 // in the language of msgs.
-func (msgs Messages) ImagesAccent() string { return msgs.text(1280) }
+func (msgs Messages) ImagesAccent() string { return msgs.text(1288) }
 
 // ImagesInfo says "Info"
 // in the language the app shows under cx.
@@ -26705,7 +26835,7 @@ func ImagesInfo(cx *core.Scope) string { return For(cx).ImagesInfo() }
 
 // ImagesInfo says "Info"
 // in the language of msgs.
-func (msgs Messages) ImagesInfo() string { return msgs.text(1281) }
+func (msgs Messages) ImagesInfo() string { return msgs.text(1289) }
 
 // ImagesDanger says "Danger"
 // in the language the app shows under cx.
@@ -26713,7 +26843,7 @@ func ImagesDanger(cx *core.Scope) string { return For(cx).ImagesDanger() }
 
 // ImagesDanger says "Danger"
 // in the language of msgs.
-func (msgs Messages) ImagesDanger() string { return msgs.text(1282) }
+func (msgs Messages) ImagesDanger() string { return msgs.text(1290) }
 
 // ImagesAsDrawn says "As drawn"
 // in the language the app shows under cx.
@@ -26721,7 +26851,7 @@ func ImagesAsDrawn(cx *core.Scope) string { return For(cx).ImagesAsDrawn() }
 
 // ImagesAsDrawn says "As drawn"
 // in the language of msgs.
-func (msgs Messages) ImagesAsDrawn() string { return msgs.text(1283) }
+func (msgs Messages) ImagesAsDrawn() string { return msgs.text(1291) }
 
 // ImagesSvgImages says "SVG images"
 // in the language the app shows under cx.
@@ -26729,7 +26859,7 @@ func ImagesSvgImages(cx *core.Scope) string { return For(cx).ImagesSvgImages() }
 
 // ImagesSvgImages says "SVG images"
 // in the language of msgs.
-func (msgs Messages) ImagesSvgImages() string { return msgs.text(1284) }
+func (msgs Messages) ImagesSvgImages() string { return msgs.text(1292) }
 
 // ImagesStarSvgMarkSvgAnd says "star.svg, mark.svg and a remote SVG, sharp at every size"
 // in the language the app shows under cx.
@@ -26737,7 +26867,7 @@ func ImagesStarSvgMarkSvgAnd(cx *core.Scope) string { return For(cx).ImagesStarS
 
 // ImagesStarSvgMarkSvgAnd says "star.svg, mark.svg and a remote SVG, sharp at every size"
 // in the language of msgs.
-func (msgs Messages) ImagesStarSvgMarkSvgAnd() string { return msgs.text(1285) }
+func (msgs Messages) ImagesStarSvgMarkSvgAnd() string { return msgs.text(1293) }
 
 // ImagesRemote says "Remote"
 // in the language the app shows under cx.
@@ -26745,7 +26875,7 @@ func ImagesRemote(cx *core.Scope) string { return For(cx).ImagesRemote() }
 
 // ImagesRemote says "Remote"
 // in the language of msgs.
-func (msgs Messages) ImagesRemote() string { return msgs.text(1286) }
+func (msgs Messages) ImagesRemote() string { return msgs.text(1294) }
 
 // ImagesAnimatedGifAndWebp says "Animated GIF and WebP"
 // in the language the app shows under cx.
@@ -26753,7 +26883,7 @@ func ImagesAnimatedGifAndWebp(cx *core.Scope) string { return For(cx).ImagesAnim
 
 // ImagesAnimatedGifAndWebp says "Animated GIF and WebP"
 // in the language of msgs.
-func (msgs Messages) ImagesAnimatedGifAndWebp() string { return msgs.text(1287) }
+func (msgs Messages) ImagesAnimatedGifAndWebp() string { return msgs.text(1295) }
 
 // ImagesDecodedAndPlayedNatively says "Decoded and played natively"
 // in the language the app shows under cx.
@@ -26763,7 +26893,7 @@ func ImagesDecodedAndPlayedNatively(cx *core.Scope) string {
 
 // ImagesDecodedAndPlayedNatively says "Decoded and played natively"
 // in the language of msgs.
-func (msgs Messages) ImagesDecodedAndPlayedNatively() string { return msgs.text(1288) }
+func (msgs Messages) ImagesDecodedAndPlayedNatively() string { return msgs.text(1296) }
 
 // ImagesScaledRound says "Scaled, round"
 // in the language the app shows under cx.
@@ -26771,7 +26901,7 @@ func ImagesScaledRound(cx *core.Scope) string { return For(cx).ImagesScaledRound
 
 // ImagesScaledRound says "Scaled, round"
 // in the language of msgs.
-func (msgs Messages) ImagesScaledRound() string { return msgs.text(1289) }
+func (msgs Messages) ImagesScaledRound() string { return msgs.text(1297) }
 
 // ImagesPlaceholderAndFade says "Placeholder and fade"
 // in the language the app shows under cx.
@@ -26779,7 +26909,7 @@ func ImagesPlaceholderAndFade(cx *core.Scope) string { return For(cx).ImagesPlac
 
 // ImagesPlaceholderAndFade says "Placeholder and fade"
 // in the language of msgs.
-func (msgs Messages) ImagesPlaceholderAndFade() string { return msgs.text(1290) }
+func (msgs Messages) ImagesPlaceholderAndFade() string { return msgs.text(1298) }
 
 // ImagesAPlaceholderThenAFade says "A placeholder, then a fade"
 // in the language the app shows under cx.
@@ -26787,7 +26917,7 @@ func ImagesAPlaceholderThenAFade(cx *core.Scope) string { return For(cx).ImagesA
 
 // ImagesAPlaceholderThenAFade says "A placeholder, then a fade"
 // in the language of msgs.
-func (msgs Messages) ImagesAPlaceholderThenAFade() string { return msgs.text(1291) }
+func (msgs Messages) ImagesAPlaceholderThenAFade() string { return msgs.text(1299) }
 
 // ImagesReload says "Reload"
 // in the language the app shows under cx.
@@ -26795,7 +26925,7 @@ func ImagesReload(cx *core.Scope) string { return For(cx).ImagesReload() }
 
 // ImagesReload says "Reload"
 // in the language of msgs.
-func (msgs Messages) ImagesReload() string { return msgs.text(1292) }
+func (msgs Messages) ImagesReload() string { return msgs.text(1300) }
 
 // ImagesLoads says "Loads"
 // in the language the app shows under cx.
@@ -26803,7 +26933,7 @@ func ImagesLoads(cx *core.Scope) string { return For(cx).ImagesLoads() }
 
 // ImagesLoads says "Loads"
 // in the language of msgs.
-func (msgs Messages) ImagesLoads() string { return msgs.text(1293) }
+func (msgs Messages) ImagesLoads() string { return msgs.text(1301) }
 
 // ImagesNone says "None"
 // in the language the app shows under cx.
@@ -26811,7 +26941,7 @@ func ImagesNone(cx *core.Scope) string { return For(cx).ImagesNone() }
 
 // ImagesNone says "None"
 // in the language of msgs.
-func (msgs Messages) ImagesNone() string { return msgs.text(1294) }
+func (msgs Messages) ImagesNone() string { return msgs.text(1302) }
 
 // ImagesBlurRadius says "Blur radius"
 // in the language the app shows under cx.
@@ -26819,7 +26949,7 @@ func ImagesBlurRadius(cx *core.Scope) string { return For(cx).ImagesBlurRadius()
 
 // ImagesBlurRadius says "Blur radius"
 // in the language of msgs.
-func (msgs Messages) ImagesBlurRadius() string { return msgs.text(1295) }
+func (msgs Messages) ImagesBlurRadius() string { return msgs.text(1303) }
 
 // ImagesBlurradiusAppliedWhileDecoding says "BlurRadius, applied while decoding"
 // in the language the app shows under cx.
@@ -26829,7 +26959,7 @@ func ImagesBlurradiusAppliedWhileDecoding(cx *core.Scope) string {
 
 // ImagesBlurradiusAppliedWhileDecoding says "BlurRadius, applied while decoding"
 // in the language of msgs.
-func (msgs Messages) ImagesBlurradiusAppliedWhileDecoding() string { return msgs.text(1296) }
+func (msgs Messages) ImagesBlurradiusAppliedWhileDecoding() string { return msgs.text(1304) }
 
 // ImagesNotShown says "not shown"
 // in the language the app shows under cx.
@@ -26837,7 +26967,7 @@ func ImagesNotShown(cx *core.Scope) string { return For(cx).ImagesNotShown() }
 
 // ImagesNotShown says "not shown"
 // in the language of msgs.
-func (msgs Messages) ImagesNotShown() string { return msgs.text(1297) }
+func (msgs Messages) ImagesNotShown() string { return msgs.text(1305) }
 
 // ImagesSizePrefetchProgress says "Size, prefetch, progress"
 // in the language the app shows under cx.
@@ -26845,7 +26975,7 @@ func ImagesSizePrefetchProgress(cx *core.Scope) string { return For(cx).ImagesSi
 
 // ImagesSizePrefetchProgress says "Size, prefetch, progress"
 // in the language of msgs.
-func (msgs Messages) ImagesSizePrefetchProgress() string { return msgs.text(1298) }
+func (msgs Messages) ImagesSizePrefetchProgress() string { return msgs.text(1306) }
 
 // ImagesSize says "Size"
 // in the language the app shows under cx.
@@ -26853,7 +26983,7 @@ func ImagesSize(cx *core.Scope) string { return For(cx).ImagesSize() }
 
 // ImagesSize says "Size"
 // in the language of msgs.
-func (msgs Messages) ImagesSize() string { return msgs.text(1299) }
+func (msgs Messages) ImagesSize() string { return msgs.text(1307) }
 
 // ImagesPrefetch says "Prefetch"
 // in the language the app shows under cx.
@@ -26861,7 +26991,7 @@ func ImagesPrefetch(cx *core.Scope) string { return For(cx).ImagesPrefetch() }
 
 // ImagesPrefetch says "Prefetch"
 // in the language of msgs.
-func (msgs Messages) ImagesPrefetch() string { return msgs.text(1300) }
+func (msgs Messages) ImagesPrefetch() string { return msgs.text(1308) }
 
 // ImagesInTheCache says "in the cache"
 // in the language the app shows under cx.
@@ -26869,7 +26999,7 @@ func ImagesInTheCache(cx *core.Scope) string { return For(cx).ImagesInTheCache()
 
 // ImagesInTheCache says "in the cache"
 // in the language of msgs.
-func (msgs Messages) ImagesInTheCache() string { return msgs.text(1301) }
+func (msgs Messages) ImagesInTheCache() string { return msgs.text(1309) }
 
 // ImagesHide says "Hide"
 // in the language the app shows under cx.
@@ -26877,7 +27007,7 @@ func ImagesHide(cx *core.Scope) string { return For(cx).ImagesHide() }
 
 // ImagesHide says "Hide"
 // in the language of msgs.
-func (msgs Messages) ImagesHide() string { return msgs.text(1302) }
+func (msgs Messages) ImagesHide() string { return msgs.text(1310) }
 
 // ImagesShow says "Show"
 // in the language the app shows under cx.
@@ -26885,7 +27015,7 @@ func ImagesShow(cx *core.Scope) string { return For(cx).ImagesShow() }
 
 // ImagesShow says "Show"
 // in the language of msgs.
-func (msgs Messages) ImagesShow() string { return msgs.text(1303) }
+func (msgs Messages) ImagesShow() string { return msgs.text(1311) }
 
 // ImagesPrefetchThenShowNoDownload says "Prefetch, then show: no download, no progress"
 // in the language the app shows under cx.
@@ -26895,7 +27025,7 @@ func ImagesPrefetchThenShowNoDownload(cx *core.Scope) string {
 
 // ImagesPrefetchThenShowNoDownload says "Prefetch, then show: no download, no progress"
 // in the language of msgs.
-func (msgs Messages) ImagesPrefetchThenShowNoDownload() string { return msgs.text(1304) }
+func (msgs Messages) ImagesPrefetchThenShowNoDownload() string { return msgs.text(1312) }
 
 // ImagesLoadedNoDownload says "loaded (no download)"
 // in the language the app shows under cx.
@@ -26903,7 +27033,7 @@ func ImagesLoadedNoDownload(cx *core.Scope) string { return For(cx).ImagesLoaded
 
 // ImagesLoadedNoDownload says "loaded (no download)"
 // in the language of msgs.
-func (msgs Messages) ImagesLoadedNoDownload() string { return msgs.text(1305) }
+func (msgs Messages) ImagesLoadedNoDownload() string { return msgs.text(1313) }
 
 // ImagesLoading says "Loading…"
 // in the language the app shows under cx.
@@ -26911,7 +27041,7 @@ func ImagesLoading(cx *core.Scope) string { return For(cx).ImagesLoading() }
 
 // ImagesLoading says "Loading…"
 // in the language of msgs.
-func (msgs Messages) ImagesLoading() string { return msgs.text(1306) }
+func (msgs Messages) ImagesLoading() string { return msgs.text(1314) }
 
 // ImagesEvents says "Events"
 // in the language the app shows under cx.
@@ -26919,7 +27049,7 @@ func ImagesEvents(cx *core.Scope) string { return For(cx).ImagesEvents() }
 
 // ImagesEvents says "Events"
 // in the language of msgs.
-func (msgs Messages) ImagesEvents() string { return msgs.text(1307) }
+func (msgs Messages) ImagesEvents() string { return msgs.text(1315) }
 
 // ImagesLoadStartLoadErrorLoad says "Load start, load, error, load end"
 // in the language the app shows under cx.
@@ -26929,7 +27059,7 @@ func ImagesLoadStartLoadErrorLoad(cx *core.Scope) string {
 
 // ImagesLoadStartLoadErrorLoad says "Load start, load, error, load end"
 // in the language of msgs.
-func (msgs Messages) ImagesLoadStartLoadErrorLoad() string { return msgs.text(1308) }
+func (msgs Messages) ImagesLoadStartLoadErrorLoad() string { return msgs.text(1316) }
 
 // ImagesLoaded says "Loaded, "
 // in the language the app shows under cx.
@@ -26937,7 +27067,7 @@ func ImagesLoaded(cx *core.Scope) string { return For(cx).ImagesLoaded() }
 
 // ImagesLoaded says "Loaded, "
 // in the language of msgs.
-func (msgs Messages) ImagesLoaded() string { return msgs.text(1309) }
+func (msgs Messages) ImagesLoaded() string { return msgs.text(1317) }
 
 // ImagesPx says " px"
 // in the language the app shows under cx.
@@ -26945,7 +27075,7 @@ func ImagesPx(cx *core.Scope) string { return For(cx).ImagesPx() }
 
 // ImagesPx says " px"
 // in the language of msgs.
-func (msgs Messages) ImagesPx() string { return msgs.text(1310) }
+func (msgs Messages) ImagesPx() string { return msgs.text(1318) }
 
 // ImagesNoLoadEventsYet says "No load events yet"
 // in the language the app shows under cx.
@@ -26953,7 +27083,7 @@ func ImagesNoLoadEventsYet(cx *core.Scope) string { return For(cx).ImagesNoLoadE
 
 // ImagesNoLoadEventsYet says "No load events yet"
 // in the language of msgs.
-func (msgs Messages) ImagesNoLoadEventsYet() string { return msgs.text(1311) }
+func (msgs Messages) ImagesNoLoadEventsYet() string { return msgs.text(1319) }
 
 // StocksBreadth says "Breadth"
 // in the language the app shows under cx.
@@ -26961,7 +27091,7 @@ func StocksBreadth(cx *core.Scope) string { return For(cx).StocksBreadth() }
 
 // StocksBreadth says "Breadth"
 // in the language of msgs.
-func (msgs Messages) StocksBreadth() string { return msgs.text(1312) }
+func (msgs Messages) StocksBreadth() string { return msgs.text(1320) }
 
 // StocksComposite says "Composite"
 // in the language the app shows under cx.
@@ -26969,7 +27099,7 @@ func StocksComposite(cx *core.Scope) string { return For(cx).StocksComposite() }
 
 // StocksComposite says "Composite"
 // in the language of msgs.
-func (msgs Messages) StocksComposite() string { return msgs.text(1313) }
+func (msgs Messages) StocksComposite() string { return msgs.text(1321) }
 
 // StocksAll says "All"
 // in the language the app shows under cx.
@@ -26977,7 +27107,7 @@ func StocksAll(cx *core.Scope) string { return For(cx).StocksAll() }
 
 // StocksAll says "All"
 // in the language of msgs.
-func (msgs Messages) StocksAll() string { return msgs.text(1314) }
+func (msgs Messages) StocksAll() string { return msgs.text(1322) }
 
 // StocksGainers says "Gainers"
 // in the language the app shows under cx.
@@ -26985,7 +27115,7 @@ func StocksGainers(cx *core.Scope) string { return For(cx).StocksGainers() }
 
 // StocksGainers says "Gainers"
 // in the language of msgs.
-func (msgs Messages) StocksGainers() string { return msgs.text(1315) }
+func (msgs Messages) StocksGainers() string { return msgs.text(1323) }
 
 // StocksLosers says "Losers"
 // in the language the app shows under cx.
@@ -26993,7 +27123,7 @@ func StocksLosers(cx *core.Scope) string { return For(cx).StocksLosers() }
 
 // StocksLosers says "Losers"
 // in the language of msgs.
-func (msgs Messages) StocksLosers() string { return msgs.text(1316) }
+func (msgs Messages) StocksLosers() string { return msgs.text(1324) }
 
 // StocksActive says "Active"
 // in the language the app shows under cx.
@@ -27001,7 +27131,7 @@ func StocksActive(cx *core.Scope) string { return For(cx).StocksActive() }
 
 // StocksActive says "Active"
 // in the language of msgs.
-func (msgs Messages) StocksActive() string { return msgs.text(1317) }
+func (msgs Messages) StocksActive() string { return msgs.text(1325) }
 
 // StocksNothingHereRightNow says "Nothing here right now"
 // in the language the app shows under cx.
@@ -27009,7 +27139,7 @@ func StocksNothingHereRightNow(cx *core.Scope) string { return For(cx).StocksNot
 
 // StocksNothingHereRightNow says "Nothing here right now"
 // in the language of msgs.
-func (msgs Messages) StocksNothingHereRightNow() string { return msgs.text(1318) }
+func (msgs Messages) StocksNothingHereRightNow() string { return msgs.text(1326) }
 
 // StocksMid says "mid "
 // in the language the app shows under cx.
@@ -27017,7 +27147,7 @@ func StocksMid(cx *core.Scope) string { return For(cx).StocksMid() }
 
 // StocksMid says "mid "
 // in the language of msgs.
-func (msgs Messages) StocksMid() string { return msgs.text(1319) }
+func (msgs Messages) StocksMid() string { return msgs.text(1327) }
 
 // StocksDepth says "Depth"
 // in the language the app shows under cx.
@@ -27025,7 +27155,7 @@ func StocksDepth(cx *core.Scope) string { return For(cx).StocksDepth() }
 
 // StocksDepth says "Depth"
 // in the language of msgs.
-func (msgs Messages) StocksDepth() string { return msgs.text(1320) }
+func (msgs Messages) StocksDepth() string { return msgs.text(1328) }
 
 // StocksDepthChart says "Depth chart"
 // in the language the app shows under cx.
@@ -27033,7 +27163,7 @@ func StocksDepthChart(cx *core.Scope) string { return For(cx).StocksDepthChart()
 
 // StocksDepthChart says "Depth chart"
 // in the language of msgs.
-func (msgs Messages) StocksDepthChart() string { return msgs.text(1321) }
+func (msgs Messages) StocksDepthChart() string { return msgs.text(1329) }
 
 // StocksBids says "Bids"
 // in the language the app shows under cx.
@@ -27041,7 +27171,7 @@ func StocksBids(cx *core.Scope) string { return For(cx).StocksBids() }
 
 // StocksBids says "Bids"
 // in the language of msgs.
-func (msgs Messages) StocksBids() string { return msgs.text(1322) }
+func (msgs Messages) StocksBids() string { return msgs.text(1330) }
 
 // StocksAsks says "Asks"
 // in the language the app shows under cx.
@@ -27049,7 +27179,7 @@ func StocksAsks(cx *core.Scope) string { return For(cx).StocksAsks() }
 
 // StocksAsks says "Asks"
 // in the language of msgs.
-func (msgs Messages) StocksAsks() string { return msgs.text(1323) }
+func (msgs Messages) StocksAsks() string { return msgs.text(1331) }
 
 // StocksImbalance says "Imbalance"
 // in the language the app shows under cx.
@@ -27057,7 +27187,7 @@ func StocksImbalance(cx *core.Scope) string { return For(cx).StocksImbalance() }
 
 // StocksImbalance says "Imbalance"
 // in the language of msgs.
-func (msgs Messages) StocksImbalance() string { return msgs.text(1324) }
+func (msgs Messages) StocksImbalance() string { return msgs.text(1332) }
 
 // StocksOrderBook says "Order book"
 // in the language the app shows under cx.
@@ -27065,7 +27195,7 @@ func StocksOrderBook(cx *core.Scope) string { return For(cx).StocksOrderBook() }
 
 // StocksOrderBook says "Order book"
 // in the language of msgs.
-func (msgs Messages) StocksOrderBook() string { return msgs.text(1325) }
+func (msgs Messages) StocksOrderBook() string { return msgs.text(1333) }
 
 // StocksLevels says "Levels"
 // in the language the app shows under cx.
@@ -27073,7 +27203,7 @@ func StocksLevels(cx *core.Scope) string { return For(cx).StocksLevels() }
 
 // StocksLevels says "Levels"
 // in the language of msgs.
-func (msgs Messages) StocksLevels() string { return msgs.text(1326) }
+func (msgs Messages) StocksLevels() string { return msgs.text(1334) }
 
 // StocksSpread says "spread "
 // in the language the app shows under cx.
@@ -27081,7 +27211,7 @@ func StocksSpread(cx *core.Scope) string { return For(cx).StocksSpread() }
 
 // StocksSpread says "spread "
 // in the language of msgs.
-func (msgs Messages) StocksSpread() string { return msgs.text(1327) }
+func (msgs Messages) StocksSpread() string { return msgs.text(1335) }
 
 // StocksLvl says "LVL"
 // in the language the app shows under cx.
@@ -27089,7 +27219,7 @@ func StocksLvl(cx *core.Scope) string { return For(cx).StocksLvl() }
 
 // StocksLvl says "LVL"
 // in the language of msgs.
-func (msgs Messages) StocksLvl() string { return msgs.text(1328) }
+func (msgs Messages) StocksLvl() string { return msgs.text(1336) }
 
 // StocksPrice says "PRICE"
 // in the language the app shows under cx.
@@ -27097,7 +27227,7 @@ func StocksPrice(cx *core.Scope) string { return For(cx).StocksPrice() }
 
 // StocksPrice says "PRICE"
 // in the language of msgs.
-func (msgs Messages) StocksPrice() string { return msgs.text(1329) }
+func (msgs Messages) StocksPrice() string { return msgs.text(1337) }
 
 // StocksSize says "SIZE"
 // in the language the app shows under cx.
@@ -27105,7 +27235,7 @@ func StocksSize(cx *core.Scope) string { return For(cx).StocksSize() }
 
 // StocksSize says "SIZE"
 // in the language of msgs.
-func (msgs Messages) StocksSize() string { return msgs.text(1330) }
+func (msgs Messages) StocksSize() string { return msgs.text(1338) }
 
 // StocksTotal says "TOTAL"
 // in the language the app shows under cx.
@@ -27113,7 +27243,7 @@ func StocksTotal(cx *core.Scope) string { return For(cx).StocksTotal() }
 
 // StocksTotal says "TOTAL"
 // in the language of msgs.
-func (msgs Messages) StocksTotal() string { return msgs.text(1331) }
+func (msgs Messages) StocksTotal() string { return msgs.text(1339) }
 
 // StocksBlock says "BLOCK"
 // in the language the app shows under cx.
@@ -27121,7 +27251,7 @@ func StocksBlock(cx *core.Scope) string { return For(cx).StocksBlock() }
 
 // StocksBlock says "BLOCK"
 // in the language of msgs.
-func (msgs Messages) StocksBlock() string { return msgs.text(1332) }
+func (msgs Messages) StocksBlock() string { return msgs.text(1340) }
 
 // StocksTimeSales says "Time & sales"
 // in the language the app shows under cx.
@@ -27129,7 +27259,7 @@ func StocksTimeSales(cx *core.Scope) string { return For(cx).StocksTimeSales() }
 
 // StocksTimeSales says "Time & sales"
 // in the language of msgs.
-func (msgs Messages) StocksTimeSales() string { return msgs.text(1333) }
+func (msgs Messages) StocksTimeSales() string { return msgs.text(1341) }
 
 // StocksBlocks says "blocks ≥ "
 // in the language the app shows under cx.
@@ -27137,7 +27267,7 @@ func StocksBlocks(cx *core.Scope) string { return For(cx).StocksBlocks() }
 
 // StocksBlocks says "blocks ≥ "
 // in the language of msgs.
-func (msgs Messages) StocksBlocks() string { return msgs.text(1334) }
+func (msgs Messages) StocksBlocks() string { return msgs.text(1342) }
 
 // StocksAtAsk says "At ask"
 // in the language the app shows under cx.
@@ -27145,7 +27275,7 @@ func StocksAtAsk(cx *core.Scope) string { return For(cx).StocksAtAsk() }
 
 // StocksAtAsk says "At ask"
 // in the language of msgs.
-func (msgs Messages) StocksAtAsk() string { return msgs.text(1335) }
+func (msgs Messages) StocksAtAsk() string { return msgs.text(1343) }
 
 // StocksAtBid says "At bid"
 // in the language the app shows under cx.
@@ -27153,7 +27283,7 @@ func StocksAtBid(cx *core.Scope) string { return For(cx).StocksAtBid() }
 
 // StocksAtBid says "At bid"
 // in the language of msgs.
-func (msgs Messages) StocksAtBid() string { return msgs.text(1336) }
+func (msgs Messages) StocksAtBid() string { return msgs.text(1344) }
 
 // StocksBlocks2 says "Blocks"
 // in the language the app shows under cx.
@@ -27161,7 +27291,7 @@ func StocksBlocks2(cx *core.Scope) string { return For(cx).StocksBlocks2() }
 
 // StocksBlocks2 says "Blocks"
 // in the language of msgs.
-func (msgs Messages) StocksBlocks2() string { return msgs.text(1337) }
+func (msgs Messages) StocksBlocks2() string { return msgs.text(1345) }
 
 // StocksTime says "TIME"
 // in the language the app shows under cx.
@@ -27169,7 +27299,7 @@ func StocksTime(cx *core.Scope) string { return For(cx).StocksTime() }
 
 // StocksTime says "TIME"
 // in the language of msgs.
-func (msgs Messages) StocksTime() string { return msgs.text(1338) }
+func (msgs Messages) StocksTime() string { return msgs.text(1346) }
 
 // StocksRecentTrades says "Recent trades"
 // in the language the app shows under cx.
@@ -27177,7 +27307,7 @@ func StocksRecentTrades(cx *core.Scope) string { return For(cx).StocksRecentTrad
 
 // StocksRecentTrades says "Recent trades"
 // in the language of msgs.
-func (msgs Messages) StocksRecentTrades() string { return msgs.text(1339) }
+func (msgs Messages) StocksRecentTrades() string { return msgs.text(1347) }
 
 // StocksTradeFlow says "Trade flow"
 // in the language the app shows under cx.
@@ -27185,7 +27315,7 @@ func StocksTradeFlow(cx *core.Scope) string { return For(cx).StocksTradeFlow() }
 
 // StocksTradeFlow says "Trade flow"
 // in the language of msgs.
-func (msgs Messages) StocksTradeFlow() string { return msgs.text(1340) }
+func (msgs Messages) StocksTradeFlow() string { return msgs.text(1348) }
 
 // StocksSoldBought says "sold ← · → bought"
 // in the language the app shows under cx.
@@ -27193,7 +27323,7 @@ func StocksSoldBought(cx *core.Scope) string { return For(cx).StocksSoldBought()
 
 // StocksSoldBought says "sold ← · → bought"
 // in the language of msgs.
-func (msgs Messages) StocksSoldBought() string { return msgs.text(1341) }
+func (msgs Messages) StocksSoldBought() string { return msgs.text(1349) }
 
 // StocksNet says " net · "
 // in the language the app shows under cx.
@@ -27201,7 +27331,7 @@ func StocksNet(cx *core.Scope) string { return For(cx).StocksNet() }
 
 // StocksNet says " net · "
 // in the language of msgs.
-func (msgs Messages) StocksNet() string { return msgs.text(1342) }
+func (msgs Messages) StocksNet() string { return msgs.text(1350) }
 
 // StocksLargeOrders says " large orders"
 // in the language the app shows under cx.
@@ -27209,7 +27339,7 @@ func StocksLargeOrders(cx *core.Scope) string { return For(cx).StocksLargeOrders
 
 // StocksLargeOrders says " large orders"
 // in the language of msgs.
-func (msgs Messages) StocksLargeOrders() string { return msgs.text(1343) }
+func (msgs Messages) StocksLargeOrders() string { return msgs.text(1351) }
 
 // StocksBuy says "Buy"
 // in the language the app shows under cx.
@@ -27217,7 +27347,7 @@ func StocksBuy(cx *core.Scope) string { return For(cx).StocksBuy() }
 
 // StocksBuy says "Buy"
 // in the language of msgs.
-func (msgs Messages) StocksBuy() string { return msgs.text(1344) }
+func (msgs Messages) StocksBuy() string { return msgs.text(1352) }
 
 // StocksSell says "Sell"
 // in the language the app shows under cx.
@@ -27225,7 +27355,7 @@ func StocksSell(cx *core.Scope) string { return For(cx).StocksSell() }
 
 // StocksSell says "Sell"
 // in the language of msgs.
-func (msgs Messages) StocksSell() string { return msgs.text(1345) }
+func (msgs Messages) StocksSell() string { return msgs.text(1353) }
 
 // StocksSimulatedNothingIsSent says "simulated · nothing is sent"
 // in the language the app shows under cx.
@@ -27235,7 +27365,7 @@ func StocksSimulatedNothingIsSent(cx *core.Scope) string {
 
 // StocksSimulatedNothingIsSent says "simulated · nothing is sent"
 // in the language of msgs.
-func (msgs Messages) StocksSimulatedNothingIsSent() string { return msgs.text(1346) }
+func (msgs Messages) StocksSimulatedNothingIsSent() string { return msgs.text(1354) }
 
 // StocksLimitPrice says "Limit price"
 // in the language the app shows under cx.
@@ -27243,7 +27373,7 @@ func StocksLimitPrice(cx *core.Scope) string { return For(cx).StocksLimitPrice()
 
 // StocksLimitPrice says "Limit price"
 // in the language of msgs.
-func (msgs Messages) StocksLimitPrice() string { return msgs.text(1347) }
+func (msgs Messages) StocksLimitPrice() string { return msgs.text(1355) }
 
 // StocksUseLast says "use last "
 // in the language the app shows under cx.
@@ -27251,7 +27381,7 @@ func StocksUseLast(cx *core.Scope) string { return For(cx).StocksUseLast() }
 
 // StocksUseLast says "use last "
 // in the language of msgs.
-func (msgs Messages) StocksUseLast() string { return msgs.text(1348) }
+func (msgs Messages) StocksUseLast() string { return msgs.text(1356) }
 
 // StocksLowerThePrice says "Lower the price"
 // in the language the app shows under cx.
@@ -27259,7 +27389,7 @@ func StocksLowerThePrice(cx *core.Scope) string { return For(cx).StocksLowerTheP
 
 // StocksLowerThePrice says "Lower the price"
 // in the language of msgs.
-func (msgs Messages) StocksLowerThePrice() string { return msgs.text(1349) }
+func (msgs Messages) StocksLowerThePrice() string { return msgs.text(1357) }
 
 // StocksRaiseThePrice says "Raise the price"
 // in the language the app shows under cx.
@@ -27267,7 +27397,7 @@ func StocksRaiseThePrice(cx *core.Scope) string { return For(cx).StocksRaiseTheP
 
 // StocksRaiseThePrice says "Raise the price"
 // in the language of msgs.
-func (msgs Messages) StocksRaiseThePrice() string { return msgs.text(1350) }
+func (msgs Messages) StocksRaiseThePrice() string { return msgs.text(1358) }
 
 // StocksQuantity says "Quantity"
 // in the language the app shows under cx.
@@ -27275,7 +27405,7 @@ func StocksQuantity(cx *core.Scope) string { return For(cx).StocksQuantity() }
 
 // StocksQuantity says "Quantity"
 // in the language of msgs.
-func (msgs Messages) StocksQuantity() string { return msgs.text(1351) }
+func (msgs Messages) StocksQuantity() string { return msgs.text(1359) }
 
 // StocksSh says " sh"
 // in the language the app shows under cx.
@@ -27283,7 +27413,7 @@ func StocksSh(cx *core.Scope) string { return For(cx).StocksSh() }
 
 // StocksSh says " sh"
 // in the language of msgs.
-func (msgs Messages) StocksSh() string { return msgs.text(1352) }
+func (msgs Messages) StocksSh() string { return msgs.text(1360) }
 
 // StocksEstimatedCost says "Estimated cost"
 // in the language the app shows under cx.
@@ -27291,7 +27421,7 @@ func StocksEstimatedCost(cx *core.Scope) string { return For(cx).StocksEstimated
 
 // StocksEstimatedCost says "Estimated cost"
 // in the language of msgs.
-func (msgs Messages) StocksEstimatedCost() string { return msgs.text(1353) }
+func (msgs Messages) StocksEstimatedCost() string { return msgs.text(1361) }
 
 // StocksEstimatedProceeds says "Estimated proceeds"
 // in the language the app shows under cx.
@@ -27299,7 +27429,7 @@ func StocksEstimatedProceeds(cx *core.Scope) string { return For(cx).StocksEstim
 
 // StocksEstimatedProceeds says "Estimated proceeds"
 // in the language of msgs.
-func (msgs Messages) StocksEstimatedProceeds() string { return msgs.text(1354) }
+func (msgs Messages) StocksEstimatedProceeds() string { return msgs.text(1362) }
 
 // StocksReview says "Review "
 // in the language the app shows under cx.
@@ -27307,7 +27437,7 @@ func StocksReview(cx *core.Scope) string { return For(cx).StocksReview() }
 
 // StocksReview says "Review "
 // in the language of msgs.
-func (msgs Messages) StocksReview() string { return msgs.text(1355) }
+func (msgs Messages) StocksReview() string { return msgs.text(1363) }
 
 // StocksLimitDay says "LIMIT · DAY"
 // in the language the app shows under cx.
@@ -27315,7 +27445,7 @@ func StocksLimitDay(cx *core.Scope) string { return For(cx).StocksLimitDay() }
 
 // StocksLimitDay says "LIMIT · DAY"
 // in the language of msgs.
-func (msgs Messages) StocksLimitDay() string { return msgs.text(1356) }
+func (msgs Messages) StocksLimitDay() string { return msgs.text(1364) }
 
 // StocksLimit says "Limit"
 // in the language the app shows under cx.
@@ -27323,7 +27453,7 @@ func StocksLimit(cx *core.Scope) string { return For(cx).StocksLimit() }
 
 // StocksLimit says "Limit"
 // in the language of msgs.
-func (msgs Messages) StocksLimit() string { return msgs.text(1357) }
+func (msgs Messages) StocksLimit() string { return msgs.text(1365) }
 
 // StocksFeesEst says "Fees (est.)"
 // in the language the app shows under cx.
@@ -27331,7 +27461,7 @@ func StocksFeesEst(cx *core.Scope) string { return For(cx).StocksFeesEst() }
 
 // StocksFeesEst says "Fees (est.)"
 // in the language of msgs.
-func (msgs Messages) StocksFeesEst() string { return msgs.text(1358) }
+func (msgs Messages) StocksFeesEst() string { return msgs.text(1366) }
 
 // StocksTotal2 says "Total"
 // in the language the app shows under cx.
@@ -27339,7 +27469,7 @@ func StocksTotal2(cx *core.Scope) string { return For(cx).StocksTotal2() }
 
 // StocksTotal2 says "Total"
 // in the language of msgs.
-func (msgs Messages) StocksTotal2() string { return msgs.text(1359) }
+func (msgs Messages) StocksTotal2() string { return msgs.text(1367) }
 
 // StocksEdit says "Edit"
 // in the language the app shows under cx.
@@ -27347,7 +27477,7 @@ func StocksEdit(cx *core.Scope) string { return For(cx).StocksEdit() }
 
 // StocksEdit says "Edit"
 // in the language of msgs.
-func (msgs Messages) StocksEdit() string { return msgs.text(1360) }
+func (msgs Messages) StocksEdit() string { return msgs.text(1368) }
 
 // StocksPlace says "Place "
 // in the language the app shows under cx.
@@ -27355,7 +27485,7 @@ func StocksPlace(cx *core.Scope) string { return For(cx).StocksPlace() }
 
 // StocksPlace says "Place "
 // in the language of msgs.
-func (msgs Messages) StocksPlace() string { return msgs.text(1361) }
+func (msgs Messages) StocksPlace() string { return msgs.text(1369) }
 
 // StocksOrder says " order"
 // in the language the app shows under cx.
@@ -27363,7 +27493,7 @@ func StocksOrder(cx *core.Scope) string { return For(cx).StocksOrder() }
 
 // StocksOrder says " order"
 // in the language of msgs.
-func (msgs Messages) StocksOrder() string { return msgs.text(1362) }
+func (msgs Messages) StocksOrder() string { return msgs.text(1370) }
 
 // StocksOrderPlaced says " order placed"
 // in the language the app shows under cx.
@@ -27371,7 +27501,7 @@ func StocksOrderPlaced(cx *core.Scope) string { return For(cx).StocksOrderPlaced
 
 // StocksOrderPlaced says " order placed"
 // in the language of msgs.
-func (msgs Messages) StocksOrderPlaced() string { return msgs.text(1363) }
+func (msgs Messages) StocksOrderPlaced() string { return msgs.text(1371) }
 
 // StocksToday says " today"
 // in the language the app shows under cx.
@@ -27379,7 +27509,7 @@ func StocksToday(cx *core.Scope) string { return For(cx).StocksToday() }
 
 // StocksToday says " today"
 // in the language of msgs.
-func (msgs Messages) StocksToday() string { return msgs.text(1364) }
+func (msgs Messages) StocksToday() string { return msgs.text(1372) }
 
 // StocksOpen says "Open"
 // in the language the app shows under cx.
@@ -27387,7 +27517,7 @@ func StocksOpen(cx *core.Scope) string { return For(cx).StocksOpen() }
 
 // StocksOpen says "Open"
 // in the language of msgs.
-func (msgs Messages) StocksOpen() string { return msgs.text(1365) }
+func (msgs Messages) StocksOpen() string { return msgs.text(1373) }
 
 // StocksPrevClose says "Prev close"
 // in the language the app shows under cx.
@@ -27395,7 +27525,7 @@ func StocksPrevClose(cx *core.Scope) string { return For(cx).StocksPrevClose() }
 
 // StocksPrevClose says "Prev close"
 // in the language of msgs.
-func (msgs Messages) StocksPrevClose() string { return msgs.text(1366) }
+func (msgs Messages) StocksPrevClose() string { return msgs.text(1374) }
 
 // StocksAvgPrice says "Avg price"
 // in the language the app shows under cx.
@@ -27403,7 +27533,7 @@ func StocksAvgPrice(cx *core.Scope) string { return For(cx).StocksAvgPrice() }
 
 // StocksAvgPrice says "Avg price"
 // in the language of msgs.
-func (msgs Messages) StocksAvgPrice() string { return msgs.text(1367) }
+func (msgs Messages) StocksAvgPrice() string { return msgs.text(1375) }
 
 // StocksAmplitude says "Amplitude"
 // in the language the app shows under cx.
@@ -27411,7 +27541,7 @@ func StocksAmplitude(cx *core.Scope) string { return For(cx).StocksAmplitude() }
 
 // StocksAmplitude says "Amplitude"
 // in the language of msgs.
-func (msgs Messages) StocksAmplitude() string { return msgs.text(1368) }
+func (msgs Messages) StocksAmplitude() string { return msgs.text(1376) }
 
 // StocksVolume says "Volume"
 // in the language the app shows under cx.
@@ -27419,7 +27549,7 @@ func StocksVolume(cx *core.Scope) string { return For(cx).StocksVolume() }
 
 // StocksVolume says "Volume"
 // in the language of msgs.
-func (msgs Messages) StocksVolume() string { return msgs.text(1369) }
+func (msgs Messages) StocksVolume() string { return msgs.text(1377) }
 
 // StocksTurnover says "Turnover"
 // in the language the app shows under cx.
@@ -27427,7 +27557,7 @@ func StocksTurnover(cx *core.Scope) string { return For(cx).StocksTurnover() }
 
 // StocksTurnover says "Turnover"
 // in the language of msgs.
-func (msgs Messages) StocksTurnover() string { return msgs.text(1370) }
+func (msgs Messages) StocksTurnover() string { return msgs.text(1378) }
 
 // Stocks120dHigh says "120d high"
 // in the language the app shows under cx.
@@ -27435,7 +27565,7 @@ func Stocks120dHigh(cx *core.Scope) string { return For(cx).Stocks120dHigh() }
 
 // Stocks120dHigh says "120d high"
 // in the language of msgs.
-func (msgs Messages) Stocks120dHigh() string { return msgs.text(1371) }
+func (msgs Messages) Stocks120dHigh() string { return msgs.text(1379) }
 
 // Stocks120dLow says "120d low"
 // in the language the app shows under cx.
@@ -27443,7 +27573,7 @@ func Stocks120dLow(cx *core.Scope) string { return For(cx).Stocks120dLow() }
 
 // Stocks120dLow says "120d low"
 // in the language of msgs.
-func (msgs Messages) Stocks120dLow() string { return msgs.text(1372) }
+func (msgs Messages) Stocks120dLow() string { return msgs.text(1380) }
 
 // StocksLast says "last "
 // in the language the app shows under cx.
@@ -27451,7 +27581,7 @@ func StocksLast(cx *core.Scope) string { return For(cx).StocksLast() }
 
 // StocksLast says "last "
 // in the language of msgs.
-func (msgs Messages) StocksLast() string { return msgs.text(1373) }
+func (msgs Messages) StocksLast() string { return msgs.text(1381) }
 
 // StocksRanges says "Ranges"
 // in the language the app shows under cx.
@@ -27459,7 +27589,7 @@ func StocksRanges(cx *core.Scope) string { return For(cx).StocksRanges() }
 
 // StocksRanges says "Ranges"
 // in the language of msgs.
-func (msgs Messages) StocksRanges() string { return msgs.text(1374) }
+func (msgs Messages) StocksRanges() string { return msgs.text(1382) }
 
 // StocksLowHighEachSecond says "low → high · each second"
 // in the language the app shows under cx.
@@ -27467,7 +27597,7 @@ func StocksLowHighEachSecond(cx *core.Scope) string { return For(cx).StocksLowHi
 
 // StocksLowHighEachSecond says "low → high · each second"
 // in the language of msgs.
-func (msgs Messages) StocksLowHighEachSecond() string { return msgs.text(1375) }
+func (msgs Messages) StocksLowHighEachSecond() string { return msgs.text(1383) }
 
 // StocksPriceRanges says "Price ranges"
 // in the language the app shows under cx.
@@ -27475,7 +27605,7 @@ func StocksPriceRanges(cx *core.Scope) string { return For(cx).StocksPriceRanges
 
 // StocksPriceRanges says "Price ranges"
 // in the language of msgs.
-func (msgs Messages) StocksPriceRanges() string { return msgs.text(1376) }
+func (msgs Messages) StocksPriceRanges() string { return msgs.text(1384) }
 
 // StocksResumeTheMarket says "Resume the market"
 // in the language the app shows under cx.
@@ -27483,7 +27613,7 @@ func StocksResumeTheMarket(cx *core.Scope) string { return For(cx).StocksResumeT
 
 // StocksResumeTheMarket says "Resume the market"
 // in the language of msgs.
-func (msgs Messages) StocksResumeTheMarket() string { return msgs.text(1377) }
+func (msgs Messages) StocksResumeTheMarket() string { return msgs.text(1385) }
 
 // StocksPauseTheMarket says "Pause the market"
 // in the language the app shows under cx.
@@ -27491,7 +27621,7 @@ func StocksPauseTheMarket(cx *core.Scope) string { return For(cx).StocksPauseThe
 
 // StocksPauseTheMarket says "Pause the market"
 // in the language of msgs.
-func (msgs Messages) StocksPauseTheMarket() string { return msgs.text(1378) }
+func (msgs Messages) StocksPauseTheMarket() string { return msgs.text(1386) }
 
 // StocksOrderTicket says "Order ticket"
 // in the language the app shows under cx.
@@ -27499,7 +27629,7 @@ func StocksOrderTicket(cx *core.Scope) string { return For(cx).StocksOrderTicket
 
 // StocksOrderTicket says "Order ticket"
 // in the language of msgs.
-func (msgs Messages) StocksOrderTicket() string { return msgs.text(1379) }
+func (msgs Messages) StocksOrderTicket() string { return msgs.text(1387) }
 
 // StocksPrice2 says "Price"
 // in the language the app shows under cx.
@@ -27507,7 +27637,7 @@ func StocksPrice2(cx *core.Scope) string { return For(cx).StocksPrice2() }
 
 // StocksPrice2 says "Price"
 // in the language of msgs.
-func (msgs Messages) StocksPrice2() string { return msgs.text(1380) }
+func (msgs Messages) StocksPrice2() string { return msgs.text(1388) }
 
 // StocksAvg says "Avg"
 // in the language the app shows under cx.
@@ -27515,7 +27645,7 @@ func StocksAvg(cx *core.Scope) string { return For(cx).StocksAvg() }
 
 // StocksAvg says "Avg"
 // in the language of msgs.
-func (msgs Messages) StocksAvg() string { return msgs.text(1381) }
+func (msgs Messages) StocksAvg() string { return msgs.text(1389) }
 
 // StocksVol says "Vol"
 // in the language the app shows under cx.
@@ -27523,7 +27653,7 @@ func StocksVol(cx *core.Scope) string { return For(cx).StocksVol() }
 
 // StocksVol says "Vol"
 // in the language of msgs.
-func (msgs Messages) StocksVol() string { return msgs.text(1382) }
+func (msgs Messages) StocksVol() string { return msgs.text(1390) }
 
 // StocksChart says " chart"
 // in the language the app shows under cx.
@@ -27531,7 +27661,7 @@ func StocksChart(cx *core.Scope) string { return For(cx).StocksChart() }
 
 // StocksChart says " chart"
 // in the language of msgs.
-func (msgs Messages) StocksChart() string { return msgs.text(1383) }
+func (msgs Messages) StocksChart() string { return msgs.text(1391) }
 
 // StocksTechnology says "Technology"
 // in the language the app shows under cx.
@@ -27539,7 +27669,7 @@ func StocksTechnology(cx *core.Scope) string { return For(cx).StocksTechnology()
 
 // StocksTechnology says "Technology"
 // in the language of msgs.
-func (msgs Messages) StocksTechnology() string { return msgs.text(1384) }
+func (msgs Messages) StocksTechnology() string { return msgs.text(1392) }
 
 // StocksHealth says "Health"
 // in the language the app shows under cx.
@@ -27547,7 +27677,7 @@ func StocksHealth(cx *core.Scope) string { return For(cx).StocksHealth() }
 
 // StocksHealth says "Health"
 // in the language of msgs.
-func (msgs Messages) StocksHealth() string { return msgs.text(1385) }
+func (msgs Messages) StocksHealth() string { return msgs.text(1393) }
 
 // StocksFinance says "Finance"
 // in the language the app shows under cx.
@@ -27555,7 +27685,7 @@ func StocksFinance(cx *core.Scope) string { return For(cx).StocksFinance() }
 
 // StocksFinance says "Finance"
 // in the language of msgs.
-func (msgs Messages) StocksFinance() string { return msgs.text(1386) }
+func (msgs Messages) StocksFinance() string { return msgs.text(1394) }
 
 // StocksConsumer says "Consumer"
 // in the language the app shows under cx.
@@ -27563,7 +27693,7 @@ func StocksConsumer(cx *core.Scope) string { return For(cx).StocksConsumer() }
 
 // StocksConsumer says "Consumer"
 // in the language of msgs.
-func (msgs Messages) StocksConsumer() string { return msgs.text(1387) }
+func (msgs Messages) StocksConsumer() string { return msgs.text(1395) }
 
 // StocksIndustrials says "Industrials"
 // in the language the app shows under cx.
@@ -27571,7 +27701,7 @@ func StocksIndustrials(cx *core.Scope) string { return For(cx).StocksIndustrials
 
 // StocksIndustrials says "Industrials"
 // in the language of msgs.
-func (msgs Messages) StocksIndustrials() string { return msgs.text(1388) }
+func (msgs Messages) StocksIndustrials() string { return msgs.text(1396) }
 
 // StocksEnergy says "Energy"
 // in the language the app shows under cx.
@@ -27579,7 +27709,7 @@ func StocksEnergy(cx *core.Scope) string { return For(cx).StocksEnergy() }
 
 // StocksEnergy says "Energy"
 // in the language of msgs.
-func (msgs Messages) StocksEnergy() string { return msgs.text(1389) }
+func (msgs Messages) StocksEnergy() string { return msgs.text(1397) }
 
 // StocksSmall says "Small"
 // in the language the app shows under cx.
@@ -27587,7 +27717,7 @@ func StocksSmall(cx *core.Scope) string { return For(cx).StocksSmall() }
 
 // StocksSmall says "Small"
 // in the language of msgs.
-func (msgs Messages) StocksSmall() string { return msgs.text(1390) }
+func (msgs Messages) StocksSmall() string { return msgs.text(1398) }
 
 // StocksMedium says "Medium"
 // in the language the app shows under cx.
@@ -27595,7 +27725,7 @@ func StocksMedium(cx *core.Scope) string { return For(cx).StocksMedium() }
 
 // StocksMedium says "Medium"
 // in the language of msgs.
-func (msgs Messages) StocksMedium() string { return msgs.text(1391) }
+func (msgs Messages) StocksMedium() string { return msgs.text(1399) }
 
 // StocksLarge says "Large"
 // in the language the app shows under cx.
@@ -27603,7 +27733,7 @@ func StocksLarge(cx *core.Scope) string { return For(cx).StocksLarge() }
 
 // StocksLarge says "Large"
 // in the language of msgs.
-func (msgs Messages) StocksLarge() string { return msgs.text(1392) }
+func (msgs Messages) StocksLarge() string { return msgs.text(1400) }
 
 // StocksBlock2 says "Block"
 // in the language the app shows under cx.
@@ -27611,7 +27741,7 @@ func StocksBlock2(cx *core.Scope) string { return For(cx).StocksBlock2() }
 
 // StocksBlock2 says "Block"
 // in the language of msgs.
-func (msgs Messages) StocksBlock2() string { return msgs.text(1393) }
+func (msgs Messages) StocksBlock2() string { return msgs.text(1401) }
 
 // StocksIntraday says "Intraday"
 // in the language the app shows under cx.
@@ -27619,7 +27749,7 @@ func StocksIntraday(cx *core.Scope) string { return For(cx).StocksIntraday() }
 
 // StocksIntraday says "Intraday"
 // in the language of msgs.
-func (msgs Messages) StocksIntraday() string { return msgs.text(1394) }
+func (msgs Messages) StocksIntraday() string { return msgs.text(1402) }
 
 // StocksToday2 says "Today"
 // in the language the app shows under cx.
@@ -27627,7 +27757,7 @@ func StocksToday2(cx *core.Scope) string { return For(cx).StocksToday2() }
 
 // StocksToday2 says "Today"
 // in the language of msgs.
-func (msgs Messages) StocksToday2() string { return msgs.text(1395) }
+func (msgs Messages) StocksToday2() string { return msgs.text(1403) }
 
 // StocksDaysAgo says "{days, number}d ago"
 // in the language the app shows under cx.
@@ -27972,7 +28102,7 @@ func ChatToday(cx *core.Scope) string { return For(cx).ChatToday() }
 
 // ChatToday says "Today"
 // in the language of msgs.
-func (msgs Messages) ChatToday() string { return msgs.text(1396) }
+func (msgs Messages) ChatToday() string { return msgs.text(1404) }
 
 // ChatWaitingForAConnection says "Waiting for a connection"
 // in the language the app shows under cx.
@@ -27980,7 +28110,7 @@ func ChatWaitingForAConnection(cx *core.Scope) string { return For(cx).ChatWaiti
 
 // ChatWaitingForAConnection says "Waiting for a connection"
 // in the language of msgs.
-func (msgs Messages) ChatWaitingForAConnection() string { return msgs.text(1397) }
+func (msgs Messages) ChatWaitingForAConnection() string { return msgs.text(1405) }
 
 // ChatStopped says "Stopped"
 // in the language the app shows under cx.
@@ -27988,7 +28118,7 @@ func ChatStopped(cx *core.Scope) string { return For(cx).ChatStopped() }
 
 // ChatStopped says "Stopped"
 // in the language of msgs.
-func (msgs Messages) ChatStopped() string { return msgs.text(1398) }
+func (msgs Messages) ChatStopped() string { return msgs.text(1406) }
 
 // ChatReasoning says "Reasoning"
 // in the language the app shows under cx.
@@ -27996,7 +28126,7 @@ func ChatReasoning(cx *core.Scope) string { return For(cx).ChatReasoning() }
 
 // ChatReasoning says "Reasoning"
 // in the language of msgs.
-func (msgs Messages) ChatReasoning() string { return msgs.text(1399) }
+func (msgs Messages) ChatReasoning() string { return msgs.text(1407) }
 
 // ChatSomethingWentWrong says "Something went wrong."
 // in the language the app shows under cx.
@@ -28004,7 +28134,7 @@ func ChatSomethingWentWrong(cx *core.Scope) string { return For(cx).ChatSomethin
 
 // ChatSomethingWentWrong says "Something went wrong."
 // in the language of msgs.
-func (msgs Messages) ChatSomethingWentWrong() string { return msgs.text(1400) }
+func (msgs Messages) ChatSomethingWentWrong() string { return msgs.text(1408) }
 
 // ChatYouStoppedThisReply says "You stopped this reply"
 // in the language the app shows under cx.
@@ -28012,7 +28142,7 @@ func ChatYouStoppedThisReply(cx *core.Scope) string { return For(cx).ChatYouStop
 
 // ChatYouStoppedThisReply says "You stopped this reply"
 // in the language of msgs.
-func (msgs Messages) ChatYouStoppedThisReply() string { return msgs.text(1401) }
+func (msgs Messages) ChatYouStoppedThisReply() string { return msgs.text(1409) }
 
 // ChatCopy says "Copy"
 // in the language the app shows under cx.
@@ -28020,7 +28150,7 @@ func ChatCopy(cx *core.Scope) string { return For(cx).ChatCopy() }
 
 // ChatCopy says "Copy"
 // in the language of msgs.
-func (msgs Messages) ChatCopy() string { return msgs.text(1402) }
+func (msgs Messages) ChatCopy() string { return msgs.text(1410) }
 
 // ChatRegenerate says "Regenerate"
 // in the language the app shows under cx.
@@ -28028,7 +28158,7 @@ func ChatRegenerate(cx *core.Scope) string { return For(cx).ChatRegenerate() }
 
 // ChatRegenerate says "Regenerate"
 // in the language of msgs.
-func (msgs Messages) ChatRegenerate() string { return msgs.text(1403) }
+func (msgs Messages) ChatRegenerate() string { return msgs.text(1411) }
 
 // ChatGoodReply says "Good reply"
 // in the language the app shows under cx.
@@ -28036,7 +28166,7 @@ func ChatGoodReply(cx *core.Scope) string { return For(cx).ChatGoodReply() }
 
 // ChatGoodReply says "Good reply"
 // in the language of msgs.
-func (msgs Messages) ChatGoodReply() string { return msgs.text(1404) }
+func (msgs Messages) ChatGoodReply() string { return msgs.text(1412) }
 
 // ChatBadReply says "Bad reply"
 // in the language the app shows under cx.
@@ -28044,7 +28174,7 @@ func ChatBadReply(cx *core.Scope) string { return For(cx).ChatBadReply() }
 
 // ChatBadReply says "Bad reply"
 // in the language of msgs.
-func (msgs Messages) ChatBadReply() string { return msgs.text(1405) }
+func (msgs Messages) ChatBadReply() string { return msgs.text(1413) }
 
 // ChatASimulatedAssistantEveryReply says "A simulated assistant: every reply is scripted and streamed locally."
 // in the language the app shows under cx.
@@ -28054,7 +28184,7 @@ func ChatASimulatedAssistantEveryReply(cx *core.Scope) string {
 
 // ChatASimulatedAssistantEveryReply says "A simulated assistant: every reply is scripted and streamed locally."
 // in the language of msgs.
-func (msgs Messages) ChatASimulatedAssistantEveryReply() string { return msgs.text(1406) }
+func (msgs Messages) ChatASimulatedAssistantEveryReply() string { return msgs.text(1414) }
 
 // ChatChatWithYourLocalClaude says "Chat with your local Claude or Codex CLI. Sign in to the CLI in a terminal first."
 // in the language the app shows under cx.
@@ -28062,7 +28192,7 @@ func ChatChatWithYourLocalClaude(cx *core.Scope) string { return For(cx).ChatCha
 
 // ChatChatWithYourLocalClaude says "Chat with your local Claude or Codex CLI. Sign in to the CLI in a terminal first."
 // in the language of msgs.
-func (msgs Messages) ChatChatWithYourLocalClaude() string { return msgs.text(1407) }
+func (msgs Messages) ChatChatWithYourLocalClaude() string { return msgs.text(1415) }
 
 // ChatHowCanIHelp says "How can I help?"
 // in the language the app shows under cx.
@@ -28070,7 +28200,7 @@ func ChatHowCanIHelp(cx *core.Scope) string { return For(cx).ChatHowCanIHelp() }
 
 // ChatHowCanIHelp says "How can I help?"
 // in the language of msgs.
-func (msgs Messages) ChatHowCanIHelp() string { return msgs.text(1408) }
+func (msgs Messages) ChatHowCanIHelp() string { return msgs.text(1416) }
 
 // ChatLoadALongConversation says "Load a long conversation"
 // in the language the app shows under cx.
@@ -28078,7 +28208,7 @@ func ChatLoadALongConversation(cx *core.Scope) string { return For(cx).ChatLoadA
 
 // ChatLoadALongConversation says "Load a long conversation"
 // in the language of msgs.
-func (msgs Messages) ChatLoadALongConversation() string { return msgs.text(1409) }
+func (msgs Messages) ChatLoadALongConversation() string { return msgs.text(1417) }
 
 // ChatChooseAPhoto says "Choose a photo"
 // in the language the app shows under cx.
@@ -28086,7 +28216,7 @@ func ChatChooseAPhoto(cx *core.Scope) string { return For(cx).ChatChooseAPhoto()
 
 // ChatChooseAPhoto says "Choose a photo"
 // in the language of msgs.
-func (msgs Messages) ChatChooseAPhoto() string { return msgs.text(1410) }
+func (msgs Messages) ChatChooseAPhoto() string { return msgs.text(1418) }
 
 // ChatAttachAPhotoAndA says "Attach a photo and a file"
 // in the language the app shows under cx.
@@ -28094,7 +28224,7 @@ func ChatAttachAPhotoAndA(cx *core.Scope) string { return For(cx).ChatAttachAPho
 
 // ChatAttachAPhotoAndA says "Attach a photo and a file"
 // in the language of msgs.
-func (msgs Messages) ChatAttachAPhotoAndA() string { return msgs.text(1411) }
+func (msgs Messages) ChatAttachAPhotoAndA() string { return msgs.text(1419) }
 
 // ChatMessage says "Message "
 // in the language the app shows under cx.
@@ -28102,7 +28232,7 @@ func ChatMessage(cx *core.Scope) string { return For(cx).ChatMessage() }
 
 // ChatMessage says "Message "
 // in the language of msgs.
-func (msgs Messages) ChatMessage() string { return msgs.text(1412) }
+func (msgs Messages) ChatMessage() string { return msgs.text(1420) }
 
 // ChatJumpToTheLatestMessage says "Jump to the latest message"
 // in the language the app shows under cx.
@@ -28110,7 +28240,7 @@ func ChatJumpToTheLatestMessage(cx *core.Scope) string { return For(cx).ChatJump
 
 // ChatJumpToTheLatestMessage says "Jump to the latest message"
 // in the language of msgs.
-func (msgs Messages) ChatJumpToTheLatestMessage() string { return msgs.text(1413) }
+func (msgs Messages) ChatJumpToTheLatestMessage() string { return msgs.text(1421) }
 
 // ChatBackOnline says "Back online"
 // in the language the app shows under cx.
@@ -28118,7 +28248,7 @@ func ChatBackOnline(cx *core.Scope) string { return For(cx).ChatBackOnline() }
 
 // ChatBackOnline says "Back online"
 // in the language of msgs.
-func (msgs Messages) ChatBackOnline() string { return msgs.text(1414) }
+func (msgs Messages) ChatBackOnline() string { return msgs.text(1422) }
 
 // ChatSendingYourMessage says "Sending your message."
 // in the language the app shows under cx.
@@ -28126,7 +28256,7 @@ func ChatSendingYourMessage(cx *core.Scope) string { return For(cx).ChatSendingY
 
 // ChatSendingYourMessage says "Sending your message."
 // in the language of msgs.
-func (msgs Messages) ChatSendingYourMessage() string { return msgs.text(1415) }
+func (msgs Messages) ChatSendingYourMessage() string { return msgs.text(1423) }
 
 // ChatYouReOffline says "You're offline"
 // in the language the app shows under cx.
@@ -28134,7 +28264,7 @@ func ChatYouReOffline(cx *core.Scope) string { return For(cx).ChatYouReOffline()
 
 // ChatYouReOffline says "You're offline"
 // in the language of msgs.
-func (msgs Messages) ChatYouReOffline() string { return msgs.text(1416) }
+func (msgs Messages) ChatYouReOffline() string { return msgs.text(1424) }
 
 // ChatYourMessageSendsWhenThe says "Your message sends when the connection returns."
 // in the language the app shows under cx.
@@ -28142,7 +28272,7 @@ func ChatYourMessageSendsWhenThe(cx *core.Scope) string { return For(cx).ChatYou
 
 // ChatYourMessageSendsWhenThe says "Your message sends when the connection returns."
 // in the language of msgs.
-func (msgs Messages) ChatYourMessageSendsWhenThe() string { return msgs.text(1417) }
+func (msgs Messages) ChatYourMessageSendsWhenThe() string { return msgs.text(1425) }
 
 // ChatCloseTheMenu says "Close the menu"
 // in the language the app shows under cx.
@@ -28150,7 +28280,7 @@ func ChatCloseTheMenu(cx *core.Scope) string { return For(cx).ChatCloseTheMenu()
 
 // ChatCloseTheMenu says "Close the menu"
 // in the language of msgs.
-func (msgs Messages) ChatCloseTheMenu() string { return msgs.text(1418) }
+func (msgs Messages) ChatCloseTheMenu() string { return msgs.text(1426) }
 
 // ChatAddAndReplay says "ADD AND REPLAY"
 // in the language the app shows under cx.
@@ -28158,7 +28288,7 @@ func ChatAddAndReplay(cx *core.Scope) string { return For(cx).ChatAddAndReplay()
 
 // ChatAddAndReplay says "ADD AND REPLAY"
 // in the language of msgs.
-func (msgs Messages) ChatAddAndReplay() string { return msgs.text(1419) }
+func (msgs Messages) ChatAddAndReplay() string { return msgs.text(1427) }
 
 // ChatAdd says "Add"
 // in the language the app shows under cx.
@@ -28166,7 +28296,7 @@ func ChatAdd(cx *core.Scope) string { return For(cx).ChatAdd() }
 
 // ChatAdd says "Add"
 // in the language of msgs.
-func (msgs Messages) ChatAdd() string { return msgs.text(1420) }
+func (msgs Messages) ChatAdd() string { return msgs.text(1428) }
 
 // ChatStopGenerating says "Stop generating"
 // in the language the app shows under cx.
@@ -28174,7 +28304,7 @@ func ChatStopGenerating(cx *core.Scope) string { return For(cx).ChatStopGenerati
 
 // ChatStopGenerating says "Stop generating"
 // in the language of msgs.
-func (msgs Messages) ChatStopGenerating() string { return msgs.text(1421) }
+func (msgs Messages) ChatStopGenerating() string { return msgs.text(1429) }
 
 // ChatSend says "Send"
 // in the language the app shows under cx.
@@ -28182,7 +28312,7 @@ func ChatSend(cx *core.Scope) string { return For(cx).ChatSend() }
 
 // ChatSend says "Send"
 // in the language of msgs.
-func (msgs Messages) ChatSend() string { return msgs.text(1422) }
+func (msgs Messages) ChatSend() string { return msgs.text(1430) }
 
 // ChatWeeksOfMessagesLoadedAt says "Weeks of messages, loaded at once"
 // in the language the app shows under cx.
@@ -28190,7 +28320,7 @@ func ChatWeeksOfMessagesLoadedAt(cx *core.Scope) string { return For(cx).ChatWee
 
 // ChatWeeksOfMessagesLoadedAt says "Weeks of messages, loaded at once"
 // in the language of msgs.
-func (msgs Messages) ChatWeeksOfMessagesLoadedAt() string { return msgs.text(1423) }
+func (msgs Messages) ChatWeeksOfMessagesLoadedAt() string { return msgs.text(1431) }
 
 // ChatNewChat says "New chat"
 // in the language the app shows under cx.
@@ -28198,7 +28328,7 @@ func ChatNewChat(cx *core.Scope) string { return For(cx).ChatNewChat() }
 
 // ChatNewChat says "New chat"
 // in the language of msgs.
-func (msgs Messages) ChatNewChat() string { return msgs.text(1424) }
+func (msgs Messages) ChatNewChat() string { return msgs.text(1432) }
 
 // ChatConversations says "CONVERSATIONS"
 // in the language the app shows under cx.
@@ -28206,7 +28336,7 @@ func ChatConversations(cx *core.Scope) string { return For(cx).ChatConversations
 
 // ChatConversations says "CONVERSATIONS"
 // in the language of msgs.
-func (msgs Messages) ChatConversations() string { return msgs.text(1425) }
+func (msgs Messages) ChatConversations() string { return msgs.text(1433) }
 
 // ChatRemoveFile says "Remove file"
 // in the language the app shows under cx.
@@ -28214,7 +28344,7 @@ func ChatRemoveFile(cx *core.Scope) string { return For(cx).ChatRemoveFile() }
 
 // ChatRemoveFile says "Remove file"
 // in the language of msgs.
-func (msgs Messages) ChatRemoveFile() string { return msgs.text(1426) }
+func (msgs Messages) ChatRemoveFile() string { return msgs.text(1434) }
 
 // ChatRunCode says "Run code"
 // in the language the app shows under cx.
@@ -28222,7 +28352,7 @@ func ChatRunCode(cx *core.Scope) string { return For(cx).ChatRunCode() }
 
 // ChatRunCode says "Run code"
 // in the language of msgs.
-func (msgs Messages) ChatRunCode() string { return msgs.text(1427) }
+func (msgs Messages) ChatRunCode() string { return msgs.text(1435) }
 
 // ChatSandboxed says ", sandboxed"
 // in the language the app shows under cx.
@@ -28230,7 +28360,7 @@ func ChatSandboxed(cx *core.Scope) string { return For(cx).ChatSandboxed() }
 
 // ChatSandboxed says ", sandboxed"
 // in the language of msgs.
-func (msgs Messages) ChatSandboxed() string { return msgs.text(1428) }
+func (msgs Messages) ChatSandboxed() string { return msgs.text(1436) }
 
 // ChatWebSearch says "Web search"
 // in the language the app shows under cx.
@@ -28238,7 +28368,7 @@ func ChatWebSearch(cx *core.Scope) string { return For(cx).ChatWebSearch() }
 
 // ChatWebSearch says "Web search"
 // in the language of msgs.
-func (msgs Messages) ChatWebSearch() string { return msgs.text(1429) }
+func (msgs Messages) ChatWebSearch() string { return msgs.text(1437) }
 
 // ChatWeather says "Weather"
 // in the language the app shows under cx.
@@ -28246,7 +28376,7 @@ func ChatWeather(cx *core.Scope) string { return For(cx).ChatWeather() }
 
 // ChatWeather says "Weather"
 // in the language of msgs.
-func (msgs Messages) ChatWeather() string { return msgs.text(1430) }
+func (msgs Messages) ChatWeather() string { return msgs.text(1438) }
 
 // ChatOutput says "Output"
 // in the language the app shows under cx.
@@ -28254,7 +28384,7 @@ func ChatOutput(cx *core.Scope) string { return For(cx).ChatOutput() }
 
 // ChatOutput says "Output"
 // in the language of msgs.
-func (msgs Messages) ChatOutput() string { return msgs.text(1431) }
+func (msgs Messages) ChatOutput() string { return msgs.text(1439) }
 
 // ChatRetry says "Retry"
 // in the language the app shows under cx.
@@ -28262,7 +28392,7 @@ func ChatRetry(cx *core.Scope) string { return For(cx).ChatRetry() }
 
 // ChatRetry says "Retry"
 // in the language of msgs.
-func (msgs Messages) ChatRetry() string { return msgs.text(1432) }
+func (msgs Messages) ChatRetry() string { return msgs.text(1440) }
 
 // ChatCopyCode says "Copy code"
 // in the language the app shows under cx.
@@ -28270,7 +28400,7 @@ func ChatCopyCode(cx *core.Scope) string { return For(cx).ChatCopyCode() }
 
 // ChatCopyCode says "Copy code"
 // in the language of msgs.
-func (msgs Messages) ChatCopyCode() string { return msgs.text(1433) }
+func (msgs Messages) ChatCopyCode() string { return msgs.text(1441) }
 
 // ChatClaudeCouldNotCompleteThis says "Claude could not complete this reply"
 // in the language the app shows under cx.
@@ -28280,7 +28410,7 @@ func ChatClaudeCouldNotCompleteThis(cx *core.Scope) string {
 
 // ChatClaudeCouldNotCompleteThis says "Claude could not complete this reply"
 // in the language of msgs.
-func (msgs Messages) ChatClaudeCouldNotCompleteThis() string { return msgs.text(1434) }
+func (msgs Messages) ChatClaudeCouldNotCompleteThis() string { return msgs.text(1442) }
 
 // ChatCodexCouldNotCompleteThis says "Codex could not complete this reply"
 // in the language the app shows under cx.
@@ -28290,7 +28420,7 @@ func ChatCodexCouldNotCompleteThis(cx *core.Scope) string {
 
 // ChatCodexCouldNotCompleteThis says "Codex could not complete this reply"
 // in the language of msgs.
-func (msgs Messages) ChatCodexCouldNotCompleteThis() string { return msgs.text(1435) }
+func (msgs Messages) ChatCodexCouldNotCompleteThis() string { return msgs.text(1443) }
 
 // ChatNoReply says "no reply"
 // in the language the app shows under cx.
@@ -28298,7 +28428,7 @@ func ChatNoReply(cx *core.Scope) string { return For(cx).ChatNoReply() }
 
 // ChatNoReply says "no reply"
 // in the language of msgs.
-func (msgs Messages) ChatNoReply() string { return msgs.text(1436) }
+func (msgs Messages) ChatNoReply() string { return msgs.text(1444) }
 
 // ChatQueued says "Queued"
 // in the language the app shows under cx.
@@ -28306,7 +28436,7 @@ func ChatQueued(cx *core.Scope) string { return For(cx).ChatQueued() }
 
 // ChatQueued says "Queued"
 // in the language of msgs.
-func (msgs Messages) ChatQueued() string { return msgs.text(1437) }
+func (msgs Messages) ChatQueued() string { return msgs.text(1445) }
 
 // ChatRunning says "Running"
 // in the language the app shows under cx.
@@ -28314,7 +28444,7 @@ func ChatRunning(cx *core.Scope) string { return For(cx).ChatRunning() }
 
 // ChatRunning says "Running"
 // in the language of msgs.
-func (msgs Messages) ChatRunning() string { return msgs.text(1438) }
+func (msgs Messages) ChatRunning() string { return msgs.text(1446) }
 
 // ChatDone says "Done"
 // in the language the app shows under cx.
@@ -28322,7 +28452,7 @@ func ChatDone(cx *core.Scope) string { return For(cx).ChatDone() }
 
 // ChatDone says "Done"
 // in the language of msgs.
-func (msgs Messages) ChatDone() string { return msgs.text(1439) }
+func (msgs Messages) ChatDone() string { return msgs.text(1447) }
 
 // ChatInstallCli says "{provider}: {why}. Install {command} on PATH and sign in with {command} in a terminal, then retry."
 // in the language the app shows under cx.
@@ -28404,7 +28534,7 @@ func DockFiles(cx *core.Scope) string { return For(cx).DockFiles() }
 
 // DockFiles says "Files"
 // in the language of msgs.
-func (msgs Messages) DockFiles() string { return msgs.text(1440) }
+func (msgs Messages) DockFiles() string { return msgs.text(1448) }
 
 // DockTerminal says "Terminal"
 // in the language the app shows under cx.
@@ -28412,7 +28542,7 @@ func DockTerminal(cx *core.Scope) string { return For(cx).DockTerminal() }
 
 // DockTerminal says "Terminal"
 // in the language of msgs.
-func (msgs Messages) DockTerminal() string { return msgs.text(1441) }
+func (msgs Messages) DockTerminal() string { return msgs.text(1449) }
 
 // DockEdit says "Edit "
 // in the language the app shows under cx.
@@ -28420,7 +28550,7 @@ func DockEdit(cx *core.Scope) string { return For(cx).DockEdit() }
 
 // DockEdit says "Edit "
 // in the language of msgs.
-func (msgs Messages) DockEdit() string { return msgs.text(1442) }
+func (msgs Messages) DockEdit() string { return msgs.text(1450) }
 
 // DockEdit2 says "Edit"
 // in the language the app shows under cx.
@@ -28428,7 +28558,7 @@ func DockEdit2(cx *core.Scope) string { return For(cx).DockEdit2() }
 
 // DockEdit2 says "Edit"
 // in the language of msgs.
-func (msgs Messages) DockEdit2() string { return msgs.text(1443) }
+func (msgs Messages) DockEdit2() string { return msgs.text(1451) }
 
 // DockLivePreview says "Live preview"
 // in the language the app shows under cx.
@@ -28436,7 +28566,7 @@ func DockLivePreview(cx *core.Scope) string { return For(cx).DockLivePreview() }
 
 // DockLivePreview says "Live preview"
 // in the language of msgs.
-func (msgs Messages) DockLivePreview() string { return msgs.text(1444) }
+func (msgs Messages) DockLivePreview() string { return msgs.text(1452) }
 
 // DockFollowsTheEditorBesideIt says "Follows the editor beside it"
 // in the language the app shows under cx.
@@ -28446,7 +28576,7 @@ func DockFollowsTheEditorBesideIt(cx *core.Scope) string {
 
 // DockFollowsTheEditorBesideIt says "Follows the editor beside it"
 // in the language of msgs.
-func (msgs Messages) DockFollowsTheEditorBesideIt() string { return msgs.text(1445) }
+func (msgs Messages) DockFollowsTheEditorBesideIt() string { return msgs.text(1453) }
 
 // DockToggleFiles says "Toggle files"
 // in the language the app shows under cx.
@@ -28454,7 +28584,7 @@ func DockToggleFiles(cx *core.Scope) string { return For(cx).DockToggleFiles() }
 
 // DockToggleFiles says "Toggle files"
 // in the language of msgs.
-func (msgs Messages) DockToggleFiles() string { return msgs.text(1446) }
+func (msgs Messages) DockToggleFiles() string { return msgs.text(1454) }
 
 // DockToggleTerminal says "Toggle terminal"
 // in the language the app shows under cx.
@@ -28462,7 +28592,7 @@ func DockToggleTerminal(cx *core.Scope) string { return For(cx).DockToggleTermin
 
 // DockToggleTerminal says "Toggle terminal"
 // in the language of msgs.
-func (msgs Messages) DockToggleTerminal() string { return msgs.text(1447) }
+func (msgs Messages) DockToggleTerminal() string { return msgs.text(1455) }
 
 // DockLockTheLayout says "Lock the layout"
 // in the language the app shows under cx.
@@ -28470,7 +28600,7 @@ func DockLockTheLayout(cx *core.Scope) string { return For(cx).DockLockTheLayout
 
 // DockLockTheLayout says "Lock the layout"
 // in the language of msgs.
-func (msgs Messages) DockLockTheLayout() string { return msgs.text(1448) }
+func (msgs Messages) DockLockTheLayout() string { return msgs.text(1456) }
 
 // DockLock says "Lock"
 // in the language the app shows under cx.
@@ -28478,7 +28608,7 @@ func DockLock(cx *core.Scope) string { return For(cx).DockLock() }
 
 // DockLock says "Lock"
 // in the language of msgs.
-func (msgs Messages) DockLock() string { return msgs.text(1449) }
+func (msgs Messages) DockLock() string { return msgs.text(1457) }
 
 // DockShowCloseButtons says "Show close buttons"
 // in the language the app shows under cx.
@@ -28486,7 +28616,7 @@ func DockShowCloseButtons(cx *core.Scope) string { return For(cx).DockShowCloseB
 
 // DockShowCloseButtons says "Show close buttons"
 // in the language of msgs.
-func (msgs Messages) DockShowCloseButtons() string { return msgs.text(1450) }
+func (msgs Messages) DockShowCloseButtons() string { return msgs.text(1458) }
 
 // DockClose says "Close"
 // in the language the app shows under cx.
@@ -28494,7 +28624,7 @@ func DockClose(cx *core.Scope) string { return For(cx).DockClose() }
 
 // DockClose says "Close"
 // in the language of msgs.
-func (msgs Messages) DockClose() string { return msgs.text(1451) }
+func (msgs Messages) DockClose() string { return msgs.text(1459) }
 
 // DockZoomTheGroup says "Zoom the group"
 // in the language the app shows under cx.
@@ -28502,7 +28632,7 @@ func DockZoomTheGroup(cx *core.Scope) string { return For(cx).DockZoomTheGroup()
 
 // DockZoomTheGroup says "Zoom the group"
 // in the language of msgs.
-func (msgs Messages) DockZoomTheGroup() string { return msgs.text(1452) }
+func (msgs Messages) DockZoomTheGroup() string { return msgs.text(1460) }
 
 // DockZoom says "Zoom"
 // in the language the app shows under cx.
@@ -28510,7 +28640,7 @@ func DockZoom(cx *core.Scope) string { return For(cx).DockZoom() }
 
 // DockZoom says "Zoom"
 // in the language of msgs.
-func (msgs Messages) DockZoom() string { return msgs.text(1453) }
+func (msgs Messages) DockZoom() string { return msgs.text(1461) }
 
 // DockResetTheLayout says "Reset the layout"
 // in the language the app shows under cx.
@@ -28518,7 +28648,7 @@ func DockResetTheLayout(cx *core.Scope) string { return For(cx).DockResetTheLayo
 
 // DockResetTheLayout says "Reset the layout"
 // in the language of msgs.
-func (msgs Messages) DockResetTheLayout() string { return msgs.text(1454) }
+func (msgs Messages) DockResetTheLayout() string { return msgs.text(1462) }
 
 // DockReset says "Reset"
 // in the language the app shows under cx.
@@ -28526,7 +28656,7 @@ func DockReset(cx *core.Scope) string { return For(cx).DockReset() }
 
 // DockReset says "Reset"
 // in the language of msgs.
-func (msgs Messages) DockReset() string { return msgs.text(1455) }
+func (msgs Messages) DockReset() string { return msgs.text(1463) }
 
 // DockHoldATabToReorder says "Hold a tab to reorder it"
 // in the language the app shows under cx.
@@ -28534,7 +28664,7 @@ func DockHoldATabToReorder(cx *core.Scope) string { return For(cx).DockHoldATabT
 
 // DockHoldATabToReorder says "Hold a tab to reorder it"
 // in the language of msgs.
-func (msgs Messages) DockHoldATabToReorder() string { return msgs.text(1456) }
+func (msgs Messages) DockHoldATabToReorder() string { return msgs.text(1464) }
 
 // DockDragATabOntoAnother says "Drag a tab onto another group, or to a group's edge to split it"
 // in the language the app shows under cx.
@@ -28542,7 +28672,7 @@ func DockDragATabOntoAnother(cx *core.Scope) string { return For(cx).DockDragATa
 
 // DockDragATabOntoAnother says "Drag a tab onto another group, or to a group's edge to split it"
 // in the language of msgs.
-func (msgs Messages) DockDragATabOntoAnother() string { return msgs.text(1457) }
+func (msgs Messages) DockDragATabOntoAnother() string { return msgs.text(1465) }
 
 // DockCenter says "Center: "
 // in the language the app shows under cx.
@@ -28550,7 +28680,7 @@ func DockCenter(cx *core.Scope) string { return For(cx).DockCenter() }
 
 // DockCenter says "Center: "
 // in the language of msgs.
-func (msgs Messages) DockCenter() string { return msgs.text(1458) }
+func (msgs Messages) DockCenter() string { return msgs.text(1466) }
 
 // DockFirstSlot says "First slot: "
 // in the language the app shows under cx.
@@ -28558,7 +28688,7 @@ func DockFirstSlot(cx *core.Scope) string { return For(cx).DockFirstSlot() }
 
 // DockFirstSlot says "First slot: "
 // in the language of msgs.
-func (msgs Messages) DockFirstSlot() string { return msgs.text(1459) }
+func (msgs Messages) DockFirstSlot() string { return msgs.text(1467) }
 
 // DockLeft says "Left"
 // in the language the app shows under cx.
@@ -28566,7 +28696,7 @@ func DockLeft(cx *core.Scope) string { return For(cx).DockLeft() }
 
 // DockLeft says "Left"
 // in the language of msgs.
-func (msgs Messages) DockLeft() string { return msgs.text(1460) }
+func (msgs Messages) DockLeft() string { return msgs.text(1468) }
 
 // DockBottom says "Bottom"
 // in the language the app shows under cx.
@@ -28574,7 +28704,7 @@ func DockBottom(cx *core.Scope) string { return For(cx).DockBottom() }
 
 // DockBottom says "Bottom"
 // in the language of msgs.
-func (msgs Messages) DockBottom() string { return msgs.text(1461) }
+func (msgs Messages) DockBottom() string { return msgs.text(1469) }
 
 // DockShowingDocksNone says "Showing docks: none"
 // in the language the app shows under cx.
@@ -28582,7 +28712,7 @@ func DockShowingDocksNone(cx *core.Scope) string { return For(cx).DockShowingDoc
 
 // DockShowingDocksNone says "Showing docks: none"
 // in the language of msgs.
-func (msgs Messages) DockShowingDocksNone() string { return msgs.text(1462) }
+func (msgs Messages) DockShowingDocksNone() string { return msgs.text(1470) }
 
 // DockShowingDocks says "Showing docks: "
 // in the language the app shows under cx.
@@ -28590,7 +28720,7 @@ func DockShowingDocks(cx *core.Scope) string { return For(cx).DockShowingDocks()
 
 // DockShowingDocks says "Showing docks: "
 // in the language of msgs.
-func (msgs Messages) DockShowingDocks() string { return msgs.text(1463) }
+func (msgs Messages) DockShowingDocks() string { return msgs.text(1471) }
 
 // DockZoomed says "Zoomed: "
 // in the language the app shows under cx.
@@ -28598,7 +28728,7 @@ func DockZoomed(cx *core.Scope) string { return For(cx).DockZoomed() }
 
 // DockZoomed says "Zoomed: "
 // in the language of msgs.
-func (msgs Messages) DockZoomed() string { return msgs.text(1464) }
+func (msgs Messages) DockZoomed() string { return msgs.text(1472) }
 
 // DockZoomedNone says "Zoomed: none"
 // in the language the app shows under cx.
@@ -28606,7 +28736,7 @@ func DockZoomedNone(cx *core.Scope) string { return For(cx).DockZoomedNone() }
 
 // DockZoomedNone says "Zoomed: none"
 // in the language of msgs.
-func (msgs Messages) DockZoomedNone() string { return msgs.text(1465) }
+func (msgs Messages) DockZoomedNone() string { return msgs.text(1473) }
 
 // DockLastEvent says "Last event: "
 // in the language the app shows under cx.
@@ -28614,7 +28744,7 @@ func DockLastEvent(cx *core.Scope) string { return For(cx).DockLastEvent() }
 
 // DockLastEvent says "Last event: "
 // in the language of msgs.
-func (msgs Messages) DockLastEvent() string { return msgs.text(1466) }
+func (msgs Messages) DockLastEvent() string { return msgs.text(1474) }
 
 // DockClosed says "Closed "
 // in the language the app shows under cx.
@@ -28622,7 +28752,7 @@ func DockClosed(cx *core.Scope) string { return For(cx).DockClosed() }
 
 // DockClosed says "Closed "
 // in the language of msgs.
-func (msgs Messages) DockClosed() string { return msgs.text(1467) }
+func (msgs Messages) DockClosed() string { return msgs.text(1475) }
 
 // DockShowing says "Showing "
 // in the language the app shows under cx.
@@ -28630,7 +28760,7 @@ func DockShowing(cx *core.Scope) string { return For(cx).DockShowing() }
 
 // DockShowing says "Showing "
 // in the language of msgs.
-func (msgs Messages) DockShowing() string { return msgs.text(1468) }
+func (msgs Messages) DockShowing() string { return msgs.text(1476) }
 
 // DockResize says "Resize"
 // in the language the app shows under cx.
@@ -28638,7 +28768,7 @@ func DockResize(cx *core.Scope) string { return For(cx).DockResize() }
 
 // DockResize says "Resize"
 // in the language of msgs.
-func (msgs Messages) DockResize() string { return msgs.text(1469) }
+func (msgs Messages) DockResize() string { return msgs.text(1477) }
 
 // DockClose2 says "Close "
 // in the language the app shows under cx.
@@ -28646,7 +28776,7 @@ func DockClose2(cx *core.Scope) string { return For(cx).DockClose2() }
 
 // DockClose2 says "Close "
 // in the language of msgs.
-func (msgs Messages) DockClose2() string { return msgs.text(1470) }
+func (msgs Messages) DockClose2() string { return msgs.text(1478) }
 
 // DockHide says "Hide "
 // in the language the app shows under cx.
@@ -28654,7 +28784,7 @@ func DockHide(cx *core.Scope) string { return For(cx).DockHide() }
 
 // DockHide says "Hide "
 // in the language of msgs.
-func (msgs Messages) DockHide() string { return msgs.text(1471) }
+func (msgs Messages) DockHide() string { return msgs.text(1479) }
 
 // DockHide2 says "Hide"
 // in the language the app shows under cx.
@@ -28662,7 +28792,7 @@ func DockHide2(cx *core.Scope) string { return For(cx).DockHide2() }
 
 // DockHide2 says "Hide"
 // in the language of msgs.
-func (msgs Messages) DockHide2() string { return msgs.text(1472) }
+func (msgs Messages) DockHide2() string { return msgs.text(1480) }
 
 // DockEveryEditorIsClosed says "Every editor is closed"
 // in the language the app shows under cx.
@@ -28670,7 +28800,7 @@ func DockEveryEditorIsClosed(cx *core.Scope) string { return For(cx).DockEveryEd
 
 // DockEveryEditorIsClosed says "Every editor is closed"
 // in the language of msgs.
-func (msgs Messages) DockEveryEditorIsClosed() string { return msgs.text(1473) }
+func (msgs Messages) DockEveryEditorIsClosed() string { return msgs.text(1481) }
 
 // DockResetBringsThemBack says "Reset brings them back"
 // in the language the app shows under cx.
@@ -28678,7 +28808,7 @@ func DockResetBringsThemBack(cx *core.Scope) string { return For(cx).DockResetBr
 
 // DockResetBringsThemBack says "Reset brings them back"
 // in the language of msgs.
-func (msgs Messages) DockResetBringsThemBack() string { return msgs.text(1474) }
+func (msgs Messages) DockResetBringsThemBack() string { return msgs.text(1482) }
 
 // ScrollOneCardPerFling says "One card per fling"
 // in the language the app shows under cx.
@@ -28686,7 +28816,7 @@ func ScrollOneCardPerFling(cx *core.Scope) string { return For(cx).ScrollOneCard
 
 // ScrollOneCardPerFling says "One card per fling"
 // in the language of msgs.
-func (msgs Messages) ScrollOneCardPerFling() string { return msgs.text(1475) }
+func (msgs Messages) ScrollOneCardPerFling() string { return msgs.text(1483) }
 
 // ScrollScrollTheBox says "Scroll the box"
 // in the language the app shows under cx.
@@ -28694,7 +28824,7 @@ func ScrollScrollTheBox(cx *core.Scope) string { return For(cx).ScrollScrollTheB
 
 // ScrollScrollTheBox says "Scroll the box"
 // in the language of msgs.
-func (msgs Messages) ScrollScrollTheBox() string { return msgs.text(1476) }
+func (msgs Messages) ScrollScrollTheBox() string { return msgs.text(1484) }
 
 // ScrollViewportPt says "viewport — pt"
 // in the language the app shows under cx.
@@ -28702,7 +28832,7 @@ func ScrollViewportPt(cx *core.Scope) string { return For(cx).ScrollViewportPt()
 
 // ScrollViewportPt says "viewport — pt"
 // in the language of msgs.
-func (msgs Messages) ScrollViewportPt() string { return msgs.text(1477) }
+func (msgs Messages) ScrollViewportPt() string { return msgs.text(1485) }
 
 // ScrollBeginDrag says "begin drag"
 // in the language the app shows under cx.
@@ -28710,7 +28840,7 @@ func ScrollBeginDrag(cx *core.Scope) string { return For(cx).ScrollBeginDrag() }
 
 // ScrollBeginDrag says "begin drag"
 // in the language of msgs.
-func (msgs Messages) ScrollBeginDrag() string { return msgs.text(1478) }
+func (msgs Messages) ScrollBeginDrag() string { return msgs.text(1486) }
 
 // ScrollEndDrag says "end drag"
 // in the language the app shows under cx.
@@ -28718,7 +28848,7 @@ func ScrollEndDrag(cx *core.Scope) string { return For(cx).ScrollEndDrag() }
 
 // ScrollEndDrag says "end drag"
 // in the language of msgs.
-func (msgs Messages) ScrollEndDrag() string { return msgs.text(1479) }
+func (msgs Messages) ScrollEndDrag() string { return msgs.text(1487) }
 
 // ScrollMomentumBegin says "momentum begin"
 // in the language the app shows under cx.
@@ -28726,7 +28856,7 @@ func ScrollMomentumBegin(cx *core.Scope) string { return For(cx).ScrollMomentumB
 
 // ScrollMomentumBegin says "momentum begin"
 // in the language of msgs.
-func (msgs Messages) ScrollMomentumBegin() string { return msgs.text(1480) }
+func (msgs Messages) ScrollMomentumBegin() string { return msgs.text(1488) }
 
 // ScrollMomentumEnd says "momentum end"
 // in the language the app shows under cx.
@@ -28734,7 +28864,7 @@ func ScrollMomentumEnd(cx *core.Scope) string { return For(cx).ScrollMomentumEnd
 
 // ScrollMomentumEnd says "momentum end"
 // in the language of msgs.
-func (msgs Messages) ScrollMomentumEnd() string { return msgs.text(1481) }
+func (msgs Messages) ScrollMomentumEnd() string { return msgs.text(1489) }
 
 // ScrollNoDragsYet says "No drags yet"
 // in the language the app shows under cx.
@@ -28742,7 +28872,7 @@ func ScrollNoDragsYet(cx *core.Scope) string { return For(cx).ScrollNoDragsYet()
 
 // ScrollNoDragsYet says "No drags yet"
 // in the language of msgs.
-func (msgs Messages) ScrollNoDragsYet() string { return msgs.text(1482) }
+func (msgs Messages) ScrollNoDragsYet() string { return msgs.text(1490) }
 
 // ScrollScrollEnabled says "Scroll enabled"
 // in the language the app shows under cx.
@@ -28750,7 +28880,7 @@ func ScrollScrollEnabled(cx *core.Scope) string { return For(cx).ScrollScrollEna
 
 // ScrollScrollEnabled says "Scroll enabled"
 // in the language of msgs.
-func (msgs Messages) ScrollScrollEnabled() string { return msgs.text(1483) }
+func (msgs Messages) ScrollScrollEnabled() string { return msgs.text(1491) }
 
 // ScrollBounces says "Bounces"
 // in the language the app shows under cx.
@@ -28758,7 +28888,7 @@ func ScrollBounces(cx *core.Scope) string { return For(cx).ScrollBounces() }
 
 // ScrollBounces says "Bounces"
 // in the language of msgs.
-func (msgs Messages) ScrollBounces() string { return msgs.text(1484) }
+func (msgs Messages) ScrollBounces() string { return msgs.text(1492) }
 
 // ScrollContentInset says "Content inset"
 // in the language the app shows under cx.
@@ -28766,7 +28896,7 @@ func ScrollContentInset(cx *core.Scope) string { return For(cx).ScrollContentIns
 
 // ScrollContentInset says "Content inset"
 // in the language of msgs.
-func (msgs Messages) ScrollContentInset() string { return msgs.text(1485) }
+func (msgs Messages) ScrollContentInset() string { return msgs.text(1493) }
 
 // Scroll40PtAtTheTop says "40 pt at the top and bottom"
 // in the language the app shows under cx.
@@ -28774,7 +28904,7 @@ func Scroll40PtAtTheTop(cx *core.Scope) string { return For(cx).Scroll40PtAtTheT
 
 // Scroll40PtAtTheTop says "40 pt at the top and bottom"
 // in the language of msgs.
-func (msgs Messages) Scroll40PtAtTheTop() string { return msgs.text(1486) }
+func (msgs Messages) Scroll40PtAtTheTop() string { return msgs.text(1494) }
 
 // ScrollZoomedIn says "zoomed in"
 // in the language the app shows under cx.
@@ -28782,7 +28912,7 @@ func ScrollZoomedIn(cx *core.Scope) string { return For(cx).ScrollZoomedIn() }
 
 // ScrollZoomedIn says "zoomed in"
 // in the language of msgs.
-func (msgs Messages) ScrollZoomedIn() string { return msgs.text(1487) }
+func (msgs Messages) ScrollZoomedIn() string { return msgs.text(1495) }
 
 // ScrollZoomedOut says "zoomed out"
 // in the language the app shows under cx.
@@ -28790,7 +28920,7 @@ func ScrollZoomedOut(cx *core.Scope) string { return For(cx).ScrollZoomedOut() }
 
 // ScrollZoomedOut says "zoomed out"
 // in the language of msgs.
-func (msgs Messages) ScrollZoomedOut() string { return msgs.text(1488) }
+func (msgs Messages) ScrollZoomedOut() string { return msgs.text(1496) }
 
 // Scroll05To5 says "0.5× to 5×"
 // in the language the app shows under cx.
@@ -28798,7 +28928,7 @@ func Scroll05To5(cx *core.Scope) string { return For(cx).Scroll05To5() }
 
 // Scroll05To5 says "0.5× to 5×"
 // in the language of msgs.
-func (msgs Messages) Scroll05To5() string { return msgs.text(1489) }
+func (msgs Messages) Scroll05To5() string { return msgs.text(1497) }
 
 // ScrollBouncesPastTheLimits says "Bounces past the limits"
 // in the language the app shows under cx.
@@ -28806,7 +28936,7 @@ func ScrollBouncesPastTheLimits(cx *core.Scope) string { return For(cx).ScrollBo
 
 // ScrollBouncesPastTheLimits says "Bounces past the limits"
 // in the language of msgs.
-func (msgs Messages) ScrollBouncesPastTheLimits() string { return msgs.text(1490) }
+func (msgs Messages) ScrollBouncesPastTheLimits() string { return msgs.text(1498) }
 
 // ScrollScrollDownALittleThen says "Scroll down a little, then add"
 // in the language the app shows under cx.
@@ -28814,7 +28944,7 @@ func ScrollScrollDownALittleThen(cx *core.Scope) string { return For(cx).ScrollS
 
 // ScrollScrollDownALittleThen says "Scroll down a little, then add"
 // in the language of msgs.
-func (msgs Messages) ScrollScrollDownALittleThen() string { return msgs.text(1491) }
+func (msgs Messages) ScrollScrollDownALittleThen() string { return msgs.text(1499) }
 
 // ScrollAdd3PostsOnTop says "Add 3 posts on top"
 // in the language the app shows under cx.
@@ -28822,7 +28952,7 @@ func ScrollAdd3PostsOnTop(cx *core.Scope) string { return For(cx).ScrollAdd3Post
 
 // ScrollAdd3PostsOnTop says "Add 3 posts on top"
 // in the language of msgs.
-func (msgs Messages) ScrollAdd3PostsOnTop() string { return msgs.text(1492) }
+func (msgs Messages) ScrollAdd3PostsOnTop() string { return msgs.text(1500) }
 
 // ScrollEdgeEffects says "Edge effects"
 // in the language the app shows under cx.
@@ -28830,7 +28960,7 @@ func ScrollEdgeEffects(cx *core.Scope) string { return For(cx).ScrollEdgeEffects
 
 // ScrollEdgeEffects says "Edge effects"
 // in the language of msgs.
-func (msgs Messages) ScrollEdgeEffects() string { return msgs.text(1493) }
+func (msgs Messages) ScrollEdgeEffects() string { return msgs.text(1501) }
 
 // ScrollScrollUnderTheBars says "Scroll under the bars"
 // in the language the app shows under cx.
@@ -28838,7 +28968,7 @@ func ScrollScrollUnderTheBars(cx *core.Scope) string { return For(cx).ScrollScro
 
 // ScrollScrollUnderTheBars says "Scroll under the bars"
 // in the language of msgs.
-func (msgs Messages) ScrollScrollUnderTheBars() string { return msgs.text(1494) }
+func (msgs Messages) ScrollScrollUnderTheBars() string { return msgs.text(1502) }
 
 // ScrollPaging says "Paging"
 // in the language the app shows under cx.
@@ -28846,7 +28976,7 @@ func ScrollPaging(cx *core.Scope) string { return For(cx).ScrollPaging() }
 
 // ScrollPaging says "Paging"
 // in the language of msgs.
-func (msgs Messages) ScrollPaging() string { return msgs.text(1495) }
+func (msgs Messages) ScrollPaging() string { return msgs.text(1503) }
 
 // Scroll5Pages says "5 pages"
 // in the language the app shows under cx.
@@ -28854,7 +28984,7 @@ func Scroll5Pages(cx *core.Scope) string { return For(cx).Scroll5Pages() }
 
 // Scroll5Pages says "5 pages"
 // in the language of msgs.
-func (msgs Messages) Scroll5Pages() string { return msgs.text(1496) }
+func (msgs Messages) Scroll5Pages() string { return msgs.text(1504) }
 
 // ScrollSnapping says "Snapping"
 // in the language the app shows under cx.
@@ -28862,7 +28992,7 @@ func ScrollSnapping(cx *core.Scope) string { return For(cx).ScrollSnapping() }
 
 // ScrollSnapping says "Snapping"
 // in the language of msgs.
-func (msgs Messages) ScrollSnapping() string { return msgs.text(1497) }
+func (msgs Messages) ScrollSnapping() string { return msgs.text(1505) }
 
 // Scroll20Cards says "20 cards"
 // in the language the app shows under cx.
@@ -28870,7 +29000,7 @@ func Scroll20Cards(cx *core.Scope) string { return For(cx).Scroll20Cards() }
 
 // Scroll20Cards says "20 cards"
 // in the language of msgs.
-func (msgs Messages) Scroll20Cards() string { return msgs.text(1498) }
+func (msgs Messages) Scroll20Cards() string { return msgs.text(1506) }
 
 // ScrollZoom says "Zoom"
 // in the language the app shows under cx.
@@ -28878,7 +29008,7 @@ func ScrollZoom(cx *core.Scope) string { return For(cx).ScrollZoom() }
 
 // ScrollZoom says "Zoom"
 // in the language of msgs.
-func (msgs Messages) ScrollZoom() string { return msgs.text(1499) }
+func (msgs Messages) ScrollZoom() string { return msgs.text(1507) }
 
 // ScrollPinchOrTapATile says "Pinch or tap a tile"
 // in the language the app shows under cx.
@@ -28886,7 +29016,7 @@ func ScrollPinchOrTapATile(cx *core.Scope) string { return For(cx).ScrollPinchOr
 
 // ScrollPinchOrTapATile says "Pinch or tap a tile"
 // in the language of msgs.
-func (msgs Messages) ScrollPinchOrTapATile() string { return msgs.text(1500) }
+func (msgs Messages) ScrollPinchOrTapATile() string { return msgs.text(1508) }
 
 // ScrollPinchOnATouchpadOr says "Pinch on a touchpad or click a tile"
 // in the language the app shows under cx.
@@ -28894,7 +29024,7 @@ func ScrollPinchOnATouchpadOr(cx *core.Scope) string { return For(cx).ScrollPinc
 
 // ScrollPinchOnATouchpadOr says "Pinch on a touchpad or click a tile"
 // in the language of msgs.
-func (msgs Messages) ScrollPinchOnATouchpadOr() string { return msgs.text(1501) }
+func (msgs Messages) ScrollPinchOnATouchpadOr() string { return msgs.text(1509) }
 
 // ScrollEventsAndBehavior says "Events and behavior"
 // in the language the app shows under cx.
@@ -28902,7 +29032,7 @@ func ScrollEventsAndBehavior(cx *core.Scope) string { return For(cx).ScrollEvent
 
 // ScrollEventsAndBehavior says "Events and behavior"
 // in the language of msgs.
-func (msgs Messages) ScrollEventsAndBehavior() string { return msgs.text(1502) }
+func (msgs Messages) ScrollEventsAndBehavior() string { return msgs.text(1510) }
 
 // ScrollPrependingKeepsThePosition says "Prepending keeps the position"
 // in the language the app shows under cx.
@@ -28912,7 +29042,7 @@ func ScrollPrependingKeepsThePosition(cx *core.Scope) string {
 
 // ScrollPrependingKeepsThePosition says "Prepending keeps the position"
 // in the language of msgs.
-func (msgs Messages) ScrollPrependingKeepsThePosition() string { return msgs.text(1503) }
+func (msgs Messages) ScrollPrependingKeepsThePosition() string { return msgs.text(1511) }
 
 // ScrollTapsWithTheKeyboardUp says "Taps with the keyboard up"
 // in the language the app shows under cx.
@@ -28920,7 +29050,7 @@ func ScrollTapsWithTheKeyboardUp(cx *core.Scope) string { return For(cx).ScrollT
 
 // ScrollTapsWithTheKeyboardUp says "Taps with the keyboard up"
 // in the language of msgs.
-func (msgs Messages) ScrollTapsWithTheKeyboardUp() string { return msgs.text(1504) }
+func (msgs Messages) ScrollTapsWithTheKeyboardUp() string { return msgs.text(1512) }
 
 // ScrollTheButtonGetsTheTap says "The button gets the tap and the keyboard stays; a tap on empty space hides it."
 // in the language the app shows under cx.
@@ -28928,7 +29058,7 @@ func ScrollTheButtonGetsTheTap(cx *core.Scope) string { return For(cx).ScrollThe
 
 // ScrollTheButtonGetsTheTap says "The button gets the tap and the keyboard stays; a tap on empty space hides it."
 // in the language of msgs.
-func (msgs Messages) ScrollTheButtonGetsTheTap() string { return msgs.text(1505) }
+func (msgs Messages) ScrollTheButtonGetsTheTap() string { return msgs.text(1513) }
 
 // ScrollTapsNeverHideTheKeyboard says "Taps never hide the keyboard."
 // in the language the app shows under cx.
@@ -28938,7 +29068,7 @@ func ScrollTapsNeverHideTheKeyboard(cx *core.Scope) string {
 
 // ScrollTapsNeverHideTheKeyboard says "Taps never hide the keyboard."
 // in the language of msgs.
-func (msgs Messages) ScrollTapsNeverHideTheKeyboard() string { return msgs.text(1506) }
+func (msgs Messages) ScrollTapsNeverHideTheKeyboard() string { return msgs.text(1514) }
 
 // ScrollATapOutsideTheInput says "A tap outside the input only hides the keyboard; the button does not get it."
 // in the language the app shows under cx.
@@ -28946,7 +29076,7 @@ func ScrollATapOutsideTheInput(cx *core.Scope) string { return For(cx).ScrollATa
 
 // ScrollATapOutsideTheInput says "A tap outside the input only hides the keyboard; the button does not get it."
 // in the language of msgs.
-func (msgs Messages) ScrollATapOutsideTheInput() string { return msgs.text(1507) }
+func (msgs Messages) ScrollATapOutsideTheInput() string { return msgs.text(1515) }
 
 // ScrollTypeHereThenTapThe says "Type here, then tap the button"
 // in the language the app shows under cx.
@@ -28954,7 +29084,7 @@ func ScrollTypeHereThenTapThe(cx *core.Scope) string { return For(cx).ScrollType
 
 // ScrollTypeHereThenTapThe says "Type here, then tap the button"
 // in the language of msgs.
-func (msgs Messages) ScrollTypeHereThenTapThe() string { return msgs.text(1508) }
+func (msgs Messages) ScrollTypeHereThenTapThe() string { return msgs.text(1516) }
 
 // ScrollTypeHereThenClickThe says "Type here, then click the button"
 // in the language the app shows under cx.
@@ -28962,7 +29092,7 @@ func ScrollTypeHereThenClickThe(cx *core.Scope) string { return For(cx).ScrollTy
 
 // ScrollTypeHereThenClickThe says "Type here, then click the button"
 // in the language of msgs.
-func (msgs Messages) ScrollTypeHereThenClickThe() string { return msgs.text(1509) }
+func (msgs Messages) ScrollTypeHereThenClickThe() string { return msgs.text(1517) }
 
 // ScrollCountATap says "Count a tap"
 // in the language the app shows under cx.
@@ -28970,7 +29100,7 @@ func ScrollCountATap(cx *core.Scope) string { return For(cx).ScrollCountATap() }
 
 // ScrollCountATap says "Count a tap"
 // in the language of msgs.
-func (msgs Messages) ScrollCountATap() string { return msgs.text(1510) }
+func (msgs Messages) ScrollCountATap() string { return msgs.text(1518) }
 
 // ScrollTapMe says "Tap me"
 // in the language the app shows under cx.
@@ -28978,7 +29108,7 @@ func ScrollTapMe(cx *core.Scope) string { return For(cx).ScrollTapMe() }
 
 // ScrollTapMe says "Tap me"
 // in the language of msgs.
-func (msgs Messages) ScrollTapMe() string { return msgs.text(1511) }
+func (msgs Messages) ScrollTapMe() string { return msgs.text(1519) }
 
 // ScrollClickMe says "Click me"
 // in the language the app shows under cx.
@@ -28986,7 +29116,7 @@ func ScrollClickMe(cx *core.Scope) string { return For(cx).ScrollClickMe() }
 
 // ScrollClickMe says "Click me"
 // in the language of msgs.
-func (msgs Messages) ScrollClickMe() string { return msgs.text(1512) }
+func (msgs Messages) ScrollClickMe() string { return msgs.text(1520) }
 
 // OverlayOverlay says "Overlay"
 // in the language the app shows under cx.
@@ -28994,7 +29124,7 @@ func OverlayOverlay(cx *core.Scope) string { return For(cx).OverlayOverlay() }
 
 // OverlayOverlay says "Overlay"
 // in the language of msgs.
-func (msgs Messages) OverlayOverlay() string { return msgs.text(1513) }
+func (msgs Messages) OverlayOverlay() string { return msgs.text(1521) }
 
 // OverlayABoxThatClipsIts says "A box that clips its content, with an overlay anchored inside it"
 // in the language the app shows under cx.
@@ -29002,7 +29132,7 @@ func OverlayABoxThatClipsIts(cx *core.Scope) string { return For(cx).OverlayABox
 
 // OverlayABoxThatClipsIts says "A box that clips its content, with an overlay anchored inside it"
 // in the language of msgs.
-func (msgs Messages) OverlayABoxThatClipsIts() string { return msgs.text(1514) }
+func (msgs Messages) OverlayABoxThatClipsIts() string { return msgs.text(1522) }
 
 // OverlayClose says "Close"
 // in the language the app shows under cx.
@@ -29010,7 +29140,7 @@ func OverlayClose(cx *core.Scope) string { return For(cx).OverlayClose() }
 
 // OverlayClose says "Close"
 // in the language of msgs.
-func (msgs Messages) OverlayClose() string { return msgs.text(1515) }
+func (msgs Messages) OverlayClose() string { return msgs.text(1523) }
 
 // OverlayOpenTheOverlay says "Open the overlay"
 // in the language the app shows under cx.
@@ -29018,7 +29148,7 @@ func OverlayOpenTheOverlay(cx *core.Scope) string { return For(cx).OverlayOpenTh
 
 // OverlayOpenTheOverlay says "Open the overlay"
 // in the language of msgs.
-func (msgs Messages) OverlayOpenTheOverlay() string { return msgs.text(1516) }
+func (msgs Messages) OverlayOpenTheOverlay() string { return msgs.text(1524) }
 
 // OverlayOverlayAt says "overlay at "
 // in the language the app shows under cx.
@@ -29026,7 +29156,7 @@ func OverlayOverlayAt(cx *core.Scope) string { return For(cx).OverlayOverlayAt()
 
 // OverlayOverlayAt says "overlay at "
 // in the language of msgs.
-func (msgs Messages) OverlayOverlayAt() string { return msgs.text(1517) }
+func (msgs Messages) OverlayOverlayAt() string { return msgs.text(1525) }
 
 // OverlayOutsideTheClippedBoxOn says "Outside the clipped box, on top of the page."
 // in the language the app shows under cx.
@@ -29036,7 +29166,7 @@ func OverlayOutsideTheClippedBoxOn(cx *core.Scope) string {
 
 // OverlayOutsideTheClippedBoxOn says "Outside the clipped box, on top of the page."
 // in the language of msgs.
-func (msgs Messages) OverlayOutsideTheClippedBoxOn() string { return msgs.text(1518) }
+func (msgs Messages) OverlayOutsideTheClippedBoxOn() string { return msgs.text(1526) }
 
 // OverlayScrollThePageItFollows says "Scroll the page: it follows its anchor"
 // in the language the app shows under cx.
@@ -29046,7 +29176,7 @@ func OverlayScrollThePageItFollows(cx *core.Scope) string {
 
 // OverlayScrollThePageItFollows says "Scroll the page: it follows its anchor"
 // in the language of msgs.
-func (msgs Messages) OverlayScrollThePageItFollows() string { return msgs.text(1519) }
+func (msgs Messages) OverlayScrollThePageItFollows() string { return msgs.text(1527) }
 
 // OverlayPopover says "Popover"
 // in the language the app shows under cx.
@@ -29054,7 +29184,7 @@ func OverlayPopover(cx *core.Scope) string { return For(cx).OverlayPopover() }
 
 // OverlayPopover says "Popover"
 // in the language of msgs.
-func (msgs Messages) OverlayPopover() string { return msgs.text(1520) }
+func (msgs Messages) OverlayPopover() string { return msgs.text(1528) }
 
 // OverlayAnchoredToItsTriggerOn says "Anchored to its trigger on every device"
 // in the language the app shows under cx.
@@ -29064,7 +29194,7 @@ func OverlayAnchoredToItsTriggerOn(cx *core.Scope) string {
 
 // OverlayAnchoredToItsTriggerOn says "Anchored to its trigger on every device"
 // in the language of msgs.
-func (msgs Messages) OverlayAnchoredToItsTriggerOn() string { return msgs.text(1521) }
+func (msgs Messages) OverlayAnchoredToItsTriggerOn() string { return msgs.text(1529) }
 
 // OverlayShowThePopover says "Show the popover"
 // in the language the app shows under cx.
@@ -29072,7 +29202,7 @@ func OverlayShowThePopover(cx *core.Scope) string { return For(cx).OverlayShowTh
 
 // OverlayShowThePopover says "Show the popover"
 // in the language of msgs.
-func (msgs Messages) OverlayShowThePopover() string { return msgs.text(1522) }
+func (msgs Messages) OverlayShowThePopover() string { return msgs.text(1530) }
 
 // OverlayPopover2 says "popover "
 // in the language the app shows under cx.
@@ -29080,7 +29210,7 @@ func OverlayPopover2(cx *core.Scope) string { return For(cx).OverlayPopover2() }
 
 // OverlayPopover2 says "popover "
 // in the language of msgs.
-func (msgs Messages) OverlayPopover2() string { return msgs.text(1523) }
+func (msgs Messages) OverlayPopover2() string { return msgs.text(1531) }
 
 // OverlayAPressOutsideEscapeOr says "A press outside, Escape or back closes it."
 // in the language the app shows under cx.
@@ -29090,7 +29220,7 @@ func OverlayAPressOutsideEscapeOr(cx *core.Scope) string {
 
 // OverlayAPressOutsideEscapeOr says "A press outside, Escape or back closes it."
 // in the language of msgs.
-func (msgs Messages) OverlayAPressOutsideEscapeOr() string { return msgs.text(1524) }
+func (msgs Messages) OverlayAPressOutsideEscapeOr() string { return msgs.text(1532) }
 
 // OverlayTooltip says "Tooltip"
 // in the language the app shows under cx.
@@ -29098,7 +29228,7 @@ func OverlayTooltip(cx *core.Scope) string { return For(cx).OverlayTooltip() }
 
 // OverlayTooltip says "Tooltip"
 // in the language of msgs.
-func (msgs Messages) OverlayTooltip() string { return msgs.text(1525) }
+func (msgs Messages) OverlayTooltip() string { return msgs.text(1533) }
 
 // OverlayTooltipsFollowAPointerPin says "Tooltips follow a pointer: pin one to see it"
 // in the language the app shows under cx.
@@ -29108,7 +29238,7 @@ func OverlayTooltipsFollowAPointerPin(cx *core.Scope) string {
 
 // OverlayTooltipsFollowAPointerPin says "Tooltips follow a pointer: pin one to see it"
 // in the language of msgs.
-func (msgs Messages) OverlayTooltipsFollowAPointerPin() string { return msgs.text(1526) }
+func (msgs Messages) OverlayTooltipsFollowAPointerPin() string { return msgs.text(1534) }
 
 // OverlayRestThePointerOnA says "Rest the pointer on a button"
 // in the language the app shows under cx.
@@ -29116,7 +29246,7 @@ func OverlayRestThePointerOnA(cx *core.Scope) string { return For(cx).OverlayRes
 
 // OverlayRestThePointerOnA says "Rest the pointer on a button"
 // in the language of msgs.
-func (msgs Messages) OverlayRestThePointerOnA() string { return msgs.text(1527) }
+func (msgs Messages) OverlayRestThePointerOnA() string { return msgs.text(1535) }
 
 // OverlaySavesTheDocument says "Saves the document"
 // in the language the app shows under cx.
@@ -29124,7 +29254,7 @@ func OverlaySavesTheDocument(cx *core.Scope) string { return For(cx).OverlaySave
 
 // OverlaySavesTheDocument says "Saves the document"
 // in the language of msgs.
-func (msgs Messages) OverlaySavesTheDocument() string { return msgs.text(1528) }
+func (msgs Messages) OverlaySavesTheDocument() string { return msgs.text(1536) }
 
 // OverlaySave says "Save"
 // in the language the app shows under cx.
@@ -29132,7 +29262,7 @@ func OverlaySave(cx *core.Scope) string { return For(cx).OverlaySave() }
 
 // OverlaySave says "Save"
 // in the language of msgs.
-func (msgs Messages) OverlaySave() string { return msgs.text(1529) }
+func (msgs Messages) OverlaySave() string { return msgs.text(1537) }
 
 // OverlayPressedSave says "pressed Save"
 // in the language the app shows under cx.
@@ -29140,7 +29270,7 @@ func OverlayPressedSave(cx *core.Scope) string { return For(cx).OverlayPressedSa
 
 // OverlayPressedSave says "pressed Save"
 // in the language of msgs.
-func (msgs Messages) OverlayPressedSave() string { return msgs.text(1530) }
+func (msgs Messages) OverlayPressedSave() string { return msgs.text(1538) }
 
 // OverlayTooltip2 says "tooltip "
 // in the language the app shows under cx.
@@ -29148,7 +29278,7 @@ func OverlayTooltip2(cx *core.Scope) string { return For(cx).OverlayTooltip2() }
 
 // OverlayTooltip2 says "tooltip "
 // in the language of msgs.
-func (msgs Messages) OverlayTooltip2() string { return msgs.text(1531) }
+func (msgs Messages) OverlayTooltip2() string { return msgs.text(1539) }
 
 // OverlayPinTheTooltip says "Pin the tooltip"
 // in the language the app shows under cx.
@@ -29156,7 +29286,7 @@ func OverlayPinTheTooltip(cx *core.Scope) string { return For(cx).OverlayPinTheT
 
 // OverlayPinTheTooltip says "Pin the tooltip"
 // in the language of msgs.
-func (msgs Messages) OverlayPinTheTooltip() string { return msgs.text(1532) }
+func (msgs Messages) OverlayPinTheTooltip() string { return msgs.text(1540) }
 
 // OverlayUnpinTheTooltip says "Unpin the tooltip"
 // in the language the app shows under cx.
@@ -29164,7 +29294,7 @@ func OverlayUnpinTheTooltip(cx *core.Scope) string { return For(cx).OverlayUnpin
 
 // OverlayUnpinTheTooltip says "Unpin the tooltip"
 // in the language of msgs.
-func (msgs Messages) OverlayUnpinTheTooltip() string { return msgs.text(1533) }
+func (msgs Messages) OverlayUnpinTheTooltip() string { return msgs.text(1541) }
 
 // OverlayShownWhilePinnedOrHovered says "Shown while pinned or hovered"
 // in the language the app shows under cx.
@@ -29174,7 +29304,7 @@ func OverlayShownWhilePinnedOrHovered(cx *core.Scope) string {
 
 // OverlayShownWhilePinnedOrHovered says "Shown while pinned or hovered"
 // in the language of msgs.
-func (msgs Messages) OverlayShownWhilePinnedOrHovered() string { return msgs.text(1534) }
+func (msgs Messages) OverlayShownWhilePinnedOrHovered() string { return msgs.text(1542) }
 
 // OverlaySheet says "Sheet"
 // in the language the app shows under cx.
@@ -29182,7 +29312,7 @@ func OverlaySheet(cx *core.Scope) string { return For(cx).OverlaySheet() }
 
 // OverlaySheet says "Sheet"
 // in the language of msgs.
-func (msgs Messages) OverlaySheet() string { return msgs.text(1535) }
+func (msgs Messages) OverlaySheet() string { return msgs.text(1543) }
 
 // OverlayAPanelAtTheBottom says "A panel at the bottom, over a backdrop"
 // in the language the app shows under cx.
@@ -29190,7 +29320,7 @@ func OverlayAPanelAtTheBottom(cx *core.Scope) string { return For(cx).OverlayAPa
 
 // OverlayAPanelAtTheBottom says "A panel at the bottom, over a backdrop"
 // in the language of msgs.
-func (msgs Messages) OverlayAPanelAtTheBottom() string { return msgs.text(1536) }
+func (msgs Messages) OverlayAPanelAtTheBottom() string { return msgs.text(1544) }
 
 // OverlayShowTheSheet says "Show the sheet"
 // in the language the app shows under cx.
@@ -29198,7 +29328,7 @@ func OverlayShowTheSheet(cx *core.Scope) string { return For(cx).OverlayShowTheS
 
 // OverlayShowTheSheet says "Show the sheet"
 // in the language of msgs.
-func (msgs Messages) OverlayShowTheSheet() string { return msgs.text(1537) }
+func (msgs Messages) OverlayShowTheSheet() string { return msgs.text(1545) }
 
 // OverlaySheet2 says "sheet "
 // in the language the app shows under cx.
@@ -29206,7 +29336,7 @@ func OverlaySheet2(cx *core.Scope) string { return For(cx).OverlaySheet2() }
 
 // OverlaySheet2 says "sheet "
 // in the language of msgs.
-func (msgs Messages) OverlaySheet2() string { return msgs.text(1538) }
+func (msgs Messages) OverlaySheet2() string { return msgs.text(1546) }
 
 // OverlayTheBackdropEscapeAndBack says "The backdrop, Escape and back close it."
 // in the language the app shows under cx.
@@ -29216,7 +29346,7 @@ func OverlayTheBackdropEscapeAndBack(cx *core.Scope) string {
 
 // OverlayTheBackdropEscapeAndBack says "The backdrop, Escape and back close it."
 // in the language of msgs.
-func (msgs Messages) OverlayTheBackdropEscapeAndBack() string { return msgs.text(1539) }
+func (msgs Messages) OverlayTheBackdropEscapeAndBack() string { return msgs.text(1547) }
 
 // OverlayDone says "Done"
 // in the language the app shows under cx.
@@ -29224,7 +29354,7 @@ func OverlayDone(cx *core.Scope) string { return For(cx).OverlayDone() }
 
 // OverlayDone says "Done"
 // in the language of msgs.
-func (msgs Messages) OverlayDone() string { return msgs.text(1540) }
+func (msgs Messages) OverlayDone() string { return msgs.text(1548) }
 
 // OverlayToast says "Toast"
 // in the language the app shows under cx.
@@ -29232,7 +29362,7 @@ func OverlayToast(cx *core.Scope) string { return For(cx).OverlayToast() }
 
 // OverlayToast says "Toast"
 // in the language of msgs.
-func (msgs Messages) OverlayToast() string { return msgs.text(1541) }
+func (msgs Messages) OverlayToast() string { return msgs.text(1549) }
 
 // OverlayTheGallerySToastsOn says "The gallery's toasts, on ToastManager, ToastStack and Toast"
 // in the language the app shows under cx.
@@ -29240,7 +29370,7 @@ func OverlayTheGallerySToastsOn(cx *core.Scope) string { return For(cx).OverlayT
 
 // OverlayTheGallerySToastsOn says "The gallery's toasts, on ToastManager, ToastStack and Toast"
 // in the language of msgs.
-func (msgs Messages) OverlayTheGallerySToastsOn() string { return msgs.text(1542) }
+func (msgs Messages) OverlayTheGallerySToastsOn() string { return msgs.text(1550) }
 
 // OverlayCopyTheLink says "Copy the link"
 // in the language the app shows under cx.
@@ -29248,7 +29378,7 @@ func OverlayCopyTheLink(cx *core.Scope) string { return For(cx).OverlayCopyTheLi
 
 // OverlayCopyTheLink says "Copy the link"
 // in the language of msgs.
-func (msgs Messages) OverlayCopyTheLink() string { return msgs.text(1543) }
+func (msgs Messages) OverlayCopyTheLink() string { return msgs.text(1551) }
 
 // OverlayCopied says "Copied"
 // in the language the app shows under cx.
@@ -29256,7 +29386,7 @@ func OverlayCopied(cx *core.Scope) string { return For(cx).OverlayCopied() }
 
 // OverlayCopied says "Copied"
 // in the language of msgs.
-func (msgs Messages) OverlayCopied() string { return msgs.text(1544) }
+func (msgs Messages) OverlayCopied() string { return msgs.text(1552) }
 
 // OverlayDeleteTheDraft says "Delete the draft"
 // in the language the app shows under cx.
@@ -29264,7 +29394,7 @@ func OverlayDeleteTheDraft(cx *core.Scope) string { return For(cx).OverlayDelete
 
 // OverlayDeleteTheDraft says "Delete the draft"
 // in the language of msgs.
-func (msgs Messages) OverlayDeleteTheDraft() string { return msgs.text(1545) }
+func (msgs Messages) OverlayDeleteTheDraft() string { return msgs.text(1553) }
 
 // OverlayDraftDeleted says "Draft deleted"
 // in the language the app shows under cx.
@@ -29272,7 +29402,7 @@ func OverlayDraftDeleted(cx *core.Scope) string { return For(cx).OverlayDraftDel
 
 // OverlayDraftDeleted says "Draft deleted"
 // in the language of msgs.
-func (msgs Messages) OverlayDraftDeleted() string { return msgs.text(1546) }
+func (msgs Messages) OverlayDraftDeleted() string { return msgs.text(1554) }
 
 // OverlayUndo says "Undo"
 // in the language the app shows under cx.
@@ -29280,7 +29410,7 @@ func OverlayUndo(cx *core.Scope) string { return For(cx).OverlayUndo() }
 
 // OverlayUndo says "Undo"
 // in the language of msgs.
-func (msgs Messages) OverlayUndo() string { return msgs.text(1547) }
+func (msgs Messages) OverlayUndo() string { return msgs.text(1555) }
 
 // OverlayToastUndone says "toast: undone"
 // in the language the app shows under cx.
@@ -29288,7 +29418,7 @@ func OverlayToastUndone(cx *core.Scope) string { return For(cx).OverlayToastUndo
 
 // OverlayToastUndone says "toast: undone"
 // in the language of msgs.
-func (msgs Messages) OverlayToastUndone() string { return msgs.text(1548) }
+func (msgs Messages) OverlayToastUndone() string { return msgs.text(1556) }
 
 // OverlayToastGone says "toast: gone"
 // in the language the app shows under cx.
@@ -29296,7 +29426,7 @@ func OverlayToastGone(cx *core.Scope) string { return For(cx).OverlayToastGone()
 
 // OverlayToastGone says "toast: gone"
 // in the language of msgs.
-func (msgs Messages) OverlayToastGone() string { return msgs.text(1549) }
+func (msgs Messages) OverlayToastGone() string { return msgs.text(1557) }
 
 // OverlayDismissAll says "Dismiss all"
 // in the language the app shows under cx.
@@ -29304,7 +29434,7 @@ func OverlayDismissAll(cx *core.Scope) string { return For(cx).OverlayDismissAll
 
 // OverlayDismissAll says "Dismiss all"
 // in the language of msgs.
-func (msgs Messages) OverlayDismissAll() string { return msgs.text(1550) }
+func (msgs Messages) OverlayDismissAll() string { return msgs.text(1558) }
 
 // OverlaySwipeOneAwayThePointer says "Swipe one away; the pointer on one stops its time"
 // in the language the app shows under cx.
@@ -29314,7 +29444,7 @@ func OverlaySwipeOneAwayThePointer(cx *core.Scope) string {
 
 // OverlaySwipeOneAwayThePointer says "Swipe one away; the pointer on one stops its time"
 // in the language of msgs.
-func (msgs Messages) OverlaySwipeOneAwayThePointer() string { return msgs.text(1551) }
+func (msgs Messages) OverlaySwipeOneAwayThePointer() string { return msgs.text(1559) }
 
 // OverlayLastEvent says "Last event"
 // in the language the app shows under cx.
@@ -29322,7 +29452,7 @@ func OverlayLastEvent(cx *core.Scope) string { return For(cx).OverlayLastEvent()
 
 // OverlayLastEvent says "Last event"
 // in the language of msgs.
-func (msgs Messages) OverlayLastEvent() string { return msgs.text(1552) }
+func (msgs Messages) OverlayLastEvent() string { return msgs.text(1560) }
 
 // MediaWebView says "Web view"
 // in the language the app shows under cx.
@@ -29330,7 +29460,7 @@ func MediaWebView(cx *core.Scope) string { return For(cx).MediaWebView() }
 
 // MediaWebView says "Web view"
 // in the language of msgs.
-func (msgs Messages) MediaWebView() string { return msgs.text(1553) }
+func (msgs Messages) MediaWebView() string { return msgs.text(1561) }
 
 // MediaInlineHtmlWithMessagesBoth says "Inline HTML, with messages both ways"
 // in the language the app shows under cx.
@@ -29340,7 +29470,7 @@ func MediaInlineHtmlWithMessagesBoth(cx *core.Scope) string {
 
 // MediaInlineHtmlWithMessagesBoth says "Inline HTML, with messages both ways"
 // in the language of msgs.
-func (msgs Messages) MediaInlineHtmlWithMessagesBoth() string { return msgs.text(1554) }
+func (msgs Messages) MediaInlineHtmlWithMessagesBoth() string { return msgs.text(1562) }
 
 // MediaFromThePage says "From the page"
 // in the language the app shows under cx.
@@ -29348,7 +29478,7 @@ func MediaFromThePage(cx *core.Scope) string { return For(cx).MediaFromThePage()
 
 // MediaFromThePage says "From the page"
 // in the language of msgs.
-func (msgs Messages) MediaFromThePage() string { return msgs.text(1555) }
+func (msgs Messages) MediaFromThePage() string { return msgs.text(1563) }
 
 // MediaToThePage says "To the page"
 // in the language the app shows under cx.
@@ -29356,7 +29486,7 @@ func MediaToThePage(cx *core.Scope) string { return For(cx).MediaToThePage() }
 
 // MediaToThePage says "To the page"
 // in the language of msgs.
-func (msgs Messages) MediaToThePage() string { return msgs.text(1556) }
+func (msgs Messages) MediaToThePage() string { return msgs.text(1564) }
 
 // MediaPostToThePage says "Post to the page"
 // in the language the app shows under cx.
@@ -29364,7 +29494,7 @@ func MediaPostToThePage(cx *core.Scope) string { return For(cx).MediaPostToThePa
 
 // MediaPostToThePage says "Post to the page"
 // in the language of msgs.
-func (msgs Messages) MediaPostToThePage() string { return msgs.text(1557) }
+func (msgs Messages) MediaPostToThePage() string { return msgs.text(1565) }
 
 // MediaAWebSite says "A web site"
 // in the language the app shows under cx.
@@ -29372,7 +29502,7 @@ func MediaAWebSite(cx *core.Scope) string { return For(cx).MediaAWebSite() }
 
 // MediaAWebSite says "A web site"
 // in the language of msgs.
-func (msgs Messages) MediaAWebSite() string { return msgs.text(1558) }
+func (msgs Messages) MediaAWebSite() string { return msgs.text(1566) }
 
 // MediaNavigationStateBackAndForward says "Navigation state, back and forward"
 // in the language the app shows under cx.
@@ -29382,7 +29512,7 @@ func MediaNavigationStateBackAndForward(cx *core.Scope) string {
 
 // MediaNavigationStateBackAndForward says "Navigation state, back and forward"
 // in the language of msgs.
-func (msgs Messages) MediaNavigationStateBackAndForward() string { return msgs.text(1559) }
+func (msgs Messages) MediaNavigationStateBackAndForward() string { return msgs.text(1567) }
 
 // MediaLoading says "Loading"
 // in the language the app shows under cx.
@@ -29390,7 +29520,7 @@ func MediaLoading(cx *core.Scope) string { return For(cx).MediaLoading() }
 
 // MediaLoading says "Loading"
 // in the language of msgs.
-func (msgs Messages) MediaLoading() string { return msgs.text(1560) }
+func (msgs Messages) MediaLoading() string { return msgs.text(1568) }
 
 // MediaLoaded says "Loaded"
 // in the language the app shows under cx.
@@ -29398,7 +29528,7 @@ func MediaLoaded(cx *core.Scope) string { return For(cx).MediaLoaded() }
 
 // MediaLoaded says "Loaded"
 // in the language of msgs.
-func (msgs Messages) MediaLoaded() string { return msgs.text(1561) }
+func (msgs Messages) MediaLoaded() string { return msgs.text(1569) }
 
 // MediaBack says "Back"
 // in the language the app shows under cx.
@@ -29406,7 +29536,7 @@ func MediaBack(cx *core.Scope) string { return For(cx).MediaBack() }
 
 // MediaBack says "Back"
 // in the language of msgs.
-func (msgs Messages) MediaBack() string { return msgs.text(1562) }
+func (msgs Messages) MediaBack() string { return msgs.text(1570) }
 
 // MediaForward says "Forward"
 // in the language the app shows under cx.
@@ -29414,7 +29544,7 @@ func MediaForward(cx *core.Scope) string { return For(cx).MediaForward() }
 
 // MediaForward says "Forward"
 // in the language of msgs.
-func (msgs Messages) MediaForward() string { return msgs.text(1563) }
+func (msgs Messages) MediaForward() string { return msgs.text(1571) }
 
 // MediaReload says "Reload"
 // in the language the app shows under cx.
@@ -29422,7 +29552,7 @@ func MediaReload(cx *core.Scope) string { return For(cx).MediaReload() }
 
 // MediaReload says "Reload"
 // in the language of msgs.
-func (msgs Messages) MediaReload() string { return msgs.text(1564) }
+func (msgs Messages) MediaReload() string { return msgs.text(1572) }
 
 // MediaVideo says "Video"
 // in the language the app shows under cx.
@@ -29430,7 +29560,7 @@ func MediaVideo(cx *core.Scope) string { return For(cx).MediaVideo() }
 
 // MediaVideo says "Video"
 // in the language of msgs.
-func (msgs Messages) MediaVideo() string { return msgs.text(1565) }
+func (msgs Messages) MediaVideo() string { return msgs.text(1573) }
 
 // MediaThePlatformSPlayer says "The platform's player"
 // in the language the app shows under cx.
@@ -29438,7 +29568,7 @@ func MediaThePlatformSPlayer(cx *core.Scope) string { return For(cx).MediaThePla
 
 // MediaThePlatformSPlayer says "The platform's player"
 // in the language of msgs.
-func (msgs Messages) MediaThePlatformSPlayer() string { return msgs.text(1566) }
+func (msgs Messages) MediaThePlatformSPlayer() string { return msgs.text(1574) }
 
 // MediaError says "Error"
 // in the language the app shows under cx.
@@ -29446,7 +29576,7 @@ func MediaError(cx *core.Scope) string { return For(cx).MediaError() }
 
 // MediaError says "Error"
 // in the language of msgs.
-func (msgs Messages) MediaError() string { return msgs.text(1567) }
+func (msgs Messages) MediaError() string { return msgs.text(1575) }
 
 // MediaBuffering says "Buffering"
 // in the language the app shows under cx.
@@ -29454,7 +29584,7 @@ func MediaBuffering(cx *core.Scope) string { return For(cx).MediaBuffering() }
 
 // MediaBuffering says "Buffering"
 // in the language of msgs.
-func (msgs Messages) MediaBuffering() string { return msgs.text(1568) }
+func (msgs Messages) MediaBuffering() string { return msgs.text(1576) }
 
 // MediaPaused says "Paused"
 // in the language the app shows under cx.
@@ -29462,7 +29592,7 @@ func MediaPaused(cx *core.Scope) string { return For(cx).MediaPaused() }
 
 // MediaPaused says "Paused"
 // in the language of msgs.
-func (msgs Messages) MediaPaused() string { return msgs.text(1569) }
+func (msgs Messages) MediaPaused() string { return msgs.text(1577) }
 
 // MediaPlaying says "Playing"
 // in the language the app shows under cx.
@@ -29470,7 +29600,7 @@ func MediaPlaying(cx *core.Scope) string { return For(cx).MediaPlaying() }
 
 // MediaPlaying says "Playing"
 // in the language of msgs.
-func (msgs Messages) MediaPlaying() string { return msgs.text(1570) }
+func (msgs Messages) MediaPlaying() string { return msgs.text(1578) }
 
 // MediaPlay says "Play"
 // in the language the app shows under cx.
@@ -29478,7 +29608,7 @@ func MediaPlay(cx *core.Scope) string { return For(cx).MediaPlay() }
 
 // MediaPlay says "Play"
 // in the language of msgs.
-func (msgs Messages) MediaPlay() string { return msgs.text(1571) }
+func (msgs Messages) MediaPlay() string { return msgs.text(1579) }
 
 // MediaPause says "Pause"
 // in the language the app shows under cx.
@@ -29486,7 +29616,7 @@ func MediaPause(cx *core.Scope) string { return For(cx).MediaPause() }
 
 // MediaPause says "Pause"
 // in the language of msgs.
-func (msgs Messages) MediaPause() string { return msgs.text(1572) }
+func (msgs Messages) MediaPause() string { return msgs.text(1580) }
 
 // MediaRestart says "Restart"
 // in the language the app shows under cx.
@@ -29494,7 +29624,7 @@ func MediaRestart(cx *core.Scope) string { return For(cx).MediaRestart() }
 
 // MediaRestart says "Restart"
 // in the language of msgs.
-func (msgs Messages) MediaRestart() string { return msgs.text(1573) }
+func (msgs Messages) MediaRestart() string { return msgs.text(1581) }
 
 // MediaOwnControls says "Own controls"
 // in the language the app shows under cx.
@@ -29502,7 +29632,7 @@ func MediaOwnControls(cx *core.Scope) string { return For(cx).MediaOwnControls()
 
 // MediaOwnControls says "Own controls"
 // in the language of msgs.
-func (msgs Messages) MediaOwnControls() string { return msgs.text(1574) }
+func (msgs Messages) MediaOwnControls() string { return msgs.text(1582) }
 
 // MediaSystemControls says "System controls"
 // in the language the app shows under cx.
@@ -29510,7 +29640,7 @@ func MediaSystemControls(cx *core.Scope) string { return For(cx).MediaSystemCont
 
 // MediaSystemControls says "System controls"
 // in the language of msgs.
-func (msgs Messages) MediaSystemControls() string { return msgs.text(1575) }
+func (msgs Messages) MediaSystemControls() string { return msgs.text(1583) }
 
 // MediaNoneYet says "none yet"
 // in the language the app shows under cx.
@@ -29518,7 +29648,7 @@ func MediaNoneYet(cx *core.Scope) string { return For(cx).MediaNoneYet() }
 
 // MediaNoneYet says "none yet"
 // in the language of msgs.
-func (msgs Messages) MediaNoneYet() string { return msgs.text(1576) }
+func (msgs Messages) MediaNoneYet() string { return msgs.text(1584) }
 
 // MediaThisPlatformRegistersNoSlider says "This platform registers no slider, so the box stays empty."
 // in the language the app shows under cx.
@@ -29528,7 +29658,7 @@ func MediaThisPlatformRegistersNoSlider(cx *core.Scope) string {
 
 // MediaThisPlatformRegistersNoSlider says "This platform registers no slider, so the box stays empty."
 // in the language of msgs.
-func (msgs Messages) MediaThisPlatformRegistersNoSlider() string { return msgs.text(1577) }
+func (msgs Messages) MediaThisPlatformRegistersNoSlider() string { return msgs.text(1585) }
 
 // MediaDraggingThePlatformSOwn says "Dragging the platform's own slider reports change events; the buttons set its value and send it a command."
 // in the language the app shows under cx.
@@ -29538,7 +29668,7 @@ func MediaDraggingThePlatformSOwn(cx *core.Scope) string {
 
 // MediaDraggingThePlatformSOwn says "Dragging the platform's own slider reports change events; the buttons set its value and send it a command."
 // in the language of msgs.
-func (msgs Messages) MediaDraggingThePlatformSOwn() string { return msgs.text(1578) }
+func (msgs Messages) MediaDraggingThePlatformSOwn() string { return msgs.text(1586) }
 
 // MediaNativeViews says "Native views"
 // in the language the app shows under cx.
@@ -29546,7 +29676,7 @@ func MediaNativeViews(cx *core.Scope) string { return For(cx).MediaNativeViews()
 
 // MediaNativeViews says "Native views"
 // in the language of msgs.
-func (msgs Messages) MediaNativeViews() string { return msgs.text(1579) }
+func (msgs Messages) MediaNativeViews() string { return msgs.text(1587) }
 
 // MediaTheAppSOwnPlatform says "The app's own platform views in the tree"
 // in the language the app shows under cx.
@@ -29554,7 +29684,7 @@ func MediaTheAppSOwnPlatform(cx *core.Scope) string { return For(cx).MediaTheApp
 
 // MediaTheAppSOwnPlatform says "The app's own platform views in the tree"
 // in the language of msgs.
-func (msgs Messages) MediaTheAppSOwnPlatform() string { return msgs.text(1580) }
+func (msgs Messages) MediaTheAppSOwnPlatform() string { return msgs.text(1588) }
 
 // MediaNativeSlider says "Native slider"
 // in the language the app shows under cx.
@@ -29562,7 +29692,7 @@ func MediaNativeSlider(cx *core.Scope) string { return For(cx).MediaNativeSlider
 
 // MediaNativeSlider says "Native slider"
 // in the language of msgs.
-func (msgs Messages) MediaNativeSlider() string { return msgs.text(1581) }
+func (msgs Messages) MediaNativeSlider() string { return msgs.text(1589) }
 
 // MediaValue says "Value"
 // in the language the app shows under cx.
@@ -29570,7 +29700,7 @@ func MediaValue(cx *core.Scope) string { return For(cx).MediaValue() }
 
 // MediaValue says "Value"
 // in the language of msgs.
-func (msgs Messages) MediaValue() string { return msgs.text(1582) }
+func (msgs Messages) MediaValue() string { return msgs.text(1590) }
 
 // MediaLastEvent says "Last event: "
 // in the language the app shows under cx.
@@ -29578,7 +29708,7 @@ func MediaLastEvent(cx *core.Scope) string { return For(cx).MediaLastEvent() }
 
 // MediaLastEvent says "Last event: "
 // in the language of msgs.
-func (msgs Messages) MediaLastEvent() string { return msgs.text(1583) }
+func (msgs Messages) MediaLastEvent() string { return msgs.text(1591) }
 
 // MediaSet08 says "Set 0.8"
 // in the language the app shows under cx.
@@ -29586,7 +29716,7 @@ func MediaSet08(cx *core.Scope) string { return For(cx).MediaSet08() }
 
 // MediaSet08 says "Set 0.8"
 // in the language of msgs.
-func (msgs Messages) MediaSet08() string { return msgs.text(1584) }
+func (msgs Messages) MediaSet08() string { return msgs.text(1592) }
 
 // MediaResetCommand says "Reset command"
 // in the language the app shows under cx.
@@ -29594,7 +29724,7 @@ func MediaResetCommand(cx *core.Scope) string { return For(cx).MediaResetCommand
 
 // MediaResetCommand says "Reset command"
 // in the language of msgs.
-func (msgs Messages) MediaResetCommand() string { return msgs.text(1585) }
+func (msgs Messages) MediaResetCommand() string { return msgs.text(1593) }
 
 // A11yValuesAndHints says "Values and hints"
 // in the language the app shows under cx.
@@ -29602,7 +29732,7 @@ func A11yValuesAndHints(cx *core.Scope) string { return For(cx).A11yValuesAndHin
 
 // A11yValuesAndHints says "Values and hints"
 // in the language of msgs.
-func (msgs Messages) A11yValuesAndHints() string { return msgs.text(1586) }
+func (msgs Messages) A11yValuesAndHints() string { return msgs.text(1594) }
 
 // A11yAnAdjustableElementSwipeUp says "An adjustable element: swipe up or down"
 // in the language the app shows under cx.
@@ -29612,7 +29742,7 @@ func A11yAnAdjustableElementSwipeUp(cx *core.Scope) string {
 
 // A11yAnAdjustableElementSwipeUp says "An adjustable element: swipe up or down"
 // in the language of msgs.
-func (msgs Messages) A11yAnAdjustableElementSwipeUp() string { return msgs.text(1587) }
+func (msgs Messages) A11yAnAdjustableElementSwipeUp() string { return msgs.text(1595) }
 
 // A11yQuantity says "Quantity"
 // in the language the app shows under cx.
@@ -29620,7 +29750,7 @@ func A11yQuantity(cx *core.Scope) string { return For(cx).A11yQuantity() }
 
 // A11yQuantity says "Quantity"
 // in the language of msgs.
-func (msgs Messages) A11yQuantity() string { return msgs.text(1588) }
+func (msgs Messages) A11yQuantity() string { return msgs.text(1596) }
 
 // A11ySwipeUpOrDownTo says "Swipe up or down to adjust"
 // in the language the app shows under cx.
@@ -29628,7 +29758,7 @@ func A11ySwipeUpOrDownTo(cx *core.Scope) string { return For(cx).A11ySwipeUpOrDo
 
 // A11ySwipeUpOrDownTo says "Swipe up or down to adjust"
 // in the language of msgs.
-func (msgs Messages) A11ySwipeUpOrDownTo() string { return msgs.text(1589) }
+func (msgs Messages) A11ySwipeUpOrDownTo() string { return msgs.text(1597) }
 
 // A11yFewer says "Fewer"
 // in the language the app shows under cx.
@@ -29636,7 +29766,7 @@ func A11yFewer(cx *core.Scope) string { return For(cx).A11yFewer() }
 
 // A11yFewer says "Fewer"
 // in the language of msgs.
-func (msgs Messages) A11yFewer() string { return msgs.text(1590) }
+func (msgs Messages) A11yFewer() string { return msgs.text(1598) }
 
 // A11yMore says "More"
 // in the language the app shows under cx.
@@ -29644,7 +29774,7 @@ func A11yMore(cx *core.Scope) string { return For(cx).A11yMore() }
 
 // A11yMore says "More"
 // in the language of msgs.
-func (msgs Messages) A11yMore() string { return msgs.text(1591) }
+func (msgs Messages) A11yMore() string { return msgs.text(1599) }
 
 // A11yARangeValueAndThe says "A range value and the increment and decrement actions"
 // in the language the app shows under cx.
@@ -29652,7 +29782,7 @@ func A11yARangeValueAndThe(cx *core.Scope) string { return For(cx).A11yARangeVal
 
 // A11yARangeValueAndThe says "A range value and the increment and decrement actions"
 // in the language of msgs.
-func (msgs Messages) A11yARangeValueAndThe() string { return msgs.text(1592) }
+func (msgs Messages) A11yARangeValueAndThe() string { return msgs.text(1600) }
 
 // A11yExpandedState says "Expanded state"
 // in the language the app shows under cx.
@@ -29660,7 +29790,7 @@ func A11yExpandedState(cx *core.Scope) string { return For(cx).A11yExpandedState
 
 // A11yExpandedState says "Expanded state"
 // in the language of msgs.
-func (msgs Messages) A11yExpandedState() string { return msgs.text(1593) }
+func (msgs Messages) A11yExpandedState() string { return msgs.text(1601) }
 
 // A11yScreenReadersSayWhetherIt says "Screen readers say whether it is expanded"
 // in the language the app shows under cx.
@@ -29670,7 +29800,7 @@ func A11yScreenReadersSayWhetherIt(cx *core.Scope) string {
 
 // A11yScreenReadersSayWhetherIt says "Screen readers say whether it is expanded"
 // in the language of msgs.
-func (msgs Messages) A11yScreenReadersSayWhetherIt() string { return msgs.text(1594) }
+func (msgs Messages) A11yScreenReadersSayWhetherIt() string { return msgs.text(1602) }
 
 // A11yShippingDetails says "Shipping details"
 // in the language the app shows under cx.
@@ -29678,7 +29808,7 @@ func A11yShippingDetails(cx *core.Scope) string { return For(cx).A11yShippingDet
 
 // A11yShippingDetails says "Shipping details"
 // in the language of msgs.
-func (msgs Messages) A11yShippingDetails() string { return msgs.text(1595) }
+func (msgs Messages) A11yShippingDetails() string { return msgs.text(1603) }
 
 // A11yShipsInTwoDaysFrom says "Ships in two days from Lisbon."
 // in the language the app shows under cx.
@@ -29686,7 +29816,7 @@ func A11yShipsInTwoDaysFrom(cx *core.Scope) string { return For(cx).A11yShipsInT
 
 // A11yShipsInTwoDaysFrom says "Ships in two days from Lisbon."
 // in the language of msgs.
-func (msgs Messages) A11yShipsInTwoDaysFrom() string { return msgs.text(1596) }
+func (msgs Messages) A11yShipsInTwoDaysFrom() string { return msgs.text(1604) }
 
 // A11yADisclosure says "A disclosure"
 // in the language the app shows under cx.
@@ -29694,7 +29824,7 @@ func A11yADisclosure(cx *core.Scope) string { return For(cx).A11yADisclosure() }
 
 // A11yADisclosure says "A disclosure"
 // in the language of msgs.
-func (msgs Messages) A11yADisclosure() string { return msgs.text(1597) }
+func (msgs Messages) A11yADisclosure() string { return msgs.text(1605) }
 
 // A11yNoneYet says "none yet"
 // in the language the app shows under cx.
@@ -29702,7 +29832,7 @@ func A11yNoneYet(cx *core.Scope) string { return For(cx).A11yNoneYet() }
 
 // A11yNoneYet says "none yet"
 // in the language of msgs.
-func (msgs Messages) A11yNoneYet() string { return msgs.text(1598) }
+func (msgs Messages) A11yNoneYet() string { return msgs.text(1606) }
 
 // A11yActions says "Actions"
 // in the language the app shows under cx.
@@ -29710,7 +29840,7 @@ func A11yActions(cx *core.Scope) string { return For(cx).A11yActions() }
 
 // A11yActions says "Actions"
 // in the language of msgs.
-func (msgs Messages) A11yActions() string { return msgs.text(1599) }
+func (msgs Messages) A11yActions() string { return msgs.text(1607) }
 
 // A11yInTheScreenReaderS says "In the screen reader's actions menu"
 // in the language the app shows under cx.
@@ -29718,7 +29848,7 @@ func A11yInTheScreenReaderS(cx *core.Scope) string { return For(cx).A11yInTheScr
 
 // A11yInTheScreenReaderS says "In the screen reader's actions menu"
 // in the language of msgs.
-func (msgs Messages) A11yInTheScreenReaderS() string { return msgs.text(1600) }
+func (msgs Messages) A11yInTheScreenReaderS() string { return msgs.text(1608) }
 
 // A11yArchive says "Archive"
 // in the language the app shows under cx.
@@ -29726,7 +29856,7 @@ func A11yArchive(cx *core.Scope) string { return For(cx).A11yArchive() }
 
 // A11yArchive says "Archive"
 // in the language of msgs.
-func (msgs Messages) A11yArchive() string { return msgs.text(1601) }
+func (msgs Messages) A11yArchive() string { return msgs.text(1609) }
 
 // A11yFlag says "Flag"
 // in the language the app shows under cx.
@@ -29734,7 +29864,7 @@ func A11yFlag(cx *core.Scope) string { return For(cx).A11yFlag() }
 
 // A11yFlag says "Flag"
 // in the language of msgs.
-func (msgs Messages) A11yFlag() string { return msgs.text(1602) }
+func (msgs Messages) A11yFlag() string { return msgs.text(1610) }
 
 // A11yLunchOnFriday says "Lunch on Friday?"
 // in the language the app shows under cx.
@@ -29742,7 +29872,7 @@ func A11yLunchOnFriday(cx *core.Scope) string { return For(cx).A11yLunchOnFriday
 
 // A11yLunchOnFriday says "Lunch on Friday?"
 // in the language of msgs.
-func (msgs Messages) A11yLunchOnFriday() string { return msgs.text(1603) }
+func (msgs Messages) A11yLunchOnFriday() string { return msgs.text(1611) }
 
 // A11yLastAction says "Last action"
 // in the language the app shows under cx.
@@ -29750,7 +29880,7 @@ func A11yLastAction(cx *core.Scope) string { return For(cx).A11yLastAction() }
 
 // A11yLastAction says "Last action"
 // in the language of msgs.
-func (msgs Messages) A11yLastAction() string { return msgs.text(1604) }
+func (msgs Messages) A11yLastAction() string { return msgs.text(1612) }
 
 // A11yCustomOnesActivateEscapeAnd says "Custom ones, activate, escape and magic tap"
 // in the language the app shows under cx.
@@ -29760,7 +29890,7 @@ func A11yCustomOnesActivateEscapeAnd(cx *core.Scope) string {
 
 // A11yCustomOnesActivateEscapeAnd says "Custom ones, activate, escape and magic tap"
 // in the language of msgs.
-func (msgs Messages) A11yCustomOnesActivateEscapeAnd() string { return msgs.text(1605) }
+func (msgs Messages) A11yCustomOnesActivateEscapeAnd() string { return msgs.text(1613) }
 
 // A11yGroupedElements says "Grouped elements"
 // in the language the app shows under cx.
@@ -29768,7 +29898,7 @@ func A11yGroupedElements(cx *core.Scope) string { return For(cx).A11yGroupedElem
 
 // A11yGroupedElements says "Grouped elements"
 // in the language of msgs.
-func (msgs Messages) A11yGroupedElements() string { return msgs.text(1606) }
+func (msgs Messages) A11yGroupedElements() string { return msgs.text(1614) }
 
 // A11yOneElementLabelledWithThe says "One element, labelled with the text inside"
 // in the language the app shows under cx.
@@ -29778,7 +29908,7 @@ func A11yOneElementLabelledWithThe(cx *core.Scope) string {
 
 // A11yOneElementLabelledWithThe says "One element, labelled with the text inside"
 // in the language of msgs.
-func (msgs Messages) A11yOneElementLabelledWithThe() string { return msgs.text(1607) }
+func (msgs Messages) A11yOneElementLabelledWithThe() string { return msgs.text(1615) }
 
 // A11yApples says "Apples"
 // in the language the app shows under cx.
@@ -29786,7 +29916,7 @@ func A11yApples(cx *core.Scope) string { return For(cx).A11yApples() }
 
 // A11yApples says "Apples"
 // in the language of msgs.
-func (msgs Messages) A11yApples() string { return msgs.text(1608) }
+func (msgs Messages) A11yApples() string { return msgs.text(1616) }
 
 // A11yChangeThePrice says "Change the price"
 // in the language the app shows under cx.
@@ -29794,7 +29924,7 @@ func A11yChangeThePrice(cx *core.Scope) string { return For(cx).A11yChangeThePri
 
 // A11yChangeThePrice says "Change the price"
 // in the language of msgs.
-func (msgs Messages) A11yChangeThePrice() string { return msgs.text(1609) }
+func (msgs Messages) A11yChangeThePrice() string { return msgs.text(1617) }
 
 // A11yHiddenElements says "Hidden elements"
 // in the language the app shows under cx.
@@ -29802,7 +29932,7 @@ func A11yHiddenElements(cx *core.Scope) string { return For(cx).A11yHiddenElemen
 
 // A11yHiddenElements says "Hidden elements"
 // in the language of msgs.
-func (msgs Messages) A11yHiddenElements() string { return msgs.text(1610) }
+func (msgs Messages) A11yHiddenElements() string { return msgs.text(1618) }
 
 // A11yDecorationScreenReadersSkip says "Decoration screen readers skip"
 // in the language the app shows under cx.
@@ -29812,7 +29942,7 @@ func A11yDecorationScreenReadersSkip(cx *core.Scope) string {
 
 // A11yDecorationScreenReadersSkip says "Decoration screen readers skip"
 // in the language of msgs.
-func (msgs Messages) A11yDecorationScreenReadersSkip() string { return msgs.text(1611) }
+func (msgs Messages) A11yDecorationScreenReadersSkip() string { return msgs.text(1619) }
 
 // A11yDecoration says "✦ ✦ ✦  decoration  ✦ ✦ ✦"
 // in the language the app shows under cx.
@@ -29820,7 +29950,7 @@ func A11yDecoration(cx *core.Scope) string { return For(cx).A11yDecoration() }
 
 // A11yDecoration says "✦ ✦ ✦  decoration  ✦ ✦ ✦"
 // in the language of msgs.
-func (msgs Messages) A11yDecoration() string { return msgs.text(1612) }
+func (msgs Messages) A11yDecoration() string { return msgs.text(1620) }
 
 // A11yHideTheDecoration says "Hide the decoration"
 // in the language the app shows under cx.
@@ -29828,7 +29958,7 @@ func A11yHideTheDecoration(cx *core.Scope) string { return For(cx).A11yHideTheDe
 
 // A11yHideTheDecoration says "Hide the decoration"
 // in the language of msgs.
-func (msgs Messages) A11yHideTheDecoration() string { return msgs.text(1613) }
+func (msgs Messages) A11yHideTheDecoration() string { return msgs.text(1621) }
 
 // A11yLiveRegions says "Live regions"
 // in the language the app shows under cx.
@@ -29836,7 +29966,7 @@ func A11yLiveRegions(cx *core.Scope) string { return For(cx).A11yLiveRegions() }
 
 // A11yLiveRegions says "Live regions"
 // in the language of msgs.
-func (msgs Messages) A11yLiveRegions() string { return msgs.text(1614) }
+func (msgs Messages) A11yLiveRegions() string { return msgs.text(1622) }
 
 // A11yChangesAnnouncedWithoutMovingFocus says "Changes announced without moving focus"
 // in the language the app shows under cx.
@@ -29846,7 +29976,7 @@ func A11yChangesAnnouncedWithoutMovingFocus(cx *core.Scope) string {
 
 // A11yChangesAnnouncedWithoutMovingFocus says "Changes announced without moving focus"
 // in the language of msgs.
-func (msgs Messages) A11yChangesAnnouncedWithoutMovingFocus() string { return msgs.text(1615) }
+func (msgs Messages) A11yChangesAnnouncedWithoutMovingFocus() string { return msgs.text(1623) }
 
 // A11yAddToBasket says "Add to basket"
 // in the language the app shows under cx.
@@ -29854,7 +29984,7 @@ func A11yAddToBasket(cx *core.Scope) string { return For(cx).A11yAddToBasket() }
 
 // A11yAddToBasket says "Add to basket"
 // in the language of msgs.
-func (msgs Messages) A11yAddToBasket() string { return msgs.text(1616) }
+func (msgs Messages) A11yAddToBasket() string { return msgs.text(1624) }
 
 // A11yAnnouncedAsItChanges says "Announced as it changes"
 // in the language the app shows under cx.
@@ -29862,7 +29992,7 @@ func A11yAnnouncedAsItChanges(cx *core.Scope) string { return For(cx).A11yAnnoun
 
 // A11yAnnouncedAsItChanges says "Announced as it changes"
 // in the language of msgs.
-func (msgs Messages) A11yAnnouncedAsItChanges() string { return msgs.text(1617) }
+func (msgs Messages) A11yAnnouncedAsItChanges() string { return msgs.text(1625) }
 
 // A11yFocus says "Focus"
 // in the language the app shows under cx.
@@ -29870,7 +30000,7 @@ func A11yFocus(cx *core.Scope) string { return For(cx).A11yFocus() }
 
 // A11yFocus says "Focus"
 // in the language of msgs.
-func (msgs Messages) A11yFocus() string { return msgs.text(1618) }
+func (msgs Messages) A11yFocus() string { return msgs.text(1626) }
 
 // A11yMovingTheScreenReaderAs says "Moving the screen reader, as after a search"
 // in the language the app shows under cx.
@@ -29878,7 +30008,7 @@ func A11yMovingTheScreenReaderAs(cx *core.Scope) string { return For(cx).A11yMov
 
 // A11yMovingTheScreenReaderAs says "Moving the screen reader, as after a search"
 // in the language of msgs.
-func (msgs Messages) A11yMovingTheScreenReaderAs() string { return msgs.text(1619) }
+func (msgs Messages) A11yMovingTheScreenReaderAs() string { return msgs.text(1627) }
 
 // A11ySearchApples says "Search apples"
 // in the language the app shows under cx.
@@ -29886,7 +30016,7 @@ func A11ySearchApples(cx *core.Scope) string { return For(cx).A11ySearchApples()
 
 // A11ySearchApples says "Search apples"
 // in the language of msgs.
-func (msgs Messages) A11ySearchApples() string { return msgs.text(1620) }
+func (msgs Messages) A11ySearchApples() string { return msgs.text(1628) }
 
 // A11y3ResultsForApples says "3 results for “apples”"
 // in the language the app shows under cx.
@@ -29894,7 +30024,7 @@ func A11y3ResultsForApples(cx *core.Scope) string { return For(cx).A11y3ResultsF
 
 // A11y3ResultsForApples says "3 results for “apples”"
 // in the language of msgs.
-func (msgs Messages) A11y3ResultsForApples() string { return msgs.text(1621) }
+func (msgs Messages) A11y3ResultsForApples() string { return msgs.text(1629) }
 
 // A11yMovesTheReaderHere says "Moves the reader here"
 // in the language the app shows under cx.
@@ -29902,7 +30032,7 @@ func A11yMovesTheReaderHere(cx *core.Scope) string { return For(cx).A11yMovesThe
 
 // A11yMovesTheReaderHere says "Moves the reader here"
 // in the language of msgs.
-func (msgs Messages) A11yMovesTheReaderHere() string { return msgs.text(1622) }
+func (msgs Messages) A11yMovesTheReaderHere() string { return msgs.text(1630) }
 
 // DockPreview says "Preview"
 // in the language the app shows under cx.
@@ -29910,7 +30040,7 @@ func DockPreview(cx *core.Scope) string { return For(cx).DockPreview() }
 
 // DockPreview says "Preview"
 // in the language of msgs.
-func (msgs Messages) DockPreview() string { return msgs.text(1623) }
+func (msgs Messages) DockPreview() string { return msgs.text(1631) }
 
 // ScrollRevenue says "Revenue"
 // in the language the app shows under cx.
@@ -29918,7 +30048,7 @@ func ScrollRevenue(cx *core.Scope) string { return For(cx).ScrollRevenue() }
 
 // ScrollRevenue says "Revenue"
 // in the language of msgs.
-func (msgs Messages) ScrollRevenue() string { return msgs.text(1624) }
+func (msgs Messages) ScrollRevenue() string { return msgs.text(1632) }
 
 // ScrollSessions says "Sessions"
 // in the language the app shows under cx.
@@ -29926,7 +30056,7 @@ func ScrollSessions(cx *core.Scope) string { return For(cx).ScrollSessions() }
 
 // ScrollSessions says "Sessions"
 // in the language of msgs.
-func (msgs Messages) ScrollSessions() string { return msgs.text(1625) }
+func (msgs Messages) ScrollSessions() string { return msgs.text(1633) }
 
 // ScrollLatency says "Latency"
 // in the language the app shows under cx.
@@ -29934,7 +30064,7 @@ func ScrollLatency(cx *core.Scope) string { return For(cx).ScrollLatency() }
 
 // ScrollLatency says "Latency"
 // in the language of msgs.
-func (msgs Messages) ScrollLatency() string { return msgs.text(1626) }
+func (msgs Messages) ScrollLatency() string { return msgs.text(1634) }
 
 // ScrollMsP95 says "ms p95"
 // in the language the app shows under cx.
@@ -29942,7 +30072,7 @@ func ScrollMsP95(cx *core.Scope) string { return For(cx).ScrollMsP95() }
 
 // ScrollMsP95 says "ms p95"
 // in the language of msgs.
-func (msgs Messages) ScrollMsP95() string { return msgs.text(1627) }
+func (msgs Messages) ScrollMsP95() string { return msgs.text(1635) }
 
 // ScrollUptime says "Uptime"
 // in the language the app shows under cx.
@@ -29950,7 +30080,7 @@ func ScrollUptime(cx *core.Scope) string { return For(cx).ScrollUptime() }
 
 // ScrollUptime says "Uptime"
 // in the language of msgs.
-func (msgs Messages) ScrollUptime() string { return msgs.text(1628) }
+func (msgs Messages) ScrollUptime() string { return msgs.text(1636) }
 
 // ScrollErrors says "Errors"
 // in the language the app shows under cx.
@@ -29958,7 +30088,7 @@ func ScrollErrors(cx *core.Scope) string { return For(cx).ScrollErrors() }
 
 // ScrollErrors says "Errors"
 // in the language of msgs.
-func (msgs Messages) ScrollErrors() string { return msgs.text(1629) }
+func (msgs Messages) ScrollErrors() string { return msgs.text(1637) }
 
 // DockEdits says "{panel}: {count, plural, one {# edit} other {# edits}}"
 // in the language the app shows under cx.
@@ -30053,7 +30183,7 @@ func DockOpen(cx *core.Scope) string { return For(cx).DockOpen() }
 
 // DockOpen says "open"
 // in the language of msgs.
-func (msgs Messages) DockOpen() string { return msgs.text(1630) }
+func (msgs Messages) DockOpen() string { return msgs.text(1638) }
 
 // DockClosedState says "closed"
 // in the language the app shows under cx.
@@ -30061,7 +30191,7 @@ func DockClosedState(cx *core.Scope) string { return For(cx).DockClosedState() }
 
 // DockClosedState says "closed"
 // in the language of msgs.
-func (msgs Messages) DockClosedState() string { return msgs.text(1631) }
+func (msgs Messages) DockClosedState() string { return msgs.text(1639) }
 
 // OverlayLinkOnClipboard says "The link is on the clipboard ({count, number})"
 // in the language the app shows under cx.
@@ -30329,7 +30459,7 @@ func ChartsShowThisWeek(cx *core.Scope) string { return For(cx).ChartsShowThisWe
 
 // ChartsShowThisWeek says "Show this week"
 // in the language of msgs.
-func (msgs Messages) ChartsShowThisWeek() string { return msgs.text(1632) }
+func (msgs Messages) ChartsShowThisWeek() string { return msgs.text(1640) }
 
 // ChartsShowLastWeek says "Show last week"
 // in the language the app shows under cx.
@@ -30337,7 +30467,7 @@ func ChartsShowLastWeek(cx *core.Scope) string { return For(cx).ChartsShowLastWe
 
 // ChartsShowLastWeek says "Show last week"
 // in the language of msgs.
-func (msgs Messages) ChartsShowLastWeek() string { return msgs.text(1633) }
+func (msgs Messages) ChartsShowLastWeek() string { return msgs.text(1641) }
 
 // ChartsVisitors says "Visitors"
 // in the language the app shows under cx.
@@ -30345,7 +30475,7 @@ func ChartsVisitors(cx *core.Scope) string { return For(cx).ChartsVisitors() }
 
 // ChartsVisitors says "Visitors"
 // in the language of msgs.
-func (msgs Messages) ChartsVisitors() string { return msgs.text(1634) }
+func (msgs Messages) ChartsVisitors() string { return msgs.text(1642) }
 
 // ChartsAWeekOverTheOther says "A week over the other, with hover, grid lines and motion"
 // in the language the app shows under cx.
@@ -30353,7 +30483,7 @@ func ChartsAWeekOverTheOther(cx *core.Scope) string { return For(cx).ChartsAWeek
 
 // ChartsAWeekOverTheOther says "A week over the other, with hover, grid lines and motion"
 // in the language of msgs.
-func (msgs Messages) ChartsAWeekOverTheOther() string { return msgs.text(1635) }
+func (msgs Messages) ChartsAWeekOverTheOther() string { return msgs.text(1643) }
 
 // ChartsTheLastDay says ", the last day"
 // in the language the app shows under cx.
@@ -30361,7 +30491,7 @@ func ChartsTheLastDay(cx *core.Scope) string { return For(cx).ChartsTheLastDay()
 
 // ChartsTheLastDay says ", the last day"
 // in the language of msgs.
-func (msgs Messages) ChartsTheLastDay() string { return msgs.text(1636) }
+func (msgs Messages) ChartsTheLastDay() string { return msgs.text(1644) }
 
 // ChartsVisitors2 says " visitors"
 // in the language the app shows under cx.
@@ -30369,7 +30499,7 @@ func ChartsVisitors2(cx *core.Scope) string { return For(cx).ChartsVisitors2() }
 
 // ChartsVisitors2 says " visitors"
 // in the language of msgs.
-func (msgs Messages) ChartsVisitors2() string { return msgs.text(1637) }
+func (msgs Messages) ChartsVisitors2() string { return msgs.text(1645) }
 
 // ChartsPlotLeft says "Plot: left"
 // in the language the app shows under cx.
@@ -30377,7 +30507,7 @@ func ChartsPlotLeft(cx *core.Scope) string { return For(cx).ChartsPlotLeft() }
 
 // ChartsPlotLeft says "Plot: left"
 // in the language of msgs.
-func (msgs Messages) ChartsPlotLeft() string { return msgs.text(1638) }
+func (msgs Messages) ChartsPlotLeft() string { return msgs.text(1646) }
 
 // ChartsPlotLastWeek says "Plot: last week"
 // in the language the app shows under cx.
@@ -30385,7 +30515,7 @@ func ChartsPlotLastWeek(cx *core.Scope) string { return For(cx).ChartsPlotLastWe
 
 // ChartsPlotLastWeek says "Plot: last week"
 // in the language of msgs.
-func (msgs Messages) ChartsPlotLastWeek() string { return msgs.text(1639) }
+func (msgs Messages) ChartsPlotLastWeek() string { return msgs.text(1647) }
 
 // ChartsPlotThisWeek says "Plot: this week"
 // in the language the app shows under cx.
@@ -30393,7 +30523,7 @@ func ChartsPlotThisWeek(cx *core.Scope) string { return For(cx).ChartsPlotThisWe
 
 // ChartsPlotThisWeek says "Plot: this week"
 // in the language of msgs.
-func (msgs Messages) ChartsPlotThisWeek() string { return msgs.text(1640) }
+func (msgs Messages) ChartsPlotThisWeek() string { return msgs.text(1648) }
 
 // ChartsSparklines says "Sparklines"
 // in the language the app shows under cx.
@@ -30401,7 +30531,7 @@ func ChartsSparklines(cx *core.Scope) string { return For(cx).ChartsSparklines()
 
 // ChartsSparklines says "Sparklines"
 // in the language of msgs.
-func (msgs Messages) ChartsSparklines() string { return msgs.text(1641) }
+func (msgs Messages) ChartsSparklines() string { return msgs.text(1649) }
 
 // ChartsAPlotPerRowOf says "A plot per row of a list, drawn in as the row comes"
 // in the language the app shows under cx.
@@ -30409,7 +30539,7 @@ func ChartsAPlotPerRowOf(cx *core.Scope) string { return For(cx).ChartsAPlotPerR
 
 // ChartsAPlotPerRowOf says "A plot per row of a list, drawn in as the row comes"
 // in the language of msgs.
-func (msgs Messages) ChartsAPlotPerRowOf() string { return msgs.text(1642) }
+func (msgs Messages) ChartsAPlotPerRowOf() string { return msgs.text(1650) }
 
 // ChartsLastEvent says "Last event"
 // in the language the app shows under cx.
@@ -30417,7 +30547,7 @@ func ChartsLastEvent(cx *core.Scope) string { return For(cx).ChartsLastEvent() }
 
 // ChartsLastEvent says "Last event"
 // in the language of msgs.
-func (msgs Messages) ChartsLastEvent() string { return msgs.text(1643) }
+func (msgs Messages) ChartsLastEvent() string { return msgs.text(1651) }
 
 // EdgesInbox says "Inbox"
 // in the language the app shows under cx.
@@ -30425,7 +30555,7 @@ func EdgesInbox(cx *core.Scope) string { return For(cx).EdgesInbox() }
 
 // EdgesInbox says "Inbox"
 // in the language of msgs.
-func (msgs Messages) EdgesInbox() string { return msgs.text(1644) }
+func (msgs Messages) EdgesInbox() string { return msgs.text(1652) }
 
 // EdgesSearch says "Search"
 // in the language the app shows under cx.
@@ -30433,7 +30563,7 @@ func EdgesSearch(cx *core.Scope) string { return For(cx).EdgesSearch() }
 
 // EdgesSearch says "Search"
 // in the language of msgs.
-func (msgs Messages) EdgesSearch() string { return msgs.text(1645) }
+func (msgs Messages) EdgesSearch() string { return msgs.text(1653) }
 
 // EdgesStarred says "Starred"
 // in the language the app shows under cx.
@@ -30441,7 +30571,7 @@ func EdgesStarred(cx *core.Scope) string { return For(cx).EdgesStarred() }
 
 // EdgesStarred says "Starred"
 // in the language of msgs.
-func (msgs Messages) EdgesStarred() string { return msgs.text(1646) }
+func (msgs Messages) EdgesStarred() string { return msgs.text(1654) }
 
 // EdgesNewMessage says "New message"
 // in the language the app shows under cx.
@@ -30449,7 +30579,7 @@ func EdgesNewMessage(cx *core.Scope) string { return For(cx).EdgesNewMessage() }
 
 // EdgesNewMessage says "New message"
 // in the language of msgs.
-func (msgs Messages) EdgesNewMessage() string { return msgs.text(1647) }
+func (msgs Messages) EdgesNewMessage() string { return msgs.text(1655) }
 
 // EdgesNotifications says "Notifications"
 // in the language the app shows under cx.
@@ -30457,7 +30587,7 @@ func EdgesNotifications(cx *core.Scope) string { return For(cx).EdgesNotificatio
 
 // EdgesNotifications says "Notifications"
 // in the language of msgs.
-func (msgs Messages) EdgesNotifications() string { return msgs.text(1648) }
+func (msgs Messages) EdgesNotifications() string { return msgs.text(1656) }
 
 // EdgesSoft says "Soft"
 // in the language the app shows under cx.
@@ -30465,7 +30595,7 @@ func EdgesSoft(cx *core.Scope) string { return For(cx).EdgesSoft() }
 
 // EdgesSoft says "Soft"
 // in the language of msgs.
-func (msgs Messages) EdgesSoft() string { return msgs.text(1649) }
+func (msgs Messages) EdgesSoft() string { return msgs.text(1657) }
 
 // EdgesHard says "Hard"
 // in the language the app shows under cx.
@@ -30473,7 +30603,7 @@ func EdgesHard(cx *core.Scope) string { return For(cx).EdgesHard() }
 
 // EdgesHard says "Hard"
 // in the language of msgs.
-func (msgs Messages) EdgesHard() string { return msgs.text(1650) }
+func (msgs Messages) EdgesHard() string { return msgs.text(1658) }
 
 // EdgesHidden says "Hidden"
 // in the language the app shows under cx.
@@ -30481,7 +30611,7 @@ func EdgesHidden(cx *core.Scope) string { return For(cx).EdgesHidden() }
 
 // EdgesHidden says "Hidden"
 // in the language of msgs.
-func (msgs Messages) EdgesHidden() string { return msgs.text(1651) }
+func (msgs Messages) EdgesHidden() string { return msgs.text(1659) }
 
 // ShaderIntensity says "Intensity"
 // in the language the app shows under cx.
@@ -30489,7 +30619,7 @@ func ShaderIntensity(cx *core.Scope) string { return For(cx).ShaderIntensity() }
 
 // ShaderIntensity says "Intensity"
 // in the language of msgs.
-func (msgs Messages) ShaderIntensity() string { return msgs.text(1652) }
+func (msgs Messages) ShaderIntensity() string { return msgs.text(1660) }
 
 // ShaderScale says "Scale"
 // in the language the app shows under cx.
@@ -30497,7 +30627,7 @@ func ShaderScale(cx *core.Scope) string { return For(cx).ShaderScale() }
 
 // ShaderScale says "Scale"
 // in the language of msgs.
-func (msgs Messages) ShaderScale() string { return msgs.text(1653) }
+func (msgs Messages) ShaderScale() string { return msgs.text(1661) }
 
 // ShaderSignalField says "Signal field"
 // in the language the app shows under cx.
@@ -30505,7 +30635,7 @@ func ShaderSignalField(cx *core.Scope) string { return For(cx).ShaderSignalField
 
 // ShaderSignalField says "Signal field"
 // in the language of msgs.
-func (msgs Messages) ShaderSignalField() string { return msgs.text(1654) }
+func (msgs Messages) ShaderSignalField() string { return msgs.text(1662) }
 
 // ShaderPressAnywhereOnTheField says "Press anywhere on the field."
 // in the language the app shows under cx.
@@ -30515,7 +30645,7 @@ func ShaderPressAnywhereOnTheField(cx *core.Scope) string {
 
 // ShaderPressAnywhereOnTheField says "Press anywhere on the field."
 // in the language of msgs.
-func (msgs Messages) ShaderPressAnywhereOnTheField() string { return msgs.text(1655) }
+func (msgs Messages) ShaderPressAnywhereOnTheField() string { return msgs.text(1663) }
 
 // ShaderMoveThePointerOverThe says "Move the pointer over the field and press anywhere."
 // in the language the app shows under cx.
@@ -30523,7 +30653,7 @@ func ShaderMoveThePointerOverThe(cx *core.Scope) string { return For(cx).ShaderM
 
 // ShaderMoveThePointerOverThe says "Move the pointer over the field and press anywhere."
 // in the language of msgs.
-func (msgs Messages) ShaderMoveThePointerOverThe() string { return msgs.text(1656) }
+func (msgs Messages) ShaderMoveThePointerOverThe() string { return msgs.text(1664) }
 
 // ShaderStart says "Start"
 // in the language the app shows under cx.
@@ -30531,7 +30661,7 @@ func ShaderStart(cx *core.Scope) string { return For(cx).ShaderStart() }
 
 // ShaderStart says "Start"
 // in the language of msgs.
-func (msgs Messages) ShaderStart() string { return msgs.text(1657) }
+func (msgs Messages) ShaderStart() string { return msgs.text(1665) }
 
 // ShaderBackground says "Background"
 // in the language the app shows under cx.
@@ -30539,7 +30669,7 @@ func ShaderBackground(cx *core.Scope) string { return For(cx).ShaderBackground()
 
 // ShaderBackground says "Background"
 // in the language of msgs.
-func (msgs Messages) ShaderBackground() string { return msgs.text(1658) }
+func (msgs Messages) ShaderBackground() string { return msgs.text(1666) }
 
 // ShaderAClockAndRipplesThe says "A clock and ripples the platform runs; a glow at the pointer"
 // in the language the app shows under cx.
@@ -30547,7 +30677,7 @@ func ShaderAClockAndRipplesThe(cx *core.Scope) string { return For(cx).ShaderACl
 
 // ShaderAClockAndRipplesThe says "A clock and ripples the platform runs; a glow at the pointer"
 // in the language of msgs.
-func (msgs Messages) ShaderAClockAndRipplesThe() string { return msgs.text(1659) }
+func (msgs Messages) ShaderAClockAndRipplesThe() string { return msgs.text(1667) }
 
 // ShaderUniforms says "Uniforms"
 // in the language the app shows under cx.
@@ -30555,7 +30685,7 @@ func ShaderUniforms(cx *core.Scope) string { return For(cx).ShaderUniforms() }
 
 // ShaderUniforms says "Uniforms"
 // in the language of msgs.
-func (msgs Messages) ShaderUniforms() string { return msgs.text(1660) }
+func (msgs Messages) ShaderUniforms() string { return msgs.text(1668) }
 
 // ShaderImages says "Images"
 // in the language the app shows under cx.
@@ -30563,7 +30693,7 @@ func ShaderImages(cx *core.Scope) string { return For(cx).ShaderImages() }
 
 // ShaderImages says "Images"
 // in the language of msgs.
-func (msgs Messages) ShaderImages() string { return msgs.text(1661) }
+func (msgs Messages) ShaderImages() string { return msgs.text(1669) }
 
 // ShaderWhatImage0atToImage3atRead says "What image0At to image3At read, in the image's pixels"
 // in the language the app shows under cx.
@@ -30573,7 +30703,7 @@ func ShaderWhatImage0atToImage3atRead(cx *core.Scope) string {
 
 // ShaderWhatImage0atToImage3atRead says "What image0At to image3At read, in the image's pixels"
 // in the language of msgs.
-func (msgs Messages) ShaderWhatImage0atToImage3atRead() string { return msgs.text(1662) }
+func (msgs Messages) ShaderWhatImage0atToImage3atRead() string { return msgs.text(1670) }
 
 // ShaderRipplingLogo says "Rippling logo"
 // in the language the app shows under cx.
@@ -30581,7 +30711,7 @@ func ShaderRipplingLogo(cx *core.Scope) string { return For(cx).ShaderRipplingLo
 
 // ShaderRipplingLogo says "Rippling logo"
 // in the language of msgs.
-func (msgs Messages) ShaderRipplingLogo() string { return msgs.text(1663) }
+func (msgs Messages) ShaderRipplingLogo() string { return msgs.text(1671) }
 
 // ShaderItsRowsWaveWithA says "Its rows wave with a phase the platform turns"
 // in the language the app shows under cx.
@@ -30589,7 +30719,7 @@ func ShaderItsRowsWaveWithA(cx *core.Scope) string { return For(cx).ShaderItsRow
 
 // ShaderItsRowsWaveWithA says "Its rows wave with a phase the platform turns"
 // in the language of msgs.
-func (msgs Messages) ShaderItsRowsWaveWithA() string { return msgs.text(1664) }
+func (msgs Messages) ShaderItsRowsWaveWithA() string { return msgs.text(1672) }
 
 // ShaderTheSource says "The source"
 // in the language the app shows under cx.
@@ -30597,7 +30727,7 @@ func ShaderTheSource(cx *core.Scope) string { return For(cx).ShaderTheSource() }
 
 // ShaderTheSource says "The source"
 // in the language of msgs.
-func (msgs Messages) ShaderTheSource() string { return msgs.text(1665) }
+func (msgs Messages) ShaderTheSource() string { return msgs.text(1673) }
 
 // ShaderGoSSyntaxCheckedAnd says "Go's syntax, checked and written as MSL, GLSL or HLSL"
 // in the language the app shows under cx.
@@ -30605,7 +30735,7 @@ func ShaderGoSSyntaxCheckedAnd(cx *core.Scope) string { return For(cx).ShaderGoS
 
 // ShaderGoSSyntaxCheckedAnd says "Go's syntax, checked and written as MSL, GLSL or HLSL"
 // in the language of msgs.
-func (msgs Messages) ShaderGoSSyntaxCheckedAnd() string { return msgs.text(1666) }
+func (msgs Messages) ShaderGoSSyntaxCheckedAnd() string { return msgs.text(1674) }
 
 // ShaderCompiledOnceAsTheProgram says "Compiled once, as the program loads"
 // in the language the app shows under cx.
@@ -30615,7 +30745,7 @@ func ShaderCompiledOnceAsTheProgram(cx *core.Scope) string {
 
 // ShaderCompiledOnceAsTheProgram says "Compiled once, as the program loads"
 // in the language of msgs.
-func (msgs Messages) ShaderCompiledOnceAsTheProgram() string { return msgs.text(1667) }
+func (msgs Messages) ShaderCompiledOnceAsTheProgram() string { return msgs.text(1675) }
 
 // PhotosPhoto says "Photo"
 // in the language the app shows under cx.
@@ -30623,7 +30753,7 @@ func PhotosPhoto(cx *core.Scope) string { return For(cx).PhotosPhoto() }
 
 // PhotosPhoto says "Photo"
 // in the language of msgs.
-func (msgs Messages) PhotosPhoto() string { return msgs.text(1668) }
+func (msgs Messages) PhotosPhoto() string { return msgs.text(1676) }
 
 // PhotosRefreshes says " refreshes. "
 // in the language the app shows under cx.
@@ -30631,7 +30761,7 @@ func PhotosRefreshes(cx *core.Scope) string { return For(cx).PhotosRefreshes() }
 
 // PhotosRefreshes says " refreshes. "
 // in the language of msgs.
-func (msgs Messages) PhotosRefreshes() string { return msgs.text(1669) }
+func (msgs Messages) PhotosRefreshes() string { return msgs.text(1677) }
 
 // PhotosRefresh says "Refresh"
 // in the language the app shows under cx.
@@ -30639,7 +30769,7 @@ func PhotosRefresh(cx *core.Scope) string { return For(cx).PhotosRefresh() }
 
 // PhotosRefresh says "Refresh"
 // in the language of msgs.
-func (msgs Messages) PhotosRefresh() string { return msgs.text(1670) }
+func (msgs Messages) PhotosRefresh() string { return msgs.text(1678) }
 
 // PhotosRefreshing says "Refreshing…"
 // in the language the app shows under cx.
@@ -30647,7 +30777,7 @@ func PhotosRefreshing(cx *core.Scope) string { return For(cx).PhotosRefreshing()
 
 // PhotosRefreshing says "Refreshing…"
 // in the language of msgs.
-func (msgs Messages) PhotosRefreshing() string { return msgs.text(1671) }
+func (msgs Messages) PhotosRefreshing() string { return msgs.text(1679) }
 
 // PhotosPhotoStream says "Photo stream"
 // in the language the app shows under cx.
@@ -30655,7 +30785,7 @@ func PhotosPhotoStream(cx *core.Scope) string { return For(cx).PhotosPhotoStream
 
 // PhotosPhotoStream says "Photo stream"
 // in the language of msgs.
-func (msgs Messages) PhotosPhotoStream() string { return msgs.text(1672) }
+func (msgs Messages) PhotosPhotoStream() string { return msgs.text(1680) }
 
 // PhotosARecycledListOfRemote says "A recycled list of remote images"
 // in the language the app shows under cx.
@@ -30663,7 +30793,7 @@ func PhotosARecycledListOfRemote(cx *core.Scope) string { return For(cx).PhotosA
 
 // PhotosARecycledListOfRemote says "A recycled list of remote images"
 // in the language of msgs.
-func (msgs Messages) PhotosARecycledListOfRemote() string { return msgs.text(1673) }
+func (msgs Messages) PhotosARecycledListOfRemote() string { return msgs.text(1681) }
 
 // PhotosRemote says "Remote"
 // in the language the app shows under cx.
@@ -30671,7 +30801,7 @@ func PhotosRemote(cx *core.Scope) string { return For(cx).PhotosRemote() }
 
 // PhotosRemote says "Remote"
 // in the language of msgs.
-func (msgs Messages) PhotosRemote() string { return msgs.text(1674) }
+func (msgs Messages) PhotosRemote() string { return msgs.text(1682) }
 
 // PhotosPhotos says " photos"
 // in the language the app shows under cx.
@@ -30679,7 +30809,7 @@ func PhotosPhotos(cx *core.Scope) string { return For(cx).PhotosPhotos() }
 
 // PhotosPhotos says " photos"
 // in the language of msgs.
-func (msgs Messages) PhotosPhotos() string { return msgs.text(1675) }
+func (msgs Messages) PhotosPhotos() string { return msgs.text(1683) }
 
 // PhotosPages says "Pages"
 // in the language the app shows under cx.
@@ -30687,7 +30817,7 @@ func PhotosPages(cx *core.Scope) string { return For(cx).PhotosPages() }
 
 // PhotosPages says "Pages"
 // in the language of msgs.
-func (msgs Messages) PhotosPages() string { return msgs.text(1676) }
+func (msgs Messages) PhotosPages() string { return msgs.text(1684) }
 
 // PhotosPerPage says "Per page"
 // in the language the app shows under cx.
@@ -30695,7 +30825,7 @@ func PhotosPerPage(cx *core.Scope) string { return For(cx).PhotosPerPage() }
 
 // PhotosPerPage says "Per page"
 // in the language of msgs.
-func (msgs Messages) PhotosPerPage() string { return msgs.text(1677) }
+func (msgs Messages) PhotosPerPage() string { return msgs.text(1685) }
 
 // PhotosRefreshes2 says "Refreshes"
 // in the language the app shows under cx.
@@ -30703,7 +30833,7 @@ func PhotosRefreshes2(cx *core.Scope) string { return For(cx).PhotosRefreshes2()
 
 // PhotosRefreshes2 says "Refreshes"
 // in the language of msgs.
-func (msgs Messages) PhotosRefreshes2() string { return msgs.text(1678) }
+func (msgs Messages) PhotosRefreshes2() string { return msgs.text(1686) }
 
 // DiffWords says "Words"
 // in the language the app shows under cx.
@@ -30711,7 +30841,7 @@ func DiffWords(cx *core.Scope) string { return For(cx).DiffWords() }
 
 // DiffWords says "Words"
 // in the language of msgs.
-func (msgs Messages) DiffWords() string { return msgs.text(1679) }
+func (msgs Messages) DiffWords() string { return msgs.text(1687) }
 
 // DiffEachWord says "Each word"
 // in the language the app shows under cx.
@@ -30719,7 +30849,7 @@ func DiffEachWord(cx *core.Scope) string { return For(cx).DiffEachWord() }
 
 // DiffEachWord says "Each word"
 // in the language of msgs.
-func (msgs Messages) DiffEachWord() string { return msgs.text(1680) }
+func (msgs Messages) DiffEachWord() string { return msgs.text(1688) }
 
 // DiffCharacters says "Characters"
 // in the language the app shows under cx.
@@ -30727,7 +30857,7 @@ func DiffCharacters(cx *core.Scope) string { return For(cx).DiffCharacters() }
 
 // DiffCharacters says "Characters"
 // in the language of msgs.
-func (msgs Messages) DiffCharacters() string { return msgs.text(1681) }
+func (msgs Messages) DiffCharacters() string { return msgs.text(1689) }
 
 // DiffNone says "None"
 // in the language the app shows under cx.
@@ -30735,7 +30865,7 @@ func DiffNone(cx *core.Scope) string { return For(cx).DiffNone() }
 
 // DiffNone says "None"
 // in the language of msgs.
-func (msgs Messages) DiffNone() string { return msgs.text(1682) }
+func (msgs Messages) DiffNone() string { return msgs.text(1690) }
 
 // DiffShowAPatch says "Show a patch"
 // in the language the app shows under cx.
@@ -30743,7 +30873,7 @@ func DiffShowAPatch(cx *core.Scope) string { return For(cx).DiffShowAPatch() }
 
 // DiffShowAPatch says "Show a patch"
 // in the language of msgs.
-func (msgs Messages) DiffShowAPatch() string { return msgs.text(1683) }
+func (msgs Messages) DiffShowAPatch() string { return msgs.text(1691) }
 
 // DiffPatch says "Patch"
 // in the language the app shows under cx.
@@ -30751,7 +30881,7 @@ func DiffPatch(cx *core.Scope) string { return For(cx).DiffPatch() }
 
 // DiffPatch says "Patch"
 // in the language of msgs.
-func (msgs Messages) DiffPatch() string { return msgs.text(1684) }
+func (msgs Messages) DiffPatch() string { return msgs.text(1692) }
 
 // DiffOneColumn says "One column"
 // in the language the app shows under cx.
@@ -30759,7 +30889,7 @@ func DiffOneColumn(cx *core.Scope) string { return For(cx).DiffOneColumn() }
 
 // DiffOneColumn says "One column"
 // in the language of msgs.
-func (msgs Messages) DiffOneColumn() string { return msgs.text(1685) }
+func (msgs Messages) DiffOneColumn() string { return msgs.text(1693) }
 
 // DiffUnified says "Unified"
 // in the language the app shows under cx.
@@ -30767,7 +30897,7 @@ func DiffUnified(cx *core.Scope) string { return For(cx).DiffUnified() }
 
 // DiffUnified says "Unified"
 // in the language of msgs.
-func (msgs Messages) DiffUnified() string { return msgs.text(1686) }
+func (msgs Messages) DiffUnified() string { return msgs.text(1694) }
 
 // DiffSoftWrap says "Soft wrap"
 // in the language the app shows under cx.
@@ -30775,7 +30905,7 @@ func DiffSoftWrap(cx *core.Scope) string { return For(cx).DiffSoftWrap() }
 
 // DiffSoftWrap says "Soft wrap"
 // in the language of msgs.
-func (msgs Messages) DiffSoftWrap() string { return msgs.text(1687) }
+func (msgs Messages) DiffSoftWrap() string { return msgs.text(1695) }
 
 // DiffWrap says "Wrap"
 // in the language the app shows under cx.
@@ -30783,7 +30913,7 @@ func DiffWrap(cx *core.Scope) string { return For(cx).DiffWrap() }
 
 // DiffWrap says "Wrap"
 // in the language of msgs.
-func (msgs Messages) DiffWrap() string { return msgs.text(1688) }
+func (msgs Messages) DiffWrap() string { return msgs.text(1696) }
 
 // DiffPreviousChange says "Previous change"
 // in the language the app shows under cx.
@@ -30791,7 +30921,7 @@ func DiffPreviousChange(cx *core.Scope) string { return For(cx).DiffPreviousChan
 
 // DiffPreviousChange says "Previous change"
 // in the language of msgs.
-func (msgs Messages) DiffPreviousChange() string { return msgs.text(1689) }
+func (msgs Messages) DiffPreviousChange() string { return msgs.text(1697) }
 
 // DiffNextChange says "Next change"
 // in the language the app shows under cx.
@@ -30799,7 +30929,7 @@ func DiffNextChange(cx *core.Scope) string { return For(cx).DiffNextChange() }
 
 // DiffNextChange says "Next change"
 // in the language of msgs.
-func (msgs Messages) DiffNextChange() string { return msgs.text(1690) }
+func (msgs Messages) DiffNextChange() string { return msgs.text(1698) }
 
 // DiffExpandEveryLine says "Expand every line"
 // in the language the app shows under cx.
@@ -30807,7 +30937,7 @@ func DiffExpandEveryLine(cx *core.Scope) string { return For(cx).DiffExpandEvery
 
 // DiffExpandEveryLine says "Expand every line"
 // in the language of msgs.
-func (msgs Messages) DiffExpandEveryLine() string { return msgs.text(1691) }
+func (msgs Messages) DiffExpandEveryLine() string { return msgs.text(1699) }
 
 // DiffExpand says "Expand"
 // in the language the app shows under cx.
@@ -30815,7 +30945,7 @@ func DiffExpand(cx *core.Scope) string { return For(cx).DiffExpand() }
 
 // DiffExpand says "Expand"
 // in the language of msgs.
-func (msgs Messages) DiffExpand() string { return msgs.text(1692) }
+func (msgs Messages) DiffExpand() string { return msgs.text(1700) }
 
 // DiffCollapseUnchangedLines says "Collapse unchanged lines"
 // in the language the app shows under cx.
@@ -30823,7 +30953,7 @@ func DiffCollapseUnchangedLines(cx *core.Scope) string { return For(cx).DiffColl
 
 // DiffCollapseUnchangedLines says "Collapse unchanged lines"
 // in the language of msgs.
-func (msgs Messages) DiffCollapseUnchangedLines() string { return msgs.text(1693) }
+func (msgs Messages) DiffCollapseUnchangedLines() string { return msgs.text(1701) }
 
 // DiffCollapse says "Collapse"
 // in the language the app shows under cx.
@@ -30831,7 +30961,7 @@ func DiffCollapse(cx *core.Scope) string { return For(cx).DiffCollapse() }
 
 // DiffCollapse says "Collapse"
 // in the language of msgs.
-func (msgs Messages) DiffCollapse() string { return msgs.text(1694) }
+func (msgs Messages) DiffCollapse() string { return msgs.text(1702) }
 
 // DiffStartAgain says "Start again"
 // in the language the app shows under cx.
@@ -30839,7 +30969,7 @@ func DiffStartAgain(cx *core.Scope) string { return For(cx).DiffStartAgain() }
 
 // DiffStartAgain says "Start again"
 // in the language of msgs.
-func (msgs Messages) DiffStartAgain() string { return msgs.text(1695) }
+func (msgs Messages) DiffStartAgain() string { return msgs.text(1703) }
 
 // DiffReset says "Reset"
 // in the language the app shows under cx.
@@ -30847,7 +30977,7 @@ func DiffReset(cx *core.Scope) string { return For(cx).DiffReset() }
 
 // DiffReset says "Reset"
 // in the language of msgs.
-func (msgs Messages) DiffReset() string { return msgs.text(1696) }
+func (msgs Messages) DiffReset() string { return msgs.text(1704) }
 
 // DiffResolve says "Resolve"
 // in the language the app shows under cx.
@@ -30855,7 +30985,7 @@ func DiffResolve(cx *core.Scope) string { return For(cx).DiffResolve() }
 
 // DiffResolve says "Resolve"
 // in the language of msgs.
-func (msgs Messages) DiffResolve() string { return msgs.text(1697) }
+func (msgs Messages) DiffResolve() string { return msgs.text(1705) }
 
 // DiffAddAComment says "Add a comment"
 // in the language the app shows under cx.
@@ -30863,7 +30993,7 @@ func DiffAddAComment(cx *core.Scope) string { return For(cx).DiffAddAComment() }
 
 // DiffAddAComment says "Add a comment"
 // in the language of msgs.
-func (msgs Messages) DiffAddAComment() string { return msgs.text(1698) }
+func (msgs Messages) DiffAddAComment() string { return msgs.text(1706) }
 
 // DiffCommented says "Commented"
 // in the language the app shows under cx.
@@ -30871,7 +31001,7 @@ func DiffCommented(cx *core.Scope) string { return For(cx).DiffCommented() }
 
 // DiffCommented says "Commented"
 // in the language of msgs.
-func (msgs Messages) DiffCommented() string { return msgs.text(1699) }
+func (msgs Messages) DiffCommented() string { return msgs.text(1707) }
 
 // DiffRevert says "Revert"
 // in the language the app shows under cx.
@@ -30879,7 +31009,7 @@ func DiffRevert(cx *core.Scope) string { return For(cx).DiffRevert() }
 
 // DiffRevert says "Revert"
 // in the language of msgs.
-func (msgs Messages) DiffRevert() string { return msgs.text(1700) }
+func (msgs Messages) DiffRevert() string { return msgs.text(1708) }
 
 // DiffKeep says "Keep"
 // in the language the app shows under cx.
@@ -30887,7 +31017,7 @@ func DiffKeep(cx *core.Scope) string { return For(cx).DiffKeep() }
 
 // DiffKeep says "Keep"
 // in the language of msgs.
-func (msgs Messages) DiffKeep() string { return msgs.text(1701) }
+func (msgs Messages) DiffKeep() string { return msgs.text(1709) }
 
 // ChartsMon says "Mon"
 // in the language the app shows under cx.
@@ -30895,7 +31025,7 @@ func ChartsMon(cx *core.Scope) string { return For(cx).ChartsMon() }
 
 // ChartsMon says "Mon"
 // in the language of msgs.
-func (msgs Messages) ChartsMon() string { return msgs.text(1702) }
+func (msgs Messages) ChartsMon() string { return msgs.text(1710) }
 
 // ChartsTue says "Tue"
 // in the language the app shows under cx.
@@ -30903,7 +31033,7 @@ func ChartsTue(cx *core.Scope) string { return For(cx).ChartsTue() }
 
 // ChartsTue says "Tue"
 // in the language of msgs.
-func (msgs Messages) ChartsTue() string { return msgs.text(1703) }
+func (msgs Messages) ChartsTue() string { return msgs.text(1711) }
 
 // ChartsWed says "Wed"
 // in the language the app shows under cx.
@@ -30911,7 +31041,7 @@ func ChartsWed(cx *core.Scope) string { return For(cx).ChartsWed() }
 
 // ChartsWed says "Wed"
 // in the language of msgs.
-func (msgs Messages) ChartsWed() string { return msgs.text(1704) }
+func (msgs Messages) ChartsWed() string { return msgs.text(1712) }
 
 // ChartsThu says "Thu"
 // in the language the app shows under cx.
@@ -30919,7 +31049,7 @@ func ChartsThu(cx *core.Scope) string { return For(cx).ChartsThu() }
 
 // ChartsThu says "Thu"
 // in the language of msgs.
-func (msgs Messages) ChartsThu() string { return msgs.text(1705) }
+func (msgs Messages) ChartsThu() string { return msgs.text(1713) }
 
 // ChartsFri says "Fri"
 // in the language the app shows under cx.
@@ -30927,7 +31057,7 @@ func ChartsFri(cx *core.Scope) string { return For(cx).ChartsFri() }
 
 // ChartsFri says "Fri"
 // in the language of msgs.
-func (msgs Messages) ChartsFri() string { return msgs.text(1706) }
+func (msgs Messages) ChartsFri() string { return msgs.text(1714) }
 
 // ChartsSat says "Sat"
 // in the language the app shows under cx.
@@ -30935,7 +31065,7 @@ func ChartsSat(cx *core.Scope) string { return For(cx).ChartsSat() }
 
 // ChartsSat says "Sat"
 // in the language of msgs.
-func (msgs Messages) ChartsSat() string { return msgs.text(1707) }
+func (msgs Messages) ChartsSat() string { return msgs.text(1715) }
 
 // ChartsSun says "Sun"
 // in the language the app shows under cx.
@@ -30943,7 +31073,7 @@ func ChartsSun(cx *core.Scope) string { return For(cx).ChartsSun() }
 
 // ChartsSun says "Sun"
 // in the language of msgs.
-func (msgs Messages) ChartsSun() string { return msgs.text(1708) }
+func (msgs Messages) ChartsSun() string { return msgs.text(1716) }
 
 // ChartsLastWeek says "Last week"
 // in the language the app shows under cx.
@@ -30951,7 +31081,7 @@ func ChartsLastWeek(cx *core.Scope) string { return For(cx).ChartsLastWeek() }
 
 // ChartsLastWeek says "Last week"
 // in the language of msgs.
-func (msgs Messages) ChartsLastWeek() string { return msgs.text(1709) }
+func (msgs Messages) ChartsLastWeek() string { return msgs.text(1717) }
 
 // ChartsThisWeek says "This week"
 // in the language the app shows under cx.
@@ -30959,7 +31089,7 @@ func ChartsThisWeek(cx *core.Scope) string { return For(cx).ChartsThisWeek() }
 
 // ChartsThisWeek says "This week"
 // in the language of msgs.
-func (msgs Messages) ChartsThisWeek() string { return msgs.text(1710) }
+func (msgs Messages) ChartsThisWeek() string { return msgs.text(1718) }
 
 // ChartsVisitorsPerDay says "Visitors per day, from {monday} on Monday to {sunday} on Sunday"
 // in the language the app shows under cx.
@@ -31489,7 +31619,7 @@ func TextviewCopied(cx *core.Scope) string { return For(cx).TextviewCopied() }
 
 // TextviewCopied says "Copied"
 // in the language of msgs.
-func (msgs Messages) TextviewCopied() string { return msgs.text(1711) }
+func (msgs Messages) TextviewCopied() string { return msgs.text(1719) }
 
 // TextviewCopyCode says "Copy code"
 // in the language the app shows under cx.
@@ -31497,7 +31627,7 @@ func TextviewCopyCode(cx *core.Scope) string { return For(cx).TextviewCopyCode()
 
 // TextviewCopyCode says "Copy code"
 // in the language of msgs.
-func (msgs Messages) TextviewCopyCode() string { return msgs.text(1712) }
+func (msgs Messages) TextviewCopyCode() string { return msgs.text(1720) }
 
 // TextviewStreaming says "Streaming"
 // in the language the app shows under cx.
@@ -31505,7 +31635,7 @@ func TextviewStreaming(cx *core.Scope) string { return For(cx).TextviewStreaming
 
 // TextviewStreaming says "Streaming"
 // in the language of msgs.
-func (msgs Messages) TextviewStreaming() string { return msgs.text(1713) }
+func (msgs Messages) TextviewStreaming() string { return msgs.text(1721) }
 
 // TextviewAReplyAsAnAi says "A reply as an AI model writes it, with a caret"
 // in the language the app shows under cx.
@@ -31513,7 +31643,7 @@ func TextviewAReplyAsAnAi(cx *core.Scope) string { return For(cx).TextviewAReply
 
 // TextviewAReplyAsAnAi says "A reply as an AI model writes it, with a caret"
 // in the language of msgs.
-func (msgs Messages) TextviewAReplyAsAnAi() string { return msgs.text(1714) }
+func (msgs Messages) TextviewAReplyAsAnAi() string { return msgs.text(1722) }
 
 // TextviewStreamIt says "Stream it"
 // in the language the app shows under cx.
@@ -31521,7 +31651,7 @@ func TextviewStreamIt(cx *core.Scope) string { return For(cx).TextviewStreamIt()
 
 // TextviewStreamIt says "Stream it"
 // in the language of msgs.
-func (msgs Messages) TextviewStreamIt() string { return msgs.text(1715) }
+func (msgs Messages) TextviewStreamIt() string { return msgs.text(1723) }
 
 // TextviewStreaming2 says "Streaming…"
 // in the language the app shows under cx.
@@ -31529,7 +31659,7 @@ func TextviewStreaming2(cx *core.Scope) string { return For(cx).TextviewStreamin
 
 // TextviewStreaming2 says "Streaming…"
 // in the language of msgs.
-func (msgs Messages) TextviewStreaming2() string { return msgs.text(1716) }
+func (msgs Messages) TextviewStreaming2() string { return msgs.text(1724) }
 
 // TextviewNothingYet says "nothing yet"
 // in the language the app shows under cx.
@@ -31537,7 +31667,7 @@ func TextviewNothingYet(cx *core.Scope) string { return For(cx).TextviewNothingY
 
 // TextviewNothingYet says "nothing yet"
 // in the language of msgs.
-func (msgs Messages) TextviewNothingYet() string { return msgs.text(1717) }
+func (msgs Messages) TextviewNothingYet() string { return msgs.text(1725) }
 
 // TextviewMarkdown says "Markdown"
 // in the language the app shows under cx.
@@ -31545,7 +31675,7 @@ func TextviewMarkdown(cx *core.Scope) string { return For(cx).TextviewMarkdown()
 
 // TextviewMarkdown says "Markdown"
 // in the language of msgs.
-func (msgs Messages) TextviewMarkdown() string { return msgs.text(1718) }
+func (msgs Messages) TextviewMarkdown() string { return msgs.text(1726) }
 
 // TextviewCommonmarkAndGithubSTables says "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML"
 // in the language the app shows under cx.
@@ -31555,7 +31685,7 @@ func TextviewCommonmarkAndGithubSTables(cx *core.Scope) string {
 
 // TextviewCommonmarkAndGithubSTables says "CommonMark and GitHub's: tables, tasks, alerts, footnotes, math, HTML"
 // in the language of msgs.
-func (msgs Messages) TextviewCommonmarkAndGithubSTables() string { return msgs.text(1719) }
+func (msgs Messages) TextviewCommonmarkAndGithubSTables() string { return msgs.text(1727) }
 
 // TextviewLinkPressed says "Link pressed"
 // in the language the app shows under cx.
@@ -31563,7 +31693,7 @@ func TextviewLinkPressed(cx *core.Scope) string { return For(cx).TextviewLinkPre
 
 // TextviewLinkPressed says "Link pressed"
 // in the language of msgs.
-func (msgs Messages) TextviewLinkPressed() string { return msgs.text(1720) }
+func (msgs Messages) TextviewLinkPressed() string { return msgs.text(1728) }
 
 // TextviewHtml says "HTML"
 // in the language the app shows under cx.
@@ -31571,7 +31701,7 @@ func TextviewHtml(cx *core.Scope) string { return For(cx).TextviewHtml() }
 
 // TextviewHtml says "HTML"
 // in the language of msgs.
-func (msgs Messages) TextviewHtml() string { return msgs.text(1721) }
+func (msgs Messages) TextviewHtml() string { return msgs.text(1729) }
 
 // TextviewAnArticlePageSectionsFigures says "An article page: sections, figures, lists, tables, code"
 // in the language the app shows under cx.
@@ -31581,7 +31711,7 @@ func TextviewAnArticlePageSectionsFigures(cx *core.Scope) string {
 
 // TextviewAnArticlePageSectionsFigures says "An article page: sections, figures, lists, tables, code"
 // in the language of msgs.
-func (msgs Messages) TextviewAnArticlePageSectionsFigures() string { return msgs.text(1722) }
+func (msgs Messages) TextviewAnArticlePageSectionsFigures() string { return msgs.text(1730) }
 
 // TextviewExtensions says "Extensions"
 // in the language the app shows under cx.
@@ -31589,7 +31719,7 @@ func TextviewExtensions(cx *core.Scope) string { return For(cx).TextviewExtensio
 
 // TextviewExtensions says "Extensions"
 // in the language of msgs.
-func (msgs Messages) TextviewExtensions() string { return msgs.text(1723) }
+func (msgs Messages) TextviewExtensions() string { return msgs.text(1731) }
 
 // TextviewMentionsAChartBlockA says "Mentions, a chart block, a <Callout> tag, a :::note container"
 // in the language the app shows under cx.
@@ -31599,7 +31729,7 @@ func TextviewMentionsAChartBlockA(cx *core.Scope) string {
 
 // TextviewMentionsAChartBlockA says "Mentions, a chart block, a <Callout> tag, a :::note container"
 // in the language of msgs.
-func (msgs Messages) TextviewMentionsAChartBlockA() string { return msgs.text(1724) }
+func (msgs Messages) TextviewMentionsAChartBlockA() string { return msgs.text(1732) }
 
 // TextviewSelectableView says "Selectable view"
 // in the language the app shows under cx.
@@ -31607,7 +31737,7 @@ func TextviewSelectableView(cx *core.Scope) string { return For(cx).TextviewSele
 
 // TextviewSelectableView says "Selectable view"
 // in the language of msgs.
-func (msgs Messages) TextviewSelectableView() string { return msgs.text(1725) }
+func (msgs Messages) TextviewSelectableView() string { return msgs.text(1733) }
 
 // TextviewOneSelectionAcrossTextsAnd says "One selection across texts and TextViews"
 // in the language the app shows under cx.
@@ -31617,7 +31747,7 @@ func TextviewOneSelectionAcrossTextsAnd(cx *core.Scope) string {
 
 // TextviewOneSelectionAcrossTextsAnd says "One selection across texts and TextViews"
 // in the language of msgs.
-func (msgs Messages) TextviewOneSelectionAcrossTextsAnd() string { return msgs.text(1726) }
+func (msgs Messages) TextviewOneSelectionAcrossTextsAnd() string { return msgs.text(1734) }
 
 // TextviewNotSelectable says "Not selectable"
 // in the language the app shows under cx.
@@ -31625,7 +31755,7 @@ func TextviewNotSelectable(cx *core.Scope) string { return For(cx).TextviewNotSe
 
 // TextviewNotSelectable says "Not selectable"
 // in the language of msgs.
-func (msgs Messages) TextviewNotSelectable() string { return msgs.text(1727) }
+func (msgs Messages) TextviewNotSelectable() string { return msgs.text(1735) }
 
 // TextviewAPlainTextJoinsThe says "A plain Text joins the selection too."
 // in the language the app shows under cx.
@@ -31633,7 +31763,7 @@ func TextviewAPlainTextJoinsThe(cx *core.Scope) string { return For(cx).Textview
 
 // TextviewAPlainTextJoinsThe says "A plain Text joins the selection too."
 // in the language of msgs.
-func (msgs Messages) TextviewAPlainTextJoinsThe() string { return msgs.text(1728) }
+func (msgs Messages) TextviewAPlainTextJoinsThe() string { return msgs.text(1736) }
 
 // TextviewLongPressThenMoveThe says "Long press, then move the handles from the question into the answer"
 // in the language the app shows under cx.
@@ -31643,7 +31773,7 @@ func TextviewLongPressThenMoveThe(cx *core.Scope) string {
 
 // TextviewLongPressThenMoveThe says "Long press, then move the handles from the question into the answer"
 // in the language of msgs.
-func (msgs Messages) TextviewLongPressThenMoveThe() string { return msgs.text(1729) }
+func (msgs Messages) TextviewLongPressThenMoveThe() string { return msgs.text(1737) }
 
 // TextviewDragFromTheQuestionInto says "Drag from the question into the answer"
 // in the language the app shows under cx.
@@ -31653,7 +31783,7 @@ func TextviewDragFromTheQuestionInto(cx *core.Scope) string {
 
 // TextviewDragFromTheQuestionInto says "Drag from the question into the answer"
 // in the language of msgs.
-func (msgs Messages) TextviewDragFromTheQuestionInto() string { return msgs.text(1730) }
+func (msgs Messages) TextviewDragFromTheQuestionInto() string { return msgs.text(1738) }
 
 // StorageClearTheStorage says "Clear the storage?"
 // in the language the app shows under cx.
@@ -31661,7 +31791,7 @@ func StorageClearTheStorage(cx *core.Scope) string { return For(cx).StorageClear
 
 // StorageClearTheStorage says "Clear the storage?"
 // in the language of msgs.
-func (msgs Messages) StorageClearTheStorage() string { return msgs.text(1731) }
+func (msgs Messages) StorageClearTheStorage() string { return msgs.text(1739) }
 
 // StorageRemovesEveryKeyTheGallery says "Removes every key the gallery keeps, the launch count and the note among them."
 // in the language the app shows under cx.
@@ -31671,7 +31801,7 @@ func StorageRemovesEveryKeyTheGallery(cx *core.Scope) string {
 
 // StorageRemovesEveryKeyTheGallery says "Removes every key the gallery keeps, the launch count and the note among them."
 // in the language of msgs.
-func (msgs Messages) StorageRemovesEveryKeyTheGallery() string { return msgs.text(1732) }
+func (msgs Messages) StorageRemovesEveryKeyTheGallery() string { return msgs.text(1740) }
 
 // StorageCancel says "Cancel"
 // in the language the app shows under cx.
@@ -31679,7 +31809,7 @@ func StorageCancel(cx *core.Scope) string { return For(cx).StorageCancel() }
 
 // StorageCancel says "Cancel"
 // in the language of msgs.
-func (msgs Messages) StorageCancel() string { return msgs.text(1733) }
+func (msgs Messages) StorageCancel() string { return msgs.text(1741) }
 
 // StorageClear says "Clear"
 // in the language the app shows under cx.
@@ -31687,7 +31817,7 @@ func StorageClear(cx *core.Scope) string { return For(cx).StorageClear() }
 
 // StorageClear says "Clear"
 // in the language of msgs.
-func (msgs Messages) StorageClear() string { return msgs.text(1734) }
+func (msgs Messages) StorageClear() string { return msgs.text(1742) }
 
 // StorageLaunches says "Launches"
 // in the language the app shows under cx.
@@ -31695,7 +31825,7 @@ func StorageLaunches(cx *core.Scope) string { return For(cx).StorageLaunches() }
 
 // StorageLaunches says "Launches"
 // in the language of msgs.
-func (msgs Messages) StorageLaunches() string { return msgs.text(1735) }
+func (msgs Messages) StorageLaunches() string { return msgs.text(1743) }
 
 // StorageCountedEachTimeThisDemo says "Counted each time this demo opens"
 // in the language the app shows under cx.
@@ -31705,7 +31835,7 @@ func StorageCountedEachTimeThisDemo(cx *core.Scope) string {
 
 // StorageCountedEachTimeThisDemo says "Counted each time this demo opens"
 // in the language of msgs.
-func (msgs Messages) StorageCountedEachTimeThisDemo() string { return msgs.text(1736) }
+func (msgs Messages) StorageCountedEachTimeThisDemo() string { return msgs.text(1744) }
 
 // StorageKept says "Kept"
 // in the language the app shows under cx.
@@ -31713,7 +31843,7 @@ func StorageKept(cx *core.Scope) string { return For(cx).StorageKept() }
 
 // StorageKept says "Kept"
 // in the language of msgs.
-func (msgs Messages) StorageKept() string { return msgs.text(1737) }
+func (msgs Messages) StorageKept() string { return msgs.text(1745) }
 
 // StorageNote says "Note"
 // in the language the app shows under cx.
@@ -31721,7 +31851,7 @@ func StorageNote(cx *core.Scope) string { return For(cx).StorageNote() }
 
 // StorageNote says "Note"
 // in the language of msgs.
-func (msgs Messages) StorageNote() string { return msgs.text(1738) }
+func (msgs Messages) StorageNote() string { return msgs.text(1746) }
 
 // StorageSavedAsYouTypeBack says "Saved as you type, back when the demo opens again"
 // in the language the app shows under cx.
@@ -31729,7 +31859,7 @@ func StorageSavedAsYouTypeBack(cx *core.Scope) string { return For(cx).StorageSa
 
 // StorageSavedAsYouTypeBack says "Saved as you type, back when the demo opens again"
 // in the language of msgs.
-func (msgs Messages) StorageSavedAsYouTypeBack() string { return msgs.text(1739) }
+func (msgs Messages) StorageSavedAsYouTypeBack() string { return msgs.text(1747) }
 
 // StorageWriteSomethingThenComeBack says "Write something, then come back to it"
 // in the language the app shows under cx.
@@ -31739,7 +31869,7 @@ func StorageWriteSomethingThenComeBack(cx *core.Scope) string {
 
 // StorageWriteSomethingThenComeBack says "Write something, then come back to it"
 // in the language of msgs.
-func (msgs Messages) StorageWriteSomethingThenComeBack() string { return msgs.text(1740) }
+func (msgs Messages) StorageWriteSomethingThenComeBack() string { return msgs.text(1748) }
 
 // StorageSaved says "Saved"
 // in the language the app shows under cx.
@@ -31747,7 +31877,7 @@ func StorageSaved(cx *core.Scope) string { return For(cx).StorageSaved() }
 
 // StorageSaved says "Saved"
 // in the language of msgs.
-func (msgs Messages) StorageSaved() string { return msgs.text(1741) }
+func (msgs Messages) StorageSaved() string { return msgs.text(1749) }
 
 // StorageNotSaved says "Not saved"
 // in the language the app shows under cx.
@@ -31755,7 +31885,7 @@ func StorageNotSaved(cx *core.Scope) string { return For(cx).StorageNotSaved() }
 
 // StorageNotSaved says "Not saved"
 // in the language of msgs.
-func (msgs Messages) StorageNotSaved() string { return msgs.text(1742) }
+func (msgs Messages) StorageNotSaved() string { return msgs.text(1750) }
 
 // StorageStoredKeys says "Stored keys"
 // in the language the app shows under cx.
@@ -31763,7 +31893,7 @@ func StorageStoredKeys(cx *core.Scope) string { return For(cx).StorageStoredKeys
 
 // StorageStoredKeys says "Stored keys"
 // in the language of msgs.
-func (msgs Messages) StorageStoredKeys() string { return msgs.text(1743) }
+func (msgs Messages) StorageStoredKeys() string { return msgs.text(1751) }
 
 // StorageKeysAndEachValueS says "Keys and each value's length"
 // in the language the app shows under cx.
@@ -31771,7 +31901,7 @@ func StorageKeysAndEachValueS(cx *core.Scope) string { return For(cx).StorageKey
 
 // StorageKeysAndEachValueS says "Keys and each value's length"
 // in the language of msgs.
-func (msgs Messages) StorageKeysAndEachValueS() string { return msgs.text(1744) }
+func (msgs Messages) StorageKeysAndEachValueS() string { return msgs.text(1752) }
 
 // StorageNothingStored says "Nothing stored"
 // in the language the app shows under cx.
@@ -31779,7 +31909,7 @@ func StorageNothingStored(cx *core.Scope) string { return For(cx).StorageNothing
 
 // StorageNothingStored says "Nothing stored"
 // in the language of msgs.
-func (msgs Messages) StorageNothingStored() string { return msgs.text(1745) }
+func (msgs Messages) StorageNothingStored() string { return msgs.text(1753) }
 
 // StorageClearAll says "Clear all"
 // in the language the app shows under cx.
@@ -31787,7 +31917,7 @@ func StorageClearAll(cx *core.Scope) string { return For(cx).StorageClearAll() }
 
 // StorageClearAll says "Clear all"
 // in the language of msgs.
-func (msgs Messages) StorageClearAll() string { return msgs.text(1746) }
+func (msgs Messages) StorageClearAll() string { return msgs.text(1754) }
 
 // StorageTheDataStaysOnThis says "The data stays on this device and survives restarts, under the app's id from nsgo.yaml."
 // in the language the app shows under cx.
@@ -31795,7 +31925,7 @@ func StorageTheDataStaysOnThis(cx *core.Scope) string { return For(cx).StorageTh
 
 // StorageTheDataStaysOnThis says "The data stays on this device and survives restarts, under the app's id from nsgo.yaml."
 // in the language of msgs.
-func (msgs Messages) StorageTheDataStaysOnThis() string { return msgs.text(1747) }
+func (msgs Messages) StorageTheDataStaysOnThis() string { return msgs.text(1755) }
 
 // StorageNoneOnThisTarget says "none on this target"
 // in the language the app shows under cx.
@@ -31803,7 +31933,7 @@ func StorageNoneOnThisTarget(cx *core.Scope) string { return For(cx).StorageNone
 
 // StorageNoneOnThisTarget says "none on this target"
 // in the language of msgs.
-func (msgs Messages) StorageNoneOnThisTarget() string { return msgs.text(1748) }
+func (msgs Messages) StorageNoneOnThisTarget() string { return msgs.text(1756) }
 
 // StorageAppDirectories says "App directories"
 // in the language the app shows under cx.
@@ -31811,7 +31941,7 @@ func StorageAppDirectories(cx *core.Scope) string { return For(cx).StorageAppDir
 
 // StorageAppDirectories says "App directories"
 // in the language of msgs.
-func (msgs Messages) StorageAppDirectories() string { return msgs.text(1749) }
+func (msgs Messages) StorageAppDirectories() string { return msgs.text(1757) }
 
 // StorageDatadirAndCachedirNamedBy says "DataDir and CacheDir, named by the app's id"
 // in the language the app shows under cx.
@@ -31821,7 +31951,7 @@ func StorageDatadirAndCachedirNamedBy(cx *core.Scope) string {
 
 // StorageDatadirAndCachedirNamedBy says "DataDir and CacheDir, named by the app's id"
 // in the language of msgs.
-func (msgs Messages) StorageDatadirAndCachedirNamedBy() string { return msgs.text(1750) }
+func (msgs Messages) StorageDatadirAndCachedirNamedBy() string { return msgs.text(1758) }
 
 // StorageData says "Data"
 // in the language the app shows under cx.
@@ -31829,7 +31959,7 @@ func StorageData(cx *core.Scope) string { return For(cx).StorageData() }
 
 // StorageData says "Data"
 // in the language of msgs.
-func (msgs Messages) StorageData() string { return msgs.text(1751) }
+func (msgs Messages) StorageData() string { return msgs.text(1759) }
 
 // StorageCache says "Cache"
 // in the language the app shows under cx.
@@ -31837,7 +31967,7 @@ func StorageCache(cx *core.Scope) string { return For(cx).StorageCache() }
 
 // StorageCache says "Cache"
 // in the language of msgs.
-func (msgs Messages) StorageCache() string { return msgs.text(1752) }
+func (msgs Messages) StorageCache() string { return msgs.text(1760) }
 
 // PhysicsDragAndRelease says "Drag and release"
 // in the language the app shows under cx.
@@ -31845,7 +31975,7 @@ func PhysicsDragAndRelease(cx *core.Scope) string { return For(cx).PhysicsDragAn
 
 // PhysicsDragAndRelease says "Drag and release"
 // in the language of msgs.
-func (msgs Messages) PhysicsDragAndRelease() string { return msgs.text(1753) }
+func (msgs Messages) PhysicsDragAndRelease() string { return msgs.text(1761) }
 
 // PhysicsTapToPulseLongPress says "Tap to pulse, long press to reset"
 // in the language the app shows under cx.
@@ -31853,7 +31983,7 @@ func PhysicsTapToPulseLongPress(cx *core.Scope) string { return For(cx).PhysicsT
 
 // PhysicsTapToPulseLongPress says "Tap to pulse, long press to reset"
 // in the language of msgs.
-func (msgs Messages) PhysicsTapToPulseLongPress() string { return msgs.text(1754) }
+func (msgs Messages) PhysicsTapToPulseLongPress() string { return msgs.text(1762) }
 
 // PhysicsClickToPulsePressAnd says "Click to pulse, press and hold to reset"
 // in the language the app shows under cx.
@@ -31861,7 +31991,7 @@ func PhysicsClickToPulsePressAnd(cx *core.Scope) string { return For(cx).Physics
 
 // PhysicsClickToPulsePressAnd says "Click to pulse, press and hold to reset"
 // in the language of msgs.
-func (msgs Messages) PhysicsClickToPulsePressAnd() string { return msgs.text(1755) }
+func (msgs Messages) PhysicsClickToPulsePressAnd() string { return msgs.text(1763) }
 
 // PhysicsUiThread says "UI thread"
 // in the language the app shows under cx.
@@ -31869,7 +31999,7 @@ func PhysicsUiThread(cx *core.Scope) string { return For(cx).PhysicsUiThread() }
 
 // PhysicsUiThread says "UI thread"
 // in the language of msgs.
-func (msgs Messages) PhysicsUiThread() string { return msgs.text(1756) }
+func (msgs Messages) PhysicsUiThread() string { return msgs.text(1764) }
 
 // PhysicsDraggableCard says "Draggable card"
 // in the language the app shows under cx.
@@ -31877,7 +32007,7 @@ func PhysicsDraggableCard(cx *core.Scope) string { return For(cx).PhysicsDraggab
 
 // PhysicsDraggableCard says "Draggable card"
 // in the language of msgs.
-func (msgs Messages) PhysicsDraggableCard() string { return msgs.text(1757) }
+func (msgs Messages) PhysicsDraggableCard() string { return msgs.text(1765) }
 
 // PhysicsDragMe says "Drag me"
 // in the language the app shows under cx.
@@ -31885,7 +32015,7 @@ func PhysicsDragMe(cx *core.Scope) string { return For(cx).PhysicsDragMe() }
 
 // PhysicsDragMe says "Drag me"
 // in the language of msgs.
-func (msgs Messages) PhysicsDragMe() string { return msgs.text(1758) }
+func (msgs Messages) PhysicsDragMe() string { return msgs.text(1766) }
 
 // PhysicsSpring says "Spring"
 // in the language the app shows under cx.
@@ -31893,7 +32023,7 @@ func PhysicsSpring(cx *core.Scope) string { return For(cx).PhysicsSpring() }
 
 // PhysicsSpring says "Spring"
 // in the language of msgs.
-func (msgs Messages) PhysicsSpring() string { return msgs.text(1759) }
+func (msgs Messages) PhysicsSpring() string { return msgs.text(1767) }
 
 // PhysicsCoast says "Coast"
 // in the language the app shows under cx.
@@ -31901,7 +32031,7 @@ func PhysicsCoast(cx *core.Scope) string { return For(cx).PhysicsCoast() }
 
 // PhysicsCoast says "Coast"
 // in the language of msgs.
-func (msgs Messages) PhysicsCoast() string { return msgs.text(1760) }
+func (msgs Messages) PhysicsCoast() string { return msgs.text(1768) }
 
 // PhysicsSnap says "Snap"
 // in the language the app shows under cx.
@@ -31909,7 +32039,7 @@ func PhysicsSnap(cx *core.Scope) string { return For(cx).PhysicsSnap() }
 
 // PhysicsSnap says "Snap"
 // in the language of msgs.
-func (msgs Messages) PhysicsSnap() string { return msgs.text(1761) }
+func (msgs Messages) PhysicsSnap() string { return msgs.text(1769) }
 
 // PhysicsSoft says "Soft"
 // in the language the app shows under cx.
@@ -31917,7 +32047,7 @@ func PhysicsSoft(cx *core.Scope) string { return For(cx).PhysicsSoft() }
 
 // PhysicsSoft says "Soft"
 // in the language of msgs.
-func (msgs Messages) PhysicsSoft() string { return msgs.text(1762) }
+func (msgs Messages) PhysicsSoft() string { return msgs.text(1770) }
 
 // PhysicsBouncy says "Bouncy"
 // in the language the app shows under cx.
@@ -31925,7 +32055,7 @@ func PhysicsBouncy(cx *core.Scope) string { return For(cx).PhysicsBouncy() }
 
 // PhysicsBouncy says "Bouncy"
 // in the language of msgs.
-func (msgs Messages) PhysicsBouncy() string { return msgs.text(1763) }
+func (msgs Messages) PhysicsBouncy() string { return msgs.text(1771) }
 
 // PhysicsFirm says "Firm"
 // in the language the app shows under cx.
@@ -31933,7 +32063,7 @@ func PhysicsFirm(cx *core.Scope) string { return For(cx).PhysicsFirm() }
 
 // PhysicsFirm says "Firm"
 // in the language of msgs.
-func (msgs Messages) PhysicsFirm() string { return msgs.text(1764) }
+func (msgs Messages) PhysicsFirm() string { return msgs.text(1772) }
 
 // PhysicsReleases says "Releases"
 // in the language the app shows under cx.
@@ -31941,7 +32071,7 @@ func PhysicsReleases(cx *core.Scope) string { return For(cx).PhysicsReleases() }
 
 // PhysicsReleases says "Releases"
 // in the language of msgs.
-func (msgs Messages) PhysicsReleases() string { return msgs.text(1765) }
+func (msgs Messages) PhysicsReleases() string { return msgs.text(1773) }
 
 // PhysicsSpeed says "Speed"
 // in the language the app shows under cx.
@@ -31949,7 +32079,7 @@ func PhysicsSpeed(cx *core.Scope) string { return For(cx).PhysicsSpeed() }
 
 // PhysicsSpeed says "Speed"
 // in the language of msgs.
-func (msgs Messages) PhysicsSpeed() string { return msgs.text(1766) }
+func (msgs Messages) PhysicsSpeed() string { return msgs.text(1774) }
 
 // PhysicsCorner says "Corner"
 // in the language the app shows under cx.
@@ -31957,7 +32087,7 @@ func PhysicsCorner(cx *core.Scope) string { return For(cx).PhysicsCorner() }
 
 // PhysicsCorner says "Corner"
 // in the language of msgs.
-func (msgs Messages) PhysicsCorner() string { return msgs.text(1767) }
+func (msgs Messages) PhysicsCorner() string { return msgs.text(1775) }
 
 // PhysicsCoastsToAStopThen says "Coasts to a stop, then springs home"
 // in the language the app shows under cx.
@@ -31965,7 +32095,7 @@ func PhysicsCoastsToAStopThen(cx *core.Scope) string { return For(cx).PhysicsCoa
 
 // PhysicsCoastsToAStopThen says "Coasts to a stop, then springs home"
 // in the language of msgs.
-func (msgs Messages) PhysicsCoastsToAStopThen() string { return msgs.text(1768) }
+func (msgs Messages) PhysicsCoastsToAStopThen() string { return msgs.text(1776) }
 
 // PhysicsSpringsToTheCornerThe says "Springs to the corner the fling points at"
 // in the language the app shows under cx.
@@ -31975,7 +32105,7 @@ func PhysicsSpringsToTheCornerThe(cx *core.Scope) string {
 
 // PhysicsSpringsToTheCornerThe says "Springs to the corner the fling points at"
 // in the language of msgs.
-func (msgs Messages) PhysicsSpringsToTheCornerThe() string { return msgs.text(1769) }
+func (msgs Messages) PhysicsSpringsToTheCornerThe() string { return msgs.text(1777) }
 
 // PhysicsSpringsHomeWithTheRelease says "Springs home with the release velocity"
 // in the language the app shows under cx.
@@ -31985,7 +32115,7 @@ func PhysicsSpringsHomeWithTheRelease(cx *core.Scope) string {
 
 // PhysicsSpringsHomeWithTheRelease says "Springs home with the release velocity"
 // in the language of msgs.
-func (msgs Messages) PhysicsSpringsHomeWithTheRelease() string { return msgs.text(1770) }
+func (msgs Messages) PhysicsSpringsHomeWithTheRelease() string { return msgs.text(1778) }
 
 // PhysicsDecay says "Decay"
 // in the language the app shows under cx.
@@ -31993,7 +32123,7 @@ func PhysicsDecay(cx *core.Scope) string { return For(cx).PhysicsDecay() }
 
 // PhysicsDecay says "Decay"
 // in the language of msgs.
-func (msgs Messages) PhysicsDecay() string { return msgs.text(1771) }
+func (msgs Messages) PhysicsDecay() string { return msgs.text(1779) }
 
 // ResizableDragALineBetweenTwo says "Drag a line between two panels with your finger"
 // in the language the app shows under cx.
@@ -32003,7 +32133,7 @@ func ResizableDragALineBetweenTwo(cx *core.Scope) string {
 
 // ResizableDragALineBetweenTwo says "Drag a line between two panels with your finger"
 // in the language of msgs.
-func (msgs Messages) ResizableDragALineBetweenTwo() string { return msgs.text(1772) }
+func (msgs Messages) ResizableDragALineBetweenTwo() string { return msgs.text(1780) }
 
 // ResizableDragALineBetweenTwo2 says "Drag a line between two panels"
 // in the language the app shows under cx.
@@ -32013,7 +32143,7 @@ func ResizableDragALineBetweenTwo2(cx *core.Scope) string {
 
 // ResizableDragALineBetweenTwo2 says "Drag a line between two panels"
 // in the language of msgs.
-func (msgs Messages) ResizableDragALineBetweenTwo2() string { return msgs.text(1773) }
+func (msgs Messages) ResizableDragALineBetweenTwo2() string { return msgs.text(1781) }
 
 // ResizableConsole says "Console"
 // in the language the app shows under cx.
@@ -32021,7 +32151,7 @@ func ResizableConsole(cx *core.Scope) string { return For(cx).ResizableConsole()
 
 // ResizableConsole says "Console"
 // in the language of msgs.
-func (msgs Messages) ResizableConsole() string { return msgs.text(1774) }
+func (msgs Messages) ResizableConsole() string { return msgs.text(1782) }
 
 // ResizableResizeTheSidebar says "Resize the sidebar"
 // in the language the app shows under cx.
@@ -32029,7 +32159,7 @@ func ResizableResizeTheSidebar(cx *core.Scope) string { return For(cx).Resizable
 
 // ResizableResizeTheSidebar says "Resize the sidebar"
 // in the language of msgs.
-func (msgs Messages) ResizableResizeTheSidebar() string { return msgs.text(1775) }
+func (msgs Messages) ResizableResizeTheSidebar() string { return msgs.text(1783) }
 
 // ResizableRow says "Row: "
 // in the language the app shows under cx.
@@ -32037,7 +32167,7 @@ func ResizableRow(cx *core.Scope) string { return For(cx).ResizableRow() }
 
 // ResizableRow says "Row: "
 // in the language of msgs.
-func (msgs Messages) ResizableRow() string { return msgs.text(1776) }
+func (msgs Messages) ResizableRow() string { return msgs.text(1784) }
 
 // ResizableFiles says "Files"
 // in the language the app shows under cx.
@@ -32045,7 +32175,7 @@ func ResizableFiles(cx *core.Scope) string { return For(cx).ResizableFiles() }
 
 // ResizableFiles says "Files"
 // in the language of msgs.
-func (msgs Messages) ResizableFiles() string { return msgs.text(1777) }
+func (msgs Messages) ResizableFiles() string { return msgs.text(1785) }
 
 // Resizable120To360Pt says "120 to 360 pt"
 // in the language the app shows under cx.
@@ -32053,7 +32183,7 @@ func Resizable120To360Pt(cx *core.Scope) string { return For(cx).Resizable120To3
 
 // Resizable120To360Pt says "120 to 360 pt"
 // in the language of msgs.
-func (msgs Messages) Resizable120To360Pt() string { return msgs.text(1778) }
+func (msgs Messages) Resizable120To360Pt() string { return msgs.text(1786) }
 
 // ResizableResizeTheConsole says "Resize the console"
 // in the language the app shows under cx.
@@ -32061,7 +32191,7 @@ func ResizableResizeTheConsole(cx *core.Scope) string { return For(cx).Resizable
 
 // ResizableResizeTheConsole says "Resize the console"
 // in the language of msgs.
-func (msgs Messages) ResizableResizeTheConsole() string { return msgs.text(1779) }
+func (msgs Messages) ResizableResizeTheConsole() string { return msgs.text(1787) }
 
 // ResizableColumn says "Column: "
 // in the language the app shows under cx.
@@ -32069,7 +32199,7 @@ func ResizableColumn(cx *core.Scope) string { return For(cx).ResizableColumn() }
 
 // ResizableColumn says "Column: "
 // in the language of msgs.
-func (msgs Messages) ResizableColumn() string { return msgs.text(1780) }
+func (msgs Messages) ResizableColumn() string { return msgs.text(1788) }
 
 // ResizableEditor says "Editor"
 // in the language the app shows under cx.
@@ -32077,7 +32207,7 @@ func ResizableEditor(cx *core.Scope) string { return For(cx).ResizableEditor() }
 
 // ResizableEditor says "Editor"
 // in the language of msgs.
-func (msgs Messages) ResizableEditor() string { return msgs.text(1781) }
+func (msgs Messages) ResizableEditor() string { return msgs.text(1789) }
 
 // ResizableTakesTheRoomTheOthers says "Takes the room the others leave"
 // in the language the app shows under cx.
@@ -32087,7 +32217,7 @@ func ResizableTakesTheRoomTheOthers(cx *core.Scope) string {
 
 // ResizableTakesTheRoomTheOthers says "Takes the room the others leave"
 // in the language of msgs.
-func (msgs Messages) ResizableTakesTheRoomTheOthers() string { return msgs.text(1782) }
+func (msgs Messages) ResizableTakesTheRoomTheOthers() string { return msgs.text(1790) }
 
 // ResizableHiddenItKeepsItsSize says "Hidden, it keeps its size"
 // in the language the app shows under cx.
@@ -32097,7 +32227,7 @@ func ResizableHiddenItKeepsItsSize(cx *core.Scope) string {
 
 // ResizableHiddenItKeepsItsSize says "Hidden, it keeps its size"
 // in the language of msgs.
-func (msgs Messages) ResizableHiddenItKeepsItsSize() string { return msgs.text(1783) }
+func (msgs Messages) ResizableHiddenItKeepsItsSize() string { return msgs.text(1791) }
 
 // ResizableLastResize says "Last resize: "
 // in the language the app shows under cx.
@@ -32105,7 +32235,7 @@ func ResizableLastResize(cx *core.Scope) string { return For(cx).ResizableLastRe
 
 // ResizableLastResize says "Last resize: "
 // in the language of msgs.
-func (msgs Messages) ResizableLastResize() string { return msgs.text(1784) }
+func (msgs Messages) ResizableLastResize() string { return msgs.text(1792) }
 
 // Collapsing160EntriesByWeek says "160 entries, by week"
 // in the language the app shows under cx.
@@ -32113,7 +32243,7 @@ func Collapsing160EntriesByWeek(cx *core.Scope) string { return For(cx).Collapsi
 
 // Collapsing160EntriesByWeek says "160 entries, by week"
 // in the language of msgs.
-func (msgs Messages) Collapsing160EntriesByWeek() string { return msgs.text(1785) }
+func (msgs Messages) Collapsing160EntriesByWeek() string { return msgs.text(1793) }
 
 // CollapsingRecent says "Recent"
 // in the language the app shows under cx.
@@ -32121,7 +32251,7 @@ func CollapsingRecent(cx *core.Scope) string { return For(cx).CollapsingRecent()
 
 // CollapsingRecent says "Recent"
 // in the language of msgs.
-func (msgs Messages) CollapsingRecent() string { return msgs.text(1786) }
+func (msgs Messages) CollapsingRecent() string { return msgs.text(1794) }
 
 // CollapsingThatSAll160Entries says "That's all 160 entries"
 // in the language the app shows under cx.
@@ -32131,7 +32261,7 @@ func CollapsingThatSAll160Entries(cx *core.Scope) string {
 
 // CollapsingThatSAll160Entries says "That's all 160 entries"
 // in the language of msgs.
-func (msgs Messages) CollapsingThatSAll160Entries() string { return msgs.text(1787) }
+func (msgs Messages) CollapsingThatSAll160Entries() string { return msgs.text(1795) }
 
 // CollapsingAFooterAfterTheList says "A footer after the list: the list keeps only the rows near the screen, at its full length in the page."
 // in the language the app shows under cx.
@@ -32141,7 +32271,7 @@ func CollapsingAFooterAfterTheList(cx *core.Scope) string {
 
 // CollapsingAFooterAfterTheList says "A footer after the list: the list keeps only the rows near the screen, at its full length in the page."
 // in the language of msgs.
-func (msgs Messages) CollapsingAFooterAfterTheList() string { return msgs.text(1788) }
+func (msgs Messages) CollapsingAFooterAfterTheList() string { return msgs.text(1796) }
 
 // UiLightAppearance says "Light appearance"
 // in the language the app shows under cx.
@@ -32149,7 +32279,7 @@ func UiLightAppearance(cx *core.Scope) string { return For(cx).UiLightAppearance
 
 // UiLightAppearance says "Light appearance"
 // in the language of msgs.
-func (msgs Messages) UiLightAppearance() string { return msgs.text(1789) }
+func (msgs Messages) UiLightAppearance() string { return msgs.text(1797) }
 
 // UiDarkAppearance says "Dark appearance"
 // in the language the app shows under cx.
@@ -32157,7 +32287,7 @@ func UiDarkAppearance(cx *core.Scope) string { return For(cx).UiDarkAppearance()
 
 // UiDarkAppearance says "Dark appearance"
 // in the language of msgs.
-func (msgs Messages) UiDarkAppearance() string { return msgs.text(1790) }
+func (msgs Messages) UiDarkAppearance() string { return msgs.text(1798) }
 
 // UiBack says "Back"
 // in the language the app shows under cx.
@@ -32165,7 +32295,7 @@ func UiBack(cx *core.Scope) string { return For(cx).UiBack() }
 
 // UiBack says "Back"
 // in the language of msgs.
-func (msgs Messages) UiBack() string { return msgs.text(1791) }
+func (msgs Messages) UiBack() string { return msgs.text(1799) }
 
 // ViewerImage says "Image"
 // in the language the app shows under cx.
@@ -32173,7 +32303,7 @@ func ViewerImage(cx *core.Scope) string { return For(cx).ViewerImage() }
 
 // ViewerImage says "Image"
 // in the language of msgs.
-func (msgs Messages) ViewerImage() string { return msgs.text(1792) }
+func (msgs Messages) ViewerImage() string { return msgs.text(1800) }
 
 // ViewerClose says "Close"
 // in the language the app shows under cx.
@@ -32181,7 +32311,7 @@ func ViewerClose(cx *core.Scope) string { return For(cx).ViewerClose() }
 
 // ViewerClose says "Close"
 // in the language of msgs.
-func (msgs Messages) ViewerClose() string { return msgs.text(1793) }
+func (msgs Messages) ViewerClose() string { return msgs.text(1801) }
 
 // ToastClose says "Close"
 // in the language the app shows under cx.
@@ -32189,7 +32319,7 @@ func ToastClose(cx *core.Scope) string { return For(cx).ToastClose() }
 
 // ToastClose says "Close"
 // in the language of msgs.
-func (msgs Messages) ToastClose() string { return msgs.text(1794) }
+func (msgs Messages) ToastClose() string { return msgs.text(1802) }
 
 // EditorErrors says "{count, plural, one {# error} other {# errors}}"
 // in the language the app shows under cx.

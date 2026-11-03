@@ -164,8 +164,12 @@ type gallery struct {
 	sidebarWidth *core.Signal[core.Points]
 	// chosen is the label of the last application menu item chosen.
 	chosen *core.Signal[string]
-	// language is the one chosen in the language menu, "" the system's.
+	// language is the one chosen in the settings, "" the system's.
 	language *core.Signal[string]
+	// settingsOpen is whether the settings show, and settingsCategory and
+	// settingsQuery what they show.
+	settingsOpen                    *core.Signal[bool]
+	settingsCategory, settingsQuery *core.Signal[string]
 	// wasDesktop is whether the desktop layout has been shown, for the
 	// switch back.
 	wasDesktop bool
@@ -223,14 +227,17 @@ func Root(cx *core.Scope) core.Node {
 	env := cx.Env()
 	first := groups[0].demos[0].name
 	g := &gallery{
-		nav:          base.NewNav(cx, route{}),
-		selected:     core.NewSignal(cx, first),
-		sidebarOpen:  core.NewSignal(cx, true),
-		sidebarWidth: core.NewSignal(cx, sidebarWidth),
-		chosen:       core.NewSignal(cx, locales.For(cx).AppNothingYet()),
-		language:     core.NewSignal(cx, ""),
-		env:          env,
-		toasts:       newToaster(cx),
+		nav:              base.NewNav(cx, route{}),
+		selected:         core.NewSignal(cx, first),
+		sidebarOpen:      core.NewSignal(cx, true),
+		sidebarWidth:     core.NewSignal(cx, sidebarWidth),
+		chosen:           core.NewSignal(cx, locales.For(cx).AppNothingYet()),
+		language:         core.NewSignal(cx, ""),
+		settingsOpen:     core.NewSignal(cx, false),
+		settingsCategory: core.NewSignal(cx, ""),
+		settingsQuery:    core.NewSignal(cx, ""),
+		env:              env,
+		toasts:           newToaster(cx),
 	}
 	desktopLayout := core.NewMemo(cx, func() bool {
 		limit := tabletWidth
@@ -268,7 +275,7 @@ func Root(cx *core.Scope) core.Node {
 			if hasWindow && !wide {
 				children = append(children, g.titleBar(cx))
 			}
-			children = append(children, body, g.toasts.view(wide))
+			children = append(children, body, g.settingsDialog(cx), g.toasts.view(wide))
 			return core.View{StyleFunc: func() core.Style {
 				return fillPage.Merge(core.Style{Background: ui.Chrome(cx), Color: colors.Text()})
 			}, Children: children}
@@ -358,9 +365,9 @@ func (g *gallery) phone(cx *core.Scope) core.Node {
 					Children: []core.Node{core.Func(func(cx *core.Scope) core.Node { return d.screen(cx) })}}}}
 		}
 		return base.NavPage{Title: tr.AppGallery(), TestID: "index", HeaderStyleFunc: headerStyle(cx),
-			HeaderRight: core.View{Style: headerActions, Children: []core.Node{g.languageMenu(cx), barThemeToggle(cx)}},
+			HeaderRight: core.View{Style: headerActions, Children: []core.Node{g.barSettingsButton(cx), barThemeToggle(cx)}},
 			Header: pageHeader(cx, pageHeaderProps{title: tr.AppGallery(), root: true,
-				right: core.View{Style: headerActions, Children: []core.Node{g.languageMenu(cx), themeToggle(cx)}}}),
+				right: core.View{Style: headerActions, Children: []core.Node{g.settingsButton(cx), themeToggle(cx)}}}),
 			Children: []core.Node{g.home(cx)}}
 	})
 }
@@ -436,7 +443,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		cx.OnKey("mod+b", g.toggleSidebar)
 	}
 	tr := locales.For(cx)
-	return ui.SidebarShell{TestID: "shell", Sidebar: []core.Node{g.sidebar(tr)}, SidebarFooter: []core.Node{ui.Spacer{}, g.languageMenu(cx), themeToggle(cx)},
+	return ui.SidebarShell{TestID: "shell", Sidebar: []core.Node{g.sidebar(tr)}, SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeToggle(cx)},
 		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 200, MaxWidth: 360,
 		ResizeLabel: tr.AppResizeSidebar(),

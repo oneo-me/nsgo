@@ -1,6 +1,14 @@
 languageName: العربية
 language: اللغة
 languageSystem: اتباع النظام
+settings: الإعدادات
+settingsSearch: البحث في الإعدادات
+settingsSearchPlaceholder: بحث
+settingsResults: النتائج
+settingsEmpty: لا توجد إعدادات مطابقة.
+settingsClose: إغلاق الإعدادات
+settingsGeneral: عام
+settingsLanguageDetail: اللغة التي يعرضها المعرض ومكونات NSGo، واتجاه قراءتها.
 # NSGo is not translated to Arabic: the gallery supplies it.
 github.com/oneo-me/nsgo/base/locales:
   sortBy: "الفرز حسب {column}"

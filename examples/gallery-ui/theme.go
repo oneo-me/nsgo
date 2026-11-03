@@ -1,9 +1,10 @@
 // Package ui is the gallery's look and the components it shares, as NSH's
 // nsh-gallery-ui is its gallery's: colors, finishes and motion here,
 // styled components over base and core in components.go, the parts
-// several demos share in parts.go, Onexa's sidebar shell in shell.go and
-// the line icons. It composes base and core and is maintained with the
-// gallery, not published as an API.
+// several demos share in parts.go, Onexa's sidebar shell in shell.go,
+// Onevra's settings surface in settings.go and the line icons. It
+// composes base and core and is maintained with the gallery, not
+// published as an API.
 //
 // The look is Onevra's palette: a warm page, cards with an inset surface
 // and one orange accent, the logo's. Sizes are for phones: 44 pt touch
