@@ -36,9 +36,19 @@ type Translation struct {
 
 var supplied = map[string]Translation{}
 
+// The indexes of the messages without arguments in texts.
+const (
+	textAlertNote = iota
+	textAlertTip
+	textAlertImportant
+	textAlertWarning
+	textAlertCaution
+	numTexts
+)
+
 // texts are the messages without arguments, by language, in the
-// source's order; "" where a language lacks one.
-var texts = map[string][]string{
+// order of their indexes; "" where a language lacks one.
+var texts = map[string]*[numTexts]string{
 	"en": {
 		"Note",
 		"Tip",
@@ -64,7 +74,7 @@ var texts = map[string][]string{
 
 // suppliedTexts are the messages without arguments other packages
 // supply, as texts are.
-var suppliedTexts = map[string][]string{}
+var suppliedTexts = map[string]*[numTexts]string{}
 
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
@@ -89,23 +99,23 @@ func Supply(lang string, t Translation) {
 	s := supplied[lang]
 	st := suppliedTexts[lang]
 	if st == nil {
-		st = make([]string, 5)
+		st = new([numTexts]string)
 		suppliedTexts[lang] = st
 	}
 	if t.AlertNote != nil {
-		st[0] = t.AlertNote()
+		st[textAlertNote] = t.AlertNote()
 	}
 	if t.AlertTip != nil {
-		st[1] = t.AlertTip()
+		st[textAlertTip] = t.AlertTip()
 	}
 	if t.AlertImportant != nil {
-		st[2] = t.AlertImportant()
+		st[textAlertImportant] = t.AlertImportant()
 	}
 	if t.AlertWarning != nil {
-		st[3] = t.AlertWarning()
+		st[textAlertWarning] = t.AlertWarning()
 	}
 	if t.AlertCaution != nil {
-		st[4] = t.AlertCaution()
+		st[textAlertCaution] = t.AlertCaution()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -119,7 +129,7 @@ func AlertNote(cx *core.Scope) string { return For(cx).AlertNote() }
 
 // AlertNote says "Note"
 // in the language of msgs.
-func (msgs Messages) AlertNote() string { return msgs.text(0) }
+func (msgs Messages) AlertNote() string { return msgs.text(textAlertNote) }
 
 // AlertTip says "Tip"
 // in the language the app shows under cx.
@@ -129,7 +139,7 @@ func AlertTip(cx *core.Scope) string { return For(cx).AlertTip() }
 
 // AlertTip says "Tip"
 // in the language of msgs.
-func (msgs Messages) AlertTip() string { return msgs.text(1) }
+func (msgs Messages) AlertTip() string { return msgs.text(textAlertTip) }
 
 // AlertImportant says "Important"
 // in the language the app shows under cx.
@@ -139,7 +149,7 @@ func AlertImportant(cx *core.Scope) string { return For(cx).AlertImportant() }
 
 // AlertImportant says "Important"
 // in the language of msgs.
-func (msgs Messages) AlertImportant() string { return msgs.text(2) }
+func (msgs Messages) AlertImportant() string { return msgs.text(textAlertImportant) }
 
 // AlertWarning says "Warning"
 // in the language the app shows under cx.
@@ -149,7 +159,7 @@ func AlertWarning(cx *core.Scope) string { return For(cx).AlertWarning() }
 
 // AlertWarning says "Warning"
 // in the language of msgs.
-func (msgs Messages) AlertWarning() string { return msgs.text(3) }
+func (msgs Messages) AlertWarning() string { return msgs.text(textAlertWarning) }
 
 // AlertCaution says "Caution"
 // in the language the app shows under cx.
@@ -159,4 +169,4 @@ func AlertCaution(cx *core.Scope) string { return For(cx).AlertCaution() }
 
 // AlertCaution says "Caution"
 // in the language of msgs.
-func (msgs Messages) AlertCaution() string { return msgs.text(4) }
+func (msgs Messages) AlertCaution() string { return msgs.text(textAlertCaution) }

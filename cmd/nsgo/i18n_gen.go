@@ -63,24 +63,42 @@ func (c *catalog) generate() ([]byte, error) {
 	g.p("}")
 	g.p("")
 	// Messages without arguments are constants: a table per language,
-	// which one method looks up, rather than code per message.
-	index := map[string]int{}
-	var constants []string
+	// which one method looks up, rather than code per message. Each has
+	// a named index, so adding a message changes no other's code.
+	index := map[string]string{}
 	for _, key := range c.keys {
 		if len(c.params[key]) == 0 {
-			index[key] = len(constants)
-			constants = append(constants, key)
+			index[key] = "text" + exportName(key)
 		}
 	}
 	g.p("var supplied = map[string]Translation{}")
 	g.p("")
-	if len(constants) > 0 {
+	if len(index) > 0 {
+		g.p("// The indexes of the messages without arguments in texts.")
+		g.p("const (")
+		first := true
+		for _, key := range c.keys {
+			if name, ok := index[key]; ok {
+				if first {
+					g.p("\t%s = iota", name)
+					first = false
+				} else {
+					g.p("\t%s", name)
+				}
+			}
+		}
+		g.p("\tnumTexts")
+		g.p(")")
+		g.p("")
 		g.p("// texts are the messages without arguments, by language, in the")
-		g.p("// source's order; \"\" where a language lacks one.")
-		g.p("var texts = map[string][]string{")
+		g.p("// order of their indexes; \"\" where a language lacks one.")
+		g.p("var texts = map[string]*[numTexts]string{")
 		for _, lang := range langs {
 			g.p("\t%q: {", lang)
-			for _, key := range constants {
+			for _, key := range c.keys {
+				if _, ok := index[key]; !ok {
+					continue
+				}
 				text := ""
 				if m := c.files[lang].msgs[key]; m != nil {
 					text = constantText(m.parts)
@@ -93,7 +111,7 @@ func (c *catalog) generate() ([]byte, error) {
 		g.p("")
 		g.p("// suppliedTexts are the messages without arguments other packages")
 		g.p("// supply, as texts are.")
-		g.p("var suppliedTexts = map[string][]string{}")
+		g.p("var suppliedTexts = map[string]*[numTexts]string{}")
 		g.p("")
 		g.p("// text says the message without arguments at i in the language of msgs,")
 		g.p("// else of the languages it falls back to, else of the source.")
@@ -117,10 +135,10 @@ func (c *catalog) generate() ([]byte, error) {
 	g.p("// them as it initializes.")
 	g.p("func Supply(lang string, t Translation) {")
 	g.p("\ts := supplied[lang]")
-	if len(constants) > 0 {
+	if len(index) > 0 {
 		g.p("\tst := suppliedTexts[lang]")
 		g.p("\tif st == nil {")
-		g.p("\t\tst = make([]string, %d)", len(constants))
+		g.p("\t\tst = new([numTexts]string)")
 		g.p("\t\tsuppliedTexts[lang] = st")
 		g.p("\t}")
 	}
@@ -128,7 +146,7 @@ func (c *catalog) generate() ([]byte, error) {
 		name := exportName(key)
 		g.p("\tif t.%s != nil {", name)
 		if i, ok := index[key]; ok {
-			g.p("\t\tst[%d] = t.%s()", i, name)
+			g.p("\t\tst[%s] = t.%s()", i, name)
 		} else {
 			g.p("\t\ts.%s = t.%s", name, name)
 		}
@@ -158,7 +176,7 @@ func (c *catalog) generate() ([]byte, error) {
 		g.p("// %s says %s", name, strconv.Quote(m.text))
 		g.p("// in the language of msgs.")
 		if i, ok := index[key]; ok {
-			g.p("func (msgs Messages) %s() string { return msgs.text(%d) }", name, i)
+			g.p("func (msgs Messages) %s() string { return msgs.text(%s) }", name, i)
 			continue
 		}
 		g.p("func (msgs Messages) %s(%s) string {", name, signature(params))

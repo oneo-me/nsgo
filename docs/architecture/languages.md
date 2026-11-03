@@ -36,7 +36,7 @@ The gallery (`examples/gallery/locales`) says its interface in English, Simplifi
 
 ## Generated code
 
-The tool writes `catalog_gen.go` into the directory (`cmd/nsgo/i18n_gen.go`). A message without arguments is a string in a table per language, which one method looks up; one with arguments is compiled to Go per language: a concatenation, or for plurals and selects a `switch` writing to a `strings.Builder`. An app links no YAML, catalog or message parser. The gallery's 1,900 messages in four languages add 1.3 MB to it (2026-11-02). Per key it writes:
+The tool writes `catalog_gen.go` into the directory (`cmd/nsgo/i18n_gen.go`). A message without arguments is a string in a table per language, which one method looks up by a constant named after its key (`textDemoStocks`), so adding a message changes only its own lines; one with arguments is compiled to Go per language: a concatenation, or for plurals and selects a `switch` writing to a `strings.Builder`. An app links no YAML, catalog or message parser. The gallery's 1,900 messages in four languages add 1.3 MB to it (2026-11-02). Per key it writes:
 
 - `Key(cx, args...)`, the message in the language the app shows under `cx`, which a binding (`ContentFunc`, `LabelFunc`) follows as the language changes;
 - `Messages.Key(args...)`, from `In(locale)` or `For(cx)`, for a language of the caller's choice;
