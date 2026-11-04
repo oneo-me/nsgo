@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"unsafe"
 
@@ -52,9 +55,10 @@ const (
 	ofnNoChangeDir      = 0x00000008
 	ofnOverwritePrompt  = 0x00000002
 
-	wmDialog   = 0x8000 + 5 // an open or save dialog waits
-	wmPopup    = 0x8000 + 6 // a context menu waits
-	wmSysKeyUp = 0x0105
+	wmDialog       = 0x8000 + 5 // an open or save dialog waits
+	wmPopup        = 0x8000 + 6 // a context menu waits
+	wmFolderChange = 0x8000 + 8 // the folder dialog opened another folder
+	wmSysKeyUp     = 0x0105
 
 	wmEnterMenuLoop = 0x0211
 	wmExitMenuLoop  = 0x0212
@@ -421,22 +425,119 @@ var (
 // IFileOpenDialog's methods, from IModalWindow's and IFileDialog's, and
 // those of the shell items it answers with.
 const (
-	fileDialogShow       = 3
-	fileDialogSetOptions = 9
-	fileDialogGetOptions = 10
-	fileDialogGetResults = 27
-	itemArrayGetCount    = 7
-	itemArrayGetItemAt   = 8
-	shellItemGetName     = 5
+	fileDialogShow        = 3
+	fileDialogAdvise      = 7
+	fileDialogUnadvise    = 8
+	fileDialogSetOptions  = 9
+	fileDialogGetOptions  = 10
+	fileDialogSetFolder   = 12
+	fileDialogGetFolder   = 13
+	fileDialogSetFileName = 15
+	fileDialogGetResults  = 27
+	itemArrayGetCount     = 7
+	itemArrayGetItemAt    = 8
+	shellItemGetName      = 5
 
-	fosNoChangeDir      = 0x8
-	fosPickFolders      = 0x20
-	fosForceFileSystem  = 0x40
-	fosAllowMultiSelect = 0x200
-	fosPathMustExist    = 0x800
-	sigdnFileSysPath    = 0x80058000
-	hresultCancelled    = 0x800704C7 // HRESULT_FROM_WIN32(ERROR_CANCELLED)
+	fosNoChangeDir              = 0x8
+	fosPickFolders              = 0x20
+	fosForceFileSystem          = 0x40
+	fosAllowMultiSelect         = 0x200
+	fosPathMustExist            = 0x800
+	sigdnFileSysPath            = 0x80058000
+	sigdnDesktopAbsoluteParsing = 0x80028000
+	hresultCancelled            = 0x800704C7 // HRESULT_FROM_WIN32(ERROR_CANCELLED)
+
+	// homeFolder is the CLSID of Windows 11's Home, which is not on the
+	// file system.
+	homeFolder = "{F874310E-B6B7-47DC-BC84-B9E6B38F5903}"
 )
+
+var (
+	iidFileDialogEvents         = parseGUID("973510DB-7D7F-452B-8975-74A85828D354")
+	iidShellItem                = parseGUID("43826D1E-E718-42EE-BC55-A1E261C37BFE")
+	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
+
+	// folderEventsVtbl is IFileDialogEvents': OnFolderChange answers,
+	// and the rest accept.
+	folderEventsVtbl = [10]uintptr{
+		syscall.NewCallback(folderEventsQueryInterface),
+		syscall.NewCallback(folderEventsAddRef),
+		syscall.NewCallback(folderEventsRelease),
+		syscall.NewCallback(func(e *folderEvents, dialog uintptr) uintptr { return sOK }),                 // OnFileOk
+		syscall.NewCallback(func(e *folderEvents, dialog, folder uintptr) uintptr { return sOK }),         // OnFolderChanging
+		syscall.NewCallback(folderEventsFolderChange),                                                     // OnFolderChange
+		syscall.NewCallback(func(e *folderEvents, dialog uintptr) uintptr { return sOK }),                 // OnSelectionChange
+		syscall.NewCallback(func(e *folderEvents, dialog, item, response uintptr) uintptr { return sOK }), // OnShareViolation
+		syscall.NewCallback(func(e *folderEvents, dialog uintptr) uintptr { return sOK }),                 // OnTypeChange
+		syscall.NewCallback(func(e *folderEvents, dialog, item, response uintptr) uintptr { return sOK }), // OnOverwrite
+	}
+)
+
+// folderEvents is the folder dialog's IFileDialogEvents, implemented in
+// Go. The dialog calls it on the window's thread, and the window keeps it
+// alive while the dialog shows, so nothing is freed when it is released.
+type folderEvents struct {
+	vtbl *[10]uintptr
+	refs atomic.Int32
+	w    *window
+}
+
+func folderEventsQueryInterface(e *folderEvents, iid *guid, out *unsafe.Pointer) uintptr {
+	if *iid == iidUnknown || *iid == iidFileDialogEvents {
+		*out = unsafe.Pointer(e)
+		e.refs.Add(1)
+		return sOK
+	}
+	*out = nil
+	return eNoInterface
+}
+
+func folderEventsAddRef(e *folderEvents) uintptr { return uintptr(e.refs.Add(1)) }
+
+func folderEventsRelease(e *folderEvents) uintptr { return uintptr(e.refs.Add(-1)) }
+
+// folderEventsFolderChange has the window check the folder opened once
+// the dialog has finished opening it, which fills in the name field.
+func folderEventsFolderChange(e *folderEvents, dialog uintptr) uintptr {
+	postMessageW.Call(e.w.hwnd, wmFolderChange, 0, 0)
+	return sOK
+}
+
+// leaveVirtualFolder corrects the folder dialog when it opens a folder
+// that is not on the file system, whose name it puts in the name field
+// though Select Folder cannot resolve it: Home opens the user's profile,
+// as Explorer's does, and the field is emptied so Select Folder picks the
+// folder open.
+func (w *window) leaveVirtualFolder() {
+	d := w.folderPick
+	if d == nil {
+		return
+	}
+	var folder *comObject
+	if failed(d.call(fileDialogGetFolder, uintptr(unsafe.Pointer(&folder)))) || folder == nil {
+		return
+	}
+	defer folder.release()
+	var name *uint16
+	if !failed(folder.call(shellItemGetName, sigdnFileSysPath, uintptr(unsafe.Pointer(&name)))) {
+		takeString(name)
+		return
+	}
+	name = nil
+	folder.call(shellItemGetName, sigdnDesktopAbsoluteParsing, uintptr(unsafe.Pointer(&name)))
+	if strings.Contains(strings.ToUpper(takeString(name)), homeFolder) {
+		if home, err := os.UserHomeDir(); err == nil {
+			var item *comObject
+			if hr, _, _ := shCreateItemFromParsingName.Call(uintptr(unsafe.Pointer(wide(home))), 0,
+				uintptr(unsafe.Pointer(&iidShellItem)), uintptr(unsafe.Pointer(&item))); !failed(hr) && item != nil {
+				d.call(fileDialogSetFolder, item.ptr())
+				item.release()
+			}
+		}
+	}
+	empty := uint16(0)
+	d.call(fileDialogSetFileName, uintptr(unsafe.Pointer(&empty)))
+}
 
 // folderDialog returns the paths of the folders chosen in Windows' open
 // dialog for folders (IFileOpenDialog), at most limit; none when it was
@@ -458,7 +559,17 @@ func (w *window) folderDialog(limit int) ([]string, error) {
 		options |= fosAllowMultiSelect
 	}
 	dialog.call(fileDialogSetOptions, uintptr(options))
-	if hr := dialog.call(fileDialogShow, w.owner()); uint32(hr) == hresultCancelled {
+	events := &folderEvents{vtbl: &folderEventsVtbl, w: w}
+	var cookie uint32
+	advised := !failed(dialog.call(fileDialogAdvise, uintptr(unsafe.Pointer(events)), uintptr(unsafe.Pointer(&cookie))))
+	w.folderPick = dialog
+	hr := dialog.call(fileDialogShow, w.owner())
+	w.folderPick = nil
+	if advised {
+		dialog.call(fileDialogUnadvise, uintptr(cookie))
+	}
+	runtime.KeepAlive(events)
+	if uint32(hr) == hresultCancelled {
 		return nil, nil
 	} else if failed(hr) {
 		return nil, hresultError("folder dialog", hr)

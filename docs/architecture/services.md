@@ -76,7 +76,7 @@ Windows checks the registry first because the shell asks the user for an app for
 | macOS | An `NSOpenPanel` sheet with `UTType`s | An `NSOpenPanel` sheet for directories | An `NSSavePanel` sheet, keeping the name's extension |
 | iOS | `UIDocumentPickerViewController` copying into the app's `tmp` | None: an error ([roadmap](../roadmap.md#finish-the-existing-platforms)) | The same, exporting a copy of the staged file |
 | Android | `ACTION_OPEN_DOCUMENT`; Java copies each document into the cache's `nsgo-files` | None: an error | `ACTION_CREATE_DOCUMENT`; Java copies the file in and deletes the document when that fails |
-| Windows | `GetOpenFileNameW` | `IFileOpenDialog` with `FOS_PICKFOLDERS`, which comdlg32 has no peer of | `GetSaveFileNameW`, asking before replacing a file |
+| Windows | `GetOpenFileNameW` | `IFileOpenDialog` with `FOS_PICKFOLDERS`, which comdlg32 has no peer of; Windows 11's Home, not on disk, opens the profile | `GetSaveFileNameW`, asking before replacing a file |
 | Linux | `GtkFileDialog`, filtering by MIME type and suffix | `GtkFileDialog`'s folder selection | `GtkFileDialog`'s save |
 | Web | `<input type=file>` | None: an error | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
 

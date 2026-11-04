@@ -343,8 +343,11 @@ type window struct {
 	alertRestore *textInput
 	// The open and save dialogs and context menus waiting for a message
 	// of their own, and whether one shows.
-	dialogs       []func()
-	inDialog      bool
+	dialogs  []func()
+	inDialog bool
+	// folderPick is the folder dialog showing, which wmFolderChange
+	// corrects (system.go).
+	folderPick    *comObject
 	popups        []popupRequest
 	popupTracking bool
 	// popupChoice is the item a test chose in the menu tracking, which
@@ -1604,6 +1607,9 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		return 0
 	case wmDialog:
 		w.showDialog()
+		return 0
+	case wmFolderChange:
+		w.leaveVirtualFolder()
 		return 0
 	case wmPopup:
 		w.showPopup()

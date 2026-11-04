@@ -198,6 +198,21 @@ func TestServicesReachTheSystem(t *testing.T) {
 	if s := <-status; s != "photos true <nil>" {
 		t.Errorf("picked %q", s)
 	}
+	// Windows 11's Home is not on the file system: it opens the profile.
+	home, _ := os.UserHomeDir()
+	cx.Post(func() {
+		cx.PickDirectories(core.PickDirectoriesOptions{}, func(dirs []core.Directory, err error) {
+			var parts []string
+			for _, d := range dirs {
+				parts = append(parts, fmt.Sprint(strings.EqualFold(d.Path, home)))
+			}
+			status <- fmt.Sprint(strings.Join(parts, ","), " ", err)
+		})
+	})
+	answerFolderDialog(t, hwnd, "shell:::"+homeFolder)
+	if s := <-status; s != "true <nil>" {
+		t.Errorf("picked Home as %q", s)
+	}
 	copied := filepath.Join(filepath.Dir(shot), "copy.txt")
 	cx.Post(func() {
 		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
