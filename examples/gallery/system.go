@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -708,6 +710,44 @@ func filesCard(cx *core.Scope) core.Node {
 			}
 		})
 	}
+	// note writes a text file to the cache, for another app to open or
+	// receive.
+	note := func() (core.SharedFile, bool) {
+		dir := cx.CacheDir()
+		if dir == "" {
+			dir = os.TempDir()
+		}
+		path := filepath.Join(dir, "Hello from NSGo.txt")
+		if err := os.WriteFile(path, []byte("Hello from NSGo\n"), 0o644); err != nil {
+			status.Set(tr.SystemTheOpenFailed() + err.Error())
+			return core.SharedFile{}, false
+		}
+		return core.SharedFile{Path: path}, true
+	}
+	open := func(f core.SharedFile) {
+		cx.OpenFile(f, func(opened bool, err error) {
+			switch {
+			case err != nil:
+				status.Set(tr.SystemTheOpenFailed() + err.Error())
+			case opened:
+				status.Set(tr.SystemOpenedInAnotherApp())
+			default:
+				status.Set(tr.SystemNoAppOpensIt())
+			}
+		})
+	}
+	var shareButton core.Ref
+	share := func(files ...core.SharedFile) {
+		o := core.ShareOptions{Files: files, Text: "Hello from NSGo", Anchor: &shareButton}
+		cx.Share(o, func(shown bool, err error) {
+			switch {
+			case err != nil:
+				status.Set(tr.SystemTheShareFailed() + err.Error())
+			case shown:
+				status.Set(tr.SystemShareSheetShown())
+			}
+		})
+	}
 	small := func(l string, fn func()) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
 	}
@@ -742,6 +782,23 @@ func filesCard(cx *core.Scope) core.Node {
 		}), small(tr.SystemSaveTheFilePicked(), func() {
 			if files := picked.Get(); len(files) > 0 && files[0].Path != "" {
 				save(core.SaveOptions{Name: files[0].Name, Path: files[0].Path})
+			} else {
+				status.Set(tr.SystemPickAFileFirst())
+			}
+		})}},
+		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
+		ui.Caption{Label: "OpenFile · Share"},
+		ui.Wrap{Children: []core.Node{small(tr.SystemOpenATextFile(), func() {
+			if f, ok := note(); ok {
+				open(f)
+			}
+		}), core.View{Ref: &shareButton, Children: []core.Node{small(tr.SystemShareATextFile(), func() {
+			if f, ok := note(); ok {
+				share(f)
+			}
+		})}}, small(tr.SystemShareTheFilePicked(), func() {
+			if files := picked.Get(); len(files) > 0 && files[0].Path != "" {
+				share(core.SharedFile{Path: files[0].Path, Name: files[0].Name, MIME: files[0].MIME})
 			} else {
 				status.Set(tr.SystemPickAFileFirst())
 			}

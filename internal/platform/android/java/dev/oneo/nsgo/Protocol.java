@@ -114,6 +114,8 @@ final class Protocol {
     static final int ITEM_HISTORY = 56;
     static final int ITEM_PICK_FILES = 57;
     static final int ITEM_SAVE_FILE = 58;
+    static final int ITEM_OPEN_FILE = 61;
+    static final int ITEM_SHARE = 62;
 
     // View kinds, as in core/mount.go.
     static final int KIND_VIEW = 1;

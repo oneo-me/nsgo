@@ -1215,6 +1215,22 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.str(it.Save.Path)
 			w.str(it.Save.Name)
 			w.str(it.Save.MIME)
+		case driver.ItemOpenFile:
+			// The file, the name the app opening it sees and its type.
+			w.u32(it.Count)
+			w.str(it.Open.Path)
+			w.str(it.Open.Name)
+			w.str(it.Open.MIME)
+		case driver.ItemShare:
+			// The text, then each file as ItemOpenFile's.
+			w.u32(it.Count)
+			w.str(it.Share.Text)
+			w.u32(uint32(len(it.Share.Files)))
+			for _, f := range it.Share.Files {
+				w.str(f.Path)
+				w.str(f.Name)
+				w.str(f.MIME)
+			}
 		case driver.ItemAppearance:
 			w.byte(byte(it.Appearance))
 		case driver.ItemKeymap:

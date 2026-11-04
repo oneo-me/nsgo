@@ -181,8 +181,10 @@ const (
 	EventScrollEnd
 	// EventFiles answers ItemPickFiles Count with the files picked (Data,
 	// a []File), ItemPickDirectories Count with the folders picked (a
-	// []Directory), none when the user cancelled, and ItemSaveFile Count
-	// with whether the file was saved (Finished); Text is what failed.
+	// []Directory), none when the user cancelled, ItemSaveFile Count
+	// with whether the file was saved (Finished), ItemOpenFile Count with
+	// whether an app opened the file and ItemShare Count with whether the
+	// share sheet showed; Text is what failed.
 	EventFiles
 	// EventModalShown and EventModalDismissed report that the platform
 	// finished presenting modal ID and taking it away, where it says so.

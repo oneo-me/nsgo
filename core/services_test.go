@@ -289,6 +289,120 @@ func TestSaveFile(t *testing.T) {
 	}
 }
 
+func TestOpenFile(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	dir := t.TempDir()
+	src := filepath.Join(dir, "report.pdf")
+	if err := os.WriteFile(src, []byte("%PDF"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	opened, answered := false, 0
+	var openErr error
+	open := func(ok bool, err error) { opened, openErr = ok, err; answered++ }
+	cx.OpenFile(SharedFile{Path: src}, open)
+	it := command(h.commit(), driver.ItemOpenFile)
+	if it == nil || *it.Open != (driver.SharedFile{Path: src, Name: "report.pdf", MIME: "application/pdf"}) {
+		t.Fatalf("open = %+v", it)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if answered != 1 || !opened || openErr != nil {
+		t.Fatalf("opened = %v, %v", opened, openErr)
+	}
+	cx.OpenFile(SharedFile{Path: src, Name: "../Q3.bin", MIME: "application/x-q"}, open)
+	it = command(h.commit(), driver.ItemOpenFile)
+	if it.Open.Name != "Q3.bin" || it.Open.MIME != "application/x-q" {
+		t.Fatalf("open = %+v", it.Open)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count})
+	if answered != 2 || opened || openErr != nil {
+		t.Fatalf("a file no app opens answers %v, %v", opened, openErr)
+	}
+	cx.OpenFile(SharedFile{Path: src}, open)
+	it = command(h.commit(), driver.ItemOpenFile)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoFileOpener})
+	if answered != 3 || openErr == nil || openErr.Error() != driver.NoFileOpener {
+		t.Fatalf("a failed open answers %v", openErr)
+	}
+	for _, path := range []string{"", filepath.Join(dir, "missing"), dir} {
+		cx.OpenFile(SharedFile{Path: path}, open)
+		if openErr == nil || command(h.commit(), driver.ItemOpenFile) != nil {
+			t.Fatalf("opening %q asked the platform, or answered %v", path, openErr)
+		}
+	}
+}
+
+func TestShare(t *testing.T) {
+	var cx *Scope
+	var anchor Ref
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node {
+		cx = c
+		return View{Children: []Node{View{Ref: &anchor, Style: Style{Width: Pt(40), Height: Pt(20)}}}}
+	})
+	h.commit()
+	dir := t.TempDir()
+	a, b := filepath.Join(dir, "a.txt"), filepath.Join(dir, "b.png")
+	for _, p := range []string{a, b} {
+		if err := os.WriteFile(p, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	shown, answered := false, 0
+	var shareErr error
+	share := func(ok bool, err error) { shown, shareErr = ok, err; answered++ }
+	cx.Share(ShareOptions{Files: []SharedFile{{Path: a, Name: "Notes.txt"}, {Path: b}}, Text: "hi", Anchor: &anchor}, share)
+	it := command(h.commit(), driver.ItemShare)
+	want := []driver.SharedFile{{Path: a, Name: "Notes.txt", MIME: "text/plain"}, {Path: b, Name: "b.png", MIME: "image/png"}}
+	if it == nil || !slices.Equal(it.Share.Files, want) || it.Share.Text != "hi" || it.Share.From.Size != (Size{Width: 40, Height: 20}) {
+		t.Fatalf("share = %+v", it.Share)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if answered != 1 || !shown || shareErr != nil {
+		t.Fatalf("shown = %v, %v", shown, shareErr)
+	}
+	cx.Share(ShareOptions{Text: "https://example.com"}, share)
+	it = command(h.commit(), driver.ItemShare)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoShareSheet})
+	if answered != 2 || shown || shareErr == nil {
+		t.Fatalf("a failed share answers %v, %v", shown, shareErr)
+	}
+	for _, o := range []ShareOptions{{}, {Files: []SharedFile{{Path: a}, {Path: filepath.Join(dir, "missing")}}}} {
+		cx.Share(o, share)
+		if shareErr == nil || command(h.commit(), driver.ItemShare) != nil {
+			t.Fatalf("share %+v asked the platform, or answered %v", o, shareErr)
+		}
+	}
+}
+
+func TestSharedFileStage(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "x1.bin")
+	if err := os.WriteFile(src, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if p, err := (driver.SharedFile{Path: src, Name: "x1.bin"}).Stage(filepath.Join(dir, "share")); err != nil || p != src {
+		t.Fatalf("a file under its own name staged as %q, %v", p, err)
+	}
+	stage := filepath.Join(dir, "share")
+	old := filepath.Join(stage, "old")
+	if err := os.MkdirAll(old, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	then := time.Now().Add(-2 * driver.ShareStageAge)
+	os.Chtimes(old, then, then)
+	p, err := (driver.SharedFile{Path: src, Name: "Report.bin"}).Stage(stage)
+	if err != nil || filepath.Base(p) != "Report.bin" {
+		t.Fatalf("staged %q, %v", p, err)
+	}
+	if b, _ := os.ReadFile(p); string(b) != "x" {
+		t.Fatalf("staged %q", b)
+	}
+	if _, err := os.Stat(old); !os.IsNotExist(err) {
+		t.Fatal("an old stage stayed")
+	}
+}
+
 func TestSaveRequestSaveTo(t *testing.T) {
 	dir := t.TempDir()
 	dst := filepath.Join(dir, "out.txt")

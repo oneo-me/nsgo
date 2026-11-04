@@ -1232,6 +1232,12 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemPickDirectories:
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
 			continue
+		case driver.ItemOpenFile:
+			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoFileOpener})
+			continue
+		case driver.ItemShare:
+			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoShareSheet})
+			continue
 		case driver.ItemSaveFile:
 			s.saveFile(*it.Save, it.Count)
 			continue

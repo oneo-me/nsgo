@@ -143,6 +143,60 @@ func (r SaveRequest) Stage(dir string) (string, error) {
 	return path, nil
 }
 
+// SharedFile is a file the app hands another app: one it opens in the
+// app the system associates with it, or one of a share.
+type SharedFile struct {
+	// Path is where it is on disk, absolute once the core resolved it.
+	Path string
+	// Name is the file name the other app sees, Path's own unless the app
+	// gave another; the core fills it in.
+	Name string
+	// MIME is its media type, which the core fills in from Name.
+	MIME string
+}
+
+// ShareRequest is a share as the platform carries it out: files, text,
+// or both, for the system's share sheet.
+type ShareRequest struct {
+	Files []SharedFile
+	Text  string
+	// From is the area the sheet points at where it shows as a popover,
+	// as on macOS and iPads, in the root's points; zero for the root's
+	// center.
+	From Bounds
+}
+
+// What a platform that cannot open a file or share answers ItemOpenFile
+// or ItemShare with.
+const (
+	NoFileOpener = "this platform opens no files in other apps"
+	NoShareSheet = "this platform has no share sheet"
+)
+
+// ShareStageAge is how long a file Stage made stays before a later stage
+// in the same directory removes it: long enough for the app the user
+// chose to read it.
+const ShareStageAge = time.Hour
+
+// Stage returns a path to f under its Name, for platforms that hand
+// files on by path and show a file's own name: Path itself when its name
+// is Name, else a link to it, or a copy where the system allows none, in
+// a new directory under dir. Directories a stage made over ShareStageAge
+// ago go first.
+func (f SharedFile) Stage(dir string) (string, error) {
+	if filepath.Base(f.Path) == f.Name {
+		return f.Path, nil
+	}
+	if entries, err := os.ReadDir(dir); err == nil {
+		for _, e := range entries {
+			if info, err := e.Info(); err == nil && e.IsDir() && time.Since(info.ModTime()) > ShareStageAge {
+				os.RemoveAll(filepath.Join(dir, e.Name()))
+			}
+		}
+	}
+	return SaveRequest{Name: f.Name, Path: f.Path}.Stage(dir)
+}
+
 // FinishFiles returns files as the app gets them: at most r.Limit, each
 // with a name, a type and, for one on disk, its size and modification
 // time.

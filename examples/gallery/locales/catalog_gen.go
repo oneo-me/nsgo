@@ -523,6 +523,14 @@ type Translation struct {
 	SystemSaveATextFile                          func() string
 	SystemSaveTheFilePicked                      func() string
 	SystemPickAFileFirst                         func() string
+	SystemOpenATextFile                          func() string
+	SystemShareATextFile                         func() string
+	SystemShareTheFilePicked                     func() string
+	SystemOpenedInAnotherApp                     func() string
+	SystemNoAppOpensIt                           func() string
+	SystemTheOpenFailed                          func() string
+	SystemShareSheetShown                        func() string
+	SystemTheShareFailed                         func() string
 	SystemCounted                                func(n int) string
 	SystemTitleBarInsets                         func(top float64, left float64, right float64) string
 	SystemClipboardImage                         func(width float64, height float64, bytes int) string
@@ -2437,6 +2445,14 @@ const (
 	textSystemSaveATextFile
 	textSystemSaveTheFilePicked
 	textSystemPickAFileFirst
+	textSystemOpenATextFile
+	textSystemShareATextFile
+	textSystemShareTheFilePicked
+	textSystemOpenedInAnotherApp
+	textSystemNoAppOpensIt
+	textSystemTheOpenFailed
+	textSystemShareSheetShown
+	textSystemTheShareFailed
 	textCommonYes
 	textCommonNo
 	textListsViewableItemsAtLeastHalf
@@ -4241,7 +4257,7 @@ var texts = map[string]*[numTexts]string{
 		"Saved ",
 		"Nothing saved",
 		"Files",
-		"PickFiles · SaveFile",
+		"PickFiles · SaveFile · OpenFile · Share",
 		"Pick a file",
 		"PDFs and images",
 		"Pick a folder",
@@ -4249,6 +4265,14 @@ var texts = map[string]*[numTexts]string{
 		"Save a text file",
 		"Save the file picked",
 		"Pick a file first",
+		"Open a text file",
+		"Share a text file",
+		"Share the file picked",
+		"Opened in another app",
+		"No app opens it",
+		"The open failed: ",
+		"Share sheet shown",
+		"The share failed: ",
 		"yes",
 		"no",
 		"Viewable items (at least half shown)",
@@ -6048,7 +6072,7 @@ var texts = map[string]*[numTexts]string{
 		"تم حفظ ",
 		"لم يُحفظ شيء",
 		"الملفات",
-		"PickFiles · SaveFile",
+		"PickFiles · SaveFile · OpenFile · Share",
 		"اختر ملفًا",
 		"ملفات PDF والصور",
 		"اختر مجلدًا",
@@ -6056,6 +6080,14 @@ var texts = map[string]*[numTexts]string{
 		"حفظ ملف نصي",
 		"حفظ الملف المختار",
 		"اختر ملفًا أولًا",
+		"افتح ملفًا نصيًا",
+		"شارك ملفًا نصيًا",
+		"شارك الملف المختار",
+		"فُتح في تطبيق آخر",
+		"لا يوجد تطبيق يفتحه",
+		"فشل الفتح: ",
+		"عُرضت ورقة المشاركة",
+		"فشلت المشاركة: ",
 		"نعم",
 		"لا",
 		"العناصر المرئية (نصفها على الأقل ظاهر)",
@@ -7855,7 +7887,7 @@ var texts = map[string]*[numTexts]string{
 		"已保存 ",
 		"未保存任何内容",
 		"文件",
-		"PickFiles · SaveFile",
+		"PickFiles · SaveFile · OpenFile · Share",
 		"选取文件",
 		"PDF 和图片",
 		"选取文件夹",
@@ -7863,6 +7895,14 @@ var texts = map[string]*[numTexts]string{
 		"保存一个文本文件",
 		"保存选取的文件",
 		"请先选取文件",
+		"打开文本文件",
+		"分享文本文件",
+		"分享选取的文件",
+		"已在其他应用中打开",
+		"没有应用能打开它",
+		"打开失败：",
+		"已显示分享面板",
+		"分享失败：",
 		"有",
 		"无",
 		"可见项（至少显示一半）",
@@ -9662,7 +9702,7 @@ var texts = map[string]*[numTexts]string{
 		"已儲存 ",
 		"未儲存任何內容",
 		"檔案",
-		"PickFiles · SaveFile",
+		"PickFiles · SaveFile · OpenFile · Share",
 		"選取檔案",
 		"PDF 和圖片",
 		"選取資料夾",
@@ -9670,6 +9710,14 @@ var texts = map[string]*[numTexts]string{
 		"儲存一個文本檔案",
 		"儲存選取的檔案",
 		"請先選取檔案",
+		"開啟文字檔",
+		"分享文字檔",
+		"分享選取的檔案",
+		"已在其他 App 中開啟",
+		"沒有 App 能開啟它",
+		"開啟失敗：",
+		"已顯示分享表單",
+		"分享失敗：",
 		"有",
 		"無",
 		"可見項（至少顯示一半）",
@@ -12435,6 +12483,30 @@ func Supply(lang string, t Translation) {
 	}
 	if t.SystemPickAFileFirst != nil {
 		st[textSystemPickAFileFirst] = t.SystemPickAFileFirst()
+	}
+	if t.SystemOpenATextFile != nil {
+		st[textSystemOpenATextFile] = t.SystemOpenATextFile()
+	}
+	if t.SystemShareATextFile != nil {
+		st[textSystemShareATextFile] = t.SystemShareATextFile()
+	}
+	if t.SystemShareTheFilePicked != nil {
+		st[textSystemShareTheFilePicked] = t.SystemShareTheFilePicked()
+	}
+	if t.SystemOpenedInAnotherApp != nil {
+		st[textSystemOpenedInAnotherApp] = t.SystemOpenedInAnotherApp()
+	}
+	if t.SystemNoAppOpensIt != nil {
+		st[textSystemNoAppOpensIt] = t.SystemNoAppOpensIt()
+	}
+	if t.SystemTheOpenFailed != nil {
+		st[textSystemTheOpenFailed] = t.SystemTheOpenFailed()
+	}
+	if t.SystemShareSheetShown != nil {
+		st[textSystemShareSheetShown] = t.SystemShareSheetShown()
+	}
+	if t.SystemTheShareFailed != nil {
+		st[textSystemTheShareFailed] = t.SystemTheShareFailed()
 	}
 	if t.SystemCounted != nil {
 		s.SystemCounted = t.SystemCounted
@@ -20702,11 +20774,11 @@ func SystemFiles2(cx *core.Scope) string { return For(cx).SystemFiles2() }
 // in the language of msgs.
 func (msgs Messages) SystemFiles2() string { return msgs.text(textSystemFiles2) }
 
-// SystemPickfilesSavefile says "PickFiles · SaveFile"
+// SystemPickfilesSavefile says "PickFiles · SaveFile · OpenFile · Share"
 // in the language the app shows under cx.
 func SystemPickfilesSavefile(cx *core.Scope) string { return For(cx).SystemPickfilesSavefile() }
 
-// SystemPickfilesSavefile says "PickFiles · SaveFile"
+// SystemPickfilesSavefile says "PickFiles · SaveFile · OpenFile · Share"
 // in the language of msgs.
 func (msgs Messages) SystemPickfilesSavefile() string { return msgs.text(textSystemPickfilesSavefile) }
 
@@ -20765,6 +20837,74 @@ func SystemPickAFileFirst(cx *core.Scope) string { return For(cx).SystemPickAFil
 // SystemPickAFileFirst says "Pick a file first"
 // in the language of msgs.
 func (msgs Messages) SystemPickAFileFirst() string { return msgs.text(textSystemPickAFileFirst) }
+
+// SystemOpenATextFile says "Open a text file"
+// in the language the app shows under cx.
+func SystemOpenATextFile(cx *core.Scope) string { return For(cx).SystemOpenATextFile() }
+
+// SystemOpenATextFile says "Open a text file"
+// in the language of msgs.
+func (msgs Messages) SystemOpenATextFile() string { return msgs.text(textSystemOpenATextFile) }
+
+// SystemShareATextFile says "Share a text file"
+// in the language the app shows under cx.
+func SystemShareATextFile(cx *core.Scope) string { return For(cx).SystemShareATextFile() }
+
+// SystemShareATextFile says "Share a text file"
+// in the language of msgs.
+func (msgs Messages) SystemShareATextFile() string { return msgs.text(textSystemShareATextFile) }
+
+// SystemShareTheFilePicked says "Share the file picked"
+// in the language the app shows under cx.
+func SystemShareTheFilePicked(cx *core.Scope) string { return For(cx).SystemShareTheFilePicked() }
+
+// SystemShareTheFilePicked says "Share the file picked"
+// in the language of msgs.
+func (msgs Messages) SystemShareTheFilePicked() string {
+	return msgs.text(textSystemShareTheFilePicked)
+}
+
+// SystemOpenedInAnotherApp says "Opened in another app"
+// in the language the app shows under cx.
+func SystemOpenedInAnotherApp(cx *core.Scope) string { return For(cx).SystemOpenedInAnotherApp() }
+
+// SystemOpenedInAnotherApp says "Opened in another app"
+// in the language of msgs.
+func (msgs Messages) SystemOpenedInAnotherApp() string {
+	return msgs.text(textSystemOpenedInAnotherApp)
+}
+
+// SystemNoAppOpensIt says "No app opens it"
+// in the language the app shows under cx.
+func SystemNoAppOpensIt(cx *core.Scope) string { return For(cx).SystemNoAppOpensIt() }
+
+// SystemNoAppOpensIt says "No app opens it"
+// in the language of msgs.
+func (msgs Messages) SystemNoAppOpensIt() string { return msgs.text(textSystemNoAppOpensIt) }
+
+// SystemTheOpenFailed says "The open failed: "
+// in the language the app shows under cx.
+func SystemTheOpenFailed(cx *core.Scope) string { return For(cx).SystemTheOpenFailed() }
+
+// SystemTheOpenFailed says "The open failed: "
+// in the language of msgs.
+func (msgs Messages) SystemTheOpenFailed() string { return msgs.text(textSystemTheOpenFailed) }
+
+// SystemShareSheetShown says "Share sheet shown"
+// in the language the app shows under cx.
+func SystemShareSheetShown(cx *core.Scope) string { return For(cx).SystemShareSheetShown() }
+
+// SystemShareSheetShown says "Share sheet shown"
+// in the language of msgs.
+func (msgs Messages) SystemShareSheetShown() string { return msgs.text(textSystemShareSheetShown) }
+
+// SystemTheShareFailed says "The share failed: "
+// in the language the app shows under cx.
+func SystemTheShareFailed(cx *core.Scope) string { return For(cx).SystemTheShareFailed() }
+
+// SystemTheShareFailed says "The share failed: "
+// in the language of msgs.
+func (msgs Messages) SystemTheShareFailed() string { return msgs.text(textSystemTheShareFailed) }
 
 // SystemCounted says "Counted {n, number}"
 // in the language the app shows under cx.

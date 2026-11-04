@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
 
 ## Requests and answers
 
@@ -8,7 +8,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories` and `SaveFile`, and it records the appearance, quits and the context menu shown.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories`, `SaveFile` and `OpenFile`, and it records the shares, the appearance, quits and the context menu shown.
 
 ## Clipboard
 
@@ -23,10 +23,10 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 | iOS | PNG | The same types, else `UIPasteboard.image` |
 | Windows | `PNG` and a DIB over white | `PNG`, else the DIB through `x/image/bmp` |
 | Linux | A `GdkTexture` | A texture, saved as PNG |
-| Android | A PNG `ClipProvider` serves | An image URI, decoded and encoded as PNG |
+| Android | A PNG `FileProvider` serves | An image URI, decoded and encoded as PNG |
 | Web | The PNG browsers take | `image/png`, with the page's permission |
 
-Android's clipboard holds images only as content URIs, so the runtime declares `ClipProvider` with an authority named after the app's package. It is unexported and grants URIs, so only the app pasting reads the image. NSH writes no images on Android.
+Android's clipboard holds images only as content URIs, which the runtime's `FileProvider` serves ([sharing files](#opening-and-sharing-files)). NSH writes no images on Android.
 
 ## Opening URLs
 
@@ -79,6 +79,26 @@ Windows checks the registry first because the shell asks the user for an app for
 | Windows | `GetOpenFileNameW` | `IFileOpenDialog` with `FOS_PICKFOLDERS`, which comdlg32 has no peer of; Windows 11's Home, not on disk, opens the profile | `GetSaveFileNameW`, asking before replacing a file |
 | Linux | `GtkFileDialog`, filtering by MIME type and suffix | `GtkFileDialog`'s folder selection | `GtkFileDialog`'s save |
 | Web | `<input type=file>` | None: an error | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
+
+## Opening and sharing files
+
+`OpenFile` opens a file the app has in the app the system associates with its type, and `Share` shows the system's share sheet for files, text or both. Each `SharedFile` is a path, with the name the other app sees and its type, which the file's name and extension say by default. Files go by path or content URI, so their size costs the bridge nothing.
+
+- `core` checks each file is a regular file before asking the platform, and fails a share of neither files nor text.
+- `OpenFile` tells a type no app opens (`opened == false`, no error) from a failure. `Share` answers once the sheet shows, which says nothing of what the app chosen did with the files.
+- Where a platform hands files on by path and shows their own names, a file whose `Name` differs is linked under it in a directory of the temporary one (`SharedFile.Stage`), which a later share removes after `ShareStageAge`. Desktops open a file itself, under its own name.
+- `ShareOptions.Anchor` is the element a sheet shown as a popover points at, on macOS and iPads; it points at the root's center without one.
+
+| Target | `OpenFile` | `Share` |
+| --- | --- | --- |
+| macOS | `NSWorkspace openURL:` once `URLForApplicationToOpenURL:` finds an app | `NSSharingServicePicker` |
+| iOS | `UIDocumentInteractionController`'s Open In menu, which shows no apps when none opens the type | `UIActivityViewController` |
+| Android | `Intent.ACTION_VIEW` | An `ACTION_SEND` or `ACTION_SEND_MULTIPLE` chooser, whose clip carries the grants and the preview |
+| Windows | `ShellExecuteExW` without UI, false on `ERROR_NO_ASSOCIATION` | None: `NoShareSheet` ([roadmap](../roadmap.md#finish-the-existing-platforms)) |
+| Linux | `GtkFileLauncher`, through the desktop portal, which may ask for an app; false on `G_IO_ERROR_NOT_SUPPORTED` or a dismissed chooser | None: `NoShareSheet` |
+| Web | None: `NoFileOpener` | None: `NoShareSheet` |
+
+Android hands files on as content URIs from the runtime's `FileProvider`, which the manifest declares unexported, granting URIs, with an authority named after the app's package. A URI names one of its roots, the app's data directory (which holds `DataDir` and `CacheDir`) or its external one, the path under it and the name the other app sees, with the type as a parameter; a file elsewhere fails, and the provider serves nothing outside its roots, whatever the path says. The intent grants the app chosen read access until its activity finishes, so the app keeps the file there until then and deletes it itself.
 
 ## Appearance and quitting
 
@@ -141,7 +161,7 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 | A bar height picks an `NSToolbar` style, and AppKit places the traffic lights | NSGo places them in the app's bar, where `SetWindowControls` says | Any bar height and position, as MyGo and Electron allow |
 | No window material | `nsgo.WindowMaterial` and `SetWindowMaterial`, after MyGo's `Vibrancy` | Desktop apps show the system's materials behind sidebars |
 | `openUrl` throws for a refused URL | `OpenURL` answers false; `CheckURL` says why | A callback has no exception to throw |
-| No images written on Android | `ClipProvider` serves them | The clipboard holds images only as content URIs |
+| No images written on Android | `FileProvider` serves them | The clipboard holds images only as content URIs |
 | Picked images become `File`s whose bytes stay native | `PickedFile` holds the bytes | Go apps hold bytes directly |
 
 ## Verification

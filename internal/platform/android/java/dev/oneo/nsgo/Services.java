@@ -33,8 +33,9 @@ import java.util.List;
 /**
  * The services NsgoView performs for the app beyond its views: the
  * clipboard's images and files, opening URLs, the photo picker, whose
- * images it prepares as Go's driver.PickRequest says, and the documents
- * UI's file picks and saves.
+ * images it prepares as Go's driver.PickRequest says, the documents UI's
+ * file picks and saves, and opening and sharing the app's files, which
+ * FileProvider serves.
  */
 final class Services {
     private Services() {}
@@ -54,6 +55,9 @@ final class Services {
 
     /** The directory in the app's cache picked files are copied to, as Go's File.Temporary says. */
     static final String FILES_DIR = "nsgo-files";
+
+    /** The directory in the app's cache the clipboard's image is kept in. */
+    static final String CLIP_DIR = "nsgo-clip";
 
     static byte[] read(ContentResolver resolver, Uri uri) throws IOException {
         try (InputStream s = resolver.openInputStream(uri)) {
@@ -120,13 +124,13 @@ final class Services {
 
     /**
      * Puts the image bytes encode on the clipboard: a PNG in the app's
-     * cache that ClipProvider serves, which the clipboard lets the app
+     * cache that FileProvider serves, which the clipboard lets the app
      * pasting it read.
      */
     static void setClipboardImage(Context context, ClipboardManager cm, byte[] bytes) {
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         if (bitmap == null || cm == null) return;
-        File dir = new File(context.getCacheDir(), ClipProvider.DIR);
+        File dir = new File(context.getCacheDir(), CLIP_DIR);
         dir.mkdirs();
         File[] old = dir.listFiles();
         if (old != null) for (File f : old) f.delete();
@@ -136,8 +140,12 @@ final class Services {
         } catch (IOException e) {
             return;
         }
-        Uri uri = new Uri.Builder().scheme("content").authority(ClipProvider.authority(context))
-                .appendPath(file.getName()).build();
+        Uri uri;
+        try {
+            uri = FileProvider.uri(context, file, file.getName(), "image/png");
+        } catch (IOException e) {
+            return;
+        }
         cm.setPrimaryClip(ClipData.newUri(context.getContentResolver(), "Image", uri));
     }
 
@@ -151,6 +159,81 @@ final class Services {
         } catch (ActivityNotFoundException | SecurityException e) {
             return false;
         }
+    }
+
+    /**
+     * Opens the file at path in the app the system associates with mime,
+     * which reads it as name through a URI granted to it; false when no
+     * app opens it. error says what failed otherwise.
+     */
+    static boolean openFile(Context context, String path, String name, String mime, String[] error) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        try {
+            intent.setDataAndType(FileProvider.uri(context, new File(path), name, mime), mime);
+        } catch (IOException e) {
+            error[0] = e.getMessage();
+            return false;
+        }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            return false;
+        } catch (RuntimeException e) {
+            error[0] = String.valueOf(e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Shows the system's share sheet for text and the files at paths,
+     * which the app chosen reads under names through URIs granted to it;
+     * it returns what failed, "" once the sheet shows.
+     */
+    static String share(Context context, String text, String[] paths, String[] names, String[] mimes) {
+        ArrayList<Uri> uris = new ArrayList<>();
+        try {
+            for (int i = 0; i < paths.length; i++) {
+                uris.add(FileProvider.uri(context, new File(paths[i]), names[i], mimes[i]));
+            }
+        } catch (IOException e) {
+            return e.getMessage();
+        }
+        Intent intent = new Intent(uris.size() > 1 ? Intent.ACTION_SEND_MULTIPLE : Intent.ACTION_SEND);
+        intent.setType(uris.isEmpty() ? "text/plain" : commonType(mimes));
+        if (!text.isEmpty()) intent.putExtra(Intent.EXTRA_TEXT, text);
+        if (uris.size() == 1) intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+        else if (uris.size() > 1) intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        if (!uris.isEmpty()) {
+            // The clip carries the grants through the chooser to the app
+            // chosen, and the sheet's preview of the files.
+            ClipData clip = new ClipData(names[0], mimes, new ClipData.Item(uris.get(0)));
+            for (int i = 1; i < uris.size(); i++) clip.addItem(new ClipData.Item(uris.get(i)));
+            intent.setClipData(clip);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        Intent chooser = Intent.createChooser(intent, null);
+        if (!(context instanceof Activity)) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(chooser);
+            return "";
+        } catch (RuntimeException e) {
+            return String.valueOf(e.getMessage());
+        }
+    }
+
+    /** The type a share of files of types says: theirs, their family's (image/*) or any. */
+    private static String commonType(String[] types) {
+        String type = types[0];
+        for (String t : types) {
+            if (t.equals(type)) continue;
+            String family = type.substring(0, type.indexOf('/') + 1);
+            if (family.isEmpty() || !t.startsWith(family)) return "*/*";
+            type = family + "*";
+        }
+        return type;
     }
 
     /** A pick the photo picker answers: Go's request and how to prepare its images. */

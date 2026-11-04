@@ -39,6 +39,7 @@ var itemNames = map[ItemKind]string{
 	ItemOpenURL: "open-url", ItemPickImages: "pick-images",
 	ItemAppearance: "appearance", ItemPopupMenu: "popup-menu", ItemQuit: "quit", ItemBackPreview: "back-preview", ItemHistory: "history",
 	ItemPickFiles: "pick-files", ItemSaveFile: "save-file", ItemDirection: "direction", ItemPickDirectories: "pick-directories",
+	ItemOpenFile: "open-file", ItemShare: "share",
 }
 
 // TraceLine is the item as traces print it: its kind, its view and what

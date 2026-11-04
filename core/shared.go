@@ -382,6 +382,13 @@ type (
 	// SaveRequest is a save as the platform carries it out, SaveOptions
 	// resolved.
 	SaveRequest = driver.SaveRequest
+	// SharedFile is a file on disk the app hands another app, with
+	// OpenFile or Share: its path, and the name the other app sees and
+	// its type, which Path's name and extension say when empty.
+	SharedFile = driver.SharedFile
+	// ShareRequest is a share as the platform carries it out,
+	// ShareOptions resolved.
+	ShareRequest = driver.ShareRequest
 	// WindowCommand is an ItemWindow's request.
 	WindowCommand = driver.WindowCommand
 	// WindowDrag marks a view as a handle that moves the desktop window, or

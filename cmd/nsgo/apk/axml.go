@@ -151,7 +151,7 @@ func EncodeManifest(template []byte, m Manifest) ([]byte, error) {
 	}
 	if p := child(app, "provider"); p != nil {
 		// Each app's provider needs an authority of its own.
-		setAttr(p, androidNS, "authorities", m.Package+".nsgo.clip")
+		setAttr(p, androidNS, "authorities", m.Package+".nsgo.files")
 	}
 	if m.Icon != nil {
 		setAttr(app, androidNS, "icon", iconResource)

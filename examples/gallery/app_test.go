@@ -406,6 +406,20 @@ func TestSystem(t *testing.T) {
 	if b, _ := os.ReadFile(saved); string(b) != "%PDF-1.7 report" {
 		t.Fatalf("saved %q", b)
 	}
+	app.Press("role:button Share the file picked")
+	app.Find("text:Share sheet shown")
+	if r := app.Shares[0]; len(r.Files) != 1 || r.Files[0] != (core.SharedFile{Path: report, Name: "report.pdf", MIME: "application/pdf"}) ||
+		r.Text != "Hello from NSGo" || r.From.Size.Width == 0 {
+		t.Fatalf("share = %+v", r)
+	}
+	app.Press("role:button Open a text file")
+	app.Find("text:Opened in another app")
+	if f := app.OpenedFiles[0]; f.Name != "Hello from NSGo.txt" || f.MIME != "text/plain" {
+		t.Fatalf("opened %+v", f)
+	}
+	app.OpenFile = func(core.SharedFile) bool { return false }
+	app.Press("role:button Open a text file")
+	app.Find("text:No app opens it")
 	app.SaveFile = nil
 	app.Press("role:button Save a text file")
 	app.Find("text:Nothing saved")

@@ -234,6 +234,24 @@ func (w *window) openURL(u string, id uint32) {
 	w.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: id, Finished: r != 0})
 }
 
+// openFile has the shell open f with the app associated with its type.
+// A type no app opens answers false without the shell asking for an app.
+func (w *window) openFile(f driver.SharedFile, id uint32) {
+	const flagNoUI = 0x00000400 // SEE_MASK_FLAG_NO_UI
+	info := shellExecuteInfo{Mask: flagNoUI, Hwnd: w.hwnd, File: wide(f.Path), Show: swShowNormal}
+	info.Size = uint32(unsafe.Sizeof(info))
+	ev := driver.Event{Kind: driver.EventFiles, Count: id}
+	r, _, err := shellExecuteExW.Call(uintptr(unsafe.Pointer(&info)))
+	const errNoAssociation = 1155 // ERROR_NO_ASSOCIATION
+	switch {
+	case r != 0:
+		ev.Finished = true
+	case err != syscall.Errno(errNoAssociation):
+		ev.Text = err.Error()
+	}
+	w.engine.Dispatch(ev)
+}
+
 // openFileName is OPENFILENAMEW.
 type openFileName struct {
 	StructSize    uint32

@@ -835,6 +835,12 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemPickDirectories:
 			w.pickDirectories(*it.Directories, it.Count)
 			continue
+		case driver.ItemOpenFile:
+			w.openFile(*it.Open, it.Count)
+			continue
+		case driver.ItemShare:
+			w.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoShareSheet})
+			continue
 		case driver.ItemSaveFile:
 			w.saveFile(*it.Save, it.Count)
 			continue

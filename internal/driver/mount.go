@@ -222,6 +222,12 @@ const (
 	// ItemPickDirectories shows the system's folder picker for
 	// Directories; the platform answers with EventFiles carrying Count.
 	ItemPickDirectories
+	// ItemOpenFile opens the file Open in the app the system associates
+	// with it; the platform answers with EventFiles carrying Count.
+	ItemOpenFile
+	// ItemShare shows the system's share sheet for Share; the platform
+	// answers with EventFiles carrying Count once it shows.
+	ItemShare
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -281,11 +287,14 @@ type MountItem struct {
 	Screen    *ScreenConfig
 	// Pick is ItemPickImages' request.
 	Pick *PickRequest
-	// Files is ItemPickFiles' request, Save ItemSaveFile's and
-	// Directories ItemPickDirectories'.
+	// Files is ItemPickFiles' request, Save ItemSaveFile's,
+	// Directories ItemPickDirectories', Open ItemOpenFile's and Share
+	// ItemShare's.
 	Files       *FilesRequest
 	Save        *SaveRequest
 	Directories *DirectoriesRequest
+	Open        *SharedFile
+	Share       *ShareRequest
 }
 
 // StickyCell is a sticky list cell and its travel, in its scroll view's

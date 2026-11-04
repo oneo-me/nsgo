@@ -154,6 +154,8 @@ type surface struct {
 	// follow animated values.
 	stickyBound map[*view]bool
 	native      objc.ID
+	// sharing is the share picker shown last, kept while it shows.
+	sharing objc.ID
 	// window is the window native is in: its own, or for an embedded
 	// surface the host's, 0 while it is in none.
 	window objc.ID
@@ -1269,6 +1271,12 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPickDirectories:
 			s.pickDirectories(*it.Directories, it.Count)
+			continue
+		case driver.ItemOpenFile:
+			s.openFile(*it.Open, it.Count)
+			continue
+		case driver.ItemShare:
+			s.share(*it.Share, it.Count)
 			continue
 		case driver.ItemSaveFile:
 			s.saveFile(*it.Save, it.Count)

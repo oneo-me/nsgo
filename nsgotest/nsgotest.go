@@ -153,6 +153,14 @@ type App struct {
 	// written; with none, or "", the user cancels.
 	Saves    []driver.SaveRequest
 	SaveFile func(r driver.SaveRequest) string
+	// OpenedFiles are the files the app opened in other apps, oldest
+	// first. OpenFile answers whether an app opens each; every one does
+	// when it is nil.
+	OpenedFiles []driver.SharedFile
+	OpenFile    func(f driver.SharedFile) bool
+	// Shares are the shares the app asked for, oldest first; each sheet
+	// shows.
+	Shares []driver.ShareRequest
 	// OnAlert answers each alert the app shows with the index of the
 	// button the user presses, or -1 to dismiss it, once the step that
 	// showed it ends. Without it Alerts lists them and Answer answers

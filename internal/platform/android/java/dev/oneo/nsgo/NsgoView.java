@@ -1869,6 +1869,31 @@ public class NsgoView extends FrameLayout {
                 }
                 break;
             }
+            case Protocol.ITEM_OPEN_FILE: {
+                long count = in.readInt() & 0xffffffffL;
+                String path = Protocol.readString(in), name = Protocol.readString(in), mime = Protocol.readString(in);
+                Context context = activity() != null ? activity() : getContext();
+                String[] error = {""};
+                boolean opened = Services.openFile(context, path, name, mime, error);
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, error[0], 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", opened);
+                break;
+            }
+            case Protocol.ITEM_SHARE: {
+                long count = in.readInt() & 0xffffffffL;
+                String text = Protocol.readString(in);
+                int files = in.readInt();
+                String[] paths = new String[files], names = new String[files], mimes = new String[files];
+                for (int i = 0; i < files; i++) {
+                    paths[i] = Protocol.readString(in);
+                    names[i] = Protocol.readString(in);
+                    mimes[i] = Protocol.readString(in);
+                }
+                Context context = activity() != null ? activity() : getContext();
+                String error = Services.share(context, text, paths, names, mimes);
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, error, 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "",
+                        error.isEmpty());
+                break;
+            }
             case Protocol.ITEM_APPEARANCE:
                 appearance = in.readUnsignedByte();
                 systemBars();

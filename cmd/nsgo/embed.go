@@ -388,8 +388,8 @@ func writeIOSFramework(slice, module, id, header string, catalyst bool) (string,
 
 // aarManifest is the library's manifest, which a host's build merges into
 // its own: the runtime starts the app from the native library directory,
-// so native libraries must be extracted, and the clipboard's provider is
-// named after the host's package.
+// so native libraries must be extracted, and the provider of the files
+// the app hands other apps is named after the host's package.
 const aarManifest = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.oneo.nsgo">
     <uses-sdk android:minSdkVersion="28" />
@@ -397,8 +397,8 @@ const aarManifest = `<?xml version="1.0" encoding="utf-8"?>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <application android:extractNativeLibs="true">
         <provider
-            android:name="dev.oneo.nsgo.ClipProvider"
-            android:authorities="${applicationId}.nsgo.clip"
+            android:name="dev.oneo.nsgo.FileProvider"
+            android:authorities="${applicationId}.nsgo.files"
             android:exported="false"
             android:grantUriPermissions="true" />
     </application>

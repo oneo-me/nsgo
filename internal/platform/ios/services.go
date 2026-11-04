@@ -15,8 +15,8 @@ import (
 )
 
 // The services UIKit performs: the pasteboard's images and files,
-// opening URLs, the photo picker, the document picker for files and
-// saves, and the app's appearance.
+// opening URLs and files, the photo picker, the document picker for
+// files and saves, the share sheet, and the app's appearance.
 
 func generalPasteboard() objc.ID {
 	return objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
@@ -106,6 +106,56 @@ func (s *surface) openURL(u string, id uint32) {
 	opts := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionary"))
 	app.Send(sel("openURL:options:completionHandler:"), nsURL, opts, done)
 	done.Release()
+}
+
+// openFile shows the apps that open f, under its name, for the user to
+// choose one, from the root's center; none shows when no app opens its
+// type.
+func (s *surface) openFile(f driver.SharedFile, id uint32) {
+	u := objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(f.Path))
+	if s.opening != 0 {
+		s.opening.Send(sel("dismissMenuAnimated:"), false)
+		s.opening.Send(selRelease)
+	}
+	s.opening = objc.ID(objc.GetClass("UIDocumentInteractionController")).Send(sel("interactionControllerWithURL:"), u)
+	s.opening.Send(sel("retain"))
+	s.opening.Send(sel("setName:"), apple.NSString(f.Name))
+	b := objc.Send[apple.CGRect](s.native, selBounds)
+	shown := objc.Send[bool](s.opening, sel("presentOpenInMenuFromRect:inView:animated:"),
+		apple.Rect(b.Size.Width/2, b.Size.Height/2, 0, 0), s.native, true)
+	s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Finished: shown})
+}
+
+// share presents UIActivityViewController for r's files, under their
+// names, and text; on iPads it is a popover pointing at r.From.
+func (s *surface) share(r driver.ShareRequest, id uint32) {
+	items := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	for _, f := range r.Files {
+		path, err := f.Stage(filepath.Join(os.TempDir(), "nsgo-share"))
+		if err != nil {
+			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: err.Error()})
+			return
+		}
+		items.Send(sel("addObject:"), objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
+	}
+	if r.Text != "" {
+		items.Send(sel("addObject:"), apple.NSString(r.Text))
+	}
+	ctrl := objc.ID(objc.GetClass("UIActivityViewController")).Send(selAlloc).
+		Send(sel("initWithActivityItems:applicationActivities:"), items, objc.ID(0))
+	defer ctrl.Send(selRelease)
+	if pop := ctrl.Send(sel("popoverPresentationController")); pop != 0 {
+		from := r.From
+		if from == (driver.Bounds{}) {
+			b := objc.Send[apple.CGRect](s.native, selBounds)
+			from.Origin = driver.Point{X: driver.Points(b.Size.Width / 2), Y: driver.Points(b.Size.Height / 2)}
+		}
+		pop.Send(sel("setSourceView:"), s.native)
+		pop.Send(sel("setSourceRect:"), apple.Rect(float64(from.Origin.X), float64(from.Origin.Y),
+			float64(from.Size.Width), float64(from.Size.Height)))
+	}
+	s.topController().Send(sel("presentViewController:animated:completion:"), ctrl, true, objc.ID(0))
+	s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Finished: true})
 }
 
 var (

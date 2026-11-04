@@ -411,6 +411,13 @@ func (a *App) apply(b *driver.MountBatch) {
 				}
 			}
 			a.post(ev)
+		case driver.ItemOpenFile:
+			a.OpenedFiles = append(a.OpenedFiles, *it.Open)
+			opened := a.OpenFile == nil || a.OpenFile(*it.Open)
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: opened})
+		case driver.ItemShare:
+			a.Shares = append(a.Shares, *it.Share)
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
 		case driver.ItemAppearance:
 			a.Appearance = it.Appearance
 		case driver.ItemQuit:

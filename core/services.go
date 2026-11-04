@@ -483,6 +483,130 @@ func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
 	})
 }
 
+// resolveShared returns f as the platform hands it on, with an absolute
+// path, a name and a type, or why it cannot be: a file that is not
+// there, or not a regular file.
+func resolveShared(f SharedFile) (driver.SharedFile, error) {
+	if f.Path == "" {
+		return driver.SharedFile{}, errors.New("core: a shared file has a path")
+	}
+	path, err := filepath.Abs(f.Path)
+	if err != nil {
+		return driver.SharedFile{}, err
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return driver.SharedFile{}, err
+	}
+	if !info.Mode().IsRegular() {
+		return driver.SharedFile{}, fmt.Errorf("core: %s is not a file", path)
+	}
+	r := driver.SharedFile{Path: path, Name: f.Name, MIME: f.MIME}
+	if i := strings.LastIndexAny(r.Name, `/\`); i >= 0 {
+		r.Name = r.Name[i+1:]
+	}
+	if r.Name == "" || r.Name == "." || r.Name == ".." {
+		r.Name = filepath.Base(path)
+	}
+	if r.MIME == "" {
+		r.MIME = driver.MIMEForFile(r.Name)
+	}
+	return r, nil
+}
+
+// OpenFile opens the file f names in the app the system associates with
+// its type, the user choosing where several are: NSWorkspace on macOS,
+// the shell on Windows, GtkFileLauncher on Linux, a document
+// interaction's options on iOS and Intent.ACTION_VIEW on Android. done,
+// when not nil, learns whether an app opened it: false with no error
+// when none opens its type, and the error when the file is missing or
+// the platform failed. On Android the file is in the app's own storage,
+// such as DataDir and CacheDir, and the app opening it reads it through
+// a content URI the runtime grants it, until its activity finishes; the
+// file stays the app's to keep there that long and to delete. The web
+// opens no files.
+func (cx *Scope) OpenFile(f SharedFile, done func(opened bool, err error)) {
+	answer := func(opened bool, err error) {
+		if done != nil {
+			done(opened, err)
+		}
+	}
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	r, err := resolveShared(f)
+	if err != nil {
+		answer(false, err)
+		return
+	}
+	t.request(cx, driver.MountItem{Kind: driver.ItemOpenFile, Open: &r}, func(ev driver.Event) {
+		if ev.Text != "" {
+			answer(false, errors.New(ev.Text))
+			return
+		}
+		answer(ev.Finished, nil)
+	})
+}
+
+// ShareOptions say what Share shares: files, text, or both.
+type ShareOptions struct {
+	Files []SharedFile
+	// Text goes with the files, or alone: a message or a link.
+	Text string
+	// Anchor is the element the sheet points at where it shows as a
+	// popover, on macOS and iPads; nil points at the root's center.
+	Anchor *Ref
+}
+
+// Share shows the system's share sheet for what o names, for the user to
+// send it to another app: UIActivityViewController on iOS,
+// NSSharingServicePicker on macOS and an Intent.ACTION_SEND chooser on
+// Android. Files go by path or content URI, never through the
+// platform's bridge, so large ones cost nothing more. done, when not
+// nil, learns whether the sheet showed, with the error when it did not:
+// a missing file, or a platform without a share sheet (Windows, Linux
+// and the web). That it showed says nothing of what the app the user
+// chose did with what it received. On Android the files are in the
+// app's own storage, such as DataDir and CacheDir, and the app chosen
+// reads them through content URIs the runtime grants it, until its
+// activity finishes; the files stay the app's to keep there that long
+// and to delete.
+func (cx *Scope) Share(o ShareOptions, done func(shown bool, err error)) {
+	answer := func(shown bool, err error) {
+		if done != nil {
+			done(shown, err)
+		}
+	}
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	r := driver.ShareRequest{Text: o.Text}
+	for _, f := range o.Files {
+		sf, err := resolveShared(f)
+		if err != nil {
+			answer(false, err)
+			return
+		}
+		r.Files = append(r.Files, sf)
+	}
+	if len(r.Files) == 0 && r.Text == "" {
+		answer(false, errors.New("core: a share has files or text"))
+		return
+	}
+	if o.Anchor != nil {
+		r.From, _ = o.Anchor.Bounds()
+	}
+	t.request(cx, driver.MountItem{Kind: driver.ItemShare, Share: &r}, func(ev driver.Event) {
+		if ev.Text != "" {
+			answer(false, errors.New(ev.Text))
+			return
+		}
+		answer(ev.Finished, nil)
+	})
+}
+
 // SetAppearance shows the app light or dark whatever the system's
 // appearance, or follows it again with AppearanceSystem: Env.Dark
 // reports the one shown, and the platform's own chrome, such as title

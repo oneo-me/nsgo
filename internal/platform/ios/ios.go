@@ -135,6 +135,9 @@ type surface struct {
 	// alerts are the alerts shown, by ID, kept for a test host to answer
 	// them.
 	alerts map[uint32]shownAlert
+	// opening is the document interaction showing the apps that open a
+	// file, kept while it shows.
+	opening objc.ID
 	// appearance is the one the app forces, or the system's.
 	appearance driver.Appearance
 	// rtl is the app's direction (driver.ItemDirection), which its
@@ -777,6 +780,12 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPickDirectories:
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
+			continue
+		case driver.ItemOpenFile:
+			s.openFile(*it.Open, it.Count)
+			continue
+		case driver.ItemShare:
+			s.share(*it.Share, it.Count)
 			continue
 		case driver.ItemSaveFile:
 			s.saveFile(*it.Save, it.Count)

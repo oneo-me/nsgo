@@ -19,7 +19,8 @@ import (
 )
 
 // The services GTK performs: the clipboard's images and files, opening
-// URLs (GtkUriLauncher), the photo, file and folder pickers and the save
+// URLs (GtkUriLauncher) and files (GtkFileLauncher), the photo, file and
+// folder pickers and the save
 // dialog (GtkFileDialog), context menus (GtkPopoverMenu), the app's appearance
 // and the menu bar that hides.
 
@@ -30,6 +31,10 @@ var (
 	gtkURILauncherNew                        func(uri *byte) uintptr
 	gtkURILauncherLaunch                     func(launcher, parent, cancellable, callback, data uintptr)
 	gtkURILauncherLaunchFinish               func(launcher, result, err uintptr) int32
+	gtkFileLauncherNew                       func(file uintptr) uintptr
+	gtkFileLauncherLaunch                    func(launcher, parent, cancellable, callback, data uintptr)
+	gtkFileLauncherLaunchFinish              func(launcher, result, err uintptr) int32
+	gIOErrorQuark                            func() uint32
 	gtkFileDialogNew                         func() uintptr
 	gtkFileDialogSetModal                    func(dialog uintptr, modal int32)
 	gtkFileDialogSetDefaultFilter            func(dialog, filter uintptr)
@@ -79,6 +84,10 @@ func bindSystem() {
 	gtk(&gtkURILauncherNew, "gtk_uri_launcher_new")
 	gtk(&gtkURILauncherLaunch, "gtk_uri_launcher_launch")
 	gtk(&gtkURILauncherLaunchFinish, "gtk_uri_launcher_launch_finish")
+	gtk(&gtkFileLauncherNew, "gtk_file_launcher_new")
+	gtk(&gtkFileLauncherLaunch, "gtk_file_launcher_launch")
+	gtk(&gtkFileLauncherLaunchFinish, "gtk_file_launcher_launch_finish")
+	purego.RegisterLibFunc(&gIOErrorQuark, gioLib, "g_io_error_quark")
 	gtk(&gtkFileDialogNew, "gtk_file_dialog_new")
 	gtk(&gtkFileDialogSetModal, "gtk_file_dialog_set_modal")
 	gtk(&gtkFileDialogSetDefaultFilter, "gtk_file_dialog_set_default_filter")
@@ -233,6 +242,41 @@ func (w *window) openURL(u string, id uint32) {
 		gObjectUnref(source)
 		if !w.closing {
 			w.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: id, Finished: ok})
+		}
+	}))
+}
+
+// openFile opens f in the app associated with its type, through the
+// desktop portal where there is one, which may ask the user for one. No
+// app for it, or the user choosing none, answers false.
+func (w *window) openFile(f driver.SharedFile, id uint32) {
+	file := gFileNewForPath(cstr(f.Path))
+	launcher := gtkFileLauncherNew(file)
+	gObjectUnref(file)
+	if launcher == 0 {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: "GTK could not open " + f.Path})
+		return
+	}
+	gtkFileLauncherLaunch(launcher, w.toplevel(), 0, cbAsync, async(func(source, result uintptr) {
+		var gerr uintptr
+		ev := driver.Event{Kind: driver.EventFiles, Count: id}
+		ev.Finished = gtkFileLauncherLaunchFinish(source, result, uintptr(unsafe.Pointer(&gerr))) != 0
+		gObjectUnref(source)
+		if gerr != 0 {
+			e := (*gError)(cPointer(gerr))
+			const notSupported = 15 // G_IO_ERROR_NOT_SUPPORTED: no app for the type
+			if e.domain != gIOErrorQuark() || e.code != notSupported {
+				if err := dialogError(gerr); err != nil {
+					ev.Text = err.Error()
+				}
+				gerr = 0
+			}
+			if gerr != 0 {
+				gErrorFree(gerr)
+			}
+		}
+		if !w.closing {
+			w.engine.Dispatch(ev)
 		}
 	}))
 }

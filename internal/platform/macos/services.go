@@ -14,8 +14,9 @@ import (
 )
 
 // The services AppKit performs: the clipboard's images and files,
-// opening URLs, the photo and file pickers, the save panel, context
-// menus, the app's appearance and the window's frame and level.
+// opening URLs and files, the photo and file pickers, the save panel,
+// the share picker, context menus, the app's appearance and the
+// window's frame and level.
 
 func generalPasteboard() objc.ID {
 	return objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
@@ -96,6 +97,52 @@ func (s *surface) openURL(u string, id uint32) {
 		opened = objc.Send[bool](ws, sel("openURL:"), nsURL)
 	}
 	s.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: id, Finished: opened})
+}
+
+// openFile opens f in the app Launch Services associates with it, and
+// reports whether one did: none when no app opens its type.
+func (s *surface) openFile(f driver.SharedFile, id uint32) {
+	u := objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(f.Path))
+	ws := objc.ID(objc.GetClass("NSWorkspace")).Send(sel("sharedWorkspace"))
+	ev := driver.Event{Kind: driver.EventFiles, Count: id}
+	if ws.Send(sel("URLForApplicationToOpenURL:"), u) != 0 {
+		ev.Finished = objc.Send[bool](ws, sel("openURL:"), u)
+		if !ev.Finished {
+			ev.Text = "macOS could not open " + f.Path
+		}
+	}
+	s.engine.Dispatch(ev)
+}
+
+// share shows NSSharingServicePicker for r's files, under their names,
+// and text, pointing at r.From.
+func (s *surface) share(r driver.ShareRequest, id uint32) {
+	items := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	for _, f := range r.Files {
+		path, err := f.Stage(filepath.Join(os.TempDir(), "nsgo-share"))
+		if err != nil {
+			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: err.Error()})
+			return
+		}
+		items.Send(sel("addObject:"), objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
+	}
+	if r.Text != "" {
+		items.Send(sel("addObject:"), apple.NSString(r.Text))
+	}
+	if s.sharing != 0 {
+		s.sharing.Send(selRelease)
+	}
+	s.sharing = objc.ID(objc.GetClass("NSSharingServicePicker")).Send(selAlloc).Send(sel("initWithItems:"), items)
+	from := r.From
+	if from == (driver.Bounds{}) {
+		b := objc.Send[apple.CGRect](s.native, sel("bounds"))
+		from.Origin = driver.Point{X: driver.Points(b.Size.Width / 2), Y: driver.Points(b.Size.Height / 2)}
+	}
+	const edgeMaxY = 3 // NSRectEdgeMaxY: below, the view being flipped
+	s.sharing.Send(sel("showRelativeToRect:ofView:preferredEdge:"),
+		apple.Rect(float64(from.Origin.X), float64(from.Origin.Y), float64(from.Size.Width), float64(from.Size.Height)),
+		s.native, edgeMaxY)
+	s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Finished: true})
 }
 
 // pickImages shows an open panel as a sheet on the window for the

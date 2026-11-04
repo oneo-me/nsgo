@@ -33,11 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Serves the image the app puts on the clipboard; nsgo build
-             names its authority after the app's package. -->
+        <!-- Serves the app's files to the apps it hands them to: the
+             clipboard's image, a file it opens and the files it shares;
+             nsgo build names its authority after the app's package. -->
         <provider
-            android:name="dev.oneo.nsgo.ClipProvider"
-            android:authorities="dev.oneo.nsgo.app.nsgo.clip"
+            android:name="dev.oneo.nsgo.FileProvider"
+            android:authorities="dev.oneo.nsgo.app.nsgo.files"
             android:exported="false"
             android:grantUriPermissions="true" />
     </application>
