@@ -1,30 +1,120 @@
 # Roadmap
 
-This plan lists what NSGo still lacks of NSH's 0.3.0 release (tag `v0.3.0`, `76fa8a7f`), in the order to build it. Each item names its NSH reference and the result that finishes it. What exists is in [ARCHITECTURE.md](../ARCHITECTURE.md), and what NSGo leaves out on purpose in [NSGo and NSH](architecture/nsh.md#what-nsgo-leaves-out). Design questions that block an item are in [Open questions](../ARCHITECTURE.md#open-questions).
+This plan lists what NSGo still lacks of NSH's 0.4.0 release (tag `v0.4.0`, `e626a8dd`), in the order to build it. Each item names its NSH reference and the result that finishes it. What exists is in [ARCHITECTURE.md](../ARCHITECTURE.md), and what NSGo leaves out on purpose in [NSGo and NSH](architecture/nsh.md#what-nsgo-leaves-out). Design questions that block an item are in [Open questions](../ARCHITECTURE.md#open-questions).
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Following NSH's releases](architecture/nsh.md#following-nshs-releases) says how to rebuild this plan for NSH's next release.
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). All of them pass but what needs the standard modules NSGo leaves out and one gallery test that reads QuickJS's wording of a `TypeError`: 105 of the 122 compat cases ran every step of their scripts on 2026-11-03, and the other 17 belong to the apps that import those modules. `.nsgo/types` exports the type names `.nsh/types` does, and NSH's gallery type-checks against it as against NSH's own.
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-04, 52 of the 173 compat cases, 10 of the 15 examples and 25 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
+
+## The 0.4.0 API: events
+
+What TSX apps write differently in 0.4.0 (`api-naming.md` (Renames)), first because nearly every failing case calls one of these. Done when `events-gestures`, `events-input`, `events-layout`, `events-media`, `events-pointer` and `events-scroll` and the `hopper` and `desktop` examples pass.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Events as one object | `api-naming.md` (Payloads, 2026-10-27) | Every event passes one object: `onLayout({ bounds })`, `onLoad({ size })` and `onContentSizeChange({ size })`, the scroll events' `{ offset }`, pans' `translation`, `velocity` and `value` points, `PressEvent` always passed, keymap handlers' `{ keystroke }`, and `nsh/base`'s components' `onChange`, `onOpenChange({ open, reason })`, `onVisibleRowsChange` and the like |
+| The DOM's mouse events | `api-naming.md` (`onMouseEnter`) | `onMouseEnter`, `onMouseLeave` and one `onMouseMove` take a `MouseEvent` with `position`, `pagePosition`, `modifiers` and `pressedButton`, in place of `onHoverIn`, `onHoverOut`, `onHoverMove` and the old `onMouseMove`, on Go elements too |
+| The compat runner | `nsh/tests/compat` | `nshcompat_test.go` knows the steps and events 0.4.0's scripts use (`onMouseEnter`, canvas `fillStyle` gradients, transform strings), so `core-canvas` and `core-list` fail only where NSGo does |
+
+## The 0.4.0 API: styles
+
+Done when `props-text-lines`, `props-view-touch`, `props-media-image`, `props-media-video`, `props-input-config`, `core/steps`, `paint-borders`, `paint-current-color`, `paint-misc`, `paint-shadows`, `paint-tailwind`, `paint-text`, `state-expanded`, `state-focus-within` and `state-pressed` pass.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Props as style keys | `styles.md` (Principles, Extensions) | `numberOfLines`, `textOverflow`, `userSelect`, `pointerEvents`, `objectFit` and `caretColor` are style keys and classes as CSS has them, inline winning over classes; transforms read CSS strings |
+| States and variants | `styles.md` (variants) | `aria-expanded:`, `aria-pressed:`, `aria-busy:`, `aria-checked:`, `aria-selected:` and `data-<name>:` variants and their style props (`expandedStyle`, `pressedStyle`, `focusWithinStyle`); `focus-within:` follows any focus, popups' included, kept by the core per surface; parts show `data-*` attributes |
+
+## The 0.4.0 API: the rest
+
+Independent of each other, done in any order. Done when the `layout-*`, `core-theme`, `props-view-accessibility`, `props-list-follow`, `web-fetch`, `base-radio`, `base-tabs`, `base-switch` and `base-button` cases pass.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Roles and focus | `elements.md`, `api-naming.md` (keys of `RadioGroup` and `Tabs`) | The `listbox`, `option`, `group`, `region`, `tree` and `menuitemcheckbox` roles and the pressed state; `focusable` stops without presses; a group of radios or tabs is one Tab stop its arrows move through, swapped right to left; `hitSlop` on `Button`, `Checkbox`, `Radio`, `Switch`, `Toggle` and `Link` |
+| Errors with codes | `api-naming.md`, `sandbox.md` (What a refusal does) | What JS calls fails one way with a stable `code` (`ERR_ACCESS_DENIED`, `ERR_FEATURE_UNAVAILABLE_ON_PLATFORM`, `ERR_NSH_QUOTA_EXCEEDED`), with `permission` and `resource` where a capability refused it |
+| Fonts and files | `text.md`, `images.md` | Apps import WOFF and WOFF2 fonts; `fontFamily` lists fall back in order; italic runs keep color emoji upright; `fetch` reads the files the app ships (`asset:/`); `svg()` draws an SVG document as authored |
+
+## Components of 0.4.0: controls
+
+What `nsh/base` added in 0.4.0 (`components.md`, `nsh/crates/nsh-base/src`), each in `base` with no look and in the gallery with Onexa's. These share the roving focus and keys of [the rest](#the-040-api-the-rest). Done when `base-slider`, `base-number-input`, `base-otp-input`, `base-toggle`, `base-toolbar`, `base-pagination`, `base-accordion`, `base-collapsible-reveal`, `base-link`, `base-avatar`, `base-tree`, `base-carousel` and `base-scrollbar` pass.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Value controls | `slider.rs`, `number_input.rs`, `otp_input.rs`, `toggle.rs` | `Slider` (a value or a range), `NumberInput`, `OtpInput` in one native field, `Toggle` and `ToggleGroup` |
+| Structure and navigation | `components.md` (Carousels), `toolbar.rs`, `pagination.rs`, `accordion.rs`, `tree.rs` | `Accordion` and a `Collapsible` that reveals its height as it opens, `Toolbar`, `Pagination`, `Tree` in a virtual list, `Carousel` on a native scroll view that can loop, `Link`, `Avatar` and `AvatarGroup` |
+| Scroll bars of the app's | `scrolling-and-lists.md`, `components.md` (Scroll bars) | `Scrollbar` names a scroll view or list and draws its bar in the app's look on every backend, `Scrollbar.setTheme` replaces every view's indicator, and the DataTable draws it above its rows |
+
+## Components of 0.4.0: popups
+
+On `base`'s popups ([components](architecture/components.md)). Done when `base-select`, `base-combobox`, `base-command`, `base-hover-card`, `base-date-picker`, `base-color-picker`, `base-menu-checked`, `base-popups`, `base-dialog` and `base-dialog-backdrop` pass, with the `browser/*-desktop` ones once the gallery's [open question](../ARCHITECTURE.md#open-questions) is answered.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Pickers | `components.md` (Popups), `select.rs`, `combobox.rs`, `date_picker.rs`, `calendar.rs`, `time_field.rs`, `color_picker` | `Select`, `Combobox` (one value or several, typed into its trigger), `DatePicker`, `Calendar` and `TimeField`, picked in one tap on phones, and `ColorPicker` (area, channel sliders, fields, swatches, mirrored right to left) |
+| Palettes and cards | `components.md` (Popups), `command.rs`, `hover_card.rs` | `Command`'s palette filtering natively and `HoverCard`, open while the pointer rests or the focus is in it |
+| Menus and dialogs | `components.md` (Popups), `menu.rs` | Menu items checked with the app's mark, a menu bar whose menus open on hover, popups and dialogs that report an open change, with its reason, before they open or close |
+
+## Components of 0.4.0: plots
+
+Independent of the other components. Done when `base-plot` passes and the gallery's Charts page shows each mark.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Marks | `components.md`, `nsh/crates/nsh-base/src/plot` | `Bar` (stacked, grouped, per-row bases), `Pie` and `Arc`, `PlotAxis`, `PlotLabel`, `RadialLine` and `RadialGrid`, `Sankey`, `Cell`, `Dot`, `Rule` and `Treemap` |
+| Scales and motion | `nsh/crates/nsh-base/src/plot` (`scale.rs`, `tween.rs`, `appear.rs`) | An ordinal `colorScale`, reversed and second y scales, domains that glide (`motion.update`) and marks that appear once (`PlotAppearScope`), the hover moved by keys and screen readers |
+
+## Components of 0.4.0: the rich editor and the DataTable
+
+Each a project of its own.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Rich editor | `rich-editor.md` | `RichEditor`, a ProseMirror-style document with lists, mentions, tables (merged cells, resizing, reordering), a bubble menu, undo grouped by time and input methods composing in the line; the `base-rich-editor-*` cases pass |
+| The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns); `base-data-table` passes |
+| Editor and diff | `editor.md`, `diff.md` | The Editor's gutter and overview ruler decorations, the DiffView's scroll position and change positions reported; `base-editor` and `base-diff` pass |
+
+## Shaders and transitions
+
+NSH 0.4.0's `Shader` draws a box with a WGSL `shade(uv)` (`shaders.md`); NSGo's shaders are Go ([shaders](architecture/shaders.md)).
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| WGSL for TSX | `shaders.md` (The contract, Validation and limits) | A TSX `Shader` compiles its WGSL into `internal/shaderir`, with NSH's built-ins, uniforms and limits, so `core-shader` passes on every backend |
+| Effects and transitions | `shaders.md` (Effects, transitions and pictures) | `ShaderEffect` draws a view's children through a shader, `ShaderTransition` changes them, and `ScreenEffect` and `ScreenTransition` cover the screen, picturing children only when they changed, as NSH's backends do |
+| Pages and dialogs | `shaders.md` (Pages and dialogs) | Pages a stack pushes and pops and dialogs that open and close come and go through a shader, with `core-shader-effects` and `base-transition-shader` passing |
 
 ## TSX and dynamic delivery
 
-What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)). Signed packages and capabilities wait for their [open question](../ARCHITECTURE.md#open-questions).
+What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)). Signed packages and capabilities wait for their [open question](../ARCHITECTURE.md#open-questions), and running TSX on the browser's engine for its own.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | TSX on the other targets | `tooling.md` (Dev server, `nsh test`) | `examples/tsx` updates in place on a save under `nsgo dev` on the web, Windows, Linux, the iOS simulator and Android, and passes its Go and TSX tests under `nsgo test -target` on the last four, as it does on macOS, and for its tests on the web, since 2026-11-04 |
-| Signed packages | `signed-packages.md` | `nsgo keygen`, `certify`, `publish`, `verify` and `revoke` work; a Go, iOS and Android host verifies a package, runs it in `tsx.View`, and refuses tampered, revoked and older builds |
-| Capabilities and limits | `sandbox.md` | Every request a capability names (`fetch`, remote images, web views, `openUrl`, host calls) is refused without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
+| TSX on the browser's engine | `web.md` (The browser's JavaScript engine) | On the web a TSX app runs as ES modules on the page's own JavaScript engine, in an iframe realm per run, rather than on goja compiled to WebAssembly |
+| Signed packages | `signed-packages.md` | `nsgo keygen`, `certify`, `publish` (signing a package again with another release key too), `verify` and `revoke` work; a Go, iOS and Android host verifies a package, runs it in `tsx.View`, and refuses tampered, revoked and older builds |
+| Capabilities and limits | `sandbox.md` | Every request a capability names (`fetch`, remote images, web views and their trusted input, `openUrl`, the clipboard, the picker, speech, host calls) is refused with `ERR_ACCESS_DENIED` without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
 
-## Performance against NSH's baselines
-
-NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). The DataTable keeps up with NSH's headless, in headless Chrome, with no task over 50 ms, and on macOS, and its cells move with the content in each frame on every backend, as NSH's do only on the web.
+## Platform services of 0.4.0
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, costs on Windows, Linux, iOS and Android what NSH's does there, measured on those machines and on NSH's builds for them |
+| Speech | `sandbox.md` (`speech`), `nsh`'s `Speech` | `Speech.start` sessions recognize speech on macOS and iOS and report their transcript |
+| The app's lifecycle | `nsh`'s `lifecycle()` (NSH `#747`) | `lifecycle()` reads, reactively, whether the app is `active`, `inactive` (visible without the focus) or in the `background`, which every backend reports |
+| Clipboard images as URLs | `api-naming.md` (Clipboard) | `readImage` promises a URL and rejects what cannot be read, on every backend (`mod-clipboard` passes) |
+| Web views of 0.4.0 | `macos.md` | macOS saves the downloads a web view's app opts into (`onDownload`) to the app's data directory, and web views take trusted input (`sendInput`), which only a declared capability grants |
+
+## Performance against NSH's baselines
+
+NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). Against 0.3.0 the DataTable kept up with NSH's headless, in headless Chrome, with no task over 50 ms, and on macOS, its cells moving with the content in each frame on every backend.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Device pixels | `performance.md`, `geometry.md` | Layout rounds to device pixels rather than whole points, frames that stay on their pixels are not sent again, and a subtree that moved by whole pixels skips its frames, as NSH's `#557`, `#617` and `#637` do |
+| 0.4.0's baselines | `data-table.md` (Performance), `performance.md` | The DataTable's scroll (a frame crossing no row 4 items in ~1.2 ms, a few rows ~35–50 in ~2 ms, no views made), its tick and the Animations page cost what NSH 0.4.0's build does on the same machine, headless, in headless Chrome and on macOS |
+| The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, and a stack's slides cost on Windows, Linux, iOS and Android what NSH's do there (Pixel 10 Pro: ~870 views, commits at 3 and 7 ms at the median and 90th percentile, slides on whole pixels), measured on those machines and on NSH's builds for them |
 | Android's new views | `nsh/AGENTS.md` (Performance rules, 4) | `NsgoView` starts a node in the default style with no props and no events, and `classes.dex` is rebuilt, so the Go side stops sending the three for every new view (`withDefaults`) |
 
 ## Languages

@@ -108,6 +108,8 @@ Packages import only downward; `layering_test.go` checks it on every target:
 Record a design question here, and confirm the answer with the user before choosing it.
 
 - **Signed packages and capabilities.** Port both for TSX modules only, Go code staying trusted, as [TSX](docs/architecture/tsx.md#sandbox) proposes?
+- **NSH 0.4.0's gallery and `process`.** NSGo leaves the standard modules out ([NSGo and NSH](docs/architecture/nsh.md#what-nsgo-leaves-out)), but 0.4.0's gallery shell reads `process.env` as it starts, so none of its demos or tests run. Give TSX a `process` of the environment alone (`env`, `platform`, `arch`), port the module, or rename the oracle's shell?
+- **TSX on the browser's engine.** NSH 0.4.0 runs TSX on the page's own JavaScript engine on the web, keeping QuickJS on the native targets. Do the same, keeping goja off the web, or keep one engine on every target?
 
 ## Verification
 
