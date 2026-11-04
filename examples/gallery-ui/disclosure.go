@@ -237,7 +237,7 @@ func (p Progress) Render(cx *core.Scope) core.Node {
 		TrackStyleFunc: Filled(colors.Inset),
 		IndicatorStyleFunc: func() core.Style {
 			if !is(p.Indeterminate) {
-				return bar().Merge(core.Style{Transition: core.Transition{Duration: 200 * time.Millisecond, Easing: core.EaseOut}})
+				return bar().Merge(core.Style{Transition: core.Transition{Duration: 200 * time.Millisecond, Easing: core.EaseOut, Properties: core.TransitionLayout}})
 			}
 			if still {
 				return bar().Merge(core.Style{Width: core.Pct(100), Animation: core.KeyframeAnimation{Keyframes: core.KeyframesPulse}})
