@@ -278,6 +278,50 @@ func TestAfterFuncRunsOnClock(t *testing.T) {
 	}
 }
 
+func TestTransitionEndFollowsTheNewTransition(t *testing.T) {
+	var ending *Signal[bool]
+	ended := 0
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		ending = NewSignal(cx, false)
+		return Overlay{TestID: "o", OnTransitionEnd: func() { ended++ },
+			ClassFunc: func() string {
+				if ending.Get() {
+					return "opacity-0 transition-opacity duration-200 delay-100"
+				}
+				return ""
+			}}
+	})
+	h.commit()
+	h.clock.Advance(time.Second)
+	h.drain()
+	if ended != 0 {
+		t.Fatal("ended with no change")
+	}
+	ending.Set(true)
+	h.commit()
+	if got := h.find("o").style.Opacity.Value(); got != 0 {
+		t.Fatalf("ending class not applied: opacity %v", got)
+	}
+	h.clock.Advance(299 * time.Millisecond)
+	h.drain()
+	if ended != 0 {
+		t.Fatal("ended before the delay and duration")
+	}
+	h.clock.Advance(time.Millisecond)
+	h.drain()
+	if ended != 1 {
+		t.Fatalf("ended %d times", ended)
+	}
+	// Back with no transition: at once after the commit.
+	ending.Set(false)
+	h.commit()
+	h.clock.Advance(0)
+	h.drain()
+	if ended != 2 {
+		t.Fatalf("ended %d times without a duration", ended)
+	}
+}
+
 func frames(b *driver.MountBatch) map[NodeID]Bounds {
 	out := map[NodeID]Bounds{}
 	for _, it := range b.Items {

@@ -85,6 +85,12 @@ type View struct {
 	// OnLayout receives the view's frame after each layout that moves or
 	// sizes it.
 	OnLayout func(Bounds)
+	// OnTransitionEnd runs once a change to the view's style or classes
+	// has had its transition's time: its new style's Transition.Delay and
+	// Duration after the commit that sends it, at once without a duration
+	// or while the user asks for reduced motion. A later change starts it
+	// over. The core times it, so it runs whether or not anything moved.
+	OnTransitionEnd func()
 
 	// OnPan follows a drag on the view, once PanActivation activates it;
 	// an active pan takes the touch from presses and scroll views.
@@ -628,6 +634,7 @@ type Overlay struct {
 	Offset, Margin Points
 	// Class is Tailwind CSS classes, as View's.
 	Class     string
+	ClassFunc func() string
 	Style     Style
 	StyleFunc func() Style
 	Children  []Node
@@ -644,6 +651,8 @@ type Overlay struct {
 	// OnPosition reports where an anchored overlay went, again when it
 	// moves or its room changes.
 	OnPosition func(OverlayPosition)
+	// OnTransitionEnd is View's.
+	OnTransitionEnd func()
 	// Ref names the overlay's view: its bounds.
 	Ref    *Ref
 	Role   Role

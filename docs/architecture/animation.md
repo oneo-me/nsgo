@@ -4,6 +4,8 @@ Style transitions, animated values and layout animations run on the platform's m
 
 Layout runs in the engine, so the frame clock moves only what a platform draws without it: a transition of drawn properties and an animated value never change a view's frame. A view's size and position animate as a [layout animation](#layout-animation), of a whole commit or of one view's own changes.
 
+`View.OnTransitionEnd` and `Overlay.OnTransitionEnd` run once a change to the view's style or classes has had its new `Transition`'s delay and duration after the commit that sends it, at once without a duration or under reduced motion; a later change starts the wait over. The core times it instead of hearing it from the platform, so it runs alike everywhere, whether or not anything moved.
+
 ## Frames
 
 `Scope.RequestAnimationFrame(fn)` calls fn once, on the graph's goroutine, when the next display frame begins, with the frame's time from the graph clock, as timers do. stop cancels the wait, and a callback whose owner is disposed does not run; registering again from fn is the loop that runs every frame, as `requestAnimationFrame`'s does. `Scope.Animate` steps this way, so an app draws at the display's rate without a timer of its own.
@@ -60,3 +62,4 @@ A display link runs only in the run loop mode object it is given: Foundation's `
 | Optional velocities | `Velocity` 0 keeps the value's current velocity | Zero values are defaults |
 | `Easing` as data decoded in Rust | `Easing` values with a `Kind` and `Mode`; zero is linear | Zero values are defaults |
 | A transition's properties are drawn ones; `width` and the like are unknown | `TransitionLayout` moves the frame a view's own style change sets | A component animates its own size without animating the rest of the commit |
+| No transition end | `OnTransitionEnd`, timed by the core | A popup leaves the tree once its exit transition is over |

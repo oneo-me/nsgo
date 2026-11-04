@@ -73,7 +73,9 @@ type menuParts struct {
 	align           core.Align
 	offset, margin  core.Points
 	popup, backdrop part
-	label, testID   string
+	// starting and ending are the desktop popup's phases (popupMotion).
+	starting, ending part
+	label, testID    string
 }
 
 // menuSurface is a menu while it is open: its popup at anchor, or at
@@ -113,17 +115,17 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 				role: core.RoleMenu, label: parts.label, testID: parts.testID, content: items}.node()
 		})
 	}
-	st.lifecycle(cx, st.open)
-	return core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
+	m := newPopupMotion(cx, st.open, parts.starting, parts.ending)
+	st.lifecycle(cx, m.shown.Get)
+	return core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 		openSub.Set(0)
 		menuKey.Provide(cx, ctx)
-		o := core.Overlay{
+		o := m.overlay(core.Overlay{
 			Anchor: anchor, Placement: parts.placement, Align: parts.align, Offset: parts.offset, Margin: parts.margin,
-			Class: parts.popup.class, Style: parts.popup.style, StyleFunc: parts.popup.fn, Children: items, Role: core.RoleMenu,
-			Label: parts.label, TestID: parts.testID,
+			Children: items, Role: core.RoleMenu, Label: parts.label, TestID: parts.testID,
 			OnPressOutside: func(core.Point) { dismiss(ReasonPressOutside) },
 			OnCancel:       cancel,
-		}
+		}, parts.popup)
 		if anchor == nil {
 			o.AnchorBounds = func() core.Bounds { return core.Bounds{Origin: point.Get()} }
 		}
@@ -157,6 +159,12 @@ type Menu struct {
 	PopupClass     string
 	PopupStyle     core.Style
 	PopupStyleFunc func() core.Style
+	// StartingStyle and EndingStyle are the popup's on desktops, as
+	// Popover's; a sheet has its own motion.
+	StartingClass string
+	StartingStyle core.Style
+	EndingClass   string
+	EndingStyle   core.Style
 	// BackdropStyle styles the backdrop behind the sheet on touch screens.
 	BackdropClass     string
 	BackdropStyle     core.Style
@@ -187,7 +195,9 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 			Children: []core.Node{m.Trigger}},
 		menuSurface(cx, st, anchor, nil, menuParts{placement: m.Placement, align: align, offset: m.Offset, margin: m.Margin,
 			popup:    part{m.PopupClass, m.PopupStyle, m.PopupStyleFunc},
-			backdrop: part{m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc}}, m.Children),
+			backdrop: part{m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc},
+			starting: part{class: m.StartingClass, style: m.StartingStyle},
+			ending:   part{class: m.EndingClass, style: m.EndingStyle}}, m.Children),
 	}
 }
 
@@ -204,13 +214,18 @@ type ContextMenu struct {
 	Disabled     bool
 
 	// Offset and Margin place the popup beside the pointer on desktops.
-	Offset, Margin    core.Points
-	Class             string // the content's
-	Style             core.Style
-	StyleFunc         func() core.Style
-	PopupClass        string
-	PopupStyle        core.Style
-	PopupStyleFunc    func() core.Style
+	Offset, Margin core.Points
+	Class          string // the content's
+	Style          core.Style
+	StyleFunc      func() core.Style
+	PopupClass     string
+	PopupStyle     core.Style
+	PopupStyleFunc func() core.Style
+	// StartingStyle and EndingStyle are Menu's.
+	StartingClass     string
+	StartingStyle     core.Style
+	EndingClass       string
+	EndingStyle       core.Style
 	BackdropClass     string
 	BackdropStyle     core.Style
 	BackdropStyleFunc func() core.Style
@@ -273,7 +288,9 @@ func (m ContextMenu) Render(cx *core.Scope) core.Node {
 			Children: []core.Node{m.Trigger}},
 		menuSurface(cx, st, nil, point, menuParts{placement: core.PlaceBottom, align: core.AlignStart,
 			offset: m.Offset, margin: m.Margin, popup: part{m.PopupClass, m.PopupStyle, m.PopupStyleFunc},
-			backdrop: part{m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc}}, m.Children),
+			backdrop: part{m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc},
+			starting: part{class: m.StartingClass, style: m.StartingStyle},
+			ending:   part{class: m.EndingClass, style: m.EndingStyle}}, m.Children),
 	}
 }
 

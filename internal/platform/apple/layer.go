@@ -104,11 +104,19 @@ func StyleLayer(layer objc.ID, vs *driver.ViewStyle, view objc.ID) {
 }
 
 // RestyleLayer draws vs with a layer that shows shown, the style
-// StyleLayer last drew there (nil for none). When the two differ only in
-// opacity and transform, as an animation's frames do, it sets just those:
-// drawing every property again remade its colors, shadow, filters and
-// gradients each frame, and the window server drew them all again.
+// StyleLayer last drew there; with none it draws vs at once. When the two
+// differ only in opacity and transform, as an animation's frames do, it
+// sets just those: drawing every property again remade its colors,
+// shadow, filters and gradients each frame, and the window server drew
+// them all again.
 func RestyleLayer(layer objc.ID, shown, vs *driver.ViewStyle, view objc.ID) {
+	if shown == nil && vs.Transition.Duration > 0 {
+		// A view's first style shows at once, as CSS transitions none.
+		first := *vs
+		first.Transition = driver.Transition{}
+		StyleLayer(layer, &first, view)
+		return
+	}
 	if shown == nil || vs.Transition.Duration > 0 || !onlyMoves(shown, vs) {
 		StyleLayer(layer, vs, view)
 		return

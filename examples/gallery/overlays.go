@@ -86,7 +86,9 @@ func popoverCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		return ui.Card{Title: tr.OverlayPopover(), Description: tr.OverlayAnchoredToItsTriggerOn(), Children: []core.Node{
+			// It fades and grows in and out by its classes alone.
 			base.Popover{Offset: 6, Margin: 8, PopupStyleFunc: popupStyle(cx), Label: tr.OverlayShowThePopover(),
+				PopupClass: "transition duration-150 ease-out", StartingClass: "opacity-0 scale-95", EndingClass: "opacity-0 scale-95",
 				OnOpenChange: func(open bool, reason base.Reason) {
 					state := "closed"
 					if open {
@@ -129,6 +131,7 @@ func tooltipCard(last *core.Signal[string]) cardFunc {
 						last.Set(tr.OverlayTooltip2() + state + " (" + reason.String() + ")")
 					},
 					Placement: core.PlaceBottom, Delay: 300e6,
+					PopupClass: "transition-opacity duration-100", StartingClass: "opacity-0", EndingClass: "opacity-0",
 					PopupStyle: core.Style{CornerRadius: 6, Padding: core.Symmetric(4, 8)}, PopupStyleFunc: ui.Filled(colors.Text),
 					Trigger: core.Dynamic(func(*core.Scope) core.Node {
 						label := tr.OverlayPinTheTooltip()

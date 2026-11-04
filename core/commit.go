@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/layout"
@@ -39,6 +40,7 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 		t.commitRound()
 	}
 	t.paceLater()
+	t.timeTransitionEnds()
 	if driver.CheckCommits && !t.changed {
 		t.checkCommit()
 	}
@@ -54,6 +56,36 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	b := &driver.MountBatch{Root: t.view.id, Items: items, LayoutAnimation: t.layoutAnim}
 	t.layoutAnim = nil
 	return b
+}
+
+// timeTransitionEnds runs each restyled node's OnTransitionEnd once its
+// new transition's time is over, in place of an earlier wait.
+func (t *Tree) timeTransitionEnds() {
+	reduce := t.root.Env().reduce.GetUntracked()
+	for _, n := range t.ending {
+		n.restyled = false
+		if n.endStop != nil {
+			n.endStop()
+			n.endStop = nil
+		}
+		if n.deleted {
+			continue
+		}
+		var d time.Duration
+		if tr := n.style.Transition; !reduce && tr.Duration > 0 {
+			d = tr.Delay + tr.Duration
+		}
+		t.within(n.owner, func() {
+			n.endStop = n.owner.AfterFunc(d, func() {
+				n.endStop = nil
+				if !n.deleted {
+					n.h.transitionEnd()
+				}
+			})
+		})
+	}
+	clear(t.ending)
+	t.ending = t.ending[:0]
 }
 
 // shrinkItems drops the items' slice for a smaller one once a commit of n

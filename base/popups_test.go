@@ -146,6 +146,63 @@ func TestPopoversOnTouchScreensTakeThePressOutside(t *testing.T) {
 	}
 }
 
+func TestDesktopPopupsComeInAndGoThroughTheirPhases(t *testing.T) {
+	var log []string
+	app := startDesktop(t, func(cx *core.Scope) core.Node {
+		return base.Popover{Trigger: core.Text{Content: "Pop"}, Label: "Pop",
+			OnOpen: func() { log = append(log, "open") }, OnClose: func() { log = append(log, "close") },
+			PopupClass: "transition-opacity duration-200", StartingClass: "opacity-0", EndingClass: "opacity-0",
+			Children: []core.Node{core.Text{Content: "inside"}}}
+	})
+	opacity := func() float32 { return app.Find("text:inside").Parent.Style.Opacity }
+	app.Press("label:Pop")
+	if got := opacity(); got != 0 {
+		t.Errorf("the popup starts at opacity %v", got)
+	}
+	app.Advance(60 * time.Millisecond)
+	if got := opacity(); got != 1 || !slices.Equal(log, []string{"open"}) {
+		t.Errorf("past its first frame: opacity %v, log %q", got, log)
+	}
+	app.Press("label:Pop")
+	if got := opacity(); got != 0 || len(log) != 1 {
+		t.Errorf("closing: opacity %v, log %q", got, log)
+	}
+	app.Advance(199 * time.Millisecond)
+	if !app.Exists("text:inside") {
+		t.Fatal("the popup left before its transition ended")
+	}
+	app.Advance(time.Millisecond)
+	if app.Exists("text:inside") || !slices.Equal(log, []string{"open", "close"}) {
+		t.Errorf("after its transition: log %q", log)
+	}
+	// Opened again on its way out, it stays.
+	app.Press("label:Pop")
+	app.Advance(60 * time.Millisecond)
+	app.Press("label:Pop")
+	app.Advance(100 * time.Millisecond)
+	app.Press("label:Pop")
+	app.Advance(time.Second)
+	if !app.Exists("text:inside") || opacity() != 1 {
+		t.Error("a popup opened again on its way out left")
+	}
+}
+
+func TestDesktopPopupsGoAtOnceWithReducedMotion(t *testing.T) {
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return base.Menu{Trigger: core.Text{Content: "More"}, Label: "More",
+			PopupClass: "transition-opacity duration-200", StartingClass: "opacity-0", EndingClass: "opacity-0",
+			Children: []core.Node{base.MenuItem{Label: "Copy", Children: []core.Node{core.Text{Content: "Copy"}}}}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop, ReduceMotion: true}))
+	app.Press("label:More")
+	if got := app.Find("text:Copy").Parent.Parent.Style.Opacity; got != 1 {
+		t.Errorf("the menu starts at opacity %v", got)
+	}
+	app.Press("label:Copy")
+	if app.Exists("text:Copy") {
+		t.Error("the menu stayed to go")
+	}
+}
+
 func TestViewTooltipsShowOnHoverOnDesktops(t *testing.T) {
 	app := startDesktop(t, func(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{Padding: core.All(40)}, Children: []core.Node{

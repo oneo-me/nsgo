@@ -40,6 +40,7 @@ type Tree struct {
 	items       []driver.MountItem
 	laidOut     []*node
 	transits    []*node // nodes whose next frame their layout transition moves
+	ending      []*node // nodes with OnTransitionEnd restyled since the last commit
 	reports     []report
 	stacks      []*node
 	lists       []*node
@@ -199,11 +200,13 @@ type node struct {
 	lstate   layout.State
 	lstyle   layout.Style
 	lstyleOK bool
-	transit  bool  // in Tree.transits
-	queued   bool  // a boundary waiting in Tree.boundaries
-	rtl      bool  // laid out right to left
-	isRoot   bool  // a layout root: the root view, an overlay or a modal
-	fill     *Size // the size a root fills, if it fills one
+	transit  bool        // in Tree.transits
+	restyled bool        // in Tree.ending
+	endStop  func() bool // stops the OnTransitionEnd waiting for its transition
+	queued   bool        // a boundary waiting in Tree.boundaries
+	rtl      bool        // laid out right to left
+	isRoot   bool        // a layout root: the root view, an overlay or a modal
+	fill     *Size       // the size a root fills, if it fills one
 
 	created       bool
 	deleted       bool
@@ -239,6 +242,7 @@ type handlers struct {
 	fileEnter, fileLeave                 func()
 	fileDrop                             func([]string)
 	action                               func(string)
+	transitionEnd                        func()
 }
 
 type textNode struct {
@@ -941,6 +945,10 @@ func (t *Tree) bindStyle(cx *Scope, n *node, base Style, fn func() Style) {
 // changed: a color does not.
 func (t *Tree) restyle(n *node) bool {
 	t.markResolve(n)
+	if n.h.transitionEnd != nil && n.created && !n.restyled {
+		n.restyled = true
+		t.ending = append(t.ending, n)
+	}
 	p := n.props
 	if n.input != nil && n.input.config.Disabled {
 		p.Disabled = true
@@ -1119,7 +1127,7 @@ func (t *Tree) setViewParts(n *node, v View) {
 		layout: v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
 		pan: v.OnPan, pinch: v.OnPinch, rotation: v.OnRotation,
 		fileEnter: v.OnFileDragEnter, fileLeave: v.OnFileDragLeave, fileDrop: v.OnFileDrop,
-		focus: v.OnFocus, blur: v.OnBlur}
+		focus: v.OnFocus, blur: v.OnBlur, transitionEnd: v.OnTransitionEnd}
 	n.h.action = v.OnAccessibilityAction
 	n.responder = v.Responder
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,

@@ -69,7 +69,7 @@ func (t *Tree) mountOverlay(cx *Scope, parent *node, o Overlay) {
 	n := t.newNode(driver.KindView, parent, cx)
 	h := &hoistNode{overlay: &o}
 	t.hoist(n, h)
-	t.setClasses(n, o.Class)
+	t.bindClasses(cx, n, o.Class, o.ClassFunc)
 	t.bindStyle(cx, n, o.Style, o.StyleFunc)
 	t.setRef(n, o.Ref)
 	if o.AnchorBounds != nil && o.Anchor == nil {
@@ -80,7 +80,7 @@ func (t *Tree) mountOverlay(cx *Scope, parent *node, o Overlay) {
 			t.changed = true
 		})
 	}
-	n.h = handlers{pressOutside: o.OnPressOutside, cancel: o.OnCancel}
+	n.h = handlers{pressOutside: o.OnPressOutside, cancel: o.OnCancel, transitionEnd: o.OnTransitionEnd}
 	n.props = driver.ViewProps{Role: o.Role, Label: o.Label, TestID: o.TestID, PointerEvents: o.PointerEvents}
 	for _, c := range o.Children {
 		t.mount(cx, n, c)

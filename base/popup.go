@@ -105,6 +105,108 @@ func (p *popup) cancel(r Reason, keep bool) {
 	}
 }
 
+// popupMotion keeps an overlay popup (Popover, Tooltip, a menu's on
+// desktops) in the tree while it comes in and goes, as Base UI's data-starting-style and
+// data-ending-style do and as a Toast's phases: the popup takes its
+// starting part in its first frame, so a transition in its style runs
+// its entry from there, and its ending part as it closes, leaving the
+// tree once that part's transition is over. Without an ending part, or
+// while the user asks for less motion, it comes and goes at once.
+type popupMotion struct {
+	starting, ending part
+	// shown: in the tree, while open and while it goes.
+	shown *core.Signal[bool]
+	// entered: past its first frame.
+	entered *core.Signal[bool]
+	// closing: it goes, and leaves once its transition ends.
+	closing                    *core.Signal[bool]
+	startingClass, endingClass string
+}
+
+// newPopupMotion returns the motion of a popup following open.
+func newPopupMotion(cx *core.Scope, open func() bool, starting, ending part) *popupMotion {
+	m := &popupMotion{starting: starting, ending: ending,
+		shown: core.NewSignal(cx, false), entered: core.NewSignal(cx, false), closing: core.NewSignal(cx, false),
+		startingClass: important(starting.class), endingClass: important(ending.class)}
+	cx.Effect(func() {
+		o := open()
+		cx.Untrack(func() { m.follow(cx, o) })
+	})
+	return m
+}
+
+func (m *popupMotion) follow(cx *core.Scope, open bool) {
+	still := core.Untracked(cx, cx.Env().ReduceMotion)
+	if open {
+		// Opened again on its way out: back from where it is.
+		m.closing.Set(false)
+		if m.shown.GetUntracked() {
+			return
+		}
+		m.entered.Set(still || !m.starting.set())
+		m.shown.Set(true)
+		if !m.entered.GetUntracked() {
+			// Past its first frame: the next display frame, or a frame's
+			// time where none comes, whichever is first.
+			enter := func() { m.entered.Set(true) }
+			cx.RequestAnimationFrame(func(time.Time) { enter() })
+			cx.AfterFunc(toastFirstFrame, enter)
+		}
+		return
+	}
+	if !m.shown.GetUntracked() || m.closing.GetUntracked() {
+		return
+	}
+	if still || !m.ending.set() {
+		m.shown.Set(false)
+		return
+	}
+	m.closing.Set(true)
+}
+
+// transitionEnd is the popup's OnTransitionEnd: a closing popup leaves.
+func (m *popupMotion) transitionEnd() {
+	if m.closing.GetUntracked() {
+		m.closing.Set(false)
+		m.shown.Set(false)
+	}
+}
+
+// class is the phase's class, after and over the popup's own.
+func (m *popupMotion) class() string {
+	switch {
+	case m.closing.Get():
+		return m.endingClass
+	case !m.entered.Get():
+		return m.startingClass
+	}
+	return ""
+}
+
+// style merges the phase's style over fn's.
+func (m *popupMotion) style(fn func() core.Style) func() core.Style {
+	return func() core.Style {
+		var s core.Style
+		if fn != nil {
+			s = fn()
+		}
+		switch {
+		case m.closing.Get():
+			s = s.Merge(m.ending.style)
+		case !m.entered.Get():
+			s = s.Merge(m.starting.style)
+		}
+		return s
+	}
+}
+
+// overlay gives o the motion's phases and the popup's part.
+func (m *popupMotion) overlay(o core.Overlay, popup part) core.Overlay {
+	o.Class, o.ClassFunc, o.Style, o.StyleFunc = popup.class, m.class, popup.style, m.style(popup.fn)
+	o.OnTransitionEnd = m.transitionEnd
+	return o
+}
+
 // Popover shows content beside its trigger: pressing the trigger opens
 // it, pressing outside or Escape closes it. On desktops a press outside
 // goes on to what is under the pointer; on touch screens a transparent
@@ -130,10 +232,17 @@ type Popover struct {
 	PopupClass     string
 	PopupStyle     core.Style
 	PopupStyleFunc func() core.Style
-	Trigger        core.Node
-	Children       []core.Node
-	Label          string
-	TestID         string
+	// StartingStyle styles the popup in its first frame and EndingStyle
+	// as it goes (popupMotion); they merge over PopupStyle, and their
+	// classes are important.
+	StartingClass string
+	StartingStyle core.Style
+	EndingClass   string
+	EndingStyle   core.Style
+	Trigger       core.Node
+	Children      []core.Node
+	Label         string
+	TestID        string
 	// OnLayout and Tooltip are its view's, as a core.View's.
 	OnLayout func(core.Bounds)
 	Tooltip  core.Node
@@ -143,7 +252,9 @@ type Popover struct {
 func (p Popover) Render(cx *core.Scope) core.Node {
 	st := newPopup(cx, p.Open, p.DefaultOpen, p.OnOpenChange, p.OnOpen, p.OnClose)
 	st.onCancel = p.OnCancel
-	st.lifecycle(cx, st.open)
+	m := newPopupMotion(cx, st.open, part{class: p.StartingClass, style: p.StartingStyle},
+		part{class: p.EndingClass, style: p.EndingStyle})
+	st.lifecycle(cx, m.shown.Get)
 	anchor := new(core.Ref)
 	outside := func() { st.cancel(ReasonPressOutside, p.NoCloseOnPressOutside) }
 	return core.Group{
@@ -151,17 +262,19 @@ func (p Popover) Render(cx *core.Scope) core.Node {
 			Expanded: st.open,
 			OnPress:  func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
 			Children: []core.Node{p.Trigger}},
-		core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
-			popup := core.Overlay{
+		core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
+			popup := m.overlay(core.Overlay{
 				Anchor: anchor, Placement: p.Placement, Align: p.Align, Offset: p.Offset, Margin: p.Margin,
-				Class: p.PopupClass, Style: p.PopupStyle, StyleFunc: p.PopupStyleFunc, Children: p.Children, Role: core.RoleDialog,
+				Children: p.Children, Role: core.RoleDialog,
 				OnCancel: func() { st.cancel(ReasonCancel, p.NoCloseOnEscape) },
-			}
+			}, part{p.PopupClass, p.PopupStyle, p.PopupStyleFunc})
 			if core.Untracked(cx, cx.Env().Desktop) {
 				popup.OnPressOutside = func(core.Point) { outside() }
 				return popup
 			}
-			return core.Group{touchBackdrop(outside), popup}
+			// The backdrop leaves as the popover closes, so a press goes
+			// on while it goes.
+			return core.Group{core.Show{When: st.open, Then: func(*core.Scope) core.Node { return touchBackdrop(outside) }}, popup}
 		}},
 	}
 }
@@ -199,9 +312,14 @@ type Tooltip struct {
 	PopupClass     string
 	PopupStyle     core.Style
 	PopupStyleFunc func() core.Style
-	Trigger        core.Node
-	Children       []core.Node
-	TestID         string
+	// StartingStyle and EndingStyle are the popup's, as Popover's.
+	StartingClass string
+	StartingStyle core.Style
+	EndingClass   string
+	EndingStyle   core.Style
+	Trigger       core.Node
+	Children      []core.Node
+	TestID        string
 }
 
 // Render implements core.Node.
@@ -223,7 +341,9 @@ func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool
 		// A disabled tooltip never shows.
 		st.open = func() bool { return false }
 	}
-	st.lifecycle(cx, st.open)
+	m := newPopupMotion(cx, st.open, part{class: t.StartingClass, style: t.StartingStyle},
+		part{class: t.EndingClass, style: t.EndingStyle})
+	st.lifecycle(cx, m.shown.Get)
 	delay := t.Delay
 	if delay == 0 {
 		delay = 500 * time.Millisecond
@@ -266,10 +386,9 @@ func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool
 			return s
 		}
 	}
-	return core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
-		return core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
-			Class: class, Style: style, StyleFunc: fn, Children: t.Children,
-			Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}
+	return core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
+		return m.overlay(core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
+			Children: t.Children, Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}, part{class, style, fn})
 	}}, hover
 }
 
