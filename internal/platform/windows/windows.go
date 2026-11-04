@@ -493,7 +493,8 @@ func Run(app engine.App, opts Options) {
 
 	instance, className := registerClass()
 
-	// Size the window so its client area is the app's size.
+	// A first guess at the window around the app's size, which placeNew
+	// corrects.
 	const style = wsOverlappedWindow | wsClipChildren
 	var ex uintptr
 	if w.baseComposed {
@@ -506,6 +507,9 @@ func Run(app engine.App, opts Options) {
 		cwUseDefault, cwUseDefault, uintptr(frame.Right-frame.Left), uintptr(frame.Bottom-frame.Top),
 		0, 0, instance, 0)
 	w.hwnd = hwnd
+	// Placed before it is the window's, so the sizes this sends do not
+	// reach the engine, which starts at the client area the window has.
+	w.placeNew(opts.Width, opts.Height, opts.test == nil)
 	windows[hwnd] = w
 	// Nothing has the focus yet: typing must not open a composition.
 	w.updateIME()
@@ -522,7 +526,10 @@ func Run(app engine.App, opts Options) {
 	w.darkTitleBar(w.shownDark())
 	darkMenus(w.appearance)
 	// The engine starts once the window exists, so Mount can post to it.
-	w.startEngine(app, opts, driver.Size{Width: opts.Width, Height: opts.Height})
+	var client rect
+	getClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
+	size := w.point(client.Right, client.Bottom)
+	w.startEngine(app, opts, driver.Size{Width: size.X, Height: size.Y})
 	showWindow.Call(hwnd, swShow)
 	if opts.test != nil {
 		opts.test.ready <- w
@@ -543,6 +550,34 @@ func Run(app engine.App, opts Options) {
 		translateMessage.Call(uintptr(unsafe.Pointer(&m)))
 		dispatchMessageW.Call(uintptr(unsafe.Pointer(&m)))
 	}
+}
+
+// placeNew sizes a new window so its client area is width by height in
+// the DPI of its monitor, measuring what its frame takes rather than
+// trusting AdjustWindowRect's system DPI, and centers it in the monitor's
+// work area, shrunk to fit it when fit is set.
+func (w *window) placeNew(width, height driver.Points, fit bool) {
+	if dpi, _, _ := getDpiForWindow.Call(w.hwnd); dpi != 0 {
+		w.scale = float64(dpi) / 96
+	}
+	var outer, client rect
+	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&outer)))
+	getClientRect.Call(w.hwnd, uintptr(unsafe.Pointer(&client)))
+	cx := outer.Right - outer.Left + w.px(width) - client.Right
+	cy := outer.Bottom - outer.Top + w.px(height) - client.Bottom
+	x, y := outer.Left, outer.Top
+	var mi monitorInfo
+	mi.Size = uint32(unsafe.Sizeof(mi))
+	monitor, _, _ := monitorFromWindow.Call(w.hwnd, monitorDefaultNear)
+	if r, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&mi))); r != 0 {
+		work := mi.Work
+		workW, workH := work.Right-work.Left, work.Bottom-work.Top
+		if fit {
+			cx, cy = min(cx, workW), min(cy, workH)
+		}
+		x, y = work.Left+max(workW-cx, 0)/2, work.Top+max(workH-cy, 0)/2
+	}
+	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), swpNoZOrder|swpNoActivate)
 }
 
 // newWindow returns the state of a window showing an app.

@@ -959,6 +959,43 @@ func waitForPixel(t *testing.T, hwnd uintptr, x, y int32, want uint32, timeout t
 	}
 }
 
+// TestClientAreaIsTheAppsSize opens a window whose root ends with a bar:
+// its client area is the size asked for, within the monitor's work area,
+// and the bar's last row is on screen (#23).
+func TestClientAreaIsTheAppsSize(t *testing.T) {
+	if testing.Short() {
+		t.Skip("opens a window")
+	}
+	app := func(cx *core.Scope) core.Node {
+		return core.View{Style: core.Style{Direction: core.Column, Height: core.Pct(100)}, Children: []core.Node{
+			core.View{Style: core.Style{FlexGrow: 1}},
+			core.View{Style: core.Style{Height: core.Pt(58), Background: core.RGB(0xFF00A0)}},
+		}}
+	}
+	hwnd := startApp(t, "nsgo-client-size", app, 400, 300)
+	var scale float64
+	var client, outer rect
+	var mi monitorInfo
+	onMain(t, hwnd, func(w *window) {
+		scale = w.scale
+		getClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
+		getWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&outer)))
+		mi.Size = uint32(unsafe.Sizeof(mi))
+		monitor, _, _ := monitorFromWindow.Call(hwnd, monitorDefaultNear)
+		getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&mi)))
+	})
+	px := func(p float64) int32 { return int32(math.Round(p * scale)) }
+	if client.Right != px(400) || client.Bottom != px(300) {
+		t.Errorf("client area = %dx%d, want %dx%d", client.Right, client.Bottom, px(400), px(300))
+	}
+	if w := mi.Work; outer.Top < w.Top || outer.Bottom > w.Bottom {
+		t.Errorf("window %+v outside the work area %+v", outer, w)
+	}
+	if got, ok := waitForPixel(t, hwnd, client.Right/2, client.Bottom-1, 0xFF00A0, 3*time.Second); !ok {
+		t.Errorf("the bar's last row shows #%06x", got)
+	}
+}
+
 // TestWheelSettlesOnPagesWithinInsets turns the wheel over a paging
 // scroll view with a content inset: it settles on the next page once the
 // wheel rests, reporting the momentum, and the inset widens its offsets.
