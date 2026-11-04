@@ -70,7 +70,7 @@ type statusLayer struct {
 // and modals' settings, with the fields patch sets. Desktops and the web
 // have no status bar.
 func (cx *Scope) SetStatusBar(patch StatusBarSetting) {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.status.base = patch.over(t.status.base)
 		t.changed = true
 	}

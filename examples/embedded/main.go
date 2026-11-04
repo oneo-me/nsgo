@@ -9,4 +9,4 @@ import (
 	"github.com/oneo-me/nsgo/examples/embedded/app"
 )
 
-func main() { nsgo.Run(app.Root) }
+func main() { nsgo.Run(app.Root, nsgo.WindowSize(420, 560)) }

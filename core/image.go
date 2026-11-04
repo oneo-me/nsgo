@@ -54,7 +54,7 @@ var (
 // an "asset:" source with Scales included, and keeps its bytes for the
 // views that show it next.
 func (cx *Scope) ImageSize(src ImageSource, done func(pixels Size, err error)) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}

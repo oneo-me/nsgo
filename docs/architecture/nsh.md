@@ -62,6 +62,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 - GPU shaders written in Go, compiled for each backend ([shaders](shaders.md)).
 - Icons as vector elements and the bundled Lucide pack, where NSH loads SVG files as images ([icons](icons.md)).
 - Scroll edge effects under the app's bars, after iOS 26's ([scrolling](scrolling.md#edge-effects)).
+- Apps that open their windows, panels and tray icons themselves, on one engine, with global shortcuts and shutdown modes, after Avalonia's ([application and windows](application.md#departures-from-nsh)).
 - Window materials and window controls placed in the app's own title bar ([services](services.md#where-nsgo-departs-from-nsh)).
 - A theme and an appearance per subtree, Onevra's palette by default ([themes](themes.md#departures-from-nsh)).
 - Zooming scroll views on macOS, and AppKit's bounce where momentum reaches an edge ([scrolling](scrolling.md#scrolling)).

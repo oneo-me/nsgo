@@ -52,6 +52,19 @@ What components still lack to move as their parts come, go and travel (#19), whi
 | Shared elements | SwiftUI's `matchedGeometryEffect`, Motion's `layoutId` | Views a commit removes and inserts under one match ID count as one: the new view moves from the frame the old one showed, with the commit's layout animation |
 | Resisting drags | `RubberBandClamp` | A node resists a value past its bounds on the frame clock, so a drag bound with `PanValues` slows at its ends without a commit per move |
 
+## Application and windows
+
+What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Surfaces on Windows and Linux | macOS's `own` surface | The backends run the app on a surface in no window and attach each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
+| Tray icons on Windows | `Shell_NotifyIcon` | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
+| Tray icons on Linux | StatusNotifierItem over D-Bus | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
+| Global shortcuts on Windows and Linux | `RegisterHotKey`; `XGrabKey`, the GlobalShortcuts portal | A shortcut shows a panel from any app, on Wayland once the user grants it |
+| One instance on Windows and Linux | A named mutex and pipe; a Unix socket | A second launch hands its arguments to the running app, which hears `OnReopen` |
+| Launch at login on Windows and Linux | The `Run` registry key; an XDG autostart entry | `SetLaunchAtLogin` starts the app at login and `LaunchAtLogin` reads it |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

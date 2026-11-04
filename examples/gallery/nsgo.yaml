@@ -2,10 +2,6 @@ name: Gallery
 id: dev.oneo.nsgo.gallery
 version: 0.1.0
 
-window:
-  width: 1080
-  height: 760
-
 dev:
   target: native
 

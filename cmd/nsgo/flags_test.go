@@ -20,7 +20,7 @@ func TestLoadAndOverride(t *testing.T) {
 
 	fs := flag.NewFlagSet("dev", flag.ContinueOnError)
 	f := bindDevFlags(fs)
-	if err := fs.Parse([]string{"-name", "Other", "-width", "800"}); err != nil {
+	if err := fs.Parse([]string{"-name", "Other"}); err != nil {
 		t.Fatal(err)
 	}
 	f.apply(p)
@@ -28,15 +28,22 @@ func TestLoadAndOverride(t *testing.T) {
 	if p.Name != "Other" || p.ID != "dev.nsgo.Other" {
 		t.Errorf("app: got %q, %q", p.Name, p.ID)
 	}
-	if p.Window.Width != 800 || p.Window.Height != 640 {
-		t.Errorf("window: got %dx%d, want 800x640", p.Window.Width, p.Window.Height)
+}
+
+func TestLoadRefusesWindow(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "nsgo.yaml"), []byte("name: App\nwindow: {width: 420, height: 560}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := load(dir); err == nil || !strings.Contains(err.Error(), "nsgo.WindowSize") {
+		t.Errorf("a window in nsgo.yaml: %v", err)
 	}
 }
 
 func TestDevFlagsApply(t *testing.T) {
 	fs := flag.NewFlagSet("dev", flag.ContinueOnError)
 	f := bindDevFlags(fs)
-	args := []string{"-target", "web", "-hot-reload", "-name", "Other", "-width", "800"}
+	args := []string{"-target", "web", "-hot-reload", "-name", "Other"}
 	if err := fs.Parse(args); err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +55,6 @@ func TestDevFlagsApply(t *testing.T) {
 	p.Dev.Target = "native"
 	off := false
 	p.Dev.HotReload = &off
-	p.Window.Width, p.Window.Height = 420, 560
 
 	f.apply(p)
 
@@ -63,9 +69,6 @@ func TestDevFlagsApply(t *testing.T) {
 	}
 	if p.ID != "com.example.app" {
 		t.Errorf("explicit id changed to %q", p.ID)
-	}
-	if p.Window.Width != 800 || p.Window.Height != 560 {
-		t.Errorf("window: got %dx%d, want 800x560", p.Window.Width, p.Window.Height)
 	}
 	if p.Version != "1.0.0" {
 		t.Errorf("version: got %q, want 1.0.0", p.Version)
@@ -82,7 +85,6 @@ func TestDevFlagsKeepValues(t *testing.T) {
 	p := &project{Name: "App", ID: "com.example.app", Version: "1.0.0"}
 	p.Dev.Target = "web"
 	p.Dev.HotReload = &hot
-	p.Window.Width, p.Window.Height = 420, 560
 
 	f.apply(p)
 
@@ -91,9 +93,6 @@ func TestDevFlagsKeepValues(t *testing.T) {
 	}
 	if p.Name != "App" || p.ID != "com.example.app" || p.Version != "1.0.0" {
 		t.Errorf("app: got %q, %q, %q", p.Name, p.ID, p.Version)
-	}
-	if p.Window.Width != 420 || p.Window.Height != 560 {
-		t.Errorf("window: got %dx%d, want 420x560", p.Window.Width, p.Window.Height)
 	}
 }
 

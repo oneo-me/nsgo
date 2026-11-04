@@ -126,7 +126,7 @@ func (t *Tree) pickDrawingScales(d *Drawing) {
 // monospaced font's character width.
 func (cx *Scope) MeasureText(text string, font Font) TextMetrics {
 	var engine driver.TextEngine
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		engine = t.text
 	}
 	return driver.NewDrawing(engine).TextMetrics(text, font)

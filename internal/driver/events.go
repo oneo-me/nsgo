@@ -196,6 +196,23 @@ const (
 	// EventScreenInsets reports what covers screen ID's content (Insets):
 	// its header and the system's bars, where the platform measures them.
 	EventScreenInsets
+	// EventWindowClose reports that the user asked to close the surface's
+	// window; the core closes it unless the app keeps it.
+	EventWindowClose
+	// EventWindowHidden reports that the platform hid the surface's
+	// window, as a panel hides when it loses the focus.
+	EventWindowHidden
+	// EventReopen reports that the user opened the app again while it
+	// ran: from the Dock, or by launching it a second time.
+	EventReopen
+	// EventTray reports a click on tray icon Count: Index 0 for the
+	// primary button, 1 for the secondary.
+	EventTray
+	// EventHotKey reports the global shortcut whose ID is Count.
+	EventHotKey
+	// EventLaunchAtLogin answers ItemLaunchAtLogin Count with whether the
+	// system starts the app at login (Finished).
+	EventLaunchAtLogin
 )
 
 // EventMask is a set of event kinds.

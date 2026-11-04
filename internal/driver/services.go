@@ -133,7 +133,67 @@ const (
 	WindowSetControls
 	// WindowSetMaterial puts Material behind the window's content.
 	WindowSetMaterial
+	// WindowShow shows a hidden window without activating the app; a
+	// panel shows under tray icon Anchor, when set.
+	WindowShow
+	// WindowHide hides the window, keeping it and its views.
+	WindowHide
+	// WindowDestroy closes an opened surface's window for good: its tree
+	// is gone.
+	WindowDestroy
 )
+
+// SurfaceKind is what an opened surface shows in.
+type SurfaceKind uint8
+
+const (
+	// SurfaceWindow is a window of the platform's own chrome.
+	SurfaceWindow SurfaceKind = iota
+	// SurfacePanel is a borderless window that floats over the others
+	// without activating the app: a tray icon's or a launcher's.
+	SurfacePanel
+	// SurfaceTrayIcon is the view a tray icon draws itself with
+	// (TrayConfig.View), in the menu bar on macOS.
+	SurfaceTrayIcon
+)
+
+// SurfaceConfig is a window, a panel or a tray icon's view the app opens
+// (ItemOpenSurface).
+type SurfaceConfig struct {
+	// ID numbers the surface's tree, which the platform attaches.
+	ID   uint32
+	Kind SurfaceKind
+	// Title is a window's; empty is the app's name.
+	Title string
+	// Width and Height are the content's size in points; zero is the
+	// platform's default.
+	Width, Height Points
+	// Hidden opens it without showing it, as panels open.
+	Hidden bool
+	// Material is the material behind the content (WindowSetMaterial).
+	Material WindowMaterial
+	// HideOnBlur hides a panel as it loses the focus, reported with
+	// EventWindowHidden.
+	HideOnBlur bool
+	// Tray is the tray icon a SurfaceTrayIcon draws.
+	Tray uint32
+}
+
+// TrayConfig is a tray icon (ItemTray).
+type TrayConfig struct {
+	ID uint32
+	// Icon is the icon as PNG, drawn in the menu bar's colors when
+	// Template, on macOS.
+	Icon     []byte
+	Template bool
+	// Title is text beside the icon, on macOS.
+	Title   string
+	Tooltip string
+	// View, when set, is the SurfaceTrayIcon the icon draws itself with.
+	View uint32
+	// Removed takes the icon away.
+	Removed bool
+}
 
 // WindowCommand is an ItemWindow's request.
 type WindowCommand struct {
@@ -147,6 +207,8 @@ type WindowCommand struct {
 	MenuBar  MenuBarMode
 	Controls WindowControls
 	Material WindowMaterial
+	// Anchor is the tray icon WindowShow shows a panel under.
+	Anchor uint32
 }
 
 // WindowControls is how a hidden title bar shows the system's window

@@ -12,7 +12,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 
 | Package | NSH counterpart | Responsibility |
 | --- | --- | --- |
-| `nsgo` (module root) | `run_app`, `AppView` | `nsgo.Run`, and `nsgo.NewView` in a host's window ([embedding](docs/architecture/embedding.md)), on the backend build tags pick |
+| `nsgo` (module root) | `run_app`, `AppView` | `nsgo.Run` of a root view or of an app that opens its windows ([application](docs/architecture/application.md)), and `nsgo.NewView` in a host's window ([embedding](docs/architecture/embedding.md)), on the backend build tags pick |
 | `core` | `nsh-core` | The app's API: elements, styles, Tailwind classes, themes, the reactive graph and regions, services; the shadow tree, layout and text preparation |
 | `base` | `nsh-base` | Unstyled components: controls, popups, navigation, panels, a dock, charts and tables ([components](docs/architecture/components.md)) |
 | `mobile`, `desktop` | `nsh/mobile`, `nsh/desktop` | What only phones have (the tab bar) and only desktops (the window, menus) |
@@ -83,7 +83,7 @@ Packages import only downward; `layering_test.go` checks it on every target:
 - What animates runs on the platform's frame clock, which stops when idle: the engine sends transitions and animated values once, never a commit per frame ([animation](docs/architecture/animation.md)).
 - The reactive graph belongs to the engine goroutine and never locks; other goroutines reach it through `Scope.Post`.
 - Text is prepared and laid out on the engine side through a platform `TextEngine`; the main thread only draws the result.
-- One engine is one app with no global state, so a host app embeds several; `tsx.Register` configures the process before apps start.
+- One engine is one app with no global state, so a host app embeds several; its windows are surfaces of that engine, a tree each. `tsx.Register` configures the process before apps start.
 - `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`.
 - Layout (`internal/layout`) ports Taffy 0.15's algorithms step by step and passes every Taffy fixture that applies to NSH's features.
 
@@ -124,6 +124,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Scrolling](docs/architecture/scrolling.md) | `Scroll`, `List` or a scroll view |
 | [Interaction](docs/architecture/interaction.md) | Accessibility, pointers, focus, touches, gestures or drops |
 | [Services](docs/architecture/services.md) | A service, a menu, the desktop window or the app's lifecycle |
+| [Application and windows](docs/architecture/application.md) | `nsgo.Run`, the windows, panels and tray icons an app opens, global shortcuts or shutdown |
 | [Hosted views](docs/architecture/native-views.md) | `WebView`, `Video` or `Native` components |
 | [Images](docs/architecture/images.md) | How backends load, cache, decode or play images |
 | [Canvas](docs/architecture/canvas.md) | `Canvas`, `Drawing` or a backend's canvas player |

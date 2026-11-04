@@ -221,3 +221,81 @@ func TestTraceHearsEachCommit(t *testing.T) {
 		t.Fatalf("the trace heard %+v", h)
 	}
 }
+
+// items returns the items of kind the recorder was handed.
+func (r *recorder) items(kind driver.ItemKind) []driver.MountItem {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var out []driver.MountItem
+	for _, b := range r.batches {
+		for _, it := range b.Items {
+			if it.Kind == kind {
+				out = append(out, it)
+			}
+		}
+	}
+	return out
+}
+
+// wait waits until cond holds of r.
+func (r *recorder) wait(t *testing.T, what string, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for !cond() {
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for %s", what)
+		}
+		select {
+		case <-r.mounted:
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+}
+
+func TestAttachOpenedSurfaces(t *testing.T) {
+	app := &recorder{mounted: make(chan struct{}, 1)}
+	var count *core.Signal[int]
+	e := Start(app, core.AppRoot(func(cx *core.Scope) {
+		count = core.NewSignal(cx, 1)
+		cx.SetMainView(func(cx *core.Scope) core.Node {
+			return core.Text{ContentFunc: func() string { return strconv.Itoa(count.Get()) }}
+		})
+	}), Options{Windows: &core.WindowOptions{Width: 300, Height: 200}})
+	defer e.Close()
+	app.wait(t, "the main window to open", func() bool { return len(app.items(driver.ItemOpenSurface)) == 1 })
+	cfg := app.items(driver.ItemOpenSurface)[0].Surface
+	if cfg.ID != 1 || cfg.Width != 300 {
+		t.Fatalf("opened %+v", cfg)
+	}
+	win := &recorder{mounted: make(chan struct{}, 1)}
+	we := e.Attach(cfg.ID, win)
+	we.Resize(driver.Size{Width: 300, Height: 200})
+	win.wait(t, "the window's view", func() bool { return slices.Contains(slices.Collect(values(win.texts())), "1") })
+	done := make(chan struct{})
+	e.push(message{fn: func() { count.Set(2); close(done) }})
+	<-done
+	win.wait(t, "a shared signal to reach the window", func() bool {
+		return slices.Contains(slices.Collect(values(win.texts())), "2")
+	})
+	we.Dispatch(driver.Event{Kind: driver.EventWindowClose})
+	win.wait(t, "the window to be destroyed", func() bool {
+		for _, it := range win.items(driver.ItemWindow) {
+			if it.Window.Action == driver.WindowDestroy {
+				return true
+			}
+		}
+		return false
+	})
+	app.wait(t, "the app to quit with its last window", func() bool { return len(app.items(driver.ItemQuit)) == 1 })
+}
+
+// values returns the values of m.
+func values(m map[driver.NodeID]string) func(func(string) bool) {
+	return func(yield func(string) bool) {
+		for _, v := range m {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}

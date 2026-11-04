@@ -44,10 +44,8 @@ type project struct {
 	// Appearance starts the app light or dark whatever the system's, its
 	// launch screen and window included; empty follows the system.
 	Appearance string `yaml:"appearance"`
-	Window     struct {
-		Width  int `yaml:"width"`
-		Height int `yaml:"height"`
-	} `yaml:"window"`
+	// Window is no longer nsgo.yaml's: Go code sizes windows.
+	Window any `yaml:"window"`
 	// Icon names the app's icons; resolveIcons fills in the defaults
 	// under assets.
 	Icon icons `yaml:"icon"`
@@ -170,8 +168,8 @@ func load(dir string) (*project, error) {
 	default:
 		return nil, fmt.Errorf("nsgo.yaml: appearance is %q; use light, dark or leave it out", p.Appearance)
 	}
-	if p.Window.Width == 0 || p.Window.Height == 0 {
-		p.Window.Width, p.Window.Height = 480, 640
+	if p.Window != nil {
+		return nil, fmt.Errorf("nsgo.yaml: window is set in Go now: nsgo.Run(Root, nsgo.WindowSize(width, height)), or desktop.WindowOptions")
 	}
 	if p.Dev.Target == "" {
 		p.Dev.Target = "native"
@@ -230,12 +228,11 @@ func (p *project) cache(parts ...string) string {
 	return filepath.Join(append([]string{p.Dir, ".nsgo"}, parts...)...)
 }
 
-// ldflags passes nsgo.yaml's name, ID and window size, and the performance
-// monitor, to nsgo.Run.
+// ldflags passes nsgo.yaml's name and ID, and the performance monitor, to
+// nsgo.Run.
 func (p *project) ldflags(extra ...string) string {
 	const pkg = "github.com/oneo-me/nsgo"
-	flags := fmt.Sprintf("-X '%s.name=%s' -X '%s.id=%s' -X %s.width=%d -X %s.height=%d",
-		pkg, p.Name, pkg, p.ID, pkg, p.Window.Width, pkg, p.Window.Height)
+	flags := fmt.Sprintf("-X '%s.name=%s' -X '%s.id=%s'", pkg, p.Name, pkg, p.ID)
 	if p.Perf {
 		flags += fmt.Sprintf(" -X '%s.fps=1'", pkg)
 	}

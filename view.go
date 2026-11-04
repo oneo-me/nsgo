@@ -30,8 +30,8 @@ type platformView interface {
 // event loop itself. The host puts Handle in its window and sizes it;
 // the app starts once it is there, so settings made before are in its
 // first frame. Component, Fonts, Appearance, Parent, DataDir, OnError and
-// HostChannel apply; FPS, WindowMaterial and KeepAliveOnClose are Run's
-// window's. Close the view when the host is done with it.
+// HostChannel apply; FPS, WindowMaterial, WindowSize and HideDock are
+// Run's. Close the view when the host is done with it.
 func NewView(app App, opts ...Option) *View {
 	o := options{appearance: map[string]core.Appearance{
 		"light": core.AppearanceLight, "dark": core.AppearanceDark}[appearance]}

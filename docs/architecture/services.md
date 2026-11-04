@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
 ## Requests and answers
 
@@ -121,7 +121,7 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 
 `Quit` ends the app. On desktops `nsgo.Run` returns once the engine stopped and storage was written, as NSH's `run_app`: macOS cancels `applicationShouldTerminate:` and stops AppKit's loop, posting an event to wake it. Android finishes its task; iOS apps never quit themselves. `mobile.ExitApp`, NSH's `BackHandler.exitApp`, does what Android's back does when nothing in the app takes it (`ItemBackUnhandled`): the task's root goes to the background, another activity finishes.
 
-`nsgo.KeepAliveOnClose` keeps a macOS app running when its window closes: the window orders out, and the Dock's reopen shows it again. Windows and Linux end with the window, having no Dock to reopen from.
+When the app ends by itself, and which of its windows a close keeps, is its shutdown mode's and its windows' `OnClosing` ([application and windows](application.md#lifecycle)).
 
 ## Desktop windows
 

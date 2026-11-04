@@ -65,7 +65,6 @@ func boolFlag(fs *flag.FlagSet, name, usage string) *boolOverride {
 // and nsgo build.
 type overrides struct {
 	name, id, version *override[string]
-	width, height     *override[int]
 	buildNumber       *override[int]
 }
 
@@ -74,8 +73,6 @@ func bindOverrides(fs *flag.FlagSet) *overrides {
 		name:        stringFlag(fs, "name", "the app `name` (default: nsgo.yaml's name)"),
 		id:          stringFlag(fs, "id", "the bundle `id` (default: nsgo.yaml's id)"),
 		version:     stringFlag(fs, "version", "the app `version` (default: nsgo.yaml's version)"),
-		width:       intFlag(fs, "width", "the window `width` (default: nsgo.yaml's window.width)"),
-		height:      intFlag(fs, "height", "the window `height` (default: nsgo.yaml's window.height)"),
 		buildNumber: intFlag(fs, "build-number", "the build's `number`, CFBundleVersion and Android's versionCode (default: nsgo.yaml's build_number)"),
 	}
 }
@@ -88,8 +85,6 @@ func (o *overrides) apply(p *project) {
 	}
 	o.id.replace(&p.ID)
 	o.version.replace(&p.Version)
-	o.width.replace(&p.Window.Width)
-	o.height.replace(&p.Window.Height)
 	o.buildNumber.replace(&p.BuildNumber)
 }
 

@@ -105,7 +105,19 @@ func (s *surface) command(c *driver.WindowCommand) {
 	case driver.WindowSetLevel:
 		s.setLevel(c.Level)
 	case driver.WindowOrderFront:
-		s.orderFront()
+		if s.kind == driver.SurfacePanel {
+			s.showPanel(s.anchor)
+		} else {
+			s.orderFront()
+		}
+	case driver.WindowShow:
+		s.show(c.Anchor)
+	case driver.WindowHide:
+		if s.kind == driver.SurfacePanel {
+			s.hidePanel(false)
+		} else {
+			w.Send(sel("orderOut:"), objc.ID(0))
+		}
 	case driver.WindowSetControls:
 		s.controls = c.Controls
 		s.applyTitleBar()

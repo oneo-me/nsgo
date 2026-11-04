@@ -135,8 +135,8 @@ func ToggleMaximize(cx *core.Scope) { cx.ToggleMaximize() }
 // ToggleFullScreen enters or leaves full screen.
 func ToggleFullScreen(cx *core.Scope) { cx.ToggleFullScreen() }
 
-// CloseWindow closes the window as its close button does; the app ends
-// with it, unless nsgo.KeepAliveOnClose keeps it running on macOS.
+// CloseWindow closes the window as its close button does: the window's
+// OnClosing handlers may keep it, and the app ends by its shutdown mode.
 func CloseWindow(cx *core.Scope) { cx.CloseWindow() }
 
 // SetWindowFrame moves and sizes the window: f's top left corner is in

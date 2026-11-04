@@ -128,7 +128,7 @@ func usage() {
   nsgo check [dir]
   nsgo i18n  [-source L] [dir]
 
-dev and build take -name, -id, -version, -width and -height, which replace
-nsgo.yaml's values, and -h lists every flag.`)
+dev and build take -name, -id and -version, which replace nsgo.yaml's
+values, and -h lists every flag.`)
 	os.Exit(2)
 }

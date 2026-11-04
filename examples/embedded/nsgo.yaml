@@ -2,9 +2,5 @@ name: Embedded
 id: dev.oneo.nsgo.embedded
 version: 0.1.0
 
-window:
-  width: 420
-  height: 560
-
 web:
   host: host.js

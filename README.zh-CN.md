@@ -63,8 +63,10 @@ func Root(cx *core.Scope) core.Node {
 	}}
 }
 
-func main() { nsgo.Run(Root) }
+func main() { nsgo.Run(Root, nsgo.WindowSize(420, 560)) }
 ```
+
+桌面应用也可以像 Avalonia 应用那样自己决定显示什么：`nsgo.Run(App)` 只运行一次 `func App(app *core.Scope)`，由它用 `desktop` 打开窗口、面板、托盘图标和全局快捷键，它们共享应用的 signal（目前支持 macOS）。`examples/tray` 不出现在 Dock 中，常驻菜单栏。
 
 用 `nsgotest` 无窗口地测试它；`go tool nsgo test -target macos` 会在真实窗口中用原生输入运行同样的测试，并可截图（`app.Screenshot("name")`）：
 
@@ -113,7 +115,6 @@ version: 0.1.0
 build_number: 1         # CFBundleVersion 和 Android 的 versionCode；否则取自 version
 # appearance: dark      # 无论系统设置，固定为 light 或 dark
 # theme: theme.json     # TSX 应用的主题：NSGo 的或 shadcn/ui 的
-window: { width: 420, height: 560 }
 # i18n: { dir: locales, source: en }  # 应用的语言目录，及编写它所用的语言
 icon:
   apple: assets/AppIcon.icon  # macOS 和 iOS，或 macOS 的 .icns

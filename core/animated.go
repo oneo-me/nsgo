@@ -42,7 +42,7 @@ type AnimatedXY struct{ X, Y *AnimatedValue }
 // NewAnimatedValue returns a value starting at v, released with the
 // current owner.
 func NewAnimatedValue(cx *Scope, v float64) *AnimatedValue {
-	t := cx.rt.tree
+	t := cx.tree()
 	a := &AnimatedValue{animNode{t: t, id: t.anim.node()}}
 	t.anim.add(driver.AnimationOp{Kind: driver.AnimCreateValue, Node: a.id, Value: v})
 	t.anim.own(cx, &a.animNode)
@@ -264,7 +264,7 @@ func (r *AnimationRun) Reset() {
 // or resetting it, a value's Set or Stop, or another animation of one of
 // its values ends it early. The owner going stops it.
 func (cx *Scope) StartAnimation(a *Animation, done func(finished bool)) *AnimationRun {
-	t := cx.rt.tree
+	t := cx.tree()
 	r := &AnimationRun{t: t}
 	reported := false
 	r.id = t.anim.wait(cx, func(e driver.Event) {
@@ -549,7 +549,7 @@ var (
 // AnimateLayout animates the changes of the next commit that has any
 // with a: views move and resize, and appear and go, on the platform.
 func (cx *Scope) AnimateLayout(a LayoutAnimation) {
-	t := cx.rt.tree
+	t := cx.tree()
 	t.layoutAnim = &a
 	t.changed = true
 }

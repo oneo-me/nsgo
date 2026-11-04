@@ -4,7 +4,7 @@ NSGo apps run inside apps of their own: Go desktop programs make views with `nsg
 
 ## Views
 
-A view is one surface and one engine; `nsgo.Run` is one view in a window of its own, with its loop. A host makes as many as it likes, in one window or several, so backends keep a surface's state on the surface. What is the process's by nature stays process-wide: the standalone app's runner, window and controller, registries keyed by native object (views, widgets, menu targets), observers that report to every live surface, fonts, the image cache and file storage per data directory.
+A view is one surface and one engine; `nsgo.Run` runs one engine with its loop, whose windows are surfaces of it ([application and windows](application.md)). A host makes as many as it likes, in one window or several, so backends keep a surface's state on the surface. What is the process's by nature stays process-wide: the standalone app's runner, window and controller, registries keyed by native object (views, widgets, menu targets), observers that report to every live surface, fonts, the image cache and file storage per data directory.
 
 | Target | `Handle` / class | The engine starts | It stops |
 | --- | --- | --- | --- |

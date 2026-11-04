@@ -2,6 +2,8 @@
 
 package nsgo
 
-func run(app App, o options) {
+import "github.com/oneo-me/nsgo/core"
+
+func run(App, func(*core.Scope), options) {
 	panic("nsgo: no backend for this platform yet")
 }

@@ -36,6 +36,9 @@ type Scope struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	comp     *computation // set when the scope is a computation's
+	// surf is the tree of the window the scope is in, inherited by what
+	// it owns; nil leaves it the graph's first.
+	surf     *Tree
 	disposed bool
 }
 
@@ -63,6 +66,10 @@ type RootOptions struct {
 	// parameters, events, handlers and URL handler. The graph attaches to
 	// it until its root is disposed.
 	Host *Host
+	// Windows, set where the platform opens windows, are the main
+	// window's options (SetMainView): the first tree is then the app's
+	// own surface, which shows no view.
+	Windows *WindowOptions
 }
 
 // NewRoot returns the root scope of a new graph.
@@ -72,7 +79,7 @@ func NewRoot(opts RootOptions) *Scope {
 	}
 	rt := &runtime{post: opts.Post, clock: opts.Clock, report: opts.Report,
 		store: opts.Storage, dataDir: opts.DataDir, cacheDir: opts.CacheDir,
-		requestFrame: opts.RequestFrame}
+		requestFrame: opts.RequestFrame, windows: opts.Windows}
 	rt.root = &Scope{rt: rt}
 	if opts.Host != nil {
 		rt.attachHost(opts.Host)
@@ -109,10 +116,36 @@ type runtime struct {
 	dataDir        string
 	cacheDir       string
 	host           *hostApp
+	// windows are the main window's options where the platform opens
+	// windows (RootOptions.Windows); surfaces the trees of the windows,
+	// panels and tray views opened, keyed those opened with a key.
+	windows   *WindowOptions
+	surfaces  []*Tree
+	surfaceID uint32
+	keyed     map[string]*Window
+	// shutdown says when the app ends; main is its main window, ownMain
+	// the one SetMainView opened to show mainView.
+	shutdown      ShutdownMode
+	main, ownMain *Window
+	mainView      *Signal[func(cx *Scope) Node]
+	reopens       []*reopenHandler
+	trays         map[uint32]*Tray
+	trayID        uint32
+	hotKeys       []*hotKey
+	hotKeyID      uint32
 	// theme is DefaultTheme's, made on first use; subtreeAppearance
 	// whether any scope has forced one.
 	theme             *Theme
 	subtreeAppearance bool
+}
+
+// tree is the tree of the surface cx is in: its window's, or the
+// graph's first.
+func (cx *Scope) tree() *Tree {
+	if cx.surf != nil {
+		return cx.surf
+	}
+	return cx.rt.tree
 }
 
 // current is the scope that owns what code using cx creates now.
@@ -126,6 +159,9 @@ func (cx *Scope) current() *Scope {
 func (cx *Scope) adopt(child *Scope) {
 	child.rt = cx.rt
 	child.parent = cx
+	if child.surf == nil {
+		child.surf = cx.surf
+	}
 	if cx.disposed {
 		child.disposed = true
 		return

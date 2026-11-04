@@ -63,8 +63,10 @@ func Root(cx *core.Scope) core.Node {
 	}}
 }
 
-func main() { nsgo.Run(Root) }
+func main() { nsgo.Run(Root, nsgo.WindowSize(420, 560)) }
 ```
+
+A desktop app can open what it shows itself instead, as an Avalonia application does: `nsgo.Run(App)` runs `func App(app *core.Scope)` once, and it opens windows, panels, tray icons and global shortcuts with `desktop`, which share its signals (on macOS for now). `examples/tray` keeps out of the Dock and lives in the menu bar.
 
 Test it headless with `nsgotest`, no window needed; `go tool nsgo test -target macos` runs the same tests in a real window, with native input and screenshots (`app.Screenshot("name")`):
 
@@ -113,7 +115,6 @@ version: 0.1.0
 build_number: 1         # CFBundleVersion and Android's versionCode; else from version
 # appearance: dark      # light or dark whatever the system's
 # theme: theme.json     # a TSX app's theme: NSGo's or a shadcn/ui one
-window: { width: 420, height: 560 }
 # i18n: { dir: locales, source: en }  # the app's catalogs and the language they are written in
 icon:
   apple: assets/AppIcon.icon  # macOS and iOS, or an .icns for macOS

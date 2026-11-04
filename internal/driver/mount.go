@@ -238,6 +238,29 @@ const (
 	// ItemInstallSettings opens the system's setting that lets the app
 	// install packages; Android answers with EventFiles carrying Count.
 	ItemInstallSettings
+	// ItemOpenSurface opens a window, a panel or a tray icon's view
+	// (Surface) for the tree the core numbered Surface.ID, which the
+	// platform attaches to the engine (engine.Engine.Attach). Only the
+	// app's own surface, the first, is sent it.
+	ItemOpenSurface
+	// ItemTray adds, changes or removes a tray icon (Tray); the app's own
+	// surface is sent it, and EventTray reports its clicks.
+	ItemTray
+	// ItemTrayMenu shows Menu at the place of tray icon Tray.ID, numbered
+	// Count as ItemPopupMenu's menus are.
+	ItemTrayMenu
+	// ItemHotKeys replaces the app's global shortcuts (Keys, each with its
+	// ID), which fire whichever app has the focus with EventHotKey.
+	ItemHotKeys
+	// ItemDock shows the app in the Dock and the app switcher (On), or
+	// leaves it to its tray icon and windows.
+	ItemDock
+	// ItemSetLaunchAtLogin has the system start the app as the user logs
+	// in (On), or no more.
+	ItemSetLaunchAtLogin
+	// ItemLaunchAtLogin asks whether the system starts the app at login;
+	// the platform answers with EventLaunchAtLogin carrying Count.
+	ItemLaunchAtLogin
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -305,6 +328,11 @@ type MountItem struct {
 	Directories *DirectoriesRequest
 	Open        *SharedFile
 	Share       *ShareRequest
+	// Surface is ItemOpenSurface's window, Tray ItemTray's icon, and On
+	// ItemDock's and ItemSetLaunchAtLogin's choice.
+	Surface *SurfaceConfig
+	Tray    *TrayConfig
+	On      bool
 }
 
 // StickyCell is a sticky list cell and its travel, in its scroll view's

@@ -23,7 +23,7 @@ type Element struct {
 // bound: the tsx runtime binds what changes itself. With nil props it is
 // a region, whose children lay out as its parent's.
 func NewElement(cx *Scope, props Node) *Element {
-	t, owner := cx.rt.tree, cx.current()
+	t, owner := cx.tree(), cx.current()
 	var n *node
 	switch props.(type) {
 	case nil:

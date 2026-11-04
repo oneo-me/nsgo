@@ -2,6 +2,3 @@ name: TSX
 id: dev.oneo.nsgo.tsx
 version: 0.1.0
 
-window:
-  width: 960
-  height: 720

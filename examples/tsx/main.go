@@ -16,4 +16,4 @@ var src embed.FS
 // Root is the app: what App.tsx mounts.
 var Root = compiler.App(src, "App.tsx")
 
-func main() { nsgo.Run(Root) }
+func main() { nsgo.Run(Root, nsgo.WindowSize(960, 720)) }

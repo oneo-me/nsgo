@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"slices"
 	"sync"
 	"time"
 
@@ -91,6 +92,11 @@ type Options struct {
 	Appearance driver.Appearance
 	// Host is what an embedding host gives the view the app runs in.
 	Host HostOptions
+	// Windows, set where the platform opens windows, are the main
+	// window's options (core.RootOptions.Windows): the first surface is
+	// the app's own, which shows no view, and the platform attaches each
+	// surface the app opens.
+	Windows *WindowOptions
 	// Perf collects this app's commit timings; nil measures nothing.
 	Perf *PerfMonitor
 	// Thread runs first on the OS thread the engine keeps, before the
@@ -112,11 +118,12 @@ type Options struct {
 	LogPerf bool
 }
 
-// Host and Tokens are core's, for backends.
+// Host, Tokens and WindowOptions are core's, for backends.
 type (
-	Host     = core.Host
-	HostCall = core.HostCall
-	Tokens   = core.Tokens
+	WindowOptions = core.WindowOptions
+	Host          = core.Host
+	HostCall      = core.HostCall
+	Tokens        = core.Tokens
 )
 
 // NewHost returns a new channel to an embedding host (core.NewHost).
@@ -193,14 +200,22 @@ func (h HostEnvironment) over(env driver.Environment) driver.Environment {
 	return env
 }
 
-// Engine is one running app: one tree, one reactive graph, one goroutine.
-// Its methods are safe to call from any goroutine and never block, so a
-// platform's main thread can call them.
+// Engine is one running app: one reactive graph, one goroutine, and a
+// tree per surface. An Engine value is one surface's: Start returns the
+// first's, and Attach another's, which the app opened. Its methods are
+// safe to call from any goroutine and never block, so a platform's main
+// thread can call them.
 type Engine struct {
+	*runner
+	surface uint32
+}
+
+// runner is what an app's surfaces share.
+type runner struct {
 	mu     sync.Mutex
 	event  func(driver.Event)
 	pin    func(driver.Environment) driver.Environment
-	raw    driver.Environment // the platform's last, before pinning
+	raw    driver.Environment // the first surface's last, before pinning
 	host   HostEnvironment
 	queue  []message
 	wake   chan struct{}
@@ -210,9 +225,12 @@ type Engine struct {
 }
 
 type message struct {
-	frame  bool
-	event  driver.Event
-	resize *driver.Size
+	// surface is the surface a resize, an environment, a press or an
+	// event is for.
+	surface uint32
+	frame   bool
+	event   driver.Event
+	resize  *driver.Size
 	// resized are closed once the commit after the resize is mounted.
 	resized []chan struct{}
 	env     *driver.Environment
@@ -220,6 +238,9 @@ type message struct {
 	tokens  *core.Tokens
 	fn      func()
 	fonts   bool
+	// attach is the platform of an opened surface; detach ends it.
+	attach Platform
+	detach bool
 }
 
 // Trace, when set, hears each commit's batch, before the platform, and
@@ -228,15 +249,15 @@ type message struct {
 // builds set it, as their dev client starts.
 var Trace func(b *driver.MountBatch, took time.Duration)
 
-// Start runs app on a new goroutine.
+// Start runs app on a new goroutine, its first surface on p.
 func Start(p Platform, app App, opts Options) *Engine {
-	e := &Engine{
+	e := &Engine{runner: &runner{
 		wake:   make(chan struct{}, 1),
 		done:   make(chan struct{}),
 		exited: make(chan struct{}),
 		event:  opts.Event,
 		pin:    opts.Pin,
-	}
+	}}
 	var tokens Tokens
 	if hs := opts.Host.Settings; hs != nil {
 		e.host, tokens = hs.Environment, hs.Tokens
@@ -272,6 +293,29 @@ func (e *Engine) logPerf(m *PerfMonitor) {
 	}
 }
 
+// Attach attaches platform p to the surface the app opened as id
+// (driver.ItemOpenSurface) and returns the surface's Engine, which p
+// reports to as the first surface's platform does: its size and
+// environment first. Closing it detaches p.
+func (e *Engine) Attach(id uint32, p Platform) *Engine {
+	e.push(message{surface: id, attach: p})
+	return &Engine{runner: e.runner, surface: id}
+}
+
+// surface is an attached surface: its tree and platform.
+type surface struct {
+	tree   *core.Tree
+	p      Platform
+	commit func() *driver.MountBatch
+}
+
+// destroyed is the batch that tells an opened surface's platform that its
+// tree is gone.
+func destroyed() *driver.MountBatch {
+	return &driver.MountBatch{Items: []driver.MountItem{{Kind: driver.ItemWindow,
+		Window: &driver.WindowCommand{Action: driver.WindowDestroy}}}}
+}
+
 func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 	defer close(e.exited)
 	// Text engines such as Android's need the same OS thread each call.
@@ -287,6 +331,21 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 			log.Printf("nsgo: the app's directory could not be made: %v", err)
 		}
 	}
+	// surfaces are the attached ones by ID, the first's 0; frameAsked is
+	// set while a display frame was asked for.
+	surfaces := map[uint32]*surface{}
+	frameAsked := false
+	requestFrame := func() {
+		frameAsked = true
+		// A window's display ticks; the first surface may have none.
+		for _, s := range surfaces {
+			if s.tree.ID() != 0 {
+				s.p.RequestFrame()
+				return
+			}
+		}
+		p.RequestFrame()
+	}
 	root := core.NewRoot(core.RootOptions{
 		Post:  func(fn func()) { e.push(message{fn: fn}) },
 		Clock: opts.Clock,
@@ -297,11 +356,12 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 			}
 		},
 		// The platform owns the display frame: the engine only asks.
-		RequestFrame: p.RequestFrame,
+		RequestFrame: requestFrame,
 		Storage:      opts.Storage,
 		DataDir:      opts.DataDir,
 		CacheDir:     opts.CacheDir,
 		Host:         opts.Host.Channel,
+		Windows:      opts.Windows,
 	})
 	defer root.Dispose()
 	tree := core.NewTree(root, p)
@@ -310,30 +370,36 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 	tree.SetAppearance(opts.Appearance)
 	tree.SetTokens(tokens)
 	perf, trace := opts.Perf, Trace
-	// commit applies what changed and records what it cost when a monitor
-	// measures or a trace hears; start is when the wake-up that led here
-	// began.
-	// A test host's observer may keep a batch past the next commit.
-	commitTree := tree.Commit
-	if _, ok := p.(SharedMounter); ok && opts.Observe == nil {
-		commitTree = tree.CommitShared
+	// attach makes t's surface p's. A test host's observer may keep a
+	// batch past the next commit.
+	attach := func(t *core.Tree, p Platform) *surface {
+		s := &surface{tree: t, p: p, commit: t.Commit}
+		if _, ok := p.(SharedMounter); ok && opts.Observe == nil {
+			s.commit = t.CommitShared
+		}
+		surfaces[t.ID()] = s
+		return s
 	}
-	commit := func(start time.Time) {
+	attach(tree, p)
+	// commitOne applies what changed in s and records what it cost when a
+	// monitor measures or a trace hears; start is when the wake-up that
+	// led here began.
+	commitOne := func(s *surface, start time.Time) {
 		if perf == nil && trace == nil {
-			if b := commitTree(); b != nil {
-				p.Mount(b)
+			if b := s.commit(); b != nil {
+				s.p.Mount(b)
 			}
 			return
 		}
 		coreStart := time.Now()
-		b := commitTree()
+		b := s.commit()
 		core := time.Since(coreStart)
 		if b != nil && trace != nil {
 			trace(b, core)
 		}
 		if perf == nil {
 			if b != nil {
-				p.Mount(b)
+				s.p.Mount(b)
 			}
 			return
 		}
@@ -344,9 +410,29 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 			}
 			b.Sent = time.Now()
 			perf.RecordCommit(CommitTiming{App: app, Core: core, Items: len(b.Items)})
-			p.Mount(b)
+			s.p.Mount(b)
 		}
-		perf.RecordBusy(time.Since(start))
+	}
+	// commit commits every attached surface, the first first, and ends
+	// the opened ones that closed.
+	commit := func(start time.Time) {
+		commitOne(surfaces[0], start)
+		for _, t := range slices.Clone(tree.Surfaces()) {
+			s := surfaces[t.ID()]
+			switch {
+			case t.Closed():
+				t.Forget()
+				if s != nil {
+					delete(surfaces, t.ID())
+					s.p.Mount(destroyed())
+				}
+			case s != nil:
+				commitOne(s, start)
+			}
+		}
+		if perf != nil {
+			perf.RecordBusy(time.Since(start))
+		}
 	}
 	var start time.Time
 	if perf != nil {
@@ -367,22 +453,53 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		for _, m := range e.take() {
 			switch {
 			case m.frame:
+				frameAsked = false
 				root.RunFrame()
+				continue
 			case m.fn != nil:
 				m.fn()
-			case m.resize != nil:
-				tree.Resize(*m.resize)
-				resized = append(resized, m.resized...)
-			case m.env != nil:
-				tree.SetEnvironment(*m.env)
-			case m.at != nil:
-				tree.PressAt(*m.at)
+				continue
 			case m.tokens != nil:
 				tree.SetTokens(*m.tokens)
+				continue
 			case m.fonts:
 				tree.FontsChanged()
+				for _, t := range tree.Surfaces() {
+					t.FontsChanged()
+				}
+				continue
+			case m.attach != nil:
+				i := slices.IndexFunc(tree.Surfaces(), func(t *core.Tree) bool { return t.ID() == m.surface })
+				if i < 0 || tree.Surfaces()[i].Closed() {
+					// It closed before its platform attached it.
+					m.attach.Mount(destroyed())
+					continue
+				}
+				attach(tree.Surfaces()[i], m.attach)
+				if frameAsked {
+					m.attach.RequestFrame()
+				}
+				continue
+			}
+			s := surfaces[m.surface]
+			if s == nil {
+				continue
+			}
+			t := s.tree
+			switch {
+			case m.detach:
+				if m.surface != 0 {
+					delete(surfaces, m.surface)
+				}
+			case m.resize != nil:
+				t.Resize(*m.resize)
+				resized = append(resized, m.resized...)
+			case m.env != nil:
+				t.SetEnvironment(*m.env)
+			case m.at != nil:
+				t.PressAt(*m.at)
 			default:
-				tree.Dispatch(m.event)
+				t.Dispatch(m.event)
 			}
 		}
 		commit(start)
@@ -393,25 +510,26 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 }
 
 // push queues m and wakes the engine. A mergeable event replaces one of
-// the same kind for the same view still queued, a resize the last resize,
-// and a frame request the one still queued, so bursts cost one update
-// each.
+// the same kind for the same view still queued, a resize the last resize
+// of the same surface, and a frame request the one still queued, so
+// bursts cost one update each.
 func (e *Engine) push(m message) {
 	e.mu.Lock()
 	merged := false
 	for i := range e.queue {
 		q := &e.queue[i]
+		same := q.surface == m.surface
 		switch {
-		case m.resize != nil && q.resize != nil:
+		case m.resize != nil && q.resize != nil && same:
 			// The commit at the newest size answers the waits for both.
 			m.resized = append(q.resized, m.resized...)
 			*q = m
 			merged = true
 		case m.frame && q.frame,
-			m.env != nil && q.env != nil,
+			m.env != nil && q.env != nil && same,
 			m.tokens != nil && q.tokens != nil,
 			m.fonts && q.fonts,
-			m.event.Mergeable() && q.event.Mergeable() && q.event.Kind == m.event.Kind && q.event.ID == m.event.ID:
+			same && m.event.Mergeable() && q.event.Mergeable() && q.event.Kind == m.event.Kind && q.event.ID == m.event.ID:
 			*q = m
 			merged = true
 		}
@@ -439,10 +557,10 @@ func (e *Engine) take() []message {
 
 // Dispatch reports a platform event.
 func (e *Engine) Dispatch(ev driver.Event) {
-	if e.event != nil {
+	if e.event != nil && e.surface == 0 {
 		e.event(ev)
 	}
-	e.push(message{event: ev})
+	e.push(message{surface: e.surface, event: ev})
 }
 
 // Sync returns once the engine ran what was posted to it before, as a
@@ -461,25 +579,27 @@ func (e *Engine) Sync() {
 func (e *Engine) Frame() { e.push(message{frame: true}) }
 
 // Resize sets the surface size.
-func (e *Engine) Resize(size driver.Size) { e.push(message{resize: &size}) }
+func (e *Engine) Resize(size driver.Size) { e.push(message{surface: e.surface, resize: &size}) }
 
 // ResizeAndWait sets the surface size and returns a channel closed once
 // the commit laid out at it is mounted: a platform that shows a new size
 // at once waits on it, briefly.
 func (e *Engine) ResizeAndWait(size driver.Size) <-chan struct{} {
 	done := make(chan struct{})
-	e.push(message{resize: &size, resized: []chan struct{}{done}})
+	e.push(message{surface: e.surface, resize: &size, resized: []chan struct{}{done}})
 	return done
 }
 
 // SetEnvironment reports what the platform knows about where the app
 // runs; only the latest report queued is applied.
 func (e *Engine) SetEnvironment(env driver.Environment) {
-	e.mu.Lock()
-	e.raw = env
-	e.mu.Unlock()
+	if e.surface == 0 {
+		e.mu.Lock()
+		e.raw = env
+		e.mu.Unlock()
+	}
 	env = e.effective(env)
-	e.push(message{env: &env})
+	e.push(message{surface: e.surface, env: &env})
 }
 
 // effective is the environment the app sees for the platform's env: the
@@ -518,15 +638,20 @@ func (e *Engine) SetTokens(t core.Tokens) { e.push(message{tokens: &t}) }
 // PressAt reports a press at ev.Page in surface points, with its
 // Modifiers and click Count, for platforms that draw their own views and
 // leave hit testing to the engine.
-func (e *Engine) PressAt(ev driver.Event) { e.push(message{at: &ev}) }
+func (e *Engine) PressAt(ev driver.Event) { e.push(message{surface: e.surface, at: &ev}) }
 
 // FontsChanged prepares the app's text again, for fonts the platform
 // loaded after they were registered (driver.FontRegistrar).
 func (e *Engine) FontsChanged() { e.push(message{fonts: true}) }
 
 // Close stops the app, disposing its graph, and waits for the engine
-// goroutine to exit. It must not be called from the engine goroutine.
+// goroutine to exit; an opened surface's Engine only detaches its
+// platform. It must not be called from the engine goroutine.
 func (e *Engine) Close() {
+	if e.surface != 0 {
+		e.push(message{surface: e.surface, detach: true})
+		return
+	}
 	e.once.Do(func() { close(e.done) })
 	<-e.exited
 }

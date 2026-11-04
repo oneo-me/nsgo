@@ -22,7 +22,7 @@ type Holder struct {
 // content belongs to cx itself rather than to the owner running, so it
 // outlives the places that show it: until cx goes or Dispose.
 func NewHolder(cx *Scope, content func(cx *Scope) Node) *Holder {
-	h := &Holder{t: cx.rt.tree, content: content, scope: &Scope{}}
+	h := &Holder{t: cx.tree(), content: content, scope: &Scope{}}
 	cx.adopt(h.scope)
 	h.scope.addCleanup(h.discard)
 	return h

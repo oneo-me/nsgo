@@ -16,6 +16,8 @@ type KeyBinding struct {
 	// Repeat fires it again on the auto-repeats of a held key; else they
 	// are consumed and fire nothing.
 	Repeat bool
+	// ID is a global shortcut's (ItemHotKeys), which EventHotKey reports.
+	ID uint32
 }
 
 // NormalizeKey returns key lowercased with its modifiers in the order

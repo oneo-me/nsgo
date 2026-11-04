@@ -7,7 +7,7 @@ import "github.com/oneo-me/nsgo/internal/driver"
 // desktop windows ignore all of it.
 
 func (cx *Scope) window(c WindowCommand) {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemWindow, Window: &c})
 		t.changed = true
 	}
@@ -99,7 +99,7 @@ type menuAction struct {
 
 // SetApplicationMenu is the core's part of desktop.SetApplicationMenu, which apps use.
 func (cx *Scope) SetApplicationMenu(items []MenuItem) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -132,7 +132,7 @@ type popupMenu struct {
 
 // PopupMenu is the core's part of desktop.PopupMenu, which apps use.
 func (cx *Scope) PopupMenu(items []MenuItem, at Point, closed func()) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}

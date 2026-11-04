@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/internal/platform/ios"
 )
 
@@ -22,8 +23,8 @@ var (
 	embedded  = make(chan struct{})
 )
 
-func run(app App, o options) {
-	ios.Embed(app, ios.Options{ID: id, Components: o.components, Fonts: o.fonts, Appearance: o.appearance})
+func run(root App, app func(*core.Scope), o options) {
+	ios.Embed(rootOf(root, app), ios.Options{ID: id, Components: o.components, Fonts: o.fonts, Appearance: o.appearance})
 	close(embedded)
 	select {}
 }

@@ -8,7 +8,6 @@ import (
 )
 
 func newView(app App, o options, h engine.HostOptions) platformView {
-	w, ht := windowSize()
-	return macos.NewView(app, macos.Options{Title: name, Width: w, Height: ht, ID: id, Components: o.components,
+	return macos.NewView(app, macos.Options{Title: name, Width: o.width, Height: o.height, ID: id, Components: o.components,
 		Fonts: o.fonts, Appearance: o.appearance, Host: h})
 }

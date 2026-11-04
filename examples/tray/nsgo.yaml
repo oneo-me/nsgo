@@ -1,0 +1,6 @@
+name: Tray
+id: dev.oneo.nsgo.tray
+version: 0.1.0
+
+dev:
+  target: native

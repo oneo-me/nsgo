@@ -35,7 +35,9 @@ type Env struct {
 	headers [2]Points
 }
 
-func newEnv(cx *Scope) *Env {
+// newEnv makes an environment owned by cx. A window's shares what the
+// app sets for all of them with the first's, app.
+func newEnv(cx *Scope, app *Env) *Env {
 	e := &Env{
 		window:           NewSignal(cx, Size{}),
 		safe:             NewSignal(cx, Edges{}),
@@ -59,6 +61,9 @@ func newEnv(cx *Scope) *Env {
 		material:         NewSignal(cx, WindowMaterialNone),
 		tokens:           NewSignalFunc(cx, hostColors{}, nil),
 	}
+	if app != nil {
+		e.forced, e.appearance, e.tokens = app.forced, app.appearance, app.tokens
+	}
 	e.language = NewMemo(cx, func() string {
 		locale := e.Locale()
 		if match := languageMatch.Load(); match != nil {
@@ -80,7 +85,9 @@ func newEnv(cx *Scope) *Env {
 	return e
 }
 
-// Env returns the app's environment.
+// Env returns the environment of the window cx is in: its size, scale
+// and safe area are the window's, and what the app forces is every
+// window's.
 func (cx *Scope) Env() *Env {
 	rt := cx.rt
 	if rt.env == nil {
@@ -88,7 +95,13 @@ func (cx *Scope) Env() *Env {
 		for root.parent != nil {
 			root = root.parent
 		}
-		rt.env = newEnv(root)
+		rt.env = newEnv(root, nil)
+	}
+	if t := cx.surf; t != nil && t != rt.tree {
+		if t.env == nil {
+			t.env = newEnv(t.root, rt.env)
+		}
+		return t.env
 	}
 	return rt.env
 }
@@ -215,7 +228,7 @@ func SetLanguageMatch(match func(locale string) string) {
 // later launches itself, as in its storage.
 func (cx *Scope) SetLocale(locale string) {
 	cx.Env().forced.Set(locale)
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.changed = true
 	}
 }

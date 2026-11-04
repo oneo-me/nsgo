@@ -52,9 +52,9 @@ type Options struct {
 	Fonts []string
 	// Appearance is the appearance the app starts in.
 	Appearance driver.Appearance
-	// KeepAlive keeps the app running when its window closes: the window
-	// hides, and the Dock shows it again.
-	KeepAlive bool
+	// HideDock starts the app out of the Dock and the app switcher, as a
+	// tray app (nsgo.HideDock); desktop.SetDockVisible changes it.
+	HideDock bool
 	// Host is what an embedding host gives the view (NewView).
 	Host engine.HostOptions
 }
@@ -162,6 +162,15 @@ type surface struct {
 	// embedded is set for a host's view (NewView): the host owns the
 	// window, its chrome and the menu bar.
 	embedded bool
+	// id is the surface's tree for a surface the app opened, of kind;
+	// tray is the tray icon a SurfaceTrayIcon draws, anchor the one a
+	// panel last showed under. hideOnBlur hides a panel as it loses the
+	// focus.
+	id         uint32
+	kind       driver.SurfaceKind
+	tray       uint32
+	anchor     uint32
+	hideOnBlur bool
 	// The app and how an embedded surface starts it once it is in a
 	// window; observed the window its observations follow.
 	app      engine.App
@@ -486,23 +495,23 @@ func register(name string, super objc.Class, protocols []*objc.Protocol, methods
 	return apple.RegisterClass(name, super, protocols, methods)
 }
 
-// Run opens a window showing app and runs the event loop until the app
-// ends: its window closed, unless KeepAlive, or quit. Call it from main.
-// It returns once the app's graph is gone and its storage written,
-// leaving the process to the caller, as NSH's run_app does.
+// Run runs app and the event loop until the app ends, by its shutdown
+// mode or by quitting. The app opens its windows, panels and tray icons
+// itself (core.RootOptions.Windows); opts' size, title and material are
+// its main window's. Call it from main. It returns once the app's graph
+// is gone and its storage written, leaving the process to the caller,
+// as NSH's run_app does.
 func Run(app engine.App, opts Options) {
 	nsApp := startApp(opts)
-	s := openWindow(app, opts, nil)
-	runner = s
-	// Activate once the run loop runs: a request before it can be lost,
-	// and launch activation settles after the app has finished starting.
-	apple.OnMain(func() {
-		activateApp()
-		s.window.Send(sel("makeKeyAndOrderFront:"), objc.ID(0))
-	})
+	s := startOwn(app, opts)
 	nsApp.Send(sel("run"))
+	for o := range surfaces {
+		if o != s {
+			o.close()
+		}
+	}
 	s.close()
-	runner = nil
+	own = nil
 	engine.SyncStorage()
 	nsApp.Send(sel("setDelegate:"), objc.ID(0))
 }
@@ -575,10 +584,15 @@ func startApp(opts Options) objc.ID {
 	loadAppKit()
 	apple.RegisterFonts(opts.Fonts)
 	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
-	nsApp.Send(sel("setActivationPolicy:"), 0)
+	// An accessory app set so before the loop runs never shows in the
+	// Dock, as LSUIElement would.
+	policy := policyRegular
+	if opts.HideDock {
+		policy = policyAccessory
+	}
+	nsApp.Send(sel("setActivationPolicy:"), policy)
 	defaultMenu = mainMenu()
 	nsApp.Send(sel("setMainMenu:"), defaultMenu)
-	keepAlive = opts.KeepAlive
 	delegate := objc.ID(register("NsgoAppDelegate", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("applicationShouldTerminateAfterLastWindowClosed:"),
 		Fn:  func(self objc.ID, _ objc.SEL, app objc.ID) bool { return false },
@@ -591,11 +605,15 @@ func startApp(opts Options) objc.ID {
 			return terminateCancel
 		},
 	}, {
-		// Clicking the Dock icon shows a window that closed while kept
-		// alive.
+		// Clicking the Dock icon, or launching the app again, is the
+		// app's to answer (core.Scope.OnReopen).
 		Cmd: sel("applicationShouldHandleReopen:hasVisibleWindows:"),
 		Fn: func(self objc.ID, _ objc.SEL, app objc.ID, visible bool) bool {
-			if runner != nil && !finished {
+			switch {
+			case finished:
+			case own != nil && own.engine != nil:
+				own.engine.Dispatch(driver.Event{Kind: driver.EventReopen})
+			case runner != nil:
 				runner.orderFront()
 			}
 			return false
@@ -743,23 +761,26 @@ func (s *surface) close() {
 	delete(menuTargets, s.menuTarget)
 }
 
-// keepAlive hides the window instead of closing it; finished is set once
-// the app ends.
-var keepAlive, finished bool
+// finished is set once the app ends.
+var finished bool
 
-// finish ends the app: it closes the window, stops AppKit's event loop
+// finish ends the app: it closes its windows, stops AppKit's event loop
 // and wakes it, so Run returns.
 func finish() {
 	if finished {
 		return
 	}
 	finished = true
-	if s := runner; s != nil && s.window != 0 {
-		s.closePopup()
-		// Close without asking the delegate again.
-		s.window.Send(selSetDelegate, objc.ID(0))
-		s.window.Send(sel("close"))
+	for s := range surfaces {
+		if s.window != 0 && !s.embedded {
+			s.closePopup()
+			// Close without asking the delegate again.
+			s.window.Send(selSetDelegate, objc.ID(0))
+			s.window.Send(sel("close"))
+		}
 	}
+	removeTrays()
+	unregisterHotKeys()
 	app := nsApp()
 	app.Send(sel("stop:"), objc.ID(0))
 	// stop: takes effect after the next event, and a close from the app
@@ -886,9 +907,14 @@ func (s *surface) observe() {
 	if !s.embedded {
 		// The window's appearance lays its title bar out again too.
 		w := s.window
-		key := apple.NSString("effectiveAppearance")
+		// Kept until the observation ends: an autoreleased key is gone by
+		// the time a window the app opened closes.
+		key := apple.NSString("effectiveAppearance").Send(sel("retain"))
 		w.Send(sel("addObserver:forKeyPath:options:context:"), appObserver, key, uint(0), uintptr(0))
-		s.stops = append(s.stops, func() { w.Send(sel("removeObserver:forKeyPath:"), appObserver, key) })
+		s.stops = append(s.stops, func() {
+			w.Send(sel("removeObserver:forKeyPath:"), appObserver, key)
+			key.Send(selRelease)
+		})
 	}
 
 	const keyDown, leftDown, leftUp, mouseMoved, leftDragged, rightDown, otherDown, wheel, flags = 1 << 10, 1 << 1, 1 << 2, 1 << 5, 1 << 6, 1 << 3, 1 << 25, 1 << 22, 1 << 12
@@ -1169,7 +1195,7 @@ func (s *surface) alert(a *driver.AlertConfig) {
 		hidden.Send(sel("setHidden:"), true)
 	}
 	id := a.ID
-	done := objc.NewBlock(func(_ objc.Block, response int) {
+	answer := func(response int) {
 		const firstButton = 1000
 		index := response - firstButton
 		if index < 0 || index >= len(order) {
@@ -1182,10 +1208,20 @@ func (s *surface) alert(a *driver.AlertConfig) {
 			delete(s.alerts, id)
 		}
 		alert.Send(selRelease)
-	})
+	}
 	if s.alerts != nil {
 		s.alerts[id] = shownAlert{alert, order}
 	}
+	if s.window == 0 || s.kind == driver.SurfaceTrayIcon {
+		// The app's own surface has no window: the alert is the app's,
+		// once the batch has returned.
+		apple.OnMain(func() {
+			activateApp()
+			answer(objc.Send[int](alert, sel("runModal")))
+		})
+		return
+	}
+	done := objc.NewBlock(func(_ objc.Block, response int) { answer(response) })
 	alert.Send(sel("beginSheetModalForWindow:completionHandler:"), s.window, done)
 	done.Release()
 }
@@ -1295,6 +1331,27 @@ func (s *surface) apply(b *driver.MountBatch) {
 				apple.OnMain(finish)
 			}
 			continue
+		case driver.ItemOpenSurface:
+			s.openSurface(*it.Surface)
+			continue
+		case driver.ItemTray:
+			s.applyTray(*it.Tray)
+			continue
+		case driver.ItemTrayMenu:
+			s.trayMenu(it.Tray.ID, it.Menu, it.Count)
+			continue
+		case driver.ItemHotKeys:
+			s.hotKeys(it.Keys)
+			continue
+		case driver.ItemDock:
+			setDock(it.On)
+			continue
+		case driver.ItemSetLaunchAtLogin:
+			setLaunchAtLogin(it.On)
+			continue
+		case driver.ItemLaunchAtLogin:
+			s.engine.Dispatch(driver.Event{Kind: driver.EventLaunchAtLogin, Count: it.Count, Finished: launchesAtLogin()})
+			continue
 		case driver.ItemImageInfo:
 			apple.ImageInfo(it, s.engine.Dispatch)
 			continue
@@ -1305,6 +1362,11 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.keys = it.Keys
 			continue
 		case driver.ItemTitle, driver.ItemWindow, driver.ItemMenu:
+			if it.Kind == driver.ItemWindow && it.Window.Action == driver.WindowDestroy {
+				// Nothing follows the surface's last item.
+				s.destroy()
+				return
+			}
 			// An embedding host owns its window and menu bar.
 			if !s.embedded {
 				s.chromeItem(it)
@@ -1692,6 +1754,9 @@ func nsColor(c driver.Color) objc.ID {
 // hitTest lets presses on text and plain containers through to the
 // nearest pressable ancestor; text fields keep theirs.
 func hitTest(self objc.ID, cmd objc.SEL, p apple.CGPoint) objc.ID {
+	if v := views[self]; v != nil && v.surface != nil && v.surface.kind == driver.SurfaceTrayIcon {
+		return 0 // the status item's button takes the clicks
+	}
 	hit := reach(self, cmd, p)
 	if rawHit {
 		return hit

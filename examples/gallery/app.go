@@ -558,5 +558,5 @@ func main() {
 	for _, name := range names {
 		opts = append(opts, nsgo.Component(name, components[name]))
 	}
-	nsgo.Run(Root, append(opts, nsgo.WindowMaterial(desktop.WindowMaterialSidebar))...)
+	nsgo.Run(Root, append(opts, nsgo.WindowSize(1080, 760), nsgo.WindowMaterial(desktop.WindowMaterialSidebar))...)
 }

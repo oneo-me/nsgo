@@ -82,10 +82,6 @@ var initYAML = template.Must(template.New("yaml").Parse(`name: {{.Name}}
 id: {{.ID}}
 version: 0.1.0
 
-window:
-  width: 420
-  height: 640
-
 # macOS and iOS use assets/AppIcon.icon, or assets/AppIcon.icns on macOS; the
 # other targets, and Apple ones without those, use assets/Icon.png. To use
 # other files, name them here:

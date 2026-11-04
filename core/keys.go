@@ -48,7 +48,7 @@ func (cx *Scope) OnKey(key string, fn func()) { cx.OnKeyWith(key, KeyOptions{}, 
 
 // OnKeyWith is OnKey firing as opts say.
 func (cx *Scope) OnKeyWith(key string, opts KeyOptions, fn func()) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -76,7 +76,7 @@ type backHandler struct {
 // stacks, the newest handler first. fn returns true to take it; when none
 // does, the top stack pops, else the platform goes back itself.
 func (cx *Scope) OnBackPress(fn func() bool) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (cx *Scope) OnBackPress(fn func() bool) {
 // ExitApp is the core's part of mobile.ExitApp, which apps use: it
 // leaves the app as Android's back button does when nothing takes it.
 func (cx *Scope) ExitApp() {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemBackUnhandled})
 		t.changed = true
 	}
@@ -201,7 +201,7 @@ func (cx *Scope) KeyLabel(key string) string {
 
 // SetTitle is the core's part of desktop.SetTitle, which apps use.
 func (cx *Scope) SetTitle(title string) {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemTitle, Value: title})
 		t.changed = true
 	}

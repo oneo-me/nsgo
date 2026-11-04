@@ -55,19 +55,25 @@ func registerPaste() {
 	}})
 	classWindowDelegate = register("NsgoWindowDelegate", objc.GetClass("NSObject"),
 		[]*objc.Protocol{objc.GetProtocol("NSWindowDelegate")}, []objc.MethodDef{{
-			// A window kept alive hides instead of closing.
+			// An opened window's close is the app's to decide
+			// (core.Window.OnClosing), which destroys it.
 			Cmd: sel("windowShouldClose:"),
 			Fn: func(self objc.ID, _ objc.SEL, window objc.ID) bool {
-				if keepAlive && !finished {
-					window.Send(sel("orderOut:"), objc.ID(0))
+				if s := windowSurface(window); s != nil && s.id != 0 && !finished {
+					s.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
 					return false
 				}
 				return true
 			},
 		}, {
-			// The app ends with its window, once AppKit's close returned.
+			// A test host's app ends with its window, once AppKit's close
+			// returned.
 			Cmd: sel("windowWillClose:"),
-			Fn:  func(self objc.ID, _ objc.SEL, note objc.ID) { apple.OnMain(finish) },
+			Fn: func(self objc.ID, _ objc.SEL, note objc.ID) {
+				if s := windowSurface(note.Send(sel("object"))); s == nil || s.id == 0 {
+					apple.OnMain(finish)
+				}
+			},
 		}})
 }
 

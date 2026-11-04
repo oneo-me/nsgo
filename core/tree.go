@@ -25,7 +25,16 @@ import (
 // Tree is the shadow tree of one surface. Commit turns its changes into a
 // MountBatch. It is not safe for concurrent use: the engine owns it.
 type Tree struct {
-	root        *Scope
+	root *Scope
+	// env is a window's own environment (Scope.Env); the first tree's is
+	// the graph's. reported is the platform's last report of it.
+	env      *Env
+	reported Environment
+	// id numbers an opened surface's tree, 0 the first's; window is its
+	// handle, closed set once it is gone.
+	id          uint32
+	window      *Window
+	closed      bool
 	rt          *runtime
 	text        driver.TextEngine
 	nodes       []*node // index is NodeID; 0 is unused
@@ -551,9 +560,20 @@ type sent struct {
 
 // NewTree returns an empty tree under root, laying text out with text.
 func NewTree(root *Scope, text driver.TextEngine) *Tree {
+	root.rt.tree = nil
+	t := newTree(root, text)
+	root.rt.tree = t
+	return t
+}
+
+// newTree returns an empty tree under root, which becomes the graph's
+// first unless one is.
+func newTree(root *Scope, text driver.TextEngine) *Tree {
 	t := &Tree{root: root, rt: root.rt, text: text, nodes: []*node{nil}, measures: newMeasureCache()}
 	t.anim.t = t
-	root.rt.tree = t
+	if root.rt.tree != nil {
+		root.surf = t
+	}
 	t.view = t.newNode(driver.KindView, nil, root)
 	t.view.style = Style{Direction: Column}
 	return t
@@ -579,6 +599,7 @@ func (t *Tree) Resize(size Size) {
 // SetEnvironment records what the platform reports about where the app
 // runs.
 func (t *Tree) SetEnvironment(env Environment) {
+	t.reported = env
 	e := t.root.Env()
 	safe, headers := e.safe.GetUntracked(), e.headers
 	// In one batch, so what reads the environment sees all of it new.
@@ -1430,6 +1451,9 @@ func (t *Tree) mountCatch(cx *Scope, parent *node, c Catch) {
 
 // Dispatch handles a platform event.
 func (t *Tree) Dispatch(ev driver.Event) {
+	if ev.Kind >= driver.EventWindowClose && t.surfaceEvent(ev) {
+		return
+	}
 	switch ev.Kind {
 	case driver.EventTouch:
 		t.touched(ev)

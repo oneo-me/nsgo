@@ -20,7 +20,7 @@ import (
 // chosen, or -1 when it was dismissed without one. done runs even
 // when the owner that showed the alert is gone, such as a closed menu.
 func (cx *Scope) ShowAlert(a AlertConfig, done func(index int)) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		panic("core: ShowAlert needs a mounted tree")
 	}
@@ -91,7 +91,7 @@ func (t *Tree) answer(ev driver.Event) {
 // DismissKeyboard takes focus away from the focused text field, hiding
 // the software keyboard.
 func (cx *Scope) DismissKeyboard() {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemDismissKeyboard})
 		t.changed = true
 	}
@@ -100,7 +100,7 @@ func (cx *Scope) DismissKeyboard() {
 // SetClipboard puts text on the system clipboard, replacing what it
 // holds.
 func (cx *Scope) SetClipboard(text string) {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemSetClipboard, Value: text})
 		t.changed = true
 	}
@@ -110,14 +110,14 @@ func (cx *Scope) SetClipboard(text string) {
 // replacing what it holds: PNG, JPEG, GIF or WebP bytes, as
 // ReadClipboardImage gives them or an ImageSource holds them.
 func (cx *Scope) SetClipboardImage(data []byte) {
-	if t := cx.rt.tree; t != nil && len(data) > 0 {
+	if t := cx.tree(); t != nil && len(data) > 0 {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemSetClipboardImage, Data: data})
 		t.changed = true
 	}
 }
 
 func (cx *Scope) readClipboard(what driver.ClipboardRead, done func(driver.Event)) {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.request(cx, driver.MountItem{Kind: driver.ItemReadClipboard, Clipboard: what}, done)
 	}
 }
@@ -162,7 +162,7 @@ func (cx *Scope) ReadClipboardFiles(done func(uris []string)) {
 
 // Announce has the screen reader say text.
 func (cx *Scope) Announce(text string) {
-	if t := cx.rt.tree; t != nil {
+	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemAnnounce, Value: text})
 		t.changed = true
 	}
@@ -213,7 +213,7 @@ func CheckURL(u string) error {
 // that registers fonts as the app runs (a headless test's) it does
 // nothing.
 func (cx *Scope) RegisterFont(data []byte) error {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return nil
 	}
@@ -266,7 +266,7 @@ func (cx *Scope) OpenURL(u string, done func(opened bool)) {
 	}
 	o := cx.current()
 	platform := func() {
-		t := cx.rt.tree
+		t := cx.tree()
 		if t == nil || o.disposed {
 			answer(false)
 			return
@@ -327,7 +327,7 @@ func pickLimit(multiple bool, limit int) int {
 // photo picker, an open panel on the desktops and a file chooser on the
 // web. The mobile pickers need no permission.
 func (cx *Scope) PickImages(o PickOptions, done func(files []PickedFile)) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -377,7 +377,7 @@ func (o PickFilesOptions) request() driver.FilesRequest {
 // (File.Temporary) that is the app's to delete, and none on the web,
 // where File.Open reads it. The pickers need no permission.
 func (cx *Scope) PickFiles(o PickFilesOptions, done func(files []File, err error)) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -411,7 +411,7 @@ type PickDirectoriesOptions struct {
 // permission. iOS, Android and the web have none yet and answer with an
 // error.
 func (cx *Scope) PickDirectories(o PickDirectoriesOptions, done func(dirs []Directory, err error)) {
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -451,7 +451,7 @@ func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
 			done(saved, err)
 		}
 	}
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -531,7 +531,7 @@ func (cx *Scope) OpenFile(f SharedFile, done func(opened bool, err error)) {
 			done(opened, err)
 		}
 	}
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -578,7 +578,7 @@ func (cx *Scope) Share(o ShareOptions, done func(shown bool, err error)) {
 			done(shown, err)
 		}
 	}
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -618,7 +618,7 @@ func (cx *Scope) InstallPackage(path string, done func(started bool, err error))
 			done(started, err)
 		}
 	}
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -662,7 +662,7 @@ func (cx *Scope) androidAsk(kind driver.ItemKind, done func(bool)) {
 			done(ok)
 		}
 	}
-	t := cx.rt.tree
+	t := cx.tree()
 	if t == nil {
 		return
 	}
@@ -693,6 +693,12 @@ func (t *Tree) SetAppearance(a Appearance) {
 	t.root.Batch(func() {
 		e.appearance.Set(a)
 		e.dark.Set(e.shownDark())
+		// The windows share the appearance the app forces.
+		for _, o := range t.rt.surfaces {
+			if o.env != nil {
+				o.env.dark.Set(o.env.shownDark())
+			}
+		}
 	})
 	t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemAppearance, Appearance: a})
 	t.changed = true
