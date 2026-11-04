@@ -51,7 +51,9 @@ func (w *window) styleOf(v *view) *driver.ViewStyle {
 // transition.
 func (w *window) setStyle(v *view, s *driver.ViewStyle) {
 	from := *w.styleOf(v)
-	styled := v.styled
+	// The first style shows at once, unless the view was created by an
+	// earlier batch: then it changes from the default style.
+	styled := v.styled || v.born != w.batch
 	if s.Animation != v.style.Animation || !styled {
 		v.keyframeStart = time.Now()
 		if s.Animation.Keyframes != 0 {

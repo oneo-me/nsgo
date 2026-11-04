@@ -95,6 +95,8 @@ type surface struct {
 	measureCSS *cssBox    // its style
 	widths     textWidths // texts measured on a canvas
 	paragraphs map[paragraphKey]*paragraphStyle
+	classes    classSheet
+	css        cssText       // the buffer CSS for a class is built in
 	dom        dom           // frames and texts applied in bulk (dom.go)
 	parked     js.Value      // a hidden, inert element removed views wait in
 	measuring  *preparedText // the text measure holds
@@ -160,6 +162,12 @@ type view struct {
 	inner   js.Value // a text view's text, a text field's <input> or a <canvas>
 	textCSS *cssBox  // a text view's inner style
 	elCSS   *cssBox  // el's style but its frame (css)
+	// look is el's class of the view style, feel of what its events make
+	// of the pointer and selection, and textClass inner's of its
+	// paragraph (classes.go).
+	look, feel, textClass classSlot
+	// unbordered is the border of its parent its element is placed in.
+	unbordered driver.Edges
 	// para is the paragraph style textCSS last set; filled the text its
 	// inner element holds, while plain (no spans or attachments).
 	para   *paragraphStyle
@@ -831,6 +839,7 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 type paragraphStyle struct {
 	style, drawn map[string]string
 	line         lineFont // empty when a canvas cannot measure it
+	css          string   // the drawn text's, once made (paragraphCSS)
 }
 
 type paragraphKey struct {
@@ -866,6 +875,70 @@ func (s *surface) paragraphStyle(t *driver.AttributedText) *paragraphStyle {
 	}
 	s.paragraphs[key] = ps
 	return ps
+}
+
+// spanClass is the class of a span of style css, a link's with the
+// pointer.
+func (s *surface) spanClass(css map[string]string, link bool) string {
+	c := s.sortedCSS(css)
+	if link {
+		c.add("cursor", "pointer")
+	}
+	s.css = c
+	if len(c) == 0 {
+		return ""
+	}
+	name, _ := s.classSheet().class(string(c))
+	return name
+}
+
+// sortedCSS is css in the order of its names, in the surface's buffer.
+func (s *surface) sortedCSS(css map[string]string) cssText {
+	names := make([]string, 0, len(css))
+	for k := range css {
+		names = append(names, k)
+	}
+	slices.Sort(names)
+	c := s.css[:0]
+	for _, k := range names {
+		c.add(k, css[k])
+	}
+	s.css = c
+	return c
+}
+
+// paragraphCSS is the CSS of a text drawn in paragraph style ps, or of
+// r's own style without one.
+func (s *surface) paragraphCSS(ps *paragraphStyle, r *richText) cssText {
+	if ps != nil && ps.css != "" {
+		return cssText(ps.css)
+	}
+	style, drawn := r.style, r.drawn
+	if ps != nil {
+		style, drawn = ps.style, ps.drawn
+	}
+	names := make([]string, 0, len(style)+len(drawn))
+	for k := range style {
+		if _, ok := drawn[k]; !ok {
+			names = append(names, k)
+		}
+	}
+	for k := range drawn {
+		names = append(names, k)
+	}
+	slices.Sort(names)
+	var c cssText
+	for _, k := range names {
+		v, ok := drawn[k]
+		if !ok {
+			v = style[k]
+		}
+		c.add(k, v)
+	}
+	if ps != nil {
+		ps.css = string(c)
+	}
+	return c
 }
 
 // verticalAligns are the CSS of the vertical aligns, which core defines
@@ -911,7 +984,8 @@ func (r *richText) appendText(doc, el js.Value, start, end int) {
 // fill puts the text in el: as it is, or as a <span> per span carrying
 // its byte offset, so a press can tell the character it hit. Links take
 // keyboard focus when interactive.
-func (r *richText) fill(doc, el js.Value, interactive bool) {
+func (r *richText) fill(s *surface, el js.Value, interactive bool) {
+	doc := s.doc
 	if len(r.spans) == 0 && len(r.attachments) == 0 {
 		el.Set("textContent", r.text)
 		return
@@ -923,13 +997,15 @@ func (r *richText) fill(doc, el js.Value, interactive bool) {
 			r.appendText(doc, el, at, sp.start)
 		}
 		e := doc.Call("createElement", "span")
-		setStyle(e, sp.style)
+		link := sp.link && interactive
+		if c := s.spanClass(sp.style, link); c != "" {
+			e.Set("className", c)
+		}
 		r.appendText(doc, e, sp.start, sp.end)
 		e.Call("setAttribute", "data-start", sp.start)
-		if sp.link && interactive {
+		if link {
 			e.Call("setAttribute", "role", "link")
 			e.Call("setAttribute", "tabindex", "0")
-			setStyle(e, map[string]string{"cursor": "pointer"})
 		}
 		el.Call("appendChild", e)
 		at = sp.end
@@ -1067,7 +1143,7 @@ func (p *preparedText) hold() js.Value {
 		if p.text == "" {
 			m.Set("textContent", "​") // an empty text keeps a line's height
 		} else {
-			p.fill(p.s.doc, m, false)
+			p.fill(p.s, m, false)
 		}
 	}
 	return m
@@ -1177,6 +1253,7 @@ func (s *surface) MountsAtOnce() {}
 // Mount implements engine.Platform; the page has one thread, so it
 // applies the batch right away.
 func (s *surface) Mount(b *driver.MountBatch) {
+	defer collectLater()
 	var lb *layoutBatch
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {
 		lb = &layoutBatch{anim: b.LayoutAnimation, created: map[driver.NodeID]bool{}}
@@ -1303,7 +1380,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			if parent.content.Equal(parent.el) {
 				b = parent.border
 			}
-			unborder(v.el, b)
+			v.unborder(b)
 			if parent.grouped || v.el.Call("hasAttribute", "aria-hidden").Bool() {
 				hidden := parent.grouped || v.props.ElementsHidden && v.kind != driver.KindInput
 				setAttr(v.el, "aria-hidden", map[bool]string{true: "true"}[hidden])
@@ -1335,12 +1412,24 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			if v.track.Truthy() {
 				v.track.Call("remove")
 			}
-			if !s.vanish(v, lb) {
+			vanishing := s.vanish(v, lb)
+			if !vanishing {
 				v.el.Call("remove")
 			}
 			s.animator.Forget(v.id)
 			if s.drag == v {
 				s.drag = nil
+			}
+			if v.sc != nil {
+				s.dropGlide(v)
+			}
+			if !vanishing { // a fading element keeps its rules
+				s.freeClass(&v.look)
+				s.freeClass(&v.feel)
+				s.freeClass(&v.textClass)
+				if v.input != nil {
+					s.freeClass(&v.input.look)
+				}
 			}
 			if v.component != nil {
 				v.component.Close()
@@ -1451,7 +1540,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemScrollBy:
 			// After the scrolls it follows.
 			for _, sc := range scrolls {
-				sc.v.scrollTo(sc.to, sc.animated)
+				s.scrollTo(sc.v, sc.to, sc.animated)
 			}
 			scrolls = scrolls[:0]
 			if v.kind == driver.KindScroll {
@@ -1496,7 +1585,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			s.setSelection(v, it.ViewProps)
 			if v.panActivation != it.ViewProps.PanActivation {
 				v.panActivation = it.ViewProps.PanActivation
-				s.setGestureStyle(v)
+				s.setFeel(v)
 			}
 		case driver.ItemScrollConfig:
 			if v.kind == driver.KindScroll {
@@ -1520,7 +1609,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	}
 	s.dom.flush()
 	for _, sc := range scrolls {
-		sc.v.scrollTo(sc.to, sc.animated)
+		s.scrollTo(sc.v, sc.to, sc.animated)
 	}
 	s.applyAnimated()
 	s.changedShaders()
@@ -1538,10 +1627,14 @@ func (s *surface) RequestFrame() {
 }
 
 // baseCSS places the elements the surface makes (nsgo-el) where their
-// frames say, and starts views (nsgo-view) without a border or the
-// browser's focus ring, so their styles only write what they draw.
+// frames say, starts views (nsgo-view) without a border or the browser's
+// focus ring, so their styles only write what they draw, breaks texts'
+// lines (nsgo-text) as the measuring element does (textBase), and takes
+// the browser's own look off text fields (nsgo-field).
 const baseCSS = `.nsgo-el { position: absolute; box-sizing: border-box; margin: 0; left: 0; top: 0; }
-.nsgo-view { border: 0 solid transparent; outline: none; }`
+.nsgo-view { border: 0 solid transparent; outline: none; }
+.nsgo-text { white-space: pre-wrap; overflow-wrap: break-word; }
+.nsgo-field { padding: 0; border: 0; outline: none; background: transparent; resize: none; }`
 
 func (s *surface) element(tag string) js.Value {
 	el := s.doc.Call("createElement", tag)
@@ -1553,7 +1646,9 @@ func (s *surface) create(id driver.NodeID, kind driver.ViewKind) *view {
 	for len(s.views) <= int(id) {
 		s.views = append(s.views, nil)
 	}
-	v := &view{id: id, kind: kind, el: s.element("div")}
+	// A new view has the default style and no props or events: the core
+	// sends them only when they differ, and the element shows them as it is.
+	v := &view{id: id, kind: kind, el: s.element("div"), style: driver.DefaultViewStyle}
 	v.el.Get("classList").Call("add", "nsgo-view")
 	v.el.Set("nsgoID", int(id))
 	v.content = v.el
@@ -1562,7 +1657,6 @@ func (s *surface) create(id driver.NodeID, kind driver.ViewKind) *view {
 		v.inner = s.element("div")
 		v.inner.Get("classList").Call("add", "nsgo-text")
 		v.textCSS = newCSSBox(v.inner)
-		v.textCSS.set(textBase)
 		v.el.Call("appendChild", v.inner)
 	case driver.KindInput:
 		s.createInput(v)
@@ -1592,36 +1686,9 @@ func (s *surface) create(id driver.NodeID, kind driver.ViewKind) *view {
 }
 
 func (s *surface) setViewStyle(v *view, vs *driver.ViewStyle) {
-	style := decorCSS(vs, v.size)
-	style["background-color"] = fillCSS(vs.Background)
-	style["opacity"] = opacityCSS(vs.Opacity)
-	style["display"] = ""
-	style["transform"] = transformCSS(vs.Transform)
-	style["transition"] = transitionCSS(vs.Transition)
-	if vs.Hidden {
-		style["display"] = "none"
-	}
 	border := driver.All(vs.BorderWidth)
-	colors := driver.AllColors(vs.BorderColor)
 	if vs.Borders != (driver.Edges{}) {
-		border, colors = vs.Borders, vs.BorderColors
-	}
-	for _, side := range []struct {
-		name  string
-		width driver.Points
-		color driver.Color
-	}{
-		{"top", border.Top, colors.Top}, {"right", border.Right, colors.Right},
-		{"bottom", border.Bottom, colors.Bottom}, {"left", border.Left, colors.Left},
-	} {
-		style["border-"+side.name+"-style"], style["border-"+side.name+"-width"] = "", ""
-		if ls := lineStyle(vs.BorderStyle); ls != "solid" {
-			style["border-"+side.name+"-style"] = ls
-		}
-		if side.width != 0 {
-			style["border-"+side.name+"-width"] = px(side.width)
-		}
-		style["border-"+side.name+"-color"] = fillCSS(side.color)
+		border = vs.Borders
 	}
 	if im := v.image; im != nil && im.tint != vs.TintColor {
 		im.tint = vs.TintColor
@@ -1641,38 +1708,107 @@ func (s *surface) setViewStyle(v *view, vs *driver.ViewStyle) {
 			kids := v.el.Get("children")
 			for i := range kids.Length() {
 				el := kids.Index(i)
-				if !el.Get("nsgoID").IsUndefined() || el.Equal(v.inner) && (v.kind == driver.KindText || v.kind == driver.KindInput) {
+				if kid := s.viewOf(el); kid != nil {
+					kid.unborder(border)
+				} else if el.Equal(v.inner) && (v.kind == driver.KindText || v.kind == driver.KindInput) {
 					unborder(el, border)
 				}
 			}
 		}
 	}
-	if v.kind != driver.KindScroll {
-		style["overflow"] = ""
-		if vs.Clip {
-			style["overflow"] = clipOverflow()
-		}
-	}
-	v.css().set(style)
-	s.setCursor(v)
+	s.setLook(v)
+	s.setFeel(v)
 	s.setKeyframes(v, vs.Animation)
 }
 
-// setCursor shows v's cursor, or a pointer over a pressable view.
-func (s *surface) setCursor(v *view) {
-	cursor := ""
-	if v.style.Cursor != driver.CursorAuto {
-		cursor = v.style.Cursor.Name()
-	} else if v.pressable() {
-		cursor = driver.CursorPointer.Name()
+// setLook gives v the class of its view style, at its size.
+func (s *surface) setLook(v *view) {
+	c := s.css[:0]
+	viewCSS(&c, &v.style, v.size, v.kind)
+	s.setClass(v.el, &v.look, c)
+	s.css = c
+}
+
+// viewCSS appends the CSS of view style vs at size. A scroll view's
+// overflow is its configuration's.
+func viewCSS(c *cssText, vs *driver.ViewStyle, size driver.Size, kind driver.ViewKind) {
+	if vs.Hidden {
+		c.add("display", "none")
 	}
-	v.css().set1("cursor", cursor)
+	c.add("background-color", fillCSS(vs.Background))
+	c.add("opacity", opacityCSS(vs.Opacity))
+	c.add("transform", transformCSS(vs.Transform))
+	c.add("transition", transitionCSS(vs.Transition))
+	decorCSS(c, vs, size)
+	border, colors := driver.All(vs.BorderWidth), driver.AllColors(vs.BorderColor)
+	if vs.Borders != (driver.Edges{}) {
+		border, colors = vs.Borders, vs.BorderColors
+	}
+	if ls := lineStyle(vs.BorderStyle); ls != "solid" {
+		c.add("border-style", ls)
+	}
+	if border != (driver.Edges{}) {
+		if border == driver.All(border.Top) {
+			c.add("border-width", px(border.Top))
+		} else {
+			c.add("border-width", px(border.Top)+" "+px(border.Right)+" "+px(border.Bottom)+" "+px(border.Left))
+		}
+	}
+	if colors == driver.AllColors(colors.Top) {
+		c.add("border-color", fillCSS(colors.Top))
+	} else {
+		c.add("border-color", cssColor(colors.Top)+" "+cssColor(colors.Right)+" "+cssColor(colors.Bottom)+" "+cssColor(colors.Left))
+	}
+	if kind != driver.KindScroll && vs.Clip {
+		c.add("overflow", clipOverflow())
+	}
+}
+
+// setFeel gives v the class of what its events and props make of the
+// pointer: its cursor, a pointer over a pressable view; the browser's
+// touch scrolling and zooming kept out of its gestures; pressable views
+// and views with gestures keep the page's own text selection, callout
+// and tap highlight out, and a selection area selects text.
+func (s *surface) setFeel(v *view) {
+	c := s.css[:0]
+	switch {
+	case v.style.Cursor != driver.CursorAuto:
+		c.add("cursor", v.style.Cursor.Name())
+	case v.pressable():
+		c.add("cursor", driver.CursorPointer.Name())
+	}
+	if v.kind != driver.KindInput {
+		c.add("touch-action", v.touchAction())
+		switch {
+		case v.pressable() || v.hasGestures():
+			c.add("user-select", "none")
+			c.add("-webkit-user-select", "none")
+			c.add("-webkit-touch-callout", "none")
+		case v.area:
+			c.add("user-select", "text")
+			c.add("-webkit-user-select", "text")
+		}
+		if v.pressable() {
+			c.add("-webkit-tap-highlight-color", "transparent")
+		}
+	}
+	s.setClass(v.el, &v.feel, c)
+	s.css = c
 }
 
 // unborder places el, framed from its parent view's origin, where the
 // frame says: CSS places it inside the parent's border b.
 func unborder(el js.Value, b driver.Edges) {
 	setStyle(el, map[string]string{"margin-left": px(-b.Left), "margin-top": px(-b.Top)})
+}
+
+// unborder places v's element inside its parent's border b, unless it is
+// there: a new element is at no border.
+func (v *view) unborder(b driver.Edges) {
+	if b.Left != v.unbordered.Left || b.Top != v.unbordered.Top {
+		v.unbordered = b
+		unborder(v.el, b)
+	}
 }
 
 // transformCSS is t around the view's transform origin, in its order:
@@ -1778,10 +1914,7 @@ func (s *surface) setText(v *view, t *driver.TextContent) {
 	if l.para != v.para || l.para == nil {
 		s.dom.flush()
 		v.para = l.para
-		v.textCSS.set(l.style)
-		if l.drawn != nil {
-			v.textCSS.set(l.drawn)
-		}
+		s.setClass(v.inner, &v.textClass, s.paragraphCSS(l.para, &l.richText))
 	}
 	c := t.Content
 	if s.dom.ok {
@@ -1804,7 +1937,7 @@ func (s *surface) setText(v *view, t *driver.TextContent) {
 		s.dom.setText(v.id, l.text)
 	default:
 		s.dom.flush()
-		l.fill(s.doc, v.inner, true)
+		l.fill(s, v.inner, true)
 	}
 	v.plain, v.filled = plain, l.text
 }
@@ -2013,25 +2146,12 @@ func (s *surface) setEvents(v *view, m driver.EventMask) {
 		v.input.fs.Events = m
 	}
 	s.setOutside(v, m.Has(driver.EventPressOutside))
-	s.setCursor(v)
+	s.setFeel(v)
 	if v.kind == driver.KindInput {
 		return
 	}
-	// Pressable views take keyboard focus and keep the page's own text
-	// selection and tap highlight out of presses.
-	style := map[string]string{
-		"user-select": "", "-webkit-user-select": "",
-		"-webkit-touch-callout": "", "-webkit-tap-highlight-color": "",
-	}
-	if v.pressable() {
-		style = map[string]string{
-			"user-select": "none", "-webkit-user-select": "none",
-			"-webkit-touch-callout": "none", "-webkit-tap-highlight-color": "transparent",
-		}
-	}
-	v.css().set(style)
+	// Pressable views take keyboard focus.
 	v.setTabIndex()
-	s.setGestureStyle(v)
 	if !v.hover && (m.Has(driver.EventHoverIn) || m.Has(driver.EventHoverOut)) {
 		v.hover = true
 		v.listeners.on(v.el, "pointerenter", func(js.Value) { s.send(v, driver.Event{Kind: driver.EventHoverIn}) })
@@ -2125,21 +2245,6 @@ func (s *surface) pressed(v *view, kind driver.EventKind) {
 	ev := s.press.at
 	ev.Kind = kind
 	s.send(v, ev)
-}
-
-// setGestureStyle keeps the browser's touch scrolling and zooming and
-// its text selection out of a view's gestures.
-func (s *surface) setGestureStyle(v *view) {
-	if v.kind == driver.KindInput {
-		return
-	}
-	style := map[string]string{"touch-action": v.touchAction()}
-	if v.hasGestures() {
-		style["user-select"], style["-webkit-user-select"], style["-webkit-touch-callout"] = "none", "none", "none"
-	} else if !v.pressable() {
-		style["user-select"], style["-webkit-user-select"], style["-webkit-touch-callout"] = "", "", ""
-	}
-	v.css().set(style)
 }
 
 // windowCommand carries out what a page can of a window's commands: full

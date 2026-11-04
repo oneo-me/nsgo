@@ -270,6 +270,7 @@ type view struct {
 
 	// What animates: the style, after the first, and the scroll offset.
 	styled     bool
+	born       uint64 // the batch that created it
 	transition *transition
 	scrolling  *scrolling
 	// animated are the values bound to the view, Set 0 when none; drawn is
@@ -306,6 +307,7 @@ func (v *view) detach() {
 }
 
 type window struct {
+	batch uint64 // batches applied
 	hwnd  uintptr
 	title string
 	// damage is what the next frame draws again (damage.go).
@@ -782,6 +784,7 @@ func (w *window) view(id driver.NodeID) *view {
 }
 
 func (w *window) apply(b *driver.MountBatch) {
+	w.batch++
 	var rescroll, loads []*view
 	structure := false // views came or went, for UI Automation
 	lb := w.layoutBatch(b)
@@ -1098,7 +1101,9 @@ func (w *window) create(id driver.NodeID, kind driver.ViewKind) {
 	for len(w.views) <= int(id) {
 		w.views = append(w.views, nil)
 	}
-	v := &view{id: id, kind: kind, style: driver.ViewStyle{Opacity: 1}}
+	// A new view has the default style and no props or events: the core
+	// sends them only when they differ.
+	v := &view{id: id, kind: kind, style: driver.DefaultViewStyle, born: w.batch}
 	if kind == driver.KindInput {
 		v.field = newTextInput(w, v)
 	}

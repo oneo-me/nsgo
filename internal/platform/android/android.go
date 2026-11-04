@@ -940,6 +940,62 @@ const webInterface = "nsgo"
 const webBridge = "(function (n) { if (n) window." + webInterface +
 	" = { postMessage: function (data) { n.postMessage(String(data)); } }; })(window." + webInterface + ");"
 
+// withDefaults returns items with a default style, props and events
+// after each create its batch sends none of them for: the core sends
+// them only when they differ, and NsgoView's nodes, from the classes.dex
+// built before that, have no state until they come.
+func withDefaults(items []driver.MountItem) []driver.MountItem {
+	const style, props, events = 1, 2, 4
+	var sent map[driver.NodeID]uint8
+	for i := range items {
+		switch it := &items[i]; it.Kind {
+		case driver.ItemCreate:
+			if sent == nil {
+				sent = map[driver.NodeID]uint8{}
+			}
+			sent[it.ID] = 0
+		case driver.ItemViewStyle:
+			if has, ok := sent[it.ID]; ok {
+				sent[it.ID] = has | style
+			}
+		case driver.ItemViewProps:
+			if has, ok := sent[it.ID]; ok {
+				sent[it.ID] = has | props
+			}
+		case driver.ItemEvents:
+			if has, ok := sent[it.ID]; ok {
+				sent[it.ID] = has | events
+			}
+		}
+	}
+	if sent == nil {
+		return items
+	}
+	out := make([]driver.MountItem, 0, len(items)+3*len(sent))
+	for _, it := range items {
+		out = append(out, it)
+		if it.Kind != driver.ItemCreate {
+			continue
+		}
+		has := sent[it.ID]
+		if has&style == 0 {
+			out = append(out, driver.MountItem{Kind: driver.ItemViewStyle, ID: it.ID, ViewStyle: &defaultStyle})
+		}
+		if has&props == 0 {
+			out = append(out, driver.MountItem{Kind: driver.ItemViewProps, ID: it.ID, ViewProps: &defaultProps})
+		}
+		if has&events == 0 {
+			out = append(out, driver.MountItem{Kind: driver.ItemEvents, ID: it.ID})
+		}
+	}
+	return out
+}
+
+var (
+	defaultStyle = driver.DefaultViewStyle
+	defaultProps driver.ViewProps
+)
+
 // encode writes a batch in the format NsgoView.mount reads: each item is
 // its kind, its ID and the fields of that kind; requests numbers its
 // ItemImage items in order, and natives says what its ItemNative items
@@ -949,9 +1005,10 @@ const webBridge = "(function (n) { if (n) window." + webInterface +
 func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []nativeItem, shaders []shaderItem) {
 	w.u32(uint32(b.Root))
 	writeLayoutAnimation(w, b.LayoutAnimation)
-	w.u32(uint32(len(b.Items)))
-	for i := range b.Items {
-		it := &b.Items[i]
+	items := withDefaults(b.Items)
+	w.u32(uint32(len(items)))
+	for i := range items {
+		it := &items[i]
 		w.byte(byte(it.Kind))
 		w.u32(uint32(it.ID))
 		switch it.Kind {

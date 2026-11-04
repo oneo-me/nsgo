@@ -354,7 +354,8 @@ func (cx *Scope) Batch(fn func()) {
 // Effect runs fn after the current batch and again whenever what it read
 // changes, until the current owner is disposed or stop is called.
 func (cx *Scope) Effect(fn func()) (stop func()) {
-	c := newComputation(cx.current(), userEffect, func() bool { fn(); return false })
+	c := newComputation(cx.current(), userEffect, nil)
+	c.effect = fn
 	c.state = dirty
 	cx.rt.enqueue(c)
 	cx.rt.maybeFlush()
@@ -364,7 +365,8 @@ func (cx *Scope) Effect(fn func()) (stop func()) {
 // renderEffect runs fn now and again before the app's effects whenever
 // what it read changes. Element bindings are render effects.
 func (cx *Scope) renderEffect(fn func()) {
-	c := newComputation(cx.current(), renderEffect, func() bool { fn(); return false })
+	c := newComputation(cx.current(), renderEffect, nil)
+	c.effect = fn
 	c.run()
 }
 
@@ -474,15 +476,15 @@ type source interface {
 
 type computation struct {
 	Scope
-	fn      func() (changed bool)
-	kind    compKind
-	state   compState
-	queued  bool
-	sources []source
-	// slots are c's index in each source's readers, so unlinking takes
-	// constant time however many read the source.
-	slots []int
-	subs  *subscribers // a memo's readers
+	fn     func() (changed bool)
+	effect func() // an effect's, which changes nothing it is read for, in place of fn
+	kind   compKind
+	state  compState
+	queued bool
+	// sources are what c read, each with c's index in the source's
+	// readers, so unlinking takes constant time however many read it.
+	sources []sourceLink
+	subs    *subscribers // a memo's readers
 }
 
 func newComputation(owner *Scope, kind compKind, fn func() bool) *computation {
@@ -493,11 +495,11 @@ func newComputation(owner *Scope, kind compKind, fn func() bool) *computation {
 }
 
 func (c *computation) unlink() {
-	for i, s := range c.sources {
-		s.readers().remove(c.slots[i])
+	for _, s := range c.sources {
+		s.src.readers().remove(s.at)
 	}
 	clear(c.sources)
-	c.sources, c.slots = c.sources[:0], c.slots[:0]
+	c.sources = c.sources[:0]
 }
 
 func (c *computation) mark(s compState) {
@@ -511,7 +513,7 @@ func (c *computation) mark(s compState) {
 	}
 	if c.subs != nil {
 		for _, r := range c.subs.list {
-			r.mark(check)
+			r.c.mark(check)
 		}
 		return
 	}
@@ -525,7 +527,7 @@ func (c *computation) update() {
 	}
 	if c.state == check {
 		for _, s := range c.sources {
-			s.refresh()
+			s.src.refresh()
 			if c.state == dirty {
 				break
 			}
@@ -549,12 +551,18 @@ func (c *computation) run() {
 	rt.owner, rt.observer = &c.Scope, c
 	rt.batch++
 	changed := false
-	rt.guard(&c.Scope, func() { changed = c.fn() })
+	rt.guard(&c.Scope, func() {
+		if c.effect != nil {
+			c.effect()
+		} else {
+			changed = c.fn()
+		}
+	})
 	rt.batch--
 	rt.owner, rt.observer = prevOwner, prevObs
 	if changed && c.subs != nil {
 		for _, r := range c.subs.list {
-			r.mark(dirty)
+			r.c.mark(dirty)
 		}
 	}
 	rt.maybeFlush()
@@ -624,23 +632,37 @@ func (c *computation) runTop() {
 	c.update()
 }
 
-// subscribers are a source's readers; slots are the source's index in
-// each reader's sources.
+// subscribers are a source's readers, each with the source's index in
+// the reader's sources.
 type subscribers struct {
-	list  []*computation
-	slots []int
+	list []readerLink
 }
+
+// sourceLink is a source a computation read and its index in the
+// source's readers; readerLink a computation reading a source and the
+// source's index in the computation's sources. One slice of pairs a side
+// keeps the graph to half the objects of a slice of each.
+type (
+	sourceLink struct {
+		src source
+		at  int
+	}
+	readerLink struct {
+		c  *computation
+		at int
+	}
+)
 
 // remove takes out the reader at i, moving the last one into its place.
 func (s *subscribers) remove(i int) {
 	last := len(s.list) - 1
 	if i != last {
 		moved := s.list[last]
-		s.list[i], s.slots[i] = moved, s.slots[last]
-		moved.slots[s.slots[i]] = i
+		s.list[i] = moved
+		moved.c.sources[moved.at].at = i
 	}
-	s.list[last] = nil
-	s.list, s.slots = s.list[:last], s.slots[:last]
+	s.list[last] = readerLink{}
+	s.list = s.list[:last]
 }
 
 func (rt *runtime) track(src source, subs *subscribers) {
@@ -649,14 +671,12 @@ func (rt *runtime) track(src source, subs *subscribers) {
 		return
 	}
 	for _, s := range c.sources {
-		if s == src {
+		if s.src == src {
 			return
 		}
 	}
-	c.sources = append(c.sources, src)
-	c.slots = append(c.slots, len(subs.list))
-	subs.list = append(subs.list, c)
-	subs.slots = append(subs.slots, len(c.sources)-1)
+	c.sources = append(c.sources, sourceLink{src, len(subs.list)})
+	subs.list = append(subs.list, readerLink{c, len(c.sources) - 1})
 }
 
 // Signal is a value computations subscribe to by reading it.
@@ -696,8 +716,8 @@ func (s *Signal[T]) Set(v T) {
 	s.value = v
 	rt := s.rt
 	rt.batch++
-	for _, c := range s.subs.list {
-		c.mark(dirty)
+	for _, r := range s.subs.list {
+		r.c.mark(dirty)
 	}
 	rt.batch--
 	rt.maybeFlush()

@@ -1126,7 +1126,7 @@ func (t *Tree) emitScrollBy(n *node, before bool) {
 	if sc.by == (Point{}) {
 		return
 	}
-	shrinks := sc.main(Point{X: sc.content.Width, Y: sc.content.Height}) < sc.main(Point{X: n.sent.content.Width, Y: n.sent.content.Height})
+	shrinks := sc.main(Point{X: sc.content.Width, Y: sc.content.Height}) < sc.main(Point{X: sc.sentContent.Width, Y: sc.sentContent.Height})
 	if before != shrinks {
 		return
 	}

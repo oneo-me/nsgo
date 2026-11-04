@@ -187,7 +187,7 @@ func runWebTest(ctx context.Context, b *cdp, base string, args, env []string, ou
 		{"Runtime.enable", nil},
 		{"Page.enable", nil},
 		{"Runtime.addBinding", map[string]any{"name": "nsgoTest"}},
-		{"Emulation.setDeviceMetricsOverride", map[string]any{"width": 390, "height": 844, "deviceScaleFactor": 2, "mobile": false}},
+		{"Emulation.setDeviceMetricsOverride", map[string]any{"width": 390, "height": 844, "deviceScaleFactor": webTestScale, "mobile": false}},
 	} {
 		if _, err := b.call(session, call.method, call.params); err != nil {
 			return -1, err
@@ -245,11 +245,14 @@ func mustJSON(v any) string {
 	return string(b)
 }
 
+// webTestScale is the device scale of the page tests run in.
+const webTestScale = 2
+
 func (p *webPage) do(op webOp, data *any) error {
 	switch op.Op {
 	case "viewport":
 		_, err := p.call("Emulation.setDeviceMetricsOverride", map[string]any{
-			"width": int(math.Round(op.Width)), "height": int(math.Round(op.Height)), "deviceScaleFactor": 2, "mobile": false})
+			"width": int(math.Round(op.Width)), "height": int(math.Round(op.Height)), "deviceScaleFactor": webTestScale, "mobile": false})
 		return err
 	case "press":
 		if err := p.mouse("mouseMoved", op.X, op.Y, "none", 0, 0); err != nil {
@@ -292,9 +295,11 @@ func (p *webPage) do(op webOp, data *any) error {
 	case "scroll":
 		p.mouse("mouseMoved", op.X, op.Y, "none", 0, 0)
 		n := int(math.Max(math.Abs(op.DX), math.Abs(op.DY))/20) + 1
+		// The page moves by the wheel events' deltas, which Chrome gives
+		// it in points: its device pixels over the scale.
 		for range n {
 			if _, err := p.call("Input.dispatchMouseEvent", map[string]any{"type": "mouseWheel", "x": op.X, "y": op.Y,
-				"deltaX": op.DX / float64(n), "deltaY": op.DY / float64(n)}); err != nil {
+				"deltaX": op.DX * webTestScale / float64(n), "deltaY": op.DY * webTestScale / float64(n)}); err != nil {
 				return err
 			}
 			time.Sleep(16 * time.Millisecond)

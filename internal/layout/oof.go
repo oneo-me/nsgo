@@ -311,6 +311,11 @@ func computeOofLayout(n Node, out *layoutOutput) {
 		style.Overflow, &hoisted, &unclaimed)
 	st.hoisted = hoisted
 	out.oofCandidates = unclaimed
+	if cap(candidates) > 0 {
+		// Nothing holds them now: the next layout collects into them.
+		clear(candidates)
+		st.spare = candidates[:0]
+	}
 	out.scrollableOverflow = rectUnion(out.scrollableOverflow, overflowRect)
 }
 

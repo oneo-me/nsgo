@@ -62,6 +62,12 @@ type scrollState struct {
 	applied uint32
 	smooth  *[2]float64
 	tracks  map[driver.NodeID]*view
+	// glide is the wheel's (wheel.go); driven counts what scrolls the view
+	// here, meanwhile the browser's scrollend is not the end, and ownEnd is
+	// where such a scroll ended, whose scrollend is not another.
+	glide  *glide
+	driven int
+	ownEnd *[2]float64
 }
 
 // newScroll sets scroll view v up.
@@ -223,7 +229,8 @@ func (v *view) offset() driver.Point {
 }
 
 // scrollTo scrolls the view so its offset is p; the browser clamps it.
-func (v *view) scrollTo(p driver.Point, animated bool) {
+// It stops the wheel's glide.
+func (s *surface) scrollTo(v *view, p driver.Point, animated bool) {
 	behavior := "auto"
 	if animated {
 		behavior = "smooth"
@@ -234,6 +241,7 @@ func (v *view) scrollTo(p driver.Point, animated bool) {
 	if animated {
 		v.sc.smooth = &to
 	}
+	s.stopGlide(v, to)
 	v.el.Call("scrollTo", map[string]any{"left": to[0], "top": to[1], "behavior": behavior})
 }
 
@@ -247,6 +255,11 @@ func (v *view) scrollBy(d driver.Point) {
 		sm[1] += float64(d.Y)
 		v.el.Call("scrollTo", map[string]any{"left": sm[0], "top": sm[1], "behavior": "smooth"})
 		return
+	}
+	// So does the wheel's glide: its next frame would put the offset back.
+	if a := v.sc.glide; a != nil {
+		a.to[0], a.to[1] = a.to[0]+float64(d.X), a.to[1]+float64(d.Y)
+		a.at[0], a.at[1] = a.at[0]+float64(d.X), a.at[1]+float64(d.Y)
 	}
 	v.el.Set("scrollLeft", v.el.Get("scrollLeft").Float()+float64(d.X))
 	v.el.Set("scrollTop", v.el.Get("scrollTop").Float()+float64(d.Y))
@@ -306,7 +319,12 @@ func (s *surface) scrolled(v *view) {
 func (s *surface) scrollEnded(v *view) {
 	sc := v.sc
 	sc.smooth = nil
-	if sc.touching || sc.bar {
+	if sc.touching || sc.bar || sc.driven > 0 {
+		return
+	}
+	own := sc.ownEnd
+	sc.ownEnd = nil
+	if own != nil && own[0] == v.el.Get("scrollLeft").Float() && own[1] == v.el.Get("scrollTop").Float() {
 		return
 	}
 	sc.released = 0

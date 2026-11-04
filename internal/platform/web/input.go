@@ -46,6 +46,7 @@ type webInput struct {
 	listeners listeners
 	props     *driver.ViewProps // the last, which a new element takes
 	config    *driver.InputConfig
+	look      classSlot // the field's class of its text style (classes.go)
 }
 
 // createInput puts an <input> in v's element.
@@ -64,12 +65,12 @@ func (s *surface) setFieldElement(v *view, tag string) {
 		v.inner.Call("remove")
 	}
 	el := s.element(tag)
+	el.Get("classList").Call("add", "nsgo-field")
 	if tag == "input" {
 		el.Set("type", "text")
 	}
-	setStyle(el, map[string]string{
-		"padding": "0", "border": "0", "outline": "none", "background": "transparent", "resize": "none",
-	})
+	s.freeClass(&in.look)
+	in.look = classSlot{} // the new element has none
 	el.Set("value", value)
 	v.inner = el
 	v.el.Call("appendChild", el)
@@ -180,7 +181,6 @@ func (s *surface) setInput(v *view, c *driver.InputConfig) {
 	}
 	in.fs.Config = *c
 	el := v.inner
-	setStyle(el, fontStyle(c.Style))
 	setStyle(el, frameStyle(c.Content))
 	if !c.Multiline {
 		kind := "text"
@@ -217,29 +217,29 @@ func (s *surface) setInput(v *view, c *driver.InputConfig) {
 		maxLength = strconv.Itoa(c.MaxLength)
 	}
 	setAttr(el, "maxlength", maxLength)
-	caret := ""
+	css := fontStyle(c.Style)
 	switch {
 	case c.HideCaret:
-		caret = "transparent"
+		css["caret-color"] = "transparent"
 	case c.SelectionColor != 0:
-		caret = cssColor(c.SelectionColor)
+		css["caret-color"] = cssColor(c.SelectionColor)
 	}
-	setStyle(el, map[string]string{"caret-color": caret})
 	classes := el.Get("classList")
 	if c.SelectionColor != 0 {
 		s.selectionStyle()
 		classes.Call("add", "nsgo-selection")
-		el.Get("style").Call("setProperty", "--nsgo-selection", cssColor(c.SelectionColor.Faded(0.3)))
+		css["--nsgo-selection"] = cssColor(c.SelectionColor.Faded(0.3))
 	} else {
 		classes.Call("remove", "nsgo-selection")
 	}
 	if c.PlaceholderColor != 0 {
 		s.fieldStyle()
 		classes.Call("add", "nsgo-placeholder")
-		el.Get("style").Call("setProperty", "--nsgo-placeholder", cssColor(c.PlaceholderColor))
+		css["--nsgo-placeholder"] = cssColor(c.PlaceholderColor)
 	} else {
 		classes.Call("remove", "nsgo-placeholder")
 	}
+	s.setClass(el, &in.look, s.sortedCSS(css))
 }
 
 // fieldStyle adds fieldCSS to the page once.

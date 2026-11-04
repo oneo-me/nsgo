@@ -16,66 +16,51 @@ import (
 // Gradients arrive resolved against the box in fractions, so their CSS is
 // written again when the box changes size.
 
-// decorCSS is the CSS of vs's shape and effects on a box of size. A
-// property at CSS's initial value is "", which removes the one the view
-// had, so the element keeps only what it draws.
-func decorCSS(vs *driver.ViewStyle, size driver.Size) map[string]string {
-	style := map[string]string{
-		"border-radius":           radiusCSS(vs),
-		"corner-shape":            "",
-		"outline":                 "",
-		"outline-offset":          "",
-		"background-image":        "",
-		"filter":                  "",
-		"backdrop-filter":         "",
-		"-webkit-backdrop-filter": "",
-		"mask-image":              "",
-		"-webkit-mask-image":      "",
-		"mix-blend-mode":          "",
-		"transform-origin":        "",
-		"perspective":             "",
-		"backface-visibility":     "",
-		"box-shadow":              shadowCSS(vs),
-	}
-	if vs.BlendMode != driver.BlendNormal {
-		style["mix-blend-mode"] = vs.BlendMode.Name()
-	}
-	if o := vs.Origin; o != (driver.Point{}) || vs.OriginZ != 0 {
-		style["transform-origin"] = fmt.Sprintf("calc(50%% + %s) calc(50%% + %s) %s", px(o.X), px(o.Y), px(vs.OriginZ))
-	}
+// decorCSS appends the CSS of vs's shape and effects on a box of size;
+// what is at CSS's initial value it leaves out.
+func decorCSS(c *cssText, vs *driver.ViewStyle, size driver.Size) {
+	c.add("border-radius", radiusCSS(vs))
 	if vs.ContinuousCorners {
-		style["corner-shape"] = "squircle"
+		c.add("corner-shape", "squircle")
 	}
 	if o := vs.Outline; o.Visible() {
-		style["outline"] = fmt.Sprintf("%s %s %s", px(o.Width), lineStyle(o.Style), cssColor(o.Color))
-		style["outline-offset"] = px(o.Offset)
+		c.add("outline", px(o.Width)+" "+lineStyle(o.Style)+" "+cssColor(o.Color))
+		c.add("outline-offset", px(o.Offset))
+	}
+	c.add("box-shadow", shadowCSS(vs))
+	if vs.BlendMode != driver.BlendNormal {
+		c.add("mix-blend-mode", vs.BlendMode.Name())
+	}
+	if o := vs.Origin; o != (driver.Point{}) || vs.OriginZ != 0 {
+		c.add("transform-origin", fmt.Sprintf("calc(50%% + %s) calc(50%% + %s) %s", px(o.X), px(o.Y), px(vs.OriginZ)))
 	}
 	if vs.ChildPerspective > 0 {
-		style["perspective"] = px(vs.ChildPerspective)
+		c.add("perspective", px(vs.ChildPerspective))
 	}
 	if vs.BackfaceHidden {
-		style["backface-visibility"] = "hidden"
+		c.add("backface-visibility", "hidden")
 	}
-	if e := vs.Effects; e != nil {
-		var images []string
+	e := vs.Effects
+	if e == nil {
+		return
+	}
+	if len(e.Gradients) > 0 {
+		images := make([]string, len(e.Gradients))
 		for i := range e.Gradients {
-			images = append(images, gradientCSS(&e.Gradients[i], size))
+			images[i] = gradientCSS(&e.Gradients[i], size)
 		}
-		if len(images) > 0 {
-			style["background-image"] = strings.Join(images, ", ")
-		}
-		if f := filterCSS(e.Filters); f != "" {
-			style["filter"] = f
-		}
-		if f := filterCSS(e.BackdropFilters); f != "" {
-			style["backdrop-filter"], style["-webkit-backdrop-filter"] = f, f
-		}
-		if e.Mask != nil {
-			m := gradientCSS(e.Mask, size)
-			style["mask-image"], style["-webkit-mask-image"] = m, m
-		}
+		c.add("background-image", strings.Join(images, ", "))
 	}
-	return style
+	c.add("filter", filterCSS(e.Filters))
+	if f := filterCSS(e.BackdropFilters); f != "" {
+		c.add("backdrop-filter", f)
+		c.add("-webkit-backdrop-filter", f)
+	}
+	if e.Mask != nil {
+		m := gradientCSS(e.Mask, size)
+		c.add("mask-image", m)
+		c.add("-webkit-mask-image", m)
+	}
 }
 
 // radiusCSS is the border-radius of vs, which the browser fits.
@@ -192,13 +177,9 @@ func filterCSS(filters []driver.Filter) string {
 
 // redrawGradients writes v's gradients again for its new size.
 func (s *surface) redrawGradients(v *view) {
-	e := v.style.Effects
-	if e == nil || len(e.Gradients) == 0 && e.Mask == nil {
-		return
+	if e := v.style.Effects; e != nil && (len(e.Gradients) > 0 || e.Mask != nil) {
+		s.setLook(v)
 	}
-	css := decorCSS(&v.style, v.size)
-	v.css().set(map[string]string{"background-image": css["background-image"],
-		"mask-image": css["mask-image"], "-webkit-mask-image": css["-webkit-mask-image"]})
 }
 
 // setKeyframes runs v's keyframe animation with the Web Animations API,

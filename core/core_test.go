@@ -1377,3 +1377,20 @@ func TestListLoadsMoreAtEitherEnd(t *testing.T) {
 		t.Errorf("reaching the end of 220 rows loaded %d times in all, want 2", ends)
 	}
 }
+
+// TestNewViewsSendOnlyWhatDiffers sends a new view's style, props and
+// events only when they differ from a new native view's, as NSH does:
+// they were a sixth of the items opening the gallery's DataTable.
+func TestNewViewsSendOnlyWhatDiffers(t *testing.T) {
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		return View{Children: []Node{
+			View{},
+			View{Style: Style{Background: RGB(0xff0000)}, TestID: "styled"},
+			View{OnPress: func(PressEvent) {}},
+		}}
+	})
+	b := h.commit()
+	if k := kinds(b); k[driver.ItemCreate] < 4 || k[driver.ItemViewStyle] != 1 || k[driver.ItemViewProps] != 1 || k[driver.ItemEvents] != 1 {
+		t.Fatalf("kinds = %v, want one style, props and events", k)
+	}
+}

@@ -121,6 +121,7 @@ Style `Transition`s, animated values and layout animations run on the platform, 
 The protocol is defined in `mount.go` and `events.go`. Backends apply items in order on the main thread, in one hop per batch.
 
 - IDs are dense and reused after `ItemDelete`, possibly later in the same batch.
+- Backends create a view in `driver.DefaultViewStyle`, with no props and an empty event mask, so a new view's `ItemViewStyle`, `ItemViewProps` and `ItemEvents` come only when they differ, as NSH's do: they were 2,646 of the 18,252 items opening the gallery's DataTable. A view's first style shows at once; one that changes from the default in a later batch transitions. Android's `classes.dex` predates this, so its writer sends the three for each new view itself (`withDefaults`).
 - `ItemInsert` places a view before a sibling, not at an index, so views a platform adds itself cannot shift positions.
 - A view that changes parents, or comes back after `ItemRemove`, is inserted after the round's other inserts, once its new parent is in place.
 - Backends move such a view in one step, so scroll offsets and iframes' pages stay: the web with `moveBefore`, parking removed views in a hidden element.

@@ -93,6 +93,7 @@ type view struct {
 
 	// What animates: the style after the first, and the scroll offset.
 	styled     bool
+	born       uint64 // the batch that created it
 	transition *transition
 	// keyframeStart is when the keyframe animation of style began.
 	keyframeStart time.Time

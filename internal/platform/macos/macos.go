@@ -121,9 +121,12 @@ type view struct {
 	shift    driver.Point // a sticky cell's, from frame
 	style    driver.ViewStyle
 	animated driver.AnimatedValues
-	// drawn is the style its layer was last drawn with, once styled.
+	// drawn is the style its layer was last drawn with, once styled, and
+	// the default style before. born is the batch that created it, whose
+	// style shows at once.
 	drawn  driver.ViewStyle
 	styled bool
+	born   uint64
 
 	component     driver.NativeComponent // a native view's
 	componentView objc.ID
@@ -150,6 +153,7 @@ type view struct {
 }
 
 type surface struct {
+	batch uint64 // batches applied
 	// stickyBound are the scroll views with sticky cells whose insets
 	// follow animated values.
 	stickyBound map[*view]bool
@@ -1256,6 +1260,7 @@ func (s *surface) RequestFrame() {
 }
 
 func (s *surface) apply(b *driver.MountBatch) {
+	s.batch++
 	var lb *layoutBatch
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {
 		lb = &layoutBatch{anim: b.LayoutAnimation, created: map[driver.NodeID]bool{}, deleted: map[objc.ID]bool{}}
@@ -1576,7 +1581,10 @@ func (s *surface) startImages() {
 }
 
 func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
-	v := &view{surface: s, id: id, kind: kind}
+	// A new view has the default style and no props or events: the core
+	// sends them only when they differ.
+	v := &view{surface: s, id: id, kind: kind, style: driver.DefaultViewStyle,
+		drawn: driver.DefaultViewStyle, born: s.batch}
 	switch kind {
 	case driver.KindScroll:
 		v.native = objc.ID(classScroll).Send(selNew)
@@ -1604,6 +1612,8 @@ func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
 		v.video.Dispatch = v.report
 	case driver.KindShader:
 		v.newShader()
+	case driver.KindText:
+		v.updateAccessibility() // a text is an element without props
 	}
 	views[v.native] = v
 	return v

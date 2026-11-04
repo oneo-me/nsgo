@@ -77,6 +77,7 @@ type testOpen struct {
 // window is one GTK window and the tree it shows. The engine's goroutine
 // reaches its main-thread half only through Mount and post.
 type window struct {
+	batch   uint64  // batches applied
 	win     uintptr // GtkWindow, 0 for an embedded surface
 	surface uintptr // the NsgoView holding the root view
 	// embedded is set for a host's widget (NewView): the host owns the
@@ -564,6 +565,7 @@ func (w *window) view(id driver.NodeID) *view {
 
 // apply applies one commit's items.
 func (w *window) apply(b *driver.MountBatch) {
+	w.batch++
 	var rescroll, loads []*view
 	type focusChange struct {
 		v     *view
@@ -865,7 +867,9 @@ func (w *window) create(id driver.NodeID, kind driver.ViewKind) {
 	for len(w.views) <= int(id) {
 		w.views = append(w.views, nil)
 	}
-	v := &view{id: id, kind: kind, style: driver.ViewStyle{Opacity: 1}}
+	// A new view has the default style and no props or events: the core
+	// sends them only when they differ.
+	v := &view{id: id, kind: kind, style: driver.DefaultViewStyle, born: w.batch}
 	v.widget = w.newViewWidget(v)
 	w.views[id] = v
 }

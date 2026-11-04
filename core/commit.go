@@ -337,10 +337,12 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 				// A text that lays out as before, its colors aside, or
 				// that measures as before, lays nothing out: only its own
 				// lines change. Attachments are placed by them.
-				h := t.measures.hash(&at)
+				// Prepared from tn.text, at stays on the stack.
+				tn.text = at
+				h := t.measures.hash(&tn.text)
 				same := tn.prepared != nil && h == tn.hash && tn.fonts == t.fonts
-				tn.text, tn.hash, tn.fonts = at, h, t.fonts
-				tn.prepared = t.text.Prepare(&at)
+				tn.hash, tn.fonts = h, t.fonts
+				tn.prepared = t.text.Prepare(&tn.text)
 				tn.minWidth = -1
 				tn.resent = true
 				if tn.attachments > 0 || !same && !layout.MeasuresAsBefore(n) {
@@ -556,13 +558,18 @@ func (t *Tree) emitParts(n *node) bool {
 	// What goes into an item is a copy made only when it is sent: the
 	// comparison alone would otherwise put both values on the heap for
 	// every view of every commit.
-	if vs := n.viewStyle(); first || vs != n.sent.viewStyle {
+	// A new view starts in the default style with no props and no events
+	// on every backend, so they are sent only when they differ.
+	if first {
+		n.sent.viewStyle, n.sent.props, n.sent.events = driver.DefaultViewStyle, driver.ViewProps{}, 0
+	}
+	if vs := n.viewStyle(); vs != n.sent.viewStyle {
 		n.sent.viewStyle = vs
 		sent := vs
 		add(driver.MountItem{Kind: driver.ItemViewStyle, ID: n.id, ViewStyle: &sent})
 		styled = true
 	}
-	if p := n.sentProps(); first || p != n.sent.props {
+	if p := n.sentProps(); p != n.sent.props {
 		// A label changing alone goes alone: it is the one that follows
 		// app state (a count, a price).
 		rest := p
@@ -578,7 +585,7 @@ func (t *Tree) emitParts(n *node) bool {
 	if n.style.Animated != nil || n.anim != nil {
 		t.bindAnimated(n)
 	}
-	if ev := n.events(); first || ev != n.sent.events {
+	if ev := n.events(); ev != n.sent.events {
 		n.sent.events = ev
 		add(driver.MountItem{Kind: driver.ItemEvents, ID: n.id, Events: ev})
 	}
@@ -593,9 +600,9 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.input != nil:
 		in := n.input
 		in.config.Accessory, in.config.AccessoryID = t.accessoryFor(in.accessory), in.accessory
-		if first || in.config != n.sent.input {
+		if first || in.config != in.sent {
 			c := in.config
-			n.sent.input = c
+			in.sent = c
 			add(driver.MountItem{Kind: driver.ItemInput, ID: n.id, Input: &c})
 		}
 		if first || in.value != in.shown {
@@ -659,15 +666,15 @@ func (t *Tree) emitParts(n *node) bool {
 			c.HeaderInset = inset
 			c.Behavior.ContentInset.Top += inset
 		}
-		if first || sc.resend || !c.Equal(&n.sent.scroll) {
+		if first || sc.resend || !c.Equal(&sc.sent) {
 			sc.resend = false
 			c.Behavior.SnapToOffsets = slices.Clone(c.Behavior.SnapToOffsets)
-			n.sent.scroll = c
+			sc.sent = c
 			add(driver.MountItem{Kind: driver.ItemScrollConfig, ID: n.id, Scroll: &c})
 		}
 		t.emitScrollBy(n, true)
-		if first || sc.content != n.sent.content {
-			n.sent.content = sc.content
+		if first || sc.content != sc.sentContent {
+			sc.sentContent = sc.content
 			add(driver.MountItem{Kind: driver.ItemScrollContent, ID: n.id, Size: sc.content})
 		}
 		t.emitScrollBy(n, false)

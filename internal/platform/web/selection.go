@@ -42,12 +42,7 @@ func (s *surface) setSelection(v *view, p *driver.ViewProps) {
 	}
 	if p.SelectionArea != v.area {
 		v.area = p.SelectionArea
-		select_ := ""
-		if v.area {
-			select_ = "text"
-		}
-		v.css().set1("user-select", select_)
-		v.css().set1("-webkit-user-select", select_)
+		s.setFeel(v)
 	}
 }
 

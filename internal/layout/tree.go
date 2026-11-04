@@ -30,6 +30,10 @@ type State struct {
 
 	cache   cache
 	hoisted []Node
+	// spare is the buffer of the out-of-flow candidates its last layout
+	// collected, which the next one collects into: a table's absolutely
+	// placed cells allocated a list per row each layout.
+	spare []oofCandidate
 	// grid is the detailed grid information of a grid container, which
 	// positions its out-of-flow children against grid areas.
 	grid *gridInfo

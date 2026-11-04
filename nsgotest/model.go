@@ -226,7 +226,7 @@ func (a *App) apply(b *driver.MountBatch) {
 		v := a.views[it.ID]
 		switch it.Kind {
 		case driver.ItemCreate:
-			a.views[it.ID] = &View{ID: it.ID, Kind: it.View, Style: driver.ViewStyle{Opacity: 1}, anim: a.anim}
+			a.views[it.ID] = &View{ID: it.ID, Kind: it.View, Style: driver.DefaultViewStyle, anim: a.anim}
 		case driver.ItemDelete:
 			if v != nil {
 				v.detach()

@@ -410,6 +410,7 @@ type attachNode struct {
 }
 
 type inputNode struct {
+	sent      driver.InputConfig // the config last sent
 	config    driver.InputConfig
 	valueFn   func() string
 	value     string // the app's
@@ -444,8 +445,11 @@ type preparedInput struct {
 }
 
 type scrollNode struct {
-	config  driver.ScrollConfig
-	content Size
+	// sent and sentContent are the config and content size last sent.
+	sent        driver.ScrollConfig
+	sentContent Size
+	config      driver.ScrollConfig
+	content     Size
 	// offset is the reported offset with the scrolls the platform had not
 	// applied yet replayed over it.
 	offset Point
@@ -546,9 +550,6 @@ type sent struct {
 	viewStyle driver.ViewStyle
 	props     driver.ViewProps
 	events    driver.EventMask
-	input     driver.InputConfig
-	scroll    driver.ScrollConfig
-	content   Size
 	children  []*node
 	layout    Bounds
 	overflow  Bounds // the area ItemOverflow last gave

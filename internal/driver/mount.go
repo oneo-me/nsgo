@@ -451,6 +451,12 @@ type ViewStyle struct {
 	Hidden bool
 }
 
+// DefaultViewStyle is the style of a view no style changes: opaque and
+// nothing else. Backends create views in it, and the core sends a new
+// view's style only when it differs, as it sends no empty ViewProps and
+// no empty EventMask.
+var DefaultViewStyle = ViewStyle{Opacity: 1}
+
 // Radii returns the radius of each corner, fitted to size.
 func (vs *ViewStyle) Radii(size Size) Corners {
 	c := vs.Corners

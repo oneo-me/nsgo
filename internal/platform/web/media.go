@@ -58,32 +58,39 @@ func (s *surface) applyAnimated() {
 			return
 		}
 		v.animated = vals
-		vs := vals.Apply(v.style)
-		style := map[string]string{
-			"opacity":          opacityCSS(vs.Opacity),
-			"transform":        transformCSS(vs.Transform),
-			"background-color": fillCSS(vs.Background),
-			"box-shadow":       shadowCSS(&vs),
-		}
+		// What animates goes inline over the view's class; once nothing
+		// does, the class shows.
+		style := map[string]string{"opacity": "", "transform": "", "background-color": "", "box-shadow": "",
+			"transition": "", "-webkit-text-fill-color": "", "border-color": ""}
 		if vals.Set != 0 {
+			vs := vals.Apply(v.style)
+			style["opacity"], style["transform"] = opacityCSS(vs.Opacity), transformCSS(vs.Transform)
+			style["background-color"], style["box-shadow"] = fillCSS(vs.Background), shadowCSS(&vs)
+			// A bound value moves at once; the view's transition is for
+			// its style's changes.
 			style["transition"] = "none"
-		} else {
-			style["transition"] = transitionCSS(vs.Transition)
-		}
-		if vals.Has(driver.PropBorderColor) {
-			style["border-color"] = cssColor(vs.BorderColor)
-		}
-		// A bound color fills every glyph, the spans' too, which inherit
-		// the fill color over their own.
-		style["-webkit-text-fill-color"] = ""
-		if vals.Has(driver.PropTextColor) {
-			style["-webkit-text-fill-color"] = cssColor(vals.TextColor)
+			if vs.Opacity == 1 {
+				style["opacity"] = "1"
+			}
+			if style["transform"] == "" {
+				style["transform"] = "none"
+			}
+			if style["background-color"] == "" {
+				style["background-color"] = "transparent"
+			}
+			if style["box-shadow"] == "" {
+				style["box-shadow"] = "none"
+			}
+			if vals.Has(driver.PropBorderColor) {
+				style["border-color"] = cssColor(vs.BorderColor)
+			}
+			// A bound color fills every glyph, the spans' too, which
+			// inherit the fill color over their own.
+			if vals.Has(driver.PropTextColor) {
+				style["-webkit-text-fill-color"] = cssColor(vals.TextColor)
+			}
 		}
 		v.css().set(style)
-		if vals.Has(driver.PropBorderColor) {
-			// The shorthand set every side's color the view style sets.
-			v.css().forget("border-top-color", "border-right-color", "border-bottom-color", "border-left-color")
-		}
 	})
 	s.changedCanvases()
 	s.changedNatives()

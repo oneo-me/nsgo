@@ -162,8 +162,9 @@ func (v *view) restyle() {
 // styleLayer draws vs with v's layer, only what changed since it was
 // last drawn when that is all an animation moves.
 func (v *view) styleLayer(vs *driver.ViewStyle) {
+	// A view created by an earlier batch shows the default style.
 	var shown *driver.ViewStyle
-	if v.styled {
+	if v.styled || v.born != v.surface.batch {
 		shown = &v.drawn
 	}
 	apple.RestyleLayer(v.native.Send(selLayer), shown, vs, 0)

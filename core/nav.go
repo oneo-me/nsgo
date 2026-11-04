@@ -419,14 +419,14 @@ func (t *Tree) markHeaderScrolls() {
 			inner := top
 			if c.kind != 0 {
 				if inner += c.frame.Origin.Y; inner >= limit {
-					if c.scroll != nil && c.sent.scroll.HeaderInset > 0 {
+					if c.scroll != nil && c.scroll.sent.HeaderInset > 0 {
 						t.mark(c)
 					}
 					continue
 				}
 			}
 			if sc := c.scroll; sc != nil {
-				if !sc.config.Horizontal && c.created && t.headerInset(c) != c.sent.scroll.HeaderInset {
+				if !sc.config.Horizontal && c.created && t.headerInset(c) != c.scroll.sent.HeaderInset {
 					t.mark(c)
 				}
 				inner -= sc.offset.Y

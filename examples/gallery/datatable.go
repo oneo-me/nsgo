@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand/v2"
+	"strconv"
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
@@ -46,27 +47,26 @@ type stockQuote struct {
 	open, prevClose, high, low, shares, ratio, ranking float64
 }
 
-func compactQuote(v float64) string {
+// compactQuote appends v in thousands, millions, billions or trillions.
+func compactQuote(b []byte, v float64) []byte {
 	a := math.Abs(v)
-	switch {
-	case a >= 1e12:
-		return fmt.Sprintf("%.2fT", v/1e12)
-	case a >= 1e9:
-		return fmt.Sprintf("%.2fB", v/1e9)
-	case a >= 1e6:
-		return fmt.Sprintf("%.2fM", v/1e6)
-	case a >= 1e3:
-		return fmt.Sprintf("%.2fK", v/1e3)
+	for _, u := range [...]struct {
+		at   float64
+		unit byte
+	}{{1e12, 'T'}, {1e9, 'B'}, {1e6, 'M'}, {1e3, 'K'}} {
+		if a >= u.at {
+			return append(strconv.AppendFloat(b, v/u.at, 'f', 2, 64), u.unit)
+		}
 	}
-	return fmt.Sprintf("%.2f", v)
+	return strconv.AppendFloat(b, v, 'f', 2, 64)
 }
 
-func signedQuote(v float64, unit string) string {
-	s := fmt.Sprintf("%.2f%s", v, unit)
+// signedQuote appends v with its sign and unit.
+func signedQuote(b []byte, v float64, unit string) []byte {
 	if v > 0 {
-		return "+" + s
+		b = append(b, '+')
 	}
-	return s
+	return append(strconv.AppendFloat(b, v, 'f', 2, 64), unit...)
 }
 
 // stockHash is a number in [0, 1) fixed by id and k: a stock's quote
@@ -136,18 +136,52 @@ func toned(key string) bool {
 // order.
 func quoteRow(id int, q *stockQuote) []string {
 	c := counters[id%len(counters)]
-	f := func(v float64) string { return fmt.Sprintf("%.2f", v) }
-	out := []string{itoa(id + 1), c[0], fmt.Sprint(c[1], " ", id+1), c[2], f(q.price), signedQuote(q.change, ""),
-		signedQuote(q.percent*100, "%"), compactQuote(q.volume), compactQuote(q.turnover), compactQuote(q.cap), f(q.ttm),
-		f(q.bid), compactQuote(q.bidVolume), f(q.ask), compactQuote(q.askVolume), f(q.open), f(q.prevClose),
-		f(q.high), f(q.low), f(q.ratio), fmt.Sprintf("%.1f", q.ranking)}
+	// The cells are cut from one string: a page's rows are formatted on
+	// every scroll and tick.
+	const cells = 21 + indicators
+	var ends [cells]int
+	b := make([]byte, 0, 8*cells)
+	n := 0
+	cell := func(next []byte) {
+		b = next
+		ends[n] = len(b)
+		n++
+	}
+	f := func(v float64) { cell(strconv.AppendFloat(b, v, 'f', 2, 64)) }
+	cell(strconv.AppendInt(b, int64(id+1), 10))
+	cell(append(b, c[0]...))
+	cell(strconv.AppendInt(append(append(b, c[1]...), ' '), int64(id+1), 10))
+	cell(append(b, c[2]...))
+	f(q.price)
+	cell(signedQuote(b, q.change, ""))
+	cell(signedQuote(b, q.percent*100, "%"))
+	cell(compactQuote(b, q.volume))
+	cell(compactQuote(b, q.turnover))
+	cell(compactQuote(b, q.cap))
+	f(q.ttm)
+	f(q.bid)
+	cell(compactQuote(b, q.bidVolume))
+	f(q.ask)
+	cell(compactQuote(b, q.askVolume))
+	f(q.open)
+	f(q.prevClose)
+	f(q.high)
+	f(q.low)
+	f(q.ratio)
+	cell(strconv.AppendFloat(b, q.ranking, 'f', 1, 64))
 	// Indicators move with the change, each by a share of its own.
 	for i := range indicators {
 		sign := -1.0
 		if i%2 == 1 {
 			sign = 1
 		}
-		out = append(out, signedQuote(q.percent*100*sign*(0.25+float64(i%7)*0.2), "%"))
+		cell(signedQuote(b, q.percent*100*sign*(0.25+float64(i%7)*0.2), "%"))
+	}
+	all := string(b)
+	out := make([]string, cells)
+	at := 0
+	for i, end := range ends {
+		out[i], at = all[at:end], end
 	}
 	return out
 }

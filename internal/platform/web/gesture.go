@@ -81,6 +81,7 @@ type gestures struct {
 	two      *twoFinger
 	wheel    *wheelPinch
 	wheelEnd js.Func
+	scroll   *wheelLock // a wheel scroll's view
 }
 
 // listenGestures follows the host's pointers for gestures. Wheel and
@@ -98,7 +99,10 @@ func (s *surface) listenGestures(ls *listeners) {
 			return nil
 		}), active)
 	}
-	listen(s.host, "wheel", s.wheelZoom)
+	listen(s.host, "wheel", func(e js.Value) {
+		s.wheelZoom(e)
+		s.wheelScroll(e)
+	})
 	listen(s.host, "touchmove", func(e js.Value) {
 		if s.gestures.two != nil || s.panning() {
 			e.Call("preventDefault")
