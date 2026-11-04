@@ -149,6 +149,12 @@ type Translation struct {
 	DemoStepperDetail                            func() string
 	DemoToggleButton                             func() string
 	DemoToggleButtonDetail                       func() string
+	DemoSelect                                   func() string
+	DemoSelectDetail                             func() string
+	DemoSlider                                   func() string
+	DemoSliderDetail                             func() string
+	DemoSpinner                                  func() string
+	DemoSpinnerDetail                            func() string
 	DemoTooltip                                  func() string
 	DemoTooltipDetail                            func() string
 	DemoStyles                                   func() string
@@ -2050,6 +2056,27 @@ type Translation struct {
 	LibMovedToTrash                              func() string
 	LibThreeFiles                                func() string
 	LibRestored                                  func() string
+	LibSliders                                   func() string
+	LibSlidersNote                               func() string
+	LibVolume                                    func() string
+	LibFontSize                                  func() string
+	LibPrice                                     func() string
+	LibMinimum                                   func() string
+	LibMaximum                                   func() string
+	LibSelect                                    func() string
+	LibSelectNote                                func() string
+	LibFruit                                     func() string
+	LibPickFruit                                 func() string
+	LibApple                                     func() string
+	LibBanana                                    func() string
+	LibCherry                                    func() string
+	LibGrape                                     func() string
+	LibSpinners                                  func() string
+	LibSpinnersNote                              func() string
+	LibProgress                                  func() string
+	LibLess                                      func() string
+	LibMore                                      func() string
+	LibLoading                                   func() string
 }
 
 var supplied = map[string]Translation{}
@@ -2144,6 +2171,12 @@ const (
 	textDemoStepperDetail
 	textDemoToggleButton
 	textDemoToggleButtonDetail
+	textDemoSelect
+	textDemoSelectDetail
+	textDemoSlider
+	textDemoSliderDetail
+	textDemoSpinner
+	textDemoSpinnerDetail
 	textDemoTooltip
 	textDemoTooltipDetail
 	textDemoStyles
@@ -3938,6 +3971,27 @@ const (
 	textLibMovedToTrash
 	textLibThreeFiles
 	textLibRestored
+	textLibSliders
+	textLibSlidersNote
+	textLibVolume
+	textLibFontSize
+	textLibPrice
+	textLibMinimum
+	textLibMaximum
+	textLibSelect
+	textLibSelectNote
+	textLibFruit
+	textLibPickFruit
+	textLibApple
+	textLibBanana
+	textLibCherry
+	textLibGrape
+	textLibSpinners
+	textLibSpinnersNote
+	textLibProgress
+	textLibLess
+	textLibMore
+	textLibLoading
 	numTexts
 )
 
@@ -4033,6 +4087,12 @@ var texts = map[string]*[numTexts]string{
 		"Where a person is in a flow of steps",
 		"ToggleButton",
 		"Buttons that stay on or off, as a toolbar's formatting",
+		"Select",
+		"One choice of a few, from a field that opens them",
+		"Slider",
+		"A number or a range picked by dragging along a track",
+		"Spinner",
+		"Rings and spokes for work under way",
 		"Tooltip",
 		"A label while the pointer rests on an element, or pinned by the app",
 		"Styles",
@@ -5827,6 +5887,27 @@ var texts = map[string]*[numTexts]string{
 		"Moved to trash",
 		"3 files",
 		"Restored 3 files",
+		"Sliders",
+		"Drag a knob, press the track, or use the arrow keys",
+		"Volume",
+		"Font size",
+		"Price",
+		"minimum",
+		"maximum",
+		"Select",
+		"The chosen option is checked in the menu",
+		"Fruit",
+		"Pick a fruit",
+		"Apple",
+		"Banana",
+		"Cherry",
+		"Grape",
+		"Rings and spinners",
+		"Progress as a ring, and work of unknown length",
+		"Progress",
+		"Less",
+		"More",
+		"Loading",
 	},
 	"ar": {
 		"العربية",
@@ -5917,6 +5998,12 @@ var texts = map[string]*[numTexts]string{
 		"أين يقف الشخص في سلسلة من الخطوات",
 		"زر التبديل",
 		"أزرار تبقى مفعّلة أو معطّلة، كأزرار التنسيق في شريط الأدوات",
+		"قائمة الاختيار",
+		"خيار واحد من عدة خيارات، من حقل يفتحها",
+		"شريط التمرير",
+		"رقم أو نطاق يُختار بالسحب على مسار",
+		"مؤشر التحميل",
+		"حلقات وأشعة لعمل جارٍ",
 		"التلميح",
 		"تسمية تظهر عند استقرار المؤشر على عنصر، أو يثبّتها التطبيق",
 		"الأنماط",
@@ -7711,6 +7798,27 @@ var texts = map[string]*[numTexts]string{
 		"نُقل إلى المهملات",
 		"3 ملفات",
 		"تمت استعادة 3 ملفات",
+		"أشرطة التمرير",
+		"اسحب المقبض أو اضغط على المسار أو استخدم مفاتيح الأسهم",
+		"مستوى الصوت",
+		"حجم الخط",
+		"السعر",
+		"الحد الأدنى",
+		"الحد الأقصى",
+		"قائمة الاختيار",
+		"يُعلَّم الخيار المحدد في القائمة",
+		"الفاكهة",
+		"اختر فاكهة",
+		"تفاح",
+		"موز",
+		"كرز",
+		"عنب",
+		"الحلقات ومؤشرات التحميل",
+		"التقدم على شكل حلقة، وعمل مدته غير معروفة",
+		"التقدم",
+		"أقل",
+		"أكثر",
+		"جارٍ التحميل",
 	},
 	"zh-Hans": {
 		"简体中文",
@@ -7801,6 +7909,12 @@ var texts = map[string]*[numTexts]string{
 		"显示用户在多步流程中的位置",
 		"切换按钮",
 		"保持开或关的按钮，如工具栏的格式按钮",
+		"选择框",
+		"从展开的字段中选择几项之一",
+		"滑块",
+		"沿轨道拖动选取数值或范围",
+		"加载指示器",
+		"表示进行中工作的圆环与辐条",
 		"工具提示",
 		"指针停留在元素上时显示的标签，或由应用固定显示",
 		"样式",
@@ -9595,6 +9709,27 @@ var texts = map[string]*[numTexts]string{
 		"已移到废纸篓",
 		"3 个文件",
 		"已恢复 3 个文件",
+		"滑块",
+		"拖动滑钮、按下轨道或使用方向键",
+		"音量",
+		"字号",
+		"价格",
+		"最小值",
+		"最大值",
+		"选择框",
+		"菜单中勾选已选的选项",
+		"水果",
+		"选择一种水果",
+		"苹果",
+		"香蕉",
+		"樱桃",
+		"葡萄",
+		"圆环与加载指示器",
+		"圆环形式的进度，以及时长未知的工作",
+		"进度",
+		"减少",
+		"增加",
+		"正在加载",
 	},
 	"zh-Hant": {
 		"繁體中文",
@@ -9685,6 +9820,12 @@ var texts = map[string]*[numTexts]string{
 		"顯示使用者在多步流程中的位置",
 		"切換按鈕",
 		"保持開或關的按鈕，如工具列的格式按鈕",
+		"選擇框",
+		"從展開的欄位中選擇幾項之一",
+		"滑桿",
+		"沿軌道拖曳選取數值或範圍",
+		"載入指示器",
+		"表示進行中工作的圓環與輻條",
 		"工具提示",
 		"指標停留在元素上時顯示的標籤，或由應用固定顯示",
 		"樣式",
@@ -11479,6 +11620,27 @@ var texts = map[string]*[numTexts]string{
 		"已移至垃圾桶",
 		"3 個檔案",
 		"已還原 3 個檔案",
+		"滑桿",
+		"拖曳滑鈕、按下軌道或使用方向鍵",
+		"音量",
+		"字級",
+		"價格",
+		"最小值",
+		"最大值",
+		"選擇框",
+		"選單中勾選已選的選項",
+		"水果",
+		"選擇一種水果",
+		"蘋果",
+		"香蕉",
+		"櫻桃",
+		"葡萄",
+		"圓環與載入指示器",
+		"圓環形式的進度，以及時長未知的工作",
+		"進度",
+		"減少",
+		"增加",
+		"正在載入",
 	},
 }
 
@@ -11775,6 +11937,24 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoToggleButtonDetail != nil {
 		st[textDemoToggleButtonDetail] = t.DemoToggleButtonDetail()
+	}
+	if t.DemoSelect != nil {
+		st[textDemoSelect] = t.DemoSelect()
+	}
+	if t.DemoSelectDetail != nil {
+		st[textDemoSelectDetail] = t.DemoSelectDetail()
+	}
+	if t.DemoSlider != nil {
+		st[textDemoSlider] = t.DemoSlider()
+	}
+	if t.DemoSliderDetail != nil {
+		st[textDemoSliderDetail] = t.DemoSliderDetail()
+	}
+	if t.DemoSpinner != nil {
+		st[textDemoSpinner] = t.DemoSpinner()
+	}
+	if t.DemoSpinnerDetail != nil {
+		st[textDemoSpinnerDetail] = t.DemoSpinnerDetail()
 	}
 	if t.DemoTooltip != nil {
 		st[textDemoTooltip] = t.DemoTooltip()
@@ -17479,6 +17659,69 @@ func Supply(lang string, t Translation) {
 	if t.LibRestored != nil {
 		st[textLibRestored] = t.LibRestored()
 	}
+	if t.LibSliders != nil {
+		st[textLibSliders] = t.LibSliders()
+	}
+	if t.LibSlidersNote != nil {
+		st[textLibSlidersNote] = t.LibSlidersNote()
+	}
+	if t.LibVolume != nil {
+		st[textLibVolume] = t.LibVolume()
+	}
+	if t.LibFontSize != nil {
+		st[textLibFontSize] = t.LibFontSize()
+	}
+	if t.LibPrice != nil {
+		st[textLibPrice] = t.LibPrice()
+	}
+	if t.LibMinimum != nil {
+		st[textLibMinimum] = t.LibMinimum()
+	}
+	if t.LibMaximum != nil {
+		st[textLibMaximum] = t.LibMaximum()
+	}
+	if t.LibSelect != nil {
+		st[textLibSelect] = t.LibSelect()
+	}
+	if t.LibSelectNote != nil {
+		st[textLibSelectNote] = t.LibSelectNote()
+	}
+	if t.LibFruit != nil {
+		st[textLibFruit] = t.LibFruit()
+	}
+	if t.LibPickFruit != nil {
+		st[textLibPickFruit] = t.LibPickFruit()
+	}
+	if t.LibApple != nil {
+		st[textLibApple] = t.LibApple()
+	}
+	if t.LibBanana != nil {
+		st[textLibBanana] = t.LibBanana()
+	}
+	if t.LibCherry != nil {
+		st[textLibCherry] = t.LibCherry()
+	}
+	if t.LibGrape != nil {
+		st[textLibGrape] = t.LibGrape()
+	}
+	if t.LibSpinners != nil {
+		st[textLibSpinners] = t.LibSpinners()
+	}
+	if t.LibSpinnersNote != nil {
+		st[textLibSpinnersNote] = t.LibSpinnersNote()
+	}
+	if t.LibProgress != nil {
+		st[textLibProgress] = t.LibProgress()
+	}
+	if t.LibLess != nil {
+		st[textLibLess] = t.LibLess()
+	}
+	if t.LibMore != nil {
+		st[textLibMore] = t.LibMore()
+	}
+	if t.LibLoading != nil {
+		st[textLibLoading] = t.LibLoading()
+	}
 	supplied[lang] = s
 	Catalog.Add(lang)
 }
@@ -18198,6 +18441,54 @@ func DemoToggleButtonDetail(cx *core.Scope) string { return For(cx).DemoToggleBu
 // DemoToggleButtonDetail says "Buttons that stay on or off, as a toolbar's formatting"
 // in the language of msgs.
 func (msgs Messages) DemoToggleButtonDetail() string { return msgs.text(textDemoToggleButtonDetail) }
+
+// DemoSelect says "Select"
+// in the language the app shows under cx.
+func DemoSelect(cx *core.Scope) string { return For(cx).DemoSelect() }
+
+// DemoSelect says "Select"
+// in the language of msgs.
+func (msgs Messages) DemoSelect() string { return msgs.text(textDemoSelect) }
+
+// DemoSelectDetail says "One choice of a few, from a field that opens them"
+// in the language the app shows under cx.
+func DemoSelectDetail(cx *core.Scope) string { return For(cx).DemoSelectDetail() }
+
+// DemoSelectDetail says "One choice of a few, from a field that opens them"
+// in the language of msgs.
+func (msgs Messages) DemoSelectDetail() string { return msgs.text(textDemoSelectDetail) }
+
+// DemoSlider says "Slider"
+// in the language the app shows under cx.
+func DemoSlider(cx *core.Scope) string { return For(cx).DemoSlider() }
+
+// DemoSlider says "Slider"
+// in the language of msgs.
+func (msgs Messages) DemoSlider() string { return msgs.text(textDemoSlider) }
+
+// DemoSliderDetail says "A number or a range picked by dragging along a track"
+// in the language the app shows under cx.
+func DemoSliderDetail(cx *core.Scope) string { return For(cx).DemoSliderDetail() }
+
+// DemoSliderDetail says "A number or a range picked by dragging along a track"
+// in the language of msgs.
+func (msgs Messages) DemoSliderDetail() string { return msgs.text(textDemoSliderDetail) }
+
+// DemoSpinner says "Spinner"
+// in the language the app shows under cx.
+func DemoSpinner(cx *core.Scope) string { return For(cx).DemoSpinner() }
+
+// DemoSpinner says "Spinner"
+// in the language of msgs.
+func (msgs Messages) DemoSpinner() string { return msgs.text(textDemoSpinner) }
+
+// DemoSpinnerDetail says "Rings and spokes for work under way"
+// in the language the app shows under cx.
+func DemoSpinnerDetail(cx *core.Scope) string { return For(cx).DemoSpinnerDetail() }
+
+// DemoSpinnerDetail says "Rings and spokes for work under way"
+// in the language of msgs.
+func (msgs Messages) DemoSpinnerDetail() string { return msgs.text(textDemoSpinnerDetail) }
 
 // DemoTooltip says "Tooltip"
 // in the language the app shows under cx.
@@ -36372,3 +36663,171 @@ func LibRestored(cx *core.Scope) string { return For(cx).LibRestored() }
 // LibRestored says "Restored 3 files"
 // in the language of msgs.
 func (msgs Messages) LibRestored() string { return msgs.text(textLibRestored) }
+
+// LibSliders says "Sliders"
+// in the language the app shows under cx.
+func LibSliders(cx *core.Scope) string { return For(cx).LibSliders() }
+
+// LibSliders says "Sliders"
+// in the language of msgs.
+func (msgs Messages) LibSliders() string { return msgs.text(textLibSliders) }
+
+// LibSlidersNote says "Drag a knob, press the track, or use the arrow keys"
+// in the language the app shows under cx.
+func LibSlidersNote(cx *core.Scope) string { return For(cx).LibSlidersNote() }
+
+// LibSlidersNote says "Drag a knob, press the track, or use the arrow keys"
+// in the language of msgs.
+func (msgs Messages) LibSlidersNote() string { return msgs.text(textLibSlidersNote) }
+
+// LibVolume says "Volume"
+// in the language the app shows under cx.
+func LibVolume(cx *core.Scope) string { return For(cx).LibVolume() }
+
+// LibVolume says "Volume"
+// in the language of msgs.
+func (msgs Messages) LibVolume() string { return msgs.text(textLibVolume) }
+
+// LibFontSize says "Font size"
+// in the language the app shows under cx.
+func LibFontSize(cx *core.Scope) string { return For(cx).LibFontSize() }
+
+// LibFontSize says "Font size"
+// in the language of msgs.
+func (msgs Messages) LibFontSize() string { return msgs.text(textLibFontSize) }
+
+// LibPrice says "Price"
+// in the language the app shows under cx.
+func LibPrice(cx *core.Scope) string { return For(cx).LibPrice() }
+
+// LibPrice says "Price"
+// in the language of msgs.
+func (msgs Messages) LibPrice() string { return msgs.text(textLibPrice) }
+
+// LibMinimum says "minimum"
+// in the language the app shows under cx.
+func LibMinimum(cx *core.Scope) string { return For(cx).LibMinimum() }
+
+// LibMinimum says "minimum"
+// in the language of msgs.
+func (msgs Messages) LibMinimum() string { return msgs.text(textLibMinimum) }
+
+// LibMaximum says "maximum"
+// in the language the app shows under cx.
+func LibMaximum(cx *core.Scope) string { return For(cx).LibMaximum() }
+
+// LibMaximum says "maximum"
+// in the language of msgs.
+func (msgs Messages) LibMaximum() string { return msgs.text(textLibMaximum) }
+
+// LibSelect says "Select"
+// in the language the app shows under cx.
+func LibSelect(cx *core.Scope) string { return For(cx).LibSelect() }
+
+// LibSelect says "Select"
+// in the language of msgs.
+func (msgs Messages) LibSelect() string { return msgs.text(textLibSelect) }
+
+// LibSelectNote says "The chosen option is checked in the menu"
+// in the language the app shows under cx.
+func LibSelectNote(cx *core.Scope) string { return For(cx).LibSelectNote() }
+
+// LibSelectNote says "The chosen option is checked in the menu"
+// in the language of msgs.
+func (msgs Messages) LibSelectNote() string { return msgs.text(textLibSelectNote) }
+
+// LibFruit says "Fruit"
+// in the language the app shows under cx.
+func LibFruit(cx *core.Scope) string { return For(cx).LibFruit() }
+
+// LibFruit says "Fruit"
+// in the language of msgs.
+func (msgs Messages) LibFruit() string { return msgs.text(textLibFruit) }
+
+// LibPickFruit says "Pick a fruit"
+// in the language the app shows under cx.
+func LibPickFruit(cx *core.Scope) string { return For(cx).LibPickFruit() }
+
+// LibPickFruit says "Pick a fruit"
+// in the language of msgs.
+func (msgs Messages) LibPickFruit() string { return msgs.text(textLibPickFruit) }
+
+// LibApple says "Apple"
+// in the language the app shows under cx.
+func LibApple(cx *core.Scope) string { return For(cx).LibApple() }
+
+// LibApple says "Apple"
+// in the language of msgs.
+func (msgs Messages) LibApple() string { return msgs.text(textLibApple) }
+
+// LibBanana says "Banana"
+// in the language the app shows under cx.
+func LibBanana(cx *core.Scope) string { return For(cx).LibBanana() }
+
+// LibBanana says "Banana"
+// in the language of msgs.
+func (msgs Messages) LibBanana() string { return msgs.text(textLibBanana) }
+
+// LibCherry says "Cherry"
+// in the language the app shows under cx.
+func LibCherry(cx *core.Scope) string { return For(cx).LibCherry() }
+
+// LibCherry says "Cherry"
+// in the language of msgs.
+func (msgs Messages) LibCherry() string { return msgs.text(textLibCherry) }
+
+// LibGrape says "Grape"
+// in the language the app shows under cx.
+func LibGrape(cx *core.Scope) string { return For(cx).LibGrape() }
+
+// LibGrape says "Grape"
+// in the language of msgs.
+func (msgs Messages) LibGrape() string { return msgs.text(textLibGrape) }
+
+// LibSpinners says "Rings and spinners"
+// in the language the app shows under cx.
+func LibSpinners(cx *core.Scope) string { return For(cx).LibSpinners() }
+
+// LibSpinners says "Rings and spinners"
+// in the language of msgs.
+func (msgs Messages) LibSpinners() string { return msgs.text(textLibSpinners) }
+
+// LibSpinnersNote says "Progress as a ring, and work of unknown length"
+// in the language the app shows under cx.
+func LibSpinnersNote(cx *core.Scope) string { return For(cx).LibSpinnersNote() }
+
+// LibSpinnersNote says "Progress as a ring, and work of unknown length"
+// in the language of msgs.
+func (msgs Messages) LibSpinnersNote() string { return msgs.text(textLibSpinnersNote) }
+
+// LibProgress says "Progress"
+// in the language the app shows under cx.
+func LibProgress(cx *core.Scope) string { return For(cx).LibProgress() }
+
+// LibProgress says "Progress"
+// in the language of msgs.
+func (msgs Messages) LibProgress() string { return msgs.text(textLibProgress) }
+
+// LibLess says "Less"
+// in the language the app shows under cx.
+func LibLess(cx *core.Scope) string { return For(cx).LibLess() }
+
+// LibLess says "Less"
+// in the language of msgs.
+func (msgs Messages) LibLess() string { return msgs.text(textLibLess) }
+
+// LibMore says "More"
+// in the language the app shows under cx.
+func LibMore(cx *core.Scope) string { return For(cx).LibMore() }
+
+// LibMore says "More"
+// in the language of msgs.
+func (msgs Messages) LibMore() string { return msgs.text(textLibMore) }
+
+// LibLoading says "Loading"
+// in the language the app shows under cx.
+func LibLoading(cx *core.Scope) string { return For(cx).LibLoading() }
+
+// LibLoading says "Loading"
+// in the language of msgs.
+func (msgs Messages) LibLoading() string { return msgs.text(textLibLoading) }

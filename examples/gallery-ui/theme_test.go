@@ -42,6 +42,12 @@ func showcase(cx *core.Scope) core.Node {
 			Stepper{Current: func() int { return 1 }, OnSelect: func(int) {},
 				Steps: []StepperStep{{Label: "One"}, {Label: "Two", Description: "Now"}, {Label: "Three", Error: "Failed"}}},
 			Stepper{Current: func() int { return 1 }, Vertical: true, Steps: []StepperStep{{Label: "One"}, {Label: "Two"}}},
+			Slider{Label: "Level", Value: func() float64 { return 30 }, Step: 10},
+			Slider{Label: "Range", Value: func() float64 { return 20 }, High: func() float64 { return 70 }},
+			HStack{Gap: 8, Children: []core.Node{
+				ProgressRing{Value: func() float32 { return 60 }}, Spinner{}, Spinner{Variant: SpinnerSpokes},
+				Select[int]{Placeholder: "Pick", Options: []Option[int]{{Value: 1, Label: "One"}}},
+			}},
 		}},
 		Accordion{Items: []AccordionItem{{Text: "Open", Content: core.Text{Content: "Body"}}, {Text: "Closed"}},
 			Open: func(i int) bool { return i == 0 }},

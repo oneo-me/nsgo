@@ -185,3 +185,92 @@ func styledToastsCard(last *core.Signal[string]) cardFunc {
 		}}
 	}
 }
+
+// sliderCard is Slider for a volume, stepped for a font size, and as a
+// price range.
+func sliderCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
+		colors := ui.ColorsOf(cx)
+		volume, size := core.NewSignal(cx, 40.0), core.NewSignal(cx, 14.0)
+		low, high := core.NewSignal(cx, 20.0), core.NewSignal(cx, 80.0)
+		row := func(name string, value func() string, slider ui.Slider) core.Node {
+			return core.View{Style: core.Style{Gap: 6}, Children: []core.Node{
+				core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
+					ui.Text(name, 13, ui.Medium, colors.Text), ui.Tabular(ui.Textf(value, 13, ui.Regular, colors.Muted)),
+				}},
+				slider,
+			}}
+		}
+		number := func(s *core.Signal[float64]) func() string { return func() string { return fmt.Sprint(s.Get()) } }
+		return ui.Card{Title: tr.LibSliders(), Description: tr.LibSlidersNote(), Children: []core.Node{
+			row(tr.LibVolume(), number(volume), ui.Slider{Label: tr.LibVolume(), TestID: "slider-volume", Value: volume.Get,
+				OnChange: func(v float64) { volume.Set(v); last.Set(fmt.Sprintf("%s: %.0f", tr.LibVolume(), v)) }}),
+			row(tr.LibFontSize(), number(size), ui.Slider{Label: tr.LibFontSize(), Min: 10, Max: 24, Step: 2, Value: size.Get,
+				OnChange: func(v float64) { size.Set(v); last.Set(fmt.Sprintf("%s: %v", tr.LibFontSize(), v)) }}),
+			row(tr.LibPrice(), func() string { return fmt.Sprintf("$%v – $%v", low.Get(), high.Get()) },
+				ui.Slider{Label: tr.LibPrice(), LowLabel: tr.LibMinimum(), HighLabel: tr.LibMaximum(), Step: 5,
+					Value: low.Get, OnChange: low.Set, High: high.Get, OnHighChange: high.Set}),
+			row(tr.LibLocked(), constant("50"), ui.Slider{Label: tr.LibLocked(), Value: func() float64 { return 50 }, Disabled: func() bool { return true }}),
+		}}
+	}
+}
+
+// constant is s as text that may change.
+func constant(s string) func() string { return func() string { return s } }
+
+// selectCard is Select over a few fruits, beside one with nothing chosen.
+func selectCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
+		options := []ui.Option[string]{{Value: "apple", Label: tr.LibApple()}, {Value: "banana", Label: tr.LibBanana()},
+			{Value: "cherry", Label: tr.LibCherry()}, {Value: "grape", Label: tr.LibGrape()}}
+		fruit, other := core.NewSignal(cx, "banana"), core.NewSignal(cx, "")
+		choose := func(s *core.Signal[string]) func(string) {
+			return func(v string) {
+				s.Set(v)
+				for _, o := range options {
+					if o.Value == v {
+						last.Set(o.Label)
+					}
+				}
+			}
+		}
+		return ui.Card{Title: tr.LibSelect(), Description: tr.LibSelectNote(), Children: []core.Node{
+			ui.Wrap{Children: []core.Node{
+				ui.Select[string]{Label: tr.LibFruit(), TestID: "select-fruit", Options: options, Value: fruit.Get, OnChange: choose(fruit)},
+				ui.Select[string]{Label: tr.LibFruit(), Placeholder: tr.LibPickFruit(), Options: options, Value: other.Get, OnChange: choose(other)},
+			}},
+		}}
+	}
+}
+
+// spinnerCard is ProgressRing at a few values, one the buttons move, and
+// both Spinners at two sizes.
+func spinnerCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
+		done := core.NewSignal(cx, float32(40))
+		ring := func(v float32) core.Node {
+			return ui.ProgressRing{Label: tr.LibProgress(), Value: func() float32 { return v }}
+		}
+		move := func(by float32) func() {
+			return func() {
+				done.Set(min(max(done.GetUntracked()+by, 0), 100))
+				last.Set(fmt.Sprintf("%s: %.0f%%", tr.LibProgress(), done.GetUntracked()))
+			}
+		}
+		return ui.Card{Title: tr.LibSpinners(), Description: tr.LibSpinnersNote(), Children: []core.Node{
+			ui.HStack{Gap: 16, Children: []core.Node{
+				ring(0), ring(25), ring(100),
+				ui.ProgressRing{Label: tr.LibProgress(), Value: done.Get, Size: 44, TestID: "ring"},
+				ui.Button{Icon: ui.IconMinus, Label: tr.LibLess(), Variant: ui.ButtonGhost, OnPress: move(-10)},
+				ui.Button{Icon: ui.IconPlus, Label: tr.LibMore(), Variant: ui.ButtonGhost, OnPress: move(10)},
+			}},
+			ui.HStack{Gap: 16, Children: []core.Node{
+				ui.Spinner{Label: tr.LibLoading()}, ui.Spinner{Label: tr.LibLoading(), Size: 20},
+				ui.Spinner{Label: tr.LibLoading(), Variant: ui.SpinnerSpokes}, ui.Spinner{Label: tr.LibLoading(), Variant: ui.SpinnerSpokes, Size: 20},
+			}},
+		}}
+	}
+}
