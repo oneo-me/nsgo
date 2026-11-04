@@ -1221,6 +1221,13 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.str(it.Open.Path)
 			w.str(it.Open.Name)
 			w.str(it.Open.MIME)
+		case driver.ItemInstallPackage:
+			// The APK, under its name.
+			w.u32(it.Count)
+			w.str(it.Open.Path)
+			w.str(it.Open.Name)
+		case driver.ItemCanInstallPackages, driver.ItemInstallSettings:
+			w.u32(it.Count)
 		case driver.ItemShare:
 			// The text, then each file as ItemOpenFile's.
 			w.u32(it.Count)

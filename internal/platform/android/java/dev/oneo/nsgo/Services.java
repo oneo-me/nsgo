@@ -224,6 +224,62 @@ final class Services {
         }
     }
 
+    /** The permission an app installing packages asks for in its manifest. */
+    private static final String INSTALL_PERMISSION = "android.permission.REQUEST_INSTALL_PACKAGES";
+
+    /**
+     * Hands the APK at path to the package installer, which reads it as
+     * name through a URI granted to it and asks the user to confirm; it
+     * returns what failed, "" once the installer starts.
+     */
+    static String installPackage(Context context, String path, String name) {
+        if (!asksFor(context, INSTALL_PERMISSION)) {
+            return "the app's manifest does not ask for " + INSTALL_PERMISSION
+                    + ": add it to nsgo.yaml's android.permissions, or an embedding app's manifest";
+        }
+        String mime = "application/vnd.android.package-archive";
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        try {
+            intent.setDataAndType(FileProvider.uri(context, new File(path), name, mime), mime);
+        } catch (IOException e) {
+            return e.getMessage();
+        }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(intent);
+            return "";
+        } catch (RuntimeException e) {
+            return String.valueOf(e.getMessage());
+        }
+    }
+
+    /** Whether the app's manifest asks for permission. */
+    private static boolean asksFor(Context context, String permission) {
+        try {
+            String[] asked = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), android.content.pm.PackageManager.GET_PERMISSIONS)
+                    .requestedPermissions;
+            if (asked != null) for (String p : asked) if (permission.equals(p)) return true;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            // The app's own package is always there.
+        }
+        return false;
+    }
+
+    /** Opens the setting that lets the app install packages; false when it cannot. */
+    static boolean installSettings(Context context) {
+        Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + context.getPackageName()));
+        if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(intent);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
     /** The type a share of files of types says: theirs, their family's (image/*) or any. */
     private static String commonType(String[] types) {
         String type = types[0];

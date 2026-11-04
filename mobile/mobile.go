@@ -37,3 +37,32 @@ func IsAvailable(cx *core.Scope) bool {
 // any other finishes. iOS apps never leave themselves, so it does nothing
 // there, as elsewhere.
 func ExitApp(cx *core.Scope) { cx.ExitApp() }
+
+// InstallPackage hands the APK at path, in the app's own storage, to
+// Android's package installer, which asks the user to confirm. done,
+// when not nil, learns whether the installer started, with the error
+// when it did not: a missing file, an app whose manifest does not ask
+// for android.permission.REQUEST_INSTALL_PACKAGES (nsgo.yaml's
+// android.permissions; an embedding host's own manifest), or a failed
+// launch. That it started says nothing of whether the user installed
+// the package. Where the user has not let the app install packages
+// (CanInstallPackages), the installer sends them to the setting first.
+// The installer reads the file through a content URI the runtime grants
+// it, so the app keeps it until the installer is done and deletes it
+// itself. Elsewhere it answers with an error. It never installs
+// silently.
+func InstallPackage(cx *core.Scope, path string, done func(started bool, err error)) {
+	cx.InstallPackage(path, done)
+}
+
+// CanInstallPackages calls done with whether the user lets the app
+// install packages on Android, as PackageManager.canRequestPackageInstalls
+// says: false until they allow it in the setting OpenInstallSettings
+// opens, and always for an app whose manifest does not ask for
+// REQUEST_INSTALL_PACKAGES. Elsewhere it answers false.
+func CanInstallPackages(cx *core.Scope, done func(allowed bool)) { cx.CanInstallPackages(done) }
+
+// OpenInstallSettings opens Android's setting that lets the app install
+// packages, for the user to allow it, and calls done with whether it
+// opened. Elsewhere it answers false.
+func OpenInstallSettings(cx *core.Scope, done func(opened bool)) { cx.OpenInstallSettings(done) }

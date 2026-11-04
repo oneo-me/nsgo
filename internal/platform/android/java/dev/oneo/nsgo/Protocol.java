@@ -116,6 +116,9 @@ final class Protocol {
     static final int ITEM_SAVE_FILE = 58;
     static final int ITEM_OPEN_FILE = 61;
     static final int ITEM_SHARE = 62;
+    static final int ITEM_INSTALL_PACKAGE = 63;
+    static final int ITEM_CAN_INSTALL_PACKAGES = 64;
+    static final int ITEM_INSTALL_SETTINGS = 65;
 
     // View kinds, as in core/mount.go.
     static final int KIND_VIEW = 1;

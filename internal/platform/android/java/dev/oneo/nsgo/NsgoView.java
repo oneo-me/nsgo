@@ -1878,6 +1878,28 @@ public class NsgoView extends FrameLayout {
                 event(Protocol.EVENT_FILES, 0, count, 0, 0, error[0], 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", opened);
                 break;
             }
+            case Protocol.ITEM_INSTALL_PACKAGE: {
+                long count = in.readInt() & 0xffffffffL;
+                String path = Protocol.readString(in), name = Protocol.readString(in);
+                Context context = activity() != null ? activity() : getContext();
+                String error = Services.installPackage(context, path, name);
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, error, 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "",
+                        error.isEmpty());
+                break;
+            }
+            case Protocol.ITEM_CAN_INSTALL_PACKAGES: {
+                long count = in.readInt() & 0xffffffffL;
+                boolean allowed = getContext().getPackageManager().canRequestPackageInstalls();
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", allowed);
+                break;
+            }
+            case Protocol.ITEM_INSTALL_SETTINGS: {
+                long count = in.readInt() & 0xffffffffL;
+                Context context = activity() != null ? activity() : getContext();
+                boolean opened = Services.installSettings(context);
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", opened);
+                break;
+            }
             case Protocol.ITEM_SHARE: {
                 long count = in.readInt() & 0xffffffffL;
                 String text = Protocol.readString(in);

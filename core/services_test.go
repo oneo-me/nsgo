@@ -375,6 +375,46 @@ func TestShare(t *testing.T) {
 	}
 }
 
+func TestInstallPackage(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	apk := filepath.Join(t.TempDir(), "update.apk")
+	if err := os.WriteFile(apk, []byte("PK"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	started, allowed, opened := false, true, true
+	var installErr error
+	cx.InstallPackage(apk, func(ok bool, err error) { started, installErr = ok, err })
+	cx.CanInstallPackages(func(ok bool) { allowed = ok })
+	cx.OpenInstallSettings(func(ok bool) { opened = ok })
+	if installErr == nil || allowed || opened || len(h.commit().Items) != 0 {
+		t.Fatalf("off Android: %v, %v, %v", installErr, allowed, opened)
+	}
+
+	h.tree.SetEnvironment(Environment{OS: OSAndroid})
+	h.commit()
+	cx.InstallPackage(apk, func(ok bool, err error) { started, installErr = ok, err })
+	it := command(h.commit(), driver.ItemInstallPackage)
+	if it == nil || it.Open.Path != apk || it.Open.MIME != "application/vnd.android.package-archive" {
+		t.Fatalf("install = %+v", it)
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if !started || installErr != nil {
+		t.Fatalf("started = %v, %v", started, installErr)
+	}
+	cx.CanInstallPackages(func(ok bool) { allowed = ok })
+	it = command(h.commit(), driver.ItemCanInstallPackages)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if !allowed {
+		t.Fatal("not allowed")
+	}
+	cx.InstallPackage(filepath.Join(filepath.Dir(apk), "missing.apk"), func(ok bool, err error) { started, installErr = ok, err })
+	if installErr == nil || command(h.commit(), driver.ItemInstallPackage) != nil {
+		t.Fatalf("installing a missing file answered %v", installErr)
+	}
+}
+
 func TestSharedFileStage(t *testing.T) {
 	dir := t.TempDir()
 	src := filepath.Join(dir, "x1.bin")

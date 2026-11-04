@@ -81,6 +81,30 @@ func TestEncodeManifest(t *testing.T) {
 	}
 }
 
+// TestEncodeManifestPermissions checks that the app's permissions join
+// the runtime's once each, and that a name that is none fails.
+func TestEncodeManifestPermissions(t *testing.T) {
+	perms := []string{"android.permission.REQUEST_INSTALL_PACKAGES", "android.permission.INTERNET"}
+	data, err := EncodeManifest(androidruntime.Manifest, Manifest{Package: "dev.oneo.nsgo.test", Permissions: perms})
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked := map[string]int{}
+	for _, kid := range decodeXML(t, data).root.kids {
+		if kid.name == "uses-permission" {
+			asked[kid.string(t, "name")]++
+		}
+	}
+	for _, p := range perms {
+		if asked[p] != 1 {
+			t.Errorf("the manifest asks for %s %d times: %v", p, asked[p], asked)
+		}
+	}
+	if _, err := EncodeManifest(androidruntime.Manifest, Manifest{Package: "dev.oneo.nsgo.test", Permissions: []string{"not a permission"}}); err == nil {
+		t.Error("a bad permission was accepted")
+	}
+}
+
 func TestEncodeManifestRejectsBadIDs(t *testing.T) {
 	for _, id := range []string{"", "hello", "dev..nsgo", "dev.nsgo.hello world", "1dev.nsgo.hello"} {
 		if _, err := EncodeManifest(androidruntime.Manifest, Manifest{Package: id}); err == nil {

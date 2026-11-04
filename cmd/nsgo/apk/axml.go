@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,6 +28,9 @@ type Manifest struct {
 	// Debuggable marks a test build, whose launch intent may name the test
 	// the runtime runs.
 	Debuggable bool
+	// Permissions are the permissions the app asks for beyond the
+	// runtime's, by their full names.
+	Permissions []string
 }
 
 // The binary XML chunk and value types, from Android's ResourceTypes.h.
@@ -156,6 +160,18 @@ func EncodeManifest(template []byte, m Manifest) ([]byte, error) {
 	if m.Icon != nil {
 		setAttr(app, androidNS, "icon", iconResource)
 	}
+	for _, perm := range m.Permissions {
+		if err := validPermission(perm); err != nil {
+			return nil, err
+		}
+		if !asksFor(root, perm) {
+			// Before the application, as the runtime's own.
+			use := &node{name: xml.Name{Local: "uses-permission"}}
+			setAttr(use, androidNS, "name", perm)
+			i := slices.Index(root.kids, app)
+			root.kids = slices.Insert(root.kids, i, use)
+		}
+	}
 
 	e := &encoder{index: map[string]int{}}
 	// Attribute names come first in the string pool: the resource map
@@ -212,6 +228,30 @@ func validPackage(id string) error {
 		}
 	}
 	return nil
+}
+
+// validPermission checks that perm names a permission: dotted Java
+// identifiers, as android.permission.CAMERA.
+func validPermission(perm string) error {
+	if err := validPackage(perm); err != nil {
+		return fmt.Errorf("permission %q is not a permission's name", perm)
+	}
+	return nil
+}
+
+// asksFor reports whether the manifest root already asks for perm.
+func asksFor(root *node, perm string) bool {
+	for _, kid := range root.kids {
+		if kid.name.Local != "uses-permission" {
+			continue
+		}
+		for _, a := range kid.attrs {
+			if a.Name.Space == androidNS && a.Name.Local == "name" && a.Value == perm {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func parseInt(s string) (uint32, error) {

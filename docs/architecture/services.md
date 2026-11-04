@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, the appearance, keyboard shortcuts, the status bar, the desktop window and the app's lifecycle. Read this before changing one, in `core` or in a backend.
 
 ## Requests and answers
 
@@ -8,7 +8,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories`, `SaveFile` and `OpenFile`, and it records the shares, the appearance, quits and the context menu shown.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile` and `CanInstallPackages`, and it records the shares, the packages installed, the install settings opened, the appearance, quits and the context menu shown.
 
 ## Clipboard
 
@@ -99,6 +99,12 @@ Windows checks the registry first because the shell asks the user for an app for
 | Web | None: `NoFileOpener` | None: `NoShareSheet` |
 
 Android hands files on as content URIs from the runtime's `FileProvider`, which the manifest declares unexported, granting URIs, with an authority named after the app's package. A URI names one of its roots, the app's data directory (which holds `DataDir` and `CacheDir`) or its external one, the path under it and the name the other app sees, with the type as a parameter; a file elsewhere fails, and the provider serves nothing outside its roots, whatever the path says. The intent grants the app chosen read access until its activity finishes, so the app keeps the file there until then and deletes it itself.
+
+## Installing packages
+
+`mobile.InstallPackage` hands an APK in the app's storage to Android's package installer, as `OpenFile` hands a file on: `ACTION_VIEW` of a `FileProvider` URI typed `application/vnd.android.package-archive`. The installer asks the user to confirm, and sends them to the setting first where they have not let the app install packages, so the answer says only that it started. `CanInstallPackages` is `canRequestPackageInstalls`, and `OpenInstallSettings` opens `ACTION_MANAGE_UNKNOWN_APP_SOURCES` for the app. Elsewhere `core` answers at once, without asking the platform.
+
+The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PACKAGES`, which stores review, so the runtime asks for nothing: an app lists it in `nsgo.yaml`'s `android.permissions` ([tool](tool.md)), an embedding host in its own manifest, and `InstallPackage` fails with that advice without it.
 
 ## Appearance and quitting
 

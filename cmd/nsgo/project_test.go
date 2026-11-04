@@ -30,6 +30,21 @@ func TestHotReload(t *testing.T) {
 	}
 }
 
+func TestAndroidPermissions(t *testing.T) {
+	dir := t.TempDir()
+	yaml := "name: Test\nandroid:\n  permissions: [REQUEST_INSTALL_PACKAGES, com.example.READ]\n"
+	if err := os.WriteFile(filepath.Join(dir, "nsgo.yaml"), []byte(yaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p, err := load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := p.Android.Permissions; len(got) != 2 || got[0] != "android.permission.REQUEST_INSTALL_PACKAGES" || got[1] != "com.example.READ" {
+		t.Fatalf("permissions = %v", got)
+	}
+}
+
 func TestBuildOpen(t *testing.T) {
 	for _, tt := range []struct {
 		yaml string

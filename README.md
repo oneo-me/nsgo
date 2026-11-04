@@ -128,6 +128,7 @@ build:
   open: false           # true opens the output directory after building
   fps: false            # as dev.fps, for packages
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, android_arm64, android_x64, web]
+# android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
 # sign:                 # store releases; passwords come from NSGO_KEYSTORE_PASSWORD and NSGO_KEY_PASSWORD
 #   profile: assets/AppStore.mobileprovision  # signs the IPA
 #   keystore: assets/release.p12              # signs APKs, with key_alias

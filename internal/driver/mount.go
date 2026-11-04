@@ -228,6 +228,16 @@ const (
 	// ItemShare shows the system's share sheet for Share; the platform
 	// answers with EventFiles carrying Count once it shows.
 	ItemShare
+	// ItemInstallPackage hands the APK Open to Android's package
+	// installer, which asks the user to confirm; the platform answers
+	// with EventFiles carrying Count once the installer starts.
+	ItemInstallPackage
+	// ItemCanInstallPackages asks whether the user lets the app install
+	// packages; Android answers with EventFiles carrying Count.
+	ItemCanInstallPackages
+	// ItemInstallSettings opens the system's setting that lets the app
+	// install packages; Android answers with EventFiles carrying Count.
+	ItemInstallSettings
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -288,8 +298,8 @@ type MountItem struct {
 	// Pick is ItemPickImages' request.
 	Pick *PickRequest
 	// Files is ItemPickFiles' request, Save ItemSaveFile's,
-	// Directories ItemPickDirectories', Open ItemOpenFile's and Share
-	// ItemShare's.
+	// Directories ItemPickDirectories', Open ItemOpenFile's and
+	// ItemInstallPackage's and Share ItemShare's.
 	Files       *FilesRequest
 	Save        *SaveRequest
 	Directories *DirectoriesRequest

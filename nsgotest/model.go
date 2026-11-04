@@ -415,6 +415,14 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.OpenedFiles = append(a.OpenedFiles, *it.Open)
 			opened := a.OpenFile == nil || a.OpenFile(*it.Open)
 			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: opened})
+		case driver.ItemInstallPackage:
+			a.Installs = append(a.Installs, *it.Open)
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+		case driver.ItemCanInstallPackages:
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: a.InstallAllowed})
+		case driver.ItemInstallSettings:
+			a.InstallSettings++
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
 		case driver.ItemShare:
 			a.Shares = append(a.Shares, *it.Share)
 			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})

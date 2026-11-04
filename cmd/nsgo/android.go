@@ -105,6 +105,7 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 		Icon:        icon,
 		Theme:       androidThemes[p.Appearance],
 		Debuggable:  p.testBinary,
+		Permissions: p.Android.Permissions,
 	}, files, key)
 	if err != nil {
 		return "", err

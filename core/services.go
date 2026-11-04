@@ -607,6 +607,72 @@ func (cx *Scope) Share(o ShareOptions, done func(shown bool, err error)) {
 	})
 }
 
+// errNoInstaller is what InstallPackage answers off Android.
+var errNoInstaller = errors.New("core: only Android installs packages")
+
+// InstallPackage is the core's part of mobile.InstallPackage, which apps
+// use: it hands the APK at path to Android's package installer.
+func (cx *Scope) InstallPackage(path string, done func(started bool, err error)) {
+	answer := func(started bool, err error) {
+		if done != nil {
+			done(started, err)
+		}
+	}
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	if cx.Env().os.GetUntracked() != OSAndroid {
+		answer(false, errNoInstaller)
+		return
+	}
+	r, err := resolveShared(SharedFile{Path: path, MIME: "application/vnd.android.package-archive"})
+	if err != nil {
+		answer(false, err)
+		return
+	}
+	t.request(cx, driver.MountItem{Kind: driver.ItemInstallPackage, Open: &r}, func(ev driver.Event) {
+		if ev.Text != "" {
+			answer(false, errors.New(ev.Text))
+			return
+		}
+		answer(ev.Finished, nil)
+	})
+}
+
+// CanInstallPackages is the core's part of mobile.CanInstallPackages,
+// which apps use: it asks Android whether the user lets the app install
+// packages.
+func (cx *Scope) CanInstallPackages(done func(allowed bool)) {
+	cx.androidAsk(driver.ItemCanInstallPackages, done)
+}
+
+// OpenInstallSettings is the core's part of mobile.OpenInstallSettings,
+// which apps use: it opens Android's setting that lets the app install
+// packages.
+func (cx *Scope) OpenInstallSettings(done func(opened bool)) {
+	cx.androidAsk(driver.ItemInstallSettings, done)
+}
+
+// androidAsk sends Android a request of kind that answers yes or no,
+// and answers no elsewhere.
+func (cx *Scope) androidAsk(kind driver.ItemKind, done func(bool)) {
+	answer := func(ok bool) {
+		if done != nil {
+			done(ok)
+		}
+	}
+	t := cx.rt.tree
+	if t == nil {
+		return
+	}
+	if cx.Env().os.GetUntracked() != OSAndroid {
+		answer(false)
+		return
+	}
+	t.request(cx, driver.MountItem{Kind: kind}, func(ev driver.Event) { answer(ev.Finished) })
+}
+
 // SetAppearance shows the app light or dark whatever the system's
 // appearance, or follows it again with AppearanceSystem: Env.Dark
 // reports the one shown, and the platform's own chrome, such as title

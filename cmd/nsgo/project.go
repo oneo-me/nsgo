@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -85,6 +86,13 @@ type project struct {
 	Web struct {
 		Host string `yaml:"host"`
 	} `yaml:"web"`
+	// Android is the Android target's: Permissions are the permissions
+	// its manifest asks for beyond the runtime's, such as
+	// REQUEST_INSTALL_PACKAGES, which a name without a dot is under
+	// android.permission.
+	Android struct {
+		Permissions []string `yaml:"permissions"`
+	} `yaml:"android"`
 	Sign  signing `yaml:"sign"`
 	Build struct {
 		Output  string   `yaml:"output"`
@@ -167,6 +175,11 @@ func load(dir string) (*project, error) {
 		p.Build.Output = "dist"
 	}
 	p.Build.Output = p.resolve(p.Build.Output)
+	for i, perm := range p.Android.Permissions {
+		if !strings.Contains(perm, ".") {
+			p.Android.Permissions[i] = "android.permission." + perm
+		}
+	}
 	if p.I18n.Dir == "" {
 		p.I18n.Dir = "locales"
 	}

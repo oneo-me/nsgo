@@ -161,6 +161,13 @@ type App struct {
 	// Shares are the shares the app asked for, oldest first; each sheet
 	// shows.
 	Shares []driver.ShareRequest
+	// Installs are the packages the app handed Android's installer,
+	// oldest first; each installer starts. InstallAllowed is what
+	// CanInstallPackages answers, and InstallSettings counts the times the
+	// app opened the setting, which opens.
+	Installs        []driver.SharedFile
+	InstallAllowed  bool
+	InstallSettings int
 	// OnAlert answers each alert the app shows with the index of the
 	// button the user presses, or -1 to dismiss it, once the step that
 	// showed it ends. Without it Alerts lists them and Answer answers
