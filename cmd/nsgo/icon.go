@@ -333,18 +333,39 @@ func writeLinuxIcon(p *project, dir string) error {
 	if err := os.WriteFile(filepath.Join(dir, p.ID+".png"), scaledPNG(img, 512), 0o644); err != nil {
 		return err
 	}
+	n, err := p.appNames()
+	if err != nil {
+		return err
+	}
+	entry := desktopData{Name: p.Name, Exec: p.Name, ID: p.ID}
+	if n != nil {
+		entry.Name = n.names[n.source]
+		for _, lang := range n.languages()[1:] {
+			entry.Names = append(entry.Names, [2]string{desktopLocale(lang), n.names[lang]})
+		}
+	}
 	f, err := os.Create(filepath.Join(dir, p.ID+".desktop"))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return desktopEntry.Execute(f, p)
+	return desktopEntry.Execute(f, entry)
+}
+
+// desktopData is what a desktop entry says: the app's name, in its other
+// languages by locale too, its executable and its icon.
+type desktopData struct {
+	Name, Exec, ID string
+	Names          [][2]string
 }
 
 var desktopEntry = template.Must(template.New("desktop").Parse(`[Desktop Entry]
 Type=Application
 Name={{.Name}}
-Exec="{{.Name}}"
+{{- range .Names}}
+Name[{{index . 0}}]={{index . 1}}
+{{- end}}
+Exec="{{.Exec}}"
 Icon={{.ID}}
 Terminal=false
 `))

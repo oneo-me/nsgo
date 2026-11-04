@@ -129,7 +129,7 @@ Package `desktop` is NSH's `nsh/desktop`: native controls, an app-drawn title ba
 
 - `SetTitleBar` hides the system title bar and gives the app's bar its height, in which the platform centers its controls. `TitleBar` then reports the area they keep, and views with `Desktop.WindowDrag` drag the window.
 - macOS centers the traffic lights in the bar, 16 points from the left, as Onevra does; Windows draws Onevra's rounded caption buttons; Linux reports the bar's height and the app draws its buttons.
-- `SetWindowControls` hides those controls for the app's own, or moves the traffic lights, as MyGo's `TrafficLightPosition` does: the close button's top left from the window's, zero X or Y keeping the default.
+- `SetWindowControls` hides those controls for the app's own, or moves the traffic lights, as Electron's `trafficLightPosition` does: the close button's top left from the window's, zero X or Y keeping the default.
 - macOS 27's AppKit puts the traffic lights back whenever it lays the title bar out, without a notification, so NSGo's `NSWindow` subclass places them after each `layoutIfNeeded`. Hiding and showing them makes AppKit place them again once the app's position goes, as Electron's `window_buttons_proxy.mm` notes.
 - `Maximized` reports a maximized or zoomed window, so an app-drawn maximize button can show restore.
 - The platform decides a window drag on the main thread from the mounted props: the nearest view setting `WindowDrag` decides, and a nearer pressable, input or gesture view keeps the press.
@@ -164,8 +164,8 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 | NSH | NSGo | Why |
 | --- | --- | --- |
 | `setFrame`'s `x` and `y` are the bottom left on macOS, with `anchorTop` | The top left from the main screen everywhere | One coordinate system; the top edge stays without an option |
-| A bar height picks an `NSToolbar` style, and AppKit places the traffic lights | NSGo places them in the app's bar, where `SetWindowControls` says | Any bar height and position, as MyGo and Electron allow |
-| No window material | `nsgo.WindowMaterial` and `SetWindowMaterial`, after MyGo's `Vibrancy` | Desktop apps show the system's materials behind sidebars |
+| A bar height picks an `NSToolbar` style, and AppKit places the traffic lights | NSGo places them in the app's bar, where `SetWindowControls` says | Any bar height and position, as Electron allows |
+| No window material | `nsgo.WindowMaterial` and `SetWindowMaterial`, after Electron's `vibrancy` | Desktop apps show the system's materials behind sidebars |
 | `openUrl` throws for a refused URL | `OpenURL` answers false; `CheckURL` says why | A callback has no exception to throw |
 | No images written on Android | `FileProvider` serves them | The clipboard holds images only as content URIs |
 | Picked images become `File`s whose bytes stay native | `PickedFile` holds the bytes | Go apps hold bytes directly |

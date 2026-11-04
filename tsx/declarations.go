@@ -66,6 +66,7 @@ func Declarations() map[string]string {
 			modules = append(modules, m)
 		}
 	}
+	modules = append(modules, catalogModules(modules)...)
 	sort.Strings(modules)
 	for _, m := range modules {
 		var path, from string
@@ -92,6 +93,9 @@ func Declarations() map[string]string {
 			d.function(f)
 		}
 		out[path] = out[path] + d.file(from)
+		if c, ok := registeredCatalogs[m]; ok {
+			out[path] += messagesDecl(c)
+		}
 	}
 	out["types/nsgo/tokens.d.ts"] = TokenDeclarations(core.DefaultTheme())
 	out["tsconfig.json"] = tsconfig

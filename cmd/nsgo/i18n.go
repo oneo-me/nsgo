@@ -332,7 +332,7 @@ func readMessage(k, v *yaml.Node, path string, ds *diags) *catalogMessage {
 
 // placeholderTypes maps ARB's placeholder types to Go's.
 var placeholderTypes = map[string]string{
-	"String": "string", "int": "int", "double": "float64", "num": "float64", "Object": "any",
+	"String": "string", "int": "int", "double": "float64", "num": "float64", "DateTime": "time.Time", "Object": "any",
 }
 
 // sourceParams returns a source message's parameters: its placeholders',
@@ -342,15 +342,11 @@ func sourceParams(m *catalogMessage, path string, ds *diags) []param {
 	var params []param
 	declared := map[string]bool{}
 	for _, p := range m.placeholders {
-		if p.typ == "DateTime" {
-			ds.errorf(path, p.line, "%s: %s: DateTime placeholders are not supported yet", m.key, p.name)
-			continue
-		}
 		typ := "string"
 		if p.typ != "" {
 			var ok bool
 			if typ, ok = placeholderTypes[p.typ]; !ok {
-				ds.errorf(path, p.line, "%s: %s: unknown type %s; use String, int, double, num or Object", m.key, p.name, p.typ)
+				ds.errorf(path, p.line, "%s: %s: unknown type %s; use String, int, double, num, DateTime or Object", m.key, p.name, p.typ)
 				continue
 			}
 		} else {
@@ -374,10 +370,13 @@ func sourceParams(m *catalogMessage, path string, ds *diags) []param {
 	return params
 }
 
-// inferredType is the type of a parameter without one: float64 for a
-// percentage, int for another number or a count, else string.
+// inferredType is the type of a parameter without one: time.Time for a
+// date or a time, float64 for a percentage, int for another number or a
+// count, else string.
 func inferredType(use argUse) string {
 	switch {
+	case use&useDate != 0:
+		return "time.Time"
 	case use&usePercent != 0:
 		return "float64"
 	case use&useNumber != 0:
@@ -406,6 +405,12 @@ func checkUse(m *catalogMessage, p param, use argUse, path string, ds *diags) {
 	switch {
 	case use&useNumber != 0 && use&useSelect != 0:
 		ds.errorf(path, m.line, "%s: %s is both counted and selected on", m.key, p.name)
+	case use&useDate != 0 && use&(useNumber|useSelect) != 0:
+		ds.errorf(path, m.line, "%s: %s is both a date and a number or a choice", m.key, p.name)
+	case use&useDate != 0 && p.typ != "time.Time":
+		ds.errorf(path, m.line, "%s: %s is a %s, which a date or time cannot write", m.key, p.name, p.typ)
+	case use&(useNumber|useSelect) != 0 && p.typ == "time.Time":
+		ds.errorf(path, m.line, "%s: %s is a DateTime, which a number or a choice cannot use", m.key, p.name)
 	case use&useNumber != 0 && (p.typ == "string" || p.typ == "any"):
 		ds.errorf(path, m.line, "%s: %s is a %s, which a number or plural cannot count", m.key, p.name, p.typ)
 	case use&useSelect != 0 && p.typ != "string":
@@ -478,7 +483,7 @@ var pluralCategoryCache sync.Map
 
 // reservedNames are what a package of catalogs declares besides its
 // messages.
-var reservedNames = []string{"Source", "Catalog", "Messages", "In", "For", "Translation", "Supply"}
+var reservedNames = []string{"Source", "Catalog", "Messages", "In", "For", "Translation", "Supply", "Parameters"}
 
 // exportName is the functions' name for a key.
 func exportName(key string) string { return strings.ToUpper(key[:1]) + key[1:] }

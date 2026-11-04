@@ -13,16 +13,25 @@ const Source = "en"
 // Catalog holds the messages' languages: en, the source, zh-Hans, zh-Hant, and those other packages supply.
 var Catalog = i18n.NewCatalog("en", "zh-Hans", "zh-Hant")
 
-// Messages say the messages in one language.
-type Messages struct{ lang string }
+// Messages say the messages in one language; with mark, the source's
+// with their arguments marked, which a pseudo locale transforms.
+type Messages struct {
+	lang string
+	mark bool
+}
 
 // In returns the messages in the catalog's language that suits locale
 // best, as zh-Hant suits zh-TW, else in the source language.
-func In(locale string) Messages { return Messages{Catalog.Match(locale)} }
+func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }
 
 // For returns the messages in the language the app shows under cx
 // (i18n.Language); a binding that says them follows it as it changes.
 func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
+
+// Parameters names the parameters of each message that has some, by
+// its method, for the TSX declarations of the messages
+// (tsx.RegisterMessages).
+var Parameters = map[string][]string{}
 
 // Translation is a language's messages another package supplies; a nil
 // field leaves the message to the catalog.
@@ -79,6 +88,9 @@ var suppliedTexts = map[string]*[numTexts]string{}
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
 func (msgs Messages) text(i int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, texts[Source][i])
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
 			return t[i]

@@ -167,6 +167,7 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 		b = &navBar{}
 		b.bar = objc.ID(objc.GetClass("UINavigationBar")).Send(selNew)
 		b.bar.Send(selSetDeleg, navDelegate)
+		s.direct(b.bar)
 		const flexibleWidth = 2
 		b.bar.Send(sel("setAutoresizingMask:"), flexibleWidth)
 		if objc.Send[bool](b.bar, sel("respondsToSelector:"), sel("setPreferredBehavioralStyle:")) {

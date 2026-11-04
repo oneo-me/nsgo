@@ -273,6 +273,7 @@ func (s *surface) saveFile(r driver.SaveRequest, id uint32) {
 func (s *surface) popupMenu(entries []driver.MenuEntry, p driver.Point, id uint32) {
 	s.ensureMenuTarget()
 	menu := s.submenu("", entries)
+	s.directMenu(menu)
 	// One menu at a time: the one tracking closes first.
 	s.closePopup()
 	s.popup = menu

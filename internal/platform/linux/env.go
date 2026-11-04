@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	gtkTextDirLTR = 1
 	gtkTextDirRTL = 2
 	// gtk-xft-dpi is in 1024ths of a point per inch.
 	xftDPIUnit = 1024
@@ -52,7 +53,7 @@ func (w *window) environment() driver.Environment {
 		Dark:         dark,
 		FontScale:    fontScale,
 		ReduceMotion: reduce,
-		RTL:          gtkWidgetGetDefaultDirection() == gtkTextDirRTL || rightToLeft(locale),
+		RTL:          systemDirection() == gtkTextDirRTL || rightToLeft(locale),
 		PixelRatio:   float32(scale),
 		Locale:       locale,
 		OS:           driver.OSLinux,

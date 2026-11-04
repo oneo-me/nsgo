@@ -383,6 +383,7 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 		bar.Send(sel("addItem:"), holder)
 		holder.Send(selRelease)
 	}
+	s.directMenu(bar)
 	nsApp.Send(sel("setMainMenu:"), bar)
 	s.menu = bar
 }

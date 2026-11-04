@@ -84,11 +84,14 @@ type window struct {
 	// window, its chrome and the main loop. app and opts start its engine
 	// once GTK first allocates it.
 	embedded bool
-	app      engine.App
-	opts     Options
-	box      uintptr // the window content: menu bar and surface
-	menuBar  uintptr
-	loop     uintptr // GMainLoop
+	// dir is the app's direction (driver.ItemDirection) as GTK's, or 0
+	// before the app has one.
+	dir     int32
+	app     engine.App
+	opts    Options
+	box     uintptr // the window content: menu bar and surface
+	menuBar uintptr
+	loop    uintptr // GMainLoop
 
 	env driver.Environment
 
@@ -638,6 +641,7 @@ func (w *window) apply(b *driver.MountBatch) {
 			}
 			continue
 		case driver.ItemDirection:
+			w.setDirection(it.RTL)
 			continue
 		case driver.ItemQuit:
 			if !w.embedded {

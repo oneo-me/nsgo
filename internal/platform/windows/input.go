@@ -103,6 +103,8 @@ const (
 	spiGetCaretWidth = 0x2006
 	tpmReturnCmd     = 0x0100
 	tpmRightButton   = 0x0002
+	tpmRightAlign    = 0x0008
+	tpmLayoutRTL     = 0x8000
 
 	// caretTimer blinks the focused field's caret.
 	caretTimer = 3
@@ -1468,7 +1470,7 @@ func (w *window) fieldMenu(in *textInput, x, y int32) {
 			appendMenuW.Call(menu, mfSeparator, 0, 0)
 			continue
 		}
-		var flags uintptr = mfString
+		flags := w.menuFlags()
 		if !it.enabled {
 			flags |= mfGrayed
 		}
@@ -1476,7 +1478,7 @@ func (w *window) fieldMenu(in *textInput, x, y int32) {
 	}
 	at := point{x, y}
 	clientToScreen.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
-	chosen, _, _ := trackPopupMenuEx.Call(menu, tpmReturnCmd|tpmRightButton, uintptr(at.X), uintptr(at.Y), w.hwnd, 0)
+	chosen, _, _ := trackPopupMenuEx.Call(menu, w.popupFlags(), uintptr(at.X), uintptr(at.Y), w.hwnd, 0)
 	if i := int(chosen) - 1; i >= 0 && i < len(items) && w.focusedField() == in {
 		w.editKey(items[i].vk, items[i].ctrl, false, false)
 	}

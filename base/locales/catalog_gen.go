@@ -13,16 +13,27 @@ const Source = "en"
 // Catalog holds the messages' languages: en, the source, zh-Hans, zh-Hant, and those other packages supply.
 var Catalog = i18n.NewCatalog("en", "zh-Hans", "zh-Hant")
 
-// Messages say the messages in one language.
-type Messages struct{ lang string }
+// Messages say the messages in one language; with mark, the source's
+// with their arguments marked, which a pseudo locale transforms.
+type Messages struct {
+	lang string
+	mark bool
+}
 
 // In returns the messages in the catalog's language that suits locale
 // best, as zh-Hant suits zh-TW, else in the source language.
-func In(locale string) Messages { return Messages{Catalog.Match(locale)} }
+func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }
 
 // For returns the messages in the language the app shows under cx
 // (i18n.Language); a binding that says them follows it as it changes.
 func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
+
+// Parameters names the parameters of each message that has some, by
+// its method, for the TSX declarations of the messages
+// (tsx.RegisterMessages).
+var Parameters = map[string][]string{
+	"SortBy": {"column"},
+}
 
 // Translation is a language's messages another package supplies; a nil
 // field leaves the message to the catalog.
@@ -44,6 +55,15 @@ func Supply(lang string, t Translation) {
 	Catalog.Add(lang)
 }
 
+// arg is what an argument wrote, marked in the source's message for a
+// pseudo locale.
+func (msgs Messages) arg(s string) string {
+	if msgs.mark {
+		return i18n.Arg(s)
+	}
+	return s
+}
+
 // SortBy says "Sort by {column}"
 // in the language the app shows under cx.
 //
@@ -53,13 +73,16 @@ func SortBy(cx *core.Scope, column string) string { return For(cx).SortBy(column
 // SortBy says "Sort by {column}"
 // in the language of msgs.
 func (msgs Messages) SortBy(column string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SortBy(column))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].SortBy; f != nil {
 			return f(column)
 		}
 		switch lang {
 		case "", "en":
-			return "Sort by " + column
+			return "Sort by " + msgs.arg(column)
 		case "zh-Hans":
 			return "按" + column + "排序"
 		case "zh-Hant":

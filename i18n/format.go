@@ -5,6 +5,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/oneo-me/nsgo/internal/cldr"
 
 	"golang.org/x/text/feature/plural"
 	"golang.org/x/text/language"
@@ -84,3 +87,53 @@ func FormatInteger(lang string, n float64) string {
 // FormatPercent writes n, a fraction, as a percentage in lang's way: 25%
 // in English for 0.25, 25 % in German.
 func FormatPercent(lang string, n float64) string { return printer(lang).Sprint(number.Percent(n)) }
+
+// FormatNumberSkeleton writes n in lang's way by an ICU number skeleton,
+// as a message's {n, number, ::.00} does: of its stems percent, integer,
+// the fraction digits (.00 two, .0# one or two) and group-off.
+func FormatNumberSkeleton(lang string, n float64, skeleton string) string {
+	var opts []number.Option
+	percent := false
+	for _, stem := range strings.Fields(skeleton) {
+		switch {
+		case stem == "percent":
+			percent = true
+		case stem == "integer", stem == "precision-integer":
+			opts = append(opts, number.MaxFractionDigits(0))
+		case stem == "group-off":
+			opts = append(opts, number.NoSeparator())
+		case strings.HasPrefix(stem, "."):
+			opts = append(opts, number.MinFractionDigits(strings.Count(stem, "0")), number.MaxFractionDigits(len(stem)-1))
+		}
+	}
+	if percent {
+		return printer(lang).Sprint(number.Percent(n, opts...))
+	}
+	return printer(lang).Sprint(number.Decimal(n, opts...))
+}
+
+// Style is the length of a date or a time as CLDR's patterns write it.
+type Style = cldr.Style
+
+const (
+	// NoStyle leaves the date, or the time, out.
+	NoStyle = cldr.NoStyle
+	// ShortStyle is numeric: "1/5/26", "1:07 PM".
+	ShortStyle = cldr.ShortStyle
+	// MediumStyle abbreviates: "Jan 5, 2026", "1:07:09 PM".
+	MediumStyle = cldr.MediumStyle
+	// LongStyle writes the month out: "January 5, 2026".
+	LongStyle = cldr.LongStyle
+	// FullStyle writes everything: "Monday, January 5, 2026".
+	FullStyle = cldr.FullStyle
+)
+
+// DateOptions are how FormatDate writes a time: its date, its time or
+// both by style, or else the fields of a skeleton of CLDR's letters
+// ("yMMMd", "jm") in the order and form the language writes them.
+type DateOptions = cldr.DateOptions
+
+// FormatDate writes t, in its location, in lang's way, in the Gregorian
+// calendar, by CLDR's patterns and names: "Jan 5, 2026", "2026年1月5日".
+// Time zones are written as offsets from GMT.
+func FormatDate(lang string, t time.Time, o DateOptions) string { return cldr.FormatDate(lang, t, o) }

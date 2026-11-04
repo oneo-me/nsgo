@@ -117,18 +117,6 @@ NSH records what its hot paths cost (`data-table.md` (Performance), `performance
 | The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, and a stack's slides cost on Windows, Linux, iOS and Android what NSH's do there (Pixel 10 Pro: ~870 views, commits at 3 and 7 ms at the median and 90th percentile, slides on whole pixels), measured on those machines and on NSH's builds for them |
 | Android's new views | `nsh/AGENTS.md` (Performance rules, 4) | `NsgoView` starts a node in the default style with no props and no events, and `classes.dex` is rebuilt, so the Go side stops sending the three for every new view (`withDefaults`) |
 
-## Languages
-
-What [languages](architecture/languages.md) still lacks of MyGo's design (`docs/i18n.md` in MyGo), which NSH does not have.
-
-| Item | Reference | Done when |
-| --- | --- | --- |
-| Dates and times | MyGo's `i18n.FormatDate` | Messages take `{d, date, short}`, `{d, time}` and skeletons, and `DateTime` placeholders, written by the language's CLDR patterns |
-| Native controls in the app's direction | MyGo's `MYGO_DIRECTION` | Native controls, system headers and Android's back gesture mirror as the app's language is written (`ItemDirection`), not as the system's: `semanticContentAttribute` on iOS, `setLayoutDirection` on Android, which needs `classes.dex` rebuilt, and their peers on the desktops and the web |
-| Pseudo locales | MyGo's `en-XA`, `ar-XB` | `nsgo dev -lang en-XA` shows accented, longer messages and `ar-XB` mirrored ones, so untranslated and cut text shows |
-| TSX messages | MyGo's generated `locales.ts` | A TSX app imports its catalogs' messages as typed functions that follow the app's language |
-| The app's name per language | MyGo's `mygo.appName` | Packages list the app under its name in each of its languages: `InfoPlist.strings`, Android's `strings.xml`, the web manifest |
-
 ## Motion
 
 What components still lack to move as their parts come, go and travel (#19), which NSH lacks as well (`animation.md`, the table beside gpui-base's).
@@ -166,4 +154,5 @@ These items wait for community contributions, and a change to one backend record
 | Ink past a text's box | `styles.md` (text) | A text's decoration lines and shadow that reach past its box are checked to draw on Android, Windows and Linux, as they do on Apple and the web |
 | Android blurs | `styles.md` (`backdropFilter`) | From Android 12, a backdrop filter blurs what the view's parent drew under it through a `RenderNode` and a `RenderEffect`, and a scroll view's soft and hard edges ([scrolling](architecture/scrolling.md#edge-effects)) blur the content under its bars |
 | Progressive edges before iOS 26 | — | Before iOS 26 a soft scroll edge blurs by a radius that grows toward the side through a `CABackdropLayer`'s variable blur, as macOS's does ([scrolling](architecture/scrolling.md#edge-effects)), rather than fading in an even blur |
-| Web glass | — (MyGo's `glass.Glass`) | Liquid Glass draws through MyGo's shader on the web where Chrome's HTML-in-Canvas draws a whole app, its `<canvas>` elements included, without hanging ([styles](architecture/styles.md)) |
+| Web glass | — | Liquid Glass draws through the glass shader on the web where Chrome's HTML-in-Canvas draws a whole app, its `<canvas>` elements included, without hanging ([styles](architecture/styles.md)) |
+| Native direction on devices | — | The app's direction ([languages](architecture/languages.md#which-language)) is checked to mirror the native controls on an iPhone, an Android device, Windows and Linux, where it was only built (2026-11-04), and on macOS, where headless tests ran |

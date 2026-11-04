@@ -88,8 +88,11 @@ func (c *clicks) down(p driver.Point) int {
 }
 
 type surface struct {
-	doc        js.Value
-	host       js.Value
+	doc  js.Value
+	host js.Value
+	// rtl is the app's direction (driver.ItemDirection), which alerts lay
+	// their buttons out in.
+	rtl        bool
 	root       *view
 	measure    js.Value   // a hidden element text is measured in
 	measureCSS *cssBox    // its style
@@ -1322,6 +1325,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			s.setAppearance(it.Appearance)
 			continue
 		case driver.ItemDirection:
+			s.rtl = it.RTL
 			continue
 		case driver.ItemQuit, driver.ItemPopupMenu:
 			// No toasts; a page neither quits nor shows native menus, and

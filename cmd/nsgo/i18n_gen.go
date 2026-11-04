@@ -43,16 +43,31 @@ func (c *catalog) generate() ([]byte, error) {
 	if err := c.writeSupplies(g); err != nil {
 		return nil, err
 	}
-	g.p("// Messages say the messages in one language.")
-	g.p("type Messages struct{ lang string }")
+	g.p("// Messages say the messages in one language; with mark, the source's")
+	g.p("// with their arguments marked, which a pseudo locale transforms.")
+	g.p("type Messages struct {")
+	g.p("\tlang string")
+	g.p("\tmark bool")
+	g.p("}")
 	g.p("")
 	g.p("// In returns the messages in the catalog's language that suits locale")
 	g.p("// best, as zh-Hant suits zh-TW, else in the source language.")
-	g.p("func In(locale string) Messages { return Messages{Catalog.Match(locale)} }")
+	g.p("func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }")
 	g.p("")
 	g.p("// For returns the messages in the language the app shows under cx")
 	g.p("// (i18n.Language); a binding that says them follows it as it changes.")
 	g.p("func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }")
+	g.p("")
+	g.p("// Parameters names the parameters of each message that has some, by")
+	g.p("// its method, for the TSX declarations of the messages")
+	g.p("// (tsx.RegisterMessages).")
+	g.p("var Parameters = map[string][]string{")
+	for _, key := range c.keys {
+		if params := c.params[key]; len(params) > 0 {
+			g.p("\t%q: {%s},", exportName(key), quoteList(names(params)))
+		}
+	}
+	g.p("}")
 	g.p("")
 	g.p("// Translation is a language's messages another package supplies; a nil")
 	g.p("// field leaves the message to the catalog.")
@@ -116,6 +131,9 @@ func (c *catalog) generate() ([]byte, error) {
 		g.p("// text says the message without arguments at i in the language of msgs,")
 		g.p("// else of the languages it falls back to, else of the source.")
 		g.p("func (msgs Messages) text(i int) string {")
+		g.p("\tif i18n.IsPseudo(msgs.lang) {")
+		g.p("\t\treturn i18n.Pseudo(msgs.lang, texts[Source][i])")
+		g.p("\t}")
 		g.p("\tfor lang := msgs.lang; ; lang = i18n.Parent(lang) {")
 		g.p("\t\tif t := suppliedTexts[lang]; t != nil && t[i] != \"\" {")
 		g.p("\t\t\treturn t[i]")
@@ -155,6 +173,17 @@ func (c *catalog) generate() ([]byte, error) {
 	g.p("\tsupplied[lang] = s")
 	g.p("\tCatalog.Add(lang)")
 	g.p("}")
+	if len(index) < len(c.keys) {
+		g.p("")
+		g.p("// arg is what an argument wrote, marked in the source's message for a")
+		g.p("// pseudo locale.")
+		g.p("func (msgs Messages) arg(s string) string {")
+		g.p("\tif msgs.mark {")
+		g.p("\t\treturn i18n.Arg(s)")
+		g.p("\t}")
+		g.p("\treturn s")
+		g.p("}")
+	}
 	for _, key := range c.keys {
 		m, params := src.msgs[key], c.params[key]
 		name := exportName(key)
@@ -180,6 +209,9 @@ func (c *catalog) generate() ([]byte, error) {
 			continue
 		}
 		g.p("func (msgs Messages) %s(%s) string {", name, signature(params))
+		g.p("\tif i18n.IsPseudo(msgs.lang) {")
+		g.p("\t\treturn i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.%s(%s))", name, arguments(params))
+		g.p("\t}")
 		g.p("\tfor lang := msgs.lang; ; lang = i18n.Parent(lang) {")
 		g.p("\t\tif f := supplied[lang].%s; f != nil {", name)
 		g.p("\t\t\treturn f(%s)", arguments(params))
@@ -195,13 +227,18 @@ func (c *catalog) generate() ([]byte, error) {
 			} else {
 				g.p("\t\tcase %q:", lang)
 			}
+			g.mark = lang == c.source
 			g.say(tm.parts, lang, params, "\t\t\t")
+			g.mark = false
 		}
 		g.p("\t\t}")
 		g.p("\t}")
 		g.p("}")
 	}
 
+	if bytes.Contains(body.Bytes(), []byte("time.Time")) {
+		g.imports["time"] = "time"
+	}
 	var out bytes.Buffer
 	fmt.Fprintf(&out, "%s\n\npackage %s\n\nimport (\n", genHeader, c.pkg)
 	paths := make([]string, 0, len(g.imports))
@@ -268,6 +305,9 @@ func (c *catalog) writeSupplies(g *goWriter) error {
 type goWriter struct {
 	out     *bytes.Buffer
 	imports map[string]string // import path → name
+	// mark wraps what arguments write in msgs.arg, in the source's
+	// messages, which pseudo locales transform.
+	mark bool
 }
 
 func (g *goWriter) p(format string, args ...any) {
@@ -414,9 +454,19 @@ func (c *counted) value() string {
 
 // term is the expression of a part that is not a choice.
 func (g *goWriter) term(part msgPart, lang string, params []param, pound *counted) string {
+	if t, ok := part.(msgText); ok {
+		return strconv.Quote(string(t))
+	}
+	e := g.argTerm(part, lang, params, pound)
+	if g.mark {
+		return "msgs.arg(" + e + ")"
+	}
+	return e
+}
+
+// argTerm is the expression of what an argument or # writes.
+func (g *goWriter) argTerm(part msgPart, lang string, params []param, pound *counted) string {
 	switch part := part.(type) {
-	case msgText:
-		return strconv.Quote(string(part))
 	case msgPound:
 		return fmt.Sprintf("i18n.FormatNumber(%q, %s)", lang, pound.value())
 	case msgArg:
@@ -427,10 +477,14 @@ func (g *goWriter) term(part msgPart, lang string, params []param, pound *counte
 			num = "float64(" + v + ")"
 		}
 		switch {
+		case p.typ == "time.Time":
+			return fmt.Sprintf("i18n.FormatDate(%q, %s, %s)", lang, v, dateOptions(part))
 		case part.style == "integer":
 			return fmt.Sprintf("i18n.FormatInteger(%q, %s)", lang, num)
 		case part.style == "percent":
 			return fmt.Sprintf("i18n.FormatPercent(%q, %s)", lang, num)
+		case strings.HasPrefix(part.style, "::"):
+			return fmt.Sprintf("i18n.FormatNumberSkeleton(%q, %s, %q)", lang, num, strings.TrimSpace(part.style[2:]))
 		case p.typ == "int" || p.typ == "float64":
 			return fmt.Sprintf("i18n.FormatNumber(%q, %s)", lang, num)
 		case p.typ == "any":
@@ -440,6 +494,22 @@ func (g *goWriter) term(part msgPart, lang string, params []param, pound *counte
 		return v
 	}
 	panic(fmt.Sprintf("nsgo: no term for %T", part))
+}
+
+// dateOptions is the i18n.DateOptions of a date or time argument: by
+// style or skeleton, and a plain {t} as a short date and time.
+func dateOptions(a msgArg) string {
+	if skel, ok := strings.CutPrefix(a.style, "::"); ok {
+		return fmt.Sprintf("i18n.DateOptions{Skeleton: %q}", strings.TrimSpace(skel))
+	}
+	style := map[string]string{"short": "i18n.ShortStyle", "medium": "i18n.MediumStyle", "long": "i18n.LongStyle", "full": "i18n.FullStyle", "": "i18n.MediumStyle"}[a.style]
+	switch a.kind {
+	case "date":
+		return "i18n.DateOptions{Date: " + style + "}"
+	case "time":
+		return "i18n.DateOptions{Time: " + style + "}"
+	}
+	return "i18n.DateOptions{Date: i18n.ShortStyle, Time: i18n.ShortStyle}"
 }
 
 func caseParts(ch msgChoice, key string) []msgPart {
@@ -480,7 +550,7 @@ func findParam(params []param, name string) param {
 // parameters.
 var reservedLocal = map[string]bool{
 	"cx": true, "msgs": true, "lang": true, "b": true, "f": true, "s": true, "t": true,
-	"supplied": true, "core": true, "i18n": true, "strings": true, "fmt": true, "math": true,
+	"supplied": true, "core": true, "i18n": true, "strings": true, "fmt": true, "math": true, "time": true,
 }
 
 // predeclared are Go's predeclared identifiers, which a parameter must not
@@ -513,6 +583,15 @@ func signature(params []param) string {
 		parts = append(parts, goName(p.name)+" "+p.typ)
 	}
 	return strings.Join(parts, ", ")
+}
+
+// names are the parameters' names in Go.
+func names(params []param) []string {
+	var out []string
+	for _, p := range params {
+		out = append(out, goName(p.name))
+	}
+	return out
 }
 
 func arguments(params []param) string {

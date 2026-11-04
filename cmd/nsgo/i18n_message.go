@@ -178,17 +178,70 @@ func (p *msgParser) argument() (msgPart, error) {
 				p.pos++
 			}
 			style = strings.TrimSpace(p.src[start:p.pos])
-			if style != "integer" && style != "percent" {
-				return nil, p.errorf("number style %q is not supported: use integer or percent", style)
+			if err := checkNumberStyle(style); err != nil {
+				return nil, p.errorf("%v", err)
+			}
+		}
+		return msgArg{name: name, kind: kind, style: style}, p.expect('}')
+	case "date", "time":
+		style := ""
+		p.space()
+		if p.pos < len(p.src) && p.src[p.pos] == ',' {
+			p.pos++
+			p.space()
+			start := p.pos
+			for p.pos < len(p.src) && p.src[p.pos] != '}' {
+				p.pos++
+			}
+			style = strings.TrimSpace(p.src[start:p.pos])
+			if err := checkDateStyle(style); err != nil {
+				return nil, p.errorf("%v", err)
 			}
 		}
 		return msgArg{name: name, kind: kind, style: style}, p.expect('}')
 	case "plural", "selectordinal", "select":
 		return p.choice(name, kind)
-	case "date", "time":
-		return nil, p.errorf("%s arguments are not supported yet", kind)
 	}
 	return nil, p.errorf("unknown argument type %q", kind)
+}
+
+// checkNumberStyle checks a number argument's style: integer, percent,
+// or an ICU skeleton of the stems i18n writes.
+func checkNumberStyle(style string) error {
+	skel, ok := strings.CutPrefix(style, "::")
+	if !ok {
+		if style != "integer" && style != "percent" {
+			return fmt.Errorf("number style %q is not supported: use integer, percent or a skeleton (::.00)", style)
+		}
+		return nil
+	}
+	for _, stem := range strings.Fields(skel) {
+		switch {
+		case stem == "integer", stem == "precision-integer", stem == "percent", stem == "group-off":
+		case len(stem) > 1 && stem[0] == '.' && strings.Trim(stem[1:], "0#") == "":
+		default:
+			return fmt.Errorf("number skeleton stem %q is not supported: use percent, integer, .00, .0# or group-off", stem)
+		}
+	}
+	return nil
+}
+
+// checkDateStyle checks a date or time argument's style: short, medium,
+// long, full, or a skeleton of CLDR's date letters (::yMMMd).
+func checkDateStyle(style string) error {
+	skel, ok := strings.CutPrefix(style, "::")
+	if !ok {
+		switch style {
+		case "short", "medium", "long", "full":
+			return nil
+		}
+		return fmt.Errorf("date style %q is not supported: use short, medium, long, full or a skeleton (::yMMMd)", style)
+	}
+	skel = strings.TrimSpace(skel)
+	if skel == "" || strings.Trim(skel, "yMLdEjhHKkamsz") != "" {
+		return fmt.Errorf("date skeleton %q: use the letters y, M, L, d, E, j, h, H, K, k, a, m, s and z", skel)
+	}
+	return nil
 }
 
 func (p *msgParser) choice(name, kind string) (msgPart, error) {
@@ -298,6 +351,7 @@ const (
 	useNumber                     // {name, number} or counted by plural or selectordinal
 	useSelect                     // {name, select}
 	usePercent                    // {name, number, percent}, a fraction
+	useDate                       // {name, date} or {name, time}
 )
 
 // messageArgs returns the message's arguments in the order they first
@@ -316,7 +370,9 @@ func messageArgs(parts []msgPart) ([]string, map[string]argUse) {
 		for _, part := range parts {
 			switch part := part.(type) {
 			case msgArg:
-				if part.style == "percent" {
+				if part.kind == "date" || part.kind == "time" {
+					add(part.name, useDate)
+				} else if part.style == "percent" {
 					add(part.name, useNumber|usePercent)
 				} else if part.kind == "number" {
 					add(part.name, useNumber)

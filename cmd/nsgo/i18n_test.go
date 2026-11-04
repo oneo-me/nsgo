@@ -17,6 +17,8 @@ func TestParseMessage(t *testing.T) {
 		"{n, plural, =0 {none} one {# x} other {'#' #}}": `[plural n =0[text "none"] one[pound text " x"] other[text "# " pound]]`,
 		"{g, select, female {She} other {They}}":         `[select g female[text "She"] other[text "They"]]`,
 		"{n, plural, offset:1 other {#}}":                `[plural n other[pound]]`,
+		"{d, date, short} {d, time} {d, date, ::yMMMd}":  `[arg d date short text " " arg d time text " " arg d date ::yMMMd]`,
+		"{n, number, ::.00 group-off}":                   `[arg n number ::.00 group-off]`,
 	} {
 		parts, err := parseMessage(src)
 		if err != nil {
@@ -30,8 +32,9 @@ func TestParseMessage(t *testing.T) {
 	for src, want := range map[string]string{
 		"{n, plural, one {x}}":                   "no other case",
 		"{n, plural, lots {x} other {y}}":        "not a plural category",
-		"{d, date, short}":                       "not supported yet",
-		"{n, number, ::.00}":                     "not supported",
+		"{d, date, shortish}":                    "date style",
+		"{d, date, ::yMMMQ}":                     "date skeleton",
+		"{n, number, ::currency/EUR}":            "not supported",
 		"{n":                                     "want",
 		"a } b":                                  "unexpected }",
 		"{n, plural, one {x} one {y} other {z}}": "twice",
@@ -94,6 +97,8 @@ unused:
   message: plain
   placeholders:
     extra: {}
+when:
+  message: "{d, date} {d, plural, other {#}}"
 `,
 		"de.yaml": `
 files: "{count, plural, other {# Dateien}} {other}"
@@ -118,6 +123,7 @@ extra: "Mehr"
 		"n is a string, which a number or plural cannot count",
 		"extra is not a message of en.yaml",
 		"{other} is not an argument",
+		"d is both a date and a number or a choice",
 	} {
 		if !strings.Contains(all, want) {
 			t.Errorf("no error saying %q in\n%s", want, all)
@@ -129,7 +135,7 @@ extra: "Mehr"
 		"lacks ru's few case",
 		"lacks ru's many case",
 		"placeholder extra is not in the message",
-		"lacks 5 of the source's messages",
+		"lacks 6 of the source's messages",
 	} {
 		if !strings.Contains(all, want) {
 			t.Errorf("no warning saying %q in\n%s", want, all)
@@ -201,6 +207,16 @@ ratio:
   message: "Ratio {r}"
   placeholders:
     r: {type: double}
+due: "Due {d, date, medium} at {d, time, short}"
+month: "{d, date, ::yMMMM}"
+sent:
+  message: "Sent {at}"
+  placeholders:
+    at: {type: DateTime}
+fixed:
+  message: "{n, number, ::.00} or {n, number, ::group-off}"
+  placeholders:
+    n: {type: double}
 `,
 		"locales/de.yaml": `
 filesSelected: "{count, plural, =0 {Keine Dateien ausgewählt} one {# Datei ausgewählt} other {# Dateien ausgewählt}}"
@@ -209,11 +225,13 @@ github.com/oneo-me/nsgo/base/locales:
   sortBy: "Nach {column} sortieren"
 `,
 		"locales/en-GB.yaml":  `greeting: "Hiya, {name}!"`,
+		"locales/ar.yaml":     `due: "{d, date, medium}"`,
 		"locales/en.yaml.txt": "",
 		"app_test.go": `package app
 
 import (
 	"testing"
+	"time"
 
 	"example.com/app/locales"
 	baselocales "github.com/oneo-me/nsgo/base/locales"
@@ -221,6 +239,7 @@ import (
 
 func TestMessages(t *testing.T) {
 	en, de := locales.In("en-US"), locales.In("de-CH")
+	day := time.Date(2026, 1, 5, 13, 7, 0, 0, time.UTC)
 	for _, c := range []struct{ got, want string }{
 		{en.FilesSelected(0), "No files selected"},
 		{en.FilesSelected(1), "1 file selected"},
@@ -245,6 +264,16 @@ func TestMessages(t *testing.T) {
 		{en.Type("a", "b"), "a b"},
 		{en.Object(true), "Item true"},
 		{en.Ratio(1.5), "Ratio 1.5"},
+		{en.Due(day), "Due Jan 5, 2026 at 1:07 PM"},
+		{de.Due(day), "Due Jan 5, 2026 at 1:07 PM"},
+		{locales.In("ar-EG").Due(day), "05\u200f/01\u200f/2026"},
+		{en.Month(day), "January 2026"},
+		{en.Sent(day), "Sent 1/5/26, 1:07 PM"},
+		{en.Fixed(1234.5), "1,234.50 or 1234.5"},
+		{locales.In("en-XA").Greeting("Ada"), "[Ĥéĺĺó, Ada! ~~~]"},
+		{locales.In("en-XA").Quoted(), "[Úśé {ƀŕáćéś} áńď ďóń'ť ~~~~~~~~]"},
+		{locales.In("ar-XB").Positional("1", "2"), "\u200f1\u200f \u200f\u202eof\u202c\u200f \u200f2\u200f"},
+		{baselocales.In("en-XA").SortBy("Name"), "[Śóŕť ƀý Name ~~~]"},
 		{baselocales.In("de-AT").SortBy("Name"), "Nach Name sortieren"},
 		{baselocales.In("zh-CN").SortBy("名称"), "按名称排序"},
 		{baselocales.In("fr").SortBy("Nom"), "Sort by Nom"},
@@ -253,7 +282,7 @@ func TestMessages(t *testing.T) {
 			t.Errorf("got %q, want %q", c.got, c.want)
 		}
 	}
-	if got := locales.Catalog.Languages(); len(got) != 3 || got[0] != "en" {
+	if got := locales.Catalog.Languages(); len(got) != 4 || got[0] != "en" {
 		t.Errorf("languages %v", got)
 	}
 }

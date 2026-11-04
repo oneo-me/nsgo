@@ -29,3 +29,7 @@ Authors, licensed under the Apache License, Version 2.0, as MyGo,
 https://github.com/egoist/mygo, Copyright (c) 2026 MyGo contributors, forked
 it under the MIT License. Its files keep their notices and say what MyGo
 changed; NSGo replaced MyGo's bridge. internal/shader/LICENSE holds both texts.
+
+The date and time tables in internal/cldr/tables.go are generated from the
+Unicode Common Locale Data Repository (CLDR), https://cldr.unicode.org,
+Copyright (c) 1991-2025 Unicode, Inc., licensed under the Unicode License v3.

@@ -342,7 +342,11 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err != nil {
 		return "", err
 	}
-	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist, icon); err != nil {
+	names, err := writeAppleNames(p, resources)
+	if err != nil {
+		return "", err
+	}
+	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist, icon+"\n"+names); err != nil {
 		return "", err
 	}
 	stage("signing")
@@ -612,9 +616,9 @@ func writePlist(path string, p *project, t *template.Template, extra string) err
 		return err
 	}
 	plist := out.String()
-	if extra != "" {
+	if extra = strings.TrimSpace(extra); extra != "" {
 		end := strings.LastIndex(plist, "</dict>")
-		plist = plist[:end] + "\t" + strings.TrimSpace(extra) + "\n" + plist[end:]
+		plist = plist[:end] + "\t" + extra + "\n" + plist[end:]
 	}
 	return os.WriteFile(path, []byte(plist), 0o644)
 }

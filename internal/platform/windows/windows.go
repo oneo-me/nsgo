@@ -310,6 +310,9 @@ type window struct {
 	batch uint64 // batches applied
 	hwnd  uintptr
 	title string
+	// rtl is the app's direction (driver.ItemDirection), which the menus
+	// lay out in.
+	rtl bool
 	// damage is what the next frame draws again (damage.go).
 	damage damage
 	// hud is the performance panel, when the app shows one (perf.go).
@@ -854,6 +857,12 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.setAppearance(it.Appearance)
 			continue
 		case driver.ItemDirection:
+			if w.rtl != it.RTL {
+				w.rtl = it.RTL
+				if !w.embedded {
+					w.showMenuBar()
+				}
+			}
 			continue
 		case driver.ItemQuit:
 			if w.embedded {

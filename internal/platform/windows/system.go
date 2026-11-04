@@ -673,7 +673,7 @@ func (w *window) showPopup() {
 		at := point{w.px(p.at.X), w.px(p.at.Y)}
 		clientToScreen.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
 		w.popupTracking, w.popupShown = true, p.entries
-		chosen, _, _ := trackPopupMenuEx.Call(menu, tpmReturnCmd|tpmRightButton, uintptr(at.X), uintptr(at.Y), w.hwnd, 0)
+		chosen, _, _ := trackPopupMenuEx.Call(menu, w.popupFlags(), uintptr(at.X), uintptr(at.Y), w.hwnd, 0)
 		w.popupTracking, w.popupShown = false, nil
 		destroyMenu.Call(menu)
 		if c := w.popupChoice; c != nil {

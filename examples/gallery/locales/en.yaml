@@ -1,3 +1,6 @@
+appName:
+  message: Gallery
+  description: The app's name, which its packages list it under in each language.
 languageName:
   message: English
   description: This language's name in itself, as the language setting lists it.

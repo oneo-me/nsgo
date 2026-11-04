@@ -43,6 +43,7 @@ type devOptions struct {
 	team    string // the Apple developer team the iOS target signs with
 	release bool   // build as nsgo build does, for measuring
 	trace   bool   // print the running app's commits
+	lang    string // the locale to run the app in
 	server  *devServer
 }
 
@@ -160,7 +161,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 // the dev client, -trace's commits and the dev icons; -release strips
 // them as nsgo build does, keeping the monitor for measuring.
 func (p *project) prepareDev(opts devOptions) {
-	p.Perf, p.Release, p.Dev.Client, p.Dev.Trace = p.Dev.FPS, opts.release, true, opts.trace
+	p.Perf, p.Release, p.Dev.Client, p.Dev.Trace, p.Dev.Lang = p.Dev.FPS, opts.release, true, opts.trace, opts.lang
 	p.useDevIcons()
 }
 

@@ -97,9 +97,14 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 		return "", err
 	}
 	defer f.Close()
+	names, err := p.appNames()
+	if err != nil {
+		return "", err
+	}
 	err = apk.Write(f, androidruntime.Manifest, apk.Manifest{
 		Package:     p.ID,
 		Label:       p.Name,
+		Names:       names.android(),
 		VersionName: p.Version,
 		VersionCode: p.versionCode(),
 		Icon:        icon,

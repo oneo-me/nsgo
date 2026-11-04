@@ -16,8 +16,11 @@ import (
 
 // Manifest is what packaging fills into the runtime's manifest template.
 type Manifest struct {
-	Package     string
-	Label       string
+	Package string
+	Label   string
+	// Names are the app's name in its languages, by BCP 47 tag, "" for
+	// the default, which the launcher lists it under in place of Label.
+	Names       map[string]string
 	VersionName string
 	VersionCode int
 	// Icon is the launcher icon, an IconSize PNG; nil keeps the system's.
@@ -146,7 +149,11 @@ func EncodeManifest(template []byte, m Manifest) ([]byte, error) {
 	if app == nil {
 		return nil, errors.New("manifest: no application element")
 	}
-	setAttr(app, androidNS, "label", m.Label)
+	if len(m.Names) > 0 {
+		setAttr(app, androidNS, "label", nameResource)
+	} else {
+		setAttr(app, androidNS, "label", m.Label)
+	}
 	if m.Theme != "" {
 		setAttr(app, androidNS, "theme", m.Theme)
 	}
@@ -173,7 +180,7 @@ func EncodeManifest(template []byte, m Manifest) ([]byte, error) {
 		}
 	}
 
-	e := &encoder{index: map[string]int{}}
+	e := &encoder{index: map[string]int{}, icon: m.Icon != nil}
 	// Attribute names come first in the string pool: the resource map
 	// that gives each one its framework ID is indexed by pool position.
 	// It ascends by resource ID, as aapt2 writes it and the system reads
@@ -313,6 +320,7 @@ var (
 
 // encoder builds the element chunks and the string pool they index.
 type encoder struct {
+	icon    bool // the table has the icon, before the names
 	strings []string
 	index   map[string]int
 	ids     []uint32 // the framework ID of each leading attribute name
@@ -370,6 +378,10 @@ func (e *encoder) element(n *node) error {
 			attr.id = spec.id
 			attr.name = e.str(a.Name.Local)
 			attr.kind = spec.kind
+			if a.Name.Local == "label" && a.Value == nameResource {
+				attr.kind, attr.data = typeReference, nameResourceID(e.icon)
+				break
+			}
 			if spec.kind == typeString {
 				attr.data = e.str(a.Value)
 				attr.raw = int32(attr.data)

@@ -1,0 +1,39 @@
+<html><body><script>// Writes dates.json, what Chrome's Intl.DateTimeFormat (ICU) writes for
+// each case TestFormatDate checks:
+//   chrome --headless --dump-dom file://$PWD/golden.html, the body's text.
+const locales = ["en", "en-GB", "en-AU", "de", "de-CH", "fr", "es", "es-419", "it", "pt-BR", "ru", "ja", "ko",
+  "zh-Hans", "zh-Hant", "zh-TW", "ar", "ar-EG", "he", "hi", "fa", "tr", "nl", "sv", "pl", "th", "vi", "uk", "id"];
+const times = [Date.UTC(2026, 0, 5, 13, 7, 9), Date.UTC(2025, 10, 23, 0, 5, 0), Date.UTC(2026, 6, 30, 19, 45, 0)];
+const styles = ["short", "medium", "long", "full"];
+const skeletons = {
+  yMd: { year: "numeric", month: "numeric", day: "numeric" },
+  yMMMd: { year: "numeric", month: "short", day: "numeric" },
+  yMMMMd: { year: "numeric", month: "long", day: "numeric" },
+  yMMMEd: { year: "numeric", month: "short", day: "numeric", weekday: "short" },
+  yMMMMEEEEd: { year: "numeric", month: "long", day: "numeric", weekday: "long" },
+  MMMd: { month: "short", day: "numeric" },
+  MMMMd: { month: "long", day: "numeric" },
+  yMMM: { year: "numeric", month: "short" },
+  yMMMM: { year: "numeric", month: "long" },
+  MEd: { month: "numeric", day: "numeric", weekday: "short" },
+  Ed: { day: "numeric", weekday: "short" },
+  jm: { hour: "numeric", minute: "2-digit" },
+  jms: { hour: "numeric", minute: "2-digit", second: "2-digit" },
+  Hm: { hour: "numeric", minute: "2-digit", hourCycle: "h23" },
+  hm: { hour: "numeric", minute: "2-digit", hourCycle: "h12" },
+  yMMMdjm: { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
+  yMdjm: { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" },
+};
+const cases = [];
+for (const locale of locales) {
+  for (const time of times) {
+    const add = (options, o) =>
+      cases.push({ locale, time, options, want: new Intl.DateTimeFormat(locale, { ...o, timeZone: "UTC", calendar: "gregory" }).format(time) });
+    for (const s of styles) add("date=" + s, { dateStyle: s });
+    for (const s of ["short", "medium"]) add("time=" + s, { timeStyle: s });
+    for (const s of styles) add("date=" + s + ",time=short", { dateStyle: s, timeStyle: "short" });
+    for (const [k, o] of Object.entries(skeletons)) add("skeleton=" + k, o);
+  }
+}
+document.body.textContent = JSON.stringify(cases, null, 1);
+</script></body></html>

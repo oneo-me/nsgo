@@ -101,6 +101,7 @@ type devFlags struct {
 	team      string
 	release   bool
 	trace     bool
+	lang      string
 }
 
 func bindDevFlags(fs *flag.FlagSet) *devFlags {
@@ -113,6 +114,7 @@ func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	fs.StringVar(&f.device, "device", "", "the `device` to run on: an iPhone's name, UDID, serial or ECID, a simulator's name or UDID, or an adb serial or emulator's AVD name (default: the only one connected, or the booted simulator)")
 	fs.BoolVar(&f.release, "release", false, "build stripped release binaries, as nsgo build does, keeping dev's performance monitor")
 	fs.BoolVar(&f.trace, "trace", false, "print each commit's time and mount items from the running app")
+	fs.StringVar(&f.lang, "lang", "", "run the app in this `locale`, as de or zh-Hant, or a pseudo locale: en-XA accents and lengthens its messages, ar-XB mirrors them")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` the iOS target signs with (default: the team Xcode last used)")
 	return f
 }

@@ -569,6 +569,12 @@ public class NsgoView extends FrameLayout {
 
     /** The appearance the app forces, as driver.Appearance; 0 follows the system's. */
     private int appearance;
+    /**
+     * The app's layout direction, as its language is written, or -1 before
+     * Go sends it: the views, headers, dialogs and back gesture lay out in
+     * it whatever the system's.
+     */
+    private int direction = -1;
 
     /** The pick the photo picker answers. */
     private Services.Pick pick;
@@ -1921,6 +1927,10 @@ public class NsgoView extends FrameLayout {
                 systemBars();
                 environment();
                 break;
+            case Protocol.ITEM_DIRECTION:
+                direction = in.readUnsignedByte() != 0 ? LAYOUT_DIRECTION_RTL : LAYOUT_DIRECTION_LTR;
+                applyDirection();
+                break;
             case Protocol.ITEM_QUIT: {
                 Activity activity = activity();
                 if (activity != null) activity.finishAndRemoveTask();
@@ -2445,6 +2455,20 @@ public class NsgoView extends FrameLayout {
         return getContext().getSystemService(ClipboardManager.class);
     }
 
+    /**
+     * Lays the view and the views inside it out in the app's direction, and
+     * an activity of NSGo's own, its window too, which the system's back
+     * animation follows. A host's activity keeps its own.
+     */
+    private void applyDirection() {
+        if (direction < 0) return;
+        setLayoutDirection(direction);
+        Activity activity = activity();
+        if (activity instanceof NsgoActivity && activity.getWindow() != null) {
+            activity.getWindow().getDecorView().setLayoutDirection(direction);
+        }
+    }
+
     private Activity activity() {
         for (Context c = getContext(); c instanceof ContextWrapper; c = ((ContextWrapper) c).getBaseContext()) {
             if (c instanceof Activity) return (Activity) c;
@@ -2628,7 +2652,9 @@ public class NsgoView extends FrameLayout {
         int dismissed = cancel;
         b.setCancelable(sheet || cancelable || cancel >= 0);
         b.setOnCancelListener(d -> answer.accept(dismissed));
-        AlertDialog dialog = b.show();
+        AlertDialog dialog = b.create();
+        if (direction >= 0 && dialog.getWindow() != null) dialog.getWindow().getDecorView().setLayoutDirection(direction);
+        dialog.show();
         alerts.put(id, new TestAgent.Alert(dialog, buttons, listIndices(count, sheet, roles)));
         for (int i = 0; buttons != null && i < count; i++) {
             if (roles[i] == Protocol.ALERT_DESTRUCTIVE) dialog.getButton(buttons[i]).setTextColor(DESTRUCTIVE);

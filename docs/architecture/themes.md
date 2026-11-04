@@ -4,7 +4,7 @@ How an app, a component library and an embedding host give the UI its colors in 
 
 ## Model
 
-A `core.Theme` is one look in both appearances: a `Palette` for light and one for dark, a corner radius and font families. Its roles are Onevra's (its `theme` package, on MyGo's `ui.Theme`), and `DefaultTheme` holds Onevra's values:
+A `core.Theme` is one look in both appearances: a `Palette` for light and one for dark, a corner radius and font families. Its roles are Onevra's (its `theme` package), and `DefaultTheme` holds Onevra's values:
 
 | Role | What it colors |
 | --- | --- |

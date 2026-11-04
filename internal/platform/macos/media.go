@@ -48,6 +48,7 @@ func (s *surface) configureNative(v *view, c *driver.NativeConfig) {
 			native.Send(selSetFrame, objc.Send[apple.CGRect](v.native, selBounds))
 			v.native.Send(selAddSubview, native)
 			v.componentView = native
+			v.surface.directTree(native)
 		}
 	}
 	if v.component == nil {

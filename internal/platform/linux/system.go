@@ -490,6 +490,9 @@ func (w *window) popupMenu(entries []driver.MenuEntry, p driver.Point, id uint32
 	}
 	popover := gtkPopoverMenuNewFromModel(menu)
 	gObjectUnref(menu)
+	if w.dir != 0 {
+		gtkWidgetSetDirection(popover, w.dir)
+	}
 	gtkWidgetSetParent(popover, w.surface)
 	gtkPopoverSetHasArrow(popover, 0)
 	const bottom = 3 // GTK_POS_BOTTOM

@@ -86,14 +86,18 @@ var hashed = regexp.MustCompile(`\.[0-9a-f]{10}(\.[A-Za-z0-9]+)?(/|$)`)
 // webManifest is a site's manifest.webmanifest, which lets browsers
 // install it as an app.
 type webManifest struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	ShortName       string    `json:"short_name"`
-	StartURL        string    `json:"start_url"`
-	Display         string    `json:"display"`
-	BackgroundColor string    `json:"background_color,omitempty"`
-	ThemeColor      string    `json:"theme_color,omitempty"`
-	Icons           []webIcon `json:"icons,omitempty"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	ShortName string `json:"short_name"`
+	// NameLocalized and ShortNameLocalized name the app in each of its
+	// other languages, by BCP 47 tag.
+	NameLocalized      map[string]string `json:"name_localized,omitempty"`
+	ShortNameLocalized map[string]string `json:"short_name_localized,omitempty"`
+	StartURL           string            `json:"start_url"`
+	Display            string            `json:"display"`
+	BackgroundColor    string            `json:"background_color,omitempty"`
+	ThemeColor         string            `json:"theme_color,omitempty"`
+	Icons              []webIcon         `json:"icons,omitempty"`
 }
 
 type webIcon struct {
@@ -118,6 +122,19 @@ func writeWebManifest(p *project, dir string, icons []webIcon) error {
 	color := appearanceColor(p.Appearance)
 	m := webManifest{ID: p.ID, Name: p.Name, ShortName: p.Name, StartURL: ".", Display: "standalone",
 		BackgroundColor: color, ThemeColor: color, Icons: icons}
+	n, err := p.appNames()
+	if err != nil {
+		return err
+	}
+	if n != nil {
+		m.Name, m.ShortName = n.names[n.source], n.names[n.source]
+		for _, lang := range n.languages()[1:] {
+			if m.NameLocalized == nil {
+				m.NameLocalized, m.ShortNameLocalized = map[string]string{}, map[string]string{}
+			}
+			m.NameLocalized[lang], m.ShortNameLocalized[lang] = n.names[lang], n.names[lang]
+		}
+	}
 	data, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return err

@@ -3,8 +3,8 @@
 `bench/quotes` measures the CPU cost of a moving screen: a 40-row quote
 table where every display frame changes 10 rows, four text cells each,
 while the other 30 rows' signals stay untouched. Its values, PRNG
-(mulberry32, seed 42), column widths and window size match the mygo, gogui
-and nsh ports of the same case.
+(mulberry32, seed 42), column widths and window size match the gogui and
+nsh ports of the same case.
 
 As nsh does from `requestAnimationFrame`, it drives the tick from
 `Scope.RequestAnimationFrame`. A callback writes signals; the engine turns

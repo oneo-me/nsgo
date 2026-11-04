@@ -145,8 +145,9 @@ type surface struct {
 	// appearance is the one the app forces, or the system's.
 	appearance driver.Appearance
 	// rtl is the app's direction (driver.ItemDirection), which its
-	// navigation slides and swipes back in.
-	rtl bool
+	// navigation slides and swipes back in and its UIKit views lay out in
+	// once directed.
+	rtl, directed bool
 	// stickyBound are the scroll views with sticky cells whose insets
 	// follow animated values.
 	stickyBound map[*view]bool
@@ -618,6 +619,7 @@ func (s *surface) alert(a *driver.AlertConfig) {
 	}
 	ctrl := objc.ID(objc.GetClass("UIAlertController")).Send(sel("alertControllerWithTitle:message:preferredStyle:"),
 		apple.NSString(a.Title), apple.NSString(a.Message), style)
+	s.directTree(ctrl.Send(sel("view")))
 	id := a.ID
 	add := func(label string, style, index int) {
 		handler := objc.NewBlock(func(_ objc.Block, _ objc.ID) {
@@ -796,7 +798,8 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.saveFile(*it.Save, it.Count)
 			continue
 		case driver.ItemDirection:
-			s.rtl = it.RTL
+			s.rtl, s.directed = it.RTL, true
+			s.applyDirection()
 			continue
 		case driver.ItemAppearance:
 			s.appearance = it.Appearance
@@ -1083,6 +1086,7 @@ func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
 		v.native = objc.ID(classView).Send(selNew)
 	}
 	v.native.Send(selSetOpaque, false)
+	s.direct(v.native)
 	switch kind {
 	case driver.KindText, driver.KindCanvas:
 		v.newContent()

@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/internal/cldr"
 	"golang.org/x/text/language"
 )
 
@@ -54,8 +55,11 @@ func (c *Catalog) Add(lang string) {
 
 // Match returns the catalog's language that suits locale best, as
 // zh-Hant suits zh-TW and de suits de-CH, or the source language when
-// none does.
+// none does. A pseudo locale (IsPseudo) suits every catalog.
 func (c *Catalog) Match(locale string) string {
+	if IsPseudo(locale) {
+		return locale
+	}
 	c.mu.RLock()
 	lang, ok := c.matched[locale]
 	c.mu.RUnlock()
@@ -122,3 +126,28 @@ func Parent(lang string) string {
 	parents.Store(lang, p)
 	return p
 }
+
+// The pseudo locales, which test an app's layouts before any translation
+// exists, as Android's do: every catalog says its source language's
+// messages transformed in them.
+const (
+	// PseudoAccents is en-XA: letters accented, messages a third longer
+	// and bracketed, "[Šöŕţ ƀý name one]", so text that is not in a
+	// catalog, is cut, or is pieced together shows.
+	PseudoAccents = cldr.PseudoAccents
+	// PseudoBidi is ar-XB: each word shown right to left, and the app
+	// laid out right to left, so what does not mirror shows.
+	PseudoBidi = cldr.PseudoBidi
+)
+
+// IsPseudo reports whether lang is a pseudo locale, en-XA or ar-XB.
+func IsPseudo(lang string) bool { return lang == PseudoAccents || lang == PseudoBidi }
+
+// Pseudo transforms s, a message in the source language whose arguments
+// are marked (Arg), as the pseudo locale lang shows it. The code nsgo
+// writes calls it.
+func Pseudo(lang, s string) string { return cldr.Pseudolocalize(lang, s) }
+
+// Arg marks what an argument wrote in a message Pseudo transforms, which
+// keeps it as written. The code nsgo writes calls it.
+func Arg(s string) string { return cldr.ArgStart + s + cldr.ArgEnd }

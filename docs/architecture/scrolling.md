@@ -23,7 +23,7 @@ A scroll view follows NSH's `scrolling-and-lists.md`: `ScrollBehavior` holds pag
 
 ### Edge effects
 
-`Scroll.EdgeEffects` sets the views over a scroll view's sides apart from the content scrolling under them, as iOS 26's scroll edge effects do: its bars, views whose `EdgeBar` names the scroll view by its `Ref` and a side. NSH has none; the looks follow iOS 26's and MyGo's measures of macOS 27's.
+`Scroll.EdgeEffects` sets the views over a scroll view's sides apart from the content scrolling under them, as iOS 26's scroll edge effects do: its bars, views whose `EdgeBar` names the scroll view by its `Ref` and a side. NSH has none; the looks follow iOS 26's and measures of macOS 27's.
 
 - After layout the core measures how far each side's bars reach into the scroll view (`markEdgeScrolls`) and sends it in `ScrollConfig.Edges`, with the bars, the background the content scrolls over and a hard edge's hairline. Automatic is soft under bars and nothing without them.
 - Both edges lay the background at 80% under the bars. A soft edge blurs most at the side, down to nothing 24 points past the bars, and its background eases out along smoothstep's curve from 24 points short of the bars' end, so no line shows where the fade begins; a hard edge frosts evenly under the bars, with a half-point hairline past them (`driver.SoftEdgeLevels`, `SoftTint`, `BandRect`, `HairlineRect`).

@@ -47,20 +47,138 @@ func init() {
 	})
 }
 
-// Messages say the messages in one language.
-type Messages struct{ lang string }
+// Messages say the messages in one language; with mark, the source's
+// with their arguments marked, which a pseudo locale transforms.
+type Messages struct {
+	lang string
+	mark bool
+}
 
 // In returns the messages in the catalog's language that suits locale
 // best, as zh-Hant suits zh-TW, else in the source language.
-func In(locale string) Messages { return Messages{Catalog.Match(locale)} }
+func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }
 
 // For returns the messages in the language the app shows under cx
 // (i18n.Language); a binding that says them follows it as it changes.
 func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 
+// Parameters names the parameters of each message that has some, by
+// its method, for the TSX declarations of the messages
+// (tsx.RegisterMessages).
+var Parameters = map[string][]string{
+	"ControlsCountOf":         {"shown", "total"},
+	"ControlsShowingItems":    {"count"},
+	"ControlsContinueEvent":   {"plan", "price"},
+	"MenusViewState":          {"sidebar", "statusBar", "zoom"},
+	"SystemCounted":           {"n"},
+	"SystemTitleBarInsets":    {"top", "left", "right"},
+	"SystemClipboardImage":    {"width", "height", "bytes"},
+	"SystemClipboardHolds":    {"text", "image"},
+	"SystemPicked":            {"count"},
+	"ListsVisible":            {"count"},
+	"ListsItemsColumns":       {"items", "columns"},
+	"ListsMessagesPages":      {"messages", "pages"},
+	"ListsCard":               {"n"},
+	"ListsItem":               {"n"},
+	"ListsWeek":               {"n"},
+	"ListsRows":               {"count"},
+	"NavRow":                  {"n"},
+	"NavCharactersLost":       {"count"},
+	"NavLevel":                {"n"},
+	"NavDeep":                 {"n"},
+	"NavOnlyCallOnCancel":     {"what", "count"},
+	"FormAccountCreated":      {"name", "email"},
+	"FormFieldsNeedAttention": {"count"},
+	"CanvasAvg":               {"mean"},
+	"CanvasVsAverage":         {"delta"},
+	"CanvasStrokesPoints":     {"strokes", "points"},
+	"CanvasBarValue":          {"n", "value"},
+	"CanvasBar":               {"n"},
+	"TableIndicator":          {"n"},
+	"TableCellRow":            {"row", "column"},
+	"TableRow":                {"row"},
+	"TableRowsOf":             {"first", "last", "total"},
+	"TableColumnsTick":        {"columns", "tick"},
+	"EditorLnCol":             {"line", "column"},
+	"EditorCarets":            {"count"},
+	"EditorMatches":           {"count"},
+	"EditorDefinitionAt":      {"name", "line", "column"},
+	"EditorReplaced":          {"count"},
+	"EditorLinePressed":       {"line"},
+	"EditorProblemsCount":     {"count"},
+	"CompCharacters":          {"count"},
+	"CompAnnouncement":        {"n"},
+	"AnimViews":               {"count"},
+	"AnimReadyMadeMotions":    {"count"},
+	"GestDown":                {"count"},
+	"GestTouchLine":           {"at", "page", "count"},
+	"GestTaps":                {"count"},
+	"GestPointerAt":           {"at"},
+	"StocksDaysAgo":           {"days"},
+	"StocksFlatIssues":        {"flat", "issues"},
+	"StocksDownCount":         {"count"},
+	"StocksSimulatedFooter":   {"engine", "quotes"},
+	"StocksTicksCumulative":   {"ticks"},
+	"StocksBidShare":          {"share"},
+	"StocksAskShare":          {"share"},
+	"StocksAvgVol":            {"avg", "vol"},
+	"StocksDayRange":          {"low", "high"},
+	"StocksSimulatedStats":    {"engine", "quotes"},
+	"StocksShares":            {"count"},
+	"StocksOfBuyingPower":     {"percent", "power"},
+	"StocksPlacedDetail":      {"quantity", "code", "price"},
+	"ChatInstallCli":          {"provider", "why", "command"},
+	"ChatThinking":            {"seconds"},
+	"ChatThoughtFor":          {"seconds"},
+	"DockEdits":               {"panel", "count"},
+	"ScrollPageOf":            {"title", "n", "total"},
+	"DockRegionNone":          {"name"},
+	"OverlayLinkOnClipboard":  {"count"},
+	"A11yItems":               {"count"},
+	"A11yAKilo":               {"price"},
+	"A11yInTheBasket":         {"count"},
+	"ScrollSettledOnPage":     {"n"},
+	"ScrollViewport":          {"height"},
+	"ScrollTile":              {"n"},
+	"ScrollPost":              {"n"},
+	"ScrollNew":               {"n"},
+	"ScrollPosts":             {"count"},
+	"ChartsVisitorsPerDay":    {"monday", "sunday"},
+	"ChartsHoverValue":        {"day", "visitors", "other", "week"},
+	"ChartsPlotEvent":         {"day", "visitors"},
+	"ShaderStartPressed":      {"count"},
+	"ShaderScaleIntensity":    {"scale", "intensity"},
+	"PhotosViews":             {"count"},
+	"PhotosPullToRefresh":     {"count"},
+	"PhotosLoadsMore":         {"count"},
+	"PhotosLoadingMore":       {"count"},
+	"DiffChange":              {"n"},
+	"DiffCommentOnLine":       {"line"},
+	"DiffCommentOnLines":      {"first", "last"},
+	"DiffLinesSelected":       {"first", "last"},
+	"DiffLineOfOld":           {"line"},
+	"DiffLineOfNew":           {"line"},
+	"DiffCollapsed":           {"path", "state"},
+	"DiffReverted":            {"n"},
+	"DiffKept":                {"n"},
+	"DiffLines":               {"count"},
+	"DiffChanges":             {"count"},
+	"EditorErrors":            {"count"},
+	"EditorWarnings":          {"count"},
+	"EditorInfos":             {"count"},
+	"GestFiles":               {"count"},
+	"StorageKeysChars":        {"keys", "chars"},
+	"StorageChars":            {"count"},
+	"ResizableSidebarPt":      {"size"},
+	"ResizableConsolePt":      {"size"},
+	"CollapsingEntry":         {"n"},
+	"CollapsingMinutes":       {"count"},
+}
+
 // Translation is a language's messages another package supplies; a nil
 // field leaves the message to the catalog.
 type Translation struct {
+	AppName                                      func() string
 	LanguageName                                 func() string
 	Language                                     func() string
 	LanguageSystem                               func() string
@@ -2083,7 +2201,8 @@ var supplied = map[string]Translation{}
 
 // The indexes of the messages without arguments in texts.
 const (
-	textLanguageName = iota
+	textAppName = iota
+	textLanguageName
 	textLanguage
 	textLanguageSystem
 	textSettings
@@ -3999,6 +4118,7 @@ const (
 // order of their indexes; "" where a language lacks one.
 var texts = map[string]*[numTexts]string{
 	"en": {
+		"Gallery",
 		"English",
 		"Language",
 		"Follow system",
@@ -5910,6 +6030,7 @@ var texts = map[string]*[numTexts]string{
 		"Loading",
 	},
 	"ar": {
+		"المعرض",
 		"العربية",
 		"اللغة",
 		"اتباع النظام",
@@ -7821,6 +7942,7 @@ var texts = map[string]*[numTexts]string{
 		"جارٍ التحميل",
 	},
 	"zh-Hans": {
+		"画廊",
 		"简体中文",
 		"语言",
 		"跟随系统",
@@ -9732,6 +9854,7 @@ var texts = map[string]*[numTexts]string{
 		"正在加载",
 	},
 	"zh-Hant": {
+		"畫廊",
 		"繁體中文",
 		"語言",
 		"跟隨系統",
@@ -11651,6 +11774,9 @@ var suppliedTexts = map[string]*[numTexts]string{}
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
 func (msgs Messages) text(i int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, texts[Source][i])
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
 			return t[i]
@@ -11673,6 +11799,9 @@ func Supply(lang string, t Translation) {
 	if st == nil {
 		st = new([numTexts]string)
 		suppliedTexts[lang] = st
+	}
+	if t.AppName != nil {
+		st[textAppName] = t.AppName()
 	}
 	if t.LanguageName != nil {
 		st[textLanguageName] = t.LanguageName()
@@ -17726,6 +17855,25 @@ func Supply(lang string, t Translation) {
 	Catalog.Add(lang)
 }
 
+// arg is what an argument wrote, marked in the source's message for a
+// pseudo locale.
+func (msgs Messages) arg(s string) string {
+	if msgs.mark {
+		return i18n.Arg(s)
+	}
+	return s
+}
+
+// AppName says "Gallery"
+// in the language the app shows under cx.
+//
+// The app's name, which its packages list it under in each language.
+func AppName(cx *core.Scope) string { return For(cx).AppName() }
+
+// AppName says "Gallery"
+// in the language of msgs.
+func (msgs Messages) AppName() string { return msgs.text(textAppName) }
+
 // LanguageName says "English"
 // in the language the app shows under cx.
 //
@@ -19463,13 +19611,16 @@ func ControlsCountOf(cx *core.Scope, shown int, total int) string {
 // ControlsCountOf says "{shown, number} of {total, number}"
 // in the language of msgs.
 func (msgs Messages) ControlsCountOf(shown int, total int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ControlsCountOf(shown, total))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ControlsCountOf; f != nil {
 			return f(shown, total)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(shown)) + " of " + i18n.FormatNumber("en", float64(total))
+			return msgs.arg(i18n.FormatNumber("en", float64(shown))) + " of " + msgs.arg(i18n.FormatNumber("en", float64(total)))
 		case "ar":
 			return i18n.FormatNumber("ar", float64(shown)) + " من " + i18n.FormatNumber("ar", float64(total))
 		case "zh-Hans":
@@ -19489,6 +19640,9 @@ func ControlsShowingItems(cx *core.Scope, count int) string {
 // ControlsShowingItems says "Showing {count, plural, one {# item} other {# items}}"
 // in the language of msgs.
 func (msgs Messages) ControlsShowingItems(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ControlsShowingItems(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ControlsShowingItems; f != nil {
 			return f(count)
@@ -19499,10 +19653,10 @@ func (msgs Messages) ControlsShowingItems(count int) string {
 			b.WriteString("Showing ")
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" item")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" items")
 			}
 			return b.String()
@@ -19525,13 +19679,16 @@ func ControlsContinueEvent(cx *core.Scope, plan string, price string) string {
 // ControlsContinueEvent says "Continue: {plan}, {price}"
 // in the language of msgs.
 func (msgs Messages) ControlsContinueEvent(plan string, price string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ControlsContinueEvent(plan, price))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ControlsContinueEvent; f != nil {
 			return f(plan, price)
 		}
 		switch lang {
 		case "", "en":
-			return "Continue: " + plan + ", " + price
+			return "Continue: " + msgs.arg(plan) + ", " + msgs.arg(price)
 		case "ar":
 			return "متابعة: " + plan + "، " + price
 		case "zh-Hans":
@@ -20505,13 +20662,16 @@ func MenusViewState(cx *core.Scope, sidebar string, statusBar string, zoom strin
 // MenusViewState says "Sidebar {sidebar} · status bar {statusBar} · zoom {zoom}"
 // in the language of msgs.
 func (msgs Messages) MenusViewState(sidebar string, statusBar string, zoom string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.MenusViewState(sidebar, statusBar, zoom))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].MenusViewState; f != nil {
 			return f(sidebar, statusBar, zoom)
 		}
 		switch lang {
 		case "", "en":
-			return "Sidebar " + sidebar + " · status bar " + statusBar + " · zoom " + zoom
+			return "Sidebar " + msgs.arg(sidebar) + " · status bar " + msgs.arg(statusBar) + " · zoom " + msgs.arg(zoom)
 		case "ar":
 			return "الشريط الجانبي " + sidebar + " · شريط الحالة " + statusBar + " · التكبير " + zoom
 		case "zh-Hans":
@@ -21889,13 +22049,16 @@ func SystemCounted(cx *core.Scope, n int) string { return For(cx).SystemCounted(
 // SystemCounted says "Counted {n, number}"
 // in the language of msgs.
 func (msgs Messages) SystemCounted(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemCounted(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].SystemCounted; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Counted " + i18n.FormatNumber("en", float64(n))
+			return "Counted " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "تم العدّ " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -21915,13 +22078,16 @@ func SystemTitleBarInsets(cx *core.Scope, top float64, left float64, right float
 // SystemTitleBarInsets says "{top, number, integer} pt, controls keep {left, number, integer} / {right, number, integer} pt"
 // in the language of msgs.
 func (msgs Messages) SystemTitleBarInsets(top float64, left float64, right float64) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemTitleBarInsets(top, left, right))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].SystemTitleBarInsets; f != nil {
 			return f(top, left, right)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatInteger("en", top) + " pt, controls keep " + i18n.FormatInteger("en", left) + " / " + i18n.FormatInteger("en", right) + " pt"
+			return msgs.arg(i18n.FormatInteger("en", top)) + " pt, controls keep " + msgs.arg(i18n.FormatInteger("en", left)) + " / " + msgs.arg(i18n.FormatInteger("en", right)) + " pt"
 		case "ar":
 			return i18n.FormatInteger("ar", top) + " نقطة، وتحتفظ الأزرار بـ " + i18n.FormatInteger("ar", left) + " / " + i18n.FormatInteger("ar", right) + " نقطة"
 		case "zh-Hans":
@@ -21941,13 +22107,16 @@ func SystemClipboardImage(cx *core.Scope, width float64, height float64, bytes i
 // SystemClipboardImage says "Image: {width, number, integer} × {height, number, integer} px, {bytes, number} bytes of PNG"
 // in the language of msgs.
 func (msgs Messages) SystemClipboardImage(width float64, height float64, bytes int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemClipboardImage(width, height, bytes))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].SystemClipboardImage; f != nil {
 			return f(width, height, bytes)
 		}
 		switch lang {
 		case "", "en":
-			return "Image: " + i18n.FormatInteger("en", width) + " × " + i18n.FormatInteger("en", height) + " px, " + i18n.FormatNumber("en", float64(bytes)) + " bytes of PNG"
+			return "Image: " + msgs.arg(i18n.FormatInteger("en", width)) + " × " + msgs.arg(i18n.FormatInteger("en", height)) + " px, " + msgs.arg(i18n.FormatNumber("en", float64(bytes))) + " bytes of PNG"
 		case "ar":
 			return "صورة: " + i18n.FormatInteger("ar", width) + " × " + i18n.FormatInteger("ar", height) + " بكسل، " + i18n.FormatNumber("ar", float64(bytes)) + " بايت من PNG"
 		case "zh-Hans":
@@ -21967,13 +22136,16 @@ func SystemClipboardHolds(cx *core.Scope, text string, image string) string {
 // SystemClipboardHolds says "Text: {text}, image: {image}"
 // in the language of msgs.
 func (msgs Messages) SystemClipboardHolds(text string, image string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemClipboardHolds(text, image))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].SystemClipboardHolds; f != nil {
 			return f(text, image)
 		}
 		switch lang {
 		case "", "en":
-			return "Text: " + text + ", image: " + image
+			return "Text: " + msgs.arg(text) + ", image: " + msgs.arg(image)
 		case "ar":
 			return "نص: " + text + "، صورة: " + image
 		case "zh-Hans":
@@ -21991,13 +22163,16 @@ func SystemPicked(cx *core.Scope, count int) string { return For(cx).SystemPicke
 // SystemPicked says "Picked {count, number}"
 // in the language of msgs.
 func (msgs Messages) SystemPicked(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemPicked(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].SystemPicked; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "Picked " + i18n.FormatNumber("en", float64(count))
+			return "Picked " + msgs.arg(i18n.FormatNumber("en", float64(count)))
 		case "ar":
 			return "تم اختيار " + i18n.FormatNumber("ar", float64(count))
 		case "zh-Hans":
@@ -22491,13 +22666,16 @@ func ListsVisible(cx *core.Scope, count int) string { return For(cx).ListsVisibl
 // ListsVisible says "{count, number} visible"
 // in the language of msgs.
 func (msgs Messages) ListsVisible(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsVisible(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsVisible; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " visible"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " visible"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " ظاهر"
 		case "zh-Hans":
@@ -22517,6 +22695,9 @@ func ListsItemsColumns(cx *core.Scope, items int, columns int) string {
 // ListsItemsColumns says "{items, plural, one {# item} other {# items}}, {columns, plural, one {# column} other {# columns}}"
 // in the language of msgs.
 func (msgs Messages) ListsItemsColumns(items int, columns int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsItemsColumns(items, columns))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsItemsColumns; f != nil {
 			return f(items, columns)
@@ -22526,19 +22707,19 @@ func (msgs Messages) ListsItemsColumns(items int, columns int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(items)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(items)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(items))))
 				b.WriteString(" item")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(items)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(items))))
 				b.WriteString(" items")
 			}
 			b.WriteString(", ")
 			switch i18n.Cardinal("en", float64(columns)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(columns)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(columns))))
 				b.WriteString(" column")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(columns)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(columns))))
 				b.WriteString(" columns")
 			}
 			return b.String()
@@ -22561,6 +22742,9 @@ func ListsMessagesPages(cx *core.Scope, messages int, pages int) string {
 // ListsMessagesPages says "{messages, plural, one {# message} other {# messages}}, {pages, plural, one {# older page} other {# older pages}}"
 // in the language of msgs.
 func (msgs Messages) ListsMessagesPages(messages int, pages int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsMessagesPages(messages, pages))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsMessagesPages; f != nil {
 			return f(messages, pages)
@@ -22570,19 +22754,19 @@ func (msgs Messages) ListsMessagesPages(messages int, pages int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(messages)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(messages)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(messages))))
 				b.WriteString(" message")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(messages)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(messages))))
 				b.WriteString(" messages")
 			}
 			b.WriteString(", ")
 			switch i18n.Cardinal("en", float64(pages)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(pages)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(pages))))
 				b.WriteString(" older page")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(pages)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(pages))))
 				b.WriteString(" older pages")
 			}
 			return b.String()
@@ -22603,13 +22787,16 @@ func ListsCard(cx *core.Scope, n int) string { return For(cx).ListsCard(n) }
 // ListsCard says "Card {n, number}"
 // in the language of msgs.
 func (msgs Messages) ListsCard(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsCard(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsCard; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Card " + i18n.FormatNumber("en", float64(n))
+			return "Card " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "البطاقة " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -22627,13 +22814,16 @@ func ListsItem(cx *core.Scope, n int) string { return For(cx).ListsItem(n) }
 // ListsItem says "Item {n, number}"
 // in the language of msgs.
 func (msgs Messages) ListsItem(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsItem(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsItem; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Item " + i18n.FormatNumber("en", float64(n))
+			return "Item " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "العنصر " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -22651,13 +22841,16 @@ func ListsWeek(cx *core.Scope, n int) string { return For(cx).ListsWeek(n) }
 // ListsWeek says "Week {n, number}"
 // in the language of msgs.
 func (msgs Messages) ListsWeek(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsWeek(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsWeek; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Week " + i18n.FormatNumber("en", float64(n))
+			return "Week " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "الأسبوع " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -22675,6 +22868,9 @@ func ListsRows(cx *core.Scope, count int) string { return For(cx).ListsRows(coun
 // ListsRows says "{count, plural, one {# row} other {# rows}}"
 // in the language of msgs.
 func (msgs Messages) ListsRows(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ListsRows(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ListsRows; f != nil {
 			return f(count)
@@ -22684,10 +22880,10 @@ func (msgs Messages) ListsRows(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" row")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" rows")
 			}
 			return b.String()
@@ -24276,13 +24472,16 @@ func NavRow(cx *core.Scope, n int) string { return For(cx).NavRow(n) }
 // NavRow says "Row {n, number}"
 // in the language of msgs.
 func (msgs Messages) NavRow(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.NavRow(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].NavRow; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Row " + i18n.FormatNumber("en", float64(n))
+			return "Row " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "الصف " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -24300,6 +24499,9 @@ func NavCharactersLost(cx *core.Scope, count int) string { return For(cx).NavCha
 // NavCharactersLost says "{count, plural, one {# character would be lost} other {# characters would be lost}}: back asks first"
 // in the language of msgs.
 func (msgs Messages) NavCharactersLost(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.NavCharactersLost(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].NavCharactersLost; f != nil {
 			return f(count)
@@ -24309,10 +24511,10 @@ func (msgs Messages) NavCharactersLost(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" character would be lost")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" characters would be lost")
 			}
 			b.WriteString(": back asks first")
@@ -24334,13 +24536,16 @@ func NavLevel(cx *core.Scope, n int) string { return For(cx).NavLevel(n) }
 // NavLevel says "Level {n, number}"
 // in the language of msgs.
 func (msgs Messages) NavLevel(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.NavLevel(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].NavLevel; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Level " + i18n.FormatNumber("en", float64(n))
+			return "Level " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "المستوى " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -24358,13 +24563,16 @@ func NavDeep(cx *core.Scope, n int) string { return For(cx).NavDeep(n) }
 // NavDeep says "{n, number} deep in the stack"
 // in the language of msgs.
 func (msgs Messages) NavDeep(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.NavDeep(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].NavDeep; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(n)) + " deep in the stack"
+			return msgs.arg(i18n.FormatNumber("en", float64(n))) + " deep in the stack"
 		case "ar":
 			return "بعمق " + i18n.FormatNumber("ar", float64(n)) + " في المكدس"
 		case "zh-Hans":
@@ -24384,13 +24592,16 @@ func NavOnlyCallOnCancel(cx *core.Scope, what string, count int) string {
 // NavOnlyCallOnCancel says "{what} only call OnCancel ({count, number} so far): the button closes it."
 // in the language of msgs.
 func (msgs Messages) NavOnlyCallOnCancel(what string, count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.NavOnlyCallOnCancel(what, count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].NavOnlyCallOnCancel; f != nil {
 			return f(what, count)
 		}
 		switch lang {
 		case "", "en":
-			return what + " only call OnCancel (" + i18n.FormatNumber("en", float64(count)) + " so far): the button closes it."
+			return msgs.arg(what) + " only call OnCancel (" + msgs.arg(i18n.FormatNumber("en", float64(count))) + " so far): the button closes it."
 		case "ar":
 			return what + " تستدعي OnCancel فقط (" + i18n.FormatNumber("ar", float64(count)) + " حتى الآن): الزر يغلقها."
 		case "zh-Hans":
@@ -25118,13 +25329,16 @@ func FormAccountCreated(cx *core.Scope, name string, email string) string {
 // FormAccountCreated says "Account created for {name} <{email}>"
 // in the language of msgs.
 func (msgs Messages) FormAccountCreated(name string, email string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.FormAccountCreated(name, email))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].FormAccountCreated; f != nil {
 			return f(name, email)
 		}
 		switch lang {
 		case "", "en":
-			return "Account created for " + name + " <" + email + ">"
+			return "Account created for " + msgs.arg(name) + " <" + msgs.arg(email) + ">"
 		case "ar":
 			return "تم إنشاء حساب لـ " + name + " <" + email + ">"
 		case "zh-Hans":
@@ -25144,6 +25358,9 @@ func FormFieldsNeedAttention(cx *core.Scope, count int) string {
 // FormFieldsNeedAttention says "{count, plural, one {# field needs attention} other {# fields need attention}}"
 // in the language of msgs.
 func (msgs Messages) FormFieldsNeedAttention(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.FormFieldsNeedAttention(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].FormFieldsNeedAttention; f != nil {
 			return f(count)
@@ -25153,10 +25370,10 @@ func (msgs Messages) FormFieldsNeedAttention(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" field needs attention")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" fields need attention")
 			}
 			return b.String()
@@ -26527,13 +26744,16 @@ func CanvasAvg(cx *core.Scope, mean float64) string { return For(cx).CanvasAvg(m
 // CanvasAvg says "avg {mean, number, integer}"
 // in the language of msgs.
 func (msgs Messages) CanvasAvg(mean float64) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CanvasAvg(mean))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CanvasAvg; f != nil {
 			return f(mean)
 		}
 		switch lang {
 		case "", "en":
-			return "avg " + i18n.FormatInteger("en", mean)
+			return "avg " + msgs.arg(i18n.FormatInteger("en", mean))
 		case "ar":
 			return "المتوسط " + i18n.FormatInteger("ar", mean)
 		case "zh-Hans":
@@ -26551,13 +26771,16 @@ func CanvasVsAverage(cx *core.Scope, delta string) string { return For(cx).Canva
 // CanvasVsAverage says "{delta} vs. average"
 // in the language of msgs.
 func (msgs Messages) CanvasVsAverage(delta string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CanvasVsAverage(delta))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CanvasVsAverage; f != nil {
 			return f(delta)
 		}
 		switch lang {
 		case "", "en":
-			return delta + " vs. average"
+			return msgs.arg(delta) + " vs. average"
 		case "ar":
 			return delta + " مقابل المتوسط"
 		case "zh-Hans":
@@ -26577,6 +26800,9 @@ func CanvasStrokesPoints(cx *core.Scope, strokes int, points int) string {
 // CanvasStrokesPoints says "{strokes, number} · {points, plural, one {# point} other {# points}}"
 // in the language of msgs.
 func (msgs Messages) CanvasStrokesPoints(strokes int, points int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CanvasStrokesPoints(strokes, points))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CanvasStrokesPoints; f != nil {
 			return f(strokes, points)
@@ -26584,14 +26810,14 @@ func (msgs Messages) CanvasStrokesPoints(strokes int, points int) string {
 		switch lang {
 		case "", "en":
 			var b strings.Builder
-			b.WriteString(i18n.FormatNumber("en", float64(strokes)))
+			b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(strokes))))
 			b.WriteString(" · ")
 			switch i18n.Cardinal("en", float64(points)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(points)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(points))))
 				b.WriteString(" point")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(points)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(points))))
 				b.WriteString(" points")
 			}
 			return b.String()
@@ -26614,13 +26840,16 @@ func CanvasBarValue(cx *core.Scope, n int, value float64) string {
 // CanvasBarValue says "Bar {n, number}, {value, number, percent}"
 // in the language of msgs.
 func (msgs Messages) CanvasBarValue(n int, value float64) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CanvasBarValue(n, value))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CanvasBarValue; f != nil {
 			return f(n, value)
 		}
 		switch lang {
 		case "", "en":
-			return "Bar " + i18n.FormatNumber("en", float64(n)) + ", " + i18n.FormatPercent("en", value)
+			return "Bar " + msgs.arg(i18n.FormatNumber("en", float64(n))) + ", " + msgs.arg(i18n.FormatPercent("en", value))
 		case "ar":
 			return "الشريط " + i18n.FormatNumber("ar", float64(n)) + "، " + i18n.FormatPercent("ar", value)
 		case "zh-Hans":
@@ -26638,13 +26867,16 @@ func CanvasBar(cx *core.Scope, n int) string { return For(cx).CanvasBar(n) }
 // CanvasBar says "Bar {n, number}"
 // in the language of msgs.
 func (msgs Messages) CanvasBar(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CanvasBar(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CanvasBar; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Bar " + i18n.FormatNumber("en", float64(n))
+			return "Bar " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "الشريط " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -27070,13 +27302,16 @@ func TableIndicator(cx *core.Scope, n int) string { return For(cx).TableIndicato
 // TableIndicator says "Indicator {n, number}"
 // in the language of msgs.
 func (msgs Messages) TableIndicator(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TableIndicator(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].TableIndicator; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Indicator " + i18n.FormatNumber("en", float64(n))
+			return "Indicator " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "المؤشر " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -27096,13 +27331,16 @@ func TableCellRow(cx *core.Scope, row string, column string) string {
 // TableCellRow says "Cell row {row}, {column}"
 // in the language of msgs.
 func (msgs Messages) TableCellRow(row string, column string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TableCellRow(row, column))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].TableCellRow; f != nil {
 			return f(row, column)
 		}
 		switch lang {
 		case "", "en":
-			return "Cell row " + row + ", " + column
+			return "Cell row " + msgs.arg(row) + ", " + msgs.arg(column)
 		case "ar":
 			return "الخلية في الصف " + row + "، " + column
 		case "zh-Hans":
@@ -27120,13 +27358,16 @@ func TableRow(cx *core.Scope, row string) string { return For(cx).TableRow(row) 
 // TableRow says "Row {row}"
 // in the language of msgs.
 func (msgs Messages) TableRow(row string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TableRow(row))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].TableRow; f != nil {
 			return f(row)
 		}
 		switch lang {
 		case "", "en":
-			return "Row " + row
+			return "Row " + msgs.arg(row)
 		case "ar":
 			return "الصف " + row
 		case "zh-Hans":
@@ -27146,13 +27387,16 @@ func TableRowsOf(cx *core.Scope, first string, last string, total string) string
 // TableRowsOf says "rows {first}–{last} of {total}"
 // in the language of msgs.
 func (msgs Messages) TableRowsOf(first string, last string, total string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TableRowsOf(first, last, total))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].TableRowsOf; f != nil {
 			return f(first, last, total)
 		}
 		switch lang {
 		case "", "en":
-			return "rows " + first + "–" + last + " of " + total
+			return "rows " + msgs.arg(first) + "–" + msgs.arg(last) + " of " + msgs.arg(total)
 		case "ar":
 			return "الصفوف " + first + "–" + last + " من " + total
 		case "zh-Hans":
@@ -27172,6 +27416,9 @@ func TableColumnsTick(cx *core.Scope, columns int, tick int) string {
 // TableColumnsTick says "{columns, plural, one {# column} other {# columns}} · tick {tick, number}"
 // in the language of msgs.
 func (msgs Messages) TableColumnsTick(columns int, tick int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TableColumnsTick(columns, tick))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].TableColumnsTick; f != nil {
 			return f(columns, tick)
@@ -27181,14 +27428,14 @@ func (msgs Messages) TableColumnsTick(columns int, tick int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(columns)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(columns)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(columns))))
 				b.WriteString(" column")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(columns)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(columns))))
 				b.WriteString(" columns")
 			}
 			b.WriteString(" · tick ")
-			b.WriteString(i18n.FormatNumber("en", float64(tick)))
+			b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(tick))))
 			return b.String()
 		case "ar":
 			return i18n.FormatNumber("ar", float64(columns)) + " عمودًا · النبضة " + i18n.FormatNumber("ar", float64(tick))
@@ -27617,13 +27864,16 @@ func EditorLnCol(cx *core.Scope, line int, column int) string {
 // EditorLnCol says "Ln {line, number}, Col {column, number}"
 // in the language of msgs.
 func (msgs Messages) EditorLnCol(line int, column int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorLnCol(line, column))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorLnCol; f != nil {
 			return f(line, column)
 		}
 		switch lang {
 		case "", "en":
-			return "Ln " + i18n.FormatNumber("en", float64(line)) + ", Col " + i18n.FormatNumber("en", float64(column))
+			return "Ln " + msgs.arg(i18n.FormatNumber("en", float64(line))) + ", Col " + msgs.arg(i18n.FormatNumber("en", float64(column)))
 		case "ar":
 			return "السطر " + i18n.FormatNumber("ar", float64(line)) + "، العمود " + i18n.FormatNumber("ar", float64(column))
 		case "zh-Hans":
@@ -27641,6 +27891,9 @@ func EditorCarets(cx *core.Scope, count int) string { return For(cx).EditorCaret
 // EditorCarets says "{count, plural, one {# caret} other {# carets}}"
 // in the language of msgs.
 func (msgs Messages) EditorCarets(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorCarets(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorCarets; f != nil {
 			return f(count)
@@ -27650,10 +27903,10 @@ func (msgs Messages) EditorCarets(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" caret")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" carets")
 			}
 			return b.String()
@@ -27674,6 +27927,9 @@ func EditorMatches(cx *core.Scope, count int) string { return For(cx).EditorMatc
 // EditorMatches says "{count, plural, one {# match} other {# matches}}"
 // in the language of msgs.
 func (msgs Messages) EditorMatches(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorMatches(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorMatches; f != nil {
 			return f(count)
@@ -27683,10 +27939,10 @@ func (msgs Messages) EditorMatches(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" match")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" matches")
 			}
 			return b.String()
@@ -27709,13 +27965,16 @@ func EditorDefinitionAt(cx *core.Scope, name string, line int, column int) strin
 // EditorDefinitionAt says "Definition of {name} at {line, number}:{column, number}"
 // in the language of msgs.
 func (msgs Messages) EditorDefinitionAt(name string, line int, column int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorDefinitionAt(name, line, column))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorDefinitionAt; f != nil {
 			return f(name, line, column)
 		}
 		switch lang {
 		case "", "en":
-			return "Definition of " + name + " at " + i18n.FormatNumber("en", float64(line)) + ":" + i18n.FormatNumber("en", float64(column))
+			return "Definition of " + msgs.arg(name) + " at " + msgs.arg(i18n.FormatNumber("en", float64(line))) + ":" + msgs.arg(i18n.FormatNumber("en", float64(column)))
 		case "ar":
 			return "تعريف " + name + " عند " + i18n.FormatNumber("ar", float64(line)) + ":" + i18n.FormatNumber("ar", float64(column))
 		case "zh-Hans":
@@ -27733,13 +27992,16 @@ func EditorReplaced(cx *core.Scope, count int) string { return For(cx).EditorRep
 // EditorReplaced says "Replaced {count, number}"
 // in the language of msgs.
 func (msgs Messages) EditorReplaced(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorReplaced(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorReplaced; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "Replaced " + i18n.FormatNumber("en", float64(count))
+			return "Replaced " + msgs.arg(i18n.FormatNumber("en", float64(count)))
 		case "ar":
 			return "تم استبدال " + i18n.FormatNumber("ar", float64(count))
 		case "zh-Hans":
@@ -27757,13 +28019,16 @@ func EditorLinePressed(cx *core.Scope, line int) string { return For(cx).EditorL
 // EditorLinePressed says "Line {line, number} pressed"
 // in the language of msgs.
 func (msgs Messages) EditorLinePressed(line int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorLinePressed(line))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorLinePressed; f != nil {
 			return f(line)
 		}
 		switch lang {
 		case "", "en":
-			return "Line " + i18n.FormatNumber("en", float64(line)) + " pressed"
+			return "Line " + msgs.arg(i18n.FormatNumber("en", float64(line))) + " pressed"
 		case "ar":
 			return "تم الضغط على السطر " + i18n.FormatNumber("ar", float64(line))
 		case "zh-Hans":
@@ -27781,13 +28046,16 @@ func EditorProblemsCount(cx *core.Scope, count int) string { return For(cx).Edit
 // EditorProblemsCount says "Problems {count, number}"
 // in the language of msgs.
 func (msgs Messages) EditorProblemsCount(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorProblemsCount(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorProblemsCount; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "Problems " + i18n.FormatNumber("en", float64(count))
+			return "Problems " + msgs.arg(i18n.FormatNumber("en", float64(count)))
 		case "ar":
 			return "المشكلات " + i18n.FormatNumber("ar", float64(count))
 		case "zh-Hans":
@@ -28333,6 +28601,9 @@ func CompCharacters(cx *core.Scope, count int) string { return For(cx).CompChara
 // CompCharacters says "{count, plural, one {# character} other {# characters}}"
 // in the language of msgs.
 func (msgs Messages) CompCharacters(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CompCharacters(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CompCharacters; f != nil {
 			return f(count)
@@ -28342,10 +28613,10 @@ func (msgs Messages) CompCharacters(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" character")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" characters")
 			}
 			return b.String()
@@ -28382,13 +28653,16 @@ func CompAnnouncement(cx *core.Scope, n int) string { return For(cx).CompAnnounc
 // CompAnnouncement says "Announcement {n, number}"
 // in the language of msgs.
 func (msgs Messages) CompAnnouncement(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CompAnnouncement(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CompAnnouncement; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Announcement " + i18n.FormatNumber("en", float64(n))
+			return "Announcement " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "إعلان " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -28860,6 +29134,9 @@ func AnimViews(cx *core.Scope, count int) string { return For(cx).AnimViews(coun
 // AnimViews says "{count, plural, one {# view} other {# views}}"
 // in the language of msgs.
 func (msgs Messages) AnimViews(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AnimViews(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].AnimViews; f != nil {
 			return f(count)
@@ -28869,10 +29146,10 @@ func (msgs Messages) AnimViews(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" view")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" views")
 			}
 			return b.String()
@@ -29141,6 +29418,9 @@ func AnimReadyMadeMotions(cx *core.Scope, count int) string {
 // AnimReadyMadeMotions says "{count, plural, one {# ready-made motion} other {# ready-made motions}}, played natively"
 // in the language of msgs.
 func (msgs Messages) AnimReadyMadeMotions(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AnimReadyMadeMotions(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].AnimReadyMadeMotions; f != nil {
 			return f(count)
@@ -29150,10 +29430,10 @@ func (msgs Messages) AnimReadyMadeMotions(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" ready-made motion")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" ready-made motions")
 			}
 			b.WriteString(", played natively")
@@ -29735,13 +30015,16 @@ func GestDown(cx *core.Scope, count int) string { return For(cx).GestDown(count)
 // GestDown says "{count, number} down"
 // in the language of msgs.
 func (msgs Messages) GestDown(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.GestDown(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].GestDown; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " down"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " down"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " مضغوط"
 		case "zh-Hans":
@@ -29761,13 +30044,16 @@ func GestTouchLine(cx *core.Scope, at string, page string, count int) string {
 // GestTouchLine says "{at} · page {page} · {count, number} down"
 // in the language of msgs.
 func (msgs Messages) GestTouchLine(at string, page string, count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.GestTouchLine(at, page, count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].GestTouchLine; f != nil {
 			return f(at, page, count)
 		}
 		switch lang {
 		case "", "en":
-			return at + " · page " + page + " · " + i18n.FormatNumber("en", float64(count)) + " down"
+			return msgs.arg(at) + " · page " + msgs.arg(page) + " · " + msgs.arg(i18n.FormatNumber("en", float64(count))) + " down"
 		case "ar":
 			return at + " · الصفحة " + page + " · " + i18n.FormatNumber("ar", float64(count)) + " مضغوط"
 		case "zh-Hans":
@@ -29785,6 +30071,9 @@ func GestTaps(cx *core.Scope, count int) string { return For(cx).GestTaps(count)
 // GestTaps says "{count, plural, one {# tap} other {# taps}}"
 // in the language of msgs.
 func (msgs Messages) GestTaps(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.GestTaps(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].GestTaps; f != nil {
 			return f(count)
@@ -29794,10 +30083,10 @@ func (msgs Messages) GestTaps(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" tap")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" taps")
 			}
 			return b.String()
@@ -29818,13 +30107,16 @@ func GestPointerAt(cx *core.Scope, at string) string { return For(cx).GestPointe
 // GestPointerAt says "Pointer at {at}"
 // in the language of msgs.
 func (msgs Messages) GestPointerAt(at string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.GestPointerAt(at))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].GestPointerAt; f != nil {
 			return f(at)
 		}
 		switch lang {
 		case "", "en":
-			return "Pointer at " + at
+			return "Pointer at " + msgs.arg(at)
 		case "ar":
 			return "المؤشر عند " + at
 		case "zh-Hans":
@@ -31178,13 +31470,16 @@ func StocksDaysAgo(cx *core.Scope, days int) string { return For(cx).StocksDaysA
 // StocksDaysAgo says "{days, number}d ago"
 // in the language of msgs.
 func (msgs Messages) StocksDaysAgo(days int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksDaysAgo(days))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksDaysAgo; f != nil {
 			return f(days)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(days)) + "d ago"
+			return msgs.arg(i18n.FormatNumber("en", float64(days))) + "d ago"
 		case "ar":
 			return "قبل " + i18n.FormatNumber("ar", float64(days)) + " يوم"
 		case "zh-Hans":
@@ -31204,13 +31499,16 @@ func StocksFlatIssues(cx *core.Scope, flat int, issues int) string {
 // StocksFlatIssues says "{flat, number} flat · {issues, number} issues"
 // in the language of msgs.
 func (msgs Messages) StocksFlatIssues(flat int, issues int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksFlatIssues(flat, issues))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksFlatIssues; f != nil {
 			return f(flat, issues)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(flat)) + " flat · " + i18n.FormatNumber("en", float64(issues)) + " issues"
+			return msgs.arg(i18n.FormatNumber("en", float64(flat))) + " flat · " + msgs.arg(i18n.FormatNumber("en", float64(issues))) + " issues"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(flat)) + " ثابت · " + i18n.FormatNumber("ar", float64(issues)) + " سهمًا"
 		case "zh-Hans":
@@ -31228,13 +31526,16 @@ func StocksDownCount(cx *core.Scope, count int) string { return For(cx).StocksDo
 // StocksDownCount says "{count, number} down"
 // in the language of msgs.
 func (msgs Messages) StocksDownCount(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksDownCount(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksDownCount; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " down"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " down"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " منخفض"
 		case "zh-Hans":
@@ -31254,13 +31555,16 @@ func StocksSimulatedFooter(cx *core.Scope, engine string, quotes string) string 
 // StocksSimulatedFooter says "Simulated, fictional companies · tick 50 ms · {engine} ms engine/tick · {quotes} quotes/s"
 // in the language of msgs.
 func (msgs Messages) StocksSimulatedFooter(engine string, quotes string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksSimulatedFooter(engine, quotes))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksSimulatedFooter; f != nil {
 			return f(engine, quotes)
 		}
 		switch lang {
 		case "", "en":
-			return "Simulated, fictional companies · tick 50 ms · " + engine + " ms engine/tick · " + quotes + " quotes/s"
+			return "Simulated, fictional companies · tick 50 ms · " + msgs.arg(engine) + " ms engine/tick · " + msgs.arg(quotes) + " quotes/s"
 		case "ar":
 			return "محاكاة لشركات خيالية · نبضة كل 50 مللي ثانية · " + engine + " مللي ثانية للمحرك/نبضة · " + quotes + " سعر/ث"
 		case "zh-Hans":
@@ -31280,13 +31584,16 @@ func StocksTicksCumulative(cx *core.Scope, ticks int) string {
 // StocksTicksCumulative says "±{ticks, number} ticks · cumulative"
 // in the language of msgs.
 func (msgs Messages) StocksTicksCumulative(ticks int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksTicksCumulative(ticks))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksTicksCumulative; f != nil {
 			return f(ticks)
 		}
 		switch lang {
 		case "", "en":
-			return "±" + i18n.FormatNumber("en", float64(ticks)) + " ticks · cumulative"
+			return "±" + msgs.arg(i18n.FormatNumber("en", float64(ticks))) + " ticks · cumulative"
 		case "ar":
 			return "±" + i18n.FormatNumber("ar", float64(ticks)) + " نبضة · تراكمي"
 		case "zh-Hans":
@@ -31304,13 +31611,16 @@ func StocksBidShare(cx *core.Scope, share float64) string { return For(cx).Stock
 // StocksBidShare says "BID {share, number, percent}"
 // in the language of msgs.
 func (msgs Messages) StocksBidShare(share float64) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksBidShare(share))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksBidShare; f != nil {
 			return f(share)
 		}
 		switch lang {
 		case "", "en":
-			return "BID " + i18n.FormatPercent("en", share)
+			return "BID " + msgs.arg(i18n.FormatPercent("en", share))
 		case "ar":
 			return "العرض " + i18n.FormatPercent("ar", share)
 		case "zh-Hans":
@@ -31328,13 +31638,16 @@ func StocksAskShare(cx *core.Scope, share float64) string { return For(cx).Stock
 // StocksAskShare says "{share, number, percent} ASK"
 // in the language of msgs.
 func (msgs Messages) StocksAskShare(share float64) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksAskShare(share))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksAskShare; f != nil {
 			return f(share)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatPercent("en", share) + " ASK"
+			return msgs.arg(i18n.FormatPercent("en", share)) + " ASK"
 		case "ar":
 			return i18n.FormatPercent("ar", share) + " الطلب"
 		case "zh-Hans":
@@ -31354,13 +31667,16 @@ func StocksAvgVol(cx *core.Scope, avg string, vol string) string {
 // StocksAvgVol says "avg {avg} · vol {vol}"
 // in the language of msgs.
 func (msgs Messages) StocksAvgVol(avg string, vol string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksAvgVol(avg, vol))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksAvgVol; f != nil {
 			return f(avg, vol)
 		}
 		switch lang {
 		case "", "en":
-			return "avg " + avg + " · vol " + vol
+			return "avg " + msgs.arg(avg) + " · vol " + msgs.arg(vol)
 		case "ar":
 			return "المتوسط " + avg + " · الحجم " + vol
 		case "zh-Hans":
@@ -31380,13 +31696,16 @@ func StocksDayRange(cx *core.Scope, low string, high string) string {
 // StocksDayRange says "Day range {low} to {high}"
 // in the language of msgs.
 func (msgs Messages) StocksDayRange(low string, high string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksDayRange(low, high))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksDayRange; f != nil {
 			return f(low, high)
 		}
 		switch lang {
 		case "", "en":
-			return "Day range " + low + " to " + high
+			return "Day range " + msgs.arg(low) + " to " + msgs.arg(high)
 		case "ar":
 			return "نطاق اليوم من " + low + " إلى " + high
 		case "zh-Hans":
@@ -31406,13 +31725,16 @@ func StocksSimulatedStats(cx *core.Scope, engine string, quotes string) string {
 // StocksSimulatedStats says "simulated · {engine} ms engine/tick · {quotes} quotes/s"
 // in the language of msgs.
 func (msgs Messages) StocksSimulatedStats(engine string, quotes string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksSimulatedStats(engine, quotes))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksSimulatedStats; f != nil {
 			return f(engine, quotes)
 		}
 		switch lang {
 		case "", "en":
-			return "simulated · " + engine + " ms engine/tick · " + quotes + " quotes/s"
+			return "simulated · " + msgs.arg(engine) + " ms engine/tick · " + msgs.arg(quotes) + " quotes/s"
 		case "ar":
 			return "محاكاة · " + engine + " مللي ثانية للمحرك/نبضة · " + quotes + " سعر/ث"
 		case "zh-Hans":
@@ -31430,6 +31752,9 @@ func StocksShares(cx *core.Scope, count int) string { return For(cx).StocksShare
 // StocksShares says "{count, plural, one {# share} other {# shares}}"
 // in the language of msgs.
 func (msgs Messages) StocksShares(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksShares(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksShares; f != nil {
 			return f(count)
@@ -31439,10 +31764,10 @@ func (msgs Messages) StocksShares(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" share")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" shares")
 			}
 			return b.String()
@@ -31465,13 +31790,16 @@ func StocksOfBuyingPower(cx *core.Scope, percent string, power string) string {
 // StocksOfBuyingPower says "{percent} of {power} buying power"
 // in the language of msgs.
 func (msgs Messages) StocksOfBuyingPower(percent string, power string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksOfBuyingPower(percent, power))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksOfBuyingPower; f != nil {
 			return f(percent, power)
 		}
 		switch lang {
 		case "", "en":
-			return percent + " of " + power + " buying power"
+			return msgs.arg(percent) + " of " + msgs.arg(power) + " buying power"
 		case "ar":
 			return percent + " من القوة الشرائية " + power
 		case "zh-Hans":
@@ -31491,13 +31819,16 @@ func StocksPlacedDetail(cx *core.Scope, quantity string, code string, price stri
 // StocksPlacedDetail says "{quantity} {code} at {price} · simulated"
 // in the language of msgs.
 func (msgs Messages) StocksPlacedDetail(quantity string, code string, price string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksPlacedDetail(quantity, code, price))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksPlacedDetail; f != nil {
 			return f(quantity, code, price)
 		}
 		switch lang {
 		case "", "en":
-			return quantity + " " + code + " at " + price + " · simulated"
+			return msgs.arg(quantity) + " " + msgs.arg(code) + " at " + msgs.arg(price) + " · simulated"
 		case "ar":
 			return quantity + " " + code + " بسعر " + price + " · محاكاة"
 		case "zh-Hans":
@@ -31893,13 +32224,16 @@ func ChatInstallCli(cx *core.Scope, provider string, why string, command string)
 // ChatInstallCli says "{provider}: {why}. Install {command} on PATH and sign in with {command} in a terminal, then retry."
 // in the language of msgs.
 func (msgs Messages) ChatInstallCli(provider string, why string, command string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatInstallCli(provider, why, command))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ChatInstallCli; f != nil {
 			return f(provider, why, command)
 		}
 		switch lang {
 		case "", "en":
-			return provider + ": " + why + ". Install " + command + " on PATH and sign in with " + command + " in a terminal, then retry."
+			return msgs.arg(provider) + ": " + msgs.arg(why) + ". Install " + msgs.arg(command) + " on PATH and sign in with " + msgs.arg(command) + " in a terminal, then retry."
 		case "ar":
 			return provider + ": " + why + ". ثبّت " + command + " في PATH وسجّل الدخول باستخدام " + command + " في طرفية، ثم أعد المحاولة."
 		case "zh-Hans":
@@ -31917,13 +32251,16 @@ func ChatThinking(cx *core.Scope, seconds int) string { return For(cx).ChatThink
 // ChatThinking says "Thinking… {seconds, number} s"
 // in the language of msgs.
 func (msgs Messages) ChatThinking(seconds int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatThinking(seconds))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ChatThinking; f != nil {
 			return f(seconds)
 		}
 		switch lang {
 		case "", "en":
-			return "Thinking… " + i18n.FormatNumber("en", float64(seconds)) + " s"
+			return "Thinking… " + msgs.arg(i18n.FormatNumber("en", float64(seconds))) + " s"
 		case "ar":
 			return "يفكر… " + i18n.FormatNumber("ar", float64(seconds)) + " ث"
 		case "zh-Hans":
@@ -31941,13 +32278,16 @@ func ChatThoughtFor(cx *core.Scope, seconds int) string { return For(cx).ChatTho
 // ChatThoughtFor says "Thought for {seconds, number} s"
 // in the language of msgs.
 func (msgs Messages) ChatThoughtFor(seconds int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatThoughtFor(seconds))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ChatThoughtFor; f != nil {
 			return f(seconds)
 		}
 		switch lang {
 		case "", "en":
-			return "Thought for " + i18n.FormatNumber("en", float64(seconds)) + " s"
+			return "Thought for " + msgs.arg(i18n.FormatNumber("en", float64(seconds))) + " s"
 		case "ar":
 			return "فكّر لمدة " + i18n.FormatNumber("ar", float64(seconds)) + " ث"
 		case "zh-Hans":
@@ -33599,6 +33939,9 @@ func DockEdits(cx *core.Scope, panel string, count int) string {
 // DockEdits says "{panel}: {count, plural, one {# edit} other {# edits}}"
 // in the language of msgs.
 func (msgs Messages) DockEdits(panel string, count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DockEdits(panel, count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DockEdits; f != nil {
 			return f(panel, count)
@@ -33606,14 +33949,14 @@ func (msgs Messages) DockEdits(panel string, count int) string {
 		switch lang {
 		case "", "en":
 			var b strings.Builder
-			b.WriteString(panel)
+			b.WriteString(msgs.arg(panel))
 			b.WriteString(": ")
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" edit")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" edits")
 			}
 			return b.String()
@@ -33636,13 +33979,16 @@ func ScrollPageOf(cx *core.Scope, title string, n int, total int) string {
 // ScrollPageOf says "{title} · {n, number} of {total, number}"
 // in the language of msgs.
 func (msgs Messages) ScrollPageOf(title string, n int, total int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollPageOf(title, n, total))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollPageOf; f != nil {
 			return f(title, n, total)
 		}
 		switch lang {
 		case "", "en":
-			return title + " · " + i18n.FormatNumber("en", float64(n)) + " of " + i18n.FormatNumber("en", float64(total))
+			return msgs.arg(title) + " · " + msgs.arg(i18n.FormatNumber("en", float64(n))) + " of " + msgs.arg(i18n.FormatNumber("en", float64(total)))
 		case "ar":
 			return title + " · " + i18n.FormatNumber("ar", float64(n)) + " من " + i18n.FormatNumber("ar", float64(total))
 		case "zh-Hans":
@@ -33660,13 +34006,16 @@ func DockRegionNone(cx *core.Scope, name string) string { return For(cx).DockReg
 // DockRegionNone says "{name}: none"
 // in the language of msgs.
 func (msgs Messages) DockRegionNone(name string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DockRegionNone(name))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DockRegionNone; f != nil {
 			return f(name)
 		}
 		switch lang {
 		case "", "en":
-			return name + ": none"
+			return msgs.arg(name) + ": none"
 		case "ar":
 			return name + ": لا شيء"
 		case "zh-Hans":
@@ -33702,13 +34051,16 @@ func OverlayLinkOnClipboard(cx *core.Scope, count int) string {
 // OverlayLinkOnClipboard says "The link is on the clipboard ({count, number})"
 // in the language of msgs.
 func (msgs Messages) OverlayLinkOnClipboard(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.OverlayLinkOnClipboard(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].OverlayLinkOnClipboard; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "The link is on the clipboard (" + i18n.FormatNumber("en", float64(count)) + ")"
+			return "The link is on the clipboard (" + msgs.arg(i18n.FormatNumber("en", float64(count))) + ")"
 		case "ar":
 			return "الرابط في الحافظة (" + i18n.FormatNumber("ar", float64(count)) + ")"
 		case "zh-Hans":
@@ -33726,6 +34078,9 @@ func A11yItems(cx *core.Scope, count int) string { return For(cx).A11yItems(coun
 // A11yItems says "{count, plural, one {# item} other {# items}}"
 // in the language of msgs.
 func (msgs Messages) A11yItems(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.A11yItems(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].A11yItems; f != nil {
 			return f(count)
@@ -33735,10 +34090,10 @@ func (msgs Messages) A11yItems(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" item")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" items")
 			}
 			return b.String()
@@ -33759,13 +34114,16 @@ func A11yAKilo(cx *core.Scope, price string) string { return For(cx).A11yAKilo(p
 // A11yAKilo says "{price} a kilo"
 // in the language of msgs.
 func (msgs Messages) A11yAKilo(price string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.A11yAKilo(price))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].A11yAKilo; f != nil {
 			return f(price)
 		}
 		switch lang {
 		case "", "en":
-			return price + " a kilo"
+			return msgs.arg(price) + " a kilo"
 		case "ar":
 			return price + " للكيلو"
 		case "zh-Hans":
@@ -33783,13 +34141,16 @@ func A11yInTheBasket(cx *core.Scope, count int) string { return For(cx).A11yInTh
 // A11yInTheBasket says "{count, number} in the basket"
 // in the language of msgs.
 func (msgs Messages) A11yInTheBasket(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.A11yInTheBasket(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].A11yInTheBasket; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " in the basket"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " in the basket"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " في السلة"
 		case "zh-Hans":
@@ -33807,13 +34168,16 @@ func ScrollSettledOnPage(cx *core.Scope, n int) string { return For(cx).ScrollSe
 // ScrollSettledOnPage says "Settled on page {n, number}"
 // in the language of msgs.
 func (msgs Messages) ScrollSettledOnPage(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollSettledOnPage(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollSettledOnPage; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Settled on page " + i18n.FormatNumber("en", float64(n))
+			return "Settled on page " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "استقر على الصفحة " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -33831,13 +34195,16 @@ func ScrollViewport(cx *core.Scope, height string) string { return For(cx).Scrol
 // ScrollViewport says "viewport {height} pt"
 // in the language of msgs.
 func (msgs Messages) ScrollViewport(height string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollViewport(height))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollViewport; f != nil {
 			return f(height)
 		}
 		switch lang {
 		case "", "en":
-			return "viewport " + height + " pt"
+			return "viewport " + msgs.arg(height) + " pt"
 		case "ar":
 			return "منطقة العرض " + height + " نقطة"
 		case "zh-Hans":
@@ -33855,13 +34222,16 @@ func ScrollTile(cx *core.Scope, n int) string { return For(cx).ScrollTile(n) }
 // ScrollTile says "Tile {n, number}"
 // in the language of msgs.
 func (msgs Messages) ScrollTile(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollTile(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollTile; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Tile " + i18n.FormatNumber("en", float64(n))
+			return "Tile " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "المربع " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -33879,13 +34249,16 @@ func ScrollPost(cx *core.Scope, n int) string { return For(cx).ScrollPost(n) }
 // ScrollPost says "Post {n, number}"
 // in the language of msgs.
 func (msgs Messages) ScrollPost(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollPost(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollPost; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Post " + i18n.FormatNumber("en", float64(n))
+			return "Post " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "المنشور " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -33903,13 +34276,16 @@ func ScrollNew(cx *core.Scope, n int) string { return For(cx).ScrollNew(n) }
 // ScrollNew says "New {n, number}"
 // in the language of msgs.
 func (msgs Messages) ScrollNew(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollNew(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollNew; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "New " + i18n.FormatNumber("en", float64(n))
+			return "New " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "جديد " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -33927,6 +34303,9 @@ func ScrollPosts(cx *core.Scope, count int) string { return For(cx).ScrollPosts(
 // ScrollPosts says "{count, plural, one {# post} other {# posts}}"
 // in the language of msgs.
 func (msgs Messages) ScrollPosts(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ScrollPosts(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ScrollPosts; f != nil {
 			return f(count)
@@ -33936,10 +34315,10 @@ func (msgs Messages) ScrollPosts(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" post")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" posts")
 			}
 			return b.String()
@@ -34616,13 +34995,16 @@ func ChartsVisitorsPerDay(cx *core.Scope, monday string, sunday string) string {
 // ChartsVisitorsPerDay says "Visitors per day, from {monday} on Monday to {sunday} on Sunday"
 // in the language of msgs.
 func (msgs Messages) ChartsVisitorsPerDay(monday string, sunday string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsVisitorsPerDay(monday, sunday))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ChartsVisitorsPerDay; f != nil {
 			return f(monday, sunday)
 		}
 		switch lang {
 		case "", "en":
-			return "Visitors per day, from " + monday + " on Monday to " + sunday + " on Sunday"
+			return "Visitors per day, from " + msgs.arg(monday) + " on Monday to " + msgs.arg(sunday) + " on Sunday"
 		case "ar":
 			return "الزوار يوميًا، من " + monday + " يوم الإثنين إلى " + sunday + " يوم الأحد"
 		case "zh-Hans":
@@ -34642,13 +35024,16 @@ func ChartsHoverValue(cx *core.Scope, day string, visitors string, other string,
 // ChartsHoverValue says "{day}, {visitors} visitors, {other} {week}"
 // in the language of msgs.
 func (msgs Messages) ChartsHoverValue(day string, visitors string, other string, week string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsHoverValue(day, visitors, other, week))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ChartsHoverValue; f != nil {
 			return f(day, visitors, other, week)
 		}
 		switch lang {
 		case "", "en":
-			return day + ", " + visitors + " visitors, " + other + " " + week
+			return msgs.arg(day) + ", " + msgs.arg(visitors) + " visitors, " + msgs.arg(other) + " " + msgs.arg(week)
 		case "ar":
 			return day + "، " + visitors + " زائر، " + other + " " + week
 		case "zh-Hans":
@@ -34668,13 +35053,16 @@ func ChartsPlotEvent(cx *core.Scope, day string, visitors string) string {
 // ChartsPlotEvent says "Plot: {day}, {visitors}"
 // in the language of msgs.
 func (msgs Messages) ChartsPlotEvent(day string, visitors string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsPlotEvent(day, visitors))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ChartsPlotEvent; f != nil {
 			return f(day, visitors)
 		}
 		switch lang {
 		case "", "en":
-			return "Plot: " + day + ", " + visitors
+			return "Plot: " + msgs.arg(day) + ", " + msgs.arg(visitors)
 		case "ar":
 			return "المخطط: " + day + "، " + visitors
 		case "zh-Hans":
@@ -34692,6 +35080,9 @@ func ShaderStartPressed(cx *core.Scope, count int) string { return For(cx).Shade
 // ShaderStartPressed says "Start pressed {count, plural, one {# time} other {# times}}"
 // in the language of msgs.
 func (msgs Messages) ShaderStartPressed(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ShaderStartPressed(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ShaderStartPressed; f != nil {
 			return f(count)
@@ -34702,10 +35093,10 @@ func (msgs Messages) ShaderStartPressed(count int) string {
 			b.WriteString("Start pressed ")
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" time")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" times")
 			}
 			return b.String()
@@ -34728,13 +35119,16 @@ func ShaderScaleIntensity(cx *core.Scope, scale string, intensity string) string
 // ShaderScaleIntensity says "Scale {scale} · Intensity {intensity}"
 // in the language of msgs.
 func (msgs Messages) ShaderScaleIntensity(scale string, intensity string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ShaderScaleIntensity(scale, intensity))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ShaderScaleIntensity; f != nil {
 			return f(scale, intensity)
 		}
 		switch lang {
 		case "", "en":
-			return "Scale " + scale + " · Intensity " + intensity
+			return "Scale " + msgs.arg(scale) + " · Intensity " + msgs.arg(intensity)
 		case "ar":
 			return "المقياس " + scale + " · الشدة " + intensity
 		case "zh-Hans":
@@ -34752,13 +35146,16 @@ func PhotosViews(cx *core.Scope, count string) string { return For(cx).PhotosVie
 // PhotosViews says "{count} views"
 // in the language of msgs.
 func (msgs Messages) PhotosViews(count string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.PhotosViews(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].PhotosViews; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return count + " views"
+			return msgs.arg(count) + " views"
 		case "ar":
 			return count + " مشاهدة"
 		case "zh-Hans":
@@ -34776,13 +35173,16 @@ func PhotosPullToRefresh(cx *core.Scope, count int) string { return For(cx).Phot
 // PhotosPullToRefresh says "Pull to refresh. Scrolling to the end loads {count, number} more."
 // in the language of msgs.
 func (msgs Messages) PhotosPullToRefresh(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.PhotosPullToRefresh(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].PhotosPullToRefresh; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "Pull to refresh. Scrolling to the end loads " + i18n.FormatNumber("en", float64(count)) + " more."
+			return "Pull to refresh. Scrolling to the end loads " + msgs.arg(i18n.FormatNumber("en", float64(count))) + " more."
 		case "ar":
 			return "اسحب للتحديث. التمرير إلى النهاية يحمّل " + i18n.FormatNumber("ar", float64(count)) + " أخرى."
 		case "zh-Hans":
@@ -34800,13 +35200,16 @@ func PhotosLoadsMore(cx *core.Scope, count int) string { return For(cx).PhotosLo
 // PhotosLoadsMore says "Scrolling to the end loads {count, number} more."
 // in the language of msgs.
 func (msgs Messages) PhotosLoadsMore(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.PhotosLoadsMore(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].PhotosLoadsMore; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "Scrolling to the end loads " + i18n.FormatNumber("en", float64(count)) + " more."
+			return "Scrolling to the end loads " + msgs.arg(i18n.FormatNumber("en", float64(count))) + " more."
 		case "ar":
 			return "التمرير إلى النهاية يحمّل " + i18n.FormatNumber("ar", float64(count)) + " أخرى."
 		case "zh-Hans":
@@ -34824,13 +35227,16 @@ func PhotosLoadingMore(cx *core.Scope, count int) string { return For(cx).Photos
 // PhotosLoadingMore says "Loading {count, number} more…"
 // in the language of msgs.
 func (msgs Messages) PhotosLoadingMore(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.PhotosLoadingMore(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].PhotosLoadingMore; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return "Loading " + i18n.FormatNumber("en", float64(count)) + " more…"
+			return "Loading " + msgs.arg(i18n.FormatNumber("en", float64(count))) + " more…"
 		case "ar":
 			return "جارٍ تحميل " + i18n.FormatNumber("ar", float64(count)) + " أخرى…"
 		case "zh-Hans":
@@ -34848,13 +35254,16 @@ func DiffChange(cx *core.Scope, n int) string { return For(cx).DiffChange(n) }
 // DiffChange says "Change {n, number}"
 // in the language of msgs.
 func (msgs Messages) DiffChange(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffChange(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffChange; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Change " + i18n.FormatNumber("en", float64(n))
+			return "Change " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "التغيير " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -34872,13 +35281,16 @@ func DiffCommentOnLine(cx *core.Scope, line int) string { return For(cx).DiffCom
 // DiffCommentOnLine says "Comment on line {line, number}"
 // in the language of msgs.
 func (msgs Messages) DiffCommentOnLine(line int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffCommentOnLine(line))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffCommentOnLine; f != nil {
 			return f(line)
 		}
 		switch lang {
 		case "", "en":
-			return "Comment on line " + i18n.FormatNumber("en", float64(line))
+			return "Comment on line " + msgs.arg(i18n.FormatNumber("en", float64(line)))
 		case "ar":
 			return "تعليق على السطر " + i18n.FormatNumber("ar", float64(line))
 		case "zh-Hans":
@@ -34898,13 +35310,16 @@ func DiffCommentOnLines(cx *core.Scope, first int, last int) string {
 // DiffCommentOnLines says "Comment on lines {first, number} to {last, number}"
 // in the language of msgs.
 func (msgs Messages) DiffCommentOnLines(first int, last int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffCommentOnLines(first, last))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffCommentOnLines; f != nil {
 			return f(first, last)
 		}
 		switch lang {
 		case "", "en":
-			return "Comment on lines " + i18n.FormatNumber("en", float64(first)) + " to " + i18n.FormatNumber("en", float64(last))
+			return "Comment on lines " + msgs.arg(i18n.FormatNumber("en", float64(first))) + " to " + msgs.arg(i18n.FormatNumber("en", float64(last)))
 		case "ar":
 			return "تعليق على الأسطر " + i18n.FormatNumber("ar", float64(first)) + " إلى " + i18n.FormatNumber("ar", float64(last))
 		case "zh-Hans":
@@ -34924,13 +35339,16 @@ func DiffLinesSelected(cx *core.Scope, first int, last int) string {
 // DiffLinesSelected says "Lines {first, number} to {last, number} selected"
 // in the language of msgs.
 func (msgs Messages) DiffLinesSelected(first int, last int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffLinesSelected(first, last))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffLinesSelected; f != nil {
 			return f(first, last)
 		}
 		switch lang {
 		case "", "en":
-			return "Lines " + i18n.FormatNumber("en", float64(first)) + " to " + i18n.FormatNumber("en", float64(last)) + " selected"
+			return "Lines " + msgs.arg(i18n.FormatNumber("en", float64(first))) + " to " + msgs.arg(i18n.FormatNumber("en", float64(last))) + " selected"
 		case "ar":
 			return "تم تحديد الأسطر " + i18n.FormatNumber("ar", float64(first)) + " إلى " + i18n.FormatNumber("ar", float64(last))
 		case "zh-Hans":
@@ -34948,13 +35366,16 @@ func DiffLineOfOld(cx *core.Scope, line int) string { return For(cx).DiffLineOfO
 // DiffLineOfOld says "Line {line, number} of the old text"
 // in the language of msgs.
 func (msgs Messages) DiffLineOfOld(line int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffLineOfOld(line))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffLineOfOld; f != nil {
 			return f(line)
 		}
 		switch lang {
 		case "", "en":
-			return "Line " + i18n.FormatNumber("en", float64(line)) + " of the old text"
+			return "Line " + msgs.arg(i18n.FormatNumber("en", float64(line))) + " of the old text"
 		case "ar":
 			return "السطر " + i18n.FormatNumber("ar", float64(line)) + " من النص القديم"
 		case "zh-Hans":
@@ -34972,13 +35393,16 @@ func DiffLineOfNew(cx *core.Scope, line int) string { return For(cx).DiffLineOfN
 // DiffLineOfNew says "Line {line, number} of the new text"
 // in the language of msgs.
 func (msgs Messages) DiffLineOfNew(line int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffLineOfNew(line))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffLineOfNew; f != nil {
 			return f(line)
 		}
 		switch lang {
 		case "", "en":
-			return "Line " + i18n.FormatNumber("en", float64(line)) + " of the new text"
+			return "Line " + msgs.arg(i18n.FormatNumber("en", float64(line))) + " of the new text"
 		case "ar":
 			return "السطر " + i18n.FormatNumber("ar", float64(line)) + " من النص الجديد"
 		case "zh-Hans":
@@ -34998,13 +35422,16 @@ func DiffCollapsed(cx *core.Scope, path string, state string) string {
 // DiffCollapsed says "{path} collapsed: {state}"
 // in the language of msgs.
 func (msgs Messages) DiffCollapsed(path string, state string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffCollapsed(path, state))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffCollapsed; f != nil {
 			return f(path, state)
 		}
 		switch lang {
 		case "", "en":
-			return path + " collapsed: " + state
+			return msgs.arg(path) + " collapsed: " + msgs.arg(state)
 		case "ar":
 			return path + " مطوي: " + state
 		case "zh-Hans":
@@ -35022,13 +35449,16 @@ func DiffReverted(cx *core.Scope, n int) string { return For(cx).DiffReverted(n)
 // DiffReverted says "Reverted change {n, number}"
 // in the language of msgs.
 func (msgs Messages) DiffReverted(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffReverted(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffReverted; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Reverted change " + i18n.FormatNumber("en", float64(n))
+			return "Reverted change " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "تم التراجع عن التغيير " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -35046,13 +35476,16 @@ func DiffKept(cx *core.Scope, n int) string { return For(cx).DiffKept(n) }
 // DiffKept says "Kept change {n, number}"
 // in the language of msgs.
 func (msgs Messages) DiffKept(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffKept(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffKept; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Kept change " + i18n.FormatNumber("en", float64(n))
+			return "Kept change " + msgs.arg(i18n.FormatNumber("en", float64(n)))
 		case "ar":
 			return "تم إبقاء التغيير " + i18n.FormatNumber("ar", float64(n))
 		case "zh-Hans":
@@ -35070,6 +35503,9 @@ func DiffLines(cx *core.Scope, count int) string { return For(cx).DiffLines(coun
 // DiffLines says "{count, plural, one {# line} other {# lines}}"
 // in the language of msgs.
 func (msgs Messages) DiffLines(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffLines(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffLines; f != nil {
 			return f(count)
@@ -35079,10 +35515,10 @@ func (msgs Messages) DiffLines(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" line")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" lines")
 			}
 			return b.String()
@@ -35103,6 +35539,9 @@ func DiffChanges(cx *core.Scope, count int) string { return For(cx).DiffChanges(
 // DiffChanges says "{count, plural, one {# change} other {# changes}}"
 // in the language of msgs.
 func (msgs Messages) DiffChanges(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffChanges(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].DiffChanges; f != nil {
 			return f(count)
@@ -35112,10 +35551,10 @@ func (msgs Messages) DiffChanges(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" change")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" changes")
 			}
 			return b.String()
@@ -35900,6 +36339,9 @@ func EditorErrors(cx *core.Scope, count int) string { return For(cx).EditorError
 // EditorErrors says "{count, plural, one {# error} other {# errors}}"
 // in the language of msgs.
 func (msgs Messages) EditorErrors(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorErrors(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorErrors; f != nil {
 			return f(count)
@@ -35909,10 +36351,10 @@ func (msgs Messages) EditorErrors(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" error")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" errors")
 			}
 			return b.String()
@@ -35933,6 +36375,9 @@ func EditorWarnings(cx *core.Scope, count int) string { return For(cx).EditorWar
 // EditorWarnings says "{count, plural, one {# warning} other {# warnings}}"
 // in the language of msgs.
 func (msgs Messages) EditorWarnings(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorWarnings(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorWarnings; f != nil {
 			return f(count)
@@ -35942,10 +36387,10 @@ func (msgs Messages) EditorWarnings(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" warning")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" warnings")
 			}
 			return b.String()
@@ -35966,13 +36411,16 @@ func EditorInfos(cx *core.Scope, count int) string { return For(cx).EditorInfos(
 // EditorInfos says "{count, number} info"
 // in the language of msgs.
 func (msgs Messages) EditorInfos(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.EditorInfos(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].EditorInfos; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " info"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " info"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " معلومات"
 		case "zh-Hans":
@@ -35990,6 +36438,9 @@ func GestFiles(cx *core.Scope, count int) string { return For(cx).GestFiles(coun
 // GestFiles says "{count, plural, one {# file} other {# files}}"
 // in the language of msgs.
 func (msgs Messages) GestFiles(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.GestFiles(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].GestFiles; f != nil {
 			return f(count)
@@ -35999,10 +36450,10 @@ func (msgs Messages) GestFiles(count int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(count)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" file")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(count)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
 				b.WriteString(" files")
 			}
 			return b.String()
@@ -36025,6 +36476,9 @@ func StorageKeysChars(cx *core.Scope, keys int, chars int) string {
 // StorageKeysChars says "{keys, plural, one {# key} other {# keys}} · {chars, number} chars of 5 MB"
 // in the language of msgs.
 func (msgs Messages) StorageKeysChars(keys int, chars int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StorageKeysChars(keys, chars))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StorageKeysChars; f != nil {
 			return f(keys, chars)
@@ -36034,14 +36488,14 @@ func (msgs Messages) StorageKeysChars(keys int, chars int) string {
 			var b strings.Builder
 			switch i18n.Cardinal("en", float64(keys)) {
 			case i18n.One:
-				b.WriteString(i18n.FormatNumber("en", float64(keys)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(keys))))
 				b.WriteString(" key")
 			default:
-				b.WriteString(i18n.FormatNumber("en", float64(keys)))
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(keys))))
 				b.WriteString(" keys")
 			}
 			b.WriteString(" · ")
-			b.WriteString(i18n.FormatNumber("en", float64(chars)))
+			b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(chars))))
 			b.WriteString(" chars of 5 MB")
 			return b.String()
 		case "ar":
@@ -36061,13 +36515,16 @@ func StorageChars(cx *core.Scope, count int) string { return For(cx).StorageChar
 // StorageChars says "{count, number} chars"
 // in the language of msgs.
 func (msgs Messages) StorageChars(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StorageChars(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StorageChars; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " chars"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " chars"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " حرفًا"
 		case "zh-Hans":
@@ -36085,13 +36542,16 @@ func ResizableSidebarPt(cx *core.Scope, size string) string { return For(cx).Res
 // ResizableSidebarPt says "Sidebar {size} pt"
 // in the language of msgs.
 func (msgs Messages) ResizableSidebarPt(size string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ResizableSidebarPt(size))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ResizableSidebarPt; f != nil {
 			return f(size)
 		}
 		switch lang {
 		case "", "en":
-			return "Sidebar " + size + " pt"
+			return "Sidebar " + msgs.arg(size) + " pt"
 		case "ar":
 			return "الشريط الجانبي " + size + " نقطة"
 		case "zh-Hans":
@@ -36109,13 +36569,16 @@ func ResizableConsolePt(cx *core.Scope, size string) string { return For(cx).Res
 // ResizableConsolePt says "Console {size} pt"
 // in the language of msgs.
 func (msgs Messages) ResizableConsolePt(size string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ResizableConsolePt(size))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].ResizableConsolePt; f != nil {
 			return f(size)
 		}
 		switch lang {
 		case "", "en":
-			return "Console " + size + " pt"
+			return "Console " + msgs.arg(size) + " pt"
 		case "ar":
 			return "وحدة التحكم " + size + " نقطة"
 		case "zh-Hans":
@@ -36133,13 +36596,16 @@ func CollapsingEntry(cx *core.Scope, n string) string { return For(cx).Collapsin
 // CollapsingEntry says "Entry {n}"
 // in the language of msgs.
 func (msgs Messages) CollapsingEntry(n string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CollapsingEntry(n))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CollapsingEntry; f != nil {
 			return f(n)
 		}
 		switch lang {
 		case "", "en":
-			return "Entry " + n
+			return "Entry " + msgs.arg(n)
 		case "ar":
 			return "الإدخال " + n
 		case "zh-Hans":
@@ -36157,13 +36623,16 @@ func CollapsingMinutes(cx *core.Scope, count int) string { return For(cx).Collap
 // CollapsingMinutes says "{count, number} min"
 // in the language of msgs.
 func (msgs Messages) CollapsingMinutes(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CollapsingMinutes(count))
+	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].CollapsingMinutes; f != nil {
 			return f(count)
 		}
 		switch lang {
 		case "", "en":
-			return i18n.FormatNumber("en", float64(count)) + " min"
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " min"
 		case "ar":
 			return i18n.FormatNumber("ar", float64(count)) + " دقيقة"
 		case "zh-Hans":

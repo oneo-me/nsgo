@@ -61,9 +61,11 @@ type project struct {
 		FPS bool `yaml:"fps"`
 		// Client builds the dev client in, which connects to nsgo dev's
 		// server: nsgo dev sets it. Trace has the client send the server
-		// each commit: nsgo dev -trace sets it.
-		Client bool `yaml:"-"`
-		Trace  bool `yaml:"-"`
+		// each commit: nsgo dev -trace sets it. Lang is the locale the
+		// client runs the app in: nsgo dev -lang sets it.
+		Client bool   `yaml:"-"`
+		Trace  bool   `yaml:"-"`
+		Lang   string `yaml:"-"`
 	} `yaml:"dev"`
 	// Theme is a TSX app's theme file, relative to nsgo.yaml: a theme
 	// core.ParseTheme reads, NSGo's or a shadcn/ui one, which the
@@ -244,6 +246,9 @@ func (p *project) ldflags(extra ...string) string {
 	}
 	if p.Dev.Client && p.Dev.Trace {
 		flags += fmt.Sprintf(" -X %s.devTrace=1", pkg)
+	}
+	if p.Dev.Client && p.Dev.Lang != "" {
+		flags += fmt.Sprintf(" -X %s.devLocale=%s", pkg, p.Dev.Lang)
 	}
 	if p.Release {
 		flags += " -s -w"

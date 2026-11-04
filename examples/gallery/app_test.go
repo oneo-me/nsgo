@@ -900,3 +900,20 @@ func TestSidebarKeys(t *testing.T) {
 		t.Fatalf("home selected %q, want Stocks", got)
 	}
 }
+
+// TestPseudoLocales chooses en-XA, which says the gallery's and base's
+// messages accented and bracketed, then ar-XB, which lays it out right to
+// left.
+func TestPseudoLocales(t *testing.T) {
+	app := startDesktop(t)
+	ltr := app.Find("id:settings").Frame.Origin.X
+	app.Press("id:settings")
+	app.Press("id:language")
+	app.Press("text:[Éńğĺíśĥ ~~~]")
+	app.Find("text:[Śéťťíńğś ~~~]")
+	app.Press("id:language")
+	app.Press("text:\u200f\u202eEnglish\u202c\u200f")
+	if got := app.Find("id:settings").Frame.Origin.X; got <= ltr {
+		t.Errorf("in ar-XB the settings button is at %v, %v left to right", got, ltr)
+	}
+}

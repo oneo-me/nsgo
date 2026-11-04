@@ -91,6 +91,9 @@ const (
 	mfChecked   = 0x0008
 	mfPopup     = 0x0010
 	mfSeparator = 0x0800
+	// mfRightOrder lays a menu out right to left: its items' text, and
+	// the bar's and its submenus' order.
+	mfRightOrder = 0x2000
 )
 
 // The caption buttons after Onevra's: 32 point squares 4 apart, their
@@ -676,6 +679,24 @@ func (w *window) showMenuBar() {
 	drawMenuBar.Call(w.hwnd)
 }
 
+// menuFlags are the flags of every item of a menu: right to left in an
+// app laid out so, whatever the system's direction.
+func (w *window) menuFlags() uintptr {
+	if w.rtl {
+		return mfString | mfRightOrder
+	}
+	return mfString
+}
+
+// popupFlags are TrackPopupMenuEx's flags of a context menu, which opens
+// leftward in an app laid out right to left.
+func (w *window) popupFlags() uintptr {
+	if w.rtl {
+		return tpmReturnCmd | tpmRightButton | tpmLayoutRTL | tpmRightAlign
+	}
+	return tpmReturnCmd | tpmRightButton
+}
+
 // appendMenu appends entries to the menu bar's menu, numbering their
 // commands.
 func (w *window) appendMenu(menu uintptr, entries []driver.MenuEntry) {
@@ -699,7 +720,7 @@ func (w *window) appendMenuTo(menu uintptr, entries []driver.MenuEntry, refs *[]
 			continue
 		}
 		label := strings.ReplaceAll(e.Label, "&", "&&")
-		var flags uintptr = mfString
+		flags := w.menuFlags()
 		if e.Disabled {
 			flags |= mfGrayed
 		}

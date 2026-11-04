@@ -50,7 +50,11 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	if err != nil {
 		return "", err
 	}
-	if err := writePlist(filepath.Join(app, "Info.plist"), p, iosPlist, icon); err != nil {
+	names, err := writeAppleNames(p, app)
+	if err != nil {
+		return "", err
+	}
+	if err := writePlist(filepath.Join(app, "Info.plist"), p, iosPlist, icon+"\n"+names); err != nil {
 		return "", err
 	}
 	if simulator {

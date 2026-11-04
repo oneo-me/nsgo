@@ -5,6 +5,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/i18n"
 )
 
 // languageKey keeps the language chosen in the gallery's settings;
@@ -40,7 +41,7 @@ func languageName(cx *core.Scope, lang string) string {
 }
 
 // languageSelect chooses the language the gallery shows: the system's,
-// or one of its catalogs', each named in itself. Its button shows the
+// one of its catalogs', each named in itself, or a pseudo locale. Its button shows the
 // choice; base's components follow it, and Arabic lays the gallery out
 // right to left.
 func (g *gallery) languageSelect(cx *core.Scope) core.Node {
@@ -58,6 +59,9 @@ func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 	for _, lang := range locales.Catalog.Languages() {
 		items = append(items, item(lang))
 	}
+	// The pseudo locales, which show untranslated, cut and unmirrored
+	// text.
+	items = append(items, separator(cx), item(i18n.PseudoAccents), item(i18n.PseudoBidi))
 	name := ui.Textf(func() string { return languageName(cx, g.language.Get()) }, 13, ui.Medium, colors.Text)
 	name.MaxLines = 1
 	return base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),

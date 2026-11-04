@@ -51,6 +51,9 @@ func (s *surface) showAlert(c *driver.AlertConfig) {
 		"display": "flex", "flex-direction": "column", "gap": "8px",
 		"background": panel, "border-radius": "14px", "box-shadow": "0 12px 40px rgba(0,0,0,0.3)",
 	})
+	if s.rtl {
+		a.layer.Call("setAttribute", "dir", "rtl")
+	}
 	box.Call("setAttribute", "role", "alertdialog")
 	box.Call("setAttribute", "aria-modal", "true")
 	text := func(id, content string, style map[string]string) {

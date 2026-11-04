@@ -166,6 +166,9 @@ type surface struct {
 	// embedded is set for a host's view (NewView): the host owns the
 	// window, its chrome and the menu bar.
 	embedded bool
+	// rtl is the app's direction (driver.ItemDirection), which AppKit's
+	// views and the menus the surface shows lay out in once directed.
+	rtl, directed bool
 	// id is the surface's tree for a surface the app opened, of kind;
 	// tray is the tray icon a SurfaceTrayIcon draws, anchor the one a
 	// panel last showed under. hideOnBlur hides a panel as it loses the
@@ -1330,6 +1333,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.applyAppearance()
 			continue
 		case driver.ItemDirection:
+			s.rtl, s.directed = it.RTL, true
+			s.directTree(s.native)
+			s.directMenu(s.menu)
 			continue
 		case driver.ItemQuit:
 			if !s.embedded {
@@ -1615,6 +1621,7 @@ func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
 	case driver.KindText:
 		v.updateAccessibility() // a text is an element without props
 	}
+	s.directTree(v.native)
 	views[v.native] = v
 	return v
 }
