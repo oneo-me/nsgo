@@ -99,6 +99,9 @@ const (
 	IconImageOff    IconName = "image-off"
 	IconSplitX      IconName = "split-x"
 	IconSplitY      IconName = "split-y"
+	IconInfo        IconName = "info"
+	IconSuccess     IconName = "success"
+	IconError       IconName = "error"
 )
 
 var glyphs = map[IconName]func() *core.SVG{
@@ -187,6 +190,9 @@ var glyphs = map[IconName]func() *core.SVG{
 	IconImageOff:    lucide.ImageOff,
 	IconSplitX:      lucide.ChevronsLeftRight,
 	IconSplitY:      lucide.ChevronsUpDown,
+	IconInfo:        lucide.Info,
+	IconSuccess:     lucide.CircleCheck,
+	IconError:       lucide.CircleX,
 }
 
 // RegisterIcon names svg name, for the app's own glyphs beside these.

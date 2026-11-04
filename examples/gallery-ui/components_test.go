@@ -38,8 +38,8 @@ func size(e core.Environment) nsgotest.Option {
 }
 
 // start runs content under the gallery's theme for e, as an app sets it,
-// and returns the colors it shows.
-func start(t *testing.T, e core.Environment, content func(cx *core.Scope) core.Node) (*nsgotest.App, Palette) {
+// with opts, and returns the colors it shows.
+func start(t *testing.T, e core.Environment, content func(cx *core.Scope) core.Node, opts ...nsgotest.Option) (*nsgotest.App, Palette) {
 	t.Helper()
 	var shown Palette
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
@@ -48,7 +48,7 @@ func start(t *testing.T, e core.Environment, content func(cx *core.Scope) core.N
 		shown = core.Untracked(cx, colors.Now)
 		return core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 12}, StyleFunc: Filled(colors.Background),
 			Children: []core.Node{core.Func(content)}}
-	}, size(e), nsgotest.Environment(e))
+	}, append([]nsgotest.Option{size(e), nsgotest.Environment(e)}, opts...)...)
 	return app, shown
 }
 

@@ -48,7 +48,7 @@ type group struct {
 }
 
 // groups are the demos: the apps built on NSGo, core's primitives from the
-// simplest, base's components by name, styling, motion and the platform's
+// simplest, base's components and gallery-ui's own by name, styling, motion and the platform's
 // services, as NSH's gallery lists them after its 0.3.0 release. They are
 // set in init because demos list them.
 var groups []group
@@ -71,6 +71,8 @@ func init() {
 		{"DiffView", locales.Messages.DemoDiffView, locales.Messages.DemoDiffViewDetail, ui.IconDiff, diffDemo},
 		{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, ui.IconDock, dockDemo},
 		{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, ui.IconCode, editorDemo},
+		{"FileIcon", locales.Messages.DemoFileIcon, locales.Messages.DemoFileIconDetail, ui.IconFile, eventsDemo(fileIconCard)},
+		{"HoldToConfirm", locales.Messages.DemoHoldToConfirm, locales.Messages.DemoHoldToConfirmDetail, ui.IconTrash, eventsDemo(holdCard)},
 		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, ui.IconForm, formDemo},
 		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, ui.IconMenu, menusDemo},
 		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, ui.IconNav, navigationDemo},
@@ -80,11 +82,13 @@ func init() {
 		{"Radio", locales.Messages.DemoRadio, locales.Messages.DemoRadioDetail, ui.IconRadio, controlsDemo(controls.plansCard)},
 		{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, ui.IconSidebar, resizableDemo},
 		{"Sheet", locales.Messages.DemoSheet, locales.Messages.DemoSheetDetail, ui.IconSheet, eventsDemo(sheetCard)},
+		{"Stepper", locales.Messages.DemoStepper, locales.Messages.DemoStepperDetail, ui.IconCheck, stepperDemo},
 		{"Switch", locales.Messages.DemoSwitch, locales.Messages.DemoSwitchDetail, ui.IconSwitch, controlsDemo(controls.settings)},
 		{"Table", locales.Messages.DemoTable, locales.Messages.DemoTableDetail, ui.IconTable, tableDemo},
 		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, ui.IconTabs, controlsDemo(controls.sections)},
 		{"TextView", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, ui.IconFileText, textViewDemo},
-		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, ui.IconBell, eventsDemo(toastCard)},
+		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, ui.IconBell, eventsDemo(toastCard, styledToastsCard)},
+		{"ToggleButton", locales.Messages.DemoToggleButton, locales.Messages.DemoToggleButtonDetail, ui.IconControls, eventsDemo(toggleCard)},
 		{"Tooltip", locales.Messages.DemoTooltip, locales.Messages.DemoTooltipDetail, ui.IconTooltip, eventsDemo(tooltipCard)},
 	}
 	groups = []group{

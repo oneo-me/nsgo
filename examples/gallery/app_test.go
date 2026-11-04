@@ -218,7 +218,7 @@ func TestMenus(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Menu")
 	// On the chip's text, as a pointer presses it.
-	app.Press("text:File")
+	app.Press("id:demo-Menu >> text:File")
 	app.Press("text:New document")
 	app.Find("text:Done: New document")
 	app.Find("text:chose New document")
@@ -377,7 +377,7 @@ func TestSystem(t *testing.T) {
 	app.Press("role:button The website")
 	app.Find("text:Opened https://github.com/oneo-me/nsgo")
 	app.OnAlert = func(core.AlertConfig) int { return 1 }
-	app.Press("role:button Confirm")
+	app.Press("id:demo-System >> role:button Confirm")
 	app.Find("text:Delete")
 
 	dir := t.TempDir()

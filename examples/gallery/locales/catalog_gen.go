@@ -141,6 +141,14 @@ type Translation struct {
 	DemoTextViewDetail                           func() string
 	DemoToast                                    func() string
 	DemoToastDetail                              func() string
+	DemoFileIcon                                 func() string
+	DemoFileIconDetail                           func() string
+	DemoHoldToConfirm                            func() string
+	DemoHoldToConfirmDetail                      func() string
+	DemoStepper                                  func() string
+	DemoStepperDetail                            func() string
+	DemoToggleButton                             func() string
+	DemoToggleButtonDetail                       func() string
 	DemoTooltip                                  func() string
 	DemoTooltipDetail                            func() string
 	DemoStyles                                   func() string
@@ -1981,6 +1989,67 @@ type Translation struct {
 	ResizableConsolePt                           func(size string) string
 	CollapsingEntry                              func(n string) string
 	CollapsingMinutes                            func(count int) string
+	LibFormatting                                func() string
+	LibFormattingNote                            func() string
+	LibBold                                      func() string
+	LibItalic                                    func() string
+	LibUnderline                                 func() string
+	LibStarred                                   func() string
+	LibLocked                                    func() string
+	LibHold                                      func() string
+	LibHoldNote                                  func() string
+	LibHoldToDelete                              func() string
+	LibDeleted                                   func() string
+	LibHoldToArchive                             func() string
+	LibArchived                                  func() string
+	LibHoldToSend                                func() string
+	LibSent                                      func() string
+	LibCheckout                                  func() string
+	LibCheckoutNote                              func() string
+	LibCart                                      func() string
+	LibCartDetail                                func() string
+	LibShipping                                  func() string
+	LibShippingDetail                            func() string
+	LibPayment                                   func() string
+	LibPaymentDetail                             func() string
+	LibReview                                    func() string
+	LibReviewDetail                              func() string
+	LibOrderPlaced                               func() string
+	LibBack                                      func() string
+	LibNext                                      func() string
+	LibSetup                                     func() string
+	LibSetupNote                                 func() string
+	LibCreateAccount                             func() string
+	LibConnectRepository                         func() string
+	LibConnectRepositoryDetail                   func() string
+	LibInstall                                   func() string
+	LibInstallError                              func() string
+	LibDeploy                                    func() string
+	LibDeployDetail                              func() string
+	LibCompact                                   func() string
+	LibCompactNote                               func() string
+	LibStepUpcoming                              func() string
+	LibStepCurrent                               func() string
+	LibStepComplete                              func() string
+	LibStepFailed                                func() string
+	LibFiles                                     func() string
+	LibFilesNote                                 func() string
+	LibToasts                                    func() string
+	LibToastsNote                                func() string
+	LibPlain                                     func() string
+	LibInfo                                      func() string
+	LibSuccess                                   func() string
+	LibWarning                                   func() string
+	LibError                                     func() string
+	LibMessageSent                               func() string
+	LibNewVersion                                func() string
+	LibChangesSaved                              func() string
+	LibStorageFull                               func() string
+	LibUploadFailed                              func() string
+	LibWithAction                                func() string
+	LibMovedToTrash                              func() string
+	LibThreeFiles                                func() string
+	LibRestored                                  func() string
 }
 
 var supplied = map[string]Translation{}
@@ -2067,6 +2136,14 @@ const (
 	textDemoTextViewDetail
 	textDemoToast
 	textDemoToastDetail
+	textDemoFileIcon
+	textDemoFileIconDetail
+	textDemoHoldToConfirm
+	textDemoHoldToConfirmDetail
+	textDemoStepper
+	textDemoStepperDetail
+	textDemoToggleButton
+	textDemoToggleButtonDetail
 	textDemoTooltip
 	textDemoTooltipDetail
 	textDemoStyles
@@ -3800,6 +3877,67 @@ const (
 	textViewerImage
 	textViewerClose
 	textToastClose
+	textLibFormatting
+	textLibFormattingNote
+	textLibBold
+	textLibItalic
+	textLibUnderline
+	textLibStarred
+	textLibLocked
+	textLibHold
+	textLibHoldNote
+	textLibHoldToDelete
+	textLibDeleted
+	textLibHoldToArchive
+	textLibArchived
+	textLibHoldToSend
+	textLibSent
+	textLibCheckout
+	textLibCheckoutNote
+	textLibCart
+	textLibCartDetail
+	textLibShipping
+	textLibShippingDetail
+	textLibPayment
+	textLibPaymentDetail
+	textLibReview
+	textLibReviewDetail
+	textLibOrderPlaced
+	textLibBack
+	textLibNext
+	textLibSetup
+	textLibSetupNote
+	textLibCreateAccount
+	textLibConnectRepository
+	textLibConnectRepositoryDetail
+	textLibInstall
+	textLibInstallError
+	textLibDeploy
+	textLibDeployDetail
+	textLibCompact
+	textLibCompactNote
+	textLibStepUpcoming
+	textLibStepCurrent
+	textLibStepComplete
+	textLibStepFailed
+	textLibFiles
+	textLibFilesNote
+	textLibToasts
+	textLibToastsNote
+	textLibPlain
+	textLibInfo
+	textLibSuccess
+	textLibWarning
+	textLibError
+	textLibMessageSent
+	textLibNewVersion
+	textLibChangesSaved
+	textLibStorageFull
+	textLibUploadFailed
+	textLibWithAction
+	textLibMovedToTrash
+	textLibThreeFiles
+	textLibRestored
 	numTexts
 )
 
@@ -3887,6 +4025,14 @@ var texts = map[string]*[numTexts]string{
 		"Markdown and HTML documents, extensions, streaming replies",
 		"Toast",
 		"Notes that close by themselves, by their action, back or a swipe",
+		"FileIcon",
+		"A file's type at a glance, by its name",
+		"HoldToConfirm",
+		"Buttons held down to confirm what cannot be undone",
+		"Stepper",
+		"Where a person is in a flow of steps",
+		"ToggleButton",
+		"Buttons that stay on or off, as a toolbar's formatting",
 		"Tooltip",
 		"A label while the pointer rests on an element, or pinned by the app",
 		"Styles",
@@ -5620,6 +5766,67 @@ var texts = map[string]*[numTexts]string{
 		"Image",
 		"Close",
 		"Close",
+		"Formatting",
+		"Toggles in a toolbar, each on or off",
+		"Bold",
+		"Italic",
+		"Underline",
+		"Starred",
+		"Locked",
+		"Hold to confirm",
+		"Held until the fill is full; let go early and it rewinds",
+		"Hold to delete",
+		"Deleted",
+		"Hold to archive",
+		"Archived",
+		"Hold to send",
+		"Sent",
+		"Checkout",
+		"Steps in a row; press a completed one to go back",
+		"Cart",
+		"3 items",
+		"Shipping",
+		"Address and speed",
+		"Payment",
+		"Card or wallet",
+		"Review",
+		"Confirm the order",
+		"Order placed",
+		"Back",
+		"Next",
+		"Setup",
+		"Down a column, a failed step's error in place of its description",
+		"Create an account",
+		"Connect a repository",
+		"GitHub or GitLab",
+		"Install dependencies",
+		"The lockfile is out of date",
+		"Deploy",
+		"To production",
+		"Compact",
+		"Markers alone, the current step named under them",
+		"upcoming",
+		"current",
+		"completed",
+		"failed",
+		"Project files",
+		"Chosen by a file's whole name, then its extension",
+		"Styled toasts",
+		"The components' Toasts, stacked at the top",
+		"Plain",
+		"Info",
+		"Success",
+		"Warning",
+		"Error",
+		"Message sent",
+		"A new version is available",
+		"Changes saved",
+		"Storage almost full",
+		"Upload failed",
+		"With an action",
+		"Moved to trash",
+		"3 files",
+		"Restored 3 files",
 	},
 	"ar": {
 		"العربية",
@@ -5702,6 +5909,14 @@ var texts = map[string]*[numTexts]string{
 		"مستندات Markdown وHTML، الإضافات، الردود المتدفقة",
 		"الإشعار المنبثق",
 		"ملاحظات تُغلق وحدها أو بإجرائها أو بالرجوع أو بالسحب",
+		"أيقونة الملف",
+		"نوع الملف بنظرة واحدة من اسمه",
+		"الضغط المطوّل للتأكيد",
+		"أزرار تُضغط مطوّلًا لتأكيد ما لا يمكن التراجع عنه",
+		"مؤشر الخطوات",
+		"أين يقف الشخص في سلسلة من الخطوات",
+		"زر التبديل",
+		"أزرار تبقى مفعّلة أو معطّلة، كأزرار التنسيق في شريط الأدوات",
 		"التلميح",
 		"تسمية تظهر عند استقرار المؤشر على عنصر، أو يثبّتها التطبيق",
 		"الأنماط",
@@ -7435,6 +7650,67 @@ var texts = map[string]*[numTexts]string{
 		"صورة",
 		"إغلاق",
 		"إغلاق",
+		"التنسيق",
+		"أزرار تبديل في شريط أدوات، كل منها مفعّل أو معطّل",
+		"عريض",
+		"مائل",
+		"تسطير",
+		"مميّز بنجمة",
+		"مقفل",
+		"اضغط مطوّلًا للتأكيد",
+		"اضغط حتى يمتلئ؛ وإن أفلتّ مبكرًا يتراجع",
+		"اضغط مطوّلًا للحذف",
+		"تم الحذف",
+		"اضغط مطوّلًا للأرشفة",
+		"تمت الأرشفة",
+		"اضغط مطوّلًا للإرسال",
+		"تم الإرسال",
+		"إتمام الشراء",
+		"خطوات في صف؛ اضغط خطوة مكتملة للعودة إليها",
+		"السلة",
+		"3 عناصر",
+		"الشحن",
+		"العنوان والسرعة",
+		"الدفع",
+		"بطاقة أو محفظة",
+		"المراجعة",
+		"تأكيد الطلب",
+		"تم تقديم الطلب",
+		"السابق",
+		"التالي",
+		"الإعداد",
+		"في عمود، وخطأ الخطوة الفاشلة مكان وصفها",
+		"إنشاء حساب",
+		"ربط مستودع",
+		"GitHub أو GitLab",
+		"تثبيت الاعتماديات",
+		"ملف القفل قديم",
+		"النشر",
+		"إلى بيئة الإنتاج",
+		"مضغوط",
+		"العلامات وحدها، واسم الخطوة الحالية تحتها",
+		"قادمة",
+		"حالية",
+		"مكتملة",
+		"فشلت",
+		"ملفات المشروع",
+		"تُختار بالاسم الكامل للملف، ثم بامتداده",
+		"إشعارات منبثقة منسّقة",
+		"إشعارات المكوّنات، مكدّسة في الأعلى",
+		"عادي",
+		"معلومة",
+		"نجاح",
+		"تحذير",
+		"خطأ",
+		"تم إرسال الرسالة",
+		"يتوفر إصدار جديد",
+		"تم حفظ التغييرات",
+		"التخزين ممتلئ تقريبًا",
+		"فشل الرفع",
+		"مع إجراء",
+		"نُقل إلى المهملات",
+		"3 ملفات",
+		"تمت استعادة 3 ملفات",
 	},
 	"zh-Hans": {
 		"简体中文",
@@ -7517,6 +7793,14 @@ var texts = map[string]*[numTexts]string{
 		"Markdown 和 HTML 文档、扩展、流式回复",
 		"轻提示",
 		"自动关闭，或通过操作、返回或滑动关闭的提示",
+		"文件图标",
+		"按文件名一眼看出文件类型",
+		"按住确认",
+		"按住才能确认无法撤销的操作",
+		"步骤条",
+		"显示用户在多步流程中的位置",
+		"切换按钮",
+		"保持开或关的按钮，如工具栏的格式按钮",
 		"工具提示",
 		"指针停留在元素上时显示的标签，或由应用固定显示",
 		"样式",
@@ -9250,6 +9534,67 @@ var texts = map[string]*[numTexts]string{
 		"图片",
 		"关闭",
 		"关闭",
+		"格式",
+		"工具栏中的切换按钮，各自开或关",
+		"粗体",
+		"斜体",
+		"下划线",
+		"已加星标",
+		"已锁定",
+		"按住确认",
+		"按住直到填满；提前松手会倒退",
+		"按住删除",
+		"已删除",
+		"按住归档",
+		"已归档",
+		"按住发送",
+		"已发送",
+		"结账",
+		"横排的步骤；点已完成的步骤可返回",
+		"购物车",
+		"3 件商品",
+		"配送",
+		"地址和时效",
+		"付款",
+		"银行卡或钱包",
+		"确认",
+		"确认订单",
+		"已下单",
+		"上一步",
+		"下一步",
+		"设置",
+		"竖排；失败步骤以错误替代说明",
+		"创建账户",
+		"连接仓库",
+		"GitHub 或 GitLab",
+		"安装依赖",
+		"锁文件已过期",
+		"部署",
+		"到生产环境",
+		"紧凑",
+		"只显示标记，下方写出当前步骤",
+		"未开始",
+		"当前",
+		"已完成",
+		"失败",
+		"项目文件",
+		"先按完整文件名，再按扩展名选择",
+		"带样式的轻提示",
+		"组件库的 Toasts，堆叠在顶部",
+		"普通",
+		"信息",
+		"成功",
+		"警告",
+		"错误",
+		"消息已发送",
+		"有新版本可用",
+		"更改已保存",
+		"存储空间快满了",
+		"上传失败",
+		"带操作",
+		"已移到废纸篓",
+		"3 个文件",
+		"已恢复 3 个文件",
 	},
 	"zh-Hant": {
 		"繁體中文",
@@ -9332,6 +9677,14 @@ var texts = map[string]*[numTexts]string{
 		"Markdown 和 HTML 文件、擴充功能、流式回覆",
 		"輕提示",
 		"自動關閉，或透過操作、返回或滑動關閉的提示",
+		"檔案圖示",
+		"依檔名一眼看出檔案類型",
+		"按住確認",
+		"按住才能確認無法復原的操作",
+		"步驟條",
+		"顯示使用者在多步流程中的位置",
+		"切換按鈕",
+		"保持開或關的按鈕，如工具列的格式按鈕",
 		"工具提示",
 		"指標停留在元素上時顯示的標籤，或由應用固定顯示",
 		"樣式",
@@ -11065,6 +11418,67 @@ var texts = map[string]*[numTexts]string{
 		"圖片",
 		"關閉",
 		"關閉",
+		"格式",
+		"工具列中的切換按鈕，各自開或關",
+		"粗體",
+		"斜體",
+		"底線",
+		"已加星號",
+		"已鎖定",
+		"按住確認",
+		"按住直到填滿；提前放開會倒退",
+		"按住刪除",
+		"已刪除",
+		"按住封存",
+		"已封存",
+		"按住傳送",
+		"已傳送",
+		"結帳",
+		"橫排的步驟；點已完成的步驟可返回",
+		"購物車",
+		"3 件商品",
+		"配送",
+		"地址和時效",
+		"付款",
+		"信用卡或錢包",
+		"確認",
+		"確認訂單",
+		"已下單",
+		"上一步",
+		"下一步",
+		"設定",
+		"直排；失敗步驟以錯誤取代說明",
+		"建立帳戶",
+		"連接儲存庫",
+		"GitHub 或 GitLab",
+		"安裝相依套件",
+		"鎖定檔已過期",
+		"部署",
+		"到正式環境",
+		"緊湊",
+		"只顯示標記，下方寫出目前步驟",
+		"未開始",
+		"目前",
+		"已完成",
+		"失敗",
+		"專案檔案",
+		"先依完整檔名，再依副檔名選擇",
+		"帶樣式的輕提示",
+		"元件庫的 Toasts，堆疊在頂部",
+		"普通",
+		"資訊",
+		"成功",
+		"警告",
+		"錯誤",
+		"訊息已傳送",
+		"有新版本可用",
+		"變更已儲存",
+		"儲存空間快滿了",
+		"上傳失敗",
+		"帶操作",
+		"已移至垃圾桶",
+		"3 個檔案",
+		"已還原 3 個檔案",
 	},
 }
 
@@ -11337,6 +11751,30 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoToastDetail != nil {
 		st[textDemoToastDetail] = t.DemoToastDetail()
+	}
+	if t.DemoFileIcon != nil {
+		st[textDemoFileIcon] = t.DemoFileIcon()
+	}
+	if t.DemoFileIconDetail != nil {
+		st[textDemoFileIconDetail] = t.DemoFileIconDetail()
+	}
+	if t.DemoHoldToConfirm != nil {
+		st[textDemoHoldToConfirm] = t.DemoHoldToConfirm()
+	}
+	if t.DemoHoldToConfirmDetail != nil {
+		st[textDemoHoldToConfirmDetail] = t.DemoHoldToConfirmDetail()
+	}
+	if t.DemoStepper != nil {
+		st[textDemoStepper] = t.DemoStepper()
+	}
+	if t.DemoStepperDetail != nil {
+		st[textDemoStepperDetail] = t.DemoStepperDetail()
+	}
+	if t.DemoToggleButton != nil {
+		st[textDemoToggleButton] = t.DemoToggleButton()
+	}
+	if t.DemoToggleButtonDetail != nil {
+		st[textDemoToggleButtonDetail] = t.DemoToggleButtonDetail()
 	}
 	if t.DemoTooltip != nil {
 		st[textDemoTooltip] = t.DemoTooltip()
@@ -16858,6 +17296,189 @@ func Supply(lang string, t Translation) {
 	if t.CollapsingMinutes != nil {
 		s.CollapsingMinutes = t.CollapsingMinutes
 	}
+	if t.LibFormatting != nil {
+		st[textLibFormatting] = t.LibFormatting()
+	}
+	if t.LibFormattingNote != nil {
+		st[textLibFormattingNote] = t.LibFormattingNote()
+	}
+	if t.LibBold != nil {
+		st[textLibBold] = t.LibBold()
+	}
+	if t.LibItalic != nil {
+		st[textLibItalic] = t.LibItalic()
+	}
+	if t.LibUnderline != nil {
+		st[textLibUnderline] = t.LibUnderline()
+	}
+	if t.LibStarred != nil {
+		st[textLibStarred] = t.LibStarred()
+	}
+	if t.LibLocked != nil {
+		st[textLibLocked] = t.LibLocked()
+	}
+	if t.LibHold != nil {
+		st[textLibHold] = t.LibHold()
+	}
+	if t.LibHoldNote != nil {
+		st[textLibHoldNote] = t.LibHoldNote()
+	}
+	if t.LibHoldToDelete != nil {
+		st[textLibHoldToDelete] = t.LibHoldToDelete()
+	}
+	if t.LibDeleted != nil {
+		st[textLibDeleted] = t.LibDeleted()
+	}
+	if t.LibHoldToArchive != nil {
+		st[textLibHoldToArchive] = t.LibHoldToArchive()
+	}
+	if t.LibArchived != nil {
+		st[textLibArchived] = t.LibArchived()
+	}
+	if t.LibHoldToSend != nil {
+		st[textLibHoldToSend] = t.LibHoldToSend()
+	}
+	if t.LibSent != nil {
+		st[textLibSent] = t.LibSent()
+	}
+	if t.LibCheckout != nil {
+		st[textLibCheckout] = t.LibCheckout()
+	}
+	if t.LibCheckoutNote != nil {
+		st[textLibCheckoutNote] = t.LibCheckoutNote()
+	}
+	if t.LibCart != nil {
+		st[textLibCart] = t.LibCart()
+	}
+	if t.LibCartDetail != nil {
+		st[textLibCartDetail] = t.LibCartDetail()
+	}
+	if t.LibShipping != nil {
+		st[textLibShipping] = t.LibShipping()
+	}
+	if t.LibShippingDetail != nil {
+		st[textLibShippingDetail] = t.LibShippingDetail()
+	}
+	if t.LibPayment != nil {
+		st[textLibPayment] = t.LibPayment()
+	}
+	if t.LibPaymentDetail != nil {
+		st[textLibPaymentDetail] = t.LibPaymentDetail()
+	}
+	if t.LibReview != nil {
+		st[textLibReview] = t.LibReview()
+	}
+	if t.LibReviewDetail != nil {
+		st[textLibReviewDetail] = t.LibReviewDetail()
+	}
+	if t.LibOrderPlaced != nil {
+		st[textLibOrderPlaced] = t.LibOrderPlaced()
+	}
+	if t.LibBack != nil {
+		st[textLibBack] = t.LibBack()
+	}
+	if t.LibNext != nil {
+		st[textLibNext] = t.LibNext()
+	}
+	if t.LibSetup != nil {
+		st[textLibSetup] = t.LibSetup()
+	}
+	if t.LibSetupNote != nil {
+		st[textLibSetupNote] = t.LibSetupNote()
+	}
+	if t.LibCreateAccount != nil {
+		st[textLibCreateAccount] = t.LibCreateAccount()
+	}
+	if t.LibConnectRepository != nil {
+		st[textLibConnectRepository] = t.LibConnectRepository()
+	}
+	if t.LibConnectRepositoryDetail != nil {
+		st[textLibConnectRepositoryDetail] = t.LibConnectRepositoryDetail()
+	}
+	if t.LibInstall != nil {
+		st[textLibInstall] = t.LibInstall()
+	}
+	if t.LibInstallError != nil {
+		st[textLibInstallError] = t.LibInstallError()
+	}
+	if t.LibDeploy != nil {
+		st[textLibDeploy] = t.LibDeploy()
+	}
+	if t.LibDeployDetail != nil {
+		st[textLibDeployDetail] = t.LibDeployDetail()
+	}
+	if t.LibCompact != nil {
+		st[textLibCompact] = t.LibCompact()
+	}
+	if t.LibCompactNote != nil {
+		st[textLibCompactNote] = t.LibCompactNote()
+	}
+	if t.LibStepUpcoming != nil {
+		st[textLibStepUpcoming] = t.LibStepUpcoming()
+	}
+	if t.LibStepCurrent != nil {
+		st[textLibStepCurrent] = t.LibStepCurrent()
+	}
+	if t.LibStepComplete != nil {
+		st[textLibStepComplete] = t.LibStepComplete()
+	}
+	if t.LibStepFailed != nil {
+		st[textLibStepFailed] = t.LibStepFailed()
+	}
+	if t.LibFiles != nil {
+		st[textLibFiles] = t.LibFiles()
+	}
+	if t.LibFilesNote != nil {
+		st[textLibFilesNote] = t.LibFilesNote()
+	}
+	if t.LibToasts != nil {
+		st[textLibToasts] = t.LibToasts()
+	}
+	if t.LibToastsNote != nil {
+		st[textLibToastsNote] = t.LibToastsNote()
+	}
+	if t.LibPlain != nil {
+		st[textLibPlain] = t.LibPlain()
+	}
+	if t.LibInfo != nil {
+		st[textLibInfo] = t.LibInfo()
+	}
+	if t.LibSuccess != nil {
+		st[textLibSuccess] = t.LibSuccess()
+	}
+	if t.LibWarning != nil {
+		st[textLibWarning] = t.LibWarning()
+	}
+	if t.LibError != nil {
+		st[textLibError] = t.LibError()
+	}
+	if t.LibMessageSent != nil {
+		st[textLibMessageSent] = t.LibMessageSent()
+	}
+	if t.LibNewVersion != nil {
+		st[textLibNewVersion] = t.LibNewVersion()
+	}
+	if t.LibChangesSaved != nil {
+		st[textLibChangesSaved] = t.LibChangesSaved()
+	}
+	if t.LibStorageFull != nil {
+		st[textLibStorageFull] = t.LibStorageFull()
+	}
+	if t.LibUploadFailed != nil {
+		st[textLibUploadFailed] = t.LibUploadFailed()
+	}
+	if t.LibWithAction != nil {
+		st[textLibWithAction] = t.LibWithAction()
+	}
+	if t.LibMovedToTrash != nil {
+		st[textLibMovedToTrash] = t.LibMovedToTrash()
+	}
+	if t.LibThreeFiles != nil {
+		st[textLibThreeFiles] = t.LibThreeFiles()
+	}
+	if t.LibRestored != nil {
+		st[textLibRestored] = t.LibRestored()
+	}
 	supplied[lang] = s
 	Catalog.Add(lang)
 }
@@ -17513,6 +18134,70 @@ func DemoToastDetail(cx *core.Scope) string { return For(cx).DemoToastDetail() }
 // DemoToastDetail says "Notes that close by themselves, by their action, back or a swipe"
 // in the language of msgs.
 func (msgs Messages) DemoToastDetail() string { return msgs.text(textDemoToastDetail) }
+
+// DemoFileIcon says "FileIcon"
+// in the language the app shows under cx.
+func DemoFileIcon(cx *core.Scope) string { return For(cx).DemoFileIcon() }
+
+// DemoFileIcon says "FileIcon"
+// in the language of msgs.
+func (msgs Messages) DemoFileIcon() string { return msgs.text(textDemoFileIcon) }
+
+// DemoFileIconDetail says "A file's type at a glance, by its name"
+// in the language the app shows under cx.
+func DemoFileIconDetail(cx *core.Scope) string { return For(cx).DemoFileIconDetail() }
+
+// DemoFileIconDetail says "A file's type at a glance, by its name"
+// in the language of msgs.
+func (msgs Messages) DemoFileIconDetail() string { return msgs.text(textDemoFileIconDetail) }
+
+// DemoHoldToConfirm says "HoldToConfirm"
+// in the language the app shows under cx.
+func DemoHoldToConfirm(cx *core.Scope) string { return For(cx).DemoHoldToConfirm() }
+
+// DemoHoldToConfirm says "HoldToConfirm"
+// in the language of msgs.
+func (msgs Messages) DemoHoldToConfirm() string { return msgs.text(textDemoHoldToConfirm) }
+
+// DemoHoldToConfirmDetail says "Buttons held down to confirm what cannot be undone"
+// in the language the app shows under cx.
+func DemoHoldToConfirmDetail(cx *core.Scope) string { return For(cx).DemoHoldToConfirmDetail() }
+
+// DemoHoldToConfirmDetail says "Buttons held down to confirm what cannot be undone"
+// in the language of msgs.
+func (msgs Messages) DemoHoldToConfirmDetail() string { return msgs.text(textDemoHoldToConfirmDetail) }
+
+// DemoStepper says "Stepper"
+// in the language the app shows under cx.
+func DemoStepper(cx *core.Scope) string { return For(cx).DemoStepper() }
+
+// DemoStepper says "Stepper"
+// in the language of msgs.
+func (msgs Messages) DemoStepper() string { return msgs.text(textDemoStepper) }
+
+// DemoStepperDetail says "Where a person is in a flow of steps"
+// in the language the app shows under cx.
+func DemoStepperDetail(cx *core.Scope) string { return For(cx).DemoStepperDetail() }
+
+// DemoStepperDetail says "Where a person is in a flow of steps"
+// in the language of msgs.
+func (msgs Messages) DemoStepperDetail() string { return msgs.text(textDemoStepperDetail) }
+
+// DemoToggleButton says "ToggleButton"
+// in the language the app shows under cx.
+func DemoToggleButton(cx *core.Scope) string { return For(cx).DemoToggleButton() }
+
+// DemoToggleButton says "ToggleButton"
+// in the language of msgs.
+func (msgs Messages) DemoToggleButton() string { return msgs.text(textDemoToggleButton) }
+
+// DemoToggleButtonDetail says "Buttons that stay on or off, as a toolbar's formatting"
+// in the language the app shows under cx.
+func DemoToggleButtonDetail(cx *core.Scope) string { return For(cx).DemoToggleButtonDetail() }
+
+// DemoToggleButtonDetail says "Buttons that stay on or off, as a toolbar's formatting"
+// in the language of msgs.
+func (msgs Messages) DemoToggleButtonDetail() string { return msgs.text(textDemoToggleButtonDetail) }
 
 // DemoTooltip says "Tooltip"
 // in the language the app shows under cx.
@@ -35197,3 +35882,493 @@ func (msgs Messages) CollapsingMinutes(count int) string {
 		}
 	}
 }
+
+// LibFormatting says "Formatting"
+// in the language the app shows under cx.
+func LibFormatting(cx *core.Scope) string { return For(cx).LibFormatting() }
+
+// LibFormatting says "Formatting"
+// in the language of msgs.
+func (msgs Messages) LibFormatting() string { return msgs.text(textLibFormatting) }
+
+// LibFormattingNote says "Toggles in a toolbar, each on or off"
+// in the language the app shows under cx.
+func LibFormattingNote(cx *core.Scope) string { return For(cx).LibFormattingNote() }
+
+// LibFormattingNote says "Toggles in a toolbar, each on or off"
+// in the language of msgs.
+func (msgs Messages) LibFormattingNote() string { return msgs.text(textLibFormattingNote) }
+
+// LibBold says "Bold"
+// in the language the app shows under cx.
+func LibBold(cx *core.Scope) string { return For(cx).LibBold() }
+
+// LibBold says "Bold"
+// in the language of msgs.
+func (msgs Messages) LibBold() string { return msgs.text(textLibBold) }
+
+// LibItalic says "Italic"
+// in the language the app shows under cx.
+func LibItalic(cx *core.Scope) string { return For(cx).LibItalic() }
+
+// LibItalic says "Italic"
+// in the language of msgs.
+func (msgs Messages) LibItalic() string { return msgs.text(textLibItalic) }
+
+// LibUnderline says "Underline"
+// in the language the app shows under cx.
+func LibUnderline(cx *core.Scope) string { return For(cx).LibUnderline() }
+
+// LibUnderline says "Underline"
+// in the language of msgs.
+func (msgs Messages) LibUnderline() string { return msgs.text(textLibUnderline) }
+
+// LibStarred says "Starred"
+// in the language the app shows under cx.
+func LibStarred(cx *core.Scope) string { return For(cx).LibStarred() }
+
+// LibStarred says "Starred"
+// in the language of msgs.
+func (msgs Messages) LibStarred() string { return msgs.text(textLibStarred) }
+
+// LibLocked says "Locked"
+// in the language the app shows under cx.
+func LibLocked(cx *core.Scope) string { return For(cx).LibLocked() }
+
+// LibLocked says "Locked"
+// in the language of msgs.
+func (msgs Messages) LibLocked() string { return msgs.text(textLibLocked) }
+
+// LibHold says "Hold to confirm"
+// in the language the app shows under cx.
+func LibHold(cx *core.Scope) string { return For(cx).LibHold() }
+
+// LibHold says "Hold to confirm"
+// in the language of msgs.
+func (msgs Messages) LibHold() string { return msgs.text(textLibHold) }
+
+// LibHoldNote says "Held until the fill is full; let go early and it rewinds"
+// in the language the app shows under cx.
+func LibHoldNote(cx *core.Scope) string { return For(cx).LibHoldNote() }
+
+// LibHoldNote says "Held until the fill is full; let go early and it rewinds"
+// in the language of msgs.
+func (msgs Messages) LibHoldNote() string { return msgs.text(textLibHoldNote) }
+
+// LibHoldToDelete says "Hold to delete"
+// in the language the app shows under cx.
+func LibHoldToDelete(cx *core.Scope) string { return For(cx).LibHoldToDelete() }
+
+// LibHoldToDelete says "Hold to delete"
+// in the language of msgs.
+func (msgs Messages) LibHoldToDelete() string { return msgs.text(textLibHoldToDelete) }
+
+// LibDeleted says "Deleted"
+// in the language the app shows under cx.
+func LibDeleted(cx *core.Scope) string { return For(cx).LibDeleted() }
+
+// LibDeleted says "Deleted"
+// in the language of msgs.
+func (msgs Messages) LibDeleted() string { return msgs.text(textLibDeleted) }
+
+// LibHoldToArchive says "Hold to archive"
+// in the language the app shows under cx.
+func LibHoldToArchive(cx *core.Scope) string { return For(cx).LibHoldToArchive() }
+
+// LibHoldToArchive says "Hold to archive"
+// in the language of msgs.
+func (msgs Messages) LibHoldToArchive() string { return msgs.text(textLibHoldToArchive) }
+
+// LibArchived says "Archived"
+// in the language the app shows under cx.
+func LibArchived(cx *core.Scope) string { return For(cx).LibArchived() }
+
+// LibArchived says "Archived"
+// in the language of msgs.
+func (msgs Messages) LibArchived() string { return msgs.text(textLibArchived) }
+
+// LibHoldToSend says "Hold to send"
+// in the language the app shows under cx.
+func LibHoldToSend(cx *core.Scope) string { return For(cx).LibHoldToSend() }
+
+// LibHoldToSend says "Hold to send"
+// in the language of msgs.
+func (msgs Messages) LibHoldToSend() string { return msgs.text(textLibHoldToSend) }
+
+// LibSent says "Sent"
+// in the language the app shows under cx.
+func LibSent(cx *core.Scope) string { return For(cx).LibSent() }
+
+// LibSent says "Sent"
+// in the language of msgs.
+func (msgs Messages) LibSent() string { return msgs.text(textLibSent) }
+
+// LibCheckout says "Checkout"
+// in the language the app shows under cx.
+func LibCheckout(cx *core.Scope) string { return For(cx).LibCheckout() }
+
+// LibCheckout says "Checkout"
+// in the language of msgs.
+func (msgs Messages) LibCheckout() string { return msgs.text(textLibCheckout) }
+
+// LibCheckoutNote says "Steps in a row; press a completed one to go back"
+// in the language the app shows under cx.
+func LibCheckoutNote(cx *core.Scope) string { return For(cx).LibCheckoutNote() }
+
+// LibCheckoutNote says "Steps in a row; press a completed one to go back"
+// in the language of msgs.
+func (msgs Messages) LibCheckoutNote() string { return msgs.text(textLibCheckoutNote) }
+
+// LibCart says "Cart"
+// in the language the app shows under cx.
+func LibCart(cx *core.Scope) string { return For(cx).LibCart() }
+
+// LibCart says "Cart"
+// in the language of msgs.
+func (msgs Messages) LibCart() string { return msgs.text(textLibCart) }
+
+// LibCartDetail says "3 items"
+// in the language the app shows under cx.
+func LibCartDetail(cx *core.Scope) string { return For(cx).LibCartDetail() }
+
+// LibCartDetail says "3 items"
+// in the language of msgs.
+func (msgs Messages) LibCartDetail() string { return msgs.text(textLibCartDetail) }
+
+// LibShipping says "Shipping"
+// in the language the app shows under cx.
+func LibShipping(cx *core.Scope) string { return For(cx).LibShipping() }
+
+// LibShipping says "Shipping"
+// in the language of msgs.
+func (msgs Messages) LibShipping() string { return msgs.text(textLibShipping) }
+
+// LibShippingDetail says "Address and speed"
+// in the language the app shows under cx.
+func LibShippingDetail(cx *core.Scope) string { return For(cx).LibShippingDetail() }
+
+// LibShippingDetail says "Address and speed"
+// in the language of msgs.
+func (msgs Messages) LibShippingDetail() string { return msgs.text(textLibShippingDetail) }
+
+// LibPayment says "Payment"
+// in the language the app shows under cx.
+func LibPayment(cx *core.Scope) string { return For(cx).LibPayment() }
+
+// LibPayment says "Payment"
+// in the language of msgs.
+func (msgs Messages) LibPayment() string { return msgs.text(textLibPayment) }
+
+// LibPaymentDetail says "Card or wallet"
+// in the language the app shows under cx.
+func LibPaymentDetail(cx *core.Scope) string { return For(cx).LibPaymentDetail() }
+
+// LibPaymentDetail says "Card or wallet"
+// in the language of msgs.
+func (msgs Messages) LibPaymentDetail() string { return msgs.text(textLibPaymentDetail) }
+
+// LibReview says "Review"
+// in the language the app shows under cx.
+func LibReview(cx *core.Scope) string { return For(cx).LibReview() }
+
+// LibReview says "Review"
+// in the language of msgs.
+func (msgs Messages) LibReview() string { return msgs.text(textLibReview) }
+
+// LibReviewDetail says "Confirm the order"
+// in the language the app shows under cx.
+func LibReviewDetail(cx *core.Scope) string { return For(cx).LibReviewDetail() }
+
+// LibReviewDetail says "Confirm the order"
+// in the language of msgs.
+func (msgs Messages) LibReviewDetail() string { return msgs.text(textLibReviewDetail) }
+
+// LibOrderPlaced says "Order placed"
+// in the language the app shows under cx.
+func LibOrderPlaced(cx *core.Scope) string { return For(cx).LibOrderPlaced() }
+
+// LibOrderPlaced says "Order placed"
+// in the language of msgs.
+func (msgs Messages) LibOrderPlaced() string { return msgs.text(textLibOrderPlaced) }
+
+// LibBack says "Back"
+// in the language the app shows under cx.
+func LibBack(cx *core.Scope) string { return For(cx).LibBack() }
+
+// LibBack says "Back"
+// in the language of msgs.
+func (msgs Messages) LibBack() string { return msgs.text(textLibBack) }
+
+// LibNext says "Next"
+// in the language the app shows under cx.
+func LibNext(cx *core.Scope) string { return For(cx).LibNext() }
+
+// LibNext says "Next"
+// in the language of msgs.
+func (msgs Messages) LibNext() string { return msgs.text(textLibNext) }
+
+// LibSetup says "Setup"
+// in the language the app shows under cx.
+func LibSetup(cx *core.Scope) string { return For(cx).LibSetup() }
+
+// LibSetup says "Setup"
+// in the language of msgs.
+func (msgs Messages) LibSetup() string { return msgs.text(textLibSetup) }
+
+// LibSetupNote says "Down a column, a failed step's error in place of its description"
+// in the language the app shows under cx.
+func LibSetupNote(cx *core.Scope) string { return For(cx).LibSetupNote() }
+
+// LibSetupNote says "Down a column, a failed step's error in place of its description"
+// in the language of msgs.
+func (msgs Messages) LibSetupNote() string { return msgs.text(textLibSetupNote) }
+
+// LibCreateAccount says "Create an account"
+// in the language the app shows under cx.
+func LibCreateAccount(cx *core.Scope) string { return For(cx).LibCreateAccount() }
+
+// LibCreateAccount says "Create an account"
+// in the language of msgs.
+func (msgs Messages) LibCreateAccount() string { return msgs.text(textLibCreateAccount) }
+
+// LibConnectRepository says "Connect a repository"
+// in the language the app shows under cx.
+func LibConnectRepository(cx *core.Scope) string { return For(cx).LibConnectRepository() }
+
+// LibConnectRepository says "Connect a repository"
+// in the language of msgs.
+func (msgs Messages) LibConnectRepository() string { return msgs.text(textLibConnectRepository) }
+
+// LibConnectRepositoryDetail says "GitHub or GitLab"
+// in the language the app shows under cx.
+func LibConnectRepositoryDetail(cx *core.Scope) string { return For(cx).LibConnectRepositoryDetail() }
+
+// LibConnectRepositoryDetail says "GitHub or GitLab"
+// in the language of msgs.
+func (msgs Messages) LibConnectRepositoryDetail() string {
+	return msgs.text(textLibConnectRepositoryDetail)
+}
+
+// LibInstall says "Install dependencies"
+// in the language the app shows under cx.
+func LibInstall(cx *core.Scope) string { return For(cx).LibInstall() }
+
+// LibInstall says "Install dependencies"
+// in the language of msgs.
+func (msgs Messages) LibInstall() string { return msgs.text(textLibInstall) }
+
+// LibInstallError says "The lockfile is out of date"
+// in the language the app shows under cx.
+func LibInstallError(cx *core.Scope) string { return For(cx).LibInstallError() }
+
+// LibInstallError says "The lockfile is out of date"
+// in the language of msgs.
+func (msgs Messages) LibInstallError() string { return msgs.text(textLibInstallError) }
+
+// LibDeploy says "Deploy"
+// in the language the app shows under cx.
+func LibDeploy(cx *core.Scope) string { return For(cx).LibDeploy() }
+
+// LibDeploy says "Deploy"
+// in the language of msgs.
+func (msgs Messages) LibDeploy() string { return msgs.text(textLibDeploy) }
+
+// LibDeployDetail says "To production"
+// in the language the app shows under cx.
+func LibDeployDetail(cx *core.Scope) string { return For(cx).LibDeployDetail() }
+
+// LibDeployDetail says "To production"
+// in the language of msgs.
+func (msgs Messages) LibDeployDetail() string { return msgs.text(textLibDeployDetail) }
+
+// LibCompact says "Compact"
+// in the language the app shows under cx.
+func LibCompact(cx *core.Scope) string { return For(cx).LibCompact() }
+
+// LibCompact says "Compact"
+// in the language of msgs.
+func (msgs Messages) LibCompact() string { return msgs.text(textLibCompact) }
+
+// LibCompactNote says "Markers alone, the current step named under them"
+// in the language the app shows under cx.
+func LibCompactNote(cx *core.Scope) string { return For(cx).LibCompactNote() }
+
+// LibCompactNote says "Markers alone, the current step named under them"
+// in the language of msgs.
+func (msgs Messages) LibCompactNote() string { return msgs.text(textLibCompactNote) }
+
+// LibStepUpcoming says "upcoming"
+// in the language the app shows under cx.
+func LibStepUpcoming(cx *core.Scope) string { return For(cx).LibStepUpcoming() }
+
+// LibStepUpcoming says "upcoming"
+// in the language of msgs.
+func (msgs Messages) LibStepUpcoming() string { return msgs.text(textLibStepUpcoming) }
+
+// LibStepCurrent says "current"
+// in the language the app shows under cx.
+func LibStepCurrent(cx *core.Scope) string { return For(cx).LibStepCurrent() }
+
+// LibStepCurrent says "current"
+// in the language of msgs.
+func (msgs Messages) LibStepCurrent() string { return msgs.text(textLibStepCurrent) }
+
+// LibStepComplete says "completed"
+// in the language the app shows under cx.
+func LibStepComplete(cx *core.Scope) string { return For(cx).LibStepComplete() }
+
+// LibStepComplete says "completed"
+// in the language of msgs.
+func (msgs Messages) LibStepComplete() string { return msgs.text(textLibStepComplete) }
+
+// LibStepFailed says "failed"
+// in the language the app shows under cx.
+func LibStepFailed(cx *core.Scope) string { return For(cx).LibStepFailed() }
+
+// LibStepFailed says "failed"
+// in the language of msgs.
+func (msgs Messages) LibStepFailed() string { return msgs.text(textLibStepFailed) }
+
+// LibFiles says "Project files"
+// in the language the app shows under cx.
+func LibFiles(cx *core.Scope) string { return For(cx).LibFiles() }
+
+// LibFiles says "Project files"
+// in the language of msgs.
+func (msgs Messages) LibFiles() string { return msgs.text(textLibFiles) }
+
+// LibFilesNote says "Chosen by a file's whole name, then its extension"
+// in the language the app shows under cx.
+func LibFilesNote(cx *core.Scope) string { return For(cx).LibFilesNote() }
+
+// LibFilesNote says "Chosen by a file's whole name, then its extension"
+// in the language of msgs.
+func (msgs Messages) LibFilesNote() string { return msgs.text(textLibFilesNote) }
+
+// LibToasts says "Styled toasts"
+// in the language the app shows under cx.
+func LibToasts(cx *core.Scope) string { return For(cx).LibToasts() }
+
+// LibToasts says "Styled toasts"
+// in the language of msgs.
+func (msgs Messages) LibToasts() string { return msgs.text(textLibToasts) }
+
+// LibToastsNote says "The components' Toasts, stacked at the top"
+// in the language the app shows under cx.
+func LibToastsNote(cx *core.Scope) string { return For(cx).LibToastsNote() }
+
+// LibToastsNote says "The components' Toasts, stacked at the top"
+// in the language of msgs.
+func (msgs Messages) LibToastsNote() string { return msgs.text(textLibToastsNote) }
+
+// LibPlain says "Plain"
+// in the language the app shows under cx.
+func LibPlain(cx *core.Scope) string { return For(cx).LibPlain() }
+
+// LibPlain says "Plain"
+// in the language of msgs.
+func (msgs Messages) LibPlain() string { return msgs.text(textLibPlain) }
+
+// LibInfo says "Info"
+// in the language the app shows under cx.
+func LibInfo(cx *core.Scope) string { return For(cx).LibInfo() }
+
+// LibInfo says "Info"
+// in the language of msgs.
+func (msgs Messages) LibInfo() string { return msgs.text(textLibInfo) }
+
+// LibSuccess says "Success"
+// in the language the app shows under cx.
+func LibSuccess(cx *core.Scope) string { return For(cx).LibSuccess() }
+
+// LibSuccess says "Success"
+// in the language of msgs.
+func (msgs Messages) LibSuccess() string { return msgs.text(textLibSuccess) }
+
+// LibWarning says "Warning"
+// in the language the app shows under cx.
+func LibWarning(cx *core.Scope) string { return For(cx).LibWarning() }
+
+// LibWarning says "Warning"
+// in the language of msgs.
+func (msgs Messages) LibWarning() string { return msgs.text(textLibWarning) }
+
+// LibError says "Error"
+// in the language the app shows under cx.
+func LibError(cx *core.Scope) string { return For(cx).LibError() }
+
+// LibError says "Error"
+// in the language of msgs.
+func (msgs Messages) LibError() string { return msgs.text(textLibError) }
+
+// LibMessageSent says "Message sent"
+// in the language the app shows under cx.
+func LibMessageSent(cx *core.Scope) string { return For(cx).LibMessageSent() }
+
+// LibMessageSent says "Message sent"
+// in the language of msgs.
+func (msgs Messages) LibMessageSent() string { return msgs.text(textLibMessageSent) }
+
+// LibNewVersion says "A new version is available"
+// in the language the app shows under cx.
+func LibNewVersion(cx *core.Scope) string { return For(cx).LibNewVersion() }
+
+// LibNewVersion says "A new version is available"
+// in the language of msgs.
+func (msgs Messages) LibNewVersion() string { return msgs.text(textLibNewVersion) }
+
+// LibChangesSaved says "Changes saved"
+// in the language the app shows under cx.
+func LibChangesSaved(cx *core.Scope) string { return For(cx).LibChangesSaved() }
+
+// LibChangesSaved says "Changes saved"
+// in the language of msgs.
+func (msgs Messages) LibChangesSaved() string { return msgs.text(textLibChangesSaved) }
+
+// LibStorageFull says "Storage almost full"
+// in the language the app shows under cx.
+func LibStorageFull(cx *core.Scope) string { return For(cx).LibStorageFull() }
+
+// LibStorageFull says "Storage almost full"
+// in the language of msgs.
+func (msgs Messages) LibStorageFull() string { return msgs.text(textLibStorageFull) }
+
+// LibUploadFailed says "Upload failed"
+// in the language the app shows under cx.
+func LibUploadFailed(cx *core.Scope) string { return For(cx).LibUploadFailed() }
+
+// LibUploadFailed says "Upload failed"
+// in the language of msgs.
+func (msgs Messages) LibUploadFailed() string { return msgs.text(textLibUploadFailed) }
+
+// LibWithAction says "With an action"
+// in the language the app shows under cx.
+func LibWithAction(cx *core.Scope) string { return For(cx).LibWithAction() }
+
+// LibWithAction says "With an action"
+// in the language of msgs.
+func (msgs Messages) LibWithAction() string { return msgs.text(textLibWithAction) }
+
+// LibMovedToTrash says "Moved to trash"
+// in the language the app shows under cx.
+func LibMovedToTrash(cx *core.Scope) string { return For(cx).LibMovedToTrash() }
+
+// LibMovedToTrash says "Moved to trash"
+// in the language of msgs.
+func (msgs Messages) LibMovedToTrash() string { return msgs.text(textLibMovedToTrash) }
+
+// LibThreeFiles says "3 files"
+// in the language the app shows under cx.
+func LibThreeFiles(cx *core.Scope) string { return For(cx).LibThreeFiles() }
+
+// LibThreeFiles says "3 files"
+// in the language of msgs.
+func (msgs Messages) LibThreeFiles() string { return msgs.text(textLibThreeFiles) }
+
+// LibRestored says "Restored 3 files"
+// in the language the app shows under cx.
+func LibRestored(cx *core.Scope) string { return For(cx).LibRestored() }
+
+// LibRestored says "Restored 3 files"
+// in the language of msgs.
+func (msgs Messages) LibRestored() string { return msgs.text(textLibRestored) }
