@@ -1,22 +1,3 @@
-// Package ui is the gallery's look and the components it shares, as NSH's
-// nsh-gallery-ui is its gallery's: colors, finishes and motion here,
-// styled components over base and core in components.go, the parts
-// several demos share in parts.go, Onexa's sidebar shell in shell.go,
-// Onevra's settings surface in settings.go and the line icons. It
-// composes base and core and is maintained with the gallery, not
-// published as an API.
-//
-// The look is Onevra's gallery: a warm page, demos on flat bordered cards
-// under bold titles, flat bordered controls 28 pt tall
-// in 13 pt text, 8 pt corners and one terracotta accent. On touch screens
-// controls keep that look and take presses 44 pt across.
-//
-// Components are structs with a Render method, as Onexa's are: the app
-// sets the fields and handles changes. Each reads its colors where it is
-// built (ColorsOf, TintsOf, FinOf), so a subtree's theme or forced
-// appearance reaches it, and reads them in StyleFuncs, Draws and the like,
-// which follow a change of theme or appearance in place, as NSH's styles
-// do: nothing is built again.
 package ui
 
 import (
@@ -99,6 +80,9 @@ type Palette struct {
 	Background, Surface, Inset, Raised, Field, FieldBorder, Border, Line core.Color
 	Text, Muted, Faint, Accent, AccentFill, OnAccent, Light, OnLight     core.Color
 	Track, Knob, Hover, Pressed, Code, Info, Warn, Danger, Up, Down      core.Color
+	// Selection is selected text and rows; AccentHover and AccentPressed
+	// are the accent's fill under the pointer and held down.
+	Selection, AccentHover, AccentPressed core.Color
 }
 
 // Now is the colors where c is as they are now; a Draw that calls it
@@ -114,6 +98,7 @@ func (c Colors) Now() Palette {
 		Light: r["light"], OnLight: r["onLight"], Track: r["track"], Knob: r["knob"],
 		Hover: p.SurfaceHover, Pressed: p.SurfacePressed, Code: r["code"],
 		Info: r["info"], Warn: p.Warning, Danger: p.Danger, Up: p.Success, Down: r["down"],
+		Selection: p.Selection, AccentHover: p.AccentHover, AccentPressed: p.AccentPressed,
 	}
 }
 

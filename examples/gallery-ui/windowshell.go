@@ -2,7 +2,6 @@ package ui
 
 import (
 	"math"
-	"slices"
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
@@ -10,19 +9,22 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 )
 
-// The sidebar shell is Onexa's: the sidebar reaches the window's top
-// beside the window controls, its toggle after them, and leaves a window
-// material showing through; the content has a header of its own and
-// slides over the sidebar as it hides. The app hides the system's title
-// bar for HeaderHeight and picks the material (nsgo.WindowMaterial).
+// The window shells fill the window with the app's content under a
+// header of their own, which drags the window: the sidebar reaches the
+// window's top beside the window controls, keeping clear of them, and
+// leaves a window material showing through. The app hides the system's
+// title bar for HeaderHeight with desktop.SetTitleBar and picks the
+// material (nsgo.WindowMaterial).
 
 // HeaderHeight is the height of the shell's headers, which the app gives
 // desktop.SetTitleBar for the window controls to center in.
 const HeaderHeight core.Points = 40
 
-// headerHeight is HeaderHeight, or the window controls' height where it
-// is greater.
-func headerHeight(cx *core.Scope) core.Points { return max(HeaderHeight, desktop.TitleBar(cx).Top) }
+// ShellHeaderHeight is a shell's header's height: HeaderHeight, or the
+// window controls' height where it is greater.
+func ShellHeaderHeight(cx *core.Scope) core.Points {
+	return max(HeaderHeight, desktop.TitleBar(cx).Top)
+}
 
 // Chrome is the background of the window's chrome (a title bar, the
 // sidebar): none while a window material shows through it, read in a
@@ -49,15 +51,12 @@ func shellHeader(cx *core.Scope, testID string, lead func() core.Points, trail b
 			p.Right += desktop.TitleBar(cx).Right + safe.Right
 		}
 		return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, FlexShrink: 0,
-			Height: core.Pt(headerHeight(cx) + safe.Top), Padding: p, Background: fill()}
+			Height: core.Pt(ShellHeaderHeight(cx) + safe.Top), Padding: p, Background: fill()}
 	}}
 }
 
 // sidebarSlide is how long the sidebar takes to show or hide.
 const sidebarSlide = 220 * time.Millisecond
-
-// fillRest grows to fill its container.
-var fillRest = core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), MinHeight: core.Pt(0)}
 
 // SidebarShell is a window of a sidebar beside the content, each under a
 // header: the sidebar's toggle stays after the window controls, the
@@ -176,7 +175,7 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 	if s.OnOpenChange != nil {
 		toggle = core.View{StyleFunc: func() core.Style {
 			return core.Style{Position: core.Absolute, Top: core.Pt(core.Insets(cx).Top), Left: core.Pt(toggleStart()),
-				Height: core.Pt(headerHeight(cx)), Direction: core.Row, AlignItems: core.AlignCenter, ZIndex: 2}
+				Height: core.Pt(ShellHeaderHeight(cx)), Direction: core.Row, AlignItems: core.AlignCenter, ZIndex: 2}
 		}, Children: []core.Node{IconButton{Icon: IconSidebar, Label: s.ToggleLabel, Size: toggleSize, Selected: open,
 			OnPress: func() { s.OnOpenChange(!open()) }}}}
 		reserve = func() core.Points { return toggleStart() - 12 + toggleSize + 8 }
@@ -252,183 +251,51 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 	}, Children: children}
 }
 
-// SidebarItem is a destination of a Sidebar.
-type SidebarItem struct {
-	// ID is what Selected and OnSelect name the item by.
-	ID     string
-	Text   string
-	Icon   IconName
-	TestID string
-}
-
-// SidebarSection is a group of a Sidebar's items under an optional
-// title.
-type SidebarSection struct {
-	Title  string
-	Items  []SidebarItem
-	TestID string
-}
-
-// Sidebar is grouped navigation, as Onexa's: the sections' items, the
-// Selected one on a faint fill of the text's color, icons in the accent.
-// It scrolls and leaves its background to the shell.
-//
-// It is one stop of Tab, as a macOS source list is: while it has the
-// keyboard focus, the selected item is ringed, Up and Down select the item
-// before and after, Home and End the first and the last, scrolled into
-// view.
-type Sidebar struct {
-	Sections []SidebarSection
-	Selected func() string
-	OnSelect func(id string)
-	TestID   string
+// PlainShell is a window of the app's content under a header: the app's
+// Leading content, its Title where Leading is nil, and its Actions at the
+// end. Content starts below the header, or under it with BehindHeader,
+// keeping its controls clear with ShellHeaderHeight. The header leaves a
+// window material showing through, and is on the page's background where
+// none shows, as the content is.
+type PlainShell struct {
+	Title        string
+	Leading      []core.Node
+	Actions      []core.Node
+	Content      []core.Node
+	BehindHeader bool
+	TestID       string
 }
 
 // Render implements core.Node.
-func (s Sidebar) Render(cx *core.Scope) core.Node {
+func (p PlainShell) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	desk := core.Untracked(cx, cx.Env().Desktop)
-	height := core.Points(32)
-	if !desk {
-		height = 40
+	lead := p.Leading
+	if lead == nil && p.Title != "" {
+		lead = []core.Node{core.Text{Content: p.Title, MaxLines: 1, Role: core.RoleHeader,
+			Style: typeLabel.Merge(core.Style{FlexShrink: 1}), StyleFunc: Colored(colors.Text)}}
 	}
-	selected := func() string {
-		if s.Selected == nil {
-			return ""
+	head := []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, FlexGrow: 1,
+		FlexShrink: 1, MinWidth: core.Pt(0), Height: core.Pct(100), Overflow: core.Hidden}, Children: lead}}
+	head = append(head, p.Actions...)
+	page := func() core.Color {
+		if desktop.ShowsMaterial(cx) {
+			return 0
 		}
-		return s.Selected()
+		return colors.Background()
 	}
-	choose := func(id string) {
-		if s.OnSelect != nil {
-			s.OnSelect(id)
-		}
+	fill := page
+	if p.BehindHeader {
+		fill = func() core.Color { return 0 }
 	}
-	focused := core.NewSignal(cx, false)
-	row := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(height),
-		Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorPointer}
-	selectedFill := func() core.Color { return Alpha(colors.Text(), 0.1) }
-
-	// The items in order, and where each is: what the keys move through
-	// and scroll into view.
-	var order []string
-	refs := map[string]*core.Ref{}
-	scroll, content := &core.Ref{}, &core.Ref{}
-	var offset core.Points
-	reveal := func(id string) {
-		r, ok := refs[id].Bounds()
-		c, ok2 := content.Bounds()
-		view, ok3 := scroll.Bounds()
-		if !ok || !ok2 || !ok3 {
-			return
-		}
-		top := r.Origin.Y - c.Origin.Y
-		bottom := top + r.Size.Height
-		switch {
-		case top < offset:
-			scroll.ScrollTo(core.Point{Y: top}, true)
-		case bottom > offset+view.Size.Height:
-			scroll.ScrollTo(core.Point{Y: bottom - view.Size.Height}, true)
-		}
+	bar := shellHeader(cx, "shell-header", func() core.Points { return controlsEnd(cx) }, true, fill, head)
+	body := core.View{Style: fillRest, StyleFunc: Filled(colors.Background), Children: p.Content}
+	children := []core.Node{bar, body}
+	if p.BehindHeader {
+		bar = core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0)},
+			Children: []core.Node{bar}}
+		children = []core.Node{body, bar}
 	}
-	// move selects the item at to(at, last): at is the selected one's
-	// place, -1 when it is not shown.
-	move := func(to func(at, last int) int) {
-		if len(order) == 0 {
-			return
-		}
-		at := slices.Index(order, core.Untracked(cx, selected))
-		i := min(max(to(at, len(order)-1), 0), len(order)-1)
-		if i == at {
-			return
-		}
-		choose(order[i])
-		reveal(order[i])
-	}
-
-	item := func(item SidebarItem) core.Node {
-		ref := &core.Ref{}
-		order = append(order, item.ID)
-		refs[item.ID] = ref
-		on := func() bool { return selected() == item.ID }
-		label := Text(item.Text, 13, Regular, colors.Text)
-		label.MaxLines, label.Style.FlexGrow, label.Style.FlexShrink = 1, 1, 1
-		return core.View{Ref: ref, Role: core.RoleButton, Label: item.Text, Selected: on, NoFocus: true, TestID: item.TestID,
-			OnPress: func(core.PressEvent) { choose(item.ID) },
-			Style:   row, StyleFunc: func() core.Style {
-				st := core.Style{Selected: &core.Style{Background: selectedFill()}}
-				if !desk {
-					st.Active = &core.Style{Background: selectedFill()}
-				}
-				if on() && focused.Get() {
-					st = st.Merge(*FocusRing(cx, -2))
-				}
-				return st
-			},
-			Children: []core.Node{Icon(item.Icon, 16, colors.Accent), label}}
-	}
-	var sections []core.Node
-	for _, sec := range s.Sections {
-		var nodes []core.Node
-		if sec.Title != "" {
-			title := Text(sec.Title, 11, Bold, colors.Muted)
-			title.Role, title.MaxLines = core.RoleHeader, 1
-			title.Style.Padding = core.Edges{Top: 4, Right: 8, Bottom: 2, Left: 8}
-			nodes = append(nodes, title)
-		}
-		for _, it := range sec.Items {
-			nodes = append(nodes, item(it))
-		}
-		sections = append(sections, core.View{TestID: sec.TestID, Style: core.Style{Gap: 1}, Children: nodes})
-	}
-
-	// The keys are the list's only while it has the focus: elsewhere the
-	// arrows are the page's.
-	keys := core.Show{When: focused.Get, Then: func(cx *core.Scope) core.Node {
-		repeat := core.KeyOptions{When: core.KeyNotEditing, Repeat: true}
-		cx.OnKeyWith("up", repeat, func() { move(func(at, _ int) int { return at - 1 }) })
-		cx.OnKeyWith("down", repeat, func() { move(func(at, _ int) int { return at + 1 }) })
-		cx.OnKeyWith("home", repeat, func() { move(func(int, int) int { return 0 }) })
-		cx.OnKeyWith("end", repeat, func() { move(func(_, last int) int { return last }) })
-		return core.Group{}
-	}}
-	return core.Scroll{Ref: scroll, TestID: s.TestID, Style: fillRest, OnScroll: func(e core.ScrollEvent) { offset = e.Offset.Y },
-		Children: []core.Node{core.View{Ref: content, OnPress: func(core.PressEvent) {},
-			OnFocus: func() { focused.Set(true) }, OnBlur: func() { focused.Set(false) },
-			Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 12, Left: 12}, Gap: 12}, Children: append(sections, keys)}}}
-}
-
-// IconButton is a square icon button with no fill at rest, Size points
-// across (28 when 0), as a toolbar's: a fill under the pointer, held
-// down and while Selected. IconFunc and LabelFunc replace Icon and Label,
-// what assistive technology reads.
-type IconButton struct {
-	Icon      IconName
-	IconFunc  func() IconName
-	Label     string
-	LabelFunc func() string
-	Size      core.Points
-	Selected  func() bool
-	OnPress   func()
-	TestID    string
-}
-
-// Render implements core.Node.
-func (b IconButton) Render(cx *core.Scope) core.Node {
-	colors := ColorsOf(cx)
-	size := b.Size
-	if size == 0 {
-		size = 28
-	}
-	name := b.IconFunc
-	if name == nil {
-		name = func() IconName { return b.Icon }
-	}
-	return core.View{OnPress: func(core.PressEvent) { b.OnPress() }, Role: core.RoleButton, Label: b.Label, LabelFunc: b.LabelFunc,
-		Selected: b.Selected, TestID: b.TestID, Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff},
-		Style: core.Style{Width: core.Pt(size), Height: core.Pt(size), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-			CornerRadius: 8, Cursor: core.CursorPointer},
-		StyleFunc: func() core.Style {
-			return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
-		},
-		Children: []core.Node{IconOf(name, size*0.6, colors.Muted)}}
+	return core.View{TestID: p.TestID, Style: fillRest, StyleFunc: func() core.Style {
+		return core.Style{Background: page(), Color: colors.Text()}
+	}, Children: children}
 }

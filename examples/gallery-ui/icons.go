@@ -91,6 +91,14 @@ const (
 	IconTooltip     IconName = "tooltip"
 	IconHeader      IconName = "header"
 	IconSettings    IconName = "settings"
+
+	// The components'.
+	IconChevronUp   IconName = "chevron-up"
+	IconChevronDown IconName = "chevron-down"
+	IconMore        IconName = "more"
+	IconImageOff    IconName = "image-off"
+	IconSplitX      IconName = "split-x"
+	IconSplitY      IconName = "split-y"
 )
 
 var glyphs = map[IconName]func() *core.SVG{
@@ -173,21 +181,36 @@ var glyphs = map[IconName]func() *core.SVG{
 	IconTooltip:     lucide.MessageSquareText,
 	IconHeader:      lucide.PanelTop,
 	IconSettings:    lucide.Settings,
+	IconChevronUp:   lucide.ChevronUp,
+	IconChevronDown: lucide.ChevronDown,
+	IconMore:        lucide.Ellipsis,
+	IconImageOff:    lucide.ImageOff,
+	IconSplitX:      lucide.ChevronsLeftRight,
+	IconSplitY:      lucide.ChevronsUpDown,
 }
 
-// Icon draws a glyph size points square in the tint, which it follows.
-func Icon(name IconName, size core.Points, tint func() core.Color) core.Node {
-	var svg *core.SVG
-	if name != "" {
-		svg = glyphs[name]()
+// RegisterIcon names svg name, for the app's own glyphs beside these.
+// Call it before building a tree that names it.
+func RegisterIcon(name IconName, svg func() *core.SVG) { glyphs[name] = svg }
+
+// glyph is the glyph name names, nil for none.
+func glyph(name IconName) *core.SVG {
+	if fn := glyphs[name]; fn != nil {
+		return fn()
 	}
-	return core.Icon{SVG: svg, Style: core.Style{Width: core.Pt(size), Height: core.Pt(size)},
+	return nil
+}
+
+// Icon draws a glyph size points square in the tint, which it follows;
+// nothing for a name not registered.
+func Icon(name IconName, size core.Points, tint func() core.Color) core.Node {
+	return core.Icon{SVG: glyph(name), Style: core.Style{Width: core.Pt(size), Height: core.Pt(size)},
 		StyleFunc: func() core.Style { return core.Style{Color: tint()} }}
 }
 
 // IconOf draws the glyph name returns, which it follows.
 func IconOf(name func() IconName, size core.Points, tint func() core.Color) core.Node {
 	ic := Icon("", size, tint).(core.Icon)
-	ic.SVGFunc = func() *core.SVG { return glyphs[name()]() }
+	ic.SVGFunc = func() *core.SVG { return glyph(name()) }
 	return ic
 }

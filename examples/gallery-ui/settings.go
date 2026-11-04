@@ -260,10 +260,6 @@ func (s Settings) chips(cx *core.Scope) core.Node {
 		Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, Gap: 6}, Children: chips}}}
 }
 
-// transparent is no color, for a border kept for its width: 0 would
-// leave the border its default color.
-var transparent = core.RGBA(0xffffff, 0)
-
 // rows are the page: the selected category's rows, every category's
 // without navigation, or the results while searching.
 func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, selected int, searching bool) core.Node {

@@ -34,7 +34,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `internal/platform/<target>` | `nsh-platform-*` | Native view mounting, text engine and input for one target |
 | `internal/platform/*` | Platforms' shared code | What backends share: `apple` for macOS and iOS, images ([images](docs/architecture/images.md)), picked photos, process readings |
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
-| `examples/gallery-ui` | `examples/nsh-gallery-ui` | The gallery's look and styled components, structs as Onexa's are ([themes](docs/architecture/themes.md#gallery)) |
+| `examples/gallery-ui` | `examples/nsh-gallery-ui` | The gallery's look and styled components, which Onexa copies as its own ([themes](docs/architecture/themes.md#gallery)) |
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |

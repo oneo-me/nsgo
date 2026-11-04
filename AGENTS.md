@@ -23,6 +23,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 
 - Each component takes the app's styles part by part and has no look. Themes and styled controls and variants belong to apps or a component library, never here.
 - A component says its own words through its package's catalogs (`locales/`), never string literals, in English and NSGo's other languages ([languages](docs/architecture/languages.md)).
+- `examples/gallery-ui` is the source of Onexa's components, which copy it: keep its components product-neutral, put what only the gallery's demos use in `gallery.go`, which the copy leaves out, and run `go run ./tools/syncgallery` in `../onexa` after changing them.
 - Keep a component in the `base` package unless it links dependencies an app without it should not; then give it a package under `base`, as `base/textview` has.
 
 ## Working with the user
