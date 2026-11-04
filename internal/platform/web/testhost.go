@@ -185,6 +185,8 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 
 // Animating counts the page's own finite animations too: transitions
 // and a screen sliding in.
+func (t *testSurface) Sync() { t.s.engine.Sync() }
+
 func (t *testSurface) Animating() bool {
 	if t.s.animator.Ending() {
 		return true

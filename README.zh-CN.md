@@ -102,7 +102,7 @@ function App() {
 mount(App);
 ```
 
-TSX 从 `nsgo/base` 导入 `base` 的组件；应用注册自己的 Go 组件后也能导入它们：`tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` 之后，`import { Badge } from "app/native"` 会把 `Badge` 的字段当作 props。放一个继承 `.nsgo/tsconfig.json` 的 `tsconfig.json`，`go tool nsgo check` 就会检查应用并对 TSX 做类型检查；旁边用 `nsgo/test` 编写的 `*.test.tsx` 文件会和 Go 测试一起运行。
+TSX 从 `nsgo/base` 导入 `base` 的组件；应用注册自己的 Go 组件后也能导入它们：`tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` 之后，`import { Badge } from "app/native"` 会把 `Badge` 的字段当作 props；`tsx.RegisterFunctions` 导出 Go 函数，以 `context.Context` 为第一个参数的函数返回 Promise，`tsx.RegisterClass` 导出可在 TSX 中用 `new` 创建的 Go 类型。放一个继承 `.nsgo/tsconfig.json` 的 `tsconfig.json`，`go tool nsgo check` 就会检查应用并对 TSX 做类型检查；旁边用 `nsgo/test` 编写的 `*.test.tsx` 文件会和 Go 测试一起运行。
 
 在包旁边放一个 `nsgo.yaml`，写明应用名称和目标平台：
 
@@ -144,13 +144,15 @@ build:
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` 运行应用，并在每次修改时重新编译并重启；设置 `dev.hot_reload: false` 时只运行一次；只改动 TSX 时会就地更新正在运行的应用，未改动部分的状态保持不变。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R 会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
+`go tool nsgo init` 创建新应用：默认是 Go 应用；`-template tsx` 创建 TSX 应用，`-template mixed` 创建一个 Go 应用，它的 TSX 入口会导入应用自己的 Go 组件、函数和类。
 
-`go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站。`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。
+`go tool nsgo dev` 运行应用，并在每次修改时重新编译并重启；设置 `dev.hot_reload: false` 时只运行一次；只改动 TSX 时会就地更新正在运行的应用，保留顶层的 signal、导航栈以及未改动组件的状态。编译失败会显示在正在运行的应用上方；在应用中按 Command 或 Control+R 会重新编译。`-trace` 在每个目标上打印运行中应用的每次提交及其耗时和挂载项。
+
+`go tool nsgo build` 为每个目标输出一个去除符号的发布包：`.app`、`.ipa`、`.apk`，Windows 和 Linux 的目录，或一个网站；网站中被 `import()` 引用的 TSX 模块会在导入执行时才由页面加载。`-run` 启动为本机构建的包，或把包安装到 iPhone、模拟器或 Android 设备上运行，`-device` 选择具体设备。
 
 `-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示。Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用网站中的 `nsgo.js`。宿主由网页提供，或是 `nsgo.yaml` 的 `web.host` 指定的模块。参见 `examples/embed-*`。
 
-`go tool nsgo test` 运行应用的测试（包括 `*.test.tsx`），每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
+`go tool nsgo test` 运行应用的测试（包括 `*.test.tsx`），每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`；加上 `-fps` 时，会在 `macos`、`windows`、`linux` 和 `ios_simulator` 上每秒记录一次性能监视器的读数。传入 TSX 入口时，`go tool nsgo test App.tsx < steps.ts` 会打开应用并执行标准输入中的步骤，写法与 `*.test.tsx` 测试的函数体相同，`app` 即该应用。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
 
 参数会覆盖它们对应的 `nsgo.yaml` 值，例如 `-target`、`-version` 或 `-output`；dev 和 build 都接受 `-device` 选择 iPhone、模拟器或 Android 设备，build 的 `-team` 为 iPhone 的包签名，dev 的 `-port` 指定其服务器端口。`-h` 会列出全部参数。
 
@@ -178,12 +180,14 @@ go test ./...
 bench/run.sh                                       # 测量行情表基准（见 bench/README.md）
 ```
 
-NSGo 以 NSH 作为参考实现，并只对齐 NSH 的各个发行版。将它克隆到仓库根目录的 `nsh/`，并检出它的最新发行版标签，不要用 `main`；Git 会忽略该目录：
+NSGo 以 NSH 作为参考实现，并只对齐 NSH 的各个发行版。将它克隆到仓库旁边的 `../nsh`，并检出它的最新发行版标签，不要用 `main`：
 
 ```sh
-git clone https://github.com/longbridge/nsh.git nsh
-git -C nsh checkout "$(git -C nsh describe --tags --abbrev=0)"
+git clone https://github.com/longbridge/nsh.git ../nsh
+git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 ```
+
+`go test ./tsx` 会从这份检出运行 NSH 的应用与兼容用例；设置了 `$NSH_DIR` 时改从该目录运行，找不到时跳过。
 
 修改代码前请先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [AGENTS.md](AGENTS.md)。
 

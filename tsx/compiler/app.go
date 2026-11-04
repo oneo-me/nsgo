@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/tsx"
 )
 
 // App returns the app whose TSX entry is entry in fsys, for nsgo.Run and
@@ -25,6 +26,9 @@ func App(fsys fs.FS, entry string) func(cx *core.Scope) core.Node {
 				panic(err)
 			}
 		}
+		if urls, ok := chunks[path.Clean(entry)]; ok {
+			return tsx.SplitApp(entry, code, func(key string) (string, error) { return fetchChunk(urls[key]) })(cx)
+		}
 		return run(cx, entry, code)
 	}
 }
@@ -36,3 +40,12 @@ var bundles = map[string]string{}
 // The tool's builds call it from a file they add to the app's main
 // package; apps do not.
 func Bundled(entry, script string) { bundles[path.Clean(entry)] = script }
+
+// chunks are the URLs of the chunks of split bundles, by entry and key.
+var chunks = map[string]map[string]string{}
+
+// BundledChunks says that entry's bundle is split (bundler.CompileSplit)
+// and where its chunks are, by key: URLs relative to the web page, which
+// App fetches as the app's import()s need them. The tool's web builds
+// call it with Bundled.
+func BundledChunks(entry string, urls map[string]string) { chunks[path.Clean(entry)] = urls }

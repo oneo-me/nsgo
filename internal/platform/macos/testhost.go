@@ -40,7 +40,7 @@ func (host) Open(app func(cx *core.Scope) core.Node, o testhost.Options) (testho
 	var s *surface
 	test := &testWindow{options: o}
 	onMainSync(func() {
-		s = openWindow(app, Options{Title: "NSGo test", Width: o.Size.Width, Height: o.Size.Height}, test)
+		s = openWindow(app, Options{Title: "NSGo test", Width: o.Size.Width, Height: o.Size.Height, Perf: o.FPS}, test)
 		// In front, as a user sees it, but without taking the keyboard
 		// from the app the user works in.
 		s.window.Send(sel("orderFrontRegardless"))
@@ -451,6 +451,8 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 	}
 	return png, nil
 }
+
+func (t *testSurface) Sync() { t.s.engine.Sync() }
 
 func (t *testSurface) Animating() bool {
 	var busy bool

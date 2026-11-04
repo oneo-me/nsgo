@@ -4,7 +4,7 @@ NSGo is a Go port of the design of [Native Shell (NSH)](https://github.com/longb
 
 ## Reference implementation
 
-NSH, checked out in `nsh/` at its latest release, is a reference, not a constraint ([principles](AGENTS.md#principles)): port its design rather than its code. [NSGo and NSH](docs/architecture/nsh.md) says what NSGo keeps, changes, adds and leaves out.
+NSH, checked out beside the repository at its latest release ([development](README.md#development)), is a reference, not a constraint ([principles](AGENTS.md#principles)): port its design rather than its code. [NSGo and NSH](docs/architecture/nsh.md) says what NSGo keeps, changes, adds and leaves out.
 
 ## Code map
 
@@ -20,8 +20,8 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting and the rows a virtualized view makes |
 | `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
-| `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler |
-| `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, or compiles it as it starts |
+| `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; hot and split bundles |
+| `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, fetching a split one's chunks on the web, or compiles it as it starts |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
 | `i18n`, `*/locales` | — (MyGo's `i18n`) | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |

@@ -92,6 +92,7 @@ func (a *App) startTarget(app func(cx *core.Scope) core.Node) {
 	a.anim = driver.NewAnimator(func(driver.Event) {})
 	s, err := h.Open(app, testhost.Options{
 		Size: a.size, Environment: a.env, Storage: a.store, Host: a.host, Clock: a.Clock,
+		FPS: os.Getenv("NSGO_TEST_FPS") != "",
 		Observe: func(b *driver.MountBatch) {
 			t.mu.Lock()
 			t.batches = append(t.batches, b)
@@ -237,6 +238,9 @@ func (t *target) advance(d time.Duration, run bool) {
 		step := min(d, driver.FrameInterval)
 		t.a.Clock.Advance(step)
 		d -= step
+		// What the step's timers posted runs before the next step, so
+		// the timers it sets (an interval's next run) fall due in time.
+		t.surface.Sync()
 		t.drain()
 	}
 	t.settle()

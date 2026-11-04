@@ -173,7 +173,9 @@ func Register(module string, components map[string]core.Node, opts ...Option) {
 // exports its functions: each value of funcs is a func, exported under
 // its key. JS's arguments convert to its parameters and its result back,
 // structs as objects with lower-camel keys; a non-nil error it returns
-// last throws. Register them before an app starts.
+// last throws. A func taking a context.Context first is async: it runs
+// on a goroutine and JS gets a promise (classes.go). Register them before
+// an app starts.
 func RegisterFunctions(module string, funcs map[string]any) {
 	registryMu.Lock()
 	defer registryMu.Unlock()
@@ -183,7 +185,10 @@ func RegisterFunctions(module string, funcs map[string]any) {
 			panic(fmt.Sprintf("tsx: RegisterFunctions: %s.%s is no func", module, name))
 		}
 		registeredFuncs[module] = append(registeredFuncs[module], registeredFunc{name, t})
-		registered[module] = append(registered[module], export{name, func(r *runtime) goja.Value { return r.vm.ToValue(fn) }})
+		v, qualified := reflect.ValueOf(fn), module+"."+name
+		registered[module] = append(registered[module], export{name, func(r *runtime) goja.Value {
+			return r.function(func(call goja.FunctionCall) goja.Value { return r.callGo(qualified, v, call.Arguments) })
+		}})
 	}
 }
 
@@ -713,6 +718,10 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 		return out
 	}
 
+	if def := classOf(t); def != nil {
+		out.Set(r.instanceOf(def, v, "argument"))
+		return out
+	}
 	switch t {
 	case gojaValueType:
 		out.Set(reflect.ValueOf(v))
@@ -852,7 +861,9 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 			out.Set(reflect.ValueOf(e))
 		}
 	case reflect.Func:
-		if fn := v; isFunction(fn) {
+		if fn := v; isFunction(fn) && r.posting > 0 {
+			out.Set(r.callback(fn, t))
+		} else if isFunction(fn) {
 			out.Set(reflect.MakeFunc(t, func(in []reflect.Value) []reflect.Value {
 				args := make([]goja.Value, len(in))
 				for i, a := range in {
@@ -886,6 +897,9 @@ func (r *runtime) encode(v reflect.Value) goja.Value {
 	}
 	if s, ok := shapeOf(v.Type()); ok {
 		return r.encodeShaped(s.encode(v.Interface()))
+	}
+	if def := classOf(v.Type()); def != nil {
+		return r.instanceObject(def, v)
 	}
 	switch v.Type() {
 	case pressType:

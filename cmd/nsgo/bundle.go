@@ -8,8 +8,10 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -98,11 +100,51 @@ func compileBundles(dir string, hot bool) (map[string]string, error) {
 	return out, nil
 }
 
+// splitBundles are a web release's bundles (bundler.CompileSplit): each
+// entry's script, and its chunks' URLs by key.
+type splitBundles struct {
+	main   map[string]string
+	chunks map[string]map[string]string
+}
+
+// compileSplit compiles the app's TSX entries split, giving each chunk
+// to write, which returns its URL relative to the page.
+func compileSplit(dir string, write func(name string, data []byte) (string, error)) (*splitBundles, error) {
+	entries, err := tsxEntries(dir)
+	if err != nil {
+		return nil, err
+	}
+	s := &splitBundles{main: map[string]string{}, chunks: map[string]map[string]string{}}
+	for _, e := range entries {
+		main, chunks, err := bundler.CompileSplit(os.DirFS(dir), e)
+		if err != nil {
+			return nil, fmt.Errorf("compiling %s: %w", e, err)
+		}
+		s.main[e] = main
+		urls := map[string]string{}
+		for key, code := range chunks {
+			name := strings.TrimSuffix(strings.TrimPrefix(key, "app:"), filepath.Ext(key))
+			if urls[key], err = write("chunks/"+strings.ReplaceAll(name, "/", "-")+".js", []byte(code)); err != nil {
+				return nil, err
+			}
+		}
+		s.chunks[e] = urls
+	}
+	return s, nil
+}
+
 // bundleFile compiles the app's TSX and writes the file that gives its
 // bundles to compiler.App, returning its path; "" for an app without
-// TSX.
+// TSX. A web release's are split.
 func (p *project) bundleFile() (string, error) {
-	bundles, err := compileBundles(p.Dir, p.Dev.Client && !p.Release)
+	var bundles map[string]string
+	var chunks map[string]map[string]string
+	var err error
+	if p.split != nil {
+		bundles, chunks = p.split.main, p.split.chunks
+	} else {
+		bundles, err = compileBundles(p.Dir, p.Dev.Client && !p.Release)
+	}
 	if err != nil || len(bundles) == 0 {
 		return "", err
 	}
@@ -116,6 +158,13 @@ func (p *project) bundleFile() (string, error) {
 	fmt.Fprintf(&b, "import %q\n\nfunc init() {\n", compilerPath)
 	for _, e := range entries {
 		fmt.Fprintf(&b, "\tcompiler.Bundled(%q, %s)\n", e, strconv.Quote(bundles[e]))
+		if urls := chunks[e]; len(urls) > 0 {
+			fmt.Fprintf(&b, "\tcompiler.BundledChunks(%q, map[string]string{\n", e)
+			for _, k := range slices.Sorted(maps.Keys(urls)) {
+				fmt.Fprintf(&b, "\t\t%q: %q,\n", k, urls[k])
+			}
+			b.WriteString("\t})\n")
+		}
 	}
 	b.WriteString("}\n")
 	return p.cacheFile("bundle", ".go", b.String())
@@ -166,42 +215,97 @@ func (p *project) overlay(files map[string]string) (string, error) {
 	return p.cacheFile("overlay", ".json", string(b))
 }
 
+// steps are nsgo test <entry>'s: the entry, relative to the package, and
+// the steps standard input held.
+type steps struct{ entry, src string }
+
+// stepsTest is the Go test running p.steps.
+const stepsTest = "TestSteps"
+
 // tsxTestFile writes the Go test that runs the app's *.test.tsx files
-// (tsxtest.Run), returning its path; "" when it has none.
+// (tsxtest.Run), or the steps of nsgo test <entry>, returning its path;
+// "" when it has none. Headless, the test reads the app's files from its
+// directory; built for a target, which runs it where they are not, it
+// carries them.
 func (p *project) tsxTestFile() (string, error) {
 	var found bool
-	_ = filepath.WalkDir(p.Dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil || found {
-			return filepath.SkipAll
+	files := map[string][]byte{}
+	err := filepath.WalkDir(p.Dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		if d.IsDir() && path != p.Dir && (strings.HasPrefix(d.Name(), ".") || d.Name() == "node_modules") {
-			return filepath.SkipDir
+		name := d.Name()
+		if d.IsDir() {
+			if path != p.Dir && (strings.HasPrefix(name, ".") || name == "node_modules" || name == p.Build.Output) {
+				return filepath.SkipDir
+			}
+			return nil
 		}
-		if strings.HasSuffix(d.Name(), ".test.tsx") || strings.HasSuffix(d.Name(), ".test.ts") {
+		if strings.HasSuffix(name, ".test.tsx") || strings.HasSuffix(name, ".test.ts") {
 			found = true
+		}
+		if p.testBinary && !strings.HasSuffix(name, ".go") && tsxFile(name) {
+			b, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			r, _ := filepath.Rel(p.Dir, path)
+			files[filepath.ToSlash(r)] = b
 		}
 		return nil
 	})
-	if !found {
+	if err != nil {
+		return "", err
+	}
+	if !found && p.steps == nil {
 		return "", nil
 	}
 	name, err := packageName(p.Dir)
 	if err != nil {
 		return "", err
 	}
+	fsys, imports := `os.DirFS(".")`, `"os"`
+	if p.testBinary {
+		var b strings.Builder
+		b.WriteString("fstest.MapFS{\n")
+		keys := slices.Sorted(maps.Keys(files))
+		for _, k := range keys {
+			fmt.Fprintf(&b, "\t%q: {Data: []byte(%q)},\n", k, files[k])
+		}
+		b.WriteString("}")
+		fsys, imports = b.String(), `"testing/fstest"`
+	}
+	test := "func TestTSX(t *testing.T) { tsxtest.Run(t, appFiles) }"
+	if s := p.steps; s != nil {
+		test = fmt.Sprintf("func %s(t *testing.T) { tsxtest.RunSteps(t, appFiles, %q, %q) }", stepsTest, s.entry, s.src)
+	}
 	return p.cacheFile("tsxtest", "_test.go", fmt.Sprintf(`// Written by nsgo: the app's TSX tests.
 
 package %s
 
 import (
-	"os"
+	%s
 	"testing"
 
 	"github.com/oneo-me/nsgo/tsx/tsxtest"
 )
 
-func TestTSX(t *testing.T) { tsxtest.Run(t, os.DirFS(".")) }
-`, name))
+// appFiles are the files the tests compile the app from.
+var appFiles = %s
+
+%s
+`, name, imports, fsys, test))
+}
+
+// tsxFile reports whether a TSX app compiles from a file of this name:
+// its modules, data, configuration and assets.
+func tsxFile(name string) bool {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json", ".yaml", ".yml",
+		".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ttf", ".otf", ".woff", ".woff2", ".ttc":
+		return true
+	}
+	return false
 }
 
 // packageName is the name of the package in dir.

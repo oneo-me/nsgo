@@ -44,6 +44,10 @@ type Options struct {
 	// Clock is the test's, which the app's timers run on in place of the
 	// system's: they fire as the test moves it.
 	Clock core.Clock
+	// FPS measures the app with the backend's performance monitor and
+	// logs its readings once a second (nsgo test -fps), where the backend
+	// has one: macOS, iOS, Windows and Linux.
+	FPS bool
 }
 
 // Surface is an app shown on a platform. Its methods act as the user
@@ -88,6 +92,9 @@ type Surface interface {
 	// as a system setting does.
 	Resize(size driver.Size) error
 	SetEnvironment(env driver.Environment) error
+	// Sync returns once the app's engine ran what was posted to it
+	// before: what the timers the test's clock fired run.
+	Sync()
 }
 
 var host Host

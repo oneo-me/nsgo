@@ -23,6 +23,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/dop251/goja"
@@ -60,6 +61,41 @@ func Run(t *testing.T, fsys fs.FS) {
 	for _, f := range files {
 		t.Run(f, func(t *testing.T) { runFile(t, fsys, f) })
 	}
+}
+
+// idle is how long RunSteps lets the app run before its steps: long
+// enough for what it does as it settles to show in a trace, as NSH's
+// nsh test <entry> waits.
+const idle = 1200
+
+// RunSteps runs steps, the body of an async test function given app, the
+// app at entry in fsys opened on the network after it ran a while: what
+// nsgo test <entry> runs with the steps of its standard input.
+func RunSteps(t *testing.T, fsys fs.FS, entry, steps string) {
+	file := path.Join(path.Dir(entry), path.Base(entry)+".steps.test.ts")
+	src := fmt.Sprintf(`import { expect, open, test } from "nsgo/test";
+
+test("steps", async () => {
+const app = await open(%q, { network: "live" });
+await app.wait(%d);
+%s
+});
+`, "./"+path.Base(entry), idle, steps)
+	runFile(t, withFile{fsys, file, []byte(src)}, file)
+}
+
+// withFile is an fs.FS with one more file.
+type withFile struct {
+	fs.FS
+	name string
+	data []byte
+}
+
+func (w withFile) Open(name string) (fs.File, error) {
+	if name == w.name {
+		return fstest.MapFS{name: {Data: w.data}}.Open(name)
+	}
+	return w.FS.Open(name)
 }
 
 // runner is one test file's VM.

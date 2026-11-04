@@ -20,6 +20,12 @@ The web target is served from the same server; its page shows the overlay itself
 
 The tool finds a package's TSX entries in its `compiler.App(src, "App.tsx")` calls (`bundle.go`), compiles each with `tsx/bundler` from the app's directory and adds the bundles to the package with a file calling `compiler.Bundled`, through `go -overlay`, built with the `nsgo_bundled` tag, which leaves the compiler out. The overlay names the package's directory as `$PWD` spells it and by its real path, since `go` names the files by either. `nsgo dev` compiles hot bundles ([TSX](tsx.md#developing)) and watches the files they compile from apart from the Go ones: a change of them alone compiles the TSX again and sends `bundle <entry>` over `/_nsgo/events`, which `/_nsgo/bundle?entry=` serves, with no Go build; a failed compile shows as a failed build does.
 
+A web release's bundles are split ([TSX](tsx.md#split-bundles)): `buildWeb` writes each chunk as `chunks/<module>.<10 hex>.js` before the Go build, and the file the overlay adds gives `compiler.BundledChunks` their URLs.
+
+## New apps
+
+`nsgo init` (`init.go`) writes an app of `-template` `go` (the default), `tsx` or `mixed`, NSH's `ts` and `mixed` templates: `nsgo.yaml` and tests each, and for TSX a main package embedding the sources, `App.tsx`, `app.test.tsx`, `tsconfig.json` and `.gitignore`; `mixed`'s `App.tsx` imports a Go component, function and class `native.go` registers under `<slug>/native`. It refuses a directory holding any of its files. `TestInitTemplates` writes each and runs its tests against the checkout.
+
 ## Catalogs
 
 `i18n.go`, `i18n_message.go`, `i18n_gen.go` and `i18n_build.go` check packages' catalogs and write their Go code ([languages](languages.md#the-tool)): `dev`, `build` and `test` before they compile, `check` without writing, and `nsgo i18n` for one directory. `dev` watches the YAML files of the directories it watches, and the app's catalogs before it imports them.
@@ -30,9 +36,9 @@ The tool finds a package's TSX entries in its `compiler.App(src, "App.tsx")` cal
 
 ## Tests
 
-`nsgo test` (`test.go`) runs `go test -json` and prints a line per test, with a test running the package's `*.test.tsx` files (`tsxtest.Run`) added through the overlay when it has any, a failure's output under it, a tally, and with `-junit` a JUnit report, a suite per package. `-run` filters; `-trace` sets `NSGO_TEST_TRACE`, under which `nsgotest` prints each batch under its step with its items and the commit's time.
+`nsgo test` (`test.go`) runs `go test -json` and prints a line per test, with a test running the package's `*.test.tsx` files (`tsxtest.Run`) added through the overlay when it has any, a failure's output under it (a subtest's under its own line), a tally, and with `-junit` a JUnit report, a suite per package. Given a TSX entry rather than a directory, it runs `TestSteps` instead, which opens the entry on the network, lets it run 1.2 s and takes the steps standard input holds, none from a terminal (`tsxtest.RunSteps`, NSH's `nsh test <entry>`). `-run` filters; `-trace` sets `NSGO_TEST_TRACE`, under which `nsgotest` prints each batch under its step with its items and the commit's time.
 
-`-target` runs the tests on a platform, a process per test ([testing](testing.md#on-a-platform)): macOS, Windows and Linux on this machine, the web in a headless Chrome, Chromium or Edge it finds (or `NSGO_BROWSER`) over the DevTools protocol (`cdp.go`, on `x/net/websocket`), the simulator through `simctl launch`, and Android through `am start` with the test in an intent extra and its output read back from the device's log.
+`-target` runs the tests on a platform, a process per test ([testing](testing.md#on-a-platform)), the TSX ones among them: the test binary carries the app's TSX, data and assets, since it runs where its sources are not, and starts the app from the bundles compiled ahead, as packages do. `-fps` has the test hosts of macOS, Windows, Linux and the iOS simulator log their performance monitor's readings each second, which the tool prints as they come (`NSGO_TEST_FPS`, `testhost.Options.FPS`). macOS, Windows and Linux on this machine, the web in a headless Chrome, Chromium or Edge it finds (or `NSGO_BROWSER`) over the DevTools protocol (`cdp.go`, on `x/net/websocket`), the simulator through `simctl launch`, and Android through `am start` with the test in an intent extra and its output read back from the device's log.
 
 ## Packages
 

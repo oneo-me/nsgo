@@ -54,7 +54,7 @@ func TestTasks(t *testing.T) {
 
 func TestFocusTimer(t *testing.T) {
 	app := nsgotest.Start(t, Root)
-	has(t, app, "25:00", "READY")
+	has(t, app, "25:00", "READY", "A 25 minute session · 0 sessions · 0 min")
 	app.Press("text:Start")
 	app.Advance(3 * time.Second)
 	has(t, app, "24:57", "RUNNING", "Pause")
@@ -62,7 +62,13 @@ func TestFocusTimer(t *testing.T) {
 	app.Advance(2 * time.Second)
 	has(t, app, "24:57", "PAUSED")
 	app.Press("text:Reset")
-	has(t, app, "25:00", "READY")
+	has(t, app, "25:00", "READY", "A 25 minute session · 1 session · 0 min")
+}
+
+func TestExport(t *testing.T) {
+	app := nsgotest.Start(t, Root)
+	app.Press("text:Export")
+	app.WaitFor("text:Exported 3 tasks", 5*time.Second)
 }
 
 func TestAppearanceAndColumns(t *testing.T) {

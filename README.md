@@ -102,7 +102,7 @@ function App() {
 mount(App);
 ```
 
-TSX imports `base`'s components from `nsgo/base`, and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props. A `tsconfig.json` extending `.nsgo/tsconfig.json` lets `go tool nsgo check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
+TSX imports `base`'s components from `nsgo/base`, and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props; `tsx.RegisterFunctions` exports Go functions, those taking a `context.Context` as promises, and `tsx.RegisterClass` Go types TSX makes with `new`. A `tsconfig.json` extending `.nsgo/tsconfig.json` lets `go tool nsgo check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
 
 Beside the package, `nsgo.yaml` names the app and its targets:
 
@@ -144,13 +144,15 @@ Add the tool to your module once; `go tool nsgo` then runs it without installing
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 ```
 
-`go tool nsgo dev` runs the app and rebuilds and restarts it on each change, or with `dev.hot_reload: false` runs it once; a change of TSX alone updates the running app in place, keeping the state of what did not change. A failed build shows over the running app; Command or Control+R in the app builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
+`go tool nsgo init` writes a new app: a Go app, or with `-template tsx` a TSX app and with `-template mixed` a Go app whose TSX entry imports a Go component, function and class of its own.
 
-`go tool nsgo build` writes a stripped release package per target: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site. `-run` starts the one built for this machine, or installs it on an iPhone, simulator or Android device, which `-device` picks.
+`go tool nsgo dev` runs the app and rebuilds and restarts it on each change, or with `dev.hot_reload: false` runs it once; a change of TSX alone updates the running app in place, keeping top-level signals, navigation stacks and the state of the components it did not change. A failed build shows over the running app; Command or Control+R in the app builds it again. `-trace` prints each of the running app's commits, its time and mount items, on every target.
+
+`go tool nsgo build` writes a stripped release package per target: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site, whose page fetches each TSX module an `import()` names when the import runs. `-run` starts the one built for this machine, or installs it on an iPhone, simulator or Android device, which `-device` picks.
 
 `-embed` packages the app for an iOS or Android app of your own instead: an XCFramework (of dynamic frameworks with `-dynamic`) or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`. The host is the page's, or the module `nsgo.yaml`'s `web.host` names. See `examples/embed-*`.
 
-`go tool nsgo test` runs the app's tests, its `*.test.tsx` among them, with a line per test; `-run` filters them, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
+`go tool nsgo test` runs the app's tests, its `*.test.tsx` among them, with a line per test; `-run` filters them, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`, and with `-fps` logs the performance monitor's readings each second on `macos`, `windows`, `linux` and `ios_simulator`. Given a TSX entry, `go tool nsgo test App.tsx < steps.ts` opens the app and runs the steps standard input holds, as a `*.test.tsx` test's body with `app` the app. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
 
 Flags replace the `nsgo.yaml` values they name, such as `-target`, `-version` or `-output`; `dev` and `build` take `-device` for an iPhone, simulator or Android device, `build` `-team` to sign the iPhone's package, and `dev` `-port` for its server. `-h` lists every flag.
 
@@ -178,12 +180,14 @@ go test ./...
 bench/run.sh                                       # measure the quotes benchmark (bench/README.md)
 ```
 
-NSGo uses NSH as its reference implementation, and aligns with its releases. Clone it into `nsh/` at the repository root and check out its latest release tag, never `main`; Git ignores that directory:
+NSGo uses NSH as its reference implementation, and aligns with its releases. Clone it beside the repository, as `../nsh`, and check out its latest release tag, never `main`:
 
 ```sh
-git clone https://github.com/longbridge/nsh.git nsh
-git -C nsh checkout "$(git -C nsh describe --tags --abbrev=0)"
+git clone https://github.com/longbridge/nsh.git ../nsh
+git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 ```
+
+`go test ./tsx` runs NSH's apps and compat cases from that checkout, or from `$NSH_DIR` when set, and skips them without one.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md) before changing code.
 

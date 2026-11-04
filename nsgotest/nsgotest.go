@@ -110,6 +110,13 @@ func ManualFrames() Option {
 	return func(a *App) { a.manualFrames = true }
 }
 
+// Errors hands what the app reports failing to report instead of failing
+// the test, as a host's overlay shows it while the app runs on. It
+// applies headless only.
+func Errors(report func(error)) Option {
+	return func(a *App) { a.report = report }
+}
+
 // seed is a storage backend that loads entries and keeps nothing.
 type seed map[string]string
 
@@ -122,6 +129,8 @@ func (seed) Write(driver.StorageChange)         {}
 type App struct {
 	t    testing.TB
 	size driver.Size
+	// report takes what the app reports failing (Errors).
+	report func(error)
 	// Clipboard is the clipboard's text, ClipboardImage its image as the
 	// app last set it or reads it, and ClipboardFiles the file: URLs it
 	// holds; Announced what screen readers were asked to say.
@@ -284,8 +293,14 @@ func Start(t testing.TB, app func(cx *core.Scope) core.Node, opts ...Option) *Ap
 			a.posts = append(a.posts, fn)
 			a.mu.Unlock()
 		},
-		Clock:  a.Clock,
-		Report: func(err error) { t.Errorf("nsgotest: the app failed: %v", err) },
+		Clock: a.Clock,
+		Report: func(err error) {
+			if a.report != nil {
+				a.report(err)
+				return
+			}
+			t.Errorf("nsgotest: the app failed: %v", err)
+		},
 		// Frames run as the clock advances, as a platform's display does.
 		RequestFrame: func() {
 			a.mu.Lock()

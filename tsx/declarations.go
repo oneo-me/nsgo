@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -60,6 +61,11 @@ func Declarations() map[string]string {
 			modules = append(modules, m)
 		}
 	}
+	for m := range registeredClasses {
+		if !slices.Contains(modules, m) {
+			modules = append(modules, m)
+		}
+	}
 	sort.Strings(modules)
 	for _, m := range modules {
 		var path, from string
@@ -73,6 +79,10 @@ func Declarations() map[string]string {
 			path, from = "types/"+m+".d.ts", ""
 		}
 		d := newDeclarer()
+		d.module = m
+		for _, c := range registeredClasses[m] {
+			d.class(c)
+		}
 		for _, c := range registeredTypes[m] {
 			d.component(c)
 		}
@@ -166,8 +176,11 @@ type declarer struct {
 	named  map[reflect.Type]string
 	queue  []reflect.Type
 	extras strings.Builder
-	// current is the component being declared, which names its ref.
-	current string
+	// current is the component being declared, which names its ref, and
+	// module the module declared.
+	current, module string
+	// async is set while an async call's parameters are declared.
+	async bool
 }
 
 // typePrefixes name the types of the packages of a component as NSH
@@ -324,6 +337,13 @@ func (d *declarer) params(t reflect.Type, render bool) string {
 
 // ts is the TypeScript type of a value of t.
 func (d *declarer) ts(t reflect.Type) string {
+	// Declarations runs with the registry locked.
+	if c := classes[t]; c != nil {
+		if c.module == d.module {
+			return c.name
+		}
+		return fmt.Sprintf("import(%q).%s", c.module, c.name)
+	}
 	if s, ok := shapeOf(t); ok {
 		if _, done := d.named[t]; !done {
 			d.named[t] = s.name
@@ -427,9 +447,10 @@ func (d *declarer) ts(t reflect.Type) string {
 		}
 		return d.structName(t)
 	case reflect.Func:
-		out := "void"
-		if t.NumOut() == 1 {
-			out = d.ts(t.Out(0))
+		out := d.result(t)
+		if d.async && out != "void" {
+			// A function given to an async call may answer later.
+			out += " | Promise<" + out + ">"
 		}
 		return "(" + d.params(t, false) + ") => " + out
 	}
@@ -438,27 +459,79 @@ func (d *declarer) ts(t reflect.Type) string {
 
 // function declares a registered function: its error result throws.
 func (d *declarer) function(f registeredFunc) {
-	t := f.t
+	fmt.Fprintf(&d.b, "export declare function %s%s;\n", f.name, d.signature(f.t, 0))
+}
+
+// signature is a Go call's parameters and result from its first'th
+// parameter, as callGo gives them: an async call's context left out and
+// its result a promise, its error result thrown.
+func (d *declarer) signature(t reflect.Type, first int) string {
+	async := isAsync(t, first)
+	if async {
+		first++
+	}
+	d.async = async
+	defer func() { d.async = false }()
 	var params []string
-	for i := range t.NumIn() {
+	for i := first; i < t.NumIn(); i++ {
 		in := t.In(i)
 		if t.IsVariadic() && i == t.NumIn()-1 {
-			params = append(params, fmt.Sprintf("...arg%d: %s", i, d.ts(in)))
+			params = append(params, fmt.Sprintf("...arg%d: %s", i-first, d.ts(in)))
 			continue
 		}
-		params = append(params, fmt.Sprintf("arg%d: %s", i, d.ts(in)))
+		params = append(params, fmt.Sprintf("arg%d: %s", i-first, d.ts(in)))
 	}
+	result := d.result(t)
+	if async {
+		result = "Promise<" + result + ">"
+	}
+	return "(" + strings.Join(params, ", ") + "): " + result
+}
+
+// result is the TypeScript type of what a Go call returns.
+func (d *declarer) result(t reflect.Type) string {
 	outs := t.NumOut()
 	if outs > 0 && t.Out(outs-1) == errorType {
 		outs--
 	}
-	result := "void"
-	if outs == 1 {
-		result = d.ts(t.Out(0))
-	} else if outs > 1 {
-		result = "unknown[]"
+	switch {
+	case outs == 1:
+		return d.ts(t.Out(0))
+	case outs > 1:
+		return "unknown[]"
 	}
-	fmt.Fprintf(&d.b, "export declare function %s(%s): %s;\n", f.name, strings.Join(params, ", "), result)
+	return "void"
+}
+
+// class declares a registered class.
+func (d *declarer) class(c *classDef) {
+	fmt.Fprintf(&d.b, "export declare class %s {\n", c.name)
+	if c.ctor.IsValid() {
+		sig := d.signature(c.ctor.Type(), 0)
+		fmt.Fprintf(&d.b, "  constructor%s;\n", sig[:strings.LastIndex(sig, "):")+1])
+	} else {
+		d.b.WriteString("  private constructor();\n")
+	}
+	getters := make([]string, 0, len(c.getters))
+	for g := range c.getters {
+		getters = append(getters, g)
+	}
+	sort.Strings(getters)
+	for _, g := range getters {
+		name, get := lowerCamel(g), c.getters[g]
+		fmt.Fprintf(&d.b, "  get %s(): %s;\n", name, d.result(get.Type))
+		if s, ok := c.setters[g]; ok && s.Type.NumIn() == 2 {
+			fmt.Fprintf(&d.b, "  set %s(value: %s);\n", name, d.ts(s.Type.In(1)))
+		}
+	}
+	for _, m := range c.methods {
+		fmt.Fprintf(&d.b, "  %s%s;\n", lowerCamel(m.Name), d.signature(m.Type, 1))
+	}
+	for _, s := range c.statics {
+		fmt.Fprintf(&d.b, "  static %s%s;\n", s.name, d.signature(s.fn.Type(), 0))
+	}
+	d.b.WriteString("  /** Lets the Go value go now, closing it; the object throws after. */\n  dispose(): void;\n")
+	d.b.WriteString("  [Symbol.dispose](): void;\n}\n")
 }
 
 // structName names a struct type's interface, declared once.

@@ -2,16 +2,26 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"text/template"
 )
 
-// initApp writes a new app into dir: nsgo.yaml, a main package with a
-// component and a headless test of it.
-func initApp(dir, name, module string) error {
+// templates are what nsgo init writes: a Go app, a TSX app, or a Go app
+// with a TSX entry importing Go of its own (NSH's ts, rust and mixed).
+var templates = []string{"go", "tsx", "mixed"}
+
+// initApp writes a new app of template kind into dir: nsgo.yaml, a main
+// package and tests; a TSX app's entry, its tests, tsconfig.json and
+// .gitignore.
+func initApp(dir, name, module, kind string) error {
+	if !slices.Contains(templates, kind) {
+		return fmt.Errorf("init: no template %q; use %s", kind, strings.Join(templates, ", "))
+	}
 	if name == "" {
 		name = filepath.Base(dir)
 	}
@@ -25,12 +35,27 @@ func initApp(dir, name, module string) error {
 		return fmt.Errorf("init: %s already has an nsgo.yaml", rel(dir))
 	}
 	id := "dev.nsgo." + strings.ToLower(regexp.MustCompile(`[^A-Za-z0-9]+`).ReplaceAllString(name, ""))
-	data := struct{ Name, ID, Module string }{name, id, module}
+	slug := strings.Trim(strings.ToLower(regexp.MustCompile(`[^A-Za-z0-9]+`).ReplaceAllString(name, "-")), "-")
+	data := struct{ Name, ID, Module, Slug string }{name, id, module, slug}
 	files := map[string]*template.Template{"nsgo.yaml": initYAML, "app.go": initApp_, "app_test.go": initTest}
+	if kind != "go" {
+		files = map[string]*template.Template{"nsgo.yaml": initYAML, "main.go": initTSXMain, "App.tsx": initTSX,
+			"app.test.tsx": initTSXTest, "tsconfig.json": initTSConfig, ".gitignore": initIgnore}
+	}
+	if kind == "mixed" {
+		files["App.tsx"], files["native.go"] = initMixedTSX, initNative
+	}
 	if module != "" {
 		files["go.mod"] = initMod
 	}
-	for file, t := range files {
+	names := slices.Sorted(maps.Keys(files))
+	for _, file := range names {
+		if _, err := os.Stat(filepath.Join(dir, file)); err == nil {
+			return fmt.Errorf("init: %s exists", rel(filepath.Join(dir, file)))
+		}
+	}
+	for _, file := range names {
+		t := files[file]
 		f, err := os.OpenFile(filepath.Join(dir, file), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 		if err != nil {
 			return err
@@ -46,6 +71,9 @@ func initApp(dir, name, module string) error {
 		detail("next: cd %s && go get github.com/oneo-me/nsgo && go get -tool github.com/oneo-me/nsgo/cmd/nsgo && go tool nsgo dev", rel(dir))
 	} else {
 		detail("next: go tool nsgo dev %s", rel(dir))
+	}
+	if kind != "go" {
+		detail("nsgo check writes the TSX's types to .nsgo/types and checks it")
 	}
 	return nil
 }
@@ -132,4 +160,131 @@ func TestPress(t *testing.T) {
 	app.Press("role:button Press me")
 	app.Find("text:Pressed 1 times")
 }
+`))
+
+var initTSXMain = template.Must(template.New("main").Parse(`// Command {{.Name}} is an NSGo app written in TSX: App.tsx is its entry.
+// nsgo dev and nsgo build compile it ahead; go run and go test compile it
+// as it starts.
+package main
+
+import (
+	"embed"
+
+	"github.com/oneo-me/nsgo"
+	"github.com/oneo-me/nsgo/tsx/compiler"
+)
+
+//go:embed *.tsx nsgo.yaml
+var src embed.FS
+
+// Root is the app: what App.tsx mounts.
+var Root = compiler.App(src, "App.tsx")
+
+func main() { nsgo.Run(Root) }
+`))
+
+var initTSX = template.Must(template.New("tsx").Parse(`import { mount, signal, Text, View } from "nsgo";
+
+function App() {
+  const count = signal(0);
+  return (
+    <View class="flex-1 gap-4 p-6">
+      <Text class="text-3xl font-bold">{{.Name}}</Text>
+      <Text>Pressed {count()} times</Text>
+      <View
+        role="button"
+        accessibilityLabel="Press me"
+        onPress={() => count.set(count() + 1)}
+        class="self-start rounded-lg bg-blue-600 px-4 py-2 active:opacity-80"
+      >
+        <Text class="text-white">Press me</Text>
+      </View>
+    </View>
+  );
+}
+
+mount(App);
+`))
+
+var initMixedTSX = template.Must(template.New("mixed").Parse(`import { mount, signal, Text, View } from "nsgo";
+// What native.go registers: a component, a function and a class in Go.
+import { Badge, greet, Tally } from "{{.Slug}}/native";
+
+function App() {
+  const tally = new Tally();
+  const count = signal(tally.count);
+  return (
+    <View class="flex-1 gap-4 p-6">
+      <Text class="text-3xl font-bold">{greet("{{.Name}}")}</Text>
+      <Badge text={` + "`" + `Pressed ${count()} times` + "`" + `} />
+      <View
+        role="button"
+        accessibilityLabel="Press me"
+        onPress={() => count.set(tally.add(1))}
+        class="self-start rounded-lg bg-blue-600 px-4 py-2 active:opacity-80"
+      >
+        <Text class="text-white">Press me</Text>
+      </View>
+    </View>
+  );
+}
+
+mount(App);
+`))
+
+var initNative = template.Must(template.New("native").Parse(`package main
+
+import (
+	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/tsx"
+)
+
+// Badge is a Go component App.tsx renders: its fields are its props, in
+// lower camel case (Text is text).
+type Badge struct {
+	Text string
+}
+
+func (b Badge) Render(*core.Scope) core.Node {
+	return core.Text{Content: b.Text, Class: "self-start rounded-full bg-zinc-100 px-3 py-1 text-sm"}
+}
+
+// Tally is a Go class App.tsx makes with new: its methods are the
+// class's, and Count, a getter, its count property.
+type Tally struct{ count int }
+
+func (t *Tally) Add(by int) int { t.count += by; return t.count }
+func (t *Tally) Count() int     { return t.count }
+
+func init() {
+	tsx.Register("{{.Slug}}/native", map[string]core.Node{"Badge": Badge{}})
+	tsx.RegisterFunctions("{{.Slug}}/native", map[string]any{
+		"greet": func(name string) string { return "Hello from Go, " + name },
+	})
+	tsx.RegisterClass("{{.Slug}}/native", "Tally", tsx.Class[Tally]{
+		New:     func() *Tally { return &Tally{} },
+		Getters: []string{"Count"},
+	})
+}
+`))
+
+var initTSXTest = template.Must(template.New("tsxtest").Parse(`// The app's TSX tests: nsgo test runs them headless, or on a platform
+// with -target.
+import { expect, open, test } from "nsgo/test";
+
+test("counts presses", async () => {
+  const app = await open("App.tsx");
+  await app.press("role:button[Press me]");
+  expect(app.shows("Pressed 1 times")).toBe(true);
+});
+`))
+
+var initTSConfig = template.Must(template.New("tsconfig").Parse(`{
+  "extends": "./.nsgo/tsconfig.json",
+  "include": ["**/*.ts", "**/*.tsx"]
+}
+`))
+
+var initIgnore = template.Must(template.New("ignore").Parse(`.nsgo/
+dist/
 `))

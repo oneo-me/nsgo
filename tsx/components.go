@@ -2,6 +2,8 @@ package tsx
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/dop251/goja"
 
@@ -131,11 +133,22 @@ func (r *runtime) thrown(err error) goja.Value {
 	return r.vm.NewGoError(err)
 }
 
+// contextDefault keys a context's default, which a hot update replaces
+// in the context it keeps.
+var contextDefault = goja.NewSymbol("nsgo.contextDefault")
+
 // context is `context(default)`: a function reading the nearest value
 // provided, with a Provider component (`<Ctx.Provider value>`).
 func (r *runtime) context(call goja.FunctionCall) goja.Value {
-	key := core.NewKey("context", arg(call, 0))
-	ctx := r.function(func(goja.FunctionCall) goja.Value { return key.Use(r.cx) })
+	key := core.NewKey[goja.Value]("context", nil)
+	var ctx *goja.Object
+	ctx = r.function(func(goja.FunctionCall) goja.Value {
+		if v := key.Use(r.cx); v != nil {
+			return v
+		}
+		return ctx.GetSymbol(contextDefault)
+	})
+	_ = ctx.DefineDataPropertySymbol(contextDefault, arg(call, 0), goja.FLAG_TRUE, goja.FLAG_FALSE, goja.FLAG_FALSE)
 	_ = ctx.Set("Provider", r.function(func(call goja.FunctionCall) goja.Value {
 		props := arg(call, 0).ToObject(r.vm)
 		owner := r.cx.Child()
@@ -149,6 +162,43 @@ func (r *runtime) context(call goja.FunctionCall) goja.Value {
 		return out
 	}))
 	return ctx
+}
+
+// keepContext is `keepContext(kept, made)`, for hot updates: kept, the
+// context its module made first, takes the default of made, the one it
+// made again, and stays the context, so providers and readers stay
+// connected.
+func (r *runtime) keepContext(call goja.FunctionCall) goja.Value {
+	kept, made := arg(call, 0).ToObject(r.vm), arg(call, 1).ToObject(r.vm)
+	_ = kept.DefineDataPropertySymbol(contextDefault, made.GetSymbol(contextDefault), goja.FLAG_TRUE, goja.FLAG_FALSE, goja.FLAG_FALSE)
+	return kept
+}
+
+// loadChunk is `loadChunk(key)`, for a split bundle's import(): a promise
+// settled once the chunk of that key ran, which defines its modules.
+func (r *runtime) loadChunk(call goja.FunctionCall) goja.Value {
+	key := arg(call, 0).String()
+	p, resolve, reject := r.vm.NewPromise()
+	if r.chunk == nil {
+		_ = reject(r.vm.NewTypeError("nsgo: the app has no chunk %s", key))
+		return r.vm.ToValue(p)
+	}
+	go func() {
+		code, err := r.chunk(key)
+		r.cx.Post(func() {
+			r.inJS(func() {
+				if err == nil {
+					_, err = r.vm.RunScript(strings.TrimPrefix(key, "app:"), code)
+				}
+				if err != nil {
+					_ = reject(r.goError(fmt.Errorf("nsgo: loading %s: %w", key, err)))
+					return
+				}
+				_ = resolve(goja.Undefined())
+			})
+		})
+	}()
+	return r.vm.ToValue(p)
 }
 
 // splitSource is `split(props, keys)`: [picked, rest], getters kept.

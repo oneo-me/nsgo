@@ -1,8 +1,7 @@
 import {
   colorScheme,
-  computed,
-  effect,
   mount,
+  resource,
   safeAreaInsets,
   Scroll,
   setColorScheme,
@@ -11,6 +10,7 @@ import {
   View,
 } from "nsgo";
 import { Input } from "nsgo/base";
+import { exportTasks } from "app/native";
 import { Badge, Button, Card, Segmented } from "./components";
 import {
   addTask,
@@ -148,63 +148,34 @@ function Tasks() {
       <If when={completed() > 0}>
         <Button label="Clear completed" variant="ghost" onPress={clearCompleted} />
       </If>
+      <Export />
     </Card>
   );
 }
 
-const SESSION = 25 * 60;
-
-function Focus() {
-  const left = signal(SESSION);
-  const running = signal(false);
-  // A second at a time while running; the interval goes when it stops.
-  effect(() => {
-    if (!running()) return;
-    const id = setInterval(() => {
-      left.update((s) => s - 1);
-      if (left() === 0) running.set(false);
-    }, 1000);
-    return () => clearInterval(id);
-  });
-  const two = (n: number) => String(n).padStart(2, "0");
-  const progress = computed(() => 1 - left() / SESSION);
-  const state = () => (running() ? "Running" : left() === SESSION ? "Ready" : "Paused");
+/** Exports the tasks as Markdown in Go, which reports each one written. */
+function Export() {
+  const status = signal("");
+  const run = async () => {
+    const list = tasks();
+    status.set(`Exporting 0 of ${list.length}…`);
+    const markdown = await exportTasks(
+      list.map((t) => t.title),
+      list.map((t) => t.done),
+      (n) => status.set(`Exporting ${n} of ${list.length}…`),
+    );
+    status.set(`Exported ${markdown.trim().split("\n").length} tasks`);
+  };
   return (
-    <Card title="Focus" subtitle="A 25 minute session">
-      <View class="items-center gap-2 py-2">
-        <Text testID="clock" class="text-6xl font-bold tracking-tight text-zinc-900 dark:text-white">
-          {two(Math.floor(left() / 60))}:{two(left() % 60)}
-        </Text>
-        <View class="flex-row items-center gap-2">
-          <View
-            class="size-2 rounded-full"
-            classList={{ "animate-pulse bg-emerald-500": running(), "bg-zinc-300 dark:bg-zinc-600": !running() }}
-          />
-          <Text class="text-xs font-medium uppercase tracking-widest text-zinc-500">{state()}</Text>
-        </View>
-      </View>
-      <View class="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <View class="h-full rounded-full bg-linear-to-r from-indigo-500 to-fuchsia-500" style={{ width: `${progress() * 100}%` }} />
-      </View>
-      <View class="flex-row gap-2">
-        <View class="flex-1">
-          <Button label={running() ? "Pause" : "Start"} onPress={() => running.set(!running())} />
-        </View>
-        <View class="flex-1">
-          <Button
-            label="Reset"
-            variant="ghost"
-            disabled={left() === SESSION}
-            onPress={() => {
-              running.set(false);
-              left.set(SESSION);
-            }}
-          />
-        </View>
-      </View>
-    </Card>
+    <View class="flex-row items-center justify-between gap-2">
+      <Text testID="export-status" class="flex-1 text-xs text-zinc-500">{status()}</Text>
+      <Button label="Export" variant="ghost" onPress={run} />
+    </View>
   );
 }
+
+/** The focus timer: a module of its own, which the web page loads when it first shows. */
+const focus = resource(() => import("./focus"));
 
 function App() {
   // Inline styles merge over classes side by side: the safe area adds to p-6's top and bottom.
@@ -220,7 +191,12 @@ function App() {
             <Tasks />
           </View>
           <View class="md:w-80">
-            <Focus />
+            <If when={focus()}>
+              {(m) => {
+                const Focus = m().Focus;
+                return <Focus />;
+              }}
+            </If>
           </View>
         </View>
       </View>

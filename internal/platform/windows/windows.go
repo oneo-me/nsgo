@@ -632,7 +632,7 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 	}
 	imageload.UseDiskCache(cache)
 	w.cacheDir = cache
-	if opts.Perf && opts.test == nil {
+	if opts.Perf && opts.test == nil || opts.test != nil && opts.test.options.FPS {
 		eopts.Perf = w.startPerf()
 	}
 	w.engine = engine.Start(w, app, eopts)

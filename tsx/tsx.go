@@ -31,6 +31,20 @@ func App(name, src string) func(cx *core.Scope) core.Node {
 	}
 }
 
+// SplitApp returns the app of a split bundle (bundler.CompileSplit), as
+// App does: an import() of one of its chunks calls chunk, on a goroutine
+// of its own, for the chunk's script by its key, and runs it.
+func SplitApp(name, src string, chunk func(key string) (string, error)) func(cx *core.Scope) core.Node {
+	return func(cx *core.Scope) core.Node {
+		r := newRuntime(cx)
+		r.chunk = chunk
+		if _, err := r.vm.RunScript(name, src); err != nil {
+			panic(err)
+		}
+		return r.root.elem
+	}
+}
+
 // Hot returns the app of a hot bundle (bundler.CompileHot), as App
 // does, and what runs a newer one in the same VM: the modules whose code
 // changed run again and their components' instances render again, while
@@ -88,6 +102,12 @@ type runtime struct {
 	depth  int
 	// origin is when performance.now() and frames' times count from.
 	origin time.Time
+	// classes are the Go classes made in this VM; posting counts the
+	// async calls converting their arguments.
+	classes vmClasses
+	posting int
+	// chunk loads a split bundle's chunks (SplitApp).
+	chunk func(key string) (string, error)
 }
 
 // maxCallStack is how deep JS calls nest in any app.

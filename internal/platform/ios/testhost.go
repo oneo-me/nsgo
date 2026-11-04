@@ -449,6 +449,8 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 
 // Animating counts finite Core Animation animations (a screen pushed, a
 // sheet presented, an alert fading in) and scroll views gliding.
+func (t *testSurface) Sync() { t.s.engine.Sync() }
+
 func (t *testSurface) Animating() bool {
 	var busy bool
 	onMainSync(func() {

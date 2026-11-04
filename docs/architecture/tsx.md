@@ -11,17 +11,19 @@ var src embed.FS
 func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 ```
 
-`examples/tsx` is such an app: its modules, components, signals, inputs, lists and timers, styled with classes in light and dark, one column on phones and two from `md:`, with Go and TSX tests.
+`examples/tsx` is such an app: its modules, components, signals, inputs, lists and timers, styled with classes in light and dark, one column on phones and two from `md:`, a Go class and an async Go function of its own, and a timer module it loads with `import()`, with Go and TSX tests.
 
 ## The ports
 
 | NSH | NSGo | Part |
 | --- | --- | --- |
-| `nsh-bundler`: Oxc, `jsx.rs`, rolldown, `hot.rs` | `tsx/bundler`: esbuild, `jsx.go`, `hot.go` | TSX to one script; asset imports; hot bundles |
+| `nsh-bundler`: Oxc, `jsx.rs`, rolldown, `hot.rs`, `split.rs` | `tsx/bundler`: esbuild, `jsx.go`, `hot.go`, `split.go` | TSX to one script; asset imports; hot and split bundles |
 | `nsh-js` `reactive.rs`, `resource.rs` | `tsx/reactive.go`, `services.go` | `signal`, `computed`, `effect`, `batch`, `untracked`, `cleanup`, `resource` |
 | `nsh-js` `dom.rs`, `list.rs` | `tsx/dom.go`, `components.go`, `face.go`, `elements.go` | `nsgo:rt`, what compiled JSX calls; the primitives |
 | `nsh-js` `protocol.rs`, `nsh-core` `style.rs` | `tsx/protocol.go`, `hostprops.go`, `stylekeys.go`, `css.go` | Props and style objects decoded into `core`'s values |
 | `nsh-js` `components.rs`, `navigation.rs` | `tsx/goface.go`, `base.go`, `dialog.go`, `navigation.go`, `toasts.go` | Go components in TSX: `nsgo/base`, an app's own |
+| `nsh-js` `classes.rs`, `nsh-core` `call.rs` | `tsx/classes.go` | Go classes and functions in TSX, async ones as promises |
+| `nsh-js` `hot.rs`, `chunks.rs` | `tsx/bundler/hot.go`, `split.go` (their runtimes), `components.go` | Hot updates; chunks loaded on demand |
 | `nsh-js` `animated.rs`, `touch.rs`, `canvas.rs` | `tsx/animated.go`, `touch.go`, `canvas.go` | Animation, gestures and the responder, Canvas 2D |
 | `nsh-js` `env.rs`, `platform_modules.rs`, `desktop.rs`, `host_channel.rs` | `tsx/env.go`, `platform.go`, `services.go`, `host.go` | The environment, services, `nsgo/mobile`, `nsgo/desktop`, `host` |
 | `nsh-js` `web/` | `tsx/web.js`, `web.go`, `intl.js`, `intl.go` | Web APIs and `Intl` |
@@ -65,6 +67,10 @@ What goja lacks, and the answer:
 - `nsgo.yaml` beside the entry names the app's `theme` ([themes](themes.md#theme-files)) and extends Tailwind's under `tailwind` ([themes](themes.md#tailwind)); the bundle's first line hands both to the runtime (`nsgo:rt`'s `setup`). The tool reads both from the app's directory; compiled as it starts, the app embeds them too.
 - NSH's compiler tests are its tests (`jsx_test.go`), with its errors: lowercase tags, unknown tags with the import to write, text outside `<Text>`.
 
+### Split bundles
+
+`bundler.CompileSplit` (`split.go`, NSH's `split.rs`) makes each app module an `import()` names a chunk of its own, with the modules it imports that the entry's script does not, and the tool splits a web release so: its page fetches a chunk as the import first runs, and every other package holds the whole app, `import()` resolving at once. goja's parser reads no `import()`, so the transform writes each as `_$load(spec, key)`, the same length, so the source map holds; a module's key is esbuild's name for it (`app:screen.tsx`). The modules of the entry's script and the chunks are defined once in the VM by key (`__nsgo_split`), so a chunk shares the entry's modules and their state, and a chunk imports them from the VM rather than holding them again. `tsx.SplitApp` takes the function that loads a chunk's script, which `compiler.App` fetches relative to the page (`compiler.BundledChunks`).
+
 `compiler.App` runs the bundle the `nsgo` tool compiled ahead when the build has one ([tool](tool.md#tsx-apps)), else compiles the embedded sources as it starts. The tool's builds take the `nsgo_bundled` tag, under which the compiler's esbuild part is left out, so packages ship no compiler.
 
 ## The runtime
@@ -92,7 +98,13 @@ The primitives that are not `core.Element`s (`Overlay`, `WebView`, `Video`, `Lis
 - Props are the fields in lower camel case; `Label` is `accessibilityLabel`, `Hint` `accessibilityHint`, `XLabel` `xAccessibilityLabel`, and a bool `NoX` the prop `x` negated, true unless set. `Rename` gives another name, and `Flag` a choice of names a bool field reads (`DiffView`'s `layout`, `Unified`). `Omit` leaves a field out, and `Preset` leaves it out set to a value, as `TextView`'s typography and the `Editor`'s look of diagnostics are NSH's in TSX.
 - `Enum` names an integer type's values; `Union` names the members of an interface type by the type tag their objects carry (`{ type: "paragraph" }`); slices are arrays, `*regexp.Regexp` a pattern, and structs data objects whose keys are their fields in lower camel case. `Fields` names a struct's fields NSH names otherwise, and `Shape` gives a type a JS shape of its own both ways (an editor's context-menu event's `x` and `y`, a sort's `direction`, a dock layout's nodes typed `split` and `tabs`).
 
-`tsx.RegisterFunctions(module, funcs)` makes Go functions importable the same way, as an embedding app's UI set exports its functions: arguments convert to their parameters, a non-nil error result throws. `tsx.RegisterStatics` hangs functions on a registered component, as NSH's `TextView.parse`. `nativeModule(specifier)` gives a module's exports without an import, NSGo's own or a registered one, the object an import gives, and a `ReferenceError` where none is.
+`tsx.RegisterFunctions(module, funcs)` makes Go functions importable the same way, as an embedding app's UI set exports its functions: arguments convert to their parameters, a non-nil error result throws. `tsx.RegisterStatics` hangs functions on a registered component, as NSH's `TextView.parse`.
+
+`tsx.RegisterClass[T](module, name, tsx.Class[T]{New, Getters, Statics})` makes `*T` a class, NSH's `#[class]` (`rust-classes.md`): `New` is the constructor, `*T`'s exported methods its methods in lower camel case, `Getters` the methods read as properties with `SetX` as `X`'s setter, and `Statics` functions on the class. A JS object holds its `*T`, one object per instance while it lives (a table of weak pointers), and `dispose()` or `[Symbol.dispose]` lets it go, calling `Close` when `T` has one; the object throws after. A parameter `*T` takes an instance, a `TypeError` naming the member and the parameter otherwise, and a result `*T` gives one. Calls of classes and functions share one path (`callGo`), as NSH's `call.rs`:
+
+- One whose Go function takes a `context.Context` first is async: its arguments convert in the JS call, it runs on a goroutine of its own and JS gets a promise, settled on the engine goroutine; the context ends with the app. Every other call runs in the JS call, as NSH's synchronous members do. A trailing error, or a panic, throws or rejects with an `Error`.
+- A JS function a synchronous call gets runs in place when Go calls it. One an async call gets runs on the engine goroutine: a func without results is posted, NSH's `Callback::post`, and one with results waits for them, and for a promise the function returns to settle, NSH's `call_async`.
+- `.nsgo/types` declares each class with its members, `Promise<T>` for an async call, and parameters as `argN`, since Go keeps no parameter names. `nativeModule(specifier)` gives a module's exports without an import, NSGo's own or a registered one, the object an import gives, and a `ReferenceError` where none is.
 
 `nsgo/base` registers `base`'s components this way (`base.go`), with NSH's names where `base`'s differ and a few props shaped otherwise (`DataTable`'s `data`, `Plot`'s `data`, `x` and `y`, `DockArea`'s `panels`, a list by `id`, and `renderPanel`'s `{ id }`). A component's host props, NSH's `ComponentHostProps`, are its fields: `class`, `style`, `testID`, and `onLayout` and `tooltip` on each component whose root is a view of its own, which take a `core.View`'s. `ResizablePanel` is a part: its call is a value its group collects from its children. The navigation (`createNavStack`, `NavStack`, `NavPage`, on `base.Nav`), `Dialog`, `AlertDialog`, `ToastManager` and `ToastStack` are written out. `TextView`, `Editor` and `DiffView` link packages other apps should not, so `tsx/textview`, `tsx/editor` and `tsx/diff` register them for an app that imports them.
 
@@ -118,11 +130,12 @@ The primitives that are not `core.Element`s (`Overlay`, `WebView`, `Video`, `Lis
 
 ## Developing
 
-Under `nsgo dev` the tool compiles TSX ahead for hot updates (`bundler.CompileHot`), and a save that changes only the bundle's files compiles it again and sends it over `/_nsgo/events`, with no Go build. `compiler.App`, built with the dev client, follows the server and runs the new bundle in the same VM (`tsx.Hot`):
+Under `nsgo dev` the tool compiles TSX ahead for hot updates (`bundler.CompileHot`), and a save that changes only the bundle's files compiles it again and sends it over `/_nsgo/events`, with no Go build. `compiler.App`, built with the dev client, follows the server and runs the new bundle in the same VM (`tsx.Hot`). The hot transform and registry (`hot.go`) port NSH's (`tooling.md`, "Hot module replacement"), and `hot_test.go` ports `nsh-engine/tests/engine/hot.rs`:
 
-- A hot bundle's modules go through a registry (`hot.go`), which esbuild's module wrapper calls: a module runs again only when its code changed, and its importers get a facade of its current exports, in which components are proxies.
-- A proxy's instances render the component's newest code, so an edit renders the changed components again; the modules it did not change keep their state, and their components' instances too.
-- An edited entry mounts the app again; a failed compile shows over the running app.
+- A hot bundle's modules go through a registry, which esbuild's module wrapper calls: a newer bundle runs again the modules whose code changed, and the importers of those that do not take their own updates, up to the entry. A module takes its own when all it exports are components. Importers keep a facade of a module's current exports.
+- Top-level components, capitalized functions whose code has JSX, render through proxies that stay the same across updates, each a memo of its component's newest code. Its signature is its code and its module's code outside components, so an edit renders again the instances whose signature changed, and those of the modules run again because a module they import changed; their own state starts afresh, everything else keeps its.
+- Top-level `context()` results keep their identity, taking the new default (`keepContext`), and top-level `const`s made by `signal()` or `createNavStack()` keep their value while their initializer's code is the same. A `mount` call made again with the same component and no props keeps what it mounted; from the first that differs, the module's earlier mounts are undone and made anew.
+- A component that throws reports the error (`reportError`) and renders nothing until the fix; a failed compile shows over the running app.
 
 ## Sandbox
 
@@ -158,6 +171,9 @@ Without a heap limit a module can still exhaust memory. That suits the app's own
 | A heap limit | Time, stack and quotas | goja allocates from Go's heap |
 | Nodes released when collected | Released with their owner | Go's collector cannot tell the tree's handler closures from the app's references |
 | Rust components' JS face generated from specs | Go components read by reflection as they are made, declarations from their types | One registration call, no generator step; making a component is not a hot path |
+| `#[class]`, `#[getter]`, `async fn`, `Callback<A, R>` | `RegisterClass` with getters by name, a leading `context.Context`, plain Go funcs | Go has no attributes or `async`; a context is how Go code that waits says so |
+| Shared chunks of modules several chunks import | Each chunk holds the modules it imports beyond the entry's, defined once by key | esbuild splits only ES modules, which goja does not run; a module two chunks import costs bytes, not a second instance |
+| Development bundles of one chunk per module, patched | The whole hot bundle again, its unchanged modules not run | A bundle compiles in milliseconds; only the modules' code is compared |
 | Web APIs in Rust | Thin JS classes over Go natives (`web.js`) | Little code; only `fetch`, encoding and URLs need the system |
 | `Intl` for every CLDR locale | Numbers, plurals and collation by CLDR; dates in English | `golang.org/x/text` has no date formats |
 | `nsh.json` | `nsgo.yaml` | Configuration is YAML |

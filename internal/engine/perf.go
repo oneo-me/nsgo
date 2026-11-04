@@ -472,3 +472,21 @@ func statText(s Stat) string {
 func milliseconds(d time.Duration) float64 {
 	return float64(d) / float64(time.Millisecond)
 }
+
+// String is the snapshot as one line, as nsgo test -fps logs it.
+func (s PerfSnapshot) String() string {
+	ms := func(d time.Duration) string { return fmt.Sprintf("%.2fms", float64(d.Microseconds())/1000) }
+	line := fmt.Sprintf("fps %.0f (max %.0f) frame %s p95 %s dropped %.0f%% commits %.0f/s app %s core %s items %.0f latency %s engine %.0f%%",
+		s.FPS, s.MaxFPS, ms(s.Frame.Mean), ms(s.Frame.P95), s.Dropped*100, s.Commits, ms(s.App.Mean), ms(s.Core.Mean),
+		s.Items, ms(s.Latency.Mean), s.EngineBusy)
+	if c := s.Process.CPU; c != nil {
+		line += fmt.Sprintf(" cpu %.0f%%", *c)
+	}
+	if g := s.Process.GPU; g != nil {
+		line += fmt.Sprintf(" gpu %.0f%%", *g)
+	}
+	if m := s.Process.Memory; m != nil {
+		line += fmt.Sprintf(" memory %.1fMB", float64(*m)/(1<<20))
+	}
+	return line
+}

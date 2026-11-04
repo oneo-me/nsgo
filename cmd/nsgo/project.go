@@ -28,6 +28,11 @@ type project struct {
 	// testBinary builds the package's tests with the nsgotest tag in
 	// place of the app, for nsgo test -target.
 	testBinary bool
+	// steps, when set, are what nsgo test <entry> runs in place of the
+	// package's tests: the steps of standard input on the app at entry.
+	steps *steps
+	// split, set while a web release builds, holds its split bundles.
+	split *splitBundles
 
 	Name    string `yaml:"name"`
 	ID      string `yaml:"id"`

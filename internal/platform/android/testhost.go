@@ -152,6 +152,8 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 
 // Animating compares where every view is, how far it scrolled and how
 // opaque it is with the last look: anything that moved animates.
+func (t *testSurface) Sync() { t.s.engine.Sync() }
+
 func (t *testSurface) Animating() bool {
 	sig, err := t.ask(map[string]any{"op": "signature"})
 	if err != nil {

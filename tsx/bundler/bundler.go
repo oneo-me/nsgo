@@ -42,7 +42,7 @@ func CompileHot(fsys fs.FS, entry string) (string, error) { return build(fsys, e
 
 func build(fsys fs.FS, entry string, hot bool) (string, error) {
 	entry = path.Clean(entry)
-	plugins := []api.Plugin{appPlugin(fsys)}
+	plugins := []api.Plugin{appPlugin(fsys, hot, nil)}
 	entryPoint := entry
 	if hot {
 		// The entry is a module too, run again only when it changes.
@@ -158,7 +158,7 @@ var sources = []string{".tsx", ".ts", ".jsx", ".js", ".mjs"}
 
 // appPlugin resolves and loads the app's modules from fsys, compiling
 // each one's JSX.
-func appPlugin(fsys fs.FS) api.Plugin {
+func appPlugin(fsys fs.FS, hot bool, split *splitter) api.Plugin {
 	return api.Plugin{Name: "nsgo", Setup: func(b api.PluginBuild) {
 		b.OnResolve(api.OnResolveOptions{Filter: ".*"}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
 			if isNative(args.Path) {
@@ -199,7 +199,7 @@ func appPlugin(fsys fs.FS) api.Plugin {
 			if strings.HasSuffix(args.Path, ".json") {
 				return api.OnLoadResult{Contents: &src, Loader: api.LoaderJSON}, nil
 			}
-			code, err := Transform(args.Path, src)
+			code, err := transform(args.Path, src, hot, split)
 			if err != nil {
 				var list []api.Message
 				for _, e := range unwrap(err) {
@@ -241,7 +241,16 @@ func resolve(fsys fs.FS, p string) (string, bool) {
 
 // Transform compiles one module: its TypeScript stripped and its JSX
 // compiled, as CommonJS with its source map inline.
-func Transform(file, src string) (string, error) {
+func Transform(file, src string) (string, error) { return transform(file, src, false, nil) }
+
+// transform is Transform, with the hot transform (hot.go) when hot, and
+// the split one (split.go) when split is set.
+func transform(file, src string, hot bool, split *splitter) (string, error) {
+	supported := gojaLacks
+	if split != nil {
+		// import() stays, for splitImports.
+		supported = map[string]bool{"async-generator": false, "for-await": false}
+	}
 	loader := api.LoaderTS
 	switch path.Ext(file) {
 	case ".tsx":
@@ -258,7 +267,7 @@ func Transform(file, src string) (string, error) {
 		JSXFragment: jsxFragment,
 		Format:      api.FormatCommonJS,
 		Target:      api.ES2020,
-		Supported:   gojaLacks,
+		Supported:   supported,
 		Sourcemap:   api.SourceMapExternal,
 		Sourcefile:  file,
 		Charset:     api.CharsetUTF8,
@@ -271,7 +280,14 @@ func Transform(file, src string) (string, error) {
 		return "", messages(r.Errors)
 	}
 	code := string(r.Code)
-	if !strings.Contains(code, jsxFactory) {
+	var loads []insertion
+	if split != nil {
+		var err error
+		if code, loads, err = split.splitImports(file, code); err != nil {
+			return "", err
+		}
+	}
+	if !hot && split == nil && !strings.Contains(code, jsxFactory) {
 		return inline(code, string(r.Map)), nil
 	}
 	prev, err := sourcemap.Parse(file, r.Map)
@@ -293,6 +309,14 @@ func Transform(file, src string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if hot {
+		ins, err := hotInsertions(file, code)
+		if err != nil {
+			return "", err
+		}
+		f = f.insert(ins)
+	}
+	f = f.insert(loads)
 	out, m := f.mapped(pos, prev, file, src)
 	return inline(out, m), nil
 }

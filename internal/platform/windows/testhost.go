@@ -367,6 +367,8 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 
 // Animating counts transitions, layout animations and animated values
 // that end.
+func (t *testSurface) Sync() { t.w.engine.Sync() }
+
 func (t *testSurface) Animating() bool {
 	var busy bool
 	t.onMain(func() {

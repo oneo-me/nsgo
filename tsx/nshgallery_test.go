@@ -24,13 +24,10 @@ var nshImports = regexp.MustCompile(`(from |import\(|nativeModule[^(\n]*\()"nsh(
 
 // nshGallery is NSH's gallery (nsh/examples/gallery, with the styled UI
 // it shares) with its imports renamed, at app/ and nsh-gallery-ui/, and
-// its tests when tests is set. It skips the test without nsh/ checked
+// its tests when tests is set. It skips the test without NSH checked
 // out.
 func nshGallery(t *testing.T, tests bool) fstest.MapFS {
-	examples := filepath.Join("..", "nsh", "examples")
-	if _, err := os.Stat(filepath.Join(examples, "gallery", "App.tsx")); err != nil {
-		t.Skip("nsh/ is not checked out")
-	}
+	examples := nshDir(t, "examples")
 	fsys := fstest.MapFS{
 		"app/nsgo.yaml":                  {Data: []byte("name: Gallery\ntheme: ../nsh-gallery-ui/theme.json\n")},
 		"nsh-gallery-ui/tests/nsgo.yaml": {Data: []byte("name: Gallery UI\ntheme: ../theme.json\n")},
@@ -121,13 +118,13 @@ func TestNSHGalleryTests(t *testing.T) {
 // port of it has; the module names its texts give are renamed too
 // ("nsh/host:").
 func nshExample(t *testing.T, dir string) fstest.MapFS {
-	return nshApp(t, filepath.Join("..", "nsh", "examples", dir))
+	return nshApp(t, nshDir(t, "examples", dir))
 }
 
 // nshApp is the NSH app at root, as nshExample has it.
 func nshApp(t *testing.T, root string) fstest.MapFS {
 	if _, err := os.Stat(filepath.Join(root, "App.tsx")); err != nil {
-		t.Skip("nsh/ is not checked out")
+		t.Fatal(err)
 	}
 	fsys := fstest.MapFS{}
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {

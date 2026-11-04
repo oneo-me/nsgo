@@ -254,6 +254,18 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 		if tsxTest != "" {
 			files["zz_nsgo_tsx_test.go"] = tsxTest
 		}
+		// The app starts from bundles compiled ahead, as its packages do,
+		// rather than compiling as it starts, which a phone or a page
+		// takes seconds for; the tests still link the compiler for their
+		// own files.
+		stage("compiling TSX")
+		bundle, err := p.bundleFile()
+		if err != nil {
+			return err
+		}
+		if bundle != "" {
+			files["zz_nsgo_bundle.go"] = bundle
+		}
 	} else {
 		stage("compiling TSX")
 		bundle, err := p.bundleFile()
@@ -375,6 +387,23 @@ func buildLinux(ctx context.Context, p *project, dir, arch string) error {
 // keeps the names and follows nsgo dev's server.
 func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	wasm := filepath.Join(dir, "app.wasm")
+	if !dev {
+		// A release's TSX is split: the page fetches each module an
+		// import() names when the import runs.
+		stage("compiling TSX")
+		split, err := compileSplit(p.Dir, func(name string, data []byte) (string, error) {
+			name = hashedName(name, data)
+			if err := os.MkdirAll(filepath.Join(dir, filepath.Dir(name)), 0o755); err != nil {
+				return "", err
+			}
+			return name, os.WriteFile(filepath.Join(dir, name), data, 0o644)
+		})
+		if err != nil {
+			return err
+		}
+		p.split = split
+		defer func() { p.split = nil }()
+	}
 	if err := goBuild(ctx, p, wasm, []string{"GOOS=js", "GOARCH=wasm"}); err != nil {
 		return err
 	}

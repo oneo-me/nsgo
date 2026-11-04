@@ -108,6 +108,8 @@ type Options struct {
 	// Clipboard, with Observe, is the clipboard of a test's own, which
 	// the app's clipboard commands use instead of the platform's.
 	Clipboard *driver.MemoryClipboard
+	// LogPerf logs Perf's readings once a second while the engine runs.
+	LogPerf bool
 }
 
 // Host and Tokens are core's, for backends.
@@ -250,7 +252,24 @@ func Start(p Platform, app App, opts Options) *Engine {
 		p = observed{p, observe, opts.Clipboard, e.Dispatch}
 	}
 	go e.run(p, app, opts, tokens)
+	if opts.LogPerf && opts.Perf != nil {
+		go e.logPerf(opts.Perf)
+	}
 	return e
+}
+
+// logPerf logs m's readings once a second until the engine closes.
+func (e *Engine) logPerf(m *PerfMonitor) {
+	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
+	for {
+		select {
+		case <-e.done:
+			return
+		case <-tick.C:
+			log.Print("nsgo: perf ", m.Snapshot())
+		}
+	}
 }
 
 func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
@@ -424,6 +443,17 @@ func (e *Engine) Dispatch(ev driver.Event) {
 		e.event(ev)
 	}
 	e.push(message{event: ev})
+}
+
+// Sync returns once the engine ran what was posted to it before, as a
+// test host waits for the timers a step of its clock fired.
+func (e *Engine) Sync() {
+	done := make(chan struct{})
+	e.push(message{fn: func() { close(done) }})
+	select {
+	case <-done:
+	case <-e.exited:
+	}
 }
 
 // Frame reports that the display frame the app asked for has begun. The

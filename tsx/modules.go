@@ -83,5 +83,7 @@ var moduleTable = map[string][]export{
 		fn("ref", (*runtime).ref),
 		fn("spread", (*runtime).spread),
 		script("merge", mergeSource),
+		fn("keepContext", (*runtime).keepContext),
+		fn("loadChunk", (*runtime).loadChunk),
 	},
 }

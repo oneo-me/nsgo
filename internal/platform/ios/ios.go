@@ -461,7 +461,7 @@ func (s *surface) startEngine(test *testOpen) {
 		s.alerts = map[uint32]shownAlert{}
 	}
 	imageload.UseDiskCache(opts.CacheDir)
-	if s.perfOn && test == nil {
+	if s.perfOn && test == nil || test != nil && test.options.FPS {
 		s.perf = engine.NewPerfMonitor()
 		opts.Perf = s.perf
 		s.hud = newHud(s, s.perf)

@@ -38,15 +38,18 @@ var compatFailing = map[string][]string{
 	"modules": {"mod-standard-access", "mod-accessibility", "mod-android", "mod-clipboard", "mod-picker", "mod-desktop", "mod-device", "mod-host-channel", "mod-ios", "mod-keymap", "mod-mobile", "mod-storage", "mod-host"},
 }
 
-// compatDepartures are the steps of a case, by domain/case, that count
-// the views NSH wraps its parts in where NSGo's components nest theirs
-// differently, with the step that checks the same part on NSGo, or none
-// where no selector reaches it: NSH puts what a render prop or a node
-// prop renders in views of its own (resizable, plot), stacks its
-// drawer's layers deeper (dock), and centers a plot's hover dots by
-// transform where NSGo's center in an anchor of no size.
+// compatDepartures are the steps of a case, by domain/case, that check
+// what NSGo does otherwise on purpose, with the step that checks the
+// same part on NSGo, or none where no selector reaches it: NSH puts what
+// a render prop or a node prop renders in views of its own (resizable,
+// plot), stacks its drawer's layers deeper (dock), centers a plot's hover
+// dots by transform where NSGo's center in an anchor of no size, and
+// gives a resize handle a band 9 points across where NSGo's is 3
+// (docs/architecture/components.md).
 var compatDepartures = map[string]map[string]string{
 	"base/base-resizable": {
+		"frame label:Resize 146 0 9 100": "frame label:Resize 149 0 3 100",
+		"frame label:Resize 176 0 9 100": "frame label:Resize 179 0 3 100",
 		`style parent:parent:parent:text:"Grip 0 horizontal idle" backgroundColor #ff0000ff`: `style parent:text:"Grip 0 horizontal idle" backgroundColor #ff0000ff`,
 		`style parent:parent:parent:text:"Grip 0 horizontal idle" opacity 0.5`:               `style parent:text:"Grip 0 horizontal idle" opacity 0.5`,
 	},
@@ -68,10 +71,10 @@ var compatDepartures = map[string]map[string]string{
 
 // TestNSHCompat runs NSH's compat cases headless.
 func TestNSHCompat(t *testing.T) {
-	root := filepath.Join("..", "nsh", "tests", "compat", "cases")
+	root := nshDir(t, "tests", "compat", "cases")
 	domains, err := os.ReadDir(root)
 	if err != nil {
-		t.Skip("nsh/ is not checked out")
+		t.Fatal(err)
 	}
 	logs := &compatLog{}
 	log.SetOutput(logs)

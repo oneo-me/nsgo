@@ -36,6 +36,9 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	if err != nil {
 		return err
 	}
+	if p.steps != nil {
+		names = []string{stepsTest}
+	}
 	if len(names) == 0 {
 		plain("no tests match")
 		return nil
@@ -55,11 +58,14 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	if opts.trace {
 		env = append(env, "NSGO_TEST_TRACE=1")
 	}
+	if opts.fps {
+		env = append(env, "NSGO_TEST_FPS=1")
+	}
 	for _, name := range names {
 		var out bytes.Buffer
 		w := io.Writer(&out)
-		if opts.trace {
-			w = io.MultiWriter(&out, traceWriter{r.out})
+		if opts.trace || opts.fps {
+			w = io.MultiWriter(&out, traceWriter{r.out, opts.trace, opts.fps})
 		}
 		tctx, cancel := context.WithTimeout(ctx, testTimeout)
 		started := time.Now()
@@ -84,12 +90,18 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 }
 
 // traceWriter passes a test's trace lines on as they come.
-type traceWriter struct{ w io.Writer }
+type traceWriter struct {
+	w          io.Writer
+	trace, fps bool
+}
 
 func (t traceWriter) Write(b []byte) (int, error) {
 	for _, line := range strings.SplitAfter(string(b), "\n") {
-		if strings.HasPrefix(line, "──") || strings.HasPrefix(line, "   ") {
+		switch {
+		case t.trace && (strings.HasPrefix(line, "──") || strings.HasPrefix(line, "   ")):
 			io.WriteString(t.w, line)
+		case t.fps && strings.Contains(line, "nsgo: perf "):
+			io.WriteString(t.w, margin+line[strings.Index(line, "nsgo: perf ")+len("nsgo: "):])
 		}
 	}
 	return len(b), nil
@@ -101,7 +113,18 @@ func listTests(ctx context.Context, p *project, run string) ([]string, error) {
 	if run == "" {
 		run = "."
 	}
-	cmd := exec.CommandContext(ctx, "go", "test", "-list", run, ".")
+	args := []string{"test", "-list", run}
+	// The TSX tests are in a file the tool adds.
+	if tsxTest, err := p.tsxTestFile(); err != nil {
+		return nil, err
+	} else if tsxTest != "" {
+		ov, err := p.overlay(map[string]string{"zz_nsgo_tsx_test.go": tsxTest})
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, "-overlay", ov)
+	}
+	cmd := exec.CommandContext(ctx, "go", append(args, ".")...)
 	cmd.Dir = p.Dir
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

@@ -1,11 +1,13 @@
 // Command nsgo develops and builds NSGo apps.
 //
-//	nsgo init  [-name N] [-module M] [dir]               write a new app
+//	nsgo init  [-template go|tsx|mixed] [-name N] [-module M] [dir]
+//	                                                      write a new app
 //	nsgo dev   [-target T] [-hot-reload=false] [-trace] [flags] [dir]
 //	                                                      run the app and rebuild it on changes
 //	nsgo build [-target all|T,...] [flags] [dir]         build packages for nsgo.yaml's targets or all platforms
-//	nsgo test  [-run R] [-junit F] [-trace] [-target T] [dir] [-- go test flags]
-//	                                                      run the app's tests headless or on a platform
+//	nsgo test  [-run R] [-junit F] [-trace] [-target T [-fps]] [dir | entry] [-- go test flags]
+//	                                                      run the app's tests, or an entry with the steps
+//	                                                      of standard input, headless or on a platform
 //	nsgo check [dir]                                     vet the app and type-check its TSX
 //	nsgo i18n  [-source L] [dir]                         check catalogs and write their Go code
 //
@@ -46,12 +48,13 @@ func main() {
 		fs := flag.NewFlagSet("init", flag.ExitOnError)
 		name := fs.String("name", "", "the app's name (default: the directory's)")
 		module := fs.String("module", "", "write a go.mod for this module path")
+		kind := fs.String("template", "go", "the app to write: go, tsx (a TSX app) or mixed (a Go app with a TSX entry)")
 		fs.Parse(args)
 		dir := fs.Arg(0)
 		if dir == "" {
 			dir = "."
 		}
-		err = initApp(dir, *name, *module)
+		err = initApp(dir, *name, *module, *kind)
 	case "build":
 		fs := flag.NewFlagSet("build", flag.ExitOnError)
 		f := bindBuildFlags(fs)
@@ -69,6 +72,7 @@ func main() {
 		fs.BoolVar(&o.trace, "trace", false, "print each step's mount items and commit times")
 		fs.StringVar(&o.target, "target", "", "run on a `platform`: macos, windows, linux, web, ios_simulator or android (default: headless)")
 		fs.StringVar(&o.device, "device", "", "the simulator, by name or UDID, or the adb device the target runs on")
+		fs.BoolVar(&o.fps, "fps", false, "log the performance monitor's readings once a second (with -target macos, windows, linux or ios_simulator)")
 		fs.Parse(args)
 		rest := fs.Args()
 		dir := ""
@@ -80,7 +84,7 @@ func main() {
 		}
 		o.args = rest
 		var p *project
-		if p, err = loadForTest(dir); err == nil {
+		if p, err = loadForTest(dir, os.Stdin); err == nil {
 			err = runTests(ctx, p, o)
 		}
 	case "check":
@@ -117,10 +121,10 @@ func main() {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage:
-  nsgo init  [-name N] [-module M] [dir]
+  nsgo init  [-template go|tsx|mixed] [-name N] [-module M] [dir]
   nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload=false] [-release] [-trace] [-device D] [-port N] [-open=false] [dir]
   nsgo build [-target all|macos_arm64,windows_x64,linux_x64,ios,web,...] [-output DIR] [-open] [-run [-device D]] [dir]
-  nsgo test  [-run REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android] [dir] [-- go test flags]
+  nsgo test  [-run REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android [-fps]] [dir | App.tsx < steps] [-- go test flags]
   nsgo check [dir]
   nsgo i18n  [-source L] [dir]
 

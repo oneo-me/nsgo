@@ -79,9 +79,9 @@ Each subject records the departures of its own area ([by subject](#departures-by
 
 ## Following NSH's releases
 
-NSGo tracks NSH's releases, never its `main`: `nsh/` is checked out at the latest release tag, and the [roadmap](../roadmap.md) lists what NSGo still lacks of that release. One exception, decided by the user on 2026-11-03: the gallery's index is laid out as NSH's `main` lays out its own after 0.3.0, a demo per element. Its Primitives and Components are groups of their own rather than parts of an Elements group, and it has no search. It lists only the components NSGo has, and those NSH added since wait for its release. To move to a new release:
+NSGo tracks NSH's releases, never its `main`: NSH's checkout (`../nsh`, [development](../../README.md#development)) is at the latest release tag, and the [roadmap](../roadmap.md) lists what NSGo still lacks of that release. One exception, decided by the user on 2026-11-03: the gallery's index is laid out as NSH's `main` lays out its own after 0.3.0, a demo per element. Its Primitives and Components are groups of their own rather than parts of an Elements group, and it has no search. It lists only the components NSGo has, and those NSH added since wait for its release. To move to a new release:
 
-1. In `nsh/`, run `git fetch --tags --force` and check out the release's tag.
+1. In NSH's checkout, run `git fetch --tags --force` and check out the release's tag.
 2. Read `git log <old tag>..<new tag>` there and the pages of `nsh/docs/dev/` it changed.
 3. Compare the declarations NSH writes to `examples/gallery/.nsh/types/` when any `nsh` command runs on its gallery with those `tsx.WriteDeclarations` writes.
 4. Run NSH's apps as oracles, imports renamed, with `go test ./tsx`: its gallery (`TestNSHGallery`), its gallery's tests (`TestNSHGalleryTests`), its examples and their tests (`TestNSHExamples`), and the cases of `tests/compat/` (`TestNSHCompat`, whose `compatFailing` lists what fails). Each skips what needs the standard modules.

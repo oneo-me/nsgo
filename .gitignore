@@ -1,4 +1,4 @@
-# Reference checkout of Native Shell (Rust); read locally, never committed
+# An older place for the reference checkout of Native Shell, now ../nsh
 /nsh/
 .DS_Store
 # The nsgo tool's caches and build output

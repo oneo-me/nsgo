@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ type testOptions struct {
 	junit  string // where to write a JUnit report
 	trace  bool   // print each step's batches and commit times
 	target string // the platform to run on; headless when ""
+	fps    bool   // log the performance monitor's readings on target
 	device string // the simulator or device a mobile target runs on
 	args   []string
 }
@@ -60,8 +62,14 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 	if err := p.prepareCatalogs(ctx, "./...", false); err != nil {
 		return err
 	}
+	if opts.fps && !slices.Contains([]string{"macos", "windows", "linux", "ios_simulator"}, opts.target) {
+		return errors.New("test: -fps goes with -target macos, windows, linux or ios_simulator, whose monitors it reads")
+	}
 	if opts.target != "" {
 		return runTargetTests(ctx, p, opts)
+	}
+	if p.steps != nil {
+		opts.run = "^" + stepsTest + "$"
 	}
 	args := []string{"test", "-json"}
 	if opts.run != "" {
@@ -96,8 +104,28 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 }
 
 // loadForTest reads the app's nsgo.yaml; a directory without one still
-// has tests to run headless.
-func loadForTest(dir string) (*project, error) {
+// has tests to run headless. Given an app's TSX entry, it reads its
+// directory's, and the steps standard input holds, none from a terminal.
+func loadForTest(dir string, stdin *os.File) (*project, error) {
+	if ext := filepath.Ext(dir); (ext == ".tsx" || ext == ".ts") && !strings.HasSuffix(dir, ".test"+ext) {
+		if fi, err := os.Stat(dir); err != nil || fi.IsDir() {
+			return nil, fmt.Errorf("test: no entry %s", dir)
+		}
+		p, err := loadForTest(filepath.Dir(dir), nil)
+		if err != nil {
+			return nil, err
+		}
+		s := &steps{entry: filepath.ToSlash(filepath.Base(dir))}
+		if fi, err := stdin.Stat(); err == nil && fi.Mode()&os.ModeCharDevice == 0 {
+			b, err := io.ReadAll(stdin)
+			if err != nil {
+				return nil, fmt.Errorf("test: the steps of standard input: %w", err)
+			}
+			s.src = string(b)
+		}
+		p.steps = s
+		return p, nil
+	}
 	p, err := load(dir)
 	if errors.Is(err, os.ErrNotExist) {
 		if dir == "" {
@@ -189,11 +217,12 @@ func (r *testRun) event(ev testEvent) {
 	}
 }
 
-// print shows one finished test: a line, and a failure's output.
+// print shows one finished test: a line, and a failure's output, a
+// subtest's under its own line (go test gives each test its own).
 func (r *testRun) print(t *testResult) {
 	mark := map[string]string{"pass": "✓", "fail": "✗", "skip": "-"}[t.Status]
 	fmt.Fprintf(r.out, "%s%s %s (%s)\n", margin, mark, t.Name, t.Elapsed.Round(time.Millisecond))
-	if t.Status == "fail" && !strings.Contains(t.Name, "/") {
+	if t.Status == "fail" {
 		for _, line := range strings.Split(strings.TrimRight(t.Output, "\n"), "\n") {
 			if strings.HasPrefix(line, "=== ") || strings.HasPrefix(line, "--- ") {
 				continue

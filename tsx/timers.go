@@ -94,6 +94,13 @@ func (r *runtime) installTimers() {
 		_, _ = then(r.vm.ToValue(p), fn)
 		return goja.Undefined()
 	}))
+	// reportError reports an exception as an uncaught one, after the
+	// turn: the host shows it while the app runs on.
+	_ = r.vm.Set("reportError", r.function(func(call goja.FunctionCall) goja.Value {
+		thrown := arg(call, 0)
+		r.cx.Post(func() { panic(thrown) })
+		return goja.Undefined()
+	}))
 
 	console := r.vm.NewObject()
 	for _, level := range []string{"log", "info", "debug", "warn", "error"} {
