@@ -5,8 +5,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // specimenStage is the stage every specimen stands on: the card's light,
@@ -97,7 +97,7 @@ func cornersCard(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.StylesCorners(), Description: tr.StylesCornerradiusBordercurvePerCorner(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: row},
-		ui.Caption{Label: tr.StylesContinuousCornersEaseIntoThe(), Note: label(tr.StylesRadius20Pt())},
+		Caption{Label: tr.StylesContinuousCornersEaseIntoThe(), Note: label(tr.StylesRadius20Pt())},
 		grid(
 			tile(cx, tileProps{label: tr.StylesTopCorners(), code: "CornerRadii", note: tr.Styles28Pt()},
 				core.View{StyleFunc: func() core.Style {
@@ -234,7 +234,7 @@ func layersCard(cx *core.Scope) core.Node {
 					return tr.StylesClipped()
 				}
 				return tr.StylesVisible()
-			}, code: "Overflow: Hidden / Visible", note: ui.Hint(cx, tr.StylesTapToSwitch(), tr.StylesClickToSwitch()), onPress: func() { toggled(clip) }},
+			}, code: "Overflow: Hidden / Visible", note: Hint(cx, tr.StylesTapToSwitch(), tr.StylesClickToSwitch()), onPress: func() { toggled(clip) }},
 				core.View{StyleFunc: func() core.Style {
 					o := core.Hidden
 					if !clip.Get() {
@@ -243,9 +243,9 @@ func layersCard(cx *core.Scope) core.Node {
 					return specimen(cx, core.Style{Background: tints.Warn(), CornerRadius: 22, BorderWidth: 1.5, BorderColor: colors.Warn(), Overflow: o})
 				}, Children: []core.Node{
 					core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(-26), Top: core.Pt(-26), Width: core.Pt(72), Height: core.Pt(72), CornerRadius: 36}, StyleFunc: ui.Filled(colors.Danger)},
-					specimenLabel(ui.Hint(cx, tr.StylesTap(), tr.StylesClick()), colors.Warn),
+					specimenLabel(Hint(cx, tr.StylesTap(), tr.StylesClick()), colors.Warn),
 				}}),
-			tile(cx, tileProps{label: tr.StylesStackingOrder(), code: "ZIndex", note: ui.Hint(cx, tr.StylesTapToRaiseTheNext(), tr.StylesClickToRaiseTheNext()), onPress: func() { front.Update(func(n int) int { return (n + 1) % 3 }) }},
+			tile(cx, tileProps{label: tr.StylesStackingOrder(), code: "ZIndex", note: Hint(cx, tr.StylesTapToRaiseTheNext(), tr.StylesClickToRaiseTheNext()), onPress: func() { front.Update(func(n int) int { return (n + 1) % 3 }) }},
 				core.View{Style: core.Style{Width: core.Pt(130), Height: core.Pt(84)}, Children: cards}),
 		),
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
@@ -253,7 +253,7 @@ func layersCard(cx *core.Scope) core.Node {
 				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Animated: &core.AnimatedStyle{Opacity: opacity}}, StyleFunc: ui.Filled(colors.Info),
 				Children: []core.Node{ui.Textf(level.Get, 13, ui.Bold, onBlue)}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
-				ui.Caption{Label: tr.StylesOpacity(), Note: label(tr.StylesAnimatedNatively())},
+				Caption{Label: tr.StylesOpacity(), Note: label(tr.StylesAnimatedNatively())},
 				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "0.2", Label: "0.2"}, {Value: "0.45", Label: "0.45"}, {Value: "1", Label: "1"}}, Value: level.Get, OnChange: func(v string) {
 					level.Set(v)
 					to := map[string]float64{"0.2": 0.2, "0.45": 0.45, "1": 1}[v]
@@ -296,7 +296,7 @@ func flipCard(cx *core.Scope) core.Node {
 	}
 	front := face(paint{core.RGB(0xeef2fc), core.RGB(0xf0f4fd), core.RGB(0xebf0fb), core.RGB(0xcdd8f3)},
 		paint{core.RGB(0x1a2134), core.RGB(0x1e263b), core.RGB(0x1a2134), core.RGB(0x2b3a5c)},
-		angle, "front", ui.ToneInfo, "0°", ui.Hint(cx, tr.StylesTapToFlip(), tr.StylesClickToFlip()), tr.StylesASpringTurnsItOn())
+		angle, "front", ui.ToneInfo, "0°", Hint(cx, tr.StylesTapToFlip(), tr.StylesClickToFlip()), tr.StylesASpringTurnsItOn())
 	back := face(paint{core.RGB(0xfbefe6), core.RGB(0xfcf2ea), core.RGB(0xfaebe0), core.RGB(0xf0cdb3)},
 		paint{core.RGB(0x2a1d14), core.RGB(0x2f2116), core.RGB(0x291c13), core.RGB(0x4e3423)},
 		core.Add(angle, core.Constant(180)), "back", ui.ToneAccent, "180°", "BackfaceHidden", tr.StylesEachFaceHidesWhileTurned())
@@ -426,7 +426,7 @@ func rightToLeft(cx *core.Scope) core.Node {
 			}
 			return core.Style{LayoutDirection: d, Gap: 12}
 		}, Children: []core.Node{
-			ui.Caption{LabelFunc: func() string {
+			Caption{LabelFunc: func() string {
 				if rtl.Get() {
 					return "LayoutDirection: RTL"
 				}
@@ -435,10 +435,10 @@ func rightToLeft(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: boxes},
 			core.Text{Content: tr.StylesTextAlignsToTheStart(),
 				Style: core.Style{FontSize: 15, LineHeight: 21}, StyleFunc: ui.Colored(colors.Text)},
-			ui.Caption{Label: tr.StylesHorizontalScrollView(), Note: monoNote("Scroll")},
+			Caption{Label: tr.StylesHorizontalScrollView(), Note: monoNote("Scroll")},
 			core.Scroll{Horizontal: true, HideIndicator: true, Style: core.Style{Height: core.Pt(40)}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, Gap: 6}, Children: chips}}},
-			ui.Caption{Label: tr.StylesHorizontalList(), Note: monoNote("List")},
+			Caption{Label: tr.StylesHorizontalList(), Note: monoNote("List")},
 			core.List{Count: func() int { return 30 }, Horizontal: true, EstimatedSize: 46, HideIndicator: true, Gap: 6, Style: core.Style{Height: core.Pt(40)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
 					colors := ui.ColorsOf(cx)
@@ -548,7 +548,7 @@ func keyframesCard(cx *core.Scope) core.Node {
 					return core.Style{Width: core.Pt(28), Height: core.Pt(28), CornerRadius: 14, Background: colors.Raised(), Transition: core.Transition{Duration: 150 * time.Millisecond},
 						GroupStyle: &core.GroupStyle{Name: "row", Hover: &core.Style{Background: colors.Accent()}, Active: &core.Style{Transform: core.Transform{Scale: 0.85}}}}
 				}},
-				core.Text{Content: ui.Hint(cx, tr.StylesPressThisRowItsDot(), tr.StylesHoverThisRowItsDot()), StyleFunc: func() core.Style {
+				core.Text{Content: Hint(cx, tr.StylesPressThisRowItsDot(), tr.StylesHoverThisRowItsDot()), StyleFunc: func() core.Style {
 					return core.Style{FontSize: 14, Color: colors.Muted(),
 						GroupStyle: &core.GroupStyle{Name: "row", Hover: &core.Style{Color: colors.Text()}}}
 				}},

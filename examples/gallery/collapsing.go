@@ -5,8 +5,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 const (

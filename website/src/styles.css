@@ -1,5 +1,5 @@
-/* NSGo's home page. The palette and roles follow the gallery's (examples/
-   gallery/ui.go): a warm charcoal page, warm paper in the light theme,
+/* NSGo's home page. The palette and roles follow the gallery's (ui/
+   theme.go): a warm charcoal page, warm paper in the light theme,
    one orange accent and quiet terracotta. Muted and faint text carry a
    little more contrast than the app's for reading on the web. Surfaces
    are flat; hairlines and type carry the hierarchy. Highlights and

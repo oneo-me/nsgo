@@ -8,8 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // dayRange is where the last price sits in the day, in one line: the
@@ -133,14 +133,14 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 		}},
 		dayRange(cx, s),
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap}, Children: []core.Node{
-			ui.Stat{Label: tr.StocksOpen(), Value: func() string { return p(q().open) }, Width: w},
-			ui.Stat{Label: tr.StocksPrevClose(), Value: func() string { return p(q().prevClose) }, Width: w},
-			ui.Stat{Label: tr.StocksAvgPrice(), Value: func() string { qq := q(); return p(qq.turnover / math.Max(qq.volume, 1)) }, Width: w},
-			ui.Stat{Label: tr.StocksAmplitude(), Value: func() string { qq := q(); return fmt.Sprintf("%.2f%%", (qq.high-qq.low)/qq.prevClose*100) }, Width: w},
-			ui.Stat{Label: tr.StocksVolume(), Value: func() string { return compactNumber(q().volume) }, Width: w},
-			ui.Stat{Label: tr.StocksTurnover(), Value: func() string { return compactNumber(q().turnover) }, Width: w},
-			ui.Stat{Label: tr.Stocks120dHigh(), Value: label(p(yearHi)), Width: w},
-			ui.Stat{Label: tr.Stocks120dLow(), Value: label(p(yearLo)), Width: w},
+			Stat{Label: tr.StocksOpen(), Value: func() string { return p(q().open) }, Width: w},
+			Stat{Label: tr.StocksPrevClose(), Value: func() string { return p(q().prevClose) }, Width: w},
+			Stat{Label: tr.StocksAvgPrice(), Value: func() string { qq := q(); return p(qq.turnover / math.Max(qq.volume, 1)) }, Width: w},
+			Stat{Label: tr.StocksAmplitude(), Value: func() string { qq := q(); return fmt.Sprintf("%.2f%%", (qq.high-qq.low)/qq.prevClose*100) }, Width: w},
+			Stat{Label: tr.StocksVolume(), Value: func() string { return compactNumber(q().volume) }, Width: w},
+			Stat{Label: tr.StocksTurnover(), Value: func() string { return compactNumber(q().turnover) }, Width: w},
+			Stat{Label: tr.Stocks120dHigh(), Value: label(p(yearHi)), Width: w},
+			Stat{Label: tr.Stocks120dLow(), Value: label(p(yearLo)), Width: w},
 		}},
 	}}
 }

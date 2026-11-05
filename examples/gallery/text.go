@@ -5,8 +5,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 const lorem = "Native text, typeset once on the engine with the platform's text engine and drawn on the main thread without any layout work."
@@ -63,7 +63,7 @@ func linksCard(cx *core.Scope) core.Node {
 			{Content: "."},
 		}},
 	}, Footer: []core.Node{
-		ui.Caption{Label: tr.TextPressed(), Note: tapped.Get},
+		Caption{Label: tr.TextPressed(), Note: tapped.Get},
 	}}
 }
 
@@ -248,7 +248,7 @@ func selectionCard(cx *core.Scope) core.Node {
 	ink := func() core.Style {
 		return core.Style{Color: colors.Text(), SelectionColor: ui.Alpha(colors.Accent(), 0.35)}
 	}
-	return ui.Card{Title: tr.TextSelection(), Description: ui.Hint(cx, tr.TextLongPressToSelect(), tr.TextDragOrDoubleOrTriple()), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return ui.Card{Title: tr.TextSelection(), Description: Hint(cx, tr.TextLongPressToSelect(), tr.TextDragOrDoubleOrTriple()), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		specimenRow(cx, tr.TextOnItsOwn(), "SelectableOn", true, core.Text{Content: tr.TextThisTextSelectsOnIts(), Selectable: core.SelectableOn, Style: b, StyleFunc: ink}),
 		specimenRow(cx, tr.TextAcrossTexts(), "View.Selectable", false,
 			core.View{Selectable: true, Style: core.Style{Gap: 8}, Children: []core.Node{

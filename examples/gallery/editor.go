@@ -9,14 +9,15 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/dock"
 	"github.com/oneo-me/nsgo/base/editor"
 	"github.com/oneo-me/nsgo/base/textview"
 	"github.com/oneo-me/nsgo/base/textview/highlight"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // base/editor's Editor draws its text, gutter, carets and matches itself
@@ -244,7 +245,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	// Each sample's text as last edited, so switching back finds it as it
 	// was.
 	texts := map[string]string{}
-	ref, area, toolbar := &editor.Ref{}, &base.DockAreaRef{}, new(core.Ref)
+	ref, area, toolbar := &editor.Ref{}, &dock.AreaRef{}, new(core.Ref)
 	// Whether the problems' dock shows: open in the full presentation,
 	// none at first at compact width.
 	problemsShown := core.NewSignal(cx, core.Untracked(cx, cx.Env().Window).Width >= 600)
@@ -839,7 +840,7 @@ func editorDemo(cx *core.Scope) core.Node {
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
-					return item(cx, tr.EditorProblems(), func() { area.ToggleDock(base.DockBottom) }, checked(problemsShown.Get), "", false)
+					return item(cx, tr.EditorProblems(), func() { area.ToggleDock(dock.Bottom) }, checked(problemsShown.Get), "", false)
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
@@ -864,10 +865,10 @@ func editorDemo(cx *core.Scope) core.Node {
 			}},
 	}}
 
-	dock := base.DockArea{Ref: area, TestID: "editor-dock", Style: core.Style{FlexGrow: 1},
-		DefaultLayout: base.DockLayout{Center: base.DockTabs("editor"), Bottom: &base.DockRegion{Root: base.DockTabs("problems"), Size: 120}},
-		OnDockOpenChange: func(p base.DockPlacement, open bool) {
-			if p == base.DockBottom {
+	docks := dock.Area{Ref: area, TestID: "editor-dock", Style: core.Style{FlexGrow: 1},
+		DefaultLayout: dock.Layout{Center: dock.Tabs("editor"), Bottom: &dock.Region{Root: dock.Tabs("problems"), Size: 120}},
+		OnDockOpenChange: func(p dock.Placement, open bool) {
+			if p == dock.Bottom {
 				problemsShown.Set(open)
 			}
 		},
@@ -884,7 +885,7 @@ func editorDemo(cx *core.Scope) core.Node {
 				BorderColors: core.EdgeColors{Top: colors.Border()}, Background: colors.Surface()}
 		},
 		BackdropStyle: core.Style{Background: ui.Black(0.4)},
-		RenderTab: func(cx *core.Scope, tab base.DockTab) core.Node {
+		RenderTab: func(cx *core.Scope, tab dock.Tab) core.Node {
 			return core.View{Style: core.Style{Height: core.Pt(28), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 12)},
 				Children: []core.Node{
 					core.Text{MaxLines: 1, ContentFunc: func() string {
@@ -1027,13 +1028,13 @@ func editorDemo(cx *core.Scope) core.Node {
 			}
 			return editorSamples[language.Get()].label
 		}, colors.Muted, true),
-		iconTool(tr.EditorToggleProblems(), lucide.TriangleAlert, problemsShown.Get, func() { area.ToggleDock(base.DockBottom) }, true),
+		iconTool(tr.EditorToggleProblems(), lucide.TriangleAlert, problemsShown.Get, func() { area.ToggleDock(dock.Bottom) }, true),
 	}}
 
 	return core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{
 		toolbarView,
 		findBar,
-		core.View{Style: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)}, Children: []core.Node{dock}},
+		core.View{Style: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)}, Children: []core.Node{docks}},
 		hoverCard,
 		quickFixList,
 		statusLine,

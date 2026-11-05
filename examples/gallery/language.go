@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/i18n"
 	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // languageKey keeps the language chosen in the gallery's settings;

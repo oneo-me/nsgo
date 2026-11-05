@@ -1,6 +1,6 @@
 # Components
 
-`base` holds NSGo's built-in unstyled components, after NSH's `nsh-base` (`nsh/docs/dev/components.md`, `dock.md`): they own behavior, state and accessibility and take every style from the app. Read this before changing a component in `base`; [text view](textview.md) covers `base/textview`, and [editor](editor.md) `base/editor` and `base/diff`.
+`base` holds NSGo's built-in unstyled components, after NSH's `nsh-base` (`nsh/docs/dev/components.md`, `dock.md`): they own behavior, state and accessibility and take every style from the app. A component is a file of `base`, or a package under it when it is complex: `base/datatable`, `base/dock`, `base/plot` and `base/toast`. Read this before changing a component in `base`; [text view](textview.md) covers `base/textview`, and [editor](editor.md) `base/editor` and `base/diff`.
 
 A component whose root is a view of its own takes that view's `OnLayout` and `Tooltip`, as NSH's components take their host's.
 
@@ -32,7 +32,7 @@ They present themselves by `Env.Desktop`, as NSH's do:
 
 Items reach their menu through a context key (`menuContext`), so the app arranges them freely. A sheet's hidden levels are out of layout and their content out of the tree, so screen readers and tests see one level.
 
-- `Sheet` and a phone's menus are overlays, not modals: `sheetMotion` (`sheet.go`) ports NSH's `SheetMotion`. The panel's translation and the backdrop's opacity are animated nodes of one `fade` value and the panel's measured size, so they run on the platform's frame clock; the parts leave the tree when the motion out ends, or after its time where no end is reported.
+- `Sheet` and a phone's menus are overlays, not modals: `sheet.Motion` (`internal/sheet`) ports NSH's `SheetMotion`. The panel's translation and the backdrop's opacity are animated nodes of one `fade` value and the panel's measured size, so they run on the platform's frame clock; the parts leave the tree when the motion out ends, or after its time where no end is reported.
 - With `CloseOnSwipe` a bottom sheet's `PanValues` move a drag value; a release past 30% of its height or 800 points a second asks to close (`ReasonSwipe`), else it comes back. On iOS the panel's pan hands off from the scroll view the drag starts in (`View.PanScrollHandoff`): the drag scrolls it back to its top first, and what goes on past that moves the sheet while the scroll view stays pinned there. Elsewhere the scroll view keeps the drag.
 - `View.Tooltip` is the short form: the core shows the node above the view, 4 points away, after half a second of hover on desktops. A `Tooltip` given there is the hint itself, as NSH's: it shows against the view when its own open state says, the core telling it of the pointer (`core.HintTooltip`), so an app opens it on touch screens too. Tooltips never take the pointer (`Overlay.PointerEvents`).
 - An overlay popup (`Popover`, `Tooltip`, and a `Menu`'s or `ContextMenu`'s on desktops) comes and goes through `popupMotion` (`popup.go`), as Base UI's `data-starting-style` and `data-ending-style`: `StartingStyle` in its first frame (the next display frame, or 50 ms), so the app's `Transition` runs the entry, and `EndingStyle` as it closes, leaving the tree on the overlay's `OnTransitionEnd`; `OnClose` follows that. Both merge over the popup's style and their classes are important, as a toast's. Without an ending part, or under reduced motion, it goes at once. Submenus' popups have no phases. NSH shows a popup at once; this departs so an app animates one with classes alone, with no motion of `base`'s own.
@@ -40,7 +40,7 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 
 ## Toasts
 
-`Toast`, `ToastStack` and `ToastManager` are NSH's, which are `gpui-base`'s three pieces with its names; a `toast(...)` shown from anywhere is the app's, as the gallery's `toast.go` is. NSH removed the system toast for them, and so `Scope.ShowToast` is gone.
+`Toast`, `toast.Stack` and `toast.Manager` are NSH's, which are `gpui-base`'s three pieces with its names; a `toast(...)` shown from anywhere is the app's, as the gallery's `toast.go` is. NSH removed the system toast for them, and so `Scope.ShowToast` is gone.
 
 - `ToastManager[K, V]` is plain data with no timer, generic over the app's ids and values: the app calls `Advance` on its own timer while toasts show, with `Scope.Now`, so a test's manual clock moves it. Its zero value has Sonner's motion, and `Push` takes the timeout directly, where NSH has `new(motion)` and `ToastOptions`.
 - `ToastStack[T, K]` takes the toasts as `Toasts`, `Key` and `Toast`, an `Each`, in place of NSH's children each wrapped as an item. Each item is an absolute view at the placement's edge whose `TranslateY`, `ScaleX` and `Opacity` are animated values moved by critically damped springs on the frame clock; the items' measured heights give the distances and the stack's height, so its hover area follows. A finger down (observed with `OnTouch`) expands it as hover does, and a zero-size overlay hears Escape and back while it holds toasts.
@@ -53,11 +53,10 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 - Marks reach their plot through a context key and add themselves to it: their extent makes the y domain when `YScale` gives none, and each has a hover dot.
 - The hover never records: the pointer moves animated values, the cross line, the dots and the tooltip glide on `Motion.Pointer` and fade on `Enter` and `Exit`, and the tooltip is clamped inside the plot by animated math from the plot's size and its own, as NSH's.
 - The appear clips the marks to an edge `Bind` animates from the leading edge, and records once more without the clip when it ends.
-- `PlotArea.BackgroundStyle` shows inside the shape through `FillBackgroundFromView`.
+- `plot.Area.BackgroundStyle` shows inside the shape through `FillBackgroundFromView`.
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| `Plot`, `Line`, `Area`, `Grid` in `nsh/base/plot` | `Plot`, `PlotLine`, `PlotArea`, `PlotGrid` in `base` | `base` keeps components without extra dependencies in one package, where bare `Line` and `Grid` would read as general |
 | Rows of objects and accessors by key or function | `Y`, `X` and a mark's `Y` as functions returning `[]float64`, NaN skipping a row | Go reads fields with code, so the app gives the column |
 | `Scale` objects | `PointScale()` and `LinearScale(domain...)` | A comparable value; the y axis is always linear |
 | `interactive` | `NoHover` | Go's zero value is the default |
@@ -67,7 +66,7 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 
 `Table` and its parts (`TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell`, `TableCaption`) give the app's few rows a table's roles, `RoleTable` around `RoleRowGroup`, `RoleRow`, `RoleColumnHeader` and `RoleCell`, which each backend maps to its accessibility: AppKit's and WebKit's table roles, ARIA's, Android's role descriptions, and VoiceOver's containers with headers on iOS.
 
-`DataTable` ports NSH's (`nsh/docs/dev/data-table.md`): the pure parts in `datatable_layout.go` (the scaled axis past 3 000 000 points, the columns' prefix sums, the selection's keys, the row window and slots), the controller in `datatable.go` and the layers in `datatable_view.go`.
+`DataTable` ports NSH's (`nsh/docs/dev/data-table.md`): the pure parts in `datatable/layout.go` (the scaled axis past 3 000 000 points, the columns' prefix sums, the selection's keys, the row window and slots), the controller in `datatable.go` and the layers in `datatable/view.go`.
 
 - A vertical `Scroll` of a horizontal one of an empty box is the hit layer the platform scrolls; the body over it takes no pointer and places the rows and columns in view from the offsets the scroll events report, in whole points; the header above it is interactive. Desktops get a horizontal scroll bar band over the body's bottom and a vertical one over its right edge, each following the table's scroll view on its axis without echoing its moves back.
 - Rows and scrolling columns are slots made once (`slotItem`): a scroll gives slots other rows, so no view is made while scrolling. The rows made are those in view and half a viewport each way, as many more on one side as the table's end cuts from the other (`rowWindow`), so the window keeps its length and moves with every row. The columns' window is NSH's (`window.Rows`, reaching one column and three), and only the cells of the columns in view and one each way read their texts; the others keep theirs, hidden. Rows are placed relative to a chunk of 1024, columns of 256, so places stay small at any offset.
@@ -97,7 +96,7 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 
 ## Dock
 
-`DockArea` ports NSH's dock in layers: the layout data (`dock_layout.go`: `DockNode` trees, normalization to a fixpoint, edits, the app's layouts installed with their IDs repaired), `gpui-base`'s persisted format (`dock_state.go`, `DockLayout`'s JSON) and the component (`dock.go`).
+`dock.Area` ports NSH's dock in layers: the layout data (`dock/layout.go`: `dock.Node` trees, normalization to a fixpoint, edits, the app's layouts installed with their IDs repaired), `gpui-base`'s persisted format (`dock/state.go`, `DockLayout`'s JSON) and the component (`dock.go`).
 
 - Container IDs come from a counter per area above the largest ID its layout holds, not one per process.
 - Each container renders from a memo of its shape (kind and children's IDs), so selecting a tab or resizing rebuilds nothing; a split whose children change is rendered again.
@@ -110,5 +109,5 @@ Items reach their menu through a context key (`menuContext`), so the app arrange
 | --- | --- | --- |
 | `DockAreaApi` through a ref | `DockAreaRef`, bound as the area mounts | Go has no refs to components |
 | `movePanel`'s `index` and `activate`, `null` for no group | `DockTarget.Before`, the tab it goes before, and `NoActivate`; 0 for no group | Go's zero value is the default: last, displayed |
-| Nodes typed `split` or `tabs`, a region's `open` and `collapsible`, `panels` a list of options by `id` | One `DockNode` struct with `Tabs`, `DockRegion.Closed` and `NoCollapse`, `Panels` a map of `NoClose`, `NoZoom` and `Hidden` by key; `nsgo/base` gives NSH's shapes | Go has no unions, and its zero value allows everything, as a panel NSH's `panels` leaves out does |
+| Nodes typed `split` or `tabs`, a region's `open` and `collapsible`, `panels` a list of options by `id` | One `dock.Node` struct with `Tabs`, `DockRegion.Closed` and `NoCollapse`, `Panels` a map of `NoClose`, `NoZoom` and `Hidden` by key; `nsgo/base` gives NSH's shapes | Go has no unions, and its zero value allows everything, as a panel NSH's `panels` leaves out does |
 | `groupOf` and `zoomedGroup` give `null` for none | `GroupOf` and `ZoomedGroup` return an ID and whether there is one | Go's comma-ok result |

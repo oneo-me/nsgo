@@ -8,8 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 const diffOld = `package store
@@ -206,21 +206,21 @@ func diffDemo(cx *core.Scope) core.Node {
 		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: 12})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			ui.Tool{Label: tr.DiffShowAPatch(), Text: tr.DiffPatch(), On: patch.Get, OnPress: toggle(patch)},
-			ui.Tool{Label: tr.DiffOneColumn(), Text: tr.DiffUnified(), On: unified.Get, OnPress: toggle(unified)},
-			ui.Tool{Label: tr.DiffSoftWrap(), Text: tr.DiffWrap(), On: wrap.Get, OnPress: toggle(wrap)},
+			Tool{Label: tr.DiffShowAPatch(), Text: tr.DiffPatch(), On: patch.Get, OnPress: toggle(patch)},
+			Tool{Label: tr.DiffOneColumn(), Text: tr.DiffUnified(), On: unified.Get, OnPress: toggle(unified)},
+			Tool{Label: tr.DiffSoftWrap(), Text: tr.DiffWrap(), On: wrap.Get, OnPress: toggle(wrap)},
 			core.View{Style: core.Style{Width: core.Pt(360)}, Children: []core.Node{ui.Segmented[diff.Inline]{Options: modes, Value: inline.Get, OnChange: inline.Set, Small: true}}},
-			ui.Tool{Label: tr.DiffPreviousChange(), Text: "↑", OnPress: func() {
+			Tool{Label: tr.DiffPreviousChange(), Text: "↑", OnPress: func() {
 				i, _ := ref.PreviousHunk()
 				last.Set(tr.DiffChange(i + 1))
 			}},
-			ui.Tool{Label: tr.DiffNextChange(), Text: "↓", OnPress: func() {
+			Tool{Label: tr.DiffNextChange(), Text: "↓", OnPress: func() {
 				i, _ := ref.NextHunk()
 				last.Set(tr.DiffChange(i + 1))
 			}},
-			ui.Tool{Label: tr.DiffExpandEveryLine(), Text: tr.DiffExpand(), OnPress: ref.ExpandAll},
-			ui.Tool{Label: tr.DiffCollapseUnchangedLines(), Text: tr.DiffCollapse(), OnPress: ref.CollapseAll},
-			ui.Tool{Label: tr.DiffStartAgain(), Text: tr.DiffReset(), OnPress: func() { oldText.Set(diffOld); newText.Set(diffNew) }},
+			Tool{Label: tr.DiffExpandEveryLine(), Text: tr.DiffExpand(), OnPress: ref.ExpandAll},
+			Tool{Label: tr.DiffCollapseUnchangedLines(), Text: tr.DiffCollapse(), OnPress: ref.CollapseAll},
+			Tool{Label: tr.DiffStartAgain(), Text: tr.DiffReset(), OnPress: func() { oldText.Set(diffOld); newText.Set(diffNew) }},
 		}},
 		core.View{StyleFunc: func() core.Style {
 			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: ui.RadiusInset,

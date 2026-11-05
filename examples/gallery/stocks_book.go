@@ -6,8 +6,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 const (
@@ -116,9 +116,9 @@ func depthBlock(cx *core.Scope, m *market, s *stock) core.Node {
 	return block(cx, tr.StocksDepth(), label(tr.StocksTicksCumulative(depthSpan)), nil, false,
 		core.Canvas{Style: core.Style{Height: core.Pt(120)}, Draw: draw, Label: tr.StocksDepthChart()},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 16, RowGap: 6}, Children: []core.Node{
-			ui.Legend{Color: colors.Up, Label: tr.StocksBids(), Value: func() string { b, _, _ := totals(); return compactNumber(b) }},
-			ui.Legend{Color: colors.Down, Label: tr.StocksAsks(), Value: func() string { _, a, _ := totals(); return compactNumber(a) }},
-			ui.Legend{Color: colors.Border, Label: tr.StocksImbalance(), Value: func() string { _, _, i := totals(); return signed(i*100, 0) + "%" }},
+			Legend{Color: colors.Up, Label: tr.StocksBids(), Value: func() string { b, _, _ := totals(); return compactNumber(b) }},
+			Legend{Color: colors.Down, Label: tr.StocksAsks(), Value: func() string { _, a, _ := totals(); return compactNumber(a) }},
+			Legend{Color: colors.Border, Label: tr.StocksImbalance(), Value: func() string { _, _, i := totals(); return signed(i*100, 0) + "%" }},
 		}},
 	)
 }
@@ -348,9 +348,9 @@ func tapeBlock(cx *core.Scope, m *market, s *stock) core.Node {
 	}
 	return block(cx, tr.StocksTimeSales(), label(tr.StocksBlocks()+compactNumber(blockSize)), nil, false,
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 16, RowGap: 6}, Children: []core.Node{
-			ui.Legend{Color: colors.Up, Label: tr.StocksAtAsk(), Value: func() string { b, _, _ := stats(); return compactNumber(b) }},
-			ui.Legend{Color: colors.Down, Label: tr.StocksAtBid(), Value: func() string { _, sl, _ := stats(); return compactNumber(sl) }},
-			ui.Legend{Color: colors.Accent, Label: tr.StocksBlocks2(), Value: func() string { _, _, n := stats(); return itoa(n) }},
+			Legend{Color: colors.Up, Label: tr.StocksAtAsk(), Value: func() string { b, _, _ := stats(); return compactNumber(b) }},
+			Legend{Color: colors.Down, Label: tr.StocksAtBid(), Value: func() string { _, sl, _ := stats(); return compactNumber(sl) }},
+			Legend{Color: colors.Accent, Label: tr.StocksBlocks2(), Value: func() string { _, _, n := stats(); return itoa(n) }},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 10, Padding: core.Symmetric(0, 8)}, Children: []core.Node{
 			head(cx, tr.StocksTime(), 80, 0, core.TextAlignStart), head(cx, tr.StocksPrice(), 0, 1, core.TextAlignStart), head(cx, tr.StocksSize(), 0, 0, core.TextAlignEnd),

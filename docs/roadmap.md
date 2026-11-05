@@ -39,7 +39,7 @@ Independent of each other, done in any order. Done when the `layout-*`, `core-th
 
 ## Components of 0.4.0: controls
 
-What `nsh/base` added in 0.4.0 (`components.md`, `nsh/crates/nsh-base/src`), each in `base` with no look and in the gallery with Onexa's. These share the roving focus and keys of [the rest](#the-040-api-the-rest). Done when `base-slider`, `base-number-input`, `base-otp-input`, `base-toggle`, `base-toolbar`, `base-pagination`, `base-accordion`, `base-collapsible-reveal`, `base-link`, `base-avatar`, `base-tree`, `base-carousel` and `base-scrollbar` pass.
+What `nsh/base` added in 0.4.0 (`components.md`, `nsh/crates/nsh-base/src`), each in `base` with no look and in `ui` with its look. These share the roving focus and keys of [the rest](#the-040-api-the-rest). Done when `base-slider`, `base-number-input`, `base-otp-input`, `base-toggle`, `base-toolbar`, `base-pagination`, `base-accordion`, `base-collapsible-reveal`, `base-link`, `base-avatar`, `base-tree`, `base-carousel` and `base-scrollbar` pass.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |

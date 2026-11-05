@@ -11,8 +11,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // motionTones are the tones of the demos' dots and tiles.
@@ -100,9 +100,9 @@ func hero(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{Width: core.Pt(s), Height: core.Pt(s)}, Children: stage},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			ui.APILine{Label: tr.AnimOrbitsOneTurnIn3(), Names: "Loop"},
-			ui.APILine{Label: tr.AnimRings08SApart(), Names: "Stagger"},
-			ui.APILine{Label: tr.AnimCoreInAndOut(), Names: "Sequence"},
+			APILine{Label: tr.AnimOrbitsOneTurnIn3(), Names: "Loop"},
+			APILine{Label: tr.AnimRings08SApart(), Names: "Stagger"},
+			APILine{Label: tr.AnimCoreInAndOut(), Names: "Sequence"},
 		}},
 	}}
 }
@@ -287,7 +287,7 @@ func easingRace(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.AnimSideBySide(), Description: tr.AnimTenTimingsStartedTogether(), Actions: []core.Node{ui.Badge{Text: "1.2 s"}}, Children: []core.Node{
 		core.View{Style: core.Style{Gap: 2}, Children: rows},
-		ui.APILine{Label: tr.AnimOneGroupOneStart(), Names: "Parallel"},
+		APILine{Label: tr.AnimOneGroupOneStart(), Names: "Parallel"},
 		core.Dynamic(func(*core.Scope) core.Node {
 			l := tr.AnimPlay()
 			if there.Get() {
@@ -476,7 +476,7 @@ func springs(cx *core.Scope) core.Node {
 	}
 	var legends, tracks []core.Node
 	for i, s := range springKinds {
-		legends = append(legends, ui.Legend{Color: s.tone.Shade(cx), Label: s.label(locales.For(cx)), Value: label(fmt.Sprintf("%.0f / %.0f", s.stiffness, s.damping))})
+		legends = append(legends, Legend{Color: s.tone.Shade(cx), Label: s.label(locales.For(cx)), Value: label(fmt.Sprintf("%.0f / %.0f", s.stiffness, s.damping))})
 		track := core.View{StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(28), JustifyContent: core.JustifyCenter, CornerRadius: 14, Background: colors.Background(), Shadows: fin.Track().Shadows}
 		},
@@ -567,9 +567,9 @@ func interpolations(cx *core.Scope) core.Node {
 		}},
 		ui.Segmented[int]{Options: []ui.Option[int]{{Value: 0, Label: "t = 0"}, {Value: 1, Label: "t = 1"}, {Value: 2, Label: "t = 2"}}, Value: at.Get, OnChange: goTo},
 		core.View{Style: core.Style{Gap: 6}, Children: []core.Node{
-			ui.Caption{Label: tr.AnimColorThroughThreeStops(), Note: label(tr.AnimAt01And2())},
-			ui.Caption{Label: tr.AnimRotationKeepsGoingPast1(), Note: label(tr.Anim360At2())},
-			ui.Caption{Label: tr.AnimScaleStopsAt12(), Note: label("clamp")},
+			Caption{Label: tr.AnimColorThroughThreeStops(), Note: label(tr.AnimAt01And2())},
+			Caption{Label: tr.AnimRotationKeepsGoingPast1(), Note: label(tr.Anim360At2())},
+			Caption{Label: tr.AnimScaleStopsAt12(), Note: label("clamp")},
 		}},
 	}}
 }
@@ -616,7 +616,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 			}, Children: []core.Node{
 				ui.Icon(lucide.Search, 16, colors.Muted),
 				core.Text{Content: tr.AnimSearch(), Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
-				ui.API{Text: fmt.Sprintf("DiffClamp(0, %.0f)", h)},
+				API{Text: fmt.Sprintf("DiffClamp(0, %.0f)", h)},
 			}},
 		}},
 	}}
@@ -729,7 +729,7 @@ func transitions(cx *core.Scope) core.Node {
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 2}, Children: lanes},
-		ui.APILine{Label: tr.AnimColorCornersTransformOpacityAndFrame(), Names: "Style.Transition · TransitionLayout"},
+		APILine{Label: tr.AnimColorCornersTransformOpacityAndFrame(), Names: "Style.Transition · TransitionLayout"},
 		ui.Button{Text: tr.AnimToggle(), Variant: ui.ButtonSecondary, OnPress: func() { toggled(moved) }},
 	}}
 }

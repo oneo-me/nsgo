@@ -8,8 +8,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 const (
@@ -154,11 +154,11 @@ func physicsDemo(cx *core.Scope) core.Node {
 			page = pageStyle(cx)
 		}
 		return core.View{Style: outer, StyleFunc: page, Children: []core.Node{
-			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-				ui.IconTile{Icon: lucide.Atom, Size: 40},
+			Appear{Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
+				IconTile{Icon: lucide.Atom, Size: 40},
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 					ui.Text(tr.PhysicsDragAndRelease(), 15, ui.Semibold, colors.Text),
-					core.Text{Content: ui.Hint(cx, tr.PhysicsTapToPulseLongPress(), tr.PhysicsClickToPulsePressAnd()), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+					core.Text{Content: Hint(cx, tr.PhysicsTapToPulseLongPress(), tr.PhysicsClickToPulsePressAnd()), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Badge{Text: tr.PhysicsUiThread(), Tone: ui.ToneAccent},
 			}}}},
@@ -197,19 +197,19 @@ func physicsDemo(cx *core.Scope) core.Node {
 				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.PhysicsSpring()}, {Value: "coast", Label: tr.PhysicsCoast()}, {Value: "snap", Label: tr.PhysicsSnap()}}, Value: mode.Get, OnChange: mode.Set},
 				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "soft", Label: tr.PhysicsSoft()}, {Value: "bouncy", Label: tr.PhysicsBouncy()}, {Value: "firm", Label: tr.PhysicsFirm()}}, Value: feel.Get, OnChange: feel.Set, Small: true},
 				core.View{Style: core.Style{Direction: core.Row, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
-					ui.Stat{Label: tr.PhysicsReleases(), Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
+					Stat{Label: tr.PhysicsReleases(), Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
 					core.Dynamic(func(*core.Scope) core.Node {
 						t := ui.ToneNeutral
 						if speed.Get() > 1500 {
 							t = ui.ToneWarn
 						}
-						return ui.Stat{Label: tr.PhysicsSpeed(), Value: func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, Tone: t, Width: core.Pct(34)}
+						return Stat{Label: tr.PhysicsSpeed(), Value: func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, Tone: t, Width: core.Pct(34)}
 					}),
 					core.Dynamic(func(*core.Scope) core.Node {
 						if mode.Get() == "snap" {
-							return ui.Stat{Label: tr.PhysicsCorner(), Value: corner.Get, Width: core.Pct(36)}
+							return Stat{Label: tr.PhysicsCorner(), Value: corner.Get, Width: core.Pct(36)}
 						}
-						return ui.Stat{Label: tr.PhysicsSpring(), Value: func() string { f := feels[feel.Get()]; return fmt.Sprintf("%.0f / %.0f", f.Stiffness, f.Damping) }, Width: core.Pct(36)}
+						return Stat{Label: tr.PhysicsSpring(), Value: func() string { f := feels[feel.Get()]; return fmt.Sprintf("%.0f / %.0f", f.Stiffness, f.Damping) }, Width: core.Pct(36)}
 					}),
 				}},
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(0, 4)}, Children: []core.Node{

@@ -50,7 +50,7 @@ download, decompression, compilation and start progress to the page over
 `postMessage`; the page's stage shows it and starts the gallery by itself
 when it enters view and the visitor's connection allows it.
 
-The theme follows the gallery's (`examples/gallery-ui/theme.go`): a warm charcoal
+The theme follows the gallery's (`ui/theme.go`): a warm charcoal
 page, a warm paper light theme, one orange accent and flat surfaces. Hairlines
 and type carry depth; there are no gradients or top highlights, and only the
 stage window and the mobile menu cast a shadow.

@@ -8,8 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // The ready-made motions, a staggered entrance, keyframes and an aurora:
@@ -128,8 +128,8 @@ func motionPresets(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: tiles}
 		}),
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			ui.APILine{Label: tr.AnimChannelsForAView(), Names: "NewMotion"},
-			ui.APILine{Label: tr.AnimAPreset(), Names: "Motion.Play(Shake.Spec())"},
+			APILine{Label: tr.AnimChannelsForAView(), Names: "NewMotion"},
+			APILine{Label: tr.AnimAPreset(), Names: "Motion.Play(Shake.Spec())"},
 		}},
 	}}
 }
@@ -356,10 +356,10 @@ func keyframesMotions(cx *core.Scope) core.Node {
 			ui.Button{Text: tr.AnimCharge(), Small: true, Variant: ui.ButtonSecondary, OnPress: charging},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			ui.APILine{Label: tr.AnimASpriteSheetFrameBy(), Names: "StepsEasing(8)"},
-			ui.APILine{Label: tr.Anim1ThreeStopsOneWith(), Names: "StopAt(…).Eased(…)"},
-			ui.APILine{Label: tr.AnimLikePopInThenA(), Names: "Play(…, done)"},
-			ui.APILine{Label: tr.AnimChargeInFiveJumps(), Names: "ValueKeyframes"},
+			APILine{Label: tr.AnimASpriteSheetFrameBy(), Names: "StepsEasing(8)"},
+			APILine{Label: tr.Anim1ThreeStopsOneWith(), Names: "StopAt(…).Eased(…)"},
+			APILine{Label: tr.AnimLikePopInThenA(), Names: "Play(…, done)"},
+			APILine{Label: tr.AnimChargeInFiveJumps(), Names: "ValueKeyframes"},
 		}},
 	}}
 }

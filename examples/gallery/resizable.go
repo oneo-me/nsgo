@@ -7,8 +7,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 func roundSizes(sizes []core.Points) string {
@@ -49,7 +49,7 @@ func resizableDemo(cx *core.Scope) core.Node {
 		return fillPage.Merge(core.Style{Gap: 12, Background: colors.Background(), Padding: core.All(16)})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			core.Text{Content: ui.Hint(cx, tr.ResizableDragALineBetweenTwo(), tr.ResizableDragALineBetweenTwo2()),
+			core.Text{Content: Hint(cx, tr.ResizableDragALineBetweenTwo(), tr.ResizableDragALineBetweenTwo2()),
 				Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			base.Button{OnPress: func(core.PressEvent) { toggled(shown) }, Selected: shown.Get, Label: tr.ResizableConsole(),
 				StyleFunc: func() core.Style {

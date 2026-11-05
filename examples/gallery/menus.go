@@ -10,8 +10,8 @@ import (
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // The look of every menu here is the gallery's: base draws none.
@@ -94,7 +94,7 @@ func (l menuLook) item(cx *core.Scope, p itemProps) core.Node {
 	states := func() core.Style { return core.Style{Hover: itemHovered(cx), Active: itemPressed(cx)} }
 	children := []core.Node{core.Text{ContentFunc: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(fg)}}
 	if p.note != "" {
-		children = append(children, ui.API{Text: p.note})
+		children = append(children, API{Text: p.note})
 	}
 	if p.mark != nil {
 		children = append(children, core.View{Style: core.Style{Width: core.Pt(16), AlignItems: core.AlignCenter}, Children: []core.Node{
@@ -262,7 +262,7 @@ func menusDemo(cx *core.Scope) core.Node {
 				return markNone
 			}}))
 		}
-		return ui.Card{Title: tr.MenusMenuBar(), Description: ui.Hint(cx, tr.MenusEachMenuASheetSubmenus(), tr.MenusHoverAcrossSubmenusTheShortcuts()), Children: []core.Node{
+		return ui.Card{Title: tr.MenusMenuBar(), Description: Hint(cx, tr.MenusEachMenuASheetSubmenus(), tr.MenusHoverAcrossSubmenusTheShortcuts()), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 				menu(tr.MenusFile(), chip(cx, label(tr.MenusFile()), nil),
 					l.item(cx, itemProps{label: label(tr.MenusNewDocument()), note: key("mod+alt+n"), onSelect: func() { act(tr.MenusNewDocument()) }}),
@@ -306,10 +306,10 @@ func menusDemo(cx *core.Scope) core.Node {
 					groupTitle(cx, tr.MenusZoom()),
 				}, sizes...)...),
 			}},
-			ui.Caption{LabelFunc: func() string {
+			Caption{LabelFunc: func() string {
 				return tr.MenusViewState(onOff(tr, sidebar.Get()), onOff(tr, statusBar.Get()), zoom.Get())
 			}},
-			ui.Caption{LabelFunc: func() string {
+			Caption{LabelFunc: func() string {
 				if h := history.Get(); len(h) > 0 {
 					return tr.MenusDone() + strings.Join(h, ", ")
 				}
@@ -378,8 +378,8 @@ func menusDemo(cx *core.Scope) core.Node {
 				}}),
 			}
 		}
-		return ui.Card{Title: tr.MenusOnTheRowsOfA(), Description: ui.Hint(cx, tr.MenusHoldAFingerOnA(), tr.MenusRightClickARowOr()), Children: []core.Node{
-			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.MenusNoFilesLeft()} },
+		return ui.Card{Title: tr.MenusOnTheRowsOfA(), Description: Hint(cx, tr.MenusHoldAFingerOnA(), tr.MenusRightClickARowOr()), Children: []core.Node{
+			core.Show{When: func() bool { return len(files.Get()) > 0 }, Else: func(*core.Scope) core.Node { return Caption{Label: tr.MenusNoFilesLeft()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Children: []core.Node{core.Each(files.Get, func(f menuFile) int { return f.id },
 						func(cx *core.Scope, file func() menuFile, i func() int) core.Node {
@@ -420,7 +420,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		side := core.NewSignal(cx, core.PlaceBottom)
 		align := core.NewSignal(cx, core.AlignStart)
 		alignName := map[core.Align]string{core.AlignStart: "start", core.AlignCenter: "center", core.AlignEnd: "end"}
-		return ui.Card{Title: tr.MenusWhereItGoes(), Description: ui.Hint(cx, tr.MenusPhonesShowMenusAsSheets(), tr.MenusTheSideAndAlignmentIt()), Children: []core.Node{
+		return ui.Card{Title: tr.MenusWhereItGoes(), Description: Hint(cx, tr.MenusPhonesShowMenusAsSheets(), tr.MenusTheSideAndAlignmentIt()), Children: []core.Node{
 			ui.Segmented[core.Placement]{Options: []ui.Option[core.Placement]{{Value: core.PlaceTop, Label: tr.MenusTop()}, {Value: core.PlaceBottom, Label: tr.MenusBottom()}, {Value: core.PlaceLeft, Label: tr.MenusLeft()}, {Value: core.PlaceRight, Label: tr.MenusRight()}}, Value: side.Get, OnChange: side.Set, Small: true},
 			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: tr.MenusStart()}, {Value: core.AlignCenter, Label: tr.MenusCenter()}, {Value: core.AlignEnd, Label: tr.MenusEnd()}}, Value: align.Get, OnChange: align.Set, Small: true},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(24, 0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
@@ -509,19 +509,19 @@ func menusDemo(cx *core.Scope) core.Node {
 				},
 				OnPress:       func(e core.PressEvent) { show(e.PagePosition) },
 				OnContextMenu: func(e core.ContextMenuEvent) { show(e.PagePosition) },
-				Children:      []core.Node{ui.Text(ui.Hint(cx, tr.MenusPressHere(), tr.MenusRightClickOrPressHere()), 13, ui.Regular, colors.Muted)}},
-			ui.Caption{LabelFunc: chosen.Get},
+				Children:      []core.Node{ui.Text(Hint(cx, tr.MenusPressHere(), tr.MenusRightClickOrPressHere()), 13, ui.Regular, colors.Muted)}},
+			Caption{LabelFunc: chosen.Get},
 		}}
 	}
 
 	appMenu := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		children := []core.Node{
-			ui.Note{Text: tr.MenusSetapplicationmenuSetsTheMenuBar()},
-			ui.Caption{Label: tr.MenusLastChosen(), Note: shell.chosen.Get},
+			Note{Text: tr.MenusSetapplicationmenuSetsTheMenuBar()},
+			Caption{Label: tr.MenusLastChosen(), Note: shell.chosen.Get},
 		}
 		if env := cx.Env(); env.Desktop() && env.OS() != core.OSMacOS && env.OS() != core.OSWeb {
-			children = append(children, ui.Note{Text: tr.MenusSetmenubarHidesTheBarWindows()},
+			children = append(children, Note{Text: tr.MenusSetmenubarHidesTheBarWindows()},
 				ui.HStack{Gap: 8, Children: []core.Node{
 					ui.Button{Text: tr.MenusAlwaysShown(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }},
 					ui.Button{Text: tr.MenusAutoHide(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
@@ -534,7 +534,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		return ui.Card{Title: tr.MenusEvents(), Description: tr.MenusOnopenchangeWithItsReasonAnd(), Children: []core.Node{
-			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.MenusOpenAMenu()} },
+			core.Show{When: func() bool { return len(events.Get()) > 0 }, Else: func(*core.Scope) core.Node { return Caption{Label: tr.MenusOpenAMenu()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Style: core.Style{Gap: 4}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 						var lines []core.Node

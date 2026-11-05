@@ -7,6 +7,7 @@ import (
 	"github.com/dop251/goja"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -75,14 +76,14 @@ func (r *runtime) alertDialog() goja.Value {
 	return o
 }
 
-// toastKey holds a JS ToastManager's base.ToastManager.
+// toastKey holds a JS ToastManager's toast.Manager.
 var toastKey = goja.NewSymbol("nsgo.toasts")
 
-type toastManager = base.ToastManager[string, goja.Value]
+type toastManager = toast.Manager[string, goja.Value]
 
-func (r *runtime) toastMotion(v goja.Value) base.ToastMotion {
+func (r *runtime) toastMotion(v goja.Value) toast.Motion {
 	o := r.options(v)
-	return base.ToastMotion{Duration: millis(o.float("duration", 0)), ExitDuration: millis(o.float("exitDuration", 0)),
+	return toast.Motion{Duration: millis(o.float("duration", 0)), ExitDuration: millis(o.float("exitDuration", 0)),
 		CollapsedPeek: core.Points(o.float("collapsedPeek", 0)), ExpandedGap: core.Points(o.float("expandedGap", 0)),
 		CollapsedScaleStep: float32(o.float("collapsedScaleStep", 0)), CollapsedVisible: int(o.float("collapsedVisible", 0))}
 }
@@ -112,15 +113,15 @@ func (r *runtime) toastManagerClass() goja.Value {
 		}))
 	}
 	now := func() time.Time { return r.cx.Now() }
-	entry := func(e base.ToastEntry[string, goja.Value]) *goja.Object {
+	entry := func(e toast.Entry[string, goja.Value]) *goja.Object {
 		o := r.vm.NewObject()
 		_ = o.Set("id", e.ID)
 		_ = o.Set("value", e.Value)
-		_ = o.Set("status", map[base.ToastStatus]string{base.ToastStarting: "starting", base.ToastPresent: "present",
-			base.ToastEnding: "ending"}[e.Status])
+		_ = o.Set("status", map[toast.Status]string{toast.Starting: "starting", toast.Present: "present",
+			toast.Ending: "ending"}[e.Status])
 		return o
 	}
-	entries := func(es []base.ToastEntry[string, goja.Value]) goja.Value {
+	entries := func(es []toast.Entry[string, goja.Value]) goja.Value {
 		out := make([]any, len(es))
 		for i, e := range es {
 			out[i] = entry(e)
@@ -185,7 +186,7 @@ func toastStackFace(p *props) core.Node {
 	// keeps its rows: made at each read, they would be other nodes, which
 	// the stack could not match.
 	children := core.NewMemoFunc(r.cx, func() goja.Value { return p.get("children") }, nil)
-	return base.ToastStack[goja.Value, any]{
+	return toast.Stack[goja.Value, any]{
 		Toasts: func() []goja.Value {
 			var out []goja.Value
 			for _, it := range r.resolve(children.Get(), nil, 0) {
@@ -200,7 +201,7 @@ func toastStackFace(p *props) core.Node {
 			return r.region(func() goja.Value { return item() })
 		},
 		Motion:           r.toastMotion(p.get("motion")),
-		Placement:        r.decode(p.get("placement"), reflect.TypeFor[base.Anchor]()).Interface().(base.Anchor),
+		Placement:        r.decode(p.get("placement"), reflect.TypeFor[toast.Anchor]()).Interface().(toast.Anchor),
 		NoCloseOnEscape:  !p.boolOr("closeOnEscape", true),
 		OnExpandedChange: func(e bool) { callIf(p, "onExpandedChange", r.vm.ToValue(e)) },
 		OnCancel:         p.on("onCancel"),

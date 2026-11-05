@@ -10,8 +10,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 var listTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger, ui.ToneNeutral}
@@ -379,7 +379,7 @@ func listMore(cx *core.Scope) core.Node {
 			refreshing.Set(false)
 		})
 	}
-	refreshKey := ui.BindRefresh(cx, refresh)
+	refreshKey := BindRefresh(cx, refresh)
 	edit := func(change func()) {
 		cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)
 		change()
@@ -420,7 +420,7 @@ func listMore(cx *core.Scope) core.Node {
 							Background: colors.Raised(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 					}, Children: []core.Node{ui.Icon(lucide.ArrowDown, 20, colors.Accent)}}
 				}
-				return ui.IconTile{Icon: lucide.ArrowDown, Size: 40}
+				return IconTile{Icon: lucide.ArrowDown, Size: 40}
 			}),
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 				ui.Textf(func() string {
@@ -428,9 +428,9 @@ func listMore(cx *core.Scope) core.Node {
 						return tr.ListsRefreshing()
 					}
 					if refreshKey != "" {
-						return ui.Hint(cx, tr.ListsPullThePageDown(), tr.ListsRefreshOr()+refreshKey)
+						return Hint(cx, tr.ListsPullThePageDown(), tr.ListsRefreshOr()+refreshKey)
 					}
-					return ui.Hint(cx, tr.ListsPullThePageDown(), tr.ListsRefreshBelow())
+					return Hint(cx, tr.ListsPullThePageDown(), tr.ListsRefreshBelow())
 				}, 13, ui.Regular, colors.Text),
 				ui.Textf(func() string {
 					if custom.Get() {
@@ -468,13 +468,13 @@ func listMore(cx *core.Scope) core.Node {
 					core.Text{Content: tr.ListsMoreListFeatures(), Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 					core.Text{Content: "Position: Sticky", Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 				}},
-				ui.Section{Title: tr.ListsPullToRefresh(), Children: pullChildren},
-				ui.Section{Title: tr.ListsHorizontalScrollView(), NoteFunc: rng.Get, Children: []core.Node{core.View{Style: core.Style{Margin: core.Edges{Left: -14, Right: -14}}, Children: []core.Node{
+				Section{Title: tr.ListsPullToRefresh(), Children: pullChildren},
+				Section{Title: tr.ListsHorizontalScrollView(), NoteFunc: rng.Get, Children: []core.Node{core.View{Style: core.Style{Margin: core.Edges{Left: -14, Right: -14}}, Children: []core.Node{
 					core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
 						base.Tabs{Label: tr.ListsRange(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 14)}, Children: chips},
 					}},
 				}}}},
-				ui.Section{Title: tr.ListsHorizontalList(), Note: tr.Lists1000RecycledCards(), Children: []core.Node{core.View{Style: core.Style{Margin: core.Edges{Left: -14, Right: -14}}, Children: []core.Node{
+				Section{Title: tr.ListsHorizontalList(), Note: tr.Lists1000RecycledCards(), Children: []core.Node{core.View{Style: core.Style{Margin: core.Edges{Left: -14, Right: -14}}, Children: []core.Node{
 					core.List{Count: func() int { return 1000 }, Horizontal: true, EstimatedSize: 130, HideIndicator: true,
 						Style: core.Style{Height: core.Pt(124), Padding: core.Symmetric(0, 14)}, Gap: 10,
 						Row: func(cx *core.Scope, r core.ListRow) core.Node {
@@ -495,7 +495,7 @@ func listMore(cx *core.Scope) core.Node {
 							}}
 						}},
 				}}}},
-				ui.Section{Title: tr.ListsAnEmptyList(), NoteFunc: func() string { return tr.A11yItems(len(items.Get())) }, Children: []core.Node{
+				Section{Title: tr.ListsAnEmptyList(), NoteFunc: func() string { return tr.A11yItems(len(items.Get())) }, Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 						ui.Cell{Child: ui.Button{Text: tr.ListsAdd(), Icon: lucide.Plus, OnPress: func() {
 							edit(func() {
@@ -511,8 +511,8 @@ func listMore(cx *core.Scope) core.Node {
 							return core.Style{CornerRadius: ui.RadiusControl, Background: colors.Surface(), Shadows: fin.Card().Shadows, BorderWidth: 1, BorderColor: colors.Line()}
 						},
 						Empty: core.View{Style: core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 10, Height: core.Pt(194)}, Children: []core.Node{
-							ui.IconTile{Icon: lucide.List, Size: 40},
-							ui.Text(ui.Hint(cx, tr.ListsNothingHereYetTapAdd(), tr.ListsNothingHereYetClickAdd()), 13, ui.Regular, colors.Muted),
+							IconTile{Icon: lucide.List, Size: 40},
+							ui.Text(Hint(cx, tr.ListsNothingHereYetTapAdd(), tr.ListsNothingHereYetClickAdd()), 13, ui.Regular, colors.Muted),
 						}},
 						Separator: func(*core.Scope) core.Node {
 							return core.View{Style: core.Style{Height: core.Pt(1), Margin: core.Edges{Left: 14}}, StyleFunc: ui.Filled(colors.Line)}
@@ -677,7 +677,7 @@ func listPage(cx *core.Scope) core.Node {
 	page := core.Scroll{TestID: "page", OffsetValues: core.AnimatedXY{Y: scroll}, Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 		core.View{Style: core.Style{Padding: core.Edges{Top: 16 + pageBar, Right: 16, Bottom: 16, Left: 16}, Gap: 10, Width: core.Pct(100), MaxWidth: core.Pt(720),
 			AlignSelf: core.AlignCenter}, Children: []core.Node{
-			ui.Section{Title: tr.ListsOnePageTwoLists(), Note: "ListViewportParent", Children: []core.Node{
+			Section{Title: tr.ListsOnePageTwoLists(), Note: "ListViewportParent", Children: []core.Node{
 				ui.Text(tr.ListsTheListsBelowLieIn(),
 					13, ui.Regular, colors.Muted),
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
@@ -744,7 +744,7 @@ func listsDemo(cx *core.Scope) core.Node {
 		}, Value: tab.Get, OnChange: tab.Set}}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			v := views[tab.Get()]
-			return ui.Appear{Flex: true, Children: []core.Node{core.Func(v)}}
+			return Appear{Flex: true, Children: []core.Node{core.Func(v)}}
 		}),
 	}}
 }

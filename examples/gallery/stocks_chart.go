@@ -6,8 +6,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 type period string
@@ -384,15 +384,15 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 		if intraday() {
 			return core.Group{
 				core.Dynamic(func(*core.Scope) core.Node {
-					return ui.Legend{Color: func() core.Color { return toneOf(cx, focus().c-prevClose()) }, Label: tr.StocksPrice2(), Value: func() string { return p(focus().c) }}
+					return Legend{Color: func() core.Color { return toneOf(cx, focus().c-prevClose()) }, Label: tr.StocksPrice2(), Value: func() string { return p(focus().c) }}
 				}),
-				ui.Legend{Color: colors.Warn, Label: tr.StocksAvg(), Value: func() string { return p(focus().a) }},
-				ui.Legend{Color: colors.Faint, Label: tr.StocksVol(), Value: func() string { return compactNumber(focus().v) }},
+				Legend{Color: colors.Warn, Label: tr.StocksAvg(), Value: func() string { return p(focus().a) }},
+				Legend{Color: colors.Faint, Label: tr.StocksVol(), Value: func() string { return compactNumber(focus().v) }},
 			}
 		}
 		var out core.Group
 		for _, a := range averages(cx) {
-			out = append(out, ui.Legend{Color: a.c, Label: fmt.Sprintf("MA%d", a.n), Value: func() string {
+			out = append(out, Legend{Color: a.c, Label: fmt.Sprintf("MA%d", a.n), Value: func() string {
 				i := cursor.Get()
 				if i < 0 {
 					i = len(data.Get()) - 1

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // livePulse is a pulse that loops on the platform while running: 0 to 1

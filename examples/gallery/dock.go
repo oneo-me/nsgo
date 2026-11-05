@@ -6,13 +6,14 @@ import (
 	"strings"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/dock"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
-// base.DockArea owns the workspace's behavior: tab drags into another
+// dock.Area owns the workspace's behavior: tab drags into another
 // group, to a group's edge (a new split) or along a tab bar, all run on
 // the platform; the splits' and docks' handles; selection, closing and
 // what may move. The layout is the app's data: the area reports every edit
@@ -32,25 +33,25 @@ func dockTitle(tr locales.Messages, panel string) string {
 }
 
 // dockNames are the docks' names, by placement.
-var dockNames = map[base.DockPlacement]func(locales.Messages) string{base.DockLeft: locales.Messages.DockFiles, base.DockBottom: locales.Messages.DockTerminal}
+var dockNames = map[dock.Placement]func(locales.Messages) string{dock.Left: locales.Messages.DockFiles, dock.Bottom: locales.Messages.DockTerminal}
 
 // initialDock is the workspace at first: two editor groups side by side,
 // the files on the left and a terminal under them.
-func initialDock() base.DockLayout {
-	editors := base.DockTabs("readme", "main")
+func initialDock() dock.Layout {
+	editors := dock.Tabs("readme", "main")
 	editors.Active = 1
-	center := base.DockSplit(base.Horizontal, editors, base.DockTabs("preview"))
+	center := dock.Split(base.Horizontal, editors, dock.Tabs("preview"))
 	center.Sizes = []core.Points{300, 0}
-	return base.DockLayout{
+	return dock.Layout{
 		Center: center,
-		Left:   &base.DockRegion{Root: base.DockTabs("files"), Size: 200},
-		Bottom: &base.DockRegion{Root: base.DockTabs("terminal"), Size: 160},
+		Left:   &dock.Region{Root: dock.Tabs("files"), Size: 200},
+		Bottom: &dock.Region{Root: dock.Tabs("terminal"), Size: 160},
 	}
 }
 
 // describeDock is a layout as a line of text: row(...) and column(...)
 // for splits, [a, b] for tab groups.
-func describeNode(tr locales.Messages, n base.DockNode) string {
+func describeNode(tr locales.Messages, n dock.Node) string {
 	if n.Tabs {
 		titles := make([]string, len(n.Panels))
 		for i, p := range n.Panels {
@@ -69,7 +70,7 @@ func describeNode(tr locales.Messages, n base.DockNode) string {
 	return axis + "(" + strings.Join(parts, " ") + ")"
 }
 
-func describeRegion(tr locales.Messages, name string, r *base.DockRegion) string {
+func describeRegion(tr locales.Messages, name string, r *dock.Region) string {
 	if r == nil {
 		return tr.DockRegionNone(name)
 	}
@@ -81,7 +82,7 @@ func describeRegion(tr locales.Messages, name string, r *base.DockRegion) string
 }
 
 // firstSlot is the size of the center's first slot, when it is a split.
-func firstSlot(n base.DockNode) string {
+func firstSlot(n dock.Node) string {
 	switch {
 	case n.Tabs:
 		return "—"
@@ -156,7 +157,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 		return core.View{Style: core.Style{FlexGrow: 1, Gap: 2, Padding: core.All(8)}, Children: rows}
 	case "preview":
 		return core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12, Padding: core.All(16)}, Children: []core.Node{
-			ui.IconTile{Icon: lucide.Sparkles, Size: 40},
+			IconTile{Icon: lucide.Sparkles, Size: 40},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 2}, Children: []core.Node{
 				ui.Text(tr.DockLivePreview(), 13, ui.Semibold, colors.Text), ui.Text(tr.DockFollowsTheEditorBesideIt(), 12, ui.Regular, colors.Muted)}},
 		}}
@@ -169,7 +170,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 	}}
 }
 
-// dockDemo is base.DockArea: editor tabs in a center split, files in a
+// dockDemo is dock.Area: editor tabs in a center split, files in a
 // left dock and a terminal in a bottom dock; tabs dragged between groups
 // and to their edges, closed, the docks toggled and resized. Narrower
 // than 600 pt it shows one group at a time and presents a dock at a time,
@@ -178,12 +179,12 @@ func dockDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	layout := core.NewSignalFunc(cx, initialDock(), func(a, b base.DockLayout) bool { return false })
+	layout := core.NewSignalFunc(cx, initialDock(), func(a, b dock.Layout) bool { return false })
 	locked, closing := core.NewSignal(cx, false), core.NewSignal(cx, true)
 	last, zoomed := core.NewSignal(cx, "—"), core.NewSignal(cx, "")
 	wide := core.Untracked(cx, cx.Env().Window).Width >= 600
 	showLeft, showBottom := core.NewSignal(cx, wide), core.NewSignal(cx, wide)
-	area := &base.DockAreaRef{}
+	area := &dock.AreaRef{}
 	// current is the panel shown last, whose group the zoom takes.
 	current := "main"
 	pointer := cx.Env().Desktop()
@@ -202,11 +203,11 @@ func dockDemo(cx *core.Scope) core.Node {
 		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: gap})
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			ui.Tool{Label: tr.DockToggleFiles(), Text: tr.DockFiles(), On: showLeft.Get, OnPress: func() { area.ToggleDock(base.DockLeft) }},
-			ui.Tool{Label: tr.DockToggleTerminal(), Text: tr.DockTerminal(), On: showBottom.Get, OnPress: func() { area.ToggleDock(base.DockBottom) }},
-			ui.Tool{Label: tr.DockLockTheLayout(), Text: tr.DockLock(), On: locked.Get, OnPress: func() { toggled(locked) }},
-			ui.Tool{Label: tr.DockShowCloseButtons(), Text: tr.DockClose(), On: closing.Get, OnPress: func() { toggled(closing) }},
-			ui.Tool{Label: tr.DockZoomTheGroup(), Text: tr.DockZoom(), On: func() bool { return zoomed.Get() != "" }, OnPress: func() {
+			Tool{Label: tr.DockToggleFiles(), Text: tr.DockFiles(), On: showLeft.Get, OnPress: func() { area.ToggleDock(dock.Left) }},
+			Tool{Label: tr.DockToggleTerminal(), Text: tr.DockTerminal(), On: showBottom.Get, OnPress: func() { area.ToggleDock(dock.Bottom) }},
+			Tool{Label: tr.DockLockTheLayout(), Text: tr.DockLock(), On: locked.Get, OnPress: func() { toggled(locked) }},
+			Tool{Label: tr.DockShowCloseButtons(), Text: tr.DockClose(), On: closing.Get, OnPress: func() { toggled(closing) }},
+			Tool{Label: tr.DockZoomTheGroup(), Text: tr.DockZoom(), On: func() bool { return zoomed.Get() != "" }, OnPress: func() {
 				if zoomed.GetUntracked() != "" {
 					area.ToggleZoom(0)
 				} else {
@@ -214,8 +215,8 @@ func dockDemo(cx *core.Scope) core.Node {
 					area.ToggleZoom(g)
 				}
 			}},
-			ui.Tool{Label: tr.DockResetTheLayout(), Text: tr.DockReset(), OnPress: func() { layout.Set(initialDock()) }},
-			core.Text{Content: ui.Hint(cx, tr.DockHoldATabToReorder(), tr.DockDragATabOntoAnother()),
+			Tool{Label: tr.DockResetTheLayout(), Text: tr.DockReset(), OnPress: func() { layout.Set(initialDock()) }},
+			core.Text{Content: Hint(cx, tr.DockHoldATabToReorder(), tr.DockDragATabOntoAnother()),
 				Style: core.Style{MinWidth: core.Pt(160), FlexGrow: 1, FlexShrink: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 		core.View{StyleFunc: func() core.Style {
@@ -226,10 +227,10 @@ func dockDemo(cx *core.Scope) core.Node {
 				return fin.Inset().Over(core.Style{FlexGrow: 1, FlexShrink: 1, Overflow: core.Hidden, BorderWidth: 1, BorderColor: colors.Line(), Background: colors.Inset(),
 					CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous})
 			}, Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
-				panels := map[string]base.DockPanelOptions{}
+				panels := map[string]dock.PanelOptions{}
 				if !closing.Get() {
 					for k := range dockTitles {
-						panels[k] = base.DockPanelOptions{NoClose: true}
+						panels[k] = dock.PanelOptions{NoClose: true}
 					}
 				}
 				return core.Func(func(cx *core.Scope) core.Node {
@@ -266,12 +267,12 @@ func dockDemo(cx *core.Scope) core.Node {
 	}}
 }
 
-func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.DockLayout], locked *core.Signal[bool], last, zoomed *core.Signal[string],
-	showLeft, showBottom *core.Signal[bool], panels map[string]base.DockPanelOptions, pointer bool, current *string) core.Node {
+func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layout], locked *core.Signal[bool], last, zoomed *core.Signal[string],
+	showLeft, showBottom *core.Signal[bool], panels map[string]dock.PanelOptions, pointer bool, current *string) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
-	return base.DockArea{Ref: area, TestID: "dock", Layout: layout.Get, OnLayoutChange: layout.Set, Locked: locked.Get, Panels: panels,
+	return dock.Area{Ref: area, TestID: "dock", Layout: layout.Get, OnLayoutChange: layout.Set, Locked: locked.Get, Panels: panels,
 		OnPanelRemove: func(p string) { last.Set(tr.DockClosed() + dockTitle(tr, p)) },
 		OnPanelActiveChange: func(p string, active bool) {
 			if active {
@@ -280,11 +281,11 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 			}
 		},
 		OnZoomChange: zoomed.Set,
-		OnDockOpenChange: func(p base.DockPlacement, open bool) {
+		OnDockOpenChange: func(p dock.Placement, open bool) {
 			switch p {
-			case base.DockLeft:
+			case dock.Left:
 				showLeft.Set(open)
-			case base.DockBottom:
+			case dock.Bottom:
 				showBottom.Set(open)
 			}
 		},
@@ -316,7 +317,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 		// is lit and underlined in orange. With a pointer, the close
 		// button fades in over the tab's end while the pointer is on it;
 		// a touch screen keeps it beside the shown tab's title.
-		RenderTab: func(cx *core.Scope, tab base.DockTab) core.Node {
+		RenderTab: func(cx *core.Scope, tab dock.Tab) core.Node {
 			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			children := []core.Node{core.Text{Content: dockTitle(tr, tab.Key), MaxLines: 1, StyleFunc: func() core.Style {
@@ -353,7 +354,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 			return core.View{TestID: "tab-" + tab.Key, Style: core.Style{Height: core.Pt(36), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, Padding: core.Symmetric(0, 12)},
 				Children: children}
 		},
-		RenderDock: func(cx *core.Scope, d base.DockInfo) core.Node {
+		RenderDock: func(cx *core.Scope, d dock.Info) core.Node {
 			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			name := ""
@@ -374,7 +375,7 @@ func dockArea(cx *core.Scope, area *base.DockAreaRef, layout *core.Signal[base.D
 					Children: []core.Node{ui.Text(tr.DockHide2(), 12, ui.Medium, colors.Muted)}},
 			}}
 		},
-		RenderDragPreview: func(cx *core.Scope, tab base.DockTab) core.Node {
+		RenderDragPreview: func(cx *core.Scope, tab dock.Tab) core.Node {
 			colors := ui.ColorsOf(cx)
 			fin := ui.FinOf(cx)
 			return core.View{StyleFunc: func() core.Style {

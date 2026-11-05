@@ -12,8 +12,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // fieldProps are a labelled input's: api names the property it shows,
@@ -102,7 +102,7 @@ func formField(p fieldProps, in base.Input) core.Node {
 
 		head := []core.Node{core.Text{Content: p.label, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Muted)}}
 		if p.api != "" {
-			head = append(head, ui.API{Text: p.api})
+			head = append(head, API{Text: p.api})
 		}
 		if p.hint != nil {
 			head = append(head, ui.Textf(p.hint, 13, ui.Regular, colors.Faint))
@@ -284,14 +284,14 @@ func formDemo(cx *core.Scope) core.Node {
 			ui.Segmented[core.KeyboardDismissMode]{Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: tr.FormNone()}, {Value: core.KeyboardDismissOnDrag, Label: tr.FormOnDrag()},
 				{Value: core.KeyboardDismissInteractive, Label: tr.FormInteractive()}}, Value: mode.Get, OnChange: mode.Set},
 		}, Footer: []core.Node{
-			ui.Caption{Label: ui.Hint(cx, tr.FormDragTheFormWithThe(), tr.FormDesktopsHaveNoOnScreen()), Note: func() string { return modeName[mode.Get()] }},
+			Caption{Label: Hint(cx, tr.FormDragTheFormWithThe(), tr.FormDesktopsHaveNoOnScreen()), Note: func() string { return modeName[mode.Get()] }},
 		}}
 	}
 
 	account := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: tr.FormAccount(), Note: "AutoComplete", Children: []core.Node{
+		return Section{Title: tr.FormAccount(), Note: "AutoComplete", Children: []core.Node{
 			formField(fieldProps{label: tr.FormName(), next: refs[1], err: nameError},
 				base.Input{Ref: refs[0], Value: name.Get, OnChange: name.Set, OnBlur: touch("name"), AutoCapitalize: core.AutoCapitalizeWords,
 					AutoComplete: core.AutoCompleteName, Placeholder: "Ada Lovelace", TestID: "name"}),
@@ -331,7 +331,7 @@ func formDemo(cx *core.Scope) core.Node {
 
 	numbers := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Section{Title: tr.FormNumbers(), Note: "KeyboardType", Children: []core.Node{
+		return Section{Title: tr.FormNumbers(), Note: "KeyboardType", Children: []core.Node{
 			pair(
 				formField(fieldProps{label: tr.FormAge(), hint: label(tr.Form3Digits()), next: refs[6]},
 					base.Input{Ref: refs[5], KeyboardType: core.KeyboardNumber, MaxLength: 3, Placeholder: "36"}),
@@ -348,7 +348,7 @@ func formDemo(cx *core.Scope) core.Node {
 
 	shipping := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Section{Title: tr.FormShippingAddress(), Note: tr.FormScrollsIntoView(), Children: []core.Node{
+		return Section{Title: tr.FormShippingAddress(), Note: tr.FormScrollsIntoView(), Children: []core.Node{
 			formField(fieldProps{label: tr.FormStreet(), next: refs[9]}, base.Input{Ref: refs[8], AutoComplete: core.AutoCompleteStreetAddress, Placeholder: "12 Analytical Way"}),
 			pair(
 				formField(fieldProps{label: tr.FormCity(), next: refs[10]}, base.Input{Ref: refs[9], AutoComplete: core.AutoCompleteCity, Placeholder: "London"}),
@@ -361,13 +361,13 @@ func formDemo(cx *core.Scope) core.Node {
 
 	selection := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Section{Title: tr.FormSelectionAndKeys(), Note: "OnSelectionChange", Children: []core.Node{selectionDemo()}}
+		return Section{Title: tr.FormSelectionAndKeys(), Note: "OnSelectionChange", Children: []core.Node{selectionDemo()}}
 	}
 
 	textCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: tr.FormText(), Note: tr.FormInputOptions(), Children: []core.Node{
+		return Section{Title: tr.FormText(), Note: tr.FormInputOptions(), Children: []core.Node{
 			formField(fieldProps{label: tr.FormControlled(), hint: label(tr.FormUppercasedAsYouType()), next: refs[13]},
 				base.Input{Ref: refs[12], TestID: "shout", Value: shout.Get, OnChange: func(t string) { shout.Set(strings.ToUpper(t)) }, Placeholder: tr.FormTypeInLowerCase()}),
 			formField(fieldProps{label: tr.FormReadOnly(), api: "Readonly"}, base.Input{Value: label(tr.FormNotEditable()), Readonly: true}),
@@ -420,8 +420,8 @@ func formDemo(cx *core.Scope) core.Node {
 	more := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return ui.Card{Title: tr.FormMoreKeyboards(), Description: tr.FormSheetsAndBarsThatRide(), Flush: true, Children: []core.Node{
-			ui.LinkRow{Icon: lucide.Component, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
-			ui.LinkRow{Divided: true, Icon: lucide.Type, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
+			LinkRow{Icon: lucide.Component, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
+			LinkRow{Divided: true, Icon: lucide.Type, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
 		}}
 	}
 
@@ -498,7 +498,7 @@ func messageBar(cx *core.Scope) base.NavPage {
 				core.Text{Content: tr.FormToday(), Style: core.Style{AlignSelf: core.AlignCenter, FontSize: 12, FontWeight: ui.Medium, Padding: core.Edges{Bottom: 8}}, StyleFunc: ui.Colored(colors.Faint)},
 				core.Each(messages.Get, func(m message) message { return m }, func(cx *core.Scope, m func() message, _ func() int) core.Node {
 					msg := core.Untracked(cx, m)
-					return ui.Appear{Children: []core.Node{bubble(cx, msg)}}
+					return Appear{Children: []core.Node{bubble(cx, msg)}}
 				}),
 			}},
 		}},
@@ -575,7 +575,7 @@ func selectionDemo() core.Node {
 							return ks[max(0, len(ks)-8):]
 						})
 					}, AutoComplete: core.AutoCompleteOff}),
-			ui.Caption{Label: tr.FormSelected(), Note: func() string { return fmt.Sprintf("%q", selected()) }},
+			Caption{Label: tr.FormSelected(), Note: func() string { return fmt.Sprintf("%q", selected()) }},
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 6, MinHeight: core.Pt(28)}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					ks := keys.Get()

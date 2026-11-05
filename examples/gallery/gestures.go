@@ -12,8 +12,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // dots is a dot matrix behind a stage, drawn once.
@@ -109,11 +109,11 @@ func transformable(cx *core.Scope) core.Node {
 				Children: []core.Node{core.Image{Source: core.Src("https://picsum.photos/seed/nsh-card/400/300"), Style: core.Style{FlexGrow: 1}}}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-			ui.Stat{Label: tr.GestDrag(), Value: func() string { return fmt.Sprintf("%d pt", last.Get().drag) }, Width: core.Pct(33)},
-			ui.Stat{Label: tr.GestScale(), Value: func() string { return fmt.Sprintf("%.2f×", last.Get().scale) }, Tone: ui.ToneAccent, Width: core.Pct(33)},
-			ui.Stat{Label: tr.GestAngle(), Value: func() string { return fmt.Sprintf("%d°", int(math.Round(float64(last.Get().angle)))) }, Tone: ui.ToneInfo, Width: core.Pct(34)},
+			Stat{Label: tr.GestDrag(), Value: func() string { return fmt.Sprintf("%d pt", last.Get().drag) }, Width: core.Pct(33)},
+			Stat{Label: tr.GestScale(), Value: func() string { return fmt.Sprintf("%.2f×", last.Get().scale) }, Tone: ui.ToneAccent, Width: core.Pct(33)},
+			Stat{Label: tr.GestAngle(), Value: func() string { return fmt.Sprintf("%d°", int(math.Round(float64(last.Get().angle)))) }, Tone: ui.ToneInfo, Width: core.Pct(34)},
 		}},
-		ui.Note{Text: ui.Hint(cx, tr.GestPinchAndRotateWithTwo(), tr.GestDragWithTheMousePinch())},
+		Note{Text: Hint(cx, tr.GestPinchAndRotateWithTwo(), tr.GestDragWithTheMousePinch())},
 		ui.Button{Text: tr.GestReset(), Variant: ui.ButtonSecondary, OnPress: reset},
 	}}
 }
@@ -165,7 +165,7 @@ func ball(cx *core.Scope) core.Node {
 					}}
 			}, Children: []core.Node{core.View{Style: core.Style{Width: core.Pt(18), Height: core.Pt(18), CornerRadius: 9, Background: core.RGBA(0x1e1408, 0.35)}}}},
 		}},
-		ui.Caption{Label: tr.GestPosition(), Note: func() string { p := pos.Get(); return fmt.Sprintf("%.0f, %.0f", p.X, p.Y) }},
+		Caption{Label: tr.GestPosition(), Note: func() string { p := pos.Get(); return fmt.Sprintf("%.0f, %.0f", p.X, p.Y) }},
 		ui.Button{Text: tr.GestCenter(), Variant: ui.ButtonSecondary, OnPress: func() { pos.Set(core.Point{}) }},
 	}}
 }
@@ -183,7 +183,7 @@ func touchPad(cx *core.Scope) core.Node {
 	log := core.NewSignalFunc(cx, []entry(nil), slices.Equal)
 	fingers := core.NewSignalFunc(cx, []finger(nil), slices.Equal)
 	names := map[core.TouchPhase]string{core.TouchStart: "start", core.TouchMove: "move", core.TouchEnd: "end", core.TouchCancel: "cancel"}
-	return ui.Card{Title: tr.GestTouchEvents(), Description: ui.Hint(cx, tr.GestStartMoveEndAndCancel(), tr.GestStartMoveEndAndCancel2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Title: tr.GestTouchEvents(), Description: Hint(cx, tr.GestStartMoveEndAndCancel(), tr.GestStartMoveEndAndCancel2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		n := len(fingers.Get())
 		t := ui.ToneNeutral
 		if n > 0 {
@@ -211,7 +211,7 @@ func touchPad(cx *core.Scope) core.Node {
 		}, StyleFunc: centered(cx, 150), Children: []core.Node{
 			dots(cx),
 			core.Show{When: func() bool { return len(fingers.Get()) == 0 }, Then: func(*core.Scope) core.Node {
-				return ui.Text(ui.Hint(cx, tr.GestTouchHereTryTwoFingers(), tr.GestPressAndDragHereWith()), 13, ui.Regular, colors.Muted)
+				return ui.Text(Hint(cx, tr.GestTouchHereTryTwoFingers(), tr.GestPressAndDragHereWith()), 13, ui.Regular, colors.Muted)
 			}},
 			core.Each(fingers.Get, func(f finger) int { return f.id }, func(cx *core.Scope, f func() finger, _ func() int) core.Node {
 				colors := ui.ColorsOf(cx)
@@ -283,7 +283,7 @@ func pressEvents(cx *core.Scope) core.Node {
 				return fin.Light().Over(core.Style{Height: core.Pt(64), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Light(),
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Opacity: core.Alpha(0.55)}})
 			},
-			Children: []core.Node{ui.Text(ui.Hint(cx, tr.GestTapHoldOrSlideOff(), tr.GestClickHoldOrSlideOff()), 13, ui.Semibold, colors.OnLight)}},
+			Children: []core.Node{ui.Text(Hint(cx, tr.GestTapHoldOrSlideOff(), tr.GestClickHoldOrSlideOff()), 13, ui.Semibold, colors.OnLight)}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 6}, Children: chips},
 		core.Text{ContentFunc: func() string {
 			if l := log.Get(); len(l) > 0 {
@@ -323,7 +323,7 @@ func hitSlop(cx *core.Scope) core.Node {
 		core.Timing(ring, 0, core.TimingConfig{Duration: 1400 * time.Millisecond, Easing: sine}),
 	), 0), nil)
 	cx.Cleanup(run.Stop)
-	return ui.Card{Title: tr.GestHitSlop(), Description: ui.Hint(cx, tr.GestA12PtDotThat(), tr.GestA12PtDotThat2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Title: tr.GestHitSlop(), Description: Hint(cx, tr.GestA12PtDotThat(), tr.GestA12PtDotThat2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		t := ui.ToneNeutral
 		if taps.Get() > 0 {
 			t = ui.ToneAccent
@@ -342,7 +342,7 @@ func hitSlop(cx *core.Scope) core.Node {
 					StyleFunc: func() core.Style { return core.Style{Background: colors.Danger(), Shadows: knobShadows(cx)} }},
 			}},
 		}},
-		ui.APILine{Label: ui.Hint(cx, tr.GestTheDashedRingIsThe(), tr.GestTheDashedRingIsThe2()), Names: "HitSlop: All(30)"},
+		APILine{Label: Hint(cx, tr.GestTheDashedRingIsThe(), tr.GestTheDashedRingIsThe2()), Names: "HitSlop: All(30)"},
 	}}
 }
 
@@ -355,7 +355,7 @@ func pointerEventsCard(cx *core.Scope) core.Node {
 	through := core.NewSignal(cx, 0)
 	warn := colors.Warn
 	hatch := func() core.Color { return ui.Alpha(warn(), 0.28) }
-	return ui.Card{Title: tr.GestPointerEvents(), Description: ui.Hint(cx, tr.GestAnOverlayThatLetsTaps(), tr.GestAnOverlayThatLetsClicks()), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(through.Get()) }, Tone: ui.ToneUp}}, Children: []core.Node{
+	return ui.Card{Title: tr.GestPointerEvents(), Description: Hint(cx, tr.GestAnOverlayThatLetsTaps(), tr.GestAnOverlayThatLetsClicks()), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(through.Get()) }, Tone: ui.ToneUp}}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(88)}, Children: []core.Node{
 			ui.Press{OnPress: func() { through.Update(func(n int) int { return n + 1 }) }, Scale: 0.98, Label: tr.GestButtonUnderAnOverlay(), Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
@@ -376,7 +376,7 @@ func pointerEventsCard(cx *core.Scope) core.Node {
 					d.SetLineDash(4, 4).SetStrokeColor(warn()).BeginPath().RoundRect(w*0.18+0.5, 0.5, w*0.64-1, h-1, 10).Stroke()
 				}}}},
 		}},
-		ui.APILine{Label: ui.Hint(cx, tr.GestTapsOnTheHatchedBand(), tr.GestClicksOnTheHatchedBand()), Names: "PointerEventsNone"},
+		APILine{Label: Hint(cx, tr.GestTapsOnTheHatchedBand(), tr.GestClicksOnTheHatchedBand()), Names: "PointerEventsNone"},
 	}}
 }
 
@@ -386,7 +386,7 @@ func hover(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	over := core.NewSignal(cx, false)
 	at := core.NewSignal(cx, core.Point{})
-	return ui.Card{Title: tr.GestHover(), Description: ui.Hint(cx, tr.GestAPointerOverAView(), tr.GestTheMouseOverAView()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return ui.Card{Title: tr.GestHover(), Description: Hint(cx, tr.GestAPointerOverAView(), tr.GestTheMouseOverAView()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if over.Get() {
 			return ui.Badge{Text: tr.GestOver(), Tone: ui.ToneAccent}
 		}
@@ -404,7 +404,7 @@ func hover(cx *core.Scope) core.Node {
 				p := at.Get()
 				return tr.GestPointerAt(fmt.Sprintf("%.0f, %.0f", p.X, p.Y))
 			}, 13, ui.Regular, colors.Muted)}},
-		ui.APILine{Label: tr.GestInMoveAndOut(), Names: "OnHoverIn · OnHoverMove · OnHoverOut"},
+		APILine{Label: tr.GestInMoveAndOut(), Names: "OnHoverIn · OnHoverMove · OnHoverOut"},
 	}}
 }
 
@@ -430,7 +430,7 @@ func fileDrop(cx *core.Scope) core.Node {
 				if over.Get() {
 					return tr.GestReleaseToDrop()
 				}
-				return ui.Hint(cx, tr.GestDesktopsAndTheWebTake(), tr.GestDropFilesHere())
+				return Hint(cx, tr.GestDesktopsAndTheWebTake(), tr.GestDropFilesHere())
 			}, 13, ui.Regular, colors.Muted)}},
 		core.Text{TestID: "dropped", ContentFunc: func() string {
 			uris := dropped.Get()
@@ -443,7 +443,7 @@ func fileDrop(cx *core.Scope) core.Node {
 			}
 			return strings.Join(names, ", ")
 		}, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
-		ui.APILine{Label: tr.GestOnTheWebBlobUrls(), Names: "OnFileDrop"},
+		APILine{Label: tr.GestOnTheWebBlobUrls(), Names: "OnFileDrop"},
 	}}
 }
 
@@ -472,7 +472,7 @@ func accessibleRows(cx *core.Scope) core.Node {
 	var rows []core.Node
 	for i, it := range items {
 		rows = append(rows, core.View{Accessible: true, Role: core.RoleButton, Label: it.label, Hint: it.hint, OnPress: func(core.PressEvent) { last.Set(it.label) },
-			Children: []core.Node{ui.Row{First: i == 0, Children: []core.Node{
+			Children: []core.Node{Row{First: i == 0, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					if last.Get() == it.label {
 						return core.View{StyleFunc: func() core.Style {
@@ -480,7 +480,7 @@ func accessibleRows(cx *core.Scope) core.Node {
 								Background: colors.Raised(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
 						}, Children: []core.Node{ui.Icon(it.icon, 17, colors.Accent)}}
 					}
-					return ui.IconTile{Icon: it.icon, Size: 34}
+					return IconTile{Icon: it.icon, Size: 34}
 				}),
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1}, Children: []core.Node{ui.Text(it.label, 13, ui.Regular, colors.Text), ui.Text(it.hint, 12, ui.Regular, colors.Muted)}},
 				core.Text{Content: "button", Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},

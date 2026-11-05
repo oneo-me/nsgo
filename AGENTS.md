@@ -12,19 +12,20 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - Prebuild what users cannot build with Go and Xcode, such as the Android runtime's `classes.dex` and `classes.jar`, and commit it with the command that rebuilds it (`internal/platform/android/runtime/build.sh`).
 - When implementing, fixing or optimizing anything, check whether other targets' backends need the same change, and make it or record the gap in the [roadmap](docs/roadmap.md).
 - Keep each package's imports within the [dependency graph](ARCHITECTURE.md#boundaries); `layering_test.go` checks it.
-- Give each API one home, as NSH's modules do: `core` for elements and the environment, `base` for controls and navigation, `mobile` and `desktop` for what only phones or only desktops have.
+- Give each API one home, as NSH's modules do: `core` for elements and the environment, `base` for controls and navigation, `ui` for their styled forms, `mobile` and `desktop` for what only phones or only desktops have.
 - When `core` implements another package's API, its exported part names that package in its comment.
 - Write configuration files people edit by hand in YAML, never JSON, including ones ported from NSH's JSON files.
 - Mark unimplemented designs as goals or open questions; never document them as existing behavior.
 
 ## Components
 
-`base` holds NSGo's built-in unstyled components; `nsh-base` is the reference for their behavior and names.
+`base` holds NSGo's built-in unstyled components, with `nsh-base` the reference for their behavior and names. `ui` holds its built-in styled components, on `base` and `core`, with Onevra the reference for their look.
 
-- Each component takes the app's styles part by part and has no look. Themes and styled controls and variants belong to apps or a component library, never here.
+- A `base` component takes the app's styles part by part and has no look; themes, styled controls and variants belong in `ui`.
+- A `ui` component is product-neutral: what only the gallery's demos use stays in `examples/gallery`.
 - A component says its own words through its package's catalogs (`locales/`), never string literals, in English and NSGo's other languages ([languages](docs/architecture/languages.md)).
-- `examples/gallery-ui` is the source of Onexa's components, which copy it: keep its components product-neutral, put what only the gallery's demos use in `gallery.go`, which the copy leaves out, and run `go run ./tools/syncgallery` in `../onexa` after changing them.
-- Keep a component in the `base` package unless it links dependencies an app without it should not; then give it a package under `base`, as `base/textview` has.
+- In `base` and `ui`, keep one component to a file, named after it (`iconbutton.go`), with the types and parts only it uses; what several share gets a file of its own.
+- A complex component takes a directory of its own, whose package may hold many files (`base/dock`, `ui/chat`), and drops the component's name from its API (`dock.Area`). Packages under `base` share code through `base/internal`.
 
 ## Working with the user
 

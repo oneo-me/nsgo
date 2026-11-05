@@ -26,7 +26,7 @@ NSGo 参考 [Native Shell（NSH）](https://nsh.dev) 的设计，NSH 用 Rust �
 
 ## 状态
 
-NSGo 处于早期阶段。它已在 macOS、iOS、Windows、Linux、Web 和 Android 上具备 NSH 的响应式模型、布局、文本、图片、画布、着色器、动画、系统服务和无样式基础组件，应用也可嵌入独立的 iOS、Android 和 Go 桌面应用。尚无发布版本或稳定的 API。各平台进度见 [ARCHITECTURE.md](ARCHITECTURE.md#platforms)。
+NSGo 处于早期阶段。它已在 macOS、iOS、Windows、Linux、Web 和 Android 上具备 NSH 的响应式模型、布局、文本、图片、画布、着色器、动画、系统服务、无样式基础组件和带样式的 `ui` 组件，应用也可嵌入独立的 iOS、Android 和 Go 桌面应用。尚无发布版本或稳定的 API。各平台进度见 [ARCHITECTURE.md](ARCHITECTURE.md#platforms)。
 
 ## 目标
 
@@ -167,7 +167,7 @@ Android 真机和模拟器开发还需要 Android SDK platform-tools 中的 `adb
 
 x86_64 模拟器目标 `android_x64` 还需要 Android NDK：Go 只能通过 cgo 链接 android/amd64。在 Windows 上，只需 Go 1.26 或更高版本即可运行原生应用，并构建 Windows 和 Web 包。在 Linux 上，安装 GTK 4.14 或更高版本、Pango 和 Cairo 后即可用 Go 运行原生应用；网页视图还需要 WebKitGTK 6.0，视频还需要 GStreamer 插件。
 
-在仓库根目录运行 gallery：用 Go 翻译的 NSH gallery，为每个元素、`base` 组件和服务各提供一个演示。宽窗口在侧边栏列出演示，窄窗口则是手机的索引页。
+在仓库根目录运行 gallery：用 Go 翻译的 NSH gallery，为每个元素、`base` 和 `ui` 组件及服务各提供一个演示。宽窗口在侧边栏列出演示，窄窗口则是手机的索引页。
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml 的 dev 目标，应用退出后随之退出

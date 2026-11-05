@@ -6,11 +6,11 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
-// The demos of gallery-ui's own composed components, which Onexa copies:
+// The demos of ui's own composed components:
 // what the gallery shows of them beside base's.
 
 // toggleCard is ToggleButton in a formatting toolbar.
@@ -154,7 +154,7 @@ func fileIconCard(*core.Signal[string]) cardFunc {
 	}
 }
 
-// styledToastsCard is gallery-ui's Toasts, beside the gallery's own: a
+// styledToastsCard is ui's Toasts, beside the gallery's own: a
 // toaster of its own, stacked at the top of the window.
 func styledToastsCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {

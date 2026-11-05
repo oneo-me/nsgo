@@ -8,6 +8,10 @@ import (
 	"github.com/dop251/goja"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/datatable"
+	"github.com/oneo-me/nsgo/base/dock"
+	"github.com/oneo-me/nsgo/base/plot"
+	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -24,25 +28,25 @@ var enumOptions = []Option{
 		"right": core.PlaceRight}),
 	Enum(map[string]core.Align{"start": core.AlignStart, "center": core.AlignCenter, "end": core.AlignEnd}),
 	Enum(map[string]base.Axis{"horizontal": base.Horizontal, "vertical": base.Vertical}),
-	Enum(map[string]base.Anchor{"topLeft": base.AnchorTopLeft, "topCenter": base.AnchorTopCenter,
-		"topRight": base.AnchorTopRight, "bottomLeft": base.AnchorBottomLeft,
-		"bottomCenter": base.AnchorBottomCenter, "bottomRight": base.AnchorBottomRight,
-		"leftCenter": base.AnchorLeftCenter, "rightCenter": base.AnchorRightCenter}),
-	Enum(map[string]base.DataTableAlign{"start": base.AlignStartColumn, "center": base.AlignCenterColumn,
-		"end": base.AlignEndColumn}),
-	Enum(map[string]base.DockPlacement{"left": base.DockLeft, "right": base.DockRight, "bottom": base.DockBottom,
-		"center": base.DockCenter}),
+	Enum(map[string]toast.Anchor{"topLeft": toast.AnchorTopLeft, "topCenter": toast.AnchorTopCenter,
+		"topRight": toast.AnchorTopRight, "bottomLeft": toast.AnchorBottomLeft,
+		"bottomCenter": toast.AnchorBottomCenter, "bottomRight": toast.AnchorBottomRight,
+		"leftCenter": toast.AnchorLeftCenter, "rightCenter": toast.AnchorRightCenter}),
+	Enum(map[string]datatable.Align{"start": datatable.AlignStartColumn, "center": datatable.AlignCenterColumn,
+		"end": datatable.AlignEndColumn}),
+	Enum(map[string]dock.Placement{"left": dock.Left, "right": dock.Right, "bottom": dock.Bottom,
+		"center": dock.Center}),
 	Enum(map[string]base.HandleEdge{"centered": base.HandleCentered, "leading": base.HandleLeading,
 		"trailing": base.HandleTrailing}),
-	Enum(map[string]base.PlotCurve{"linear": base.CurveLinear, "natural": base.CurveNatural,
-		"stepAfter": base.CurveStepAfter}),
+	Enum(map[string]plot.Curve{"linear": plot.CurveLinear, "natural": plot.CurveNatural,
+		"stepAfter": plot.CurveStepAfter}),
 	Enum(map[string]base.ResizeHandleState{"idle": base.HandleIdle, "hovered": base.HandleHovered,
 		"pressed": base.HandlePressed, "dragging": base.HandleDragging}),
-	Enum(map[string]base.SwipeDirection{"off": base.SwipeOff, "up": base.SwipeUp, "down": base.SwipeDown,
-		"left": base.SwipeLeft, "right": base.SwipeRight}),
-	Enum(map[string]base.ToastStatus{"starting": base.ToastStarting, "present": base.ToastPresent,
-		"ending": base.ToastEnding}),
-	Enum(map[string]base.TooltipPlacement{"top": base.TooltipTop, "pointer": base.TooltipPointer}),
+	Enum(map[string]toast.SwipeDirection{"off": toast.SwipeOff, "up": toast.SwipeUp, "down": toast.SwipeDown,
+		"left": toast.SwipeLeft, "right": toast.SwipeRight}),
+	Enum(map[string]toast.Status{"starting": toast.Starting, "present": toast.Present,
+		"ending": toast.Ending}),
+	Enum(map[string]plot.TooltipPlacement{"top": plot.TooltipTop, "pointer": plot.TooltipPointer}),
 	Enum(map[string]base.Reason{"cancel": base.ReasonCancel, "backdropPress": base.ReasonBackdropPress,
 		"swipe": base.ReasonSwipe, "pressOutside": base.ReasonPressOutside, "triggerPress": base.ReasonTriggerPress,
 		"hover": base.ReasonHover, "select": base.ReasonSelect, "contextMenu": base.ReasonContextMenu,
@@ -57,27 +61,27 @@ func init() {
 	Optional[core.TimingConfig]("Duration", "Easing", "Delay")
 	Optional[core.SpringConfig]("Stiffness", "Damping", "Mass", "Velocity")
 	Optional[core.AccessibilityValue]("Min", "Max", "Now")
-	Optional[base.DataTableColumn]("Width", "MinWidth", "MaxWidth", "FitPadding")
-	Fields[base.DataTableColumn](map[string]string{"NoResize": "resizable", "NoMove": "movable", "NoSelect": "selectable"})
-	Required[base.DataTableDump]("Headers", "Rows")
-	Required[base.DataTableColumnMove]("Key", "From", "To", "Order")
+	Optional[datatable.Column]("Width", "MinWidth", "MaxWidth", "FitPadding")
+	Fields[datatable.Column](map[string]string{"NoResize": "resizable", "NoMove": "movable", "NoSelect": "selectable"})
+	Required[datatable.Dump]("Headers", "Rows")
+	Required[datatable.ColumnMove]("Key", "From", "To", "Order")
 	// NSH's sort names its direction.
 	Shape("DataTableSort", `export type DataTableSortDirection = "ascending" | "descending";
 export interface DataTableSort { key: string; direction?: DataTableSortDirection }`,
-		func(s base.DataTableSort) map[string]any {
+		func(s datatable.Sort) map[string]any {
 			if s.Key == "" {
 				return nil
 			}
 			return map[string]any{"key": s.Key, "direction": map[bool]string{false: "ascending", true: "descending"}[s.Descending]}
 		},
-		func(m map[string]any) base.DataTableSort {
+		func(m map[string]any) datatable.Sort {
 			key, _ := m["key"].(string)
-			return base.DataTableSort{Key: key, Descending: m["direction"] == "descending"}
+			return datatable.Sort{Key: key, Descending: m["direction"] == "descending"}
 		})
 	// NSH's selection leaves out what it does not select; null selects
 	// nothing.
 	Shape("DataTableSelection", `export interface DataTableSelection { row?: number | null; column?: number | null }`,
-		func(s base.DataTableSelection) map[string]any {
+		func(s datatable.Selection) map[string]any {
 			if s.Row < 0 && s.Column < 0 {
 				return nil
 			}
@@ -90,8 +94,8 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 			}
 			return m
 		},
-		func(m map[string]any) base.DataTableSelection {
-			s := base.NoTableSelection
+		func(m map[string]any) datatable.Selection {
+			s := datatable.NoTableSelection
 			if m["row"] != nil {
 				s.Row = int(jsNumber(m["row"]))
 			}
@@ -100,9 +104,9 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 			}
 			return s
 		})
-	shapeNone(base.NoTableSelection)
+	shapeNone(datatable.NoTableSelection)
 	Shape("DataTableContextMenu", `export interface DataTableContextMenu { row?: number | null; column?: number | null; x: number; y: number }`,
-		func(e base.DataTableContextMenu) map[string]any {
+		func(e datatable.ContextMenu) map[string]any {
 			m := map[string]any{"x": js32(e.At.X), "y": js32(e.At.Y)}
 			if e.Row >= 0 {
 				m["row"] = e.Row
@@ -118,7 +122,7 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 		"Checkbox":            base.Checkbox{},
 		"Collapsible":         base.Collapsible{},
 		"ContextMenu":         base.ContextMenu{},
-		"DataTable":           base.DataTable{},
+		"DataTable":           datatable.DataTable{},
 		"Menu":                base.Menu{},
 		"MenuItem":            base.MenuItem{},
 		"MenuSeparator":       base.MenuSeparator{},
@@ -140,15 +144,15 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 		"TableHead":           base.TableHead{},
 		"TableCell":           base.TableCell{},
 		"TableCaption":        base.TableCaption{},
-		"Toast":               base.Toast{},
+		"Toast":               toast.Toast{},
 		"Tooltip":             base.Tooltip{},
 	}, append(enumOptions, baseRenames...)...)
-	Register("nsgo/base", map[string]core.Node{"DockArea": base.DockArea{}}, slices.Concat(enumOptions, baseRenames, dockOptions)...)
+	Register("nsgo/base", map[string]core.Node{"DockArea": dock.Area{}}, slices.Concat(enumOptions, baseRenames, dockOptions)...)
 	Register("nsgo/base/plot", map[string]core.Node{
-		"Plot": base.Plot{},
-		"Line": base.PlotLine{},
-		"Area": base.PlotArea{},
-		"Grid": base.PlotGrid{},
+		"Plot": plot.Plot{},
+		"Line": plot.Line{},
+		"Area": plot.Area{},
+		"Grid": plot.Grid{},
 	}, append(append(enumOptions, baseRenames...), Rename("Tooltip", "tooltipContent"))...)
 }
 
@@ -190,14 +194,14 @@ var baseRenames = []Option{
 			v.Set(reflect.ValueOf(func() float64 { return p.float("y0") }))
 		}
 	}, "y0?: number"),
-	typed("XScale", custom("XScale", plotScale("xScale"), "xScale?: Scale"), reflect.TypeFor[base.PlotScale]()),
-	typed("YScale", custom("YScale", plotScale("yScale"), "yScale?: Scale"), reflect.TypeFor[base.PlotScale]()),
+	typed("XScale", custom("XScale", plotScale("xScale"), "xScale?: Scale"), reflect.TypeFor[plot.Scale]()),
+	typed("YScale", custom("YScale", plotScale("yScale"), "yScale?: Scale"), reflect.TypeFor[plot.Scale]()),
 }
 
 func init() {
 	// A plot's scale as NSH's declares it; plotScale reads it.
 	Shape("Scale", `export type Scale = { type: "point" } | { type: "linear"; domain?: [number, number] };`,
-		func(base.PlotScale) map[string]any { return nil }, nil)
+		func(plot.Scale) map[string]any { return nil }, nil)
 }
 
 // plotAxis declares a plot's axis: a row's key, a function of a row and
@@ -341,16 +345,16 @@ func plotScale(prop string) func(p *props, v reflect.Value) {
 		if !p.has(prop) {
 			return
 		}
-		v.Set(reflect.ValueOf(func() base.PlotScale {
+		v.Set(reflect.ValueOf(func() plot.Scale {
 			o := p.r.options(p.get(prop))
 			if o.str("type", "") == "point" {
-				return base.PointScale()
+				return plot.PointScale()
 			}
 			var domain []float64
 			for _, d := range p.r.arrayItems(o.get("domain")) {
 				domain = append(domain, d.ToFloat())
 			}
-			return base.LinearScale(domain...)
+			return plot.LinearScale(domain...)
 		}))
 	}
 }

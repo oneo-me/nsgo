@@ -9,8 +9,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 var scrollTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
@@ -113,7 +113,7 @@ func pager(cx *core.Scope) core.Node {
 							TranslateX: core.Interpolate(x, core.Interpolation{Input: rng, Output: []float64{-w * 0.35, 0, w * 0.35}, Extrapolate: core.ExtrapolateClamp}),
 						}}, Children: []core.Node{
 							ui.Text(tr.ScrollPageOf(p.title(tr), i+1, len(pagerPages)), 13, ui.Regular, colors.Muted),
-							ui.Figure{Value: label(p.value), Note: label(p.note), Tone: p.tone},
+							Figure{Value: label(p.value), Note: label(p.note), Tone: p.tone},
 						}},
 					}})
 				}
@@ -173,7 +173,7 @@ func snapCards(cx *core.Scope) core.Node {
 				}},
 		}},
 		ui.Segmented[core.SnapAlignment]{Options: []ui.Option[core.SnapAlignment]{{Value: core.SnapStart, Label: "start"}, {Value: core.SnapCenter, Label: "center"}, {Value: core.SnapEnd, Label: "end"}}, Value: align.Get, OnChange: align.Set, Small: true},
-		ui.SwitchRow{Label: tr.ScrollOneCardPerFling(), Code: "DisableIntervalMomentum", Checked: oneStep.Get, OnChange: oneStep.Set},
+		SwitchRow{Label: tr.ScrollOneCardPerFling(), Code: "DisableIntervalMomentum", Checked: oneStep.Get, OnChange: oneStep.Set},
 	}}
 }
 
@@ -216,7 +216,7 @@ func scrollEvents(cx *core.Scope) core.Node {
 	}
 	return core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd}, Children: []core.Node{
-			core.View{Style: fill, Children: []core.Node{ui.Figure{Value: func() string { return itoa(int(math.Round(float64(offset.Get().Offset.Y)))) }, Unit: "pt", Note: func() string {
+			core.View{Style: fill, Children: []core.Node{Figure{Value: func() string { return itoa(int(math.Round(float64(offset.Get().Offset.Y)))) }, Unit: "pt", Note: func() string {
 				if !seen.Get() {
 					return tr.ScrollScrollTheBox()
 				}
@@ -260,9 +260,9 @@ func scrollEvents(cx *core.Scope) core.Node {
 			return core.Group(lines)
 		})}},
 		core.View{Children: []core.Node{
-			ui.SwitchRow{Label: tr.ScrollScrollEnabled(), Code: "NoScroll", Checked: enabled.Get, OnChange: enabled.Set},
-			ui.SwitchRow{Label: tr.ScrollBounces(), Code: "NoBounces", Checked: bounces.Get, OnChange: bounces.Set},
-			ui.SwitchRow{Label: tr.ScrollContentInset(), Note: tr.Scroll40PtAtTheTop(), Checked: insetOn.Get, OnChange: insetOn.Set},
+			SwitchRow{Label: tr.ScrollScrollEnabled(), Code: "NoScroll", Checked: enabled.Get, OnChange: enabled.Set},
+			SwitchRow{Label: tr.ScrollBounces(), Code: "NoBounces", Checked: bounces.Get, OnChange: bounces.Set},
+			SwitchRow{Label: tr.ScrollContentInset(), Note: tr.Scroll40PtAtTheTop(), Checked: insetOn.Get, OnChange: insetOn.Set},
 		}},
 	}}
 }
@@ -308,7 +308,7 @@ func zoom(cx *core.Scope) core.Node {
 				case s < 0.99:
 					noteText = tr.ScrollZoomedOut()
 				}
-				return ui.Figure{Value: label(fmt.Sprintf("%.2f", s)), Unit: "×", Note: label(noteText), Tone: t}
+				return Figure{Value: label(fmt.Sprintf("%.2f", s)), Unit: "×", Note: label(noteText), Tone: t}
 			})}},
 			ui.Text(tr.Scroll05To5(), 13, ui.Regular, colors.Faint),
 		}},
@@ -324,7 +324,7 @@ func zoom(cx *core.Scope) core.Node {
 			ui.Cell{Child: ui.Button{Text: "1×", OnPress: zoomTo(1)}},
 			ui.Cell{Child: ui.Button{Text: "2×", Variant: ui.ButtonSecondary, OnPress: zoomTo(2)}},
 		}},
-		ui.SwitchRow{Label: tr.ScrollBouncesPastTheLimits(), Code: "NoBouncesZoom", Checked: bounces.Get, OnChange: bounces.Set},
+		SwitchRow{Label: tr.ScrollBouncesPastTheLimits(), Code: "NoBouncesZoom", Checked: bounces.Get, OnChange: bounces.Set},
 	}}
 }
 
@@ -390,7 +390,7 @@ func feed(cx *core.Scope) core.Node {
 					}),
 				}}
 			}},
-		ui.Caption{Label: tr.ScrollScrollDownALittleThen(), Note: func() string { return tr.ScrollPosts(len(posts.Get())) }},
+		Caption{Label: tr.ScrollScrollDownALittleThen(), Note: func() string { return tr.ScrollPosts(len(posts.Get())) }},
 		ui.Button{Text: tr.ScrollAdd3PostsOnTop(), Icon: lucide.Plus, OnPress: addOnTop},
 	}}
 }
@@ -411,34 +411,34 @@ func scrollingDemo(cx *core.Scope) core.Node {
 		behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardShouldPersistTaps: taps.Get()} }},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
-			return ui.Section{Title: tr.ScrollEdgeEffects(), Note: tr.ScrollScrollUnderTheBars(), Children: []core.Node{ui.API{Text: "EdgeEffects · EdgeBar"}, edgeEffects(cx)}}
+			return Section{Title: tr.ScrollEdgeEffects(), Note: tr.ScrollScrollUnderTheBars(), Children: []core.Node{API{Text: "EdgeEffects · EdgeBar"}, edgeEffects(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
-			return ui.Section{Title: tr.ScrollPaging(), Note: tr.Scroll5Pages(), Children: []core.Node{ui.API{Text: "Behavior.Paging · OffsetValues"}, pager(cx)}}
+			return Section{Title: tr.ScrollPaging(), Note: tr.Scroll5Pages(), Children: []core.Node{API{Text: "Behavior.Paging · OffsetValues"}, pager(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
-			return ui.Section{Title: tr.ScrollSnapping(), Note: tr.Scroll20Cards(), Children: []core.Node{ui.API{Text: "SnapToInterval · SnapToAlignment"}, snapCards(cx)}}
+			return Section{Title: tr.ScrollSnapping(), Note: tr.Scroll20Cards(), Children: []core.Node{API{Text: "SnapToInterval · SnapToAlignment"}, snapCards(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
-			return ui.Section{Title: tr.ScrollZoom(), Note: ui.Hint(cx, tr.ScrollPinchOrTapATile(), tr.ScrollPinchOnATouchpadOr()), Children: []core.Node{ui.API{Text: "MaxZoomScale · Ref.ZoomTo"}, zoom(cx)}}
+			return Section{Title: tr.ScrollZoom(), Note: Hint(cx, tr.ScrollPinchOrTapATile(), tr.ScrollPinchOnATouchpadOr()), Children: []core.Node{API{Text: "MaxZoomScale · Ref.ZoomTo"}, zoom(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
-			return ui.Section{Title: tr.ScrollEventsAndBehavior(), Children: []core.Node{ui.API{Text: "OnScroll · OnScrollDragStart · OnMomentumEnd"}, scrollEvents(cx)}}
+			return Section{Title: tr.ScrollEventsAndBehavior(), Children: []core.Node{API{Text: "OnScroll · OnScrollDragStart · OnMomentumEnd"}, scrollEvents(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
-			return ui.Section{Title: tr.ScrollPrependingKeepsThePosition(), Children: []core.Node{feed(cx)}}
+			return Section{Title: tr.ScrollPrependingKeepsThePosition(), Children: []core.Node{feed(cx)}}
 		},
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			fin := ui.FinOf(cx)
-			return ui.Section{Title: tr.ScrollTapsWithTheKeyboardUp(), Children: []core.Node{
-				ui.API{Text: "KeyboardShouldPersistTaps"},
+			return Section{Title: tr.ScrollTapsWithTheKeyboardUp(), Children: []core.Node{
+				API{Text: "KeyboardShouldPersistTaps"},
 				ui.Segmented[core.KeyboardTaps]{Options: []ui.Option[core.KeyboardTaps]{{Value: core.KeyboardTapsNever, Label: "never"}, {Value: core.KeyboardTapsHandled, Label: "handled"},
 					{Value: core.KeyboardTapsAlways, Label: "always"}}, Value: taps.Get, OnChange: taps.Set, Small: true},
 				core.Text{ContentFunc: func() string {
@@ -450,7 +450,7 @@ func scrollingDemo(cx *core.Scope) core.Node {
 					}
 					return tr.ScrollATapOutsideTheInput()
 				}, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
-				base.Input{Placeholder: ui.Hint(cx, tr.ScrollTypeHereThenTapThe(), tr.ScrollTypeHereThenClickThe()),
+				base.Input{Placeholder: Hint(cx, tr.ScrollTypeHereThenTapThe(), tr.ScrollTypeHereThenClickThe()),
 					StyleFunc: func() core.Style {
 						return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), Height: core.Pt(44), FontSize: 13, Color: colors.Text(),
 							Background: colors.Field(), BorderWidth: 1, BorderColor: colors.FieldBorder(), CornerRadius: ui.RadiusControl, Padding: core.Symmetric(0, 14)})
@@ -460,7 +460,7 @@ func scrollingDemo(cx *core.Scope) core.Node {
 						return fin.Light().Over(core.Style{Height: core.Pt(44), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous, Background: colors.Light(),
 							Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8})
 					}, Children: []core.Node{
-						ui.Text(ui.Hint(cx, tr.ScrollTapMe(), tr.ScrollClickMe()), 13, ui.Semibold, colors.OnLight),
+						ui.Text(Hint(cx, tr.ScrollTapMe(), tr.ScrollClickMe()), 13, ui.Semibold, colors.OnLight),
 						ui.Textf(func() string { return itoa(presses.Get()) }, 13, ui.Regular, countColor),
 					}},
 				}},

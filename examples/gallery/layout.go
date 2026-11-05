@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // layoutDemo is the layout NSGo ports from Taffy: flexbox, wrapping,
@@ -47,12 +47,12 @@ func layoutDemo(cx *core.Scope) core.Node {
 			name string
 			v    core.Justify
 		}{{"JustifyStart", core.JustifyStart}, {"JustifyCenter", core.JustifyCenter}, {"JustifySpaceBetween", core.JustifySpaceBetween}, {"JustifySpaceEvenly", core.JustifySpaceEvenly}} {
-			justify = append(justify, ui.API{Text: j.name},
+			justify = append(justify, API{Text: j.name},
 				frame(core.Style{Direction: core.Row, JustifyContent: j.v}, box("A", core.Style{}), box("B", core.Style{}), box("C", core.Style{})))
 		}
-		justify = append(justify, ui.API{Text: "Column, AlignCenter"},
+		justify = append(justify, API{Text: "Column, AlignCenter"},
 			frame(core.Style{AlignItems: core.AlignCenter}, box(tr.LayoutOne(), core.Style{}), box(tr.LayoutTwoWider(), core.Style{}), box(tr.LayoutThree(), core.Style{})))
-		return ui.Section{Title: tr.LayoutRowAndColumn(), Note: "Direction · JustifyContent", Children: justify}
+		return Section{Title: tr.LayoutRowAndColumn(), Note: "Direction · JustifyContent", Children: justify}
 	}
 
 	wrapCard := func(cx *core.Scope) core.Node {
@@ -64,12 +64,12 @@ func layoutDemo(cx *core.Scope) core.Node {
 				chips = append(chips, box(w, core.Style{CornerRadius: 14}))
 			}
 		}
-		return ui.Section{Title: "Wrap", Note: "Wrap", Children: []core.Node{frame(core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, chips...)}}
+		return Section{Title: "Wrap", Note: "Wrap", Children: []core.Node{frame(core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, chips...)}}
 	}
 
 	grow := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Section{Title: tr.LayoutGrowAndShrink(), Note: "FlexGrow · FlexShrink · AutoMargin", Children: []core.Node{
+		return Section{Title: tr.LayoutGrowAndShrink(), Note: "FlexGrow · FlexShrink · AutoMargin", Children: []core.Node{
 			frame(core.Style{Direction: core.Row}, box("1", core.Style{FlexGrow: 1}), box("2", core.Style{FlexGrow: 2}), box("3", core.Style{FlexGrow: 3})),
 			frame(core.Style{Direction: core.Row}, box(tr.LayoutFixed120(), core.Style{Width: core.Pt(120)}), box(tr.Layout900WideShrinksToFit(), core.Style{Width: core.Pt(900), FlexShrink: 1})),
 			frame(core.Style{Direction: core.Row}, box(tr.LayoutStart(), core.Style{}), box(tr.LayoutPushedToTheEnd(), core.Style{AutoMargin: core.SideLeft})),
@@ -79,7 +79,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 	absolute := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: tr.LayoutAbsolutePositioning(), Note: "Position: Absolute", Children: []core.Node{
+		return Section{Title: tr.LayoutAbsolutePositioning(), Note: "Position: Absolute", Children: []core.Node{
 			frame(core.Style{Height: core.Pt(120)},
 				box(tr.LayoutTopLeft(), core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(8)}),
 				box(tr.LayoutBottomRight(), core.Style{Position: core.Absolute, Bottom: core.Pt(8), Right: core.Pt(8)}),
@@ -98,15 +98,15 @@ func layoutDemo(cx *core.Scope) core.Node {
 		for i := 1; i <= 7; i++ {
 			cells = append(cells, box(itoa(i), core.Style{Height: core.Pt(44)}))
 		}
-		return ui.Section{Title: tr.LayoutGrid(), Note: "DisplayGrid", Children: []core.Node{
-			ui.API{Text: `GridTemplateColumns: "repeat(3, 1fr)"`},
+		return Section{Title: tr.LayoutGrid(), Note: "DisplayGrid", Children: []core.Node{
+			API{Text: `GridTemplateColumns: "repeat(3, 1fr)"`},
 			core.View{Style: core.Style{Display: core.DisplayGrid, GridTemplateColumns: "repeat(3, 1fr)", GridAutoRows: "44px", Gap: 8}, Children: []core.Node{
 				tintedBox(tr.LayoutSpan2(), core.Style{GridColumn: core.GridLines{Start: core.GridSpan(2)}}),
 				box("B", core.Style{}), box("C", core.Style{}),
 				tintedBox(tr.Layout2Rows(), core.Style{GridRow: core.GridLines{Start: core.GridSpan(2)}}),
 				box("E", core.Style{}), box("F", core.Style{}), box("G", core.Style{}), box("H", core.Style{}),
 			}},
-			ui.API{Text: `"repeat(auto-fill, minmax(80px, 1fr))"`},
+			API{Text: `"repeat(auto-fill, minmax(80px, 1fr))"`},
 			core.View{Style: core.Style{Display: core.DisplayGrid, GridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", Gap: 8}, Children: cells},
 		}}
 	}
@@ -130,8 +130,8 @@ func layoutDemo(cx *core.Scope) core.Node {
 			groups = append(groups, core.View{Children: g})
 		}
 		shown := core.NewSignal(cx, false)
-		return ui.Section{Title: tr.LayoutStaticStickyAndFixed(), Note: "Position", Children: []core.Node{
-			ui.Note{Text: tr.LayoutStaticIgnoresInsetsAndLets()},
+		return Section{Title: tr.LayoutStaticStickyAndFixed(), Note: "Position", Children: []core.Node{
+			Note{Text: tr.LayoutStaticIgnoresInsetsAndLets()},
 			frame(core.Style{Height: core.Pt(80)},
 				core.View{Style: core.Style{Position: core.Static, Top: core.Pt(40), Padding: core.All(4)}, Children: []core.Node{
 					box(tr.LayoutAbsoluteInTheFrame(), core.Style{Position: core.Absolute, Bottom: core.Pt(4), Right: core.Pt(4)}),
@@ -151,7 +151,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 
 	intrinsic := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Section{Title: tr.LayoutIntrinsicSizes(), Note: "MinContent · MaxContent · FitContent", Children: []core.Node{
+		return Section{Title: tr.LayoutIntrinsicSizes(), Note: "MinContent · MaxContent · FitContent", Children: []core.Node{
 			frame(core.Style{AlignItems: core.AlignStart},
 				tintedBox(tr.LayoutMinContentEachWordOn(), core.Style{Width: core.MinContent}),
 				tintedBox(tr.LayoutMaxContentOneLine(), core.Style{Width: core.MaxContent}),
@@ -163,7 +163,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 	stacking := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: tr.LayoutStacking(), Note: "ZIndex", Children: []core.Node{
+		return Section{Title: tr.LayoutStacking(), Note: "ZIndex", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, Height: core.Pt(90)},
 				tintedBox("ZIndex 2", core.Style{Width: core.Pt(100), Height: core.Pt(60), ZIndex: 2}),
 				box("0", core.Style{Width: core.Pt(100), Height: core.Pt(60), Margin: core.Edges{Left: -30, Top: 20}}),
@@ -175,7 +175,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 	direction := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Section{Title: tr.LayoutDirection(), Note: "LayoutDirection · WritingDirection", Children: []core.Node{
+		return Section{Title: tr.LayoutDirection(), Note: "LayoutDirection · WritingDirection", Children: []core.Node{
 			frame(core.Style{Direction: core.Row, LayoutDirection: core.DirectionRTL}, box("first", core.Style{}), box("second", core.Style{}), box("third", core.Style{})),
 			frame(core.Style{},
 				core.Text{Content: "שלום עולם, hello world", Style: core.Style{WritingDirection: core.WritingAuto, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
@@ -186,7 +186,7 @@ func layoutDemo(cx *core.Scope) core.Node {
 
 	block := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Section{Title: tr.LayoutBlock(), Note: "DisplayBlock", Children: []core.Node{
+		return Section{Title: tr.LayoutBlock(), Note: "DisplayBlock", Children: []core.Node{
 			frame(core.Style{Display: core.DisplayBlock},
 				box(tr.LayoutMarginBottom16(), core.Style{Margin: core.Edges{Bottom: 16}}),
 				box(tr.LayoutMarginTop16TheGap(), core.Style{Margin: core.Edges{Top: 16}}),

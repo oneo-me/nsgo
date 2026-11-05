@@ -10,12 +10,12 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // The gallery's shell: its layouts, demo pages and headers, and helpers
-// its demos share. Its look and components are examples/gallery-ui's.
+// its demos share. Its look and components are package ui's.
 
 // The layouts' sizes.
 const (
@@ -141,7 +141,7 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 		if p.still {
 			return node
 		}
-		return ui.Appear{Index: i, Children: []core.Node{node}}
+		return Appear{Index: i, Children: []core.Node{node}}
 	}
 	bottom := p.bottom
 	if bottom == 0 {

@@ -7,8 +7,8 @@ import (
 	"github.com/oneo-me/nsgo/base/terminal"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // base/terminal's View runs the user's shell with Ghostty's emulator, or
@@ -111,7 +111,7 @@ func terminalDemo(cx *core.Scope) core.Node {
 	option := func(label, api string, control core.Node) core.Node {
 		return core.View{Style: core.Style{Gap: 6, Padding: core.Symmetric(6, 0)}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8}, Children: []core.Node{
-				ui.Text(label, 13, ui.Medium, colors.Text), ui.API{Text: api},
+				ui.Text(label, 13, ui.Medium, colors.Text), API{Text: api},
 			}},
 			control,
 		}}
@@ -125,7 +125,7 @@ func terminalDemo(cx *core.Scope) core.Node {
 		if name == "" {
 			label = tr.TerminalAutomatic()
 		}
-		themeRows = append(themeRows, ui.Row{First: i == 0, OnPress: func() { theme.Set(name) }, Children: []core.Node{
+		themeRows = append(themeRows, Row{First: i == 0, OnPress: func() { theme.Set(name) }, Children: []core.Node{
 			core.Text{Content: label, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			core.Text{ContentFunc: func() string {
 				if theme.Get() == name {
@@ -161,7 +161,7 @@ func terminalDemo(cx *core.Scope) core.Node {
 		}
 		return core.Style{MaxHeight: core.Pt(280), FlexShrink: 0}
 	}, Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
-		ui.Section{Title: tr.TerminalOptions(), Note: "terminal.View", Children: []core.Node{
+		Section{Title: tr.TerminalOptions(), Note: "terminal.View", Children: []core.Node{
 			sessionOption,
 			option(tr.TerminalTheme(), "Theme · DarkTheme", core.View{Children: themeRows}),
 			option(tr.TerminalFont(), "Font.Family", ui.Segmented[string]{Small: true, Value: family.Get, OnChange: family.Set,
@@ -179,10 +179,10 @@ func terminalDemo(cx *core.Scope) core.Node {
 				Options: []ui.Option[terminal.CursorStyle]{{Value: terminal.CursorBlock, Label: tr.TerminalBlock()},
 					{Value: terminal.CursorBar, Label: tr.TerminalBar()}, {Value: terminal.CursorUnderline, Label: tr.TerminalUnderline()}}}),
 		}},
-		ui.Section{Title: tr.TerminalKeyBar(), Note: "KeyBarKeys · NoKeyBar", Children: []core.Node{
-			ui.SwitchRow{Label: tr.TerminalKeyBar(), Note: tr.TerminalKeyBarNote(), Checked: keyBar.Get, OnChange: keyBar.Set},
+		Section{Title: tr.TerminalKeyBar(), Note: "KeyBarKeys · NoKeyBar", Children: []core.Node{
+			SwitchRow{Label: tr.TerminalKeyBar(), Note: tr.TerminalKeyBarNote(), Checked: keyBar.Get, OnChange: keyBar.Set},
 		}},
-		ui.Section{Title: tr.TerminalStatus(), Note: "OnTitle · OnSizeChange · Dir", Children: []core.Node{
+		Section{Title: tr.TerminalStatus(), Note: "OnTitle · OnSizeChange · Dir", Children: []core.Node{
 			status(tr.TerminalTitle(), "terminal-title", title.Get),
 			status(tr.TerminalSize(), "terminal-size", func() string { c := cells.Get(); return tr.TerminalSizeCells(c[0], c[1]) }),
 			status(tr.TerminalDirectory(), "terminal-dir", dir.Get),

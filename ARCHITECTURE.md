@@ -14,12 +14,14 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | --- | --- | --- |
 | `nsgo` (module root) | `run_app`, `AppView` | `nsgo.Run` of a root view or of an app that opens its windows ([application](docs/architecture/application.md)), and `nsgo.NewView` in a host's window ([embedding](docs/architecture/embedding.md)), on the backend build tags pick |
 | `core` | `nsh-core` | The app's API: elements, styles, Tailwind classes, themes, the reactive graph and regions, services; the shadow tree, layout and text preparation |
-| `base` | `nsh-base` | Unstyled components: controls, popups, navigation, panels, a dock, charts and tables ([components](docs/architecture/components.md)) |
+| `base` | `nsh-base` | Unstyled components, a file each: controls, popups, navigation, panels and tables ([components](docs/architecture/components.md)) |
+| `base/datatable`, `base/dock`, `base/plot`, `base/toast` | `nsh-base` | Complex components, a package each: a virtualized table, a dock, charts and toasts |
+| `ui`, `ui/chat` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, and Onevra's conversation as a package ([themes](docs/architecture/themes.md#ui)) |
 | `mobile`, `desktop` | `nsh/mobile`, `nsh/desktop` | What only phones have (the tab bar) and only desktops (the window, menus) |
 | `base/textview`, `base/textview/highlight` | `nsh-base`'s `text_view`, `highlight` | `TextView`: Markdown, HTML or the app's blocks, and its code highlighting ([text view](docs/architecture/textview.md)) |
 | `base/terminal`, `tools/libghostty` | — (Ghostty's libghostty-vt) | `Terminal` and its `View`: a program in a pseudo-terminal with libghostty-vt loaded through purego, and the command building the library ([terminal](docs/architecture/terminal.md)) |
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
-| `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting and the rows a virtualized view makes |
+| `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting, the rows a virtualized view makes, part styles and sheets |
 | `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
 | `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; hot and split bundles |
 | `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, fetching a split one's chunks on the web, or compiles it as it starts |
@@ -35,7 +37,6 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `internal/platform/<target>` | `nsh-platform-*` | Native view mounting, text engine and input for one target |
 | `internal/platform/*` | Platforms' shared code | What backends share: `apple` for macOS and iOS, images ([images](docs/architecture/images.md)), picked photos, process readings |
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
-| `examples/gallery-ui` | `examples/nsh-gallery-ui` | The gallery's look and styled components, which Onexa copies as its own ([themes](docs/architecture/themes.md#gallery)) |
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
@@ -59,7 +60,7 @@ Android runs the app as a second process because Go builds Android shared librar
 
 Packages import only downward, which `layering_test.go` checks on every target; [package layers](docs/architecture/layers.md) holds the graph and the rules for each layer.
 
-- Each API has one home, and `base`'s components have no look ([principles](AGENTS.md#principles), [components](AGENTS.md#components)).
+- Each API has one home, `base`'s components have no look and `ui`'s are `base`'s in one ([principles](AGENTS.md#principles), [components](AGENTS.md#components)).
 - The main thread never waits for the engine, but up to 16 ms on macOS for a resized window's layout; the engine never touches main-thread-only UI objects.
 - What animates runs on the platform's frame clock, which stops when idle: the engine sends transitions and animated values once, never a commit per frame ([animation](docs/architecture/animation.md)).
 - The reactive graph belongs to the engine goroutine and never locks; other goroutines reach it through `Scope.Post`.

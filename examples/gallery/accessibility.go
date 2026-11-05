@@ -7,8 +7,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 func always() bool { return true }
@@ -43,11 +43,11 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 				Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 16},
 				Children: []core.Node{
 					step(lucide.Minus, -1, tr.A11yFewer()),
-					ui.Figure{Value: func() string { return itoa(n.Get()) }, Unit: "items"},
+					Figure{Value: func() string { return itoa(n.Get()) }, Unit: "items"},
 					step(lucide.Plus, 1, tr.A11yMore()),
 				}},
 			ui.Meter{Value: func() float64 { return float64(n.Get()) / 10 }, Tone: ui.ToneAccent},
-			ui.APILine{Label: tr.A11yARangeValueAndThe(), Names: "RoleAdjustable"},
+			APILine{Label: tr.A11yARangeValueAndThe(), Names: "RoleAdjustable"},
 		}}
 	}
 
@@ -68,8 +68,8 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 						return s
 					}, Children: []core.Node{ui.Icon(lucide.ChevronRight, 16, colors.Muted)}},
 				}},
-			core.Show{When: open.Get, Then: func(*core.Scope) core.Node { return ui.Note{Text: tr.A11yShipsInTwoDaysFrom()} }},
-			ui.APILine{Label: tr.A11yADisclosure(), Names: "Expanded"},
+			core.Show{When: open.Get, Then: func(*core.Scope) core.Node { return Note{Text: tr.A11yShipsInTwoDaysFrom()} }},
+			APILine{Label: tr.A11yADisclosure(), Names: "Expanded"},
 		}}
 	}
 
@@ -89,8 +89,8 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 					return fin.Raised().Over(core.Style{Background: colors.Raised(), CornerRadius: ui.RadiusControl, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(12), Gap: 4})
 				},
 				Children: []core.Node{ui.Text("Ana", 13, ui.Semibold, colors.Text), ui.Text(tr.A11yLunchOnFriday(), 13, ui.Regular, colors.Muted)}},
-			ui.Caption{Label: tr.A11yLastAction(), Note: last.Get},
-			ui.APILine{Label: tr.A11yCustomOnesActivateEscapeAnd(), Names: "AccessibilityActions"},
+			Caption{Label: tr.A11yLastAction(), Note: last.Get},
+			APILine{Label: tr.A11yCustomOnesActivateEscapeAnd(), Names: "AccessibilityActions"},
 		}}
 	}
 
@@ -119,7 +119,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		return ui.Card{Title: tr.A11yHiddenElements(), Description: tr.A11yDecorationScreenReadersSkip(), Children: []core.Node{
 			core.View{AccessibilityElementsHidden: h.Get, TestID: "a11y-hidden", Style: core.Style{AlignItems: core.AlignCenter},
 				Children: []core.Node{ui.Text(tr.A11yDecoration(), 13, ui.Regular, colors.Faint)}},
-			ui.SwitchRow{Label: tr.A11yHideTheDecoration(), Code: "AccessibilityElementsHidden", Checked: h.Get, OnChange: h.Set},
+			SwitchRow{Label: tr.A11yHideTheDecoration(), Code: "AccessibilityElementsHidden", Checked: h.Get, OnChange: h.Set},
 		}}
 	}
 
@@ -131,7 +131,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 			core.Text{LiveRegion: core.LiveRegionPolite, TestID: "a11y-live", ContentFunc: func() string { return tr.A11yInTheBasket(added.Get()) },
 				Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Button{Text: tr.A11yAddToBasket(), Icon: lucide.Plus, OnPress: func() { added.Update(func(n int) int { return n + 1 }) }},
-			ui.APILine{Label: tr.A11yAnnouncedAsItChanges(), Names: "LiveRegionPolite"},
+			APILine{Label: tr.A11yAnnouncedAsItChanges(), Names: "LiveRegionPolite"},
 		}}
 	}
 
@@ -142,7 +142,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		return ui.Card{Title: tr.A11yFocus(), Description: tr.A11yMovingTheScreenReaderAs(), Children: []core.Node{
 			ui.Button{Text: tr.A11ySearchApples(), Variant: ui.ButtonSecondary, TestID: "a11y-search", OnPress: result.SetAccessibilityFocus},
 			core.Text{Ref: result, Content: tr.A11y3ResultsForApples(), TestID: "a11y-result", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
-			ui.APILine{Label: tr.A11yMovesTheReaderHere(), Names: "Ref.SetAccessibilityFocus"},
+			APILine{Label: tr.A11yMovesTheReaderHere(), Names: "Ref.SetAccessibilityFocus"},
 		}}
 	}
 

@@ -10,8 +10,8 @@ import (
 	"github.com/oneo-me/nsgo/base/textview/highlight"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // readingStyles is the gallery's reading typography for every part of a
@@ -188,7 +188,7 @@ func markdownCard(cx *core.Scope) core.Node {
 		textview.TextView{Markdown: tvMarkdown, StyleOf: readingStyles(cx), Selectable: true, TestID: "document", Highlighter: highlight.New(cx),
 			CodeBlockActions: []textview.CodeAction{{ID: textview.CopyAction, Label: tr.TextviewCopyCode()}}, RenderCodeBlockAction: copyAction,
 			OnLinkPress: func(e textview.LinkPressEvent) { pressed.Set(e.URL) }, OnImagePress: viewing.Set},
-		ui.Caption{Label: tr.TextviewLinkPressed(), Note: pressed.Get},
+		Caption{Label: tr.TextviewLinkPressed(), Note: pressed.Get},
 		imageViewer(cx, viewing.Get, func() { viewing.Set(textview.Image{}) }),
 	}}
 }
@@ -306,7 +306,7 @@ func selectionAreaCard(cx *core.Scope) core.Node {
 				core.Text{Content: tr.TextviewAPlainTextJoinsThe(), Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			}},
 		}},
-		ui.Caption{Label: ui.Hint(cx, tr.TextviewLongPressThenMoveThe(), tr.TextviewDragFromTheQuestionInto())},
+		Caption{Label: Hint(cx, tr.TextviewLongPressThenMoveThe(), tr.TextviewDragFromTheQuestionInto())},
 	}}
 }
 

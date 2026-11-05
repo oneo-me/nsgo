@@ -6,8 +6,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // signalField is Onevra's SignalField background on core.Shader: a sparse
@@ -182,7 +182,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 			},
 			Children: []core.Node{
 				core.Text{Content: tr.ShaderSignalField(), Role: core.RoleHeader, Style: core.Style{FontSize: 22, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
-				core.Text{Content: ui.Hint(cx, tr.ShaderPressAnywhereOnTheField(), tr.ShaderMoveThePointerOverThe()),
+				core.Text{Content: Hint(cx, tr.ShaderPressAnywhereOnTheField(), tr.ShaderMoveThePointerOverThe()),
 					Style: core.Style{FontSize: 13, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
 				ui.Button{Text: tr.ShaderStart(), Variant: ui.ButtonAccent, OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }},
 				ui.Textf(func() string { return tr.ShaderStartPressed(presses.Get()) }, 13, ui.Regular, colors.Faint),
@@ -194,7 +194,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 				ui.Cell{Child: ui.Button{Text: tr.ShaderScale(), Variant: ui.ButtonSecondary, OnPress: cycle(scale, 1, 1.5, 0.75)}},
 				ui.Cell{Child: ui.Button{Text: tr.ShaderIntensity(), Variant: ui.ButtonSecondary, OnPress: cycle(intensity, 1, 2, 0.5)}},
 			}},
-			ui.Caption{Label: tr.ShaderUniforms(), Note: func() string {
+			Caption{Label: tr.ShaderUniforms(), Note: func() string {
 				return tr.ShaderScaleIntensity(fmt.Sprintf("%.2g", scale.Get()), fmt.Sprintf("%.2g", intensity.Get()))
 			}},
 		}}
@@ -213,7 +213,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 					Label: tr.ShaderRipplingLogo(), TestID: "image-shader",
 					Style: core.Style{Width: core.Pt(160), Height: core.Pt(160), CornerRadius: 12, Overflow: core.Hidden}},
 			}},
-			ui.APILine{Label: tr.ShaderItsRowsWaveWithA(), Names: "Shader.Images"},
+			APILine{Label: tr.ShaderItsRowsWaveWithA(), Names: "Shader.Images"},
 		}}
 	}
 	source := func(cx *core.Scope) core.Node {
@@ -222,7 +222,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 		return ui.Card{Title: tr.ShaderTheSource(), Description: tr.ShaderGoSSyntaxCheckedAnd(), Children: []core.Node{
 			core.Scroll{Horizontal: true, Children: []core.Node{core.Text{Content: rippleSource,
 				Style: core.Style{FontFamily: ui.Mono, FontSize: 12, LineHeight: 18}, StyleFunc: ui.Colored(colors.Code)}}},
-			ui.APILine{Label: tr.ShaderCompiledOnceAsTheProgram(), Names: "MustCompileShader"},
+			APILine{Label: tr.ShaderCompiledOnceAsTheProgram(), Names: "MustCompileShader"},
 		}}
 	}
 	return demoPage(cx, pageProps{}, background, images, source)

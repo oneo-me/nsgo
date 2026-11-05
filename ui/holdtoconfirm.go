@@ -1,0 +1,221 @@
+package ui
+
+import (
+	"time"
+
+	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
+)
+
+// HoldTone is the color a HoldToConfirm fills with.
+type HoldTone uint8
+
+const (
+	// HoldAccent fills with the accent.
+	HoldAccent HoldTone = iota
+	// HoldDanger tints the face and fills with the danger color, for an
+	// action that cannot be undone.
+	HoldDanger
+	// HoldNeutral fills with the text's color.
+	HoldNeutral
+)
+
+// HoldToConfirm is Onevra's hold-to-confirm button, for destructive or
+// hard-to-undo actions a stray press must not trigger: held down for
+// Duration (1.2 s when 0), a fill sweeps across it from the leading edge,
+// and once it is full OnConfirm runs, the screen reader announces
+// ConfirmedText, and Text and Icon (lucide.Trash when empty) give way to it
+// and a check. Letting go early rewinds the fill. The keyboard and
+// assistive technology, which cannot hold, start the fill with a press
+// and cancel it with another or by moving the focus away.
+//
+// Confirmed is the app's: true shows the done state, and setting it back
+// to false resets the button. Hint is what assistive technology reads
+// after the label, such as "Hold to confirm". Prefer an AlertDialog when
+// people need to read the consequences first.
+type HoldToConfirm struct {
+	Text          string
+	ConfirmedText string
+	Icon          func() *core.SVG
+	Tone          HoldTone
+	Duration      time.Duration
+	Confirmed     func() bool
+	OnConfirm     func()
+	Hint          string
+	Disabled      func() bool
+	TestID        string
+}
+
+// holdRewind is how long an empty-to-full fill takes to drain.
+const holdRewind = 400 * time.Millisecond
+
+var holdLinear = core.BezierEasing(core.Linear)
+
+// Render implements core.Node.
+func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
+	colors := ColorsOf(cx)
+	duration := h.Duration
+	if duration <= 0 {
+		duration = 1200 * time.Millisecond
+	}
+	icon := h.Icon
+	if icon == nil {
+		icon = lucide.Trash
+	}
+	confirmed := func() bool { return is(h.Confirmed) }
+	scale := core.NewAnimatedValue(cx, 1)
+	width := core.NewSignal[core.Points](cx, 0)
+	holding := core.NewSignal(cx, false)
+
+	// The fill moves linearly both ways, so where it is follows from when
+	// its last run started, where from and toward what.
+	var runStart time.Time
+	var runFor time.Duration
+	runFrom, runTo := 0.0, 0.0
+	if core.Untracked(cx, confirmed) {
+		runFrom, runTo = 1, 1
+	}
+	fill := core.NewAnimatedValue(cx, runTo)
+	at := func() float64 {
+		if runFor <= 0 {
+			return runTo
+		}
+		p := min(float64(cx.Now().Sub(runStart))/float64(runFor), 1)
+		return runFrom + (runTo-runFrom)*p
+	}
+	run := func(to float64, d time.Duration, done func(bool)) {
+		runFrom, runTo, runStart, runFor = at(), to, cx.Now(), d
+		if d <= 0 {
+			fill.Set(to)
+			return
+		}
+		cx.StartAnimation(core.Timing(fill, to, core.TimingConfig{Duration: d, Easing: holdLinear}), done)
+	}
+	still := ReduceMotion(cx)
+	begin := func() {
+		if core.Untracked(cx, confirmed) || is(h.Disabled) || holding.GetUntracked() {
+			return
+		}
+		holding.Set(true)
+		if !still {
+			Spring(cx, scale, 0.97, pressSpring)
+		}
+		from := at()
+		run(1, time.Duration((1-from)*float64(duration)), func(finished bool) {
+			if !finished || !holding.GetUntracked() {
+				return
+			}
+			holding.Set(false)
+			Spring(cx, scale, 1, pressSpring)
+			if h.ConfirmedText != "" {
+				cx.Announce(h.ConfirmedText)
+			}
+			if h.OnConfirm != nil {
+				h.OnConfirm()
+			}
+		})
+	}
+	release := func() {
+		if !holding.GetUntracked() {
+			return
+		}
+		holding.Set(false)
+		Spring(cx, scale, 1, pressSpring)
+		run(0, time.Duration(at()*float64(holdRewind)), nil)
+	}
+	cx.Effect(func() {
+		on := confirmed()
+		if core.Untracked(cx, holding.Get) {
+			return
+		}
+		if on && at() < 1 {
+			run(1, 0, nil)
+		} else if !on && at() > 0 {
+			run(0, holdRewind, nil)
+		}
+	})
+
+	ink, fillColor, onFill, border := colors.Text, colors.Accent, colors.OnAccent, colors.Border
+	switch h.Tone {
+	case HoldDanger:
+		ink, fillColor, onFill = colors.Danger, colors.Danger, colors.Background
+		border = func() core.Color { return Mix(colors.Border(), colors.Danger(), 0.32) }
+	case HoldNeutral:
+		fillColor, onFill = colors.Text, colors.Background
+	}
+	text := func() string {
+		if confirmed() {
+			return h.ConfirmedText
+		}
+		return h.Text
+	}
+	glyph := func() *core.SVG {
+		if confirmed() {
+			return lucide.Check()
+		}
+		return icon()
+	}
+	face := func(c func() core.Color) core.Node {
+		t := Textf(text, 13, Regular, c)
+		t.MaxLines = 1
+		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8,
+			Height: core.Pt(ButtonHeight - 2), Padding: core.Symmetric(0, 13)}, Children: []core.Node{IconOf(glyph, 14, c), t}}
+	}
+	// A second face in the fill's colors shows through it, so the text
+	// changes color exactly at its edge: the fill slides in from the
+	// leading edge while its face slides the other way, staying put.
+	fullSize := core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0)}
+	slide := func(sign float64) func() core.Style {
+		return func() core.Style {
+			w := float64(width.Get())
+			return core.Style{Animated: &core.AnimatedStyle{TranslateX: Lerp(fill, sign*-w, 0)}}
+		}
+	}
+	inverse := core.View{PointerEvents: core.PointerEventsNone,
+		Style: core.Style{Position: core.Absolute, Left: core.Pt(-1), Right: core.Pt(-1), Top: core.Pt(-1), Bottom: core.Pt(-1), Overflow: core.Hidden, CornerRadius: RadiusControl},
+		// Until it is measured the fill could not slide out of sight.
+		StyleFunc: func() core.Style {
+			if width.Get() == 0 {
+				return core.Style{Opacity: core.Alpha(0)}
+			}
+			return core.Style{}
+		},
+		OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) },
+		// The fill clips its face, which stays where the button's is.
+		Children: []core.Node{core.View{Style: fullSize.Merge(core.Style{Overflow: core.Hidden}), StyleFunc: func() core.Style {
+			return core.Style{Background: fillColor()}.Merge(slide(1)())
+		}, Children: []core.Node{core.View{Style: fullSize.Merge(core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}),
+			StyleFunc: slide(-1), Children: []core.Node{face(onFill)}}}}}}
+
+	// upAt is when a pointer's press last ended.
+	var upAt time.Time
+	return core.View{Role: core.RoleButton, LabelFunc: text, Hint: h.Hint, TestID: h.TestID, Disabled: h.Disabled,
+		OnPressDown: func(core.PressEvent) { begin() },
+		OnPressUp:   func(core.PressEvent) { upAt = cx.Now(); release() },
+		OnPress: func(core.PressEvent) {
+			// A pointer's press may end in a press too, right after it lets
+			// go; only the keyboard's and assistive technology's start or
+			// cancel a hold here.
+			if !upAt.IsZero() && cx.Now().Sub(upAt) < 250*time.Millisecond {
+				upAt = time.Time{}
+				return
+			}
+			if holding.GetUntracked() {
+				release()
+			} else {
+				begin()
+			}
+		},
+		OnBlur: release,
+		Style: core.Style{Group: "hold", AlignSelf: core.AlignStart, CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
+			BorderWidth: 1, Cursor: core.CursorPointer, Transition: quick, Disabled: Dimmed(),
+			Animated: &core.AnimatedStyle{Scale: scale}}.Merge(slop(cx, ButtonHeight)),
+		StyleFunc: func() core.Style {
+			s := core.Style{Background: colors.Surface(), BorderColor: border(), Focus: FocusRing(cx, 2)}
+			if !confirmed() {
+				s.Hover = &core.Style{Background: Mix(colors.Surface(), fillColor(), 0.06)}
+			}
+			return s
+		},
+		Children: []core.Node{face(ink), inverse}}
+}

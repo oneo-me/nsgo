@@ -2,7 +2,7 @@
 // services and base's unstyled components, a demo each, in NSH's gallery's
 // design. A wide window shows a sidebar of the demos beside the selected
 // one; a narrow one is a phone's index with demos pushed over it. Its
-// look and components are examples/gallery-ui's, as NSH's are its
+// look and components are package ui's, as NSH's are its
 // nsh-gallery-ui's.
 //
 // It translates NSH's examples/gallery demo by demo, and departs from it
@@ -25,8 +25,8 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 	"github.com/oneo-me/nsgo/i18n"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 //go:embed logo.png
@@ -49,7 +49,7 @@ type group struct {
 }
 
 // groups are the demos: the apps built on NSGo, core's primitives from the
-// simplest, base's components and gallery-ui's own by name, styling, motion and the platform's
+// simplest, base's components and ui's own by name, styling, motion and the platform's
 // services, as NSH's gallery lists them after its 0.3.0 release. They are
 // set in init because demos list them.
 var groups []group
@@ -391,7 +391,7 @@ func (g *gallery) home(cx *core.Scope) core.Node {
 		for j, d := range grp.demos {
 			rows = append(rows, demoRow(cx, d, j == 0, func() { g.nav.Push(route{demo: d.name}) }))
 		}
-		nodes = append(nodes, ui.Appear{Index: i + 1, Children: []core.Node{core.View{TestID: "group-" + grp.name, Style: core.Style{Gap: 8}, Children: []core.Node{
+		nodes = append(nodes, Appear{Index: i + 1, Children: []core.Node{core.View{TestID: "group-" + grp.name, Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
 				core.Text{Content: grp.title(tr), Role: core.RoleHeader, Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold,
 					LetterSpacing: 0.4, TextTransform: core.TextTransformUppercase}, StyleFunc: ui.Colored(colors.Muted)},
@@ -421,7 +421,7 @@ func demoRow(cx *core.Scope, d demo, first bool, open func()) core.Node {
 			}
 			return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}}
 		}, Children: []core.Node{
-			ui.IconTile{Icon: d.icon, Size: 38},
+			IconTile{Icon: d.icon, Size: 38},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 				ui.Text(d.title(tr), 16, ui.Medium, colors.Text),
 				core.Text{Content: d.detail(tr), MaxLines: 2, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},

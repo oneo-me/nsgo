@@ -7,8 +7,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 type photo struct {
@@ -134,7 +134,7 @@ func photosDemo(cx *core.Scope) core.Node {
 			refreshing.Set(false)
 		})
 	}
-	refreshKey := ui.BindRefresh(cx, refresh)
+	refreshKey := BindRefresh(cx, refresh)
 	loadMore := func() {
 		current := photos.GetUntracked()
 		photos.Set(append(current[:len(current):len(current)], makePhotos(len(current)+1, photoPage)...))
@@ -187,14 +187,14 @@ func photosDemo(cx *core.Scope) core.Node {
 				core.View{StyleFunc: func() core.Style {
 					return core.Style{Direction: core.Row, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}, Padding: core.Edges{Top: 10}}
 				}, Children: []core.Node{
-					ui.Stat{Label: tr.PhotosPages(), Value: func() string { return itoa((len(photos.Get()) + photoPage - 1) / photoPage) }, Width: core.Pct(33)},
-					ui.Stat{Label: tr.PhotosPerPage(), Value: label(itoa(photoPage)), Width: core.Pct(33)},
+					Stat{Label: tr.PhotosPages(), Value: func() string { return itoa((len(photos.Get()) + photoPage - 1) / photoPage) }, Width: core.Pct(33)},
+					Stat{Label: tr.PhotosPerPage(), Value: label(itoa(photoPage)), Width: core.Pct(33)},
 					core.Dynamic(func(*core.Scope) core.Node {
 						t := ui.ToneNeutral
 						if refreshes.Get() > 0 {
 							t = ui.ToneAccent
 						}
-						return ui.Stat{Label: tr.PhotosRefreshes2(), Value: func() string { return itoa(refreshes.Get()) }, Tone: t, Width: core.Pct(33)}
+						return Stat{Label: tr.PhotosRefreshes2(), Value: func() string { return itoa(refreshes.Get()) }, Tone: t, Width: core.Pct(33)}
 					}),
 				}},
 			}},

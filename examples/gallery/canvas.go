@@ -7,8 +7,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 const tau = 2 * math.Pi
@@ -160,10 +160,10 @@ func dial(cx *core.Scope) core.Node {
 			core.Dynamic(func(*core.Scope) core.Node {
 				z := zone()
 				name := map[ui.Tone]string{ui.ToneDanger: tr.CanvasRedline(), ui.ToneWarn: tr.CanvasHigh(), ui.ToneUp: tr.CanvasNominal()}[z]
-				return ui.Stat{Label: tr.CanvasZone(), Value: label(name), Tone: z, Width: core.Pct(33)}
+				return Stat{Label: tr.CanvasZone(), Value: label(name), Tone: z, Width: core.Pct(33)}
 			}),
-			ui.Stat{Label: tr.CanvasSpool(), Value: func() string { return thousands(int(load()*128)) + tr.CanvasRpm() }, Width: core.Pct(33)},
-			ui.Stat{Label: tr.CanvasLimit(), Value: label("85 %"), Tone: ui.ToneDanger, Width: core.Pct(33)},
+			Stat{Label: tr.CanvasSpool(), Value: func() string { return thousands(int(load()*128)) + tr.CanvasRpm() }, Width: core.Pct(33)},
+			Stat{Label: tr.CanvasLimit(), Value: label("85 %"), Tone: ui.ToneDanger, Width: core.Pct(33)},
 		}},
 	}}
 }
@@ -270,11 +270,11 @@ func areaChart(cx *core.Scope) core.Node {
 			if l < a {
 				t, sign = ui.ToneDown, "−"
 			}
-			return ui.Figure{Value: label(fmt.Sprintf("%d.%d", l, (l*7)%10)), Unit: "k/s", Note: label(tr.CanvasVsAverage(fmt.Sprintf("%s%d", sign, max(l-a, a-l)))), Tone: t}
+			return Figure{Value: label(fmt.Sprintf("%d.%d", l, (l*7)%10)), Unit: "k/s", Note: label(tr.CanvasVsAverage(fmt.Sprintf("%s%d", sign, max(l-a, a-l)))), Tone: t}
 		}),
 		core.Canvas{Style: core.Style{Height: core.Pt(180)}, Draw: draw, Label: tr.CanvasThroughputChart()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
-			ui.Legend{Color: colors.Accent, Label: tr.CanvasMessages()}, ui.Legend{Color: colors.Muted, Label: tr.CanvasAverage()}, ui.Legend{Color: colors.Warn, Label: tr.CanvasDeploy()},
+			Legend{Color: colors.Accent, Label: tr.CanvasMessages()}, Legend{Color: colors.Muted, Label: tr.CanvasAverage()}, Legend{Color: colors.Warn, Label: tr.CanvasDeploy()},
 		}},
 	}}
 }
@@ -354,9 +354,9 @@ func ridgeline(cx *core.Scope) core.Node {
 		}
 	}
 	return ui.Card{Title: tr.CanvasFootfallByHour(), Description: tr.CanvasRidgelineOneCurveADay(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
-		ui.Caption{Label: tr.CanvasGateBLastWeek(), Note: label(tr.CanvasPeak12001400())},
+		Caption{Label: tr.CanvasGateBLastWeek(), Note: label(tr.CanvasPeak12001400())},
 		core.Canvas{Style: core.Style{Height: core.Pt(210)}, Draw: draw, Label: tr.CanvasFootfallRidgeline()},
-		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{ui.Legend{Color: colors.Accent, Label: tr.CanvasWeekday()}, ui.Legend{Color: colors.Info, Label: tr.CanvasWeekend()}}},
+		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{Legend{Color: colors.Accent, Label: tr.CanvasWeekday()}, Legend{Color: colors.Info, Label: tr.CanvasWeekend()}}},
 	}}
 }
 
@@ -405,10 +405,10 @@ func dotMatrix(cx *core.Scope) core.Node {
 			StyleFunc: ui.Filled(func() core.Color { return levels(cx)[i] })})
 	}
 	return ui.Card{Title: tr.CanvasBeaconUptime(), Description: tr.CanvasDotMatrixOneColumnA(), Children: []core.Node{
-		ui.Figure{Value: label("99.94"), Unit: "%", Note: label(tr.Canvas3Incidents()), Tone: ui.ToneDanger},
+		Figure{Value: label("99.94"), Unit: "%", Note: label(tr.Canvas3Incidents()), Tone: ui.ToneDanger},
 		core.Canvas{Style: core.Style{Height: core.Pt(96)}, Draw: draw, Label: tr.CanvasUptimeMatrix()},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{ui.Text(tr.CanvasLess(), 13, ui.Regular, colors.Muted)}, swatches...),
-			core.Text{Content: tr.CanvasMore(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}, ui.Legend{Color: colors.Danger, Label: tr.CanvasIncident()})},
+			core.Text{Content: tr.CanvasMore(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}, Legend{Color: colors.Danger, Label: tr.CanvasIncident()})},
 	}}
 }
 
@@ -465,7 +465,7 @@ func dumbbell(cx *core.Scope) core.Node {
 	return ui.Card{Title: tr.CanvasRouteLatency(), Description: tr.CanvasDumbbellBeforeAfter(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(30*len(routesLatency) + 24))}, Draw: draw, Label: tr.CanvasRouteLatency()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
-			ui.Legend{Color: colors.Muted, Label: tr.CanvasBefore()}, ui.Legend{Color: colors.Accent, Label: tr.CanvasAfter()}, ui.Legend{Color: colors.Danger, Label: tr.CanvasRegressed()},
+			Legend{Color: colors.Muted, Label: tr.CanvasBefore()}, Legend{Color: colors.Accent, Label: tr.CanvasAfter()}, Legend{Color: colors.Danger, Label: tr.CanvasRegressed()},
 		}},
 	}}
 }
@@ -503,7 +503,7 @@ func clock(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 16}, Children: []core.Node{
 			core.Canvas{Style: core.Style{Width: core.Pt(150), Height: core.Pt(150)}, Draw: draw, Label: tr.CanvasClock()},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
-				ui.Caption{Label: tr.CanvasTicks(), Note: label(tr.Canvas60Rotations())}, ui.Caption{Label: tr.CanvasHands(), Note: label(tr.CanvasSaveRestore())}, ui.Caption{Label: tr.CanvasSecondHand(), Note: label(tr.CanvasALoop())},
+				Caption{Label: tr.CanvasTicks(), Note: label(tr.Canvas60Rotations())}, Caption{Label: tr.CanvasHands(), Note: label(tr.CanvasSaveRestore())}, Caption{Label: tr.CanvasSecondHand(), Note: label(tr.CanvasALoop())},
 			}},
 		}},
 	}}
@@ -622,7 +622,7 @@ func sketch(cx *core.Scope) core.Node {
 			d.Stroke()
 		}
 	}
-	return ui.Card{Title: tr.CanvasSketch(), Description: ui.Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
+	return ui.Card{Title: tr.CanvasSketch(), Description: Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
 		core.View{TestID: "sketch", Responder: &core.Responder{Claims: []core.TouchClaim{{}}, Keep: true,
 			OnGrant: func(e core.ResponderEvent) {
 				strokes.Update(func(s [][]core.Point) [][]core.Point { return append(s, []core.Point{e.Position}) })
@@ -637,7 +637,7 @@ func sketch(cx *core.Scope) core.Node {
 				})
 			},
 		}, Children: []core.Node{core.Canvas{Style: core.Style{Height: core.Pt(200)}, Draw: draw, Label: tr.CanvasSketchPad()}}},
-		ui.Caption{Label: tr.CanvasStrokes(), Note: func() string {
+		Caption{Label: tr.CanvasStrokes(), Note: func() string {
 			n := 0
 			for _, s := range strokes.Get() {
 				n += len(s)
@@ -684,7 +684,7 @@ func hitTests(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.CanvasNodesAndHitTests(), Description: tr.CanvasBarsScreenReadersSeeA(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(140)}, Draw: draw, OnPress: pressed, Label: tr.CanvasSelectableBars(), TestID: "bars"},
-		ui.Caption{Label: tr.CanvasSelected(), Note: func() string {
+		Caption{Label: tr.CanvasSelected(), Note: func() string {
 			if s := selected.Get(); s >= 0 {
 				return tr.CanvasBar(s + 1)
 			}

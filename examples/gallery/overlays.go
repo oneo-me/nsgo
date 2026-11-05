@@ -6,8 +6,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // popupStyle is the popups' look: the gallery's, as base draws none.
@@ -75,7 +75,7 @@ func overlayCard(last *core.Signal[string]) cardFunc {
 							Style: core.Style{FontSize: 13, Padding: core.All(6)}, StyleFunc: ui.Colored(colors.Text)}}}
 				}},
 			}},
-			ui.Caption{Label: tr.OverlayScrollThePageItFollows()},
+			Caption{Label: tr.OverlayScrollThePageItFollows()},
 		}}
 	}
 }
@@ -112,7 +112,7 @@ func tooltipCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		hoveredOpen, pinned := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return ui.Card{Title: tr.OverlayTooltip(), Description: ui.Hint(cx, tr.OverlayTooltipsFollowAPointerPin(), tr.OverlayRestThePointerOnA()), Children: []core.Node{
+		return ui.Card{Title: tr.OverlayTooltip(), Description: Hint(cx, tr.OverlayTooltipsFollowAPointerPin(), tr.OverlayRestThePointerOnA()), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
 				// A view's Tooltip: the platform's bubble with the defaults.
 				core.View{Tooltip: core.Text{Content: tr.OverlaySavesTheDocument(), StyleFunc: func() core.Style {
@@ -186,10 +186,10 @@ func toastCard(last *core.Signal[string]) cardFunc {
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
 				ui.Button{Text: tr.OverlayCopyTheLink(), Variant: ui.ButtonSecondary, OnPress: func() {
 					count++
-					toast(toastContent{title: tr.OverlayCopied(), description: tr.OverlayLinkOnClipboard(count)})
+					showToast(toastContent{title: tr.OverlayCopied(), description: tr.OverlayLinkOnClipboard(count)})
 				}},
 				ui.Button{Text: tr.OverlayDeleteTheDraft(), Variant: ui.ButtonSecondary, OnPress: func() {
-					toast(toastContent{id: "draft", title: tr.OverlayDraftDeleted(), action: tr.OverlayUndo(), close: "×", duration: 8 * time.Second,
+					showToast(toastContent{id: "draft", title: tr.OverlayDraftDeleted(), action: tr.OverlayUndo(), close: "×", duration: 8 * time.Second,
 						done: func(answer string) {
 							if answer == tr.OverlayUndo() {
 								last.Set(tr.OverlayToastUndone())

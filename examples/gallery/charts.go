@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/plot"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // chartDayNames are the days of a week, short, in tr's language.
@@ -181,20 +181,20 @@ func chartsDemo(cx *core.Scope) core.Node {
 				if hover.Get() < 0 {
 					day += tr.ChartsTheLastDay()
 				}
-				return ui.Caption{Label: day, Note: func() string { return visitors(rows()[shown()]) + tr.ChartsVisitors2() }}
+				return Caption{Label: day, Note: func() string { return visitors(rows()[shown()]) + tr.ChartsVisitors2() }}
 			}),
 			core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
 				legendItem(cx, func() string { return chartWeekNames[week.Get()] }, false),
 				legendItem(cx, func() string { return chartWeekNames[1-week.Get()] }, true),
 			}},
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-				base.Plot{
+				plot.Plot{
 					TestID: "visitors-plot",
 					Y:      rows,
 					// Room above the highest week for the tooltip.
-					YScale:           func() base.PlotScale { return base.LinearScale(0, visitorsTop) },
+					YScale:           func() plot.Scale { return plot.LinearScale(0, visitorsTop) },
 					AppearGeneration: week.Get,
-					Motion: base.PlotMotion{
+					Motion: plot.Motion{
 						Appear:  &core.TimingConfig{Duration: 600 * time.Millisecond, Easing: core.Easing{Kind: core.EasingQuad, Mode: core.EaseModeOut}},
 						Enter:   &core.TimingConfig{Duration: 150 * time.Millisecond},
 						Exit:    &core.TimingConfig{Duration: 150 * time.Millisecond},
@@ -234,17 +234,17 @@ func chartsDemo(cx *core.Scope) core.Node {
 					},
 					Style: core.Style{FlexGrow: 1, Height: core.Pt(160)},
 					Children: []core.Node{
-						base.PlotGrid{Y: func() []float64 { return []float64{1000, 2000, 3000} }, StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(colors.Line())} }},
+						plot.Grid{Y: func() []float64 { return []float64{1000, 2000, 3000} }, StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(colors.Line())} }},
 						// The line over it has the dot.
-						base.PlotArea{BackgroundStyleFunc: func() core.Style { return wash(ui.ToneAccent.Color(cx)) }, HoverDotStyle: core.Style{Display: core.DisplayNone}},
-						base.PlotGrid{Y: func() []float64 { return []float64{0} }, StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(colors.Border())} }},
+						plot.Area{BackgroundStyleFunc: func() core.Style { return wash(ui.ToneAccent.Color(cx)) }, HoverDotStyle: core.Style{Display: core.DisplayNone}},
+						plot.Grid{Y: func() []float64 { return []float64{0} }, StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(colors.Border())} }},
 						// Each week's dot in its line's color, ringed in the
 						// card's, so it cuts out of the line.
-						base.PlotLine{Y: other, StyleFunc: func() core.Style {
+						plot.Line{Y: other, StyleFunc: func() core.Style {
 							return core.Style{Stroke: core.PaintColor(colors.Muted()), StrokeWidth: 1.5, StrokeDash: []core.Points{4, 4}}
 						},
 							HoverDotStyleFunc: func() core.Style { return core.Style{Background: colors.Muted(), BorderColor: colors.Surface()} }},
-						base.PlotLine{StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(ui.ToneAccent.Color(cx)), StrokeWidth: 2} },
+						plot.Line{StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(ui.ToneAccent.Color(cx)), StrokeWidth: 2} },
 							HoverDotStyleFunc: func() core.Style {
 								return core.Style{Background: ui.ToneAccent.Color(cx), BorderColor: colors.Surface()}
 							}},
@@ -302,11 +302,11 @@ func chartsDemo(cx *core.Scope) core.Node {
 					}
 					return core.View{Style: core.Style{Height: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: gap}, Children: []core.Node{
 						core.Text{ContentFunc: func() string { return t().symbol }, Style: core.Style{Width: core.Pt(64), FontSize: label, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
-						base.Plot{
+						plot.Plot{
 							Y:                func() []float64 { return t().prices },
 							NoHover:          true,
 							AppearGeneration: func() int { return t().id },
-							Motion:           base.PlotMotion{Appear: &core.TimingConfig{Duration: 400 * time.Millisecond, Easing: core.Easing{Kind: core.EasingQuad, Mode: core.EaseModeOut}}},
+							Motion:           plot.Motion{Appear: &core.TimingConfig{Duration: 400 * time.Millisecond, Easing: core.Easing{Kind: core.EasingQuad, Mode: core.EaseModeOut}}},
 							LabelFunc: func() string {
 								dir := "down"
 								if up() {
@@ -317,8 +317,8 @@ func chartsDemo(cx *core.Scope) core.Node {
 							Style: core.Style{FlexGrow: 1, Height: core.Pt(28)},
 							Children: []core.Node{
 								// A wash under the line, in its tone, fading out.
-								base.PlotArea{BackgroundStyleFunc: func() core.Style { return wash(tn().Color(cx)) }},
-								base.PlotLine{StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(tn().Color(cx)), StrokeWidth: 1.5} }},
+								plot.Area{BackgroundStyleFunc: func() core.Style { return wash(tn().Color(cx)) }},
+								plot.Line{StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(tn().Color(cx)), StrokeWidth: 1.5} }},
 							},
 						},
 						// The close over its change: an explicit plus, a true minus.

@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/datatable"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // base's DataTable over a million stocks of sixty columns the app does
@@ -106,12 +107,12 @@ func openingQuote(id int) *stockQuote {
 }
 
 // stockColumns are the table's columns, titled in tr's language.
-func stockColumns(tr locales.Messages) []base.DataTableColumn {
-	right := func(key, title string) base.DataTableColumn {
-		return base.DataTableColumn{Key: key, Title: title, Width: 110, Align: base.AlignEndColumn}
+func stockColumns(tr locales.Messages) []datatable.Column {
+	right := func(key, title string) datatable.Column {
+		return datatable.Column{Key: key, Title: title, Width: 110, Align: datatable.AlignEndColumn}
 	}
-	cols := []base.DataTableColumn{
-		{Key: "id", Title: tr.TableId(), Width: 90, Align: base.AlignEndColumn, Fixed: true, Sortable: true},
+	cols := []datatable.Column{
+		{Key: "id", Title: tr.TableId(), Width: 90, Align: datatable.AlignEndColumn, Fixed: true, Sortable: true},
 		{Key: "symbol", Title: tr.TableSymbol(), Width: 110, Fixed: true},
 		{Key: "name", Title: tr.TableName(), Width: 150},
 		{Key: "market", Title: tr.TableMarket(), Width: 80},
@@ -194,16 +195,16 @@ type stockPageRows struct {
 
 // tableStyles is the gallery's table look, base having none, as its
 // StylesFunc.
-func tableStyles(cx *core.Scope) func() base.DataTableStyles {
-	return ui.Themed(cx, func() base.DataTableStyles { return tableParts(cx) })
+func tableStyles(cx *core.Scope) func() datatable.Styles {
+	return ui.Themed(cx, func() datatable.Styles { return tableParts(cx) })
 }
 
 // tableParts are the table's styles, read where ui.ColorsOf's colors are.
-func tableParts(cx *core.Scope) base.DataTableStyles {
+func tableParts(cx *core.Scope) datatable.Styles {
 	colors := ui.ColorsOf(cx).Now()
 	selected := &core.Style{Color: colors.Text, Opacity: core.Alpha(1)}
 	chevron := core.Style{Color: colors.Muted, Opacity: core.Alpha(0.6), Selected: selected}
-	return base.DataTableStyles{
+	return datatable.Styles{
 		Header:             core.Style{Background: ui.Alpha(colors.Inset, 0.5), Color: colors.Muted, Borders: core.Edges{Bottom: 1}, BorderColor: colors.Border},
 		HeaderCell:         core.Style{Padding: core.Edges{Left: 8, Right: 4}},
 		HeaderContent:      core.Style{Gap: 4},
@@ -237,12 +238,12 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	mode := core.NewSignal(cx, "row")
-	sort := core.NewSignal(cx, base.DataTableSort{})
+	sort := core.NewSignal(cx, datatable.Sort{})
 	page := core.NewSignalFunc(cx, stockPageRows{}, func(a, b stockPageRows) bool { return false })
-	selection := core.NewSignal(cx, base.NoTableSelection)
+	selection := core.NewSignal(cx, datatable.NoTableSelection)
 	visible := core.NewSignal(cx, [2]int{})
 	stripe, live, ticks := core.NewSignal(cx, true), core.NewSignal(cx, true), core.NewSignal(cx, 0)
-	table := &base.DataTableRef{}
+	table := &datatable.Ref{}
 	around := [2]int{0, 40}
 	// The quotes that ticked, by stock: those of the page held. The others
 	// show how they opened.
@@ -328,10 +329,10 @@ func dataTableDemo(cx *core.Scope) core.Node {
 
 	// The columns color their rises and falls in the palette shown, which
 	// the table follows without resetting their widths or order.
-	columnsNow := func() []base.DataTableColumn {
+	columnsNow := func() []datatable.Column {
 		up, down := colors.Up(), colors.Down()
 		titled := stockColumns(tr)
-		columns := make([]base.DataTableColumn, len(titled))
+		columns := make([]datatable.Column, len(titled))
 		for i, c := range titled {
 			c.FitPadding = 16
 			if toned(c.Key) {
@@ -375,18 +376,18 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(260)}, Children: []core.Node{
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "row", Label: tr.TableRows()}, {Value: "cell", Label: tr.TableCells()}}, Value: mode.Get, OnChange: func(v string) { mode.Set(v); selection.Set(base.NoTableSelection) }, Small: true},
+				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "row", Label: tr.TableRows()}, {Value: "cell", Label: tr.TableCells()}}, Value: mode.Get, OnChange: func(v string) { mode.Set(v); selection.Set(datatable.NoTableSelection) }, Small: true},
 			}},
 			core.Dynamic(func(cx *core.Scope) core.Node {
 				tr := locales.For(cx)
-				return ui.Tool{Label: tr.TableToggleLiveUpdates(), Text: onOff(tr.TableLive(), live)(), OnPress: toggle(live)}
+				return Tool{Label: tr.TableToggleLiveUpdates(), Text: onOff(tr.TableLive(), live)(), OnPress: toggle(live)}
 			}),
 			core.Dynamic(func(cx *core.Scope) core.Node {
 				tr := locales.For(cx)
-				return ui.Tool{Label: tr.TableToggleStripes(), Text: onOff(tr.TableStripes(), stripe)(), OnPress: toggle(stripe)}
+				return Tool{Label: tr.TableToggleStripes(), Text: onOff(tr.TableStripes(), stripe)(), OnPress: toggle(stripe)}
 			}),
-			ui.Tool{Label: tr.TableGoToRow500000(), Text: tr.TableRow500000(), OnPress: func() { table.ScrollToRow(499_999, false) }},
-			ui.Tool{Label: tr.TableGoToIndicator30(), Text: tr.TableIndicator30(), OnPress: func() { table.ScrollToColumn("x30", false) }},
+			Tool{Label: tr.TableGoToRow500000(), Text: tr.TableRow500000(), OnPress: func() { table.ScrollToRow(499_999, false) }},
+			Tool{Label: tr.TableGoToIndicator30(), Text: tr.TableIndicator30(), OnPress: func() { table.ScrollToColumn("x30", false) }},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 			status(describe, colors.Text),
@@ -396,7 +397,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 			}, colors.Muted),
 			status(func() string { return tr.TableColumnsTick(len(columns), ticks.Get()) }, colors.Muted),
 		}},
-		base.DataTable{
+		datatable.DataTable{
 			Ref: table, TestID: "table", Label: tr.TableStocks(),
 			Columns:  columnsNow,
 			RowCount: func() int { return stockRows },
@@ -416,7 +417,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 				return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: 8, BorderWidth: 1,
 					BorderColor: colors.Border(), Background: colors.Background(), Color: colors.Text()}
 			},
-			OnSortChange: func(next base.DataTableSort) {
+			OnSortChange: func(next datatable.Sort) {
 				sort.Set(next)
 				clear(quotes)
 				serve(true)

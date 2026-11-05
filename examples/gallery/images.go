@@ -7,8 +7,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 //go:embed assets/bounce.gif
@@ -188,7 +188,7 @@ func placeholders(cx *core.Scope) core.Node {
 	return ui.Card{Title: tr.ImagesPlaceholderAndFade(), Description: tr.ImagesAPlaceholderThenAFade(), Actions: []core.Node{ui.Button{Text: tr.ImagesReload(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: cells},
 	}, Footer: []core.Node{
-		ui.Caption{Label: tr.ImagesLoads(), Note: func() string { return itoa(seed.Get()) }},
+		Caption{Label: tr.ImagesLoads(), Note: func() string { return itoa(seed.Get()) }},
 	}}
 }
 
@@ -245,9 +245,9 @@ func imageInfo(cx *core.Scope) core.Node {
 			})},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-			ui.Caption{Label: "ImageSize", Note: size.Get},
-			ui.Caption{Label: "PrefetchImage", Note: prefetched.Get},
-			ui.Caption{Label: "OnProgress", Note: func() string { return fmt.Sprintf("%.0f%% · %s", progress.Get()*100, status.Get()) }},
+			Caption{Label: "ImageSize", Note: size.Get},
+			Caption{Label: "PrefetchImage", Note: prefetched.Get},
+			Caption{Label: "OnProgress", Note: func() string { return fmt.Sprintf("%.0f%% · %s", progress.Get()*100, status.Get()) }},
 			core.Dynamic(func(*core.Scope) core.Node {
 				t := ui.ToneAccent
 				if progress.Get() >= 1 {
@@ -260,7 +260,7 @@ func imageInfo(cx *core.Scope) core.Node {
 			return imageNote(cx, tr.ImagesPrefetchThenShowNoDownload(), false)
 		},
 			Then: func(*core.Scope) core.Node {
-				return ui.Appear{Children: []core.Node{core.Image{Source: core.Src(big), Style: imageFrame(cx, core.Style{Height: core.Pt(170)}), StyleFunc: frameInk(cx),
+				return Appear{Children: []core.Node{core.Image{Source: core.Src(big), Style: imageFrame(cx, core.Style{Height: core.Pt(170)}), StyleFunc: frameInk(cx),
 					OnLoadStart: func() { status.Set("loading") },
 					OnProgress: func(loaded, total int64) {
 						progress.Set(float64(loaded) / float64(max(1, total)))

@@ -13,16 +13,21 @@ import (
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/base/editor"
 	"github.com/oneo-me/nsgo/base/textview"
+	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/nsgotest"
 )
 
 // TestEveryPartStyleHasAClass checks that each style a component of base
-// or of its document packages takes for a part has the part's class
+// or of its packages takes for a part has the part's class
 // beside it, as NSH pairs them: Style and Class, PopupStyle and
 // PopupClass, Styles and Classes.
 func TestEveryPartStyleHasAClass(t *testing.T) {
-	for dir, name := range map[string]string{".": "base", "textview": "textview", "editor": "editor", "diff": "diff"} {
+	for _, dir := range []string{".", "datatable", "diff", "dock", "editor", "plot", "textview", "toast"} {
+		name := dir
+		if dir == "." {
+			name = "base"
+		}
 		fset := token.NewFileSet()
 		pkgs, err := parser.ParseDir(fset, dir, func(fi fs.FileInfo) bool { return !strings.HasSuffix(fi.Name(), "_test.go") }, 0)
 		if err != nil {
@@ -112,16 +117,16 @@ func TestClassesStyleTheirParts(t *testing.T) {
 }
 
 func TestToastStateClassesWinOverItsStyle(t *testing.T) {
-	var status *core.Signal[base.ToastStatus]
+	var status *core.Signal[toast.Status]
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		status = core.NewSignal(cx, base.ToastPresent)
-		return base.Toast{TestID: "toast", Status: status.Get, Class: "h-10 opacity-90", Style: core.Style{Opacity: core.Alpha(0.8)},
+		status = core.NewSignal(cx, toast.Present)
+		return toast.Toast{TestID: "toast", Status: status.Get, Class: "h-10 opacity-90", Style: core.Style{Opacity: core.Alpha(0.8)},
 			EndingClass: "opacity-50"}
 	})
 	if o := app.Find("id:toast").Style.Opacity; o != 0.8 {
 		t.Errorf("shown, the toast's opacity is %v, want its style's", o)
 	}
-	status.Set(base.ToastEnding)
+	status.Set(toast.Ending)
 	app.Settle()
 	if o := app.Find("id:toast").Style.Opacity; o != 0.5 {
 		t.Errorf("ending, the toast's opacity is %v, want its EndingClass's", o)

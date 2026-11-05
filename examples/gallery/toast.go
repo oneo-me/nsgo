@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
-// The gallery's toasts: toast(...) from anywhere, shown by the toaster the
+// The gallery's toasts: showToast(...) from anywhere, shown by the toaster the
 // root places once, styled by the gallery. A styled layer built on base's
 // unstyled pieces, as NSH's gallery builds its toast.tsx: a ToastManager
 // keeps the toasts and their lifecycle, a ToastStack lays them out, a
@@ -35,7 +35,7 @@ type toastContent struct {
 	done func(answer string)
 }
 
-type toastEntry = base.ToastEntry[string, toastContent]
+type toastEntry = toast.Entry[string, toastContent]
 
 const (
 	toastLimit = 3                     // how many show at once
@@ -45,7 +45,7 @@ const (
 // toaster is the gallery's toasts, kept across the rebuilds of its root.
 type toaster struct {
 	cx       *core.Scope
-	manager  base.ToastManager[string, toastContent]
+	manager  toast.Manager[string, toastContent]
 	shown    *core.Signal[[]toastEntry]
 	expanded *core.Signal[bool]
 	chosen   map[string]string
@@ -118,8 +118,8 @@ func (t *toaster) choose(id, action string) {
 	t.dismiss(id)
 }
 
-// toast shows a toast from anywhere in the gallery.
-func toast(c toastContent) { shell.toasts.show(c) }
+// showToast shows a toast from anywhere in the gallery.
+func showToast(c toastContent) { shell.toasts.show(c) }
 
 // item is one toast, the gallery's look.
 func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
@@ -146,8 +146,8 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 			Children: []core.Node{core.Text{Content: c.close, Style: core.Style{FontSize: 16}, StyleFunc: ui.Colored(colors.Muted)}}})
 	}
 	fade := core.Transition{Duration: ms(200), Easing: core.EaseOut}
-	return base.Toast{TestID: id, Label: label,
-		Status:           func() base.ToastStatus { return e().Status },
+	return toast.Toast{TestID: id, Label: label,
+		Status:           func() toast.Status { return e().Status },
 		OnDismissRequest: func() { t.dismiss(id) },
 		StartingStyle:    core.Style{Opacity: core.Alpha(0), Transform: core.Transform{TranslateY: 16}},
 		EndingStyle:      core.Style{Opacity: core.Alpha(0), Transform: core.Transform{Scale: 0.95}},
@@ -162,21 +162,21 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 
 // view is where the toasts show: at the bottom, inside the safe area.
 func (t *toaster) view(wide bool) core.Node {
-	placement, align := base.AnchorBottomCenter, core.AlignCenter
+	placement, align := toast.AnchorBottomCenter, core.AlignCenter
 	if wide {
-		placement, align = base.AnchorBottomRight, core.AlignEnd
+		placement, align = toast.AnchorBottomRight, core.AlignEnd
 	}
 	return core.Overlay{PointerEvents: core.PointerEventsBoxNone,
 		Style: core.Style{Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), AlignItems: align,
 			Padding: core.All(16), PaddingEnv: core.EnvEdges{Bottom: core.EnvSafeArea}},
-		Children: []core.Node{base.ToastStack[toastEntry, string]{TestID: "toasts", Placement: placement,
+		Children: []core.Node{toast.Stack[toastEntry, string]{TestID: "toasts", Placement: placement,
 			Toasts: t.shown.Get, Key: func(e toastEntry) string { return e.ID }, Toast: t.item,
 			Style:            core.Style{Width: core.Pt(340), MaxWidth: core.Pct(100)},
 			OnExpandedChange: t.expanded.Set,
 			OnCancel: func() {
 				shown := t.shown.GetUntracked()
 				for i := len(shown) - 1; i >= 0; i-- {
-					if shown[i].Status != base.ToastEnding {
+					if shown[i].Status != toast.Ending {
 						t.dismiss(shown[i].ID)
 						return
 					}

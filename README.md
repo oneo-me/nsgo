@@ -26,7 +26,7 @@ NSGo follows the design of [Native Shell (NSH)](https://nsh.dev), which does the
 
 ## Status
 
-NSGo is early. It has NSH's reactive model, layout, text, images, canvas, shaders, animations, services and unstyled base components on macOS, iOS, Windows, Linux, the web and Android, and apps embed in iOS, Android and Go desktop apps of their own. There is no release or stable API yet. [ARCHITECTURE.md](ARCHITECTURE.md#platforms) tracks each target.
+NSGo is early. It has NSH's reactive model, layout, text, images, canvas, shaders, animations, services, unstyled base components and styled `ui` components on macOS, iOS, Windows, Linux, the web and Android, and apps embed in iOS, Android and Go desktop apps of their own. There is no release or stable API yet. [ARCHITECTURE.md](ARCHITECTURE.md#platforms) tracks each target.
 
 ## Goals
 
@@ -167,7 +167,7 @@ Android device and emulator development additionally needs `adb` from the Androi
 
 The x86_64 emulator target, `android_x64`, also needs an Android NDK: Go links android/amd64 only with cgo. On Windows, Go 1.26 or later runs the native app and builds the Windows and web packages. On Linux, Go runs the native app once GTK 4.14 or newer, Pango and Cairo are installed, WebKitGTK 6.0 for web views and GStreamer plug-ins for videos.
 
-Run the gallery from the repository root: NSH's gallery in Go, a demo of each element, `base` component and service. A wide window shows the demos in a sidebar; a narrow one is a phone's index.
+Run the gallery from the repository root: NSH's gallery in Go, a demo of each element, `base` and `ui` component and service. A wide window shows the demos in a sidebar; a narrow one is a phone's index.
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml's dev target, exiting with the app

@@ -8,8 +8,8 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // inlinePage is an inline page in the gallery's colors, for the
@@ -63,8 +63,8 @@ func messaging(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.MediaWebView(), Description: tr.MediaInlineHtmlWithMessagesBoth(), Children: []core.Node{
 		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: message.Set},
-		ui.Caption{Label: tr.MediaFromThePage(), Note: func() string { return or(message.Get()) }},
-		ui.Caption{Label: tr.MediaToThePage(), Note: func() string {
+		Caption{Label: tr.MediaFromThePage(), Note: func() string { return or(message.Get()) }},
+		Caption{Label: tr.MediaToThePage(), Note: func() string {
 			if sent.Get() == 0 {
 				return "—"
 			}
@@ -229,8 +229,8 @@ func nativeView(cx *core.Scope) core.Node {
 				events.Set(fmt.Sprintf("%s %v", name, data))
 			},
 			Style: core.Style{AlignSelf: core.AlignStretch, MinWidth: core.Pt(200), MinHeight: core.Pt(28)}},
-		ui.Note{Text: noteText},
-		ui.Caption{Label: tr.MediaValue(), Note: func() string { return fmt.Sprintf("%.2f", value.Get()) }},
+		Note{Text: noteText},
+		Caption{Label: tr.MediaValue(), Note: func() string { return fmt.Sprintf("%.2f", value.Get()) }},
 		core.Text{TestID: "native-value", ContentFunc: func() string { return tr.MediaLastEvent() + events.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 			ui.Cell{Child: ui.Button{Text: tr.MediaSet08(), Variant: ui.ButtonSecondary, OnPress: func() { value.Set(0.8) }}},

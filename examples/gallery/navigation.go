@@ -8,8 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // insetsRow is the safe-area insets where it renders, one figure per
@@ -22,10 +22,10 @@ func insetsRow(cx *core.Scope) core.Node {
 	}
 	_ = env
 	return core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-		ui.Stat{Label: tr.NavTop(), Value: edge(func(e core.Edges) core.Points { return e.Top }), Width: core.Pct(25)},
-		ui.Stat{Label: tr.NavBottom(), Value: edge(func(e core.Edges) core.Points { return e.Bottom }), Width: core.Pct(25)},
-		ui.Stat{Label: tr.NavLeft(), Value: edge(func(e core.Edges) core.Points { return e.Left }), Width: core.Pct(25)},
-		ui.Stat{Label: tr.NavRight(), Value: edge(func(e core.Edges) core.Points { return e.Right }), Width: core.Pct(25)},
+		Stat{Label: tr.NavTop(), Value: edge(func(e core.Edges) core.Points { return e.Top }), Width: core.Pct(25)},
+		Stat{Label: tr.NavBottom(), Value: edge(func(e core.Edges) core.Points { return e.Bottom }), Width: core.Pct(25)},
+		Stat{Label: tr.NavLeft(), Value: edge(func(e core.Edges) core.Points { return e.Left }), Width: core.Pct(25)},
+		Stat{Label: tr.NavRight(), Value: edge(func(e core.Edges) core.Points { return e.Right }), Width: core.Pct(25)},
 	}}
 }
 
@@ -36,9 +36,9 @@ func navPage(cx *core.Scope, intro string, children ...core.Node) core.Node {
 	colors := ui.ColorsOf(cx)
 	return core.Scroll{Style: core.Style{FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 		core.View{Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, Gap: 16}, Children: []core.Node{
-			ui.Appear{Children: []core.Node{core.Text{Content: intro, Style: core.Style{FontSize: 13, LineHeight: 21, Padding: core.Symmetric(0, 4)}, StyleFunc: ui.Colored(colors.Muted)}}},
-			ui.Appear{Index: 1, Children: []core.Node{ui.Section{Title: tr.NavSafeArea(), Note: tr.NavInsets(), Children: []core.Node{insetsRow(cx)}}}},
-			ui.Appear{Index: 2, Children: []core.Node{core.View{Style: core.Style{Gap: 16}, Children: children}}},
+			Appear{Children: []core.Node{core.Text{Content: intro, Style: core.Style{FontSize: 13, LineHeight: 21, Padding: core.Symmetric(0, 4)}, StyleFunc: ui.Colored(colors.Muted)}}},
+			Appear{Index: 1, Children: []core.Node{Section{Title: tr.NavSafeArea(), Note: tr.NavInsets(), Children: []core.Node{insetsRow(cx)}}}},
+			Appear{Index: 2, Children: []core.Node{core.View{Style: core.Style{Gap: 16}, Children: children}}},
 		}},
 	}}
 }
@@ -83,12 +83,12 @@ func transparentPage(cx *core.Scope) base.NavPage {
 			core.View{StyleFunc: func() core.Style {
 				return core.Style{Position: core.Absolute, Top: core.Pt(150), Left: core.Pt(-110), Width: core.Pt(260), Height: core.Pt(260), CornerRadius: 130, Background: tints.Info()}
 			}},
-			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
+			Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderTransparent", Tone: ui.ToneAccent}}},
 				core.Text{Content: tr.NavContentUnderTheHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: tr.NavTheCirclesStartAtThe(), Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
-			ui.Appear{Index: 1, Children: []core.Node{ui.Inset{Children: []core.Node{insetsRow(cx)}}}},
+			Appear{Index: 1, Children: []core.Node{ui.Inset{Children: []core.Node{insetsRow(cx)}}}},
 		}}}}
 }
 
@@ -121,7 +121,7 @@ func customHeaderPage(cx *core.Scope) base.NavPage {
 		HeaderBackHidden: true, HeaderLeft: left(), HeaderTitle: center(), HeaderRight: right(),
 		Header: pageHeader(cx, pageHeaderProps{title: tr.NavCustom(), background: colors.AccentFill, left: left(), center: center(), right: right()}),
 		Children: []core.Node{navPage(cx, tr.NavTheHeaderSItemsAre(),
-			ui.Section{Title: tr.NavHeader(), Note: "HeaderRight", Children: []core.Node{ui.Figure{Value: func() string { return itoa(likes.Get()) }, Note: func() string {
+			Section{Title: tr.NavHeader(), Note: "HeaderRight", Children: []core.Node{Figure{Value: func() string { return itoa(likes.Get()) }, Note: func() string {
 				if likes.Get() == 1 {
 					return "star"
 				}
@@ -131,12 +131,12 @@ func customHeaderPage(cx *core.Scope) base.NavPage {
 
 func lockedPage(cx *core.Scope) base.NavPage {
 	tr := locales.For(cx)
-	s := screen(cx, tr.NavNoSwipeBack(), nil, navPage(cx, ui.Hint(cx,
+	s := screen(cx, tr.NavNoSwipeBack(), nil, navPage(cx, Hint(cx,
 		tr.NavTheBackGestureIsOff(),
 		tr.NavTheBackGestureIsOff2()),
-		ui.Section{Title: tr.NavLeaving(), Note: "NoPopOnSwipe", Children: []core.Node{core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-			ui.Stat{Label: tr.NavSwipeBack(), Value: label(tr.NavOff()), Tone: ui.ToneDanger, Width: core.Pct(50)},
-			ui.Stat{Label: tr.NavBackButtons(), Value: label(tr.NavOn()), Tone: ui.ToneUp, Width: core.Pct(50)},
+		Section{Title: tr.NavLeaving(), Note: "NoPopOnSwipe", Children: []core.Node{core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
+			Stat{Label: tr.NavSwipeBack(), Value: label(tr.NavOff()), Tone: ui.ToneDanger, Width: core.Pct(50)},
+			Stat{Label: tr.NavBackButtons(), Value: label(tr.NavOn()), Tone: ui.ToneUp, Width: core.Pct(50)},
 		}}}}))
 	s.NoPopOnSwipe = true
 	return s
@@ -165,7 +165,7 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 	}
 	s := base.NavPage{Title: tr.NavUnsavedChanges(), HeaderStyleFunc: headerStyle(cx), NoPopOnBack: true, OnBackPress: back,
 		Header: pageHeader(cx, pageHeaderProps{title: tr.NavUnsavedChanges(), onBack: back}),
-		Children: []core.Node{navPage(cx, ui.Hint(cx,
+		Children: []core.Node{navPage(cx, Hint(cx,
 			tr.NavTypeSomethingThenGoBack(),
 			tr.NavTypeSomethingThenGoBack2()),
 			ui.Card{Title: tr.NavDraft(), Description: "NoPopOnBack + OnBackPress", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
@@ -175,7 +175,7 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 				return ui.Badge{Text: tr.NavEmpty()}
 			})}, Children: []core.Node{
 				ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: tr.NavADraft(), TestID: "draft"}},
-				ui.Note{TextFunc: func() string {
+				Note{TextFunc: func() string {
 					if n := len([]rune(draft.Get())); n > 0 {
 						return tr.NavCharactersLost(n)
 					}
@@ -190,13 +190,13 @@ func headerlessPage(cx *core.Scope) base.NavPage {
 	colors := ui.ColorsOf(cx)
 	return base.NavPage{HeaderHidden: true, Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 		core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
-			ui.Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 12, Right: 4, Left: 4}}, Children: []core.Node{
+			Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 12, Right: 4, Left: 4}}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderHidden", Tone: ui.ToneAccent}}},
 				core.Text{Content: tr.NavNoHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: tr.NavTheScreenOwnsTheWhole(),
 					Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
-			ui.Appear{Index: 1, Children: []core.Node{ui.Section{Title: tr.NavSafeArea(), Note: "PaddingEnv: EnvSafeArea", Children: []core.Node{insetsRow(cx)}}}},
+			Appear{Index: 1, Children: []core.Node{Section{Title: tr.NavSafeArea(), Note: "PaddingEnv: EnvSafeArea", Children: []core.Node{insetsRow(cx)}}}},
 			ui.Spacer{},
 			ui.Button{Text: tr.NavBack(), OnPress: func() { shell.nav.Pop(1) }},
 		}},
@@ -257,7 +257,7 @@ func modalBody(cx *core.Scope, title, noteText func() string, body func() string
 				core.Text{ContentFunc: title, Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{ContentFunc: body, Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
-			ui.Section{Title: tr.NavSafeArea(), Note: tr.NavTheModalS(), Children: []core.Node{insetsRow(cx)}},
+			Section{Title: tr.NavSafeArea(), Note: tr.NavTheModalS(), Children: []core.Node{insetsRow(cx)}},
 			ui.Spacer{},
 			ui.Button{Text: tr.NavClose(), OnPress: onClose},
 		}},
@@ -275,11 +275,11 @@ func navigationDemo(cx *core.Scope) core.Node {
 	closeModal := func() { open.Set("") }
 	modals := []modalKind{
 		{"fullScreen", tr.NavFullScreen(), tr.NavSlidesUp(), lucide.Smartphone},
-		{"pageSheet", tr.NavPageSheet(), ui.Hint(cx, tr.NavIosSheet(), tr.NavATallCenteredCard()), lucide.Component},
-		{"formSheet", tr.NavFormSheet(), ui.Hint(cx, tr.NavIosCentered(), tr.NavASmallerCenteredCard()), lucide.TextCursorInput},
+		{"pageSheet", tr.NavPageSheet(), Hint(cx, tr.NavIosSheet(), tr.NavATallCenteredCard()), lucide.Component},
+		{"formSheet", tr.NavFormSheet(), Hint(cx, tr.NavIosCentered(), tr.NavASmallerCenteredCard()), lucide.TextCursorInput},
 		{"fade", tr.NavFade(), tr.NavFadesIn(), lucide.Sparkles},
 		{"dialog", tr.NavDialog(), tr.NavSeeThrough(), lucide.Bell},
-		{"kept", tr.NavKeptOpen(), ui.Hint(cx, tr.NavNoSwipeToClose(), tr.NavEscapeDoesNotClose()), lucide.ArrowDown},
+		{"kept", tr.NavKeptOpen(), Hint(cx, tr.NavNoSwipeToClose(), tr.NavEscapeDoesNotClose()), lucide.ArrowDown},
 	}
 	// A handler hears back before the stack pops; it lives only while
 	// intercepting, in a scope of its own.
@@ -315,7 +315,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 		}
 		return modalKind{}
 	}
-	platformName := ui.Hint(cx, "UIKit / View", tr.NavNativeViews())
+	platformName := Hint(cx, "UIKit / View", tr.NavNativeViews())
 	if cx.Env().OS() == core.OSLinux {
 		platformName = "GTK 4"
 	}
@@ -327,13 +327,13 @@ func navigationDemo(cx *core.Scope) core.Node {
 	pages := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return ui.Card{Title: tr.NavPages(), Description: tr.NavScreenOptionsPushedWithNav(), Flush: true, Children: []core.Node{
-			ui.LinkRow{Icon: lucide.Type, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
-			ui.LinkRow{Divided: true, Icon: lucide.Palette, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
-			ui.LinkRow{Divided: true, Icon: lucide.Star, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
-			ui.LinkRow{Divided: true, Icon: lucide.Smartphone, Title: tr.NavNoHeader(), Note: "HeaderHidden", OnPress: func() { shell.push(headerlessPage) }},
-			ui.LinkRow{Divided: true, Icon: lucide.Hand, Title: tr.NavNoSwipeBack(), Note: "NoPopOnSwipe", OnPress: func() { shell.push(lockedPage) }},
-			ui.LinkRow{Divided: true, Icon: lucide.TextCursorInput, Title: tr.NavUnsavedChanges(), Note: "NoPopOnBack + OnBackPress", OnPress: func() { shell.push(unsavedPage) }},
-			ui.LinkRow{Divided: true, Icon: lucide.List, Title: tr.NavADeepStack(), Note: "Push / PopToRoot", OnPress: func() { shell.push(deepPage(1)) }},
+			LinkRow{Icon: lucide.Type, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
+			LinkRow{Divided: true, Icon: lucide.Palette, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
+			LinkRow{Divided: true, Icon: lucide.Star, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
+			LinkRow{Divided: true, Icon: lucide.Smartphone, Title: tr.NavNoHeader(), Note: "HeaderHidden", OnPress: func() { shell.push(headerlessPage) }},
+			LinkRow{Divided: true, Icon: lucide.Hand, Title: tr.NavNoSwipeBack(), Note: "NoPopOnSwipe", OnPress: func() { shell.push(lockedPage) }},
+			LinkRow{Divided: true, Icon: lucide.TextCursorInput, Title: tr.NavUnsavedChanges(), Note: "NoPopOnBack + OnBackPress", OnPress: func() { shell.push(unsavedPage) }},
+			LinkRow{Divided: true, Icon: lucide.List, Title: tr.NavADeepStack(), Note: "Push / PopToRoot", OnPress: func() { shell.push(deepPage(1)) }},
 		}}
 	}
 	modalsCard := func(cx *core.Scope) core.Node {
@@ -346,7 +346,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 					return core.Style{MinHeight: core.Pt(100), Padding: core.All(12), Gap: 12, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
 						Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Line()}
 				}, Children: []core.Node{
-					ui.IconTile{Icon: m.icon, Size: 32},
+					IconTile{Icon: m.icon, Size: 32},
 					core.View{Style: core.Style{Gap: 2}, Children: []core.Node{ui.Text(m.title, 13, ui.Medium, colors.Text), ui.Text(m.note, 13, ui.Regular, colors.Faint)}},
 				}},
 			}})
@@ -357,8 +357,8 @@ func navigationDemo(cx *core.Scope) core.Node {
 	}
 	backCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Title: tr.NavBackButton(), Description: ui.Hint(cx, tr.NavOnbackpressTheBackButtonAnd(), tr.NavOnbackpressEscapeTheMouseS()), Actions: []core.Node{ui.Switch{Checked: intercept.Get, OnChange: intercept.Set, Label: tr.NavInterceptTheBackButton()}}, Children: []core.Node{
-			ui.Figure{Value: func() string { return itoa(backs.Get()) }, Note: func() string {
+		return ui.Card{Title: tr.NavBackButton(), Description: Hint(cx, tr.NavOnbackpressTheBackButtonAnd(), tr.NavOnbackpressEscapeTheMouseS()), Actions: []core.Node{ui.Switch{Checked: intercept.Get, OnChange: intercept.Set, Label: tr.NavInterceptTheBackButton()}}, Children: []core.Node{
+			Figure{Value: func() string { return itoa(backs.Get()) }, Note: func() string {
 				unit := "presses"
 				if backs.Get() == 1 {
 					unit = "press"
@@ -368,11 +368,11 @@ func navigationDemo(cx *core.Scope) core.Node {
 				}
 				return unit + tr.NavPopped()
 			}, Tone: ui.ToneAccent},
-			ui.Note{TextFunc: func() string {
+			Note{TextFunc: func() string {
 				if intercept.Get() {
 					return tr.NavTheHandlerReturnsTrueBack()
 				}
-				return ui.Hint(cx, tr.NavOffTheBackButtonPops(), tr.NavOffEscapePopsThisScreen())
+				return Hint(cx, tr.NavOffTheBackButtonPops(), tr.NavOffEscapePopsThisScreen())
 			}},
 		}}
 	}
@@ -407,17 +407,17 @@ func navigationDemo(cx *core.Scope) core.Node {
 				PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch},
 				Children: []core.Node{modalBody(cx, func() string { return current().title }, func() string { return k }, func() string {
 					if k == "pageSheet" || k == "formSheet" {
-						return ui.Hint(cx, tr.NavCloseWithTheButtonThe(),
+						return Hint(cx, tr.NavCloseWithTheButtonThe(),
 							tr.NavCloseWithTheButtonEscape())
 					}
-					return ui.Hint(cx, tr.NavCloseWithTheButtonOr(), tr.NavCloseWithTheButtonOr2())
+					return Hint(cx, tr.NavCloseWithTheButtonOr(), tr.NavCloseWithTheButtonOr2())
 				}, closeModal)}}
 		}),
 		base.Dialog{Open: isShown("kept"), Presentation: core.ModalPageSheet, NoCloseOnEscape: true, NoCloseOnBackdropPress: true, NoCloseOnSwipe: true,
 			OnCancel: func() { cancels.Update(func(n int) int { return n + 1 }) }, Label: tr.NavKeptOpen(),
 			PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch},
 			Children: []core.Node{modalBody(cx, label(tr.NavKeptOpen()), label("NoCloseOn…"), func() string {
-				return tr.NavOnlyCallOnCancel(ui.Hint(cx, tr.NavSwipingItDownIosAnd(), tr.NavEscapeAndClicksOutside()), cancels.Get())
+				return tr.NavOnlyCallOnCancel(Hint(cx, tr.NavSwipingItDownIosAnd(), tr.NavEscapeAndClicksOutside()), cancels.Get())
 			}, closeModal)}},
 		base.Dialog{Open: isShown("dialog"), Animation: core.ModalFade, OnOpenChange: func(o bool, _ base.Reason) {
 			if !o {

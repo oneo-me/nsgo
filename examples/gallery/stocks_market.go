@@ -10,7 +10,7 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // A simulated market: fictional companies whose prices walk every 50 ms.

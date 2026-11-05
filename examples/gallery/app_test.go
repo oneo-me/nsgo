@@ -17,7 +17,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.

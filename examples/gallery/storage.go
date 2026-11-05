@@ -8,8 +8,8 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // Storage keys of the demo.
@@ -72,7 +72,7 @@ func storageDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		return ui.Card{Title: tr.StorageLaunches(), Description: tr.StorageCountedEachTimeThisDemo(), Actions: []core.Node{ui.Badge{Text: tr.StorageKept(), Tone: ui.ToneUp}}, Children: []core.Node{
-			ui.Figure{Value: func() string { return strconv.Itoa(shown.Get()) }, Note: func() string {
+			Figure{Value: func() string { return strconv.Itoa(shown.Get()) }, Note: func() string {
 				if shown.Get() == 1 {
 					return "opening"
 				}
@@ -131,13 +131,13 @@ func storageDemo(cx *core.Scope) core.Node {
 			return n
 		}
 		return ui.Card{Title: tr.StorageStoredKeys(), Description: tr.StorageKeysAndEachValueS(), Children: []core.Node{
-			core.Show{When: func() bool { return len(store.Keys()) > 0 }, Else: func(*core.Scope) core.Node { return ui.Caption{Label: tr.StorageNothingStored()} },
+			core.Show{When: func() bool { return len(store.Keys()) > 0 }, Else: func(*core.Scope) core.Node { return Caption{Label: tr.StorageNothingStored()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Children: []core.Node{core.Each(entries, func(e entry) string { return e.key },
 						func(cx *core.Scope, e func() entry, i func() int) core.Node {
 							colors := ui.ColorsOf(cx)
 							return core.Dynamic(func(*core.Scope) core.Node {
-								return ui.Row{First: i() == 0, Children: []core.Node{
+								return Row{First: i() == 0, Children: []core.Node{
 									core.Text{ContentFunc: func() string { return e().key }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
 									core.Text{ContentFunc: func() string { return tr.StorageChars(e().length) }, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 								}}
@@ -160,8 +160,8 @@ func storageDemo(cx *core.Scope) core.Node {
 			return d
 		}
 		return ui.Card{Title: tr.StorageAppDirectories(), Description: tr.StorageDatadirAndCachedirNamedBy(), Children: []core.Node{
-			ui.Caption{Label: tr.StorageData()}, ui.Code{Text: dir(cx.DataDir())},
-			ui.Caption{Label: tr.StorageCache()}, ui.Code{Text: dir(cx.CacheDir())},
+			Caption{Label: tr.StorageData()}, Code{Text: dir(cx.DataDir())},
+			Caption{Label: tr.StorageCache()}, Code{Text: dir(cx.CacheDir())},
 		}}
 	}
 

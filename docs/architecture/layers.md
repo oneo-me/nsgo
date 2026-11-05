@@ -13,7 +13,6 @@ nsgo
 ├── Apps
 │   ├── examples/gallery, tray, tsx      Demos of what apps are made of
 │   ├── examples/embedded, embed-*       An embeddable app and its hosts
-│   ├── examples/gallery-ui              Styled components Onexa copies
 │   └── bench/quotes                     Benchmarks
 │
 ├── Entry points
@@ -25,11 +24,14 @@ nsgo
 │   └── nsgotest                         Runs apps in tests, headless or on a target
 │
 ├── Components
+│   ├── ui                               Styled components on base
+│   │   └── chat                         A conversation
 │   ├── base                             Unstyled controls, popups, navigation
-│   │   ├── textview, editor, diff       Components with heavier dependencies
+│   │   ├── datatable, dock, plot, toast Complex components
+│   │   ├── textview, editor, diff       Complex components with heavier dependencies
 │   │   ├── terminal                     A program in a pseudo-terminal
 │   │   ├── locales                      Their catalogs
-│   │   └── internal/syntax, window      What they share
+│   │   └── internal/                    What they share
 │   ├── mobile                           What only phones have
 │   ├── desktop                          What only desktops have
 │   ├── icons/lucide                     The bundled icons
@@ -93,7 +95,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
          │                       │                    │
     nsgo (root)         tsx, tsx/compiler         nsgotest
          │                       │                    │
-         │             base/*  mobile  desktop        │
+         │           ui/*  base/*  mobile  desktop    │
          │             icons/*  i18n                  │
          │                       │                    │
  internal/platform/<target>      │                    │
@@ -111,6 +113,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 - Backends import `internal/driver`, `internal/engine`, their shared packages and the shader writers, never the compiler, which only `core` links.
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
+- `ui` imports `base`, `core`, `mobile`, `desktop` and the icons; `base` never imports it.
 - `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`.
 - `base/terminal` is the one package of `base` that is not portable: it loads libghostty-vt through purego, runs programs on desktops and remote sessions there and on iOS, and elsewhere builds to report that it cannot (`unportable` in `layering_test.go`).
 
@@ -124,7 +127,7 @@ Backends reach `core` only through the engine and `core` imports no backend, so 
 
 `nsgotest` is a backend of its own: headless, without the engine, applying each batch to a model of the native views. On a platform, it drives a backend's test host through `internal/testhost`.
 
-Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base` but for `base/terminal`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine`. No package has cgo files or hand-written C.
+Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base` but for `base/terminal`, `ui`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine`. No package has cgo files or hand-written C.
 
 ## Backends
 
@@ -157,8 +160,8 @@ This follows a `base.Button` from an app to the Windows backend; another backend
 
 | Change | Layer |
 | --- | --- |
-| A look, a variant or a styled control | The app, or `examples/gallery-ui` for what Onexa copies |
-| An unstyled component | `base`, or a package under it if it links dependencies other apps should not |
+| A look, a variant or a styled control | `ui`, or the app for what is its own |
+| An unstyled component | A file of `base`, or a package under it if it is complex |
 | What only phones or only desktops have | `mobile` or `desktop` |
 | A new element or service | `core` and `internal/driver`, then every backend |
 | A drawing or input bug on one target | `internal/platform/<target>`, then check the other backends |

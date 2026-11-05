@@ -14,8 +14,9 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 	"github.com/oneo-me/nsgo/icons/lucide"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
+	"github.com/oneo-me/nsgo/ui/chat"
 )
 
 var featured = []struct {
@@ -75,7 +76,7 @@ func chatDemo(cx *core.Scope) core.Node {
 	bannerKind := core.NewSignal(cx, "offline")
 	// copied is the copied message, for a moment.
 	copied := core.NewSignal(cx, "")
-	conversation := ui.NewChatConversationState(cx)
+	conversation := chat.NewConversationState(cx)
 
 	// The reply being written; finished replies are plain data in
 	// messages.
@@ -489,20 +490,20 @@ func chatDemo(cx *core.Scope) core.Node {
 			return m().md
 		}
 		written := core.NewMemo(cx, func() bool { return md() != "" })
-		status := core.NewMemo(cx, func() ui.ChatStatus {
+		status := core.NewMemo(cx, func() chat.Status {
 			switch {
 			case live():
-				return ui.ChatRunning
+				return chat.Running
 			case m().waiting:
-				return ui.ChatWaiting
+				return chat.Waiting
 			case m().status == "error":
-				return ui.ChatFailed
+				return chat.Failed
 			case m().status == "stopped":
-				return ui.ChatCancelled
+				return chat.Cancelled
 			case m().status == "done":
-				return ui.ChatCompleted
+				return chat.Completed
 			}
-			return ui.ChatRunning
+			return chat.Running
 		})
 		elapsed := func() (minutes, seconds int) {
 			end := m().ended
@@ -514,27 +515,27 @@ func chatDemo(cx *core.Scope) core.Node {
 		}
 		statusLabel := func() string {
 			switch status.Get() {
-			case ui.ChatWaiting:
+			case chat.Waiting:
 				return tr.ChatWaitingForAConnection()
-			case ui.ChatFailed:
+			case chat.Failed:
 				return tr.ChatFailed()
-			case ui.ChatCancelled:
+			case chat.Cancelled:
 				return tr.ChatStopped()
 			}
 			return tr.ChatRunning()
 		}
-		steps := func() []ui.ChatStep {
-			var activities []ui.ChatActivity
+		steps := func() []chat.Step {
+			var activities []chat.Activity
 			if reasoned.Get() {
-				a := ui.ChatActivity{ID: "think", Icon: lucide.Brain, Action: thinkingLabel(), Status: ui.ChatCompleted,
+				a := chat.Activity{ID: "think", Icon: lucide.Brain, Action: thinkingLabel(), Status: chat.Completed,
 					Content: func(*core.Scope) core.Node { return core.Text{ContentFunc: reasonText, Selectable: core.SelectableOn} }}
 				if live() && thinking.Get() {
-					a.Status = ui.ChatRunning
+					a.Status = chat.Running
 				}
 				activities = append(activities, a)
 			}
 			for _, t := range tools() {
-				a := ui.ChatActivity{ID: t.id, Icon: lucide.Terminal, Action: tr.ChatRunCode(), Detail: t.lang + tr.ChatSandboxed(), MaxHeight: 320}
+				a := chat.Activity{ID: t.id, Icon: lucide.Terminal, Action: tr.ChatRunCode(), Detail: t.lang + tr.ChatSandboxed(), MaxHeight: 320}
 				switch t.kind {
 				case "search":
 					a.Icon, a.Action, a.Detail = lucide.Globe, tr.ChatWebSearch(), t.query
@@ -543,43 +544,43 @@ func chatDemo(cx *core.Scope) core.Node {
 				}
 				switch t.state {
 				case toolDone:
-					a.Status = ui.ChatCompleted
+					a.Status = chat.Completed
 				case toolCancelled:
-					a.Status = ui.ChatCancelled
+					a.Status = chat.Cancelled
 				default:
-					a.Status = ui.ChatRunning
+					a.Status = chat.Running
 				}
 				id := t.id
 				a.Content = func(cx *core.Scope) core.Node { return toolBody(cx, tool(id)) }
 				activities = append(activities, a)
 			}
-			var out []ui.ChatStep
+			var out []chat.Step
 			if n := len(activities); n > 0 {
 				title := tr.ChatRanTools(n)
 				if last := activities[n-1]; live() && !written.Get() {
 					// A live group names its latest activity.
 					title = strings.TrimSpace(last.Action + " " + last.Detail)
 				}
-				out = append(out, ui.ChatStep{ID: "work", Title: title, Activities: activities})
+				out = append(out, chat.Step{ID: "work", Title: title, Activities: activities})
 			}
 			if live() && written.Get() {
 				// The reply streams after the work and becomes the final
 				// response once complete.
-				out = append(out, ui.ChatStep{ID: "reply", Message: func(*core.Scope) core.Node { return chatMarkdown(md, func() bool { return true }) }})
+				out = append(out, chat.Step{ID: "reply", Message: func(*core.Scope) core.Node { return chatMarkdown(md, func() bool { return true }) }})
 			}
 			return out
 		}
-		return ui.ChatTurn{Status: status.Get, Steps: steps, Conversation: conversation,
+		return chat.Turn{Status: status.Get, Steps: steps, Conversation: conversation,
 			Summary: func() string { minutes, seconds := elapsed(); return tr.ChatWorked(minutes, seconds) },
 			Working: func() string { minutes, seconds := elapsed(); return tr.ChatWorking(statusLabel(), minutes, seconds) },
 			Prompt: func(cx *core.Scope) core.Node {
 				first := core.Untracked(cx, m)
 				var nodes core.Group
 				if hasImage(first.image) {
-					nodes = append(nodes, ui.ChatAttachmentPreview{Label: tr.ChatPhoto(), Image: first.image})
+					nodes = append(nodes, chat.AttachmentPreview{Label: tr.ChatPhoto(), Image: first.image})
 				}
 				if first.file != nil {
-					nodes = append(nodes, ui.ChatAttachment{Label: first.file.name, Detail: first.file.size})
+					nodes = append(nodes, chat.Attachment{Label: first.file.name, Detail: first.file.size})
 				}
 				return append(nodes, core.Text{Content: first.text, Selectable: core.SelectableOn, Style: core.Style{FontSize: 13, LineHeight: 19}})
 			},
@@ -589,7 +590,7 @@ func chatDemo(cx *core.Scope) core.Node {
 					core.Show{When: func() bool { return m().waiting }, Then: func(cx *core.Scope) core.Node {
 						return ui.HStack{Gap: 6, Children: []core.Node{ui.Spinner{Size: 12}, ui.Text(tr.ChatWaitingForAConnection(), 12, ui.Regular, colors.Muted)}}
 					}},
-					core.Show{When: func() bool { return status.Get() == ui.ChatFailed }, Then: func(cx *core.Scope) core.Node {
+					core.Show{When: func() bool { return status.Get() == chat.Failed }, Then: func(cx *core.Scope) core.Node {
 						return errorRow(cx, func() string {
 							if e := m().err; e != "" {
 								return e
@@ -597,12 +598,12 @@ func chatDemo(cx *core.Scope) core.Node {
 							return tr.ChatSomethingWentWrong()
 						}, func() { retry(core.Untracked(cx, m)) })
 					}},
-					core.Show{When: func() bool { return status.Get() == ui.ChatCancelled }, Then: func(cx *core.Scope) core.Node {
+					core.Show{When: func() bool { return status.Get() == chat.Cancelled }, Then: func(cx *core.Scope) core.Node {
 						return ui.Text(tr.ChatYouStoppedThisReply(), 13, ui.Regular, colors.Faint)
 					}},
 				}
 			},
-			ShowActions: func() bool { return status.Get() == ui.ChatCompleted || status.Get() == ui.ChatCancelled },
+			ShowActions: func() bool { return status.Get() == chat.Completed || status.Get() == chat.Cancelled },
 			Actions: func(cx *core.Scope) core.Node {
 				rate := func(to string) func() {
 					return func() {
@@ -617,15 +618,15 @@ func chatDemo(cx *core.Scope) core.Node {
 					}
 				}
 				return core.Group{
-					ui.ChatIconAction{Label: tr.ChatCopy(), IconFunc: func() *core.SVG {
+					chat.IconAction{Label: tr.ChatCopy(), IconFunc: func() *core.SVG {
 						if copied.Get() == m().id {
 							return lucide.Check()
 						}
 						return lucide.Copy()
 					}, Active: func() bool { return copied.Get() == m().id }, Tint: colors.Up, OnPress: func() { mm := core.Untracked(cx, m); copyText(mm.id, mm.md) }},
-					ui.ChatIconAction{Label: tr.ChatRegenerate(), Icon: lucide.RefreshCw, OnPress: func() { regenerate(core.Untracked(cx, m)) }},
-					ui.ChatIconAction{Label: tr.ChatGoodReply(), Icon: lucide.ThumbsUp, Active: func() bool { return m().rating == "up" }, Tint: colors.Accent, OnPress: rate("up")},
-					ui.ChatIconAction{Label: tr.ChatBadReply(), Icon: lucide.ThumbsDown, Active: func() bool { return m().rating == "down" }, Tint: colors.Danger, OnPress: rate("down")},
+					chat.IconAction{Label: tr.ChatRegenerate(), Icon: lucide.RefreshCw, OnPress: func() { regenerate(core.Untracked(cx, m)) }},
+					chat.IconAction{Label: tr.ChatGoodReply(), Icon: lucide.ThumbsUp, Active: func() bool { return m().rating == "up" }, Tint: colors.Accent, OnPress: rate("up")},
+					chat.IconAction{Label: tr.ChatBadReply(), Icon: lucide.ThumbsDown, Active: func() bool { return m().rating == "down" }, Tint: colors.Danger, OnPress: rate("down")},
 				}
 			}}
 	}
@@ -638,7 +639,7 @@ func chatDemo(cx *core.Scope) core.Node {
 	for i, f := range featured {
 		s, _ := findScenario(f.id)
 		featuredTiles = append(featuredTiles, core.View{Style: core.Style{Width: core.Pct(47), FlexGrow: 1}, Children: []core.Node{
-			ui.Appear{Index: i + 1, Children: []core.Node{ui.Press{OnPress: func() { play(s.id) }, Label: s.chip, Children: []core.Node{
+			Appear{Index: i + 1, Children: []core.Node{ui.Press{OnPress: func() { play(s.id) }, Label: s.chip, Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
 					return fin.Card().Over(core.Style{MinHeight: core.Pt(104), Padding: core.All(12), Gap: 8, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
 						Background: colors.Surface(), BorderWidth: 1, BorderColor: colors.Border()})
@@ -667,10 +668,10 @@ func chatDemo(cx *core.Scope) core.Node {
 		}
 		return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), AlignItems: core.AlignCenter},
 			StyleFunc: func() core.Style { return core.Style{Bottom: core.Pt(conversation.ComposerHeight())} },
-			Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, Width: core.Pct(100), MaxWidth: core.Pt(ui.ChatContentWidth), MinHeight: core.Pt(0)}, Children: []core.Node{
+			Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, Width: core.Pct(100), MaxWidth: core.Pt(chat.ContentWidth), MinHeight: core.Pt(0)}, Children: []core.Node{
 				core.View{Style: core.Style{FlexGrow: 1, JustifyContent: core.JustifyCenter, Padding: core.Symmetric(24, 20), Gap: 24, MinHeight: core.Pt(0)}, Children: []core.Node{
-					ui.Appear{Children: []core.Node{core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-						ui.IconTile{Icon: lucide.Sparkles, Size: 56},
+					Appear{Children: []core.Node{core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
+						IconTile{Icon: lucide.Sparkles, Size: 56},
 						ui.Text(tr.ChatHowCanIHelp(), 22, ui.Semibold, colors.Text),
 						core.Text{Content: emptyText, Style: core.Style{FontSize: 13, LineHeight: 21, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
 					}}}},
@@ -682,26 +683,26 @@ func chatDemo(cx *core.Scope) core.Node {
 	}
 
 	accessory := func(cx *core.Scope) core.Node {
-		var models ui.ChatPicker
+		var models chat.Picker
 		if native {
-			models = ui.ChatPicker{Label: provider.Get, Icon: lucide.Sparkles, Selected: provider.Get, OnChange: func(id string) {
+			models = chat.Picker{Label: provider.Get, Icon: lucide.Sparkles, Selected: provider.Get, OnChange: func(id string) {
 				if run == nil {
 					provider.Set(id)
 				}
-			}, Options: []ui.ChatOption{
+			}, Options: []chat.Option{
 				{ID: "Claude", Label: "Claude", Group: tr.ChatProviderLocal(), Icon: lucide.Sparkles},
 				{ID: "Codex", Label: "Codex", Group: tr.ChatProviderLocal(), Icon: lucide.Sparkles},
 			}}
 		} else {
-			var options []ui.ChatOption
+			var options []chat.Option
 			for _, name := range []chatModel{"Swift", "Deep", "Vision"} {
-				options = append(options, ui.ChatOption{ID: string(name), Label: string(name), Detail: chatTokens(chatWindows[name]), Group: tr.ChatProviderRemote(), Icon: lucide.Sparkles})
+				options = append(options, chat.Option{ID: string(name), Label: string(name), Detail: chatTokens(chatWindows[name]), Group: tr.ChatProviderRemote(), Icon: lucide.Sparkles})
 			}
-			models = ui.ChatPicker{Label: func() string { return string(model.Get()) }, Icon: lucide.Sparkles, Options: options,
+			models = chat.Picker{Label: func() string { return string(model.Get()) }, Icon: lucide.Sparkles, Options: options,
 				Selected: func() string { return string(model.Get()) }, OnChange: func(id string) { model.Set(chatModel(id)) },
 				SearchLabel: tr.ChatSearchModels(), EmptyText: tr.ChatNoResults(), Searchable: 2, Width: 280, TestID: "chat-model"}
 		}
-		levels := []ui.ChatOption{{ID: "off", Label: tr.ChatEffortOff()}, {ID: "low", Label: tr.ChatEffortLow()},
+		levels := []chat.Option{{ID: "off", Label: tr.ChatEffortOff()}, {ID: "low", Label: tr.ChatEffortLow()},
 			{ID: "medium", Label: tr.ChatEffortMedium()}, {ID: "high", Label: tr.ChatEffortHigh()}, {ID: "max", Label: tr.ChatEffortMax()}}
 		tooltip := func() string {
 			for _, o := range levels {
@@ -711,7 +712,7 @@ func chatDemo(cx *core.Scope) core.Node {
 			}
 			return tr.ChatEffort()
 		}
-		return core.Group{models, ui.ChatEffortPicker{Label: tr.ChatEffort(), Tooltip: tooltip, Icon: lucide.Brain, Levels: levels, Selected: effort.Get, OnChange: effort.Set, Off: true, TestID: "chat-effort"}}
+		return core.Group{models, chat.EffortPicker{Label: tr.ChatEffort(), Tooltip: tooltip, Icon: lucide.Brain, Levels: levels, Selected: effort.Get, OnChange: effort.Set, Off: true, TestID: "chat-effort"}}
 	}
 	trailing := func(cx *core.Scope) core.Node {
 		used := func() int {
@@ -726,8 +727,8 @@ func chatDemo(cx *core.Scope) core.Node {
 			return fmt.Sprintf("%s / %s (%d%%)", chatTokens(used()), chatTokens(chatWindows[model.Get()]), int(math.Round(fraction()*100)))
 		}
 		return core.Group{
-			ui.ChatIconAction{Label: tr.ChatChooseAPhoto(), Icon: lucide.Paperclip, OnPress: choosePhoto, TestID: "chat-attach"},
-			ui.ChatContextMeter{Label: tr.ChatContextWindow(), Title: tr.ChatContextWindow(), Tooltip: value, Value: value, Fraction: fraction, TestID: "chat-context"},
+			chat.IconAction{Label: tr.ChatChooseAPhoto(), Icon: lucide.Paperclip, OnPress: choosePhoto, TestID: "chat-attach"},
+			chat.ContextMeter{Label: tr.ChatContextWindow(), Title: tr.ChatContextWindow(), Tooltip: value, Value: value, Fraction: fraction, TestID: "chat-context"},
 		}
 	}
 	// A sample account: its countdown runs and its refresh only waits.
@@ -741,7 +742,7 @@ func chatDemo(cx *core.Scope) core.Node {
 		now.Set(cx.Now())
 	})
 	cx.Cleanup(clock)
-	quota := ui.ChatQuota{ID: "demo", Title: tr.ChatQuotaAccount(), RefreshLabel: tr.ChatQuotaRefresh(), OpenLabel: tr.ChatQuotaOpen(), Refreshing: refreshing.Get,
+	quota := chat.Quota{ID: "demo", Title: tr.ChatQuotaAccount(), RefreshLabel: tr.ChatQuotaRefresh(), OpenLabel: tr.ChatQuotaOpen(), Refreshing: refreshing.Get,
 		Countdown: func() string {
 			if refreshing.Get() {
 				return tr.ChatQuotaRefreshing()
@@ -750,8 +751,8 @@ func chatDemo(cx *core.Scope) core.Node {
 			return fmt.Sprintf("%02d:%02d", seconds/60, seconds%60)
 		},
 		Leading: func(_ *core.Scope, size core.Points) core.Node { return ui.Icon(lucide.Gauge, size, colors.Muted) },
-		Rows: func() []ui.ChatQuotaRow {
-			return []ui.ChatQuotaRow{
+		Rows: func() []chat.QuotaRow {
+			return []chat.QuotaRow{
 				{Label: tr.ChatQuotaFiveHour(), Detail: tr.ChatQuotaFiveHourReset(), Value: tr.ChatQuotaLeft(63), Fraction: 0.63},
 				{Label: tr.ChatQuotaWeekly(), Detail: tr.ChatQuotaWeeklyReset(), Value: tr.ChatQuotaLeft(18), Fraction: 0.18},
 				{Label: tr.ChatQuotaCredits(), Value: "$12.40", Fraction: -1},
@@ -766,16 +767,16 @@ func chatDemo(cx *core.Scope) core.Node {
 		},
 		OnOpen: func() { cx.OpenURL("https://github.com/oneo-me/nsgo", nil) }}
 	footer := func(cx *core.Scope) core.Node {
-		var replay []ui.ChatOption
+		var replay []chat.Option
 		for _, c := range chips {
-			replay = append(replay, ui.ChatOption{ID: c.id, Label: c.label, Icon: lucide.RefreshCw})
+			replay = append(replay, chat.Option{ID: c.id, Label: c.label, Icon: lucide.RefreshCw})
 		}
-		branches := []ui.ChatOption{{ID: "main", Label: "main"}, {ID: "feature/chat-ui", Label: "feature/chat-ui"}, {ID: "release/0.2026.10", Label: "release/0.2026.10"}}
+		branches := []chat.Option{{ID: "main", Label: "main"}, {ID: "feature/chat-ui", Label: "feature/chat-ui"}, {ID: "release/0.2026.10", Label: "release/0.2026.10"}}
 		nodes := core.Group{
-			ui.ChatChip{Text: "nsgo", Icon: lucide.Folder},
-			ui.ChatPicker{Label: branch.Get, Icon: lucide.GitBranch, Options: branches, Selected: branch.Get, OnChange: branch.Set,
+			chat.Chip{Text: "nsgo", Icon: lucide.Folder},
+			chat.Picker{Label: branch.Get, Icon: lucide.GitBranch, Options: branches, Selected: branch.Get, OnChange: branch.Set,
 				SearchLabel: tr.ChatSearchBranches(), EmptyText: tr.ChatNoResults(), Searchable: 2, TestID: "chat-branch"},
-			ui.ChatPicker{Label: tr.ChatReplay, Icon: lucide.RefreshCw, Options: replay, OnChange: play, TestID: "chat-replay"},
+			chat.Picker{Label: tr.ChatReplay, Icon: lucide.RefreshCw, Options: replay, OnChange: play, TestID: "chat-replay"},
 		}
 		if wide {
 			nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Margin: core.Edges{Left: 7}}, Children: []core.Node{
@@ -786,12 +787,12 @@ func chatDemo(cx *core.Scope) core.Node {
 		nodes = append(nodes, core.View{Style: core.Style{FlexGrow: 1, MinWidth: core.Pt(0)}})
 		if wide {
 			nodes = append(nodes, core.Show{When: streaming, Then: func(*core.Scope) core.Node {
-				return ui.ChatShimmer{Text: tr.ChatStreaming, Size: 12.5, Color: colors.Muted, Highlight: colors.Text}
+				return chat.Shimmer{Text: tr.ChatStreaming, Size: 12.5, Color: colors.Muted, Highlight: colors.Text}
 			}})
 		}
-		first := func() ui.ChatQuotaRow { return quota.Rows()[0] }
-		return append(nodes, ui.ChatQuotaSummary{Label: tr.ChatUsageLimits(), Tooltip: func() string { return quota.Title + "\n" + first().Label + " · " + first().Value },
-			Row: first, Quotas: []ui.ChatQuota{quota}, TestID: "chat-quota"})
+		first := func() chat.QuotaRow { return quota.Rows()[0] }
+		return append(nodes, chat.QuotaSummary{Label: tr.ChatUsageLimits(), Tooltip: func() string { return quota.Title + "\n" + first().Label + " · " + first().Value },
+			Row: first, Quotas: []chat.Quota{quota}, TestID: "chat-quota"})
 	}
 	attachments := func(cx *core.Scope) core.Node {
 		return core.Dynamic(func(cx *core.Scope) core.Node {
@@ -799,13 +800,13 @@ func chatDemo(cx *core.Scope) core.Node {
 			if a == nil {
 				return nil
 			}
-			return ui.ChatAttachment{Label: a.file.name, Detail: a.file.size, Image: a.image, RemoveLabel: tr.ChatRemoveFile(), OnRemove: func() { attachment.Set(nil) }}
+			return chat.Attachment{Label: a.file.name, Detail: a.file.size, Image: a.image, RemoveLabel: tr.ChatRemoveFile(), OnRemove: func() { attachment.Set(nil) }}
 		})
 	}
 
 	pane := core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{
 		core.View{Style: fillPage.Merge(core.Style{PaddingEnv: core.EnvEdges{Bottom: core.EnvKeyboard}}), Children: []core.Node{
-			ui.ChatFloatingConversation{State: conversation, JumpLabel: tr.ChatJumpToTheLatestMessage(), TestID: "messages",
+			chat.FloatingConversation{State: conversation, JumpLabel: tr.ChatJumpToTheLatestMessage(), TestID: "messages",
 				// One selection across the turns.
 				Children: []core.Node{core.View{Selectable: true, Style: core.Style{Gap: 48, MinWidth: core.Pt(0)}, Children: []core.Node{
 					core.Each(messages.Get, func(m msg) string { return m.id }, func(cx *core.Scope, m func() msg, _ func() int) core.Node {
@@ -815,7 +816,7 @@ func chatDemo(cx *core.Scope) core.Node {
 						return core.Func(func(cx *core.Scope) core.Node { return turnRow(cx, m) })
 					}),
 				}}},
-				Composer: []core.Node{ui.ChatComposer{Draft: draft.Get, OnDraftChange: draft.Set, Label: tr.ChatMessage(), Placeholder: tr.ChatPlaceholder(),
+				Composer: []core.Node{chat.Composer{Draft: draft.Get, OnDraftChange: draft.Set, Label: tr.ChatMessage(), Placeholder: tr.ChatPlaceholder(),
 					SendLabel: tr.ChatSend(), StopLabel: tr.ChatStop(), Running: streaming, OnSend: send, OnStop: stop, Glass: true, State: conversation,
 					Accessory: accessory, Trailing: trailing, Footer: footer, Attachments: attachments, HasAttachments: func() bool { return attachment.Get() != nil },
 					OnDropFiles: dropped}},

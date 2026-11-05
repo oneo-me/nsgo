@@ -6,6 +6,7 @@ import (
 	"github.com/dop251/goja"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/dock"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -20,24 +21,24 @@ type dockPanel struct{ ID string }
 // dockPanelOptions is one entry of panels: what panel id allows.
 type dockPanelOptions struct {
 	id string
-	o  base.DockPanelOptions
+	o  dock.PanelOptions
 }
 
 func init() {
-	refDecls[reflect.TypeFor[*base.DockAreaRef]()] = map[string]string{"ToggleZoom": "toggleZoom(group: number | null): void"}
+	refDecls[reflect.TypeFor[*dock.AreaRef]()] = map[string]string{"ToggleZoom": "toggleZoom(group: number | null): void"}
 	Shape("DockNode", `export type DockNode =
   | { type: "split"; id?: number; axis: "horizontal" | "vertical"; children: DockNode[]; sizes?: (number | null)[] }
   | { type: "tabs"; id?: number; panels: string[]; activeIndex?: number };`, encodeDockNode, decodeDockNode)
 	Shape("DockRegion", `export interface DockRegion { layout: DockNode; size?: number; open?: boolean; collapsible?: boolean }`,
-		func(r base.DockRegion) map[string]any {
+		func(r dock.Region) map[string]any {
 			size := r.Size
 			if size == 0 {
 				size = 2 * base.PanelMinSize
 			}
 			return map[string]any{"layout": r.Root, "size": js32(size), "open": !r.Closed, "collapsible": !r.NoCollapse}
 		},
-		func(m map[string]any) base.DockRegion {
-			r := base.DockRegion{Size: core.Points(jsNumber(m["size"])), Closed: m["open"] == false,
+		func(m map[string]any) dock.Region {
+			r := dock.Region{Size: core.Points(jsNumber(m["size"])), Closed: m["open"] == false,
 				NoCollapse: m["collapsible"] == false}
 			if l, ok := m["layout"].(map[string]any); ok {
 				r.Root = decodeDockNode(l)
@@ -45,17 +46,17 @@ func init() {
 			return r
 		})
 	Shape("DockTab", `export interface DockTab { panel: string; group: number; index: number; active: boolean; closable: boolean; zoomed: boolean }`,
-		func(t base.DockTab) map[string]any {
+		func(t dock.Tab) map[string]any {
 			return map[string]any{"panel": t.Key, "group": t.Group, "index": call(t.Index), "active": call(t.Selected),
 				"closable": call(t.Closable), "zoomed": call(t.Zoomed)}
 		}, nil)
 	Shape("DockInfo", `export interface DockInfo { placement: DockPlacement; open: boolean; size: number; collapsible: boolean }`,
-		func(d base.DockInfo) map[string]any {
+		func(d dock.Info) map[string]any {
 			return map[string]any{"placement": d.Placement, "open": call(d.Open), "size": js32(call(d.Size)),
 				"collapsible": call(d.Collapsible)}
 		}, nil)
 	Shape("DockDropIndicator", `export interface DockDropIndicator { group: number; side?: Placement; index?: number }`,
-		func(d base.DockDropIndicator) map[string]any {
+		func(d dock.DropIndicator) map[string]any {
 			m := map[string]any{"group": d.Group}
 			if d.Side != core.PlaceDefault {
 				m["side"] = d.Side
@@ -73,7 +74,7 @@ func init() {
 		},
 		func(m map[string]any) dockPanelOptions {
 			id, _ := m["id"].(string)
-			return dockPanelOptions{id, base.DockPanelOptions{NoClose: m["closable"] == false, NoZoom: m["zoomable"] == false,
+			return dockPanelOptions{id, dock.PanelOptions{NoClose: m["closable"] == false, NoZoom: m["zoomable"] == false,
 				Hidden: m["visible"] == false}}
 		})
 }
@@ -96,7 +97,7 @@ var dockOptions = []Option{
 		if !defined(x) {
 			return
 		}
-		m := map[string]base.DockPanelOptions{}
+		m := map[string]dock.PanelOptions{}
 		for _, o := range p.r.decode(x, reflect.TypeFor[[]dockPanelOptions]()).Interface().([]dockPanelOptions) {
 			m[o.id] = o.o
 		}
@@ -121,7 +122,7 @@ func typed(field string, o Option, types ...reflect.Type) Option {
 	}
 }
 
-func encodeDockNode(n base.DockNode) map[string]any {
+func encodeDockNode(n dock.Node) map[string]any {
 	m := map[string]any{}
 	if n.ID != 0 {
 		m["id"] = n.ID
@@ -136,12 +137,12 @@ func encodeDockNode(n base.DockNode) map[string]any {
 			sizes[i] = js32(n.Sizes[i])
 		}
 	}
-	m["type"], m["axis"], m["children"], m["sizes"] = "split", n.Axis, append([]base.DockNode{}, n.Children...), sizes
+	m["type"], m["axis"], m["children"], m["sizes"] = "split", n.Axis, append([]dock.Node{}, n.Children...), sizes
 	return m
 }
 
-func decodeDockNode(m map[string]any) base.DockNode {
-	n := base.DockNode{ID: uint64(jsNumber(m["id"]))}
+func decodeDockNode(m map[string]any) dock.Node {
+	n := dock.Node{ID: uint64(jsNumber(m["id"]))}
 	if m["type"] == "tabs" {
 		n.Tabs, n.Active = true, int(jsNumber(m["activeIndex"]))
 		for _, p := range list(m["panels"]) {

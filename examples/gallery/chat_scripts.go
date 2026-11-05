@@ -6,7 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // The chat's fictional models: the picker changes the voice and whether

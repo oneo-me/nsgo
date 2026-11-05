@@ -51,6 +51,7 @@ var layers = []struct {
 	{"mobile", []string{"core"}},
 	{"desktop", []string{"core"}},
 	{"icons/", []string{"core"}},
+	{"ui/", []string{"core", "base/", "ui/", "mobile", "desktop", "icons/"}},
 	// The TSX test runner drives apps through nsgotest.
 	{"tsx/tsxtest", []string{"core", "internal/driver", "nsgotest", "tsx", "tsx/"}},
 	// The nsgo tool links the bundler, so it reaches no runtime.
@@ -58,7 +59,7 @@ var layers = []struct {
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
-	{"examples/", []string{"", "core", "base/", "mobile", "desktop", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
+	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
 	// The nsgo tool links no component or runtime, so changing them does
 	// not build it again; it writes TSX declarations by running the app.
@@ -77,7 +78,7 @@ var platformShared = []string{
 // portable lists the packages that build unchanged for every target: no
 // purego, syscall or unsafe.
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shaderir/", "internal/engine",
-	"internal/testhost", "internal/cldr", "base/", "i18n", "mobile", "desktop", "icons/", "nsgotest", "tsx"}
+	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "icons/", "nsgotest", "tsx"}
 
 // unportable are the packages among portable's that reach the system: the
 // terminal loads libghostty-vt and runs programs, on macOS, Linux and

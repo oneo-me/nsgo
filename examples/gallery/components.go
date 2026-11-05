@@ -11,8 +11,8 @@ import (
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/mobile"
 
-	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/ui"
 )
 
 // hairline is one device pixel, in points.
@@ -90,7 +90,7 @@ func pressableSheet(cx *core.Scope) core.Node {
 					Active: &core.Style{Transform: core.Transform{Scale: 0.97}, Background: pressedFill}}
 			},
 			Children: []core.Node{ui.Text(tr.CompOpenASheet(), 13, ui.Semibold, colors.OnAccent)}},
-		ui.Caption{Label: tr.CompScalesAndDarkensWhilePressed(), Note: func() string { return "Active: scale 0.97" }},
+		Caption{Label: tr.CompScalesAndDarkensWhilePressed(), Note: func() string { return "Active: scale 0.97" }},
 		base.Sheet{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: tr.CompASheet(),
 			BackdropStyle: core.Style{Background: ui.Black(0.5)},
 			PopupStyleFunc: func() core.Style {
@@ -101,7 +101,7 @@ func pressableSheet(cx *core.Scope) core.Node {
 				core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: tr.CompSheet(), Tone: ui.ToneAccent}}},
 					core.Text{Content: tr.CompASheet(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
-					core.Text{Content: ui.Hint(cx, tr.CompTapOutsideItOrPress(), tr.CompPressEscapeOrClickOutside()),
+					core.Text{Content: Hint(cx, tr.CompTapOutsideItOrPress(), tr.CompPressEscapeOrClickOutside()),
 						Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Button{Text: tr.CompClose(), OnPress: func() { open.Set(false) }},
@@ -114,7 +114,7 @@ func pressTile(cx *core.Scope, title func() string, noteText string, right core.
 	colors := ui.ColorsOf(cx)
 	children := []core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 		ui.Textf(title, 13, ui.Regular, colors.Text),
-		ui.API{Text: noteText},
+		API{Text: noteText},
 	}}}
 	if right != nil {
 		children = append(children, right)
@@ -145,7 +145,7 @@ func pressFeedback(cx *core.Scope) core.Node {
 		s.Active, s.Disabled = &core.Style{Background: tints.Danger()}, &core.Style{Opacity: core.Alpha(0.4)}
 		return s
 	}
-	return ui.Card{Title: tr.CompPressFeedback(), Description: ui.Hint(cx, tr.CompDrawnNativelyWhileTheFinger(), tr.CompDrawnNativelyWhileTheButton()), Children: []core.Node{
+	return ui.Card{Title: tr.CompPressFeedback(), Description: Hint(cx, tr.CompDrawnNativelyWhileTheFinger(), tr.CompDrawnNativelyWhileTheButton()), Children: []core.Node{
 		core.View{StyleFunc: fade, Role: core.RoleButton, OnPress: func(core.PressEvent) { last.Set(tr.CompFadingTile()) },
 			Children: []core.Node{pressTile(cx, label(tr.CompFadesWhilePressed()), "Active: Opacity 0.4", nil)}},
 		core.View{StyleFunc: under, Role: core.RoleButton, OnPress: func(core.PressEvent) { last.Set(tr.CompUnderlayTile()) },
@@ -163,7 +163,7 @@ func pressFeedback(cx *core.Scope) core.Node {
 				return ui.Badge{Text: tr.CompOn(), Tone: ui.ToneUp}
 			}))}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-			core.View{Style: fill, Children: []core.Node{ui.Caption{Label: tr.CompLastPressed(), Note: last.Get}}},
+			core.View{Style: fill, Children: []core.Node{Caption{Label: tr.CompLastPressed(), Note: last.Get}}},
 			ui.Switch{Checked: disabled.Get, OnChange: disabled.Set, Label: tr.CompDisableTheThirdTile()},
 		}},
 	}}
@@ -182,7 +182,7 @@ func accessory(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.CompInputAccessory(), Description: tr.CompABarOverTheSoftware(), Actions: []core.Node{ui.Badge{Text: "iOS · Android"}}, Children: []core.Node{
 		ui.Input{Input: base.Input{Ref: input, Value: value.Get, OnChange: value.Set, Placeholder: tr.CompFocusMe(), InputAccessoryViewID: "counter", TestID: "accessory-field"}},
-		ui.Caption{Label: captionText, Note: func() string { return `InputAccessoryViewID: "counter"` }},
+		Caption{Label: captionText, Note: func() string { return `InputAccessoryViewID: "counter"` }},
 		mobile.InputAccessoryView{ID: "counter", TestID: "accessory-bar", StyleFunc: ui.Filled(colors.Surface), Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
 				return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(8, 16),
@@ -238,7 +238,7 @@ func modalOptions(cx *core.Scope) core.Node {
 	return ui.Card{Title: tr.CompDialogOptions(), Description: tr.CompStatusbartranslucentOrientations(), Actions: []core.Node{ui.Switch{Checked: translucent.Get, OnChange: translucent.Set, Label: "StatusBarTranslucent"}}, Children: []core.Node{
 		core.Text{Content: tr.CompAndroidTranslucentContentReachesUnder(),
 			Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
-		ui.Caption{Label: "StatusBarTranslucent", Note: func() string { return fmt.Sprint(translucent.Get()) }},
+		Caption{Label: "StatusBarTranslucent", Note: func() string { return fmt.Sprint(translucent.Get()) }},
 		ui.Button{Text: tr.CompOpenTheDialog(), Variant: ui.ButtonSecondary, OnPress: func() { visible.Set(true) }},
 		core.Dynamic(func(*core.Scope) core.Node {
 			t := translucent.Get()
@@ -288,7 +288,7 @@ func platformInfo(cx *core.Scope) core.Node {
 		core.Dynamic(func(*core.Scope) core.Node {
 			var nodes []core.Node
 			for i, r := range rows() {
-				nodes = append(nodes, ui.Row{First: i == 0, Children: []core.Node{
+				nodes = append(nodes, Row{First: i == 0, Children: []core.Node{
 					core.Text{Content: r[0], MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 					core.Text{Content: r[1], MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 				}})
@@ -296,7 +296,7 @@ func platformInfo(cx *core.Scope) core.Node {
 			return core.View{Children: nodes}
 		}),
 		core.View{StyleFunc: func() core.Style { return core.Style{Height: core.Pt(hairline(env)), Background: colors.Accent()} }},
-		ui.Caption{Label: tr.CompTheLineAboveIsOne(), Note: func() string { return fmt.Sprintf("%.3f pt", hairline(env)) }},
+		Caption{Label: tr.CompTheLineAboveIsOne(), Note: func() string { return fmt.Sprintf("%.3f pt", hairline(env)) }},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 			ui.Cell{Child: ui.Button{Text: tr.CompAnnounce(), OnPress: func() {
 				announced++
@@ -330,7 +330,7 @@ func componentsDemo(cx *core.Scope) core.Node {
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
 			return ui.Card{Title: tr.CompKeyboardAvoidance(), Description: tr.CompContentOutsideScrollViews(), Flush: true, Children: []core.Node{
-				ui.LinkRow{Icon: lucide.TextCursorInput, Title: tr.CompKeyboardInset(), Note: "EnvKeyboard", OnPress: func() { shell.push(avoidingPage) }},
+				LinkRow{Icon: lucide.TextCursorInput, Title: tr.CompKeyboardInset(), Note: "EnvKeyboard", OnPress: func() { shell.push(avoidingPage) }},
 			}}
 		},
 		modalOptions, platformInfo)
