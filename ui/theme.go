@@ -52,7 +52,7 @@ func (c Colors) OnLight() core.Color { return c.role("onLight") }
 func (c Colors) Track() core.Color { return c.role("track") }
 func (c Colors) Knob() core.Color  { return c.role("knob") }
 
-// Hover is a row under the pointer, Pressed one held down.
+// Hover is a control under the pointer, Pressed one held down.
 func (c Colors) Hover() core.Color   { return c.cx.Palette().SurfaceHover }
 func (c Colors) Pressed() core.Color { return c.cx.Palette().SurfacePressed }
 

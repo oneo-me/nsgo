@@ -205,7 +205,7 @@ func (n NumberInput) steppers(cx *core.Scope, by func(float64), at func(float64)
 	colors := ColorsOf(cx)
 	button := func(icon func() *core.SVG, label string, steps float64, disabled func() bool, s core.Style) core.Node {
 		return base.Button{Label: label, Disabled: disabled, OnPress: func(core.PressEvent) { by(steps) },
-			Style: core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer,
+			Style: core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 				Transition: quick, Borders: core.Edges{Left: 1}, Disabled: &core.Style{Cursor: core.CursorDefault}}.Merge(s),
 			StyleFunc: func() core.Style {
 				c := colors.Now()

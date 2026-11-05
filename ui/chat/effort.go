@@ -241,7 +241,7 @@ func (p EffortPicker) panel(cx *core.Scope, motion *chatEffortMotion, selected f
 			}
 		},
 		PanActivation: core.PanActivation{ActiveOffsetX: 2, FailOffsetY: 12},
-		Style:         core.Style{Width: core.Pt(inner), Height: core.Pt(chatEffortBar + chatEffortNameGap + chatEffortName), Cursor: core.CursorPointer, CornerRadius: chatEffortBar / 2},
+		Style:         core.Style{Width: core.Pt(inner), Height: core.Pt(chatEffortBar + chatEffortNameGap + chatEffortName), CornerRadius: chatEffortBar / 2},
 		Children: []core.Node{keys, core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Direction: core.Row, JustifyContent: core.JustifySpaceBetween},
 			Children: names}}}
 	label := ui.Text(p.Label, 12.5, ui.Regular, colors.Text)

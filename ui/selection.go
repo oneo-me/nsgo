@@ -10,7 +10,7 @@ const selectionGroup = "selection"
 // selectionRow is a selection control's row: its part, then its label,
 // all of it pressable.
 var selectionRow = core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(24),
-	Cursor: core.CursorPointer, CornerRadius: RadiusSmall, Group: selectionGroup, Disabled: &core.Style{Cursor: core.CursorDefault}}
+	CornerRadius: RadiusSmall, Group: selectionGroup, Disabled: &core.Style{Cursor: core.CursorDefault}}
 
 // selectionLabel is a selection control's label: the app's children, or
 // its text, faint while the control is disabled.

@@ -25,6 +25,9 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - A `ui` component is product-neutral: what only the gallery's demos use stays in `examples/gallery`.
 - A component says its own words through its package's catalogs (`locales/`), never string literals, in English and NSGo's other languages ([languages](docs/architecture/languages.md)).
 - In `base` and `ui`, keep one component to a file, named after it (`iconbutton.go`), with the types and parts only it uses; what several share gets a file of its own.
+- Lists, trees, tables and sidebars have two looks, default and selected: no hover and no press. Only the rows of a popup that drops down, such as a menu or a select, follow the pointer.
+- Leave the pointer's look alone, as native apps do: pressables keep the platform's arrow, and `Style.Cursor` is for what the arrow cannot say, such as text fields and resize or scrub drags.
+- Keep a scroll bar against its container's edge: the scroll view fills the container and the padding goes on its content, never around the scroll view.
 - A complex component takes a directory of its own, whose package may hold many files (`base/dock`, `ui/chat`), and drops the component's name from its API (`dock.Area`). Packages under `base` share code through `base/internal`.
 
 ## Working with the user

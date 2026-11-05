@@ -140,7 +140,7 @@ func editorParts(cx *core.Scope) editor.Styles {
 	return editor.Styles{
 		Gutter:                 core.Style{Color: colors.Faint, FontSize: 12},
 		ActiveLineNumber:       core.Style{Color: colors.Text},
-		FoldMarker:             core.Style{Color: colors.Faint, Cursor: core.CursorPointer},
+		FoldMarker:             core.Style{Color: colors.Faint},
 		Content:                core.Style{Color: colors.Text},
 		ActiveLine:             core.Style{Background: ui.Alpha(colors.Text, 0.04)},
 		Selection:              core.Style{Background: ui.Alpha(colors.Accent, 0.22)},
@@ -755,8 +755,7 @@ func editorDemo(cx *core.Scope) core.Node {
 								ref.Focus()
 							},
 							StyleFunc: func() core.Style {
-								return core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 12), Hover: &core.Style{Background: ui.Alpha(colors.Text(), 0.1)},
-									Active: &core.Style{Background: ui.Alpha(colors.Text(), 0.15)}}
+								return core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 12)}
 							},
 							Children: []core.Node{
 								core.Dynamic(func(*core.Scope) core.Node { return dot(p().diagnostic.Severity) }),

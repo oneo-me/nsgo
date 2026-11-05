@@ -89,7 +89,6 @@ func (r Rating) Render(cx *core.Scope) core.Node {
 		}
 		if !r.Readonly {
 			v.NoFocus = true
-			v.Style.Cursor = core.CursorPointer
 			v.OnPress = func(core.PressEvent) {
 				if value() == i {
 					set(0)

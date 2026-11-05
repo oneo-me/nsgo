@@ -21,7 +21,7 @@ func (s Switch) Render(cx *core.Scope) core.Node {
 	look := NewSwitchLook(cx, s.Checked, s.Small)
 	// More to press on every side, without taking more room.
 	return base.Switch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label,
-		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8), Cursor: core.CursorPointer},
+		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8)},
 		TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb}
 }
 

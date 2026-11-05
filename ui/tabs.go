@@ -45,7 +45,7 @@ func (t Tabs) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	list := core.Style{Direction: core.Row, AlignItems: core.AlignStretch}
 	tab := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 6,
-		Cursor: core.CursorPointer, Transition: quick, Disabled: &core.Style{Cursor: core.CursorDefault}}
+		Transition: quick, Disabled: &core.Style{Cursor: core.CursorDefault}}
 	segmented := t.Variant == TabsSegmented
 	if segmented {
 		list.CornerRadius, list.Padding, list.Gap, list.BorderWidth = RadiusControl, core.All(2), 2, 1

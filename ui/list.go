@@ -383,11 +383,6 @@ func (l List) Render(cx *core.Scope) core.Node {
 		s := core.Style{Color: c.Text}
 		if interactive {
 			s.Selected = &core.Style{Background: c.Selection}
-			if onDesktop {
-				s.Hover = &core.Style{Background: c.Hover}
-			} else {
-				s.Active = &core.Style{Background: c.Pressed}
-			}
 		}
 		if ringed {
 			s.OutlineWidth, s.OutlineColor, s.OutlineOffset = 2, c.Info, -2

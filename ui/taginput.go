@@ -74,7 +74,7 @@ func (in TagInput) Render(cx *core.Scope) core.Node {
 				set(slices.DeleteFunc(slices.Clone(tags()), func(s string) bool { return s == tag() }))
 			},
 			Style: core.Style{Width: core.Pt(chipSize - 6), Height: core.Pt(chipSize - 6), CornerRadius: RadiusFull,
-				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer, Transition: quick,
+				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Transition: quick,
 				Disabled: &core.Style{Cursor: core.CursorDefault}},
 			StyleFunc: func() core.Style {
 				return core.Style{Color: colors.Muted(), Hover: &core.Style{Background: colors.Pressed(), Color: colors.Text()}, Focus: FocusRing(cx, 0)}

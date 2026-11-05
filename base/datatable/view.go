@@ -1187,7 +1187,7 @@ func (t *dataTable) sortButton(def int, sorted *core.Memo[Sort]) core.Node {
 	return core.View{
 		Role: core.RoleButton, LabelFunc: func() string { return locales.SortBy(t.cx, t.title(def)) }, TestID: "sort:" + t.column(def).Key, NoFocus: true,
 		Style: core.Style{FlexShrink: 0, Width: px(sortWidth), Height: px(sortWidth), AlignItems: core.AlignCenter,
-			JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer},
+			JustifyContent: core.JustifyCenter},
 		Class:     t.p.Classes.SortIndicator,
 		StyleFunc: func() core.Style { return t.styles().SortIndicator },
 		OnPress:   func(core.PressEvent) { t.sortNext(def) },

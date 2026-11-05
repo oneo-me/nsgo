@@ -244,7 +244,7 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 			},
 			Role: core.RoleButton, Label: tr.UiBack(), HitSlop: core.All(6),
 			Style: core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2,
-				Padding: core.Edges{Left: 4, Right: 10}, CornerRadius: ui.RadiusControl, Cursor: core.CursorPointer},
+				Padding: core.Edges{Left: 4, Right: 10}, CornerRadius: ui.RadiusControl},
 			StyleFunc: func() core.Style {
 				return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 			},

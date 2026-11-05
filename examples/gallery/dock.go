@@ -148,7 +148,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 			}
 			rows = append(rows, core.View{StyleFunc: func() core.Style {
 				return core.Style{Height: core.Pt(28), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, CornerRadius: 6,
-					Padding: core.Edges{Left: 8 + core.Points(f.depth)*14, Right: 8}, Hover: &core.Style{Background: colors.Hover()}}
+					Padding: core.Edges{Left: 8 + core.Points(f.depth)*14, Right: 8}}
 			}, Children: []core.Node{
 				core.View{Style: core.Style{Width: core.Pt(6), Height: core.Pt(6), CornerRadius: 3}, StyleFunc: ui.Filled(dot)},
 				core.Text{Content: f.name, Style: core.Style{FontFamily: ui.Mono, FontSize: 12}, StyleFunc: ui.Colored(colors.Text)},

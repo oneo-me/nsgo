@@ -59,7 +59,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 	}
 	focused := core.NewSignal(cx, false)
 	row := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(height),
-		Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorPointer}
+		Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorDefault}
 	selectedFill := func() core.Color { return Alpha(colors.Text(), 0.1) }
 
 	// The items in order, and where each is: what the keys move through
@@ -110,9 +110,6 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 			OnPress: func(core.PressEvent) { choose(item.ID) },
 			Style:   row, StyleFunc: func() core.Style {
 				st := core.Style{Selected: &core.Style{Background: selectedFill()}}
-				if !desk {
-					st.Active = &core.Style{Background: selectedFill()}
-				}
 				if on() && focused.Get() {
 					st = st.Merge(*FocusRing(cx, -2))
 				}

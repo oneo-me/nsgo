@@ -71,7 +71,7 @@ func (sc Segmented[T]) Render(cx *core.Scope) core.Node {
 		}
 		children = append(children, base.Tab{Selected: selected, OnPress: func(core.PressEvent) { sc.OnChange(o.Value) }, Label: o.Label,
 			Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 5,
-				Padding: core.Symmetric(0, 12), Cursor: core.CursorPointer},
+				Padding: core.Symmetric(0, 12)},
 			Children: label})
 	}
 	return core.View{OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) }, Children: []core.Node{base.Tabs{

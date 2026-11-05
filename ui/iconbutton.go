@@ -32,7 +32,7 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 	return core.View{OnPress: func(core.PressEvent) { b.OnPress() }, Role: core.RoleButton, Label: b.Label, LabelFunc: b.LabelFunc,
 		Selected: b.Selected, Disabled: b.Disabled, TestID: b.TestID, Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff},
 		Style: core.Style{Width: core.Pt(size), Height: core.Pt(size), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-			CornerRadius: 8, Cursor: core.CursorPointer, Disabled: Dimmed()},
+			CornerRadius: 8, Disabled: Dimmed()},
 		StyleFunc: func() core.Style {
 			return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
 		},

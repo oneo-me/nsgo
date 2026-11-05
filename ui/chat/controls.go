@@ -35,8 +35,7 @@ func (a AttachmentPreview) Render(cx *core.Scope) core.Node {
 	children := []core.Node{inner}
 	if a.RemoveLabel != "" {
 		children = append(children, base.Button{Label: a.RemoveLabel, OnPress: chatPress(a.OnRemove),
-			Style: core.Style{Position: core.Absolute, Top: core.Pt(3), Right: core.Pt(3), Width: core.Pt(18), Height: core.Pt(18), CornerRadius: 5, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-				Cursor: core.CursorPointer},
+			Style: core.Style{Position: core.Absolute, Top: core.Pt(3), Right: core.Pt(3), Width: core.Pt(18), Height: core.Pt(18), CornerRadius: 5, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: func() core.Style {
 				return core.Style{Background: ui.Alpha(colors.Background(), 0.9), Hover: &core.Style{Background: colors.Surface(), BorderWidth: 1, BorderColor: colors.Accent()}}
 			},
@@ -87,7 +86,7 @@ func (a Attachment) Render(cx *core.Scope) core.Node {
 		children = append(children, core.View{Style: core.Style{Width: core.Pt(2)}})
 	} else {
 		children = append(children, base.Button{Label: a.RemoveLabel, OnPress: chatPress(a.OnRemove),
-			Style: core.Style{Group: "chat-remove", Width: core.Pt(18), Height: core.Pt(18), FlexShrink: 0, CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer},
+			Style: core.Style{Group: "chat-remove", Width: core.Pt(18), Height: core.Pt(18), FlexShrink: 0, CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: func() core.Style {
 				return core.Style{Hover: &core.Style{Background: colors.chatOverlayStrong()}, Focus: ui.FocusRing(cx, 2)}
 			},
@@ -162,7 +161,7 @@ func (p Chip) face(cx *core.Scope) []core.Node {
 // shape is the chip's size and how it fills.
 func (p Chip) shape(cx *core.Scope) (core.Style, func() core.Style) {
 	return core.Style{Direction: core.Row, Height: core.Pt(26), MinWidth: core.Pt(0), FlexShrink: 1, Padding: core.Symmetric(0, 7), CornerRadius: 6, AlignItems: core.AlignCenter, Gap: 6,
-			Cursor: core.CursorPointer, Disabled: &core.Style{Opacity: core.Alpha(0.7)}},
+			Disabled: &core.Style{Opacity: core.Alpha(0.7)}},
 		func() core.Style {
 			return chatTriggerStates(cx, is(p.Active))
 		}
@@ -317,7 +316,7 @@ func chatPickerRow(cx *core.Scope, o Option, leading bool, selected func() bool,
 		core.Show{When: selected, Then: func(*core.Scope) core.Node { return ui.Icon(lucide.Check, 12, colors.Accent) }},
 	}})
 	return base.Button{Label: o.Label, Selected: selected, OnPress: chatPress(choose),
-		Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Padding: core.Symmetric(6, 8), CornerRadius: 6, AlignItems: core.AlignCenter, Gap: 8, Cursor: core.CursorPointer},
+		Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Padding: core.Symmetric(6, 8), CornerRadius: 6, AlignItems: core.AlignCenter, Gap: 8},
 		StyleFunc: func() core.Style {
 			return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}, Focus: &core.Style{Background: colors.chatOverlay()}}
 		},
@@ -348,7 +347,7 @@ func (m ContextMeter) Render(cx *core.Scope) core.Node {
 	value := ui.Textf(m.Value, 12.5, ui.Regular, colors.Muted)
 	value.Style.FlexShrink = 0
 	trigger := base.Popover{Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) }, Placement: core.PlaceTop, Align: core.AlignEnd, Offset: 4, Margin: 8,
-		Style:     core.Style{Height: core.Pt(20), Padding: core.Symmetric(0, 5), CornerRadius: 5, FlexShrink: 0, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer},
+		Style:     core.Style{Height: core.Pt(20), Padding: core.Symmetric(0, 5), CornerRadius: 5, FlexShrink: 0, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 		StyleFunc: chatMeterStates(cx, open.Get), Label: m.Label, TestID: m.TestID, PopupStyleFunc: chatPopup(cx),
 		PopupStyle: core.Style{Width: core.Pt(320), MaxWidth: core.Pct(100), Padding: core.All(14), Gap: 7},
 		Trigger:    chatGauge(cx, m.Fraction, fill),
@@ -534,7 +533,7 @@ func chatQuotaRow(cx *core.Scope, row QuotaRow) core.Node {
 func chatQuotaAction(cx *core.Scope, label string, icon func() *core.SVG, disabled func() bool, press func()) core.Node {
 	colors := tonesOf(cx)
 	return ui.Tooltip{Text: label, Trigger: base.Button{Label: label, Disabled: disabled, OnPress: chatPress(press),
-		Style: core.Style{Width: core.Pt(20), Height: core.Pt(20), FlexShrink: 0, CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer, Disabled: ui.Dimmed()},
+		Style: core.Style{Width: core.Pt(20), Height: core.Pt(20), FlexShrink: 0, CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Disabled: ui.Dimmed()},
 		StyleFunc: func() core.Style {
 			return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}, Focus: ui.FocusRing(cx, 2)}
 		},
@@ -585,7 +584,7 @@ func (q QuotaSummary) Render(cx *core.Scope) core.Node {
 		panel = append(panel, quota)
 	}
 	trigger := base.Popover{Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) }, Placement: core.PlaceTop, Align: core.AlignEnd, Offset: 4, Margin: 8,
-		Style:     core.Style{Direction: core.Row, Height: core.Pt(20), Padding: core.Symmetric(0, 5), CornerRadius: 5, FlexShrink: 0, AlignItems: core.AlignCenter, Gap: 6, Cursor: core.CursorPointer},
+		Style:     core.Style{Direction: core.Row, Height: core.Pt(20), Padding: core.Symmetric(0, 5), CornerRadius: 5, FlexShrink: 0, AlignItems: core.AlignCenter, Gap: 6},
 		StyleFunc: chatMeterStates(cx, open.Get), Label: q.Label, TestID: q.TestID, Trigger: face, PopupStyleFunc: chatPopup(cx),
 		PopupStyle: core.Style{Width: core.Pt(320), MaxWidth: core.Pct(100), Padding: core.All(14), Gap: 14}, Children: panel}
 	if q.Tooltip != nil {
@@ -651,9 +650,8 @@ func (r ResultSummary) Render(cx *core.Scope) core.Node {
 				r.OnSelect(i.ID)
 			}
 		},
-			Style:     core.Style{Direction: core.Row, MinWidth: core.Pt(0), Padding: core.Symmetric(8, 12), AlignItems: core.AlignCenter, Gap: 8, Cursor: core.CursorPointer},
-			StyleFunc: func() core.Style { return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}} },
-			Children:  []core.Node{label, trailing}}
+			Style:    core.Style{Direction: core.Row, MinWidth: core.Pt(0), Padding: core.Symmetric(8, 12), AlignItems: core.AlignCenter, Gap: 8},
+			Children: []core.Node{label, trailing}}
 	}
 	children := []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(12)}, Children: head},
@@ -674,7 +672,7 @@ func (r ResultSummary) Render(cx *core.Scope) core.Node {
 			expanded.Update(func(v bool) bool { return !v })
 			r.Conversation.pause()
 		},
-			Style: core.Style{Height: core.Pt(ui.ButtonHeight), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Borders: core.Edges{Top: 1}, Cursor: core.CursorPointer},
+			Style: core.Style{Height: core.Pt(ui.ButtonHeight), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Borders: core.Edges{Top: 1}},
 			StyleFunc: func() core.Style {
 				return core.Style{BorderColors: core.EdgeColors{Top: colors.Border()}, Hover: &core.Style{Background: colors.chatOverlay()}}
 			},

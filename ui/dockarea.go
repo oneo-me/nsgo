@@ -25,7 +25,7 @@ func (d DockArea) Render(cx *core.Scope) core.Node {
 		return core.Style{Background: colors.Inset(), BorderColors: core.EdgeColors{Bottom: colors.Line()}}
 	}, d.TabBarStyle, d.TabBarStyleFunc)
 	out.TabStyle = TypeLabel.Merge(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, Padding: core.Symmetric(0, 12),
-		Cursor: core.CursorPointer, Borders: core.Edges{Top: 2, Right: 1}, Margin: core.Edges{Bottom: -1}}).Merge(d.TabStyle)
+		Borders: core.Edges{Top: 2, Right: 1}, Margin: core.Edges{Bottom: -1}}).Merge(d.TabStyle)
 	out.TabStyleFunc = over(func() core.Style {
 		c := colors.Now()
 		return core.Style{Color: c.Muted, BorderColors: core.EdgeColors{Top: transparent, Right: c.Line},

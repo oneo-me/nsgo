@@ -251,15 +251,11 @@ func stockRow(cx *core.Scope, s *stock, first func() bool, onPress func(), wide 
 	q := s.quote.Get
 	change := func() float64 { return percentOf(q()) }
 	st := core.Style{Height: core.Pt(64), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16)}
-	if wide {
-		st.Cursor = core.CursorPointer
-	}
 	states := func() core.Style {
-		s := core.Style{Active: &core.Style{Background: colors.Surface()}}
 		if wide {
-			s.Hover, s.Selected = &core.Style{Background: colors.Surface()}, &core.Style{Background: colors.Pressed()}
+			return core.Style{Selected: &core.Style{Background: colors.Pressed()}}
 		}
-		return s
+		return core.Style{}
 	}
 	return core.View{OnPress: func(core.PressEvent) { onPress() }, Role: core.RoleButton, Label: s.name, Selected: active, TestID: "stock-" + s.code,
 		Style: st, StyleFunc: states, Children: []core.Node{

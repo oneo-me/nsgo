@@ -114,7 +114,7 @@ func chatTranscript(s *ConversationState, pad core.Edges, children []core.Node, 
 func chatJumpButton(cx *core.Scope, s *ConversationState, label string, bottom func() core.Points, glass bool) core.Node {
 	colors := tonesOf(cx)
 	button := base.Button{Label: label, OnPress: func(core.PressEvent) { s.JumpToLatest() },
-		Style: core.Style{Group: "chat-jump", Width: core.Pt(32), Height: core.Pt(32), CornerRadius: 16, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer},
+		Style: core.Style{Group: "chat-jump", Width: core.Pt(32), Height: core.Pt(32), CornerRadius: 16, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 		StyleFunc: func() core.Style {
 			st := core.Style{Focus: ui.FocusRing(cx, 2)}
 			if glass {

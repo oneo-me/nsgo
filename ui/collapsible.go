@@ -54,7 +54,7 @@ func collapsibleTrigger(cx *core.Scope, c Collapsible, s core.Style) core.Node {
 			}
 		},
 		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(ButtonHeight + 4),
-			CornerRadius: RadiusControl, Cursor: core.CursorPointer, Transition: quick, Disabled: Dimmed()}.Merge(s),
+			CornerRadius: RadiusControl, Transition: quick, Disabled: Dimmed()}.Merge(s),
 		StyleFunc: func() core.Style {
 			return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()},
 				Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}

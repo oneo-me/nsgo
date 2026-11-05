@@ -174,7 +174,7 @@ func statusBarCard(cx *core.Scope) core.Node {
 func actionRow(cx *core.Scope, first bool, name func() *core.SVG, tint func() core.Color, title, detail string, onPress func()) core.Node {
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	return ui.Press{OnPress: onPress, Scale: 0.98, Label: title, Children: []core.Node{
+	return core.View{OnPress: func(core.PressEvent) { onPress() }, Role: core.RoleButton, Label: title, Children: []core.Node{
 		Row{First: first, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
 				return fin.Raised().Over(core.Style{Width: core.Pt(34), Height: core.Pt(34), CornerRadius: 10, BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Raised(),

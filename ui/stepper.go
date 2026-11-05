@@ -204,11 +204,7 @@ func (s Stepper) item(cx *core.Scope, i int, step StepperStep, status func(int) 
 		h = core.View{Role: core.RoleButton, LabelFunc: label, TestID: s.stepID(i), Disabled: func() bool { return i > s.Current() },
 			Hint: step.Description, Style: headStyle,
 			StyleFunc: func() core.Style {
-				st := core.Style{Focus: FocusRing(cx, 4)}
-				if selectable() {
-					st.Cursor = core.CursorPointer
-				}
-				return st
+				return core.Style{Focus: FocusRing(cx, 4)}
 			},
 			OnPress: func(core.PressEvent) {
 				if core.Untracked(cx, selectable) {

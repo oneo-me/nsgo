@@ -79,7 +79,7 @@ func TextViewStyles(cx *core.Scope) textview.Styles {
 		textview.PartCodeBlock:       {Background: c.Inset, CornerRadius: RadiusInset, BorderWidth: 1, BorderColor: c.Line},
 		textview.PartCodeBlockHeader: {Direction: core.Row, Gap: 4, Padding: core.All(4), Top: core.Pt(0), Right: core.Pt(0)},
 		textview.PartCodeBlockAction: TypeCaption.Merge(core.Style{Padding: core.Symmetric(2, 8), CornerRadius: RadiusSmall,
-			Background: c.Raised, BorderWidth: 1, BorderColor: c.Border, Color: c.Muted, Cursor: core.CursorPointer,
+			Background: c.Raised, BorderWidth: 1, BorderColor: c.Border, Color: c.Muted,
 			Hover: &core.Style{Color: c.Text}}),
 		textview.PartCodeBlockScroll: {Padding: core.Symmetric(12, 16)},
 		textview.PartCodeBlockCode:   TypeCode.Merge(core.Style{Color: c.Code}),
@@ -109,7 +109,7 @@ func TextViewStyles(cx *core.Scope) textview.Styles {
 		textview.PartMathBlock: TypeCode.Merge(core.Style{Padding: core.All(12), Background: c.Inset, CornerRadius: RadiusControl}),
 
 		textview.PartDetails:       {Gap: 8, Padding: core.Symmetric(8, 12), BorderWidth: 1, BorderColor: c.Border, CornerRadius: RadiusControl},
-		textview.PartSummary:       TypeLabel.Merge(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Cursor: core.CursorPointer}),
+		textview.PartSummary:       TypeLabel.Merge(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}),
 		textview.PartSummaryMarker: {Color: c.Muted},
 
 		textview.PartFootnotes: TypeCaption.Merge(core.Style{Gap: 4, Padding: core.Edges{Top: 12}, Borders: core.Edges{Top: 1},

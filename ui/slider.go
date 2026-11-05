@@ -223,7 +223,7 @@ func (s Slider) Render(cx *core.Scope) core.Node {
 			}
 		},
 		PanActivation: core.PanActivation{ActiveOffsetX: 2, FailOffsetY: 12},
-		Style: core.Style{Height: core.Pt(tall + 2*reach), Margin: core.Symmetric(-reach, 0), MinWidth: core.Pt(80), Cursor: core.CursorPointer,
+		Style: core.Style{Height: core.Pt(tall + 2*reach), Margin: core.Symmetric(-reach, 0), MinWidth: core.Pt(80),
 			Disabled: Dimmed()}.Merge(s.Style),
 		Children: children}
 }

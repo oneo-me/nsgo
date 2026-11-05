@@ -871,8 +871,7 @@ func chatDemo(cx *core.Scope) core.Node {
 		}
 		convs = append(convs, core.View{OnPress: func(core.PressEvent) { openChat(c.id) }, Role: core.RoleButton, Label: c.label, Selected: sel,
 			StyleFunc: func() core.Style {
-				return core.Style{Padding: core.Symmetric(9, 12), CornerRadius: ui.RadiusControl, Gap: 2, Cursor: core.CursorPointer,
-					Hover: &core.Style{Background: colors.Surface()}, Active: &core.Style{Background: colors.Pressed()}, Selected: &core.Style{Background: colors.Pressed()}}
+				return core.Style{Padding: core.Symmetric(9, 12), CornerRadius: ui.RadiusControl, Gap: 2, Selected: &core.Style{Background: colors.Pressed()}}
 			},
 			Children: []core.Node{
 				core.Text{Content: c.label, MaxLines: 1, StyleFunc: func() core.Style {
@@ -894,7 +893,7 @@ func chatDemo(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{Padding: core.All(12), Gap: 2}, Children: append([]core.Node{
 				ui.Press{OnPress: newChat, Label: tr.ChatNewChat(), Children: []core.Node{core.View{StyleFunc: func() core.Style {
 					return fin.Raised().Over(core.Style{Height: core.Pt(40), CornerRadius: ui.RadiusControl, BorderCurve: core.BorderCurveContinuous,
-						Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(), Cursor: core.CursorPointer})
+						Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border()})
 				},
 					Children: []core.Node{ui.Icon(lucide.Plus, 15, colors.Text), ui.Text(tr.ChatNewChat(), 13, ui.Semibold, colors.Text)}}}},
 				core.Text{Content: tr.ChatConversations(), Style: core.Style{FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.6, Padding: core.Edges{Top: 18, Right: 12, Bottom: 6, Left: 12}}, StyleFunc: ui.Colored(colors.Faint)},

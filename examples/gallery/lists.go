@@ -206,7 +206,7 @@ func listContacts(cx *core.Scope) core.Node {
 				Else: func(*core.Scope) core.Node {
 					return core.View{OnPress: func(core.PressEvent) {}, Role: core.RoleButton,
 						StyleFunc: func() core.Style {
-							return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Edges{Left: 16}, Height: core.Pt(60), Active: &core.Style{Background: colors.Raised()}}
+							return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Edges{Left: 16}, Height: core.Pt(60)}
 						},
 						Children: []core.Node{
 							core.View{StyleFunc: func() core.Style {

@@ -161,7 +161,7 @@ func chatFoldRow(cx *core.Scope, summary func() string, open func() bool, toggle
 		divider(),
 		core.View{Role: core.RoleButton, Expanded: open, OnPress: func(core.PressEvent) { toggle() }, LabelFunc: label,
 			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(24), Padding: core.Symmetric(0, 2), Gap: 5,
-				CornerRadius: ui.RadiusControl, Cursor: core.CursorPointer},
+				CornerRadius: ui.RadiusControl},
 			StyleFunc: func() core.Style { return core.Style{Focus: ui.FocusRing(cx, 2)} },
 			Children: []core.Node{
 				ui.Textf(label, 13.5, ui.Medium, colors.Muted),
@@ -264,7 +264,7 @@ func chatActivityGroup(cx *core.Scope, s func() Step, live func() bool, conversa
 				}
 				conversation.pause()
 			},
-			Style:     core.Style{Group: "chat-group", Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(26), Gap: 6, MinWidth: core.Pt(0), Cursor: core.CursorPointer},
+			Style:     core.Style{Group: "chat-group", Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(26), Gap: 6, MinWidth: core.Pt(0)},
 			StyleFunc: func() core.Style { return core.Style{Focus: ui.FocusRing(cx, 2)} },
 			Children: []core.Node{
 				core.Text{ContentFunc: title, MaxLines: 1, Style: core.Style{FontSize: 12.5, FontWeight: ui.Medium, MinWidth: core.Pt(0), FlexShrink: 1}, StyleFunc: func() core.Style {
@@ -323,7 +323,7 @@ func (r ActivityRow) Render(cx *core.Scope) core.Node {
 					expanded.Update(func(v bool) bool { return !v })
 					r.Conversation.pause()
 				},
-				Style: shape.Merge(core.Style{Cursor: core.CursorPointer}),
+				Style: shape,
 				StyleFunc: func() core.Style {
 					return core.Style{Hover: &core.Style{Background: ui.Alpha(colors.Text(), 0.03)}, Focus: &core.Style{Background: ui.Alpha(colors.Text(), 0.03)}}
 				},

@@ -31,7 +31,7 @@ var (
 	touchSizes   = controlSizes{row: 56, padding: 8, gap: 12, label: 15, detail: 13, control: 22, corner: 7, check: 16, dash: 10, dot: 8, tabs: 40, line: 44}
 )
 
-// bleed is how far a row's hover fill reaches past its content on each
+// bleed is how far a row's focus ring reaches past its content on each
 // side, and its corners.
 const bleed core.Points = 8
 
@@ -55,11 +55,11 @@ func rowLine(cx *core.Scope, first bool) func() core.Style {
 	return func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: ui.ColorsOf(cx).Line()}} }
 }
 
-// hoverRow is a row that takes the pointer's hover: its fill reaching
-// bleed past the content on both sides with rounded corners, and the
-// content where it was (start: more room before it). The hairline above
-// it is a divider, so nothing moves.
-func (z controlSizes) hoverRow(cx *core.Scope, first bool, start core.Points, disabled bool) core.Style {
+// listRow is a row of a control list: its focus ring reaching bleed past
+// the content on both sides with rounded corners, and the content where
+// it was (start: more room before it). The hairline above it is a
+// divider, so nothing moves.
+func (z controlSizes) listRow(cx *core.Scope, first bool, start core.Points) core.Style {
 	s := z.controlRow(cx, true)
 	s.Margin = core.Edges{Left: -bleed, Right: -bleed}
 	top := z.padding
@@ -68,24 +68,16 @@ func (z controlSizes) hoverRow(cx *core.Scope, first bool, start core.Points, di
 	}
 	s.Padding = core.Edges{Left: bleed + start, Right: bleed, Top: top, Bottom: z.padding}
 	s.CornerRadius = bleed
-	s.Active = &core.Style{Opacity: core.Alpha(0.7)}
 	s.Disabled = &core.Style{Opacity: core.Alpha(0.4)}
 	return s
 }
 
-// hoverPaint is a hover row's focus ring and hover fill, for its
-// StyleFunc.
-func hoverPaint(cx *core.Scope, disabled bool) func() core.Style {
-	return func() core.Style {
-		s := core.Style{Focus: ui.FocusRing(cx, -2)}
-		if !disabled {
-			s.Hover = ui.Hovered(cx)
-		}
-		return s
-	}
+// listRowFocus is a list row's focus ring, for its StyleFunc.
+func listRowFocus(cx *core.Scope) func() core.Style {
+	return func() core.Style { return core.Style{Focus: ui.FocusRing(cx, -2)} }
 }
 
-// divider is the hairline above a hover row that is not the first.
+// divider is the hairline above a list row that is not the first.
 func divider(cx *core.Scope, show bool) core.Node {
 	colors := ui.ColorsOf(cx)
 	if !show {
@@ -222,7 +214,7 @@ func (c controls) setting(cx *core.Scope, label string, detail func() string, on
 	last := c.last
 	tr := locales.For(cx)
 	look := ui.NewSwitchLook(cx, on.Get, z.small)
-	s := z.hoverRow(cx, first, 0, false)
+	s := z.listRow(cx, first, 0)
 	// The track at the trailing edge, after the label.
 	s.Direction = core.RowReverse
 	return base.Switch{Checked: on.Get, Disabled: disabled, Label: label,
@@ -230,7 +222,7 @@ func (c controls) setting(cx *core.Scope, label string, detail func() string, on
 			on.Set(v)
 			last.Set(fmt.Sprintf("%s: %s", label, onOff(tr, v)))
 		},
-		Style: s, StyleFunc: hoverPaint(cx, false), TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb,
+		Style: s, StyleFunc: listRowFocus(cx), TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb,
 		Children: []core.Node{divider(cx, !first), z.labelled(cx, label, detail)}}
 }
 
@@ -295,7 +287,7 @@ func (c controls) filter(cx *core.Scope) core.Node {
 			shown.Set(names)
 			last.Set(fmt.Sprintf("%s: %s", tr.ControlsSelectAll(), onOff(tr, on)))
 		},
-		Style: z.hoverRow(cx, true, 0, false), StyleFunc: hoverPaint(cx, false), IndicatorStyleFunc: func() core.Style { return z.box(cx, boxMark()) }, Indicator: z.boxMark(cx, boxMark),
+		Style: z.listRow(cx, true, 0), StyleFunc: listRowFocus(cx), IndicatorStyleFunc: func() core.Style { return z.box(cx, boxMark()) }, Indicator: z.boxMark(cx, boxMark),
 		Children: []core.Node{core.Text{Content: tr.ControlsSelectAll(), Style: core.Style{FlexGrow: 1, FontSize: z.label, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)}}}}
 	for _, k := range kinds {
 		m := func() mark {
@@ -316,7 +308,7 @@ func (c controls) filter(cx *core.Scope) core.Node {
 				last.Set(fmt.Sprintf("%s: %s", k.name, onOff(tr, on)))
 			},
 			// One level under "Select all": the boxes line up with its label.
-			Style: z.hoverRow(cx, false, z.control+z.gap, false), StyleFunc: hoverPaint(cx, false), IndicatorStyleFunc: func() core.Style { return z.box(cx, m()) }, Indicator: z.boxMark(cx, m),
+			Style: z.listRow(cx, false, z.control+z.gap), StyleFunc: listRowFocus(cx), IndicatorStyleFunc: func() core.Style { return z.box(cx, m()) }, Indicator: z.boxMark(cx, m),
 			Children: []core.Node{divider(cx, true),
 				core.Text{Content: k.name, Style: core.Style{FlexGrow: 1, FontSize: z.label}, StyleFunc: ui.Colored(colors.Text)},
 				ui.Text(thousands(k.count), z.detail, ui.Regular, colors.Faint)}})
@@ -355,7 +347,7 @@ func (c controls) plansCard(cx *core.Scope) core.Node {
 		on := func() bool { return chosen.Get() == p.name }
 		radios = append(radios, base.Radio{Checked: on, Disabled: func() bool { return p.disabled }, Label: p.name,
 			OnChange: func(bool) { chosen.Set(p.name); last.Set(tr.ControlsPlan() + p.name) },
-			Style:    z.hoverRow(cx, i == 0, 0, p.disabled), StyleFunc: hoverPaint(cx, p.disabled),
+			Style:    z.listRow(cx, i == 0, 0), StyleFunc: listRowFocus(cx),
 			Children: []core.Node{divider(cx, i != 0), z.ring(cx, on), z.labelled(cx, p.name, func() string { return p.detail }),
 				core.Text{Content: p.price, StyleFunc: func() core.Style {
 					c := colors.Muted
@@ -470,7 +462,7 @@ func (c controls) disclosure(cx *core.Scope) core.Node {
 				}
 				last.Set(label + ": " + state)
 			},
-			Style: z.hoverRow(cx, first, 0, false), StyleFunc: hoverPaint(cx, false),
+			Style: z.listRow(cx, first, 0), StyleFunc: listRowFocus(cx),
 			Children: []core.Node{divider(cx, !first), z.labelled(cx, label, func() string { return detail }),
 				// A lane as wide as the chevron's stroke, so the chevron
 				// ends where the values below it end.
@@ -493,7 +485,7 @@ func (c controls) disclosure(cx *core.Scope) core.Node {
 			ui.Text(u[1], z.label, ui.Regular, colors.Muted),
 		}})
 	}
-	keep := z.hoverRow(cx, false, z.gap, false)
+	keep := z.listRow(cx, false, z.gap)
 	keep.Direction = core.RowReverse
 	return ui.Card{Title: tr.ControlsCollapsible(), Description: tr.ControlsDetailsUnderASummaryKept(), Children: []core.Node{
 		core.View{Children: []core.Node{
@@ -503,7 +495,7 @@ func (c controls) disclosure(cx *core.Scope) core.Node {
 			base.Collapsible{Open: advanced.Get,
 				Content: base.Switch{Checked: originals.Get, Label: tr.ControlsKeepOriginals(),
 					OnChange: func(on bool) { originals.Set(on); last.Set(tr.ControlsKeepOriginals2() + onOff(tr, on)) },
-					Style:    keep, StyleFunc: hoverPaint(cx, false), TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb,
+					Style:    keep, StyleFunc: listRowFocus(cx), TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb,
 					Children: []core.Node{divider(cx, true), z.labelled(cx, tr.ControlsKeepOriginals(), func() string {
 						if originals.Get() {
 							return tr.ControlsEditsAreSavedAsCopies()

@@ -47,6 +47,6 @@ func (b RoundButton) Render(cx *core.Scope) core.Node {
 		}
 		return s
 	}
-	return Press{OnPress: b.OnPress, Scale: 0.96, LabelFunc: label, HitSlop: max(0, (44-size)/2), Style: core.Style{Group: "button", Cursor: core.CursorPointer},
+	return Press{OnPress: b.OnPress, Scale: 0.96, LabelFunc: label, HitSlop: max(0, (44-size)/2), Style: core.Style{Group: "button"},
 		Children: []core.Node{core.View{StyleFunc: face, Children: []core.Node{IconOf(name, size*0.45, fg)}}}}
 }

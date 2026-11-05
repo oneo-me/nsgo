@@ -115,7 +115,7 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 			Background: rest, BorderWidth: 1, BorderColor: border,
 			GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: hover}, Active: &core.Style{Background: pressed}}})
 	}
-	style := core.Style{Group: "button", FlexGrow: b.Flex, FlexShrink: b.Flex, CornerRadius: RadiusControl, Cursor: core.CursorPointer,
+	style := core.Style{Group: "button", FlexGrow: b.Flex, FlexShrink: b.Flex, CornerRadius: RadiusControl,
 		Disabled: &core.Style{Opacity: core.Alpha(0.4)}}.Merge(slop(cx, ButtonHeight))
 	return style, func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} }, core.View{StyleFunc: face, Children: children}
 }

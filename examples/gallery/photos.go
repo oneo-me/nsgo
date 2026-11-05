@@ -50,7 +50,7 @@ func photoRow(cx *core.Scope, p func() photo) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	return ui.Press{Scale: 0.985, Label: tr.PhotosPhoto(), Children: []core.Node{
+	return core.View{Role: core.RoleButton, Label: tr.PhotosPhoto(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16), Height: core.Pt(76)}, Children: []core.Node{
 			core.Image{SourceFunc: func() core.ImageSource { return core.Src(fmt.Sprintf("https://picsum.photos/seed/%d/112/112", p().id)) },
 				StyleFunc: func() core.Style {
@@ -88,10 +88,9 @@ func photoTile(cx *core.Scope, p func() photo) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	return ui.Press{Scale: 0.97, Label: tr.PhotosPhoto(), Children: []core.Node{
+	return core.View{Role: core.RoleButton, Label: tr.PhotosPhoto(), Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
-			return core.Style{Padding: core.All(6), Gap: 8, CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, Cursor: core.CursorPointer,
-				Hover: &core.Style{Background: colors.Surface()}}
+			return core.Style{Padding: core.All(6), Gap: 8, CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous}
 		}, Children: []core.Node{
 			core.Image{SourceFunc: func() core.ImageSource { return core.Src(fmt.Sprintf("https://picsum.photos/seed/%d/480/360", p().id)) },
 				StyleFunc: func() core.Style {

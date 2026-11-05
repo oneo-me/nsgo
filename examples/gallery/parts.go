@@ -206,9 +206,6 @@ func (r Row) Render(cx *core.Scope) core.Node {
 			if !r.First {
 				s.Borders, s.BorderColors = core.Edges{Top: 1}, core.EdgeColors{Top: colors.Line()}
 			}
-			if r.OnPress != nil {
-				s.Active = &core.Style{Background: colors.Hover()}
-			}
 			return s
 		}, Children: r.Children}
 	if r.OnPress != nil {
@@ -295,11 +292,9 @@ type LinkRow struct {
 // Render implements core.Node.
 func (r LinkRow) Render(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
-	row := ui.Press{OnPress: r.OnPress, Scale: 0.98, Label: r.Title, Style: core.Style{Group: "row", Cursor: core.CursorPointer}, Children: []core.Node{
+	row := core.View{OnPress: func(core.PressEvent) { r.OnPress() }, Role: core.RoleButton, Label: r.Title, Children: []core.Node{
 		core.View{Style: core.Style{MinHeight: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Symmetric(6, 8), CornerRadius: ui.RadiusControl},
-			StyleFunc: func() core.Style {
-				return core.Style{GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}}}
-			}, Children: []core.Node{
+			Children: []core.Node{
 				IconTile{Icon: r.Icon, Size: 28},
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 					ui.Text(r.Title, 13, ui.Medium, colors.Text),
@@ -343,7 +338,7 @@ func (t Tool) Render(cx *core.Scope) core.Node {
 	return base.Button{OnPress: func(core.PressEvent) { t.OnPress() }, Selected: t.On, Label: t.Label,
 		StyleFunc: func() core.Style {
 			return fin.Raised().Over(core.Style{Height: core.Pt(ui.ButtonHeight), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8,
-				CornerRadius: ui.ButtonHeight / 2, BorderWidth: 1, BorderColor: ui.Alpha(colors.Border(), 0.8), Cursor: core.CursorPointer,
+				CornerRadius: ui.ButtonHeight / 2, BorderWidth: 1, BorderColor: ui.Alpha(colors.Border(), 0.8),
 				Padding: core.Symmetric(0, 12), Background: colors.Raised(), Transition: core.Transition{Duration: 150e6},
 				Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}})
 		},

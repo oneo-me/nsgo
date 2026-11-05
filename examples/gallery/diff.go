@@ -164,9 +164,9 @@ func diffParts(cx *core.Scope) diff.Styles {
 		IndicatorAdded:   core.Style{Background: added, Color: added},
 		IndicatorDeleted: core.Style{Background: deleted, Color: deleted},
 		Content:          core.Style{Color: colors.Text},
-		Separator:        core.Style{Background: colors.Inset, Color: colors.Muted, Padding: core.Symmetric(0, 12), Cursor: core.CursorPointer},
+		Separator:        core.Style{Background: colors.Inset, Color: colors.Muted, Padding: core.Symmetric(0, 12)},
 		FileHeader: core.Style{Background: colors.Raised, Color: colors.Text, Padding: core.Symmetric(0, 12), Borders: core.Edges{Bottom: 1},
-			BorderColor: colors.Border, Cursor: core.CursorPointer},
+			BorderColor: colors.Border},
 		LineSelected:  core.Style{Background: ui.Alpha(colors.Accent, 0.18)},
 		Annotation:    core.Style{Padding: core.Symmetric(6, 12)},
 		AddAnnotation: core.Style{Padding: core.Edges{Right: 2}},
@@ -265,7 +265,7 @@ func diffDemo(cx *core.Scope) core.Node {
 						tr := locales.For(cx)
 						colors := ui.ColorsOf(cx)
 						return core.View{Role: core.RoleButton, Label: tr.DiffAddAComment(), Style: core.Style{Width: core.Pt(16), Height: core.Pt(16),
-							CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer}, StyleFunc: ui.Filled(colors.Accent),
+							CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, StyleFunc: ui.Filled(colors.Accent),
 							OnPress: func(core.PressEvent) {
 								list := comments.GetUntracked()
 								id := fmt.Sprint("c", len(list)+1)

@@ -97,7 +97,7 @@ func (MenuSeparator) Render(cx *core.Scope) core.Node {
 // height across a sheet.
 func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
 	colors := ColorsOf(cx)
-	s := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Cursor: core.CursorPointer, Disabled: Dimmed()}
+	s := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Disabled: Dimmed()}
 	if !Touch(cx) {
 		s.MinHeight, s.Padding, s.CornerRadius = core.Pt(ButtonHeight), core.Symmetric(0, 8), RadiusControl-2
 		return s, func() core.Style {

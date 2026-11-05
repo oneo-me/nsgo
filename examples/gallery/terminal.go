@@ -157,10 +157,10 @@ func terminalDemo(cx *core.Scope) core.Node {
 	}
 	panel := core.Scroll{StyleFunc: func() core.Style {
 		if wide() {
-			return core.Style{Width: core.Pt(300), FlexShrink: 0}
+			return core.Style{Width: core.Pt(332), FlexShrink: 0}
 		}
-		return core.Style{MaxHeight: core.Pt(280), FlexShrink: 0}
-	}, Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
+		return core.Style{MaxHeight: core.Pt(312), FlexShrink: 0}
+	}, Children: []core.Node{core.View{Style: core.Style{Padding: core.All(16), Gap: 12}, Children: []core.Node{
 		Section{Title: tr.TerminalOptions(), Note: "terminal.View", Children: []core.Node{
 			sessionOption,
 			option(tr.TerminalTheme(), "Theme · DarkTheme", core.View{Children: themeRows}),
@@ -199,10 +199,16 @@ func terminalDemo(cx *core.Scope) core.Node {
 		if wide() {
 			direction = core.Row
 		}
-		return fillPage.Merge(core.Style{Direction: direction, Background: colors.Background(), Padding: core.All(16), Gap: 16})
+		return fillPage.Merge(core.Style{Direction: direction, Background: colors.Background()})
 	}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
-			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(240), MinWidth: core.Pt(0), CornerRadius: ui.RadiusInset,
+			// The panel beside it scrolls to the page's edge, so only the
+			// screen keeps the page's margin there.
+			margin := core.Edges{Top: 16, Right: 16, Left: 16}
+			if wide() {
+				margin = core.Edges{Top: 16, Bottom: 16, Left: 16}
+			}
+			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(240), MinWidth: core.Pt(0), Margin: margin, CornerRadius: ui.RadiusInset,
 				BorderWidth: 1, BorderColor: colors.Border(), Overflow: core.Hidden})
 		}, Children: []core.Node{screen}},
 		panel,

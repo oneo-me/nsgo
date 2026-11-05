@@ -414,7 +414,7 @@ func demoRow(cx *core.Scope, d demo, first bool, open func()) core.Node {
 	if !first {
 		s.Borders = core.Edges{Top: 1}
 	}
-	return ui.Press{OnPress: open, Scale: 0.98, Label: d.title(tr), TestID: "nav-" + d.name, Children: []core.Node{
+	return core.View{OnPress: func(core.PressEvent) { open() }, Role: core.RoleButton, Label: d.title(tr), TestID: "nav-" + d.name, Children: []core.Node{
 		core.View{Style: s, StyleFunc: func() core.Style {
 			if first {
 				return core.Style{}

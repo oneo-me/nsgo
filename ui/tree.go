@@ -107,7 +107,7 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 			Style: core.Style{Width: core.Pt(iconSize), Height: core.Pt(iconSize), FlexShrink: 0, CornerRadius: RadiusSmall,
 				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: func() core.Style {
-				s := core.Style{Color: colors.Muted(), Hover: &core.Style{Color: colors.Text()}}
+				s := core.Style{Color: colors.Muted()}
 				if !item.Branch() {
 					s.Opacity, s.Cursor = core.Alpha(0), core.CursorDefault
 				}

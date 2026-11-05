@@ -68,7 +68,7 @@ func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 	return base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
 		Label: locales.Language(cx), TestID: "language",
 		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Height: core.Pt(32), MinWidth: core.Pt(140),
-			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderWidth: 1, Cursor: core.CursorPointer},
+			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderWidth: 1},
 		StyleFunc: func() core.Style {
 			return core.Style{Background: colors.Raised(), BorderColor: colors.Border(), Hover: &core.Style{Background: colors.Hover()},
 				Active: &core.Style{Background: colors.Pressed()}, Focus: ui.FocusRing(cx, -2)}

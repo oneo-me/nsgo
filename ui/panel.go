@@ -45,7 +45,7 @@ func (p Panel) Render(cx *core.Scope) core.Node {
 	surface := core.View{StyleFunc: func() core.Style { return CardStyle(cx).Merge(p.Style) }, Children: parts}
 	if p.OnPress != nil {
 		surface.Role, surface.Label, surface.OnPress = core.RoleButton, p.Label, func(core.PressEvent) { p.OnPress() }
-		surface.Style = core.Style{Cursor: core.CursorPointer, Transition: quick}
+		surface.Style = core.Style{Transition: quick}
 		surface.StyleFunc = func() core.Style {
 			colors := ColorsOf(cx)
 			return CardStyle(cx).Merge(core.Style{Hover: &core.Style{BorderColor: colors.FieldBorder()},
