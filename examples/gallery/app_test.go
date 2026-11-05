@@ -48,21 +48,152 @@ func startPhone(t *testing.T) *nsgotest.App {
 	return nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Environment(core.Environment{OS: core.OSIOS, Idiom: core.IdiomPhone, Locale: "en-US"}))
 }
 
-// open shows a demo in the desktop layout.
-func open(app *nsgotest.App, name string) { app.Press("id:nav-" + name) }
+// open shows a demo in the desktop layout, from its tab's sidebar.
+func open(app *nsgotest.App, name string) {
+	app.Press("id:tab-" + tabs[tabOf(name)].id)
+	app.Press("id:nav-" + name)
+}
 
-// TestGroups keeps the sidebar in NSH's order of groups.
-func TestGroups(t *testing.T) {
+// openTab chooses a tab of the phone layout's system tab bar.
+func openTab(app *nsgotest.App, i int) { app.Emit("id:tab-bar", "change", float64(i)) }
+
+// openPhone pushes a demo in the phone layout, from its tab's index.
+func openPhone(app *nsgotest.App, name string) {
+	openTab(app, tabOf(name))
+	app.Press("id:nav-" + name)
+}
+
+// TestTabs keeps each tab's sidebar to its demos, in order, and lets each
+// tab show the demo it showed last.
+func TestTabs(t *testing.T) {
 	app := startDesktop(t)
-	last := core.Points(-1)
-	for _, g := range groups {
-		root := app.Find("id:nav-group-" + g.name)
-		app.Find("id:nav-group-" + g.name + " >> id:nav-" + g.demos[0].name)
-		if root.Frame.Origin.Y <= last {
-			t.Fatalf("the %s group is above the group before it", g.name)
+	for _, tab := range tabs {
+		app.Press("id:tab-" + tab.id)
+		last := core.Points(-1)
+		for _, g := range tab.groups {
+			root := app.Find("id:nav-group-" + g.name)
+			app.Find("id:nav-group-" + g.name + " >> id:nav-" + g.demos[0].name)
+			if root.Frame.Origin.Y <= last {
+				t.Fatalf("the %s group is above the group before it", g.name)
+			}
+			last = root.Frame.Origin.Y
 		}
-		last = root.Frame.Origin.Y
+		app.Find("id:demo-" + tab.groups[0].demos[0].name)
 	}
+	if app.Exists("id:nav-Stocks") {
+		t.Fatal("the basics tab lists the apps")
+	}
+	open(app, "Switch")
+	app.Press("id:tab-basics")
+	app.Press("id:tab-components")
+	app.Find("id:demo-Switch")
+	// The menu reaches a demo of another tab.
+	app.ChooseMenu("View", "Photos")
+	app.Find("id:nav-Photos")
+	app.Find("id:demo-Photos")
+}
+
+// TestPhoneTabs shows the tabs and the settings at the bottom, and the
+// settings' theme.
+func TestPhoneTabs(t *testing.T) {
+	app := startPhone(t)
+	bars := app.QueryMounted("id:tab-bar")
+	if len(bars) != 1 || len(bars[0].NativeProps["items"].([]any)) != len(tabs)+1 {
+		t.Fatalf("the bars are %v", bars)
+	}
+	openPhone(app, "Switch")
+	app.Back()
+	openTab(app, settingsTab())
+	app.Find("id:settings-page")
+	app.Find("id:settings-general-language")
+	app.Press("id:theme")
+	app.Press("id:theme-2")
+	if got, _ := app.Storage().GetItem(themeKey); got != "dark" {
+		t.Fatalf("kept %q, want dark", got)
+	}
+	if got := app.Find("id:settings-page").Style.Background; got != ui.Theme().Dark.Background {
+		t.Fatalf("page = %x, want the dark background", got)
+	}
+	// One bar serves every tab, and pages pushed cover it.
+	openPhone(app, "Switch")
+	app.Back()
+	if got := len(app.QueryMounted("id:tab-bar")); got != 1 {
+		t.Fatalf("%d bars", got)
+	}
+	if len(app.QueryMounted("id:screen-Switch >> id:tab-bar")) != 0 {
+		t.Fatal("a pushed page holds the bar")
+	}
+}
+
+// TestPhoneLargeTitles titles the indexes, the settings and the demos that
+// scroll with iOS's large title, and leaves the others a compact bar.
+func TestPhoneLargeTitles(t *testing.T) {
+	app := startPhone(t)
+	if !app.Find("id:index").Screen.LargeTitle {
+		t.Fatal("the index has no large title")
+	}
+	openPhone(app, "Switch")
+	if !app.Find("id:screen-Switch").Screen.LargeTitle {
+		t.Fatal("a demo that scrolls has no large title")
+	}
+	app.Back()
+	openPhone(app, "Terminal")
+	if app.Find("id:screen-Terminal").Screen.LargeTitle {
+		t.Fatal("a demo that fills the page has a large title")
+	}
+	app.Back()
+	openTab(app, settingsTab())
+	if !app.Find("id:settings-page").Screen.LargeTitle {
+		t.Fatal("the settings have no large title")
+	}
+}
+
+// TestNarrowDesktop shows the stack's header at the window's top, clear of
+// the window controls, with no title bar of the app's.
+func TestNarrowDesktop(t *testing.T) {
+	env := desktopEnv
+	env.TitleBar = core.Edges{Top: 28, Left: 78}
+	app := startDesktop(t, nsgotest.Size(500, 700), nsgotest.Environment(env))
+	app.Press("role:tab Settings")
+	app.Find("id:settings-page")
+	head := app.Find("role:header Settings").Parent.Parent
+	if head.Frame.Origin.Y != 0 || head.Props.WindowDrag != core.WindowDragOn {
+		t.Fatalf("the header is at %v, dragging %v", head.Frame.Origin, head.Props.WindowDrag)
+	}
+	if x := app.Find("role:header Settings").Parent.Frame.Origin.X; x < 78 {
+		t.Fatalf("the title is at %v, under the window controls", x)
+	}
+	if app.Exists("id:settings") {
+		t.Fatal("the sidebar's footer shows")
+	}
+	// The bar leaves pushed pages the window.
+	app.Press("role:tab Apps")
+	app.Press("id:nav-Stocks")
+	if app.Exists("role:tablist Sections") {
+		t.Fatal("the tab bar shows over a pushed page")
+	}
+	app.Back()
+	app.Find("role:tablist Sections")
+}
+
+// TestSettingsFollowTheLayout turns the dialog into the tab and back.
+func TestSettingsFollowTheLayout(t *testing.T) {
+	app := startDesktop(t)
+	app.Press("id:settings")
+	app.Press("id:theme")
+	app.Press("id:theme-1")
+	if got, _ := app.Storage().GetItem(themeKey); got != "light" {
+		t.Fatalf("kept %q, want light", got)
+	}
+	app.Resize(400, 800)
+	app.Find("id:settings-page")
+	app.Resize(1200, 800)
+	app.Find("id:settings-dialog")
+}
+
+func TestThemeRemembered(t *testing.T) {
+	app := startDesktop(t, nsgotest.Storage(map[string]string{themeKey: "dark"}))
+	app.Find("role:button Light appearance")
 }
 
 // TestEveryDemoBuilds opens each demo in both layouts and in the dark.
@@ -74,7 +205,7 @@ func TestEveryDemoBuilds(t *testing.T) {
 			t.Fatalf("title = %q, want %q", got, d.name)
 		}
 		wide.Find("id:demo-" + d.name)
-		phone.Press("id:nav-" + d.name)
+		openPhone(phone, d.name)
 		phone.Find("id:screen-" + d.name)
 		phone.Back()
 		phone.Find("id:home")
@@ -262,7 +393,7 @@ func TestStocks(t *testing.T) {
 
 func TestStocksOnAPhone(t *testing.T) {
 	app := startPhone(t)
-	app.Press("id:nav-Stocks")
+	openPhone(app, "Stocks")
 	app.Press("id:stock-ORBX")
 	app.Find("text:Orbex Freight")
 	app.Back()
@@ -271,7 +402,7 @@ func TestStocksOnAPhone(t *testing.T) {
 
 func TestChatStreamsAScript(t *testing.T) {
 	app := startPhone(t)
-	app.Press("id:nav-AI Chat")
+	openPhone(app, "AI Chat")
 	app.Press("label:Think it through >> nth=0")
 	app.Advance(20 * time.Second)
 	app.Find("text:The ball costs")
@@ -291,7 +422,7 @@ func TestChatStreamsAScript(t *testing.T) {
 
 func TestChatRetriesAFailure(t *testing.T) {
 	app := startPhone(t)
-	app.Press("id:nav-AI Chat")
+	openPhone(app, "AI Chat")
 	app.Press("label:Fail a reply")
 	app.Advance(10 * time.Second)
 	app.Find("text:error 529")
@@ -603,7 +734,7 @@ func TestAppearanceRestylesInPlace(t *testing.T) {
 			checkKept(t, before, got)
 			// The gallery keeps its state in a global: the fresh build
 			// starts after the switched one is read.
-			fresh := startDesktop(t, nsgotest.Environment(dark))
+			fresh := startDesktop(t, nsgotest.Environment(dark), nsgotest.Storage(map[string]string{themeKey: "dark"}))
 			open(fresh, d.name)
 			fresh.FastForward(2 * time.Second)
 			checkLooks(t, got, snapshot(fresh, shown, drawings))
@@ -612,7 +743,7 @@ func TestAppearanceRestylesInPlace(t *testing.T) {
 }
 
 // TestPhoneAppearanceRestylesInPlace switches the phone layout to dark:
-// with the index's toggle, and as the system turns dark under a pushed
+// with the settings' theme, and as the system turns dark under a pushed
 // demo.
 func TestPhoneAppearanceRestylesInPlace(t *testing.T) {
 	headless(t)
@@ -620,24 +751,34 @@ func TestPhoneAppearanceRestylesInPlace(t *testing.T) {
 	dark := phone
 	dark.Dark = true
 	for _, demo := range []string{"", "Switch"} {
+		var stored map[string]string
 		start := func(env core.Environment) (*nsgotest.App, string) {
-			app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Environment(env))
+			app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Environment(env), nsgotest.Storage(stored))
 			if demo == "" {
+				// Both builds have the settings' tab.
+				openTab(app, settingsTab())
+				openTab(app, 0)
 				return app, "id:home"
 			}
-			app.Press("id:nav-" + demo)
+			openPhone(app, demo)
 			return app, "id:screen-" + demo
 		}
 		app, shown := start(phone)
 		app.FastForward(2 * time.Second)
 		before := viewIDs(rootOf(app.Find(shown)))
 		if demo == "" {
-			app.Press("role:button Dark appearance")
+			openTab(app, settingsTab())
+			app.Press("id:theme")
+			app.Press("id:theme-2")
+			openTab(app, 0)
 		} else {
 			app.SetEnvironment(dark)
 		}
 		got := snapshot(app, shown, true)
 		checkKept(t, before, got)
+		if demo == "" {
+			stored = map[string]string{themeKey: "dark"}
+		}
 		fresh, _ := start(dark)
 		fresh.FastForward(2 * time.Second)
 		checkLooks(t, got, snapshot(fresh, shown, true))
@@ -845,8 +986,8 @@ func TestGalleryLanguages(t *testing.T) {
 			env := desktopEnv
 			env.Locale = c.locale
 			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
-			app.Find("id:nav-Switch >> text:" + c.nav)
 			open(app, "Switch")
+			app.Find("id:nav-Switch >> text:" + c.nav)
 			app.Find("id:demo-Switch >> text:" + c.title)
 			open(app, "DataTable")
 			app.Find("label:" + c.sort)
@@ -895,7 +1036,7 @@ func TestSidebarKeys(t *testing.T) {
 		t.Fatalf("down from Stocks selected %q, want AI Chat", got)
 	}
 	app.Key("end")
-	if got, want := app.Find("id:title").Text, allDemos()[len(allDemos())-1].name; got != want {
+	if got, want := app.Find("id:title").Text, "Photos"; got != want {
 		t.Fatalf("end selected %q, want %q", got, want)
 	}
 	app.Key("home")
@@ -951,7 +1092,7 @@ func TestTerminal(t *testing.T) {
 // the panel; a long press opens the context menu.
 func TestTerminalPhone(t *testing.T) {
 	app := startPhone(t)
-	app.Press("id:nav-Terminal")
+	openPhone(app, "Terminal")
 	app.Find("id:terminal")
 	app.Find("id:terminal-key-escape")
 	app.Type("label:Terminal", "title on a phone")
@@ -972,7 +1113,7 @@ func TestTerminalPhone(t *testing.T) {
 // rows: it is selected, which the context menu's Copy follows.
 func TestTerminalPhoneSelect(t *testing.T) {
 	app := startPhone(t)
-	app.Press("id:nav-Terminal")
+	openPhone(app, "Terminal")
 	app.Find("id:terminal")
 	app.Type("label:Terminal", "top")
 	app.Key("enter")

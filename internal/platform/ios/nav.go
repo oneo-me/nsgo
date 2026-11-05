@@ -174,6 +174,8 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 			const pad = 2
 			b.bar.Send(sel("setPreferredBehavioralStyle:"), pad)
 		}
+		// Outside a navigation controller the bar has no margins of its own.
+		b.bar.Send(sel("setLayoutMargins:"), edgeInsets{Left: 16, Right: 16})
 		b.item = objc.ID(objc.GetClass("UINavigationItem")).Send(selNew)
 		b.back = objc.ID(objc.GetClass("UINavigationItem")).Send(selNew)
 		v.native.Send(selAddSubview, b.bar)
@@ -214,7 +216,8 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 }
 
 // styleBar sets the bar's appearance from the header's colors, UIKit's
-// own where they are unset, as NSH's header_appearance.
+// own where they are unset, as NSH's header_appearance. A large title has
+// no background until it collapses, as under a navigation controller.
 func (s *surface) styleBar(b *navBar, c *driver.ScreenConfig) {
 	tint := objc.ID(0)
 	if c.TintColor != 0 {
@@ -223,13 +226,16 @@ func (s *surface) styleBar(b *navBar, c *driver.ScreenConfig) {
 	b.bar.Send(sel("setTintColor:"), tint)
 	a := objc.ID(objc.GetClass("UINavigationBarAppearance")).Send(selNew)
 	switch {
-	case c.HeaderTransparent:
+	case c.HeaderTransparent, c.LargeTitle && !b.collapsed:
 		a.Send(sel("configureWithTransparentBackground"))
 	case c.Background != 0:
 		a.Send(sel("configureWithOpaqueBackground"))
 		a.Send(sel("setBackgroundColor:"), uiColor(c.Background))
 	default:
+		// From iOS 26 the default background has no blur of its own.
+		const systemChromeMaterial = 10
 		a.Send(sel("configureWithDefaultBackground"))
+		a.Send(sel("setBackgroundEffect:"), objc.ID(objc.GetClass("UIBlurEffect")).Send(sel("effectWithStyle:"), systemChromeMaterial))
 	}
 	if c.TitleColor != 0 {
 		key := apple.Global(uikitPath, "NSForegroundColorAttributeName")
@@ -335,6 +341,7 @@ func (s *surface) followLargeTitle(sv *view, offset driver.Points) {
 	b.collapsed = collapsed
 	animations := objc.NewBlock(func(objc.Block) {
 		s.showLargeTitle(b)
+		s.styleBar(b, &b.config)
 		s.layoutBar(screen)
 		b.bar.Send(sel("layoutIfNeeded"))
 	})

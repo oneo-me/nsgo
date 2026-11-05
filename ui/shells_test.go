@@ -203,6 +203,30 @@ func TestShellPhone(t *testing.T) {
 	}
 }
 
+// TestTabShellSystemBar takes the system's bar on a phone where every tab
+// names its icon, and the drawn bar elsewhere.
+func TestTabShellSystemBar(t *testing.T) {
+	selected := 0
+	tabs := func(cx *core.Scope) core.Node {
+		sel := core.NewSignal(cx, 0)
+		return TabShell{Label: "Sections", Selected: sel.Get, OnChange: func(i int) { selected = i; sel.Set(i) }, Tabs: []ShellTab{
+			{Text: "Home", SystemIcon: "house", Content: func(cx *core.Scope) core.Node { return core.Text{Content: "Home page"} }},
+			{Text: "Search", SystemIcon: "magnifyingglass", Content: func(cx *core.Scope) core.Node { return core.Text{Content: "Search page"} }},
+		}}
+	}
+	phone := core.Environment{OS: core.OSIOS, Idiom: core.IdiomPhone, Locale: "en-US"}
+	app, _ := shell(t, phone, tabs)
+	if app.Exists("role:tablist Sections") {
+		t.Fatal("a phone draws the bar")
+	}
+	app.Emit("id:tab-bar", "change", float64(1))
+	if selected != 1 || !app.Exists("Search page") {
+		t.Fatal("the system's bar did not switch sections")
+	}
+	wide, _ := shell(t, desktopEnv, tabs)
+	wide.Find("role:tablist Sections")
+}
+
 // TestTabShell switches sections, keeping the first built while hidden,
 // and hides the bar under the keyboard.
 func TestTabShell(t *testing.T) {

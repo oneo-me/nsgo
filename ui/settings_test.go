@@ -71,3 +71,14 @@ func TestSettings(t *testing.T) {
 		}
 	})
 }
+
+// TestSettingsHideHeading leaves the title to the host's header.
+func TestSettingsHideHeading(t *testing.T) {
+	app, _ := shell(t, desktopEnv, func(cx *core.Scope) core.Node {
+		return Settings{Categories: settingsCatalog, Title: "Preferences", HideHeading: true, HideSearch: true, HideSidebar: true}
+	})
+	app.Find("Open at login")
+	if app.Exists("Preferences") {
+		t.Fatal("the heading shows")
+	}
+}

@@ -167,7 +167,7 @@ Android device and emulator development additionally needs `adb` from the Androi
 
 The x86_64 emulator target, `android_x64`, also needs an Android NDK: Go links android/amd64 only with cgo. On Windows, Go 1.26 or later runs the native app and builds the Windows and web packages. On Linux, Go runs the native app once GTK 4.14 or newer, Pango and Cairo are installed, WebKitGTK 6.0 for web views and GStreamer plug-ins for videos.
 
-Run the gallery from the repository root: NSH's gallery in Go, a demo of each element, `base` and `ui` component and service. A wide window shows the demos in a sidebar; a narrow one is a phone's index.
+Run the gallery from the repository root: NSH's gallery in Go, a demo of each element, `base` and `ui` component and service. A wide window shows the demos under tabs in a sidebar; a narrow one shows the tabs and the settings in a bottom bar, with demos pushed over them.
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml's dev target, exiting with the app

@@ -224,6 +224,14 @@ type Translation struct {
 	SettingsResults                              func() string
 	SettingsEmpty                                func() string
 	SettingsClose                                func() string
+	SettingsThemeDetail                          func() string
+	Theme                                        func() string
+	ThemeSystem                                  func() string
+	ThemeLight                                   func() string
+	ThemeDark                                    func() string
+	TabComponents                                func() string
+	TabBasics                                    func() string
+	AppSections                                  func() string
 	SettingsGeneral                              func() string
 	SettingsLanguageDetail                       func() string
 	AppGallery                                   func() string
@@ -2301,6 +2309,14 @@ const (
 	textSettingsResults
 	textSettingsEmpty
 	textSettingsClose
+	textSettingsThemeDetail
+	textTheme
+	textThemeSystem
+	textThemeLight
+	textThemeDark
+	textTabComponents
+	textTabBasics
+	textAppSections
 	textSettingsGeneral
 	textSettingsLanguageDetail
 	textAppGallery
@@ -4266,6 +4282,14 @@ var texts = map[string]*[numTexts]string{
 		"Results",
 		"No settings match.",
 		"Close settings",
+		"Whether the gallery shows light or dark, or follows the system.",
+		"Theme",
+		"System",
+		"Light",
+		"Dark",
+		"Controls",
+		"Basics",
+		"Sections",
 		"General",
 		"The language the gallery and NSGo's components speak, and the direction they read in.",
 		"Gallery",
@@ -6226,6 +6250,14 @@ var texts = map[string]*[numTexts]string{
 		"النتائج",
 		"لا توجد إعدادات مطابقة.",
 		"إغلاق الإعدادات",
+		"عرض المعرض بالمظهر الفاتح أو الداكن أو بمظهر النظام.",
+		"السمة",
+		"النظام",
+		"فاتح",
+		"داكن",
+		"المكونات",
+		"الأساسيات",
+		"الأقسام",
 		"عام",
 		"اللغة التي يعرضها المعرض ومكونات NSGo، واتجاه قراءتها.",
 		"المعرض",
@@ -8186,6 +8218,14 @@ var texts = map[string]*[numTexts]string{
 		"搜索结果",
 		"没有匹配的设置。",
 		"关闭设置",
+		"Gallery 显示浅色、深色，或与系统一致。",
+		"主题",
+		"系统",
+		"浅色",
+		"深色",
+		"组件",
+		"基础",
+		"分区",
 		"通用",
 		"示例库和 NSGo 组件使用的语言，以及阅读方向。",
 		"示例库",
@@ -10146,6 +10186,14 @@ var texts = map[string]*[numTexts]string{
 		"搜尋結果",
 		"沒有相符的設定。",
 		"關閉設定",
+		"Gallery 顯示淺色、深色，或與系統一致。",
+		"主題",
+		"系統",
+		"淺色",
+		"深色",
+		"元件",
+		"基礎",
+		"分區",
 		"一般",
 		"示例庫和 NSGo 元件使用的語言，以及閱讀方向。",
 		"範例集",
@@ -12159,6 +12207,30 @@ func Supply(lang string, t Translation) {
 	}
 	if t.SettingsClose != nil {
 		st[textSettingsClose] = t.SettingsClose()
+	}
+	if t.SettingsThemeDetail != nil {
+		st[textSettingsThemeDetail] = t.SettingsThemeDetail()
+	}
+	if t.Theme != nil {
+		st[textTheme] = t.Theme()
+	}
+	if t.ThemeSystem != nil {
+		st[textThemeSystem] = t.ThemeSystem()
+	}
+	if t.ThemeLight != nil {
+		st[textThemeLight] = t.ThemeLight()
+	}
+	if t.ThemeDark != nil {
+		st[textThemeDark] = t.ThemeDark()
+	}
+	if t.TabComponents != nil {
+		st[textTabComponents] = t.TabComponents()
+	}
+	if t.TabBasics != nil {
+		st[textTabBasics] = t.TabBasics()
+	}
+	if t.AppSections != nil {
+		st[textAppSections] = t.AppSections()
 	}
 	if t.SettingsGeneral != nil {
 		st[textSettingsGeneral] = t.SettingsGeneral()
@@ -18447,6 +18519,70 @@ func SettingsClose(cx *core.Scope) string { return For(cx).SettingsClose() }
 // SettingsClose says "Close settings"
 // in the language of msgs.
 func (msgs Messages) SettingsClose() string { return msgs.text(textSettingsClose) }
+
+// SettingsThemeDetail says "Whether the gallery shows light or dark, or follows the system."
+// in the language the app shows under cx.
+func SettingsThemeDetail(cx *core.Scope) string { return For(cx).SettingsThemeDetail() }
+
+// SettingsThemeDetail says "Whether the gallery shows light or dark, or follows the system."
+// in the language of msgs.
+func (msgs Messages) SettingsThemeDetail() string { return msgs.text(textSettingsThemeDetail) }
+
+// Theme says "Theme"
+// in the language the app shows under cx.
+func Theme(cx *core.Scope) string { return For(cx).Theme() }
+
+// Theme says "Theme"
+// in the language of msgs.
+func (msgs Messages) Theme() string { return msgs.text(textTheme) }
+
+// ThemeSystem says "System"
+// in the language the app shows under cx.
+func ThemeSystem(cx *core.Scope) string { return For(cx).ThemeSystem() }
+
+// ThemeSystem says "System"
+// in the language of msgs.
+func (msgs Messages) ThemeSystem() string { return msgs.text(textThemeSystem) }
+
+// ThemeLight says "Light"
+// in the language the app shows under cx.
+func ThemeLight(cx *core.Scope) string { return For(cx).ThemeLight() }
+
+// ThemeLight says "Light"
+// in the language of msgs.
+func (msgs Messages) ThemeLight() string { return msgs.text(textThemeLight) }
+
+// ThemeDark says "Dark"
+// in the language the app shows under cx.
+func ThemeDark(cx *core.Scope) string { return For(cx).ThemeDark() }
+
+// ThemeDark says "Dark"
+// in the language of msgs.
+func (msgs Messages) ThemeDark() string { return msgs.text(textThemeDark) }
+
+// TabComponents says "Controls"
+// in the language the app shows under cx.
+func TabComponents(cx *core.Scope) string { return For(cx).TabComponents() }
+
+// TabComponents says "Controls"
+// in the language of msgs.
+func (msgs Messages) TabComponents() string { return msgs.text(textTabComponents) }
+
+// TabBasics says "Basics"
+// in the language the app shows under cx.
+func TabBasics(cx *core.Scope) string { return For(cx).TabBasics() }
+
+// TabBasics says "Basics"
+// in the language of msgs.
+func (msgs Messages) TabBasics() string { return msgs.text(textTabBasics) }
+
+// AppSections says "Sections"
+// in the language the app shows under cx.
+func AppSections(cx *core.Scope) string { return For(cx).AppSections() }
+
+// AppSections says "Sections"
+// in the language of msgs.
+func (msgs Messages) AppSections() string { return msgs.text(textAppSections) }
 
 // SettingsGeneral says "General"
 // in the language the app shows under cx.

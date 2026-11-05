@@ -8,6 +8,14 @@ settingsSearchPlaceholder: 搜索
 settingsResults: 搜索结果
 settingsEmpty: 没有匹配的设置。
 settingsClose: 关闭设置
+settingsThemeDetail: Gallery 显示浅色、深色，或与系统一致。
+theme: 主题
+themeSystem: 系统
+themeLight: 浅色
+themeDark: 深色
+tabComponents: 组件
+tabBasics: 基础
+appSections: 分区
 settingsGeneral: 通用
 settingsLanguageDetail: 示例库和 NSGo 组件使用的语言，以及阅读方向。
 appGallery: "示例库"

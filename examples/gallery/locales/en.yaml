@@ -18,6 +18,14 @@ settingsSearchPlaceholder: Search
 settingsResults: Results
 settingsEmpty: No settings match.
 settingsClose: Close settings
+settingsThemeDetail: Whether the gallery shows light or dark, or follows the system.
+theme: Theme
+themeSystem: System
+themeLight: Light
+themeDark: Dark
+tabComponents: Controls
+tabBasics: Basics
+appSections: Sections
 settingsGeneral: General
 settingsLanguageDetail: The language the gallery and NSGo's components speak, and the direction they read in.
 appGallery: Gallery

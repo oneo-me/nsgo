@@ -160,15 +160,16 @@ func (t *toaster) item(cx *core.Scope, e func() toastEntry) core.Node {
 		Children: children}
 }
 
-// view is where the toasts show: at the bottom, inside the safe area.
+// view is where the toasts show: at the bottom, inside the safe area, over
+// the narrow layout's tab bar.
 func (t *toaster) view(wide bool) core.Node {
-	placement, align := toast.AnchorBottomCenter, core.AlignCenter
+	placement, align, padding := toast.AnchorBottomCenter, core.AlignCenter, core.Edges{Top: 16, Right: 16, Bottom: 16 + tabBarHeight, Left: 16}
 	if wide {
-		placement, align = toast.AnchorBottomRight, core.AlignEnd
+		placement, align, padding = toast.AnchorBottomRight, core.AlignEnd, core.All(16)
 	}
 	return core.Overlay{PointerEvents: core.PointerEventsBoxNone,
 		Style: core.Style{Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), AlignItems: align,
-			Padding: core.All(16), PaddingEnv: core.EnvEdges{Bottom: core.EnvSafeArea}},
+			Padding: padding, PaddingEnv: core.EnvEdges{Bottom: core.EnvSafeArea}},
 		Children: []core.Node{toast.Stack[toastEntry, string]{TestID: "toasts", Placement: placement,
 			Toasts: t.shown.Get, Key: func(e toastEntry) string { return e.ID }, Toast: t.item,
 			Style:            core.Style{Width: core.Pt(340), MaxWidth: core.Pct(100)},

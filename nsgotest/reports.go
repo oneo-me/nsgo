@@ -406,9 +406,13 @@ func (a *App) DropFiles(selector string, uris ...string) {
 }
 
 // Emit reports that the component of the native view selector matches
-// emitted name with data.
+// emitted name with data. The view need only be mounted: headless, a
+// component that sizes itself, such as the system's tab bar, has no size.
 func (a *App) Emit(selector, name string, data any) {
 	a.t.Helper()
-	v := a.Find(selector)
-	a.dispatch(driver.Event{Kind: driver.EventNative, ID: v.ID, Text: name, Data: data})
+	vs := a.QueryMounted(selector)
+	if len(vs) != 1 {
+		a.t.Fatalf("nsgotest: %d views match %q\n%s", len(vs), selector, a.Dump())
+	}
+	a.dispatch(driver.Event{Kind: driver.EventNative, ID: vs[0].ID, Text: name, Data: data})
 }

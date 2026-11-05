@@ -188,7 +188,11 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 func headerlessPage(cx *core.Scope) base.NavPage {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	return base.NavPage{HeaderHidden: true, Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
+	// No header keeps it clear of the window controls.
+	page := func() core.Style {
+		return core.Style{Background: colors.Background(), Padding: core.Edges{Top: shell.titleBar(cx).Top}}
+	}
+	return base.NavPage{HeaderHidden: true, Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: page, Children: []core.Node{
 		core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
 			Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 12, Right: 4, Left: 4}}, Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderHidden", Tone: ui.ToneAccent}}},

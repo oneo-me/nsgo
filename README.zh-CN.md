@@ -167,7 +167,7 @@ Android 真机和模拟器开发还需要 Android SDK platform-tools 中的 `adb
 
 x86_64 模拟器目标 `android_x64` 还需要 Android NDK：Go 只能通过 cgo 链接 android/amd64。在 Windows 上，只需 Go 1.26 或更高版本即可运行原生应用，并构建 Windows 和 Web 包。在 Linux 上，安装 GTK 4.14 或更高版本、Pango 和 Cairo 后即可用 Go 运行原生应用；网页视图还需要 WebKitGTK 6.0，视频还需要 GStreamer 插件。
 
-在仓库根目录运行 gallery：用 Go 翻译的 NSH gallery，为每个元素、`base` 和 `ui` 组件及服务各提供一个演示。宽窗口在侧边栏列出演示，窄窗口则是手机的索引页。
+在仓库根目录运行 gallery：用 Go 翻译的 NSH gallery，为每个元素、`base` 和 `ui` 组件及服务各提供一个演示。宽窗口在侧边栏按选项卡列出演示，窄窗口在底部栏显示选项卡和设置，演示页面推入其上。
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml 的 dev 目标，应用退出后随之退出

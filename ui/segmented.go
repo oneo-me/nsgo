@@ -10,12 +10,15 @@ import (
 // Segmented is Onevra's segmented control: equal segments in a recessed
 // capsule, the selected one on a raised thumb that slides to it, 28 pt
 // tall: base.Tabs, a tab per segment, in ui's look. Small is the
-// same control.
+// same control; Compact narrows the segments' padding, for a sidebar.
+// Label names it for assistive technology.
 type Segmented[T comparable] struct {
 	Options  []Option[T]
 	Value    func() T
 	OnChange func(T)
 	Small    bool
+	Compact  bool
+	Label    string
 }
 
 // Render implements core.Node.
@@ -42,6 +45,10 @@ func (sc Segmented[T]) Render(cx *core.Scope) core.Node {
 	env := cx.Env()
 	cx.Effect(func() {
 		to := float64(core.Points(index()) * segment())
+		// Right to left, the thumb starts at the right.
+		if env.RTL() {
+			to = -to
+		}
 		if width.Get() <= 0 {
 			return
 		}
@@ -57,6 +64,10 @@ func (sc Segmented[T]) Render(cx *core.Scope) core.Node {
 			Width: core.Pt(max(0, segment())), CornerRadius: (height - 2*pad) / 2,
 			Animated: &core.AnimatedStyle{TranslateX: x}})
 	}}}
+	padding := core.Points(12)
+	if sc.Compact {
+		padding = 2
+	}
 	for _, o := range sc.Options {
 		selected := func() bool { return sc.Value() == o.Value }
 		label := []core.Node{core.Text{Content: o.Label, MaxLines: 1, StyleFunc: func() core.Style {
@@ -69,12 +80,13 @@ func (sc Segmented[T]) Render(cx *core.Scope) core.Node {
 		if o.Count != nil {
 			label = append(label, Textf(func() string { return fmt.Sprint(o.Count()) }, 12, Regular, colors.Faint))
 		}
-		children = append(children, base.Tab{Selected: selected, OnPress: func(core.PressEvent) { sc.OnChange(o.Value) }, Label: o.Label,
+		children = append(children, base.Tab{Selected: selected, OnPress: func(core.PressEvent) { sc.OnChange(o.Value) }, Label: o.Label, TestID: o.TestID,
 			Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 5,
-				Padding: core.Symmetric(0, 12)},
+				Padding: core.Symmetric(0, padding)},
 			Children: label})
 	}
 	return core.View{OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) }, Children: []core.Node{base.Tabs{
+		Label:     sc.Label,
 		Style:     core.Style{Height: core.Pt(height), Direction: core.Row, Padding: core.All(pad), CornerRadius: height / 2},
 		StyleFunc: func() core.Style { return core.Style{Background: Alpha(colors.Text(), 0.06)} },
 		Children:  children,

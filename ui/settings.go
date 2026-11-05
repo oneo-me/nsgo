@@ -83,7 +83,8 @@ func SearchSettings(categories []SettingsCategory, query string) []SettingsResul
 // SearchLabel and SearchPlaceholder name the search field, ResultsTitle
 // heads the results and EmptyText says there are none. OnClose, when
 // set, adds a close button named CloseLabel. HideSearch drops the search
-// field; HideSidebar the navigation, showing every category on one page.
+// field; HideSidebar the navigation, showing every category on one page;
+// HideHeading the page's heading, for a host whose header says it.
 type Settings struct {
 	Categories              []SettingsCategory
 	Category, Query         *core.Signal[string]
@@ -94,6 +95,7 @@ type Settings struct {
 	OnClose                 func()
 	CloseLabel              string
 	HideSearch, HideSidebar bool
+	HideHeading             bool
 	TestID                  string
 }
 
@@ -144,18 +146,21 @@ func (s Settings) choose(id string) {
 
 func (s Settings) layout(cx *core.Scope, narrow bool) core.Node {
 	colors := ColorsOf(cx)
-	page := []core.Node{s.heading(cx, func() string {
-		switch {
-		case s.query() != "":
-			return s.ResultsTitle
-		case narrow || s.HideSidebar:
+	var page []core.Node
+	if !s.HideHeading {
+		page = append(page, s.heading(cx, func() string {
+			switch {
+			case s.query() != "":
+				return s.ResultsTitle
+			case narrow || s.HideSidebar:
+				return s.Title
+			}
+			if i := s.selected(); i >= 0 {
+				return s.Categories[i].Title
+			}
 			return s.Title
-		}
-		if i := s.selected(); i >= 0 {
-			return s.Categories[i].Title
-		}
-		return s.Title
-	}, true)}
+		}, true))
+	}
 	if narrow {
 		var bar []core.Node
 		if !s.HideSidebar {

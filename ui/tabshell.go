@@ -3,12 +3,16 @@ package ui
 import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/mobile"
 )
 
 // ShellTab is a top-level section of a TabShell.
 type ShellTab struct {
 	Text string
 	Icon func() *core.SVG
+	// SystemIcon is the platform's name for the tab's icon on iOS and
+	// Android, as mobile.TabBarItem's Icon.
+	SystemIcon string
 	// Content is the section, such as a base.Nav's stack of pages. It is
 	// built when the tab is first selected and kept while others show.
 	Content func(cx *core.Scope) core.Node
@@ -16,9 +20,11 @@ type ShellTab struct {
 }
 
 // TabShell is an app's top-level sections over a drawn tab bar, which
-// keeps clear of the bottom safe area. The Selected tab's content fills
-// the rest; Selected is the app's, set from OnChange. The bar hides
-// while the software keyboard shows, so content padded by
+// keeps clear of the bottom safe area, or on iOS and Android the system's
+// where every tab has a SystemIcon. iOS's floats over the sections, which
+// keep what they must show clear of it with TabBarInset. The Selected
+// tab's content fills the rest; Selected is the app's, set from OnChange.
+// The bar hides while the software keyboard shows, so content padded by
 // core.EnvKeyboard meets the keyboard without an offset.
 type TabShell struct {
 	Tabs     []ShellTab
@@ -27,6 +33,18 @@ type TabShell struct {
 	// Label names the bar for assistive technology.
 	Label  string
 	TestID string
+}
+
+// tabBarInsetKey provides a floating tab bar's inset to its sections.
+var tabBarInsetKey = core.NewKey[func() core.Points]("tabBarInset", nil)
+
+// TabBarInset is how much of a TabShell section's bottom the floating tab
+// bar covers, read in a StyleFunc: 0 where the bar takes room of its own.
+func TabBarInset(cx *core.Scope) core.Points {
+	if inset := tabBarInsetKey.Use(cx); inset != nil {
+		return inset()
+	}
+	return 0
 }
 
 // Render implements core.Node.
@@ -65,22 +83,40 @@ func (s TabShell) Render(cx *core.Scope) core.Node {
 			}})
 	}
 	env := cx.Env()
+	floating := env.OS() == core.OSIOS && s.systemItems(cx) != nil
+	height := core.NewSignal(cx, core.Points(0))
+	if floating {
+		tabBarInsetKey.Provide(cx, func() core.Points {
+			if env.KeyboardHeight() > 0 {
+				return 0
+			}
+			return height.Get()
+		})
+	}
 	return core.View{TestID: s.TestID, Style: FillRest, StyleFunc: func() core.Style {
 		return core.Style{Background: colors.Background(), Color: colors.Text()}
 	}, Children: []core.Node{
 		core.View{Style: FillRest, Children: sections},
-		core.View{Children: []core.Node{s.bar(cx, selected, change)}, StyleFunc: func() core.Style {
-			if env.KeyboardHeight() > 0 {
-				return core.Style{Display: core.DisplayNone}
-			}
-			return core.Style{}
-		}},
+		core.View{Children: []core.Node{s.bar(cx, selected, change)}, OnLayout: func(b core.Bounds) { height.Set(b.Size.Height) },
+			StyleFunc: func() core.Style {
+				var st core.Style
+				if floating {
+					st = core.Style{Position: core.Absolute, Right: core.Pt(0), Bottom: core.Pt(0), Left: core.Pt(0)}
+				}
+				if env.KeyboardHeight() > 0 {
+					st.Display = core.DisplayNone
+				}
+				return st
+			}},
 	}}
 }
 
 // bar is the tab bar: the tabs' icons over their text, the selected
 // one in the accent.
 func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) core.Node {
+	if items := s.systemItems(cx); items != nil {
+		return mobile.TabBar{Items: items, Selected: selected, OnChange: change, TestID: "tab-bar"}
+	}
 	colors := ColorsOf(cx)
 	var tabs []core.Node
 	for i, tab := range s.Tabs {
@@ -108,4 +144,20 @@ func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) cor
 			core.View{Role: core.RoleTabList, Label: s.Label, TestID: "tab-bar",
 				Style: core.Style{Direction: core.Row, FlexGrow: 1, Gap: 4}, Children: tabs},
 		}}
+}
+
+// systemItems are the tabs for the system's tab bar, nil where it does not
+// show them.
+func (s TabShell) systemItems(cx *core.Scope) []mobile.TabBarItem {
+	if !mobile.IsAvailable(cx) {
+		return nil
+	}
+	items := make([]mobile.TabBarItem, len(s.Tabs))
+	for i, tab := range s.Tabs {
+		if tab.SystemIcon == "" {
+			return nil
+		}
+		items[i] = mobile.TabBarItem{Title: tab.Text, Icon: tab.SystemIcon}
+	}
+	return items
 }

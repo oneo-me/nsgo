@@ -16,6 +16,8 @@ type tabBar struct {
 	cx    *driver.NativeContext
 	bar   objc.ID
 	items []objc.ID
+	// selected is the selected tab's index, kept for props in any order.
+	selected int
 }
 
 var (
@@ -48,16 +50,37 @@ func newTabBar(cx *driver.NativeContext) driver.NativeComponent {
 	t := &tabBar{cx: cx, bar: objc.ID(objc.GetClass("UITabBar")).Send(selNew)}
 	t.bar.Send(selSetDeleg, tabBarDelegate)
 	tabBars[t.bar] = t
-	// The system's height, the home indicator below it included.
+	t.measure()
+	return t
+}
+
+// measure asks for the system's height with the home indicator below it,
+// which a bar outside a window does not count.
+func (t *tabBar) measure() {
 	fit := objc.Send[apple.CGSize](t.bar, sel("sizeThatFits:"), apple.CGSize{Width: 390})
 	if fit.Height <= 0 {
 		fit.Height = 49
 	}
-	cx.SetSize(driver.Size{Height: driver.Points(fit.Height)})
-	return t
+	var bottom float64
+	if objc.Send[objc.ID](t.bar, sel("window")) == 0 {
+		app := objc.ID(objc.GetClass("UIApplication")).Send(sel("sharedApplication"))
+		if window := objc.Send[objc.ID](app, sel("keyWindow")); window != 0 {
+			bottom = objc.Send[edgeInsets](window, sel("safeAreaInsets")).Bottom
+		}
+	}
+	t.cx.SetSize(driver.Size{Height: driver.Points(float64(fit.Height) + bottom)})
 }
 
 func (t *tabBar) View() any { return t.bar }
+
+// showSelected selects the selected tab's item; one past them selects none.
+func (t *tabBar) showSelected() {
+	var item objc.ID
+	if t.selected >= 0 && t.selected < len(t.items) {
+		item = t.items[t.selected]
+	}
+	t.bar.Send(sel("setSelectedItem:"), item)
+}
 
 func (t *tabBar) SetProp(name string, value any) {
 	switch name {
@@ -81,13 +104,11 @@ func (t *tabBar) SetProp(name string, value any) {
 		}
 		t.bar.Send(sel("setItems:animated:"), array, false)
 		array.Send(selRelease)
+		t.showSelected()
 	case "selectedIndex":
 		i, _ := value.(float64)
-		var item objc.ID
-		if n := int(i); n >= 0 && n < len(t.items) {
-			item = t.items[n]
-		}
-		t.bar.Send(sel("setSelectedItem:"), item)
+		t.selected = int(i)
+		t.showSelected()
 	}
 }
 

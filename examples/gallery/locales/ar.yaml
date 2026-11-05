@@ -8,6 +8,14 @@ settingsSearchPlaceholder: بحث
 settingsResults: النتائج
 settingsEmpty: لا توجد إعدادات مطابقة.
 settingsClose: إغلاق الإعدادات
+settingsThemeDetail: عرض المعرض بالمظهر الفاتح أو الداكن أو بمظهر النظام.
+theme: السمة
+themeSystem: النظام
+themeLight: فاتح
+themeDark: داكن
+tabComponents: المكونات
+tabBasics: الأساسيات
+appSections: الأقسام
 settingsGeneral: عام
 settingsLanguageDetail: اللغة التي يعرضها المعرض ومكونات NSGo، واتجاه قراءتها.
 # NSGo is not translated to Arabic: the gallery supplies it.

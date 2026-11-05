@@ -8,6 +8,14 @@ settingsSearchPlaceholder: 搜尋
 settingsResults: 搜尋結果
 settingsEmpty: 沒有相符的設定。
 settingsClose: 關閉設定
+settingsThemeDetail: Gallery 顯示淺色、深色，或與系統一致。
+theme: 主題
+themeSystem: 系統
+themeLight: 淺色
+themeDark: 深色
+tabComponents: 元件
+tabBasics: 基礎
+appSections: 分區
 settingsGeneral: 一般
 settingsLanguageDetail: 示例庫和 NSGo 元件使用的語言，以及閱讀方向。
 appGallery: "範例集"

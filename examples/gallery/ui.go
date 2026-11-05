@@ -25,6 +25,9 @@ const (
 	// on desktops; tabletWidth on other devices (an iPad in landscape).
 	desktopWidth core.Points = 700
 	tabletWidth  core.Points = 900
+	// tabBarHeight is about what the narrow layout's tab bar takes, above
+	// the safe area.
+	tabBarHeight core.Points = 56
 )
 
 // Shared styles.
@@ -53,17 +56,6 @@ func themeToggle(cx *core.Scope) core.Node {
 	return ui.IconButton{IconFunc: name, LabelFunc: label, Size: 30, OnPress: func() { flipAppearance(cx) }}
 }
 
-// barThemeToggle is the theme toggle in the system's bar (iOS, Android),
-// where the system draws the button (iOS's Liquid Glass): the item is the
-// icon alone.
-func barThemeToggle(cx *core.Scope) core.Node {
-	name, label := toggleFace(cx)
-	return ui.Press{OnPress: func() { flipAppearance(cx) }, Scale: 0.92, LabelFunc: label, Children: []core.Node{
-		core.View{Style: core.Style{Width: core.Pt(34), Height: core.Pt(34), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-			Children: []core.Node{ui.IconOf(name, 18, ui.ColorsOf(cx).Text)}},
-	}}
-}
-
 // toggleFace is a theme toggle's icon and label: the appearance it
 // switches to.
 func toggleFace(cx *core.Scope) (name func() *core.SVG, label func() string) {
@@ -89,7 +81,7 @@ func flipAppearance(cx *core.Scope) {
 	if cx.Dark() {
 		next = core.AppearanceLight
 	}
-	cx.SetAppearance(next)
+	setAppearance(cx, next)
 }
 
 //go:embed assets/logo-dark.svg
@@ -209,7 +201,9 @@ type pageHeaderProps struct {
 
 // pageHeader is a page's header where the app draws it (desktops, the
 // web): a back button while the page is above another, the title and
-// right. Phones show their system header with the screen's title instead.
+// right. In the narrow layout on a desktop it reaches the window's top,
+// keeping clear of the window controls, and drags the window. Phones show
+// their system header with the screen's title instead.
 func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
@@ -220,6 +214,9 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 	back := func() bool { return p.left == nil && !p.root && shell.nav.Depth() > 0 }
 	style := func() core.Style {
 		s := core.Style{Height: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 12)}
+		if tb := shell.titleBar(cx); tb != (core.Edges{}) {
+			s.Height, s.Padding = core.Pt(ui.ShellHeaderHeight(cx)), core.Edges{Left: tb.Left + 12, Right: tb.Right + 12}
+		}
 		switch {
 		case p.transparent:
 		case p.background != nil:
@@ -267,7 +264,11 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 	if p.right != nil {
 		children = append(children, p.right)
 	}
-	return core.View{StyleFunc: style, Children: children}
+	header := core.View{StyleFunc: style, Children: children}
+	if !shell.desktop() {
+		header.Desktop = core.DesktopViewProps{WindowDrag: core.WindowDragOn}
+	}
+	return header
 }
 
 // headerStyle is the system header's colors on every page (iOS,
