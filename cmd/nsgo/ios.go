@@ -57,6 +57,9 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	if err := writePlist(filepath.Join(app, "Info.plist"), p, iosPlist, icon+"\n"+names); err != nil {
 		return "", err
 	}
+	if err := addIOSFrameworks(ctx, p, app, env, simulator); err != nil {
+		return "", err
+	}
 	if simulator {
 		stage("signing")
 		return app, run(ctx, "codesign", "--force", "--sign", "-", app)
@@ -253,6 +256,10 @@ for file in "$SRCROOT/unsigned"/*; do
 	cp -R "$file" "$app/"
 done
 chmod +x "$app/$EXECUTABLE_NAME"
+for fw in "$app"/Frameworks/*.framework; do
+	[ -d "$fw" ] && codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$fw"
+done
+true
 `
 
 // iosTeam returns the Apple developer team to sign with: the -team flag,

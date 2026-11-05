@@ -245,3 +245,38 @@ func TestEditorGrowsAndDrawsGuides(t *testing.T) {
 	}
 	app.WaitUntil(5*time.Second, func() bool { return app.SpanStyle("text:One").Color != 0 })
 }
+
+// TestComposition inserts what an input method commits: the commit's
+// change comes while the composition lasts, and its end after it.
+func TestComposition(t *testing.T) {
+	var value string
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return editor.Editor{Label: "Code", OnChange: func(s string) { value = s }, Style: core.Style{Width: core.Pt(400), Height: core.Pt(300)}}
+	}, nsgotest.Size(400, 300))
+	app.Type("label:Code", "a")
+	app.Compose("label:Code", "ni")
+	app.Type("label:Code", "你")
+	app.Compose("label:Code", "")
+	app.Settle()
+	if value != "a你" {
+		t.Errorf("value = %q, want a你", value)
+	}
+}
+
+// TestSoftKeyboard takes a software keyboard's Return and its Backspace in
+// an empty sink, which reach no key binding.
+func TestSoftKeyboard(t *testing.T) {
+	var value string
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return editor.Editor{Label: "Code", OnChange: func(s string) { value = s }, Style: core.Style{Width: core.Pt(400), Height: core.Pt(300)}}
+	}, nsgotest.Size(400, 300))
+	app.Type("label:Code", "ab")
+	app.Submit("label:Code")
+	if value != "ab\n" {
+		t.Fatalf("value = %q after Return", value)
+	}
+	app.KeyPress("label:Code", "Backspace")
+	if value != "ab" {
+		t.Errorf("value = %q after Backspace", value)
+	}
+}

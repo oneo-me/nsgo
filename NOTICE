@@ -33,3 +33,11 @@ changed; NSGo replaced MyGo's bridge. internal/shader/LICENSE holds both texts.
 The date and time tables in internal/cldr/tables.go are generated from the
 Unicode Common Locale Data Repository (CLDR), https://cldr.unicode.org,
 Copyright (c) 1991-2025 Unicode, Inc., licensed under the Unicode License v3.
+
+base/terminal/internal/vt and base/terminal/internal/pty come from
+https://github.com/egoist/mygo, Copyright (c) 2026 MyGo contributors, licensed
+under the MIT License. base/terminal/internal/library/lib holds libghostty-vt
+built from Ghostty, https://github.com/ghostty-org/ghostty, Copyright (c) 2024
+Mitchell Hashimoto, Ghostty contributors, licensed under the MIT License.
+base/terminal/ghostty_themes.go holds iTerm2-Color-Schemes' themes as Ghostty
+ships them, under the MIT License its header gives.

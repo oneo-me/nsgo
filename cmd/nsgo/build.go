@@ -350,6 +350,9 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 		return "", err
 	}
 	stage("signing")
+	if err := addMacLibraries(ctx, p, app, arch); err != nil {
+		return "", err
+	}
 	return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 }
 

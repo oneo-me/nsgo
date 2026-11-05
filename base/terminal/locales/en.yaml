@@ -1,0 +1,47 @@
+processExited:
+  message: "[Process exited]"
+  description: The line a terminal writes under a program's output once the program ended with code 0.
+processExitedWithCode:
+  message: "[Process exited with code {code}]"
+  description: The line a terminal writes under a program's output once the program ended with another code.
+  placeholders:
+    code: { type: int }
+disconnected:
+  message: "[Disconnected]"
+  description: The line a terminal connected to a stream, such as an SSH session, writes once the stream ended.
+keyEscape:
+  message: "Esc"
+  description: The Escape key on the bar of keys over a touch screen's keyboard, as keyboards label it.
+keyTab:
+  message: "Tab"
+  description: The Tab key on the bar of keys over a touch screen's keyboard.
+keyControl:
+  message: "Ctrl"
+  description: The Control key on the bar of keys over a touch screen's keyboard, which applies to the next key.
+keyAlt:
+  message: "Alt"
+  description: The Alt key on the bar of keys over a touch screen's keyboard, which applies to the next key.
+keyLeft:
+  message: "Left arrow"
+  description: What screen readers say of the left arrow key on the bar of keys.
+keyRight:
+  message: "Right arrow"
+  description: What screen readers say of the right arrow key on the bar of keys.
+keyUp:
+  message: "Up arrow"
+  description: What screen readers say of the up arrow key on the bar of keys.
+keyDown:
+  message: "Down arrow"
+  description: What screen readers say of the down arrow key on the bar of keys.
+keyHome:
+  message: "Home"
+  description: The Home key on the bar of keys.
+keyEnd:
+  message: "End"
+  description: The End key on the bar of keys.
+keyPageUp:
+  message: "Page up"
+  description: What screen readers say of the Page Up key on the bar of keys.
+keyPageDown:
+  message: "Page down"
+  description: What screen readers say of the Page Down key on the bar of keys.

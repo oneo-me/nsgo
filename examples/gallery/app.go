@@ -89,6 +89,7 @@ func init() {
 		{"Switch", locales.Messages.DemoSwitch, locales.Messages.DemoSwitchDetail, ui.IconSwitch, controlsDemo(controls.settings)},
 		{"Table", locales.Messages.DemoTable, locales.Messages.DemoTableDetail, ui.IconTable, tableDemo},
 		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, ui.IconTabs, controlsDemo(controls.sections)},
+		{"Terminal", locales.Messages.DemoTerminal, locales.Messages.DemoTerminalDetail, ui.IconTerminal, terminalDemo},
 		{"TextView", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, ui.IconFileText, textViewDemo},
 		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, ui.IconBell, eventsDemo(toastCard, styledToastsCard)},
 		{"ToggleButton", locales.Messages.DemoToggleButton, locales.Messages.DemoToggleButtonDetail, ui.IconControls, eventsDemo(toggleCard)},

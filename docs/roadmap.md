@@ -140,6 +140,25 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 | One instance on Windows and Linux | A named mutex and pipe; a Unix socket | A second launch hands its arguments to the running app, which hears `OnReopen` |
 | Launch at login on Windows and Linux | The `Run` registry key; an XDG autostart entry | `SetLaunchAtLogin` starts the app at login and `LaunchAtLogin` reads it |
 
+## Terminal
+
+What `base/terminal` still lacks of a terminal app's features, Ghostty's the reference ([terminal](architecture/terminal.md)), in the order to build them.
+
+| Item | Ghostty reference | Done when |
+| --- | --- | --- |
+| Bold and italic monospace text on Apple platforms | — | A monospace or named family's bold and italic draw in their faces: Apple's `buildFace` copies traits onto a descriptor that names a font, which keeps the regular face |
+| Android | — | An Android app's remote session runs: libghostty-vt built for `aarch64-linux-android` (Ghostty's build takes the NDK's sysroot, which `tools/libghostty` would download) goes into the APK's native libraries, and the Go process, which has no cgo on arm64, loads it: purego loads libraries on Android only through cgo, so this needs a loader for bionic without cgo, checked on a device |
+| iOS on a device | — | The gallery's `TestTerminalPhone` passes on an iPhone with its signed framework and software keyboard, as it does under `nsgo test -target ios_simulator` since 2026-11-05 |
+| `-embed` frameworks and other packages | — | `-embed` XCFrameworks and AARs, and Windows and Linux packages, carry libghostty-vt beside the app, as macOS and iOS apps do |
+| The web | — | A page runs a remote session over a WebSocket with libghostty-vt built for WebAssembly, which the browser runs, through the binding's calls |
+| Mouse reports and the wheel on full-screen programs | `mouse-reporting`, `mouse-scroll-multiplier` | A program that takes the mouse gets presses, moves and the wheel as it asks, and the alternate screen gets the wheel as arrows |
+| Links | `link-url`, OSC 8 | Command+click (Control+click elsewhere) opens hyperlinks and URLs and paths printed as text, with a hand over them |
+| Clipboard protocols | `clipboard-read`, `clipboard-write` | Programs copy with OSC 52 and read the clipboard as the app allows, and the Kitty clipboard protocol offers pasted images |
+| Keybinds, zoom, the context menu and secondary clicks | `keybind`, `right-click-action` | Ghostty's actions bind to keys over the defaults, zoom changes the font's size, and a secondary click shows Copy, Paste, Select All and Clear |
+| Drawn box characters, blinking and contrast | `cursor-style-blink`, `minimum-contrast`, `window-padding-color` | Box drawing, blocks and Powerline's separators are drawn so lines join, the cursor blinks, and minimum contrast and padding colors apply |
+| Search, images and shell integration | Find, the Kitty graphics protocol, `shell-integration` | A search highlights matches, programs show images, and OSC 133 prompts take Option+click to move the cursor |
+| TSX | — | TSX apps import the terminal as `tsx/editor` registers `Editor` |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

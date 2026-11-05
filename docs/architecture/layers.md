@@ -27,6 +27,7 @@ nsgo
 ├── Components
 │   ├── base                             Unstyled controls, popups, navigation
 │   │   ├── textview, editor, diff       Components with heavier dependencies
+│   │   ├── terminal                     A program in a pseudo-terminal
 │   │   ├── locales                      Their catalogs
 │   │   └── internal/syntax, window      What they share
 │   ├── mobile                           What only phones have
@@ -64,7 +65,8 @@ nsgo
 │
 └── Build time, outside the layers
     ├── cmd/nsgo                         The nsgo tool
-    └── tools/lucidegen                  Generates icons/lucide
+    ├── tools/lucidegen                  Generates icons/lucide
+    └── tools/libghostty                 Builds libghostty-vt and its themes
 ```
 
 What keeps each layer in its place:
@@ -110,6 +112,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
 - `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`.
+- `base/terminal` is the one package of `base` that is not portable: it loads libghostty-vt through purego, runs programs on desktops and remote sessions there and on iOS, and elsewhere builds to report that it cannot (`unportable` in `layering_test.go`).
 
 ## Why core and backends do not meet
 
@@ -121,7 +124,7 @@ Backends reach `core` only through the engine and `core` imports no backend, so 
 
 `nsgotest` is a backend of its own: headless, without the engine, applying each batch to a model of the native views. On a platform, it drives a backend's test host through `internal/testhost`.
 
-Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine`. No package has cgo files or hand-written C.
+Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base` but for `base/terminal`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine`. No package has cgo files or hand-written C.
 
 ## Backends
 

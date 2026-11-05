@@ -35,7 +35,7 @@ A message is formatted in its catalog's language: a translation's numbers and da
 
 A key that is an import path supplies that package's catalog in the file's language, under its keys, with its parameters. Apps supply languages NSGo does not translate to, or replace its words in one it does.
 
-NSGo's own catalogs are `base/locales` and `base/textview/locales`, in English, Simplified and Traditional Chinese. A component in another package gives that package catalogs of its own.
+NSGo's own catalogs are `base/locales`, `base/textview/locales` and `base/terminal/locales`, in English, Simplified and Traditional Chinese. A component in another package gives that package catalogs of its own.
 
 The gallery (`examples/gallery/locales`) says its interface in English, Simplified and Traditional Chinese and Arabic, and supplies Arabic to `base`'s catalogs. What a demo shows as content stays as written: code, documents, conversations and names. A message keeps an English ID where code or tests key on it, as a demo's `name`, and says its `title` through a method expression (`locales.Messages.DemoStocks`); Traditional Chinese was converted from Simplified with OpenCC's `s2twp`, then corrected by hand.
 

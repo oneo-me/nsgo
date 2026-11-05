@@ -79,6 +79,11 @@ var platformShared = []string{
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shaderir/", "internal/engine",
 	"internal/testhost", "internal/cldr", "base/", "i18n", "mobile", "desktop", "icons/", "nsgotest", "tsx"}
 
+// unportable are the packages among portable's that reach the system: the
+// terminal loads libghostty-vt and runs programs, on macOS, Linux and
+// Windows, and builds elsewhere to report that it cannot.
+var unportable = []string{"base/terminal/"}
+
 // layerTargets are the GOOS/GOARCH pairs the nsgo tool builds for.
 var layerTargets = [][2]string{
 	{"darwin", "arm64"},
@@ -154,7 +159,7 @@ func checkLayer(t *testing.T, p listedPackage) {
 		t.Errorf("%s: cgo files %v; reach system APIs through purego or syscall", p.ImportPath, p.CgoFiles)
 	}
 	allowed, ruled := layerImports(pkg)
-	isPortable := matchesAny(pkg, portable)
+	isPortable := matchesAny(pkg, portable) && !matchesAny(pkg, unportable)
 	for _, imp := range p.Imports {
 		if dep, ok := inModule(imp); ok {
 			if ruled && !matchesAny(dep, allowed) {

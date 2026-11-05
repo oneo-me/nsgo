@@ -128,6 +128,9 @@ func signForStore(ctx context.Context, p *project, app string) error {
 	defer os.Remove(ents)
 	detail("sign with %s", identity)
 	stage("signing")
+	if err := signFrameworks(ctx, app, identity); err != nil {
+		return err
+	}
 	return run(ctx, "codesign", "--force", "--sign", identity, "--entitlements", ents, "--generate-entitlement-der", app)
 }
 

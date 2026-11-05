@@ -651,7 +651,8 @@ func (e *ed) caretPage() core.Bounds {
 // sinkView is the input that takes typing, at the primary caret in the
 // editor's box, invisible.
 func (e *ed) sinkView() core.Node {
-	clear := core.RGBA(0, 0)
+	// Not RGBA(0, 0), which is the unset color: the text would show.
+	clear := core.RGBA(0xffffff, 0)
 	return core.Input{
 		Ref:            e.sinkRef,
 		Label:          e.p.Label,
@@ -669,12 +670,26 @@ func (e *ed) sinkView() core.Node {
 			}
 		},
 		OnChange: e.sinkChanged,
+		// A software keyboard's Return and Backspace reach no key binding:
+		// Return submits, keeping the keyboard, and Backspace in an empty
+		// sink changes nothing.
+		SubmitBehavior: core.SubmitBehaviorSubmit,
+		OnSubmit: func(string) {
+			e.clearSink()
+			e.run(Newline)
+		},
+		OnKeyPress: func(key string) {
+			if key == "Backspace" && e.sink.GetUntracked() == "" {
+				e.run(DeleteBackward)
+			}
+		},
 		OnCompositionChange: func(c core.Composition) {
 			if c.Composing {
 				e.composing.Set(c.Text)
-			} else {
-				e.composing.Set("")
+				return
 			}
+			e.composing.Set("")
+			e.flushSink()
 		},
 		OnFocus: func() {
 			e.focused.Set(true)

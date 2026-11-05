@@ -4,6 +4,7 @@ package locales
 
 import (
 	baselocales "github.com/oneo-me/nsgo/base/locales"
+	terminallocales "github.com/oneo-me/nsgo/base/terminal/locales"
 	textviewlocales "github.com/oneo-me/nsgo/base/textview/locales"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/i18n"
@@ -26,6 +27,35 @@ func init() {
 	baselocales.Supply("ar", baselocales.Translation{
 		SortBy: func(column string) string {
 			return "الفرز حسب " + column
+		},
+	})
+	terminallocales.Supply("ar", terminallocales.Translation{
+		ProcessExited: func() string {
+			return "[انتهت العملية]"
+		},
+		ProcessExitedWithCode: func(code int) string {
+			return "[انتهت العملية بالرمز " + i18n.FormatNumber("ar", float64(code)) + "]"
+		},
+		Disconnected: func() string {
+			return "[انقطع الاتصال]"
+		},
+		KeyLeft: func() string {
+			return "سهم لليسار"
+		},
+		KeyRight: func() string {
+			return "سهم لليمين"
+		},
+		KeyUp: func() string {
+			return "سهم لأعلى"
+		},
+		KeyDown: func() string {
+			return "سهم لأسفل"
+		},
+		KeyPageUp: func() string {
+			return "صفحة لأعلى"
+		},
+		KeyPageDown: func() string {
+			return "صفحة لأسفل"
 		},
 	})
 	textviewlocales.Supply("ar", textviewlocales.Translation{
@@ -173,6 +203,8 @@ var Parameters = map[string][]string{
 	"ResizableConsolePt":      {"size"},
 	"CollapsingEntry":         {"n"},
 	"CollapsingMinutes":       {"count"},
+	"TerminalSizeCells":       {"cols", "rows"},
+	"TerminalUnavailable":     {"reason"},
 }
 
 // Translation is a language's messages another package supplies; a nil
@@ -2195,6 +2227,36 @@ type Translation struct {
 	LibLess                                      func() string
 	LibMore                                      func() string
 	LibLoading                                   func() string
+	DemoTerminal                                 func() string
+	DemoTerminalDetail                           func() string
+	TerminalOptions                              func() string
+	TerminalTheme                                func() string
+	TerminalAutomatic                            func() string
+	TerminalFont                                 func() string
+	TerminalMonospace                            func() string
+	TerminalFontSize                             func() string
+	TerminalCursor                               func() string
+	TerminalBlock                                func() string
+	TerminalBar                                  func() string
+	TerminalUnderline                            func() string
+	TerminalPadding                              func() string
+	TerminalAcross                               func() string
+	TerminalDown                                 func() string
+	TerminalStatus                               func() string
+	TerminalTitle                                func() string
+	TerminalSize                                 func() string
+	TerminalSizeCells                            func(cols int, rows int) string
+	TerminalDirectory                            func() string
+	TerminalRestart                              func() string
+	TerminalUnavailable                          func(reason string) string
+	TerminalSession                              func() string
+	TerminalLocalShell                           func() string
+	TerminalDemoSession                          func() string
+	TerminalCopy                                 func() string
+	TerminalPaste                                func() string
+	TerminalSelectAll                            func() string
+	TerminalKeyBar                               func() string
+	TerminalKeyBarNote                           func() string
 }
 
 var supplied = map[string]Translation{}
@@ -4111,6 +4173,34 @@ const (
 	textLibLess
 	textLibMore
 	textLibLoading
+	textDemoTerminal
+	textDemoTerminalDetail
+	textTerminalOptions
+	textTerminalTheme
+	textTerminalAutomatic
+	textTerminalFont
+	textTerminalMonospace
+	textTerminalFontSize
+	textTerminalCursor
+	textTerminalBlock
+	textTerminalBar
+	textTerminalUnderline
+	textTerminalPadding
+	textTerminalAcross
+	textTerminalDown
+	textTerminalStatus
+	textTerminalTitle
+	textTerminalSize
+	textTerminalDirectory
+	textTerminalRestart
+	textTerminalSession
+	textTerminalLocalShell
+	textTerminalDemoSession
+	textTerminalCopy
+	textTerminalPaste
+	textTerminalSelectAll
+	textTerminalKeyBar
+	textTerminalKeyBarNote
 	numTexts
 )
 
@@ -6028,6 +6118,34 @@ var texts = map[string]*[numTexts]string{
 		"Less",
 		"More",
 		"Loading",
+		"Terminal",
+		"The user's shell with Ghostty's emulator: colors, a scrollback, selection, copy and paste",
+		"Options",
+		"Theme",
+		"Follows the appearance",
+		"Font",
+		"System",
+		"Size",
+		"Cursor",
+		"Block",
+		"Bar",
+		"Underline",
+		"Padding",
+		"Across",
+		"Down",
+		"Status",
+		"Title",
+		"Size",
+		"Directory",
+		"Restart the shell",
+		"Session",
+		"Local shell",
+		"Demo session",
+		"Copy",
+		"Paste",
+		"Select all",
+		"Key bar",
+		"Over a touch screen's keyboard",
 	},
 	"ar": {
 		"المعرض",
@@ -7940,6 +8058,34 @@ var texts = map[string]*[numTexts]string{
 		"أقل",
 		"أكثر",
 		"جارٍ التحميل",
+		"الطرفية",
+		"صدفة المستخدم بمحاكي Ghostty: ألوان وسجل تمرير وتحديد ونسخ ولصق",
+		"الخيارات",
+		"السمة",
+		"يتبع المظهر",
+		"الخط",
+		"النظام",
+		"الحجم",
+		"المؤشر",
+		"كتلة",
+		"شريط",
+		"تسطير",
+		"الحشو",
+		"أفقي",
+		"عمودي",
+		"الحالة",
+		"العنوان",
+		"الحجم",
+		"المجلد",
+		"إعادة تشغيل الصدفة",
+		"الجلسة",
+		"صدفة محلية",
+		"جلسة تجريبية",
+		"نسخ",
+		"لصق",
+		"تحديد الكل",
+		"شريط المفاتيح",
+		"فوق لوحة مفاتيح الشاشة اللمسية",
 	},
 	"zh-Hans": {
 		"画廊",
@@ -9852,6 +9998,34 @@ var texts = map[string]*[numTexts]string{
 		"减少",
 		"增加",
 		"正在加载",
+		"终端",
+		"用 Ghostty 模拟器运行用户的 shell：颜色、回滚、选择、复制和粘贴",
+		"参数",
+		"主题",
+		"跟随外观",
+		"字体",
+		"系统",
+		"字号",
+		"光标",
+		"方块",
+		"竖线",
+		"下划线",
+		"内边距",
+		"水平",
+		"垂直",
+		"状态",
+		"标题",
+		"尺寸",
+		"目录",
+		"重启 shell",
+		"会话",
+		"本地 shell",
+		"演示会话",
+		"复制",
+		"粘贴",
+		"全选",
+		"按键栏",
+		"显示在触屏的软键盘上方",
 	},
 	"zh-Hant": {
 		"畫廊",
@@ -11764,6 +11938,34 @@ var texts = map[string]*[numTexts]string{
 		"減少",
 		"增加",
 		"正在載入",
+		"終端機",
+		"用 Ghostty 模擬器執行使用者的 shell：顏色、回捲、選取、複製和貼上",
+		"參數",
+		"主題",
+		"跟隨外觀",
+		"字型",
+		"系統",
+		"字級",
+		"游標",
+		"方塊",
+		"直線",
+		"底線",
+		"內距",
+		"水平",
+		"垂直",
+		"狀態",
+		"標題",
+		"尺寸",
+		"目錄",
+		"重新啟動 shell",
+		"工作階段",
+		"本機 shell",
+		"示範工作階段",
+		"拷貝",
+		"貼上",
+		"全選",
+		"按鍵列",
+		"顯示在觸控螢幕的軟體鍵盤上方",
 	},
 }
 
@@ -17850,6 +18052,96 @@ func Supply(lang string, t Translation) {
 	}
 	if t.LibLoading != nil {
 		st[textLibLoading] = t.LibLoading()
+	}
+	if t.DemoTerminal != nil {
+		st[textDemoTerminal] = t.DemoTerminal()
+	}
+	if t.DemoTerminalDetail != nil {
+		st[textDemoTerminalDetail] = t.DemoTerminalDetail()
+	}
+	if t.TerminalOptions != nil {
+		st[textTerminalOptions] = t.TerminalOptions()
+	}
+	if t.TerminalTheme != nil {
+		st[textTerminalTheme] = t.TerminalTheme()
+	}
+	if t.TerminalAutomatic != nil {
+		st[textTerminalAutomatic] = t.TerminalAutomatic()
+	}
+	if t.TerminalFont != nil {
+		st[textTerminalFont] = t.TerminalFont()
+	}
+	if t.TerminalMonospace != nil {
+		st[textTerminalMonospace] = t.TerminalMonospace()
+	}
+	if t.TerminalFontSize != nil {
+		st[textTerminalFontSize] = t.TerminalFontSize()
+	}
+	if t.TerminalCursor != nil {
+		st[textTerminalCursor] = t.TerminalCursor()
+	}
+	if t.TerminalBlock != nil {
+		st[textTerminalBlock] = t.TerminalBlock()
+	}
+	if t.TerminalBar != nil {
+		st[textTerminalBar] = t.TerminalBar()
+	}
+	if t.TerminalUnderline != nil {
+		st[textTerminalUnderline] = t.TerminalUnderline()
+	}
+	if t.TerminalPadding != nil {
+		st[textTerminalPadding] = t.TerminalPadding()
+	}
+	if t.TerminalAcross != nil {
+		st[textTerminalAcross] = t.TerminalAcross()
+	}
+	if t.TerminalDown != nil {
+		st[textTerminalDown] = t.TerminalDown()
+	}
+	if t.TerminalStatus != nil {
+		st[textTerminalStatus] = t.TerminalStatus()
+	}
+	if t.TerminalTitle != nil {
+		st[textTerminalTitle] = t.TerminalTitle()
+	}
+	if t.TerminalSize != nil {
+		st[textTerminalSize] = t.TerminalSize()
+	}
+	if t.TerminalSizeCells != nil {
+		s.TerminalSizeCells = t.TerminalSizeCells
+	}
+	if t.TerminalDirectory != nil {
+		st[textTerminalDirectory] = t.TerminalDirectory()
+	}
+	if t.TerminalRestart != nil {
+		st[textTerminalRestart] = t.TerminalRestart()
+	}
+	if t.TerminalUnavailable != nil {
+		s.TerminalUnavailable = t.TerminalUnavailable
+	}
+	if t.TerminalSession != nil {
+		st[textTerminalSession] = t.TerminalSession()
+	}
+	if t.TerminalLocalShell != nil {
+		st[textTerminalLocalShell] = t.TerminalLocalShell()
+	}
+	if t.TerminalDemoSession != nil {
+		st[textTerminalDemoSession] = t.TerminalDemoSession()
+	}
+	if t.TerminalCopy != nil {
+		st[textTerminalCopy] = t.TerminalCopy()
+	}
+	if t.TerminalPaste != nil {
+		st[textTerminalPaste] = t.TerminalPaste()
+	}
+	if t.TerminalSelectAll != nil {
+		st[textTerminalSelectAll] = t.TerminalSelectAll()
+	}
+	if t.TerminalKeyBar != nil {
+		st[textTerminalKeyBar] = t.TerminalKeyBar()
+	}
+	if t.TerminalKeyBarNote != nil {
+		st[textTerminalKeyBarNote] = t.TerminalKeyBarNote()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -37300,3 +37592,285 @@ func LibLoading(cx *core.Scope) string { return For(cx).LibLoading() }
 // LibLoading says "Loading"
 // in the language of msgs.
 func (msgs Messages) LibLoading() string { return msgs.text(textLibLoading) }
+
+// DemoTerminal says "Terminal"
+// in the language the app shows under cx.
+func DemoTerminal(cx *core.Scope) string { return For(cx).DemoTerminal() }
+
+// DemoTerminal says "Terminal"
+// in the language of msgs.
+func (msgs Messages) DemoTerminal() string { return msgs.text(textDemoTerminal) }
+
+// DemoTerminalDetail says "The user's shell with Ghostty's emulator: colors, a scrollback, selection, copy and paste"
+// in the language the app shows under cx.
+func DemoTerminalDetail(cx *core.Scope) string { return For(cx).DemoTerminalDetail() }
+
+// DemoTerminalDetail says "The user's shell with Ghostty's emulator: colors, a scrollback, selection, copy and paste"
+// in the language of msgs.
+func (msgs Messages) DemoTerminalDetail() string { return msgs.text(textDemoTerminalDetail) }
+
+// TerminalOptions says "Options"
+// in the language the app shows under cx.
+func TerminalOptions(cx *core.Scope) string { return For(cx).TerminalOptions() }
+
+// TerminalOptions says "Options"
+// in the language of msgs.
+func (msgs Messages) TerminalOptions() string { return msgs.text(textTerminalOptions) }
+
+// TerminalTheme says "Theme"
+// in the language the app shows under cx.
+func TerminalTheme(cx *core.Scope) string { return For(cx).TerminalTheme() }
+
+// TerminalTheme says "Theme"
+// in the language of msgs.
+func (msgs Messages) TerminalTheme() string { return msgs.text(textTerminalTheme) }
+
+// TerminalAutomatic says "Follows the appearance"
+// in the language the app shows under cx.
+func TerminalAutomatic(cx *core.Scope) string { return For(cx).TerminalAutomatic() }
+
+// TerminalAutomatic says "Follows the appearance"
+// in the language of msgs.
+func (msgs Messages) TerminalAutomatic() string { return msgs.text(textTerminalAutomatic) }
+
+// TerminalFont says "Font"
+// in the language the app shows under cx.
+func TerminalFont(cx *core.Scope) string { return For(cx).TerminalFont() }
+
+// TerminalFont says "Font"
+// in the language of msgs.
+func (msgs Messages) TerminalFont() string { return msgs.text(textTerminalFont) }
+
+// TerminalMonospace says "System"
+// in the language the app shows under cx.
+func TerminalMonospace(cx *core.Scope) string { return For(cx).TerminalMonospace() }
+
+// TerminalMonospace says "System"
+// in the language of msgs.
+func (msgs Messages) TerminalMonospace() string { return msgs.text(textTerminalMonospace) }
+
+// TerminalFontSize says "Size"
+// in the language the app shows under cx.
+func TerminalFontSize(cx *core.Scope) string { return For(cx).TerminalFontSize() }
+
+// TerminalFontSize says "Size"
+// in the language of msgs.
+func (msgs Messages) TerminalFontSize() string { return msgs.text(textTerminalFontSize) }
+
+// TerminalCursor says "Cursor"
+// in the language the app shows under cx.
+func TerminalCursor(cx *core.Scope) string { return For(cx).TerminalCursor() }
+
+// TerminalCursor says "Cursor"
+// in the language of msgs.
+func (msgs Messages) TerminalCursor() string { return msgs.text(textTerminalCursor) }
+
+// TerminalBlock says "Block"
+// in the language the app shows under cx.
+func TerminalBlock(cx *core.Scope) string { return For(cx).TerminalBlock() }
+
+// TerminalBlock says "Block"
+// in the language of msgs.
+func (msgs Messages) TerminalBlock() string { return msgs.text(textTerminalBlock) }
+
+// TerminalBar says "Bar"
+// in the language the app shows under cx.
+func TerminalBar(cx *core.Scope) string { return For(cx).TerminalBar() }
+
+// TerminalBar says "Bar"
+// in the language of msgs.
+func (msgs Messages) TerminalBar() string { return msgs.text(textTerminalBar) }
+
+// TerminalUnderline says "Underline"
+// in the language the app shows under cx.
+func TerminalUnderline(cx *core.Scope) string { return For(cx).TerminalUnderline() }
+
+// TerminalUnderline says "Underline"
+// in the language of msgs.
+func (msgs Messages) TerminalUnderline() string { return msgs.text(textTerminalUnderline) }
+
+// TerminalPadding says "Padding"
+// in the language the app shows under cx.
+func TerminalPadding(cx *core.Scope) string { return For(cx).TerminalPadding() }
+
+// TerminalPadding says "Padding"
+// in the language of msgs.
+func (msgs Messages) TerminalPadding() string { return msgs.text(textTerminalPadding) }
+
+// TerminalAcross says "Across"
+// in the language the app shows under cx.
+func TerminalAcross(cx *core.Scope) string { return For(cx).TerminalAcross() }
+
+// TerminalAcross says "Across"
+// in the language of msgs.
+func (msgs Messages) TerminalAcross() string { return msgs.text(textTerminalAcross) }
+
+// TerminalDown says "Down"
+// in the language the app shows under cx.
+func TerminalDown(cx *core.Scope) string { return For(cx).TerminalDown() }
+
+// TerminalDown says "Down"
+// in the language of msgs.
+func (msgs Messages) TerminalDown() string { return msgs.text(textTerminalDown) }
+
+// TerminalStatus says "Status"
+// in the language the app shows under cx.
+func TerminalStatus(cx *core.Scope) string { return For(cx).TerminalStatus() }
+
+// TerminalStatus says "Status"
+// in the language of msgs.
+func (msgs Messages) TerminalStatus() string { return msgs.text(textTerminalStatus) }
+
+// TerminalTitle says "Title"
+// in the language the app shows under cx.
+func TerminalTitle(cx *core.Scope) string { return For(cx).TerminalTitle() }
+
+// TerminalTitle says "Title"
+// in the language of msgs.
+func (msgs Messages) TerminalTitle() string { return msgs.text(textTerminalTitle) }
+
+// TerminalSize says "Size"
+// in the language the app shows under cx.
+func TerminalSize(cx *core.Scope) string { return For(cx).TerminalSize() }
+
+// TerminalSize says "Size"
+// in the language of msgs.
+func (msgs Messages) TerminalSize() string { return msgs.text(textTerminalSize) }
+
+// TerminalSizeCells says "{cols, number} × {rows, number}"
+// in the language the app shows under cx.
+func TerminalSizeCells(cx *core.Scope, cols int, rows int) string {
+	return For(cx).TerminalSizeCells(cols, rows)
+}
+
+// TerminalSizeCells says "{cols, number} × {rows, number}"
+// in the language of msgs.
+func (msgs Messages) TerminalSizeCells(cols int, rows int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TerminalSizeCells(cols, rows))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].TerminalSizeCells; f != nil {
+			return f(cols, rows)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatNumber("en", float64(cols))) + " × " + msgs.arg(i18n.FormatNumber("en", float64(rows)))
+		case "ar":
+			return i18n.FormatNumber("ar", float64(cols)) + " × " + i18n.FormatNumber("ar", float64(rows))
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(cols)) + " × " + i18n.FormatNumber("zh-Hans", float64(rows))
+		case "zh-Hant":
+			return i18n.FormatNumber("zh-Hant", float64(cols)) + " × " + i18n.FormatNumber("zh-Hant", float64(rows))
+		}
+	}
+}
+
+// TerminalDirectory says "Directory"
+// in the language the app shows under cx.
+func TerminalDirectory(cx *core.Scope) string { return For(cx).TerminalDirectory() }
+
+// TerminalDirectory says "Directory"
+// in the language of msgs.
+func (msgs Messages) TerminalDirectory() string { return msgs.text(textTerminalDirectory) }
+
+// TerminalRestart says "Restart the shell"
+// in the language the app shows under cx.
+func TerminalRestart(cx *core.Scope) string { return For(cx).TerminalRestart() }
+
+// TerminalRestart says "Restart the shell"
+// in the language of msgs.
+func (msgs Messages) TerminalRestart() string { return msgs.text(textTerminalRestart) }
+
+// TerminalUnavailable says "No terminal here: {reason}"
+// in the language the app shows under cx.
+func TerminalUnavailable(cx *core.Scope, reason string) string {
+	return For(cx).TerminalUnavailable(reason)
+}
+
+// TerminalUnavailable says "No terminal here: {reason}"
+// in the language of msgs.
+func (msgs Messages) TerminalUnavailable(reason string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.TerminalUnavailable(reason))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].TerminalUnavailable; f != nil {
+			return f(reason)
+		}
+		switch lang {
+		case "", "en":
+			return "No terminal here: " + msgs.arg(reason)
+		case "ar":
+			return "لا طرفية هنا: " + reason
+		case "zh-Hans":
+			return "此处无法运行终端：" + reason
+		case "zh-Hant":
+			return "此處無法執行終端機：" + reason
+		}
+	}
+}
+
+// TerminalSession says "Session"
+// in the language the app shows under cx.
+func TerminalSession(cx *core.Scope) string { return For(cx).TerminalSession() }
+
+// TerminalSession says "Session"
+// in the language of msgs.
+func (msgs Messages) TerminalSession() string { return msgs.text(textTerminalSession) }
+
+// TerminalLocalShell says "Local shell"
+// in the language the app shows under cx.
+func TerminalLocalShell(cx *core.Scope) string { return For(cx).TerminalLocalShell() }
+
+// TerminalLocalShell says "Local shell"
+// in the language of msgs.
+func (msgs Messages) TerminalLocalShell() string { return msgs.text(textTerminalLocalShell) }
+
+// TerminalDemoSession says "Demo session"
+// in the language the app shows under cx.
+func TerminalDemoSession(cx *core.Scope) string { return For(cx).TerminalDemoSession() }
+
+// TerminalDemoSession says "Demo session"
+// in the language of msgs.
+func (msgs Messages) TerminalDemoSession() string { return msgs.text(textTerminalDemoSession) }
+
+// TerminalCopy says "Copy"
+// in the language the app shows under cx.
+func TerminalCopy(cx *core.Scope) string { return For(cx).TerminalCopy() }
+
+// TerminalCopy says "Copy"
+// in the language of msgs.
+func (msgs Messages) TerminalCopy() string { return msgs.text(textTerminalCopy) }
+
+// TerminalPaste says "Paste"
+// in the language the app shows under cx.
+func TerminalPaste(cx *core.Scope) string { return For(cx).TerminalPaste() }
+
+// TerminalPaste says "Paste"
+// in the language of msgs.
+func (msgs Messages) TerminalPaste() string { return msgs.text(textTerminalPaste) }
+
+// TerminalSelectAll says "Select all"
+// in the language the app shows under cx.
+func TerminalSelectAll(cx *core.Scope) string { return For(cx).TerminalSelectAll() }
+
+// TerminalSelectAll says "Select all"
+// in the language of msgs.
+func (msgs Messages) TerminalSelectAll() string { return msgs.text(textTerminalSelectAll) }
+
+// TerminalKeyBar says "Key bar"
+// in the language the app shows under cx.
+func TerminalKeyBar(cx *core.Scope) string { return For(cx).TerminalKeyBar() }
+
+// TerminalKeyBar says "Key bar"
+// in the language of msgs.
+func (msgs Messages) TerminalKeyBar() string { return msgs.text(textTerminalKeyBar) }
+
+// TerminalKeyBarNote says "Over a touch screen's keyboard"
+// in the language the app shows under cx.
+func TerminalKeyBarNote(cx *core.Scope) string { return For(cx).TerminalKeyBarNote() }
+
+// TerminalKeyBarNote says "Over a touch screen's keyboard"
+// in the language of msgs.
+func (msgs Messages) TerminalKeyBarNote() string { return msgs.text(textTerminalKeyBarNote) }

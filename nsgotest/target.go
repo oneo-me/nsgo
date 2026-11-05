@@ -262,9 +262,20 @@ func (t *target) answer(alert driver.AlertConfig, index int) {
 }
 
 func (t *target) press(at driver.Point, hold time.Duration) { t.check(t.surface.Press(at, hold)) }
-func (t *target) rightClick(at driver.Point)                { t.check(t.surface.RightClick(at)) }
-func (t *target) hover(at driver.Point)                     { t.check(t.surface.Hover(at)) }
-func (t *target) back()                                     { t.check(t.surface.Back()) }
+
+// pressWhile holds a press for hold, running during once the finger is
+// down.
+func (t *target) pressWhile(at driver.Point, hold time.Duration, during func()) {
+	done := make(chan error, 1)
+	go func() { done <- t.surface.Press(at, hold) }()
+	time.Sleep(hold / 2)
+	during()
+	t.check(<-done)
+}
+
+func (t *target) rightClick(at driver.Point) { t.check(t.surface.RightClick(at)) }
+func (t *target) hover(at driver.Point)      { t.check(t.surface.Hover(at)) }
+func (t *target) back()                      { t.check(t.surface.Back()) }
 
 func (t *target) typeText(v *View, text string) { t.check(t.surface.Type(text)) }
 

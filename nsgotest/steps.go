@@ -281,7 +281,11 @@ func (a *App) LongPress(selector string) {
 		hold = defaultLongPress
 	}
 	if a.target != nil {
-		a.target.press(at, hold)
+		// A finger rests as a person's does: past what a scroll view holds
+		// its content's touches back, with the test's clock going for what
+		// times the hold on the engine, as a context menu does.
+		hold = max(hold, defaultLongPress) + 200*time.Millisecond
+		a.target.pressWhile(at, hold, func() { a.target.advance(hold, true) })
 		a.done()
 		return
 	}
@@ -293,9 +297,11 @@ func (a *App) LongPress(selector string) {
 	a.elapse(hold)
 	ev.Kind = driver.EventLongPress
 	a.send(v, ev)
+	// A finger rests as long as a person's, past a shorter delay.
+	a.elapse(defaultLongPress - hold)
 	ev.Kind = driver.EventPressUp
 	a.send(v, ev)
-	a.touchAt(driver.GestureEnded, at, hold)
+	a.touchAt(driver.GestureEnded, at, max(hold, defaultLongPress))
 	a.done()
 }
 

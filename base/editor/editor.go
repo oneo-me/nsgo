@@ -74,6 +74,7 @@ type ed struct {
 	focused                                   *core.Signal[bool]
 	composing                                 *core.Signal[string]
 	sink                                      *core.Signal[string]
+	typed                                     string // the sink's text the editor has
 	link                                      *core.Signal[span]
 	hasLink                                   *core.Signal[bool]
 	sinkRef, vs, hs, box                      *core.Ref
@@ -416,15 +417,19 @@ func (e *ed) typeText(text string) {
 
 func firstRune(s string) rune { r, _ := utf8.DecodeRuneInString(s); return r }
 
-// sinkChanged takes what the sink holds now: the difference from what it
-// held becomes backspaces and typed text, as autocorrection and input
-// methods replace their text.
+// sinkChanged takes what the sink holds now. Platforms report the text an
+// input method commits before the composition's end, which types it.
 func (e *ed) sinkChanged(text string) {
-	held := e.sink.GetUntracked()
-	if e.composing.GetUntracked() != "" {
-		e.sink.Set(text)
-		return
+	e.sink.Set(text)
+	if e.composing.GetUntracked() == "" {
+		e.flushSink()
 	}
+}
+
+// flushSink takes how the sink differs from what was typed: backspaces and
+// typed text, as autocorrection and input methods replace their text.
+func (e *ed) flushSink() {
+	text, held := e.sink.GetUntracked(), e.typed
 	common := 0
 	for common < len(held) && common < len(text) && held[common] == text[common] {
 		common++
@@ -436,14 +441,16 @@ func (e *ed) sinkChanged(text string) {
 		e.edit(func() []change { return e.st.deleteBy(e.st.prevChar, true) })
 	}
 	e.typeText(text[common:])
-	e.sink.Set(text)
+	e.typed = text
 	if len(text) > 256 {
+		e.typed = ""
 		e.sink.Set("")
 	}
 }
 
 func (e *ed) clearSink() {
 	if e.composing.GetUntracked() == "" && e.sink.GetUntracked() != "" {
+		e.typed = ""
 		e.sink.Set("")
 	}
 }

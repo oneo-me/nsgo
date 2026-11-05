@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -915,5 +916,73 @@ func TestPseudoLocales(t *testing.T) {
 	app.Press("text:\u200f\u202eEnglish\u202c\u200f")
 	if got := app.Find("id:settings").Frame.Origin.X; got <= ltr {
 		t.Errorf("in ar-XB the settings button is at %v, %v left to right", got, ltr)
+	}
+}
+
+// TestTerminal runs the shell, types a command that sets the title, which
+// the panel shows, and restarts the shell.
+func TestTerminal(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("runs a Unix shell")
+	}
+	app := startDesktop(t)
+	open(app, "Terminal")
+	app.Find("id:terminal")
+	// The view sized the screen, which the panel reports.
+	app.WaitUntil(5*time.Second, func() bool { return app.Find("id:terminal-size").Text != "0 × 0" })
+	app.Type("label:Terminal", `printf '\033]0;%s\007' nsgo-terminal-test`)
+	app.Key("enter")
+	titled := func() bool { return app.Find("id:terminal-title").Text == "nsgo-terminal-test" }
+	app.WaitUntil(10*time.Second, titled)
+	app.Screenshot("terminal")
+	app.Press("text:Dracula")
+	app.Press("text:Bar")
+	app.Screenshot("terminal-dracula")
+	app.Press("text:Restart the shell")
+	if titled() {
+		t.Error("the restarted shell kept the old title")
+	}
+}
+
+// TestTerminalPhone runs the demo session on a phone, which runs no local
+// programs: typed through the key bar and the keyboard, its title reaches
+// the panel; a long press opens the context menu.
+func TestTerminalPhone(t *testing.T) {
+	app := startPhone(t)
+	app.Press("id:nav-Terminal")
+	app.Find("id:terminal")
+	app.Find("id:terminal-key-escape")
+	app.Type("label:Terminal", "title on a phone")
+	app.Press("id:terminal-key-ctrl")
+	app.Type("label:Terminal", "u")
+	app.Type("label:Terminal", "title from the phone")
+	app.Key("enter")
+	app.WaitUntil(5*time.Second, func() bool { return app.Find("id:terminal-title").Text == "from the phone" })
+	app.Screenshot("terminal-phone")
+	app.LongPress("id:terminal-screen")
+	// The menu's hold is timed on the test's clock.
+	app.Advance(time.Second)
+	app.WaitFor("text:Paste", 5*time.Second)
+	app.Screenshot("terminal-phone-menu")
+}
+
+// TestTerminalPhoneSelect long-presses a word of a full-screen program's
+// rows: it is selected, which the context menu's Copy follows.
+func TestTerminalPhoneSelect(t *testing.T) {
+	app := startPhone(t)
+	app.Press("id:nav-Terminal")
+	app.Find("id:terminal")
+	app.Type("label:Terminal", "top")
+	app.Key("enter")
+	time.Sleep(300 * time.Millisecond)
+	app.Settle()
+	app.LongPress("id:terminal-screen")
+	app.Advance(time.Second)
+	app.WaitFor("text:Paste", 5*time.Second)
+	app.Screenshot("terminal-phone-select")
+	for v := app.Find("text:Copy"); v != nil; v = v.Parent {
+		if v.Props.Disabled {
+			t.Error("Copy is disabled with a word selected")
+		}
 	}
 }

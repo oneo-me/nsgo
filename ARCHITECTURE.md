@@ -17,6 +17,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base` | `nsh-base` | Unstyled components: controls, popups, navigation, panels, a dock, charts and tables ([components](docs/architecture/components.md)) |
 | `mobile`, `desktop` | `nsh/mobile`, `nsh/desktop` | What only phones have (the tab bar) and only desktops (the window, menus) |
 | `base/textview`, `base/textview/highlight` | `nsh-base`'s `text_view`, `highlight` | `TextView`: Markdown, HTML or the app's blocks, and its code highlighting ([text view](docs/architecture/textview.md)) |
+| `base/terminal`, `tools/libghostty` | — (Ghostty's libghostty-vt) | `Terminal` and its `View`: a program in a pseudo-terminal with libghostty-vt loaded through purego, and the command building the library ([terminal](docs/architecture/terminal.md)) |
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting and the rows a virtualized view makes |
 | `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
@@ -115,6 +116,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Components](docs/architecture/components.md) | A component in `base`: controls, popups, resizable panels or the dock |
 | [Text view](docs/architecture/textview.md) | `TextView`, its parsers, parts or highlighting |
 | [Editor](docs/architecture/editor.md) | `Editor`, `DiffView` or their highlighting |
+| [Terminal](docs/architecture/terminal.md) | `base/terminal`, its emulator binding or pseudo-terminals |
 | [Languages](docs/architecture/languages.md) | `i18n`, a package's catalogs or the code `nsgo` writes from them |
 | [Icons](docs/architecture/icons.md) | SVG parsing, `core.Icon` or the Lucide pack |
 | [Performance](docs/architecture/performance.md) | The performance monitor, a frame clock or a per-frame path |
