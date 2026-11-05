@@ -1988,10 +1988,16 @@ func rightMouseDown(self objc.ID, cmd objc.SEL, event objc.ID) {
 
 // cursorUpdate sets the cursor of the view under the mouse, which
 // AppKit's default, the arrow, would replace as it asks for the cursor
-// after views move or come.
+// after views move or come. It goes to self or the nearest view around
+// it NSGo knows: a field editor is no view of a surface.
 func cursorUpdate(self objc.ID, _ objc.SEL, _ objc.ID) {
-	if v := views[self]; v != nil && v.surface.window != 0 {
-		v.surface.pick(objc.Send[apple.CGPoint](v.surface.window, sel("mouseLocationOutsideOfEventStream")), false)
+	for n := self; n != 0; n = n.Send(selSuperview) {
+		if v := views[n]; v != nil {
+			if v.surface.window != 0 {
+				v.surface.pick(objc.Send[apple.CGPoint](v.surface.window, sel("mouseLocationOutsideOfEventStream")), false)
+			}
+			return
+		}
 	}
 }
 
@@ -2062,9 +2068,9 @@ func (s *surface) updateCursor(hit, up objc.ID, always bool) {
 }
 
 // cursorAt returns the cursor over hit, a view in up: the nearest view's
-// from hit up that names one, or the I-beam over a text a press selects.
-// own is false off the surface and over the views that show their own:
-// inputs' editors, web views, players and native components.
+// from hit up that names one, or the I-beam over a text a press selects
+// or an input's text. own is false off the surface and over the views that
+// show their own: web views, players and native components.
 func cursorAt(hit, up objc.ID) (cursor driver.Cursor, own bool) {
 	if hit == 0 {
 		return driver.CursorAuto, false
@@ -2073,8 +2079,10 @@ func cursorAt(hit, up objc.ID) (cursor driver.Cursor, own bool) {
 		v := views[n]
 		switch {
 		case v == nil:
+		case v.kind == driver.KindInput && hit != v.native && v.input.showsIBeam(hit):
+			return driver.CursorText, true
 		case v.native != n:
-			if v.kind == driver.KindInput || v.kind == driver.KindWeb || v.kind == driver.KindVideo {
+			if v.kind == driver.KindWeb || v.kind == driver.KindVideo {
 				return driver.CursorAuto, false
 			}
 		case v.kind == driver.KindNative && n != hit:

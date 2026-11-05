@@ -67,7 +67,9 @@ var (
 	selInsertTabIgnore = sel("insertTabIgnoringFieldEditor:")
 	selDeleteBackward  = sel("deleteBackward:")
 
-	classField, classSecureField, classTextView objc.Class
+	classField, classSecureField, classTextView, classSecureEditor objc.Class
+
+	selResetCursorRects = sel("resetCursorRects")
 )
 
 // registerInput registers the field and text view classes.
@@ -87,13 +89,15 @@ func registerInput() {
 		}},
 		{Cmd: selShouldChange, Fn: fieldShouldChange},
 		{Cmd: selDidChangeSel, Fn: fieldSelectionChanged},
+		{Cmd: selResetCursorRects, Fn: func(objc.ID, objc.SEL) {}},
 	}
 	registerPaste()
 	delegate := []*objc.Protocol{objc.GetProtocol("NSTextFieldDelegate")}
 	classField = register("NsgoField", objc.GetClass("NSTextField"), delegate, fieldMethods)
 	classSecureField = register("NsgoSecureField", objc.GetClass("NSSecureTextField"), delegate, fieldMethods)
+	classSecureEditor = register("NsgoSecureEditor", objc.GetClass("NSSecureTextView"), nil, editorCursor())
 	classTextView = register("NsgoTextView", objc.GetClass("NSTextView"),
-		[]*objc.Protocol{objc.GetProtocol("NSTextViewDelegate")}, []objc.MethodDef{
+		[]*objc.Protocol{objc.GetProtocol("NSTextViewDelegate")}, append(editorCursor(), []objc.MethodDef{
 			{Cmd: sel("textDidChange:"), Fn: func(self objc.ID, _ objc.SEL, _ objc.ID) { inputOf(self).changed() }},
 			{Cmd: selShouldChange, Fn: func(self objc.ID, _ objc.SEL, tv objc.ID, r apple.NSRange, repl objc.ID) bool {
 				return inputOf(self).shouldChange(tv, r, repl)
@@ -146,7 +150,41 @@ func registerInput() {
 					apple.Super(self, cmd, sender)
 				}
 			}},
-		})
+		}...))
+}
+
+// editorCursor keeps a text view from setting the cursor, which is the
+// surface's (updateCursor): AppKit sets the I-beam from the view's tracking
+// area, its cursor rects and the moves a first responder hears, wherever
+// the mouse is over it, overlays above it or not.
+func editorCursor() []objc.MethodDef {
+	return []objc.MethodDef{
+		{Cmd: sel("addTrackingArea:"), Fn: func(objc.ID, objc.SEL, objc.ID) {}},
+		{Cmd: selResetCursorRects, Fn: func(objc.ID, objc.SEL) {}},
+		{Cmd: sel("mouseMoved:"), Fn: func(objc.ID, objc.SEL, objc.ID) {}},
+		{Cmd: sel("cursorUpdate:"), Fn: cursorUpdate},
+	}
+}
+
+// quietEditor does for the field editor what the field's class cannot:
+// AppKit makes a secure field's, which becomes NSGo's as it comes, and the
+// clip view around it with a cursor rect.
+func (in *input) quietEditor() {
+	e := in.field.Send(selCurrentEditor)
+	if e == 0 {
+		return
+	}
+	if e.Send(sel("class")) == objc.ID(objc.GetClass("NSSecureTextView")) {
+		loadSetClass()
+		objectSetClass(e, classSecureEditor)
+		areas := e.Send(sel("trackingAreas"))
+		for i := objc.Send[int](areas, sel("count")) - 1; i >= 0; i-- {
+			e.Send(sel("removeTrackingArea:"), areas.Send(sel("objectAtIndex:"), i))
+		}
+	}
+	if clip := e.Send(selSuperview); objc.Send[bool](clip, sel("respondsToSelector:"), sel("setDocumentCursor:")) {
+		clip.Send(sel("setDocumentCursor:"), objc.ID(0))
+	}
 }
 
 // inputOf returns the input of a field or text view, or nil.
@@ -155,6 +193,16 @@ func inputOf(editor objc.ID) *input {
 		return v.input
 	}
 	return nil
+}
+
+// showsIBeam reports whether the cursor over hit, a view of the input, is
+// the I-beam: its text selects, and hit is not the text view's scroll bar.
+func (in *input) showsIBeam(hit objc.ID) bool {
+	if in.multiline {
+		return objc.Send[bool](in.field, sel("isSelectable")) &&
+			!objc.Send[bool](hit, sel("isKindOfClass:"), objc.GetClass("NSScroller"))
+	}
+	return objc.Send[bool](in.field, sel("isEnabled"))
 }
 
 // isEditor reports whether n is v's editor, which keeps its presses.
@@ -202,6 +250,7 @@ func (v *view) setEditor(multiline, masked bool) {
 		container.Send(sel("setWidthTracksTextView:"), true)
 		tv.Send(selSetDelegate, tv)
 		scroll.Send(sel("setDocumentView:"), tv)
+		scroll.Send(sel("setDocumentCursor:"), objc.ID(0))
 		tv.Send(selRelease)
 		label := objc.ID(objc.GetClass("NSTextField")).Send(sel("labelWithString:"), apple.NSString(""))
 		label.Send(selSetHidden, true)
@@ -740,6 +789,7 @@ func fieldFocused(self objc.ID, cmd objc.SEL) bool {
 	if in != nil {
 		in.focusing = false
 		if ok {
+			in.quietEditor()
 			in.focusChanged(true)
 		}
 	}

@@ -33,11 +33,11 @@ func registerPaste() {
 		}
 		return apple.SendSuper[bool](self, cmd, item)
 	}
-	classFieldEditor = register("NsgoFieldEditor", objc.GetClass("NSTextView"), nil, []objc.MethodDef{
+	classFieldEditor = register("NsgoFieldEditor", objc.GetClass("NSTextView"), nil, append(editorCursor(), []objc.MethodDef{
 		{Cmd: sel("paste:"), Fn: paste},
 		{Cmd: sel("pasteAsPlainText:"), Fn: paste},
 		{Cmd: sel("validateUserInterfaceItem:"), Fn: validate},
-	})
+	}...))
 	classFieldCell = register("NsgoFieldCell", objc.GetClass("NSTextFieldCell"), nil, []objc.MethodDef{{
 		Cmd: sel("fieldEditorForView:"),
 		Fn: func(self objc.ID, _ objc.SEL, control objc.ID) objc.ID {

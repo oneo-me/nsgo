@@ -59,7 +59,7 @@ On macOS and the web, views that take presses are Tab stops beside the text inpu
 
 ## Cursors
 
-`Style.Cursor` sets the pointer's look over a view. `Auto` leaves it to the nearest ancestor that names one, and the web shows a pointer over pressable views. macOS sets the cursor of the view under the pointer by the same hit test, since AppKit's cursor rects would show through overlays; Windows answers `WM_SETCURSOR` with that view, Linux sets GTK's named cursor, and the web sets CSS `cursor`. Touch platforms ignore it; resizable handles ask for the column or row resize cursor. `ui` names a cursor only for text fields and resize or scrub drags, so its pressables keep the platform's arrow. macOS gives a view its tracking areas only within what its parents show, so a handle's band lies inside its group.
+`Style.Cursor` sets the pointer's look over a view. `Auto` leaves it to the nearest ancestor that names one, and the web shows a pointer over pressable views. macOS sets the cursor of the view under the pointer by the same hit test, inputs' I-beam too, since AppKit's cursor rects and text views' tracking areas would show through overlays: NSGo's fields and text views give them up, and a secure field's AppKit-made editor takes a subclass that does as it comes; Windows answers `WM_SETCURSOR` with that view, Linux sets GTK's named cursor, and the web sets CSS `cursor`. Touch platforms ignore it; resizable handles ask for the column or row resize cursor. `ui` names a cursor only for text fields and resize or scrub drags, so its pressables keep the platform's arrow. macOS gives a view its tracking areas only within what its parents show, so a handle's band lies inside its group.
 
 ## Gestures
 
