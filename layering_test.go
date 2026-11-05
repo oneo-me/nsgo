@@ -11,10 +11,10 @@ import (
 	"testing"
 )
 
-// layers lists the module packages a package may import (ARCHITECTURE.md,
-// Boundaries), both as paths inside the module, "" for its root. A pattern
-// ending in "/" matches a package and the packages below it; the first
-// rule whose package matches applies.
+// layers lists the module packages a package may import
+// (docs/architecture/layers.md), both as paths inside the module, "" for
+// its root. A pattern ending in "/" matches a package and the packages
+// below it; the first rule whose package matches applies.
 var layers = []struct {
 	pkg     string
 	imports []string

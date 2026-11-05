@@ -56,35 +56,14 @@ Android runs the app as a second process because Go builds Android shared librar
 
 ## Boundaries
 
-Packages import only downward; `layering_test.go` checks it on every target:
+Packages import only downward, which `layering_test.go` checks on every target; [package layers](docs/architecture/layers.md) holds the graph and the rules for each layer.
 
-```text
-                    apps (examples/*, bench/*)
-         ┌───────────────┬───────┴───────┬───────────────┐
-    nsgo (root)       nsgotest base/* mobile desktop  icons/* tsx
-         │               │               │               │
- internal/platform/*     │               │               │
-         │               │               │               │
-  internal/engine        │               │               │
-         └───────────────┴───────┬───────┴───────────────┘
-                               core
-                                 │
-                          internal/driver
-```
-
-- Apps import `nsgo`, `core`, `base`, `mobile`, `desktop`, `i18n`, `icons`, `tsx` and `nsgotest` only, native components included; `core` and `nsgotest` alias the internal types their API reaches (`TestPublicAPINamesNoInternalType`).
-- `internal/driver` is the protocol and imports from the module only `internal/shaderir`, for the shader programs it carries. Backends import it and `internal/engine`, never `core`, and never the shader compiler (`internal/shader`), which only `core` links.
-- `core` imports only `internal/driver`, `internal/layout` and the shader compiler (`internal/shader`, `internal/shaderir`).
-- `i18n` imports only `core`, and `base`'s packages import it for their catalogs.
-- `internal/engine` runs one app on `core` and defines `engine.Platform`, which backends implement. `nsgotest` is the headless backend, without the engine, and on a platform drives a backend's test host.
-- `core`, `base`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine` build unchanged for every target: no purego, `syscall` or `unsafe`. No package has cgo files or hand-written C.
 - Each API has one home, and `base`'s components have no look ([principles](AGENTS.md#principles), [components](AGENTS.md#components)).
 - The main thread never waits for the engine, but up to 16 ms on macOS for a resized window's layout; the engine never touches main-thread-only UI objects.
 - What animates runs on the platform's frame clock, which stops when idle: the engine sends transitions and animated values once, never a commit per frame ([animation](docs/architecture/animation.md)).
 - The reactive graph belongs to the engine goroutine and never locks; other goroutines reach it through `Scope.Post`.
 - Text is prepared and laid out on the engine side through a platform `TextEngine`; the main thread only draws the result.
 - One engine is one app with no global state, so a host app embeds several; its windows are surfaces of that engine, a tree each. `tsx.Register` configures the process before apps start.
-- `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`.
 - Layout (`internal/layout`) ports Taffy 0.15's algorithms step by step and passes every Taffy fixture that applies to NSH's features.
 
 ## Tool
@@ -108,7 +87,7 @@ Packages import only downward; `layering_test.go` checks it on every target:
 Record a design question here, and confirm the answer with the user before choosing it.
 
 - **Signed packages and capabilities.** Port both for TSX modules only, Go code staying trusted, as [TSX](docs/architecture/tsx.md#sandbox) proposes?
-- **NSH 0.4.0's gallery and `process`.** NSGo leaves the standard modules out ([NSGo and NSH](docs/architecture/nsh.md#what-nsgo-leaves-out)), but 0.4.0's gallery shell reads `process.env` as it starts, so none of its demos or tests run. Give TSX a `process` of the environment alone (`env`, `platform`, `arch`), port the module, or rename the oracle's shell?
+- **NSH 0.4.0's gallery and `process`.** [NSGo leaves the standard modules out](docs/architecture/nsh.md#what-nsgo-leaves-out), but 0.4.0's gallery shell reads `process.env` at start, so no demo or test runs. Give TSX a `process` of the environment alone (`env`, `platform`, `arch`), port the module, or rename the oracle's shell?
 - **TSX on the browser's engine.** NSH 0.4.0 runs TSX on the page's own JavaScript engine on the web, keeping QuickJS on the native targets. Do the same, keeping goja off the web, or keep one engine on every target?
 
 ## Verification
@@ -119,6 +98,7 @@ Record a design question here, and confirm the answer with the user before choos
 
 | Document | Read before changing |
 | --- | --- |
+| [Package layers](docs/architecture/layers.md) | A package's imports, or where new code belongs |
 | [Core](docs/architecture/core.md) | The graph, elements, regions, layers, commit, storage or the mount protocol |
 | [Styles](docs/architecture/styles.md) | `Style` or how a backend draws a view |
 | [Themes](docs/architecture/themes.md) | Themes, theme files or the gallery's look |
