@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
@@ -22,7 +23,7 @@ const (
 // TabItem is one tab of Tabs.
 type TabItem struct {
 	Text     string
-	Icon     IconName
+	Icon     func() *core.SVG
 	Disabled func() bool
 	TestID   string
 }
@@ -79,7 +80,7 @@ func (t Tabs) Render(cx *core.Scope) core.Node {
 	var tabs []core.Node
 	for i, item := range t.Items {
 		var children []core.Node
-		if item.Icon != "" {
+		if item.Icon != nil {
 			children = append(children, Icon(item.Icon, iconSize, inherited))
 		}
 		if item.Text != "" {
@@ -139,7 +140,7 @@ func collapsibleTrigger(cx *core.Scope, c Collapsible, s core.Style) core.Node {
 			return core.Style{Transform: core.Transform{Rotate: 180}}
 		}
 		return core.Style{}
-	}, Children: []core.Node{Icon(IconChevronDown, iconSize, colors.Muted)}}
+	}, Children: []core.Node{Icon(lucide.ChevronDown, iconSize, colors.Muted)}}
 	return base.Button{Expanded: func() bool { return is(c.Open) }, Disabled: c.Disabled, Label: c.Text,
 		OnPress: func(core.PressEvent) {
 			if c.OnOpenChange != nil {

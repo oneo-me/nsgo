@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 	"strings"
 
@@ -78,7 +79,7 @@ func (in TagInput) Render(cx *core.Scope) core.Node {
 			StyleFunc: func() core.Style {
 				return core.Style{Color: colors.Muted(), Hover: &core.Style{Background: colors.Pressed(), Color: colors.Text()}, Focus: FocusRing(cx, 0)}
 			},
-			Children: []core.Node{Icon(IconClose, typeCaption.FontSize, inherited)}}
+			Children: []core.Node{Icon(lucide.X, typeCaption.FontSize, inherited)}}
 		return core.View{Style: typeBody.Merge(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2, Height: core.Pt(chipSize),
 			Padding: core.Edges{Left: 8, Right: 2}, CornerRadius: radiusSmall, BorderWidth: 1, MinWidth: core.Pt(0), FlexShrink: 1}),
 			StyleFunc: func() core.Style {

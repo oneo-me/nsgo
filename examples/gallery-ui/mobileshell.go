@@ -8,7 +8,7 @@ import (
 // ShellTab is a top-level section of a TabShell.
 type ShellTab struct {
 	Text string
-	Icon IconName
+	Icon func() *core.SVG
 	// Content is the section, such as a base.Nav's stack of pages. It is
 	// built when the tab is first selected and kept while others show.
 	Content func(cx *core.Scope) core.Node
@@ -85,7 +85,7 @@ func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) cor
 	var tabs []core.Node
 	for i, tab := range s.Tabs {
 		var content []core.Node
-		if tab.Icon != "" {
+		if tab.Icon != nil {
 			content = append(content, Icon(tab.Icon, 22, inherited))
 		}
 		content = append(content, line(tab.Text, typeCaption.Merge(core.Style{FontWeight: Medium}), 1))

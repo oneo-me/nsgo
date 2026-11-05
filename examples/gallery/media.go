@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strings"
 	"time"
 
@@ -89,7 +90,7 @@ func navButton(cx *core.Scope, flip bool, enabled func() bool, label string, onP
 		return s
 	}
 	return ui.Press{OnPress: onPress, Disabled: func() bool { return !enabled() }, Label: label, HitSlop: 4, Children: []core.Node{
-		core.View{StyleFunc: s, Children: []core.Node{ui.Icon(ui.IconChevron, 18, colors.Text)}},
+		core.View{StyleFunc: s, Children: []core.Node{ui.Icon(lucide.ChevronRight, 18, colors.Text)}},
 	}}
 }
 
@@ -181,9 +182,9 @@ func player(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					if paused.Get() {
-						return ui.RoundButton{Icon: ui.IconPlay, Label: tr.MediaPlay(), OnPress: func() { paused.Set(false) }}
+						return ui.RoundButton{Icon: lucide.Play, Label: tr.MediaPlay(), OnPress: func() { paused.Set(false) }}
 					}
-					return ui.RoundButton{Icon: ui.IconPause, Label: tr.MediaPause(), OnPress: func() { paused.Set(true) }}
+					return ui.RoundButton{Icon: lucide.Pause, Label: tr.MediaPause(), OnPress: func() { paused.Set(true) }}
 				}),
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
 					ui.Meter{Value: func() float64 {

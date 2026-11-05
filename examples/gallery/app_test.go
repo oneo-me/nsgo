@@ -276,7 +276,9 @@ func TestChatStreamsAScript(t *testing.T) {
 	app.Advance(20 * time.Second)
 	app.Find("text:The ball costs")
 	app.Find("role:button Regenerate")
-	app.Find("text:Thought for")
+	app.Press("role:button Worked for")
+	app.Press("role:button Ran 1 step")
+	app.Find("role:button Thought for")
 	app.Press("role:button Copy")
 	if !strings.Contains(app.Clipboard, "0.05") {
 		t.Fatalf("copied %q", app.Clipboard)

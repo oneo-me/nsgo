@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"regexp"
 	"slices"
 	"strings"
@@ -401,9 +402,9 @@ func formDemo(cx *core.Scope) core.Node {
 			core.Show{When: func() bool { return result.Get().text != "" }, Then: func(*core.Scope) core.Node {
 				return core.Dynamic(func(*core.Scope) core.Node {
 					r := result.Get()
-					fg, bg, name := colors.Danger, tints.Danger, ui.IconBell
+					fg, bg, name := colors.Danger, tints.Danger, lucide.Bell
 					if r.t == ui.ToneUp {
-						fg, bg, name = colors.Up, tints.Up, ui.IconCheck
+						fg, bg, name = colors.Up, tints.Up, lucide.Check
 					}
 					return core.View{TestID: "form-status", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(12),
 						CornerRadius: ui.RadiusControl}, StyleFunc: ui.Filled(bg), Children: []core.Node{
@@ -419,8 +420,8 @@ func formDemo(cx *core.Scope) core.Node {
 	more := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return ui.Card{Title: tr.FormMoreKeyboards(), Description: tr.FormSheetsAndBarsThatRide(), Flush: true, Children: []core.Node{
-			ui.LinkRow{Icon: ui.IconComponents, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconText, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
+			ui.LinkRow{Icon: lucide.Component, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
+			ui.LinkRow{Divided: true, Icon: lucide.Type, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
 		}}
 	}
 
@@ -516,7 +517,7 @@ func messageBar(cx *core.Scope) base.NavPage {
 					return fin.Inset().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44),
 						Padding: core.Symmetric(0, 16), FontSize: 13, Color: colors.Text(), Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 22})
 				}},
-			ui.RoundButton{Icon: ui.IconArrowUp, Label: tr.FormSend(), OnPress: send},
+			ui.RoundButton{Icon: lucide.ArrowUp, Label: tr.FormSend(), OnPress: send},
 		}},
 	}})
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -21,7 +22,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		n := core.NewSignal(cx, 2)
 		adjust := func(by int) { n.Update(func(v int) int { return min(max(v+by, 0), 10) }) }
-		step := func(name ui.IconName, by int, label string) core.Node {
+		step := func(name func() *core.SVG, by int, label string) core.Node {
 			// The buttons are for the pointer; the screen reader adjusts
 			// the quantity itself.
 			return core.View{AccessibilityElementsHidden: always, Children: []core.Node{ui.RoundButton{Icon: name, Label: label, Variant: ui.ButtonSecondary, Size: 36, OnPress: func() { adjust(by) }}}}
@@ -41,9 +42,9 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 				},
 				Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 16},
 				Children: []core.Node{
-					step(ui.IconMinus, -1, tr.A11yFewer()),
+					step(lucide.Minus, -1, tr.A11yFewer()),
 					ui.Figure{Value: func() string { return itoa(n.Get()) }, Unit: "items"},
-					step(ui.IconPlus, 1, tr.A11yMore()),
+					step(lucide.Plus, 1, tr.A11yMore()),
 				}},
 			ui.Meter{Value: func() float64 { return float64(n.Get()) / 10 }, Tone: ui.ToneAccent},
 			ui.APILine{Label: tr.A11yARangeValueAndThe(), Names: "RoleAdjustable"},
@@ -65,7 +66,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 							s.Transform.Rotate = 90
 						}
 						return s
-					}, Children: []core.Node{ui.Icon(ui.IconChevron, 16, colors.Muted)}},
+					}, Children: []core.Node{ui.Icon(lucide.ChevronRight, 16, colors.Muted)}},
 				}},
 			core.Show{When: open.Get, Then: func(*core.Scope) core.Node { return ui.Note{Text: tr.A11yShipsInTwoDaysFrom()} }},
 			ui.APILine{Label: tr.A11yADisclosure(), Names: "Expanded"},
@@ -129,7 +130,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		return ui.Card{Title: tr.A11yLiveRegions(), Description: tr.A11yChangesAnnouncedWithoutMovingFocus(), Children: []core.Node{
 			core.Text{LiveRegion: core.LiveRegionPolite, TestID: "a11y-live", ContentFunc: func() string { return tr.A11yInTheBasket(added.Get()) },
 				Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Text)},
-			ui.Button{Text: tr.A11yAddToBasket(), Icon: ui.IconPlus, OnPress: func() { added.Update(func(n int) int { return n + 1 }) }},
+			ui.Button{Text: tr.A11yAddToBasket(), Icon: lucide.Plus, OnPress: func() { added.Update(func(n int) int { return n + 1 }) }},
 			ui.APILine{Label: tr.A11yAnnouncedAsItChanges(), Names: "LiveRegionPolite"},
 		}}
 	}

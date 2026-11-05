@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"slices"
 	"time"
@@ -116,7 +117,7 @@ func marketStrip(cx *core.Scope, m *market) core.Node {
 					core.Text{ContentFunc: func() string { return signed(change(), 2) + "%" }, StyleFunc: func() core.Style {
 						return core.Style{FontSize: 13, FontWeight: ui.Medium, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 					}},
-					core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 90, -90)}}, Children: []core.Node{ui.Icon(ui.IconChevron, 12, colors.Faint)}},
+					core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 90, -90)}}, Children: []core.Node{ui.Icon(lucide.ChevronRight, 12, colors.Faint)}},
 				}},
 			ui.Tabular(ui.Textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, ui.Regular, colors.Faint)),
 			pauseButton(cx, m),

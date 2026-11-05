@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"reflect"
 	"slices"
 	"strings"
@@ -528,7 +529,7 @@ func editorDemo(cx *core.Scope) core.Node {
 	}
 	// iconTool is an icon button, its label for screen readers and its
 	// tooltip, lit while what it toggles is on.
-	iconTool := func(label string, name ui.IconName, on func() bool, onPress func(), small bool) core.Node {
+	iconTool := func(label string, name func() *core.SVG, on func() bool, onPress func(), small bool) core.Node {
 		if on == nil {
 			on = func() bool { return false }
 		}
@@ -579,14 +580,14 @@ func editorDemo(cx *core.Scope) core.Node {
 					textTool(tr.EditorMatchCase(), "Aa", caseSensitive.Get, func() { toggled(caseSensitive) }),
 					textTool(tr.EditorWholeWord(), "W", wholeWord.Get, func() { toggled(wholeWord) }),
 					textTool(tr.EditorRegularExpression(), ".*", regex.Get, func() { toggled(regex) }),
-					iconTool(tr.EditorPreviousMatch(), ui.IconArrowUp, nil, func() { ref.Run(editor.FindPrevious) }, false),
-					iconTool(tr.EditorNextMatch(), ui.IconArrowDown, nil, func() { ref.Run(editor.FindNext) }, false),
-					iconTool(tr.EditorCloseTheFindBar(), ui.IconClose, nil, closeFind, false),
+					iconTool(tr.EditorPreviousMatch(), lucide.ArrowUp, nil, func() { ref.Run(editor.FindPrevious) }, false),
+					iconTool(tr.EditorNextMatch(), lucide.ArrowDown, nil, func() { ref.Run(editor.FindNext) }, false),
+					iconTool(tr.EditorCloseTheFindBar(), lucide.X, nil, closeFind, false),
 				}},
 				core.View{Style: row, Children: []core.Node{
 					field(tr.EditorReplace(), replacement, func() { ref.Replace(replacement.GetUntracked()) }, false),
-					iconTool(tr.EditorReplace(), ui.IconReplace, nil, func() { ref.Replace(replacement.GetUntracked()) }, false),
-					iconTool(tr.EditorReplaceAll(), ui.IconReplaceAll, nil, func() { last.Set(tr.EditorReplaced(ref.ReplaceAll(replacement.GetUntracked()))) }, false),
+					iconTool(tr.EditorReplace(), lucide.Replace, nil, func() { ref.Replace(replacement.GetUntracked()) }, false),
+					iconTool(tr.EditorReplaceAll(), lucide.ReplaceAll, nil, func() { last.Set(tr.EditorReplaced(ref.ReplaceAll(replacement.GetUntracked()))) }, false),
 				}},
 			}}}}
 	}}
@@ -797,7 +798,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Border()}}
 	}, Children: []core.Node{
 		base.Menu{Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: tr.EditorLanguage(),
-			Trigger: menuTrigger(tr.EditorLanguage(), ui.Icon(ui.IconCode, 16, colors.Muted),
+			Trigger: menuTrigger(tr.EditorLanguage(), ui.Icon(lucide.Code, 16, colors.Muted),
 				core.Text{ContentFunc: func() string { return editorSamples[language.Get()].label }, Style: core.Style{FontSize: 12, FontWeight: ui.Medium},
 					StyleFunc: ui.Colored(colors.Text)}),
 			Children: func() []core.Node {
@@ -818,7 +819,7 @@ func editorDemo(cx *core.Scope) core.Node {
 				return out
 			}()},
 		ui.Spacer{},
-		iconTool(tr.EditorFindAndReplace(), ui.IconSearch, finding.Get, func() {
+		iconTool(tr.EditorFindAndReplace(), lucide.Search, finding.Get, func() {
 			if finding.GetUntracked() {
 				closeFind()
 			} else {
@@ -826,7 +827,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			}
 		}, false),
 		base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: tr.EditorEditorOptions(),
-			Trigger: menuTrigger(tr.EditorEditorOptions(), ui.Icon(ui.IconSliders, 16, colors.Muted)),
+			Trigger: menuTrigger(tr.EditorEditorOptions(), ui.Icon(lucide.SlidersHorizontal, 16, colors.Muted)),
 			Children: []core.Node{
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
@@ -1026,7 +1027,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			}
 			return editorSamples[language.Get()].label
 		}, colors.Muted, true),
-		iconTool(tr.EditorToggleProblems(), ui.IconProblems, problemsShown.Get, func() { area.ToggleDock(base.DockBottom) }, true),
+		iconTool(tr.EditorToggleProblems(), lucide.TriangleAlert, problemsShown.Get, func() { area.ToggleDock(base.DockBottom) }, true),
 	}}
 
 	return core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{

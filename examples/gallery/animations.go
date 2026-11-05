@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"math/rand/v2"
 	"slices"
@@ -92,7 +93,7 @@ func hero(cx *core.Scope) core.Node {
 					Background: core.Interpolate(breathe, core.Interpolation{Input: []float64{0, 1}, Colors: []core.Color{colors.AccentFill(), colors.Up()}}),
 					Scale:      ui.Lerp(breathe, 0.9, 1.08),
 				}}
-		}, Children: []core.Node{ui.Icon(ui.IconAnimation, 22, colors.OnAccent)}},
+		}, Children: []core.Node{ui.Icon(lucide.Zap, 22, colors.OnAccent)}},
 	)
 	return ui.Card{Title: tr.AnimNativeMotion(), Description: tr.AnimThreeLoopsStartedOnceRun(), Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(s + 8), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, Children: []core.Node{
@@ -238,7 +239,7 @@ func easingPlot(cx *core.Scope) core.Node {
 		core.Canvas{Style: core.Style{Height: core.Pt(196)}, Draw: draw, Label: tr.AnimEasingCurve()},
 		core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
 			base.Tabs{Label: tr.AnimCurves(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
-		ui.Button{Text: tr.AnimPlay(), Icon: ui.IconPlay, OnPress: play},
+		ui.Button{Text: tr.AnimPlay(), Icon: lucide.Play, OnPress: play},
 	}}
 }
 
@@ -292,7 +293,7 @@ func easingRace(cx *core.Scope) core.Node {
 			if there.Get() {
 				l = tr.AnimReverse()
 			}
-			return ui.Button{Text: l, Variant: ui.ButtonSecondary, Icon: ui.IconPlay, OnPress: play}
+			return ui.Button{Text: l, Variant: ui.ButtonSecondary, Icon: lucide.Play, OnPress: play}
 		}),
 	}}
 }
@@ -373,7 +374,7 @@ func composition(cx *core.Scope) core.Node {
 			ui.Cell{Child: ui.Button{Text: "Loop", Variant: ui.ButtonSecondary, OnPress: run("loop", pulse)}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: tr.AnimStop(), Variant: ui.ButtonGhost, Icon: ui.IconPause, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimStop(), Variant: ui.ButtonGhost, Icon: lucide.Pause, OnPress: func() {
 				for _, r := range runs {
 					r.Stop()
 				}
@@ -613,7 +614,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 						Opacity:    core.Interpolate(header, core.Interpolation{Input: []float64{0, float64(h)}, Output: []float64{1, 0}, Easing: ease(core.EasingQuad, core.EaseModeIn)}),
 					}})
 			}, Children: []core.Node{
-				ui.Icon(ui.IconSearch, 16, colors.Muted),
+				ui.Icon(lucide.Search, 16, colors.Muted),
 				core.Text{Content: tr.AnimSearch(), Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 				ui.API{Text: fmt.Sprintf("DiffClamp(0, %.0f)", h)},
 			}},
@@ -676,7 +677,7 @@ func layoutAnimation(cx *core.Scope) core.Node {
 			}}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: tr.AnimAdd(), Variant: ui.ButtonSecondary, Icon: ui.IconPlus, Disabled: func() bool { return len(items.Get()) >= 8 }, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimAdd(), Variant: ui.ButtonSecondary, Icon: lucide.Plus, Disabled: func() bool { return len(items.Get()) >= 8 }, OnPress: func() {
 				change(func() { items.Update(func(s []int) []int { return append(slices.Clone(s), next) }); next++ })
 			}}},
 			ui.Cell{Child: ui.Button{Text: tr.AnimRemove(), Variant: ui.ButtonGhost, Disabled: func() bool { return len(items.Get()) <= 1 }, OnPress: func() {

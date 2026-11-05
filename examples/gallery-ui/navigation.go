@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 
 	"github.com/oneo-me/nsgo/base"
@@ -13,7 +14,7 @@ type SidebarItem struct {
 	// ID is what Selected and OnSelect name the item by.
 	ID     string
 	Text   string
-	Icon   IconName
+	Icon   func() *core.SVG
 	TestID string
 }
 
@@ -170,7 +171,7 @@ func (h NavHeader) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	var children []core.Node
 	if h.OnBack != nil {
-		children = append(children, IconButton{Icon: IconBack, Label: h.BackLabel, Size: 32, OnPress: h.OnBack})
+		children = append(children, IconButton{Icon: lucide.ChevronLeft, Label: h.BackLabel, Size: 32, OnPress: h.OnBack})
 	}
 	children = append(children, h.Leading...)
 	children = append(children, core.Text{Content: h.Title, MaxLines: 1, Role: core.RoleHeader,
@@ -235,7 +236,7 @@ type Breadcrumbs struct {
 // Render implements core.Node.
 func (b Breadcrumbs) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	sep := func() core.Node { return Icon(IconChevron, 13, colors.Faint) }
+	sep := func() core.Node { return Icon(lucide.ChevronRight, 13, colors.Faint) }
 	choose := func(i int) {
 		if b.OnSelect != nil {
 			b.OnSelect(i)
@@ -261,7 +262,7 @@ func (b Breadcrumbs) Render(cx *core.Scope) core.Node {
 				for j := 1; j <= hidden; j++ {
 					items = append(items, MenuItem{Text: b.Items[j], OnSelect: func() { choose(j) }})
 				}
-				out = append(out, sep(), Menu{Trigger: Button{Variant: ButtonGhost, Icon: IconMore, Label: b.MoreLabel},
+				out = append(out, sep(), Menu{Trigger: Button{Variant: ButtonGhost, Icon: lucide.Ellipsis, Label: b.MoreLabel},
 					Label: b.MoreLabel, Children: items})
 			}
 			continue

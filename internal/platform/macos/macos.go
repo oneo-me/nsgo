@@ -166,6 +166,8 @@ type surface struct {
 	// embedded is set for a host's view (NewView): the host owns the
 	// window, its chrome and the menu bar.
 	embedded bool
+	// glassActive is set once the window keeps its glass active.
+	glassActive bool
 	// rtl is the app's direction (driver.ItemDirection), which AppKit's
 	// views and the menus the surface shows lay out in once directed.
 	rtl, directed bool
@@ -339,13 +341,7 @@ func loadAppKit() {
 	common := []objc.MethodDef{
 		{Cmd: sel("makeBackingLayer"), Fn: makeBackingLayer},
 		{Cmd: sel("isFlipped"), Fn: func(self objc.ID, _ objc.SEL) bool { return true }},
-		// AppKit clips views to their bounds as their frames change, and
-		// with them the shadows and outlines drawn outside; a view clips
-		// as its style says.
-		{Cmd: sel("clipsToBounds"), Fn: func(self objc.ID, _ objc.SEL) bool {
-			v := views[self]
-			return v == nil || v.style.Clip || v.kind == driver.KindScroll
-		}},
+		{Cmd: sel("clipsToBounds"), Fn: func(self objc.ID, _ objc.SEL) bool { return clipsBounds(views[self]) }},
 		{Cmd: sel("hitTest:"), Fn: hitTest},
 		{Cmd: sel("mouseDown:"), Fn: mouseDown},
 		{Cmd: sel("mouseUp:"), Fn: mouseUp},
@@ -472,6 +468,14 @@ var (
 
 // makeBackingLayer gives a view AppKit's own backing layer, made a
 // subclass that keeps the transform a style gives it.
+// clipsBounds answers AppKit, which clips views to their bounds as their
+// frames change, and with them the shadows and outlines drawn outside: a
+// view clips as its style says. AppKit asks before the view is registered
+// too, when v is nil, masking the layer of a view no style ever reaches.
+func clipsBounds(v *view) bool {
+	return v != nil && (v.style.Clip || v.kind == driver.KindScroll)
+}
+
 func makeBackingLayer(self objc.ID, cmd objc.SEL) objc.ID {
 	layer := apple.SendSuper[objc.ID](self, cmd)
 	if classLayer == 0 {

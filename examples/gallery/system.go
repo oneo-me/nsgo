@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"log"
 	"net/http"
 	"os"
@@ -133,7 +134,7 @@ func statusBarCard(cx *core.Scope) core.Node {
 			}},
 			ui.Switch{Checked: hidden.Get, OnChange: hidden.Set, Label: tr.SystemHideTheStatusBar()},
 		}},
-		ui.Button{Text: tr.SystemPreview(), Icon: ui.IconMobile, OnPress: func() { open.Set(true) }},
+		ui.Button{Text: tr.SystemPreview(), Icon: lucide.Smartphone, OnPress: func() { open.Set(true) }},
 		base.Dialog{Open: open.Get, Animation: core.ModalFade, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: tr.SystemStatusBarPreview(),
 			StatusBarFunc: func() core.StatusBarSetting {
 				h := core.ToggleOff
@@ -170,7 +171,7 @@ func statusBarCard(cx *core.Scope) core.Node {
 
 // actionRow is a pressable row with an icon tile, a title, a detail and
 // a chevron.
-func actionRow(cx *core.Scope, first bool, name ui.IconName, tint func() core.Color, title, detail string, onPress func()) core.Node {
+func actionRow(cx *core.Scope, first bool, name func() *core.SVG, tint func() core.Color, title, detail string, onPress func()) core.Node {
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	return ui.Press{OnPress: onPress, Scale: 0.98, Label: title, Children: []core.Node{
@@ -181,7 +182,7 @@ func actionRow(cx *core.Scope, first bool, name ui.IconName, tint func() core.Co
 			}, Children: []core.Node{ui.Icon(name, 17, tint)}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 1, Padding: core.Symmetric(8, 0)}, Children: []core.Node{
 				ui.Text(title, 13, ui.Regular, colors.Text), ui.Text(detail, 12, ui.Regular, colors.Muted)}},
-			ui.Icon(ui.IconChevron, 14, colors.Faint),
+			ui.Icon(lucide.ChevronRight, 14, colors.Faint),
 		}},
 	}}
 }
@@ -209,11 +210,11 @@ func dialogsCard(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.SystemAlertsAndSheets(), Description: tr.SystemAlertdialogToast(), Flush: true, Children: []core.Node{
 		ui.Inset{Padding: 12, Exact: true, Children: []core.Node{
-			actionRow(cx, true, ui.IconCheck, colors.Up, tr.SystemAlert(), tr.SystemOneButton(), func() {
+			actionRow(cx, true, lucide.Check, colors.Up, tr.SystemAlert(), tr.SystemOneButton(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemSaved(), Description: tr.SystemYourChangesWereSaved(), Actions: []core.AlertAction{{Label: tr.SystemOk()}}},
 					func(string) { show(tr.SystemOk(), ui.ToneUp) })
 			}),
-			actionRow(cx, false, ui.IconBell, colors.Danger, tr.SystemConfirm(), tr.SystemCancelAndDestructiveButtons(), func() {
+			actionRow(cx, false, lucide.Bell, colors.Danger, tr.SystemConfirm(), tr.SystemCancelAndDestructiveButtons(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemDeleteThePhoto(), Description: tr.SystemThisCannotBeUndone(),
 					Actions:       []core.AlertAction{{Label: tr.SystemCancel(), Role: core.AlertCancel}, {Label: tr.SystemDelete(), Role: core.AlertDestructive}},
 					CloseOnEscape: core.ToggleOn, CloseOnBackdropPress: core.ToggleOn},
@@ -225,7 +226,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 						show(or(l), t)
 					})
 			}),
-			actionRow(cx, false, ui.IconStar, colors.Info, tr.SystemThreeButtons(), tr.SystemReportsTheLabelOfThe(), func() {
+			actionRow(cx, false, lucide.Star, colors.Info, tr.SystemThreeButtons(), tr.SystemReportsTheLabelOfThe(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemUpdateAvailable(), Description: tr.SystemInstallItNow(),
 					Actions: []core.AlertAction{{Label: tr.SystemLater()}, {Label: tr.SystemNever(), Role: core.AlertCancel}, {Label: tr.SystemInstall()}}},
 					func(l string) {
@@ -236,7 +237,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 						show(or(l), t)
 					})
 			}),
-			actionRow(cx, false, ui.IconLists, colors.Accent, tr.SystemActionSheet(), tr.SystemTitleCancelAndDestructiveOptions(), func() {
+			actionRow(cx, false, lucide.List, colors.Accent, tr.SystemActionSheet(), tr.SystemTitleCancelAndDestructiveOptions(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemShareThePhoto(), Presentation: base.AlertPresentActionSheet,
 					Actions: []core.AlertAction{{Label: tr.SystemCancel(), Role: core.AlertCancel}, {Label: tr.SystemCopyLink()}, {Label: tr.SystemSave()}, {Label: tr.SystemDelete(), Role: core.AlertDestructive}}},
 					func(l string) {
@@ -247,7 +248,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 						show(or(l), t)
 					})
 			}),
-			actionRow(cx, false, ui.IconSpark, colors.Warn, tr.SystemToast(), tr.SystemBaseEveryPlatform(), func() {
+			actionRow(cx, false, lucide.Sparkles, colors.Warn, tr.SystemToast(), tr.SystemBaseEveryPlatform(), func() {
 				toast(toastContent{title: tr.SystemHelloFromAToast(), description: tr.SystemBaseSToastmanagerStyledBy()})
 			}),
 		}},
@@ -341,9 +342,9 @@ func framesAndTimers(cx *core.Scope) core.Node {
 		}},
 		core.Dynamic(func(*core.Scope) core.Node {
 			if running.Get() {
-				return ui.Button{Text: tr.SystemStopCountingFrames(), Icon: ui.IconPause, OnPress: toggle}
+				return ui.Button{Text: tr.SystemStopCountingFrames(), Icon: lucide.Pause, OnPress: toggle}
 			}
-			return ui.Button{Text: tr.SystemCountFrames(), Icon: ui.IconPlay, OnPress: toggle}
+			return ui.Button{Text: tr.SystemCountFrames(), Icon: lucide.Play, OnPress: toggle}
 		}),
 	}}
 }
@@ -467,7 +468,7 @@ func networkCard(cx *core.Scope) core.Node {
 				if loading.Get() {
 					l = tr.SystemLoading()
 				}
-				return ui.Button{Text: l, Icon: ui.IconArrowDown, Disabled: loading.Get, OnPress: load}
+				return ui.Button{Text: l, Icon: lucide.ArrowDown, Disabled: loading.Get, OnPress: load}
 			})},
 			ui.Cell{Child: ui.Button{Text: "log.Printf", Variant: ui.ButtonSecondary, OnPress: func() {
 				log.Printf("hello from the gallery at %s", time.Now().Format(time.RFC3339))

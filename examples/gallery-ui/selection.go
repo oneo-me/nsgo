@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -14,11 +15,13 @@ type Switch struct {
 	Checked  func() bool
 	OnChange func(bool)
 	Label    string
+	// Small is the compact switch, for a row of chips.
+	Small bool
 }
 
 // Render implements core.Node.
 func (s Switch) Render(cx *core.Scope) core.Node {
-	look := NewSwitchLook(cx, s.Checked, false)
+	look := NewSwitchLook(cx, s.Checked, s.Small)
 	// More to press on every side, without taking more room.
 	return base.Switch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label,
 		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8), Cursor: core.CursorPointer},
@@ -193,7 +196,7 @@ func (c Checkbox) Render(cx *core.Scope) core.Node {
 		return core.Style{Display: core.DisplayNone, GroupStyle: gs}
 	}
 	check := core.View{Style: shown(func(gs *core.GroupStyle, s *core.Style) { gs.Checked = s }),
-		Children: []core.Node{Icon(IconCheck, iconSize-4, colors.OnAccent)}}
+		Children: []core.Node{Icon(lucide.Check, iconSize-4, colors.OnAccent)}}
 	dash := core.View{Style: core.Style{Width: core.Pt(iconSize / 2), Height: core.Pt(2), CornerRadius: 1}.
 		Merge(shown(func(gs *core.GroupStyle, s *core.Style) { gs.Indeterminate = s })), StyleFunc: Filled(colors.OnAccent)}
 	box := core.Style{Width: core.Pt(iconSize), Height: core.Pt(iconSize), CornerRadius: radiusSmall, BorderWidth: 1,

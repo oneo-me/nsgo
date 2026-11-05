@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"strconv"
 	"time"
@@ -65,13 +66,13 @@ func barThemeToggle(cx *core.Scope) core.Node {
 
 // toggleFace is a theme toggle's icon and label: the appearance it
 // switches to.
-func toggleFace(cx *core.Scope) (name func() ui.IconName, label func() string) {
+func toggleFace(cx *core.Scope) (name func() *core.SVG, label func() string) {
 	tr := locales.For(cx)
-	name = func() ui.IconName {
+	name = func() *core.SVG {
 		if cx.Dark() {
-			return ui.IconSun
+			return lucide.Sun()
 		}
-		return ui.IconMoon
+		return lucide.Moon()
 	}
 	label = func() string {
 		if cx.Dark() {
@@ -247,7 +248,7 @@ func pageHeader(cx *core.Scope, p pageHeaderProps) core.Node {
 			StyleFunc: func() core.Style {
 				return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 			},
-			Children: []core.Node{ui.Icon(ui.IconBack, 18, tint), ui.Text(tr.UiBack(), 13, ui.Medium, tint)},
+			Children: []core.Node{ui.Icon(lucide.ChevronLeft, 18, tint), ui.Text(tr.UiBack(), 13, ui.Medium, tint)},
 		}
 	}})
 	center := p.center

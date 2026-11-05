@@ -15,6 +15,7 @@ package main
 
 import (
 	_ "embed"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"os"
 	"slices"
 
@@ -36,7 +37,7 @@ var logoPNG []byte
 type demo struct {
 	name          string
 	title, detail func(locales.Messages) string
-	icon          ui.IconName
+	icon          func() *core.SVG
 	screen        func(cx *core.Scope) core.Node
 }
 
@@ -55,69 +56,69 @@ var groups []group
 
 func init() {
 	primitives := []demo{
-		{"Text", locales.Messages.DemoText, locales.Messages.DemoTextDetail, ui.IconText, textDemo},
-		{"Image", locales.Messages.DemoImage, locales.Messages.DemoImageDetail, ui.IconImage, imagesDemo},
-		{"Scroll", locales.Messages.DemoScroll, locales.Messages.DemoScrollDetail, ui.IconScroll, scrollingDemo},
-		{"List", locales.Messages.DemoList, locales.Messages.DemoListDetail, ui.IconLists, listsDemo},
-		{"Canvas", locales.Messages.DemoCanvas, locales.Messages.DemoCanvasDetail, ui.IconCanvas, canvasDemo},
-		{"Shader", locales.Messages.DemoShader, locales.Messages.DemoShaderDetail, ui.IconShader, shaderDemo},
-		{"WebView and Video", locales.Messages.DemoWebViewAndVideo, locales.Messages.DemoWebViewAndVideoDetail, ui.IconMedia, mediaDemo},
-		{"Overlay", locales.Messages.DemoOverlay, locales.Messages.DemoOverlayDetail, ui.IconOverlays, eventsDemo(overlayCard)},
+		{"Text", locales.Messages.DemoText, locales.Messages.DemoTextDetail, lucide.Type, textDemo},
+		{"Image", locales.Messages.DemoImage, locales.Messages.DemoImageDetail, lucide.Image, imagesDemo},
+		{"Scroll", locales.Messages.DemoScroll, locales.Messages.DemoScrollDetail, lucide.ScrollText, scrollingDemo},
+		{"List", locales.Messages.DemoList, locales.Messages.DemoListDetail, lucide.List, listsDemo},
+		{"Canvas", locales.Messages.DemoCanvas, locales.Messages.DemoCanvasDetail, lucide.PenTool, canvasDemo},
+		{"Shader", locales.Messages.DemoShader, locales.Messages.DemoShaderDetail, lucide.Sparkles, shaderDemo},
+		{"WebView and Video", locales.Messages.DemoWebViewAndVideo, locales.Messages.DemoWebViewAndVideoDetail, lucide.Film, mediaDemo},
+		{"Overlay", locales.Messages.DemoOverlay, locales.Messages.DemoOverlayDetail, lucide.Layers, eventsDemo(overlayCard)},
 	}
 	components := []demo{
-		{"Checkbox", locales.Messages.DemoCheckbox, locales.Messages.DemoCheckboxDetail, ui.IconCheckbox, controlsDemo(controls.filter)},
-		{"Collapsible", locales.Messages.DemoCollapsible, locales.Messages.DemoCollapsibleDetail, ui.IconCollapsible, controlsDemo(controls.disclosure)},
-		{"DataTable", locales.Messages.DemoDataTable, locales.Messages.DemoDataTableDetail, ui.IconTable, dataTableDemo},
-		{"DiffView", locales.Messages.DemoDiffView, locales.Messages.DemoDiffViewDetail, ui.IconDiff, diffDemo},
-		{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, ui.IconDock, dockDemo},
-		{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, ui.IconCode, editorDemo},
-		{"FileIcon", locales.Messages.DemoFileIcon, locales.Messages.DemoFileIconDetail, ui.IconFile, eventsDemo(fileIconCard)},
-		{"HoldToConfirm", locales.Messages.DemoHoldToConfirm, locales.Messages.DemoHoldToConfirmDetail, ui.IconTrash, eventsDemo(holdCard)},
-		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, ui.IconForm, formDemo},
-		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, ui.IconMenu, menusDemo},
-		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, ui.IconNav, navigationDemo},
-		{"Plot", locales.Messages.DemoPlot, locales.Messages.DemoPlotDetail, ui.IconChart, chartsDemo},
-		{"Popover", locales.Messages.DemoPopover, locales.Messages.DemoPopoverDetail, ui.IconPopover, eventsDemo(popoverCard)},
-		{"Progress", locales.Messages.DemoProgress, locales.Messages.DemoProgressDetail, ui.IconProgress, controlsDemo(controls.transfers)},
-		{"Radio", locales.Messages.DemoRadio, locales.Messages.DemoRadioDetail, ui.IconRadio, controlsDemo(controls.plansCard)},
-		{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, ui.IconSidebar, resizableDemo},
-		{"Select", locales.Messages.DemoSelect, locales.Messages.DemoSelectDetail, ui.IconChevronDown, eventsDemo(selectCard)},
-		{"Sheet", locales.Messages.DemoSheet, locales.Messages.DemoSheetDetail, ui.IconSheet, eventsDemo(sheetCard)},
-		{"Slider", locales.Messages.DemoSlider, locales.Messages.DemoSliderDetail, ui.IconSliders, eventsDemo(sliderCard)},
-		{"Spinner", locales.Messages.DemoSpinner, locales.Messages.DemoSpinnerDetail, ui.IconRefresh, eventsDemo(spinnerCard)},
-		{"Stepper", locales.Messages.DemoStepper, locales.Messages.DemoStepperDetail, ui.IconCheck, stepperDemo},
-		{"Switch", locales.Messages.DemoSwitch, locales.Messages.DemoSwitchDetail, ui.IconSwitch, controlsDemo(controls.settings)},
-		{"Table", locales.Messages.DemoTable, locales.Messages.DemoTableDetail, ui.IconTable, tableDemo},
-		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, ui.IconTabs, controlsDemo(controls.sections)},
-		{"Terminal", locales.Messages.DemoTerminal, locales.Messages.DemoTerminalDetail, ui.IconTerminal, terminalDemo},
-		{"TextView", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, ui.IconFileText, textViewDemo},
-		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, ui.IconBell, eventsDemo(toastCard, styledToastsCard)},
-		{"ToggleButton", locales.Messages.DemoToggleButton, locales.Messages.DemoToggleButtonDetail, ui.IconControls, eventsDemo(toggleCard)},
-		{"Tooltip", locales.Messages.DemoTooltip, locales.Messages.DemoTooltipDetail, ui.IconTooltip, eventsDemo(tooltipCard)},
+		{"Checkbox", locales.Messages.DemoCheckbox, locales.Messages.DemoCheckboxDetail, lucide.SquareCheck, controlsDemo(controls.filter)},
+		{"Collapsible", locales.Messages.DemoCollapsible, locales.Messages.DemoCollapsibleDetail, lucide.ChevronsUpDown, controlsDemo(controls.disclosure)},
+		{"DataTable", locales.Messages.DemoDataTable, locales.Messages.DemoDataTableDetail, lucide.Table, dataTableDemo},
+		{"DiffView", locales.Messages.DemoDiffView, locales.Messages.DemoDiffViewDetail, lucide.FileDiff, diffDemo},
+		{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, lucide.AppWindow, dockDemo},
+		{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, lucide.Code, editorDemo},
+		{"FileIcon", locales.Messages.DemoFileIcon, locales.Messages.DemoFileIconDetail, lucide.File, eventsDemo(fileIconCard)},
+		{"HoldToConfirm", locales.Messages.DemoHoldToConfirm, locales.Messages.DemoHoldToConfirmDetail, lucide.Trash, eventsDemo(holdCard)},
+		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, lucide.TextCursorInput, formDemo},
+		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, lucide.Menu, menusDemo},
+		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, lucide.PanelsTopLeft, navigationDemo},
+		{"Plot", locales.Messages.DemoPlot, locales.Messages.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
+		{"Popover", locales.Messages.DemoPopover, locales.Messages.DemoPopoverDetail, lucide.MessageSquare, eventsDemo(popoverCard)},
+		{"Progress", locales.Messages.DemoProgress, locales.Messages.DemoProgressDetail, lucide.LoaderCircle, controlsDemo(controls.transfers)},
+		{"Radio", locales.Messages.DemoRadio, locales.Messages.DemoRadioDetail, lucide.CircleDot, controlsDemo(controls.plansCard)},
+		{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, lucide.PanelLeft, resizableDemo},
+		{"Select", locales.Messages.DemoSelect, locales.Messages.DemoSelectDetail, lucide.ChevronDown, eventsDemo(selectCard)},
+		{"Sheet", locales.Messages.DemoSheet, locales.Messages.DemoSheetDetail, lucide.PanelBottom, eventsDemo(sheetCard)},
+		{"Slider", locales.Messages.DemoSlider, locales.Messages.DemoSliderDetail, lucide.SlidersHorizontal, eventsDemo(sliderCard)},
+		{"Spinner", locales.Messages.DemoSpinner, locales.Messages.DemoSpinnerDetail, lucide.RefreshCw, eventsDemo(spinnerCard)},
+		{"Stepper", locales.Messages.DemoStepper, locales.Messages.DemoStepperDetail, lucide.Check, stepperDemo},
+		{"Switch", locales.Messages.DemoSwitch, locales.Messages.DemoSwitchDetail, lucide.ToggleRight, controlsDemo(controls.settings)},
+		{"Table", locales.Messages.DemoTable, locales.Messages.DemoTableDetail, lucide.Table, tableDemo},
+		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, lucide.NotebookTabs, controlsDemo(controls.sections)},
+		{"Terminal", locales.Messages.DemoTerminal, locales.Messages.DemoTerminalDetail, lucide.Terminal, terminalDemo},
+		{"TextView", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, lucide.FileText, textViewDemo},
+		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, lucide.Bell, eventsDemo(toastCard, styledToastsCard)},
+		{"ToggleButton", locales.Messages.DemoToggleButton, locales.Messages.DemoToggleButtonDetail, lucide.SlidersHorizontal, eventsDemo(toggleCard)},
+		{"Tooltip", locales.Messages.DemoTooltip, locales.Messages.DemoTooltipDetail, lucide.MessageSquareText, eventsDemo(tooltipCard)},
 	}
 	groups = []group{
 		{"Apps", locales.Messages.GroupApps, []demo{
-			{"Stocks", locales.Messages.DemoStocks, locales.Messages.DemoStocksDetail, ui.IconStocks, stocksDemo},
-			{"AI Chat", locales.Messages.DemoAIChat, locales.Messages.DemoAIChatDetail, ui.IconChat, chatDemo},
-			{"Photos", locales.Messages.DemoPhotos, locales.Messages.DemoPhotosDetail, ui.IconPhotos, photosDemo},
+			{"Stocks", locales.Messages.DemoStocks, locales.Messages.DemoStocksDetail, lucide.ChartCandlestick, stocksDemo},
+			{"AI Chat", locales.Messages.DemoAIChat, locales.Messages.DemoAIChatDetail, lucide.MessageCircle, chatDemo},
+			{"Photos", locales.Messages.DemoPhotos, locales.Messages.DemoPhotosDetail, lucide.Images, photosDemo},
 		}},
 		{"Primitives", locales.Messages.GroupPrimitives, primitives},
 		{"Components", locales.Messages.GroupComponents, components},
 		{"Styling", locales.Messages.GroupStyling, []demo{
-			{"Styles", locales.Messages.DemoStyles, locales.Messages.DemoStylesDetail, ui.IconStyles, stylesDemo},
-			{"Layout", locales.Messages.DemoLayout, locales.Messages.DemoLayoutDetail, ui.IconLayout, layoutDemo},
-			{"Patterns", locales.Messages.DemoPatterns, locales.Messages.DemoPatternsDetail, ui.IconComponents, componentsDemo},
+			{"Styles", locales.Messages.DemoStyles, locales.Messages.DemoStylesDetail, lucide.Palette, stylesDemo},
+			{"Layout", locales.Messages.DemoLayout, locales.Messages.DemoLayoutDetail, lucide.Columns2, layoutDemo},
+			{"Patterns", locales.Messages.DemoPatterns, locales.Messages.DemoPatternsDetail, lucide.Component, componentsDemo},
 		}},
 		{"Motion", locales.Messages.GroupMotion, []demo{
-			{"Animations", locales.Messages.DemoAnimations, locales.Messages.DemoAnimationsDetail, ui.IconAnimation, animationsDemo},
-			{"Gestures", locales.Messages.DemoGestures, locales.Messages.DemoGesturesDetail, ui.IconGestures, gesturesDemo},
-			{"Physics", locales.Messages.DemoPhysics, locales.Messages.DemoPhysicsDetail, ui.IconPhysics, physicsDemo},
-			{"Collapsing header", locales.Messages.DemoCollapsingHeader, locales.Messages.DemoCollapsingHeaderDetail, ui.IconHeader, collapsingDemo},
+			{"Animations", locales.Messages.DemoAnimations, locales.Messages.DemoAnimationsDetail, lucide.Zap, animationsDemo},
+			{"Gestures", locales.Messages.DemoGestures, locales.Messages.DemoGesturesDetail, lucide.Hand, gesturesDemo},
+			{"Physics", locales.Messages.DemoPhysics, locales.Messages.DemoPhysicsDetail, lucide.Atom, physicsDemo},
+			{"Collapsing header", locales.Messages.DemoCollapsingHeader, locales.Messages.DemoCollapsingHeaderDetail, lucide.PanelTop, collapsingDemo},
 		}},
 		{"Platform", locales.Messages.GroupPlatform, []demo{
-			{"System", locales.Messages.DemoSystem, locales.Messages.DemoSystemDetail, ui.IconSystem, systemDemo},
-			{"Storage", locales.Messages.DemoStorage, locales.Messages.DemoStorageDetail, ui.IconStorage, storageDemo},
-			{"Accessibility", locales.Messages.DemoAccessibility, locales.Messages.DemoAccessibilityDetail, ui.IconAccess, accessibilityDemo},
+			{"System", locales.Messages.DemoSystem, locales.Messages.DemoSystemDetail, lucide.Cpu, systemDemo},
+			{"Storage", locales.Messages.DemoStorage, locales.Messages.DemoStorageDetail, lucide.Database, storageDemo},
+			{"Accessibility", locales.Messages.DemoAccessibility, locales.Messages.DemoAccessibilityDetail, lucide.Accessibility, accessibilityDemo},
 		}},
 	}
 }
@@ -425,7 +426,7 @@ func demoRow(cx *core.Scope, d demo, first bool, open func()) core.Node {
 				ui.Text(d.title(tr), 16, ui.Medium, colors.Text),
 				core.Text{Content: d.detail(tr), MaxLines: 2, Style: core.Style{FontSize: 13, LineHeight: 18}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
-			ui.Icon(ui.IconChevron, 16, colors.Faint),
+			ui.Icon(lucide.ChevronRight, 16, colors.Faint),
 		}},
 	}}
 }

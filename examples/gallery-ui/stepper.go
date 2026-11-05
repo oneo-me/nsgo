@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strconv"
 	"time"
 
@@ -343,7 +344,7 @@ func (s Stepper) marker(cx *core.Scope, i int, status func(int) StepStatus, dela
 		Children: []core.Node{
 			core.View{Style: layer, StyleFunc: func() core.Style { return shown(glyph(StepCurrent), 0.5, delay(i)) }, Children: []core.Node{number}},
 			core.View{Style: layer, StyleFunc: func() core.Style { return shown(glyph(StepComplete), 0.5, delay(i)) },
-				Children: []core.Node{Icon(IconCheck, 14, ink)}},
+				Children: []core.Node{Icon(lucide.Check, 14, ink)}},
 			core.View{Style: layer, StyleFunc: func() core.Style { return shown(glyph(StepFailed), 0.5, delay(i)) }, Children: []core.Node{alert}},
 		}}
 	return core.View{Style: core.Style{Width: core.Pt(stepMarker), Height: core.Pt(stepMarker), FlexShrink: 0}, Children: []core.Node{ring, disc}}

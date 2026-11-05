@@ -36,7 +36,7 @@ type NumberInput struct {
 	// Leading is the scrub handle's icon, or LeadingText its text, such
 	// as "W"; without either the field has no handle. Its test ID is the
 	// field's with "-scrub".
-	Leading     IconName
+	Leading     func() *core.SVG
 	LeadingText string
 	// HideSteppers leaves the buttons out.
 	HideSteppers bool
@@ -137,7 +137,7 @@ func (n NumberInput) Render(cx *core.Scope) core.Node {
 			return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection}
 		}}
 	var children []core.Node
-	if n.Leading != "" || n.LeadingText != "" {
+	if n.Leading != nil || n.LeadingText != "" {
 		children = append(children, n.handle(cx, value, set))
 		field.Style.Padding.Left = 4
 	}
@@ -173,7 +173,7 @@ func (n NumberInput) handle(cx *core.Scope, value func() float64, set func(float
 	colors := ColorsOf(cx)
 	var from float64
 	var content core.Node
-	if n.Leading != "" {
+	if n.Leading != nil {
 		content = Icon(n.Leading, iconSize-2, colors.Muted)
 	} else {
 		content = core.Text{Content: n.LeadingText, MaxLines: 1, Style: typeLabel, StyleFunc: Colored(colors.Muted)}
@@ -204,7 +204,7 @@ func (n NumberInput) handle(cx *core.Scope, value func() float64, set func(float
 // desktops, a minus and a plus on touch screens.
 func (n NumberInput) steppers(cx *core.Scope, by func(float64), at func(float64) func() bool) core.Node {
 	colors := ColorsOf(cx)
-	button := func(icon IconName, label string, steps float64, disabled func() bool, s core.Style) core.Node {
+	button := func(icon func() *core.SVG, label string, steps float64, disabled func() bool, s core.Style) core.Node {
 		return base.Button{Label: label, Disabled: disabled, OnPress: func(core.PressEvent) { by(steps) },
 			Style: core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Cursor: core.CursorPointer,
 				Transition: quick, Borders: core.Edges{Left: 1}, Disabled: &core.Style{Cursor: core.CursorDefault}}.Merge(s),
@@ -219,14 +219,14 @@ func (n NumberInput) steppers(cx *core.Scope, by func(float64), at func(float64)
 	if !touch(cx) {
 		half := core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Width: core.Pt(22)}
 		return core.View{Children: []core.Node{
-			button(IconChevronUp, n.IncrementLabel, 1, at(n.Max), half),
-			button(IconChevronDown, n.DecrementLabel, -1, at(n.Min), half.Merge(core.Style{Borders: core.Edges{Left: 1, Top: 1}})),
+			button(lucide.ChevronUp, n.IncrementLabel, 1, at(n.Max), half),
+			button(lucide.ChevronDown, n.DecrementLabel, -1, at(n.Min), half.Merge(core.Style{Borders: core.Edges{Left: 1, Top: 1}})),
 		}}
 	}
 	square := core.Style{Width: core.Pt(ButtonHeight)}
 	return core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-		button(IconMinus, n.DecrementLabel, -1, at(n.Min), square),
-		button(IconPlus, n.IncrementLabel, 1, at(n.Max), square),
+		button(lucide.Minus, n.DecrementLabel, -1, at(n.Min), square),
+		button(lucide.Plus, n.IncrementLabel, 1, at(n.Max), square),
 	}}
 }
 

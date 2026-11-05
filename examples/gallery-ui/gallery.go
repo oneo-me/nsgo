@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
@@ -59,7 +60,7 @@ func (a Appear) Render(cx *core.Scope) core.Node {
 
 // IconTile is a rounded tile Size points square around an icon.
 type IconTile struct {
-	Icon IconName
+	Icon func() *core.SVG
 	Size core.Points
 }
 
@@ -282,7 +283,7 @@ func (r SwitchRow) Render(cx *core.Scope) core.Node {
 // LinkRow is a row that opens a page: an icon tile, a Title and the
 // API's name as its Note, a chevron. Divided draws a hairline above it.
 type LinkRow struct {
-	Icon        IconName
+	Icon        func() *core.SVG
 	Title, Note string
 	Divided     bool
 	OnPress     func()
@@ -301,7 +302,7 @@ func (r LinkRow) Render(cx *core.Scope) core.Node {
 					Text(r.Title, 13, Medium, colors.Text),
 					core.Text{Content: r.Note, MaxLines: 1, Style: core.Style{FontSize: 12, FontFamily: Mono}, StyleFunc: Colored(colors.Faint)},
 				}},
-				Icon(IconChevron, 14, colors.Faint),
+				Icon(lucide.ChevronRight, 14, colors.Faint),
 			}},
 	}}
 	if !r.Divided {

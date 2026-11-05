@@ -6,6 +6,7 @@ import (
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/i18n"
+	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
 // languageKey keeps the language chosen in the gallery's settings;
@@ -74,7 +75,7 @@ func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 		},
 		Trigger: core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, FlexGrow: 1}, Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)}, Children: []core.Node{name}},
-			ui.Icon(ui.IconCaretDown, 14, colors.Faint),
+			ui.Icon(lucide.ChevronDown, 14, colors.Faint),
 		}},
 		Children: items}
 }

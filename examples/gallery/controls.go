@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 	"time"
 
@@ -126,7 +127,7 @@ func (z controlSizes) boxMark(cx *core.Scope, m func() mark) core.Node {
 	return core.Dynamic(func(*core.Scope) core.Node {
 		switch m() {
 		case markCheck:
-			return ui.Icon(ui.IconCheck, z.check, colors.OnAccent)
+			return ui.Icon(lucide.Check, z.check, colors.OnAccent)
 		case markDash:
 			return core.View{Style: core.Style{Width: core.Pt(z.dash), Height: core.Pt(2), CornerRadius: 1}, StyleFunc: ui.Filled(colors.OnAccent)}
 		}
@@ -482,7 +483,7 @@ func (c controls) disclosure(cx *core.Scope) core.Node {
 						s.Transform.Rotate = 90
 					}
 					return s
-				}, Children: []core.Node{ui.Icon(ui.IconChevron, z.check, colors.Muted)}},
+				}, Children: []core.Node{ui.Icon(lucide.ChevronRight, z.check, colors.Muted)}},
 			}}
 	}
 	var used []core.Node

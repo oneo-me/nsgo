@@ -178,3 +178,21 @@ func tooltipBubble(cx *core.Scope, content string) core.Node {
 
 // inherited is no color, for an icon in the color of the text it is in.
 func inherited() core.Color { return 0 }
+
+// Icon draws a Lucide glyph size points square in the tint, which it
+// follows; nothing for nil.
+func Icon(svg func() *core.SVG, size core.Points, tint func() core.Color) core.Node {
+	i := core.Icon{Style: core.Style{Width: core.Pt(size), Height: core.Pt(size)},
+		StyleFunc: func() core.Style { return core.Style{Color: tint()} }}
+	if svg != nil {
+		i.SVG = svg()
+	}
+	return i
+}
+
+// IconOf draws the glyph svg returns, which it follows.
+func IconOf(svg func() *core.SVG, size core.Points, tint func() core.Color) core.Node {
+	i := Icon(nil, size, tint).(core.Icon)
+	i.SVGFunc = svg
+	return i
+}

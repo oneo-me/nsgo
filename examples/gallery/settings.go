@@ -5,12 +5,13 @@ import (
 	"github.com/oneo-me/nsgo/core"
 	ui "github.com/oneo-me/nsgo/examples/gallery-ui"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
 // settingsButton opens the gallery's settings, at the start of the
 // sidebar's footer and in the index's header.
 func (g *gallery) settingsButton(cx *core.Scope) core.Node {
-	return ui.IconButton{Icon: ui.IconSettings, Label: locales.Settings(cx), Size: 30, TestID: "settings",
+	return ui.IconButton{Icon: lucide.Settings, Label: locales.Settings(cx), Size: 30, TestID: "settings",
 		OnPress: func() { g.settingsOpen.Set(true) }}
 }
 
@@ -19,7 +20,7 @@ func (g *gallery) settingsButton(cx *core.Scope) core.Node {
 func (g *gallery) barSettingsButton(cx *core.Scope) core.Node {
 	return ui.Press{OnPress: func() { g.settingsOpen.Set(true) }, Scale: 0.92, Label: locales.Settings(cx), Children: []core.Node{
 		core.View{Style: core.Style{Width: core.Pt(34), Height: core.Pt(34), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-			Children: []core.Node{ui.Icon(ui.IconSettings, 18, ui.ColorsOf(cx).Text)}},
+			Children: []core.Node{ui.Icon(lucide.Settings, 18, ui.ColorsOf(cx).Text)}},
 	}}
 }
 
@@ -29,7 +30,7 @@ func (g *gallery) settingsDialog(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	width := func() core.Points { return min(800, env.Window().Width*0.92) }
-	categories := []ui.SettingsCategory{{ID: "general", Title: locales.SettingsGeneral(cx), Icon: ui.IconSettings,
+	categories := []ui.SettingsCategory{{ID: "general", Title: locales.SettingsGeneral(cx), Icon: lucide.Settings,
 		Groups: []ui.SettingsGroup{{ID: "language", Items: []ui.SettingsItem{{
 			ID: "language", Title: locales.Language(cx), Description: locales.SettingsLanguageDetail(cx),
 			Keywords: append([]string{"language", languageName(cx, "")}, languageNames()...),

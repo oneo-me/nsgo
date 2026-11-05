@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"slices"
 
@@ -390,7 +391,7 @@ func feed(cx *core.Scope) core.Node {
 				}}
 			}},
 		ui.Caption{Label: tr.ScrollScrollDownALittleThen(), Note: func() string { return tr.ScrollPosts(len(posts.Get())) }},
-		ui.Button{Text: tr.ScrollAdd3PostsOnTop(), Icon: ui.IconPlus, OnPress: addOnTop},
+		ui.Button{Text: tr.ScrollAdd3PostsOnTop(), Icon: lucide.Plus, OnPress: addOnTop},
 	}}
 }
 

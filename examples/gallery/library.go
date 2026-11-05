@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/core"
 
@@ -16,21 +17,21 @@ import (
 func toggleCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		toggle := func(name string, icon ui.IconName, on bool) core.Node {
+		toggle := func(name string, icon func() *core.SVG, on bool) core.Node {
 			s := core.NewSignal(cx, on)
 			b := ui.ToggleButton{Text: name, TestID: "toggle-" + name, On: s.Get, OnChange: func(v bool) {
 				s.Set(v)
 				last.Set(fmt.Sprintf("%s: %s", name, onOff(tr, v)))
 			}}
-			if icon != "" {
+			if icon != nil {
 				b.Text, b.Icon, b.Label = "", icon, name
 			}
 			return b
 		}
 		return ui.Card{Title: tr.LibFormatting(), Description: tr.LibFormattingNote(), Children: []core.Node{
 			ui.Wrap{Children: []core.Node{
-				toggle(tr.LibBold(), "", true), toggle(tr.LibItalic(), "", false), toggle(tr.LibUnderline(), "", false),
-				toggle(tr.LibStarred(), ui.IconStar, false),
+				toggle(tr.LibBold(), nil, true), toggle(tr.LibItalic(), nil, false), toggle(tr.LibUnderline(), nil, false),
+				toggle(tr.LibStarred(), lucide.Star, false),
 				ui.ToggleButton{Text: tr.LibLocked(), On: func() bool { return true }, Disabled: func() bool { return true }},
 			}},
 		}}
@@ -42,16 +43,16 @@ func holdCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		var resets []func()
-		hold := func(text, done string, icon ui.IconName, tone ui.HoldTone, id string) core.Node {
+		hold := func(text, done string, icon func() *core.SVG, tone ui.HoldTone, id string) core.Node {
 			s := core.NewSignal(cx, false)
 			resets = append(resets, func() { s.Set(false) })
 			return ui.HoldToConfirm{Text: text, ConfirmedText: done, Icon: icon, Tone: tone, Hint: tr.LibHold(), TestID: id,
 				Confirmed: s.Get, OnConfirm: func() { s.Set(true); last.Set(done) }}
 		}
 		holds := []core.Node{
-			hold(tr.LibHoldToDelete(), tr.LibDeleted(), "", ui.HoldDanger, "hold-delete"),
-			hold(tr.LibHoldToArchive(), tr.LibArchived(), ui.IconFile, ui.HoldAccent, "hold-archive"),
-			hold(tr.LibHoldToSend(), tr.LibSent(), ui.IconSend, ui.HoldNeutral, "hold-send"),
+			hold(tr.LibHoldToDelete(), tr.LibDeleted(), nil, ui.HoldDanger, "hold-delete"),
+			hold(tr.LibHoldToArchive(), tr.LibArchived(), lucide.File, ui.HoldAccent, "hold-archive"),
+			hold(tr.LibHoldToSend(), tr.LibSent(), lucide.Send, ui.HoldNeutral, "hold-send"),
 		}
 		return ui.Card{Title: tr.LibHold(), Description: tr.LibHoldNote(), Children: []core.Node{
 			ui.Wrap{Children: holds},
@@ -264,8 +265,8 @@ func spinnerCard(last *core.Signal[string]) cardFunc {
 			ui.HStack{Gap: 16, Children: []core.Node{
 				ring(0), ring(25), ring(100),
 				ui.ProgressRing{Label: tr.LibProgress(), Value: done.Get, Size: 44, TestID: "ring"},
-				ui.Button{Icon: ui.IconMinus, Label: tr.LibLess(), Variant: ui.ButtonGhost, OnPress: move(-10)},
-				ui.Button{Icon: ui.IconPlus, Label: tr.LibMore(), Variant: ui.ButtonGhost, OnPress: move(10)},
+				ui.Button{Icon: lucide.Minus, Label: tr.LibLess(), Variant: ui.ButtonGhost, OnPress: move(-10)},
+				ui.Button{Icon: lucide.Plus, Label: tr.LibMore(), Variant: ui.ButtonGhost, OnPress: move(10)},
 			}},
 			ui.HStack{Gap: 16, Children: []core.Node{
 				ui.Spinner{Label: tr.LibLoading()}, ui.Spinner{Label: tr.LibLoading(), Size: 20},

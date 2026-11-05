@@ -39,3 +39,17 @@ func TestMaterialCode(t *testing.T) {
 		}
 	}
 }
+
+func TestViewsClipAsTheirStyleSays(t *testing.T) {
+	if clipsBounds(nil) {
+		t.Fatal("a view not yet registered clips, masking its layer for good")
+	}
+	plain := &view{}
+	if clipsBounds(plain) {
+		t.Fatal("a view whose style does not clip clips")
+	}
+	plain.style.Clip = true
+	if !clipsBounds(plain) {
+		t.Fatal("a view whose style clips does not")
+	}
+}

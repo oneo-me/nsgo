@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"strconv"
 
@@ -190,7 +191,7 @@ func staggeredEntrance(cx *core.Scope) core.Node {
 			chipTab(cx, tr.AnimCenter(), func() bool { return from.Get() == 1 }, func() { replay(1) }),
 			chipTab(cx, tr.AnimLast(), func() bool { return from.Get() == 2 }, func() { replay(2) }),
 		}},
-		ui.Button{Text: tr.AnimReplay(), Variant: ui.ButtonSecondary, Icon: ui.IconPlay, OnPress: func() { replay(from.GetUntracked()) }},
+		ui.Button{Text: tr.AnimReplay(), Variant: ui.ButtonSecondary, Icon: lucide.Play, OnPress: func() { replay(from.GetUntracked()) }},
 	}}
 }
 
@@ -321,7 +322,7 @@ func keyframesMotions(cx *core.Scope) core.Node {
 						return core.Style{Width: core.Pt(moon), Height: core.Pt(moon), CornerRadius: moon / 2, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 							Background: bg, BorderWidth: 1, BorderColor: border}
 					}, Children: []core.Node{
-						core.View{Style: core.Style{Animated: heart.Style()}, Children: []core.Node{ui.Icon(ui.IconStar, 24, func() core.Color {
+						core.View{Style: core.Style{Animated: heart.Style()}, Children: []core.Node{ui.Icon(lucide.Star, 24, func() core.Color {
 							if liked.Get() {
 								return colors.Warn()
 							}

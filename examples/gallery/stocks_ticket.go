@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 
 	"github.com/oneo-me/nsgo/core"
@@ -64,7 +65,7 @@ func newBanner(cx *core.Scope) banner {
 				c = colors.Down
 			}
 			return core.Style{Width: core.Pt(34), Height: core.Pt(34), CornerRadius: 17, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Background: c()}
-		}, Children: []core.Node{ui.Icon(ui.IconCheck, 18, check)}},
+		}, Children: []core.Node{ui.Icon(lucide.Check, 18, check)}},
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 			ui.Textf(func() string { return message.Get().title }, 13, ui.Semibold, colors.OnLight),
 			core.Text{ContentFunc: func() string { return message.Get().detail }, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(detailColor)},
@@ -129,7 +130,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 		}
 		return tr.StocksSell()
 	}
-	stepper := func(name ui.IconName, lbl string, by float64) core.Node {
+	stepper := func(name func() *core.SVG, lbl string, by float64) core.Node {
 		return ui.Press{OnPress: func() { nudge(by) }, Label: lbl, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
 				return fin.Pill().Over(core.Style{Width: core.Pt(44), Height: core.Pt(44), CornerRadius: ui.RadiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, BorderWidth: 1})
@@ -174,12 +175,12 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 					OnPress: func(core.PressEvent) { limit.Set(s.quote.GetUntracked().last) }, Style: core.Style{FontSize: 13, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Accent)},
 			}},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
-				stepper(ui.IconMinus, tr.StocksLowerThePrice(), -1),
+				stepper(lucide.Minus, tr.StocksLowerThePrice(), -1),
 				core.View{StyleFunc: func() core.Style {
 					return core.Style{FlexGrow: 1, Height: core.Pt(44), CornerRadius: ui.RadiusControl, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 						Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border()}
 				}, Children: []core.Node{ui.Textf(func() string { return p(limit.Get()) }, 20, ui.Semibold, colors.Text)}},
-				stepper(ui.IconPlus, tr.StocksRaiseThePrice(), 1),
+				stepper(lucide.Plus, tr.StocksRaiseThePrice(), 1),
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{

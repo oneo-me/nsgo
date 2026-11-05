@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 	"strings"
 	"time"
@@ -20,11 +21,11 @@ var toneNames = map[ui.Tone]string{ui.ToneNeutral: "neutral", ui.ToneAccent: "ac
 
 // action is a small pill action for list headers (36 pt, 44 pt with its
 // hit slop).
-func action(cx *core.Scope, label string, name ui.IconName, onPress func()) core.Node {
+func action(cx *core.Scope, label string, name func() *core.SVG, onPress func()) core.Node {
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	children := []core.Node{}
-	if name != "" {
+	if name != nil {
 		children = append(children, ui.Icon(name, 14, colors.Text))
 	}
 	children = append(children, ui.Text(label, 13, ui.Semibold, colors.Text))
@@ -101,8 +102,8 @@ func listGrid(cx *core.Scope) core.Node {
 					return float64(last.Get()+1) / float64(len(items))
 				}, Tone: ui.ToneAccent},
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-					action(cx, tr.ListsJumpTo60(), ui.IconArrowDown, func() { ref.ScrollToIndexAt(60, 0.5, 0, true) }),
-					action(cx, tr.ListsEnd(), "", func() { ref.ScrollToEnd(true) }),
+					action(cx, tr.ListsJumpTo60(), lucide.ArrowDown, func() { ref.ScrollToIndexAt(60, 0.5, 0, true) }),
+					action(cx, tr.ListsEnd(), nil, func() { ref.ScrollToEnd(true) }),
 				}},
 			}},
 			Footer: core.Text{Content: tr.ListsEndOfTheList(), Style: core.Style{TextAlign: core.TextAlignCenter, FontSize: 13, Padding: core.All(16)}, StyleFunc: ui.Colored(colors.Faint)},
@@ -344,7 +345,7 @@ func listChat(cx *core.Scope) core.Node {
 					return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44), FontSize: 13,
 						Color: colors.Text(), Background: colors.Field(), BorderWidth: 1, BorderColor: colors.FieldBorder(), CornerRadius: 22, Padding: core.Symmetric(0, 16)})
 				}},
-			ui.RoundButton{Icon: ui.IconArrowUp, Label: tr.ListsSend(), OnPress: send},
+			ui.RoundButton{Icon: lucide.ArrowUp, Label: tr.ListsSend(), OnPress: send},
 		}},
 	}}
 }
@@ -417,9 +418,9 @@ func listMore(cx *core.Scope) core.Node {
 					return core.View{StyleFunc: func() core.Style {
 						return fin.Raised().Over(core.Style{Width: core.Pt(40), Height: core.Pt(40), CornerRadius: 12, BorderWidth: 1, BorderColor: colors.Border(),
 							Background: colors.Raised(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter})
-					}, Children: []core.Node{ui.Icon(ui.IconArrowDown, 20, colors.Accent)}}
+					}, Children: []core.Node{ui.Icon(lucide.ArrowDown, 20, colors.Accent)}}
 				}
-				return ui.IconTile{Icon: ui.IconArrowDown, Size: 40}
+				return ui.IconTile{Icon: lucide.ArrowDown, Size: 40}
 			}),
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 				ui.Textf(func() string {
@@ -496,7 +497,7 @@ func listMore(cx *core.Scope) core.Node {
 				}}}},
 				ui.Section{Title: tr.ListsAnEmptyList(), NoteFunc: func() string { return tr.A11yItems(len(items.Get())) }, Children: []core.Node{
 					core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-						ui.Cell{Child: ui.Button{Text: tr.ListsAdd(), Icon: ui.IconPlus, OnPress: func() {
+						ui.Cell{Child: ui.Button{Text: tr.ListsAdd(), Icon: lucide.Plus, OnPress: func() {
 							edit(func() {
 								items.Update(func(s []listEntry) []listEntry {
 									return append(slices.Clone(s), listEntry{len(s) + 1, listTones[len(s)%(len(listTones)-1)]})
@@ -510,7 +511,7 @@ func listMore(cx *core.Scope) core.Node {
 							return core.Style{CornerRadius: ui.RadiusControl, Background: colors.Surface(), Shadows: fin.Card().Shadows, BorderWidth: 1, BorderColor: colors.Line()}
 						},
 						Empty: core.View{Style: core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 10, Height: core.Pt(194)}, Children: []core.Node{
-							ui.IconTile{Icon: ui.IconLists, Size: 40},
+							ui.IconTile{Icon: lucide.List, Size: 40},
 							ui.Text(ui.Hint(cx, tr.ListsNothingHereYetTapAdd(), tr.ListsNothingHereYetClickAdd()), 13, ui.Regular, colors.Muted),
 						}},
 						Separator: func(*core.Scope) core.Node {
@@ -588,7 +589,7 @@ func customIndicator(cx *core.Scope, pull *core.AnimatedValue, refreshing func()
 			core.View{StyleFunc: func() core.Style {
 				return shown(!refreshing()).Merge(core.Style{Position: core.Absolute,
 					Animated: &core.AnimatedStyle{Rotate: lerp(pull, [2]float64{pullIndicator * 0.5, pullIndicator}, [2]float64{0, 180})}})
-			}, Children: []core.Node{ui.Icon(ui.IconArrowDown, 18, colors.Accent)}},
+			}, Children: []core.Node{ui.Icon(lucide.ArrowDown, 18, colors.Accent)}},
 			core.View{StyleFunc: func() core.Style {
 				return shown(refreshing()).Merge(core.Style{Position: core.Absolute, Width: core.Pt(20), Height: core.Pt(20), CornerRadius: 10,
 					BorderWidth: 2, BorderColor: ui.Alpha(colors.Accent(), 0.25), BorderColors: core.EdgeColors{Top: colors.Accent()},
@@ -680,8 +681,8 @@ func listPage(cx *core.Scope) core.Node {
 				ui.Text(tr.ListsTheListsBelowLieIn(),
 					13, ui.Regular, colors.Muted),
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-					action(cx, tr.ListsRecent150(), ui.IconArrowDown, func() { ref.ScrollToIndexAt(indexOf(149), 0.5, 0, true) }),
-					action(cx, tr.ListsEndOfRecent(), "", func() { ref.ScrollToEnd(true) }),
+					action(cx, tr.ListsRecent150(), lucide.ArrowDown, func() { ref.ScrollToIndexAt(indexOf(149), 0.5, 0, true) }),
+					action(cx, tr.ListsEndOfRecent(), nil, func() { ref.ScrollToEnd(true) }),
 				}},
 			}},
 			heading(tr.ListsRecent(), label(tr.Lists200Rows())),

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"testing"
 
 	"github.com/oneo-me/nsgo/base"
@@ -14,8 +15,8 @@ func TestSidebar(t *testing.T) {
 			selected := core.NewSignal(cx, "inbox")
 			return core.View{Style: core.Style{Height: core.Pt(400)}, Children: []core.Node{
 				Sidebar{TestID: "sidebar", Selected: selected.Get, OnSelect: selected.Set, Sections: []SidebarSection{
-					{Items: []SidebarItem{{ID: "inbox", Text: "Inbox", Icon: IconBell, TestID: "inbox"}}},
-					{Title: "Projects", Items: []SidebarItem{{ID: "web", Text: "Website", Icon: IconGlobe, TestID: "web"}}},
+					{Items: []SidebarItem{{ID: "inbox", Text: "Inbox", Icon: lucide.Bell, TestID: "inbox"}}},
+					{Title: "Projects", Items: []SidebarItem{{ID: "web", Text: "Website", Icon: lucide.Globe, TestID: "web"}}},
 				}}}}
 		})
 		if got := app.Find("inbox").Style.Background; got != Alpha(p.Text, 0.1) {

@@ -123,6 +123,21 @@ func backdropMaterial(m driver.BackdropMaterial) int {
 	return 15 // fullScreenUI
 }
 
+// keepGlassActive keeps Liquid Glass as it is in a window in the back or
+// an app not in front, as a blur does at effectStateActive: AppKit redraws
+// it flat from the window's active appearance, and NSGlassEffectView has
+// no state of its own to set. The appearance is the window's, so its title
+// bar stays active too, for as long as it lives. A host's window is the
+// host's to say.
+func (s *surface) keepGlassActive() {
+	force := sel("_setForceMainAppearance:")
+	if s.glassActive || s.embedded || s.window == 0 || !objc.Send[bool](s.window, sel("respondsToSelector:"), force) {
+		return
+	}
+	s.window.Send(force, true)
+	s.glassActive = true
+}
+
 // setBackdrop gives v the backdrop its style asks for, or takes it away.
 func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	glass := vs.Glass != driver.GlassNone && objc.GetClass("NSGlassEffectView") != 0
@@ -149,6 +164,7 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	}
 	radius := float64(max(vs.CornerRadius, vs.Corners.TopLeft))
 	if glass {
+		v.surface.keepGlassActive()
 		v.backdrop.Send(sel("setStyle:"), int(vs.Glass)-1)
 		v.backdrop.Send(sel("setCornerRadius:"), radius)
 		return

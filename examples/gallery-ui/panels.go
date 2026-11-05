@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
@@ -132,7 +133,7 @@ func (d DockArea) Render(cx *core.Scope) core.Node {
 type DockTabLabel struct {
 	Tab        base.DockTab
 	Text       string
-	Icon       IconName
+	Icon       func() *core.SVG
 	CloseLabel string
 }
 
@@ -140,7 +141,7 @@ type DockTabLabel struct {
 func (l DockTabLabel) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	var out []core.Node
-	if l.Icon != "" {
+	if l.Icon != nil {
 		out = append(out, Icon(l.Icon, iconSize, inherited))
 	}
 	out = append(out, line(l.Text, core.Style{}, 1))
@@ -152,7 +153,7 @@ func (l DockTabLabel) Render(cx *core.Scope) core.Node {
 				StyleFunc: func() core.Style {
 					return core.Style{Color: colors.Muted(), Hover: &core.Style{Background: colors.Pressed(), Color: colors.Text()}}
 				},
-				Children: []core.Node{Icon(IconClose, iconSize-4, inherited)}}
+				Children: []core.Node{Icon(lucide.X, iconSize-4, inherited)}}
 		}})
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: out}

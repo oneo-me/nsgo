@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 	"strings"
 
@@ -100,7 +101,7 @@ func (l menuLook) item(cx *core.Scope, p itemProps) core.Node {
 			core.Dynamic(func(*core.Scope) core.Node {
 				switch p.mark() {
 				case markCheck:
-					return ui.Icon(ui.IconCheck, 14, colors.Accent)
+					return ui.Icon(lucide.Check, 14, colors.Accent)
 				case markDot:
 					return core.View{Style: core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 4}, StyleFunc: ui.Filled(colors.Accent)}
 				}
@@ -128,9 +129,9 @@ func (l menuLook) submenu(cx *core.Scope, name string, disabled bool, children .
 	return base.Submenu{Disabled: func() bool { return disabled }, Label: name,
 		Trigger: core.View{Style: row, StyleFunc: func() core.Style { return core.Style{Hover: itemHovered(cx), Active: itemPressed(cx)} }, Children: []core.Node{
 			core.Text{Content: name, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
-			ui.Icon(ui.IconChevron, 14, colors.Faint),
+			ui.Icon(lucide.ChevronRight, 14, colors.Faint),
 		}},
-		Back:     core.View{Style: back, StyleFunc: func() core.Style { return core.Style{Active: itemPressed(cx)} }, Children: []core.Node{ui.Icon(ui.IconBack, 14, colors.Accent), ui.Text(name, 13, ui.Semibold, colors.Accent)}},
+		Back:     core.View{Style: back, StyleFunc: func() core.Style { return core.Style{Active: itemPressed(cx)} }, Children: []core.Node{ui.Icon(lucide.ChevronLeft, 14, colors.Accent), ui.Text(name, 13, ui.Semibold, colors.Accent)}},
 		Children: children}
 }
 
@@ -147,11 +148,11 @@ func separator(cx *core.Scope) core.Node {
 }
 
 // chip is a pressable that opens a menu.
-func chip(cx *core.Scope, label func() string, name ui.IconName) core.Node {
+func chip(cx *core.Scope, label func() string, name func() *core.SVG) core.Node {
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	children := []core.Node{}
-	if name != "" {
+	if name != nil {
 		children = append(children, ui.Icon(name, 14, colors.Muted))
 	}
 	children = append(children, ui.Textf(label, 13, ui.Medium, colors.Text))
@@ -263,7 +264,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		}
 		return ui.Card{Title: tr.MenusMenuBar(), Description: ui.Hint(cx, tr.MenusEachMenuASheetSubmenus(), tr.MenusHoverAcrossSubmenusTheShortcuts()), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-				menu(tr.MenusFile(), chip(cx, label(tr.MenusFile()), ""),
+				menu(tr.MenusFile(), chip(cx, label(tr.MenusFile()), nil),
 					l.item(cx, itemProps{label: label(tr.MenusNewDocument()), note: key("mod+alt+n"), onSelect: func() { act(tr.MenusNewDocument()) }}),
 					l.item(cx, itemProps{label: label(tr.MenusNewWindow()), onSelect: func() { act(tr.MenusNewWindow()) }}),
 					l.submenu(cx, tr.MenusOpenRecent(), false,
@@ -288,7 +289,7 @@ func menusDemo(cx *core.Scope) core.Node {
 					separator(cx),
 					l.item(cx, itemProps{label: label(tr.MenusDeleteDocument()), danger: true, onSelect: func() { act(tr.MenusDeleteDocument()) }}),
 				),
-				menu(tr.MenusEdit(), chip(cx, label(tr.MenusEdit()), ""),
+				menu(tr.MenusEdit(), chip(cx, label(tr.MenusEdit()), nil),
 					l.item(cx, itemProps{label: lastOf(history, tr.MenusUndo()), note: key("mod+alt+z"), disabled: empty(history), onSelect: undo}),
 					l.item(cx, itemProps{label: lastOf(undone, tr.MenusRedo()), note: key("mod+alt+shift+z"), disabled: empty(undone), onSelect: redo}),
 					separator(cx),
@@ -297,7 +298,7 @@ func menusDemo(cx *core.Scope) core.Node {
 					l.item(cx, itemProps{label: label(tr.MenusCopy()), onSelect: func() { act(tr.MenusCopy()) }}),
 					l.item(cx, itemProps{label: label(tr.MenusPaste()), onSelect: func() { act(tr.MenusPaste()) }}),
 				),
-				menu(tr.MenusView(), chip(cx, label(tr.MenusView()), ""), append([]core.Node{
+				menu(tr.MenusView(), chip(cx, label(tr.MenusView()), nil), append([]core.Node{
 					groupTitle(cx, tr.MenusShow()),
 					l.item(cx, itemProps{label: label(tr.MenusSidebar()), mark: check(sidebar), keepOpen: true, onSelect: func() { toggled(sidebar) }}),
 					l.item(cx, itemProps{label: label(tr.MenusStatusBar()), mark: check(statusBar), keepOpen: true, onSelect: func() { toggled(statusBar) }}),
@@ -396,9 +397,9 @@ func menusDemo(cx *core.Scope) core.Node {
 								}, Children: []core.Node{
 									core.Dynamic(func(*core.Scope) core.Node {
 										if starred() {
-											return ui.Icon(ui.IconStar, 16, colors.Accent)
+											return ui.Icon(lucide.Star, 16, colors.Accent)
 										}
-										return ui.Icon(ui.IconText, 16, colors.Muted)
+										return ui.Icon(lucide.Type, 16, colors.Muted)
 									}),
 									core.Text{ContentFunc: func() string { return file().name }, MaxLines: 1, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 									base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: l.surface(cx), BackdropStyle: l.backdrop(),
@@ -424,7 +425,7 @@ func menusDemo(cx *core.Scope) core.Node {
 			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: tr.MenusStart()}, {Value: core.AlignCenter, Label: tr.MenusCenter()}, {Value: core.AlignEnd, Label: tr.MenusEnd()}}, Value: align.Get, OnChange: align.Set, Small: true},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(24, 0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				p, a := side.Get(), align.Get()
-				m := menu(tr.MenusPlaced(), chip(cx, label(placementName(p)+" · "+alignName[a]), ""),
+				m := menu(tr.MenusPlaced(), chip(cx, label(placementName(p)+" · "+alignName[a]), nil),
 					l.item(cx, itemProps{label: label(tr.MenusOne()), onSelect: func() { log(tr.MenusChoseOne()) }}),
 					l.item(cx, itemProps{label: label(tr.MenusTwo()), onSelect: func() { log(tr.MenusChoseTwo()) }}),
 					l.item(cx, itemProps{label: label(tr.MenusThree()), onSelect: func() { log(tr.MenusChoseThree()) }}),
@@ -451,7 +452,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		if l.desktop {
 			maxHeight = 280
 		}
-		m := menu(tr.MenusTimeZone(), chip(cx, zone.Get, ui.IconSearch),
+		m := menu(tr.MenusTimeZone(), chip(cx, zone.Get, lucide.Search),
 			core.Scroll{Style: core.Style{MaxHeight: core.Pt(maxHeight)}, Children: []core.Node{core.View{Style: core.Style{Padding: core.All(6)}, Children: items}}})
 		m.PopupStyle.Padding = core.Edges{}
 		if !l.desktop {
@@ -468,7 +469,7 @@ func menusDemo(cx *core.Scope) core.Node {
 		if l.desktop {
 			right = ui.Badge{Text: cx.KeyLabel("mod+shift+p")}
 		}
-		m := menu(tr.MenusCommands(), chip(cx, label(tr.MenusCommands()), ui.IconPlus),
+		m := menu(tr.MenusCommands(), chip(cx, label(tr.MenusCommands()), lucide.Plus),
 			groupTitle(cx, tr.MenusCommands()),
 			l.item(cx, itemProps{label: label(tr.MenusNewNote()), onSelect: func() { log(tr.MenusRanNewNote()) }}),
 			l.item(cx, itemProps{label: label(tr.MenusToggleTheme()), onSelect: func() { log(tr.MenusRanToggleTheme()) }}),

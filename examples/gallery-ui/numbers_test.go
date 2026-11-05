@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"testing"
 
 	"github.com/oneo-me/nsgo/core"
@@ -15,7 +16,7 @@ func TestNumberInput(t *testing.T) {
 		app, _ := start(t, e, func(cx *core.Scope) core.Node {
 			value = core.NewSignal(cx, 1.5)
 			return NumberInput{TestID: "number", Label: "Opacity", Value: value.Get, OnChange: value.Set, Min: 0, Max: 2, Step: 0.5,
-				Leading: IconSliders, IncrementLabel: "Increase", DecrementLabel: "Decrease"}
+				Leading: lucide.SlidersHorizontal, IncrementLabel: "Increase", DecrementLabel: "Decrease"}
 		})
 		if got := app.Find("label:Opacity").Text; got != "1.5" {
 			t.Fatalf("the field shows %q, want 1.5", got)

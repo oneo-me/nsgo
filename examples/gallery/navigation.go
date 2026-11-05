@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strings"
 
 	"github.com/oneo-me/nsgo/base"
@@ -110,7 +111,7 @@ func customHeaderPage(cx *core.Scope) base.NavPage {
 	right := func() core.Node {
 		return core.View{OnPress: func(core.PressEvent) { likes.Update(func(n int) int { return n + 1 }) }, Role: core.RoleButton, Label: tr.NavStar(), HitSlop: core.All(10),
 			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 5}, Children: []core.Node{
-				ui.Icon(ui.IconStar, 18, colors.OnAccent),
+				ui.Icon(lucide.Star, 18, colors.OnAccent),
 				ui.Textf(func() string { return itoa(likes.Get()) }, 15, ui.Semibold, colors.OnAccent),
 			}}
 	}
@@ -232,7 +233,7 @@ func deepPage(depth int) func(cx *core.Scope) base.NavPage {
 			ui.Card{Title: title, Description: tr.NavDeep(depth), Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, Children: levels},
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-					ui.Button{Text: tr.NavDeeper(), Icon: ui.IconPlus, Flex: 1, OnPress: func() { shell.push(deepPage(depth + 1)) }},
+					ui.Button{Text: tr.NavDeeper(), Icon: lucide.Plus, Flex: 1, OnPress: func() { shell.push(deepPage(depth + 1)) }},
 					ui.Button{Text: tr.NavToTheIndex(), Variant: ui.ButtonSecondary, Flex: 1, OnPress: func() { shell.nav.PopToRoot() }},
 				}},
 			}}))
@@ -241,7 +242,7 @@ func deepPage(depth int) func(cx *core.Scope) base.NavPage {
 
 type modalKind struct {
 	key, title, note string
-	icon             ui.IconName
+	icon             func() *core.SVG
 }
 
 // modalBody is a modal's content: what it is, its safe area and a close
@@ -273,12 +274,12 @@ func navigationDemo(cx *core.Scope) core.Node {
 	backs, cancels := core.NewSignal(cx, 0), core.NewSignal(cx, 0)
 	closeModal := func() { open.Set("") }
 	modals := []modalKind{
-		{"fullScreen", tr.NavFullScreen(), tr.NavSlidesUp(), ui.IconMobile},
-		{"pageSheet", tr.NavPageSheet(), ui.Hint(cx, tr.NavIosSheet(), tr.NavATallCenteredCard()), ui.IconComponents},
-		{"formSheet", tr.NavFormSheet(), ui.Hint(cx, tr.NavIosCentered(), tr.NavASmallerCenteredCard()), ui.IconForm},
-		{"fade", tr.NavFade(), tr.NavFadesIn(), ui.IconSpark},
-		{"dialog", tr.NavDialog(), tr.NavSeeThrough(), ui.IconBell},
-		{"kept", tr.NavKeptOpen(), ui.Hint(cx, tr.NavNoSwipeToClose(), tr.NavEscapeDoesNotClose()), ui.IconArrowDown},
+		{"fullScreen", tr.NavFullScreen(), tr.NavSlidesUp(), lucide.Smartphone},
+		{"pageSheet", tr.NavPageSheet(), ui.Hint(cx, tr.NavIosSheet(), tr.NavATallCenteredCard()), lucide.Component},
+		{"formSheet", tr.NavFormSheet(), ui.Hint(cx, tr.NavIosCentered(), tr.NavASmallerCenteredCard()), lucide.TextCursorInput},
+		{"fade", tr.NavFade(), tr.NavFadesIn(), lucide.Sparkles},
+		{"dialog", tr.NavDialog(), tr.NavSeeThrough(), lucide.Bell},
+		{"kept", tr.NavKeptOpen(), ui.Hint(cx, tr.NavNoSwipeToClose(), tr.NavEscapeDoesNotClose()), lucide.ArrowDown},
 	}
 	// A handler hears back before the stack pops; it lives only while
 	// intercepting, in a scope of its own.
@@ -326,13 +327,13 @@ func navigationDemo(cx *core.Scope) core.Node {
 	pages := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return ui.Card{Title: tr.NavPages(), Description: tr.NavScreenOptionsPushedWithNav(), Flush: true, Children: []core.Node{
-			ui.LinkRow{Icon: ui.IconText, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconStyles, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconStar, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconMobile, Title: tr.NavNoHeader(), Note: "HeaderHidden", OnPress: func() { shell.push(headerlessPage) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconGestures, Title: tr.NavNoSwipeBack(), Note: "NoPopOnSwipe", OnPress: func() { shell.push(lockedPage) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconForm, Title: tr.NavUnsavedChanges(), Note: "NoPopOnBack + OnBackPress", OnPress: func() { shell.push(unsavedPage) }},
-			ui.LinkRow{Divided: true, Icon: ui.IconLists, Title: tr.NavADeepStack(), Note: "Push / PopToRoot", OnPress: func() { shell.push(deepPage(1)) }},
+			ui.LinkRow{Icon: lucide.Type, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
+			ui.LinkRow{Divided: true, Icon: lucide.Palette, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
+			ui.LinkRow{Divided: true, Icon: lucide.Star, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
+			ui.LinkRow{Divided: true, Icon: lucide.Smartphone, Title: tr.NavNoHeader(), Note: "HeaderHidden", OnPress: func() { shell.push(headerlessPage) }},
+			ui.LinkRow{Divided: true, Icon: lucide.Hand, Title: tr.NavNoSwipeBack(), Note: "NoPopOnSwipe", OnPress: func() { shell.push(lockedPage) }},
+			ui.LinkRow{Divided: true, Icon: lucide.TextCursorInput, Title: tr.NavUnsavedChanges(), Note: "NoPopOnBack + OnBackPress", OnPress: func() { shell.push(unsavedPage) }},
+			ui.LinkRow{Divided: true, Icon: lucide.List, Title: tr.NavADeepStack(), Note: "Push / PopToRoot", OnPress: func() { shell.push(deepPage(1)) }},
 		}}
 	}
 	modalsCard := func(cx *core.Scope) core.Node {

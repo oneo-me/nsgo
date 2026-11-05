@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 	"testing"
 
@@ -8,13 +9,13 @@ import (
 )
 
 var settingsCatalog = []SettingsCategory{
-	{ID: "general", Title: "General", Icon: IconSettings, Groups: []SettingsGroup{
+	{ID: "general", Title: "General", Icon: lucide.Settings, Groups: []SettingsGroup{
 		{Title: "Startup", Items: []SettingsItem{
 			{ID: "login", Title: "Open at login"},
 			{ID: "restore", Title: "Restore windows", Description: "Reopen what was open"},
 		}},
 	}},
-	{ID: "appearance", Title: "Appearance", Icon: IconSun, Groups: []SettingsGroup{
+	{ID: "appearance", Title: "Appearance", Icon: lucide.Sun, Groups: []SettingsGroup{
 		{Items: []SettingsItem{{ID: "theme", Title: "Theme", Keywords: []string{"dark", "light"}}}},
 		{Title: "Text", Items: []SettingsItem{{ID: "font", Title: "Font size"}}},
 	}},

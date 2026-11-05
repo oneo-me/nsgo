@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/core"
 
@@ -70,12 +71,12 @@ func edgeEffects(cx *core.Scope) core.Node {
 			}),
 			bar(core.SideTop,
 				core.View{Style: core.Style{FlexGrow: 1}, Children: []core.Node{ui.Text(tr.EdgesInbox(), 22, ui.Semibold, colors.Text)}},
-				ui.RoundButton{Icon: ui.IconSearch, Label: tr.EdgesSearch(), Variant: ui.ButtonSecondary, Size: 36, OnPress: func() {}},
+				ui.RoundButton{Icon: lucide.Search, Label: tr.EdgesSearch(), Variant: ui.ButtonSecondary, Size: 36, OnPress: func() {}},
 			),
 			bar(core.SideBottom,
-				ui.RoundButton{Icon: ui.IconStar, Label: tr.EdgesStarred(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
-				ui.RoundButton{Icon: ui.IconPlus, Label: tr.EdgesNewMessage(), Variant: ui.ButtonAccent, Size: 40, OnPress: func() {}},
-				ui.RoundButton{Icon: ui.IconBell, Label: tr.EdgesNotifications(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
+				ui.RoundButton{Icon: lucide.Star, Label: tr.EdgesStarred(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
+				ui.RoundButton{Icon: lucide.Plus, Label: tr.EdgesNewMessage(), Variant: ui.ButtonAccent, Size: 40, OnPress: func() {}},
+				ui.RoundButton{Icon: lucide.Bell, Label: tr.EdgesNotifications(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
 			),
 		}},
 		ui.Segmented[core.EdgeEffect]{Options: []ui.Option[core.EdgeEffect]{{Value: core.EdgeEffectSoft, Label: tr.EdgesSoft()}, {Value: core.EdgeEffectHard, Label: tr.EdgesHard()},

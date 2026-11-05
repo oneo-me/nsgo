@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"net/url"
 	"path"
@@ -301,7 +302,7 @@ func pressEvents(cx *core.Scope) core.Node {
 			core.View{Role: core.RoleButton, Label: tr.GestStar(), OnPress: func(core.PressEvent) { fire("borderless") },
 				Android:  core.AndroidViewProps{Ripple: &core.Ripple{Borderless: true, Radius: 40}},
 				Style:    core.Style{Width: core.Pt(56), Height: core.Pt(56), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Active: &core.Style{Opacity: core.Alpha(0.4)}},
-				Children: []core.Node{ui.Icon(ui.IconStar, 24, colors.Warn)}},
+				Children: []core.Node{ui.Icon(lucide.Star, 24, colors.Warn)}},
 		}},
 		core.Text{Content: tr.GestPressableTextDimmedWhilePressed(), OnPress: func(core.PressEvent) { fire("text") }, Role: core.RoleLink,
 			Style: core.Style{AlignSelf: core.AlignStart, FontSize: 13, Padding: core.Symmetric(12, 0)}, StyleFunc: ui.Colored(colors.Accent)},
@@ -466,8 +467,8 @@ func accessibleRows(cx *core.Scope) core.Node {
 	last := core.NewSignal(cx, "")
 	items := []struct {
 		label, hint string
-		icon        ui.IconName
-	}{{tr.GestPlay(), tr.GestStartsTheSong(), ui.IconPlay}, {tr.GestLike(), tr.GestAddsToFavorites(), ui.IconStar}, {tr.GestNotify(), tr.GestTurnsOnAlerts(), ui.IconBell}}
+		icon        func() *core.SVG
+	}{{tr.GestPlay(), tr.GestStartsTheSong(), lucide.Play}, {tr.GestLike(), tr.GestAddsToFavorites(), lucide.Star}, {tr.GestNotify(), tr.GestTurnsOnAlerts(), lucide.Bell}}
 	var rows []core.Node
 	for i, it := range items {
 		rows = append(rows, core.View{Accessible: true, Role: core.RoleButton, Label: it.label, Hint: it.hint, OnPress: func(core.PressEvent) { last.Set(it.label) },

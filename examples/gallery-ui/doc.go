@@ -1,7 +1,7 @@
 // Package ui is the gallery's look and the components it shares, as NSH's
 // nsh-gallery-ui is its gallery's: colors, finishes and motion in
-// theme.go, line icons in icons.go, the components in files by kind, and
-// the parts only the gallery's demos use in gallery.go. It composes base
+// theme.go, the components in files by kind, and the parts only the
+// gallery's demos use in gallery.go. Icons are Lucide's accessors. It composes base
 // and core and is maintained with the gallery, not published as an API.
 //
 // Onexa's components are a copy of this package: its tools/syncgallery

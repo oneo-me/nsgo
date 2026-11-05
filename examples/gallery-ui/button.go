@@ -79,7 +79,7 @@ type Button struct {
 	Variant ButtonVariant
 	// Color fills it with that color instead.
 	Color func() core.Color
-	Icon  IconName
+	Icon  func() *core.SVG
 	// Label is what assistive technology reads, Text when empty: give it
 	// to a button of an icon alone.
 	Label    string
@@ -148,14 +148,14 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 		return 0, colors.Hover(), colors.Pressed(), colors.Border()
 	}
 	var children []core.Node
-	if b.Icon != "" {
+	if b.Icon != nil {
 		children = append(children, Icon(b.Icon, 14, fg))
 	}
-	if b.Text != "" || b.Icon == "" {
+	if b.Text != "" || b.Icon == nil {
 		children = append(children, Text(b.Text, 13, Regular, fg))
 	}
 	shape := core.Style{Height: core.Pt(ButtonHeight), Padding: core.Symmetric(0, 14)}
-	if b.Text == "" && b.Icon != "" {
+	if b.Text == "" && b.Icon != nil {
 		shape = core.Style{Width: core.Pt(ButtonHeight), Height: core.Pt(ButtonHeight)}
 	}
 	face := func() core.Style {
@@ -175,8 +175,8 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 // raised toolbar face otherwise. IconFunc and LabelFunc replace Icon and
 // Label.
 type RoundButton struct {
-	Icon      IconName
-	IconFunc  func() IconName
+	Icon      func() *core.SVG
+	IconFunc  func() *core.SVG
 	Label     string
 	LabelFunc func() string
 	Variant   ButtonVariant
@@ -193,7 +193,7 @@ func (b RoundButton) Render(cx *core.Scope) core.Node {
 	}
 	name := b.IconFunc
 	if name == nil {
-		name = func() IconName { return b.Icon }
+		name = b.Icon
 	}
 	label := b.LabelFunc
 	if label == nil {
@@ -224,8 +224,8 @@ func (b RoundButton) Render(cx *core.Scope) core.Node {
 // down and while Selected, faded while Disabled. IconFunc and LabelFunc
 // replace Icon and Label, what assistive technology reads.
 type IconButton struct {
-	Icon      IconName
-	IconFunc  func() IconName
+	Icon      func() *core.SVG
+	IconFunc  func() *core.SVG
 	Label     string
 	LabelFunc func() string
 	Size      core.Points
@@ -244,7 +244,7 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 	}
 	name := b.IconFunc
 	if name == nil {
-		name = func() IconName { return b.Icon }
+		name = b.Icon
 	}
 	return core.View{OnPress: func(core.PressEvent) { b.OnPress() }, Role: core.RoleButton, Label: b.Label, LabelFunc: b.LabelFunc,
 		Selected: b.Selected, Disabled: b.Disabled, TestID: b.TestID, Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff},
@@ -263,7 +263,7 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 // what it reads, Text when empty.
 type ToggleButton struct {
 	Text     string
-	Icon     IconName
+	Icon     func() *core.SVG
 	Label    string
 	On       func() bool
 	OnChange func(on bool)
@@ -285,16 +285,16 @@ func (b ToggleButton) Render(cx *core.Scope) core.Node {
 		return colors.Text()
 	}
 	var children []core.Node
-	if b.Icon != "" {
+	if b.Icon != nil {
 		children = append(children, Icon(b.Icon, 14, ink))
 	}
-	if b.Text != "" || b.Icon == "" {
+	if b.Text != "" || b.Icon == nil {
 		t := Text(b.Text, 13, Regular, ink)
 		t.MaxLines = 1
 		children = append(children, t)
 	}
 	shape := core.Style{Height: core.Pt(ButtonHeight), Padding: core.Symmetric(0, 14)}
-	if b.Text == "" && b.Icon != "" {
+	if b.Text == "" && b.Icon != nil {
 		shape = core.Style{Width: core.Pt(ButtonHeight), Height: core.Pt(ButtonHeight)}
 	}
 	face := func() core.Style {

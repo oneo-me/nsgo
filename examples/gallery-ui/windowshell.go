@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"time"
 
@@ -176,7 +177,7 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		toggle = core.View{StyleFunc: func() core.Style {
 			return core.Style{Position: core.Absolute, Top: core.Pt(core.Insets(cx).Top), Left: core.Pt(toggleStart()),
 				Height: core.Pt(ShellHeaderHeight(cx)), Direction: core.Row, AlignItems: core.AlignCenter, ZIndex: 2}
-		}, Children: []core.Node{IconButton{Icon: IconSidebar, Label: s.ToggleLabel, Size: toggleSize, Selected: open,
+		}, Children: []core.Node{IconButton{Icon: lucide.PanelLeft, Label: s.ToggleLabel, Size: toggleSize, Selected: open,
 			OnPress: func() { s.OnOpenChange(!open()) }}}}
 		reserve = func() core.Points { return toggleStart() - 12 + toggleSize + 8 }
 	}

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strings"
 
 	"github.com/oneo-me/nsgo/base"
@@ -17,7 +18,7 @@ import (
 // of a Section are listed under its title.
 type SettingsCategory struct {
 	ID, Title, Section, Description string
-	Icon                            IconName
+	Icon                            func() *core.SVG
 	Groups                          []SettingsGroup
 }
 
@@ -197,7 +198,7 @@ func (s Settings) heading(cx *core.Scope, title func() string, close bool) core.
 	text.Role, text.MaxLines, text.Style.FlexGrow, text.Style.FlexShrink = core.RoleHeader, 1, 1, 1
 	children := []core.Node{text}
 	if close && s.OnClose != nil {
-		children = append(children, IconButton{Icon: IconClose, Label: s.CloseLabel, OnPress: s.OnClose, TestID: "settings-close"})
+		children = append(children, IconButton{Icon: lucide.X, Label: s.CloseLabel, OnPress: s.OnClose, TestID: "settings-close"})
 	}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(56), FlexShrink: 0,
 		Padding: core.Symmetric(12, 16)}, Children: children}
@@ -211,7 +212,7 @@ func (s Settings) search(cx *core.Scope) core.Node {
 			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderCurve: core.BorderCurveContinuous,
 			BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()})
 	}, Children: []core.Node{
-		Icon(IconSearch, 14, colors.Faint),
+		Icon(lucide.Search, 14, colors.Faint),
 		base.Input{Value: s.Query.Get, OnChange: s.Query.Set, Placeholder: s.SearchPlaceholder, Label: s.SearchLabel, TestID: "settings-search",
 			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13},
 			StyleFunc: func() core.Style {

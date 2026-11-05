@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"math/rand/v2"
 	"slices"
@@ -52,7 +53,7 @@ func layoutAnimations(cx *core.Scope) core.Node {
 			}),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: tr.CompAdd(), Icon: ui.IconPlus, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.CompAdd(), Icon: lucide.Plus, OnPress: func() {
 				animate(func() { items.Update(func(s []int) []int { return append([]int{next}, s...) }); next++ })
 			}}},
 			ui.Cell{Child: ui.Button{Text: tr.CompShuffle(), Variant: ui.ButtonSecondary, OnPress: func() {
@@ -329,7 +330,7 @@ func componentsDemo(cx *core.Scope) core.Node {
 		func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
 			return ui.Card{Title: tr.CompKeyboardAvoidance(), Description: tr.CompContentOutsideScrollViews(), Flush: true, Children: []core.Node{
-				ui.LinkRow{Icon: ui.IconForm, Title: tr.CompKeyboardInset(), Note: "EnvKeyboard", OnPress: func() { shell.push(avoidingPage) }},
+				ui.LinkRow{Icon: lucide.TextCursorInput, Title: tr.CompKeyboardInset(), Note: "EnvKeyboard", OnPress: func() { shell.push(avoidingPage) }},
 			}}
 		},
 		modalOptions, platformInfo)

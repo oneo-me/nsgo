@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
 // Menus are base's: a popup at the trigger or the pointer on desktops,
@@ -74,7 +75,7 @@ func menuSurface(cx *core.Scope) (popup func() core.Style, backdrop core.Style) 
 // its text while it returns true, for an option of the menu.
 type MenuItem struct {
 	Text string
-	Icon IconName
+	Icon func() *core.SVG
 	// Shortcut is the keys that choose it, shown at its end on desktops.
 	Shortcut string
 	// Danger colors a destructive choice.
@@ -117,7 +118,7 @@ func (MenuSeparator) Render(cx *core.Scope) core.Node {
 // label for returning.
 type Submenu struct {
 	Text     string
-	Icon     IconName
+	Icon     func() *core.SVG
 	Back     string
 	Children []core.Node
 	Disabled func() bool
@@ -130,10 +131,10 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 	style, look := menuRow(cx)
 	trigger := append(menuLeading(cx, s.Icon, nil),
 		core.Text{Content: s.Text, MaxLines: 1, Style: typeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}), StyleFunc: Colored(colors.Text)},
-		Icon(IconChevron, iconSize, colors.Muted))
+		Icon(lucide.ChevronRight, iconSize, colors.Muted))
 	return base.Submenu{Disabled: s.Disabled, Style: style, StyleFunc: look, Trigger: core.Group(trigger),
 		Back: core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8},
-			Children: []core.Node{Icon(IconBack, iconSize, colors.Muted), core.Text{Content: s.Back, MaxLines: 1, Style: typeLabel,
+			Children: []core.Node{Icon(lucide.ChevronLeft, iconSize, colors.Muted), core.Text{Content: s.Back, MaxLines: 1, Style: typeLabel,
 				StyleFunc: Colored(colors.Muted)}}},
 		BackStyle: style, Children: s.Children, Label: s.Text, TestID: s.TestID}
 }
@@ -155,7 +156,7 @@ func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
 
 // menuLeading is what goes before an item's text: its check, its icon,
 // or nothing.
-func menuLeading(cx *core.Scope, icon IconName, checked func() bool) []core.Node {
+func menuLeading(cx *core.Scope, icon func() *core.SVG, checked func() bool) []core.Node {
 	colors := ColorsOf(cx)
 	var out []core.Node
 	if checked != nil {
@@ -164,9 +165,9 @@ func menuLeading(cx *core.Scope, icon IconName, checked func() bool) []core.Node
 				return core.Style{Opacity: core.Alpha(0)}
 			}
 			return core.Style{}
-		}, Children: []core.Node{Icon(IconCheck, iconSize, colors.Text)}})
+		}, Children: []core.Node{Icon(lucide.Check, iconSize, colors.Text)}})
 	}
-	if icon != "" {
+	if icon != nil {
 		out = append(out, Icon(icon, iconSize, colors.Muted))
 	}
 	return out

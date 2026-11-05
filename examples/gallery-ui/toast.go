@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"slices"
 	"strings"
 	"time"
@@ -211,7 +212,7 @@ func (ts Toasts) item(cx *core.Scope, e func() toastEntry, swipe base.SwipeDirec
 			t.Dismiss(id)
 		}})
 	}
-	children = append(children, IconButton{Icon: IconClose, Label: ts.CloseLabel, Size: 24, TestID: id + "-close", OnPress: func() { t.Dismiss(id) }})
+	children = append(children, IconButton{Icon: lucide.X, Label: ts.CloseLabel, Size: 24, TestID: id + "-close", OnPress: func() { t.Dismiss(id) }})
 	align := core.AlignCenter
 	if c.Description != "" {
 		align = core.AlignStart
@@ -242,17 +243,17 @@ func toastLeading(c ToastContent) core.Node {
 	if c.Leading != nil {
 		return c.Leading
 	}
-	var name IconName
+	var name func() *core.SVG
 	var tint func(Colors) func() core.Color
 	switch c.Type {
 	case ToastInfo:
-		name, tint = IconInfo, func(c Colors) func() core.Color { return c.Accent }
+		name, tint = lucide.Info, func(c Colors) func() core.Color { return c.Accent }
 	case ToastSuccess:
-		name, tint = IconSuccess, func(c Colors) func() core.Color { return c.Up }
+		name, tint = lucide.CircleCheck, func(c Colors) func() core.Color { return c.Up }
 	case ToastWarning:
-		name, tint = IconProblems, func(c Colors) func() core.Color { return c.Warn }
+		name, tint = lucide.TriangleAlert, func(c Colors) func() core.Color { return c.Warn }
 	case ToastError:
-		name, tint = IconError, func(c Colors) func() core.Color { return c.Danger }
+		name, tint = lucide.CircleX, func(c Colors) func() core.Color { return c.Danger }
 	default:
 		return nil
 	}

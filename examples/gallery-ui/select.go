@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strconv"
 
 	"github.com/oneo-me/nsgo/base"
@@ -61,7 +62,7 @@ func (s Select[T]) Render(cx *core.Scope) core.Node {
 			return core.Style{Background: bg, BorderColor: border,
 				GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}}
 		},
-		Children: []core.Node{text, Icon(IconChevronDown, iconSize-2, colors.Muted)}}
+		Children: []core.Node{text, Icon(lucide.ChevronDown, iconSize-2, colors.Muted)}}
 	items := make([]core.Node, len(s.Options))
 	for i, o := range s.Options {
 		id := ""

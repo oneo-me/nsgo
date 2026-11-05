@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strings"
 	"time"
 	"unicode"
@@ -174,7 +175,7 @@ func streamingCard(cx *core.Scope) core.Node {
 			if streaming.Get() {
 				l = tr.TextviewStreaming2()
 			}
-			return ui.Button{Text: l, Icon: ui.IconPlay, Variant: ui.ButtonSecondary, Disabled: streaming.Get, OnPress: play}
+			return ui.Button{Text: l, Icon: lucide.Play, Variant: ui.ButtonSecondary, Disabled: streaming.Get, OnPress: play}
 		}),
 	}}
 }

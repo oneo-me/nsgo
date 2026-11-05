@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import (
+	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
+)
 
 // Tree is the app's nested items as a List of the expanded ones,
 // indented by depth, each branch with a chevron that expands it. It
@@ -113,7 +116,7 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 				}
 				return s
 			},
-			Children: []core.Node{Icon(IconChevron, iconSize-3, inherited)}}
+			Children: []core.Node{Icon(lucide.ChevronRight, iconSize-3, inherited)}}
 		if !reduceMotion(cx) {
 			chevron.Style.Transition = core.Transition{Duration: quick.Duration, Easing: core.EaseOut, Properties: core.TransitionTransform}
 		}

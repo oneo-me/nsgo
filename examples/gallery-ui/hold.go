@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
@@ -23,7 +24,7 @@ const (
 // hard-to-undo actions a stray press must not trigger: held down for
 // Duration (1.2 s when 0), a fill sweeps across it from the leading edge,
 // and once it is full OnConfirm runs, the screen reader announces
-// ConfirmedText, and Text and Icon (IconTrash when empty) give way to it
+// ConfirmedText, and Text and Icon (lucide.Trash when empty) give way to it
 // and a check. Letting go early rewinds the fill. The keyboard and
 // assistive technology, which cannot hold, start the fill with a press
 // and cancel it with another or by moving the focus away.
@@ -35,7 +36,7 @@ const (
 type HoldToConfirm struct {
 	Text          string
 	ConfirmedText string
-	Icon          IconName
+	Icon          func() *core.SVG
 	Tone          HoldTone
 	Duration      time.Duration
 	Confirmed     func() bool
@@ -58,8 +59,8 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 		duration = 1200 * time.Millisecond
 	}
 	icon := h.Icon
-	if icon == "" {
-		icon = IconTrash
+	if icon == nil {
+		icon = lucide.Trash
 	}
 	confirmed := func() bool { return is(h.Confirmed) }
 	scale := core.NewAnimatedValue(cx, 1)
@@ -148,11 +149,11 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 		}
 		return h.Text
 	}
-	glyph := func() IconName {
+	glyph := func() *core.SVG {
 		if confirmed() {
-			return IconCheck
+			return lucide.Check()
 		}
-		return icon
+		return icon()
 	}
 	face := func(c func() core.Color) core.Node {
 		t := Textf(text, 13, Regular, c)

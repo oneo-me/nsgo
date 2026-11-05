@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"runtime"
 
 	"github.com/oneo-me/nsgo/base/terminal"
@@ -100,7 +101,7 @@ func terminalDemo(cx *core.Scope) core.Node {
 				},
 			}
 			return ui.ContextMenu{TestID: "terminal-menu", Style: core.Style{FlexGrow: 1}, Trigger: view, Children: []core.Node{
-				ui.MenuItem{Text: tr.TerminalCopy(), Icon: ui.IconCopy, Disabled: func() bool { return !ref.Selected() }, OnSelect: ref.Copy},
+				ui.MenuItem{Text: tr.TerminalCopy(), Icon: lucide.Copy, Disabled: func() bool { return !ref.Selected() }, OnSelect: ref.Copy},
 				ui.MenuItem{Text: tr.TerminalPaste(), OnSelect: ref.Paste},
 				ui.MenuItem{Text: tr.TerminalSelectAll(), OnSelect: ref.SelectAll},
 			}}

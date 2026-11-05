@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"strconv"
 	"time"
@@ -47,11 +48,11 @@ func (i Image) Render(cx *core.Scope) core.Node {
 		if i.Placeholder != nil {
 			return i.Placeholder
 		}
-		return IconOf(func() IconName {
+		return IconOf(func() *core.SVG {
 			if failed.Get() {
-				return IconImageOff
+				return lucide.ImageOff()
 			}
-			return IconImage
+			return lucide.Image()
 		}, ButtonHeight, colors.Faint)
 	}
 	fill := core.Style{Position: core.Absolute, Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Left: core.Pt(0)}
@@ -172,11 +173,11 @@ func (p ImageCompare) Render(cx *core.Scope) core.Node {
 		after = core.Style{Bottom: inset, Left: inset}
 	}
 	const knob = 32
-	chevrons := IconSplitX
+	chevrons := lucide.ChevronsLeftRight
 	edge := core.Style{Position: core.Absolute, Background: white, Shadows: []core.BoxShadow{{Blur: 6, Color: Black(0.3)}},
 		AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}
 	if p.Vertical {
-		chevrons = IconSplitY
+		chevrons = lucide.ChevronsUpDown
 		edge.Left, edge.Right, edge.Height, edge.Margin = core.Pt(0), core.Pt(0), core.Pt(2), core.Edges{Top: -1}
 	} else {
 		edge.Top, edge.Bottom, edge.Width, edge.Margin = core.Pt(0), core.Pt(0), core.Pt(2), core.Edges{Left: -1}
@@ -361,15 +362,15 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 					Focus: FocusRing(cx, 2)}
 			}})
 	}
-	arrow := func(icon IconName, name string, by int) core.Node {
+	arrow := func(icon func() *core.SVG, name string, by int) core.Node {
 		return IconButton{Icon: icon, Label: name, OnPress: func() { choose(core.Untracked(cx, index) + by) },
 			Disabled: func() bool { i := shown.Get() + by; return i < 0 || i >= n }}
 	}
 	controls := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12},
 		Children: []core.Node{
-			arrow(IconBack, c.PreviousLabel, -1),
+			arrow(lucide.ChevronLeft, c.PreviousLabel, -1),
 			core.View{Role: core.RoleTabList, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: dots},
-			arrow(IconChevron, c.NextLabel, 1),
+			arrow(lucide.ChevronRight, c.NextLabel, 1),
 		}}
 	return core.View{Label: c.Label, Style: core.Style{Gap: 12}.Merge(c.Style), Children: []core.Node{track, controls}}
 }

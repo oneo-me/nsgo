@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/oneo-me/nsgo/core"
 
@@ -49,29 +50,29 @@ type fileRef struct{ name, size string }
 type reasoning struct {
 	text    string
 	seconds int
-	open    bool
 }
 
-// msg is a row of the conversation: a date, the user's message or the
-// assistant's reply, by kind.
+// msg is a row of the conversation: a date, or a turn, the user's message
+// and the reply to it, by kind.
 type msg struct {
 	kind, id string
 	// date
 	label string
-	// user
+	// the user's message
 	text    string
 	image   core.ImageSource
 	file    *fileRef
 	waiting bool
-	// assistant
-	model     chatModel
-	script    string
-	reasoning *reasoning
-	tools     []chatTool
-	md        string
-	status    string
-	err       string
-	rating    string
+	// the reply
+	model          chatModel
+	script         string
+	reasoning      *reasoning
+	tools          []chatTool
+	md             string
+	status         string
+	err            string
+	rating         string
+	started, ended time.Time
 }
 
 // chatStep is a step of a scripted reply: thinking, a tool call, words,
@@ -222,7 +223,7 @@ func chatHistory(nextID func() string) []msg {
 		out = append(out, msg{kind: "date", id: nextID(), label: label})
 		for i := range 20 {
 			p := pastPrompts[(day*20+i)%len(pastPrompts)]
-			out = append(out, msg{kind: "user", id: nextID(), text: p[0]}, msg{kind: "assistant", id: nextID(), model: "Swift", script: "history", md: p[1], status: "done"})
+			out = append(out, msg{kind: "turn", id: nextID(), text: p[0], model: "Swift", script: "history", md: p[1], status: "done"})
 		}
 	}
 	return out

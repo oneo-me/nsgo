@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 
 	"github.com/oneo-me/nsgo/base"
@@ -124,7 +125,7 @@ func quoteBlock(cx *core.Scope, m *market, s *stock) core.Node {
 			core.Text{ContentFunc: func() string { return p(q().last) }, TestID: "stock-price", StyleFunc: func() core.Style {
 				return core.Style{FontSize: 36, FontWeight: ui.Semibold, LetterSpacing: -1, FontVariant: core.FontTabularNums, Color: toneOf(cx, change())}
 			}},
-			core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 0, 180)}}, Children: []core.Node{ui.Icon(ui.IconArrowUp, 20, func() core.Color { return toneOf(cx, change()) })}},
+			core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 0, 180)}}, Children: []core.Node{ui.Icon(lucide.ArrowUp, 20, func() core.Color { return toneOf(cx, change()) })}},
 			core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignEnd, Gap: 1}, Children: []core.Node{
 				core.Text{ContentFunc: func() string { return signed(percentOf(q()), 2) + "%" }, StyleFunc: toneStyle(15, ui.Semibold)},
 				core.Text{ContentFunc: func() string { return signed(change(), decimals) + tr.StocksToday() }, StyleFunc: toneStyle(12, ui.Regular)},
@@ -223,9 +224,9 @@ func pauseButton(cx *core.Scope, m *market) core.Node {
 			}
 			return s
 		}
-		name, tint, lbl := ui.IconPlay, colors.OnAccent, tr.StocksResumeTheMarket()
+		name, tint, lbl := lucide.Play, colors.OnAccent, tr.StocksResumeTheMarket()
 		if run {
-			name, tint, lbl = ui.IconPause, colors.Muted, tr.StocksPauseTheMarket()
+			name, tint, lbl = lucide.Pause, colors.Muted, tr.StocksPauseTheMarket()
 		}
 		return ui.Press{OnPress: func() {
 			if m.running.GetUntracked() {

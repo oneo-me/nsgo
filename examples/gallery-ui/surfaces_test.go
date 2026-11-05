@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ func TestCard(t *testing.T) {
 		app, p := start(t, e, func(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 				Card{TestID: "card", Title: "Storage", Description: "12 GB of 50 GB used",
-					Actions:  []core.Node{Button{Variant: ButtonGhost, Icon: IconMore, Label: "More"}},
+					Actions:  []core.Node{Button{Variant: ButtonGhost, Icon: lucide.Ellipsis, Label: "More"}},
 					Children: []core.Node{Progress{Label: "Used", Value: func() float32 { return 24 }}},
 					Footer:   []core.Node{Button{Text: "Manage"}}},
 				Card{Title: "Open project", OnPress: func() { pressed++ }, Children: []core.Node{core.Text{Content: "Onexa"}}},
@@ -44,7 +45,7 @@ func TestScrollView(t *testing.T) {
 				rows = append(rows, core.View{Style: core.Style{Height: core.Pt(40)}})
 			}
 			return ScrollView{TestID: "scroll", Style: core.Style{Height: core.Pt(300)}, Children: rows,
-				BottomBar: []core.Node{IconButton{Icon: IconPlus, Label: "Add", OnPress: func() {}}}, BottomBarLabel: "Actions"}
+				BottomBar: []core.Node{IconButton{Icon: lucide.Plus, Label: "Add", OnPress: func() {}}}, BottomBarLabel: "Actions"}
 		})
 		frame := app.Find("scroll").Parent
 		top, bottom := frame.Children[1], frame.Children[2]

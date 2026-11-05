@@ -160,6 +160,10 @@ var Parameters = map[string][]string{
 	"ChatInstallCli":          {"provider", "why", "command"},
 	"ChatThinking":            {"seconds"},
 	"ChatThoughtFor":          {"seconds"},
+	"ChatWorked":              {"minutes", "seconds"},
+	"ChatWorking":             {"status", "minutes", "seconds"},
+	"ChatRanTools":            {"count"},
+	"ChatQuotaLeft":           {"percent"},
 	"DockEdits":               {"panel", "count"},
 	"ScrollPageOf":            {"title", "n", "total"},
 	"DockRegionNone":          {"name"},
@@ -1700,10 +1704,8 @@ type Translation struct {
 	StocksShares                                 func(count int) string
 	StocksOfBuyingPower                          func(percent string, power string) string
 	StocksPlacedDetail                           func(quantity string, code string, price string) string
-	ChatToday                                    func() string
 	ChatWaitingForAConnection                    func() string
 	ChatStopped                                  func() string
-	ChatReasoning                                func() string
 	ChatSomethingWentWrong                       func() string
 	ChatYouStoppedThisReply                      func() string
 	ChatCopy                                     func() string
@@ -1715,17 +1717,12 @@ type Translation struct {
 	ChatHowCanIHelp                              func() string
 	ChatLoadALongConversation                    func() string
 	ChatChooseAPhoto                             func() string
-	ChatAttachAPhotoAndA                         func() string
 	ChatMessage                                  func() string
 	ChatJumpToTheLatestMessage                   func() string
 	ChatBackOnline                               func() string
 	ChatSendingYourMessage                       func() string
 	ChatYouReOffline                             func() string
 	ChatYourMessageSendsWhenThe                  func() string
-	ChatCloseTheMenu                             func() string
-	ChatAddAndReplay                             func() string
-	ChatAdd                                      func() string
-	ChatStopGenerating                           func() string
 	ChatSend                                     func() string
 	ChatWeeksOfMessagesLoadedAt                  func() string
 	ChatNewChat                                  func() string
@@ -1741,12 +1738,43 @@ type Translation struct {
 	ChatClaudeCouldNotCompleteThis               func() string
 	ChatCodexCouldNotCompleteThis                func() string
 	ChatNoReply                                  func() string
-	ChatQueued                                   func() string
 	ChatRunning                                  func() string
-	ChatDone                                     func() string
 	ChatInstallCli                               func(provider string, why string, command string) string
 	ChatThinking                                 func(seconds int) string
 	ChatThoughtFor                               func(seconds int) string
+	ChatPlaceholder                              func() string
+	ChatStop                                     func() string
+	ChatFailed                                   func() string
+	ChatWorked                                   func(minutes int, seconds int) string
+	ChatWorking                                  func(status string, minutes int, seconds int) string
+	ChatRanTools                                 func(count int) string
+	ChatPhoto                                    func() string
+	ChatSearchModels                             func() string
+	ChatSearchBranches                           func() string
+	ChatNoResults                                func() string
+	ChatReplay                                   func() string
+	ChatWorktree                                 func() string
+	ChatStreaming                                func() string
+	ChatContextWindow                            func() string
+	ChatProviderLocal                            func() string
+	ChatProviderRemote                           func() string
+	ChatEffort                                   func() string
+	ChatEffortOff                                func() string
+	ChatEffortLow                                func() string
+	ChatEffortMedium                             func() string
+	ChatEffortHigh                               func() string
+	ChatEffortMax                                func() string
+	ChatUsageLimits                              func() string
+	ChatQuotaAccount                             func() string
+	ChatQuotaFiveHour                            func() string
+	ChatQuotaFiveHourReset                       func() string
+	ChatQuotaWeekly                              func() string
+	ChatQuotaWeeklyReset                         func() string
+	ChatQuotaCredits                             func() string
+	ChatQuotaRefresh                             func() string
+	ChatQuotaOpen                                func() string
+	ChatQuotaRefreshing                          func() string
+	ChatQuotaLeft                                func(percent int) string
 	DockFiles                                    func() string
 	DockTerminal                                 func() string
 	DockEdit                                     func() string
@@ -3692,10 +3720,8 @@ const (
 	textStocksBlock2
 	textStocksIntraday
 	textStocksToday2
-	textChatToday
 	textChatWaitingForAConnection
 	textChatStopped
-	textChatReasoning
 	textChatSomethingWentWrong
 	textChatYouStoppedThisReply
 	textChatCopy
@@ -3707,17 +3733,12 @@ const (
 	textChatHowCanIHelp
 	textChatLoadALongConversation
 	textChatChooseAPhoto
-	textChatAttachAPhotoAndA
 	textChatMessage
 	textChatJumpToTheLatestMessage
 	textChatBackOnline
 	textChatSendingYourMessage
 	textChatYouReOffline
 	textChatYourMessageSendsWhenThe
-	textChatCloseTheMenu
-	textChatAddAndReplay
-	textChatAdd
-	textChatStopGenerating
 	textChatSend
 	textChatWeeksOfMessagesLoadedAt
 	textChatNewChat
@@ -3733,9 +3754,36 @@ const (
 	textChatClaudeCouldNotCompleteThis
 	textChatCodexCouldNotCompleteThis
 	textChatNoReply
-	textChatQueued
 	textChatRunning
-	textChatDone
+	textChatPlaceholder
+	textChatStop
+	textChatFailed
+	textChatPhoto
+	textChatSearchModels
+	textChatSearchBranches
+	textChatNoResults
+	textChatReplay
+	textChatWorktree
+	textChatStreaming
+	textChatContextWindow
+	textChatProviderLocal
+	textChatProviderRemote
+	textChatEffort
+	textChatEffortOff
+	textChatEffortLow
+	textChatEffortMedium
+	textChatEffortHigh
+	textChatEffortMax
+	textChatUsageLimits
+	textChatQuotaAccount
+	textChatQuotaFiveHour
+	textChatQuotaFiveHourReset
+	textChatQuotaWeekly
+	textChatQuotaWeeklyReset
+	textChatQuotaCredits
+	textChatQuotaRefresh
+	textChatQuotaOpen
+	textChatQuotaRefreshing
 	textDockFiles
 	textDockTerminal
 	textDockEdit
@@ -5637,10 +5685,8 @@ var texts = map[string]*[numTexts]string{
 		"Block",
 		"Intraday",
 		"Today",
-		"Today",
 		"Waiting for a connection",
 		"Stopped",
-		"Reasoning",
 		"Something went wrong.",
 		"You stopped this reply",
 		"Copy",
@@ -5652,17 +5698,12 @@ var texts = map[string]*[numTexts]string{
 		"How can I help?",
 		"Load a long conversation",
 		"Choose a photo",
-		"Attach a photo and a file",
-		"Message ",
+		"Message",
 		"Jump to the latest message",
 		"Back online",
 		"Sending your message.",
 		"You're offline",
 		"Your message sends when the connection returns.",
-		"Close the menu",
-		"ADD AND REPLAY",
-		"Add",
-		"Stop generating",
 		"Send",
 		"Weeks of messages, loaded at once",
 		"New chat",
@@ -5678,9 +5719,36 @@ var texts = map[string]*[numTexts]string{
 		"Claude could not complete this reply",
 		"Codex could not complete this reply",
 		"no reply",
-		"Queued",
-		"Running",
-		"Done",
+		"Working",
+		"Write a message.",
+		"Stop",
+		"Failed",
+		"Photo",
+		"Search models",
+		"Search branches",
+		"No results",
+		"Replay",
+		"Worktree",
+		"Streaming a reply",
+		"Context window",
+		"Local",
+		"Remote",
+		"Reasoning effort",
+		"Off",
+		"Low",
+		"Medium",
+		"High",
+		"Max",
+		"Usage limits",
+		"Demo account",
+		"5-hour limit",
+		"2h 14m",
+		"Weekly limit",
+		"4d",
+		"Credits",
+		"Refresh limits",
+		"Open usage page",
+		"Refreshing…",
 		"Files",
 		"Terminal",
 		"Edit ",
@@ -7577,10 +7645,8 @@ var texts = map[string]*[numTexts]string{
 		"كتلة",
 		"خلال اليوم",
 		"اليوم",
-		"اليوم",
 		"بانتظار الاتصال",
 		"توقف",
-		"الاستدلال",
 		"حدث خطأ ما.",
 		"أوقفت هذا الرد",
 		"نسخ",
@@ -7592,17 +7658,12 @@ var texts = map[string]*[numTexts]string{
 		"كيف يمكنني المساعدة؟",
 		"تحميل محادثة طويلة",
 		"اختر صورة",
-		"إرفاق صورة وملف",
-		"رسالة إلى ",
+		"رسالة",
 		"الانتقال إلى أحدث رسالة",
 		"عاد الاتصال",
 		"جارٍ إرسال رسالتك.",
 		"أنت غير متصل",
 		"تُرسل رسالتك عند عودة الاتصال.",
-		"إغلاق القائمة",
-		"إضافة وإعادة تشغيل",
-		"إضافة",
-		"إيقاف التوليد",
 		"إرسال",
 		"رسائل أسابيع، تُحمّل دفعة واحدة",
 		"دردشة جديدة",
@@ -7618,9 +7679,36 @@ var texts = map[string]*[numTexts]string{
 		"لم يتمكن Claude من إكمال هذا الرد",
 		"لم يتمكن Codex من إكمال هذا الرد",
 		"لا رد",
-		"في الانتظار",
-		"قيد التشغيل",
-		"تم",
+		"قيد التنفيذ",
+		"اكتب رسالة.",
+		"إيقاف",
+		"فشل",
+		"صورة",
+		"البحث في النماذج",
+		"البحث في الفروع",
+		"لا توجد نتائج",
+		"إعادة التشغيل",
+		"شجرة العمل",
+		"جارٍ بث الرد",
+		"نافذة السياق",
+		"محلي",
+		"بعيد",
+		"جهد التفكير",
+		"إيقاف",
+		"منخفض",
+		"متوسط",
+		"مرتفع",
+		"أقصى",
+		"حدود الاستخدام",
+		"حساب تجريبي",
+		"حد 5 ساعات",
+		"2 س 14 د",
+		"الحد الأسبوعي",
+		"4 أيام",
+		"الرصيد",
+		"تحديث الحدود",
+		"فتح صفحة الاستخدام",
+		"جارٍ التحديث…",
 		"الملفات",
 		"الطرفية",
 		"تحرير ",
@@ -9517,10 +9605,8 @@ var texts = map[string]*[numTexts]string{
 		"特大单",
 		"分时",
 		"今天",
-		"今天",
 		"等待连接",
 		"已停止",
-		"推理过程",
 		"出了点问题。",
 		"你停止了这条回复",
 		"拷贝",
@@ -9532,17 +9618,12 @@ var texts = map[string]*[numTexts]string{
 		"有什么可以帮你？",
 		"加载一段很长的对话",
 		"选择照片",
-		"附加一张照片和一个文件",
-		"发消息给 ",
+		"消息",
 		"跳到最新消息",
 		"已恢复联网",
 		"正在发送你的消息。",
 		"你已离线",
 		"连接恢复后会发送你的消息。",
-		"关闭菜单",
-		"添加与重放",
-		"添加",
-		"停止生成",
 		"发送",
 		"几周的消息，一次性加载",
 		"新聊天",
@@ -9558,9 +9639,36 @@ var texts = map[string]*[numTexts]string{
 		"Claude 无法完成这条回复",
 		"Codex 无法完成这条回复",
 		"没有回复",
-		"排队中",
-		"运行中",
-		"完成",
+		"执行中",
+		"输入消息。",
+		"停止",
+		"失败",
+		"照片",
+		"搜索模型",
+		"搜索分支",
+		"无结果",
+		"重放",
+		"工作树",
+		"正在流式输出回复",
+		"上下文窗口",
+		"本地",
+		"远程",
+		"思考强度",
+		"关闭",
+		"低",
+		"中",
+		"高",
+		"极限",
+		"用量限额",
+		"示例账户",
+		"5 小时限额",
+		"2 小时 14 分",
+		"每周限额",
+		"4 天",
+		"余额",
+		"刷新限额",
+		"打开用量页面",
+		"正在刷新…",
 		"文件",
 		"终端",
 		"编辑 ",
@@ -11457,10 +11565,8 @@ var texts = map[string]*[numTexts]string{
 		"特大單",
 		"分時",
 		"今天",
-		"今天",
 		"等待連線",
 		"已停止",
-		"推理過程",
 		"出了點問題。",
 		"你停止了這條回覆",
 		"複製",
@@ -11472,17 +11578,12 @@ var texts = map[string]*[numTexts]string{
 		"有什麼可以幫你？",
 		"載入一段很長的對話",
 		"選擇照片",
-		"附加一張照片和一個檔案",
-		"發訊息給 ",
+		"訊息",
 		"跳到最新訊息",
 		"已恢復聯網",
 		"正在傳送你的訊息。",
 		"你已離線",
 		"連線恢復後會傳送你的訊息。",
-		"關閉選單",
-		"新增與重放",
-		"新增",
-		"停止生成",
 		"傳送",
 		"幾週的訊息，一次性載入",
 		"新聊天",
@@ -11498,9 +11599,36 @@ var texts = map[string]*[numTexts]string{
 		"Claude 無法完成這條回覆",
 		"Codex 無法完成這條回覆",
 		"沒有回覆",
-		"排隊中",
 		"執行中",
-		"完成",
+		"輸入訊息。",
+		"停止",
+		"失敗",
+		"照片",
+		"搜尋模型",
+		"搜尋分支",
+		"無結果",
+		"重播",
+		"工作樹",
+		"正在串流輸出回覆",
+		"上下文視窗",
+		"本機",
+		"遠端",
+		"思考強度",
+		"關閉",
+		"低",
+		"中",
+		"高",
+		"極限",
+		"用量限額",
+		"範例帳戶",
+		"5 小時限額",
+		"2 小時 14 分",
+		"每週限額",
+		"4 天",
+		"餘額",
+		"重新整理限額",
+		"開啟用量頁面",
+		"正在重新整理…",
 		"檔案",
 		"終端",
 		"編輯 ",
@@ -16472,17 +16600,11 @@ func Supply(lang string, t Translation) {
 	if t.StocksPlacedDetail != nil {
 		s.StocksPlacedDetail = t.StocksPlacedDetail
 	}
-	if t.ChatToday != nil {
-		st[textChatToday] = t.ChatToday()
-	}
 	if t.ChatWaitingForAConnection != nil {
 		st[textChatWaitingForAConnection] = t.ChatWaitingForAConnection()
 	}
 	if t.ChatStopped != nil {
 		st[textChatStopped] = t.ChatStopped()
-	}
-	if t.ChatReasoning != nil {
-		st[textChatReasoning] = t.ChatReasoning()
 	}
 	if t.ChatSomethingWentWrong != nil {
 		st[textChatSomethingWentWrong] = t.ChatSomethingWentWrong()
@@ -16517,9 +16639,6 @@ func Supply(lang string, t Translation) {
 	if t.ChatChooseAPhoto != nil {
 		st[textChatChooseAPhoto] = t.ChatChooseAPhoto()
 	}
-	if t.ChatAttachAPhotoAndA != nil {
-		st[textChatAttachAPhotoAndA] = t.ChatAttachAPhotoAndA()
-	}
 	if t.ChatMessage != nil {
 		st[textChatMessage] = t.ChatMessage()
 	}
@@ -16537,18 +16656,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ChatYourMessageSendsWhenThe != nil {
 		st[textChatYourMessageSendsWhenThe] = t.ChatYourMessageSendsWhenThe()
-	}
-	if t.ChatCloseTheMenu != nil {
-		st[textChatCloseTheMenu] = t.ChatCloseTheMenu()
-	}
-	if t.ChatAddAndReplay != nil {
-		st[textChatAddAndReplay] = t.ChatAddAndReplay()
-	}
-	if t.ChatAdd != nil {
-		st[textChatAdd] = t.ChatAdd()
-	}
-	if t.ChatStopGenerating != nil {
-		st[textChatStopGenerating] = t.ChatStopGenerating()
 	}
 	if t.ChatSend != nil {
 		st[textChatSend] = t.ChatSend()
@@ -16595,14 +16702,8 @@ func Supply(lang string, t Translation) {
 	if t.ChatNoReply != nil {
 		st[textChatNoReply] = t.ChatNoReply()
 	}
-	if t.ChatQueued != nil {
-		st[textChatQueued] = t.ChatQueued()
-	}
 	if t.ChatRunning != nil {
 		st[textChatRunning] = t.ChatRunning()
-	}
-	if t.ChatDone != nil {
-		st[textChatDone] = t.ChatDone()
 	}
 	if t.ChatInstallCli != nil {
 		s.ChatInstallCli = t.ChatInstallCli
@@ -16612,6 +16713,105 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ChatThoughtFor != nil {
 		s.ChatThoughtFor = t.ChatThoughtFor
+	}
+	if t.ChatPlaceholder != nil {
+		st[textChatPlaceholder] = t.ChatPlaceholder()
+	}
+	if t.ChatStop != nil {
+		st[textChatStop] = t.ChatStop()
+	}
+	if t.ChatFailed != nil {
+		st[textChatFailed] = t.ChatFailed()
+	}
+	if t.ChatWorked != nil {
+		s.ChatWorked = t.ChatWorked
+	}
+	if t.ChatWorking != nil {
+		s.ChatWorking = t.ChatWorking
+	}
+	if t.ChatRanTools != nil {
+		s.ChatRanTools = t.ChatRanTools
+	}
+	if t.ChatPhoto != nil {
+		st[textChatPhoto] = t.ChatPhoto()
+	}
+	if t.ChatSearchModels != nil {
+		st[textChatSearchModels] = t.ChatSearchModels()
+	}
+	if t.ChatSearchBranches != nil {
+		st[textChatSearchBranches] = t.ChatSearchBranches()
+	}
+	if t.ChatNoResults != nil {
+		st[textChatNoResults] = t.ChatNoResults()
+	}
+	if t.ChatReplay != nil {
+		st[textChatReplay] = t.ChatReplay()
+	}
+	if t.ChatWorktree != nil {
+		st[textChatWorktree] = t.ChatWorktree()
+	}
+	if t.ChatStreaming != nil {
+		st[textChatStreaming] = t.ChatStreaming()
+	}
+	if t.ChatContextWindow != nil {
+		st[textChatContextWindow] = t.ChatContextWindow()
+	}
+	if t.ChatProviderLocal != nil {
+		st[textChatProviderLocal] = t.ChatProviderLocal()
+	}
+	if t.ChatProviderRemote != nil {
+		st[textChatProviderRemote] = t.ChatProviderRemote()
+	}
+	if t.ChatEffort != nil {
+		st[textChatEffort] = t.ChatEffort()
+	}
+	if t.ChatEffortOff != nil {
+		st[textChatEffortOff] = t.ChatEffortOff()
+	}
+	if t.ChatEffortLow != nil {
+		st[textChatEffortLow] = t.ChatEffortLow()
+	}
+	if t.ChatEffortMedium != nil {
+		st[textChatEffortMedium] = t.ChatEffortMedium()
+	}
+	if t.ChatEffortHigh != nil {
+		st[textChatEffortHigh] = t.ChatEffortHigh()
+	}
+	if t.ChatEffortMax != nil {
+		st[textChatEffortMax] = t.ChatEffortMax()
+	}
+	if t.ChatUsageLimits != nil {
+		st[textChatUsageLimits] = t.ChatUsageLimits()
+	}
+	if t.ChatQuotaAccount != nil {
+		st[textChatQuotaAccount] = t.ChatQuotaAccount()
+	}
+	if t.ChatQuotaFiveHour != nil {
+		st[textChatQuotaFiveHour] = t.ChatQuotaFiveHour()
+	}
+	if t.ChatQuotaFiveHourReset != nil {
+		st[textChatQuotaFiveHourReset] = t.ChatQuotaFiveHourReset()
+	}
+	if t.ChatQuotaWeekly != nil {
+		st[textChatQuotaWeekly] = t.ChatQuotaWeekly()
+	}
+	if t.ChatQuotaWeeklyReset != nil {
+		st[textChatQuotaWeeklyReset] = t.ChatQuotaWeeklyReset()
+	}
+	if t.ChatQuotaCredits != nil {
+		st[textChatQuotaCredits] = t.ChatQuotaCredits()
+	}
+	if t.ChatQuotaRefresh != nil {
+		st[textChatQuotaRefresh] = t.ChatQuotaRefresh()
+	}
+	if t.ChatQuotaOpen != nil {
+		st[textChatQuotaOpen] = t.ChatQuotaOpen()
+	}
+	if t.ChatQuotaRefreshing != nil {
+		st[textChatQuotaRefreshing] = t.ChatQuotaRefreshing()
+	}
+	if t.ChatQuotaLeft != nil {
+		s.ChatQuotaLeft = t.ChatQuotaLeft
 	}
 	if t.DockFiles != nil {
 		st[textDockFiles] = t.DockFiles()
@@ -32131,14 +32331,6 @@ func (msgs Messages) StocksPlacedDetail(quantity string, code string, price stri
 	}
 }
 
-// ChatToday says "Today"
-// in the language the app shows under cx.
-func ChatToday(cx *core.Scope) string { return For(cx).ChatToday() }
-
-// ChatToday says "Today"
-// in the language of msgs.
-func (msgs Messages) ChatToday() string { return msgs.text(textChatToday) }
-
 // ChatWaitingForAConnection says "Waiting for a connection"
 // in the language the app shows under cx.
 func ChatWaitingForAConnection(cx *core.Scope) string { return For(cx).ChatWaitingForAConnection() }
@@ -32156,14 +32348,6 @@ func ChatStopped(cx *core.Scope) string { return For(cx).ChatStopped() }
 // ChatStopped says "Stopped"
 // in the language of msgs.
 func (msgs Messages) ChatStopped() string { return msgs.text(textChatStopped) }
-
-// ChatReasoning says "Reasoning"
-// in the language the app shows under cx.
-func ChatReasoning(cx *core.Scope) string { return For(cx).ChatReasoning() }
-
-// ChatReasoning says "Reasoning"
-// in the language of msgs.
-func (msgs Messages) ChatReasoning() string { return msgs.text(textChatReasoning) }
 
 // ChatSomethingWentWrong says "Something went wrong."
 // in the language the app shows under cx.
@@ -32261,19 +32445,11 @@ func ChatChooseAPhoto(cx *core.Scope) string { return For(cx).ChatChooseAPhoto()
 // in the language of msgs.
 func (msgs Messages) ChatChooseAPhoto() string { return msgs.text(textChatChooseAPhoto) }
 
-// ChatAttachAPhotoAndA says "Attach a photo and a file"
-// in the language the app shows under cx.
-func ChatAttachAPhotoAndA(cx *core.Scope) string { return For(cx).ChatAttachAPhotoAndA() }
-
-// ChatAttachAPhotoAndA says "Attach a photo and a file"
-// in the language of msgs.
-func (msgs Messages) ChatAttachAPhotoAndA() string { return msgs.text(textChatAttachAPhotoAndA) }
-
-// ChatMessage says "Message "
+// ChatMessage says "Message"
 // in the language the app shows under cx.
 func ChatMessage(cx *core.Scope) string { return For(cx).ChatMessage() }
 
-// ChatMessage says "Message "
+// ChatMessage says "Message"
 // in the language of msgs.
 func (msgs Messages) ChatMessage() string { return msgs.text(textChatMessage) }
 
@@ -32320,38 +32496,6 @@ func ChatYourMessageSendsWhenThe(cx *core.Scope) string { return For(cx).ChatYou
 func (msgs Messages) ChatYourMessageSendsWhenThe() string {
 	return msgs.text(textChatYourMessageSendsWhenThe)
 }
-
-// ChatCloseTheMenu says "Close the menu"
-// in the language the app shows under cx.
-func ChatCloseTheMenu(cx *core.Scope) string { return For(cx).ChatCloseTheMenu() }
-
-// ChatCloseTheMenu says "Close the menu"
-// in the language of msgs.
-func (msgs Messages) ChatCloseTheMenu() string { return msgs.text(textChatCloseTheMenu) }
-
-// ChatAddAndReplay says "ADD AND REPLAY"
-// in the language the app shows under cx.
-func ChatAddAndReplay(cx *core.Scope) string { return For(cx).ChatAddAndReplay() }
-
-// ChatAddAndReplay says "ADD AND REPLAY"
-// in the language of msgs.
-func (msgs Messages) ChatAddAndReplay() string { return msgs.text(textChatAddAndReplay) }
-
-// ChatAdd says "Add"
-// in the language the app shows under cx.
-func ChatAdd(cx *core.Scope) string { return For(cx).ChatAdd() }
-
-// ChatAdd says "Add"
-// in the language of msgs.
-func (msgs Messages) ChatAdd() string { return msgs.text(textChatAdd) }
-
-// ChatStopGenerating says "Stop generating"
-// in the language the app shows under cx.
-func ChatStopGenerating(cx *core.Scope) string { return For(cx).ChatStopGenerating() }
-
-// ChatStopGenerating says "Stop generating"
-// in the language of msgs.
-func (msgs Messages) ChatStopGenerating() string { return msgs.text(textChatStopGenerating) }
 
 // ChatSend says "Send"
 // in the language the app shows under cx.
@@ -32483,29 +32627,13 @@ func ChatNoReply(cx *core.Scope) string { return For(cx).ChatNoReply() }
 // in the language of msgs.
 func (msgs Messages) ChatNoReply() string { return msgs.text(textChatNoReply) }
 
-// ChatQueued says "Queued"
-// in the language the app shows under cx.
-func ChatQueued(cx *core.Scope) string { return For(cx).ChatQueued() }
-
-// ChatQueued says "Queued"
-// in the language of msgs.
-func (msgs Messages) ChatQueued() string { return msgs.text(textChatQueued) }
-
-// ChatRunning says "Running"
+// ChatRunning says "Working"
 // in the language the app shows under cx.
 func ChatRunning(cx *core.Scope) string { return For(cx).ChatRunning() }
 
-// ChatRunning says "Running"
+// ChatRunning says "Working"
 // in the language of msgs.
 func (msgs Messages) ChatRunning() string { return msgs.text(textChatRunning) }
-
-// ChatDone says "Done"
-// in the language the app shows under cx.
-func ChatDone(cx *core.Scope) string { return For(cx).ChatDone() }
-
-// ChatDone says "Done"
-// in the language of msgs.
-func (msgs Messages) ChatDone() string { return msgs.text(textChatDone) }
 
 // ChatInstallCli says "{provider}: {why}. Install {command} on PATH and sign in with {command} in a terminal, then retry."
 // in the language the app shows under cx.
@@ -32586,6 +32714,375 @@ func (msgs Messages) ChatThoughtFor(seconds int) string {
 			return "思考了 " + i18n.FormatNumber("zh-Hans", float64(seconds)) + " 秒"
 		case "zh-Hant":
 			return "思考了 " + i18n.FormatNumber("zh-Hant", float64(seconds)) + " 秒"
+		}
+	}
+}
+
+// ChatPlaceholder says "Write a message."
+// in the language the app shows under cx.
+func ChatPlaceholder(cx *core.Scope) string { return For(cx).ChatPlaceholder() }
+
+// ChatPlaceholder says "Write a message."
+// in the language of msgs.
+func (msgs Messages) ChatPlaceholder() string { return msgs.text(textChatPlaceholder) }
+
+// ChatStop says "Stop"
+// in the language the app shows under cx.
+func ChatStop(cx *core.Scope) string { return For(cx).ChatStop() }
+
+// ChatStop says "Stop"
+// in the language of msgs.
+func (msgs Messages) ChatStop() string { return msgs.text(textChatStop) }
+
+// ChatFailed says "Failed"
+// in the language the app shows under cx.
+func ChatFailed(cx *core.Scope) string { return For(cx).ChatFailed() }
+
+// ChatFailed says "Failed"
+// in the language of msgs.
+func (msgs Messages) ChatFailed() string { return msgs.text(textChatFailed) }
+
+// ChatWorked says "Worked for {minutes, number}m {seconds, number}s"
+// in the language the app shows under cx.
+func ChatWorked(cx *core.Scope, minutes int, seconds int) string {
+	return For(cx).ChatWorked(minutes, seconds)
+}
+
+// ChatWorked says "Worked for {minutes, number}m {seconds, number}s"
+// in the language of msgs.
+func (msgs Messages) ChatWorked(minutes int, seconds int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatWorked(minutes, seconds))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChatWorked; f != nil {
+			return f(minutes, seconds)
+		}
+		switch lang {
+		case "", "en":
+			return "Worked for " + msgs.arg(i18n.FormatNumber("en", float64(minutes))) + "m " + msgs.arg(i18n.FormatNumber("en", float64(seconds))) + "s"
+		case "ar":
+			return "استغرق " + i18n.FormatNumber("ar", float64(minutes)) + " د " + i18n.FormatNumber("ar", float64(seconds)) + " ث"
+		case "zh-Hans":
+			return "用时 " + i18n.FormatNumber("zh-Hans", float64(minutes)) + " 分 " + i18n.FormatNumber("zh-Hans", float64(seconds)) + " 秒"
+		case "zh-Hant":
+			return "用時 " + i18n.FormatNumber("zh-Hant", float64(minutes)) + " 分 " + i18n.FormatNumber("zh-Hant", float64(seconds)) + " 秒"
+		}
+	}
+}
+
+// ChatWorking says "{status} · {minutes, number}m {seconds, number}s"
+// in the language the app shows under cx.
+func ChatWorking(cx *core.Scope, status string, minutes int, seconds int) string {
+	return For(cx).ChatWorking(status, minutes, seconds)
+}
+
+// ChatWorking says "{status} · {minutes, number}m {seconds, number}s"
+// in the language of msgs.
+func (msgs Messages) ChatWorking(status string, minutes int, seconds int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatWorking(status, minutes, seconds))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChatWorking; f != nil {
+			return f(status, minutes, seconds)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(status) + " · " + msgs.arg(i18n.FormatNumber("en", float64(minutes))) + "m " + msgs.arg(i18n.FormatNumber("en", float64(seconds))) + "s"
+		case "ar":
+			return status + " · " + i18n.FormatNumber("ar", float64(minutes)) + " د " + i18n.FormatNumber("ar", float64(seconds)) + " ث"
+		case "zh-Hans":
+			return status + " · " + i18n.FormatNumber("zh-Hans", float64(minutes)) + " 分 " + i18n.FormatNumber("zh-Hans", float64(seconds)) + " 秒"
+		case "zh-Hant":
+			return status + " · " + i18n.FormatNumber("zh-Hant", float64(minutes)) + " 分 " + i18n.FormatNumber("zh-Hant", float64(seconds)) + " 秒"
+		}
+	}
+}
+
+// ChatRanTools says "{count, plural, one {Ran # step} other {Ran # steps}}"
+// in the language the app shows under cx.
+func ChatRanTools(cx *core.Scope, count int) string { return For(cx).ChatRanTools(count) }
+
+// ChatRanTools says "{count, plural, one {Ran # step} other {Ran # steps}}"
+// in the language of msgs.
+func (msgs Messages) ChatRanTools(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatRanTools(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChatRanTools; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			switch i18n.Cardinal("en", float64(count)) {
+			case i18n.One:
+				b.WriteString("Ran ")
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" step")
+			default:
+				b.WriteString("Ran ")
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" steps")
+			}
+			return b.String()
+		case "ar":
+			return "خطوات منفذة: " + i18n.FormatNumber("ar", float64(count))
+		case "zh-Hans":
+			var b strings.Builder
+			switch i18n.Cardinal("zh-Hans", float64(count)) {
+			default:
+				b.WriteString("已执行 ")
+				b.WriteString(i18n.FormatNumber("zh-Hans", float64(count)))
+				b.WriteString(" 个步骤")
+			}
+			return b.String()
+		case "zh-Hant":
+			var b strings.Builder
+			switch i18n.Cardinal("zh-Hant", float64(count)) {
+			default:
+				b.WriteString("已執行 ")
+				b.WriteString(i18n.FormatNumber("zh-Hant", float64(count)))
+				b.WriteString(" 個步驟")
+			}
+			return b.String()
+		}
+	}
+}
+
+// ChatPhoto says "Photo"
+// in the language the app shows under cx.
+func ChatPhoto(cx *core.Scope) string { return For(cx).ChatPhoto() }
+
+// ChatPhoto says "Photo"
+// in the language of msgs.
+func (msgs Messages) ChatPhoto() string { return msgs.text(textChatPhoto) }
+
+// ChatSearchModels says "Search models"
+// in the language the app shows under cx.
+func ChatSearchModels(cx *core.Scope) string { return For(cx).ChatSearchModels() }
+
+// ChatSearchModels says "Search models"
+// in the language of msgs.
+func (msgs Messages) ChatSearchModels() string { return msgs.text(textChatSearchModels) }
+
+// ChatSearchBranches says "Search branches"
+// in the language the app shows under cx.
+func ChatSearchBranches(cx *core.Scope) string { return For(cx).ChatSearchBranches() }
+
+// ChatSearchBranches says "Search branches"
+// in the language of msgs.
+func (msgs Messages) ChatSearchBranches() string { return msgs.text(textChatSearchBranches) }
+
+// ChatNoResults says "No results"
+// in the language the app shows under cx.
+func ChatNoResults(cx *core.Scope) string { return For(cx).ChatNoResults() }
+
+// ChatNoResults says "No results"
+// in the language of msgs.
+func (msgs Messages) ChatNoResults() string { return msgs.text(textChatNoResults) }
+
+// ChatReplay says "Replay"
+// in the language the app shows under cx.
+func ChatReplay(cx *core.Scope) string { return For(cx).ChatReplay() }
+
+// ChatReplay says "Replay"
+// in the language of msgs.
+func (msgs Messages) ChatReplay() string { return msgs.text(textChatReplay) }
+
+// ChatWorktree says "Worktree"
+// in the language the app shows under cx.
+func ChatWorktree(cx *core.Scope) string { return For(cx).ChatWorktree() }
+
+// ChatWorktree says "Worktree"
+// in the language of msgs.
+func (msgs Messages) ChatWorktree() string { return msgs.text(textChatWorktree) }
+
+// ChatStreaming says "Streaming a reply"
+// in the language the app shows under cx.
+func ChatStreaming(cx *core.Scope) string { return For(cx).ChatStreaming() }
+
+// ChatStreaming says "Streaming a reply"
+// in the language of msgs.
+func (msgs Messages) ChatStreaming() string { return msgs.text(textChatStreaming) }
+
+// ChatContextWindow says "Context window"
+// in the language the app shows under cx.
+func ChatContextWindow(cx *core.Scope) string { return For(cx).ChatContextWindow() }
+
+// ChatContextWindow says "Context window"
+// in the language of msgs.
+func (msgs Messages) ChatContextWindow() string { return msgs.text(textChatContextWindow) }
+
+// ChatProviderLocal says "Local"
+// in the language the app shows under cx.
+func ChatProviderLocal(cx *core.Scope) string { return For(cx).ChatProviderLocal() }
+
+// ChatProviderLocal says "Local"
+// in the language of msgs.
+func (msgs Messages) ChatProviderLocal() string { return msgs.text(textChatProviderLocal) }
+
+// ChatProviderRemote says "Remote"
+// in the language the app shows under cx.
+func ChatProviderRemote(cx *core.Scope) string { return For(cx).ChatProviderRemote() }
+
+// ChatProviderRemote says "Remote"
+// in the language of msgs.
+func (msgs Messages) ChatProviderRemote() string { return msgs.text(textChatProviderRemote) }
+
+// ChatEffort says "Reasoning effort"
+// in the language the app shows under cx.
+func ChatEffort(cx *core.Scope) string { return For(cx).ChatEffort() }
+
+// ChatEffort says "Reasoning effort"
+// in the language of msgs.
+func (msgs Messages) ChatEffort() string { return msgs.text(textChatEffort) }
+
+// ChatEffortOff says "Off"
+// in the language the app shows under cx.
+func ChatEffortOff(cx *core.Scope) string { return For(cx).ChatEffortOff() }
+
+// ChatEffortOff says "Off"
+// in the language of msgs.
+func (msgs Messages) ChatEffortOff() string { return msgs.text(textChatEffortOff) }
+
+// ChatEffortLow says "Low"
+// in the language the app shows under cx.
+func ChatEffortLow(cx *core.Scope) string { return For(cx).ChatEffortLow() }
+
+// ChatEffortLow says "Low"
+// in the language of msgs.
+func (msgs Messages) ChatEffortLow() string { return msgs.text(textChatEffortLow) }
+
+// ChatEffortMedium says "Medium"
+// in the language the app shows under cx.
+func ChatEffortMedium(cx *core.Scope) string { return For(cx).ChatEffortMedium() }
+
+// ChatEffortMedium says "Medium"
+// in the language of msgs.
+func (msgs Messages) ChatEffortMedium() string { return msgs.text(textChatEffortMedium) }
+
+// ChatEffortHigh says "High"
+// in the language the app shows under cx.
+func ChatEffortHigh(cx *core.Scope) string { return For(cx).ChatEffortHigh() }
+
+// ChatEffortHigh says "High"
+// in the language of msgs.
+func (msgs Messages) ChatEffortHigh() string { return msgs.text(textChatEffortHigh) }
+
+// ChatEffortMax says "Max"
+// in the language the app shows under cx.
+func ChatEffortMax(cx *core.Scope) string { return For(cx).ChatEffortMax() }
+
+// ChatEffortMax says "Max"
+// in the language of msgs.
+func (msgs Messages) ChatEffortMax() string { return msgs.text(textChatEffortMax) }
+
+// ChatUsageLimits says "Usage limits"
+// in the language the app shows under cx.
+func ChatUsageLimits(cx *core.Scope) string { return For(cx).ChatUsageLimits() }
+
+// ChatUsageLimits says "Usage limits"
+// in the language of msgs.
+func (msgs Messages) ChatUsageLimits() string { return msgs.text(textChatUsageLimits) }
+
+// ChatQuotaAccount says "Demo account"
+// in the language the app shows under cx.
+func ChatQuotaAccount(cx *core.Scope) string { return For(cx).ChatQuotaAccount() }
+
+// ChatQuotaAccount says "Demo account"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaAccount() string { return msgs.text(textChatQuotaAccount) }
+
+// ChatQuotaFiveHour says "5-hour limit"
+// in the language the app shows under cx.
+func ChatQuotaFiveHour(cx *core.Scope) string { return For(cx).ChatQuotaFiveHour() }
+
+// ChatQuotaFiveHour says "5-hour limit"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaFiveHour() string { return msgs.text(textChatQuotaFiveHour) }
+
+// ChatQuotaFiveHourReset says "2h 14m"
+// in the language the app shows under cx.
+func ChatQuotaFiveHourReset(cx *core.Scope) string { return For(cx).ChatQuotaFiveHourReset() }
+
+// ChatQuotaFiveHourReset says "2h 14m"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaFiveHourReset() string { return msgs.text(textChatQuotaFiveHourReset) }
+
+// ChatQuotaWeekly says "Weekly limit"
+// in the language the app shows under cx.
+func ChatQuotaWeekly(cx *core.Scope) string { return For(cx).ChatQuotaWeekly() }
+
+// ChatQuotaWeekly says "Weekly limit"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaWeekly() string { return msgs.text(textChatQuotaWeekly) }
+
+// ChatQuotaWeeklyReset says "4d"
+// in the language the app shows under cx.
+func ChatQuotaWeeklyReset(cx *core.Scope) string { return For(cx).ChatQuotaWeeklyReset() }
+
+// ChatQuotaWeeklyReset says "4d"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaWeeklyReset() string { return msgs.text(textChatQuotaWeeklyReset) }
+
+// ChatQuotaCredits says "Credits"
+// in the language the app shows under cx.
+func ChatQuotaCredits(cx *core.Scope) string { return For(cx).ChatQuotaCredits() }
+
+// ChatQuotaCredits says "Credits"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaCredits() string { return msgs.text(textChatQuotaCredits) }
+
+// ChatQuotaRefresh says "Refresh limits"
+// in the language the app shows under cx.
+func ChatQuotaRefresh(cx *core.Scope) string { return For(cx).ChatQuotaRefresh() }
+
+// ChatQuotaRefresh says "Refresh limits"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaRefresh() string { return msgs.text(textChatQuotaRefresh) }
+
+// ChatQuotaOpen says "Open usage page"
+// in the language the app shows under cx.
+func ChatQuotaOpen(cx *core.Scope) string { return For(cx).ChatQuotaOpen() }
+
+// ChatQuotaOpen says "Open usage page"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaOpen() string { return msgs.text(textChatQuotaOpen) }
+
+// ChatQuotaRefreshing says "Refreshing…"
+// in the language the app shows under cx.
+func ChatQuotaRefreshing(cx *core.Scope) string { return For(cx).ChatQuotaRefreshing() }
+
+// ChatQuotaRefreshing says "Refreshing…"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaRefreshing() string { return msgs.text(textChatQuotaRefreshing) }
+
+// ChatQuotaLeft says "{percent, number}% left"
+// in the language the app shows under cx.
+func ChatQuotaLeft(cx *core.Scope, percent int) string { return For(cx).ChatQuotaLeft(percent) }
+
+// ChatQuotaLeft says "{percent, number}% left"
+// in the language of msgs.
+func (msgs Messages) ChatQuotaLeft(percent int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatQuotaLeft(percent))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChatQuotaLeft; f != nil {
+			return f(percent)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatNumber("en", float64(percent))) + "% left"
+		case "ar":
+			return "المتبقي " + i18n.FormatNumber("ar", float64(percent)) + "%"
+		case "zh-Hans":
+			return "剩余 " + i18n.FormatNumber("zh-Hans", float64(percent)) + "%"
+		case "zh-Hant":
+			return "剩餘 " + i18n.FormatNumber("zh-Hant", float64(percent)) + "%"
 		}
 	}
 }

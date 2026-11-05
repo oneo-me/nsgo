@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"strings"
 
 	"github.com/oneo-me/nsgo/base"
@@ -117,7 +118,7 @@ func editorPanel(cx *core.Scope, panel string) core.Node {
 					return fin.Accent().Over(core.Style{Height: core.Pt(32), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, CornerRadius: 8, Padding: core.Symmetric(0, 12),
 						Background: colors.AccentFill(), Transition: core.Transition{Duration: 150e6}, Active: &core.Style{Transform: core.Transform{Scale: 0.97}}})
 				},
-				Children: []core.Node{ui.Icon(ui.IconPlus, 14, colors.OnAccent), ui.Text(tr.DockEdit2(), 13, ui.Semibold, colors.OnAccent)}},
+				Children: []core.Node{ui.Icon(lucide.Plus, 14, colors.OnAccent), ui.Text(tr.DockEdit2(), 13, ui.Semibold, colors.OnAccent)}},
 			ui.Textf(func() string { return tr.DockEdits(dockTitle(tr, panel), edits.Get()) }, 13, ui.Regular, colors.Muted),
 		}},
 		core.View{Style: core.Style{Gap: 4}, Children: lines},
@@ -155,7 +156,7 @@ func dockPanel(cx *core.Scope, panel string) core.Node {
 		return core.View{Style: core.Style{FlexGrow: 1, Gap: 2, Padding: core.All(8)}, Children: rows}
 	case "preview":
 		return core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12, Padding: core.All(16)}, Children: []core.Node{
-			ui.IconTile{Icon: ui.IconSpark, Size: 40},
+			ui.IconTile{Icon: lucide.Sparkles, Size: 40},
 			core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 2}, Children: []core.Node{
 				ui.Text(tr.DockLivePreview(), 13, ui.Semibold, colors.Text), ui.Text(tr.DockFollowsTheEditorBesideIt(), 12, ui.Regular, colors.Muted)}},
 		}}

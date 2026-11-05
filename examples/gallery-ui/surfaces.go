@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"math"
 	"time"
 
@@ -520,8 +521,8 @@ func (s CardStack) Render(cx *core.Scope) core.Node {
 	off := func() bool { return done() || busy.Get() }
 	buttons := core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifyCenter, Gap: 12},
 		Children: []core.Node{
-			Button{Variant: ButtonGhost, Icon: IconClose, Text: s.LeftLabel, Disabled: off, OnPress: func() { decide(CardLeft, 0) }},
-			Button{Variant: ButtonAccent, Icon: IconCheck, Text: s.RightLabel, Disabled: off, OnPress: func() { decide(CardRight, 0) }},
+			Button{Variant: ButtonGhost, Icon: lucide.X, Text: s.LeftLabel, Disabled: off, OnPress: func() { decide(CardLeft, 0) }},
+			Button{Variant: ButtonAccent, Icon: lucide.Check, Text: s.RightLabel, Disabled: off, OnPress: func() { decide(CardRight, 0) }},
 		}}
 	return core.View{Style: core.Style{Gap: 16}, Children: []core.Node{stage, buttons}}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
@@ -152,7 +153,7 @@ func photosDemo(cx *core.Scope) core.Node {
 				hintText = refreshKey + tr.PhotosRefreshes() + hintText
 			}
 		}
-		foot := []core.Node{ui.Icon(ui.IconArrowDown, 14, colors.Faint), core.Text{Content: hintText, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)}}
+		foot := []core.Node{ui.Icon(lucide.ArrowDown, 14, colors.Faint), core.Text{Content: hintText, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)}}
 		// The mouse does not pull scroll views down: desktops refresh here.
 		if desktopIdiom {
 			foot = append(foot, core.Dynamic(func(*core.Scope) core.Node {

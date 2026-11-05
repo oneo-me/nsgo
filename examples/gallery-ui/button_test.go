@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"testing"
 
 	"github.com/oneo-me/nsgo/core"
@@ -19,7 +20,7 @@ func TestButton(t *testing.T) {
 				row = append(row, Button{Variant: v, Text: names[i], TestID: names[i], OnPress: func() { pressed = append(pressed, names[i]) }})
 			}
 			row = append(row,
-				Button{Icon: IconPlus, Label: "Add", TestID: "icon", Variant: ButtonGhost},
+				Button{Icon: lucide.Plus, Label: "Add", TestID: "icon", Variant: ButtonGhost},
 				Button{Text: "Off", TestID: "disabled", Disabled: func() bool { return true }, OnPress: func() { pressed = append(pressed, "off") }})
 			return core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8, AlignItems: core.AlignStart}, Children: row}
 		})
