@@ -50,8 +50,11 @@ func NewSwitchLook(cx *core.Scope, on func() bool, small bool) SwitchLook {
 	t := core.NewAnimatedValue(cx, start)
 	x := Lerp(t, 0, float64(width-2*pad-knobW))
 	env := cx.Env()
+	// A memo, since the effect's next run stops the slide it started and on
+	// may read what changes without changing its value, as an app's revision.
+	value := core.NewMemo(cx, on)
 	cx.Effect(func() {
-		next := on()
+		next := value.Get()
 		if next == shown {
 			return
 		}
