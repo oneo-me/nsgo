@@ -353,3 +353,37 @@ func TestWindowConstraintsClamp(t *testing.T) {
 		}
 	}
 }
+
+// A window restored at a frame opens there at its size, and reports the
+// frame the platform gives it, not the app's own.
+func TestWindowFrame(t *testing.T) {
+	saved := WindowFrame{X: 40, Y: 50, Move: true, Width: 900, Height: 700}
+	var inside *Scope
+	w := newWindows(t, func(cx *Scope) {
+		cx.OpenWindow(WindowOptions{Frame: saved, Constraints: WindowConstraints{MaxWidth: 800}}, func(cx *Scope) Node {
+			inside = cx
+			return View{}
+		})
+		cx.OpenWindow(WindowOptions{Frame: WindowFrame{Width: 900, Height: 700}}, func(cx *Scope) Node { return View{} })
+	})
+	opened := w.take(0, driver.ItemOpenSurface)
+	if len(opened) != 2 {
+		t.Fatalf("opened %d surfaces", len(opened))
+	}
+	s := opened[0].Surface
+	if s.Frame != saved || s.Width != 800 || s.Height != 700 {
+		t.Fatalf("opened %+v", s)
+	}
+	if s := opened[1].Surface; s.Frame != (WindowFrame{}) || s.Width != 400 || s.Height != 300 {
+		t.Fatalf("a frame that does not move opened %+v", s)
+	}
+	env := inside.Env()
+	if env.WindowFrame() != (WindowFrame{}) || env.FullScreen() {
+		t.Fatal("a window starts with a frame the platform has not reported")
+	}
+	moved := WindowFrame{X: 60, Y: 70, Move: true, Width: 800, Height: 700}
+	w.app.Surfaces()[0].SetEnvironment(driver.Environment{FullScreen: true, WindowFrame: moved})
+	if env.WindowFrame() != moved || !env.FullScreen() {
+		t.Fatalf("reported frame %+v", env.WindowFrame())
+	}
+}

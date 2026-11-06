@@ -99,6 +99,10 @@ func (s *surface) command(c *driver.WindowCommand) {
 	case driver.WindowSetTitleBar:
 		s.titleBar, s.titleHeight = c.TitleBar, c.Height
 		s.applyTitleBar()
+		// A title bar's change keeps the content's size, not the frame's.
+		if s.openFrame.Move {
+			s.setWindowFrame(s.openFrame)
+		}
 	case driver.WindowMinimize:
 		w.Send(sel("miniaturize:"), objc.ID(0))
 	case driver.WindowToggleMaximize:

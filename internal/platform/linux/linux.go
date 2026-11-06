@@ -441,7 +441,7 @@ func (w *window) createWindow(opts Options) {
 	}
 	w.setupInputs()
 	gSignalConnect(w.win, "close-request", cbCloseRequest, w.handle)
-	for _, name := range []string{"maximized", "fullscreen"} {
+	for _, name := range []string{"maximized", "fullscreen", "default-width", "default-height"} {
 		gSignalConnect(w.win, "notify::"+name, cbWindowState, w.handle)
 	}
 }

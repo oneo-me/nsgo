@@ -54,6 +54,8 @@ func init() {
 type Options struct {
 	Title         string
 	Width, Height driver.Points
+	// Frame is where the window opens (nsgo.WindowFrame).
+	Frame driver.WindowFrame
 	// ID names the app's directories and storage (engine.AppDirs).
 	ID string
 	// Components are the native components Native elements name.
@@ -522,6 +524,9 @@ func Run(app engine.App, opts Options) {
 	// Placed before it is the window's, so the sizes this sends do not
 	// reach the engine, which starts at the client area the window has.
 	w.placeNew(opts.Width, opts.Height, opts.test == nil)
+	if opts.Frame.Move {
+		w.placeAt(opts.Frame)
+	}
 	windows[hwnd] = w
 	// Nothing has the focus yet: typing must not open a composition.
 	w.updateIME()
@@ -590,6 +595,24 @@ func (w *window) placeNew(width, height driver.Points, fit bool) {
 		x, y = work.Left+max(workW-cx, 0)/2, work.Top+max(workH-cy, 0)/2
 	}
 	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), swpNoZOrder|swpNoActivate)
+}
+
+// placeAt moves the new window to frame f, kept on the monitor nearest it.
+// That monitor's scale may be another one than the window started with.
+func (w *window) placeAt(f driver.WindowFrame) {
+	r := rect{Left: w.px(f.X), Top: w.px(f.Y), Right: w.px(f.X + f.Width), Bottom: w.px(f.Y + f.Height)}
+	var mi monitorInfo
+	mi.Size = uint32(unsafe.Sizeof(mi))
+	monitor, _, _ := monitorFromRect.Call(uintptr(unsafe.Pointer(&r)), monitorDefaultNear)
+	if ok, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&mi))); ok != 0 {
+		corner := w.point(mi.Work.Left, mi.Work.Top)
+		size := w.point(mi.Work.Right-mi.Work.Left, mi.Work.Bottom-mi.Work.Top)
+		f = f.OnScreen([]driver.Bounds{{Origin: corner, Size: driver.Size{Width: size.X, Height: size.Y}}})
+	}
+	setWindowPos.Call(w.hwnd, 0, uintptr(w.px(f.X)), uintptr(w.px(f.Y)), uintptr(w.px(f.Width)), uintptr(w.px(f.Height)), swpNoZOrder|swpNoActivate)
+	if dpi, _, _ := getDpiForWindow.Call(w.hwnd); dpi != 0 {
+		w.scale = float64(dpi) / 96
+	}
 }
 
 // newWindow returns the state of a window showing an app.
@@ -1958,6 +1981,10 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmMove:
 		for wv := range w.webs {
 			wv.moved()
+		}
+		if f := w.windowFrame(); w.engine != nil && f != w.env.WindowFrame {
+			w.env.WindowFrame = f
+			w.engine.SetEnvironment(w.env)
 		}
 	}
 	r, _, _ := defWindowProcW.Call(hwnd, uintptr(message), wParam, lParam)

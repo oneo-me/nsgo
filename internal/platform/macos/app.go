@@ -45,7 +45,7 @@ func startOwn(app engine.App, opts Options) *surface {
 	}
 	eopts := engine.Options{Environment: s.env, Perf: ownPerf, Thread: apple.RaiseThread,
 		Appearance: opts.Appearance, Host: opts.Host,
-		Windows: &engine.WindowOptions{Title: opts.Title, Width: opts.Width, Height: opts.Height,
+		Windows: &engine.WindowOptions{Title: opts.Title, Width: opts.Width, Height: opts.Height, Frame: opts.Frame,
 			Material: opts.Material, Constraints: opts.Constraints}}
 	eopts.SetDirs(engine.AppDirs(opts.ID))
 	imageload.UseDiskCache(eopts.CacheDir)
@@ -120,7 +120,12 @@ func (o *surface) openSurface(cfg driver.SurfaceConfig) {
 	s.attach(o.engine)
 	if cfg.Kind == driver.SurfaceWindow {
 		s.setConstraints(cfg.Constraints)
-		window.Send(sel("center"))
+		if cfg.Frame.Move {
+			s.openFrame = cfg.Frame.OnScreen(usableScreens())
+			s.setWindowFrame(s.openFrame)
+		} else {
+			window.Send(sel("center"))
+		}
 	}
 	if !cfg.Hidden {
 		if cfg.Kind == driver.SurfacePanel {

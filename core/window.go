@@ -37,6 +37,10 @@ type WindowOptions struct {
 	// Width and Height are the content's size in points; zero is the
 	// main window's (nsgo.WindowSize).
 	Width, Height Points
+	// Frame, when it moves, opens the window there at its size instead of
+	// centered, as an app restoring a window does: Width and Height give
+	// way to it, and a window no screen would show opens centered.
+	Frame WindowFrame
 	// Key, when set, finds a window opened with the same key and still
 	// open: OpenWindow shows and focuses it instead of opening another.
 	Key string
@@ -105,10 +109,15 @@ func (cx *Scope) OpenWindow(opts WindowOptions, content func(cx *Scope) Node) *W
 	if opts.Width <= 0 || opts.Height <= 0 {
 		opts.Width, opts.Height = rt.windows.Width, rt.windows.Height
 	}
+	if opts.Frame.Move && opts.Frame.Width > 0 && opts.Frame.Height > 0 {
+		opts.Width, opts.Height = opts.Frame.Width, opts.Frame.Height
+	} else {
+		opts.Frame = WindowFrame{}
+	}
 	limits := opts.Constraints.Normalized()
 	size := limits.Clamp(Size{Width: opts.Width, Height: opts.Height})
 	w := rt.openSurface(cx.current(), driver.SurfaceConfig{Kind: driver.SurfaceWindow, Title: opts.Title,
-		Width: size.Width, Height: size.Height, Hidden: opts.Hidden, Material: opts.Material, Constraints: limits}, content)
+		Width: size.Width, Height: size.Height, Frame: opts.Frame, Hidden: opts.Hidden, Material: opts.Material, Constraints: limits}, content)
 	if opts.Key != "" {
 		w.key = opts.Key
 		if rt.keyed == nil {
@@ -148,7 +157,7 @@ func (rt *runtime) openSurface(owner *Scope, cfg driver.SurfaceConfig, content f
 	rt.surfaces = append(rt.surfaces, t)
 	// It starts in the app's environment until its platform reports its own.
 	env := app.reported
-	env.TitleBar, env.Maximized, env.WindowMaterial = Edges{}, false, cfg.Material
+	env.TitleBar, env.Maximized, env.FullScreen, env.WindowFrame, env.WindowMaterial = Edges{}, false, false, WindowFrame{}, cfg.Material
 	t.SetEnvironment(env)
 	t.Resize(Size{Width: cfg.Width, Height: cfg.Height})
 	app.commands = append(app.commands, driver.MountItem{Kind: driver.ItemOpenSurface, Surface: &cfg})

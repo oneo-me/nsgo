@@ -10,7 +10,7 @@ import (
 // run runs the app on its own surface, which opens its windows.
 func run(root App, app func(*core.Scope), o options) {
 	macos.Run(core.AppRoot(appOf(root, app)), macos.Options{
-		Title: name, Width: o.width, Height: o.height, ID: id,
+		Title: name, Width: o.width, Height: o.height, Frame: o.frame, ID: id,
 		Components: o.components, Perf: o.monitor, Material: o.material, Constraints: o.constraints, Fonts: o.fonts,
 		Appearance: o.appearance, HideDock: o.hideDock,
 	})

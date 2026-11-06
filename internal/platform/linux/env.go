@@ -49,6 +49,12 @@ func (w *window) environment() driver.Environment {
 		fontScale = float32(float64(dpi) / float64(96*xftDPIUnit))
 	}
 	locale := sessionLocale()
+	var frame driver.WindowFrame
+	if w.win != 0 {
+		var width, height int32
+		gtkWindowGetDefaultSize(w.win, &width, &height)
+		frame.Width, frame.Height = driver.Points(width), driver.Points(height)
+	}
 	return driver.Environment{
 		Dark:         dark,
 		FontScale:    fontScale,
@@ -61,6 +67,8 @@ func (w *window) environment() driver.Environment {
 		Idiom:        driver.IdiomDesktop,
 		TitleBar:     w.titleBarArea(),
 		Maximized:    w.win != 0 && gtkWindowIsMaximized(w.win) != 0,
+		FullScreen:   w.chrome.fullScreen,
+		WindowFrame:  frame,
 	}
 }
 

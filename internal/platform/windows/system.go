@@ -752,6 +752,22 @@ func getProcOrdinal(module uintptr, ordinal uintptr) (uintptr, error) {
 	return p, nil
 }
 
+// windowFrame returns the window's frame from the main screen's top left, as
+// setWindowFrame takes it; a minimized window, parked out of sight, keeps
+// the one it had.
+func (w *window) windowFrame() driver.WindowFrame {
+	if w.embedded {
+		return driver.WindowFrame{}
+	}
+	if isIconicWindow(w.hwnd) {
+		return w.env.WindowFrame
+	}
+	var r rect
+	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&r)))
+	corner, size := w.point(r.Left, r.Top), w.point(r.Right-r.Left, r.Bottom-r.Top)
+	return driver.WindowFrame{X: corner.X, Y: corner.Y, Move: true, Width: size.X, Height: size.Y}
+}
+
 // setWindowFrame moves and sizes the window: points from the main
 // screen's top left, which is the virtual screen's origin, in the
 // window's pixels.

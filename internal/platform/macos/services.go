@@ -377,6 +377,53 @@ func (s *surface) setWindowFrame(f driver.WindowFrame) {
 	w.Send(sel("setFrame:display:animate:"), frame, true, f.Animated)
 }
 
+// windowFrame returns the window's frame from the main screen's top left,
+// as setWindowFrame takes it.
+func (s *surface) windowFrame() driver.WindowFrame {
+	if s.embedded || s.window == 0 {
+		return driver.WindowFrame{}
+	}
+	frame := objc.Send[apple.CGRect](s.window, sel("frame"))
+	screens := screenFrames("frame")
+	if len(screens) == 0 {
+		return driver.WindowFrame{}
+	}
+	main := screens[0]
+	return driver.WindowFrame{X: driver.Points(frame.Origin.X - main.Origin.X),
+		Y: driver.Points(main.Origin.Y + main.Size.Height - frame.Origin.Y - frame.Size.Height), Move: true,
+		Width: driver.Points(frame.Size.Width), Height: driver.Points(frame.Size.Height)}
+}
+
+// screenFrames returns each screen's rectangle named by selector, the
+// main screen first, in AppKit's coordinates.
+func screenFrames(selector string) []apple.CGRect {
+	screens := objc.ID(objc.GetClass("NSScreen")).Send(sel("screens"))
+	frames := make([]apple.CGRect, objc.Send[uint](screens, sel("count")))
+	for i := range frames {
+		frames[i] = objc.Send[apple.CGRect](screens.Send(sel("objectAtIndex:"), uint(i)), sel(selector))
+	}
+	return frames
+}
+
+// usableScreens returns what the screens leave windows, past the menu bar
+// and the Dock, from the main screen's top left, y down.
+func usableScreens() []driver.Bounds {
+	frames := screenFrames("visibleFrame")
+	screens := make([]driver.Bounds, len(frames))
+	if len(frames) == 0 {
+		return screens
+	}
+	main := screenFrames("frame")[0]
+	top := main.Origin.Y + main.Size.Height
+	for i, f := range frames {
+		screens[i] = driver.Bounds{
+			Origin: driver.Point{X: driver.Points(f.Origin.X - main.Origin.X), Y: driver.Points(top - f.Origin.Y - f.Size.Height)},
+			Size:   driver.Size{Width: driver.Points(f.Size.Width), Height: driver.Points(f.Size.Height)},
+		}
+	}
+	return screens
+}
+
 // The window levels and collection behaviors of setLevel.
 const (
 	levelNormal, levelFloating = 0, 3

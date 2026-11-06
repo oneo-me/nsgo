@@ -58,6 +58,9 @@ func Run[M Main](main M, opts ...Option) {
 		fn(&o)
 	}
 	o.constraints = o.constraints.Normalized()
+	if o.frame.Width > 0 && o.frame.Height > 0 {
+		o.width, o.height = o.frame.Width, o.frame.Height
+	}
 	size := o.constraints.Clamp(core.Size{Width: o.width, Height: o.height})
 	o.width, o.height = size.Width, size.Height
 	switch m := any(main).(type) {
@@ -109,6 +112,8 @@ type options struct {
 	// width and height its size.
 	material      core.WindowMaterial
 	width, height core.Points
+	// frame is where the main window opens, when it moves.
+	frame core.WindowFrame
 	// constraints limit the main window.
 	constraints core.WindowConstraints
 	// appearance is the appearance the app starts in.
@@ -134,6 +139,14 @@ func Appearance(appearance core.Appearance) Option {
 // default. desktop.OpenWindow's windows take it where they set no size.
 func WindowSize(width, height core.Points) Option {
 	return func(o *options) { o.width, o.height = width, height }
+}
+
+// WindowFrame opens the main window with frame f, as desktop.Frame
+// reported it, instead of centered at WindowSize: an app restores its
+// window with it. A window no screen would show, as on a screen that
+// went away, opens centered on the main screen. Linux takes only the size.
+func WindowFrame(f core.WindowFrame) Option {
+	return func(o *options) { o.frame = f }
 }
 
 // WindowConstraints limits the main window's content size and what the

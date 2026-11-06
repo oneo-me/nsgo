@@ -36,6 +36,7 @@ var (
 	getWindowPlacement     = user32.NewProc("GetWindowPlacement")
 	setWindowPlacement     = user32.NewProc("SetWindowPlacement")
 	monitorFromWindow      = user32.NewProc("MonitorFromWindow")
+	monitorFromRect        = user32.NewProc("MonitorFromRect")
 	getMonitorInfoW        = user32.NewProc("GetMonitorInfoW")
 	createMenu             = user32.NewProc("CreateMenu")
 	createPopupMenu        = user32.NewProc("CreatePopupMenu")

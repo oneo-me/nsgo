@@ -20,6 +20,12 @@ type Environment struct {
 	// Maximized is whether the window is maximized or zoomed, so an
 	// app-drawn maximize button can show restore.
 	Maximized bool
+	// FullScreen is whether the window fills its screen in full screen.
+	FullScreen bool
+	// WindowFrame is where the window is and how large, as WindowSetFrame
+	// takes them; zero without a window, and a position only where the
+	// platform knows one (Move).
+	WindowFrame WindowFrame
 	// KeyboardHeight is how much of the bottom the software keyboard
 	// covers; KeyboardDuration is how long it takes to move.
 	KeyboardHeight   Points

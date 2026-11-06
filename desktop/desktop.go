@@ -129,6 +129,17 @@ func ShowsMaterial(cx *core.Scope) bool {
 // maximize button of the app's own can show restore.
 func Maximized(cx *core.Scope) bool { return cx.Env().Maximized() }
 
+// FullScreen reports whether the window is in full screen.
+func FullScreen(cx *core.Scope) bool { return cx.Env().FullScreen() }
+
+// Frame returns where the window is and how large, as SetWindowFrame and
+// nsgo.WindowFrame take them, changing as it moves and resizes. While
+// the window is maximized or in full screen it is that frame, so an app
+// remembering a window keeps the one it last had otherwise. Linux knows
+// only the size GTK keeps, which ignores those states, and Move says no
+// position came; zero without a window.
+func Frame(cx *core.Scope) WindowFrame { return cx.Env().WindowFrame() }
+
 // MinimizeWindow minimizes the window.
 func MinimizeWindow(cx *core.Scope) { cx.MinimizeWindow() }
 

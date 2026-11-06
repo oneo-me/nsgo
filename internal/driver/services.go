@@ -171,6 +171,9 @@ type SurfaceConfig struct {
 	// Width and Height are the content's size in points; zero is the
 	// platform's default.
 	Width, Height Points
+	// Frame, when it moves, places a window instead of centering it,
+	// kept on a screen (WindowFrame.OnScreen).
+	Frame WindowFrame
 	// Hidden opens it without showing it, as panels open.
 	Hidden bool
 	// Material is the material behind the content (WindowSetMaterial).
@@ -245,6 +248,35 @@ type WindowFrame struct {
 	Width, Height Points
 	// Animated animates the change with macOS's resize animation.
 	Animated bool
+}
+
+// The part of a window's top edge a screen must show for the user to
+// reach it and drag it back: its title bar's height, and this much wide.
+const (
+	reachableHeight Points = 32
+	reachableWidth  Points = 100
+)
+
+// OnScreen returns f when one of screens, the usable areas of the
+// connected screens in f's coordinates, shows enough of its top edge to
+// drag it, as a screen that went away does not. Else f shrinks to fit
+// the first screen and centers on it.
+func (f WindowFrame) OnScreen(screens []Bounds) WindowFrame {
+	if len(screens) == 0 {
+		return f
+	}
+	for _, s := range screens {
+		wide := min(f.X+f.Width, s.Origin.X+s.Size.Width) - max(f.X, s.Origin.X)
+		tall := min(f.Y+reachableHeight, s.Origin.Y+s.Size.Height) - max(f.Y, s.Origin.Y)
+		if wide >= min(reachableWidth, f.Width) && tall >= reachableHeight {
+			return f
+		}
+	}
+	s := screens[0]
+	f.Width, f.Height = min(f.Width, s.Size.Width), min(f.Height, s.Size.Height)
+	f.X = s.Origin.X + (s.Size.Width-f.Width)/2
+	f.Y = s.Origin.Y + (s.Size.Height-f.Height)/2
+	return f
 }
 
 // WindowConstraints limit a window's content size, in points, and what

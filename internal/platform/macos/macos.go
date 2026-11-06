@@ -44,6 +44,8 @@ type Options struct {
 	// Material is the material behind the app's views, where they draw
 	// nothing opaque (nsgo.WindowMaterial).
 	Material driver.WindowMaterial
+	// Frame is where the main window opens (nsgo.WindowFrame).
+	Frame driver.WindowFrame
 	// Constraints limit the main window (nsgo.WindowConstraints).
 	Constraints driver.WindowConstraints
 	// Perf shows the performance monitor over the app: frame rate, frame
@@ -157,6 +159,10 @@ type view struct {
 }
 
 type surface struct {
+	// openFrame is the frame the window opened at, until its first batch,
+	// whose title bar would change it.
+	openFrame driver.WindowFrame
+
 	batch uint64 // batches applied
 	// stickyBound are the scroll views with sticky cells whose insets
 	// follow animated values.
@@ -869,6 +875,8 @@ func (s *surface) environment() driver.Environment {
 		TitleBar:       s.titleBarArea(),
 		WindowMaterial: s.material,
 		Maximized:      !s.embedded && objc.Send[bool](s.window, sel("isZoomed")),
+		FullScreen:     !s.embedded && s.window != 0 && objc.Send[uint](s.window, selStyleMask)&maskFullScreen != 0,
+		WindowFrame:    s.windowFrame(),
 	}
 }
 
@@ -907,14 +915,14 @@ func (s *surface) refresh() {
 func (s *surface) observe() {
 	observeApp()
 	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
-	for _, name := range []string{"NSWindowDidResizeNotification", "NSWindowDidEnterFullScreenNotification",
-		"NSWindowDidExitFullScreenNotification"} {
+	for _, name := range []string{"NSWindowDidResizeNotification", "NSWindowDidMoveNotification",
+		"NSWindowDidEnterFullScreenNotification", "NSWindowDidExitFullScreenNotification"} {
 		s.stops = append(s.stops, apple.Observe(center, apple.Global(appKitPath, name), func(note objc.ID) {
 			if note.Send(sel("object")) != s.window {
 				return
 			}
 			s.refresh()
-			if name != "NSWindowDidResizeNotification" {
+			if strings.Contains(name, "FullScreen") {
 				// AppKit lays the bar out again as it leaves full screen,
 				// after the notification.
 				apple.OnMain(func() { s.layoutTrafficLights(); s.refresh() })
@@ -1275,6 +1283,7 @@ func (s *surface) RequestFrame() {
 }
 
 func (s *surface) apply(b *driver.MountBatch) {
+	defer func() { s.openFrame = driver.WindowFrame{} }()
 	s.batch++
 	var lb *layoutBatch
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {

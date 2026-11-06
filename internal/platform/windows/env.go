@@ -49,6 +49,8 @@ func (w *window) environment() driver.Environment {
 		TitleBar:       w.titleBarArea(),
 		WindowMaterial: w.material,
 		Maximized:      w.zoomed(),
+		FullScreen:     w.chrome.fullScreen,
+		WindowFrame:    w.windowFrame(),
 	}
 }
 
