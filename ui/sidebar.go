@@ -141,7 +141,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 		if sec.Note != nil {
 			nodes = append(nodes, core.View{Style: core.Style{Padding: core.Symmetric(4, 8)}, Children: []core.Node{sec.Note}})
 		}
-		sections = append(sections, core.View{TestID: sec.TestID, Style: core.Style{Gap: 1}, Children: nodes})
+		sections = append(sections, core.View{TestID: sec.TestID, Style: core.Style{Gap: 4}, Children: nodes})
 	}
 
 	// The keys are the list's only while it has the focus: elsewhere the

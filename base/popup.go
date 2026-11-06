@@ -174,18 +174,26 @@ func (m *popupMotion) transitionEnd() {
 }
 
 // class is the phase's class, after and over the popup's own.
-func (m *popupMotion) class() string {
+func (m *popupMotion) class() string { return m.classed(m.startingClass, m.endingClass) }
+
+// classed is starting or ending, by phase.
+func (m *popupMotion) classed(starting, ending string) string {
 	switch {
 	case m.closing.Get():
-		return m.endingClass
+		return ending
 	case !m.entered.Get():
-		return m.startingClass
+		return starting
 	}
 	return ""
 }
 
 // style merges the phase's style over fn's.
 func (m *popupMotion) style(fn func() core.Style) func() core.Style {
+	return m.styled(fn, m.starting.Style, m.ending.Style)
+}
+
+// styled merges starting or ending, by phase, over fn's style.
+func (m *popupMotion) styled(fn func() core.Style, starting, ending core.Style) func() core.Style {
 	return func() core.Style {
 		var s core.Style
 		if fn != nil {
@@ -193,9 +201,9 @@ func (m *popupMotion) style(fn func() core.Style) func() core.Style {
 		}
 		switch {
 		case m.closing.Get():
-			s = s.Merge(m.ending.Style)
+			s = s.Merge(ending)
 		case !m.entered.Get():
-			s = s.Merge(m.starting.Style)
+			s = s.Merge(starting)
 		}
 		return s
 	}
@@ -211,19 +219,28 @@ func (m *popupMotion) overlay(o core.Overlay, popup part) core.Overlay {
 // part is the class and styles the app gives one of a component's parts.
 type part = parts.Part
 
-// modalLayer shows m, holding the backdrop and the popup, while st is
-// open.
-func modalLayer(st *popup, m core.Modal, backdrop part, backdropID string, keepOnBackdrop, keepOnEscape bool, popup part,
-	children []core.Node, label, testID string) core.Node {
-	return core.Show{When: st.open, Then: func(cx *core.Scope) core.Node {
+// modalLayer shows m, holding the backdrop, the popup and what d lays out
+// around it, while the motion keeps the popup in the tree.
+func modalLayer(st *popup, motion *popupMotion, m core.Modal, d Dialog) core.Node {
+	backdrop, popup := parts.Of(d.BackdropClass, d.BackdropStyle, d.BackdropStyleFunc), parts.Of(d.PopupClass, d.PopupStyle, d.PopupStyleFunc)
+	return core.Show{When: motion.shown.Get, Then: func(cx *core.Scope) core.Node {
 		var nodes []core.Node
 		if backdrop.Set() {
-			nodes = append(nodes, core.View{Class: backdrop.Class, Style: parts.Fill.Merge(backdrop.Style), StyleFunc: backdrop.Fn,
-				OnPress: func(core.PressEvent) { st.cancel(ReasonBackdropPress, keepOnBackdrop) }, NoFocus: true,
-				TestID: backdropID})
+			startingClass, endingClass := parts.Important(d.BackdropStartingClass), parts.Important(d.BackdropEndingClass)
+			nodes = append(nodes, core.View{Class: backdrop.Class, Style: parts.Fill.Merge(backdrop.Style),
+				ClassFunc: func() string { return motion.classed(startingClass, endingClass) },
+				StyleFunc: motion.styled(backdrop.Fn, d.BackdropStartingStyle, d.BackdropEndingStyle),
+				OnPress:   func(core.PressEvent) { st.cancel(ReasonBackdropPress, d.NoCloseOnBackdropPress) }, NoFocus: true,
+				TestID: d.BackdropTestID})
 		}
-		nodes = append(nodes, core.View{Class: popup.Class, Style: popup.Style, StyleFunc: popup.Fn, Role: core.RoleDialog,
-			Label: label, TestID: testID, Children: children})
+		nodes = append(nodes, d.Before...)
+		nodes = append(nodes, core.View{Class: popup.Class, ClassFunc: motion.class, Style: popup.Style, StyleFunc: motion.style(popup.Fn), Role: core.RoleDialog,
+			OnTransitionEnd: motion.transitionEnd, Label: d.Label, TestID: d.TestID, Children: d.Children})
+		nodes = append(nodes, d.After...)
+		// What is going takes no more presses.
+		nodes = append(nodes, core.Show{When: motion.closing.Get, Then: func(*core.Scope) core.Node {
+			return core.View{Style: parts.Fill, OnPress: func(core.PressEvent) {}, NoFocus: true}
+		}})
 		m.Children = nodes
 		m.OnRequestClose = func(reason string) {
 			if reason == "swipe" {
@@ -231,7 +248,7 @@ func modalLayer(st *popup, m core.Modal, backdrop part, backdropID string, keepO
 				st.cancel(ReasonSwipe, m.NoCloseOnSwipe)
 				return
 			}
-			st.cancel(ReasonCancel, keepOnEscape)
+			st.cancel(ReasonCancel, d.NoCloseOnEscape)
 		}
 		return m
 	}}

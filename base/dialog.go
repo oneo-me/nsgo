@@ -36,6 +36,22 @@ type Dialog struct {
 	PopupClass        string
 	PopupStyle        core.Style
 	PopupStyleFunc    func() core.Style
+	// StartingStyle styles the popup in its first frame and EndingStyle as
+	// it goes (popupMotion), as Popover's, so a Transition in its style
+	// comes in and goes in the tree, with the modal held until it went;
+	// BackdropStartingStyle and BackdropEndingStyle style the backdrop in
+	// those phases. Without them Animation is the platform's entrance.
+	StartingClass         string
+	StartingStyle         core.Style
+	EndingClass           string
+	EndingStyle           core.Style
+	BackdropStartingClass string
+	BackdropStartingStyle core.Style
+	BackdropEndingClass   string
+	BackdropEndingStyle   core.Style
+	// Before and After are laid out in the layer around the popup, such
+	// as spacers that place it off center.
+	Before, After []core.Node
 	// LayerClass and LayerStyle style the layer that holds the backdrop
 	// and the popup, over its default, which centers the popup.
 	LayerClass string
@@ -60,9 +76,11 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 		})
 		st.open = func() bool { return d.Open() && !st.userClosed.Get() }
 	}
+	motion := newPopupMotion(cx, st.open, parts.Part{Class: d.StartingClass, Style: d.StartingStyle},
+		parts.Part{Class: d.EndingClass, Style: d.EndingStyle})
 	// The platform presents the modal: OnOpen and OnClose follow once its
 	// animation would have ended, or as soon as a platform reports it
-	// shown or gone.
+	// shown or gone. A motion in the tree holds the modal for itself.
 	var stop func() bool
 	report := func(open bool) func() {
 		return func() {
@@ -77,7 +95,7 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 	}
 	was := false
 	cx.Effect(func() {
-		open := st.open()
+		open := motion.shown.Get()
 		if open == was {
 			return
 		}
@@ -97,6 +115,5 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 		IOS: d.IOS, Android: d.Android, StatusBar: d.StatusBar, StatusBarFunc: d.StatusBarFunc, Class: d.LayerClass,
 		OnShown: report(true), OnDismissed: report(false),
 		Style: core.Style{JustifyContent: core.JustifyCenter, AlignItems: core.AlignCenter}.Merge(d.LayerStyle)}
-	return modalLayer(st, m, parts.Of(d.BackdropClass, d.BackdropStyle, d.BackdropStyleFunc), d.BackdropTestID, d.NoCloseOnBackdropPress,
-		d.NoCloseOnEscape, parts.Of(d.PopupClass, d.PopupStyle, d.PopupStyleFunc), d.Children, d.Label, d.TestID)
+	return modalLayer(st, motion, m, d)
 }

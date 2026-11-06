@@ -206,7 +206,7 @@ func (s Settings) layout(cx *core.Scope, narrow bool) core.Node {
 // heading is a pane's title, with the close button where close says.
 func (s Settings) heading(cx *core.Scope, title func() string, close bool) core.Node {
 	colors := ColorsOf(cx)
-	text := Textf(title, 15, Semibold, colors.Text)
+	text := Textf(title, 13, Bold, colors.Text)
 	text.Role, text.MaxLines, text.Style.FlexGrow, text.Style.FlexShrink = core.RoleHeader, 1, 1, 1
 	children := []core.Node{text}
 	if close && s.HeaderActions != nil {
@@ -300,7 +300,7 @@ func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, se
 		item := group.Items[r.Item]
 		if r.Category != lastCategory {
 			if searching || all && len(s.Categories) > 1 {
-				title := Text(category.Title, 15, Semibold, colors.Text)
+				title := Text(category.Title, 13, Bold, colors.Text)
 				title.Role = core.RoleHeader
 				nodes = append(nodes, title)
 			}
@@ -309,11 +309,11 @@ func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, se
 			}
 		}
 		if (r.Category != lastCategory || r.Group != lastGroup) && (group.Title != "" || group.Actions != nil) {
-			title := Text(group.Title, 13, Semibold, colors.Muted)
+			title := Text(group.Title, 13, Regular, colors.Text)
 			title.Style.FlexGrow, title.Style.FlexShrink = 1, 1
 			nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12,
-				Padding: core.Edges{Bottom: 8}, Borders: core.Edges{Bottom: 1}},
-				StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Bottom: colors.Line()}} },
+				Padding: core.Edges{Bottom: 12}, Borders: core.Edges{Bottom: 1}},
+				StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Bottom: colors.Border()}} },
 				Children:  append([]core.Node{title}, group.Actions...)})
 		}
 		lastCategory, lastGroup = r.Category, r.Group
@@ -325,7 +325,7 @@ func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, se
 		nodes = append(nodes, s.row(cx, item, narrow || item.Stacked, testID))
 	}
 	if len(nodes) == 0 {
-		nodes = append(nodes, Text(s.EmptyText, 14, Regular, colors.Muted))
+		nodes = append(nodes, Text(s.EmptyText, 13, Regular, colors.Muted))
 	}
 	return core.View{Style: core.Style{Padding: core.All(20), Gap: 20}, Children: nodes}
 }
@@ -336,11 +336,11 @@ func (s Settings) row(cx *core.Scope, item SettingsItem, stacked bool, testID st
 	colors := ColorsOf(cx)
 	var texts []core.Node
 	if item.Title != "" {
-		texts = append(texts, Text(item.Title, 14, Medium, colors.Text))
+		texts = append(texts, Text(item.Title, 13, Regular, colors.Text))
 	}
 	if item.Description != "" {
-		d := Text(item.Description, 13, Regular, colors.Muted)
-		d.Style.LineHeight = 18
+		d := Text(item.Description, 11.375, Regular, colors.Muted)
+		d.Style.LineHeight = 16
 		texts = append(texts, d)
 	}
 	var text core.Node = core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), Gap: 4}, Children: texts}
@@ -357,4 +357,32 @@ func (s Settings) row(cx *core.Scope, item SettingsItem, stacked bool, testID st
 		style.Direction, style.AlignItems = core.Row, core.AlignCenter
 	}
 	return core.View{TestID: testID, Style: style, Children: children}
+}
+
+// SettingsDialog is Settings in a Dialog, as Onevra hosts it: the surface
+// holds nothing else, and Content builds the Settings, told when the width
+// it is given is narrow.
+type SettingsDialog struct {
+	Open         func() bool
+	OnOpenChange func(open bool, reason base.Reason)
+	OnClose      func()
+	Content      func(narrow func() bool) core.Node
+	// Inset is Dialog's.
+	Inset core.Points
+	// Label names the dialog for assistive technology.
+	Label  string
+	TestID string
+}
+
+// Render implements core.Node.
+func (d SettingsDialog) Render(cx *core.Scope) core.Node {
+	env := cx.Env()
+	width := func() core.Points {
+		w := env.Window().Width
+		return min(800, w*.88, max(0, w-2*dialogInset(cx, d.Inset)))
+	}
+	return Dialog{Open: d.Open, OnOpenChange: d.OnOpenChange, OnClose: d.OnClose, Inset: d.Inset, Bare: true, Label: d.Label, TestID: d.TestID,
+		Children: []core.Node{core.View{StyleFunc: func() core.Style {
+			return core.Style{Width: core.Pt(width()), Height: core.Pt(min(720, env.Window().Height*.85)), MinHeight: core.Pt(0), FlexShrink: 1}
+		}, Children: []core.Node{d.Content(func() bool { return width() < 680 })}}}}
 }

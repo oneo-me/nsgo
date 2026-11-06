@@ -20,10 +20,12 @@ type AlertAction struct {
 type AlertDialog struct {
 	Open         func() bool
 	OnOpenChange func(open bool, reason base.Reason)
-	Title        string
-	Description  string
-	Actions      []AlertAction
-	TestID       string
+	// OnClose follows it being gone, once its motion ended.
+	OnClose     func()
+	Title       string
+	Description string
+	Actions     []AlertAction
+	TestID      string
 }
 
 // Render implements core.Node.
@@ -39,6 +41,6 @@ func (a AlertDialog) Render(*core.Scope) core.Node {
 			}
 		}})
 	}
-	return Dialog{Open: a.Open, OnOpenChange: a.OnOpenChange, Title: a.Title, Description: a.Description, Footer: footer,
-		NoCloseOnBackdropPress: true, TestID: a.TestID, Style: core.Style{MaxWidth: core.Pt(420)}}
+	return Dialog{Open: a.Open, OnOpenChange: a.OnOpenChange, OnClose: a.OnClose, Title: a.Title, Description: a.Description, Footer: footer,
+		NoCloseOnBackdropPress: true, TestID: a.TestID}
 }

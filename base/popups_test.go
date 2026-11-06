@@ -10,6 +10,45 @@ import (
 	"github.com/oneo-me/nsgo/nsgotest"
 )
 
+// A dialog with an ending part stays until its transition is over, and comes back from where it is when opened again.
+func TestDialogGoesThroughItsMotion(t *testing.T) {
+	var open *core.Signal[bool]
+	closed := 0
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		open = core.NewSignal(cx, true)
+		return base.Dialog{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, OnClose: func() { closed++ },
+			Animation: core.ModalNone, BackdropStyle: core.Style{Background: core.RGBA(0, 0.3)}, BackdropTestID: "backdrop",
+			BackdropEndingStyle: core.Style{Opacity: core.Alpha(0)}, TestID: "dialog",
+			PopupStyle:  core.Style{Width: core.Pt(100), Height: core.Pt(100), Transition: core.Transition{Duration: 200 * time.Millisecond, Properties: core.TransitionOpacity}},
+			EndingStyle: core.Style{Opacity: core.Alpha(0)},
+			Children:    []core.Node{core.Text{Content: "inside"}}}
+	})
+	app.Settle()
+	open.Set(false)
+	app.Settle()
+	if got := app.Find("id:dialog").Style.Opacity; got != 0 || app.Find("id:backdrop").Style.Opacity != 0 {
+		t.Fatalf("dialog opacity = %v as it goes", got)
+	}
+	if closed != 0 {
+		t.Fatal("OnClose ran before the dialog had gone")
+	}
+	open.Set(true)
+	app.Settle()
+	app.Advance(300 * time.Millisecond)
+	if !app.Exists("id:dialog") || closed != 0 {
+		t.Fatal("opened again as it went, the dialog left")
+	}
+	open.Set(false)
+	app.Advance(100 * time.Millisecond)
+	if !app.Exists("id:dialog") {
+		t.Fatal("the dialog left before its transition ended")
+	}
+	app.Advance(150 * time.Millisecond)
+	if app.Exists("id:dialog") || closed != 1 {
+		t.Fatalf("after its transition: shown %v, %d closes", app.Exists("id:dialog"), closed)
+	}
+}
+
 func TestSheetSlidesInAndReportsAfterItsMotion(t *testing.T) {
 	var log []string
 	var open *core.Signal[bool]

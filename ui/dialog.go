@@ -1,24 +1,37 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/desktop"
 )
 
-// Dialog is a modal surface over a dimmed app, centered on desktops and
-// a sheet from the bottom on touch screens: a title, a description, the
-// app's children and its Footer of actions.
+// Dialog is a modal surface over a dimmed app and a sheet from the bottom
+// on touch screens: a title, a description, the app's children and its
+// Footer of actions. On desktops it pops in and fades out as Onevra's
+// does, centered across and with two thirds of the spare height below it.
 type Dialog struct {
 	Open         func() bool
 	OnOpenChange func(open bool, reason base.Reason)
-	Title        string
-	Description  string
-	Children     []core.Node
+	// OnClose follows it being gone, once its motion ended.
+	OnClose     func()
+	Title       string
+	Description string
+	Children    []core.Node
 	// Footer holds the actions, at the end of a row on desktops, the
 	// last first in a stack across a sheet.
 	Footer                 []core.Node
 	NoCloseOnEscape        bool
 	NoCloseOnBackdropPress bool
+	// Inset is the least distance from the window's edges on desktops, 20
+	// when 0; a title bar the app draws in takes it further. The strip of
+	// that title bar keeps moving the window under the backdrop.
+	Inset core.Points
+	// Bare leaves out the surface's padding, gap and width, for content
+	// that fills it, sizes it and is clipped to its corners.
+	Bare bool
 	// Label names the dialog for assistive technology, Title when empty.
 	Label  string
 	TestID string
@@ -59,9 +72,54 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 		body = append(body, core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, JustifyContent: core.JustifyEnd,
 			Gap: 8, Margin: core.Edges{Top: 8}}, Children: d.Footer})
 	}
-	return base.Dialog{Open: d.Open, OnOpenChange: d.OnOpenChange, Animation: core.ModalFade, NoCloseOnEscape: d.NoCloseOnEscape,
-		NoCloseOnBackdropPress: d.NoCloseOnBackdropPress, BackdropStyle: scrim,
-		PopupStyle:     core.Style{Width: core.Pct(90), MaxWidth: core.Pt(480), Padding: core.All(20), Gap: 12},
-		PopupStyleFunc: func() core.Style { return surface(cx).Merge(d.Style) },
-		Children:       body, Label: label, TestID: d.TestID}
+	popup := core.Style{Width: core.Pt(440), Padding: core.All(20), Gap: 12, Transition: dialogPop}
+	if d.Bare {
+		popup = core.Style{Overflow: core.Hidden, Transition: dialogPop}
+	}
+	spacer := func(grow float32) core.View {
+		return core.View{Style: core.Style{FlexGrow: grow, MinHeight: core.Pt(0)}, PointerEvents: core.PointerEventsNone}
+	}
+	return base.Dialog{Open: d.Open, OnOpenChange: d.OnOpenChange, OnClose: d.OnClose, Animation: core.ModalNone, NoCloseOnEscape: d.NoCloseOnEscape,
+		NoCloseOnBackdropPress: d.NoCloseOnBackdropPress, BackdropStyle: core.Style{Background: Black(0.18), Transition: dialogFade},
+		BackdropStartingStyle: core.Style{Opacity: core.Alpha(0)}, BackdropEndingStyle: core.Style{Opacity: core.Alpha(0)},
+		PopupStyle: popup, StartingStyle: dialogStarting, EndingStyle: dialogEnding,
+		PopupStyleFunc: func() core.Style {
+			window, inset := cx.Env().Window(), dialogInset(cx, d.Inset)
+			finish := FinOf(cx).Menu()
+			return finish.Over(core.Style{Background: Alpha(finish.Background, 0.96), Color: colors.Text(), CornerRadius: RadiusDialog, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1,
+				MaxWidth: core.Pt(max(0, window.Width-2*inset)), MaxHeight: core.Pt(max(0, window.Height-2*inset)), FlexShrink: 0}).Merge(d.Style)
+		},
+		LayerStyle: core.Style{JustifyContent: core.JustifyStart}, Before: []core.Node{spacer(1)}, After: []core.Node{spacer(2), dialogDragStrip(cx)},
+		Children: body, Label: label, TestID: d.TestID}
+}
+
+// RadiusDialog rounds a dialog on desktops.
+const RadiusDialog core.Points = 16
+
+// A dialog's layers move as Onevra's: the dim fades, and the surface pops
+// in and fades out where it is. Under reduced motion they come and go at
+// once.
+var (
+	dialogFade = core.Transition{Duration: 180 * time.Millisecond, Easing: core.EaseOut, Properties: core.TransitionOpacity}
+	dialogPop  = core.Transition{Duration: 180 * time.Millisecond, Easing: core.EaseOut,
+		Properties: core.TransitionOpacity | core.TransitionTransform}
+	dialogStarting = core.Style{Opacity: core.Alpha(0), Transform: core.Transform{Scale: 0.96, TranslateY: 8}}
+	dialogEnding   = core.Style{Opacity: core.Alpha(0), Transform: core.Transform{Scale: 0.98}}
+)
+
+// dialogInset is how far a dialog stays from the window's edges: inset, 20
+// when 0, at least the title bar the app draws in.
+func dialogInset(cx *core.Scope, inset core.Points) core.Points {
+	if inset <= 0 {
+		inset = 20
+	}
+	return max(inset, desktop.TitleBar(cx).Top)
+}
+
+// dialogDragStrip keeps the title bar the app draws in moving the window
+// under a dialog's backdrop.
+func dialogDragStrip(cx *core.Scope) core.Node {
+	return core.View{Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOn}, StyleFunc: func() core.Style {
+		return core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Height: core.Pt(desktop.TitleBar(cx).Top)}
+	}}
 }

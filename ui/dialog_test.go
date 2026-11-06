@@ -32,21 +32,23 @@ func TestDialog(t *testing.T) {
 		})
 		app.Press("open")
 		d := app.Find("dialog")
-		if d.Style.Background != p.Surface {
-			t.Fatalf("dialog = %x, want the surface", d.Style.Background)
-		}
 		if e.Idiom == core.IdiomDesktop {
-			if d.Style.CornerRadius != RadiusCard {
-				t.Fatal("the desktop dialog is not a rounded card")
+			if d.Style.CornerRadius != RadiusDialog {
+				t.Fatal("the desktop dialog is not a rounded panel")
 			}
-		} else if d.Style.Corners.BottomLeft != 0 || d.Style.Corners.TopLeft == 0 {
+		} else if d.Style.Background != p.Surface || d.Style.Corners.BottomLeft != 0 || d.Style.Corners.TopLeft == 0 {
 			t.Fatal("the phone dialog is not a sheet from the bottom")
 		}
 		app.Find("Rename file")
 		app.Press("cancel")
+		if e.Idiom == core.IdiomDesktop {
+			app.Find("Rename file") // it fades out
+			app.Advance(200 * time.Millisecond)
+		}
 		app.WaitForGone("Rename file", time.Second)
 		app.Press("open-alert")
 		app.Press("confirm")
+		app.Advance(200 * time.Millisecond)
 		app.WaitForGone("Delete report.pdf?", time.Second)
 		if !confirmed {
 			t.Fatal("the alert's action did not run")

@@ -990,6 +990,7 @@ func TestLanguageSetting(t *testing.T) {
 		t.Errorf("back to the system's English, the button is at %v, was %v", got, ltr)
 	}
 	app.Press("id:settings-close")
+	app.Advance(200 * time.Millisecond)
 	app.WaitForGone("id:settings-dialog", time.Second)
 }
 

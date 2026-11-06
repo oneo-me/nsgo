@@ -181,13 +181,18 @@ type Dialog struct {
 	State  *State
 	Open   func() bool
 	OnOpen func(open bool)
-	Labels Labels
+	// OnClose follows the dialog being gone, once its motion ended.
+	OnClose func()
+	Labels  Labels
 	// Device names the machine browsed, leading the breadcrumbs.
 	Device string
 	// Hint is a sentence beside the dialog's buttons, such as what the
 	// chosen folder is for.
 	Hint     string
 	Sections []Section
+	// SectionsFunc, when set, gives Sections as they change, which keeps
+	// the dialog as they load.
+	SectionsFunc func() []Section
 	// Files lets files be chosen. Otherwise only folders are: Choose takes
 	// the selected folder, or the one shown, and files show dimmed.
 	Files bool
@@ -236,8 +241,7 @@ func (p Dialog) Render(cx *core.Scope) core.Node {
 	if p.Choose != nil {
 		children = append(children, divider(cx), p.footer(cx, closeIt, choose))
 	}
-	return ui.Dialog{Open: p.Open, OnOpenChange: func(open bool, _ base.Reason) { p.OnOpen(open) }, Label: p.Labels.Title, TestID: p.TestID,
-		Style: core.Style{Padding: core.All(0), Gap: 0, Overflow: core.Hidden},
+	return ui.Dialog{Open: p.Open, OnOpenChange: func(open bool, _ base.Reason) { p.OnOpen(open) }, OnClose: p.OnClose, Label: p.Labels.Title, TestID: p.TestID, Bare: true,
 		Children: []core.Node{core.View{StyleFunc: func() core.Style {
 			w := env.Window()
 			return core.Style{Width: core.Pt(min(840, w.Width-80)), Height: core.Pt(min(560, w.Height-80)), MinHeight: core.Pt(0)}
@@ -361,15 +365,20 @@ func (p Dialog) addressField(cx *core.Scope) core.Node {
 		}}}
 }
 
-// places lists the sidebar's sections.
+// places lists the sidebar's sections, following SectionsFunc.
 func (p Dialog) places(cx *core.Scope) core.Node {
+	if p.SectionsFunc != nil {
+		return core.Dynamic(func(cx *core.Scope) core.Node { return p.sidebar(p.SectionsFunc()) })
+	}
+	return p.sidebar(p.Sections)
+}
+
+func (p Dialog) sidebar(list []Section) core.Node {
 	s := p.State
-	sections := make([]ui.SidebarSection, len(p.Sections))
-	paths := map[string]bool{}
-	for i, section := range p.Sections {
+	sections := make([]ui.SidebarSection, len(list))
+	for i, section := range list {
 		sections[i].Title = section.Label
 		for _, place := range section.Places {
-			paths[place.Path] = true
 			sections[i].Items = append(sections[i].Items, ui.SidebarItem{ID: place.Path, Text: place.Name, Icon: place.Icon})
 		}
 	}

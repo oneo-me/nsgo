@@ -29,26 +29,18 @@ func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 		}}}}}}
 }
 
-// settingsDialog is the gallery's settings (ui.Settings) in a dialog over
-// the desktop layout, narrow on a small window's width.
+// settingsDialog is the gallery's settings in a dialog over the desktop
+// layout.
 func (g *gallery) settingsDialog(cx *core.Scope) core.Node {
-	colors := ui.ColorsOf(cx)
-	env := cx.Env()
-	width := func() core.Points { return min(800, env.Window().Width*0.92) }
-	close := func() { g.settingsOpen.Set(false) }
-	return base.Dialog{Open: g.settingsOpen.Get, Animation: core.ModalFade, Label: locales.Settings(cx), TestID: "settings-dialog",
-		OnOpenChange:  func(open bool, _ base.Reason) { g.settingsOpen.Set(open) },
-		BackdropStyle: core.Style{Background: ui.Black(0.4)},
-		PopupStyleFunc: func() core.Style {
-			return ui.CardStyle(cx).Merge(core.Style{Width: core.Pt(width()), Height: core.Pt(min(560, env.Window().Height*0.85)),
-				Overflow: core.Hidden, Color: colors.Text()})
-		},
-		Children: []core.Node{ui.Settings{Categories: g.settingsCategories(cx), Category: g.settingsCategory, Query: g.settingsQuery,
-			Narrow: func() bool { return width() < 600 }, TestID: "settings-surface",
-			Title: locales.Settings(cx), SearchLabel: locales.SettingsSearch(cx), SearchPlaceholder: locales.SettingsSearchPlaceholder(cx),
-			ResultsTitle: locales.SettingsResults(cx), EmptyText: locales.SettingsEmpty(cx),
-			OnClose: close, CloseLabel: locales.SettingsClose(cx)}},
-	}
+	return ui.SettingsDialog{Open: g.settingsOpen.Get, OnOpenChange: func(open bool, _ base.Reason) { g.settingsOpen.Set(open) },
+		Label: locales.Settings(cx), TestID: "settings-dialog",
+		Content: func(narrow func() bool) core.Node {
+			return ui.Settings{Categories: g.settingsCategories(cx), Category: g.settingsCategory, Query: g.settingsQuery,
+				Narrow: narrow, TestID: "settings-surface",
+				Title: locales.Settings(cx), SearchLabel: locales.SettingsSearch(cx), SearchPlaceholder: locales.SettingsSearchPlaceholder(cx),
+				ResultsTitle: locales.SettingsResults(cx), EmptyText: locales.SettingsEmpty(cx),
+				OnClose: func() { g.settingsOpen.Set(false) }, CloseLabel: locales.SettingsClose(cx)}
+		}}
 }
 
 // settingsPage is the settings as the narrow layout's tab, under its
