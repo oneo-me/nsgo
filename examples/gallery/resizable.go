@@ -42,42 +42,41 @@ func resizableDemo(cx *core.Scope) core.Node {
 	if core.Untracked(cx, cx.Env().Window).Width < 600 {
 		start = 130
 	}
-	sidebar, consoleSize := core.NewSignal(cx, start), core.NewSignal(cx, core.Points(140))
+	sidebarValue, consoleValue := core.NewSignal(cx, float64(start)), core.NewSignal(cx, 140.0)
+	sidebar := func() core.Points { return core.Points(sidebarValue.Get()) }
+	consoleSize := func() core.Points { return core.Points(consoleValue.Get()) }
+	setSidebar := func(p core.Points) { sidebarValue.Set(float64(p)) }
+	setConsole := func(p core.Points) { consoleValue.Set(float64(p)) }
 	shown := core.NewSignal(cx, true)
 	last := core.NewSignal(cx, "—")
-	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Gap: 12, Background: colors.Background(), Padding: core.All(16)})
-	}, Children: []core.Node{
-		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			core.Text{Content: Hint(cx, tr.ResizableDragALineBetweenTwo(), tr.ResizableDragALineBetweenTwo2()),
-				Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
-			base.Button{OnPress: func(core.PressEvent) { toggled(shown) }, Selected: shown.Get, Label: tr.ResizableConsole(),
-				StyleFunc: func() core.Style {
-					return core.Style{CornerRadius: 6, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.Symmetric(6, 12),
-						Active: &core.Style{Opacity: core.Alpha(0.7)}, Selected: &core.Style{Background: colors.Raised()}}
-				},
-				Children: []core.Node{ui.Text(tr.ResizableConsole(), 13, ui.Medium, colors.Text)}},
-		}},
+	return stagePage(cx,
 		core.View{StyleFunc: func() core.Style {
-			return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(240), Overflow: core.Hidden, CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Border(),
+			return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), Overflow: core.Hidden, CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Border(),
 				Background: colors.Background()}
 		}, Children: []core.Node{
 			base.ResizablePanelGroup{TestID: "panels", HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx), HandleLabel: tr.ResizableResizeTheSidebar(),
 				Style:    core.Style{FlexGrow: 1},
 				OnResize: func(s []core.Points) { last.Set(tr.ResizableRow() + roundSizes(s)) },
 				Panels: []base.ResizablePanel{
-					{Size: sidebar.Get, MinSize: 120, MaxSize: 360, OnResize: sidebar.Set, StyleFunc: ui.Filled(colors.Raised),
-						Children: []core.Node{pane(cx, tr.ResizableFiles(), tr.Resizable120To360Pt(), func() string { return tr.ResizableSidebarPt(fmt.Sprintf("%.0f", sidebar.Get())) })}},
+					{Size: sidebar, MinSize: 120, MaxSize: 360, OnResize: setSidebar, StyleFunc: ui.Filled(colors.Raised),
+						Children: []core.Node{pane(cx, tr.ResizableFiles(), tr.Resizable120To360Pt(), func() string { return tr.ResizableSidebarPt(fmt.Sprintf("%.0f", sidebar())) })}},
 					{MinSize: 160, Children: []core.Node{base.ResizablePanelGroup{Axis: base.Vertical, HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
 						HandleLabel: tr.ResizableResizeTheConsole(), Style: core.Style{FlexGrow: 1},
 						OnResize: func(s []core.Points) { last.Set(tr.ResizableColumn() + roundSizes(s)) },
 						Panels: []base.ResizablePanel{
 							{MinSize: 80, Children: []core.Node{pane(cx, tr.ResizableEditor(), tr.ResizableTakesTheRoomTheOthers(), nil)}},
-							{Size: consoleSize.Get, MinSize: 60, Visible: shown.Get, OnResize: consoleSize.Set, StyleFunc: ui.Filled(colors.Raised),
-								Children: []core.Node{pane(cx, tr.ResizableConsole(), tr.ResizableHiddenItKeepsItsSize(), func() string { return tr.ResizableConsolePt(fmt.Sprintf("%.0f", consoleSize.Get())) })}},
+							{Size: consoleSize, MinSize: 60, Visible: shown.Get, OnResize: setConsole, StyleFunc: ui.Filled(colors.Raised),
+								Children: []core.Node{pane(cx, tr.ResizableConsole(), tr.ResizableHiddenItKeepsItsSize(), func() string { return tr.ResizableConsolePt(fmt.Sprintf("%.0f", consoleSize())) })}},
 						}}}},
 				}},
 		}},
-		core.Text{ContentFunc: func() string { return tr.ResizableLastResize() + last.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
-	}}
+		Section{Title: tr.TerminalOptions(), Note: "base.ResizablePanel", Children: []core.Node{
+			SwitchRow{Label: tr.ResizableConsole(), Code: "Visible", Checked: shown.Get, OnChange: shown.Set},
+			numberKnob(tr.ResizableFiles(), sidebarValue, 120, 360, 10),
+			numberKnob(tr.ResizableConsole(), consoleValue, 60, 300, 10),
+			Note{Text: Hint(cx, tr.ResizableDragALineBetweenTwo(), tr.ResizableDragALineBetweenTwo2())},
+		}},
+		Section{Title: tr.TerminalStatus(), Note: "OnResize", Children: []core.Node{
+			core.Text{ContentFunc: func() string { return tr.ResizableLastResize() + last.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
+		}})
 }

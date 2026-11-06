@@ -25,8 +25,9 @@ const (
 // ToastContent is a toast: a Title, a quieter Description and, with
 // Action, a button that runs OnAction and closes it. Leading replaces the
 // Type's status icon, as with an image or a spinner. Duration is how long
-// it stays, 5 s when 0 and until it is dismissed when negative. A toast
-// with the ID of one shown replaces it.
+// it stays, 5 s when 0 and until it is dismissed when negative. OnClose
+// runs once it has gone, whatever closed it. A toast with the ID of one
+// shown replaces it.
 type ToastContent struct {
 	ID          string
 	Type        ToastType
@@ -35,13 +36,14 @@ type ToastContent struct {
 	Leading     core.Node
 	Action      string
 	OnAction    func()
+	OnClose     func()
 	Duration    time.Duration
 }
 
 type toastEntry = toast.Entry[string, ToastContent]
 
 const (
-	toastLimit = 3                     // how many show at once
+	toastLimit = 3                     // how many show at once by default
 	toastTick  = 50 * time.Millisecond // how often the lifecycle advances while one shows
 )
 
@@ -49,8 +51,10 @@ const (
 // NewToaster, shows and dismisses toasts through it from anywhere, and
 // places a Toasts of it once over its content. NSGo's ToastManager keeps
 // their lifecycle; a toast's timeout pauses while the stack is open
-// under the pointer or a finger.
+// under the pointer or a finger. Limit is how many show at once, 3 when
+// 0, older ones waiting behind them.
 type Toaster struct {
+	Limit    int
 	cx       *core.Scope
 	manager  toast.Manager[string, ToastContent]
 	shown    *core.Signal[[]toastEntry]
@@ -74,7 +78,9 @@ func (t *Toaster) Show(c ToastContent) string {
 	if c.Duration == 0 {
 		c.Duration = 5 * time.Second
 	}
-	t.manager.Push(c.ID, c, max(c.Duration, 0), t.cx.Now())
+	if old, ok := t.manager.Push(c.ID, c, max(c.Duration, 0), t.cx.Now()); ok && old.OnClose != nil {
+		old.OnClose()
+	}
 	t.run()
 	return c.ID
 }
@@ -91,8 +97,17 @@ func (t *Toaster) DismissAll() {
 	t.run()
 }
 
+// visible is the toasts to show.
+func (t *Toaster) visible() []toastEntry {
+	limit := t.Limit
+	if limit == 0 {
+		limit = toastLimit
+	}
+	return t.manager.Visible(limit)
+}
+
 func (t *Toaster) run() {
-	t.shown.Set(t.manager.Visible(toastLimit))
+	t.shown.Set(t.visible())
 	if !t.ticking {
 		t.ticking = true
 		t.cx.AfterFunc(toastTick, t.tick)
@@ -100,8 +115,14 @@ func (t *Toaster) run() {
 }
 
 func (t *Toaster) tick() {
-	if a := t.manager.Advance(t.cx.Now(), t.expanded.GetUntracked()); a.Changed {
-		t.shown.Set(t.manager.Visible(toastLimit))
+	a := t.manager.Advance(t.cx.Now(), t.expanded.GetUntracked())
+	if a.Changed {
+		t.shown.Set(t.visible())
+	}
+	for _, gone := range a.Removed {
+		if gone.Value.OnClose != nil {
+			gone.Value.OnClose()
+		}
 	}
 	if t.manager.Len() == 0 {
 		t.ticking = false
@@ -121,9 +142,14 @@ const (
 	ToastBottom
 	ToastBottomStart
 	ToastBottomEnd
+	// ToastStart and ToastEnd are the middle of the window's sides.
+	ToastStart
+	ToastEnd
 )
 
 func (p ToastPlacement) top() bool { return p <= ToastTopEnd }
+
+func (p ToastPlacement) side() bool { return p >= ToastStart }
 
 // anchor and align are the stack's anchor and where it sits across.
 func (p ToastPlacement) anchor() (toast.Anchor, core.Align) {
@@ -138,19 +164,65 @@ func (p ToastPlacement) anchor() (toast.Anchor, core.Align) {
 		return toast.AnchorBottomLeft, core.AlignStart
 	case ToastBottomEnd:
 		return toast.AnchorBottomRight, core.AlignEnd
+	case ToastStart:
+		return toast.AnchorLeftCenter, core.AlignStart
+	case ToastEnd:
+		return toast.AnchorRightCenter, core.AlignEnd
 	}
 	return toast.AnchorTopCenter, core.AlignCenter
+}
+
+// ToastSwipe is the way toasts are swiped away. The zero value is toward
+// the nearest edge of the window.
+type ToastSwipe uint8
+
+const (
+	ToastSwipeEdge ToastSwipe = iota
+	ToastSwipeLeft
+	ToastSwipeRight
+	ToastSwipeUp
+	ToastSwipeDown
+	// ToastSwipeOff keeps them from being swiped.
+	ToastSwipeOff
+)
+
+// direction is the swipe of toasts at p, in a layout right to left or not.
+func (s ToastSwipe) direction(p ToastPlacement, rtl bool) toast.SwipeDirection {
+	switch s {
+	case ToastSwipeLeft:
+		return toast.SwipeLeft
+	case ToastSwipeRight:
+		return toast.SwipeRight
+	case ToastSwipeUp:
+		return toast.SwipeUp
+	case ToastSwipeDown:
+		return toast.SwipeDown
+	case ToastSwipeOff:
+		return toast.SwipeOff
+	}
+	switch {
+	case p.side() && (p == ToastStart) != rtl:
+		return toast.SwipeLeft
+	case p.side():
+		return toast.SwipeRight
+	case p.top():
+		return toast.SwipeUp
+	}
+	return toast.SwipeDown
 }
 
 // Toasts is Onevra's toasts, a Toaster's, over the window inside the safe
 // area: glass cards up to 360 points wide, the newest in front and older
 // ones tucked behind it, fanning out under the pointer or a finger.
-// Swiping one away or Escape closes it. Inset adds room at the
-// placement's edge, as for a shell's header. CloseLabel names each
-// toast's close button for assistive technology.
+// Reverse puts the newest farthest from the edge, as a list growing away
+// from it. Swiping one away, Swipe's way, or Escape closes it. Inset adds
+// room at the placement's edge, as for a shell's header. CloseLabel names
+// each toast's close button for assistive technology.
 type Toasts struct {
 	Toaster    *Toaster
 	Placement  ToastPlacement
+	Reverse    bool
+	Swipe      ToastSwipe
 	Inset      core.Points
 	CloseLabel string
 	TestID     string
@@ -160,20 +232,23 @@ type Toasts struct {
 func (ts Toasts) Render(cx *core.Scope) core.Node {
 	t := ts.Toaster
 	anchor, align := ts.Placement.anchor()
-	place := core.Style{Left: core.Pt(0), Right: core.Pt(0), AlignItems: align, Padding: core.All(16)}
-	swipe := toast.SwipeDown
-	if ts.Placement.top() {
+	// An overlay sizes to its content: the window's width gives align room.
+	place := core.Style{Left: core.Pt(0), Width: core.Pct(100), AlignItems: align, Padding: core.All(16)}
+	switch {
+	case ts.Placement.side():
+		place.Top, place.Height, place.JustifyContent = core.Pt(0), core.Pct(100), core.JustifyCenter
+		place.PaddingEnv = core.EnvEdges{Top: core.EnvSafeArea, Bottom: core.EnvSafeArea}
+	case ts.Placement.top():
 		place.Top, place.Padding.Top, place.PaddingEnv = core.Pt(0), 16+ts.Inset, core.EnvEdges{Top: core.EnvSafeArea}
-		swipe = toast.SwipeUp
-	} else {
+	default:
 		place.Bottom, place.Padding.Bottom, place.PaddingEnv = core.Pt(0), 16+ts.Inset, core.EnvEdges{Bottom: core.EnvSafeArea}
 	}
 	return core.Overlay{PointerEvents: core.PointerEventsBoxNone, Style: place,
-		Children: []core.Node{toast.Stack[toastEntry, string]{TestID: ts.TestID, Placement: anchor,
+		Children: []core.Node{toast.Stack[toastEntry, string]{TestID: ts.TestID, Placement: anchor, Reverse: ts.Reverse,
 			Motion: toast.Motion{CollapsedPeek: 14, ExpandedGap: 8},
 			Toasts: t.shown.Get, Key: func(e toastEntry) string { return e.ID },
 			Toast: func(cx *core.Scope, e func() toastEntry) core.Node {
-				return ts.item(cx, e, swipe)
+				return ts.item(cx, e)
 			},
 			Style:            core.Style{Width: core.Pt(360), MaxWidth: core.Pct(100)},
 			OnExpandedChange: t.expanded.Set,
@@ -189,7 +264,7 @@ func (ts Toasts) Render(cx *core.Scope) core.Node {
 }
 
 // item is one toast.
-func (ts Toasts) item(cx *core.Scope, e func() toastEntry, swipe toast.SwipeDirection) core.Node {
+func (ts Toasts) item(cx *core.Scope, e func() toastEntry) core.Node {
 	t := ts.Toaster
 	colors := ColorsOf(cx)
 	first := core.Untracked(cx, e)
@@ -217,8 +292,16 @@ func (ts Toasts) item(cx *core.Scope, e func() toastEntry, swipe toast.SwipeDire
 	if c.Description != "" {
 		align = core.AlignStart
 	}
-	enter := core.Transform{TranslateY: -16}
-	if swipe == toast.SwipeDown {
+	swipe := ts.Swipe.direction(ts.Placement, core.Untracked(cx, cx.Env().RTL))
+	var enter core.Transform
+	switch {
+	case ts.Placement.side() && swipe == toast.SwipeRight:
+		enter.TranslateX = 16
+	case ts.Placement.side():
+		enter.TranslateX = -16
+	case ts.Placement.top():
+		enter.TranslateY = -16
+	default:
 		enter.TranslateY = 16
 	}
 	return toast.Toast{TestID: id, Label: label, SwipeDirection: swipe,

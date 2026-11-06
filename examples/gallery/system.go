@@ -249,7 +249,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 					})
 			}),
 			actionRow(cx, false, lucide.Sparkles, colors.Warn, tr.SystemToast(), tr.SystemBaseEveryPlatform(), func() {
-				showToast(toastContent{title: tr.SystemHelloFromAToast(), description: tr.SystemBaseSToastmanagerStyledBy()})
+				shell.toasts.Show(ui.ToastContent{Title: tr.SystemHelloFromAToast(), Description: tr.SystemBaseSToastmanagerStyledBy()})
 			}),
 		}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Edges{Top: 12, Right: 11, Bottom: 11, Left: 11}, MinHeight: core.Pt(44)}, Children: []core.Node{

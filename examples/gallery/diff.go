@@ -7,6 +7,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/ui"
@@ -192,36 +193,12 @@ func diffDemo(cx *core.Scope) core.Node {
 	stats := core.NewSignal(cx, diff.Stats{})
 	last := core.NewSignal(cx, "—")
 	ref := &diff.Ref{}
-	pad := core.Points(16)
-	if shell.desktop() {
-		pad = 24
-	}
-	toggle := func(s *core.Signal[bool]) func() { return func() { s.Set(!s.GetUntracked()) } }
 	small := func(label string, onPress func()) core.Node {
 		return ui.Button{Text: label, Variant: ui.ButtonSecondary, Small: true, OnPress: onPress}
 	}
 	modes := []ui.Option[diff.Inline]{{Value: diff.InlineWordAlt, Label: tr.DiffWords()}, {Value: diff.InlineWord, Label: tr.DiffEachWord()},
 		{Value: diff.InlineChar, Label: tr.DiffCharacters()}, {Value: diff.InlineNone, Label: tr.DiffNone()}}
-	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: 12})
-	}, Children: []core.Node{
-		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			Tool{Label: tr.DiffShowAPatch(), Text: tr.DiffPatch(), On: patch.Get, OnPress: toggle(patch)},
-			Tool{Label: tr.DiffOneColumn(), Text: tr.DiffUnified(), On: unified.Get, OnPress: toggle(unified)},
-			Tool{Label: tr.DiffSoftWrap(), Text: tr.DiffWrap(), On: wrap.Get, OnPress: toggle(wrap)},
-			core.View{Style: core.Style{Width: core.Pt(360)}, Children: []core.Node{ui.Segmented[diff.Inline]{Options: modes, Value: inline.Get, OnChange: inline.Set, Small: true}}},
-			Tool{Label: tr.DiffPreviousChange(), Text: "↑", OnPress: func() {
-				i, _ := ref.PreviousHunk()
-				last.Set(tr.DiffChange(i + 1))
-			}},
-			Tool{Label: tr.DiffNextChange(), Text: "↓", OnPress: func() {
-				i, _ := ref.NextHunk()
-				last.Set(tr.DiffChange(i + 1))
-			}},
-			Tool{Label: tr.DiffExpandEveryLine(), Text: tr.DiffExpand(), OnPress: ref.ExpandAll},
-			Tool{Label: tr.DiffCollapseUnchangedLines(), Text: tr.DiffCollapse(), OnPress: ref.CollapseAll},
-			Tool{Label: tr.DiffStartAgain(), Text: tr.DiffReset(), OnPress: func() { oldText.Set(diffOld); newText.Set(diffNew) }},
-		}},
+	return stagePage(cx,
 		core.View{StyleFunc: func() core.Style {
 			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: ui.RadiusInset,
 				BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(), Overflow: core.Hidden})
@@ -312,14 +289,34 @@ func diffDemo(cx *core.Scope) core.Node {
 				return d
 			}),
 		}},
-		core.View{Style: core.Style{Direction: core.Row, Gap: 16, AlignItems: core.AlignCenter}, Children: []core.Node{
+		Section{Title: tr.TerminalOptions(), Note: "diff.DiffView", Children: []core.Node{
+			SwitchRow{Label: tr.DiffShowAPatch(), Code: "Patch", Checked: patch.Get, OnChange: patch.Set},
+			SwitchRow{Label: tr.DiffOneColumn(), Code: "Unified", Checked: unified.Get, OnChange: unified.Set},
+			SwitchRow{Label: tr.DiffSoftWrap(), Code: "SoftWrap", Checked: wrap.Get, OnChange: wrap.Set},
+			choiceKnob("Inline", inline, modes...),
+		}},
+		Section{Title: tr.KitActions(), Note: "diff.Ref", Children: []core.Node{
+			ui.Wrap{Children: []core.Node{
+				ui.Button{Text: tr.DiffPreviousChange(), Icon: lucide.ArrowUp, Label: tr.DiffPreviousChange(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+					i, _ := ref.PreviousHunk()
+					last.Set(tr.DiffChange(i + 1))
+				}},
+				ui.Button{Text: tr.DiffNextChange(), Icon: lucide.ArrowDown, Label: tr.DiffNextChange(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+					i, _ := ref.NextHunk()
+					last.Set(tr.DiffChange(i + 1))
+				}},
+				small(tr.DiffExpandEveryLine(), ref.ExpandAll),
+				small(tr.DiffCollapseUnchangedLines(), ref.CollapseAll),
+				small(tr.DiffStartAgain(), func() { oldText.Set(diffOld); newText.Set(diffNew) }),
+			}},
+		}},
+		Section{Title: tr.TerminalStatus(), Note: "OnStatsChange", Children: []core.Node{
 			core.Text{Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, SpansFunc: func() []core.Span {
 				s := stats.Get()
 				return []core.Span{{Content: fmt.Sprintf("+%d", s.Added), StyleFunc: ui.Colored(colors.Up)},
 					{Content: " "}, {Content: fmt.Sprintf("−%d", s.Deleted), StyleFunc: ui.Colored(colors.Down)},
 					{Content: " · " + tr.DiffChanges(s.Hunks), StyleFunc: ui.Colored(colors.Muted)}}
 			}},
-			core.Text{ContentFunc: last.Get, MaxLines: 1, Style: core.Style{FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
-		}},
-	}}
+			core.Text{ContentFunc: last.Get, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
+		}})
 }

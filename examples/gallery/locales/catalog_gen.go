@@ -96,9 +96,6 @@ func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 // its method, for the TSX declarations of the messages
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{
-	"ControlsCountOf":         {"shown", "total"},
-	"ControlsShowingItems":    {"count"},
-	"ControlsContinueEvent":   {"plan", "price"},
 	"MenusViewState":          {"sidebar", "statusBar", "zoom"},
 	"SystemCounted":           {"n"},
 	"SystemTitleBarInsets":    {"top", "left", "right"},
@@ -167,7 +164,6 @@ var Parameters = map[string][]string{
 	"DockEdits":               {"panel", "count"},
 	"ScrollPageOf":            {"title", "n", "total"},
 	"DockRegionNone":          {"name"},
-	"OverlayLinkOnClipboard":  {"count"},
 	"A11yItems":               {"count"},
 	"A11yAKilo":               {"price"},
 	"A11yInTheBasket":         {"count"},
@@ -209,6 +205,7 @@ var Parameters = map[string][]string{
 	"CollapsingMinutes":       {"count"},
 	"TerminalSizeCells":       {"cols", "rows"},
 	"TerminalUnavailable":     {"reason"},
+	"KitPressed":              {"name"},
 }
 
 // Translation is a language's messages another package supplies; a nil
@@ -237,10 +234,16 @@ type Translation struct {
 	AppGallery                                   func() string
 	GroupApps                                    func() string
 	GroupPrimitives                              func() string
-	GroupComponents                              func() string
 	GroupStyling                                 func() string
 	GroupMotion                                  func() string
 	GroupPlatform                                func() string
+	GroupActions                                 func() string
+	GroupInputs                                  func() string
+	GroupDisplay                                 func() string
+	GroupFeedback                                func() string
+	GroupPopups                                  func() string
+	GroupNavigation                              func() string
+	GroupComplex                                 func() string
 	DemoStocks                                   func() string
 	DemoStocksDetail                             func() string
 	DemoAIChat                                   func() string
@@ -263,8 +266,6 @@ type Translation struct {
 	DemoWebViewAndVideoDetail                    func() string
 	DemoOverlay                                  func() string
 	DemoOverlayDetail                            func() string
-	DemoCheckbox                                 func() string
-	DemoCheckboxDetail                           func() string
 	DemoCollapsible                              func() string
 	DemoCollapsibleDetail                        func() string
 	DemoDataTable                                func() string
@@ -283,42 +284,16 @@ type Translation struct {
 	DemoNavStackDetail                           func() string
 	DemoPlot                                     func() string
 	DemoPlotDetail                               func() string
-	DemoPopover                                  func() string
-	DemoPopoverDetail                            func() string
 	DemoProgress                                 func() string
 	DemoProgressDetail                           func() string
-	DemoRadio                                    func() string
-	DemoRadioDetail                              func() string
 	DemoResizable                                func() string
 	DemoResizableDetail                          func() string
-	DemoSheet                                    func() string
-	DemoSheetDetail                              func() string
-	DemoSwitch                                   func() string
-	DemoSwitchDetail                             func() string
-	DemoTable                                    func() string
-	DemoTableDetail                              func() string
 	DemoTabs                                     func() string
 	DemoTabsDetail                               func() string
 	DemoTextView                                 func() string
 	DemoTextViewDetail                           func() string
 	DemoToast                                    func() string
 	DemoToastDetail                              func() string
-	DemoFileIcon                                 func() string
-	DemoFileIconDetail                           func() string
-	DemoHoldToConfirm                            func() string
-	DemoHoldToConfirmDetail                      func() string
-	DemoStepper                                  func() string
-	DemoStepperDetail                            func() string
-	DemoToggleButton                             func() string
-	DemoToggleButtonDetail                       func() string
-	DemoSelect                                   func() string
-	DemoSelectDetail                             func() string
-	DemoSlider                                   func() string
-	DemoSliderDetail                             func() string
-	DemoSpinner                                  func() string
-	DemoSpinnerDetail                            func() string
-	DemoTooltip                                  func() string
-	DemoTooltipDetail                            func() string
 	DemoStyles                                   func() string
 	DemoStylesDetail                             func() string
 	DemoLayout                                   func() string
@@ -348,90 +323,17 @@ type Translation struct {
 	AppWindow                                    func() string
 	ControlsPhotos                               func() string
 	ControlsVideos                               func() string
-	ControlsLivePhotos                           func() string
-	ControlsPlus                                 func() string
 	ControlsOverview                             func() string
-	ControlsSwitch                               func() string
-	ControlsSettingsThatTakeEffectAt             func() string
-	ControlsNotifications                        func() string
-	ControlsBannersSoundsAndBadges               func() string
-	ControlsOff                                  func() string
-	ControlsBadges                               func() string
-	ControlsTheUnreadCountOnThe                  func() string
-	ControlsTurnOnNotificationsFirst             func() string
-	ControlsHaptics                              func() string
-	ControlsATapUnderTheFinger                   func() string
-	ControlsLowDataMode                          func() string
-	ControlsImagesLoadAtALower                   func() string
-	ControlsImagesLoadInFull                     func() string
-	ControlsSelectAll                            func() string
-	ControlsCheckbox                             func() string
-	ControlsAFilterSelectAllShows                func() string
-	ControlsNothingToShow                        func() string
-	ControlsPlan                                 func() string
-	ControlsRadio                                func() string
-	ControlsAPlanPickerOneOf                     func() string
-	ControlsPlan2                                func() string
-	ControlsContinueWith                         func() string
-	ControlsTab                                  func() string
-	ControlsTabs                                 func() string
-	ControlsASectionSwitcherTheApp               func() string
-	ControlsSections                             func() string
-	ControlsCollapsible                          func() string
-	ControlsDetailsUnderASummaryKept             func() string
-	ControlsStorage                              func() string
-	Controls212GbOf256Gb                         func() string
-	ControlsKeepOriginals                        func() string
-	ControlsKeepOriginals2                       func() string
-	ControlsEditsAreSavedAsCopies                func() string
-	ControlsEditsReplaceThePhoto                 func() string
-	ControlsAdvanced                             func() string
-	ControlsOptionsMostPeopleLeaveAlone          func() string
-	ControlsUploadStarted                        func() string
-	ControlsUploadDone                           func() string
-	ControlsProgress                             func() string
-	ControlsTransfersTheAppOwnsThe               func() string
-	ControlsUpload                               func() string
-	Controls24PhotosSent                         func() string
-	ControlsSending24Photos                      func() string
-	Controls24PhotosToSend                       func() string
-	ControlsBackup                               func() string
-	ControlsPreparingItsSizeIsNot                func() string
-	ControlsSend                                 func() string
-	ControlsPause                                func() string
-	ControlsSendAgain                            func() string
-	ControlsUploadPaused                         func() string
 	ControlsReset                                func() string
-	ControlsUploadReset                          func() string
-	ControlsScreenshots                          func() string
-	ControlsFree                                 func() string
-	ControlsOneDevice5Gb                         func() string
-	ControlsThreeDevices200Gb                    func() string
-	Controls3Mo                                  func() string
-	ControlsTeam                                 func() string
-	ControlsASharedLibrary2Tb                    func() string
-	Controls12Mo                                 func() string
-	ControlsEnterprise                           func() string
-	ControlsSetUpByYourOrganization              func() string
-	ControlsVisitors                             func() string
-	ControlsSignUps                              func() string
-	ControlsConversion                           func() string
 	ControlsActivity                             func() string
 	ControlsDeployedToProduction                 func() string
 	ControlsInvoicePaid                          func() string
 	ControlsAMemberJoined                        func() string
 	ControlsMembers                              func() string
-	ControlsOwner                                func() string
-	ControlsAdmin                                func() string
-	ControlsMember                               func() string
 	ControlsBilling                              func() string
 	ControlsApps                                 func() string
-	ControlsSystem                               func() string
 	CommonOn                                     func() string
 	CommonOff                                    func() string
-	ControlsCountOf                              func(shown int, total int) string
-	ControlsShowingItems                         func(count int) string
-	ControlsContinueEvent                        func(plan string, price string) string
 	MenusMedium                                  func() string
 	MenusChose                                   func() string
 	MenusNewDocument                             func() string
@@ -492,23 +394,6 @@ type Translation struct {
 	MenusNoFilesLeft                             func() string
 	MenusActionsFor                              func() string
 	MenusMoreActions                             func() string
-	MenusWhereItGoes                             func() string
-	MenusPhonesShowMenusAsSheets                 func() string
-	MenusTheSideAndAlignmentIt                   func() string
-	MenusTop                                     func() string
-	MenusBottom                                  func() string
-	MenusLeft                                    func() string
-	MenusRight                                   func() string
-	MenusStart                                   func() string
-	MenusCenter                                  func() string
-	MenusEnd                                     func() string
-	MenusPlaced                                  func() string
-	MenusOne                                     func() string
-	MenusChoseOne                                func() string
-	MenusTwo                                     func() string
-	MenusChoseTwo                                func() string
-	MenusThree                                   func() string
-	MenusChoseThree                              func() string
 	MenusTimeZone                                func() string
 	MenusALongMenu                               func() string
 	MenusTwentyChoicesInAMenu                    func() string
@@ -1215,13 +1100,9 @@ type Translation struct {
 	CanvasBar                                    func(n int) string
 	TableColumn                                  func() string
 	TableNothingSelected                         func() string
-	TableOn                                      func() string
-	TableOff                                     func() string
 	TableRows                                    func() string
 	TableCells                                   func() string
-	TableToggleLiveUpdates                       func() string
 	TableLive                                    func() string
-	TableToggleStripes                           func() string
 	TableStripes                                 func() string
 	TableGoToRow500000                           func() string
 	TableRow500000                               func() string
@@ -1792,13 +1673,9 @@ type Translation struct {
 	DockToggleFiles                              func() string
 	DockToggleTerminal                           func() string
 	DockLockTheLayout                            func() string
-	DockLock                                     func() string
 	DockShowCloseButtons                         func() string
-	DockClose                                    func() string
 	DockZoomTheGroup                             func() string
-	DockZoom                                     func() string
 	DockResetTheLayout                           func() string
-	DockReset                                    func() string
 	DockHoldATabToReorder                        func() string
 	DockDragATabOntoAnother                      func() string
 	DockCenter                                   func() string
@@ -1864,37 +1741,21 @@ type Translation struct {
 	OverlayOutsideTheClippedBoxOn                func() string
 	OverlayScrollThePageItFollows                func() string
 	OverlayPopover                               func() string
-	OverlayAnchoredToItsTriggerOn                func() string
 	OverlayShowThePopover                        func() string
-	OverlayPopover2                              func() string
 	OverlayAPressOutsideEscapeOr                 func() string
-	OverlayTooltip                               func() string
-	OverlayTooltipsFollowAPointerPin             func() string
-	OverlayRestThePointerOnA                     func() string
 	OverlaySavesTheDocument                      func() string
 	OverlaySave                                  func() string
-	OverlayPressedSave                           func() string
-	OverlayTooltip2                              func() string
-	OverlayPinTheTooltip                         func() string
-	OverlayUnpinTheTooltip                       func() string
-	OverlayShownWhilePinnedOrHovered             func() string
 	OverlaySheet                                 func() string
 	OverlayAPanelAtTheBottom                     func() string
 	OverlayShowTheSheet                          func() string
 	OverlaySheet2                                func() string
 	OverlayTheBackdropEscapeAndBack              func() string
 	OverlayDone                                  func() string
-	OverlayToast                                 func() string
-	OverlayTheGallerySToastsOn                   func() string
-	OverlayCopyTheLink                           func() string
-	OverlayCopied                                func() string
 	OverlayDeleteTheDraft                        func() string
-	OverlayDraftDeleted                          func() string
 	OverlayUndo                                  func() string
 	OverlayToastUndone                           func() string
 	OverlayToastGone                             func() string
 	OverlayDismissAll                            func() string
-	OverlaySwipeOneAwayThePointer                func() string
 	OverlayLastEvent                             func() string
 	MediaWebView                                 func() string
 	MediaInlineHtmlWithMessagesBoth              func() string
@@ -1978,7 +1839,6 @@ type Translation struct {
 	DockRegionNone                               func(name string) string
 	DockOpen                                     func() string
 	DockClosedState                              func() string
-	OverlayLinkOnClipboard                       func(count int) string
 	A11yItems                                    func(count int) string
 	A11yAKilo                                    func(price string) string
 	A11yInTheBasket                              func(count int) string
@@ -2040,19 +1900,13 @@ type Translation struct {
 	DiffCharacters                               func() string
 	DiffNone                                     func() string
 	DiffShowAPatch                               func() string
-	DiffPatch                                    func() string
 	DiffOneColumn                                func() string
-	DiffUnified                                  func() string
 	DiffSoftWrap                                 func() string
-	DiffWrap                                     func() string
 	DiffPreviousChange                           func() string
 	DiffNextChange                               func() string
 	DiffExpandEveryLine                          func() string
-	DiffExpand                                   func() string
 	DiffCollapseUnchangedLines                   func() string
-	DiffCollapse                                 func() string
 	DiffStartAgain                               func() string
-	DiffReset                                    func() string
 	DiffResolve                                  func() string
 	DiffAddAComment                              func() string
 	DiffCommented                                func() string
@@ -2181,23 +2035,12 @@ type Translation struct {
 	ResizableConsolePt                           func(size string) string
 	CollapsingEntry                              func(n string) string
 	CollapsingMinutes                            func(count int) string
-	LibFormatting                                func() string
-	LibFormattingNote                            func() string
 	LibBold                                      func() string
-	LibItalic                                    func() string
-	LibUnderline                                 func() string
 	LibStarred                                   func() string
-	LibLocked                                    func() string
 	LibHold                                      func() string
-	LibHoldNote                                  func() string
 	LibHoldToDelete                              func() string
 	LibDeleted                                   func() string
-	LibHoldToArchive                             func() string
-	LibArchived                                  func() string
-	LibHoldToSend                                func() string
-	LibSent                                      func() string
 	LibCheckout                                  func() string
-	LibCheckoutNote                              func() string
 	LibCart                                      func() string
 	LibCartDetail                                func() string
 	LibShipping                                  func() string
@@ -2209,62 +2052,50 @@ type Translation struct {
 	LibOrderPlaced                               func() string
 	LibBack                                      func() string
 	LibNext                                      func() string
-	LibSetup                                     func() string
-	LibSetupNote                                 func() string
-	LibCreateAccount                             func() string
-	LibConnectRepository                         func() string
-	LibConnectRepositoryDetail                   func() string
-	LibInstall                                   func() string
 	LibInstallError                              func() string
-	LibDeploy                                    func() string
-	LibDeployDetail                              func() string
-	LibCompact                                   func() string
-	LibCompactNote                               func() string
 	LibStepUpcoming                              func() string
 	LibStepCurrent                               func() string
 	LibStepComplete                              func() string
 	LibStepFailed                                func() string
 	LibFiles                                     func() string
 	LibFilesNote                                 func() string
-	LibToasts                                    func() string
-	LibToastsNote                                func() string
-	LibPlain                                     func() string
-	LibInfo                                      func() string
-	LibSuccess                                   func() string
-	LibWarning                                   func() string
-	LibError                                     func() string
-	LibMessageSent                               func() string
 	LibNewVersion                                func() string
 	LibChangesSaved                              func() string
-	LibStorageFull                               func() string
-	LibUploadFailed                              func() string
-	LibWithAction                                func() string
-	LibMovedToTrash                              func() string
 	LibThreeFiles                                func() string
-	LibRestored                                  func() string
-	LibSliders                                   func() string
-	LibSlidersNote                               func() string
 	LibVolume                                    func() string
 	LibFontSize                                  func() string
-	LibPrice                                     func() string
 	LibMinimum                                   func() string
 	LibMaximum                                   func() string
-	LibSelect                                    func() string
-	LibSelectNote                                func() string
 	LibFruit                                     func() string
 	LibPickFruit                                 func() string
 	LibApple                                     func() string
 	LibBanana                                    func() string
 	LibCherry                                    func() string
-	LibGrape                                     func() string
-	LibSpinners                                  func() string
-	LibSpinnersNote                              func() string
 	LibProgress                                  func() string
-	LibLess                                      func() string
 	LibMore                                      func() string
 	LibLoading                                   func() string
 	DemoTerminal                                 func() string
 	DemoTerminalDetail                           func() string
+	DemoButtons                                  func() string
+	DemoButtonsDetail                            func() string
+	DemoSelection                                func() string
+	DemoSelectionDetail                          func() string
+	DemoSliderAndRating                          func() string
+	DemoSliderAndRatingDetail                    func() string
+	DemoBadgeAndAvatar                           func() string
+	DemoBadgeAndAvatarDetail                     func() string
+	DemoCards                                    func() string
+	DemoCardsDetail                              func() string
+	DemoMedia                                    func() string
+	DemoMediaDetail                              func() string
+	DemoListsAndTables                           func() string
+	DemoListsAndTablesDetail                     func() string
+	DemoDialogAndSheet                           func() string
+	DemoDialogAndSheetDetail                     func() string
+	DemoPopoverAndTooltip                        func() string
+	DemoPopoverAndTooltipDetail                  func() string
+	DemoStepperAndBreadcrumbs                    func() string
+	DemoStepperAndBreadcrumbsDetail              func() string
 	TerminalOptions                              func() string
 	TerminalTheme                                func() string
 	TerminalAutomatic                            func() string
@@ -2293,6 +2124,24 @@ type Translation struct {
 	TerminalSelectAll                            func() string
 	TerminalKeyBar                               func() string
 	TerminalKeyBarNote                           func() string
+	KitPressed                                   func(name string) string
+	KitRating                                    func() string
+	KitPass                                      func() string
+	KitKeep                                      func() string
+	KitNoMoreCards                               func() string
+	KitBefore                                    func() string
+	KitAfter                                     func() string
+	KitExpand                                    func() string
+	KitAction                                    func() string
+	KitActions                                   func() string
+	KitShow                                      func() string
+	KitOpen                                      func() string
+	KitCancel                                    func() string
+	KitDialogTitle                               func() string
+	KitDialogNote                                func() string
+	KitMore                                      func() string
+	KitLongPressHere                             func() string
+	KitRightClickHere                            func() string
 }
 
 var supplied = map[string]Translation{}
@@ -2322,10 +2171,16 @@ const (
 	textAppGallery
 	textGroupApps
 	textGroupPrimitives
-	textGroupComponents
 	textGroupStyling
 	textGroupMotion
 	textGroupPlatform
+	textGroupActions
+	textGroupInputs
+	textGroupDisplay
+	textGroupFeedback
+	textGroupPopups
+	textGroupNavigation
+	textGroupComplex
 	textDemoStocks
 	textDemoStocksDetail
 	textDemoAIChat
@@ -2348,8 +2203,6 @@ const (
 	textDemoWebViewAndVideoDetail
 	textDemoOverlay
 	textDemoOverlayDetail
-	textDemoCheckbox
-	textDemoCheckboxDetail
 	textDemoCollapsible
 	textDemoCollapsibleDetail
 	textDemoDataTable
@@ -2368,42 +2221,16 @@ const (
 	textDemoNavStackDetail
 	textDemoPlot
 	textDemoPlotDetail
-	textDemoPopover
-	textDemoPopoverDetail
 	textDemoProgress
 	textDemoProgressDetail
-	textDemoRadio
-	textDemoRadioDetail
 	textDemoResizable
 	textDemoResizableDetail
-	textDemoSheet
-	textDemoSheetDetail
-	textDemoSwitch
-	textDemoSwitchDetail
-	textDemoTable
-	textDemoTableDetail
 	textDemoTabs
 	textDemoTabsDetail
 	textDemoTextView
 	textDemoTextViewDetail
 	textDemoToast
 	textDemoToastDetail
-	textDemoFileIcon
-	textDemoFileIconDetail
-	textDemoHoldToConfirm
-	textDemoHoldToConfirmDetail
-	textDemoStepper
-	textDemoStepperDetail
-	textDemoToggleButton
-	textDemoToggleButtonDetail
-	textDemoSelect
-	textDemoSelectDetail
-	textDemoSlider
-	textDemoSliderDetail
-	textDemoSpinner
-	textDemoSpinnerDetail
-	textDemoTooltip
-	textDemoTooltipDetail
 	textDemoStyles
 	textDemoStylesDetail
 	textDemoLayout
@@ -2433,85 +2260,15 @@ const (
 	textAppWindow
 	textControlsPhotos
 	textControlsVideos
-	textControlsLivePhotos
-	textControlsPlus
 	textControlsOverview
-	textControlsSwitch
-	textControlsSettingsThatTakeEffectAt
-	textControlsNotifications
-	textControlsBannersSoundsAndBadges
-	textControlsOff
-	textControlsBadges
-	textControlsTheUnreadCountOnThe
-	textControlsTurnOnNotificationsFirst
-	textControlsHaptics
-	textControlsATapUnderTheFinger
-	textControlsLowDataMode
-	textControlsImagesLoadAtALower
-	textControlsImagesLoadInFull
-	textControlsSelectAll
-	textControlsCheckbox
-	textControlsAFilterSelectAllShows
-	textControlsNothingToShow
-	textControlsPlan
-	textControlsRadio
-	textControlsAPlanPickerOneOf
-	textControlsPlan2
-	textControlsContinueWith
-	textControlsTab
-	textControlsTabs
-	textControlsASectionSwitcherTheApp
-	textControlsSections
-	textControlsCollapsible
-	textControlsDetailsUnderASummaryKept
-	textControlsStorage
-	textControls212GbOf256Gb
-	textControlsKeepOriginals
-	textControlsKeepOriginals2
-	textControlsEditsAreSavedAsCopies
-	textControlsEditsReplaceThePhoto
-	textControlsAdvanced
-	textControlsOptionsMostPeopleLeaveAlone
-	textControlsUploadStarted
-	textControlsUploadDone
-	textControlsProgress
-	textControlsTransfersTheAppOwnsThe
-	textControlsUpload
-	textControls24PhotosSent
-	textControlsSending24Photos
-	textControls24PhotosToSend
-	textControlsBackup
-	textControlsPreparingItsSizeIsNot
-	textControlsSend
-	textControlsPause
-	textControlsSendAgain
-	textControlsUploadPaused
 	textControlsReset
-	textControlsUploadReset
-	textControlsScreenshots
-	textControlsFree
-	textControlsOneDevice5Gb
-	textControlsThreeDevices200Gb
-	textControls3Mo
-	textControlsTeam
-	textControlsASharedLibrary2Tb
-	textControls12Mo
-	textControlsEnterprise
-	textControlsSetUpByYourOrganization
-	textControlsVisitors
-	textControlsSignUps
-	textControlsConversion
 	textControlsActivity
 	textControlsDeployedToProduction
 	textControlsInvoicePaid
 	textControlsAMemberJoined
 	textControlsMembers
-	textControlsOwner
-	textControlsAdmin
-	textControlsMember
 	textControlsBilling
 	textControlsApps
-	textControlsSystem
 	textCommonOn
 	textCommonOff
 	textMenusMedium
@@ -2574,23 +2331,6 @@ const (
 	textMenusNoFilesLeft
 	textMenusActionsFor
 	textMenusMoreActions
-	textMenusWhereItGoes
-	textMenusPhonesShowMenusAsSheets
-	textMenusTheSideAndAlignmentIt
-	textMenusTop
-	textMenusBottom
-	textMenusLeft
-	textMenusRight
-	textMenusStart
-	textMenusCenter
-	textMenusEnd
-	textMenusPlaced
-	textMenusOne
-	textMenusChoseOne
-	textMenusTwo
-	textMenusChoseTwo
-	textMenusThree
-	textMenusChoseThree
 	textMenusTimeZone
 	textMenusALongMenu
 	textMenusTwentyChoicesInAMenu
@@ -3272,13 +3012,9 @@ const (
 	textCanvasCheck
 	textTableColumn
 	textTableNothingSelected
-	textTableOn
-	textTableOff
 	textTableRows
 	textTableCells
-	textTableToggleLiveUpdates
 	textTableLive
-	textTableToggleStripes
 	textTableStripes
 	textTableGoToRow500000
 	textTableRow500000
@@ -3809,13 +3545,9 @@ const (
 	textDockToggleFiles
 	textDockToggleTerminal
 	textDockLockTheLayout
-	textDockLock
 	textDockShowCloseButtons
-	textDockClose
 	textDockZoomTheGroup
-	textDockZoom
 	textDockResetTheLayout
-	textDockReset
 	textDockHoldATabToReorder
 	textDockDragATabOntoAnother
 	textDockCenter
@@ -3881,37 +3613,21 @@ const (
 	textOverlayOutsideTheClippedBoxOn
 	textOverlayScrollThePageItFollows
 	textOverlayPopover
-	textOverlayAnchoredToItsTriggerOn
 	textOverlayShowThePopover
-	textOverlayPopover2
 	textOverlayAPressOutsideEscapeOr
-	textOverlayTooltip
-	textOverlayTooltipsFollowAPointerPin
-	textOverlayRestThePointerOnA
 	textOverlaySavesTheDocument
 	textOverlaySave
-	textOverlayPressedSave
-	textOverlayTooltip2
-	textOverlayPinTheTooltip
-	textOverlayUnpinTheTooltip
-	textOverlayShownWhilePinnedOrHovered
 	textOverlaySheet
 	textOverlayAPanelAtTheBottom
 	textOverlayShowTheSheet
 	textOverlaySheet2
 	textOverlayTheBackdropEscapeAndBack
 	textOverlayDone
-	textOverlayToast
-	textOverlayTheGallerySToastsOn
-	textOverlayCopyTheLink
-	textOverlayCopied
 	textOverlayDeleteTheDraft
-	textOverlayDraftDeleted
 	textOverlayUndo
 	textOverlayToastUndone
 	textOverlayToastGone
 	textOverlayDismissAll
-	textOverlaySwipeOneAwayThePointer
 	textOverlayLastEvent
 	textMediaWebView
 	textMediaInlineHtmlWithMessagesBoth
@@ -4044,19 +3760,13 @@ const (
 	textDiffCharacters
 	textDiffNone
 	textDiffShowAPatch
-	textDiffPatch
 	textDiffOneColumn
-	textDiffUnified
 	textDiffSoftWrap
-	textDiffWrap
 	textDiffPreviousChange
 	textDiffNextChange
 	textDiffExpandEveryLine
-	textDiffExpand
 	textDiffCollapseUnchangedLines
-	textDiffCollapse
 	textDiffStartAgain
-	textDiffReset
 	textDiffResolve
 	textDiffAddAComment
 	textDiffCommented
@@ -4155,23 +3865,12 @@ const (
 	textViewerImage
 	textViewerClose
 	textToastClose
-	textLibFormatting
-	textLibFormattingNote
 	textLibBold
-	textLibItalic
-	textLibUnderline
 	textLibStarred
-	textLibLocked
 	textLibHold
-	textLibHoldNote
 	textLibHoldToDelete
 	textLibDeleted
-	textLibHoldToArchive
-	textLibArchived
-	textLibHoldToSend
-	textLibSent
 	textLibCheckout
-	textLibCheckoutNote
 	textLibCart
 	textLibCartDetail
 	textLibShipping
@@ -4183,62 +3882,50 @@ const (
 	textLibOrderPlaced
 	textLibBack
 	textLibNext
-	textLibSetup
-	textLibSetupNote
-	textLibCreateAccount
-	textLibConnectRepository
-	textLibConnectRepositoryDetail
-	textLibInstall
 	textLibInstallError
-	textLibDeploy
-	textLibDeployDetail
-	textLibCompact
-	textLibCompactNote
 	textLibStepUpcoming
 	textLibStepCurrent
 	textLibStepComplete
 	textLibStepFailed
 	textLibFiles
 	textLibFilesNote
-	textLibToasts
-	textLibToastsNote
-	textLibPlain
-	textLibInfo
-	textLibSuccess
-	textLibWarning
-	textLibError
-	textLibMessageSent
 	textLibNewVersion
 	textLibChangesSaved
-	textLibStorageFull
-	textLibUploadFailed
-	textLibWithAction
-	textLibMovedToTrash
 	textLibThreeFiles
-	textLibRestored
-	textLibSliders
-	textLibSlidersNote
 	textLibVolume
 	textLibFontSize
-	textLibPrice
 	textLibMinimum
 	textLibMaximum
-	textLibSelect
-	textLibSelectNote
 	textLibFruit
 	textLibPickFruit
 	textLibApple
 	textLibBanana
 	textLibCherry
-	textLibGrape
-	textLibSpinners
-	textLibSpinnersNote
 	textLibProgress
-	textLibLess
 	textLibMore
 	textLibLoading
 	textDemoTerminal
 	textDemoTerminalDetail
+	textDemoButtons
+	textDemoButtonsDetail
+	textDemoSelection
+	textDemoSelectionDetail
+	textDemoSliderAndRating
+	textDemoSliderAndRatingDetail
+	textDemoBadgeAndAvatar
+	textDemoBadgeAndAvatarDetail
+	textDemoCards
+	textDemoCardsDetail
+	textDemoMedia
+	textDemoMediaDetail
+	textDemoListsAndTables
+	textDemoListsAndTablesDetail
+	textDemoDialogAndSheet
+	textDemoDialogAndSheetDetail
+	textDemoPopoverAndTooltip
+	textDemoPopoverAndTooltipDetail
+	textDemoStepperAndBreadcrumbs
+	textDemoStepperAndBreadcrumbsDetail
 	textTerminalOptions
 	textTerminalTheme
 	textTerminalAutomatic
@@ -4265,6 +3952,23 @@ const (
 	textTerminalSelectAll
 	textTerminalKeyBar
 	textTerminalKeyBarNote
+	textKitRating
+	textKitPass
+	textKitKeep
+	textKitNoMoreCards
+	textKitBefore
+	textKitAfter
+	textKitExpand
+	textKitAction
+	textKitActions
+	textKitShow
+	textKitOpen
+	textKitCancel
+	textKitDialogTitle
+	textKitDialogNote
+	textKitMore
+	textKitLongPressHere
+	textKitRightClickHere
 	numTexts
 )
 
@@ -4295,10 +3999,16 @@ var texts = map[string]*[numTexts]string{
 		"Gallery",
 		"Apps",
 		"Primitives",
-		"Components",
 		"Styling",
 		"Motion",
 		"Platform",
+		"Actions",
+		"Inputs",
+		"Display",
+		"Feedback",
+		"Popups",
+		"Navigation",
+		"Complex",
 		"Stocks",
 		"A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms",
 		"AI Chat",
@@ -4321,8 +4031,6 @@ var texts = map[string]*[numTexts]string{
 		"Web views, video players and the app's own native views",
 		"Overlay",
 		"Content on top of the screen, outside the box that clips it",
-		"Checkbox",
-		"A filter whose “Select all” shows a partial selection",
 		"Collapsible",
 		"Details under a summary, kept while collapsed",
 		"DataTable",
@@ -4341,42 +4049,16 @@ var texts = map[string]*[numTexts]string{
 		"Header options, modals, the back button, safe areas",
 		"Plot",
 		"A line and area plot with hover, grid lines and motion, sparklines in a list",
-		"Popover",
-		"A panel anchored to its trigger; a press outside, Escape or back closes it",
 		"Progress",
 		"A transfer the app drives, and one of unknown size",
-		"Radio",
-		"A plan picker: one of a small set, a disabled plan",
 		"Resizable",
 		"Panels resized by dragging the lines between them, within their ranges",
-		"Sheet",
-		"A panel at the bottom, over a backdrop; the backdrop, Escape or back closes it",
-		"Switch",
-		"Settings that take effect at once, one that needs another on",
-		"Table",
-		"A few rows the app writes out, with a table's roles",
 		"Tabs",
 		"A section switcher, a disabled tab",
 		"TextView",
 		"Markdown and HTML documents, extensions, streaming replies",
 		"Toast",
 		"Notes that close by themselves, by their action, back or a swipe",
-		"FileIcon",
-		"A file's type at a glance, by its name",
-		"HoldToConfirm",
-		"Buttons held down to confirm what cannot be undone",
-		"Stepper",
-		"Where a person is in a flow of steps",
-		"ToggleButton",
-		"Buttons that stay on or off, as a toolbar's formatting",
-		"Select",
-		"One choice of a few, from a field that opens them",
-		"Slider",
-		"A number or a range picked by dragging along a track",
-		"Spinner",
-		"Rings and spokes for work under way",
-		"Tooltip",
-		"A label while the pointer rests on an element, or pinned by the app",
 		"Styles",
 		"Corners, borders, shadows, clipping, filters, 3D transforms",
 		"Layout",
@@ -4406,85 +4088,15 @@ var texts = map[string]*[numTexts]string{
 		"Window",
 		"Photos",
 		"Videos",
-		"Live Photos",
-		"Plus",
 		"Overview",
-		"Switch",
-		"Settings that take effect at once",
-		"Notifications",
-		"Banners, sounds and badges",
-		"Off",
-		"Badges",
-		"The unread count on the icon",
-		"Turn on notifications first",
-		"Haptics",
-		"A tap under the finger as values change",
-		"Low data mode",
-		"Images load at a lower quality",
-		"Images load in full",
-		"Select all",
-		"Checkbox",
-		"A filter: “Select all” shows a partial selection",
-		"Nothing to show",
-		"Plan: ",
-		"Radio",
-		"A plan picker: one of a small set, all in view",
-		"Plan",
-		"Continue with ",
-		"Tab: ",
-		"Tabs",
-		"A section switcher: the app shows the selected one",
-		"Sections",
-		"Collapsible",
-		"Details under a summary, kept while collapsed",
-		"Storage",
-		"212 GB of 256 GB used",
-		"Keep originals",
-		"Keep originals: ",
-		"Edits are saved as copies",
-		"Edits replace the photo",
-		"Advanced",
-		"Options most people leave alone",
-		"Upload: started",
-		"Upload: done",
-		"Progress",
-		"Transfers: the app owns the value",
-		"Upload",
-		"24 photos sent",
-		"Sending 24 photos",
-		"24 photos to send",
-		"Backup",
-		"Preparing: its size is not known yet",
-		"Send",
-		"Pause",
-		"Send again",
-		"Upload: paused",
 		"Reset",
-		"Upload: reset",
-		"Screenshots",
-		"Free",
-		"One device, 5 GB",
-		"Three devices, 200 GB",
-		"$3 / mo",
-		"Team",
-		"A shared library, 2 TB",
-		"$12 / mo",
-		"Enterprise",
-		"Set up by your organization",
-		"Visitors",
-		"Sign-ups",
-		"Conversion",
 		"Activity",
 		"Deployed to production",
 		"Invoice paid",
 		"A member joined",
 		"Members",
-		"Owner",
-		"Admin",
-		"Member",
 		"Billing",
 		"Apps",
-		"System",
 		"on",
 		"off",
 		"Medium",
@@ -4547,23 +4159,6 @@ var texts = map[string]*[numTexts]string{
 		"No files left",
 		"Actions for ",
 		"More actions",
-		"Where it goes",
-		"Phones show menus as sheets: try a desktop",
-		"The side and alignment; it flips where there is no room",
-		"Top",
-		"Bottom",
-		"Left",
-		"Right",
-		"Start",
-		"Center",
-		"End",
-		"Placed",
-		"One",
-		"chose One",
-		"Two",
-		"chose Two",
-		"Three",
-		"chose Three",
 		"Time zone",
 		"A long menu",
 		"Twenty choices in a menu that scrolls",
@@ -5245,13 +4840,9 @@ var texts = map[string]*[numTexts]string{
 		"Check",
 		"Column ",
 		"Nothing selected",
-		" on",
-		" off",
 		"Rows",
 		"Cells",
-		"Toggle live updates",
 		"Live",
-		"Toggle stripes",
 		"Stripes",
 		"Go to row 500000",
 		"Row 500,000",
@@ -5782,13 +5373,9 @@ var texts = map[string]*[numTexts]string{
 		"Toggle files",
 		"Toggle terminal",
 		"Lock the layout",
-		"Lock",
 		"Show close buttons",
-		"Close",
 		"Zoom the group",
-		"Zoom",
 		"Reset the layout",
-		"Reset",
 		"Hold a tab to reorder it",
 		"Drag a tab onto another group, or to a group's edge to split it",
 		"Center: ",
@@ -5854,37 +5441,21 @@ var texts = map[string]*[numTexts]string{
 		"Outside the clipped box, on top of the page.",
 		"Scroll the page: it follows its anchor",
 		"Popover",
-		"Anchored to its trigger on every device",
 		"Show the popover",
-		"popover ",
 		"A press outside, Escape or back closes it.",
-		"Tooltip",
-		"Tooltips follow a pointer: pin one to see it",
-		"Rest the pointer on a button",
 		"Saves the document",
 		"Save",
-		"pressed Save",
-		"tooltip ",
-		"Pin the tooltip",
-		"Unpin the tooltip",
-		"Shown while pinned or hovered",
 		"Sheet",
 		"A panel at the bottom, over a backdrop",
 		"Show the sheet",
 		"sheet ",
 		"The backdrop, Escape and back close it.",
 		"Done",
-		"Toast",
-		"The gallery's toasts, on ToastManager, ToastStack and Toast",
-		"Copy the link",
-		"Copied",
 		"Delete the draft",
-		"Draft deleted",
 		"Undo",
 		"toast: undone",
 		"toast: gone",
 		"Dismiss all",
-		"Swipe one away; the pointer on one stops its time",
 		"Last event",
 		"Web view",
 		"Inline HTML, with messages both ways",
@@ -6017,19 +5588,13 @@ var texts = map[string]*[numTexts]string{
 		"Characters",
 		"None",
 		"Show a patch",
-		"Patch",
 		"One column",
-		"Unified",
 		"Soft wrap",
-		"Wrap",
 		"Previous change",
 		"Next change",
 		"Expand every line",
-		"Expand",
 		"Collapse unchanged lines",
-		"Collapse",
 		"Start again",
-		"Reset",
 		"Resolve",
 		"Add a comment",
 		"Commented",
@@ -6128,23 +5693,12 @@ var texts = map[string]*[numTexts]string{
 		"Image",
 		"Close",
 		"Close",
-		"Formatting",
-		"Toggles in a toolbar, each on or off",
 		"Bold",
-		"Italic",
-		"Underline",
 		"Starred",
-		"Locked",
 		"Hold to confirm",
-		"Held until the fill is full; let go early and it rewinds",
 		"Hold to delete",
 		"Deleted",
-		"Hold to archive",
-		"Archived",
-		"Hold to send",
-		"Sent",
 		"Checkout",
-		"Steps in a row; press a completed one to go back",
 		"Cart",
 		"3 items",
 		"Shipping",
@@ -6156,62 +5710,50 @@ var texts = map[string]*[numTexts]string{
 		"Order placed",
 		"Back",
 		"Next",
-		"Setup",
-		"Down a column, a failed step's error in place of its description",
-		"Create an account",
-		"Connect a repository",
-		"GitHub or GitLab",
-		"Install dependencies",
 		"The lockfile is out of date",
-		"Deploy",
-		"To production",
-		"Compact",
-		"Markers alone, the current step named under them",
 		"upcoming",
 		"current",
 		"completed",
 		"failed",
 		"Project files",
 		"Chosen by a file's whole name, then its extension",
-		"Styled toasts",
-		"The components' Toasts, stacked at the top",
-		"Plain",
-		"Info",
-		"Success",
-		"Warning",
-		"Error",
-		"Message sent",
 		"A new version is available",
 		"Changes saved",
-		"Storage almost full",
-		"Upload failed",
-		"With an action",
-		"Moved to trash",
 		"3 files",
-		"Restored 3 files",
-		"Sliders",
-		"Drag a knob, press the track, or use the arrow keys",
 		"Volume",
 		"Font size",
-		"Price",
 		"minimum",
 		"maximum",
-		"Select",
-		"The chosen option is checked in the menu",
 		"Fruit",
 		"Pick a fruit",
 		"Apple",
 		"Banana",
 		"Cherry",
-		"Grape",
-		"Rings and spinners",
-		"Progress as a ring, and work of unknown length",
 		"Progress",
-		"Less",
 		"More",
 		"Loading",
 		"Terminal",
 		"The user's shell with Ghostty's emulator: colors, a scrollback, selection, copy and paste",
+		"Buttons",
+		"Plain, icon, toggle and hold-to-confirm buttons",
+		"Selection",
+		"Checkboxes, radios, switches and selects",
+		"Slider and Rating",
+		"A number on a track, a range, a score of stars",
+		"Badge and Avatar",
+		"Small labels, people and files",
+		"Cards",
+		"Titled containers, insets and a deck to decide",
+		"Media",
+		"Pictures, a comparison and a carousel",
+		"Lists and Tables",
+		"Long runs of rows, nested items and a small table",
+		"Dialog and Sheet",
+		"Modal surfaces over a dimmed app",
+		"Popover and Tooltip",
+		"Surfaces anchored to what opens them",
+		"Stepper and Breadcrumbs",
+		"Where a person is in a flow or a hierarchy",
 		"Options",
 		"Theme",
 		"Follows the appearance",
@@ -6238,6 +5780,23 @@ var texts = map[string]*[numTexts]string{
 		"Select all",
 		"Key bar",
 		"Over a touch screen's keyboard",
+		"Rating",
+		"Pass",
+		"Keep",
+		"No more cards",
+		"Before",
+		"After",
+		"Expand",
+		"Action",
+		"Actions",
+		"Show a toast",
+		"Open",
+		"Cancel",
+		"Publish this page?",
+		"Everyone with the link will see it.",
+		"More",
+		"Long-press here",
+		"Right-click here",
 	},
 	"ar": {
 		"المعرض",
@@ -6263,10 +5822,16 @@ var texts = map[string]*[numTexts]string{
 		"المعرض",
 		"التطبيقات",
 		"العناصر الأساسية",
-		"المكوّنات",
 		"التنسيق",
 		"الحركة",
 		"المنصة",
+		"الإجراءات",
+		"الإدخال",
+		"العرض",
+		"الإفادة",
+		"النوافذ المنبثقة",
+		"التنقل",
+		"المكوّنات المركّبة",
 		"الأسهم",
 		"قائمة متابعة حية وسهم: شموع وعمق وشريط صفقات، بتحديث كل 50 مللي ثانية",
 		"دردشة الذكاء الاصطناعي",
@@ -6289,8 +5854,6 @@ var texts = map[string]*[numTexts]string{
 		"عروض الويب ومشغلات الفيديو وعروض التطبيق الأصلية",
 		"الطبقة العلوية",
 		"محتوى فوق الشاشة، خارج الإطار الذي يقصّه",
-		"خانة الاختيار",
-		"مرشح يعرض فيه «تحديد الكل» تحديدًا جزئيًا",
 		"قابل للطي",
 		"تفاصيل أسفل الملخص، تُحفظ أثناء الطي",
 		"جدول البيانات",
@@ -6309,42 +5872,16 @@ var texts = map[string]*[numTexts]string{
 		"خيارات الرأس، النوافذ المشروطة، زر الرجوع، المناطق الآمنة",
 		"المخطط",
 		"مخطط خطي ومساحي مع تمرير ووخطوط شبكة وحركة، ومخططات مصغرة في قائمة",
-		"النافذة المنبثقة",
-		"لوحة مثبتة بمشغّلها؛ يغلقها ضغط خارجها أو Escape أو الرجوع",
 		"التقدم",
 		"نقل يتحكم فيه التطبيق، وآخر حجمه غير معروف",
-		"زر الاختيار",
-		"منتقي خطط: واحدة من مجموعة صغيرة، وخطة معطلة",
 		"قابل لتغيير الحجم",
 		"لوحات يتغير حجمها بسحب الخطوط بينها، ضمن حدودها",
-		"اللوحة السفلية",
-		"لوحة في الأسفل فوق خلفية؛ تغلقها الخلفية أو Escape أو الرجوع",
-		"مفتاح التبديل",
-		"إعدادات تسري فورًا، وأحدها يتطلب تشغيل آخر",
-		"الجدول",
-		"بضعة صفوف يكتبها التطبيق، بأدوار الجدول",
 		"علامات التبويب",
 		"مبدّل أقسام، وعلامة تبويب معطلة",
 		"عارض النصوص",
 		"مستندات Markdown وHTML، الإضافات، الردود المتدفقة",
 		"الإشعار المنبثق",
 		"ملاحظات تُغلق وحدها أو بإجرائها أو بالرجوع أو بالسحب",
-		"أيقونة الملف",
-		"نوع الملف بنظرة واحدة من اسمه",
-		"الضغط المطوّل للتأكيد",
-		"أزرار تُضغط مطوّلًا لتأكيد ما لا يمكن التراجع عنه",
-		"مؤشر الخطوات",
-		"أين يقف الشخص في سلسلة من الخطوات",
-		"زر التبديل",
-		"أزرار تبقى مفعّلة أو معطّلة، كأزرار التنسيق في شريط الأدوات",
-		"قائمة الاختيار",
-		"خيار واحد من عدة خيارات، من حقل يفتحها",
-		"شريط التمرير",
-		"رقم أو نطاق يُختار بالسحب على مسار",
-		"مؤشر التحميل",
-		"حلقات وأشعة لعمل جارٍ",
-		"التلميح",
-		"تسمية تظهر عند استقرار المؤشر على عنصر، أو يثبّتها التطبيق",
 		"الأنماط",
 		"الزوايا، الحدود، الظلال، القص، المرشحات، التحويلات ثلاثية الأبعاد",
 		"التخطيط",
@@ -6374,85 +5911,15 @@ var texts = map[string]*[numTexts]string{
 		"نافذة",
 		"الصور",
 		"الفيديوهات",
-		"الصور الحية",
-		"Plus",
 		"نظرة عامة",
-		"مفتاح التبديل",
-		"إعدادات تسري فورًا",
-		"الإشعارات",
-		"لافتات وأصوات وشارات",
-		"متوقف",
-		"الشارات",
-		"عدد غير المقروء على الأيقونة",
-		"شغّل الإشعارات أولًا",
-		"اللمس الاهتزازي",
-		"نقرة خفيفة تحت الإصبع مع تغير القيم",
-		"وضع البيانات المنخفضة",
-		"تُحمّل الصور بجودة أقل",
-		"تُحمّل الصور بالجودة الكاملة",
-		"تحديد الكل",
-		"خانة الاختيار",
-		"مرشح: «تحديد الكل» يعرض تحديدًا جزئيًا",
-		"لا شيء للعرض",
-		"الخطة: ",
-		"زر الاختيار",
-		"اختيار الخطة: واحد من مجموعة صغيرة، كلها ظاهرة",
-		"الخطة",
-		"المتابعة مع ",
-		"علامة التبويب: ",
-		"علامات التبويب",
-		"مبدّل الأقسام: يعرض التطبيق القسم المحدد",
-		"الأقسام",
-		"قابل للطي",
-		"تفاصيل أسفل الملخص، تُحفظ أثناء الطي",
-		"التخزين",
-		"تم استخدام 212 غيغابايت من 256 غيغابايت",
-		"الاحتفاظ بالأصل",
-		"الاحتفاظ بالأصل: ",
-		"تُحفظ التعديلات كنسخ",
-		"التعديلات تستبدل الصورة",
-		"متقدم",
-		"خيارات يتركها معظم الناس كما هي",
-		"الرفع: بدأ",
-		"الرفع: اكتمل",
-		"التقدم",
-		"عمليات النقل: التطبيق يتحكم في القيمة",
-		"الرفع",
-		"تم إرسال 24 صورة",
-		"جارٍ إرسال 24 صورة",
-		"24 صورة للإرسال",
-		"النسخ الاحتياطي",
-		"قيد التحضير: الحجم غير معروف بعد",
-		"إرسال",
-		"إيقاف مؤقت",
-		"إرسال مرة أخرى",
-		"الرفع: متوقف مؤقتًا",
 		"إعادة تعيين",
-		"الرفع: أُعيد تعيينه",
-		"لقطات الشاشة",
-		"مجاني",
-		"جهاز واحد، 5 غيغابايت",
-		"ثلاثة أجهزة، 200 غيغابايت",
-		"3 $ / شهريًا",
-		"الفريق",
-		"مكتبة مشتركة، 2 تيرابايت",
-		"12 $ / شهريًا",
-		"المؤسسات",
-		"يُعدّها مؤسستك",
-		"الزوار",
-		"التسجيلات",
-		"معدل التحويل",
 		"النشاط",
 		"تم النشر إلى بيئة الإنتاج",
 		"تم دفع الفاتورة",
 		"انضم عضو",
 		"الأعضاء",
-		"المالك",
-		"مسؤول",
-		"عضو",
 		"الفوترة",
 		"التطبيقات",
-		"النظام",
 		"تشغيل",
 		"إيقاف",
 		"متوسط",
@@ -6515,23 +5982,6 @@ var texts = map[string]*[numTexts]string{
 		"لم يتبقَّ أي ملف",
 		"إجراءات لـ ",
 		"إجراءات أخرى",
-		"مكان الظهور",
-		"تعرض الهواتف القوائم كلوحات سفلية: جرّب على سطح المكتب",
-		"الجهة والمحاذاة؛ تنقلب حيث لا توجد مساحة",
-		"أعلى",
-		"أسفل",
-		"يسار",
-		"يمين",
-		"البداية",
-		"الوسط",
-		"النهاية",
-		"موضوعة",
-		"واحد",
-		"اخترت واحد",
-		"اثنان",
-		"اخترت اثنان",
-		"ثلاثة",
-		"اخترت ثلاثة",
 		"المنطقة الزمنية",
 		"قائمة طويلة",
 		"عشرون خيارًا في قائمة قابلة للتمرير",
@@ -7213,13 +6663,9 @@ var texts = map[string]*[numTexts]string{
 		"علامة صح",
 		"العمود ",
 		"لم يُحدد شيء",
-		" يعمل",
-		" متوقف",
 		"الصفوف",
 		"الخلايا",
-		"تبديل التحديثات المباشرة",
 		"مباشر",
-		"تبديل الخطوط المتناوبة",
 		"خطوط متناوبة",
 		"الانتقال إلى الصف 500000",
 		"الصف 500,000",
@@ -7750,13 +7196,9 @@ var texts = map[string]*[numTexts]string{
 		"تبديل الملفات",
 		"تبديل الطرفية",
 		"قفل التخطيط",
-		"قفل",
 		"إظهار أزرار الإغلاق",
-		"إغلاق",
 		"تكبير المجموعة",
-		"تكبير",
 		"إعادة تعيين التخطيط",
-		"إعادة تعيين",
 		"اضغط باستمرار على علامة تبويب لإعادة ترتيبها",
 		"اسحب علامة تبويب إلى مجموعة أخرى، أو إلى حافة مجموعة لتقسيمها",
 		"الوسط: ",
@@ -7822,37 +7264,21 @@ var texts = map[string]*[numTexts]string{
 		"خارج الصندوق المقصوص، فوق الصفحة.",
 		"مرّر الصفحة: تتبع مرساتها",
 		"النافذة المنبثقة",
-		"مثبتة على مشغّلها في كل جهاز",
 		"إظهار النافذة المنبثقة",
-		"النافذة المنبثقة ",
 		"الضغط خارجها أو Escape أو الرجوع يغلقها.",
-		"التلميح",
-		"التلميحات تتبع المؤشر: ثبّت واحدًا لتراه",
-		"أبقِ المؤشر على زر",
 		"يحفظ المستند",
 		"حفظ",
-		"تم ضغط حفظ",
-		"التلميح ",
-		"تثبيت التلميح",
-		"إلغاء تثبيت التلميح",
-		"يظهر عند التثبيت أو التمرير فوقه",
 		"اللوحة السفلية",
 		"لوحة في الأسفل فوق خلفية معتمة",
 		"إظهار اللوحة السفلية",
 		"اللوحة السفلية ",
 		"الخلفية وEscape والرجوع تغلقها.",
 		"تم",
-		"الإشعار المنبثق",
-		"إشعارات المعرض المنبثقة، على ToastManager وToastStack وToast",
-		"نسخ الرابط",
-		"تم النسخ",
 		"حذف المسودة",
-		"تم حذف المسودة",
 		"تراجع",
 		"الإشعار: تم التراجع",
 		"الإشعار: اختفى",
 		"إغلاق الكل",
-		"اسحب واحدًا لإبعاده؛ ووجود المؤشر عليه يوقف وقته",
 		"آخر حدث",
 		"عرض الويب",
 		"HTML مضمن، مع رسائل في الاتجاهين",
@@ -7985,19 +7411,13 @@ var texts = map[string]*[numTexts]string{
 		"الأحرف",
 		"لا شيء",
 		"إظهار رقعة",
-		"رقعة",
 		"عمود واحد",
-		"موحد",
 		"التفاف الأسطر",
-		"التفاف",
 		"التغيير السابق",
 		"التغيير التالي",
 		"توسيع كل الأسطر",
-		"توسيع",
 		"طي الأسطر غير المتغيرة",
-		"طي",
 		"البدء من جديد",
-		"إعادة تعيين",
 		"حل",
 		"إضافة تعليق",
 		"تم التعليق",
@@ -8096,23 +7516,12 @@ var texts = map[string]*[numTexts]string{
 		"صورة",
 		"إغلاق",
 		"إغلاق",
-		"التنسيق",
-		"أزرار تبديل في شريط أدوات، كل منها مفعّل أو معطّل",
 		"عريض",
-		"مائل",
-		"تسطير",
 		"مميّز بنجمة",
-		"مقفل",
 		"اضغط مطوّلًا للتأكيد",
-		"اضغط حتى يمتلئ؛ وإن أفلتّ مبكرًا يتراجع",
 		"اضغط مطوّلًا للحذف",
 		"تم الحذف",
-		"اضغط مطوّلًا للأرشفة",
-		"تمت الأرشفة",
-		"اضغط مطوّلًا للإرسال",
-		"تم الإرسال",
 		"إتمام الشراء",
-		"خطوات في صف؛ اضغط خطوة مكتملة للعودة إليها",
 		"السلة",
 		"3 عناصر",
 		"الشحن",
@@ -8124,62 +7533,50 @@ var texts = map[string]*[numTexts]string{
 		"تم تقديم الطلب",
 		"السابق",
 		"التالي",
-		"الإعداد",
-		"في عمود، وخطأ الخطوة الفاشلة مكان وصفها",
-		"إنشاء حساب",
-		"ربط مستودع",
-		"GitHub أو GitLab",
-		"تثبيت الاعتماديات",
 		"ملف القفل قديم",
-		"النشر",
-		"إلى بيئة الإنتاج",
-		"مضغوط",
-		"العلامات وحدها، واسم الخطوة الحالية تحتها",
 		"قادمة",
 		"حالية",
 		"مكتملة",
 		"فشلت",
 		"ملفات المشروع",
 		"تُختار بالاسم الكامل للملف، ثم بامتداده",
-		"إشعارات منبثقة منسّقة",
-		"إشعارات المكوّنات، مكدّسة في الأعلى",
-		"عادي",
-		"معلومة",
-		"نجاح",
-		"تحذير",
-		"خطأ",
-		"تم إرسال الرسالة",
 		"يتوفر إصدار جديد",
 		"تم حفظ التغييرات",
-		"التخزين ممتلئ تقريبًا",
-		"فشل الرفع",
-		"مع إجراء",
-		"نُقل إلى المهملات",
 		"3 ملفات",
-		"تمت استعادة 3 ملفات",
-		"أشرطة التمرير",
-		"اسحب المقبض أو اضغط على المسار أو استخدم مفاتيح الأسهم",
 		"مستوى الصوت",
 		"حجم الخط",
-		"السعر",
 		"الحد الأدنى",
 		"الحد الأقصى",
-		"قائمة الاختيار",
-		"يُعلَّم الخيار المحدد في القائمة",
 		"الفاكهة",
 		"اختر فاكهة",
 		"تفاح",
 		"موز",
 		"كرز",
-		"عنب",
-		"الحلقات ومؤشرات التحميل",
-		"التقدم على شكل حلقة، وعمل مدته غير معروفة",
 		"التقدم",
-		"أقل",
 		"أكثر",
 		"جارٍ التحميل",
 		"الطرفية",
 		"صدفة المستخدم بمحاكي Ghostty: ألوان وسجل تمرير وتحديد ونسخ ولصق",
+		"الأزرار",
+		"أزرار عادية وبأيقونات وتبديل وتأكيد بالضغط المطوّل",
+		"التحديد",
+		"مربعات اختيار وأزرار اختيار ومفاتيح وقوائم اختيار",
+		"المنزلق والتقييم",
+		"رقم على مسار ونطاق وتقييم بالنجوم",
+		"الشارة والصورة الرمزية",
+		"تسميات صغيرة وأشخاص وملفات",
+		"البطاقات",
+		"حاويات بعناوين ومساحات داخلية ومجموعة بطاقات للاختيار",
+		"الوسائط",
+		"صور ومقارنة وعرض دوّار",
+		"القوائم والجداول",
+		"صفوف طويلة وعناصر متداخلة وجدول صغير",
+		"مربع الحوار واللوحة",
+		"أسطح مشروطة فوق تطبيق معتّم",
+		"النافذة المنبثقة وتلميح الأداة",
+		"أسطح مثبتة بما يفتحها",
+		"الخطوات ومسار التنقل",
+		"موقع الشخص في مسار أو تسلسل هرمي",
 		"الخيارات",
 		"السمة",
 		"يتبع المظهر",
@@ -8206,6 +7603,23 @@ var texts = map[string]*[numTexts]string{
 		"تحديد الكل",
 		"شريط المفاتيح",
 		"فوق لوحة مفاتيح الشاشة اللمسية",
+		"التقييم",
+		"تخطٍّ",
+		"إبقاء",
+		"لا مزيد من البطاقات",
+		"قبل",
+		"بعد",
+		"توسيع",
+		"إجراء",
+		"الإجراءات",
+		"إظهار إشعار",
+		"فتح",
+		"إلغاء",
+		"هل تريد نشر هذه الصفحة؟",
+		"سيراها كل من لديه الرابط.",
+		"المزيد",
+		"اضغط مطولًا هنا",
+		"انقر بزر الماوس الأيمن هنا",
 	},
 	"zh-Hans": {
 		"画廊",
@@ -8231,10 +7645,16 @@ var texts = map[string]*[numTexts]string{
 		"示例库",
 		"应用",
 		"基础元素",
-		"组件",
 		"外观",
 		"动效",
 		"平台",
+		"操作",
+		"输入",
+		"展示",
+		"反馈",
+		"浮层",
+		"导航",
+		"复杂组件",
 		"股票",
 		"实时自选股和个股：K 线、深度、成交明细，每 50 毫秒更新一次",
 		"AI 聊天",
@@ -8257,8 +7677,6 @@ var texts = map[string]*[numTexts]string{
 		"网页视图、视频播放器和应用自己的原生视图",
 		"浮层",
 		"显示在屏幕最上层、超出裁剪它的容器的内容",
-		"复选框",
-		"“全选”显示部分选中状态的筛选",
 		"可折叠",
 		"摘要下的详情，折叠时也会保留",
 		"数据表",
@@ -8277,42 +7695,16 @@ var texts = map[string]*[numTexts]string{
 		"标题栏选项、模态页、返回按钮、安全区域",
 		"图表",
 		"带悬停、网格线和动效的折线面积图，列表中的迷你图",
-		"弹出框",
-		"锚定在触发元素上的面板；点击外部、Escape 或返回即可关闭",
 		"进度",
 		"应用驱动的传输，以及大小未知的传输",
-		"单选按钮",
-		"套餐选择：从少量选项中选一个，含一个不可用的套餐",
 		"可调整大小",
 		"拖动面板之间的分隔线调整大小，限制在各自范围内",
-		"底部面板",
-		"背景遮罩上方的底部面板；点击遮罩、Escape 或返回即可关闭",
-		"开关",
-		"立即生效的设置，其中一项需要先开启另一项",
-		"表格",
-		"应用写出的几行数据，带表格的角色",
 		"标签页",
 		"分区切换，含一个不可用的标签",
 		"文本视图",
 		"Markdown 和 HTML 文档、扩展、流式回复",
 		"轻提示",
 		"自动关闭，或通过操作、返回或滑动关闭的提示",
-		"文件图标",
-		"按文件名一眼看出文件类型",
-		"按住确认",
-		"按住才能确认无法撤销的操作",
-		"步骤条",
-		"显示用户在多步流程中的位置",
-		"切换按钮",
-		"保持开或关的按钮，如工具栏的格式按钮",
-		"选择框",
-		"从展开的字段中选择几项之一",
-		"滑块",
-		"沿轨道拖动选取数值或范围",
-		"加载指示器",
-		"表示进行中工作的圆环与辐条",
-		"工具提示",
-		"指针停留在元素上时显示的标签，或由应用固定显示",
 		"样式",
 		"圆角、边框、阴影、裁剪、滤镜、3D 变换",
 		"布局",
@@ -8342,85 +7734,15 @@ var texts = map[string]*[numTexts]string{
 		"窗口",
 		"照片",
 		"视频",
-		"实况照片",
-		"Plus",
 		"概览",
-		"开关",
-		"立即生效的设置",
-		"通知",
-		"横幅、声音和标记",
-		"关闭",
-		"标记",
-		"图标上的未读数",
-		"请先打开通知",
-		"触感反馈",
-		"数值变化时在指尖轻触一下",
-		"低数据模式",
-		"图片以较低质量加载",
-		"图片以完整质量加载",
-		"全选",
-		"复选框",
-		"筛选：“全选”显示部分选中状态",
-		"没有可显示的内容",
-		"套餐：",
-		"单选按钮",
-		"套餐选择：从少量选项中选一个，全部可见",
-		"套餐",
-		"继续使用 ",
-		"标签页：",
-		"标签页",
-		"分区切换：应用显示选中的那一个",
-		"分区",
-		"可折叠",
-		"摘要下的详情，折叠时也会保留",
-		"存储空间",
-		"已使用 212 GB，共 256 GB",
-		"保留原片",
-		"保留原片：",
-		"编辑后另存为副本",
-		"编辑会替换原照片",
-		"高级",
-		"大多数人不会改动的选项",
-		"上传：已开始",
-		"上传：已完成",
-		"进度",
-		"传输：进度值由应用掌控",
-		"上传",
-		"已发送 24 张照片",
-		"正在发送 24 张照片",
-		"待发送 24 张照片",
-		"备份",
-		"准备中：大小尚未知",
-		"发送",
-		"暂停",
-		"重新发送",
-		"上传：已暂停",
 		"重置",
-		"上传：已重置",
-		"截屏",
-		"免费",
-		"一台设备，5 GB",
-		"三台设备，200 GB",
-		"$3 / 月",
-		"团队",
-		"共享图库，2 TB",
-		"$12 / 月",
-		"企业",
-		"由你的组织配置",
-		"访客",
-		"注册",
-		"转化率",
 		"动态",
 		"已部署到生产环境",
 		"发票已支付",
 		"有成员加入",
 		"成员",
-		"所有者",
-		"管理员",
-		"成员",
 		"账单",
 		"应用",
-		"系统",
 		"开",
 		"关",
 		"中",
@@ -8483,23 +7805,6 @@ var texts = map[string]*[numTexts]string{
 		"没有剩余文件",
 		"操作：",
 		"更多操作",
-		"弹出位置",
-		"手机上菜单显示为底部面板：请在桌面上试试",
-		"方向和对齐；空间不足时会翻转",
-		"上",
-		"下",
-		"左",
-		"右",
-		"起始",
-		"居中",
-		"末尾",
-		"已放置",
-		"一",
-		"选择了 一",
-		"二",
-		"选择了 二",
-		"三",
-		"选择了 三",
 		"时区",
 		"长菜单",
 		"一个可滚动的菜单，有二十个选项",
@@ -9181,13 +8486,9 @@ var texts = map[string]*[numTexts]string{
 		"对勾",
 		"列 ",
 		"未选择任何内容",
-		" 开",
-		" 关",
 		"行",
 		"单元格",
-		"切换实时更新",
 		"实时",
-		"切换斑马纹",
 		"斑马纹",
 		"跳到第 500000 行",
 		"第 500,000 行",
@@ -9718,13 +9019,9 @@ var texts = map[string]*[numTexts]string{
 		"显示或隐藏文件",
 		"显示或隐藏终端",
 		"锁定布局",
-		"锁定",
 		"显示关闭按钮",
-		"关闭",
 		"放大分组",
-		"放大",
 		"重置布局",
-		"重置",
 		"按住标签页以调整顺序",
 		"把标签页拖到另一个分组，或拖到分组边缘进行拆分",
 		"中央：",
@@ -9790,37 +9087,21 @@ var texts = map[string]*[numTexts]string{
 		"在裁剪框之外，位于页面最上层。",
 		"滚动页面：它会跟随锚点",
 		"弹出框",
-		"在所有设备上锚定到触发它的元素",
 		"显示弹出框",
-		"弹出框 ",
 		"在外部按下、按 Escape 或返回键可以关闭它。",
-		"工具提示",
-		"工具提示跟随指针：固定一个才能看到",
-		"把指针停在按钮上",
 		"保存文档",
 		"保存",
-		"按下了保存",
-		"工具提示 ",
-		"固定工具提示",
-		"取消固定工具提示",
-		"固定或悬停时显示",
 		"底部面板",
 		"底部的面板，覆盖在背景遮罩上",
 		"显示底部面板",
 		"底部面板 ",
 		"背景遮罩、Escape 和返回键可以关闭它。",
 		"完成",
-		"轻提示",
-		"示例库的轻提示，基于 ToastManager、ToastStack 和 Toast",
-		"拷贝链接",
-		"已拷贝",
 		"删除草稿",
-		"草稿已删除",
 		"撤销",
 		"轻提示：已撤销",
 		"轻提示：已消失",
 		"全部关闭",
-		"轻扫可以关闭；指针停在上面时计时暂停",
 		"最近事件",
 		"网页视图",
 		"内联 HTML，双向传递消息",
@@ -9953,19 +9234,13 @@ var texts = map[string]*[numTexts]string{
 		"按字符",
 		"无",
 		"显示补丁",
-		"补丁",
 		"单栏",
-		"合并",
 		"自动换行",
-		"换行",
 		"上一处改动",
 		"下一处改动",
 		"展开所有行",
-		"展开",
 		"折叠未改动的行",
-		"折叠",
 		"重新开始",
-		"重置",
 		"解决",
 		"添加评论",
 		"已评论",
@@ -10064,23 +9339,12 @@ var texts = map[string]*[numTexts]string{
 		"图片",
 		"关闭",
 		"关闭",
-		"格式",
-		"工具栏中的切换按钮，各自开或关",
 		"粗体",
-		"斜体",
-		"下划线",
 		"已加星标",
-		"已锁定",
 		"按住确认",
-		"按住直到填满；提前松手会倒退",
 		"按住删除",
 		"已删除",
-		"按住归档",
-		"已归档",
-		"按住发送",
-		"已发送",
 		"结账",
-		"横排的步骤；点已完成的步骤可返回",
 		"购物车",
 		"3 件商品",
 		"配送",
@@ -10092,62 +9356,50 @@ var texts = map[string]*[numTexts]string{
 		"已下单",
 		"上一步",
 		"下一步",
-		"设置",
-		"竖排；失败步骤以错误替代说明",
-		"创建账户",
-		"连接仓库",
-		"GitHub 或 GitLab",
-		"安装依赖",
 		"锁文件已过期",
-		"部署",
-		"到生产环境",
-		"紧凑",
-		"只显示标记，下方写出当前步骤",
 		"未开始",
 		"当前",
 		"已完成",
 		"失败",
 		"项目文件",
 		"先按完整文件名，再按扩展名选择",
-		"带样式的轻提示",
-		"组件库的 Toasts，堆叠在顶部",
-		"普通",
-		"信息",
-		"成功",
-		"警告",
-		"错误",
-		"消息已发送",
 		"有新版本可用",
 		"更改已保存",
-		"存储空间快满了",
-		"上传失败",
-		"带操作",
-		"已移到废纸篓",
 		"3 个文件",
-		"已恢复 3 个文件",
-		"滑块",
-		"拖动滑钮、按下轨道或使用方向键",
 		"音量",
 		"字号",
-		"价格",
 		"最小值",
 		"最大值",
-		"选择框",
-		"菜单中勾选已选的选项",
 		"水果",
 		"选择一种水果",
 		"苹果",
 		"香蕉",
 		"樱桃",
-		"葡萄",
-		"圆环与加载指示器",
-		"圆环形式的进度，以及时长未知的工作",
 		"进度",
-		"减少",
 		"增加",
 		"正在加载",
 		"终端",
 		"用 Ghostty 模拟器运行用户的 shell：颜色、回滚、选择、复制和粘贴",
+		"按钮",
+		"普通、图标、切换和长按确认按钮",
+		"选择",
+		"复选框、单选框、开关和下拉选择",
+		"滑块与评分",
+		"轨道上的数值、范围和星级评分",
+		"徽标与头像",
+		"小标签、人物和文件",
+		"卡片",
+		"带标题的容器、内嵌区域和可决策的卡组",
+		"媒体",
+		"图片、对比和轮播",
+		"列表与表格",
+		"长列表、嵌套项和小型表格",
+		"对话框与面板",
+		"覆盖在变暗应用上的模态界面",
+		"气泡与提示",
+		"锚定在触发元素上的浮层",
+		"步骤与路径",
+		"用户在流程或层级中的位置",
 		"参数",
 		"主题",
 		"跟随外观",
@@ -10174,6 +9426,23 @@ var texts = map[string]*[numTexts]string{
 		"全选",
 		"按键栏",
 		"显示在触屏的软键盘上方",
+		"评分",
+		"跳过",
+		"保留",
+		"没有更多卡片了",
+		"之前",
+		"之后",
+		"展开",
+		"操作",
+		"操作",
+		"显示通知",
+		"打开",
+		"取消",
+		"发布此页面？",
+		"拥有链接的人都能看到它。",
+		"更多",
+		"在此长按",
+		"在此右键点击",
 	},
 	"zh-Hant": {
 		"畫廊",
@@ -10199,10 +9468,16 @@ var texts = map[string]*[numTexts]string{
 		"範例集",
 		"應用",
 		"基礎元素",
-		"元件",
 		"外觀",
 		"動效",
 		"平台",
+		"操作",
+		"輸入",
+		"展示",
+		"回饋",
+		"浮層",
+		"導覽",
+		"複雜元件",
 		"股票",
 		"即時自選股和個股：K 線、深度、成交明細，每 50 毫秒更新一次",
 		"AI 聊天",
@@ -10225,8 +9500,6 @@ var texts = map[string]*[numTexts]string{
 		"網頁檢視、影片播放器和應用自己的原生檢視",
 		"浮層",
 		"顯示在螢幕最上層、超出裁剪它的容器的內容",
-		"核取方塊",
-		"「全選」顯示部分選取狀態的篩選",
 		"可摺疊",
 		"摘要下的詳情，摺疊時也會保留",
 		"資料表",
@@ -10245,42 +9518,16 @@ var texts = map[string]*[numTexts]string{
 		"標題列選項、模態頁、返回按鈕、安全區域",
 		"圖表",
 		"帶懸停、網格線和動效的折線面積圖，列表中的迷你圖",
-		"彈出框",
-		"錨定在觸發元素上的面板；點選外部、Escape 或返回即可關閉",
 		"進度",
 		"應用驅動的傳輸，以及大小未知的傳輸",
-		"單選按鈕",
-		"套餐選擇：從少量選項中選一個，含一個不可用的套餐",
 		"可調整大小",
 		"拖動面板之間的分隔線調整大小，限制在各自範圍內",
-		"底部面板",
-		"背景遮罩上方的底部面板；點選遮罩、Escape 或返回即可關閉",
-		"開關",
-		"立即生效的設定，其中一項需要先開啟另一項",
-		"表格",
-		"應用寫出的幾行資料，帶表格的角色",
 		"標籤頁",
 		"分割槽切換，含一個不可用的標籤",
 		"文本檢視",
 		"Markdown 和 HTML 文件、擴充功能、流式回覆",
 		"輕提示",
 		"自動關閉，或透過操作、返回或滑動關閉的提示",
-		"檔案圖示",
-		"依檔名一眼看出檔案類型",
-		"按住確認",
-		"按住才能確認無法復原的操作",
-		"步驟條",
-		"顯示使用者在多步流程中的位置",
-		"切換按鈕",
-		"保持開或關的按鈕，如工具列的格式按鈕",
-		"選擇框",
-		"從展開的欄位中選擇幾項之一",
-		"滑桿",
-		"沿軌道拖曳選取數值或範圍",
-		"載入指示器",
-		"表示進行中工作的圓環與輻條",
-		"工具提示",
-		"指標停留在元素上時顯示的標籤，或由應用固定顯示",
 		"樣式",
 		"圓角、邊框、陰影、裁剪、濾鏡、3D 變換",
 		"佈局",
@@ -10310,85 +9557,15 @@ var texts = map[string]*[numTexts]string{
 		"視窗",
 		"照片",
 		"影片",
-		"實況照片",
-		"Plus",
 		"概覽",
-		"開關",
-		"立即生效的設定",
-		"通知",
-		"橫幅、聲音和標記",
-		"關閉",
-		"標記",
-		"圖示上的未讀數",
-		"請先開啟通知",
-		"觸感反饋",
-		"數值變化時在指尖輕觸一下",
-		"低資料模式",
-		"圖片以較低質量載入",
-		"圖片以完整質量載入",
-		"全選",
-		"核取方塊",
-		"篩選：「全選」顯示部分選中狀態",
-		"沒有可顯示的內容",
-		"套餐：",
-		"單選按鈕",
-		"套餐選擇：從少量選項中選一個，全部可見",
-		"套餐",
-		"繼續使用 ",
-		"標籤頁：",
-		"標籤頁",
-		"分割槽切換：應用顯示選中的那一個",
-		"分割槽",
-		"可摺疊",
-		"摘要下的詳情，摺疊時也會保留",
-		"儲存空間",
-		"已使用 212 GB，共 256 GB",
-		"保留原片",
-		"保留原片：",
-		"編輯後另存為副本",
-		"編輯會取代原照片",
-		"高階",
-		"大多數人不會改動的選項",
-		"上傳：已開始",
-		"上傳：已完成",
-		"進度",
-		"傳輸：進度值由應用掌控",
-		"上傳",
-		"已傳送 24 張照片",
-		"正在傳送 24 張照片",
-		"待發送 24 張照片",
-		"備份",
-		"準備中：大小尚未知",
-		"傳送",
-		"暫停",
-		"重新發送",
-		"上傳：已暫停",
 		"重置",
-		"上傳：已重置",
-		"截圖",
-		"免費",
-		"一臺裝置，5 GB",
-		"三臺裝置，200 GB",
-		"$3 / 月",
-		"團隊",
-		"共享相簿，2 TB",
-		"$12 / 月",
-		"企業",
-		"由你的組織配置",
-		"訪客",
-		"註冊",
-		"轉化率",
 		"動態",
 		"已部署到生產環境",
 		"發票已支付",
 		"有成員加入",
 		"成員",
-		"所有者",
-		"管理員",
-		"成員",
 		"賬單",
 		"應用",
-		"系統",
 		"開",
 		"關",
 		"中",
@@ -10451,23 +9628,6 @@ var texts = map[string]*[numTexts]string{
 		"沒有剩餘檔案",
 		"操作：",
 		"更多操作",
-		"彈出位置",
-		"手機上選單顯示為底部面板：請在桌面上試試",
-		"方向和對齊；空間不足時會翻轉",
-		"上",
-		"下",
-		"左",
-		"右",
-		"起始",
-		"居中",
-		"末尾",
-		"已放置",
-		"一",
-		"選擇了 一",
-		"二",
-		"選擇了 二",
-		"三",
-		"選擇了 三",
 		"時區",
 		"長選單",
 		"一個可滾動的選單，有二十個選項",
@@ -11149,13 +10309,9 @@ var texts = map[string]*[numTexts]string{
 		"對勾",
 		"列 ",
 		"未選擇任何內容",
-		" 開",
-		" 關",
 		"行",
 		"單元格",
-		"切換即時更新",
 		"即時",
-		"切換斑馬紋",
 		"斑馬紋",
 		"跳到第 500000 行",
 		"第 500,000 行",
@@ -11686,13 +10842,9 @@ var texts = map[string]*[numTexts]string{
 		"顯示或隱藏檔案",
 		"顯示或隱藏終端",
 		"鎖定佈局",
-		"鎖定",
 		"顯示關閉按鈕",
-		"關閉",
 		"放大分組",
-		"放大",
 		"重置佈局",
-		"重置",
 		"按住標籤頁以調整順序",
 		"把標籤頁拖到另一個分組，或拖到分組邊緣進行拆分",
 		"中央：",
@@ -11758,37 +10910,21 @@ var texts = map[string]*[numTexts]string{
 		"在裁剪框之外，位於頁面最上層。",
 		"滾動頁面：它會跟隨錨點",
 		"彈出框",
-		"在所有裝置上錨定到觸發它的元素",
 		"顯示彈出框",
-		"彈出框 ",
 		"在外部按下、按 Escape 或返回鍵可以關閉它。",
-		"工具提示",
-		"工具提示跟隨指標：固定一個才能看到",
-		"把指標停在按鈕上",
 		"儲存文件",
 		"儲存",
-		"按下了儲存",
-		"工具提示 ",
-		"固定工具提示",
-		"取消固定工具提示",
-		"固定或懸停時顯示",
 		"底部面板",
 		"底部的面板，覆蓋在背景遮罩上",
 		"顯示底部面板",
 		"底部面板 ",
 		"背景遮罩、Escape 和返回鍵可以關閉它。",
 		"完成",
-		"輕提示",
-		"範例集的輕提示，基於 ToastManager、ToastStack 和 Toast",
-		"複製連結",
-		"已複製",
 		"刪除草稿",
-		"草稿已刪除",
 		"復原",
 		"輕提示：已復原",
 		"輕提示：已消失",
 		"全部關閉",
-		"輕掃可以關閉；指標停在上面時計時暫停",
 		"最近事件",
 		"網頁檢視",
 		"內聯 HTML，雙向傳遞訊息",
@@ -11921,19 +11057,13 @@ var texts = map[string]*[numTexts]string{
 		"按字元",
 		"無",
 		"顯示補丁",
-		"補丁",
 		"單欄",
-		"合併",
 		"自動換行",
-		"換行",
 		"上一處改動",
 		"下一處改動",
 		"展開所有行",
-		"展開",
 		"摺疊未改動的行",
-		"摺疊",
 		"重新開始",
-		"重置",
 		"解決",
 		"新增評論",
 		"已評論",
@@ -12032,23 +11162,12 @@ var texts = map[string]*[numTexts]string{
 		"圖片",
 		"關閉",
 		"關閉",
-		"格式",
-		"工具列中的切換按鈕，各自開或關",
 		"粗體",
-		"斜體",
-		"底線",
 		"已加星號",
-		"已鎖定",
 		"按住確認",
-		"按住直到填滿；提前放開會倒退",
 		"按住刪除",
 		"已刪除",
-		"按住封存",
-		"已封存",
-		"按住傳送",
-		"已傳送",
 		"結帳",
-		"橫排的步驟；點已完成的步驟可返回",
 		"購物車",
 		"3 件商品",
 		"配送",
@@ -12060,62 +11179,50 @@ var texts = map[string]*[numTexts]string{
 		"已下單",
 		"上一步",
 		"下一步",
-		"設定",
-		"直排；失敗步驟以錯誤取代說明",
-		"建立帳戶",
-		"連接儲存庫",
-		"GitHub 或 GitLab",
-		"安裝相依套件",
 		"鎖定檔已過期",
-		"部署",
-		"到正式環境",
-		"緊湊",
-		"只顯示標記，下方寫出目前步驟",
 		"未開始",
 		"目前",
 		"已完成",
 		"失敗",
 		"專案檔案",
 		"先依完整檔名，再依副檔名選擇",
-		"帶樣式的輕提示",
-		"元件庫的 Toasts，堆疊在頂部",
-		"普通",
-		"資訊",
-		"成功",
-		"警告",
-		"錯誤",
-		"訊息已傳送",
 		"有新版本可用",
 		"變更已儲存",
-		"儲存空間快滿了",
-		"上傳失敗",
-		"帶操作",
-		"已移至垃圾桶",
 		"3 個檔案",
-		"已還原 3 個檔案",
-		"滑桿",
-		"拖曳滑鈕、按下軌道或使用方向鍵",
 		"音量",
 		"字級",
-		"價格",
 		"最小值",
 		"最大值",
-		"選擇框",
-		"選單中勾選已選的選項",
 		"水果",
 		"選擇一種水果",
 		"蘋果",
 		"香蕉",
 		"櫻桃",
-		"葡萄",
-		"圓環與載入指示器",
-		"圓環形式的進度，以及時長未知的工作",
 		"進度",
-		"減少",
 		"增加",
 		"正在載入",
 		"終端機",
 		"用 Ghostty 模擬器執行使用者的 shell：顏色、回捲、選取、複製和貼上",
+		"按鈕",
+		"普通、圖示、切換和長按確認按鈕",
+		"選擇",
+		"核取方塊、單選按鈕、開關和下拉選擇",
+		"滑桿與評分",
+		"軌道上的數值、範圍和星級評分",
+		"徽標與頭像",
+		"小標籤、人物和檔案",
+		"卡片",
+		"帶標題的容器、內嵌區域和可決策的卡組",
+		"媒體",
+		"圖片、對比和輪播",
+		"列表與表格",
+		"長列表、巢狀項目和小型表格",
+		"對話方塊與面板",
+		"覆蓋在變暗應用程式上的強制回應介面",
+		"氣泡與提示",
+		"錨定在觸發元素上的浮層",
+		"步驟與路徑",
+		"使用者在流程或階層中的位置",
 		"參數",
 		"主題",
 		"跟隨外觀",
@@ -12142,6 +11249,23 @@ var texts = map[string]*[numTexts]string{
 		"全選",
 		"按鍵列",
 		"顯示在觸控螢幕的軟體鍵盤上方",
+		"評分",
+		"略過",
+		"保留",
+		"沒有更多卡片了",
+		"之前",
+		"之後",
+		"展開",
+		"操作",
+		"操作",
+		"顯示通知",
+		"開啟",
+		"取消",
+		"發布此頁面？",
+		"擁有連結的人都能看到它。",
+		"更多",
+		"在此長按",
+		"在此按右鍵",
 	},
 }
 
@@ -12247,9 +11371,6 @@ func Supply(lang string, t Translation) {
 	if t.GroupPrimitives != nil {
 		st[textGroupPrimitives] = t.GroupPrimitives()
 	}
-	if t.GroupComponents != nil {
-		st[textGroupComponents] = t.GroupComponents()
-	}
 	if t.GroupStyling != nil {
 		st[textGroupStyling] = t.GroupStyling()
 	}
@@ -12258,6 +11379,27 @@ func Supply(lang string, t Translation) {
 	}
 	if t.GroupPlatform != nil {
 		st[textGroupPlatform] = t.GroupPlatform()
+	}
+	if t.GroupActions != nil {
+		st[textGroupActions] = t.GroupActions()
+	}
+	if t.GroupInputs != nil {
+		st[textGroupInputs] = t.GroupInputs()
+	}
+	if t.GroupDisplay != nil {
+		st[textGroupDisplay] = t.GroupDisplay()
+	}
+	if t.GroupFeedback != nil {
+		st[textGroupFeedback] = t.GroupFeedback()
+	}
+	if t.GroupPopups != nil {
+		st[textGroupPopups] = t.GroupPopups()
+	}
+	if t.GroupNavigation != nil {
+		st[textGroupNavigation] = t.GroupNavigation()
+	}
+	if t.GroupComplex != nil {
+		st[textGroupComplex] = t.GroupComplex()
 	}
 	if t.DemoStocks != nil {
 		st[textDemoStocks] = t.DemoStocks()
@@ -12325,12 +11467,6 @@ func Supply(lang string, t Translation) {
 	if t.DemoOverlayDetail != nil {
 		st[textDemoOverlayDetail] = t.DemoOverlayDetail()
 	}
-	if t.DemoCheckbox != nil {
-		st[textDemoCheckbox] = t.DemoCheckbox()
-	}
-	if t.DemoCheckboxDetail != nil {
-		st[textDemoCheckboxDetail] = t.DemoCheckboxDetail()
-	}
 	if t.DemoCollapsible != nil {
 		st[textDemoCollapsible] = t.DemoCollapsible()
 	}
@@ -12385,47 +11521,17 @@ func Supply(lang string, t Translation) {
 	if t.DemoPlotDetail != nil {
 		st[textDemoPlotDetail] = t.DemoPlotDetail()
 	}
-	if t.DemoPopover != nil {
-		st[textDemoPopover] = t.DemoPopover()
-	}
-	if t.DemoPopoverDetail != nil {
-		st[textDemoPopoverDetail] = t.DemoPopoverDetail()
-	}
 	if t.DemoProgress != nil {
 		st[textDemoProgress] = t.DemoProgress()
 	}
 	if t.DemoProgressDetail != nil {
 		st[textDemoProgressDetail] = t.DemoProgressDetail()
 	}
-	if t.DemoRadio != nil {
-		st[textDemoRadio] = t.DemoRadio()
-	}
-	if t.DemoRadioDetail != nil {
-		st[textDemoRadioDetail] = t.DemoRadioDetail()
-	}
 	if t.DemoResizable != nil {
 		st[textDemoResizable] = t.DemoResizable()
 	}
 	if t.DemoResizableDetail != nil {
 		st[textDemoResizableDetail] = t.DemoResizableDetail()
-	}
-	if t.DemoSheet != nil {
-		st[textDemoSheet] = t.DemoSheet()
-	}
-	if t.DemoSheetDetail != nil {
-		st[textDemoSheetDetail] = t.DemoSheetDetail()
-	}
-	if t.DemoSwitch != nil {
-		st[textDemoSwitch] = t.DemoSwitch()
-	}
-	if t.DemoSwitchDetail != nil {
-		st[textDemoSwitchDetail] = t.DemoSwitchDetail()
-	}
-	if t.DemoTable != nil {
-		st[textDemoTable] = t.DemoTable()
-	}
-	if t.DemoTableDetail != nil {
-		st[textDemoTableDetail] = t.DemoTableDetail()
 	}
 	if t.DemoTabs != nil {
 		st[textDemoTabs] = t.DemoTabs()
@@ -12444,54 +11550,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoToastDetail != nil {
 		st[textDemoToastDetail] = t.DemoToastDetail()
-	}
-	if t.DemoFileIcon != nil {
-		st[textDemoFileIcon] = t.DemoFileIcon()
-	}
-	if t.DemoFileIconDetail != nil {
-		st[textDemoFileIconDetail] = t.DemoFileIconDetail()
-	}
-	if t.DemoHoldToConfirm != nil {
-		st[textDemoHoldToConfirm] = t.DemoHoldToConfirm()
-	}
-	if t.DemoHoldToConfirmDetail != nil {
-		st[textDemoHoldToConfirmDetail] = t.DemoHoldToConfirmDetail()
-	}
-	if t.DemoStepper != nil {
-		st[textDemoStepper] = t.DemoStepper()
-	}
-	if t.DemoStepperDetail != nil {
-		st[textDemoStepperDetail] = t.DemoStepperDetail()
-	}
-	if t.DemoToggleButton != nil {
-		st[textDemoToggleButton] = t.DemoToggleButton()
-	}
-	if t.DemoToggleButtonDetail != nil {
-		st[textDemoToggleButtonDetail] = t.DemoToggleButtonDetail()
-	}
-	if t.DemoSelect != nil {
-		st[textDemoSelect] = t.DemoSelect()
-	}
-	if t.DemoSelectDetail != nil {
-		st[textDemoSelectDetail] = t.DemoSelectDetail()
-	}
-	if t.DemoSlider != nil {
-		st[textDemoSlider] = t.DemoSlider()
-	}
-	if t.DemoSliderDetail != nil {
-		st[textDemoSliderDetail] = t.DemoSliderDetail()
-	}
-	if t.DemoSpinner != nil {
-		st[textDemoSpinner] = t.DemoSpinner()
-	}
-	if t.DemoSpinnerDetail != nil {
-		st[textDemoSpinnerDetail] = t.DemoSpinnerDetail()
-	}
-	if t.DemoTooltip != nil {
-		st[textDemoTooltip] = t.DemoTooltip()
-	}
-	if t.DemoTooltipDetail != nil {
-		st[textDemoTooltipDetail] = t.DemoTooltipDetail()
 	}
 	if t.DemoStyles != nil {
 		st[textDemoStyles] = t.DemoStyles()
@@ -12580,209 +11638,11 @@ func Supply(lang string, t Translation) {
 	if t.ControlsVideos != nil {
 		st[textControlsVideos] = t.ControlsVideos()
 	}
-	if t.ControlsLivePhotos != nil {
-		st[textControlsLivePhotos] = t.ControlsLivePhotos()
-	}
-	if t.ControlsPlus != nil {
-		st[textControlsPlus] = t.ControlsPlus()
-	}
 	if t.ControlsOverview != nil {
 		st[textControlsOverview] = t.ControlsOverview()
 	}
-	if t.ControlsSwitch != nil {
-		st[textControlsSwitch] = t.ControlsSwitch()
-	}
-	if t.ControlsSettingsThatTakeEffectAt != nil {
-		st[textControlsSettingsThatTakeEffectAt] = t.ControlsSettingsThatTakeEffectAt()
-	}
-	if t.ControlsNotifications != nil {
-		st[textControlsNotifications] = t.ControlsNotifications()
-	}
-	if t.ControlsBannersSoundsAndBadges != nil {
-		st[textControlsBannersSoundsAndBadges] = t.ControlsBannersSoundsAndBadges()
-	}
-	if t.ControlsOff != nil {
-		st[textControlsOff] = t.ControlsOff()
-	}
-	if t.ControlsBadges != nil {
-		st[textControlsBadges] = t.ControlsBadges()
-	}
-	if t.ControlsTheUnreadCountOnThe != nil {
-		st[textControlsTheUnreadCountOnThe] = t.ControlsTheUnreadCountOnThe()
-	}
-	if t.ControlsTurnOnNotificationsFirst != nil {
-		st[textControlsTurnOnNotificationsFirst] = t.ControlsTurnOnNotificationsFirst()
-	}
-	if t.ControlsHaptics != nil {
-		st[textControlsHaptics] = t.ControlsHaptics()
-	}
-	if t.ControlsATapUnderTheFinger != nil {
-		st[textControlsATapUnderTheFinger] = t.ControlsATapUnderTheFinger()
-	}
-	if t.ControlsLowDataMode != nil {
-		st[textControlsLowDataMode] = t.ControlsLowDataMode()
-	}
-	if t.ControlsImagesLoadAtALower != nil {
-		st[textControlsImagesLoadAtALower] = t.ControlsImagesLoadAtALower()
-	}
-	if t.ControlsImagesLoadInFull != nil {
-		st[textControlsImagesLoadInFull] = t.ControlsImagesLoadInFull()
-	}
-	if t.ControlsSelectAll != nil {
-		st[textControlsSelectAll] = t.ControlsSelectAll()
-	}
-	if t.ControlsCheckbox != nil {
-		st[textControlsCheckbox] = t.ControlsCheckbox()
-	}
-	if t.ControlsAFilterSelectAllShows != nil {
-		st[textControlsAFilterSelectAllShows] = t.ControlsAFilterSelectAllShows()
-	}
-	if t.ControlsNothingToShow != nil {
-		st[textControlsNothingToShow] = t.ControlsNothingToShow()
-	}
-	if t.ControlsPlan != nil {
-		st[textControlsPlan] = t.ControlsPlan()
-	}
-	if t.ControlsRadio != nil {
-		st[textControlsRadio] = t.ControlsRadio()
-	}
-	if t.ControlsAPlanPickerOneOf != nil {
-		st[textControlsAPlanPickerOneOf] = t.ControlsAPlanPickerOneOf()
-	}
-	if t.ControlsPlan2 != nil {
-		st[textControlsPlan2] = t.ControlsPlan2()
-	}
-	if t.ControlsContinueWith != nil {
-		st[textControlsContinueWith] = t.ControlsContinueWith()
-	}
-	if t.ControlsTab != nil {
-		st[textControlsTab] = t.ControlsTab()
-	}
-	if t.ControlsTabs != nil {
-		st[textControlsTabs] = t.ControlsTabs()
-	}
-	if t.ControlsASectionSwitcherTheApp != nil {
-		st[textControlsASectionSwitcherTheApp] = t.ControlsASectionSwitcherTheApp()
-	}
-	if t.ControlsSections != nil {
-		st[textControlsSections] = t.ControlsSections()
-	}
-	if t.ControlsCollapsible != nil {
-		st[textControlsCollapsible] = t.ControlsCollapsible()
-	}
-	if t.ControlsDetailsUnderASummaryKept != nil {
-		st[textControlsDetailsUnderASummaryKept] = t.ControlsDetailsUnderASummaryKept()
-	}
-	if t.ControlsStorage != nil {
-		st[textControlsStorage] = t.ControlsStorage()
-	}
-	if t.Controls212GbOf256Gb != nil {
-		st[textControls212GbOf256Gb] = t.Controls212GbOf256Gb()
-	}
-	if t.ControlsKeepOriginals != nil {
-		st[textControlsKeepOriginals] = t.ControlsKeepOriginals()
-	}
-	if t.ControlsKeepOriginals2 != nil {
-		st[textControlsKeepOriginals2] = t.ControlsKeepOriginals2()
-	}
-	if t.ControlsEditsAreSavedAsCopies != nil {
-		st[textControlsEditsAreSavedAsCopies] = t.ControlsEditsAreSavedAsCopies()
-	}
-	if t.ControlsEditsReplaceThePhoto != nil {
-		st[textControlsEditsReplaceThePhoto] = t.ControlsEditsReplaceThePhoto()
-	}
-	if t.ControlsAdvanced != nil {
-		st[textControlsAdvanced] = t.ControlsAdvanced()
-	}
-	if t.ControlsOptionsMostPeopleLeaveAlone != nil {
-		st[textControlsOptionsMostPeopleLeaveAlone] = t.ControlsOptionsMostPeopleLeaveAlone()
-	}
-	if t.ControlsUploadStarted != nil {
-		st[textControlsUploadStarted] = t.ControlsUploadStarted()
-	}
-	if t.ControlsUploadDone != nil {
-		st[textControlsUploadDone] = t.ControlsUploadDone()
-	}
-	if t.ControlsProgress != nil {
-		st[textControlsProgress] = t.ControlsProgress()
-	}
-	if t.ControlsTransfersTheAppOwnsThe != nil {
-		st[textControlsTransfersTheAppOwnsThe] = t.ControlsTransfersTheAppOwnsThe()
-	}
-	if t.ControlsUpload != nil {
-		st[textControlsUpload] = t.ControlsUpload()
-	}
-	if t.Controls24PhotosSent != nil {
-		st[textControls24PhotosSent] = t.Controls24PhotosSent()
-	}
-	if t.ControlsSending24Photos != nil {
-		st[textControlsSending24Photos] = t.ControlsSending24Photos()
-	}
-	if t.Controls24PhotosToSend != nil {
-		st[textControls24PhotosToSend] = t.Controls24PhotosToSend()
-	}
-	if t.ControlsBackup != nil {
-		st[textControlsBackup] = t.ControlsBackup()
-	}
-	if t.ControlsPreparingItsSizeIsNot != nil {
-		st[textControlsPreparingItsSizeIsNot] = t.ControlsPreparingItsSizeIsNot()
-	}
-	if t.ControlsSend != nil {
-		st[textControlsSend] = t.ControlsSend()
-	}
-	if t.ControlsPause != nil {
-		st[textControlsPause] = t.ControlsPause()
-	}
-	if t.ControlsSendAgain != nil {
-		st[textControlsSendAgain] = t.ControlsSendAgain()
-	}
-	if t.ControlsUploadPaused != nil {
-		st[textControlsUploadPaused] = t.ControlsUploadPaused()
-	}
 	if t.ControlsReset != nil {
 		st[textControlsReset] = t.ControlsReset()
-	}
-	if t.ControlsUploadReset != nil {
-		st[textControlsUploadReset] = t.ControlsUploadReset()
-	}
-	if t.ControlsScreenshots != nil {
-		st[textControlsScreenshots] = t.ControlsScreenshots()
-	}
-	if t.ControlsFree != nil {
-		st[textControlsFree] = t.ControlsFree()
-	}
-	if t.ControlsOneDevice5Gb != nil {
-		st[textControlsOneDevice5Gb] = t.ControlsOneDevice5Gb()
-	}
-	if t.ControlsThreeDevices200Gb != nil {
-		st[textControlsThreeDevices200Gb] = t.ControlsThreeDevices200Gb()
-	}
-	if t.Controls3Mo != nil {
-		st[textControls3Mo] = t.Controls3Mo()
-	}
-	if t.ControlsTeam != nil {
-		st[textControlsTeam] = t.ControlsTeam()
-	}
-	if t.ControlsASharedLibrary2Tb != nil {
-		st[textControlsASharedLibrary2Tb] = t.ControlsASharedLibrary2Tb()
-	}
-	if t.Controls12Mo != nil {
-		st[textControls12Mo] = t.Controls12Mo()
-	}
-	if t.ControlsEnterprise != nil {
-		st[textControlsEnterprise] = t.ControlsEnterprise()
-	}
-	if t.ControlsSetUpByYourOrganization != nil {
-		st[textControlsSetUpByYourOrganization] = t.ControlsSetUpByYourOrganization()
-	}
-	if t.ControlsVisitors != nil {
-		st[textControlsVisitors] = t.ControlsVisitors()
-	}
-	if t.ControlsSignUps != nil {
-		st[textControlsSignUps] = t.ControlsSignUps()
-	}
-	if t.ControlsConversion != nil {
-		st[textControlsConversion] = t.ControlsConversion()
 	}
 	if t.ControlsActivity != nil {
 		st[textControlsActivity] = t.ControlsActivity()
@@ -12799,38 +11659,17 @@ func Supply(lang string, t Translation) {
 	if t.ControlsMembers != nil {
 		st[textControlsMembers] = t.ControlsMembers()
 	}
-	if t.ControlsOwner != nil {
-		st[textControlsOwner] = t.ControlsOwner()
-	}
-	if t.ControlsAdmin != nil {
-		st[textControlsAdmin] = t.ControlsAdmin()
-	}
-	if t.ControlsMember != nil {
-		st[textControlsMember] = t.ControlsMember()
-	}
 	if t.ControlsBilling != nil {
 		st[textControlsBilling] = t.ControlsBilling()
 	}
 	if t.ControlsApps != nil {
 		st[textControlsApps] = t.ControlsApps()
 	}
-	if t.ControlsSystem != nil {
-		st[textControlsSystem] = t.ControlsSystem()
-	}
 	if t.CommonOn != nil {
 		st[textCommonOn] = t.CommonOn()
 	}
 	if t.CommonOff != nil {
 		st[textCommonOff] = t.CommonOff()
-	}
-	if t.ControlsCountOf != nil {
-		s.ControlsCountOf = t.ControlsCountOf
-	}
-	if t.ControlsShowingItems != nil {
-		s.ControlsShowingItems = t.ControlsShowingItems
-	}
-	if t.ControlsContinueEvent != nil {
-		s.ControlsContinueEvent = t.ControlsContinueEvent
 	}
 	if t.MenusMedium != nil {
 		st[textMenusMedium] = t.MenusMedium()
@@ -13011,57 +11850,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.MenusMoreActions != nil {
 		st[textMenusMoreActions] = t.MenusMoreActions()
-	}
-	if t.MenusWhereItGoes != nil {
-		st[textMenusWhereItGoes] = t.MenusWhereItGoes()
-	}
-	if t.MenusPhonesShowMenusAsSheets != nil {
-		st[textMenusPhonesShowMenusAsSheets] = t.MenusPhonesShowMenusAsSheets()
-	}
-	if t.MenusTheSideAndAlignmentIt != nil {
-		st[textMenusTheSideAndAlignmentIt] = t.MenusTheSideAndAlignmentIt()
-	}
-	if t.MenusTop != nil {
-		st[textMenusTop] = t.MenusTop()
-	}
-	if t.MenusBottom != nil {
-		st[textMenusBottom] = t.MenusBottom()
-	}
-	if t.MenusLeft != nil {
-		st[textMenusLeft] = t.MenusLeft()
-	}
-	if t.MenusRight != nil {
-		st[textMenusRight] = t.MenusRight()
-	}
-	if t.MenusStart != nil {
-		st[textMenusStart] = t.MenusStart()
-	}
-	if t.MenusCenter != nil {
-		st[textMenusCenter] = t.MenusCenter()
-	}
-	if t.MenusEnd != nil {
-		st[textMenusEnd] = t.MenusEnd()
-	}
-	if t.MenusPlaced != nil {
-		st[textMenusPlaced] = t.MenusPlaced()
-	}
-	if t.MenusOne != nil {
-		st[textMenusOne] = t.MenusOne()
-	}
-	if t.MenusChoseOne != nil {
-		st[textMenusChoseOne] = t.MenusChoseOne()
-	}
-	if t.MenusTwo != nil {
-		st[textMenusTwo] = t.MenusTwo()
-	}
-	if t.MenusChoseTwo != nil {
-		st[textMenusChoseTwo] = t.MenusChoseTwo()
-	}
-	if t.MenusThree != nil {
-		st[textMenusThree] = t.MenusThree()
-	}
-	if t.MenusChoseThree != nil {
-		st[textMenusChoseThree] = t.MenusChoseThree()
 	}
 	if t.MenusTimeZone != nil {
 		st[textMenusTimeZone] = t.MenusTimeZone()
@@ -15181,26 +13969,14 @@ func Supply(lang string, t Translation) {
 	if t.TableNothingSelected != nil {
 		st[textTableNothingSelected] = t.TableNothingSelected()
 	}
-	if t.TableOn != nil {
-		st[textTableOn] = t.TableOn()
-	}
-	if t.TableOff != nil {
-		st[textTableOff] = t.TableOff()
-	}
 	if t.TableRows != nil {
 		st[textTableRows] = t.TableRows()
 	}
 	if t.TableCells != nil {
 		st[textTableCells] = t.TableCells()
 	}
-	if t.TableToggleLiveUpdates != nil {
-		st[textTableToggleLiveUpdates] = t.TableToggleLiveUpdates()
-	}
 	if t.TableLive != nil {
 		st[textTableLive] = t.TableLive()
-	}
-	if t.TableToggleStripes != nil {
-		st[textTableToggleStripes] = t.TableToggleStripes()
 	}
 	if t.TableStripes != nil {
 		st[textTableStripes] = t.TableStripes()
@@ -16912,26 +15688,14 @@ func Supply(lang string, t Translation) {
 	if t.DockLockTheLayout != nil {
 		st[textDockLockTheLayout] = t.DockLockTheLayout()
 	}
-	if t.DockLock != nil {
-		st[textDockLock] = t.DockLock()
-	}
 	if t.DockShowCloseButtons != nil {
 		st[textDockShowCloseButtons] = t.DockShowCloseButtons()
-	}
-	if t.DockClose != nil {
-		st[textDockClose] = t.DockClose()
 	}
 	if t.DockZoomTheGroup != nil {
 		st[textDockZoomTheGroup] = t.DockZoomTheGroup()
 	}
-	if t.DockZoom != nil {
-		st[textDockZoom] = t.DockZoom()
-	}
 	if t.DockResetTheLayout != nil {
 		st[textDockResetTheLayout] = t.DockResetTheLayout()
-	}
-	if t.DockReset != nil {
-		st[textDockReset] = t.DockReset()
 	}
 	if t.DockHoldATabToReorder != nil {
 		st[textDockHoldATabToReorder] = t.DockHoldATabToReorder()
@@ -17128,47 +15892,17 @@ func Supply(lang string, t Translation) {
 	if t.OverlayPopover != nil {
 		st[textOverlayPopover] = t.OverlayPopover()
 	}
-	if t.OverlayAnchoredToItsTriggerOn != nil {
-		st[textOverlayAnchoredToItsTriggerOn] = t.OverlayAnchoredToItsTriggerOn()
-	}
 	if t.OverlayShowThePopover != nil {
 		st[textOverlayShowThePopover] = t.OverlayShowThePopover()
 	}
-	if t.OverlayPopover2 != nil {
-		st[textOverlayPopover2] = t.OverlayPopover2()
-	}
 	if t.OverlayAPressOutsideEscapeOr != nil {
 		st[textOverlayAPressOutsideEscapeOr] = t.OverlayAPressOutsideEscapeOr()
-	}
-	if t.OverlayTooltip != nil {
-		st[textOverlayTooltip] = t.OverlayTooltip()
-	}
-	if t.OverlayTooltipsFollowAPointerPin != nil {
-		st[textOverlayTooltipsFollowAPointerPin] = t.OverlayTooltipsFollowAPointerPin()
-	}
-	if t.OverlayRestThePointerOnA != nil {
-		st[textOverlayRestThePointerOnA] = t.OverlayRestThePointerOnA()
 	}
 	if t.OverlaySavesTheDocument != nil {
 		st[textOverlaySavesTheDocument] = t.OverlaySavesTheDocument()
 	}
 	if t.OverlaySave != nil {
 		st[textOverlaySave] = t.OverlaySave()
-	}
-	if t.OverlayPressedSave != nil {
-		st[textOverlayPressedSave] = t.OverlayPressedSave()
-	}
-	if t.OverlayTooltip2 != nil {
-		st[textOverlayTooltip2] = t.OverlayTooltip2()
-	}
-	if t.OverlayPinTheTooltip != nil {
-		st[textOverlayPinTheTooltip] = t.OverlayPinTheTooltip()
-	}
-	if t.OverlayUnpinTheTooltip != nil {
-		st[textOverlayUnpinTheTooltip] = t.OverlayUnpinTheTooltip()
-	}
-	if t.OverlayShownWhilePinnedOrHovered != nil {
-		st[textOverlayShownWhilePinnedOrHovered] = t.OverlayShownWhilePinnedOrHovered()
 	}
 	if t.OverlaySheet != nil {
 		st[textOverlaySheet] = t.OverlaySheet()
@@ -17188,23 +15922,8 @@ func Supply(lang string, t Translation) {
 	if t.OverlayDone != nil {
 		st[textOverlayDone] = t.OverlayDone()
 	}
-	if t.OverlayToast != nil {
-		st[textOverlayToast] = t.OverlayToast()
-	}
-	if t.OverlayTheGallerySToastsOn != nil {
-		st[textOverlayTheGallerySToastsOn] = t.OverlayTheGallerySToastsOn()
-	}
-	if t.OverlayCopyTheLink != nil {
-		st[textOverlayCopyTheLink] = t.OverlayCopyTheLink()
-	}
-	if t.OverlayCopied != nil {
-		st[textOverlayCopied] = t.OverlayCopied()
-	}
 	if t.OverlayDeleteTheDraft != nil {
 		st[textOverlayDeleteTheDraft] = t.OverlayDeleteTheDraft()
-	}
-	if t.OverlayDraftDeleted != nil {
-		st[textOverlayDraftDeleted] = t.OverlayDraftDeleted()
 	}
 	if t.OverlayUndo != nil {
 		st[textOverlayUndo] = t.OverlayUndo()
@@ -17217,9 +15936,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.OverlayDismissAll != nil {
 		st[textOverlayDismissAll] = t.OverlayDismissAll()
-	}
-	if t.OverlaySwipeOneAwayThePointer != nil {
-		st[textOverlaySwipeOneAwayThePointer] = t.OverlaySwipeOneAwayThePointer()
 	}
 	if t.OverlayLastEvent != nil {
 		st[textOverlayLastEvent] = t.OverlayLastEvent()
@@ -17470,9 +16186,6 @@ func Supply(lang string, t Translation) {
 	if t.DockClosedState != nil {
 		st[textDockClosedState] = t.DockClosedState()
 	}
-	if t.OverlayLinkOnClipboard != nil {
-		s.OverlayLinkOnClipboard = t.OverlayLinkOnClipboard
-	}
 	if t.A11yItems != nil {
 		s.A11yItems = t.A11yItems
 	}
@@ -17656,20 +16369,11 @@ func Supply(lang string, t Translation) {
 	if t.DiffShowAPatch != nil {
 		st[textDiffShowAPatch] = t.DiffShowAPatch()
 	}
-	if t.DiffPatch != nil {
-		st[textDiffPatch] = t.DiffPatch()
-	}
 	if t.DiffOneColumn != nil {
 		st[textDiffOneColumn] = t.DiffOneColumn()
 	}
-	if t.DiffUnified != nil {
-		st[textDiffUnified] = t.DiffUnified()
-	}
 	if t.DiffSoftWrap != nil {
 		st[textDiffSoftWrap] = t.DiffSoftWrap()
-	}
-	if t.DiffWrap != nil {
-		st[textDiffWrap] = t.DiffWrap()
 	}
 	if t.DiffPreviousChange != nil {
 		st[textDiffPreviousChange] = t.DiffPreviousChange()
@@ -17680,20 +16384,11 @@ func Supply(lang string, t Translation) {
 	if t.DiffExpandEveryLine != nil {
 		st[textDiffExpandEveryLine] = t.DiffExpandEveryLine()
 	}
-	if t.DiffExpand != nil {
-		st[textDiffExpand] = t.DiffExpand()
-	}
 	if t.DiffCollapseUnchangedLines != nil {
 		st[textDiffCollapseUnchangedLines] = t.DiffCollapseUnchangedLines()
 	}
-	if t.DiffCollapse != nil {
-		st[textDiffCollapse] = t.DiffCollapse()
-	}
 	if t.DiffStartAgain != nil {
 		st[textDiffStartAgain] = t.DiffStartAgain()
-	}
-	if t.DiffReset != nil {
-		st[textDiffReset] = t.DiffReset()
 	}
 	if t.DiffResolve != nil {
 		st[textDiffResolve] = t.DiffResolve()
@@ -18079,32 +16774,14 @@ func Supply(lang string, t Translation) {
 	if t.CollapsingMinutes != nil {
 		s.CollapsingMinutes = t.CollapsingMinutes
 	}
-	if t.LibFormatting != nil {
-		st[textLibFormatting] = t.LibFormatting()
-	}
-	if t.LibFormattingNote != nil {
-		st[textLibFormattingNote] = t.LibFormattingNote()
-	}
 	if t.LibBold != nil {
 		st[textLibBold] = t.LibBold()
-	}
-	if t.LibItalic != nil {
-		st[textLibItalic] = t.LibItalic()
-	}
-	if t.LibUnderline != nil {
-		st[textLibUnderline] = t.LibUnderline()
 	}
 	if t.LibStarred != nil {
 		st[textLibStarred] = t.LibStarred()
 	}
-	if t.LibLocked != nil {
-		st[textLibLocked] = t.LibLocked()
-	}
 	if t.LibHold != nil {
 		st[textLibHold] = t.LibHold()
-	}
-	if t.LibHoldNote != nil {
-		st[textLibHoldNote] = t.LibHoldNote()
 	}
 	if t.LibHoldToDelete != nil {
 		st[textLibHoldToDelete] = t.LibHoldToDelete()
@@ -18112,23 +16789,8 @@ func Supply(lang string, t Translation) {
 	if t.LibDeleted != nil {
 		st[textLibDeleted] = t.LibDeleted()
 	}
-	if t.LibHoldToArchive != nil {
-		st[textLibHoldToArchive] = t.LibHoldToArchive()
-	}
-	if t.LibArchived != nil {
-		st[textLibArchived] = t.LibArchived()
-	}
-	if t.LibHoldToSend != nil {
-		st[textLibHoldToSend] = t.LibHoldToSend()
-	}
-	if t.LibSent != nil {
-		st[textLibSent] = t.LibSent()
-	}
 	if t.LibCheckout != nil {
 		st[textLibCheckout] = t.LibCheckout()
-	}
-	if t.LibCheckoutNote != nil {
-		st[textLibCheckoutNote] = t.LibCheckoutNote()
 	}
 	if t.LibCart != nil {
 		st[textLibCart] = t.LibCart()
@@ -18163,38 +16825,8 @@ func Supply(lang string, t Translation) {
 	if t.LibNext != nil {
 		st[textLibNext] = t.LibNext()
 	}
-	if t.LibSetup != nil {
-		st[textLibSetup] = t.LibSetup()
-	}
-	if t.LibSetupNote != nil {
-		st[textLibSetupNote] = t.LibSetupNote()
-	}
-	if t.LibCreateAccount != nil {
-		st[textLibCreateAccount] = t.LibCreateAccount()
-	}
-	if t.LibConnectRepository != nil {
-		st[textLibConnectRepository] = t.LibConnectRepository()
-	}
-	if t.LibConnectRepositoryDetail != nil {
-		st[textLibConnectRepositoryDetail] = t.LibConnectRepositoryDetail()
-	}
-	if t.LibInstall != nil {
-		st[textLibInstall] = t.LibInstall()
-	}
 	if t.LibInstallError != nil {
 		st[textLibInstallError] = t.LibInstallError()
-	}
-	if t.LibDeploy != nil {
-		st[textLibDeploy] = t.LibDeploy()
-	}
-	if t.LibDeployDetail != nil {
-		st[textLibDeployDetail] = t.LibDeployDetail()
-	}
-	if t.LibCompact != nil {
-		st[textLibCompact] = t.LibCompact()
-	}
-	if t.LibCompactNote != nil {
-		st[textLibCompactNote] = t.LibCompactNote()
 	}
 	if t.LibStepUpcoming != nil {
 		st[textLibStepUpcoming] = t.LibStepUpcoming()
@@ -18214,59 +16846,14 @@ func Supply(lang string, t Translation) {
 	if t.LibFilesNote != nil {
 		st[textLibFilesNote] = t.LibFilesNote()
 	}
-	if t.LibToasts != nil {
-		st[textLibToasts] = t.LibToasts()
-	}
-	if t.LibToastsNote != nil {
-		st[textLibToastsNote] = t.LibToastsNote()
-	}
-	if t.LibPlain != nil {
-		st[textLibPlain] = t.LibPlain()
-	}
-	if t.LibInfo != nil {
-		st[textLibInfo] = t.LibInfo()
-	}
-	if t.LibSuccess != nil {
-		st[textLibSuccess] = t.LibSuccess()
-	}
-	if t.LibWarning != nil {
-		st[textLibWarning] = t.LibWarning()
-	}
-	if t.LibError != nil {
-		st[textLibError] = t.LibError()
-	}
-	if t.LibMessageSent != nil {
-		st[textLibMessageSent] = t.LibMessageSent()
-	}
 	if t.LibNewVersion != nil {
 		st[textLibNewVersion] = t.LibNewVersion()
 	}
 	if t.LibChangesSaved != nil {
 		st[textLibChangesSaved] = t.LibChangesSaved()
 	}
-	if t.LibStorageFull != nil {
-		st[textLibStorageFull] = t.LibStorageFull()
-	}
-	if t.LibUploadFailed != nil {
-		st[textLibUploadFailed] = t.LibUploadFailed()
-	}
-	if t.LibWithAction != nil {
-		st[textLibWithAction] = t.LibWithAction()
-	}
-	if t.LibMovedToTrash != nil {
-		st[textLibMovedToTrash] = t.LibMovedToTrash()
-	}
 	if t.LibThreeFiles != nil {
 		st[textLibThreeFiles] = t.LibThreeFiles()
-	}
-	if t.LibRestored != nil {
-		st[textLibRestored] = t.LibRestored()
-	}
-	if t.LibSliders != nil {
-		st[textLibSliders] = t.LibSliders()
-	}
-	if t.LibSlidersNote != nil {
-		st[textLibSlidersNote] = t.LibSlidersNote()
 	}
 	if t.LibVolume != nil {
 		st[textLibVolume] = t.LibVolume()
@@ -18274,20 +16861,11 @@ func Supply(lang string, t Translation) {
 	if t.LibFontSize != nil {
 		st[textLibFontSize] = t.LibFontSize()
 	}
-	if t.LibPrice != nil {
-		st[textLibPrice] = t.LibPrice()
-	}
 	if t.LibMinimum != nil {
 		st[textLibMinimum] = t.LibMinimum()
 	}
 	if t.LibMaximum != nil {
 		st[textLibMaximum] = t.LibMaximum()
-	}
-	if t.LibSelect != nil {
-		st[textLibSelect] = t.LibSelect()
-	}
-	if t.LibSelectNote != nil {
-		st[textLibSelectNote] = t.LibSelectNote()
 	}
 	if t.LibFruit != nil {
 		st[textLibFruit] = t.LibFruit()
@@ -18304,20 +16882,8 @@ func Supply(lang string, t Translation) {
 	if t.LibCherry != nil {
 		st[textLibCherry] = t.LibCherry()
 	}
-	if t.LibGrape != nil {
-		st[textLibGrape] = t.LibGrape()
-	}
-	if t.LibSpinners != nil {
-		st[textLibSpinners] = t.LibSpinners()
-	}
-	if t.LibSpinnersNote != nil {
-		st[textLibSpinnersNote] = t.LibSpinnersNote()
-	}
 	if t.LibProgress != nil {
 		st[textLibProgress] = t.LibProgress()
-	}
-	if t.LibLess != nil {
-		st[textLibLess] = t.LibLess()
 	}
 	if t.LibMore != nil {
 		st[textLibMore] = t.LibMore()
@@ -18330,6 +16896,66 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoTerminalDetail != nil {
 		st[textDemoTerminalDetail] = t.DemoTerminalDetail()
+	}
+	if t.DemoButtons != nil {
+		st[textDemoButtons] = t.DemoButtons()
+	}
+	if t.DemoButtonsDetail != nil {
+		st[textDemoButtonsDetail] = t.DemoButtonsDetail()
+	}
+	if t.DemoSelection != nil {
+		st[textDemoSelection] = t.DemoSelection()
+	}
+	if t.DemoSelectionDetail != nil {
+		st[textDemoSelectionDetail] = t.DemoSelectionDetail()
+	}
+	if t.DemoSliderAndRating != nil {
+		st[textDemoSliderAndRating] = t.DemoSliderAndRating()
+	}
+	if t.DemoSliderAndRatingDetail != nil {
+		st[textDemoSliderAndRatingDetail] = t.DemoSliderAndRatingDetail()
+	}
+	if t.DemoBadgeAndAvatar != nil {
+		st[textDemoBadgeAndAvatar] = t.DemoBadgeAndAvatar()
+	}
+	if t.DemoBadgeAndAvatarDetail != nil {
+		st[textDemoBadgeAndAvatarDetail] = t.DemoBadgeAndAvatarDetail()
+	}
+	if t.DemoCards != nil {
+		st[textDemoCards] = t.DemoCards()
+	}
+	if t.DemoCardsDetail != nil {
+		st[textDemoCardsDetail] = t.DemoCardsDetail()
+	}
+	if t.DemoMedia != nil {
+		st[textDemoMedia] = t.DemoMedia()
+	}
+	if t.DemoMediaDetail != nil {
+		st[textDemoMediaDetail] = t.DemoMediaDetail()
+	}
+	if t.DemoListsAndTables != nil {
+		st[textDemoListsAndTables] = t.DemoListsAndTables()
+	}
+	if t.DemoListsAndTablesDetail != nil {
+		st[textDemoListsAndTablesDetail] = t.DemoListsAndTablesDetail()
+	}
+	if t.DemoDialogAndSheet != nil {
+		st[textDemoDialogAndSheet] = t.DemoDialogAndSheet()
+	}
+	if t.DemoDialogAndSheetDetail != nil {
+		st[textDemoDialogAndSheetDetail] = t.DemoDialogAndSheetDetail()
+	}
+	if t.DemoPopoverAndTooltip != nil {
+		st[textDemoPopoverAndTooltip] = t.DemoPopoverAndTooltip()
+	}
+	if t.DemoPopoverAndTooltipDetail != nil {
+		st[textDemoPopoverAndTooltipDetail] = t.DemoPopoverAndTooltipDetail()
+	}
+	if t.DemoStepperAndBreadcrumbs != nil {
+		st[textDemoStepperAndBreadcrumbs] = t.DemoStepperAndBreadcrumbs()
+	}
+	if t.DemoStepperAndBreadcrumbsDetail != nil {
+		st[textDemoStepperAndBreadcrumbsDetail] = t.DemoStepperAndBreadcrumbsDetail()
 	}
 	if t.TerminalOptions != nil {
 		st[textTerminalOptions] = t.TerminalOptions()
@@ -18414,6 +17040,60 @@ func Supply(lang string, t Translation) {
 	}
 	if t.TerminalKeyBarNote != nil {
 		st[textTerminalKeyBarNote] = t.TerminalKeyBarNote()
+	}
+	if t.KitPressed != nil {
+		s.KitPressed = t.KitPressed
+	}
+	if t.KitRating != nil {
+		st[textKitRating] = t.KitRating()
+	}
+	if t.KitPass != nil {
+		st[textKitPass] = t.KitPass()
+	}
+	if t.KitKeep != nil {
+		st[textKitKeep] = t.KitKeep()
+	}
+	if t.KitNoMoreCards != nil {
+		st[textKitNoMoreCards] = t.KitNoMoreCards()
+	}
+	if t.KitBefore != nil {
+		st[textKitBefore] = t.KitBefore()
+	}
+	if t.KitAfter != nil {
+		st[textKitAfter] = t.KitAfter()
+	}
+	if t.KitExpand != nil {
+		st[textKitExpand] = t.KitExpand()
+	}
+	if t.KitAction != nil {
+		st[textKitAction] = t.KitAction()
+	}
+	if t.KitActions != nil {
+		st[textKitActions] = t.KitActions()
+	}
+	if t.KitShow != nil {
+		st[textKitShow] = t.KitShow()
+	}
+	if t.KitOpen != nil {
+		st[textKitOpen] = t.KitOpen()
+	}
+	if t.KitCancel != nil {
+		st[textKitCancel] = t.KitCancel()
+	}
+	if t.KitDialogTitle != nil {
+		st[textKitDialogTitle] = t.KitDialogTitle()
+	}
+	if t.KitDialogNote != nil {
+		st[textKitDialogNote] = t.KitDialogNote()
+	}
+	if t.KitMore != nil {
+		st[textKitMore] = t.KitMore()
+	}
+	if t.KitLongPressHere != nil {
+		st[textKitLongPressHere] = t.KitLongPressHere()
+	}
+	if t.KitRightClickHere != nil {
+		st[textKitRightClickHere] = t.KitRightClickHere()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -18624,14 +17304,6 @@ func GroupPrimitives(cx *core.Scope) string { return For(cx).GroupPrimitives() }
 // in the language of msgs.
 func (msgs Messages) GroupPrimitives() string { return msgs.text(textGroupPrimitives) }
 
-// GroupComponents says "Components"
-// in the language the app shows under cx.
-func GroupComponents(cx *core.Scope) string { return For(cx).GroupComponents() }
-
-// GroupComponents says "Components"
-// in the language of msgs.
-func (msgs Messages) GroupComponents() string { return msgs.text(textGroupComponents) }
-
 // GroupStyling says "Styling"
 // in the language the app shows under cx.
 func GroupStyling(cx *core.Scope) string { return For(cx).GroupStyling() }
@@ -18655,6 +17327,62 @@ func GroupPlatform(cx *core.Scope) string { return For(cx).GroupPlatform() }
 // GroupPlatform says "Platform"
 // in the language of msgs.
 func (msgs Messages) GroupPlatform() string { return msgs.text(textGroupPlatform) }
+
+// GroupActions says "Actions"
+// in the language the app shows under cx.
+func GroupActions(cx *core.Scope) string { return For(cx).GroupActions() }
+
+// GroupActions says "Actions"
+// in the language of msgs.
+func (msgs Messages) GroupActions() string { return msgs.text(textGroupActions) }
+
+// GroupInputs says "Inputs"
+// in the language the app shows under cx.
+func GroupInputs(cx *core.Scope) string { return For(cx).GroupInputs() }
+
+// GroupInputs says "Inputs"
+// in the language of msgs.
+func (msgs Messages) GroupInputs() string { return msgs.text(textGroupInputs) }
+
+// GroupDisplay says "Display"
+// in the language the app shows under cx.
+func GroupDisplay(cx *core.Scope) string { return For(cx).GroupDisplay() }
+
+// GroupDisplay says "Display"
+// in the language of msgs.
+func (msgs Messages) GroupDisplay() string { return msgs.text(textGroupDisplay) }
+
+// GroupFeedback says "Feedback"
+// in the language the app shows under cx.
+func GroupFeedback(cx *core.Scope) string { return For(cx).GroupFeedback() }
+
+// GroupFeedback says "Feedback"
+// in the language of msgs.
+func (msgs Messages) GroupFeedback() string { return msgs.text(textGroupFeedback) }
+
+// GroupPopups says "Popups"
+// in the language the app shows under cx.
+func GroupPopups(cx *core.Scope) string { return For(cx).GroupPopups() }
+
+// GroupPopups says "Popups"
+// in the language of msgs.
+func (msgs Messages) GroupPopups() string { return msgs.text(textGroupPopups) }
+
+// GroupNavigation says "Navigation"
+// in the language the app shows under cx.
+func GroupNavigation(cx *core.Scope) string { return For(cx).GroupNavigation() }
+
+// GroupNavigation says "Navigation"
+// in the language of msgs.
+func (msgs Messages) GroupNavigation() string { return msgs.text(textGroupNavigation) }
+
+// GroupComplex says "Complex"
+// in the language the app shows under cx.
+func GroupComplex(cx *core.Scope) string { return For(cx).GroupComplex() }
+
+// GroupComplex says "Complex"
+// in the language of msgs.
+func (msgs Messages) GroupComplex() string { return msgs.text(textGroupComplex) }
 
 // DemoStocks says "Stocks"
 // in the language the app shows under cx.
@@ -18834,22 +17562,6 @@ func DemoOverlayDetail(cx *core.Scope) string { return For(cx).DemoOverlayDetail
 // in the language of msgs.
 func (msgs Messages) DemoOverlayDetail() string { return msgs.text(textDemoOverlayDetail) }
 
-// DemoCheckbox says "Checkbox"
-// in the language the app shows under cx.
-func DemoCheckbox(cx *core.Scope) string { return For(cx).DemoCheckbox() }
-
-// DemoCheckbox says "Checkbox"
-// in the language of msgs.
-func (msgs Messages) DemoCheckbox() string { return msgs.text(textDemoCheckbox) }
-
-// DemoCheckboxDetail says "A filter whose “Select all” shows a partial selection"
-// in the language the app shows under cx.
-func DemoCheckboxDetail(cx *core.Scope) string { return For(cx).DemoCheckboxDetail() }
-
-// DemoCheckboxDetail says "A filter whose “Select all” shows a partial selection"
-// in the language of msgs.
-func (msgs Messages) DemoCheckboxDetail() string { return msgs.text(textDemoCheckboxDetail) }
-
 // DemoCollapsible says "Collapsible"
 // in the language the app shows under cx.
 func DemoCollapsible(cx *core.Scope) string { return For(cx).DemoCollapsible() }
@@ -18994,22 +17706,6 @@ func DemoPlotDetail(cx *core.Scope) string { return For(cx).DemoPlotDetail() }
 // in the language of msgs.
 func (msgs Messages) DemoPlotDetail() string { return msgs.text(textDemoPlotDetail) }
 
-// DemoPopover says "Popover"
-// in the language the app shows under cx.
-func DemoPopover(cx *core.Scope) string { return For(cx).DemoPopover() }
-
-// DemoPopover says "Popover"
-// in the language of msgs.
-func (msgs Messages) DemoPopover() string { return msgs.text(textDemoPopover) }
-
-// DemoPopoverDetail says "A panel anchored to its trigger; a press outside, Escape or back closes it"
-// in the language the app shows under cx.
-func DemoPopoverDetail(cx *core.Scope) string { return For(cx).DemoPopoverDetail() }
-
-// DemoPopoverDetail says "A panel anchored to its trigger; a press outside, Escape or back closes it"
-// in the language of msgs.
-func (msgs Messages) DemoPopoverDetail() string { return msgs.text(textDemoPopoverDetail) }
-
 // DemoProgress says "Progress"
 // in the language the app shows under cx.
 func DemoProgress(cx *core.Scope) string { return For(cx).DemoProgress() }
@@ -19026,22 +17722,6 @@ func DemoProgressDetail(cx *core.Scope) string { return For(cx).DemoProgressDeta
 // in the language of msgs.
 func (msgs Messages) DemoProgressDetail() string { return msgs.text(textDemoProgressDetail) }
 
-// DemoRadio says "Radio"
-// in the language the app shows under cx.
-func DemoRadio(cx *core.Scope) string { return For(cx).DemoRadio() }
-
-// DemoRadio says "Radio"
-// in the language of msgs.
-func (msgs Messages) DemoRadio() string { return msgs.text(textDemoRadio) }
-
-// DemoRadioDetail says "A plan picker: one of a small set, a disabled plan"
-// in the language the app shows under cx.
-func DemoRadioDetail(cx *core.Scope) string { return For(cx).DemoRadioDetail() }
-
-// DemoRadioDetail says "A plan picker: one of a small set, a disabled plan"
-// in the language of msgs.
-func (msgs Messages) DemoRadioDetail() string { return msgs.text(textDemoRadioDetail) }
-
 // DemoResizable says "Resizable"
 // in the language the app shows under cx.
 func DemoResizable(cx *core.Scope) string { return For(cx).DemoResizable() }
@@ -19057,54 +17737,6 @@ func DemoResizableDetail(cx *core.Scope) string { return For(cx).DemoResizableDe
 // DemoResizableDetail says "Panels resized by dragging the lines between them, within their ranges"
 // in the language of msgs.
 func (msgs Messages) DemoResizableDetail() string { return msgs.text(textDemoResizableDetail) }
-
-// DemoSheet says "Sheet"
-// in the language the app shows under cx.
-func DemoSheet(cx *core.Scope) string { return For(cx).DemoSheet() }
-
-// DemoSheet says "Sheet"
-// in the language of msgs.
-func (msgs Messages) DemoSheet() string { return msgs.text(textDemoSheet) }
-
-// DemoSheetDetail says "A panel at the bottom, over a backdrop; the backdrop, Escape or back closes it"
-// in the language the app shows under cx.
-func DemoSheetDetail(cx *core.Scope) string { return For(cx).DemoSheetDetail() }
-
-// DemoSheetDetail says "A panel at the bottom, over a backdrop; the backdrop, Escape or back closes it"
-// in the language of msgs.
-func (msgs Messages) DemoSheetDetail() string { return msgs.text(textDemoSheetDetail) }
-
-// DemoSwitch says "Switch"
-// in the language the app shows under cx.
-func DemoSwitch(cx *core.Scope) string { return For(cx).DemoSwitch() }
-
-// DemoSwitch says "Switch"
-// in the language of msgs.
-func (msgs Messages) DemoSwitch() string { return msgs.text(textDemoSwitch) }
-
-// DemoSwitchDetail says "Settings that take effect at once, one that needs another on"
-// in the language the app shows under cx.
-func DemoSwitchDetail(cx *core.Scope) string { return For(cx).DemoSwitchDetail() }
-
-// DemoSwitchDetail says "Settings that take effect at once, one that needs another on"
-// in the language of msgs.
-func (msgs Messages) DemoSwitchDetail() string { return msgs.text(textDemoSwitchDetail) }
-
-// DemoTable says "Table"
-// in the language the app shows under cx.
-func DemoTable(cx *core.Scope) string { return For(cx).DemoTable() }
-
-// DemoTable says "Table"
-// in the language of msgs.
-func (msgs Messages) DemoTable() string { return msgs.text(textDemoTable) }
-
-// DemoTableDetail says "A few rows the app writes out, with a table's roles"
-// in the language the app shows under cx.
-func DemoTableDetail(cx *core.Scope) string { return For(cx).DemoTableDetail() }
-
-// DemoTableDetail says "A few rows the app writes out, with a table's roles"
-// in the language of msgs.
-func (msgs Messages) DemoTableDetail() string { return msgs.text(textDemoTableDetail) }
 
 // DemoTabs says "Tabs"
 // in the language the app shows under cx.
@@ -19153,134 +17785,6 @@ func DemoToastDetail(cx *core.Scope) string { return For(cx).DemoToastDetail() }
 // DemoToastDetail says "Notes that close by themselves, by their action, back or a swipe"
 // in the language of msgs.
 func (msgs Messages) DemoToastDetail() string { return msgs.text(textDemoToastDetail) }
-
-// DemoFileIcon says "FileIcon"
-// in the language the app shows under cx.
-func DemoFileIcon(cx *core.Scope) string { return For(cx).DemoFileIcon() }
-
-// DemoFileIcon says "FileIcon"
-// in the language of msgs.
-func (msgs Messages) DemoFileIcon() string { return msgs.text(textDemoFileIcon) }
-
-// DemoFileIconDetail says "A file's type at a glance, by its name"
-// in the language the app shows under cx.
-func DemoFileIconDetail(cx *core.Scope) string { return For(cx).DemoFileIconDetail() }
-
-// DemoFileIconDetail says "A file's type at a glance, by its name"
-// in the language of msgs.
-func (msgs Messages) DemoFileIconDetail() string { return msgs.text(textDemoFileIconDetail) }
-
-// DemoHoldToConfirm says "HoldToConfirm"
-// in the language the app shows under cx.
-func DemoHoldToConfirm(cx *core.Scope) string { return For(cx).DemoHoldToConfirm() }
-
-// DemoHoldToConfirm says "HoldToConfirm"
-// in the language of msgs.
-func (msgs Messages) DemoHoldToConfirm() string { return msgs.text(textDemoHoldToConfirm) }
-
-// DemoHoldToConfirmDetail says "Buttons held down to confirm what cannot be undone"
-// in the language the app shows under cx.
-func DemoHoldToConfirmDetail(cx *core.Scope) string { return For(cx).DemoHoldToConfirmDetail() }
-
-// DemoHoldToConfirmDetail says "Buttons held down to confirm what cannot be undone"
-// in the language of msgs.
-func (msgs Messages) DemoHoldToConfirmDetail() string { return msgs.text(textDemoHoldToConfirmDetail) }
-
-// DemoStepper says "Stepper"
-// in the language the app shows under cx.
-func DemoStepper(cx *core.Scope) string { return For(cx).DemoStepper() }
-
-// DemoStepper says "Stepper"
-// in the language of msgs.
-func (msgs Messages) DemoStepper() string { return msgs.text(textDemoStepper) }
-
-// DemoStepperDetail says "Where a person is in a flow of steps"
-// in the language the app shows under cx.
-func DemoStepperDetail(cx *core.Scope) string { return For(cx).DemoStepperDetail() }
-
-// DemoStepperDetail says "Where a person is in a flow of steps"
-// in the language of msgs.
-func (msgs Messages) DemoStepperDetail() string { return msgs.text(textDemoStepperDetail) }
-
-// DemoToggleButton says "ToggleButton"
-// in the language the app shows under cx.
-func DemoToggleButton(cx *core.Scope) string { return For(cx).DemoToggleButton() }
-
-// DemoToggleButton says "ToggleButton"
-// in the language of msgs.
-func (msgs Messages) DemoToggleButton() string { return msgs.text(textDemoToggleButton) }
-
-// DemoToggleButtonDetail says "Buttons that stay on or off, as a toolbar's formatting"
-// in the language the app shows under cx.
-func DemoToggleButtonDetail(cx *core.Scope) string { return For(cx).DemoToggleButtonDetail() }
-
-// DemoToggleButtonDetail says "Buttons that stay on or off, as a toolbar's formatting"
-// in the language of msgs.
-func (msgs Messages) DemoToggleButtonDetail() string { return msgs.text(textDemoToggleButtonDetail) }
-
-// DemoSelect says "Select"
-// in the language the app shows under cx.
-func DemoSelect(cx *core.Scope) string { return For(cx).DemoSelect() }
-
-// DemoSelect says "Select"
-// in the language of msgs.
-func (msgs Messages) DemoSelect() string { return msgs.text(textDemoSelect) }
-
-// DemoSelectDetail says "One choice of a few, from a field that opens them"
-// in the language the app shows under cx.
-func DemoSelectDetail(cx *core.Scope) string { return For(cx).DemoSelectDetail() }
-
-// DemoSelectDetail says "One choice of a few, from a field that opens them"
-// in the language of msgs.
-func (msgs Messages) DemoSelectDetail() string { return msgs.text(textDemoSelectDetail) }
-
-// DemoSlider says "Slider"
-// in the language the app shows under cx.
-func DemoSlider(cx *core.Scope) string { return For(cx).DemoSlider() }
-
-// DemoSlider says "Slider"
-// in the language of msgs.
-func (msgs Messages) DemoSlider() string { return msgs.text(textDemoSlider) }
-
-// DemoSliderDetail says "A number or a range picked by dragging along a track"
-// in the language the app shows under cx.
-func DemoSliderDetail(cx *core.Scope) string { return For(cx).DemoSliderDetail() }
-
-// DemoSliderDetail says "A number or a range picked by dragging along a track"
-// in the language of msgs.
-func (msgs Messages) DemoSliderDetail() string { return msgs.text(textDemoSliderDetail) }
-
-// DemoSpinner says "Spinner"
-// in the language the app shows under cx.
-func DemoSpinner(cx *core.Scope) string { return For(cx).DemoSpinner() }
-
-// DemoSpinner says "Spinner"
-// in the language of msgs.
-func (msgs Messages) DemoSpinner() string { return msgs.text(textDemoSpinner) }
-
-// DemoSpinnerDetail says "Rings and spokes for work under way"
-// in the language the app shows under cx.
-func DemoSpinnerDetail(cx *core.Scope) string { return For(cx).DemoSpinnerDetail() }
-
-// DemoSpinnerDetail says "Rings and spokes for work under way"
-// in the language of msgs.
-func (msgs Messages) DemoSpinnerDetail() string { return msgs.text(textDemoSpinnerDetail) }
-
-// DemoTooltip says "Tooltip"
-// in the language the app shows under cx.
-func DemoTooltip(cx *core.Scope) string { return For(cx).DemoTooltip() }
-
-// DemoTooltip says "Tooltip"
-// in the language of msgs.
-func (msgs Messages) DemoTooltip() string { return msgs.text(textDemoTooltip) }
-
-// DemoTooltipDetail says "A label while the pointer rests on an element, or pinned by the app"
-// in the language the app shows under cx.
-func DemoTooltipDetail(cx *core.Scope) string { return For(cx).DemoTooltipDetail() }
-
-// DemoTooltipDetail says "A label while the pointer rests on an element, or pinned by the app"
-// in the language of msgs.
-func (msgs Messages) DemoTooltipDetail() string { return msgs.text(textDemoTooltipDetail) }
 
 // DemoStyles says "Styles"
 // in the language the app shows under cx.
@@ -19516,22 +18020,6 @@ func ControlsVideos(cx *core.Scope) string { return For(cx).ControlsVideos() }
 // in the language of msgs.
 func (msgs Messages) ControlsVideos() string { return msgs.text(textControlsVideos) }
 
-// ControlsLivePhotos says "Live Photos"
-// in the language the app shows under cx.
-func ControlsLivePhotos(cx *core.Scope) string { return For(cx).ControlsLivePhotos() }
-
-// ControlsLivePhotos says "Live Photos"
-// in the language of msgs.
-func (msgs Messages) ControlsLivePhotos() string { return msgs.text(textControlsLivePhotos) }
-
-// ControlsPlus says "Plus"
-// in the language the app shows under cx.
-func ControlsPlus(cx *core.Scope) string { return For(cx).ControlsPlus() }
-
-// ControlsPlus says "Plus"
-// in the language of msgs.
-func (msgs Messages) ControlsPlus() string { return msgs.text(textControlsPlus) }
-
 // ControlsOverview says "Overview"
 // in the language the app shows under cx.
 func ControlsOverview(cx *core.Scope) string { return For(cx).ControlsOverview() }
@@ -19540,460 +18028,6 @@ func ControlsOverview(cx *core.Scope) string { return For(cx).ControlsOverview()
 // in the language of msgs.
 func (msgs Messages) ControlsOverview() string { return msgs.text(textControlsOverview) }
 
-// ControlsSwitch says "Switch"
-// in the language the app shows under cx.
-func ControlsSwitch(cx *core.Scope) string { return For(cx).ControlsSwitch() }
-
-// ControlsSwitch says "Switch"
-// in the language of msgs.
-func (msgs Messages) ControlsSwitch() string { return msgs.text(textControlsSwitch) }
-
-// ControlsSettingsThatTakeEffectAt says "Settings that take effect at once"
-// in the language the app shows under cx.
-func ControlsSettingsThatTakeEffectAt(cx *core.Scope) string {
-	return For(cx).ControlsSettingsThatTakeEffectAt()
-}
-
-// ControlsSettingsThatTakeEffectAt says "Settings that take effect at once"
-// in the language of msgs.
-func (msgs Messages) ControlsSettingsThatTakeEffectAt() string {
-	return msgs.text(textControlsSettingsThatTakeEffectAt)
-}
-
-// ControlsNotifications says "Notifications"
-// in the language the app shows under cx.
-func ControlsNotifications(cx *core.Scope) string { return For(cx).ControlsNotifications() }
-
-// ControlsNotifications says "Notifications"
-// in the language of msgs.
-func (msgs Messages) ControlsNotifications() string { return msgs.text(textControlsNotifications) }
-
-// ControlsBannersSoundsAndBadges says "Banners, sounds and badges"
-// in the language the app shows under cx.
-func ControlsBannersSoundsAndBadges(cx *core.Scope) string {
-	return For(cx).ControlsBannersSoundsAndBadges()
-}
-
-// ControlsBannersSoundsAndBadges says "Banners, sounds and badges"
-// in the language of msgs.
-func (msgs Messages) ControlsBannersSoundsAndBadges() string {
-	return msgs.text(textControlsBannersSoundsAndBadges)
-}
-
-// ControlsOff says "Off"
-// in the language the app shows under cx.
-func ControlsOff(cx *core.Scope) string { return For(cx).ControlsOff() }
-
-// ControlsOff says "Off"
-// in the language of msgs.
-func (msgs Messages) ControlsOff() string { return msgs.text(textControlsOff) }
-
-// ControlsBadges says "Badges"
-// in the language the app shows under cx.
-func ControlsBadges(cx *core.Scope) string { return For(cx).ControlsBadges() }
-
-// ControlsBadges says "Badges"
-// in the language of msgs.
-func (msgs Messages) ControlsBadges() string { return msgs.text(textControlsBadges) }
-
-// ControlsTheUnreadCountOnThe says "The unread count on the icon"
-// in the language the app shows under cx.
-func ControlsTheUnreadCountOnThe(cx *core.Scope) string { return For(cx).ControlsTheUnreadCountOnThe() }
-
-// ControlsTheUnreadCountOnThe says "The unread count on the icon"
-// in the language of msgs.
-func (msgs Messages) ControlsTheUnreadCountOnThe() string {
-	return msgs.text(textControlsTheUnreadCountOnThe)
-}
-
-// ControlsTurnOnNotificationsFirst says "Turn on notifications first"
-// in the language the app shows under cx.
-func ControlsTurnOnNotificationsFirst(cx *core.Scope) string {
-	return For(cx).ControlsTurnOnNotificationsFirst()
-}
-
-// ControlsTurnOnNotificationsFirst says "Turn on notifications first"
-// in the language of msgs.
-func (msgs Messages) ControlsTurnOnNotificationsFirst() string {
-	return msgs.text(textControlsTurnOnNotificationsFirst)
-}
-
-// ControlsHaptics says "Haptics"
-// in the language the app shows under cx.
-func ControlsHaptics(cx *core.Scope) string { return For(cx).ControlsHaptics() }
-
-// ControlsHaptics says "Haptics"
-// in the language of msgs.
-func (msgs Messages) ControlsHaptics() string { return msgs.text(textControlsHaptics) }
-
-// ControlsATapUnderTheFinger says "A tap under the finger as values change"
-// in the language the app shows under cx.
-func ControlsATapUnderTheFinger(cx *core.Scope) string { return For(cx).ControlsATapUnderTheFinger() }
-
-// ControlsATapUnderTheFinger says "A tap under the finger as values change"
-// in the language of msgs.
-func (msgs Messages) ControlsATapUnderTheFinger() string {
-	return msgs.text(textControlsATapUnderTheFinger)
-}
-
-// ControlsLowDataMode says "Low data mode"
-// in the language the app shows under cx.
-func ControlsLowDataMode(cx *core.Scope) string { return For(cx).ControlsLowDataMode() }
-
-// ControlsLowDataMode says "Low data mode"
-// in the language of msgs.
-func (msgs Messages) ControlsLowDataMode() string { return msgs.text(textControlsLowDataMode) }
-
-// ControlsImagesLoadAtALower says "Images load at a lower quality"
-// in the language the app shows under cx.
-func ControlsImagesLoadAtALower(cx *core.Scope) string { return For(cx).ControlsImagesLoadAtALower() }
-
-// ControlsImagesLoadAtALower says "Images load at a lower quality"
-// in the language of msgs.
-func (msgs Messages) ControlsImagesLoadAtALower() string {
-	return msgs.text(textControlsImagesLoadAtALower)
-}
-
-// ControlsImagesLoadInFull says "Images load in full"
-// in the language the app shows under cx.
-func ControlsImagesLoadInFull(cx *core.Scope) string { return For(cx).ControlsImagesLoadInFull() }
-
-// ControlsImagesLoadInFull says "Images load in full"
-// in the language of msgs.
-func (msgs Messages) ControlsImagesLoadInFull() string {
-	return msgs.text(textControlsImagesLoadInFull)
-}
-
-// ControlsSelectAll says "Select all"
-// in the language the app shows under cx.
-func ControlsSelectAll(cx *core.Scope) string { return For(cx).ControlsSelectAll() }
-
-// ControlsSelectAll says "Select all"
-// in the language of msgs.
-func (msgs Messages) ControlsSelectAll() string { return msgs.text(textControlsSelectAll) }
-
-// ControlsCheckbox says "Checkbox"
-// in the language the app shows under cx.
-func ControlsCheckbox(cx *core.Scope) string { return For(cx).ControlsCheckbox() }
-
-// ControlsCheckbox says "Checkbox"
-// in the language of msgs.
-func (msgs Messages) ControlsCheckbox() string { return msgs.text(textControlsCheckbox) }
-
-// ControlsAFilterSelectAllShows says "A filter: “Select all” shows a partial selection"
-// in the language the app shows under cx.
-func ControlsAFilterSelectAllShows(cx *core.Scope) string {
-	return For(cx).ControlsAFilterSelectAllShows()
-}
-
-// ControlsAFilterSelectAllShows says "A filter: “Select all” shows a partial selection"
-// in the language of msgs.
-func (msgs Messages) ControlsAFilterSelectAllShows() string {
-	return msgs.text(textControlsAFilterSelectAllShows)
-}
-
-// ControlsNothingToShow says "Nothing to show"
-// in the language the app shows under cx.
-func ControlsNothingToShow(cx *core.Scope) string { return For(cx).ControlsNothingToShow() }
-
-// ControlsNothingToShow says "Nothing to show"
-// in the language of msgs.
-func (msgs Messages) ControlsNothingToShow() string { return msgs.text(textControlsNothingToShow) }
-
-// ControlsPlan says "Plan: "
-// in the language the app shows under cx.
-func ControlsPlan(cx *core.Scope) string { return For(cx).ControlsPlan() }
-
-// ControlsPlan says "Plan: "
-// in the language of msgs.
-func (msgs Messages) ControlsPlan() string { return msgs.text(textControlsPlan) }
-
-// ControlsRadio says "Radio"
-// in the language the app shows under cx.
-func ControlsRadio(cx *core.Scope) string { return For(cx).ControlsRadio() }
-
-// ControlsRadio says "Radio"
-// in the language of msgs.
-func (msgs Messages) ControlsRadio() string { return msgs.text(textControlsRadio) }
-
-// ControlsAPlanPickerOneOf says "A plan picker: one of a small set, all in view"
-// in the language the app shows under cx.
-func ControlsAPlanPickerOneOf(cx *core.Scope) string { return For(cx).ControlsAPlanPickerOneOf() }
-
-// ControlsAPlanPickerOneOf says "A plan picker: one of a small set, all in view"
-// in the language of msgs.
-func (msgs Messages) ControlsAPlanPickerOneOf() string {
-	return msgs.text(textControlsAPlanPickerOneOf)
-}
-
-// ControlsPlan2 says "Plan"
-// in the language the app shows under cx.
-func ControlsPlan2(cx *core.Scope) string { return For(cx).ControlsPlan2() }
-
-// ControlsPlan2 says "Plan"
-// in the language of msgs.
-func (msgs Messages) ControlsPlan2() string { return msgs.text(textControlsPlan2) }
-
-// ControlsContinueWith says "Continue with "
-// in the language the app shows under cx.
-func ControlsContinueWith(cx *core.Scope) string { return For(cx).ControlsContinueWith() }
-
-// ControlsContinueWith says "Continue with "
-// in the language of msgs.
-func (msgs Messages) ControlsContinueWith() string { return msgs.text(textControlsContinueWith) }
-
-// ControlsTab says "Tab: "
-// in the language the app shows under cx.
-func ControlsTab(cx *core.Scope) string { return For(cx).ControlsTab() }
-
-// ControlsTab says "Tab: "
-// in the language of msgs.
-func (msgs Messages) ControlsTab() string { return msgs.text(textControlsTab) }
-
-// ControlsTabs says "Tabs"
-// in the language the app shows under cx.
-func ControlsTabs(cx *core.Scope) string { return For(cx).ControlsTabs() }
-
-// ControlsTabs says "Tabs"
-// in the language of msgs.
-func (msgs Messages) ControlsTabs() string { return msgs.text(textControlsTabs) }
-
-// ControlsASectionSwitcherTheApp says "A section switcher: the app shows the selected one"
-// in the language the app shows under cx.
-func ControlsASectionSwitcherTheApp(cx *core.Scope) string {
-	return For(cx).ControlsASectionSwitcherTheApp()
-}
-
-// ControlsASectionSwitcherTheApp says "A section switcher: the app shows the selected one"
-// in the language of msgs.
-func (msgs Messages) ControlsASectionSwitcherTheApp() string {
-	return msgs.text(textControlsASectionSwitcherTheApp)
-}
-
-// ControlsSections says "Sections"
-// in the language the app shows under cx.
-func ControlsSections(cx *core.Scope) string { return For(cx).ControlsSections() }
-
-// ControlsSections says "Sections"
-// in the language of msgs.
-func (msgs Messages) ControlsSections() string { return msgs.text(textControlsSections) }
-
-// ControlsCollapsible says "Collapsible"
-// in the language the app shows under cx.
-func ControlsCollapsible(cx *core.Scope) string { return For(cx).ControlsCollapsible() }
-
-// ControlsCollapsible says "Collapsible"
-// in the language of msgs.
-func (msgs Messages) ControlsCollapsible() string { return msgs.text(textControlsCollapsible) }
-
-// ControlsDetailsUnderASummaryKept says "Details under a summary, kept while collapsed"
-// in the language the app shows under cx.
-func ControlsDetailsUnderASummaryKept(cx *core.Scope) string {
-	return For(cx).ControlsDetailsUnderASummaryKept()
-}
-
-// ControlsDetailsUnderASummaryKept says "Details under a summary, kept while collapsed"
-// in the language of msgs.
-func (msgs Messages) ControlsDetailsUnderASummaryKept() string {
-	return msgs.text(textControlsDetailsUnderASummaryKept)
-}
-
-// ControlsStorage says "Storage"
-// in the language the app shows under cx.
-func ControlsStorage(cx *core.Scope) string { return For(cx).ControlsStorage() }
-
-// ControlsStorage says "Storage"
-// in the language of msgs.
-func (msgs Messages) ControlsStorage() string { return msgs.text(textControlsStorage) }
-
-// Controls212GbOf256Gb says "212 GB of 256 GB used"
-// in the language the app shows under cx.
-func Controls212GbOf256Gb(cx *core.Scope) string { return For(cx).Controls212GbOf256Gb() }
-
-// Controls212GbOf256Gb says "212 GB of 256 GB used"
-// in the language of msgs.
-func (msgs Messages) Controls212GbOf256Gb() string { return msgs.text(textControls212GbOf256Gb) }
-
-// ControlsKeepOriginals says "Keep originals"
-// in the language the app shows under cx.
-func ControlsKeepOriginals(cx *core.Scope) string { return For(cx).ControlsKeepOriginals() }
-
-// ControlsKeepOriginals says "Keep originals"
-// in the language of msgs.
-func (msgs Messages) ControlsKeepOriginals() string { return msgs.text(textControlsKeepOriginals) }
-
-// ControlsKeepOriginals2 says "Keep originals: "
-// in the language the app shows under cx.
-func ControlsKeepOriginals2(cx *core.Scope) string { return For(cx).ControlsKeepOriginals2() }
-
-// ControlsKeepOriginals2 says "Keep originals: "
-// in the language of msgs.
-func (msgs Messages) ControlsKeepOriginals2() string { return msgs.text(textControlsKeepOriginals2) }
-
-// ControlsEditsAreSavedAsCopies says "Edits are saved as copies"
-// in the language the app shows under cx.
-func ControlsEditsAreSavedAsCopies(cx *core.Scope) string {
-	return For(cx).ControlsEditsAreSavedAsCopies()
-}
-
-// ControlsEditsAreSavedAsCopies says "Edits are saved as copies"
-// in the language of msgs.
-func (msgs Messages) ControlsEditsAreSavedAsCopies() string {
-	return msgs.text(textControlsEditsAreSavedAsCopies)
-}
-
-// ControlsEditsReplaceThePhoto says "Edits replace the photo"
-// in the language the app shows under cx.
-func ControlsEditsReplaceThePhoto(cx *core.Scope) string {
-	return For(cx).ControlsEditsReplaceThePhoto()
-}
-
-// ControlsEditsReplaceThePhoto says "Edits replace the photo"
-// in the language of msgs.
-func (msgs Messages) ControlsEditsReplaceThePhoto() string {
-	return msgs.text(textControlsEditsReplaceThePhoto)
-}
-
-// ControlsAdvanced says "Advanced"
-// in the language the app shows under cx.
-func ControlsAdvanced(cx *core.Scope) string { return For(cx).ControlsAdvanced() }
-
-// ControlsAdvanced says "Advanced"
-// in the language of msgs.
-func (msgs Messages) ControlsAdvanced() string { return msgs.text(textControlsAdvanced) }
-
-// ControlsOptionsMostPeopleLeaveAlone says "Options most people leave alone"
-// in the language the app shows under cx.
-func ControlsOptionsMostPeopleLeaveAlone(cx *core.Scope) string {
-	return For(cx).ControlsOptionsMostPeopleLeaveAlone()
-}
-
-// ControlsOptionsMostPeopleLeaveAlone says "Options most people leave alone"
-// in the language of msgs.
-func (msgs Messages) ControlsOptionsMostPeopleLeaveAlone() string {
-	return msgs.text(textControlsOptionsMostPeopleLeaveAlone)
-}
-
-// ControlsUploadStarted says "Upload: started"
-// in the language the app shows under cx.
-func ControlsUploadStarted(cx *core.Scope) string { return For(cx).ControlsUploadStarted() }
-
-// ControlsUploadStarted says "Upload: started"
-// in the language of msgs.
-func (msgs Messages) ControlsUploadStarted() string { return msgs.text(textControlsUploadStarted) }
-
-// ControlsUploadDone says "Upload: done"
-// in the language the app shows under cx.
-func ControlsUploadDone(cx *core.Scope) string { return For(cx).ControlsUploadDone() }
-
-// ControlsUploadDone says "Upload: done"
-// in the language of msgs.
-func (msgs Messages) ControlsUploadDone() string { return msgs.text(textControlsUploadDone) }
-
-// ControlsProgress says "Progress"
-// in the language the app shows under cx.
-func ControlsProgress(cx *core.Scope) string { return For(cx).ControlsProgress() }
-
-// ControlsProgress says "Progress"
-// in the language of msgs.
-func (msgs Messages) ControlsProgress() string { return msgs.text(textControlsProgress) }
-
-// ControlsTransfersTheAppOwnsThe says "Transfers: the app owns the value"
-// in the language the app shows under cx.
-func ControlsTransfersTheAppOwnsThe(cx *core.Scope) string {
-	return For(cx).ControlsTransfersTheAppOwnsThe()
-}
-
-// ControlsTransfersTheAppOwnsThe says "Transfers: the app owns the value"
-// in the language of msgs.
-func (msgs Messages) ControlsTransfersTheAppOwnsThe() string {
-	return msgs.text(textControlsTransfersTheAppOwnsThe)
-}
-
-// ControlsUpload says "Upload"
-// in the language the app shows under cx.
-func ControlsUpload(cx *core.Scope) string { return For(cx).ControlsUpload() }
-
-// ControlsUpload says "Upload"
-// in the language of msgs.
-func (msgs Messages) ControlsUpload() string { return msgs.text(textControlsUpload) }
-
-// Controls24PhotosSent says "24 photos sent"
-// in the language the app shows under cx.
-func Controls24PhotosSent(cx *core.Scope) string { return For(cx).Controls24PhotosSent() }
-
-// Controls24PhotosSent says "24 photos sent"
-// in the language of msgs.
-func (msgs Messages) Controls24PhotosSent() string { return msgs.text(textControls24PhotosSent) }
-
-// ControlsSending24Photos says "Sending 24 photos"
-// in the language the app shows under cx.
-func ControlsSending24Photos(cx *core.Scope) string { return For(cx).ControlsSending24Photos() }
-
-// ControlsSending24Photos says "Sending 24 photos"
-// in the language of msgs.
-func (msgs Messages) ControlsSending24Photos() string { return msgs.text(textControlsSending24Photos) }
-
-// Controls24PhotosToSend says "24 photos to send"
-// in the language the app shows under cx.
-func Controls24PhotosToSend(cx *core.Scope) string { return For(cx).Controls24PhotosToSend() }
-
-// Controls24PhotosToSend says "24 photos to send"
-// in the language of msgs.
-func (msgs Messages) Controls24PhotosToSend() string { return msgs.text(textControls24PhotosToSend) }
-
-// ControlsBackup says "Backup"
-// in the language the app shows under cx.
-func ControlsBackup(cx *core.Scope) string { return For(cx).ControlsBackup() }
-
-// ControlsBackup says "Backup"
-// in the language of msgs.
-func (msgs Messages) ControlsBackup() string { return msgs.text(textControlsBackup) }
-
-// ControlsPreparingItsSizeIsNot says "Preparing: its size is not known yet"
-// in the language the app shows under cx.
-func ControlsPreparingItsSizeIsNot(cx *core.Scope) string {
-	return For(cx).ControlsPreparingItsSizeIsNot()
-}
-
-// ControlsPreparingItsSizeIsNot says "Preparing: its size is not known yet"
-// in the language of msgs.
-func (msgs Messages) ControlsPreparingItsSizeIsNot() string {
-	return msgs.text(textControlsPreparingItsSizeIsNot)
-}
-
-// ControlsSend says "Send"
-// in the language the app shows under cx.
-func ControlsSend(cx *core.Scope) string { return For(cx).ControlsSend() }
-
-// ControlsSend says "Send"
-// in the language of msgs.
-func (msgs Messages) ControlsSend() string { return msgs.text(textControlsSend) }
-
-// ControlsPause says "Pause"
-// in the language the app shows under cx.
-func ControlsPause(cx *core.Scope) string { return For(cx).ControlsPause() }
-
-// ControlsPause says "Pause"
-// in the language of msgs.
-func (msgs Messages) ControlsPause() string { return msgs.text(textControlsPause) }
-
-// ControlsSendAgain says "Send again"
-// in the language the app shows under cx.
-func ControlsSendAgain(cx *core.Scope) string { return For(cx).ControlsSendAgain() }
-
-// ControlsSendAgain says "Send again"
-// in the language of msgs.
-func (msgs Messages) ControlsSendAgain() string { return msgs.text(textControlsSendAgain) }
-
-// ControlsUploadPaused says "Upload: paused"
-// in the language the app shows under cx.
-func ControlsUploadPaused(cx *core.Scope) string { return For(cx).ControlsUploadPaused() }
-
-// ControlsUploadPaused says "Upload: paused"
-// in the language of msgs.
-func (msgs Messages) ControlsUploadPaused() string { return msgs.text(textControlsUploadPaused) }
-
 // ControlsReset says "Reset"
 // in the language the app shows under cx.
 func ControlsReset(cx *core.Scope) string { return For(cx).ControlsReset() }
@@ -20001,126 +18035,6 @@ func ControlsReset(cx *core.Scope) string { return For(cx).ControlsReset() }
 // ControlsReset says "Reset"
 // in the language of msgs.
 func (msgs Messages) ControlsReset() string { return msgs.text(textControlsReset) }
-
-// ControlsUploadReset says "Upload: reset"
-// in the language the app shows under cx.
-func ControlsUploadReset(cx *core.Scope) string { return For(cx).ControlsUploadReset() }
-
-// ControlsUploadReset says "Upload: reset"
-// in the language of msgs.
-func (msgs Messages) ControlsUploadReset() string { return msgs.text(textControlsUploadReset) }
-
-// ControlsScreenshots says "Screenshots"
-// in the language the app shows under cx.
-func ControlsScreenshots(cx *core.Scope) string { return For(cx).ControlsScreenshots() }
-
-// ControlsScreenshots says "Screenshots"
-// in the language of msgs.
-func (msgs Messages) ControlsScreenshots() string { return msgs.text(textControlsScreenshots) }
-
-// ControlsFree says "Free"
-// in the language the app shows under cx.
-func ControlsFree(cx *core.Scope) string { return For(cx).ControlsFree() }
-
-// ControlsFree says "Free"
-// in the language of msgs.
-func (msgs Messages) ControlsFree() string { return msgs.text(textControlsFree) }
-
-// ControlsOneDevice5Gb says "One device, 5 GB"
-// in the language the app shows under cx.
-func ControlsOneDevice5Gb(cx *core.Scope) string { return For(cx).ControlsOneDevice5Gb() }
-
-// ControlsOneDevice5Gb says "One device, 5 GB"
-// in the language of msgs.
-func (msgs Messages) ControlsOneDevice5Gb() string { return msgs.text(textControlsOneDevice5Gb) }
-
-// ControlsThreeDevices200Gb says "Three devices, 200 GB"
-// in the language the app shows under cx.
-func ControlsThreeDevices200Gb(cx *core.Scope) string { return For(cx).ControlsThreeDevices200Gb() }
-
-// ControlsThreeDevices200Gb says "Three devices, 200 GB"
-// in the language of msgs.
-func (msgs Messages) ControlsThreeDevices200Gb() string {
-	return msgs.text(textControlsThreeDevices200Gb)
-}
-
-// Controls3Mo says "$3 / mo"
-// in the language the app shows under cx.
-func Controls3Mo(cx *core.Scope) string { return For(cx).Controls3Mo() }
-
-// Controls3Mo says "$3 / mo"
-// in the language of msgs.
-func (msgs Messages) Controls3Mo() string { return msgs.text(textControls3Mo) }
-
-// ControlsTeam says "Team"
-// in the language the app shows under cx.
-func ControlsTeam(cx *core.Scope) string { return For(cx).ControlsTeam() }
-
-// ControlsTeam says "Team"
-// in the language of msgs.
-func (msgs Messages) ControlsTeam() string { return msgs.text(textControlsTeam) }
-
-// ControlsASharedLibrary2Tb says "A shared library, 2 TB"
-// in the language the app shows under cx.
-func ControlsASharedLibrary2Tb(cx *core.Scope) string { return For(cx).ControlsASharedLibrary2Tb() }
-
-// ControlsASharedLibrary2Tb says "A shared library, 2 TB"
-// in the language of msgs.
-func (msgs Messages) ControlsASharedLibrary2Tb() string {
-	return msgs.text(textControlsASharedLibrary2Tb)
-}
-
-// Controls12Mo says "$12 / mo"
-// in the language the app shows under cx.
-func Controls12Mo(cx *core.Scope) string { return For(cx).Controls12Mo() }
-
-// Controls12Mo says "$12 / mo"
-// in the language of msgs.
-func (msgs Messages) Controls12Mo() string { return msgs.text(textControls12Mo) }
-
-// ControlsEnterprise says "Enterprise"
-// in the language the app shows under cx.
-func ControlsEnterprise(cx *core.Scope) string { return For(cx).ControlsEnterprise() }
-
-// ControlsEnterprise says "Enterprise"
-// in the language of msgs.
-func (msgs Messages) ControlsEnterprise() string { return msgs.text(textControlsEnterprise) }
-
-// ControlsSetUpByYourOrganization says "Set up by your organization"
-// in the language the app shows under cx.
-func ControlsSetUpByYourOrganization(cx *core.Scope) string {
-	return For(cx).ControlsSetUpByYourOrganization()
-}
-
-// ControlsSetUpByYourOrganization says "Set up by your organization"
-// in the language of msgs.
-func (msgs Messages) ControlsSetUpByYourOrganization() string {
-	return msgs.text(textControlsSetUpByYourOrganization)
-}
-
-// ControlsVisitors says "Visitors"
-// in the language the app shows under cx.
-func ControlsVisitors(cx *core.Scope) string { return For(cx).ControlsVisitors() }
-
-// ControlsVisitors says "Visitors"
-// in the language of msgs.
-func (msgs Messages) ControlsVisitors() string { return msgs.text(textControlsVisitors) }
-
-// ControlsSignUps says "Sign-ups"
-// in the language the app shows under cx.
-func ControlsSignUps(cx *core.Scope) string { return For(cx).ControlsSignUps() }
-
-// ControlsSignUps says "Sign-ups"
-// in the language of msgs.
-func (msgs Messages) ControlsSignUps() string { return msgs.text(textControlsSignUps) }
-
-// ControlsConversion says "Conversion"
-// in the language the app shows under cx.
-func ControlsConversion(cx *core.Scope) string { return For(cx).ControlsConversion() }
-
-// ControlsConversion says "Conversion"
-// in the language of msgs.
-func (msgs Messages) ControlsConversion() string { return msgs.text(textControlsConversion) }
 
 // ControlsActivity says "Activity"
 // in the language the app shows under cx.
@@ -20166,30 +18080,6 @@ func ControlsMembers(cx *core.Scope) string { return For(cx).ControlsMembers() }
 // in the language of msgs.
 func (msgs Messages) ControlsMembers() string { return msgs.text(textControlsMembers) }
 
-// ControlsOwner says "Owner"
-// in the language the app shows under cx.
-func ControlsOwner(cx *core.Scope) string { return For(cx).ControlsOwner() }
-
-// ControlsOwner says "Owner"
-// in the language of msgs.
-func (msgs Messages) ControlsOwner() string { return msgs.text(textControlsOwner) }
-
-// ControlsAdmin says "Admin"
-// in the language the app shows under cx.
-func ControlsAdmin(cx *core.Scope) string { return For(cx).ControlsAdmin() }
-
-// ControlsAdmin says "Admin"
-// in the language of msgs.
-func (msgs Messages) ControlsAdmin() string { return msgs.text(textControlsAdmin) }
-
-// ControlsMember says "Member"
-// in the language the app shows under cx.
-func ControlsMember(cx *core.Scope) string { return For(cx).ControlsMember() }
-
-// ControlsMember says "Member"
-// in the language of msgs.
-func (msgs Messages) ControlsMember() string { return msgs.text(textControlsMember) }
-
 // ControlsBilling says "Billing"
 // in the language the app shows under cx.
 func ControlsBilling(cx *core.Scope) string { return For(cx).ControlsBilling() }
@@ -20206,14 +18096,6 @@ func ControlsApps(cx *core.Scope) string { return For(cx).ControlsApps() }
 // in the language of msgs.
 func (msgs Messages) ControlsApps() string { return msgs.text(textControlsApps) }
 
-// ControlsSystem says "System"
-// in the language the app shows under cx.
-func ControlsSystem(cx *core.Scope) string { return For(cx).ControlsSystem() }
-
-// ControlsSystem says "System"
-// in the language of msgs.
-func (msgs Messages) ControlsSystem() string { return msgs.text(textControlsSystem) }
-
 // CommonOn says "on"
 // in the language the app shows under cx.
 func CommonOn(cx *core.Scope) string { return For(cx).CommonOn() }
@@ -20229,103 +18111,6 @@ func CommonOff(cx *core.Scope) string { return For(cx).CommonOff() }
 // CommonOff says "off"
 // in the language of msgs.
 func (msgs Messages) CommonOff() string { return msgs.text(textCommonOff) }
-
-// ControlsCountOf says "{shown, number} of {total, number}"
-// in the language the app shows under cx.
-func ControlsCountOf(cx *core.Scope, shown int, total int) string {
-	return For(cx).ControlsCountOf(shown, total)
-}
-
-// ControlsCountOf says "{shown, number} of {total, number}"
-// in the language of msgs.
-func (msgs Messages) ControlsCountOf(shown int, total int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ControlsCountOf(shown, total))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ControlsCountOf; f != nil {
-			return f(shown, total)
-		}
-		switch lang {
-		case "", "en":
-			return msgs.arg(i18n.FormatNumber("en", float64(shown))) + " of " + msgs.arg(i18n.FormatNumber("en", float64(total)))
-		case "ar":
-			return i18n.FormatNumber("ar", float64(shown)) + " من " + i18n.FormatNumber("ar", float64(total))
-		case "zh-Hans":
-			return i18n.FormatNumber("zh-Hans", float64(shown)) + " / " + i18n.FormatNumber("zh-Hans", float64(total))
-		case "zh-Hant":
-			return i18n.FormatNumber("zh-Hant", float64(shown)) + " / " + i18n.FormatNumber("zh-Hant", float64(total))
-		}
-	}
-}
-
-// ControlsShowingItems says "Showing {count, plural, one {# item} other {# items}}"
-// in the language the app shows under cx.
-func ControlsShowingItems(cx *core.Scope, count int) string {
-	return For(cx).ControlsShowingItems(count)
-}
-
-// ControlsShowingItems says "Showing {count, plural, one {# item} other {# items}}"
-// in the language of msgs.
-func (msgs Messages) ControlsShowingItems(count int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ControlsShowingItems(count))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ControlsShowingItems; f != nil {
-			return f(count)
-		}
-		switch lang {
-		case "", "en":
-			var b strings.Builder
-			b.WriteString("Showing ")
-			switch i18n.Cardinal("en", float64(count)) {
-			case i18n.One:
-				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
-				b.WriteString(" item")
-			default:
-				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
-				b.WriteString(" items")
-			}
-			return b.String()
-		case "ar":
-			return "عرض " + i18n.FormatNumber("ar", float64(count)) + " عنصر"
-		case "zh-Hans":
-			return "显示 " + i18n.FormatNumber("zh-Hans", float64(count)) + " 项"
-		case "zh-Hant":
-			return "顯示 " + i18n.FormatNumber("zh-Hant", float64(count)) + " 項"
-		}
-	}
-}
-
-// ControlsContinueEvent says "Continue: {plan}, {price}"
-// in the language the app shows under cx.
-func ControlsContinueEvent(cx *core.Scope, plan string, price string) string {
-	return For(cx).ControlsContinueEvent(plan, price)
-}
-
-// ControlsContinueEvent says "Continue: {plan}, {price}"
-// in the language of msgs.
-func (msgs Messages) ControlsContinueEvent(plan string, price string) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ControlsContinueEvent(plan, price))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ControlsContinueEvent; f != nil {
-			return f(plan, price)
-		}
-		switch lang {
-		case "", "en":
-			return "Continue: " + msgs.arg(plan) + ", " + msgs.arg(price)
-		case "ar":
-			return "متابعة: " + plan + "، " + price
-		case "zh-Hans":
-			return "继续：" + plan + "，" + price
-		case "zh-Hant":
-			return "繼續：" + plan + "，" + price
-		}
-	}
-}
 
 // MenusMedium says "Medium"
 // in the language the app shows under cx.
@@ -20812,148 +18597,6 @@ func MenusMoreActions(cx *core.Scope) string { return For(cx).MenusMoreActions()
 // MenusMoreActions says "More actions"
 // in the language of msgs.
 func (msgs Messages) MenusMoreActions() string { return msgs.text(textMenusMoreActions) }
-
-// MenusWhereItGoes says "Where it goes"
-// in the language the app shows under cx.
-func MenusWhereItGoes(cx *core.Scope) string { return For(cx).MenusWhereItGoes() }
-
-// MenusWhereItGoes says "Where it goes"
-// in the language of msgs.
-func (msgs Messages) MenusWhereItGoes() string { return msgs.text(textMenusWhereItGoes) }
-
-// MenusPhonesShowMenusAsSheets says "Phones show menus as sheets: try a desktop"
-// in the language the app shows under cx.
-func MenusPhonesShowMenusAsSheets(cx *core.Scope) string {
-	return For(cx).MenusPhonesShowMenusAsSheets()
-}
-
-// MenusPhonesShowMenusAsSheets says "Phones show menus as sheets: try a desktop"
-// in the language of msgs.
-func (msgs Messages) MenusPhonesShowMenusAsSheets() string {
-	return msgs.text(textMenusPhonesShowMenusAsSheets)
-}
-
-// MenusTheSideAndAlignmentIt says "The side and alignment; it flips where there is no room"
-// in the language the app shows under cx.
-func MenusTheSideAndAlignmentIt(cx *core.Scope) string { return For(cx).MenusTheSideAndAlignmentIt() }
-
-// MenusTheSideAndAlignmentIt says "The side and alignment; it flips where there is no room"
-// in the language of msgs.
-func (msgs Messages) MenusTheSideAndAlignmentIt() string {
-	return msgs.text(textMenusTheSideAndAlignmentIt)
-}
-
-// MenusTop says "Top"
-// in the language the app shows under cx.
-func MenusTop(cx *core.Scope) string { return For(cx).MenusTop() }
-
-// MenusTop says "Top"
-// in the language of msgs.
-func (msgs Messages) MenusTop() string { return msgs.text(textMenusTop) }
-
-// MenusBottom says "Bottom"
-// in the language the app shows under cx.
-func MenusBottom(cx *core.Scope) string { return For(cx).MenusBottom() }
-
-// MenusBottom says "Bottom"
-// in the language of msgs.
-func (msgs Messages) MenusBottom() string { return msgs.text(textMenusBottom) }
-
-// MenusLeft says "Left"
-// in the language the app shows under cx.
-func MenusLeft(cx *core.Scope) string { return For(cx).MenusLeft() }
-
-// MenusLeft says "Left"
-// in the language of msgs.
-func (msgs Messages) MenusLeft() string { return msgs.text(textMenusLeft) }
-
-// MenusRight says "Right"
-// in the language the app shows under cx.
-func MenusRight(cx *core.Scope) string { return For(cx).MenusRight() }
-
-// MenusRight says "Right"
-// in the language of msgs.
-func (msgs Messages) MenusRight() string { return msgs.text(textMenusRight) }
-
-// MenusStart says "Start"
-// in the language the app shows under cx.
-func MenusStart(cx *core.Scope) string { return For(cx).MenusStart() }
-
-// MenusStart says "Start"
-// in the language of msgs.
-func (msgs Messages) MenusStart() string { return msgs.text(textMenusStart) }
-
-// MenusCenter says "Center"
-// in the language the app shows under cx.
-func MenusCenter(cx *core.Scope) string { return For(cx).MenusCenter() }
-
-// MenusCenter says "Center"
-// in the language of msgs.
-func (msgs Messages) MenusCenter() string { return msgs.text(textMenusCenter) }
-
-// MenusEnd says "End"
-// in the language the app shows under cx.
-func MenusEnd(cx *core.Scope) string { return For(cx).MenusEnd() }
-
-// MenusEnd says "End"
-// in the language of msgs.
-func (msgs Messages) MenusEnd() string { return msgs.text(textMenusEnd) }
-
-// MenusPlaced says "Placed"
-// in the language the app shows under cx.
-func MenusPlaced(cx *core.Scope) string { return For(cx).MenusPlaced() }
-
-// MenusPlaced says "Placed"
-// in the language of msgs.
-func (msgs Messages) MenusPlaced() string { return msgs.text(textMenusPlaced) }
-
-// MenusOne says "One"
-// in the language the app shows under cx.
-func MenusOne(cx *core.Scope) string { return For(cx).MenusOne() }
-
-// MenusOne says "One"
-// in the language of msgs.
-func (msgs Messages) MenusOne() string { return msgs.text(textMenusOne) }
-
-// MenusChoseOne says "chose One"
-// in the language the app shows under cx.
-func MenusChoseOne(cx *core.Scope) string { return For(cx).MenusChoseOne() }
-
-// MenusChoseOne says "chose One"
-// in the language of msgs.
-func (msgs Messages) MenusChoseOne() string { return msgs.text(textMenusChoseOne) }
-
-// MenusTwo says "Two"
-// in the language the app shows under cx.
-func MenusTwo(cx *core.Scope) string { return For(cx).MenusTwo() }
-
-// MenusTwo says "Two"
-// in the language of msgs.
-func (msgs Messages) MenusTwo() string { return msgs.text(textMenusTwo) }
-
-// MenusChoseTwo says "chose Two"
-// in the language the app shows under cx.
-func MenusChoseTwo(cx *core.Scope) string { return For(cx).MenusChoseTwo() }
-
-// MenusChoseTwo says "chose Two"
-// in the language of msgs.
-func (msgs Messages) MenusChoseTwo() string { return msgs.text(textMenusChoseTwo) }
-
-// MenusThree says "Three"
-// in the language the app shows under cx.
-func MenusThree(cx *core.Scope) string { return For(cx).MenusThree() }
-
-// MenusThree says "Three"
-// in the language of msgs.
-func (msgs Messages) MenusThree() string { return msgs.text(textMenusThree) }
-
-// MenusChoseThree says "chose Three"
-// in the language the app shows under cx.
-func MenusChoseThree(cx *core.Scope) string { return For(cx).MenusChoseThree() }
-
-// MenusChoseThree says "chose Three"
-// in the language of msgs.
-func (msgs Messages) MenusChoseThree() string { return msgs.text(textMenusChoseThree) }
 
 // MenusTimeZone says "Time zone"
 // in the language the app shows under cx.
@@ -27531,22 +25174,6 @@ func TableNothingSelected(cx *core.Scope) string { return For(cx).TableNothingSe
 // in the language of msgs.
 func (msgs Messages) TableNothingSelected() string { return msgs.text(textTableNothingSelected) }
 
-// TableOn says " on"
-// in the language the app shows under cx.
-func TableOn(cx *core.Scope) string { return For(cx).TableOn() }
-
-// TableOn says " on"
-// in the language of msgs.
-func (msgs Messages) TableOn() string { return msgs.text(textTableOn) }
-
-// TableOff says " off"
-// in the language the app shows under cx.
-func TableOff(cx *core.Scope) string { return For(cx).TableOff() }
-
-// TableOff says " off"
-// in the language of msgs.
-func (msgs Messages) TableOff() string { return msgs.text(textTableOff) }
-
 // TableRows says "Rows"
 // in the language the app shows under cx.
 func TableRows(cx *core.Scope) string { return For(cx).TableRows() }
@@ -27563,14 +25190,6 @@ func TableCells(cx *core.Scope) string { return For(cx).TableCells() }
 // in the language of msgs.
 func (msgs Messages) TableCells() string { return msgs.text(textTableCells) }
 
-// TableToggleLiveUpdates says "Toggle live updates"
-// in the language the app shows under cx.
-func TableToggleLiveUpdates(cx *core.Scope) string { return For(cx).TableToggleLiveUpdates() }
-
-// TableToggleLiveUpdates says "Toggle live updates"
-// in the language of msgs.
-func (msgs Messages) TableToggleLiveUpdates() string { return msgs.text(textTableToggleLiveUpdates) }
-
 // TableLive says "Live"
 // in the language the app shows under cx.
 func TableLive(cx *core.Scope) string { return For(cx).TableLive() }
@@ -27578,14 +25197,6 @@ func TableLive(cx *core.Scope) string { return For(cx).TableLive() }
 // TableLive says "Live"
 // in the language of msgs.
 func (msgs Messages) TableLive() string { return msgs.text(textTableLive) }
-
-// TableToggleStripes says "Toggle stripes"
-// in the language the app shows under cx.
-func TableToggleStripes(cx *core.Scope) string { return For(cx).TableToggleStripes() }
-
-// TableToggleStripes says "Toggle stripes"
-// in the language of msgs.
-func (msgs Messages) TableToggleStripes() string { return msgs.text(textTableToggleStripes) }
 
 // TableStripes says "Stripes"
 // in the language the app shows under cx.
@@ -33299,14 +30910,6 @@ func DockLockTheLayout(cx *core.Scope) string { return For(cx).DockLockTheLayout
 // in the language of msgs.
 func (msgs Messages) DockLockTheLayout() string { return msgs.text(textDockLockTheLayout) }
 
-// DockLock says "Lock"
-// in the language the app shows under cx.
-func DockLock(cx *core.Scope) string { return For(cx).DockLock() }
-
-// DockLock says "Lock"
-// in the language of msgs.
-func (msgs Messages) DockLock() string { return msgs.text(textDockLock) }
-
 // DockShowCloseButtons says "Show close buttons"
 // in the language the app shows under cx.
 func DockShowCloseButtons(cx *core.Scope) string { return For(cx).DockShowCloseButtons() }
@@ -33314,14 +30917,6 @@ func DockShowCloseButtons(cx *core.Scope) string { return For(cx).DockShowCloseB
 // DockShowCloseButtons says "Show close buttons"
 // in the language of msgs.
 func (msgs Messages) DockShowCloseButtons() string { return msgs.text(textDockShowCloseButtons) }
-
-// DockClose says "Close"
-// in the language the app shows under cx.
-func DockClose(cx *core.Scope) string { return For(cx).DockClose() }
-
-// DockClose says "Close"
-// in the language of msgs.
-func (msgs Messages) DockClose() string { return msgs.text(textDockClose) }
 
 // DockZoomTheGroup says "Zoom the group"
 // in the language the app shows under cx.
@@ -33331,14 +30926,6 @@ func DockZoomTheGroup(cx *core.Scope) string { return For(cx).DockZoomTheGroup()
 // in the language of msgs.
 func (msgs Messages) DockZoomTheGroup() string { return msgs.text(textDockZoomTheGroup) }
 
-// DockZoom says "Zoom"
-// in the language the app shows under cx.
-func DockZoom(cx *core.Scope) string { return For(cx).DockZoom() }
-
-// DockZoom says "Zoom"
-// in the language of msgs.
-func (msgs Messages) DockZoom() string { return msgs.text(textDockZoom) }
-
 // DockResetTheLayout says "Reset the layout"
 // in the language the app shows under cx.
 func DockResetTheLayout(cx *core.Scope) string { return For(cx).DockResetTheLayout() }
@@ -33346,14 +30933,6 @@ func DockResetTheLayout(cx *core.Scope) string { return For(cx).DockResetTheLayo
 // DockResetTheLayout says "Reset the layout"
 // in the language of msgs.
 func (msgs Messages) DockResetTheLayout() string { return msgs.text(textDockResetTheLayout) }
-
-// DockReset says "Reset"
-// in the language the app shows under cx.
-func DockReset(cx *core.Scope) string { return For(cx).DockReset() }
-
-// DockReset says "Reset"
-// in the language of msgs.
-func (msgs Messages) DockReset() string { return msgs.text(textDockReset) }
 
 // DockHoldATabToReorder says "Hold a tab to reorder it"
 // in the language the app shows under cx.
@@ -33909,18 +31488,6 @@ func OverlayPopover(cx *core.Scope) string { return For(cx).OverlayPopover() }
 // in the language of msgs.
 func (msgs Messages) OverlayPopover() string { return msgs.text(textOverlayPopover) }
 
-// OverlayAnchoredToItsTriggerOn says "Anchored to its trigger on every device"
-// in the language the app shows under cx.
-func OverlayAnchoredToItsTriggerOn(cx *core.Scope) string {
-	return For(cx).OverlayAnchoredToItsTriggerOn()
-}
-
-// OverlayAnchoredToItsTriggerOn says "Anchored to its trigger on every device"
-// in the language of msgs.
-func (msgs Messages) OverlayAnchoredToItsTriggerOn() string {
-	return msgs.text(textOverlayAnchoredToItsTriggerOn)
-}
-
 // OverlayShowThePopover says "Show the popover"
 // in the language the app shows under cx.
 func OverlayShowThePopover(cx *core.Scope) string { return For(cx).OverlayShowThePopover() }
@@ -33928,14 +31495,6 @@ func OverlayShowThePopover(cx *core.Scope) string { return For(cx).OverlayShowTh
 // OverlayShowThePopover says "Show the popover"
 // in the language of msgs.
 func (msgs Messages) OverlayShowThePopover() string { return msgs.text(textOverlayShowThePopover) }
-
-// OverlayPopover2 says "popover "
-// in the language the app shows under cx.
-func OverlayPopover2(cx *core.Scope) string { return For(cx).OverlayPopover2() }
-
-// OverlayPopover2 says "popover "
-// in the language of msgs.
-func (msgs Messages) OverlayPopover2() string { return msgs.text(textOverlayPopover2) }
 
 // OverlayAPressOutsideEscapeOr says "A press outside, Escape or back closes it."
 // in the language the app shows under cx.
@@ -33947,36 +31506,6 @@ func OverlayAPressOutsideEscapeOr(cx *core.Scope) string {
 // in the language of msgs.
 func (msgs Messages) OverlayAPressOutsideEscapeOr() string {
 	return msgs.text(textOverlayAPressOutsideEscapeOr)
-}
-
-// OverlayTooltip says "Tooltip"
-// in the language the app shows under cx.
-func OverlayTooltip(cx *core.Scope) string { return For(cx).OverlayTooltip() }
-
-// OverlayTooltip says "Tooltip"
-// in the language of msgs.
-func (msgs Messages) OverlayTooltip() string { return msgs.text(textOverlayTooltip) }
-
-// OverlayTooltipsFollowAPointerPin says "Tooltips follow a pointer: pin one to see it"
-// in the language the app shows under cx.
-func OverlayTooltipsFollowAPointerPin(cx *core.Scope) string {
-	return For(cx).OverlayTooltipsFollowAPointerPin()
-}
-
-// OverlayTooltipsFollowAPointerPin says "Tooltips follow a pointer: pin one to see it"
-// in the language of msgs.
-func (msgs Messages) OverlayTooltipsFollowAPointerPin() string {
-	return msgs.text(textOverlayTooltipsFollowAPointerPin)
-}
-
-// OverlayRestThePointerOnA says "Rest the pointer on a button"
-// in the language the app shows under cx.
-func OverlayRestThePointerOnA(cx *core.Scope) string { return For(cx).OverlayRestThePointerOnA() }
-
-// OverlayRestThePointerOnA says "Rest the pointer on a button"
-// in the language of msgs.
-func (msgs Messages) OverlayRestThePointerOnA() string {
-	return msgs.text(textOverlayRestThePointerOnA)
 }
 
 // OverlaySavesTheDocument says "Saves the document"
@@ -33994,50 +31523,6 @@ func OverlaySave(cx *core.Scope) string { return For(cx).OverlaySave() }
 // OverlaySave says "Save"
 // in the language of msgs.
 func (msgs Messages) OverlaySave() string { return msgs.text(textOverlaySave) }
-
-// OverlayPressedSave says "pressed Save"
-// in the language the app shows under cx.
-func OverlayPressedSave(cx *core.Scope) string { return For(cx).OverlayPressedSave() }
-
-// OverlayPressedSave says "pressed Save"
-// in the language of msgs.
-func (msgs Messages) OverlayPressedSave() string { return msgs.text(textOverlayPressedSave) }
-
-// OverlayTooltip2 says "tooltip "
-// in the language the app shows under cx.
-func OverlayTooltip2(cx *core.Scope) string { return For(cx).OverlayTooltip2() }
-
-// OverlayTooltip2 says "tooltip "
-// in the language of msgs.
-func (msgs Messages) OverlayTooltip2() string { return msgs.text(textOverlayTooltip2) }
-
-// OverlayPinTheTooltip says "Pin the tooltip"
-// in the language the app shows under cx.
-func OverlayPinTheTooltip(cx *core.Scope) string { return For(cx).OverlayPinTheTooltip() }
-
-// OverlayPinTheTooltip says "Pin the tooltip"
-// in the language of msgs.
-func (msgs Messages) OverlayPinTheTooltip() string { return msgs.text(textOverlayPinTheTooltip) }
-
-// OverlayUnpinTheTooltip says "Unpin the tooltip"
-// in the language the app shows under cx.
-func OverlayUnpinTheTooltip(cx *core.Scope) string { return For(cx).OverlayUnpinTheTooltip() }
-
-// OverlayUnpinTheTooltip says "Unpin the tooltip"
-// in the language of msgs.
-func (msgs Messages) OverlayUnpinTheTooltip() string { return msgs.text(textOverlayUnpinTheTooltip) }
-
-// OverlayShownWhilePinnedOrHovered says "Shown while pinned or hovered"
-// in the language the app shows under cx.
-func OverlayShownWhilePinnedOrHovered(cx *core.Scope) string {
-	return For(cx).OverlayShownWhilePinnedOrHovered()
-}
-
-// OverlayShownWhilePinnedOrHovered says "Shown while pinned or hovered"
-// in the language of msgs.
-func (msgs Messages) OverlayShownWhilePinnedOrHovered() string {
-	return msgs.text(textOverlayShownWhilePinnedOrHovered)
-}
 
 // OverlaySheet says "Sheet"
 // in the language the app shows under cx.
@@ -34093,40 +31578,6 @@ func OverlayDone(cx *core.Scope) string { return For(cx).OverlayDone() }
 // in the language of msgs.
 func (msgs Messages) OverlayDone() string { return msgs.text(textOverlayDone) }
 
-// OverlayToast says "Toast"
-// in the language the app shows under cx.
-func OverlayToast(cx *core.Scope) string { return For(cx).OverlayToast() }
-
-// OverlayToast says "Toast"
-// in the language of msgs.
-func (msgs Messages) OverlayToast() string { return msgs.text(textOverlayToast) }
-
-// OverlayTheGallerySToastsOn says "The gallery's toasts, on ToastManager, ToastStack and Toast"
-// in the language the app shows under cx.
-func OverlayTheGallerySToastsOn(cx *core.Scope) string { return For(cx).OverlayTheGallerySToastsOn() }
-
-// OverlayTheGallerySToastsOn says "The gallery's toasts, on ToastManager, ToastStack and Toast"
-// in the language of msgs.
-func (msgs Messages) OverlayTheGallerySToastsOn() string {
-	return msgs.text(textOverlayTheGallerySToastsOn)
-}
-
-// OverlayCopyTheLink says "Copy the link"
-// in the language the app shows under cx.
-func OverlayCopyTheLink(cx *core.Scope) string { return For(cx).OverlayCopyTheLink() }
-
-// OverlayCopyTheLink says "Copy the link"
-// in the language of msgs.
-func (msgs Messages) OverlayCopyTheLink() string { return msgs.text(textOverlayCopyTheLink) }
-
-// OverlayCopied says "Copied"
-// in the language the app shows under cx.
-func OverlayCopied(cx *core.Scope) string { return For(cx).OverlayCopied() }
-
-// OverlayCopied says "Copied"
-// in the language of msgs.
-func (msgs Messages) OverlayCopied() string { return msgs.text(textOverlayCopied) }
-
 // OverlayDeleteTheDraft says "Delete the draft"
 // in the language the app shows under cx.
 func OverlayDeleteTheDraft(cx *core.Scope) string { return For(cx).OverlayDeleteTheDraft() }
@@ -34134,14 +31585,6 @@ func OverlayDeleteTheDraft(cx *core.Scope) string { return For(cx).OverlayDelete
 // OverlayDeleteTheDraft says "Delete the draft"
 // in the language of msgs.
 func (msgs Messages) OverlayDeleteTheDraft() string { return msgs.text(textOverlayDeleteTheDraft) }
-
-// OverlayDraftDeleted says "Draft deleted"
-// in the language the app shows under cx.
-func OverlayDraftDeleted(cx *core.Scope) string { return For(cx).OverlayDraftDeleted() }
-
-// OverlayDraftDeleted says "Draft deleted"
-// in the language of msgs.
-func (msgs Messages) OverlayDraftDeleted() string { return msgs.text(textOverlayDraftDeleted) }
 
 // OverlayUndo says "Undo"
 // in the language the app shows under cx.
@@ -34174,18 +31617,6 @@ func OverlayDismissAll(cx *core.Scope) string { return For(cx).OverlayDismissAll
 // OverlayDismissAll says "Dismiss all"
 // in the language of msgs.
 func (msgs Messages) OverlayDismissAll() string { return msgs.text(textOverlayDismissAll) }
-
-// OverlaySwipeOneAwayThePointer says "Swipe one away; the pointer on one stops its time"
-// in the language the app shows under cx.
-func OverlaySwipeOneAwayThePointer(cx *core.Scope) string {
-	return For(cx).OverlaySwipeOneAwayThePointer()
-}
-
-// OverlaySwipeOneAwayThePointer says "Swipe one away; the pointer on one stops its time"
-// in the language of msgs.
-func (msgs Messages) OverlaySwipeOneAwayThePointer() string {
-	return msgs.text(textOverlaySwipeOneAwayThePointer)
-}
 
 // OverlayLastEvent says "Last event"
 // in the language the app shows under cx.
@@ -34967,35 +32398,6 @@ func DockClosedState(cx *core.Scope) string { return For(cx).DockClosedState() }
 // in the language of msgs.
 func (msgs Messages) DockClosedState() string { return msgs.text(textDockClosedState) }
 
-// OverlayLinkOnClipboard says "The link is on the clipboard ({count, number})"
-// in the language the app shows under cx.
-func OverlayLinkOnClipboard(cx *core.Scope, count int) string {
-	return For(cx).OverlayLinkOnClipboard(count)
-}
-
-// OverlayLinkOnClipboard says "The link is on the clipboard ({count, number})"
-// in the language of msgs.
-func (msgs Messages) OverlayLinkOnClipboard(count int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.OverlayLinkOnClipboard(count))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].OverlayLinkOnClipboard; f != nil {
-			return f(count)
-		}
-		switch lang {
-		case "", "en":
-			return "The link is on the clipboard (" + msgs.arg(i18n.FormatNumber("en", float64(count))) + ")"
-		case "ar":
-			return "الرابط في الحافظة (" + i18n.FormatNumber("ar", float64(count)) + ")"
-		case "zh-Hans":
-			return "链接已在剪贴板上（" + i18n.FormatNumber("zh-Hans", float64(count)) + "）"
-		case "zh-Hant":
-			return "連結已在剪貼簿上（" + i18n.FormatNumber("zh-Hant", float64(count)) + "）"
-		}
-	}
-}
-
 // A11yItems says "{count, plural, one {# item} other {# items}}"
 // in the language the app shows under cx.
 func A11yItems(cx *core.Scope, count int) string { return For(cx).A11yItems(count) }
@@ -35693,14 +33095,6 @@ func DiffShowAPatch(cx *core.Scope) string { return For(cx).DiffShowAPatch() }
 // in the language of msgs.
 func (msgs Messages) DiffShowAPatch() string { return msgs.text(textDiffShowAPatch) }
 
-// DiffPatch says "Patch"
-// in the language the app shows under cx.
-func DiffPatch(cx *core.Scope) string { return For(cx).DiffPatch() }
-
-// DiffPatch says "Patch"
-// in the language of msgs.
-func (msgs Messages) DiffPatch() string { return msgs.text(textDiffPatch) }
-
 // DiffOneColumn says "One column"
 // in the language the app shows under cx.
 func DiffOneColumn(cx *core.Scope) string { return For(cx).DiffOneColumn() }
@@ -35709,14 +33103,6 @@ func DiffOneColumn(cx *core.Scope) string { return For(cx).DiffOneColumn() }
 // in the language of msgs.
 func (msgs Messages) DiffOneColumn() string { return msgs.text(textDiffOneColumn) }
 
-// DiffUnified says "Unified"
-// in the language the app shows under cx.
-func DiffUnified(cx *core.Scope) string { return For(cx).DiffUnified() }
-
-// DiffUnified says "Unified"
-// in the language of msgs.
-func (msgs Messages) DiffUnified() string { return msgs.text(textDiffUnified) }
-
 // DiffSoftWrap says "Soft wrap"
 // in the language the app shows under cx.
 func DiffSoftWrap(cx *core.Scope) string { return For(cx).DiffSoftWrap() }
@@ -35724,14 +33110,6 @@ func DiffSoftWrap(cx *core.Scope) string { return For(cx).DiffSoftWrap() }
 // DiffSoftWrap says "Soft wrap"
 // in the language of msgs.
 func (msgs Messages) DiffSoftWrap() string { return msgs.text(textDiffSoftWrap) }
-
-// DiffWrap says "Wrap"
-// in the language the app shows under cx.
-func DiffWrap(cx *core.Scope) string { return For(cx).DiffWrap() }
-
-// DiffWrap says "Wrap"
-// in the language of msgs.
-func (msgs Messages) DiffWrap() string { return msgs.text(textDiffWrap) }
 
 // DiffPreviousChange says "Previous change"
 // in the language the app shows under cx.
@@ -35757,14 +33135,6 @@ func DiffExpandEveryLine(cx *core.Scope) string { return For(cx).DiffExpandEvery
 // in the language of msgs.
 func (msgs Messages) DiffExpandEveryLine() string { return msgs.text(textDiffExpandEveryLine) }
 
-// DiffExpand says "Expand"
-// in the language the app shows under cx.
-func DiffExpand(cx *core.Scope) string { return For(cx).DiffExpand() }
-
-// DiffExpand says "Expand"
-// in the language of msgs.
-func (msgs Messages) DiffExpand() string { return msgs.text(textDiffExpand) }
-
 // DiffCollapseUnchangedLines says "Collapse unchanged lines"
 // in the language the app shows under cx.
 func DiffCollapseUnchangedLines(cx *core.Scope) string { return For(cx).DiffCollapseUnchangedLines() }
@@ -35775,14 +33145,6 @@ func (msgs Messages) DiffCollapseUnchangedLines() string {
 	return msgs.text(textDiffCollapseUnchangedLines)
 }
 
-// DiffCollapse says "Collapse"
-// in the language the app shows under cx.
-func DiffCollapse(cx *core.Scope) string { return For(cx).DiffCollapse() }
-
-// DiffCollapse says "Collapse"
-// in the language of msgs.
-func (msgs Messages) DiffCollapse() string { return msgs.text(textDiffCollapse) }
-
 // DiffStartAgain says "Start again"
 // in the language the app shows under cx.
 func DiffStartAgain(cx *core.Scope) string { return For(cx).DiffStartAgain() }
@@ -35790,14 +33152,6 @@ func DiffStartAgain(cx *core.Scope) string { return For(cx).DiffStartAgain() }
 // DiffStartAgain says "Start again"
 // in the language of msgs.
 func (msgs Messages) DiffStartAgain() string { return msgs.text(textDiffStartAgain) }
-
-// DiffReset says "Reset"
-// in the language the app shows under cx.
-func DiffReset(cx *core.Scope) string { return For(cx).DiffReset() }
-
-// DiffReset says "Reset"
-// in the language of msgs.
-func (msgs Messages) DiffReset() string { return msgs.text(textDiffReset) }
 
 // DiffResolve says "Resolve"
 // in the language the app shows under cx.
@@ -37568,22 +34922,6 @@ func (msgs Messages) CollapsingMinutes(count int) string {
 	}
 }
 
-// LibFormatting says "Formatting"
-// in the language the app shows under cx.
-func LibFormatting(cx *core.Scope) string { return For(cx).LibFormatting() }
-
-// LibFormatting says "Formatting"
-// in the language of msgs.
-func (msgs Messages) LibFormatting() string { return msgs.text(textLibFormatting) }
-
-// LibFormattingNote says "Toggles in a toolbar, each on or off"
-// in the language the app shows under cx.
-func LibFormattingNote(cx *core.Scope) string { return For(cx).LibFormattingNote() }
-
-// LibFormattingNote says "Toggles in a toolbar, each on or off"
-// in the language of msgs.
-func (msgs Messages) LibFormattingNote() string { return msgs.text(textLibFormattingNote) }
-
 // LibBold says "Bold"
 // in the language the app shows under cx.
 func LibBold(cx *core.Scope) string { return For(cx).LibBold() }
@@ -37591,22 +34929,6 @@ func LibBold(cx *core.Scope) string { return For(cx).LibBold() }
 // LibBold says "Bold"
 // in the language of msgs.
 func (msgs Messages) LibBold() string { return msgs.text(textLibBold) }
-
-// LibItalic says "Italic"
-// in the language the app shows under cx.
-func LibItalic(cx *core.Scope) string { return For(cx).LibItalic() }
-
-// LibItalic says "Italic"
-// in the language of msgs.
-func (msgs Messages) LibItalic() string { return msgs.text(textLibItalic) }
-
-// LibUnderline says "Underline"
-// in the language the app shows under cx.
-func LibUnderline(cx *core.Scope) string { return For(cx).LibUnderline() }
-
-// LibUnderline says "Underline"
-// in the language of msgs.
-func (msgs Messages) LibUnderline() string { return msgs.text(textLibUnderline) }
 
 // LibStarred says "Starred"
 // in the language the app shows under cx.
@@ -37616,14 +34938,6 @@ func LibStarred(cx *core.Scope) string { return For(cx).LibStarred() }
 // in the language of msgs.
 func (msgs Messages) LibStarred() string { return msgs.text(textLibStarred) }
 
-// LibLocked says "Locked"
-// in the language the app shows under cx.
-func LibLocked(cx *core.Scope) string { return For(cx).LibLocked() }
-
-// LibLocked says "Locked"
-// in the language of msgs.
-func (msgs Messages) LibLocked() string { return msgs.text(textLibLocked) }
-
 // LibHold says "Hold to confirm"
 // in the language the app shows under cx.
 func LibHold(cx *core.Scope) string { return For(cx).LibHold() }
@@ -37631,14 +34945,6 @@ func LibHold(cx *core.Scope) string { return For(cx).LibHold() }
 // LibHold says "Hold to confirm"
 // in the language of msgs.
 func (msgs Messages) LibHold() string { return msgs.text(textLibHold) }
-
-// LibHoldNote says "Held until the fill is full; let go early and it rewinds"
-// in the language the app shows under cx.
-func LibHoldNote(cx *core.Scope) string { return For(cx).LibHoldNote() }
-
-// LibHoldNote says "Held until the fill is full; let go early and it rewinds"
-// in the language of msgs.
-func (msgs Messages) LibHoldNote() string { return msgs.text(textLibHoldNote) }
 
 // LibHoldToDelete says "Hold to delete"
 // in the language the app shows under cx.
@@ -37656,38 +34962,6 @@ func LibDeleted(cx *core.Scope) string { return For(cx).LibDeleted() }
 // in the language of msgs.
 func (msgs Messages) LibDeleted() string { return msgs.text(textLibDeleted) }
 
-// LibHoldToArchive says "Hold to archive"
-// in the language the app shows under cx.
-func LibHoldToArchive(cx *core.Scope) string { return For(cx).LibHoldToArchive() }
-
-// LibHoldToArchive says "Hold to archive"
-// in the language of msgs.
-func (msgs Messages) LibHoldToArchive() string { return msgs.text(textLibHoldToArchive) }
-
-// LibArchived says "Archived"
-// in the language the app shows under cx.
-func LibArchived(cx *core.Scope) string { return For(cx).LibArchived() }
-
-// LibArchived says "Archived"
-// in the language of msgs.
-func (msgs Messages) LibArchived() string { return msgs.text(textLibArchived) }
-
-// LibHoldToSend says "Hold to send"
-// in the language the app shows under cx.
-func LibHoldToSend(cx *core.Scope) string { return For(cx).LibHoldToSend() }
-
-// LibHoldToSend says "Hold to send"
-// in the language of msgs.
-func (msgs Messages) LibHoldToSend() string { return msgs.text(textLibHoldToSend) }
-
-// LibSent says "Sent"
-// in the language the app shows under cx.
-func LibSent(cx *core.Scope) string { return For(cx).LibSent() }
-
-// LibSent says "Sent"
-// in the language of msgs.
-func (msgs Messages) LibSent() string { return msgs.text(textLibSent) }
-
 // LibCheckout says "Checkout"
 // in the language the app shows under cx.
 func LibCheckout(cx *core.Scope) string { return For(cx).LibCheckout() }
@@ -37695,14 +34969,6 @@ func LibCheckout(cx *core.Scope) string { return For(cx).LibCheckout() }
 // LibCheckout says "Checkout"
 // in the language of msgs.
 func (msgs Messages) LibCheckout() string { return msgs.text(textLibCheckout) }
-
-// LibCheckoutNote says "Steps in a row; press a completed one to go back"
-// in the language the app shows under cx.
-func LibCheckoutNote(cx *core.Scope) string { return For(cx).LibCheckoutNote() }
-
-// LibCheckoutNote says "Steps in a row; press a completed one to go back"
-// in the language of msgs.
-func (msgs Messages) LibCheckoutNote() string { return msgs.text(textLibCheckoutNote) }
 
 // LibCart says "Cart"
 // in the language the app shows under cx.
@@ -37792,56 +35058,6 @@ func LibNext(cx *core.Scope) string { return For(cx).LibNext() }
 // in the language of msgs.
 func (msgs Messages) LibNext() string { return msgs.text(textLibNext) }
 
-// LibSetup says "Setup"
-// in the language the app shows under cx.
-func LibSetup(cx *core.Scope) string { return For(cx).LibSetup() }
-
-// LibSetup says "Setup"
-// in the language of msgs.
-func (msgs Messages) LibSetup() string { return msgs.text(textLibSetup) }
-
-// LibSetupNote says "Down a column, a failed step's error in place of its description"
-// in the language the app shows under cx.
-func LibSetupNote(cx *core.Scope) string { return For(cx).LibSetupNote() }
-
-// LibSetupNote says "Down a column, a failed step's error in place of its description"
-// in the language of msgs.
-func (msgs Messages) LibSetupNote() string { return msgs.text(textLibSetupNote) }
-
-// LibCreateAccount says "Create an account"
-// in the language the app shows under cx.
-func LibCreateAccount(cx *core.Scope) string { return For(cx).LibCreateAccount() }
-
-// LibCreateAccount says "Create an account"
-// in the language of msgs.
-func (msgs Messages) LibCreateAccount() string { return msgs.text(textLibCreateAccount) }
-
-// LibConnectRepository says "Connect a repository"
-// in the language the app shows under cx.
-func LibConnectRepository(cx *core.Scope) string { return For(cx).LibConnectRepository() }
-
-// LibConnectRepository says "Connect a repository"
-// in the language of msgs.
-func (msgs Messages) LibConnectRepository() string { return msgs.text(textLibConnectRepository) }
-
-// LibConnectRepositoryDetail says "GitHub or GitLab"
-// in the language the app shows under cx.
-func LibConnectRepositoryDetail(cx *core.Scope) string { return For(cx).LibConnectRepositoryDetail() }
-
-// LibConnectRepositoryDetail says "GitHub or GitLab"
-// in the language of msgs.
-func (msgs Messages) LibConnectRepositoryDetail() string {
-	return msgs.text(textLibConnectRepositoryDetail)
-}
-
-// LibInstall says "Install dependencies"
-// in the language the app shows under cx.
-func LibInstall(cx *core.Scope) string { return For(cx).LibInstall() }
-
-// LibInstall says "Install dependencies"
-// in the language of msgs.
-func (msgs Messages) LibInstall() string { return msgs.text(textLibInstall) }
-
 // LibInstallError says "The lockfile is out of date"
 // in the language the app shows under cx.
 func LibInstallError(cx *core.Scope) string { return For(cx).LibInstallError() }
@@ -37849,38 +35065,6 @@ func LibInstallError(cx *core.Scope) string { return For(cx).LibInstallError() }
 // LibInstallError says "The lockfile is out of date"
 // in the language of msgs.
 func (msgs Messages) LibInstallError() string { return msgs.text(textLibInstallError) }
-
-// LibDeploy says "Deploy"
-// in the language the app shows under cx.
-func LibDeploy(cx *core.Scope) string { return For(cx).LibDeploy() }
-
-// LibDeploy says "Deploy"
-// in the language of msgs.
-func (msgs Messages) LibDeploy() string { return msgs.text(textLibDeploy) }
-
-// LibDeployDetail says "To production"
-// in the language the app shows under cx.
-func LibDeployDetail(cx *core.Scope) string { return For(cx).LibDeployDetail() }
-
-// LibDeployDetail says "To production"
-// in the language of msgs.
-func (msgs Messages) LibDeployDetail() string { return msgs.text(textLibDeployDetail) }
-
-// LibCompact says "Compact"
-// in the language the app shows under cx.
-func LibCompact(cx *core.Scope) string { return For(cx).LibCompact() }
-
-// LibCompact says "Compact"
-// in the language of msgs.
-func (msgs Messages) LibCompact() string { return msgs.text(textLibCompact) }
-
-// LibCompactNote says "Markers alone, the current step named under them"
-// in the language the app shows under cx.
-func LibCompactNote(cx *core.Scope) string { return For(cx).LibCompactNote() }
-
-// LibCompactNote says "Markers alone, the current step named under them"
-// in the language of msgs.
-func (msgs Messages) LibCompactNote() string { return msgs.text(textLibCompactNote) }
 
 // LibStepUpcoming says "upcoming"
 // in the language the app shows under cx.
@@ -37930,70 +35114,6 @@ func LibFilesNote(cx *core.Scope) string { return For(cx).LibFilesNote() }
 // in the language of msgs.
 func (msgs Messages) LibFilesNote() string { return msgs.text(textLibFilesNote) }
 
-// LibToasts says "Styled toasts"
-// in the language the app shows under cx.
-func LibToasts(cx *core.Scope) string { return For(cx).LibToasts() }
-
-// LibToasts says "Styled toasts"
-// in the language of msgs.
-func (msgs Messages) LibToasts() string { return msgs.text(textLibToasts) }
-
-// LibToastsNote says "The components' Toasts, stacked at the top"
-// in the language the app shows under cx.
-func LibToastsNote(cx *core.Scope) string { return For(cx).LibToastsNote() }
-
-// LibToastsNote says "The components' Toasts, stacked at the top"
-// in the language of msgs.
-func (msgs Messages) LibToastsNote() string { return msgs.text(textLibToastsNote) }
-
-// LibPlain says "Plain"
-// in the language the app shows under cx.
-func LibPlain(cx *core.Scope) string { return For(cx).LibPlain() }
-
-// LibPlain says "Plain"
-// in the language of msgs.
-func (msgs Messages) LibPlain() string { return msgs.text(textLibPlain) }
-
-// LibInfo says "Info"
-// in the language the app shows under cx.
-func LibInfo(cx *core.Scope) string { return For(cx).LibInfo() }
-
-// LibInfo says "Info"
-// in the language of msgs.
-func (msgs Messages) LibInfo() string { return msgs.text(textLibInfo) }
-
-// LibSuccess says "Success"
-// in the language the app shows under cx.
-func LibSuccess(cx *core.Scope) string { return For(cx).LibSuccess() }
-
-// LibSuccess says "Success"
-// in the language of msgs.
-func (msgs Messages) LibSuccess() string { return msgs.text(textLibSuccess) }
-
-// LibWarning says "Warning"
-// in the language the app shows under cx.
-func LibWarning(cx *core.Scope) string { return For(cx).LibWarning() }
-
-// LibWarning says "Warning"
-// in the language of msgs.
-func (msgs Messages) LibWarning() string { return msgs.text(textLibWarning) }
-
-// LibError says "Error"
-// in the language the app shows under cx.
-func LibError(cx *core.Scope) string { return For(cx).LibError() }
-
-// LibError says "Error"
-// in the language of msgs.
-func (msgs Messages) LibError() string { return msgs.text(textLibError) }
-
-// LibMessageSent says "Message sent"
-// in the language the app shows under cx.
-func LibMessageSent(cx *core.Scope) string { return For(cx).LibMessageSent() }
-
-// LibMessageSent says "Message sent"
-// in the language of msgs.
-func (msgs Messages) LibMessageSent() string { return msgs.text(textLibMessageSent) }
-
 // LibNewVersion says "A new version is available"
 // in the language the app shows under cx.
 func LibNewVersion(cx *core.Scope) string { return For(cx).LibNewVersion() }
@@ -38010,38 +35130,6 @@ func LibChangesSaved(cx *core.Scope) string { return For(cx).LibChangesSaved() }
 // in the language of msgs.
 func (msgs Messages) LibChangesSaved() string { return msgs.text(textLibChangesSaved) }
 
-// LibStorageFull says "Storage almost full"
-// in the language the app shows under cx.
-func LibStorageFull(cx *core.Scope) string { return For(cx).LibStorageFull() }
-
-// LibStorageFull says "Storage almost full"
-// in the language of msgs.
-func (msgs Messages) LibStorageFull() string { return msgs.text(textLibStorageFull) }
-
-// LibUploadFailed says "Upload failed"
-// in the language the app shows under cx.
-func LibUploadFailed(cx *core.Scope) string { return For(cx).LibUploadFailed() }
-
-// LibUploadFailed says "Upload failed"
-// in the language of msgs.
-func (msgs Messages) LibUploadFailed() string { return msgs.text(textLibUploadFailed) }
-
-// LibWithAction says "With an action"
-// in the language the app shows under cx.
-func LibWithAction(cx *core.Scope) string { return For(cx).LibWithAction() }
-
-// LibWithAction says "With an action"
-// in the language of msgs.
-func (msgs Messages) LibWithAction() string { return msgs.text(textLibWithAction) }
-
-// LibMovedToTrash says "Moved to trash"
-// in the language the app shows under cx.
-func LibMovedToTrash(cx *core.Scope) string { return For(cx).LibMovedToTrash() }
-
-// LibMovedToTrash says "Moved to trash"
-// in the language of msgs.
-func (msgs Messages) LibMovedToTrash() string { return msgs.text(textLibMovedToTrash) }
-
 // LibThreeFiles says "3 files"
 // in the language the app shows under cx.
 func LibThreeFiles(cx *core.Scope) string { return For(cx).LibThreeFiles() }
@@ -38049,30 +35137,6 @@ func LibThreeFiles(cx *core.Scope) string { return For(cx).LibThreeFiles() }
 // LibThreeFiles says "3 files"
 // in the language of msgs.
 func (msgs Messages) LibThreeFiles() string { return msgs.text(textLibThreeFiles) }
-
-// LibRestored says "Restored 3 files"
-// in the language the app shows under cx.
-func LibRestored(cx *core.Scope) string { return For(cx).LibRestored() }
-
-// LibRestored says "Restored 3 files"
-// in the language of msgs.
-func (msgs Messages) LibRestored() string { return msgs.text(textLibRestored) }
-
-// LibSliders says "Sliders"
-// in the language the app shows under cx.
-func LibSliders(cx *core.Scope) string { return For(cx).LibSliders() }
-
-// LibSliders says "Sliders"
-// in the language of msgs.
-func (msgs Messages) LibSliders() string { return msgs.text(textLibSliders) }
-
-// LibSlidersNote says "Drag a knob, press the track, or use the arrow keys"
-// in the language the app shows under cx.
-func LibSlidersNote(cx *core.Scope) string { return For(cx).LibSlidersNote() }
-
-// LibSlidersNote says "Drag a knob, press the track, or use the arrow keys"
-// in the language of msgs.
-func (msgs Messages) LibSlidersNote() string { return msgs.text(textLibSlidersNote) }
 
 // LibVolume says "Volume"
 // in the language the app shows under cx.
@@ -38090,14 +35154,6 @@ func LibFontSize(cx *core.Scope) string { return For(cx).LibFontSize() }
 // in the language of msgs.
 func (msgs Messages) LibFontSize() string { return msgs.text(textLibFontSize) }
 
-// LibPrice says "Price"
-// in the language the app shows under cx.
-func LibPrice(cx *core.Scope) string { return For(cx).LibPrice() }
-
-// LibPrice says "Price"
-// in the language of msgs.
-func (msgs Messages) LibPrice() string { return msgs.text(textLibPrice) }
-
 // LibMinimum says "minimum"
 // in the language the app shows under cx.
 func LibMinimum(cx *core.Scope) string { return For(cx).LibMinimum() }
@@ -38113,22 +35169,6 @@ func LibMaximum(cx *core.Scope) string { return For(cx).LibMaximum() }
 // LibMaximum says "maximum"
 // in the language of msgs.
 func (msgs Messages) LibMaximum() string { return msgs.text(textLibMaximum) }
-
-// LibSelect says "Select"
-// in the language the app shows under cx.
-func LibSelect(cx *core.Scope) string { return For(cx).LibSelect() }
-
-// LibSelect says "Select"
-// in the language of msgs.
-func (msgs Messages) LibSelect() string { return msgs.text(textLibSelect) }
-
-// LibSelectNote says "The chosen option is checked in the menu"
-// in the language the app shows under cx.
-func LibSelectNote(cx *core.Scope) string { return For(cx).LibSelectNote() }
-
-// LibSelectNote says "The chosen option is checked in the menu"
-// in the language of msgs.
-func (msgs Messages) LibSelectNote() string { return msgs.text(textLibSelectNote) }
 
 // LibFruit says "Fruit"
 // in the language the app shows under cx.
@@ -38170,30 +35210,6 @@ func LibCherry(cx *core.Scope) string { return For(cx).LibCherry() }
 // in the language of msgs.
 func (msgs Messages) LibCherry() string { return msgs.text(textLibCherry) }
 
-// LibGrape says "Grape"
-// in the language the app shows under cx.
-func LibGrape(cx *core.Scope) string { return For(cx).LibGrape() }
-
-// LibGrape says "Grape"
-// in the language of msgs.
-func (msgs Messages) LibGrape() string { return msgs.text(textLibGrape) }
-
-// LibSpinners says "Rings and spinners"
-// in the language the app shows under cx.
-func LibSpinners(cx *core.Scope) string { return For(cx).LibSpinners() }
-
-// LibSpinners says "Rings and spinners"
-// in the language of msgs.
-func (msgs Messages) LibSpinners() string { return msgs.text(textLibSpinners) }
-
-// LibSpinnersNote says "Progress as a ring, and work of unknown length"
-// in the language the app shows under cx.
-func LibSpinnersNote(cx *core.Scope) string { return For(cx).LibSpinnersNote() }
-
-// LibSpinnersNote says "Progress as a ring, and work of unknown length"
-// in the language of msgs.
-func (msgs Messages) LibSpinnersNote() string { return msgs.text(textLibSpinnersNote) }
-
 // LibProgress says "Progress"
 // in the language the app shows under cx.
 func LibProgress(cx *core.Scope) string { return For(cx).LibProgress() }
@@ -38201,14 +35217,6 @@ func LibProgress(cx *core.Scope) string { return For(cx).LibProgress() }
 // LibProgress says "Progress"
 // in the language of msgs.
 func (msgs Messages) LibProgress() string { return msgs.text(textLibProgress) }
-
-// LibLess says "Less"
-// in the language the app shows under cx.
-func LibLess(cx *core.Scope) string { return For(cx).LibLess() }
-
-// LibLess says "Less"
-// in the language of msgs.
-func (msgs Messages) LibLess() string { return msgs.text(textLibLess) }
 
 // LibMore says "More"
 // in the language the app shows under cx.
@@ -38241,6 +35249,182 @@ func DemoTerminalDetail(cx *core.Scope) string { return For(cx).DemoTerminalDeta
 // DemoTerminalDetail says "The user's shell with Ghostty's emulator: colors, a scrollback, selection, copy and paste"
 // in the language of msgs.
 func (msgs Messages) DemoTerminalDetail() string { return msgs.text(textDemoTerminalDetail) }
+
+// DemoButtons says "Buttons"
+// in the language the app shows under cx.
+func DemoButtons(cx *core.Scope) string { return For(cx).DemoButtons() }
+
+// DemoButtons says "Buttons"
+// in the language of msgs.
+func (msgs Messages) DemoButtons() string { return msgs.text(textDemoButtons) }
+
+// DemoButtonsDetail says "Plain, icon, toggle and hold-to-confirm buttons"
+// in the language the app shows under cx.
+func DemoButtonsDetail(cx *core.Scope) string { return For(cx).DemoButtonsDetail() }
+
+// DemoButtonsDetail says "Plain, icon, toggle and hold-to-confirm buttons"
+// in the language of msgs.
+func (msgs Messages) DemoButtonsDetail() string { return msgs.text(textDemoButtonsDetail) }
+
+// DemoSelection says "Selection"
+// in the language the app shows under cx.
+func DemoSelection(cx *core.Scope) string { return For(cx).DemoSelection() }
+
+// DemoSelection says "Selection"
+// in the language of msgs.
+func (msgs Messages) DemoSelection() string { return msgs.text(textDemoSelection) }
+
+// DemoSelectionDetail says "Checkboxes, radios, switches and selects"
+// in the language the app shows under cx.
+func DemoSelectionDetail(cx *core.Scope) string { return For(cx).DemoSelectionDetail() }
+
+// DemoSelectionDetail says "Checkboxes, radios, switches and selects"
+// in the language of msgs.
+func (msgs Messages) DemoSelectionDetail() string { return msgs.text(textDemoSelectionDetail) }
+
+// DemoSliderAndRating says "Slider and Rating"
+// in the language the app shows under cx.
+func DemoSliderAndRating(cx *core.Scope) string { return For(cx).DemoSliderAndRating() }
+
+// DemoSliderAndRating says "Slider and Rating"
+// in the language of msgs.
+func (msgs Messages) DemoSliderAndRating() string { return msgs.text(textDemoSliderAndRating) }
+
+// DemoSliderAndRatingDetail says "A number on a track, a range, a score of stars"
+// in the language the app shows under cx.
+func DemoSliderAndRatingDetail(cx *core.Scope) string { return For(cx).DemoSliderAndRatingDetail() }
+
+// DemoSliderAndRatingDetail says "A number on a track, a range, a score of stars"
+// in the language of msgs.
+func (msgs Messages) DemoSliderAndRatingDetail() string {
+	return msgs.text(textDemoSliderAndRatingDetail)
+}
+
+// DemoBadgeAndAvatar says "Badge and Avatar"
+// in the language the app shows under cx.
+func DemoBadgeAndAvatar(cx *core.Scope) string { return For(cx).DemoBadgeAndAvatar() }
+
+// DemoBadgeAndAvatar says "Badge and Avatar"
+// in the language of msgs.
+func (msgs Messages) DemoBadgeAndAvatar() string { return msgs.text(textDemoBadgeAndAvatar) }
+
+// DemoBadgeAndAvatarDetail says "Small labels, people and files"
+// in the language the app shows under cx.
+func DemoBadgeAndAvatarDetail(cx *core.Scope) string { return For(cx).DemoBadgeAndAvatarDetail() }
+
+// DemoBadgeAndAvatarDetail says "Small labels, people and files"
+// in the language of msgs.
+func (msgs Messages) DemoBadgeAndAvatarDetail() string {
+	return msgs.text(textDemoBadgeAndAvatarDetail)
+}
+
+// DemoCards says "Cards"
+// in the language the app shows under cx.
+func DemoCards(cx *core.Scope) string { return For(cx).DemoCards() }
+
+// DemoCards says "Cards"
+// in the language of msgs.
+func (msgs Messages) DemoCards() string { return msgs.text(textDemoCards) }
+
+// DemoCardsDetail says "Titled containers, insets and a deck to decide"
+// in the language the app shows under cx.
+func DemoCardsDetail(cx *core.Scope) string { return For(cx).DemoCardsDetail() }
+
+// DemoCardsDetail says "Titled containers, insets and a deck to decide"
+// in the language of msgs.
+func (msgs Messages) DemoCardsDetail() string { return msgs.text(textDemoCardsDetail) }
+
+// DemoMedia says "Media"
+// in the language the app shows under cx.
+func DemoMedia(cx *core.Scope) string { return For(cx).DemoMedia() }
+
+// DemoMedia says "Media"
+// in the language of msgs.
+func (msgs Messages) DemoMedia() string { return msgs.text(textDemoMedia) }
+
+// DemoMediaDetail says "Pictures, a comparison and a carousel"
+// in the language the app shows under cx.
+func DemoMediaDetail(cx *core.Scope) string { return For(cx).DemoMediaDetail() }
+
+// DemoMediaDetail says "Pictures, a comparison and a carousel"
+// in the language of msgs.
+func (msgs Messages) DemoMediaDetail() string { return msgs.text(textDemoMediaDetail) }
+
+// DemoListsAndTables says "Lists and Tables"
+// in the language the app shows under cx.
+func DemoListsAndTables(cx *core.Scope) string { return For(cx).DemoListsAndTables() }
+
+// DemoListsAndTables says "Lists and Tables"
+// in the language of msgs.
+func (msgs Messages) DemoListsAndTables() string { return msgs.text(textDemoListsAndTables) }
+
+// DemoListsAndTablesDetail says "Long runs of rows, nested items and a small table"
+// in the language the app shows under cx.
+func DemoListsAndTablesDetail(cx *core.Scope) string { return For(cx).DemoListsAndTablesDetail() }
+
+// DemoListsAndTablesDetail says "Long runs of rows, nested items and a small table"
+// in the language of msgs.
+func (msgs Messages) DemoListsAndTablesDetail() string {
+	return msgs.text(textDemoListsAndTablesDetail)
+}
+
+// DemoDialogAndSheet says "Dialog and Sheet"
+// in the language the app shows under cx.
+func DemoDialogAndSheet(cx *core.Scope) string { return For(cx).DemoDialogAndSheet() }
+
+// DemoDialogAndSheet says "Dialog and Sheet"
+// in the language of msgs.
+func (msgs Messages) DemoDialogAndSheet() string { return msgs.text(textDemoDialogAndSheet) }
+
+// DemoDialogAndSheetDetail says "Modal surfaces over a dimmed app"
+// in the language the app shows under cx.
+func DemoDialogAndSheetDetail(cx *core.Scope) string { return For(cx).DemoDialogAndSheetDetail() }
+
+// DemoDialogAndSheetDetail says "Modal surfaces over a dimmed app"
+// in the language of msgs.
+func (msgs Messages) DemoDialogAndSheetDetail() string {
+	return msgs.text(textDemoDialogAndSheetDetail)
+}
+
+// DemoPopoverAndTooltip says "Popover and Tooltip"
+// in the language the app shows under cx.
+func DemoPopoverAndTooltip(cx *core.Scope) string { return For(cx).DemoPopoverAndTooltip() }
+
+// DemoPopoverAndTooltip says "Popover and Tooltip"
+// in the language of msgs.
+func (msgs Messages) DemoPopoverAndTooltip() string { return msgs.text(textDemoPopoverAndTooltip) }
+
+// DemoPopoverAndTooltipDetail says "Surfaces anchored to what opens them"
+// in the language the app shows under cx.
+func DemoPopoverAndTooltipDetail(cx *core.Scope) string { return For(cx).DemoPopoverAndTooltipDetail() }
+
+// DemoPopoverAndTooltipDetail says "Surfaces anchored to what opens them"
+// in the language of msgs.
+func (msgs Messages) DemoPopoverAndTooltipDetail() string {
+	return msgs.text(textDemoPopoverAndTooltipDetail)
+}
+
+// DemoStepperAndBreadcrumbs says "Stepper and Breadcrumbs"
+// in the language the app shows under cx.
+func DemoStepperAndBreadcrumbs(cx *core.Scope) string { return For(cx).DemoStepperAndBreadcrumbs() }
+
+// DemoStepperAndBreadcrumbs says "Stepper and Breadcrumbs"
+// in the language of msgs.
+func (msgs Messages) DemoStepperAndBreadcrumbs() string {
+	return msgs.text(textDemoStepperAndBreadcrumbs)
+}
+
+// DemoStepperAndBreadcrumbsDetail says "Where a person is in a flow or a hierarchy"
+// in the language the app shows under cx.
+func DemoStepperAndBreadcrumbsDetail(cx *core.Scope) string {
+	return For(cx).DemoStepperAndBreadcrumbsDetail()
+}
+
+// DemoStepperAndBreadcrumbsDetail says "Where a person is in a flow or a hierarchy"
+// in the language of msgs.
+func (msgs Messages) DemoStepperAndBreadcrumbsDetail() string {
+	return msgs.text(textDemoStepperAndBreadcrumbsDetail)
+}
 
 // TerminalOptions says "Options"
 // in the language the app shows under cx.
@@ -38507,3 +35691,166 @@ func TerminalKeyBarNote(cx *core.Scope) string { return For(cx).TerminalKeyBarNo
 // TerminalKeyBarNote says "Over a touch screen's keyboard"
 // in the language of msgs.
 func (msgs Messages) TerminalKeyBarNote() string { return msgs.text(textTerminalKeyBarNote) }
+
+// KitPressed says "{name} pressed"
+// in the language the app shows under cx.
+func KitPressed(cx *core.Scope, name string) string { return For(cx).KitPressed(name) }
+
+// KitPressed says "{name} pressed"
+// in the language of msgs.
+func (msgs Messages) KitPressed(name string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.KitPressed(name))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].KitPressed; f != nil {
+			return f(name)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(name) + " pressed"
+		case "ar":
+			return "تم الضغط على " + name
+		case "zh-Hans":
+			return "已按下 " + name
+		case "zh-Hant":
+			return "已按下 " + name
+		}
+	}
+}
+
+// KitRating says "Rating"
+// in the language the app shows under cx.
+func KitRating(cx *core.Scope) string { return For(cx).KitRating() }
+
+// KitRating says "Rating"
+// in the language of msgs.
+func (msgs Messages) KitRating() string { return msgs.text(textKitRating) }
+
+// KitPass says "Pass"
+// in the language the app shows under cx.
+func KitPass(cx *core.Scope) string { return For(cx).KitPass() }
+
+// KitPass says "Pass"
+// in the language of msgs.
+func (msgs Messages) KitPass() string { return msgs.text(textKitPass) }
+
+// KitKeep says "Keep"
+// in the language the app shows under cx.
+func KitKeep(cx *core.Scope) string { return For(cx).KitKeep() }
+
+// KitKeep says "Keep"
+// in the language of msgs.
+func (msgs Messages) KitKeep() string { return msgs.text(textKitKeep) }
+
+// KitNoMoreCards says "No more cards"
+// in the language the app shows under cx.
+func KitNoMoreCards(cx *core.Scope) string { return For(cx).KitNoMoreCards() }
+
+// KitNoMoreCards says "No more cards"
+// in the language of msgs.
+func (msgs Messages) KitNoMoreCards() string { return msgs.text(textKitNoMoreCards) }
+
+// KitBefore says "Before"
+// in the language the app shows under cx.
+func KitBefore(cx *core.Scope) string { return For(cx).KitBefore() }
+
+// KitBefore says "Before"
+// in the language of msgs.
+func (msgs Messages) KitBefore() string { return msgs.text(textKitBefore) }
+
+// KitAfter says "After"
+// in the language the app shows under cx.
+func KitAfter(cx *core.Scope) string { return For(cx).KitAfter() }
+
+// KitAfter says "After"
+// in the language of msgs.
+func (msgs Messages) KitAfter() string { return msgs.text(textKitAfter) }
+
+// KitExpand says "Expand"
+// in the language the app shows under cx.
+func KitExpand(cx *core.Scope) string { return For(cx).KitExpand() }
+
+// KitExpand says "Expand"
+// in the language of msgs.
+func (msgs Messages) KitExpand() string { return msgs.text(textKitExpand) }
+
+// KitAction says "Action"
+// in the language the app shows under cx.
+func KitAction(cx *core.Scope) string { return For(cx).KitAction() }
+
+// KitAction says "Action"
+// in the language of msgs.
+func (msgs Messages) KitAction() string { return msgs.text(textKitAction) }
+
+// KitActions says "Actions"
+// in the language the app shows under cx.
+func KitActions(cx *core.Scope) string { return For(cx).KitActions() }
+
+// KitActions says "Actions"
+// in the language of msgs.
+func (msgs Messages) KitActions() string { return msgs.text(textKitActions) }
+
+// KitShow says "Show a toast"
+// in the language the app shows under cx.
+func KitShow(cx *core.Scope) string { return For(cx).KitShow() }
+
+// KitShow says "Show a toast"
+// in the language of msgs.
+func (msgs Messages) KitShow() string { return msgs.text(textKitShow) }
+
+// KitOpen says "Open"
+// in the language the app shows under cx.
+func KitOpen(cx *core.Scope) string { return For(cx).KitOpen() }
+
+// KitOpen says "Open"
+// in the language of msgs.
+func (msgs Messages) KitOpen() string { return msgs.text(textKitOpen) }
+
+// KitCancel says "Cancel"
+// in the language the app shows under cx.
+func KitCancel(cx *core.Scope) string { return For(cx).KitCancel() }
+
+// KitCancel says "Cancel"
+// in the language of msgs.
+func (msgs Messages) KitCancel() string { return msgs.text(textKitCancel) }
+
+// KitDialogTitle says "Publish this page?"
+// in the language the app shows under cx.
+func KitDialogTitle(cx *core.Scope) string { return For(cx).KitDialogTitle() }
+
+// KitDialogTitle says "Publish this page?"
+// in the language of msgs.
+func (msgs Messages) KitDialogTitle() string { return msgs.text(textKitDialogTitle) }
+
+// KitDialogNote says "Everyone with the link will see it."
+// in the language the app shows under cx.
+func KitDialogNote(cx *core.Scope) string { return For(cx).KitDialogNote() }
+
+// KitDialogNote says "Everyone with the link will see it."
+// in the language of msgs.
+func (msgs Messages) KitDialogNote() string { return msgs.text(textKitDialogNote) }
+
+// KitMore says "More"
+// in the language the app shows under cx.
+func KitMore(cx *core.Scope) string { return For(cx).KitMore() }
+
+// KitMore says "More"
+// in the language of msgs.
+func (msgs Messages) KitMore() string { return msgs.text(textKitMore) }
+
+// KitLongPressHere says "Long-press here"
+// in the language the app shows under cx.
+func KitLongPressHere(cx *core.Scope) string { return For(cx).KitLongPressHere() }
+
+// KitLongPressHere says "Long-press here"
+// in the language of msgs.
+func (msgs Messages) KitLongPressHere() string { return msgs.text(textKitLongPressHere) }
+
+// KitRightClickHere says "Right-click here"
+// in the language the app shows under cx.
+func KitRightClickHere(cx *core.Scope) string { return For(cx).KitRightClickHere() }
+
+// KitRightClickHere says "Right-click here"
+// in the language of msgs.
+func (msgs Messages) KitRightClickHere() string { return msgs.text(textKitRightClickHere) }

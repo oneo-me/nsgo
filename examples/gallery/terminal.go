@@ -44,7 +44,6 @@ func terminalDemo(cx *core.Scope) core.Node {
 	// The terminal running, for the cursor's setter.
 	var term *terminal.Terminal
 
-	wide := func() bool { return cx.Env().Window().Width >= 760 }
 	screen := core.Dynamic(func(cx *core.Scope) core.Node {
 		generation.Get()
 		var conn *demoSession
@@ -135,13 +134,6 @@ func terminalDemo(cx *core.Scope) core.Node {
 			}, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Accent)},
 		}})
 	}
-	status := func(label, id string, value func() string) core.Node {
-		return core.View{Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 0)}, Children: []core.Node{
-			ui.Text(label, 12, ui.Regular, colors.Muted),
-			core.Text{ContentFunc: value, TestID: id, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono, TextAlign: core.TextAlignEnd},
-				StyleFunc: ui.Colored(colors.Text)},
-		}}
-	}
 	// Phones have the demo's session alone.
 	var sessionOption core.Node = core.Group{}
 	if local {
@@ -155,12 +147,10 @@ func terminalDemo(cx *core.Scope) core.Node {
 			},
 			Options: []ui.Option[bool]{{Value: false, Label: tr.TerminalLocalShell()}, {Value: true, Label: tr.TerminalDemoSession()}}})
 	}
-	panel := core.Scroll{StyleFunc: func() core.Style {
-		if wide() {
-			return core.Style{Width: core.Pt(332), FlexShrink: 0}
-		}
-		return core.Style{MaxHeight: core.Pt(312), FlexShrink: 0}
-	}, Children: []core.Node{core.View{Style: core.Style{Padding: core.All(16), Gap: 12}, Children: []core.Node{
+	return stagePage(cx, core.View{StyleFunc: func() core.Style {
+		return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: ui.RadiusInset,
+			BorderWidth: 1, BorderColor: colors.Border(), Overflow: core.Hidden})
+	}, Children: []core.Node{screen}},
 		Section{Title: tr.TerminalOptions(), Note: "terminal.View", Children: []core.Node{
 			sessionOption,
 			option(tr.TerminalTheme(), "Theme · DarkTheme", core.View{Children: themeRows}),
@@ -183,34 +173,13 @@ func terminalDemo(cx *core.Scope) core.Node {
 			SwitchRow{Label: tr.TerminalKeyBar(), Note: tr.TerminalKeyBarNote(), Checked: keyBar.Get, OnChange: keyBar.Set},
 		}},
 		Section{Title: tr.TerminalStatus(), Note: "OnTitle · OnSizeChange · Dir", Children: []core.Node{
-			status(tr.TerminalTitle(), "terminal-title", title.Get),
-			status(tr.TerminalSize(), "terminal-size", func() string { c := cells.Get(); return tr.TerminalSizeCells(c[0], c[1]) }),
-			status(tr.TerminalDirectory(), "terminal-dir", dir.Get),
+			statusLine(cx, tr.TerminalTitle(), "terminal-title", title.Get),
+			statusLine(cx, tr.TerminalSize(), "terminal-size", func() string { c := cells.Get(); return tr.TerminalSizeCells(c[0], c[1]) }),
+			statusLine(cx, tr.TerminalDirectory(), "terminal-dir", dir.Get),
 		}},
 		ui.Button{Text: tr.TerminalRestart(), Variant: ui.ButtonSecondary, OnPress: func() {
 			title.Set("—")
 			dir.Set("—")
 			generation.Update(func(n int) int { return n + 1 })
-		}},
-	}}}}
-
-	return core.View{StyleFunc: func() core.Style {
-		direction := core.Column
-		if wide() {
-			direction = core.Row
-		}
-		return fillPage.Merge(core.Style{Direction: direction, Background: colors.Background()})
-	}, Children: []core.Node{
-		core.View{StyleFunc: func() core.Style {
-			// The panel beside it scrolls to the page's edge, so only the
-			// screen keeps the page's margin there.
-			margin := core.Edges{Top: 16, Right: 16, Left: 16}
-			if wide() {
-				margin = core.Edges{Top: 16, Bottom: 16, Left: 16}
-			}
-			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(240), MinWidth: core.Pt(0), Margin: margin, CornerRadius: ui.RadiusInset,
-				BorderWidth: 1, BorderColor: colors.Border(), Overflow: core.Hidden})
-		}, Children: []core.Node{screen}},
-		panel,
-	}}
+		}})
 }

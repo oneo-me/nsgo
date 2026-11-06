@@ -119,6 +119,8 @@ type pageProps struct {
 	behaviorFunc func() core.ScrollBehavior
 	// after follows the cards inside the scroll view (a demo's modals).
 	after []core.Node
+	// flush is a page inside a stage: no gutters and as wide as it.
+	flush bool
 	ref   *core.Ref
 }
 
@@ -144,13 +146,20 @@ func demoPage(cx *core.Scope, p pageProps, cards ...cardFunc) core.Node {
 		most = 2
 	}
 	var body core.Node
-	if !shell.desktop() {
+	switch {
+	case p.flush:
+		var nodes []core.Node
+		for i, c := range cards {
+			nodes = append(nodes, build(i, c))
+		}
+		body = core.View{Style: core.Style{Gap: 20}, Children: nodes}
+	case !shell.desktop():
 		var nodes []core.Node
 		for i, c := range cards {
 			nodes = append(nodes, build(i, c))
 		}
 		body = core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 12, Bottom: bottom, Left: 12}, Gap: 20}, Children: nodes}
-	} else {
+	default:
 		// The cards are built once and move between the columns, which
 		// are built again when their number changes.
 		held := make([]*core.Holder, len(cards))

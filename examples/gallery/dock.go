@@ -188,10 +188,6 @@ func dockDemo(cx *core.Scope) core.Node {
 	// current is the panel shown last, whose group the zoom takes.
 	current := "main"
 	pointer := cx.Env().Desktop()
-	pad, gap := core.Points(16), core.Points(12)
-	if shell.desktop() {
-		pad, gap = 24, 16
-	}
 	status := func(fn func() string, strong bool) core.Node {
 		c := colors.Muted
 		if strong {
@@ -199,28 +195,9 @@ func dockDemo(cx *core.Scope) core.Node {
 		}
 		return core.Text{ContentFunc: fn, Style: core.Style{FontFamily: ui.Mono, FontSize: 11}, StyleFunc: ui.Colored(c)}
 	}
-	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: gap})
-	}, Children: []core.Node{
-		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			Tool{Label: tr.DockToggleFiles(), Text: tr.DockFiles(), On: showLeft.Get, OnPress: func() { area.ToggleDock(dock.Left) }},
-			Tool{Label: tr.DockToggleTerminal(), Text: tr.DockTerminal(), On: showBottom.Get, OnPress: func() { area.ToggleDock(dock.Bottom) }},
-			Tool{Label: tr.DockLockTheLayout(), Text: tr.DockLock(), On: locked.Get, OnPress: func() { toggled(locked) }},
-			Tool{Label: tr.DockShowCloseButtons(), Text: tr.DockClose(), On: closing.Get, OnPress: func() { toggled(closing) }},
-			Tool{Label: tr.DockZoomTheGroup(), Text: tr.DockZoom(), On: func() bool { return zoomed.Get() != "" }, OnPress: func() {
-				if zoomed.GetUntracked() != "" {
-					area.ToggleZoom(0)
-				} else {
-					g, _ := area.GroupOf(current)
-					area.ToggleZoom(g)
-				}
-			}},
-			Tool{Label: tr.DockResetTheLayout(), Text: tr.DockReset(), OnPress: func() { layout.Set(initialDock()) }},
-			core.Text{Content: Hint(cx, tr.DockHoldATabToReorder(), tr.DockDragATabOntoAnother()),
-				Style: core.Style{MinWidth: core.Pt(160), FlexGrow: 1, FlexShrink: 1, TextAlign: core.TextAlignEnd, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
-		}},
+	return stagePage(cx,
 		core.View{StyleFunc: func() core.Style {
-			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(320), BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(),
+			return fin.Card().Over(core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(),
 				CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, Padding: core.All(5), Gap: 5})
 		}, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
@@ -237,34 +214,49 @@ func dockDemo(cx *core.Scope) core.Node {
 					return dockArea(cx, area, layout, locked, last, zoomed, showLeft, showBottom, panels, pointer, &current)
 				})
 			})}},
-			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 20, RowGap: 4, Padding: core.Edges{Top: 2, Right: 10, Bottom: 4, Left: 10}}, Children: []core.Node{
-				status(func() string { return tr.DockCenter() + describeNode(tr, layout.Get().Center) }, true),
-				status(func() string { return tr.DockFirstSlot() + firstSlot(layout.Get().Center) }, false),
-				status(func() string { return describeRegion(tr, tr.DockLeft(), layout.Get().Left) }, false),
-				status(func() string { return describeRegion(tr, tr.DockBottom(), layout.Get().Bottom) }, false),
-				status(func() string {
-					var names []string
-					if showLeft.Get() {
-						names = append(names, tr.DockFiles())
-					}
-					if showBottom.Get() {
-						names = append(names, tr.DockTerminal())
-					}
-					if len(names) == 0 {
-						return tr.DockShowingDocksNone()
-					}
-					return tr.DockShowingDocks() + strings.Join(names, ", ")
-				}, false),
-				status(func() string {
-					if z := zoomed.Get(); z != "" {
-						return tr.DockZoomed() + dockTitle(tr, z)
-					}
-					return tr.DockZoomedNone()
-				}, false),
-				status(func() string { return tr.DockLastEvent() + last.Get() }, false),
-			}},
 		}},
-	}}
+		Section{Title: tr.TerminalOptions(), Note: "dock.Area", Children: []core.Node{
+			SwitchRow{Label: tr.DockToggleFiles(), Code: "ToggleDock(Left)", Checked: showLeft.Get, OnChange: func(bool) { area.ToggleDock(dock.Left) }},
+			SwitchRow{Label: tr.DockToggleTerminal(), Code: "ToggleDock(Bottom)", Checked: showBottom.Get, OnChange: func(bool) { area.ToggleDock(dock.Bottom) }},
+			SwitchRow{Label: tr.DockLockTheLayout(), Code: "Locked", Checked: locked.Get, OnChange: locked.Set},
+			SwitchRow{Label: tr.DockShowCloseButtons(), Code: "NoClose", Checked: closing.Get, OnChange: closing.Set},
+			SwitchRow{Label: tr.DockZoomTheGroup(), Code: "ToggleZoom", Checked: func() bool { return zoomed.Get() != "" }, OnChange: func(bool) {
+				if zoomed.GetUntracked() != "" {
+					area.ToggleZoom(0)
+				} else {
+					g, _ := area.GroupOf(current)
+					area.ToggleZoom(g)
+				}
+			}},
+			ui.Button{Text: tr.DockResetTheLayout(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { layout.Set(initialDock()) }},
+			Note{Text: Hint(cx, tr.DockHoldATabToReorder(), tr.DockDragATabOntoAnother())},
+		}},
+		Section{Title: tr.TerminalStatus(), Note: "OnLayoutChange", Children: []core.Node{
+			status(func() string { return tr.DockCenter() + describeNode(tr, layout.Get().Center) }, true),
+			status(func() string { return tr.DockFirstSlot() + firstSlot(layout.Get().Center) }, false),
+			status(func() string { return describeRegion(tr, tr.DockLeft(), layout.Get().Left) }, false),
+			status(func() string { return describeRegion(tr, tr.DockBottom(), layout.Get().Bottom) }, false),
+			status(func() string {
+				var names []string
+				if showLeft.Get() {
+					names = append(names, tr.DockFiles())
+				}
+				if showBottom.Get() {
+					names = append(names, tr.DockTerminal())
+				}
+				if len(names) == 0 {
+					return tr.DockShowingDocksNone()
+				}
+				return tr.DockShowingDocks() + strings.Join(names, ", ")
+			}, false),
+			status(func() string {
+				if z := zoomed.Get(); z != "" {
+					return tr.DockZoomed() + dockTitle(tr, z)
+				}
+				return tr.DockZoomedNone()
+			}, false),
+			status(func() string { return tr.DockLastEvent() + last.Get() }, false),
+		}})
 }
 
 func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layout], locked *core.Signal[bool], last, zoomed *core.Signal[string],

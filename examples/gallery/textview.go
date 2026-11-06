@@ -310,8 +310,17 @@ func selectionAreaCard(cx *core.Scope) core.Node {
 	}}
 }
 
-// textViewDemo is base/textview's TextView: Markdown and HTML documents,
-// the app's own syntax, a streaming reply and selection across documents.
+// textViewDemo is base/textview's TextView over the whole page, one sample
+// at a time: Markdown and HTML documents, the app's own syntax, a
+// streaming reply and selection across documents.
 func textViewDemo(cx *core.Scope) core.Node {
-	return demoPage(cx, pageProps{}, streamingCard, markdownCard, selectionAreaCard, extensionsCard, htmlCard)
+	tr := locales.For(cx)
+	cards := []cardFunc{markdownCard, streamingCard, selectionAreaCard, extensionsCard, htmlCard}
+	sample := core.NewSignal(cx, 0)
+	return stagePage(cx, core.Dynamic(func(*core.Scope) core.Node {
+		card := cards[sample.Get()]
+		return core.Func(func(cx *core.Scope) core.Node { return demoPage(cx, pageProps{flush: true, still: true}, card) })
+	}), Section{Title: tr.TerminalOptions(), Note: "textview.TextView", Children: []core.Node{
+		choiceKnob("Markdown", sample, options([]int{0, 1, 2, 3, 4}, tr.TextviewMarkdown(), tr.TextviewStreaming(), tr.TextviewSelectableView(), tr.TextviewExtensions(), tr.TextviewHtml())...),
+	}})
 }

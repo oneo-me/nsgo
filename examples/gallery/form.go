@@ -447,7 +447,7 @@ func formDemo(cx *core.Scope) core.Node {
 		}}}}
 
 	return demoPage(cx, pageProps{behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardDismissMode: mode.Get()} }, after: []core.Node{dialog}},
-		keyboard, account, numbers, shipping, selection, textCard, submitCard, more)
+		inputPlayground, numberInputCard, tagInputCard, keyboard, account, numbers, shipping, selection, textCard, submitCard, more)
 }
 
 // autoGrow is a multiline input that grows with its text
@@ -604,4 +604,36 @@ func selectionDemo() core.Node {
 				base.Input{KeyboardType: core.KeyboardNumber, AutoComplete: core.AutoCompleteOneTimeCode, MaxLength: 6, Placeholder: "123456"}),
 		}}
 	})
+}
+
+// inputPlayground is ui.Input with its props to set.
+func inputPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	value := core.NewSignal(cx, "")
+	multiline, masked, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+	return Playground{Title: "Input", Fill: true, Stage: func() core.Node {
+		return ui.Input{Input: base.Input{Value: value.Get, OnChange: value.Set, Placeholder: tr.CompTypeHere(), Multiline: multiline.Get(), Masked: masked.Get(),
+			Disabled: disabled.Get}}
+	}, Knobs: []core.Node{boolKnob("Multiline", multiline), boolKnob("Masked", masked), boolKnob("Disabled", disabled)}}
+}
+
+// numberInputCard is ui.NumberInput with its props to set.
+func numberInputCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	value, step := core.NewSignal(cx, 12.0), core.NewSignal(cx, 1.0)
+	hide, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
+	return Playground{Title: "NumberInput", Fill: true, Stage: func() core.Node {
+		return ui.NumberInput{Label: tr.LibFontSize(), Value: value.Get, OnChange: value.Set, Min: 0, Max: 100, Step: step.Get(), HideSteppers: hide.Get(),
+			LeadingText: "#", Disabled: disabled.Get}
+	}, Knobs: []core.Node{numberKnob("Step", step, 1, 10, 1), boolKnob("HideSteppers", hide), boolKnob("Disabled", disabled)}}
+}
+
+// tagInputCard is ui.TagInput with its props to set.
+func tagInputCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	tags := core.NewSignalFunc(cx, []string{tr.LibApple(), tr.LibBanana()}, slices.Equal)
+	disabled := core.NewSignal(cx, false)
+	return Playground{Title: "TagInput", Fill: true, Stage: func() core.Node {
+		return ui.TagInput{Label: tr.LibFruit(), Tags: tags.Get, OnChange: tags.Set, Placeholder: tr.LibPickFruit(), Disabled: disabled.Get}
+	}, Knobs: []core.Node{boolKnob("Disabled", disabled)}}
 }

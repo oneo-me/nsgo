@@ -128,6 +128,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	chartDays, chartWeekNames := chartDayNames(tr), []string{tr.ChartsLastWeek(), tr.ChartsThisWeek()}
 	last := core.NewSignal(cx, "—")
+	week := core.NewSignal(cx, 0)
 	pointer := shell.desktop()
 	gap := core.Points(12)
 	label, detail := core.Points(15), core.Points(13)
@@ -139,7 +140,6 @@ func chartsDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
-		week := core.NewSignal(cx, 0)
 		hover := core.NewSignal(cx, -1)
 		// The last day hovered: the tooltip keeps it while it fades out.
 		tip := core.NewSignal(cx, 0)
@@ -331,13 +331,11 @@ func chartsDemo(cx *core.Scope) core.Node {
 		}}
 	}
 
-	lastCard := func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		return ui.Card{Title: tr.ChartsLastEvent(), Children: []core.Node{
-			core.Text{ContentFunc: last.Get, Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
-		}}
-	}
-
-	return demoPage(cx, pageProps{}, visitorsCard, sparklines, lastCard)
+	return stagePage(cx, demoPage(cx, pageProps{flush: true}, visitorsCard, sparklines),
+		Section{Title: tr.TerminalOptions(), Note: "plot.Plot", Children: []core.Node{
+			choiceKnob("Y", week, ui.Option[int]{Value: 0, Label: chartWeekNames[0]}, ui.Option[int]{Value: 1, Label: chartWeekNames[1]}),
+		}},
+		Section{Title: tr.ChartsLastEvent(), Note: "OnHoverChange", Children: []core.Node{
+			core.Text{ContentFunc: last.Get, Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(ui.ColorsOf(cx).Text)},
+		}})
 }

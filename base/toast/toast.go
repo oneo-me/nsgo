@@ -251,7 +251,9 @@ func (a Anchor) bottom() bool {
 // apart, each further one narrower by CollapsedScaleStep, and only
 // CollapsedVisible show; expanded, while the pointer or a finger is on
 // it, they are a list ExpandedGap apart, so the app pauses its manager
-// (OnExpandedChange). Arrivals, departures and expansion move them with
+// (OnExpandedChange). Reverse turns the stack around: the newest toast is
+// the farthest from the edge and the oldest the nearest, as a list
+// growing away from it. Arrivals, departures and expansion move them with
 // critically damped springs of the motion's Duration. While it holds
 // toasts it hears Escape and back (OnCancel: dismiss the newest), unless
 // NoCloseOnEscape. It has no look: its style gives its width, and the app
@@ -262,6 +264,7 @@ type Stack[T any, K comparable] struct {
 	Toast            func(cx *core.Scope, item func() T) core.Node
 	Motion           Motion
 	Placement        Anchor
+	Reverse          bool
 	NoCloseOnEscape  bool
 	OnExpandedChange func(expanded bool)
 	OnCancel         func()
@@ -330,11 +333,17 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 		}
 		return out
 	}
-	bottom := s.Placement.bottom()
+	bottom := s.Placement.bottom() != s.Reverse
 
 	item := func(cx *core.Scope, it func() T, index func() int) core.Node {
 		key := s.Key(core.Untracked(cx, it))
 		y, sx, op := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 1), core.NewAnimatedValue(cx, 1)
+		// offset is its distance from the edge, in the layout: hit tests go
+		// by frames, not transforms, so each toast takes its presses where
+		// it shows. y plays its way there, less laid, where the layout put
+		// it.
+		offset := core.NewSignal(cx, core.Points(0))
+		laid := core.NewAnimatedValue(cx, 0)
 		first := true
 		cx.Effect(func() {
 			open := expanded.Get()
@@ -346,10 +355,6 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 			if open {
 				d = full
 			}
-			ty := float64(d)
-			if bottom {
-				ty = -ty
-			}
 			scale := 1.0
 			if !open {
 				scale = 1 - float64(m.CollapsedScaleStep)*float64(min(rank, m.CollapsedVisible-1))
@@ -358,25 +363,36 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 			if open || rank < m.CollapsedVisible {
 				opacity = 1
 			}
-			if first || core.Untracked(cx, cx.Env().ReduceMotion) {
+			ty := float64(d)
+			if bottom {
+				ty = -ty
+			}
+			moved := !first && !core.Untracked(cx, cx.Env().ReduceMotion)
+			if !moved {
 				first = false
 				y.Set(ty)
 				sx.Set(scale)
 				op.Set(opacity)
-				return
 			}
-			c := toastSpring(m.Duration)
-			cx.StartAnimation(core.Parallel(core.Spring(y, ty, c), core.Spring(sx, scale, c), core.Spring(op, opacity, c)), nil)
+			offset.Set(d)
+			laid.Set(-ty)
+			if moved {
+				c := toastSpring(m.Duration)
+				cx.StartAnimation(core.Parallel(core.Spring(y, ty, c), core.Spring(sx, scale, c), core.Spring(op, opacity, c)), nil)
+			}
 		})
 		cx.Cleanup(func() {
 			measured.Update(func(hs map[K]core.Points) map[K]core.Points { delete(hs, key); return hs })
 		})
-		place := core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0),
-			Animated: &core.AnimatedStyle{TranslateY: y, ScaleX: sx, Opacity: op}}
-		if bottom {
-			place.Top, place.Bottom = core.Length{}, core.Pt(0)
-		}
+		place := core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0),
+			Animated: &core.AnimatedStyle{TranslateY: core.Add(y, laid), ScaleX: sx, Opacity: op}}
 		return core.View{Style: place, PointerEvents: core.PointerEventsBoxNone,
+			StyleFunc: func() core.Style {
+				if bottom {
+					return core.Style{Bottom: core.Pt(offset.Get())}
+				}
+				return core.Style{Top: core.Pt(offset.Get())}
+			},
 			OnLayout: func(b core.Bounds) {
 				if h := b.Size.Height; measured.GetUntracked()[key] != h {
 					measured.Update(func(hs map[K]core.Points) map[K]core.Points { hs[key] = h; return hs })

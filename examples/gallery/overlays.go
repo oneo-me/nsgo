@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
@@ -35,17 +33,39 @@ func placementName(p core.Placement) string {
 	return [...]string{"default", "bottom", "top", "left", "right"}[p]
 }
 
-// eventsDemo is a demo of cards that report what happened, above the last
+// eventBar is the last event a page's cards reported, along its bottom
+// once there is one.
+func eventBar(cx *core.Scope, last *core.Signal[string]) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	return core.Show{When: func() bool { return last.Get() != "" }, Then: func(*core.Scope) core.Node {
+		return core.View{StyleFunc: func() core.Style {
+			return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(32), Padding: core.Symmetric(4, 16),
+				PaddingEnv: core.EnvEdges{Bottom: core.EnvSafeArea}, FlexShrink: 0, Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()},
+				Background: colors.Background()}
+		}, Children: []core.Node{
+			ui.Text(tr.OverlayLastEvent(), 12, ui.Regular, colors.Muted),
+			core.Text{ContentFunc: last.Get, TestID: "last-event", MaxLines: 1, Style: core.Style{FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
+		}}
+	}}
+}
+
+// eventsDemo is a demo of cards that report what happened, over the last
 // event they reported.
 func eventsDemo(cards ...func(last *core.Signal[string]) cardFunc) func(cx *core.Scope) core.Node {
 	return func(cx *core.Scope) core.Node {
-		last := core.NewSignal(cx, "—")
+		last := core.NewSignal(cx, "")
 		var fns []cardFunc
 		for _, card := range cards {
 			fns = append(fns, card(last))
 		}
-		return demoPage(cx, pageProps{}, append(fns, lastEventCard(last))...)
+		return core.View{Style: fillPage, Children: []core.Node{demoPage(cx, pageProps{}, fns...), eventBar(cx, last)}}
 	}
+}
+
+// plainCard makes a card that reports nothing a card of an eventsDemo.
+func plainCard(card cardFunc) func(*core.Signal[string]) cardFunc {
+	return func(*core.Signal[string]) cardFunc { return card }
 }
 
 // overlayCard is core.Overlay: its children on top of the screen whatever
@@ -80,72 +100,6 @@ func overlayCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-// popoverCard is base.Popover, a panel anchored to its trigger.
-func popoverCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		return ui.Card{Title: tr.OverlayPopover(), Description: tr.OverlayAnchoredToItsTriggerOn(), Children: []core.Node{
-			// It fades and grows in and out by its classes alone.
-			base.Popover{Offset: 6, Margin: 8, PopupStyleFunc: popupStyle(cx), Label: tr.OverlayShowThePopover(),
-				PopupClass: "transition duration-150 ease-out", StartingClass: "opacity-0 scale-95", EndingClass: "opacity-0 scale-95",
-				OnOpenChange: func(open bool, reason base.Reason) {
-					state := "closed"
-					if open {
-						state = "opened"
-					}
-					last.Set(tr.OverlayPopover2() + state + " (" + reason.String() + ")")
-				},
-				Trigger: trigger(cx, func() string { return tr.OverlayShowThePopover() }),
-				Children: []core.Node{core.View{Style: core.Style{Padding: core.All(8), Gap: 4, MaxWidth: core.Pt(260)}, Children: []core.Node{
-					ui.Text(tr.OverlayPopover(), 13, ui.Semibold, colors.Text),
-					ui.Text(tr.OverlayAPressOutsideEscapeOr(), 13, ui.Regular, colors.Muted),
-				}}}},
-		}}
-	}
-}
-
-// tooltipCard is a view's Tooltip, the platform's bubble, and
-// base.Tooltip, the app's, which reports.
-func tooltipCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		hoveredOpen, pinned := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return ui.Card{Title: tr.OverlayTooltip(), Description: Hint(cx, tr.OverlayTooltipsFollowAPointerPin(), tr.OverlayRestThePointerOnA()), Children: []core.Node{
-			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
-				// A view's Tooltip: the platform's bubble with the defaults.
-				core.View{Tooltip: core.Text{Content: tr.OverlaySavesTheDocument(), StyleFunc: func() core.Style {
-					return core.Style{FontSize: 12, Color: colors.Background(),
-						Background: colors.Text(), CornerRadius: 6, Padding: core.Symmetric(4, 8)}
-				}},
-					Children: []core.Node{ui.Button{Text: tr.OverlaySave(), Variant: ui.ButtonSecondary, OnPress: func() { last.Set(tr.OverlayPressedSave()) }}}},
-				// base.Tooltip: the bubble is the app's, and it reports.
-				base.Tooltip{Open: func() bool { return pinned.Get() || hoveredOpen.Get() },
-					OnOpenChange: func(open bool, reason base.Reason) {
-						hoveredOpen.Set(open)
-						state := "hidden"
-						if open {
-							state = "shown"
-						}
-						last.Set(tr.OverlayTooltip2() + state + " (" + reason.String() + ")")
-					},
-					Placement: core.PlaceBottom, Delay: 300e6,
-					PopupClass: "transition-opacity duration-100", StartingClass: "opacity-0", EndingClass: "opacity-0",
-					PopupStyle: core.Style{CornerRadius: 6, Padding: core.Symmetric(4, 8)}, PopupStyleFunc: ui.Filled(colors.Text),
-					Trigger: core.Dynamic(func(*core.Scope) core.Node {
-						label := tr.OverlayPinTheTooltip()
-						if pinned.Get() {
-							label = tr.OverlayUnpinTheTooltip()
-						}
-						return ui.Button{Text: label, Variant: ui.ButtonSecondary, OnPress: func() { toggled(pinned) }}
-					}),
-					Children: []core.Node{ui.Text(tr.OverlayShownWhilePinnedOrHovered(), 12, ui.Regular, colors.Background)}},
-			}},
-		}}
-	}
-}
-
 // sheetCard is base.Sheet, a panel at the bottom over a backdrop.
 func sheetCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
@@ -171,47 +125,6 @@ func sheetCard(last *core.Signal[string]) cardFunc {
 					ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 13, ui.Regular, colors.Muted),
 					ui.Button{Text: tr.OverlayDone(), OnPress: func() { open.Set(false) }},
 				}}}},
-		}}
-	}
-}
-
-// toastCard is the gallery's toasts, on base's ToastManager, ToastStack
-// and Toast.
-func toastCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		count := 0
-		return ui.Card{Title: tr.OverlayToast(), Description: tr.OverlayTheGallerySToastsOn(), Children: []core.Node{
-			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8}, Children: []core.Node{
-				ui.Button{Text: tr.OverlayCopyTheLink(), Variant: ui.ButtonSecondary, OnPress: func() {
-					count++
-					showToast(toastContent{title: tr.OverlayCopied(), description: tr.OverlayLinkOnClipboard(count)})
-				}},
-				ui.Button{Text: tr.OverlayDeleteTheDraft(), Variant: ui.ButtonSecondary, OnPress: func() {
-					showToast(toastContent{id: "draft", title: tr.OverlayDraftDeleted(), action: tr.OverlayUndo(), close: "×", duration: 8 * time.Second,
-						done: func(answer string) {
-							if answer == tr.OverlayUndo() {
-								last.Set(tr.OverlayToastUndone())
-							} else {
-								last.Set(tr.OverlayToastGone())
-							}
-						}})
-				}},
-				ui.Button{Text: tr.OverlayDismissAll(), Variant: ui.ButtonSecondary, OnPress: func() { shell.toasts.dismiss("") }},
-			}},
-			ui.Text(tr.OverlaySwipeOneAwayThePointer(), 13, ui.Regular, colors.Muted),
-		}}
-	}
-}
-
-// lastEventCard shows the last thing a demo reported.
-func lastEventCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		return ui.Card{Title: tr.OverlayLastEvent(), Children: []core.Node{
-			core.Text{ContentFunc: last.Get, TestID: "last-event", Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
 		}}
 	}
 }

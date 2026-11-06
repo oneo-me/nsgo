@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
 	"github.com/oneo-me/nsgo/icons/lucide"
@@ -309,38 +308,4 @@ func (r LinkRow) Render(cx *core.Scope) core.Node {
 	return core.View{StyleFunc: func() core.Style {
 		return core.Style{Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}}
 	}, Children: []core.Node{row}}
-}
-
-// Tool is Onevra's toolbar button, a raised capsule 28 pt tall: its Text
-// after a dot that lights with the accent while On, when On is set. Label
-// is what assistive technology reads.
-type Tool struct {
-	Label, Text string
-	On          func() bool
-	OnPress     func()
-}
-
-// Render implements core.Node.
-func (t Tool) Render(cx *core.Scope) core.Node {
-	colors := ui.ColorsOf(cx)
-	fin := ui.FinOf(cx)
-	children := []core.Node{}
-	if t.On != nil {
-		children = append(children, core.View{StyleFunc: func() core.Style {
-			c := colors.Faint
-			if t.On() {
-				c = colors.Accent
-			}
-			return core.Style{Width: core.Pt(6), Height: core.Pt(6), CornerRadius: 3, Background: c()}
-		}})
-	}
-	children = append(children, ui.Text(t.Text, 13, ui.Regular, colors.Text))
-	return base.Button{OnPress: func(core.PressEvent) { t.OnPress() }, Selected: t.On, Label: t.Label,
-		StyleFunc: func() core.Style {
-			return fin.Raised().Over(core.Style{Height: core.Pt(ui.ButtonHeight), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8,
-				CornerRadius: ui.ButtonHeight / 2, BorderWidth: 1, BorderColor: ui.Alpha(colors.Border(), 0.8),
-				Padding: core.Symmetric(0, 12), Background: colors.Raised(), Transition: core.Transition{Duration: 150e6},
-				Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}})
-		},
-		Children: children}
 }

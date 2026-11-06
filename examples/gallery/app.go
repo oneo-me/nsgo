@@ -1,16 +1,18 @@
 // Command gallery shows what NSGo apps are made of: core's elements and
-// services and base's unstyled components, a demo each, in NSH's gallery's
-// design, under three tabs. A wide window shows them atop a sidebar of the
-// demos beside the selected one; a narrow one shows them, and the settings,
-// in a bar at the bottom, with demos pushed over it all. Its look and
-// components are package ui's, as NSH's are its nsh-gallery-ui's.
+// services, and the components of base and ui, in NSH's gallery's design,
+// under three tabs. Components are grouped by what they do: a page of
+// cards per kind, each with its props to set, and a whole page per complex
+// one with its options beside it. A wide window shows the tabs atop a
+// sidebar of the demos beside the selected one; a narrow one shows them,
+// and the settings, in a bar at the bottom, with demos pushed over it all.
+// Its look and components are package ui's, as NSH's are its
+// nsh-gallery-ui's.
 //
 // It translates NSH's examples/gallery demo by demo, and departs from it
 // where NSGo differs: icons are Lucide's (core.Icon) rather than glyphs
 // drawn in canvases; NSH's Tailwind and standard-module demos have no
 // NSGo counterpart, while Layout, Table and Accessibility show what NSGo
-// has beyond NSH's gallery. Its index is laid out as NSH's after the 0.3.0
-// release, a demo per element, listing the components NSGo has.
+// has beyond NSH's gallery.
 package main
 
 import (
@@ -59,9 +61,10 @@ type tab struct {
 	groups       []group
 }
 
-// tabs are the demos: the apps built on NSGo, base's components and ui's
-// own by name, and core's primitives from the simplest with styling,
-// motion and the platform's services. They are set in init because demos
+// tabs are the demos: the apps built on NSGo, the components by what they
+// do, a page of cards per kind and a whole page per complex one, and
+// core's primitives from the simplest with styling, motion and the
+// platform's services. They are set in init because demos
 // list them.
 var tabs []tab
 
@@ -79,36 +82,44 @@ func init() {
 		{"WebView and Video", locales.Messages.DemoWebViewAndVideo, locales.Messages.DemoWebViewAndVideoDetail, lucide.Film, mediaDemo},
 		{"Overlay", locales.Messages.DemoOverlay, locales.Messages.DemoOverlayDetail, lucide.Layers, eventsDemo(overlayCard)},
 	}
-	components := []demo{
-		{"Checkbox", locales.Messages.DemoCheckbox, locales.Messages.DemoCheckboxDetail, lucide.SquareCheck, controlsDemo(controls.filter)},
-		{"Collapsible", locales.Messages.DemoCollapsible, locales.Messages.DemoCollapsibleDetail, lucide.ChevronsUpDown, controlsDemo(controls.disclosure)},
+	actions := []demo{
+		{"Buttons", locales.Messages.DemoButtons, locales.Messages.DemoButtonsDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, toggleButtonCard, holdPlayground, floatingBarCard)},
+	}
+	inputs := []demo{
+		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, lucide.TextCursorInput, formDemo},
+		{"Selection", locales.Messages.DemoSelection, locales.Messages.DemoSelectionDetail, lucide.SquareCheck, eventsDemo(checkboxCard, radioCard, switchCard, selectPlayground)},
+		{"Slider and Rating", locales.Messages.DemoSliderAndRating, locales.Messages.DemoSliderAndRatingDetail, lucide.SlidersHorizontal, eventsDemo(sliderPlayground, ratingCard)},
+	}
+	display := []demo{
+		{"Badge and Avatar", locales.Messages.DemoBadgeAndAvatar, locales.Messages.DemoBadgeAndAvatarDetail, lucide.Tag, eventsDemo(badgeCard, avatarCard, avatarGroupCard, fileIconCard)},
+		{"Cards", locales.Messages.DemoCards, locales.Messages.DemoCardsDetail, lucide.PanelTop, eventsDemo(cardPlayground, insetCard, cardStackCard)},
+		{"Media", locales.Messages.DemoMedia, locales.Messages.DemoMediaDetail, lucide.Image, eventsDemo(imagePlayground, imageCompareCard, carouselCard)},
+		{"Lists and Tables", locales.Messages.DemoListsAndTables, locales.Messages.DemoListsAndTablesDetail, lucide.Table, eventsDemo(listCard, treeCard, plainCard(tableCard))},
+	}
+	feedback := []demo{
+		{"Progress", locales.Messages.DemoProgress, locales.Messages.DemoProgressDetail, lucide.LoaderCircle, eventsDemo(progressCard, progressRingCard, spinnerPlayground, meterCard, skeletonCard)},
+		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, lucide.Bell, eventsDemo(toastPlayground)},
+	}
+	popups := []demo{
+		{"Dialog and Sheet", locales.Messages.DemoDialogAndSheet, locales.Messages.DemoDialogAndSheetDetail, lucide.PanelBottom, eventsDemo(dialogCard, alertDialogCard, sheetCard)},
+		{"Popover and Tooltip", locales.Messages.DemoPopoverAndTooltip, locales.Messages.DemoPopoverAndTooltipDetail, lucide.MessageSquare, eventsDemo(popoverPlayground, tooltipPlayground)},
+		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, lucide.Menu, menusDemo},
+	}
+	navigation := []demo{
+		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, lucide.NotebookTabs, eventsDemo(tabsCard, segmentedCard)},
+		{"Stepper and Breadcrumbs", locales.Messages.DemoStepperAndBreadcrumbs, locales.Messages.DemoStepperAndBreadcrumbsDetail, lucide.Check, eventsDemo(stepperPlayground, breadcrumbsCard)},
+		{"Collapsible", locales.Messages.DemoCollapsible, locales.Messages.DemoCollapsibleDetail, lucide.ChevronsUpDown, eventsDemo(accordionCard, collapsiblePlayground)},
+		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, lucide.PanelsTopLeft, navigationDemo},
+	}
+	complexes := []demo{
 		{"DataTable", locales.Messages.DemoDataTable, locales.Messages.DemoDataTableDetail, lucide.Table, dataTableDemo},
 		{"DiffView", locales.Messages.DemoDiffView, locales.Messages.DemoDiffViewDetail, lucide.FileDiff, diffDemo},
 		{"Dock", locales.Messages.DemoDock, locales.Messages.DemoDockDetail, lucide.AppWindow, dockDemo},
 		{"Editor", locales.Messages.DemoEditor, locales.Messages.DemoEditorDetail, lucide.Code, editorDemo},
-		{"FileIcon", locales.Messages.DemoFileIcon, locales.Messages.DemoFileIconDetail, lucide.File, eventsDemo(fileIconCard)},
-		{"HoldToConfirm", locales.Messages.DemoHoldToConfirm, locales.Messages.DemoHoldToConfirmDetail, lucide.Trash, eventsDemo(holdCard)},
-		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, lucide.TextCursorInput, formDemo},
-		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, lucide.Menu, menusDemo},
-		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, lucide.PanelsTopLeft, navigationDemo},
 		{"Plot", locales.Messages.DemoPlot, locales.Messages.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
-		{"Popover", locales.Messages.DemoPopover, locales.Messages.DemoPopoverDetail, lucide.MessageSquare, eventsDemo(popoverCard)},
-		{"Progress", locales.Messages.DemoProgress, locales.Messages.DemoProgressDetail, lucide.LoaderCircle, controlsDemo(controls.transfers)},
-		{"Radio", locales.Messages.DemoRadio, locales.Messages.DemoRadioDetail, lucide.CircleDot, controlsDemo(controls.plansCard)},
 		{"Resizable", locales.Messages.DemoResizable, locales.Messages.DemoResizableDetail, lucide.PanelLeft, resizableDemo},
-		{"Select", locales.Messages.DemoSelect, locales.Messages.DemoSelectDetail, lucide.ChevronDown, eventsDemo(selectCard)},
-		{"Sheet", locales.Messages.DemoSheet, locales.Messages.DemoSheetDetail, lucide.PanelBottom, eventsDemo(sheetCard)},
-		{"Slider", locales.Messages.DemoSlider, locales.Messages.DemoSliderDetail, lucide.SlidersHorizontal, eventsDemo(sliderCard)},
-		{"Spinner", locales.Messages.DemoSpinner, locales.Messages.DemoSpinnerDetail, lucide.RefreshCw, eventsDemo(spinnerCard)},
-		{"Stepper", locales.Messages.DemoStepper, locales.Messages.DemoStepperDetail, lucide.Check, stepperDemo},
-		{"Switch", locales.Messages.DemoSwitch, locales.Messages.DemoSwitchDetail, lucide.ToggleRight, controlsDemo(controls.settings)},
-		{"Table", locales.Messages.DemoTable, locales.Messages.DemoTableDetail, lucide.Table, tableDemo},
-		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, lucide.NotebookTabs, controlsDemo(controls.sections)},
 		{"Terminal", locales.Messages.DemoTerminal, locales.Messages.DemoTerminalDetail, lucide.Terminal, terminalDemo},
 		{"TextView", locales.Messages.DemoTextView, locales.Messages.DemoTextViewDetail, lucide.FileText, textViewDemo},
-		{"Toast", locales.Messages.DemoToast, locales.Messages.DemoToastDetail, lucide.Bell, eventsDemo(toastCard, styledToastsCard)},
-		{"ToggleButton", locales.Messages.DemoToggleButton, locales.Messages.DemoToggleButtonDetail, lucide.SlidersHorizontal, eventsDemo(toggleCard)},
-		{"Tooltip", locales.Messages.DemoTooltip, locales.Messages.DemoTooltipDetail, lucide.MessageSquareText, eventsDemo(tooltipCard)},
 	}
 	basics := []group{
 		{"Primitives", locales.Messages.GroupPrimitives, primitives},
@@ -138,7 +149,9 @@ func init() {
 		{"apps", locales.Messages.GroupApps, lucide.LayoutGrid, "square.grid.2x2", "android:ic_menu_gallery",
 			[]group{{"Apps", locales.Messages.GroupApps, apps}}},
 		{"components", locales.Messages.TabComponents, lucide.Component, "puzzlepiece.extension", "android:ic_menu_agenda",
-			[]group{{"Components", locales.Messages.GroupComponents, components}}},
+			[]group{{"Actions", locales.Messages.GroupActions, actions}, {"Inputs", locales.Messages.GroupInputs, inputs}, {"Display", locales.Messages.GroupDisplay, display},
+				{"Feedback", locales.Messages.GroupFeedback, feedback}, {"Popups", locales.Messages.GroupPopups, popups}, {"Navigation", locales.Messages.GroupNavigation, navigation},
+				{"Complex", locales.Messages.GroupComplex, complexes}}},
 		{"basics", locales.Messages.TabBasics, lucide.Shapes, "square.on.circle", "android:ic_menu_sort_by_size", basics},
 	}
 }
@@ -227,12 +240,17 @@ type gallery struct {
 	// settingsQuery what they show.
 	settingsOpen                    *core.Signal[bool]
 	settingsCategory, settingsQuery *core.Signal[string]
+	// toastPlacement, toastReverse and toastSwipe are how toasts show, as
+	// the Toast demo sets them.
+	toastPlacement *core.Signal[ui.ToastPlacement]
+	toastReverse   *core.Signal[bool]
+	toastSwipe     *core.Signal[ui.ToastSwipe]
 	// wasDesktop is whether the desktop layout has been shown, for the
 	// switch back.
 	wasDesktop bool
 	desktop    func() bool
 	env        *core.Env
-	toasts     *toaster
+	toasts     *ui.Toaster
 }
 
 // shell is the running gallery's state, which demos reach for the layout
@@ -318,7 +336,10 @@ func Root(cx *core.Scope) core.Node {
 		settingsCategory: core.NewSignal(cx, ""),
 		settingsQuery:    core.NewSignal(cx, ""),
 		env:              env,
-		toasts:           newToaster(cx),
+		toastPlacement:   core.NewSignal(cx, ui.ToastBottomEnd),
+		toastReverse:     core.NewSignal(cx, false),
+		toastSwipe:       core.NewSignal(cx, ui.ToastSwipeEdge),
+		toasts:           ui.NewToaster(cx),
 	}
 	desktopLayout := core.NewMemo(cx, func() bool {
 		limit := tabletWidth
@@ -354,11 +375,23 @@ func Root(cx *core.Scope) core.Node {
 			} else {
 				children = []core.Node{g.phone(cx)}
 			}
-			children = append(children, g.toasts.view(wide))
+			children = append(children, g.toastView(wide))
 			return core.View{StyleFunc: func() core.Style {
 				return fillPage.Merge(core.Style{Background: ui.Chrome(cx), Color: colors.Text()})
 			}, Children: children}
 		})
+	})
+}
+
+// toastView is where the toasts show, over the narrow layout's tab bar.
+func (g *gallery) toastView(wide bool) core.Node {
+	return core.Dynamic(func(cx *core.Scope) core.Node {
+		t := ui.Toasts{Toaster: g.toasts, Placement: g.toastPlacement.Get(), Reverse: g.toastReverse.Get(), Swipe: g.toastSwipe.Get(),
+			CloseLabel: locales.For(cx).ToastClose(), TestID: "toasts"}
+		if !wide && t.Placement >= ui.ToastBottom && t.Placement <= ui.ToastBottomEnd {
+			t.Inset = tabBarHeight
+		}
+		return t
 	})
 }
 
@@ -484,7 +517,7 @@ func (g *gallery) section(cx *core.Scope, i int) base.NavPage {
 // fixedDemos are the demos that fill the page rather than scroll under a
 // large title.
 var fixedDemos = map[string]bool{"Stocks": true, "AI Chat": true, "Photos": true, "List": true, "DataTable": true, "DiffView": true, "Dock": true,
-	"Editor": true, "Resizable": true, "Terminal": true, "Physics": true, "Collapsing header": true}
+	"Editor": true, "Plot": true, "Resizable": true, "Terminal": true, "TextView": true, "Physics": true, "Collapsing header": true}
 
 // largeTitle gives page p iOS's large title, over no background until the
 // content scrolls under the system's blurred bar.

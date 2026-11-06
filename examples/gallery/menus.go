@@ -415,27 +415,6 @@ func menusDemo(cx *core.Scope) core.Node {
 		}}
 	}
 
-	placement := func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		side := core.NewSignal(cx, core.PlaceBottom)
-		align := core.NewSignal(cx, core.AlignStart)
-		alignName := map[core.Align]string{core.AlignStart: "start", core.AlignCenter: "center", core.AlignEnd: "end"}
-		return ui.Card{Title: tr.MenusWhereItGoes(), Description: Hint(cx, tr.MenusPhonesShowMenusAsSheets(), tr.MenusTheSideAndAlignmentIt()), Children: []core.Node{
-			ui.Segmented[core.Placement]{Options: []ui.Option[core.Placement]{{Value: core.PlaceTop, Label: tr.MenusTop()}, {Value: core.PlaceBottom, Label: tr.MenusBottom()}, {Value: core.PlaceLeft, Label: tr.MenusLeft()}, {Value: core.PlaceRight, Label: tr.MenusRight()}}, Value: side.Get, OnChange: side.Set, Small: true},
-			ui.Segmented[core.Align]{Options: []ui.Option[core.Align]{{Value: core.AlignStart, Label: tr.MenusStart()}, {Value: core.AlignCenter, Label: tr.MenusCenter()}, {Value: core.AlignEnd, Label: tr.MenusEnd()}}, Value: align.Get, OnChange: align.Set, Small: true},
-			core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(24, 0)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
-				p, a := side.Get(), align.Get()
-				m := menu(tr.MenusPlaced(), chip(cx, label(placementName(p)+" · "+alignName[a]), nil),
-					l.item(cx, itemProps{label: label(tr.MenusOne()), onSelect: func() { log(tr.MenusChoseOne()) }}),
-					l.item(cx, itemProps{label: label(tr.MenusTwo()), onSelect: func() { log(tr.MenusChoseTwo()) }}),
-					l.item(cx, itemProps{label: label(tr.MenusThree()), onSelect: func() { log(tr.MenusChoseThree()) }}),
-				)
-				m.Placement, m.Align, m.Offset = p, a, 6
-				return m
-			})}},
-		}}
-	}
-
 	longList := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		zone := core.NewSignal(cx, "UTC+8 Hong Kong")
@@ -551,5 +530,11 @@ func menusDemo(cx *core.Scope) core.Node {
 		}}
 	}
 
-	return demoPage(cx, pageProps{}, menuBar, rows, placement, longList, commands, native, appMenu, eventsCard)
+	event := core.NewSignal(cx, "")
+	cx.Effect(func() {
+		if e := event.Get(); e != "" {
+			core.Untracked(cx, func() bool { log(e); return true })
+		}
+	})
+	return demoPage(cx, pageProps{}, menuPlayground(event), contextMenuCard(event), menuBar, rows, longList, commands, native, appMenu, eventsCard)
 }

@@ -357,45 +357,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 	status := func(fn func() string, c func() core.Color) core.Node {
 		return core.Text{ContentFunc: fn, Style: core.Style{FontFamily: ui.Mono, FontSize: 12}, StyleFunc: ui.Colored(c)}
 	}
-	pad := core.Points(16)
-	if shell.desktop() {
-		pad = 24
-	}
-	onOff := func(name string, on *core.Signal[bool]) func() string {
-		return func() string {
-			if on.Get() {
-				return name + tr.TableOn()
-			}
-			return name + tr.TableOff()
-		}
-	}
-	toggle := func(s *core.Signal[bool]) func() { return func() { s.Set(!s.GetUntracked()) } }
-	return core.View{StyleFunc: func() core.Style {
-		return fillPage.Merge(core.Style{Background: colors.Background(), Padding: core.All(pad), Gap: 12})
-	}, Children: []core.Node{
-		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-			core.View{Style: core.Style{Width: core.Pt(260)}, Children: []core.Node{
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "row", Label: tr.TableRows()}, {Value: "cell", Label: tr.TableCells()}}, Value: mode.Get, OnChange: func(v string) { mode.Set(v); selection.Set(datatable.NoTableSelection) }, Small: true},
-			}},
-			core.Dynamic(func(cx *core.Scope) core.Node {
-				tr := locales.For(cx)
-				return Tool{Label: tr.TableToggleLiveUpdates(), Text: onOff(tr.TableLive(), live)(), OnPress: toggle(live)}
-			}),
-			core.Dynamic(func(cx *core.Scope) core.Node {
-				tr := locales.For(cx)
-				return Tool{Label: tr.TableToggleStripes(), Text: onOff(tr.TableStripes(), stripe)(), OnPress: toggle(stripe)}
-			}),
-			Tool{Label: tr.TableGoToRow500000(), Text: tr.TableRow500000(), OnPress: func() { table.ScrollToRow(499_999, false) }},
-			Tool{Label: tr.TableGoToIndicator30(), Text: tr.TableIndicator30(), OnPress: func() { table.ScrollToColumn("x30", false) }},
-		}},
-		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
-			status(describe, colors.Text),
-			status(func() string {
-				v := visible.Get()
-				return tr.TableRowsOf(itoa(v[0]+1), itoa(v[1]), visitors(stockRows))
-			}, colors.Muted),
-			status(func() string { return tr.TableColumnsTick(len(columns), ticks.Get()) }, colors.Muted),
-		}},
+	return stagePage(cx, core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0)}, Children: []core.Node{
 		datatable.DataTable{
 			Ref: table, TestID: "table", Label: tr.TableStocks(),
 			Columns:  columnsNow,
@@ -428,7 +390,26 @@ func dataTableDemo(cx *core.Scope) core.Node {
 				follow()
 			},
 		},
-	}}
+	}},
+		Section{Title: tr.TerminalOptions(), Note: "datatable.DataTable", Children: []core.Node{
+			choiceKnob("CellSelect", mode, ui.Option[string]{Value: "row", Label: tr.TableRows()}, ui.Option[string]{Value: "cell", Label: tr.TableCells()}),
+			SwitchRow{Label: tr.TableStripes(), Code: "Stripe", Checked: stripe.Get, OnChange: stripe.Set},
+			SwitchRow{Label: tr.TableLive(), Checked: live.Get, OnChange: live.Set},
+		}},
+		Section{Title: tr.KitActions(), Note: "datatable.Ref", Children: []core.Node{
+			ui.Wrap{Children: []core.Node{
+				ui.Button{Text: tr.TableRow500000(), Label: tr.TableGoToRow500000(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { table.ScrollToRow(499_999, false) }},
+				ui.Button{Text: tr.TableIndicator30(), Label: tr.TableGoToIndicator30(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { table.ScrollToColumn("x30", false) }},
+			}},
+		}},
+		Section{Title: tr.TerminalStatus(), Note: "OnVisibleRowsChange", Children: []core.Node{
+			status(describe, colors.Text),
+			status(func() string {
+				v := visible.Get()
+				return tr.TableRowsOf(itoa(v[0]+1), itoa(v[1]), visitors(stockRows))
+			}, colors.Muted),
+			status(func() string { return tr.TableColumnsTick(len(columns), ticks.Get()) }, colors.Muted),
+		}})
 }
 
 // tableDemo is base's Table.

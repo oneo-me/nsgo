@@ -83,10 +83,10 @@ func TestTabs(t *testing.T) {
 	if app.Exists("id:nav-Stocks") {
 		t.Fatal("the basics tab lists the apps")
 	}
-	open(app, "Switch")
+	open(app, "Selection")
 	app.Press("id:tab-basics")
 	app.Press("id:tab-components")
-	app.Find("id:demo-Switch")
+	app.Find("id:demo-Selection")
 	// The menu reaches a demo of another tab.
 	app.ChooseMenu("View", "Photos")
 	app.Find("id:nav-Photos")
@@ -101,7 +101,7 @@ func TestPhoneTabs(t *testing.T) {
 	if len(bars) != 1 || len(bars[0].NativeProps["items"].([]any)) != len(tabs)+1 {
 		t.Fatalf("the bars are %v", bars)
 	}
-	openPhone(app, "Switch")
+	openPhone(app, "Selection")
 	app.Back()
 	openTab(app, settingsTab())
 	app.Find("id:settings-page")
@@ -115,12 +115,12 @@ func TestPhoneTabs(t *testing.T) {
 		t.Fatalf("page = %x, want the dark background", got)
 	}
 	// One bar serves every tab, and pages pushed cover it.
-	openPhone(app, "Switch")
+	openPhone(app, "Selection")
 	app.Back()
 	if got := len(app.QueryMounted("id:tab-bar")); got != 1 {
 		t.Fatalf("%d bars", got)
 	}
-	if len(app.QueryMounted("id:screen-Switch >> id:tab-bar")) != 0 {
+	if len(app.QueryMounted("id:screen-Selection >> id:tab-bar")) != 0 {
 		t.Fatal("a pushed page holds the bar")
 	}
 }
@@ -132,8 +132,8 @@ func TestPhoneLargeTitles(t *testing.T) {
 	if !app.Find("id:index").Screen.LargeTitle {
 		t.Fatal("the index has no large title")
 	}
-	openPhone(app, "Switch")
-	if !app.Find("id:screen-Switch").Screen.LargeTitle {
+	openPhone(app, "Selection")
+	if !app.Find("id:screen-Selection").Screen.LargeTitle {
 		t.Fatal("a demo that scrolls has no large title")
 	}
 	app.Back()
@@ -223,9 +223,9 @@ func TestEveryDemoBuilds(t *testing.T) {
 // TestLayoutsKeepTheDemo moves between the layouts with a demo open.
 func TestLayoutsKeepTheDemo(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Switch")
+	open(app, "Selection")
 	app.Resize(400, 800)
-	app.Find("id:screen-Switch")
+	app.Find("id:screen-Selection")
 	app.Back()
 	app.Press("id:nav-Input")
 	app.Resize(1200, 800)
@@ -241,17 +241,17 @@ func TestLayoutsKeepTheDemo(t *testing.T) {
 // they show, when the pane narrows to one column.
 func TestResizeKeepsTheCards(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Switch")
-	app.Press("role:switch Notifications")
+	open(app, "Selection")
+	app.Press("role:switch Disabled >> nth=0")
 	app.Resize(900, 800)
-	if !app.Find("role:switch Badges").Props.Disabled {
-		t.Fatal("the switches were built again")
+	if !app.Find("role:checkbox Starred").Props.Disabled {
+		t.Fatal("the cards were built again")
 	}
 }
 
 func TestPhoneRestoresDemo(t *testing.T) {
-	app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Storage(map[string]string{lastDemo: "Switch"}))
-	app.Find("id:screen-Switch")
+	app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Storage(map[string]string{lastDemo: "Selection"}))
+	app.Find("id:screen-Selection")
 	app.Back()
 	app.Find("id:home")
 	if _, ok := app.Storage().GetItem(lastDemo); ok {
@@ -280,37 +280,23 @@ func TestApplicationMenu(t *testing.T) {
 	}
 }
 
-// TestControls uses each of base's controls on its own demo.
+// TestControls uses a control of each page, each reporting its event.
 func TestControls(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Switch")
-	app.Press("role:switch Notifications")
-	app.Find("text:Notifications: off")
-	if !app.Find("role:switch Badges").Props.Disabled {
-		t.Fatal("Badges stays enabled without notifications")
-	}
-	open(app, "Checkbox")
-	app.Press("role:checkbox Select all")
-	app.Find("text:Showing 1,650 items")
-	open(app, "Radio")
-	app.Press("role:radio Team")
-	app.Press("role:button Continue with Team")
-	app.Find("text:Continue: Team, $12 / mo")
+	open(app, "Selection")
+	app.Press("role:radio Banana")
+	app.Find("text:Radio: Banana")
+	app.Press("role:checkbox Starred")
+	app.Find("text:Checkbox: off")
 	open(app, "Tabs")
-	app.Press("role:tab Members")
-	app.Find("text:Grace Hopper")
-	open(app, "Collapsible")
-	app.Press("id:demo-Collapsible >> role:button Storage")
-	app.Find("text:120 GB")
-	// Send becomes Pause as the transfer starts, which must not end it.
+	app.Press("role:tab Activity")
+	app.Find("text:Tabs: 1")
+	open(app, "Stepper and Breadcrumbs")
+	app.Find("id:stage-Breadcrumbs")
 	open(app, "Progress")
-	app.Press("role:button Send")
-	app.Advance(time.Second)
-	if now := app.Find("role:progressbar Upload").Props.Value.Now; now < 30 {
-		t.Fatalf("the upload stands at %v%% after a second", now)
+	if now := app.Find("role:progressbar Progress >> nth=0").Props.Value.Now; now != 40 {
+		t.Fatalf("the bar stands at %v%%", now)
 	}
-	app.Press("role:button Pause")
-	app.Find("role:button Send")
 }
 
 func TestForm(t *testing.T) {
@@ -580,18 +566,71 @@ func TestAccessibility(t *testing.T) {
 func TestToasts(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Toast")
-	app.Press("role:button Delete the draft")
-	app.Find("id:draft >> text:Draft deleted")
+	app.Press("role:switch Action")
+	app.Press("id:toast-show")
+	app.Find("id:toasts >> text:Changes saved")
 	app.Press("role:button Undo")
 	app.Advance(time.Second)
-	app.WaitForGone("id:draft", 2*time.Second)
+	app.WaitForGone("text:Changes saved", 2*time.Second)
 	if got := app.Find("id:last-event").Text; got != "toast: undone" {
 		t.Fatalf("last event = %q, want the action that closed the toast", got)
 	}
-	app.Press("role:button Copy the link")
-	app.Find("text:The link is on the clipboard (1)")
+	app.Press("id:toast-show")
+	app.Find("text:Changes saved")
 	app.Advance(6 * time.Second)
-	app.WaitForGone("text:The link is on the clipboard (1)", 2*time.Second)
+	app.WaitForGone("text:Changes saved", 2*time.Second)
+}
+
+// TestToastOptions moves the toasts from the Toast demo, each option
+// applying to the one toast system every demo shows through.
+func TestToastOptions(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Toast")
+	app.Press("id:toast-show")
+	bottom := app.Find("id:toasts").Parent.Frame.Origin.Y
+	if x := app.Find("id:toasts").Frame.Origin.X; x < 600 {
+		t.Fatalf("the toasts at the bottom end are at x %v", x)
+	}
+	app.Press("id:knob-Placement")
+	app.Press("text:TopStart")
+	if top := app.Find("id:toasts").Parent.Frame.Origin.Y; top >= bottom {
+		t.Fatalf("the toasts moved from y %v to %v, want the top", bottom, top)
+	}
+	if x := app.Find("id:toasts").Frame.Origin.X; x != 16 {
+		t.Fatalf("the toasts at the top start are at x %v", x)
+	}
+	shell.toastPlacement.Set(ui.ToastEnd)
+	app.Settle()
+	if at := app.Find("id:toasts").Frame.Origin; at.X < 600 || at.Y < 200 {
+		t.Fatalf("the toasts at the end are at %v, want the middle of the right side", at)
+	}
+	if got := len(app.QueryMounted("id:toasts")); got != 1 {
+		t.Fatalf("%d toast stacks", got)
+	}
+}
+
+// TestPlaygrounds sets a prop and sees the component change, and a stage
+// page keeps its panel beside the component until the pane is too narrow.
+func TestPlaygrounds(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Buttons")
+	if app.Find("id:button").Props.Disabled {
+		t.Fatal("the button starts disabled")
+	}
+	app.Press("id:stage-Button >> role:button Save")
+	app.Find("text:Button pressed")
+	app.Press("role:switch Disabled >> nth=0")
+	if !app.Find("id:button").Props.Disabled {
+		t.Fatal("the Disabled knob left the button enabled")
+	}
+	open(app, "DataTable")
+	if s, p := app.Find("id:stage"), app.Find("id:stage-panel"); p.Frame.Origin.X < s.Frame.Origin.X+s.Frame.Size.Width {
+		t.Fatalf("the panel is at %v, inside the stage to %v", p.Frame.Origin.X, s.Frame.Size.Width)
+	}
+	app.Resize(800, 800)
+	if s, p := app.Find("id:stage"), app.Find("id:stage-panel"); p.Frame.Origin.Y < s.Frame.Origin.Y+s.Frame.Size.Height {
+		t.Fatalf("the panel is at %v, beside the stage", p.Frame.Origin)
+	}
 }
 
 func TestCollapsingHeader(t *testing.T) {
@@ -653,7 +692,7 @@ func TestDataTable(t *testing.T) {
 // TestTable finds the invoices' table and its roles.
 func TestTable(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Table")
+	open(app, "Lists and Tables")
 	app.Find("role:table Recent invoices")
 	if n := len(app.Query("role:columnheader")); n < 4 {
 		t.Fatalf("%d column headers, want the invoices' 4 and the total", n)
@@ -708,7 +747,7 @@ func TestDiff(t *testing.T) {
 	app.Find("text:· 7 changes")
 	app.Press("role:button Revert >> nth=0")
 	app.Find("text:· 6 changes")
-	app.Press("role:button Show a patch")
+	app.Press("role:switch Show a patch")
 	app.Find("text:store.go")
 	app.Find("text:old_test.go → store_test.go")
 }
@@ -750,7 +789,7 @@ func TestPhoneAppearanceRestylesInPlace(t *testing.T) {
 	phone := core.Environment{OS: core.OSIOS, Idiom: core.IdiomPhone, Locale: "en-US"}
 	dark := phone
 	dark.Dark = true
-	for _, demo := range []string{"", "Switch"} {
+	for _, demo := range []string{"", "Selection"} {
 		var stored map[string]string
 		start := func(env core.Environment) (*nsgotest.App, string) {
 			app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Environment(env), nsgotest.Storage(stored))
@@ -978,17 +1017,17 @@ func TestLanguageRemembered(t *testing.T) {
 // sidebar, a demo and base's own words.
 func TestGalleryLanguages(t *testing.T) {
 	for _, c := range []struct{ locale, nav, title, sort string }{
-		{"zh-CN", "开关", "立即生效的设置", "按ID排序"},
-		{"zh-TW", "開關", "立即生效的設定", "依ID排序"},
-		{"ar-EG", "مفتاح التبديل", "إعدادات تسري فورًا", "الفرز حسب المعرّف"},
+		{"zh-CN", "选择", "苹果", "按ID排序"},
+		{"zh-TW", "選擇", "蘋果", "依ID排序"},
+		{"ar-EG", "التحديد", "تفاح", "الفرز حسب المعرّف"},
 	} {
 		t.Run(c.locale, func(t *testing.T) {
 			env := desktopEnv
 			env.Locale = c.locale
 			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
-			open(app, "Switch")
-			app.Find("id:nav-Switch >> text:" + c.nav)
-			app.Find("id:demo-Switch >> text:" + c.title)
+			open(app, "Selection")
+			app.Find("id:nav-Selection >> text:" + c.nav)
+			app.Find("id:demo-Selection >> text:" + c.title + " >> nth=0")
 			open(app, "DataTable")
 			app.Find("label:" + c.sort)
 		})
