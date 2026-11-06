@@ -154,6 +154,9 @@ type DiffView struct {
 	// NoLineNumbers hides the numbers; SoftWrap wraps long lines at the
 	// side's width.
 	NoLineNumbers, SoftWrap bool
+	// Selectable lets the user select and copy each column's text, its
+	// numbers and separators left out.
+	Selectable bool
 	// FontFamily (the monospaced font when empty), FontSize (13) and
 	// LineHeight (20).
 	FontFamily           string
@@ -864,6 +867,7 @@ func (v *dv) side(side int) core.Node {
 			OnMove: func(ev core.ResponderEvent) { v.dragLines(float32(ev.Position.Y)) }}
 	}
 	rows := core.View{
+		Selectable: v.p.Selectable,
 		StyleFunc: func() core.Style {
 			v.geo.Get()
 			return core.Style{Width: core.Pt(core.Points(v.textWidth())), Height: core.Pt(core.Points(v.height()))}

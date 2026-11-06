@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"structs"
+	"sync"
 	"unicode/utf8"
 	"unsafe"
 
@@ -719,7 +720,14 @@ func (p *prepared) layout(size driver.Size) *Layout {
 		l.origins = []CGPoint{{X: ctLinePenOffsetForFlush(p.line, p.flush, width), Y: h - math.Round(h-p.ascent)}}
 		return l
 	}
-	l.frame = p.frame(CGSize{Width: float64(size.Width) + 0.5, Height: float64(size.Height) + 1})
+	box := CGSize{Width: float64(size.Width) + 0.5, Height: float64(size.Height) + 1}
+	if p.maxLines <= 0 && len(p.decos) == 0 && len(p.atts) == 0 {
+		// Drawing or reading it makes its frame: a long transcript's texts
+		// wrap again at each width of a drag, off the screen too.
+		l.str, l.box = cfRetain(p.str), box
+		return l
+	}
+	l.frame = p.frame(box)
 	if p.maxLines <= 0 {
 		return l
 	}
@@ -793,7 +801,13 @@ func (p *prepared) Release() {
 // Layout is text CoreText laid out on the engine goroutine, drawn on the
 // main thread.
 type Layout struct {
-	frame  uintptr
+	frame uintptr
+	// str, box and made make frame when first asked (laid), on whichever
+	// goroutine asks, with a framesetter of its own: prepared's stays on
+	// the engine goroutine.
+	str    uintptr
+	box    CGSize
+	made   sync.Once
 	height float64
 	// With a line limit: the lines shown before the last, the last one
 	// truncated, and their baselines from the top.
@@ -819,6 +833,23 @@ type Layout struct {
 	carets driver.LazyCarets
 }
 
+// laid returns l's frame, 0 for none, making it when first asked.
+func (l *Layout) laid() uintptr {
+	if l.str != 0 {
+		l.made.Do(func() {
+			fs := ctFramesetterCreate(l.str)
+			defer Release(fs)
+			path := rectPath(l.box)
+			defer cgPathRelease(path)
+			l.frame = ctFramesetterCreateFrame(fs, 0, 0, path, 0)
+		})
+	}
+	return l.frame
+}
+
+// empty reports whether l has nothing to show: an empty text.
+func (l *Layout) empty() bool { return l.str == 0 && l.frame == 0 && l.truncated == 0 }
+
 // HitTest implements driver.TextHitTester.
 func (l *Layout) HitTest(p driver.Point) driver.Caret { return l.carets.HitTest(p) }
 
@@ -834,7 +865,7 @@ func (l *Layout) RangeRects(start, end int, out []driver.Bounds) []driver.Bounds
 // each run's glyphs grouped by the characters they show, its direction
 // from the run's status. The truncation token's run is left out.
 func (l *Layout) caretLines() driver.CaretLayout {
-	if l.frame == 0 && l.truncated == 0 {
+	if l.empty() {
 		// An empty text: one empty line, as high as the box.
 		return driver.CaretLayout{{Box: driver.Bounds{Size: driver.Size{Height: driver.Points(l.height)}}}}
 	}
@@ -920,12 +951,15 @@ func (l *Layout) Release() {
 		return
 	}
 	l.carets.Drop()
+	// A frame not made yet stays unmade.
+	l.made.Do(func() {})
+	Release(l.str)
 	Release(l.frame)
 	for _, line := range l.lines {
 		Release(line)
 	}
 	Release(l.truncated)
-	l.frame, l.lines, l.truncated, l.origins = 0, nil, 0, nil
+	l.str, l.frame, l.lines, l.truncated, l.origins = 0, 0, nil, 0, nil
 	l.under, l.over, l.attachments = nil, nil, nil
 }
 
@@ -933,14 +967,14 @@ func (l *Layout) Release() {
 // UTF-16 offset each line's string range starts from: 0, or the rest's
 // start for the truncated last line.
 func (l *Layout) placed() (lines []uintptr, baselines []CGPoint, bases []int) {
-	if l.frame != 0 {
-		arr := ctFrameGetLines(l.frame)
+	if frame := l.laid(); frame != 0 {
+		arr := ctFrameGetLines(frame)
 		n := cfArrayGetCount(arr)
 		if n == 0 {
 			return nil, nil, nil
 		}
 		origins := make([]CGPoint, n)
-		ctFrameGetLineOrigins(l.frame, 0, n, &origins[0])
+		ctFrameGetLineOrigins(frame, 0, n, &origins[0])
 		// Draw puts the frame's bottom at the box's top plus height+1.
 		for i := range n {
 			lines = append(lines, cfArrayGetValueAtIndex(arr, i))
@@ -957,7 +991,7 @@ func (l *Layout) placed() (lines []uintptr, baselines []CGPoint, bases []int) {
 // TextLines implements core.LineLayout: each line's range, box and its
 // first run's font metrics.
 func (l *Layout) TextLines() []driver.TextLine {
-	if l == nil || (l.frame == 0 && l.truncated == 0) {
+	if l == nil || l.empty() {
 		return nil
 	}
 	lines, baselines, bases := l.placed()
@@ -992,7 +1026,7 @@ func (l *Layout) TextLines() []driver.TextLine {
 // IndexAt returns the UTF-8 byte offset of the character at p, a point of
 // the view Draw drew l in at box, or -1 when no character is there.
 func (l *Layout) IndexAt(p CGPoint, box CGRect) int {
-	if l == nil || (l.frame == 0 && l.truncated == 0) {
+	if l == nil || l.empty() {
 		return -1
 	}
 	x, y := p.X-box.Origin.X, p.Y-box.Origin.Y // from the box's top left
@@ -1074,7 +1108,7 @@ func FillRects(ctx uintptr, rects []CGRect, color uintptr) {
 // Draw draws l in box of a flipped context of a view viewHeight tall,
 // whose base space points up when baseUp is set (DrawTopDown).
 func (l *Layout) Draw(ctx uintptr, viewHeight float64, box CGRect, baseUp bool) {
-	if l == nil || ctx == 0 || (l.frame == 0 && l.truncated == 0) {
+	if l == nil || ctx == 0 || l.empty() {
 		return
 	}
 	cgContextSaveGState(ctx)
@@ -1129,9 +1163,9 @@ func (l *Layout) drawGlyphs(ctx uintptr, viewHeight float64, box CGRect) {
 	// CoreText draws bottom-up; flip the view's top-down coordinates.
 	cgContextTranslateCTM(ctx, 0, viewHeight)
 	cgContextScaleCTM(ctx, 1, -1)
-	if l.frame != 0 {
+	if frame := l.laid(); frame != 0 {
 		cgContextTranslateCTM(ctx, box.Origin.X, viewHeight-box.Origin.Y-l.height-1)
-		ctFrameDraw(l.frame, ctx)
+		ctFrameDraw(frame, ctx)
 		return
 	}
 	top := viewHeight - box.Origin.Y

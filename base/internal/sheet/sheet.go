@@ -240,6 +240,8 @@ func (l Layer) Node() core.Node {
 			Style: panelPlace(l.Side).Merge(l.Panel.Style).Merge(core.Style{Animated: &core.AnimatedStyle{
 				TranslateX: m.x, TranslateY: m.y}}),
 			StyleFunc: l.Panel.Fn, Role: l.Role, Label: l.Label, TestID: l.TestID, Children: l.Content,
+			// Its blank space takes presses, which would reach the backdrop.
+			OnPress: func(core.PressEvent) {}, NoFocus: true,
 			OnLayout: func(b core.Bounds) {
 				height = max(b.Size.Height, 1)
 				extent.Set(float64(height))

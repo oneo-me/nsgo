@@ -285,3 +285,20 @@ func TestAlertDialogsPresentAsActionSheets(t *testing.T) {
 		t.Errorf("a dismissal chose %q", chosen)
 	}
 }
+
+// A press on a dialog's blank space stays in it, off the backdrop under it.
+func TestDialogKeepsPressesOffItsBackdrop(t *testing.T) {
+	var reasons []base.Reason
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return base.Dialog{Open: func() bool { return true }, OnOpenChange: func(_ bool, r base.Reason) { reasons = append(reasons, r) },
+			BackdropStyle: core.Style{Background: core.RGB(0)}, BackdropTestID: "backdrop", PopupStyle: core.Style{Width: core.Pt(200), Height: core.Pt(100)}, TestID: "dialog"}
+	}, nsgotest.Size(400, 300))
+	app.Press("id:dialog")
+	if len(reasons) != 0 {
+		t.Fatalf("the press closed the dialog: %v", reasons)
+	}
+	app.Press("id:backdrop")
+	if len(reasons) != 1 || reasons[0] != base.ReasonBackdropPress {
+		t.Fatalf("reasons = %v", reasons)
+	}
+}

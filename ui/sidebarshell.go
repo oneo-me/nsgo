@@ -23,7 +23,8 @@ const sidebarSlide = 220 * time.Millisecond
 //
 // Open and Width are the app's, set from OnOpenChange and OnWidthChange.
 // The sidebar and its header are the chrome (Chrome), the content and
-// its header on the page's background.
+// its header on the page's background, and the right panel on that
+// background at 80%.
 type SidebarShell struct {
 	Sidebar        []core.Node
 	SidebarActions []core.Node
@@ -45,8 +46,9 @@ type SidebarShell struct {
 	ResizeLabel        string
 	// Right is a panel at the content's end under RightHeader, and
 	// RightOpen whether it shows, with a toggle ending the content's
-	// header, named RightToggleLabel, while OnRightOpenChange is set. Its
-	// edge is a handle of its own, named RightResizeLabel; RightWidth,
+	// header, named RightToggleLabel, while OnRightOpenChange is set. The
+	// content slides over it as over the sidebar, and draws its line, a
+	// handle of its own named RightResizeLabel, on its edge; RightWidth,
 	// RightDefaultWidth (280 when 0), RightMinWidth (200 when 0) and
 	// RightMaxWidth (none when 0) work as the sidebar's do.
 	Right, RightHeader                 []core.Node
@@ -103,31 +105,7 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		}
 	}
 
-	// shown is whether the sidebar is seen: it hides once the content has
-	// slid over it, out of the pointer's and screen readers' way.
-	shown := core.NewSignal(cx, core.Untracked(cx, open))
-	first := true
-	var stop func() bool
-	cx.Effect(func() {
-		o := open()
-		if first {
-			first = false
-			return
-		}
-		cx.Untrack(func() {
-			if !env.ReduceMotion() {
-				cx.AnimateLayout(core.LayoutAnimation{Update: &core.LayoutTransition{Curve: core.LayoutEaseInEaseOut, Duration: sidebarSlide}})
-			}
-			if stop != nil {
-				stop()
-			}
-			if o {
-				shown.Set(true)
-				return
-			}
-			stop = cx.AfterFunc(sidebarSlide, func() { shown.Set(open()) })
-		})
-	})
+	shown := slideShown(cx, open)
 
 	// The toggle follows the window controls, which keep a margin of
 	// their own, or the window's edge at a margin; the headers keep clear
@@ -174,9 +152,13 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		return st
 	}}}}
 
+	var right, rightHandle core.Node
+	if s.Right != nil {
+		right, rightHandle = s.rightPanel(cx)
+	}
 	head := []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8,
 		FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), Height: core.Pct(100), Overflow: core.Hidden}, Children: s.Header}}
-	content := core.View{Style: FillRest, StyleFunc: Filled(colors.Background), Children: []core.Node{
+	content := core.View{Style: FillRest.Merge(core.Style{Overflow: core.Hidden}), StyleFunc: Filled(colors.Background), Children: []core.Node{
 		shellHeader(cx, "content-header", func() core.Points {
 			if open() {
 				return 0
@@ -184,6 +166,7 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 			return reserve()
 		}, true, func() core.Color { return colors.Background() }, append(append(head, s.Actions...), s.rightToggle()...)),
 		core.View{Style: FillRest, Children: s.Content},
+		rightHandle,
 	}}
 
 	// The handle's band, 3 points across, centers its line on the
@@ -212,8 +195,8 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		ThumbStyle: HandleThumb(cx), ThumbStyleFunc: HandleThumbColor(cx)}}}
 
 	row := []core.Node{slot, content}
-	if s.Right != nil {
-		row = append(row, s.rightPanel(cx))
+	if right != nil {
+		row = append(row, right)
 	}
 	children := []core.Node{core.View{Style: FillRest.Merge(core.Style{Direction: core.Row}), Children: row}, handle}
 	if toggle != nil {
@@ -222,6 +205,36 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 	return core.View{TestID: s.TestID, Style: FillRest, StyleFunc: func() core.Style {
 		return core.Style{Background: Chrome(cx), Color: colors.Text()}
 	}, Children: children}
+}
+
+// slideShown is whether a panel that open shows is seen: it hides once the
+// content has slid over it, out of the pointer's and screen readers' way.
+func slideShown(cx *core.Scope, open func() bool) *core.Signal[bool] {
+	env := cx.Env()
+	shown := core.NewSignal(cx, core.Untracked(cx, open))
+	first := true
+	var stop func() bool
+	cx.Effect(func() {
+		o := open()
+		if first {
+			first = false
+			return
+		}
+		cx.Untrack(func() {
+			if !env.ReduceMotion() {
+				cx.AnimateLayout(core.LayoutAnimation{Update: &core.LayoutTransition{Curve: core.LayoutEaseInEaseOut, Duration: sidebarSlide}})
+			}
+			if stop != nil {
+				stop()
+			}
+			if o {
+				shown.Set(true)
+				return
+			}
+			stop = cx.AfterFunc(sidebarSlide, func() { shown.Set(open()) })
+		})
+	})
+	return shown
 }
 
 // rightToggle is the toggle of the right panel, when it has one.
@@ -235,8 +248,10 @@ func (s SidebarShell) rightToggle() []core.Node {
 
 func (s SidebarShell) rightOpen() bool { return s.RightOpen != nil && s.RightOpen() }
 
-// rightPanel is the panel at the content's end, its leading edge a handle.
-func (s SidebarShell) rightPanel(cx *core.Scope) core.Node {
+// rightPanel is the panel at the content's end, which stays against the
+// window's edge as the content slides over it, and the handle on the
+// content's edge, whose line moves with the content.
+func (s SidebarShell) rightPanel(cx *core.Scope) (panel, handle core.Node) {
 	colors := ColorsOf(cx)
 	env := cx.Env()
 	def, lo, hi := s.RightDefaultWidth, s.RightMinWidth, s.RightMaxWidth
@@ -271,22 +286,35 @@ func (s SidebarShell) rightPanel(cx *core.Scope) core.Node {
 			s.OnRightWidthChange(w)
 		}
 	}
+	shown := slideShown(cx, s.rightOpen)
+	closed := func() bool { return !s.rightOpen() }
 	var start core.Points
-	return core.Show{When: s.rightOpen, Then: func(cx *core.Scope) core.Node {
+	panel = core.View{TestID: "right-slot", StyleFunc: func() core.Style {
+		var w core.Points
+		if s.rightOpen() {
+			w = width()
+		}
+		return core.Style{Width: core.Pt(w), FlexShrink: 0, Height: core.Pct(100), AlignItems: core.AlignEnd, Overflow: core.Hidden}
+	}, Children: []core.Node{core.Show{When: shown.Get, Then: func(cx *core.Scope) core.Node {
 		head := []core.Node{shellHeader(cx, "right-header", func() core.Points { return 0 }, false, func() core.Color { return 0 }, s.RightHeader)}
-		return core.View{TestID: "right-panel", StyleFunc: func() core.Style {
-			return core.Style{Width: core.Pt(width()), FlexShrink: 0, Height: core.Pct(100), MinHeight: core.Pt(0), Background: Chrome(cx), Color: colors.Text()}
-		}, Children: append(head, core.View{Style: FillRest, Children: s.Right},
-			core.View{TestID: "right-resize", Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Left: core.Pt(-2), Width: core.Pt(3), ZIndex: 1},
-				Children: []core.Node{base.ResizeHandle{Label: s.RightResizeLabel, Edge: base.HandleLeading,
-					Value: func() core.AccessibilityValue {
-						return core.AccessibilityValue{Now: float32(chosen()), Min: float32(lo), Max: float32(min(hi, env.Window().Width))}
-					},
-					OnDragStart:   func() { start = chosen() },
-					OnDragMove:    func(d core.Points) { resize(min(start-d, env.Window().Width-12)) },
-					OnDragEnd:     func(d core.Points) { resize(min(start-d, env.Window().Width-12)) },
-					OnDoublePress: func() { resize(def) },
-					Style:         core.Style{Margin: core.Edges{Left: 1}}, StyleFunc: HandleLine(cx),
-					ThumbStyle: HandleThumb(cx), ThumbStyleFunc: HandleThumbColor(cx)}}})}
-	}}
+		return core.View{TestID: "right-panel", Disabled: closed, StyleFunc: func() core.Style {
+			return core.Style{Width: core.Pt(width()), FlexShrink: 0, Height: core.Pct(100), MinHeight: core.Pt(0), Background: Alpha(colors.Background(), 0.8), Color: colors.Text()}
+		}, Children: append(head, core.View{Style: FillRest, Children: s.Right})}
+	}}}}
+	handle = core.View{TestID: "right-resize", Disabled: closed, StyleFunc: func() core.Style {
+		st := core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Right: core.Pt(0), Width: core.Pt(3), ZIndex: 1}
+		if !shown.Get() {
+			st.Visibility = core.VisibilityHidden
+		}
+		return st
+	}, Children: []core.Node{base.ResizeHandle{Label: s.RightResizeLabel, Edge: base.HandleTrailing, Disabled: closed,
+		Value: func() core.AccessibilityValue {
+			return core.AccessibilityValue{Now: float32(chosen()), Min: float32(lo), Max: float32(min(hi, env.Window().Width))}
+		},
+		OnDragStart:   func() { start = chosen() },
+		OnDragMove:    func(d core.Points) { resize(min(start-d, env.Window().Width-12)) },
+		OnDragEnd:     func(d core.Points) { resize(min(start-d, env.Window().Width-12)) },
+		OnDoublePress: func() { resize(def) },
+		StyleFunc:     HandleLine(cx), ThumbStyle: HandleThumb(cx), ThumbStyleFunc: HandleThumbColor(cx)}}}
+	return panel, handle
 }

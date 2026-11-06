@@ -327,3 +327,23 @@ func hunkOf(i int, ok bool) int {
 	}
 	return i
 }
+
+// A selectable diff makes its text column a selection area, its numbers
+// outside it.
+func TestDiffViewSelectable(t *testing.T) {
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return DiffView{OldValue: func() string { return "one\ntwo\n" }, NewValue: func() string { return "one\nthree\n" }, Unified: true, Selectable: true,
+			Style: core.Style{Width: core.Pt(400), Height: core.Pt(200)}}
+	}, nsgotest.Size(400, 200))
+	inArea := func(selector string) bool {
+		for v := app.Find(selector); v != nil; v = v.Parent {
+			if v.Props.SelectionArea {
+				return true
+			}
+		}
+		return false
+	}
+	if !inArea("text:three") || inArea(`text:"2" >> nth=0`) {
+		t.Fatalf("text in an area: %v, number: %v\n%s", inArea("text:three"), inArea(`text:"2" >> nth=0`), app.Dump())
+	}
+}

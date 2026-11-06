@@ -234,7 +234,9 @@ func modalLayer(st *popup, motion *popupMotion, m core.Modal, d Dialog) core.Nod
 				TestID: d.BackdropTestID})
 		}
 		nodes = append(nodes, d.Before...)
+		// Its blank space takes presses, which would reach the backdrop.
 		nodes = append(nodes, core.View{Class: popup.Class, ClassFunc: motion.class, Style: popup.Style, StyleFunc: motion.style(popup.Fn), Role: core.RoleDialog,
+			OnPress: func(core.PressEvent) {}, NoFocus: true,
 			OnTransitionEnd: motion.transitionEnd, Label: d.Label, TestID: d.TestID, Children: d.Children})
 		nodes = append(nodes, d.After...)
 		// What is going takes no more presses.

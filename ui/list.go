@@ -149,8 +149,10 @@ type List struct {
 	Ref    *core.Ref
 	TestID string
 	Style  core.Style
-	// RowStyle merges over each row's.
-	RowStyle core.Style
+	// RowStyle merges over each row's, and RowStyleFunc, read as the row's
+	// colors are, over that.
+	RowStyle     core.Style
+	RowStyleFunc func() core.Style
 
 	// A Tree sets these: the keys it adds, and whether row i expands.
 	keys     func(cx *core.Scope, l *listKeys)
@@ -387,7 +389,11 @@ func (l List) Render(cx *core.Scope) core.Node {
 		if ringed {
 			s.OutlineWidth, s.OutlineColor, s.OutlineOffset = 2, c.Info, -2
 		}
-		return s.Merge(l.RowStyle)
+		s = s.Merge(l.RowStyle)
+		if l.RowStyleFunc != nil {
+			s = s.Merge(l.RowStyleFunc())
+		}
+		return s
 	}
 	cell := func(cx *core.Scope, r core.ListRow) core.Node {
 		content := []core.Node{}

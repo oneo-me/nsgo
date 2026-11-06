@@ -210,17 +210,32 @@ func (v FloatingConversation) Render(cx *core.Scope) core.Node {
 
 // GlassPanel is a compact card on the composer's glass, for status the
 // host floats over a conversation, such as command output or errors. Its
-// height follows its content.
+// height follows its content. Flush lays the children edge to edge, clipped
+// to its inner corners, and StyleFunc merges over the surface's.
 type GlassPanel struct {
-	Children []core.Node
-	TestID   string
+	Children  []core.Node
+	Flush     bool
+	StyleFunc func() core.Style
+	TestID    string
 }
 
 // Render implements core.Node.
 func (p GlassPanel) Render(cx *core.Scope) core.Node {
 	colors := tonesOf(cx)
-	return core.View{TestID: p.TestID, Style: core.Style{MinWidth: core.Pt(0), Padding: core.Symmetric(8, 12), CornerRadius: 8, BorderWidth: 1},
+	const radius = 8
+	surface := core.Style{MinWidth: core.Pt(0), Padding: core.Symmetric(8, 12), CornerRadius: radius, BorderWidth: 1}
+	children := p.Children
+	if p.Flush {
+		// Clipped inside the surface, which keeps its shadow.
+		surface.Padding = core.Edges{}
+		children = []core.Node{core.View{Style: core.Style{MinWidth: core.Pt(0), Overflow: core.Hidden, CornerRadius: radius - 1}, Children: children}}
+	}
+	return core.View{TestID: p.TestID, Style: surface,
 		StyleFunc: func() core.Style {
-			return chatGlass(ui.Alpha(colors.Surface(), 0.6)).Merge(core.Style{BorderColor: chatGlassEdge(cx, colors.Border())})
-		}, Children: p.Children}
+			st := chatGlass(ui.Alpha(colors.Surface(), 0.6)).Merge(core.Style{BorderColor: chatGlassEdge(cx, colors.Border())})
+			if p.StyleFunc != nil {
+				st = st.Merge(p.StyleFunc())
+			}
+			return st
+		}, Children: children}
 }

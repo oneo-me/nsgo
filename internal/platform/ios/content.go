@@ -153,6 +153,9 @@ func blurStyle(m driver.BackdropMaterial) int {
 	return 6 + int(m) // systemUltraThinMaterial and on
 }
 
+// The background shows over the blur, where CSS has it, in the effect's
+// content view.
+
 // setBackdrop gives v the backdrop its style asks for, or takes it away.
 func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	glass := vs.Glass != driver.GlassNone && objc.GetClass("UIGlassEffect") != 0
@@ -191,4 +194,7 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 		layer.Send(sel("setCornerCurve:"), apple.NSString("continuous"))
 	}
 	v.backdrop.Send(sel("setClipsToBounds:"), radius > 0)
+	if !glass {
+		v.backdrop.Send(sel("contentView")).Send(sel("setBackgroundColor:"), uiColor(vs.Background))
+	}
 }

@@ -35,6 +35,8 @@ type Tree struct {
 	TestID        string
 	Style         core.Style
 	RowStyle      core.Style
+	// RowStyleFunc is List's.
+	RowStyleFunc func() core.Style
 }
 
 // TreeItem is the item a Tree's cell shows, as signals.
@@ -139,7 +141,7 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 	rowStyle := core.Style{Padding: core.Symmetric(0, 4), MinHeight: core.Pt(RowHeight(cx) - 8)}.Merge(tr.RowStyle)
 	return List{Count: func() int { return len(rows.Get()) }, Key: func(i int) any { return entry(i).key }, Row: row,
 		Selection: tr.Selection, OnActivate: activate, RowLabel: label, EstimatedSize: tr.EstimatedSize, Empty: tr.Empty,
-		Label: tr.Label, Ref: tr.Ref, TestID: tr.TestID, Style: tr.Style, RowStyle: rowStyle,
+		Label: tr.Label, Ref: tr.Ref, TestID: tr.TestID, Style: tr.Style, RowStyle: rowStyle, RowStyleFunc: tr.RowStyleFunc,
 		expanded: func(i int) bool { e := entry(i); return e.branch && expanded(e.key) },
 		keys: func(cx *core.Scope, k *listKeys) {
 			repeat := core.KeyOptions{Repeat: true}

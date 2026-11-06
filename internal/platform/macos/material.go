@@ -104,7 +104,9 @@ func (s *surface) setMaterial(m driver.WindowMaterial) {
 // A view's backdrop blur is an NSVisualEffectView under its children that
 // blends with what is behind it in the window, or Liquid Glass on macOS 26
 // and later. AppKit sets the blur's strength by material, not by radius:
-// the radius only turns it on.
+// the radius only turns it on. The material is opaque enough to hide the
+// view's own layer, so a view inside it shows the background over the blur,
+// where CSS has it.
 
 const blendingWithinWindow = 1
 
@@ -145,7 +147,7 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	if !want || glass != v.glass {
 		if v.backdrop != 0 {
 			v.backdrop.Send(sel("removeFromSuperview"))
-			v.backdrop = 0
+			v.backdrop, v.tint = 0, 0
 		}
 		if !want {
 			return
@@ -176,4 +178,14 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	layer := v.backdrop.Send(selLayer)
 	layer.Send(sel("setCornerRadius:"), radius)
 	layer.Send(sel("setMasksToBounds:"), radius > 0)
+	if v.tint == 0 {
+		v.tint = objc.ID(objc.GetClass("NSView")).Send(selAlloc).Send(sel("initWithFrame:"), objc.Send[apple.CGRect](v.backdrop, selBounds))
+		v.tint.Send(selSetAutoresizingMask, widthHeightSizable)
+		v.tint.Send(sel("setWantsLayer:"), true)
+		v.backdrop.Send(sel("addSubview:"), v.tint)
+		v.tint.Send(selRelease)
+	}
+	c := apple.CGColor(vs.Background)
+	v.tint.Send(selLayer).Send(selSetBackgroundColor, c)
+	apple.Release(c)
 }

@@ -75,7 +75,9 @@ type view struct {
 	over bool
 	// backdrop is the view's backdrop blur, Liquid Glass when glass.
 	backdrop objc.ID
-	glass    bool
+	// tint is the view's background over its backdrop blur.
+	tint  objc.ID
+	glass bool
 
 	pressing  atomic.Bool
 	longFired atomic.Bool
@@ -1930,7 +1932,7 @@ func mouseDown(self objc.ID, cmd objc.SEL, event objc.ID) {
 	v := views[self]
 	// Control-click is a secondary click.
 	const control = 1 << 18
-	if v != nil && v.events.Has(driver.EventContextMenu) && objc.Send[uint](event, sel("modifierFlags"))&control != 0 {
+	if v != nil && objc.Send[uint](event, sel("modifierFlags"))&control != 0 && v.surface.contextView(event) != nil {
 		rightMouseDown(self, cmd, event)
 		return
 	}
@@ -2012,12 +2014,28 @@ func (v *view) indexAt(p apple.CGPoint) int {
 // rightMouseDown reports a secondary click to a view listening for
 // context menus, and passes it on otherwise.
 func rightMouseDown(self objc.ID, cmd objc.SEL, event objc.ID) {
-	v := views[self]
-	if v == nil || !v.events.Has(driver.EventContextMenu) {
+	var target *view
+	if v := views[self]; v != nil {
+		target = v.surface.contextView(event)
+	}
+	if target == nil {
 		apple.Super(self, cmd, event)
 		return
 	}
-	v.report(v.pointer(driver.EventContextMenu, event))
+	target.report(target.pointer(driver.EventContextMenu, event))
+}
+
+// contextView is the nearest view around the point of event that listens
+// for context menus. The hit test gives AppKit a pressable view, which may
+// hold the one listening, as a list's row holds its content.
+func (s *surface) contextView(event objc.ID) *view {
+	stop := s.native.Send(selSuperview)
+	for n := s.hitAt(objc.Send[apple.CGPoint](event, selLocationInWindow)); n != 0 && n != stop; n = n.Send(selSuperview) {
+		if v := views[n]; v != nil && v.native == n && v.events.Has(driver.EventContextMenu) {
+			return v
+		}
+	}
+	return nil
 }
 
 // cursorUpdate sets the cursor of the view under the mouse, which

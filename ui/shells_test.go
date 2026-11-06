@@ -272,3 +272,32 @@ func TestTabShell(t *testing.T) {
 		t.Fatal("the phone's tab did not switch sections")
 	}
 }
+
+// The content slides over the right panel, which stays against the window's
+// edge, and draws the panel's handle on its own edge.
+func TestSidebarShellRightPanel(t *testing.T) {
+	var set func(bool)
+	app, _ := shell(t, windowEnv, func(cx *core.Scope) core.Node {
+		o := core.NewSignal(cx, true)
+		set = o.Set
+		return SidebarShell{Content: []core.Node{core.View{Style: FillRest}}, Right: []core.Node{core.View{Style: FillRest}},
+			RightOpen: o.Get, OnRightOpenChange: o.Set, RightResizeLabel: "Resize",
+			RightWidth: func() core.Points { return 300 }, TestID: "shell"}
+	})
+	app.Settle()
+	if got := x(app, "shell", app.Find("id:right-resize")) + 3; got != x(app, "shell", app.Find("id:right-slot")) {
+		t.Fatalf("the handle ends at %v, not at the panel", got)
+	}
+	app.Post(func() { set(false) })
+	app.Advance(sidebarSlide / 2)
+	if got := within(app.Find("shell"), "right-slot").Frame.Size.Width; got != 0 {
+		t.Fatalf("slot %v wide", got)
+	}
+	if got := within(app.Find("shell"), "right-panel").Frame.Size.Width; got != 300 {
+		t.Fatalf("the panel narrowed to %v as the content slid over it", got)
+	}
+	app.Advance(sidebarSlide)
+	if within(app.Find("shell"), "right-panel") != nil {
+		t.Fatal("the panel stayed after the slide")
+	}
+}
