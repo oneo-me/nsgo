@@ -201,6 +201,8 @@ type App struct {
 	// Keymap is the keyboard shortcuts the app binds; Title its title.
 	Keymap []string
 	Title  string
+	// Language is the language the platform labels its menus in.
+	Language string
 	// Menu is the application menu the app set; Window the window
 	// commands it sent, oldest first.
 	Menu   []driver.MenuEntry

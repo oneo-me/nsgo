@@ -8,8 +8,10 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
+	"github.com/oneo-me/nsgo/desktop/locales"
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/oneo-me/nsgo/internal/platform/menutext"
 )
 
 // The window's chrome, as NSH's macOS chrome.rs does it. A hidden title
@@ -36,8 +38,9 @@ type chrome struct {
 	constraints driver.WindowConstraints
 
 	appName     string
-	defaultMenu objc.ID // the menu bar the backend builds
 	menu        objc.ID // the app's menu bar
+	menuEntries []driver.MenuEntry
+	language    string // what the menus say (driver.ItemDirection)
 	menuTarget  objc.ID
 	// notInText are the IDs of the items whose shortcuts a field or a
 	// web view with the keyboard focus keeps (MenuEntry.NotInText).
@@ -78,6 +81,15 @@ var (
 var rawHit bool
 
 var selMenuChosen = sel("nsgoMenuChosen:")
+
+// The action of the full screen role's item, in place of AppKit's
+// toggleFullScreen:, whose validation titles the item in the language of
+// the app's bundle.
+var selMenuFullScreen = sel("nsgoMenuFullScreen:")
+
+// fullScreenTitled is the tag of a full screen item the app did not label,
+// which says what choosing it does.
+const fullScreenTitled = -1
 
 // chromeItem applies an item of the window's own: its title, a window
 // command or the menu bar.
@@ -424,8 +436,9 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 		defer s.menu.Send(selRelease)
 		s.menu = 0
 	}
+	s.menuEntries = entries
 	if entries == nil {
-		nsApp.Send(sel("setMainMenu:"), s.defaultMenu)
+		nsApp.Send(sel("setMainMenu:"), defaultMenu)
 		return
 	}
 	s.ensureMenuTarget()
@@ -447,6 +460,22 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 	s.directMenu(bar)
 	nsApp.Send(sel("setMainMenu:"), bar)
 	s.menu = bar
+}
+
+// relabelMenus says the menu bar again in the surface's language.
+func (s *surface) relabelMenus() {
+	if s.language != defaultLanguage {
+		nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+		old := defaultMenu
+		defaultLanguage, defaultMenu = s.language, mainMenu(s.language)
+		if nsApp.Send(sel("mainMenu")) == old {
+			nsApp.Send(sel("setMainMenu:"), defaultMenu)
+		}
+		old.Send(selRelease)
+	}
+	if s.menu != 0 {
+		s.setMenu(s.menuEntries)
+	}
 }
 
 // The action of disabled items: nothing answers it, so AppKit disables
@@ -502,23 +531,16 @@ var roleActions = map[driver.MenuRole]string{
 	driver.MenuHideOthers: "hideOtherApplications:", driver.MenuShowAll: "unhideAllApplications:",
 	driver.MenuQuit: "terminate:", driver.MenuUndo: "undo:", driver.MenuRedo: "redo:", driver.MenuCut: "cut:",
 	driver.MenuCopy: "copy:", driver.MenuPaste: "paste:", driver.MenuSelectAll: "selectAll:",
-	driver.MenuMinimize: "performMiniaturize:", driver.MenuZoom: "performZoom:",
-	driver.MenuToggleFullScreen: "toggleFullScreen:", driver.MenuClose: "performClose:",
+	driver.MenuMinimize: "performMiniaturize:", driver.MenuZoom: "performZoom:", driver.MenuClose: "performClose:",
 }
 
 // item returns a new menu item of e.
 func (s *surface) item(e driver.MenuEntry) objc.ID {
-	title := e.Label
-	switch e.Role {
-	case driver.MenuAbout, driver.MenuHide, driver.MenuQuit:
-		// macOS names the app in these.
-		if title == e.Role.Label() && s.name() != "" {
-			title += " " + s.name()
-		}
-	case driver.MenuToggleFullScreen:
-		if title == e.Role.Label() {
-			title = "Enter Full Screen" // AppKit retitles it as the window changes
-		}
+	title := menutext.Label(s.language, &e, s.name())
+	fullScreen := e.Role == driver.MenuToggleFullScreen
+	titled := fullScreen && (e.Label == "" || e.Label == e.Role.Label())
+	if titled {
+		title = locales.In(s.language).EnterFullScreen() // validateMenu retitles it as the window changes
 	}
 	shortcut := e.Shortcut
 	if shortcut == "" && e.Role != driver.MenuRoleNone {
@@ -529,6 +551,8 @@ func (s *surface) item(e driver.MenuEntry) objc.ID {
 	switch {
 	case e.Disabled:
 		action = selMenuDisabled
+	case fullScreen:
+		action = selMenuFullScreen
 	case e.Role != driver.MenuRoleNone:
 		action = sel(roleActions[e.Role])
 	case e.ID != 0:
@@ -538,6 +562,12 @@ func (s *surface) item(e driver.MenuEntry) objc.ID {
 		apple.NSString(title), action, apple.NSString(key))
 	if key != "" {
 		it.Send(sel("setKeyEquivalentModifierMask:"), mods)
+	}
+	if action == selMenuFullScreen {
+		it.Send(selSetTarget, s.menuTarget)
+		if titled {
+			it.Send(sel("setTag:"), fullScreenTitled)
+		}
 	}
 	if action == selMenuChosen {
 		it.Send(selSetTarget, s.menuTarget)
@@ -636,6 +666,9 @@ func (s *surface) ensureMenuTarget() {
 // the field; clicked, the item is enabled.
 func validateMenu(self objc.ID, _ objc.SEL, item objc.ID) bool {
 	s := menuTargets[self]
+	if s != nil && objc.Send[objc.SEL](item, sel("action")) == selMenuFullScreen {
+		return s.validateFullScreen(item)
+	}
 	if s == nil || !s.notInText[uint32(objc.Send[int](item, sel("tag")))] {
 		return true
 	}
@@ -643,6 +676,30 @@ func validateMenu(self objc.ID, _ objc.SEL, item objc.ID) bool {
 	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
 	e := nsApp.Send(sel("currentEvent"))
 	return e == 0 || objc.Send[uint](e, sel("type")) != keyDown || !s.editing()
+}
+
+// validateFullScreen enables a full screen item while a window has the
+// keyboard focus, and titles it by what choosing it does there.
+func (s *surface) validateFullScreen(item objc.ID) bool {
+	w := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")).Send(sel("keyWindow"))
+	if w == 0 {
+		return false
+	}
+	if objc.Send[int](item, sel("tag")) == fullScreenTitled {
+		msgs, title := locales.In(s.language), ""
+		if objc.Send[uint](w, selStyleMask)&maskFullScreen != 0 {
+			title = msgs.ExitFullScreen()
+		} else {
+			title = msgs.EnterFullScreen()
+		}
+		item.Send(sel("setTitle:"), apple.NSString(title))
+	}
+	return true
+}
+
+// menuFullScreen toggles the window with the keyboard focus.
+func menuFullScreen(objc.ID, objc.SEL, objc.ID) {
+	objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")).Send(sel("keyWindow")).Send(sel("toggleFullScreen:"), objc.ID(0))
 }
 
 // menuChosen reports a chosen menu item's ID to its surface.

@@ -77,8 +77,10 @@ type Tree struct {
 	menuID       uint32
 	menuGen      uint32
 	rtl          bool // the layout direction the nodes were mapped for
-	// directionSent records that the platform has the direction.
+	// directionSent records that the platform has the direction and
+	// language, the language it was told last.
 	directionSent bool
+	language      string
 	// sticky are the views whose position is Sticky; stuckIn the scroll
 	// views that pinned some at the last commit.
 	sticky  map[*node]bool

@@ -317,6 +317,8 @@ type window struct {
 	batch uint64 // batches applied
 	hwnd  uintptr
 	title string
+	// language is what the menus say (driver.ItemDirection).
+	language string
 	// rtl is the app's direction (driver.ItemDirection), which the menus
 	// lay out in.
 	rtl bool
@@ -887,8 +889,8 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.setAppearance(it.Appearance)
 			continue
 		case driver.ItemDirection:
-			if w.rtl != it.RTL {
-				w.rtl = it.RTL
+			if w.rtl != it.RTL || w.language != it.Language {
+				w.rtl, w.language = it.RTL, it.Language
 				if !w.embedded {
 					w.showMenuBar()
 				}

@@ -19,6 +19,7 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 
+	"github.com/oneo-me/nsgo/desktop/locales"
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/engine"
 	"github.com/oneo-me/nsgo/internal/platform/apple"
@@ -468,6 +469,7 @@ func loadAppKit() {
 	registerCanvasNodes()
 	classMenuTarget = register("NsgoMenuTarget", objc.GetClass("NSObject"), nil, []objc.MethodDef{
 		{Cmd: selMenuChosen, Fn: menuChosen},
+		{Cmd: selMenuFullScreen, Fn: menuFullScreen},
 		{Cmd: sel("validateMenuItem:"), Fn: validateMenu},
 	})
 }
@@ -614,7 +616,8 @@ func startApp(opts Options) objc.ID {
 		policy = policyAccessory
 	}
 	nsApp.Send(sel("setActivationPolicy:"), policy)
-	defaultMenu = mainMenu()
+	defaultLanguage, _ = apple.Locale()
+	defaultMenu = mainMenu(defaultLanguage)
 	nsApp.Send(sel("setMainMenu:"), defaultMenu)
 	delegate := objc.ID(register("NsgoAppDelegate", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("applicationShouldTerminateAfterLastWindowClosed:"),
@@ -667,6 +670,9 @@ type shownAlert struct {
 // the app sets its own.
 var defaultMenu objc.ID
 
+// defaultLanguage is the language defaultMenu says.
+var defaultLanguage string
+
 // openWindow shows app in a new window at opts' size and starts its
 // engine; test, when set, is what a test host opens it with.
 func openWindow(app engine.App, opts Options, test *testWindow) *surface {
@@ -705,7 +711,7 @@ func newSurface(opts Options, embedded bool) *surface {
 	s := &surface{epoch: time.Now(), motions: map[*view]*motion{}, movers: map[*view]struct{}{},
 		inside:     map[*view]struct{}{},
 		components: opts.Components, embedded: embedded, appearance: opts.Appearance}
-	s.defaultMenu, s.appName = defaultMenu, opts.Title
+	s.appName = opts.Title
 	s.native = objc.ID(classSurface).Send(selAlloc).Send(sel("initWithFrame:"),
 		apple.Rect(0, 0, float64(opts.Width), float64(opts.Height)))
 	s.native.Send(selSetWantsLayer, true)
@@ -829,7 +835,9 @@ func activateApp() {
 	}
 }
 
-func mainMenu() objc.ID {
+// mainMenu is the menu bar of an app that sets none, in lang.
+func mainMenu(lang string) objc.ID {
+	msgs := locales.In(lang)
 	menu := func(title string) objc.ID {
 		return objc.ID(objc.GetClass("NSMenu")).Send(selAlloc).Send(sel("initWithTitle:"), apple.NSString(title))
 	}
@@ -843,15 +851,15 @@ func mainMenu() objc.ID {
 	}
 	bar := menu("")
 	app := menu("")
-	item(app, "Quit", "terminate:", "q")
+	item(app, msgs.Quit(), "terminate:", "q")
 	submenu(bar, app)
-	edit := menu("Edit")
-	item(edit, "Undo", "undo:", "z")
-	item(edit, "Redo", "redo:", "Z")
-	item(edit, "Cut", "cut:", "x")
-	item(edit, "Copy", "copy:", "c")
-	item(edit, "Paste", "paste:", "v")
-	item(edit, "Select All", "selectAll:", "a")
+	edit := menu(msgs.Edit())
+	item(edit, msgs.Undo(), "undo:", "z")
+	item(edit, msgs.Redo(), "redo:", "Z")
+	item(edit, msgs.Cut(), "cut:", "x")
+	item(edit, msgs.Copy(), "copy:", "c")
+	item(edit, msgs.Paste(), "paste:", "v")
+	item(edit, msgs.SelectAll(), "selectAll:", "a")
 	submenu(bar, edit)
 	return bar
 }
@@ -1360,6 +1368,13 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemDirection:
 			s.rtl, s.directed = it.RTL, true
 			s.directTree(s.native)
+			if it.Language != s.language {
+				s.language = it.Language
+				// An embedding host owns its menu bar.
+				if !s.embedded {
+					s.relabelMenus()
+				}
+			}
 			s.directMenu(s.menu)
 			continue
 		case driver.ItemQuit:

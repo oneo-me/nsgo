@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/menutext"
 )
 
 // The window's chrome, as NSH's Windows backend has it:
@@ -827,7 +828,7 @@ func (w *window) appendMenuTo(menu uintptr, entries []driver.MenuEntry, refs *[]
 		case unsupported(e.Role):
 			continue
 		}
-		label := strings.ReplaceAll(e.Label, "&", "&&")
+		label := strings.ReplaceAll(menutext.Label(w.language, e, ""), "&", "&&")
 		flags := w.menuFlags()
 		if e.Disabled {
 			flags |= mfGrayed

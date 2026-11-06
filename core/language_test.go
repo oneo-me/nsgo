@@ -49,6 +49,17 @@ func TestDirectionWithoutCatalogs(t *testing.T) {
 	}
 }
 
+func TestPlatformHearsLanguage(t *testing.T) {
+	app := nsgotest.Start(t, languageApp("zh-Hans"), nsgotest.Environment(core.Environment{Locale: "en-US"}))
+	if app.Language != "en-US" {
+		t.Errorf("the system's: %q", app.Language)
+	}
+	app.Press("id:force")
+	if app.Language != "zh-Hans" {
+		t.Errorf("forced: %q", app.Language)
+	}
+}
+
 func TestDirectionFollowsLanguage(t *testing.T) {
 	core.SetLanguageMatch(func(locale string) string {
 		if strings.HasPrefix(locale, "ar") {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/menutext"
 )
 
 // roleActionBase separates a role's action data from a menu item's ID.
@@ -116,10 +117,7 @@ func (w *window) buildSubmenu(entries []driver.MenuEntry) uintptr {
 
 // buildItem returns a GMenuItem of e with an action when it has one.
 func (w *window) buildItem(e *driver.MenuEntry) uintptr {
-	label := e.Label
-	if label == "" {
-		label = e.Role.Label()
-	}
+	label := menutext.Label(w.language, e, "")
 	action := ""
 	if e.ID != 0 {
 		action = w.addAction(e.ID, e.Role, e.Disabled, e.Checkable, e.Checked)

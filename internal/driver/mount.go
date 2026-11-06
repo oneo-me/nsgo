@@ -215,9 +215,10 @@ const (
 	// carrying Count.
 	ItemSaveFile
 	// ItemDirection says whether the app lays out right to left (RTL), as
-	// the language it shows is written, whatever the system's: on its
-	// first commit and when it changes. Platforms whose own motion
-	// follows a direction, as iOS's navigation, take it.
+	// the language it shows is written, whatever the system's, and that
+	// language (Language): on its first commit and when either changes.
+	// Platforms whose own motion follows a direction, as iOS's navigation,
+	// take it, and those that draw menus label them in the language.
 	ItemDirection
 	// ItemPickDirectories shows the system's folder picker for
 	// Directories; the platform answers with EventFiles carrying Count.
@@ -283,9 +284,10 @@ type MountItem struct {
 	Animated bool
 	// Clipboard is what an ItemReadClipboard reads.
 	Clipboard ClipboardRead
-	// Appearance is ItemAppearance's, RTL ItemDirection's.
+	// Appearance is ItemAppearance's, RTL and Language ItemDirection's.
 	Appearance Appearance
 	RTL        bool
+	Language   string
 	Events     EventMask
 
 	ViewStyle *ViewStyle

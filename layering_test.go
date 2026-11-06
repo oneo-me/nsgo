@@ -37,18 +37,20 @@ var layers = []struct {
 	{"internal/platform/hover", []string{"internal/driver"}},
 	{"internal/platform/imagedecode", []string{"internal/driver"}},
 	{"internal/platform/imageload", []string{"internal/driver"}},
+	{"internal/platform/menutext", []string{"internal/driver", "desktop/locales"}},
 	{"internal/platform/perfhud", []string{"internal/driver", "internal/engine", "internal/platform/apple"}},
 	{"internal/platform/picked", []string{"internal/driver"}},
 	{"internal/platform/queue", []string{"internal/driver"}},
 	{"internal/platform/scrollbar", []string{"internal/driver"}},
 	{"internal/platform/textselect", []string{"internal/driver"}},
-	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core"}, platformShared...)},
+	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales"}, platformShared...)},
 	{"nsgotest", []string{"core", "internal/driver", "internal/testhost"}},
 	{"", []string{"core", "internal/engine", "internal/platform/"}},
 	// The code nsgo writes from catalogs runs on i18n.
 	{"i18n", []string{"core", "internal/cldr"}},
 	{"base/", []string{"core", "base/", "i18n"}},
 	{"mobile", []string{"core"}},
+	{"desktop/locales", []string{"core", "i18n"}},
 	{"desktop", []string{"core"}},
 	{"icons/", []string{"core"}},
 	{"ui/", []string{"core", "base/", "ui/", "mobile", "desktop", "icons/"}},
@@ -59,7 +61,7 @@ var layers = []struct {
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
-	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
+	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
 	// The nsgo tool links no component or runtime, so changing them does
 	// not build it again; it writes TSX declarations by running the app.
@@ -71,14 +73,14 @@ var layers = []struct {
 // writers but not the compiler, which only the core links.
 var platformShared = []string{
 	"internal/platform/apple", "internal/platform/canvastest", "internal/platform/field", "internal/platform/finger",
-	"internal/platform/fontfile", "internal/platform/hover", "internal/platform/imagedecode", "internal/platform/imageload", "internal/platform/perfhud", "internal/platform/picked", "internal/platform/queue", "internal/platform/scrollbar",
+	"internal/platform/fontfile", "internal/platform/hover", "internal/platform/imagedecode", "internal/platform/imageload", "internal/platform/menutext", "internal/platform/perfhud", "internal/platform/picked", "internal/platform/queue", "internal/platform/scrollbar",
 	"internal/platform/textselect", "internal/shaderir/",
 }
 
 // portable lists the packages that build unchanged for every target: no
 // purego, syscall or unsafe.
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shaderir/", "internal/engine",
-	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "icons/", "nsgotest", "tsx"}
+	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx"}
 
 // unportable are the packages among portable's that reach the system: the
 // terminal loads libghostty-vt and runs programs, on macOS, Linux and

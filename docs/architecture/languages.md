@@ -35,9 +35,9 @@ A message is formatted in its catalog's language: a translation's numbers and da
 
 A key that is an import path supplies that package's catalog in the file's language, under its keys, with its parameters. Apps supply languages NSGo does not translate to, or replace its words in one it does.
 
-NSGo's own catalogs are `base/locales`, `base/textview/locales` and `base/terminal/locales`, in English, Simplified and Traditional Chinese. A component in another package gives that package catalogs of its own.
+NSGo's own catalogs are `base/locales`, `base/textview/locales`, `base/terminal/locales` and `desktop/locales`, in English, Simplified and Traditional Chinese. A component in another package gives that package catalogs of its own.
 
-The gallery (`examples/gallery/locales`) says its interface in English, Simplified and Traditional Chinese and Arabic, and supplies Arabic to `base`'s catalogs. What a demo shows as content stays as written: code, documents, conversations and names. A message keeps an English ID where code or tests key on it, as a demo's `name`, and says its `title` through a method expression (`locales.Messages.DemoStocks`); Traditional Chinese was converted from Simplified with OpenCC's `s2twp`, then corrected by hand.
+The gallery (`examples/gallery/locales`) says its interface in English, Simplified and Traditional Chinese and Arabic, and supplies Arabic to `base`'s and `desktop`'s catalogs. What a demo shows as content stays as written: code, documents, conversations and names. A message keeps an English ID where code or tests key on it, as a demo's `name`, and says its `title` through a method expression (`locales.Messages.DemoStocks`); Traditional Chinese was converted from Simplified with OpenCC's `s2twp`, then corrected by hand.
 
 ## Generated code
 
@@ -94,7 +94,7 @@ import { messages } from "app/locales";
 - `nsgo test` does the same for `./...`, and `nsgo check` reports code out of date as an error without writing it.
 - `nsgo i18n [-source L] [dir]` does it for one directory, a library's, as `//go:generate go tool nsgo i18n` in `base/locales` runs it; in an app's directory it does what `build` does.
 
-Packages name the app by its catalogs' `appName`: a `CFBundleDisplayName` and an `InfoPlist.strings` per language on macOS and iOS, an `@string/app_name` per locale in the APK's resource table, which its label refers to, `name_localized` in the web manifest, and `Name[locale]` in Linux's desktop entry.
+Apple bundles list the catalogs' languages in `CFBundleLocalizations`, in which the system says what it adds to the app, such as the dictation and emoji items of a menu bar's Edit menu; it follows the user's languages, not `SetLocale`. Packages name the app by its catalogs' `appName`: a `CFBundleDisplayName` and an `InfoPlist.strings` per language on macOS and iOS, an `@string/app_name` per locale in the APK's resource table, which its label refers to, `name_localized` in the web manifest, and `Name[locale]` in Linux's desktop entry.
 
 Errors stop them: a file not named by a canonical tag, a message that does not parse, a translation's key or argument the source lacks or uses as its type cannot be, two keys making one function name, a supplied package without catalogs or a key it lacks, and an `appName` with arguments. Warnings do not: a translation's missing messages, plural cases its language lacks or never says, unused placeholders, a package of the build without one of the app's languages, and an app that does not import its catalogs. `TestCatalogsUpToDate` checks NSGo's own code against its catalogs.
 

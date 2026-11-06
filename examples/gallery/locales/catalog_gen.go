@@ -7,6 +7,7 @@ import (
 	terminallocales "github.com/oneo-me/nsgo/base/terminal/locales"
 	textviewlocales "github.com/oneo-me/nsgo/base/textview/locales"
 	"github.com/oneo-me/nsgo/core"
+	desktoplocales "github.com/oneo-me/nsgo/desktop/locales"
 	"github.com/oneo-me/nsgo/i18n"
 	"strings"
 )
@@ -73,6 +74,77 @@ func init() {
 		},
 		AlertCaution: func() string {
 			return "تنبيه"
+		},
+	})
+	desktoplocales.Supply("ar", desktoplocales.Translation{
+		Edit: func() string {
+			return "تحرير"
+		},
+		Window: func() string {
+			return "نافذة"
+		},
+		About: func() string {
+			return "حول"
+		},
+		AboutApp: func(app string) string {
+			return "حول " + app
+		},
+		Hide: func() string {
+			return "إخفاء"
+		},
+		HideApp: func(app string) string {
+			return "إخفاء " + app
+		},
+		HideOthers: func() string {
+			return "إخفاء الآخرين"
+		},
+		ShowAll: func() string {
+			return "إظهار الكل"
+		},
+		Quit: func() string {
+			return "إنهاء"
+		},
+		QuitApp: func(app string) string {
+			return "إنهاء " + app
+		},
+		Undo: func() string {
+			return "تراجع"
+		},
+		Redo: func() string {
+			return "إعادة"
+		},
+		Cut: func() string {
+			return "قص"
+		},
+		Copy: func() string {
+			return "نسخ"
+		},
+		Paste: func() string {
+			return "لصق"
+		},
+		Delete: func() string {
+			return "حذف"
+		},
+		SelectAll: func() string {
+			return "تحديد الكل"
+		},
+		Minimize: func() string {
+			return "تصغير"
+		},
+		Zoom: func() string {
+			return "تكبير/تصغير"
+		},
+		ToggleFullScreen: func() string {
+			return "تبديل ملء الشاشة"
+		},
+		EnterFullScreen: func() string {
+			return "الدخول إلى ملء الشاشة"
+		},
+		ExitFullScreen: func() string {
+			return "الخروج من ملء الشاشة"
+		},
+		Close: func() string {
+			return "إغلاق"
 		},
 	})
 }

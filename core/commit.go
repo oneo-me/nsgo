@@ -136,12 +136,12 @@ func (t *Tree) commitRound() {
 		t.fontScale = scale
 		t.fullRound = true
 	}
-	if rtl := t.root.Env().rtl.GetUntracked(); rtl != t.rtl || !t.directionSent {
+	if rtl, lang := t.root.Env().rtl.GetUntracked(), t.shownLanguage(); rtl != t.rtl || lang != t.language || !t.directionSent {
 		if rtl != t.rtl {
 			t.setRTL(rtl)
 		}
-		t.directionSent = true
-		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemDirection, RTL: rtl})
+		t.language, t.directionSent = lang, true
+		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemDirection, RTL: rtl, Language: lang})
 	}
 	live := t.stacks[:0]
 	for _, s := range t.stacks {

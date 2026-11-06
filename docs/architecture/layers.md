@@ -34,6 +34,7 @@ nsgo
 │   │   └── internal/                    What they share
 │   ├── mobile                           What only phones have
 │   ├── desktop                          What only desktops have
+│   │   └── locales                      Its menus' words, which backends read
 │   ├── icons/lucide                     The bundled icons
 │   └── i18n                             The language the app shows
 │       └── internal/cldr                Dates and pseudo locales by CLDR's data
@@ -49,6 +50,7 @@ nsgo
 │       ├── field, hover, finger         Shared input
 │       ├── scrollbar, textselect        Shared scrolling and selection
 │       ├── imagedecode, imageload       Shared images
+│       ├── menutext                     Shared menu labels
 │       ├── picked, fontfile             Shared picked photos and font files
 │       └── queue, perfhud, canvastest   Shared batches, readings and test drawings
 │
@@ -110,7 +112,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 - Apps may import any public package directly, `core` included. `core` and `nsgotest` alias the internal types their API reaches (`TestPublicAPINamesNoInternalType`).
 - `internal/driver` imports from the module only `internal/shaderir`, for the shader programs it carries.
 - `core` imports only `internal/driver`, `internal/layout` and the shader compiler (`internal/shader`, `internal/shaderir`).
-- Backends import `internal/driver`, `internal/engine`, their shared packages and the shader writers, never the compiler, which only `core` links.
+- Backends import `internal/driver`, `internal/engine`, `desktop/locales`, their shared packages and the shader writers, never the compiler, which only `core` links.
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
 - `ui` imports `base`, `core`, `mobile`, `desktop` and the icons; `base` never imports it.

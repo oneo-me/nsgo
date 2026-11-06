@@ -1,0 +1,35 @@
+edit:
+  message: "Edit"
+  description: The title of the menu of the text editing items.
+window:
+  message: "Window"
+  description: The title of the menu of the window items.
+about: "About"
+aboutApp:
+  message: "About {app}"
+  description: The macOS app menu's item, which names the app.
+hide: "Hide"
+hideApp:
+  message: "Hide {app}"
+  description: The macOS app menu's item, which names the app.
+hideOthers: "Hide Others"
+showAll: "Show All"
+quit: "Quit"
+quitApp:
+  message: "Quit {app}"
+  description: The macOS app menu's item, which names the app.
+undo: "Undo"
+redo: "Redo"
+cut: "Cut"
+copy: "Copy"
+paste: "Paste"
+delete:
+  message: "Delete"
+  description: The item of a text field's context menu that removes the selection.
+selectAll: "Select All"
+minimize: "Minimize"
+zoom: "Zoom"
+toggleFullScreen: "Toggle Full Screen"
+enterFullScreen: "Enter Full Screen"
+exitFullScreen: "Exit Full Screen"
+close: "Close"

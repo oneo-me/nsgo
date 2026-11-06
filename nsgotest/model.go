@@ -458,6 +458,8 @@ func (a *App) apply(b *driver.MountBatch) {
 			v.Screen = *it.Screen
 		case driver.ItemModal:
 			v.Modal = *it.Modal
+		case driver.ItemDirection:
+			a.Language = it.Language
 		case driver.ItemMenu:
 			a.Menu = it.Menu
 		case driver.ItemWindow:

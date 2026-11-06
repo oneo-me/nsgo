@@ -43,6 +43,7 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
+	"github.com/oneo-me/nsgo/desktop/locales"
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/platform/field"
 )
@@ -1450,15 +1451,16 @@ func (w *window) fieldMenu(in *textInput, x, y int32) {
 		vk      uintptr
 		ctrl    bool
 	}
+	msgs := locales.In(w.language)
 	items := []item{
-		{driver.MenuUndo.Label() + "\tCtrl+Z", editable && m.canUndo(), 'Z', true},
+		{msgs.Undo() + "\tCtrl+Z", editable && m.canUndo(), 'Z', true},
 		{},
-		{driver.MenuCut.Label() + "\tCtrl+X", editable && selected && !masked, 'X', true},
-		{driver.MenuCopy.Label() + "\tCtrl+C", selected && !masked, 'C', true},
-		{driver.MenuPaste.Label() + "\tCtrl+V", editable && clip != 0, 'V', true},
-		{"Delete\tDel", editable && selected, vkDelete, false},
+		{msgs.Cut() + "\tCtrl+X", editable && selected && !masked, 'X', true},
+		{msgs.Copy() + "\tCtrl+C", selected && !masked, 'C', true},
+		{msgs.Paste() + "\tCtrl+V", editable && clip != 0, 'V', true},
+		{msgs.Delete() + "\tDel", editable && selected, vkDelete, false},
 		{},
-		{driver.MenuSelectAll.Label() + "\tCtrl+A", m.text != "" && !(s == 0 && e == len(m.text)), 'A', true},
+		{msgs.SelectAll() + "\tCtrl+A", m.text != "" && !(s == 0 && e == len(m.text)), 'A', true},
 	}
 	menu, _, _ := createPopupMenu.Call()
 	if menu == 0 {

@@ -86,6 +86,8 @@ type window struct {
 	// window, its chrome and the main loop. app and opts start its engine
 	// once GTK first allocates it.
 	embedded bool
+	// language is what the menus say (driver.ItemDirection).
+	language string
 	// dir is the app's direction (driver.ItemDirection) as GTK's, or 0
 	// before the app has one.
 	dir     int32
@@ -648,6 +650,12 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemDirection:
 			w.setDirection(it.RTL)
+			if it.Language != w.language {
+				w.language = it.Language
+				if !w.embedded {
+					w.showMenuBar()
+				}
+			}
 			continue
 		case driver.ItemQuit:
 			if !w.embedded {

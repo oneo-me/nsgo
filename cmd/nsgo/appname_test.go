@@ -28,6 +28,9 @@ func TestAppNames(t *testing.T) {
 	if want := "<key>CFBundleDisplayName</key><string>Gallery</string>"; !strings.Contains(extra, want) {
 		t.Errorf("plist entries %q lack %q", extra, want)
 	}
+	if want := "<key>CFBundleLocalizations</key><array><string>en</string><string>pt-BR</string><string>zh-Hans</string></array>"; !strings.Contains(extra, want) {
+		t.Errorf("plist entries %q lack %q", extra, want)
+	}
 	for lang, want := range map[string]string{"zh-Hans": `"CFBundleDisplayName" = "画廊";`, "pt-BR": `"CFBundleName" = "Galeria \"Nova\"";`} {
 		data, _ := os.ReadFile(filepath.Join(res, lang+".lproj", "InfoPlist.strings"))
 		if !strings.Contains(string(data), want) {

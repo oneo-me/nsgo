@@ -223,6 +223,19 @@ func (e *Env) Locale() string {
 // reads it.
 func (e *Env) Language() string { return e.language.Get() }
 
+// shownLanguage is the language the platform says its menus in: the one
+// the app shows, else the locale it runs in.
+func (t *Tree) shownLanguage() string {
+	e := t.root.Env()
+	if lang := e.language.GetUntracked(); lang != "" {
+		return lang
+	}
+	if forced := e.forced.GetUntracked(); forced != "" {
+		return forced
+	}
+	return e.locale.GetUntracked()
+}
+
 var languageMatch atomic.Pointer[func(locale string) string]
 
 // SetLanguageMatch sets how the language the app shows follows its
