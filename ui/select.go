@@ -98,8 +98,7 @@ func (s Select[T]) Render(cx *core.Scope) core.Node {
 		label = s.Placeholder
 	}
 	return base.Menu{Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) }, Offset: 4, Margin: 8,
-		Style: core.Style{Group: "button", Width: core.Pt(200), CornerRadius: RadiusControl}.
-			Merge(slop(cx, ButtonHeight)).Merge(s.Style),
+		Style:     core.Style{Group: "button", Width: core.Pt(200), CornerRadius: RadiusControl}.Merge(s.Style),
 		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
 		Trigger:   face, PopupStyleFunc: popup, BackdropStyle: backdrop, Children: items, Label: label, TestID: s.TestID}
 }

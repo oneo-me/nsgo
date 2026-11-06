@@ -138,7 +138,7 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 	if tr.OnActivate != nil {
 		activate = func(i int) { tr.OnActivate(entry(i).key) }
 	}
-	rowStyle := core.Style{Padding: core.Symmetric(0, 4), MinHeight: core.Pt(RowHeight(cx) - 8)}.Merge(tr.RowStyle)
+	rowStyle := core.Style{Padding: core.Symmetric(0, 4), MinHeight: core.Pt(RowHeight - 8)}.Merge(tr.RowStyle)
 	return List{Count: func() int { return len(rows.Get()) }, Key: func(i int) any { return entry(i).key }, Row: row,
 		Selection: tr.Selection, OnActivate: activate, RowLabel: label, EstimatedSize: tr.EstimatedSize, Empty: tr.Empty,
 		Label: tr.Label, Ref: tr.Ref, TestID: tr.TestID, Style: tr.Style, RowStyle: rowStyle, RowStyleFunc: tr.RowStyleFunc,

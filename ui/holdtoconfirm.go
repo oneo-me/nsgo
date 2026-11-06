@@ -209,7 +209,7 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 		OnBlur: release,
 		Style: core.Style{Group: "hold", AlignSelf: core.AlignStart, CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
 			BorderWidth: 1, Transition: quick, Disabled: Dimmed(),
-			Animated: &core.AnimatedStyle{Scale: scale}}.Merge(slop(cx, ButtonHeight)),
+			Animated: &core.AnimatedStyle{Scale: scale}},
 		StyleFunc: func() core.Style {
 			s := core.Style{Background: colors.Surface(), BorderColor: border(), Focus: FocusRing(cx, 2)}
 			if !confirmed() {

@@ -157,13 +157,7 @@ func (s Slider) Render(cx *core.Scope) core.Node {
 	if s.Step > 0 {
 		tall += 8
 	}
-	// A finger's room: the slider reaches 44 pt tall into its margins,
-	// its parts placed down by as much.
-	var reach core.Points
-	if Touch(cx) && tall < 44 {
-		reach = (44 - tall) / 2
-	}
-	middle := reach + height/2
+	const middle = height / 2
 	bar := core.Style{Position: core.Absolute, Top: core.Pt(middle - sliderTrack/2), Height: core.Pt(sliderTrack), CornerRadius: sliderTrack / 2}
 	children := []core.Node{
 		core.View{PointerEvents: core.PointerEventsNone, Style: bar.Merge(core.Style{Left: core.Pt(sliderKnobW / 2), Right: core.Pt(sliderKnobW / 2)}),
@@ -223,7 +217,7 @@ func (s Slider) Render(cx *core.Scope) core.Node {
 			}
 		},
 		PanActivation: core.PanActivation{ActiveOffsetX: 2, FailOffsetY: 12},
-		Style: core.Style{Height: core.Pt(tall + 2*reach), Margin: core.Symmetric(-reach, 0), MinWidth: core.Pt(80),
+		Style: core.Style{Height: core.Pt(tall), MinWidth: core.Pt(80),
 			Disabled: Dimmed()}.Merge(s.Style),
 		Children: children}
 }

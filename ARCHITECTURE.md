@@ -90,6 +90,7 @@ Record a design question here, and confirm the answer with the user before choos
 
 - **Signed packages and capabilities.** Port both for TSX modules only, Go code staying trusted, as [TSX](docs/architecture/tsx.md#sandbox) proposes?
 - **NSH 0.4.0's gallery and `process`.** [NSGo leaves the standard modules out](docs/architecture/nsh.md#what-nsgo-leaves-out), but 0.4.0's gallery shell reads `process.env` at start, so no demo or test runs. Give TSX a `process` of the environment alone (`env`, `platform`, `arch`), port the module, or rename the oracle's shell?
+- **Implicit presentations.** Components swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)). Make each one a field the app sets, and which form is the default?
 - **TSX on the browser's engine.** NSH 0.4.0 runs TSX on the page's own JavaScript engine on the web, keeping QuickJS on the native targets. Do the same, keeping goja off the web, or keep one engine on every target?
 
 ## Verification
@@ -115,6 +116,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Animation](docs/architecture/animation.md) | Animated values, layout animations or a backend's frame clock |
 | [Shaders](docs/architecture/shaders.md) | `Shader`, the shader compiler or a backend's shader view |
 | [Components](docs/architecture/components.md) | A component in `base`: controls, popups, resizable panels or the dock |
+| [Device differences](docs/architecture/device-differences.md) | A component that changes by device, input or width |
 | [Text view](docs/architecture/textview.md) | `TextView`, its parsers, parts or highlighting |
 | [Editor](docs/architecture/editor.md) | `Editor`, `DiffView` or their highlighting |
 | [Terminal](docs/architecture/terminal.md) | `base/terminal`, its emulator binding or pseudo-terminals |

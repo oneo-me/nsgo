@@ -128,7 +128,7 @@ func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) cor
 		tabs = append(tabs, base.Button{Role: core.RoleTab, Label: tab.Text, Selected: func() bool { return selected() == i },
 			OnPress: func(core.PressEvent) { change(i) },
 			Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), AlignItems: core.AlignCenter,
-				JustifyContent: core.JustifyCenter, Gap: 2, MinHeight: core.Pt(RowHeight(cx) + 4), CornerRadius: RadiusControl,
+				JustifyContent: core.JustifyCenter, Gap: 2, MinHeight: core.Pt(RowHeight + 4), CornerRadius: RadiusControl,
 				Transition: quick},
 			StyleFunc: func() core.Style {
 				return core.Style{Color: colors.Muted(), Hover: &core.Style{Color: colors.Text()}, Active: &core.Style{Background: colors.Pressed()},

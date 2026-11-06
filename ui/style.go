@@ -37,27 +37,13 @@ const (
 // constant is s as a string that may change.
 func constant(s string) func() string { return func() string { return s } }
 
-// Touch reports whether the device takes touches rather than a pointer:
-// its controls keep their look and take presses 44 pt across.
+// Touch reports whether the device takes touches rather than a pointer,
+// for what a pointer alone can do. A control's size is the same on every
+// device.
 func Touch(cx *core.Scope) bool { return !core.Untracked(cx, cx.Env().Desktop) }
 
-// RowHeight is a row's height: 36 pt, or 44 pt for a finger.
-func RowHeight(cx *core.Scope) core.Points {
-	if Touch(cx) {
-		return 44
-	}
-	return 36
-}
-
-// slop is the room to press that a control height points tall needs on
-// every side for a finger, as a margin it takes back.
-func slop(cx *core.Scope, height core.Points) core.Style {
-	if !Touch(cx) || height >= 44 {
-		return core.Style{}
-	}
-	d := (44 - height) / 2
-	return core.Style{Margin: core.Symmetric(-d, 0), Padding: core.Symmetric(d, 0)}
-}
+// RowHeight is a row's height.
+const RowHeight core.Points = 36
 
 // FillRest grows to fill its container.
 var FillRest = core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), MinHeight: core.Pt(0)}

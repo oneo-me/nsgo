@@ -66,7 +66,7 @@ func (b ToggleButton) Render(cx *core.Scope) core.Node {
 				b.OnChange(!is(b.On))
 			}
 		},
-		Style:     core.Style{Group: "button", CornerRadius: RadiusControl, Disabled: Dimmed()}.Merge(slop(cx, ButtonHeight)),
+		Style:     core.Style{Group: "button", CornerRadius: RadiusControl, Disabled: Dimmed()},
 		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
 		Children:  []core.Node{core.View{StyleFunc: face, Children: children}}}
 }

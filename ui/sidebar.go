@@ -45,11 +45,7 @@ type Sidebar struct {
 // Render implements core.Node.
 func (s Sidebar) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	desk := core.Untracked(cx, cx.Env().Desktop)
-	height := core.Points(32)
-	if !desk {
-		height = 40
-	}
+	const height core.Points = 32
 	selected := func() string {
 		if s.Selected == nil {
 			return ""

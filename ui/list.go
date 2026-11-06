@@ -372,7 +372,7 @@ func (l List) Render(cx *core.Scope) core.Node {
 	focused, held := core.NewSignal(cx, false), core.NewSignal(cx, 0)
 	take := func() { held.Update(func(n int) int { return n + 1 }) }
 
-	row := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(RowHeight(cx) - 8),
+	row := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(RowHeight - 8),
 		Padding: core.Symmetric(4, 10), CornerRadius: RadiusControl, MinWidth: core.Pt(0)}
 	interactive := selectable || l.OnActivate != nil
 	if interactive {
@@ -430,7 +430,7 @@ func (l List) Render(cx *core.Scope) core.Node {
 	}
 	size := l.EstimatedSize
 	if size == 0 {
-		size = RowHeight(cx)
+		size = RowHeight
 	}
 	list := core.List{Count: count, Key: l.Key, Row: cell, EstimatedSize: size, NumColumns: columns, Gap: l.Gap, ColumnGap: l.Gap,
 		Header: l.Header, Footer: l.Footer, Empty: l.Empty, OnLoadMore: l.OnLoadMore, Ref: ref,

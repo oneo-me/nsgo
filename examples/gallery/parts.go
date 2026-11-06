@@ -199,7 +199,7 @@ type Row struct {
 // Render implements core.Node.
 func (r Row) Render(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
-	v := core.View{Style: core.Style{MinHeight: core.Pt(ui.RowHeight(cx)), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10},
+	v := core.View{Style: core.Style{MinHeight: core.Pt(ui.RowHeight), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10},
 		StyleFunc: func() core.Style {
 			var s core.Style
 			if !r.First {
@@ -273,7 +273,7 @@ func (r SwitchRow) Render(cx *core.Scope) core.Node {
 	if r.Note != "" {
 		titles = append(titles, ui.Text(r.Note, 12, ui.Regular, colors.Muted))
 	}
-	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(ui.RowHeight(cx))}, Children: []core.Node{
+	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(ui.RowHeight)}, Children: []core.Node{
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles},
 		ui.Switch{Checked: r.Checked, OnChange: r.OnChange, Label: r.Label},
 	}}

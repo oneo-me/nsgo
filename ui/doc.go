@@ -5,8 +5,7 @@
 //
 // The look is Onevra's: a warm page, demos on flat bordered cards under
 // bold titles, flat bordered controls 28 pt tall in 13 pt text, 8 pt
-// corners and one terracotta accent. On touch screens controls keep that
-// look and take presses 44 pt across.
+// corners and one terracotta accent, the same sizes on every device.
 //
 // Components are structs with a Render method: the app sets the fields
 // and handles changes. Each reads its colors where it is built (ColorsOf,

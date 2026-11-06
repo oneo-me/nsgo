@@ -21,10 +21,7 @@ type Progress struct {
 // Render implements core.Node.
 func (p Progress) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	height := core.Points(6)
-	if Touch(cx) {
-		height = 8
-	}
+	const height core.Points = 6
 	bar := func() core.Style {
 		return core.Style{Height: core.Pt(height), CornerRadius: RadiusFull, Background: colors.Accent()}
 	}

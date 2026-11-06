@@ -103,8 +103,11 @@ func (MenuSeparator) Render(cx *core.Scope) core.Node {
 	return base.MenuSeparator{Style: core.Style{Height: core.Pt(1), Margin: core.Symmetric(4, 0)}, StyleFunc: Filled(ColorsOf(cx).Line)}
 }
 
-// menuRow is an item's row and its look: compact in a popup, a finger's
-// height across a sheet.
+// sheetRowHeight is the height of a row across a sheet.
+const sheetRowHeight core.Points = 44
+
+// menuRow is an item's row and its look: compact in a popup, a sheet's
+// row across a sheet.
 func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
 	colors := ColorsOf(cx)
 	s := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Disabled: Dimmed()}
@@ -114,7 +117,7 @@ func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
 			return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 		}
 	}
-	s.MinHeight, s.Padding, s.Gap = core.Pt(RowHeight(cx)), core.Symmetric(0, 20), 12
+	s.MinHeight, s.Padding, s.Gap = core.Pt(sheetRowHeight), core.Symmetric(0, 20), 12
 	return s, func() core.Style { return core.Style{Active: &core.Style{Background: colors.Pressed()}} }
 }
 
