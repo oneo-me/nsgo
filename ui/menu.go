@@ -58,6 +58,10 @@ type MenuItem struct {
 	Icon func() *core.SVG
 	// Shortcut is the keys that choose it, shown at its end on desktops.
 	Shortcut string
+	// Leading goes before its text, after its check and icon, and Trailing
+	// at its end, where a button's presses stay its own.
+	Leading  core.Node
+	Trailing core.Node
 	// Danger colors a destructive choice.
 	Danger          bool
 	Checked         func() bool
@@ -76,10 +80,16 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 		fg = colors.Danger
 	}
 	children := menuLeading(cx, i.Icon, i.Checked)
+	if i.Leading != nil {
+		children = append(children, i.Leading)
+	}
 	children = append(children, core.Text{Content: i.Text, MaxLines: 1, Style: TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}),
 		StyleFunc: Colored(fg)})
 	if i.Shortcut != "" && !Touch(cx) {
 		children = append(children, core.Text{Content: i.Shortcut, MaxLines: 1, Style: TypeCaption, StyleFunc: Colored(colors.Muted)})
+	}
+	if i.Trailing != nil {
+		children = append(children, i.Trailing)
 	}
 	return base.MenuItem{OnSelect: i.OnSelect, Disabled: i.Disabled, NoCloseOnSelect: i.NoCloseOnSelect, Style: style, StyleFunc: look,
 		Children: children, Label: i.Text, TestID: i.TestID}

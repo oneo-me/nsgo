@@ -11,13 +11,15 @@ import (
 // Select picks one of Options from a field that opens them as a menu:
 // beside it on desktops, where the arrow keys move through them, and as
 // a sheet on touch screens. The field shows the chosen option's label,
-// or Placeholder while Value matches none, and the menu checks it.
+// or Placeholder while Value matches none, and the menu checks it unless
+// NoCheck.
 // Options' Icon, Disabled and Content go unused.
 type Select[T comparable] struct {
 	Options     []Option[T]
 	Value       func() T
 	OnChange    func(value T)
 	Placeholder string
+	NoCheck     bool
 	// Label names the field for assistive technology.
 	Label string
 	// TestID names the field; each option adds "-" and its index.
@@ -30,26 +32,36 @@ type Select[T comparable] struct {
 func (s Select[T]) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	open := core.NewSignal(cx, false)
-	chosen := func() (string, bool) {
-		if s.Value == nil {
-			return s.Placeholder, false
-		}
-		v := s.Value()
-		for _, o := range s.Options {
-			if o.Value == v {
-				return o.Label, true
+	chosen := core.NewMemo(cx, func() int {
+		if s.Value != nil {
+			v := s.Value()
+			for i, o := range s.Options {
+				if o.Value == v {
+					return i
+				}
 			}
 		}
-		return s.Placeholder, false
-	}
+		return -1
+	})
 	text := core.Text{MaxLines: 1, Style: TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}),
-		ContentFunc: func() string { t, _ := chosen(); return t },
+		ContentFunc: func() string {
+			if i := chosen.Get(); i >= 0 {
+				return s.Options[i].Label
+			}
+			return s.Placeholder
+		},
 		StyleFunc: func() core.Style {
-			if _, ok := chosen(); ok {
+			if chosen.Get() >= 0 {
 				return core.Style{Color: colors.Text()}
 			}
 			return core.Style{Color: colors.Faint()}
 		}}
+	leading := core.Dynamic(func(*core.Scope) core.Node {
+		if i := chosen.Get(); i >= 0 && s.Options[i].Leading != nil {
+			return s.Options[i].Leading
+		}
+		return core.Group(nil)
+	})
 	face := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Height: core.Pt(ButtonHeight),
 		Padding: core.Edges{Left: 10, Right: 8}, CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1,
 		Transition: quick},
@@ -62,20 +74,23 @@ func (s Select[T]) Render(cx *core.Scope) core.Node {
 			return core.Style{Background: bg, BorderColor: border,
 				GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}}
 		},
-		Children: []core.Node{text, Icon(lucide.ChevronDown, iconSize-2, colors.Muted)}}
+		Children: []core.Node{leading, text, Icon(lucide.ChevronDown, iconSize-2, colors.Muted)}}
 	items := make([]core.Node, len(s.Options))
 	for i, o := range s.Options {
 		id := ""
 		if s.TestID != "" {
 			id = s.TestID + "-" + strconv.Itoa(i)
 		}
-		items[i] = MenuItem{Text: o.Label, TestID: id,
-			Checked: func() bool { return s.Value != nil && s.Value() == o.Value },
+		item := MenuItem{Text: o.Label, Leading: o.Leading, Trailing: o.Trailing, TestID: id,
 			OnSelect: func() {
 				if s.OnChange != nil && (s.Value == nil || s.Value() != o.Value) {
 					s.OnChange(o.Value)
 				}
 			}}
+		if !s.NoCheck {
+			item.Checked = func() bool { return s.Value != nil && s.Value() == o.Value }
+		}
+		items[i] = item
 	}
 	popup, backdrop := menuSurface(cx)
 	label := s.Label
