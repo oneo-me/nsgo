@@ -574,6 +574,46 @@ func (w *window) setFrame(f driver.WindowFrame) {
 	gtkWindowSetDefaultSize(w.win, width, height)
 }
 
+func (w *window) minimize() {
+	if !w.chrome.constraints.NoMinimize {
+		gtkWindowMinimize(w.win)
+	}
+}
+
+func (w *window) toggleMaximize() {
+	if gtkWindowIsMaximized(w.win) != 0 {
+		gtkWindowUnmaximize(w.win)
+	} else if !w.chrome.constraints.NoMaximize {
+		gtkWindowMaximize(w.win)
+	}
+}
+
+// setConstraints limits the surface's size, which the window's follows
+// around its menu bar and title bar. GTK 4 sets no maximum and takes no
+// buttons, so a window is fixed by not being resizable, at the size its
+// minimum then asks: GTK shows such a window at its natural size.
+func (w *window) setConstraints(c driver.WindowConstraints) {
+	if w.win == 0 {
+		return
+	}
+	w.chrome.constraints = c
+	size := c.Clamp(driver.Size{Width: w.lastWidth, Height: w.lastHeight})
+	gtkWindowSetDefaultSize(w.win, int32(size.Width), int32(size.Height))
+	fixed := c.NoResize || c.MaxWidth > 0 && c.MaxWidth == c.MinWidth && c.MaxHeight > 0 && c.MaxHeight == c.MinHeight
+	request := func(p driver.Points) int32 {
+		if p > 0 {
+			return int32(p)
+		}
+		return -1 // no minimum
+	}
+	if fixed {
+		gtkWidgetSetSizeRequest(w.surface, int32(size.Width), int32(size.Height))
+	} else {
+		gtkWidgetSetSizeRequest(w.surface, request(c.MinWidth), request(c.MinHeight))
+	}
+	gtkWindowSetResizable(w.win, boolInt(!fixed))
+}
+
 // The keyvals of the menu bar's keys.
 const (
 	gdkAltL = 0xffe9

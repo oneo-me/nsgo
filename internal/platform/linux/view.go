@@ -124,8 +124,10 @@ type chrome struct {
 	titleBar   driver.TitleBarStyle
 	height     driver.Points // the app's title bar height
 	fullScreen bool
-	menu       []driver.MenuEntry
-	keys       map[string]menuRef
+	// constraints are the app's limits on the window.
+	constraints driver.WindowConstraints
+	menu        []driver.MenuEntry
+	keys        map[string]menuRef
 	// menuBar says when the bar shows; with MenuBarAutoHide, revealed is
 	// set while a key showed it, and altAlone while Alt is down alone.
 	menuBar            driver.MenuBarMode

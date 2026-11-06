@@ -3,6 +3,7 @@
 package macos
 
 import (
+	"math"
 	"strings"
 
 	"github.com/ebitengine/purego/objc"
@@ -31,6 +32,8 @@ type chrome struct {
 	// placed is set while the traffic lights are where layoutTrafficLights
 	// put them rather than where AppKit does.
 	placed bool
+	// constraints are the app's limits on the window.
+	constraints driver.WindowConstraints
 
 	appName     string
 	defaultMenu objc.ID // the menu bar the backend builds
@@ -55,6 +58,10 @@ const (
 	zoomButton     = 2
 	titleHidden    = 1
 	titleVisible   = 0
+
+	// fullScreenNone is the collection behavior of a window that never
+	// goes full screen.
+	fullScreenNone = 1 << 9
 )
 
 var (
@@ -124,6 +131,56 @@ func (s *surface) command(c *driver.WindowCommand) {
 	case driver.WindowSetMaterial:
 		s.setMaterial(c.Material)
 		s.refresh()
+	case driver.WindowSetConstraints:
+		s.setConstraints(c.Constraints)
+	}
+}
+
+// setConstraints limits the window, a panel being the app's to size.
+// miniaturize: does nothing without Miniaturizable, and zoom: nothing
+// once windowShouldZoom:toFrame: declines, so the app's commands, the
+// title bar's double click and the menus all follow.
+func (s *surface) setConstraints(c driver.WindowConstraints) {
+	w := s.window
+	if w == 0 || s.kind != driver.SurfaceWindow {
+		return
+	}
+	s.constraints = c
+	w.Send(sel("setContentMinSize:"), apple.CGSize{Width: float64(c.MinWidth), Height: float64(c.MinHeight)})
+	limit := func(p driver.Points) float64 {
+		if p > 0 {
+			return float64(p)
+		}
+		return math.MaxFloat32
+	}
+	w.Send(sel("setContentMaxSize:"), apple.CGSize{Width: limit(c.MaxWidth), Height: limit(c.MaxHeight)})
+	behavior := objc.Send[uint](w, sel("collectionBehavior")) &^ fullScreenNone
+	if c.NoMaximize {
+		behavior |= fullScreenNone
+	}
+	w.Send(sel("setCollectionBehavior:"), behavior)
+	mask := objc.Send[uint](w, selStyleMask)
+	style := mask | styleResizable | styleMiniaturizable
+	if c.NoResize {
+		style &^= styleResizable
+	}
+	if c.NoMinimize {
+		style &^= styleMiniaturizable
+	}
+	if style != mask {
+		w.Send(sel("setStyleMask:"), style)
+		s.applyTitleBar()
+	}
+	if zoom := w.Send(selStandardButton, zoomButton); zoom != 0 {
+		zoom.Send(sel("setEnabled:"), !c.NoMaximize)
+	}
+	if mask&maskFullScreen != 0 {
+		return
+	}
+	size := objc.Send[apple.CGRect](s.native, selBounds).Size
+	shown := driver.Size{Width: driver.Points(size.Width), Height: driver.Points(size.Height)}
+	if fit := c.Clamp(shown); fit != shown {
+		w.Send(sel("setContentSize:"), apple.CGSize{Width: float64(fit.Width), Height: float64(fit.Height)})
 	}
 }
 

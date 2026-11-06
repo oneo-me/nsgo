@@ -44,6 +44,8 @@ type Options struct {
 	// Material is the material behind the app's views, where they draw
 	// nothing opaque (nsgo.WindowMaterial).
 	Material driver.WindowMaterial
+	// Constraints limit the main window (nsgo.WindowConstraints).
+	Constraints driver.WindowConstraints
 	// Perf shows the performance monitor over the app: frame rate, frame
 	// and commit costs, CPU, GPU and memory.
 	Perf bool

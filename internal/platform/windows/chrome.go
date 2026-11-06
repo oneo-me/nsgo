@@ -48,6 +48,7 @@ var (
 
 const (
 	wmClose           = 0x0010
+	wmGetMinMaxInfo   = 0x0024
 	wmNCCalcSize      = 0x0083
 	wmNCHitTest       = 0x0084
 	wmNCActivate      = 0x0086
@@ -122,6 +123,15 @@ type trackMouse struct {
 	HoverTime uint32
 }
 
+// minMaxInfo is MINMAXINFO.
+type minMaxInfo struct {
+	Reserved     point
+	MaxSize      point
+	MaxPosition  point
+	MinTrackSize point
+	MaxTrackSize point
+}
+
 type windowPlacement struct {
 	Length, Flags, ShowCmd uint32
 	MinPosition            point
@@ -146,6 +156,9 @@ type chrome struct {
 	pressed   uint32
 	tracking  bool // the mouse is tracked for WM_NCMOUSELEAVE
 	inactive  bool
+
+	// constraints are the app's limits on the window.
+	constraints driver.WindowConstraints
 
 	fullScreen bool
 	savedStyle uintptr
@@ -249,7 +262,7 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 			w.chromeChanged()
 		}
 	case driver.WindowMinimize:
-		showWindow.Call(w.hwnd, swMinimize)
+		w.minimize()
 	case driver.WindowToggleMaximize:
 		w.toggleMaximize()
 	case driver.WindowToggleFullScreen:
@@ -272,6 +285,88 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 		}
 	case driver.WindowSetMaterial:
 		w.setMaterial(c.Material)
+	case driver.WindowSetConstraints:
+		w.setConstraints(c.Constraints)
+	}
+}
+
+// constrainedStyle returns style with the frame and the buttons c leaves.
+func constrainedStyle(style uintptr, c driver.WindowConstraints) uintptr {
+	style |= wsThickFrame | wsMinimizeBox | wsMaximizeBox
+	if c.NoResize {
+		style &^= wsThickFrame
+	}
+	if c.NoMinimize {
+		style &^= wsMinimizeBox
+	}
+	if c.NoMaximize {
+		style &^= wsMaximizeBox
+	}
+	return style
+}
+
+// setConstraints limits the window and moves it into its new sizes; in
+// full screen they wait for the style it goes back to.
+func (w *window) setConstraints(c driver.WindowConstraints) {
+	w.chrome.constraints = c
+	w.chrome.hover, w.chrome.pressed = 0, 0
+	if w.chrome.fullScreen {
+		w.chrome.savedStyle = constrainedStyle(w.chrome.savedStyle, c)
+		return
+	}
+	style, _, _ := getWindowLongPtrW.Call(w.hwnd, gwlStyle)
+	setWindowLongPtrW.Call(w.hwnd, gwlStyle, constrainedStyle(style, c))
+	w.frameChanged()
+	w.redrawAll()
+	if w.zoomed() || isIconicWindow(w.hwnd) {
+		return
+	}
+	var outer, client rect
+	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&outer)))
+	getClientRect.Call(w.hwnd, uintptr(unsafe.Pointer(&client)))
+	shown := w.point(client.Right, client.Bottom)
+	size := driver.Size{Width: shown.X, Height: shown.Y}
+	if fit := c.Clamp(size); fit != size {
+		setWindowPos.Call(w.hwnd, 0, 0, 0,
+			uintptr(outer.Right-outer.Left-client.Right+w.px(fit.Width)),
+			uintptr(outer.Bottom-outer.Top-client.Bottom+w.px(fit.Height)),
+			swpNoMove|swpNoZOrder|swpNoActivate)
+	}
+}
+
+// minMaxInfo answers WM_GETMINMAXINFO: the constraints' content sizes
+// with what the frame takes. Windows also holds SetWindowPos to these
+// sizes, so full screen goes without them, and a minimized window has
+// no client area to measure.
+func (w *window) minMaxInfo(lParam uintptr) {
+	c := &w.chrome.constraints
+	if w.chrome.fullScreen || isIconicWindow(w.hwnd) {
+		return
+	}
+	info := *(**minMaxInfo)(unsafe.Pointer(&lParam)) // the message's, valid while it is handled
+	var outer, client rect
+	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&outer)))
+	getClientRect.Call(w.hwnd, uintptr(unsafe.Pointer(&client)))
+	frameX, frameY := outer.Right-outer.Left-client.Right, outer.Bottom-outer.Top-client.Bottom
+	if c.MinWidth > 0 {
+		info.MinTrackSize.X = w.px(c.MinWidth) + frameX
+	}
+	if c.MinHeight > 0 {
+		info.MinTrackSize.Y = w.px(c.MinHeight) + frameY
+	}
+	if c.MaxWidth > 0 {
+		info.MaxTrackSize.X = w.px(c.MaxWidth) + frameX
+		info.MaxSize.X = min(info.MaxSize.X, info.MaxTrackSize.X)
+	}
+	if c.MaxHeight > 0 {
+		info.MaxTrackSize.Y = w.px(c.MaxHeight) + frameY
+		info.MaxSize.Y = min(info.MaxSize.Y, info.MaxTrackSize.Y)
+	}
+}
+
+func (w *window) minimize() {
+	if !w.chrome.constraints.NoMinimize {
+		showWindow.Call(w.hwnd, swMinimize)
 	}
 }
 
@@ -281,7 +376,7 @@ func (w *window) toggleMaximize() {
 	}
 	if w.zoomed() {
 		showWindow.Call(w.hwnd, swRestore)
-	} else {
+	} else if !w.chrome.constraints.NoMaximize {
 		showWindow.Call(w.hwnd, swMaximize)
 	}
 }
@@ -351,10 +446,20 @@ func (w *window) captionAt(p driver.Point) uint32 {
 	for i, code := range []uint32{htClose, htMaxButton, htMinButton} {
 		right := width - captionMargin - driver.Points(i)*(captionButtonSize+captionButtonGap)
 		if p.X >= right-captionButtonSize && p.X < right {
+			if !w.captionEnabled(code) {
+				return 0
+			}
 			return code
 		}
 	}
 	return 0
+}
+
+// captionEnabled reports whether the app's constraints leave the caption
+// button code.
+func (w *window) captionEnabled(code uint32) bool {
+	c := &w.chrome.constraints
+	return !(code == htMinButton && c.NoMinimize || code == htMaxButton && c.NoMaximize)
 }
 
 // ncHitTest answers WM_NCHITTEST: the hidden title bar's resize border
@@ -368,7 +473,7 @@ func (w *window) ncHitTest(lParam uintptr) uintptr {
 	screenToClient.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
 	p := w.point(at.X, at.Y)
 	if w.hidden() {
-		if border := w.frameThickness(); !w.zoomed() && at.Y < border {
+		if border := w.frameThickness(); !w.zoomed() && !w.chrome.constraints.NoResize && at.Y < border {
 			var client rect
 			getClientRect.Call(w.hwnd, uintptr(unsafe.Pointer(&client)))
 			switch {
@@ -509,6 +614,8 @@ func (p *painter) drawCaptionButtons(width int32) {
 			fg = 0xbdb6aaff
 		}
 		switch {
+		case !w.captionEnabled(code):
+			fg = fg&^0xff | 0x48
 		case code == htClose && hovered:
 			fg = 0xffffffff
 		case c.inactive && !hovered:
@@ -800,7 +907,7 @@ func (w *window) chooseMenu(ref menuRef) {
 	case driver.MenuQuit, driver.MenuClose:
 		postMessageW.Call(w.hwnd, wmClose, 0, 0)
 	case driver.MenuMinimize:
-		showWindow.Call(w.hwnd, swMinimize)
+		w.minimize()
 	case driver.MenuZoom:
 		w.toggleMaximize()
 	case driver.MenuToggleFullScreen:

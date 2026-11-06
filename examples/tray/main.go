@@ -27,7 +27,8 @@ func App(app *core.Scope) {
 	desktop.SetShutdownMode(app, desktop.ShutdownOnExplicit)
 	count := core.NewSignal(app, 0)
 	settings := func() {
-		desktop.OpenWindow(app, desktop.WindowOptions{Title: "Settings", Width: 360, Height: 240, Key: "settings"},
+		desktop.OpenWindow(app, desktop.WindowOptions{Title: "Settings", Width: 360, Height: 240, Key: "settings",
+			Constraints: desktop.WindowConstraints{NoResize: true, NoMinimize: true}},
 			func(cx *core.Scope) core.Node { return Settings(cx, count) })
 	}
 

@@ -59,6 +59,8 @@ type Options struct {
 	Fonts []string
 	// Appearance is the appearance the app starts in.
 	Appearance driver.Appearance
+	// Constraints limit the window (nsgo.WindowConstraints).
+	Constraints driver.WindowConstraints
 	// Perf shows the performance monitor over the app (perf.go).
 	Perf bool
 	// Host is what an embedding host gives the view (NewView).
@@ -434,6 +436,9 @@ func (w *window) createWindow(opts Options) {
 	gtkWidgetSetVexpand(w.surface, 1)
 	gtkBoxAppend(w.box, w.surface)
 	gtkWindowSetChild(w.win, w.box)
+	if opts.Constraints != (driver.WindowConstraints{}) {
+		w.setConstraints(opts.Constraints)
+	}
 	w.setupInputs()
 	gSignalConnect(w.win, "close-request", cbCloseRequest, w.handle)
 	for _, name := range []string{"maximized", "fullscreen"} {
@@ -945,13 +950,9 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 		w.showMenuBar()
 		w.updateEnvironment()
 	case driver.WindowMinimize:
-		gtkWindowMinimize(w.win)
+		w.minimize()
 	case driver.WindowToggleMaximize:
-		if gtkWindowIsMaximized(w.win) != 0 {
-			gtkWindowUnmaximize(w.win)
-		} else {
-			gtkWindowMaximize(w.win)
-		}
+		w.toggleMaximize()
 	case driver.WindowToggleFullScreen:
 		if w.chrome.fullScreen {
 			gtkWindowUnfullscreen(w.win)
@@ -971,6 +972,8 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 	case driver.WindowSetMenuBar:
 		w.chrome.menuBar, w.chrome.revealed = c.MenuBar, false
 		w.showMenuBar()
+	case driver.WindowSetConstraints:
+		w.setConstraints(c.Constraints)
 	case driver.WindowSetLevel:
 		// Stacking is the compositor's.
 	}

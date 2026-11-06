@@ -63,6 +63,8 @@ type Options struct {
 	// 22H2 or later, where DWM draws system backdrops; earlier Windows
 	// keeps the window opaque.
 	Material driver.WindowMaterial
+	// Constraints limit the window (nsgo.WindowConstraints).
+	Constraints driver.WindowConstraints
 	// Fonts are font files under the app's resources, registered before
 	// the first view.
 	Fonts []string
@@ -136,6 +138,9 @@ const (
 	wmFrame         = 0x8000 + 4 // the app waits for a display frame
 
 	wsOverlappedWindow = 0x00CF0000
+	wsThickFrame       = 0x00040000
+	wsMinimizeBox      = 0x00020000
+	wsMaximizeBox      = 0x00010000
 	wsClipChildren     = 0x02000000
 	wsVisible          = 0x10000000
 	wsExNoRedirect     = 0x00200000           // no redirection bitmap, for a composition surface
@@ -425,7 +430,7 @@ type window struct {
 	// The views under the pointer that follow hovers, and where the
 	// pointer is while it is over the client area.
 	hovered   hover.Tracker
-	buttons   uintptr // the buttons the last mouse move held down
+	held      uintptr // the buttons the last mouse move held down
 	pointer   driver.Point
 	pointerIn bool
 
@@ -501,7 +506,8 @@ func Run(app engine.App, opts Options) {
 
 	// A first guess at the window around the app's size, which placeNew
 	// corrects.
-	const style = wsOverlappedWindow | wsClipChildren
+	w.chrome.constraints = opts.Constraints
+	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
 	var ex uintptr
 	if w.baseComposed {
 		ex = wsExNoRedirect
@@ -1464,7 +1470,7 @@ func (w *window) hoverViews() {
 			under = append(under, v.id)
 		}
 	}
-	mods, button := modifiers(), hover.Pressed(uint32(w.buttons), mouseButtons)
+	mods, button := modifiers(), hover.Pressed(uint32(w.held), mouseButtons)
 	for _, e := range w.hovered.Move(under) {
 		if v := w.view(e.ID); v != nil {
 			b, _ := w.surfaceBounds(v)
@@ -1526,7 +1532,7 @@ func (w *window) reportMouseMove() {
 	if len(under) == 0 {
 		return
 	}
-	mods, button := modifiers(), hover.Pressed(uint32(w.buttons), mouseButtons)
+	mods, button := modifiers(), hover.Pressed(uint32(w.held), mouseButtons)
 	for i := len(under) - 1; i >= 0; i-- {
 		v := under[i]
 		b, _ := w.surfaceBounds(v)
@@ -1616,7 +1622,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		}
 	}
 	if message == wmMouseMove {
-		w.buttons = wParam
+		w.held = wParam
 		w.pointerMoved(int32(int16(lParam&0xffff)), int32(int16(lParam>>16&0xffff)))
 		w.mouseMoved()
 	}
@@ -1799,6 +1805,11 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		return 0
 	case wmGesture:
 		if w.gesture(lParam) {
+			return 0
+		}
+	case wmGetMinMaxInfo:
+		if !w.embedded && w.chrome.constraints != (driver.WindowConstraints{}) {
+			w.minMaxInfo(lParam)
 			return 0
 		}
 	case wmNCCalcSize:

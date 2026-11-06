@@ -317,3 +317,39 @@ func TestMainViewWithoutWindows(t *testing.T) {
 		t.Error("a later main view does not replace it")
 	}
 }
+
+func TestWindowConstraints(t *testing.T) {
+	var cx *Scope
+	w := newWindows(t, func(app *Scope) {
+		app.OpenWindow(WindowOptions{Width: 1000, Height: 100, Constraints: WindowConstraints{
+			MinWidth: 300, MinHeight: 200, MaxWidth: 100, MaxHeight: 800, NoResize: true}},
+			func(c *Scope) Node { cx = c; return View{} })
+	})
+	cfg := w.take(0, driver.ItemOpenSurface)[0].Surface
+	want := WindowConstraints{MinWidth: 300, MinHeight: 200, MaxWidth: 300, MaxHeight: 800, NoResize: true, NoMaximize: true}
+	if cfg.Constraints != want {
+		t.Fatalf("a window opens with %+v; want %+v", cfg.Constraints, want)
+	}
+	if cfg.Width != 300 || cfg.Height != 200 {
+		t.Fatalf("a window opens at %v by %v; want its sizes kept to, at 300 by 200", cfg.Width, cfg.Height)
+	}
+	cx.SetWindowConstraints(WindowConstraints{MinWidth: -1, MaxHeight: 500, NoMinimize: true})
+	w.commit()
+	sent := w.take(cfg.ID, driver.ItemWindow)
+	if len(sent) != 1 || sent[0].Window.Action != driver.WindowSetConstraints ||
+		sent[0].Window.Constraints != (WindowConstraints{MaxHeight: 500, NoMinimize: true}) {
+		t.Fatalf("the window was sent %+v", sent)
+	}
+}
+
+func TestWindowConstraintsClamp(t *testing.T) {
+	c := WindowConstraints{MinWidth: 300, MaxHeight: 500}.Normalized()
+	for _, tc := range []struct{ in, want Size }{
+		{Size{Width: 100, Height: 100}, Size{Width: 300, Height: 100}},
+		{Size{Width: 4000, Height: 4000}, Size{Width: 4000, Height: 500}},
+	} {
+		if got := c.Clamp(tc.in); got != tc.want {
+			t.Errorf("Clamp(%v) = %v; want %v", tc.in, got, tc.want)
+		}
+	}
+}

@@ -350,6 +350,9 @@ type (
 	WindowFrame = driver.WindowFrame
 	// WindowLevel is where a window stacks among the others.
 	WindowLevel = driver.WindowLevel
+	// WindowConstraints limit a window's size and what the user may do
+	// to it.
+	WindowConstraints = driver.WindowConstraints
 	// WindowControls is how a hidden title bar shows the system's window
 	// controls: hidden, or macOS's traffic lights moved.
 	WindowControls = driver.WindowControls

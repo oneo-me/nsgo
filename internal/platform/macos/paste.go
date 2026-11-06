@@ -58,6 +58,14 @@ func registerPaste() {
 				return true
 			},
 		}, {
+			// A window the app keeps from maximizing stays as it is.
+			// The rect after the window goes unread.
+			Cmd: sel("windowShouldZoom:toFrame:"),
+			Fn: func(self objc.ID, _ objc.SEL, window objc.ID) bool {
+				s := windowSurface(window)
+				return s == nil || !s.constraints.NoMaximize
+			},
+		}, {
 			// A test host's app ends with its window, once AppKit's close
 			// returned.
 			Cmd: sel("windowWillClose:"),

@@ -41,6 +41,11 @@ func (cx *Scope) SetWindowLevel(level WindowLevel) {
 	cx.window(WindowCommand{Action: WindowSetLevel, Level: level})
 }
 
+// SetWindowConstraints is the core's part of desktop.SetWindowConstraints, which apps use.
+func (cx *Scope) SetWindowConstraints(c WindowConstraints) {
+	cx.window(WindowCommand{Action: driver.WindowSetConstraints, Constraints: c.Normalized()})
+}
+
 // OrderFront is the core's part of desktop.OrderFront, which apps use.
 func (cx *Scope) OrderFront() { cx.window(WindowCommand{Action: WindowOrderFront}) }
 

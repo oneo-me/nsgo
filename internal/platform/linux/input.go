@@ -790,13 +790,9 @@ func (w *window) menuChosen(ref menuRef) bool {
 	case driver.MenuQuit, driver.MenuClose:
 		w.close()
 	case driver.MenuMinimize:
-		gtkWindowMinimize(w.win)
+		w.minimize()
 	case driver.MenuZoom:
-		if gtkWindowIsMaximized(w.win) != 0 {
-			gtkWindowUnmaximize(w.win)
-		} else {
-			gtkWindowMaximize(w.win)
-		}
+		w.toggleMaximize()
 	case driver.MenuToggleFullScreen:
 		if w.chrome.fullScreen {
 			gtkWindowUnfullscreen(w.win)

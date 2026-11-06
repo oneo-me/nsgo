@@ -124,6 +124,7 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 | Item | Reference | Done when |
 | --- | --- | --- |
 | Surfaces on Windows and Linux | macOS's `own` surface | The backends run the app on a surface in no window and attach each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
+| Window limits on Linux | `XSetWMNormalHints` on X11, `xdg_toplevel.set_max_size` on Wayland; `GtkHeaderBar`'s decoration layout | GTK 4 reaches neither from its API: a maximum other than a fixed size holds, and `NoMinimize` and `NoMaximize` take the system title bar's buttons |
 | Tray icons on Windows | `Shell_NotifyIcon` | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
 | Tray icons on Linux | StatusNotifierItem over D-Bus | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
 | Global shortcuts on Windows and Linux | `RegisterHotKey`; `XGrabKey`, the GlobalShortcuts portal | A shortcut shows a panel from any app, on Wayland once the user grants it |

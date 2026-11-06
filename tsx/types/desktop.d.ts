@@ -25,6 +25,8 @@ export type MenuBarMode = "shown" | "autoHide";
 export type TitleBarStyle = "default" | "hidden";
 /** A window's frame: the part of it to move, in points; a field left out keeps its value. */
 export interface WindowFrame { origin?: Partial<Point>; size?: Partial<Size>; animated?: boolean }
+/** What limits the window: its content's sizes in points, and what the user may do to it. A field left out limits nothing. */
+export interface WindowConstraints { minWidth?: number; minHeight?: number; maxWidth?: number; maxHeight?: number; resizable?: boolean; minimizable?: boolean; maximizable?: boolean }
 /** Where the window sits among the others. */
 export type WindowLevel = "normal" | "floating" | "desktopIcon";
 export interface WindowModule {
@@ -35,6 +37,7 @@ export interface WindowModule {
   toggleMaximize(): void;
   toggleFullScreen(): void;
   setFrame(frame: WindowFrame): void;
+  setConstraints(constraints: WindowConstraints): void;
   setLevel(level: WindowLevel): void;
   orderFront(): void;
   close(): void;

@@ -531,6 +531,11 @@ type Translation struct {
 	SystemFullScreen                             func() string
 	SystemAwayFor2S                              func() string
 	SystemFrameAndLevel                          func() string
+	SystemConstraints                            func() string
+	SystemNoConstraints                          func() string
+	SystemNoResize                               func() string
+	SystemNoMinimize                             func() string
+	SystemNoMaximize                             func() string
 	SystemTallerAnimated                         func() string
 	SystemMoveTo8080                             func() string
 	SystemNormal                                 func() string
@@ -2467,6 +2472,11 @@ const (
 	textSystemFullScreen
 	textSystemAwayFor2S
 	textSystemFrameAndLevel
+	textSystemConstraints
+	textSystemNoConstraints
+	textSystemNoResize
+	textSystemNoMinimize
+	textSystemNoMaximize
 	textSystemTallerAnimated
 	textSystemMoveTo8080
 	textSystemNormal
@@ -4295,6 +4305,11 @@ var texts = map[string]*[numTexts]string{
 		"Full screen",
 		"Away for 2 s",
 		"Frame and level",
+		"Constraints",
+		"No limits",
+		"Fixed size",
+		"No minimize",
+		"No maximize",
 		"Taller, animated",
 		"Move to 80, 80",
 		"Normal",
@@ -6118,6 +6133,11 @@ var texts = map[string]*[numTexts]string{
 		"ملء الشاشة",
 		"ابتعاد لثانيتين",
 		"الإطار والمستوى",
+		"القيود",
+		"بلا قيود",
+		"حجم ثابت",
+		"بلا تصغير",
+		"بلا تكبير",
 		"أطول، مع حركة",
 		"النقل إلى 80، 80",
 		"عادي",
@@ -7941,6 +7961,11 @@ var texts = map[string]*[numTexts]string{
 		"全屏",
 		"离开 2 秒",
 		"框架和层级",
+		"窗口限制",
+		"不限制",
+		"固定大小",
+		"禁止最小化",
+		"禁止最大化",
 		"变高，带动画",
 		"移到 80, 80",
 		"普通",
@@ -9764,6 +9789,11 @@ var texts = map[string]*[numTexts]string{
 		"全屏",
 		"離開 2 秒",
 		"框架和層級",
+		"視窗限制",
+		"不限制",
+		"固定大小",
+		"禁止最小化",
+		"禁止最大化",
 		"變高，帶動畫",
 		"移到 80, 80",
 		"普通",
@@ -12261,6 +12291,21 @@ func Supply(lang string, t Translation) {
 	}
 	if t.SystemFrameAndLevel != nil {
 		st[textSystemFrameAndLevel] = t.SystemFrameAndLevel()
+	}
+	if t.SystemConstraints != nil {
+		st[textSystemConstraints] = t.SystemConstraints()
+	}
+	if t.SystemNoConstraints != nil {
+		st[textSystemNoConstraints] = t.SystemNoConstraints()
+	}
+	if t.SystemNoResize != nil {
+		st[textSystemNoResize] = t.SystemNoResize()
+	}
+	if t.SystemNoMinimize != nil {
+		st[textSystemNoMinimize] = t.SystemNoMinimize()
+	}
+	if t.SystemNoMaximize != nil {
+		st[textSystemNoMaximize] = t.SystemNoMaximize()
 	}
 	if t.SystemTallerAnimated != nil {
 		st[textSystemTallerAnimated] = t.SystemTallerAnimated()
@@ -19792,6 +19837,46 @@ func SystemFrameAndLevel(cx *core.Scope) string { return For(cx).SystemFrameAndL
 // SystemFrameAndLevel says "Frame and level"
 // in the language of msgs.
 func (msgs Messages) SystemFrameAndLevel() string { return msgs.text(textSystemFrameAndLevel) }
+
+// SystemConstraints says "Constraints"
+// in the language the app shows under cx.
+func SystemConstraints(cx *core.Scope) string { return For(cx).SystemConstraints() }
+
+// SystemConstraints says "Constraints"
+// in the language of msgs.
+func (msgs Messages) SystemConstraints() string { return msgs.text(textSystemConstraints) }
+
+// SystemNoConstraints says "No limits"
+// in the language the app shows under cx.
+func SystemNoConstraints(cx *core.Scope) string { return For(cx).SystemNoConstraints() }
+
+// SystemNoConstraints says "No limits"
+// in the language of msgs.
+func (msgs Messages) SystemNoConstraints() string { return msgs.text(textSystemNoConstraints) }
+
+// SystemNoResize says "Fixed size"
+// in the language the app shows under cx.
+func SystemNoResize(cx *core.Scope) string { return For(cx).SystemNoResize() }
+
+// SystemNoResize says "Fixed size"
+// in the language of msgs.
+func (msgs Messages) SystemNoResize() string { return msgs.text(textSystemNoResize) }
+
+// SystemNoMinimize says "No minimize"
+// in the language the app shows under cx.
+func SystemNoMinimize(cx *core.Scope) string { return For(cx).SystemNoMinimize() }
+
+// SystemNoMinimize says "No minimize"
+// in the language of msgs.
+func (msgs Messages) SystemNoMinimize() string { return msgs.text(textSystemNoMinimize) }
+
+// SystemNoMaximize says "No maximize"
+// in the language the app shows under cx.
+func SystemNoMaximize(cx *core.Scope) string { return For(cx).SystemNoMaximize() }
+
+// SystemNoMaximize says "No maximize"
+// in the language of msgs.
+func (msgs Messages) SystemNoMaximize() string { return msgs.text(textSystemNoMaximize) }
 
 // SystemTallerAnimated says "Taller, animated"
 // in the language the app shows under cx.

@@ -535,6 +535,16 @@ func windowCard(cx *core.Scope) core.Node {
 			}),
 			small(tr.SystemMoveTo8080(), func() { desktop.SetWindowFrame(cx, desktop.WindowFrame{X: 80, Y: 80, Move: true}) }),
 		}},
+		Caption{Label: tr.SystemConstraints()},
+		ui.Wrap{Children: []core.Node{
+			small(tr.SystemNoConstraints(), func() { desktop.SetWindowConstraints(cx, desktop.WindowConstraints{}) }),
+			small("400 × 300 – 800 × 600", func() {
+				desktop.SetWindowConstraints(cx, desktop.WindowConstraints{MinWidth: 400, MinHeight: 300, MaxWidth: 800, MaxHeight: 600})
+			}),
+			small(tr.SystemNoResize(), func() { desktop.SetWindowConstraints(cx, desktop.WindowConstraints{NoResize: true}) }),
+			small(tr.SystemNoMinimize(), func() { desktop.SetWindowConstraints(cx, desktop.WindowConstraints{NoMinimize: true}) }),
+			small(tr.SystemNoMaximize(), func() { desktop.SetWindowConstraints(cx, desktop.WindowConstraints{NoMaximize: true}) }),
+		}},
 		ui.Wrap{Children: []core.Node{
 			small(tr.SystemNormal(), func() { desktop.SetWindowLevel(cx, desktop.WindowLevelNormal) }),
 			small(tr.SystemFloating(), func() { desktop.SetWindowLevel(cx, desktop.WindowLevelFloating) }),

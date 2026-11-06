@@ -13,7 +13,7 @@ import "github.com/oneo-me/nsgo/core"
 type (
 	// Window is a window or a panel the app opened.
 	Window = core.Window
-	// WindowOptions are a window's title, size and key.
+	// WindowOptions are a window's title, size, constraints and key.
 	WindowOptions = core.WindowOptions
 	// PanelOptions are a panel's size and whether it hides as it loses
 	// the focus.

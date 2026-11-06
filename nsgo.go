@@ -57,6 +57,9 @@ func Run[M Main](main M, opts ...Option) {
 	for _, fn := range opts {
 		fn(&o)
 	}
+	o.constraints = o.constraints.Normalized()
+	size := o.constraints.Clamp(core.Size{Width: o.width, Height: o.height})
+	o.width, o.height = size.Width, size.Height
 	switch m := any(main).(type) {
 	case func(cx *core.Scope) core.Node:
 		run(devApp(m), nil, o)
@@ -106,6 +109,8 @@ type options struct {
 	// width and height its size.
 	material      core.WindowMaterial
 	width, height core.Points
+	// constraints limit the main window.
+	constraints core.WindowConstraints
 	// appearance is the appearance the app starts in.
 	appearance core.Appearance
 	// hideDock starts the app out of the Dock (macOS).
@@ -129,6 +134,14 @@ func Appearance(appearance core.Appearance) Option {
 // default. desktop.OpenWindow's windows take it where they set no size.
 func WindowSize(width, height core.Points) Option {
 	return func(o *options) { o.width, o.height = width, height }
+}
+
+// WindowConstraints limits the main window's content size and what the
+// user may do to it: desktop.SetWindowConstraints says how, and changes
+// them later. desktop.OpenWindow's windows take their own from
+// WindowOptions.
+func WindowConstraints(c core.WindowConstraints) Option {
+	return func(o *options) { o.constraints = c }
 }
 
 // HideDock starts the app out of the Dock and the app switcher, on

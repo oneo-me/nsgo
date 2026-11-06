@@ -20,6 +20,9 @@ type (
 	WindowFrame = core.WindowFrame
 	// WindowLevel is where a window stacks among the others.
 	WindowLevel = core.WindowLevel
+	// WindowConstraints limit a window's size and what the user may do
+	// to it.
+	WindowConstraints = core.WindowConstraints
 	// MenuBarMode says when Windows and Linux show the menu bar.
 	MenuBarMode = core.MenuBarMode
 	// WindowControls is how a hidden title bar shows the system's window
@@ -150,6 +153,20 @@ func SetWindowFrame(cx *core.Scope, f WindowFrame) { cx.SetWindowFrame(f) }
 // SetWindowLevel puts the window at level among the others, on macOS
 // and Windows; Linux leaves stacking to the compositor.
 func SetWindowLevel(cx *core.Scope, level WindowLevel) { cx.SetWindowLevel(level) }
+
+// SetWindowConstraints limits the window's content size and says whether
+// it resizes, minimizes and maximizes; the zero WindowConstraints limits
+// nothing. The window moves into its new sizes, and MinimizeWindow and
+// ToggleMaximize do nothing where it may not, as its buttons:
+//
+//	desktop.SetWindowConstraints(cx, desktop.WindowConstraints{MinWidth: 480, MinHeight: 320, NoMaximize: true})
+//
+// A window sets them as it opens with WindowOptions.Constraints, and the
+// main window with nsgo.WindowConstraints. On Linux, GTK 4 has neither
+// maximum sizes nor a way to take the title bar's buttons, so only
+// NoResize, or a maximum equal to the minimum, limits a window from
+// above, and the user's buttons stay.
+func SetWindowConstraints(cx *core.Scope, c WindowConstraints) { cx.SetWindowConstraints(c) }
 
 // OrderFront shows the window, restoring it when minimized or hidden,
 // brings it to the front of its level and activates the app.

@@ -44,6 +44,9 @@ type WindowOptions struct {
 	Hidden bool
 	// Material is the material behind the content (WindowMaterial).
 	Material WindowMaterial
+	// Constraints limit the window's size, which Width and Height keep
+	// to, and what the user may do to it.
+	Constraints WindowConstraints
 }
 
 // PanelOptions are a panel's: the core's part of desktop.PanelOptions,
@@ -102,8 +105,10 @@ func (cx *Scope) OpenWindow(opts WindowOptions, content func(cx *Scope) Node) *W
 	if opts.Width <= 0 || opts.Height <= 0 {
 		opts.Width, opts.Height = rt.windows.Width, rt.windows.Height
 	}
+	limits := opts.Constraints.Normalized()
+	size := limits.Clamp(Size{Width: opts.Width, Height: opts.Height})
 	w := rt.openSurface(cx.current(), driver.SurfaceConfig{Kind: driver.SurfaceWindow, Title: opts.Title,
-		Width: opts.Width, Height: opts.Height, Hidden: opts.Hidden, Material: opts.Material}, content)
+		Width: size.Width, Height: size.Height, Hidden: opts.Hidden, Material: opts.Material, Constraints: limits}, content)
 	if opts.Key != "" {
 		w.key = opts.Key
 		if rt.keyed == nil {

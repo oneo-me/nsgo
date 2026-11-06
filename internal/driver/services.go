@@ -133,6 +133,9 @@ const (
 	WindowSetControls
 	// WindowSetMaterial puts Material behind the window's content.
 	WindowSetMaterial
+	// WindowSetConstraints limits the window's size and what the user may
+	// do to it (Constraints).
+	WindowSetConstraints
 	// WindowShow shows a hidden window without activating the app; a
 	// panel shows under tray icon Anchor, when set.
 	WindowShow
@@ -172,6 +175,8 @@ type SurfaceConfig struct {
 	Hidden bool
 	// Material is the material behind the content (WindowSetMaterial).
 	Material WindowMaterial
+	// Constraints limit a window (WindowSetConstraints).
+	Constraints WindowConstraints
 	// HideOnBlur hides a panel as it loses the focus, reported with
 	// EventWindowHidden.
 	HideOnBlur bool
@@ -207,6 +212,8 @@ type WindowCommand struct {
 	MenuBar  MenuBarMode
 	Controls WindowControls
 	Material WindowMaterial
+	// Constraints are what WindowSetConstraints sets.
+	Constraints WindowConstraints
 	// Anchor is the tray icon WindowShow shows a panel under.
 	Anchor uint32
 }
@@ -238,6 +245,49 @@ type WindowFrame struct {
 	Width, Height Points
 	// Animated animates the change with macOS's resize animation.
 	Animated bool
+}
+
+// WindowConstraints limit a window's content size, in points, and what
+// the user may do to it; the zero value limits nothing. A size of 0 has
+// no limit, and a maximum under the minimum takes the minimum. Full
+// screen goes past the sizes.
+type WindowConstraints struct {
+	MinWidth, MinHeight Points
+	MaxWidth, MaxHeight Points
+	// NoResize keeps the user from resizing the window, and so from
+	// maximizing it; WindowSetFrame still sizes it.
+	NoResize bool
+	// NoMinimize keeps the window from minimizing.
+	NoMinimize bool
+	// NoMaximize keeps the window from maximizing, and on macOS, where
+	// the same button goes full screen, from full screen.
+	NoMaximize bool
+}
+
+// Normalized returns c with its negative sizes 0, its maximums at least
+// its minimums and NoResize implying NoMaximize.
+func (c WindowConstraints) Normalized() WindowConstraints {
+	c.NoMaximize = c.NoMaximize || c.NoResize
+	c.MinWidth, c.MinHeight = max(c.MinWidth, 0), max(c.MinHeight, 0)
+	if c.MaxWidth = max(c.MaxWidth, 0); c.MaxWidth > 0 {
+		c.MaxWidth = max(c.MaxWidth, c.MinWidth)
+	}
+	if c.MaxHeight = max(c.MaxHeight, 0); c.MaxHeight > 0 {
+		c.MaxHeight = max(c.MaxHeight, c.MinHeight)
+	}
+	return c
+}
+
+// Clamp returns size within c's sizes, which c.Normalized returned.
+func (c WindowConstraints) Clamp(size Size) Size {
+	size.Width, size.Height = max(size.Width, c.MinWidth), max(size.Height, c.MinHeight)
+	if c.MaxWidth > 0 {
+		size.Width = min(size.Width, c.MaxWidth)
+	}
+	if c.MaxHeight > 0 {
+		size.Height = min(size.Height, c.MaxHeight)
+	}
+	return size
 }
 
 // WindowLevel is where a window stacks among the others.

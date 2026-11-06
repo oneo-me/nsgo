@@ -359,6 +359,12 @@ func (s *surface) setWindowFrame(f driver.WindowFrame) {
 	if f.Height > 0 {
 		frame.Size.Height = float64(f.Height)
 	}
+	// AppKit limits only the user's resizes.
+	content := objc.Send[apple.CGRect](w, sel("contentRectForFrameRect:"), frame).Size
+	size := driver.Size{Width: driver.Points(content.Width), Height: driver.Points(content.Height)}
+	fit := s.constraints.Clamp(size)
+	frame.Size.Width += float64(fit.Width - size.Width)
+	frame.Size.Height += float64(fit.Height - size.Height)
 	if f.Move {
 		screens := objc.ID(objc.GetClass("NSScreen")).Send(sel("screens"))
 		if objc.Send[uint](screens, sel("count")) > 0 {

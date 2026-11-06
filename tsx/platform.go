@@ -174,6 +174,13 @@ func (r *runtime) windowModule() goja.Value {
 		desktop.SetWindowLevel(r.cx, map[string]core.WindowLevel{"normal": core.WindowLevelNormal,
 			"floating": core.WindowLevelFloating, "desktopIcon": core.WindowLevelDesktop}[stringOf(arg(call, 0))])
 	})
+	set("setConstraints", func(call goja.FunctionCall) {
+		c := r.options(arg(call, 0))
+		desktop.SetWindowConstraints(r.cx, core.WindowConstraints{MinWidth: core.Points(c.float("minWidth", 0)),
+			MinHeight: core.Points(c.float("minHeight", 0)), MaxWidth: core.Points(c.float("maxWidth", 0)),
+			MaxHeight: core.Points(c.float("maxHeight", 0)), NoResize: !c.bool("resizable", true),
+			NoMinimize: !c.bool("minimizable", true), NoMaximize: !c.bool("maximizable", true)})
+	})
 	set("orderFront", func(goja.FunctionCall) { desktop.OrderFront(r.cx) })
 	set("close", func(goja.FunctionCall) { desktop.CloseWindow(r.cx) })
 	return o
