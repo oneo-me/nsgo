@@ -80,6 +80,7 @@ func (w *window) showSelection() {
 	ranges := map[driver.NodeID]driver.SelectionRange{}
 	if w.textSelection != nil {
 		ranges = w.textSelection.Ranges()
+		w.tellSelection(w.textSelection, false)
 	}
 	for _, v := range w.selected {
 		if _, ok := ranges[v.id]; !ok && !v.deleted && v.selEnd > v.selStart {
@@ -96,6 +97,18 @@ func (w *window) showSelection() {
 			}
 			w.selected = append(w.selected, v)
 		}
+	}
+}
+
+// tellSelection reports the selection's extent to its area.
+func (w *window) tellSelection(sl *textselect.Selection, cleared bool) {
+	area := w.view(sl.Area)
+	if area == nil {
+		return
+	}
+	b, _ := w.surfaceBounds(area)
+	if ev, ok := sl.Tell(b.Origin, cleared); ok {
+		w.report(area, ev)
 	}
 }
 
@@ -192,6 +205,7 @@ func (w *window) clearSelection() {
 	if w.textSelection == nil {
 		return
 	}
+	w.tellSelection(w.textSelection, true)
 	w.textSelection = nil
 	w.showSelection()
 }

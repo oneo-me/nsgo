@@ -1,3 +1,15 @@
 sortBy:
   message: "Sort by {column}"
   description: What screen readers say of a data table column's sort button.
+diffUnchangedLines:
+  message: "{n, plural, one {# unchanged line} other {# unchanged lines}}"
+  description: What a diff says of the unchanged lines it collapses.
+diffExpandAll:
+  message: "Expand all"
+  description: What screen readers say of the button showing all of a diff's collapsed lines.
+diffStage:
+  message: "Stage"
+  description: The button staging the lines of a diff's change for a commit.
+diffDiscardChanges:
+  message: "Discard Changes…"
+  description: The button that, after asking, throws away the lines of a diff's change.

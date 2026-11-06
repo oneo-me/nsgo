@@ -465,6 +465,16 @@ func (a *App) hoverAt(selector string, local *driver.Point) {
 	a.done()
 }
 
+// SelectText has the selection of the Selectable view selector names touch
+// box of its texts, no Size clearing it, as the platforms report it.
+func (a *App) SelectText(selector string, box driver.Bounds) {
+	a.t.Helper()
+	a.step("selectText(%s, %v)", selector, box)
+	v := a.pick(selector, "view", func(m *View) (*View, bool) { return m, true })
+	a.send(v, driver.Event{Kind: driver.EventSelectionChange, Point: box.Origin, Size: box.Size})
+	a.done()
+}
+
 // HoverOut moves the mouse out of the surface: every view hovered hears
 // MouseLeave.
 func (a *App) HoverOut() {

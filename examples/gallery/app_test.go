@@ -740,14 +740,22 @@ func TestEditor(t *testing.T) {
 	app.Find("text:main.rs")
 }
 
-// TestDiff counts the changes, reverts one and shows the patch.
+// TestDiff counts the changes, stages and discards one, and shows the
+// patch.
 func TestDiff(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "DiffView")
 	app.Find("text:var ErrNotFound")
 	app.Find("text:· 7 changes")
-	app.Press("role:button Revert >> nth=0")
+	app.OnAlert = func(core.AlertConfig) int { return 1 }
+	app.Hover("text:var ErrNotFound")
+	app.Press("role:button Stage")
 	app.Find("text:· 6 changes")
+	app.Find("text:Staged")
+	app.Hover("text:/safe for concurrent use/ >> nth=0")
+	app.Press("role:button Discard Changes…")
+	app.Find("text:· 5 changes")
+	app.Find("text:Discarded")
 	app.Press("role:switch Show a patch")
 	app.Find("text:store.go")
 	app.Find("text:old_test.go → store_test.go")

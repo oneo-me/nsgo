@@ -253,6 +253,7 @@ type node struct {
 type handlers struct {
 	press, longPress, pressDown, pressUp func(PressEvent)
 	mouseEnter, mouseLeave, mouseMove    func(MouseEvent)
+	textSelection                        func(Bounds)
 	focus, blur                          func()
 	touch, touchCapture                  func(TouchEvent)
 	contextMenu                          func(ContextMenuEvent)
@@ -1322,7 +1323,8 @@ func (t *Tree) setViewParts(n *node, v View) {
 	t.pointersMoved = t.pointerStyled
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, pressDown: v.OnPressDown, pressUp: v.OnPressUp,
 		mouseEnter: v.OnMouseEnter, mouseLeave: v.OnMouseLeave, mouseMove: v.OnMouseMove,
-		layout: v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
+		textSelection: v.OnTextSelection,
+		layout:        v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
 		pan: v.OnPan, pinch: v.OnPinch, rotation: v.OnRotation,
 		fileEnter: v.OnFileDragEnter, fileLeave: v.OnFileDragLeave, fileDrop: v.OnFileDrop,
 		focus: v.OnFocus, blur: v.OnBlur, transitionEnd: v.OnTransitionEnd}
@@ -1843,6 +1845,9 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		if in := n.input; in != nil && in.selection != nil {
 			t.within(n.owner, func() { in.selection(TextRange{Start: ev.Index, End: int(ev.Count)}) })
 		}
+		if h.textSelection != nil {
+			t.within(n.owner, func() { h.textSelection(Bounds{Origin: ev.Point, Size: ev.Size}) })
+		}
 	case driver.EventKeyPress:
 		if in := n.input; in != nil && in.keyPress != nil {
 			t.within(n.owner, func() { in.keyPress(ev.Text) })
@@ -2159,6 +2164,7 @@ func (n *node) events() driver.EventMask {
 	bit(driver.EventError, h.loadError != nil)
 	bit(driver.EventLoadEnd, h.loadEnd != nil)
 	bit(driver.EventChangeText, n.kind == driver.KindInput)
+	bit(driver.EventSelectionChange, h.textSelection != nil)
 	if in := n.input; in != nil {
 		bit(driver.EventSelectionChange, in.selection != nil)
 		bit(driver.EventKeyPress, in.keyPress != nil)

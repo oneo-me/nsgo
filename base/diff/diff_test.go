@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 )
 
@@ -345,5 +346,71 @@ func TestDiffViewSelectable(t *testing.T) {
 	}
 	if !inArea("text:three") || inArea(`text:"2" >> nth=0`) {
 		t.Fatalf("text in an area: %v, number: %v\n%s", inArea("text:three"), inArea(`text:"2" >> nth=0`), app.Dump())
+	}
+}
+
+func TestRegionActsOnTheChangeUnderThePointerOrTheLinesDragged(t *testing.T) {
+	ref := &Ref{}
+	var got Change
+	var regions []Region
+	oldText := "a\nb\nc\nd\ne\nf\ng\nh\ni\nj\n"
+	newText := "a\nb\nc\nD\nE\nf\ng\nh\ni\nj\n"
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return DiffView{Ref: ref, TestID: "diff", Unified: true, OldValue: func() string { return oldText }, NewValue: func() string { return newText },
+			OnChange: func(c Change) { got = c },
+			RenderRegionActions: func(cx *core.Scope, r Region) core.Node {
+				regions = append(regions, r)
+				return core.View{TestID: "actions", Role: core.RoleButton, Style: core.Style{Width: core.Pt(40), Height: core.Pt(16)},
+					OnPress: func(core.PressEvent) { ref.AcceptRegion(r) }}
+			},
+			Style: core.Style{Width: core.Pt(600), Height: core.Pt(400)}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop}), nsgotest.Size(600, 400))
+	app.Settle()
+	if app.Exists("id:actions") {
+		t.Fatal("actions before the pointer is on a change")
+	}
+	// Unchanged lines next to the change hold it; those further do not.
+	app.Hover("text:b")
+	app.Settle()
+	if !app.Exists("id:actions") {
+		t.Fatal(app.Dump())
+	}
+	r := regions[len(regions)-1]
+	if !slices.Equal(r.Old, []int{3, 4}) || !slices.Equal(r.New, []int{3, 4}) || r.Selected {
+		t.Fatalf("hovered %+v", r)
+	}
+	app.Hover("text:a >> nth=0")
+	app.Advance(hoverLeave * 2)
+	app.Settle()
+	if app.Exists("id:actions") {
+		t.Fatal("actions two lines past the frame")
+	}
+	// A selection from the old d to the new D frames those rows whole.
+	app.SelectText("id:diff-rows", driver.Bounds{Origin: driver.Point{X: 12, Y: 70}, Size: driver.Size{Width: 8, Height: 40}})
+	app.Settle()
+	r = regions[len(regions)-1]
+	if !slices.Equal(r.Old, []int{3, 4}) || !slices.Equal(r.New, []int{3}) || !r.Selected {
+		t.Fatalf("selected %+v", r)
+	}
+	// A press on the actions clears the selection around them first.
+	app.Hover("id:actions")
+	app.SelectText("id:diff-rows", driver.Bounds{})
+	app.Settle()
+	app.Press("id:actions")
+	app.Settle()
+	if want := "a\nb\nc\nD\nf\ng\nh\ni\nj\n"; got.OldValue != want || got.NewValue != newText {
+		t.Fatalf("staged %q %q", got.OldValue, got.NewValue)
+	}
+}
+
+func TestLinesRevertAndAcceptApart(t *testing.T) {
+	m := newModel("a\nb\nc\n", "a\nB\nC\nD\n")
+	o, n := m.acceptLines([]int{1}, []int{1})
+	if o != "a\nB\nc\n" || n != "a\nB\nC\nD\n" {
+		t.Fatalf("accept %q %q", o, n)
+	}
+	o, n = m.revertLines([]int{1}, []int{2})
+	if o != "a\nb\nc\n" || n != "a\nb\nB\nD\n" {
+		t.Fatalf("revert %q %q", o, n)
 	}
 }

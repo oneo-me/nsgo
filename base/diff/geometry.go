@@ -8,7 +8,8 @@ import (
 
 // Rows are not of one height: a row is its lines (one, or with SoftWrap
 // the wrapped lines of its line, in a split row the taller side's) times
-// the line height, plus the annotations under it. tops keeps every row's
+// the line height, or a separator's height, plus the annotations under
+// it. tops keeps every row's
 // top, a prefix sum, so the rows at a height are a binary search.
 
 // layoutRows computes every row's top from the wrapping and the
@@ -23,7 +24,7 @@ func (v *dv) layoutRows() {
 	y := float32(0)
 	for i, r := range v.rows {
 		v.tops[i] = y
-		h := float32(v.lineCount(r)) * v.lh
+		h := v.rowHeight(r)
 		if a, ok := under[i]; ok {
 			h += a
 		}
@@ -48,6 +49,14 @@ func (v *dv) rowAt(y float32) int {
 	}
 	i := sort.Search(n, func(i int) bool { return v.tops[i+1] > y })
 	return min(i, n-1)
+}
+
+// rowHeight is row r's height, without its annotations.
+func (v *dv) rowHeight(r row) float32 {
+	if r.kind == rowSeparator || r.kind == rowFile {
+		return v.sepH
+	}
+	return float32(v.lineCount(r)) * v.lh
 }
 
 // lineCount is how many lines row r takes: its wrapped lines with

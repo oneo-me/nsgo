@@ -36,6 +36,8 @@ type selection struct {
 	from           apple.CGPoint
 	// at is where the drag is, in the window.
 	at apple.CGPoint
+	// told is the extent the area last reported.
+	told driver.Bounds
 }
 
 const (
@@ -135,6 +137,15 @@ func (s *selection) show(old []*view) {
 	}
 	for _, r := range s.model.Ranges(s) {
 		s.texts[r.Text].setSelected(r.Start, r.End)
+	}
+	s.tell(s.model.Extent(s))
+}
+
+// tell reports the selection's extent to the area when it moved.
+func (s *selection) tell(b driver.Bounds) {
+	if b != s.told {
+		s.told = b
+		s.area.report(driver.Event{Kind: driver.EventSelectionChange, Point: b.Origin, Size: b.Size})
 	}
 }
 
@@ -338,6 +349,7 @@ func (s *surface) clearSelection() {
 	for _, v := range s.selecting.texts {
 		v.setSelected(0, 0)
 	}
+	s.selecting.tell(driver.Bounds{})
 	s.selecting = nil
 }
 

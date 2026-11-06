@@ -1,1 +1,5 @@
 sortBy: "依{column}排序"
+diffUnchangedLines: "{n} 行未修改"
+diffExpandAll: "全部展開"
+diffStage: "暫存"
+diffDiscardChanges: "還原變更…"

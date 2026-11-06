@@ -5,6 +5,7 @@ package locales
 import (
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/i18n"
+	"strings"
 )
 
 // Source is the language the messages are written in.
@@ -32,24 +33,97 @@ func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 // its method, for the TSX declarations of the messages
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{
-	"SortBy": {"column"},
+	"SortBy":             {"column"},
+	"DiffUnchangedLines": {"n"},
 }
 
 // Translation is a language's messages another package supplies; a nil
 // field leaves the message to the catalog.
 type Translation struct {
-	SortBy func(column string) string
+	SortBy             func(column string) string
+	DiffUnchangedLines func(n int) string
+	DiffExpandAll      func() string
+	DiffStage          func() string
+	DiffDiscardChanges func() string
 }
 
 var supplied = map[string]Translation{}
+
+// The indexes of the messages without arguments in texts.
+const (
+	textDiffExpandAll = iota
+	textDiffStage
+	textDiffDiscardChanges
+	numTexts
+)
+
+// texts are the messages without arguments, by language, in the
+// order of their indexes; "" where a language lacks one.
+var texts = map[string]*[numTexts]string{
+	"en": {
+		"Expand all",
+		"Stage",
+		"Discard Changes…",
+	},
+	"zh-Hans": {
+		"全部展开",
+		"暂存",
+		"还原更改…",
+	},
+	"zh-Hant": {
+		"全部展開",
+		"暫存",
+		"還原變更…",
+	},
+}
+
+// suppliedTexts are the messages without arguments other packages
+// supply, as texts are.
+var suppliedTexts = map[string]*[numTexts]string{}
+
+// text says the message without arguments at i in the language of msgs,
+// else of the languages it falls back to, else of the source.
+func (msgs Messages) text(i int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, texts[Source][i])
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
+			return t[i]
+		}
+		if lang == "" {
+			return texts[Source][i]
+		}
+		if t := texts[lang]; t != nil && t[i] != "" {
+			return t[i]
+		}
+	}
+}
 
 // Supply adds the messages t has in lang to the catalog, over its own.
 // nsgo writes the calls, in the package that supplies them, which runs
 // them as it initializes.
 func Supply(lang string, t Translation) {
 	s := supplied[lang]
+	st := suppliedTexts[lang]
+	if st == nil {
+		st = new([numTexts]string)
+		suppliedTexts[lang] = st
+	}
 	if t.SortBy != nil {
 		s.SortBy = t.SortBy
+	}
+	if t.DiffUnchangedLines != nil {
+		s.DiffUnchangedLines = t.DiffUnchangedLines
+	}
+	if t.DiffExpandAll != nil {
+		st[textDiffExpandAll] = t.DiffExpandAll()
+	}
+	if t.DiffStage != nil {
+		st[textDiffStage] = t.DiffStage()
+	}
+	if t.DiffDiscardChanges != nil {
+		st[textDiffDiscardChanges] = t.DiffDiscardChanges()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -90,3 +164,69 @@ func (msgs Messages) SortBy(column string) string {
 		}
 	}
 }
+
+// DiffUnchangedLines says "{n, plural, one {# unchanged line} other {# unchanged lines}}"
+// in the language the app shows under cx.
+//
+// What a diff says of the unchanged lines it collapses.
+func DiffUnchangedLines(cx *core.Scope, n int) string { return For(cx).DiffUnchangedLines(n) }
+
+// DiffUnchangedLines says "{n, plural, one {# unchanged line} other {# unchanged lines}}"
+// in the language of msgs.
+func (msgs Messages) DiffUnchangedLines(n int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffUnchangedLines(n))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].DiffUnchangedLines; f != nil {
+			return f(n)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			switch i18n.Cardinal("en", float64(n)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(n))))
+				b.WriteString(" unchanged line")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(n))))
+				b.WriteString(" unchanged lines")
+			}
+			return b.String()
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(n)) + " 行未修改"
+		case "zh-Hant":
+			return i18n.FormatNumber("zh-Hant", float64(n)) + " 行未修改"
+		}
+	}
+}
+
+// DiffExpandAll says "Expand all"
+// in the language the app shows under cx.
+//
+// What screen readers say of the button showing all of a diff's collapsed lines.
+func DiffExpandAll(cx *core.Scope) string { return For(cx).DiffExpandAll() }
+
+// DiffExpandAll says "Expand all"
+// in the language of msgs.
+func (msgs Messages) DiffExpandAll() string { return msgs.text(textDiffExpandAll) }
+
+// DiffStage says "Stage"
+// in the language the app shows under cx.
+//
+// The button staging the lines of a diff's change for a commit.
+func DiffStage(cx *core.Scope) string { return For(cx).DiffStage() }
+
+// DiffStage says "Stage"
+// in the language of msgs.
+func (msgs Messages) DiffStage() string { return msgs.text(textDiffStage) }
+
+// DiffDiscardChanges says "Discard Changes…"
+// in the language the app shows under cx.
+//
+// The button that, after asking, throws away the lines of a diff's change.
+func DiffDiscardChanges(cx *core.Scope) string { return For(cx).DiffDiscardChanges() }
+
+// DiffDiscardChanges says "Discard Changes…"
+// in the language of msgs.
+func (msgs Messages) DiffDiscardChanges() string { return msgs.text(textDiffDiscardChanges) }

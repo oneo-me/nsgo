@@ -89,6 +89,41 @@ func (s *surface) selectKey(e js.Value) bool {
 	return true
 }
 
+// selectionChanged reports the selection's extent to the area it is in,
+// and to the area it left that it has none.
+func (s *surface) selectionChanged() {
+	var area *view
+	var box driver.Bounds
+	if sel := js.Global().Call("getSelection"); sel.Truthy() && sel.Get("rangeCount").Int() > 0 && !sel.Get("isCollapsed").Bool() {
+		r := sel.Call("getRangeAt", 0)
+		el := r.Get("commonAncestorContainer")
+		if el.Get("nodeType").Int() != 1 {
+			el = el.Get("parentElement")
+		}
+		for ; el.Truthy() && !el.Equal(s.host); el = el.Get("parentElement") {
+			if v := s.viewOf(el); v != nil && v.area {
+				area = v
+			}
+		}
+		if area != nil {
+			from, to := area.el.Call("getBoundingClientRect"), r.Call("getBoundingClientRect")
+			box = driver.Bounds{
+				Origin: driver.Point{X: driver.Points(to.Get("left").Float() - from.Get("left").Float()), Y: driver.Points(to.Get("top").Float() - from.Get("top").Float())},
+				Size:   driver.Size{Width: driver.Points(to.Get("width").Float()), Height: driver.Points(to.Get("height").Float())},
+			}
+		}
+	}
+	if s.selectedArea != nil && s.selectedArea != area {
+		s.send(s.selectedArea, driver.Event{Kind: driver.EventSelectionChange})
+		s.selectedBox = driver.Bounds{}
+	}
+	s.selectedArea = area
+	if area != nil && box != s.selectedBox {
+		s.selectedBox = box
+		s.send(area, driver.Event{Kind: driver.EventSelectionChange, Point: box.Origin, Size: box.Size})
+	}
+}
+
 // selectionScope returns the element Select All selects for a selection
 // in node: the outermost area around it, or its selectable text.
 func (s *surface) selectionScope(node js.Value) js.Value {

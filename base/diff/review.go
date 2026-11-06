@@ -52,6 +52,7 @@ func (v *dv) selectLine(side Side, line int, extend bool) {
 	if !extend || v.sel == nil || v.sel.Side != side {
 		v.anchor = line
 	}
+	v.rowSel.Set(noRows)
 	v.setSelection(&LineRange{Side: side, Start: min(v.anchor, line), End: max(v.anchor, line)}, true)
 }
 
@@ -77,24 +78,6 @@ func (v *dv) setSelection(r *LineRange, report bool) {
 func (v *dv) selected(side Side, line int) bool {
 	v.selRev.Get()
 	return line >= 0 && v.sel != nil && v.sel.Side == side && v.sel.Start <= line && line <= v.sel.End
-}
-
-// gutterSide is the side a press on row r's gutter at x selects: the
-// number column pressed in unified, else the side the row has.
-func (v *dv) gutterSide(r row, side int, x float32) Side {
-	if side >= 0 {
-		return Side(side)
-	}
-	if r.kind == rowEqual && !v.p.NoLineNumbers {
-		if x < v.numberWidth() {
-			return Old
-		}
-		return New
-	}
-	if r.kind == rowDeleted {
-		return Old
-	}
-	return New
 }
 
 // dragLines extends the selection to the line on its side at height y

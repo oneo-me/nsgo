@@ -255,14 +255,10 @@ var Parameters = map[string][]string{
 	"PhotosLoadsMore":         {"count"},
 	"PhotosLoadingMore":       {"count"},
 	"DiffChange":              {"n"},
-	"DiffCommentOnLine":       {"line"},
-	"DiffCommentOnLines":      {"first", "last"},
 	"DiffLinesSelected":       {"first", "last"},
 	"DiffLineOfOld":           {"line"},
 	"DiffLineOfNew":           {"line"},
 	"DiffCollapsed":           {"path", "state"},
-	"DiffReverted":            {"n"},
-	"DiffKept":                {"n"},
 	"DiffLines":               {"count"},
 	"DiffChanges":             {"count"},
 	"EditorErrors":            {"count"},
@@ -1984,11 +1980,6 @@ type Translation struct {
 	DiffExpandEveryLine                          func() string
 	DiffCollapseUnchangedLines                   func() string
 	DiffStartAgain                               func() string
-	DiffResolve                                  func() string
-	DiffAddAComment                              func() string
-	DiffCommented                                func() string
-	DiffRevert                                   func() string
-	DiffKeep                                     func() string
 	ChartsMon                                    func() string
 	ChartsTue                                    func() string
 	ChartsWed                                    func() string
@@ -2008,14 +1999,10 @@ type Translation struct {
 	PhotosLoadsMore                              func(count int) string
 	PhotosLoadingMore                            func(count int) string
 	DiffChange                                   func(n int) string
-	DiffCommentOnLine                            func(line int) string
-	DiffCommentOnLines                           func(first int, last int) string
 	DiffLinesSelected                            func(first int, last int) string
 	DiffLineOfOld                                func(line int) string
 	DiffLineOfNew                                func(line int) string
 	DiffCollapsed                                func(path string, state string) string
-	DiffReverted                                 func(n int) string
-	DiffKept                                     func(n int) string
 	DiffLines                                    func(count int) string
 	DiffChanges                                  func(count int) string
 	TextviewCopied                               func() string
@@ -2218,6 +2205,11 @@ type Translation struct {
 	KitMore                                      func() string
 	KitLongPressHere                             func() string
 	KitRightClickHere                            func() string
+	DiffDiscardTheseChanges                      func() string
+	DiffCancel                                   func() string
+	DiffDiscard                                  func() string
+	DiffStaged                                   func() string
+	DiffDiscarded                                func() string
 }
 
 var supplied = map[string]Translation{}
@@ -3848,11 +3840,6 @@ const (
 	textDiffExpandEveryLine
 	textDiffCollapseUnchangedLines
 	textDiffStartAgain
-	textDiffResolve
-	textDiffAddAComment
-	textDiffCommented
-	textDiffRevert
-	textDiffKeep
 	textChartsMon
 	textChartsTue
 	textChartsWed
@@ -4049,6 +4036,11 @@ const (
 	textKitMore
 	textKitLongPressHere
 	textKitRightClickHere
+	textDiffDiscardTheseChanges
+	textDiffCancel
+	textDiffDiscard
+	textDiffStaged
+	textDiffDiscarded
 	numTexts
 )
 
@@ -5680,11 +5672,6 @@ var texts = map[string]*[numTexts]string{
 		"Expand every line",
 		"Collapse unchanged lines",
 		"Start again",
-		"Resolve",
-		"Add a comment",
-		"Commented",
-		"Revert",
-		"Keep",
 		"Mon",
 		"Tue",
 		"Wed",
@@ -5881,6 +5868,11 @@ var texts = map[string]*[numTexts]string{
 		"More",
 		"Long-press here",
 		"Right-click here",
+		"Discard these changes?",
+		"Cancel",
+		"Discard",
+		"Staged",
+		"Discarded",
 	},
 	"ar": {
 		"المعرض",
@@ -7507,11 +7499,6 @@ var texts = map[string]*[numTexts]string{
 		"توسيع كل الأسطر",
 		"طي الأسطر غير المتغيرة",
 		"البدء من جديد",
-		"حل",
-		"إضافة تعليق",
-		"تم التعليق",
-		"تراجع",
-		"إبقاء",
 		"إثن",
 		"ثلا",
 		"أرب",
@@ -7708,6 +7695,11 @@ var texts = map[string]*[numTexts]string{
 		"المزيد",
 		"اضغط مطولًا هنا",
 		"انقر بزر الماوس الأيمن هنا",
+		"هل تريد تجاهل هذه التغييرات؟",
+		"إلغاء",
+		"تجاهل",
+		"تم التجهيز",
+		"تم التجاهل",
 	},
 	"zh-Hans": {
 		"画廊",
@@ -9334,11 +9326,6 @@ var texts = map[string]*[numTexts]string{
 		"展开所有行",
 		"折叠未改动的行",
 		"重新开始",
-		"解决",
-		"添加评论",
-		"已评论",
-		"撤销",
-		"保留",
 		"周一",
 		"周二",
 		"周三",
@@ -9535,6 +9522,11 @@ var texts = map[string]*[numTexts]string{
 		"更多",
 		"在此长按",
 		"在此右键点击",
+		"还原这些更改？",
+		"取消",
+		"还原",
+		"已暂存",
+		"已还原",
 	},
 	"zh-Hant": {
 		"畫廊",
@@ -11161,11 +11153,6 @@ var texts = map[string]*[numTexts]string{
 		"展開所有行",
 		"摺疊未改動的行",
 		"重新開始",
-		"解決",
-		"新增評論",
-		"已評論",
-		"復原",
-		"保留",
 		"週一",
 		"週二",
 		"週三",
@@ -11362,6 +11349,11 @@ var texts = map[string]*[numTexts]string{
 		"更多",
 		"在此長按",
 		"在此按右鍵",
+		"還原這些變更？",
+		"取消",
+		"還原",
+		"已暫存",
+		"已還原",
 	},
 }
 
@@ -16501,21 +16493,6 @@ func Supply(lang string, t Translation) {
 	if t.DiffStartAgain != nil {
 		st[textDiffStartAgain] = t.DiffStartAgain()
 	}
-	if t.DiffResolve != nil {
-		st[textDiffResolve] = t.DiffResolve()
-	}
-	if t.DiffAddAComment != nil {
-		st[textDiffAddAComment] = t.DiffAddAComment()
-	}
-	if t.DiffCommented != nil {
-		st[textDiffCommented] = t.DiffCommented()
-	}
-	if t.DiffRevert != nil {
-		st[textDiffRevert] = t.DiffRevert()
-	}
-	if t.DiffKeep != nil {
-		st[textDiffKeep] = t.DiffKeep()
-	}
 	if t.ChartsMon != nil {
 		st[textChartsMon] = t.ChartsMon()
 	}
@@ -16573,12 +16550,6 @@ func Supply(lang string, t Translation) {
 	if t.DiffChange != nil {
 		s.DiffChange = t.DiffChange
 	}
-	if t.DiffCommentOnLine != nil {
-		s.DiffCommentOnLine = t.DiffCommentOnLine
-	}
-	if t.DiffCommentOnLines != nil {
-		s.DiffCommentOnLines = t.DiffCommentOnLines
-	}
 	if t.DiffLinesSelected != nil {
 		s.DiffLinesSelected = t.DiffLinesSelected
 	}
@@ -16590,12 +16561,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DiffCollapsed != nil {
 		s.DiffCollapsed = t.DiffCollapsed
-	}
-	if t.DiffReverted != nil {
-		s.DiffReverted = t.DiffReverted
-	}
-	if t.DiffKept != nil {
-		s.DiffKept = t.DiffKept
 	}
 	if t.DiffLines != nil {
 		s.DiffLines = t.DiffLines
@@ -17202,6 +17167,21 @@ func Supply(lang string, t Translation) {
 	}
 	if t.KitRightClickHere != nil {
 		st[textKitRightClickHere] = t.KitRightClickHere()
+	}
+	if t.DiffDiscardTheseChanges != nil {
+		st[textDiffDiscardTheseChanges] = t.DiffDiscardTheseChanges()
+	}
+	if t.DiffCancel != nil {
+		st[textDiffCancel] = t.DiffCancel()
+	}
+	if t.DiffDiscard != nil {
+		st[textDiffDiscard] = t.DiffDiscard()
+	}
+	if t.DiffStaged != nil {
+		st[textDiffStaged] = t.DiffStaged()
+	}
+	if t.DiffDiscarded != nil {
+		st[textDiffDiscarded] = t.DiffDiscarded()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -33301,46 +33281,6 @@ func DiffStartAgain(cx *core.Scope) string { return For(cx).DiffStartAgain() }
 // in the language of msgs.
 func (msgs Messages) DiffStartAgain() string { return msgs.text(textDiffStartAgain) }
 
-// DiffResolve says "Resolve"
-// in the language the app shows under cx.
-func DiffResolve(cx *core.Scope) string { return For(cx).DiffResolve() }
-
-// DiffResolve says "Resolve"
-// in the language of msgs.
-func (msgs Messages) DiffResolve() string { return msgs.text(textDiffResolve) }
-
-// DiffAddAComment says "Add a comment"
-// in the language the app shows under cx.
-func DiffAddAComment(cx *core.Scope) string { return For(cx).DiffAddAComment() }
-
-// DiffAddAComment says "Add a comment"
-// in the language of msgs.
-func (msgs Messages) DiffAddAComment() string { return msgs.text(textDiffAddAComment) }
-
-// DiffCommented says "Commented"
-// in the language the app shows under cx.
-func DiffCommented(cx *core.Scope) string { return For(cx).DiffCommented() }
-
-// DiffCommented says "Commented"
-// in the language of msgs.
-func (msgs Messages) DiffCommented() string { return msgs.text(textDiffCommented) }
-
-// DiffRevert says "Revert"
-// in the language the app shows under cx.
-func DiffRevert(cx *core.Scope) string { return For(cx).DiffRevert() }
-
-// DiffRevert says "Revert"
-// in the language of msgs.
-func (msgs Messages) DiffRevert() string { return msgs.text(textDiffRevert) }
-
-// DiffKeep says "Keep"
-// in the language the app shows under cx.
-func DiffKeep(cx *core.Scope) string { return For(cx).DiffKeep() }
-
-// DiffKeep says "Keep"
-// in the language of msgs.
-func (msgs Messages) DiffKeep() string { return msgs.text(textDiffKeep) }
-
 // ChartsMon says "Mon"
 // in the language the app shows under cx.
 func ChartsMon(cx *core.Scope) string { return For(cx).ChartsMon() }
@@ -33701,62 +33641,6 @@ func (msgs Messages) DiffChange(n int) string {
 	}
 }
 
-// DiffCommentOnLine says "Comment on line {line, number}"
-// in the language the app shows under cx.
-func DiffCommentOnLine(cx *core.Scope, line int) string { return For(cx).DiffCommentOnLine(line) }
-
-// DiffCommentOnLine says "Comment on line {line, number}"
-// in the language of msgs.
-func (msgs Messages) DiffCommentOnLine(line int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffCommentOnLine(line))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].DiffCommentOnLine; f != nil {
-			return f(line)
-		}
-		switch lang {
-		case "", "en":
-			return "Comment on line " + msgs.arg(i18n.FormatNumber("en", float64(line)))
-		case "ar":
-			return "تعليق على السطر " + i18n.FormatNumber("ar", float64(line))
-		case "zh-Hans":
-			return "评论第 " + i18n.FormatNumber("zh-Hans", float64(line)) + " 行"
-		case "zh-Hant":
-			return "評論第 " + i18n.FormatNumber("zh-Hant", float64(line)) + " 行"
-		}
-	}
-}
-
-// DiffCommentOnLines says "Comment on lines {first, number} to {last, number}"
-// in the language the app shows under cx.
-func DiffCommentOnLines(cx *core.Scope, first int, last int) string {
-	return For(cx).DiffCommentOnLines(first, last)
-}
-
-// DiffCommentOnLines says "Comment on lines {first, number} to {last, number}"
-// in the language of msgs.
-func (msgs Messages) DiffCommentOnLines(first int, last int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffCommentOnLines(first, last))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].DiffCommentOnLines; f != nil {
-			return f(first, last)
-		}
-		switch lang {
-		case "", "en":
-			return "Comment on lines " + msgs.arg(i18n.FormatNumber("en", float64(first))) + " to " + msgs.arg(i18n.FormatNumber("en", float64(last)))
-		case "ar":
-			return "تعليق على الأسطر " + i18n.FormatNumber("ar", float64(first)) + " إلى " + i18n.FormatNumber("ar", float64(last))
-		case "zh-Hans":
-			return "评论第 " + i18n.FormatNumber("zh-Hans", float64(first)) + " 到 " + i18n.FormatNumber("zh-Hans", float64(last)) + " 行"
-		case "zh-Hant":
-			return "評論第 " + i18n.FormatNumber("zh-Hant", float64(first)) + " 到 " + i18n.FormatNumber("zh-Hant", float64(last)) + " 行"
-		}
-	}
-}
-
 // DiffLinesSelected says "Lines {first, number} to {last, number} selected"
 // in the language the app shows under cx.
 func DiffLinesSelected(cx *core.Scope, first int, last int) string {
@@ -33865,60 +33749,6 @@ func (msgs Messages) DiffCollapsed(path string, state string) string {
 			return path + " 已折叠：" + state
 		case "zh-Hant":
 			return path + " 已摺疊：" + state
-		}
-	}
-}
-
-// DiffReverted says "Reverted change {n, number}"
-// in the language the app shows under cx.
-func DiffReverted(cx *core.Scope, n int) string { return For(cx).DiffReverted(n) }
-
-// DiffReverted says "Reverted change {n, number}"
-// in the language of msgs.
-func (msgs Messages) DiffReverted(n int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffReverted(n))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].DiffReverted; f != nil {
-			return f(n)
-		}
-		switch lang {
-		case "", "en":
-			return "Reverted change " + msgs.arg(i18n.FormatNumber("en", float64(n)))
-		case "ar":
-			return "تم التراجع عن التغيير " + i18n.FormatNumber("ar", float64(n))
-		case "zh-Hans":
-			return "已撤销改动 " + i18n.FormatNumber("zh-Hans", float64(n))
-		case "zh-Hant":
-			return "已復原改動 " + i18n.FormatNumber("zh-Hant", float64(n))
-		}
-	}
-}
-
-// DiffKept says "Kept change {n, number}"
-// in the language the app shows under cx.
-func DiffKept(cx *core.Scope, n int) string { return For(cx).DiffKept(n) }
-
-// DiffKept says "Kept change {n, number}"
-// in the language of msgs.
-func (msgs Messages) DiffKept(n int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffKept(n))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].DiffKept; f != nil {
-			return f(n)
-		}
-		switch lang {
-		case "", "en":
-			return "Kept change " + msgs.arg(i18n.FormatNumber("en", float64(n)))
-		case "ar":
-			return "تم إبقاء التغيير " + i18n.FormatNumber("ar", float64(n))
-		case "zh-Hans":
-			return "已保留改动 " + i18n.FormatNumber("zh-Hans", float64(n))
-		case "zh-Hant":
-			return "已保留改動 " + i18n.FormatNumber("zh-Hant", float64(n))
 		}
 	}
 }
@@ -35994,3 +35824,43 @@ func KitRightClickHere(cx *core.Scope) string { return For(cx).KitRightClickHere
 // KitRightClickHere says "Right-click here"
 // in the language of msgs.
 func (msgs Messages) KitRightClickHere() string { return msgs.text(textKitRightClickHere) }
+
+// DiffDiscardTheseChanges says "Discard these changes?"
+// in the language the app shows under cx.
+func DiffDiscardTheseChanges(cx *core.Scope) string { return For(cx).DiffDiscardTheseChanges() }
+
+// DiffDiscardTheseChanges says "Discard these changes?"
+// in the language of msgs.
+func (msgs Messages) DiffDiscardTheseChanges() string { return msgs.text(textDiffDiscardTheseChanges) }
+
+// DiffCancel says "Cancel"
+// in the language the app shows under cx.
+func DiffCancel(cx *core.Scope) string { return For(cx).DiffCancel() }
+
+// DiffCancel says "Cancel"
+// in the language of msgs.
+func (msgs Messages) DiffCancel() string { return msgs.text(textDiffCancel) }
+
+// DiffDiscard says "Discard"
+// in the language the app shows under cx.
+func DiffDiscard(cx *core.Scope) string { return For(cx).DiffDiscard() }
+
+// DiffDiscard says "Discard"
+// in the language of msgs.
+func (msgs Messages) DiffDiscard() string { return msgs.text(textDiffDiscard) }
+
+// DiffStaged says "Staged"
+// in the language the app shows under cx.
+func DiffStaged(cx *core.Scope) string { return For(cx).DiffStaged() }
+
+// DiffStaged says "Staged"
+// in the language of msgs.
+func (msgs Messages) DiffStaged() string { return msgs.text(textDiffStaged) }
+
+// DiffDiscarded says "Discarded"
+// in the language the app shows under cx.
+func DiffDiscarded(cx *core.Scope) string { return For(cx).DiffDiscarded() }
+
+// DiffDiscarded says "Discarded"
+// in the language of msgs.
+func (msgs Messages) DiffDiscarded() string { return msgs.text(textDiffDiscarded) }

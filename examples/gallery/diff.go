@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
@@ -147,19 +147,13 @@ rename to store_test.go
 
 // diffDemo is ui/diff's View: two texts side by side or unified,
 // the words changed marked, unchanged lines collapsed, changes navigated,
-// reverted and kept, and a patch of several files.
+// their lines staged and discarded, and a patch of several files.
 func diffDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
 	oldText, newText := core.NewSignal(cx, diffOld), core.NewSignal(cx, diffNew)
 	unified, patch, wrap := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-	// The review's comments, under the lines they are on.
-	type comment struct {
-		diff.Annotation
-		lines diff.LineRange
-	}
-	comments := core.NewSignalFunc(cx, []comment(nil), slices.Equal)
 	inline := core.NewSignal(cx, diff.InlineWordAlt)
 	stats := core.NewSignal(cx, diff.Stats{})
 	last := core.NewSignal(cx, "—")
@@ -177,49 +171,22 @@ func diffDemo(cx *core.Scope) core.Node {
 			core.Dynamic(func(cx *core.Scope) core.Node {
 				d := uidiff.View{
 					Ref: ref, TestID: "diff", Language: "go", Unified: unified.Get(), Inline: inline.Get(), SoftWrap: wrap.Get(),
-					Annotations: func() []diff.Annotation {
-						var out []diff.Annotation
-						for _, c := range comments.Get() {
-							out = append(out, c.Annotation)
-						}
-						return out
-					},
-					RenderAnnotation: func(cx *core.Scope, a diff.Annotation) core.Node {
+					RenderRegionActions: func(cx *core.Scope, r diff.Region) core.Node {
 						tr := locales.For(cx)
-						colors := ui.ColorsOf(cx)
-						fin := ui.FinOf(cx)
-						var c comment
-						for _, x := range comments.GetUntracked() {
-							if x.ID == a.ID {
-								c = x
-							}
-						}
-						text := tr.DiffCommentOnLine(c.lines.Start + 1)
-						if c.lines.End > c.lines.Start {
-							text = tr.DiffCommentOnLines(c.lines.Start+1, c.lines.End+1)
-						}
-						return core.View{StyleFunc: func() core.Style {
-							return fin.Raised().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(8),
-								CornerRadius: 6, BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Raised()})
-						}, Children: []core.Node{
-							core.Text{Content: text, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
-							small(tr.DiffResolve(), func() {
-								comments.Set(slices.DeleteFunc(slices.Clone(comments.GetUntracked()), func(x comment) bool { return x.ID == a.ID }))
-							}),
-						}}
-					},
-					RenderAddAnnotation: func(cx *core.Scope, lines diff.LineRange) core.Node {
-						tr := locales.For(cx)
-						colors := ui.ColorsOf(cx)
-						return core.View{Role: core.RoleButton, Label: tr.DiffAddAComment(), Style: core.Style{Width: core.Pt(16), Height: core.Pt(16),
-							CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, StyleFunc: ui.Filled(colors.Accent),
-							OnPress: func(core.PressEvent) {
-								list := comments.GetUntracked()
-								id := fmt.Sprint("c", len(list)+1)
-								comments.Set(append(slices.Clone(list), comment{diff.Annotation{ID: id, Side: lines.Side, Line: lines.End}, lines}))
-								last.Set(tr.DiffCommented())
+						return uidiff.RegionActions{
+							OnStage: func() { ref.AcceptRegion(r); last.Set(tr.DiffStaged()) },
+							OnDiscard: func() {
+								base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.DiffDiscardTheseChanges(), Actions: []core.AlertAction{
+									{Label: tr.DiffCancel(), Role: core.AlertCancel},
+									{Label: tr.DiffDiscard(), Role: core.AlertDestructive},
+								}}, func(label string) {
+									if label == tr.DiffDiscard() {
+										ref.RevertRegion(r)
+										last.Set(tr.DiffDiscarded())
+									}
+								})
 							},
-							Children: []core.Node{core.Text{Content: "+", Style: core.Style{FontSize: 12, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.OnAccent)}}}
+						}
 					},
 					OnLineSelectionChange: func(r *diff.LineRange) {
 						if r != nil {
@@ -232,18 +199,11 @@ func diffDemo(cx *core.Scope) core.Node {
 						last.Set(map[diff.Side]string{diff.Old: tr.DiffLineOfOld(l.Line), diff.New: tr.DiffLineOfNew(l.Line)}[l.Side])
 					},
 					OnFileToggle: func(f diff.File) { last.Set(tr.DiffCollapsed(f.Path, onOff(tr, f.Collapsed))) },
-					RenderHunkActions: func(cx *core.Scope, h diff.Hunk) core.Node {
-						tr := locales.For(cx)
-						return core.View{Style: core.Style{Direction: core.Row, Gap: 4}, Children: []core.Node{
-							small(tr.DiffRevert(), func() { ref.RevertHunk(h.Index); last.Set(tr.DiffReverted(h.Index + 1)) }),
-							small(tr.DiffKeep(), func() { ref.AcceptHunk(h.Index); last.Set(tr.DiffKept(h.Index + 1)) }),
-						}}
-					},
-					Style: core.Style{FlexGrow: 1},
+					Style:        core.Style{FlexGrow: 1},
 				}
 				if patch.Get() {
 					d.Language = ""
-					d.RenderHunkActions = nil
+					d.RenderRegionActions = nil
 					d.Patch = func() string { return diffPatch }
 					d.RenderSeparator = func(cx *core.Scope, s diff.Separator) core.Node {
 						label := tr.DiffLines(s.Lines)

@@ -132,6 +132,10 @@ type surface struct {
 	stickyBound map[*view]bool
 	// selectionCSS is whether the ::selection rule is in the page.
 	selectionCSS bool
+	// selectedArea is the area the selection is in, and selectedBox the
+	// extent it last reported.
+	selectedArea *view
+	selectedBox  driver.Bounds
 	scrollCSS    bool
 	stickyCSS    bool
 	// fieldCSS is whether fieldCSS is in the page.
@@ -2217,6 +2221,7 @@ func (s *surface) listenModifiers(ls *listeners) {
 	}
 	ls.on(s.doc, "keydown", changed)
 	ls.on(s.doc, "keyup", changed)
+	ls.on(s.doc, "selectionchange", func(js.Value) { s.selectionChanged() })
 }
 
 // pointer returns where e's pointer is in v and in v's root view, the

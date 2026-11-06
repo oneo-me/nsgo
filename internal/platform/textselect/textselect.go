@@ -23,6 +23,27 @@ type Selection struct {
 	Texts    []Text
 	Model    driver.SelectionModel
 	Dragging bool
+	// Told is the extent the area last reported.
+	Told driver.Bounds
+}
+
+// Tell returns the event reporting the selection's extent to its area, at
+// origin in the coordinates of its texts' boxes; false when it stayed. A
+// cleared selection reports none.
+func (s *Selection) Tell(origin driver.Point, cleared bool) (driver.Event, bool) {
+	var b driver.Bounds
+	if !cleared {
+		b = s.Model.Extent(s)
+	}
+	if b.Size.Height > 0 {
+		b.Origin.X -= origin.X
+		b.Origin.Y -= origin.Y
+	}
+	if b == s.Told {
+		return driver.Event{}, false
+	}
+	s.Told = b
+	return driver.Event{Kind: driver.EventSelectionChange, ID: s.Area, Point: b.Origin, Size: b.Size}, true
 }
 
 // Len implements driver.SelectionTexts.

@@ -302,6 +302,27 @@ func (m *SelectionModel) remember(texts SelectionTexts) {
 	}
 }
 
+// Extent is the box of the texts the selection touches, for
+// EventSelectionChange; no Size without a selection.
+func (m *SelectionModel) Extent(texts SelectionTexts) Bounds {
+	var box Bounds
+	for _, r := range m.Ranges(texts) {
+		if r.End <= r.Start {
+			continue
+		}
+		f := texts.Frame(r.Text)
+		if box.Size.Height == 0 {
+			box = f
+			continue
+		}
+		x0, y0 := min(box.Origin.X, f.Origin.X), min(box.Origin.Y, f.Origin.Y)
+		x1 := max(box.Origin.X+box.Size.Width, f.Origin.X+f.Size.Width)
+		y1 := max(box.Origin.Y+box.Size.Height, f.Origin.Y+f.Size.Height)
+		box = Bounds{Origin: Point{X: x0, Y: y0}, Size: Size{Width: x1 - x0, Height: y1 - y0}}
+	}
+	return box
+}
+
 // Ranges returns what each text has selected, in order, leaving out
 // empty ranges: what the backend highlights.
 func (m *SelectionModel) Ranges(texts SelectionTexts) []SelectionRange {

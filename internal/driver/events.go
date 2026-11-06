@@ -119,7 +119,9 @@ const (
 	// pixels, or the error in Text.
 	EventImageInfo
 	// EventSelectionChange carries a text field's selection after the
-	// user moved it: Index to Count, in UTF-16 units.
+	// user moved it: Index to Count, in UTF-16 units. On a selection area
+	// it carries the box of the texts its selection touches, in the area
+	// (Point and Size), no Size for no selection.
 	EventSelectionChange
 	// EventKeyPress is a key typed in a text field (Text: what it enters,
 	// "Backspace" or "Enter").

@@ -15,10 +15,12 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/alecthomas/chroma/v2"
 
 	"github.com/oneo-me/nsgo/base/internal/syntax"
+	"github.com/oneo-me/nsgo/base/locales"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -26,7 +28,7 @@ import (
 type Indicators uint8
 
 const (
-	// IndicatorBars is a bar at the gutter's edge.
+	// IndicatorBars is a bar at the gutter's left edge.
 	IndicatorBars Indicators = iota
 	// IndicatorClassic is + and −.
 	IndicatorClassic
@@ -100,10 +102,13 @@ type Styles struct {
 	// LineNumberAdded and LineNumberDeleted after it on changed lines.
 	Side, Gutter, LineNumber, LineNumberAdded, LineNumberDeleted core.Style
 	// Content is a side's text beside its gutter; Line every row, with
-	// LineAdded and LineDeleted after it; Filler the empty half of a split
-	// row beside a line the other side lacks.
+	// LineAdded and LineDeleted after it, on a changed row's gutter too;
+	// Filler the empty half of a split row beside a line the other side
+	// lacks, its Color hatching it.
 	Content, Line, LineAdded, LineDeleted, Filler core.Style
-	// WordAdded and WordDeleted mark the words changed within lines.
+	// WordAdded and WordDeleted mark the words changed within lines, a
+	// box a line tall behind them, whose Background and CornerRadius the
+	// words' text leaves to it.
 	WordAdded, WordDeleted core.Style
 	// IndicatorAdded and IndicatorDeleted are the bars, or the + and −.
 	IndicatorAdded, IndicatorDeleted core.Style
@@ -115,6 +120,8 @@ type Styles struct {
 	// and text; Annotation the box of an annotation; AddAnnotation the box
 	// of the add control, the gutter's width and a line tall.
 	LineSelected, Annotation, AddAnnotation core.Style
+	// Region frames the lines RenderRegionActions acts on.
+	Region core.Style
 }
 
 // Classes are Tailwind classes of a DiffView's parts, by Styles' names,
@@ -125,7 +132,7 @@ type Classes struct {
 	WordAdded, WordDeleted                                       string
 	IndicatorAdded, IndicatorDeleted                             string
 	Separator, HunkActions, FileHeader                           string
-	LineSelected, Annotation, AddAnnotation                      string
+	LineSelected, Annotation, AddAnnotation, Region              string
 }
 
 // DiffView shows the changes between OldValue and NewValue, or the files
@@ -158,9 +165,10 @@ type DiffView struct {
 	// numbers and separators left out.
 	Selectable bool
 	// FontFamily (the monospaced font when empty), FontSize (13) and
-	// LineHeight (20).
-	FontFamily           string
-	FontSize, LineHeight core.Points
+	// LineHeight (20). SeparatorHeight is the height of separators and
+	// file headers, LineHeight when 0.
+	FontFamily                            string
+	FontSize, LineHeight, SeparatorHeight core.Points
 	// RenderFileHeader draws a patch's file headers, a header above a
 	// patch of one file too; its controls call Ref.ToggleFile. Without it
 	// a header shows the file's path and counts, and a press toggles it.
@@ -172,6 +180,12 @@ type DiffView struct {
 	// RenderHunkActions draws the app's actions on a change (revert,
 	// keep), at its first row's right.
 	RenderHunkActions func(cx *core.Scope, h Hunk) core.Node
+	// RenderRegionActions draws the app's actions on lines (stage, discard)
+	// in a frame around them, at its top right: the change the pointer is
+	// over, or the whole lines the text selection touches or those selected
+	// on the numbers, which take its place while they last. The text is
+	// selectable with it.
+	RenderRegionActions func(cx *core.Scope, r Region) core.Node
 	// Annotations are the app's content under lines, each drawn by
 	// RenderAnnotation across its line's side (the view unified).
 	Annotations      func() []Annotation
@@ -232,7 +246,10 @@ type row struct {
 	gap      int // a separator's gap
 	hidden   int
 	header   string
-	file     int
+	// pair is the line on the other side a unified row's changed words
+	// are against, -1 for none.
+	pair int
+	file int
 	// first and last mark a separator before the first change or after
 	// the last.
 	first, last bool
@@ -271,11 +288,13 @@ type dv struct {
 	window       *core.Memo[[2]int]
 	font         core.Font
 	charW, lh    float32
-	widest       int
-	stats        Stats
-	reported     bool
-	nav          *nav
-	job          int
+	// sepH is the height of separators and file headers.
+	sepH     float32
+	widest   int
+	stats    Stats
+	reported bool
+	nav      *nav
+	job      int
 	// tops is every row's top, and the rows' height last; geo counts
 	// moves of the rows; wrapCols is the columns lines wrap at.
 	tops     []float32
@@ -291,6 +310,11 @@ type dv struct {
 	anchor  int
 	selRev  *core.Signal[int]
 	hovered *core.Signal[LineRange]
+	// rowSel is the rows the text selection touches. onActions says the
+	// pointer is on the region's actions, which a press on would clear
+	// the selection under, and cleared that it did.
+	rowSel             *core.Signal[[2]int]
+	onActions, cleared bool
 	// hoverStop ends the hover a moment after the pointer left.
 	hoverStop   func() bool
 	annotations []Annotation
@@ -303,7 +327,8 @@ func (p DiffView) Render(cx *core.Scope) core.Node {
 		scrollY: core.NewSignal(cx, core.Points(0)), viewport: core.NewSignal(cx, core.Size{}), vs: &core.Ref{},
 		expand: map[int][2]int{}, collapsed: map[string]bool{}, m: &model{},
 		geo: core.NewSignal(cx, 0), selRev: core.NewSignal(cx, 0), hovered: core.NewSignal(cx, LineRange{Start: -1, End: -1}),
-		annH: map[string]float32{}}
+		rowSel: core.NewSignal(cx, noRows),
+		annH:   map[string]float32{}}
 	v.font = core.Font{Family: p.FontFamily, Size: p.FontSize}
 	if v.font.Family == "" {
 		v.font.Family = core.FontMonospace
@@ -314,6 +339,10 @@ func (p DiffView) Render(cx *core.Scope) core.Node {
 	v.lh = float32(p.LineHeight)
 	if v.lh == 0 {
 		v.lh = 20
+	}
+	v.sepH = float32(p.SeparatorHeight)
+	if v.sepH == 0 {
+		v.sepH = v.lh
 	}
 	v.charW = max(cx.MeasureText("0000000000", v.font).Width/10, 1)
 	if p.Ref != nil {
@@ -348,7 +377,7 @@ func (p DiffView) Render(cx *core.Scope) core.Node {
 	})
 	return core.View{
 		Class:     p.Class,
-		Style:     merge(core.Style{Overflow: core.Hidden, FontFamily: v.font.Family, FontSize: v.font.Size}, p.Style),
+		Style:     merge(core.Style{Overflow: core.Hidden}, p.Style),
 		StyleFunc: p.StyleFunc, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip,
 		Children: []core.Node{core.Scroll{
 			Ref: v.vs, TestID: "diff-scroll",
@@ -542,6 +571,7 @@ func (v *dv) build() {
 	}
 	v.layoutRows()
 	v.cx.Batch(func() {
+		v.rowSel.Set(noRows)
 		v.rev.Update(func(n int) int { return n + 1 })
 		v.geo.Update(func(n int) int { return n + 1 })
 	})
@@ -552,27 +582,33 @@ func (v *dv) build() {
 func (v *dv) hunkRows(rows []row, h hunk, index int) []row {
 	if v.p.Unified {
 		for i := h.oldStart; i < h.oldEnd; i++ {
-			rows = append(rows, row{kind: rowDeleted, old: i, new: -1, hunk: index})
+			rows = append(rows, row{kind: rowDeleted, old: i, new: -1, hunk: index, pair: h.pairOf(0, i)})
 		}
 		for j := h.newStart; j < h.newEnd; j++ {
-			rows = append(rows, row{kind: rowAdded, old: -1, new: j, hunk: index})
+			rows = append(rows, row{kind: rowAdded, old: -1, new: j, hunk: index, pair: h.pairOf(1, j)})
 		}
 		return rows
 	}
-	oi, ni := h.oldStart, h.newStart
-	for _, pr := range append(h.pairs, [2]int{h.oldEnd, h.newEnd}) {
-		for ; oi < pr[0]; oi++ {
-			rows = append(rows, row{kind: rowDeleted, old: oi, new: -1, hunk: index})
+	h.walk(func(o, n int) {
+		kind := rowModified
+		if n < 0 {
+			kind = rowDeleted
+		} else if o < 0 {
+			kind = rowAdded
 		}
-		for ; ni < pr[1]; ni++ {
-			rows = append(rows, row{kind: rowAdded, old: -1, new: ni, hunk: index})
-		}
-		if pr[0] < h.oldEnd && pr[1] < h.newEnd {
-			rows = append(rows, row{kind: rowModified, old: pr[0], new: pr[1], hunk: index})
-			oi, ni = pr[0]+1, pr[1]+1
+		rows = append(rows, row{kind: kind, old: o, new: n, hunk: index, pair: -1})
+	})
+	return rows
+}
+
+// pairOf is the line paired with line of side (0 old, 1 new), -1 for none.
+func (h hunk) pairOf(side, line int) int {
+	for _, pr := range h.pairs {
+		if pr[side] == line {
+			return pr[1-side]
 		}
 	}
-	return rows
+	return -1
 }
 
 // textRows are two texts' rows: the changes with their context, and
@@ -685,6 +721,29 @@ func (v *dv) highlight() {
 	}
 }
 
+// marks is the words changed in row r's line on a side, in bytes: a
+// modified row's, or a unified row's against its pair.
+func (v *dv) marks(r row, isOld bool) [][2]int {
+	o, n := r.old, r.new
+	switch r.kind {
+	case rowModified:
+	case rowDeleted:
+		n = r.pair
+	case rowAdded:
+		o = r.pair
+	default:
+		return nil
+	}
+	if o < 0 || n < 0 {
+		return nil
+	}
+	in := v.inlineOf(o, n)
+	if isOld {
+		return in[0]
+	}
+	return in[1]
+}
+
 // inlineOf is a modified row's changed ranges, computed once.
 func (v *dv) inlineOf(o, n int) [2][][2]int {
 	k := [2]int{o, n}
@@ -724,7 +783,7 @@ func (v *dv) measureWindow() [2]int {
 	return [2]int{max(first-reach, 0), min(last+reach, n)}
 }
 
-// numberWidth is a number column's width.
+// numberWidth is the number column's width, for three digits at least.
 func (v *dv) numberWidth() float32 {
 	if v.p.NoLineNumbers {
 		return 0
@@ -738,20 +797,23 @@ func (v *dv) numberWidth() float32 {
 			most = max(most, slices.Max(append(s.newNums, 0)))
 		}
 	}
-	return float32(max(len(fmt.Sprint(most)), 2))*v.charW + 8
+	return float32(max(len(fmt.Sprint(most)), 3))*v.charW + v.charW*1.5 + 4
 }
 
-// gutterWidth is a side's gutter: its numbers (two unified) and the
-// indicator.
+// gutterWidth is a side's gutter: its numbers and the indicator.
 func (v *dv) gutterWidth() float32 {
-	w := v.numberWidth()
-	if v.p.Unified {
-		w *= 2
+	return v.numberWidth() + v.indicatorWidth()
+}
+
+// indicatorWidth is the indicator column's width.
+func (v *dv) indicatorWidth() float32 {
+	switch v.p.Indicators {
+	case IndicatorBars:
+		return barWidth + 2
+	case IndicatorClassic:
+		return v.charW + 4
 	}
-	if v.p.Indicators != IndicatorNone {
-		w += v.charW + 4
-	}
-	return w
+	return 0
 }
 
 // viewWidth is the view's width; halfWidth a split side's.
@@ -818,9 +880,12 @@ func (v *dv) box() core.Node {
 			v.geo.Get()
 			return core.Style{Width: core.Pt(core.Points(v.viewWidth())), Height: core.Pt(core.Points(v.height())), Direction: core.Row}
 		},
-		Children: append(sides, v.bands(), v.actions(), v.annotationsView(), v.addControls()),
+		Children: append(sides, v.bands(), v.actions(), v.annotationsView(), v.addControls(), v.region()),
 	}
 }
+
+// barWidth is an indicator bar's width.
+const barWidth = 4
 
 // rowsOf is the rows in the window, made by piece in a column of a side.
 func (v *dv) rowsOf(piece func(i int, r row) core.Node) core.Node {
@@ -867,12 +932,16 @@ func (v *dv) side(side int) core.Node {
 			OnMove: func(ev core.ResponderEvent) { v.dragLines(float32(ev.Position.Y)) }}
 	}
 	rows := core.View{
-		Selectable: v.p.Selectable,
+		TestID:     "diff-rows",
+		Selectable: v.p.Selectable || v.p.RenderRegionActions != nil,
 		StyleFunc: func() core.Style {
 			v.geo.Get()
 			return core.Style{Width: core.Pt(core.Points(v.textWidth())), Height: core.Pt(core.Points(v.height()))}
 		},
 		Children: []core.Node{v.rowsOf(func(i int, r row) core.Node { return v.textPiece(i, r, side) })},
+	}
+	if v.p.RenderRegionActions != nil {
+		rows.OnTextSelection = v.textSelected
 	}
 	var text core.Node
 	if v.p.SoftWrap {
@@ -888,7 +957,7 @@ func (v *dv) side(side int) core.Node {
 		StyleFunc: func() core.Style {
 			v.geo.Get()
 			return merge(core.Style{Width: core.Pt(core.Points(v.sideWidth())), Height: core.Pt(core.Points(v.height())),
-				Direction: core.Row}, v.styles().Side)
+				Direction: core.Row, FontFamily: v.font.Family, FontSize: v.font.Size}, v.styles().Side)
 		},
 		Children: []core.Node{gutter, text},
 	}
@@ -926,9 +995,24 @@ func (v *dv) rowSelected(r row, side int) bool {
 	return v.selected(Old, r.old) || v.selected(New, r.new)
 }
 
+// tinted is the row style of a line added or deleted.
+func (v *dv) tinted(added, deleted bool) core.Style {
+	st := v.styles().Line
+	switch {
+	case added:
+		st = merge(st, v.styles().LineAdded)
+	case deleted:
+		st = merge(st, v.styles().LineDeleted)
+	}
+	return st
+}
+
 // tints are the row's changed state in column side.
 func (v *dv) tints(r row, side int) (added, deleted bool) {
 	isOld := side == int(Old) || side < 0 && r.kind == rowDeleted
+	if _, line := r.pieceSide(side); line < 0 {
+		return false, false
+	}
 	added = r.kind == rowAdded || r.kind == rowModified && !isOld
 	deleted = r.kind == rowDeleted || r.kind == rowModified && isOld
 	if side < 0 && r.kind == rowModified {
@@ -937,29 +1021,35 @@ func (v *dv) tints(r row, side int) (added, deleted bool) {
 	return added, deleted
 }
 
-// hoverable sets the handlers that show the add control over row r.
+// hoverable sets the handlers that follow the pointer over row r, for the
+// add control and the change it is on.
 func (v *dv) hoverable(view *core.View, r row, side int) {
-	if v.p.RenderAddAnnotation == nil {
+	if v.p.RenderAddAnnotation == nil && v.p.RenderRegionActions == nil {
 		return
 	}
 	sd, line := r.pieceSide(side)
+	if line < 0 {
+		// A filler: the row's line on the other side.
+		sd, line = New-sd, r.lineOf(New-sd)
+	}
 	view.OnMouseEnter = func(core.MouseEvent) { v.hover(sd, line) }
 	view.OnMouseLeave = func(core.MouseEvent) { v.hover(sd, -1) }
 }
 
-// gutterPiece is row r's numbers and indicator in column side.
+// gutterPiece is row r's number and indicator in column side, on the
+// tint of its line.
 func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 	s, c := v.styles, &v.p.Classes
 	added, deleted := v.tints(r, side)
-	numClass, tint := c.LineNumber, ""
+	numClass, tint, class := c.LineNumber, "", c.Line
 	switch {
 	case added:
-		numClass, tint = joinClasses(numClass, c.LineNumberAdded), c.IndicatorAdded
+		numClass, tint, class = joinClasses(numClass, c.LineNumberAdded), c.IndicatorAdded, joinClasses(class, c.LineAdded)
 	case deleted:
-		numClass, tint = joinClasses(numClass, c.LineNumberDeleted), c.IndicatorDeleted
+		numClass, tint, class = joinClasses(numClass, c.LineNumberDeleted), c.IndicatorDeleted, joinClasses(class, c.LineDeleted)
 	}
 	numPlace := core.Style{Width: core.Pt(core.Points(v.numberWidth())), TextAlign: core.TextAlignEnd,
-		Padding: core.Edges{Right: 8}, LineHeight: core.Points(v.lh)}
+		Padding: core.Edges{Right: core.Points(4 + v.charW/2)}, LineHeight: core.Points(v.lh)}
 	numStyle := func() core.Style {
 		st := s().LineNumber
 		if added {
@@ -969,25 +1059,15 @@ func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 		}
 		return st
 	}
-	number := func(sd Side, at int) core.Node {
-		if v.p.NoLineNumbers {
-			return core.Group{}
-		}
+	var number core.Node = core.Group{}
+	if !v.p.NoLineNumbers {
 		text := ""
-		if at >= 0 {
+		if sd, at := r.pieceSide(side); at >= 0 {
 			text = fmt.Sprint(v.number(sd, at))
 		}
-		return core.Text{Content: text, MaxLines: 1, Class: numClass, Style: numPlace, StyleFunc: numStyle}
+		number = core.Text{Content: text, MaxLines: 1, Class: numClass, Style: numPlace, StyleFunc: numStyle}
 	}
-	var children []core.Node
-	switch {
-	case side < 0:
-		children = append(children, number(Old, r.old), number(New, r.new))
-	case side == int(Old):
-		children = append(children, number(Old, r.old))
-	default:
-		children = append(children, number(New, r.new))
-	}
+	children := []core.Node{number}
 	switch v.p.Indicators {
 	case IndicatorBars:
 		st := func() core.Style {
@@ -999,8 +1079,8 @@ func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 			}
 			return core.Style{}
 		}
-		children = append(children, core.View{Style: core.Style{Width: core.Pt(core.Points(v.charW + 4))},
-			Children: []core.Node{core.View{Class: tint, Style: core.Style{Width: core.Pt(3), FlexGrow: 1}, StyleFunc: st}}})
+		children = []core.Node{core.View{Style: core.Style{Width: core.Pt(core.Points(v.indicatorWidth()))},
+			Children: []core.Node{core.View{Class: tint, Style: core.Style{Width: core.Pt(barWidth), FlexGrow: 1}, StyleFunc: st}}}, number}
 	case IndicatorClassic:
 		mark := " "
 		if added {
@@ -1017,18 +1097,17 @@ func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 			}
 			return core.Style{}
 		}
-		children = append(children, core.Text{Content: mark, Class: tint, Style: core.Style{Width: core.Pt(core.Points(v.charW + 4)),
+		children = append(children, core.Text{Content: mark, Class: tint, Style: core.Style{Width: core.Pt(core.Points(v.indicatorWidth())),
 			LineHeight: core.Points(v.lh)}, StyleFunc: st})
 	}
 	desktop := core.Untracked(v.cx, v.cx.Env().Desktop)
-	press := func(ev core.PressEvent) {
-		sd := v.gutterSide(r, side, float32(ev.Position.X))
-		v.selectLine(sd, r.lineOf(sd), ev.Modifiers.Shift)
-	}
+	sd, line := r.pieceSide(side)
+	press := func(ev core.PressEvent) { v.selectLine(sd, line, ev.Modifiers.Shift) }
 	view := core.View{
+		Class:     class,
 		ClassFunc: v.selectedClass(r, side),
 		StyleFunc: func() core.Style {
-			st := merge(v.place(i, r), core.Style{Direction: core.Row})
+			st := merge(v.place(i, r), core.Style{Direction: core.Row}, v.tinted(added, deleted))
 			if v.rowSelected(r, side) {
 				st = merge(st, s().LineSelected)
 			}
@@ -1037,11 +1116,10 @@ func (v *dv) gutterPiece(i int, r row, side int) core.Node {
 		NoFocus:  true,
 		Children: children,
 		OnPress: func(ev core.PressEvent) {
-			sd := v.gutterSide(r, side, float32(ev.Position.X))
 			if !desktop {
 				press(ev)
 			}
-			if line := r.lineOf(sd); line >= 0 && v.p.OnLineNumberPress != nil {
+			if line >= 0 && v.p.OnLineNumberPress != nil {
 				v.p.OnLineNumberPress(Line{Side: sd, Line: v.index(sd, line)})
 			}
 		},
@@ -1068,16 +1146,10 @@ func (v *dv) textPiece(i int, r row, side int) core.Node {
 		class = joinClasses(class, c.LineDeleted)
 	}
 	lineStyle := func() core.Style {
-		st := s().Line
-		switch {
-		case line < 0:
-			st = merge(st, s().Filler)
-		case added:
-			st = merge(st, s().LineAdded)
-		case deleted:
-			st = merge(st, s().LineDeleted)
+		if line < 0 {
+			return merge(s().Line, s().Filler)
 		}
-		return st
+		return v.tinted(added, deleted)
 	}
 	var texts []core.Node
 	if line >= 0 {
@@ -1092,16 +1164,20 @@ func (v *dv) textPiece(i int, r row, side int) core.Node {
 			if k+1 < len(starts) {
 				b = starts[k+1]
 			}
-			texts = append(texts, core.Text{MaxLines: 1, Style: core.Style{WhiteSpace: core.WhiteSpaceNoWrap, LineHeight: core.Points(v.lh),
+			text := core.Text{MaxLines: 1, Style: core.Style{WhiteSpace: core.WhiteSpaceNoWrap, LineHeight: core.Points(v.lh),
 				Height: core.Pt(core.Points(v.lh))},
-				SpansFunc: func() []core.Span { return v.spans(r, isOld, line, a, b) }})
+				SpansFunc: func() []core.Span { return v.spans(r, isOld, line, a, b) }}
+			texts = append(texts, v.wordBoxes(r, isOld, line, a, b, text))
 		}
+	}
+	if line < 0 {
+		texts = []core.Node{v.hatching(v.tops[i])}
 	}
 	view := core.View{
 		Class:     joinClasses(class, c.Content),
 		ClassFunc: v.selectedClass(r, side),
 		StyleFunc: func() core.Style {
-			st := merge(v.place(i, r), core.Style{Padding: core.Edges{Left: 8, Right: 8}}, lineStyle(), s().Content)
+			st := merge(v.place(i, r), core.Style{Padding: core.Edges{Left: 4, Right: 8}}, lineStyle(), s().Content)
 			if v.rowSelected(r, side) {
 				st = merge(st, s().LineSelected)
 			}
@@ -1111,6 +1187,68 @@ func (v *dv) textPiece(i int, r row, side int) core.Node {
 	}
 	v.hoverable(&view, r, side)
 	return view
+}
+
+// hatching is a filler's lines at 45°, up to the right, every 8 points
+// along a row, in Filler's Color. They run on across the rows, from
+// where a row whose top is at top starts in them.
+func (v *dv) hatching(top float32) core.Node {
+	const every = 8
+	return core.Canvas{
+		Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
+		Draw: func(d *core.Drawing, size core.Size) {
+			c := v.styles().Filler.Color
+			if c == 0 {
+				return
+			}
+			w, h := float32(size.Width), float32(size.Height)
+			d.SetStrokeColor(c).SetLineWidth(1).BeginPath()
+			first := -float32(math.Mod(float64(top), every))
+			for x := first; x < w+h; x += every {
+				d.MoveTo(x, 0).LineTo(x-h, h)
+			}
+			d.Stroke()
+		},
+	}
+}
+
+// wordBoxes puts text, bytes from to to of a line, over a box behind each
+// word changed in them, which runs over the tokens the word crosses and is
+// as tall as the line, where a span's background is a box a token and a
+// font tall.
+func (v *dv) wordBoxes(r row, isOld bool, line, from, to int, text core.Text) core.Node {
+	marks := v.marks(r, isOld)
+	if len(marks) == 0 {
+		return text
+	}
+	style, class := func() core.Style { return v.styles().WordAdded }, v.p.Classes.WordAdded
+	if isOld {
+		style, class = func() core.Style { return v.styles().WordDeleted }, v.p.Classes.WordDeleted
+	}
+	full := v.lineText(isOld, line)
+	var children []core.Node
+	for _, m := range marks {
+		a, b := max(m[0], from), min(m[1], to)
+		if a >= b {
+			continue
+		}
+		left, right := v.widthOf(full[from:a]), v.widthOf(full[from:b])
+		children = append(children, core.View{Class: class, StyleFunc: func() core.Style {
+			return merge(style(), core.Style{Position: core.Absolute, Left: core.Pt(core.Points(left)), Width: core.Pt(core.Points(right - left)),
+				Top: core.Pt(0), Bottom: core.Pt(0)})
+		}})
+	}
+	return core.View{Style: core.Style{Height: core.Pt(core.Points(v.lh))}, Children: append(children, text)}
+}
+
+// widthOf is the width s takes in a line, tabs as four spaces: columns of
+// the font, unless a character in it may be wider.
+func (v *dv) widthOf(s string) float32 {
+	if len(s) == utf8.RuneCountInString(s) {
+		return float32(columns(s)) * v.charW
+	}
+	// The 0 keeps the white space that ends s.
+	return v.cx.MeasureText(strings.ReplaceAll(s, "\t", "    ")+"0", v.font).Width - v.charW
 }
 
 // selectedClass is LineSelected's class while row r is selected in
@@ -1177,8 +1315,8 @@ func (v *dv) bands() core.Node {
 // press toggling the file or showing the gap's lines.
 func (v *dv) band(cx *core.Scope, i int, r row) core.Node {
 	s, c := v.styles, &v.p.Classes
-	place := core.Style{Position: core.Absolute, Left: core.Pt(0), Width: core.Pt(core.Points(core.Untracked(v.cx, v.viewWidth))),
-		Top: core.Pt(core.Points(v.tops[i])), Height: core.Pt(core.Points(v.lh)), Direction: core.Row, AlignItems: core.AlignCenter}
+	place := core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(core.Points(v.tops[i])),
+		Bottom: core.Pt(core.Points(v.height() - v.tops[i+1])), Direction: core.Row, AlignItems: core.AlignCenter}
 	if r.kind == rowFile {
 		seg := v.segs[r.file]
 		f := seg.file
@@ -1207,10 +1345,7 @@ func (v *dv) band(cx *core.Scope, i int, r row) core.Node {
 	}
 	label := r.header
 	if label == "" {
-		label = fmt.Sprintf("⋯ %d unchanged lines", r.hidden)
-		if r.hidden == 1 {
-			label = "⋯ 1 unchanged line"
-		}
+		label = "⋯ " + locales.DiffUnchangedLines(cx, r.hidden)
 	}
 	gap := r.gap
 	return core.View{Class: c.Separator, Style: place, StyleFunc: func() core.Style { return s().Separator }, Role: core.RoleButton, Label: label,
@@ -1266,20 +1401,15 @@ func (v *dv) spans(r row, isOld bool, line, from, to int) []core.Span {
 	}
 	text := v.m.new[line]
 	toks := v.hlNew[line]
-	word, wordClass := v.styles().WordAdded, v.p.Classes.WordAdded
+	word := v.styles().WordAdded
 	if isOld {
-		text, toks, word, wordClass = v.m.old[line], v.hlOld[line], v.styles().WordDeleted, v.p.Classes.WordDeleted
+		text, toks, word = v.m.old[line], v.hlOld[line], v.styles().WordDeleted
 	}
+	// The word's box draws these (wordBoxes).
+	word.Background, word.Gradients, word.CornerRadius = 0, nil, 0
 	text = strings.TrimSuffix(text, "\n")
 	to = min(to, len(text))
-	var marks [][2]int
-	if r.kind == rowModified {
-		in := v.inlineOf(r.old, r.new)
-		marks = in[1]
-		if isOld {
-			marks = in[0]
-		}
-	}
+	marks := v.marks(r, isOld)
 	cuts := []int{from, to}
 	for _, t := range toks {
 		cuts = append(cuts, t.Start, t.End)
@@ -1296,7 +1426,6 @@ func (v *dv) spans(r row, isOld bool, line, from, to int) []core.Span {
 			continue
 		}
 		var st core.Style
-		var class string
 		for _, t := range toks {
 			if t.Start <= a && b <= t.End {
 				st = palette[t.Kind]
@@ -1304,10 +1433,10 @@ func (v *dv) spans(r row, isOld bool, line, from, to int) []core.Span {
 		}
 		for _, m := range marks {
 			if m[0] <= a && b <= m[1] {
-				st, class = merge(st, word), wordClass
+				st = merge(st, word)
 			}
 		}
-		out = append(out, core.Span{Content: strings.ReplaceAll(text[a:b], "\t", "    "), Class: class, Style: st})
+		out = append(out, core.Span{Content: strings.ReplaceAll(text[a:b], "\t", "    "), Style: st})
 	}
 	if len(out) == 0 {
 		out = []core.Span{{Content: ""}}

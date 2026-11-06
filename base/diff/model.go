@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -403,6 +404,70 @@ func changed(rs [][2]int) int {
 func (m *model) revert(h hunk) (string, string) {
 	lines := append(append(append([]string(nil), m.new[:h.newStart]...), m.old[h.oldStart:h.oldEnd]...), m.new[h.newEnd:]...)
 	return strings.Join(m.old, ""), strings.Join(lines, "")
+}
+
+// walk calls fn with the hunk's lines in the order rows show them side by
+// side: a line alone, its other side -1, or a pair.
+func (h hunk) walk(fn func(old, new int)) {
+	oi, ni := h.oldStart, h.newStart
+	for _, pr := range append(h.pairs, [2]int{h.oldEnd, h.newEnd}) {
+		for ; oi < pr[0]; oi++ {
+			fn(oi, -1)
+		}
+		for ; ni < pr[1]; ni++ {
+			fn(-1, ni)
+		}
+		if pr[0] < h.oldEnd && pr[1] < h.newEnd {
+			fn(pr[0], pr[1])
+			oi, ni = pr[0]+1, pr[1]+1
+		}
+	}
+}
+
+// revertLines puts the old and new lines given (sorted, from 0) back as
+// the old text has them, the changes' other lines staying changes.
+func (m *model) revertLines(old, new []int) (string, string) {
+	var lines []string
+	at := 0
+	for _, h := range m.hunks {
+		lines = append(lines, m.new[at:h.newStart]...)
+		h.walk(func(o, n int) {
+			if o >= 0 && has(old, o) {
+				lines = append(lines, m.old[o])
+			}
+			if n >= 0 && !has(new, n) {
+				lines = append(lines, m.new[n])
+			}
+		})
+		at = h.newEnd
+	}
+	return strings.Join(m.old, ""), strings.Join(append(lines, m.new[at:]...), "")
+}
+
+// acceptLines makes the old and new lines given (sorted, from 0) the old
+// text's, the changes' other lines staying changes.
+func (m *model) acceptLines(old, new []int) (string, string) {
+	var lines []string
+	at := 0
+	for _, h := range m.hunks {
+		lines = append(lines, m.old[at:h.oldStart]...)
+		h.walk(func(o, n int) {
+			if o >= 0 && !has(old, o) {
+				lines = append(lines, m.old[o])
+			}
+			if n >= 0 && has(new, n) {
+				lines = append(lines, m.new[n])
+			}
+		})
+		at = h.oldEnd
+	}
+	return strings.Join(append(lines, m.old[at:]...), ""), strings.Join(m.new, "")
+}
+
+// has reports whether sorted lines holds line.
+func has(lines []int, line int) bool {
+	_, ok := slices.BinarySearch(lines, line)
+	return ok
 }
 
 // accept makes hunk h's new lines the old text's.

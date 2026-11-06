@@ -101,6 +101,7 @@ A final layout answers where its carets are, as NSH's `TextEngine` hit testing d
 Selection follows NSH's: one selection runs across the texts of a selection area (a `View` with `Selectable`, NSH's selectable views), in document order, as a web page's does. A `Text` with `SelectableOn` outside any area is an area of its own; one with `SelectableOff` stays out. The highlight is the inherited `SelectionColor`, else the platform's.
 
 - `ViewProps` carries `SelectionArea` (the view's `Selectable`), `Selectable` and `SelectionColor`, so a selection never waits for the engine.
+- An area with `OnTextSelection` hears `EventSelectionChange` with the box of the texts its selection touches (`SelectionModel.Extent`, the range's box on the web), each time it moves. Android does not report it yet.
 - `SelectionModel` in `selection.go` is the platform-independent model the Go backends drive on their main thread; `internal/platform/textselect` holds what Windows and Linux share of it. Android's `Selection.java` follows it on the UI thread.
 - A backend lists an area's texts as `SelectionTexts`, with content, frames, hit test and NodeIDs, then feeds it presses, drags and long presses and draws its `Ranges`.
 - Offsets are UTF-16. `Text` joins texts on one row with a tab and others with a line break, leaving attachments out.
