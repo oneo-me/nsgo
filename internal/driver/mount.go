@@ -621,7 +621,10 @@ type InputConfig struct {
 	// takes SelectionColor without one; 0 is the platform's.
 	SelectionColor Color
 	CaretColor     Color
-	HideCaret      bool
+	// AccentColor is the accent of the input's theme, for what the
+	// platform draws around it, such as an input method's candidates.
+	AccentColor Color
+	HideCaret   bool
 	// PasteBehavior says whether a paste inserts its text.
 	PasteBehavior PasteBehavior
 }

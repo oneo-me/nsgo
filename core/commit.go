@@ -366,7 +366,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 	case n.input != nil:
 		in := n.input
 		in.config.PlaceholderColor, in.config.SelectionColor = inherited.PlaceholderColor, inherited.SelectionColor
-		in.config.CaretColor = n.style.CaretColor
+		in.config.CaretColor, in.config.AccentColor = n.style.CaretColor, in.themeCaret
 		cc := func(c *Color) { *c = currentIn(*c, inherited.Color) }
 		cc(&in.config.PlaceholderColor)
 		cc(&in.config.SelectionColor)

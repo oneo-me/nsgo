@@ -35,6 +35,7 @@ type input struct {
 	multiline bool
 	masked    bool
 	focused   bool
+	embedded  bool // in a host's view, whose app's accent is the host's
 	// applying is a change made here, clipping an insertion cut to
 	// maxLength, editing an edit allowed and not reported yet, focusing a
 	// field taking the focus.
@@ -211,7 +212,7 @@ func (v *view) isEditor(n objc.ID) bool { return v.input != nil && v.input.field
 
 // newInput makes an input view's editor.
 func (v *view) newInput() {
-	v.input = &input{fs: field.State{ID: v.id, Dispatch: v.surface.engine.Dispatch}}
+	v.input = &input{fs: field.State{ID: v.id, Dispatch: v.surface.engine.Dispatch}, embedded: v.surface.embedded}
 	v.setEditor(false, false)
 }
 
@@ -640,6 +641,34 @@ func (in *input) styleEditor() {
 	}
 	e.Send(sel("setContinuousSpellCheckingEnabled:"), !c.NoAutoCorrect)
 	e.Send(sel("setAutomaticSpellingCorrectionEnabled:"), !c.NoAutoCorrect)
+	in.followAccent(e)
+}
+
+// appAccent is the accent the app was last given.
+var appAccent driver.Color
+
+// followAccent gives the app the theme's accent, which input methods draw
+// their candidates and marked text in. Info.plist's NSAccentColorName
+// does the same but names one color for the app's life, so this takes
+// AppKit's private setter and a system without it keeps its own accent;
+// either way an accent the user chose in System Settings wins, as only
+// Multicolor leaves it to the app. An input method reads the accent as
+// its context activates, so the context activates again, unless it is
+// composing: the next focus or theme change applies the color then.
+func (in *input) followAccent(editor objc.ID) {
+	accent := in.fs.Config.AccentColor
+	if _, composing := in.markedText(); in.embedded || composing || accent == 0 || accent == appAccent {
+		return
+	}
+	app, set := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")), sel("_setAccentColor:")
+	if !objc.Send[bool](app, sel("respondsToSelector:"), set) {
+		return
+	}
+	app.Send(set, nsColor(accent))
+	appAccent = accent
+	context := editor.Send(sel("inputContext"))
+	context.Send(sel("deactivate"))
+	context.Send(sel("activate"))
 }
 
 // AppKit's text alignments.

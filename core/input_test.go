@@ -48,7 +48,7 @@ func TestInputConfigCarriesProps(t *testing.T) {
 	want := driver.InputConfig{Multiline: true, MaxLength: 5, ReturnKey: ReturnKeySend, SubmitBehavior: SubmitBehaviorSubmit,
 		AutoCapitalize: AutoCapitalizeWords, NoAutoCorrect: true, AutoComplete: AutoCompleteEmail,
 		KeyboardAppearance: KeyboardAppearanceDark, HideCaret: true,
-		PlaceholderColor: RGB(0xff0000), SelectionColor: RGB(0x00ff00)}
+		PlaceholderColor: RGB(0xff0000), SelectionColor: RGB(0x00ff00), AccentColor: DefaultTheme().Light.Accent}
 	got := *c
 	got.Style, got.Content = driver.InputConfig{}.Style, Bounds{}
 	if got != want {
