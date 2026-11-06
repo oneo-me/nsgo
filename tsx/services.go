@@ -144,7 +144,7 @@ func (r *runtime) clipboard() goja.Value {
 		p, resolve, reject := r.vm.NewPromise()
 		data, err := imageBytes(arg(call, 0).String())
 		if err != nil {
-			_ = reject(r.vm.NewGoError(err))
+			_ = reject(r.goError(err))
 			return r.vm.ToValue(p)
 		}
 		r.cx.SetClipboardImage(data)
@@ -199,7 +199,7 @@ func (r *runtime) storage() goja.Value {
 			p, resolve, reject := r.vm.NewPromise()
 			v, err := f(call)
 			if err != nil {
-				_ = reject(r.vm.NewGoError(err))
+				_ = reject(r.goError(err))
 			} else {
 				_ = resolve(v)
 			}
@@ -263,7 +263,7 @@ func (r *runtime) imageModule() goja.Value {
 		r.cx.ImageSize(r.imageSource(arg(call, 0)), func(px core.Size, err error) {
 			r.inJS(func() {
 				if err != nil {
-					_ = reject(r.vm.NewGoError(err))
+					_ = reject(r.goError(err))
 					return
 				}
 				_ = resolve(r.size(px))
@@ -516,6 +516,26 @@ func (r *runtime) registerFont(call goja.FunctionCall) goja.Value {
 	return goja.Undefined()
 }
 
+// registerAsset is `registerAsset(url, dataURL)`, which a compiled image
+// import calls as its module runs: what its asset: URL reads, for the
+// images and fetches that name it.
+func (r *runtime) registerAsset(call goja.FunctionCall) goja.Value {
+	if r.assets == nil {
+		r.assets = map[string]string{}
+	}
+	r.assets[arg(call, 0).String()] = arg(call, 1).String()
+	return goja.Undefined()
+}
+
+// assetData is what the platform loads for an image's url: the bytes a
+// bundle ships for an asset: URL.
+func (r *runtime) assetData(url string) string {
+	if data, ok := r.assets[url]; ok {
+		return data
+	}
+	return url
+}
+
 // setup is `setup({ theme, tailwind })`, which compiled bundles call
 // first: the theme file and the Tailwind theme nsgo.yaml gives, the
 // app's.
@@ -532,13 +552,13 @@ func (r *runtime) setup(call goja.FunctionCall) goja.Value {
 	if theme != "" {
 		var err error
 		if t, err = core.ParseTheme([]byte(theme)); err != nil {
-			panic(r.vm.NewGoError(err))
+			panic(r.goError(err))
 		}
 	}
 	if tw != "" {
 		var err error
 		if t.Tailwind, err = core.ParseTailwind([]byte(tw)); err != nil {
-			panic(r.vm.NewGoError(err))
+			panic(r.goError(err))
 		}
 	}
 	r.cx.SetTheme(t)

@@ -617,6 +617,10 @@ var compatRoles = map[driver.Role]string{
 	driver.RoleMenu: "menu", driver.RoleMenuItem: "menuitem", driver.RoleDialog: "dialog", driver.RoleAlert: "alert",
 	driver.RoleTable: "table", driver.RoleGrid: "grid", driver.RoleRowGroup: "rowgroup", driver.RoleRow: "row",
 	driver.RoleColumnHeader: "columnheader", driver.RoleCell: "cell",
+	driver.RoleListbox: "listbox", driver.RoleOption: "option", driver.RoleGroup: "group", driver.RoleRegion: "region",
+	driver.RoleNavigation: "navigation", driver.RoleTree: "tree", driver.RoleTreeItem: "treeitem",
+	driver.RoleToolbar: "toolbar", driver.RoleMenuItemCheckbox: "menuitemcheckbox",
+	driver.RoleMenuItemRadio: "menuitemradio",
 }
 
 // compatPairs writes key=value pairs, those with a value only.
@@ -732,7 +736,7 @@ func compatProp(t compatTarget, key string) (string, bool) {
 	case "delayLongPress":
 		return compatMillis(p.DelayLongPress), p.DelayLongPress != 0
 	case "focusable":
-		return compatBool(!p.NoFocus), p.NoFocus
+		return compatBool(!p.NoFocus), p.NoFocus || p.Focusable
 	case "panActivation":
 		a := p.PanActivation
 		return compatPairs("activeOffsetX", compatNonzero(a.ActiveOffsetX), "activeOffsetY", compatNonzero(a.ActiveOffsetY),

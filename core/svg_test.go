@@ -108,3 +108,14 @@ func TestIconChangesDocument(t *testing.T) {
 		t.Fatal("a new document did not draw")
 	}
 }
+
+func TestSVGViewTakesTheDocumentsSize(t *testing.T) {
+	s := MustParseSVG([]byte(`<svg width="30" height="10" viewBox="0 0 3 1"><rect width="3" height="1" fill="red"/></svg>`))
+	h := newHost(t, Size{Width: 200, Height: 100}, func(cx *Scope) Node {
+		return View{Style: Style{AlignItems: AlignStart, FontSize: 20}, Children: []Node{SVGView{SVG: s, TestID: "doc"}}}
+	})
+	h.commit()
+	if got := h.find("doc").frame.Size; got != (Size{Width: 30, Height: 10}) {
+		t.Errorf("the view is %v, want the document's size", got)
+	}
+}

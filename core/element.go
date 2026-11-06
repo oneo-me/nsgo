@@ -1,6 +1,7 @@
 package core
 
 import (
+	"slices"
 	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -68,9 +69,25 @@ type View struct {
 	// focus's Tab stops on macOS and the web: a backdrop that closes a
 	// popover, rows a list moves through with the arrow keys.
 	NoFocus bool
+	// Focusable, when set, says whether the view is a Tab stop on macOS and
+	// the web, over NoFocus and whether it takes presses, following what
+	// it reads: a chart in a pressable card takes keys while focused
+	// without taking presses of its own, and a group of radios keeps one
+	// of them a stop. Return and Space press a stop only when it takes
+	// presses.
+	Focusable func() bool
+	// Follow names the view whose frame this absolutely positioned view
+	// follows, nil for none: along its parent's main axis it spans that
+	// view's frame, a view inside its parent, inside its own margins on
+	// that axis, and across it its own layout stands, as a tab list's
+	// indicator does. The core places it, so a layout that moves the
+	// other view moves it in the same batch, and FollowTransition runs
+	// when it moves to another view.
+	Follow           func() *Ref
+	FollowTransition *LayoutTransition
 	// OnFocus and OnBlur follow the keyboard focus to and from a view that
-	// takes presses, on macOS and the web; a click presses without
-	// focusing.
+	// takes presses or is Focusable, on macOS and the web; a click presses
+	// without focusing.
 	OnFocus func()
 	OnBlur  func()
 	// PointerEvents says which of the view and its children take
@@ -518,6 +535,31 @@ func (r *Ref) Focus() {
 	if r.n != nil && !r.n.deleted {
 		r.t.command(driver.ItemFocus, r.n)
 	}
+}
+
+// Before reports whether r's view comes before other's in tree order,
+// the order Tab goes through them; views not mounted come last.
+func (r *Ref) Before(other *Ref) bool {
+	a, b := r.path(), other.path()
+	for i := range min(len(a), len(b)) {
+		if a[i] != b[i] {
+			return a[i] < b[i]
+		}
+	}
+	return len(a) < len(b) && a != nil
+}
+
+// path is the view's index under each of its ancestors, from the root.
+func (r *Ref) path() []int {
+	if r.n == nil || r.n.deleted {
+		return nil
+	}
+	var path []int
+	for n := r.n; n.parent != nil; n = n.parent {
+		path = append(path, slices.Index(n.parent.children, n))
+	}
+	slices.Reverse(path)
+	return path
 }
 
 // ScrollTo scrolls the element, a Scroll or List, so its content's

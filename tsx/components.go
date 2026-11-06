@@ -130,7 +130,7 @@ func (r *runtime) thrown(err error) goja.Value {
 			return v
 		}
 	}
-	return r.vm.NewGoError(err)
+	return r.goError(err)
 }
 
 // contextDefault keys a context's default, which a hot update replaces

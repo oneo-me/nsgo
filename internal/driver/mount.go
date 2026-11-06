@@ -682,8 +682,9 @@ type ViewProps struct {
 	SelectionArea  bool
 	Selectable     Selectable
 	SelectionColor Color
-	// NoFocus keeps a pressable view out of the Tab stops.
-	NoFocus bool
+	// NoFocus keeps a pressable view out of the Tab stops, and Focusable
+	// makes a Tab stop of a view that takes no presses.
+	NoFocus, Focusable bool
 	// Appearance is the one its subtree forces (Scope.SetSubtreeAppearance),
 	// for the platform's views in it; AppearanceSystem follows the window.
 	Appearance Appearance
@@ -745,6 +746,23 @@ const (
 	RoleRow
 	RoleColumnHeader
 	RoleCell
+	// RoleListbox holds RoleOptions the user picks from, as a select's
+	// popup does.
+	RoleListbox
+	RoleOption
+	// RoleGroup, RoleRegion and RoleNavigation are parts of a page, the
+	// last two landmarks.
+	RoleGroup
+	RoleRegion
+	RoleNavigation
+	// RoleTree holds RoleTreeItems.
+	RoleTree
+	RoleTreeItem
+	RoleToolbar
+	// RoleMenuItemCheckbox and RoleMenuItemRadio are menu items with a
+	// checked state.
+	RoleMenuItemCheckbox
+	RoleMenuItemRadio
 )
 
 // ScrollConfig configures a scroll view.

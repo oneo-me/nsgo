@@ -150,7 +150,7 @@ func entryStyle(v *view) string {
 	}
 	fmt.Fprintf(&b, "%s { color: %s; caret-color: %s; }\n", all, cssColor(in.Style.Color), caretCSS)
 	if f.Family != "" {
-		fmt.Fprintf(&b, "%s { font-family: %q; }\n", all, f.Family)
+		fmt.Fprintf(&b, "%s { font-family: %s; }\n", all, gtkFamilies(f.Family))
 	}
 	if f.Size > 0 {
 		fmt.Fprintf(&b, "%s { font-size: %.3fpt; }\n", all, float64(f.Size))

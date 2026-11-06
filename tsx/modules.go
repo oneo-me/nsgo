@@ -71,6 +71,7 @@ var moduleTable = map[string][]export{
 		fn("list", (*runtime).list),
 		fn("setup", (*runtime).setup),
 		fn("registerFont", (*runtime).registerFont),
+		fn("registerAsset", (*runtime).registerAsset),
 		fn("element", (*runtime).element),
 		fn("text", (*runtime).textNode),
 		fn("append", (*runtime).append),

@@ -1504,7 +1504,7 @@ func writeDrawing(w *writer, d *driver.Drawing) {
 			// The point the recorder placed the text at.
 			arg(driver.ArgX, op.X+op.X1)
 			arg(driver.ArgY, op.Y+op.Y1)
-			w.str(op.Font.Family)
+			w.str(firstFamily(op.Font.Family))
 			w.points(op.Font.Size)
 			w.u16(uint16(op.Font.Weight))
 			w.flags(op.Font.Italic)
@@ -1545,6 +1545,26 @@ func writeDrawing(w *writer, d *driver.Drawing) {
 		w.str(n.Label)
 		w.str(n.TestID)
 		w.flags(n.Selected)
+	}
+}
+
+// firstFamily is the family Java sets a fontFamily list in: the first,
+// the system's for a generic one. Java takes the rest from the system's
+// fallback, not the list (docs/roadmap.md).
+func firstFamily(list string) string {
+	families := driver.FontFamilies(list)
+	if len(families) == 0 {
+		return list
+	}
+	switch f := families[0]; f.Kind {
+	case driver.FamilyMonospace:
+		return driver.FontMonospace
+	case driver.FamilySerif:
+		return "serif"
+	case driver.FamilySystem, driver.FamilyRounded:
+		return ""
+	default:
+		return f.Name
 	}
 }
 
@@ -1739,7 +1759,7 @@ func writeDecor(w *writer, v *driver.ViewStyle) {
 
 // writeStyle writes a text style in the format Text.Style reads.
 func writeStyle(w *writer, t *driver.TextStyle) {
-	w.str(t.Font.Family)
+	w.str(firstFamily(t.Font.Family))
 	w.points(t.Font.Size)
 	w.u16(uint16(t.Font.Weight))
 	w.u32(uint32(t.Color))

@@ -443,3 +443,17 @@ func mustParse(t *testing.T, data []byte) *SVG {
 	}
 	return s
 }
+
+func TestSVGDashes(t *testing.T) {
+	s, err := ParseSVG([]byte(`<svg viewBox="0 0 10 10"><g transform="scale(2)"><path d="M0 0L5 0" stroke="red" stroke-width="1" stroke-dasharray="1,2 3" stroke-dashoffset="4"/></g></svg>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ops := kindsOf(s.ops, DrawLineDash)
+	if len(ops) != 2 || ops[0].Dash == nil || !slices.Equal(*ops[0].Dash, LineDash{2, 4, 6, 2, 4, 6}) || ops[1].Dash != nil {
+		t.Errorf("dashes %+v", ops)
+	}
+	if off := kindsOf(s.ops, DrawLineDashOffset); len(off) != 2 || off[0].W != 8 || off[1].W != 0 {
+		t.Errorf("offsets %+v", off)
+	}
+}

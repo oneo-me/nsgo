@@ -371,7 +371,7 @@ func (cx *Scope) CallHostTimeout(name string, data any, timeout time.Duration, d
 	}
 	a := rt.host
 	if a == nil {
-		finish(nil, fmt.Errorf("%w: no host embeds the app", ErrNoHostHandler))
+		finish(nil, &Error{Code: CodeUnavailable, Message: "core: no host embeds the app", Err: ErrNoHostHandler})
 		return
 	}
 	fn := a.h.handler(name)
@@ -380,7 +380,7 @@ func (cx *Scope) CallHostTimeout(name string, data any, timeout time.Duration, d
 		return
 	}
 	if a.calls >= maxHostCalls {
-		finish(nil, fmt.Errorf("core: %d host calls are waiting already", maxHostCalls))
+		finish(nil, &Error{Code: CodeQuotaExceeded, Message: fmt.Sprintf("core: %d host calls are waiting already", maxHostCalls)})
 		return
 	}
 	v, err := hostValue(data)

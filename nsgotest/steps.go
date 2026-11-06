@@ -699,13 +699,14 @@ func (a *App) tabs() bool {
 
 // moveFocus moves the keyboard focus to the next Tab stop, or the
 // previous one, around: editable fields and the pressable views not
-// NoFocus, disabled or out of sight, in tree order.
+// NoFocus, disabled or out of sight and the Focusable ones, in tree
+// order.
 func (a *App) moveFocus(back bool) {
 	var stops []*View
 	at := -1
 	for _, v := range a.shown() {
 		stop := v.Kind == driver.KindInput && !v.Input.Readonly ||
-			v.Kind != driver.KindInput && pressable(v) && !v.Props.NoFocus
+			v.Kind != driver.KindInput && (pressable(v) || v.Props.Focusable) && !v.Props.NoFocus
 		if !stop || v.disabled(nil) {
 			continue
 		}

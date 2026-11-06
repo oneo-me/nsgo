@@ -106,12 +106,22 @@ func (n *node) applyEnv() {
 		return 0
 	}
 	// Right to left, layout swaps left and right (layoutStyle), so a term
-	// on the left takes the right edge's inset.
-	marginLeft, marginRight := in.Left, in.Right
-	if n.rtl {
-		marginLeft, marginRight = in.Right, in.Left
+	// on the left takes the right edge's inset, unless the side is
+	// physical.
+	sides := func(keep Sides) (left, right Points) {
+		left, right = in.Left, in.Right
+		if n.rtl {
+			if keep&SideLeft == 0 {
+				left = in.Right
+			}
+			if keep&SideRight == 0 {
+				right = in.Left
+			}
+		}
+		return left, right
 	}
-	padLeft, padRight := marginLeft, marginRight
+	marginLeft, marginRight := sides(s.PhysicalEdges.Margin)
+	padLeft, padRight := sides(s.PhysicalEdges.Padding)
 	if n.scroll != nil && n.scroll.config.Horizontal {
 		padLeft, padRight = in.Left, in.Right
 	}

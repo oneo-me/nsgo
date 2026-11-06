@@ -100,6 +100,20 @@ var roles = map[driver.Role][2]string{
 	// WebKit's subroles for ARIA's dialog and alert.
 	driver.RoleDialog: {"AXGroup", "AXApplicationDialog"},
 	driver.RoleAlert:  {"AXGroup", "AXApplicationAlert"},
+	// A listbox and a tree are lists, as WebKit maps ARIA's. Their items
+	// are static text that reports its state: AppKit's rows need a
+	// table's columns, and its menu items a menu.
+	driver.RoleListbox:  {"AXList", ""},
+	driver.RoleTree:     {"AXList", ""},
+	driver.RoleOption:   {"AXStaticText", ""},
+	driver.RoleTreeItem: {"AXStaticText", ""},
+	driver.RoleGroup:    {"AXGroup", ""},
+	// ARIA's landmark subroles, as WebKit maps them.
+	driver.RoleRegion:           {"AXGroup", "AXLandmarkRegion"},
+	driver.RoleNavigation:       {"AXGroup", "AXLandmarkNavigation"},
+	driver.RoleToolbar:          {"AXToolbar", ""},
+	driver.RoleMenuItemCheckbox: {"AXMenuItem", ""},
+	driver.RoleMenuItemRadio:    {"AXMenuItem", ""},
 }
 
 // axRole returns the AppKit role of v, or none.
@@ -108,6 +122,10 @@ func (v *view) axRole() [2]string {
 	if len(v.axNodes) > 0 {
 		// A canvas with named parts holds them.
 		return [2]string{"AXGroup", ""}
+	}
+	if p.Role == driver.RoleButton && p.Pressed {
+		// A button that stays on, as browsers make ARIA's aria-pressed.
+		return [2]string{"AXCheckBox", "AXToggle"}
 	}
 	if r, ok := roles[p.Role]; ok {
 		return r
@@ -277,12 +295,13 @@ func (v *view) updateAccessibility() {
 		native.Send(sel("setAccessibilityMaxValue:"), nsNumber(float64(val.Max)))
 		native.Send(selSetAccessibilityValue, nsNumber(float64(val.Now)))
 		native.Send(sel("setAccessibilityValueDescription:"), nsOrNil(val.Text))
-	case p.Role == driver.RoleCheckbox || p.Role == driver.RoleSwitch || p.Role == driver.RoleRadio:
+	case p.Role == driver.RoleCheckbox || p.Role == driver.RoleSwitch || p.Role == driver.RoleRadio ||
+		p.Role == driver.RoleMenuItemCheckbox || p.Role == driver.RoleMenuItemRadio || p.Pressed:
 		n := 0
 		switch {
 		case p.Indeterminate:
 			n = 2 // mixed
-		case p.Checked || p.Selected:
+		case p.Checked || p.Selected || p.Pressed:
 			n = 1
 		}
 		native.Send(selSetAccessibilityValue, objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithInt:"), n))

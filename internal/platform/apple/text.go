@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/objc"
 
 	"github.com/oneo-me/nsgo/internal/driver"
 )
@@ -34,6 +35,8 @@ var (
 	ctFontCreateUIFont          func(kind uint32, size float64, lang uintptr) uintptr
 	ctFontCreateWithName        func(name uintptr, size float64, matrix uintptr) uintptr
 	ctFontCopyFontDescriptor    func(font uintptr) uintptr
+	ctFontCopyFamilyName        func(font uintptr) uintptr
+	ctFontCopyPostScriptName    func(font uintptr) uintptr
 	ctFontDescriptorCopyAttrs   func(desc, attrs uintptr) uintptr
 	ctFontCreateWithDescriptor  func(desc uintptr, size float64, matrix uintptr) uintptr
 	ctFontGetAscent             func(uintptr) float64
@@ -71,6 +74,7 @@ var (
 	attrFont, attrColor, attrKern, attrUnderline, attrParagraph uintptr
 	attrTraits, attrWeight, attrSymbolic, attrUnderlineColor    uintptr
 	attrFeatureSettings, attrFeatureTag, attrFeatureValue       uintptr
+	attrCascadeList                                             uintptr
 
 	ctFontDescriptorCreateWithAttrs func(attrs uintptr) uintptr
 	ctFontCreateCopyWithAttrs       func(font uintptr, size float64, matrix, desc uintptr) uintptr
@@ -101,6 +105,8 @@ func loadText(cf, cg uintptr) {
 	reg(&ctFontCreateUIFont, ct, "CTFontCreateUIFontForLanguage")
 	reg(&ctFontCreateWithName, ct, "CTFontCreateWithName")
 	reg(&ctFontCopyFontDescriptor, ct, "CTFontCopyFontDescriptor")
+	reg(&ctFontCopyFamilyName, ct, "CTFontCopyFamilyName")
+	reg(&ctFontCopyPostScriptName, ct, "CTFontCopyPostScriptName")
 	reg(&ctFontDescriptorCopyAttrs, ct, "CTFontDescriptorCreateCopyWithAttributes")
 	reg(&ctFontCreateWithDescriptor, ct, "CTFontCreateWithFontDescriptor")
 	reg(&ctFontGetAscent, ct, "CTFontGetAscent")
@@ -144,6 +150,7 @@ func loadText(cf, cg uintptr) {
 	attrSymbolic = constant(ct, "kCTFontSymbolicTrait")
 	attrUnderlineColor = constant(ct, "kCTUnderlineColorAttributeName")
 	attrFeatureSettings = constant(ct, "kCTFontFeatureSettingsAttribute")
+	attrCascadeList = constant(ct, "kCTFontCascadeListAttribute")
 	attrFeatureTag = constant(ct, "kCTFontOpenTypeFeatureTag")
 	attrFeatureValue = constant(ct, "kCTFontOpenTypeFeatureValue")
 	reg(&ctFontDescriptorCreateWithAttrs, ct, "CTFontDescriptorCreateWithAttributes")
@@ -219,6 +226,68 @@ func withFeatures(font uintptr, tags []string) uintptr {
 	return out
 }
 
+// listedFont returns a new CTFont of the first family of f's list the
+// system has, taking what it lacks from the others it has, in their order,
+// before the system's fallback fonts: CoreText's cascade list.
+func listedFont(f driver.Font) uintptr {
+	var fonts []uintptr
+	for _, family := range driver.FontFamilies(f.Family) {
+		if font := familyFont(family, f.Size); font != 0 {
+			fonts = append(fonts, font)
+		}
+	}
+	if len(fonts) == 0 {
+		const uiFontSystem = 2
+		return ctFontCreateUIFont(uiFontSystem, float64(f.Size), 0)
+	}
+	if len(fonts) == 1 {
+		return fonts[0]
+	}
+	first := fonts[0]
+	descriptors := make([]uintptr, len(fonts)-1)
+	for i, font := range fonts[1:] {
+		descriptors[i] = ctFontCopyFontDescriptor(font)
+		Release(font)
+	}
+	list := cfArray(descriptors)
+	attrs := dictionary([]uintptr{attrCascadeList}, []uintptr{list})
+	desc := ctFontDescriptorCreateWithAttrs(attrs)
+	out := ctFontCreateCopyWithAttrs(first, 0, 0, desc)
+	for _, ref := range append(descriptors, list, attrs, desc, first) {
+		Release(ref)
+	}
+	return out
+}
+
+// familyFont returns a new CTFont of a family, 0 for a named one the
+// system does not have: CTFontCreateWithName answers those with another.
+func familyFont(family driver.Family, size driver.Points) uintptr {
+	const uiFontSystem, uiFontUserFixedPitch = 2, 1
+	switch family.Kind {
+	case driver.FamilySystem, driver.FamilyRounded:
+		return ctFontCreateUIFont(uiFontSystem, float64(size), 0)
+	case driver.FamilyMonospace:
+		return ctFontCreateUIFont(uiFontUserFixedPitch, float64(size), 0)
+	case driver.FamilySerif:
+		family.Name = "Times New Roman"
+	}
+	name := CFString(family.Name)
+	defer Release(name)
+	font := ctFontCreateWithName(name, float64(size), 0)
+	if font == 0 {
+		return 0
+	}
+	have := ctFontCopyFamilyName(font)
+	full := ctFontCopyPostScriptName(font)
+	defer Release(have)
+	defer Release(full)
+	if GoString(objc.ID(have)) != family.Name && GoString(objc.ID(full)) != family.Name {
+		Release(font)
+		return 0
+	}
+	return font
+}
+
 // buildFace returns a new CTFont of f's family, size, weight and slant.
 func buildFace(f driver.Font) uintptr {
 	var base uintptr
@@ -226,9 +295,7 @@ func buildFace(f driver.Font) uintptr {
 		const uiFontUserFixedPitch = 1
 		base = ctFontCreateUIFont(uiFontUserFixedPitch, float64(f.Size), 0)
 	} else if f.Family != "" {
-		name := CFString(f.Family)
-		base = ctFontCreateWithName(name, float64(f.Size), 0)
-		Release(name)
+		base = listedFont(f)
 	} else {
 		const uiFontSystem = 2
 		base = ctFontCreateUIFont(uiFontSystem, float64(f.Size), 0)

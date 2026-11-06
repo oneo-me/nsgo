@@ -58,7 +58,22 @@ func cssFamily(family string) string {
 	case driver.FontMonospace:
 		return monospaceFamily
 	}
-	return strconv.Quote(family) + ", " + fontFamily
+	var list []string
+	for _, f := range driver.FontFamilies(family) {
+		switch f.Kind {
+		case driver.FamilyMonospace:
+			list = append(list, monospaceFamily)
+		case driver.FamilySerif:
+			list = append(list, "serif")
+		case driver.FamilyRounded:
+			list = append(list, "ui-rounded")
+		case driver.FamilySystem:
+			list = append(list, fontFamily)
+		default:
+			list = append(list, strconv.Quote(f.Name))
+		}
+	}
+	return strings.Join(append(list, fontFamily), ", ")
 }
 
 // longPressDelay is how long a press is held to be a long press, in
@@ -1985,6 +2000,17 @@ var roles = map[driver.Role]string{
 	driver.RoleRow:          "row",
 	driver.RoleColumnHeader: "columnheader",
 	driver.RoleCell:         "cell",
+
+	driver.RoleListbox:          "listbox",
+	driver.RoleOption:           "option",
+	driver.RoleGroup:            "group",
+	driver.RoleRegion:           "region",
+	driver.RoleNavigation:       "navigation",
+	driver.RoleTree:             "tree",
+	driver.RoleTreeItem:         "treeitem",
+	driver.RoleToolbar:          "toolbar",
+	driver.RoleMenuItemCheckbox: "menuitemcheckbox",
+	driver.RoleMenuItemRadio:    "menuitemradio",
 }
 
 // colorSchemes are CSS's color-scheme of each appearance, inherited for
@@ -2036,6 +2062,8 @@ func setViewProps(v *view, p *driver.ViewProps) {
 	setAttr(el, "aria-disabled", flag(p.Disabled))
 	setAttr(el, "aria-selected", flag(p.Selected))
 	setAttr(el, "aria-checked", checked)
+	setAttr(el, "aria-pressed", flag(p.Pressed))
+	setAttr(el, "aria-busy", flag(p.Busy))
 	expanded := ""
 	if p.Expandable {
 		expanded = strconv.FormatBool(p.Expanded)
@@ -2116,7 +2144,7 @@ func (v *view) setTabIndex() {
 	tabIndex := ""
 	switch {
 	case v.props.ElementsHidden || v.props.Disabled:
-	case v.pressable() && !v.props.NoFocus || v.events.Has(driver.EventAccessibilityAction) && v.hasKeyAction():
+	case (v.pressable() || v.props.Focusable) && !v.props.NoFocus || v.events.Has(driver.EventAccessibilityAction) && v.hasKeyAction():
 		tabIndex = "0"
 	case v.a11yFocus:
 		tabIndex = "-1"

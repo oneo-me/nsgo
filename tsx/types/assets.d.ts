@@ -42,6 +42,18 @@ declare module "*.ttf" {
   export default family;
 }
 
+declare module "*.woff" {
+  /** The font's family name, for fontFamily. */
+  const family: string;
+  export default family;
+}
+
+declare module "*.woff2" {
+  /** The font's family name, for fontFamily. */
+  const family: string;
+  export default family;
+}
+
 declare module "*.otf" {
   /** The font's family name, for fontFamily. */
   const family: string;

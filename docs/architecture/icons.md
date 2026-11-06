@@ -11,7 +11,7 @@ An icon is a vector element, not an image: `core.SVG` turns a document into canv
 | Read | Not read |
 | --- | --- |
 | `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon` inside `svg`, `g`, `a`, `switch` and `use` (of shapes, groups and symbols) | Text, images, patterns, masks, filters, markers, animations, nested viewports' `viewBox`es |
-| `fill`, `stroke`, `stroke-width`, `stroke-linecap`, `stroke-linejoin`, `fill-rule`, `clip-rule`, `fill-opacity`, `stroke-opacity`, `color`, `visibility`, inherited through groups; `opacity`, `display="none"`, `transform` | Dashes, `stroke-miterlimit`, `paint-order`, blend modes |
+| `fill`, `stroke`, `stroke-width`, `stroke-linecap`, `stroke-linejoin`, `stroke-dasharray`, `stroke-dashoffset`, `fill-rule`, `clip-rule`, `fill-opacity`, `stroke-opacity`, `color`, `visibility`, inherited through groups; `opacity`, `display="none"`, `transform` | `stroke-miterlimit`, `paint-order`, blend modes |
 | `none`, `currentColor`, hex, `rgb()`, `rgba()`, `hsl()`, `hsla()`, CSS names, `transparent`; `url(#id)` with a fallback | `var()`, `currentColor` in a gradient stop (black) |
 | Linear and radial gradients with `href` inheritance, both units, `gradientTransform` and spread methods; clip paths in user space units | Clip paths in `objectBoundingBox` units; a focal point outside its circle moves onto it, as in SVG 1.1 |
 | Presentation attributes, the `style` attribute, and style sheets' type, class and id selectors | Other selectors, at-rules |
@@ -33,6 +33,7 @@ Parsing reads the document into a tree first, so references may point forward, t
 
 - Each commit's style resolution writes the inherited color into the icon's signal; a changed color redraws without a relayout.
 - `SVGFunc` re-reads a document from a signal, as `Image.SourceFunc` does, so a list's cell follows its row without being rebuilt. A document whose intrinsic size changes marks the icon for layout.
+- `SVGView` is the same element sized by the document's `width` and `height`, else its `viewBox`, for an SVG drawn as authored, as NSH's `svg()`.
 - `Label` gives the icon the image role and a name for assistive technology; without it the icon is a decoration that technology skips.
 
 ## Lucide pack

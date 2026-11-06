@@ -63,6 +63,7 @@ const (
 	unitMinContent
 	unitMaxContent
 	unitFitContent
+	unitAutoMinimum
 )
 
 // The intrinsic sizes, for widths and heights: the narrowest a box gets
@@ -73,6 +74,10 @@ var (
 	MaxContent = Length{unit: unitMaxContent}
 	FitContent = Length{unit: unitFitContent}
 )
+
+// AutoMinimum is CSS's automatic minimum, for a minimum size: a flex
+// item keeps its content's size, where an unset minimum is 0, as in Yoga.
+var AutoMinimum = Length{unit: unitAutoMinimum}
 
 // Pt returns a length in points.
 func Pt(p Points) Length { return Length{float32(p), unitPoints} }

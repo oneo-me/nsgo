@@ -49,6 +49,12 @@ type Style struct {
 	// swap, as in React Native, so they are its start and end, as are the
 	// left and right of margins, paddings, borders and corners.
 	Top, Right, Bottom, Left Length
+	// RowByDefault lays a flex container out in a row unless a Direction
+	// says otherwise, as CSS's display: flex, wherever it was written.
+	RowByDefault bool
+	// PhysicalEdges marks the sides of Margin, Padding and the insets that
+	// stay on their sides right to left, as CSS's left and right.
+	PhysicalEdges PhysicalEdges
 	// LayoutDirection lays the node and what it holds out left to right
 	// or right to left, over the app's direction; the zero value inherits
 	// the parent's.
@@ -189,7 +195,8 @@ type Style struct {
 
 	// Text, inherited by descendants that set none.
 	Color Color
-	// FontFamily names a font family; empty is the system font, and
+	// FontFamily names a font family or a CSS list of them, each used for
+	// the characters those before it lack; empty is the system font, and
 	// FontMonospace the system's fixed-pitch font.
 	FontFamily string
 	FontSize   Points
@@ -345,6 +352,12 @@ func (s stateSet) dataStyle(name string) *Style {
 		*s.data = slices.Insert(slices.Clone(*s.data), i, DataStyle{Name: name, Style: &Style{}})
 	}
 	return (*s.data)[i].Style
+}
+
+// PhysicalEdges are the sides of a style's box that stay on their sides
+// right to left (Style.PhysicalEdges).
+type PhysicalEdges struct {
+	Margin, Padding, Inset Sides
 }
 
 // PhysicalBorders are the parts of a style's border that stay on their
@@ -706,6 +719,10 @@ func (s Style) Merge(o Style) Style {
 	set(&s.Borders, o.Borders)
 	set(&s.BorderColor, o.BorderColor)
 	set(&s.BorderColors, o.BorderColors)
+	s.RowByDefault = s.RowByDefault || o.RowByDefault
+	s.PhysicalEdges.Margin |= o.PhysicalEdges.Margin
+	s.PhysicalEdges.Padding |= o.PhysicalEdges.Padding
+	s.PhysicalEdges.Inset |= o.PhysicalEdges.Inset
 	s.PhysicalBorders.Widths |= o.PhysicalBorders.Widths
 	s.PhysicalBorders.Colors |= o.PhysicalBorders.Colors
 	s.PhysicalBorders.Corners |= o.PhysicalBorders.Corners
@@ -1160,6 +1177,13 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 // mirrored places a left and a right value right to left: each goes to
 // the other side unless keep holds it on its own, where it wins.
 func mirrored[T any](left, right T, keep Sides) (l, r T) {
+	var none T
+	return mirroredOr(left, right, none, keep)
+}
+
+// mirroredOr is mirrored with what a side that gets no value holds.
+func mirroredOr[T any](left, right, none T, keep Sides) (l, r T) {
+	l, r = none, none
 	if keep&SideLeft == 0 {
 		r = left
 	}

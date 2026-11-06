@@ -1,8 +1,11 @@
 package tsx_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"image"
+	"image/png"
 	"slices"
 	"strings"
 	"testing"
@@ -558,5 +561,49 @@ mount(() => <View style={{ flex: 1 }}>
 	app.Scroll("id:list", 300)
 	if got := app.Find("id:ends").Text; got != "1 1" {
 		t.Errorf("scroll ends %q, want one each", got)
+	}
+}
+
+func TestFailuresCarryStableCodes(t *testing.T) {
+	app := run(t, `import { mount, signal, Text, Storage, host } from "nsgo";
+function App() {
+	const out = signal("");
+	const code = (p) => p.then(() => "kept", (e) => e.name + " " + e.code);
+	(async () => {
+		out.set([await code(Storage.setItem("big", "x".repeat(6 * 1024 * 1024))), await code(host.call("x"))].join("|"));
+	})();
+	return <Text testID="out">{out}</Text>;
+}
+mount(App);`)
+	want := "Error ERR_NSH_QUOTA_EXCEEDED|Error ERR_FEATURE_UNAVAILABLE_ON_PLATFORM"
+	app.WaitUntil(2*time.Second, func() bool { return app.Exists("text:" + want) })
+	if !app.Exists("text:" + want) {
+		t.Errorf("got %q, want %q", app.Texts(), want)
+	}
+}
+
+func TestShippedImagesAreAssets(t *testing.T) {
+	var pixel bytes.Buffer
+	if err := png.Encode(&pixel, image.NewRGBA(image.Rect(0, 0, 1, 1))); err != nil {
+		t.Fatal(err)
+	}
+	fsys := fstest.MapFS{"a.png": {Data: pixel.Bytes()}, "App.tsx": {Data: []byte(`import { mount, signal, Text } from "nsgo";
+import a from "./a.png";
+function App() {
+	const out = signal("");
+	(async () => {
+		const res = await fetch(a.url);
+		const bytes = await res.bytes();
+		const missing = await fetch("asset:/b.png").catch((e) => e.name);
+		out.set([a.url, res.headers.get("content-type"), res.headers.get("content-length") == bytes.length, missing].join("|"));
+	})();
+	return <Text testID="out">{out}</Text>;
+}
+mount(App);`)}}
+	app := nsgotest.Start(t, compiler.App(fsys, "App.tsx"))
+	want := "asset:/a.png|image/png|true|TypeError"
+	app.WaitUntil(2*time.Second, func() bool { return app.Exists("text:" + want) })
+	if !app.Exists("text:" + want) {
+		t.Errorf("got %q, want %q", app.Texts(), want)
 	}
 }

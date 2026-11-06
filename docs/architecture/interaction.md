@@ -4,7 +4,7 @@ Accessibility, pointer events, keyboard focus, touch areas, touches and the resp
 
 ## Accessibility
 
-Elements carry NSH's accessibility props: `Role`, `Label` (`LabelFunc` when it changes), `Hint`, `AccessibilityValue` (a range when `Max` is above `Min`, and `Text`), `Expanded`, `AccessibilityActions` with `OnAccessibilityAction`, `Accessible`, `ImportantForAccessibility`, `AccessibilityElementsHidden` and `LiveRegion`. `Ref.SetAccessibilityFocus` moves the screen reader, as an `ItemAccessibilityFocus` command.
+Elements carry NSH's accessibility props: `Role` (a menu item's checked kinds, `RoleListbox`, `RoleOption`, `RoleGroup`, `RoleRegion`, `RoleNavigation`, `RoleTree`, `RoleTreeItem` and `RoleToolbar` among them, each on a backend's nearest role, as WebKit maps ARIA's; Android reads those as plain views for now, [roadmap](../roadmap.md#finish-the-existing-platforms)), `Pressed` and `Busy`, `Label` (`LabelFunc` when it changes), `Hint`, `AccessibilityValue` (a range when `Max` is above `Min`, and `Text`), `Expanded`, `AccessibilityActions` with `OnAccessibilityAction`, `Accessible`, `ImportantForAccessibility`, `AccessibilityElementsHidden` and `LiveRegion`. `Ref.SetAccessibilityFocus` moves the screen reader, as an `ItemAccessibilityFocus` command.
 
 - The props go in `ViewProps`, except a label changing alone on mounted props, which goes as `ItemAccessibilityLabel`.
 - An `Accessible` view is one element. Without a label of its own, the core labels it with the text inside it, so every platform reads the same words, and the label follows the text.
@@ -30,7 +30,7 @@ Presses, the mouse and secondary clicks carry where they happened, as NSH's `Pre
 
 ## Keyboard focus
 
-On macOS and the web, views that take presses are Tab stops beside the text inputs, unless disabled, hidden, `NoFocus` (a backdrop that closes a popover) or under a newer modal; Return and Space press the focused one once, whatever the keymap binds, and a click presses without focusing. `Style.Focus` follows the keyboard focus, and `View.OnFocus` and `OnBlur` hear it come and go. The other backends move the focus between fields only.
+On macOS and the web, views that take presses are Tab stops beside the text inputs, unless disabled, hidden, `NoFocus` (a backdrop that closes a popover) or under a newer modal. `View.Focusable`, when set, decides over both, following what it reads: it makes a stop of a view that takes no presses, whose keys come through the keymap, and a group's roving focus turns stops on and off with it; Return and Space press the focused one once, whatever the keymap binds, and a click presses without focusing. `Style.Focus` follows the keyboard focus, and `View.OnFocus` and `OnBlur` hear it come and go. The other backends move the focus between fields only.
 
 - macOS puts the views in AppKit's key view loop (`acceptsFirstResponder`, `canBecomeKeyView`, the window recalculating it); the surface, which holds selections, hands Tab to the window's first key view. A modal remembers what had the focus as it came and gives it back as it goes, if the focus fell to the window; a field comes back with the caret at the end.
 - The web makes them `tabindex=0`, reports focus while `:focus-visible`, prevents a pressable's `mousedown` from moving the focus, and makes what a modal covers `inert` until it goes, then gives the focus back.

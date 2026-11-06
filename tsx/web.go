@@ -505,8 +505,15 @@ func (r *runtime) fetch(call goja.FunctionCall) goja.Value {
 	r.cx.Run(func() { ctx, cancel = context.WithCancel(r.cx.Context()) })
 	answer := func(fn func()) { r.cx.Post(func() { r.inJS(fn) }) }
 	fetcher := fetcherKey.Use(r.cx)
+	asset, shipped := r.assets[target]
 	go func() {
-		res, err := doFetch(ctx, target, method, headers, body, redirect, fetcher)
+		var res *fetched
+		var err error
+		if strings.HasPrefix(target, "asset:") {
+			res, err = fetchAsset(target, asset, shipped)
+		} else {
+			res, err = doFetch(ctx, target, method, headers, body, redirect, fetcher)
+		}
 		if err != nil {
 			if ctx.Err() == nil {
 				answer(func() { r.call(fail, r.vm.ToValue(err.Error())) })
@@ -606,6 +613,20 @@ func doFetch(ctx context.Context, target, method string, headers [][2]string, bo
 		}
 	}
 	return f, nil
+}
+
+// fetchAsset reads an asset: URL from what the bundle ships.
+func fetchAsset(target, data string, shipped bool) (*fetched, error) {
+	if !shipped {
+		return nil, errors.New("fetch: no asset " + target)
+	}
+	res, err := fetchData(data)
+	if err != nil {
+		return nil, err
+	}
+	res.url = target
+	res.headers = append(res.headers, [2]string{"content-length", strconv.Itoa(len(res.body))})
+	return res, nil
 }
 
 // fetchData reads a data: URL.

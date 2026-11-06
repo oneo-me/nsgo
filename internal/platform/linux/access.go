@@ -134,7 +134,10 @@ var roleNicks = [...]string{
 	driver.RoleDialog: "dialog", driver.RoleAlert: "alert", driver.RoleAdjustable: "slider",
 	driver.RoleProgressBar: "progress-bar", driver.RoleTable: "table", driver.RoleGrid: "grid",
 	driver.RoleRowGroup: "row-group", driver.RoleRow: "row", driver.RoleColumnHeader: "column-header",
-	driver.RoleCell: "cell",
+	driver.RoleCell: "cell", driver.RoleListbox: "list-box", driver.RoleOption: "option", driver.RoleGroup: "group",
+	driver.RoleRegion: "region", driver.RoleNavigation: "navigation", driver.RoleTree: "tree",
+	driver.RoleTreeItem: "tree-item", driver.RoleToolbar: "toolbar",
+	driver.RoleMenuItemCheckbox: "menu-item-checkbox", driver.RoleMenuItemRadio: "menu-item-radio",
 }
 
 // roleNick returns the GTK role of a view: its Role's, else a text's
@@ -213,7 +216,7 @@ type accessState struct {
 	label, description, valueText string
 	min, max, now                 float32
 	ranged                        bool
-	states                        [6]int8 // disabled, selected, checked, pressed, expanded, hidden: -1 unset, 0, 1, 2 mixed
+	states                        [7]int8 // disabled, selected, checked, pressed, expanded, hidden, busy: -1 unset, 0, 1, 2 mixed
 	testID                        string
 	set                           bool
 }
@@ -234,7 +237,7 @@ func (w *window) updateAccess(v *view) bool {
 	if p.Value.IsRange() {
 		n.ranged, n.min, n.max, n.now = true, p.Value.Min, p.Value.Max, p.Value.Now
 	}
-	n.states = [6]int8{-1, -1, -1, -1, -1, -1}
+	n.states = [7]int8{-1, -1, -1, -1, -1, -1, -1}
 	bit := func(b bool) int8 {
 		if b {
 			return 1
@@ -245,8 +248,9 @@ func (w *window) updateAccess(v *view) bool {
 	if p.Selected {
 		n.states[1] = 1
 	}
-	checkable := p.Role == driver.RoleCheckbox || p.Role == driver.RoleSwitch || p.Role == driver.RoleRadio
-	toggle := p.Checked || p.Indeterminate
+	checkable := p.Role == driver.RoleCheckbox || p.Role == driver.RoleSwitch || p.Role == driver.RoleRadio ||
+		p.Role == driver.RoleMenuItemCheckbox || p.Role == driver.RoleMenuItemRadio
+	toggle := p.Checked || p.Indeterminate || p.Pressed
 	switch {
 	case checkable:
 		n.states[2] = bit(p.Checked)
@@ -254,7 +258,7 @@ func (w *window) updateAccess(v *view) bool {
 			n.states[2] = 2
 		}
 	case toggle && (p.Role == driver.RoleButton || pressable(v.events)):
-		n.states[3] = bit(p.Checked)
+		n.states[3] = bit(p.Checked || p.Pressed)
 		if p.Indeterminate {
 			n.states[3] = 2
 		}
@@ -263,6 +267,7 @@ func (w *window) updateAccess(v *view) bool {
 		n.states[4] = bit(p.Expanded)
 	}
 	n.states[5] = bit(p.ElementsHidden || v.style.Hidden)
+	n.states[6] = bit(p.Busy)
 	if n == old {
 		return false
 	}
@@ -300,7 +305,7 @@ func (w *window) updateAccess(v *view) bool {
 			gValueUnset(uintptr(unsafe.Pointer(&val)))
 		}
 	}
-	for i, nick := range []string{"disabled", "selected", "checked", "pressed", "expanded", "hidden"} {
+	for i, nick := range []string{"disabled", "selected", "checked", "pressed", "expanded", "hidden", "busy"} {
 		s := n.states[i]
 		if old.set && s == old.states[i] {
 			continue

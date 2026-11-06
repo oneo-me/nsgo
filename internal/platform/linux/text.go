@@ -309,7 +309,7 @@ func addStyle(list uintptr, textLen, start, end int, s driver.TextStyle, holes [
 	}
 	f := s.Font
 	if f.Family != "" {
-		add(pangoAttrFamilyNew(cstr(f.Family)))
+		add(pangoAttrFamilyNew(cstr(pangoFamilies(f.Family))))
 	}
 	if f.Size > 0 {
 		add(pangoAttrSizeNew(int32(f.Size*pangoScale + 0.5)))

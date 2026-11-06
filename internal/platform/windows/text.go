@@ -132,7 +132,57 @@ func fontName(family string) string {
 	case driver.FontMonospace:
 		return "Consolas"
 	}
-	return family
+	return firstInstalled(family)
+}
+
+// familiesMu guards families.
+var (
+	familiesMu sync.Mutex
+	families   = map[string]string{}
+)
+
+// firstInstalled is the first family of a fontFamily list the system has,
+// else the first: DirectWrite takes one family.
+func firstInstalled(list string) string {
+	familiesMu.Lock()
+	defer familiesMu.Unlock()
+	if name, ok := families[list]; ok {
+		return name
+	}
+	names := make([]string, 0, 1)
+	for _, f := range driver.FontFamilies(list) {
+		switch f.Kind {
+		case driver.FamilyMonospace:
+			names = append(names, "Consolas")
+		case driver.FamilySerif:
+			names = append(names, "Times New Roman")
+		case driver.FamilySystem, driver.FamilyRounded:
+			names = append(names, defaultFontName)
+		default:
+			names = append(names, f.Name)
+		}
+	}
+	if len(names) == 0 {
+		return defaultFontName
+	}
+	name := names[0]
+	if len(names) > 1 {
+		if c := systemFonts(); c != nil {
+			defer c.release()
+			for _, n := range names {
+				var index uint32
+				var exists int32
+				c.call(collectionFindFamilyName, uintptr(unsafe.Pointer(wide(n))), uintptr(unsafe.Pointer(&index)),
+					uintptr(unsafe.Pointer(&exists)))
+				if exists != 0 {
+					name = n
+					break
+				}
+			}
+		}
+	}
+	families[list] = name
+	return name
 }
 
 func fontWeight(w driver.FontWeight) uintptr {

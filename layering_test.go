@@ -20,6 +20,7 @@ var layers = []struct {
 	imports []string
 }{
 	{"internal/layout", nil},
+	{"internal/woff", nil},
 	{"internal/cldr/", nil},
 	{"internal/cldr", nil},
 	{"internal/driver", []string{"internal/shaderir"}},
@@ -57,7 +58,7 @@ var layers = []struct {
 	// The TSX test runner drives apps through nsgotest.
 	{"tsx/tsxtest", []string{"core", "internal/driver", "nsgotest", "tsx", "tsx/"}},
 	// The nsgo tool links the bundler, so it reaches no runtime.
-	{"tsx/bundler", []string{"core", "internal/driver"}},
+	{"tsx/bundler", []string{"core", "internal/driver", "internal/woff"}},
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.

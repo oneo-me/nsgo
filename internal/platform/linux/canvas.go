@@ -594,7 +594,7 @@ func canvasLayout(cr uintptr, text string, font driver.Font) uintptr {
 func fontDescription(font driver.Font) uintptr {
 	desc := pangoFontDescriptionNew()
 	if font.Family != "" {
-		pangoFontDescriptionSetFamily(desc, cstr(font.Family))
+		pangoFontDescriptionSetFamily(desc, cstr(pangoFamilies(font.Family)))
 	}
 	pangoFontDescriptionSetSize(desc, int32(float64(font.Size)*pangoScale+0.5))
 	if font.Weight != 0 {

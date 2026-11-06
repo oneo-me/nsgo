@@ -233,7 +233,11 @@ func (n *node) layoutStyle() layout.Style {
 		// absolutely (fixedRoot).
 		l.Position = layout.PositionAbsolute
 	}
-	switch s.Direction {
+	direction := s.Direction
+	if direction == 0 && s.RowByDefault {
+		direction = Row
+	}
+	switch direction {
 	case Row:
 		l.FlexDirection = layout.Row
 	case RowReverse:
@@ -361,11 +365,11 @@ func (n *node) layoutStyle() layout.Style {
 	// scroll view lays its content out left to right with its own sides as
 	// written, and its children's frames are mirrored.
 	if n.rtl {
-		l.Margin.Left, l.Margin.Right = l.Margin.Right, l.Margin.Left
-		l.Inset.Left, l.Inset.Right = l.Inset.Right, l.Inset.Left
+		l.Margin.Left, l.Margin.Right = mirroredOr(l.Margin.Left, l.Margin.Right, layout.Px(0), s.PhysicalEdges.Margin)
+		l.Inset.Left, l.Inset.Right = mirroredOr(l.Inset.Left, l.Inset.Right, layout.Auto, s.PhysicalEdges.Inset)
 		if !horizontalScroll {
 			l.Direction = layout.RTL
-			l.Padding.Left, l.Padding.Right = l.Padding.Right, l.Padding.Left
+			l.Padding.Left, l.Padding.Right = mirroredOr(l.Padding.Left, l.Padding.Right, layout.Px(0), s.PhysicalEdges.Padding)
 			l.Border.Left, l.Border.Right = mirrored(l.Border.Left, l.Border.Right, n.style.PhysicalBorders.Widths)
 		}
 	}
@@ -410,7 +414,8 @@ func sizeLayout(l Length) layout.Length {
 	return lengthLayout(l)
 }
 
-// minLayout maps a minimum size: auto is 0, as in Yoga.
+// lengthMinLayout maps a minimum size: unset is 0, as in Yoga, and
+// AutoMinimum CSS's automatic minimum.
 func lengthMinLayout(l Length) layout.Length {
 	if l.IsAuto() {
 		return layout.Px(0)
@@ -508,6 +513,7 @@ func (t *Tree) layout() {
 		t.placeHoisted(t.view) // anchors may have moved
 	}
 	if !t.view.layoutDirty {
+		t.placeFollowers(false)
 		t.layoutAccessories()
 		t.layoutHeaderViews()
 		return
@@ -515,6 +521,7 @@ func (t *Tree) layout() {
 	t.layoutRoot(t.view, t.size, true)
 	t.setFrame(t.view, Bounds{Size: t.size})
 	t.syncFrames(t.view)
+	t.placeFollowers(true)
 	t.placeHoisted(t.view)
 	t.layoutAccessories()
 	t.layoutHeaderViews()
@@ -573,6 +580,9 @@ func (t *Tree) syncFrames(n *node) {
 		}
 		if c.hidden {
 			f = Bounds{}
+		}
+		if c.follow != nil {
+			f = t.laidFollower(c, f)
 		}
 		moved = t.setFrame(c, f) || moved
 		// An absolute view is its subtree's containing block, so all of

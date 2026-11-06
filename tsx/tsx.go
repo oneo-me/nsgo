@@ -85,6 +85,8 @@ type runtime struct {
 	warned map[string]bool
 	timers timers
 	anim   animClasses
+	// assets are the data: URLs of the asset: URLs a bundle ships.
+	assets map[string]string
 	// blobs are the blob: URLs URL.createObjectURL made, until revoked.
 	blobs   map[string]blobEntry
 	blobSeq int

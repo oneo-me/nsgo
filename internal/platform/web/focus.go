@@ -10,7 +10,7 @@ import (
 )
 
 // Keyboard focus for pressable views, as NSH's web runtime keeps it:
-// they are Tab stops unless disabled, hidden or NoFocus, their focus
+// they and Focusable views are Tab stops unless disabled, hidden or NoFocus, their focus
 // state follows the keyboard focus (:focus-visible), and a click never
 // moves the focus. The views under the newest modal are inert, and the
 // focus one took comes back when it closes.

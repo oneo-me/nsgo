@@ -20,16 +20,20 @@ import (
 	_ "golang.org/x/image/webp"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/woff"
 )
 
 // Assets a module imports (NSH's plugin.rs): an image is an ImageAsset,
 // its size in points read as the bundle is built and its bytes inlined
-// as a data: URL, so it ships in the bundle on every target; a font is
-// its family name, its bytes inlined and registered as its module runs.
+// as a data: URL registered under its asset: URL as its module runs, so
+// it ships in the bundle on every target; a font is
+// its family name, its TrueType or OpenType data inlined and registered
+// as its module runs, a WOFF or WOFF2 file unpacked here so no text
+// engine meets one.
 
 var imageExts = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true, ".svg": true}
 
-var fontExts = map[string]bool{".ttf": true, ".otf": true}
+var fontExts = map[string]bool{".ttf": true, ".otf": true, ".woff": true, ".woff2": true}
 
 // isAsset reports whether a module is an asset.
 func isAsset(p string) bool {
@@ -40,13 +44,17 @@ func isAsset(p string) bool {
 // density is the pixel density a file's name gives: logo@2x.png is 2.
 var densityRE = regexp.MustCompile(`@([0-9.]+)x\.[A-Za-z]+$`)
 
-// assetModule is the module of asset p, read from fsys: its data: URL,
-// its size in points and, for a raster image with density variants
+// assetModule is the module of asset p, read from fsys: its URL, its
+// size in points and, for a raster image with density variants
 // beside it (logo@2x.png, logo@3x.png), their scales and data: URLs, of
 // which the core mounts the one for the screen's pixel ratio.
 func assetModule(fsys fs.FS, p string, data []byte) (string, error) {
 	ext := strings.ToLower(path.Ext(p))
 	if fontExts[ext] {
+		data, err := woff.Unpack(data)
+		if err != nil {
+			return "", fmt.Errorf("%s: cannot read the font: %w", p, err)
+		}
 		family, err := fontFamily(data)
 		if err != nil {
 			return "", fmt.Errorf("%s: cannot read the font: %w", p, err)
@@ -81,7 +89,7 @@ func assetModule(fsys fs.FS, p string, data []byte) (string, error) {
 		kind = "image/svg+xml"
 	}
 	dataURL := func(b []byte) string { return "data:" + kind + ";base64," + base64.StdEncoding.EncodeToString(b) }
-	m := map[string]any{"url": dataURL(data), "size": map[string]float64{"width": w, "height": h}}
+	m := map[string]any{"url": "asset:/" + p, "size": map[string]float64{"width": w, "height": h}}
 	if ext != ".svg" && !densityRE.MatchString(p) {
 		scales, variants := []float32{1}, map[string]string{}
 		base := strings.TrimSuffix(p, path.Ext(p))
@@ -97,7 +105,9 @@ func assetModule(fsys fs.FS, p string, data []byte) (string, error) {
 		}
 	}
 	asset, _ := json.Marshal(m)
-	return "export default " + string(asset) + ";\n", nil
+	// Its bytes come with the bundle: images and fetch read them by URL.
+	return "require(\"nsgo:rt\").registerAsset(" + strconv.Quote("asset:/"+p) + ", " + strconv.Quote(dataURL(data)) +
+		");\nexport default " + string(asset) + ";\n", nil
 }
 
 // fontFamily is the family a font registers under: its typographic

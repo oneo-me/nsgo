@@ -12,8 +12,9 @@ import (
 )
 
 // Keyboard focus for pressable views, as NSH's macOS backend gives it: a
-// view that takes presses is in AppKit's key view loop with the text
-// fields, unless it is disabled, hidden, NoFocus or under a newer modal;
+// view that takes presses or is Focusable is in AppKit's key view loop
+// with the text fields, unless it is disabled, hidden, NoFocus or under a
+// newer modal;
 // a click presses it without focusing it, and Return or Space press it
 // once while it has the focus. A modal remembers what had the focus as it
 // came and gives it back when it goes, if the focus fell to the window.
@@ -54,7 +55,7 @@ func focusMethods() []objc.MethodDef {
 				}
 				return
 			}
-			if v == nil || !activates(event) {
+			if v == nil || !v.pressable() || !activates(event) {
 				apple.Super(self, cmd, event)
 				return
 			}
@@ -65,7 +66,7 @@ func focusMethods() []objc.MethodDef {
 			}
 		}},
 		{Cmd: sel("keyUp:"), Fn: func(self objc.ID, cmd objc.SEL, event objc.ID) {
-			if views[self] == nil || !activates(event) {
+			if v := views[self]; v == nil || !v.pressable() || !activates(event) {
 				apple.Super(self, cmd, event)
 			}
 		}},
@@ -83,7 +84,7 @@ func activates(event objc.ID) bool {
 
 // focusable reports whether v may take the keyboard focus.
 func (v *view) focusable() bool {
-	if v.native == 0 || !v.pressable() || v.props.Disabled || v.props.NoFocus || v.kind == driver.KindInput ||
+	if v.native == 0 || !v.pressable() && !v.props.Focusable || v.props.Disabled || v.props.NoFocus || v.kind == driver.KindInput ||
 		objc.Send[bool](v.native, sel("isHiddenOrHasHiddenAncestor")) || v.native.Send(selWindow) == 0 {
 		return false
 	}

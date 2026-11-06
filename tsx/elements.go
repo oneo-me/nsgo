@@ -317,8 +317,8 @@ func listFace(p *props) core.Node {
 	if c, ok := p.get("viewabilityConfig").(*goja.Object); ok {
 		o := opts{c}
 		l.ViewabilityConfig = core.ViewabilityConfig{
-			ViewAreaCoveragePercentThreshold: float32(o.float("viewAreaCoveragePercentThreshold", 0)),
-			ItemVisiblePercentThreshold:      float32(o.float("itemVisiblePercentThreshold", 0)),
+			ViewAreaCoveragePercentThreshold: float32(o.float("viewAreaCoverageThreshold", 0)) * 100,
+			ItemVisiblePercentThreshold:      float32(o.float("itemVisibleThreshold", 0)) * 100,
 			MinimumViewTime:                  time.Duration(o.float("minimumViewTime", 0) * float64(time.Millisecond)),
 		}
 	}

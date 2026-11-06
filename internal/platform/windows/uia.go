@@ -107,9 +107,14 @@ const (
 	ctProgressBar = 50012
 	ctRadioButton = 50013
 	ctSlider      = 50015
+	ctToolBar     = 50021
 	ctTab         = 50018
 	ctTabItem     = 50019
 	ctText        = 50020
+	ctList        = 50008
+	ctListItem    = 50007
+	ctTree        = 50023
+	ctTreeItem    = 50024
 	ctGroup       = 50026
 	ctDataGrid    = 50028
 	ctDataItem    = 50029
@@ -318,14 +323,18 @@ var uiaControls = [...]int32{
 	driver.RoleMenu: ctMenu, driver.RoleMenuItem: ctMenuItem, driver.RoleDialog: ctWindow, driver.RoleAlert: ctText,
 	driver.RoleAdjustable: ctSlider, driver.RoleProgressBar: ctProgressBar, driver.RoleTable: ctTable,
 	driver.RoleGrid: ctDataGrid, driver.RoleRowGroup: ctGroup, driver.RoleRow: ctDataItem,
-	driver.RoleColumnHeader: ctHeaderItem, driver.RoleCell: ctText,
+	driver.RoleColumnHeader: ctHeaderItem, driver.RoleCell: ctText, driver.RoleListbox: ctList,
+	driver.RoleOption: ctListItem, driver.RoleGroup: ctGroup, driver.RoleRegion: ctGroup,
+	driver.RoleNavigation: ctGroup, driver.RoleTree: ctTree, driver.RoleTreeItem: ctTreeItem,
+	driver.RoleToolbar: ctToolBar, driver.RoleMenuItemCheckbox: ctMenuItem, driver.RoleMenuItemRadio: ctMenuItem,
 }
 
 // groups reports whether role groups the texts and images inside it.
 func groups(p *driver.ViewProps, pressable bool) bool {
 	switch p.Role {
 	case driver.RoleButton, driver.RoleLink, driver.RoleCheckbox, driver.RoleSwitch, driver.RoleRadio, driver.RoleTab,
-		driver.RoleMenuItem, driver.RoleHeader, driver.RoleCell, driver.RoleColumnHeader:
+		driver.RoleMenuItem, driver.RoleHeader, driver.RoleCell, driver.RoleColumnHeader, driver.RoleOption,
+		driver.RoleTreeItem, driver.RoleMenuItemCheckbox, driver.RoleMenuItemRadio:
 		return true
 	}
 	return p.Accessible == driver.AccessibleYes || p.Role == driver.RoleNone && pressable
@@ -399,9 +408,10 @@ func (e *uiaElement) spec(v *view) uiaSpec {
 	}
 	s.invoke = pressable || p.HasAction(driver.ActionActivate)
 	switch {
-	case p.Role == driver.RoleCheckbox || p.Role == driver.RoleSwitch || p.Checked || p.Indeterminate:
+	case p.Role == driver.RoleCheckbox || p.Role == driver.RoleSwitch || p.Role == driver.RoleMenuItemCheckbox ||
+		p.Role == driver.RoleMenuItemRadio || p.Checked || p.Indeterminate || p.Pressed:
 		s.toggle = 0
-		if p.Checked {
+		if p.Checked || p.Pressed {
 			s.toggle = 1
 		}
 		if p.Indeterminate {
@@ -413,7 +423,7 @@ func (e *uiaElement) spec(v *view) uiaSpec {
 		s.ranged, s.min, s.max, s.now = true, p.Value.Min, p.Value.Max, p.Value.Now
 	}
 	s.expandable, s.expanded = p.Expandable, p.Expanded
-	s.selectable = p.Role == driver.RoleTab || p.Role == driver.RoleRadio || p.Selected
+	s.selectable = p.Role == driver.RoleTab || p.Role == driver.RoleRadio || p.Role == driver.RoleOption || p.Selected
 	s.selected = p.Selected || p.Role == driver.RoleRadio && p.Checked
 	if in := v.field; in != nil {
 		s.focusable, s.focused, s.password = true, in.focused, in.masked()

@@ -1,9 +1,9 @@
 package tsx
 
 import (
-	"errors"
-
 	"github.com/dop251/goja"
+
+	"github.com/oneo-me/nsgo/core"
 )
 
 // The host channel (NSH's host_channel.rs): host reaches the app that
@@ -24,13 +24,17 @@ func (r *runtime) host() goja.Value {
 		p, resolve, reject := r.vm.NewPromise()
 		name, data := arg(call, 0).String(), exportJSON(arg(call, 1))
 		if !r.cx.HasHost() {
-			_ = reject(r.vm.NewGoError(errors.New("nsgo/host: this platform has no host")))
+			_ = reject(r.goError(core.Unavailable("nsgo/host: this platform has no host")))
 			return r.vm.ToValue(p)
 		}
 		done := func(result any, err error) {
 			r.inJS(func() {
 				if err != nil {
-					_ = reject(r.vm.NewGoError(err))
+					// What the host answered, unless a failure says otherwise.
+					if core.ErrorCode(err) == "" {
+						err = &core.Error{Code: core.CodeHostError, Message: err.Error(), Err: err}
+					}
+					_ = reject(r.goError(err))
 					return
 				}
 				_ = resolve(r.vm.ToValue(result))

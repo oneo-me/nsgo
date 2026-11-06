@@ -10,6 +10,10 @@ Each part a component styles takes Tailwind classes beside its style, as NSH's `
 
 `Button`, `Checkbox`, `Radio` in a `RadioGroup`, `Switch`, `Tab` in `Tabs`, `Collapsible` and `Progress` hold no value: the app passes it and sets it from `OnChange` or `OnPress`, as NSH's controlled props do.
 
+`Tabs` and `RadioGroup` are one Tab stop (`base/roving.go`, as NSH's `roving.rs`): the item the focus is on, else the selected tab or checked radio, else the first enabled one is `Focusable`. Their arrows, bound in the keymap only while an item has the focus, focus the item they reach and activate it, swapped right to left, and `Tabs` adds Home and End. The items sort in tree order (`Ref.Before`), since an `Each` may mount one between others. `HitSlop` goes to the view of `Button`, `Checkbox`, `Radio` and `Switch`.
+
+`Tabs`' indicator is a view that follows the selected tab (`View.Follow`, `core/follow.go`, as NSH's `follow.rs`). After each layout the core spans the target's frame along the parent's main axis, inside the follower's margins there, and leaves the cross axis to the follower's layout, so a change of tab is one frame item with `FollowTransition`, and a layout that moves the tabs moves it in the same batch.
+
 `Input` is the core's text field under a name in `base`, as NSH's `nsh/base` names its core's, so apps take it with the other controls; `NavPage` is `core.Screen` for a `Nav`'s pages the same way.
 
 - A control's parts (a checkbox's indicator, a switch's track and thumb) follow its states through `View.PartStates`, which styles a view by states it does not report, so assistive technology hears them from the control alone. Content the app puts inside follows them with a `GroupStyle` under the control's `Style.Group`.

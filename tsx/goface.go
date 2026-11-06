@@ -988,7 +988,7 @@ func (r *runtime) encode(v reflect.Value) goja.Value {
 		if v.IsNil() {
 			return goja.Null()
 		}
-		return r.vm.NewGoError(v.Interface().(error))
+		return r.goError(v.Interface().(error))
 	case scopeType:
 		return goja.Undefined()
 	}

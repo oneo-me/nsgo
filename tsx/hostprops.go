@@ -81,7 +81,8 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 			p.Tooltip = r.region(func() goja.Value { return v })
 		}
 	case "focusable":
-		p.NoFocus = !v.ToBoolean()
+		on := v.ToBoolean()
+		p.Focusable = func() bool { return on }
 	case "disabled":
 		p.Disabled = boolFunc(v.ToBoolean())
 	case "selected":
@@ -696,7 +697,7 @@ func (r *runtime) imageProp(p *core.Image, name string, v goja.Value) bool {
 func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 	o, ok := v.(*goja.Object)
 	if !ok {
-		src := core.ImageSource{URI: stringOf(v)}
+		src := core.ImageSource{URI: r.assetData(stringOf(v))}
 		// A blob: URL's bytes go to the platform, which cannot read it.
 		if b, ok := r.blobs[src.URI]; ok {
 			src.Data = b.bytes
@@ -704,7 +705,7 @@ func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 		return src
 	}
 	op := opts{o}
-	src := core.ImageSource{URI: op.str("url", op.str("uri", ""))}
+	src := core.ImageSource{URI: r.assetData(op.str("url", op.str("uri", "")))}
 	if b, ok := r.blobs[src.URI]; ok {
 		src.Data = b.bytes
 	}
@@ -768,7 +769,10 @@ var roles = map[string]core.Role{"button": core.RoleButton, "imagebutton": core.
 	"radiogroup": core.RoleRadioGroup, "tab": core.RoleTab, "tablist": core.RoleTabList, "menu": core.RoleMenu,
 	"menubar": core.RoleMenu, "menuitem": core.RoleMenuItem, "dialog": core.RoleDialog, "alert": core.RoleAlert,
 	"adjustable": core.RoleAdjustable, "spinbutton": core.RoleAdjustable, "scrollbar": core.RoleAdjustable,
-	"progressbar": core.RoleProgressBar, "timer": core.RoleText, "toolbar": core.RoleNone, "list": core.RoleNone,
+	"progressbar": core.RoleProgressBar, "timer": core.RoleText, "toolbar": core.RoleToolbar, "list": core.RoleNone,
+	"listbox": core.RoleListbox, "option": core.RoleOption, "group": core.RoleGroup, "region": core.RoleRegion,
+	"navigation": core.RoleNavigation, "tree": core.RoleTree, "treeitem": core.RoleTreeItem,
+	"menuitemcheckbox": core.RoleMenuItemCheckbox, "menuitemradio": core.RoleMenuItemRadio,
 	"grid": core.RoleGrid, "table": core.RoleTable, "row": core.RoleRow, "cell": core.RoleCell,
 	"columnheader": core.RoleColumnHeader, "rowgroup": core.RoleRowGroup, "none": core.RoleNone}
 

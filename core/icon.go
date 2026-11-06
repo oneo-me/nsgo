@@ -26,10 +26,34 @@ type Icon struct {
 	Ref       *Ref
 	Label     string
 	TestID    string
+	// documentSize measures it at its document's size (SVGView).
+	documentSize bool
 }
 
 // Render implements Node.
 func (i Icon) Render(*Scope) Node { return i }
+
+// SVGView draws an SVG document as authored, as an <svg> written inline in
+// a web page: in its own colors, sized by its width and height, else its
+// viewBox, where Style sets no size. Its shapes are vectors, sharp at any
+// size, and currentColor is the text color it inherits.
+type SVGView struct {
+	SVG       *SVG
+	SVGFunc   func() *SVG
+	Style     Style
+	StyleFunc func() Style
+	OnPress   func(PressEvent)
+	OnLayout  func(Bounds)
+	Ref       *Ref
+	Label     string
+	TestID    string
+}
+
+// Render implements Node.
+func (v SVGView) Render(*Scope) Node {
+	return Icon{SVG: v.SVG, SVGFunc: v.SVGFunc, Style: v.Style, StyleFunc: v.StyleFunc, OnPress: v.OnPress,
+		OnLayout: v.OnLayout, Ref: v.Ref, Label: v.Label, TestID: v.TestID, documentSize: true}
+}
 
 // iconNode is an icon's drawing state: the document, the color it inherits
 // and the text it inherits it from.
@@ -37,11 +61,17 @@ type iconNode struct {
 	svg   *Signal[*SVG]
 	color *Signal[Color]
 	text  driver.TextStyle
+	// documentSize is Icon's.
+	documentSize bool
 }
 
 // naturalSize is what an icon measures without a style size: as high as its
 // text, as wide as the SVG's aspect ratio makes it.
 func (in *iconNode) naturalSize() Size {
+	if in.documentSize {
+		w, h := in.svg.GetUntracked().Size()
+		return Size{Width: w, Height: h}
+	}
 	h := in.text.Font.Size
 	if h <= 0 {
 		h = DefaultFontSize
@@ -67,7 +97,7 @@ func (t *Tree) mountIcon(cx *Scope, parent *node, v Icon) {
 		role = RoleImage
 	}
 	n.props = driver.ViewProps{Role: role, Label: v.Label, TestID: v.TestID}
-	in := &iconNode{svg: NewSignal(cx, v.SVG), color: NewSignal(cx, Color(0))}
+	in := &iconNode{svg: NewSignal(cx, v.SVG), color: NewSignal(cx, Color(0)), documentSize: v.documentSize}
 	cn := &canvasNode{size: NewSignal(cx, Size{})}
 	n.icon, n.canvas = in, cn
 	t.canvases = append(t.canvases, n)

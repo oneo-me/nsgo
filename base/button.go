@@ -38,6 +38,8 @@ type Button struct {
 	// desktops, as core.View's.
 	Tooltip core.Node
 	TestID  string
+	// HitSlop is how far outside the button presses count.
+	HitSlop core.Edges
 	// OnLayout is its view's, as a core.View's.
 	OnLayout func(core.Bounds)
 	Children []core.Node
@@ -65,6 +67,7 @@ func (b Button) Render(*core.Scope) core.Node {
 		Label:       b.Label,
 		Tooltip:     b.Tooltip,
 		Hint:        b.Hint,
+		HitSlop:     b.HitSlop,
 		TestID:      b.TestID, OnLayout: b.OnLayout,
 	}
 }

@@ -49,11 +49,16 @@ func styleOrder(key string) int {
 	switch {
 	case styleShorthands[key]:
 		return 0
-	case key == "shadowOpacity":
+	case key == "shadowOpacity", logicalKeys[key]:
 		return 2
 	}
 	return 1
 }
+
+// logicalKeys take their side from the direction, over the physical key
+// of that side whatever the order, as NSH's.
+var logicalKeys = map[string]bool{"start": true, "end": true, "marginStart": true, "marginEnd": true,
+	"paddingStart": true, "paddingEnd": true}
 
 var styleShorthands = map[string]bool{
 	"flex": true, "margin": true, "marginHorizontal": true, "marginVertical": true,
@@ -86,6 +91,7 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		}
 		s.Display = pick(r, key, v, map[string]core.Display{"flex": core.DisplayFlex, "none": core.DisplayNone,
 			"grid": core.DisplayGrid, "block": core.DisplayBlock})
+		s.RowByDefault = s.Display == core.DisplayFlex
 	case "boxSizing":
 		s.BoxSizing = pick(r, key, v, map[string]core.BoxSizing{"border-box": core.BorderBox, "content-box": core.ContentBox})
 	case "position":
@@ -98,15 +104,7 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.Wrap = pick(r, key, v, map[string]core.FlexWrap{"nowrap": core.NoWrap, "wrap": core.Wrap,
 			"wrap-reverse": core.WrapReverse})
 	case "flex":
-		// React Native's meaning, not CSS's shorthand.
-		switch f := float32(finite(v)); {
-		case f > 0:
-			s.FlexGrow, s.FlexShrink, s.FlexBasis = f, 1, core.Pt(0)
-		case f < 0:
-			s.FlexGrow, s.FlexShrink = 0, -f
-		default:
-			s.FlexGrow, s.FlexShrink = 0, 0
-		}
+		r.flex(s, key, v)
 	case "flexGrow":
 		s.FlexGrow = float32(finite(v))
 	case "flexShrink":
@@ -130,23 +128,25 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 	case "height":
 		s.Height = r.length(key, v)
 	case "minWidth":
-		s.MinWidth = r.length(key, v)
+		s.MinWidth = r.minimum(key, v)
 	case "minHeight":
-		s.MinHeight = r.length(key, v)
+		s.MinHeight = r.minimum(key, v)
 	case "maxWidth":
 		s.MaxWidth = r.length(key, v)
 	case "maxHeight":
 		s.MaxHeight = r.length(key, v)
 	case "aspectRatio":
-		s.AspectRatio = float32(finite(v))
+		s.AspectRatio = r.aspectRatio(key, v)
 	case "top":
 		s.Top = r.length(key, v)
 	case "right", "end":
 		s.Right = r.length(key, v)
+		s.PhysicalEdges.Inset = sided(s.PhysicalEdges.Inset, core.SideRight, key == "right")
 	case "bottom":
 		s.Bottom = r.length(key, v)
 	case "left", "start":
 		s.Left = r.length(key, v)
+		s.PhysicalEdges.Inset = sided(s.PhysicalEdges.Inset, core.SideLeft, key == "left")
 	case "zIndex":
 		s.ZIndex = int(v.ToInteger())
 	case "direction":
@@ -161,10 +161,12 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		r.edge(s, key, v, true, core.SideTop)
 	case "marginRight", "marginEnd":
 		r.edge(s, key, v, true, core.SideRight)
+		s.PhysicalEdges.Margin = sided(s.PhysicalEdges.Margin, core.SideRight, key == "marginRight")
 	case "marginBottom":
 		r.edge(s, key, v, true, core.SideBottom)
 	case "marginLeft", "marginStart":
 		r.edge(s, key, v, true, core.SideLeft)
+		s.PhysicalEdges.Margin = sided(s.PhysicalEdges.Margin, core.SideLeft, key == "marginLeft")
 	case "padding":
 		r.edge(s, key, v, false, core.SidesAll)
 	case "paddingHorizontal":
@@ -175,10 +177,12 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		r.edge(s, key, v, false, core.SideTop)
 	case "paddingRight", "paddingEnd":
 		r.edge(s, key, v, false, core.SideRight)
+		s.PhysicalEdges.Padding = sided(s.PhysicalEdges.Padding, core.SideRight, key == "paddingRight")
 	case "paddingBottom":
 		r.edge(s, key, v, false, core.SideBottom)
 	case "paddingLeft", "paddingStart":
 		r.edge(s, key, v, false, core.SideLeft)
+		s.PhysicalEdges.Padding = sided(s.PhysicalEdges.Padding, core.SideLeft, key == "paddingLeft")
 	case "gap":
 		s.Gap = points(v)
 	case "rowGap":
@@ -825,6 +829,76 @@ func (r *runtime) degrees(v goja.Value) float32 {
 	return float32(finite(v))
 }
 
+// sided marks side in keep as physical, or takes the mark off.
+func sided(keep, side core.Sides, physical bool) core.Sides {
+	if physical {
+		return keep | side
+	}
+	return keep &^ side
+}
+
+// flex is CSS's shorthand: a number is grow with a basis of 0, "none",
+// "auto" and "initial" its keywords, or grow, shrink and basis written
+// out ("2 0 50%"). React Native's negative factors are no CSS.
+func (r *runtime) flex(s *core.Style, key string, v goja.Value) {
+	text, isString := v.Export().(string)
+	if !isString {
+		f := float32(finite(v))
+		r.check(key, v, f >= 0)
+		if f >= 0 {
+			s.FlexGrow, s.FlexShrink, s.FlexBasis = f, 1, core.Pt(0)
+		}
+		return
+	}
+	switch text = strings.TrimSpace(text); text {
+	case "none":
+		s.FlexGrow, s.FlexShrink, s.FlexBasis = 0, 0, core.Length{}
+		return
+	case "auto":
+		s.FlexGrow, s.FlexShrink, s.FlexBasis = 1, 1, core.Length{}
+		return
+	case "initial":
+		s.FlexGrow, s.FlexShrink, s.FlexBasis = 0, 1, core.Length{}
+		return
+	}
+	fields := strings.Fields(text)
+	if len(fields) == 0 || len(fields) > 3 {
+		r.check(key, v, false)
+		return
+	}
+	grow, shrink, basis := float32(1), float32(1), core.Pt(0)
+	numbers := 0
+	for _, f := range fields {
+		if n, ok := cssNumber(f); ok && numbers < 2 && n >= 0 {
+			if numbers == 0 {
+				grow = float32(n)
+			} else {
+				shrink = float32(n)
+			}
+			numbers++
+			continue
+		}
+		l, ok := flexBasis(f)
+		if !ok {
+			r.check(key, v, false)
+			return
+		}
+		basis = l
+	}
+	s.FlexGrow, s.FlexShrink, s.FlexBasis = grow, shrink, basis
+}
+
+// flexBasis reads a word of flex that is its basis.
+func flexBasis(s string) (core.Length, bool) {
+	if s == "auto" {
+		return core.Length{}, true
+	}
+	if l, ok := intrinsic(s); ok {
+		return l, true
+	}
+	return cssLengthOrPercent(s)
+}
+
 // edge sets a margin's or a padding's sides: a number, a percentage,
 // "auto" (margins), env() or calc(env() + length).
 func (r *runtime) edge(s *core.Style, key string, v goja.Value, margin bool, sides core.Sides) {
@@ -1047,13 +1121,60 @@ func (r *runtime) length(key string, v goja.Value) core.Length {
 	if !isString {
 		return core.Pt(core.Points(finite(v)))
 	}
-	switch s {
-	case "auto", "min-content", "max-content", "fit-content":
+	if s == "auto" {
 		return core.Length{}
+	}
+	if l, ok := intrinsic(s); ok {
+		return l
 	}
 	l, ok := cssLengthOrPercent(s)
 	r.check(key, v, ok)
 	return l
+}
+
+// minimum is a length for a minimum size, where "auto" is written out.
+func (r *runtime) minimum(key string, v goja.Value) core.Length {
+	if s, ok := v.Export().(string); ok && s == "auto" {
+		return core.AutoMinimum
+	}
+	return r.length(key, v)
+}
+
+// aspectRatio is width over height: a number, CSS's "16 / 9", or "auto"
+// for none.
+func (r *runtime) aspectRatio(key string, v goja.Value) float32 {
+	text, isString := v.Export().(string)
+	if !isString {
+		return float32(finite(v))
+	}
+	if text == "auto" {
+		return 0
+	}
+	width, height, ratio := strings.Cut(text, "/")
+	w, ok := cssNumber(strings.TrimSpace(width))
+	r.check(key, v, ok)
+	if !ratio {
+		return float32(w)
+	}
+	h, ok := cssNumber(strings.TrimSpace(height))
+	r.check(key, v, ok && h != 0)
+	if h == 0 {
+		return 0
+	}
+	return float32(w / h)
+}
+
+// intrinsic reads a size named by its content.
+func intrinsic(s string) (core.Length, bool) {
+	switch s {
+	case "min-content":
+		return core.MinContent, true
+	case "max-content":
+		return core.MaxContent, true
+	case "fit-content":
+		return core.FitContent, true
+	}
+	return core.Length{}, false
 }
 
 func (r *runtime) color(key string, v goja.Value) core.Color {

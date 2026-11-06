@@ -64,6 +64,7 @@ nsgo
 │   └── internal/shader                  The shader compiler
 │
 ├── Protocol
+│   ├── internal/woff                    WOFF and WOFF2 fonts unpacked, for the bundler
 │   ├── internal/driver                  Mount items, events, TextEngine, shared values
 │   └── internal/shaderir                Shader IR, written as MSL, GLSL or HLSL
 │

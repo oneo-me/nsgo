@@ -213,7 +213,8 @@ func (v *view) updateAccessibility() {
 	var t uint64
 	switch p.Role {
 	case driver.RoleRadioGroup, driver.RoleTabList, driver.RoleMenu, driver.RoleDialog, driver.RoleAlert,
-		driver.RoleTable, driver.RoleGrid, driver.RoleRowGroup, driver.RoleRow:
+		driver.RoleTable, driver.RoleGrid, driver.RoleRowGroup, driver.RoleRow, driver.RoleListbox, driver.RoleGroup,
+		driver.RoleRegion, driver.RoleNavigation, driver.RoleTree, driver.RoleToolbar:
 		// Groups are containers, so their children stay accessible.
 		native.Send(selSetIsAccessibilityElement, false)
 		v.axElement = false
@@ -226,7 +227,10 @@ func (v *view) updateAccessibility() {
 		if pressable {
 			t = traits["Button"]
 		}
-	case driver.RoleButton, driver.RoleCheckbox, driver.RoleSwitch, driver.RoleRadio, driver.RoleTab, driver.RoleMenuItem:
+	case driver.RoleButton, driver.RoleCheckbox, driver.RoleSwitch, driver.RoleRadio, driver.RoleTab, driver.RoleMenuItem,
+		driver.RoleMenuItemCheckbox, driver.RoleMenuItemRadio, driver.RoleOption, driver.RoleTreeItem:
+		// UIKit has no option or tree item trait: they are activated, and
+		// the chosen one carries Selected.
 		t = traits["Button"]
 	case driver.RoleLink:
 		t = traits["Link"]
@@ -244,8 +248,13 @@ func (v *view) updateAccessibility() {
 	if p.HasAction(driver.ActionIncrement) || p.HasAction(driver.ActionDecrement) {
 		t |= traits["Adjustable"]
 	}
-	if p.Selected {
+	// A toggle button that is on reads as selected, as WebKit reads
+	// aria-pressed.
+	if p.Selected || p.Pressed {
 		t |= traits["Selected"]
+	}
+	if p.Busy {
+		t |= traits["UpdatesFrequently"]
 	}
 	if p.Disabled {
 		t |= traits["NotEnabled"]
@@ -308,7 +317,7 @@ func spokenValue(p *driver.ViewProps) string {
 		parts = append(parts, fmt.Sprintf("%g%%", math.Round(float64((val.Now-val.Min)/(val.Max-val.Min)*100))))
 	}
 	switch p.Role {
-	case driver.RoleCheckbox, driver.RoleSwitch, driver.RoleRadio:
+	case driver.RoleCheckbox, driver.RoleSwitch, driver.RoleRadio, driver.RoleMenuItemCheckbox, driver.RoleMenuItemRadio:
 		switch {
 		case p.Indeterminate:
 			parts = append(parts, "mixed")

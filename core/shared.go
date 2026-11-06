@@ -644,21 +644,36 @@ const (
 )
 
 const (
-	RoleNone        = driver.RoleNone
-	RoleButton      = driver.RoleButton
-	RoleLink        = driver.RoleLink
-	RoleHeader      = driver.RoleHeader
-	RoleImage       = driver.RoleImage
-	RoleCheckbox    = driver.RoleCheckbox
-	RoleSwitch      = driver.RoleSwitch
-	RoleRadio       = driver.RoleRadio
-	RoleTab         = driver.RoleTab
-	RoleText        = driver.RoleText
-	RoleTextField   = driver.RoleTextField
-	RoleRadioGroup  = driver.RoleRadioGroup
-	RoleTabList     = driver.RoleTabList
-	RoleMenu        = driver.RoleMenu
-	RoleMenuItem    = driver.RoleMenuItem
+	RoleNone       = driver.RoleNone
+	RoleButton     = driver.RoleButton
+	RoleLink       = driver.RoleLink
+	RoleHeader     = driver.RoleHeader
+	RoleImage      = driver.RoleImage
+	RoleCheckbox   = driver.RoleCheckbox
+	RoleSwitch     = driver.RoleSwitch
+	RoleRadio      = driver.RoleRadio
+	RoleTab        = driver.RoleTab
+	RoleText       = driver.RoleText
+	RoleTextField  = driver.RoleTextField
+	RoleRadioGroup = driver.RoleRadioGroup
+	RoleTabList    = driver.RoleTabList
+	RoleMenu       = driver.RoleMenu
+	RoleMenuItem   = driver.RoleMenuItem
+	// RoleMenuItemCheckbox and RoleMenuItemRadio are menu items with a
+	// checked state.
+	RoleMenuItemCheckbox = driver.RoleMenuItemCheckbox
+	RoleMenuItemRadio    = driver.RoleMenuItemRadio
+	// RoleListbox holds RoleOptions the user picks from.
+	RoleListbox = driver.RoleListbox
+	RoleOption  = driver.RoleOption
+	// RoleGroup, RoleRegion and RoleNavigation are parts of a page.
+	RoleGroup      = driver.RoleGroup
+	RoleRegion     = driver.RoleRegion
+	RoleNavigation = driver.RoleNavigation
+	// RoleTree holds RoleTreeItems.
+	RoleTree        = driver.RoleTree
+	RoleTreeItem    = driver.RoleTreeItem
+	RoleToolbar     = driver.RoleToolbar
 	RoleDialog      = driver.RoleDialog
 	RoleAlert       = driver.RoleAlert
 	RoleAdjustable  = driver.RoleAdjustable

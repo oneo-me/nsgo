@@ -2,6 +2,7 @@ package tsx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -12,6 +13,8 @@ import (
 	"weak"
 
 	"github.com/dop251/goja"
+
+	"github.com/oneo-me/nsgo/core"
 )
 
 // Go classes and calls in TSX (NSH's classes.rs and call.rs, on
@@ -309,6 +312,14 @@ func isAsync(t reflect.Type, first int) bool { return t.NumIn() > first && t.In(
 // goError is err as JS's Error, of its message.
 func (r *runtime) goError(err error) *goja.Object {
 	o, _ := r.vm.New(r.vm.Get("Error"), r.vm.ToValue(err.Error()))
+	if code := core.ErrorCode(err); code != "" {
+		_ = o.Set("code", code)
+	}
+	var coded *core.Error
+	if errors.As(err, &coded) && coded.Permission != "" {
+		_ = o.Set("permission", coded.Permission)
+		_ = o.Set("resource", coded.Resource)
+	}
 	return o
 }
 

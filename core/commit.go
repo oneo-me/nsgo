@@ -341,6 +341,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 				}
 				at.Text = b.String()
 			}
+			driver.UprightEmoji(&at)
 			tn.style = ts
 			tn.stale = false
 			if tn.prepared == nil || !at.Equal(&tn.text) || tn.fonts != t.fonts {
@@ -572,6 +573,12 @@ func (t *Tree) emit(n *node) bool {
 		it := driver.MountItem{Kind: driver.ItemFrame, ID: n.id, Frame: n.frame}
 		if n.transit && !first && !t.root.Env().reduce.GetUntracked() {
 			it.Transition = n.style.Transition.Layout()
+		}
+		if f := n.follow; f != nil {
+			if f.moved != nil && !first && !t.root.Env().reduce.GetUntracked() {
+				it.Transition = f.moved
+			}
+			f.moved = nil
 		}
 		t.items = append(t.items, it)
 		if n.h.layout != nil {

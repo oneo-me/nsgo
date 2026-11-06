@@ -599,6 +599,10 @@ func (cx *Scope) Share(o ShareOptions, done func(shown bool, err error)) {
 		r.From, _ = o.Anchor.Bounds()
 	}
 	t.request(cx, driver.MountItem{Kind: driver.ItemShare, Share: &r}, func(ev driver.Event) {
+		if ev.Text == driver.NoShareSheet {
+			answer(false, Unavailable(ev.Text))
+			return
+		}
 		if ev.Text != "" {
 			answer(false, errors.New(ev.Text))
 			return
@@ -608,7 +612,7 @@ func (cx *Scope) Share(o ShareOptions, done func(shown bool, err error)) {
 }
 
 // errNoInstaller is what InstallPackage answers off Android.
-var errNoInstaller = errors.New("core: only Android installs packages")
+var errNoInstaller = Unavailable("core: only Android installs packages")
 
 // InstallPackage is the core's part of mobile.InstallPackage, which apps
 // use: it hands the APK at path to Android's package installer.

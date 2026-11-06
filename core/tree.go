@@ -95,6 +95,10 @@ type Tree struct {
 	// fonts counts the fonts registered as the app runs: text prepared
 	// with fewer is prepared again.
 	fonts uint32
+	// followers are the views that follow another's frame, and followMoved
+	// says what they follow changed.
+	followers   []*node
+	followMoved bool
 	// edgeBars are the views that are bars over a scroll view's side, and
 	// edgeScrolls the scroll views they last reached into.
 	edgeBars, edgeScrolls []*node
@@ -145,6 +149,7 @@ type node struct {
 	owner    *Scope
 
 	responder *Responder // a view's part in the touch responder
+	follow    *following // what its frame follows (View.Follow)
 	// tip is the tooltip's: what shows it as the pointer comes onto the
 	// view, and hides it as the pointer leaves or presses.
 	tip *tooltipHooks
@@ -1290,6 +1295,16 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 		hidden: v.AccessibilityElementsHidden, actions: v.AccessibilityActions, accessible: v.Accessible,
 		important: v.ImportantForAccessibility})
 	t.bindBool(cx, n, v.Disabled, &n.props.Disabled)
+	if v.Follow != nil {
+		t.bindFollow(cx, n, v)
+	}
+	if focusable := v.Focusable; focusable != nil {
+		cx.renderEffect(func() {
+			n.props.Focusable = focusable()
+			n.props.NoFocus = !n.props.Focusable
+			t.restyle(n)
+		})
+	}
 	t.bindBool(cx, n, v.Selected, &n.props.Selected)
 	t.bindBool(cx, n, v.Checked, &n.props.Checked)
 	t.bindBool(cx, n, v.Indeterminate, &n.props.Indeterminate)
@@ -2151,7 +2166,7 @@ func (n *node) events() driver.EventMask {
 	bit(driver.EventTouch, n.hearsTouches())
 	// The focus of any view that can take it is reported, for the core's
 	// own focus (focusReported).
-	focusable := n.kind == driver.KindInput || n.takesPresses()
+	focusable := n.kind == driver.KindInput || n.takesPresses() || n.props.Focusable
 	bit(driver.EventFocus, h.focus != nil || s.Focus != nil || focusable)
 	bit(driver.EventBlur, h.blur != nil || s.Focus != nil || focusable)
 	bit(driver.EventSubmitEditing, h.submit != nil)

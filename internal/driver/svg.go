@@ -9,6 +9,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // SVG is a parsed SVG document: vector shapes that stay sharp at any size.
@@ -240,6 +241,8 @@ type svgStyle struct {
 	width                      float32
 	cap                        LineCap
 	join                       LineJoin
+	dash                       []float32
+	dashOffset                 float32
 	evenOdd, clipEvenOdd       bool
 	hidden                     bool
 	ctm                        svgMatrix
@@ -609,7 +612,21 @@ func (p *svgParser) paint(style svgStyle) error {
 		p.op(DrawOp{Kind: DrawLineWidth, W: width})
 		p.op(DrawOp{Kind: DrawLineCap, Cap: style.cap})
 		p.op(DrawOp{Kind: DrawLineJoin, Join: style.join})
+		dashed := len(style.dash) > 0
+		if dashed {
+			scale := width / style.width
+			d := make(LineDash, len(style.dash))
+			for i, l := range style.dash {
+				d[i] = l * scale
+			}
+			p.op(DrawOp{Kind: DrawLineDash, Dash: &d})
+			p.op(DrawOp{Kind: DrawLineDashOffset, W: style.dashOffset * scale})
+		}
 		p.op(DrawOp{Kind: DrawStroke})
+		if dashed {
+			p.op(DrawOp{Kind: DrawLineDash})
+			p.op(DrawOp{Kind: DrawLineDashOffset})
+		}
 		if restore {
 			p.op(DrawOp{Kind: DrawRestore})
 		}
@@ -811,6 +828,12 @@ func (s *svgStyle) apply(a map[string]string) error {
 				return fmt.Errorf("svg: stroke-width: %w", err)
 			}
 			s.width = n
+		case "stroke-dasharray":
+			s.dash = svgDashes(value)
+		case "stroke-dashoffset":
+			if n, err := svgLength(value); err == nil {
+				s.dashOffset = n
+			}
 		case "stroke-linecap":
 			switch value {
 			case "butt":
@@ -838,6 +861,31 @@ func (s *svgStyle) apply(a map[string]string) error {
 		}
 	}
 	return nil
+}
+
+// svgDashes reads stroke-dasharray, an odd list repeated, none for a
+// solid line.
+func svgDashes(v string) []float32 {
+	if strings.TrimSpace(v) == "none" {
+		return nil
+	}
+	var dash []float32
+	total := float32(0)
+	for _, f := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || unicode.IsSpace(r) }) {
+		n, err := svgLength(f)
+		if err != nil || n < 0 {
+			return nil
+		}
+		dash = append(dash, n)
+		total += n
+	}
+	if total == 0 {
+		return nil
+	}
+	if len(dash)%2 != 0 {
+		dash = append(dash, dash...)
+	}
+	return dash
 }
 
 // svgOpacity reads an opacity, a number or a percentage from 0 to 1; one

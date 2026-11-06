@@ -191,6 +191,10 @@ func (t *Tree) setView(n *node, v View) {
 		p.ElementsHidden = v.AccessibilityElementsHidden()
 	}
 	p.Disabled = read(v.Disabled)
+	if v.Focusable != nil {
+		p.Focusable = v.Focusable()
+		p.NoFocus = !p.Focusable
+	}
 	p.Selected = read(v.Selected)
 	p.Checked = read(v.Checked)
 	p.Indeterminate = read(v.Indeterminate)

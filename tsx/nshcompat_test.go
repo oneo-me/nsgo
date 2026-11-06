@@ -47,6 +47,12 @@ var compatFailing = map[string][]string{
 // gives a resize handle a band 9 points across where NSGo's is 3
 // (docs/architecture/components.md).
 var compatDepartures = map[string]map[string]string{
+	// NSH's Android clipboard carries text; NSGo's holds images.
+	"android/mod-clipboard-android": {
+		"expect Write: rejected ERR_FEATURE_UNAVAILABLE_ON_PLATFORM": "expect Write: ok undefined",
+		"expect Read: rejected ERR_FEATURE_UNAVAILABLE_ON_PLATFORM":  "expect Read: ok [object Object]",
+		"expect Has: ok false": "expect Has: ok true",
+	},
 	"base/base-resizable": {
 		"frame label:Resize 146 0 9 100": "frame label:Resize 149 0 3 100",
 		"frame label:Resize 176 0 9 100": "frame label:Resize 179 0 3 100",
