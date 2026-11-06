@@ -22,7 +22,7 @@ import (
 
 	"github.com/evanw/esbuild/pkg/api"
 	"github.com/go-sourcemap/sourcemap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/oneo-me/nsgo/core"
 )

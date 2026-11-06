@@ -11,10 +11,10 @@ require (
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
 	github.com/yuin/goldmark v1.8.6
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/image v0.45.0
 	golang.org/x/net v0.58.0
 	golang.org/x/text v0.43.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 // Tailwind is Tailwind CSS 4's default theme extended for the classes of
