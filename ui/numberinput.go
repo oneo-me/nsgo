@@ -133,7 +133,7 @@ func (n NumberInput) Render(cx *core.Scope) core.Node {
 		OnBlur:  func() { commit(); focused.Set(false) },
 		Style:   TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(32), Padding: core.Symmetric(0, 10)}),
 		StyleFunc: func() core.Style {
-			return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection}
+			return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection, CaretColor: colors.Accent()}
 		}}
 	var children []core.Node
 	if n.Leading != nil || n.LeadingText != "" {

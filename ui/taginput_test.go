@@ -12,12 +12,18 @@ import (
 func TestTagInput(t *testing.T) {
 	each(t, func(t *testing.T, e core.Environment) {
 		var tags *core.Signal[[]string]
-		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+		app, p := start(t, e, func(cx *core.Scope) core.Node {
 			tags = core.NewSignalFunc(cx, []string{"design"}, slices.Equal)
 			return TagInput{TestID: "tags", Label: "Tags", Tags: tags.Get, OnChange: tags.Set,
 				Accept:      func(s string) bool { return s != "bad" },
 				RemoveLabel: func(s string) string { return "Remove " + s }}
 		})
+		if got := app.Find("label:Tags").Input.CaretColor; got != p.Accent {
+			t.Fatalf("caret = %x, want the accent", got)
+		}
+		if got := app.Find("tags >> design").Parent.Style.Cursor; got != core.CursorDefault {
+			t.Fatalf("a tag's cursor = %v, want the arrow", got)
+		}
 		app.Type("label:Tags", "go")
 		app.Submit("label:Tags")
 		app.Type("label:Tags", "ui, design, bad, docs")

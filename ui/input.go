@@ -38,7 +38,7 @@ func (f Input) Render(cx *core.Scope) core.Node {
 		if focused.Get() {
 			border = colors.Accent
 		}
-		return shape.Merge(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: cx.Palette().Selection,
+		return shape.Merge(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: cx.Palette().Selection, CaretColor: colors.Accent(),
 			FontSize: 13, Color: colors.Text(), Background: colors.Field(),
 			BorderWidth: 1, BorderColor: border(), CornerRadius: RadiusControl,
 			Hover: &core.Style{BorderColor: Mix(colors.FieldBorder(), colors.Text(), 0.25)}})

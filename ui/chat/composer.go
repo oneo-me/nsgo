@@ -78,7 +78,7 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 		OnContentSizeChange: func(s core.Size) { height.Set(min(10*chatEditorLine, max(chatEditorLine, s.Height))) },
 		Style:               core.Style{Padding: core.Edges{Top: 2, Right: 14, Left: 14}, MinHeight: core.Pt(40), FontSize: 13.5, LineHeight: chatEditorLine, TextAlignVertical: core.TextAlignVerticalTop},
 		StyleFunc: func() core.Style {
-			return core.Style{Height: core.Pt(height.Get() + 2), Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: cx.Palette().Selection}
+			return core.Style{Height: core.Pt(height.Get() + 2), Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: cx.Palette().Selection, CaretColor: colors.Accent()}
 		}}
 	var row []core.Node
 	var accessory []core.Node

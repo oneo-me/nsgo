@@ -21,6 +21,9 @@ func TestInput(t *testing.T) {
 		if f := app.Find("email"); f.Frame.Size.Height != ButtonHeight || f.Style.BorderColor != p.FieldBorder {
 			t.Fatalf("field = %v tall, edge %x; want %v and the field border", f.Frame.Size.Height, f.Style.BorderColor, ButtonHeight)
 		}
+		if got := app.Find("email").Input.CaretColor; got != p.Accent {
+			t.Fatalf("caret = %x, want the accent", got)
+		}
 		if h := app.Find("notes").Frame.Size.Height; h <= ButtonHeight {
 			t.Fatalf("multiline = %v tall, want more than a line", h)
 		}

@@ -74,14 +74,13 @@ func (in TagInput) Render(cx *core.Scope) core.Node {
 				set(slices.DeleteFunc(slices.Clone(tags()), func(s string) bool { return s == tag() }))
 			},
 			Style: core.Style{Width: core.Pt(chipSize - 6), Height: core.Pt(chipSize - 6), CornerRadius: RadiusFull,
-				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Transition: quick,
-				Disabled: &core.Style{Cursor: core.CursorDefault}},
+				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Transition: quick},
 			StyleFunc: func() core.Style {
 				return core.Style{Color: colors.Muted(), Hover: &core.Style{Background: colors.Pressed(), Color: colors.Text()}, Focus: FocusRing(cx, 0)}
 			},
 			Children: []core.Node{Icon(lucide.X, TypeCaption.FontSize, Inherited)}}
 		return core.View{Style: TypeBody.Merge(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2, Height: core.Pt(chipSize),
-			Padding: core.Edges{Left: 8, Right: 2}, CornerRadius: RadiusSmall, BorderWidth: 1, MinWidth: core.Pt(0), FlexShrink: 1}),
+			Padding: core.Edges{Left: 8, Right: 2}, CornerRadius: RadiusSmall, BorderWidth: 1, MinWidth: core.Pt(0), FlexShrink: 1, Cursor: core.CursorDefault}),
 			StyleFunc: func() core.Style {
 				return core.Style{BorderColor: colors.Border(), Background: colors.Raised(), Color: colors.Text()}
 			},
@@ -91,7 +90,7 @@ func (in TagInput) Render(cx *core.Scope) core.Node {
 		Style: TypeBody.Merge(core.Style{FlexGrow: 1, FlexBasis: core.Pt(80), MinWidth: core.Pt(80), Height: core.Pt(chipSize),
 			Padding: core.Symmetric(0, 4)}),
 		StyleFunc: func() core.Style {
-			return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection}
+			return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection, CaretColor: colors.Accent()}
 		},
 		OnChange: func(s string) {
 			if i := strings.LastIndexAny(s, ",\n"); i >= 0 {
