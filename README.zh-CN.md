@@ -130,7 +130,8 @@ build:
   fps: false            # 同 dev.fps，作用于构建产物
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, android_arm64, android_x64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时之外的清单权限
-# sign:                 # 商店发布；密码来自 NSGO_KEYSTORE_PASSWORD 和 NSGO_KEY_PASSWORD
+# sign:                 # 构建产物；密码来自 NSGO_KEYSTORE_PASSWORD 和 NSGO_KEY_PASSWORD
+#   identity: "Apple Development: you@example.com (ABCDE12345)"  # 为 macOS 应用签名，否则使用 ad hoc
 #   profile: assets/AppStore.mobileprovision  # 为 IPA 签名
 #   keystore: assets/release.p12              # 为 APK 签名，配合 key_alias
 ```

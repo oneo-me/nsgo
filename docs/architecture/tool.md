@@ -44,7 +44,7 @@ A web release's bundles are split ([TSX](tsx.md#split-bundles)): `buildWeb` writ
 
 `nsgo build` strips symbols, paths and VCS stamps (`nsgo dev` keeps symbols unless `-release`) and writes a directory per target under `build.output`:
 
-- macOS: `<name>.app`, signed ad hoc. iOS: `<name>.app` and `<name>.ipa`, signed with `sign.profile`, else unsigned. Android: `<name>.apk`, signed with `sign.keystore`, else the project's debug key.
+- macOS: `<name>.app`, signed with `sign.identity`, else ad hoc. iOS: `<name>.app` and `<name>.ipa`, signed with `sign.profile`, else unsigned. Android: `<name>.apk`, signed with `sign.keystore`, else the project's debug key.
 - Windows and Linux: the executable with the resources beside it.
 - With `-embed`, for apps of their own to embed ([embedding](embedding.md)): iOS's `<module>.xcframework` (of dynamic frameworks with `-dynamic`) with `<name>Resources`, Android's `<name>.aar`, and no package for other targets.
 - Web: `index.html`, `manifest.webmanifest`, `nsgo.json`, which names the rest for the loader, and every other file named by its content (`app.<10 hex>.wasm`, `nsgo.<10 hex>.js`, `web.host`'s module as `host.<10 hex>.js` and each resource), so hosts cache them for good. The page mounts the app with the loader and `nsgo.json`'s content inline ([embedding](embedding.md#on-the-web)).
@@ -55,7 +55,9 @@ Native libraries come with the packages that hold them (`natives.go`): when the 
 
 `build_number` sets `CFBundleVersion` and `versionCode`, else they follow `version`. `android.permissions` adds `uses-permission`s to the APK's manifest beyond the runtime's, a name without a dot under `android.permission.`; `-embed` libraries leave them to the host's manifest. `appearance` starts the app light or dark through `-X`, and sets `UIUserInterfaceStyle`, macOS's Aqua appearance, Android's activity theme and the page's `color-scheme`. `-run` starts the package of the first target this machine runs: the app, the iPhone's, the simulator's, the Android device's, or the site served with a CDN's cache headers. `-device` picks the device as `nsgo dev`'s does; Xcode signs the iPhone's package again for `-team`, as in the dev loop, since devices install only development builds.
 
-## Store signing
+## Signing
+
+`sign.identity` signs macOS packages, libraries first: macOS keeps the permissions it grants an identity's app across builds, where each ad hoc signature counts as a new program. `nsgo dev` and `nsgo test` stay ad hoc, as macOS credits what a terminal starts to the terminal.
 
 `sign.profile` signs the iOS package: `security cms` opens the profile, whose `application-identifier` must cover the bundle ID; a wildcard profile signs the app's own ID, which devices require. The profile goes in as `embedded.mobileprovision`, and `codesign` signs with `sign.identity`, else the keychain's identity for one of the profile's certificates.
 

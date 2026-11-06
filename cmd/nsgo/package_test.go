@@ -94,3 +94,10 @@ func TestSimulatorsArePickedByName(t *testing.T) {
 		t.Error("an unknown name picked a simulator")
 	}
 }
+
+func TestIdentityAloneLeavesIOSUnsigned(t *testing.T) {
+	p := &project{Sign: signing{Identity: "Apple Development: someone"}}
+	if err := signForStore(t.Context(), p, t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+}

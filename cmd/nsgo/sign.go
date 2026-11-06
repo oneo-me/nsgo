@@ -21,12 +21,13 @@ import (
 	"github.com/oneo-me/nsgo/cmd/nsgo/apk"
 )
 
-// signing is nsgo.yaml's sign section: what release packages for stores
-// are signed with. Passwords never go in it: NSGO_KEYSTORE_PASSWORD and
+// signing is nsgo.yaml's sign section: what release packages are signed
+// with. Passwords never go in it: NSGO_KEYSTORE_PASSWORD and
 // NSGO_KEY_PASSWORD give them.
 type signing struct {
-	// Identity is the codesign identity of the iOS package, its name or
-	// SHA-1; by default the keychain's identity for one of Profile's
+	// Identity is the codesign identity of the macOS and iOS packages,
+	// its name or SHA-1. By default macOS packages are signed ad hoc and
+	// iOS ones with the keychain's identity for one of Profile's
 	// certificates.
 	Identity string `yaml:"identity"`
 	// Profile is the provisioning profile the iOS package carries and
@@ -45,7 +46,7 @@ type signFlags struct {
 }
 
 func (f *signFlags) bind(fs *flag.FlagSet) {
-	f.identity = stringFlag(fs, "sign", "the iOS codesign `identity` (default: nsgo.yaml's sign.identity, else the profile's in the keychain)")
+	f.identity = stringFlag(fs, "sign", "the macOS and iOS codesign `identity` (default: nsgo.yaml's sign.identity, else ad hoc on macOS and the profile's in the keychain on iOS)")
 	f.profile = stringFlag(fs, "profile", "the iOS provisioning `profile` (default: nsgo.yaml's sign.profile)")
 	f.keystore = stringFlag(fs, "keystore", "the Android `keystore`, PKCS#12 or JKS; NSGO_KEYSTORE_PASSWORD and NSGO_KEY_PASSWORD give its passwords (default: nsgo.yaml's sign.keystore)")
 	f.alias = stringFlag(fs, "key-alias", "the `alias` of the keystore's key (default: nsgo.yaml's sign.key_alias, else its only key)")
@@ -82,14 +83,30 @@ func releaseKey(p *project) (*apk.Key, error) {
 	return key, nil
 }
 
+// signMacApp signs a macOS package with sign.identity, its libraries
+// first so the app's signature seals them. macOS keeps the permissions it
+// grants a program signed by an identity across builds, and loses them
+// with each new ad hoc signature, which stays without an identity.
+func signMacApp(ctx context.Context, p *project, app string) error {
+	if p.Sign.Identity == "" {
+		return nil
+	}
+	detail("sign with %s", p.Sign.Identity)
+	stage("signing")
+	libs, _ := filepath.Glob(filepath.Join(app, "Contents", "Frameworks", "*.dylib"))
+	for _, lib := range libs {
+		if err := run(ctx, "codesign", "--force", "--sign", p.Sign.Identity, lib); err != nil {
+			return err
+		}
+	}
+	return run(ctx, "codesign", "--force", "--sign", p.Sign.Identity, app)
+}
+
 // signForStore signs an iOS device build with the project's provisioning
 // profile, which it embeds and takes the entitlements from. Without a
 // profile the package stays unsigned, for the developer to sign.
 func signForStore(ctx context.Context, p *project, app string) error {
 	if p.Sign.Profile == "" {
-		if p.Sign.Identity != "" {
-			return errors.New("sign.identity needs sign.profile, the provisioning profile to sign with")
-		}
 		detail("unsigned: set sign.profile to install it on devices or upload it")
 		return nil
 	}

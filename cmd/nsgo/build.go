@@ -182,8 +182,11 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 	}
 	switch target {
 	case "macos_arm64", "macos_x64":
-		_, err := buildMacApp(ctx, p, dir, goArch(arch))
-		return err
+		app, err := buildMacApp(ctx, p, dir, goArch(arch))
+		if err != nil {
+			return err
+		}
+		return signMacApp(ctx, p, app)
 	case "windows_arm64", "windows_x64":
 		return buildWindows(ctx, p, dir, goArch(arch))
 	case "ios":
