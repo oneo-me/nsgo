@@ -72,7 +72,7 @@ func pasteInto(editor objc.ID) bool {
 		}
 	}
 	in.fs.Dispatch(driver.Event{Kind: driver.EventPaste, ID: in.fs.ID, Data: p})
-	return p.Text != "" && in.fs.Config.PasteBehavior == driver.PasteInsert
+	return p.Text != "" && len(p.URIs) == 0 && in.fs.Config.PasteBehavior == driver.PasteInsert
 }
 
 // caretMoved reports where in's caret is, while it has the focus.

@@ -150,6 +150,7 @@ func registerInput() {
 					apple.Super(self, cmd, sender)
 				}
 			}},
+			{Cmd: sel("validateUserInterfaceItem:"), Fn: validatePaste},
 		}...))
 }
 

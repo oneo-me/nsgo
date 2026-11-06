@@ -370,7 +370,7 @@ type Input struct {
 	OnCaretMove func(CaretEvent)
 	// OnPaste receives what the user pastes, before the text it inserts
 	// is reported; PasteBehavior PasteReport keeps the text out. Images
-	// and files are never inserted.
+	// and files are never inserted, nor the text naming pasted files.
 	OnPaste       func(PasteEvent)
 	PasteBehavior PasteBehavior
 	OnLayout      func(Bounds)

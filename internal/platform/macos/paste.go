@@ -25,18 +25,10 @@ func registerPaste() {
 			apple.Super(self, cmd, sender)
 		}
 	}
-	validate := func(self objc.ID, cmd objc.SEL, item objc.ID) bool {
-		if a := objc.Send[objc.SEL](item, sel("action")); a == sel("paste:") || a == sel("pasteAsPlainText:") {
-			if in := pasteInput(self); in != nil && in.fs.Events.Has(driver.EventPaste) {
-				return true // images and files too
-			}
-		}
-		return apple.SendSuper[bool](self, cmd, item)
-	}
 	classFieldEditor = register("NsgoFieldEditor", objc.GetClass("NSTextView"), nil, append(editorCursor(), []objc.MethodDef{
 		{Cmd: sel("paste:"), Fn: paste},
 		{Cmd: sel("pasteAsPlainText:"), Fn: paste},
-		{Cmd: sel("validateUserInterfaceItem:"), Fn: validate},
+		{Cmd: sel("validateUserInterfaceItem:"), Fn: validatePaste},
 	}...))
 	classFieldCell = register("NsgoFieldCell", objc.GetClass("NSTextFieldCell"), nil, []objc.MethodDef{{
 		Cmd: sel("fieldEditorForView:"),
@@ -77,6 +69,17 @@ func registerPaste() {
 		}})
 }
 
+// validatePaste enables Paste for an input that hears pastes, whatever the
+// pasteboard holds: AppKit enables it only for text it could insert.
+func validatePaste(self objc.ID, cmd objc.SEL, item objc.ID) bool {
+	if a := objc.Send[objc.SEL](item, sel("action")); a == sel("paste:") || a == sel("pasteAsPlainText:") {
+		if in := pasteInput(self); in != nil && in.fs.Events.Has(driver.EventPaste) {
+			return true // images and files too
+		}
+	}
+	return apple.SendSuper[bool](self, cmd, item)
+}
+
 // setWindowDelegate gives s's own window the delegate that ends the app
 // with it.
 func (s *surface) setWindowDelegate() {
@@ -94,8 +97,8 @@ func pasteInput(editor objc.ID) *input {
 }
 
 // pasteInto reports a paste into editor's input, and whether the editor
-// inserts its text: unless the input only reports pastes, or there is
-// none.
+// inserts its text: unless the input only reports pastes, there is none,
+// or it names the files pasted, as the text of a Finder copy does.
 func pasteInto(editor objc.ID) bool {
 	in := pasteInput(editor)
 	if in == nil || !in.fs.Events.Has(driver.EventPaste) {
@@ -103,11 +106,11 @@ func pasteInto(editor objc.ID) bool {
 	}
 	p := pasted()
 	in.fs.Dispatch(driver.Event{Kind: driver.EventPaste, ID: in.fs.ID, Data: p})
-	return p.Text != "" && in.fs.Config.PasteBehavior == driver.PasteInsert
+	return p.Text != "" && len(p.URIs) == 0 && in.fs.Config.PasteBehavior == driver.PasteInsert
 }
 
 // pasted reads the general pasteboard as a paste: its text, its local
-// files, or else its image.
+// files, or else its image, as a PNG or a JPEG, which is what apps read.
 func pasted() *driver.PasteEvent {
 	pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
 	p := &driver.PasteEvent{HTML: apple.GoString(pb.Send(sel("stringForType:"), apple.NSString("public.html"))),
@@ -116,17 +119,21 @@ func pasted() *driver.PasteEvent {
 	if len(p.URIs) > 0 {
 		return p // a file's icon is no image of the user's
 	}
-	for _, t := range []struct{ uti, mime string }{
-		{"public.png", "image/png"}, {"public.jpeg", "image/jpeg"}, {"public.tiff", "image/tiff"},
-	} {
-		if d := pb.Send(sel("dataForType:"), apple.NSString(t.uti)); d != 0 {
-			n := objc.Send[uint](d, sel("length"))
-			b := make([]byte, n)
-			if n > 0 {
-				copy(b, unsafe.Slice(objc.Send[*byte](d, sel("bytes")), n))
-			}
-			p.Files = append(p.Files, driver.PastedFile{MIME: t.mime, Data: b})
-			break
+	t := availableType(pb, imageTypes)
+	if t == "" {
+		return p
+	}
+	data := apple.Bytes(pb.Send(sel("dataForType:"), apple.NSString(t)))
+	switch t {
+	case "public.png":
+		p.Files = []driver.PastedFile{{MIME: "image/png", Data: data}}
+	case "public.jpeg":
+		p.Files = []driver.PastedFile{{MIME: "image/jpeg", Data: data}}
+	default:
+		// Copying from Preview or Safari gives a TIFF. A paste is one
+		// gesture, so its conversion may keep the main thread.
+		if png, _, err := apple.PNG(data); err == nil {
+			p.Files = []driver.PastedFile{{MIME: "image/png", Data: png}}
 		}
 	}
 	return p
