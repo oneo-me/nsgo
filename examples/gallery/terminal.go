@@ -137,7 +137,7 @@ func terminalDemo(cx *core.Scope) core.Node {
 	// Phones have the demo's session alone.
 	var sessionOption core.Node = core.Group{}
 	if local {
-		sessionOption = option(tr.TerminalSession(), "Options.Conn", ui.Segmented[bool]{Small: true, Value: demo.Get,
+		sessionOption = option(tr.TerminalSession(), "Options.Conn", ui.Tabs[bool]{Equal: true, Value: demo.Get,
 			OnChange: func(d bool) {
 				if d || local {
 					demo.Set(d)
@@ -154,12 +154,12 @@ func terminalDemo(cx *core.Scope) core.Node {
 		Section{Title: tr.TerminalOptions(), Note: "terminal.View", Children: []core.Node{
 			sessionOption,
 			option(tr.TerminalTheme(), "Theme · DarkTheme", core.View{Children: themeRows}),
-			option(tr.TerminalFont(), "Font.Family", ui.Segmented[string]{Small: true, Value: family.Get, OnChange: family.Set,
+			option(tr.TerminalFont(), "Font.Family", ui.Tabs[string]{Equal: true, Value: family.Get, OnChange: family.Set,
 				Options: []ui.Option[string]{{Value: "", Label: tr.TerminalMonospace()}, {Value: "Menlo", Label: "Menlo"}, {Value: "Courier New", Label: "Courier"}}}),
 			option(tr.TerminalFontSize(), "Font.Size", number(tr.TerminalFontSize(), size, 8, 32)),
 			option(tr.TerminalPadding()+" · "+tr.TerminalAcross(), "Padding.X", number(tr.TerminalAcross(), padX, 0, 40)),
 			option(tr.TerminalPadding()+" · "+tr.TerminalDown(), "Padding.Y", number(tr.TerminalDown(), padY, 0, 40)),
-			option(tr.TerminalCursor(), "Terminal.SetCursor", ui.Segmented[terminal.CursorStyle]{Small: true, Value: cursor.Get,
+			option(tr.TerminalCursor(), "Terminal.SetCursor", ui.Tabs[terminal.CursorStyle]{Equal: true, Value: cursor.Get,
 				OnChange: func(c terminal.CursorStyle) {
 					cursor.Set(c)
 					if term != nil {

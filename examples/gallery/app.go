@@ -106,7 +106,7 @@ func init() {
 		{"Menu", locales.Messages.DemoMenu, locales.Messages.DemoMenuDetail, lucide.Menu, menusDemo},
 	}
 	navigation := []demo{
-		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, lucide.NotebookTabs, eventsDemo(tabsCard, segmentedCard)},
+		{"Tabs", locales.Messages.DemoTabs, locales.Messages.DemoTabsDetail, lucide.NotebookTabs, eventsDemo(tabsCard)},
 		{"Stepper and Breadcrumbs", locales.Messages.DemoStepperAndBreadcrumbs, locales.Messages.DemoStepperAndBreadcrumbsDetail, lucide.Check, eventsDemo(stepperPlayground, breadcrumbsCard)},
 		{"Collapsible", locales.Messages.DemoCollapsible, locales.Messages.DemoCollapsibleDetail, lucide.ChevronsUpDown, eventsDemo(accordionCard, collapsiblePlayground)},
 		{"NavStack", locales.Messages.DemoNavStack, locales.Messages.DemoNavStackDetail, lucide.PanelsTopLeft, navigationDemo},
@@ -655,7 +655,7 @@ func (g *gallery) sidebar(tr locales.Messages) []core.Node {
 	}
 	return []core.Node{
 		core.View{Style: core.Style{FlexShrink: 0, Padding: core.Edges{Right: 12, Bottom: 8, Left: 12}}, Children: []core.Node{
-			ui.Segmented[int]{Options: options, Value: g.tab.Get, OnChange: func(i int) { g.selectDemo(g.picked[i]) }, Compact: true, Label: tr.AppSections()},
+			ui.Tabs[int]{Equal: true, Options: options, Value: g.tab.Get, OnChange: func(i int) { g.selectDemo(g.picked[i]) }, Label: tr.AppSections()},
 		}},
 		core.View{Style: ui.FillRest, Children: lists},
 	}

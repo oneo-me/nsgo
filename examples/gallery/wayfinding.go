@@ -16,38 +16,33 @@ func tabsCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		selected := core.NewSignal(cx, 0)
-		variant := core.NewSignal(cx, ui.TabsUnderline)
-		icons, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
+		variant := core.NewSignal(cx, ui.TabsSegmented)
+		equal, icons, content, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
 		return Playground{Title: "Tabs", Fill: true, Stage: func() core.Node {
-			items := []ui.TabItem{{Text: tr.ControlsOverview()}, {Text: tr.ControlsActivity()}, {Text: tr.ControlsBilling(), Disabled: disabled.Get}}
+			choices := []ui.Option[int]{{Value: 0, Label: tr.ControlsOverview()}, {Value: 1, Label: tr.ControlsActivity()}, {Value: 2, Label: tr.ControlsBilling(), Disabled: disabled.Get}}
 			if icons.Get() {
-				items[0].Icon, items[1].Icon, items[2].Icon = lucide.LayoutGrid, lucide.List, lucide.File
+				choices[0].Icon, choices[1].Icon, choices[2].Icon = lucide.LayoutGrid, lucide.List, lucide.File
 			}
-			return ui.Tabs{Variant: variant.Get(), Items: items, Selected: selected.Get, Label: tr.DemoTabs(),
+			if content.Get() {
+				for i := range choices {
+					choices[i].Content = countedTab(cx, choices[i].Label, func() int { return (i + 1) * 4 })
+				}
+			}
+			return ui.Tabs[int]{Variant: variant.Get(), Equal: equal.Get(), Options: choices, Value: selected.Get, Label: tr.DemoTabs(),
 				OnChange: func(i int) { selected.Set(i); last.Set(fmt.Sprintf("Tabs: %d", i)) }}
 		}, Knobs: []core.Node{
-			choiceKnob("Variant", variant, options([]ui.TabsVariant{ui.TabsUnderline, ui.TabsSegmented}, "Underline", "Segmented")...),
-			boolKnob("Icon", icons), boolKnob("Disabled", disabled),
+			choiceKnob("Variant", variant, options([]ui.TabsVariant{ui.TabsSegmented, ui.TabsUnderline}, "Segmented", "Underline")...),
+			boolKnob("Equal", equal), boolKnob("Icon", icons), boolKnob("Content", content), boolKnob("Disabled", disabled),
 		}}
 	}
 }
 
-func segmentedCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		value := core.NewSignal(cx, 0)
-		small, compact, counts := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "Segmented", Fill: true, Stage: func() core.Node {
-			choices := []ui.Option[int]{{Value: 0, Label: tr.ControlsPhotos()}, {Value: 1, Label: tr.ControlsVideos()}, {Value: 2, Label: tr.ControlsApps()}}
-			if counts.Get() {
-				for i := range choices {
-					choices[i].Count = func() int { return (i + 1) * 4 }
-				}
-			}
-			return ui.Segmented[int]{Label: tr.DemoTabs(), Options: choices, Value: value.Get, Small: small.Get(), Compact: compact.Get(),
-				OnChange: func(i int) { value.Set(i); last.Set(fmt.Sprintf("Segmented: %d", i)) }}
-		}, Knobs: []core.Node{boolKnob("Small", small), boolKnob("Compact", compact), boolKnob("Count", counts)}}
-	}
+// countedTab is a tab's content: its label and a quiet count.
+func countedTab(cx *core.Scope, label string, count func() int) core.Node {
+	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 5}, Children: []core.Node{
+		core.Text{Content: label, MaxLines: 1},
+		ui.Textf(func() string { return fmt.Sprint(count()) }, 12, ui.Regular, ui.ColorsOf(cx).Faint),
+	}}
 }
 
 func stepperPlayground(last *core.Signal[string]) cardFunc {

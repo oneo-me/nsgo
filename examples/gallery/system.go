@@ -126,7 +126,7 @@ func statusBarCard(cx *core.Scope) core.Node {
 	hidden, open := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	names := map[core.StatusBarStyle]string{core.StatusBarLight: "light", core.StatusBarDark: "dark", core.StatusBarAuto: "auto"}
 	return ui.Card{Title: tr.SystemStatusBar(), Description: tr.SystemADialogSStatusbarOver(), Children: []core.Node{
-		ui.Segmented[core.StatusBarStyle]{Options: []ui.Option[core.StatusBarStyle]{{Value: core.StatusBarLight, Label: tr.SystemLight()}, {Value: core.StatusBarDark, Label: tr.SystemDark()}, {Value: core.StatusBarAuto, Label: tr.SystemAuto()}}, Value: foreground, OnChange: pick},
+		ui.Tabs[core.StatusBarStyle]{Equal: true, Options: []ui.Option[core.StatusBarStyle]{{Value: core.StatusBarLight, Label: tr.SystemLight()}, {Value: core.StatusBarDark, Label: tr.SystemDark()}, {Value: core.StatusBarAuto, Label: tr.SystemAuto()}}, Value: foreground, OnChange: pick},
 		Row{Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 				ui.Text(tr.SystemHidden(), 13, ui.Regular, colors.Text),

@@ -281,7 +281,7 @@ func formDemo(cx *core.Scope) core.Node {
 			}
 			return ui.Badge{Text: fmt.Sprintf("%d pt", int(h+0.5)), Tone: t}
 		})}, Children: []core.Node{
-			ui.Segmented[core.KeyboardDismissMode]{Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: tr.FormNone()}, {Value: core.KeyboardDismissOnDrag, Label: tr.FormOnDrag()},
+			ui.Tabs[core.KeyboardDismissMode]{Equal: true, Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: tr.FormNone()}, {Value: core.KeyboardDismissOnDrag, Label: tr.FormOnDrag()},
 				{Value: core.KeyboardDismissInteractive, Label: tr.FormInteractive()}}, Value: mode.Get, OnChange: mode.Set},
 		}, Footer: []core.Node{
 			Caption{Label: Hint(cx, tr.FormDragTheFormWithThe(), tr.FormDesktopsHaveNoOnScreen()), Note: func() string { return modeName[mode.Get()] }},

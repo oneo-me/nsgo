@@ -37,7 +37,7 @@ func layoutAnimations(cx *core.Scope) core.Node {
 		change()
 	}
 	return ui.Card{Title: tr.CompLayoutAnimation(), Description: tr.CompAnimatelayoutThenChangeTheTree(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(len(items.Get())) }}}, Children: []core.Node{
-		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.CompSpring()}, {Value: "ease", Label: tr.CompEase()}, {Value: "linear", Label: tr.CompLinear()}}, Value: preset.Get, OnChange: preset.Set, Small: true},
+		ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "spring", Label: tr.CompSpring()}, {Value: "ease", Label: tr.CompEase()}, {Value: "linear", Label: tr.CompLinear()}}, Value: preset.Get, OnChange: preset.Set},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 8, MinHeight: core.Pt(56)}, Children: []core.Node{
 			core.Each(items.Get, func(n int) int { return n }, func(cx *core.Scope, n func() int, _ func() int) core.Node {
 				t := tileTones[core.Untracked(cx, n)%len(tileTones)]
@@ -215,7 +215,7 @@ func avoidingPage(cx *core.Scope) base.NavPage {
 		return core.View{Style: style, StyleFunc: ui.Filled(tints.Info), Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
 				ui.Card{Title: tr.CompRoom() + title, Description: tr.CompFocusTheFieldAtThe(), Children: []core.Node{
-					ui.Segmented[bool]{Options: []ui.Option[bool]{{Value: false, Label: "padding"}, {Value: true, Label: "margin"}}, Value: margin.Get, OnChange: margin.Set},
+					ui.Tabs[bool]{Equal: true, Options: []ui.Option[bool]{{Value: false, Label: "padding"}, {Value: true, Label: "margin"}}, Value: margin.Get, OnChange: margin.Set},
 					core.Text{Content: note, Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Spacer{},

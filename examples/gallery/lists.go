@@ -445,7 +445,7 @@ func listMore(cx *core.Scope) core.Node {
 			}},
 		}},
 	}
-	pullChildren = append(pullChildren, ui.Segmented[bool]{Options: []ui.Option[bool]{{Value: false, Label: tr.ListsSystemSpinner()}, {Value: true, Label: tr.ListsCustomIndicator()}}, Value: custom.Get, OnChange: custom.Set})
+	pullChildren = append(pullChildren, ui.Tabs[bool]{Equal: true, Options: []ui.Option[bool]{{Value: false, Label: tr.ListsSystemSpinner()}, {Value: true, Label: tr.ListsCustomIndicator()}}, Value: custom.Get, OnChange: custom.Set})
 	// The mouse does not pull scroll views down: desktops refresh here.
 	if cx.Env().Desktop() {
 		pullChildren = append(pullChildren, ui.Button{Text: tr.ListsRefresh(), Variant: ui.ButtonSecondary, Disabled: refreshing.Get, OnPress: refresh})
@@ -739,7 +739,7 @@ func listsDemo(cx *core.Scope) core.Node {
 	}
 	views := map[string]func(*core.Scope) core.Node{"grid": listGrid, "sections": listContacts, "chat": listChat, "page": listPage, "more": listMore}
 	return core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{
-		core.View{Style: head, Children: []core.Node{ui.Segmented[string]{Options: []ui.Option[string]{
+		core.View{Style: head, Children: []core.Node{ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{
 			{Value: "grid", Label: tr.ListsGrid()}, {Value: "sections", Label: tr.ListsSections()}, {Value: "chat", Label: tr.ListsChat()}, {Value: "page", Label: tr.ListsPage()}, {Value: "more", Label: tr.ListsMore()},
 		}, Value: tab.Get, OnChange: tab.Set}}},
 		core.Dynamic(func(cx *core.Scope) core.Node {

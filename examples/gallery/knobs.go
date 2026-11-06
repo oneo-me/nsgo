@@ -47,7 +47,7 @@ func choiceKnob[T comparable](name string, s *core.Signal[T], options ...ui.Opti
 	if len(options) > 4 {
 		return Knob{Name: name, Control: ui.Select[T]{Label: name, TestID: "knob-" + name, Options: options, Value: s.Get, OnChange: s.Set, Style: core.Style{Width: core.Pct(100)}}}
 	}
-	return Knob{Name: name, Control: ui.Segmented[T]{Label: name, Options: options, Value: s.Get, OnChange: s.Set, Small: true}}
+	return Knob{Name: name, Control: ui.Tabs[T]{Equal: true, Label: name, Options: options, Value: s.Get, OnChange: s.Set}}
 }
 
 // numberKnob sets a number from lo to hi, step by step.

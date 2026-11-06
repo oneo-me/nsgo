@@ -79,7 +79,7 @@ func edgeEffects(cx *core.Scope) core.Node {
 				ui.RoundButton{Icon: lucide.Bell, Label: tr.EdgesNotifications(), Variant: ui.ButtonSecondary, Size: 40, OnPress: func() {}},
 			),
 		}},
-		ui.Segmented[core.EdgeEffect]{Options: []ui.Option[core.EdgeEffect]{{Value: core.EdgeEffectSoft, Label: tr.EdgesSoft()}, {Value: core.EdgeEffectHard, Label: tr.EdgesHard()},
-			{Value: core.EdgeEffectHidden, Label: tr.EdgesHidden()}}, Value: effect.Get, OnChange: effect.Set, Small: true},
+		ui.Tabs[core.EdgeEffect]{Equal: true, Options: []ui.Option[core.EdgeEffect]{{Value: core.EdgeEffectSoft, Label: tr.EdgesSoft()}, {Value: core.EdgeEffectHard, Label: tr.EdgesHard()},
+			{Value: core.EdgeEffectHidden, Label: tr.EdgesHidden()}}, Value: effect.Get, OnChange: effect.Set},
 	}}
 }

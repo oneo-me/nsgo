@@ -12,7 +12,7 @@ import (
 // beside it on desktops, where the arrow keys move through them, and as
 // a sheet on touch screens. The field shows the chosen option's label,
 // or Placeholder while Value matches none, and the menu checks it.
-// Options' Count goes unused.
+// Options' Icon, Disabled and Content go unused.
 type Select[T comparable] struct {
 	Options     []Option[T]
 	Value       func() T

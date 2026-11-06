@@ -167,7 +167,7 @@ func ticket(cx *core.Scope, open func() bool, s *stock, sd *core.Signal[side], o
 			core.Text{ContentFunc: func() string { return verb() + " " + s.code }, Style: core.Style{FlexGrow: 1, FontSize: 20, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Tabular(ui.Text(tr.StocksSimulatedNothingIsSent(), 12, ui.Regular, colors.Faint)),
 		}},
-		ui.Segmented[side]{Options: []ui.Option[side]{{Value: "buy", Label: tr.StocksBuy()}, {Value: "sell", Label: tr.StocksSell()}}, Value: sd.Get, OnChange: sd.Set},
+		ui.Tabs[side]{Equal: true, Options: []ui.Option[side]{{Value: "buy", Label: tr.StocksBuy()}, {Value: "sell", Label: tr.StocksSell()}}, Value: sd.Get, OnChange: sd.Set},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline}, Children: []core.Node{
 				core.Text{Content: tr.StocksLimitPrice(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},

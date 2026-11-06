@@ -410,7 +410,7 @@ func stockChart(cx *core.Scope, s *stock, running func() bool, height core.Point
 		core.Canvas{Style: core.Style{Height: core.Pt(height)}, Draw: draw, Label: s.code + tr.StocksChart(), TestID: "chart"},
 	}}, pick)
 	return core.View{Style: core.Style{Gap: 10}, Children: []core.Node{
-		ui.Segmented[period]{Options: periods(tr), Value: per.Get, OnChange: per.Set, Small: true},
+		ui.Tabs[period]{Equal: true, Options: periods(tr), Value: per.Get, OnChange: per.Set},
 		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, ColumnGap: 14, RowGap: 6}, Children: []core.Node{legends}},
 		core.View{Style: core.Style{Height: core.Pt(height)}, Children: []core.Node{
 			canvas,

@@ -565,7 +565,7 @@ func interpolations(cx *core.Scope) core.Node {
 				core.Text{Content: "clamp", Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 			}},
 		}},
-		ui.Segmented[int]{Options: []ui.Option[int]{{Value: 0, Label: "t = 0"}, {Value: 1, Label: "t = 1"}, {Value: 2, Label: "t = 2"}}, Value: at.Get, OnChange: goTo},
+		ui.Tabs[int]{Equal: true, Options: []ui.Option[int]{{Value: 0, Label: "t = 0"}, {Value: 1, Label: "t = 1"}, {Value: 2, Label: "t = 2"}}, Value: at.Get, OnChange: goTo},
 		core.View{Style: core.Style{Gap: 6}, Children: []core.Node{
 			Caption{Label: tr.AnimColorThroughThreeStops(), Note: label(tr.AnimAt01And2())},
 			Caption{Label: tr.AnimRotationKeepsGoingPast1(), Note: label(tr.Anim360At2())},
@@ -637,7 +637,7 @@ func layoutAnimation(cx *core.Scope) core.Node {
 	}
 	tones := motionTones(cx)
 	return ui.Card{Title: tr.AnimLayoutAnimation(), Description: tr.AnimFramesInsertsAndRemovalsOf(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.AnimViews(len(items.Get())) }}}, Children: []core.Node{
-		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.AnimSpring()}, {Value: "ease", Label: tr.AnimEaseInOut()}, {Value: "linear", Label: tr.AnimLinear()}}, Value: preset.Get, OnChange: preset.Set, Small: true},
+		ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "spring", Label: tr.AnimSpring()}, {Value: "ease", Label: tr.AnimEaseInOut()}, {Value: "linear", Label: tr.AnimLinear()}}, Value: preset.Get, OnChange: preset.Set},
 		core.View{StyleFunc: func() core.Style {
 			d := core.Row
 			if column.Get() {

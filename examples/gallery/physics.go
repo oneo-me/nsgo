@@ -194,8 +194,8 @@ func physicsDemo(cx *core.Scope) core.Node {
 					Children: []core.Node{ui.Icon(lucide.Hand, 28, colors.OnAccent), ui.Text(tr.PhysicsDragMe(), 13, ui.Bold, colors.OnAccent)}},
 			}},
 			core.View{StyleFunc: func() core.Style { return ui.CardStyle(cx).Merge(core.Style{Padding: core.All(12), Gap: 12}) }, Children: []core.Node{
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "spring", Label: tr.PhysicsSpring()}, {Value: "coast", Label: tr.PhysicsCoast()}, {Value: "snap", Label: tr.PhysicsSnap()}}, Value: mode.Get, OnChange: mode.Set},
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "soft", Label: tr.PhysicsSoft()}, {Value: "bouncy", Label: tr.PhysicsBouncy()}, {Value: "firm", Label: tr.PhysicsFirm()}}, Value: feel.Get, OnChange: feel.Set, Small: true},
+				ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "spring", Label: tr.PhysicsSpring()}, {Value: "coast", Label: tr.PhysicsCoast()}, {Value: "snap", Label: tr.PhysicsSnap()}}, Value: mode.Get, OnChange: mode.Set},
+				ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "soft", Label: tr.PhysicsSoft()}, {Value: "bouncy", Label: tr.PhysicsBouncy()}, {Value: "firm", Label: tr.PhysicsFirm()}}, Value: feel.Get, OnChange: feel.Set},
 				core.View{Style: core.Style{Direction: core.Row, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
 					Stat{Label: tr.PhysicsReleases(), Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
 					core.Dynamic(func(*core.Scope) core.Node {

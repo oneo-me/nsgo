@@ -172,7 +172,7 @@ func snapCards(cx *core.Scope) core.Node {
 						}}
 				}},
 		}},
-		ui.Segmented[core.SnapAlignment]{Options: []ui.Option[core.SnapAlignment]{{Value: core.SnapStart, Label: "start"}, {Value: core.SnapCenter, Label: "center"}, {Value: core.SnapEnd, Label: "end"}}, Value: align.Get, OnChange: align.Set, Small: true},
+		ui.Tabs[core.SnapAlignment]{Equal: true, Options: []ui.Option[core.SnapAlignment]{{Value: core.SnapStart, Label: "start"}, {Value: core.SnapCenter, Label: "center"}, {Value: core.SnapEnd, Label: "end"}}, Value: align.Get, OnChange: align.Set},
 		SwitchRow{Label: tr.ScrollOneCardPerFling(), Code: "DisableIntervalMomentum", Checked: oneStep.Get, OnChange: oneStep.Set},
 	}}
 }
@@ -439,8 +439,8 @@ func scrollingDemo(cx *core.Scope) core.Node {
 			fin := ui.FinOf(cx)
 			return Section{Title: tr.ScrollTapsWithTheKeyboardUp(), Children: []core.Node{
 				API{Text: "KeyboardShouldPersistTaps"},
-				ui.Segmented[core.KeyboardTaps]{Options: []ui.Option[core.KeyboardTaps]{{Value: core.KeyboardTapsNever, Label: "never"}, {Value: core.KeyboardTapsHandled, Label: "handled"},
-					{Value: core.KeyboardTapsAlways, Label: "always"}}, Value: taps.Get, OnChange: taps.Set, Small: true},
+				ui.Tabs[core.KeyboardTaps]{Equal: true, Options: []ui.Option[core.KeyboardTaps]{{Value: core.KeyboardTapsNever, Label: "never"}, {Value: core.KeyboardTapsHandled, Label: "handled"},
+					{Value: core.KeyboardTapsAlways, Label: "always"}}, Value: taps.Get, OnChange: taps.Set},
 				core.Text{ContentFunc: func() string {
 					switch taps.Get() {
 					case core.KeyboardTapsHandled:

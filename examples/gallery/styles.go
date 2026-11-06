@@ -254,7 +254,7 @@ func layersCard(cx *core.Scope) core.Node {
 				Children: []core.Node{ui.Textf(level.Get, 13, ui.Bold, onBlue)}},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
 				Caption{Label: tr.StylesOpacity(), Note: label(tr.StylesAnimatedNatively())},
-				ui.Segmented[string]{Options: []ui.Option[string]{{Value: "0.2", Label: "0.2"}, {Value: "0.45", Label: "0.45"}, {Value: "1", Label: "1"}}, Value: level.Get, OnChange: func(v string) {
+				ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "0.2", Label: "0.2"}, {Value: "0.45", Label: "0.45"}, {Value: "1", Label: "1"}}, Value: level.Get, OnChange: func(v string) {
 					level.Set(v)
 					to := map[string]float64{"0.2": 0.2, "0.45": 0.45, "1": 1}[v]
 					ui.Timing(cx, opacity, to, core.TimingConfig{Duration: ms(260), Easing: ui.EaseOutCubic})

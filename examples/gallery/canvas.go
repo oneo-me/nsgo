@@ -155,7 +155,7 @@ func dial(cx *core.Scope) core.Node {
 	}
 	return ui.Card{Title: tr.CanvasTurbine3Load(), Description: tr.CanvasNeedleAndSweepOnOne(), Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(230)}, Draw: draw, Label: tr.CanvasLoadDial(), TestID: "dial"},
-		ui.Segmented[string]{Options: opts, Value: preset.Get, OnChange: choose},
+		ui.Tabs[string]{Equal: true, Options: opts, Value: preset.Get, OnChange: choose},
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				z := zone()

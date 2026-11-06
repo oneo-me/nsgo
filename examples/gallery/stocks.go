@@ -352,16 +352,16 @@ func stocksDemo(cx *core.Scope) core.Node {
 	// Stable options, so the segments stay mounted; the counts follow the
 	// once-a-second counts.
 	options := []ui.Option[string]{
-		{Value: "all", Label: tr.StocksAll(), Count: func() int { return len(m.stocks) }},
-		{Value: "gainers", Label: tr.StocksGainers(), Count: func() int { return counts.Get()[0] }},
-		{Value: "losers", Label: tr.StocksLosers(), Count: func() int { return counts.Get()[1] }},
+		{Value: "all", Label: tr.StocksAll(), Content: countedTab(cx, tr.StocksAll(), func() int { return len(m.stocks) })},
+		{Value: "gainers", Label: tr.StocksGainers(), Content: countedTab(cx, tr.StocksGainers(), func() int { return counts.Get()[0] })},
+		{Value: "losers", Label: tr.StocksLosers(), Content: countedTab(cx, tr.StocksLosers(), func() int { return counts.Get()[1] })},
 		{Value: "active", Label: tr.StocksActive()},
 	}
 	// Desktop: the stock beside the list.
 	shown := core.NewSignal(cx, m.stocks[0])
 	watchlist := core.View{StyleFunc: func() core.Style { return fillPage.Merge(core.Style{Background: colors.Background()}) }, Children: []core.Node{
 		marketStrip(cx, m),
-		core.View{Style: core.Style{Padding: core.Edges{Right: 16, Bottom: 6, Left: 16}}, Children: []core.Node{ui.Segmented[string]{Options: options, Value: filter.Get, OnChange: filter.Set, Small: true}}},
+		core.View{Style: core.Style{Padding: core.Edges{Right: 16, Bottom: 6, Left: 16}}, Children: []core.Node{ui.Tabs[string]{Equal: true, Options: options, Value: filter.Get, OnChange: filter.Set}}},
 		core.Scroll{Style: core.Style{FlexGrow: 1}, TestID: "watchlist", Children: []core.Node{
 			core.View{Children: []core.Node{
 				core.Each(rows.Get, func(s *stock) string { return s.code }, func(cx *core.Scope, s func() *stock, i func() int) core.Node {

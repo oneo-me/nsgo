@@ -201,8 +201,8 @@ func player(cx *core.Scope) core.Node {
 				ui.Button{Text: tr.MediaRestart(), Variant: ui.ButtonSecondary, OnPress: func() { ref.Seek(0) }},
 			}}
 		}},
-		ui.Segmented[string]{Options: []ui.Option[string]{{Value: "own", Label: tr.MediaOwnControls()}, {Value: "system", Label: tr.MediaSystemControls()}}, Value: controls.Get, OnChange: controls.Set},
-		ui.Segmented[core.ResizeMode]{Options: []ui.Option[core.ResizeMode]{{Value: core.Contain, Label: "Contain"}, {Value: core.Cover, Label: "Cover"}, {Value: core.Stretch, Label: "Stretch"}}, Value: fit.Get, OnChange: fit.Set, Small: true},
+		ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "own", Label: tr.MediaOwnControls()}, {Value: "system", Label: tr.MediaSystemControls()}}, Value: controls.Get, OnChange: controls.Set},
+		ui.Tabs[core.ResizeMode]{Equal: true, Options: []ui.Option[core.ResizeMode]{{Value: core.Contain, Label: "Contain"}, {Value: core.Cover, Label: "Cover"}, {Value: core.Stretch, Label: "Stretch"}}, Value: fit.Get, OnChange: fit.Set},
 	}}
 }
 
