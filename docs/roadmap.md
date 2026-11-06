@@ -144,7 +144,7 @@ What `base/terminal` still lacks of a terminal app's features, Ghostty's the ref
 | `-embed` frameworks and other packages | — | `-embed` XCFrameworks and AARs, and Windows and Linux packages, carry libghostty-vt beside the app, as macOS and iOS apps do |
 | The web | — | A page runs a remote session over a WebSocket with libghostty-vt built for WebAssembly, which the browser runs, through the binding's calls |
 | Mouse reports and the wheel on full-screen programs | `mouse-reporting`, `mouse-scroll-multiplier` | A program that takes the mouse gets presses, moves and the wheel as it asks, and the alternate screen gets the wheel as arrows |
-| Links | `link-url`, OSC 8 | Command+click (Control+click elsewhere) opens hyperlinks and URLs and paths printed as text, with a hand over them |
+| Paths as links | `link-url` | Command+click (Control+click elsewhere) opens a path printed as text, relative ones from the shell's directory, as it opens URLs and hyperlinks |
 | Clipboard protocols | `clipboard-read`, `clipboard-write` | Programs copy with OSC 52 and read the clipboard as the app allows, and the Kitty clipboard protocol offers pasted images |
 | Keybinds, zoom, the context menu and secondary clicks | `keybind`, `right-click-action` | Ghostty's actions bind to keys over the defaults, zoom changes the font's size, and a secondary click shows Copy, Paste, Select All and Clear |
 | Drawn box characters, blinking and contrast | `cursor-style-blink`, `minimum-contrast`, `window-padding-color` | Box drawing, blocks and Powerline's separators are drawn so lines join, the cursor blinks, and minimum contrast and padding colors apply |

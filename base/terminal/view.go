@@ -25,6 +25,10 @@ import (
 // Command+C on Apple platforms and Control+Shift+C elsewhere; paste
 // Command+V, or Control+Shift+V; Ref gives them to the app's menus.
 //
+// Links, programs' hyperlinks (OSC 8) and URLs printed as text, underline
+// faintly under the mouse, fully with a hand with Command held, or Control
+// off Apple platforms, when a click opens them with Scope.OpenURL.
+//
 // On touch screens a bar of the keys software keyboards lack shows over
 // the keyboard while the view has the focus, and the grid keeps to what
 // the keyboard leaves of the view.
@@ -90,6 +94,7 @@ func (p View) Render(cx *core.Scope) core.Node {
 		focused: core.NewSignal(cx, false), content: core.NewSignal(cx, core.Points(0)),
 		caret: core.NewSignal(cx, core.Point{}), sinkRef: &core.Ref{}, scrollRef: &core.Ref{},
 		selected: core.NewSignal(cx, false), ctrlOn: core.NewSignal(cx, false), altOn: core.NewSignal(cx, false),
+		linkOn: core.NewSignal(cx, false),
 		bounds: core.NewSignal(cx, core.Bounds{}), rootRef: &core.Ref{}}
 	if p.Ref != nil {
 		p.Ref.v = v
@@ -140,13 +145,20 @@ func (p View) Render(cx *core.Scope) core.Node {
 					core.Scroll{
 						Ref: v.scrollRef, Style: fill, OnScroll: v.scrolled, Behavior: keepKeyboard,
 						Children: []core.Node{core.View{
-							StyleFunc:   func() core.Style { return core.Style{Height: core.Pt(v.content.Get()), Cursor: core.CursorText} },
-							NoFocus:     true,
-							TestID:      v.testID("screen"),
-							OnPressDown: v.pressDown,
-							OnPressUp:   v.pressUp,
-							OnMouseMove: func(e core.MouseEvent) { v.mouseMove(e.Position) },
-							OnLongPress: v.longPress,
+							StyleFunc: func() core.Style {
+								cursor := core.CursorText
+								if v.linkOn.Get() {
+									cursor = core.CursorPointer
+								}
+								return core.Style{Height: core.Pt(v.content.Get()), Cursor: cursor}
+							},
+							NoFocus:      true,
+							TestID:       v.testID("screen"),
+							OnPressDown:  v.pressDown,
+							OnPressUp:    v.pressUp,
+							OnMouseMove:  v.mouseMove,
+							OnMouseLeave: v.mouseLeave,
+							OnLongPress:  v.longPress,
 							// A scroll view holds its content's touches back
 							// 150 ms: the word is selected before a context
 							// menu's hold of 400 ms opens it.
@@ -196,6 +208,16 @@ type view struct {
 	// bounds is the view's frame in the surface, for the keyboard.
 	bounds  *core.Signal[core.Bounds]
 	rootRef *core.Ref
+	// link is the link under the mouse, hover the cell of the viewport the
+	// mouse is over while hovered, armed that the key opening links is
+	// held, linkOn that the mouse shows a hand as a press would open link,
+	// and pressedLink the URL a press on a link opens as it ends there.
+	link        link
+	hover       [2]int
+	hovered     bool
+	armed       bool
+	linkOn      *core.Signal[bool]
+	pressedLink string
 
 	// The grid as the last drawing laid it out, in points.
 	cellW, cellH, padX, padY float32
@@ -291,6 +313,8 @@ func (v *view) draw(d *core.Drawing, size core.Size) {
 	}
 	if !t.held {
 		t.rs.Update(t.term)
+		// Output and scrolling move what is under the mouse.
+		v.findLink()
 	}
 	sb := t.term.Scrollbar()
 	if cols, rows := v.cols, v.rows; v.p.OnSizeChange != nil && [2]int{cols, rows} != v.reported {
@@ -467,6 +491,7 @@ func (f *frame) paint(size core.Size) {
 		ry := oy + float32(y)*ch
 		cells := rs.RowCells()
 		selA, selB, sel := rs.RowSelection()
+		linkA, linkB, linked := v.link.cells(y)
 		styles := map[uint16]resolved{}
 		styleOf := func(c vt.Cell, x int) resolved {
 			if c.Style == 0 {
@@ -535,6 +560,12 @@ func (f *frame) paint(size core.Size) {
 					ul = st.ul
 				}
 				addDeco(x, x+w, st.underline, ul)
+			} else if linked && x >= linkA && x <= linkB {
+				ul := st.fg
+				if !v.armed {
+					ul = ul.Faded(0.5)
+				}
+				addDeco(x, x+w, vt.UnderlineSingle, ul)
 			}
 			if st.strike {
 				addDeco(x, x+w, decoStrike, st.fg)
@@ -926,10 +957,18 @@ func (v *view) pressDown(e core.PressEvent) {
 	if t.term == nil {
 		return
 	}
+	col, row, px, py := v.cellAt(e.Position)
+	if v.opensLinks(e.Modifiers) {
+		if l := linkAt(t.term, col, row); l.url != "" {
+			v.pressedLink = l.url
+			return
+		}
+	}
+	v.hovered = false
+	v.findLink()
 	if !v.ensureGesture() {
 		return
 	}
-	col, row, px, py := v.cellAt(e.Position)
 	ref, ok := t.term.CellAt(col, row)
 	if !ok {
 		return
@@ -947,15 +986,73 @@ func (v *view) pressDown(e core.PressEvent) {
 	}
 }
 
-func (v *view) mouseMove(p core.Point) {
-	if !v.selecting || v.t == nil {
+func (v *view) mouseMove(e core.MouseEvent) {
+	t := v.t
+	if t == nil {
 		return
 	}
-	v.lastMouse = p
-	v.t.mu.Lock()
-	v.dragTo(p)
-	v.t.mu.Unlock()
-	v.t.redraw()
+	if v.selecting {
+		v.lastMouse = e.Position
+		t.mu.Lock()
+		v.dragTo(e.Position)
+		t.mu.Unlock()
+		t.redraw()
+		return
+	}
+	col, row, _, _ := v.cellAt(e.Position)
+	hover, armed := [2]int{col, row}, v.opensLinks(e.Modifiers)
+	if v.hovered && hover == v.hover && armed == v.armed {
+		return
+	}
+	draw := armed != v.armed && v.link.url != ""
+	v.hovered, v.hover, v.armed = true, hover, armed
+	t.mu.Lock()
+	if t.term != nil && v.findLink() {
+		draw = true
+	}
+	t.mu.Unlock()
+	if draw {
+		t.redraw()
+	}
+}
+
+func (v *view) mouseLeave(core.MouseEvent) {
+	t := v.t
+	if t == nil {
+		return
+	}
+	v.hovered = false
+	t.mu.Lock()
+	draw := v.findLink()
+	t.mu.Unlock()
+	if draw {
+		t.redraw()
+	}
+}
+
+// opensLinks reports whether held has the key that opens links.
+func (v *view) opensLinks(held core.Modifiers) bool {
+	if core.Untracked(v.cx, v.cx.Env().AppleKeys) {
+		return held.Platform
+	}
+	return held.Control
+}
+
+// findLink finds the link under the mouse, and reports whether it changed;
+// t.mu is held and the terminal is running while the mouse hovers.
+func (v *view) findLink() bool {
+	var l link
+	if v.hovered {
+		l = linkAt(v.t.term, v.hover[0], v.hover[1])
+	}
+	if on := l.url != "" && v.armed; on != v.linkOn.GetUntracked() {
+		v.cx.Post(func() { v.linkOn.Set(on) })
+	}
+	if l.same(v.link) {
+		return false
+	}
+	v.link = l
+	return true
 }
 
 // dragTo extends the selection the press started to p; t.mu is held.
@@ -980,10 +1077,21 @@ func (v *view) dragTo(p core.Point) {
 }
 
 func (v *view) pressUp(e core.PressEvent) {
-	if !v.selecting || v.t == nil {
+	t := v.t
+	if url := v.pressedLink; url != "" && t != nil {
+		v.pressedLink = ""
+		col, row, _, _ := v.cellAt(e.Position)
+		t.mu.Lock()
+		same := t.term != nil && linkAt(t.term, col, row).url == url
+		t.mu.Unlock()
+		if same {
+			v.cx.OpenURL(url, nil)
+		}
 		return
 	}
-	t := v.t
+	if !v.selecting || t == nil {
+		return
+	}
 	t.mu.Lock()
 	v.selecting = false
 	if t.term != nil && v.gesture != nil {

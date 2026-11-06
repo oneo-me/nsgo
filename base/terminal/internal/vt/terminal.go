@@ -446,13 +446,30 @@ func (t *Terminal) SetResizePullBack(v bool) {
 	t.set(optResizePullBack, unsafe.Pointer(&v))
 }
 
+// ScreenCellAt is CellAt in the rows of the screen and its scrollback, 0
+// the oldest, as ScreenRow numbers them.
+func (t *Terminal) ScreenCellAt(x, y int) (GridRef, bool) {
+	ref := GridRef{size: unsafe.Sizeof(GridRef{})}
+	p := point{tag: pointScreen, x: uint16(max(0, min(x, 0xFFFF))), y: uint32(max(y, 0))}
+	return ref, terminalGridRef(t.h, p, &ref) == 0
+}
+
 // RowText returns the text of row y of the viewport, and the column of
 // each of its runes.
 func (t *Terminal) RowText(y int) (text []rune, cols []int) {
+	return t.rowText(y, t.CellAt)
+}
+
+// ScreenRowText is RowText for a row of the screen and its scrollback.
+func (t *Terminal) ScreenRowText(y int) (text []rune, cols []int) {
+	return t.rowText(y, t.ScreenCellAt)
+}
+
+func (t *Terminal) rowText(y int, cellAt func(x, y int) (GridRef, bool)) (text []rune, cols []int) {
 	c, _ := t.Size()
 	var buf [16]uint32
 	for x := range c {
-		ref, found := t.CellAt(x, y)
+		ref, found := cellAt(x, y)
 		if !found {
 			break
 		}
@@ -502,6 +519,19 @@ func (t *Terminal) Row(y int) (prompt RowPrompt, wrap bool) {
 		prompt = NoPrompt
 	}
 	return prompt, ok(call(fnRowData, uintptr(row), rowDataWrap, uintptr(unsafe.Pointer(&wrap)))) && wrap
+}
+
+// ScreenRowWraps reports whether row y of the screen and its scrollback
+// soft-wraps into the next.
+func (t *Terminal) ScreenRowWraps(y int) bool {
+	ref, found := t.ScreenCellAt(0, y)
+	if !found {
+		return false
+	}
+	var row uint64
+	var wrap bool
+	return ok(call(fnGridRefRow, uintptr(unsafe.Pointer(&ref)), uintptr(unsafe.Pointer(&row)))) &&
+		ok(call(fnRowData, uintptr(row), rowDataWrap, uintptr(unsafe.Pointer(&wrap)))) && wrap
 }
 
 // Hyperlink returns the URI of the hyperlink (OSC 8) of a cell, or "".
