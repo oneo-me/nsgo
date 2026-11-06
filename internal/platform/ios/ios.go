@@ -1460,7 +1460,12 @@ func surfaceLayout(self objc.ID, cmd objc.SEL) {
 }
 
 func surfaceApply(self objc.ID, _ objc.SEL, _ objc.ID) {
-	s := views[self].surface
+	// The message outlives a surface closed while it waited.
+	v := views[self]
+	if v == nil {
+		return
+	}
+	s := v.surface
 	done := s.measuring(true)
 	for _, b := range s.batches.Drain() {
 		if s.perf != nil && !b.Sent.IsZero() {

@@ -2328,8 +2328,12 @@ func (s *surface) resize(size driver.Size) {
 	}
 }
 
+// surfaceApply applies what Mount queued. The message outlives a surface
+// closed while it waited, as AppKit keeps the view until it is delivered.
 func surfaceApply(self objc.ID, _ objc.SEL, _ objc.ID) {
-	views[self].surface.applyQueued()
+	if v := views[self]; v != nil {
+		v.surface.applyQueued()
+	}
 }
 
 // applyQueued applies the batches the engine has sent as they land,

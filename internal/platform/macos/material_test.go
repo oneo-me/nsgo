@@ -53,3 +53,9 @@ func TestViewsClipAsTheirStyleSays(t *testing.T) {
 		t.Fatal("a view whose style clips does not")
 	}
 }
+
+// TestApplyAfterClose ignores the apply message of a surface closed while
+// it waited on the main thread.
+func TestApplyAfterClose(t *testing.T) {
+	surfaceApply(0, 0, 0)
+}
