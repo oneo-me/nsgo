@@ -91,7 +91,7 @@ func init() {
 		{"Slider and Rating", locales.Messages.DemoSliderAndRating, locales.Messages.DemoSliderAndRatingDetail, lucide.SlidersHorizontal, eventsDemo(sliderPlayground, ratingCard)},
 	}
 	display := []demo{
-		{"Badge and Avatar", locales.Messages.DemoBadgeAndAvatar, locales.Messages.DemoBadgeAndAvatarDetail, lucide.Tag, eventsDemo(badgeCard, avatarCard, avatarGroupCard, fileIconCard)},
+		{"Badge and Avatar", locales.Messages.DemoBadgeAndAvatar, locales.Messages.DemoBadgeAndAvatarDetail, lucide.Tag, eventsDemo(badgeCard, avatarCard, avatarGroupCard)},
 		{"Cards", locales.Messages.DemoCards, locales.Messages.DemoCardsDetail, lucide.PanelTop, eventsDemo(cardPlayground, insetCard, cardStackCard)},
 		{"Media", locales.Messages.DemoMedia, locales.Messages.DemoMediaDetail, lucide.Image, eventsDemo(imagePlayground, imageCompareCard, carouselCard)},
 		{"Lists and Tables", locales.Messages.DemoListsAndTables, locales.Messages.DemoListsAndTablesDetail, lucide.Table, eventsDemo(listCard, treeCard, plainCard(tableCard))},

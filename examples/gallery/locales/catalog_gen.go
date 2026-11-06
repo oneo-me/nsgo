@@ -2063,7 +2063,6 @@ type Translation struct {
 	LibStepComplete                              func() string
 	LibStepFailed                                func() string
 	LibFiles                                     func() string
-	LibFilesNote                                 func() string
 	LibNewVersion                                func() string
 	LibChangesSaved                              func() string
 	LibThreeFiles                                func() string
@@ -3898,7 +3897,6 @@ const (
 	textLibStepComplete
 	textLibStepFailed
 	textLibFiles
-	textLibFilesNote
 	textLibNewVersion
 	textLibChangesSaved
 	textLibThreeFiles
@@ -5731,7 +5729,6 @@ var texts = map[string]*[numTexts]string{
 		"completed",
 		"failed",
 		"Project files",
-		"Chosen by a file's whole name, then its extension",
 		"A new version is available",
 		"Changes saved",
 		"3 files",
@@ -5756,7 +5753,7 @@ var texts = map[string]*[numTexts]string{
 		"Slider and Rating",
 		"A number on a track, a range, a score of stars",
 		"Badge and Avatar",
-		"Small labels, people and files",
+		"Small labels and people",
 		"Cards",
 		"Titled containers, insets and a deck to decide",
 		"Media",
@@ -7559,7 +7556,6 @@ var texts = map[string]*[numTexts]string{
 		"مكتملة",
 		"فشلت",
 		"ملفات المشروع",
-		"تُختار بالاسم الكامل للملف، ثم بامتداده",
 		"يتوفر إصدار جديد",
 		"تم حفظ التغييرات",
 		"3 ملفات",
@@ -7584,7 +7580,7 @@ var texts = map[string]*[numTexts]string{
 		"المنزلق والتقييم",
 		"رقم على مسار ونطاق وتقييم بالنجوم",
 		"الشارة والصورة الرمزية",
-		"تسميات صغيرة وأشخاص وملفات",
+		"تسميات صغيرة وأشخاص",
 		"البطاقات",
 		"حاويات بعناوين ومساحات داخلية ومجموعة بطاقات للاختيار",
 		"الوسائط",
@@ -9387,7 +9383,6 @@ var texts = map[string]*[numTexts]string{
 		"已完成",
 		"失败",
 		"项目文件",
-		"先按完整文件名，再按扩展名选择",
 		"有新版本可用",
 		"更改已保存",
 		"3 个文件",
@@ -9412,7 +9407,7 @@ var texts = map[string]*[numTexts]string{
 		"滑块与评分",
 		"轨道上的数值、范围和星级评分",
 		"徽标与头像",
-		"小标签、人物和文件",
+		"小标签和人物",
 		"卡片",
 		"带标题的容器、内嵌区域和可决策的卡组",
 		"媒体",
@@ -11215,7 +11210,6 @@ var texts = map[string]*[numTexts]string{
 		"已完成",
 		"失敗",
 		"專案檔案",
-		"先依完整檔名，再依副檔名選擇",
 		"有新版本可用",
 		"變更已儲存",
 		"3 個檔案",
@@ -11240,7 +11234,7 @@ var texts = map[string]*[numTexts]string{
 		"滑桿與評分",
 		"軌道上的數值、範圍和星級評分",
 		"徽標與頭像",
-		"小標籤、人物和檔案",
+		"小標籤和人物",
 		"卡片",
 		"帶標題的容器、內嵌區域和可決策的卡組",
 		"媒體",
@@ -16887,9 +16881,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.LibFiles != nil {
 		st[textLibFiles] = t.LibFiles()
-	}
-	if t.LibFilesNote != nil {
-		st[textLibFilesNote] = t.LibFilesNote()
 	}
 	if t.LibNewVersion != nil {
 		st[textLibNewVersion] = t.LibNewVersion()
@@ -35191,14 +35182,6 @@ func LibFiles(cx *core.Scope) string { return For(cx).LibFiles() }
 // in the language of msgs.
 func (msgs Messages) LibFiles() string { return msgs.text(textLibFiles) }
 
-// LibFilesNote says "Chosen by a file's whole name, then its extension"
-// in the language the app shows under cx.
-func LibFilesNote(cx *core.Scope) string { return For(cx).LibFilesNote() }
-
-// LibFilesNote says "Chosen by a file's whole name, then its extension"
-// in the language of msgs.
-func (msgs Messages) LibFilesNote() string { return msgs.text(textLibFilesNote) }
-
 // LibNewVersion says "A new version is available"
 // in the language the app shows under cx.
 func LibNewVersion(cx *core.Scope) string { return For(cx).LibNewVersion() }
@@ -35393,11 +35376,11 @@ func DemoBadgeAndAvatar(cx *core.Scope) string { return For(cx).DemoBadgeAndAvat
 // in the language of msgs.
 func (msgs Messages) DemoBadgeAndAvatar() string { return msgs.text(textDemoBadgeAndAvatar) }
 
-// DemoBadgeAndAvatarDetail says "Small labels, people and files"
+// DemoBadgeAndAvatarDetail says "Small labels and people"
 // in the language the app shows under cx.
 func DemoBadgeAndAvatarDetail(cx *core.Scope) string { return For(cx).DemoBadgeAndAvatarDetail() }
 
-// DemoBadgeAndAvatarDetail says "Small labels, people and files"
+// DemoBadgeAndAvatarDetail says "Small labels and people"
 // in the language of msgs.
 func (msgs Messages) DemoBadgeAndAvatarDetail() string {
 	return msgs.text(textDemoBadgeAndAvatarDetail)
