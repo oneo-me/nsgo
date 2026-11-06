@@ -143,7 +143,7 @@ func (p View) Render(cx *core.Scope) core.Node {
 				core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), Position: core.Relative, Overflow: core.Hidden}, Children: []core.Node{
 					core.Canvas{Style: fill, Draw: v.draw},
 					core.Scroll{
-						Ref: v.scrollRef, Style: fill, OnScroll: v.scrolled, Behavior: keepKeyboard,
+						Ref: v.scrollRef, Style: fill, TestID: v.testID("scroll"), OnScroll: v.scrolled, Behavior: keepKeyboard,
 						Children: []core.Node{core.View{
 							StyleFunc: func() core.Style {
 								cursor := core.CursorText
@@ -225,9 +225,8 @@ type view struct {
 	reported                 [2]int // the size OnSizeChange last had
 	ratio                    float32
 	// scrollY is the scroll layer's offset; setY the one the view last
-	// scrolled it to, whose report it ignores; sb the scrollback's rows.
+	// scrolled it to, whose report it ignores.
 	scrollY, setY float64
-	sb            vt.Scrollbar
 
 	// Guarded by the terminal's mu.
 	keys      *vt.KeyEncoder
@@ -364,20 +363,35 @@ func (f *frame) paintMatches() {
 	}
 }
 
-// follow sizes the scroll layer for the scrollback and keeps it where the
-// terminal's viewport is, after the commit that draws.
+// follow sizes the scroll layer for the scrollback and brings it to the
+// terminal's viewport, after the commit that draws.
 func (v *view) follow(sb vt.Scrollbar, size core.Size) {
 	content := size.Height + core.Points(float32(sb.Total-min(sb.Len, sb.Total))*v.cellH)
-	y := float64(sb.Offset) * float64(v.cellH)
-	moved := sb != v.sb || math.Abs(y-v.scrollY) >= float64(v.cellH)/2
-	v.sb = sb
 	v.cx.Post(func() {
 		v.content.Set(content)
-		if moved && math.Abs(y-v.scrollY) >= 0.5 {
-			v.setY, v.scrollY = y, y
-			v.scrollRef.ScrollTo(core.Point{Y: core.Points(y)}, false)
-		}
+		v.followRow()
 	})
+}
+
+// followRow moves the scroll layer to the row of the terminal's viewport.
+// It reads the terminal, as the user may have scrolled since the frame. A
+// layer on that row stays where it is: it rests between rows as the user
+// scrolls it, and moving it would stop the gesture and its momentum.
+func (v *view) followRow() {
+	t := v.t
+	t.mu.Lock()
+	if t.term == nil {
+		t.mu.Unlock()
+		return
+	}
+	row := t.term.Scrollbar().Offset
+	t.mu.Unlock()
+	if int(math.Round(v.scrollY/float64(v.cellH))) == int(row) {
+		return
+	}
+	y := float64(row) * float64(v.cellH)
+	v.setY, v.scrollY = y, y
+	v.scrollRef.ScrollTo(core.Point{Y: core.Points(y)}, false)
 }
 
 // scrolled moves the terminal's viewport with the scroll layer.

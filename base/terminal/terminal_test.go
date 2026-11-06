@@ -209,3 +209,42 @@ func TestLinkPastViewport(t *testing.T) {
 		t.Errorf("link %+v", l)
 	}
 }
+
+// The scroll layer stays between rows while the user scrolls it, which a
+// move would stop, and goes to the row of a viewport that moved otherwise.
+func TestViewKeepsAScrollGoing(t *testing.T) {
+	term := newTerminal(t, Options{Command: []string{"/bin/sh", "-c", "exit 0"}})
+	<-term.Done()
+	term.Feed([]byte(strings.Repeat("line\r\n", 200)))
+	ref := &Ref{}
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return View{Terminal: term, Ref: ref, TestID: "terminal", Style: core.Style{Width: core.Pct(100), Height: core.Pct(100)}}
+	}, nsgotest.Size(320, 240))
+	app.WaitUntil(5*time.Second, func() bool { return ref.v.cols > 0 && ref.v.content.GetUntracked() > 400 })
+	app.Settle()
+
+	v := ref.v
+	viewportRow := func() int {
+		term.mu.Lock()
+		defer term.mu.Unlock()
+		return int(term.term.Scrollbar().Offset)
+	}
+	cell := core.Points(v.cellH)
+	applied := app.Find("id:terminal-scroll").Applied
+	at := 10*cell + cell/4
+	app.ScrollTo("id:terminal-scroll", core.Point{Y: at})
+	app.WaitUntil(5*time.Second, func() bool { return viewportRow() == 10 })
+	app.Settle()
+	if layer := app.Find("id:terminal-scroll"); layer.Applied != applied || layer.Offset.Y != at {
+		t.Errorf("the scroll moved: %d moves since %d, offset %v, want %v", layer.Applied, applied, layer.Offset.Y, at)
+	}
+
+	term.mu.Lock()
+	term.term.ScrollToRow(20)
+	term.mu.Unlock()
+	term.redraw()
+	app.Settle()
+	if y := app.Find("id:terminal-scroll").Offset.Y; y != 20*cell {
+		t.Errorf("the layer at %v, want the viewport's %v", y, 20*cell)
+	}
+}
