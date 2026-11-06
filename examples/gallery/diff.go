@@ -11,6 +11,7 @@ import (
 
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/ui"
+	uidiff "github.com/oneo-me/nsgo/ui/diff"
 )
 
 const diffOld = `package store
@@ -144,37 +145,7 @@ rename from old_test.go
 rename to store_test.go
 `
 
-// diffStyles is the gallery's diff look, base having none, for its
-// StylesFunc.
-func diffStyles(cx *core.Scope) func() diff.Styles {
-	return ui.Themed(cx, func() diff.Styles { return diffParts(cx) })
-}
-
-// diffParts are the diff's styles, read where ui.ColorsOf's colors are.
-func diffParts(cx *core.Scope) diff.Styles {
-	colors := ui.ColorsOf(cx).Now()
-	added, deleted := colors.Up, colors.Down
-	return diff.Styles{
-		Side:             core.Style{Borders: core.Edges{Right: 1}, BorderColor: colors.Line},
-		LineNumber:       core.Style{Color: colors.Faint, FontSize: 12},
-		LineAdded:        core.Style{Background: ui.Alpha(added, 0.12)},
-		LineDeleted:      core.Style{Background: ui.Alpha(deleted, 0.12)},
-		Filler:           core.Style{Background: ui.Alpha(colors.Inset, 0.5)},
-		WordAdded:        core.Style{Background: ui.Alpha(added, 0.30)},
-		WordDeleted:      core.Style{Background: ui.Alpha(deleted, 0.30)},
-		IndicatorAdded:   core.Style{Background: added, Color: added},
-		IndicatorDeleted: core.Style{Background: deleted, Color: deleted},
-		Content:          core.Style{Color: colors.Text},
-		Separator:        core.Style{Background: colors.Inset, Color: colors.Muted, Padding: core.Symmetric(0, 12)},
-		FileHeader: core.Style{Background: colors.Raised, Color: colors.Text, Padding: core.Symmetric(0, 12), Borders: core.Edges{Bottom: 1},
-			BorderColor: colors.Border},
-		LineSelected:  core.Style{Background: ui.Alpha(colors.Accent, 0.18)},
-		Annotation:    core.Style{Padding: core.Symmetric(6, 12)},
-		AddAnnotation: core.Style{Padding: core.Edges{Right: 2}},
-	}
-}
-
-// diffDemo is base/diff's DiffView: two texts side by side or unified,
+// diffDemo is ui/diff's View: two texts side by side or unified,
 // the words changed marked, unchanged lines collapsed, changes navigated,
 // reverted and kept, and a patch of several files.
 func diffDemo(cx *core.Scope) core.Node {
@@ -204,8 +175,7 @@ func diffDemo(cx *core.Scope) core.Node {
 				BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(), Overflow: core.Hidden})
 		}, Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
-				colors := ui.ColorsOf(cx)
-				d := diff.DiffView{
+				d := uidiff.View{
 					Ref: ref, TestID: "diff", Language: "go", Unified: unified.Get(), Inline: inline.Get(), SoftWrap: wrap.Get(),
 					Annotations: func() []diff.Annotation {
 						var out []diff.Annotation
@@ -269,8 +239,7 @@ func diffDemo(cx *core.Scope) core.Node {
 							small(tr.DiffKeep(), func() { ref.AcceptHunk(h.Index); last.Set(tr.DiffKept(h.Index + 1)) }),
 						}}
 					},
-					StylesFunc: diffStyles(cx),
-					StyleFunc:  func() core.Style { return core.Style{FlexGrow: 1, Color: colors.Text()} },
+					Style: core.Style{FlexGrow: 1},
 				}
 				if patch.Get() {
 					d.Language = ""
@@ -289,7 +258,7 @@ func diffDemo(cx *core.Scope) core.Node {
 				return d
 			}),
 		}},
-		Section{Title: tr.TerminalOptions(), Note: "diff.DiffView", Children: []core.Node{
+		Section{Title: tr.TerminalOptions(), Note: "diff.View", Children: []core.Node{
 			SwitchRow{Label: tr.DiffShowAPatch(), Code: "Patch", Checked: patch.Get, OnChange: patch.Set},
 			SwitchRow{Label: tr.DiffOneColumn(), Code: "Unified", Checked: unified.Get, OnChange: unified.Set},
 			SwitchRow{Label: tr.DiffSoftWrap(), Code: "SoftWrap", Checked: wrap.Get, OnChange: wrap.Set},
