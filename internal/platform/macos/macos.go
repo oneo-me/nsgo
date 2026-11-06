@@ -2197,6 +2197,14 @@ func (v *view) selects() bool {
 	return v.selectable == driver.SelectableOn
 }
 
+// NSCursorFrameResizePosition's corners and
+// NSCursorFrameResizeDirectionsAll.
+const (
+	nsCursorFrameTopLeft       = 1<<0 | 1<<1
+	nsCursorFrameTopRight      = 1<<0 | 1<<3
+	nsCursorFrameDirectionsAll = 1<<0 | 1<<1
+)
+
 // nsCursor is the AppKit cursor of c. AppKit has no public wait, progress,
 // help or zoom cursors: those show the arrow.
 func nsCursor(c driver.Cursor) objc.ID {
@@ -2221,6 +2229,17 @@ func nsCursor(c driver.Cursor) objc.ID {
 		return pick("resizeUpDownCursor")
 	case driver.CursorNone:
 		return invisibleCursor()
+	case driver.CursorNwseResize, driver.CursorNeswResize:
+		// AppKit's frame cursors are macOS 15's; before it, the open hand.
+		frame := sel("frameResizeCursorFromPosition:inDirections:")
+		if !objc.Send[bool](class, sel("respondsToSelector:"), frame) {
+			return pick("openHandCursor")
+		}
+		position := uint64(nsCursorFrameTopLeft)
+		if c == driver.CursorNeswResize {
+			position = nsCursorFrameTopRight
+		}
+		return class.Send(frame, position, uint64(nsCursorFrameDirectionsAll))
 	}
 	return pick("arrowCursor")
 }

@@ -209,6 +209,24 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 	case "gridRowEnd":
 		s.GridRow.End = gridPlacement(v.String())
 
+	case "numberOfLines":
+		s.NumberOfLines = int(v.ToInteger())
+		if s.NumberOfLines == 0 {
+			s.NumberOfLines = core.NoLineLimit
+		}
+	case "textOverflow":
+		s.TextOverflow = pick(r, key, v, map[string]core.EllipsizeMode{"ellipsis": core.EllipsizeTail,
+			"ellipsis-start": core.EllipsizeHead, "ellipsis-middle": core.EllipsizeMiddle, "clip": core.EllipsizeClip})
+	case "userSelect":
+		s.UserSelect = pick(r, key, v, map[string]core.UserSelect{"text": core.UserSelectText, "none": core.UserSelectNone,
+			"auto": 0})
+	case "pointerEvents":
+		s.PointerEvents = pick(r, key, v, map[string]core.PointerEvents{"auto": core.PointerEventsOn,
+			"none": core.PointerEventsNone, "box-none": core.PointerEventsBoxNone, "box-only": core.PointerEventsBoxOnly})
+	case "objectFit":
+		s.ObjectFit = pick(r, key, v, map[string]core.ResizeMode{"cover": core.Cover, "contain": core.Contain,
+			"fill": core.Stretch, "none": core.Center, "scale-down": core.ScaleDown})
+
 	case "backgroundColor":
 		s.Background = r.color(key, v)
 	case "backgroundImage":
@@ -218,14 +236,28 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 	case "borderRadius":
 		s.CornerRadius = points(v)
 		s.CornerRadii = core.AllCorners(points(v))
-	case "borderTopLeftRadius", "borderTopStartRadius":
+	case "borderTopStartRadius":
 		s.CornerRadii.TopLeft = points(v)
-	case "borderTopRightRadius", "borderTopEndRadius":
+	case "borderTopEndRadius":
 		s.CornerRadii.TopRight = points(v)
-	case "borderBottomRightRadius", "borderBottomEndRadius":
+	case "borderBottomEndRadius":
 		s.CornerRadii.BottomRight = points(v)
-	case "borderBottomLeftRadius", "borderBottomStartRadius":
+	case "borderBottomStartRadius":
 		s.CornerRadii.BottomLeft = points(v)
+	// Left and right stay on their sides right to left, as in CSS; start
+	// and end follow the direction.
+	case "borderTopLeftRadius":
+		s.CornerRadii.TopLeft = points(v)
+		s.PhysicalBorders.Corners |= core.SideLeft
+	case "borderTopRightRadius":
+		s.CornerRadii.TopRight = points(v)
+		s.PhysicalBorders.Corners |= core.SideRight
+	case "borderBottomRightRadius":
+		s.CornerRadii.BottomRight = points(v)
+		s.PhysicalBorders.Corners |= core.SideRight
+	case "borderBottomLeftRadius":
+		s.CornerRadii.BottomLeft = points(v)
+		s.PhysicalBorders.Corners |= core.SideLeft
 	case "borderCurve":
 		s.BorderCurve = pick(r, key, v, map[string]core.BorderCurve{"circular": core.BorderCurveCircular,
 			"continuous": core.BorderCurveContinuous})
@@ -234,23 +266,35 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.Borders = core.All(points(v))
 	case "borderTopWidth":
 		s.Borders.Top = points(v)
-	case "borderRightWidth", "borderEndWidth":
+	case "borderEndWidth":
 		s.Borders.Right = points(v)
+	case "borderRightWidth":
+		s.Borders.Right = points(v)
+		s.PhysicalBorders.Widths |= core.SideRight
 	case "borderBottomWidth":
 		s.Borders.Bottom = points(v)
-	case "borderLeftWidth", "borderStartWidth":
+	case "borderStartWidth":
 		s.Borders.Left = points(v)
+	case "borderLeftWidth":
+		s.Borders.Left = points(v)
+		s.PhysicalBorders.Widths |= core.SideLeft
 	case "borderColor":
 		s.BorderColor = core.SetColor(r.color(key, v))
 		s.BorderColors = core.AllColors(s.BorderColor)
 	case "borderTopColor":
 		s.BorderColors.Top = core.SetColor(r.color(key, v))
-	case "borderRightColor", "borderEndColor":
+	case "borderEndColor":
 		s.BorderColors.Right = core.SetColor(r.color(key, v))
+	case "borderRightColor":
+		s.BorderColors.Right = core.SetColor(r.color(key, v))
+		s.PhysicalBorders.Colors |= core.SideRight
 	case "borderBottomColor":
 		s.BorderColors.Bottom = core.SetColor(r.color(key, v))
-	case "borderLeftColor", "borderStartColor":
+	case "borderStartColor":
 		s.BorderColors.Left = core.SetColor(r.color(key, v))
+	case "borderLeftColor":
+		s.BorderColors.Left = core.SetColor(r.color(key, v))
+		s.PhysicalBorders.Colors |= core.SideLeft
 	case "borderStyle":
 		s.BorderStyle = pick(r, key, v, borderStyles)
 	case "outlineWidth":
@@ -270,9 +314,7 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.Overflow = pick(r, key, v, map[string]core.Overflow{"visible": core.Visible, "hidden": core.Hidden,
 			"scroll": core.OverflowScroll})
 	case "boxShadow":
-		sh, ok := cssShadows(v.String())
-		r.check(key, v, ok)
-		s.Shadows = sh
+		s.Shadows = r.shadows(key, v)
 	case "shadowColor":
 		s.ShadowColor = r.color(key, v)
 	case "shadowOffset":
@@ -314,6 +356,31 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.BackfaceHidden = v.String() == "hidden"
 	case "transform":
 		r.transform(s, v)
+	case "translate":
+		x, y := r.axes(v)
+		t := &s.Transform
+		t.TranslateX, t.TranslateXPercent, t.TranslateY, t.TranslateYPercent = 0, 0, 0, 0
+		if p, pct := r.translation(key, x); pct {
+			t.TranslateXPercent = float32(p)
+		} else {
+			t.TranslateX = p
+		}
+		if p, pct := r.translation(key, y); pct {
+			t.TranslateYPercent = float32(p)
+		} else {
+			t.TranslateY = p
+		}
+	case "scale":
+		x, y := r.axes(v)
+		if x == nil {
+			break
+		}
+		s.Transform.Scale, s.Transform.ScaleX, s.Transform.ScaleY = 0, float32(finite(x)), float32(finite(x))
+		if y != nil {
+			s.Transform.ScaleY = float32(finite(y))
+		}
+	case "rotate":
+		r.rotate(s, v)
 	case "transformOrigin":
 		origin := v.String()
 		s.TransformOriginZ = 0
@@ -392,7 +459,10 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.ObjectPosition = p
 
 	case "color":
-		s.Color = r.color(key, v)
+		// currentColor is the color it inherits.
+		if c := r.color(key, v); c != core.CurrentColor {
+			s.Color = c
+		}
 	case "fontSize":
 		s.FontSize = points(v)
 	case "fontWeight":
@@ -415,8 +485,9 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 			s.LetterSpacing, s.LetterSpacingEm = points(v), 0
 		}
 	case "textAlign":
-		s.TextAlign = pick(r, key, v, map[string]core.TextAlign{"left": core.TextAlignStart, "auto": core.TextAlignStart,
-			"center": core.TextAlignCenter, "right": core.TextAlignEnd, "justify": core.TextAlignJustify})
+		s.TextAlign = pick(r, key, v, map[string]core.TextAlign{"left": core.TextAlignLeft, "auto": core.TextAlignStart,
+			"start": core.TextAlignStart, "center": core.TextAlignCenter, "end": core.TextAlignEnd,
+			"right": core.TextAlignRight, "justify": core.TextAlignJustify})
 	case "textAlignVertical":
 		s.TextAlignVertical = map[string]core.TextAlignVertical{"top": core.TextAlignVerticalTop,
 			"center": core.TextAlignVerticalCenter, "bottom": core.TextAlignVerticalBottom}[v.String()]
@@ -455,6 +526,14 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.TextTransform = pick(r, key, v, map[string]core.TextTransform{"none": core.TextTransformNone,
 			"uppercase": core.TextTransformUppercase, "lowercase": core.TextTransformLowercase,
 			"capitalize": core.TextTransformCapitalize})
+	case "textShadow":
+		// One shadow draws: of several layers, the widest.
+		s.TextShadowColor, s.TextShadowOffset, s.TextShadowRadius = 0, core.Point{}, 0
+		for i, sh := range r.shadows(key, v) {
+			if i == 0 || sh.Blur >= s.TextShadowRadius {
+				s.TextShadowColor, s.TextShadowOffset, s.TextShadowRadius = sh.Color, sh.Offset, sh.Blur
+			}
+		}
 	case "textShadowColor":
 		s.TextShadowColor = r.color(key, v)
 	case "textShadowOffset":
@@ -509,8 +588,115 @@ func (r *runtime) animatedKey(s *core.Style, key string, n core.AnimatedNode) {
 	}
 }
 
-// transform reads the steps of a transform, animated ones bound.
+// axes reads CSS's two-value keys, translate and scale: a value, "x y" or
+// a list; y is nil without one, and x for none.
+func (r *runtime) axes(v goja.Value) (x, y goja.Value) {
+	items := r.arrayItems(v)
+	if str, ok := v.Export().(string); ok {
+		if str = strings.TrimSpace(str); str == "none" {
+			return nil, nil
+		}
+		for _, w := range strings.Fields(str) {
+			items = append(items, r.vm.ToValue(w))
+		}
+	}
+	if len(items) == 0 {
+		return v, nil
+	}
+	x = items[0]
+	if len(items) > 1 {
+		y = items[1]
+	}
+	return x, y
+}
+
+// translation reads a length or a percentage of a transform; nil is 0.
+func (r *runtime) translation(key string, v goja.Value) (core.Points, bool) {
+	if v == nil {
+		return 0, false
+	}
+	str, ok := v.Export().(string)
+	if !ok {
+		return core.Points(finite(v)), false
+	}
+	l, ok := cssLengthOrPercent(str)
+	r.check(key, v, ok)
+	if pct, is := l.Percent(); is {
+		return core.Points(pct), true
+	}
+	p, _ := l.Points()
+	return p, false
+}
+
+// rotate reads CSS's rotate: degrees, an angle, or an axis and an angle.
+func (r *runtime) rotate(s *core.Style, v goja.Value) {
+	str, isString := v.Export().(string)
+	if !isString {
+		s.Transform.Rotate = float32(finite(v))
+		return
+	}
+	f := strings.Fields(str)
+	switch {
+	case len(f) == 1 && f[0] == "none":
+		s.Transform.Rotate = 0
+	case len(f) == 1:
+		s.Transform.Rotate = r.degrees(v)
+	case len(f) == 2:
+		a := r.degrees(r.vm.ToValue(f[1]))
+		switch f[0] {
+		case "x":
+			s.Transform.RotateX = a
+		case "y":
+			s.Transform.RotateY = a
+		case "z":
+			s.Transform.Rotate = a
+		default:
+			r.warn("style key \"rotate\" has no value %q", str)
+		}
+	default:
+		r.warn("style key \"rotate\" has no value %q", str)
+	}
+}
+
+// shadows reads a CSS list of shadows or a list of layers, { x, y, blur,
+// spread, color, inset }.
+func (r *runtime) shadows(key string, v goja.Value) []core.BoxShadow {
+	items := r.arrayItems(v)
+	if items == nil {
+		sh, ok := cssShadows(v.String())
+		r.check(key, v, ok)
+		return sh
+	}
+	out := make([]core.BoxShadow, 0, len(items))
+	for _, it := range items {
+		o := r.options(it)
+		sh := core.BoxShadow{Color: core.CurrentColor, Inset: o.bool("inset", false), Spread: core.Points(o.float("spread", 0)),
+			Blur: core.Points(o.float("blur", 0)), Offset: core.Point{X: core.Points(o.float("x", 0)), Y: core.Points(o.float("y", 0))}}
+		if c := o.get("color"); defined(c) {
+			sh.Color = r.color(key, c)
+		}
+		out = append(out, sh)
+	}
+	return out
+}
+
+// transform reads a transform: CSS's string, or a list of steps. The
+// steps stay in order in Transforms, unless some are animated, which go
+// in Transform's fields, in their order, with the others.
 func (r *runtime) transform(s *core.Style, v goja.Value) {
+	if str, ok := v.Export().(string); ok {
+		steps, err := core.ParseTransform(str)
+		if err != nil {
+			r.warn("style key \"transform\": %v", err)
+			return
+		}
+		s.Transforms = steps
+		return
+	}
+	if steps, ok := r.transformSteps(v); ok {
+		s.Transforms = steps
+		return
+	}
 	var t core.Transform
 	for _, step := range r.arrayItems(v) {
 		o, ok := step.(*goja.Object)
@@ -581,6 +767,54 @@ func (r *runtime) transform(s *core.Style, v goja.Value) {
 		}
 	}
 	s.Transform = t
+}
+
+// transformSteps reads a list of steps, false if one is animated.
+func (r *runtime) transformSteps(v goja.Value) ([]core.TransformStep, bool) {
+	out := []core.TransformStep{}
+	for _, step := range r.arrayItems(v) {
+		o, ok := step.(*goja.Object)
+		if !ok {
+			continue
+		}
+		for _, k := range o.Keys() {
+			x := o.Get(k)
+			if r.animatedNodeOf(x) != nil {
+				return nil, false
+			}
+			add := func(kind core.TransformKind, value float32, percent bool) {
+				out = append(out, core.TransformStep{Kind: kind, Value: value, Percent: percent})
+			}
+			switch k {
+			case "translateX", "translateY":
+				p, pct := r.translation(k, x)
+				add(map[string]core.TransformKind{"translateX": core.TransformTranslateX,
+					"translateY": core.TransformTranslateY}[k], float32(p), pct)
+			case "scale":
+				add(core.TransformScaleX, float32(finite(x)), false)
+				add(core.TransformScaleY, float32(finite(x)), false)
+			case "scaleX":
+				add(core.TransformScaleX, float32(finite(x)), false)
+			case "scaleY":
+				add(core.TransformScaleY, float32(finite(x)), false)
+			case "rotate", "rotateZ":
+				add(core.TransformRotate, r.degrees(x), false)
+			case "rotateX":
+				add(core.TransformRotateX, r.degrees(x), false)
+			case "rotateY":
+				add(core.TransformRotateY, r.degrees(x), false)
+			case "skewX":
+				add(core.TransformSkewX, r.degrees(x), false)
+			case "skewY":
+				add(core.TransformSkewY, r.degrees(x), false)
+			case "perspective":
+				add(core.TransformPerspective, float32(points(x)), false)
+			default:
+				r.warn("transform step %q is not supported", k)
+			}
+		}
+	}
+	return out, true
 }
 
 // degrees reads an angle: a number of degrees or "45deg".
@@ -746,7 +980,9 @@ var cursors = map[string]core.Cursor{"auto": core.CursorAuto, "default": core.Cu
 	"no-drop": core.CursorNotAllowed, "zoom-in": core.CursorZoomIn, "zoom-out": core.CursorZoomOut,
 	"col-resize": core.CursorColResize, "e-resize": core.CursorColResize, "w-resize": core.CursorColResize,
 	"ew-resize": core.CursorColResize, "row-resize": core.CursorRowResize, "n-resize": core.CursorRowResize,
-	"s-resize": core.CursorRowResize, "ns-resize": core.CursorRowResize, "none": core.CursorNone}
+	"s-resize": core.CursorRowResize, "ns-resize": core.CursorRowResize, "none": core.CursorNone,
+	"nwse-resize": core.CursorNwseResize, "nw-resize": core.CursorNwseResize, "se-resize": core.CursorNwseResize,
+	"nesw-resize": core.CursorNeswResize, "ne-resize": core.CursorNeswResize, "sw-resize": core.CursorNeswResize}
 
 var fontVariants = map[string]core.FontVariant{"small-caps": core.FontSmallCaps,
 	"oldstyle-nums": core.FontOldstyleNums, "lining-nums": core.FontLiningNums,

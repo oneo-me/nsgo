@@ -711,6 +711,7 @@ const (
 	PointerEventsNone    = driver.PointerEventsNone
 	PointerEventsBoxNone = driver.PointerEventsBoxNone
 	PointerEventsBoxOnly = driver.PointerEventsBoxOnly
+	PointerEventsOn      = driver.PointerEventsOn
 )
 
 const (
@@ -767,6 +768,8 @@ const (
 	CursorZoomOut    = driver.CursorZoomOut
 	CursorColResize  = driver.CursorColResize
 	CursorRowResize  = driver.CursorRowResize
+	CursorNwseResize = driver.CursorNwseResize
+	CursorNeswResize = driver.CursorNeswResize
 	CursorNone       = driver.CursorNone
 )
 
@@ -919,6 +922,8 @@ const (
 	TextAlignStart   = driver.TextAlignStart
 	TextAlignCenter  = driver.TextAlignCenter
 	TextAlignEnd     = driver.TextAlignEnd
+	TextAlignLeft    = driver.TextAlignLeft
+	TextAlignRight   = driver.TextAlignRight
 	TextAlignJustify = driver.TextAlignJustify
 )
 

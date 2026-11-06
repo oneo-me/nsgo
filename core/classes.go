@@ -2,6 +2,7 @@ package core
 
 import (
 	"log"
+	"slices"
 	"sync"
 )
 
@@ -226,9 +227,6 @@ func (t *Tree) classKids(p *node) {
 func (n *node) withClasses(style Style) Style {
 	if c := n.cls; c != nil {
 		style = mergeStyles(mergeStyles(c.normal, style), c.important)
-		if pe := c.props.pointerEvents; pe != 0 && n.props.PointerEvents == 0 {
-			n.props.PointerEvents = pe
-		}
 	}
 	if p := n.nativeParent(); p != nil && p.cls != nil && (p.cls.props.hasSpaceX || p.cls.props.hasSpaceY) {
 		sp := p.cls.props
@@ -278,40 +276,38 @@ func mergeStyles(a, b Style) Style {
 			BottomRight: cmpOr(b.CornerRadii.BottomRight, a.CornerRadii.BottomRight),
 			BottomLeft:  cmpOr(b.CornerRadii.BottomLeft, a.CornerRadii.BottomLeft)}
 	}
-	both := func(x, y *Style) *Style {
-		if x == nil || y == nil {
-			return nil
-		}
-		m := mergeStyles(*x, *y)
-		return &m
-	}
-	pairs := []struct{ dst, x, y **Style }{
-		{&out.Hover, &a.Hover, &b.Hover}, {&out.Focus, &a.Focus, &b.Focus}, {&out.Active, &a.Active, &b.Active},
-		{&out.Selected, &a.Selected, &b.Selected}, {&out.Checked, &a.Checked, &b.Checked},
-		{&out.Indeterminate, &a.Indeterminate, &b.Indeterminate}, {&out.Disabled, &a.Disabled, &b.Disabled},
-	}
-	for _, p := range pairs {
-		if m := both(*p.x, *p.y); m != nil {
-			*p.dst = m
-		}
-	}
+	mergeStates(out.states(), a.states(), b.states())
 	if a.GroupStyle != nil && b.GroupStyle != nil && a.GroupStyle.Name == b.GroupStyle.Name {
 		g := *b.GroupStyle
-		ga := a.GroupStyle
-		for _, p := range []struct{ dst, x **Style }{{&g.Hover, &ga.Hover}, {&g.Focus, &ga.Focus},
-			{&g.Active, &ga.Active}, {&g.Selected, &ga.Selected}, {&g.Checked, &ga.Checked},
-			{&g.Indeterminate, &ga.Indeterminate}, {&g.Disabled, &ga.Disabled}} {
-			switch {
-			case *p.dst == nil:
-				*p.dst = *p.x
-			case *p.x != nil:
-				m := mergeStyles(**p.x, **p.dst)
-				*p.dst = &m
-			}
-		}
+		mergeStates(g.states(), a.GroupStyle.states(), b.GroupStyle.states())
 		out.GroupStyle = &g
 	}
 	return out
+}
+
+// mergeStates sets out's states to b's over a's, merging those both have.
+func mergeStates(out, a, b stateSet) {
+	for i := range out.slots {
+		x, y := *a.slots[i], *b.slots[i]
+		switch {
+		case y == nil:
+			*out.slots[i] = x
+		case x != nil:
+			m := mergeStyles(*x, *y)
+			*out.slots[i] = &m
+		default:
+			*out.slots[i] = y
+		}
+	}
+	if len(*a.data) > 0 && len(*b.data) > 0 {
+		merged := slices.Clone(*a.data)
+		set := stateSet{data: &merged}
+		for _, d := range *b.data {
+			m := set.dataStyle(d.Name)
+			*m = mergeStyles(*m, *d.Style)
+		}
+		*out.data = merged
+	}
 }
 
 // sides is b's sides over a's, side by side.
@@ -320,29 +316,17 @@ func sides(a, b Edges) Edges {
 		Left: cmpOr(b.Left, a.Left)}
 }
 
-// classResizeMode is the fit n's classes give an image or a video
-// (object-contain), 0 without one: the element's own wins.
-func (n *node) classResizeMode() ResizeMode {
-	if n.cls == nil {
-		return 0
-	}
-	return n.cls.props.resizeMode
+// resizeMode is the fit of image or video n: its style's over its own.
+func (n *node) resizeMode(own, def ResizeMode) ResizeMode {
+	return resolveMode(cmpOr(n.style.ObjectFit, own), def)
 }
 
-// textLimits returns text n's line limit and how it ellipsizes: its own,
-// else its classes'.
+// textLimits returns text n's line limit and how it ellipsizes: its
+// style's, classes included, else its own.
 func (n *node) textLimits() (int, EllipsizeMode) {
 	tn := n.text
-	lines, mode := tn.maxLines, tn.ellipsize
-	if c := n.cls; c != nil {
-		if lines == 0 && c.props.lines > 0 {
-			lines = c.props.lines
-		}
-		if mode == 0 {
-			mode = c.props.ellipsize
-		}
-	}
-	return lines, mode
+	lines := cmpOr(n.style.NumberOfLines, tn.maxLines)
+	return max(lines, 0), cmpOr(n.style.TextOverflow, tn.ellipsize)
 }
 
 // spanClasses are the classes of a text's spans.

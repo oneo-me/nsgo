@@ -6,16 +6,7 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-06, 69 of the 173 compat cases, 12 of the 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
-
-## The 0.4.0 API: styles
-
-Done when `props-text-lines`, `props-view-touch`, `props-media-image`, `props-media-video`, `props-input-config`, `core/steps`, `paint-borders`, `paint-current-color`, `paint-misc`, `paint-shadows`, `paint-tailwind`, `paint-text`, `state-expanded`, `state-focus-within` and `state-pressed` pass.
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Props as style keys | `styles.md` (Principles, Extensions) | `numberOfLines`, `textOverflow`, `userSelect`, `pointerEvents` and `objectFit` are style keys and classes as CSS has them, inline winning over classes; transforms read CSS strings |
-| States and variants | `styles.md` (variants) | `aria-expanded:`, `aria-pressed:`, `aria-busy:`, `aria-checked:`, `aria-selected:` and `data-<name>:` variants and their style props (`expandedStyle`, `pressedStyle`, `focusWithinStyle`); `focus-within:` follows any focus, popups' included, kept by the core per surface; parts show `data-*` attributes |
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-06, 85 of the 173 compat cases, 12 of the 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
 
 ## The 0.4.0 API: the rest
 
@@ -23,7 +14,7 @@ Independent of each other, done in any order. Done when the `layout-*`, `core-th
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Roles and focus | `elements.md`, `api-naming.md` (keys of `RadioGroup` and `Tabs`) | The `listbox`, `option`, `group`, `region`, `tree` and `menuitemcheckbox` roles and the pressed state; `focusable` stops without presses; a group of radios or tabs is one Tab stop its arrows move through, swapped right to left; `hitSlop` on `Button`, `Checkbox`, `Radio`, `Switch`, `Toggle` and `Link` |
+| Roles and focus | `elements.md`, `api-naming.md` (keys of `RadioGroup` and `Tabs`) | The `listbox`, `option`, `group`, `region`, `tree` and `menuitemcheckbox` roles, and the pressed and busy states, which reach styles today, on every backend's accessibility; `focusable` stops without presses and reports its focus to `focus-within:`; a group of radios or tabs is one Tab stop its arrows move through, swapped right to left; `hitSlop` on `Button`, `Checkbox`, `Radio`, `Switch`, `Toggle` and `Link` |
 | Errors with codes | `api-naming.md`, `sandbox.md` (What a refusal does) | What JS calls fails one way with a stable `code` (`ERR_ACCESS_DENIED`, `ERR_FEATURE_UNAVAILABLE_ON_PLATFORM`, `ERR_NSH_QUOTA_EXCEEDED`), with `permission` and `resource` where a capability refused it |
 | Fonts and files | `text.md`, `images.md` | Apps import WOFF and WOFF2 fonts; `fontFamily` lists fall back in order; italic runs keep color emoji upright; `fetch` reads the files the app ships (`asset:/`); `svg()` draws an SVG document as authored |
 

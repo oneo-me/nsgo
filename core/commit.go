@@ -37,6 +37,12 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	t.commits++
 	t.commitStart = t.rt.clock.Now()
 	for round := 0; t.changed && round < maxRounds; round++ {
+		if t.focusMoved {
+			t.updateFocusWithin()
+		}
+		if t.pointersMoved {
+			t.updatePointerEvents()
+		}
 		t.commitRound()
 	}
 	t.paceLater()
@@ -242,6 +248,10 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 	}
 	t.mark(n)
 	if n.kind != 0 {
+		// An element made apart meets the trigger around it here.
+		if f := n.nativeParent(); f != nil && f.showsExpanded && !n.props.Expandable {
+			t.restyleExpanded(n)
+		}
 		n.color = inherited.Color
 		if n.color == 0 {
 			n.color = RGB(0x000000)
@@ -270,6 +280,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 		// An icon paints in the text color it inherits.
 		in := n.icon
 		in.text = t.scaled(inherited.textStyle())
+		in.text.Align = sidedAlign(in.text.Align, n.rtl)
 		t.within(n.owner, func() { in.color.Set(in.text.Color) })
 	case n.canvas != nil:
 		t.resolvePaint(n, &inherited)
@@ -298,6 +309,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 		scale := tn.fontMultiplier(t.fontScale)
 		ts := scaleText(inherited.textStyle(), scale)
 		ts.RTL = n.textRTL(inherited, tn.content)
+		ts.Align = sidedAlign(ts.Align, ts.RTL)
 		sized := tn.attachments > 0 && t.sizeAttachments(n, inherited, kids)
 		shadow := inherited.textShadow()
 		if tn.stale || sized || tn.prepared == nil || ts != tn.style || shadow != tn.text.Shadow {
@@ -322,6 +334,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 					b.WriteString(own.TextTransform.Apply(sp.content))
 					spanStyle := scaleText(own.textStyle(), scale)
 					spanStyle.RTL = ts.RTL
+					spanStyle.Align = sidedAlign(spanStyle.Align, ts.RTL)
 					at.Spans = append(at.Spans, driver.TextSpan{Start: start, End: b.Len(),
 						Style: spanStyle, Link: sp.press != nil,
 						Background: driver.TextBackground{Color: currentIn(sp.style.Background, spanStyle.Color), Radius: sp.style.CornerRadius}})
@@ -354,6 +367,10 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 		in := n.input
 		in.config.PlaceholderColor, in.config.SelectionColor = inherited.PlaceholderColor, inherited.SelectionColor
 		in.config.CaretColor = n.style.CaretColor
+		cc := func(c *Color) { *c = currentIn(*c, inherited.Color) }
+		cc(&in.config.PlaceholderColor)
+		cc(&in.config.SelectionColor)
+		cc(&in.config.CaretColor)
 		if in.config.SelectionColor == 0 {
 			in.config.SelectionColor = in.themeSelection
 			if in.config.CaretColor == 0 {
@@ -362,6 +379,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 		}
 		ts := scaleText(inherited.textStyle(), fontMultiplier(t.fontScale, in.noScale, in.maxScale))
 		ts.RTL = n.textRTL(inherited, in.value)
+		ts.Align = sidedAlign(ts.Align, ts.RTL)
 		if ts != in.config.Style || in.lineH == 0 {
 			in.config.Style = ts
 			p := t.text.Prepare(&driver.AttributedText{Text: "Ag", Style: ts})
@@ -377,6 +395,18 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 	for _, c := range n.children {
 		t.resolve(c, inherited, kids)
 	}
+}
+
+// sidedAlign turns an alignment to a side into one to the start or the
+// end of text that runs right to left when rtl.
+func sidedAlign(a TextAlign, rtl bool) TextAlign {
+	switch {
+	case a == TextAlignLeft && !rtl, a == TextAlignRight && rtl:
+		return TextAlignStart
+	case a == TextAlignLeft, a == TextAlignRight:
+		return TextAlignEnd
+	}
+	return a
 }
 
 // textRTL reports whether text node n, styled inherited, writes content
@@ -623,7 +653,7 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.image != nil:
 		im := n.image
 		c := im.config
-		c.ResizeMode = resolveMode(cmpOr(c.ResizeMode, n.classResizeMode()), Cover)
+		c.ResizeMode = n.resizeMode(c.ResizeMode, Cover)
 		c.Position = n.style.ObjectPosition
 		c.Source = t.pickScale(c.Source)
 		c.Placeholder = t.pickScale(c.Placeholder)
@@ -660,7 +690,7 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.video != nil:
 		vn := n.video
 		c := vn.config
-		c.ResizeMode = resolveMode(cmpOr(c.ResizeMode, n.classResizeMode()), Contain)
+		c.ResizeMode = n.resizeMode(c.ResizeMode, Contain)
 		if first || c != vn.sent {
 			vn.sent = c
 			add(driver.MountItem{Kind: driver.ItemVideo, ID: n.id, Video: &c})

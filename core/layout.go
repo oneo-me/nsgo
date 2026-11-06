@@ -366,7 +366,7 @@ func (n *node) layoutStyle() layout.Style {
 		if !horizontalScroll {
 			l.Direction = layout.RTL
 			l.Padding.Left, l.Padding.Right = l.Padding.Right, l.Padding.Left
-			l.Border.Left, l.Border.Right = l.Border.Right, l.Border.Left
+			l.Border.Left, l.Border.Right = mirrored(l.Border.Left, l.Border.Right, n.style.PhysicalBorders.Widths)
 		}
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -103,6 +104,10 @@ type Style struct {
 	// BorderColors, when set, colors each side; a side left 0 takes
 	// BorderColor.
 	BorderColors EdgeColors
+	// PhysicalBorders marks the sides of Borders, BorderColors and
+	// CornerRadii that stay where their names say right to left, as CSS's
+	// border-left does, where the others are starts and ends.
+	PhysicalBorders PhysicalBorders
 	// BorderStyle dashes or dots the border; BorderNone and BorderHidden
 	// take it away, in layout too.
 	BorderStyle BorderStyle
@@ -153,7 +158,13 @@ type Style struct {
 	// VerticalAlign places an attachment in its text's line, set on the
 	// span or on the attachment's view.
 	VerticalAlign VerticalAlign
-	Transform     Transform
+	// Transform is CSS's translate, rotate and scale, each set on its own
+	// by Merge, and the fixed functions of its transform property.
+	Transform Transform
+	// Transforms is CSS's transform as a list, its functions in the order
+	// they are given, after Transform; it replaces Transform's functions
+	// as it merges (ParseTransform reads the CSS).
+	Transforms []TransformStep
 	// TransformOrigin is where Transform acts: its zero value is the
 	// center, and its percentages are of the node's size.
 	TransformOrigin ObjectPosition
@@ -248,6 +259,20 @@ type Style struct {
 	// UserSelect lets the user select the texts inside, unless a text's
 	// own Selectable says otherwise.
 	UserSelect UserSelect
+	// NumberOfLines limits a text's lines over its MaxLines, and
+	// TextOverflow says where it is cut over its EllipsizeMode;
+	// NoLineLimit lifts a limit, as line-clamp-none does.
+	NumberOfLines int
+	TextOverflow  EllipsizeMode
+	// PointerEvents says which of the view and its children take the
+	// pointer, over the element's own. PointerEventsNone is inherited, as
+	// CSS's none: a view inside it takes the pointer again with
+	// PointerEventsOn, or either of the box values, which are the view's
+	// alone.
+	PointerEvents PointerEvents
+	// ObjectFit fits an image or a video to its view, over its own
+	// ResizeMode.
+	ObjectFit ResizeMode
 	// WritingDirection is the base direction of text, which orders runs of
 	// mixed directions and says where TextAlignStart is; the zero value is
 	// the layout direction.
@@ -262,11 +287,73 @@ type Style struct {
 
 	// State styles merge over the rest while the node is in the state, in
 	// NSH's order of precedence, lowest first: checked, indeterminate and
-	// selected, which the app sets, then hovered, focused (text fields) and
-	// pressed, which the platform reports, then disabled over all. While
-	// the node is disabled only Disabled applies of its own, as NSH's
-	// state styles; its classes' variants (checked:, hover:, ...) apply.
-	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled *Style
+	// selected, which the app sets; FocusWithin, while the focus is on the
+	// node or inside it; hovered, focused (text fields) and pressed, which
+	// the platform reports; the aria-* states of its accessibility state,
+	// busy, checked, expanded, pressed (a toggle that is on, not a press)
+	// and selected; the data-* attributes a control's parts show; then
+	// disabled over all. While the node is disabled only Disabled applies
+	// of its own, as NSH's state styles; its classes' variants (checked:,
+	// hover:, ...) apply.
+	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled    *Style
+	FocusWithin, AriaBusy, AriaChecked, Expanded, Pressed, AriaSelected *Style
+	// Data are styles of data-* attributes, sorted by name.
+	Data []DataStyle
+}
+
+// DataStyle styles a node, or a group, that shows the data-* attribute
+// Name (PartStates.Data).
+type DataStyle struct {
+	Name  string
+	Style *Style
+}
+
+// stateCount is how many states stateSet lists.
+const stateCount = 13
+
+// stateSet points at the state styles of a Style or a GroupStyle: all
+// but Data's in the order they merge, as classStates lists their class
+// bits. Disabled is last, after Data.
+type stateSet struct {
+	slots [stateCount]**Style
+	data  *[]DataStyle
+}
+
+func (s *Style) states() stateSet {
+	return stateSet{[stateCount]**Style{&s.Checked, &s.Indeterminate, &s.Selected, &s.FocusWithin, &s.Hover, &s.Focus,
+		&s.Active, &s.AriaBusy, &s.AriaChecked, &s.Expanded, &s.Pressed, &s.AriaSelected, &s.Disabled}, &s.Data}
+}
+
+func (g *GroupStyle) states() stateSet {
+	return stateSet{[stateCount]**Style{&g.Checked, &g.Indeterminate, &g.Selected, &g.FocusWithin, &g.Hover, &g.Focus,
+		&g.Active, &g.AriaBusy, &g.AriaChecked, &g.Expanded, &g.Pressed, &g.AriaSelected, &g.Disabled}, &g.Data}
+}
+
+// copyFrom sets s's styles to o's.
+func (s stateSet) copyFrom(o stateSet) {
+	for i := range s.slots {
+		*s.slots[i] = *o.slots[i]
+	}
+	*s.data = *o.data
+}
+
+// dataStyle returns the style of the attribute name, made when missing,
+// keeping the list sorted.
+func (s stateSet) dataStyle(name string) *Style {
+	i, found := slices.BinarySearchFunc(*s.data, name, func(d DataStyle, n string) int { return strings.Compare(d.Name, n) })
+	if !found {
+		*s.data = slices.Insert(slices.Clone(*s.data), i, DataStyle{Name: name, Style: &Style{}})
+	}
+	return (*s.data)[i].Style
+}
+
+// PhysicalBorders are the parts of a style's border that stay on their
+// sides right to left (Style.PhysicalBorders).
+type PhysicalBorders struct {
+	Widths, Colors Sides
+	// Corners has SideLeft for the left corners and SideRight for the
+	// right ones.
+	Corners Sides
 }
 
 // Display says whether a node takes part in layout.
@@ -387,6 +474,9 @@ const (
 	WhiteSpaceNoWrap
 )
 
+// NoLineLimit, as a style's NumberOfLines, lifts a limit a text has.
+const NoLineLimit = -1
+
 // UserSelect says whether the user may select text.
 type UserSelect uint8
 
@@ -399,8 +489,11 @@ const (
 // nearest ancestor whose Group is Name, or any group when Name is empty,
 // as Tailwind's group-hover and its kin do.
 type GroupStyle struct {
-	Name                                                             string
-	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled *Style
+	Name                                                                string
+	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled    *Style
+	FocusWithin, AriaBusy, AriaChecked, Expanded, Pressed, AriaSelected *Style
+	// Data are styles of data-* attributes of the group, sorted by name.
+	Data []DataStyle
 }
 
 // FlexDirection is the main axis of a container, as in CSS.
@@ -613,6 +706,9 @@ func (s Style) Merge(o Style) Style {
 	set(&s.Borders, o.Borders)
 	set(&s.BorderColor, o.BorderColor)
 	set(&s.BorderColors, o.BorderColors)
+	s.PhysicalBorders.Widths |= o.PhysicalBorders.Widths
+	s.PhysicalBorders.Colors |= o.PhysicalBorders.Colors
+	s.PhysicalBorders.Corners |= o.PhysicalBorders.Corners
 	set(&s.BorderStyle, o.BorderStyle)
 	set(&s.OutlineWidth, o.OutlineWidth)
 	set(&s.OutlineOffset, o.OutlineOffset)
@@ -636,7 +732,7 @@ func (s Style) Merge(o Style) Style {
 	set(&s.Cursor, o.Cursor)
 	set(&s.ObjectPosition, o.ObjectPosition)
 	set(&s.VerticalAlign, o.VerticalAlign)
-	set(&s.Transform, o.Transform)
+	s.Transform, s.Transforms = mergeTransforms(s.Transform, s.Transforms, o.Transform, o.Transforms)
 	set(&s.TransformOrigin, o.TransformOrigin)
 	set(&s.TransformOriginZ, o.TransformOriginZ)
 	set(&s.Perspective, o.Perspective)
@@ -647,14 +743,35 @@ func (s Style) Merge(o Style) Style {
 	s.mergeText(o)
 	set(&s.Group, o.Group)
 	set(&s.GroupStyle, o.GroupStyle)
-	set(&s.Hover, o.Hover)
-	set(&s.Focus, o.Focus)
-	set(&s.Active, o.Active)
-	set(&s.Selected, o.Selected)
-	set(&s.Checked, o.Checked)
-	set(&s.Indeterminate, o.Indeterminate)
-	set(&s.Disabled, o.Disabled)
+	dst, src := s.states(), o.states()
+	for i := range dst.slots {
+		set(dst.slots[i], *src.slots[i])
+	}
+	setSlice(&s.Data, o.Data)
+	set(&s.NumberOfLines, o.NumberOfLines)
+	set(&s.TextOverflow, o.TextOverflow)
+	set(&s.PointerEvents, o.PointerEvents)
+	set(&s.ObjectFit, o.ObjectFit)
 	return s
+}
+
+// mergeTransforms is b over a, CSS's properties one by one: translate,
+// rotate, scale and perspective each replace their own, and the transform
+// property's functions, fixed or a list, replace each other.
+func mergeTransforms(a Transform, al []TransformStep, b Transform, bl []TransformStep) (Transform, []TransformStep) {
+	if b.TranslateX != 0 || b.TranslateY != 0 || b.TranslateXPercent != 0 || b.TranslateYPercent != 0 {
+		a.TranslateX, a.TranslateY, a.TranslateXPercent, a.TranslateYPercent = b.TranslateX, b.TranslateY, b.TranslateXPercent, b.TranslateYPercent
+	}
+	set(&a.Rotate, b.Rotate)
+	if b.Scale != 0 || b.ScaleX != 0 || b.ScaleY != 0 {
+		a.Scale, a.ScaleX, a.ScaleY = b.Scale, b.ScaleX, b.ScaleY
+	}
+	set(&a.Perspective, b.Perspective)
+	if bl != nil || b.RotateX != 0 || b.RotateY != 0 || b.RotateZ != 0 || b.SkewX != 0 || b.SkewY != 0 {
+		a.RotateX, a.RotateY, a.RotateZ, a.SkewX, a.SkewY = b.RotateX, b.RotateY, b.RotateZ, b.SkewX, b.SkewY
+		al = bl
+	}
+	return a, al
 }
 
 // Interaction states a node's style depends on.
@@ -662,19 +779,29 @@ const (
 	statePressed uint8 = 1 << iota
 	stateHovered
 	stateFocused
+	// stateFocusWithin is the core's own: the focus is on the node or
+	// inside it (updateFocusWithin).
+	stateFocusWithin
 )
 
-// groupState is what a node's GroupStyle follows: the states of its
-// group.
-type groupState struct {
-	states                                     uint8
-	checked, indeterminate, selected, disabled bool
+// shownStates are the states a node, or its group, is in, in the order
+// of StateStyles.slots, and the data-* attributes it shows.
+type shownStates struct {
+	on   [stateCount]bool
+	data []string
+}
+
+// statesOf is the states of a node with interaction states and props p.
+func statesOf(states uint8, p *driver.ViewProps, data []string) shownStates {
+	return shownStates{data: data, on: [stateCount]bool{p.Checked, p.Indeterminate, p.Selected, states&stateFocusWithin != 0,
+		states&stateHovered != 0, states&stateFocused != 0, states&statePressed != 0, p.Busy, p.Checked, p.Expanded,
+		p.Pressed, p.Selected, p.Disabled}}
 }
 
 // withStates returns s with the styles of the states n is in merged in,
 // its group's first. A state's Background without Gradients replaces the
 // gradients, so press feedback shows.
-func (s Style) withStates(states uint8, p driver.ViewProps, g groupState) Style {
+func (s Style) withStates(own, group shownStates) Style {
 	out := s
 	merge := func(on bool, st *Style) {
 		if !on || st == nil {
@@ -686,24 +813,20 @@ func (s Style) withStates(states uint8, p driver.ViewProps, g groupState) Style 
 		// Side by side, as a class's state variant sets one side.
 		out = mergeStyles(out, *st)
 	}
-	if gs := s.GroupStyle; gs != nil {
-		merge(g.checked, gs.Checked)
-		merge(g.indeterminate, gs.Indeterminate)
-		merge(g.selected, gs.Selected)
-		merge(g.states&stateHovered != 0, gs.Hover)
-		merge(g.states&stateFocused != 0, gs.Focus)
-		merge(g.states&statePressed != 0, gs.Active)
-		merge(g.disabled, gs.Disabled)
+	apply := func(styles stateSet, shown *shownStates) {
+		for i, slot := range styles.slots[:stateCount-1] {
+			merge(shown.on[i], *slot)
+		}
+		for _, d := range *styles.data {
+			merge(slices.Contains(shown.data, d.Name), d.Style)
+		}
+		merge(shown.on[stateCount-1], *styles.slots[stateCount-1])
 	}
-	merge(p.Checked, s.Checked)
-	merge(p.Indeterminate, s.Indeterminate)
-	merge(p.Selected, s.Selected)
-	merge(states&stateHovered != 0, s.Hover)
-	merge(states&stateFocused != 0, s.Focus)
-	merge(states&statePressed != 0, s.Active)
-	merge(p.Disabled, s.Disabled)
-	out.Hover, out.Focus, out.Active = s.Hover, s.Focus, s.Active
-	out.Selected, out.Checked, out.Indeterminate, out.Disabled = s.Selected, s.Checked, s.Indeterminate, s.Disabled
+	if gs := s.GroupStyle; gs != nil {
+		apply(gs.states(), &group)
+	}
+	apply(s.states(), &own)
+	out.states().copyFrom(s.states())
 	out.GroupStyle = s.GroupStyle
 	return out
 }
@@ -800,7 +923,7 @@ type textFields struct {
 // height in em becomes a length where it is set.
 func (s *Style) inherit(parent textFields) textFields {
 	t := parent
-	set(&t.Color, s.Color)
+	set(&t.Color, currentIn(s.Color, parent.Color))
 	set(&t.FontFamily, s.FontFamily)
 	set(&t.FontSize, s.FontSize)
 	set(&t.FontWeight, s.FontWeight)
@@ -876,7 +999,7 @@ func (s *textFields) textShadow() driver.TextShadow {
 	if s.TextShadowColor == 0 && s.TextShadowOffset == (Point{}) && s.TextShadowRadius == 0 {
 		return driver.TextShadow{}
 	}
-	c := s.TextShadowColor
+	c := currentIn(s.TextShadowColor, cmpOr(s.Color, RGB(0)))
 	if c == 0 {
 		c = Color(0x00000055)
 	}
@@ -908,7 +1031,7 @@ func (s *textFields) textStyle() driver.TextStyle {
 		if s.TextDecorationStyle > DecorationSolid {
 			t.DecorationStyle = s.TextDecorationStyle
 		}
-		t.DecorationColor = s.TextDecorationColor
+		t.DecorationColor = currentIn(s.TextDecorationColor, s.Color)
 	}
 	if t.Font.Size == 0 {
 		t.Font.Size = DefaultFontSize
@@ -972,7 +1095,7 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 		ShadowRadius:      s.ShadowRadius,
 		TintColor:         cc(s.TintColor),
 		Cursor:            s.Cursor,
-		Transform:         s.Transform,
+		Transform:         s.frameTransform(size),
 		BackfaceHidden:    s.BackfaceHidden,
 		ChildPerspective:  max(s.Perspective, 0),
 		BlendMode:         s.BlendMode,
@@ -983,7 +1106,9 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 	}
 	if c := s.CornerRadii; c != (Corners{}) {
 		if rtl {
-			c.TopLeft, c.TopRight, c.BottomLeft, c.BottomRight = c.TopRight, c.TopLeft, c.BottomRight, c.BottomLeft
+			keep := s.PhysicalBorders.Corners
+			c.TopLeft, c.TopRight = mirrored(c.TopLeft, c.TopRight, keep)
+			c.BottomLeft, c.BottomRight = mirrored(c.BottomLeft, c.BottomRight, keep)
 		}
 		if c.Uniform() {
 			v.CornerRadius = c.TopLeft
@@ -996,8 +1121,8 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 		c.Top, c.Right, c.Bottom, c.Left = border(c.Top, w.Top), border(c.Right, w.Right), border(c.Bottom, w.Bottom),
 			border(c.Left, w.Left)
 		if rtl {
-			w.Left, w.Right = w.Right, w.Left
-			c.Left, c.Right = c.Right, c.Left
+			w.Left, w.Right = mirrored(w.Left, w.Right, s.PhysicalBorders.Widths)
+			c.Left, c.Right = mirrored(c.Left, c.Right, s.PhysicalBorders.Colors)
 		}
 		if w == All(w.Top) && c == AllColors(c.Top) {
 			v.BorderWidth, v.BorderColor = w.Top, c.Top
@@ -1023,10 +1148,6 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 			v.Outline = o
 		}
 	}
-	t := &v.Transform
-	t.TranslateX += Points(t.TranslateXPercent) * size.Width / 100
-	t.TranslateY += Points(t.TranslateYPercent) * size.Height / 100
-	t.TranslateXPercent, t.TranslateYPercent = 0, 0
 	if s.TransformOrigin != (ObjectPosition{}) {
 		at := s.TransformOrigin.Place(size, Size{})
 		v.Origin = Point{X: at.X - size.Width/2, Y: at.Y - size.Height/2}
@@ -1034,6 +1155,24 @@ func (s *Style) viewStyle(size Size, color Color, rtl bool) driver.ViewStyle {
 	v.OriginZ = s.TransformOriginZ
 	v.Effects = s.effects(size, cc)
 	return v
+}
+
+// mirrored places a left and a right value right to left: each goes to
+// the other side unless keep holds it on its own, where it wins.
+func mirrored[T any](left, right T, keep Sides) (l, r T) {
+	if keep&SideLeft == 0 {
+		r = left
+	}
+	if keep&SideRight == 0 {
+		l = right
+	}
+	if keep&SideLeft != 0 {
+		l = left
+	}
+	if keep&SideRight != 0 {
+		r = right
+	}
+	return l, r
 }
 
 // effects resolves the effects s draws on a view of size, nil when it
@@ -1051,7 +1190,8 @@ func (s *Style) effects(size Size, cc func(Color) Color) *driver.Effects {
 	// An animated background replaces the gradients, as a state's does.
 	if s.Animated == nil || s.Animated.Background == nil {
 		for i := range s.Gradients {
-			if p, ok := s.Gradients[i].Paint(size); ok {
+			g := currentStops(s.Gradients[i], cc)
+			if p, ok := g.Paint(size); ok {
 				e.Gradients = append(e.Gradients, p)
 			}
 		}
@@ -1066,7 +1206,8 @@ func (s *Style) effects(size Size, cc func(Color) Color) *driver.Effects {
 		}
 	}
 	if s.Mask != nil {
-		if p, ok := s.Mask.Paint(size); ok {
+		g := currentStops(*s.Mask, cc)
+		if p, ok := g.Paint(size); ok {
 			e.Mask = &p
 		}
 	}
@@ -1074,6 +1215,24 @@ func (s *Style) effects(size Size, cc func(Color) Color) *driver.Effects {
 		return nil
 	}
 	return e
+}
+
+// currentStops returns g with its stops' colors passed through cc, the
+// same gradient when that changes none.
+func currentStops(g Gradient, cc func(Color) Color) Gradient {
+	var stops []ColorStop
+	for i, st := range g.Stops {
+		if c := cc(st.Color); c != st.Color {
+			if stops == nil {
+				stops = slices.Clone(g.Stops)
+			}
+			stops[i].Color = c
+		}
+	}
+	if stops != nil {
+		g.Stops = stops
+	}
+	return g
 }
 
 // overflow returns the overflow on each axis.

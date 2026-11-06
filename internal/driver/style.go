@@ -26,6 +26,11 @@ const (
 	// TextAlignJustify stretches every line but a paragraph's last to the
 	// box's width, aligned to the start.
 	TextAlignJustify
+	// TextAlignLeft and TextAlignRight keep their sides right to left,
+	// where the others follow the direction. The core sends them as
+	// TextAlignStart or TextAlignEnd, by the text's direction.
+	TextAlignLeft
+	TextAlignRight
 )
 
 // VerticalAlign is where an attachment sits in its line, as CSS's
@@ -113,11 +118,35 @@ type Transform struct {
 	// Perspective is the distance the view is seen from, for its own
 	// rotations out of its plane; 0 is none.
 	Perspective Points
+	// Then is a matrix applied after all of those, for what they cannot
+	// say: functions in an order of the app's, as CSS's transform lists.
+	// Its zero value is none.
+	Then Matrix3D
 }
 
 // Flat reports whether t stays in the view's plane, a 2D affine
 // transform.
-func (t Transform) Flat() bool { return t.RotateX == 0 && t.RotateY == 0 }
+func (t Transform) Flat() bool {
+	m := &t.Then
+	depth := m[2] != 0 || m[3] != 0 || m[6] != 0 || m[7] != 0 || m[8] != 0 || m[9] != 0 || m[11] != 0 || m[14] != 0
+	return t.RotateX == 0 && t.RotateY == 0 && !depth
+}
+
+// InPlane returns what t does in the view's plane as one translation,
+// rotation and scale around the view's origin, for platforms that have
+// only those: Then joins the rest, and its depth and shear are lost.
+func (t Transform) InPlane() Transform {
+	if t.Then == (Matrix3D{}) {
+		return t
+	}
+	m := t.Matrix(Point{})
+	sx := math.Hypot(m[0], m[1])
+	if sx == 0 {
+		return Transform{TranslateX: Points(m[12]), TranslateY: Points(m[13]), ScaleX: 1e-6, ScaleY: 1e-6}
+	}
+	return Transform{TranslateX: Points(m[12]), TranslateY: Points(m[13]), ScaleX: float32(sx),
+		ScaleY: float32((m[0]*m[5] - m[1]*m[4]) / sx), Rotate: float32(math.Atan2(m[1], m[0]) * 180 / math.Pi)}
+}
 
 // Scales returns the x and y scale factors.
 func (t Transform) Scales() (x, y float32) {
@@ -229,12 +258,16 @@ const (
 	CursorColResize
 	CursorRowResize
 	CursorNone
+	// CursorNwseResize and CursorNeswResize are the diagonal resizes:
+	// top left to bottom right, and top right to bottom left.
+	CursorNwseResize
+	CursorNeswResize
 )
 
 var cursorNames = [...]string{
 	"auto", "default", "pointer", "text", "wait", "progress", "help", "crosshair",
 	"move", "grab", "grabbing", "not-allowed", "zoom-in", "zoom-out",
-	"col-resize", "row-resize", "none",
+	"col-resize", "row-resize", "none", "nwse-resize", "nesw-resize",
 }
 
 // Name returns the cursor's CSS name.

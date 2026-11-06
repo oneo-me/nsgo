@@ -281,6 +281,17 @@ func compatStyle(t compatTarget, key string) (string, bool) {
 		return strconv.Itoa(vs.Animation.Iterations), true
 	case "objectPosition":
 		return compatPosition(t.view.Image.Position), true
+	case "numberOfLines":
+		return strconv.Itoa(t.view.MaxLines), t.view.MaxLines != 0
+	case "textOverflow":
+		return [...]string{"ellipsis", "ellipsis", "ellipsis-start", "ellipsis-middle", "clip"}[t.view.Ellipsize],
+			t.view.Ellipsize > driver.EllipsizeTail
+	case "userSelect":
+		return map[driver.Selectable]string{driver.SelectableAuto: "auto", driver.SelectableOn: "text",
+			driver.SelectableOff: "none"}[t.view.Props.Selectable], t.view.Props.Selectable != driver.SelectableAuto
+	case "pointerEvents":
+		return [...]string{"auto", "none", "box-none", "box-only"}[t.view.Props.PointerEvents],
+			t.view.Props.PointerEvents != driver.PointerEventsAuto
 
 	case "color":
 		return color(ts.Color)
@@ -686,7 +697,7 @@ func compatProp(t compatTarget, key string) (string, bool) {
 			return ""
 		}
 		return compatPairs("disabled", pick(p.Disabled), "selected", pick(p.Selected), "checked", checked,
-			"expanded", expanded), true
+			"expanded", expanded, "pressed", pick(p.Pressed), "busy", pick(p.Busy)), true
 	case "accessibilityValue":
 		av := p.Value
 		now := compatNum(av.Now)

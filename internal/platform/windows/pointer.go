@@ -33,6 +33,8 @@ const (
 	idcArrow       = 32512
 	idcWait        = 32514
 	idcCross       = 32515
+	idcSizeNWSE    = 32642
+	idcSizeNESW    = 32643
 	idcSizeWE      = 32644
 	idcSizeNS      = 32645
 	idcSizeAll     = 32646
@@ -339,6 +341,10 @@ func systemCursor(c driver.Cursor) uintptr {
 		id = idcSizeWE
 	case driver.CursorRowResize:
 		id = idcSizeNS
+	case driver.CursorNwseResize:
+		id = idcSizeNWSE
+	case driver.CursorNeswResize:
+		id = idcSizeNESW
 	}
 	if cursors[c] == 0 {
 		h, _, _ := loadCursorW.Call(0, id)

@@ -82,6 +82,7 @@ func (t *Tree) mountOverlay(cx *Scope, parent *node, o Overlay) {
 	}
 	n.h = handlers{pressOutside: o.OnPressOutside, cancel: o.OnCancel, transitionEnd: o.OnTransitionEnd}
 	n.props = driver.ViewProps{Role: o.Role, Label: o.Label, TestID: o.TestID, PointerEvents: o.PointerEvents}
+	n.ownPointer = o.PointerEvents
 	for _, c := range o.Children {
 		t.mount(cx, n, c)
 	}

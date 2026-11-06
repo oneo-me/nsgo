@@ -650,8 +650,11 @@ type ViewProps struct {
 	Selected      bool
 	Checked       bool
 	Indeterminate bool
-	Expandable    bool
-	Expanded      bool
+	// Pressed is a toggle that is on and Busy an element still loading.
+	Pressed    bool
+	Busy       bool
+	Expandable bool
+	Expanded   bool
 	// Value is a range's or a textual element's value.
 	Value AccessibilityValue
 	// Accessible makes the view one element, or none.

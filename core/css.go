@@ -180,7 +180,7 @@ func cssShadows(s string) ([]BoxShadow, bool) {
 
 // cssShadow reads [inset] <x> <y> [<blur> [<spread>]] [<color>].
 func cssShadow(s string) (BoxShadow, bool) {
-	sh := BoxShadow{Color: RGB(0)}
+	sh := BoxShadow{Color: CurrentColor}
 	var lengths []Points
 	colorSeen := false
 	for _, w := range words(s) {

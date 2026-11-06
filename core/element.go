@@ -156,6 +156,13 @@ type View struct {
 	// indicator follows the checkbox. Assistive technology hears the
 	// states from the control alone.
 	PartStates func() PartStates
+	// Pressed is a toggle that is on, for screen readers and pressed
+	// styles; Busy an element still loading.
+	Pressed, Busy func() bool
+	// ShowsExpanded shows the view's Expanded state to the views it holds
+	// directly, for their styles, as a popup's trigger does to the app's
+	// content; screen readers hear this view alone.
+	ShowsExpanded bool
 	// Expanded makes the element expandable, as a disclosure or a menu
 	// button, and expanded while it returns true.
 	Expanded func() bool
@@ -209,6 +216,11 @@ func (v View) Render(*Scope) Node { return v }
 // Checked, Indeterminate, Selected and Disabled merge in while they hold.
 type PartStates struct {
 	Checked, Indeterminate, Selected, Disabled bool
+	// Data are the data-* attributes the part shows, without their
+	// prefix, as a calendar's day shows range-start: its data-*: classes
+	// and data styles read them, and those of views inside it when it is
+	// a group.
+	Data []string
 }
 
 // Text is a run of text the engine lays out and the platform draws.

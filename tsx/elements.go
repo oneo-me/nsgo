@@ -181,7 +181,6 @@ func videoFace(p *props) core.Node {
 		MutedFunc:        func() bool { return p.bool("muted") },
 		VolumeFunc:       func() float32 { return float32(p.float("volume")) },
 		RateFunc:         func() float32 { return float32(p.float("rate")) },
-		ResizeModeFunc:   func() core.ResizeMode { return resizeModes[p.str("resizeMode")] },
 		Repeat:           p.bool("repeat"),
 		Controls:         p.bool("controls"),
 		ProgressInterval: time.Duration(p.float("progressUpdateInterval") * float64(time.Millisecond)),

@@ -100,10 +100,10 @@ func TestStateBackgroundReplacesGradients(t *testing.T) {
 	g := []Gradient{LinearGradient(180, RGB(0xffffff), RGB(0xdddddd))}
 	s := Style{Gradients: g, Active: &Style{Background: RGB(0x333333)},
 		Hover: &Style{Background: RGB(0x666666), Gradients: g}}
-	if out := s.withStates(statePressed, driver.ViewProps{}, groupState{}); out.Gradients != nil {
+	if out := s.withStates(statesOf(statePressed, &driver.ViewProps{}, nil), shownStates{}); out.Gradients != nil {
 		t.Errorf("pressed keeps gradients %v", out.Gradients)
 	}
-	if out := s.withStates(stateHovered, driver.ViewProps{}, groupState{}); len(out.Gradients) != 1 {
+	if out := s.withStates(statesOf(stateHovered, &driver.ViewProps{}, nil), shownStates{}); len(out.Gradients) != 1 {
 		t.Error("a hover with gradients of its own lost them")
 	}
 }

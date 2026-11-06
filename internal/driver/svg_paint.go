@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // parseSVGPaint reads a paint. It reports ok false for a paint it does not
@@ -773,9 +774,10 @@ func parseCSSDeclarations(s string) [][2]string {
 }
 
 // ParseColor reads a CSS color: hex, rgb(), rgba(), hsl(), hsla(), a
-// color name or transparent.
+// color name, transparent or currentColor, which is CurrentColor, as is
+// a color-mix() of it a mark ResolveCurrent reads.
 func ParseColor(s string) (Color, error) {
-	c, ok, err := parseSVGColor(s)
+	c, ok, err := parseCSSColor(s)
 	if err == nil && !ok {
 		err = fmt.Errorf("driver: %q is no CSS color", s)
 	}
@@ -861,7 +863,7 @@ func cssColorMix(args string) (Color, bool, error) {
 			}
 			pct, has, p = n/100, true, strings.TrimSpace(p[:i])
 		}
-		c, ok, err := parseSVGColor(p)
+		c, ok, err := parseCSSColor(p)
 		if err != nil || !ok {
 			return 0, 0, false, false
 		}
@@ -884,11 +886,101 @@ func cssColorMix(args string) (Color, bool, error) {
 	if sum <= 0 {
 		return 0, false, nil
 	}
-	c := MixColors(c1, c2, float32(p2/sum), sp)
-	if sum < 1 {
-		_, _, _, a := c.Components()
-		r, g, b, _ := c.Components()
-		c = packColor([4]float64{r, g, b, a * sum})
+	m := colorMix{a: c1, b: c2, t: float32(p2 / sum), scale: float32(min(sum, 1)), space: sp}
+	if hasCurrent(c1) || hasCurrent(c2) {
+		return m.mark(), true, nil
 	}
-	return c, true, nil
+	return m.color(), true, nil
+}
+
+// parseCSSColor is parseSVGColor with currentColor, which SVG's paints
+// read themselves.
+func parseCSSColor(s string) (Color, bool, error) {
+	if strings.EqualFold(strings.TrimSpace(s), "currentColor") {
+		return CurrentColor, true, nil
+	}
+	return parseSVGColor(s)
+}
+
+// CurrentColor, in a style's colors other than the text color itself, is
+// the text color the view has: its own, else the one it inherits, else
+// black, as CSS's currentColor. It never draws as itself.
+const CurrentColor Color = 0x00000001
+
+// A color-mix() of currentColor waits for the text color as a mark: a
+// color with no alpha, which draws nothing and so is free, in the range
+// of mixMark, holding its index in currentMixes.
+const (
+	mixMark Color = 0x7f000000
+	mixMask Color = 0xff0000ff
+)
+
+// colorMix is a color-mix(): b at t over a, its alpha scaled by scale,
+// as percentages that add to less than 100% do.
+type colorMix struct {
+	a, b     Color
+	t, scale float32
+	space    ColorSpace
+}
+
+func (m colorMix) color() Color {
+	c := MixColors(m.a, m.b, m.t, m.space)
+	if m.scale >= 1 {
+		return c
+	}
+	r, g, b, a := c.Components()
+	return packColor([4]float64{r, g, b, a * float64(m.scale)})
+}
+
+var currentMixes struct {
+	sync.RWMutex
+	list  []colorMix
+	index map[colorMix]int
+}
+
+// mark returns m's mark, the same for the same mix. Apps that write
+// more mixes than a mark holds get transparent for the rest.
+func (m colorMix) mark() Color {
+	mixes := &currentMixes
+	mixes.Lock()
+	defer mixes.Unlock()
+	i, ok := mixes.index[m]
+	if !ok {
+		if len(mixes.list) >= 1<<16 {
+			return 0
+		}
+		if mixes.index == nil {
+			mixes.index = map[colorMix]int{}
+		}
+		i = len(mixes.list)
+		mixes.list = append(mixes.list, m)
+		mixes.index[m] = i
+	}
+	return mixMark | Color(i)<<8
+}
+
+func isCurrentMix(c Color) bool { return c&mixMask == mixMark }
+
+func hasCurrent(c Color) bool { return c == CurrentColor || isCurrentMix(c) }
+
+// ResolveCurrent returns c with CurrentColor, or the marks of its mixes,
+// replaced by color.
+func ResolveCurrent(c, color Color) Color {
+	switch {
+	case c == CurrentColor:
+		return color
+	case !isCurrentMix(c):
+		return c
+	}
+	mixes := &currentMixes
+	mixes.RLock()
+	i := int(c >> 8 & 0xffff)
+	if i >= len(mixes.list) {
+		mixes.RUnlock()
+		return c
+	}
+	m := mixes.list[i]
+	mixes.RUnlock()
+	m.a, m.b = ResolveCurrent(m.a, color), ResolveCurrent(m.b, color)
+	return m.color()
 }

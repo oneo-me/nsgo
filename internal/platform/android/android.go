@@ -1048,7 +1048,7 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.u32(uint32(v.TintColor))
 			// The scales as they are, 0 unset, for Java to combine with
 			// animated ones as core.Transform.Scales does.
-			tr := v.Transform
+			tr := v.Transform.InPlane()
 			w.points(tr.TranslateX)
 			w.points(tr.TranslateY)
 			w.floats(tr.Scale, tr.ScaleX, tr.ScaleY)

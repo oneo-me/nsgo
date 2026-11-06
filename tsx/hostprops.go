@@ -35,6 +35,9 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 			e := o.bool("expanded", false)
 			p.Expanded = func() bool { return e }
 		}
+		pressed := o.get("pressed")
+		p.Pressed = boolFunc(defined(pressed) && pressed.String() == "true")
+		p.Busy = boolFunc(o.bool("busy", false))
 		switch c := o.get("checked"); {
 		case !defined(c):
 			p.Checked, p.Indeterminate = nil, nil
@@ -87,8 +90,6 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 		p.Checked = boolFunc(v.ToBoolean())
 	case "selectable":
 		p.Selectable = v.ToBoolean()
-	case "pointerEvents":
-		p.PointerEvents = pointerEvents[stringOf(v)]
 	case "hitSlop":
 		p.HitSlop = r.edges(v)
 	case "delayLongPress":
@@ -243,8 +244,6 @@ var liveRegions = map[string]core.LiveRegion{"none": core.LiveRegionNone, "polit
 // textProp sets a prop of a <Text>, reporting whether it has it.
 func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
 	switch name {
-	case "pointerEvents":
-		p.PointerEvents = pointerEvents[stringOf(v)]
 	case "testID":
 		p.TestID = stringOf(v)
 	case "accessibilityLabel":
@@ -255,11 +254,6 @@ func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
 		p.LiveRegion = liveRegions[stringOf(v)]
 	case "role":
 		p.Role = roles[stringOf(v)]
-	case "numberOfLines":
-		p.MaxLines = int(v.ToInteger())
-	case "ellipsizeMode":
-		p.EllipsizeMode = map[string]core.EllipsizeMode{"head": core.EllipsizeHead, "middle": core.EllipsizeMiddle,
-			"tail": core.EllipsizeTail, "clip": core.EllipsizeClip}[stringOf(v)]
 	case "allowFontScaling":
 		p.NoFontScaling = !v.ToBoolean()
 	case "maxFontSizeMultiplier":
@@ -268,11 +262,6 @@ func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
 		p.AdjustsFontSizeToFit = v.ToBoolean()
 	case "minimumFontScale":
 		p.MinimumFontScale = float32(v.ToFloat())
-	case "selectable":
-		p.Selectable = core.SelectableOff
-		if v.ToBoolean() {
-			p.Selectable = core.SelectableOn
-		}
 	case "onPress":
 		p.OnPress = r.pressHandler(v)
 	case "onLongPress":
@@ -656,8 +645,6 @@ func (r *runtime) imageProp(p *core.Image, name string, v goja.Value) bool {
 		p.Source = r.imageSource(v)
 	case "placeholder":
 		p.Placeholder = r.imageSource(v)
-	case "resizeMode":
-		p.ResizeMode = resizeModes[stringOf(v)]
 	case "blurRadius":
 		p.BlurRadius = core.Points(v.ToFloat())
 	case "fadeDuration":

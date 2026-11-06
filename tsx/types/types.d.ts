@@ -99,6 +99,9 @@ export interface LayoutStyle {
 
 type BorderStyle = "solid" | "dashed" | "dotted" | "none" | "hidden";
 
+/** A shadow as numbers: the layers of boxShadow and textShadow. */
+export interface ShadowLayer { x?: number; y?: number; blur?: number; spread?: number; color?: ColorValue; inset?: boolean }
+
 export interface ViewStyle extends LayoutStyle {
   backgroundColor?: Animatable<ColorValue>;
   backgroundImage?: string;
@@ -134,7 +137,7 @@ export interface ViewStyle extends LayoutStyle {
   opacity?: Animatable<number>;
   visibility?: "visible" | "hidden" | "collapse";
   overflow?: "visible" | "hidden";
-  boxShadow?: string;
+  boxShadow?: string | ShadowLayer[];
   shadowColor?: Animatable<ColorValue>;
   shadowOffset?: { width: number; height: number };
   shadowOpacity?: Animatable<number>;
@@ -144,9 +147,14 @@ export interface ViewStyle extends LayoutStyle {
   maskImage?: string;
   glassEffect?: "none" | "regular" | "clear";
   mixBlendMode?: "normal" | "multiply" | "screen" | "overlay" | "darken" | "lighten" | "color-dodge" | "color-burn" | "hard-light" | "soft-light" | "difference" | "exclusion" | "hue" | "saturation" | "color" | "luminosity" | "plus-darker" | "plus-lighter";
-  cursor?: "auto" | "default" | "pointer" | "text" | "vertical-text" | "wait" | "progress" | "help" | "crosshair" | "move" | "all-scroll" | "grab" | "grabbing" | "not-allowed" | "no-drop" | "zoom-in" | "zoom-out" | "col-resize" | "e-resize" | "w-resize" | "ew-resize" | "row-resize" | "n-resize" | "s-resize" | "ns-resize" | "none";
+  cursor?: "auto" | "default" | "pointer" | "text" | "vertical-text" | "wait" | "progress" | "help" | "crosshair" | "move" | "all-scroll" | "grab" | "grabbing" | "not-allowed" | "no-drop" | "zoom-in" | "zoom-out" | "col-resize" | "e-resize" | "w-resize" | "ew-resize" | "row-resize" | "n-resize" | "s-resize" | "ns-resize" | "nwse-resize" | "nw-resize" | "se-resize" | "nesw-resize" | "ne-resize" | "sw-resize" | "none";
   backfaceVisibility?: "visible" | "hidden";
-  transform?: TransformStep[];
+  transform?: string | TransformStep[];
+  translate?: number | string | (number | string)[];
+  rotate?: number | string;
+  scale?: number | string | number[];
+  pointerEvents?: "auto" | "none" | "box-none" | "box-only";
+  userSelect?: "auto" | "text" | "none";
   transformOrigin?: string | (number | string)[];
   transitionProperty?: string;
   transitionDuration?: Time;
@@ -173,7 +181,7 @@ export interface TextStyle extends ViewStyle {
   fontVariant?: ("small-caps" | "oldstyle-nums" | "lining-nums" | "tabular-nums" | "proportional-nums")[];
   lineHeight?: number;
   letterSpacing?: number;
-  textAlign?: "auto" | "left" | "center" | "right" | "justify";
+  textAlign?: "auto" | "start" | "left" | "center" | "end" | "right" | "justify";
   textAlignVertical?: "auto" | "top" | "center" | "bottom";
   textDecorationLine?: "none" | "underline" | "line-through" | "underline line-through";
   textDecorationStyle?: "solid" | "double" | "dotted" | "dashed" | "wavy";
@@ -181,10 +189,13 @@ export interface TextStyle extends ViewStyle {
   textDecorationThickness?: number | "auto" | "from-font";
   textUnderlineOffset?: number | "auto";
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  textShadow?: string | ShadowLayer[];
   textShadowColor?: ColorValue;
   textShadowOffset?: { width: number; height: number };
   textShadowRadius?: number;
   writingDirection?: "auto" | "ltr" | "rtl";
+  numberOfLines?: number;
+  textOverflow?: "ellipsis" | "ellipsis-start" | "ellipsis-middle" | "clip";
   placeholderColor?: ColorValue;
   selectionColor?: ColorValue;
   caretColor?: ColorValue;
@@ -192,6 +203,7 @@ export interface TextStyle extends ViewStyle {
 
 export interface ImageStyle extends ViewStyle {
   tintColor?: ColorValue;
+  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
   objectPosition?: string;
 }
 
@@ -224,7 +236,7 @@ export interface ResponderGestureState { moveX: number; moveY: number; x0: numbe
 export interface PanActivation { activeOffsetX?: number; activeOffsetY?: number; failOffsetX?: number; failOffsetY?: number }
 
 export type AccessibilityRole = "none" | "button" | "link" | "search" | "image" | "imagebutton" | "keyboardkey" | "text" | "adjustable" | "header" | "summary" | "alert" | "checkbox" | "combobox" | "menu" | "menubar" | "menuitem" | "progressbar" | "radio" | "radiogroup" | "scrollbar" | "spinbutton" | "switch" | "tab" | "tablist" | "timer" | "toolbar" | "list" | "grid" | "table" | "row" | "cell" | "columnheader" | "rowgroup";
-export interface AccessibilityState { disabled?: boolean; selected?: boolean; checked?: boolean | "mixed"; busy?: boolean; expanded?: boolean }
+export interface AccessibilityState { disabled?: boolean; selected?: boolean; checked?: boolean | "mixed"; pressed?: boolean | "mixed"; busy?: boolean; expanded?: boolean }
 
 export interface TouchProps {
   onTouchStart?: (e: GestureResponderEvent) => void;
@@ -254,6 +266,9 @@ export interface StateStyleProps {
   activeStyle?: StyleProp<ViewStyle>;
   hoverStyle?: StyleProp<ViewStyle>;
   focusStyle?: StyleProp<ViewStyle>;
+  focusWithinStyle?: StyleProp<ViewStyle>;
+  expandedStyle?: StyleProp<ViewStyle>;
+  pressedStyle?: StyleProp<ViewStyle>;
   disabledStyle?: StyleProp<ViewStyle>;
   checkedStyle?: StyleProp<ViewStyle>;
   indeterminateStyle?: StyleProp<ViewStyle>;
@@ -265,7 +280,6 @@ export interface HostProps {
   pinch?: { scale?: AnimatedValue };
   rotation?: { angle?: AnimatedValue };
   panActivation?: PanActivation;
-  pointerEvents?: "auto" | "none" | "box-none" | "box-only";
   hitSlop?: number | Partial<Edges>;
   class?: string;
   classList?: Record<string, boolean | null | undefined>;
@@ -341,14 +355,10 @@ export interface ViewProps extends CommonProps, ViewHostProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export type EllipsizeMode = "tail" | "head" | "middle" | "clip";
 /** A text's own props. */
 export interface TextHostProps {
-  numberOfLines?: number;
-  ellipsizeMode?: EllipsizeMode;
   allowFontScaling?: boolean;
   maxFontSizeMultiplier?: number;
-  selectable?: boolean;
   adjustsFontSizeToFit?: boolean;
   minimumFontScale?: number;
   onTextLayout?: (e: { lines: TextLayoutLine[] }) => void;
@@ -367,12 +377,9 @@ export interface ImageAsset {
   /** The URLs of the densities past 1, by density, which the bundle carries. */
   variants?: Record<string, string>;
 }
-export type ResizeMode = "cover" | "contain" | "stretch" | "center" | "scale-down";
-
 /** An image's own props. */
 export interface ImageHostProps {
   src?: string | ImageAsset;
-  resizeMode?: ResizeMode;
   placeholder?: string | ImageAsset;
   blurRadius?: number;
   fadeDuration?: number;
@@ -442,6 +449,7 @@ export type Placement = "top" | "bottom" | "left" | "right";
 export type Align = "start" | "center" | "end";
 /** An overlay's own props. */
 export interface OverlayHostProps {
+  pointerEvents?: "auto" | "none" | "box-none" | "box-only";
   anchor?: YNode | Point | Bounds | null;
   placement?: Placement;
   align?: Align;
@@ -522,7 +530,6 @@ export type AudioSession = "default" | "playback" | "mixWithOthers";
 /** A video's own props. */
 export interface VideoHostProps {
   src?: string;
-  resizeMode?: ResizeMode;
   paused?: boolean;
   muted?: boolean;
   volume?: number;
@@ -615,6 +622,9 @@ export interface ComponentHostProps {
   activeStyle?: StyleProp<ViewStyle>;
   hoverStyle?: StyleProp<ViewStyle>;
   focusStyle?: StyleProp<ViewStyle>;
+  focusWithinStyle?: StyleProp<ViewStyle>;
+  expandedStyle?: StyleProp<ViewStyle>;
+  pressedStyle?: StyleProp<ViewStyle>;
   disabledStyle?: StyleProp<ViewStyle>;
   selectedStyle?: StyleProp<ViewStyle>;
   checkedStyle?: StyleProp<ViewStyle>;

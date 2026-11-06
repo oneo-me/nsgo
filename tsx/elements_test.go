@@ -148,7 +148,7 @@ mount(() => <View>
 	if len(fx.Filters) != 2 {
 		t.Errorf("filters %+v", fx.Filters)
 	}
-	if tr := v.Style.Transform; tr.TranslateX != 10 || tr.Rotate != 45 || tr.Scale != 2 {
+	if tr := v.Style.Transform; tr.TranslateX != 10 || tr.Rotate != 45 || tr.ScaleX != 2 || tr.ScaleY != 2 {
 		t.Errorf("transform %+v", tr)
 	}
 	if v.Style.Corners.TopLeft != 6 {

@@ -163,7 +163,7 @@ var (
 // the view has: its own, else the one it inherits, else black, as CSS's
 // currentColor. It is the one color value set aside: it never draws as
 // itself.
-const CurrentColor Color = 0x00000001
+const CurrentColor = driver.CurrentColor
 
 // Transparent is a color that draws nothing but, unlike 0, is set: a
 // border Transparent colors draws none, where one left 0 draws in the

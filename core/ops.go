@@ -194,6 +194,8 @@ func (t *Tree) setView(n *node, v View) {
 	p.Selected = read(v.Selected)
 	p.Checked = read(v.Checked)
 	p.Indeterminate = read(v.Indeterminate)
+	p.Pressed = read(v.Pressed)
+	p.Busy = read(v.Busy)
 	n.part = PartStates{}
 	if v.PartStates != nil {
 		n.part = v.PartStates()
@@ -214,6 +216,8 @@ func (t *Tree) setText(cx *Scope, n *node, v Text) {
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
 		Selectable: v.Selectable, PointerEvents: v.PointerEvents}
+	n.ownPointer = v.PointerEvents
+	t.pointersMoved = t.pointerStyled
 	if n.props.Role == RoleNone {
 		n.props.Role = RoleText
 	}

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/oneo-me/nsgo/internal/driver"
 )
 
 // Tailwind CSS classes (`flex-row gap-4 p-4 bg-white dark:bg-zinc-900`),
@@ -22,14 +24,37 @@ import (
 
 // Class states a variant can need, as NSH's tailwind::state.
 const (
-	classPressed uint8 = 1 << iota
+	classPressed uint16 = 1 << iota
 	classHovered
 	classFocused
 	classDisabled
 	classSelected
 	classChecked
 	classIndeterminate
+	classFocusWithin
+	classAriaBusy
+	classAriaChecked
+	classExpanded
+	classAriaPressed
+	classAriaSelected
 )
+
+// classStates are the class states in the order of StateStyles.slots.
+var classStates = [stateCount]uint16{classChecked, classIndeterminate, classSelected, classFocusWithin, classHovered,
+	classFocused, classPressed, classAriaBusy, classAriaChecked, classExpanded, classAriaPressed, classAriaSelected,
+	classDisabled}
+
+// classVariants are the variants that read one state, group-* too.
+var classVariants = map[string]struct {
+	bit   uint16
+	order uint16
+}{"checked": {classChecked, rankChecked}, "indeterminate": {classIndeterminate, rankIndeterminate},
+	"selected": {classSelected, rankSelected}, "focus-within": {classFocusWithin, rankFocusWithin},
+	"hover": {classHovered, rankHover}, "focus": {classFocused, rankFocus},
+	"focus-visible": {classFocused, rankFocusVisible}, "active": {classPressed, rankActive},
+	"disabled": {classDisabled, rankDisabled}, "aria-busy": {classAriaBusy, rankAriaBusy},
+	"aria-checked": {classAriaChecked, rankAriaChecked}, "aria-expanded": {classExpanded, rankAriaExpanded},
+	"aria-pressed": {classAriaPressed, rankAriaPressed}, "aria-selected": {classAriaSelected, rankAriaSelected}}
 
 // Positions among siblings: first:, last:, odd:, even:, only:.
 const (
@@ -56,7 +81,8 @@ type classCond struct {
 	dark, landscape, rtl, reduceMotion tri
 	minWidth, maxWidth                 Points // 0: none
 	platform                           OS     // "": any
-	states, notStates                  uint8
+	states, notStates                  uint16
+	data                               string // data-*:'s name
 	group                              *classGroup
 	position                           uint8
 	placeholder, selection             bool
@@ -66,7 +92,8 @@ type classCond struct {
 // name ("" any).
 type classGroup struct {
 	name   string
-	states uint8
+	states uint16
+	data   string
 }
 
 // classKey is a variant's place in Tailwind's variant order.
@@ -119,14 +146,21 @@ const (
 	rankChecked       = 30
 	rankIndeterminate = 31
 	rankSelected      = 32
+	rankFocusWithin   = 33
 	rankHover         = 34
 	rankFocus         = 35
 	rankFocusVisible  = 36
 	rankActive        = 37
 	rankEnabled       = 38
 	rankDisabled      = 39
-	rankMotionSafe    = 40
-	rankMotionReduce  = 41
+	rankAriaBusy      = 40
+	rankAriaChecked   = 41
+	rankAriaExpanded  = 42
+	rankAriaPressed   = 43
+	rankAriaSelected  = 44
+	rankData          = 45
+	rankMotionSafe    = 46
+	rankMotionReduce  = 47
 	rankMax           = 50
 	rankMin           = 51
 	rankPortrait      = 60
@@ -146,9 +180,6 @@ type classDecl func(s *Style, p *classProps, env *classEnv)
 // view's props, which an explicit prop wins over, and the parts several
 // utilities build one field from.
 type classProps struct {
-	lines         int // line-clamp-*; -1 none
-	ellipsize     EllipsizeMode
-	pointerEvents PointerEvents
 	// spaceX and spaceY are space-x-* and space-y-*: the margins the view
 	// gives its children but the last.
 	spaceX, spaceY Points
@@ -173,8 +204,6 @@ type classProps struct {
 	shadowAlpha, dropAlpha, textShadowAlpha float32
 	// dropColor is drop-shadow-<color>'s.
 	dropColor Color
-	// resizeMode is object-*'s fit, for images and videos.
-	resizeMode ResizeMode
 	// outlineStyle is outline-solid's and the like, whatever their place.
 	outlineStyle BorderStyle
 	// leading is set by leading-*, which wins over a text size's own
@@ -213,13 +242,10 @@ func isCurrent(c Color) bool { return c&^0xff == currentMark }
 // currentIn returns c with CurrentColor, or a -current utility's mark,
 // replaced by color, the mark's alpha applied.
 func currentIn(c, color Color) Color {
-	switch {
-	case c == CurrentColor:
-		return color
-	case isCurrent(c):
+	if isCurrent(c) {
 		return withAlpha(color, float32(c&0xff)/255)
 	}
-	return c
+	return driver.ResolveCurrent(c, color)
 }
 
 // resolveCurrent replaces the -current colors of s and p.
@@ -233,16 +259,23 @@ func (p *classProps) resolveCurrent(s *Style) {
 		switch {
 		case text != 0:
 			*c = withAlpha(text, alpha)
-		case zeroIsCurrent:
+		case zeroIsCurrent && alpha == 1:
 			*c = 0
+		case zeroIsCurrent:
+			// Faded, it stays a mark: the view's style resolves it.
 		default:
 			*c = withAlpha(RGB(0), alpha)
 		}
 	}
 	for _, c := range []*Color{&s.BorderColor, &s.BorderColors.Top, &s.BorderColors.Right, &s.BorderColors.Bottom,
-		&s.BorderColors.Left, &s.OutlineColor, &s.TextDecorationColor, &p.ringColor, &p.insetRingColor} {
+		&s.BorderColors.Left, &s.OutlineColor, &p.ringColor, &p.insetRingColor} {
 		cur(c, true)
 	}
+	if isCurrent(s.TextDecorationColor) && text == 0 {
+		// A text's decoration has its text's color, drawn with no mark.
+		s.TextDecorationColor = 0
+	}
+	cur(&s.TextDecorationColor, true)
 	// A background or a tint keeps its mark without a text color here:
 	// the view's style resolves it in the color the view inherits
 	// (currentIn).
@@ -643,33 +676,9 @@ func (t *tailwindTheme) variant(v string, c *classCond) (classKey, bool) {
 	case "even":
 		c.position |= positionEven
 		return key(rankEven)
-	case "checked":
-		c.states |= classChecked
-		return key(rankChecked)
-	case "indeterminate":
-		c.states |= classIndeterminate
-		return key(rankIndeterminate)
-	case "selected":
-		c.states |= classSelected
-		return key(rankSelected)
-	case "hover":
-		c.states |= classHovered
-		return key(rankHover)
-	case "focus":
-		c.states |= classFocused
-		return key(rankFocus)
-	case "focus-visible":
-		c.states |= classFocused
-		return key(rankFocusVisible)
-	case "active":
-		c.states |= classPressed
-		return key(rankActive)
 	case "enabled":
 		c.notStates |= classDisabled
 		return key(rankEnabled)
-	case "disabled":
-		c.states |= classDisabled
-		return key(rankDisabled)
 	case "motion-safe":
 		c.reduceMotion = no
 		return key(rankMotionSafe)
@@ -701,23 +710,29 @@ func (t *tailwindTheme) variant(v string, c *classCond) (classKey, bool) {
 		c.platform = OSWeb
 		return key(rankWeb)
 	}
+	if b, ok := classVariants[v]; ok {
+		c.states |= b.bit
+		return key(b.order)
+	}
+	if name, ok := dataVariant(v); ok {
+		c.data = name
+		return classKey{order: rankData, name: name}, true
+	}
 	if rest, ok := strings.CutPrefix(v, "group-"); ok {
 		state, name, _ := strings.Cut(rest, "/")
-		bits := map[string]struct {
-			bit   uint8
-			order uint16
-		}{"hover": {classHovered, rankHover}, "active": {classPressed, rankActive},
-			"focus": {classFocused, rankFocus}, "focus-visible": {classFocused, rankFocusVisible},
-			"disabled": {classDisabled, rankDisabled}, "selected": {classSelected, rankSelected},
-			"checked": {classChecked, rankChecked}, "indeterminate": {classIndeterminate, rankIndeterminate}}
-		b, ok := bits[state]
-		if !ok {
+		b, known := classVariants[state]
+		data, isData := dataVariant(state)
+		if !known && !isData {
 			return classKey{}, false
 		}
 		if c.group == nil {
 			c.group = &classGroup{name: name}
 		} else if c.group.name != name {
 			return classKey{}, false
+		}
+		if isData {
+			c.group.data = data
+			return classKey{order: rankGroup, value: rankData, name: name + "/" + data}, true
 		}
 		c.group.states |= b.bit
 		return classKey{order: rankGroup, value: int64(b.order), name: name}, true
@@ -754,6 +769,21 @@ func (t *tailwindTheme) variant(v string, c *classCond) (classKey, bool) {
 	}
 	c.minWidth = maxPoints(c.minWidth, width)
 	return classKey{order: rankMin, value: thousandths}, true
+}
+
+// dataVariant reads data-<name>: Tailwind's boolean form, of lower case
+// letters, digits and dashes.
+func dataVariant(v string) (string, bool) {
+	name, ok := strings.CutPrefix(v, "data-")
+	if !ok || name == "" {
+		return "", false
+	}
+	for _, c := range name {
+		if !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-') {
+			return "", false
+		}
+	}
+	return name, true
 }
 
 func maxPoints(a, b Points) Points {
@@ -819,7 +849,7 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 		if c := parts[s]; c != nil {
 			return c
 		}
-		c := &classProps{lines: -1, state: s != &normal && s != &important}
+		c := &classProps{state: s != &normal && s != &important}
 		parts[s] = c
 		order = append(order, s)
 		return c
@@ -860,12 +890,9 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 				}
 				base.GroupStyle = gs
 			}
-			gs := base.GroupStyle
-			target = stateStyle(c.group.states, &gs.Hover, &gs.Focus, &gs.Active, &gs.Selected, &gs.Checked,
-				&gs.Indeterminate, &gs.Disabled)
-		case c.states != 0:
-			target = stateStyle(c.states, &base.Hover, &base.Focus, &base.Active, &base.Selected, &base.Checked,
-				&base.Indeterminate, &base.Disabled)
+			target = stateStyle(c.group.states, c.group.data, base.GroupStyle.states())
+		case c.states != 0 || c.data != "":
+			target = stateStyle(c.states, c.data, base.states())
 		}
 		tp := propsOf(target)
 		for _, d := range r.decls {
@@ -881,21 +908,14 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 	// A state's background shows over the view's gradient, as feedback:
 	// the state hides it unless it has one of its own.
 	if len(normal.Gradients) > 0 {
-		for _, st := range []*Style{normal.Hover, normal.Focus, normal.Active, normal.Selected, normal.Checked,
-			normal.Indeterminate, normal.Disabled} {
-			if st != nil && st.Background != 0 && st.Gradients == nil {
+		for _, slot := range normal.states().slots {
+			if st := *slot; st != nil && st.Background != 0 && st.Gradients == nil {
 				st.Gradients = []Gradient{}
 			}
 		}
 	}
 	// The view's props: the important classes' over the others'.
 	p = *parts[&normal]
-	if ip := parts[&important]; ip.lines >= 0 {
-		p.lines, p.ellipsize = ip.lines, cmpOr(ip.ellipsize, p.ellipsize)
-	}
-	if ip := parts[&important]; ip.pointerEvents != 0 {
-		p.pointerEvents = ip.pointerEvents
-	}
 	// Important spacing wins over the children's own margins.
 	if ip := parts[&important]; ip.hasSpaceX || ip.hasSpaceY {
 		if ip.hasSpaceX {
@@ -911,27 +931,18 @@ func (l *classList) resolve(env *classEnv) (normal, important Style, p classProp
 
 // stateStyle returns the style of the state core merges last among
 // states, made when missing: a rule needing several states applies in
-// the one that decides.
-func stateStyle(states uint8, hover, focus, active, selected, checked, indeterminate, disabled **Style) *Style {
-	var slot **Style
-	switch {
-	case states&classDisabled != 0:
-		slot = disabled
-	case states&classPressed != 0:
-		slot = active
-	case states&classFocused != 0:
-		slot = focus
-	case states&classHovered != 0:
-		slot = hover
-	case states&classSelected != 0:
-		slot = selected
-	case states&classIndeterminate != 0:
-		slot = indeterminate
-	default:
-		slot = checked
+// the one that decides. Disabled is merged after data, the others before.
+func stateStyle(states uint16, data string, styles stateSet) *Style {
+	if states&classDisabled == 0 && data != "" {
+		return styles.dataStyle(data)
 	}
-	if *slot == nil {
-		*slot = &Style{}
+	for i := stateCount - 1; i >= 0; i-- {
+		if states&classStates[i] != 0 {
+			if *styles.slots[i] == nil {
+				*styles.slots[i] = &Style{}
+			}
+			return *styles.slots[i]
+		}
 	}
-	return *slot
+	return styles.dataStyle(data)
 }

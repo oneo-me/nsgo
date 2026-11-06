@@ -21,6 +21,9 @@ var stateProps = map[string]func(s *core.Style) **core.Style{
 	"checkedStyle":       func(s *core.Style) **core.Style { return &s.Checked },
 	"indeterminateStyle": func(s *core.Style) **core.Style { return &s.Indeterminate },
 	"selectedStyle":      func(s *core.Style) **core.Style { return &s.Selected },
+	"focusWithinStyle":   func(s *core.Style) **core.Style { return &s.FocusWithin },
+	"expandedStyle":      func(s *core.Style) **core.Style { return &s.Expanded },
+	"pressedStyle":       func(s *core.Style) **core.Style { return &s.Pressed },
 }
 
 // setProp sets prop name of n to v and gives n its props again.

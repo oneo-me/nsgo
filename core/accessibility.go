@@ -70,6 +70,7 @@ func (t *Tree) bindAccessibility(cx *Scope, n *node, a a11y) {
 		cx.renderEffect(func() {
 			p.Expanded = a.expanded()
 			t.touch(n)
+			t.restyleExpanded(n)
 		})
 	}
 	always := a.important == ImportantNoHideDescendants

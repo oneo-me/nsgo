@@ -118,6 +118,9 @@ func (t Transform) Matrix(origin Point) Matrix3D {
 	if sx != 1 || sy != 1 {
 		m = m.Mul(Matrix3D{float64(sx), 0, 0, 0, 0, float64(sy), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1})
 	}
+	if t.Then != (Matrix3D{}) {
+		m = m.Mul(t.Then)
+	}
 	return m.Mul(Translate3D(-ox, -oy, 0))
 }
 

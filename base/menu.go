@@ -192,7 +192,7 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 	}
 	return core.Group{
 		core.View{Ref: anchor, Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, Label: m.Label, TestID: m.TestID, OnLayout: m.OnLayout, Tooltip: m.Tooltip, Role: core.RoleButton,
-			Expanded: st.open,
+			Expanded: st.open, ShowsExpanded: true,
 			OnPress:  func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
 			Children: []core.Node{m.Trigger}},
 		menuSurface(cx, st, anchor, nil, menuParts{placement: m.Placement, align: align, offset: m.Offset, margin: m.Margin,

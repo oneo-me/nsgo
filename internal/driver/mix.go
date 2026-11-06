@@ -21,7 +21,7 @@ func MixStyles(from, to ViewStyle, t float64, props TransitionProperty) ViewStyl
 			Rotate: mixFloat(a.Rotate, b.Rotate, t), RotateX: mixFloat(a.RotateX, b.RotateX, t), RotateY: mixFloat(a.RotateY, b.RotateY, t),
 			RotateZ: mixFloat(a.RotateZ, b.RotateZ, t),
 			SkewX:   mixFloat(a.SkewX, b.SkewX, t), SkewY: mixFloat(a.SkewY, b.SkewY, t),
-			Perspective: mixPoints(a.Perspective, b.Perspective, t),
+			Perspective: mixPoints(a.Perspective, b.Perspective, t), Then: mixMatrix(a.Then, b.Then, t),
 		}
 		out.Origin = Point{X: mixPoints(from.Origin.X, to.Origin.X, t), Y: mixPoints(from.Origin.Y, to.Origin.Y, t)}
 	}
@@ -115,4 +115,24 @@ func mixColor(a, b Color, t float64) Color {
 func (k Keyframe) Matrix(size Size) Matrix3D {
 	t := Transform{TranslateY: Points(k.TranslateY) * size.Height, Rotate: k.Rotate, Scale: k.Scale}
 	return t.Matrix(Point{X: size.Width / 2, Y: size.Height / 2})
+}
+
+// mixMatrix mixes two Then matrices entry by entry, a zero one standing
+// for the identity. That is exact for moves and scales and close for
+// small turns; a CSS list's own functions are not matched one by one.
+func mixMatrix(a, b Matrix3D, t float64) Matrix3D {
+	if a == b {
+		return a
+	}
+	if a == (Matrix3D{}) {
+		a = Identity3D
+	}
+	if b == (Matrix3D{}) {
+		b = Identity3D
+	}
+	var out Matrix3D
+	for i := range out {
+		out[i] = a[i] + (b[i]-a[i])*t
+	}
+	return out
 }

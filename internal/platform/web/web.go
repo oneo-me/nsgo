@@ -1838,6 +1838,16 @@ func transformCSS(t driver.Transform) string {
 		fmt.Fprintf(&b, " skew(%gdeg, %gdeg)", t.SkewX, t.SkewY)
 	}
 	fmt.Fprintf(&b, " scale(%g, %g)", sx, sy)
+	if t.Then != (driver.Matrix3D{}) {
+		b.WriteString(" matrix3d(")
+		for i, v := range t.Then {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			fmt.Fprintf(&b, "%g", v)
+		}
+		b.WriteByte(')')
+	}
 	return b.String()
 }
 

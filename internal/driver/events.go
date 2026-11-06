@@ -314,6 +314,9 @@ const (
 	// PointerEventsBoxOnly lets only the view take them, never its
 	// children.
 	PointerEventsBoxOnly
+	// PointerEventsOn is auto in a style, where 0 is unset: it stops a
+	// none the view inherits. The core sends it as PointerEventsAuto.
+	PointerEventsOn
 )
 
 // Reach reports what a point p, in the coordinates of a view's parent's

@@ -106,6 +106,16 @@ type Tree struct {
 	// positional is set once a node has classes that follow its place
 	// among its siblings (first:, odd:).
 	positional bool
+	// focus is the node with the keyboard focus, whatever tracks it, and
+	// focusChain it and the nodes around it, which hold stateFocusWithin
+	// (updateFocusWithin). focusMoved asks the next commit to walk them.
+	focus      *node
+	focusChain []*node
+	focusMoved bool
+	// pointerStyled is set once a style has named PointerEvents, as apps
+	// without one skip their walk; pointersMoved asks the next commit
+	// for it (updatePointerEvents).
+	pointerStyled, pointersMoved bool
 	// replacing holds, by element and component type, the fields an
 	// XFunc beside them replaces (twins.go).
 	replacing map[reflect.Type][]twin
@@ -143,6 +153,12 @@ type node struct {
 	dyn    *Style // the StyleFunc's, kept once and updated in place
 	style  Style  // base and dyn merged, with the states' styles
 	states uint8
+	// showsExpanded, ownPointer, pointerNone and pointerTarget: View's
+	// ShowsExpanded, its element's PointerEvents, and what
+	// updatePointerEvents worked out.
+	showsExpanded              bool
+	ownPointer                 PointerEvents
+	pointerNone, pointerTarget bool
 	// color is the text color the node has, for CurrentColor.
 	color Color
 	h     handlers
@@ -629,6 +645,7 @@ func (t *Tree) within(o *Scope, fn func()) { t.rt.run(o, fn) }
 
 func (t *Tree) newNode(kind driver.ViewKind, parent *node, owner *Scope) *node {
 	n := &node{kind: kind, parent: parent, owner: owner, layoutDirty: true, childrenDirty: true, rtl: t.rtl}
+	t.pointersMoved = t.pointerStyled
 	if kind != 0 {
 		if k := len(t.free); k > 0 {
 			n.id = t.free[k-1]
@@ -783,6 +800,9 @@ func (t *Tree) discard(n *node) {
 		return
 	}
 	n.deleted = true
+	if n.states&stateFocusWithin != 0 || t.focus == n {
+		t.focusMoved = true
+	}
 	if n.place != nil {
 		// What it shows is the holder's, which keeps it.
 		n.place.unplace(n)
@@ -984,6 +1004,7 @@ func (t *Tree) restyle(n *node) bool {
 	p.Indeterminate = p.Indeterminate || n.part.Indeterminate
 	p.Selected = p.Selected || n.part.Selected
 	p.Disabled = p.Disabled || n.part.Disabled
+	t.showTrigger(n, &p)
 	var dyn Style
 	if n.dyn != nil {
 		dyn = *n.dyn
@@ -993,20 +1014,33 @@ func (t *Tree) restyle(n *node) bool {
 		// A disabled view's own state styles wait, but disabled's; its
 		// classes' variants, which merge next, still apply (NSH's
 		// state_style).
-		own.Hover, own.Focus, own.Active, own.Selected, own.Checked, own.Indeterminate = nil, nil, nil, nil, nil, nil
+		disabled := own.Disabled
+		var none Style
+		own.states().copyFrom(none.states())
+		own.Disabled = disabled
 	}
 	merged := n.withClasses(own)
-	var g groupState
+	var g shownStates
 	if gs := merged.GroupStyle; gs != nil {
 		g = n.groupState(gs.Name)
 	}
 	z, sticky := n.stackRank()
-	n.style = merged.withStates(n.states, p, g)
+	was := &n.style
+	lines, overflow, pointer := was.NumberOfLines, was.TextOverflow, was.PointerEvents
+	n.style = merged.withStates(statesOf(n.states, &p, n.part.Data), g)
 	if p.Disabled {
 		// The platform still follows the states a disabled view's own
 		// styles wait for, which the event mask reads.
 		full := n.withClasses(n.base.Merge(dyn))
-		n.style.Hover, n.style.Focus, n.style.Active = full.Hover, full.Focus, full.Active
+		n.style.Hover, n.style.Focus, n.style.Active, n.style.FocusWithin = full.Hover, full.Focus, full.Active, full.FocusWithin
+	}
+	if n.style.NumberOfLines != lines || n.style.TextOverflow != overflow {
+		if n.text != nil {
+			n.text.stale = true
+		}
+	}
+	if n.style.PointerEvents != pointer {
+		t.pointerStyled, t.pointersMoved = true, true
 	}
 	n.applyEnv()
 	if z2, sticky2 := n.stackRank(); z2 != z || sticky2 != sticky {
@@ -1036,16 +1070,48 @@ func (t *Tree) restyle(n *node) bool {
 
 // groupState returns the states of n's nearest group named name, or of
 // any group when name is empty.
-func (n *node) groupState(name string) groupState {
+func (n *node) groupState(name string) shownStates {
 	for a := n.parent; a != nil; a = a.parent {
 		if g := a.style.Group; g != "" && (name == "" || g == name) {
-			disabled := a.props.Disabled || a.part.Disabled || a.input != nil && a.input.config.Disabled
-			return groupState{states: a.states, checked: a.props.Checked || a.part.Checked,
-				indeterminate: a.props.Indeterminate || a.part.Indeterminate,
-				selected:      a.props.Selected || a.part.Selected, disabled: disabled}
+			p := a.props
+			p.Checked = p.Checked || a.part.Checked
+			p.Indeterminate = p.Indeterminate || a.part.Indeterminate
+			p.Selected = p.Selected || a.part.Selected
+			p.Disabled = p.Disabled || a.part.Disabled || a.input != nil && a.input.config.Disabled
+			return statesOf(a.states, &p, a.part.Data)
 		}
 	}
-	return groupState{}
+	return shownStates{}
+}
+
+// restyleExpanded restyles n, and the view that shows its expanded state,
+// as it changed.
+func (t *Tree) restyleExpanded(n *node) {
+	nodes := []*node{n}
+	if n.showsExpanded {
+		nodes = append(nodes, n.flatChildren()...)
+	}
+	for _, k := range nodes {
+		if t.restyle(k) {
+			t.markLayout(k)
+		}
+		t.restyleGroup(k)
+	}
+}
+
+// showTrigger gives n the expanded state of a trigger around it that
+// shows it (View.ShowsExpanded), for its styles and the platform's prop.
+// The trigger stays the control screen readers hear.
+func (t *Tree) showTrigger(n *node, p *driver.ViewProps) {
+	f := n.nativeParent()
+	if f == nil || !f.showsExpanded {
+		return
+	}
+	if !n.props.Expandable || n.props.Expanded != f.props.Expanded {
+		n.props.Expandable, n.props.Expanded = true, f.props.Expanded
+		t.touch(n)
+	}
+	p.Expandable, p.Expanded = true, f.props.Expanded
 }
 
 // setState records an interaction state and restyles n if a state style
@@ -1060,12 +1126,113 @@ func (t *Tree) setState(n *node, state uint8, on bool) {
 	if n.states == was {
 		return
 	}
-	if n.style.Hover != nil || n.style.Focus != nil || n.style.Active != nil {
+	if n.style.Hover != nil || n.style.Focus != nil || n.style.Active != nil || n.style.FocusWithin != nil {
 		if t.restyle(n) {
 			t.markLayout(n)
 		}
 	}
 	t.restyleGroup(n)
+}
+
+// focusReported records what the platform says of the keyboard focus. A
+// view taking it is the focus, in whatever order a move is reported: the
+// blur of another view changes nothing, and the root taking it is none.
+func (t *Tree) focusReported(n *node, focused bool) {
+	switch {
+	case focused && n.isRoot:
+		n = nil
+	case !focused && t.focus != n:
+		return
+	case !focused:
+		n = nil
+	}
+	if t.focus != n {
+		t.focus, t.focusMoved = n, true
+		t.changed = true
+	}
+}
+
+// updateFocusWithin puts stateFocusWithin on the focus and the nodes
+// around it, and takes it off those it left: the two chains are walked
+// and nothing else. The nodes around are parents in the core's tree,
+// where an overlay is the child of the view the app put it in, so the
+// focus in a popup is within the view holding its trigger, as in a React
+// portal.
+func (t *Tree) updateFocusWithin() {
+	t.focusMoved = false
+	if t.focus != nil && t.focus.deleted {
+		t.focus = nil
+	}
+	old := t.focusChain
+	var chain []*node
+	for n := t.focus; n != nil; n = n.parent {
+		chain = append(chain, n)
+	}
+	t.focusChain = chain
+	for _, n := range old {
+		if !n.deleted && !slices.Contains(chain, n) {
+			t.setState(n, stateFocusWithin, false)
+		}
+	}
+	for _, n := range chain {
+		t.setState(n, stateFocusWithin, true)
+	}
+}
+
+// updatePointerEvents works out what each node mounts of the pointer
+// events of the styles around it, as CSS's none inherits: a node that is
+// none by its own value or the nearest above mounts box-none when a node
+// inside it takes the pointer, none at the top of what it blocks, and
+// nothing below that.
+func (t *Tree) updatePointerEvents() {
+	t.pointersMoved = false
+	if !t.pointerStyled || t.view == nil {
+		return
+	}
+	var mark func(n *node, none bool) bool
+	mark = func(n *node, none bool) bool {
+		own := cmpOr(n.style.PointerEvents, n.ownPointer)
+		switch own {
+		case PointerEventsNone:
+			none = true
+		case 0:
+		default:
+			none = false
+		}
+		n.pointerNone = none
+		// The box values are the view's alone: what is in it inherits auto.
+		target := own != 0 && own != PointerEventsNone
+		for _, k := range n.children {
+			if mark(k, none) {
+				target = true
+			}
+		}
+		n.pointerTarget = target
+		return target
+	}
+	var apply func(n *node, covered bool)
+	apply = func(n *node, covered bool) {
+		v := cmpOr(n.style.PointerEvents, n.ownPointer)
+		switch {
+		case n.pointerNone && n.pointerTarget:
+			v, covered = PointerEventsBoxNone, false
+		case n.pointerNone && covered:
+			v = PointerEventsAuto
+		case n.pointerNone:
+			v, covered = PointerEventsNone, true
+		case v == PointerEventsOn:
+			v = PointerEventsAuto
+		}
+		if n.props.PointerEvents != v {
+			n.props.PointerEvents = v
+			t.touch(n)
+		}
+		for _, k := range n.children {
+			apply(k, covered)
+		}
+	}
+	mark(t.view, false)
+	apply(t.view, false)
 }
 
 // restyleGroup restyles the nodes inside group n that follow its states.
@@ -1125,6 +1292,8 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 	t.bindBool(cx, n, v.Selected, &n.props.Selected)
 	t.bindBool(cx, n, v.Checked, &n.props.Checked)
 	t.bindBool(cx, n, v.Indeterminate, &n.props.Indeterminate)
+	t.bindBool(cx, n, v.Pressed, &n.props.Pressed)
+	t.bindBool(cx, n, v.Busy, &n.props.Busy)
 	if v.PartStates != nil {
 		cx.renderEffect(func() {
 			n.part = v.PartStates()
@@ -1149,6 +1318,8 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 // handlers and props, before the accessibility and states bound over
 // them.
 func (t *Tree) setViewParts(n *node, v View) {
+	n.ownPointer, n.showsExpanded = v.PointerEvents, v.ShowsExpanded
+	t.pointersMoved = t.pointerStyled
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, pressDown: v.OnPressDown, pressUp: v.OnPressUp,
 		mouseEnter: v.OnMouseEnter, mouseLeave: v.OnMouseLeave, mouseMove: v.OnMouseMove,
 		layout: v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
@@ -1169,6 +1340,7 @@ func (t *Tree) setViewParts(n *node, v View) {
 	_, panClaim := v.Responder.panClaim()
 	n.panning = v.OnPan != nil || v.PanValues != (AnimatedXY{}) || panClaim
 	n.props.PanActivation, n.props.PanScrollHandoff = v.PanActivation, v.PanScrollHandoff
+	t.showTrigger(n, &n.props)
 	n.pinching, n.rotating = v.OnPinch != nil || v.PinchValue != nil, v.OnRotation != nil || v.RotationValue != nil
 	t.setRef(n, v.Ref)
 }
@@ -1222,6 +1394,7 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
 		Selectable: v.Selectable, PointerEvents: v.PointerEvents}
+	n.ownPointer = v.PointerEvents
 	if n.props.Role == RoleNone {
 		n.props.Role = RoleText
 	}
@@ -1640,9 +1813,11 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		mouse(h.mouseMove)
 	case driver.EventFocus:
 		t.setState(n, stateFocused, true)
+		t.focusReported(n, true)
 		call(h.focus)
 	case driver.EventBlur:
 		t.setState(n, stateFocused, false)
+		t.focusReported(n, false)
 		call(h.blur)
 	case driver.EventChangeText:
 		in := n.input
@@ -1969,8 +2144,11 @@ func (n *node) events() driver.EventMask {
 	bit(driver.EventMouseLeave, h.mouseLeave != nil || s.Hover != nil || group || n.tip != nil)
 	bit(driver.EventMouseMove, h.mouseMove != nil)
 	bit(driver.EventTouch, n.hearsTouches())
-	bit(driver.EventFocus, h.focus != nil || s.Focus != nil)
-	bit(driver.EventBlur, h.blur != nil || s.Focus != nil)
+	// The focus of any view that can take it is reported, for the core's
+	// own focus (focusReported).
+	focusable := n.kind == driver.KindInput || n.takesPresses()
+	bit(driver.EventFocus, h.focus != nil || s.Focus != nil || focusable)
+	bit(driver.EventBlur, h.blur != nil || s.Focus != nil || focusable)
 	bit(driver.EventSubmitEditing, h.submit != nil)
 	bit(driver.EventScroll, h.scroll != nil)
 	bit(driver.EventPressOutside, h.pressOutside != nil)

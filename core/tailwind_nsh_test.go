@@ -234,8 +234,7 @@ func TestNSHTypography(t *testing.T) {
 	s = styled(t, "text-sm/6 font-mono")
 	want(t, "text-sm/6", [2]any{s.FontSize, s.LineHeight}, [2]any{Points(14), Points(24)})
 	want(t, "font-mono", s.FontFamily, "monospace")
-	_, p := tw(t, "truncate")
-	want(t, "truncate", p.lines, 1)
+	want(t, "truncate", styled(t, "truncate").NumberOfLines, 1)
 }
 
 func TestNSHShadowsAndRings(t *testing.T) {
@@ -565,17 +564,15 @@ func TestNSHClassesWithoutANativeMeaningAreUnknown(t *testing.T) {
 }
 
 func TestNSHPlaceholderAndProps(t *testing.T) {
-	s, p := tw(t, "placeholder:text-zinc-400 selection:bg-blue-500 line-clamp-2 pointer-events-none select-none object-contain")
+	s, _ := tw(t, "placeholder:text-zinc-400 selection:bg-blue-500 line-clamp-2 pointer-events-none select-none object-contain")
 	want(t, "placeholder", s.PlaceholderColor, RGB(0x9f9fa9))
 	want(t, "selection", s.SelectionColor, RGB(0x2b7fff))
 	want(t, "caret", styled(t, "caret-blue-500").CaretColor, RGB(0x2b7fff))
-	want(t, "object-contain", p.resizeMode, Contain)
-	_, p2 := tw(t, "object-none")
-	want(t, "object-none", p2.resizeMode, Center)
-	_, p2 = tw(t, "object-scale-down")
-	want(t, "object-scale-down", p2.resizeMode, ScaleDown)
-	want(t, "line-clamp", p.lines, 2)
-	want(t, "pointer-events", p.pointerEvents, PointerEventsNone)
+	want(t, "object-contain", s.ObjectFit, Contain)
+	want(t, "object-none", styled(t, "object-none").ObjectFit, Center)
+	want(t, "object-scale-down", styled(t, "object-scale-down").ObjectFit, ScaleDown)
+	want(t, "line-clamp", s.NumberOfLines, 2)
+	want(t, "pointer-events", s.PointerEvents, PointerEventsNone)
 	want(t, "select-none", s.UserSelect, UserSelectNone)
 	got := unknownOf(defaultTailwind, "selection:text-blue-500 placeholder:italic placeholder:bg-red-500 selection:opacity-50 placeholder:text-muted-foreground selection:bg-primary")
 	want(t, "pseudo-elements", strings.Join(got, " "),
@@ -804,6 +801,6 @@ func TestObjectFitClassesReachImagesAndVideos(t *testing.T) {
 	want(t, "image", h.find("img").image.sent.ResizeMode, Contain)
 	top, _ := ParseObjectPosition("top")
 	want(t, "image position", h.find("img").image.sent.Position, top)
-	want(t, "own mode", h.find("own").image.sent.ResizeMode, Stretch)
+	want(t, "a class over the element's mode", h.find("own").image.sent.ResizeMode, Contain)
 	want(t, "video", h.find("video").video.sent.ResizeMode, Cover)
 }

@@ -71,19 +71,19 @@ func (t *tailwindTheme) keyword(u string) (classDecl, bool) {
 		return func(s *Style, p *classProps, _ *classEnv) {
 			// One line, ellipsized: core's no-wrap would lay the text out
 			// past its box instead.
-			p.lines, p.ellipsize = 1, EllipsizeTail
+			s.NumberOfLines, s.TextOverflow = 1, EllipsizeTail
 			s.Overflow = Hidden
 		}, true
 	case "text-ellipsis":
-		return func(_ *Style, p *classProps, _ *classEnv) { p.ellipsize = EllipsizeTail }, true
+		return func(s *Style, _ *classProps, _ *classEnv) { s.TextOverflow = EllipsizeTail }, true
 	case "text-clip":
-		return func(_ *Style, p *classProps, _ *classEnv) { p.ellipsize = EllipsizeClip }, true
+		return func(s *Style, _ *classProps, _ *classEnv) { s.TextOverflow = EllipsizeClip }, true
 	case "line-clamp-none":
-		return func(_ *Style, p *classProps, _ *classEnv) { p.lines = 0 }, true
+		return func(s *Style, _ *classProps, _ *classEnv) { s.NumberOfLines = NoLineLimit }, true
 	case "pointer-events-none":
-		return func(_ *Style, p *classProps, _ *classEnv) { p.pointerEvents = PointerEventsNone }, true
+		return func(s *Style, _ *classProps, _ *classEnv) { s.PointerEvents = PointerEventsNone }, true
 	case "pointer-events-auto":
-		return func(_ *Style, p *classProps, _ *classEnv) { p.pointerEvents = PointerEventsAuto }, true
+		return func(s *Style, _ *classProps, _ *classEnv) { s.PointerEvents = PointerEventsOn }, true
 	case "space-x-reverse":
 		return func(_ *Style, p *classProps, _ *classEnv) { p.reverseX = true }, true
 	case "space-y-reverse":
@@ -634,7 +634,7 @@ func init() {
 			if !ok || n < 0 {
 				return nil, false
 			}
-			return func(_ *Style, p *classProps, _ *classEnv) { p.lines = n }, false
+			return func(s *Style, _ *classProps, _ *classEnv) { s.NumberOfLines = n }, false
 		}},
 		{"decoration-", false, func(t *tailwindTheme, v string, _ bool) (classDecl, bool) {
 			if l, ok := fontLength(v, false); ok {
@@ -897,7 +897,7 @@ func init() {
 		}},
 		// Interactivity and SVG.
 		{"cursor-", false, func(t *tailwindTheme, v string, _ bool) (classDecl, bool) {
-			for c := CursorAuto; c <= CursorNone; c++ {
+			for c := CursorAuto; c <= CursorNeswResize; c++ {
 				if c.Name() == v {
 					return set1(func(s *Style) { s.Cursor = c }), false
 				}
@@ -925,7 +925,7 @@ func init() {
 		// Images and videos: object-fit and object-position.
 		{"object-", false, func(t *tailwindTheme, v string, _ bool) (classDecl, bool) {
 			if m, ok := objectFits[v]; ok {
-				return func(_ *Style, p *classProps, _ *classEnv) { p.resizeMode = m }, false
+				return func(s *Style, _ *classProps, _ *classEnv) { s.ObjectFit = m }, false
 			}
 			pos := strings.ReplaceAll(v, "-", " ")
 			if a, ok := arbitrary(v); ok {
@@ -1888,6 +1888,9 @@ func camel(s string) string {
 func withAlpha(c Color, a float32) Color {
 	if a >= 1 {
 		return c
+	}
+	if c == CurrentColor {
+		return currentMark | Color(a*255+0.5)
 	}
 	alpha := float32(c&0xff) * a
 	out := c&^0xff | Color(alpha+0.5)

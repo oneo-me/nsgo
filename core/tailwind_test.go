@@ -184,12 +184,12 @@ func TestTransformsTransitionsAndAnimations(t *testing.T) {
 }
 
 func TestImportantClassesAndProps(t *testing.T) {
-	_, important, p := resolveFor(t, "!p-1 line-clamp-2 pointer-events-none truncate", narrow)
+	normal, important, _ := resolveFor(t, "!p-1 line-clamp-2 pointer-events-none truncate", narrow)
 	if important.Padding.Top != 4 {
 		t.Errorf("!p-1: %+v", important.Padding)
 	}
-	if p.lines != 1 || p.ellipsize != EllipsizeTail || p.pointerEvents != PointerEventsNone {
-		t.Errorf("props %+v", p)
+	if normal.NumberOfLines != 1 || normal.TextOverflow != EllipsizeTail || normal.PointerEvents != PointerEventsNone {
+		t.Errorf("lines %d, overflow %v, pointer %v", normal.NumberOfLines, normal.TextOverflow, normal.PointerEvents)
 	}
 }
 
