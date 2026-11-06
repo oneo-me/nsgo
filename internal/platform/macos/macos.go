@@ -232,6 +232,8 @@ type surface struct {
 	link     objc.ID // the frame clock's CADisplayLink, made once
 	timer    objc.ID // or its NSTimer while ticking, before macOS 14
 	ticking  bool
+	// pace is the rate the link is slowed to, 0 for the screen's highest.
+	pace float64
 	// watcher checks that the link ticks, stall ticks in its place while
 	// it does not; ticked is when a frame last ticked.
 	watcher, stall objc.ID
@@ -2389,10 +2391,11 @@ func surfaceApply(self objc.ID, _ objc.SEL, _ objc.ID) {
 }
 
 // applyQueued applies the batches the engine has sent as they land,
-// unless something animates: then they wait for the start of the next
-// frame, which applies them first.
+// unless something animates at the display's rate: then they wait for the
+// start of the next frame, which applies them first. A slowed clock's
+// frames are too far apart for input to wait for.
 func (s *surface) applyQueued() {
-	if s.animating() {
+	if s.animating() && s.pace == 0 {
 		s.startTicking()
 		return
 	}

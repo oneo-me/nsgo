@@ -244,7 +244,7 @@ func (a *Animator) apply(o *AnimationOp) {
 		if o.Animation == nil {
 			return
 		}
-		r := &arun{id: o.ID, root: a.build(o.Animation), forever: endless(o.Animation)}
+		r := &arun{id: o.ID, root: a.build(o.Animation), forever: endless(o.Animation), rate: o.Animation.FrameRate}
 		var starts []valueStart
 		for _, id := range r.root.values(nil) {
 			if n := a.value(id); n != nil {
@@ -360,12 +360,37 @@ func (a *Animator) Ending() bool {
 	return false
 }
 
-// Step advances the running animations to now, a monotonic time.
+// FrameRate returns the frames a second the running animations need, 0
+// when one needs every frame the display has, for a backend to slow its
+// frame clock.
+func (a *Animator) FrameRate() float64 {
+	if len(a.settling) > 0 {
+		return 0
+	}
+	rate := 0.0
+	for _, r := range a.runs {
+		if r.rate == 0 {
+			return 0
+		}
+		rate = max(rate, r.rate)
+	}
+	return rate
+}
+
+// Step advances the running animations to now, a monotonic time. A run
+// with a frame rate moves only when its next frame is due, so a clock
+// faster than the run changes nothing in between.
 func (a *Animator) Step(now time.Duration) {
 	a.now = now.Seconds()
 	for _, r := range a.runs {
 		if a.runs[r.id] != r {
 			continue
+		}
+		if r.rate > 0 {
+			if r.moved && a.now-r.last < 1/r.rate-frameSlack {
+				continue
+			}
+			r.last, r.moved = a.now, true
 		}
 		if done, _ := r.root.step(a, a.now); done {
 			a.end(r, true)
@@ -388,6 +413,11 @@ func (a *Animator) Step(now time.Duration) {
 		a.touch()
 	}
 }
+
+// frameSlack is how early a run's frame may land, in seconds: a display
+// frame that lands a little before the rate's own would otherwise wait
+// for the one after it, halving the rate.
+const frameSlack = 0.002
 
 // settleDuration is how long a snapping diff clamp takes to its bound,
 // in seconds.
@@ -1081,6 +1111,10 @@ type arun struct {
 	root astep
 	// forever is set when a loop in it repeats without end.
 	forever bool
+	// rate is its frame rate, 0 for every step; last is when it last
+	// moved, once moved.
+	rate, last float64
+	moved      bool
 }
 
 // endless reports whether an repeats forever: it holds a Loop of no

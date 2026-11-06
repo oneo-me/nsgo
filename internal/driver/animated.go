@@ -157,6 +157,10 @@ type Animation struct {
 	// at their start.
 	Iterations int
 	NoReset    bool
+	// FrameRate caps how many times a second the whole run moves its
+	// values, on the animation StartAnimation is given; 0 is every frame
+	// the display has.
+	FrameRate float64
 }
 
 // AnimationKind is what an Animation does.

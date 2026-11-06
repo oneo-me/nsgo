@@ -287,3 +287,40 @@ func TestLayoutBezierFollowsItsCurve(t *testing.T) {
 		t.Errorf("end %v %v", p, done)
 	}
 }
+
+func TestAFrameRateSlowsARunAndItsClock(t *testing.T) {
+	a := NewAnimator(func(Event) {})
+	a.Apply([]AnimationOp{{Kind: AnimCreateValue, Node: 1}, {Kind: AnimCreateValue, Node: 2}})
+	move := func(id uint32, rate float64) {
+		a.Apply([]AnimationOp{{Kind: AnimStart, ID: uint32(id), Animation: &Animation{Kind: AnimationTiming, Value: id, To: 1,
+			Timing: TimingConfig{Duration: time.Second}, FrameRate: rate}}})
+	}
+	move(1, 30)
+	if r := a.FrameRate(); r != 30 {
+		t.Fatalf("a slowed run's rate = %v", r)
+	}
+	// A 120 Hz clock: the run moves on every fourth frame, not on the
+	// eighth, though the frames land a hair before its rate.
+	changes, last := 0, -1.0
+	for i := range 60 {
+		a.Step(time.Duration(i) * time.Second / 120)
+		if v := a.nodes[1].value; v != last {
+			changes, last = changes+1, v
+		}
+	}
+	if changes != 15 {
+		t.Fatalf("a 30 Hz run changed %d times in half a second of 120 Hz frames", changes)
+	}
+	// A run that wants every frame takes the clock back to full speed.
+	move(2, 0)
+	if r := a.FrameRate(); r != 0 {
+		t.Fatalf("the rate with an unslowed run = %v", r)
+	}
+	// It still ends where it would have.
+	for i := 60; i < 140; i++ {
+		a.Step(time.Duration(i) * time.Second / 120)
+	}
+	if a.nodes[1].value != 1 {
+		t.Fatalf("a slowed run ended at %v", a.nodes[1].value)
+	}
+}

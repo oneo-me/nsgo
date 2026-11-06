@@ -191,6 +191,11 @@ func chatWorkingRow(cx *core.Scope, label func() string) core.Node {
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(22), Gap: 8}, Children: children}
 }
 
+// chatWaveRate is how often the dots of running work change: they last as
+// long as the work does, and a slow fade this small looks no different at
+// the display's rate.
+const chatWaveRate = 30
+
 // chatWave is count stops of a period of wave, for a keyframe loop.
 func chatWave(count int, wave func(phase float64) float64) []core.KeyframeStop {
 	values := make([]float64, count+1)
@@ -209,8 +214,8 @@ func chatWaveDots(cx *core.Scope) core.Node {
 		s := core.Style{Width: core.Pt(4), Height: core.Pt(4), CornerRadius: 2, Opacity: core.Alpha(0.35)}
 		if !reduced {
 			v := core.NewAnimatedValue(cx, 0.35)
-			cx.StartAnimation(core.ValueKeyframes(v, core.KeyframeTiming{Duration: 1200 * time.Millisecond, Iterations: core.Forever},
-				chatWave(24, func(p float64) float64 { return 0.35 + 0.65*max(0, math.Sin((p-float64(i)*0.15)*2*math.Pi)) })...), nil)
+			cx.StartAnimation(core.AtFrameRate(core.ValueKeyframes(v, core.KeyframeTiming{Duration: 1200 * time.Millisecond, Iterations: core.Forever},
+				chatWave(24, func(p float64) float64 { return 0.35 + 0.65*max(0, math.Sin((p-float64(i)*0.15)*2*math.Pi)) })...), chatWaveRate), nil)
 			s.Animated = &core.AnimatedStyle{Opacity: v}
 		}
 		dots = append(dots, core.View{Style: s, StyleFunc: ui.Filled(colors.Muted)})
@@ -224,8 +229,8 @@ func chatPulseDot(cx *core.Scope) core.Node {
 	s := core.Style{Width: core.Pt(5), Height: core.Pt(5), CornerRadius: 2.5, FlexShrink: 0}
 	if !ui.ReduceMotion(cx) {
 		v := core.NewAnimatedValue(cx, 1)
-		cx.StartAnimation(core.ValueKeyframes(v, core.KeyframeTiming{Duration: time.Second, Iterations: core.Forever},
-			chatWave(12, func(p float64) float64 { return 0.45 + 0.55*(1+math.Sin(p*2*math.Pi))/2 })...), nil)
+		cx.StartAnimation(core.AtFrameRate(core.ValueKeyframes(v, core.KeyframeTiming{Duration: time.Second, Iterations: core.Forever},
+			chatWave(12, func(p float64) float64 { return 0.45 + 0.55*(1+math.Sin(p*2*math.Pi))/2 })...), chatWaveRate), nil)
 		s.Animated = &core.AnimatedStyle{Opacity: v}
 	}
 	return core.View{Style: s, StyleFunc: ui.Filled(tonesOf(cx).Accent)}

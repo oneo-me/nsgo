@@ -54,13 +54,17 @@ type ghost struct {
 // clock returns the frame clock's time.
 func (s *surface) clock() time.Duration { return time.Since(s.epoch) }
 
-// frameRateRange is what the display link asks for: the screen's highest
-// rate, at least 80 there, so a ProMotion display does not settle at 60 Hz.
+// frameRateRange is what the display link asks for: the pace, or the
+// screen's highest rate, at least 80 there, so a ProMotion display does not
+// settle at 60 Hz.
 type frameRateRange struct {
 	Minimum, Maximum, Preferred float32
 }
 
 func (s *surface) frameRateRange() frameRateRange {
+	if s.pace > 0 {
+		return frameRateRange{float32(s.pace), float32(s.pace), float32(s.pace)}
+	}
 	max := float32(60)
 	screen := s.window.Send(sel("screen"))
 	if screen == 0 {
@@ -80,9 +84,11 @@ func (s *surface) frameRateRange() frameRateRange {
 // menu tracks or a window resizes.
 func (s *surface) startTicking() {
 	if s.ticking {
+		s.setPace()
 		return
 	}
 	s.ticking = true
+	s.pace = s.wantedPace()
 	if s.link != 0 {
 		// The window may have moved to another screen meanwhile.
 		s.link.Send(sel("setPreferredFrameRateRange:"), s.frameRateRange())
@@ -105,6 +111,28 @@ func (s *surface) startTicking() {
 		return
 	}
 	s.timer = repeating(1.0/60, s.native, selTick)
+}
+
+// wantedPace is the rate the frame clock need run at: the animations' own
+// when they are all it steps, else the screen's highest.
+func (s *surface) wantedPace() float64 {
+	if len(s.motions) > 0 || len(s.ghosts) > 0 || len(s.live) > 0 || s.frameWanted || s.selecting != nil || s.perf != nil {
+		return 0
+	}
+	return s.animator.FrameRate()
+}
+
+// setPace moves the running link to the rate wanted now. The timers keep
+// theirs: the animator holds a slowed run to its rate on any clock.
+func (s *surface) setPace() {
+	pace := s.wantedPace()
+	if pace == s.pace {
+		return
+	}
+	s.pace = pace
+	if s.link != 0 {
+		s.link.Send(sel("setPreferredFrameRateRange:"), s.frameRateRange())
+	}
 }
 
 // repeating returns a retained timer that sends action to target every
@@ -232,7 +260,9 @@ func (s *surface) tick(period time.Duration) {
 	}
 	if !s.animating() && !s.frameWanted && !s.held() && !selecting && s.perf == nil {
 		s.stopTicking()
+		return
 	}
+	s.setPace()
 }
 
 // animating reports whether something moves on the frame clock: the

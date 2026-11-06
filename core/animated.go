@@ -237,6 +237,17 @@ func LoopOn(a *Animation, iterations int) *Animation {
 	return l
 }
 
+// AtFrameRate has a move its values at most rate times a second, on the
+// animation StartAnimation runs, and returns it. What loops for as long as
+// work lasts, such as a pulsing dot, wants this: a compositor redraws at
+// the rate anything on screen moves, however small, and at 120 Hz that
+// costs the system far more than the animation shows. Reserve the display's
+// full rate for what follows a finger or travels across the window.
+func AtFrameRate(a *Animation, rate float64) *Animation {
+	a.FrameRate = rate
+	return a
+}
+
 // AnimationRun is an animation StartAnimation runs on the platform.
 type AnimationRun struct {
 	t     *Tree

@@ -105,6 +105,7 @@ NSH records what its hot paths cost (`data-table.md` (Performance), `performance
 | Device pixels | `performance.md`, `geometry.md` | Layout rounds to device pixels rather than whole points, frames that stay on their pixels are not sent again, and a subtree that moved by whole pixels skips its frames, as NSH's `#557`, `#617` and `#637` do |
 | 0.4.0's baselines | `data-table.md` (Performance), `performance.md` | The DataTable's scroll (a frame crossing no row 4 items in ~1.2 ms, a few rows ~35–50 in ~2 ms, no views made), its tick and the Animations page cost what NSH 0.4.0's build does on the same machine, headless, in headless Chrome and on macOS |
 | The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, and a stack's slides cost on Windows, Linux, iOS and Android what NSH's do there (Pixel 10 Pro: ~870 views, commits at 3 and 7 ms at the median and 90th percentile, slides on whole pixels), measured on those machines and on NSH's builds for them |
+| Slowed animations | NSGo's own (`animation.md`) | Android's Java animator honors `AtFrameRate` with `classes.dex` rebuilt, and iOS slows its `CADisplayLink` as macOS does, keeping batches from waiting on it |
 | Android's new views | `nsh/AGENTS.md` (Performance rules, 4) | `NsgoView` starts a node in the default style with no props and no events, and `classes.dex` is rebuilt, so the Go side stops sending the three for every new view (`withDefaults`) |
 
 ## Motion
