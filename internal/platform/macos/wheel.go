@@ -17,7 +17,11 @@ import (
 // chain. AppKit latches them to the view a scroll began on, past where
 // the pointer moved since, so the surface finds the scroll views under
 // the pointer itself, picks the one they scroll, as NSH's macOS input
-// does, and keeps a scroll on its view. Presses on a scroll view's
+// does, and keeps a scroll on its view. A view of a virtualized list can
+// be where AppKit latches a scroll, and what scrolls out of it unmounts:
+// the rest of the gesture and its momentum would go to a view in no
+// window and be lost, so the window's monitor takes them instead
+// (wheelContinues). Presses on a scroll view's
 // indicator drag it, and a press that stops a snap is no press.
 
 // wheelGesture is a trackpad scroll gesture under way.
@@ -83,6 +87,21 @@ func (s *surface) wheelStarts(event objc.ID) bool {
 	}
 	latch := s.wheels.latch
 	return !s.alive(latch) || eventTime(event)-s.wheels.last >= wheelLatch || !slices.Contains(s.scrollsAt(event), latch)
+}
+
+// wheelContinues reports whether an event of the phases carries on a
+// scroll that has its view, so that it needs neither AppKit's routing nor
+// the chain.
+func (s *surface) wheelContinues(phase, momentum uint) bool {
+	w := &s.wheels
+	if momentum != 0 {
+		return s.alive(w.momentum)
+	}
+	g := w.gesture
+	if g == nil {
+		return false
+	}
+	return phase&(phaseEnded|phaseCancelled) != 0 || phase&phaseChanged != 0 && !g.held && s.alive(g.view)
 }
 
 // wheelEvent follows a wheel or trackpad event over the chain's views,

@@ -1017,6 +1017,10 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 		if len(s.armed) > 0 && s.wheelStarts(event) {
 			s.commitPending()
 		}
+		if s.wheelContinues(objc.Send[uint](event, sel("phase")), objc.Send[uint](event, sel("momentumPhase"))) {
+			s.wheelEvent(event)
+			return 0
+		}
 	case typeKeyDown:
 		if !s.hasKeys() {
 			break

@@ -42,3 +42,38 @@ func TestARunningAnimationHoldsACommitOnlyBriefly(t *testing.T) {
 		t.Fatal("input did not start the wait over")
 	}
 }
+
+func TestAScrollUnderWayNeedsNoRouting(t *testing.T) {
+	v := &view{id: 1, sc: &scrollState{}}
+	s := &surface{views: []*view{nil, v}}
+	gone := &view{id: 1, sc: &scrollState{}}
+	check := func(name string, phase, momentum uint, want bool) {
+		t.Helper()
+		if got := s.wheelContinues(phase, momentum); got != want {
+			t.Errorf("%s: wheelContinues = %v, want %v", name, got, want)
+		}
+	}
+	check("a change with no gesture", phaseChanged, 0, false)
+	check("momentum with no view", 0, phaseChanged, false)
+
+	s.wheels.gesture = &wheelGesture{}
+	check("a gesture before it finds its view", phaseChanged, 0, false)
+	check("a beginning", phaseBegan, 0, false)
+	check("the end of a gesture without a view", 0|phaseEnded, 0, true)
+
+	s.wheels.gesture = &wheelGesture{view: v, held: true}
+	check("resting fingers choose their view", phaseChanged, 0, false)
+	check("fingers lifted without scrolling", phaseCancelled, 0, true)
+
+	s.wheels.gesture = &wheelGesture{view: v}
+	check("a change", phaseChanged, 0, true)
+	check("an end", phaseEnded, 0, true)
+	s.wheels.gesture = &wheelGesture{view: gone}
+	check("a change on an unmounted view", phaseChanged, 0, false)
+
+	s.wheels.gesture, s.wheels.momentum = nil, v
+	check("momentum", 0, phaseChanged, true)
+	check("the end of momentum", 0, phaseEnded, true)
+	s.wheels.momentum = gone
+	check("momentum on an unmounted view", 0, phaseChanged, false)
+}
