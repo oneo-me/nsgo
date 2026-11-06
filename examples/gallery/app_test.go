@@ -88,6 +88,7 @@ func TestTabs(t *testing.T) {
 	app.Press("id:tab-components")
 	app.Find("id:demo-Selection")
 	// The menu reaches a demo of another tab.
+	app.Press("id:tab-basics")
 	app.ChooseMenu("View", "Photos")
 	app.Find("id:nav-Photos")
 	app.Find("id:demo-Photos")
@@ -167,7 +168,7 @@ func TestNarrowDesktop(t *testing.T) {
 		t.Fatal("the sidebar's footer shows")
 	}
 	// The bar leaves pushed pages the window.
-	app.Press("role:tab Apps")
+	app.Press("role:tab Controls")
 	app.Press("id:nav-Stocks")
 	if app.Exists("role:tablist Sections") {
 		t.Fatal("the tab bar shows over a pushed page")
@@ -1076,7 +1077,7 @@ func TestSidebarKeys(t *testing.T) {
 		t.Fatalf("down from Stocks selected %q, want AI Chat", got)
 	}
 	app.Key("end")
-	if got, want := app.Find("id:title").Text, "Photos"; got != want {
+	if got, want := app.Find("id:title").Text, "TextView"; got != want {
 		t.Fatalf("end selected %q, want %q", got, want)
 	}
 	app.Key("home")

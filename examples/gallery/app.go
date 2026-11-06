@@ -1,6 +1,6 @@
 // Command gallery shows what NSGo apps are made of: core's elements and
 // services, and the components of base and ui, in NSH's gallery's design,
-// under three tabs. Components are grouped by what they do: a page of
+// under two tabs. Components are grouped by what they do: a page of
 // cards per kind, each with its props to set, and a whole page per complex
 // one with its options beside it. A wide window shows the tabs atop a
 // sidebar of the demos beside the selected one; a narrow one shows them,
@@ -61,8 +61,8 @@ type tab struct {
 	groups       []group
 }
 
-// tabs are the demos: the apps built on NSGo, the components by what they
-// do, a page of cards per kind and a whole page per complex one, and
+// tabs are the demos: the apps built on NSGo above the components by what
+// they do, a page of cards per kind and a whole page per complex one, and
 // core's primitives from the simplest with styling, motion and the
 // platform's services. They are set in init because demos
 // list them.
@@ -146,10 +146,8 @@ func init() {
 		{"Photos", locales.Messages.DemoPhotos, locales.Messages.DemoPhotosDetail, lucide.Images, photosDemo},
 	}
 	tabs = []tab{
-		{"apps", locales.Messages.GroupApps, lucide.LayoutGrid, "square.grid.2x2", "android:ic_menu_gallery",
-			[]group{{"Apps", locales.Messages.GroupApps, apps}}},
 		{"components", locales.Messages.TabComponents, lucide.Component, "puzzlepiece.extension", "android:ic_menu_agenda",
-			[]group{{"Actions", locales.Messages.GroupActions, actions}, {"Inputs", locales.Messages.GroupInputs, inputs}, {"Display", locales.Messages.GroupDisplay, display},
+			[]group{{"Apps", locales.Messages.GroupApps, apps}, {"Actions", locales.Messages.GroupActions, actions}, {"Inputs", locales.Messages.GroupInputs, inputs}, {"Display", locales.Messages.GroupDisplay, display},
 				{"Feedback", locales.Messages.GroupFeedback, feedback}, {"Popups", locales.Messages.GroupPopups, popups}, {"Navigation", locales.Messages.GroupNavigation, navigation},
 				{"Complex", locales.Messages.GroupComplex, complexes}}},
 		{"basics", locales.Messages.TabBasics, lucide.Shapes, "square.on.circle", "android:ic_menu_sort_by_size", basics},
@@ -531,8 +529,7 @@ func largeTitle(cx *core.Scope, p base.NavPage) base.NavPage {
 	return p
 }
 
-// home is tab i's index of the demos by group, titled where it has more
-// than one.
+// home is tab i's index of the demos by group.
 func (g *gallery) home(cx *core.Scope, i int) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
@@ -542,16 +539,15 @@ func (g *gallery) home(cx *core.Scope, i int) core.Node {
 		for j, d := range grp.demos {
 			rows = append(rows, demoRow(cx, d, j == 0, func() { g.nav.Push(route{demo: d.name}) }))
 		}
-		var parts []core.Node
-		if len(tabs[i].groups) > 1 {
-			parts = append(parts, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
+		parts := []core.Node{
+			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
 				core.Text{Content: grp.title(tr), Role: core.RoleHeader, Style: core.Style{FlexGrow: 1, FontSize: 13, FontWeight: ui.Semibold,
 					LetterSpacing: 0.4, TextTransform: core.TextTransformUppercase}, StyleFunc: ui.Colored(colors.Muted)},
 				core.Text{Content: itoa(len(grp.demos)), Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
-			}})
+			}},
+			core.View{Style: core.Style{CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, Overflow: core.Hidden},
+				StyleFunc: func() core.Style { return core.Style{Background: colors.Surface(), BorderColor: colors.Border()} }, Children: rows},
 		}
-		parts = append(parts, core.View{Style: core.Style{CornerRadius: ui.RadiusCard, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, Overflow: core.Hidden},
-			StyleFunc: func() core.Style { return core.Style{Background: colors.Surface(), BorderColor: colors.Border()} }, Children: rows})
 		nodes = append(nodes, Appear{Index: n + 1, Children: []core.Node{core.View{TestID: "group-" + grp.name, Style: core.Style{Gap: 8}, Children: parts}}})
 	}
 	return core.Scroll{TestID: "home", Style: fillPage, StyleFunc: pageStyle(cx), Children: []core.Node{
@@ -625,8 +621,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 }
 
 // sidebar is the desktop layout's tabs above the selected one's list of
-// the demos by group, titled where it has more than one. A list hidden
-// keeps its scroll position.
+// the demos by group. A list hidden keeps its scroll position.
 func (g *gallery) sidebar(tr locales.Messages) []core.Node {
 	var options []ui.Option[int]
 	var lists []core.Node
@@ -638,11 +633,7 @@ func (g *gallery) sidebar(tr locales.Messages) []core.Node {
 			for _, d := range grp.demos {
 				entries = append(entries, ui.SidebarItem{ID: d.name, Text: d.title(tr), Icon: d.icon, TestID: "nav-" + d.name})
 			}
-			section := ui.SidebarSection{Items: entries, TestID: "nav-group-" + grp.name}
-			if len(t.groups) > 1 {
-				section.Title = grp.title(tr)
-			}
-			sections = append(sections, section)
+			sections = append(sections, ui.SidebarSection{Title: grp.title(tr), Items: entries, TestID: "nav-group-" + grp.name})
 		}
 		lists = append(lists, core.View{Children: []core.Node{ui.Sidebar{TestID: "sidebar", Sections: sections, Selected: g.selected.Get, OnSelect: g.selectDemo}},
 			StyleFunc: func() core.Style {
