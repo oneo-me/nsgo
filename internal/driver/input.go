@@ -193,6 +193,16 @@ func KeyOf(text string) string {
 	return text
 }
 
+// Highlight is what selected text shows on: SelectionColor, at 30% when
+// it is opaque, as a translucent one already says its strength; 0 is the
+// platform's.
+func (c *InputConfig) Highlight() Color {
+	if c.SelectionColor&0xff == 0xff {
+		return c.SelectionColor.Faded(0.3)
+	}
+	return c.SelectionColor
+}
+
 // Caret is the color of the caret: CaretColor, or else SelectionColor.
 func (c *InputConfig) Caret() Color {
 	if c.CaretColor != 0 {

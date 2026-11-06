@@ -334,6 +334,7 @@ func (t *Tree) setInput(n *node, v Input) {
 	if in == nil {
 		in = &inputNode{}
 		n.input = in
+		t.bindInputTheme(n.owner, n)
 	}
 	if !n.created {
 		// Props an element receives one at a time before it shows may

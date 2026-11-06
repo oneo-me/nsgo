@@ -224,7 +224,8 @@ type Style struct {
 	// TextAlignVertical moves text shorter than its box down within it.
 	TextAlignVertical TextAlignVertical
 	// SelectionColor is the highlight of selected text, and an input's
-	// caret without a CaretColor; 0 is the platform's.
+	// caret without a CaretColor; 0 is the platform's, but for an input,
+	// which takes its theme's Selection and Accent.
 	SelectionColor Color
 	// CaretColor is an input's caret, as CSS's caret-color, but for the
 	// inputs inside the view: it is not inherited. iOS tints the selection

@@ -78,7 +78,7 @@ A final layout answers where its carets are, as NSH's `TextEngine` hit testing d
 - The platform answers `MaxLength` and Return natively, without the engine.
 - `internal/platform/field` keeps what every Go backend reports the same way: edit counts, selections, keys, compositions, and a `Value` held while an input method composes. Android's `InputField` does the same in Java.
 - Selections are UTF-16 offsets. `SelectedRange` and `Ref.SetSelection` send `ItemSelection` after the batch's value.
-- `PlaceholderColor` and `SelectionColor` are inherited text styles. `CaretColor`, which is not, is the caret's and it takes the selection color without one; iOS tints both with it, and Android's runtime, which has one color for them, does too. `HideCaret` hides it.
+- `PlaceholderColor` and `SelectionColor` are inherited text styles. `CaretColor`, which is not, is the caret's and it takes the selection color without one; iOS tints both with it, and Android's runtime, which has one color for them, does too. An input without a `SelectionColor` takes its theme's `Selection` and, without a `CaretColor`, its `Accent`. An opaque `SelectionColor` highlights at 30%, a translucent one as it is (`InputConfig.Highlight`). `HideCaret` hides it.
 - `OnCaretMove` reports the caret's bounds in the input while it has the focus, and the core adds them in the surface for `Overlay.AnchorBounds`. Each platform reads them from its own editor:
 
   | Platform | Caret bounds |

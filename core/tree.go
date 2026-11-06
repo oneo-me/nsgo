@@ -418,8 +418,11 @@ type inputNode struct {
 	count     uint32 // the platform's last edit
 	autoFocus bool
 	accessory string // the InputAccessoryView's ID
-	lineH     Points
-	lineFor   driver.TextStyle
+	// themeSelection and themeCaret are its theme's colors, which the
+	// input shows without a SelectionColor of its style's.
+	themeSelection, themeCaret Color
+	lineH                      Points
+	lineFor                    driver.TextStyle
 	// noScale and maxScale limit the user's text size setting.
 	noScale  bool
 	maxScale float32
@@ -1310,6 +1313,18 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	}
 }
 
+// bindInputTheme keeps input n's theme colors, as cx's palette has them.
+func (t *Tree) bindInputTheme(cx *Scope, n *node) {
+	cx.renderEffect(func() {
+		p, in := cx.Palette(), n.input
+		if n.deleted || p.Selection == in.themeSelection && p.Accent == in.themeCaret {
+			return
+		}
+		in.themeSelection, in.themeCaret = p.Selection, p.Accent
+		t.markResolve(n)
+	})
+}
+
 func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 	n := t.newNode(driver.KindInput, parent, cx)
 	t.setClasses(n, v.Class)
@@ -1326,6 +1341,7 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 		AutoCapitalize: v.AutoCapitalize, NoAutoCorrect: v.NoAutoCorrect, AutoComplete: v.AutoComplete,
 		KeyboardAppearance: v.IOS.KeyboardAppearance, HideCaret: v.HideCaret, PasteBehavior: v.PasteBehavior}
 	n.input = in
+	t.bindInputTheme(cx, n)
 	t.bindBool(cx, n, v.Disabled, &in.config.Disabled)
 	if v.PlaceholderFunc != nil {
 		cx.renderEffect(func() {

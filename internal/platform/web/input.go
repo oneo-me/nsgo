@@ -228,7 +228,7 @@ func (s *surface) setInput(v *view, c *driver.InputConfig) {
 	if c.SelectionColor != 0 {
 		s.selectionStyle()
 		classes.Call("add", "nsgo-selection")
-		css["--nsgo-selection"] = cssColor(c.SelectionColor.Faded(0.3))
+		css["--nsgo-selection"] = cssColor(c.Highlight())
 	} else {
 		classes.Call("remove", "nsgo-selection")
 	}

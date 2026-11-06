@@ -1070,8 +1070,8 @@ func (in *textInput) compose() {
 // else iOS's blue at 30%, the text color at half strength and the text
 // color.
 func (in *textInput) selectionColor() driver.Color {
-	if c := in.config.SelectionColor; c != 0 {
-		return c.Faded(0.3)
+	if c := in.config.Highlight(); c != 0 {
+		return c
 	}
 	return selectionTint
 }

@@ -59,6 +59,61 @@ func TestInputConfigCarriesProps(t *testing.T) {
 	}
 }
 
+func TestInputTakesItsThemesColors(t *testing.T) {
+	accent := func(c Color) *Theme {
+		th := DefaultTheme().Clone()
+		th.Light.Accent, th.Light.Selection = c, c.Faded(0.2)
+		return th
+	}
+	var scope *Scope
+	h := newHost(t, Size{Width: 200, Height: 200}, func(cx *Scope) Node {
+		scope = cx
+		cx.SetTheme(accent(RGB(0x112233)))
+		return View{Children: []Node{
+			Input{TestID: "plain"},
+			Input{TestID: "styled", Style: Style{SelectionColor: RGB(0x00ff00), CaretColor: RGB(0xff0000)}},
+			Input{TestID: "selection", Style: Style{SelectionColor: RGB(0x00ff00)}},
+		}}
+	})
+	inputs := func(b *driver.MountBatch) map[NodeID]*driver.InputConfig {
+		out := map[NodeID]*driver.InputConfig{}
+		for _, it := range b.Items {
+			if it.Kind == driver.ItemInput {
+				out[it.ID] = it.Input
+			}
+		}
+		return out
+	}
+	got := inputs(h.commit())
+	plain := got[h.find("plain").id]
+	if plain == nil || plain.SelectionColor != RGB(0x112233).Faded(0.2) || plain.Caret() != RGB(0x112233) {
+		t.Fatalf("plain = %+v", plain)
+	}
+	if c := got[h.find("styled").id]; c.SelectionColor != RGB(0x00ff00) || c.Caret() != RGB(0xff0000) {
+		t.Fatalf("styled = %+v", c)
+	}
+	if c := got[h.find("selection").id]; c.SelectionColor != RGB(0x00ff00) || c.Caret() != RGB(0x00ff00) {
+		t.Fatalf("selection = %+v", c)
+	}
+	scope.SetTheme(accent(RGB(0x445566)))
+	if c := inputs(h.commit())[h.find("plain").id]; c == nil || c.Caret() != RGB(0x445566) {
+		t.Fatalf("after the theme changed, plain = %+v", c)
+	}
+}
+
+func TestInputHighlightKeepsATranslucentColor(t *testing.T) {
+	for _, c := range []struct{ set, want Color }{
+		{0, 0},
+		{RGB(0x112233), RGB(0x112233).Faded(0.3)},
+		{RGB(0x112233).Faded(0.22), RGB(0x112233).Faded(0.22)},
+	} {
+		cfg := driver.InputConfig{SelectionColor: c.set}
+		if got := cfg.Highlight(); got != c.want {
+			t.Errorf("Highlight of %08x = %08x, want %08x", uint32(c.set), uint32(got), uint32(c.want))
+		}
+	}
+}
+
 func TestMultilineInputGrowsWithItsText(t *testing.T) {
 	var text *Signal[string]
 	var sizes []Size

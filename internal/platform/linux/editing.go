@@ -164,8 +164,8 @@ func entryStyle(v *view) string {
 	if tags := f.Variant.Tags(); len(tags) > 0 {
 		fmt.Fprintf(&b, "%s { font-feature-settings: \"%s\" 1; }\n", all, strings.Join(tags, "\" 1, \""))
 	}
-	if c := in.SelectionColor; c != 0 {
-		fmt.Fprintf(&b, "%s selection { background-color: %s; color: %s; }\n", name, cssColor(c.Faded(0.3)), cssColor(in.Style.Color))
+	if c := in.Highlight(); c != 0 {
+		fmt.Fprintf(&b, "%s selection { background-color: %s; color: %s; }\n", name, cssColor(c), cssColor(in.Style.Color))
 	}
 	placeholder := in.Style.Color.Faded(0.5)
 	if in.PlaceholderColor != 0 {

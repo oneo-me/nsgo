@@ -631,8 +631,8 @@ func (in *input) styleEditor() {
 	}
 	e.Send(sel("setInsertionPointColor:"), caret)
 	highlight := objc.ID(objc.GetClass("NSColor")).Send(sel("selectedTextBackgroundColor"))
-	if c.SelectionColor != 0 {
-		highlight = nsColor(c.SelectionColor.Faded(0.3))
+	if h := c.Highlight(); h != 0 {
+		highlight = nsColor(h)
 	}
 	if key := textAttrs().background; key != 0 {
 		attrs := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), highlight, key)
