@@ -115,7 +115,7 @@ func TestSidebarShell(t *testing.T) {
 	if got := toggleX(); got != 80 {
 		t.Fatalf("toggle moved to %v", got)
 	}
-	if want := 80 + ButtonHeight + 8; x(app, "shell", app.Find("title")) != want {
+	if want := core.Points(80 + 32 + 8); x(app, "shell", app.Find("title")) != want {
 		t.Fatalf("title at %v, want %v, after the toggle", x(app, "shell", app.Find("title")), want)
 	}
 	app.Advance(time.Second)

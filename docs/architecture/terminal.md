@@ -24,6 +24,10 @@ The library runs on macOS 13 or later, Linux with glibc 2.28 or later (Debian 10
 
 `Terminal` takes `Command`, `Dir`, `Env`, `Conn`, `Scrollback`, `Cursor` (which `SetCursor` changes in a running terminal) and the `OnTitle`, `OnExit` and `OnBell` callbacks. A reader goroutine writes the program's output into the emulator under the terminal's lock; a queue writes input on a goroutine of its own, so a program that reads nothing never blocks the reader answering its queries. The program starts at the first size a view gives, or at 80×24 after half a second. Its end writes a line of `locales` in the language the view last drew in.
 
+A terminal no view shows, as a server's for a session, sizes with `Resize` and `ResizePixels` and has `Mirror`s (`mirror.go`): `Frame` returns the VT sequences that bring another terminal, one whose `Conn` reads the frames with `ResizeByConn`, to what this one shows, cell for cell, with its cursor, modes and scrollback. `ClearScreen` clears above the prompt, and programs' OSC 52 writes go on through the frames.
+
+`Search` finds text in the screen and the scrollback, a slice of the search each frame, reports through `OnSearch` and marks the matches the viewport shows.
+
 ## View
 
 - The screen is a `core.Canvas`. Each drawing updates libghostty-vt's render state and records the rows: background spans, the selection, then text, ASCII in runs of one style and anything else in its own cells, so a fallback font's width moves nothing after it; decorations; the cursor, hollow without the focus. The terminal's reader asks for a frame by bumping a signal through `Scope.Post`, once until the frame comes.

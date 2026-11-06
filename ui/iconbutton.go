@@ -12,10 +12,14 @@ type IconButton struct {
 	Label     string
 	LabelFunc func() string
 	Size      core.Points
-	Selected  func() bool
-	Disabled  func() bool
-	OnPress   func()
-	TestID    string
+	// IconSize is the glyph's, 60% of Size when 0, and Tint its color, the
+	// muted text's when nil.
+	IconSize core.Points
+	Tint     func() core.Color
+	Selected func() bool
+	Disabled func() bool
+	OnPress  func()
+	TestID   string
 }
 
 // Render implements core.Node.
@@ -29,12 +33,19 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 	if name == nil {
 		name = b.Icon
 	}
+	glyph, tint := b.IconSize, b.Tint
+	if glyph == 0 {
+		glyph = size * 0.6
+	}
+	if tint == nil {
+		tint = colors.Muted
+	}
 	return core.View{OnPress: func(core.PressEvent) { b.OnPress() }, Role: core.RoleButton, Label: b.Label, LabelFunc: b.LabelFunc,
 		Selected: b.Selected, Disabled: b.Disabled, TestID: b.TestID, Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff},
 		Style: core.Style{Width: core.Pt(size), Height: core.Pt(size), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 			CornerRadius: 8, Disabled: Dimmed()},
 		StyleFunc: func() core.Style {
-			return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
+			return core.Style{Hover: &core.Style{Background: Alpha(colors.Text(), 0.08)}, Active: &core.Style{Background: Alpha(colors.Text(), 0.14)}, Focus: FocusRing(cx, -2)}
 		},
-		Children: []core.Node{IconOf(name, size*0.6, colors.Muted)}}
+		Children: []core.Node{IconOf(name, glyph, tint)}}
 }

@@ -126,3 +126,13 @@ func menuLeading(cx *core.Scope, icon func() *core.SVG, checked func() bool) []c
 	}
 	return out
 }
+
+// MenuLabel heads a group of a menu's items.
+type MenuLabel struct{ Text string }
+
+// Render implements core.Node.
+func (l MenuLabel) Render(cx *core.Scope) core.Node {
+	t := Text(l.Text, 11.5, Medium, ColorsOf(cx).Muted)
+	t.Style.Padding = core.Edges{Top: 6, Right: 8, Bottom: 3, Left: 8}
+	return t
+}

@@ -344,7 +344,11 @@ func (t *Tree) setInput(n *node, v Input) {
 	in.noScale, in.maxScale = v.NoFontScaling, v.MaxFontSizeMultiplier
 	in.selection, in.keyPress, in.composition = v.OnSelectionChange, v.OnKeyPress, v.OnCompositionChange
 	in.contentSize, in.caret, in.paste = v.OnContentSizeChange, v.OnCaretMove, v.OnPaste
-	in.config = driver.InputConfig{Placeholder: v.Placeholder, Masked: v.Masked, Readonly: v.Readonly,
+	placeholder := v.Placeholder
+	if v.PlaceholderFunc != nil {
+		placeholder = v.PlaceholderFunc()
+	}
+	in.config = driver.InputConfig{Placeholder: placeholder, Masked: v.Masked, Readonly: v.Readonly,
 		KeyboardType: v.KeyboardType, Multiline: v.Multiline, MaxLength: max(v.MaxLength, 0),
 		SubmitBehavior: v.SubmitBehavior, ReturnKey: v.ReturnKeyType, AutoCapitalize: v.AutoCapitalize,
 		NoAutoCorrect: v.NoAutoCorrect, AutoComplete: v.AutoComplete, KeyboardAppearance: v.IOS.KeyboardAppearance,

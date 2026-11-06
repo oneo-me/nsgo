@@ -43,7 +43,21 @@ type SidebarShell struct {
 	DefaultWidth       core.Points
 	MinWidth, MaxWidth core.Points
 	ResizeLabel        string
-	TestID             string
+	// Right is a panel at the content's end under RightHeader, and
+	// RightOpen whether it shows, with a toggle ending the content's
+	// header, named RightToggleLabel, while OnRightOpenChange is set. Its
+	// edge is a handle of its own, named RightResizeLabel; RightWidth,
+	// RightDefaultWidth (280 when 0), RightMinWidth (200 when 0) and
+	// RightMaxWidth (none when 0) work as the sidebar's do.
+	Right, RightHeader                 []core.Node
+	RightOpen                          func() bool
+	OnRightOpenChange                  func(open bool)
+	RightToggleLabel, RightResizeLabel string
+	RightWidth                         func() core.Points
+	OnRightWidthChange                 func(width core.Points)
+	RightDefaultWidth                  core.Points
+	RightMinWidth, RightMaxWidth       core.Points
+	TestID                             string
 }
 
 // Render implements core.Node.
@@ -124,14 +138,14 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		}
 		return controlsEnd(cx) + 12
 	}
-	const toggleSize = 28
+	const toggleSize, toggleIcon = 32, 16.25
 	reserve := func() core.Points { return controlsEnd(cx) }
 	var toggle core.Node
 	if s.OnOpenChange != nil {
 		toggle = core.View{StyleFunc: func() core.Style {
 			return core.Style{Position: core.Absolute, Top: core.Pt(core.Insets(cx).Top), Left: core.Pt(toggleStart()),
 				Height: core.Pt(ShellHeaderHeight(cx)), Direction: core.Row, AlignItems: core.AlignCenter, ZIndex: 2}
-		}, Children: []core.Node{IconButton{Icon: lucide.PanelLeft, Label: s.ToggleLabel, Size: toggleSize, Selected: open,
+		}, Children: []core.Node{IconButton{Icon: lucide.PanelLeft, Label: s.ToggleLabel, Size: toggleSize, IconSize: toggleIcon,
 			OnPress: func() { s.OnOpenChange(!open()) }}}}
 		reserve = func() core.Points { return toggleStart() - 12 + toggleSize + 8 }
 	}
@@ -168,7 +182,7 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 				return 0
 			}
 			return reserve()
-		}, true, func() core.Color { return colors.Background() }, append(head, s.Actions...)),
+		}, true, func() core.Color { return colors.Background() }, append(append(head, s.Actions...), s.rightToggle()...)),
 		core.View{Style: FillRest, Children: s.Content},
 	}}
 
@@ -197,11 +211,82 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 		Style:         core.Style{Margin: core.Edges{Left: 1}}, StyleFunc: HandleLine(cx),
 		ThumbStyle: HandleThumb(cx), ThumbStyleFunc: HandleThumbColor(cx)}}}
 
-	children := []core.Node{core.View{Style: FillRest.Merge(core.Style{Direction: core.Row}), Children: []core.Node{slot, content}}, handle}
+	row := []core.Node{slot, content}
+	if s.Right != nil {
+		row = append(row, s.rightPanel(cx))
+	}
+	children := []core.Node{core.View{Style: FillRest.Merge(core.Style{Direction: core.Row}), Children: row}, handle}
 	if toggle != nil {
 		children = append(children, toggle)
 	}
 	return core.View{TestID: s.TestID, Style: FillRest, StyleFunc: func() core.Style {
 		return core.Style{Background: Chrome(cx), Color: colors.Text()}
 	}, Children: children}
+}
+
+// rightToggle is the toggle of the right panel, when it has one.
+func (s SidebarShell) rightToggle() []core.Node {
+	if s.Right == nil || s.OnRightOpenChange == nil {
+		return nil
+	}
+	return []core.Node{IconButton{Icon: lucide.PanelRight, Label: s.RightToggleLabel, Size: 32, IconSize: 16.25,
+		OnPress: func() { s.OnRightOpenChange(!s.rightOpen()) }}}
+}
+
+func (s SidebarShell) rightOpen() bool { return s.RightOpen != nil && s.RightOpen() }
+
+// rightPanel is the panel at the content's end, its leading edge a handle.
+func (s SidebarShell) rightPanel(cx *core.Scope) core.Node {
+	colors := ColorsOf(cx)
+	env := cx.Env()
+	def, lo, hi := s.RightDefaultWidth, s.RightMinWidth, s.RightMaxWidth
+	if lo == 0 {
+		lo = 200
+	}
+	if hi == 0 {
+		hi = core.Points(math.MaxFloat32)
+	}
+	hi = max(hi, lo)
+	if def == 0 {
+		def = 280
+	}
+	def = min(max(def, lo), hi)
+	own := core.NewSignal(cx, def)
+	chosen := func() core.Points {
+		if s.RightWidth == nil {
+			return own.Get()
+		}
+		if w := s.RightWidth(); w > 0 {
+			return min(max(w, lo), hi)
+		}
+		return def
+	}
+	width := func() core.Points { return max(min(chosen(), env.Window().Width-12), 0) }
+	resize := func(w core.Points) {
+		w = min(max(w, lo), hi)
+		if s.RightWidth == nil {
+			own.Set(w)
+		}
+		if s.OnRightWidthChange != nil {
+			s.OnRightWidthChange(w)
+		}
+	}
+	var start core.Points
+	return core.Show{When: s.rightOpen, Then: func(cx *core.Scope) core.Node {
+		head := []core.Node{shellHeader(cx, "right-header", func() core.Points { return 0 }, false, func() core.Color { return 0 }, s.RightHeader)}
+		return core.View{TestID: "right-panel", StyleFunc: func() core.Style {
+			return core.Style{Width: core.Pt(width()), FlexShrink: 0, Height: core.Pct(100), MinHeight: core.Pt(0), Background: Chrome(cx), Color: colors.Text()}
+		}, Children: append(head, core.View{Style: FillRest, Children: s.Right},
+			core.View{TestID: "right-resize", Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Left: core.Pt(-2), Width: core.Pt(3), ZIndex: 1},
+				Children: []core.Node{base.ResizeHandle{Label: s.RightResizeLabel, Edge: base.HandleLeading,
+					Value: func() core.AccessibilityValue {
+						return core.AccessibilityValue{Now: float32(chosen()), Min: float32(lo), Max: float32(min(hi, env.Window().Width))}
+					},
+					OnDragStart:   func() { start = chosen() },
+					OnDragMove:    func(d core.Points) { resize(min(start-d, env.Window().Width-12)) },
+					OnDragEnd:     func(d core.Points) { resize(min(start-d, env.Window().Width-12)) },
+					OnDoublePress: func() { resize(def) },
+					Style:         core.Style{Margin: core.Edges{Left: 1}}, StyleFunc: HandleLine(cx),
+					ThumbStyle: HandleThumb(cx), ThumbStyleFunc: HandleThumbColor(cx)}}})}
+	}}
 }

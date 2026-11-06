@@ -1327,6 +1327,15 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 		KeyboardAppearance: v.IOS.KeyboardAppearance, HideCaret: v.HideCaret, PasteBehavior: v.PasteBehavior}
 	n.input = in
 	t.bindBool(cx, n, v.Disabled, &in.config.Disabled)
+	if v.PlaceholderFunc != nil {
+		cx.renderEffect(func() {
+			if p := v.PlaceholderFunc(); p != in.config.Placeholder {
+				in.config.Placeholder = p
+				t.markResolve(n) // a field fits it
+				t.mark(n)
+			}
+		})
+	}
 	if v.Value != nil {
 		cx.renderEffect(func() {
 			in.value = v.Value()

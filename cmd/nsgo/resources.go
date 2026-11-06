@@ -12,14 +12,23 @@ import (
 const resourcesDir = "resources"
 
 // copyResources copies the app's resources directory into root, the
-// package's resource root, where "asset:" images resolve.
+// package's resource root, where "asset:" images resolve. An executable
+// stays executable, for programs the app ships and starts.
 func copyResources(p *project, root string) error {
 	return walkResources(p, func(rel string, data []byte) error {
 		out := filepath.Join(root, rel)
 		if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
 			return err
 		}
-		return os.WriteFile(out, data, 0o644)
+		mode := fs.FileMode(0o644)
+		if info, err := os.Stat(filepath.Join(p.Dir, resourcesDir, rel)); err == nil && info.Mode()&0o111 != 0 {
+			mode = 0o755
+		}
+		if err := os.WriteFile(out, data, mode); err != nil {
+			return err
+		}
+		// WriteFile keeps the mode of a file that was there.
+		return os.Chmod(out, mode)
 	})
 }
 

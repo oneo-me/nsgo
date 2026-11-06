@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -46,6 +47,12 @@ type Options struct {
 	// session, instead of a program. A Conn with a method Resize(cols,
 	// rows int) error is told the screen's size.
 	Conn io.ReadWriteCloser
+	// ResizeByConn leaves the size of the screen to whoever reads Conn: a
+	// view asks Conn's ResizePixels(cols, rows, cellWidth, cellHeight int)
+	// error, or else its Resize, for the size it fits, and the screen keeps
+	// its size until Resize sets it, as a terminal showing a server's
+	// (see Mirror) does for the frames that come.
+	ResizeByConn bool
 	// Scrollback is about how many bytes of output to keep above the
 	// screen: 10 MB when zero, none when negative.
 	Scrollback int
@@ -56,6 +63,8 @@ type Options struct {
 	OnTitle func(title string)
 	OnExit  func(code int)
 	OnBell  func()
+	// OnSearch runs on the engine as the status of the search changes.
+	OnSearch func(s SearchStatus)
 }
 
 // CursorStyle is the shape of the cursor.
@@ -85,16 +94,23 @@ type Terminal struct {
 	held      bool
 	heldSince time.Time
 	theme     *Theme
+	// mirrors are the terminal's Mirrors, each passing on what programs
+	// copy; asked is the size a view last asked Conn for.
+	mirrors []*Mirror
+	asked   gridSize
+	find    search
 	// lang is the language of the app showing the terminal, which says
 	// the terminal's own lines.
 	lang string
 
 	// src is the program's pseudo-terminal, or Conn: nil until the
 	// program starts, from launch.
-	src    io.ReadWriteCloser
-	proc   *pty.PTY
-	launch *pty.Options
-	timer  *time.Timer
+	src io.ReadWriteCloser
+	// srcClosed tells that src was closed, which happens once.
+	srcClosed bool
+	proc      *pty.PTY
+	launch    *pty.Options
+	timer     *time.Timer
 
 	draw     atomic.Pointer[func()] // asks the view for a frame
 	done     chan struct{}
@@ -154,8 +170,17 @@ func New(opts Options) (*Terminal, error) {
 		Bell:         func() { t.events.bells++ },
 		TitleChanged: func() { t.events.title = true },
 		RenderHold:   t.renderHold,
-		Size:         func() (int, int, int, int) { return t.size.cols, t.size.rows, t.size.cellW, t.size.cellH },
-		Dark:         func() bool { return t.theme == nil || t.theme.dark() },
+		Clipboard: func(text string, primary bool) bool {
+			if primary {
+				return false
+			}
+			for _, m := range t.mirrors {
+				m.clipOut = queueClip(m.clipOut, text)
+			}
+			return len(t.mirrors) > 0
+		},
+		Size: func() (int, int, int, int) { return t.size.cols, t.size.rows, t.size.cellW, t.size.cellH },
+		Dark: func() bool { return t.theme == nil || t.theme.dark() },
 	})
 	if err != nil {
 		return nil, err
@@ -213,6 +238,15 @@ func New(opts Options) (*Terminal, error) {
 	})
 	t.mu.Unlock()
 	return t, nil
+}
+
+// queueClip adds what a program copied to what a Mirror has to pass on,
+// keeping the latest few if nothing frames them.
+func queueClip(q []string, text string) []string {
+	if len(q) >= 16 {
+		q = q[1:]
+	}
+	return append(q, text)
 }
 
 // run reads the output and writes the input of the program, or Conn.
@@ -449,6 +483,47 @@ func (t *Terminal) Resize(cols, rows int) {
 	t.redraw()
 }
 
+// ResizePixels is Resize with the size of a cell in pixels, for a terminal
+// no view shows that stands for one that does, as a server's for the
+// window showing its session: programs asking the size in pixels get it. A
+// zero cell size keeps the one before.
+func (t *Terminal) ResizePixels(cols, rows, cellWidth, cellHeight int) {
+	t.mu.Lock()
+	if cellWidth <= 0 || cellHeight <= 0 {
+		cellWidth, cellHeight = t.size.cellW, t.size.cellH
+	}
+	t.resize(gridSize{max(cols, 1), max(rows, 1), cellWidth, cellHeight})
+	t.mu.Unlock()
+	t.redraw()
+}
+
+// ClearScreen clears the scrollback and the screen above the cursor's line,
+// which moves to the top, so the prompt the shell shows stays. A
+// full-screen program's screen, which this would break, is left alone; it
+// reports whether it cleared.
+func (t *Terminal) ClearScreen() bool {
+	t.mu.Lock()
+	if t.term == nil || t.term.AltScreen() {
+		t.mu.Unlock()
+		return false
+	}
+	t.term.SetSelection(nil)
+	t.term.ScrollToBottom()
+	x, y := t.term.Cursor()
+	seq := "\x1b[3J"
+	if y > 0 {
+		// Delete the rows above the cursor's from the top, then put the
+		// cursor back on its line, now the first.
+		seq += "\x1b[H\x1b[" + strconv.Itoa(y) + "M\x1b[1;" + strconv.Itoa(x+1) + "H"
+	}
+	// Under the lock, so that no output comes between the cursor read and
+	// the rows deleted.
+	t.term.Write([]byte(seq))
+	t.mu.Unlock()
+	t.redraw()
+	return true
+}
+
 // Send sends data to the program as if typed.
 func (t *Terminal) Send(data []byte) { t.in.push(append([]byte(nil), data...)) }
 
@@ -515,6 +590,7 @@ func (t *Terminal) Close() error {
 		<-t.done
 		t.mu.Lock()
 		if t.term != nil {
+			t.endSearch()
 			t.rs.Free()
 			t.term.Free()
 			t.term, t.rs = nil, nil
@@ -528,6 +604,10 @@ func (t *Terminal) Close() error {
 func (t *Terminal) closeSrc() error {
 	t.mu.Lock()
 	src := t.src
+	if t.srcClosed {
+		src = nil
+	}
+	t.srcClosed = src != nil || t.srcClosed
 	t.mu.Unlock()
 	if src == nil {
 		return nil
@@ -574,6 +654,37 @@ func (t *Terminal) resize(s gridSize) {
 	switch src := t.src.(type) {
 	case *pty.PTY:
 		src.Resize(s.cols, s.rows, s.cols*s.cellW, s.rows*s.cellH)
+	case interface{ Resize(cols, rows int) error }:
+		if !t.opts.ResizeByConn { // else the size came from Conn's reader
+			go src.Resize(s.cols, s.rows)
+		}
+	}
+}
+
+// viewResize gives the screen the size the view fits, s, or with
+// Options.ResizeByConn asks Conn for it, the screen keeping its size and
+// taking the cells' new metrics only; t.mu is held.
+func (t *Terminal) viewResize(s gridSize) {
+	if !t.opts.ResizeByConn {
+		t.resize(s)
+		return
+	}
+	if t.term == nil {
+		return
+	}
+	if s.cellW != t.size.cellW || s.cellH != t.size.cellH {
+		t.size.cellW, t.size.cellH = s.cellW, s.cellH
+		t.term.Resize(t.size.cols, t.size.rows, s.cellW, s.cellH)
+	}
+	if s == t.asked {
+		return
+	}
+	t.asked = s
+	switch src := t.src.(type) {
+	case interface {
+		ResizePixels(cols, rows, cellWidth, cellHeight int) error
+	}:
+		go src.ResizePixels(s.cols, s.rows, s.cellW, s.cellH)
 	case interface{ Resize(cols, rows int) error }:
 		go src.Resize(s.cols, s.rows)
 	}

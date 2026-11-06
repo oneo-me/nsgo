@@ -303,6 +303,8 @@ type Input struct {
 	Value        func() string
 	DefaultValue string
 	Placeholder  string
+	// PlaceholderFunc replaces Placeholder and may change.
+	PlaceholderFunc func() string
 	// Masked hides the characters, for passwords.
 	Masked       bool
 	Readonly     bool

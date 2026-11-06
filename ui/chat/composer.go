@@ -19,8 +19,10 @@ type Composer struct {
 	OnDraftChange                     func(string)
 	Label                             string
 	Placeholder, SendLabel, StopLabel string
-	Running                           func() bool
-	OnSend, OnStop                    func()
+	// PlaceholderFunc replaces Placeholder and may change.
+	PlaceholderFunc func() string
+	Running         func() bool
+	OnSend, OnStop  func()
 	// Accessory holds controls in the card's bottom row, such as chips, and
 	// shrinks; Trailing compact ones just before Send or Stop, which do not.
 	Accessory, Trailing View
@@ -68,7 +70,7 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 	if cx.Env().Desktop() {
 		submit = core.SubmitBehaviorSubmit
 	}
-	editor := base.Input{Value: draft, OnChange: m.OnDraftChange, Multiline: true, SubmitBehavior: submit, Label: m.Label, Placeholder: m.Placeholder, TestID: "composer",
+	editor := base.Input{Value: draft, OnChange: m.OnDraftChange, Multiline: true, SubmitBehavior: submit, Label: m.Label, Placeholder: m.Placeholder, PlaceholderFunc: m.PlaceholderFunc, TestID: "composer",
 		OnSubmit:            func(string) { send() },
 		OnPaste:             m.OnPaste,
 		OnFocus:             func() { focused.Set(true) },

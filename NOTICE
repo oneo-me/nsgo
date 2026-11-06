@@ -34,7 +34,8 @@ The date and time tables in internal/cldr/tables.go are generated from the
 Unicode Common Locale Data Repository (CLDR), https://cldr.unicode.org,
 Copyright (c) 1991-2025 Unicode, Inc., licensed under the Unicode License v3.
 
-base/terminal/internal/vt and base/terminal/internal/pty come from
+base/terminal/internal/vt, base/terminal/internal/pty and
+base/terminal/mirror.go and mirror_images.go come from
 https://github.com/egoist/mygo, Copyright (c) 2026 MyGo contributors, licensed
 under the MIT License. base/terminal/internal/library/lib holds libghostty-vt
 built from Ghostty, https://github.com/ghostty-org/ghostty, Copyright (c) 2024

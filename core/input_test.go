@@ -203,3 +203,26 @@ func TestCaretAndPasteReachTheInputAndAnOverlayAnchorsToTheCaret(t *testing.T) {
 		t.Fatalf("pasted %+v", pasted)
 	}
 }
+
+func TestInputPlaceholderFollowsItsSignal(t *testing.T) {
+	var text *Signal[string]
+	h := newHost(t, Size{Width: 200, Height: 200}, func(cx *Scope) Node {
+		text = NewSignal(cx, "one")
+		return Input{PlaceholderFunc: text.Get, TestID: "in"}
+	})
+	sent := func(b *driver.MountBatch) string {
+		for _, it := range b.Items {
+			if it.Kind == driver.ItemInput {
+				return it.Input.Placeholder
+			}
+		}
+		return ""
+	}
+	if got := sent(h.commit()); got != "one" {
+		t.Fatalf("placeholder %q", got)
+	}
+	text.Set("two")
+	if got := sent(h.commit()); got != "two" {
+		t.Fatalf("placeholder %q after it changed", got)
+	}
+}

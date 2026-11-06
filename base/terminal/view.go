@@ -42,6 +42,9 @@ type View struct {
 	Padding Padding
 	// AutoFocus gives the view the keyboard focus as it mounts.
 	AutoFocus bool
+	// Transparent leaves the terminal's default background undrawn, so
+	// what is behind the view shows through.
+	Transparent bool
 	// Class is Tailwind CSS classes, as core.View's, under Style.
 	Class string
 	Style core.Style
@@ -165,6 +168,12 @@ func (p View) Render(cx *core.Scope) core.Node {
 
 // view is a View's state, on the engine's goroutine.
 type view struct {
+	// searched is the status OnSearch was last told; matches are the
+	// search's spans the viewport shows, in matchBuf's memory.
+	searched SearchStatus
+	matches  []matchSpan
+	matchBuf []vt.Selection
+
 	p  View
 	t  *Terminal
 	cx *core.Scope
@@ -274,7 +283,7 @@ func (v *view) draw(d *core.Drawing, size core.Size) {
 	}
 	t.useTheme(th)
 	t.lang = i18n.Language(cx)
-	t.resize(gridSize{v.cols, v.rows, int(v.cellW * v.ratio), int(v.cellH * v.ratio)})
+	t.viewResize(gridSize{v.cols, v.rows, int(v.cellW * v.ratio), int(v.cellH * v.ratio)})
 	// A synchronized update shows when it ends, or after a second.
 	if t.held && time.Since(t.heldSince) > time.Second {
 		t.term.SetMode(vt.ModeSyncOutput, false)
@@ -288,13 +297,47 @@ func (v *view) draw(d *core.Drawing, size core.Size) {
 		v.reported = [2]int{cols, rows}
 		cx.Post(func() { v.p.OnSizeChange(cols, rows) })
 	}
+	searching := t.find.drive(t.term)
+	searched := t.find.status
+	cols, rows := t.term.Size()
+	v.matches, v.matchBuf = t.viewportMatches(v.matches, v.matchBuf, cols, rows)
 	fr := frame{v: v, d: d, rs: t.rs, th: th, focused: focused, composing: composing}
 	fr.paint(size)
+	fr.paintMatches()
 	t.mu.Unlock()
+	if searched != v.searched {
+		v.searched = searched
+		if on := t.opts.OnSearch; on != nil {
+			cx.Post(func() { on(searched) })
+		}
+	}
+	if searching {
+		cx.Post(func() { v.rev.Update(func(n int) int { return n + 1 }) })
+	}
 	if sel := fr.anySel; sel != v.selected.GetUntracked() {
 		cx.Post(func() { v.selected.Set(sel) })
 	}
 	v.follow(sb, size)
+}
+
+// paintMatches marks the matches of the search the viewport shows.
+func (f *frame) paintMatches() {
+	v, th := f.v, f.th
+	or := func(c, fallback core.Color) core.Color {
+		if c != 0 {
+			return c
+		}
+		return fallback
+	}
+	match := or(th.Search, core.RGB(0xffe082)).Faded(0.45)
+	selected := or(th.SearchSelected, core.RGB(0xf2a57e)).Faded(0.6)
+	for _, m := range v.matches {
+		c := match
+		if m.selected {
+			c = selected
+		}
+		f.d.SetFillColor(c).FillRect(v.padX+float32(m.x0)*v.cellW, v.padY+float32(m.y)*v.cellH, float32(m.x1-m.x0+1)*v.cellW, v.cellH)
+	}
 }
 
 // follow sizes the scroll layer for the scrollback and keeps it where the
@@ -399,7 +442,9 @@ func (f *frame) paint(size core.Size) {
 	m := d.TextMetrics("M", v.font(false, false))
 	base := (ch-(m.Ascent+m.Descent))/2 + m.Ascent
 	bg := color(f.colors.Background)
-	d.SetFillColor(bg).FillRect(0, 0, float32(size.Width), float32(size.Height))
+	if !v.p.Transparent {
+		d.SetFillColor(bg).FillRect(0, 0, float32(size.Width), float32(size.Height))
+	}
 	selection := f.th.Selection
 	if selection == 0 {
 		selection = color(f.colors.Foreground).Faded(0.3)

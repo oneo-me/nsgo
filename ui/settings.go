@@ -20,6 +20,9 @@ type SettingsCategory struct {
 	ID, Title, Section, Description string
 	Icon                            func() *core.SVG
 	Groups                          []SettingsGroup
+	// Placeholder, set on a category with no page, stands for it in the
+	// sidebar: a note that it is empty, not a destination.
+	Placeholder core.Node
 }
 
 // SettingsGroup is related rows under an optional Title, with Actions at
@@ -96,7 +99,11 @@ type Settings struct {
 	CloseLabel              string
 	HideSearch, HideSidebar bool
 	HideHeading             bool
-	TestID                  string
+	// HeaderActions end the shown page's title; SectionActions the heading
+	// of a section of the sidebar, given its title.
+	HeaderActions  func(cx *core.Scope) core.Node
+	SectionActions func(cx *core.Scope, section string) core.Node
+	TestID         string
 }
 
 // Render implements core.Node.
@@ -186,7 +193,7 @@ func (s Settings) layout(cx *core.Scope, narrow bool) core.Node {
 		if !s.HideSearch {
 			side = append(side, core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 16, Left: 12}}, Children: []core.Node{s.search(cx)}})
 		}
-		side = append(side, core.View{Style: FillRest, Children: []core.Node{s.sidebar()}})
+		side = append(side, core.View{Style: FillRest, Children: []core.Node{s.sidebar(cx)}})
 		children = append([]core.Node{
 			core.View{TestID: "settings-sidebar", Style: core.Style{Width: core.Pt(216), FlexShrink: 0},
 				StyleFunc: func() core.Style { return core.Style{Background: Alpha(colors.Text(), 0.035)} }, Children: side},
@@ -202,6 +209,9 @@ func (s Settings) heading(cx *core.Scope, title func() string, close bool) core.
 	text := Textf(title, 15, Semibold, colors.Text)
 	text.Role, text.MaxLines, text.Style.FlexGrow, text.Style.FlexShrink = core.RoleHeader, 1, 1, 1
 	children := []core.Node{text}
+	if close && s.HeaderActions != nil {
+		children = append(children, s.HeaderActions(cx))
+	}
 	if close && s.OnClose != nil {
 		children = append(children, IconButton{Icon: lucide.X, Label: s.CloseLabel, OnPress: s.OnClose, TestID: "settings-close"})
 	}
@@ -228,13 +238,21 @@ func (s Settings) search(cx *core.Scope) core.Node {
 
 // sidebar lists the categories, consecutive ones of a section under its
 // title.
-func (s Settings) sidebar() core.Node {
+func (s Settings) sidebar(cx *core.Scope) core.Node {
 	var sections []SidebarSection
 	for i, c := range s.Categories {
 		if i == 0 || c.Section != s.Categories[i-1].Section {
-			sections = append(sections, SidebarSection{Title: c.Section})
+			section := SidebarSection{Title: c.Section}
+			if s.SectionActions != nil {
+				section.Actions = s.SectionActions(cx, c.Section)
+			}
+			sections = append(sections, section)
 		}
 		last := &sections[len(sections)-1]
+		if c.Placeholder != nil {
+			last.Note = c.Placeholder
+			continue
+		}
 		last.Items = append(last.Items, SidebarItem{ID: c.ID, Text: c.Title, Icon: c.Icon, TestID: "settings-nav-" + c.ID})
 	}
 	return Sidebar{Sections: sections, OnSelect: s.choose, Selected: func() string {

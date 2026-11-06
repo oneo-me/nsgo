@@ -18,6 +18,9 @@ const (
 	ButtonAccent
 	// ButtonGhost is only a rim, Onevra's outline.
 	ButtonGhost
+	// ButtonPlain has no rim or fill at rest, as an IconButton, for a menu's
+	// trigger in a toolbar.
+	ButtonPlain
 )
 
 // Button is Onevra's button, 28 pt tall: Text with an optional leading
@@ -35,10 +38,15 @@ type Button struct {
 	Label    string
 	Disabled func() bool
 	// Flex grows it to share a row with its siblings.
-	Flex    float32
-	Small   bool
-	TestID  string
-	OnPress func()
+	Flex  float32
+	Small bool
+	// Size is the square of a button of an icon alone, ButtonHeight when 0,
+	// IconSize its glyph's, 14 when 0, and Tint its color, the look's when
+	// nil.
+	Size, IconSize core.Points
+	Tint           func() core.Color
+	TestID         string
+	OnPress        func()
 }
 
 // ButtonHeight is a button's height.
@@ -95,18 +103,32 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 			bg := colors.Surface()
 			return Mix(bg, text, 0.08), Mix(bg, text, 0.12), Mix(bg, text, 0.18), Mix(bg, text, 0.08)
 		}
+		if b.Variant == ButtonPlain {
+			return 0, colors.Hover(), colors.Pressed(), core.Transparent
+		}
 		return 0, colors.Hover(), colors.Pressed(), colors.Border()
 	}
 	var children []core.Node
 	if b.Icon != nil {
-		children = append(children, Icon(b.Icon, 14, fg))
+		glyph, tint := b.IconSize, b.Tint
+		if glyph == 0 {
+			glyph = 14
+		}
+		if tint == nil {
+			tint = fg
+		}
+		children = append(children, Icon(b.Icon, glyph, tint))
 	}
 	if b.Text != "" || b.Icon == nil {
 		children = append(children, Text(b.Text, 13, Regular, fg))
 	}
 	shape := core.Style{Height: core.Pt(ButtonHeight), Padding: core.Symmetric(0, 14)}
 	if b.Text == "" && b.Icon != nil {
-		shape = core.Style{Width: core.Pt(ButtonHeight), Height: core.Pt(ButtonHeight)}
+		side := b.Size
+		if side == 0 {
+			side = ButtonHeight
+		}
+		shape = core.Style{Width: core.Pt(side), Height: core.Pt(side)}
 	}
 	face := func() core.Style {
 		rest, hover, pressed, border := fill()

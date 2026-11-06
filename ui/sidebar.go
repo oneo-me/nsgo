@@ -18,9 +18,13 @@ type SidebarItem struct {
 // SidebarSection is a group of a Sidebar's items under an optional
 // title.
 type SidebarSection struct {
-	Title  string
-	Items  []SidebarItem
-	TestID string
+	Title string
+	Items []SidebarItem
+	// Actions end the title's row; Note follows the items, for a section
+	// that has none yet.
+	Actions core.Node
+	Note    core.Node
+	TestID  string
 }
 
 // Sidebar is grouped navigation: the sections' items, the Selected one on
@@ -124,10 +128,18 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 			title := Text(sec.Title, 11, Bold, colors.Muted)
 			title.Role, title.MaxLines = core.RoleHeader, 1
 			title.Style.Padding = core.Edges{Top: 4, Right: 8, Bottom: 2, Left: 8}
-			nodes = append(nodes, title)
+			if sec.Actions != nil {
+				title.Style.FlexGrow, title.Style.FlexShrink = 1, 1
+				nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Padding: core.Edges{Right: 4}}, Children: []core.Node{title, sec.Actions}})
+			} else {
+				nodes = append(nodes, title)
+			}
 		}
 		for _, it := range sec.Items {
 			nodes = append(nodes, item(it))
+		}
+		if sec.Note != nil {
+			nodes = append(nodes, core.View{Style: core.Style{Padding: core.Symmetric(4, 8)}, Children: []core.Node{sec.Note}})
 		}
 		sections = append(sections, core.View{TestID: sec.TestID, Style: core.Style{Gap: 1}, Children: nodes})
 	}

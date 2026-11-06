@@ -736,3 +736,31 @@ func (s Shimmer) Render(cx *core.Scope) core.Node {
 	return core.View{OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) }, Style: core.Style{FlexShrink: 1, MinWidth: core.Pt(0), Overflow: core.Hidden}.Merge(s.Style),
 		Children: []core.Node{base, sweep}}
 }
+
+// ChipPopover is a Chip that opens the app's Children in a popover, for a
+// choice a Picker's options cannot say: Open is the app's, as OnOpenChange
+// reports it.
+type ChipPopover struct {
+	Chip         Chip
+	Open         func() bool
+	OnOpenChange func(open bool)
+	Children     []core.Node
+	// Width is the popover's, 260 when 0.
+	Width  core.Points
+	Label  string
+	TestID string
+}
+
+// Render implements core.Node.
+func (p ChipPopover) Render(cx *core.Scope) core.Node {
+	width := p.Width
+	if width <= 0 {
+		width = 260
+	}
+	chip := p.Chip
+	chip.Active = p.Open
+	style, states := chip.shape(cx)
+	return base.Popover{Open: p.Open, OnOpenChange: func(v bool, _ base.Reason) { p.OnOpenChange(v) }, Placement: core.PlaceTop, Align: core.AlignStart, Offset: 4, Margin: 8,
+		Style: style, StyleFunc: states, Trigger: core.Group(chip.face(cx)), Label: p.Label, TestID: p.TestID,
+		PopupStyle: core.Style{Width: core.Pt(width), MaxWidth: core.Pct(100)}, PopupStyleFunc: chatPopup(cx), Children: p.Children}
+}
