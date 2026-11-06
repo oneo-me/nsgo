@@ -250,7 +250,7 @@ func (p *classProps) resolveCurrent(s *Style) {
 		cur(&s.Background, false)
 		cur(&s.TintColor, false)
 	}
-	for _, c := range []*Color{&s.SelectionColor, &s.PlaceholderColor, &p.shadowColor,
+	for _, c := range []*Color{&s.SelectionColor, &s.CaretColor, &s.PlaceholderColor, &p.shadowColor,
 		&p.insetShadowColor, &p.ringOffsetColor, &p.textShadowColor, &p.dropColor, &p.gradient.from.color,
 		&p.gradient.via.color, &p.gradient.to.color} {
 		cur(c, false)

@@ -37,10 +37,13 @@ type WebView struct {
 	OnError func(err error)
 	// OnMessage receives what the page posted, as a string.
 	OnMessage func(data string)
-	OnLayout  func(Bounds)
-	Ref       *Ref
-	Label     string
-	TestID    string
+	// OnDownload follows what the page downloads, which only a web view
+	// with one saves, to the app's data directory.
+	OnDownload func(WebDownload)
+	OnLayout   func(Bounds)
+	Ref        *Ref
+	Label      string
+	TestID     string
 }
 
 // Render implements Node.
@@ -68,6 +71,7 @@ type webNode struct {
 	loadStart, load, navigation func(WebNavigation)
 	loadError                   func(error)
 	message                     func(string)
+	download                    func(WebDownload)
 }
 
 func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
@@ -82,7 +86,7 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 			InjectedJavaScriptBeforeContent: w.InjectedJavaScriptBeforeContent, UserAgent: w.UserAgent,
 			NoScroll: w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
 		loadStart: w.OnLoadStart, load: w.OnLoad, navigation: w.OnNavigationStateChange,
-		loadError: w.OnError, message: w.OnMessage,
+		loadError: w.OnError, message: w.OnMessage, download: w.OnDownload,
 	}
 	if w.SourceFunc != nil {
 		cx.renderEffect(func() {
@@ -93,6 +97,13 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 		})
 	}
 }
+
+// How far a WebDownload got.
+const (
+	WebDownloadStarted  = driver.WebDownloadStarted
+	WebDownloadFinished = driver.WebDownloadFinished
+	WebDownloadFailed   = driver.WebDownloadFailed
+)
 
 // dispatchWeb handles a web view's events.
 func (t *Tree) dispatchWeb(n *node, ev driver.Event) {
@@ -117,6 +128,10 @@ func (t *Tree) dispatchWeb(n *node, ev driver.Event) {
 		if wn.loadError != nil {
 			t.within(n.owner, func() { wn.loadError(&WebError{URL: nav.URL, Message: ev.Text}) })
 		}
+	case driver.EventDownload:
+		if d, ok := ev.Data.(*WebDownload); ok && wn.download != nil {
+			t.within(n.owner, func() { wn.download(*d) })
+		}
 	case driver.EventMessage:
 		if wn.message != nil {
 			t.within(n.owner, func() { wn.message(ev.Text) })
@@ -137,6 +152,7 @@ func (wn *webNode) events() driver.EventMask {
 	bit(driver.EventNavigationStateChange, wn.navigation != nil)
 	bit(driver.EventError, wn.loadError != nil)
 	bit(driver.EventMessage, wn.message != nil)
+	bit(driver.EventDownload, wn.download != nil)
 	return m
 }
 

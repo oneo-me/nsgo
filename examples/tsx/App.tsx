@@ -119,7 +119,7 @@ function Tasks() {
         <Input
           testID="draft"
           value={draft()}
-          onChange={draft.set}
+          onChange={({ value }) => draft.set(value)}
           onSubmit={add}
           placeholder="Add a task…"
           returnKeyType="done"

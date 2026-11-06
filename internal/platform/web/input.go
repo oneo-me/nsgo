@@ -221,8 +221,8 @@ func (s *surface) setInput(v *view, c *driver.InputConfig) {
 	switch {
 	case c.HideCaret:
 		css["caret-color"] = "transparent"
-	case c.SelectionColor != 0:
-		css["caret-color"] = cssColor(c.SelectionColor)
+	case c.Caret() != 0:
+		css["caret-color"] = cssColor(c.Caret())
 	}
 	classes := el.Get("classList")
 	if c.SelectionColor != 0 {

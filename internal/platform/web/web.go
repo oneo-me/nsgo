@@ -2156,33 +2156,25 @@ func (s *surface) setEvents(v *view, m driver.EventMask) {
 	}
 	// Pressable views take keyboard focus.
 	v.setTabIndex()
-	if !v.hover && (m.Has(driver.EventHoverIn) || m.Has(driver.EventHoverOut)) {
+	if !v.hover && (m.Has(driver.EventMouseEnter) || m.Has(driver.EventMouseLeave)) {
 		v.hover = true
-		v.listeners.on(v.el, "pointerenter", func(js.Value) { s.send(v, driver.Event{Kind: driver.EventHoverIn}) })
-		v.listeners.on(v.el, "pointerleave", func(js.Value) { s.send(v, driver.Event{Kind: driver.EventHoverOut}) })
+		v.listeners.on(v.el, "pointerenter", func(e js.Value) { s.send(v, s.mouseEvent(v, driver.EventMouseEnter, e)) })
+		v.listeners.on(v.el, "pointerleave", func(e js.Value) { s.send(v, s.mouseEvent(v, driver.EventMouseLeave, e)) })
 	}
 	// Moves bubble, so each view under the pointer hears them, innermost
 	// first. Touches and pens never hover.
-	if !v.moves && (m.Has(driver.EventHoverMove) || m.Has(driver.EventMouseMove)) {
+	if !v.moves && m.Has(driver.EventMouseMove) {
 		v.moves = true
 		v.listeners.on(v.el, "pointermove", func(e js.Value) {
-			if e.Get("pointerType").String() != "mouse" {
-				return
-			}
-			if e.Get("buttons").Int() == 0 && v.events.Has(driver.EventHoverMove) {
-				s.send(v, s.pointer(v, driver.EventHoverMove, e))
-			}
-			if v.events.Has(driver.EventMouseMove) {
-				ev := s.pointer(v, driver.EventMouseMove, e)
-				ev.Page, ev.Modifiers = driver.Point{}, driver.Modifiers{}
-				s.send(v, ev)
+			if e.Get("pointerType").String() == "mouse" && v.events.Has(driver.EventMouseMove) {
+				s.send(v, s.mouseEvent(v, driver.EventMouseMove, e))
 			}
 		})
 	}
 }
 
 // listenModifiers follows the mouse over the host and reports a modifier
-// key pressed or released while it rests as a hover move to where it is
+// key pressed or released while it rests as a mouse move to where it is
 // with the new modifiers, so a view hears Control come and go under a
 // still mouse.
 func (s *surface) listenModifiers(ls *listeners) {
@@ -2208,8 +2200,8 @@ func (s *surface) listenModifiers(ls *listeners) {
 		}
 		el := s.doc.Call("elementFromPoint", float64(s.mouse.X), float64(s.mouse.Y))
 		for ; el.Truthy() && !el.Equal(s.host); el = el.Get("parentElement") {
-			if v := s.viewOf(el); v != nil && v.el.Equal(el) && v.events.Has(driver.EventHoverMove) {
-				s.send(v, s.pointerAt(v, driver.EventHoverMove, float64(s.mouse.X), float64(s.mouse.Y), e))
+			if v := s.viewOf(el); v != nil && v.el.Equal(el) && v.events.Has(driver.EventMouseMove) {
+				s.send(v, s.pointerAt(v, driver.EventMouseMove, float64(s.mouse.X), float64(s.mouse.Y), e))
 			}
 		}
 	}
@@ -2221,6 +2213,21 @@ func (s *surface) listenModifiers(ls *listeners) {
 // modal around it or the surface, and the modifier keys held.
 func (s *surface) pointer(v *view, kind driver.EventKind, e js.Value) driver.Event {
 	return s.pointerAt(v, kind, e.Get("clientX").Float(), e.Get("clientY").Float(), e)
+}
+
+// mouseEvent is pointer with the button a pointer event's buttons hold
+// down: the first, each a bit in the order of the DOM's.
+func (s *surface) mouseEvent(v *view, kind driver.EventKind, e js.Value) driver.Event {
+	ev := s.pointer(v, kind, e)
+	buttons := e.Get("buttons").Int()
+	for i, b := range []driver.MouseButton{driver.MouseButtonLeft, driver.MouseButtonRight, driver.MouseButtonMiddle,
+		driver.MouseButtonBack, driver.MouseButtonForward} {
+		if buttons&(1<<i) != 0 {
+			ev.Button = b
+			break
+		}
+	}
+	return ev
 }
 
 // pointerAt is pointer for the client point (x, y), with the modifier keys

@@ -142,7 +142,7 @@ func (p View) Render(cx *core.Scope) core.Node {
 							TestID:      v.testID("screen"),
 							OnPressDown: v.pressDown,
 							OnPressUp:   v.pressUp,
-							OnMouseMove: v.mouseMove,
+							OnMouseMove: func(e core.MouseEvent) { v.mouseMove(e.Position) },
 							OnLongPress: v.longPress,
 							// A scroll view holds its content's touches back
 							// 150 ms: the word is selected before a context

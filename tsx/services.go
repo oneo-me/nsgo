@@ -96,7 +96,11 @@ func (r *runtime) keymap() goja.Value {
 		owner.Run(func() {
 			for _, k := range order {
 				h, key := bindings[k], k
-				owner.OnKeyWith(key, ko, func() { r.call(h, r.vm.ToValue(key)) })
+				owner.OnKeyWith(key, ko, func() {
+					e := r.vm.NewObject()
+					_ = e.Set("keystroke", key)
+					r.call(h, e)
+				})
 			}
 		})
 		return r.function(func(goja.FunctionCall) goja.Value {

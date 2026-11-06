@@ -261,7 +261,7 @@ func viewsAt(v *view, p driver.Point, match func(*view) bool, out []*view) ([]*v
 // movePointer follows the pointer to surface point at, with modifiers
 // state.
 func (w *window) movePointer(at driver.Point, state uint32) {
-	w.lastPointer, w.pointerIn = at, true
+	w.lastPointer, w.pointerIn, w.pointerState = at, true, state
 	w.hoverViews()
 	w.mouseMoved(state)
 	if state&gdkButton1 != 0 {
@@ -286,29 +286,24 @@ func (w *window) listensTouches() bool {
 	return false
 }
 
+// mouseButtons are a pointer state's button bits: GDK's second button is
+// the middle one, and it has none for back and forward.
+var mouseButtons = [5]uint32{gdkButton1, gdkButton3, gdkButton2}
+
 // mouseMoved reports the pointer's move to the views under it that
-// follow moves, innermost first: OnMouseMove always, OnHoverMove with no
-// button down.
+// follow moves, innermost first.
 func (w *window) mouseMoved(state uint32) {
 	root := w.view(w.root)
 	if root == nil {
 		return
 	}
-	button := state&gdkButtonsMask != 0
-	under, _ := viewsAt(root, w.lastPointer, func(v *view) bool {
-		return v.events.Has(driver.EventMouseMove) || !button && v.events.Has(driver.EventHoverMove)
-	}, nil)
+	under, _ := viewsAt(root, w.lastPointer, func(v *view) bool { return v.events.Has(driver.EventMouseMove) }, nil)
 	for i := len(under) - 1; i >= 0; i-- {
 		v := under[i]
 		b, _ := w.surfaceBounds(v)
 		local := driver.Point{X: w.lastPointer.X - b.Origin.X, Y: w.lastPointer.Y - b.Origin.Y}
-		if !button && v.events.Has(driver.EventHoverMove) {
-			w.engine.Dispatch(driver.Event{Kind: driver.EventHoverMove, ID: v.id, Point: local, Page: w.lastPointer,
-				Modifiers: modifiers(state)})
-		}
-		if v.events.Has(driver.EventMouseMove) {
-			w.engine.Dispatch(driver.Event{Kind: driver.EventMouseMove, ID: v.id, Point: local})
-		}
+		w.engine.Dispatch(driver.Event{Kind: driver.EventMouseMove, ID: v.id, Point: local, Page: w.lastPointer,
+			Modifiers: modifiers(state), Button: hover.Pressed(state, mouseButtons)})
 	}
 }
 
@@ -323,6 +318,11 @@ func (w *window) hoverViews() {
 		}
 	}
 	for _, e := range w.hovered.Move(under) {
+		if v := w.view(e.ID); v != nil {
+			b, _ := w.surfaceBounds(v)
+			e.Point = driver.Point{X: w.lastPointer.X - b.Origin.X, Y: w.lastPointer.Y - b.Origin.Y}
+			e.Page, e.Modifiers, e.Button = w.lastPointer, modifiers(w.pointerState), hover.Pressed(w.pointerState, mouseButtons)
+		}
 		w.engine.Dispatch(e)
 	}
 }

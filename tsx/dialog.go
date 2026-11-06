@@ -56,7 +56,12 @@ func dialogFace(p *props) core.Node {
 	}
 	d.Android.StatusBarTranslucent = p.bool("statusBarTranslucent")
 	if h := p.handler("onOpenChange"); h != nil {
-		d.OnOpenChange = func(open bool, reason base.Reason) { h(r.vm.ToValue(open), r.vm.ToValue(reasonNames[reason])) }
+		d.OnOpenChange = func(open bool, reason base.Reason) {
+			e := r.vm.NewObject()
+			_ = e.Set("open", open)
+			_ = e.Set("reason", reasonNames[reason])
+			h(e)
+		}
 	}
 	return d
 }

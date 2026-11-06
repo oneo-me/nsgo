@@ -354,6 +354,8 @@ func compatStyle(t compatTarget, key string) (string, bool) {
 		return num(float32(t.view.TextShadow.Radius))
 	case "placeholderColor":
 		return color(t.view.Input.PlaceholderColor)
+	case "caretColor":
+		return color(t.view.Input.CaretColor)
 	case "selectionColor":
 		if t.view.Kind == driver.KindInput {
 			return color(t.view.Input.SelectionColor)
@@ -1042,4 +1044,86 @@ func compatPropIs(t compatTarget, key, want string) (bool, string) {
 		return err == nil && bytes.Equal(data, have), got
 	}
 	return got == want, got
+}
+
+// compatDrawing lists what canvas v's drawing does, an operation to a
+// line as a script's drawing steps say it, what a slot binds as
+// "animated": a path a fill takes with it is in the fill's line, as NSH's
+// recording keeps a Path2D.
+func compatDrawing(v *nsgotest.View) []string {
+	if v.Drawing == nil {
+		return nil
+	}
+	n := func(x float32) string { return strconv.FormatFloat(math.Round(float64(x)*1000)/1000, 'f', -1, 64) }
+	var out, path []string
+	for i, op := range v.Drawing.Ops {
+		arg := func(a driver.DrawArg, x float32) string {
+			for _, s := range v.Drawing.Slots {
+				if s.Op == i && s.Arg == a {
+					return "animated"
+				}
+			}
+			return n(x)
+		}
+		line := func(name string, args ...string) string { return strings.Join(append([]string{name}, args...), " ") }
+		built := ""
+		switch op.Kind {
+		case driver.DrawBeginPath:
+			path = nil
+			continue
+		case driver.DrawMoveTo:
+			built = line("moveTo", arg(driver.ArgX, op.X), arg(driver.ArgY, op.Y))
+		case driver.DrawLineTo:
+			built = line("lineTo", arg(driver.ArgX, op.X), arg(driver.ArgY, op.Y))
+		case driver.DrawClosePath:
+			built = "closePath"
+		case driver.DrawRect:
+			built = line("rect", arg(driver.ArgX, op.X), arg(driver.ArgY, op.Y), arg(driver.ArgW, op.W), arg(driver.ArgH, op.H))
+		case driver.DrawRoundRect:
+			r := arg(driver.ArgR, op.R)
+			built = line("roundRect", arg(driver.ArgX, op.X), arg(driver.ArgY, op.Y), arg(driver.ArgW, op.W), arg(driver.ArgH, op.H), r, r, r, r)
+		case driver.DrawArc:
+			built = line("arc", arg(driver.ArgX, op.X), arg(driver.ArgY, op.Y), arg(driver.ArgR, op.R), arg(driver.ArgA0, op.A0), arg(driver.ArgA1, op.A1))
+		}
+		if built != "" {
+			out, path = append(out, built), append(path, built)
+			continue
+		}
+		switch op.Kind {
+		case driver.DrawFill, driver.DrawStroke, driver.DrawClip:
+			name := map[driver.DrawKind]string{driver.DrawFill: "fill", driver.DrawStroke: "stroke", driver.DrawClip: "clip"}[op.Kind]
+			out = append(out, name, name+" path("+strings.Join(path, ", ")+")")
+			if r, ok := strings.CutPrefix(strings.Join(path, ", "), "rect "); ok && op.Kind == driver.DrawFill && len(path) == 1 {
+				out = append(out, "fillRect "+r)
+			}
+		case driver.DrawFillColor:
+			out = append(out, "fillStyle "+compatColor(op.Color))
+		case driver.DrawStrokeColor:
+			out = append(out, "strokeStyle "+compatColor(op.Color))
+		case driver.DrawFillGradient, driver.DrawStrokeGradient:
+			g := op.Gradient
+			name := map[driver.DrawKind]string{driver.DrawFillGradient: "fillStyle", driver.DrawStrokeGradient: "strokeStyle"}[op.Kind]
+			out = append(out, fmt.Sprintf("%s createLinearGradient(%s, %s, %s, %s)...", name, n(g.X1), n(g.Y1), n(g.X2), n(g.Y2)))
+		case driver.DrawLineWidth:
+			out = append(out, "lineWidth "+arg(driver.ArgW, op.W))
+		case driver.DrawTranslate:
+			out = append(out, line("translate", n(op.X), n(op.Y)))
+		case driver.DrawLineDash:
+			if op.Dash != nil && len(*op.Dash) > 0 {
+				dash := make([]string, len(*op.Dash))
+				for j, d := range *op.Dash {
+					dash[j] = n(d)
+				}
+				out = append(out, "setLineDash "+strings.Join(dash, " "))
+			}
+		case driver.DrawFillText:
+			family := op.Font.Family
+			if family == "" {
+				family = "sans-serif"
+			}
+			out = append(out, fmt.Sprintf("font %spx %s", n(float32(op.Font.Size)), family),
+				fmt.Sprintf("fillText %q %s %s", op.Text, n(op.X), n(op.Y)))
+		}
+	}
+	return out
 }

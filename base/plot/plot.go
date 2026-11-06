@@ -475,7 +475,7 @@ func (p Plot) Render(cx *core.Scope) core.Node {
 				p.OnLayout(b)
 			}
 		},
-		OnHoverMove: func(e core.HoverEvent) {
+		OnMouseMove: func(e core.MouseEvent) {
 			if p.NoHover {
 				return
 			}
@@ -489,8 +489,8 @@ func (p Plot) Render(cx *core.Scope) core.Node {
 			}
 			follow(nearest)
 		},
-		OnHoverOut: func() { follow(-1) },
-		Children:   children,
+		OnMouseLeave: func(core.MouseEvent) { follow(-1) },
+		Children:     children,
 	}
 }
 

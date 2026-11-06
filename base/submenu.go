@@ -49,7 +49,7 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 					press()
 				}
 			},
-			OnHoverIn: hover, Children: []core.Node{s.Trigger}}
+			OnMouseEnter: func(core.MouseEvent) { hover() }, Children: []core.Node{s.Trigger}}
 	}
 	if menu == nil {
 		// Outside a menu: nothing to open.

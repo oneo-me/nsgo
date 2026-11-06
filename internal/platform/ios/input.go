@@ -479,8 +479,8 @@ func (v *view) configure(c *driver.InputConfig) {
 		contentType = apple.NSString("")
 	}
 	f.Send(sel("setTextContentType:"), contentType)
-	if c.SelectionColor != 0 {
-		f.Send(sel("setTintColor:"), uiColor(c.SelectionColor))
+	if c.Caret() != 0 {
+		f.Send(sel("setTintColor:"), uiColor(c.Caret()))
 	} else {
 		f.Send(sel("setTintColor:"), objc.ID(0))
 	}

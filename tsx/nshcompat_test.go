@@ -422,7 +422,7 @@ func compatState(app *nsgotest.App, selector string, states []string) error {
 	}
 	had := compatStates[v.ID]
 	kinds := map[string][2]driver.EventKind{"pressed": {driver.EventPressDown, driver.EventPressUp},
-		"hovered": {driver.EventHoverIn, driver.EventHoverOut}, "focused": {driver.EventFocus, driver.EventBlur}}
+		"hovered": {driver.EventMouseEnter, driver.EventMouseLeave}, "focused": {driver.EventFocus, driver.EventBlur}}
 	for _, s := range []string{"focused", "hovered", "pressed"} {
 		k := kinds[s]
 		tracked := v.Events.Has(k[0]) || s == "focused" && v.Kind == driver.KindInput
@@ -670,6 +670,20 @@ func compatStep(app *nsgotest.App, step string, logs *compatLog) error {
 		}
 	case "state":
 		return compatState(app, f[1], f[2:])
+	case "drawing", "nodrawing":
+		// What a canvas told the platform to draw, an operation as NSH's
+		// runner writes it; "..." ends one the step gives the start of.
+		ops := compatDrawing(compatView(app, f[1]))
+		want := compatText(step, 2)
+		drew := slices.ContainsFunc(ops, func(op string) bool {
+			if start, ok := strings.CutSuffix(want, "..."); ok {
+				return strings.HasPrefix(op, start)
+			}
+			return op == want
+		})
+		if drew != (f[0] == "drawing") {
+			return fmt.Errorf("it drew %q", ops)
+		}
 	default:
 		return fmt.Errorf("unknown step")
 	}
@@ -679,8 +693,8 @@ func compatStep(app *nsgotest.App, step string, logs *compatLog) error {
 // compatEvents are the event kinds of NSH's handler names.
 var compatEvents = map[string]driver.EventKind{
 	"onPress": driver.EventPress, "onLongPress": driver.EventLongPress, "onPressDown": driver.EventPressDown,
-	"onPressUp": driver.EventPressUp, "onHoverIn": driver.EventHoverIn, "onHoverOut": driver.EventHoverOut,
-	"onHoverMove": driver.EventHoverMove, "onScroll": driver.EventScroll,
+	"onPressUp": driver.EventPressUp, "onMouseEnter": driver.EventMouseEnter, "onMouseLeave": driver.EventMouseLeave,
+	"onScroll":      driver.EventScroll,
 	"onContextMenu": driver.EventContextMenu, "onFocus": driver.EventFocus, "onBlur": driver.EventBlur,
 	"onMouseMove": driver.EventMouseMove, "onPressOutside": driver.EventPressOutside,
 }

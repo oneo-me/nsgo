@@ -6,17 +6,7 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-04, 52 of the 173 compat cases, 10 of the 15 examples and 25 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
-
-## The 0.4.0 API: events
-
-What TSX apps write differently in 0.4.0 (`api-naming.md` (Renames)), first because nearly every failing case calls one of these. Done when `events-gestures`, `events-input`, `events-layout`, `events-media`, `events-pointer` and `events-scroll` and the `hopper` and `desktop` examples pass.
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Events as one object | `api-naming.md` (Payloads, 2026-10-27) | Every event passes one object: `onLayout({ bounds })`, `onLoad({ size })` and `onContentSizeChange({ size })`, the scroll events' `{ offset }`, pans' `translation`, `velocity` and `value` points, `PressEvent` always passed, keymap handlers' `{ keystroke }`, and `nsh/base`'s components' `onChange`, `onOpenChange({ open, reason })`, `onVisibleRowsChange` and the like |
-| The DOM's mouse events | `api-naming.md` (`onMouseEnter`) | `onMouseEnter`, `onMouseLeave` and one `onMouseMove` take a `MouseEvent` with `position`, `pagePosition`, `modifiers` and `pressedButton`, in place of `onHoverIn`, `onHoverOut`, `onHoverMove` and the old `onMouseMove`, on Go elements too |
-| The compat runner | `nsh/tests/compat` | `nshcompat_test.go` knows the steps and events 0.4.0's scripts use (`onMouseEnter`, canvas `fillStyle` gradients, transform strings), so `core-canvas` and `core-list` fail only where NSGo does |
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-06, 69 of the 173 compat cases, 12 of the 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
 
 ## The 0.4.0 API: styles
 
@@ -24,7 +14,7 @@ Done when `props-text-lines`, `props-view-touch`, `props-media-image`, `props-me
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Props as style keys | `styles.md` (Principles, Extensions) | `numberOfLines`, `textOverflow`, `userSelect`, `pointerEvents`, `objectFit` and `caretColor` are style keys and classes as CSS has them, inline winning over classes; transforms read CSS strings |
+| Props as style keys | `styles.md` (Principles, Extensions) | `numberOfLines`, `textOverflow`, `userSelect`, `pointerEvents` and `objectFit` are style keys and classes as CSS has them, inline winning over classes; transforms read CSS strings |
 | States and variants | `styles.md` (variants) | `aria-expanded:`, `aria-pressed:`, `aria-busy:`, `aria-checked:`, `aria-selected:` and `data-<name>:` variants and their style props (`expandedStyle`, `pressedStyle`, `focusWithinStyle`); `focus-within:` follows any focus, popups' included, kept by the core per surface; parts show `data-*` attributes |
 
 ## The 0.4.0 API: the rest
@@ -104,7 +94,7 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 | Speech | `sandbox.md` (`speech`), `nsh`'s `Speech` | `Speech.start` sessions recognize speech on macOS and iOS and report their transcript |
 | The app's lifecycle | `nsh`'s `lifecycle()` (NSH `#747`) | `lifecycle()` reads, reactively, whether the app is `active`, `inactive` (visible without the focus) or in the `background`, which every backend reports |
 | Clipboard images as URLs | `api-naming.md` (Clipboard) | `readImage` promises a URL and rejects what cannot be read, on every backend (`mod-clipboard` passes) |
-| Web views of 0.4.0 | `macos.md` | macOS saves the downloads a web view's app opts into (`onDownload`) to the app's data directory, and web views take trusted input (`sendInput`), which only a declared capability grants |
+| Web views of 0.4.0 | `macos.md` | macOS saves the downloads a web view's app opts into (`onDownload`, which no backend reports yet) to the app's data directory, and web views take trusted input (`sendInput`), which only a declared capability grants |
 
 ## Performance against NSH's baselines
 
@@ -165,6 +155,8 @@ These items wait for community contributions, and a change to one backend record
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
+| The mouse on Android | `api-naming.md` (`onMouseEnter`) | `NsgoView` reports the mouse's enter and leave with where it is, its moves with the keys and the button held, and a move with a button down, which needs `classes.dex` rebuilt |
+| Pasted HTML | `api-naming.md` (`PasteEvent`) | `onPaste`'s `html` holds the clipboard's HTML on Windows (`CF_HTML`), Linux (`text/html`) and Android (`ClipData.Item.getHtmlText`), as it does on macOS, iOS and the web |
 | Folder picks on phones and the web | — | `PickDirectories` answers with folders the app reads on iOS (`UIDocumentPickerViewController` for `.folder`, kept in its security scope), Android (`ACTION_OPEN_DOCUMENT_TREE`, which grants a tree URI, not a path) and the web (`showDirectoryPicker`, or `<input webkitdirectory>`), which need a `Directory` that opens what it holds without a path, as `File.Open` does |
 | Sharing on Windows, Linux and the web | — | `Share` shows Windows' share UI (`IDataTransferManagerInterop::ShowShareUIForWindow` with the files as `StorageFile`s), the desktop portal's or a Linux file manager's where one exists, and the web's `navigator.share` for text and files the app holds as bytes, rather than answering `NoShareSheet` |
 | Modal reports | `elements.md` (`<Dialog>`) | Every backend reports a modal shown once it is presented and gone once it is dismissed (`EventModalShown`, `EventModalDismissed`), and the insets a screen keeps clear of (`EventScreenInsets`), so `Dialog`'s `OnOpen` and `OnClose` follow the platform instead of the animation's timer |

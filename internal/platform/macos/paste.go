@@ -110,7 +110,8 @@ func pasteInto(editor objc.ID) bool {
 // files, or else its image.
 func pasted() *driver.PasteEvent {
 	pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
-	p := &driver.PasteEvent{Text: apple.GoString(pb.Send(sel("stringForType:"), apple.NSString(pasteboardText))),
+	p := &driver.PasteEvent{HTML: apple.GoString(pb.Send(sel("stringForType:"), apple.NSString("public.html"))),
+		Text: apple.GoString(pb.Send(sel("stringForType:"), apple.NSString(pasteboardText))),
 		URIs: fileURLs(pb)}
 	if len(p.URIs) > 0 {
 		return p // a file's icon is no image of the user's

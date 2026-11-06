@@ -968,8 +968,8 @@ func editorDemo(cx *core.Scope) core.Node {
 		anchor := card.anchor
 		return core.Overlay{AnchorBounds: func() core.Bounds { return anchor }, Placement: core.PlaceTop, Align: core.AlignStart, Offset: 4, Margin: 8,
 			Children: []core.Node{core.View{TestID: "hover-card",
-				OnHoverIn:  func() { overCard = true; closing.cancel() },
-				OnHoverOut: func() { overCard = false; closeSoon() },
+				OnMouseEnter: func(core.MouseEvent) { overCard = true; closing.cancel() },
+				OnMouseLeave: func(core.MouseEvent) { overCard = false; closeSoon() },
 				// A width of its own: an overlay fits its content, which
 				// would leave the message's growing text no room.
 				StyleFunc: func() core.Style {

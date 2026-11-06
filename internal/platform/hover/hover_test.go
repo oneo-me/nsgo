@@ -14,10 +14,10 @@ func TestMove(t *testing.T) {
 		under []driver.NodeID
 		want  []driver.Event
 	}{
-		{[]driver.NodeID{1, 2}, []driver.Event{ev(driver.EventHoverIn, 1), ev(driver.EventHoverIn, 2)}},
+		{[]driver.NodeID{1, 2}, []driver.Event{ev(driver.EventMouseEnter, 1), ev(driver.EventMouseEnter, 2)}},
 		{[]driver.NodeID{1, 2}, nil},
-		{[]driver.NodeID{1, 3, 4}, []driver.Event{ev(driver.EventHoverOut, 2), ev(driver.EventHoverIn, 3), ev(driver.EventHoverIn, 4)}},
-		{nil, []driver.Event{ev(driver.EventHoverOut, 4), ev(driver.EventHoverOut, 3), ev(driver.EventHoverOut, 1)}},
+		{[]driver.NodeID{1, 3, 4}, []driver.Event{ev(driver.EventMouseLeave, 2), ev(driver.EventMouseEnter, 3), ev(driver.EventMouseEnter, 4)}},
+		{nil, []driver.Event{ev(driver.EventMouseLeave, 4), ev(driver.EventMouseLeave, 3), ev(driver.EventMouseLeave, 1)}},
 	}
 	for i, s := range steps {
 		if got := tr.Move(s.under); !same(got, s.want) {
@@ -26,8 +26,18 @@ func TestMove(t *testing.T) {
 	}
 	tr.Move([]driver.NodeID{1, 2})
 	tr.Forget(2)
-	if got := tr.Move(nil); !same(got, []driver.Event{ev(driver.EventHoverOut, 1)}) {
+	if got := tr.Move(nil); !same(got, []driver.Event{ev(driver.EventMouseLeave, 1)}) {
 		t.Fatalf("after Forget: got %v", got)
+	}
+}
+
+func TestPressedNamesTheFirstButtonHeld(t *testing.T) {
+	bits := [5]uint32{1, 2, 4}
+	for state, want := range map[uint32]driver.MouseButton{0: driver.MouseButtonNone, 1: driver.MouseButtonLeft,
+		2: driver.MouseButtonRight, 4: driver.MouseButtonMiddle, 6: driver.MouseButtonRight, 8: driver.MouseButtonNone} {
+		if got := Pressed(state, bits); got != want {
+			t.Errorf("Pressed(%d) = %v, want %v", state, got, want)
+		}
 	}
 }
 

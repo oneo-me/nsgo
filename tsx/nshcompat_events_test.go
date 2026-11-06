@@ -51,10 +51,14 @@ func (p compatPayload) ms(k string) time.Duration {
 	return time.Duration(float64(p.num(k)) * float64(time.Second))
 }
 
+// compatButtons are the mouse buttons a mouse event's payload names.
+var compatButtons = map[string]driver.MouseButton{"left": driver.MouseButtonLeft, "right": driver.MouseButtonRight,
+	"middle": driver.MouseButtonMiddle, "back": driver.MouseButtonBack, "forward": driver.MouseButtonForward}
+
 // compatHandlers are the event kinds of NSH's handlers a platform reports.
 var compatHandlers = map[string]driver.EventKind{
-	"onPressDown": driver.EventPressDown, "onPressUp": driver.EventPressUp, "onHoverIn": driver.EventHoverIn,
-	"onHoverOut": driver.EventHoverOut, "onHoverMove": driver.EventHoverMove, "onMouseMove": driver.EventMouseMove,
+	"onPressDown": driver.EventPressDown, "onPressUp": driver.EventPressUp, "onMouseEnter": driver.EventMouseEnter,
+	"onMouseLeave": driver.EventMouseLeave, "onMouseMove": driver.EventMouseMove,
 	"onContextMenu": driver.EventContextMenu, "onFocus": driver.EventFocus, "onBlur": driver.EventBlur,
 	"onChange": driver.EventChangeText, "onSubmit": driver.EventSubmitEditing,
 	"onSelectionChange": driver.EventSelectionChange, "onCompositionChange": driver.EventCompositionChange,
@@ -71,7 +75,7 @@ var compatHandlers = map[string]driver.EventKind{
 	"onFileDragEnter": driver.EventFileDragEnter, "onFileDragLeave": driver.EventFileDragLeave,
 	"onFileDrop": driver.EventFileDrop, "onCancel": driver.EventBack, "onBackPress": driver.EventBack,
 	"onInsets": driver.EventScreenInsets, "onDismiss": driver.EventRequestClose,
-	"onOpen": driver.EventModalShown, "onClose": driver.EventModalDismissed,
+	"onOpen": driver.EventModalShown, "onClose": driver.EventModalDismissed, "onDownload": driver.EventDownload,
 }
 
 // compatEvent reports handler's event, with payload, to the view selector
@@ -130,7 +134,7 @@ func compatEvent(app *nsgotest.App, selector, handler string, payload []string) 
 	}
 	ev := driver.Event{Kind: kind, ID: v.ID}
 	switch handler {
-	case "onHoverMove", "onContextMenu":
+	case "onMouseEnter", "onMouseLeave", "onMouseMove", "onContextMenu":
 		ev.Point, ev.Modifiers = p.pt("position.x", "position.y"), p.modifiers()
 		at := compatPageOrigin(v)
 		ev.Page = driver.Point{X: at.X + ev.Point.X, Y: at.Y + ev.Point.Y}
@@ -138,8 +142,7 @@ func compatEvent(app *nsgotest.App, selector, handler string, payload []string) 
 			ev.Page = p.pt("pageX", "pageY")
 			ev.Point = driver.Point{X: ev.Page.X - at.X, Y: ev.Page.Y - at.Y}
 		}
-	case "onMouseMove":
-		ev.Point = p.pt("x", "y")
+		ev.Button = compatButtons[p.str("pressedButton")]
 	case "onChange", "onSubmit", "onPaste", "onAccessibilityAction", "onError", "onMessage":
 		ev.Text = p.str("text") + p.str("actionName") + p.str("message") + p.str("data")
 		if handler == "onPaste" {
@@ -175,6 +178,11 @@ func compatEvent(app *nsgotest.App, selector, handler string, payload []string) 
 	case "onRefresh":
 		// Where the scroll view is, as a pull leaves it.
 		ev.Point, ev.Count = v.Offset, v.Applied
+	case "onDownload":
+		ev.Data = &driver.WebDownload{State: map[string]driver.WebDownloadState{"started": driver.WebDownloadStarted,
+			"finished": driver.WebDownloadFinished, "failed": driver.WebDownloadFailed}[p.str("state")],
+			ID: p.str("id"), URL: p.str("url"), Filename: p.str("filename"), Path: p.str("path"),
+			Bytes: int64(p.num("bytes")), Message: p.str("message")}
 	case "onFileDrop":
 		ev.URIs = p["uris"]
 	case "onCancel", "onDismiss":

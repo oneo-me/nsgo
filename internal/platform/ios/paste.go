@@ -52,6 +52,9 @@ func pasteInto(editor objc.ID) bool {
 	}
 	pb := objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
 	p := &driver.PasteEvent{Text: apple.GoString(pb.Send(sel("string")))}
+	if d := pb.Send(sel("dataForPasteboardType:"), apple.NSString("public.html")); d != 0 {
+		p.HTML = string(apple.Bytes(d))
+	}
 	apple.ForEach(pb.Send(sel("URLs")), func(u objc.ID) {
 		if objc.Send[bool](u, sel("isFileURL")) {
 			p.URIs = append(p.URIs, (&url.URL{Scheme: "file", Path: apple.GoString(u.Send(sel("path")))}).String())

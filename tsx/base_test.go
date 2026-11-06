@@ -1,6 +1,7 @@
 package tsx_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -38,7 +39,9 @@ func itoa(n int) string {
 	return s
 }
 
-func init() { tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}}) }
+func init() {
+	tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}}, tsx.Event("OnClear", "left"))
+}
 
 func TestAppComponents(t *testing.T) {
 	app := run(t, `import { mount, signal, Text } from "nsgo";
@@ -46,7 +49,7 @@ import { Badge } from "app/native";
 function App() {
 	const n = signal(3), cleared = signal(-1);
 	return <>
-		<Badge testID="b" count={n()} onClear={(left) => { cleared.set(left); n.set(0); }} />
+		<Badge testID="b" count={n()} onClear={({ left }) => { cleared.set(left); n.set(0); }} />
 		<Text>{() => "cleared " + cleared()}</Text>
 	</>;
 }
@@ -62,6 +65,36 @@ mount(App);`)
 	}
 }
 
+// A Go component's events pass one object, its fields named by
+// tsx.Event, the declarations saying so.
+func TestEventsPassOneObject(t *testing.T) {
+	decls := tsx.Declarations()["types/nsgo/base.d.ts"]
+	for _, want := range []string{
+		"onChange?: (e: { checked: boolean }) => void",
+		"onOpenChange?: (e: { open: boolean; reason: DialogChangeReason }) => void",
+		"onColumnResize?: (e: { key: string; width: number }) => void",
+		"onVisibleRowsChange?: (e: { range: DataTableRange }) => void",
+		"onLayout?: (e: { bounds: Bounds }) => void",
+	} {
+		if !strings.Contains(decls, want) {
+			t.Errorf("no %q in nsgo/base's declarations", want)
+		}
+	}
+	defer func() {
+		if recover() == nil {
+			t.Error("an event of several unnamed arguments registers")
+		}
+	}()
+	tsx.Register("app/unnamed", map[string]core.Node{"Bad": badEvent{}})
+}
+
+// badEvent has an event tsx.Event does not name.
+type badEvent struct {
+	OnPair func(a, b int)
+}
+
+func (badEvent) Render(*core.Scope) core.Node { return core.View{} }
+
 func TestBaseControls(t *testing.T) {
 	app := run(t, `import { mount, signal, Text, View } from "nsgo";
 import { Button, Checkbox, Switch, Tabs, Tab, Progress } from "nsgo/base";
@@ -69,8 +102,8 @@ function App() {
 	const on = signal(false), checked = signal(false), tab = signal(0), presses = signal(0);
 	return <View>
 		<Button testID="button" onPress={() => presses.set(presses() + 1)}><Text>Press</Text></Button>
-		<Checkbox testID="check" checked={checked()} onChange={checked.set} indicator={<Text>✓</Text>}><Text>Agree</Text></Checkbox>
-		<Switch testID="switch" checked={on()} onChange={on.set} trackClass="w-10 h-6" thumbClass="size-5" />
+		<Checkbox testID="check" checked={checked()} onChange={(e) => checked.set(e.checked)} indicator={<Text>✓</Text>}><Text>Agree</Text></Checkbox>
+		<Switch testID="switch" checked={on()} onChange={(e) => on.set(e.checked)} trackClass="w-10 h-6" thumbClass="size-5" />
 		<Tabs>
 			<Tab testID="t0" selected={tab() === 0} onPress={() => tab.set(0)}><Text>One</Text></Tab>
 			<Tab testID="t1" selected={tab() === 1} onPress={() => tab.set(1)}><Text>Two</Text></Tab>
@@ -126,7 +159,7 @@ function App() {
 			<ResizablePanel size={100}><Text>Left</Text></ResizablePanel>
 			<ResizablePanel><Text>Right</Text></ResizablePanel>
 		</ResizablePanelGroup>
-		<Popover open={open()} onOpenChange={open.set} trigger={<Text testID="trigger">Open</Text>} popupClass="p-2">
+		<Popover open={open()} onOpenChange={(e) => open.set(e.open)} trigger={<Text testID="trigger">Open</Text>} popupClass="p-2">
 			<Text>Popped</Text>
 		</Popover>
 	</View>;
@@ -218,17 +251,17 @@ function App() {
 		<Text>{() => "report " + report()}</Text>
 		<Text>{() => "zoomed " + zoomed()}</Text>
 		<Text>{() => "tabs " + width()}</Text>
-		<Tabs testID="tabs" onLayout={(e) => width.set(e.size.width)} style={{ width: 120, height: 10 }} />
+		<Tabs testID="tabs" onLayout={({ bounds }) => width.set(bounds.size.width)} style={{ width: 120, height: 10 }} />
 		<Button testID="zoom" onPress={async () => area.toggleZoom(await area.groupOf("main"))}><Text>Zoom</Text></Button>
 		<Button testID="unzoom" onPress={() => area.toggleZoom(null)}><Text>Unzoom</Text></Button>
 		<DockArea ref={(r) => (area = r)} style={{ flex: 1 }} layout={layout()}
-			onLayoutChange={(next) => {
+			onLayoutChange={({ layout: next }) => {
 				layout.set(next);
 				const c = next.center, first = c.children[0];
 				report.set([c.type, c.axis, c.sizes[0], c.sizes[1], first.type, first.activeIndex, typeof first.id,
 					next.left.layout.panels[0], next.left.open, next.left.collapsible].join(","));
 			}}
-			onZoomChange={(panel) => zoomed.set(String(panel))}
+			onZoomChange={({ panel }) => zoomed.set(String(panel))}
 			panels={[{ id: "preview", closable: false }]}
 			renderTab={(tab) => <Text testID={"tab-" + tab.panel}>{tab.panel + tab.index + (tab.active ? "*" : "") + (tab.closable ? "x" : "")}</Text>}
 			renderPanel={(panel) => <Text>{"panel " + panel.id}</Text>} />

@@ -17,6 +17,27 @@ type WebNavigation struct {
 	CanGoForward bool
 }
 
+// WebDownload is a download of a web view: its State, and where it is
+// saved. Bytes is what it wrote once finished, and Message why it failed.
+type WebDownload struct {
+	State    WebDownloadState
+	ID       string
+	URL      string
+	Filename string
+	Path     string
+	Bytes    int64
+	Message  string
+}
+
+// WebDownloadState is how far a WebDownload got.
+type WebDownloadState uint8
+
+const (
+	WebDownloadStarted WebDownloadState = iota
+	WebDownloadFinished
+	WebDownloadFailed
+)
+
 // WebConfig is everything a web view loads and allows (ItemWeb).
 // Platforms load the source again when it or the scripts change.
 type WebConfig struct {

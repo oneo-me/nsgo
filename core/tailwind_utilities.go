@@ -792,8 +792,7 @@ func init() {
 			return t.colorDecl(c, nil, func(p *classProps, c Color) { p.textShadowColor = c })
 		}},
 		{"caret-", false, func(t *tailwindTheme, v string, _ bool) (classDecl, bool) {
-			// The caret takes the selection's color (Style.SelectionColor).
-			return t.colorDecl(v, func(s *Style, c Color) { s.SelectionColor = c })
+			return t.colorDecl(v, func(s *Style, c Color) { s.CaretColor = c })
 		}},
 		{"shadow", false, func(t *tailwindTheme, v string, _ bool) (classDecl, bool) {
 			if v != "" && v[0] != '-' {

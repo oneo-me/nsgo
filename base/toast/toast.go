@@ -414,8 +414,8 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 			}
 			return st.Merge(core.Style{Position: core.Relative, Height: core.Pt(h)})
 		},
-		OnHoverIn:  func() { hovered.Set(true) },
-		OnHoverOut: func() { hovered.Set(false) },
+		OnMouseEnter: func(core.MouseEvent) { hovered.Set(true) },
+		OnMouseLeave: func(core.MouseEvent) { hovered.Set(false) },
 		// Observed, never claimed: the toasts' presses and swipes go on.
 		OnTouch: func(e core.TouchEvent) {
 			switch e.Phase {

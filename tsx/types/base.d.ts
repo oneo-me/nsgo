@@ -11,14 +11,14 @@ export interface IOSInputProps extends IOSProps, IOSInputHostProps {}
 export interface InputProps extends Omit<CommonProps, "ios">, InputHostProps {
   style?: StyleProp<TextStyle>;
   ios?: IOSInputProps & Record<string, unknown>;
-  onChange?: (text: string) => void;
+  onChange?: (e: { value: string }) => void;
   onSubmit?: (e: { text: string }) => void;
   onSelectionChange?: (e: { start: number; end: number }) => void;
   onPaste?: (e: import("./types").PasteEvent) => void;
   onCaretMove?: (e: import("./types").CaretEvent) => void;
   onKeyPress?: (e: { key: string }) => void;
   onCompositionChange?: (e: { composing: boolean; text: string }) => void;
-  onContentSizeChange?: (e: import("./types").Size) => void;
+  onContentSizeChange?: (e: { size: import("./types").Size }) => void;
 }
 export declare function Input(props: InputProps): YNode;
 
@@ -33,7 +33,7 @@ export interface DialogProps extends DialogHostProps {
   onOpen?: () => void;
   onClose?: () => void;
   onCancel?: () => void;
-  onOpenChange?: (open: boolean, reason: DialogChangeReason) => void;
+  onOpenChange?: (e: { open: boolean; reason: DialogChangeReason }) => void;
   style?: StyleProp<ViewStyle>;
   class?: string;
   backdropStyle?: StyleProp<ViewStyle>;
@@ -122,7 +122,7 @@ export interface ToastStackProps {
   motion?: ToastMotion;
   placement?: Anchor;
   closeOnEscape?: boolean;
-  onExpandedChange?: (expanded: boolean) => void;
+  onExpandedChange?: (e: { expanded: boolean }) => void;
   onCancel?: () => void;
   class?: string;
   style?: StyleProp<ViewStyle>;
@@ -137,7 +137,7 @@ export interface ResizablePanelProps {
   maxSize?: number | null;
   fixed?: boolean;
   visible?: boolean;
-  onResize?: (size: number) => void;
+  onResize?: (e: { size: number }) => void;
   class?: string;
   style?: StyleProp<ViewStyle>;
   testID?: string;

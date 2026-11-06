@@ -274,7 +274,7 @@ function App() {
 	return <View style={{ flex: 1 }}>
 		<Text testID="open" onPress={() => open.set(true)}>Open</Text>
 		<Dialog testID="dialog" open={open()} backdropClass="bg-black/50" class="p-4"
-			onOpenChange={(o, reason) => { open.set(o); why.set(reason); }}>
+			onOpenChange={(e) => { open.set(e.open); why.set(e.reason); }}>
 			<Text>Inside</Text>
 		</Dialog>
 		<Text>{() => "why " + why()}</Text>
@@ -298,8 +298,8 @@ func TestServices(t *testing.T) {
 import { isAvailable as mobile, BackHandler } from "nsgo/mobile";
 import { isAvailable as desktop, Window, titleBar } from "nsgo/desktop";
 function App() {
-	const out = signal(""), keys = signal(0);
-	keymap.bind("mod+k", () => keys.set(keys() + 1));
+	const out = signal(""), keys = signal("");
+	keymap.bind("mod+k", (e) => keys.set(e.keystroke));
 	const data = resource(() => new Promise((ok) => setTimeout(() => ok("loaded"), 10)));
 	(async () => {
 		await Storage.setItem("a", "1");
@@ -320,7 +320,7 @@ mount(App);`)
 	}
 	app.Key("mod+k")
 	app.FastForward(100 * time.Millisecond)
-	for _, want := range []string{"keys 1", "data loaded"} {
+	for _, want := range []string{"keys mod+k", "data loaded"} {
 		if !app.Exists("text:" + want) {
 			t.Errorf("no %q among %q", want, app.Texts())
 		}

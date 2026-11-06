@@ -753,26 +753,25 @@ func touchAreasApp(title string) func(*core.Scope) core.Node {
 }
 
 // TestPointerMovesReportPositions moves the pointer over a view that
-// follows moves: OnHoverMove hears it in the view and the surface, and
-// OnMouseMove in the view.
+// follows moves: OnMouseMove hears it in the view and the surface.
 func TestPointerMovesReportPositions(t *testing.T) {
 	app := func(cx *core.Scope) core.Node {
-		hover, mouse := core.NewSignal(cx, core.HoverEvent{}), core.NewSignal(cx, driver.Point{})
+		hover := core.NewSignal(cx, core.MouseEvent{})
 		cx.Effect(func() {
-			h, m := hover.Get(), mouse.Get()
-			cx.SetTitle(fmt.Sprintf("moves|%.0f,%.0f|%.0f,%.0f|%.0f,%.0f", h.Position.X, h.Position.Y,
-				h.PagePosition.X, h.PagePosition.Y, m.X, m.Y))
+			h := hover.Get()
+			cx.SetTitle(fmt.Sprintf("moves|%.0f,%.0f|%.0f,%.0f", h.Position.X, h.Position.Y,
+				h.PagePosition.X, h.PagePosition.Y))
 		})
 		return core.View{Style: core.Style{Width: driver.Pt(320), Height: driver.Pt(200), Padding: driver.All(10)},
 			Children: []core.Node{
 				core.View{Style: core.Style{Width: driver.Pt(100), Height: driver.Pt(80)},
-					OnHoverMove: hover.Set, OnMouseMove: mouse.Set},
+					OnMouseMove: hover.Set},
 			}}
 	}
 	w := startTestWindow(t, app, Options{Title: "moves|start", Width: 320, Height: 200})
-	waitForTitle(t, w, "moves|0,0|0,0|0,0")
+	waitForTitle(t, w, "moves|0,0|0,0")
 	w.onLoop(t, func() { motionCallback(0, 40, 30, w.handle) })
-	waitForTitle(t, w, "moves|30,20|40,30|30,20")
+	waitForTitle(t, w, "moves|30,20|40,30")
 }
 
 // TestHoverFollowsThePointer moves the pointer onto a view and its
@@ -786,9 +785,9 @@ func TestHoverFollowsThePointer(t *testing.T) {
 			Children: []core.Node{
 				core.View{TestID: "target", Style: core.Style{Width: driver.Pt(100), Height: driver.Pt(80), Padding: driver.All(20),
 					Background: driver.RGB(0x123456), Hover: &core.Style{Background: driver.RGB(0x654321)}},
-					OnHoverIn:  func() { in.Update(func(n int) int { return n + 1 }) },
-					OnHoverOut: func() { out.Update(func(n int) int { return n + 1 }) },
-					Children:   []core.Node{core.View{Style: core.Style{Width: driver.Pt(20), Height: driver.Pt(20)}}}},
+					OnMouseEnter: func(core.MouseEvent) { in.Update(func(n int) int { return n + 1 }) },
+					OnMouseLeave: func(core.MouseEvent) { out.Update(func(n int) int { return n + 1 }) },
+					Children:     []core.Node{core.View{Style: core.Style{Width: driver.Pt(20), Height: driver.Pt(20)}}}},
 			}}
 	}
 	w := startTestWindow(t, app, Options{Title: "hover|0|0", Width: 320, Height: 200})

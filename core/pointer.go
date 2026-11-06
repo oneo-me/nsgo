@@ -2,13 +2,24 @@ package core
 
 import "github.com/oneo-me/nsgo/internal/driver"
 
-// Pointer events: where a press, hover or secondary click happened and
-// which modifier keys were held, as NSH's PressEvent, HoverEvent and
+// Pointer events: where a press, the mouse or a secondary click was and
+// which modifier keys were held, as NSH's PressEvent, MouseEvent and
 // ContextMenuEvent report them. Positions are in points.
+
+// The mouse buttons of a MouseEvent; none is the zero value.
+const (
+	MouseButtonNone    = driver.MouseButtonNone
+	MouseButtonLeft    = driver.MouseButtonLeft
+	MouseButtonRight   = driver.MouseButtonRight
+	MouseButtonMiddle  = driver.MouseButtonMiddle
+	MouseButtonBack    = driver.MouseButtonBack
+	MouseButtonForward = driver.MouseButtonForward
+)
 
 // PressEvent is where the pointer was at a press. Backends that know them
 // report the modifier keys held when the press began and the click count;
-// a press from assistive technology or the keyboard reports none.
+// a press from assistive technology or the keyboard is at the view's
+// origin with no keys and one click.
 type PressEvent struct {
 	// Position is in the pressed view, its transforms undone; for a
 	// pressed span, in its text's view.
@@ -22,11 +33,14 @@ type PressEvent struct {
 	Clicks int
 }
 
-// HoverEvent is where the mouse is over a hovered view.
-type HoverEvent struct {
+// MouseEvent is where the mouse is over a view, as GPUI's MouseMoveEvent
+// says, or was last when it leaves.
+type MouseEvent struct {
 	Position     Point
 	PagePosition Point
 	Modifiers    Modifiers
+	// PressedButton is the button held down, none as the mouse hovers.
+	PressedButton MouseButton
 }
 
 // ContextMenuEvent is where a context menu was asked for. PagePosition is
@@ -38,7 +52,11 @@ type ContextMenuEvent struct {
 }
 
 func pressOf(e driver.Event) PressEvent {
-	return PressEvent{Position: e.Point, PagePosition: e.Page, Modifiers: e.Modifiers, Clicks: int(e.Count)}
+	return PressEvent{Position: e.Point, PagePosition: e.Page, Modifiers: e.Modifiers, Clicks: max(int(e.Count), 1)}
+}
+
+func mouseOf(e driver.Event) MouseEvent {
+	return MouseEvent{Position: e.Point, PagePosition: e.Page, Modifiers: e.Modifiers, PressedButton: e.Button}
 }
 
 // overflowArea returns the area n's children cover outside its bounds,

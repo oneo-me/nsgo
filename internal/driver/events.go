@@ -19,9 +19,11 @@ const (
 	// its root view (Page), the Modifiers held when the press began and
 	// the click count (Count), where the platform knows them.
 	EventLongPress
-	// EventHoverIn and EventHoverOut follow a pointer over a view.
-	EventHoverIn
-	EventHoverOut
+	// EventMouseEnter and EventMouseLeave follow a pointer over a view:
+	// Point, Page, Modifiers and Button as EventMouseMove's, where the
+	// platform knows them.
+	EventMouseEnter
+	EventMouseLeave
 	// EventFocus and EventBlur follow keyboard focus.
 	EventFocus
 	EventBlur
@@ -136,12 +138,14 @@ const (
 	// EventModalSize is the Size and Insets of a modal the platform
 	// presents at a size of its own, such as an iOS sheet.
 	EventModalSize
-	// EventHoverMove is the mouse moving over a hovered view with no
-	// button down: Point, Page and Modifiers as EventContextMenu's.
-	EventHoverMove
-	// EventMouseMove is the mouse moving over the view, also with a
-	// button down (Point, in the view).
+	// EventMouseMove is the mouse moving over the view, with or without a
+	// button down, or a modifier key changing while it rests there with
+	// none down: Point, Page and Modifiers as EventContextMenu's, and
+	// Button. Android's runtime numbers it EVENT_HOVER_MOVE.
 	EventMouseMove
+	// EventDownload reports a download of a web view that asked for them
+	// (Data, a *WebDownload).
+	EventDownload
 	// EventTouch reports the fingers on the surface (Touches, with their
 	// PagePosition and Changed) as one goes down (Phase GestureBegan),
 	// moves (GestureChanged), lifts (GestureEnded) or the system takes
@@ -232,7 +236,9 @@ type Event struct {
 	// modal, and Modifiers the keys held.
 	Page      Point
 	Modifiers Modifiers
-	Size      Size
+	// Button is the mouse button a mouse event holds down.
+	Button MouseButton
+	Size   Size
 	// Loaded and Total are an image's bytes loaded and expected.
 	Loaded, Total int64
 	Index         int
@@ -266,7 +272,7 @@ type Event struct {
 // mouse moves and a gesture's moves, never its first or last report.
 func (e Event) Mergeable() bool {
 	switch e.Kind {
-	case EventScroll, EventProgress, EventHoverMove, EventMouseMove, EventCaretMove:
+	case EventScroll, EventProgress, EventMouseMove, EventCaretMove:
 		return true
 	case EventPan, EventPinch, EventRotation, EventTouch:
 		return e.Phase == GestureChanged
@@ -281,6 +287,18 @@ type Modifiers struct {
 	// elsewhere.
 	Platform bool
 }
+
+// MouseButton is a button of the mouse; the zero value is none.
+type MouseButton uint8
+
+const (
+	MouseButtonNone MouseButton = iota
+	MouseButtonLeft
+	MouseButtonRight
+	MouseButtonMiddle
+	MouseButtonBack
+	MouseButtonForward
+)
 
 // PointerEvents says which of a view and its children take touches and
 // the pointer.
@@ -401,6 +419,9 @@ type Touch struct {
 // with their bytes, such as an image copied in another app, and the
 // file: URLs of local files copied in a file manager.
 type PasteEvent struct {
+	// HTML is the same content with its formatting, on the backends that
+	// read it.
+	HTML  string
 	Text  string
 	Files []PastedFile
 	URIs  []string

@@ -83,7 +83,7 @@ func (s *surface) pasted(v *view, e js.Value) {
 	if !data.Truthy() {
 		return
 	}
-	p := &driver.PasteEvent{Text: data.Call("getData", "text/plain").String()}
+	p := &driver.PasteEvent{Text: data.Call("getData", "text/plain").String(), HTML: data.Call("getData", "text/html").String()}
 	if c := v.input.config; c != nil && c.PasteBehavior == driver.PasteReport {
 		e.Call("preventDefault")
 	}

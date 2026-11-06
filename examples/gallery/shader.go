@@ -137,8 +137,8 @@ func (f signalField) Render(cx *core.Scope) core.Node {
 	}
 	return core.View{Style: style, StyleFunc: f.StyleFunc,
 		// The field only listens: presses still reach its children.
-		OnMouseMove: follow,
-		OnHoverOut:  leave,
+		OnMouseMove:  func(e core.MouseEvent) { follow(e.Position) },
+		OnMouseLeave: func(core.MouseEvent) { leave() },
 		OnTouch: func(e core.TouchEvent) {
 			if e.Phase != core.TouchStart {
 				return

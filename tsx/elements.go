@@ -133,7 +133,28 @@ func webViewFace(p *props) core.Node {
 			h(e)
 		}
 	}
+	if h := p.handler("onDownload"); h != nil {
+		w.OnDownload = func(d core.WebDownload) { h(r.webDownload(d)) }
+	}
 	return w
+}
+
+// webDownload is { state, id, url, filename, path }, with bytes once
+// finished and message when it failed.
+func (r *runtime) webDownload(d core.WebDownload) *goja.Object {
+	o := r.vm.NewObject()
+	_ = o.Set("state", [...]string{"started", "finished", "failed"}[d.State])
+	_ = o.Set("id", d.ID)
+	_ = o.Set("url", d.URL)
+	_ = o.Set("filename", d.Filename)
+	_ = o.Set("path", d.Path)
+	switch d.State {
+	case core.WebDownloadFinished:
+		_ = o.Set("bytes", d.Bytes)
+	case core.WebDownloadFailed:
+		_ = o.Set("message", d.Message)
+	}
+	return o
 }
 
 func (r *runtime) webNavigation(n core.WebNavigation) *goja.Object {

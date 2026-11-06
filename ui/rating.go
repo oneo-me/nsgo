@@ -97,8 +97,8 @@ func (r Rating) Render(cx *core.Scope) core.Node {
 				}
 			}
 			if onDesktop {
-				v.OnHoverIn = func() { hover.Set(i) }
-				v.OnHoverOut = func() { hover.Set(0) }
+				v.OnMouseEnter = func(core.MouseEvent) { hover.Set(i) }
+				v.OnMouseLeave = func(core.MouseEvent) { hover.Set(0) }
 			}
 		}
 		stars = append(stars, v)

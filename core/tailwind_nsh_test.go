@@ -173,8 +173,7 @@ func TestNSHThemeTokens(t *testing.T) {
 	want(t, "bg-primary/50", s.Background, token(light, "primary").Faded(0.5))
 	want(t, "border-t-ring", borderTop(s), token(light, "ring"))
 	s, _ = tw(t, "shadow-md shadow-primary ring-2 ring-ring bg-linear-to-r from-primary to-accent caret-primary placeholder:text-muted-foreground")
-	// The caret takes the selection's color (Style.SelectionColor).
-	want(t, "caret", s.SelectionColor, token(light, "primary"))
+	want(t, "caret", s.CaretColor, token(light, "primary"))
 	want(t, "placeholder", s.PlaceholderColor, token(light, "muted-foreground"))
 	if !slices.ContainsFunc(s.Shadows, func(b BoxShadow) bool { return b.Color == token(light, "ring") }) {
 		t.Errorf("no ring of the ring token: %+v", s.Shadows)
@@ -569,7 +568,7 @@ func TestNSHPlaceholderAndProps(t *testing.T) {
 	s, p := tw(t, "placeholder:text-zinc-400 selection:bg-blue-500 line-clamp-2 pointer-events-none select-none object-contain")
 	want(t, "placeholder", s.PlaceholderColor, RGB(0x9f9fa9))
 	want(t, "selection", s.SelectionColor, RGB(0x2b7fff))
-	want(t, "caret", styled(t, "caret-blue-500").SelectionColor, RGB(0x2b7fff))
+	want(t, "caret", styled(t, "caret-blue-500").CaretColor, RGB(0x2b7fff))
 	want(t, "object-contain", p.resizeMode, Contain)
 	_, p2 := tw(t, "object-none")
 	want(t, "object-none", p2.resizeMode, Center)

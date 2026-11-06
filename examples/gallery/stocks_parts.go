@@ -58,8 +58,8 @@ func scrubbing(v core.View, at func(x core.Points)) core.View {
 		OnTerminate: func(core.ResponderEvent) { at(-1) },
 	}
 	// Desktops: the mouse over the chart moves the crosshair too.
-	v.OnHoverMove = func(e core.HoverEvent) { at(e.Position.X) }
-	v.OnHoverOut = func() { at(-1) }
+	v.OnMouseMove = func(e core.MouseEvent) { at(e.Position.X) }
+	v.OnMouseLeave = func(core.MouseEvent) { at(-1) }
 	return v
 }
 

@@ -392,8 +392,8 @@ func hover(cx *core.Scope) core.Node {
 		}
 		return ui.Badge{Text: tr.GestAway()}
 	})}, Children: []core.Node{
-		core.View{TestID: "hover-pad", OnHoverIn: func() { over.Set(true) }, OnHoverOut: func() { over.Set(false) },
-			OnHoverMove: func(e core.HoverEvent) { at.Set(e.Position) },
+		core.View{TestID: "hover-pad", OnMouseEnter: func(core.MouseEvent) { over.Set(true) }, OnMouseLeave: func(core.MouseEvent) { over.Set(false) },
+			OnMouseMove: func(e core.MouseEvent) { at.Set(e.Position) },
 			StyleFunc: func() core.Style {
 				return stage(cx, 100).Merge(core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Hover: &core.Style{Background: colors.Surface()}})
 			},
@@ -404,7 +404,7 @@ func hover(cx *core.Scope) core.Node {
 				p := at.Get()
 				return tr.GestPointerAt(fmt.Sprintf("%.0f, %.0f", p.X, p.Y))
 			}, 13, ui.Regular, colors.Muted)}},
-		APILine{Label: tr.GestInMoveAndOut(), Names: "OnHoverIn · OnHoverMove · OnHoverOut"},
+		APILine{Label: tr.GestInMoveAndOut(), Names: "OnMouseEnter · OnMouseMove · OnMouseLeave"},
 	}}
 }
 

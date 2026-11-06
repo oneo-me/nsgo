@@ -283,7 +283,7 @@ func (p *props) onLayout() func(core.Bounds) {
 	if h == nil {
 		return nil
 	}
-	return func(b core.Bounds) { h(p.r.bounds(b)) }
+	return func(b core.Bounds) { h(p.r.layoutEvent(b)) }
 }
 
 // onError returns a handler of an error, given { message }.

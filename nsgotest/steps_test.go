@@ -231,7 +231,7 @@ func TestHoverMovesBetweenViews(t *testing.T) {
 	var log []string
 	hover := func(id string) core.View {
 		return core.View{TestID: id, Style: core.Style{Height: core.Pt(20)},
-			OnHoverIn: func() { log = append(log, "in "+id) }, OnHoverOut: func() { log = append(log, "out "+id) }}
+			OnMouseEnter: func(core.MouseEvent) { log = append(log, "in "+id) }, OnMouseLeave: func(core.MouseEvent) { log = append(log, "out "+id) }}
 	}
 	app := Start(t, func(cx *core.Scope) core.Node {
 		return core.View{Children: []core.Node{hover("a"), hover("b")}}
@@ -312,7 +312,7 @@ func TestTabMovesTheFocusBetweenPressablesAndFields(t *testing.T) {
 	a.Key("shift+Tab")
 	a.Press("a")
 	a.Press("a")
-	want := []string{"focus a", "blur a", "focus b", "press b 0", "blur b", "focus a", "blur a", "press a 1", "press a 2"}
+	want := []string{"focus a", "blur a", "focus b", "press b 1", "blur b", "focus a", "blur a", "press a 1", "press a 2"}
 	if !slices.Equal(log, want) {
 		t.Fatalf("log = %q\nwant  %q", log, want)
 	}

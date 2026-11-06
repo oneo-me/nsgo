@@ -46,7 +46,7 @@ func writeEditing(w *writer, in *driver.InputConfig) {
 	}
 	w.str(hint)
 	w.u32(uint32(in.PlaceholderColor))
-	w.u32(uint32(in.SelectionColor))
+	w.u32(uint32(in.Caret()))
 	w.byte(byte(in.PasteBehavior))
 }
 

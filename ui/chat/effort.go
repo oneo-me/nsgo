@@ -228,13 +228,13 @@ func (p EffortPicker) panel(cx *core.Scope, motion *chatEffortMotion, selected f
 				choose(min(i+1, n-1))
 			}
 		},
-		OnLayout:    bar.Set,
-		OnFocus:     func() { focused.Set(true) },
-		OnBlur:      func() { focused.Set(false) },
-		OnPress:     func(core.PressEvent) {},
-		OnPressDown: func(e core.PressEvent) { downX = e.Position.X; choose(at(downX)) },
-		OnHoverIn:   func() { hovered.Set(true) },
-		OnHoverOut:  func() { hovered.Set(false) },
+		OnLayout:     bar.Set,
+		OnFocus:      func() { focused.Set(true) },
+		OnBlur:       func() { focused.Set(false) },
+		OnPress:      func(core.PressEvent) {},
+		OnPressDown:  func(e core.PressEvent) { downX = e.Position.X; choose(at(downX)) },
+		OnMouseEnter: func(core.MouseEvent) { hovered.Set(true) },
+		OnMouseLeave: func(core.MouseEvent) { hovered.Set(false) },
 		OnPan: func(e core.PanEvent) {
 			if e.Phase == core.GestureChanged {
 				choose(at(downX + e.Translation.X))

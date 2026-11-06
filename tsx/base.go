@@ -116,7 +116,7 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 			}
 			return m
 		}, nil)
-	registerPart("nsgo/base", "ResizablePanel", base.ResizablePanel{}, enumOptions...)
+	registerPart("nsgo/base", "ResizablePanel", base.ResizablePanel{}, append(enumOptions, Event("OnResize", "size"))...)
 	Register("nsgo/base", map[string]core.Node{
 		"Button":              base.Button{},
 		"Checkbox":            base.Checkbox{},
@@ -163,29 +163,36 @@ var baseRenames = []Option{
 	Rename("CellSelect", "cellSelectable"), Rename("NoResizeColumns", "resizableColumns"),
 	Rename("NoMoveColumns", "movableColumns"), Rename("NoBounce", "bounces"), Rename("NoHover", "interactive"),
 	Rename("Status", "transitionStatus"),
+	Event("OnChange", "checked"), Event("OnOpenChange", "open", "reason"), Event("OnResize", "sizes"),
+	Event("OnColumnResize", "key", "width"), Event("OnSelectionChange", "selection"), Event("OnSortChange", "sort"),
 	custom("Text", tableText, "data?: readonly unknown[]", "dataStart?: number"),
 	custom("RowCount", tableRowCount, "rowCount?: number"),
 	custom("RowClass", tableRowClass, "rowClasses?: readonly string[]"),
 	custom("OnDoublePress", func(p *props, v reflect.Value) {
 		if h := p.handler("onDoublePress"); h != nil {
-			v.Set(reflect.ValueOf(func(row, column int) { h(p.r.target(row, column)) }))
+			v.Set(reflect.ValueOf(func(row, column int) {
+				e := p.r.vm.NewObject()
+				_ = e.Set("target", p.r.target(row, column))
+				h(e)
+			}))
 		}
-	}, "onDoublePress?: (target: DataTableTarget) => void"),
+	}, "onDoublePress?: (e: { target: DataTableTarget }) => void"),
 	custom("OnVisibleRowsChange", rangeHandler("onVisibleRowsChange"),
-		"onVisibleRowsChange?: (range: DataTableRange) => void"),
+		"onVisibleRowsChange?: (e: { range: DataTableRange }) => void"),
 	custom("OnVisibleColumnsChange", rangeHandler("onVisibleColumnsChange"),
-		"onVisibleColumnsChange?: (range: DataTableRange) => void"),
+		"onVisibleColumnsChange?: (e: { range: DataTableRange }) => void"),
 	custom("OnHoverChange", func(p *props, v reflect.Value) {
 		if h := p.handler("onHoverChange"); h != nil {
 			v.Set(reflect.ValueOf(func(index int) {
-				if index < 0 {
-					h(goja.Null())
-				} else {
-					h(p.r.vm.ToValue(index))
+				e := p.r.vm.NewObject()
+				_ = e.Set("index", goja.Null())
+				if index >= 0 {
+					_ = e.Set("index", index)
 				}
+				h(e)
 			}))
 		}
-	}, "onHoverChange?: (index: number | null) => void"),
+	}, "onHoverChange?: (e: { index: number | null }) => void"),
 	custom("Y", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
 	custom("X", plotValues("x"), "data?: readonly any[]", plotAxis("x")),
 	custom("Y1", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
@@ -230,7 +237,9 @@ func rangeHandler(prop string) func(p *props, v reflect.Value) {
 				o := p.r.vm.NewObject()
 				_ = o.Set("start", start)
 				_ = o.Set("end", end)
-				h(o)
+				e := p.r.vm.NewObject()
+				_ = e.Set("range", o)
+				h(e)
 			}))
 		}
 	}

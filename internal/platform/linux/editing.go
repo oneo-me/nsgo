@@ -141,8 +141,8 @@ func entryStyle(v *view) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s { padding: 0; margin: 0; min-width: 0; min-height: 0; border: none; border-radius: 0; box-shadow: none; background: none; background-color: transparent; outline: none; }\n", all)
 	caret := in.Style.Color
-	if in.SelectionColor != 0 {
-		caret = in.SelectionColor
+	if in.Caret() != 0 {
+		caret = in.Caret()
 	}
 	caretCSS := cssColor(caret)
 	if in.HideCaret {

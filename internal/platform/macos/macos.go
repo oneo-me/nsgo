@@ -928,11 +928,11 @@ func (s *surface) observe() {
 		})
 	}
 
-	const keyDown, leftDown, leftUp, mouseMoved, leftDragged, rightDown, otherDown, wheel, flags = 1 << 10, 1 << 1, 1 << 2, 1 << 5, 1 << 6, 1 << 3, 1 << 25, 1 << 22, 1 << 12
+	const keyDown, leftDown, leftUp, mouseMoved, leftDragged, rightDown, otherDown, rightDragged, otherDragged, wheel, flags = 1 << 10, 1 << 1, 1 << 2, 1 << 5, 1 << 6, 1 << 3, 1 << 25, 1 << 7, 1 << 27, 1 << 22, 1 << 12
 	handler := objc.NewBlock(func(_ objc.Block, event objc.ID) objc.ID { return s.filter(event) })
 	nsEvent := objc.ID(objc.GetClass("NSEvent"))
 	monitor := nsEvent.Send(sel("addLocalMonitorForEventsMatchingMask:handler:"),
-		uint64(keyDown|leftDown|leftUp|mouseMoved|leftDragged|rightDown|otherDown|wheel|flags), handler).Send(sel("retain"))
+		uint64(keyDown|leftDown|leftUp|mouseMoved|leftDragged|rightDown|otherDown|rightDragged|otherDragged|wheel|flags), handler).Send(sel("retain"))
 	handler.Release()
 	s.stops = append(s.stops, func() {
 		nsEvent.Send(sel("removeMonitor:"), monitor)
@@ -990,7 +990,7 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 	if s.window == 0 || event.Send(selWindow) != s.window || s.engine == nil {
 		return event
 	}
-	const typeLeftDown, typeLeftUp, typeRightDown, typeMouseMoved, typeLeftDragged, typeKeyDown, typeFlagsChanged, typeScrollWheel, typeOtherDown = 1, 2, 3, 5, 6, 10, 12, 22, 25
+	const typeLeftDown, typeLeftUp, typeRightDown, typeMouseMoved, typeLeftDragged, typeRightDragged, typeKeyDown, typeFlagsChanged, typeScrollWheel, typeOtherDown, typeOtherDragged = 1, 2, 3, 5, 6, 7, 10, 12, 22, 25, 27
 	switch objc.Send[uint](event, sel("type")) {
 	case typeFlagsChanged:
 		s.modifiersChanged(event)
@@ -1030,6 +1030,8 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 		if s.dragScrolls(event) || s.selectDrag(event) {
 			return 0
 		}
+	case typeRightDragged, typeOtherDragged:
+		s.dragMoved(event)
 	case typeLeftUp:
 		s.pick(objc.Send[apple.CGPoint](event, selLocationInWindow), true)
 		if s.releaseScrolls() || s.selectUp() {
@@ -1686,8 +1688,8 @@ func (v *view) setEvents(m driver.EventMask) {
 		v.input.fs.Events = m
 	}
 	v.events = m
-	moves := m.Has(driver.EventHoverMove) || m.Has(driver.EventMouseMove)
-	wantHover := moves || m.Has(driver.EventHoverIn) || m.Has(driver.EventHoverOut)
+	moves := m.Has(driver.EventMouseMove)
+	wantHover := moves || m.Has(driver.EventMouseEnter) || m.Has(driver.EventMouseLeave)
 	if moves {
 		v.surface.movers[v] = struct{}{}
 	} else {
@@ -1722,6 +1724,38 @@ func trackingArea(view objc.ID, moves bool) objc.ID {
 
 func (v *view) dispatch(kind driver.EventKind) {
 	v.report(driver.Event{Kind: kind})
+}
+
+// mouseAt reports kind, a mouse event, with the mouse at loc in the window
+// and the keys and the button held now.
+func (v *view) mouseAt(kind driver.EventKind, loc apple.CGPoint) {
+	p := objc.Send[apple.CGPoint](v.native, selConvertPoint, loc, objc.ID(0))
+	flags := objc.Send[uint](objc.ID(objc.GetClass("NSEvent")), sel("modifierFlags"))
+	v.report(driver.Event{Kind: kind, Point: driver.Point{X: driver.Points(p.X), Y: driver.Points(p.Y)}, Page: v.page(loc),
+		Modifiers: apple.Modifiers(flags), Button: pressedButton()})
+}
+
+// mouse is mouseAt where event happened; a test's event, nil, says
+// nowhere.
+func (v *view) mouse(kind driver.EventKind, event objc.ID) {
+	if event == 0 {
+		v.dispatch(kind)
+		return
+	}
+	v.mouseAt(kind, objc.Send[apple.CGPoint](event, selLocationInWindow))
+}
+
+// pressedButton is the button held down: the first of those AppKit says
+// are, each a bit by its number, as Windows' and the DOM's.
+func pressedButton() driver.MouseButton {
+	buttons := objc.Send[uint](objc.ID(objc.GetClass("NSEvent")), sel("pressedMouseButtons"))
+	for i, b := range []driver.MouseButton{driver.MouseButtonLeft, driver.MouseButtonRight, driver.MouseButtonMiddle,
+		driver.MouseButtonBack, driver.MouseButtonForward} {
+		if buttons&(1<<i) != 0 {
+			return b
+		}
+	}
+	return driver.MouseButtonNone
 }
 
 // pointer returns event's position in v and in its root view, and the
@@ -2014,9 +2048,9 @@ func (s *surface) pick(loc apple.CGPoint, always bool) {
 	for v := range s.inside {
 		switch over := covers(v, hit); {
 		case over && !v.over:
-			v.dispatch(driver.EventHoverIn)
+			v.mouseAt(driver.EventMouseEnter, loc)
 		case !over && v.over:
-			v.dispatch(driver.EventHoverOut)
+			v.mouseAt(driver.EventMouseLeave, loc)
 		default:
 			continue
 		}
@@ -2165,7 +2199,7 @@ func mouseEntered(self objc.ID, _ objc.SEL, event objc.ID) {
 	}
 	defer v.surface.measuring(false)()
 	if v.native != self {
-		v.dispatch(driver.EventHoverIn)
+		v.mouse(driver.EventMouseEnter, event)
 		return
 	}
 	v.surface.inside[v] = struct{}{}
@@ -2174,23 +2208,22 @@ func mouseEntered(self objc.ID, _ objc.SEL, event objc.ID) {
 	}
 	if !v.over && (event == 0 || covers(v, v.surface.hitAt(objc.Send[apple.CGPoint](event, selLocationInWindow)))) {
 		v.over = true
-		v.dispatch(driver.EventHoverIn)
+		v.mouse(driver.EventMouseEnter, event)
 	}
 }
 
 // modifiersChanged reports a modifier key pressed or released while the
 // mouse rests as a move to where it is with the new modifiers, to the
-// views under it that hear hover moves: a link that shows while Command
-// is down.
+// views under it that hear them: a link that shows while Command is down.
 func (s *surface) modifiersChanged(event objc.ID) {
 	mods := apple.Modifiers(objc.Send[uint](event, sel("modifierFlags")))
 	loc := objc.Send[apple.CGPoint](s.window, sel("mouseLocationOutsideOfEventStream"))
 	for v := range s.movers {
-		if !v.over || !v.events.Has(driver.EventHoverMove) {
+		if !v.over || !v.events.Has(driver.EventMouseMove) {
 			continue
 		}
 		p := objc.Send[apple.CGPoint](v.native, selConvertPoint, loc, objc.ID(0))
-		v.report(driver.Event{Kind: driver.EventHoverMove, Point: driver.Point{X: driver.Points(p.X), Y: driver.Points(p.Y)},
+		v.report(driver.Event{Kind: driver.EventMouseMove, Point: driver.Point{X: driver.Points(p.X), Y: driver.Points(p.Y)},
 			Page: v.page(loc), Modifiers: mods})
 	}
 }
@@ -2210,9 +2243,6 @@ func mouseMoved(self objc.ID, _ objc.SEL, event objc.ID) {
 	if !v.over {
 		return
 	}
-	if v.events.Has(driver.EventHoverMove) {
-		v.report(v.pointer(driver.EventHoverMove, event))
-	}
 	if v.events.Has(driver.EventMouseMove) {
 		v.report(v.pointer(driver.EventMouseMove, event))
 	}
@@ -2229,7 +2259,6 @@ func (s *surface) dragMoved(event objc.ID) {
 	type under struct {
 		v     *view
 		depth int
-		at    apple.CGPoint
 	}
 	var hit []under
 	for v := range s.movers {
@@ -2246,28 +2275,31 @@ func (s *surface) dragMoved(event objc.ID) {
 		for n := v.native; n != 0; n = n.Send(selSuperview) {
 			depth++
 		}
-		hit = append(hit, under{v, depth, p})
+		hit = append(hit, under{v, depth})
 	}
 	slices.SortFunc(hit, func(a, b under) int { return b.depth - a.depth })
+	button := pressedButton()
 	for _, u := range hit {
-		u.v.report(driver.Event{Kind: driver.EventMouseMove, Point: driver.Point{X: driver.Points(u.at.X), Y: driver.Points(u.at.Y)}})
+		ev := u.v.pointer(driver.EventMouseMove, event)
+		ev.Button = button
+		u.v.report(ev)
 	}
 }
 
-func mouseExited(self objc.ID, _ objc.SEL, _ objc.ID) {
+func mouseExited(self objc.ID, _ objc.SEL, event objc.ID) {
 	v := views[self]
 	if v == nil {
 		return
 	}
 	defer v.surface.measuring(false)()
 	if v.native != self {
-		v.dispatch(driver.EventHoverOut)
+		v.mouse(driver.EventMouseLeave, event)
 		return
 	}
 	delete(v.surface.inside, v)
 	if v.over {
 		v.over = false
-		v.dispatch(driver.EventHoverOut)
+		v.mouse(driver.EventMouseLeave, event)
 	}
 }
 

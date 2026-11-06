@@ -8,29 +8,27 @@ import (
 
 func TestPointerEventsCarryPositionsAndModifiers(t *testing.T) {
 	var presses []PressEvent
-	var hovers []HoverEvent
-	var moves []Point
+	var moves []MouseEvent
 	var menus []ContextMenuEvent
 	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
 		return View{Children: []Node{
 			View{Style: Style{Height: Pt(40)}, TestID: "v",
 				OnPress:       func(e PressEvent) { presses = append(presses, e) },
 				OnPressDown:   func(e PressEvent) { presses = append(presses, e) },
-				OnHoverMove:   func(e HoverEvent) { hovers = append(hovers, e) },
-				OnMouseMove:   func(p Point) { moves = append(moves, p) },
+				OnMouseMove:   func(e MouseEvent) { moves = append(moves, e) },
 				OnContextMenu: func(e ContextMenuEvent) { menus = append(menus, e) }},
-			View{Style: Style{Height: Pt(40)}, TestID: "plain", OnHoverIn: func() {}},
+			View{Style: Style{Height: Pt(40)}, TestID: "plain", OnMouseEnter: func(MouseEvent) {}},
 		}}
 	})
 	h.commit()
 	n := h.find("v")
 	m := n.events()
-	for _, k := range []driver.EventKind{driver.EventPress, driver.EventPressDown, driver.EventHoverMove, driver.EventMouseMove, driver.EventContextMenu} {
+	for _, k := range []driver.EventKind{driver.EventPress, driver.EventPressDown, driver.EventMouseMove, driver.EventContextMenu} {
 		if !m.Has(k) {
 			t.Errorf("events lack %v", k)
 		}
 	}
-	if m := h.find("plain").events(); m.Has(driver.EventHoverMove) || m.Has(driver.EventMouseMove) {
+	if m := h.find("plain").events(); m.Has(driver.EventMouseMove) {
 		t.Error("a view without move handlers reports moves")
 	}
 	shift := Modifiers{Shift: true}
@@ -40,20 +38,41 @@ func TestPointerEventsCarryPositionsAndModifiers(t *testing.T) {
 	if len(presses) != 2 || presses[0] != want || presses[1] != want {
 		t.Fatalf("presses = %+v, want two of %+v", presses, want)
 	}
-	h.tree.Dispatch(driver.Event{Kind: driver.EventHoverMove, ID: n.id, Point: Point{X: 1, Y: 2}, Page: Point{X: 1, Y: 42}, Modifiers: Modifiers{Platform: true}})
-	if len(hovers) != 1 || hovers[0] != (HoverEvent{Point{X: 1, Y: 2}, Point{X: 1, Y: 42}, Modifiers{Platform: true}}) {
-		t.Fatalf("hovers = %+v", hovers)
-	}
-	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseMove, ID: n.id, Point: Point{X: 3, Y: 4}})
-	if len(moves) != 1 || moves[0] != (Point{X: 3, Y: 4}) {
-		t.Fatalf("moves = %v", moves)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseMove, ID: n.id, Point: Point{X: 1, Y: 2}, Page: Point{X: 1, Y: 42},
+		Modifiers: Modifiers{Platform: true}, Button: MouseButtonLeft})
+	if len(moves) != 1 || moves[0] != (MouseEvent{Point{X: 1, Y: 2}, Point{X: 1, Y: 42}, Modifiers{Platform: true}, MouseButtonLeft}) {
+		t.Fatalf("moves = %+v", moves)
 	}
 	h.tree.Dispatch(driver.Event{Kind: driver.EventContextMenu, ID: n.id, Point: Point{X: 7, Y: 8}, Page: Point{X: 7, Y: 48}, Modifiers: Modifiers{Control: true}})
 	if len(menus) != 1 || menus[0] != (ContextMenuEvent{Point{X: 7, Y: 8}, Point{X: 7, Y: 48}, Modifiers{Control: true}}) {
 		t.Fatalf("menus = %+v", menus)
 	}
-	if !(driver.Event{Kind: driver.EventHoverMove}).Mergeable() || !(driver.Event{Kind: driver.EventMouseMove}).Mergeable() {
+	if !(driver.Event{Kind: driver.EventMouseMove}).Mergeable() {
 		t.Fatal("mouse moves do not merge")
+	}
+}
+
+func TestMouseEnterAndLeaveSayWhereAndPressesCountOne(t *testing.T) {
+	var got []MouseEvent
+	var press PressEvent
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		return View{TestID: "v", OnPress: func(e PressEvent) { press = e },
+			OnMouseEnter: func(e MouseEvent) { got = append(got, e) },
+			OnMouseLeave: func(e MouseEvent) { got = append(got, e) }}
+	})
+	h.commit()
+	n := h.find("v")
+	in := MouseEvent{Position: Point{X: 1, Y: 2}, PagePosition: Point{X: 3, Y: 4}, Modifiers: Modifiers{Shift: true}}
+	out := MouseEvent{Position: Point{X: -1, Y: 2}, PagePosition: Point{X: 1, Y: 4}, PressedButton: MouseButtonRight}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseEnter, ID: n.id, Point: in.Position, Page: in.PagePosition, Modifiers: in.Modifiers})
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseLeave, ID: n.id, Point: out.Position, Page: out.PagePosition, Button: out.PressedButton})
+	if len(got) != 2 || got[0] != in || got[1] != out {
+		t.Fatalf("got %+v", got)
+	}
+	// A press from the keyboard or a screen reader knows no pointer.
+	h.tree.Dispatch(driver.Event{Kind: driver.EventPress, ID: n.id})
+	if press != (PressEvent{Clicks: 1}) {
+		t.Fatalf("press = %+v", press)
 	}
 }
 

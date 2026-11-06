@@ -46,15 +46,14 @@ type View struct {
 	OnLongPress func(PressEvent)
 	OnPressDown func(PressEvent)
 	OnPressUp   func(PressEvent)
-	// OnHoverIn and OnHoverOut follow the mouse over the view or a view
-	// inside it, and OnHoverMove where it is while it moves there with no
-	// button down. Touches never hover.
-	OnHoverIn   func()
-	OnHoverOut  func()
-	OnHoverMove func(HoverEvent)
-	// OnMouseMove receives each mouse move over the view in its
-	// coordinates, also with a button down, on desktops and the web.
-	OnMouseMove func(Point)
+	// OnMouseEnter and OnMouseLeave follow the mouse over the view or a
+	// view inside it, as the DOM's events do, OnMouseLeave saying where it
+	// was last. OnMouseMove hears it move there, with or without a button
+	// down (PressedButton), and a modifier key change while it rests
+	// there with none down. Touches never hover.
+	OnMouseEnter func(MouseEvent)
+	OnMouseLeave func(MouseEvent)
+	OnMouseMove  func(MouseEvent)
 	// OnContextMenu receives a secondary click in the view.
 	OnContextMenu func(ContextMenuEvent)
 	// OnTouch hears the fingers on the surface while one that went down

@@ -142,6 +142,7 @@ type window struct {
 	paste         *pasting      // the paste whose clipboard is being read
 	pointerIn     bool          // the pointer is over the surface, at lastPointer
 	hovered       hover.Tracker // the views under it that follow hovers
+	pointerState  uint32        // its modifiers and buttons at its last move
 	shielding     bool          // a press kept from a hosted control goes on
 	panning       *pan
 	bars          []*view  // the scroll views under the pointer, which show their bars

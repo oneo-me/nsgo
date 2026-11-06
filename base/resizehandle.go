@@ -140,12 +140,12 @@ func handleBandNode(h handleBandSpec) core.Node {
 	return core.View{
 		Style: band, Disabled: h.disabled, HitSlop: slop,
 		OnPan: pan, PanActivation: activation,
-		OnHoverIn: func() {
+		OnMouseEnter: func(core.MouseEvent) {
 			if h.state.GetUntracked() == HandleIdle {
 				set(HandleHovered)
 			}
 		},
-		OnHoverOut: func() {
+		OnMouseLeave: func(core.MouseEvent) {
 			if h.state.GetUntracked() == HandleHovered {
 				set(HandleIdle)
 			}

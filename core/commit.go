@@ -353,6 +353,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 	case n.input != nil:
 		in := n.input
 		in.config.PlaceholderColor, in.config.SelectionColor = inherited.PlaceholderColor, inherited.SelectionColor
+		in.config.CaretColor = n.style.CaretColor
 		ts := scaleText(inherited.textStyle(), fontMultiplier(t.fontScale, in.noScale, in.maxScale))
 		ts.RTL = n.textRTL(inherited, in.value)
 		if ts != in.config.Style || in.lineH == 0 {

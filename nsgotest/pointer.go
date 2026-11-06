@@ -420,7 +420,7 @@ func (a *App) fingerLifted(f *finger) {
 // Hover moves the mouse over the middle of what selector names, as a
 // desktop's pointer does: the views from it out that hover matters to
 // (hover styles or hover events) replace those hovered before, which
-// hear HoverOut, the new ones HoverIn, and each hovered view HoverMove.
+// hear MouseLeave, the new ones MouseEnter, and each hovered view MouseMove.
 func (a *App) Hover(selector string) {
 	a.t.Helper()
 	a.step("hover(%s)", selector)
@@ -452,21 +452,21 @@ func (a *App) hoverAt(selector string, local *driver.Point) {
 	}
 	var next []*View
 	for p := v; p != nil; p = p.Parent {
-		if p.Events.Has(driver.EventHoverIn) || p.Events.Has(driver.EventHoverOut) || p.Events.Has(driver.EventHoverMove) {
+		if p.Events.Has(driver.EventMouseEnter) || p.Events.Has(driver.EventMouseLeave) || p.Events.Has(driver.EventMouseMove) {
 			next = append(next, p)
 		}
 	}
 	a.setHovered(next, at)
 	for _, h := range next {
 		ev := a.pressEvent(h, at)
-		ev.Kind, ev.Count = driver.EventHoverMove, 0
+		ev.Kind, ev.Count = driver.EventMouseMove, 0
 		a.send(h, ev)
 	}
 	a.done()
 }
 
 // HoverOut moves the mouse out of the surface: every view hovered hears
-// HoverOut.
+// MouseLeave.
 func (a *App) HoverOut() {
 	a.t.Helper()
 	a.step("hoverOut")
@@ -480,22 +480,26 @@ func (a *App) HoverOut() {
 }
 
 // setHovered makes next, innermost first, the views hovered: those that
-// leave hear HoverOut, innermost first, and those that come HoverIn,
+// leave hear MouseLeave, innermost first, and those that come MouseEnter,
 // outermost first.
 func (a *App) setHovered(next []*View, at driver.Point) {
 	for _, h := range a.hovered {
 		if !containsView(next, h) && a.views[h.ID] == h {
 			h.Hovered = false
-			a.send(h, driver.Event{Kind: driver.EventHoverOut})
+			ev := a.pressEvent(h, a.mouse)
+			ev.Kind, ev.Count = driver.EventMouseLeave, 0
+			a.send(h, ev)
 		}
 	}
 	for i := len(next) - 1; i >= 0; i-- {
 		if h := next[i]; !containsView(a.hovered, h) {
 			h.Hovered = true
-			a.send(h, driver.Event{Kind: driver.EventHoverIn})
+			ev := a.pressEvent(h, at)
+			ev.Kind, ev.Count = driver.EventMouseEnter, 0
+			a.send(h, ev)
 		}
 	}
-	a.hovered = next
+	a.hovered, a.mouse = next, at
 }
 
 // Scroll drags the scroll view selector names (the match, the nearest

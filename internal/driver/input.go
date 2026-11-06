@@ -192,3 +192,11 @@ func KeyOf(text string) string {
 	}
 	return text
 }
+
+// Caret is the color of the caret: CaretColor, or else SelectionColor.
+func (c *InputConfig) Caret() Color {
+	if c.CaretColor != 0 {
+		return c.CaretColor
+	}
+	return c.SelectionColor
+}

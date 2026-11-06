@@ -81,17 +81,20 @@ func init() {
 
 // dockOptions are DockArea's props in NSH's shapes.
 var dockOptions = []Option{
+	Event("OnDockOpenChange", "placement", "open"), Event("OnLayoutChange", "layout"),
+	Event("OnPanelActiveChange", "panel", "active"), Event("OnPanelRemove", "panel"),
 	custom("OnZoomChange", func(p *props, v reflect.Value) {
 		if h := p.handler("onZoomChange"); h != nil {
 			v.Set(reflect.ValueOf(func(key string) {
-				if key == "" {
-					h(goja.Null())
-					return
+				e := p.r.vm.NewObject()
+				_ = e.Set("panel", goja.Null())
+				if key != "" {
+					_ = e.Set("panel", key)
 				}
-				h(p.r.vm.ToValue(key))
+				h(e)
 			}))
 		}
-	}, "onZoomChange?: (panel: string | null) => void"),
+	}, "onZoomChange?: (e: { panel: string | null }) => void"),
 	typed("Panels", custom("Panels", func(p *props, v reflect.Value) {
 		x := p.get("panels")
 		if !defined(x) {

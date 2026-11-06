@@ -247,8 +247,12 @@ func (e *ed) textArea() core.Node {
 			return merge(core.Style{Width: core.Pt(core.Points(e.boxWidth())), Height: core.Pt(core.Points(e.contentHeight())),
 				Cursor: core.CursorText}, s().Content)
 		},
-		OnHoverMove: func(ev core.HoverEvent) { e.pointer(ev.Position, ev.PagePosition, ev.Modifiers) },
-		OnHoverOut:  e.pointerLeft,
+		OnMouseMove: func(ev core.MouseEvent) {
+			if ev.PressedButton == core.MouseButtonNone {
+				e.pointer(ev.Position, ev.PagePosition, ev.Modifiers)
+			}
+		},
+		OnMouseLeave: func(core.MouseEvent) { e.pointerLeft() },
 		OnContextMenu: func(ev core.ContextMenuEvent) {
 			if e.p.OnContextMenu != nil {
 				e.p.OnContextMenu(ContextMenuEvent{Position: e.position(e.posAt(ev.Position)), At: ev.PagePosition})
@@ -797,10 +801,10 @@ func (e *ed) completionList() core.Node {
 					}
 					return st
 				},
-				Selected:    func() bool { e.compRev.Get(); return i() == e.compSel },
-				OnHoverIn:   func() { e.compSel = i(); e.compRev.Update(inc) },
-				OnPressDown: func(core.PressEvent) { it, _ := item(); e.accept(it) },
-				NoFocus:     true,
+				Selected:     func() bool { e.compRev.Get(); return i() == e.compSel },
+				OnMouseEnter: func(core.MouseEvent) { e.compSel = i(); e.compRev.Update(inc) },
+				OnPressDown:  func(core.PressEvent) { it, _ := item(); e.accept(it) },
+				NoFocus:      true,
 				Children: []core.Node{
 					core.Text{ContentFunc: func() string { it, _ := item(); return string(it.Kind) }, MaxLines: 1, Class: c.CompletionKind,
 						StyleFunc: func() core.Style { return s().CompletionKind }},

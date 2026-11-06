@@ -206,7 +206,7 @@ func (v *view) setGestures(m driver.EventMask) {
 		r.Send(selSetDeleg, v.native)
 		return r
 	})
-	hover := m.Has(driver.EventHoverIn) || m.Has(driver.EventHoverOut) || m.Has(driver.EventHoverMove)
+	hover := m.Has(driver.EventMouseEnter) || m.Has(driver.EventMouseLeave) || m.Has(driver.EventMouseMove)
 	toggle(hover, &v.hover, func() objc.ID {
 		return newRecognizer(objc.GetClass("UIHoverGestureRecognizer"), selHoverAction)
 	})
@@ -222,15 +222,20 @@ func hovered(self objc.ID, _ objc.SEL, r objc.ID) {
 	}
 	at := objc.Send[apple.CGPoint](r, selLocationInView, self)
 	page := objc.Send[apple.CGPoint](r, selLocationInView, v.surface.native)
-	p := driver.Point{X: driver.Points(at.X), Y: driver.Points(at.Y)}
+	ev := driver.Event{Point: driver.Point{X: driver.Points(at.X), Y: driver.Points(at.Y)},
+		Page: driver.Point{X: driver.Points(page.X), Y: driver.Points(page.Y)}}
+	report := func(kind driver.EventKind) {
+		ev.Kind = kind
+		v.report(ev)
+	}
 	switch objc.Send[int](r, selState) {
 	case stateBegan:
-		v.report(driver.Event{Kind: driver.EventHoverIn})
+		report(driver.EventMouseEnter)
 		fallthrough
 	case stateChanged:
-		v.report(driver.Event{Kind: driver.EventHoverMove, Point: p, Page: driver.Point{X: driver.Points(page.X), Y: driver.Points(page.Y)}})
+		report(driver.EventMouseMove)
 	case stateEnded, stateCancelled:
-		v.report(driver.Event{Kind: driver.EventHoverOut})
+		report(driver.EventMouseLeave)
 	}
 }
 

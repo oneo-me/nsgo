@@ -98,15 +98,78 @@ type faceSpec struct {
 	// the types they name, declared with them.
 	decls map[string][]string
 	types map[string][]reflect.Type
+	// events are the names of what events give their handlers, by field.
+	events map[string][]string
 }
 
 func newSpec(opts []Option) *faceSpec {
 	spec := &faceSpec{renames: map[string]string{}, custom: map[string]func(p *props, v reflect.Value){},
-		decls: map[string][]string{}, types: map[string][]reflect.Type{}}
+		decls: map[string][]string{}, types: map[string][]reflect.Type{}, events: map[string][]string{}}
 	for _, o := range opts {
 		o(spec)
 	}
 	return spec
+}
+
+// Event names the fields of the one object event field passes its
+// handler, a name for each of its arguments, as NSH's #[args] does:
+// Event("OnOpenChange", "open", "reason"). An event of no name given
+// passes the event struct it has as it is, and a bare value as { value };
+// Bounds, what every OnLayout has, as { bounds }.
+func Event(field string, names ...string) Option {
+	return func(s *faceSpec) { s.events[field] = names }
+}
+
+// eventFields are the fields the object of event field of type t holds,
+// nil when its one argument is that object.
+func eventFields(spec *faceSpec, component reflect.Type, field string, t reflect.Type) []string {
+	names, named := spec.events[field]
+	switch {
+	case named && len(names) != t.NumIn():
+		panic(fmt.Sprintf("tsx: %s.%s has %d arguments, not those of %q", component, field, t.NumIn(), names))
+	case named:
+		return names
+	case t.NumIn() != 1:
+		panic(fmt.Sprintf("tsx: %s.%s needs tsx.Event to name its arguments", component, field))
+	case t.In(0) == boundsType:
+		return []string{"bounds"}
+	case t.In(0).Kind() == reflect.Struct || t.In(0) == errorType:
+		return nil
+	}
+	if _, shaped := shapeOf(t.In(0)); shaped {
+		return nil
+	}
+	return []string{"value"}
+}
+
+// isEvent reports whether field of type t is an event with something to
+// report.
+func isEvent(field string, t reflect.Type) bool {
+	return strings.HasPrefix(field, "On") && t.Kind() == reflect.Func && t.NumOut() == 0 && t.NumIn() > 0
+}
+
+// eventSetter sets event field t from prop: what it reports goes to the
+// handler as one object of the fields names, or as it is without any.
+func eventSetter(t reflect.Type, prop string, names []string) func(p *props, v reflect.Value) {
+	return func(p *props, v reflect.Value) {
+		h := p.handler(prop)
+		if h == nil {
+			return
+		}
+		r := p.r
+		v.Set(reflect.MakeFunc(t, func(in []reflect.Value) []reflect.Value {
+			if names == nil {
+				h(r.encode(in[0]))
+				return nil
+			}
+			o := r.vm.NewObject()
+			for i, a := range in {
+				_ = o.Set(names[i], r.encode(a))
+			}
+			h(o)
+			return nil
+		}))
+	}
 }
 
 // Flag sets the bool field from prop, a choice of names: true when it is
@@ -162,6 +225,11 @@ func Register(module string, components map[string]core.Node, opts ...Option) {
 	defer registryMu.Unlock()
 	for name, zero := range components {
 		t := reflect.TypeOf(zero)
+		for _, field := range reflect.VisibleFields(t) {
+			if _, set := spec.custom[field.Name]; !set && field.IsExported() && isEvent(field.Name, field.Type) {
+				eventFields(spec, t, field.Name, field.Type)
+			}
+		}
 		f := goFace(t, spec)
 		registeredTypes[module] = append(registeredTypes[module], registeredType{name, t, spec})
 		registered[module] = append(registered[module], faceExport(name, f))
@@ -584,6 +652,8 @@ func planFields(t reflect.Type, spec *faceSpec) []field {
 			}
 			pr := plan.prop
 			plan.set = func(p *props, v reflect.Value) { v.SetBool(!p.boolOr(pr, true)) }
+		case isEvent(name, ft):
+			plan.set = eventSetter(ft, prop, eventFields(spec, t, name, ft))
 		default:
 			plan.set = setter(ft, prop)
 		}

@@ -120,10 +120,10 @@ func TestGroupStylesFollowTheGroup(t *testing.T) {
 	})
 	h.commit()
 	card, inner, icon, anyGroup := h.find("card"), h.find("inner"), h.find("icon"), h.find("any")
-	if m := card.events(); !m.Has(driver.EventHoverIn) || !m.Has(driver.EventPressDown) {
+	if m := card.events(); !m.Has(driver.EventMouseEnter) || !m.Has(driver.EventPressDown) {
 		t.Fatalf("group mask = %b, want hover and press reported", m)
 	}
-	h.tree.Dispatch(driver.Event{Kind: driver.EventHoverIn, ID: card.id})
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseEnter, ID: card.id})
 	if icon.style.Opacity.Value() != 1 {
 		t.Errorf("icon opacity = %v while its group is hovered", icon.style.Opacity.Value())
 	}
@@ -136,7 +136,7 @@ func TestGroupStylesFollowTheGroup(t *testing.T) {
 	if anyGroup.style.Background != RGB(0xff0000) {
 		t.Errorf("background = %x while the nearest group is pressed", anyGroup.style.Background)
 	}
-	h.tree.Dispatch(driver.Event{Kind: driver.EventHoverOut, ID: card.id})
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseLeave, ID: card.id})
 	if icon.style.Opacity.Value() != 0.5 {
 		t.Errorf("icon opacity = %v after the hover", icon.style.Opacity.Value())
 	}

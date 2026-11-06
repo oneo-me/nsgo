@@ -234,12 +234,12 @@ type node struct {
 
 type handlers struct {
 	press, longPress, pressDown, pressUp func(PressEvent)
-	hoverIn, hoverOut, focus, blur       func()
-	hoverMove                            func(HoverEvent)
+	mouseEnter, mouseLeave, mouseMove    func(MouseEvent)
+	focus, blur                          func()
 	touch, touchCapture                  func(TouchEvent)
 	contextMenu                          func(ContextMenuEvent)
 	change, submit                       func(string)
-	scroll, pressOutside, mouseMove      func(Point)
+	scroll, pressOutside                 func(Point)
 	layout                               func(Bounds)
 	cancel                               func()
 	loadStart, loadEnd                   func()
@@ -1145,7 +1145,7 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 // them.
 func (t *Tree) setViewParts(n *node, v View) {
 	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, pressDown: v.OnPressDown, pressUp: v.OnPressUp,
-		hoverIn: v.OnHoverIn, hoverOut: v.OnHoverOut, hoverMove: v.OnHoverMove, mouseMove: v.OnMouseMove,
+		mouseEnter: v.OnMouseEnter, mouseLeave: v.OnMouseLeave, mouseMove: v.OnMouseMove,
 		layout: v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
 		pan: v.OnPan, pinch: v.OnPinch, rotation: v.OnRotation,
 		fileEnter: v.OnFileDragEnter, fileLeave: v.OnFileDragLeave, fileDrop: v.OnFileDrop,
@@ -1554,6 +1554,11 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			t.within(n.owner, func() { fn(pressOf(ev)) })
 		}
 	}
+	mouse := func(fn func(MouseEvent)) {
+		if fn != nil {
+			t.within(n.owner, func() { fn(mouseOf(ev)) })
+		}
+	}
 	switch ev.Kind {
 	case driver.EventPress:
 		t.setState(n, statePressed, false)
@@ -1592,26 +1597,20 @@ func (t *Tree) Dispatch(ev driver.Event) {
 	case driver.EventPressUp:
 		t.setState(n, statePressed, false)
 		press(h.pressUp)
-	case driver.EventHoverIn:
+	case driver.EventMouseEnter:
 		t.setState(n, stateHovered, true)
-		call(h.hoverIn)
+		mouse(h.mouseEnter)
 		if n.tip != nil {
 			call(n.tip.show)
 		}
-	case driver.EventHoverOut:
+	case driver.EventMouseLeave:
 		t.setState(n, stateHovered, false)
-		call(h.hoverOut)
+		mouse(h.mouseLeave)
 		if n.tip != nil {
 			call(n.tip.hide)
 		}
-	case driver.EventHoverMove:
-		if h.hoverMove != nil {
-			t.within(n.owner, func() { h.hoverMove(HoverEvent{ev.Point, ev.Page, ev.Modifiers}) })
-		}
 	case driver.EventMouseMove:
-		if h.mouseMove != nil {
-			t.within(n.owner, func() { h.mouseMove(ev.Point) })
-		}
+		mouse(h.mouseMove)
 	case driver.EventFocus:
 		t.setState(n, stateFocused, true)
 		call(h.focus)
@@ -1939,9 +1938,8 @@ func (n *node) events() driver.EventMask {
 	// A press hides the tooltip of a view that takes presses.
 	bit(driver.EventPressDown, h.pressDown != nil || pressStyled || n.tip != nil && h.press != nil)
 	bit(driver.EventPressUp, h.pressUp != nil || pressStyled)
-	bit(driver.EventHoverIn, h.hoverIn != nil || s.Hover != nil || group || n.tip != nil)
-	bit(driver.EventHoverOut, h.hoverOut != nil || s.Hover != nil || group || n.tip != nil)
-	bit(driver.EventHoverMove, h.hoverMove != nil)
+	bit(driver.EventMouseEnter, h.mouseEnter != nil || s.Hover != nil || group || n.tip != nil)
+	bit(driver.EventMouseLeave, h.mouseLeave != nil || s.Hover != nil || group || n.tip != nil)
 	bit(driver.EventMouseMove, h.mouseMove != nil)
 	bit(driver.EventTouch, n.hearsTouches())
 	bit(driver.EventFocus, h.focus != nil || s.Focus != nil)

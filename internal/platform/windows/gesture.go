@@ -33,6 +33,8 @@ const (
 	mkLButton        = 0x0001
 	mkRButton        = 0x0002
 	mkMButton        = 0x0010
+	mkXButton1       = 0x0020
+	mkXButton2       = 0x0040
 	mkControl        = 0x0008
 
 	gidZoom   = 3

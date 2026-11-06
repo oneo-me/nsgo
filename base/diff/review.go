@@ -284,10 +284,10 @@ func (v *dv) addControls() core.Node {
 					Width: core.Pt(core.Points(v.gutterWidth())), Height: core.Pt(core.Points(v.lh)), Direction: core.Row,
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyEnd}, v.styles().AddAnnotation)
 			},
-			Class:      v.p.Classes.AddAnnotation,
-			OnHoverIn:  func() { v.hover(place.Side, place.Start) },
-			OnHoverOut: func() { v.hover(place.Side, -1) },
-			Children:   []core.Node{v.p.RenderAddAnnotation(cx, rng)},
+			Class:        v.p.Classes.AddAnnotation,
+			OnMouseEnter: func(core.MouseEvent) { v.hover(place.Side, place.Start) },
+			OnMouseLeave: func(core.MouseEvent) { v.hover(place.Side, -1) },
+			Children:     []core.Node{v.p.RenderAddAnnotation(cx, rng)},
 		}
 	})
 }

@@ -144,7 +144,7 @@ import { Input } from "nsgo/base";
 function App() {
 	const name = signal("");
 	return <Scroll testID="scroll" class="flex-1">
-		<Input testID="name" value={name()} onChange={(v) => name.set(v.toUpperCase())} placeholder="Name" />
+		<Input testID="name" value={name()} onChange={({ value }) => name.set(value.toUpperCase())} placeholder="Name" />
 		<Text>{"hello " + name()}</Text>
 		<Image testID="img" src={{ uri: "https://example.com/a.png", width: 20, height: 10 }} />
 	</Scroll>;

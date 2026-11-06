@@ -78,8 +78,8 @@ const (
 	EventPressDown             = driver.EventPressDown
 	EventPressUp               = driver.EventPressUp
 	EventLongPress             = driver.EventLongPress
-	EventHoverIn               = driver.EventHoverIn
-	EventHoverOut              = driver.EventHoverOut
+	EventMouseEnter            = driver.EventMouseEnter
+	EventMouseLeave            = driver.EventMouseLeave
 	EventFocus                 = driver.EventFocus
 	EventBlur                  = driver.EventBlur
 	EventChangeText            = driver.EventChangeText
@@ -122,7 +122,6 @@ const (
 	EventAccessibilityAction   = driver.EventAccessibilityAction
 	EventRequestClose          = driver.EventRequestClose
 	EventModalSize             = driver.EventModalSize
-	EventHoverMove             = driver.EventHoverMove
 	EventMouseMove             = driver.EventMouseMove
 	EventTouch                 = driver.EventTouch
 	EventCaretMove             = driver.EventCaretMove

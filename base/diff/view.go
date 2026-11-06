@@ -939,8 +939,8 @@ func (v *dv) hoverable(view *core.View, r row, side int) {
 		return
 	}
 	sd, line := r.pieceSide(side)
-	view.OnHoverIn = func() { v.hover(sd, line) }
-	view.OnHoverOut = func() { v.hover(sd, -1) }
+	view.OnMouseEnter = func(core.MouseEvent) { v.hover(sd, line) }
+	view.OnMouseLeave = func(core.MouseEvent) { v.hover(sd, -1) }
 }
 
 // gutterPiece is row r's numbers and indicator in column side.

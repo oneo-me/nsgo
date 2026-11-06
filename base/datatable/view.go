@@ -108,10 +108,14 @@ func (t *dataTable) hitLayer() core.Node {
 		},
 		OnPress: pressed,
 		// Tab stops at the table here: its keys follow.
-		OnFocus:       func() { t.focused.Set(true) },
-		OnBlur:        func() { t.focused.Set(false) },
-		OnHoverMove:   func(e core.HoverEvent) { t.hoverAt(e.Position) },
-		OnHoverOut:    func() { t.hover.Set(-1) },
+		OnFocus: func() { t.focused.Set(true) },
+		OnBlur:  func() { t.focused.Set(false) },
+		OnMouseMove: func(e core.MouseEvent) {
+			if e.PressedButton == core.MouseButtonNone {
+				t.hoverAt(e.Position)
+			}
+		},
+		OnMouseLeave:  func(core.MouseEvent) { t.hover.Set(-1) },
 		OnContextMenu: func(e core.ContextMenuEvent) { t.contextMenu(t.hitAt(e.Position), e.PagePosition) },
 		TestID:        "data-table-hit",
 	}

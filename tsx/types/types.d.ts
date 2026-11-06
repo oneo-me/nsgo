@@ -187,6 +187,7 @@ export interface TextStyle extends ViewStyle {
   writingDirection?: "auto" | "ltr" | "rtl";
   placeholderColor?: ColorValue;
   selectionColor?: ColorValue;
+  caretColor?: ColorValue;
 }
 
 export interface ImageStyle extends ViewStyle {
@@ -200,14 +201,16 @@ export interface Bounds { origin: Point; size: Size }
 export interface Edges { top: number; right: number; bottom: number; left: number }
 export interface Modifiers { control: boolean; alt: boolean; shift: boolean; platform: boolean }
 export interface PressEvent { position: Point; pagePosition: Point; modifiers: Modifiers; clickCount: number }
-export interface HoverEvent { position: Point; pagePosition: Point; modifiers: Modifiers }
+export type MouseButton = "left" | "right" | "middle" | "back" | "forward";
+export interface MouseEvent { position: Point; pagePosition: Point; modifiers: Modifiers; pressedButton: MouseButton | null }
 export interface ContextMenuEvent { position: Point; pagePosition: Point; modifiers: Modifiers }
 export interface ScrollEvent { offset: Point; contentSize: Size; size: Size; zoomScale: number }
 export interface CaretEvent { bounds: Bounds; pageBounds: Bounds }
-export interface PasteEvent { text: string; files: File[]; uris: string[] }
-export interface PanEvent { cancelled: boolean; translationX: number; translationY: number; velocityX: number; velocityY: number; valueX?: number; valueY?: number }
+export interface PasteEvent { text: string; html: string; files: File[]; uris: string[] }
+export interface PanEvent { cancelled: boolean; translation: Point; velocity: Point; value?: Partial<Point> }
 export interface OverlayPosition { placement: "top" | "bottom" | "left" | "right"; bounds: Bounds }
 export interface TextLayoutLine { text: string; bounds: Bounds; ascender: number; descender: number; capHeight: number; xHeight: number }
+export interface WebViewDownload { state: "started" | "finished" | "failed"; id: string; url: string; filename: string; path: string; bytes?: number; message?: string }
 export interface WebViewNavigation { url: string; title: string; loading: boolean; canGoBack: boolean; canGoForward: boolean }
 
 export interface TouchPoint { identifier: number; locationX: number; locationY: number; pageX: number; pageY: number; target: number; timestamp: number }
@@ -285,15 +288,14 @@ export interface HostProps {
   onLongPress?: (e: PressEvent) => void;
   onPressDown?: (e: PressEvent) => void;
   onPressUp?: (e: PressEvent) => void;
-  onHoverIn?: () => void;
-  onHoverOut?: () => void;
-  onHoverMove?: (e: HoverEvent) => void;
+  onMouseEnter?: (e: MouseEvent) => void;
+  onMouseLeave?: (e: MouseEvent) => void;
+  onMouseMove?: (e: MouseEvent) => void;
   onContextMenu?: (e: ContextMenuEvent) => void;
-  onMouseMove?: (e: Point) => void;
   onFileDragEnter?: () => void;
   onFileDragLeave?: () => void;
   onFileDrop?: (e: { uris: string[] }) => void;
-  onLayout?: (bounds: Bounds) => void;
+  onLayout?: (e: { bounds: Bounds }) => void;
   onPanStart?: (e: PanEvent) => void;
   onPanEnd?: (e: PanEvent) => void;
   onPinchStart?: (e: { scale: number; velocity: number }) => void;
@@ -377,7 +379,7 @@ export interface ImageHostProps {
   alt?: string;
   onLoadStart?: () => void;
   onProgress?: (e: { loaded: number; total: number }) => void;
-  onLoad?: (e: Size) => void;
+  onLoad?: (e: { size: Size }) => void;
   onError?: (e: { message: string }) => void;
   onLoadEnd?: () => void;
 }
@@ -409,12 +411,12 @@ export interface ScrollingHostProps {
   scrollValue?: AnimatedValue;
   pullValue?: AnimatedValue;
   onScroll?: (e: ScrollEvent) => void;
-  onScrollDragStart?: (e: Point) => void;
-  onScrollDragEnd?: (e: Point) => void;
-  onMomentumStart?: (e: Point) => void;
-  onMomentumEnd?: (e: Point) => void;
+  onScrollDragStart?: (e: { offset: Point }) => void;
+  onScrollDragEnd?: (e: { offset: Point }) => void;
+  onMomentumStart?: (e: { offset: Point }) => void;
+  onMomentumEnd?: (e: { offset: Point }) => void;
   /** It came to rest: a drag that set nothing in motion ended, or a glide, a snap, an animated scroll or the wheel's turns did. */
-  onScrollEnd?: (e: Point) => void;
+  onScrollEnd?: (e: { offset: Point }) => void;
   onRefresh?: () => void;
 }
 
@@ -507,6 +509,7 @@ export interface WebViewHostProps {
   onError?: (e: { message: string }) => void;
   onMessage?: (e: { data: string }) => void;
   onNavigationStateChange?: (e: WebViewNavigation) => void;
+  onDownload?: (e: WebViewDownload) => void;
 }
 export interface IOSWebViewHostProps { allowsBackForwardNavigationGestures?: boolean }
 export interface DesktopWebViewHostProps { allowsBackForwardNavigationGestures?: boolean }

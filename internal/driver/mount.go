@@ -615,9 +615,10 @@ type InputConfig struct {
 	// PlaceholderColor is 0 for the platform's: the text color at half
 	// strength where the platform styles placeholders itself.
 	PlaceholderColor Color
-	// SelectionColor colors the caret and the selection; 0 is the
-	// platform's.
+	// SelectionColor colors the selection and CaretColor the caret, which
+	// takes SelectionColor without one; 0 is the platform's.
 	SelectionColor Color
+	CaretColor     Color
 	HideCaret      bool
 	// PasteBehavior says whether a paste inserts its text.
 	PasteBehavior PasteBehavior

@@ -232,7 +232,7 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 	return core.View{Class: i.Class, Style: i.Style, StyleFunc: merged(i.StyleFunc, menu.hiddenUnlessShown()),
 		Role: core.RoleMenuItem, Label: i.Label, TestID: i.TestID, OnLayout: i.OnLayout, Tooltip: i.Tooltip, Disabled: i.Disabled, Children: children,
 		// Over another item, a submenu of its level closes.
-		OnHoverIn: func() {
+		OnMouseEnter: func(core.MouseEvent) {
 			if menu != nil && !menu.sheet {
 				menu.openSub.Set(0)
 			}

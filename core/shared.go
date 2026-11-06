@@ -204,6 +204,8 @@ type (
 	ModalPresentation = driver.ModalPresentation
 	// Modifiers are the modifier keys held during an event.
 	Modifiers = driver.Modifiers
+	// MouseButton is a button of the mouse held in a MouseEvent.
+	MouseButton = driver.MouseButton
 	// NativeComponent is one Native element's platform view.
 	NativeComponent = driver.NativeComponent
 	// NativeComponents are the components an app registers with its platform,
@@ -229,6 +231,10 @@ type (
 	PanActivation = driver.PanActivation
 	// PasteBehavior says whether an input inserts the text the user pastes.
 	PasteBehavior = driver.PasteBehavior
+	// WebDownload is a download of a web view, which OnDownload follows.
+	WebDownload = driver.WebDownload
+	// WebDownloadState is how far a WebDownload got.
+	WebDownloadState = driver.WebDownloadState
 	// PasteEvent is what the user pasted into an input, read from the clipboard
 	// as they pasted: its plain text (empty without any), files with their
 	// bytes, such as an image copied in another app, and the file: URLs of

@@ -200,14 +200,18 @@ func toastStackFace(p *props) core.Node {
 		Toast: func(cx *core.Scope, item func() goja.Value) core.Node {
 			return r.region(func() goja.Value { return item() })
 		},
-		Motion:           r.toastMotion(p.get("motion")),
-		Placement:        r.decode(p.get("placement"), reflect.TypeFor[toast.Anchor]()).Interface().(toast.Anchor),
-		NoCloseOnEscape:  !p.boolOr("closeOnEscape", true),
-		OnExpandedChange: func(e bool) { callIf(p, "onExpandedChange", r.vm.ToValue(e)) },
-		OnCancel:         p.on("onCancel"),
-		Class:            p.class(),
-		StyleFunc:        p.style,
-		TestID:           p.str("testID"),
+		Motion:          r.toastMotion(p.get("motion")),
+		Placement:       r.decode(p.get("placement"), reflect.TypeFor[toast.Anchor]()).Interface().(toast.Anchor),
+		NoCloseOnEscape: !p.boolOr("closeOnEscape", true),
+		OnExpandedChange: func(expanded bool) {
+			e := r.vm.NewObject()
+			_ = e.Set("expanded", expanded)
+			callIf(p, "onExpandedChange", e)
+		},
+		OnCancel:  p.on("onCancel"),
+		Class:     p.class(),
+		StyleFunc: p.style,
+		TestID:    p.str("testID"),
 	}
 }
 

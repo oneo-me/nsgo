@@ -468,6 +468,8 @@ func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
 		s.PlaceholderColor = r.color(key, v)
 	case "selectionColor":
 		s.SelectionColor = r.color(key, v)
+	case "caretColor":
+		s.CaretColor = r.color(key, v)
 	case "fontVariant":
 		s.FontVariant = core.FontVariantNormal
 		var names []string

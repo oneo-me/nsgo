@@ -425,6 +425,7 @@ type window struct {
 	// The views under the pointer that follow hovers, and where the
 	// pointer is while it is over the client area.
 	hovered   hover.Tracker
+	buttons   uintptr // the buttons the last mouse move held down
 	pointer   driver.Point
 	pointerIn bool
 
@@ -1463,7 +1464,13 @@ func (w *window) hoverViews() {
 			under = append(under, v.id)
 		}
 	}
+	mods, button := modifiers(), hover.Pressed(uint32(w.buttons), mouseButtons)
 	for _, e := range w.hovered.Move(under) {
+		if v := w.view(e.ID); v != nil {
+			b, _ := w.surfaceBounds(v)
+			e.Point = driver.Point{X: w.pointer.X - b.Origin.X, Y: w.pointer.Y - b.Origin.Y}
+			e.Page, e.Modifiers, e.Button = w.pointer, mods, button
+		}
 		w.engine.Dispatch(e)
 	}
 }
@@ -1498,36 +1505,38 @@ func (w *window) listensTouches() bool {
 	return false
 }
 
+// mouseButtons are a mouse message's button bits.
+var mouseButtons = [5]uint32{mkLButton, mkRButton, mkMButton, mkXButton1, mkXButton2}
+
 // mouseMoved reports the mouse's move to the views under it that follow
-// moves, innermost first: OnMouseMove always, OnHoverMove with no button
-// down.
-func (w *window) mouseMoved(button bool) {
+// moves, innermost first.
+func (w *window) mouseMoved() {
 	root := w.view(w.root)
 	if root == nil || !w.pointerIn {
 		return
 	}
-	under, _ := viewsAt(root, w.pointer, func(v *view) bool {
-		return v.events.Has(driver.EventMouseMove) || !button && v.events.Has(driver.EventHoverMove)
-	}, nil)
+	w.reportMouseMove()
+}
+
+// reportMouseMove sends a move to where the mouse is to the views under it
+// that hear moves, innermost first.
+func (w *window) reportMouseMove() {
+	root := w.view(w.root)
+	under, _ := viewsAt(root, w.pointer, func(v *view) bool { return v.events.Has(driver.EventMouseMove) }, nil)
 	if len(under) == 0 {
 		return
 	}
-	mods := modifiers()
+	mods, button := modifiers(), hover.Pressed(uint32(w.buttons), mouseButtons)
 	for i := len(under) - 1; i >= 0; i-- {
 		v := under[i]
 		b, _ := w.surfaceBounds(v)
 		local := driver.Point{X: w.pointer.X - b.Origin.X, Y: w.pointer.Y - b.Origin.Y}
-		if !button && v.events.Has(driver.EventHoverMove) {
-			w.engine.Dispatch(driver.Event{Kind: driver.EventHoverMove, ID: v.id, Point: local, Page: w.pointer, Modifiers: mods})
-		}
-		if v.events.Has(driver.EventMouseMove) {
-			w.engine.Dispatch(driver.Event{Kind: driver.EventMouseMove, ID: v.id, Point: local})
-		}
+		w.engine.Dispatch(driver.Event{Kind: driver.EventMouseMove, ID: v.id, Point: local, Page: w.pointer, Modifiers: mods, Button: button})
 	}
 }
 
 // modifierKey reports a modifier key pressed or released while the mouse
-// rests over the window as a hover move to where it is with the new
+// rests over the window as a mouse move to where it is with the new
 // modifiers, so a view hears Control come and go under a still mouse.
 func (w *window) modifierKey(vk uintptr) {
 	switch vk {
@@ -1539,14 +1548,7 @@ func (w *window) modifierKey(vk uintptr) {
 	if root == nil || !w.pointerIn || keyDown(vkLButton) {
 		return
 	}
-	under, _ := viewsAt(root, w.pointer, func(v *view) bool { return v.events.Has(driver.EventHoverMove) }, nil)
-	mods := modifiers()
-	for i := len(under) - 1; i >= 0; i-- {
-		v := under[i]
-		b, _ := w.surfaceBounds(v)
-		local := driver.Point{X: w.pointer.X - b.Origin.X, Y: w.pointer.Y - b.Origin.Y}
-		w.engine.Dispatch(driver.Event{Kind: driver.EventHoverMove, ID: v.id, Point: local, Page: w.pointer, Modifiers: mods})
-	}
+	w.reportMouseMove()
 }
 
 // background is the color behind v: its own or its nearest ancestor's.
@@ -1614,8 +1616,9 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		}
 	}
 	if message == wmMouseMove {
+		w.buttons = wParam
 		w.pointerMoved(int32(int16(lParam&0xffff)), int32(int16(lParam>>16&0xffff)))
-		w.mouseMoved(wParam&(mkLButton|mkRButton|mkMButton) != 0)
+		w.mouseMoved()
 	}
 	switch message {
 	case wmMouseMove, wmLButtonDown, wmLButtonUp, wmRButtonDown, wmRButtonUp, wmMButtonDown, wmMButtonUp,

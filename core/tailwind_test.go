@@ -364,7 +364,7 @@ func TestArbitraryShadowsOffsetsAndTextShadows(t *testing.T) {
 		t.Errorf("ring with an offset %+v", s.Shadows)
 	}
 	s, _, _ = resolveFor(t, "text-shadow-md caret-blue-500", env)
-	if s.TextShadowRadius != 4 || s.TextShadowOffset.Y != 2 || s.SelectionColor != tailwindPalette["blue"][5] {
-		t.Errorf("text shadow %v %v, caret %#x", s.TextShadowRadius, s.TextShadowOffset, s.SelectionColor)
+	if s.TextShadowRadius != 4 || s.TextShadowOffset.Y != 2 || s.CaretColor != tailwindPalette["blue"][5] {
+		t.Errorf("text shadow %v %v, caret %#x", s.TextShadowRadius, s.TextShadowOffset, s.CaretColor)
 	}
 }

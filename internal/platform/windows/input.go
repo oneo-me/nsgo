@@ -1084,7 +1084,7 @@ func (in *textInput) placeholderColor() driver.Color {
 }
 
 func (in *textInput) caretColor() driver.Color {
-	if c := in.config.SelectionColor; c != 0 {
+	if c := in.config.Caret(); c != 0 {
 		return c
 	}
 	return in.config.Style.Color

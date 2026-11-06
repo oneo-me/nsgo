@@ -622,8 +622,8 @@ func (in *input) styleEditor() {
 	}
 	c := &in.fs.Config
 	caret := nsColor(c.Style.Color)
-	if c.SelectionColor != 0 {
-		caret = nsColor(c.SelectionColor)
+	if c.Caret() != 0 {
+		caret = nsColor(c.Caret())
 	}
 	if c.HideCaret {
 		caret = objc.ID(objc.GetClass("NSColor")).Send(sel("clearColor"))

@@ -11,6 +11,7 @@ import (
 
 func init() {
 	tsx.Register("nsgo/base", map[string]core.Node{"TextView": textview.TextView{}},
+		tsx.Event("OnImagePress", "image"),
 		tsx.Union[textview.Block](map[string]any{"paragraph": textview.Paragraph{}, "heading": textview.Heading{},
 			"blockquote": textview.Blockquote{}, "list": textview.List{}, "codeBlock": textview.CodeBlock{},
 			"table": textview.Table{}, "rule": textview.Rule{}, "details": textview.Details{}, "math": textview.Math{},

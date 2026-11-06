@@ -49,7 +49,7 @@ func (t Tooltip) Render(cx *core.Scope) core.Node {
 	tip, hover := t.Hint(cx, anchor)
 	return core.Group{
 		core.View{Ref: anchor, Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, TestID: t.TestID,
-			OnHoverIn: func() { hover(true) }, OnHoverOut: func() { hover(false) }, Children: []core.Node{t.Trigger}},
+			OnMouseEnter: func(core.MouseEvent) { hover(true) }, OnMouseLeave: func(core.MouseEvent) { hover(false) }, Children: []core.Node{t.Trigger}},
 		tip,
 	}
 }

@@ -291,10 +291,27 @@ func (d *declarer) component(c registeredType) {
 			d.b.WriteString("  children?: JSX.Element;\n")
 			continue
 		}
-		fmt.Fprintf(&d.b, "  %s?: %s;\n", f.prop, d.propType(sf))
+		fmt.Fprintf(&d.b, "  %s?: %s;\n", f.prop, d.handlerType(c, sf))
 	}
 	d.b.WriteString("}\n")
 	fmt.Fprintf(&d.b, "export declare const %s: (props: %sProps) => YNode;\n\n", c.name, c.name)
+}
+
+// handlerType is propType for a field of c, an event's taking the one
+// object it passes.
+func (d *declarer) handlerType(c registeredType, f reflect.StructField) string {
+	if !isEvent(f.Name, f.Type) {
+		return d.propType(f)
+	}
+	names := eventFields(c.spec, c.t, f.Name, f.Type)
+	if names == nil {
+		return d.propType(f)
+	}
+	fields := make([]string, len(names))
+	for i, n := range names {
+		fields[i] = n + ": " + d.ts(f.Type.In(i))
+	}
+	return "(e: { " + strings.Join(fields, "; ") + " }) => void"
 }
 
 // propType is the TypeScript type of a field's prop.

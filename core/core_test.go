@@ -624,11 +624,11 @@ func TestStateStyles(t *testing.T) {
 	})
 	h.commit()
 	n := h.find("button")
-	if m := n.events(); !m.Has(driver.EventPressDown) || !m.Has(driver.EventHoverIn) {
+	if m := n.events(); !m.Has(driver.EventPressDown) || !m.Has(driver.EventMouseEnter) {
 		t.Fatalf("mask = %b, want press down and hover reported", m)
 	}
 	bg := func() Color { return n.style.Background }
-	h.tree.Dispatch(driver.Event{Kind: driver.EventHoverIn, ID: n.id})
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseEnter, ID: n.id})
 	if bg() != RGB(0x00ff00) {
 		t.Errorf("hovered = %x", bg())
 	}
@@ -637,7 +637,7 @@ func TestStateStyles(t *testing.T) {
 		t.Errorf("pressed = %x, want active over hover", bg())
 	}
 	h.tree.Dispatch(driver.Event{Kind: driver.EventPressUp, ID: n.id})
-	h.tree.Dispatch(driver.Event{Kind: driver.EventHoverOut, ID: n.id})
+	h.tree.Dispatch(driver.Event{Kind: driver.EventMouseLeave, ID: n.id})
 	if bg() != RGB(0x0000ff) {
 		t.Errorf("released = %x", bg())
 	}

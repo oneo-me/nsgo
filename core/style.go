@@ -224,8 +224,12 @@ type Style struct {
 	// TextAlignVertical moves text shorter than its box down within it.
 	TextAlignVertical TextAlignVertical
 	// SelectionColor is the highlight of selected text, and an input's
-	// caret; 0 is the platform's.
+	// caret without a CaretColor; 0 is the platform's.
 	SelectionColor Color
+	// CaretColor is an input's caret, as CSS's caret-color, but for the
+	// inputs inside the view: it is not inherited. iOS tints the selection
+	// with it too.
+	CaretColor Color
 	// PlaceholderColor colors an input's placeholder; 0 is the platform's.
 	PlaceholderColor Color
 	// Fill, Stroke, StrokeWidth and StrokeDash are SVG's paint properties,
@@ -728,6 +732,7 @@ func (s *Style) mergeText(o Style) {
 	set(&s.TextShadowRadius, o.TextShadowRadius)
 	set(&s.TextAlignVertical, o.TextAlignVertical)
 	set(&s.SelectionColor, o.SelectionColor)
+	set(&s.CaretColor, o.CaretColor)
 	set(&s.PlaceholderColor, o.PlaceholderColor)
 	set(&s.Fill, o.Fill)
 	set(&s.Stroke, o.Stroke)

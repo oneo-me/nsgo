@@ -687,25 +687,14 @@ func keyReleasedCallback(controller uintptr, keyval, keycode, state uint32, data
 }
 
 // modifiersCallback reports a modifier key pressed or released while the
-// pointer rests over the window as a hover move to where it is with the
+// pointer rests over the window as a mouse move to where it is with the
 // new modifiers, so a view hears Control come and go under a still mouse.
 func modifiersCallback(controller uintptr, state uint32, data uintptr) int32 {
 	w := windowOf(data)
 	if w == nil || !w.pointerIn || state&gdkButtonsMask != 0 {
 		return 0
 	}
-	root := w.view(w.root)
-	if root == nil {
-		return 0
-	}
-	under, _ := viewsAt(root, w.lastPointer, func(v *view) bool { return v.events.Has(driver.EventHoverMove) }, nil)
-	for i := len(under) - 1; i >= 0; i-- {
-		v := under[i]
-		b, _ := w.surfaceBounds(v)
-		local := driver.Point{X: w.lastPointer.X - b.Origin.X, Y: w.lastPointer.Y - b.Origin.Y}
-		w.engine.Dispatch(driver.Event{Kind: driver.EventHoverMove, ID: v.id, Point: local, Page: w.lastPointer,
-			Modifiers: modifiers(state)})
-	}
+	w.mouseMoved(state)
 	return 0
 }
 
@@ -842,6 +831,8 @@ const (
 	gdkScrollSmooth  = 4
 	gdkButtonsMask   = 1<<8 | 1<<9 | 1<<10
 	gdkButton1       = 1 << 8
+	gdkButton2       = 1 << 9
+	gdkButton3       = 1 << 10
 )
 
 // shieldCallback keeps from a hosted control (a page, a video's

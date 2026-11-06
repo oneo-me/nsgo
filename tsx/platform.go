@@ -55,7 +55,9 @@ func tabBarFace(p *props) core.Node {
 		Selected: func() int { return p.int("selectedIndex") },
 		OnChange: func(i int) {
 			if h := p.handler("onChange"); h != nil {
-				h(r.vm.ToValue(i))
+				e := r.vm.NewObject()
+				_ = e.Set("index", i)
+				h(e)
 			}
 		},
 		Style:  core.Untracked(r.cx, p.style),

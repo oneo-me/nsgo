@@ -1255,8 +1255,8 @@ func hoverApp(title string) func(*core.Scope) core.Node {
 		return core.View{Style: core.Style{Width: driver.Pt(320), Height: driver.Pt(200), Padding: driver.All(10),
 			Background: driver.RGB(0xffffff)}, Children: []core.Node{
 			core.View{Style: core.Style{Width: driver.Pt(100), Height: driver.Pt(80), Background: driver.RGB(0x123456)},
-				OnHoverIn:  func() { in.Update(func(n int) int { return n + 1 }) },
-				OnHoverOut: func() { out.Update(func(n int) int { return n + 1 }) }},
+				OnMouseEnter: func(core.MouseEvent) { in.Update(func(n int) int { return n + 1 }) },
+				OnMouseLeave: func(core.MouseEvent) { out.Update(func(n int) int { return n + 1 }) }},
 		}}
 	}
 }
@@ -1491,7 +1491,7 @@ func TestPointerEventsReportPositions(t *testing.T) {
 	}
 	title := "nsgo-native-pointer"
 	app := func(cx *core.Scope) core.Node {
-		hover, press := core.NewSignal(cx, core.HoverEvent{}), core.NewSignal(cx, core.PressEvent{})
+		hover, press := core.NewSignal(cx, core.MouseEvent{}), core.NewSignal(cx, core.PressEvent{})
 		cx.Effect(func() {
 			h, p := hover.Get(), press.Get()
 			cx.SetTitle(fmt.Sprintf("%s|%.0f,%.0f|%.0f,%.0f|%d", title, h.PagePosition.X-h.Position.X,
@@ -1500,7 +1500,7 @@ func TestPointerEventsReportPositions(t *testing.T) {
 		return core.View{Style: core.Style{Width: driver.Pt(320), Height: driver.Pt(200), Padding: driver.All(10),
 			Background: driver.RGB(0xffffff)}, Children: []core.Node{
 			core.View{Style: core.Style{Width: driver.Pt(100), Height: driver.Pt(80), Background: driver.RGB(0x123456)},
-				OnHoverMove: hover.Set, OnPress: press.Set},
+				OnMouseMove: hover.Set, OnPress: press.Set},
 		}}
 	}
 	done := make(chan struct{})
