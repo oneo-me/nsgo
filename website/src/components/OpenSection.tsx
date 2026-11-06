@@ -25,7 +25,12 @@ export function OpenSection({ copy }: { copy: Copy }) {
           <h3>{copy.open.ctaTitle}</h3>
           <p>{copy.open.ctaBody}</p>
           <div className="open__actions">
-            <a className="btn btn--primary" href="#gallery">
+            <a
+              className="btn btn--primary"
+              href={links.gallery}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Icon name="arrow" size={14} />
               {copy.open.view}
             </a>

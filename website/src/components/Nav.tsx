@@ -47,11 +47,19 @@ export function Nav({
           className={`nav__links${open ? ' is-open' : ''}`}
           aria-label={copy.nav.primary}
         >
-          {copy.nav.links.map((link) => (
-            <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
-              {link.label}
-            </a>
-          ))}
+          {copy.nav.links.map((link) => {
+            const external = link.href === links.gallery;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
 
         <div className="nav__actions">

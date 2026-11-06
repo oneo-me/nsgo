@@ -193,7 +193,7 @@ git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 
 修改代码前请先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [AGENTS.md](AGENTS.md)。
 
-位于 <https://oneo-me.github.io/nsgo/> 的官方网站是一个 Astro 站点，包含 React 首页和 Markdown 文档区；其中的在线 Gallery 运行 gallery 的 WebAssembly 构建。在 `website/` 中运行 `bun install` 和 `bun run dev`（访问 <http://localhost:4321/nsgo/>），或用 `bun run build` 构建；[Website 工作流](.github/workflows/website.yml) 将 `website/dist` 发布到 GitHub Pages。网站需要 [Bun](https://bun.com) 1.4 或更新版本。
+位于 <https://oneo-me.github.io/nsgo/> 的官方网站是一个 Astro 站点，包含 React 首页和 Markdown 文档区；其中的 Gallery 链接会在新标签页打开 gallery 的 WebAssembly 构建。在 `website/` 中运行 `bun install` 和 `bun run dev`（访问 <http://localhost:4321/nsgo/>），或用 `bun run build` 构建；[Website 工作流](.github/workflows/website.yml) 将 `website/dist` 发布到 GitHub Pages。网站需要 [Bun](https://bun.com) 1.4 或更新版本。
 
 ## 许可证
 

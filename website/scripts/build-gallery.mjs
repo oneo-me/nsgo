@@ -1,16 +1,14 @@
 // Builds the gallery for the web and puts it in public/gallery/ for the
-// home page's live stage.
+// site's Gallery links.
 //
 // The nsgo tool writes index.html, wasm_exec.js, resources, a
 // content-named wasm and nsgo.json, which names them. This script adds:
 //
-//   loader.html    the same app behind a progress-reporting loader; the
-//                  page embeds it in an iframe
+//   loader.html    the same app behind a progress-reporting loader
 //   app.wasm.gzip  the engine compressed, because Go's wasm is large.
 //                  The extension is .gzip, not .gz: static servers send a
 //                  .gz with Content-Encoding: gzip, and the loader wants
 //                  the compressed bytes themselves.
-//   manifest.json  the file names and sizes the stage shows before loading
 //
 // public/gallery/ is generated: do not edit it.
 import { execFileSync } from 'node:child_process';
@@ -86,18 +84,6 @@ try {
   const gzip = `${wasm}.gzip`;
   const compressed = gzipSync(readFileSync(wasmPath), { level: 9 });
   writeFileSync(path.join(galleryDir, gzip), compressed);
-
-  const manifest = {
-    name: 'Gallery',
-    wasm,
-    gzip,
-    exec,
-    resources: JSON.parse(resources),
-    icon,
-    wasmBytes,
-    gzipBytes: compressed.length,
-  };
-  writeFileSync(path.join(galleryDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
   const loader = readFileSync(path.join(here, 'gallery-loader.html'), 'utf8')
     .replaceAll('__EXEC__', exec)

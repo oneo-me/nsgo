@@ -1,17 +1,9 @@
 import type { Copy } from '../copy';
 import { links } from '../copy';
-import type { Theme } from '../hooks/useTheme';
 import { CopyButton } from './CopyButton';
-import { GalleryStage } from './GalleryStage';
 import { Icon } from './Icon';
 
-export function Hero({
-  copy,
-  theme,
-}: {
-  copy: Copy;
-  theme: Theme;
-}) {
+export function Hero({ copy }: { copy: Copy }) {
   return (
     <section className="hero" id="top">
       <div className="container hero__inner">
@@ -88,8 +80,6 @@ export function Hero({
             </div>
           </div>
         </div>
-
-        <GalleryStage theme={theme} copy={copy} />
       </div>
     </section>
   );

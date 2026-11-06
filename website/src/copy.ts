@@ -4,6 +4,7 @@ export const REPO = 'https://github.com/oneo-me/nsgo';
 
 export const links = {
   repo: REPO,
+  gallery: `${import.meta.env.BASE_URL}gallery/loader.html`,
   issues: `${REPO}/issues`,
   readme: `${REPO}#usage`,
   docs: `${import.meta.env.BASE_URL}docs/`,
@@ -29,7 +30,7 @@ const en = {
     skip: 'Skip to content',
     primary: 'Primary',
     links: [
-      { label: 'Gallery', href: '#gallery' },
+      { label: 'Gallery', href: links.gallery },
       { label: 'Engine', href: '#engine' },
       { label: 'Platforms', href: '#platforms' },
       { label: 'Code', href: '#code' },
@@ -66,43 +67,6 @@ const en = {
     commandLabel: 'Start from the repository',
     command: 'go tool nsgo dev examples/gallery',
     commandCopy: 'Copy the command',
-  },
-  gallery: {
-    title: 'gallery.wasm',
-    wasm: 'WASM',
-    idleKicker: 'WebAssembly gallery',
-    idleTitle: 'The whole engine, in this browser.',
-    idleBody:
-      'Gallery is a real NSGo app: every element, component and service, compiled from Go to WebAssembly.',
-    idleMeta: (download: string | null, engine: string | null) =>
-      [
-        download ? `${download} to download` : null,
-        engine ? `${engine} engine` : null,
-        'compiled locally',
-      ]
-        .filter(Boolean)
-        .join(' · '),
-    start: 'Load the gallery',
-    startNote: 'The app follows the site’s appearance. Nothing is uploaded.',
-    phases: {
-      prepare: 'Preparing WebAssembly',
-      download: 'Downloading the engine',
-      decompress: 'Decompressing the engine',
-      compile: 'Compiling WebAssembly',
-      start: 'Starting the gallery',
-      ready: 'Ready',
-    },
-    steps: ['Download', 'Compile', 'Run'],
-    stepsLabel: 'Loading steps',
-    loadingDetail: (loaded: string, total: string) => `${loaded} of ${total}`,
-    loadingNote: 'The engine compiles in your browser. Nothing is uploaded.',
-    cancel: 'Cancel',
-    errorTitle: 'The gallery could not start.',
-    errorBody: 'Check your connection and try again.',
-    retry: 'Try again',
-    ready: 'Running',
-    caption: 'The real gallery, compiled from Go to WebAssembly.',
-    open: 'Open full screen',
   },
   engine: {
     kicker: 'The engine',
@@ -259,7 +223,7 @@ const en = {
       {
         title: 'Project',
         links: [
-          { label: 'Gallery', href: '#gallery' },
+          { label: 'Gallery', href: links.gallery },
           { label: 'Architecture', href: links.architecture },
           { label: 'Roadmap', href: links.roadmap },
           { label: 'Changelog', href: links.changelog },
@@ -305,7 +269,7 @@ const zh: Copy = {
     skip: '跳到正文',
     primary: '主导航',
     links: [
-      { label: 'Gallery', href: '#gallery' },
+      { label: 'Gallery', href: links.gallery },
       { label: '引擎', href: '#engine' },
       { label: '平台', href: '#platforms' },
       { label: '代码', href: '#code' },
@@ -342,38 +306,6 @@ const zh: Copy = {
     commandLabel: '从仓库开始',
     command: 'go tool nsgo dev examples/gallery',
     commandCopy: '复制命令',
-  },
-  gallery: {
-    title: 'gallery.wasm',
-    wasm: 'WASM',
-    idleKicker: 'WebAssembly Gallery',
-    idleTitle: '整个引擎，就在这个浏览器里',
-    idleBody: 'Gallery 是一个真实的 NSGo 应用：每个元素、组件和服务，都由 Go 编译为 WebAssembly。',
-    idleMeta: (download, engine) =>
-      [download ? `下载 ${download}` : null, engine ? `${engine} 引擎` : null, '本地编译']
-        .filter(Boolean)
-        .join(' · '),
-    start: '载入 Gallery',
-    startNote: '应用会跟随网站的外观。不会上传任何内容。',
-    phases: {
-      prepare: '准备 WebAssembly',
-      download: '下载引擎',
-      decompress: '解压引擎',
-      compile: '编译 WebAssembly',
-      start: '启动 Gallery',
-      ready: '就绪',
-    },
-    steps: ['下载', '编译', '运行'],
-    stepsLabel: '加载步骤',
-    loadingDetail: (loaded, total) => `${loaded} / ${total}`,
-    loadingNote: '引擎在你的浏览器里编译，不会上传任何内容。',
-    cancel: '取消',
-    errorTitle: 'Gallery 无法启动',
-    errorBody: '请检查网络连接后重试。',
-    retry: '重试',
-    ready: '运行中',
-    caption: '真实的 Gallery，由 Go 编译为 WebAssembly。',
-    open: '全屏打开',
   },
   engine: {
     kicker: '引擎',
@@ -530,7 +462,7 @@ const zh: Copy = {
       {
         title: '项目',
         links: [
-          { label: 'Gallery', href: '#gallery' },
+          { label: 'Gallery', href: links.gallery },
           { label: '架构', href: links.architecture },
           { label: '路线图', href: links.roadmap },
           { label: '更新日志', href: links.changelog },

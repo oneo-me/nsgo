@@ -27,7 +27,7 @@ export default function App() {
         copy={copy}
       />
       <main id="main">
-        <Hero copy={copy} theme={theme} />
+        <Hero copy={copy} />
         <EngineSection copy={copy} />
         <PlatformsSection copy={copy} />
         <CodeSection copy={copy} />

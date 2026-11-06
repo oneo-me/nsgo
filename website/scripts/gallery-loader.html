@@ -109,11 +109,20 @@
       }
     </style>
     <script>
-      // Embedding and theme come from the parent, so the page never paints
-      // in the wrong appearance before the app starts.
+      // The theme comes from the parent when embedded, otherwise from the
+      // site's stored preference, so the page never paints in the wrong
+      // appearance before the app starts.
       (function () {
         var params = new URLSearchParams(location.search);
-        var theme = params.get('theme') === 'light' ? 'light' : 'dark';
+        var theme = params.get('theme');
+        if (theme !== 'light' && theme !== 'dark') {
+          var stored = null;
+          try {
+            stored = localStorage.getItem('nsgo-theme');
+          } catch (error) {}
+          if (stored === 'light' || stored === 'dark') theme = stored;
+          else theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
         if (params.get('embed') === '1') document.documentElement.setAttribute('data-embed', '');

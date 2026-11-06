@@ -22,4 +22,4 @@
 - Add themes in light and dark, Onevra's by default, that a subtree can replace, force into one appearance or give a Tailwind theme of its own, read from YAML or shadcn/ui theme files and overridden by an embedding host.
 - Add `ui`: styled components on `base` in Onevra's look, a theme, a conversation in `ui/chat` and a diff in `ui/diff`, for apps to use as they are.
 - Add NSH's gallery translated to Go, with a demo of every element, component and service, components grouped by what they do with their props to set and a whole page for each complex one, its editor talking to a simulated language server and its AI Chat on Onevra's conversation components, in English, Chinese and Arabic.
-- Add an Astro site with a React home page and Markdown docs whose live gallery runs the gallery's WebAssembly build, reporting its download, compilation and start progress.
+- Add an Astro site with a React home page and Markdown docs whose Gallery links open the gallery's WebAssembly build in a new tab, reporting its download, compilation and start progress.
