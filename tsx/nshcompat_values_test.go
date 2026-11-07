@@ -612,7 +612,7 @@ const compatHidden = "\x00hidden"
 var compatRoles = map[driver.Role]string{
 	driver.RoleButton: "button", driver.RoleLink: "link", driver.RoleHeader: "header", driver.RoleImage: "image",
 	driver.RoleCheckbox: "checkbox", driver.RoleSwitch: "switch", driver.RoleRadio: "radio", driver.RoleTab: "tab",
-	driver.RoleText: "text", driver.RoleTextField: "textbox", driver.RoleAdjustable: "adjustable",
+	driver.RoleText: "text", driver.RoleTextField: "textbox", driver.RoleAdjustable: "adjustable", driver.RoleSpinButton: "spinbutton",
 	driver.RoleProgressBar: "progressbar", driver.RoleRadioGroup: "radiogroup", driver.RoleTabList: "tablist",
 	driver.RoleMenu: "menu", driver.RoleMenuItem: "menuitem", driver.RoleDialog: "dialog", driver.RoleAlert: "alert",
 	driver.RoleTable: "table", driver.RoleGrid: "grid", driver.RoleRowGroup: "rowgroup", driver.RoleRow: "row",
@@ -701,7 +701,7 @@ func compatProp(t compatTarget, key string) (string, bool) {
 			return ""
 		}
 		return compatPairs("disabled", pick(p.Disabled), "selected", pick(p.Selected), "checked", checked,
-			"expanded", expanded, "pressed", pick(p.Pressed), "busy", pick(p.Busy)), true
+			"expanded", expanded, "busy", pick(p.Busy)), true
 	case "accessibilityValue":
 		av := p.Value
 		now := compatNum(av.Now)
@@ -816,7 +816,7 @@ func compatProp(t compatTarget, key string) (string, bool) {
 	case "maxLength":
 		return strconv.Itoa(in.MaxLength), in.MaxLength != 0
 	case "keyboardType":
-		return [...]string{"default", "email-address", "numeric", "decimal-pad", "phone-pad", "url"}[in.KeyboardType],
+		return [...]string{"default", "email-address", "number-pad", "decimal-pad", "phone-pad", "url"}[in.KeyboardType],
 			in.KeyboardType != driver.KeyboardDefault
 	case "returnKeyType":
 		return [...]string{"default", "done", "go", "next", "search", "send"}[in.ReturnKey], in.ReturnKey != driver.ReturnKeyDefault

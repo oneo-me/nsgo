@@ -90,11 +90,17 @@ type View struct {
 	// without focusing.
 	OnFocus func()
 	OnBlur  func()
+	// OnFocusIn and OnFocusOut hear the keyboard focus come to the view or
+	// a view inside it from elsewhere, and leave them: a move inside the
+	// view is neither, as CSS's :focus-within sees it.
+	OnFocusIn, OnFocusOut func()
 	// PointerEvents says which of the view and its children take
 	// touches and the pointer.
 	PointerEvents PointerEvents
 	// HitSlop extends where the view takes touches beyond its bounds.
 	HitSlop Edges
+	// HitSlopFunc is HitSlop following what it reads.
+	HitSlopFunc func() Edges
 	// DelayLongPress is how long a press is held to be a long press; 0
 	// is 500 ms.
 	DelayLongPress time.Duration
@@ -187,7 +193,13 @@ type View struct {
 	// Expanded makes the element expandable, as a disclosure or a menu
 	// button, and expanded while it returns true.
 	Expanded func() bool
-	Role     Role
+	// Expandable, with Expanded, says whether the element expands at all,
+	// as a tree's row that may be a folder or a leaf.
+	Expandable func() bool
+	Role       Role
+	// AccessibilityLevel is the element's level for assistive technology,
+	// from 1: a heading's among the page's, a tree item's depth.
+	AccessibilityLevel func() int
 	// Label is what assistive technology reads.
 	Label     string
 	LabelFunc func() string
@@ -237,6 +249,9 @@ func (v View) Render(*Scope) Node { return v }
 // Checked, Indeterminate, Selected and Disabled merge in while they hold.
 type PartStates struct {
 	Checked, Indeterminate, Selected, Disabled bool
+	// Focused styles the part as focused while the keyboard is on the
+	// control around it: a tree's row, a code input's cell.
+	Focused bool
 	// Data are the data-* attributes the part shows, without their
 	// prefix, as a calendar's day shows range-start: its data-*: classes
 	// and data styles read them, and those of views inside it when it is
@@ -409,7 +424,18 @@ type Input struct {
 	OnLayout      func(Bounds)
 	Ref           *Ref
 	Label         string
-	TestID        string
+	// Role is what it is for assistive technology, a text field when 0.
+	Role Role
+	// ReadonlyFunc and KeyboardTypeFunc are Readonly and KeyboardType
+	// following what they read.
+	ReadonlyFunc     func() bool
+	KeyboardTypeFunc func() KeyboardType
+	// AccessibilityValue, AccessibilityActions and OnAccessibilityAction
+	// are as a View's, for a field that is a spin button.
+	AccessibilityValue    func() AccessibilityValue
+	AccessibilityActions  []AccessibilityAction
+	OnAccessibilityAction func(name string)
+	TestID                string
 }
 
 // Render implements Node.
@@ -423,6 +449,9 @@ type Scroll struct {
 	Class         string
 	Horizontal    bool
 	HideIndicator bool
+	// Bar draws its scroll bar in place of the platform's indicator, over
+	// the app's (Scope.SetScrollbars).
+	Bar ScrollbarMaker
 	// Behavior is how it scrolls: paging, snapping, deceleration,
 	// bounces, insets and the keyboard.
 	Behavior     ScrollBehavior
@@ -666,7 +695,10 @@ type Image struct {
 	OnLayout  func(Bounds)
 	Ref       *Ref
 	Label     string
-	TestID    string
+	// ElementsHidden hides it from assistive technology, as a part of a
+	// control that says it for it.
+	ElementsHidden bool
+	TestID         string
 }
 
 // Render implements Node.

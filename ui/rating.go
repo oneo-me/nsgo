@@ -1,18 +1,14 @@
 package ui
 
 import (
-	"strconv"
 	"sync"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Rating is a score of stars from 0 to Max (5 when 0). A press on a star
-// gives that score, or 0 when it is the score already, and on desktops
-// the pointer previews the score under it. Assistive technology reads it
-// as one adjustable element, and on desktops it is a Tab stop the arrow
-// keys adjust.
+// Rating is base.Rating in stars filled in the warning color.
 type Rating struct {
 	Value    func() int
 	OnChange func(value int)
@@ -44,103 +40,29 @@ func filledStar() *core.SVG {
 // Render implements core.Node.
 func (r Rating) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	limit := r.Max
-	if limit <= 0 {
-		limit = 5
-	}
-	value := func() int {
-		if r.Value == nil {
-			return 0
-		}
-		return min(max(r.Value(), 0), limit)
-	}
-	locked := func() bool { return r.Readonly || is(r.Disabled) }
-	set := func(v int) {
-		if v = min(max(v, 0), limit); v != value() && !locked() && r.OnChange != nil {
-			r.OnChange(v)
-		}
-	}
-	onDesktop := !Touch(cx)
-	hover := core.NewSignal(cx, 0)
-	shown := func() int {
-		if h := hover.Get(); h > 0 && !locked() {
-			return h
-		}
-		return value()
-	}
 	const size = iconSize + 3
-	var stars []core.Node
-	for i := 1; i <= limit; i++ {
-		s := core.Icon{SVGFunc: func() *core.SVG {
-			if i <= shown() {
+	star := func(_ int, filled func() bool) core.Node {
+		return core.Icon{SVGFunc: func() *core.SVG {
+			if filled() {
 				return filledStar()
 			}
 			return lucide.Star()
 		}, Style: core.Style{Width: core.Pt(size), Height: core.Pt(size)},
 			StyleFunc: func() core.Style {
-				if i <= shown() {
+				if filled() {
 					return core.Style{Color: colors.Warn()}
 				}
 				return core.Style{Color: colors.Faint()}
 			}}
-		v := core.View{Style: core.Style{Padding: core.All(2)}, Children: []core.Node{s}}
-		if r.TestID != "" {
-			v.TestID = r.TestID + "-" + strconv.Itoa(i)
-		}
-		if !r.Readonly {
-			v.NoFocus = true
-			v.OnPress = func(core.PressEvent) {
-				if value() == i {
-					set(0)
-				} else {
-					set(i)
-				}
-			}
-			if onDesktop {
-				v.OnMouseEnter = func(core.MouseEvent) { hover.Set(i) }
-				v.OnMouseLeave = func(core.MouseEvent) { hover.Set(0) }
-			}
-		}
-		stars = append(stars, v)
 	}
-	focused := core.NewSignal(cx, false)
-	stars = append(stars, core.Show{When: focused.Get, Then: func(cx *core.Scope) core.Node {
-		repeat := core.KeyOptions{Repeat: true}
-		cx.OnKeyWith("right", repeat, func() { set(value() + 1) })
-		cx.OnKeyWith("up", repeat, func() { set(value() + 1) })
-		cx.OnKeyWith("left", repeat, func() { set(value() - 1) })
-		cx.OnKeyWith("down", repeat, func() { set(value() - 1) })
-		cx.OnKey("home", func() { set(0) })
-		cx.OnKey("end", func() { set(limit) })
-		return nil
-	}})
-	view := core.View{TestID: r.TestID, Accessible: true, Role: core.RoleAdjustable, Label: r.Label, Disabled: r.Disabled,
-		AccessibilityValue: func() core.AccessibilityValue {
-			v := core.AccessibilityValue{Min: 0, Max: float32(limit), Now: float32(value())}
-			if r.ValueText != nil {
-				v.Text = r.ValueText(value())
-			}
-			return v
-		},
+	return base.Rating{Value: r.Value, OnChange: r.OnChange, Max: r.Max, Readonly: r.Readonly, Disabled: r.Disabled, ValueText: r.ValueText,
+		Label: r.Label, TestID: r.TestID, Star: star, StarStyle: core.Style{Padding: core.All(2)},
 		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, AlignSelf: core.AlignStart, CornerRadius: RadiusSmall,
 			Disabled: &core.Style{Opacity: core.Alpha(0.45)}}.Merge(r.Style),
-		Children: stars}
-	if !r.Readonly {
-		view.AccessibilityActions = []core.AccessibilityAction{{Name: core.ActionIncrement}, {Name: core.ActionDecrement}}
-		view.OnAccessibilityAction = func(name string) {
-			switch name {
-			case core.ActionIncrement:
-				set(value() + 1)
-			case core.ActionDecrement:
-				set(value() - 1)
+		StyleFunc: func() core.Style {
+			if r.Readonly {
+				return core.Style{}
 			}
-		}
-		if onDesktop {
-			view.OnPress = func(core.PressEvent) {}
-			view.OnFocus = func() { focused.Set(true) }
-			view.OnBlur = func() { focused.Set(false) }
-			view.StyleFunc = func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} }
-		}
-	}
-	return view
+			return core.Style{Focus: FocusRing(cx, 2)}
+		}}
 }

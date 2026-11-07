@@ -801,6 +801,9 @@ const (
 	stateFocusWithin
 )
 
+// ariaBusyState is the first aria-* state's slot in StateStyles.slots.
+const ariaBusyState = 7
+
 // shownStates are the states a node, or its group, is in, in the order
 // of StateStyles.slots, and the data-* attributes it shows.
 type shownStates struct {
@@ -830,19 +833,27 @@ func (s Style) withStates(own, group shownStates) Style {
 		// Side by side, as a class's state variant sets one side.
 		out = mergeStyles(out, *st)
 	}
-	apply := func(styles stateSet, shown *shownStates) {
-		for i, slot := range styles.slots[:stateCount-1] {
+	apply := func(styles stateSet, shown *shownStates, group bool) {
+		disabled := stateCount - 1
+		for i, slot := range styles.slots[:disabled] {
+			// A group's follow Tailwind's order, where aria-* come after
+			// disabled, as in a browser; a node's own disabled is over all.
+			if group && i == ariaBusyState {
+				merge(shown.on[disabled], *styles.slots[disabled])
+			}
 			merge(shown.on[i], *slot)
 		}
 		for _, d := range *styles.data {
 			merge(slices.Contains(shown.data, d.Name), d.Style)
 		}
-		merge(shown.on[stateCount-1], *styles.slots[stateCount-1])
+		if !group {
+			merge(shown.on[disabled], *styles.slots[disabled])
+		}
 	}
 	if gs := s.GroupStyle; gs != nil {
-		apply(gs.states(), &group)
+		apply(gs.states(), &group, true)
 	}
-	apply(s.states(), &own)
+	apply(s.states(), &own, false)
 	out.states().copyFrom(s.states())
 	out.GroupStyle = s.GroupStyle
 	return out

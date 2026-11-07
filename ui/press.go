@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import (
+	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/core"
+)
 
 // Press is a pressable that sinks a little under the finger and springs
 // back; the spring runs on the platform, only press in and out reach the
@@ -31,10 +34,6 @@ func (p Press) Render(cx *core.Scope) core.Node {
 	if scale == 0 {
 		scale = 0.97
 	}
-	role := p.Role
-	if role == 0 {
-		role = core.RoleButton
-	}
 	var onPress, onLongPress func(core.PressEvent)
 	if p.OnPress != nil {
 		onPress = func(core.PressEvent) { p.OnPress() }
@@ -45,9 +44,9 @@ func (p Press) Render(cx *core.Scope) core.Node {
 	style := p.Style
 	style.Animated = &core.AnimatedStyle{Scale: s}
 	style.Disabled = &core.Style{Opacity: core.Alpha(0.4)}
-	return core.View{OnPress: onPress, OnLongPress: onLongPress, Disabled: p.Disabled, Selected: p.Selected,
+	return base.Button{OnPress: onPress, OnLongPress: onLongPress, Disabled: p.Disabled, Selected: p.Selected,
 		OnPressDown: func(core.PressEvent) { Spring(cx, s, scale, pressSpring) },
 		OnPressUp:   func(core.PressEvent) { Spring(cx, s, 1, pressSpring) },
-		Role:        role, Label: p.Label, LabelFunc: p.LabelFunc, HitSlop: core.All(p.HitSlop), TestID: p.TestID,
+		Role:        p.Role, Label: p.Label, LabelFunc: p.LabelFunc, HitSlop: core.All(p.HitSlop), TestID: p.TestID,
 		Style: style, StyleFunc: p.StyleFunc, Children: p.Children}
 }

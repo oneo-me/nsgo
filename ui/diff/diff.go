@@ -6,6 +6,7 @@ package diff
 import (
 	"math"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/diff"
 	"github.com/oneo-me/nsgo/base/locales"
 	"github.com/oneo-me/nsgo/core"
@@ -72,7 +73,7 @@ func separator(cx *core.Scope, s diff.Separator, ref *diff.Ref) core.Node {
 		icon = lucide.ChevronDown
 	}
 	place.CornerRadius = 6
-	return core.View{Role: core.RoleButton, Label: locales.DiffExpandAll(cx), OnPress: func(core.PressEvent) { ref.Expand(s.Gap, diff.ExpandEvery, 0) },
+	return base.Button{Label: locales.DiffExpandAll(cx), OnPress: func(core.PressEvent) { ref.Expand(s.Gap, diff.ExpandEvery, 0) },
 		Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff}, Style: place,
 		StyleFunc: func() core.Style {
 			return core.Style{Hover: &core.Style{Background: ui.Alpha(colors.Text(), 0.08)}, Active: &core.Style{Background: ui.Alpha(colors.Text(), 0.14)},
@@ -104,7 +105,7 @@ func (a RegionActions) Render(cx *core.Scope) core.Node {
 // regionAction is a button a line tall, solid over the lines under it.
 func regionAction(cx *core.Scope, label string, press func()) core.Node {
 	colors := ui.ColorsOf(cx)
-	return core.View{OnPress: func(core.PressEvent) { press() }, Role: core.RoleButton, Label: label,
+	return base.Button{OnPress: func(core.PressEvent) { press() }, Label: label,
 		Style: core.Style{Height: core.Pt(20), Padding: core.Symmetric(0, 8), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 			CornerRadius: 5, BorderWidth: 1},
 		StyleFunc: func() core.Style {

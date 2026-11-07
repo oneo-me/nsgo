@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import (
+	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/core"
+)
 
 // IconButton is a square icon button with no fill at rest, Size points
 // across (28 when 0), as a toolbar's: a fill under the pointer, held
@@ -40,7 +43,7 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 	if tint == nil {
 		tint = colors.Muted
 	}
-	return core.View{OnPress: func(core.PressEvent) { b.OnPress() }, Role: core.RoleButton, Label: b.Label, LabelFunc: b.LabelFunc,
+	return base.Button{OnPress: func(core.PressEvent) { b.OnPress() }, Label: b.Label, LabelFunc: b.LabelFunc,
 		Selected: b.Selected, Disabled: b.Disabled, TestID: b.TestID, Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff},
 		Style: core.Style{Width: core.Pt(size), Height: core.Pt(size), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 			CornerRadius: 8, Disabled: Dimmed()},

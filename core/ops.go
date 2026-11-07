@@ -129,13 +129,15 @@ func (t *Tree) place(c, p, at *node) {
 		}
 	}
 	t.detach(c)
-	i := len(p.children)
+	i := -1
 	if at != nil {
-		if j := slices.Index(p.children, at); j >= 0 {
-			i = j
-		}
+		i = slices.Index(p.children, at)
 	}
-	p.children = slices.Insert(p.children, i, c)
+	if i >= 0 {
+		p.children = slices.Insert(p.children, i, c)
+	} else {
+		addChild(p, c)
+	}
 	c.parent = p
 	t.childrenChanged(p)
 	// It inherits from its new parent, and brings its marks.
@@ -200,6 +202,9 @@ func (t *Tree) setView(n *node, v View) {
 	p.Indeterminate = read(v.Indeterminate)
 	p.Pressed = read(v.Pressed)
 	p.Busy = read(v.Busy)
+	if v.AccessibilityLevel != nil {
+		p.Level = v.AccessibilityLevel()
+	}
 	n.part = PartStates{}
 	if v.PartStates != nil {
 		n.part = v.PartStates()
@@ -299,7 +304,10 @@ func (t *Tree) setScroll(n *node, v Scroll) {
 	t.setRef(n, v.Ref)
 	t.rebind(n, boundValues{scroll: v.OffsetValues, pull: v.PullValue})
 	sc := n.scroll
-	sc.config.Horizontal, sc.config.HideIndicator = v.Horizontal, v.HideIndicator
+	sc.config.Horizontal = v.Horizontal
+	sc.hideIndicator, sc.ownBar = v.HideIndicator, v.Bar
+	sc.config.HideIndicator = v.HideIndicator || sc.config.HideIndicator && sc.barHost != nil
+	t.refreshBar(n)
 	sc.effects = v.EdgeEffects
 	behavior := v.Behavior
 	if v.BehaviorFunc != nil {
@@ -383,7 +391,7 @@ func (t *Tree) setImage(n *node, v Image) {
 	t.setRef(n, v.Ref)
 	n.h = handlers{press: v.OnPress, layout: v.OnLayout, loadStart: v.OnLoadStart, loadEnd: v.OnLoadEnd,
 		progress: v.OnProgress, load: v.OnLoad, loadError: v.OnError}
-	n.props = driver.ViewProps{Role: RoleImage, Label: v.Label, TestID: v.TestID}
+	n.props = driver.ViewProps{Role: RoleImage, Label: v.Label, TestID: v.TestID, ElementsHidden: v.ElementsHidden}
 	src := v.Source
 	if v.SourceFunc != nil {
 		src = v.SourceFunc()

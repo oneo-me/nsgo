@@ -89,6 +89,7 @@ var roles = map[driver.Role][2]string{
 	driver.RoleMenu:        {"AXMenu", ""},
 	driver.RoleMenuItem:    {"AXMenuItem", ""},
 	driver.RoleAdjustable:  {"AXSlider", ""},
+	driver.RoleSpinButton:  {"AXIncrementor", ""},
 	driver.RoleProgressBar: {"AXProgressIndicator", ""},
 	// WebKit's roles for ARIA's tables.
 	driver.RoleTable:        {"AXTable", ""},

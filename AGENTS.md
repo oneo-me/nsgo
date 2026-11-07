@@ -19,9 +19,10 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 
 ## Components
 
-`base` holds NSGo's built-in unstyled components, with `nsh-base` the reference for their behavior and names. `ui` holds its built-in styled components, on `base` and `core`, with Onevra the reference for their look.
+`base` holds NSGo's built-in unstyled components, with `nsh-base` the reference for their behavior and names. `ui` holds its built-in styled components, with Onevra the reference for their look.
 
 - A `base` component takes the app's styles part by part and has no look; themes, styled controls and variants belong in `ui`.
+- A `ui` component is its `base` component with a look: behavior, state and accessibility stay in `base`, and what `ui` needs that `base` lacks goes into `base`, never a second implementation in `ui`.
 - A `ui` component is product-neutral: what only the gallery's demos use stays in `examples/gallery`.
 - A component says its own words through its package's catalogs (`locales/`), never string literals, in English and NSGo's other languages ([languages](docs/architecture/languages.md)).
 - In `base` and `ui`, keep one component to a file, named after it (`iconbutton.go`), with the types and parts only it uses; what several share gets a file of its own.

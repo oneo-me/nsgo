@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/oneo-me/nsgo/base"
 	"strconv"
 
 	"github.com/oneo-me/nsgo/core"
@@ -44,50 +45,48 @@ func (g AvatarGroup) Render(cx *core.Scope) core.Node {
 	if limit == 0 {
 		limit = 4
 	}
-	limit = min(max(limit, 0), len(g.Members))
-	more := len(g.Members) - limit
+	limit = max(limit, -1)
+	shown := min(max(limit, 0), len(g.Members))
+	more := len(g.Members) - shown
 	overlap := d / 6
 	onDesktop := !Touch(cx)
 	fan := onDesktop && !ReduceMotion(cx)
-	slots := limit
+	slots := shown
 	if more > 0 {
 		slots++
 	}
-	slot := func(i int, child core.Node) core.Node {
+	slot := func(i int) core.Style {
 		s := core.Style{Margin: core.Edges{Left: -overlap}}
 		if fan {
 			spread := (core.Points(i) - core.Points(slots-1)/2) * overlap * 2 / 3
 			s.Transition = core.Transition{Duration: quick.Duration * 3 / 2, Easing: core.EaseOut, Properties: core.TransitionTransform}
 			s.GroupStyle = &core.GroupStyle{Name: avatarGroupName, Hover: &core.Style{Transform: core.Transform{TranslateX: spread}}}
 		}
-		return core.View{Style: s, Children: []core.Node{child}}
+		return s
 	}
 	var children []core.Node
-	for i, m := range g.Members[:limit] {
+	for i, m := range g.Members {
 		node := Avatar{Name: m.Name, Image: m.Image, Status: m.Status, Size: d, Label: m.Label}.render(cx, 2, fan)
 		if onDesktop {
 			node = core.View{Tooltip: tooltipBubble(cx, m.Name), Children: []core.Node{node}}
 		}
-		children = append(children, slot(i, node))
+		children = append(children, core.View{Style: slot(i), Children: []core.Node{node}})
 	}
-	if more > 0 {
-		count := "+" + strconv.Itoa(more)
-		label := count
-		if g.MoreLabel != nil {
-			label = g.MoreLabel(more)
-		}
-		size := max(8, 6+d*0.16)
-		chip := core.View{Role: core.RoleImage, Label: label, Accessible: true,
-			Style: core.Style{Width: core.Pt(d), Height: core.Pt(d), CornerRadius: d / 2, AlignItems: core.AlignCenter,
-				JustifyContent: core.JustifyCenter, BorderWidth: 2},
-			StyleFunc: func() core.Style {
-				return core.Style{Background: colors.Hover(), Color: colors.Muted(), BorderColor: colors.Surface()}
-			},
-			Children: []core.Node{core.Text{Content: count, MaxLines: 1,
-				Style: core.Style{FontSize: size - 1, LineHeight: size + 1, FontWeight: Medium}}}}
-		children = append(children, slot(limit, chip))
+	count := "+" + strconv.Itoa(more)
+	label := count
+	if g.MoreLabel != nil && more > 0 {
+		label = g.MoreLabel(more)
 	}
-	return core.View{TestID: g.TestID, Label: g.Label,
+	size := max(8, 6+d*0.16)
+	chip := core.View{Role: core.RoleImage, Label: label, Accessible: true,
+		Style: core.Style{Width: core.Pt(d), Height: core.Pt(d), CornerRadius: d / 2, AlignItems: core.AlignCenter,
+			JustifyContent: core.JustifyCenter, BorderWidth: 2},
+		StyleFunc: func() core.Style {
+			return core.Style{Background: colors.Hover(), Color: colors.Muted(), BorderColor: colors.Surface()}
+		},
+		Children: []core.Node{core.Text{Content: count, MaxLines: 1,
+			Style: core.Style{FontSize: size - 1, LineHeight: size + 1, FontWeight: Medium}}}}
+	return base.AvatarGroup{Limit: limit, Overflow: chip, OverflowStyle: slot(shown), TestID: g.TestID, Label: g.Label,
 		Style: core.Style{Direction: core.Row, AlignSelf: core.AlignStart, FlexShrink: 0, Padding: core.Edges{Left: overlap},
 			Group: avatarGroupName}.Merge(g.Style),
 		Children: children}

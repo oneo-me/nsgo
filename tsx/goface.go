@@ -296,7 +296,11 @@ func (r *runtime) addStatics(module string, m *goja.Object) {
 		ft := s.fn.Type()
 		_ = c.Set(s.name, r.function(func(call goja.FunctionCall) goja.Value {
 			in := make([]reflect.Value, ft.NumIn())
-			for i := range in {
+			skip := 0
+			if len(in) > 0 && ft.In(0) == scopeType {
+				in[0], skip = reflect.ValueOf(r.cx), 1
+			}
+			for i := skip; i < len(in); i++ {
 				t := ft.In(i)
 				if ft.IsVariadic() && i == ft.NumIn()-1 {
 					t = t.Elem()
@@ -306,7 +310,7 @@ func (r *runtime) addStatics(module string, m *goja.Object) {
 					}
 					return r.results(s.fn.Call(append(in[:i], rest...)), ft, nil)
 				}
-				in[i] = r.decode(call.Argument(i), t)
+				in[i] = r.decode(call.Argument(i-skip), t)
 			}
 			return r.results(s.fn.Call(in), ft, nil)
 		}))

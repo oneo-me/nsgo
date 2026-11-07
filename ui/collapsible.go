@@ -26,12 +26,13 @@ type Collapsible struct {
 func (c Collapsible) Render(cx *core.Scope) core.Node {
 	return base.Collapsible{Open: c.Open, Content: core.View{Style: core.Style{Padding: core.Edges{Top: 4, Bottom: 8}},
 		Children: []core.Node{c.Content}}, Style: c.Style, TestID: c.TestID,
-		Children: []core.Node{collapsibleTrigger(cx, c, core.Style{Padding: core.Symmetric(0, 8)})}}
+		Children: []core.Node{collapsibleTrigger(cx, c, core.Style{Padding: core.Symmetric(0, 8)}, false)}}
 }
 
 // collapsibleTrigger is the row that opens and closes c: its title and a
-// chevron that turns as it opens.
-func collapsibleTrigger(cx *core.Scope, c Collapsible, s core.Style) core.Node {
+// chevron that turns as it opens. In an accordion it is its item's
+// trigger, which the accordion's value opens.
+func collapsibleTrigger(cx *core.Scope, c Collapsible, s core.Style, accordion bool) core.Node {
 	colors := ColorsOf(cx)
 	title := c.Trigger
 	if title == nil {
@@ -47,17 +48,21 @@ func collapsibleTrigger(cx *core.Scope, c Collapsible, s core.Style) core.Node {
 		}
 		return core.Style{}
 	}, Children: []core.Node{Icon(lucide.ChevronDown, iconSize, colors.Muted)}}
+	face := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(ButtonHeight + 4),
+		CornerRadius: RadiusControl, Transition: quick, Disabled: Dimmed()}.Merge(s)
+	look := func() core.Style {
+		return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()},
+			Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
+	}
+	children := append(append([]core.Node(nil), title...), turn)
+	if accordion {
+		return base.AccordionTrigger{Label: c.Text, Style: face, StyleFunc: look, Children: children}
+	}
 	return base.Button{Expanded: func() bool { return is(c.Open) }, Disabled: c.Disabled, Label: c.Text,
 		OnPress: func(core.PressEvent) {
 			if c.OnOpenChange != nil {
 				c.OnOpenChange(!core.Untracked(cx, func() bool { return is(c.Open) }))
 			}
 		},
-		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(ButtonHeight + 4),
-			CornerRadius: RadiusControl, Transition: quick, Disabled: Dimmed()}.Merge(s),
-		StyleFunc: func() core.Style {
-			return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()},
-				Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
-		},
-		Children: append(append([]core.Node(nil), title...), turn)}
+		Style: face, StyleFunc: look, Children: children}
 }

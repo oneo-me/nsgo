@@ -32,6 +32,7 @@ type Button struct {
 	Style     core.Style
 	StyleFunc func() core.Style
 	Label     string
+	LabelFunc func() string
 	// Hint says what pressing the button does, for assistive technology.
 	Hint string
 	// Tooltip shows above the button once the pointer rests over it on
@@ -40,34 +41,46 @@ type Button struct {
 	TestID  string
 	// HitSlop is how far outside the button presses count.
 	HitSlop core.Edges
+	// NoFocus keeps it out of the Tab stops, for a button of a row the
+	// keyboard reaches another way.
+	NoFocus bool
+	// AccessibilityElementsHidden hides it from assistive technology while
+	// it returns true, as a leaf's chevron.
+	AccessibilityElementsHidden func() bool
 	// OnLayout is its view's, as a core.View's.
 	OnLayout func(core.Bounds)
+	// Desktop holds the props only desktops have, as a core.View's.
+	Desktop  core.DesktopViewProps
 	Children []core.Node
 }
 
 // Render implements core.Node.
-func (b Button) Render(*core.Scope) core.Node {
+func (b Button) Render(cx *core.Scope) core.Node {
 	role := b.Role
 	if role == core.RoleNone {
 		role = core.RoleButton
 	}
-	return core.View{
-		Class:       b.Class,
-		Style:       b.Style,
-		StyleFunc:   b.StyleFunc,
-		Children:    b.Children,
-		OnPress:     b.OnPress,
-		OnLongPress: b.OnLongPress,
-		OnPressDown: b.OnPressDown,
-		OnPressUp:   b.OnPressUp,
-		Disabled:    b.Disabled,
-		Selected:    b.Selected,
-		Expanded:    b.Expanded,
-		Role:        role,
-		Label:       b.Label,
-		Tooltip:     b.Tooltip,
-		Hint:        b.Hint,
-		HitSlop:     b.HitSlop,
-		TestID:      b.TestID, OnLayout: b.OnLayout,
-	}
+	return barItem(cx, core.View{
+		Class:                       b.Class,
+		Style:                       b.Style,
+		StyleFunc:                   b.StyleFunc,
+		Children:                    b.Children,
+		OnPress:                     b.OnPress,
+		OnLongPress:                 b.OnLongPress,
+		OnPressDown:                 b.OnPressDown,
+		OnPressUp:                   b.OnPressUp,
+		Disabled:                    b.Disabled,
+		Selected:                    b.Selected,
+		Expanded:                    b.Expanded,
+		Role:                        role,
+		Label:                       b.Label,
+		LabelFunc:                   b.LabelFunc,
+		Desktop:                     b.Desktop,
+		Tooltip:                     b.Tooltip,
+		Hint:                        b.Hint,
+		HitSlop:                     b.HitSlop,
+		NoFocus:                     b.NoFocus,
+		AccessibilityElementsHidden: b.AccessibilityElementsHidden,
+		TestID:                      b.TestID, OnLayout: b.OnLayout,
+	}, nil)
 }

@@ -6,17 +6,7 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-06, 101 of the 173 compat cases, all 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
-
-## Components of 0.4.0: controls
-
-What `nsh/base` added in 0.4.0 (`components.md`, `nsh/crates/nsh-base/src`), each in `base` with no look and in `ui` with its look. `Toggle`, `ToggleGroup` and `Toolbar` join `base`'s roving focus, as `Tabs` and `RadioGroup` do, and `Toggle` and `Link` take `HitSlop`. Done when `base-slider`, `base-number-input`, `base-otp-input`, `base-toggle`, `base-toolbar`, `base-pagination`, `base-accordion`, `base-collapsible-reveal`, `base-link`, `base-avatar`, `base-tree`, `base-carousel` and `base-scrollbar` pass.
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Value controls | `slider.rs`, `number_input.rs`, `otp_input.rs`, `toggle.rs` | `Slider` (a value or a range), `NumberInput`, `OtpInput` in one native field, `Toggle` and `ToggleGroup` |
-| Structure and navigation | `components.md` (Carousels), `toolbar.rs`, `pagination.rs`, `accordion.rs`, `tree.rs` | `Accordion` and a `Collapsible` that reveals its height as it opens, `Toolbar`, `Pagination`, `Tree` in a virtual list, `Carousel` on a native scroll view that can loop, `Link`, `Avatar` and `AvatarGroup` |
-| Scroll bars of the app's | `scrolling-and-lists.md`, `components.md` (Scroll bars) | `Scrollbar` names a scroll view or list and draws its bar in the app's look on every backend, `Scrollbar.setTheme` replaces every view's indicator, and the DataTable draws it above its rows |
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-07, 114 of the 162 compat cases that run, all 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
 
 ## Components of 0.4.0: popups
 
@@ -26,7 +16,7 @@ On `base`'s popups ([components](architecture/components.md)). Done when `base-s
 | --- | --- | --- |
 | Pickers | `components.md` (Popups), `select.rs`, `combobox.rs`, `date_picker.rs`, `calendar.rs`, `time_field.rs`, `color_picker` | `Select`, `Combobox` (one value or several, typed into its trigger), `DatePicker`, `Calendar` and `TimeField`, picked in one tap on phones, and `ColorPicker` (area, channel sliders, fields, swatches, mirrored right to left) |
 | Palettes and cards | `components.md` (Popups), `command.rs`, `hover_card.rs` | `Command`'s palette filtering natively and `HoverCard`, open while the pointer rests or the focus is in it |
-| Menus and dialogs | `components.md` (Popups), `menu.rs` | Menu items checked with the app's mark, a menu bar whose menus open on hover, popups and dialogs that report an open change, with its reason, before they open or close |
+| Menus and dialogs | `components.md` (Popups), `menu.rs` | Menu items checked with the app's mark, the triggers of `Menu`s and `Popover`s among a `Toolbar`'s items, a menu bar whose menus open on hover, popups and dialogs that report an open change, with its reason, before they open or close |
 
 ## Components of 0.4.0: plots
 
@@ -44,7 +34,7 @@ Each a project of its own.
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Rich editor | `rich-editor.md` | `RichEditor`, a ProseMirror-style document with lists, mentions, tables (merged cells, resizing, reordering), a bubble menu, undo grouped by time and input methods composing in the line; the `base-rich-editor-*` cases pass |
-| The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns); `base-data-table` passes |
+| The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns), and the app's `Scrollbar` drawn above its rows; `base-data-table` passes |
 | Editor and diff | `editor.md`, `diff.md` | The Editor's gutter and overview ruler decorations, the DiffView's scroll position and change positions reported; `base-editor` and `base-diff` pass |
 
 ## Shaders and transitions
@@ -147,6 +137,8 @@ These items wait for community contributions, and a change to one backend record
 | Folder picks on phones and the web | — | `PickDirectories` answers with folders the app reads on iOS (`UIDocumentPickerViewController` for `.folder`, kept in its security scope), Android (`ACTION_OPEN_DOCUMENT_TREE`, which grants a tree URI, not a path) and the web (`showDirectoryPicker`, or `<input webkitdirectory>`), which need a `Directory` that opens what it holds without a path, as `File.Open` does |
 | Sharing on Windows, Linux and the web | — | `Share` shows Windows' share UI (`IDataTransferManagerInterop::ShowShareUIForWindow` with the files as `StorageFile`s), the desktop portal's or a Linux file manager's where one exists, and the web's `navigator.share` for text and files the app holds as bytes, rather than answering `NoShareSheet` |
 | Recording on the other platforms | — | `microphone.Capture` records on iOS (`AVAudioSession`'s record category alongside `audiosession_ios.go`), Windows, Linux and Android (`AudioRecord` and `RECORD_AUDIO`, with `classes.dex` rebuilt), as it does on macOS |
+| Levels and spin buttons | `elements.md` | `View.AccessibilityLevel` reaches the screen readers of macOS, iOS, Windows, Linux and Android as it does the web's `aria-level`, a `NumberInput`'s `RoleSpinButton` holds on the native text fields of iOS and Android, which take the role from their kind, and Android's `NsgoView` knows the role, with `classes.dex` rebuilt |
+| Bars in multiline inputs | `components.md` (Scroll bars) | A multiline `Input` reports its text's offset and takes `ScrollTo` on every backend, so `scrollbar={theme}` draws a `Scrollbar` over its text; `base-scrollbar`'s last step leaves `compatDepartures` |
 | Modal reports | `elements.md` (`<Dialog>`) | Every backend reports a modal shown once it is presented and gone once it is dismissed (`EventModalShown`, `EventModalDismissed`), and the insets a screen keeps clear of (`EventScreenInsets`), so `Dialog`'s `OnOpen` and `OnClose` follow the platform instead of the animation's timer |
 | Real file drags | `file-drop.md` | A real drag from Finder and from a Linux file manager is checked to reach a view, as one from Explorer is |
 | Long presses on Android spans | `text.md` (nested texts) | A long press on a text's span reaches the span's `OnLongPress` on Android, as it does on the other backends: the runtime's Java reports the character under it, which needs `classes.dex` rebuilt |

@@ -125,7 +125,7 @@ func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) cor
 			content = append(content, Icon(tab.Icon, 22, Inherited))
 		}
 		content = append(content, line(tab.Text, TypeCaption.Merge(core.Style{FontWeight: Medium}), 1))
-		tabs = append(tabs, base.Button{Role: core.RoleTab, Label: tab.Text, Selected: func() bool { return selected() == i },
+		tabs = append(tabs, base.Tab{Label: tab.Text, Selected: func() bool { return selected() == i },
 			OnPress: func(core.PressEvent) { change(i) },
 			Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), MinWidth: core.Pt(0), AlignItems: core.AlignCenter,
 				JustifyContent: core.JustifyCenter, Gap: 2, MinHeight: core.Pt(RowHeight + 4), CornerRadius: RadiusControl,
@@ -141,8 +141,7 @@ func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) cor
 		StyleFunc: func() core.Style {
 			return core.Style{Background: colors.Surface(), BorderColors: core.EdgeColors{Top: colors.Line()}}
 		}, Children: []core.Node{
-			core.View{Role: core.RoleTabList, Label: s.Label, TestID: "tab-bar",
-				Style: core.Style{Direction: core.Row, FlexGrow: 1, Gap: 4}, Children: tabs},
+			base.Tabs{Label: s.Label, TestID: "tab-bar", Style: core.Style{Direction: core.Row, FlexGrow: 1, Gap: 4}, Children: tabs},
 		}}
 }
 

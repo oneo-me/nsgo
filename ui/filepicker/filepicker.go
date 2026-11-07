@@ -85,7 +85,7 @@ type State struct {
 	folder     *core.Signal[*Folder]
 	loading    *core.Signal[bool]
 	failure    *core.Signal[string]
-	selected   *core.Signal[string]
+	selected   *ui.Selection
 	editing    *core.Signal[bool]
 	address    *core.Signal[string]
 	generation uint64
@@ -99,13 +99,30 @@ func NewState(cx *core.Scope, view ViewMode, hidden bool, width core.Points) *St
 	}
 	return &State{view: core.NewSignal(cx, view), hidden: core.NewSignal(cx, hidden), width: core.NewSignal(cx, width),
 		folder: core.NewSignal(cx, &Folder{}), loading: core.NewSignal(cx, false), failure: core.NewSignal(cx, ""),
-		selected: core.NewSignal(cx, ""), editing: core.NewSignal(cx, false), address: core.NewSignal(cx, "")}
+		selected: ui.NewSelection(cx, false), editing: core.NewSignal(cx, false), address: core.NewSignal(cx, "")}
 }
 
 // View, ShowHidden and SidebarWidth are what the app keeps of the picker.
 func (s *State) View() ViewMode            { return s.view.GetUntracked() }
 func (s *State) ShowHidden() bool          { return s.hidden.GetUntracked() }
 func (s *State) SidebarWidth() core.Points { return s.width.GetUntracked() }
+
+// selectedPath is the selected entry's path, empty for none.
+func (s *State) selectedPath() string {
+	if keys := s.selected.Keys(); len(keys) > 0 {
+		return keys[0].(string)
+	}
+	return ""
+}
+
+// selectPath selects the entry of path, none when empty.
+func (s *State) selectPath(path string) {
+	if path == "" {
+		s.selected.Clear()
+		return
+	}
+	s.selected.Set(path)
+}
 
 // Open lists path, the starting folder when empty.
 func (s *State) Open(path string) { s.load(path, "") }
@@ -130,7 +147,7 @@ func (s *State) load(path, reveal string) {
 			s.failure.Set(err.Error())
 		}
 		s.folder.Set(&folder)
-		s.selected.Set(reveal)
+		s.selectPath(reveal)
 	})
 }
 
@@ -152,7 +169,7 @@ func (p Dialog) chosen() (string, bool) {
 	if s.loading.Get() || s.failure.Get() != "" || folder.Path == "" {
 		return "", false
 	}
-	if id := s.selected.Get(); id != "" {
+	if id := s.selectedPath(); id != "" {
 		for _, e := range folder.Entries {
 			if e.Path == id && (e.Dir || p.Files) {
 				return e.Path, true
@@ -165,7 +182,7 @@ func (p Dialog) chosen() (string, bool) {
 // copied is the path copying takes: the selected entry's, or else the
 // folder's.
 func (s *State) copied() string {
-	if id := s.selected.GetUntracked(); id != "" {
+	if id := s.selectedPath(); id != "" {
 		return id
 	}
 	if s.loading.GetUntracked() || s.failure.GetUntracked() != "" {
@@ -323,7 +340,7 @@ func (p Dialog) crumbs(cx *core.Scope) core.Node {
 			}
 			t := ui.Text(name, 12, ui.Regular, colors.Muted)
 			t.MaxLines = 1
-			nodes = append(nodes, core.View{Role: core.RoleButton, Label: name, OnPress: func(core.PressEvent) { open() }, Style: core.Style{FlexShrink: 0}, Children: []core.Node{t}})
+			nodes = append(nodes, base.Button{Label: name, OnPress: func(core.PressEvent) { open() }, Style: core.Style{FlexShrink: 0}, Children: []core.Node{t}})
 		}
 		if p.Device != "" {
 			add(p.Device, func() { s.Open("") })
@@ -340,7 +357,7 @@ func (p Dialog) crumbs(cx *core.Scope) core.Node {
 				add(trail[i].Name, ancestor(i))
 			}
 		}
-		return core.View{Label: p.Labels.Address, OnPress: func(core.PressEvent) {
+		return base.Button{Label: p.Labels.Address, OnPress: func(core.PressEvent) {
 			s.address.Set(folder.Path)
 			s.editing.Set(true)
 		}, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Height: core.Pt(ui.ButtonHeight), Padding: core.Symmetric(0, 8), Overflow: core.Hidden,
@@ -438,30 +455,30 @@ func (p Dialog) copyMenu(cx *core.Scope, path func() string, trigger core.Node) 
 		}}}}
 }
 
-// entryStyle is an entry's dimming and selection.
-func (p Dialog) entryStyle(cx *core.Scope, e Entry) func() core.Style {
-	colors := ui.ColorsOf(cx)
-	s := p.State
-	return func() core.Style {
-		st := core.Style{}
-		if s.selected.Get() == e.Path {
-			st.Background = ui.Alpha(colors.Text(), .1)
-		}
-		if e.Hidden || !e.Dir && !p.Files && p.Choose != nil {
-			st.Opacity = core.Alpha(.45)
-		}
-		return st
+// entryDim is an entry's dimming.
+func (p Dialog) entryDim(e Entry) core.Style {
+	if e.Hidden || !e.Dir && !p.Files && p.Choose != nil {
+		return core.Style{Opacity: core.Alpha(.45)}
 	}
+	return core.Style{}
 }
 
-// press selects an entry, and a second press activates it.
-func (p Dialog) press(e Entry, activate func(Entry)) func(core.PressEvent) {
-	return func(ev core.PressEvent) {
-		p.State.selected.Set(e.Path)
-		if ev.Clicks > 1 {
-			activate(e)
-		}
-	}
+// entryList lists entries in rows of the picker's selection: a press selects
+// one and a second activates it. Each row's view is entry's.
+func (p Dialog) entryList(cx *core.Scope, entries []Entry, activate func(Entry), columns int, rowStyle core.Style, entry func(e Entry) core.Node) core.Node {
+	colors := ui.ColorsOf(cx)
+	return ui.List{Count: func() int { return len(entries) }, Key: func(i int) any { return entries[i].Path }, Selection: p.State.selected,
+		Columns: columns, TapSelects: true, OnActivate: func(i int) { activate(entries[i]) }, RowLabel: func(i int) string { return entries[i].Name },
+		Row: func(_ *core.Scope, r core.ListRow) core.Node {
+			return core.Dynamic(func(*core.Scope) core.Node {
+				if i := r.Index(); i < len(entries) {
+					return entry(entries[i])
+				}
+				return nil
+			})
+		},
+		Style: core.Style{FlexGrow: 1}, RowStyle: rowStyle,
+		RowStyleFunc: func() core.Style { return core.Style{Selected: &core.Style{Background: ui.Alpha(colors.Text(), .1)}} }}
 }
 
 // listView shows entries as rows under column headings.
@@ -475,8 +492,7 @@ func (p Dialog) listView(cx *core.Scope, entries []Entry, activate func(Entry)) 
 		}
 	}
 	head := func(s string) core.Node { return ui.Text(s, 11.5, ui.Regular, colors.Muted) }
-	rows := make([]core.Node, len(entries))
-	for i, e := range entries {
+	entry := func(e Entry) core.Node {
 		date, size := "", ""
 		if !e.Modified.IsZero() {
 			date = p.formatTime(e.Modified)
@@ -486,32 +502,38 @@ func (p Dialog) listView(cx *core.Scope, entries []Entry, activate func(Entry)) 
 		}
 		name := ui.Text(e.Name, 13, ui.Regular, colors.Text)
 		name.MaxLines = 1
-		rows[i] = core.View{Label: e.Name, TestID: "filepicker-entry-" + e.Name, OnPress: p.press(e, activate),
-			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(6, 8), CornerRadius: ui.RadiusControl}, StyleFunc: p.entryStyle(cx, e),
+		return core.View{TestID: "filepicker-entry-" + e.Name,
+			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, FlexGrow: 1, MinWidth: core.Pt(0)}.Merge(p.entryDim(e)),
 			Children: row(core.View{Style: core.Style{Direction: core.Row, Gap: 8, AlignItems: core.AlignCenter, MinWidth: core.Pt(0)}, Children: []core.Node{p.icon(cx, e, 18), name}},
 				ui.Text(date, 12, ui.Regular, colors.Muted), ui.Text(size, 12, ui.Regular, colors.Muted))}
 	}
 	return core.View{Style: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12, Padding: core.Symmetric(8, 20), FlexShrink: 0}, Children: row(head(p.Labels.Name), head(p.Labels.Modified), head(p.Labels.Size))},
-		core.Scroll{Style: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)}, Children: []core.Node{
-			core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 12, Left: 12}}, Children: rows}}},
+		p.entryList(cx, entries, activate, 1, core.Style{Padding: core.Symmetric(6, 8)}, entry),
 	}}
 }
 
-// iconView shows entries as a grid of large icons over their names.
+// iconCell is an icon view's cell's width.
+const iconCell = 96
+
+// iconView shows entries as a grid of large icons over their names, as
+// many across as fit.
 func (p Dialog) iconView(cx *core.Scope, entries []Entry, activate func(Entry)) core.Node {
 	colors := ui.ColorsOf(cx)
-	cells := make([]core.Node, len(entries))
-	for i, e := range entries {
+	columns := core.NewSignal(cx, 1)
+	entry := func(e Entry) core.Node {
 		name := ui.Text(e.Name, 12, ui.Regular, colors.Text)
 		name.MaxLines = 2
 		name.Style.TextAlign = core.TextAlignCenter
-		cells[i] = core.View{Label: e.Name, TestID: "filepicker-entry-" + e.Name, OnPress: p.press(e, activate),
-			Style: core.Style{Width: core.Pt(96), Height: core.Pt(104), Padding: core.Symmetric(8, 4), Gap: 6, AlignItems: core.AlignCenter, CornerRadius: ui.RadiusControl}, StyleFunc: p.entryStyle(cx, e),
+		return core.View{TestID: "filepicker-entry-" + e.Name,
+			Style:    core.Style{Height: core.Pt(88), Gap: 6, AlignItems: core.AlignCenter, FlexGrow: 1, MinWidth: core.Pt(0)}.Merge(p.entryDim(e)),
 			Children: []core.Node{p.icon(cx, e, 44), name}}
 	}
-	return core.Scroll{Style: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)}, Children: []core.Node{
-		core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Padding: core.All(12)}, Children: cells}}}
+	return core.View{Style: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)},
+		OnLayout: func(b core.Bounds) { columns.Set(max(int(b.Size.Width-24)/iconCell, 1)) },
+		Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
+			return p.entryList(cx, entries, activate, columns.Get(), core.Style{Padding: core.Symmetric(8, 4), AlignItems: core.AlignStart}, entry)
+		})}}
 }
 
 func (p Dialog) icon(cx *core.Scope, e Entry, size core.Points) core.Node {

@@ -1,8 +1,7 @@
 package ui
 
 import (
-	"strings"
-	"unicode"
+	"github.com/oneo-me/nsgo/base"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -62,24 +61,8 @@ func (a Avatar) render(cx *core.Scope, ring core.Points, lift bool) core.Node {
 		s.Transition = quick
 		s.Transition.Properties |= core.TransitionTransform
 	}
-	loaded, failed := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	size := max(8, 6+d*0.16)
-	children := []core.Node{core.Text{Content: initials(a.Name), MaxLines: 1,
-		Style: core.Style{FontSize: size, LineHeight: size + 2, FontWeight: Medium},
-		StyleFunc: func() core.Style {
-			if loaded.Get() {
-				return core.Style{Visibility: core.VisibilityHidden}
-			}
-			return core.Style{Color: colors.Text()}
-		}}}
-	if hasImage(a.Image) {
-		children = append(children, core.Show{When: func() bool { return !failed.Get() }, Then: func(cx *core.Scope) core.Node {
-			return core.Image{Source: a.Image, ResizeMode: core.Cover, OnLoad: func(core.Size) { loaded.Set(true) },
-				OnError: func(error) { failed.Set(true) },
-				Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Left: core.Pt(0),
-					CornerRadius: d/2 - ring}}
-		}})
-	}
+	var children []core.Node
 	if a.Status != AvatarNoStatus {
 		dot := min(14, max(8, 4+d/6))
 		inset := max(0, (d-48)/10) - ring
@@ -95,30 +78,15 @@ func (a Avatar) render(cx *core.Scope, ring core.Points, lift bool) core.Node {
 			Width: core.Pt(dot), Height: core.Pt(dot), CornerRadius: dot / 2, BorderWidth: edge},
 			StyleFunc: func() core.Style { return core.Style{Background: tone(), BorderColor: colors.Surface()} }})
 	}
-	return core.View{TestID: a.TestID, Role: core.RoleImage, Label: label, Accessible: true, Style: s,
+	return base.Avatar{TestID: a.TestID, Src: a.Image, Name: a.Name, Label: label, Style: s, ImageResizeMode: core.Cover,
+		ImageStyle: core.Style{CornerRadius: d/2 - ring},
+		FallbackStyle: core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
+			FontSize: size, LineHeight: size + 2, FontWeight: Medium},
 		StyleFunc: func() core.Style {
-			st := core.Style{Background: colors.Hover(), BorderColor: colors.Surface()}
+			st := core.Style{Background: colors.Hover(), BorderColor: colors.Surface(), Color: colors.Text()}
 			if lift {
 				st.Hover = &core.Style{BorderColor: colors.Accent(), Transform: core.Transform{TranslateY: -2}}
 			}
 			return st.Merge(a.Style)
 		}, Children: children}
-}
-
-// hasImage reports whether src names a picture.
-func hasImage(src core.ImageSource) bool { return src.URI != "" || len(src.Data) > 0 }
-
-// initials are the capitals of the first two words of name.
-func initials(name string) string {
-	var b strings.Builder
-	for i, word := range strings.Fields(name) {
-		if i == 2 {
-			break
-		}
-		for _, r := range word {
-			b.WriteRune(unicode.ToUpper(r))
-			break
-		}
-	}
-	return b.String()
 }

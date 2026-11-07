@@ -317,7 +317,8 @@ func (t *Tree) syncPosition(n *node) {
 	if n.kind == 0 || n.attach != nil || n.accessory != nil || n.headerView || n.isStack {
 		return
 	}
-	if sticky := n.style.Position == Sticky; sticky != t.sticky[n] {
+	host := n.parent != nil && n.parent.scroll != nil && n.parent.scroll.barHost == n
+	if sticky := n.style.Position == Sticky || host; sticky != t.sticky[n] {
 		if sticky {
 			if t.sticky == nil {
 				t.sticky = map[*node]bool{}

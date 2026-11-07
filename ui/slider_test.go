@@ -20,11 +20,11 @@ func TestSlider(t *testing.T) {
 					Value: low.Get, OnChange: low.Set, High: high.Get, OnHighChange: high.Set},
 			}}
 		})
-		app.Press("volume")
+		app.Touch(viewOf(app.Find("volume").Children[0]), core.Point{X: 110, Y: 10}).Lift()
 		if value.Get() != 50 {
 			t.Fatalf("a press in the middle gave %v, want 50", value.Get())
 		}
-		app.Drag("volume", core.Point{X: 40}, core.Point{X: 51})
+		app.Drag("volume-thumb", core.Point{X: 40}, core.Point{X: 51})
 		if v := value.Get(); v < 70 || v > 80 || v != float64(int(v/5)*5) {
 			t.Fatalf("a drag of 51 pt across 200 gave %v, want 75 in steps of 5", v)
 		}
@@ -41,7 +41,7 @@ func TestSlider(t *testing.T) {
 			}
 		}
 		// The middle is nearer the high knob, which takes the press.
-		app.Press("price")
+		app.Touch(viewOf(app.Find("price").Children[0]), core.Point{X: 110, Y: 10}).Lift()
 		if low.Get() != 20 || high.Get() != 50 {
 			t.Fatalf("range = %v–%v, want 20–50", low.Get(), high.Get())
 		}

@@ -62,7 +62,7 @@ func (n *node) fittedContent(c *driver.ScrollConfig) Size {
 		return size
 	}
 	if room := n.frame.Size.Height - in.Top - in.Bottom; room < size.Height {
-		size.Height = min(size.Height, max(room, n.scroll.contentEnd, 0))
+		size.Height = min(size.Height, max(room, n.contentBottom(), 0))
 	}
 	return size
 }

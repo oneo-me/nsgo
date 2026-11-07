@@ -4,6 +4,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 	"github.com/oneo-me/nsgo/ui"
@@ -159,7 +160,7 @@ func chatFoldRow(cx *core.Scope, summary func() string, open func() bool, toggle
 	label := func() string { return summary() }
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(24), Gap: 10}, Children: []core.Node{
 		divider(),
-		core.View{Role: core.RoleButton, Expanded: open, OnPress: func(core.PressEvent) { toggle() }, LabelFunc: label,
+		base.Button{Expanded: open, OnPress: func(core.PressEvent) { toggle() }, LabelFunc: label,
 			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(24), Padding: core.Symmetric(0, 2), Gap: 5,
 				CornerRadius: ui.RadiusControl},
 			StyleFunc: func() core.Style { return core.Style{Focus: ui.FocusRing(cx, 2)} },
@@ -260,7 +261,7 @@ func chatActivityGroup(cx *core.Scope, s func() Step, live func() bool, conversa
 	}
 	title := func() string { return s().Title }
 	return core.View{Style: core.Style{MinWidth: core.Pt(0), Gap: 4}, Children: []core.Node{
-		core.View{Role: core.RoleButton, Expanded: open, LabelFunc: title,
+		base.Button{Expanded: open, LabelFunc: title,
 			OnPress: func(core.PressEvent) {
 				if core.Untracked(cx, open) {
 					choice.Set(2)
@@ -323,7 +324,7 @@ func (r ActivityRow) Render(cx *core.Scope) core.Node {
 			if !detail.Get() {
 				return core.View{Style: shape, Children: header}
 			}
-			return core.View{Role: core.RoleButton, Expanded: open, LabelFunc: func() string { return a().Action + " " + a().Detail },
+			return base.Button{Expanded: open, LabelFunc: func() string { return a().Action + " " + a().Detail },
 				OnPress: func(core.PressEvent) {
 					expanded.Update(func(v bool) bool { return !v })
 					r.Conversation.pause()

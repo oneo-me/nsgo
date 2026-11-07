@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -46,7 +47,7 @@ func (s Spinner) Render(cx *core.Scope) core.Node {
 		cx.StartAnimation(core.ValueKeyframes(turn, core.KeyframeTiming{Duration: 900 * time.Millisecond, Iterations: core.Forever,
 			Easing: core.StepsEasing(12, core.JumpEnd)}, core.Stops(0, 360)...), nil)
 	}
-	return core.View{TestID: s.TestID, Accessible: true, Role: core.RoleProgressBar, Label: s.Label,
+	return base.Progress{TestID: s.TestID, Label: s.Label, Indeterminate: func() bool { return true }, TrackStyle: core.Style{Display: core.DisplayNone},
 		Style:     core.Style{Width: core.Pt(size), Height: core.Pt(size), FlexShrink: 0}.Merge(s.Style),
 		StyleFunc: func() core.Style { return core.Style{Animated: &core.AnimatedStyle{Rotate: turn}} },
 		Children: []core.Node{core.Icon{SVG: spokes(), Style: core.Style{Width: core.Pct(100), Height: core.Pct(100)},

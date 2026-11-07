@@ -306,7 +306,7 @@ func (r *runtime) scrollProp(p *core.Scroll, name string, v goja.Value) bool {
 	case "horizontal":
 		p.Horizontal = v.ToBoolean()
 	case "scrollbar":
-		p.HideIndicator = !v.ToBoolean()
+		p.HideIndicator, p.Bar = !v.ToBoolean(), r.scrollbarTheme(v)
 	case "contentOffset":
 		p.ContentOffset = r.pointOf(v.ToObject(r.vm))
 	case "minimumZoomScale":
@@ -768,7 +768,7 @@ var roles = map[string]core.Role{"button": core.RoleButton, "imagebutton": core.
 	"checkbox": core.RoleCheckbox, "switch": core.RoleSwitch, "radio": core.RoleRadio,
 	"radiogroup": core.RoleRadioGroup, "tab": core.RoleTab, "tablist": core.RoleTabList, "menu": core.RoleMenu,
 	"menubar": core.RoleMenu, "menuitem": core.RoleMenuItem, "dialog": core.RoleDialog, "alert": core.RoleAlert,
-	"adjustable": core.RoleAdjustable, "spinbutton": core.RoleAdjustable, "scrollbar": core.RoleAdjustable,
+	"adjustable": core.RoleAdjustable, "spinbutton": core.RoleSpinButton, "scrollbar": core.RoleAdjustable,
 	"progressbar": core.RoleProgressBar, "timer": core.RoleText, "toolbar": core.RoleToolbar, "list": core.RoleNone,
 	"listbox": core.RoleListbox, "option": core.RoleOption, "group": core.RoleGroup, "region": core.RoleRegion,
 	"navigation": core.RoleNavigation, "tree": core.RoleTree, "treeitem": core.RoleTreeItem,

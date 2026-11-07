@@ -110,6 +110,10 @@ type Tree struct {
 	// positional is set once a node has classes that follow its place
 	// among its siblings (first:, odd:).
 	positional bool
+	// bars draws the bars of scroll views that have none of their own,
+	// and watches hear scroll views move (scrollbars.go).
+	bars    ScrollbarMaker
+	watches []*scrollWatch
 	// focus is the node with the keyboard focus, whatever tracks it, and
 	// focusChain it and the nodes around it, which hold stateFocusWithin
 	// (updateFocusWithin). focusMoved asks the next commit to walk them.
@@ -257,6 +261,7 @@ type node struct {
 
 type handlers struct {
 	press, longPress, pressDown, pressUp func(PressEvent)
+	focusIn, focusOut                    func()
 	mouseEnter, mouseLeave, mouseMove    func(MouseEvent)
 	textSelection                        func(Bounds)
 	focus, blur                          func()
@@ -472,6 +477,14 @@ type preparedInput struct {
 }
 
 type scrollNode struct {
+	// ownBar is what draws its bar over the app's; hideIndicator is what
+	// the app set, config's also while a bar stands in for the indicator.
+	// barHost holds the bar (scrollbars.go).
+	ownBar        ScrollbarMaker
+	hideIndicator bool
+	barHost       *node
+	bar           *Signal[ScrollbarMaker]
+	barSize       *Signal[Size]
 	// sent and sentContent are the config and content size last sent.
 	sent        driver.ScrollConfig
 	sentContent Size
@@ -667,7 +680,7 @@ func (t *Tree) newNode(kind driver.ViewKind, parent *node, owner *Scope) *node {
 		}
 	}
 	if parent != nil {
-		parent.children = append(parent.children, n)
+		addChild(parent, n)
 		t.childrenChanged(parent)
 	}
 	t.markResolve(n)
@@ -1037,7 +1050,7 @@ func (t *Tree) restyle(n *node) bool {
 	z, sticky := n.stackRank()
 	was := &n.style
 	lines, overflow, pointer := was.NumberOfLines, was.TextOverflow, was.PointerEvents
-	n.style = merged.withStates(statesOf(n.states, &p, n.part.Data), g)
+	n.style = merged.withStates(statesOf(n.shownInteraction(), &p, n.part.Data), g)
 	if p.Disabled {
 		// The platform still follows the states a disabled view's own
 		// styles wait for, which the event mask reads.
@@ -1088,7 +1101,7 @@ func (n *node) groupState(name string) shownStates {
 			p.Indeterminate = p.Indeterminate || a.part.Indeterminate
 			p.Selected = p.Selected || a.part.Selected
 			p.Disabled = p.Disabled || a.part.Disabled || a.input != nil && a.input.config.Disabled
-			return statesOf(a.states, &p, a.part.Data)
+			return statesOf(a.shownInteraction(), &p, a.part.Data)
 		}
 	}
 	return shownStates{}
@@ -1162,6 +1175,14 @@ func (t *Tree) focusReported(n *node, focused bool) {
 	}
 }
 
+// shownInteraction is n's interaction states with those its part shows.
+func (n *node) shownInteraction() uint8 {
+	if n.part.Focused {
+		return n.states | stateFocused
+	}
+	return n.states
+}
+
 // updateFocusWithin puts stateFocusWithin on the focus and the nodes
 // around it, and takes it off those it left: the two chains are walked
 // and nothing else. The nodes around are parents in the core's tree,
@@ -1182,10 +1203,22 @@ func (t *Tree) updateFocusWithin() {
 	for _, n := range old {
 		if !n.deleted && !slices.Contains(chain, n) {
 			t.setState(n, stateFocusWithin, false)
+			t.focusCrossed(n, n.h.focusOut)
 		}
 	}
 	for _, n := range chain {
+		if !slices.Contains(old, n) {
+			t.focusCrossed(n, n.h.focusIn)
+		}
 		t.setState(n, stateFocusWithin, true)
+	}
+}
+
+// focusCrossed runs fn, a view's OnFocusIn or OnFocusOut, after the commit
+// that saw the focus cross it.
+func (t *Tree) focusCrossed(n *node, fn func()) {
+	if fn != nil {
+		n.owner.Post(fn)
 	}
 }
 
@@ -1295,7 +1328,7 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 	t.bindClasses(cx, n, v.Class, v.ClassFunc)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	t.setViewParts(n, v)
-	t.bindAccessibility(cx, n, a11y{labelFunc: v.LabelFunc, value: v.AccessibilityValue, expanded: v.Expanded,
+	t.bindAccessibility(cx, n, a11y{labelFunc: v.LabelFunc, value: v.AccessibilityValue, expanded: v.Expanded, expandable: v.Expandable,
 		hidden: v.AccessibilityElementsHidden, actions: v.AccessibilityActions, accessible: v.Accessible,
 		important: v.ImportantForAccessibility})
 	t.bindBool(cx, n, v.Disabled, &n.props.Disabled)
@@ -1314,6 +1347,22 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 	t.bindBool(cx, n, v.Indeterminate, &n.props.Indeterminate)
 	t.bindBool(cx, n, v.Pressed, &n.props.Pressed)
 	t.bindBool(cx, n, v.Busy, &n.props.Busy)
+	if v.HitSlopFunc != nil {
+		cx.renderEffect(func() {
+			if e := v.HitSlopFunc(); e != n.props.HitSlop {
+				n.props.HitSlop = e
+				t.touch(n)
+			}
+		})
+	}
+	if v.AccessibilityLevel != nil {
+		cx.renderEffect(func() {
+			if l := v.AccessibilityLevel(); l != n.props.Level {
+				n.props.Level = l
+				t.touch(n)
+			}
+		})
+	}
 	if v.PartStates != nil {
 		cx.renderEffect(func() {
 			n.part = v.PartStates()
@@ -1340,7 +1389,7 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 func (t *Tree) setViewParts(n *node, v View) {
 	n.ownPointer, n.showsExpanded = v.PointerEvents, v.ShowsExpanded
 	t.pointersMoved = t.pointerStyled
-	n.h = handlers{press: v.OnPress, longPress: v.OnLongPress, pressDown: v.OnPressDown, pressUp: v.OnPressUp,
+	n.h = handlers{focusIn: v.OnFocusIn, focusOut: v.OnFocusOut, press: v.OnPress, longPress: v.OnLongPress, pressDown: v.OnPressDown, pressUp: v.OnPressUp,
 		mouseEnter: v.OnMouseEnter, mouseLeave: v.OnMouseLeave, mouseMove: v.OnMouseMove,
 		textSelection: v.OnTextSelection,
 		layout:        v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
@@ -1526,7 +1575,9 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 	t.setClasses(n, v.Class)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	n.h = handlers{change: v.OnChange, submit: v.OnSubmit, focus: v.OnFocus, blur: v.OnBlur, layout: v.OnLayout}
-	n.props = driver.ViewProps{Role: RoleTextField, Label: v.Label, TestID: v.TestID}
+	n.props = driver.ViewProps{Role: cmpOr(v.Role, RoleTextField), Label: v.Label, TestID: v.TestID}
+	n.h.action = v.OnAccessibilityAction
+	t.bindAccessibility(cx, n, a11y{value: v.AccessibilityValue, actions: v.AccessibilityActions})
 	t.setRef(n, v.Ref)
 	in := &inputNode{valueFn: v.Value, value: v.DefaultValue, autoFocus: v.AutoFocus, accessory: v.InputAccessoryViewID,
 		selection: v.OnSelectionChange, keyPress: v.OnKeyPress, composition: v.OnCompositionChange,
@@ -1554,6 +1605,22 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 			t.markResolve(n) // a multiline field measures it
 		})
 	}
+	if v.ReadonlyFunc != nil {
+		cx.renderEffect(func() {
+			if r := v.ReadonlyFunc(); r != in.config.Readonly {
+				in.config.Readonly = r
+				t.touch(n)
+			}
+		})
+	}
+	if v.KeyboardTypeFunc != nil {
+		cx.renderEffect(func() {
+			if k := v.KeyboardTypeFunc(); k != in.config.KeyboardType {
+				in.config.KeyboardType = k
+				t.touch(n)
+			}
+		})
+	}
 	if v.SelectedRange != nil {
 		// After the value, which the commit sends before its commands.
 		cx.renderEffect(func() {
@@ -1578,7 +1645,8 @@ func (t *Tree) mountScroll(cx *Scope, parent *node, v Scroll) {
 	}
 	n.props = driver.ViewProps{TestID: v.TestID}
 	t.setRef(n, v.Ref)
-	n.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: v.Horizontal, HideIndicator: v.HideIndicator}, effects: v.EdgeEffects}
+	n.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: v.Horizontal, HideIndicator: v.HideIndicator}, effects: v.EdgeEffects,
+		ownBar: v.Bar, hideIndicator: v.HideIndicator}
 	t.bindScrollSpec(cx, n, scrollSpec{behavior: v.Behavior, behaviorFunc: v.BehaviorFunc, offset: v.ContentOffset,
 		refreshing: v.Refreshing, onRefresh: v.OnRefresh, onScroll: v.OnScroll, throttle: v.ScrollEventThrottle,
 		onDragStart: v.OnScrollDragStart, onDragEnd: v.OnScrollDragEnd,
@@ -1589,6 +1657,7 @@ func (t *Tree) mountScroll(cx *Scope, parent *node, v Scroll) {
 	for _, c := range v.Children {
 		t.mount(cx, n, c)
 	}
+	t.refreshBar(n)
 }
 
 func (t *Tree) setRef(n *node, r *Ref) {

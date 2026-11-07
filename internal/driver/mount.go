@@ -647,7 +647,9 @@ const (
 
 // ViewProps is a view's accessibility and identity.
 type ViewProps struct {
-	Role  Role
+	Role Role
+	// Level is a heading's or a tree item's level, from 1; 0 for none.
+	Level int
 	Label string
 	// Hint says what activating the element does.
 	Hint     string
@@ -767,6 +769,9 @@ const (
 	// checked state.
 	RoleMenuItemCheckbox
 	RoleMenuItemRadio
+	// RoleSpinButton is a field for a number: its Value is what it reads
+	// as, between its bounds, and its actions step it.
+	RoleSpinButton
 )
 
 // ScrollConfig configures a scroll view.

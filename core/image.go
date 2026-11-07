@@ -21,7 +21,7 @@ func (t *Tree) mountImage(cx *Scope, parent *node, v Image) {
 	t.setRef(n, v.Ref)
 	n.h = handlers{press: v.OnPress, layout: v.OnLayout, loadStart: v.OnLoadStart, loadEnd: v.OnLoadEnd,
 		progress: v.OnProgress, load: v.OnLoad, loadError: v.OnError}
-	n.props = driver.ViewProps{Role: RoleImage, Label: v.Label, TestID: v.TestID}
+	n.props = driver.ViewProps{Role: RoleImage, Label: v.Label, TestID: v.TestID, ElementsHidden: v.ElementsHidden}
 	n.image = &imageNode{config: driver.ImageConfig{Source: v.Source, Placeholder: v.Placeholder,
 		ResizeMode: v.ResizeMode, BlurRadius: v.BlurRadius, FadeDuration: v.FadeDuration}}
 	if v.SourceFunc != nil {

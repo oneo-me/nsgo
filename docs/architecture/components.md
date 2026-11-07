@@ -10,7 +10,17 @@ Each part a component styles takes Tailwind classes beside its style, as NSH's `
 
 `Button`, `Checkbox`, `Radio` in a `RadioGroup`, `Switch`, `Tab` in `Tabs`, `Collapsible` and `Progress` hold no value: the app passes it and sets it from `OnChange` or `OnPress`, as NSH's controlled props do.
 
-`Tabs` and `RadioGroup` are one Tab stop (`base/roving.go`, as NSH's `roving.rs`): the item the focus is on, else the selected tab or checked radio, else the first enabled one is `Focusable`. Their arrows, bound in the keymap only while an item has the focus, focus the item they reach and activate it, swapped right to left, and `Tabs` adds Home and End. The items sort in tree order (`Ref.Before`), since an `Each` may mount one between others. `HitSlop` goes to the view of `Button`, `Checkbox`, `Radio` and `Switch`.
+`Tabs` and `RadioGroup` are one Tab stop (`base/roving.go`, as NSH's `roving.rs`): the item the focus is on, else the selected tab or checked radio, else the first enabled one is `Focusable`. Their arrows, bound in the keymap only while an item has the focus, focus the item they reach and activate it, swapped right to left, and `Tabs` adds Home and End. The items sort in tree order (`Ref.Before`), since an `Each` may mount one between others. `HitSlop` goes to the view of `Button`, `Checkbox`, `Radio` and `Switch`; `Toggle` and `Link` also take `HitSlopFunc`, which follows what it reads.
+
+`Toolbar` and `ToggleGroup` are bars (`barItem`): groups of the same roving focus whose `Button`s, `Toggle`s and `Link`s join them, in a `ToolbarGroup` or a `ToggleGroup` inside a toolbar too, disabled with the bar. An arrow key only moves the focus, along a toolbar's `Axis`, and a toolbar's Tab comes back to the item it left where a toggle group's enters at the first pressed toggle. A `Menu`'s or `Popover`'s trigger does not join a bar yet ([roadmap](../roadmap.md#components-of-040-popups)).
+
+`Slider` and `NumberInput` share `numeric.go`, NSH's rules of a number in a range with a step and of one typed as text. A drag's value shows at once until the drag ends, without waiting for the app's `Value` to come back, and assistive technology hears it at the end unless a screen reader runs, so a drag sends no props item per move. A slider's `Value` is `SliderValue`, one number or a range, and a number input's `*float64`, nil for an empty field, the shapes TSX's `number | [number, number]` and `number | null` read as. NSH lets go of a drag's value once a TSX app has answered, a turn later; handlers run synchronously here, so the release does.
+
+`OtpInput` is one transparent native field over cells that only show the code, which keeps typing, input methods, paste and the system's code autofill the platform's. Edits are read from what the field reports and apply to the code as typed, so a controlled `Value` a few keys behind is no conflict (`otpEchoes`).
+
+`Accordion`'s and `Collapsible`'s `Reveal` animate the commit that opens or closes them with a critically damped layout spring, and the content, in a `Holder`, comes back as it was. `Avatar` lays its image out transparent over the fallback, so loading changes those two parts and nothing else, with an image node per source so a late event of the old one is not the new one's. `Pagination` makes its row once, a place for each item it can hold, so a page change makes no view. `Tree` flattens the items once per change of them and looks rows up by bisection; a move of the selection wakes the rows it leaves and reaches, spread over 32 signals (`treeFollow`). `Carousel` is a native scroll view snapping to where its slides report they are laid out, a looping one with a period of runway each side and each slide drawn in the period nearest the viewport's center by an animated translation.
+
+`Scrollbar` watches its target with `Scope.WatchScroll` and scrolls it with `Ref.ScrollTo`; its built-in form is [scrolling](scrolling.md#bars-of-the-apps)'s.
 
 `Tabs`' indicator is a view that follows the selected tab (`View.Follow`, `core/follow.go`, as NSH's `follow.rs`). After each layout the core spans the target's frame along the parent's main axis, inside the follower's margins there, and leaves the cross axis to the follower's layout, so a change of tab is one frame item with `FollowTransition`, and a layout that moves the tabs moves it in the same batch.
 
@@ -20,6 +30,17 @@ Each part a component styles takes Tailwind classes beside its style, as NSH's `
 - A radio reports checked and selected both, as `gpui-base`'s does, since screen readers read one or the other.
 - `Collapsible` makes its content the first time it opens and keeps it, hidden, while closed.
 - `Progress` is one accessible element with a range from 0 to 100, and none while indeterminate.
+
+| NSH | NSGo | Why |
+| --- | --- | --- |
+| A slot's element in a view of its own | The element in the component's row | Go's `core.Node` needs no holder, so `NumberInput`'s frames count from its row |
+| `Scrollbar`'s `axis`, vertical by default | `Horizontal` | Go's zero value is the default |
+| `Collapsible` and `AccordionPanel` keep their `reveal` as it changes | `Reveal` read as a `Collapsible` is made | Its two forms are different views |
+| Items ordered by the core's `watch_order` | `Ref.Before` as they are read | One way to order, as `Tabs` has |
+
+## What only NSGo has
+
+`List`, `Selection`, `TagInput`, `Rating`, `HoldToConfirm`, `ImageCompare`, `CardStack`, `Stepper` and `Sidebar` have no NSH counterpart: they hold the behavior of the `ui` forms Onevra's look needs, as `ui` holds none of its own ([components](../../AGENTS.md#components)). `List` is a `core.List` whose rows a `Selection` chooses by press and keyboard, a multiple one with Shift and Mod. `Tree` takes a `Selection` for the same, `Folder` items whose children are read only as they expand, and `SelectOnly` with `TreeRow.Toggle` for a chevron that expands in place of the press. `Slider`, `NumberInput`, `Carousel` and `Progress` likewise take what the look draws around them: marks, a scrub handle, a commit as the field is left, the content's offset, the thumb's ref for a slider drawn by a shader.
 
 ## Popups
 

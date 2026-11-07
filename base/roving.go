@@ -32,11 +32,19 @@ type rovingItem struct {
 
 // rovingGroup is a group of items with one stop of the keyboard focus.
 type rovingGroup struct {
-	cx       *core.Scope
-	items    []*rovingItem
-	changed  *core.Signal[int]
-	focus    *core.Signal[*rovingItem]
+	cx      *core.Scope
+	items   []*rovingItem
+	changed *core.Signal[int]
+	focus   *core.Signal[*rovingItem]
+	// last is the item the focus was on last, where a toolbar's Tab comes
+	// back to.
+	last     *core.Signal[*rovingItem]
 	homeKeys bool
+	// toolbar remembers last over the current item, and its axis keeps
+	// the keys across it to its items; a zero axis moves on both.
+	toolbar bool
+	axis    Axis
+	hasAxis bool
 }
 
 var rovingKey = core.NewKey[*rovingGroup]("base.roving", nil)
@@ -44,7 +52,8 @@ var rovingKey = core.NewKey[*rovingGroup]("base.roving", nil)
 // newRoving provides a group to what the scope renders. homeKeys binds
 // Home and End to the first and last item.
 func newRoving(cx *core.Scope, homeKeys bool) *rovingGroup {
-	g := &rovingGroup{cx: cx, changed: core.NewSignal(cx, 0), focus: core.NewSignal[*rovingItem](cx, nil), homeKeys: homeKeys}
+	g := &rovingGroup{cx: cx, changed: core.NewSignal(cx, 0), focus: core.NewSignal[*rovingItem](cx, nil),
+		last: core.NewSignal[*rovingItem](cx, nil), homeKeys: homeKeys}
 	rovingKey.Provide(cx, g)
 	var shown *rovingItem
 	cx.Effect(func() {
@@ -86,11 +95,16 @@ func (g *rovingGroup) stop() *rovingItem {
 		return i
 	}
 	var first *rovingItem
+	if g.toolbar {
+		if i := g.last.Get(); i != nil && slices.Contains(g.items, i) && enabled(i) {
+			return i
+		}
+	}
 	for _, i := range g.items {
 		if !enabled(i) {
 			continue
 		}
-		if i.current() {
+		if i.current() && !g.toolbar {
 			return i
 		}
 		if first == nil {
@@ -129,6 +143,9 @@ func (g *rovingGroup) add(cx *core.Scope, ref *core.Ref, current, disabled func(
 		cx.Untrack(func() {
 			if g.focus.GetUntracked() == item {
 				g.focus.Set(nil)
+			}
+			if g.last.GetUntracked() == item {
+				g.last.Set(nil)
 			}
 			g.changed.Update(func(n int) int { return n + 1 })
 		})
@@ -173,8 +190,11 @@ func (g *rovingGroup) move(s step) {
 	item := enabled[to]
 	// The stop first, so the focus finds the item focusable.
 	g.focus.Set(item)
+	g.last.Set(item)
 	item.ref.Focus()
-	item.activate()
+	if item.activate != nil {
+		item.activate()
+	}
 }
 
 // keys binds the group's keys; a Show holds them while the focus is on an
@@ -191,10 +211,14 @@ func (g *rovingGroup) keys() core.Node {
 				g.move(s)
 			})
 		}
-		sided("left", stepPrevious, stepNext)
-		sided("right", stepNext, stepPrevious)
-		sided("up", stepPrevious, stepPrevious)
-		sided("down", stepNext, stepNext)
+		if !g.hasAxis || g.axis == Horizontal {
+			sided("left", stepPrevious, stepNext)
+			sided("right", stepNext, stepPrevious)
+		}
+		if !g.hasAxis || g.axis == Vertical {
+			sided("up", stepPrevious, stepPrevious)
+			sided("down", stepNext, stepNext)
+		}
 		if g.homeKeys {
 			sided("home", stepFirst, stepFirst)
 			sided("end", stepLast, stepLast)
@@ -219,6 +243,7 @@ func rovingView(cx *core.Scope, v core.View, current func() bool, activate func(
 	onFocus, onBlur := v.OnFocus, v.OnBlur
 	v.OnFocus = func() {
 		g.focus.Set(item)
+		g.last.Set(item)
 		if onFocus != nil {
 			onFocus()
 		}
@@ -232,4 +257,39 @@ func rovingView(cx *core.Scope, v core.View, current func() bool, activate func(
 		}
 	}
 	return v
+}
+
+// A bar is a Toolbar's or a ToggleGroup's group of the focus: the Toggles,
+// Buttons and Links inside it join it, in a ToolbarGroup or a ToggleGroup
+// inside a toolbar too, and an arrow key only moves the focus among them.
+type bar struct {
+	roving   *rovingGroup
+	disabled func() bool
+	// axis is a toolbar's, which its groups lay out along.
+	axis    Axis
+	toolbar bool
+}
+
+var barKey = core.NewKey[*bar]("base.bar", nil)
+
+// nestedBar is the bar for a part of outer that holds items: the same
+// group of the focus, disabled with outer too.
+func nestedBar(outer *bar, disabled func() bool) *bar {
+	nested := *outer
+	nested.disabled = func() bool { return is(disabled) || is(outer.disabled) }
+	return &nested
+}
+
+// barItem puts v, a Toggle's, Button's or Link's view, in the bar around
+// cx, if any: one of its stops, disabled with the bar too. current makes
+// it where Tab enters a toggle group on its own.
+func barItem(cx *core.Scope, v core.View, current func() bool) core.View {
+	b := barKey.Use(cx)
+	if b == nil {
+		return v
+	}
+	own := v.Disabled
+	v.Disabled = func() bool { return is(own) || is(b.disabled) }
+	rovingKey.Provide(cx, b.roving)
+	return rovingView(cx, v, current, nil)
 }

@@ -35,6 +35,8 @@ type List struct {
 	NumColumns    int
 	Horizontal    bool
 	HideIndicator bool
+	// Bar draws its scroll bar, over the app's (Scope.SetScrollbars).
+	Bar ScrollbarMaker
 	// Inverted puts row 0 at the end (a chat): the list starts scrolled
 	// to the end and keeps its distance from it as content changes. With
 	// OnLoadMoreAtStart it does so only while row 0 shows; scrolled away,
@@ -333,12 +335,14 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 		if on := l.OnScroll; on != nil {
 			v.h.scroll = func(p Point) { on(v.scrollEvent(p)) }
 		}
-		v.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: l.Horizontal, HideIndicator: l.HideIndicator}}
+		v.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: l.Horizontal, HideIndicator: l.HideIndicator},
+			ownBar: l.Bar, hideIndicator: l.HideIndicator}
 		t.bindScrollSpec(cx, v, scrollSpec{behavior: l.Behavior, behaviorFunc: l.BehaviorFunc,
 			refreshing: l.Refreshing, onRefresh: l.OnRefresh, onScroll: l.OnScroll, throttle: l.ScrollEventThrottle,
 			onDragStart: l.OnScrollDragStart, onDragEnd: l.OnScrollDragEnd,
 			onMomentum: l.OnMomentumStart, onMomentumEnd: l.OnMomentumEnd, onScrollEnd: l.OnScrollEnd})
 		t.bindScroll(cx, v, l.OffsetValues, l.PullValue)
+		t.refreshBar(v)
 	}
 	if l.ContentOffset != (Point{}) {
 		ln.cmds = append(ln.cmds, listCommand{to: l.ContentOffset})
@@ -814,7 +818,7 @@ func (t *Tree) restick(ln *listNode, c *listCell, sticky bool) {
 		return
 	}
 	from.children = slices.DeleteFunc(from.children, func(n *node) bool { return n == c.node })
-	to.children = append(to.children, c.node)
+	addChild(to, c.node)
 	c.node.parent = to
 	t.carry(c.node)
 	t.childrenChanged(from)
@@ -1033,6 +1037,9 @@ func (t *Tree) sendSticky() {
 // the viewport's start less its Top (Left across a horizontal scroll
 // view), to where its end meets its parent's content end.
 func pinRange(n *node) (*node, StickyCell, bool) {
+	if p := n.parent; p != nil && p.scroll != nil && p.scroll.barHost == n {
+		return barRange(n)
+	}
 	if n.deleted || n.hidden || n.style.Display == DisplayNone || n.hoist != nil {
 		return nil, StickyCell{}, false
 	}

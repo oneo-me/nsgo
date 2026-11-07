@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -187,10 +188,31 @@ func TestEffortStaysOpen(t *testing.T) {
 			Levels: []Option{{ID: "off", Label: "Off"}, {ID: "low", Label: "Low"}, {ID: "max", Label: "Top"}}}
 	})
 	app.Press("id:effort")
-	app.Press("id:effort-bar")
+	track := app.Find("id:effort-bar").Children[0]
+	app.Touch("view:"+strconv.Itoa(int(track.ID)), core.Point{X: track.Frame.Size.Width / 2, Y: 2}).Lift()
 	app.Advance(time.Second)
 	if chosen != "low" || !app.Exists("id:effort-bar") {
 		t.Fatalf("chose %q, want the middle level with the panel open", chosen)
+	}
+}
+
+// TestEffortKeys moves the level with the keys, the bar's thumb taking the
+// focus as the panel opens, and assistive technology hears the level's name.
+func TestEffortKeys(t *testing.T) {
+	chosen := ""
+	app := start(t, desktopEnv, func(cx *core.Scope) core.Node {
+		v := core.NewSignal(cx, "off")
+		return EffortPicker{Label: "Effort", Selected: v.Get, OnChange: func(id string) { chosen = id; v.Set(id) }, TestID: "effort",
+			Levels: []Option{{ID: "off", Label: "Off"}, {ID: "low", Label: "Low"}, {ID: "max", Label: "Top"}}}
+	})
+	app.Press("id:effort")
+	app.Settle()
+	app.Key("end")
+	if chosen != "max" {
+		t.Fatalf("End chose %q", chosen)
+	}
+	if got := app.Find("role:adjustable").Props.Value.Text; got != "Top" {
+		t.Fatalf("the thumb reads %q", got)
 	}
 }
 

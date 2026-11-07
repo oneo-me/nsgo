@@ -131,7 +131,7 @@ var roleNicks = [...]string{
 	driver.RoleCheckbox: "checkbox", driver.RoleSwitch: "switch", driver.RoleRadio: "radio", driver.RoleTab: "tab",
 	driver.RoleText: "label", driver.RoleTextField: "text-box", driver.RoleRadioGroup: "radio-group",
 	driver.RoleTabList: "tab-list", driver.RoleMenu: "menu", driver.RoleMenuItem: "menu-item",
-	driver.RoleDialog: "dialog", driver.RoleAlert: "alert", driver.RoleAdjustable: "slider",
+	driver.RoleDialog: "dialog", driver.RoleAlert: "alert", driver.RoleAdjustable: "slider", driver.RoleSpinButton: "spin-button",
 	driver.RoleProgressBar: "progress-bar", driver.RoleTable: "table", driver.RoleGrid: "grid",
 	driver.RoleRowGroup: "row-group", driver.RoleRow: "row", driver.RoleColumnHeader: "column-header",
 	driver.RoleCell: "cell", driver.RoleListbox: "list-box", driver.RoleOption: "option", driver.RoleGroup: "group",

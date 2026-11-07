@@ -80,3 +80,6 @@ func (i Image) Render(cx *core.Scope) core.Node {
 	return core.View{Style: core.Style{AspectRatio: ratio, Overflow: core.Hidden, CornerRadius: RadiusControl}.Merge(i.Style),
 		StyleFunc: Filled(colors.Inset), Children: children}
 }
+
+// hasImage reports whether src names a picture.
+func hasImage(src core.ImageSource) bool { return src.URI != "" || len(src.Data) > 0 }

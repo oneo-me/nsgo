@@ -210,6 +210,8 @@ func (t *Tree) commitRound() {
 			t.within(n.owner, func() { n.h.layout(frame) })
 		}
 	}
+	t.sizeBars()
+	t.reportWatches()
 	reports := t.reports
 	t.reports = nil
 	for _, r := range reports {

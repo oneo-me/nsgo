@@ -164,35 +164,6 @@ func (p EffortPicker) panel(cx *core.Scope, motion *chatEffortMotion, selected f
 		}
 	}
 	rtl := core.Untracked(cx, cx.Env().RTL)
-	at := func(x core.Points) int {
-		w := core.Untracked(cx, bar.Get).Size.Width
-		if w <= 0 || n < 2 {
-			return 0
-		}
-		f := float64(min(max(x/w, 0), 1))
-		if rtl {
-			f = 1 - f
-		}
-		return int(math.Round(f * float64(n-1)))
-	}
-	var downX core.Points
-	focused := core.NewSignal(cx, false)
-	step := func(d int) {
-		if rtl {
-			d = -d
-		}
-		choose(min(max(core.Untracked(cx, selected)+d, 0), n-1))
-	}
-	keys := core.Show{When: focused.Get, Then: func(cx *core.Scope) core.Node {
-		repeat := core.KeyOptions{Repeat: true}
-		cx.OnKeyWith("right", repeat, func() { step(1) })
-		cx.OnKeyWith("left", repeat, func() { step(-1) })
-		cx.OnKeyWith("up", repeat, func() { choose(min(core.Untracked(cx, selected)+1, n-1)) })
-		cx.OnKeyWith("down", repeat, func() { choose(max(core.Untracked(cx, selected)-1, 0)) })
-		cx.OnKey("home", func() { choose(0) })
-		cx.OnKey("end", func() { choose(n - 1) })
-		return nil
-	}}
 	names := make([]core.Node, n)
 	for i, o := range p.Levels {
 		align := core.TextAlignCenter
@@ -214,36 +185,23 @@ func (p EffortPicker) panel(cx *core.Scope, motion *chatEffortMotion, selected f
 	if !ui.Touch(cx) {
 		cx.Post(focus.Focus)
 	}
-	control := core.View{Ref: focus, Accessible: true, Role: core.RoleAdjustable, Label: p.Label, TestID: p.testID("-bar"),
-		AccessibilityValue: func() core.AccessibilityValue {
-			i := selected()
-			return core.AccessibilityValue{Min: 0, Max: float32(n - 1), Now: float32(i), Text: p.Levels[i].Label}
-		},
-		AccessibilityActions: []core.AccessibilityAction{{Name: core.ActionIncrement}, {Name: core.ActionDecrement}},
-		OnAccessibilityAction: func(name string) {
-			i := core.Untracked(cx, selected)
-			if name == core.ActionDecrement {
-				choose(max(i-1, 0))
-			} else {
-				choose(min(i+1, n-1))
-			}
-		},
-		OnLayout:     bar.Set,
-		OnFocus:      func() { focused.Set(true) },
-		OnBlur:       func() { focused.Set(false) },
-		OnPress:      func(core.PressEvent) {},
-		OnPressDown:  func(e core.PressEvent) { downX = e.Position.X; choose(at(downX)) },
+	number := func(v float64) func() float64 { return func() float64 { return v } }
+	full := core.Style{Width: core.Pct(100), Height: core.Pct(100)}
+	// The bar is the panel's shader: of the slider it takes the behavior,
+	// over the whole of the bar and the names, and the names as a mark.
+	slider := base.Slider{TestID: p.testID("-bar"), ThumbRef: focus, Label: p.Label, Min: number(0), Max: number(float64(n - 1)), Step: number(1),
+		Value:     func() base.SliderValue { return base.SingleValue(float64(selected())) },
+		OnChange:  func(v base.SliderValue) { choose(int(v.End)) },
+		ValueText: func(v float64) string { return p.Levels[int(v)].Label },
+		Style:     full, TrackStyle: full, IndicatorStyle: full,
+		ThumbStyle: core.Style{Width: core.Pt(1), Height: core.Pt(chatEffortBar)},
+		Marks: []core.Node{core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Direction: core.Row, JustifyContent: core.JustifySpaceBetween},
+			Children: names}}}
+	control := core.View{OnLayout: bar.Set,
 		OnMouseEnter: func(core.MouseEvent) { hovered.Set(true) },
 		OnMouseLeave: func(core.MouseEvent) { hovered.Set(false) },
-		OnPan: func(e core.PanEvent) {
-			if e.Phase == core.GestureChanged {
-				choose(at(downX + e.Translation.X))
-			}
-		},
-		PanActivation: core.PanActivation{ActiveOffsetX: 2, FailOffsetY: 12},
-		Style:         core.Style{Width: core.Pt(inner), Height: core.Pt(chatEffortBar + chatEffortNameGap + chatEffortName), CornerRadius: chatEffortBar / 2},
-		Children: []core.Node{keys, core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Direction: core.Row, JustifyContent: core.JustifySpaceBetween},
-			Children: names}}}
+		Style:        core.Style{Width: core.Pt(inner), Height: core.Pt(chatEffortBar + chatEffortNameGap + chatEffortName), CornerRadius: chatEffortBar / 2},
+		Children:     []core.Node{slider}}
 	label := ui.Text(p.Label, 12.5, ui.Regular, colors.Text)
 	label.MaxLines = 1
 	label.Style.FlexGrow, label.Style.FlexShrink, label.Style.MinWidth = 1, 1, core.Pt(0)

@@ -318,3 +318,22 @@ func TestSidebarShellRightPanel(t *testing.T) {
 		t.Fatal("the panel stayed after the slide")
 	}
 }
+
+// TestTabShellArrows moves between the tabs with the arrows, one Tab stop,
+// where the system's tab bar is not available.
+func TestTabShellArrows(t *testing.T) {
+	var at *core.Signal[int]
+	app, _ := start(t, desktopEnv, func(cx *core.Scope) core.Node {
+		at = core.NewSignal(cx, 0)
+		page := func(*core.Scope) core.Node { return core.View{} }
+		return TabShell{Tabs: []ShellTab{{Text: "One", Content: page}, {Text: "Two", Content: page}}, Selected: at.Get, OnChange: at.Set}
+	})
+	if !app.Find("role:tab One").Props.Focusable || app.Find("role:tab Two").Props.Focusable {
+		t.Fatal("the tab bar is not one stop of the focus")
+	}
+	app.Key("tab")
+	app.Key("right")
+	if at.Get() != 1 {
+		t.Fatalf("Right moved to tab %d", at.Get())
+	}
+}

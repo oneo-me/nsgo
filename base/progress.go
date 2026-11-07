@@ -25,9 +25,12 @@ type Progress struct {
 	IndicatorClass     string
 	IndicatorStyle     core.Style
 	IndicatorStyleFunc func() core.Style
-	Children           []core.Node
-	Label              string
-	TestID             string
+	// ValueText is what assistive technology reads as the value, the
+	// number when nil.
+	ValueText func(value float32) string
+	Children  []core.Node
+	Label     string
+	TestID    string
 	// OnLayout and Tooltip are its view's, as a core.View's.
 	OnLayout func(core.Bounds)
 	Tooltip  core.Node
@@ -66,7 +69,11 @@ func (p Progress) Render(*core.Scope) core.Node {
 			if is(p.Indeterminate) {
 				return core.AccessibilityValue{Min: 0, Max: progressMax, NoNow: true}
 			}
-			return core.AccessibilityValue{Min: 0, Max: progressMax, Now: value()}
+			v := core.AccessibilityValue{Min: 0, Max: progressMax, Now: value()}
+			if p.ValueText != nil {
+				v.Text = p.ValueText(v.Now)
+			}
+			return v
 		},
 		Children: append([]core.Node{core.View{Class: p.TrackClass, Style: p.TrackStyle, StyleFunc: p.TrackStyleFunc,
 			Children: []core.Node{indicator}}}, p.Children...)}

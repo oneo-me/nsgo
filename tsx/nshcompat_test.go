@@ -53,6 +53,23 @@ var compatDepartures = map[string]map[string]string{
 		"expect Read: rejected ERR_FEATURE_UNAVAILABLE_ON_PLATFORM":  "expect Read: ok [object Object]",
 		"expect Has: ok false": "expect Has: ok true",
 	},
+	"base/base-number-input": {
+		"frame parent:parent:text:Less 0 0 30 30":                      "frame parent:text:Less 0 0 30 30",
+		"style parent:parent:text:Less backgroundColor #ff0000ff":      "style parent:text:Less backgroundColor #ff0000ff",
+		"frame parent:parent:text:More 130 0 30 30":                    "frame parent:text:More 130 0 30 30",
+		"style parent:parent:text:More backgroundColor #00ff00ff":      "style parent:text:More backgroundColor #00ff00ff",
+		"frame id:weight-suffix 0 0 30 10":                             "frame id:weight-suffix 270 0 30 10",
+		"frame parent:parent:text:Up 0 0 30 15":                        "frame parent:text:Up 0 0 30 15",
+		"frame parent:parent:text:Down 0 15 30 15":                     "frame parent:text:Down 0 15 30 15",
+		"style parent:parent:parent:text:Up backgroundColor #0000ffff": "style parent:parent:text:Up backgroundColor #0000ffff",
+		`frame parent:parent:text:"Locked less" 0 0 20 30`:             `frame parent:text:"Locked less" 0 0 20 30`,
+		`frame parent:parent:text:"Locked more" 120 0 20 30`:           `frame parent:text:"Locked more" 120 0 20 30`,
+	},
+	// A multiline Input's bar needs its text's scroll offset, which no
+	// backend reports yet (docs/roadmap.md, "Bars in multiline inputs").
+	"base/base-scrollbar": {
+		"frame label:Notes 290 0 10 100": "",
+	},
 	"base/base-resizable": {
 		"frame label:Resize 146 0 9 100": "frame label:Resize 149 0 3 100",
 		"frame label:Resize 176 0 9 100": "frame label:Resize 179 0 3 100",

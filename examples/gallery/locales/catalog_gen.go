@@ -2100,6 +2100,16 @@ type Translation struct {
 	CollapsingEntry                              func(n string) string
 	CollapsingMinutes                            func(count int) string
 	LibBold                                      func() string
+	LibItalic                                    func() string
+	LibFormatting                                func() string
+	LibHistory                                   func() string
+	LibUndo                                      func() string
+	LibRedo                                      func() string
+	LibReadDocs                                  func() string
+	LibPages                                     func() string
+	LibPreviousPage                              func() string
+	LibNextPage                                  func() string
+	LibOneTimeCode                               func() string
 	LibStarred                                   func() string
 	LibHold                                      func() string
 	LibHoldToDelete                              func() string
@@ -3934,6 +3944,16 @@ const (
 	textViewerClose
 	textToastClose
 	textLibBold
+	textLibItalic
+	textLibFormatting
+	textLibHistory
+	textLibUndo
+	textLibRedo
+	textLibReadDocs
+	textLibPages
+	textLibPreviousPage
+	textLibNextPage
+	textLibOneTimeCode
 	textLibStarred
 	textLibHold
 	textLibHoldToDelete
@@ -5766,6 +5786,16 @@ var texts = map[string]*[numTexts]string{
 		"Close",
 		"Close",
 		"Bold",
+		"Italic",
+		"Formatting",
+		"History",
+		"Undo",
+		"Redo",
+		"Read the docs",
+		"Pages",
+		"Previous page",
+		"Next page",
+		"One-time code",
 		"Starred",
 		"Hold to confirm",
 		"Hold to delete",
@@ -7593,6 +7623,16 @@ var texts = map[string]*[numTexts]string{
 		"إغلاق",
 		"إغلاق",
 		"عريض",
+		"مائل",
+		"التنسيق",
+		"السجل",
+		"تراجع",
+		"إعادة",
+		"اقرأ المستندات",
+		"الصفحات",
+		"الصفحة السابقة",
+		"الصفحة التالية",
+		"رمز لمرة واحدة",
 		"مميّز بنجمة",
 		"اضغط مطوّلًا للتأكيد",
 		"اضغط مطوّلًا للحذف",
@@ -9420,6 +9460,16 @@ var texts = map[string]*[numTexts]string{
 		"关闭",
 		"关闭",
 		"粗体",
+		"斜体",
+		"格式",
+		"历史",
+		"撤销",
+		"重做",
+		"阅读文档",
+		"页面",
+		"上一页",
+		"下一页",
+		"验证码",
 		"已加星标",
 		"按住确认",
 		"按住删除",
@@ -11247,6 +11297,16 @@ var texts = map[string]*[numTexts]string{
 		"關閉",
 		"關閉",
 		"粗體",
+		"斜體",
+		"格式",
+		"歷史",
+		"復原",
+		"重做",
+		"閱讀文件",
+		"頁面",
+		"上一頁",
+		"下一頁",
+		"驗證碼",
 		"已加星號",
 		"按住確認",
 		"按住刪除",
@@ -16852,6 +16912,36 @@ func Supply(lang string, t Translation) {
 	}
 	if t.LibBold != nil {
 		st[textLibBold] = t.LibBold()
+	}
+	if t.LibItalic != nil {
+		st[textLibItalic] = t.LibItalic()
+	}
+	if t.LibFormatting != nil {
+		st[textLibFormatting] = t.LibFormatting()
+	}
+	if t.LibHistory != nil {
+		st[textLibHistory] = t.LibHistory()
+	}
+	if t.LibUndo != nil {
+		st[textLibUndo] = t.LibUndo()
+	}
+	if t.LibRedo != nil {
+		st[textLibRedo] = t.LibRedo()
+	}
+	if t.LibReadDocs != nil {
+		st[textLibReadDocs] = t.LibReadDocs()
+	}
+	if t.LibPages != nil {
+		st[textLibPages] = t.LibPages()
+	}
+	if t.LibPreviousPage != nil {
+		st[textLibPreviousPage] = t.LibPreviousPage()
+	}
+	if t.LibNextPage != nil {
+		st[textLibNextPage] = t.LibNextPage()
+	}
+	if t.LibOneTimeCode != nil {
+		st[textLibOneTimeCode] = t.LibOneTimeCode()
 	}
 	if t.LibStarred != nil {
 		st[textLibStarred] = t.LibStarred()
@@ -34907,6 +34997,86 @@ func LibBold(cx *core.Scope) string { return For(cx).LibBold() }
 // LibBold says "Bold"
 // in the language of msgs.
 func (msgs Messages) LibBold() string { return msgs.text(textLibBold) }
+
+// LibItalic says "Italic"
+// in the language the app shows under cx.
+func LibItalic(cx *core.Scope) string { return For(cx).LibItalic() }
+
+// LibItalic says "Italic"
+// in the language of msgs.
+func (msgs Messages) LibItalic() string { return msgs.text(textLibItalic) }
+
+// LibFormatting says "Formatting"
+// in the language the app shows under cx.
+func LibFormatting(cx *core.Scope) string { return For(cx).LibFormatting() }
+
+// LibFormatting says "Formatting"
+// in the language of msgs.
+func (msgs Messages) LibFormatting() string { return msgs.text(textLibFormatting) }
+
+// LibHistory says "History"
+// in the language the app shows under cx.
+func LibHistory(cx *core.Scope) string { return For(cx).LibHistory() }
+
+// LibHistory says "History"
+// in the language of msgs.
+func (msgs Messages) LibHistory() string { return msgs.text(textLibHistory) }
+
+// LibUndo says "Undo"
+// in the language the app shows under cx.
+func LibUndo(cx *core.Scope) string { return For(cx).LibUndo() }
+
+// LibUndo says "Undo"
+// in the language of msgs.
+func (msgs Messages) LibUndo() string { return msgs.text(textLibUndo) }
+
+// LibRedo says "Redo"
+// in the language the app shows under cx.
+func LibRedo(cx *core.Scope) string { return For(cx).LibRedo() }
+
+// LibRedo says "Redo"
+// in the language of msgs.
+func (msgs Messages) LibRedo() string { return msgs.text(textLibRedo) }
+
+// LibReadDocs says "Read the docs"
+// in the language the app shows under cx.
+func LibReadDocs(cx *core.Scope) string { return For(cx).LibReadDocs() }
+
+// LibReadDocs says "Read the docs"
+// in the language of msgs.
+func (msgs Messages) LibReadDocs() string { return msgs.text(textLibReadDocs) }
+
+// LibPages says "Pages"
+// in the language the app shows under cx.
+func LibPages(cx *core.Scope) string { return For(cx).LibPages() }
+
+// LibPages says "Pages"
+// in the language of msgs.
+func (msgs Messages) LibPages() string { return msgs.text(textLibPages) }
+
+// LibPreviousPage says "Previous page"
+// in the language the app shows under cx.
+func LibPreviousPage(cx *core.Scope) string { return For(cx).LibPreviousPage() }
+
+// LibPreviousPage says "Previous page"
+// in the language of msgs.
+func (msgs Messages) LibPreviousPage() string { return msgs.text(textLibPreviousPage) }
+
+// LibNextPage says "Next page"
+// in the language the app shows under cx.
+func LibNextPage(cx *core.Scope) string { return For(cx).LibNextPage() }
+
+// LibNextPage says "Next page"
+// in the language of msgs.
+func (msgs Messages) LibNextPage() string { return msgs.text(textLibNextPage) }
+
+// LibOneTimeCode says "One-time code"
+// in the language the app shows under cx.
+func LibOneTimeCode(cx *core.Scope) string { return For(cx).LibOneTimeCode() }
+
+// LibOneTimeCode says "One-time code"
+// in the language of msgs.
+func (msgs Messages) LibOneTimeCode() string { return msgs.text(textLibOneTimeCode) }
 
 // LibStarred says "Starred"
 // in the language the app shows under cx.

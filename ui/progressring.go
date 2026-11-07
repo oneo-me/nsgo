@@ -5,6 +5,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -68,14 +69,11 @@ func (p ProgressRing) Render(cx *core.Scope) core.Node {
 		}
 		d.BeginPath().Arc(x, y, r, start, start+sweep, false).SetStrokeColor(c.Accent).Stroke()
 	}
-	return core.View{TestID: p.TestID, Accessible: true, Role: core.RoleProgressBar, Label: p.Label,
-		AccessibilityValue: func() core.AccessibilityValue {
-			if is(p.Indeterminate) {
-				return core.AccessibilityValue{Min: 0, Max: 100, NoNow: true}
-			}
-			return core.AccessibilityValue{Min: 0, Max: 100, Now: value(), Text: fmt.Sprintf("%d%%", int(value()+0.5))}
-		},
-		Style: core.Style{Width: core.Pt(size), Height: core.Pt(size), FlexShrink: 0}.Merge(p.Style),
+	// The ring is drawn; base's bar is its semantics.
+	return base.Progress{TestID: p.TestID, Label: p.Label, Value: value, Indeterminate: p.Indeterminate,
+		ValueText:  func(v float32) string { return fmt.Sprintf("%d%%", int(v+0.5)) },
+		TrackStyle: core.Style{Display: core.DisplayNone},
+		Style:      core.Style{Width: core.Pt(size), Height: core.Pt(size), FlexShrink: 0}.Merge(p.Style),
 		StyleFunc: func() core.Style {
 			if !is(p.Indeterminate) {
 				return core.Style{}

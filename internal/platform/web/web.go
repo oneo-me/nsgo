@@ -1993,6 +1993,7 @@ var roles = map[driver.Role]string{
 	driver.RoleDialog:       "dialog",
 	driver.RoleAlert:        "alert",
 	driver.RoleAdjustable:   "slider",
+	driver.RoleSpinButton:   "spinbutton",
 	driver.RoleProgressBar:  "progressbar",
 	driver.RoleTable:        "table",
 	driver.RoleGrid:         "grid",
@@ -2069,6 +2070,11 @@ func setViewProps(v *view, p *driver.ViewProps) {
 		expanded = strconv.FormatBool(p.Expanded)
 	}
 	setAttr(el, "aria-expanded", expanded)
+	level := ""
+	if p.Level > 0 {
+		level = strconv.Itoa(p.Level)
+	}
+	setAttr(el, "aria-level", level)
 	var lo, hi, now string
 	if val := p.Value; val.IsRange() {
 		f := func(x float32) string { return strconv.FormatFloat(float64(x), 'g', -1, 32) }

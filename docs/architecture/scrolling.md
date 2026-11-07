@@ -37,6 +37,12 @@ A scroll view follows NSH's `scrolling-and-lists.md`: `ScrollBehavior` holds pag
 | Linux | The background alone, at 85% under soft bars, easing out as elsewhere, or at 95% under hard bars, as GTK draws nothing behind a widget |
 | Android | Nothing yet ([roadmap](../roadmap.md)) |
 
+### Bars of the app's
+
+`Scope.SetScrollbars` has a `ScrollbarMaker` draw the bar of every scroll view and list that shows its indicator, and `Scroll.Bar` and `List.Bar` one view's; `base.SetScrollbarTheme` and `base.ScrollbarTheme` are what apps use, TSX's `Scrollbar.setTheme` and `scrollbar={theme}`. As NSH's `core/scrollbars.rs`, the bar is a child of the view, last so it draws over the content and what comes later goes before it, in a host as large as the viewport pinned over it by a sticky range across all of the content, which the platforms apply on the main thread, so it never waits for a commit. The indicator goes while a bar stands in for it. The host stays once made, empty while nothing draws a bar; views that never have one pay nothing. A maker that returns nil, a theme with no look for the axis, keeps the platform's indicator.
+
+`Scope.WatchScroll` reports a scroll view's offset, viewport and content to a bar, or to anything else outside it, after each commit or event that moved them, from its first layout, naming it by a function that is read each commit, as a ref may be bound later in the same render.
+
 ### macOS scroll views
 
 macOS follows NSH's `scroll.rs` (`internal/platform/macos/scroll.go`, `wheel.go`); the rubber band, the indicator's geometry and fade, the trackpad's resampling and revealing are `internal/platform/scrollbar`'s.

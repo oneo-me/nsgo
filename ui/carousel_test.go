@@ -23,7 +23,7 @@ func TestCarousel(t *testing.T) {
 			}}
 		})
 		track := app.Find("carousel")
-		step := track.Scroll.Behavior.SnapToInterval
+		step := track.Scroll.Behavior.SnapToOffsets[1]
 		if step != 280+12 {
 			t.Fatalf("snaps every %v, want a slide of 280 and its gap", step)
 		}
@@ -40,10 +40,10 @@ func TestCarousel(t *testing.T) {
 		if index.GetUntracked() != 3 {
 			t.Fatalf("after scrolling to the end index = %d, want 3", index.GetUntracked())
 		}
-		if !app.Find("role:button Next").Props.Disabled || !app.Find("role:tab 4 / 4").Props.Selected {
+		if !app.Find("role:button Next").Props.Disabled || !app.Find("role:button 4 / 4").Props.Selected {
 			t.Fatal("the last slide leaves Next enabled or its indicator unselected")
 		}
-		app.Press("role:tab 1 / 4")
+		app.Press("role:button 1 / 4")
 		app.Advance(time.Second)
 		if index.GetUntracked() != 0 || app.Find("carousel").Offset.X != 0 {
 			t.Fatal("the first indicator did not bring the first slide back")

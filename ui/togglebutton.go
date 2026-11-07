@@ -8,8 +8,9 @@ import (
 // ToggleButton is Onevra's toggle button, 28 pt tall: a quiet bordered
 // face while off, filled with the accent while On, Text with an optional
 // leading Icon or the Icon alone. A press asks OnChange for the other
-// state; assistive technology hears it as a selected button. Label is
-// what it reads, Text when empty.
+// state; assistive technology hears a toggle button, and in a ToggleGroup
+// or a Toolbar it joins their stop of the keyboard focus. Label is what it
+// reads, Text when empty.
 type ToggleButton struct {
 	Text     string
 	Icon     func() *core.SVG
@@ -60,12 +61,7 @@ func (b ToggleButton) Render(cx *core.Scope) core.Node {
 		s.GroupStyle = &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 		return s
 	}
-	return base.Button{Label: label, TestID: b.TestID, Selected: b.On, Disabled: b.Disabled,
-		OnPress: func(core.PressEvent) {
-			if b.OnChange != nil {
-				b.OnChange(!is(b.On))
-			}
-		},
+	return base.Toggle{Label: label, TestID: b.TestID, Pressed: b.On, Disabled: b.Disabled, OnChange: b.OnChange,
 		Style:     core.Style{Group: "button", CornerRadius: RadiusControl, Disabled: Dimmed()},
 		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
 		Children:  []core.Node{core.View{StyleFunc: face, Children: children}}}

@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"slices"
+	"strconv"
+
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 )
@@ -13,7 +16,8 @@ type AccordionItem struct {
 	TestID   string
 }
 
-// Accordion is a card of Collapsibles divided by hairlines. The app keeps
+// Accordion is a card of sections divided by hairlines, on base.Accordion:
+// each title a heading over a button, each panel a region. The app keeps
 // which are open: one at a time, or any.
 type Accordion struct {
 	Items        []AccordionItem
@@ -26,23 +30,42 @@ type Accordion struct {
 // Render implements core.Node.
 func (a Accordion) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
+	open := func() []string {
+		var out []string
+		for i := range a.Items {
+			if a.Open != nil && a.Open(i) {
+				out = append(out, strconv.Itoa(i))
+			}
+		}
+		return out
+	}
+	// The app says what opens: the accordion reports each change as one,
+	// so every item is free to stay open.
+	change := func(next []string) {
+		now := core.Untracked(cx, open)
+		for i := range a.Items {
+			id := strconv.Itoa(i)
+			if was, is := slices.Contains(now, id), slices.Contains(next, id); was != is && a.OnOpenChange != nil {
+				a.OnOpenChange(i, is)
+			}
+		}
+	}
 	var sections []core.Node
 	for i, item := range a.Items {
 		c := Collapsible{Text: item.Text, Disabled: item.Disabled,
-			Open: func() bool { return a.Open != nil && a.Open(i) },
-			OnOpenChange: func(open bool) {
-				if a.OnOpenChange != nil {
-					a.OnOpenChange(i, open)
-				}
+			Open: func() bool { return a.Open != nil && a.Open(i) }}
+		section := base.AccordionItem{Value: strconv.Itoa(i), Disabled: item.Disabled, TestID: item.TestID,
+			Children: []core.Node{
+				base.AccordionHeader{Children: []core.Node{collapsibleTrigger(cx, c, core.Style{Padding: core.Symmetric(8, 14), CornerRadius: RadiusCard - 1}, true)}},
+				base.AccordionPanel{Label: item.Text, KeepMounted: func() bool { return true },
+					Children: []core.Node{core.View{Style: core.Style{Padding: core.Edges{Left: 14, Right: 14, Bottom: 14}}, Children: []core.Node{item.Content}}}},
 			}}
-		section := base.Collapsible{Open: c.Open, TestID: item.TestID,
-			Content:  core.View{Style: core.Style{Padding: core.Edges{Left: 14, Right: 14, Bottom: 14}}, Children: []core.Node{item.Content}},
-			Children: []core.Node{collapsibleTrigger(cx, c, core.Style{Padding: core.Symmetric(8, 14), CornerRadius: RadiusCard - 1})}}
 		if i > 0 {
 			section.Style = core.Style{Borders: core.Edges{Top: 1}}
 			section.StyleFunc = func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} }
 		}
 		sections = append(sections, section)
 	}
-	return core.View{TestID: a.TestID, StyleFunc: func() core.Style { return CardStyle(cx).Merge(a.Style) }, Children: sections}
+	return base.Accordion{Value: open, Multiple: func() bool { return true }, OnChange: change, TestID: a.TestID,
+		StyleFunc: func() core.Style { return CardStyle(cx).Merge(a.Style) }, Children: sections}
 }

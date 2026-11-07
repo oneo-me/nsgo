@@ -34,6 +34,7 @@ type a11y struct {
 	labelFunc  func() string
 	value      func() AccessibilityValue
 	expanded   func() bool
+	expandable func() bool
 	hidden     func() bool
 	actions    []AccessibilityAction
 	accessible bool
@@ -68,6 +69,9 @@ func (t *Tree) bindAccessibility(cx *Scope, n *node, a a11y) {
 	if a.expanded != nil {
 		p.Expandable = true
 		cx.renderEffect(func() {
+			if a.expandable != nil {
+				p.Expandable = a.expandable()
+			}
 			p.Expanded = a.expanded()
 			t.touch(n)
 			t.restyleExpanded(n)
@@ -88,6 +92,9 @@ func (t *Tree) bindAccessibility(cx *Scope, n *node, a a11y) {
 func (n *node) sentProps() driver.ViewProps {
 	p := n.props
 	p.Appearance = n.appearance
+	if n.input != nil && n.input.config.Disabled {
+		p.Disabled = true
+	}
 	if p.Accessible == AccessibleYes && p.Label == "" && n.text == nil {
 		var b strings.Builder
 		n.appendText(&b)

@@ -253,6 +253,7 @@ func listFace(p *props) core.Node {
 		NumColumns:               p.int("numColumns"),
 		Horizontal:               p.bool("horizontal"),
 		HideIndicator:            !p.boolOr("scrollbar", true),
+		Bar:                      r.scrollbarTheme(p.get("scrollbar")),
 		Inverted:                 p.bool("inverted"),
 		StickyHeaderIndicesFunc:  func() []int { return r.ints(p.get("stickyHeaderIndices")) },
 		InitialScrollIndex:       p.int("initialScrollIndex"),

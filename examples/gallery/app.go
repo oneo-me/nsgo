@@ -83,7 +83,7 @@ func init() {
 		{"Overlay", locales.Messages.DemoOverlay, locales.Messages.DemoOverlayDetail, lucide.Layers, eventsDemo(overlayCard)},
 	}
 	actions := []demo{
-		{"Buttons", locales.Messages.DemoButtons, locales.Messages.DemoButtonsDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, toggleButtonCard, holdPlayground, floatingBarCard)},
+		{"Buttons", locales.Messages.DemoButtons, locales.Messages.DemoButtonsDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, toggleButtonCard, toggleGroupCard, toolbarCard, linkCard, paginationCard, otpInputCard, holdPlayground, floatingBarCard)},
 	}
 	inputs := []demo{
 		{"Input", locales.Messages.DemoInput, locales.Messages.DemoInputDetail, lucide.TextCursorInput, formDemo},

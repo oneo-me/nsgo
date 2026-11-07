@@ -1,19 +1,19 @@
 package ui
 
 import (
-	"math"
 	"strconv"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Carousel is a row of Count slides that snaps one to the center, its
-// neighbors in view, smaller and dimmer: a swipe or a trackpad moves it,
-// and the arrows and the indicators below choose a slide. The app keeps
-// the centered slide's Index and sets it from OnChange, also as the user
-// scrolls; setting it glides the slides there. Every slide stays built,
-// so keep the set short.
+// Carousel is base.Carousel in Onevra's look, a row of Count slides that
+// snaps one to the center, its neighbors in view, smaller and dimmer: a
+// swipe or a trackpad moves it, and the arrows and the indicators below
+// choose a slide. The app keeps the centered slide's Index and sets it from
+// OnChange as the user's scroll rests; setting it glides the slides there.
+// Every slide stays built, so keep the set short.
 type Carousel struct {
 	Count int
 	Slide func(cx *core.Scope, i int) core.Node
@@ -39,15 +39,6 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 	animate := !ReduceMotion(cx)
 	width := core.NewSignal(cx, core.Points(0))
 	offset := core.NewAnimatedValue(cx, 0)
-	ref := &core.Ref{}
-	clampIndex := func(i int) int { return min(max(i, 0), max(n-1, 0)) }
-	index := func() int {
-		if c.Index == nil {
-			return 0
-		}
-		return clampIndex(c.Index())
-	}
-	shown := core.NewSignal(cx, core.Untracked(cx, index))
 	const gap = 12
 	slideWidth := func(w core.Points) core.Points {
 		most := c.SlideWidth
@@ -61,39 +52,15 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 	if label == nil {
 		label = func(i, count int) string { return strconv.Itoa(i+1) + " / " + strconv.Itoa(count) }
 	}
-	choose := func(i int) {
-		if i = clampIndex(i); c.OnChange != nil && i != core.Untracked(cx, index) {
-			c.OnChange(i)
+	index := func() int {
+		if c.Index == nil {
+			return 0
 		}
-	}
-	// The app's index scrolls the slides there unless the user's scroll
-	// is what set it; a new width centers it again at once.
-	var laidOut core.Points
-	cx.Effect(func() {
-		w, i := width.Get(), index()
-		if w == 0 {
-			return
-		}
-		resized := w != laidOut
-		laidOut = w
-		if resized || i != shown.GetUntracked() {
-			ref.ScrollTo(core.Point{X: core.Points(i) * step(w)}, animate && !resized)
-		}
-	})
-	onScroll := func(e core.ScrollEvent) {
-		w := width.GetUntracked()
-		if w == 0 {
-			return
-		}
-		i := clampIndex(int(math.Round(float64(e.Offset.X / step(w)))))
-		if i != shown.GetUntracked() {
-			shown.Set(i)
-			choose(i)
-		}
+		return c.Index()
 	}
 	var slides []core.Node
 	for i := range n {
-		slides = append(slides, core.View{Label: label(i, n), StyleFunc: func() core.Style {
+		slides = append(slides, base.CarouselItem{Label: label(i, n), Children: []core.Node{c.Slide(cx, i)}, StyleFunc: func() core.Style {
 			w := width.Get()
 			s := core.Style{Width: core.Pt(slideWidth(w)), FlexShrink: 0}
 			if w == 0 {
@@ -108,41 +75,38 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 					Extrapolate: core.ExtrapolateClamp}),
 			}
 			return s
-		}, Children: []core.Node{c.Slide(cx, i)}})
+		}})
 	}
-	track := core.Scroll{Horizontal: true, HideIndicator: true, Ref: ref, TestID: c.TestID, OffsetValues: core.AnimatedXY{X: offset},
-		BehaviorFunc: func() core.ScrollBehavior {
-			return core.ScrollBehavior{SnapToInterval: step(width.Get()), DecelerationRate: core.DecelerationFast,
-				DisableIntervalMomentum: true}
-		},
-		OnScroll: onScroll, OnMomentumEnd: onScroll, OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) },
-		Children: []core.Node{core.View{StyleFunc: func() core.Style {
+	track := base.CarouselContent{TestID: c.TestID, OffsetValues: core.AnimatedXY{X: offset}, OnLayout: func(b core.Bounds) { width.Set(b.Size.Width) },
+		Style: core.Style{AlignItems: core.AlignStretch, Gap: gap}, Children: slides,
+		StyleFunc: func() core.Style {
 			w := width.Get()
-			side := (w - slideWidth(w)) / 2
-			return core.Style{Direction: core.Row, AlignItems: core.AlignStretch, Gap: gap, Padding: core.Symmetric(0, max(side, 0))}
-		}, Children: slides}}}
+			return core.Style{Padding: core.Symmetric(0, max((w-slideWidth(w))/2, 0))}
+		}}
 	var dots []core.Node
 	for i := range n {
 		dot := core.Style{Height: core.Pt(6), Width: core.Pt(6), CornerRadius: RadiusFull}
 		if animate {
 			dot.Transition = quick
 		}
-		dots = append(dots, core.View{Role: core.RoleTab, Label: label(i, n), Selected: func() bool { return shown.Get() == i },
-			HitSlop: core.All(4), OnPress: func(core.PressEvent) { choose(i) }, Style: dot,
+		dots = append(dots, base.CarouselPaginationItem{Index: i, Label: label(i, n), HitSlop: core.All(4), Style: dot,
 			StyleFunc: func() core.Style {
 				return core.Style{Background: colors.Border(), Selected: &core.Style{Width: core.Pt(22), Background: colors.Accent()},
 					Focus: FocusRing(cx, 2)}
 			}})
 	}
-	arrow := func(icon func() *core.SVG, name string, by int) core.Node {
-		return IconButton{Icon: icon, Label: name, OnPress: func() { choose(core.Untracked(cx, index) + by) },
-			Disabled: func() bool { i := shown.Get() + by; return i < 0 || i >= n }}
+	arrow := func(icon func() *core.SVG) core.Node { return Icon(icon, iconSize, Inherited) }
+	face := core.Style{Width: core.Pt(ButtonHeight), Height: core.Pt(ButtonHeight), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
+		CornerRadius: RadiusControl, Transition: quick, Disabled: Dimmed()}
+	look := func() core.Style {
+		return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, 2)}
 	}
 	controls := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12},
 		Children: []core.Node{
-			arrow(lucide.ChevronLeft, c.PreviousLabel, -1),
-			core.View{Role: core.RoleTabList, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: dots},
-			arrow(lucide.ChevronRight, c.NextLabel, 1),
+			base.CarouselPrevious{Label: c.PreviousLabel, Style: face, StyleFunc: look, Children: []core.Node{arrow(lucide.ChevronLeft)}},
+			base.CarouselPagination{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: dots},
+			base.CarouselNext{Label: c.NextLabel, Style: face, StyleFunc: look, Children: []core.Node{arrow(lucide.ChevronRight)}},
 		}}
-	return core.View{Label: c.Label, Style: core.Style{Gap: 12}.Merge(c.Style), Children: []core.Node{track, controls}}
+	return base.Carousel{Index: func() int { return index() }, OnChange: c.OnChange, Label: c.Label, Style: core.Style{Gap: 12}.Merge(c.Style),
+		Children: []core.Node{track, controls}}
 }
