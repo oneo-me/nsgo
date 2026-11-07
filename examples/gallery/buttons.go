@@ -57,24 +57,14 @@ func iconButtonCard(last *core.Signal[string]) cardFunc {
 		size := core.NewSignal(cx, 32.0)
 		selected, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
 		return Playground{Title: "IconButton", UIOnly: true, Stage: func() core.Node {
-			return ui.IconButton{Icon: lucide.Star, Label: tr.LibStarred(), Size: core.Points(size.Get()), Selected: selected.Get, Disabled: disabled.Get, OnPress: pressed(cx, last, "IconButton")}
+			var buttons []core.Node
+			for _, v := range []ui.IconButtonVariant{ui.IconButtonPlain, ui.IconButtonPrimary, ui.IconButtonRaised} {
+				buttons = append(buttons, ui.IconButton{Icon: lucide.Star, Label: tr.LibStarred(), Variant: v, Size: core.Points(size.Get()), Selected: selected.Get, Disabled: disabled.Get, OnPress: pressed(cx, last, "IconButton")})
+			}
+			return stageRow(buttons...)
 		}, Knobs: []core.Node{
 			numberKnob("Size", size, 24, 56, 4), boolKnob("Selected", selected), boolKnob("Disabled", disabled),
 		}}
-	}
-}
-
-func roundButtonCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		size := core.NewSignal(cx, 32.0)
-		return Playground{Title: "RoundButton", UIOnly: true, Stage: func() core.Node {
-			s := core.Points(size.Get())
-			return stageRow(
-				ui.RoundButton{Icon: lucide.Plus, Label: tr.LibMore(), Size: s, Variant: ui.RoundButtonPrimary, OnPress: pressed(cx, last, "RoundButton")},
-				ui.RoundButton{Icon: lucide.Plus, Label: tr.LibMore(), Size: s, Variant: ui.RoundButtonRaised, OnPress: pressed(cx, last, "RoundButton")},
-			)
-		}, Knobs: []core.Node{numberKnob("Size", size, 24, 56, 4)}}
 	}
 }
 

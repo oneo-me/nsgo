@@ -61,7 +61,7 @@ Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffVie
 
 ### Variants and sizes
 
-Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws, the color it shows included: `BadgeVariant`, `ButtonVariant`, `HoldVariant`, `MenuItemVariant`, `MeterVariant`, `RoundButtonVariant`, `SpinnerVariant` and `TabsVariant`.
+Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws, the color it shows included: `BadgeVariant`, `ButtonVariant`, `HoldVariant`, `IconButtonVariant`, `MenuItemVariant`, `MeterVariant`, `SpinnerVariant` and `TabsVariant`.
 
 Most components have one size, so controls line up without an app choosing. `Button`, `Tabs` and `Switch` take `Size`, a `ui.Size` whose zero value is the default:
 
@@ -73,7 +73,7 @@ Most components have one size, so controls line up without an app choosing. `But
 
 A `Switch` has a track of its own: 30 × 16, 40 × 20 and 48 × 24 pt. `Size.Height` gives the height, for what lines up with a control.
 
-- `Size` is `core.Points` on `Avatar`, `AvatarGroup`, `IconButton`, `ProgressRing`, `RoundButton` and `Spinner`: each is one shape that lines up with what surrounds it at any scale. `Button.Side` is the same for a button of an icon alone, since `Menu` takes a `Button` as its trigger.
+- `Size` is `core.Points` on `Avatar`, `AvatarGroup`, `IconButton`, `ProgressRing` and `Spinner`: each is one shape that lines up with what surrounds it at any scale. `Button.Side` is the same for a button of an icon alone, since `Menu` takes a `Button` as its trigger.
 - A field that changes a component's form or behavior is neither: `Pagination.Compact` and `Stepper.Compact` choose what shows, `Tabs.Equal` how tabs share the width, and `Dialog.Bare` what the surface leaves to its content.
 
 ## Departures from NSH

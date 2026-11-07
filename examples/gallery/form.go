@@ -519,7 +519,7 @@ func messageBar(cx *core.Scope) base.NavPage {
 					return fin.Inset().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44),
 						Padding: core.Symmetric(0, 16), FontSize: 13, Color: colors.Text(), Background: colors.Inset(), BorderWidth: 1, BorderColor: colors.Border(), CornerRadius: 22})
 				}},
-			ui.RoundButton{Icon: lucide.ArrowUp, Label: tr.FormSend(), OnPress: send},
+			ui.IconButton{Variant: ui.IconButtonPrimary, Icon: lucide.ArrowUp, Label: tr.FormSend(), OnPress: send},
 		}},
 	}})
 }

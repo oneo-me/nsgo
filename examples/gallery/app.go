@@ -82,7 +82,7 @@ func init() {
 		{"Photos", m.DemoPhotos, m.DemoPhotosDetail, lucide.Images, photosDemo},
 	}
 	actions := []demo{
-		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, roundButtonCard, toggleButtonCard, toggleGroupCard, holdPlayground)},
+		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, toggleButtonCard, toggleGroupCard, holdPlayground)},
 		{"Link", m.DemoLink, m.DemoLinkDetail, lucide.Link, eventsDemo(linkCard)},
 		{"Toolbar", m.DemoToolbar, m.DemoToolbarDetail, lucide.PanelTop, eventsDemo(toolbarCard)},
 	}

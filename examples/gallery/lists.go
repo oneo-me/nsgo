@@ -345,7 +345,7 @@ func listChat(cx *core.Scope) core.Node {
 					return fin.Field().Over(core.Style{PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent(), FlexGrow: 1, FlexShrink: 1, Height: core.Pt(44), FontSize: 13,
 						Color: colors.Text(), Background: colors.Field(), BorderWidth: 1, BorderColor: colors.FieldBorder(), CornerRadius: 22, Padding: core.Symmetric(0, 16)})
 				}},
-			ui.RoundButton{Icon: lucide.ArrowUp, Label: tr.ListsSend(), OnPress: send},
+			ui.IconButton{Variant: ui.IconButtonPrimary, Icon: lucide.ArrowUp, Label: tr.ListsSend(), OnPress: send},
 		}},
 	}}
 }

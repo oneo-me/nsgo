@@ -51,6 +51,28 @@ func TestSizedControls(t *testing.T) {
 	})
 }
 
+// TestIconButtonVariants gives each look its default size.
+func TestIconButtonVariants(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return core.View{Children: []core.Node{
+				IconButton{Icon: lucide.Plus, Label: "Plain", TestID: "plain"},
+				IconButton{Variant: IconButtonPrimary, Icon: lucide.Plus, Label: "Primary", TestID: "primary"},
+				IconButton{Variant: IconButtonRaised, Icon: lucide.Plus, Label: "Raised", Size: 40, TestID: "raised"},
+			}}
+		})
+		if f := app.Find("plain").Frame.Size; f.Width != 28 {
+			t.Fatalf("plain = %v, want 28 points across", f)
+		}
+		if f := app.Find("primary").Children[0].Frame.Size; f.Width != 32 {
+			t.Fatalf("primary = %v, want 32 points across", f)
+		}
+		if f := app.Find("raised").Children[0].Frame.Size; f.Width != 40 {
+			t.Fatalf("raised = %v, want 40 points across", f)
+		}
+	})
+}
+
 // TestButtonSide lets a button of an icon alone line up with what is not a
 // control's height.
 func TestButtonSide(t *testing.T) {
