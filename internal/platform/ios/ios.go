@@ -119,9 +119,6 @@ type view struct {
 
 type surface struct {
 	batch uint64 // batches applied
-	// edgesDue are the scroll views whose bars get their edge
-	// interactions at the end of the batch.
-	edgesDue []*view
 	// perf measures the surface while its panel, hud, shows; perfOn says
 	// the app asked for them.
 	perf   *engine.PerfMonitor
@@ -1024,7 +1021,6 @@ func (s *surface) apply(b *driver.MountBatch) {
 			}
 		}
 	}
-	s.attachEdgeBars()
 	if root := s.views[b.Root]; root.native.Send(selSuperview) != s.native {
 		s.native.Send(selAddSubview, root.native)
 	}
@@ -1118,7 +1114,6 @@ func (s *surface) delete(v *view, kept bool) {
 		for i := range v.sc.edges {
 			if ev := &v.sc.edges[i]; ev.holder != 0 {
 				ev.paint.Release()
-				ev.mask.Send(selRelease)
 			}
 		}
 	}

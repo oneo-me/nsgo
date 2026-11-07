@@ -46,7 +46,16 @@ type IOSScreenProps struct {
 	// on it presses HeaderRight's first view that takes presses, so keep
 	// one there; it is what the other platforms show.
 	HeaderRightSystemItem HeaderSystemItem
+	// HeaderRightSymbols shows UIKit's own bar buttons, each on glass of
+	// its own, in place of HeaderRight's views, none while it returns none.
+	// A press on one presses that of HeaderRight's views that take presses,
+	// in order: keep one there for each.
+	HeaderRightSymbols func() []HeaderSymbol
 }
+
+// HeaderSymbol is a button of iOS's header: Name is its SF Symbol, and Label
+// what assistive technology reads.
+type HeaderSymbol struct{ Name, Label string }
 
 // AndroidModalProps are a Modal's props only Android has.
 type AndroidModalProps struct {

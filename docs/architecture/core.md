@@ -57,6 +57,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - A popped screen reports `OnDismiss` and stays hidden until the app removes it; the last screen never pops.
 - Where the environment has `HeaderHeight` (iOS, Android), screens get NSH's system header: the core pads the content below the bar and the status bar, sends `ItemScreen`, and lays `HeaderLeft`, `HeaderRight` and `HeaderTitle` out as roots the platform puts in the bar.
 - `Screen.IOS.HeaderRightSystemItem` with a `HeaderRight` asks iOS for UIKit's own bar button in its place, as NSH's `headerRightSystemItem`. iOS reports its press on `HeaderRight`'s first view that takes presses.
+- `Screen.IOS.HeaderRightSymbols` asks iOS for UIKit's own bar buttons by SF Symbol in `HeaderRight`'s place, each on glass of its own through a zero-width space between them; a press reaches the view of `HeaderRight` at its place among those that take presses, and none returned takes the item away.
 - `Header` is then mounted as a root of its own that the native header leaves unused (`ScreenConfig.Header`), as NSH makes it; elsewhere it is the screen's first child.
 - iOS gives each screen a `UINavigationBar` of its own with a back item, Android a `Toolbar`; their back buttons and iOS's leading-edge swipe send `EventBack` with the screen's ID.
 - iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view.

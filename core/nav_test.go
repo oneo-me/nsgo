@@ -408,3 +408,25 @@ func TestScreenHeaderClassAndAnimation(t *testing.T) {
 		t.Errorf("dark header %#x", c.Background)
 	}
 }
+
+// TestScreenHeaderSymbols sends the symbols over HeaderRight, and no right
+// view while there are none, as the system would draw its glass for it.
+func TestScreenHeaderSymbols(t *testing.T) {
+	right := View{OnPress: func(PressEvent) {}}
+	h := newPhone(t, phone, func(cx *Scope) Node {
+		return Stack{Style: Style{FlexGrow: 1}, Children: []Node{
+			Screen{Title: "Empty", TestID: "empty", HeaderRight: right,
+				IOS: IOSScreenProps{HeaderRightSymbols: func() []HeaderSymbol { return nil }}},
+			Screen{Title: "Task", TestID: "task", HeaderRight: right, IOS: IOSScreenProps{HeaderRightSymbols: func() []HeaderSymbol {
+				return []HeaderSymbol{{Name: "play", Label: "Run"}, {Name: "ellipsis", Label: "More"}}
+			}}},
+		}}
+	})
+	items := screenItems(h.commit())
+	if c := items[h.find("task").id]; c.RightSymbols != "play\tRun\nellipsis\tMore" || c.Right == 0 {
+		t.Errorf("symbols %q, right %v", c.RightSymbols, c.Right)
+	}
+	if c := items[h.find("empty").id]; c.RightSymbols != "" || c.Right != 0 {
+		t.Errorf("without symbols: %q, right %v", c.RightSymbols, c.Right)
+	}
+}

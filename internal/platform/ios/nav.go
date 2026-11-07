@@ -5,6 +5,7 @@ package ios
 import (
 	"math"
 	"slices"
+	"strings"
 	"structs"
 
 	"github.com/ebitengine/purego/objc"
@@ -41,6 +42,10 @@ type navBar struct {
 	// flash.
 	system     objc.ID
 	systemKind driver.HeaderSystemItem
+	// symbols are the UIKit bar buttons of RightSymbols, shownSymbols, made
+	// again only as they change.
+	symbols      objc.ID
+	shownSymbols string
 }
 
 // sheet is a modal presented as a UIKit sheet.
@@ -194,7 +199,11 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 	}
 	s.showLargeTitle(b)
 	b.item.Send(sel("setLeftBarButtonItem:"), s.barItem(c.Left))
-	b.item.Send(sel("setRightBarButtonItem:"), s.rightItem(v, c))
+	if c.RightSymbols != "" {
+		b.item.Send(sel("setRightBarButtonItems:"), s.symbolItems(v, c))
+	} else {
+		b.item.Send(sel("setRightBarButtonItem:"), s.rightItem(v, c))
+	}
 	b.item.Send(sel("setTitleView:"), s.headerWrap(c.TitleView))
 	if !b.itemsSet || old.CanGoBack != c.CanGoBack {
 		b.itemsSet = true
@@ -374,6 +383,37 @@ func (s *surface) rightItem(v *view, c *driver.ScreenConfig) objc.ID {
 	return b.system
 }
 
+// symbolItems returns UIKit's bar buttons of c's RightSymbols, the last in
+// the header first as UIKit takes them, each on glass of its own: a zero-width
+// space keeps the system from joining them.
+func (s *surface) symbolItems(v *view, c *driver.ScreenConfig) objc.ID {
+	b := v.bar
+	if b.symbols != 0 && b.shownSymbols == c.RightSymbols {
+		return b.symbols
+	}
+	if b.symbols != 0 {
+		b.symbols.Send(selRelease)
+	}
+	class := objc.ID(objc.GetClass("UIBarButtonItem"))
+	array := objc.ID(objc.GetClass("NSMutableArray")).Send(selNew)
+	lines := strings.Split(c.RightSymbols, "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		name, label, _ := strings.Cut(lines[i], "\t")
+		image := objc.ID(objc.GetClass("UIImage")).Send(sel("systemImageNamed:"), apple.NSString(name))
+		const plain = 0
+		item := class.Send(selAlloc).Send(sel("initWithImage:style:target:action:"), image, plain, v.native, selHeaderItem)
+		item.Send(sel("setTag:"), i)
+		item.Send(sel("setAccessibilityLabel:"), apple.NSString(label))
+		array.Send(sel("addObject:"), item)
+		item.Send(selRelease)
+		if i > 0 {
+			array.Send(sel("addObject:"), class.Send(sel("fixedSpaceItemOfWidth:"), 0.0))
+		}
+	}
+	b.symbols, b.shownSymbols = array, c.RightSymbols
+	return array
+}
+
 // systemItems are UIKit's UIBarButtonSystemItem of each header item.
 var systemItems = map[driver.HeaderSystemItem]int{
 	driver.HeaderItemDone: 0, driver.HeaderItemCancel: 1, driver.HeaderItemEdit: 2, driver.HeaderItemSave: 3,
@@ -381,9 +421,9 @@ var systemItems = map[driver.HeaderSystemItem]int{
 	driver.HeaderItemTrash: 16, driver.HeaderItemClose: 24,
 }
 
-// headerItemPressed presses the first view of the header's Right that
-// takes presses, as the system bar button stands for it.
-func headerItemPressed(self objc.ID, _ objc.SEL, _ objc.ID) {
+// headerItemPressed presses the view of the header's Right that takes
+// presses that the system bar button stands for, by its tag.
+func headerItemPressed(self objc.ID, _ objc.SEL, sender objc.ID) {
 	v := views[self]
 	if v == nil || v.bar == nil {
 		return
@@ -392,21 +432,26 @@ func headerItemPressed(self objc.ID, _ objc.SEL, _ objc.ID) {
 	if int(id) >= len(s.views) || s.views[id] == nil {
 		return
 	}
-	if p := firstPressable(s.views[id].native); p != nil {
+	skip := objc.Send[int](sender, sel("tag"))
+	if p := pressableAt(s.views[id].native, &skip); p != nil {
 		p.report(driver.Event{Kind: driver.EventPress, Index: -1})
 	}
 }
 
-// firstPressable returns the first view under native, depth first, that
-// takes presses.
-func firstPressable(native objc.ID) *view {
+// pressableAt returns the view under native, depth first, that takes presses
+// after *skip others.
+func pressableAt(native objc.ID, skip *int) *view {
 	subs := native.Send(sel("subviews"))
 	for i, n := 0, objc.Send[int](subs, sel("count")); i < n; i++ {
 		sub := subs.Send(sel("objectAtIndex:"), i)
 		if v := views[sub]; v != nil && v.events.Has(driver.EventPress) {
-			return v
+			if *skip == 0 {
+				return v
+			}
+			*skip--
+			continue
 		}
-		if v := firstPressable(sub); v != nil {
+		if v := pressableAt(sub, skip); v != nil {
 			return v
 		}
 	}

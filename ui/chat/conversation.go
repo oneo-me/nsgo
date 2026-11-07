@@ -11,11 +11,13 @@ import (
 const ContentWidth core.Points = 720
 
 // The composer card's height with one line of draft and no attachments,
-// until a glass composer measures it, and how far the edge's progressive
-// blur fades out beyond its bars.
+// until a glass composer measures it, how far the edge's progressive blur
+// fades out beyond its bars, and how far a floating composer stays off the
+// bottom edge.
 const (
 	chatRestingCard core.Points = 96
 	chatEdgeFade    core.Points = 24
+	chatFloatMargin core.Points = 8
 )
 
 // ConversationState is a transcript's scrolling and its composer's
@@ -43,6 +45,9 @@ func (s *ConversationState) JumpToLatest() {
 	s.following.Set(true)
 	s.scroll.ScrollToEnd(false)
 }
+
+// Scroll is the transcript's scroll view, for a bar over it (View.EdgeBar).
+func (s *ConversationState) Scroll() *core.Ref { return s.scroll }
 
 // ComposerHeight is the room the floating composer takes at the bottom,
 // for what the app overlays on an empty conversation.
@@ -155,7 +160,8 @@ func chatGlassEdge(cx *core.Scope, rim core.Color) core.Color {
 // FloatingConversation lets the transcript scroll behind the composer,
 // leaving trailing room so the latest turn stays clear of it. The
 // transcript blurs progressively from the bottom edge up to the middle of
-// the composer card at rest, without following the card as it grows. Give
+// the composer card at rest, or the whole card on iOS, where nothing else
+// covers the transcript behind it, without following the card as it grows. Give
 // its parent a bounded height; Composer typically builds a Composer
 // with Glass set. It manages no title bar: TopInset clears a bar the host
 // overlays, which the transcript scrolls under.
@@ -171,7 +177,6 @@ type FloatingConversation struct {
 // Render implements core.Node.
 func (v FloatingConversation) Render(cx *core.Scope) core.Node {
 	s := v.State
-	env := cx.Env()
 	inset := max(0, v.TopInset)
 	transparent := core.Style{Background: core.Transparent}
 	// Only the scroll view clips: the composer's glass and shadow reach past
@@ -179,7 +184,7 @@ func (v FloatingConversation) Render(cx *core.Scope) core.Node {
 	return core.View{TestID: v.TestID, Style: ui.FillRest, Children: []core.Node{
 		// A transparent background keeps the edge a bare blur: its usual tint
 		// would wash out the transcript.
-		core.Scroll{Ref: s.scroll, OnScroll: s.scrolled, EdgeEffects: core.EdgeEffects{Bottom: core.EdgeEffectSoft}, TestID: "chat-transcript",
+		core.Scroll{Ref: s.scroll, OnScroll: s.scrolled, EdgeEffects: core.EdgeEffects{Top: core.EdgeEffectSoft, Bottom: core.EdgeEffectSoft}, TestID: "chat-transcript",
 			Behavior: core.ScrollBehavior{KeyboardDismissMode: core.KeyboardDismissInteractive},
 			Style:    ui.FillRest.Merge(transparent), Children: []core.Node{
 				chatTranscript(s, core.Edges{Top: 22 + inset, Right: 20, Left: 20}, v.Children, func() core.Style {
@@ -190,7 +195,7 @@ func (v FloatingConversation) Render(cx *core.Scope) core.Node {
 		core.View{EdgeBar: core.EdgeBar{Scroll: s.scroll, Side: core.SideBottom}, PointerEvents: core.PointerEventsNone,
 			Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
 			StyleFunc: func() core.Style {
-				return core.Style{Height: core.Pt(max(0, 8+s.footer.Get()+s.card.Get()/2-chatEdgeFade))}
+				return core.Style{Height: core.Pt(floatingEdge(cx, s.footer.Get(), s.card.Get()))}
 			}},
 		core.Show{When: func() bool { return !s.AtLatest() }, Then: func(cx *core.Scope) core.Node {
 			return chatJumpButton(cx, s, v.JumpLabel, func() core.Points { return s.composer.Get() + 12 }, true)
@@ -198,14 +203,40 @@ func (v FloatingConversation) Render(cx *core.Scope) core.Node {
 		core.View{PointerEvents: core.PointerEventsBoxNone, OnLayout: func(b core.Bounds) { s.composer.Set(b.Size.Height) },
 			Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), AlignItems: core.AlignCenter},
 			StyleFunc: func() core.Style {
-				bottom := core.Points(8)
-				if env.KeyboardHeight() == 0 {
-					bottom += env.SafeArea().Bottom
-				}
-				return core.Style{Padding: core.Edges{Right: 20, Bottom: bottom, Left: 20}}
+				return core.Style{Padding: core.Edges{Right: 20, Bottom: FloatingMargin(cx, s.footer.Get()), Left: 20}}
 			},
 			Children: []core.Node{core.View{Style: core.Style{Width: core.Pct(100), MaxWidth: core.Pt(ContentWidth), MinWidth: core.Pt(0)}, Children: v.Composer}}},
 	}}
+}
+
+// FloatingMargin keeps a floating composer off the bottom edge: its footer,
+// footer points tall, may stand in the safe area, which holds nothing but
+// the home indicator, while the software keyboard hides it.
+func FloatingMargin(cx *core.Scope, footer core.Points) core.Points {
+	env := cx.Env()
+	if env.KeyboardHeight() > 0 {
+		return chatFloatMargin
+	}
+	return chatFloatMargin + max(0, env.SafeArea().Bottom-footer)
+}
+
+// floatingEdge is how far a floating composer's bottom edge blur reaches.
+func floatingEdge(cx *core.Scope, footer, card core.Points) core.Points {
+	reach := FloatingMargin(cx, footer) + footer
+	if cx.Env().OS() == core.OSIOS {
+		return reach + card
+	}
+	return max(0, reach+card/2-chatEdgeFade)
+}
+
+// FloatingEdgeBar blurs scroll, a view that scrolls under a resting floating
+// composer with a footer, as FloatingConversation blurs its transcript.
+func FloatingEdgeBar(cx *core.Scope, scroll *core.Ref) core.Node {
+	return core.View{EdgeBar: core.EdgeBar{Scroll: scroll, Side: core.SideBottom}, PointerEvents: core.PointerEventsNone,
+		Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
+		StyleFunc: func() core.Style {
+			return core.Style{Height: core.Pt(floatingEdge(cx, FooterHeight, chatRestingCard))}
+		}}
 }
 
 // GlassPanel is a compact card on the composer's glass, for status the

@@ -8,21 +8,18 @@ import (
 
 var selSetHidden = sel("setHidden:")
 
-// ScrollEdge is what macOS, and iOS before 26, draw of a scroll edge
-// effect over their blur, alike: the tint of the background the content
-// scrolls over, a hard edge's hairline and, for iOS, the mask that fades
-// a soft edge's blur in toward the side. Its layers are in the band's own
-// space; the platform puts them over its blur.
+// ScrollEdge is what macOS and iOS draw of a scroll edge effect over their
+// blur, alike: the tint of the background the content scrolls over and a
+// hard edge's hairline. Its layers are in the band's own space; the platform
+// puts them over its blur.
 type ScrollEdge struct {
-	Mask, Tint, Line objc.ID
+	Tint, Line objc.ID
 }
 
 // Paint lays the layers out for edge e at side s, in a band of w by h
-// points, y growing down. A hard edge's blur has no mask: it reports
-// whether the blur takes Mask.
-func (p *ScrollEdge) Paint(e *driver.ScrollEdge, s driver.Side, w, h float64) (masked bool) {
-	if p.Mask == 0 {
-		p.Mask = objc.ID(objc.GetClass("CAGradientLayer")).Send(selNew)
+// points, y growing down.
+func (p *ScrollEdge) Paint(e *driver.ScrollEdge, s driver.Side, w, h float64) {
+	if p.Tint == 0 {
 		p.Tint = objc.ID(objc.GetClass("CAGradientLayer")).Send(selNew)
 		p.Line = objc.ID(objc.GetClass("CALayer")).Send(selNew)
 	}
@@ -33,7 +30,6 @@ func (p *ScrollEdge) Paint(e *driver.ScrollEdge, s driver.Side, w, h float64) (m
 	}
 	soft := e.Drawn() == driver.EdgeEffectSoft
 	if soft {
-		gradient(p.Mask, driver.GradientStop{Color: driver.RGB(0)}, driver.GradientStop{Color: driver.RGBA(0, 0), Offset: 1})
 		gradient(p.Tint, e.SoftTint(driver.EdgeTint)...)
 	} else {
 		tint := e.Tint.Faded(driver.EdgeTint)
@@ -46,18 +42,59 @@ func (p *ScrollEdge) Paint(e *driver.ScrollEdge, s driver.Side, w, h float64) (m
 	p.Line.Send(selSetBackgroundColor, c)
 	Release(c)
 	p.Line.Send(selSetHidden, soft)
-	return soft
 }
 
 // Release releases the layers.
 func (p *ScrollEdge) Release() {
-	for _, l := range []*objc.ID{&p.Mask, &p.Tint, &p.Line} {
+	for _, l := range []*objc.ID{&p.Tint, &p.Line} {
 		if *l != 0 {
 			l.Send(selRemoveFromSuper)
 			l.Send(selRelease)
 			*l = 0
 		}
 	}
+}
+
+// variableBlurSpread is how much wider Core Animation's variable blur
+// spreads than its Gaussian blur, whose radius is the standard deviation,
+// of the same radius: measured on macOS 27.
+const variableBlurSpread = 2
+
+// EdgeBlur returns a CABackdropLayer's filters for effect d at side s: a blur
+// growing toward a soft side, or an even one.
+func EdgeBlur(s driver.Side, d driver.EdgeEffect) objc.ID {
+	number := func(f float64) objc.ID {
+		return objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithDouble:"), f)
+	}
+	filter := objc.ID(objc.GetClass("CAFilter"))
+	set := func(f objc.ID, key string, value objc.ID) {
+		f.Send(sel("setValue:forKey:"), value, NSString(key))
+	}
+	var f objc.ID
+	if d == driver.EdgeEffectSoft {
+		f = filter.Send(sel("filterWithType:"), NSString("variableBlur"))
+		set(f, "inputRadius", number(float64(driver.SoftEdgeBlur/variableBlurSpread)))
+		set(f, "inputMaskImage", fadeImage(s))
+	} else {
+		f = filter.Send(sel("filterWithType:"), NSString("gaussianBlur"))
+		set(f, "inputRadius", number(float64(driver.HardEdgeBlur)))
+	}
+	// What is past the band's edges blurs in as if it went on, as
+	// AppKit's edges have it, rather than as clear.
+	set(f, "inputNormalizeEdges", objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), true))
+	return objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), f)
+}
+
+// fadeImages are the soft edges' masks, by side, made on first use.
+var fadeImages [4]objc.ID
+
+// fadeImage returns the soft edge's mask at side s, which the variable
+// blur stretches over the band.
+func fadeImage(s driver.Side) objc.ID {
+	if fadeImages[s] == 0 {
+		fadeImages[s] = objc.ID(FadeImage(s))
+	}
+	return fadeImages[s]
 }
 
 // FadeImage returns a new CGImage of a soft edge's fade at side s, 64

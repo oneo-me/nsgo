@@ -22,11 +22,6 @@ import (
 
 const viewAbove = 1 // NSWindowAbove
 
-// variableBlurSpread is how much wider Core Animation's variable blur
-// spreads than its Gaussian blur, whose radius is the standard deviation,
-// of the same radius: measured on macOS 27.
-const variableBlurSpread = 2
-
 // edgeView is one side's effect: a holder the mouse goes through, whose
 // layer holds the backdrop and, over it, the tint and hairline.
 type edgeView struct {
@@ -64,7 +59,7 @@ func (v *view) placeEdges() {
 			ev.holder.Send(selSetFrame, apple.Rect(float64(r.Origin.X), float64(r.Origin.Y), w, h))
 			ev.backdrop.Send(selSetFrame, apple.Rect(0, 0, w, h))
 			if d := e.Drawn(); d != ev.blur {
-				ev.backdrop.Send(sel("setFilters:"), edgeBlur(driver.Side(side), d))
+				ev.backdrop.Send(sel("setFilters:"), apple.EdgeBlur(driver.Side(side), d))
 				ev.blur = d
 			}
 			fresh := ev.paint.Tint == 0
@@ -83,38 +78,4 @@ func (ev *edgeView) release() {
 	ev.paint.Release()
 	ev.holder.Send(sel("removeFromSuperview"))
 	*ev = edgeView{}
-}
-
-// edgeBlur returns the backdrop's filters for effect d at side s: a blur
-// growing toward a soft side, or an even one.
-func edgeBlur(s driver.Side, d driver.EdgeEffect) objc.ID {
-	filter := objc.ID(objc.GetClass("CAFilter"))
-	set := func(f objc.ID, key string, value objc.ID) {
-		f.Send(sel("setValue:forKey:"), value, apple.NSString(key))
-	}
-	var f objc.ID
-	if d == driver.EdgeEffectSoft {
-		f = filter.Send(sel("filterWithType:"), apple.NSString("variableBlur"))
-		set(f, "inputRadius", nsNumber(float64(driver.SoftEdgeBlur/variableBlurSpread)))
-		set(f, "inputMaskImage", fadeImage(s))
-	} else {
-		f = filter.Send(sel("filterWithType:"), apple.NSString("gaussianBlur"))
-		set(f, "inputRadius", nsNumber(float64(driver.HardEdgeBlur)))
-	}
-	// What is past the band's edges blurs in as if it went on, as
-	// AppKit's edges have it, rather than as clear.
-	set(f, "inputNormalizeEdges", objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), true))
-	return objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), f)
-}
-
-// fadeImages are the soft edges' masks, by side, made on first use.
-var fadeImages [4]objc.ID
-
-// fadeImage returns the soft edge's mask at side s, which the variable
-// blur stretches over the band.
-func fadeImage(s driver.Side) objc.ID {
-	if fadeImages[s] == 0 {
-		fadeImages[s] = objc.ID(apple.FadeImage(s))
-	}
-	return fadeImages[s]
 }

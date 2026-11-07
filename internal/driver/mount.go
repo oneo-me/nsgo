@@ -544,6 +544,10 @@ type ScreenConfig struct {
 	// in Right's place; a press on it presses Right's first view that
 	// takes presses.
 	RightSystemItem HeaderSystemItem
+	// RightSymbols, with a Right view, are the UIKit buttons iOS shows in
+	// its place, a line each of an SF Symbol's name, a tab and its label. A
+	// press on one presses that of Right's views that take presses.
+	RightSymbols string
 	// HeaderHeight is the area the header covers from the screen's top:
 	// the bar and the part of the status bar the screen reaches under.
 	HeaderHeight Points

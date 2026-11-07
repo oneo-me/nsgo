@@ -6,23 +6,19 @@ import "github.com/oneo-me/nsgo/internal/driver"
 // bars (View.EdgeBar), apart from the content scrolling under them, as
 // iOS 26's scroll edge effects do: Scroll.EdgeEffects.
 //
-// iOS 26 and later draw their own (UIScrollEdgeEffect), shaped under the
-// bars. Elsewhere a soft edge blurs the content more toward the side, as
-// far as the bars reach and a little past them, and fades it into the
-// background it scrolls over; a hard edge frosts it evenly under the bars,
-// with a hairline along them. Windows, Android and the web blur by a
-// radius that grows toward the side; iOS before 26 and macOS by their
-// system blur, fading in toward the side. Linux only fades the content
-// into the background.
+// A soft edge blurs the content more toward the side, as far as the bars
+// reach and a little past them, and fades it into the background it
+// scrolls over; a hard edge frosts it evenly under the bars, with a
+// hairline along them. All but Linux blur by a radius that grows toward
+// the side; Linux only fades the content into the background.
 type EdgeEffect = driver.EdgeEffect
 
 const (
-	// EdgeEffectAutomatic is soft under the bars, and iOS 26's own under
-	// its system bars.
+	// EdgeEffectAutomatic is soft under the bars.
 	EdgeEffectAutomatic = driver.EdgeEffectAutomatic
 	EdgeEffectSoft      = driver.EdgeEffectSoft
 	EdgeEffectHard      = driver.EdgeEffectHard
-	// EdgeEffectHidden draws none, under iOS's system bars too.
+	// EdgeEffectHidden draws none.
 	EdgeEffectHidden = driver.EdgeEffectHidden
 )
 
@@ -34,8 +30,7 @@ type EdgeEffects struct {
 // EdgeBar makes a view a bar over a side of the scroll view Scroll refers
 // to, which content scrolls under: a header or a toolbar placed over it.
 // The scroll view's edge effect at that side reaches as far as its bars
-// do, and iOS 26 shapes it under what they show
-// (UIScrollEdgeElementContainerInteraction):
+// do:
 //
 //	scroll := &core.Ref{}
 //	core.View{Children: []core.Node{

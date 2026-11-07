@@ -25,10 +25,8 @@ import (
 
 // scrollState is what a scroll view keeps beside its UIScrollView.
 type scrollState struct {
-	// edges are its sides' effects before iOS 26, and bars the
-	// interactions of the views over its sides from iOS 26.
+	// edges are its sides' effects.
 	edges   [4]edgeView
-	bars    [4]map[driver.NodeID]edgeBar
 	config  driver.ScrollConfig
 	content driver.Size // unzoomed
 	zoom    objc.ID     // the zoom view, while it zooms

@@ -1,6 +1,10 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import (
+	"strings"
+
+	"github.com/oneo-me/nsgo/internal/driver"
+)
 
 // A stack shows its last screen that has not been popped. Back pops the
 // top screen: it reports OnDismiss and stays hidden until the app removes
@@ -26,9 +30,10 @@ type screenNode struct {
 	native            bool
 	title             string
 	headerStyle       Style
-	headerClass       Style // HeaderClass's, under headerStyle
-	left, right, view *node // the header views
-	bar               *node // Header, unused under a native header
+	headerClass       Style  // HeaderClass's, under headerStyle
+	symbols           string // HeaderRightSymbols's, as ScreenConfig has them
+	left, right, view *node  // the header views
+	bar               *node  // Header, unused under a native header
 	// header is the area the system header covers from the top; pad what
 	// the content is laid out below.
 	header, pad Points
@@ -94,6 +99,16 @@ func (t *Tree) mountScreen(cx *Scope, parent *node, s Screen) {
 	if s.HeaderStyleFunc != nil {
 		cx.renderEffect(func() {
 			sn.headerStyle = s.HeaderStyle.Merge(s.HeaderStyleFunc())
+			t.touch(n)
+		})
+	}
+	if f := s.IOS.HeaderRightSymbols; f != nil {
+		cx.renderEffect(func() {
+			var lines []string
+			for _, b := range f() {
+				lines = append(lines, b.Name+"\t"+b.Label)
+			}
+			sn.symbols = strings.Join(lines, "\n")
 			t.touch(n)
 		})
 	}
@@ -304,6 +319,10 @@ func (t *Tree) screenConfig(n *node) driver.ScreenConfig {
 	}
 	if c.Right != 0 {
 		c.RightSystemItem = s.IOS.HeaderRightSystemItem
+		c.RightSymbols = sn.symbols
+		if sn.symbols == "" && s.IOS.HeaderRightSymbols != nil {
+			c.Right = 0
+		}
 	}
 	if sn.stack != nil {
 		var below *node

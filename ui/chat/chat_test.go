@@ -168,3 +168,18 @@ func TestPickerLeavesNoFill(t *testing.T) {
 		t.Fatalf("background after closing = %x, want %x", got, rest)
 	}
 }
+
+// TestFloatingMargin lets a footer stand in the safe area, and the keyboard
+// replace the safe area.
+func TestFloatingMargin(t *testing.T) {
+	e := phoneEnv
+	e.SafeArea = core.Edges{Bottom: 34}
+	var withFooter, without core.Points
+	start(t, e, func(cx *core.Scope) core.Node {
+		withFooter, without = FloatingMargin(cx, FooterHeight), FloatingMargin(cx, 0)
+		return core.View{}
+	})
+	if withFooter != 14 || without != 42 {
+		t.Fatalf("margins %v and %v", withFooter, without)
+	}
+}

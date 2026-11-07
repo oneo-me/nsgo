@@ -153,7 +153,7 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 			}
 		}
 		if m.Footer != nil {
-			m.State.footer.Set(28)
+			m.State.footer.Set(FooterHeight)
 		} else {
 			m.State.footer.Set(0)
 		}
@@ -165,11 +165,14 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 	}
 	children := []core.Node{card}
 	if m.Footer != nil {
-		children = append(children, core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Height: core.Pt(28), Padding: core.Edges{Top: 4, Right: 10, Left: 10}, AlignItems: core.AlignCenter, Gap: 2},
+		children = append(children, core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Height: core.Pt(FooterHeight), Padding: core.Edges{Top: 4, Right: 10, Left: 10}, AlignItems: core.AlignCenter, Gap: 2},
 			Children: []core.Node{core.Func(m.Footer)}})
 	}
 	return core.View{TestID: m.TestID, Style: core.Style{MinWidth: core.Pt(0), FlexShrink: 0}, Children: children}
 }
+
+// FooterHeight is the height of a composer's Footer.
+const FooterHeight core.Points = 28
 
 // chatEditorLine is a line of the composer's editor.
 const chatEditorLine core.Points = 20

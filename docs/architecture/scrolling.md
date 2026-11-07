@@ -30,9 +30,8 @@ A scroll view follows NSH's `scrolling-and-lists.md`: `ScrollBehavior` holds pag
 
 | Target | Draws |
 | --- | --- |
-| iOS 26 and later | `UIScrollEdgeEffect`'s soft, hard or automatic style, or hidden, per side. Each bar gets a `UIScrollEdgeElementContainerInteraction` and an empty `UILabel` filling it, since UIKit shapes the effect by the labels and images it finds, and NSGo's views draw into layers |
 | macOS | A `CABackdropLayer` over the content, under the scroll bar, as AppKit's own pockets (`NSScrollPocket`) draw: soft, Core Animation's `variableBlur`, whose radius follows a mask image's alpha from the side to nothing at the band's end (its radius spreads twice a Gaussian's, so it takes half the blur); hard, an even `gaussianBlur`. The tint and hairline are layers over it. Both classes are private, as `NSVisualEffectView` cannot vary its blur, and AppKit's own edge effect reaches only `NSScrollView`s under a title bar's accessories |
-| iOS before 26 | A system blur (`UIVisualEffectView`) over the content that follows the offset inside the scroll view, fading in toward a soft side through a mask view, with the tint and hairline as layers |
+| iOS | As macOS, in a holder over the content that follows the offset inside the scroll view. `UIScrollEdgeEffect` stays hidden: its reach does not follow the bars, nor a screen's own `UINavigationBar`, so it stops short of a tall bar's end |
 | Web | Bands that stick over the content (`position: sticky`, from the top left, as the content beside them is absolutely placed), stacking `backdrop-filter` blurs whose radii double toward the side, each fading in through `mask-image` |
 | Windows | Over the children, from one copy of the target: each level blurred by its whole blur through Direct2D's Gaussian blur and faded in by a gradient opacity brush |
 | Linux | The background alone, at 85% under soft bars, easing out as elsewhere, or at 95% under hard bars, as GTK draws nothing behind a widget |
