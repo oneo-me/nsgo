@@ -90,6 +90,13 @@ func TestThemes(t *testing.T) {
 		t.Fatalf("Warm Dusk accents = %v, %v", d.Light.Accent, d.Dark.Accent)
 	}
 	for _, theme := range []*core.Theme{th, WarmDuskTheme()} {
+		for _, p := range []core.Palette{theme.Light, theme.Dark} {
+			for _, edge := range []core.Color{p.Border, p.Colors["fieldBorder"], p.Colors["line"]} {
+				if _, _, _, a := edge.Components(); a >= 1 || Alpha(edge, 1) != Alpha(p.Text, 1) {
+					t.Fatalf("edge %v is not a translucent %v", edge, p.Text)
+				}
+			}
+		}
 		var menu, pill Finish
 		start(t, desktopEnv, func(cx *core.Scope) core.Node {
 			cx.SetTheme(theme)
@@ -98,7 +105,7 @@ func TestThemes(t *testing.T) {
 				return core.Style{}
 			}}
 		})
-		if menu.Background != Alpha(theme.Light.Background, 0.92) || menu.Border != theme.Light.Border || pill.Background != theme.Light.Colors["raised"] {
+		if menu.Background != Alpha(theme.Light.Background, 0.92) || menu.Border != Mix(theme.Light.Border, theme.Light.Text, 0.125) || pill.Background != theme.Light.Colors["raised"] {
 			t.Fatalf("finishes %v, %v do not follow the theme", menu, pill)
 		}
 	}

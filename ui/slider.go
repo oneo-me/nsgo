@@ -124,7 +124,7 @@ func (s Slider) Render(cx *core.Scope) core.Node {
 		ThumbStyle: core.Style{Width: core.Pt(sliderKnobW), Height: core.Pt(sliderKnobH), CornerRadius: sliderKnobH / 2,
 			Transition: core.Transition{Duration: quick.Duration, Easing: core.EaseOut, Properties: core.TransitionTransform}},
 		ThumbStyleFunc: func() core.Style {
-			return FinOf(cx).Knob().Over(core.Style{Background: colors.Knob(), BorderWidth: 1, BorderColor: Alpha(colors.Text(), 0.08), Focus: FocusRing(cx, 2),
+			return FinOf(cx).Knob().Over(core.Style{Background: colors.Knob(), BorderWidth: 1, BorderColor: colors.Border(), Focus: FocusRing(cx, 2),
 				Active: &core.Style{Transform: core.Transform{Scale: 1.3, TranslateXPercent: -50, TranslateYPercent: -50}, Shadows: []core.BoxShadow{Shadow(0, 6, 14, -3, Black(0.18))}}})
 		}}
 }

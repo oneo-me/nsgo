@@ -114,20 +114,20 @@ func Fixed(c core.Color) func() core.Color { return func() core.Color { return c
 // Theme returns ui's default theme: neutral grays and a blue accent
 // (core.DefaultTheme), with the roles ui adds in Palette.Colors, each
 // derived from Onevra's as its components derive theirs: insets and
-// tracks recess with the text's color, fields and hairlines take the
-// border, Light is the inverse of the page. WarmDuskTheme is the other
-// built-in theme.
+// tracks recess with the text's color, fields take the border, hairlines
+// a fainter text color, Light is the inverse of the page. WarmDuskTheme
+// is the other built-in theme.
 func Theme() *core.Theme {
 	t := core.DefaultTheme()
 	t.Light.Colors = map[string]core.Color{
-		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xfefefe), "field": core.RGB(0xfdfdfd), "fieldBorder": core.RGB(0xdddddd),
-		"line": core.RGB(0xe5e5e5), "faint": core.RGB(0x9e9e9e), "accentFill": core.RGB(0x007aff),
+		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xfefefe), "field": core.RGB(0xfdfdfd), "fieldBorder": t.Light.Border,
+		"line": t.Light.Text.Faded(0.12), "faint": core.RGB(0x9e9e9e), "accentFill": core.RGB(0x007aff),
 		"light": core.RGB(0x333333), "onLight": core.RGB(0xfbfbfb), "track": core.RGB(0xc3c3c3), "knob": core.RGB(0xffffff),
 		"code": core.RGB(0x373737), "info": core.RGB(0x0891b2), "down": core.RGB(0xb4444c),
 	}
 	t.Dark.Colors = map[string]core.Color{
-		"inset": core.RGB(0x282828), "raised": core.RGB(0x333333), "field": core.RGB(0x242424), "fieldBorder": core.RGB(0x4c4c4c),
-		"line": core.RGB(0x393939), "faint": core.RGB(0x7f7f7f), "accentFill": core.RGB(0x0a84ff),
+		"inset": core.RGB(0x282828), "raised": core.RGB(0x333333), "field": core.RGB(0x242424), "fieldBorder": t.Dark.Border,
+		"line": t.Dark.Text.Faded(0.10), "faint": core.RGB(0x7f7f7f), "accentFill": core.RGB(0x0a84ff),
 		"light": core.RGB(0xeaeaea), "onLight": core.RGB(0x1f1f1f), "track": core.RGB(0x646464), "knob": core.RGB(0xf5f5f5),
 		"code": core.RGB(0xdddddd), "info": core.RGB(0x64d2ff), "down": core.RGB(0xe58f95),
 	}
@@ -204,10 +204,14 @@ func (f Fins) Glass() Finish { return f.floating(f.shown().glass) }
 // reading.
 func (f Fins) Menu() Finish { return f.floating(f.shown().menu) }
 
-// floating is fin over the page's color, rimmed with the border's.
+// floating is fin over the page's color, rimmed with the border's; in
+// light a stronger one, which stays darker than a dimmed page behind it.
 func (f Fins) floating(fin Finish) Finish {
 	p := f.cx.Palette()
 	fin.Background, fin.Border = Alpha(p.Background, 0.92), p.Border
+	if !f.cx.Dark() {
+		fin.Border = Mix(p.Border, p.Text, 0.125)
+	}
 	return fin
 }
 

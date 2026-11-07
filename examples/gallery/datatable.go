@@ -216,7 +216,7 @@ func tableParts(cx *core.Scope) datatable.Styles {
 		SortDescending:     chevron,
 		ResizeHandle:       core.Style{Background: colors.Border},
 		MoveIndicator:      core.Style{Background: colors.Accent},
-		Row:                core.Style{Borders: core.Edges{Bottom: 1}, BorderColor: ui.Alpha(colors.Border, 0.6)},
+		Row:                core.Style{Borders: core.Edges{Bottom: 1}, BorderColor: colors.Line},
 		RowOdd:             core.Style{Background: ui.Alpha(colors.Inset, 0.35)},
 		RowSelected:        core.Style{Background: ui.Alpha(colors.Accent, 0.12)},
 		RowActive:          core.Style{Background: ui.Alpha(colors.Inset, 0.6)},
