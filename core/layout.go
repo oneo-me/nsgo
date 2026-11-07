@@ -617,8 +617,9 @@ func (t *Tree) syncContent(n *node) bool {
 			return true
 		}
 	case n.scroll != nil:
-		if c := (Size{Width: Points(l.Size.Width + l.ScrollWidth()), Height: Points(l.Size.Height + l.ScrollHeight())}); c != n.scroll.content {
-			n.scroll.content = c
+		c := Size{Width: Points(l.Size.Width + l.ScrollWidth()), Height: Points(l.Size.Height + l.ScrollHeight())}
+		if end := Points(l.ScrollableOverflow.Bottom); c != n.scroll.content || end != n.scroll.contentEnd {
+			n.scroll.content, n.scroll.contentEnd = c, end
 			t.mark(n)
 			return true
 		}

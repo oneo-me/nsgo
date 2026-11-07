@@ -121,6 +121,36 @@ func TestOverflowHiddenKeepsScrollContent(t *testing.T) {
 	}
 }
 
+// Insets scroll with the content, so what fits between them does not fill the
+// view, while what does not fit keeps its size.
+func TestScrollContentStopsAtItsInsets(t *testing.T) {
+	var height *Signal[Points]
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		height = NewSignal(cx, Points(40))
+		return Scroll{Style: Style{Height: Pt(100)}, TestID: "scroll",
+			Behavior: ScrollBehavior{ContentInset: Edges{Top: 30}}, Children: []Node{
+				View{StyleFunc: func() Style { return Style{Height: Pt(height.Get())} }},
+			}}
+	})
+	content := func(b *driver.MountBatch) driver.Size {
+		t.Helper()
+		for _, it := range b.Items {
+			if it.Kind == driver.ItemScrollContent {
+				return it.Size
+			}
+		}
+		t.Fatal("no content size sent")
+		return driver.Size{}
+	}
+	if got, want := content(h.commit()), (driver.Size{Width: 100, Height: 70}); got != want {
+		t.Fatalf("fitting content = %v, want %v", got, want)
+	}
+	height.Set(90)
+	if got, want := content(h.commit()), (driver.Size{Width: 100, Height: 90}); got != want {
+		t.Fatalf("taller content = %v, want %v", got, want)
+	}
+}
+
 func TestGridTracksValid(t *testing.T) {
 	for _, g := range []GridTracks{"", "1fr", "repeat(3, minmax(0, 1fr))", "[a] 10px [b] fit-content(20%)"} {
 		if !g.Valid() {

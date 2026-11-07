@@ -475,8 +475,12 @@ type scrollNode struct {
 	// sent and sentContent are the config and content size last sent.
 	sent        driver.ScrollConfig
 	sentContent Size
-	config      driver.ScrollConfig
-	content     Size
+	// sentFitted is the content size the platform has (fittedContent), and
+	// contentEnd how far down the content reaches, even short of the view.
+	sentFitted Size
+	contentEnd Points
+	config     driver.ScrollConfig
+	content    Size
 	// offset is the reported offset with the scrolls the platform had not
 	// applied yet replayed over it.
 	offset Point

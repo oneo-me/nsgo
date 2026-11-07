@@ -717,9 +717,9 @@ func (t *Tree) emitParts(n *node) bool {
 			add(driver.MountItem{Kind: driver.ItemScrollConfig, ID: n.id, Scroll: &c})
 		}
 		t.emitScrollBy(n, true)
-		if first || sc.content != sc.sentContent {
-			sc.sentContent = sc.content
-			add(driver.MountItem{Kind: driver.ItemScrollContent, ID: n.id, Size: sc.content})
+		if fitted := n.fittedContent(&c); first || sc.content != sc.sentContent || fitted != sc.sentFitted {
+			sc.sentContent, sc.sentFitted = sc.content, fitted
+			add(driver.MountItem{Kind: driver.ItemScrollContent, ID: n.id, Size: fitted})
 		}
 		t.emitScrollBy(n, false)
 		t.emitScrollTo(n)

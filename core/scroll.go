@@ -51,6 +51,22 @@ type scrollSpec struct {
 	centerContent          bool
 }
 
+// fittedContent returns the content size scroll view n sends under config c.
+// Layout's is at least the view's, but platforms scroll a content's insets
+// with it, so content that fits between a vertical view's insets stops at
+// them, or the view would scroll with nothing to show.
+func (n *node) fittedContent(c *driver.ScrollConfig) Size {
+	size := n.scroll.content
+	in := c.Behavior.ContentInset
+	if c.Horizontal || c.Zooms() {
+		return size
+	}
+	if room := n.frame.Size.Height - in.Top - in.Bottom; room < size.Height {
+		size.Height = min(size.Height, max(room, n.scroll.contentEnd, 0))
+	}
+	return size
+}
+
 // bindScrollSpec configures scroll view n from s: its ScrollConfig, kept
 // up to date, its handlers and its initial offset.
 func (t *Tree) bindScrollSpec(cx *Scope, n *node, s scrollSpec) {
