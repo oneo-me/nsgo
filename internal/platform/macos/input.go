@@ -3,6 +3,7 @@
 package macos
 
 import (
+	"runtime"
 	"sync"
 
 	"github.com/ebitengine/purego/objc"
@@ -671,8 +672,15 @@ func (in *input) followAccent(editor objc.ID) {
 	context.Send(sel("activate"))
 }
 
-// AppKit's text alignments.
-const nsAlignLeft, nsAlignRight, nsAlignCenter = 0, 1, 2
+// AppKit's text alignments, which Apple silicon numbers as iOS does.
+const nsAlignLeft = 0
+
+var nsAlignRight, nsAlignCenter = func() (int, int) {
+	if runtime.GOARCH == "arm64" {
+		return 2, 1
+	}
+	return 1, 2
+}()
 
 // configure is ItemInput.
 func (v *view) configure(c *driver.InputConfig) {
