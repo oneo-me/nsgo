@@ -142,6 +142,24 @@ func TestTextViewRebuildsOnlyChangedBlocks(t *testing.T) {
 	}
 }
 
+// What a document's function reads changing costs no parse while the
+// document stays, as a conversation's finished replies do.
+func TestTextViewParsesOnlyWhenItsDocumentChanges(t *testing.T) {
+	doc := strings.Repeat("A paragraph with **bold** text.\n\n", 200)
+	var tick *core.Signal[int]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		tick = core.NewSignal(cx, 0)
+		return textview.TextView{MarkdownFunc: func() string { tick.Get(); return doc }}
+	})
+	allocs := testing.AllocsPerRun(5, func() {
+		tick.Update(func(n int) int { return n + 1 })
+		app.Settle()
+	})
+	if allocs > 100 {
+		t.Fatalf("%v allocations", allocs)
+	}
+}
+
 func TestTextViewShowsHTML(t *testing.T) {
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
 		return textview.TextView{HTML: "<h2>Title</h2><p>Press <kbd>Ctrl</kbd> and <mark>see</mark> x<sup>2</sup>.</p>" +

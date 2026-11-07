@@ -349,6 +349,38 @@ func TestDiffViewSelectable(t *testing.T) {
 	}
 }
 
+// Lines deleted past the new text's end show, as all of a deleted file's do.
+func TestDiffViewShowsLinesPastTheNewText(t *testing.T) {
+	for _, unified := range []bool{true, false} {
+		app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+			return DiffView{OldValue: func() string { return "alpha\nbeta\n" }, NewValue: func() string { return "" }, Unified: unified,
+				Style: core.Style{Width: core.Pt(400), Height: core.Pt(200)}}
+		}, nsgotest.Size(400, 200))
+		app.Find("text:alpha")
+		app.Find("text:beta")
+	}
+}
+
+// What the values read changing leaves the rows alone while the values stay,
+// as making them again would end a text selection.
+func TestDiffViewKeepsItsRowsWhileItsTextsStay(t *testing.T) {
+	var tick, text *core.Signal[string]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		tick, text = core.NewSignal(cx, ""), core.NewSignal(cx, "two\n")
+		return DiffView{OldValue: func() string { return "one\n" + tick.Get()[:0] }, NewValue: text.Get, Unified: true,
+			Style: core.Style{Width: core.Pt(400), Height: core.Pt(200)}}
+	}, nsgotest.Size(400, 200))
+	line := app.Find("text:two").ID
+	tick.Set("again")
+	app.Settle()
+	if app.Find("text:two").ID != line {
+		t.Fatal("the rows were made again")
+	}
+	text.Set("three\n")
+	app.Settle()
+	app.Find("text:three")
+}
+
 func TestRegionActsOnTheChangeUnderThePointerOrTheLinesDragged(t *testing.T) {
 	ref := &Ref{}
 	var got Change

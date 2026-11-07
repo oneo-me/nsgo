@@ -153,6 +153,13 @@ func (tv TextView) Render(cx *core.Scope) core.Node {
 		tv.Extensions = append(ext, tv.Extensions...)
 	}
 	r := &renderer{tv: tv, plugins: plugins, cx: cx}
+	// What the sources read may change more often than they do.
+	if tv.MarkdownFunc != nil {
+		tv.MarkdownFunc = core.NewMemo(cx, tv.MarkdownFunc).Get
+	}
+	if tv.HTMLFunc != nil {
+		tv.HTMLFunc = core.NewMemo(cx, tv.HTMLFunc).Get
+	}
 	doc := core.NewMemoFunc(cx, tv.document, nil)
 	rows := func() []row {
 		blocks := doc.Get().Blocks

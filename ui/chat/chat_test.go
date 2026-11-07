@@ -98,6 +98,28 @@ func TestTurnFolds(t *testing.T) {
 	})
 }
 
+// TestTurnReadsItsStepsOnce checks that what reads a turn's steps shares one
+// computation of them.
+func TestTurnReadsItsStepsOnce(t *testing.T) {
+	var tick *core.Signal[int]
+	reads := 0
+	app := start(t, desktopEnv, func(cx *core.Scope) core.Node {
+		tick = core.NewSignal(cx, 0)
+		return Turn{Status: func() Status { return Completed }, Summary: func() string { return "Worked" },
+			Steps: func() []Step {
+				tick.Get()
+				reads++
+				return []Step{{ID: "work", Title: "Ran it"}}
+			}}
+	})
+	reads = 0
+	tick.Set(1)
+	app.Settle()
+	if reads != 1 {
+		t.Fatalf("%d reads", reads)
+	}
+}
+
 // TestComposer checks Send follows the draft and that a draft takes
 // Stop's place while running.
 func TestComposer(t *testing.T) {

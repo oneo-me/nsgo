@@ -84,12 +84,13 @@ type Turn struct {
 // Render implements core.Node.
 func (t Turn) Render(cx *core.Scope) core.Node {
 	final := func() bool { return is(t.HasFinal) }
-	steps := func() []Step {
+	// Several things read the steps, and a turn may have many.
+	steps := core.NewMemoFunc(cx, func() []Step {
 		if t.Steps == nil {
 			return nil
 		}
 		return t.Steps()
-	}
+	}, nil).Get
 	hold := func() bool {
 		return is(t.HoldOpen) || t.Conversation != nil && !t.Conversation.AtLatest()
 	}

@@ -361,19 +361,24 @@ func (p DiffView) Render(cx *core.Scope) core.Node {
 			})
 		})
 	}
-	cx.Effect(func() {
-		var oldText, newText, patch string
+	// What the values read may change more often than they do, and loading
+	// makes every row again, which ends a text selection in them.
+	texts := core.NewMemo(cx, func() (t [3]string) {
 		if p.OldValue != nil || p.NewValue != nil {
 			if p.OldValue != nil {
-				oldText = p.OldValue()
+				t[0] = p.OldValue()
 			}
 			if p.NewValue != nil {
-				newText = p.NewValue()
+				t[1] = p.NewValue()
 			}
 		} else if p.Patch != nil {
-			patch = p.Patch()
+			t[2] = p.Patch()
 		}
-		cx.Untrack(func() { v.load(oldText, newText, patch) })
+		return t
+	})
+	cx.Effect(func() {
+		t := texts.Get()
+		cx.Untrack(func() { v.load(t[0], t[1], t[2]) })
 	})
 	return core.View{
 		Class:     p.Class,
@@ -1399,11 +1404,11 @@ func (v *dv) spans(r row, isOld bool, line, from, to int) []core.Span {
 	if dark {
 		palette = &syntax.Dark
 	}
-	text := v.m.new[line]
-	toks := v.hlNew[line]
-	word := v.styles().WordAdded
+	text, toks, word := v.lineText(isOld, line), []syntax.Tok(nil), v.styles().WordDeleted
 	if isOld {
-		text, toks, word = v.m.old[line], v.hlOld[line], v.styles().WordDeleted
+		toks = v.hlOld[line]
+	} else {
+		toks, word = v.hlNew[line], v.styles().WordAdded
 	}
 	// The word's box draws these (wordBoxes).
 	word.Background, word.Gradients, word.CornerRadius = 0, nil, 0
