@@ -2,6 +2,7 @@ package toast
 
 import (
 	"math"
+	"slices"
 	"time"
 
 	"github.com/oneo-me/nsgo/base/internal/parts"
@@ -73,8 +74,11 @@ func (s SwipeDirection) horizontal() bool { return s == SwipeRight || s == Swipe
 // SwipeDirection moves it once it moved 10 points, so its buttons stay
 // buttons; let go past SwipeThreshold (50 when 0) or flicked, it moves on
 // out and asks to be dismissed with OnDismissRequest, and short of it
-// goes back. The screen reader reads Label as it shows. A Stack lays
-// toasts out.
+// goes back. While ending it takes no presses. The screen reader reads
+// Label as it shows. A Stack lays toasts out.
+//
+// The swipe moves a view around the root, since a backend draws a view
+// with animated values without its Transition.
 type Toast struct {
 	// Status is its phase, Starting when nil.
 	Status         func() Status
@@ -116,6 +120,9 @@ func (t Toast) Render(cx *core.Scope) core.Node {
 		threshold = 50
 	}
 	dir := t.SwipeDirection
+	if report := leavingKey.Use(cx); report != nil {
+		cx.Effect(func() { report(status() == Ending) })
+	}
 
 	// Past its first frame: the next display frame, or a frame's time
 	// where none comes, whichever is first.
@@ -155,7 +162,7 @@ func (t Toast) Render(cx *core.Scope) core.Node {
 	}
 
 	startingClass, endingClass, swipingClass := parts.Important(t.StartingClass), parts.Important(t.EndingClass), parts.Important(t.SwipingClass)
-	return core.View{Role: core.RoleAlert, Label: t.Label, TestID: t.TestID, Tooltip: t.Tooltip, Class: t.Class,
+	root := core.View{Role: core.RoleAlert, Label: t.Label, TestID: t.TestID, Tooltip: t.Tooltip, Class: t.Class,
 		// The state's classes win over Class and Style, as its styles do
 		// and as CSS's state selectors do by their specificity.
 		ClassFunc: func() string {
@@ -183,7 +190,7 @@ func (t Toast) Render(cx *core.Scope) core.Node {
 			case st == Starting && !entered.Get():
 				s = s.Merge(t.StartingStyle)
 			}
-			return s.Merge(core.Style{Animated: &core.AnimatedStyle{TranslateX: x, TranslateY: y}})
+			return s
 		},
 		OnLayout: func(b core.Bounds) {
 			size = b.Size
@@ -219,11 +226,18 @@ func (t Toast) Render(cx *core.Scope) core.Node {
 			OnRelease:   release,
 			OnTerminate: func(core.ResponderEvent) { swiping.Set(false); settle(0, 0) },
 		},
-		Children: t.Children,
+		// What is going takes no more presses.
+		Children: append(slices.Clip(t.Children), core.Show{When: func() bool { return status() == Ending }, Then: func(*core.Scope) core.Node {
+			return core.View{Style: parts.Fill, OnPress: func(core.PressEvent) {}, NoFocus: true}
+		}}),
 	}
+	return core.View{Style: core.Style{Animated: &core.AnimatedStyle{TranslateX: x, TranslateY: y}}, Children: []core.Node{root}}
 }
 
 func abs(p core.Points) core.Points { return max(p, -p) }
+
+// leavingKey is how a Toast tells the Stack around it that it is ending.
+var leavingKey = core.NewKey[func(bool)]("toast.leaving", nil)
 
 // Anchor is the edge of the viewport a Stack lays out from: the
 // newest toast is nearest it.
@@ -245,6 +259,9 @@ func (a Anchor) bottom() bool {
 	return a == AnchorBottomLeft || a == AnchorBottomCenter || a == AnchorBottomRight
 }
 
+// center reports whether the stack is centered on a side.
+func (a Anchor) center() bool { return a == AnchorLeftCenter || a == AnchorRightCenter }
+
 // Stack lays toasts out, as gpui-base's: Toasts are its items, oldest
 // first, each rendered by Toast and matched by Key as core.Each matches
 // rows. From Placement's edge, collapsed toasts overlap CollapsedPeek
@@ -254,10 +271,12 @@ func (a Anchor) bottom() bool {
 // (OnExpandedChange). Reverse turns the stack around: the newest toast is
 // the farthest from the edge and the oldest the nearest, as a list
 // growing away from it. Arrivals, departures and expansion move them with
-// critically damped springs of the motion's Duration. While it holds
-// toasts it hears Escape and back (OnCancel: dismiss the newest), unless
-// NoCloseOnEscape. It has no look: its style gives its width, and the app
-// places it, in an Overlay at that edge inside the safe area.
+// critically damped springs of the motion's Duration; a Toast that is
+// ending stays where it shows and takes no room, so the others close up
+// as it leaves. While it holds toasts it hears Escape and back (OnCancel:
+// dismiss the newest), unless NoCloseOnEscape. It has no look: its style
+// gives its width, and the app places it, in an Overlay at that edge
+// inside the safe area, centered at a center anchor.
 type Stack[T any, K comparable] struct {
 	Toasts           func() []T
 	Key              func(T) K
@@ -323,37 +342,73 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 		}
 	})
 	measured := core.NewSignalFunc(cx, map[K]core.Points{}, func(a, b map[K]core.Points) bool { return false })
-	// heights are the items' measured heights, oldest first; one not
-	// measured yet counts as nothing.
+	leaving := core.NewSignalFunc(cx, map[K]bool{}, func(a, b map[K]bool) bool { return false })
+	// heights are the measured heights of the items taking room, oldest
+	// first, and index is where key is among them; one not measured yet
+	// counts as nothing.
 	heights := func() []core.Points {
-		items, hs := s.Toasts(), measured.Get()
-		out := make([]core.Points, len(items))
-		for i, it := range items {
-			out[i] = hs[s.Key(it)]
+		hs, gone := measured.Get(), leaving.Get()
+		var out []core.Points
+		for _, it := range s.Toasts() {
+			if k := s.Key(it); !gone[k] {
+				out = append(out, hs[k])
+			}
 		}
 		return out
 	}
-	bottom := s.Placement.bottom() != s.Reverse
+	index := func(key K) int {
+		gone := leaving.Get()
+		i := 0
+		for _, it := range s.Toasts() {
+			switch k := s.Key(it); {
+			case k == key:
+				return i
+			case !gone[k]:
+				i++
+			}
+		}
+		return -1
+	}
+	bottom := s.Placement.bottom()
 
-	item := func(cx *core.Scope, it func() T, index func() int) core.Node {
+	item := func(cx *core.Scope, it func() T, _ func() int) core.Node {
 		key := s.Key(core.Untracked(cx, it))
+		leavingKey.Provide(cx, func(on bool) {
+			if leaving.GetUntracked()[key] != on {
+				leaving.Update(func(gone map[K]bool) map[K]bool { gone[key] = on; return gone })
+			}
+		})
 		y, sx, op := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 1), core.NewAnimatedValue(cx, 1)
-		// offset is its distance from the edge, in the layout: hit tests go
-		// by frames, not transforms, so each toast takes its presses where
-		// it shows. y plays its way there, less laid, where the layout put
-		// it.
+		// offset is its distance from the line that stays put as the stack's
+		// height changes, in the layout: the anchored edge, or the stack's
+		// middle at a center anchor. Hit tests go by frames, not transforms,
+		// so each toast takes its presses where it shows. y plays its way
+		// there, less laid, where the layout put it.
 		offset := core.NewSignal(cx, core.Points(0))
 		laid := core.NewAnimatedValue(cx, 0)
-		first := true
+		placed := false
 		cx.Effect(func() {
+			if leaving.Get()[key] {
+				return
+			}
 			open := expanded.Get()
 			hs := heights()
-			i := index()
+			i := index(key)
+			if i < 0 || i >= len(hs) {
+				return
+			}
 			collapsed, full := toastDistance(hs, i, m.ExpandedGap, m.CollapsedPeek)
+			height, fullHeight := toastHeights(hs, m.ExpandedGap, m.CollapsedPeek)
 			rank := max(len(hs)-1-i, 0)
 			d := collapsed
 			if open {
-				d = full
+				d, height = full, fullHeight
+			}
+			if s.Reverse {
+				d = height - d - hs[i]
+			}
+			if s.Placement.center() {
+				d -= height / 2
 			}
 			scale := 1.0
 			if !open {
@@ -367,9 +422,9 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 			if bottom {
 				ty = -ty
 			}
-			moved := !first && !core.Untracked(cx, cx.Env().ReduceMotion)
+			moved := placed && !core.Untracked(cx, cx.Env().ReduceMotion)
+			placed = hs[i] > 0
 			if !moved {
-				first = false
 				y.Set(ty)
 				sx.Set(scale)
 				op.Set(opacity)
@@ -383,12 +438,16 @@ func (s Stack[T, K]) Render(cx *core.Scope) core.Node {
 		})
 		cx.Cleanup(func() {
 			measured.Update(func(hs map[K]core.Points) map[K]core.Points { delete(hs, key); return hs })
+			leaving.Update(func(gone map[K]bool) map[K]bool { delete(gone, key); return gone })
 		})
 		place := core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0),
 			Animated: &core.AnimatedStyle{TranslateY: core.Add(y, laid), ScaleX: sx, Opacity: op}}
 		return core.View{Style: place, PointerEvents: core.PointerEventsBoxNone,
 			StyleFunc: func() core.Style {
-				if bottom {
+				switch {
+				case s.Placement.center():
+					return core.Style{Top: core.Pct(50), Margin: core.Edges{Top: offset.Get()}}
+				case bottom:
 					return core.Style{Bottom: core.Pt(offset.Get())}
 				}
 				return core.Style{Top: core.Pt(offset.Get())}

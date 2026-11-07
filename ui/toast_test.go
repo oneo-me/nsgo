@@ -6,6 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/nsgotest"
 )
 
 // TestToasts shows toasts read as alerts, runs an action and closes its
@@ -71,7 +72,7 @@ func TestToastPlacements(t *testing.T) {
 		app.Advance(time.Second)
 		toaster.Show(toastOf("new", ToastPlain, "New", "", "", nil))
 		app.Advance(time.Second)
-		if !(app.Find("old").Frame.Origin.Y <= app.Find("new").Frame.Origin.Y) {
+		if !(toastY(app, "old") <= toastY(app, "new")) {
 			t.Fatal("Reverse left the newest toast above the oldest")
 		}
 	})
@@ -92,7 +93,7 @@ func TestToastsExpandedTakePresses(t *testing.T) {
 		app.Advance(time.Second)
 		app.Hover("toasts")
 		app.Advance(time.Second)
-		if !(app.Find("old").Parent.Frame.Origin.Y < app.Find("new").Parent.Frame.Origin.Y) {
+		if !(toastY(app, "old") < toastY(app, "new")) {
 			t.Fatal("the expanded toasts lie one over the other")
 		}
 		app.Press("old-close")
@@ -131,6 +132,67 @@ func TestToastLimit(t *testing.T) {
 			t.Fatalf("OnClose ran %d times once it timed out", closed)
 		}
 	})
+}
+
+// TestToastClosing closes the newest toast: it stays where it shows and
+// takes no presses, and the others close up at once, at every line a stack
+// grows from.
+func TestToastClosing(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		p       ToastPlacement
+		reverse bool
+	}{{"top", ToastTop, false}, {"bottom", ToastBottomEnd, false}, {"top reversed", ToastTop, true},
+		{"bottom reversed", ToastBottom, true}, {"side", ToastEnd, false}, {"side reversed", ToastStart, true}} {
+		t.Run(c.name, func(t *testing.T) {
+			var toaster *Toaster
+			app, _ := start(t, desktopEnv, func(cx *core.Scope) core.Node {
+				toaster = NewToaster(cx)
+				return Toasts{Toaster: toaster, Placement: c.p, Reverse: c.reverse, TestID: "toasts", CloseLabel: "Close"}
+			})
+			toaster.Show(ToastContent{ID: "old", Title: "Old", Duration: -1})
+			app.Advance(time.Second)
+			toaster.Show(ToastContent{ID: "new", Title: "New", Action: "Undo", Duration: -1})
+			app.Advance(time.Second)
+			if app.Find("new").Animated.Set != 0 {
+				t.Fatal("the toast's root binds animated values, which backends draw without its Transition")
+			}
+			height := app.Find("toasts").Frame.Size.Height
+			y := toastY(app, "new")
+			toaster.Dismiss("new")
+			app.Advance(16 * time.Millisecond)
+			if !app.Exists("new") {
+				t.Fatal("the toast left before its exit")
+			}
+			if got := toastY(app, "new"); got != y {
+				t.Fatalf("the toast going moved from %v to %v", y, got)
+			}
+			if got := app.Find("toasts").Frame.Size.Height; got >= height {
+				t.Fatalf("the stack is %v tall going, %v before: the toast going takes room", got, height)
+			}
+			settled := toastY(app, "old")
+			going := app.Find("new")
+			if top := going.Children[len(going.Children)-1]; top.Frame.Size.Width < going.Frame.Size.Width-2 {
+				t.Fatalf("nothing covers the toast going, whose buttons would take presses: %v", top.Frame)
+			}
+			app.Advance(time.Second)
+			if app.Exists("new") {
+				t.Fatal("the toast stayed after its exit")
+			}
+			if got := toastY(app, "old"); got != settled {
+				t.Fatalf("the older toast's place went from %v to %v once the newest had gone", settled, got)
+			}
+		})
+	}
+}
+
+// toastY is where the stack lays a toast out, in the window.
+func toastY(app *nsgotest.App, id string) core.Points {
+	var y core.Points
+	for v := app.Find(id).Parent; v != nil; v = v.Parent {
+		y += v.Frame.Origin.Y
+	}
+	return y
 }
 
 // toastOf is a toast's content, short.
