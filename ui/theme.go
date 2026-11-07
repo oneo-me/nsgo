@@ -204,14 +204,10 @@ func (f Fins) Glass() Finish { return f.floating(f.shown().glass) }
 // reading.
 func (f Fins) Menu() Finish { return f.floating(f.shown().menu) }
 
-// floating is fin over the page's color, rimmed with the border's; in
-// light a stronger one, which stays darker than a dimmed page behind it.
+// floating is fin over the page's color, rimmed with the border's.
 func (f Fins) floating(fin Finish) Finish {
 	p := f.cx.Palette()
 	fin.Background, fin.Border = Alpha(p.Background, 0.92), p.Border
-	if !f.cx.Dark() {
-		fin.Border = Mix(p.Border, p.Text, 0.125)
-	}
 	return fin
 }
 

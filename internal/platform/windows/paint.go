@@ -699,7 +699,14 @@ func (p *painter) drawContent(v *view, s *driver.ViewStyle, world matrix) {
 	if !glass {
 		p.drawBackdrop(e, &b, world)
 	}
-	p.fillBox(&b, s.Background, nil)
+	if rim, inset, ok := s.Rim(); ok {
+		p.fillRim(&b, s.Background, inset)
+		rimmed := *s
+		rimmed.BorderColor = rim
+		s = &rimmed
+	} else {
+		p.fillBox(&b, s.Background, nil)
+	}
 	p.drawGradients(&b, e.Gradients)
 	if glass && !p.drawGlass(v, s, &b, world) {
 		p.drawBackdrop(e, &b, world)

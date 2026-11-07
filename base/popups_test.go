@@ -138,6 +138,24 @@ func TestMenusOnTouchScreensAreSheetsWithLevels(t *testing.T) {
 	}
 }
 
+// A pointer's position holds fractions, and an overlay off the pixel grid
+// blurs its edges.
+func TestOverlaysSitOnWholePoints(t *testing.T) {
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return core.Overlay{AnchorBounds: func() core.Bounds { return core.Bounds{Origin: core.Point{X: 40.33, Y: 60.67}} },
+			Placement: core.PlaceBottom, Align: core.AlignStart,
+			Children: []core.Node{core.View{TestID: "panel", Style: core.Style{Width: core.Pt(90), Height: core.Pt(70)}}}}
+	}, nsgotest.Size(360, 300))
+	var at core.Point
+	for v := app.Find("id:panel"); v != nil; v = v.Parent {
+		at.X += v.Frame.Origin.X
+		at.Y += v.Frame.Origin.Y
+	}
+	if want := (core.Point{X: 40, Y: 61}); at != want {
+		t.Errorf("the overlay is at %v, want %v", at, want)
+	}
+}
+
 func TestContextMenusOpenAtThePointerOrAfterAHold(t *testing.T) {
 	var reasons []string
 	menu := func(cx *core.Scope) core.Node {

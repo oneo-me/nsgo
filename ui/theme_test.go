@@ -105,7 +105,7 @@ func TestThemes(t *testing.T) {
 				return core.Style{}
 			}}
 		})
-		if menu.Background != Alpha(theme.Light.Background, 0.92) || menu.Border != Mix(theme.Light.Border, theme.Light.Text, 0.125) || pill.Background != theme.Light.Colors["raised"] {
+		if menu.Background != Alpha(theme.Light.Background, 0.92) || menu.Border != theme.Light.Border || pill.Background != theme.Light.Colors["raised"] {
 			t.Fatalf("finishes %v, %v do not follow the theme", menu, pill)
 		}
 	}

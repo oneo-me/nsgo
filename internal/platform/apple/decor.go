@@ -55,6 +55,10 @@ type decor struct {
 	// inside the box; cover is the fill layer of an unshaped one.
 	covered bool
 	cover   objc.ID
+	// covers is the color cover shows; recolor is the transition that
+	// fades it to a new one, while a new style draws.
+	covers  driver.Color
+	recolor *driver.Transition
 	// insets holds the inset shadows, clipped to the padding box.
 	insets objc.ID
 	// clip and mask are the layer's masks, which d owns: the clip shape,
@@ -205,7 +209,11 @@ func applyDecor(layer objc.ID, vs *driver.ViewStyle) {
 		decors[layer] = d
 	}
 	d.vs = *vs
+	if tr := vs.Transition; tr.Duration > 0 && (tr.Properties == 0 || tr.Properties&driver.TransitionBackground != 0) {
+		d.recolor = &tr
+	}
 	d.layout(layer)
+	d.recolor = nil
 	d.setKeyframes(layer, vs.Animation)
 }
 
@@ -379,23 +387,35 @@ func (d *decor) layoutShape(layer objc.ID, w, h float64, radii driver.Corners) {
 		}
 		r, masked := cornersOf(radii)
 		setCorners(layer, r, masked, vs.ContinuousCorners, w, h)
-		if d.covered && (vs.Effects == nil || !opaqueGradient(vs.Effects)) {
-			// Above the outer shadows, so they need no mask.
+		rim, inset, rimmed := vs.Rim()
+		if rimmed || d.covered && (vs.Effects == nil || !opaqueGradient(vs.Effects)) {
+			// Above the outer shadows, so they need no mask; under the
+			// border, so its outer edge is its own.
 			if d.cover == 0 {
 				d.cover = newLayer(layer, "CALayer", zFill)
+				d.paintCover(d.covers)
 			}
-			d.cover.Send(selSetFrame, CGRect{Size: CGSize{Width: w, Height: h}})
-			setCorners(d.cover, r, masked, vs.ContinuousCorners, w, h)
-			c := CGColor(vs.Background)
-			d.cover.Send(selSetBackgroundColor, c)
-			Release(c)
+			in := float64(inset)
+			d.cover.Send(selSetFrame, CGRect{Origin: CGPoint{X: in, Y: in}, Size: CGSize{Width: w - 2*in, Height: h - 2*in}})
+			setCorners(d.cover, max(r-inset, 0), masked, vs.ContinuousCorners, w-2*in, h-2*in)
+			if d.covers != vs.Background {
+				animate(d.cover, "backgroundColor", d.recolor, false, func() { d.paintCover(vs.Background) })
+			}
+			d.covers = vs.Background
 			layer.Send(selSetBackgroundColor, uintptr(0))
+			if rimmed {
+				c := CGColor(rim)
+				layer.Send(selSetBorderColor, c)
+				Release(c)
+			}
 		} else {
 			drop(&d.cover)
+			d.covers = vs.Background
 		}
 		return
 	}
 	drop(&d.cover)
+	d.covers = vs.Background
 	// Shapes draw the corners: the layer's own background and border
 	// would show square corners.
 	layer.Send(selSetCornerRadius, 0.0)
@@ -407,7 +427,14 @@ func (d *decor) layoutShape(layer objc.ID, w, h float64, radii driver.Corners) {
 			d.fill = newLayer(layer, "CAShapeLayer", zFill)
 		}
 		d.fill.Send(selSetFrame, CGRect{Size: CGSize{Width: w, Height: h}})
-		d.fill.Send(selSetPath, path)
+		if _, inset, rimmed := vs.Rim(); rimmed {
+			in := float64(inset)
+			under := boxPath(in, in, w-2*in, h-2*in, radii.Inset(inset), vs.ContinuousCorners)
+			defer Release(under)
+			d.fill.Send(selSetPath, under)
+		} else {
+			d.fill.Send(selSetPath, path)
+		}
 		c := CGColor(vs.Background)
 		d.fill.Send(selSetFill, c)
 		Release(c)
@@ -430,6 +457,13 @@ func (d *decor) layoutShape(layer objc.ID, w, h float64, radii driver.Corners) {
 		}
 		release(&d.clip)
 	}
+}
+
+// paintCover colors the cover layer.
+func (d *decor) paintCover(color driver.Color) {
+	c := CGColor(color)
+	d.cover.Send(selSetBackgroundColor, c)
+	Release(c)
 }
 
 // layoutShadows draws the box shadows: outer ones under the box, masked
@@ -655,6 +689,9 @@ func (d *decor) layoutStroke(layer objc.ID, w, h float64, radii driver.Corners) 
 	vs := &d.vs
 	dashed := vs.BorderStyle == driver.BorderDashed || vs.BorderStyle == driver.BorderDotted
 	width, color := vs.BorderWidth, vs.BorderColor
+	if rim, _, rimmed := vs.Rim(); rimmed {
+		color = rim
+	}
 	if vs.Borders != (driver.Edges{}) {
 		// Sides that differ are rings (setBorders); dashes take the
 		// widest side.

@@ -134,6 +134,16 @@ func (c Color) Faded(f float32) Color {
 	return c&^0xff | Color(a)
 }
 
+// Over returns c drawn over an opaque under.
+func (c Color) Over(under Color) Color {
+	a := uint32(c & 0xff)
+	mix := func(shift uint) Color {
+		top, bottom := uint32(c>>shift&0xff), uint32(under>>shift&0xff)
+		return Color((top*a + bottom*(255-a) + 127) / 255 << shift)
+	}
+	return mix(24) | mix(16) | mix(8) | 0xff
+}
+
 // Components returns the red, green, blue and alpha channels from 0 to 1.
 func (c Color) Components() (r, g, b, a float64) {
 	return float64(c>>24&0xff) / 255, float64(c>>16&0xff) / 255,

@@ -111,6 +111,14 @@ func (p *painter) fillBox(b *box, c driver.Color, brush *comObject) {
 	}
 }
 
+// fillRim fills the box inset by d with c, under its border.
+func (p *painter) fillRim(b *box, c driver.Color, d driver.Points) {
+	if g := p.geometry(b, float32(d)); g != nil {
+		p.dc.call(rtFillGeometry, g.ptr(), p.solid(c).ptr(), 0)
+		g.release()
+	}
+}
+
 // pushClipBox clips what follows to the box.
 func (p *painter) pushClipBox(b *box) {
 	if r, ok := b.simple(); ok {

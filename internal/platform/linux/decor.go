@@ -209,6 +209,14 @@ func (sh *shape) fill(snap uintptr, c driver.Color) {
 	gskPathUnref(p)
 }
 
+// fillRim paints c inside the box inset by d, under its border.
+func (sh *shape) fillRim(snap uintptr, c driver.Color, d driver.Points) {
+	p := sh.path(float32(d))
+	color := rgba(c)
+	gtkSnapshotAppendFill(snap, p, fillWinding, &color)
+	gskPathUnref(p)
+}
+
 // stroke draws a line of width in c along the box inset by inset, dashed
 // as style says.
 func (sh *shape) stroke(snap uintptr, inset, width driver.Points, c driver.Color, style driver.BorderStyle) {

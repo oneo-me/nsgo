@@ -480,6 +480,23 @@ func (vs *ViewStyle) Radii(size Size) Corners {
 // Rounded reports whether some corner is rounded.
 func (vs *ViewStyle) Rounded() bool { return vs.CornerRadius > 0 || vs.Corners != (Corners{}) }
 
+// Rim is how a rounded view with an opaque fill and one solid border
+// keeps the fill from showing past it. Drawn as CSS says, both reach the
+// box's edge, and an edge pixel a curve covers partly takes the fill's
+// color before the border's. So the fill stops inset under the border,
+// and the border is rim, what it shows over the fill, the outer edge
+// being the border's alone. Inset most of the border's width, a line one
+// pixel wide keeps the two apart too, and the rest closes the seam
+// inside. Browsers do the same for CSS; ok is false
+// where nothing needs it or the border must let what is under it show.
+func (vs *ViewStyle) Rim() (rim Color, inset Points, ok bool) {
+	if !vs.Rounded() || vs.BorderWidth <= 0 || vs.Borders != (Edges{}) || vs.BorderColor&0xff == 0 || vs.Background&0xff != 0xff ||
+		vs.BorderStyle == BorderDashed || vs.BorderStyle == BorderDotted || (vs.Effects != nil && len(vs.Effects.Gradients) > 0) {
+		return 0, 0, false
+	}
+	return vs.BorderColor.Over(vs.Background), vs.BorderWidth * 3 / 4, true
+}
+
 // Matrix returns the view's transform for a box of size, around its
 // origin.
 func (vs *ViewStyle) Matrix(size Size) Matrix3D {

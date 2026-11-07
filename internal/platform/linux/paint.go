@@ -90,7 +90,12 @@ func (w *window) snapshotView(v *view, snap uintptr) {
 				gtkSnapshotAppendOutset(cur, &sh.rect, &c, float32(b.Offset.X), float32(b.Offset.Y), float32(b.Spread), float32(b.Blur))
 			}
 		}
-		if s.Background&0xff != 0 {
+		if rim, inset, ok := s.Rim(); ok {
+			sh.fillRim(cur, s.Background, inset)
+			rimmed := *s
+			rimmed.BorderColor = rim
+			s = &rimmed
+		} else if s.Background&0xff != 0 {
 			sh.fill(cur, s.Background)
 		}
 		if len(e.Gradients) > 0 {

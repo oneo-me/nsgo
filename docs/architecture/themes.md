@@ -18,7 +18,7 @@ A `core.Theme` is one look in both appearances: a `Palette` for light and one fo
 
 `Palette.Colors` holds roles a library or app adds by name (`inset`, `info`), which `Palette.Color` and `SetColor` reach as they reach the fields, by their names in lower camel case. Gradients, shadows and other finishes are not colors and stay in the library's code, chosen by `Dark`.
 
-Edges are translucent where Onevra's are solid, so one role holds on every surface and over what shows through glass. `ui.Alpha` replaces a color's opacity rather than scaling it, so a fainter edge takes `line`, the hairlines' role, not `Alpha(Border, …)`; `Mix` keeps working. What floats takes a stronger edge in light, to stay darker than a dimmed page.
+Edges are translucent where Onevra's are solid, so one role holds on every surface and over what shows through glass. `ui.Alpha` replaces a color's opacity rather than scaling it, so a fainter edge takes `line`, the hairlines' role, not `Alpha(Border, …)`; `Mix` keeps working.
 
 ## Scope
 

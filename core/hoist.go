@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"slices"
 
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -159,7 +160,7 @@ func (t *Tree) placeHoisted(host *node) {
 			t.layoutRoot(n, size, false)
 			l := &n.lstate.Rounded
 			box := Size{Width: Points(l.Size.Width), Height: Points(l.Size.Height)}
-			t.setFrame(n, Bounds{Origin: insetOrigin(&n.style, box, size, n.rtl), Size: box})
+			t.setFrame(n, Bounds{Origin: wholePoint(insetOrigin(&n.style, box, size, n.rtl)), Size: box})
 		} else {
 			t.placeOverlay(n, host, size)
 		}
@@ -276,7 +277,7 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 	if !ok {
 		// Without an anchor, an overlay is placed as an absolute child of
 		// its host.
-		origin = insetOrigin(&s, size, hostSize, n.rtl)
+		origin = wholePoint(insetOrigin(&s, size, hostSize, n.rtl))
 	} else {
 		safe := t.root.Env().safe.GetUntracked()
 		if host.kind == driver.KindModal {
@@ -305,6 +306,7 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 		} else {
 			origin, side, room = place(anchor, size, area, want, o.Align, o.Offset, rtl)
 		}
+		origin = wholePoint(origin)
 		pos := OverlayPosition{Placement: side, Bounds: Bounds{Origin: origin, Size: size}, Available: room}
 		if pos != n.hoist.placed && o.OnPosition != nil {
 			f := o.OnPosition
@@ -313,6 +315,13 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 		n.hoist.placed = pos
 	}
 	t.setFrame(n, Bounds{Origin: origin, Size: size})
+}
+
+// wholePoint snaps a root's origin as layout snaps every other frame: a
+// pointer's position or a centered overlay's holds fractions, and a box
+// off the pixel grid leaves its edges blurred, its border and fill apart.
+func wholePoint(p Point) Point {
+	return Point{X: Points(math.Floor(float64(p.X) + 0.5)), Y: Points(math.Floor(float64(p.Y) + 0.5))}
 }
 
 // covering is where overlay n's Cover view is in it: taken once both are
