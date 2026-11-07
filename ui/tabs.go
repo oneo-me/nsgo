@@ -111,12 +111,8 @@ func (t Tabs[T]) Render(cx *core.Scope) core.Node {
 		return FinOf(cx).Pill().Over(s)
 	}}
 	tabLook := func() core.Style {
-		on := core.Style{Color: colors.Text()}
-		// Only the thumb's tab is heavier: an underline never moves the labels.
-		if !underline {
-			on.FontWeight = Semibold
-		}
-		return core.Style{Color: Alpha(colors.Text(), 0.6), Selected: &on, Focus: FocusRing(cx, -2), Disabled: Dimmed()}
+		// Selection keeps the weight, so it never moves the labels.
+		return core.Style{Color: Alpha(colors.Text(), 0.6), Selected: &core.Style{Color: colors.Text()}, Focus: FocusRing(cx, -2), Disabled: Dimmed()}
 	}
 	for i := range frames {
 		frames[i] = core.NewSignal(cx, core.Bounds{})
