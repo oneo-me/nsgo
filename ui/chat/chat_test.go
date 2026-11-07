@@ -117,6 +117,49 @@ func TestComposer(t *testing.T) {
 	})
 }
 
+// TestComposerFooterHidesWithKeyboard leaves the footer out while the
+// software keyboard shows.
+func TestComposerFooterHidesWithKeyboard(t *testing.T) {
+	app := start(t, phoneEnv, func(cx *core.Scope) core.Node {
+		return Composer{Label: "Message", SendLabel: "Send", Footer: func(*core.Scope) core.Node { return ui.Button{Text: "Project"} }}
+	})
+	if !app.Exists("role:button Project") {
+		t.Fatal("footer missing without the keyboard")
+	}
+	e := phoneEnv
+	e.KeyboardHeight = 300
+	app.SetEnvironment(e)
+	if app.Exists("role:button Project") {
+		t.Fatal("footer shows over the keyboard")
+	}
+	app.SetEnvironment(phoneEnv)
+	if !app.Exists("role:button Project") {
+		t.Fatal("footer stays away after the keyboard")
+	}
+}
+
+// TestChipYields shortens a yielding chip before the one beside it.
+func TestChipYields(t *testing.T) {
+	app := start(t, desktopEnv, func(cx *core.Scope) core.Node {
+		measured := Chip{Text: "High", OnPress: func() {}, TestID: "measured"}
+		return core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
+			core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{measured}},
+			core.View{Style: core.Style{Direction: core.Row, Width: core.Pt(150), Gap: 4}, Children: []core.Node{
+				Chip{Text: "A rather long model name that cannot fit", Yield: true, OnPress: func() {}, TestID: "yielding"},
+				Chip{Text: "High", OnPress: func() {}, TestID: "other"},
+			}},
+		}}
+	})
+	whole := app.Find("id:measured").Frame.Size.Width
+	other, yielding := app.Find("id:other").Frame.Size.Width, app.Find("id:yielding").Frame.Size.Width
+	if other != whole {
+		t.Fatalf("other chip = %v, want %v", other, whole)
+	}
+	if yielding+other+4 > 150 {
+		t.Fatalf("chips = %v and %v in 150", yielding, other)
+	}
+}
+
 // TestPickerChooses checks the options a query leaves and choosing one.
 func TestPickerChooses(t *testing.T) {
 	each(t, func(t *testing.T, e core.Environment) {

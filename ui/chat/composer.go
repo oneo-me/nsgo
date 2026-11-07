@@ -29,7 +29,7 @@ type Composer struct {
 	// Attachments shows above the editor while HasAttachments is true.
 	Attachments    View
 	HasAttachments func() bool
-	// Footer shows below the card.
+	// Footer shows below the card while the software keyboard is hidden.
 	Footer View
 	// OnDropFiles makes the card take files dropped from other apps. It
 	// gets their URLs; reading them is the app's.
@@ -165,8 +165,10 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 	}
 	children := []core.Node{card}
 	if m.Footer != nil {
-		children = append(children, core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Height: core.Pt(FooterHeight), Padding: core.Edges{Top: 4, Right: 10, Left: 10}, AlignItems: core.AlignCenter, Gap: 2},
-			Children: []core.Node{core.Func(m.Footer)}})
+		children = append(children, core.Show{When: func() bool { return cx.Env().KeyboardHeight() == 0 }, Then: func(*core.Scope) core.Node {
+			return core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Height: core.Pt(FooterHeight), Padding: core.Edges{Top: 4, Right: 10, Left: 10}, AlignItems: core.AlignCenter, Gap: 2},
+				Children: []core.Node{core.Func(m.Footer)}}
+		}})
 	}
 	return core.View{TestID: m.TestID, Style: core.Style{MinWidth: core.Pt(0), FlexShrink: 0}, Children: children}
 }

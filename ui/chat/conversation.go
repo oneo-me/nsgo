@@ -222,6 +222,10 @@ func FloatingMargin(cx *core.Scope, footer core.Points) core.Points {
 
 // floatingEdge is how far a floating composer's bottom edge blur reaches.
 func floatingEdge(cx *core.Scope, footer, card core.Points) core.Points {
+	// The software keyboard hides the footer.
+	if cx.Env().KeyboardHeight() > 0 {
+		footer = 0
+	}
 	reach := FloatingMargin(cx, footer) + footer
 	if cx.Env().OS() == core.OSIOS {
 		return reach + card

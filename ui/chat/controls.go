@@ -122,6 +122,9 @@ type Chip struct {
 	Leading func(cx *core.Scope, size core.Points) core.Node
 	// Caret marks a chip that opens a choice.
 	Caret bool
+	// Yield gives up the row's room before the chips beside it, cutting the
+	// start of its label, for a name its end tells apart, such as a model's.
+	Yield bool
 	// Active keeps the chip lit while what it opens shows.
 	Active  func() bool
 	OnPress func()
@@ -150,6 +153,9 @@ func (p Chip) face(cx *core.Scope) []core.Node {
 	label := ui.Textf(p.text(), 12.5, ui.Regular, colors.chatSecondary)
 	label.MaxLines = 1
 	label.Style.MinWidth, label.Style.FlexShrink = core.Pt(0), 1
+	if p.Yield {
+		label.EllipsizeMode = core.EllipsizeHead
+	}
 	children = append(children, label)
 	if p.Caret {
 		children = append(children, core.View{Style: core.Style{FlexShrink: 0}, Children: []core.Node{
@@ -158,9 +164,17 @@ func (p Chip) face(cx *core.Scope) []core.Node {
 	return children
 }
 
+// chipYieldShrink leaves a row's other chips whole until a yielding one has
+// nothing left to give.
+const chipYieldShrink = 1000
+
 // shape is the chip's size and how it fills.
 func (p Chip) shape(cx *core.Scope) (core.Style, func() core.Style) {
-	return core.Style{Direction: core.Row, Height: core.Pt(26), MinWidth: core.Pt(0), FlexShrink: 1, Padding: core.Symmetric(0, 7), CornerRadius: 6, AlignItems: core.AlignCenter, Gap: 6,
+	shrink := float32(1)
+	if p.Yield {
+		shrink = chipYieldShrink
+	}
+	return core.Style{Direction: core.Row, Height: core.Pt(26), MinWidth: core.Pt(0), FlexShrink: shrink, Padding: core.Symmetric(0, 7), CornerRadius: 6, AlignItems: core.AlignCenter, Gap: 6,
 			Disabled: &core.Style{Opacity: core.Alpha(0.7)}},
 		func() core.Style {
 			return chatTriggerStates(cx, is(p.Active))
