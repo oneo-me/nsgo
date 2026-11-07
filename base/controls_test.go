@@ -2,6 +2,7 @@ package base_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -120,5 +121,33 @@ func TestButtonTabsCollapsibleAndProgress(t *testing.T) {
 	}
 	if w := p.Children[0].Children[0].Frame.Size.Width; w != 100 {
 		t.Errorf("indicator %v wide, want the whole track", w)
+	}
+}
+
+// TestCarouselLoopingMargin moves a looping carousel whose slides leave
+// their spacing in a margin, so no gap sits between the runway and them.
+func TestCarouselLoopingMargin(t *testing.T) {
+	app := startDesktop(t, func(cx *core.Scope) core.Node {
+		var slides []core.Node
+		for range 5 {
+			slides = append(slides, base.CarouselItem{Style: core.Style{Width: core.Pt(100), Margin: core.Edges{Right: 8}}})
+		}
+		return core.View{Style: core.Style{Width: core.Pt(200)}, Children: []core.Node{
+			base.Carousel{Looping: true, Children: []core.Node{
+				base.CarouselContent{TestID: "track", Style: core.Style{Height: core.Pt(50)}, Children: slides},
+				base.CarouselNext{Label: "Next", Style: core.Style{Height: core.Pt(30)}},
+			}},
+		}}
+	})
+	rest := func(i int) core.Points { return core.Points(532 + 108*i) }
+	if got := app.Find("track").Offset.X; got != rest(0) {
+		t.Fatalf("rests at %v, want right after the runway", got)
+	}
+	for i := 1; i <= 5; i++ {
+		app.Press("role:button Next")
+		app.Advance(time.Second)
+		if got, want := app.Find("track").Offset.X, rest(i%5); got != want {
+			t.Fatalf("Next %d reached %v, want %v", i, got, want)
+		}
 	}
 }

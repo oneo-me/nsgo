@@ -52,24 +52,27 @@ type carouselTrack struct {
 	// period is a seamless loop's: from the first slide's start to the
 	// last's end, and the gap after it; runway that less the gap. 0 while
 	// it does not loop seamlessly.
-	period, runway  float64
-	first, viewport float64
+	period, runway float64
+	// origin is the first slide's rest offset in the middle period: past
+	// the runway and whatever gap the content leaves after it, which is
+	// none when the slides space themselves with margins.
+	origin, viewport float64
 }
 
 func carouselTracksEqual(a, b carouselTrack) bool {
-	return a.period == b.period && a.runway == b.runway && a.first == b.first && a.viewport == b.viewport && slices.Equal(a.snaps, b.snaps)
+	return a.period == b.period && a.runway == b.runway && a.origin == b.origin && a.viewport == b.viewport && slices.Equal(a.snaps, b.snaps)
 }
 
 // ready says the slides are where their rests are: while the loop is
 // seamless, once its runway is in the layout before the first slide.
-func (t carouselTrack) ready() bool { return t.period == 0 || t.first+carouselEpsilon >= t.period }
+func (t carouselTrack) ready() bool { return t.period == 0 || t.origin+carouselEpsilon >= t.runway }
 
 // rest is a slide's rest offset in the middle period.
 func (t carouselTrack) rest(i int) (float64, bool) {
 	if i < 0 || i >= len(t.snaps) {
 		return 0, false
 	}
-	return t.snaps[i] + t.period, true
+	return t.snaps[i] + t.origin, true
 }
 
 // carouselFirstAt is the first of the slides whose snap point is slide i's.
@@ -92,10 +95,7 @@ func (t carouselTrack) nearest(offset float64) (index int, at float64, cycle int
 	best := math.Inf(1)
 	for _, k := range cycles {
 		for i, s := range t.snaps {
-			p := s + t.period*float64(k+1)
-			if t.period == 0 {
-				p = s
-			}
+			p := s + t.origin + t.period*float64(k)
 			if d := math.Abs(p - offset); d < best {
 				best, index, at, cycle, ok = d, i, p, k, true
 			}
@@ -123,11 +123,13 @@ type carouselCtl struct {
 	// takes them whole, as a layout reports each slide's frame apart.
 	max, viewport float64
 	known         bool
-	settled       *core.Signal[int]
-	waiting       bool
-	offset        *core.AnimatedValue
-	period        *core.AnimatedValue
-	own           *core.Signal[int]
+	// runwayAt is where each runway is laid out along the axis.
+	runwayAt [2]float64
+	settled  *core.Signal[int]
+	waiting  bool
+	offset   *core.AnimatedValue
+	period   *core.AnimatedValue
+	own      *core.Signal[int]
 	// pending is where a swipe rested until the app answered, -1 for none.
 	pending        *core.Signal[int]
 	answeredInDrag bool
@@ -173,7 +175,7 @@ func (c *carouselCtl) makeTrack() carouselTrack {
 	// A seamless loop shows each slide once: the slides span the viewport
 	// and one more slide at least.
 	seamless := c.looping && len(frames) > 1 && c.known && period+carouselEpsilon >= c.viewport+widest
-	t := carouselTrack{first: first, viewport: c.viewport}
+	t := carouselTrack{viewport: c.viewport}
 	for _, f := range frames {
 		s := math.Max(f[0]-first, 0)
 		if !seamless && c.known {
@@ -183,6 +185,8 @@ func (c *carouselCtl) makeTrack() carouselTrack {
 	}
 	if seamless {
 		t.period, t.runway = period, period-gap
+		// Past the content's padding, which the nearer runway starts at.
+		t.origin = first - min(c.runwayAt[0], c.runwayAt[1])
 	}
 	return t
 }
@@ -251,15 +255,28 @@ func (c *carouselCtl) register(cx *core.Scope, ref *core.Ref) (*carouselSlide, c
 
 // place hears slide s laid out at frame.
 func (c *carouselCtl) place(s *carouselSlide, frame core.Bounds) {
-	start, length := float64(frame.Origin.X), float64(frame.Size.Width)
-	if c.axis == Vertical {
-		start, length = float64(frame.Origin.Y), float64(frame.Size.Height)
-	}
+	start, length := c.along(frame)
 	if s.placed && s.start == start && s.length == length {
 		return
 	}
 	s.placed, s.start, s.length = true, start, length
 	c.settleLater()
+}
+
+// placeRunway hears runway i laid out at frame.
+func (c *carouselCtl) placeRunway(i int, frame core.Bounds) {
+	if start, _ := c.along(frame); c.runwayAt[i] != start {
+		c.runwayAt[i] = start
+		c.settleLater()
+	}
+}
+
+// along is where frame starts on the axis and how long it is.
+func (c *carouselCtl) along(frame core.Bounds) (start, length float64) {
+	if c.axis == Vertical {
+		return float64(frame.Origin.Y), float64(frame.Size.Height)
+	}
+	return float64(frame.Origin.X), float64(frame.Size.Width)
 }
 
 func (c *carouselCtl) measured(e core.ScrollEvent) {
@@ -621,8 +638,8 @@ type CarouselContent struct {
 	// OnLayout is its scroll view's.
 	OnLayout func(core.Bounds)
 	// OffsetValues follow its offset on the platform's main thread, for
-	// slides that scale as they near the middle. A looping carousel uses
-	// its own.
+	// slides that scale as they near the middle. A looping carousel's
+	// offset runs over its periods.
 	OffsetValues core.AnimatedXY
 }
 
@@ -657,12 +674,17 @@ func (a CarouselContent) Render(cx *core.Scope) core.Node {
 	})
 	scroll.Ref = c.scroller
 	if c.looping {
+		// The slides' translations read the app's value when it has one.
+		values := &scroll.OffsetValues.X
 		if c.axis == Vertical {
-			scroll.OffsetValues = core.AnimatedXY{Y: c.offset}
-		} else {
-			scroll.OffsetValues = core.AnimatedXY{X: c.offset}
+			values = &scroll.OffsetValues.Y
 		}
-		scroll.Children = append(append([]core.Node{c.runway()}, a.Children...), c.runway())
+		if *values != nil {
+			c.offset = *values
+		} else {
+			*values = c.offset
+		}
+		scroll.Children = append(append([]core.Node{c.runway(0)}, a.Children...), c.runway(1))
 	}
 	scroll.BehaviorFunc = func() core.ScrollBehavior {
 		t := c.track.Get()
@@ -673,7 +695,7 @@ func (a CarouselContent) Render(cx *core.Scope) core.Node {
 		var offsets []core.Points
 		for k := range cycles {
 			for _, s := range t.snaps {
-				at := s + t.period*float64(k)
+				at := s + t.origin + t.period*float64(k-1)
 				if len(offsets) == 0 || math.Abs(float64(offsets[len(offsets)-1])-at) > carouselEpsilon {
 					offsets = append(offsets, core.Points(at))
 				}
@@ -700,11 +722,12 @@ func scrollDirection(a Axis) core.FlexDirection {
 	return core.Column
 }
 
-// runway is a runway of the content, before or after the slides: as long
+// runway is runway i of the content, before or after the slides: as long
 // as a period less the gap while the loop is seamless, else out of the
 // layout.
-func (c *carouselCtl) runway() core.Node {
+func (c *carouselCtl) runway(i int) core.Node {
 	return core.View{PointerEvents: core.PointerEventsNone, AccessibilityElementsHidden: func() bool { return true },
+		OnLayout: func(b core.Bounds) { c.placeRunway(i, b) },
 		StyleFunc: func() core.Style {
 			s := core.Style{FlexGrow: 0, FlexShrink: 0}
 			r := c.track.Get().runway
@@ -744,11 +767,27 @@ func (a CarouselItem) Render(cx *core.Scope) core.Node {
 	}
 	slide, translation := c.register(cx, v.Ref)
 	if translation != nil {
-		animated := &core.AnimatedStyle{TranslateX: translation}
-		if c.axis == Vertical {
-			animated = &core.AnimatedStyle{TranslateY: translation}
+		// Over what the app animates, as a style's Animated replaces another.
+		translated := func(s *core.AnimatedStyle) *core.AnimatedStyle {
+			var out core.AnimatedStyle
+			if s != nil {
+				out = *s
+			}
+			if c.axis == Vertical {
+				out.TranslateY = translation
+			} else {
+				out.TranslateX = translation
+			}
+			return &out
 		}
-		v.Style = core.Style{Animated: animated}.Merge(v.Style)
+		v.Style.Animated = translated(v.Style.Animated)
+		if a.StyleFunc != nil {
+			v.StyleFunc = func() core.Style {
+				s := a.StyleFunc()
+				s.Animated = translated(s.Animated)
+				return s
+			}
+		}
 	}
 	v.OnLayout = func(b core.Bounds) { c.place(slide, b) }
 	return v

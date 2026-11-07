@@ -357,6 +357,7 @@ func (a *App) apply(b *driver.MountBatch) {
 			} else {
 				v.Offset = v.clamp(it.Point)
 			}
+			a.anim.Scroll(v.ID, v.Offset)
 			// A platform reports where a scroll lands, and that an animated
 			// one came to rest.
 			id, at, n := it.ID, v.Offset, v.Applied

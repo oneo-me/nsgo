@@ -112,7 +112,7 @@ func carouselCard(last *core.Signal[string]) cardFunc {
 		width, count := core.NewSignal(cx, 220.0), core.NewSignal(cx, 5.0)
 		looping := core.NewSignal(cx, false)
 		return Playground{Title: "Carousel", Fill: true, Base: baseCarouselForm(cx, last, count, looping), Stage: func() core.Node {
-			return ui.Carousel{Count: int(count.Get()), SlideWidth: core.Points(width.Get()), Index: index.Get, Label: tr.DemoImage(),
+			return ui.Carousel{Count: int(count.Get()), SlideWidth: core.Points(width.Get()), Looping: looping.Get(), Index: index.Get, Label: tr.DemoImage(),
 				OnChange: func(i int) { index.Set(i); last.Set(fmt.Sprintf("Carousel: %d", i+1)) },
 				Slide: func(cx *core.Scope, i int) core.Node {
 					return swatch(cx, tileTones[i%len(tileTones)], itoa(i+1))

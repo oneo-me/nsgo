@@ -108,9 +108,14 @@ func TestTreeModel(t *testing.T) {
 }
 
 func TestCarouselTrack(t *testing.T) {
-	loop := carouselTrack{snaps: []float64{0, 210, 420}, period: 630, runway: 620, first: 630, viewport: 200}
-	if !loop.ready() || (carouselTrack{period: 630, first: 0}).ready() {
+	loop := carouselTrack{snaps: []float64{0, 210, 420}, period: 630, runway: 620, origin: 630, viewport: 200}
+	if !loop.ready() || (carouselTrack{period: 630, runway: 620}).ready() {
 		t.Error("a loop is ready once its runway is laid out")
+	}
+	// Slides with margins rest right after the runway, no gap before them.
+	margins := carouselTrack{snaps: []float64{0, 210, 420}, period: 630, runway: 620, origin: 620, viewport: 200}
+	if r, _ := margins.rest(1); !margins.ready() || r != 830 {
+		t.Errorf("rest with margins = %v, ready %v", r, margins.ready())
 	}
 	if r, _ := loop.rest(2); r != 1050 {
 		t.Errorf("rest = %v", r)

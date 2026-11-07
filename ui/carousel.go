@@ -23,6 +23,9 @@ type Carousel struct {
 	// SlideWidth is the widest a slide grows: 340 points when 0. A slide
 	// takes at most 80% of the carousel.
 	SlideWidth core.Points
+	// Looping goes around the ends, seamlessly while the slides span the
+	// carousel and one slide more. Read as it is made.
+	Looping bool
 	// Label names the carousel, and SlideLabel slide i of count and its
 	// indicator, "i+1 / count" when nil.
 	Label                    string
@@ -68,10 +71,18 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 			}
 			at := float64(core.Points(i) * step(w))
 			d := float64(step(w))
+			var position core.AnimatedNode = offset
+			if c.Looping && n > 1 {
+				// The offset in a period, this slide resting in its middle
+				// whichever period it shows in.
+				period := float64(n) * d
+				position = core.Mod(core.Sub(offset, core.Constant(at-period/2)), core.Constant(period))
+				at = period / 2
+			}
 			input := []float64{at - d, at, at + d}
 			s.Animated = &core.AnimatedStyle{
-				Scale: core.Interpolate(offset, core.Interpolation{Input: input, Output: []float64{0.9, 1, 0.9}, Extrapolate: core.ExtrapolateClamp}),
-				Opacity: core.Interpolate(offset, core.Interpolation{Input: input, Output: []float64{0.5, 1, 0.5},
+				Scale: core.Interpolate(position, core.Interpolation{Input: input, Output: []float64{0.9, 1, 0.9}, Extrapolate: core.ExtrapolateClamp}),
+				Opacity: core.Interpolate(position, core.Interpolation{Input: input, Output: []float64{0.5, 1, 0.5},
 					Extrapolate: core.ExtrapolateClamp}),
 			}
 			return s
@@ -107,6 +118,6 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 			base.CarouselPagination{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: dots},
 			base.CarouselNext{Label: c.NextLabel, Style: face, StyleFunc: look, Children: []core.Node{arrow(lucide.ChevronRight)}},
 		}}
-	return base.Carousel{Index: func() int { return index() }, OnChange: c.OnChange, Label: c.Label, Style: core.Style{Gap: 12}.Merge(c.Style),
+	return base.Carousel{Index: func() int { return index() }, Looping: c.Looping, OnChange: c.OnChange, Label: c.Label, Style: core.Style{Gap: 12}.Merge(c.Style),
 		Children: []core.Node{track, controls}}
 }
