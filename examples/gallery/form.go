@@ -447,7 +447,7 @@ func formDemo(cx *core.Scope) core.Node {
 		}}}}
 
 	return demoPage(cx, pageProps{behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardDismissMode: mode.Get()} }, after: []core.Node{dialog}},
-		inputPlayground, numberInputCard, tagInputCard, keyboard, account, numbers, shipping, selection, textCard, submitCard, more)
+		inputPlayground, baseInputCard, keyboard, account, numbers, shipping, selection, textCard, submitCard, more)
 }
 
 // autoGrow is a multiline input that grows with its text

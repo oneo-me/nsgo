@@ -11,7 +11,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The Badge and Avatar, Cards, Media and Lists and Tables demos: what shows
+// The ui forms of what shows
 // things, each with its props to set.
 
 // demoPeople are the avatars' names.

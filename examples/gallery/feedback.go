@@ -9,7 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The Progress demo and Toast's: what says how things stand, each with its
+// The ui forms of what says how things stand, each with its
 // props to set.
 
 func progressCard(*core.Signal[string]) cardFunc {

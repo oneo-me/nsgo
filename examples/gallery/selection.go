@@ -9,7 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The Selection and Slider and Rating demos: what picks a value, each with
+// The ui forms of what picks a value, each with
 // its props to set.
 
 func checkboxCard(last *core.Signal[string]) cardFunc {

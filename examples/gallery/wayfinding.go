@@ -10,7 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The Tabs, Stepper and Breadcrumbs and Collapsible demos' props to set.
+// The ui forms of what finds and folds content, with their props to set.
 
 func tabsCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {

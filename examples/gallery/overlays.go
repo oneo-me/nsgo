@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
@@ -100,31 +99,20 @@ func overlayCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-// sheetCard is base.Sheet, a panel at the bottom over a backdrop.
+// sheetCard is ui.Sheet, a panel at the bottom over a backdrop.
 func sheetCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
-		return ui.Card{Title: tr.OverlaySheet(), Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
+		close := func() { open.Set(false); last.Set(tr.OverlaySheet2() + "closed") }
+		return ui.Card{Title: "Sheet", Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
 			ui.Button{Text: tr.OverlayShowTheSheet(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
-			base.Sheet{Open: open.Get, Label: tr.OverlaySheet(),
-				OnOpenChange: func(next bool, reason base.Reason) {
-					open.Set(next)
-					state := "closed"
-					if next {
-						state = "opened"
-					}
-					last.Set(tr.OverlaySheet2() + state + " (" + reason.String() + ")")
-				},
-				PopupStyle: core.Style{CornerRadii: core.Corners{TopLeft: 20, TopRight: 20},
-					Padding: core.Edges{Top: 12, Right: 12, Bottom: 32, Left: 12}, Gap: 2}, PopupStyleFunc: ui.Filled(colors.Surface),
-				BackdropStyle: core.Style{Background: ui.Black(0.45)},
-				Children: []core.Node{core.View{Style: core.Style{Padding: core.All(12), Gap: 12}, Children: []core.Node{
-					ui.Text(tr.OverlaySheet(), 15, ui.Semibold, colors.Text),
-					ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 13, ui.Regular, colors.Muted),
-					ui.Button{Text: tr.OverlayDone(), OnPress: func() { open.Set(false) }},
-				}}}},
+			ui.Sheet{Open: open.Get, OnClose: close, Children: []core.Node{
+				ui.Text(tr.OverlaySheet(), 15, ui.Semibold, colors.Text),
+				ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 13, ui.Regular, colors.Muted),
+				ui.Button{Text: tr.OverlayDone(), OnPress: close},
+			}},
 		}}
 	}
 }

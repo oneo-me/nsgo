@@ -9,7 +9,8 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The Buttons demo: what a press acts on, each with its props to set.
+// The ui forms of what a press acts on and of Pagination and OtpInput, each
+// with its props to set.
 
 var buttonVariants = options([]ui.ButtonVariant{ui.ButtonPrimary, ui.ButtonSecondary, ui.ButtonAccent, ui.ButtonGhost},
 	"Primary", "Secondary", "Accent", "Ghost")

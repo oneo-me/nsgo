@@ -83,10 +83,10 @@ func TestTabs(t *testing.T) {
 	if app.Exists("id:nav-Stocks") {
 		t.Fatal("the basics tab lists the apps")
 	}
-	open(app, "Selection")
+	open(app, "Checkbox")
 	app.Press("id:tab-basics")
 	app.Press("id:tab-components")
-	app.Find("id:demo-Selection")
+	app.Find("id:demo-Checkbox")
 	// The menu reaches a demo of another tab.
 	app.Press("id:tab-basics")
 	app.ChooseMenu("View", "Photos")
@@ -102,7 +102,7 @@ func TestPhoneTabs(t *testing.T) {
 	if len(bars) != 1 || len(bars[0].NativeProps["items"].([]any)) != len(tabs)+1 {
 		t.Fatalf("the bars are %v", bars)
 	}
-	openPhone(app, "Selection")
+	openPhone(app, "Checkbox")
 	app.Back()
 	openTab(app, settingsTab())
 	app.Find("id:settings-page")
@@ -116,12 +116,12 @@ func TestPhoneTabs(t *testing.T) {
 		t.Fatalf("page = %x, want the dark background", got)
 	}
 	// One bar serves every tab, and pages pushed cover it.
-	openPhone(app, "Selection")
+	openPhone(app, "Checkbox")
 	app.Back()
 	if got := len(app.QueryMounted("id:tab-bar")); got != 1 {
 		t.Fatalf("%d bars", got)
 	}
-	if len(app.QueryMounted("id:screen-Selection >> id:tab-bar")) != 0 {
+	if len(app.QueryMounted("id:screen-Checkbox >> id:tab-bar")) != 0 {
 		t.Fatal("a pushed page holds the bar")
 	}
 }
@@ -133,8 +133,8 @@ func TestPhoneLargeTitles(t *testing.T) {
 	if !app.Find("id:index").Screen.LargeTitle {
 		t.Fatal("the index has no large title")
 	}
-	openPhone(app, "Selection")
-	if !app.Find("id:screen-Selection").Screen.LargeTitle {
+	openPhone(app, "Checkbox")
+	if !app.Find("id:screen-Checkbox").Screen.LargeTitle {
 		t.Fatal("a demo that scrolls has no large title")
 	}
 	app.Back()
@@ -168,7 +168,7 @@ func TestNarrowDesktop(t *testing.T) {
 		t.Fatal("the sidebar's footer shows")
 	}
 	// The bar leaves pushed pages the window.
-	app.Press("role:tab Controls")
+	app.Press("role:tab Components")
 	app.Press("id:nav-Stocks")
 	if app.Exists("role:tablist Sections") {
 		t.Fatal("the tab bar shows over a pushed page")
@@ -224,9 +224,9 @@ func TestEveryDemoBuilds(t *testing.T) {
 // TestLayoutsKeepTheDemo moves between the layouts with a demo open.
 func TestLayoutsKeepTheDemo(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Selection")
+	open(app, "Checkbox")
 	app.Resize(400, 800)
-	app.Find("id:screen-Selection")
+	app.Find("id:screen-Checkbox")
 	app.Back()
 	app.Press("id:nav-Input")
 	app.Resize(1200, 800)
@@ -242,17 +242,17 @@ func TestLayoutsKeepTheDemo(t *testing.T) {
 // they show, when the pane narrows to one column.
 func TestResizeKeepsTheCards(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Selection")
+	open(app, "Checkbox")
 	app.Press("role:switch Disabled >> nth=0")
 	app.Resize(900, 800)
-	if !app.Find("role:checkbox Starred").Props.Disabled {
+	if !app.Find("id:stage-Checkbox >> role:checkbox Starred").Props.Disabled {
 		t.Fatal("the cards were built again")
 	}
 }
 
 func TestPhoneRestoresDemo(t *testing.T) {
-	app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Storage(map[string]string{lastDemo: "Selection"}))
-	app.Find("id:screen-Selection")
+	app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Storage(map[string]string{lastDemo: "Checkbox"}))
+	app.Find("id:screen-Checkbox")
 	app.Back()
 	app.Find("id:home")
 	if _, ok := app.Storage().GetItem(lastDemo); ok {
@@ -284,15 +284,16 @@ func TestApplicationMenu(t *testing.T) {
 // TestControls uses a control of each page, each reporting its event.
 func TestControls(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Selection")
-	app.Press("role:radio Banana")
+	open(app, "Radio")
+	app.Press("id:stage-RadioGroup · Radio >> role:radio Banana")
 	app.Find("text:Radio: Banana")
-	app.Press("role:checkbox Starred")
+	open(app, "Checkbox")
+	app.Press("id:stage-Checkbox >> role:checkbox Starred")
 	app.Find("text:Checkbox: off")
 	open(app, "Tabs")
-	app.Press("role:tab Activity")
+	app.Press("id:stage-Tabs >> role:tab Activity")
 	app.Find("text:Tabs: 1")
-	open(app, "Stepper and Breadcrumbs")
+	open(app, "Breadcrumbs")
 	app.Find("id:stage-Breadcrumbs")
 	open(app, "Progress")
 	if now := app.Find("role:progressbar Progress >> nth=0").Props.Value.Now; now != 40 {
@@ -420,7 +421,7 @@ func TestChatRetriesAFailure(t *testing.T) {
 
 func TestListsAndScrolling(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "List")
+	open(app, "Lists")
 	app.Find("id:grid")
 	app.Press("role:tab More")
 	app.Scroll("id:more", 200)
@@ -610,11 +611,33 @@ func TestToastOptions(t *testing.T) {
 	}
 }
 
+// TestBaseForms shows a component's base form beside its ui form, with
+// base's behavior under the look its page writes out.
+func TestBaseForms(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Button")
+	app.Press("id:base-button")
+	app.Find("text:base.Button pressed")
+	open(app, "Switch")
+	sw := "id:stage-base.Switch >> role:switch Starred"
+	app.Press(sw)
+	if app.Find(sw).Props.Checked {
+		t.Fatal("base.Switch stayed on")
+	}
+	open(app, "Dialog")
+	app.Press("id:stage-base.Dialog >> role:button Open")
+	app.Find("id:base-dialog")
+	open(app, "Menu")
+	app.Press("id:stage-base.Menu >> role:button Open")
+	app.Press("role:menuitem Copy")
+	app.Find("text:base.Menu: Copy")
+}
+
 // TestPlaygrounds sets a prop and sees the component change, and a stage
 // page keeps its panel beside the component until the pane is too narrow.
 func TestPlaygrounds(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Buttons")
+	open(app, "Button")
 	if app.Find("id:button").Props.Disabled {
 		t.Fatal("the button starts disabled")
 	}
@@ -693,7 +716,7 @@ func TestDataTable(t *testing.T) {
 // TestTable finds the invoices' table and its roles.
 func TestTable(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Lists and Tables")
+	open(app, "Table")
 	app.Find("role:table Recent invoices")
 	if n := len(app.Query("role:columnheader")); n < 4 {
 		t.Fatalf("%d column headers, want the invoices' 4 and the total", n)
@@ -770,8 +793,9 @@ func TestAppearanceRestylesInPlace(t *testing.T) {
 	dark.Dark = true
 	for _, d := range allDemos() {
 		t.Run(d.name, func(t *testing.T) {
-			// The market's random prices color its charts.
-			drawings := d.name != "Stocks"
+			// The market's random prices color its charts, and a shell
+			// answers the terminal when it will.
+			drawings := d.name != "Stocks" && d.name != "Terminal"
 			shown := "id:demo-" + d.name
 			app := startDesktop(t)
 			open(app, d.name)
@@ -798,7 +822,7 @@ func TestPhoneAppearanceRestylesInPlace(t *testing.T) {
 	phone := core.Environment{OS: core.OSIOS, Idiom: core.IdiomPhone, Locale: "en-US"}
 	dark := phone
 	dark.Dark = true
-	for _, demo := range []string{"", "Selection"} {
+	for _, demo := range []string{"", "Checkbox"} {
 		var stored map[string]string
 		start := func(env core.Environment) (*nsgotest.App, string) {
 			app := nsgotest.Start(t, Root, nsgotest.Size(390, 844), nsgotest.Environment(env), nsgotest.Storage(stored))
@@ -1027,17 +1051,17 @@ func TestLanguageRemembered(t *testing.T) {
 // sidebar, a demo and base's own words.
 func TestGalleryLanguages(t *testing.T) {
 	for _, c := range []struct{ locale, nav, title, sort string }{
-		{"zh-CN", "选择", "苹果", "按ID排序"},
-		{"zh-TW", "選擇", "蘋果", "依ID排序"},
-		{"ar-EG", "التحديد", "تفاح", "الفرز حسب المعرّف"},
+		{"zh-CN", "单选框", "苹果", "按ID排序"},
+		{"zh-TW", "單選按鈕", "蘋果", "依ID排序"},
+		{"ar-EG", "زر اختيار", "تفاح", "الفرز حسب المعرّف"},
 	} {
 		t.Run(c.locale, func(t *testing.T) {
 			env := desktopEnv
 			env.Locale = c.locale
 			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
-			open(app, "Selection")
-			app.Find("id:nav-Selection >> text:" + c.nav)
-			app.Find("id:demo-Selection >> text:" + c.title + " >> nth=0")
+			open(app, "Radio")
+			app.Find("id:nav-Radio >> text:" + c.nav)
+			app.Find("id:demo-Radio >> text:" + c.title + " >> nth=0")
 			open(app, "DataTable")
 			app.Find("label:" + c.sort)
 		})

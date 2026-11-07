@@ -9,7 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The Dialog and Sheet, Popover and Tooltip and Menu demos' props to set.
+// The ui forms of the popups, with their props to set.
 
 var placements = options([]core.Placement{core.PlaceBottom, core.PlaceTop, core.PlaceLeft, core.PlaceRight}, "Bottom", "Top", "Left", "Right")
 
