@@ -130,7 +130,7 @@ func DefaultTheme() *Theme {
 	text, dark := RGB(0x333333), RGB(0xeaeaea)
 	t := &Theme{
 		Light: Palette{
-			Background: RGB(0xfbfbfb), Surface: RGB(0xfefefe), SurfaceHover: RGB(0xeaeaea), SurfacePressed: RGB(0xd7d7d7),
+			Background: RGB(0xffffff), Surface: RGB(0xffffff), SurfaceHover: RGB(0xeaeaea), SurfacePressed: RGB(0xd7d7d7),
 			Border: text.Faded(0.16), Text: text, TextMuted: RGB(0x717171),
 			Accent: RGB(0x007aff), AccentHover: RGB(0x006be0), AccentPressed: RGB(0x005cbf), AccentText: RGB(0xffffff),
 			Danger: RGB(0xb4444c), Warning: RGB(0xb45309), Success: RGB(0x059669),

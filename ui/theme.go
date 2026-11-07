@@ -120,9 +120,9 @@ func Fixed(c core.Color) func() core.Color { return func() core.Color { return c
 func DefaultTheme() *core.Theme {
 	t := core.DefaultTheme()
 	t.Light.Colors = map[string]core.Color{
-		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xfefefe), "field": core.RGB(0xfdfdfd), "fieldBorder": t.Light.Border,
+		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xffffff), "field": core.RGB(0xfdfdfd), "fieldBorder": t.Light.Border,
 		"line": t.Light.Text.Faded(0.12), "faint": core.RGB(0x9e9e9e), "accentFill": core.RGB(0x007aff),
-		"light": core.RGB(0x333333), "onLight": core.RGB(0xfbfbfb), "track": core.RGB(0xc3c3c3), "knob": core.RGB(0xffffff),
+		"light": core.RGB(0x333333), "onLight": core.RGB(0xffffff), "track": core.RGB(0xc3c3c3), "knob": core.RGB(0xffffff),
 		"code": core.RGB(0x373737), "info": core.RGB(0x0891b2), "down": core.RGB(0xb4444c),
 	}
 	t.Dark.Colors = map[string]core.Color{
