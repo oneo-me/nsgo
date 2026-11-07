@@ -51,7 +51,7 @@ func showcase(cx *core.Scope) core.Node {
 		Accordion{Items: []AccordionItem{{Text: "Open", Content: core.Text{Content: "Body"}}, {Text: "Closed"}},
 			Open: func(i int) bool { return i == 0 }},
 		Collapsible{Text: "Collapsible", Open: on.Get, OnOpenChange: on.Set, Content: core.Text{Content: "Body"}},
-		Breadcrumbs{Items: []string{"Home", "Docs", "Guide", "Page"}, MaxItems: 3, MoreLabel: "More"},
+		Breadcrumbs{Items: []string{"Home", "Docs", "Guide", "Page"}},
 		NavHeader{Title: "Header", OnBack: func() {}, BackLabel: "Back"},
 		Skeleton{Lines: 2, Avatar: true, Label: "Loading"},
 		Image{Label: "Picture"},

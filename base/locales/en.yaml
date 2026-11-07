@@ -67,3 +67,6 @@ calendarMonthName:
 calendarWeekday:
   message: "{d, date, ::EEEEE}"
   description: A date in a calendar's header, grid of months or weekday headings.
+breadcrumbsMore:
+  message: "More"
+  description: What screen readers say of the button listing a breadcrumb path's collapsed ancestors.

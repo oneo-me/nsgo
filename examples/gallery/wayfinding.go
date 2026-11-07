@@ -70,12 +70,12 @@ func stepperPlayground(last *core.Signal[string]) cardFunc {
 func breadcrumbsCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		most := core.NewSignal(cx, 0.0)
+		width := core.NewSignal(cx, 480.0)
 		path := []string{tr.ControlsApps(), tr.ControlsPhotos(), "2026", "Lisbon", "IMG_0042.heic"}
 		return Playground{Title: "Breadcrumbs", UIOnly: true, Stage: func() core.Node {
-			return ui.Breadcrumbs{Items: path, MaxItems: int(most.Get()), MoreLabel: tr.KitMore(),
-				OnSelect: func(i int) { last.Set("Breadcrumbs: " + path[i]) }}
-		}, Knobs: []core.Node{numberKnob("MaxItems", most, 0, 5, 1)}}
+			return core.View{Style: core.Style{Width: core.Pt(core.Points(width.Get())), MaxWidth: core.Pct(100)}, Children: []core.Node{
+				ui.Breadcrumbs{Items: path, OnSelect: func(i int) { last.Set("Breadcrumbs: " + path[i]) }}}}
+		}, Knobs: []core.Node{numberKnob("Width", width, 120, 480, 20)}}
 	}
 }
 

@@ -67,6 +67,7 @@ type Translation struct {
 	CalendarMonth             func(d time.Time) string
 	CalendarMonthName         func(d time.Time) string
 	CalendarWeekday           func(d time.Time) string
+	BreadcrumbsMore           func() string
 }
 
 var supplied = map[string]Translation{}
@@ -91,6 +92,7 @@ const (
 	textCommandNoMatches
 	textCommandLoading
 	textCommandList
+	textBreadcrumbsMore
 	numTexts
 )
 
@@ -116,6 +118,7 @@ var texts = map[string]*[numTexts]string{
 		"No matching commands",
 		"Loading…",
 		"Commands",
+		"More",
 	},
 	"zh-Hans": {
 		"全部展开",
@@ -136,6 +139,7 @@ var texts = map[string]*[numTexts]string{
 		"没有匹配的命令",
 		"正在加载…",
 		"命令",
+		"更多",
 	},
 }
 
@@ -240,6 +244,9 @@ func Supply(lang string, t Translation) {
 	}
 	if t.CalendarWeekday != nil {
 		s.CalendarWeekday = t.CalendarWeekday
+	}
+	if t.BreadcrumbsMore != nil {
+		st[textBreadcrumbsMore] = t.BreadcrumbsMore()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -571,3 +578,13 @@ func (msgs Messages) CalendarWeekday(d time.Time) string {
 		}
 	}
 }
+
+// BreadcrumbsMore says "More"
+// in the language the app shows under cx.
+//
+// What screen readers say of the button listing a breadcrumb path's collapsed ancestors.
+func BreadcrumbsMore(cx *core.Scope) string { return For(cx).BreadcrumbsMore() }
+
+// BreadcrumbsMore says "More"
+// in the language of msgs.
+func (msgs Messages) BreadcrumbsMore() string { return msgs.text(textBreadcrumbsMore) }
