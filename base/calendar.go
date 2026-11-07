@@ -14,12 +14,11 @@ const (
 	yearsPerPage = 20
 	monthsPerRow = 3
 	yearsPerRow  = 5
-	// calendarWeeks is the most weeks a month shows, calendarMinWeeks the
-	// fewest; calendarLit how many signals the keyboard's stop is spread
-	// over, more than the days shown.
-	calendarWeeks    = 6
-	calendarMinWeeks = 4
-	calendarLit      = 96
+	// calendarWeeks is the weeks every month shows, so that turning the
+	// months moves nothing; calendarLit how many signals the keyboard's stop
+	// is spread over, more than the days shown.
+	calendarWeeks = 6
+	calendarLit   = 96
 )
 
 // DateValue is a calendar's or a date picker's value: one date, or with
@@ -425,6 +424,9 @@ var calendarGrow = core.Style{FlexGrow: 1, FlexShrink: 1, FlexBasis: core.Pt(0)}
 
 var calendarRow = core.Style{Direction: core.Row}
 
+// calendarPickerRow is a row of months or years, which share a body's height.
+var calendarPickerRow = calendarRow.Merge(calendarGrow)
+
 // nodes are the header, the body and the keys.
 func (g *calendarGrid) nodes(changed func(DateValue)) []core.Node {
 	cfg := g.config
@@ -479,7 +481,7 @@ func (g *calendarGrid) rows(items []core.Node, perRow int) core.Node {
 		for len(row) < perRow {
 			row = append(row, core.View{Style: calendarGrow})
 		}
-		rows = append(rows, core.View{Class: cfg.RowClass, Style: calendarRow.Merge(cfg.RowStyle), Children: row})
+		rows = append(rows, core.View{Class: cfg.RowClass, Style: calendarPickerRow.Merge(cfg.RowStyle), Children: row})
 	}
 	return core.View{Class: cfg.BodyClass, Style: cfg.BodyStyle, Children: rows}
 }
@@ -495,11 +497,12 @@ func (g *calendarGrid) yearView() core.Node {
 				Then: func(*core.Scope) core.Node { return g.pickerItem(CalendarYear, at) },
 				Else: func(*core.Scope) core.Node { return core.View{Style: calendarGrow} }}
 		}
-		return core.View{Class: cfg.RowClass, Style: calendarRow.Merge(cfg.RowStyle), Children: cells}
+		return core.View{Class: cfg.RowClass, Style: calendarPickerRow.Merge(cfg.RowStyle), Children: cells}
 	}
+	// A short page keeps its empty rows, so that its years stay the same size.
 	rows := make([]core.Node, yearsPerPage/yearsPerRow)
 	for r := range rows {
-		rows[r] = core.Show{When: func() bool { return holds(r * yearsPerRow) }, Then: func(*core.Scope) core.Node { return row(r) }}
+		rows[r] = row(r)
 	}
 	return core.View{Class: cfg.BodyClass, Style: cfg.BodyStyle, Children: rows}
 }
@@ -512,10 +515,8 @@ type calendarItem struct {
 	label    func() string
 	// content is the text it shows without RenderItem, label when nil.
 	content func() string
-	// shown holds while it is in a week the month has.
-	shown func() bool
-	style core.Style
-	press func()
+	style   core.Style
+	press   func()
 }
 
 func (g *calendarGrid) item(i calendarItem) core.View {
@@ -526,12 +527,7 @@ func (g *calendarGrid) item(i calendarItem) core.View {
 	}
 	var child core.Node = core.Text{ContentFunc: content}
 	if cfg.RenderItem != nil {
-		child = core.Dynamic(func(*core.Scope) core.Node {
-			if i.shown != nil && !i.shown() {
-				return nil
-			}
-			return cfg.RenderItem(i.entry())
-		})
+		child = core.Dynamic(func(*core.Scope) core.Node { return cfg.RenderItem(i.entry()) })
 	}
 	v := core.View{Role: core.RoleButton, Disabled: i.disabled, Selected: i.selected, LabelFunc: i.label,
 		Class: cfg.ItemClass, Style: i.style.Merge(cfg.ItemStyle), Children: []core.Node{child}}
@@ -661,12 +657,6 @@ func firstShown(month time.Time, firstDay int) time.Time {
 	return month.AddDate(0, 0, -((int(month.Weekday()) + 7 - firstDay%7) % 7))
 }
 
-// weekCount is how many weeks month's show.
-func weekCount(month time.Time, firstDay int) int {
-	days := int(month.AddDate(0, 1, 0).Sub(firstShown(month, firstDay)) / (24 * time.Hour))
-	return (days + 6) / 7
-}
-
 // month is the weekdays and the weeks of a month: 42 days made once, a turn
 // of the months changing what they show.
 func (g *calendarGrid) month(cx *core.Scope, offset int, changed func(DateValue)) core.Node {
@@ -674,9 +664,8 @@ func (g *calendarGrid) month(cx *core.Scope, offset int, changed func(DateValue)
 	first := cfg.FirstDayOfWeek
 	page := core.NewMemo(cx, func() time.Time { return g.page.Get().AddDate(0, offset, 0) })
 	start := core.NewMemo(cx, func() time.Time { return firstShown(page.Get(), first) })
-	count := core.NewMemo(cx, func() int { return weekCount(page.Get(), first) })
-	row := func(children []core.Node, style func() core.Style) core.Node {
-		return core.View{Class: cfg.RowClass, Style: calendarRow.Merge(cfg.RowStyle), StyleFunc: style, Children: children}
+	row := func(children []core.Node) core.Node {
+		return core.View{Class: cfg.RowClass, Style: calendarRow.Merge(cfg.RowStyle), Children: children}
 	}
 	weekdays := make([]core.Node, 7)
 	for at := range weekdays {
@@ -684,27 +673,16 @@ func (g *calendarGrid) month(cx *core.Scope, offset int, changed func(DateValue)
 		weekdays[at] = g.item(calendarItem{entry: func() CalendarEntry { return CalendarEntry{Kind: CalendarWeekday, Value: day} },
 			disabled: func() bool { return true }, label: func() string { return strconv.Itoa(day) }, style: calendarGrow})
 	}
-	nodes := []core.Node{row(weekdays, nil)}
+	nodes := []core.Node{row(weekdays)}
 	for w := range calendarWeeks {
-		var shown func() bool
-		var style func() core.Style
-		if w >= calendarMinWeeks {
-			shown = func() bool { return w < count.Get() }
-			style = func() core.Style {
-				if !shown() {
-					return core.Style{Display: core.DisplayNone}
-				}
-				return core.Style{}
-			}
-		}
 		days := make([]core.Node, 7)
 		for d := range days {
 			at := w*7 + d
 			days[d] = core.Func(func(cx *core.Scope) core.Node {
-				return g.day(cx, dayCell{page: page, start: start, at: at, id: offset*42 + at, shown: shown}, changed)
+				return g.day(cx, dayCell{page: page, start: start, at: at, id: offset*42 + at}, changed)
 			})
 		}
-		nodes = append(nodes, row(days, style))
+		nodes = append(nodes, row(days))
 	}
 	return core.View{Class: cfg.MonthClass, Style: calendarGrow.Merge(cfg.MonthStyle), Children: nodes}
 }
@@ -728,7 +706,6 @@ func marksOf(v DateValue, day time.Time) dayMarks {
 type dayCell struct {
 	page, start *core.Memo[time.Time]
 	at, id      int
-	shown       func() bool
 }
 
 func (g *calendarGrid) day(cx *core.Scope, c dayCell, changed func(DateValue)) core.Node {
@@ -766,7 +743,7 @@ func (g *calendarGrid) day(cx *core.Scope, c dayCell, changed func(DateValue)) c
 		})
 	})
 	v := g.item(calendarItem{entry: entry.Get, selected: func() bool { return marks.Get().selected }, disabled: disabled.Get,
-		label: label, content: func() string { return strconv.Itoa(date.Get().Day()) }, shown: c.shown, style: calendarGrow,
+		label: label, content: func() string { return strconv.Itoa(date.Get().Day()) }, style: calendarGrow,
 		press: func() { g.pick(date.GetUntracked(), changed) }})
 	v.Ref = me
 	v.PartStates = func() core.PartStates {

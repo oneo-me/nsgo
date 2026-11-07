@@ -30,8 +30,20 @@ type Calendar struct {
 	Style core.Style
 }
 
-// calendarWidth is a month's width: seven days 32 points wide.
-const calendarWidth core.Points = 224
+const (
+	// calendarWidth is a month's width: seven days 32 points wide.
+	calendarWidth core.Points = 224
+	// calendarBodyHeight is the weekdays' 24 points and six weeks of 28,
+	// which the months and the years fill too.
+	calendarBodyHeight core.Points = 192
+	calendarGap        core.Points = 16
+)
+
+// calendarStyle is the width of a calendar of months, whatever it shows.
+func calendarStyle(months int) core.Style {
+	n := core.Points(max(months, 1))
+	return core.Style{Width: core.Pt(n*calendarWidth + (n-1)*calendarGap)}
+}
 
 // calendarConfig is a calendar's parts in Onevra's look.
 func calendarConfig(cx *core.Scope, months, firstDay int, disabled func(time.Time) bool) base.CalendarConfig {
@@ -43,8 +55,7 @@ func calendarConfig(cx *core.Scope, months, firstDay int, disabled func(time.Tim
 	return base.CalendarConfig{NumberOfMonths: months, FirstDayOfWeek: firstDay, DisabledMatcher: disabled,
 		PreviousLabel: locales.CalendarPrevious(cx), NextLabel: locales.CalendarNext(cx),
 		HeaderStyle: core.Style{Height: core.Pt(32), Margin: core.Edges{Bottom: 8}},
-		BodyStyle:   core.Style{Gap: 16},
-		MonthStyle:  core.Style{MinWidth: core.Pt(calendarWidth)},
+		BodyStyle:   core.Style{Height: core.Pt(calendarBodyHeight), Gap: calendarGap},
 		ItemStyle:   cell,
 		ItemStyleOf: func(kind base.CalendarItemKind) core.Style {
 			switch kind {
@@ -104,5 +115,5 @@ func calendarItem(cx *core.Scope, e base.CalendarEntry, titled bool) core.Node {
 func (c Calendar) Render(cx *core.Scope) core.Node {
 	return base.Calendar{Value: c.Value, DefaultValue: c.DefaultValue, Range: c.Range, OnChange: c.OnChange, TestID: c.TestID,
 		CalendarConfig: calendarConfig(cx, c.NumberOfMonths, c.FirstDayOfWeek, c.DisabledMatcher),
-		Style:          core.Style{AlignSelf: core.AlignStart}.Merge(c.Style)}
+		Style:          core.Style{AlignSelf: core.AlignStart}.Merge(calendarStyle(c.NumberOfMonths)).Merge(c.Style)}
 }

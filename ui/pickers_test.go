@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/locales"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -165,6 +166,54 @@ func TestCalendarPicksADay(t *testing.T) {
 		app.Press("label:2026-10-15")
 		if d := base.ISODate(got.Start); d != "2026-10-15" {
 			t.Fatalf("picked %q", d)
+		}
+	})
+}
+
+// February 2026 takes four weeks, May six, and the months and years replace
+// them all: nothing moves.
+func TestCalendarKeepsItsSize(t *testing.T) {
+	headless(t)
+	february := base.DateValue{Start: base.NewDate(2026, 2, 9, base.TimeOfDay{})}
+	each(t, func(t *testing.T, e core.Environment) {
+		var next string
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			next = "label:" + locales.CalendarNext(cx)
+			return Calendar{DefaultValue: february, TestID: "calendar"}
+		})
+		was := app.Find("id:calendar").Frame
+		if was.Size.Width != 224 || was.Size.Height != 232 {
+			t.Fatalf("a calendar is %v", was.Size)
+		}
+		if !app.Exists("label:2026-03-14") {
+			t.Fatal("February does not show six weeks")
+		}
+		// Each toggle opens its view, and the first of its label closes it.
+		for _, p := range []string{next, next, next, "label:5", "label:5 >> nth=0", "label:2026", "label:2026 >> nth=0"} {
+			app.Press(p)
+			if now := app.Find("id:calendar").Frame; now != was {
+				t.Fatalf("%v became %v after %s", was, now, p)
+			}
+		}
+	})
+}
+
+// A popup has no frame to find: its next button stays under the pointer.
+func TestDatePickerKeepsItsSize(t *testing.T) {
+	headless(t)
+	each(t, func(t *testing.T, e core.Environment) {
+		var next string
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			next = "label:" + locales.CalendarNext(cx)
+			return DatePicker{DefaultValue: base.DateValue{Start: base.NewDate(2026, 2, 9, base.TimeOfDay{})}, TestID: "picker", Label: "Date"}
+		})
+		app.Press("id:picker")
+		was := app.Find(next).Frame
+		for _, p := range []string{next, next, next, "label:5"} {
+			app.Press(p)
+			if now := app.Find(next).Frame; now != was {
+				t.Fatalf("%v became %v after %s", was, now, p)
+			}
 		}
 	})
 }

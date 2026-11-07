@@ -80,6 +80,7 @@ func (d DatePicker) Render(cx *core.Scope) core.Node {
 	b := base.DatePicker{Value: value, Range: d.Range, Open: open, Disabled: d.Disabled, TimePrecision: d.TimePrecision, HourCycle: d.HourCycle,
 		DefaultTime: d.DefaultTime, Presets: d.Presets, Cleanable: d.Cleanable,
 		CalendarConfig: calendarConfig(cx, d.NumberOfMonths, d.FirstDayOfWeek, d.DisabledMatcher),
+		CalendarStyle:  calendarStyle(d.NumberOfMonths),
 		OnOpenChange: func(v bool, r base.Reason) {
 			ownOpen.Set(v)
 			if d.OnOpenChange != nil {

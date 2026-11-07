@@ -96,3 +96,22 @@ func TestPopupsReportChangesAndEveryCancel(t *testing.T) {
 func startDesktop(t *testing.T, app func(cx *core.Scope) core.Node) *nsgotest.App {
 	return nsgotest.Start(t, app, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop}))
 }
+
+// Rows of years fill a body's height, and a short page keeps the empty ones
+// so that its years stay the size of a full page's.
+func TestCalendarShortPageKeepsItsRows(t *testing.T) {
+	day := base.NewDate(2001, 2, 3, base.TimeOfDay{})
+	app := startDesktop(t, func(*core.Scope) core.Node {
+		return base.Calendar{TestID: "calendar", DefaultValue: base.DateValue{Start: day},
+			CalendarConfig: base.CalendarConfig{YearRange: [2]int{2000, 2003}, ItemStyle: core.Style{MinHeight: core.Pt(30)},
+				BodyStyle: core.Style{Height: core.Pt(210)}}}
+	})
+	high := app.Find("id:calendar").Frame.Size.Height
+	app.Press("label:2001")
+	if got := app.Find("id:calendar").Frame.Size.Height; got != high {
+		t.Fatalf("years are %v high, days %v", got, high)
+	}
+	if got := app.Find("label:2000").Frame.Size.Height; got < 52 || got > 53 {
+		t.Fatalf("a year of four rows of 210 is %v high", got)
+	}
+}

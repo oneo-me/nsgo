@@ -240,7 +240,8 @@ func baseHoverCardForm(cx *core.Scope, last *core.Signal[string], placement *cor
 // bareCalendar is a calendar's parts in a card's look.
 func bareCalendar() base.CalendarConfig {
 	cell := core.Style{MinHeight: core.Pt(30), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}
-	return base.CalendarConfig{ItemStyle: cell,
+	// A row of weekdays and six of days, which the months and years fill too.
+	return base.CalendarConfig{BodyStyle: core.Style{Height: core.Pt(210)}, ItemStyle: cell,
 		ItemClass: "rounded-md selected:bg-blue-500 selected:text-white disabled:opacity-40 data-outside:opacity-40 data-today:font-semibold data-range-middle:bg-blue-500/20"}
 }
 
@@ -284,7 +285,7 @@ func baseDatePickerForm(cx *core.Scope, last *core.Signal[string], ranged, timed
 				precision = base.TimeMinute
 			}
 			today := cx.WallTime()
-			return base.DatePicker{Range: ranged.Get(), TimePrecision: precision, Cleanable: cleanable.Get(), CalendarConfig: bareCalendar(), Label: tr.PickerPickDate(),
+			return base.DatePicker{Range: ranged.Get(), TimePrecision: precision, Cleanable: cleanable.Get(), CalendarConfig: bareCalendar(), CalendarStyle: core.Style{Width: core.Pt(224)}, Label: tr.PickerPickDate(),
 				Presets: []base.DatePreset{{Label: tr.PickerPickDate(), Value: base.DateValue{Start: base.NewDate(today.Year(), today.Month(), today.Day(), base.TimeOfDay{})}}},
 				Offset:  4, Margin: 8, Style: bareBox, StyleFunc: bareInk(cx), PopupStyle: barePanel, PopupStyleFunc: barePopup(cx), BackdropStyle: bareBackdrop,
 				SegmentClass: "px-1 rounded focus:bg-blue-500 focus:text-white", TimeFieldStyle: core.Style{Position: core.Relative}, TimeLabel: bareText(cx, tr.PickerTime()),

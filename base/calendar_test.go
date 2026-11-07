@@ -25,16 +25,10 @@ func TestRangesStartEndAndStartAgain(t *testing.T) {
 	}
 }
 
-func TestMonthsShowTheirWeeks(t *testing.T) {
+func TestMonthsStartTheirWeeks(t *testing.T) {
 	august := date(2025, 8, 1)
-	if got := weekCount(august, 0); got != 6 {
-		t.Errorf("from Sunday: %d weeks", got)
-	}
 	if got := firstShown(august, 0); got != date(2025, 7, 27) {
 		t.Errorf("first shown: %v", got)
-	}
-	if got := weekCount(august, 1); got != 5 {
-		t.Errorf("from Monday: %d weeks", got)
 	}
 	if got := firstShown(august, 1); got != date(2025, 7, 28) {
 		t.Errorf("first shown: %v", got)
