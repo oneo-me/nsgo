@@ -220,6 +220,7 @@ func (s *surface) setFrame(v *view, it *driver.MountItem, lb *layoutBatch) {
 // the frame, hold with a transform; the bounds' origin is a scroll view's
 // offset.
 func (v *view) place(f driver.Bounds) {
+	resized := f.Size != v.frame.Size
 	v.frame, v.framed = f, true
 	b := objc.Send[apple.CGRect](v.native, selBounds)
 	b.Size = apple.CGSize{Width: float64(f.Size.Width), Height: float64(f.Size.Height)}
@@ -235,6 +236,10 @@ func (v *view) place(f driver.Bounds) {
 		v.componentView.Send(selSetFrame, apple.Rect(0, 0, float64(f.Size.Width), float64(f.Size.Height)))
 	}
 	v.sizeContent()
+	if resized && v.sc != nil && v.hasEdges() {
+		// Each step of a layout animation, as the keyboard moves a composer.
+		v.placeEdges()
+	}
 	if v.image != nil {
 		v.image.Layout(apple.CGSize{Width: float64(f.Size.Width), Height: float64(f.Size.Height)})
 		v.surface.images = append(v.surface.images, v)
