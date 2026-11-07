@@ -30,7 +30,7 @@ func (k Knob) Render(cx *core.Scope) core.Node {
 	if k.Tight {
 		align = core.AlignEnd
 	}
-	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(32)}, Children: []core.Node{
+	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(28)}, Children: []core.Node{
 		core.View{Style: core.Style{FlexShrink: 0, MinWidth: core.Pt(88)}, Children: []core.Node{API{Text: k.Name}}},
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), AlignItems: align}, Children: []core.Node{k.Control}},
 	}}
@@ -78,7 +78,8 @@ func options[T comparable](values []T, names ...string) []ui.Option[T] {
 	return out
 }
 
-// Playground is a card of a component above the knobs that set its props.
+// Playground is a card of a component, edge to edge, above the knobs that
+// set its props.
 // Stage builds the component, again whenever a signal it reads changes;
 // Fill stretches it across the stage, for what has no width of its own.
 type Playground struct {
@@ -92,19 +93,18 @@ type Playground struct {
 
 // Render implements core.Node.
 func (p Playground) Render(cx *core.Scope) core.Node {
-	colors := ui.ColorsOf(cx)
 	align := core.AlignCenter
 	if p.Fill {
 		align = core.AlignStretch
 	}
-	stage := core.View{TestID: "stage-" + p.Title, Style: core.Style{MinHeight: core.Pt(96), AlignItems: align, JustifyContent: core.JustifyCenter, Gap: 8,
-		Padding: core.All(16), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous}, StyleFunc: ui.Filled(colors.Inset),
+	stage := PixelGrid{TestID: "stage-" + p.Title, Style: core.Style{MinHeight: core.Pt(96), AlignItems: align, JustifyContent: core.JustifyCenter, Gap: 8,
+		Padding: core.All(16)},
 		Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node { return p.Stage() })}}
-	children := []core.Node{stage}
+	var footer []core.Node
 	if len(p.Knobs) > 0 {
-		children = append(children, core.View{Style: core.Style{Gap: 4}, Children: p.Knobs})
+		footer = []core.Node{core.View{Style: core.Style{Gap: 2}, Children: p.Knobs}}
 	}
-	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Children: children}
+	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Flush: true, Children: []core.Node{stage}, Footer: footer}
 }
 
 // wideStage reports whether the pane fits a stagePage's panel beside its
