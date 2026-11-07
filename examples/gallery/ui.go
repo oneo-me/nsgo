@@ -90,7 +90,7 @@ var logoDark []byte
 //go:embed assets/logo-light.svg
 var logoLight []byte
 
-// logo is the gallery's mark in the appearance shown (deeper oranges on
+// logo is the gallery's mark in the appearance shown (deeper blues on
 // light backgrounds).
 func logo(cx *core.Scope, size core.Points) core.Node {
 	return core.Image{SourceFunc: func() core.ImageSource {

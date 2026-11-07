@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="-16.51 -2.63 129.26 129.26">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f5a35c"/>
-      <stop offset="1" stop-color="#e0661d"/>
+      <stop offset="0" stop-color="#4da3ff"/>
+      <stop offset="1" stop-color="#007aff"/>
     </linearGradient>
   </defs>
-  <g transform="skewX(-10)"><rect x="12.5" y="40.5" width="26" height="11" rx="5.5" fill="#e8813a"/><rect x="2.5" y="56.5" width="36" height="11" rx="5.5" fill="#e8813a"/><rect x="16.5" y="72.5" width="22" height="11" rx="5.5" fill="#e8813a"/></g><g transform="skewX(-10)"><path d="M68.0 23.0 H88.0 A25.0 25.0 0 0 1 113.0 48.0 V76.0 A25.0 25.0 0 0 1 88.0 101.0 H68.0 A25.0 25.0 0 0 1 43.0 76.0 V48.0 A25.0 25.0 0 0 1 68.0 23.0 Z M68.0 37.0 A11.0 11.0 0 0 0 57.0 48.0 V76.0 A11.0 11.0 0 0 0 68.0 87.0 H88.0 A11.0 11.0 0 0 0 99.0 76.0 V48.0 A11.0 11.0 0 0 0 88.0 37.0 Z" fill="url(#g)"/></g>
+  <g transform="skewX(-10)"><rect x="12.5" y="40.5" width="26" height="11" rx="5.5" fill="#2a8fff"/><rect x="2.5" y="56.5" width="36" height="11" rx="5.5" fill="#2a8fff"/><rect x="16.5" y="72.5" width="22" height="11" rx="5.5" fill="#2a8fff"/></g><g transform="skewX(-10)"><path d="M68.0 23.0 H88.0 A25.0 25.0 0 0 1 113.0 48.0 V76.0 A25.0 25.0 0 0 1 88.0 101.0 H68.0 A25.0 25.0 0 0 1 43.0 76.0 V48.0 A25.0 25.0 0 0 1 68.0 23.0 Z M68.0 37.0 A11.0 11.0 0 0 0 57.0 48.0 V76.0 A11.0 11.0 0 0 0 68.0 87.0 H88.0 A11.0 11.0 0 0 0 99.0 76.0 V48.0 A11.0 11.0 0 0 0 88.0 37.0 Z" fill="url(#g)"/></g>
 </svg>
