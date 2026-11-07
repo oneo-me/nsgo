@@ -76,11 +76,12 @@ func options[T comparable](values []T, names ...string) []ui.Option[T] {
 // Stage builds the component, again whenever a signal it reads changes;
 // Fill stretches it across the stage, for what has no width of its own.
 type Playground struct {
-	Title string
-	Note  string
-	Fill  bool
-	Stage func() core.Node
-	Knobs []core.Node
+	Title  string
+	Note   string
+	UIOnly bool
+	Fill   bool
+	Stage  func() core.Node
+	Knobs  []core.Node
 }
 
 // Render implements core.Node.
@@ -97,7 +98,7 @@ func (p Playground) Render(cx *core.Scope) core.Node {
 	if len(p.Knobs) > 0 {
 		children = append(children, core.View{Style: core.Style{Gap: 4}, Children: p.Knobs})
 	}
-	return ui.Card{Title: p.Title, Description: p.Note, Children: children}
+	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Children: children}
 }
 
 // wideStage reports whether the pane fits a stagePage's panel beside its

@@ -24,7 +24,7 @@ func showcase(cx *core.Scope) core.Node {
 			Badge{Text: "New", Tone: ToneAccent}, Avatar{Name: "Ada Lovelace", Status: AvatarOnline},
 			AvatarGroup{Members: []AvatarGroupMember{{Name: "Ada"}, {Name: "Alan"}, {Name: "Grace"}}, Max: 2},
 		}},
-		Card{Title: "Card", Description: "On the surface", OnPress: func() {}, Children: []core.Node{
+		core.View{Style: core.Style{Gap: 12, Padding: core.All(14)}, StyleFunc: func() core.Style { return CardStyle(cx) }, Children: []core.Node{
 			Checkbox{Text: "Checked", Checked: on.Get, OnChange: on.Set},
 			RadioGroup{Children: []core.Node{Radio{Text: "Radio", Checked: on.Get}}},
 			Switch{Checked: on.Get, OnChange: on.Set, Label: "Switch"},

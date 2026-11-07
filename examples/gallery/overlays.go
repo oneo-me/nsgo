@@ -75,7 +75,7 @@ func overlayCard(last *core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
 		anchor := &core.Ref{}
-		return ui.Card{Title: tr.OverlayOverlay(), Description: tr.OverlayABoxThatClipsIts(), Actions: []core.Node{ui.Badge{Text: "core"}}, Children: []core.Node{
+		return Card{Title: tr.OverlayOverlay(), Description: tr.OverlayABoxThatClipsIts(), Actions: []core.Node{ui.Badge{Text: "core"}}, Children: []core.Node{
 			core.View{Style: core.Style{Height: core.Pt(56), Overflow: core.Hidden, CornerRadius: ui.RadiusInset,
 				JustifyContent: core.JustifyCenter, Padding: core.Symmetric(0, 12)}, StyleFunc: ui.Filled(colors.Inset), Children: []core.Node{
 				core.View{Ref: anchor, OnPress: func(core.PressEvent) { toggled(open) }, Role: core.RoleButton, Style: core.Style{AlignSelf: core.AlignStart},
@@ -106,7 +106,7 @@ func sheetCard(last *core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
 		close := func() { open.Set(false); last.Set(tr.OverlaySheet2() + "closed") }
-		return ui.Card{Title: "Sheet", Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
+		return Card{Title: "Sheet", Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
 			ui.Button{Text: tr.OverlayShowTheSheet(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
 			ui.Sheet{Open: open.Get, OnClose: close, Children: []core.Node{
 				ui.Text(tr.OverlaySheet(), 15, ui.Semibold, colors.Text),

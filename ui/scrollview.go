@@ -8,7 +8,7 @@ const edgeFade core.Points = 24
 // ScrollView scrolls its Children (a column, or a row when Horizontal)
 // and fades them into EdgeColor at each edge more of them lies past, so
 // the reader sees there is more. TopBar and BottomBar float the app's
-// controls over a vertical view's edges on a FloatingBar, and the
+// controls over a vertical view's edges on a capsule of glass, and the
 // content starts and ends clear of them. The app sizes it, as a
 // core.Scroll.
 type ScrollView struct {
@@ -110,7 +110,10 @@ func (v ScrollView) Render(cx *core.Scope) core.Node {
 		} else {
 			s.Top = core.Pt(8)
 		}
-		return core.View{PointerEvents: core.PointerEventsBoxNone, Style: s, Children: []core.Node{FloatingBar{Children: items, Label: label}}}
+		return core.View{PointerEvents: core.PointerEventsBoxNone, Style: s, Children: []core.Node{core.View{Label: label,
+			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, Padding: core.All(4), MaxWidth: core.Pct(100),
+				CornerRadius: RadiusFull, BorderWidth: 1},
+			StyleFunc: func() core.Style { return FinOf(cx).Glass().Over(core.Style{Color: ColorsOf(cx).Text()}) }, Children: items}}}
 	}
 	if bars && v.TopBar != nil {
 		children = append(children, float(v.TopBar, v.TopBarLabel, false))

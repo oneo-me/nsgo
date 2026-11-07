@@ -3,7 +3,6 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
@@ -21,9 +20,19 @@ const (
 	HoldNeutral
 )
 
-// HoldToConfirm is base.HoldToConfirm in Onevra's look: a fill sweeps
-// across it from the leading edge, and once it is full Text and Icon
-// (lucide.Trash when empty) give way to ConfirmedText and a check.
+// holdRewind is how long an empty-to-full fill takes to drain.
+const holdRewind = 400 * time.Millisecond
+
+// holdLinear moves a hold's fill at one speed both ways.
+var holdLinear = core.BezierEasing(core.Linear)
+
+// HoldToConfirm is a button for what a stray press must not trigger: held
+// down for Duration, 1.2 s when 0, a fill sweeps across it from the leading
+// edge, and once it is full OnConfirm runs, assistive technology hears
+// ConfirmedText, and Text and Icon (lucide.Trash when empty) give way to
+// ConfirmedText and a check. Letting go early rewinds the fill. The
+// keyboard and assistive technology, which cannot hold, start it with a
+// press and cancel it with another or by moving the focus away.
 //
 // Confirmed is the app's: true shows the done state, and setting it back
 // to false resets the button. Hint is what assistive technology reads
@@ -44,12 +53,12 @@ type HoldToConfirm struct {
 
 // Render implements core.Node.
 func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
+	confirmed := func() bool { return is(h.Confirmed) }
 	colors := ColorsOf(cx)
 	icon := h.Icon
 	if icon == nil {
 		icon = lucide.Trash
 	}
-	confirmed := func() bool { return is(h.Confirmed) }
 	scale := core.NewAnimatedValue(cx, 1)
 	width := core.NewSignal[core.Points](cx, 0)
 	still := ReduceMotion(cx)
@@ -80,7 +89,7 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8,
 			Height: core.Pt(ButtonHeight - 2), Padding: core.Symmetric(0, 13)}, Children: []core.Node{IconOf(glyph, 14, c), t}}
 	}
-	content := func(_ *core.Scope, fill *core.AnimatedValue) []core.Node {
+	content := func(fill *core.AnimatedValue) []core.Node {
 		// A second face in the fill's colors shows through it, so the text
 		// changes color exactly at its edge: the fill slides in from the
 		// leading edge while its face slides the other way, staying put.
@@ -109,15 +118,82 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 
 		return []core.Node{face(ink), inverse}
 	}
-	return base.HoldToConfirm{Duration: h.Duration, Confirmed: h.Confirmed, OnConfirm: h.OnConfirm, ConfirmedLabel: h.ConfirmedText, Content: content,
-		OnHoldChange: func(holding bool) {
-			if !holding {
-				Spring(cx, scale, 1, pressSpring)
-			} else if !still {
-				Spring(cx, scale, 0.97, pressSpring)
+	duration := h.Duration
+	if duration <= 0 {
+		duration = 1200 * time.Millisecond
+	}
+	holding := core.NewSignal(cx, false)
+	setHolding := func(on bool) {
+		holding.Set(on)
+		if !on {
+			Spring(cx, scale, 1, pressSpring)
+		} else if !still {
+			Spring(cx, scale, 0.97, pressSpring)
+		}
+	}
+	// The fill moves linearly both ways, so where it is follows from when
+	// its last run started, where from and toward what.
+	var runStart time.Time
+	var runFor time.Duration
+	runFrom, runTo := 0.0, 0.0
+	if core.Untracked(cx, confirmed) {
+		runFrom, runTo = 1, 1
+	}
+	fill := core.NewAnimatedValue(cx, runTo)
+	at := func() float64 {
+		if runFor <= 0 {
+			return runTo
+		}
+		p := min(float64(cx.Now().Sub(runStart))/float64(runFor), 1)
+		return runFrom + (runTo-runFrom)*p
+	}
+	run := func(to float64, d time.Duration, done func(bool)) {
+		runFrom, runTo, runStart, runFor = at(), to, cx.Now(), d
+		if d <= 0 {
+			fill.Set(to)
+			return
+		}
+		cx.StartAnimation(core.Timing(fill, to, core.TimingConfig{Duration: d, Easing: holdLinear}), done)
+	}
+	begin := func() {
+		if core.Untracked(cx, confirmed) || core.Untracked(cx, func() bool { return is(h.Disabled) }) || holding.GetUntracked() {
+			return
+		}
+		setHolding(true)
+		run(1, time.Duration((1-at())*float64(duration)), func(finished bool) {
+			if !finished || !holding.GetUntracked() {
+				return
 			}
-		},
-		LabelFunc: text, Hint: h.Hint, TestID: h.TestID, Disabled: h.Disabled,
+			setHolding(false)
+			if h.ConfirmedText != "" {
+				cx.Announce(h.ConfirmedText)
+			}
+			if h.OnConfirm != nil {
+				h.OnConfirm()
+			}
+		})
+	}
+	release := func() {
+		if !holding.GetUntracked() {
+			return
+		}
+		setHolding(false)
+		run(0, time.Duration(at()*float64(holdRewind)), nil)
+	}
+	cx.Effect(func() {
+		on := confirmed()
+		if core.Untracked(cx, holding.Get) {
+			return
+		}
+		if on && at() < 1 {
+			run(1, 0, nil)
+		} else if !on && at() > 0 {
+			run(0, holdRewind, nil)
+		}
+	})
+	// upAt is when a pointer's press last ended.
+	var upAt time.Time
+	return core.View{Role: core.RoleButton, LabelFunc: text, Hint: h.Hint, TestID: h.TestID, Disabled: h.Disabled,
 		Style: core.Style{Group: "hold", AlignSelf: core.AlignStart, CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
 			BorderWidth: 1, Transition: quick, Disabled: Dimmed(),
 			Animated: &core.AnimatedStyle{Scale: scale}},
@@ -127,5 +203,25 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 				s.Hover = &core.Style{Background: Mix(colors.Surface(), fillColor(), 0.06)}
 			}
 			return s
-		}}
+		},
+		OnPressDown: func(core.PressEvent) { begin() },
+		OnPressUp: func(core.PressEvent) {
+			upAt = cx.Now()
+			release()
+		},
+		OnPress: func(core.PressEvent) {
+			// A pointer's press may end in a press too, right after it lets
+			// go; only the keyboard's and assistive technology's start or
+			// cancel a hold here.
+			if !upAt.IsZero() && cx.Now().Sub(upAt) < 250*time.Millisecond {
+				upAt = time.Time{}
+				return
+			}
+			if holding.GetUntracked() {
+				release()
+			} else {
+				begin()
+			}
+		},
+		OnBlur: release, Children: content(fill)}
 }

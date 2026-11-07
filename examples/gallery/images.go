@@ -91,7 +91,7 @@ func resizeModes(cx *core.Scope) core.Node {
 		}
 		rows = append(rows, core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: cells})
 	}
-	return ui.Card{Title: tr.ImagesResizeModes(), Description: tr.ImagesA21ImageIn(), Children: rows}
+	return Card{Title: tr.ImagesResizeModes(), Description: tr.ImagesA21ImageIn(), Children: rows}
 }
 
 func imageCorners(cx *core.Scope) core.Node {
@@ -102,7 +102,7 @@ func imageCorners(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			core.Image{Source: core.Src(widePhoto), Style: sq.Merge(s), StyleFunc: ink}, imageNote(cx, name, false)}}
 	}
-	return ui.Card{Title: tr.ImagesCornersAndBorders(), Description: tr.ImagesRadiiPerCornerBordersOn(), Children: []core.Node{
+	return Card{Title: tr.ImagesCornersAndBorders(), Description: tr.ImagesRadiiPerCornerBordersOn(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
 			item(core.Style{CornerRadius: 44}, frameInk(cx), tr.ImagesCircle()),
 			item(core.Style{CornerRadius: 18, BorderWidth: 2}, func() core.Style { return frameInk(cx)().Merge(core.Style{BorderColor: colors.Accent()}) }, tr.ImagesBorder()),
@@ -121,7 +121,7 @@ func assetsCard(cx *core.Scope) core.Node {
 		}
 		return imageTile(cx, name, false, 0, core.Image{Source: logoSource(), Style: core.Style{Width: core.Pt(56), Height: core.Pt(56)}, StyleFunc: ink})
 	}
-	return ui.Card{Title: tr.ImagesEmbeddedImagesAndTint(), Description: tr.ImagesLogoPngFromGoEmbed(), Children: []core.Node{
+	return Card{Title: tr.ImagesEmbeddedImagesAndTint(), Description: tr.ImagesLogoPngFromGoEmbed(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			tile(tr.ImagesOriginal(), nil), tile(tr.ImagesAccent(), colors.Accent), tile(tr.ImagesInfo(), colors.Info), tile(tr.ImagesDanger(), colors.Danger),
 		}},
@@ -146,7 +146,7 @@ func svgCard(cx *core.Scope) core.Node {
 	cell := func(child core.Node, n string, isCode bool) core.Node {
 		return core.View{Style: core.Style{FlexGrow: 1, FlexBasis: core.Pt(0), Gap: 8}, Children: []core.Node{child, imageNote(cx, n, isCode)}}
 	}
-	return ui.Card{Title: tr.ImagesSvgImages(), Description: tr.ImagesStarSvgMarkSvgAnd(), Children: []core.Node{
+	return Card{Title: tr.ImagesSvgImages(), Description: tr.ImagesStarSvgMarkSvgAnd(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: sizes},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			cell(core.Image{Source: mark, ResizeMode: core.Contain, TestID: "svg-mark-contain", Style: imageFrame(cx, core.Style{Height: core.Pt(96)}), StyleFunc: frameInk(cx)}, "Contain", true),
@@ -160,7 +160,7 @@ func animatedImages(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	gif := core.ImageSource{Data: bounceGIF, Size: core.Size{Width: 72, Height: 72}}
 	webp := core.ImageSource{Data: spinnerWebP, Size: core.Size{Width: 72, Height: 72}}
-	return ui.Card{Title: tr.ImagesAnimatedGifAndWebp(), Description: tr.ImagesDecodedAndPlayedNatively(), Children: []core.Node{
+	return Card{Title: tr.ImagesAnimatedGifAndWebp(), Description: tr.ImagesDecodedAndPlayedNatively(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
 			imageTile(cx, "bounce.gif", true, 96, core.Image{Source: gif, TestID: "gif"}),
 			imageTile(cx, "spinner.webp", true, 96, core.Image{Source: webp, TestID: "webp"}),
@@ -185,7 +185,7 @@ func placeholders(cx *core.Scope) core.Node {
 			imageNote(cx, fmt.Sprintf("%d ms", f.ms), false),
 		}})
 	}
-	return ui.Card{Title: tr.ImagesPlaceholderAndFade(), Description: tr.ImagesAPlaceholderThenAFade(), Actions: []core.Node{ui.Button{Text: tr.ImagesReload(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
+	return Card{Title: tr.ImagesPlaceholderAndFade(), Description: tr.ImagesAPlaceholderThenAFade(), Actions: []core.Node{ui.Button{Text: tr.ImagesReload(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: cells},
 	}, Footer: []core.Node{
 		Caption{Label: tr.ImagesLoads(), Note: func() string { return itoa(seed.Get()) }},
@@ -204,7 +204,7 @@ func blurCard(cx *core.Scope) core.Node {
 			core.Image{Source: core.Src(widePhoto), BlurRadius: r, Style: imageFrame(cx, core.Style{Height: core.Pt(76)}), StyleFunc: frameInk(cx)}, imageNote(cx, n, false),
 		}})
 	}
-	return ui.Card{Title: tr.ImagesBlurRadius(), Description: tr.ImagesBlurradiusAppliedWhileDecoding(), Children: []core.Node{
+	return Card{Title: tr.ImagesBlurRadius(), Description: tr.ImagesBlurradiusAppliedWhileDecoding(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: cells},
 	}}
 }
@@ -216,7 +216,7 @@ func imageInfo(cx *core.Scope) core.Node {
 	progress := core.NewSignal(cx, 0.0)
 	status := core.NewSignal(cx, tr.ImagesNotShown())
 	show := core.NewSignal(cx, false)
-	return ui.Card{Title: tr.ImagesSizePrefetchProgress(), Description: "ImageSize · PrefetchImage · OnProgress", Children: []core.Node{
+	return Card{Title: tr.ImagesSizePrefetchProgress(), Description: "ImageSize · PrefetchImage · OnProgress", Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 			ui.Cell{Child: ui.Button{Text: tr.ImagesSize(), Variant: ui.ButtonSecondary, OnPress: func() {
 				cx.ImageSize(core.Src(big), func(px core.Size, err error) {
@@ -284,7 +284,7 @@ func imageEvents(cx *core.Scope) core.Node {
 	log := func(l string) { events.Update(func(e []string) []string { return append(slices.Clone(e), l) }) }
 	loaded, failed := core.NewSignal(cx, "…"), core.NewSignal(cx, tr.ImagesLoading())
 	thumb := imageFrame(cx, core.Style{Width: core.Pt(96), Height: core.Pt(64)})
-	return ui.Card{Title: tr.ImagesEvents(), Description: tr.ImagesLoadStartLoadErrorLoad(), Children: []core.Node{
+	return Card{Title: tr.ImagesEvents(), Description: tr.ImagesLoadStartLoadErrorLoad(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12, AlignItems: core.AlignCenter}, Children: []core.Node{
 			core.Image{Source: core.Src(photoURL(1084, 600, 400)), Style: thumb, StyleFunc: frameInk(cx),
 				OnLoadStart: func() { log("OnLoadStart") },

@@ -58,7 +58,7 @@ func largeTitlePage(cx *core.Scope) base.NavPage {
 		}})
 	}
 	s := screen(cx, tr.NavLargeTitle(), nil, navPage(cx, tr.NavIosTheTitleShrinksInto(),
-		ui.Card{Flush: true, Children: rows}))
+		Card{Flush: true, Children: rows}))
 	s.HeaderLargeTitle = true
 	return s
 }
@@ -163,7 +163,7 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 		Children: []core.Node{navPage(cx, Hint(cx,
 			tr.NavTypeSomethingThenGoBack(),
 			tr.NavTypeSomethingThenGoBack2()),
-			ui.Card{Title: tr.NavDraft(), Description: "NoPopOnBack + OnBackPress", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+			Card{Title: tr.NavDraft(), Description: "NoPopOnBack + OnBackPress", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				if draft.Get() != "" {
 					return ui.Badge{Text: tr.NavGuarded(), Tone: ui.ToneWarn}
 				}
@@ -229,7 +229,7 @@ func deepPage(depth int) func(cx *core.Scope) base.NavPage {
 		}
 		title := tr.NavLevel(depth)
 		return screen(cx, title, nil, navPage(cx, tr.NavEveryPushIsANative(),
-			ui.Card{Title: title, Description: tr.NavDeep(depth), Children: []core.Node{
+			Card{Title: title, Description: tr.NavDeep(depth), Children: []core.Node{
 				core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6}, Children: levels},
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 					ui.Button{Text: tr.NavDeeper(), Icon: lucide.Plus, Flex: 1, OnPress: func() { shell.push(deepPage(depth + 1)) }},
@@ -321,11 +321,11 @@ func navigationDemo(cx *core.Scope) core.Node {
 
 	stack := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Title: tr.NavNativeStack(), Description: tr.NavHeadersTransitionsTheSafeArea(), Actions: []core.Node{ui.Badge{Text: platformName}}, Children: []core.Node{insetsRow(cx)}}
+		return Card{Title: tr.NavNativeStack(), Description: tr.NavHeadersTransitionsTheSafeArea(), Actions: []core.Node{ui.Badge{Text: platformName}}, Children: []core.Node{insetsRow(cx)}}
 	}
 	pages := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Title: tr.NavPages(), Description: tr.NavScreenOptionsPushedWithNav(), Flush: true, Children: []core.Node{
+		return Card{Title: tr.NavPages(), Description: tr.NavScreenOptionsPushedWithNav(), Flush: true, Children: []core.Node{
 			LinkRow{Icon: lucide.Type, Title: tr.NavLargeTitle(), Note: "HeaderLargeTitle", OnPress: func() { shell.push(largeTitlePage) }},
 			LinkRow{Divided: true, Icon: lucide.Palette, Title: tr.NavTransparentHeader(), Note: "HeaderTransparent", OnPress: func() { shell.push(transparentPage) }},
 			LinkRow{Divided: true, Icon: lucide.Star, Title: tr.NavCustomHeaderItems(), Note: "HeaderLeft / Title / Right", OnPress: func() { shell.push(customHeaderPage) }},
@@ -350,13 +350,13 @@ func navigationDemo(cx *core.Scope) core.Node {
 				}},
 			}})
 		}
-		return ui.Card{Title: tr.NavModals(), Description: tr.NavPresentationStylesAndTransitions(), Children: []core.Node{
+		return Card{Title: tr.NavModals(), Description: tr.NavPresentationStylesAndTransitions(), Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, JustifyContent: core.JustifySpaceBetween, RowGap: 8}, Children: tiles},
 		}}
 	}
 	backCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Title: tr.NavBackButton(), Description: Hint(cx, tr.NavOnbackpressTheBackButtonAnd(), tr.NavOnbackpressEscapeTheMouseS()), Actions: []core.Node{ui.Switch{Checked: intercept.Get, OnChange: intercept.Set, Label: tr.NavInterceptTheBackButton()}}, Children: []core.Node{
+		return Card{Title: tr.NavBackButton(), Description: Hint(cx, tr.NavOnbackpressTheBackButtonAnd(), tr.NavOnbackpressEscapeTheMouseS()), Actions: []core.Node{ui.Switch{Checked: intercept.Get, OnChange: intercept.Set, Label: tr.NavInterceptTheBackButton()}}, Children: []core.Node{
 			Figure{Value: func() string { return itoa(backs.Get()) }, Note: func() string {
 				unit := "presses"
 				if backs.Get() == 1 {
@@ -425,7 +425,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 		}, Label: tr.NavADialog(), PopupStyle: core.Style{FlexGrow: 1, AlignSelf: core.AlignStretch},
 			Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, Background: ui.Black(0.62), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Padding: core.All(16)},
 				Children: []core.Node{core.View{Style: core.Style{AlignSelf: core.AlignStretch, MaxWidth: core.Pt(480), Animated: &core.AnimatedStyle{Opacity: pop, Scale: ui.Lerp(pop, 0.9, 1)}},
-					Children: []core.Node{ui.Card{Title: tr.NavADialog(), Description: "Animation: ModalFade", Children: []core.Node{
+					Children: []core.Node{Card{Title: tr.NavADialog(), Description: "Animation: ModalFade", Children: []core.Node{
 						core.Text{Content: tr.NavADialogOwnsNoLook(),
 							Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 						core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{

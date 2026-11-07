@@ -6,6 +6,8 @@ import (
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
 	"github.com/oneo-me/nsgo/icons/lucide"
+
+	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/ui"
 )
 
@@ -37,6 +39,114 @@ func (c Code) Render(cx *core.Scope) core.Node {
 	t := ui.Text(c.Text, 12, ui.Regular, ui.ColorsOf(cx).Code)
 	t.Style.FontFamily = ui.Mono
 	return t
+}
+
+// panelMotion eases a pressable panel between its states.
+var panelMotion = core.Transition{Duration: 120 * time.Millisecond, Easing: core.EaseOut,
+	Properties: core.TransitionBackground | core.TransitionBorder}
+
+// Panel is a card: Head on the page, then the
+// surface with the Children and the Footer after a hairline. Flush lays
+// the children edge to edge, clipped to the surface's inner corners. OnPress
+// makes the surface a button named Label.
+type Panel struct {
+	Head     core.Node
+	Flush    bool
+	Children []core.Node
+	Footer   []core.Node
+	OnPress  func()
+	Label    string
+	TestID   string
+	// Style merges over the surface's.
+	Style core.Style
+}
+
+// Render implements core.Node.
+func (p Panel) Render(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	const inner = ui.RadiusCard - 1
+	var parts []core.Node
+	if len(p.Children) > 0 {
+		body := core.Style{Gap: 12, Padding: core.All(14)}
+		if p.Flush {
+			r := core.Corners{TopLeft: inner, TopRight: inner}
+			if len(p.Footer) == 0 {
+				r.BottomLeft, r.BottomRight = inner, inner
+			}
+			body = core.Style{Overflow: core.Hidden, CornerRadii: r, BorderCurve: core.BorderCurveContinuous}
+		}
+		parts = append(parts, core.View{Style: body, Children: p.Children})
+	}
+	if len(p.Footer) > 0 {
+		s := core.Style{Gap: 6, Padding: core.Symmetric(10, 14)}
+		if len(parts) > 0 {
+			s.Borders = core.Edges{Top: 1}
+		}
+		parts = append(parts, core.View{Style: s,
+			StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} }, Children: p.Footer})
+	}
+	surface := core.View{StyleFunc: func() core.Style { return ui.CardStyle(cx).Merge(p.Style) }, Children: parts}
+	if p.OnPress != nil {
+		surface.Role, surface.Label, surface.OnPress = core.RoleButton, p.Label, func(core.PressEvent) { p.OnPress() }
+		surface.Style = core.Style{Transition: panelMotion}
+		surface.StyleFunc = func() core.Style {
+			colors := ui.ColorsOf(cx)
+			return ui.CardStyle(cx).Merge(core.Style{Hover: &core.Style{BorderColor: colors.FieldBorder()},
+				Active: &core.Style{Background: colors.Raised()}, Focus: ui.FocusRing(cx, 2)}).Merge(p.Style)
+		}
+	}
+	if p.Head == nil {
+		surface.TestID = p.TestID
+		return surface
+	}
+	return core.View{TestID: p.TestID, Style: core.Style{Gap: 8}, Children: []core.Node{p.Head, surface}}
+}
+
+// Card is a demo's titled card: a bold Title with a Description, then
+// Actions, above a panel of the Children and an optional Footer. UIOnly
+// marks a component package base has no form of.
+type Card struct {
+	Title       string
+	Description string
+	UIOnly      bool
+	Actions     []core.Node
+	Children    []core.Node
+	Footer      []core.Node
+	// Flush lays the children edge to edge.
+	Flush bool
+	// OnPress makes the panel a button named Label, else Title.
+	OnPress func()
+	Label   string
+	TestID  string
+	// Style merges over the panel's.
+	Style core.Style
+}
+
+// Render implements core.Node.
+func (c Card) Render(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	var head core.Node
+	if c.Title != "" {
+		title := ui.Text(c.Title, 13, ui.Bold, colors.Text)
+		title.Role = core.RoleHeader
+		titles := []core.Node{title}
+		if c.Description != "" {
+			description := ui.Text(c.Description, 12, ui.Regular, colors.Muted)
+			description.MaxLines = 2
+			titles = append(titles, description)
+		}
+		nodes := []core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles}}
+		if c.UIOnly {
+			nodes = append(nodes, core.View{TestID: "ui-only-" + c.Title, Style: core.Style{FlexShrink: 0}, Children: []core.Node{
+				ui.Badge{Text: locales.For(cx).UiOnly(), Tone: ui.ToneNeutral}}})
+		}
+		head = core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd, Gap: 10, Padding: core.Symmetric(0, 2)}, Children: append(nodes, c.Actions...)}
+	}
+	label := c.Label
+	if label == "" {
+		label = c.Title
+	}
+	return Panel{TestID: c.TestID, Head: head, Flush: c.Flush, Children: c.Children, Footer: c.Footer, Style: c.Style, OnPress: c.OnPress, Label: label}
 }
 
 // Appear fades and lifts its content in once mounted; Index staggers
@@ -99,7 +209,7 @@ func (s Section) Render(cx *core.Scope) core.Node {
 	heading.Role, heading.Style.FlexGrow, heading.Style.FlexShrink = core.RoleHeader, 1, 1
 	head := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignBaseline, Gap: 8, Padding: core.Symmetric(0, 2)},
 		Children: []core.Node{heading, ui.Textf(note, 12, ui.Regular, colors.Faint)}}
-	return ui.Panel{TestID: "section-" + s.Title, Head: head, Children: s.Children}
+	return Panel{TestID: "section-" + s.Title, Head: head, Children: s.Children}
 }
 
 // Caption is a Label, or what LabelFunc returns, on the left and a

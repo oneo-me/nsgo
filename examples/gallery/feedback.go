@@ -41,7 +41,7 @@ func spinnerPlayground(*core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		variant := core.NewSignal(cx, ui.SpinnerRing)
 		size := core.NewSignal(cx, 24.0)
-		return Playground{Title: "Spinner", Stage: func() core.Node {
+		return Playground{Title: "Spinner", UIOnly: true, Stage: func() core.Node {
 			return ui.Spinner{Label: tr.LibLoading(), Variant: variant.Get(), Size: core.Points(size.Get())}
 		}, Knobs: []core.Node{
 			choiceKnob("Variant", variant, options([]ui.SpinnerVariant{ui.SpinnerRing, ui.SpinnerSpokes}, "Ring", "Spokes")...),
@@ -54,7 +54,7 @@ func meterCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		value, marker := core.NewSignal(cx, 0.6), core.NewSignal(cx, 0.8)
 		tone := core.NewSignal(cx, ui.ToneAccent)
-		return Playground{Title: "Meter", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Meter", UIOnly: true, Fill: true, Stage: func() core.Node {
 			return ui.Meter{Value: value.Get, Tone: tone.Get(), Marker: marker.Get()}
 		}, Knobs: []core.Node{
 			numberKnob("Value", value, 0, 1, 0.05), numberKnob("Marker", marker, 0, 1, 0.05),
@@ -69,7 +69,7 @@ func skeletonCard(*core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		lines := core.NewSignal(cx, 3.0)
 		avatar, loading := core.NewSignal(cx, true), core.NewSignal(cx, true)
-		return Playground{Title: "SkeletonContent · Skeleton", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "SkeletonContent · Skeleton", UIOnly: true, Fill: true, Stage: func() core.Node {
 			return ui.SkeletonContent{Loading: loading.Get, Placeholder: ui.Skeleton{Lines: int(lines.Get()), Avatar: avatar.Get(), Label: tr.LibLoading()},
 				Children: []core.Node{ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Text)}}
 		}, Knobs: []core.Node{numberKnob("Lines", lines, 1, 6, 1), boolKnob("Avatar", avatar), boolKnob("Loading", loading)}}
@@ -115,7 +115,7 @@ func toastPlayground(last *core.Signal[string]) cardFunc {
 			}
 			shell.toasts.Show(c)
 		}
-		return ui.Card{Title: "Toasts · ToastContent", Children: []core.Node{
+		return Card{Title: "Toasts · ToastContent", Children: []core.Node{
 			ui.HStack{Gap: 8, Children: []core.Node{
 				ui.Button{Text: tr.KitShow(), TestID: "toast-show", OnPress: show},
 				ui.Button{Text: tr.OverlayDismissAll(), Variant: ui.ButtonGhost, OnPress: shell.toasts.DismissAll},

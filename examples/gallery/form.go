@@ -273,7 +273,7 @@ func formDemo(cx *core.Scope) core.Node {
 	keyboard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		modeName := map[core.KeyboardDismissMode]string{core.KeyboardDismissNone: "none", core.KeyboardDismissOnDrag: "on-drag", core.KeyboardDismissInteractive: "interactive"}
-		return ui.Card{Title: tr.FormKeyboard(), Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		return Card{Title: tr.FormKeyboard(), Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			h := env.KeyboardHeight()
 			t := ui.ToneNeutral
 			if h > 0 {
@@ -389,7 +389,7 @@ func formDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		tints := ui.TintsOf(cx)
-		return ui.Card{Title: tr.FormCreateTheAccount(), Description: tr.FormSubmittingChecksEveryField(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+		return Card{Title: tr.FormCreateTheAccount(), Description: tr.FormSubmittingChecksEveryField(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			r := result.Get()
 			switch {
 			case r.text == "":
@@ -419,7 +419,7 @@ func formDemo(cx *core.Scope) core.Node {
 
 	more := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return ui.Card{Title: tr.FormMoreKeyboards(), Description: tr.FormSheetsAndBarsThatRide(), Flush: true, Children: []core.Node{
+		return Card{Title: tr.FormMoreKeyboards(), Description: tr.FormSheetsAndBarsThatRide(), Flush: true, Children: []core.Node{
 			LinkRow{Icon: lucide.Component, Title: tr.FormInputsInASheet(), Note: "Presentation: ModalPageSheet", OnPress: func() { sheetOpen.Set(true) }},
 			LinkRow{Divided: true, Icon: lucide.Type, Title: tr.FormAMessageBarAtThe(), Note: "PaddingEnv: EnvKeyboard", OnPress: func() { shell.push(messageBar) }},
 		}}
@@ -633,7 +633,7 @@ func tagInputCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	tags := core.NewSignalFunc(cx, []string{tr.LibApple(), tr.LibBanana()}, slices.Equal)
 	disabled := core.NewSignal(cx, false)
-	return Playground{Title: "TagInput", Fill: true, Stage: func() core.Node {
+	return Playground{Title: "TagInput", UIOnly: true, Fill: true, Stage: func() core.Node {
 		return ui.TagInput{Label: tr.LibFruit(), Tags: tags.Get, OnChange: tags.Set, Placeholder: tr.LibPickFruit(), Disabled: disabled.Get}
 	}, Knobs: []core.Node{boolKnob("Disabled", disabled)}}
 }

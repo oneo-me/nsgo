@@ -143,7 +143,7 @@ func holdPlayground(last *core.Signal[string]) cardFunc {
 		tone := core.NewSignal(cx, ui.HoldDanger)
 		seconds := core.NewSignal(cx, 1.2)
 		confirmed, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "HoldToConfirm", Stage: func() core.Node {
+		return Playground{Title: "HoldToConfirm", UIOnly: true, Stage: func() core.Node {
 			return ui.HoldToConfirm{Text: tr.LibHoldToDelete(), ConfirmedText: tr.LibDeleted(), Tone: tone.Get(), Hint: tr.LibHold(),
 				Duration: secondsOf(seconds.Get()), Disabled: disabled.Get, Confirmed: confirmed.Get,
 				OnConfirm: func() { confirmed.Set(true); last.Set(tr.LibDeleted()) }}
@@ -151,20 +151,5 @@ func holdPlayground(last *core.Signal[string]) cardFunc {
 			choiceKnob("Tone", tone, options([]ui.HoldTone{ui.HoldAccent, ui.HoldDanger, ui.HoldNeutral}, "Accent", "Danger", "Neutral")...),
 			numberKnob("Duration", seconds, 0.4, 3, 0.2), boolKnob("Confirmed", confirmed), boolKnob("Disabled", disabled),
 		}}
-	}
-}
-
-func floatingBarCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		count := core.NewSignal(cx, 3.0)
-		icons := []func() *core.SVG{lucide.Copy, lucide.Send, lucide.Star, lucide.Trash, lucide.Menu}
-		return Playground{Title: "FloatingBar", Stage: func() core.Node {
-			var children []core.Node
-			for _, icon := range icons[:int(count.Get())] {
-				children = append(children, ui.IconButton{Icon: icon, Label: tr.KitAction(), Size: 30, OnPress: pressed(cx, last, "FloatingBar")})
-			}
-			return ui.FloatingBar{Label: tr.KitAction(), Children: children}
-		}, Knobs: []core.Node{numberKnob("Children", count, 1, 5, 1)}}
 	}
 }

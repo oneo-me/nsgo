@@ -2,7 +2,7 @@ package base
 
 import "github.com/oneo-me/nsgo/core"
 
-// Selection is the rows a List or a Tree has chosen, by key, and the row
+// Selection is the rows a Tree or ui.List has chosen, by key, and the row
 // its keyboard cursor is on. The app makes it with NewSelection and keeps
 // it with the rest of its state: it reads it as it reads a signal, and
 // sets it as the list does.
@@ -50,6 +50,13 @@ func (s *Selection) Cursor() any {
 	return s.cursor
 }
 
+// Anchor returns the key of the row a range from Shift starts at, nil for
+// none.
+func (s *Selection) Anchor() any {
+	s.version.Get()
+	return s.anchor
+}
+
 // Set chooses the rows of keys alone, only the last of them in a
 // selection of one, and moves the cursor to the last.
 func (s *Selection) Set(keys ...any) {
@@ -66,6 +73,14 @@ func (s *Selection) Set(keys ...any) {
 	if len(keys) > 0 {
 		s.cursor, s.anchor = keys[len(keys)-1], keys[len(keys)-1]
 	}
+	s.changed()
+}
+
+// SetRange chooses the rows of keys alone, as a range from anchor that
+// reaches cursor.
+func (s *Selection) SetRange(anchor, cursor any, keys ...any) {
+	s.Set(keys...)
+	s.cursor, s.anchor = cursor, anchor
 	s.changed()
 }
 

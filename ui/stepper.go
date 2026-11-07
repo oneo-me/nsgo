@@ -4,20 +4,19 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
 // StepStatus is where a step of a Stepper stands.
-type StepStatus = base.StepStatus
+type StepStatus uint8
 
 const (
-	StepUpcoming = base.StepUpcoming
-	StepCurrent  = base.StepCurrent
-	StepComplete = base.StepComplete
+	StepUpcoming StepStatus = iota
+	StepCurrent
+	StepComplete
 	// StepFailed is a step with an Error.
-	StepFailed = base.StepFailed
+	StepFailed
 )
 
 // StepperStep is one step of a Stepper: a Label with a short Description
@@ -78,15 +77,49 @@ var (
 // Render implements core.Node.
 func (s Stepper) Render(cx *core.Scope) core.Node {
 	count := len(s.Steps)
-	current := func() int { return min(max(s.Current(), 0), count) }
-	still := ReduceMotion(cx)
-	listStyle := core.Style{Direction: core.Row, AlignItems: core.AlignStart, MinWidth: core.Pt(0)}
-	if s.Vertical {
-		listStyle = core.Style{MinWidth: core.Pt(0)}
+	current := func() int {
+		if s.Current == nil {
+			return 0
+		}
+		return min(max(s.Current(), 0), count)
 	}
-	style := core.Style{MinWidth: core.Pt(0)}
-	if !s.Vertical {
-		style.AlignSelf = core.AlignStretch
+	last := core.Untracked(cx, current)
+	// travel is the step progress came from and the one it is at, so a
+	// jump can stagger what it crosses.
+	travel := core.NewMemo(cx, func() [2]int {
+		to := current()
+		from := last
+		last = to
+		return [2]int{from, to}
+	})
+	status := func(i int) StepStatus {
+		switch c := current(); {
+		case s.Steps[i].Error != "":
+			return StepFailed
+		case i < c:
+			return StepComplete
+		case i == c:
+			return StepCurrent
+		}
+		return StepUpcoming
+	}
+	still := ReduceMotion(cx)
+	delay := func(i int) time.Duration {
+		t := travel.Get()
+		from, to := t[0], t[1]
+		switch {
+		case still:
+			return 0
+		case to > from && i >= from && i < to:
+			return time.Duration(i-from) * stepStagger
+		case to < from && i >= to && i < from:
+			return time.Duration(from-1-i) * stepStagger
+		}
+		return 0
+	}
+	ring := func() time.Duration {
+		t := travel.Get()
+		return time.Duration(max(0, t[1]-t[0]-1, t[0]-t[1]-1))*stepStagger + stepRing
 	}
 	head := core.Style{Gap: 12, MinWidth: core.Pt(0), CornerRadius: RadiusControl, AlignItems: core.AlignStart}
 	if s.Vertical {
@@ -95,60 +128,56 @@ func (s Stepper) Render(cx *core.Scope) core.Node {
 	if s.OnSelect != nil {
 		head.Group = "step"
 	}
-	delays := func(step base.StepperStep) (func(int) time.Duration, func() time.Duration) {
-		delay := func(i int) time.Duration {
-			t := step.Travel()
-			from, to := t[0], t[1]
-			switch {
-			case still:
-				return 0
-			case to > from && i >= from && i < to:
-				return time.Duration(i-from) * stepStagger
-			case to < from && i >= to && i < from:
-				return time.Duration(from-1-i) * stepStagger
+	var items []core.Node
+	for i, step := range s.Steps {
+		v := core.View{Style: head, Hint: step.Description, Children: s.head(cx, i, status, delay, ring),
+			StyleFunc: func() core.Style {
+				if s.OnSelect == nil {
+					return core.Style{}
+				}
+				return core.Style{Focus: FocusRing(cx, 4)}
+			},
+			LabelFunc: func() string {
+				if s.StatusText == nil {
+					return step.Label
+				}
+				return step.Label + ", " + s.StatusText(status(i))
+			}}
+		if s.TestID != "" {
+			v.TestID = s.TestID + "-" + strconv.Itoa(i)
+		}
+		if s.OnSelect != nil {
+			v.Role = core.RoleButton
+			v.Disabled = func() bool { return i > current() }
+			v.OnPress = func(core.PressEvent) {
+				if i < core.Untracked(cx, current) {
+					s.OnSelect(i)
+				}
 			}
-			return 0
+		} else {
+			v.Accessible = true
 		}
-		ring := func() time.Duration {
-			t := step.Travel()
-			return time.Duration(max(0, t[1]-t[0]-1, t[0]-t[1]-1))*stepStagger + stepRing
-		}
-		return delay, ring
+		items = append(items, s.item(cx, i, status, delay, v))
 	}
-	var caption core.Node
+	list := core.Style{Direction: core.Row, AlignItems: core.AlignStart, MinWidth: core.Pt(0)}
+	style := core.Style{AlignSelf: core.AlignStretch, MinWidth: core.Pt(0)}
+	if s.Vertical {
+		list, style = core.Style{MinWidth: core.Pt(0)}, core.Style{MinWidth: core.Pt(0)}
+	}
+	children := []core.Node{core.View{Style: list, Children: items}}
 	if s.Compact && !s.Vertical {
-		caption = s.caption(cx, current)
+		// Assistive technology hears the caption as it changes.
+		children = append(children, core.View{Style: core.Style{Margin: core.Edges{Top: 12}, Gap: 2}, LiveRegion: core.LiveRegionPolite,
+			Children: []core.Node{s.caption(cx, current)}})
 	}
-	return base.Stepper{Count: count, Current: s.Current, OnSelect: s.OnSelect, Label: s.Label, TestID: s.TestID, Style: style, ListStyle: listStyle,
-		StepStyle: head, Caption: caption, CaptionStyle: core.Style{Margin: core.Edges{Top: 12}, Gap: 2},
-		StepStyleFunc: func() core.Style {
-			if s.OnSelect == nil {
-				return core.Style{}
-			}
-			return core.Style{Focus: FocusRing(cx, 4)}
-		},
-		Failed:   func(i int) bool { return s.Steps[i].Error != "" },
-		StepHint: func(i int) string { return s.Steps[i].Description },
-		StepLabel: func(i int, st StepStatus) string {
-			if s.StatusText == nil {
-				return s.Steps[i].Label
-			}
-			return s.Steps[i].Label + ", " + s.StatusText(st)
-		},
-		Head: func(cx *core.Scope, step base.StepperStep) []core.Node {
-			delay, ring := delays(step)
-			return s.head(cx, step.Index, s.Steps[step.Index], step.Status, delay, ring)
-		},
-		Item: func(cx *core.Scope, step base.StepperStep, head core.Node) core.Node {
-			delay, _ := delays(step)
-			return s.item(cx, step.Index, step.Status, delay, head)
-		}}
+	return core.View{Style: style, Label: s.Label, TestID: s.TestID, Children: children}
 }
 
 // head is what step i shows: its marker and text.
-func (s Stepper) head(cx *core.Scope, i int, step StepperStep, st func() StepStatus, delay func(int) time.Duration, ringDelay func() time.Duration) []core.Node {
+func (s Stepper) head(cx *core.Scope, i int, status func(int) StepStatus, delay func(int) time.Duration, ringDelay func() time.Duration) []core.Node {
 	colors := ColorsOf(cx)
-	status := func(int) StepStatus { return st() }
+	step := s.Steps[i]
+	st := func() StepStatus { return status(i) }
 	last := i == len(s.Steps)-1
 	detail := func() string {
 		if step.Error != "" {
@@ -198,7 +227,7 @@ func (s Stepper) head(cx *core.Scope, i int, step StepperStep, st func() StepSta
 }
 
 // item is step i's head and the connector to the next.
-func (s Stepper) item(cx *core.Scope, i int, st func() StepStatus, delay func(int) time.Duration, head core.Node) core.Node {
+func (s Stepper) item(cx *core.Scope, i int, status func(int) StepStatus, delay func(int) time.Duration, head core.Node) core.Node {
 	last := i == len(s.Steps)-1
 	item := core.View{Style: core.Style{MinWidth: core.Pt(0)}, Children: []core.Node{head}}
 	switch {
@@ -210,7 +239,7 @@ func (s Stepper) item(cx *core.Scope, i int, st func() StepStatus, delay func(in
 		item.Style.FlexShrink = 0
 	}
 	if !last {
-		item.Children = append(item.Children, s.connector(cx, i, func(int) StepStatus { return st() }, delay))
+		item.Children = append(item.Children, s.connector(cx, i, status, delay))
 	}
 	return item
 }

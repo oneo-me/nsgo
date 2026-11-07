@@ -22,7 +22,7 @@ func badgeCard(*core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		tone := core.NewSignal(cx, ui.ToneAccent)
 		outline := core.NewSignal(cx, false)
-		return Playground{Title: "Badge", Stage: func() core.Node {
+		return Playground{Title: "Badge", UIOnly: true, Stage: func() core.Node {
 			return ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Outline: outline.Get()}
 		}, Knobs: []core.Node{
 			choiceKnob("Tone", tone, options([]ui.Tone{ui.ToneNeutral, ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger},
@@ -66,63 +66,17 @@ func avatarGroupCard(*core.Signal[string]) cardFunc {
 	}
 }
 
-func cardPlayground(*core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		flush, footer, actions := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, true)
-		return Playground{Title: "Card", Fill: true, Stage: func() core.Node {
-			c := ui.Card{Title: tr.ControlsActivity(), Description: tr.ControlsDeployedToProduction(), Flush: flush.Get(),
-				Children: []core.Node{ui.Text(tr.ControlsInvoicePaid(), 13, ui.Regular, colors.Text)}}
-			if actions.Get() {
-				c.Actions = []core.Node{ui.Badge{Text: tr.ControlsOverview(), Tone: ui.ToneAccent}}
-			}
-			if footer.Get() {
-				c.Footer = []core.Node{ui.Text(tr.ControlsAMemberJoined(), 12, ui.Regular, colors.Muted)}
-			}
-			return c
-		}, Knobs: []core.Node{boolKnob("Flush", flush), boolKnob("Actions", actions), boolKnob("Footer", footer)}}
-	}
-}
-
 func insetCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		padding, gap := core.NewSignal(cx, 12.0), core.NewSignal(cx, 8.0)
-		return Playground{Title: "Inset", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Inset", UIOnly: true, Fill: true, Stage: func() core.Node {
 			return ui.Inset{Padding: core.Points(padding.Get()), Gap: core.Points(gap.Get()), Exact: true, Children: []core.Node{
 				ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Text),
 				ui.Text(tr.ControlsInvoicePaid(), 13, ui.Regular, colors.Muted),
 			}}
 		}, Knobs: []core.Node{numberKnob("Padding", padding, 0, 24, 2), numberKnob("Gap", gap, 0, 24, 2)}}
-	}
-}
-
-func cardStackCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		index := core.NewSignal(cx, 0)
-		var items []ui.CardStackItem
-		for _, name := range demoPeople[:4] {
-			items = append(items, ui.CardStackItem{ID: name, Label: name, Content: core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(16)},
-				Children: []core.Node{ui.Avatar{Name: name, Size: 56}, ui.Text(name, 13, ui.Medium, colors.Text)}}})
-		}
-		return ui.Card{Title: "CardStack", Children: []core.Node{
-			ui.CardStack{Items: items, Index: index.Get, Label: tr.ControlsMembers(), LeftLabel: tr.KitPass(), RightLabel: tr.KitKeep(),
-				Style: core.Style{Height: core.Pt(220)},
-				OnDecide: func(i int, d ui.CardDecision) {
-					index.Set(i + 1)
-					side := tr.KitPass()
-					if d == ui.CardRight {
-						side = tr.KitKeep()
-					}
-					last.Set(items[i].Label + ": " + side)
-				},
-				Empty: ui.Text(tr.KitNoMoreCards(), 13, ui.Regular, colors.Muted)},
-			ui.HStack{Children: []core.Node{ui.Button{Text: tr.ControlsReset(), Variant: ui.ButtonGhost, Icon: lucide.RefreshCw, OnPress: func() { index.Set(0) }}}},
-		}}
 	}
 }
 
@@ -136,7 +90,7 @@ func imagePlayground(*core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		mode := core.NewSignal(cx, core.Cover)
 		ratio := core.NewSignal(cx, 1.5)
-		return Playground{Title: "Image", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Image", UIOnly: true, Fill: true, Stage: func() core.Node {
 			return ui.Image{Source: demoImage(), Label: tr.DemoImage(), ResizeMode: mode.Get(), AspectRatio: float32(ratio.Get())}
 		}, Knobs: []core.Node{
 			choiceKnob("ResizeMode", mode, options([]core.ResizeMode{core.Cover, core.Contain, core.Center}, "Cover", "Contain", "Center")...),
@@ -157,7 +111,7 @@ func imageCompareCard(*core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		position := core.NewSignal(cx, 50.0)
 		vertical := core.NewSignal(cx, false)
-		return Playground{Title: "ImageCompare", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "ImageCompare", UIOnly: true, Fill: true, Stage: func() core.Node {
 			return ui.ImageCompare{Before: swatch(cx, ui.ToneInfo, tr.KitBefore()), After: swatch(cx, ui.ToneAccent, tr.KitAfter()), Vertical: vertical.Get(),
 				Position: func() float32 { return float32(position.Get()) }, OnChange: func(p float32) { position.Set(float64(p)) },
 				BeforeLabel: tr.KitBefore(), AfterLabel: tr.KitAfter(), Label: tr.DemoImage(), AspectRatio: 2}
@@ -187,7 +141,7 @@ func listCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		multiple := core.NewSignal(cx, false)
-		return Playground{Title: "List", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "List", UIOnly: true, Fill: true, Stage: func() core.Node {
 			many := multiple.Get()
 			return core.Func(func(cx *core.Scope) core.Node {
 				selection := ui.NewSelection(cx, many)
@@ -214,7 +168,7 @@ func treeCard(last *core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignalFunc(cx, []string{"source"}, slices.Equal)
 		selection := ui.NewSelection(cx, false)
-		return ui.Card{Title: "Tree", Children: []core.Node{
+		return Card{Title: "Tree", Children: []core.Node{
 			ui.Tree{Label: tr.LibFiles(), Selection: selection, ToggleLabel: tr.KitExpand(),
 				Roots: func() []any { return []any{"source", "docs", "README.md"} }, Children: func(k any) []any { return fileTree[k] },
 				Expanded: func(k any) bool { return slices.Contains(open.Get(), k.(string)) },

@@ -72,7 +72,7 @@ func transformable(cx *core.Scope) core.Node {
 		last.Set(result{scale: 1})
 	}
 	degrees := core.Mul(angle, core.Constant(180/math.Pi))
-	return ui.Card{Title: tr.GestPanPinchAndRotation(), Description: tr.GestThreeRecognizersOnOneView(), Children: []core.Node{
+	return Card{Title: tr.GestPanPinchAndRotation(), Description: tr.GestThreeRecognizersOnOneView(), Children: []core.Node{
 		core.View{StyleFunc: centered(cx, 260), Children: []core.Node{
 			dots(cx),
 			core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
@@ -132,7 +132,7 @@ func ball(cx *core.Scope) core.Node {
 	st := core.NewSignal(cx, state{tr.GestIdle(), ui.ToneNeutral})
 	grab := core.NewAnimatedValue(cx, 0)
 	var start core.Point
-	return ui.Card{Title: tr.GestTouchResponder(), Description: tr.GestPositionsGoThroughTheEngine(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
+	return Card{Title: tr.GestTouchResponder(), Description: tr.GestPositionsGoThroughTheEngine(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style { return stage(cx, 200) }, Children: []core.Node{
 			dots(cx),
 			core.View{TestID: "ball", Responder: &core.Responder{
@@ -183,7 +183,7 @@ func touchPad(cx *core.Scope) core.Node {
 	log := core.NewSignalFunc(cx, []entry(nil), slices.Equal)
 	fingers := core.NewSignalFunc(cx, []finger(nil), slices.Equal)
 	names := map[core.TouchPhase]string{core.TouchStart: "start", core.TouchMove: "move", core.TouchEnd: "end", core.TouchCancel: "cancel"}
-	return ui.Card{Title: tr.GestTouchEvents(), Description: Hint(cx, tr.GestStartMoveEndAndCancel(), tr.GestStartMoveEndAndCancel2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return Card{Title: tr.GestTouchEvents(), Description: Hint(cx, tr.GestStartMoveEndAndCancel(), tr.GestStartMoveEndAndCancel2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		n := len(fingers.Get())
 		t := ui.ToneNeutral
 		if n > 0 {
@@ -275,7 +275,7 @@ func pressEvents(cx *core.Scope) core.Node {
 		},
 			Children: []core.Node{core.Text{Content: name, Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)}}})
 	}
-	return ui.Card{Title: tr.GestPressEvents(), Description: tr.GestInPressLongPressAnd(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(n.Get()) }}}, Children: []core.Node{
+	return Card{Title: tr.GestPressEvents(), Description: tr.GestInPressLongPressAnd(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(n.Get()) }}}, Children: []core.Node{
 		core.View{Role: core.RoleButton, Label: tr.GestPressEvents(), TestID: "press-pad",
 			OnPressDown: func(core.PressEvent) { fire("pressIn") }, OnPressUp: func(core.PressEvent) { fire("pressOut") },
 			OnPress: func(core.PressEvent) { fire("press") }, OnLongPress: func(core.PressEvent) { fire("longPress") },
@@ -323,7 +323,7 @@ func hitSlop(cx *core.Scope) core.Node {
 		core.Timing(ring, 0, core.TimingConfig{Duration: 1400 * time.Millisecond, Easing: sine}),
 	), 0), nil)
 	cx.Cleanup(run.Stop)
-	return ui.Card{Title: tr.GestHitSlop(), Description: Hint(cx, tr.GestA12PtDotThat(), tr.GestA12PtDotThat2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return Card{Title: tr.GestHitSlop(), Description: Hint(cx, tr.GestA12PtDotThat(), tr.GestA12PtDotThat2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		t := ui.ToneNeutral
 		if taps.Get() > 0 {
 			t = ui.ToneAccent
@@ -355,7 +355,7 @@ func pointerEventsCard(cx *core.Scope) core.Node {
 	through := core.NewSignal(cx, 0)
 	warn := colors.Warn
 	hatch := func() core.Color { return ui.Alpha(warn(), 0.28) }
-	return ui.Card{Title: tr.GestPointerEvents(), Description: Hint(cx, tr.GestAnOverlayThatLetsTaps(), tr.GestAnOverlayThatLetsClicks()), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(through.Get()) }, Tone: ui.ToneUp}}, Children: []core.Node{
+	return Card{Title: tr.GestPointerEvents(), Description: Hint(cx, tr.GestAnOverlayThatLetsTaps(), tr.GestAnOverlayThatLetsClicks()), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(through.Get()) }, Tone: ui.ToneUp}}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(88)}, Children: []core.Node{
 			ui.Press{OnPress: func() { through.Update(func(n int) int { return n + 1 }) }, Scale: 0.98, Label: tr.GestButtonUnderAnOverlay(), Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
@@ -386,7 +386,7 @@ func hover(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	over := core.NewSignal(cx, false)
 	at := core.NewSignal(cx, core.Point{})
-	return ui.Card{Title: tr.GestHover(), Description: Hint(cx, tr.GestAPointerOverAView(), tr.GestTheMouseOverAView()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return Card{Title: tr.GestHover(), Description: Hint(cx, tr.GestAPointerOverAView(), tr.GestTheMouseOverAView()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if over.Get() {
 			return ui.Badge{Text: tr.GestOver(), Tone: ui.ToneAccent}
 		}
@@ -415,7 +415,7 @@ func fileDrop(cx *core.Scope) core.Node {
 	tints := ui.TintsOf(cx)
 	over := core.NewSignal(cx, false)
 	dropped := core.NewSignalFunc(cx, []string(nil), slices.Equal)
-	return ui.Card{Title: tr.GestDroppedFiles(), Description: tr.GestFilesDraggedInFromOther(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.GestFiles(len(dropped.Get())) }}}, Children: []core.Node{
+	return Card{Title: tr.GestDroppedFiles(), Description: tr.GestFilesDraggedInFromOther(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.GestFiles(len(dropped.Get())) }}}, Children: []core.Node{
 		core.View{TestID: "drop-zone", Label: tr.GestDropFilesHere(),
 			OnFileDragEnter: func() { over.Set(true) }, OnFileDragLeave: func() { over.Set(false) },
 			OnFileDrop: func(uris []string) { over.Set(false); dropped.Set(uris) },
@@ -486,7 +486,7 @@ func accessibleRows(cx *core.Scope) core.Node {
 				core.Text{Content: "button", Style: core.Style{FontSize: 11, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Faint)},
 			}}}})
 	}
-	return ui.Card{Title: tr.GestAccessibility(), Description: tr.GestRolesLabelsAndHintsFor(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+	return Card{Title: tr.GestAccessibility(), Description: tr.GestRolesLabelsAndHintsFor(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if l := last.Get(); l != "" {
 			return ui.Badge{Text: l, Tone: ui.ToneInfo}
 		}

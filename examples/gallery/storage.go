@@ -71,7 +71,7 @@ func storageDemo(cx *core.Scope) core.Node {
 	launchesCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Title: tr.StorageLaunches(), Description: tr.StorageCountedEachTimeThisDemo(), Actions: []core.Node{ui.Badge{Text: tr.StorageKept(), Tone: ui.ToneUp}}, Children: []core.Node{
+		return Card{Title: tr.StorageLaunches(), Description: tr.StorageCountedEachTimeThisDemo(), Actions: []core.Node{ui.Badge{Text: tr.StorageKept(), Tone: ui.ToneUp}}, Children: []core.Node{
 			Figure{Value: func() string { return strconv.Itoa(shown.Get()) }, Note: func() string {
 				if shown.Get() == 1 {
 					return "opening"
@@ -86,7 +86,7 @@ func storageDemo(cx *core.Scope) core.Node {
 	noteCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return ui.Card{Title: tr.StorageNote(), Description: tr.StorageSavedAsYouTypeBack(), Children: []core.Node{
+		return Card{Title: tr.StorageNote(), Description: tr.StorageSavedAsYouTypeBack(), Children: []core.Node{
 			ui.Field{Input: base.Input{Multiline: true, Value: note, OnChange: write, Placeholder: tr.StorageWriteSomethingThenComeBack(),
 				Label: tr.StorageNote(), TestID: "note", Style: core.Style{Height: core.Pt(120), Padding: core.Edges{Top: 12, Right: 14, Bottom: 12, Left: 14}}}},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, MinHeight: core.Pt(16)}, Children: []core.Node{
@@ -130,7 +130,7 @@ func storageDemo(cx *core.Scope) core.Node {
 			}
 			return n
 		}
-		return ui.Card{Title: tr.StorageStoredKeys(), Description: tr.StorageKeysAndEachValueS(), Children: []core.Node{
+		return Card{Title: tr.StorageStoredKeys(), Description: tr.StorageKeysAndEachValueS(), Children: []core.Node{
 			core.Show{When: func() bool { return len(store.Keys()) > 0 }, Else: func(*core.Scope) core.Node { return Caption{Label: tr.StorageNothingStored()} },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Children: []core.Node{core.Each(entries, func(e entry) string { return e.key },
@@ -159,7 +159,7 @@ func storageDemo(cx *core.Scope) core.Node {
 			}
 			return d
 		}
-		return ui.Card{Title: tr.StorageAppDirectories(), Description: tr.StorageDatadirAndCachedirNamedBy(), Children: []core.Node{
+		return Card{Title: tr.StorageAppDirectories(), Description: tr.StorageDatadirAndCachedirNamedBy(), Children: []core.Node{
 			Caption{Label: tr.StorageData()}, Code{Text: dir(cx.DataDir())},
 			Caption{Label: tr.StorageCache()}, Code{Text: dir(cx.CacheDir())},
 		}}

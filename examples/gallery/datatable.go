@@ -457,7 +457,7 @@ func tableCard(cx *core.Scope) core.Node {
 	for i, title := range []string{tr.TableInvoice(), tr.TableStatus(), tr.TableMethod(), tr.TableAmount()} {
 		head = append(head, cell(i, true, i == 3, title))
 	}
-	return ui.Card{Title: tr.TableTable(), Description: tr.TableAFewRowsTheApp(), Children: []core.Node{
+	return Card{Title: tr.TableTable(), Description: tr.TableAFewRowsTheApp(), Children: []core.Node{
 		base.Table{Label: tr.TableRecentInvoices(), Children: []core.Node{
 			base.TableHeader{Children: []core.Node{base.TableRow{Style: line, StyleFunc: lineColor, Children: head}}},
 			base.TableBody{Children: body},

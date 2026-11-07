@@ -2124,6 +2124,7 @@ type Translation struct {
 	UiLightAppearance                            func() string
 	UiDarkAppearance                             func() string
 	UiBack                                       func() string
+	UiOnly                                       func() string
 	ViewerImage                                  func() string
 	ViewerClose                                  func() string
 	ToastClose                                   func() string
@@ -2217,9 +2218,6 @@ type Translation struct {
 	TerminalKeyBarNote                           func() string
 	KitPressed                                   func(name string) string
 	KitRating                                    func() string
-	KitPass                                      func() string
-	KitKeep                                      func() string
-	KitNoMoreCards                               func() string
 	KitBefore                                    func() string
 	KitAfter                                     func() string
 	KitExpand                                    func() string
@@ -2280,16 +2278,14 @@ type Translation struct {
 	DemoImageCompareDetail                       func() string
 	DemoCarousel                                 func() string
 	DemoCarouselDetail                           func() string
-	DemoCardStack                                func() string
-	DemoCardStackDetail                          func() string
 	DemoList                                     func() string
 	DemoListDetail                               func() string
 	DemoTree                                     func() string
 	DemoTreeDetail                               func() string
 	DemoTable                                    func() string
 	DemoTableDetail                              func() string
-	DemoCard                                     func() string
-	DemoCardDetail                               func() string
+	DemoInset                                    func() string
+	DemoInsetDetail                              func() string
 	DemoAccordion                                func() string
 	DemoAccordionDetail                          func() string
 	DemoSpinner                                  func() string
@@ -4052,6 +4048,7 @@ const (
 	textUiLightAppearance
 	textUiDarkAppearance
 	textUiBack
+	textUiOnly
 	textViewerImage
 	textViewerClose
 	textToastClose
@@ -4132,9 +4129,6 @@ const (
 	textTerminalKeyBar
 	textTerminalKeyBarNote
 	textKitRating
-	textKitPass
-	textKitKeep
-	textKitNoMoreCards
 	textKitBefore
 	textKitAfter
 	textKitExpand
@@ -4195,16 +4189,14 @@ const (
 	textDemoImageCompareDetail
 	textDemoCarousel
 	textDemoCarouselDetail
-	textDemoCardStack
-	textDemoCardStackDetail
 	textDemoList
 	textDemoListDetail
 	textDemoTree
 	textDemoTreeDetail
 	textDemoTable
 	textDemoTableDetail
-	textDemoCard
-	textDemoCardDetail
+	textDemoInset
+	textDemoInsetDetail
 	textDemoAccordion
 	textDemoAccordionDetail
 	textDemoSpinner
@@ -5968,6 +5960,7 @@ var texts = map[string]*[numTexts]string{
 		"Light appearance",
 		"Dark appearance",
 		"Back",
+		"UI only",
 		"Image",
 		"Close",
 		"Close",
@@ -6048,9 +6041,6 @@ var texts = map[string]*[numTexts]string{
 		"Key bar",
 		"Over a touch screen's keyboard",
 		"Rating",
-		"Pass",
-		"Keep",
-		"No more cards",
 		"Before",
 		"After",
 		"Expand",
@@ -6111,16 +6101,14 @@ var texts = map[string]*[numTexts]string{
 		"Two sides split by a handle",
 		"Carousel",
 		"Slides that snap into place",
-		"CardStack",
-		"A deck to decide card by card",
 		"List",
 		"Rows to select with the pointer and keyboard",
 		"Tree",
 		"Nested items that expand",
 		"Table",
 		"A few rows the app writes out",
-		"Card",
-		"Titled containers and insets",
+		"Inset",
+		"A recessed surface for content",
 		"Accordion",
 		"Sections that open one or several at a time",
 		"Spinner",
@@ -7879,6 +7867,7 @@ var texts = map[string]*[numTexts]string{
 		"المظهر الفاتح",
 		"المظهر الداكن",
 		"رجوع",
+		"UI فقط",
 		"صورة",
 		"إغلاق",
 		"إغلاق",
@@ -7959,9 +7948,6 @@ var texts = map[string]*[numTexts]string{
 		"شريط المفاتيح",
 		"فوق لوحة مفاتيح الشاشة اللمسية",
 		"التقييم",
-		"تخطٍّ",
-		"إبقاء",
-		"لا مزيد من البطاقات",
 		"قبل",
 		"بعد",
 		"توسيع",
@@ -8022,16 +8008,14 @@ var texts = map[string]*[numTexts]string{
 		"جانبان يفصلهما مقبض",
 		"عرض دوّار",
 		"شرائح تستقر في مكانها",
-		"كومة بطاقات",
-		"مجموعة بطاقات تُحسم واحدة تلو الأخرى",
 		"قائمة",
 		"صفوف تُحدد بالمؤشر ولوحة المفاتيح",
 		"شجرة",
 		"عناصر متداخلة قابلة للتوسيع",
 		"جدول",
 		"صفوف قليلة يكتبها التطبيق",
-		"بطاقة",
-		"حاويات معنونة ومناطق داخلية",
+		"Inset",
+		"سطح غائر للمحتوى",
 		"أكورديون",
 		"أقسام تُفتح واحدًا أو أكثر في كل مرة",
 		"مؤشر تحميل",
@@ -9790,6 +9774,7 @@ var texts = map[string]*[numTexts]string{
 		"浅色外观",
 		"深色外观",
 		"返回",
+		"仅 UI",
 		"图片",
 		"关闭",
 		"关闭",
@@ -9870,9 +9855,6 @@ var texts = map[string]*[numTexts]string{
 		"按键栏",
 		"显示在触屏的软键盘上方",
 		"评分",
-		"跳过",
-		"保留",
-		"没有更多卡片了",
 		"之前",
 		"之后",
 		"展开",
@@ -9933,16 +9915,14 @@ var texts = map[string]*[numTexts]string{
 		"由手柄分开的两侧",
 		"轮播",
 		"吸附到位的幻灯片",
-		"卡片堆",
-		"逐张决定的卡组",
 		"列表",
 		"可用指针和键盘选择的行",
 		"树",
 		"可展开的嵌套项",
 		"表格",
 		"应用写出的少量行",
-		"卡片",
-		"带标题的容器和内嵌区域",
+		"Inset",
+		"让内容下沉的表面",
 		"手风琴",
 		"一次打开一个或多个的分区",
 		"加载指示器",
@@ -11701,6 +11681,7 @@ var texts = map[string]*[numTexts]string{
 		"淺色外觀",
 		"深色外觀",
 		"返回",
+		"僅 UI",
 		"圖片",
 		"關閉",
 		"關閉",
@@ -11781,9 +11762,6 @@ var texts = map[string]*[numTexts]string{
 		"按鍵列",
 		"顯示在觸控螢幕的軟體鍵盤上方",
 		"評分",
-		"略過",
-		"保留",
-		"沒有更多卡片了",
 		"之前",
 		"之後",
 		"展開",
@@ -11844,16 +11822,14 @@ var texts = map[string]*[numTexts]string{
 		"由控點分開的兩側",
 		"輪播",
 		"吸附到位的投影片",
-		"卡片堆",
-		"逐張決定的牌組",
 		"清單",
 		"可用指標和鍵盤選擇的列",
 		"樹",
 		"可展開的巢狀項目",
 		"表格",
 		"應用程式寫出的少量列",
-		"卡片",
-		"帶標題的容器和內嵌區域",
+		"Inset",
+		"讓內容下沉的表面",
 		"手風琴",
 		"一次開啟一個或多個的區段",
 		"載入指示器",
@@ -17349,6 +17325,9 @@ func Supply(lang string, t Translation) {
 	if t.UiBack != nil {
 		st[textUiBack] = t.UiBack()
 	}
+	if t.UiOnly != nil {
+		st[textUiOnly] = t.UiOnly()
+	}
 	if t.ViewerImage != nil {
 		st[textViewerImage] = t.ViewerImage()
 	}
@@ -17628,15 +17607,6 @@ func Supply(lang string, t Translation) {
 	if t.KitRating != nil {
 		st[textKitRating] = t.KitRating()
 	}
-	if t.KitPass != nil {
-		st[textKitPass] = t.KitPass()
-	}
-	if t.KitKeep != nil {
-		st[textKitKeep] = t.KitKeep()
-	}
-	if t.KitNoMoreCards != nil {
-		st[textKitNoMoreCards] = t.KitNoMoreCards()
-	}
 	if t.KitBefore != nil {
 		st[textKitBefore] = t.KitBefore()
 	}
@@ -17817,12 +17787,6 @@ func Supply(lang string, t Translation) {
 	if t.DemoCarouselDetail != nil {
 		st[textDemoCarouselDetail] = t.DemoCarouselDetail()
 	}
-	if t.DemoCardStack != nil {
-		st[textDemoCardStack] = t.DemoCardStack()
-	}
-	if t.DemoCardStackDetail != nil {
-		st[textDemoCardStackDetail] = t.DemoCardStackDetail()
-	}
 	if t.DemoList != nil {
 		st[textDemoList] = t.DemoList()
 	}
@@ -17841,11 +17805,11 @@ func Supply(lang string, t Translation) {
 	if t.DemoTableDetail != nil {
 		st[textDemoTableDetail] = t.DemoTableDetail()
 	}
-	if t.DemoCard != nil {
-		st[textDemoCard] = t.DemoCard()
+	if t.DemoInset != nil {
+		st[textDemoInset] = t.DemoInset()
 	}
-	if t.DemoCardDetail != nil {
-		st[textDemoCardDetail] = t.DemoCardDetail()
+	if t.DemoInsetDetail != nil {
+		st[textDemoInsetDetail] = t.DemoInsetDetail()
 	}
 	if t.DemoAccordion != nil {
 		st[textDemoAccordion] = t.DemoAccordion()
@@ -35347,6 +35311,14 @@ func UiBack(cx *core.Scope) string { return For(cx).UiBack() }
 // in the language of msgs.
 func (msgs Messages) UiBack() string { return msgs.text(textUiBack) }
 
+// UiOnly says "UI only"
+// in the language the app shows under cx.
+func UiOnly(cx *core.Scope) string { return For(cx).UiOnly() }
+
+// UiOnly says "UI only"
+// in the language of msgs.
+func (msgs Messages) UiOnly() string { return msgs.text(textUiOnly) }
+
 // ViewerImage says "Image"
 // in the language the app shows under cx.
 func ViewerImage(cx *core.Scope) string { return For(cx).ViewerImage() }
@@ -36383,30 +36355,6 @@ func KitRating(cx *core.Scope) string { return For(cx).KitRating() }
 // in the language of msgs.
 func (msgs Messages) KitRating() string { return msgs.text(textKitRating) }
 
-// KitPass says "Pass"
-// in the language the app shows under cx.
-func KitPass(cx *core.Scope) string { return For(cx).KitPass() }
-
-// KitPass says "Pass"
-// in the language of msgs.
-func (msgs Messages) KitPass() string { return msgs.text(textKitPass) }
-
-// KitKeep says "Keep"
-// in the language the app shows under cx.
-func KitKeep(cx *core.Scope) string { return For(cx).KitKeep() }
-
-// KitKeep says "Keep"
-// in the language of msgs.
-func (msgs Messages) KitKeep() string { return msgs.text(textKitKeep) }
-
-// KitNoMoreCards says "No more cards"
-// in the language the app shows under cx.
-func KitNoMoreCards(cx *core.Scope) string { return For(cx).KitNoMoreCards() }
-
-// KitNoMoreCards says "No more cards"
-// in the language of msgs.
-func (msgs Messages) KitNoMoreCards() string { return msgs.text(textKitNoMoreCards) }
-
 // KitBefore says "Before"
 // in the language the app shows under cx.
 func KitBefore(cx *core.Scope) string { return For(cx).KitBefore() }
@@ -36887,22 +36835,6 @@ func DemoCarouselDetail(cx *core.Scope) string { return For(cx).DemoCarouselDeta
 // in the language of msgs.
 func (msgs Messages) DemoCarouselDetail() string { return msgs.text(textDemoCarouselDetail) }
 
-// DemoCardStack says "CardStack"
-// in the language the app shows under cx.
-func DemoCardStack(cx *core.Scope) string { return For(cx).DemoCardStack() }
-
-// DemoCardStack says "CardStack"
-// in the language of msgs.
-func (msgs Messages) DemoCardStack() string { return msgs.text(textDemoCardStack) }
-
-// DemoCardStackDetail says "A deck to decide card by card"
-// in the language the app shows under cx.
-func DemoCardStackDetail(cx *core.Scope) string { return For(cx).DemoCardStackDetail() }
-
-// DemoCardStackDetail says "A deck to decide card by card"
-// in the language of msgs.
-func (msgs Messages) DemoCardStackDetail() string { return msgs.text(textDemoCardStackDetail) }
-
 // DemoList says "List"
 // in the language the app shows under cx.
 func DemoList(cx *core.Scope) string { return For(cx).DemoList() }
@@ -36951,21 +36883,21 @@ func DemoTableDetail(cx *core.Scope) string { return For(cx).DemoTableDetail() }
 // in the language of msgs.
 func (msgs Messages) DemoTableDetail() string { return msgs.text(textDemoTableDetail) }
 
-// DemoCard says "Card"
+// DemoInset says "Inset"
 // in the language the app shows under cx.
-func DemoCard(cx *core.Scope) string { return For(cx).DemoCard() }
+func DemoInset(cx *core.Scope) string { return For(cx).DemoInset() }
 
-// DemoCard says "Card"
+// DemoInset says "Inset"
 // in the language of msgs.
-func (msgs Messages) DemoCard() string { return msgs.text(textDemoCard) }
+func (msgs Messages) DemoInset() string { return msgs.text(textDemoInset) }
 
-// DemoCardDetail says "Titled containers and insets"
+// DemoInsetDetail says "A recessed surface for content"
 // in the language the app shows under cx.
-func DemoCardDetail(cx *core.Scope) string { return For(cx).DemoCardDetail() }
+func DemoInsetDetail(cx *core.Scope) string { return For(cx).DemoInsetDetail() }
 
-// DemoCardDetail says "Titled containers and insets"
+// DemoInsetDetail says "A recessed surface for content"
 // in the language of msgs.
-func (msgs Messages) DemoCardDetail() string { return msgs.text(textDemoCardDetail) }
+func (msgs Messages) DemoInsetDetail() string { return msgs.text(textDemoInsetDetail) }
 
 // DemoAccordion says "Accordion"
 // in the language the app shows under cx.

@@ -664,9 +664,7 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 			for r := min(from, to); r <= max(from, to); r++ {
 				keys = append(keys, f.nodes[rows[r]].key)
 			}
-			s.Set(keys...)
-			s.cursor, s.anchor = key, anchor
-			s.changed()
+			s.SetRange(anchor, key, keys...)
 		case m.Platform || m.Control || !core.Untracked(cx, desktop):
 			s.Toggle(key)
 		default:

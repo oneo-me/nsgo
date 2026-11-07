@@ -153,7 +153,7 @@ func dial(cx *core.Scope) core.Node {
 	for _, p := range dialPresets {
 		opts = append(opts, ui.Option[string]{Value: p.value, Label: p.label(locales.For(cx))})
 	}
-	return ui.Card{Title: tr.CanvasTurbine3Load(), Description: tr.CanvasNeedleAndSweepOnOne(), Children: []core.Node{
+	return Card{Title: tr.CanvasTurbine3Load(), Description: tr.CanvasNeedleAndSweepOnOne(), Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(230)}, Draw: draw, Label: tr.CanvasLoadDial(), TestID: "dial"},
 		ui.Tabs[string]{Equal: true, Options: opts, Value: preset.Get, OnChange: choose},
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
@@ -260,7 +260,7 @@ func areaChart(cx *core.Scope) core.Node {
 		d.SetFillColor(c.Raised).BeginPath().RoundRect(w0-right-lw, y(mean)-9, lw, 18, 9).Fill()
 		d.SetFillColor(c.Text).SetTextBaseline(core.BaselineMiddle).FillText(l, w0-right-lw+6, y(mean), f)
 	}
-	return ui.Card{Title: tr.CanvasRelayThroughput(), Description: tr.CanvasAreaAverageHatching(), Actions: []core.Node{ui.Button{Text: tr.CanvasNew(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+	return Card{Title: tr.CanvasRelayThroughput(), Description: tr.CanvasAreaAverageHatching(), Actions: []core.Node{ui.Button{Text: tr.CanvasNew(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
 		data.Set(freshData(func() float64 { return float64(time.Now().UnixNano()%1000) / 1000 }))
 		replay()
 	}}}, Children: []core.Node{
@@ -353,7 +353,7 @@ func ridgeline(cx *core.Scope) core.Node {
 			d.FillText(day(tr), 0, 30+float32(di)*step-2, f)
 		}
 	}
-	return ui.Card{Title: tr.CanvasFootfallByHour(), Description: tr.CanvasRidgelineOneCurveADay(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+	return Card{Title: tr.CanvasFootfallByHour(), Description: tr.CanvasRidgelineOneCurveADay(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
 		Caption{Label: tr.CanvasGateBLastWeek(), Note: label(tr.CanvasPeak12001400())},
 		core.Canvas{Style: core.Style{Height: core.Pt(210)}, Draw: draw, Label: tr.CanvasFootfallRidgeline()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{Legend{Color: colors.Accent, Label: tr.CanvasWeekday()}, Legend{Color: colors.Info, Label: tr.CanvasWeekend()}}},
@@ -404,7 +404,7 @@ func dotMatrix(cx *core.Scope) core.Node {
 		swatches = append(swatches, core.View{Style: core.Style{Width: core.Pt(9), Height: core.Pt(9), CornerRadius: 2.5},
 			StyleFunc: ui.Filled(func() core.Color { return levels(cx)[i] })})
 	}
-	return ui.Card{Title: tr.CanvasBeaconUptime(), Description: tr.CanvasDotMatrixOneColumnA(), Children: []core.Node{
+	return Card{Title: tr.CanvasBeaconUptime(), Description: tr.CanvasDotMatrixOneColumnA(), Children: []core.Node{
 		Figure{Value: label("99.94"), Unit: "%", Note: label(tr.Canvas3Incidents()), Tone: ui.ToneDanger},
 		core.Canvas{Style: core.Style{Height: core.Pt(96)}, Draw: draw, Label: tr.CanvasUptimeMatrix()},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{ui.Text(tr.CanvasLess(), 13, ui.Regular, colors.Muted)}, swatches...),
@@ -462,7 +462,7 @@ func dumbbell(cx *core.Scope) core.Node {
 			d.SetFillColor(tn).FillText(l, width-d.MeasureText(l, f11), cy, f11)
 		}
 	}
-	return ui.Card{Title: tr.CanvasRouteLatency(), Description: tr.CanvasDumbbellBeforeAfter(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+	return Card{Title: tr.CanvasRouteLatency(), Description: tr.CanvasDumbbellBeforeAfter(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(30*len(routesLatency) + 24))}, Draw: draw, Label: tr.CanvasRouteLatency()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
 			Legend{Color: colors.Muted, Label: tr.CanvasBefore()}, Legend{Color: colors.Accent, Label: tr.CanvasAfter()}, Legend{Color: colors.Danger, Label: tr.CanvasRegressed()},
@@ -499,7 +499,7 @@ func clock(cx *core.Scope) core.Node {
 			SetStrokeColor(c.Accent).SetLineWidth(1.5).BeginPath().MoveTo(-14, 0).LineTo(r*0.8, 0).Stroke().Restore()
 		d.SetFillColor(c.Accent).BeginPath().Arc(0, 0, 4, 0, tau, false).Fill()
 	}
-	return ui.Card{Title: tr.CanvasTransforms(), Description: tr.CanvasTranslateRotateSaveRestore(), Children: []core.Node{
+	return Card{Title: tr.CanvasTransforms(), Description: tr.CanvasTranslateRotateSaveRestore(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 16}, Children: []core.Node{
 			core.Canvas{Style: core.Style{Width: core.Pt(150), Height: core.Pt(150)}, Draw: draw, Label: tr.CanvasClock()},
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 8}, Children: []core.Node{
@@ -547,7 +547,7 @@ func paths(cx *core.Scope) core.Node {
 			ui.Text(g.name(locales.For(cx)), 13, ui.Regular, colors.Muted),
 		}})
 	}
-	return ui.Card{Title: tr.CanvasPaths(), Description: tr.CanvasSvgPathDataParsedBy(), Children: []core.Node{
+	return Card{Title: tr.CanvasPaths(), Description: tr.CanvasSvgPathDataParsedBy(), Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: tiles},
 	}}
 }
@@ -582,7 +582,7 @@ func compositing(cx *core.Scope) core.Node {
 			BeginPath().Arc(rx, cy, 38, 0, tau, false).Fill()
 		d.SetLineDash(5, 5).SetStrokeColor(c.Warn).SetLineWidth(1.5).BeginPath().Arc(rx, cy, 43, 0, tau, false).Stroke()
 	}
-	return ui.Card{Title: tr.CanvasCompositing(), Description: tr.CanvasClipShadowDestinationoutDashes(), Children: []core.Node{
+	return Card{Title: tr.CanvasCompositing(), Description: tr.CanvasClipShadowDestinationoutDashes(), Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(120)}, Draw: draw, Label: tr.CanvasCompositing()},
 		core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
 			ui.Text(tr.CanvasClippedImage(), 13, ui.Regular, colors.Muted), ui.Text(tr.CanvasCutOut(), 13, ui.Regular, colors.Muted), ui.Text(tr.CanvasRadialGradient(), 13, ui.Regular, colors.Muted),
@@ -622,7 +622,7 @@ func sketch(cx *core.Scope) core.Node {
 			d.Stroke()
 		}
 	}
-	return ui.Card{Title: tr.CanvasSketch(), Description: Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
+	return Card{Title: tr.CanvasSketch(), Description: Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
 		core.View{TestID: "sketch", Responder: &core.Responder{Claims: []core.TouchClaim{{}}, Keep: true,
 			OnGrant: func(e core.ResponderEvent) {
 				strokes.Update(func(s [][]core.Point) [][]core.Point { return append(s, []core.Point{e.Position}) })
@@ -682,7 +682,7 @@ func hitTests(cx *core.Scope) core.Node {
 		}
 		selected.Set(-1)
 	}
-	return ui.Card{Title: tr.CanvasNodesAndHitTests(), Description: tr.CanvasBarsScreenReadersSeeA(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return Card{Title: tr.CanvasNodesAndHitTests(), Description: tr.CanvasBarsScreenReadersSeeA(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(140)}, Draw: draw, OnPress: pressed, Label: tr.CanvasSelectableBars(), TestID: "bars"},
 		Caption{Label: tr.CanvasSelected(), Note: func() string {
 			if s := selected.Get(); s >= 0 {

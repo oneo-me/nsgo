@@ -92,7 +92,7 @@ func ratingCard(last *core.Signal[string]) cardFunc {
 		value := core.NewSignal(cx, 3)
 		most := core.NewSignal(cx, 5.0)
 		readonly, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "Rating", Stage: func() core.Node {
+		return Playground{Title: "Rating", UIOnly: true, Stage: func() core.Node {
 			return ui.Rating{Label: tr.KitRating(), Value: value.Get, Max: int(most.Get()), Readonly: readonly.Get(), Disabled: disabled.Get,
 				OnChange: func(v int) { value.Set(v); last.Set(fmt.Sprintf("Rating: %d", v)) }}
 		}, Knobs: []core.Node{numberKnob("Max", most, 3, 10, 1), boolKnob("Readonly", readonly), boolKnob("Disabled", disabled)}}

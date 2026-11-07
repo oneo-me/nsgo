@@ -240,6 +240,18 @@ func TestEveryDemoBuilds(t *testing.T) {
 }
 
 // TestLayoutsKeepTheDemo moves between the layouts with a demo open.
+// TestUIOnlyMarks marks the cards of components base has no form of,
+// inside their pages and on no other.
+func TestUIOnlyMarks(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Button")
+	if app.Exists("id:ui-only-Button") {
+		t.Fatal("Button is marked though base has one")
+	}
+	open(app, "Badge")
+	app.Find("id:demo-Badge >> id:ui-only-Badge")
+}
+
 func TestLayoutsKeepTheDemo(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Checkbox")

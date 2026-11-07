@@ -50,7 +50,7 @@ func stepperPlayground(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		current := core.NewSignal(cx, 1.0)
 		vertical, compact, describe, failed := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "Stepper", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Stepper", UIOnly: true, Fill: true, Stage: func() core.Node {
 			steps := checkoutSteps(tr)
 			if failed.Get() {
 				steps[1].Error = tr.LibInstallError()
@@ -70,7 +70,7 @@ func breadcrumbsCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		most := core.NewSignal(cx, 0.0)
 		path := []string{tr.ControlsApps(), tr.ControlsPhotos(), "2026", "Lisbon", "IMG_0042.heic"}
-		return Playground{Title: "Breadcrumbs", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Breadcrumbs", UIOnly: true, Fill: true, Stage: func() core.Node {
 			return ui.Breadcrumbs{Items: path, MaxItems: int(most.Get()), MoreLabel: tr.KitMore(),
 				OnSelect: func(i int) { last.Set("Breadcrumbs: " + path[i]) }}
 		}, Knobs: []core.Node{numberKnob("MaxItems", most, 0, 5, 1)}}
@@ -117,5 +117,22 @@ func collapsiblePlayground(last *core.Signal[string]) cardFunc {
 				OnOpenChange: func(on bool) { open.Set(on); last.Set(fmt.Sprintf("Collapsible: %s", onOff(tr, on))) },
 				Content:      ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Muted)}
 		}, Knobs: []core.Node{boolKnob("Open", open), boolKnob("Disabled", disabled)}}
+	}
+}
+
+func sidebarCard(last *core.Signal[string]) cardFunc {
+	return func(cx *core.Scope) core.Node {
+		tr := locales.For(cx)
+		selected := core.NewSignal(cx, tr.ControlsOverview())
+		var items []ui.SidebarItem
+		for _, name := range demoSections(tr) {
+			items = append(items, ui.SidebarItem{ID: name, Text: name})
+		}
+		return Card{Title: "Sidebar", UIOnly: true, Children: []core.Node{
+			core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220), AlignSelf: core.AlignCenter}, Children: []core.Node{
+				ui.Sidebar{Selected: selected.Get, OnSelect: func(id string) { selected.Set(id); last.Set("Sidebar: " + id) },
+					Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Items: items}}},
+			}},
+		}}
 	}
 }

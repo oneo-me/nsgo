@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
+	"slices"
+
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -45,35 +46,105 @@ type Sidebar struct {
 func (s Sidebar) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	const height core.Points = 32
-	var sections []base.SidebarSection
+	selected := func() string {
+		if s.Selected == nil {
+			return ""
+		}
+		return s.Selected()
+	}
+	choose := func(id string) {
+		if s.OnSelect != nil {
+			s.OnSelect(id)
+		}
+	}
+	focused := core.NewSignal(cx, false)
+	// The items in order, and where each is: what the keys move through
+	// and scroll into view.
+	var order []string
+	refs := map[string]*core.Ref{}
+	scroll, content := &core.Ref{}, &core.Ref{}
+	var offset core.Points
+	reveal := func(id string) {
+		r, ok := refs[id].Bounds()
+		c, ok2 := content.Bounds()
+		view, ok3 := scroll.Bounds()
+		if !ok || !ok2 || !ok3 {
+			return
+		}
+		top := r.Origin.Y - c.Origin.Y
+		bottom := top + r.Size.Height
+		switch {
+		case top < offset:
+			scroll.ScrollTo(core.Point{Y: top}, true)
+		case bottom > offset+view.Size.Height:
+			scroll.ScrollTo(core.Point{Y: bottom - view.Size.Height}, true)
+		}
+	}
+	// move selects the item at to(at, last): at is the selected one's
+	// place, -1 when it is not shown.
+	move := func(to func(at, last int) int) func() {
+		return func() {
+			if len(order) == 0 {
+				return
+			}
+			at := slices.Index(order, core.Untracked(cx, selected))
+			i := min(max(to(at, len(order)-1), 0), len(order)-1)
+			if i == at {
+				return
+			}
+			choose(order[i])
+			reveal(order[i])
+		}
+	}
+	item := func(it SidebarItem) core.Node {
+		ref := &core.Ref{}
+		order = append(order, it.ID)
+		refs[it.ID] = ref
+		on := func() bool { return selected() == it.ID }
+		label := Text(it.Text, 13, Regular, colors.Text)
+		label.MaxLines, label.Style.FlexGrow, label.Style.FlexShrink = 1, 1, 1
+		return core.View{Ref: ref, Role: core.RoleButton, Label: it.Text, Selected: on, NoFocus: true, TestID: it.TestID,
+			OnPress: func(core.PressEvent) { choose(it.ID) },
+			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(height),
+				Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorDefault},
+			StyleFunc: func() core.Style {
+				return core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, Focus: FocusRing(cx, -2)}
+			},
+			PartStates: func() core.PartStates { return core.PartStates{Focused: on() && focused.Get()} },
+			Children:   []core.Node{Icon(it.Icon, 16, colors.Accent), label}}
+	}
+	var sections []core.Node
 	for _, sec := range s.Sections {
-		section := base.SidebarSection{TestID: sec.TestID, Style: core.Style{Gap: 4}}
+		var nodes []core.Node
 		if sec.Title != "" {
 			title := Text(sec.Title, 11, Bold, colors.Muted)
 			title.Role, title.MaxLines = core.RoleHeader, 1
 			title.Style.Padding = core.Edges{Top: 4, Right: 8, Bottom: 2, Left: 8}
-			section.Header = title
 			if sec.Actions != nil {
 				title.Style.FlexGrow, title.Style.FlexShrink = 1, 1
-				section.Header = core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Padding: core.Edges{Right: 4}}, Children: []core.Node{title, sec.Actions}}
+				nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Padding: core.Edges{Right: 4}}, Children: []core.Node{title, sec.Actions}})
+			} else {
+				nodes = append(nodes, title)
 			}
 		}
 		for _, it := range sec.Items {
-			label := Text(it.Text, 13, Regular, colors.Text)
-			label.MaxLines, label.Style.FlexGrow, label.Style.FlexShrink = 1, 1, 1
-			section.Items = append(section.Items, base.SidebarItem{ID: it.ID, Label: it.Text, TestID: it.TestID,
-				Children: []core.Node{Icon(it.Icon, 16, colors.Accent), label}})
+			nodes = append(nodes, item(it))
 		}
 		if sec.Note != nil {
-			section.Footer = core.View{Style: core.Style{Padding: core.Symmetric(4, 8)}, Children: []core.Node{sec.Note}}
+			nodes = append(nodes, core.View{Style: core.Style{Padding: core.Symmetric(4, 8)}, Children: []core.Node{sec.Note}})
 		}
-		sections = append(sections, section)
+		sections = append(sections, core.View{TestID: sec.TestID, Style: core.Style{Gap: 4}, Children: nodes})
 	}
-	return base.Sidebar{Sections: sections, Selected: s.Selected, OnSelect: s.OnSelect, TestID: s.TestID, Style: FillRest,
-		ContentStyle: core.Style{Padding: core.Edges{Right: 12, Bottom: 12, Left: 12}, Gap: 12},
-		ItemStyle: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(height),
-			Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorDefault},
-		ItemStyleFunc: func() core.Style {
-			return core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, Focus: FocusRing(cx, -2)}
-		}}
+	keys := core.Show{When: focused.Get, Then: func(cx *core.Scope) core.Node {
+		repeat := core.KeyOptions{When: core.KeyNotEditing, Repeat: true}
+		cx.OnKeyWith("up", repeat, move(func(at, _ int) int { return at - 1 }))
+		cx.OnKeyWith("down", repeat, move(func(at, _ int) int { return at + 1 }))
+		cx.OnKeyWith("home", repeat, move(func(int, int) int { return 0 }))
+		cx.OnKeyWith("end", repeat, move(func(_, last int) int { return last }))
+		return nil
+	}}
+	return core.Scroll{Ref: scroll, TestID: s.TestID, Style: FillRest, OnScroll: func(e core.ScrollEvent) { offset = e.Offset.Y },
+		Children: []core.Node{core.View{Ref: content, OnPress: func(core.PressEvent) {},
+			OnFocus: func() { focused.Set(true) }, OnBlur: func() { focused.Set(false) },
+			Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 12, Left: 12}, Gap: 12}, Children: append(sections, keys)}}}
 }

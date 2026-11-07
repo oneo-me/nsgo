@@ -27,7 +27,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 			// the quantity itself.
 			return core.View{AccessibilityElementsHidden: always, Children: []core.Node{ui.RoundButton{Icon: name, Label: label, Variant: ui.ButtonSecondary, Size: 36, OnPress: func() { adjust(by) }}}}
 		}
-		return ui.Card{Title: tr.A11yValuesAndHints(), Description: tr.A11yAnAdjustableElementSwipeUp(), Children: []core.Node{
+		return Card{Title: tr.A11yValuesAndHints(), Description: tr.A11yAnAdjustableElementSwipeUp(), Children: []core.Node{
 			core.View{Role: core.RoleAdjustable, Label: tr.A11yQuantity(), Hint: tr.A11ySwipeUpOrDownTo(), TestID: "a11y-quantity",
 				AccessibilityValue: func() core.AccessibilityValue {
 					return core.AccessibilityValue{Max: 10, Now: float32(n.Get()), Text: tr.A11yItems(n.Get())}
@@ -55,7 +55,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
-		return ui.Card{Title: tr.A11yExpandedState(), Description: tr.A11yScreenReadersSayWhetherIt(), Children: []core.Node{
+		return Card{Title: tr.A11yExpandedState(), Description: tr.A11yScreenReadersSayWhetherIt(), Children: []core.Node{
 			base.Button{Label: tr.A11yShippingDetails(), Expanded: open.Get, TestID: "a11y-disclosure", OnPress: func(core.PressEvent) { toggled(open) },
 				Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(44), Active: &core.Style{Opacity: core.Alpha(0.7)}},
 				Children: []core.Node{
@@ -78,7 +78,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
 		last := core.NewSignal(cx, tr.A11yNoneYet())
-		return ui.Card{Title: tr.A11yActions(), Description: tr.A11yInTheScreenReaderS(), Children: []core.Node{
+		return Card{Title: tr.A11yActions(), Description: tr.A11yInTheScreenReaderS(), Children: []core.Node{
 			core.View{Accessible: true, TestID: "a11y-message",
 				AccessibilityActions: []core.AccessibilityAction{
 					{Name: "archive", Label: tr.A11yArchive()}, {Name: "flag", Label: tr.A11yFlag()},
@@ -99,7 +99,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		colors := ui.ColorsOf(cx)
 		fin := ui.FinOf(cx)
 		price := core.NewSignal(cx, 120)
-		return ui.Card{Title: tr.A11yGroupedElements(), Description: tr.A11yOneElementLabelledWithThe(), Children: []core.Node{
+		return Card{Title: tr.A11yGroupedElements(), Description: tr.A11yOneElementLabelledWithThe(), Children: []core.Node{
 			core.View{Accessible: true, TestID: "a11y-card",
 				StyleFunc: func() core.Style {
 					return fin.Raised().Over(core.Style{Background: colors.Raised(), CornerRadius: ui.RadiusControl, BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(12), Gap: 4})
@@ -116,7 +116,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		h := core.NewSignal(cx, true)
-		return ui.Card{Title: tr.A11yHiddenElements(), Description: tr.A11yDecorationScreenReadersSkip(), Children: []core.Node{
+		return Card{Title: tr.A11yHiddenElements(), Description: tr.A11yDecorationScreenReadersSkip(), Children: []core.Node{
 			core.View{AccessibilityElementsHidden: h.Get, TestID: "a11y-hidden", Style: core.Style{AlignItems: core.AlignCenter},
 				Children: []core.Node{ui.Text(tr.A11yDecoration(), 13, ui.Regular, colors.Faint)}},
 			SwitchRow{Label: tr.A11yHideTheDecoration(), Code: "AccessibilityElementsHidden", Checked: h.Get, OnChange: h.Set},
@@ -127,7 +127,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		added := core.NewSignal(cx, 0)
-		return ui.Card{Title: tr.A11yLiveRegions(), Description: tr.A11yChangesAnnouncedWithoutMovingFocus(), Children: []core.Node{
+		return Card{Title: tr.A11yLiveRegions(), Description: tr.A11yChangesAnnouncedWithoutMovingFocus(), Children: []core.Node{
 			core.Text{LiveRegion: core.LiveRegionPolite, TestID: "a11y-live", ContentFunc: func() string { return tr.A11yInTheBasket(added.Get()) },
 				Style: core.Style{FontSize: 15, FontWeight: ui.Medium}, StyleFunc: ui.Colored(colors.Text)},
 			ui.Button{Text: tr.A11yAddToBasket(), Icon: lucide.Plus, OnPress: func() { added.Update(func(n int) int { return n + 1 }) }},
@@ -139,7 +139,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		result := &core.Ref{}
-		return ui.Card{Title: tr.A11yFocus(), Description: tr.A11yMovingTheScreenReaderAs(), Children: []core.Node{
+		return Card{Title: tr.A11yFocus(), Description: tr.A11yMovingTheScreenReaderAs(), Children: []core.Node{
 			ui.Button{Text: tr.A11ySearchApples(), Variant: ui.ButtonSecondary, TestID: "a11y-search", OnPress: result.SetAccessibilityFocus},
 			core.Text{Ref: result, Content: tr.A11y3ResultsForApples(), TestID: "a11y-result", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
 			APILine{Label: tr.A11yMovesTheReaderHere(), Names: "Ref.SetAccessibilityFocus"},

@@ -40,7 +40,7 @@ Each part a component styles takes Tailwind classes beside its style, as NSH's `
 
 ## What only NSGo has
 
-`List`, `Selection`, `TagInput`, `Rating`, `HoldToConfirm`, `ImageCompare`, `CardStack`, `Stepper` and `Sidebar` have no NSH counterpart: they hold the behavior of the `ui` forms Onevra's look needs, as `ui` holds none of its own ([components](../../AGENTS.md#components)). `List` is a `core.List` whose rows a `Selection` chooses by press and keyboard, a multiple one with Shift and Mod. `Tree` takes a `Selection` for the same, `Folder` items whose children are read only as they expand, and `SelectOnly` with `TreeRow.Toggle` for a chevron that expands in place of the press. `Slider`, `NumberInput`, `Carousel` and `Progress` likewise take what the look draws around them: marks, a scrub handle, a commit as the field is left, the content's offset, the thumb's ref for a slider drawn by a shader.
+`base` holds only what NSH has ([components](../../AGENTS.md#components)), so `List`, `TagInput`, `Rating`, `HoldToConfirm`, `ImageCompare`, `Stepper` and `Sidebar`, which NSH does not, live whole in `ui`, and the gallery marks them on their cards. `Selection` is state rather than a component, and stays in `base` because `Tree` takes it: the rows a `ui.List` chooses by press and keyboard, a multiple one with Shift and Mod, and a tree's the same way. `Tree` also takes `Folder` items whose children are read only as they expand, and `SelectOnly` with `TreeRow.Toggle` for a chevron that expands in place of the press. `Slider`, `NumberInput`, `Carousel` and `Progress` likewise take what the look draws around them: marks, a scrub handle, a commit as the field is left, the content's offset, the thumb's ref for a slider drawn by a shader.
 
 ## Popups
 

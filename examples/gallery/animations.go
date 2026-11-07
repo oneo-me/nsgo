@@ -95,7 +95,7 @@ func hero(cx *core.Scope) core.Node {
 				}}
 		}, Children: []core.Node{ui.Icon(lucide.Zap, 22, colors.OnAccent)}},
 	)
-	return ui.Card{Title: tr.AnimNativeMotion(), Description: tr.AnimThreeLoopsStartedOnceRun(), Children: []core.Node{
+	return Card{Title: tr.AnimNativeMotion(), Description: tr.AnimThreeLoopsStartedOnceRun(), Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(s + 8), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(s), Height: core.Pt(s)}, Children: stage},
 		}},
@@ -235,7 +235,7 @@ func easingPlot(cx *core.Scope) core.Node {
 	for i, c := range easingCurves {
 		chips = append(chips, chipTab(cx, c.name, func() bool { return selected.Get() == i }, func() { selected.Set(i); play() }))
 	}
-	return ui.Card{Title: tr.AnimEasing(), Description: tr.AnimCurvesAreDataEvaluatedNatively(), Children: []core.Node{
+	return Card{Title: tr.AnimEasing(), Description: tr.AnimCurvesAreDataEvaluatedNatively(), Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(196)}, Draw: draw, Label: tr.AnimEasingCurve()},
 		core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
 			base.Tabs{Label: tr.AnimCurves(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
@@ -285,7 +285,7 @@ func easingRace(cx *core.Scope) core.Node {
 			lane,
 		}})
 	}
-	return ui.Card{Title: tr.AnimSideBySide(), Description: tr.AnimTenTimingsStartedTogether(), Actions: []core.Node{ui.Badge{Text: "1.2 s"}}, Children: []core.Node{
+	return Card{Title: tr.AnimSideBySide(), Description: tr.AnimTenTimingsStartedTogether(), Actions: []core.Node{ui.Badge{Text: "1.2 s"}}, Children: []core.Node{
 		core.View{Style: core.Style{Gap: 2}, Children: rows},
 		APILine{Label: tr.AnimOneGroupOneStart(), Names: "Parallel"},
 		core.Dynamic(func(*core.Scope) core.Node {
@@ -362,7 +362,7 @@ func composition(cx *core.Scope) core.Node {
 				Shadows: fin.Knob().Shadows, Animated: &core.AnimatedStyle{Opacity: fade, TranslateY: ys[i], Rotate: ui.Lerp(spin, 0, float64(i+1)*36)}}
 		}})
 	}
-	return ui.Card{Title: tr.AnimComposition(), Description: tr.AnimEachStepStartsAsThe(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
+	return Card{Title: tr.AnimComposition(), Description: tr.AnimEachStepStartsAsThe(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(116), Direction: core.Row, JustifyContent: core.JustifyCenter, AlignItems: core.AlignEnd, Gap: 12, Padding: core.Edges{Bottom: 14}},
 			Children: append([]core.Node{core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
 				return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(14),
@@ -489,7 +489,7 @@ func springs(cx *core.Scope) core.Node {
 		}
 		tracks = append(tracks, track)
 	}
-	return ui.Card{Title: tr.AnimSprings(), Description: tr.AnimStiffnessAndDampingMass1(), Children: []core.Node{
+	return Card{Title: tr.AnimSprings(), Description: tr.AnimStiffnessAndDampingMass1(), Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(150)}, Draw: draw, Label: tr.AnimSpringResponses()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 14, Wrap: core.Wrap}, Children: legends},
 		core.View{Style: core.Style{Gap: 8}, Children: tracks},
@@ -535,7 +535,7 @@ func interpolations(cx *core.Scope) core.Node {
 		ui.Spring(cx, t, float64(v), core.SpringConfig{Stiffness: 140, Damping: 16})
 	}
 	const d core.Points = 128
-	return ui.Card{Title: tr.AnimInterpolation(), Description: tr.AnimOneValueDrivesColorAngle(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("t = %d", at.Get()) }, Tone: ui.ToneAccent}}, Children: []core.Node{
+	return Card{Title: tr.AnimInterpolation(), Description: tr.AnimOneValueDrivesColorAngle(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("t = %d", at.Get()) }, Tone: ui.ToneAccent}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(d), Height: core.Pt(d)}, Children: []core.Node{
 				dialFace(cx, d),
@@ -599,7 +599,7 @@ func hidingHeader(cx *core.Scope) core.Node {
 			core.View{Style: core.Style{Width: core.Pt(core.Points(40 + (n*37)%50)), Height: core.Pt(4), CornerRadius: 2}, StyleFunc: ui.Filled(bar)},
 		}})
 	}
-	return ui.Card{Title: tr.AnimHidingHeader(), Description: tr.AnimHidesAsTheListScrolls(), Children: []core.Node{
+	return Card{Title: tr.AnimHidingHeader(), Description: tr.AnimHidesAsTheListScrolls(), Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(300), CornerRadius: ui.RadiusControl, Overflow: core.Hidden, Background: colors.Background(), Shadows: fin.Track().Shadows}
 		}, Children: []core.Node{
@@ -636,7 +636,7 @@ func layoutAnimation(cx *core.Scope) core.Node {
 		fn()
 	}
 	tones := motionTones(cx)
-	return ui.Card{Title: tr.AnimLayoutAnimation(), Description: tr.AnimFramesInsertsAndRemovalsOf(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.AnimViews(len(items.Get())) }}}, Children: []core.Node{
+	return Card{Title: tr.AnimLayoutAnimation(), Description: tr.AnimFramesInsertsAndRemovalsOf(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return tr.AnimViews(len(items.Get())) }}}, Children: []core.Node{
 		ui.Tabs[string]{Equal: true, Options: []ui.Option[string]{{Value: "spring", Label: tr.AnimSpring()}, {Value: "ease", Label: tr.AnimEaseInOut()}, {Value: "linear", Label: tr.AnimLinear()}}, Value: preset.Get, OnChange: preset.Set},
 		core.View{StyleFunc: func() core.Style {
 			d := core.Row
@@ -715,7 +715,7 @@ func transitions(cx *core.Scope) core.Node {
 			}},
 		}})
 	}
-	return ui.Card{Title: tr.AnimTransitions(), Description: tr.AnimAStyleSTransitionAnimates(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
+	return Card{Title: tr.AnimTransitions(), Description: tr.AnimAStyleSTransitionAnimates(), Actions: []core.Node{ui.Badge{Text: "NSGo"}}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(96), AlignItems: core.AlignStart, JustifyContent: core.JustifyCenter}, Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
 				s := core.Style{Width: core.Pt(64), Height: core.Pt(64), CornerRadius: 14, Background: colors.AccentFill(), Shadows: fin.Accent().Shadows,

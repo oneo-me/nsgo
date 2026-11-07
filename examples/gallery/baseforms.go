@@ -133,31 +133,6 @@ func baseLinkCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-func baseHoldCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		seconds := core.NewSignal(cx, 1.2)
-		confirmed, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "base.HoldToConfirm", Stage: func() core.Node {
-			return base.HoldToConfirm{Label: tr.LibHoldToDelete(), ConfirmedLabel: tr.LibDeleted(), Duration: secondsOf(seconds.Get()), Disabled: disabled.Get, Confirmed: confirmed.Get,
-				OnConfirm: func() { confirmed.Set(true); last.Set(tr.LibDeleted()) }, Style: bareBox.Merge(core.Style{Overflow: core.Hidden}), StyleFunc: bareInk(cx),
-				Content: func(cx *core.Scope, fill *core.AnimatedValue) []core.Node {
-					return []core.Node{
-						core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0), Width: core.Pct(100),
-							Animated: &core.AnimatedStyle{Opacity: fill}}, StyleFunc: ui.Filled(colors.Pressed)},
-						bareTextf(cx, func() string {
-							if confirmed.Get() {
-								return tr.LibDeleted()
-							}
-							return tr.LibHoldToDelete()
-						}),
-					}
-				}}
-		}, Knobs: []core.Node{numberKnob("Duration", seconds, 0.4, 3, 0.2), boolKnob("Confirmed", confirmed), boolKnob("Disabled", disabled)}}
-	}
-}
-
 func baseToolbarCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
@@ -210,23 +185,6 @@ func baseNumberInputCard(last *core.Signal[string]) cardFunc {
 				InputStyleFunc: bareField(cx), DecrementButton: button("-"), IncrementButton: button("+"),
 				DecrementButtonStyle: bareBox, IncrementButtonStyle: bareBox}
 		}, Knobs: []core.Node{numberKnob("Step", step, 1, 10, 1), boolKnob("Disabled", disabled)}}
-	}
-}
-
-func baseTagInputCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		tags := core.NewSignalFunc(cx, []string{tr.LibApple(), tr.LibBanana()}, slices.Equal)
-		disabled := core.NewSignal(cx, false)
-		return Playground{Title: "base.TagInput", Fill: true, Stage: func() core.Node {
-			return base.TagInput{Label: tr.LibFruit(), Tags: tags.Get, OnChange: tags.Set, Placeholder: tr.LibPickFruit(), Disabled: disabled.Get,
-				RemoveIcon: bareText(cx, "×"),
-				Style:      core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, Gap: 4, MinHeight: core.Pt(32), Padding: core.All(4), CornerRadius: 6, BorderWidth: 1},
-				StyleFunc:  bareField(cx),
-				TagStyle:   core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, Padding: core.Symmetric(2, 6), FontSize: 13, CornerRadius: 4, BorderWidth: 1}, TagStyleFunc: bareInk(cx),
-				RemoveStyle: core.Style{Padding: core.Symmetric(0, 2)},
-				InputStyle:  core.Style{FlexGrow: 1, MinWidth: core.Pt(80), Height: core.Pt(22), FontSize: 13}, InputStyleFunc: bareField(cx)}
-		}, Knobs: []core.Node{boolKnob("Disabled", disabled)}}
 	}
 }
 
@@ -325,27 +283,6 @@ func baseSliderCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-func baseRatingCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		value := core.NewSignal(cx, 3)
-		readonly, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "base.Rating", Stage: func() core.Node {
-			return base.Rating{Label: tr.KitRating(), Max: 5, Value: value.Get, OnChange: value.Set, Readonly: readonly.Get(), Disabled: disabled.Get,
-				Style: core.Style{Direction: core.Row, Gap: 2, Disabled: &core.Style{Opacity: core.Alpha(0.4)}}, StarStyle: core.Style{Padding: core.All(2)},
-				Star: func(_ int, filled func() bool) core.Node {
-					return ui.Textf(func() string {
-						if filled() {
-							return "●"
-						}
-						return "○"
-					}, 16, ui.Regular, colors.Text)
-				}}
-		}, Knobs: []core.Node{boolKnob("Readonly", readonly), boolKnob("Disabled", disabled)}}
-	}
-}
-
 func baseAvatarCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		colors := ui.ColorsOf(cx)
@@ -380,41 +317,6 @@ func baseAvatarGroupCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-func baseCardStackCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		index := core.NewSignal(cx, 0)
-		var items []base.CardStackItem
-		for _, name := range demoPeople[:4] {
-			items = append(items, base.CardStackItem{ID: name, Label: name, Content: core.View{Style: core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-				Children: []core.Node{bareText(cx, name)}}})
-		}
-		return ui.Card{Title: "base.CardStack", Children: []core.Node{
-			base.CardStack{Items: items, Index: index.Get, Label: tr.ControlsMembers(), LeftLabel: tr.KitPass(), RightLabel: tr.KitKeep(), Style: core.Style{Height: core.Pt(160)},
-				OnDecide: func(i int, _ base.CardDecision) { index.Set(i + 1) },
-				CardLook: func(int) core.Style {
-					return core.Style{Background: colors.Surface(), BorderColor: colors.Line(), BorderWidth: 1, CornerRadius: 8}
-				},
-				Empty: bareButton(cx, tr.ControlsReset(), func() { index.Set(0) })},
-		}}
-	}
-}
-
-func baseImageCompareCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		position := core.NewSignal(cx, 50.0)
-		vertical := core.NewSignal(cx, false)
-		return Playground{Title: "base.ImageCompare", Fill: true, Stage: func() core.Node {
-			return base.ImageCompare{Before: swatch(cx, ui.ToneInfo, tr.KitBefore()), After: swatch(cx, ui.ToneAccent, tr.KitAfter()), Vertical: vertical.Get(), Label: tr.DemoImage(),
-				Position: func() float32 { return float32(position.Get()) }, OnChange: func(p float32) { position.Set(float64(p)) },
-				Divider: core.View{Style: core.Style{Width: core.Pt(2), Height: core.Pct(100)}, StyleFunc: ui.Filled(colors.Text)}, Style: core.Style{Height: core.Pt(120)}}
-		}, Knobs: []core.Node{numberKnob("Position", position, 0, 100, 1), boolKnob("Vertical", vertical)}}
-	}
-}
-
 func baseCarouselCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
@@ -438,25 +340,6 @@ func baseCarouselCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-func baseListCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		multiple := core.NewSignal(cx, false)
-		return Playground{Title: "base.List", Fill: true, Stage: func() core.Node {
-			many := multiple.Get()
-			return core.Func(func(cx *core.Scope) core.Node {
-				return base.List{Label: tr.ControlsMembers(), Selection: base.NewSelection(cx, many), Count: func() int { return len(demoPeople) }, Key: func(i int) any { return demoPeople[i] },
-					RowLabel: func(i int) string { return demoPeople[i] }, OnActivate: func(i int) { last.Set("base.List: " + demoPeople[i]) }, EstimatedSize: 30,
-					Row: func(cx *core.Scope, row core.ListRow) core.Node {
-						return bareTextf(cx, func() string { return demoPeople[row.Index()] })
-					},
-					Style: core.Style{Height: core.Pt(160), MinHeight: core.Pt(0)}, ListStyle: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)},
-					RowStyle: bareRow, RowStyleFunc: bareRowInk(cx)}
-			})
-		}, Knobs: []core.Node{boolKnob("Multiple", multiple)}}
-	}
-}
-
 func baseTreeCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
@@ -465,7 +348,7 @@ func baseTreeCard(last *core.Signal[string]) cardFunc {
 			{ID: "docs", Label: "docs", Children: []base.TreeItem{{ID: "guide.md", Label: "guide.md"}}},
 			{ID: "README.md", Label: "README.md"},
 		}
-		return ui.Card{Title: "base.Tree", Children: []core.Node{
+		return Card{Title: "base.Tree", Children: []core.Node{
 			base.Tree{Label: tr.LibFiles(), Items: func() []base.TreeItem { return items }, DefaultExpanded: []string{"source"}, EstimatedSize: 30,
 				OnAction: func(id string) { last.Set("base.Tree: " + id) }, Style: core.Style{Height: core.Pt(180), MinHeight: core.Pt(0)}, ListStyle: core.Style{FlexGrow: 1, MinHeight: core.Pt(0)},
 				ItemStyle: bareRow, ItemStyleFunc: bareRowInk(cx),
@@ -639,37 +522,6 @@ func baseTabsCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-func baseStepperCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		current := core.NewSignal(cx, 1.0)
-		steps := checkoutSteps(tr)
-		failed := core.NewSignal(cx, false)
-		return Playground{Title: "base.Stepper", Fill: true, Stage: func() core.Node {
-			failing := failed.Get()
-			return base.Stepper{Label: tr.LibCheckout(), Count: len(steps), Current: func() int { return int(current.Get()) }, Failed: func(i int) bool { return failing && i == 1 },
-				OnSelect: func(i int) { current.Set(float64(i)); last.Set(steps[i].Label) }, StepLabel: func(i int, _ base.StepStatus) string { return steps[i].Label },
-				ListStyle: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 4}, StepStyle: bareBox, StepStyleFunc: bareInk(cx),
-				Head: func(cx *core.Scope, step base.StepperStep) []core.Node {
-					return []core.Node{bareTextf(cx, func() string { return stepMark(step.Status()) + steps[step.Index].Label })}
-				}}
-		}, Knobs: []core.Node{numberKnob("Current", current, 0, 4, 1), boolKnob("Failed", failed)}}
-	}
-}
-
-// stepMark is a step's status in a glyph before its label.
-func stepMark(s base.StepStatus) string {
-	switch s {
-	case base.StepCurrent:
-		return "● "
-	case base.StepComplete:
-		return "✓ "
-	case base.StepFailed:
-		return "✕ "
-	}
-	return "○ "
-}
-
 func basePaginationCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
@@ -697,41 +549,6 @@ func basePaginationCard(last *core.Signal[string]) cardFunc {
 // demoSections are the Sidebar demo's sections.
 func demoSections(tr locales.Messages) []string {
 	return []string{tr.ControlsOverview(), tr.ControlsActivity(), tr.ControlsBilling()}
-}
-
-func sidebarCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		selected := core.NewSignal(cx, tr.ControlsOverview())
-		var items []ui.SidebarItem
-		for _, name := range demoSections(tr) {
-			items = append(items, ui.SidebarItem{ID: name, Text: name})
-		}
-		return ui.Card{Title: "Sidebar", Children: []core.Node{
-			core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220), AlignSelf: core.AlignCenter}, Children: []core.Node{
-				ui.Sidebar{Selected: selected.Get, OnSelect: func(id string) { selected.Set(id); last.Set("Sidebar: " + id) },
-					Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Items: items}}},
-			}},
-		}}
-	}
-}
-
-func baseSidebarCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		selected := core.NewSignal(cx, tr.ControlsOverview())
-		var items []base.SidebarItem
-		for _, name := range demoSections(tr) {
-			items = append(items, base.SidebarItem{ID: name, Label: name, Children: []core.Node{bareText(cx, name)}})
-		}
-		return ui.Card{Title: "base.Sidebar", Children: []core.Node{
-			core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220), AlignSelf: core.AlignCenter}, Children: []core.Node{
-				base.Sidebar{Selected: selected.Get, OnSelect: func(id string) { selected.Set(id); last.Set("base.Sidebar: " + id) },
-					Sections: []base.SidebarSection{{Header: bareText(cx, tr.ControlsApps()), Items: items, Style: core.Style{Gap: 2}}},
-					Style:    core.Style{FlexGrow: 1, MinHeight: core.Pt(0)}, ItemStyle: bareRow, ItemStyleFunc: bareRowInk(cx)},
-			}},
-		}}
-	}
 }
 
 func baseAccordionCard(last *core.Signal[string]) cardFunc {

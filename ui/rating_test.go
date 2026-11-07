@@ -29,3 +29,20 @@ func TestRating(t *testing.T) {
 		}
 	})
 }
+
+// TestRatingRTL trades the arrows right to left, on every press.
+func TestRatingRTL(t *testing.T) {
+	e := desktopEnv
+	e.RTL = true
+	var value *core.Signal[int]
+	app, _ := start(t, e, func(cx *core.Scope) core.Node {
+		value = core.NewSignal(cx, 2)
+		return Rating{TestID: "rating", Label: "Rating", Value: value.Get, OnChange: value.Set}
+	})
+	app.Key("tab")
+	app.Key("left")
+	app.Key("left")
+	if value.Get() != 4 {
+		t.Fatalf("value = %d after Left twice, want 4", value.Get())
+	}
+}

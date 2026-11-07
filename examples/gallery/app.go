@@ -83,13 +83,13 @@ func init() {
 		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, baseButtonCard)},
 		{"Toggle", m.DemoToggle, m.DemoToggleDetail, lucide.ToggleLeft, eventsDemo(toggleButtonCard, toggleGroupCard, baseToggleCard, baseToggleGroupCard)},
 		{"Link", m.DemoLink, m.DemoLinkDetail, lucide.Link, eventsDemo(linkCard, baseLinkCard)},
-		{"HoldToConfirm", m.DemoHoldToConfirm, m.DemoHoldToConfirmDetail, lucide.Trash, eventsDemo(holdPlayground, baseHoldCard)},
-		{"Toolbar", m.DemoToolbar, m.DemoToolbarDetail, lucide.PanelTop, eventsDemo(toolbarCard, floatingBarCard, baseToolbarCard)},
+		{"HoldToConfirm", m.DemoHoldToConfirm, m.DemoHoldToConfirmDetail, lucide.Trash, eventsDemo(holdPlayground)},
+		{"Toolbar", m.DemoToolbar, m.DemoToolbarDetail, lucide.PanelTop, eventsDemo(toolbarCard, baseToolbarCard)},
 	}
 	inputs := []demo{
 		{"Input", m.DemoInput, m.DemoInputDetail, lucide.TextCursorInput, formDemo},
 		{"NumberInput", m.DemoNumberInput, m.DemoNumberInputDetail, lucide.Hash, eventsDemo(plainCard(numberInputCard), baseNumberInputCard)},
-		{"TagInput", m.DemoTagInput, m.DemoTagInputDetail, lucide.Tag, eventsDemo(plainCard(tagInputCard), baseTagInputCard)},
+		{"TagInput", m.DemoTagInput, m.DemoTagInputDetail, lucide.Tag, eventsDemo(plainCard(tagInputCard))},
 		{"OtpInput", m.DemoOtpInput, m.DemoOtpInputDetail, lucide.Lock, eventsDemo(otpInputCard, baseOtpInputCard)},
 		{"Checkbox", m.DemoCheckbox, m.DemoCheckboxDetail, lucide.SquareCheck, eventsDemo(checkboxCard, baseCheckboxCard)},
 		{"Radio", m.DemoRadio, m.DemoRadioDetail, lucide.CircleDot, eventsDemo(radioCard, baseRadioCard)},
@@ -99,25 +99,24 @@ func init() {
 		{"DatePicker", m.DemoDatePicker, m.DemoDatePickerDetail, lucide.Calendar, eventsDemo(datePickerPlayground, calendarPlayground, timeFieldPlayground, baseDatePickerCard, baseCalendarCard, baseTimeFieldCard)},
 		{"ColorPicker", m.DemoColorPicker, m.DemoColorPickerDetail, lucide.Palette, eventsDemo(colorPickerPlayground, colorWellPlayground, baseColorPickerCard)},
 		{"Slider", m.DemoSlider, m.DemoSliderDetail, lucide.SlidersHorizontal, eventsDemo(sliderPlayground, baseSliderCard)},
-		{"Rating", m.DemoRating, m.DemoRatingDetail, lucide.Star, eventsDemo(ratingCard, baseRatingCard)},
+		{"Rating", m.DemoRating, m.DemoRatingDetail, lucide.Star, eventsDemo(ratingCard)},
 	}
 	display := []demo{
 		{"Badge", m.DemoBadge, m.DemoBadgeDetail, lucide.Tag, eventsDemo(badgeCard)},
 		{"Avatar", m.DemoAvatar, m.DemoAvatarDetail, lucide.User, eventsDemo(avatarCard, avatarGroupCard, baseAvatarCard, baseAvatarGroupCard)},
 		{"Image", m.DemoImage, m.DemoImageDetail, lucide.Image, eventsDemo(imagePlayground)},
-		{"ImageCompare", m.DemoImageCompare, m.DemoImageCompareDetail, lucide.Columns2, eventsDemo(imageCompareCard, baseImageCompareCard)},
+		{"ImageCompare", m.DemoImageCompare, m.DemoImageCompareDetail, lucide.Columns2, eventsDemo(imageCompareCard)},
 		{"Carousel", m.DemoCarousel, m.DemoCarouselDetail, lucide.GalleryHorizontal, eventsDemo(carouselCard, baseCarouselCard)},
-		{"CardStack", m.DemoCardStack, m.DemoCardStackDetail, lucide.Layers, eventsDemo(cardStackCard, baseCardStackCard)},
 	}
 	data := []demo{
-		{"List", m.DemoList, m.DemoListDetail, lucide.List, eventsDemo(listCard, baseListCard)},
+		{"List", m.DemoList, m.DemoListDetail, lucide.List, eventsDemo(listCard)},
 		{"Tree", m.DemoTree, m.DemoTreeDetail, lucide.FolderTree, eventsDemo(treeCard, baseTreeCard)},
 		{"Table", m.DemoTable, m.DemoTableDetail, lucide.Table, eventsDemo(plainCard(tableCard))},
 		{"DataTable", m.DemoDataTable, m.DemoDataTableDetail, lucide.Table, dataTableDemo},
 		{"Plot", m.DemoPlot, m.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
 	}
 	containers := []demo{
-		{"Card", m.DemoCard, m.DemoCardDetail, lucide.PanelTop, eventsDemo(cardPlayground, insetCard)},
+		{"Inset", m.DemoInset, m.DemoInsetDetail, lucide.PanelTop, eventsDemo(insetCard)},
 		{"Accordion", m.DemoAccordion, m.DemoAccordionDetail, lucide.Rows3, eventsDemo(accordionCard, baseAccordionCard)},
 		{"Collapsible", m.DemoCollapsible, m.DemoCollapsibleDetail, lucide.ChevronsUpDown, eventsDemo(collapsiblePlayground, baseCollapsibleCard)},
 		{"Resizable", m.DemoResizable, m.DemoResizableDetail, lucide.PanelLeft, resizableDemo},
@@ -142,10 +141,10 @@ func init() {
 	}
 	navigation := []demo{
 		{"Tabs", m.DemoTabs, m.DemoTabsDetail, lucide.NotebookTabs, eventsDemo(tabsCard, baseTabsCard)},
-		{"Stepper", m.DemoStepper, m.DemoStepperDetail, lucide.Check, eventsDemo(stepperPlayground, baseStepperCard)},
+		{"Stepper", m.DemoStepper, m.DemoStepperDetail, lucide.Check, eventsDemo(stepperPlayground)},
 		{"Breadcrumbs", m.DemoBreadcrumbs, m.DemoBreadcrumbsDetail, lucide.ChevronRight, eventsDemo(breadcrumbsCard)},
 		{"Pagination", m.DemoPagination, m.DemoPaginationDetail, lucide.Ellipsis, eventsDemo(paginationCard, basePaginationCard)},
-		{"Sidebar", m.DemoSidebar, m.DemoSidebarDetail, lucide.PanelLeft, eventsDemo(sidebarCard, baseSidebarCard)},
+		{"Sidebar", m.DemoSidebar, m.DemoSidebarDetail, lucide.PanelLeft, eventsDemo(sidebarCard)},
 		{"NavStack", m.DemoNavStack, m.DemoNavStackDetail, lucide.PanelsTopLeft, navigationDemo},
 	}
 	documents := []demo{

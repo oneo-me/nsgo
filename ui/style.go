@@ -182,3 +182,11 @@ func IconOf(svg func() *core.SVG, size core.Points, tint func() core.Color) core
 	i.SVGFunc = svg
 	return i
 }
+
+// CardStyle is a card's surface, flat as Onevra's are, read in a
+// StyleFunc.
+func CardStyle(cx *core.Scope) core.Style {
+	colors := ColorsOf(cx)
+	return core.Style{Background: colors.Surface(), CornerRadius: RadiusCard, BorderCurve: core.BorderCurveContinuous,
+		BorderWidth: 1, BorderColor: colors.Border()}
+}
