@@ -5,7 +5,6 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 	"reflect"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/oneo-me/nsgo/base"
@@ -232,7 +231,6 @@ func sameRange(a, b editor.Range) bool { return a == b }
 func editorDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
-	look := newMenuLook(cx)
 	pointer := core.Untracked(cx, cx.Env().Desktop)
 	apple := core.Untracked(cx, cx.Env().AppleKeys)
 	language := core.NewSignal(cx, "typescript")
@@ -770,22 +768,6 @@ func editorDemo(cx *core.Scope) core.Node {
 			}}
 	}
 
-	// The menus' items: a mark at the end, a shortcut on desktops.
-	item := func(cx *core.Scope, label string, onSelect func(), mark func() mark, shortcut string, keepOpen bool) core.Node {
-		note := ""
-		if pointer && shortcut != "" {
-			note = key(shortcut)
-		}
-		return look.item(cx, itemProps{label: func() string { return label }, onSelect: onSelect, mark: mark, note: note, keepOpen: keepOpen})
-	}
-	checked := func(on func() bool) func() mark {
-		return func() mark {
-			if on() {
-				return markCheck
-			}
-			return markNone
-		}
-	}
 	menuTrigger := func(label string, children ...core.Node) core.Node {
 		return core.View{Label: label, Tooltip: tip(label), StyleFunc: func() core.Style {
 			return core.Style{Height: core.Pt(28), MinWidth: core.Pt(28), Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
@@ -797,23 +779,18 @@ func editorDemo(cx *core.Scope) core.Node {
 		return core.Style{Height: core.Pt(40), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 2, Padding: core.Symmetric(0, 6),
 			Borders: core.Edges{Bottom: 1}, BorderColors: core.EdgeColors{Bottom: colors.Border()}}
 	}, Children: []core.Node{
-		base.Menu{Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: tr.EditorLanguage(),
-			Trigger: menuTrigger(tr.EditorLanguage(), ui.Icon(lucide.Code, 16, colors.Muted),
+		ui.Menu{Label: tr.EditorLanguage(),
+			Face: menuTrigger(tr.EditorLanguage(), ui.Icon(lucide.Code, 16, colors.Muted),
 				core.Text{ContentFunc: func() string { return editorSamples[language.Get()].label }, Style: core.Style{FontSize: 12, FontWeight: ui.Medium},
 					StyleFunc: ui.Colored(colors.Text)}),
 			Children: func() []core.Node {
 				var out []core.Node
 				for _, lang := range editorLanguages {
 					out = append(out, core.Func(func(cx *core.Scope) core.Node {
-						return item(cx, editorSamples[lang].label, func() {
+						return ui.MenuItem{Text: editorSamples[lang].label, Checked: func() bool { return language.Get() == lang }, OnSelect: func() {
 							hover.Set(nil)
 							language.Set(lang)
-						}, func() mark {
-							if language.Get() == lang {
-								return markDot
-							}
-							return markNone
-						}, "", false)
+						}}
 					}))
 				}
 				return out
@@ -826,36 +803,33 @@ func editorDemo(cx *core.Scope) core.Node {
 				openFind()
 			}
 		}, false),
-		base.Menu{Align: core.AlignEnd, Offset: 4, Margin: 8, PopupStyleFunc: look.surface(cx), BackdropStyle: look.backdrop(), Label: tr.EditorEditorOptions(),
-			Trigger: menuTrigger(tr.EditorEditorOptions(), ui.Icon(lucide.SlidersHorizontal, 16, colors.Muted)),
+		ui.Menu{Align: core.AlignEnd, Label: tr.EditorEditorOptions(),
+			Face: menuTrigger(tr.EditorEditorOptions(), ui.Icon(lucide.SlidersHorizontal, 16, colors.Muted)),
 			Children: []core.Node{
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
-					return item(cx, tr.EditorSoftWrap(), func() { toggled(softWrap) }, checked(softWrap.Get), "", true)
+					return ui.MenuItem{Text: tr.EditorSoftWrap(), Checked: softWrap.Get, NoCloseOnSelect: true, OnSelect: func() { toggled(softWrap) }}
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
-					return item(cx, tr.EditorLineNumbers(), func() { toggled(lineNumbers) }, checked(lineNumbers.Get), "", true)
+					return ui.MenuItem{Text: tr.EditorLineNumbers(), Checked: lineNumbers.Get, NoCloseOnSelect: true, OnSelect: func() { toggled(lineNumbers) }}
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
-					return item(cx, tr.EditorProblems(), func() { area.ToggleDock(dock.Bottom) }, checked(problemsShown.Get), "", false)
+					return ui.MenuItem{Text: tr.EditorProblems(), Checked: problemsShown.Get, OnSelect: func() { area.ToggleDock(dock.Bottom) }}
 				}),
 				core.Func(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
-					return item(cx, tr.EditorFindAndReplace2(), openFind, nil, "mod+f", false)
+					return ui.MenuItem{Text: tr.EditorFindAndReplace2(), Shortcut: "mod+f", OnSelect: openFind}
 				}),
-				base.MenuSeparator{StyleFunc: func() core.Style {
-					return core.Style{Margin: core.Symmetric(4, 4), Height: core.Pt(1), Background: colors.Border()}
-				}},
+				ui.MenuSeparator{},
 				core.Dynamic(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
 					title := tr.EditorKeys()
 					if typescript() {
 						title = tr.EditorTypescriptLanguageServer()
 					}
-					nodes := []core.Node{core.Text{Content: strings.ToUpper(title), Style: core.Style{Padding: core.Edges{Top: 8, Right: 8, Bottom: 4, Left: 8},
-						FontSize: 11, FontWeight: ui.Semibold, LetterSpacing: 0.5}, StyleFunc: ui.Colored(colors.Muted)}}
+					nodes := []core.Node{ui.MenuLabel{Text: title}}
 					for _, t := range tips() {
 						nodes = append(nodes, core.Text{Content: t, Style: core.Style{Padding: core.Symmetric(2, 8), FontSize: 12}, StyleFunc: ui.Colored(colors.Muted)})
 					}

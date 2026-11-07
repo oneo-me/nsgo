@@ -134,7 +134,7 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 		return shape.Merge(core.Style{CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous,
 			Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 6,
 			Background: rest, BorderWidth: 1, BorderColor: border,
-			GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: hover}, Active: &core.Style{Background: pressed}}})
+			GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: hover}, Active: &core.Style{Background: pressed}, Expanded: &core.Style{Background: hover}}})
 	}
 	style := core.Style{Group: "button", FlexGrow: b.Flex, FlexShrink: b.Flex, CornerRadius: RadiusControl,
 		Disabled: &core.Style{Opacity: core.Alpha(0.4)}}

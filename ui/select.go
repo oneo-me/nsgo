@@ -60,7 +60,7 @@ func optionRow[T comparable](cx *core.Scope, o Option[T], id string, checked fun
 	if o.Trailing != nil {
 		children = append(children, o.Trailing)
 	}
-	return core.View{TestID: id, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, FlexGrow: 1}, Children: children}
+	return core.View{TestID: id, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, FlexGrow: 1}, Children: children}
 }
 
 // Render implements core.Node.

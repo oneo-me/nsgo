@@ -38,3 +38,21 @@ func TestMenu(t *testing.T) {
 		}
 	})
 }
+
+// TestMenuFace draws the trigger from Face, which shows the app's state,
+// and scrolls the items past MaxHeight.
+func TestMenuFace(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			zone := core.NewSignal(cx, "UTC")
+			return core.View{Style: core.Style{AlignItems: core.AlignStart}, Children: []core.Node{
+				Menu{TestID: "menu", Label: "Zone", MaxHeight: 100, Face: Textf(zone.Get, 13, Regular, ColorsOf(cx).Text), Children: []core.Node{
+					MenuItem{Text: "Tokyo", OnSelect: func() { zone.Set("Tokyo") }},
+				}},
+			}}
+		})
+		app.Press("menu")
+		app.Press("role:menuitem Tokyo")
+		app.Find("text:Tokyo")
+	})
+}

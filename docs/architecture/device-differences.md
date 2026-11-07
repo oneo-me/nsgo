@@ -23,7 +23,7 @@ These swap one form for another. Each is an [open question](../../ARCHITECTURE.m
 | `ui.NumberInput` | Stacked chevrons, 22 points wide | A minus and a plus, each 28 points wide | `ui.Touch` |
 | `base/dock.Area` | Docked panels | One group at a time, docks as drawers | Width under 600 points, unless `Compact` is set |
 
-`ui.MenuItem` rows follow the sheet: 28 points in a popup and 44 across a sheet, which also hides `Shortcut`.
+`ui.MenuItem` rows follow the sheet: 26 points in a popup and 44 across a sheet, which also hides `Shortcut`.
 
 ## Hover and pointer
 

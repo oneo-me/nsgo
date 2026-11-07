@@ -18,10 +18,15 @@ type Menu struct {
 	OnOpenChange func(open bool, reason base.Reason)
 	// Trigger is the trigger's look and content; its OnPress and Disabled
 	// go unused.
-	Trigger   Button
+	Trigger Button
+	// Face, when set, draws the trigger in place of Trigger's look and
+	// content, for one that follows the app's state.
+	Face      core.Node
 	Placement core.Placement
 	Align     core.Align
 	Children  []core.Node
+	// MaxHeight, when set, scrolls the items past that height.
+	MaxHeight core.Points
 	Label     string
 	TestID    string
 }
@@ -29,10 +34,37 @@ type Menu struct {
 // Render implements core.Node.
 func (m Menu) Render(cx *core.Scope) core.Node {
 	style, focus, face := m.Trigger.parts(cx)
+	if m.Face != nil {
+		face = m.Face
+	}
 	popup, backdrop := menuSurface(cx)
+	children := m.Children
+	if m.MaxHeight > 0 {
+		popup, children = menuScroll(cx, popup, m.MaxHeight, children)
+	}
 	return base.Menu{Open: m.Open, OnOpenChange: m.OnOpenChange, Placement: m.Placement, Align: m.Align, Offset: 4, Margin: 8,
 		Style: style, StyleFunc: focus, Trigger: face, PopupStyleFunc: popup, BackdropStyle: backdrop,
-		Children: m.Children, Label: triggerLabel(m.Label, m.Trigger), TestID: m.TestID}
+		Children: children, Label: triggerLabel(m.Label, m.Trigger), TestID: m.TestID}
+}
+
+// menuPadding is a desktop popup's padding around its items.
+const menuPadding core.Points = 4
+
+// menuScroll scrolls children past height, with a popup's padding moved
+// onto them to keep the scroll bar against its edge.
+func menuScroll(cx *core.Scope, popup func() core.Style, height core.Points, children []core.Node) (func() core.Style, []core.Node) {
+	var pad core.Edges
+	surface := popup
+	if !Touch(cx) {
+		pad = core.All(menuPadding)
+		surface = func() core.Style {
+			s := popup()
+			s.Padding = core.Edges{}
+			return s
+		}
+	}
+	return surface, []core.Node{core.Scroll{Style: core.Style{MaxHeight: core.Pt(height)},
+		Children: []core.Node{core.View{Style: core.Style{Padding: pad}, Children: children}}}}
 }
 
 // menuSurface is the popup on desktops, or the sheet and its backdrop on
@@ -40,7 +72,7 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 func menuSurface(cx *core.Scope) (popup func() core.Style, backdrop core.Style) {
 	if !Touch(cx) {
 		return func() core.Style {
-			return FinOf(cx).Menu().Over(core.Style{Padding: core.All(4), MinWidth: core.Pt(200), CornerRadius: RadiusControl + 2,
+			return FinOf(cx).Menu().Over(core.Style{Padding: core.All(menuPadding), MinWidth: core.Pt(180), CornerRadius: RadiusControl + 2,
 				BorderWidth: 1, Color: ColorsOf(cx).Text()})
 		}, core.Style{}
 	}
@@ -66,7 +98,8 @@ const (
 type MenuItem struct {
 	Text string
 	Icon func() *core.SVG
-	// Shortcut is the keys that choose it, shown at its end on desktops.
+	// Shortcut is the keys that choose it, such as "mod+c", shown at its
+	// end on desktops as the platform writes them.
 	Shortcut string
 	// Leading goes before its text, after its check and icon, and Trailing
 	// at its end, where a button's presses stay its own.
@@ -95,7 +128,8 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 	children = append(children, core.Text{Content: i.Text, MaxLines: 1, Style: TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}),
 		StyleFunc: Colored(fg)})
 	if i.Shortcut != "" && !Touch(cx) {
-		children = append(children, core.Text{Content: i.Shortcut, MaxLines: 1, Style: TypeCaption, StyleFunc: Colored(colors.Muted)})
+		children = append(children, core.Text{Content: cx.KeyLabel(i.Shortcut), MaxLines: 1,
+			Style: TypeCaption.Merge(core.Style{Margin: core.Edges{Left: 16}}), StyleFunc: Colored(colors.Muted)})
 	}
 	if i.Trailing != nil {
 		children = append(children, i.Trailing)
@@ -109,11 +143,24 @@ type MenuSeparator struct{}
 
 // Render implements core.Node.
 func (MenuSeparator) Render(cx *core.Scope) core.Node {
-	return base.MenuSeparator{Style: core.Style{Height: core.Pt(1), Margin: core.Symmetric(4, 0)}, StyleFunc: Filled(ColorsOf(cx).Line)}
+	return base.MenuSeparator{Style: core.Style{Height: core.Pt(1), Margin: core.Symmetric(4, 8)}, StyleFunc: Filled(ColorsOf(cx).Line)}
 }
 
-// sheetRowHeight is the height of a row across a sheet.
-const sheetRowHeight core.Points = 44
+// menuRowHeight and sheetRowHeight are the height of a row in a popup and
+// across a sheet.
+const (
+	menuRowHeight  core.Points = 26
+	sheetRowHeight core.Points = 44
+)
+
+// menuIconSize is an item's icon on the device: smaller in a popup, whose
+// rows are compact.
+func menuIconSize(cx *core.Scope) core.Points {
+	if Touch(cx) {
+		return iconSize
+	}
+	return 14
+}
 
 // menuRow is an item's row and its look: compact in a popup, a sheet's
 // row across a sheet.
@@ -121,7 +168,7 @@ func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
 	colors := ColorsOf(cx)
 	s := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Disabled: Dimmed()}
 	if !Touch(cx) {
-		s.MinHeight, s.Padding, s.CornerRadius = core.Pt(ButtonHeight), core.Symmetric(0, 8), RadiusControl-2
+		s.MinHeight, s.Padding, s.Gap, s.CornerRadius = core.Pt(menuRowHeight), core.Symmetric(0, 8), 6, RadiusControl-2
 		return s, func() core.Style {
 			return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}
 		}
@@ -134,6 +181,7 @@ func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
 // or nothing.
 func menuLeading(cx *core.Scope, icon func() *core.SVG, checked func() bool) []core.Node {
 	colors := ColorsOf(cx)
+	size := menuIconSize(cx)
 	var out []core.Node
 	if checked != nil {
 		out = append(out, core.View{Style: core.Style{FlexShrink: 0}, StyleFunc: func() core.Style {
@@ -141,10 +189,10 @@ func menuLeading(cx *core.Scope, icon func() *core.SVG, checked func() bool) []c
 				return core.Style{Opacity: core.Alpha(0)}
 			}
 			return core.Style{}
-		}, Children: []core.Node{Icon(lucide.Check, iconSize, colors.Text)}})
+		}, Children: []core.Node{Icon(lucide.Check, size, colors.Text)}})
 	}
 	if icon != nil {
-		out = append(out, Icon(icon, iconSize, colors.Muted))
+		out = append(out, Icon(icon, size, colors.Muted))
 	}
 	return out
 }
