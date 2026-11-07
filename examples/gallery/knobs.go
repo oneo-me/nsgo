@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/oneo-me/nsgo/core"
 
@@ -51,11 +52,6 @@ func choiceKnob[T comparable](name string, s *core.Signal[T], options ...ui.Opti
 		Style: core.Style{AlignSelf: core.AlignEnd}}}
 }
 
-// sizeKnob sets a component's size.
-func sizeKnob(s *core.Signal[ui.Size]) core.Node {
-	return choiceKnob("Size", s, options([]ui.Size{ui.SizeSmall, ui.SizeDefault, ui.SizeLarge}, "Small", "Default", "Large")...)
-}
-
 // numberKnob sets a number from lo to hi, step by step.
 func numberKnob(name string, s *core.Signal[float64], lo, hi, step float64) core.Node {
 	return Knob{Name: name, Control: core.Func(func(cx *core.Scope) core.Node {
@@ -69,6 +65,25 @@ func numberKnob(name string, s *core.Signal[float64], lo, hi, step float64) core
 	})}
 }
 
+// stageRow lays a stage's variants side by side, on more rows where they do
+// not fit.
+func stageRow(variants ...core.Node) core.Node {
+	return core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12}, Children: variants}
+}
+
+// stageRows stacks what is a row wide itself, such as a group of tabs, each
+// centered on a row of its own.
+func stageRows(forms ...core.Node) core.Node {
+	rows := make([]core.Node, len(forms))
+	for i, f := range forms {
+		rows[i] = stageRow(f)
+	}
+	return core.View{Style: core.Style{Gap: 12}, Children: rows}
+}
+
+// sizes are a component's sizes, small to large.
+var sizes = []ui.Size{ui.SizeSmall, ui.SizeDefault, ui.SizeLarge}
+
 // options are a choiceKnob's options, each labeled by the value's name.
 func options[T comparable](values []T, names ...string) []ui.Option[T] {
 	out := make([]ui.Option[T], len(values))
@@ -78,33 +93,77 @@ func options[T comparable](values []T, names ...string) []ui.Option[T] {
 	return out
 }
 
+// Form is a form of a component on a Playground's stage. Stage builds it,
+// again whenever a signal it reads changes; Fill stretches it across the
+// stage, for what has no width of its own.
+type Form struct {
+	Name  string
+	Fill  bool
+	Stage func() core.Node
+}
+
 // Playground is a card of a component, edge to edge, above the knobs that
-// set its props.
-// Stage builds the component, again whenever a signal it reads changes;
-// Fill stretches it across the stage, for what has no width of its own.
+// set its props. Base is its form in package base, above Stage, its ui
+// form, Title and Fill being that form's. BaseKnobs set the props base has
+// on both forms, and a hairline keeps Knobs, ui's own, under them. Stage
+// shows every variant at the default size; Sizes, a block of its own under
+// it, shows every size of the default variant.
 type Playground struct {
-	Title  string
-	Note   string
-	UIOnly bool
-	Fill   bool
-	Stage  func() core.Node
-	Knobs  []core.Node
+	Title     string
+	Note      string
+	UIOnly    bool
+	Fill      bool
+	Base      Form
+	Stage     func() core.Node
+	Sizes     func() core.Node
+	BaseKnobs []core.Node
+	Knobs     []core.Node
 }
 
 // Render implements core.Node.
 func (p Playground) Render(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	hairline := core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
+	form := Form{Name: p.Title, Fill: p.Fill, Stage: p.Stage}
+	stages := []core.Node{form.stage("")}
+	if p.Base.Stage != nil {
+		stages = []core.Node{p.Base.stage(p.Base.Name), hairline, form.stage("ui")}
+	}
+	if p.Sizes != nil {
+		stages = append(stages, hairline, Form{Name: p.Title + "-sizes", Fill: p.Fill, Stage: p.Sizes}.stage("Size"))
+	}
+	knobs := slices.Clone(p.BaseKnobs)
+	if len(knobs) > 0 && len(p.Knobs) > 0 {
+		knobs = append(knobs, core.View{Style: core.Style{Height: core.Pt(1), Margin: core.Symmetric(4, 0)}, StyleFunc: ui.Filled(colors.Line)})
+	}
+	knobs = append(knobs, p.Knobs...)
+	var footer []core.Node
+	if len(knobs) > 0 {
+		footer = []core.Node{core.View{Style: core.Style{Gap: 2}, Children: knobs}}
+	}
+	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Flush: true, Children: stages, Footer: footer}
+}
+
+// stage is the form on the pixel grid, with caption in its corner when it
+// shares the card with another form.
+func (f Form) stage(caption string) core.Node {
 	align := core.AlignCenter
-	if p.Fill {
+	if f.Fill {
 		align = core.AlignStretch
 	}
-	stage := PixelGrid{TestID: "stage-" + p.Title, Style: core.Style{MinHeight: core.Pt(96), AlignItems: align, JustifyContent: core.JustifyCenter, Gap: 8,
-		Padding: core.All(16)},
-		Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node { return p.Stage() })}}
-	var footer []core.Node
-	if len(p.Knobs) > 0 {
-		footer = []core.Node{core.View{Style: core.Style{Gap: 2}, Children: p.Knobs}}
+	s := core.Style{MinHeight: core.Pt(96), AlignItems: align, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(16)}
+	var form core.Node = core.Dynamic(func(*core.Scope) core.Node { return f.Stage() })
+	if !f.Fill {
+		// As wide as the form, which then centers even if it starts itself.
+		form = core.View{Style: core.Style{MaxWidth: core.Pct(100), AlignItems: core.AlignCenter}, Children: []core.Node{form}}
 	}
-	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Flush: true, Children: []core.Node{stage}, Footer: footer}
+	children := []core.Node{form}
+	if caption != "" {
+		s.Padding.Top = 30
+		children = append(children, core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(14)},
+			Children: []core.Node{API{Text: caption}}})
+	}
+	return PixelGrid{TestID: "stage-" + f.Name, Style: s, Children: children}
 }
 
 // wideStage reports whether the pane fits a stagePage's panel beside its

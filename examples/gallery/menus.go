@@ -538,5 +538,5 @@ func menusDemo(cx *core.Scope) core.Node {
 			core.Untracked(cx, func() bool { log(e); return true })
 		}
 	})
-	return demoPage(cx, pageProps{}, menuPlayground(event), baseMenuCard(event), contextMenuCard(event), baseContextMenuCard(event), menuBar, rows, longList, commands, native, appMenu, eventsCard)
+	return demoPage(cx, pageProps{}, menuPlayground(event), contextMenuCard(event), menuBar, rows, longList, commands, native, appMenu, eventsCard)
 }

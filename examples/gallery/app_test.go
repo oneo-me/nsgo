@@ -346,7 +346,7 @@ func TestControls(t *testing.T) {
 	app.Press("id:stage-Checkbox >> role:checkbox Starred")
 	app.Find("text:Checkbox: off")
 	open(app, "Tabs")
-	app.Press("id:stage-Tabs >> role:tab Activity")
+	app.Press("id:stage-Tabs >> role:tab Activity >> nth=0")
 	app.Find("text:Tabs: 1")
 	open(app, "Breadcrumbs")
 	app.Find("id:stage-Breadcrumbs")
@@ -666,13 +666,21 @@ func TestToastOptions(t *testing.T) {
 	}
 }
 
-// TestBaseForms shows a component's base form beside its ui form, with
-// base's behavior under the look its page writes out.
+// TestBaseForms shows a component's base form above its ui form, with
+// base's behavior under the look its page writes out and one knob for a
+// prop both have.
 func TestBaseForms(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Button")
 	app.Press("id:base-button")
 	app.Find("text:base.Button pressed")
+	if base, form := app.Find("id:stage-base.Button"), app.Find("id:stage-Button"); base.Frame.Origin.Y >= form.Frame.Origin.Y {
+		t.Fatalf("the base form is at %v, the ui form at %v", base.Frame.Origin, form.Frame.Origin)
+	}
+	app.Press("role:switch Disabled >> nth=0")
+	if !app.Find("id:base-button").Props.Disabled || !app.Find("id:button").Props.Disabled {
+		t.Fatal("the Disabled knob left a form enabled")
+	}
 	open(app, "Switch")
 	sw := "id:stage-base.Switch >> role:switch Starred"
 	app.Press(sw)
@@ -696,8 +704,14 @@ func TestPlaygrounds(t *testing.T) {
 	if app.Find("id:button").Props.Disabled {
 		t.Fatal("the button starts disabled")
 	}
-	app.Press("id:stage-Button >> role:button Save")
+	app.Press("id:button")
 	app.Find("text:Button pressed")
+	if got := len(app.Query("id:stage-Button >> role:button Save")); got != 4 {
+		t.Fatalf("%d variants on the stage", got)
+	}
+	if got := len(app.Query("id:stage-Button-sizes >> role:button Save")); got != 3 {
+		t.Fatalf("%d sizes on the stage", got)
+	}
 	app.Press("role:switch Disabled >> nth=0")
 	if !app.Find("id:button").Props.Disabled {
 		t.Fatal("the Disabled knob left the button enabled")

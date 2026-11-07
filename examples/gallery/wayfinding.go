@@ -10,16 +10,15 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The ui forms of what finds and folds content, with their props to set.
+// What finds and folds content: each ui form under its base form, with their
+// props to set.
 
 func tabsCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		selected := core.NewSignal(cx, 0)
-		variant := core.NewSignal(cx, ui.TabsSegmented)
 		equal, icons, content, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-		size := core.NewSignal(cx, ui.SizeDefault)
-		return Playground{Title: "Tabs", Fill: true, Stage: func() core.Node {
+		tabs := func(variant ui.TabsVariant, size ui.Size) core.Node {
 			choices := []ui.Option[int]{{Value: 0, Label: tr.ControlsOverview()}, {Value: 1, Label: tr.ControlsActivity()}, {Value: 2, Label: tr.ControlsBilling(), Disabled: disabled.Get}}
 			if icons.Get() {
 				choices[0].Icon, choices[1].Icon, choices[2].Icon = lucide.LayoutGrid, lucide.List, lucide.File
@@ -29,13 +28,14 @@ func tabsCard(last *core.Signal[string]) cardFunc {
 					choices[i].Content = countedTab(cx, choices[i].Label, func() int { return (i + 1) * 4 })
 				}
 			}
-			return ui.Tabs[int]{Variant: variant.Get(), Size: size.Get(), Equal: equal.Get(), Options: choices, Value: selected.Get, Label: tr.DemoTabs(),
+			return ui.Tabs[int]{Variant: variant, Size: size, Equal: equal.Get(), Options: choices, Value: selected.Get, Label: tr.DemoTabs(),
 				OnChange: func(i int) { selected.Set(i); last.Set(fmt.Sprintf("Tabs: %d", i)) }}
-		}, Knobs: []core.Node{
-			choiceKnob("Variant", variant, options([]ui.TabsVariant{ui.TabsSegmented, ui.TabsUnderline}, "Segmented", "Underline")...),
-			sizeKnob(size),
-			boolKnob("Equal", equal), boolKnob("Icon", icons), boolKnob("Content", content), boolKnob("Disabled", disabled),
-		}}
+		}
+		return Playground{Title: "Tabs", Base: baseTabsForm(cx, last, selected, disabled), Stage: func() core.Node {
+			return stageRows(tabs(ui.TabsSegmented, ui.SizeDefault), tabs(ui.TabsUnderline, ui.SizeDefault))
+		}, Sizes: func() core.Node {
+			return stageRows(tabs(ui.TabsSegmented, ui.SizeSmall), tabs(ui.TabsSegmented, ui.SizeDefault), tabs(ui.TabsSegmented, ui.SizeLarge))
+		}, BaseKnobs: []core.Node{boolKnob("Disabled", disabled)}, Knobs: []core.Node{boolKnob("Equal", equal), boolKnob("Icon", icons), boolKnob("Content", content)}}
 	}
 }
 
@@ -84,15 +84,15 @@ func accordionCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignalFunc(cx, map[int]bool{0: true}, func(a, b map[int]bool) bool { return false })
-		single, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
+		multiple, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false)
 		section := func(text, body string, off func() bool) ui.AccordionItem {
 			return ui.AccordionItem{Text: text, Disabled: off, Content: ui.Text(body, 13, ui.Regular, colors.Muted)}
 		}
-		return Playground{Title: "Accordion", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Accordion", Fill: true, Base: baseAccordionForm(cx, multiple, disabled), Stage: func() core.Node {
 			return ui.Accordion{Open: func(i int) bool { return open.Get()[i] },
 				OnOpenChange: func(i int, on bool) {
 					open.Update(func(m map[int]bool) map[int]bool {
-						if single.GetUntracked() {
+						if !multiple.GetUntracked() {
 							clear(m)
 						}
 						m[i] = on
@@ -105,7 +105,7 @@ func accordionCard(last *core.Signal[string]) cardFunc {
 					section(tr.ControlsActivity(), tr.ControlsInvoicePaid(), nil),
 					section(tr.ControlsBilling(), tr.ControlsAMemberJoined(), disabled.Get),
 				}}
-		}, Knobs: []core.Node{boolKnob("One open", single), boolKnob("Disabled", disabled)}}
+		}, BaseKnobs: []core.Node{boolKnob("Multiple", multiple), boolKnob("Disabled", disabled)}}
 	}
 }
 
@@ -114,11 +114,11 @@ func collapsiblePlayground(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false)
-		return Playground{Title: "Collapsible", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Collapsible", Fill: true, Base: baseCollapsibleForm(cx, open, disabled), Stage: func() core.Node {
 			return ui.Collapsible{Text: tr.ControlsActivity(), Open: open.Get, Disabled: disabled.Get,
 				OnOpenChange: func(on bool) { open.Set(on); last.Set(fmt.Sprintf("Collapsible: %s", onOff(tr, on))) },
 				Content:      ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Muted)}
-		}, Knobs: []core.Node{boolKnob("Open", open), boolKnob("Disabled", disabled)}}
+		}, BaseKnobs: []core.Node{boolKnob("Open", open), boolKnob("Disabled", disabled)}}
 	}
 }
 

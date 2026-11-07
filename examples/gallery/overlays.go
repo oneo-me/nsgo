@@ -105,14 +105,18 @@ func sheetCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignal(cx, false)
+		side := core.NewSignal(cx, core.PlaceBottom)
+		swipe := core.NewSignal(cx, false)
 		close := func() { open.Set(false); last.Set(tr.OverlaySheet2() + "closed") }
-		return Card{Title: "Sheet", Description: tr.OverlayAPanelAtTheBottom(), Children: []core.Node{
-			ui.Button{Text: tr.OverlayShowTheSheet(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
-			ui.Sheet{Open: open.Get, OnClose: close, Children: []core.Node{
-				ui.Text(tr.OverlaySheet(), 15, ui.Semibold, colors.Text),
-				ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 13, ui.Regular, colors.Muted),
-				ui.Button{Text: tr.OverlayDone(), OnPress: close},
-			}},
-		}}
+		return Playground{Title: "Sheet", Note: tr.OverlayAPanelAtTheBottom(), Base: baseSheetForm(cx, last, side, swipe), Stage: func() core.Node {
+			return core.Group{
+				ui.Button{Text: tr.OverlayShowTheSheet(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
+				ui.Sheet{Open: open.Get, OnClose: close, Children: []core.Node{
+					ui.Text(tr.OverlaySheet(), 15, ui.Semibold, colors.Text),
+					ui.Text(tr.OverlayTheBackdropEscapeAndBack(), 13, ui.Regular, colors.Muted),
+					ui.Button{Text: tr.OverlayDone(), OnPress: close},
+				}},
+			}
+		}, BaseKnobs: []core.Node{choiceKnob("Side", side, placements...), boolKnob("CloseOnSwipe", swipe)}}
 	}
 }

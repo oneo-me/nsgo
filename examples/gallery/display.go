@@ -11,8 +11,8 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The ui forms of what shows
-// things, each with its props to set.
+// What shows things: each ui form under its base form, with their props to
+// set.
 
 // demoPeople are the avatars' names.
 var demoPeople = []string{"Ada Lovelace", "Grace Hopper", "Alan Turing", "Katherine Johnson", "Linus Pauling", "Edsger Dijkstra"}
@@ -21,13 +21,11 @@ func badgeCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		tone := core.NewSignal(cx, ui.ToneAccent)
-		variant := core.NewSignal(cx, ui.BadgeTinted)
 		return Playground{Title: "Badge", UIOnly: true, Stage: func() core.Node {
-			return ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Variant: variant.Get()}
+			return stageRow(ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Variant: ui.BadgeTinted}, ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Variant: ui.BadgeOutline})
 		}, Knobs: []core.Node{
 			choiceKnob("Tone", tone, options([]ui.Tone{ui.ToneNeutral, ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger},
 				"Neutral", "Accent", "Info", "Warn", "Up", "Danger")...),
-			choiceKnob("Variant", variant, options([]ui.BadgeVariant{ui.BadgeTinted, ui.BadgeOutline}, "Tinted", "Outline")...),
 		}}
 	}
 }
@@ -37,16 +35,15 @@ func avatarCard(*core.Signal[string]) cardFunc {
 		size := core.NewSignal(cx, 48.0)
 		status := core.NewSignal(cx, ui.AvatarOnline)
 		picture := core.NewSignal(cx, false)
-		return Playground{Title: "Avatar", Stage: func() core.Node {
+		return Playground{Title: "Avatar", Base: baseAvatarForm(cx, picture), Stage: func() core.Node {
 			a := ui.Avatar{Name: demoPeople[0], Size: core.Points(size.Get()), Status: status.Get()}
 			if picture.Get() {
 				a.Image = core.ImageSource{Data: logoPNG}
 			}
 			return a
-		}, Knobs: []core.Node{
+		}, BaseKnobs: []core.Node{boolKnob("Src", picture)}, Knobs: []core.Node{
 			numberKnob("Size", size, 24, 80, 4),
 			choiceKnob("Status", status, options([]ui.AvatarStatus{ui.AvatarNoStatus, ui.AvatarOnline, ui.AvatarOffline}, "None", "Online", "Offline")...),
-			boolKnob("Image", picture),
 		}}
 	}
 }
@@ -54,15 +51,15 @@ func avatarCard(*core.Signal[string]) cardFunc {
 func avatarGroupCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		most, size := core.NewSignal(cx, 4.0), core.NewSignal(cx, 36.0)
+		limit, size := core.NewSignal(cx, 4.0), core.NewSignal(cx, 36.0)
 		var members []ui.AvatarGroupMember
 		for _, name := range demoPeople {
 			members = append(members, ui.AvatarGroupMember{Name: name})
 		}
-		return Playground{Title: "AvatarGroup", Stage: func() core.Node {
-			return ui.AvatarGroup{Members: members, Max: int(most.Get()), Size: core.Points(size.Get()), Label: tr.ControlsMembers(),
+		return Playground{Title: "AvatarGroup", Base: baseAvatarGroupForm(cx, limit), Stage: func() core.Node {
+			return ui.AvatarGroup{Members: members, Max: int(limit.Get()), Size: core.Points(size.Get()), Label: tr.ControlsMembers(),
 				MoreLabel: func(n int) string { return fmt.Sprintf("+%d", n) }}
-		}, Knobs: []core.Node{numberKnob("Max", most, 1, 6, 1), numberKnob("Size", size, 24, 56, 4)}}
+		}, BaseKnobs: []core.Node{numberKnob("Limit", limit, 1, 6, 1)}, Knobs: []core.Node{numberKnob("Size", size, 24, 56, 4)}}
 	}
 }
 
@@ -124,7 +121,8 @@ func carouselCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		index := core.NewSignal(cx, 0)
 		width, count := core.NewSignal(cx, 220.0), core.NewSignal(cx, 5.0)
-		return Playground{Title: "Carousel", Fill: true, Stage: func() core.Node {
+		looping := core.NewSignal(cx, false)
+		return Playground{Title: "Carousel", Fill: true, Base: baseCarouselForm(cx, last, count, looping), Stage: func() core.Node {
 			return ui.Carousel{Count: int(count.Get()), SlideWidth: core.Points(width.Get()), Index: index.Get, Label: tr.DemoImage(),
 				OnChange: func(i int) { index.Set(i); last.Set(fmt.Sprintf("Carousel: %d", i+1)) },
 				Slide: func(cx *core.Scope, i int) core.Node {
@@ -132,7 +130,7 @@ func carouselCard(last *core.Signal[string]) cardFunc {
 				},
 				SlideLabel:    func(i, n int) string { return fmt.Sprintf("%d / %d", i+1, n) },
 				PreviousLabel: tr.LibBack(), NextLabel: tr.LibNext()}
-		}, Knobs: []core.Node{numberKnob("SlideWidth", width, 120, 320, 20), numberKnob("Count", count, 2, 8, 1)}}
+		}, BaseKnobs: []core.Node{numberKnob("Count", count, 2, 8, 1), boolKnob("Looping", looping)}, Knobs: []core.Node{numberKnob("SlideWidth", width, 120, 320, 20)}}
 	}
 }
 
@@ -168,8 +166,8 @@ func treeCard(last *core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		open := core.NewSignalFunc(cx, []string{"source"}, slices.Equal)
 		selection := ui.NewSelection(cx, false)
-		return Card{Title: "Tree", Children: []core.Node{
-			ui.Tree{Label: tr.LibFiles(), Selection: selection, ToggleLabel: tr.KitExpand(),
+		return Playground{Title: "Tree", Fill: true, Base: baseTreeForm(cx, last), Stage: func() core.Node {
+			return ui.Tree{Label: tr.LibFiles(), Selection: selection, ToggleLabel: tr.KitExpand(),
 				Roots: func() []any { return []any{"source", "docs", "README.md"} }, Children: func(k any) []any { return fileTree[k] },
 				Expanded: func(k any) bool { return slices.Contains(open.Get(), k.(string)) },
 				OnExpand: func(k any, on bool) {
@@ -191,7 +189,7 @@ func treeCard(last *core.Signal[string]) cardFunc {
 						}, 14, colors.Muted),
 						ui.Textf(func() string { return fmt.Sprint(item.Key()) }, 13, ui.Regular, colors.Text)}}
 				},
-				Style: core.Style{Height: core.Pt(220)}},
+				Style: core.Style{Height: core.Pt(220)}}
 		}}
 	}
 }

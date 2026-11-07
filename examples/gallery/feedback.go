@@ -3,13 +3,14 @@ package main
 import (
 	"time"
 
+	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// The ui forms of what says how things stand, each with its
+// What says how things stand: each ui form under its base form, with their
 // props to set.
 
 func progressCard(*core.Signal[string]) cardFunc {
@@ -18,9 +19,9 @@ func progressCard(*core.Signal[string]) cardFunc {
 		value := core.NewSignal(cx, 40.0)
 		indeterminate := core.NewSignal(cx, false)
 		percent := func() float32 { return float32(value.Get()) }
-		return Playground{Title: "Progress", Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Progress", Fill: true, Base: baseProgressForm(cx, value, indeterminate), Stage: func() core.Node {
 			return ui.Progress{Label: tr.LibProgress(), Value: percent, Indeterminate: indeterminate.Get}
-		}, Knobs: []core.Node{numberKnob("Value", value, 0, 100, 1), boolKnob("Indeterminate", indeterminate)}}
+		}, BaseKnobs: []core.Node{numberKnob("Value", value, 0, 100, 1), boolKnob("Indeterminate", indeterminate)}}
 	}
 }
 
@@ -39,14 +40,11 @@ func progressRingCard(*core.Signal[string]) cardFunc {
 func spinnerPlayground(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		variant := core.NewSignal(cx, ui.SpinnerRing)
 		size := core.NewSignal(cx, 24.0)
 		return Playground{Title: "Spinner", UIOnly: true, Stage: func() core.Node {
-			return ui.Spinner{Label: tr.LibLoading(), Variant: variant.Get(), Size: core.Points(size.Get())}
-		}, Knobs: []core.Node{
-			choiceKnob("Variant", variant, options([]ui.SpinnerVariant{ui.SpinnerRing, ui.SpinnerSpokes}, "Ring", "Spokes")...),
-			numberKnob("Size", size, 12, 48, 4),
-		}}
+			s := core.Points(size.Get())
+			return stageRow(ui.Spinner{Label: tr.LibLoading(), Variant: ui.SpinnerRing, Size: s}, ui.Spinner{Label: tr.LibLoading(), Variant: ui.SpinnerSpokes, Size: s})
+		}, Knobs: []core.Node{numberKnob("Size", size, 12, 48, 4)}}
 	}
 }
 
@@ -87,6 +85,7 @@ func toastPlayground(last *core.Signal[string]) cardFunc {
 		kind := core.NewSignal(cx, ui.ToastSuccess)
 		seconds := core.NewSignal(cx, 5.0)
 		description, action, sticky := core.NewSignal(cx, true), core.NewSignal(cx, false), core.NewSignal(cx, false)
+		swipe := core.NewSignal(cx, toast.SwipeRight)
 		limit := core.NewSignal(cx, float64(shell.toasts.Limit))
 		if limit.GetUntracked() == 0 {
 			limit.Set(3)
@@ -115,23 +114,24 @@ func toastPlayground(last *core.Signal[string]) cardFunc {
 			}
 			shell.toasts.Show(c)
 		}
-		return Card{Title: "Toasts · ToastContent", Children: []core.Node{
-			ui.HStack{Gap: 8, Children: []core.Node{
+		return Playground{Title: "Toasts · ToastContent", Base: baseToastForm(cx, last, swipe), Stage: func() core.Node {
+			return ui.HStack{Gap: 8, Children: []core.Node{
 				ui.Button{Text: tr.KitShow(), TestID: "toast-show", OnPress: show},
 				ui.Button{Text: tr.OverlayDismissAll(), Variant: ui.ButtonGhost, OnPress: shell.toasts.DismissAll},
-			}},
-			core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
-				choiceKnob("Placement", shell.toastPlacement, options([]ui.ToastPlacement{ui.ToastTopStart, ui.ToastTop, ui.ToastTopEnd, ui.ToastStart, ui.ToastEnd,
-					ui.ToastBottomStart, ui.ToastBottom, ui.ToastBottomEnd}, "TopStart", "Top", "TopEnd", "Start", "End", "BottomStart", "Bottom", "BottomEnd")...),
-				boolKnob("Reverse", shell.toastReverse),
-				choiceKnob("Swipe", shell.toastSwipe, options([]ui.ToastSwipe{ui.ToastSwipeEdge, ui.ToastSwipeLeft, ui.ToastSwipeRight, ui.ToastSwipeUp, ui.ToastSwipeDown, ui.ToastSwipeOff},
-					"Edge", "Left", "Right", "Up", "Down", "Off")...),
-				numberKnob("Limit", limit, 1, 6, 1),
-				choiceKnob("Type", kind, options([]ui.ToastType{ui.ToastPlain, ui.ToastInfo, ui.ToastSuccess, ui.ToastWarning, ui.ToastError},
-					"Plain", "Info", "Success", "Warning", "Error")...),
-				numberKnob("Duration", seconds, 1, 15, 1),
-				boolKnob("Duration < 0", sticky), boolKnob("Description", description), boolKnob("Action", action),
-			}},
+			}}
+		}, BaseKnobs: []core.Node{
+			choiceKnob("SwipeDirection", swipe, options([]toast.SwipeDirection{toast.SwipeRight, toast.SwipeLeft, toast.SwipeOff}, "Right", "Left", "Off")...),
+		}, Knobs: []core.Node{
+			choiceKnob("Placement", shell.toastPlacement, options([]ui.ToastPlacement{ui.ToastTopStart, ui.ToastTop, ui.ToastTopEnd, ui.ToastStart, ui.ToastEnd,
+				ui.ToastBottomStart, ui.ToastBottom, ui.ToastBottomEnd}, "TopStart", "Top", "TopEnd", "Start", "End", "BottomStart", "Bottom", "BottomEnd")...),
+			boolKnob("Reverse", shell.toastReverse),
+			choiceKnob("Swipe", shell.toastSwipe, options([]ui.ToastSwipe{ui.ToastSwipeEdge, ui.ToastSwipeLeft, ui.ToastSwipeRight, ui.ToastSwipeUp, ui.ToastSwipeDown, ui.ToastSwipeOff},
+				"Edge", "Left", "Right", "Up", "Down", "Off")...),
+			numberKnob("Limit", limit, 1, 6, 1),
+			choiceKnob("Type", kind, options([]ui.ToastType{ui.ToastPlain, ui.ToastInfo, ui.ToastSuccess, ui.ToastWarning, ui.ToastError},
+				"Plain", "Info", "Success", "Warning", "Error")...),
+			numberKnob("Duration", seconds, 1, 15, 1),
+			boolKnob("Duration < 0", sticky), boolKnob("Description", description), boolKnob("Action", action),
 		}}
 	}
 }
