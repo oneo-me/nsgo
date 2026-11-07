@@ -43,7 +43,7 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	stage("bundling the app")
 	// An iOS bundle's root is its resource directory; a resources
 	// directory there would read as a macOS bundle's and fail signing.
-	if err := copyResources(p, app); err != nil {
+	if err := copyMobileResources(p, app); err != nil {
 		return "", err
 	}
 	icon, err := writeIOSIcon(ctx, p, app, simulator)

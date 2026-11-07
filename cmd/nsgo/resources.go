@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // resourcesDir is the directory beside nsgo.yaml whose files packages
@@ -15,7 +16,16 @@ const resourcesDir = "resources"
 // package's resource root, where "asset:" images resolve. An executable
 // stays executable, for programs the app ships and starts.
 func copyResources(p *project, root string) error {
-	return walkResources(p, func(rel string, data []byte) error {
+	return copyWalked(p, root, walkResources)
+}
+
+// copyMobileResources is copyResources for a phone's package.
+func copyMobileResources(p *project, root string) error {
+	return copyWalked(p, root, walkMobileResources)
+}
+
+func copyWalked(p *project, root string, walk func(*project, func(string, []byte) error) error) error {
+	return walk(p, func(rel string, data []byte) error {
 		out := filepath.Join(root, rel)
 		if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
 			return err
@@ -29,6 +39,19 @@ func copyResources(p *project, root string) error {
 		}
 		// WriteFile keeps the mode of a file that was there.
 		return os.Chmod(out, mode)
+	})
+}
+
+// walkMobileResources is walkResources without what nsgo.yaml's
+// mobile.exclude_resources leaves out of phones' packages.
+func walkMobileResources(p *project, f func(rel string, data []byte) error) error {
+	return walkResources(p, func(rel string, data []byte) error {
+		for _, out := range p.Mobile.ExcludeResources {
+			if out = strings.Trim(out, "/"); rel == out || strings.HasPrefix(rel, out+"/") {
+				return nil
+			}
+		}
+		return f(rel, data)
 	})
 }
 

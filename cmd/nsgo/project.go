@@ -98,6 +98,11 @@ type project struct {
 	Android struct {
 		Permissions []string `yaml:"permissions"`
 	} `yaml:"android"`
+	// Mobile is the iOS and Android targets': ExcludeResources are paths in
+	// resources/ their packages leave out, such as what only desktops run.
+	Mobile struct {
+		ExcludeResources []string `yaml:"exclude_resources"`
+	} `yaml:"mobile"`
 	Sign  signing `yaml:"sign"`
 	Build struct {
 		Output  string   `yaml:"output"`

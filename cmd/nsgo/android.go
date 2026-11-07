@@ -76,7 +76,7 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 		{Name: "lib/" + abi + "/libnsgo.so", Data: app},
 	}
 	// Resources go in the APK's assets, where the app reads them.
-	err = walkResources(p, func(rel string, data []byte) error {
+	err = walkMobileResources(p, func(rel string, data []byte) error {
 		files = append(files, apk.File{Name: "assets/" + rel, Data: data})
 		return nil
 	})
