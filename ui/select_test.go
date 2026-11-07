@@ -8,7 +8,7 @@ import (
 )
 
 // TestSelect shows the placeholder until a choice, then the chosen
-// option's label, checked in the menu it is chosen from.
+// option's label, selected without a check in the menu it is chosen from.
 func TestSelect(t *testing.T) {
 	each(t, func(t *testing.T, e core.Environment) {
 		var fruit *core.Signal[string]
@@ -28,16 +28,18 @@ func TestSelect(t *testing.T) {
 			t.Fatalf("chose %q, want pear shown in the field", fruit.Get())
 		}
 		app.Press("fruit")
-		check := func(id string) float32 { return app.Find(id).Children[0].Style.Opacity }
-		if check("fruit-1") == 0 || check("fruit-0") != 0 {
-			t.Fatal("the chosen option is not checked")
+		if !app.Find("role:option Pear").Props.Selected || app.Find("role:option Apple").Props.Selected {
+			t.Fatal("the chosen option's row is not selected")
+		}
+		if n := len(app.Find("fruit-1").Children); n != 1 {
+			t.Fatalf("a row has %d children, want its text, with no check", n)
 		}
 	})
 }
 
 // TestSelectOptionSlots shows an option's Leading in its row and in the
 // field while chosen, and its Trailing only in its row, where a button
-// leaves the choice and the menu alone; NoCheck drops the check.
+// leaves the choice and the menu alone.
 func TestSelectOptionSlots(t *testing.T) {
 	each(t, func(t *testing.T, e core.Environment) {
 		var sound *core.Signal[string]
@@ -49,7 +51,7 @@ func TestSelectOptionSlots(t *testing.T) {
 		app, _ := start(t, e, func(cx *core.Scope) core.Node {
 			sound = core.NewSignal(cx, "bell")
 			return core.View{Style: core.Style{AlignItems: core.AlignStart}, Children: []core.Node{
-				Select[string]{TestID: "sound", Label: "Sound", NoCheck: true, Value: sound.Get, OnChange: sound.Set,
+				Select[string]{TestID: "sound", Label: "Sound", Value: sound.Get, OnChange: sound.Set,
 					Options: []Option[string]{option("bell"), option("chime")}},
 			}}
 		})
@@ -61,7 +63,7 @@ func TestSelectOptionSlots(t *testing.T) {
 			t.Fatal("no Leading in the menu")
 		}
 		if n := len(app.Find("sound-1").Children); n != 3 {
-			t.Fatalf("a row has %d children, want Leading, text and Trailing, with no check", n)
+			t.Fatalf("a row has %d children, want Leading, text and Trailing", n)
 		}
 		app.Press("play-chime")
 		if played != "chime" || sound.Get() != "bell" || !app.Exists("role:option chime") {

@@ -12,8 +12,8 @@ import (
 
 // Combobox is a text field that filters Options as it is typed in and
 // picks from them: one value that a choice replaces, closing the list, or
-// with Multiple several that a choice toggles. Options' Icon and Content go
-// unused.
+// with Multiple several that a choice toggles. The list marks what is chosen
+// with its rows' selected face. Options' Icon and Content go unused.
 type Combobox[T comparable] struct {
 	Options     []Option[T]
 	Multiple    bool
@@ -75,6 +75,6 @@ func (c Combobox[T]) Render(cx *core.Scope) core.Node {
 		PopupStyleFunc: popup, BackdropStyle: backdrop, ListStyle: core.Style{MaxHeight: core.Pt(320)}, Empty: emptyList(cx, empty),
 		ItemStyle: row, ItemStyleFunc: look, GroupStyle: group, GroupStyleFunc: groupLook,
 		RenderItem: func(e base.SelectEntry) core.Node {
-			return optionRow(cx, c.Options[e.Index], "", func() bool { return slices.Contains(indexes.Get(), strconv.Itoa(e.Index)) })
+			return optionRow(cx, c.Options[e.Index], "")
 		}}
 }

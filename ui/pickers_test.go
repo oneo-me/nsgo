@@ -45,7 +45,8 @@ func TestSelectSearchesAndClears(t *testing.T) {
 	})
 }
 
-// A combobox of several values toggles them and stays open.
+// A combobox of several values toggles them, selecting their rows, and
+// stays open.
 func TestComboboxToggles(t *testing.T) {
 	each(t, func(t *testing.T, e core.Environment) {
 		var got []string
@@ -58,6 +59,9 @@ func TestComboboxToggles(t *testing.T) {
 		app.Press("role:option Plum")
 		if len(got) != 2 || got[1] != "plum" || !app.Exists("role:option Plum") {
 			t.Fatalf("got %v, open %v", got, app.Exists("role:option Plum"))
+		}
+		if !app.Find("role:option Plum").Props.Selected {
+			t.Fatal("a chosen option's row is not selected")
 		}
 	})
 }

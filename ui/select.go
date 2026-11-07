@@ -13,14 +13,13 @@ import (
 // over it on desktops, the chosen row on the field, where the keys move
 // through them and letters jump, and as a sheet on touch screens. The field
 // shows the chosen option's label, or Placeholder while Value matches none,
-// and the list checks it unless NoCheck. The rows are made as they scroll
-// in, so a list may be long. Options' Icon and Content go unused.
+// and the list marks it with its row's selected face. The rows are made as
+// they scroll in, so a list may be long. Options' Icon and Content go unused.
 type Select[T comparable] struct {
 	Options     []Option[T]
 	Value       func() T
 	OnChange    func(value T)
 	Placeholder string
-	NoCheck     bool
 	// Searchable shows a field above the rows that filters them by label,
 	// with SearchPlaceholder in it and Empty while none matches.
 	Searchable        bool
@@ -49,10 +48,10 @@ func optionItems[T comparable](options []Option[T]) func() []base.SelectItem {
 	}
 }
 
-// optionRow draws option i of a list.
-func optionRow[T comparable](cx *core.Scope, o Option[T], id string, checked func() bool) core.Node {
+// optionRow draws an option of a list.
+func optionRow[T comparable](cx *core.Scope, o Option[T], id string) core.Node {
 	colors := ColorsOf(cx)
-	children := menuLeading(cx, nil, checked)
+	var children []core.Node
 	if o.Leading != nil {
 		children = append(children, o.Leading)
 	}
@@ -127,11 +126,7 @@ func (s Select[T]) Render(cx *core.Scope) core.Node {
 			if s.TestID != "" {
 				id = s.TestID + "-" + strconv.Itoa(e.Index)
 			}
-			var checked func() bool
-			if !s.NoCheck {
-				checked = func() bool { return chosen.Get() == e.Index }
-			}
-			return optionRow(cx, s.Options[e.Index], id, checked)
+			return optionRow(cx, s.Options[e.Index], id)
 		}}
 	if s.Searchable {
 		b.Searchable = func() bool { return true }
