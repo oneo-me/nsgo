@@ -25,6 +25,18 @@ type hoistNode struct {
 	dismissed bool
 	// anchorBounds is an overlay's AnchorBounds, in the surface.
 	anchorBounds *Bounds
+	// covering says an overlay's CoverShown holds, and covered is where
+	// its Cover view was taken: its frame in the overlay, for the overlay
+	// of size kept with the view at place in its parent.
+	covering bool
+	covered  *covered
+}
+
+// covered is where an overlay's Cover view is in it.
+type covered struct {
+	at    Bounds
+	kept  Size
+	place Point
 }
 
 // anchored reports whether an overlay host hosts, or one inside its
@@ -80,7 +92,15 @@ func (t *Tree) mountOverlay(cx *Scope, parent *node, o Overlay) {
 			t.changed = true
 		})
 	}
-	n.h = handlers{pressOutside: o.OnPressOutside, cancel: o.OnCancel, transitionEnd: o.OnTransitionEnd}
+	if o.Cover != nil && o.CoverShown != nil {
+		cx.renderEffect(func() {
+			h.covering = o.CoverShown()
+			t.markLayout(t.view)
+			t.changed = true
+		})
+	}
+	n.h = handlers{pressOutside: o.OnPressOutside, cancel: o.OnCancel, transitionEnd: o.OnTransitionEnd,
+		mouseEnter: o.OnMouseEnter, mouseLeave: o.OnMouseLeave}
 	n.props = driver.ViewProps{Role: o.Role, Label: o.Label, TestID: o.TestID, PointerEvents: o.PointerEvents}
 	n.ownPointer = o.PointerEvents
 	for _, c := range o.Children {
@@ -244,7 +264,7 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 	l := &n.lstate.Rounded
 	size := Size{Width: Points(l.Size.Width), Height: Points(l.Size.Height)}
 	var origin Point
-	anchor, ok := t.anchorRect(o.Anchor, host)
+	anchor, ok := t.anchorRect(o, host)
 	if !ok && n.hoist.anchorBounds != nil {
 		anchor, ok = *n.hoist.anchorBounds, true
 		if host != t.view {
@@ -274,7 +294,17 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 			want = PlaceBottom
 		}
 		var room Size
-		origin, side, room = place(anchor, size, area, want, o.Align, o.Offset, rtl)
+		if at, ok := t.covering(n, size); ok {
+			// Its start on the anchor's, the view's middle on the anchor's,
+			// inside the area as far as it fits.
+			keep := func(v, lo, hi, length Points) Points { return max(min(v, hi-length), lo) }
+			origin = Point{X: keep(anchor.Origin.X, area.Origin.X, area.Origin.X+area.Size.Width, size.Width),
+				Y: keep(anchor.Origin.Y+(anchor.Size.Height-at.Size.Height)/2-at.Origin.Y, area.Origin.Y,
+					area.Origin.Y+area.Size.Height, size.Height)}
+			side, room = want, area.Size
+		} else {
+			origin, side, room = place(anchor, size, area, want, o.Align, o.Offset, rtl)
+		}
 		pos := OverlayPosition{Placement: side, Bounds: Bounds{Origin: origin, Size: size}, Available: room}
 		if pos != n.hoist.placed && o.OnPosition != nil {
 			f := o.OnPosition
@@ -283,6 +313,38 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 		n.hoist.placed = pos
 	}
 	t.setFrame(n, Bounds{Origin: origin, Size: size})
+}
+
+// covering is where overlay n's Cover view is in it: taken once both are
+// laid out and kept while n keeps its size and the view its place in its
+// parent, so a scroll of its content moves nothing.
+func (t *Tree) covering(n *node, size Size) (Bounds, bool) {
+	h := n.hoist
+	ref := h.overlay.Cover
+	if ref == nil || ref.n == nil || ref.n.deleted || !h.covering {
+		return Bounds{}, false
+	}
+	inner := ref.n
+	if c := h.covered; c != nil && c.kept == size && c.place == inner.frame.Origin {
+		return c.at, true
+	}
+	at := inner.frame
+	for p := inner.nativeParent(); ; p = p.nativeParent() {
+		if p == nil {
+			return Bounds{}, false
+		}
+		if p.scroll != nil {
+			at.Origin.X -= p.scroll.offset.X
+			at.Origin.Y -= p.scroll.offset.Y
+		}
+		if p == n {
+			break
+		}
+		at.Origin.X += p.frame.Origin.X
+		at.Origin.Y += p.frame.Origin.Y
+	}
+	h.covered = &covered{at: at, kept: size, place: inner.frame.Origin}
+	return at, true
 }
 
 // insetOrigin places a box of size in a host of hostSize by s's insets,
@@ -345,17 +407,52 @@ func (t *Tree) syncPosition(n *node) {
 }
 
 // anchorRect returns ref's bounds in host's coordinates.
-func (t *Tree) anchorRect(ref *Ref, host *node) (Bounds, bool) {
+func (t *Tree) anchorRect(o *Overlay, host *node) (Bounds, bool) {
+	ref := o.Anchor
 	if ref == nil || ref.n == nil || ref.n.deleted {
 		return Bounds{}, false
 	}
 	b := t.surfaceBounds(ref.n)
+	if o.AnchorContent {
+		b = t.contentBounds(ref.n)
+	}
 	if host != t.view {
 		hb := t.surfaceBounds(host)
 		b.Origin.X -= hb.Origin.X
 		b.Origin.Y -= hb.Origin.Y
 	}
 	return b, true
+}
+
+// contentBounds is the box around the views n holds in the surface, its
+// own frame while it holds none.
+func (t *Tree) contentBounds(n *node) Bounds {
+	var box Bounds
+	found := false
+	var walk func(*node)
+	walk = func(p *node) {
+		for _, c := range p.children {
+			switch {
+			case c.hoist != nil:
+			case c.kind == 0:
+				walk(c)
+			default:
+				b := t.surfaceBounds(c)
+				if !found {
+					box, found = b, true
+					continue
+				}
+				x1, y1 := max(box.Origin.X+box.Size.Width, b.Origin.X+b.Size.Width), max(box.Origin.Y+box.Size.Height, b.Origin.Y+b.Size.Height)
+				box.Origin = Point{X: min(box.Origin.X, b.Origin.X), Y: min(box.Origin.Y, b.Origin.Y)}
+				box.Size = Size{Width: x1 - box.Origin.X, Height: y1 - box.Origin.Y}
+			}
+		}
+	}
+	walk(n)
+	if !found {
+		return t.surfaceBounds(n)
+	}
+	return box
 }
 
 // surfaceBounds returns n's frame in surface points: its native
@@ -548,7 +645,8 @@ func (t *Tree) pressOutside(n *node, at Point) {
 	if n.h.pressOutside == nil || hiddenIn(n) {
 		return
 	}
-	if a, ok := t.anchorRect(n.hoist.overlay.Anchor, t.view); ok && a.Contains(at) {
+	// Its anchor's whole box, what a press on it reaches.
+	if a, ok := t.anchorRect(&Overlay{Anchor: n.hoist.overlay.Anchor}, t.view); ok && a.Contains(at) {
 		return
 	}
 	host := n.hoist.host

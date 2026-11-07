@@ -1,0 +1,168 @@
+package ui
+
+import (
+	"testing"
+	"time"
+
+	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/nsgotest"
+)
+
+func fruitOptions() []Option[string] {
+	return []Option[string]{{Value: "apple", Label: "Apple"}, {Value: "pear", Label: "Pear"}, {Value: "plum", Label: "Plum"}}
+}
+
+// A searchable select filters its rows, shows Empty while none matches and
+// clears through OnClear.
+func TestSelectSearchesAndClears(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		var fruit *core.Signal[string]
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			fruit = core.NewSignal(cx, "pear")
+			return Select[string]{TestID: "fruit", Label: "Fruit", Options: fruitOptions(), Value: fruit.Get, OnChange: fruit.Set,
+				Searchable: true, SearchPlaceholder: "Find", Empty: "Nothing", OnClear: func() { fruit.Set("") }}
+		})
+		app.Press("id:fruit")
+		app.Type("role:textbox", "pl")
+		if app.Exists("role:option Pear") || !app.Exists("role:option Plum") {
+			t.Fatal("the search did not filter the rows")
+		}
+		app.Type("role:textbox", "zz")
+		if !app.Exists("text:Nothing") {
+			t.Fatal("no Empty while none matches")
+		}
+		app.Key("Escape")
+		app.Settle()
+		app.Advance(time.Second)
+		app.Press("label:Clear")
+		if fruit.Get() != "" {
+			t.Fatalf("value = %q after clearing", fruit.Get())
+		}
+	})
+}
+
+// A combobox of several values toggles them and stays open.
+func TestComboboxToggles(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		var got []string
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			value := core.NewSignalFunc(cx, []string{"apple"}, func(a, b []string) bool { return len(a) == len(b) })
+			return Combobox[string]{Options: fruitOptions(), Multiple: true, Label: "Fruit", Value: value.Get,
+				OnChange: func(v []string) { got = v; value.Set(v) }}
+		})
+		app.Press("role:button")
+		app.Press("role:option Plum")
+		if len(got) != 2 || got[1] != "plum" || !app.Exists("role:option Plum") {
+			t.Fatalf("got %v, open %v", got, app.Exists("role:option Plum"))
+		}
+	})
+}
+
+func TestCommandRuns(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		ran := ""
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return Command{Label: "Commands", Placeholder: "Find", Empty: "Nothing", Style: core.Style{Height: core.Pt(200)},
+				Items: func() []base.CommandItem {
+					return []base.CommandItem{{ID: "a", Label: "Alpha", Shortcut: "mod+a"}, {ID: "b", Label: "Beta", Keywords: []string{"second"}}}
+				}, OnSelect: func(id string) { ran = id }}
+		})
+		app.Type("role:textbox", "second")
+		app.Press("role:option Beta")
+		if ran != "b" {
+			t.Fatalf("ran %q", ran)
+		}
+		app.Type("role:textbox", "zz")
+		if !app.Exists("text:Nothing") {
+			t.Fatal("no Empty while none matches")
+		}
+	})
+}
+
+func TestCalendarPicksADay(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		var got base.DateValue
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return Calendar{DefaultValue: base.DateValue{Start: base.NewDate(2026, 10, 9, base.TimeOfDay{})}, OnChange: func(v base.DateValue) { got = v }}
+		})
+		if !app.Exists("label:2026-10-09") || !app.Exists("text:October") && !app.Exists("text:Oct") {
+			t.Fatal("no October")
+		}
+		app.Press("label:2026-10-15")
+		if d := base.ISODate(got.Start); d != "2026-10-15" {
+			t.Fatalf("picked %q", d)
+		}
+	})
+}
+
+func TestDatePickerShowsWhatItPicked(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return DatePicker{DefaultValue: base.DateValue{Start: base.NewDate(2026, 10, 9, base.TimeOfDay{})}, Placeholder: "Pick", TestID: "date", Label: "Date"}
+		})
+		if !app.Exists("text:2026-10-09") {
+			t.Fatal("the field does not show its date")
+		}
+		app.Press("id:date")
+		app.Press("label:2026-10-15")
+		if !app.Exists("text:2026-10-15") {
+			t.Fatal("the field does not show the date picked")
+		}
+	})
+}
+
+func TestTimeFieldEdits(t *testing.T) {
+	var got base.TimeOfDay
+	each(t, func(t *testing.T, e core.Environment) {
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return TimeField{Label: "Time", DefaultValue: base.TimeOfDay{Hour: 9, Minute: 30}, OnChange: func(v base.TimeOfDay) { got = v }}
+		})
+		app.Type("label:Time", "2")
+		if got.Hour != 2 {
+			t.Fatalf("got %+v", got)
+		}
+	})
+}
+
+func TestColorPickerTakesAPreset(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		last := ""
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return ColorPicker{DefaultValue: 0xff0000ff, Presets: []core.Color{0x00ff00ff}, OnChangeEnd: func(_ core.Color, s string) { last = s }}
+		})
+		app.Press("label:#00ff00")
+		if last != "#00ff00" {
+			t.Fatalf("reported %q", last)
+		}
+		if got := app.Find("label:Hex color").Input.Disabled; got {
+			t.Fatal("the field is disabled")
+		}
+	})
+}
+
+// On a desktop a select opens below its field, and with an option chosen
+// lays that row over the field.
+func TestSelectLaysItsChoiceOverTheField(t *testing.T) {
+	desktop := core.Environment{OS: core.OSMacOS, Idiom: core.IdiomDesktop, Locale: "en-US"}
+	var fruit *core.Signal[string]
+	app, _ := start(t, envs()[0].Environment, func(cx *core.Scope) core.Node {
+		fruit = core.NewSignal(cx, "")
+		return core.View{Style: core.Style{Padding: core.Edges{Top: 200}}, Children: []core.Node{
+			Select[string]{TestID: "fruit", Label: "Fruit", Options: fruitOptions(), Value: fruit.Get, OnChange: fruit.Set},
+		}}
+	}, nsgotest.Environment(desktop))
+	popupTop := func() driver.Points { return app.Find("role:listbox").Parent.Frame.Origin.Y }
+	app.Press("id:fruit")
+	below := popupTop()
+	app.Key("Escape")
+	app.Settle()
+	fruit.Set("plum")
+	app.Press("id:fruit")
+	app.Settle()
+	over := popupTop()
+	if over >= below {
+		t.Fatalf("the popup starts at %v with a choice and %v without", over, below)
+	}
+}

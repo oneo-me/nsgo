@@ -678,7 +678,9 @@ const (
 	RoleAlert      = driver.RoleAlert
 	RoleAdjustable = driver.RoleAdjustable
 	// RoleSpinButton is a field for a number, stepped with its actions.
-	RoleSpinButton  = driver.RoleSpinButton
+	RoleSpinButton = driver.RoleSpinButton
+	// RoleCombobox picks a value from a list it opens.
+	RoleCombobox    = driver.RoleCombobox
 	RoleProgressBar = driver.RoleProgressBar
 	// RoleTable and RoleGrid are a table and an interactive one, around
 	// RoleRowGroup, RoleRow, RoleColumnHeader and RoleCell.

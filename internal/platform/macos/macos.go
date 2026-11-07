@@ -874,6 +874,7 @@ func (s *surface) environment() driver.Environment {
 		FontScale:      1,
 		ReduceMotion:   objc.Send[bool](ws, sel("accessibilityDisplayShouldReduceMotion")),
 		ScreenReader:   objc.Send[bool](ws, sel("isVoiceOverEnabled")),
+		ScreenColor:    true,
 		RTL:            rtl,
 		PixelRatio:     s.backingScale(),
 		Locale:         locale,
@@ -1348,6 +1349,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPickDirectories:
 			s.pickDirectories(*it.Directories, it.Count)
+			continue
+		case driver.ItemPickScreenColor:
+			s.pickScreenColor(it.Count)
 			continue
 		case driver.ItemOpenFile:
 			s.openFile(*it.Open, it.Count)

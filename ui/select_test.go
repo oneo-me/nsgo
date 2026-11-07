@@ -23,7 +23,7 @@ func TestSelect(t *testing.T) {
 			t.Fatal("no placeholder before a choice")
 		}
 		app.Press("fruit")
-		app.Press("role:menuitem Pear")
+		app.Press("role:option Pear")
 		if fruit.Get() != "pear" || !app.Exists("text:Pear") || app.Exists("text:Pick a fruit") {
 			t.Fatalf("chose %q, want pear shown in the field", fruit.Get())
 		}
@@ -64,10 +64,10 @@ func TestSelectOptionSlots(t *testing.T) {
 			t.Fatalf("a row has %d children, want Leading, text and Trailing, with no check", n)
 		}
 		app.Press("play-chime")
-		if played != "chime" || sound.Get() != "bell" || !app.Exists("role:menuitem chime") {
+		if played != "chime" || sound.Get() != "bell" || !app.Exists("role:option chime") {
 			t.Fatalf("played %q with %q chosen, want chime played, bell chosen and the menu open", played, sound.Get())
 		}
-		app.Press("role:menuitem chime")
+		app.Press("role:option chime")
 		if sound.Get() != "chime" || !app.Exists("mark-chime") || app.Exists("mark-bell") {
 			t.Fatalf("chose %q, want chime's Leading in the field", sound.Get())
 		}

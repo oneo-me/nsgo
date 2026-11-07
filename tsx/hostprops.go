@@ -764,7 +764,7 @@ func (r *runtime) classList(v goja.Value) string {
 
 var roles = map[string]core.Role{"button": core.RoleButton, "imagebutton": core.RoleButton,
 	"keyboardkey": core.RoleButton, "link": core.RoleLink, "header": core.RoleHeader, "image": core.RoleImage,
-	"text": core.RoleText, "summary": core.RoleText, "search": core.RoleTextField, "combobox": core.RoleButton,
+	"text": core.RoleText, "summary": core.RoleText, "search": core.RoleTextField, "combobox": core.RoleCombobox,
 	"checkbox": core.RoleCheckbox, "switch": core.RoleSwitch, "radio": core.RoleRadio,
 	"radiogroup": core.RoleRadioGroup, "tab": core.RoleTab, "tablist": core.RoleTabList, "menu": core.RoleMenu,
 	"menubar": core.RoleMenu, "menuitem": core.RoleMenuItem, "dialog": core.RoleDialog, "alert": core.RoleAlert,

@@ -104,13 +104,17 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 	if own := (parts.Of(s.PopupClass, s.PopupStyle, s.PopupStyleFunc)); own.Set() {
 		popup = own
 	}
+	// Closing a menu closes its submenus, each with its own exit.
+	shown := func() bool { return isOpen() && menu.open() }
+	inner.open = shown
+	m := newPopupMotion(cx, shown, menu.starting, menu.ending)
 	return core.Group{
 		trigger(open, open, isOpen, anchor, nil),
-		core.Show{When: isOpen, Then: func(cx *core.Scope) core.Node {
+		core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 			menuKey.Provide(cx, &inner)
-			return core.Overlay{Anchor: anchor, Placement: core.PlaceRight, Align: core.AlignStart,
-				Class: popup.Class, Style: popup.Style, StyleFunc: popup.Fn, Children: s.Children, Role: core.RoleMenu,
-				OnCancel: func() { menu.openSub.Set(0) }}
+			return m.overlay(core.Overlay{Anchor: anchor, Placement: core.PlaceRight, Align: core.AlignStart,
+				Children: s.Children, Role: core.RoleMenu,
+				OnCancel: func() { menu.openSub.Set(0) }}, popup)
 		}},
 	}
 }

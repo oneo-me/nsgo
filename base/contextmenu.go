@@ -15,7 +15,9 @@ type ContextMenu struct {
 	OnOpen       func()
 	OnClose      func()
 	OnCancel     func()
-	Disabled     bool
+	// OnPosition reports where the popup went on desktops, as Popover's.
+	OnPosition func(core.OverlayPosition)
+	Disabled   bool
 
 	// Offset and Margin place the popup beside the pointer on desktops.
 	Offset, Margin core.Points
@@ -90,7 +92,7 @@ func (m ContextMenu) Render(cx *core.Scope) core.Node {
 				}
 			},
 			Children: []core.Node{m.Trigger}},
-		menuSurface(cx, st, nil, point, menuParts{placement: core.PlaceBottom, align: core.AlignStart,
+		menuSurface(cx, st, nil, point, menuParts{placement: core.PlaceBottom, align: core.AlignStart, onPosition: m.OnPosition,
 			offset: m.Offset, margin: m.Margin, popup: parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
 			backdrop: parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
 			starting: parts.Part{Class: m.StartingClass, Style: m.StartingStyle},

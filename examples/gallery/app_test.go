@@ -1202,3 +1202,57 @@ func TestTerminalPhoneSelect(t *testing.T) {
 		}
 	}
 }
+
+// Each picker's page shows its base form.
+func TestPickerPages(t *testing.T) {
+	for name, title := range map[string]string{"Combobox": "base.Combobox", "DatePicker": "base.DatePicker",
+		"ColorPicker": "base.ColorPicker", "HoverCard": "base.HoverCard", "Command": "base.Command"} {
+		t.Run(name, func(t *testing.T) {
+			app := startDesktop(t)
+			open(app, name)
+			app.Find("id:stage-" + title)
+		})
+	}
+}
+
+// A base form picks in the running gallery: a date, then a color.
+func TestPickersPick(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Select")
+	app.Press("id:stage-base.Select >> role:combobox")
+	app.Press("role:option Apple")
+	app.Find("text:base.Select: apple")
+	open(app, "ColorPicker")
+	app.Press("id:stage-base.ColorPicker >> role:button #ef4444")
+	app.Find("text:base.ColorPicker: #ef4444")
+	open(app, "Command")
+	app.Type("id:stage-base.Command >> label:Command", "sheet")
+	app.Key("enter")
+	app.Find("text:base.Command: sheet")
+}
+
+// ui's forms pick in the running gallery.
+func TestPickerForms(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Select")
+	app.Press("id:stage-Select >> role:combobox")
+	app.Press("role:option Banana")
+	app.Find("text:Select: banana")
+	open(app, "Combobox")
+	app.Press("id:stage-Combobox >> role:button")
+	app.Press("role:option Cherry")
+	app.Find("text:Combobox: [cherry]")
+	open(app, "DatePicker")
+	app.Press("id:stage-Calendar >> label:2026-01-15")
+	app.Find("text:Calendar: 2026-01-15")
+	app.Press("id:stage-DatePicker >> role:combobox")
+	// The calendars of the page show it too; the popup is the last.
+	app.Press("label:2026-01-20 >> nth=2")
+	app.Find("text:DatePicker: 2026-01-20 00:00")
+	open(app, "ColorPicker")
+	app.Press("id:stage-ColorPicker >> label:#22c55e")
+	app.Find("text:ColorPicker: #22c55e")
+	open(app, "Command")
+	app.Press("id:stage-Command >> role:option Sheet")
+	app.Find("text:Command: sheet")
+}

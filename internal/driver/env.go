@@ -36,6 +36,8 @@ type Environment struct {
 	FontScale    float32
 	ReduceMotion bool
 	ScreenReader bool
+	// ScreenColor says ItemPickScreenColor works here.
+	ScreenColor bool
 	// RTL lays the app out right to left.
 	RTL bool
 	// PixelRatio is device pixels per point; 0 means 1.

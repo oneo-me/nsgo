@@ -228,7 +228,7 @@ func (v *view) updateAccessibility() {
 			t = traits["Button"]
 		}
 	case driver.RoleButton, driver.RoleCheckbox, driver.RoleSwitch, driver.RoleRadio, driver.RoleTab, driver.RoleMenuItem,
-		driver.RoleMenuItemCheckbox, driver.RoleMenuItemRadio, driver.RoleOption, driver.RoleTreeItem:
+		driver.RoleMenuItemCheckbox, driver.RoleMenuItemRadio, driver.RoleOption, driver.RoleTreeItem, driver.RoleCombobox:
 		// UIKit has no option or tree item trait: they are activated, and
 		// the chosen one carries Selected.
 		t = traits["Button"]

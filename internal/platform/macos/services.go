@@ -490,3 +490,24 @@ func readPicked(path string) (driver.PickedFile, bool) {
 	}
 	return f, true
 }
+
+// pickScreenColor shows the system's color sampler, answering id.
+func (s *surface) pickScreenColor(id uint32) {
+	sampler := objc.ID(objc.GetClass("NSColorSampler")).Send(sel("alloc")).Send(sel("init"))
+	done := objc.NewBlock(func(_ objc.Block, color objc.ID) {
+		defer sampler.Send(selRelease)
+		if color == 0 {
+			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id})
+			return
+		}
+		srgb := objc.ID(objc.GetClass("NSColorSpace")).Send(sel("sRGBColorSpace"))
+		c := color.Send(sel("colorUsingColorSpace:"), srgb)
+		part := func(name string) uint32 {
+			v := objc.Send[float64](c, sel(name))
+			return uint32(max(min(v, 1), 0)*255 + 0.5)
+		}
+		packed := part("redComponent")<<24 | part("greenComponent")<<16 | part("blueComponent")<<8 | part("alphaComponent")
+		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Finished: true, Data: driver.Color(packed)})
+	})
+	sampler.Send(sel("showSamplerWithSelectionHandler:"), done)
+}

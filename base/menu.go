@@ -40,8 +40,10 @@ type menuContext struct {
 	openSub *core.Signal[int]
 	// next numbers the menu's submenus.
 	next *int
-	// popup is the popup part, for the submenus' popups.
-	popup part
+	// popup is the popup part, for the submenus' popups, with its phases.
+	popup, starting, ending part
+	// open says the popup holding this level is open.
+	open func() bool
 }
 
 // shown reports, tracked, whether a sheet shows this level's items.
@@ -78,6 +80,7 @@ type menuParts struct {
 	// starting and ending are the desktop popup's phases (popupMotion).
 	starting, ending part
 	label, testID    string
+	onPosition       func(core.OverlayPosition)
 }
 
 // menuSurface is a menu while it is open: its popup at anchor, or at
@@ -90,7 +93,7 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 	openSub := core.NewSignal(cx, 0)
 	next := 0
 	ctx := &menuContext{close: func(r Reason) { st.set(false, r) }, sheet: onSheet, path: path, openSub: openSub,
-		next: &next, popup: p.popup}
+		next: &next, popup: p.popup, starting: p.starting, ending: p.ending, open: st.open}
 	dismiss := func(r Reason) { st.cancel(r, false) }
 	// Escape and back leave the innermost submenu of a sheet first.
 	cancel := func() {
@@ -123,8 +126,8 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 		openSub.Set(0)
 		menuKey.Provide(cx, ctx)
 		o := m.overlay(core.Overlay{
-			Anchor: anchor, Placement: p.placement, Align: p.align, Offset: p.offset, Margin: p.margin,
-			Children: items, Role: core.RoleMenu, Label: p.label, TestID: p.testID,
+			Anchor: anchor, AnchorContent: anchor != nil, Placement: p.placement, Align: p.align, Offset: p.offset, Margin: p.margin,
+			Children: items, Role: core.RoleMenu, Label: p.label, TestID: p.testID, OnPosition: p.onPosition,
 			OnPressOutside: func(core.Point) { dismiss(ReasonPressOutside) },
 			OnCancel:       cancel,
 		}, p.popup)
@@ -146,6 +149,8 @@ type Menu struct {
 	OnOpen       func()
 	OnClose      func()
 	OnCancel     func()
+	// OnPosition reports where the popup went on desktops, as Popover's.
+	OnPosition func(core.OverlayPosition)
 
 	// Placement, Align, Offset and Margin place the popup on desktops;
 	// Align lines it up with its trigger, at its start when 0.
@@ -190,12 +195,14 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 	if align == 0 {
 		align = core.AlignStart
 	}
+	around := popupBar(cx)
 	return core.Group{
-		core.View{Ref: anchor, Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, Label: m.Label, TestID: m.TestID, OnLayout: m.OnLayout, Tooltip: m.Tooltip, Role: core.RoleButton,
+		barTrigger(cx, around, core.View{Ref: anchor, Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, Label: m.Label, TestID: m.TestID, OnLayout: m.OnLayout, Tooltip: m.Tooltip, Role: core.RoleButton,
 			Expanded: st.open, ShowsExpanded: true,
-			OnPress:  func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
-			Children: []core.Node{m.Trigger}},
-		menuSurface(cx, st, anchor, nil, menuParts{placement: m.Placement, align: align, offset: m.Offset, margin: m.Margin,
+			OnPress:      func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
+			OnMouseEnter: barMenu(cx, around, st),
+			Children:     []core.Node{m.Trigger}}),
+		menuSurface(cx, st, anchor, nil, menuParts{placement: m.Placement, align: align, offset: m.Offset, margin: m.Margin, onPosition: m.OnPosition,
 			popup:    parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
 			backdrop: parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
 			starting: parts.Part{Class: m.StartingClass, Style: m.StartingStyle},
@@ -204,17 +211,31 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 }
 
 // MenuItem is one choice of a menu: pressing it reports OnSelect and
-// closes the menu. Its look is the app's, with its state styles.
+// closes the menu. Its look is the app's, with its state styles. With
+// Checked it is a checkable item, a setting or by its Role one choice of a
+// group: the value is the app's, and OnSelect is the press.
 type MenuItem struct {
 	OnSelect        func()
 	Disabled        func() bool
 	NoCloseOnSelect bool
-	Class           string
-	Style           core.Style
-	StyleFunc       func() core.Style
-	Children        []core.Node
-	Label           string
-	TestID          string
+	// Checked, when set, makes it a RoleMenuItemCheckbox, or the Role it
+	// gives, reporting what Checked returns.
+	Checked func() bool
+	// Role is what it is for assistive technology, over RoleMenuItem or a
+	// checkable item's RoleMenuItemCheckbox.
+	Role core.Role
+	// Indicator, the app's mark, shows before Children in a part of its
+	// own that takes the item's checked and disabled states, styled by
+	// IndicatorClass and IndicatorStyle, so its Checked style shows it.
+	Indicator      core.Node
+	IndicatorClass string
+	IndicatorStyle core.Style
+	Class          string
+	Style          core.Style
+	StyleFunc      func() core.Style
+	Children       []core.Node
+	Label          string
+	TestID         string
 	// OnLayout and Tooltip are its view's, as a core.View's.
 	OnLayout func(core.Bounds)
 	Tooltip  core.Node
@@ -224,13 +245,26 @@ type MenuItem struct {
 func (i MenuItem) Render(cx *core.Scope) core.Node {
 	menu := menuKey.Use(cx)
 	children := i.Children
+	if i.Indicator != nil {
+		states := func() core.PartStates { return core.PartStates{Checked: is(i.Checked), Disabled: is(i.Disabled)} }
+		children = append([]core.Node{core.View{Class: i.IndicatorClass, Style: i.IndicatorStyle, PartStates: states,
+			NoFocus: true, Children: []core.Node{i.Indicator}}}, children...)
+	}
 	if menu != nil && menu.sheet {
 		// Only the items of the level shown are there, for screen readers
 		// and tests too.
-		children = []core.Node{core.Show{When: menu.shown, Then: func(*core.Scope) core.Node { return core.Group(i.Children) }}}
+		shown := children
+		children = []core.Node{core.Show{When: menu.shown, Then: func(*core.Scope) core.Node { return core.Group(shown) }}}
+	}
+	role := i.Role
+	if role == 0 {
+		role = core.RoleMenuItem
+		if i.Checked != nil {
+			role = core.RoleMenuItemCheckbox
+		}
 	}
 	return core.View{Class: i.Class, Style: i.Style, StyleFunc: merged(i.StyleFunc, menu.hiddenUnlessShown()),
-		Role: core.RoleMenuItem, Label: i.Label, TestID: i.TestID, OnLayout: i.OnLayout, Tooltip: i.Tooltip, Disabled: i.Disabled, Children: children,
+		Role: role, Label: i.Label, TestID: i.TestID, OnLayout: i.OnLayout, Tooltip: i.Tooltip, Disabled: i.Disabled, Checked: i.Checked, Children: children,
 		// Over another item, a submenu of its level closes.
 		OnMouseEnter: func(core.MouseEvent) {
 			if menu != nil && !menu.sheet {

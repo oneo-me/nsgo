@@ -69,11 +69,11 @@ func init() {
 		}, "children?: JSX.Element | readonly JSX.Element[]"))...)
 	Register("nsgo/base", map[string]core.Node{"Pagination": base.Pagination{}}, options(Event("OnChange", "page"))...)
 	Register("nsgo/base", map[string]core.Node{"Slider": base.Slider{}}, options(
-		custom("Value", func(p *props, v reflect.Value) {
+		typed("Value", custom("Value", func(p *props, v reflect.Value) {
 			if p.has("value") {
 				v.Set(reflect.ValueOf(func() base.SliderValue { return sliderValue(p.r, p.get("value")) }))
 			}
-		}, "value?: SliderValue"),
+		}, "value?: SliderValue"), reflect.TypeFor[base.SliderValue]()),
 		custom("DefaultValue", func(p *props, v reflect.Value) {
 			v.Set(reflect.ValueOf(sliderValue(p.r, p.get("defaultValue"))))
 		}, "defaultValue?: SliderValue"),

@@ -17,6 +17,7 @@ type Env struct {
 	keyboard             *Signal[Points]
 	keyboardDuration     *Signal[time.Duration]
 	dark, reduce, reader *Signal[bool]
+	screenColor          *Signal[bool]
 	fontScale, ratio     *Signal[float32]
 	// locale and systemRTL are the platform's or the host's; forced is
 	// the locale Scope.SetLocale forces.
@@ -53,6 +54,7 @@ func newEnv(cx *Scope, app *Env) *Env {
 		reduce:           NewSignal(cx, false),
 		systemRTL:        NewSignal(cx, false),
 		reader:           NewSignal(cx, false),
+		screenColor:      NewSignal(cx, false),
 		fontScale:        NewSignal(cx, float32(1)),
 		ratio:            NewSignal(cx, float32(1)),
 		locale:           NewSignal(cx, ""),
@@ -132,6 +134,7 @@ func (e *Env) set(v Environment) {
 	e.reduce.Set(v.ReduceMotion)
 	e.systemRTL.Set(v.RTL)
 	e.reader.Set(v.ScreenReader)
+	e.screenColor.Set(v.ScreenColor)
 	e.fontScale.Set(v.FontScale)
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
@@ -199,6 +202,10 @@ func (e *Env) ReduceMotion() bool { return e.reduce.Get() }
 
 // ScreenReader reports whether a screen reader is running.
 func (e *Env) ScreenReader() bool { return e.reader.Get() }
+
+// CanPickScreenColor reports whether Scope.PickScreenColor works here:
+// macOS and browsers with an EyeDropper.
+func (e *Env) CanPickScreenColor() bool { return e.screenColor.Get() }
 
 // RTL reports whether the app lays out right to left: as the language it
 // shows is written (Language), else the locale it forces, else as the

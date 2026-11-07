@@ -42,7 +42,7 @@ func axisStyle(a Axis, s core.Style) core.Style {
 func (t Toolbar) Render(cx *core.Scope) core.Node {
 	group := newRoving(cx, true)
 	group.toolbar, group.axis, group.hasAxis = true, t.Axis, true
-	barKey.Provide(cx, &bar{roving: group, disabled: t.Disabled, axis: t.Axis, toolbar: true})
+	barKey.Provide(cx, &bar{roving: group, disabled: t.Disabled, axis: t.Axis, toolbar: true, menu: new(*popup)})
 	return core.View{Class: t.Class, Style: axisStyle(t.Axis, t.Style), StyleFunc: t.StyleFunc, Role: core.RoleToolbar, Label: t.Label, TestID: t.TestID, OnLayout: t.OnLayout, Tooltip: t.Tooltip,
 		Children: append(slices.Clip(t.Children), group.keys())}
 }

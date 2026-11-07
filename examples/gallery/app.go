@@ -94,7 +94,10 @@ func init() {
 		{"Checkbox", m.DemoCheckbox, m.DemoCheckboxDetail, lucide.SquareCheck, eventsDemo(checkboxCard, baseCheckboxCard)},
 		{"Radio", m.DemoRadio, m.DemoRadioDetail, lucide.CircleDot, eventsDemo(radioCard, baseRadioCard)},
 		{"Switch", m.DemoSwitch, m.DemoSwitchDetail, lucide.ToggleRight, eventsDemo(switchCard, baseSwitchCard)},
-		{"Select", m.DemoSelect, m.DemoSelectDetail, lucide.ChevronsUpDown, eventsDemo(selectPlayground)},
+		{"Select", m.DemoSelect, m.DemoSelectDetail, lucide.ChevronsUpDown, eventsDemo(selectPlayground, baseSelectCard)},
+		{"Combobox", m.DemoCombobox, m.DemoComboboxDetail, lucide.ChevronsUpDown, eventsDemo(comboboxPlayground, baseComboboxCard)},
+		{"DatePicker", m.DemoDatePicker, m.DemoDatePickerDetail, lucide.Calendar, eventsDemo(datePickerPlayground, calendarPlayground, timeFieldPlayground, baseDatePickerCard, baseCalendarCard, baseTimeFieldCard)},
+		{"ColorPicker", m.DemoColorPicker, m.DemoColorPickerDetail, lucide.Palette, eventsDemo(colorPickerPlayground, colorWellPlayground, baseColorPickerCard)},
 		{"Slider", m.DemoSlider, m.DemoSliderDetail, lucide.SlidersHorizontal, eventsDemo(sliderPlayground, baseSliderCard)},
 		{"Rating", m.DemoRating, m.DemoRatingDetail, lucide.Star, eventsDemo(ratingCard, baseRatingCard)},
 	}
@@ -133,6 +136,8 @@ func init() {
 		{"Sheet", m.DemoSheet, m.DemoSheetDetail, lucide.PanelBottom, eventsDemo(sheetCard, baseSheetCard)},
 		{"Popover", m.DemoPopover, m.DemoPopoverDetail, lucide.MessageSquare, eventsDemo(popoverPlayground, basePopoverCard)},
 		{"Tooltip", m.DemoTooltip, m.DemoTooltipDetail, lucide.Info, eventsDemo(tooltipPlayground, baseTooltipCard)},
+		{"HoverCard", m.DemoHoverCard, m.DemoHoverCardDetail, lucide.MessageSquare, eventsDemo(hoverCardPlayground, baseHoverCardCard)},
+		{"Command", m.DemoCommand, m.DemoCommandDetail, lucide.Search, eventsDemo(commandPlayground, baseCommandCard)},
 		{"Menu", m.DemoMenu, m.DemoMenuDetail, lucide.Menu, menusDemo},
 	}
 	navigation := []demo{

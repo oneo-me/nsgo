@@ -252,3 +252,17 @@ func (s *surface) announce(text string) {
 	msg.Set("textContent", text)
 	s.live.Call("replaceChildren", msg)
 }
+
+// pickScreenColor opens the browser's EyeDropper, answering id.
+func (s *surface) pickScreenColor(id uint32) {
+	answer := func(data any, finished bool) {
+		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Finished: finished, Data: data})
+	}
+	then(js.Global().Get("EyeDropper").New().Call("open"), func(result js.Value) {
+		if c, err := driver.ParseColor(result.Get("sRGBHex").String()); err == nil {
+			answer(c, true)
+			return
+		}
+		answer(nil, false)
+	}, func(js.Value) { answer(nil, false) })
+}

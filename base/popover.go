@@ -17,6 +17,9 @@ type Popover struct {
 	OnClose      func()
 	// OnCancel hears every attempt to close it, allowed or not.
 	OnCancel func()
+	// OnPosition reports where the popup went: the other side of Placement
+	// when only that one had room, its frame and the room on that side.
+	OnPosition func(core.OverlayPosition)
 
 	Placement             core.Placement
 	Align                 core.Align
@@ -55,15 +58,16 @@ func (p Popover) Render(cx *core.Scope) core.Node {
 	st.lifecycle(cx, m.shown.Get)
 	anchor := new(core.Ref)
 	outside := func() { st.cancel(ReasonPressOutside, p.NoCloseOnPressOutside) }
+	around := popupBar(cx)
 	return core.Group{
-		core.View{Ref: anchor, Class: p.Class, Style: p.Style, StyleFunc: p.StyleFunc, Label: p.Label, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip, Role: core.RoleButton,
+		barTrigger(cx, around, core.View{Ref: anchor, Class: p.Class, Style: p.Style, StyleFunc: p.StyleFunc, Label: p.Label, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip, Role: core.RoleButton,
 			Expanded: st.open, ShowsExpanded: true,
 			OnPress:  func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
-			Children: []core.Node{p.Trigger}},
+			Children: []core.Node{p.Trigger}}),
 		core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 			popup := m.overlay(core.Overlay{
-				Anchor: anchor, Placement: p.Placement, Align: p.Align, Offset: p.Offset, Margin: p.Margin,
-				Children: p.Children, Role: core.RoleDialog,
+				Anchor: anchor, AnchorContent: true, Placement: p.Placement, Align: p.Align, Offset: p.Offset, Margin: p.Margin,
+				Children: p.Children, Role: core.RoleDialog, OnPosition: p.OnPosition,
 				OnCancel: func() { st.cancel(ReasonCancel, p.NoCloseOnEscape) },
 			}, parts.Of(p.PopupClass, p.PopupStyle, p.PopupStyleFunc))
 			if core.Untracked(cx, cx.Env().Desktop) {

@@ -108,6 +108,7 @@ const (
 	ctRadioButton = 50013
 	ctSlider      = 50015
 	ctSpinner     = 50016
+	ctComboBox    = 50003
 	ctToolBar     = 50021
 	ctTab         = 50018
 	ctTabItem     = 50019
@@ -322,7 +323,7 @@ var uiaControls = [...]int32{
 	driver.RoleCheckbox: ctCheckBox, driver.RoleSwitch: ctButton, driver.RoleRadio: ctRadioButton, driver.RoleTab: ctTabItem,
 	driver.RoleText: ctText, driver.RoleTextField: ctEdit, driver.RoleRadioGroup: ctGroup, driver.RoleTabList: ctTab,
 	driver.RoleMenu: ctMenu, driver.RoleMenuItem: ctMenuItem, driver.RoleDialog: ctWindow, driver.RoleAlert: ctText,
-	driver.RoleAdjustable: ctSlider, driver.RoleSpinButton: ctSpinner, driver.RoleProgressBar: ctProgressBar, driver.RoleTable: ctTable,
+	driver.RoleAdjustable: ctSlider, driver.RoleSpinButton: ctSpinner, driver.RoleCombobox: ctComboBox, driver.RoleProgressBar: ctProgressBar, driver.RoleTable: ctTable,
 	driver.RoleGrid: ctDataGrid, driver.RoleRowGroup: ctGroup, driver.RoleRow: ctDataItem,
 	driver.RoleColumnHeader: ctHeaderItem, driver.RoleCell: ctText, driver.RoleListbox: ctList,
 	driver.RoleOption: ctListItem, driver.RoleGroup: ctGroup, driver.RoleRegion: ctGroup,

@@ -10,6 +10,7 @@ import (
 	desktoplocales "github.com/oneo-me/nsgo/desktop/locales"
 	"github.com/oneo-me/nsgo/i18n"
 	"strings"
+	"time"
 )
 
 // Source is the language the messages are written in.
@@ -26,6 +27,45 @@ func init() {
 // The messages this package supplies to others.
 func init() {
 	baselocales.Supply("ar", baselocales.Translation{
+		ColorHue: func() string {
+			return "تدرج اللون"
+		},
+		ColorAlpha: func() string {
+			return "العتامة"
+		},
+		ColorSaturationBrightness: func() string {
+			return "التشبع والسطوع"
+		},
+		ColorHex: func() string {
+			return "لون سداسي عشري"
+		},
+		ColorEyeDropper: func() string {
+			return "اختر لونًا من الشاشة"
+		},
+		CalendarPrevious: func() string {
+			return "الشهر السابق"
+		},
+		CalendarNext: func() string {
+			return "الشهر التالي"
+		},
+		ListClear: func() string {
+			return "مسح"
+		},
+		ListNothingFound: func() string {
+			return "لا توجد نتائج"
+		},
+		ListSearch: func() string {
+			return "بحث"
+		},
+		CalendarMonth: func(d time.Time) string {
+			return i18n.FormatDate("ar", d, i18n.DateOptions{Skeleton: "yMMMM"})
+		},
+		CalendarMonthName: func(d time.Time) string {
+			return i18n.FormatDate("ar", d, i18n.DateOptions{Skeleton: "MMM"})
+		},
+		CalendarWeekday: func(d time.Time) string {
+			return i18n.FormatDate("ar", d, i18n.DateOptions{Skeleton: "EEEEE"})
+		},
 		SortBy: func(column string) string {
 			return "الفرز حسب " + column
 		},
@@ -2276,6 +2316,20 @@ type Translation struct {
 	GroupData                                    func() string
 	GroupContainers                              func() string
 	GroupDocuments                               func() string
+	DemoCombobox                                 func() string
+	DemoComboboxDetail                           func() string
+	DemoCommand                                  func() string
+	DemoCommandDetail                            func() string
+	DemoHoverCard                                func() string
+	DemoHoverCardDetail                          func() string
+	DemoDatePicker                               func() string
+	DemoDatePickerDetail                         func() string
+	DemoColorPicker                              func() string
+	DemoColorPickerDetail                        func() string
+	PickerFindCommand                            func() string
+	PickerNothingFound                           func() string
+	PickerPickDate                               func() string
+	PickerTime                                   func() string
 }
 
 var supplied = map[string]Translation{}
@@ -4173,6 +4227,20 @@ const (
 	textGroupData
 	textGroupContainers
 	textGroupDocuments
+	textDemoCombobox
+	textDemoComboboxDetail
+	textDemoCommand
+	textDemoCommandDetail
+	textDemoHoverCard
+	textDemoHoverCardDetail
+	textDemoDatePicker
+	textDemoDatePickerDetail
+	textDemoColorPicker
+	textDemoColorPickerDetail
+	textPickerFindCommand
+	textPickerNothingFound
+	textPickerPickDate
+	textPickerTime
 	numTexts
 )
 
@@ -6071,6 +6139,20 @@ var texts = map[string]*[numTexts]string{
 		"Data",
 		"Containers",
 		"Text and code",
+		"Combobox",
+		"A field that filters a list and picks from it",
+		"Command",
+		"A palette of commands to search and run",
+		"HoverCard",
+		"A preview of what the pointer rests on",
+		"DatePicker",
+		"Dates, ranges and times from a calendar",
+		"ColorPicker",
+		"A color by area, channels, text and swatches",
+		"Find a command",
+		"Nothing found",
+		"Pick a date",
+		"Time",
 	},
 	"ar": {
 		"المعرض",
@@ -7964,6 +8046,20 @@ var texts = map[string]*[numTexts]string{
 		"البيانات",
 		"الحاويات",
 		"النصوص والرموز",
+		"مربع تحرير وسرد",
+		"حقل يصفّي قائمة ويختار منها",
+		"لوحة الأوامر",
+		"ابحث عن الأوامر وشغّلها",
+		"بطاقة التمرير",
+		"معاينة لما يستقر عليه المؤشر",
+		"منتقي التاريخ",
+		"التواريخ والنطاقات والأوقات من تقويم",
+		"منتقي الألوان",
+		"لون عبر المساحة والقنوات والنص والعينات",
+		"ابحث عن أمر",
+		"لا توجد نتائج",
+		"اختر تاريخًا",
+		"الوقت",
 	},
 	"zh-Hans": {
 		"画廊",
@@ -9857,6 +9953,20 @@ var texts = map[string]*[numTexts]string{
 		"数据",
 		"容器",
 		"文本与代码",
+		"组合框",
+		"输入筛选列表并从中选择",
+		"命令面板",
+		"搜索并运行命令",
+		"悬停卡片",
+		"预览指针停留的内容",
+		"日期选择器",
+		"从日历选择日期、范围和时间",
+		"颜色选择器",
+		"用色域、通道、文本和色板选色",
+		"查找命令",
+		"未找到结果",
+		"选择日期",
+		"时间",
 	},
 	"zh-Hant": {
 		"畫廊",
@@ -11750,6 +11860,20 @@ var texts = map[string]*[numTexts]string{
 		"資料",
 		"容器",
 		"文字與程式碼",
+		"組合框",
+		"輸入篩選清單並從中選擇",
+		"命令面板",
+		"搜尋並執行命令",
+		"懸停卡片",
+		"預覽指標停留的內容",
+		"日期選擇器",
+		"從日曆選擇日期、範圍和時間",
+		"顏色選擇器",
+		"用色域、通道、文字和色票選色",
+		"尋找命令",
+		"找不到結果",
+		"選擇日期",
+		"時間",
 	},
 }
 
@@ -17776,6 +17900,48 @@ func Supply(lang string, t Translation) {
 	}
 	if t.GroupDocuments != nil {
 		st[textGroupDocuments] = t.GroupDocuments()
+	}
+	if t.DemoCombobox != nil {
+		st[textDemoCombobox] = t.DemoCombobox()
+	}
+	if t.DemoComboboxDetail != nil {
+		st[textDemoComboboxDetail] = t.DemoComboboxDetail()
+	}
+	if t.DemoCommand != nil {
+		st[textDemoCommand] = t.DemoCommand()
+	}
+	if t.DemoCommandDetail != nil {
+		st[textDemoCommandDetail] = t.DemoCommandDetail()
+	}
+	if t.DemoHoverCard != nil {
+		st[textDemoHoverCard] = t.DemoHoverCard()
+	}
+	if t.DemoHoverCardDetail != nil {
+		st[textDemoHoverCardDetail] = t.DemoHoverCardDetail()
+	}
+	if t.DemoDatePicker != nil {
+		st[textDemoDatePicker] = t.DemoDatePicker()
+	}
+	if t.DemoDatePickerDetail != nil {
+		st[textDemoDatePickerDetail] = t.DemoDatePickerDetail()
+	}
+	if t.DemoColorPicker != nil {
+		st[textDemoColorPicker] = t.DemoColorPicker()
+	}
+	if t.DemoColorPickerDetail != nil {
+		st[textDemoColorPickerDetail] = t.DemoColorPickerDetail()
+	}
+	if t.PickerFindCommand != nil {
+		st[textPickerFindCommand] = t.PickerFindCommand()
+	}
+	if t.PickerNothingFound != nil {
+		st[textPickerNothingFound] = t.PickerNothingFound()
+	}
+	if t.PickerPickDate != nil {
+		st[textPickerPickDate] = t.PickerPickDate()
+	}
+	if t.PickerTime != nil {
+		st[textPickerTime] = t.PickerTime()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -36970,3 +37136,115 @@ func GroupDocuments(cx *core.Scope) string { return For(cx).GroupDocuments() }
 // GroupDocuments says "Text and code"
 // in the language of msgs.
 func (msgs Messages) GroupDocuments() string { return msgs.text(textGroupDocuments) }
+
+// DemoCombobox says "Combobox"
+// in the language the app shows under cx.
+func DemoCombobox(cx *core.Scope) string { return For(cx).DemoCombobox() }
+
+// DemoCombobox says "Combobox"
+// in the language of msgs.
+func (msgs Messages) DemoCombobox() string { return msgs.text(textDemoCombobox) }
+
+// DemoComboboxDetail says "A field that filters a list and picks from it"
+// in the language the app shows under cx.
+func DemoComboboxDetail(cx *core.Scope) string { return For(cx).DemoComboboxDetail() }
+
+// DemoComboboxDetail says "A field that filters a list and picks from it"
+// in the language of msgs.
+func (msgs Messages) DemoComboboxDetail() string { return msgs.text(textDemoComboboxDetail) }
+
+// DemoCommand says "Command"
+// in the language the app shows under cx.
+func DemoCommand(cx *core.Scope) string { return For(cx).DemoCommand() }
+
+// DemoCommand says "Command"
+// in the language of msgs.
+func (msgs Messages) DemoCommand() string { return msgs.text(textDemoCommand) }
+
+// DemoCommandDetail says "A palette of commands to search and run"
+// in the language the app shows under cx.
+func DemoCommandDetail(cx *core.Scope) string { return For(cx).DemoCommandDetail() }
+
+// DemoCommandDetail says "A palette of commands to search and run"
+// in the language of msgs.
+func (msgs Messages) DemoCommandDetail() string { return msgs.text(textDemoCommandDetail) }
+
+// DemoHoverCard says "HoverCard"
+// in the language the app shows under cx.
+func DemoHoverCard(cx *core.Scope) string { return For(cx).DemoHoverCard() }
+
+// DemoHoverCard says "HoverCard"
+// in the language of msgs.
+func (msgs Messages) DemoHoverCard() string { return msgs.text(textDemoHoverCard) }
+
+// DemoHoverCardDetail says "A preview of what the pointer rests on"
+// in the language the app shows under cx.
+func DemoHoverCardDetail(cx *core.Scope) string { return For(cx).DemoHoverCardDetail() }
+
+// DemoHoverCardDetail says "A preview of what the pointer rests on"
+// in the language of msgs.
+func (msgs Messages) DemoHoverCardDetail() string { return msgs.text(textDemoHoverCardDetail) }
+
+// DemoDatePicker says "DatePicker"
+// in the language the app shows under cx.
+func DemoDatePicker(cx *core.Scope) string { return For(cx).DemoDatePicker() }
+
+// DemoDatePicker says "DatePicker"
+// in the language of msgs.
+func (msgs Messages) DemoDatePicker() string { return msgs.text(textDemoDatePicker) }
+
+// DemoDatePickerDetail says "Dates, ranges and times from a calendar"
+// in the language the app shows under cx.
+func DemoDatePickerDetail(cx *core.Scope) string { return For(cx).DemoDatePickerDetail() }
+
+// DemoDatePickerDetail says "Dates, ranges and times from a calendar"
+// in the language of msgs.
+func (msgs Messages) DemoDatePickerDetail() string { return msgs.text(textDemoDatePickerDetail) }
+
+// DemoColorPicker says "ColorPicker"
+// in the language the app shows under cx.
+func DemoColorPicker(cx *core.Scope) string { return For(cx).DemoColorPicker() }
+
+// DemoColorPicker says "ColorPicker"
+// in the language of msgs.
+func (msgs Messages) DemoColorPicker() string { return msgs.text(textDemoColorPicker) }
+
+// DemoColorPickerDetail says "A color by area, channels, text and swatches"
+// in the language the app shows under cx.
+func DemoColorPickerDetail(cx *core.Scope) string { return For(cx).DemoColorPickerDetail() }
+
+// DemoColorPickerDetail says "A color by area, channels, text and swatches"
+// in the language of msgs.
+func (msgs Messages) DemoColorPickerDetail() string { return msgs.text(textDemoColorPickerDetail) }
+
+// PickerFindCommand says "Find a command"
+// in the language the app shows under cx.
+func PickerFindCommand(cx *core.Scope) string { return For(cx).PickerFindCommand() }
+
+// PickerFindCommand says "Find a command"
+// in the language of msgs.
+func (msgs Messages) PickerFindCommand() string { return msgs.text(textPickerFindCommand) }
+
+// PickerNothingFound says "Nothing found"
+// in the language the app shows under cx.
+func PickerNothingFound(cx *core.Scope) string { return For(cx).PickerNothingFound() }
+
+// PickerNothingFound says "Nothing found"
+// in the language of msgs.
+func (msgs Messages) PickerNothingFound() string { return msgs.text(textPickerNothingFound) }
+
+// PickerPickDate says "Pick a date"
+// in the language the app shows under cx.
+func PickerPickDate(cx *core.Scope) string { return For(cx).PickerPickDate() }
+
+// PickerPickDate says "Pick a date"
+// in the language of msgs.
+func (msgs Messages) PickerPickDate() string { return msgs.text(textPickerPickDate) }
+
+// PickerTime says "Time"
+// in the language the app shows under cx.
+func PickerTime(cx *core.Scope) string { return For(cx).PickerTime() }
+
+// PickerTime says "Time"
+// in the language of msgs.
+func (msgs Messages) PickerTime() string { return msgs.text(textPickerTime) }

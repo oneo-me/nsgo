@@ -1577,7 +1577,7 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 	n.h = handlers{change: v.OnChange, submit: v.OnSubmit, focus: v.OnFocus, blur: v.OnBlur, layout: v.OnLayout}
 	n.props = driver.ViewProps{Role: cmpOr(v.Role, RoleTextField), Label: v.Label, TestID: v.TestID}
 	n.h.action = v.OnAccessibilityAction
-	t.bindAccessibility(cx, n, a11y{value: v.AccessibilityValue, actions: v.AccessibilityActions})
+	t.bindAccessibility(cx, n, a11y{value: v.AccessibilityValue, actions: v.AccessibilityActions, expanded: v.Expanded})
 	t.setRef(n, v.Ref)
 	in := &inputNode{valueFn: v.Value, value: v.DefaultValue, autoFocus: v.AutoFocus, accessory: v.InputAccessoryViewID,
 		selection: v.OnSelectionChange, keyPress: v.OnKeyPress, composition: v.OnCompositionChange,
@@ -1643,7 +1643,8 @@ func (t *Tree) mountScroll(cx *Scope, parent *node, v Scroll) {
 	if on := v.OnScroll; on != nil {
 		n.h.scroll = func(p Point) { on(n.scrollEvent(p)) }
 	}
-	n.props = driver.ViewProps{TestID: v.TestID}
+	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, TestID: v.TestID}
+	t.bindBool(cx, n, v.Busy, &n.props.Busy)
 	t.setRef(n, v.Ref)
 	n.scroll = &scrollNode{config: driver.ScrollConfig{Horizontal: v.Horizontal, HideIndicator: v.HideIndicator}, effects: v.EdgeEffects,
 		ownBar: v.Bar, hideIndicator: v.HideIndicator}

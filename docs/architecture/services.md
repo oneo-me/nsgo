@@ -68,6 +68,7 @@ Windows checks the registry first because the shell asks the user for an app for
 
 - A picked `File` is on disk: the user's own on desktops, a copy in the app's storage on iOS and Android (`Temporary`) that the app deletes. The web has no disk, so `File.Open` reads the file's `Blob` a slice at a time. `FinishFiles` fills names, sizes, modification times and types.
 - `SaveFile` copies the file at `SaveOptions.Path`, or `Data` where it names none. Desktops write through a temporary file beside the destination (`SaveRequest.SaveTo`), so a write that fails leaves nothing where the user chose. iOS and Android save only files on disk, so `Data` and a name other than the file's are staged in a directory that is removed once the dialog answers (`SaveRequest.Stage`).
+- `PickScreenColor` lets the user pick a color anywhere on the screen, with `NSColorSampler` on macOS and the browser's `EyeDropper`, where `Env.CanPickScreenColor` says so.
 - `PickDirectories` picks folders apart from files, so a caller that wants files gets no folders to filter out. A `Directory` is the user's folder on disk, with its name and path.
 - `done` tells a cancel from a failure: no files or folders, or `saved == false`, with a nil error, against the error the platform reported.
 

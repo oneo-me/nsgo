@@ -395,6 +395,21 @@ func (cx *Scope) PickFiles(o PickFilesOptions, done func(files []File, err error
 	})
 }
 
+// PickScreenColor lets the user pick a color anywhere on the screen and
+// calls done with it, or with false when they cancel or the platform has
+// no way to (Env.CanPickScreenColor). base.ColorEyeDropper is its button.
+func (cx *Scope) PickScreenColor(done func(c Color, ok bool)) {
+	t := cx.tree()
+	if t == nil || !Untracked(cx, cx.Env().CanPickScreenColor) {
+		done(0, false)
+		return
+	}
+	t.request(cx, driver.MountItem{Kind: driver.ItemPickScreenColor}, func(ev driver.Event) {
+		c, ok := ev.Data.(Color)
+		done(c, ok && ev.Finished)
+	})
+}
+
 // PickDirectoriesOptions say how PickDirectories picks folders.
 type PickDirectoriesOptions struct {
 	// Multiple lets the user pick several folders, at most Limit (0: up

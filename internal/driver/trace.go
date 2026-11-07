@@ -38,7 +38,7 @@ var itemNames = map[ItemKind]string{
 	ItemBlockNative: "block-native", ItemShader: "shader", ItemSetClipboardImage: "set-clipboard-image",
 	ItemOpenURL: "open-url", ItemPickImages: "pick-images",
 	ItemAppearance: "appearance", ItemPopupMenu: "popup-menu", ItemQuit: "quit", ItemBackPreview: "back-preview", ItemHistory: "history",
-	ItemPickFiles: "pick-files", ItemSaveFile: "save-file", ItemDirection: "direction", ItemPickDirectories: "pick-directories",
+	ItemPickFiles: "pick-files", ItemSaveFile: "save-file", ItemDirection: "direction", ItemPickDirectories: "pick-directories", ItemPickScreenColor: "pick-screen-color",
 	ItemOpenFile: "open-file", ItemShare: "share", ItemInstallPackage: "install-package",
 	ItemCanInstallPackages: "can-install-packages", ItemInstallSettings: "install-settings",
 	ItemOpenSurface: "open-surface", ItemTray: "tray", ItemTrayMenu: "tray-menu", ItemHotKeys: "hot-keys",

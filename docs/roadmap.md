@@ -6,17 +6,7 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## NSH's apps on NSGo
 
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-07, 114 of the 162 compat cases that run, all 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
-
-## Components of 0.4.0: popups
-
-On `base`'s popups ([components](architecture/components.md)). Done when `base-select`, `base-combobox`, `base-command`, `base-hover-card`, `base-date-picker`, `base-color-picker`, `base-menu-checked`, `base-popups`, `base-dialog` and `base-dialog-backdrop` pass, with the `browser/*-desktop` ones once the gallery's [open question](../ARCHITECTURE.md#open-questions) is answered.
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Pickers | `components.md` (Popups), `select.rs`, `combobox.rs`, `date_picker.rs`, `calendar.rs`, `time_field.rs`, `color_picker` | `Select`, `Combobox` (one value or several, typed into its trigger), `DatePicker`, `Calendar` and `TimeField`, picked in one tap on phones, and `ColorPicker` (area, channel sliders, fields, swatches, mirrored right to left) |
-| Palettes and cards | `components.md` (Popups), `command.rs`, `hover_card.rs` | `Command`'s palette filtering natively and `HoverCard`, open while the pointer rests or the focus is in it |
-| Menus and dialogs | `components.md` (Popups), `menu.rs` | Menu items checked with the app's mark, the triggers of `Menu`s and `Popover`s among a `Toolbar`'s items, a menu bar whose menus open on hover, popups and dialogs that report an open change, with its reason, before they open or close |
+NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-07, 129 of the 162 compat cases that run, all 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The browser domain's one case importing `process` runs as a stub, so its others do. The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
 
 ## Components of 0.4.0: plots
 
@@ -128,7 +118,7 @@ These items wait for community contributions, and a change to one backend record
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |
+| Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `combobox`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |
 | Font lists on Windows | `text.md` | A character the first family of a `fontFamily` list lacks comes from the next that has it through an `IDWriteFontFallback`, rather than from the system's fallback, as elsewhere |
 | Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows work there |
 | The mouse on Android | `api-naming.md` (`onMouseEnter`) | `NsgoView` reports the mouse's enter and leave with where it is, its moves with the keys and the button held, and a move with a button down, which needs `classes.dex` rebuilt |
@@ -141,6 +131,7 @@ These items wait for community contributions, and a change to one backend record
 | Levels and spin buttons | `elements.md` | `View.AccessibilityLevel` reaches the screen readers of macOS, iOS, Windows, Linux and Android as it does the web's `aria-level`, a `NumberInput`'s `RoleSpinButton` holds on the native text fields of iOS and Android, which take the role from their kind, and Android's `NsgoView` knows the role, with `classes.dex` rebuilt |
 | Bars in multiline inputs | `components.md` (Scroll bars) | A multiline `Input` reports its text's offset and takes `ScrollTo` on every backend, so `scrollbar={theme}` draws a `Scrollbar` over its text; `base-scrollbar`'s last step leaves `compatDepartures` |
 | Modal reports | `elements.md` (`<Dialog>`) | Every backend reports a modal shown once it is presented and gone once it is dismissed (`EventModalShown`, `EventModalDismissed`), and the insets a screen keeps clear of (`EventScreenInsets`), so `Dialog`'s `OnOpen` and `OnClose` follow the platform instead of the animation's timer |
+| Eyedroppers on the other desktops | `components.md` (`ColorEyeDropper`) | `Scope.PickScreenColor` works on Windows and Linux, where `ColorEyeDropper` is disabled, as NSH's is, or stays disabled by decision |
 | Real file drags | `file-drop.md` | A real drag from Finder and from a Linux file manager is checked to reach a view, as one from Explorer is |
 | Long presses on Android spans | `text.md` (nested texts) | A long press on a text's span reaches the span's `OnLongPress` on Android, as it does on the other backends: the runtime's Java reports the character under it, which needs `classes.dex` rebuilt |
 | Ink past a text's box | `styles.md` (text) | A text's decoration lines and shadow that reach past its box are checked to draw on Android, Windows and Linux, as they do on Apple and the web |

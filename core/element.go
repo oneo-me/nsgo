@@ -435,7 +435,9 @@ type Input struct {
 	AccessibilityValue    func() AccessibilityValue
 	AccessibilityActions  []AccessibilityAction
 	OnAccessibilityAction func(name string)
-	TestID                string
+	// Expanded is a View's, for a field that opens a list.
+	Expanded func() bool
+	TestID   string
 }
 
 // Render implements Node.
@@ -511,7 +513,12 @@ type Scroll struct {
 	OffsetValues AnimatedXY
 	OnLayout     func(Bounds)
 	Ref          *Ref
-	TestID       string
+	// Role and Label are what it is for assistive technology, as a list
+	// box's, and Busy says it is still loading.
+	Role   Role
+	Label  string
+	Busy   func() bool
+	TestID string
 }
 
 // Render implements Node.
@@ -548,6 +555,15 @@ func (r *Ref) Measure(done func(frame, page Bounds, ok bool)) {
 		done(frame, page, ok)
 	})
 	r.t.changed = true
+}
+
+// ContentBounds is the box around what the view holds, in the surface,
+// its own frame while it holds nothing, and false while it is not mounted.
+func (r *Ref) ContentBounds() (Bounds, bool) {
+	if r == nil || r.n == nil || r.n.deleted {
+		return Bounds{}, false
+	}
+	return r.t.contentBounds(r.n), true
 }
 
 // Frame returns the element's frame in its parent after the last commit,
@@ -713,6 +729,10 @@ func Src(uri string) ImageSource { return ImageSource{URI: uri} }
 // itself; the app removes it.
 type Overlay struct {
 	Anchor *Ref
+	// AnchorContent places it against the box around what Anchor holds
+	// rather than Anchor's own: a popup's trigger, a view its column
+	// stretches around the app's element.
+	AnchorContent bool
 	// AnchorBounds, when set and Anchor is not, places the overlay beside
 	// the bounds it returns in the surface, again when they change: an
 	// input's caret (CaretEvent.PageBounds), or a point.
@@ -723,6 +743,15 @@ type Overlay struct {
 	// Offset is the gap to the anchor; Margin keeps the overlay off the
 	// edges of its host.
 	Offset, Margin Points
+	// Cover, while CoverShown holds, names a view inside the overlay to
+	// lay over the anchor, a select's selected row over its trigger: the
+	// overlay starts where the anchor does, the view centered on it, then
+	// moves to stay in its host. Its frame in the overlay is kept while
+	// the overlay keeps its size and the view its place in its parent, so
+	// the overlay stays put while its rows scroll. Without the view it
+	// goes on its side as usual.
+	Cover      *Ref
+	CoverShown func() bool
 	// Class is Tailwind CSS classes, as View's.
 	Class     string
 	ClassFunc func() string
@@ -739,6 +768,8 @@ type Overlay struct {
 	// OnCancel receives Escape or back while it is the topmost overlay
 	// that listens.
 	OnCancel func()
+	// OnMouseEnter and OnMouseLeave are View's.
+	OnMouseEnter, OnMouseLeave func(MouseEvent)
 	// OnPosition reports where an anchored overlay went, again when it
 	// moves or its room changes.
 	OnPosition func(OverlayPosition)

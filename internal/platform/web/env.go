@@ -120,6 +120,7 @@ func (s *surface) environment() driver.Environment {
 		return driver.Points(f)
 	}
 	env := driver.Environment{
+		ScreenColor: js.Global().Get("EyeDropper").Truthy(),
 		SafeArea: driver.Edges{
 			Top: length("paddingTop"), Right: length("paddingRight"),
 			Bottom: length("paddingBottom"), Left: length("paddingLeft"),

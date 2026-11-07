@@ -302,3 +302,54 @@ func TestDialogKeepsPressesOffItsBackdrop(t *testing.T) {
 		t.Fatalf("reasons = %v", reasons)
 	}
 }
+
+// items of a list as a phone or a desktop shows them.
+func fruit() []base.SelectItem {
+	return []base.SelectItem{{Value: "apple", Title: "Apple"}, {Value: "pear", Title: "Pear", Disabled: true}, {Value: "plum", Title: "Plum"}}
+}
+
+// A desktop's select opens on its keys, moves past disabled items, chooses
+// with Return and gives the keyboard back to its trigger.
+func TestSelectKeysOnADesktop(t *testing.T) {
+	var value *string
+	app := nsgotest.Start(t, func(*core.Scope) core.Node {
+		return base.Select{Items: fruit, OnChange: func(v *string) { value = v }, TestID: "root", Label: "Fruit", ItemClass: "focus:h-[40px]",
+			Trigger: core.Text{Content: "Trigger"}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop, OS: core.OSMacOS}))
+	app.Key("Tab")
+	app.Key("down")
+	if !app.Exists("text:Plum") {
+		t.Fatal("Down did not open the list")
+	}
+	app.Key("down")
+	app.Key("enter")
+	if value == nil || *value != "plum" {
+		t.Fatalf("value = %v, want plum, past the disabled pear", value)
+	}
+	if app.Exists("text:Plum") {
+		t.Fatal("Return left the list open")
+	}
+}
+
+// A menu's trigger joins the toolbar around it, and with one of the bar's
+// menus open the pointer over another moves there.
+func TestMenusInAToolbar(t *testing.T) {
+	item := func(text string) []core.Node {
+		return []core.Node{base.MenuItem{Label: text, Children: []core.Node{core.Text{Content: text}}}}
+	}
+	app := nsgotest.Start(t, func(*core.Scope) core.Node {
+		return base.Toolbar{Children: []core.Node{
+			base.Menu{Label: "File", Trigger: core.Text{Content: "FileMenu"}, Children: item("Open")},
+			base.Menu{Label: "Edit", Trigger: core.Text{Content: "EditMenu"}, Children: item("Copy")},
+		}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop, OS: core.OSMacOS}))
+	app.Press("label:File")
+	if !app.Exists("text:Open") {
+		t.Fatal("the menu did not open")
+	}
+	app.Hover("label:Edit")
+	app.Settle()
+	if app.Exists("text:Open") || !app.Exists("text:Copy") {
+		t.Fatal("the pointer over the other trigger did not move the menu there")
+	}
+}

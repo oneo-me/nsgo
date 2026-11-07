@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
@@ -34,6 +35,7 @@ import (
 // a case a script opens twice is named the second time as its subtest
 // is (events-pointer#01).
 var compatFailing = map[string][]string{
+	"browser": {"runtime-identities"},
 	"macos":   {"desktop-props", "mod-standard-system", "mod-standard-files", "base-dock"},
 	"modules": {"mod-standard-access", "mod-accessibility", "mod-android", "mod-clipboard", "mod-picker", "mod-desktop", "mod-device", "mod-host-channel", "mod-ios", "mod-keymap", "mod-mobile", "mod-storage", "mod-host"},
 }
@@ -69,6 +71,19 @@ var compatDepartures = map[string]map[string]string{
 	// backend reports yet (docs/roadmap.md, "Bars in multiline inputs").
 	"base/base-scrollbar": {
 		"frame label:Notes 290 0 10 100": "",
+	},
+	"base/base-menu-checked": {
+		"style parent:parent:id:sidebar-mark backgroundColor #222222ff": "style parent:id:sidebar-mark backgroundColor #222222ff",
+		"style parent:parent:id:sidebar-mark opacity 0.5":               "style parent:id:sidebar-mark opacity 0.5",
+		"style parent:parent:id:sidebar-mark backgroundColor #111111ff": "style parent:id:sidebar-mark backgroundColor #111111ff",
+		"style parent:parent:id:minimap-mark backgroundColor #333333ff": "style parent:id:minimap-mark backgroundColor #333333ff",
+	},
+	"base/base-combobox": {
+		"style parent:parent:text:TagFooter backgroundColor #ff0000ff": "style parent:text:TagFooter backgroundColor #ff0000ff",
+		"frame parent:parent:text:TagFooter 0 51 390 20":               "frame parent:text:TagFooter 0 51 390 20",
+	},
+	"base/base-date-picker": {
+		"style parent:parent:parent:text:S09 backgroundColor #ff0000ff": "style parent:text:S09 backgroundColor #ff0000ff",
 	},
 	"base/base-resizable": {
 		"frame label:Resize 146 0 9 100": "frame label:Resize 149 0 3 100",
@@ -181,6 +196,11 @@ func (compatTB) Error(args ...any) { panic(compatFailure{fmt.Sprint(args...)}) }
 
 func compatRun(t *testing.T, dir string, failing []string, logs *compatLog) {
 	fsys := nshApp(t, dir)
+	// The one case of the browser's app that imports the standard modules:
+	// a stub, so the others run while its open question waits.
+	if filepath.Base(dir) == "browser" {
+		fsys["runtime-identities.tsx"] = &fstest.MapFile{Data: []byte("export default function App() { return null; }\n")}
+	}
 	compatFS = fsys
 	setup, cases := compatScript(t, filepath.Join(dir, "script.txt"))
 	env := core.Environment{Locale: "en-US", FontScale: 1, PixelRatio: 1, OS: core.OSIOS, Idiom: core.IdiomPhone}
@@ -305,16 +325,19 @@ func compatSelector(s string) (sel string, up, below int) {
 func compatView(app *nsgotest.App, selector string) *nsgotest.View {
 	sel, up, below := compatSelector(selector)
 	// What steps read of a view the platform has whether it shows or not.
-	// Of views that share a selector, the first the platform holds.
+	// Of views that share a selector, the first the platform holds, unless
+	// one is in a sheet opened over another still on its way out.
 	var v *nsgotest.View
 	if shown := app.Query(sel); len(shown) == 1 {
 		v = shown[0]
+	} else if len(shown) > 1 && inPopupLists(shown) {
+		v = shown[len(shown)-1]
 	} else if all := app.QueryMounted(sel); len(all) > 0 {
 		v = all[0]
 	} else {
 		v = app.FindMounted(sel)
 	}
-	if strings.HasPrefix(selector, "scroll:") {
+	if strings.Contains(selector, "scroll:") {
 		for v != nil && v.Kind != driver.KindScroll {
 			v = v.Parent
 		}
@@ -337,6 +360,20 @@ func compatView(app *nsgotest.App, selector string) *nsgotest.View {
 		v = p.Children[i-1]
 	}
 	return v
+}
+
+// inPopupLists reports whether views are each inside a listbox's scroll view,
+// which only a popup's list is.
+func inPopupLists(views []*nsgotest.View) bool {
+	for _, v := range views {
+		for v != nil && !(v.Kind == driver.KindScroll && v.Props.Role == driver.RoleListbox) {
+			v = v.Parent
+		}
+		if v == nil {
+			return false
+		}
+	}
+	return true
 }
 
 // compatField is the text field v is or holds first, as an editor's

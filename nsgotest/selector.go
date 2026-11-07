@@ -468,7 +468,7 @@ var roles = map[driver.Role]string{
 	driver.RoleOption: "option", driver.RoleGroup: "group", driver.RoleRegion: "region",
 	driver.RoleNavigation: "navigation", driver.RoleTree: "tree", driver.RoleTreeItem: "treeitem",
 	driver.RoleToolbar: "toolbar", driver.RoleMenuItemCheckbox: "menuitemcheckbox",
-	driver.RoleMenuItemRadio: "menuitemradio",
+	driver.RoleMenuItemRadio: "menuitemradio", driver.RoleCombobox: "combobox",
 }
 
 func roleName(r driver.Role) string { return roles[r] }

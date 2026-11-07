@@ -231,7 +231,11 @@ func (g *rovingGroup) keys() core.Node {
 // it is the item the focus is on or would enter at, reporting the focus
 // to the group.
 func rovingView(cx *core.Scope, v core.View, current func() bool, activate func()) core.View {
-	g := rovingKey.Use(cx)
+	return rovingJoin(cx, rovingKey.Use(cx), v, current, activate)
+}
+
+// rovingJoin is rovingView in group g, none when it is nil.
+func rovingJoin(cx *core.Scope, g *rovingGroup, v core.View, current func() bool, activate func()) core.View {
 	if g == nil {
 		return v
 	}
@@ -268,6 +272,10 @@ type bar struct {
 	// axis is a toolbar's, which its groups lay out along.
 	axis    Axis
 	toolbar bool
+	// menu is the bar's menu that is open, if any: with one open, the
+	// pointer over another menu's trigger opens that one instead, as a
+	// menu bar does.
+	menu **popup
 }
 
 var barKey = core.NewKey[*bar]("base.bar", nil)
@@ -292,4 +300,57 @@ func barItem(cx *core.Scope, v core.View, current func() bool) core.View {
 	v.Disabled = func() bool { return is(own) || is(b.disabled) }
 	rovingKey.Provide(cx, b.roving)
 	return rovingView(cx, v, current, nil)
+}
+
+// popupBar is the bar around a popup being made, which its trigger joins
+// (barTrigger), left for what the popup makes from now on: a component
+// the app puts in the trigger (a Button) is that one item, not another of
+// its own, and the popup's content is no part of the bar.
+func popupBar(cx *core.Scope) *bar {
+	around := barKey.Use(cx)
+	leaveBar(cx)
+	return around
+}
+
+// leaveBar leaves the bar around cx, if any, for what it makes from now
+// on.
+func leaveBar(cx *core.Scope) {
+	if barKey.Use(cx) != nil {
+		barKey.Provide(cx, nil)
+		rovingKey.Provide(cx, nil)
+	}
+}
+
+// barTrigger puts v, a popup's trigger, in b when there is one: one of its
+// stops, disabled with the bar too.
+func barTrigger(cx *core.Scope, b *bar, v core.View) core.View {
+	if b == nil {
+		return v
+	}
+	own := v.Disabled
+	v.Disabled = func() bool { return is(own) || is(b.disabled) }
+	return rovingJoin(cx, b.roving, v, nil, nil)
+}
+
+// barMenu makes st the bar's open menu while it is open, and returns what
+// the pointer over its trigger does: with another of the bar's menus
+// open, it moves there.
+func barMenu(cx *core.Scope, b *bar, st *popup) func(core.MouseEvent) {
+	if b == nil || b.menu == nil {
+		return nil
+	}
+	cx.Effect(func() {
+		switch {
+		case st.open():
+			*b.menu = st
+		case *b.menu == st:
+			*b.menu = nil
+		}
+	})
+	return func(core.MouseEvent) {
+		if shown := *b.menu; shown != nil && shown != st {
+			shown.set(false, ReasonHover)
+			st.set(true, ReasonHover)
+		}
+	}
 }

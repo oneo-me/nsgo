@@ -6,6 +6,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/i18n"
 	"strings"
+	"time"
 )
 
 // Source is the language the messages are written in.
@@ -35,16 +36,32 @@ func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 var Parameters = map[string][]string{
 	"SortBy":             {"column"},
 	"DiffUnchangedLines": {"n"},
+	"CalendarMonth":      {"d"},
+	"CalendarMonthName":  {"d"},
+	"CalendarWeekday":    {"d"},
 }
 
 // Translation is a language's messages another package supplies; a nil
 // field leaves the message to the catalog.
 type Translation struct {
-	SortBy             func(column string) string
-	DiffUnchangedLines func(n int) string
-	DiffExpandAll      func() string
-	DiffStage          func() string
-	DiffDiscardChanges func() string
+	SortBy                    func(column string) string
+	DiffUnchangedLines        func(n int) string
+	DiffExpandAll             func() string
+	DiffStage                 func() string
+	DiffDiscardChanges        func() string
+	ColorHue                  func() string
+	ColorAlpha                func() string
+	ColorSaturationBrightness func() string
+	ColorHex                  func() string
+	ColorEyeDropper           func() string
+	CalendarPrevious          func() string
+	CalendarNext              func() string
+	ListClear                 func() string
+	ListNothingFound          func() string
+	ListSearch                func() string
+	CalendarMonth             func(d time.Time) string
+	CalendarMonthName         func(d time.Time) string
+	CalendarWeekday           func(d time.Time) string
 }
 
 var supplied = map[string]Translation{}
@@ -54,6 +71,16 @@ const (
 	textDiffExpandAll = iota
 	textDiffStage
 	textDiffDiscardChanges
+	textColorHue
+	textColorAlpha
+	textColorSaturationBrightness
+	textColorHex
+	textColorEyeDropper
+	textCalendarPrevious
+	textCalendarNext
+	textListClear
+	textListNothingFound
+	textListSearch
 	numTexts
 )
 
@@ -64,16 +91,46 @@ var texts = map[string]*[numTexts]string{
 		"Expand all",
 		"Stage",
 		"Discard Changes…",
+		"Hue",
+		"Opacity",
+		"Saturation and brightness",
+		"Hex color",
+		"Pick a color from the screen",
+		"Previous month",
+		"Next month",
+		"Clear",
+		"Nothing found",
+		"Search",
 	},
 	"zh-Hans": {
 		"全部展开",
 		"暂存",
 		"还原更改…",
+		"色相",
+		"不透明度",
+		"饱和度和亮度",
+		"十六进制颜色",
+		"从屏幕取色",
+		"上个月",
+		"下个月",
+		"清除",
+		"未找到结果",
+		"搜索",
 	},
 	"zh-Hant": {
 		"全部展開",
 		"暫存",
 		"還原變更…",
+		"色相",
+		"不透明度",
+		"飽和度和亮度",
+		"十六進位顏色",
+		"從螢幕取色",
+		"上個月",
+		"下個月",
+		"清除",
+		"找不到結果",
+		"搜尋",
 	},
 }
 
@@ -124,6 +181,45 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DiffDiscardChanges != nil {
 		st[textDiffDiscardChanges] = t.DiffDiscardChanges()
+	}
+	if t.ColorHue != nil {
+		st[textColorHue] = t.ColorHue()
+	}
+	if t.ColorAlpha != nil {
+		st[textColorAlpha] = t.ColorAlpha()
+	}
+	if t.ColorSaturationBrightness != nil {
+		st[textColorSaturationBrightness] = t.ColorSaturationBrightness()
+	}
+	if t.ColorHex != nil {
+		st[textColorHex] = t.ColorHex()
+	}
+	if t.ColorEyeDropper != nil {
+		st[textColorEyeDropper] = t.ColorEyeDropper()
+	}
+	if t.CalendarPrevious != nil {
+		st[textCalendarPrevious] = t.CalendarPrevious()
+	}
+	if t.CalendarNext != nil {
+		st[textCalendarNext] = t.CalendarNext()
+	}
+	if t.ListClear != nil {
+		st[textListClear] = t.ListClear()
+	}
+	if t.ListNothingFound != nil {
+		st[textListNothingFound] = t.ListNothingFound()
+	}
+	if t.ListSearch != nil {
+		st[textListSearch] = t.ListSearch()
+	}
+	if t.CalendarMonth != nil {
+		s.CalendarMonth = t.CalendarMonth
+	}
+	if t.CalendarMonthName != nil {
+		s.CalendarMonthName = t.CalendarMonthName
+	}
+	if t.CalendarWeekday != nil {
+		s.CalendarWeekday = t.CalendarWeekday
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -230,3 +326,186 @@ func DiffDiscardChanges(cx *core.Scope) string { return For(cx).DiffDiscardChang
 // DiffDiscardChanges says "Discard Changes…"
 // in the language of msgs.
 func (msgs Messages) DiffDiscardChanges() string { return msgs.text(textDiffDiscardChanges) }
+
+// ColorHue says "Hue"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorHue(cx *core.Scope) string { return For(cx).ColorHue() }
+
+// ColorHue says "Hue"
+// in the language of msgs.
+func (msgs Messages) ColorHue() string { return msgs.text(textColorHue) }
+
+// ColorAlpha says "Opacity"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorAlpha(cx *core.Scope) string { return For(cx).ColorAlpha() }
+
+// ColorAlpha says "Opacity"
+// in the language of msgs.
+func (msgs Messages) ColorAlpha() string { return msgs.text(textColorAlpha) }
+
+// ColorSaturationBrightness says "Saturation and brightness"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorSaturationBrightness(cx *core.Scope) string { return For(cx).ColorSaturationBrightness() }
+
+// ColorSaturationBrightness says "Saturation and brightness"
+// in the language of msgs.
+func (msgs Messages) ColorSaturationBrightness() string {
+	return msgs.text(textColorSaturationBrightness)
+}
+
+// ColorHex says "Hex color"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorHex(cx *core.Scope) string { return For(cx).ColorHex() }
+
+// ColorHex says "Hex color"
+// in the language of msgs.
+func (msgs Messages) ColorHex() string { return msgs.text(textColorHex) }
+
+// ColorEyeDropper says "Pick a color from the screen"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorEyeDropper(cx *core.Scope) string { return For(cx).ColorEyeDropper() }
+
+// ColorEyeDropper says "Pick a color from the screen"
+// in the language of msgs.
+func (msgs Messages) ColorEyeDropper() string { return msgs.text(textColorEyeDropper) }
+
+// CalendarPrevious says "Previous month"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func CalendarPrevious(cx *core.Scope) string { return For(cx).CalendarPrevious() }
+
+// CalendarPrevious says "Previous month"
+// in the language of msgs.
+func (msgs Messages) CalendarPrevious() string { return msgs.text(textCalendarPrevious) }
+
+// CalendarNext says "Next month"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func CalendarNext(cx *core.Scope) string { return For(cx).CalendarNext() }
+
+// CalendarNext says "Next month"
+// in the language of msgs.
+func (msgs Messages) CalendarNext() string { return msgs.text(textCalendarNext) }
+
+// ListClear says "Clear"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ListClear(cx *core.Scope) string { return For(cx).ListClear() }
+
+// ListClear says "Clear"
+// in the language of msgs.
+func (msgs Messages) ListClear() string { return msgs.text(textListClear) }
+
+// ListNothingFound says "Nothing found"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ListNothingFound(cx *core.Scope) string { return For(cx).ListNothingFound() }
+
+// ListNothingFound says "Nothing found"
+// in the language of msgs.
+func (msgs Messages) ListNothingFound() string { return msgs.text(textListNothingFound) }
+
+// ListSearch says "Search"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ListSearch(cx *core.Scope) string { return For(cx).ListSearch() }
+
+// ListSearch says "Search"
+// in the language of msgs.
+func (msgs Messages) ListSearch() string { return msgs.text(textListSearch) }
+
+// CalendarMonth says "{d, date, ::yMMMM}"
+// in the language the app shows under cx.
+//
+// A date in a calendar's header, grid of months or weekday headings.
+func CalendarMonth(cx *core.Scope, d time.Time) string { return For(cx).CalendarMonth(d) }
+
+// CalendarMonth says "{d, date, ::yMMMM}"
+// in the language of msgs.
+func (msgs Messages) CalendarMonth(d time.Time) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CalendarMonth(d))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].CalendarMonth; f != nil {
+			return f(d)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "yMMMM"}))
+		case "zh-Hans":
+			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "yMMMM"})
+		case "zh-Hant":
+			return i18n.FormatDate("zh-Hant", d, i18n.DateOptions{Skeleton: "yMMMM"})
+		}
+	}
+}
+
+// CalendarMonthName says "{d, date, ::MMM}"
+// in the language the app shows under cx.
+//
+// A date in a calendar's header, grid of months or weekday headings.
+func CalendarMonthName(cx *core.Scope, d time.Time) string { return For(cx).CalendarMonthName(d) }
+
+// CalendarMonthName says "{d, date, ::MMM}"
+// in the language of msgs.
+func (msgs Messages) CalendarMonthName(d time.Time) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CalendarMonthName(d))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].CalendarMonthName; f != nil {
+			return f(d)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "MMM"}))
+		case "zh-Hans":
+			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "MMM"})
+		case "zh-Hant":
+			return i18n.FormatDate("zh-Hant", d, i18n.DateOptions{Skeleton: "MMM"})
+		}
+	}
+}
+
+// CalendarWeekday says "{d, date, ::EEEEE}"
+// in the language the app shows under cx.
+//
+// A date in a calendar's header, grid of months or weekday headings.
+func CalendarWeekday(cx *core.Scope, d time.Time) string { return For(cx).CalendarWeekday(d) }
+
+// CalendarWeekday says "{d, date, ::EEEEE}"
+// in the language of msgs.
+func (msgs Messages) CalendarWeekday(d time.Time) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CalendarWeekday(d))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].CalendarWeekday; f != nil {
+			return f(d)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "EEEEE"}))
+		case "zh-Hans":
+			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "EEEEE"})
+		case "zh-Hant":
+			return i18n.FormatDate("zh-Hant", d, i18n.DateOptions{Skeleton: "EEEEE"})
+		}
+	}
+}

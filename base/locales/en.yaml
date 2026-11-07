@@ -13,3 +13,42 @@ diffStage:
 diffDiscardChanges:
   message: "Discard Changes…"
   description: The button that, after asking, throws away the lines of a diff's change.
+colorHue:
+  message: "Hue"
+  description: What a styled picker says for this part.
+colorAlpha:
+  message: "Opacity"
+  description: What a styled picker says for this part.
+colorSaturationBrightness:
+  message: "Saturation and brightness"
+  description: What a styled picker says for this part.
+colorHex:
+  message: "Hex color"
+  description: What a styled picker says for this part.
+colorEyeDropper:
+  message: "Pick a color from the screen"
+  description: What a styled picker says for this part.
+calendarPrevious:
+  message: "Previous month"
+  description: What a styled picker says for this part.
+calendarNext:
+  message: "Next month"
+  description: What a styled picker says for this part.
+listClear:
+  message: "Clear"
+  description: What a styled picker says for this part.
+listNothingFound:
+  message: "Nothing found"
+  description: What a styled picker says for this part.
+listSearch:
+  message: "Search"
+  description: What a styled picker says for this part.
+calendarMonth:
+  message: "{d, date, ::yMMMM}"
+  description: A date in a calendar's header, grid of months or weekday headings.
+calendarMonthName:
+  message: "{d, date, ::MMM}"
+  description: A date in a calendar's header, grid of months or weekday headings.
+calendarWeekday:
+  message: "{d, date, ::EEEEE}"
+  description: A date in a calendar's header, grid of months or weekday headings.

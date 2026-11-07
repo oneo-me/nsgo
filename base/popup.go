@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/base/internal/parts"
+	"github.com/oneo-me/nsgo/base/internal/sheet"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -30,11 +31,16 @@ const (
 	// ReasonSwipe is a sheet swiped down: base.Sheet's, or an iOS
 	// dialog's.
 	ReasonSwipe
+	// ReasonFocus is a hover card's trigger gaining or losing the keyboard
+	// focus.
+	ReasonFocus
+	// ReasonInputChange is typing in a combobox's input.
+	ReasonInputChange
 )
 
 func (r Reason) String() string {
 	return [...]string{"", "triggerPress", "pressOutside", "backdropPress", "cancel", "select",
-		"hover", "longPress", "contextMenu", "swipe"}[r]
+		"hover", "longPress", "contextMenu", "swipe", "focus", "inputChange"}[r]
 }
 
 // popup is the open state of one popup.
@@ -254,4 +260,142 @@ func modalLayer(st *popup, motion *popupMotion, m core.Modal, d Dialog) core.Nod
 		}
 		return m
 	}}
+}
+
+// dropdownFrame is where a dropdown goes and the parts of its frame:
+// Select's, Combobox's and DatePicker's.
+type dropdownFrame struct {
+	placement       core.Placement
+	align           core.Align
+	offset, margin  core.Points
+	popup, backdrop part
+}
+
+// dropdownCover is a view inside a dropdown laid over its trigger, a
+// select's selected item.
+type dropdownCover struct {
+	view  *core.Ref
+	shown *core.Signal[bool]
+}
+
+func newDropdownCover(cx *core.Scope) *dropdownCover {
+	return &dropdownCover{view: new(core.Ref), shown: core.NewSignal(cx, false)}
+}
+
+// dropdown is what is open under a Select, a Combobox or a DatePicker: on
+// desktops a popup at anchor, as wide as width says (the trigger's once
+// laid out, -1 before), at least that wide when fit, never past the room on
+// its side; on touch screens a sheet at the bottom over a backdrop.
+type dropdown struct {
+	anchor *core.Ref
+	// onContent places it against what anchor holds, a trigger's element.
+	onContent bool
+	width     *core.Signal[core.Points]
+	fit       bool
+	cover     *dropdownCover
+	frame     dropdownFrame
+	open      func() bool
+	// dismiss hears the user try to close it, and shown it being all there
+	// and all gone.
+	dismiss func(Reason)
+	shown   func(bool)
+	// content makes what it holds, for a sheet when true.
+	content func(sheet bool) []core.Node
+}
+
+// node is the dropdown.
+func (d dropdown) node(cx *core.Scope) core.Node {
+	onSheet := !core.Untracked(cx, cx.Env().Desktop)
+	leaveBar(cx)
+	report := func(there func() bool) {
+		var was bool
+		cx.Effect(func() {
+			is := there()
+			if is != was {
+				was = is
+				cx.Untrack(func() { d.shown(is) })
+			}
+		})
+	}
+	if onSheet {
+		m := sheet.NewMotion(cx, d.open, core.PlaceBottom)
+		report(m.There)
+		env := cx.Env()
+		panel := d.frame.popup
+		place := func() core.Style {
+			s := core.Style{MaxHeight: core.Pt(env.Window().Height - env.SafeArea().Top)}.Merge(panel.Style)
+			if panel.Fn != nil {
+				s = s.Merge(panel.Fn())
+			}
+			return s
+		}
+		return sheet.Layer{Motion: m, Side: core.PlaceBottom, Backdrop: d.frame.backdrop,
+			BackdropPress: func() { d.dismiss(ReasonBackdropPress) }, Cancel: func() { d.dismiss(ReasonCancel) },
+			Panel: parts.Part{Class: panel.Class, Fn: place}, Content: d.lazyContent(true)}.Node()
+	}
+	// As wide as the trigger shows as it opens.
+	cx.Effect(func() {
+		if d.open() {
+			cx.Untrack(d.measure)
+		}
+	})
+	// It waits for the trigger's first layout, to be placed against it.
+	there := func() bool { return d.open() && d.width.Get() >= 0 }
+	report(there)
+	return core.Show{When: there, Then: func(cx *core.Scope) core.Node {
+		// Each opening lays its own cover view out again.
+		if d.cover != nil {
+			d.cover.shown.Set(false)
+		}
+		room := core.NewSignal(cx, core.Points(-1))
+		env := cx.Env()
+		size := func() core.Style {
+			w := core.Pt(max(d.width.Get(), 0))
+			height := room.Get()
+			if height < 0 {
+				// Until the core says where it went the window bounds it,
+				// so the first layout gives the rows a viewport already.
+				height = env.Window().Height
+			}
+			s := core.Style{MaxHeight: core.Pt(height)}
+			if d.fit {
+				s.MinWidth = w
+			} else {
+				s.Width = w
+			}
+			return s
+		}
+		popup := d.frame.popup
+		o := core.Overlay{Anchor: d.anchor, AnchorContent: d.onContent, Placement: d.frame.placement, Align: d.frame.align, Offset: d.frame.offset, Margin: d.frame.margin,
+			Class: popup.Class, Children: d.content(false),
+			StyleFunc: func() core.Style {
+				s := size().Merge(popup.Style)
+				if popup.Fn != nil {
+					s = s.Merge(popup.Fn())
+				}
+				return s
+			},
+			OnPosition:     func(p core.OverlayPosition) { room.Set(p.Available.Height) },
+			OnPressOutside: func(core.Point) { d.dismiss(ReasonPressOutside) },
+			OnCancel:       func() { d.dismiss(ReasonCancel) }}
+		if d.cover != nil {
+			o.Cover, o.CoverShown = d.cover.view, d.cover.shown.Get
+		}
+		return o
+	}}
+}
+
+// measure takes the trigger's width.
+func (d dropdown) measure() {
+	if !d.onContent {
+		return
+	}
+	if b, ok := d.anchor.ContentBounds(); ok {
+		d.width.Set(b.Size.Width)
+	}
+}
+
+// lazyContent makes the content as the sheet shows it, each opening anew.
+func (d dropdown) lazyContent(onSheet bool) []core.Node {
+	return []core.Node{core.Func(func(*core.Scope) core.Node { return core.Group(d.content(onSheet)) })}
 }

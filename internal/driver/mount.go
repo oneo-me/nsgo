@@ -220,6 +220,11 @@ const (
 	// Platforms whose own motion follows a direction, as iOS's navigation,
 	// take it, and those that draw menus label them in the language.
 	ItemDirection
+	// ItemPickScreenColor lets the user pick a color on the screen: the
+	// system's color sampler or the browser's EyeDropper, answered with
+	// EventFiles Count, Finished with the color in Data, a Color. Sent only
+	// where the environment says ScreenColor.
+	ItemPickScreenColor
 	// ItemPickDirectories shows the system's folder picker for
 	// Directories; the platform answers with EventFiles carrying Count.
 	ItemPickDirectories
@@ -772,6 +777,9 @@ const (
 	// RoleSpinButton is a field for a number: its Value is what it reads
 	// as, between its bounds, and its actions step it.
 	RoleSpinButton
+	// RoleCombobox picks a value from a list it opens, as a select's
+	// trigger.
+	RoleCombobox
 )
 
 // ScrollConfig configures a scroll view.

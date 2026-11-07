@@ -54,11 +54,19 @@ func selectPlayground(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		value := core.NewSignal(cx, "")
+		searchable, clearable := core.NewSignal(cx, false), core.NewSignal(cx, false)
 		choices := []ui.Option[string]{{Value: "apple", Label: tr.LibApple()}, {Value: "banana", Label: tr.LibBanana()}, {Value: "cherry", Label: tr.LibCherry()}}
 		return Playground{Title: "Select", Stage: func() core.Node {
-			return ui.Select[string]{Label: tr.LibFruit(), Placeholder: tr.LibPickFruit(), Options: choices, Value: value.Get,
-				OnChange: func(v string) { value.Set(v); last.Set("Select: " + v) }}
-		}, Knobs: []core.Node{choiceKnob("Value", value, append([]ui.Option[string]{{Value: "", Label: "\"\""}}, choices...)...)}}
+			return core.Dynamic(func(*core.Scope) core.Node {
+				s := ui.Select[string]{Label: tr.LibFruit(), Placeholder: tr.LibPickFruit(), Options: choices, Value: value.Get, Searchable: searchable.Get(),
+					OnChange: func(v string) { value.Set(v); last.Set("Select: " + v) }}
+				if clearable.Get() {
+					s.OnClear = func() { value.Set(""); last.Set("Select: \"\"") }
+				}
+				return s
+			})
+		}, Knobs: []core.Node{choiceKnob("Value", value, append([]ui.Option[string]{{Value: "", Label: "\"\""}}, choices...)...),
+			boolKnob("Searchable", searchable), boolKnob("OnClear", clearable)}}
 	}
 }
 

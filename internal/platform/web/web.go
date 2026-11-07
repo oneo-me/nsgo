@@ -1331,6 +1331,9 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemPickDirectories:
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
 			continue
+		case driver.ItemPickScreenColor:
+			s.pickScreenColor(it.Count)
+			continue
 		case driver.ItemOpenFile:
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoFileOpener})
 			continue
@@ -1994,6 +1997,7 @@ var roles = map[driver.Role]string{
 	driver.RoleAlert:        "alert",
 	driver.RoleAdjustable:   "slider",
 	driver.RoleSpinButton:   "spinbutton",
+	driver.RoleCombobox:     "combobox",
 	driver.RoleProgressBar:  "progressbar",
 	driver.RoleTable:        "table",
 	driver.RoleGrid:         "grid",
