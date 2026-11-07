@@ -6,6 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
 // AccordionItem is one section of an Accordion.
@@ -16,9 +17,10 @@ type AccordionItem struct {
 	TestID   string
 }
 
-// Accordion is a card of sections divided by hairlines, on base.Accordion:
-// each title a heading over a button, each panel a region. The app keeps
-// which are open: one at a time, or any.
+// Accordion is a bordered box of sections divided by hairlines, as
+// Onevra's, on base.Accordion: each title a heading over a button, each
+// panel a region that springs open. The app keeps which are open: one at a
+// time, or any.
 type Accordion struct {
 	Items        []AccordionItem
 	Open         func(index int) bool
@@ -50,22 +52,33 @@ func (a Accordion) Render(cx *core.Scope) core.Node {
 			}
 		}
 	}
+	reveal := func() bool { return true }
+	face := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(10, 12),
+		CornerRadius: RadiusControl, Disabled: Dimmed()}
 	var sections []core.Node
 	for i, item := range a.Items {
-		c := Collapsible{Text: item.Text, Disabled: item.Disabled,
-			Open: func() bool { return a.Open != nil && a.Open(i) }}
+		turn := disclosureArrow(cx, Icon(lucide.ChevronDown, iconSize, colors.Muted), func() float32 {
+			if a.Open != nil && a.Open(i) {
+				return 180
+			}
+			return 0
+		})
 		section := base.AccordionItem{Value: strconv.Itoa(i), Disabled: item.Disabled, TestID: item.TestID,
 			Children: []core.Node{
-				base.AccordionHeader{Children: []core.Node{collapsibleTrigger(cx, c, core.Style{Padding: core.Symmetric(8, 14), CornerRadius: RadiusCard - 1}, true)}},
-				base.AccordionPanel{Label: item.Text, KeepMounted: func() bool { return true },
-					Children: []core.Node{core.View{Style: core.Style{Padding: core.Edges{Left: 14, Right: 14, Bottom: 14}}, Children: []core.Node{item.Content}}}},
+				base.AccordionHeader{Children: []core.Node{base.AccordionTrigger{Label: item.Text, Style: face,
+					StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), Focus: FocusRing(cx, -4)} },
+					Children:  []core.Node{line(item.Text, TypeLabel.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}), 0), turn}}}},
+				base.AccordionPanel{Label: item.Text, Reveal: reveal,
+					Children: []core.Node{core.View{Style: core.Style{Padding: core.Edges{Left: 12, Right: 12, Bottom: 12}, Gap: 8}, Children: []core.Node{item.Content}}}},
 			}}
 		if i > 0 {
 			section.Style = core.Style{Borders: core.Edges{Top: 1}}
-			section.StyleFunc = func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Line()}} }
+			section.StyleFunc = func() core.Style { return core.Style{BorderColors: core.EdgeColors{Top: colors.Border()}} }
 		}
 		sections = append(sections, section)
 	}
 	return base.Accordion{Value: open, Multiple: func() bool { return true }, OnChange: change, TestID: a.TestID,
-		StyleFunc: func() core.Style { return CardStyle(cx).Merge(a.Style) }, Children: sections}
+		StyleFunc: func() core.Style {
+			return core.Style{CornerRadius: RadiusControl, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, BorderColor: colors.Border()}.Merge(a.Style)
+		}, Children: sections}
 }

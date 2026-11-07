@@ -86,7 +86,7 @@ func accordionCard(last *core.Signal[string]) cardFunc {
 		open := core.NewSignalFunc(cx, map[int]bool{0: true}, func(a, b map[int]bool) bool { return false })
 		multiple, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false)
 		section := func(text, body string, off func() bool) ui.AccordionItem {
-			return ui.AccordionItem{Text: text, Disabled: off, Content: ui.Text(body, 13, ui.Regular, colors.Muted)}
+			return ui.AccordionItem{Text: text, Disabled: off, Content: ui.Text(body, 13, ui.Regular, colors.Text)}
 		}
 		return Playground{Title: "Accordion", Fill: true, Base: baseAccordionForm(cx, multiple, disabled), Stage: func() core.Node {
 			return ui.Accordion{Open: func(i int) bool { return open.Get()[i] },
@@ -115,9 +115,12 @@ func collapsiblePlayground(last *core.Signal[string]) cardFunc {
 		colors := ui.ColorsOf(cx)
 		open, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false)
 		return Playground{Title: "Collapsible", Fill: true, Base: baseCollapsibleForm(cx, open, disabled), Stage: func() core.Node {
-			return ui.Collapsible{Text: tr.ControlsActivity(), Open: open.Get, Disabled: disabled.Get,
-				OnOpenChange: func(on bool) { open.Set(on); last.Set(fmt.Sprintf("Collapsible: %s", onOff(tr, on))) },
-				Content:      ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Muted)}
+			collapsible := func(variant ui.CollapsibleVariant) core.Node {
+				return ui.Collapsible{Variant: variant, Text: tr.ControlsActivity(), Open: open.Get, Disabled: disabled.Get,
+					OnOpenChange: func(on bool) { open.Set(on); last.Set(fmt.Sprintf("Collapsible: %s", onOff(tr, on))) },
+					Content:      ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Text)}
+			}
+			return core.View{Style: core.Style{Gap: 12}, Children: []core.Node{collapsible(ui.CollapsibleArrowRight), collapsible(ui.CollapsibleArrowLeft)}}
 		}, BaseKnobs: []core.Node{boolKnob("Open", open), boolKnob("Disabled", disabled)}}
 	}
 }

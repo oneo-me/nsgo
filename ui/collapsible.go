@@ -8,13 +8,25 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Collapsible is a titled region whose Content the trigger row shows and
-// hides; the content is made the first time it opens and kept after.
+// CollapsibleVariant is where a Collapsible's arrow sits beside its title.
+type CollapsibleVariant uint8
+
+const (
+	// CollapsibleArrowRight follows the title. It is the default.
+	CollapsibleArrowRight CollapsibleVariant = iota
+	// CollapsibleArrowLeft leads the title, and the content lines up under
+	// the title.
+	CollapsibleArrowLeft
+)
+
+// Collapsible is a titled region whose Content the trigger shows and hides
+// with a spring, as Onevra's: a title beside an arrow, as wide as they are.
 type Collapsible struct {
 	Open         func() bool
 	OnOpenChange func(open bool)
+	Variant      CollapsibleVariant
 	Text         string
-	// Trigger replaces Text in the trigger row, before its chevron.
+	// Trigger replaces Text in the trigger, beside its arrow.
 	Trigger  []core.Node
 	Content  core.Node
 	Disabled func() bool
@@ -24,45 +36,52 @@ type Collapsible struct {
 
 // Render implements core.Node.
 func (c Collapsible) Render(cx *core.Scope) core.Node {
-	return base.Collapsible{Open: c.Open, Content: core.View{Style: core.Style{Padding: core.Edges{Top: 4, Bottom: 8}},
-		Children: []core.Node{c.Content}}, Style: c.Style, TestID: c.TestID,
-		Children: []core.Node{collapsibleTrigger(cx, c, core.Style{Padding: core.Symmetric(0, 8)}, false)}}
-}
-
-// collapsibleTrigger is the row that opens and closes c: its title and a
-// chevron that turns as it opens. In an accordion it is its item's
-// trigger, which the accordion's value opens.
-func collapsibleTrigger(cx *core.Scope, c Collapsible, s core.Style, accordion bool) core.Node {
 	colors := ColorsOf(cx)
+	env := cx.Env()
 	title := c.Trigger
 	if title == nil {
-		title = []core.Node{line(c.Text, TypeLabel.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}), 0)}
+		title = []core.Node{line(c.Text, TypeBody.Merge(core.Style{FlexShrink: 1}), 1)}
 	}
-	chevron := core.Style{FlexShrink: 0}
-	if !ReduceMotion(cx) {
-		chevron.Transition = core.Transition{Duration: 160 * time.Millisecond, Easing: core.EaseOut, Properties: core.TransitionTransform}
-	}
-	turn := core.View{Style: chevron, StyleFunc: func() core.Style {
-		if is(c.Open) {
-			return core.Style{Transform: core.Transform{Rotate: 180}}
+	turn := disclosureArrow(cx, IconOf(func() *core.SVG {
+		if env.RTL() {
+			return lucide.ChevronLeft()
 		}
-		return core.Style{}
-	}, Children: []core.Node{Icon(lucide.ChevronDown, iconSize, colors.Muted)}}
-	face := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(ButtonHeight + 4),
-		CornerRadius: RadiusControl, Transition: quick, Disabled: Dimmed()}.Merge(s)
-	look := func() core.Style {
-		return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()},
-			Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
-	}
+		return lucide.ChevronRight()
+	}, iconSize, colors.Muted), func() float32 {
+		switch {
+		case !is(c.Open):
+			return 0
+		case env.RTL():
+			return -90
+		}
+		return 90
+	})
 	children := append(append([]core.Node(nil), title...), turn)
-	if accordion {
-		return base.AccordionTrigger{Label: c.Text, Style: face, StyleFunc: look, Children: children}
+	indent := core.Points(2)
+	if c.Variant == CollapsibleArrowLeft {
+		children = append([]core.Node{turn}, title...)
+		indent = 22
 	}
-	return base.Button{Expanded: func() bool { return is(c.Open) }, Disabled: c.Disabled, Label: c.Text,
-		OnPress: func(core.PressEvent) {
-			if c.OnOpenChange != nil {
-				c.OnOpenChange(!core.Untracked(cx, func() bool { return is(c.Open) }))
-			}
-		},
-		Style: face, StyleFunc: look, Children: children}
+	return base.Collapsible{Open: c.Open, Reveal: func() bool { return true }, Style: c.Style, TestID: c.TestID,
+		Content: core.View{Style: core.Style{Padding: core.Edges{Top: 4, Bottom: 4, Left: indent}, Gap: 8}, Children: []core.Node{c.Content}},
+		Children: []core.Node{base.Button{Expanded: func() bool { return is(c.Open) }, Disabled: c.Disabled, Label: c.Text,
+			OnPress: func(core.PressEvent) {
+				if c.OnOpenChange != nil {
+					c.OnOpenChange(!core.Untracked(cx, func() bool { return is(c.Open) }))
+				}
+			},
+			Style: core.Style{Direction: core.Row, AlignSelf: core.AlignStart, AlignItems: core.AlignCenter, Gap: 4,
+				Padding: core.Edges{Top: 4, Right: 8, Bottom: 4, Left: 2}, CornerRadius: RadiusControl, Disabled: Dimmed()},
+			StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), Focus: FocusRing(cx, 2)} }, Children: children}}}
+}
+
+// disclosureArrow holds icon, turning it to the degrees it returns, in the
+// time a disclosure takes to open.
+func disclosureArrow(cx *core.Scope, icon core.Node, degrees func() float32) core.Node {
+	s := core.Style{FlexShrink: 0}
+	if !ReduceMotion(cx) {
+		s.Transition = core.Transition{Duration: 200 * time.Millisecond, Easing: core.EaseOut, Properties: core.TransitionTransform}
+	}
+	return core.View{Style: s, StyleFunc: func() core.Style { return core.Style{Transform: core.Transform{Rotate: degrees()}} },
+		Children: []core.Node{icon}}
 }
