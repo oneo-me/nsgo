@@ -65,3 +65,16 @@ func TestAppNames(t *testing.T) {
 		t.Errorf("appName with an argument: %v", err)
 	}
 }
+
+func TestApplePlistTakesTheProjectsEntries(t *testing.T) {
+	p := &project{Name: "App", ID: "dev.oneo.app"}
+	p.Apple.Info = map[string]string{"NSMicrophoneUsageDescription": "Dictate & send"}
+	path := filepath.Join(t.TempDir(), "Info.plist")
+	if err := writePlist(path, p, macPlist, ""); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(path)
+	if want := "<key>NSMicrophoneUsageDescription</key><string>Dictate &amp; send</string>"; !strings.Contains(string(data), want) {
+		t.Errorf("Info.plist lacks %q:\n%s", want, data)
+	}
+}

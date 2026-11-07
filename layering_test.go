@@ -20,6 +20,7 @@ var layers = []struct {
 	imports []string
 }{
 	{"internal/layout", nil},
+	{"microphone", nil},
 	{"internal/woff", nil},
 	{"internal/cldr/", nil},
 	{"internal/cldr", nil},

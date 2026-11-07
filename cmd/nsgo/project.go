@@ -91,6 +91,11 @@ type project struct {
 	Web struct {
 		Host string `yaml:"host"`
 	} `yaml:"web"`
+	// Apple is the macOS and iOS targets': Info holds string entries for
+	// their Info.plist, such as NSMicrophoneUsageDescription.
+	Apple struct {
+		Info map[string]string `yaml:"info"`
+	} `yaml:"apple"`
 	// Android is the Android target's: Permissions are the permissions
 	// its manifest asks for beyond the runtime's, such as
 	// REQUEST_INSTALL_PACKAGES, which a name without a dot is under

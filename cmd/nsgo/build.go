@@ -639,6 +639,9 @@ const plistHead = `<?xml version="1.0" encoding="UTF-8"?>
 	<key>CFBundlePackageType</key><string>APPL</string>
 	<key>CFBundleShortVersionString</key><string>{{.Version}}</string>
 	<key>CFBundleVersion</key><string>{{.BundleVersion}}</string>
+{{- range $key, $value := .Apple.Info}}
+	<key>{{html $key}}</key><string>{{html $value}}</string>
+{{- end}}
 `
 
 var macPlist = template.Must(template.New("mac").Parse(plistHead + `	<key>LSMinimumSystemVersion</key><string>11.0</string>
