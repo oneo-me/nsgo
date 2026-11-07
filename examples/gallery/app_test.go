@@ -495,6 +495,125 @@ func TestChatRetriesAFailure(t *testing.T) {
 	app.Find("text:fewer meetings next sprint")
 }
 
+func TestChatCallsATool(t *testing.T) {
+	app := startPhone(t)
+	openPhone(app, "AI Chat")
+	app.Press("label:Search the web >> nth=0")
+	app.Advance(20 * time.Second)
+	app.Find("text:Cold starts are roughly")
+	app.Press("role:button Worked for")
+	app.Press("role:button Ran 1 step")
+	app.Find("role:button Web search")
+}
+
+func TestChatWaitsForTheConnection(t *testing.T) {
+	app := startPhone(t)
+	openPhone(app, "AI Chat")
+	app.Press("label:Go offline")
+	app.Advance(time.Second)
+	app.Find("text:You're offline")
+	app.Advance(20 * time.Second)
+	app.Find("text:Tuesday, November 3")
+}
+
+func TestChatStopsAReply(t *testing.T) {
+	app := startPhone(t)
+	openPhone(app, "AI Chat")
+	app.Press("label:Tell me a short story")
+	app.Advance(2 * time.Second)
+	app.Press("role:button Stop")
+	app.Find("text:You stopped this reply")
+}
+
+// fakeCLI puts a CLI on PATH that runs script, reading the prompt first.
+func fakeCLI(t *testing.T, name, script string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("the fake CLI is a shell script")
+	}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, name), []byte("#!/bin/sh\ncat >/dev/null\n"+script+"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
+func TestChatRunsCodex(t *testing.T) {
+	fakeCLI(t, "codex", `echo '{"type":"item.completed","item":{"type":"agent_message","text":"Hello from Codex"}}'`)
+	app := startDesktop(t)
+	open(app, "AI Chat")
+	app.Find("text:Chat with your local Claude or Codex CLI")
+	app.Type("id:composer", "Hello")
+	app.Press("role:button Send")
+	app.WaitFor("text:Hello from Codex", 10*time.Second)
+	app.WaitFor("role:button Copy", 10*time.Second)
+}
+
+func TestChatRunsClaude(t *testing.T) {
+	fakeCLI(t, "claude", `echo '{"type":"stream_event","event":{"delta":{"type":"text_delta","text":"Hello from "}}}'
+echo '{"type":"stream_event","event":{"delta":{"type":"text_delta","text":"Claude"}}}'
+echo '{"type":"result","result":"Hello from Claude"}'`)
+	app := startDesktop(t)
+	open(app, "AI Chat")
+	app.Press("text:Codex")
+	app.Press("text:Claude")
+	app.Type("id:composer", "Hello")
+	app.Press("role:button Send")
+	app.WaitFor("text:Hello from Claude", 10*time.Second)
+}
+
+func TestChatRetriesAFailedCLI(t *testing.T) {
+	fakeCLI(t, "codex", `echo '{"type":"error","message":"not signed in"}'`)
+	app := startDesktop(t)
+	open(app, "AI Chat")
+	app.Type("id:composer", "Hello")
+	app.Press("role:button Send")
+	app.WaitFor("text:not signed in", 10*time.Second)
+	fakeCLI(t, "codex", `echo '{"type":"item.completed","item":{"type":"agent_message","text":"Back again"}}'`)
+	app.Press("role:button Retry")
+	app.WaitFor("text:Back again", 10*time.Second)
+}
+
+func TestChatStopsACLI(t *testing.T) {
+	fakeCLI(t, "codex", `exec sleep 60`)
+	app := startDesktop(t)
+	open(app, "AI Chat")
+	app.Type("id:composer", "Hello")
+	app.Press("role:button Send")
+	app.Press("role:button Stop")
+	app.Find("text:You stopped this reply")
+}
+
+func TestConversationShowsItsParts(t *testing.T) {
+	app := startPhone(t)
+	openPhone(app, "Conversation")
+	app.Find("text:error 529")
+	app.Find("text:You stopped this reply")
+	app.Find("text:Waiting for a connection")
+	app.Find("text:Wrote 5 files")
+	app.Press("text:Show more")
+	app.Find("text:timeline.png")
+
+	app.Find("id:conversation-panel")
+	app.Press("role:button Remove file >> nth=0")
+	app.Find("role:button Remove file")
+	app.Find("role:button Stop")
+	app.Press("role:button Stop")
+	app.Find("role:button Send")
+	app.Press("id:conversation-model")
+	app.Press("role:button Deep")
+	app.Find("id:conversation-model")
+	app.Find("text:main")
+}
+
+func TestConversationShowsItsToolbarOnADesktop(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "Conversation")
+	app.Find("text:Standard")
+	app.Find("text:Worktree")
+	app.Find("text:MacBook Pro")
+}
+
 func TestListsAndScrolling(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Lists")

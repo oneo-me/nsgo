@@ -266,6 +266,7 @@ var Parameters = map[string][]string{
 	"StocksShares":            {"count"},
 	"StocksOfBuyingPower":     {"percent", "power"},
 	"StocksPlacedDetail":      {"quantity", "code", "price"},
+	"ChatFilesWritten":        {"count"},
 	"ChatInstallCli":          {"provider", "why", "command"},
 	"ChatThinking":            {"seconds"},
 	"ChatThoughtFor":          {"seconds"},
@@ -358,6 +359,8 @@ type Translation struct {
 	DemoStocksDetail                             func() string
 	DemoAIChat                                   func() string
 	DemoAIChatDetail                             func() string
+	DemoConversation                             func() string
+	DemoConversationDetail                       func() string
 	DemoPhotos                                   func() string
 	DemoPhotosDetail                             func() string
 	DemoText                                     func() string
@@ -1712,6 +1715,14 @@ type Translation struct {
 	ChatGoodReply                                func() string
 	ChatBadReply                                 func() string
 	ChatASimulatedAssistantEveryReply            func() string
+	ChatFilesWritten                             func(count int) string
+	ChatFilesDescription                         func() string
+	ChatShowMore                                 func() string
+	ChatShowLess                                 func() string
+	ChatChooseModel                              func() string
+	ChatTierStandard                             func() string
+	ChatTierFast                                 func() string
+	ChatVoiceInput                               func() string
 	ChatChatWithYourLocalClaude                  func() string
 	ChatHowCanIHelp                              func() string
 	ChatLoadALongConversation                    func() string
@@ -2337,6 +2348,8 @@ const (
 	textDemoStocksDetail
 	textDemoAIChat
 	textDemoAIChatDetail
+	textDemoConversation
+	textDemoConversationDetail
 	textDemoPhotos
 	textDemoPhotosDetail
 	textDemoText
@@ -3633,6 +3646,13 @@ const (
 	textChatGoodReply
 	textChatBadReply
 	textChatASimulatedAssistantEveryReply
+	textChatFilesDescription
+	textChatShowMore
+	textChatShowLess
+	textChatChooseModel
+	textChatTierStandard
+	textChatTierFast
+	textChatVoiceInput
 	textChatChatWithYourLocalClaude
 	textChatHowCanIHelp
 	textChatLoadALongConversation
@@ -4211,6 +4231,8 @@ var texts = map[string]*[numTexts]string{
 		"A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms",
 		"AI Chat",
 		"Streaming replies with reasoning, tools and attachments",
+		"Conversation",
+		"A conversation with its composer and toolbar",
 		"Photos",
 		"A long recycled list: images, pull to refresh, paging",
 		"Text",
@@ -5507,6 +5529,13 @@ var texts = map[string]*[numTexts]string{
 		"Good reply",
 		"Bad reply",
 		"A simulated assistant: every reply is scripted and streamed locally.",
+		"Ready to review",
+		"Show more",
+		"Show less",
+		"Choose a model",
+		"Standard",
+		"Fast",
+		"Voice input",
 		"Chat with your local Claude or Codex CLI. Sign in to the CLI in a terminal first.",
 		"How can I help?",
 		"Load a long conversation",
@@ -6080,6 +6109,8 @@ var texts = map[string]*[numTexts]string{
 		"قائمة متابعة حية وسهم: شموع وعمق وشريط صفقات، بتحديث كل 50 مللي ثانية",
 		"دردشة الذكاء الاصطناعي",
 		"ردود متدفقة مع استدلال وأدوات ومرفقات",
+		"محادثة",
+		"محتوى المحادثة ومربع الرسالة وشريط الأدوات",
 		"الصور",
 		"قائمة طويلة بخلايا معاد استخدامها: صور، سحب للتحديث، تحميل الصفحات",
 		"النص",
@@ -7376,6 +7407,13 @@ var texts = map[string]*[numTexts]string{
 		"رد جيد",
 		"رد سيئ",
 		"مساعد محاكى: كل رد مكتوب مسبقًا ويُبث محليًا.",
+		"جاهزة للمراجعة",
+		"عرض المزيد",
+		"عرض أقل",
+		"اختر نموذجًا",
+		"قياسي",
+		"سريع",
+		"إدخال صوتي",
 		"تحدث مع Claude أو Codex CLI المحلي. سجّل الدخول إلى CLI في طرفية أولًا.",
 		"كيف يمكنني المساعدة؟",
 		"تحميل محادثة طويلة",
@@ -7949,6 +7987,8 @@ var texts = map[string]*[numTexts]string{
 		"实时自选股和个股：K 线、深度、成交明细，每 50 毫秒更新一次",
 		"AI 聊天",
 		"流式回复，带推理、工具和附件",
+		"对话",
+		"对话内容、消息输入框和底部工具栏",
 		"照片",
 		"复用单元格的长列表：图片、下拉刷新、分页",
 		"文本",
@@ -9245,6 +9285,13 @@ var texts = map[string]*[numTexts]string{
 		"回复不错",
 		"回复不好",
 		"模拟的助手：每条回复都是预先写好、在本地流式输出的。",
+		"可以查看了",
+		"显示更多",
+		"收起",
+		"选择模型",
+		"标准",
+		"快速",
+		"语音输入",
 		"与本机的 Claude 或 Codex CLI 聊天。请先在终端中登录 CLI。",
 		"有什么可以帮你？",
 		"加载一段很长的对话",
@@ -9818,6 +9865,8 @@ var texts = map[string]*[numTexts]string{
 		"即時自選股和個股：K 線、深度、成交明細，每 50 毫秒更新一次",
 		"AI 聊天",
 		"流式回覆，帶推理、工具和附件",
+		"對話",
+		"對話內容、訊息輸入框和底部工具列",
 		"照片",
 		"複用單元格的長列表：圖片、下拉重新整理、分頁",
 		"文本",
@@ -11114,6 +11163,13 @@ var texts = map[string]*[numTexts]string{
 		"回覆不錯",
 		"回覆不好",
 		"模擬的助手：每條回覆都是預先寫好、在本地流式輸出的。",
+		"可以檢視了",
+		"顯示更多",
+		"收合",
+		"選擇模型",
+		"標準",
+		"快速",
+		"語音輸入",
 		"與本機的 Claude 或 Codex CLI 聊天。請先在終端中登入 CLI。",
 		"有什麼可以幫你？",
 		"載入一段很長的對話",
@@ -11798,6 +11854,12 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoAIChatDetail != nil {
 		st[textDemoAIChatDetail] = t.DemoAIChatDetail()
+	}
+	if t.DemoConversation != nil {
+		st[textDemoConversation] = t.DemoConversation()
+	}
+	if t.DemoConversationDetail != nil {
+		st[textDemoConversationDetail] = t.DemoConversationDetail()
 	}
 	if t.DemoPhotos != nil {
 		st[textDemoPhotos] = t.DemoPhotos()
@@ -15861,6 +15923,30 @@ func Supply(lang string, t Translation) {
 	if t.ChatASimulatedAssistantEveryReply != nil {
 		st[textChatASimulatedAssistantEveryReply] = t.ChatASimulatedAssistantEveryReply()
 	}
+	if t.ChatFilesWritten != nil {
+		s.ChatFilesWritten = t.ChatFilesWritten
+	}
+	if t.ChatFilesDescription != nil {
+		st[textChatFilesDescription] = t.ChatFilesDescription()
+	}
+	if t.ChatShowMore != nil {
+		st[textChatShowMore] = t.ChatShowMore()
+	}
+	if t.ChatShowLess != nil {
+		st[textChatShowLess] = t.ChatShowLess()
+	}
+	if t.ChatChooseModel != nil {
+		st[textChatChooseModel] = t.ChatChooseModel()
+	}
+	if t.ChatTierStandard != nil {
+		st[textChatTierStandard] = t.ChatTierStandard()
+	}
+	if t.ChatTierFast != nil {
+		st[textChatTierFast] = t.ChatTierFast()
+	}
+	if t.ChatVoiceInput != nil {
+		st[textChatVoiceInput] = t.ChatVoiceInput()
+	}
 	if t.ChatChatWithYourLocalClaude != nil {
 		st[textChatChatWithYourLocalClaude] = t.ChatChatWithYourLocalClaude()
 	}
@@ -17939,6 +18025,22 @@ func DemoAIChatDetail(cx *core.Scope) string { return For(cx).DemoAIChatDetail()
 // DemoAIChatDetail says "Streaming replies with reasoning, tools and attachments"
 // in the language of msgs.
 func (msgs Messages) DemoAIChatDetail() string { return msgs.text(textDemoAIChatDetail) }
+
+// DemoConversation says "Conversation"
+// in the language the app shows under cx.
+func DemoConversation(cx *core.Scope) string { return For(cx).DemoConversation() }
+
+// DemoConversation says "Conversation"
+// in the language of msgs.
+func (msgs Messages) DemoConversation() string { return msgs.text(textDemoConversation) }
+
+// DemoConversationDetail says "A conversation with its composer and toolbar"
+// in the language the app shows under cx.
+func DemoConversationDetail(cx *core.Scope) string { return For(cx).DemoConversationDetail() }
+
+// DemoConversationDetail says "A conversation with its composer and toolbar"
+// in the language of msgs.
+func (msgs Messages) DemoConversationDetail() string { return msgs.text(textDemoConversationDetail) }
 
 // DemoPhotos says "Photos"
 // in the language the app shows under cx.
@@ -30679,6 +30781,135 @@ func ChatASimulatedAssistantEveryReply(cx *core.Scope) string {
 func (msgs Messages) ChatASimulatedAssistantEveryReply() string {
 	return msgs.text(textChatASimulatedAssistantEveryReply)
 }
+
+// ChatFilesWritten says "{count, plural, one {Wrote # file} other {Wrote # files}}"
+// in the language the app shows under cx.
+func ChatFilesWritten(cx *core.Scope, count int) string { return For(cx).ChatFilesWritten(count) }
+
+// ChatFilesWritten says "{count, plural, one {Wrote # file} other {Wrote # files}}"
+// in the language of msgs.
+func (msgs Messages) ChatFilesWritten(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatFilesWritten(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChatFilesWritten; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			switch i18n.Cardinal("en", float64(count)) {
+			case i18n.One:
+				b.WriteString("Wrote ")
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" file")
+			default:
+				b.WriteString("Wrote ")
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" files")
+			}
+			return b.String()
+		case "ar":
+			var b strings.Builder
+			switch i18n.Cardinal("ar", float64(count)) {
+			case i18n.Zero:
+				b.WriteString("لم تتم كتابة ملفات")
+			case i18n.One:
+				b.WriteString("تمت كتابة ملف واحد")
+			case i18n.Two:
+				b.WriteString("تمت كتابة ملفين")
+			case i18n.Few:
+				b.WriteString("تمت كتابة ")
+				b.WriteString(i18n.FormatNumber("ar", float64(count)))
+				b.WriteString(" ملفات")
+			case i18n.Many:
+				b.WriteString("تمت كتابة ")
+				b.WriteString(i18n.FormatNumber("ar", float64(count)))
+				b.WriteString(" ملفًا")
+			default:
+				b.WriteString("تمت كتابة ")
+				b.WriteString(i18n.FormatNumber("ar", float64(count)))
+				b.WriteString(" ملف")
+			}
+			return b.String()
+		case "zh-Hans":
+			var b strings.Builder
+			switch i18n.Cardinal("zh-Hans", float64(count)) {
+			default:
+				b.WriteString("写入了 ")
+				b.WriteString(i18n.FormatNumber("zh-Hans", float64(count)))
+				b.WriteString(" 个文件")
+			}
+			return b.String()
+		case "zh-Hant":
+			var b strings.Builder
+			switch i18n.Cardinal("zh-Hant", float64(count)) {
+			default:
+				b.WriteString("寫入了 ")
+				b.WriteString(i18n.FormatNumber("zh-Hant", float64(count)))
+				b.WriteString(" 個檔案")
+			}
+			return b.String()
+		}
+	}
+}
+
+// ChatFilesDescription says "Ready to review"
+// in the language the app shows under cx.
+func ChatFilesDescription(cx *core.Scope) string { return For(cx).ChatFilesDescription() }
+
+// ChatFilesDescription says "Ready to review"
+// in the language of msgs.
+func (msgs Messages) ChatFilesDescription() string { return msgs.text(textChatFilesDescription) }
+
+// ChatShowMore says "Show more"
+// in the language the app shows under cx.
+func ChatShowMore(cx *core.Scope) string { return For(cx).ChatShowMore() }
+
+// ChatShowMore says "Show more"
+// in the language of msgs.
+func (msgs Messages) ChatShowMore() string { return msgs.text(textChatShowMore) }
+
+// ChatShowLess says "Show less"
+// in the language the app shows under cx.
+func ChatShowLess(cx *core.Scope) string { return For(cx).ChatShowLess() }
+
+// ChatShowLess says "Show less"
+// in the language of msgs.
+func (msgs Messages) ChatShowLess() string { return msgs.text(textChatShowLess) }
+
+// ChatChooseModel says "Choose a model"
+// in the language the app shows under cx.
+func ChatChooseModel(cx *core.Scope) string { return For(cx).ChatChooseModel() }
+
+// ChatChooseModel says "Choose a model"
+// in the language of msgs.
+func (msgs Messages) ChatChooseModel() string { return msgs.text(textChatChooseModel) }
+
+// ChatTierStandard says "Standard"
+// in the language the app shows under cx.
+func ChatTierStandard(cx *core.Scope) string { return For(cx).ChatTierStandard() }
+
+// ChatTierStandard says "Standard"
+// in the language of msgs.
+func (msgs Messages) ChatTierStandard() string { return msgs.text(textChatTierStandard) }
+
+// ChatTierFast says "Fast"
+// in the language the app shows under cx.
+func ChatTierFast(cx *core.Scope) string { return For(cx).ChatTierFast() }
+
+// ChatTierFast says "Fast"
+// in the language of msgs.
+func (msgs Messages) ChatTierFast() string { return msgs.text(textChatTierFast) }
+
+// ChatVoiceInput says "Voice input"
+// in the language the app shows under cx.
+func ChatVoiceInput(cx *core.Scope) string { return For(cx).ChatVoiceInput() }
+
+// ChatVoiceInput says "Voice input"
+// in the language of msgs.
+func (msgs Messages) ChatVoiceInput() string { return msgs.text(textChatVoiceInput) }
 
 // ChatChatWithYourLocalClaude says "Chat with your local Claude or Codex CLI. Sign in to the CLI in a terminal first."
 // in the language the app shows under cx.
