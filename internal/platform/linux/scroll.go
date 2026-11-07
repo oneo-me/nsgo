@@ -11,10 +11,9 @@ import (
 
 // Scroll behavior: content insets widen the offsets, NoScroll keeps the
 // wheel and the bar out, and snapping views settle on a snap point once
-// the wheel rests or the bar is let go, as NSH's desktops do. Views
-// scroll with the wheel, the touchpad and the bar only, so bounces,
-// deceleration, pull to refresh, the keyboard props and zooming do
-// nothing here.
+// the wheel rests or the bar is let go, as NSH's desktops do. A touchpad
+// glides on as its fingers lift (wheelGlide), as a finger's drag does
+// (touchscroll.go). The keyboard props and zooming do nothing here.
 
 // scrollEvent reports kind on scroll view v at its offset, if it listens.
 func (w *window) scrollEvent(v *view, kind driver.EventKind) {
@@ -36,6 +35,44 @@ func (w *window) interruptScroll(v *view) {
 func (w *window) wheelTurned(v *view, d driver.Points) {
 	v.wheel.Turn(time.Now(), d)
 	w.animate(v)
+}
+
+// wheelGlide lets the view the touchpad moved glide on at (vx, vy) points
+// per millisecond as the fingers lift, stopping at the edge it reaches:
+// touchpads do not bounce here. Snapping views settle once the wheel rests
+// instead.
+func (w *window) wheelGlide(vx, vy float32) {
+	v := w.wheeled
+	if v == nil || v.deleted || v.scroll.Behavior.Snaps() || w.env.ReduceMotion {
+		return
+	}
+	velocity := vy
+	if v.scroll.Horizontal {
+		velocity = vx
+	}
+	c := v.scroll
+	c.Behavior.NoBounces = true
+	lo, hi := scrollbar.Limits(&c, v.frame.Size, v.size, v.refreshing)
+	m := scrollbar.Release(&c, v.frame.Size, v.size, v.offset, velocity, lo, hi, time.Now())
+	if !m.Moves() {
+		return
+	}
+	v.wheel = scrollbar.Wheel{}
+	v.glide, w.wheelMotion = &m, &m
+	w.scrollEvent(v, driver.EventMomentumStart)
+	w.animate(v)
+}
+
+// stopWheelGlide stops the touchpad's glide where it is; the view rests
+// as it does when the wheel stops.
+func (w *window) stopWheelGlide() {
+	v := w.wheeled
+	if v == nil || v.deleted || v.glide == nil || v.glide != w.wheelMotion {
+		return
+	}
+	v.glide, w.wheelMotion = nil, nil
+	w.scrollEvent(v, driver.EventMomentumEnd)
+	w.wheelTurned(v, 0)
 }
 
 // restScroll follows v coming to rest, after a drag that set nothing in

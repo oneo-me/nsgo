@@ -13,21 +13,23 @@ var (
 	cbRun          uintptr
 	cbWindowState  uintptr
 
-	cbClickPressed  uintptr
-	cbClickReleased uintptr
-	cbMotion        uintptr
-	cbLeave         uintptr
-	cbDragBegin     uintptr
-	cbDragUpdate    uintptr
-	cbDragEnd       uintptr
-	cbZoomChanged   uintptr
-	cbRotateChanged uintptr
-	cbGestureEnd    uintptr
-	cbScroll        uintptr
-	cbKeyPressed    uintptr
-	cbKeyReleased   uintptr
-	cbModifiers     uintptr
-	cbPinchTimeout  uintptr
+	cbClickPressed     uintptr
+	cbClickReleased    uintptr
+	cbMotion           uintptr
+	cbLeave            uintptr
+	cbDragBegin        uintptr
+	cbDragUpdate       uintptr
+	cbDragEnd          uintptr
+	cbZoomChanged      uintptr
+	cbRotateChanged    uintptr
+	cbGestureEnd       uintptr
+	cbScroll           uintptr
+	cbScrollBegin      uintptr
+	cbScrollDecelerate uintptr
+	cbKeyPressed       uintptr
+	cbKeyReleased      uintptr
+	cbModifiers        uintptr
+	cbPinchTimeout     uintptr
 
 	cbEntryChanged  uintptr
 	cbEntryActivate uintptr
@@ -84,6 +86,8 @@ func init() {
 	cbRotateChanged = newCallback(rotateChangedCallback)
 	cbGestureEnd = newCallback(gestureEndCallback)
 	cbScroll = newCallback(scrollCallback)
+	cbScrollBegin = newCallback(scrollBeginCallback)
+	cbScrollDecelerate = newCallback(scrollDecelerateCallback)
 	cbKeyPressed = newCallback(keyPressedCallback)
 	cbKeyReleased = newCallback(keyReleasedCallback)
 	cbModifiers = newCallback(modifiersCallback)

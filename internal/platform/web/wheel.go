@@ -9,18 +9,26 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 )
 
-// Wheels and touchpads scroll as NSH's do (nsh.js's wheel): the page moves
-// a scroll view by the event's delta itself, rather than leaving it to the
-// browser, whose step differs with the display's scale (a wheel step moved
-// the DataTable twice as far as NSH's at 2x). A scroll goes to the
-// innermost scroll view along its axis that can move that way (a vertical
-// wheel scrolls a horizontal view when no vertical one can) and stays on it
-// until events stop for wheelLockGap. Notches glide, touchpads move with
-// the fingers. Views that snap are left to the browser's CSS snapping.
+// Wheels scroll as NSH's do (nsh.js's wheel): the page moves a scroll view
+// by the event's delta itself, rather than leaving it to the browser, whose
+// step differs with the display's scale (a wheel step moved the DataTable
+// twice as far as NSH's at 2x). A scroll goes to the innermost scroll view
+// along its axis that can move that way (a vertical wheel scrolls a
+// horizontal view when no vertical one can) and stays on it until events
+// stop for wheelLockGap. Notches glide.
+//
+// Touchpads depart from NSH's: a scroll that starts small along the view's
+// axis is left to the browser, whose scrolling has the system's inertia and
+// bounces where the platform has them and runs off the main thread, which
+// events the page moves by cannot match. A scroll no view can take goes to
+// the browser too, which bounces at the edges only there. It decides as the scroll starts, since browsers let a page
+// cancel a scroll's events only from its first. Views that snap are left to
+// the browser's CSS snapping.
 
 const (
 	wheelLockGap = 200 // ms between the events of one scroll
 	glideSettle  = 200 // ms without input before a glide's scroll ends
+	wheelNotch   = 40  // points a notch moves at least; a touchpad starts below it
 )
 
 // wheelLock is the scroll view a wheel scroll goes to, and when its last
@@ -28,6 +36,8 @@ const (
 type wheelLock struct {
 	v *view
 	t float64
+	// browser is set when the browser scrolls it (a touchpad's).
+	browser bool
 }
 
 // glide moves a scroll view to where the wheel sends it a part of the way
@@ -68,11 +78,14 @@ func (s *surface) wheelScroll(e js.Value) {
 		if v == nil || v.snaps() {
 			return // the page around, or the browser's snapping
 		}
-		lock = &wheelLock{v: v}
+		lock = &wheelLock{v: v, browser: v.sc.glide == nil && startsTouchpad(v, e, dx, dy)}
 		g.scroll = lock
 	}
-	e.Call("preventDefault")
 	lock.t = t
+	if lock.browser {
+		return
+	}
+	e.Call("preventDefault")
 	v := lock.v
 	if v.sc.config.Horizontal {
 		if dx == 0 {
@@ -83,7 +96,15 @@ func (s *surface) wheelScroll(e js.Value) {
 		dx = 0
 	}
 	d := dx + dy
-	s.glide(v, dx, dy, e.Get("deltaMode").Int() != 0 || math.Abs(d) >= 40)
+	s.glide(v, dx, dy, e.Get("deltaMode").Int() != 0 || math.Abs(d) >= wheelNotch)
+}
+
+// startsTouchpad reports whether a scroll of (dx, dy) starting on v is a
+// touchpad's the browser can do: small, in pixels and along v's axis. Mice
+// that send small deltas, as macOS's do, are the system's to scroll too.
+func startsTouchpad(v *view, e js.Value, dx, dy float64) bool {
+	return e.Get("deltaMode").Int() == 0 && max(math.Abs(dx), math.Abs(dy)) < wheelNotch &&
+		v.sc.config.Horizontal == (math.Abs(dx) > math.Abs(dy))
 }
 
 // wheelTarget is the scroll view around el that a scroll of (dx, dy)
@@ -129,8 +150,8 @@ func (v *view) canScroll(d float64) bool {
 // snaps reports whether scroll view v stops at snap points.
 func (v *view) snaps() bool { return len(v.sc.markers) > 0 }
 
-// glide moves v by (dx, dy), gliding there when smooth, and ends its
-// scroll once no more input comes for glideSettle.
+// glide moves v by (dx, dy), gliding there when smooth or while it already
+// glides, and ends its scroll once no more input comes for glideSettle.
 func (s *surface) glide(v *view, dx, dy float64, smooth bool) {
 	sc := v.sc
 	a := sc.glide
@@ -151,14 +172,11 @@ func (s *surface) glide(v *view, dx, dy float64, smooth bool) {
 	a.to[0] = min(max(a.to[0]+dx, 0), v.el.Get("scrollWidth").Float()-v.el.Get("clientWidth").Float())
 	a.to[1] = min(max(a.to[1]+dy, 0), v.el.Get("scrollHeight").Float()-v.el.Get("clientHeight").Float())
 	switch {
+	case a.frame.Truthy():
 	case !smooth:
-		if a.frame.Truthy() {
-			js.Global().Call("cancelAnimationFrame", a.frame)
-			a.frame = js.Undefined()
-		}
 		v.el.Set("scrollLeft", a.to[0])
 		v.el.Set("scrollTop", a.to[1])
-	case !a.frame.Truthy():
+	default:
 		a.last = now()
 		// Where the glide is: browsers round the offsets they are given.
 		a.at = [2]float64{v.el.Get("scrollLeft").Float(), v.el.Get("scrollTop").Float()}

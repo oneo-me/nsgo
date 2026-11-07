@@ -359,13 +359,46 @@ func scrollCallback(controller uintptr, dx, dy float64, data uintptr) int32 {
 	if w.controlAt(gtkWidgetPick(w.surface, float64(at.X), float64(at.Y), gtkPickDefault)) != nil {
 		return 0 // the page or the controls scroll themselves
 	}
-	w.wheelEvent(gtkEventControllerGetCurrentEventState(controller), at, dx, dy)
+	w.wheelEvent(gtkEventControllerGetCurrentEventState(controller), at, dx, dy, controllerPoints(controller))
 	return 1
 }
 
+// scrollBeginCallback follows fingers landing on the touchpad, which stop
+// its glide as a finger on a moving list does.
+func scrollBeginCallback(_, data uintptr) {
+	if w := windowOf(data); w != nil {
+		w.stopWheelGlide()
+	}
+}
+
+// scrollDecelerateCallback follows a touchpad's fingers lifting at a
+// velocity, which GTK gives in points per second, though it documents
+// milliseconds.
+func scrollDecelerateCallback(controller uintptr, vx, vy float64, data uintptr) {
+	w := windowOf(data)
+	if w == nil || !controllerPoints(controller) {
+		return
+	}
+	state := gtkEventControllerGetCurrentEventState(controller)
+	if state&gdkControl != 0 {
+		return
+	}
+	if state&gdkShift != 0 {
+		vx, vy = vy, 0
+	}
+	w.wheelGlide(float32(vx/1000), float32(vy/1000))
+}
+
+// controllerPoints reports whether a scroll controller's events come in
+// points, as a touchpad's do. GTK says so from 4.8.
+func controllerPoints(controller uintptr) bool {
+	return gtkEventControllerScrollGetUnit != nil && gtkEventControllerScrollGetUnit(controller) == gdkScrollUnitSurface
+}
+
 // wheelEvent follows a wheel turn with modifiers state at surface point
-// at: a pinch with Control held, else a scroll.
-func (w *window) wheelEvent(state uint32, at driver.Point, dx, dy float64) {
+// at: a pinch with Control held, else a scroll. inPoints is set when GTK
+// says the deltas are points, as a touchpad's are.
+func (w *window) wheelEvent(state uint32, at driver.Point, dx, dy float64, inPoints bool) {
 	if state&gdkControl != 0 {
 		w.wheelPinch(at, dy)
 		return
@@ -373,9 +406,10 @@ func (w *window) wheelEvent(state uint32, at driver.Point, dx, dy float64) {
 	if state&gdkShift != 0 {
 		dx, dy = dy, 0
 	}
-	// GTK's wheel turns come as whole units; a touchpad's as points.
+	// GTK's wheel turns come as whole units; a touchpad's as points, which
+	// only their size tells before 4.8.
 	notch := 48.0
-	if math.Abs(dx) <= 3 && math.Abs(dy) <= 3 {
+	if !inPoints && math.Abs(dx) <= 3 && math.Abs(dy) <= 3 {
 		dx, dy = dx*notch, dy*notch
 	}
 	w.wheel(at, dx, dy)
@@ -451,8 +485,10 @@ func (w *window) setupInputs() {
 	gSignalConnect(rotate, "end", cbGestureEnd, w.handle)
 	gtkWidgetAddController(w.surface, rotate)
 
-	scroll := gtkEventControllerScrollNew(3) // both axes
+	scroll := gtkEventControllerScrollNew(scrollBothAxes | scrollKinetic)
 	gSignalConnect(scroll, "scroll", cbScroll, w.handle)
+	gSignalConnect(scroll, "scroll-begin", cbScrollBegin, w.handle)
+	gSignalConnect(scroll, "decelerate", cbScrollDecelerate, w.handle)
 	gtkWidgetAddController(w.surface, scroll)
 
 	keys := gtkEventControllerKeyNew()
@@ -825,10 +861,14 @@ const (
 	gdkButtonRelease = 3
 	gdkScrollEvent   = 15
 	gdkScrollSmooth  = 4
-	gdkButtonsMask   = 1<<8 | 1<<9 | 1<<10
-	gdkButton1       = 1 << 8
-	gdkButton2       = 1 << 9
-	gdkButton3       = 1 << 10
+
+	scrollBothAxes       = 3 // GTK_EVENT_CONTROLLER_SCROLL_BOTH_AXES
+	scrollKinetic        = 8 // GTK_EVENT_CONTROLLER_SCROLL_KINETIC
+	gdkScrollUnitSurface = 1
+	gdkButtonsMask       = 1<<8 | 1<<9 | 1<<10
+	gdkButton1           = 1 << 8
+	gdkButton2           = 1 << 9
+	gdkButton3           = 1 << 10
 )
 
 // shieldCallback keeps from a hosted control (a page, a video's
@@ -900,7 +940,8 @@ func (w *window) shield(event uintptr) bool {
 			dx = 1
 		}
 		w.lastPointer = at
-		w.wheelEvent(gdkEventGetModifierState(event), at, dx, dy)
+		points := gdkScrollEventGetUnit != nil && gdkScrollEventGetUnit(event) == gdkScrollUnitSurface
+		w.wheelEvent(gdkEventGetModifierState(event), at, dx, dy, points)
 	}
 	return true
 }

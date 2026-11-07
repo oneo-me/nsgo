@@ -29,6 +29,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - Lists, trees, tables and sidebars have two looks, default and selected: no hover and no press. Only the rows of a popup that drops down, such as a menu or a select, follow the pointer.
 - Leave the pointer's look alone, as native apps do: pressables keep the platform's arrow, and `Style.Cursor` is for what the arrow cannot say, such as text fields and resize or scrub drags.
 - Keep a scroll bar against its container's edge: the scroll view fills the container and the padding goes on its content, never around the scroll view.
+- Everything that scrolls follows touchpads and touchscreens smoothly and glides on with inertia when let go, on every target and the web included: scroll through `Scroll`, `List` or the platform's own scrolling, never by stepping offsets from pointer or wheel events. Past an edge, follow the platform: a rubber band on macOS and iOS, its stretch on Android, a stop for touchpads on Windows and Linux, and whatever the browser does on the web.
 - A complex component takes a directory of its own, whose package may hold many files (`base/dock`, `ui/chat`), and drops the component's name from its API (`dock.Area`). Packages under `base` share code through `base/internal`.
 
 ## Working with the user

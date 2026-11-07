@@ -461,6 +461,7 @@ var (
 	gdkButtonEventGetButton      func(uintptr) uint32
 	gdkScrollEventGetDirection   func(uintptr) int32
 	gdkScrollEventGetDeltas      func(uintptr, *float64, *float64)
+	gdkScrollEventGetUnit        func(uintptr) int32 // from GTK 4.8
 )
 
 // bindWidget registers the bindings of NsgoView; bind calls it.
@@ -513,4 +514,7 @@ func bindWidget() {
 	gtk(&gdkButtonEventGetButton, "gdk_button_event_get_button")
 	gtk(&gdkScrollEventGetDirection, "gdk_scroll_event_get_direction")
 	gtk(&gdkScrollEventGetDeltas, "gdk_scroll_event_get_deltas")
+	if _, err := purego.Dlsym(gtkLib, "gdk_scroll_event_get_unit"); err == nil {
+		gtk(&gdkScrollEventGetUnit, "gdk_scroll_event_get_unit")
+	}
 }

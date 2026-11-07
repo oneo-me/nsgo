@@ -177,6 +177,10 @@ type window struct {
 	surfaceName    string
 	// touching is the touch that may drag a scroll view (touchscroll.go).
 	touching *touchScroll
+	// wheeled is the scroll view the last wheel turn moved, wheelMotion
+	// its glide after the touchpad's fingers lifted.
+	wheeled     *view
+	wheelMotion *scrollbar.Motion
 	// roles are the accessible roles of the views the batch being applied
 	// creates (access.go).
 	roles        map[driver.NodeID]int32
@@ -838,6 +842,7 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.setSticky(v, it.Sticky)
 		case driver.ItemScrollTo:
 			v.applied++
+			w.stopWheelGlide()
 			w.interruptScroll(v)
 			if it.Animated {
 				w.scrollAnimated(v, it.Point)
@@ -1031,6 +1036,7 @@ func (w *window) wheel(at driver.Point, dx, dy float64) {
 	if root == nil {
 		return
 	}
+	w.stopWheelGlide()
 	under := scrollsAt(root, at, nil)
 	for i := len(under) - 1; i >= 0; i-- {
 		v := under[i]
@@ -1052,6 +1058,7 @@ func (w *window) wheel(at driver.Point, dx, dy float64) {
 		from := v.offset
 		w.interruptScroll(v) // the wheel takes over
 		if w.scrollTo(v, offset) {
+			w.wheeled = v
 			w.wheelTurned(v, v.offset.X-from.X+v.offset.Y-from.Y)
 			return
 		}

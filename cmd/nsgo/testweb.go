@@ -295,11 +295,12 @@ func (p *webPage) do(op webOp, data *any) error {
 	case "scroll":
 		p.mouse("mouseMoved", op.X, op.Y, "none", 0, 0)
 		n := int(math.Max(math.Abs(op.DX), math.Abs(op.DY))/20) + 1
-		// The page moves by the wheel events' deltas, which Chrome gives
-		// it in points: its device pixels over the scale.
+		// Deltas this small start as a touchpad's, which Chrome scrolls
+		// itself, by what it is given here though it tells the page less:
+		// its device pixels over the scale.
 		for range n {
 			if _, err := p.call("Input.dispatchMouseEvent", map[string]any{"type": "mouseWheel", "x": op.X, "y": op.Y,
-				"deltaX": op.DX * webTestScale / float64(n), "deltaY": op.DY * webTestScale / float64(n)}); err != nil {
+				"deltaX": op.DX / float64(n), "deltaY": op.DY / float64(n)}); err != nil {
 				return err
 			}
 			time.Sleep(16 * time.Millisecond)

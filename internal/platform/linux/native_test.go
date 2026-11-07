@@ -631,6 +631,58 @@ func TestWheelScrollsContentAndClipsIt(t *testing.T) {
 	})
 }
 
+// TestTouchpadGlides lifts the touchpad's fingers at a velocity: the view
+// the turns moved glides on, slows down and rests, and fingers landing on
+// another scroll stop it where it is.
+func TestTouchpadGlides(t *testing.T) {
+	if testing.Short() {
+		t.Skip("opens a window")
+	}
+	title := "nsgo-native-" + t.Name()
+	app := func(cx *core.Scope) core.Node {
+		offset, ended := core.NewSignal(cx, driver.Points(0)), core.NewSignal(cx, 0)
+		cx.Effect(func() { cx.SetTitle(fmt.Sprintf("%s|%d|%v", title, ended.Get(), offset.Get())) })
+		return core.Scroll{HideIndicator: true, OnScroll: func(e core.ScrollEvent) { offset.Set(e.Offset.Y) },
+			OnMomentumEnd: func(core.ScrollEvent) { ended.Update(func(n int) int { return n + 1 }) },
+			Style:         core.Style{Width: driver.Pt(100), Height: driver.Pt(100)},
+			Children:      []core.Node{core.View{Style: core.Style{Height: driver.Pt(100000)}}}}
+	}
+	w := startTestWindow(t, app, Options{Title: title, Width: 100, Height: 100})
+	waitForTitle(t, w, title+"|0|0")
+	glide := func(stop bool) {
+		w.onLoop(t, func() {
+			w.wheel(driver.Point{X: 20, Y: 20}, 0, 10)
+			w.wheelGlide(0, 2)
+			if stop {
+				w.stopWheelGlide()
+			}
+		})
+	}
+	glide(false)
+	deadline := time.Now().Add(10 * time.Second)
+	for !strings.HasPrefix(w.titleOf(t), title+"|1|") {
+		if time.Now().After(deadline) {
+			t.Fatalf("window title = %q, want the glide ended", w.titleOf(t))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	var at float64
+	if _, err := fmt.Sscanf(strings.TrimPrefix(w.titleOf(t), title+"|1|"), "%g", &at); err != nil || at < 200 {
+		t.Fatalf("glided to %v (%v), want well past the turn's 10", at, err)
+	}
+	glide(true)
+	waitForTitle(t, w, fmt.Sprintf("%s|2|%v", title, at+10))
+	// At the end of the content it stops, with no bounce past it.
+	var end driver.Points
+	w.onLoop(t, func() {
+		v := w.wheeled
+		end = v.size.Height - v.frame.Size.Height
+		w.scrollTo(v, driver.Point{Y: end - 20})
+		w.wheelGlide(0, 2)
+	})
+	waitForTitle(t, w, fmt.Sprintf("%s|3|%v", title, end))
+}
+
 // TestWheelSettlesOnPagesWithinInsets turns the wheel over a paging
 // scroll view with a content inset: it settles on the next page once the
 // wheel rests, reporting the momentum, and the inset widens its offsets.

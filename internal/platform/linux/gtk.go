@@ -178,6 +178,7 @@ var (
 	gtkEventControllerKeyNew               func() uintptr
 	gtkEventControllerScrollNew            func(int32) uintptr
 	gtkEventControllerScrollSetFlags       func(uintptr, int32)
+	gtkEventControllerScrollGetUnit        func(uintptr) int32 // from GTK 4.8
 	gtkEventControllerFocusNew             func() uintptr
 	gtkEventControllerSetPropagationPhase  func(uintptr, int32)
 	gtkEventControllerGetCurrentEventState func(uintptr) uint32
@@ -501,6 +502,9 @@ func bind() {
 	purego.RegisterLibFunc(&gtkEventControllerKeyNew, gtkLib, "gtk_event_controller_key_new")
 	purego.RegisterLibFunc(&gtkEventControllerScrollNew, gtkLib, "gtk_event_controller_scroll_new")
 	purego.RegisterLibFunc(&gtkEventControllerScrollSetFlags, gtkLib, "gtk_event_controller_scroll_set_flags")
+	if _, err := purego.Dlsym(gtkLib, "gtk_event_controller_scroll_get_unit"); err == nil {
+		purego.RegisterLibFunc(&gtkEventControllerScrollGetUnit, gtkLib, "gtk_event_controller_scroll_get_unit")
+	}
 	purego.RegisterLibFunc(&gtkEventControllerFocusNew, gtkLib, "gtk_event_controller_focus_new")
 	purego.RegisterLibFunc(&gtkEventControllerSetPropagationPhase, gtkLib, "gtk_event_controller_set_propagation_phase")
 	purego.RegisterLibFunc(&gtkEventControllerGetCurrentEventState, gtkLib, "gtk_event_controller_get_current_event_state")

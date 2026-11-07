@@ -118,6 +118,7 @@ These items wait for community contributions, and a change to one backend record
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
+| Touchpad glides over hosted views on Linux | — | A touchpad scroll that reaches the surface through a hosted view's shield, whose events no scroll controller sees, glides on as the surface's own do |
 | Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `combobox`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |
 | Font lists on Windows | `text.md` | A character the first family of a `fontFamily` list lacks comes from the next that has it through an `IDWriteFontFallback`, rather than from the system's fallback, as elsewhere |
 | Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows work there |
