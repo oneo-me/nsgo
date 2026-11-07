@@ -22,6 +22,7 @@ These swap one form for another. Each is an [open question](../../ARCHITECTURE.m
 | `base.ContextMenu` | Popup on a secondary click | Sheet on a long press | `Env.Desktop` |
 | `ui.NumberInput` | Stacked chevrons, 22 points wide | A minus and a plus, each 28 points wide | `ui.Touch` |
 | `base/dock.Area` | Docked panels | One group at a time, docks as drawers | Width under 600 points, unless `Compact` is set |
+| `ui/commitgraph.View` | Refs, subject, author, hash and date | Refs and subject | Width under 560 points |
 
 `ui.MenuItem` rows follow the sheet: 26 points in a popup and 44 across a sheet, which also hides `Shortcut`.
 

@@ -104,6 +104,7 @@ func init() {
 		{"List", m.DemoList, m.DemoListDetail, lucide.List, eventsDemo(listCard, treeCard)},
 		{"Table", m.DemoTable, m.DemoTableDetail, lucide.Table, eventsDemo(plainCard(tableCard))},
 		{"DataTable", m.DemoDataTable, m.DemoDataTableDetail, lucide.Table, dataTableDemo},
+		{"CommitGraph", m.DemoCommitGraph, m.DemoCommitGraphDetail, lucide.GitGraph, commitGraphDemo},
 		{"Plot", m.DemoPlot, m.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
 	}
 	containers := []demo{
@@ -538,7 +539,7 @@ func (g *gallery) section(cx *core.Scope, i int) base.NavPage {
 
 // fixedDemos are the demos that fill the page rather than scroll under a
 // large title.
-var fixedDemos = map[string]bool{"Stocks": true, "AI Chat": true, "Conversation": true, "Photos": true, "Lists": true, "DataTable": true, "DiffView": true, "Dock": true,
+var fixedDemos = map[string]bool{"Stocks": true, "AI Chat": true, "Conversation": true, "Photos": true, "Lists": true, "DataTable": true, "CommitGraph": true, "DiffView": true, "Dock": true,
 	"Editor": true, "Plot": true, "Resizable": true, "Terminal": true, "TextView": true, "Physics": true, "Collapsing header": true}
 
 // largeTitle gives page p iOS's large title, over no background until the

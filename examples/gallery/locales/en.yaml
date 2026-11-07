@@ -1,6 +1,12 @@
 appName:
   message: Gallery
   description: The app's name, which its packages list it under in each language.
+commitGraphHistory:
+  message: "History"
+  description: What screen readers call the list of a repository's commits.
+commitGraphActivated:
+  message: "Activated"
+  description: The label of the commit a double click or Enter activated last.
 languageName:
   message: English
   description: This language's name in itself, as the language setting lists it.
@@ -63,6 +69,8 @@ demoWebViewAndVideo: "WebView and Video"
 demoWebViewAndVideoDetail: "Web views, video players and the app's own native views"
 demoOverlay: "Overlay"
 demoOverlayDetail: "Content on top of the screen, outside the box that clips it"
+demoCommitGraph: "CommitGraph"
+demoCommitGraphDetail: "A repository's commits beside the lines of their branches, with refs, merges that collapse and a selection"
 demoDataTable: "DataTable"
 demoDataTableDetail: "A million stocks of sixty columns, their quotes ticking every 33 ms, fixed columns, sorting, selection, resized and moved columns"
 demoDiffView: "DiffView"

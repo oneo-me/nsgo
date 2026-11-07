@@ -16,7 +16,8 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `core` | `nsh-core` | The app's API: elements, styles, Tailwind classes, themes, the reactive graph and regions, services; the shadow tree, layout and text preparation |
 | `base` | `nsh-base` | Unstyled components, a file each: controls, popups, navigation, panels and tables ([components](docs/architecture/components.md)) |
 | `base/datatable`, `base/dock`, `base/plot`, `base/toast` | `nsh-base` | Complex components, a package each: a virtualized table, a dock, charts and toasts |
-| `ui`, `ui/chat`, `ui/filepicker`, `ui/diff` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, Onevra's conversation, a file picker and `base/diff`'s styled form as packages ([themes](docs/architecture/themes.md#ui)) |
+| `base/commitgraph` | — | A Git history's revision graph: its layout, collapsed merges and a row's drawing ([commit graph](docs/architecture/components.md#commit-graph)) |
+| `ui`, `ui/chat`, `ui/filepicker`, `ui/diff`, `ui/commitgraph` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, Onevra's conversation, a file picker and the styled forms of `base/diff` and `base/commitgraph` as packages ([themes](docs/architecture/themes.md#ui)) |
 | `mobile`, `desktop` | `nsh/mobile`, `nsh/desktop` | What only phones have (the tab bar) and only desktops (the window, menus) |
 | `base/textview`, `base/textview/highlight` | `nsh-base`'s `text_view`, `highlight` | `TextView`: Markdown, HTML or the app's blocks, and its code highlighting ([text view](docs/architecture/textview.md)) |
 | `base/terminal`, `tools/libghostty` | — (Ghostty's libghostty-vt) | `Terminal` and its `View`: a program in a pseudo-terminal with libghostty-vt loaded through purego, and the command building the library ([terminal](docs/architecture/terminal.md)) |

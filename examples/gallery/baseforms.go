@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/oneo-me/nsgo/base"
+	"github.com/oneo-me/nsgo/base/commitgraph"
 	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 
@@ -305,6 +306,27 @@ func baseListForm(cx *core.Scope, last *core.Signal[string]) Form {
 				return bareTextf(cx, func() string { return demoPeople[row.Index()] })
 			},
 			Style: core.Style{Height: core.Pt(180)}, ItemStyle: bareRow, ItemStyleFunc: bareRowInk(cx)}
+	}}
+}
+
+func baseCommitGraphForm(cx *core.Scope, last *core.Signal[string]) Form {
+	tr := locales.For(cx)
+	selection := base.NewSelection(cx, false)
+	commits := demoHistory()
+	return Form{Name: "commitgraph.Graph", Fill: true, Stage: func() core.Node {
+		return core.Func(func(cx *core.Scope) core.Node {
+			history := commitgraph.NewHistory(cx, func() []commitgraph.Commit { return graphCommits(commits) }, selection)
+			return base.List{Label: tr.CommitGraphHistory(), Selection: selection, EstimatedSize: commitgraph.RowHeight, Count: history.Len,
+				Key:        func(i int) any { return history.At(i).Hash },
+				RowLabel:   func(i int) string { return commits[history.At(i).Index].Subject },
+				OnActivate: func(i int) { last.Set(commits[history.At(i).Index].Subject) },
+				Row: func(cx *core.Scope, row core.ListRow) core.Node {
+					item := func() commitgraph.Item { return history.At(row.Index()) }
+					return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter}, Children: []core.Node{commitgraph.Graph{History: history, Item: item},
+						bareTextf(cx, func() string { return commits[max(item().Index, 0)].Subject })}}
+				},
+				Style: core.Style{Height: core.Pt(180)}, ItemStyle: bareRow.Merge(core.Style{MinHeight: core.Pt(commitgraph.RowHeight), Height: core.Pt(commitgraph.RowHeight), CornerRadius: 0}), ItemStyleFunc: bareRowInk(cx)}
+		})
 	}}
 }
 

@@ -13,6 +13,12 @@ diffStage:
 diffDiscardChanges:
   message: "Discard Changes…"
   description: The button that, after asking, throws away the lines of a diff's change.
+collapseMerge:
+  message: "Collapse Merge"
+  description: What screen readers say of a commit graph's button hiding the commits a merge brings in.
+expandMerge:
+  message: "Expand Merge"
+  description: What screen readers say of a commit graph's button showing the commits a merge brings in.
 colorHue:
   message: "Hue"
   description: What a styled picker says for this part.

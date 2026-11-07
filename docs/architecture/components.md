@@ -1,6 +1,6 @@
 # Components
 
-`base` holds NSGo's built-in unstyled components, after NSH's `nsh-base` (`nsh/docs/dev/components.md`, `dock.md`): they own behavior, state and accessibility and take every style from the app. A component is a file of `base`, or a package under it when it is complex: `base/datatable`, `base/dock`, `base/plot` and `base/toast`. Read this before changing a component in `base`; [text view](textview.md) covers `base/textview`, and [editor](editor.md) `base/editor` and `base/diff`.
+`base` holds NSGo's built-in unstyled components, after NSH's `nsh-base` (`nsh/docs/dev/components.md`, `dock.md`): they own behavior, state and accessibility and take every style from the app. A component is a file of `base`, or a package under it when it is complex: `base/commitgraph`, `base/datatable`, `base/dock`, `base/plot` and `base/toast`. Read this before changing a component in `base`; [text view](textview.md) covers `base/textview`, and [editor](editor.md) `base/editor` and `base/diff`.
 
 A component whose root is a view of its own takes that view's `OnLayout` and `Tooltip`, as NSH's components take their host's.
 
@@ -146,6 +146,17 @@ Popups are placed against what their trigger holds (`Overlay.AnchorContent`), th
 | Selection and targets as objects with optional fields | `DataTableSelection` and `-1` for none | One comparable value |
 | The body moves with each commit, a frame or more after the content | The body also follows the scroll views on the main thread | The cells move with the content on every frame, not when a commit lands |
 | Rows made a viewport and a half ahead, the window moving near its edges | Half a viewport each way, moving with every row | Following the content, a commit per row costs nothing to see; rows made ahead were thrown away by a fast scroll before they showed, and on the web held it at 20 fps |
+
+## Commit graph
+
+`base/commitgraph` draws a Git history's revision graph, after Onegit's All Commits page; NSH has none. `Layout` is pure: it turns commits listed with each after its children into a `Row` each, the lines crossing it by column. A new line is numbered by the column it opens in, which gives it its color. Open lines stop at `MaxLines` (64): a commit past them keeps its row without a node or a merge's later parents. `Fold` says which commits a collapsed merge hides: those only its later parents reach. A commit something else shown descends from stays.
+
+- `History` is the state: which merges are collapsed, and a memo of the shown commits' rows, which folded parents leave. It moves a selection a merge hides to that merge.
+- `Graph` is one row's canvas, as wide as that row's columns. It fills lines, rings and discs in the app's `Color`, the text's when nil, and cuts rings' holes and chevrons out with `CompositeDestinationOut`, so a selected row shows through them without the graph knowing its background. Right to left it counts columns from the right, as the canvas does not mirror.
+- A merge's button is a `base.Button` over the canvas, for its label and Expanded state; it sits out of the Tab stops, as a tree's chevron does.
+- A row's lines meet the next row's only with no gap or vertical padding between them, which the app's list must keep.
+
+`ui/commitgraph.View` is `ui.List` with `Graph`, refs, subject, author, hash and date, in Onegit's palette. It keeps no second state: its `History` is `base/commitgraph`'s, and only the columns are its own.
 
 ## Resizable panels
 

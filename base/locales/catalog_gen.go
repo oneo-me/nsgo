@@ -49,6 +49,8 @@ type Translation struct {
 	DiffExpandAll             func() string
 	DiffStage                 func() string
 	DiffDiscardChanges        func() string
+	CollapseMerge             func() string
+	ExpandMerge               func() string
 	ColorHue                  func() string
 	ColorAlpha                func() string
 	ColorSaturationBrightness func() string
@@ -87,6 +89,8 @@ const (
 	textDiffExpandAll = iota
 	textDiffStage
 	textDiffDiscardChanges
+	textCollapseMerge
+	textExpandMerge
 	textColorHue
 	textColorAlpha
 	textColorSaturationBrightness
@@ -123,6 +127,8 @@ var texts = map[string]*[numTexts]string{
 		"Expand all",
 		"Stage",
 		"Discard Changes…",
+		"Collapse Merge",
+		"Expand Merge",
 		"Hue",
 		"Opacity",
 		"Saturation and brightness",
@@ -154,6 +160,8 @@ var texts = map[string]*[numTexts]string{
 		"全部展开",
 		"暂存",
 		"还原更改…",
+		"折叠合并",
+		"展开合并",
 		"色相",
 		"不透明度",
 		"饱和度和亮度",
@@ -230,6 +238,12 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DiffDiscardChanges != nil {
 		st[textDiffDiscardChanges] = t.DiffDiscardChanges()
+	}
+	if t.CollapseMerge != nil {
+		st[textCollapseMerge] = t.CollapseMerge()
+	}
+	if t.ExpandMerge != nil {
+		st[textExpandMerge] = t.ExpandMerge()
 	}
 	if t.ColorHue != nil {
 		st[textColorHue] = t.ColorHue()
@@ -419,6 +433,26 @@ func DiffDiscardChanges(cx *core.Scope) string { return For(cx).DiffDiscardChang
 // DiffDiscardChanges says "Discard Changes…"
 // in the language of msgs.
 func (msgs Messages) DiffDiscardChanges() string { return msgs.text(textDiffDiscardChanges) }
+
+// CollapseMerge says "Collapse Merge"
+// in the language the app shows under cx.
+//
+// What screen readers say of a commit graph's button hiding the commits a merge brings in.
+func CollapseMerge(cx *core.Scope) string { return For(cx).CollapseMerge() }
+
+// CollapseMerge says "Collapse Merge"
+// in the language of msgs.
+func (msgs Messages) CollapseMerge() string { return msgs.text(textCollapseMerge) }
+
+// ExpandMerge says "Expand Merge"
+// in the language the app shows under cx.
+//
+// What screen readers say of a commit graph's button showing the commits a merge brings in.
+func ExpandMerge(cx *core.Scope) string { return For(cx).ExpandMerge() }
+
+// ExpandMerge says "Expand Merge"
+// in the language of msgs.
+func (msgs Messages) ExpandMerge() string { return msgs.text(textExpandMerge) }
 
 // ColorHue says "Hue"
 // in the language the app shows under cx.

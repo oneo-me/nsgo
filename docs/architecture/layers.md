@@ -25,9 +25,11 @@ nsgo
 │
 ├── Components
 │   ├── ui                               Styled components on base
-│   │   └── chat                         A conversation
+│   │   ├── chat                         A conversation
+│   │   └── filepicker, diff, commitgraph  A file picker and styled forms
 │   ├── base                             Unstyled controls, popups, navigation
 │   │   ├── datatable, dock, plot, toast Complex components
+│   │   ├── commitgraph                  A Git history's revision graph
 │   │   ├── textview, editor, diff       Complex components with heavier dependencies
 │   │   ├── terminal                     A program in a pseudo-terminal
 │   │   ├── locales                      Their catalogs

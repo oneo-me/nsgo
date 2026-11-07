@@ -151,6 +151,8 @@ var Parameters = map[string][]string{
 // field leaves the message to the catalog.
 type Translation struct {
 	AppName                                      func() string
+	CommitGraphHistory                           func() string
+	CommitGraphActivated                         func() string
 	LanguageName                                 func() string
 	Language                                     func() string
 	LanguageSystem                               func() string
@@ -205,6 +207,8 @@ type Translation struct {
 	DemoWebViewAndVideoDetail                    func() string
 	DemoOverlay                                  func() string
 	DemoOverlayDetail                            func() string
+	DemoCommitGraph                              func() string
+	DemoCommitGraphDetail                        func() string
 	DemoDataTable                                func() string
 	DemoDataTableDetail                          func() string
 	DemoDiffView                                 func() string
@@ -2161,6 +2165,8 @@ var supplied = map[string]Translation{}
 // The indexes of the messages without arguments in texts.
 const (
 	textAppName = iota
+	textCommitGraphHistory
+	textCommitGraphActivated
 	textLanguageName
 	textLanguage
 	textLanguageSystem
@@ -2215,6 +2221,8 @@ const (
 	textDemoWebViewAndVideoDetail
 	textDemoOverlay
 	textDemoOverlayDetail
+	textDemoCommitGraph
+	textDemoCommitGraphDetail
 	textDemoDataTable
 	textDemoDataTableDetail
 	textDemoDiffView
@@ -4065,6 +4073,8 @@ const (
 var texts = map[string]*[numTexts]string{
 	"en": {
 		"Gallery",
+		"History",
+		"Activated",
 		"English",
 		"Language",
 		"Follow system",
@@ -4119,6 +4129,8 @@ var texts = map[string]*[numTexts]string{
 		"Web views, video players and the app's own native views",
 		"Overlay",
 		"Content on top of the screen, outside the box that clips it",
+		"CommitGraph",
+		"A repository's commits beside the lines of their branches, with refs, merges that collapse and a selection",
 		"DataTable",
 		"A million stocks of sixty columns, their quotes ticking every 33 ms, fixed columns, sorting, selection, resized and moved columns",
 		"DiffView",
@@ -5964,6 +5976,8 @@ var texts = map[string]*[numTexts]string{
 	},
 	"zh-Hans": {
 		"画廊",
+		"历史",
+		"已激活",
 		"简体中文",
 		"语言",
 		"跟随系统",
@@ -6018,6 +6032,8 @@ var texts = map[string]*[numTexts]string{
 		"网页视图、视频播放器和应用自己的原生视图",
 		"浮层",
 		"显示在屏幕最上层、超出裁剪它的容器的内容",
+		"提交图",
+		"仓库的提交与分支线条，引用标签、可折叠的合并和选择",
 		"数据表",
 		"一百万只股票、六十列，行情每 33 毫秒跳动，固定列、排序、选择、调整列宽和移动列",
 		"差异视图",
@@ -7899,6 +7915,12 @@ func Supply(lang string, t Translation) {
 	if t.AppName != nil {
 		st[textAppName] = t.AppName()
 	}
+	if t.CommitGraphHistory != nil {
+		st[textCommitGraphHistory] = t.CommitGraphHistory()
+	}
+	if t.CommitGraphActivated != nil {
+		st[textCommitGraphActivated] = t.CommitGraphActivated()
+	}
 	if t.LanguageName != nil {
 		st[textLanguageName] = t.LanguageName()
 	}
@@ -8060,6 +8082,12 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoOverlayDetail != nil {
 		st[textDemoOverlayDetail] = t.DemoOverlayDetail()
+	}
+	if t.DemoCommitGraph != nil {
+		st[textDemoCommitGraph] = t.DemoCommitGraph()
+	}
+	if t.DemoCommitGraphDetail != nil {
+		st[textDemoCommitGraphDetail] = t.DemoCommitGraphDetail()
 	}
 	if t.DemoDataTable != nil {
 		st[textDemoDataTable] = t.DemoDataTable()
@@ -13931,6 +13959,26 @@ func AppName(cx *core.Scope) string { return For(cx).AppName() }
 // in the language of msgs.
 func (msgs Messages) AppName() string { return msgs.text(textAppName) }
 
+// CommitGraphHistory says "History"
+// in the language the app shows under cx.
+//
+// What screen readers call the list of a repository's commits.
+func CommitGraphHistory(cx *core.Scope) string { return For(cx).CommitGraphHistory() }
+
+// CommitGraphHistory says "History"
+// in the language of msgs.
+func (msgs Messages) CommitGraphHistory() string { return msgs.text(textCommitGraphHistory) }
+
+// CommitGraphActivated says "Activated"
+// in the language the app shows under cx.
+//
+// The label of the commit a double click or Enter activated last.
+func CommitGraphActivated(cx *core.Scope) string { return For(cx).CommitGraphActivated() }
+
+// CommitGraphActivated says "Activated"
+// in the language of msgs.
+func (msgs Messages) CommitGraphActivated() string { return msgs.text(textCommitGraphActivated) }
+
 // LanguageName says "English"
 // in the language the app shows under cx.
 //
@@ -14376,6 +14424,22 @@ func DemoOverlayDetail(cx *core.Scope) string { return For(cx).DemoOverlayDetail
 // DemoOverlayDetail says "Content on top of the screen, outside the box that clips it"
 // in the language of msgs.
 func (msgs Messages) DemoOverlayDetail() string { return msgs.text(textDemoOverlayDetail) }
+
+// DemoCommitGraph says "CommitGraph"
+// in the language the app shows under cx.
+func DemoCommitGraph(cx *core.Scope) string { return For(cx).DemoCommitGraph() }
+
+// DemoCommitGraph says "CommitGraph"
+// in the language of msgs.
+func (msgs Messages) DemoCommitGraph() string { return msgs.text(textDemoCommitGraph) }
+
+// DemoCommitGraphDetail says "A repository's commits beside the lines of their branches, with refs, merges that collapse and a selection"
+// in the language the app shows under cx.
+func DemoCommitGraphDetail(cx *core.Scope) string { return For(cx).DemoCommitGraphDetail() }
+
+// DemoCommitGraphDetail says "A repository's commits beside the lines of their branches, with refs, merges that collapse and a selection"
+// in the language of msgs.
+func (msgs Messages) DemoCommitGraphDetail() string { return msgs.text(textDemoCommitGraphDetail) }
 
 // DemoDataTable says "DataTable"
 // in the language the app shows under cx.

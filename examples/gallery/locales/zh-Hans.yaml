@@ -1,4 +1,6 @@
 appName: 画廊
+commitGraphActivated: "已激活"
+commitGraphHistory: "历史"
 languageName: 简体中文
 language: 语言
 languageSystem: 跟随系统
@@ -53,6 +55,8 @@ demoWebViewAndVideo: "网页视图与视频"
 demoWebViewAndVideoDetail: "网页视图、视频播放器和应用自己的原生视图"
 demoOverlay: "浮层"
 demoOverlayDetail: "显示在屏幕最上层、超出裁剪它的容器的内容"
+demoCommitGraph: "提交图"
+demoCommitGraphDetail: "仓库的提交与分支线条，引用标签、可折叠的合并和选择"
 demoDataTable: "数据表"
 demoDataTableDetail: "一百万只股票、六十列，行情每 33 毫秒跳动，固定列、排序、选择、调整列宽和移动列"
 demoDiffView: "差异视图"
