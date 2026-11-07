@@ -2,7 +2,7 @@ package base
 
 import "github.com/oneo-me/nsgo/core"
 
-// Selection is the rows a Tree or ui.List has chosen, by key, and the row
+// Selection is the rows a Tree or a List has chosen, by key, and the row
 // its keyboard cursor is on. The app makes it with NewSelection and keeps
 // it with the rest of its state: it reads it as it reads a signal, and
 // sets it as the list does.

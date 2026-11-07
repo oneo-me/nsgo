@@ -240,15 +240,12 @@ var listViewports = map[string]core.ListViewport{"own": core.ListViewportOwn, "p
 
 func listFace(p *props) core.Node {
 	r := p.r
-	items := core.NewMemoFunc(r.cx, func() []goja.Value { return r.arrayItems(p.get("each")) }, nil)
-	item := func(i int) goja.Value {
-		if all := items.Get(); i >= 0 && i < len(all) {
-			return all[i]
-		}
-		return goja.Undefined()
-	}
+	rows := r.listRows(p)
+	item := rows.item
 	l := core.List{
-		Count:                    func() int { return len(items.Get()) },
+		Count:                    rows.count,
+		Key:                      rows.key,
+		Row:                      rows.row,
 		EstimatedSize:            p.points("estimatedItemSize"),
 		NumColumns:               p.int("numColumns"),
 		Horizontal:               p.bool("horizontal"),
@@ -323,43 +320,9 @@ func listFace(p *props) core.Node {
 			MinimumViewTime:                  time.Duration(o.float("minimumViewTime", 0) * float64(time.Millisecond)),
 		}
 	}
-	keyOfItem := func(i int) any { return keyOf(item(i)) }
-	if isFunction(p.get("keyExtractor")) {
-		keyOfItem = func(i int) any {
-			k := p.handler("keyExtractor")
-			return stringOf(k(item(i), r.vm.ToValue(i)))
-		}
-	}
-	l.Key = keyOfItem
-	l.Row = func(cx *core.Scope, row core.ListRow) core.Node {
-		render := p.peek("children")
-		index := r.accessor(func() goja.Value { return r.vm.ToValue(row.Index()) })
-		// A row the list is about to take away keeps its last item, as
-		// its bindings may read it once more as the items shrink.
-		last := goja.Undefined()
-		it := r.accessor(func() goja.Value {
-			if i := row.Index(); i >= 0 && i < len(items.Get()) {
-				last = item(i)
-			}
-			return last
-		})
-		return r.region(func() goja.Value { return r.call(render, it, index) })
-	}
-	listSlot := func(name string) core.Node {
-		if !p.has(name) {
-			return nil
-		}
-		return r.region(func() goja.Value {
-			v := p.get(name)
-			if isFunction(v) {
-				return r.call(v)
-			}
-			return v
-		})
-	}
-	l.Header, l.Footer, l.Empty = listSlot("header"), listSlot("footer"), listSlot("empty")
+	l.Header, l.Footer, l.Empty = r.listSlot(p, "header"), r.listSlot(p, "footer"), r.listSlot(p, "empty")
 	if p.has("separator") {
-		l.Separator = func(*core.Scope) core.Node { return listSlot("separator") }
+		l.Separator = func(*core.Scope) core.Node { return r.listSlot(p, "separator") }
 	}
 	if h := p.handler("onViewableItemsChange"); h != nil {
 		l.OnViewableItemsChange = func(v core.ViewableItems) {
@@ -382,6 +345,62 @@ func listFace(p *props) core.Node {
 		}
 	}
 	return l
+}
+
+// listRows is what a list reads of each's items.
+type listRows struct {
+	count func() int
+	item  func(i int) goja.Value
+	key   func(i int) any
+	row   func(cx *core.Scope, row core.ListRow) core.Node
+}
+
+// listRows reads each and keyExtractor, a row rendered by
+// children(item, index) per cell.
+func (r *runtime) listRows(p *props) listRows {
+	items := core.NewMemoFunc(r.cx, func() []goja.Value { return r.arrayItems(p.get("each")) }, nil)
+	item := func(i int) goja.Value {
+		if all := items.Get(); i >= 0 && i < len(all) {
+			return all[i]
+		}
+		return goja.Undefined()
+	}
+	key := func(i int) any { return keyOf(item(i)) }
+	if isFunction(p.get("keyExtractor")) {
+		key = func(i int) any {
+			k := p.handler("keyExtractor")
+			return stringOf(k(item(i), r.vm.ToValue(i)))
+		}
+	}
+	row := func(cx *core.Scope, row core.ListRow) core.Node {
+		render := p.peek("children")
+		index := r.accessor(func() goja.Value { return r.vm.ToValue(row.Index()) })
+		// A row the list is about to take away keeps its last item, as
+		// its bindings may read it once more as the items shrink.
+		last := goja.Undefined()
+		it := r.accessor(func() goja.Value {
+			if i := row.Index(); i >= 0 && i < len(items.Get()) {
+				last = item(i)
+			}
+			return last
+		})
+		return r.region(func() goja.Value { return r.call(render, it, index) })
+	}
+	return listRows{count: func() int { return len(items.Get()) }, item: item, key: key, row: row}
+}
+
+// listSlot is a list's slot name, nil without it.
+func (r *runtime) listSlot(p *props, name string) core.Node {
+	if !p.has(name) {
+		return nil
+	}
+	return r.region(func() goja.Value {
+		v := p.get(name)
+		if isFunction(v) {
+			return r.call(v)
+		}
+		return v
+	})
 }
 
 // tokenKey is a viewability token's key: the keyExtractor's, else the

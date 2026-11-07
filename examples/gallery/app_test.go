@@ -252,6 +252,25 @@ func TestUIOnlyMarks(t *testing.T) {
 	app.Find("id:demo-Badge >> id:ui-only-Badge")
 }
 
+// TestBaseListForm chooses a row of the List page's base form, whose card
+// is not marked as ui's alone.
+func TestBaseListForm(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "List")
+	if app.Exists("id:ui-only-List") {
+		t.Fatal("List is marked though base has one")
+	}
+	row := "id:stage-base.List >> role:option Grace Hopper"
+	app.Press(row)
+	if !app.Find(row).Props.Selected {
+		t.Fatal("base.List did not choose the row pressed")
+	}
+	app.Key("down")
+	if !app.Find("id:stage-base.List >> role:option Alan Turing").Props.Selected {
+		t.Fatal("base.List's keys did not move the choice")
+	}
+}
+
 // TestFormsCenter centers a form with a width of its own on its stage, and
 // one without in a column of formWidth.
 func TestFormsCenter(t *testing.T) {

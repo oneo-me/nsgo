@@ -21,7 +21,7 @@ Each a project of its own.
 | --- | --- | --- |
 | Rich editor | `rich-editor.md` | `RichEditor`, a ProseMirror-style document with lists, mentions, tables (merged cells, resizing, reordering), a bubble menu, undo grouped by time and input methods composing in the line |
 | The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns), and the app's `Scrollbar` drawn above its rows |
-| Tree without NSGo's extras | `nsh/crates/nsh-base/src/tree.rs` | `base.Tree` takes only NSH's props: its `Selection`, `SelectOnly` and `Folder` move to `ui.Tree`, and `Selection` leaves `base` for `ui` |
+| Tree without NSGo's extras | `nsh/crates/nsh-base/src/tree.rs` | `base.Tree` takes only NSH's props: its `SelectOnly` and `Folder` move to `ui.Tree`, and a tree's `Selection` with them, `base.List` keeping the type in `base` |
 | Editor and diff | `editor.md`, `diff.md` | The Editor's gutter and overview ruler decorations, the DiffView's scroll position and change positions reported |
 
 ## Shaders and transitions

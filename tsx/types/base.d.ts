@@ -4,7 +4,7 @@
 import type { Accessor, Easing } from "./index";
 import type {
   AndroidDialogHostProps, ColorValue, CommonProps, DialogHostProps, InputHostProps, IOSDialogHostProps, IOSInputHostProps,
-  IOSNavPageHostProps, IOSProps, JSX, NavPageHostProps, StyleProp, TextStyle, ViewStyle, YNode,
+  IOSNavPageHostProps, IOSProps, JSX, ListItemsProps, NavPageHostProps, StyleProp, TextStyle, ViewStyle, YNode,
 } from "./types";
 
 export interface IOSInputProps extends IOSProps, IOSInputHostProps {}
@@ -130,6 +130,33 @@ export interface ToastStackProps {
   children?: JSX.Element;
 }
 export declare function ToastStack(props: ToastStackProps): JSX.Element;
+
+/** A list of choices when it takes multiple, selected, defaultSelected or onSelectedChange. */
+export interface ListProps<T> extends Pick<ListItemsProps<T>, "each" | "children" | "keyExtractor" | "onLoadMore" | "header" | "footer" | "empty"> {
+  /** Any number of rows are chosen. */
+  multiple?: boolean;
+  /** The chosen rows' keys: keyExtractor's, else the items. */
+  selected?: readonly unknown[];
+  defaultSelected?: readonly unknown[];
+  onSelectedChange?: (e: { selected: unknown[] }) => void;
+  onActivate?: (e: { item: T; index: number }) => void;
+  /** A tap only selects on touch screens, and a second activates. */
+  tapSelects?: boolean;
+  /** What assistive technology reads for a row, and what typeahead matches. */
+  rowLabel?: (item: T, index: number) => string;
+  numColumns?: number;
+  estimatedItemSize?: number;
+  gap?: number;
+  accessibilityLabel?: string;
+  testID?: string;
+  class?: string;
+  style?: StyleProp<ViewStyle>;
+  listClass?: string;
+  listStyle?: StyleProp<ViewStyle>;
+  itemClass?: string;
+  itemStyle?: StyleProp<ViewStyle>;
+}
+export declare function List<T>(props: ListProps<T>): JSX.Element;
 
 export interface ResizablePanelProps {
   size?: number | null;

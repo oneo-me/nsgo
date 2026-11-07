@@ -54,7 +54,7 @@ Touch screens have no pointer, so these exist on desktops alone.
 
 | Component | Desktop | Touch screen |
 | --- | --- | --- |
-| `ui.List` | One Tab stop with a focus ring; a double press activates | No focus stop; a tap activates, or toggles in `Multiple` |
+| `base.List` | One Tab stop with a focus ring; a double press activates | No focus stop; a tap activates, or toggles in `Multiple` |
 | `ui.Slider`, `ui.Rating` | A press focuses and rings the control | No focus |
 | `ui/chat` effort picker | Takes focus as it opens | Leaves the focus alone |
 | `ui/chat` composer | Return submits | Return adds a line |

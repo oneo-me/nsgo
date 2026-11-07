@@ -128,7 +128,7 @@ func listCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		multiple := core.NewSignal(cx, false)
-		return Playground{Title: "List", UIOnly: true, Fill: true, Stage: func() core.Node {
+		return Playground{Title: "List", Fill: true, Base: baseListForm(cx, last), Stage: func() core.Node {
 			many := multiple.Get()
 			return core.Func(func(cx *core.Scope) core.Node {
 				selection := ui.NewSelection(cx, many)

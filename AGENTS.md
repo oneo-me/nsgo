@@ -20,10 +20,10 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 
 ## Components
 
-`base` holds NSGo's built-in unstyled components, with `nsh-base` the reference for their behavior and names: a component NSH does not have stays out of `base`. `ui` holds its built-in styled components, with Onevra the reference for their look.
+`base` holds NSGo's built-in unstyled components, with `nsh-base` the reference for the behavior and names of those NSH has. `ui` holds its built-in styled components, with Onevra the reference for their look.
 
 - A `base` component takes the app's styles part by part and has no look; themes, styled controls and variants belong in `ui`.
-- A `ui` component with a `base` form is that form with a look: behavior, state and accessibility stay in `base`, and what it needs that `base` lacks goes into `base`, never a second implementation in `ui`. A component NSH does not have lives whole in `ui`.
+- A `ui` component with a `base` form is that form with a look: behavior, state and accessibility stay in `base`, and what it needs that `base` lacks goes into `base`, never a second implementation in `ui`. A component with no behavior worth sharing lives whole in `ui`.
 - A `ui` component is product-neutral: what only the gallery's demos use stays in `examples/gallery`.
 - A `ui` component takes its look, the color it shows included, from `Variant`, a type of its own (`ButtonVariant`) whose zero value is the default, never from boolean fields or a shared color type.
 - Most `ui` components have one size. One that needs more takes `Size`, a `ui.Size` of default, small or large whose zero value is the default, never a `Small` or `Compact` boolean; so far `Button`, `Tabs` and `Switch`. What is one shape at any scale takes `Size` in points instead: `Avatar`, `AvatarGroup`, `ProgressRing`, `Spinner` and `IconButton` ([variants and sizes](docs/architecture/themes.md#variants-and-sizes)).

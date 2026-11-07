@@ -293,6 +293,21 @@ func baseCarouselForm(cx *core.Scope, last *core.Signal[string], count *core.Sig
 	}}
 }
 
+func baseListForm(cx *core.Scope, last *core.Signal[string]) Form {
+	tr := locales.For(cx)
+	selection := base.NewSelection(cx, false)
+	return Form{Name: "base.List", Fill: true, Stage: func() core.Node {
+		return base.List{Label: tr.ControlsMembers(), Selection: selection, EstimatedSize: 30,
+			Count: func() int { return len(demoPeople) }, Key: func(i int) any { return demoPeople[i] },
+			RowLabel:   func(i int) string { return demoPeople[i] },
+			OnActivate: func(i int) { last.Set("base.List: " + demoPeople[i]) },
+			Row: func(cx *core.Scope, row core.ListRow) core.Node {
+				return bareTextf(cx, func() string { return demoPeople[row.Index()] })
+			},
+			Style: core.Style{Height: core.Pt(180)}, ItemStyle: bareRow, ItemStyleFunc: bareRowInk(cx)}
+	}}
+}
+
 func baseTreeForm(cx *core.Scope, last *core.Signal[string]) Form {
 	tr := locales.For(cx)
 	items := []base.TreeItem{

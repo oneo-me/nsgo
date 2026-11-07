@@ -17,8 +17,8 @@ import (
 
 // nsgo/base: base's components as Go components, with the names NSH's
 // nsh/base gives their props where base's differ; Input and Dialog are
-// the runtime's, and the navigation, AlertDialog and ToastManager are
-// written out (navigation.go, toasts.go). TextView, Editor and DiffView
+// the runtime's, and List, the navigation, AlertDialog and ToastManager
+// are written out (baselist.go, navigation.go, toasts.go). TextView, Editor and DiffView
 // link packages of their own, so tsx/textview, tsx/editor and tsx/diff
 // register them.
 

@@ -231,3 +231,53 @@ mount(App);`)
 	app.Press("id:stop")
 	app.WaitFor("text:said stopped true", time.Second)
 }
+
+func TestBaseListChoosesRows(t *testing.T) {
+	app := run(t, `import { mount, signal, Text, View } from "nsgo";
+import { List } from "nsgo/base";
+function App() {
+	const chose = signal(["Plum"]), active = signal("");
+	return <View style={{ height: 300 }}>
+		<List accessibilityLabel="Fruits" each={["Apple", "Pear", "Plum"]} selected={chose()} style={{ height: 200 }}
+			itemStyle={{ height: 30 }} rowLabel={(item) => item}
+			onSelectedChange={(e) => chose.set(e.selected)} onActivate={(e) => active.set(e.item + " " + e.index)}>
+			{(item) => <Text>{item}</Text>}
+		</List>
+		<Text>{() => "chose " + chose().join()}</Text>
+		<Text>{() => "active " + active()}</Text>
+	</View>;
+}
+mount(App);`)
+	if !app.Find("role:option Plum").Props.Selected {
+		t.Fatal("the selected prop chose no row")
+	}
+	app.Press("role:option Pear")
+	app.WaitFor("text:chose Pear", time.Second)
+	if !app.Find("role:option Pear").Props.Selected || app.Find("role:option Plum").Props.Selected {
+		t.Fatal("the rows do not follow the selection")
+	}
+	app.Key("enter")
+	app.WaitFor("text:active Pear 1", time.Second)
+}
+
+func TestBaseListKeepsAControlledSelection(t *testing.T) {
+	app := run(t, `import { mount, Text } from "nsgo";
+import { List } from "nsgo/base";
+mount(() => <List each={[{ id: "a" }, { id: "b" }]} keyExtractor={(item) => item.id} selected={["a"]} rowLabel={(item) => item.id}
+	style={{ height: 200 }}>{(item) => <Text>{() => item().id}</Text>}</List>);`)
+	app.Press("role:option b")
+	app.Settle()
+	if app.Find("role:option b").Props.Selected || !app.Find("role:option a").Props.Selected {
+		t.Fatal("the list left the selected prop")
+	}
+}
+
+func TestBaseListWithoutChoices(t *testing.T) {
+	app := run(t, `import { mount, Text } from "nsgo";
+import { List } from "nsgo/base";
+mount(() => <List each={[1, 2]} empty="None" style={{ height: 200 }}>{(item) => <Text>{() => "row " + item()}</Text>}</List>);`)
+	app.Find("text:row 2")
+	if app.Exists("role:option") {
+		t.Fatal("a list with no selection props has options")
+	}
+}

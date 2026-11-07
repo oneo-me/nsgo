@@ -5,8 +5,6 @@ import (
 	"log"
 	"slices"
 	"strings"
-	"time"
-	"unicode"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -639,7 +637,7 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 		controlKey{"home", false, move(stepFirst)}, controlKey{"end", false, move(stepLast)},
 		controlKey{"right", true, right}, controlKey{"left", true, left},
 		controlKey{"enter", false, activate}, controlKey{"space", false, toggle})
-	typed := treeTypeahead(cx, active, func(prefix string) {
+	typed := typedPrefix(cx, active, func(prefix string) {
 		selectNode(treeTyped(untrackedFlat(), shown.GetUntracked(), current.GetUntracked(), prefix), true)
 	})
 	desktop := env.Desktop
@@ -835,29 +833,4 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 			held.Set(0)
 		},
 		Children: []core.Node{core.Scroll{Class: t.ListClass, Style: listStyle, Children: []core.Node{rows}}, keys, typed}}
-}
-
-// treeTypeaheadPause is how long typeahead waits before it starts over.
-const treeTypeaheadPause = 500 * time.Millisecond
-
-// treeTypeahead binds letters and digits while active, reporting what was
-// typed lately, in lower case.
-func treeTypeahead(cx *core.Scope, active func() bool, typed func(prefix string)) core.Node {
-	text := ""
-	var at time.Time
-	push := func(c rune) {
-		now := cx.Now()
-		if now.Sub(at) > treeTypeaheadPause {
-			text = ""
-		}
-		at = now
-		text += string(unicode.ToLower(c))
-		typed(text)
-	}
-	return core.Show{When: active, Then: func(cx *core.Scope) core.Node {
-		for _, c := range "abcdefghijklmnopqrstuvwxyz0123456789" {
-			cx.OnKeyWith(string(c), core.KeyOptions{When: core.KeyNotEditing}, func() { push(c) })
-		}
-		return nil
-	}}
 }
