@@ -602,18 +602,18 @@ func (p *painter) drawCaptionButtons(width int32) {
 		case code == htClose:
 			bg = 0xe81123ff
 		case !dark && pressed:
-			bg = 0x33332f24
+			bg = 0x33333324
 		case !dark:
-			bg = 0x33332f14
+			bg = 0x33333314
 		case pressed:
-			bg = 0xeeeae224
+			bg = 0xeaeaea24
 		default:
-			bg = 0xeeeae214
+			bg = 0xeaeaea14
 		}
 		p.fillRounded(rectF{float32(r.Left), float32(r.Top), float32(r.Right), float32(r.Bottom)}, radius, bg)
-		fg := driver.Color(0x72726aff)
+		fg := driver.Color(0x717171ff)
 		if dark {
-			fg = 0xbdb6aaff
+			fg = 0xb7b7b7ff
 		}
 		switch {
 		case !w.captionEnabled(code):

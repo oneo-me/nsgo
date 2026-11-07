@@ -306,7 +306,7 @@ func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layou
 		},
 		BackdropStyle: core.Style{Background: ui.Black(0.4)},
 		// Sized to its title, as wide on either side of it: the shown tab
-		// is lit and underlined in orange. With a pointer, the close
+		// is lit and underlined in the accent. With a pointer, the close
 		// button fades in over the tab's end while the pointer is on it;
 		// a touch screen keeps it beside the shown tab's title.
 		RenderTab: func(cx *core.Scope, tab dock.Tab) core.Node {

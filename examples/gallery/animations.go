@@ -25,7 +25,7 @@ func motionTones(cx *core.Scope) []func() core.Color {
 func onTone(cx *core.Scope) func() core.Color {
 	return func() core.Color {
 		if cx.Dark() {
-			return ui.ColorsOf(cx).OnAccent()
+			return ui.ColorsOf(cx).OnLight()
 		}
 		return core.RGB(0xffffff)
 	}

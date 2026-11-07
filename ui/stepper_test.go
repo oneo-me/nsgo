@@ -24,7 +24,7 @@ func TestStepper(t *testing.T) {
 		disc := func(i int) core.Color {
 			return app.Find("steps-" + string(rune('0'+i))).Children[0].Children[1].Style.Background
 		}
-		if disc(0) != p.Accent || disc(2) == p.Accent {
+		if disc(0) != p.AccentFill || disc(2) == p.AccentFill {
 			t.Fatal("only the completed steps are filled with the accent")
 		}
 		if got := app.Find("steps-1").Props.Label; got != "Profile, completed" {

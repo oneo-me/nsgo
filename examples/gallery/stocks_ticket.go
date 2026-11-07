@@ -43,15 +43,15 @@ func newBanner(cx *core.Scope) banner {
 	}
 	check := func() core.Color {
 		if cx.Dark() {
-			return core.RGB(0x1f1d1a)
+			return colors.OnLight()
 		}
 		return core.RGB(0xffffff)
 	}
 	detailColor := func() core.Color {
 		if cx.Dark() {
-			return core.RGB(0x5a554e)
+			return ui.Mix(colors.Faint(), colors.Background(), 0.5)
 		}
-		return core.RGB(0xa8a39a)
+		return colors.Faint()
 	}
 	view := core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(10), Left: core.Pt(16), Right: core.Pt(16), Direction: core.Row,
 		AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(14), CornerRadius: ui.RadiusInset + 3, BorderCurve: core.BorderCurveContinuous, Opacity: core.Alpha(0.001),

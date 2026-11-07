@@ -67,12 +67,7 @@ func transparentPage(cx *core.Scope) base.NavPage {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
-	bg := func() core.Color {
-		if cx.Dark() {
-			return core.RGB(0x21160f)
-		}
-		return core.RGB(0xf8ece3)
-	}
+	bg := func() core.Color { return ui.Mix(colors.Background(), colors.AccentFill(), 0.08) }
 	return base.NavPage{Title: tr.NavTransparent(), HeaderTransparent: true, HeaderStyleFunc: func() core.Style { return core.Style{TintColor: colors.Text(), Color: colors.Text()} },
 		Header: pageHeader(cx, pageHeaderProps{title: tr.NavTransparent(), transparent: true, tint: colors.Text}),
 		Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, Overflow: core.Hidden, Padding: core.Edges{Top: 16, Right: 16, Bottom: 56, Left: 16},

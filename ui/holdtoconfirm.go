@@ -54,7 +54,7 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 	width := core.NewSignal[core.Points](cx, 0)
 	still := ReduceMotion(cx)
 
-	ink, fillColor, onFill, border := colors.Text, colors.Accent, colors.OnAccent, colors.Border
+	ink, fillColor, onFill, border := colors.Text, colors.AccentFill, colors.OnAccent, colors.Border
 	switch h.Tone {
 	case HoldDanger:
 		ink, fillColor, onFill = colors.Danger, colors.Danger, colors.Background

@@ -30,7 +30,7 @@ func timeBox(cx *core.Scope) (core.Style, func() core.Style, core.Style, func() 
 	return box, func() core.Style {
 			return core.Style{Background: colors.Field(), BorderColor: colors.FieldBorder(), FocusWithin: &core.Style{BorderColor: colors.Accent()}}
 		}, segment, func() core.Style {
-			return core.Style{Color: colors.Text(), Focus: &core.Style{Background: colors.Accent(), Color: colors.OnAccent()}}
+			return core.Style{Color: colors.Text(), Focus: &core.Style{Background: colors.AccentFill(), Color: colors.OnAccent()}}
 		}
 }
 

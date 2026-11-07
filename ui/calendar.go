@@ -56,13 +56,13 @@ func calendarConfig(cx *core.Scope, months, firstDay int, disabled func(time.Tim
 				return strong().Merge(core.Style{Height: core.Pt(32), Padding: core.Symmetric(0, 6)})
 			case base.CalendarDay:
 				return strong().Merge(core.Style{MinHeight: core.Pt(28), BorderWidth: 1, BorderColor: core.Transparent, Color: colors.Text(),
-					Selected: &core.Style{Background: colors.Accent(), Color: colors.OnAccent()},
+					Selected: &core.Style{Background: colors.AccentFill(), Color: colors.OnAccent()},
 					Data: []core.DataStyle{{Name: "outside", Style: &core.Style{Color: colors.Faint()}},
 						{Name: "range-middle", Style: &core.Style{Background: Alpha(colors.Accent(), 0.16), Color: colors.Text()}},
 						{Name: "today", Style: &core.Style{BorderColor: colors.Accent()}}}})
 			}
 			return strong().Merge(core.Style{MinHeight: core.Pt(36), Color: colors.Text(),
-				Selected: &core.Style{Background: colors.Accent(), Color: colors.OnAccent()}})
+				Selected: &core.Style{Background: colors.AccentFill(), Color: colors.OnAccent()}})
 		},
 		RenderItem: func(e base.CalendarEntry) core.Node { return calendarItem(cx, e, months > 1) }}
 }

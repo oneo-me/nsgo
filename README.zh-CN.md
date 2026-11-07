@@ -57,7 +57,7 @@ func Root(cx *core.Scope) core.Node {
 		base.Button{
 			Label:    "Press me",
 			OnPress:  func(core.PressEvent) { count.Update(func(n int) int { return n + 1 }) },
-			Style:    core.Style{Padding: core.Symmetric(6, 14), CornerRadius: 8, Background: core.RGB(0xbd481b), Color: core.RGB(0xffffff)},
+			Style:    core.Style{Padding: core.Symmetric(6, 14), CornerRadius: 8, Background: core.RGB(0x007aff), Color: core.RGB(0xffffff)},
 			Children: []core.Node{core.Text{Content: "Press me"}},
 		},
 	}}

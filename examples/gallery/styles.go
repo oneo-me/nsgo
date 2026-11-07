@@ -284,7 +284,7 @@ func flipCard(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), CornerRadius: ui.RadiusCard,
 			BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, Padding: core.All(16), JustifyContent: core.JustifySpaceBetween, BackfaceHidden: true,
 			Transform: core.Transform{Perspective: 800}, Animated: &core.AnimatedStyle{RotateY: rotate}}, StyleFunc: func() core.Style {
-			p, sh := light, []core.BoxShadow{ui.Inner(0, 1, 0, core.RGB(0xffffff)), ui.Shadow(0, 8, 20, 0, ui.Paper(0.10))}
+			p, sh := light, []core.BoxShadow{ui.Inner(0, 1, 0, core.RGB(0xffffff)), ui.Shadow(0, 8, 20, 0, ui.Black(0.10))}
 			if cx.Dark() {
 				p, sh = dark, []core.BoxShadow{ui.Inner(0, 1, 0, ui.White(0.07)), ui.Shadow(0, 10, 24, 0, ui.Black(0.4))}
 			}

@@ -243,7 +243,7 @@ func (s Stepper) connector(cx *core.Scope, i int, status func(int) StepStatus, d
 			if vertical {
 				t = core.Transform{ScaleY: scale}
 			}
-			return core.Style{Background: colors.Accent(), Transform: t,
+			return core.Style{Background: colors.AccentFill(), Transform: t,
 				Transition: core.Transition{Duration: 400 * time.Millisecond, Delay: delay(i), Easing: stepEase,
 					Properties: core.TransitionTransform | core.TransitionBackground}}
 		}},

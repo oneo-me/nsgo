@@ -30,7 +30,7 @@ func App(cx *core.Scope) core.Node {
 				Style: core.Style{
 					Padding:      core.Symmetric(6, 14),
 					CornerRadius: 8,
-					Background:   core.RGB(0xbd481b),
+					Background:   core.RGB(0x007aff),
 					Color:        core.RGB(0xffffff),
 				},
 				Children: []core.Node{core.Text{Content: "Press me"}},

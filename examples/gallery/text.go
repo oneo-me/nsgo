@@ -114,7 +114,7 @@ func fontsCard(cx *core.Scope) core.Node {
 		if cx.Dark() {
 			return ui.Black(0.9)
 		}
-		return ui.Paper(0.22)
+		return ui.Black(0.22)
 	}
 	return ui.Card{Title: tr.TextType(), Description: tr.TextCustomFontsWeightsStylesSpacing(), Children: []core.Node{
 		specimenRow(cx, tr.TextCustomFonts(), "nsgo.Fonts", true,

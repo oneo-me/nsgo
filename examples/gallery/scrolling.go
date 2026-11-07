@@ -399,13 +399,14 @@ func feed(cx *core.Scope) core.Node {
 // snapping, zoom, the scroll events, prepending and taps with the keyboard
 // up.
 func scrollingDemo(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
 	taps := core.NewSignal(cx, core.KeyboardTapsNever)
 	presses := core.NewSignal(cx, 0)
 	countColor := func() core.Color {
 		if cx.Dark() {
-			return core.RGB(0x58534c)
+			return ui.Mix(colors.Faint(), colors.Background(), 0.5)
 		}
-		return core.RGB(0xa29e95)
+		return colors.Faint()
 	}
 	return demoPage(cx, pageProps{still: true, bottom: 16,
 		behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardShouldPersistTaps: taps.Get()} }},

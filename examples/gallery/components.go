@@ -81,13 +81,9 @@ func pressableSheet(cx *core.Scope) core.Node {
 	return ui.Card{Title: tr.CompSheet(), Description: tr.CompAPressedStateStyleOpens(), Children: []core.Node{
 		core.View{OnPress: func(core.PressEvent) { open.Set(true) }, Role: core.RoleButton, Label: tr.CompOpenASheet(),
 			StyleFunc: func() core.Style {
-				pressedFill := core.RGB(0xb84a15)
-				if cx.Dark() {
-					pressedFill = core.RGB(0xd8825a)
-				}
 				return core.Style{Shadows: fin.Accent().Shadows, Height: core.Pt(48), Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 					Gap: 8, CornerRadius: 12, Background: colors.AccentFill(), Transition: core.Transition{Duration: 150e6},
-					Active: &core.Style{Transform: core.Transform{Scale: 0.97}, Background: pressedFill}}
+					Active: &core.Style{Transform: core.Transform{Scale: 0.97}, Background: colors.Now().AccentPressed}}
 			},
 			Children: []core.Node{ui.Text(tr.CompOpenASheet(), 13, ui.Semibold, colors.OnAccent)}},
 		Caption{Label: tr.CompScalesAndDarkensWhilePressed(), Note: func() string { return "Active: scale 0.97" }},
@@ -229,12 +225,7 @@ func modalOptions(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	visible, translucent := core.NewSignal(cx, false), core.NewSignal(cx, false)
-	bg := func() core.Color {
-		if cx.Dark() {
-			return core.RGB(0x2a1d15)
-		}
-		return core.RGB(0xf8ece3)
-	}
+	bg := func() core.Color { return ui.Mix(colors.Background(), colors.AccentFill(), 0.08) }
 	return ui.Card{Title: tr.CompDialogOptions(), Description: tr.CompStatusbartranslucentOrientations(), Actions: []core.Node{ui.Switch{Checked: translucent.Get, OnChange: translucent.Set, Label: "StatusBarTranslucent"}}, Children: []core.Node{
 		core.Text{Content: tr.CompAndroidTranslucentContentReachesUnder(),
 			Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},

@@ -64,7 +64,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 - Scroll edge effects under the app's bars, after iOS 26's ([scrolling](scrolling.md#edge-effects)).
 - Apps that open their windows, panels and tray icons themselves, on one engine, with global shortcuts and shutdown modes, after Avalonia's ([application and windows](application.md#departures-from-nsh)).
 - Window materials and window controls placed in the app's own title bar ([services](services.md#where-nsgo-departs-from-nsh)).
-- A theme and an appearance per subtree, Onevra's palette by default ([themes](themes.md#departures-from-nsh)).
+- A theme and an appearance per subtree, a neutral palette by default and Onevra's as `ui.WarmDuskTheme` ([themes](themes.md#departures-from-nsh)).
 - Zooming scroll views on macOS, and AppKit's bounce where momentum reaches an edge ([scrolling](scrolling.md#scrolling)).
 - Images on Android's clipboard, through a content provider ([services](services.md#where-nsgo-departs-from-nsh)).
 - File pickers and save dialogs for files of any type, streamed rather than passed through the platform's bridge ([services](services.md#files)).

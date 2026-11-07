@@ -22,7 +22,7 @@ const image = new URL(`${base}icon.png`, site);
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#1a1816" />
+    <meta name="theme-color" content="#181818" />
     <link rel="icon" type="image/png" href={`${base}icon.png`} />
     <link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
     <link rel="canonical" href={canonical} />
@@ -46,7 +46,7 @@ const image = new URL(`${base}icon.png`, site);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', dark ? '#1a1816' : '#f5f3ef');
+        if (meta) meta.setAttribute('content', dark ? '#181818' : '#f3f3f3');
       })();
     </script>
   </head>

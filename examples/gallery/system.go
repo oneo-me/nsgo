@@ -149,16 +149,16 @@ func statusBarCard(cx *core.Scope) core.Node {
 				bg := colors.Background()
 				switch foreground() {
 				case core.StatusBarLight:
-					bg = ui.Theme().Dark.Background
+					bg = cx.Theme().Dark.Background
 				case core.StatusBarDark:
-					bg = ui.Theme().Light.Background
+					bg = cx.Theme().Light.Background
 				}
 				return core.Style{FlexGrow: 1, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 16, Background: bg}
 			}, Children: []core.Node{
 				core.Text{ContentFunc: func() string {
 					return fmt.Sprintf("StatusBar: {Foreground: %s, Hidden: %v}", names[foreground()], hidden.Get())
 				}, StyleFunc: func() core.Style {
-					c := ui.Theme().Light.Text
+					c := cx.Theme().Light.Text
 					if foreground() == core.StatusBarLight {
 						c = core.RGB(0xffffff)
 					}

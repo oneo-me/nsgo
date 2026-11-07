@@ -23,7 +23,7 @@ func (p Progress) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	const height core.Points = 6
 	bar := func() core.Style {
-		return core.Style{Height: core.Pt(height), CornerRadius: RadiusFull, Background: colors.Accent()}
+		return core.Style{Height: core.Pt(height), CornerRadius: RadiusFull, Background: colors.AccentFill()}
 	}
 	still := ReduceMotion(cx)
 	var sweep *core.Signal[bool]

@@ -111,24 +111,25 @@ func Themed[T any](cx *core.Scope, build func() T) func() T {
 // Fixed is c as a color to hand to what takes one that may change.
 func Fixed(c core.Color) func() core.Color { return func() core.Color { return c } }
 
-// Theme returns ui's theme: Onevra's (core.DefaultTheme), with
-// the roles ui adds in Palette.Colors, each derived from Onevra's
-// as its components derive theirs: insets and tracks recess with the
-// text's color, fields and hairlines take the border, Light is the
-// inverse of the page.
+// Theme returns ui's default theme: neutral grays and a blue accent
+// (core.DefaultTheme), with the roles ui adds in Palette.Colors, each
+// derived from Onevra's as its components derive theirs: insets and
+// tracks recess with the text's color, fields and hairlines take the
+// border, Light is the inverse of the page. WarmDuskTheme is the other
+// built-in theme.
 func Theme() *core.Theme {
 	t := core.DefaultTheme()
 	t.Light.Colors = map[string]core.Color{
-		"inset": core.RGB(0xf2f1ee), "raised": core.RGB(0xfefefd), "field": core.RGB(0xfdfdfc), "fieldBorder": core.RGB(0xdeded5),
-		"line": core.RGB(0xe6e5de), "faint": core.RGB(0xa29e95), "accentFill": core.RGB(0xbd481b),
-		"light": core.RGB(0x33332f), "onLight": core.RGB(0xfcfbf9), "track": core.RGB(0xc4c4bc), "knob": core.RGB(0xffffff),
-		"code": core.RGB(0x3a3631), "info": core.RGB(0x3d63d1), "down": core.RGB(0xb4444c),
+		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xfefefe), "field": core.RGB(0xfdfdfd), "fieldBorder": core.RGB(0xdddddd),
+		"line": core.RGB(0xe5e5e5), "faint": core.RGB(0x9e9e9e), "accentFill": core.RGB(0x007aff),
+		"light": core.RGB(0x333333), "onLight": core.RGB(0xfbfbfb), "track": core.RGB(0xc3c3c3), "knob": core.RGB(0xffffff),
+		"code": core.RGB(0x373737), "info": core.RGB(0x0891b2), "down": core.RGB(0xb4444c),
 	}
 	t.Dark.Colors = map[string]core.Color{
-		"inset": core.RGB(0x2a2825), "raised": core.RGB(0x36332e), "field": core.RGB(0x262421), "fieldBorder": core.RGB(0x504b43),
-		"line": core.RGB(0x3d3933), "faint": core.RGB(0x857e73), "accentFill": core.RGB(0xed986e),
-		"light": core.RGB(0xeeeae2), "onLight": core.RGB(0x211f1c), "track": core.RGB(0x68635b), "knob": core.RGB(0xf7f5f1),
-		"code": core.RGB(0xe2dcd2), "info": core.RGB(0x7ea8ff), "down": core.RGB(0xe58f95),
+		"inset": core.RGB(0x282828), "raised": core.RGB(0x333333), "field": core.RGB(0x242424), "fieldBorder": core.RGB(0x4c4c4c),
+		"line": core.RGB(0x393939), "faint": core.RGB(0x7f7f7f), "accentFill": core.RGB(0x0a84ff),
+		"light": core.RGB(0xeaeaea), "onLight": core.RGB(0x1f1f1f), "track": core.RGB(0x646464), "knob": core.RGB(0xf5f5f5),
+		"code": core.RGB(0xdddddd), "info": core.RGB(0x64d2ff), "down": core.RGB(0xe58f95),
 	}
 	return t
 }
@@ -186,17 +187,29 @@ func (f Fins) Knob() Finish   { return f.shown().knob }
 
 // Pill is lit glass floating over a track: the selected segment, a small
 // round button.
-func (f Fins) Pill() Finish { return f.shown().pill }
+func (f Fins) Pill() Finish {
+	raised := ColorsOf(f.cx).Raised()
+	pill := f.shown().pill
+	pill.Background, pill.Border = raised, raised
+	return pill
+}
 
 // Chip is a tinted capsule's rim and highlight (badges).
 func (f Fins) Chip() Finish { return f.shown().chip }
 
 // Glass is a bar floating over content: translucent, blurred, rimmed.
-func (f Fins) Glass() Finish { return f.shown().glass }
+func (f Fins) Glass() Finish { return f.floating(f.shown().glass) }
 
 // Menu is a floating panel (menus, the composer): glass, denser for
 // reading.
-func (f Fins) Menu() Finish { return f.shown().menu }
+func (f Fins) Menu() Finish { return f.floating(f.shown().menu) }
+
+// floating is fin over the page's color, rimmed with the border's.
+func (f Fins) floating(fin Finish) Finish {
+	p := f.cx.Palette()
+	fin.Background, fin.Border = Alpha(p.Background, 0.92), p.Border
+	return fin
+}
 
 // Alpha returns c at opacity a.
 func Alpha(c core.Color, a float32) core.Color {
@@ -232,7 +245,8 @@ func (f Finish) Style() core.Style {
 func (f Finish) Over(s core.Style) core.Style { return f.Style().Merge(s) }
 
 // finishes are Onevra's: flat surfaces, a hairline shadow under raised
-// controls and the knob, and a soft one under what floats.
+// controls and the knob, and a soft one under what floats. Fins gives
+// what floats the theme's colors.
 type finishes struct {
 	card, inset, field, raised, light, accent, track, knob, pill, chip, glass, menu Finish
 }
@@ -247,34 +261,27 @@ func Inner(x, y, blur core.Points, c core.Color) core.BoxShadow {
 	return core.BoxShadow{Offset: core.Point{X: x, Y: y}, Blur: blur, Color: c, Inset: true}
 }
 
-// Black, White and Paper are black, white and the warm shadow color at
-// opacity a.
+// Black and White are black and white at opacity a.
 func Black(a float32) core.Color { return core.RGBA(0x000000, a) }
 
 func White(a float32) core.Color { return core.RGBA(0xffffff, a) }
-
-func Paper(a float32) core.Color { return core.RGBA(0x1e1408, a) }
 
 func shadows(s ...core.BoxShadow) []core.BoxShadow { return s }
 
 var darkFinishes = finishes{
 	raised: Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.2)))},
 	knob:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.35)))},
-	pill:   Finish{Background: core.RGB(0x36332e), Border: core.RGB(0x36332e), Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.4)))},
-	glass: Finish{Background: core.RGBA(0x211f1c, 0.92), Border: core.RGB(0x504b43),
-		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(20)}},
-	menu: Finish{Background: core.RGBA(0x211f1c, 0.92), Border: core.RGB(0x504b43),
-		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(24)}},
+	pill:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.4)))},
+	glass:  Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(20)}},
+	menu:   Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(24)}},
 }
 
 var lightFinishes = finishes{
 	raised: Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.07)))},
 	knob:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.2)))},
-	pill:   Finish{Background: core.RGB(0xfefefd), Border: core.RGB(0xfefefd), Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.14)))},
-	glass: Finish{Background: core.RGBA(0xfcfbf9, 0.92), Border: core.RGB(0xdeded5),
-		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(20)}},
-	menu: Finish{Background: core.RGBA(0xfcfbf9, 0.92), Border: core.RGB(0xdeded5),
-		Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(24)}},
+	pill:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.14)))},
+	glass:  Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(20)}},
+	menu:   Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(24)}},
 }
 
 // Tone names a color role for badges, figures and meters.

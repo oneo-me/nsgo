@@ -96,7 +96,7 @@ func terminalDemo(cx *core.Scope) core.Node {
 						Active: &core.Style{Background: colors.Hover()}}
 				},
 				KeyOnStyleFunc: func() core.Style {
-					return core.Style{Background: colors.Accent(), BorderColor: colors.Accent(), Color: colors.OnAccent()}
+					return core.Style{Background: colors.AccentFill(), BorderColor: colors.AccentFill(), Color: colors.OnAccent()}
 				},
 			}
 			return ui.ContextMenu{TestID: "terminal-menu", Style: core.Style{FlexGrow: 1}, Trigger: view, Children: []core.Node{

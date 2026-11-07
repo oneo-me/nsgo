@@ -36,7 +36,7 @@ func TestButton(t *testing.T) {
 		if len(pressed) != len(names) {
 			t.Fatalf("pressed %v, want each variant", pressed)
 		}
-		if got := app.Find("accent").Children[0].Style.Background; got != p.Accent {
+		if got := app.Find("accent").Children[0].Style.Background; got != p.AccentFill {
 			t.Fatalf("accent = %x, want the accent", got)
 		}
 		if f := app.Find("icon").Children[0].Frame.Size; f.Width != ButtonHeight || f.Height != ButtonHeight {

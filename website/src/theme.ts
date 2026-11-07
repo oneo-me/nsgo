@@ -3,8 +3,8 @@ export type Theme = 'light' | 'dark';
 
 export const THEME_STORAGE_KEY = 'nsgo-theme';
 
-const darkColor = '#1a1816';
-const lightColor = '#f5f3ef';
+const darkColor = '#181818';
+const lightColor = '#f3f3f3';
 
 export function readPreference(): ThemePreference {
   try {

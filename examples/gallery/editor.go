@@ -516,7 +516,7 @@ func editorDemo(cx *core.Scope) core.Node {
 					CornerRadius: 6, Padding: core.Symmetric(0, 6), Hover: &core.Style{Background: ui.Alpha(colors.Text(), 0.1)},
 					Active: &core.Style{Opacity: core.Alpha(0.7)}}
 				if on() {
-					s.Background = colors.Accent()
+					s.Background = colors.AccentFill()
 				}
 				return s
 			},

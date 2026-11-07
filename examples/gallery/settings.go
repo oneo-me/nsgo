@@ -26,6 +26,10 @@ func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 			ID: "theme", Title: locales.Theme(cx), Description: locales.SettingsThemeDetail(cx),
 			Keywords: []string{"theme", "appearance", "dark", "light", locales.ThemeSystem(cx), locales.ThemeLight(cx), locales.ThemeDark(cx)},
 			Control:  themeSelect(cx),
+		}, {
+			ID: "colors", Title: locales.ColorTheme(cx), Description: locales.SettingsColorThemeDetail(cx),
+			Keywords: []string{"color", "palette", locales.ColorThemeDefault(cx), locales.ColorThemeWarmDusk(cx)},
+			Control:  g.colorThemeSelect(cx),
 		}}}}}}
 }
 
@@ -86,6 +90,46 @@ func themeSelect(cx *core.Scope) core.Node {
 		{Value: core.AppearanceDark, Label: locales.ThemeDark(cx)},
 	}, Value: cx.Env().Appearance, OnChange: func(a core.Appearance) { setAppearance(cx, a) },
 		Label: locales.Theme(cx), TestID: "theme", Style: core.Style{Width: core.Pt(140)}}
+}
+
+// colorThemeKey keeps the built-in theme chosen in the settings; without
+// it the gallery shows the default.
+const colorThemeKey = "colorTheme"
+
+// warmDusk is colorThemeKey's value for ui.WarmDuskTheme.
+const warmDusk = "warmDusk"
+
+// showTheme gives cx the built-in theme named.
+func showTheme(cx *core.Scope, name string) {
+	if name == warmDusk {
+		cx.SetTheme(ui.WarmDuskTheme())
+		return
+	}
+	cx.SetTheme(ui.Theme())
+}
+
+// rememberTheme shows the built-in theme chosen last time.
+func rememberTheme(cx *core.Scope) {
+	name, _ := cx.Storage().GetItem(colorThemeKey)
+	showTheme(cx, name)
+}
+
+// colorThemeSelect chooses the built-in theme.
+func (g *gallery) colorThemeSelect(cx *core.Scope) core.Node {
+	name, _ := cx.Storage().GetItem(colorThemeKey)
+	value := core.NewSignal(cx, name)
+	return ui.Select[string]{Options: []ui.Option[string]{
+		{Value: "", Label: locales.ColorThemeDefault(cx)},
+		{Value: warmDusk, Label: locales.ColorThemeWarmDusk(cx)},
+	}, Value: value.Get, OnChange: func(name string) {
+		value.Set(name)
+		showTheme(g.root, name)
+		if name == "" {
+			cx.Storage().RemoveItem(colorThemeKey)
+		} else {
+			cx.Storage().SetItem(colorThemeKey, name)
+		}
+	}, Label: locales.ColorTheme(cx), TestID: "color-theme", Style: core.Style{Width: core.Pt(140)}}
 }
 
 // languageNames are the catalogs' languages named in themselves, for the

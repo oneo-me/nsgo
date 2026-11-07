@@ -8,6 +8,10 @@ settingsSearchPlaceholder: بحث
 settingsResults: النتائج
 settingsEmpty: لا توجد إعدادات مطابقة.
 settingsClose: إغلاق الإعدادات
+colorTheme: سمة الألوان
+colorThemeDefault: الافتراضية
+colorThemeWarmDusk: الغسق الدافئ
+settingsColorThemeDetail: ألوان المعرض من سمات NSGo المضمّنة.
 settingsThemeDetail: عرض المعرض بالمظهر الفاتح أو الداكن أو بمظهر النظام.
 theme: السمة
 themeSystem: النظام

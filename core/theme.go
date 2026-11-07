@@ -127,21 +127,21 @@ func (t *Theme) Clone() *Theme {
 // DefaultTheme returns Onevra's theme, which a tree shows until the app
 // sets one: warm neutrals with a terracotta accent, lifted in dark.
 func DefaultTheme() *Theme {
-	text, dark := RGB(0x33332f), RGB(0xeeeae2)
+	text, dark := RGB(0x333333), RGB(0xeaeaea)
 	t := &Theme{
 		Light: Palette{
-			Background: RGB(0xfcfbf9), Surface: RGB(0xfefefd), SurfaceHover: RGB(0xeceae4), SurfacePressed: RGB(0xd9d7d2),
-			Border: RGB(0xdeded5), Text: text, TextMuted: RGB(0x72726a),
-			Accent: RGB(0xbd481b), AccentHover: RGB(0xa63f18), AccentPressed: RGB(0x8e3614), AccentText: RGB(0xffffff),
+			Background: RGB(0xfbfbfb), Surface: RGB(0xfefefe), SurfaceHover: RGB(0xeaeaea), SurfacePressed: RGB(0xd7d7d7),
+			Border: RGB(0xdddddd), Text: text, TextMuted: RGB(0x717171),
+			Accent: RGB(0x007aff), AccentHover: RGB(0x006be0), AccentPressed: RGB(0x005cbf), AccentText: RGB(0xffffff),
 			Danger: RGB(0xb4444c), Warning: RGB(0xb45309), Success: RGB(0x059669),
-			Selection: RGBA(0xe6652b, 0.22), Focus: RGBA(0xb94716, 0.55), Scrollbar: text.Faded(0.30),
+			Selection: RGBA(0x007aff, 0.22), Focus: RGBA(0x007aff, 0.55), Scrollbar: text.Faded(0.30),
 		},
 		Dark: Palette{
-			Background: RGB(0x211f1c), Surface: RGB(0x2b2925), SurfaceHover: RGB(0x36332e), SurfacePressed: RGB(0x403c36),
-			Border: RGB(0x504b43), Text: dark, TextMuted: RGB(0xbdb6aa),
-			Accent: RGB(0xed986e), AccentHover: RGB(0xefa47f), AccentPressed: RGB(0xd18661), AccentText: RGB(0x291b14),
+			Background: RGB(0x1f1f1f), Surface: RGB(0x292929), SurfaceHover: RGB(0x333333), SurfacePressed: RGB(0x3c3c3c),
+			Border: RGB(0x4c4c4c), Text: dark, TextMuted: RGB(0xb7b7b7),
+			Accent: RGB(0x0a84ff), AccentHover: RGB(0x2793ff), AccentPressed: RGB(0x0974e0), AccentText: RGB(0xffffff),
 			Danger: RGB(0xe58f95), Warning: RGB(0xe6b567), Success: RGB(0x79bea1),
-			Selection: RGBA(0xed986e, 0.24), Focus: RGBA(0xed986e, 0.8), Scrollbar: dark.Faded(0.35),
+			Selection: RGBA(0x0a84ff, 0.24), Focus: RGBA(0x0a84ff, 0.8), Scrollbar: dark.Faded(0.35),
 		},
 		Radius: 8,
 	}
@@ -191,10 +191,10 @@ var shadcnDark = map[string]Color{
 //
 //	radius: 8
 //	light:
-//	  accent: "#bd481b"
-//	  inset: "#f2efea"
+//	  accent: "#007aff"
+//	  inset: "#f1f1f1"
 //	dark:
-//	  accent: "#ed986e"
+//	  accent: "#0a84ff"
 //
 // It reads a shadcn/ui theme file too, as NSH's apps name theirs: the
 // CSS variables of cssVars' theme, light and dark sections, where a

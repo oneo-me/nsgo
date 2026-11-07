@@ -99,7 +99,7 @@ func dial(cx *core.Scope) core.Node {
 	}
 	draw := func(d *core.Drawing, size core.Size) {
 		c := colors.Now()
-		shade := ui.Paper(0.3)
+		shade := ui.Black(0.3)
 		if cx.Dark() {
 			shade = ui.Black(0.6)
 		}
@@ -560,7 +560,7 @@ func compositing(cx *core.Scope) core.Node {
 	img := core.ImageSource{Data: logoPNG}
 	draw := func(d *core.Drawing, size core.Size) {
 		c := colors.Now()
-		shade := ui.Paper(0.25)
+		shade := ui.Black(0.25)
 		if cx.Dark() {
 			shade = ui.Black(0.7)
 		}

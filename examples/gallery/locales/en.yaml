@@ -18,6 +18,10 @@ settingsSearchPlaceholder: Search
 settingsResults: Results
 settingsEmpty: No settings match.
 settingsClose: Close settings
+colorTheme: Color theme
+colorThemeDefault: Default
+colorThemeWarmDusk: Warm Dusk
+settingsColorThemeDetail: The gallery's colors, from NSGo's built-in themes.
 settingsThemeDetail: Whether the gallery shows light or dark, or follows the system.
 theme: Theme
 themeSystem: System

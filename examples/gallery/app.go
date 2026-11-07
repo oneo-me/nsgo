@@ -256,7 +256,9 @@ type route struct {
 // gallery is the state the layouts share, so switching between them (a
 // window resized, the appearance changed) keeps what is open.
 type gallery struct {
-	nav *base.Nav[route]
+	// root is the scope whose theme the settings change.
+	root *core.Scope
+	nav  *base.Nav[route]
 	// tab is the index of the tab shown: of tabs, or settingsTab in the
 	// narrow layout.
 	tab *core.Signal[int]
@@ -353,13 +355,14 @@ const lastDemo = "lastDemo"
 // appearance restyles it in place.
 // NSGO_GALLERY_OPEN names a demo to open at start, for screenshots.
 func Root(cx *core.Scope) core.Node {
-	cx.SetTheme(ui.Theme())
+	rememberTheme(cx)
 	env := cx.Env()
 	var picked []string
 	for _, t := range tabs {
 		picked = append(picked, t.groups[0].demos[0].name)
 	}
 	g := &gallery{
+		root:             cx,
 		nav:              base.NewNav(cx, route{}),
 		tab:              core.NewSignal(cx, 0),
 		selected:         core.NewSignal(cx, picked[0]),

@@ -252,7 +252,7 @@ func baseCheckboxCard(last *core.Signal[string]) cardFunc {
 				Style:          core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
 				IndicatorStyle: core.Style{Width: core.Pt(16), Height: core.Pt(16), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 4, BorderWidth: 1},
 				IndicatorStyleFunc: func() core.Style {
-					on := &core.Style{Background: colors.Accent(), BorderColor: colors.Accent()}
+					on := &core.Style{Background: colors.AccentFill(), BorderColor: colors.AccentFill()}
 					return core.Style{BorderColor: colors.Line(), Checked: on, Indeterminate: &core.Style{Background: colors.Line()}}
 				},
 				Indicator: ui.Text("✓", 11, ui.Semibold, colors.OnAccent), Children: []core.Node{bareText(cx, tr.LibStarred())}}

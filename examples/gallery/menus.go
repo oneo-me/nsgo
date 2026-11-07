@@ -48,19 +48,21 @@ func (l menuLook) surface(cx *core.Scope) func() core.Style {
 func (menuLook) backdrop() core.Style { return core.Style{Background: ui.Black(0.45)} }
 
 // itemHovered and itemPressed are an item under the pointer and pressed:
-// an orange tint with a hairline of it, read in a StyleFunc.
+// an accent tint with a hairline of it, read in a StyleFunc.
 func itemHovered(cx *core.Scope) *core.Style {
+	accent := ui.ColorsOf(cx).Accent()
 	if cx.Dark() {
-		return &core.Style{Background: core.RGBA(0xed986e, 0.08), BorderColor: core.RGBA(0xed986e, 0.22)}
+		return &core.Style{Background: ui.Alpha(accent, 0.08), BorderColor: ui.Alpha(accent, 0.22)}
 	}
-	return &core.Style{Background: core.RGBA(0xd4581b, 0.08), BorderColor: core.RGBA(0xd4581b, 0.24)}
+	return &core.Style{Background: ui.Alpha(accent, 0.08), BorderColor: ui.Alpha(accent, 0.24)}
 }
 
 func itemPressed(cx *core.Scope) *core.Style {
+	accent := ui.ColorsOf(cx).Accent()
 	if cx.Dark() {
-		return &core.Style{Background: core.RGBA(0xed986e, 0.14), BorderColor: core.RGBA(0xed986e, 0.32)}
+		return &core.Style{Background: ui.Alpha(accent, 0.14), BorderColor: ui.Alpha(accent, 0.32)}
 	}
-	return &core.Style{Background: core.RGBA(0xd4581b, 0.14), BorderColor: core.RGBA(0xd4581b, 0.34)}
+	return &core.Style{Background: ui.Alpha(accent, 0.14), BorderColor: ui.Alpha(accent, 0.34)}
 }
 
 // itemProps are a menu row: a mark at the trailing edge (a check, a

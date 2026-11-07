@@ -70,6 +70,40 @@ func showcase(cx *core.Scope) core.Node {
 	}}}}
 }
 
+// TestThemes keeps the default accent and neutrals free of a hue, and has
+// what floats follow the theme shown.
+func TestThemes(t *testing.T) {
+	headless(t)
+	th := Theme()
+	if th.Light.Accent != core.RGB(0x007aff) || th.Dark.Accent != core.RGB(0x0a84ff) || th.Light.Colors["accentFill"] != th.Light.Accent {
+		t.Fatalf("default accent = %v", th.Light.Accent)
+	}
+	for _, p := range []core.Palette{th.Light, th.Dark} {
+		for _, c := range []core.Color{p.Background, p.Surface, p.SurfaceHover, p.SurfacePressed, p.Border, p.Text, p.TextMuted,
+			p.Colors["inset"], p.Colors["raised"], p.Colors["field"], p.Colors["line"], p.Colors["faint"], p.Colors["track"]} {
+			if r, g, b, _ := c.Components(); r != g || g != b {
+				t.Errorf("neutral %v has a hue", c)
+			}
+		}
+	}
+	if d := WarmDuskTheme(); d.Light.Accent != core.RGB(0xbd481b) || d.Dark.Accent != core.RGB(0xed986e) {
+		t.Fatalf("Warm Dusk accents = %v, %v", d.Light.Accent, d.Dark.Accent)
+	}
+	for _, theme := range []*core.Theme{th, WarmDuskTheme()} {
+		var menu, pill Finish
+		start(t, desktopEnv, func(cx *core.Scope) core.Node {
+			cx.SetTheme(theme)
+			return core.View{TestID: "finish", StyleFunc: func() core.Style {
+				menu, pill = FinOf(cx).Menu(), FinOf(cx).Pill()
+				return core.Style{}
+			}}
+		})
+		if menu.Background != Alpha(theme.Light.Background, 0.92) || menu.Border != theme.Light.Border || pill.Background != theme.Light.Colors["raised"] {
+			t.Fatalf("finishes %v, %v do not follow the theme", menu, pill)
+		}
+	}
+}
+
 // TestAppearanceRestylesInPlace turns the components dark: each restyles
 // in place, built once, and looks as it does in a dark build.
 func TestAppearanceRestylesInPlace(t *testing.T) {

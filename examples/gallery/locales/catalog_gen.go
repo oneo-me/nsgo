@@ -329,6 +329,10 @@ type Translation struct {
 	SettingsResults                              func() string
 	SettingsEmpty                                func() string
 	SettingsClose                                func() string
+	ColorTheme                                   func() string
+	ColorThemeDefault                            func() string
+	ColorThemeWarmDusk                           func() string
+	SettingsColorThemeDetail                     func() string
 	SettingsThemeDetail                          func() string
 	Theme                                        func() string
 	ThemeSystem                                  func() string
@@ -2346,6 +2350,10 @@ const (
 	textSettingsResults
 	textSettingsEmpty
 	textSettingsClose
+	textColorTheme
+	textColorThemeDefault
+	textColorThemeWarmDusk
+	textSettingsColorThemeDetail
 	textSettingsThemeDetail
 	textTheme
 	textThemeSystem
@@ -4258,6 +4266,10 @@ var texts = map[string]*[numTexts]string{
 		"Results",
 		"No settings match.",
 		"Close settings",
+		"Color theme",
+		"Default",
+		"Warm Dusk",
+		"The gallery's colors, from NSGo's built-in themes.",
 		"Whether the gallery shows light or dark, or follows the system.",
 		"Theme",
 		"System",
@@ -6165,6 +6177,10 @@ var texts = map[string]*[numTexts]string{
 		"النتائج",
 		"لا توجد إعدادات مطابقة.",
 		"إغلاق الإعدادات",
+		"سمة الألوان",
+		"الافتراضية",
+		"الغسق الدافئ",
+		"ألوان المعرض من سمات NSGo المضمّنة.",
 		"عرض المعرض بالمظهر الفاتح أو الداكن أو بمظهر النظام.",
 		"السمة",
 		"النظام",
@@ -8072,6 +8088,10 @@ var texts = map[string]*[numTexts]string{
 		"搜索结果",
 		"没有匹配的设置。",
 		"关闭设置",
+		"配色",
+		"默认",
+		"暖暮",
+		"Gallery 的颜色，来自 NSGo 内置主题。",
 		"Gallery 显示浅色、深色，或与系统一致。",
 		"主题",
 		"系统",
@@ -9979,6 +9999,10 @@ var texts = map[string]*[numTexts]string{
 		"搜尋結果",
 		"沒有相符的設定。",
 		"關閉設定",
+		"配色",
+		"預設",
+		"暖暮",
+		"Gallery 的顏色，來自 NSGo 內建主題。",
 		"Gallery 顯示淺色、深色，或與系統一致。",
 		"主題",
 		"系統",
@@ -11939,6 +11963,18 @@ func Supply(lang string, t Translation) {
 	}
 	if t.SettingsClose != nil {
 		st[textSettingsClose] = t.SettingsClose()
+	}
+	if t.ColorTheme != nil {
+		st[textColorTheme] = t.ColorTheme()
+	}
+	if t.ColorThemeDefault != nil {
+		st[textColorThemeDefault] = t.ColorThemeDefault()
+	}
+	if t.ColorThemeWarmDusk != nil {
+		st[textColorThemeWarmDusk] = t.ColorThemeWarmDusk()
+	}
+	if t.SettingsColorThemeDetail != nil {
+		st[textSettingsColorThemeDetail] = t.SettingsColorThemeDetail()
 	}
 	if t.SettingsThemeDetail != nil {
 		st[textSettingsThemeDetail] = t.SettingsThemeDetail()
@@ -18047,6 +18083,40 @@ func SettingsClose(cx *core.Scope) string { return For(cx).SettingsClose() }
 // SettingsClose says "Close settings"
 // in the language of msgs.
 func (msgs Messages) SettingsClose() string { return msgs.text(textSettingsClose) }
+
+// ColorTheme says "Color theme"
+// in the language the app shows under cx.
+func ColorTheme(cx *core.Scope) string { return For(cx).ColorTheme() }
+
+// ColorTheme says "Color theme"
+// in the language of msgs.
+func (msgs Messages) ColorTheme() string { return msgs.text(textColorTheme) }
+
+// ColorThemeDefault says "Default"
+// in the language the app shows under cx.
+func ColorThemeDefault(cx *core.Scope) string { return For(cx).ColorThemeDefault() }
+
+// ColorThemeDefault says "Default"
+// in the language of msgs.
+func (msgs Messages) ColorThemeDefault() string { return msgs.text(textColorThemeDefault) }
+
+// ColorThemeWarmDusk says "Warm Dusk"
+// in the language the app shows under cx.
+func ColorThemeWarmDusk(cx *core.Scope) string { return For(cx).ColorThemeWarmDusk() }
+
+// ColorThemeWarmDusk says "Warm Dusk"
+// in the language of msgs.
+func (msgs Messages) ColorThemeWarmDusk() string { return msgs.text(textColorThemeWarmDusk) }
+
+// SettingsColorThemeDetail says "The gallery's colors, from NSGo's built-in themes."
+// in the language the app shows under cx.
+func SettingsColorThemeDetail(cx *core.Scope) string { return For(cx).SettingsColorThemeDetail() }
+
+// SettingsColorThemeDetail says "The gallery's colors, from NSGo's built-in themes."
+// in the language of msgs.
+func (msgs Messages) SettingsColorThemeDetail() string {
+	return msgs.text(textSettingsColorThemeDetail)
+}
 
 // SettingsThemeDetail says "Whether the gallery shows light or dark, or follows the system."
 // in the language the app shows under cx.

@@ -126,6 +126,24 @@ func TestPhoneTabs(t *testing.T) {
 	}
 }
 
+// TestColorThemeChosen shows and keeps the built-in theme chosen in the
+// settings.
+func TestColorThemeChosen(t *testing.T) {
+	app := startPhone(t)
+	openTab(app, settingsTab())
+	if got := app.Find("id:settings-page").Style.Background; got != ui.Theme().Light.Background {
+		t.Fatalf("page = %x, want the default background", got)
+	}
+	app.Press("id:color-theme")
+	app.Press("id:color-theme-1")
+	if got, _ := app.Storage().GetItem(colorThemeKey); got != warmDusk {
+		t.Fatalf("kept %q, want %q", got, warmDusk)
+	}
+	if got := app.Find("id:settings-page").Style.Background; got != ui.WarmDuskTheme().Light.Background {
+		t.Fatalf("page = %x, want Warm Dusk's background", got)
+	}
+}
+
 // TestPhoneLargeTitles titles the indexes, the settings and the demos that
 // scroll with iOS's large title, and leaves the others a compact bar.
 func TestPhoneLargeTitles(t *testing.T) {

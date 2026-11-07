@@ -8,6 +8,10 @@ settingsSearchPlaceholder: 搜尋
 settingsResults: 搜尋結果
 settingsEmpty: 沒有相符的設定。
 settingsClose: 關閉設定
+colorTheme: 配色
+colorThemeDefault: 預設
+colorThemeWarmDusk: 暖暮
+settingsColorThemeDetail: Gallery 的顏色，來自 NSGo 內建主題。
 settingsThemeDetail: Gallery 顯示淺色、深色，或與系統一致。
 theme: 主題
 themeSystem: 系統

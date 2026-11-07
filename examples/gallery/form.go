@@ -522,7 +522,7 @@ func messageBar(cx *core.Scope) base.NavPage {
 	}})
 }
 
-// bubble is a chat message: orange on the right for mine, raised on the
+// bubble is a chat message: the accent on the right for mine, raised on the
 // left for theirs.
 func bubble(cx *core.Scope, m message) core.Node {
 	colors := ui.ColorsOf(cx)

@@ -89,7 +89,7 @@ func toolBody(cx *core.Scope, t func() chatTool) core.Node {
 	}
 	codeColor := func() core.Color {
 		if cx.Dark() {
-			return core.RGB(0xcfc9bf)
+			return ui.Mix(colors.Code(), colors.Muted(), 0.4)
 		}
 		return colors.Code()
 	}

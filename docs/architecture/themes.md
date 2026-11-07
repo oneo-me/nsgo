@@ -4,7 +4,7 @@ How an app, a component library and an embedding host give the UI its colors in 
 
 ## Model
 
-A `core.Theme` is one look in both appearances: a `Palette` for light and one for dark, a corner radius and font families. Its roles are Onevra's (its `theme` package), and `DefaultTheme` holds Onevra's values:
+A `core.Theme` is one look in both appearances: a `Palette` for light and one for dark, a corner radius and font families. Its roles are Onevra's (its `theme` package), and `DefaultTheme` holds a look with no character of its own, neutral grays and macOS's blue as the accent, `#007AFF` in light and `#0A84FF` in dark:
 
 | Role | What it colors |
 | --- | --- |
@@ -35,10 +35,10 @@ Native views follow a subtree's forced appearance through `ViewProps.Appearance`
 ```yaml
 radius: 8
 light:
-  background: "#fcfbf9"
-  inset: "#f2efea" # a role of Palette.Colors
+  background: "#fbfbfb"
+  inset: "#f1f1f1" # a role of Palette.Colors
 dark:
-  background: "#211f1c"
+  background: "#1f1f1f"
 ```
 
 Values are CSS colors. JSON is YAML, so a theme exported as JSON reads too.
@@ -55,7 +55,7 @@ An embedding host's `core.Tokens` go over every theme's palette by the same role
 
 ## ui
 
-`ui` styles `base`, as NSH's gallery does with `examples/nsh-gallery-ui`, in the look of Onevra's gallery, for apps and the gallery alike: flat bordered cards and controls, the controls 28 pt tall in 13 pt text on every device. It holds `ui.Theme`, Onevra's with the gallery's roles in `Palette.Colors` derived from Onevra's, its finishes and motion, and components written as structs with a `Render` method (`ui.Button{Text: …, Variant: ui.ButtonSecondary, OnPress: …}`): controls, popups, menus, panels, navigation, shells, lists and a tree, form fields, settings, images, and `ui/chat`, a conversation (`chat.FloatingConversation`, `chat.Turn`, `chat.Composer` and their chips, pickers and meters, ported from Onevra's `chat`). What only the gallery's demos share is in `examples/gallery/parts.go`. Each reads its colors where it is built, so a subtree's theme reaches it, and reads `ui.ColorsOf`, `ui.TintsOf` and `ui.FinOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.Text()`), and a method value (`colors.Text`) is a color to hand on; `colors.Now()` reads them all at once for a `Draw`, and `ui.Themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build, and the package's own every component.
+`ui` styles `base`, as NSH's gallery does with `examples/nsh-gallery-ui`, in the look of Onevra's gallery, for apps and the gallery alike: flat bordered cards and controls, the controls 28 pt tall in 13 pt text on every device. It holds `ui.Theme`, the default with the gallery's roles in `Palette.Colors` derived as Onevra derives its own, `ui.WarmDuskTheme` (Warm Dusk, 暖暮), Onevra's warm palette and terracotta accent, which an app passes to `SetTheme` as it does `ui.Theme` and the gallery's settings offer, its finishes, which take what floats from the theme's colors, and motion, and components written as structs with a `Render` method (`ui.Button{Text: …, Variant: ui.ButtonSecondary, OnPress: …}`): controls, popups, menus, panels, navigation, shells, lists and a tree, form fields, settings, images, and `ui/chat`, a conversation (`chat.FloatingConversation`, `chat.Turn`, `chat.Composer` and their chips, pickers and meters, ported from Onevra's `chat`). What only the gallery's demos share is in `examples/gallery/parts.go`. Each reads its colors where it is built, so a subtree's theme reaches it, and reads `ui.ColorsOf`, `ui.TintsOf` and `ui.FinOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.Text()`), and a method value (`colors.Text`) is a color to hand on; `colors.Now()` reads them all at once for a `Draw`, and `ui.Themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build, and the package's own every component.
 
 Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffView` a `StylesFunc`, `TextView` a `StyleOf`), as `core.Span` has, so an app restyles them in place too.
 

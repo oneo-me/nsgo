@@ -120,7 +120,7 @@ func (s Slider) Render(cx *core.Scope) core.Node {
 		IndicatorStyle:     core.Style{Height: core.Pt(sliderTrack), CornerRadius: sliderTrack / 2, Margin: core.Edges{Top: (height - sliderTrack) / 2, Left: sliderKnobW / 2, Right: sliderKnobW / 2}},
 		IndicatorStyleFunc: Filled(colors.Line),
 		RangeStyle:         core.Style{CornerRadius: sliderTrack / 2},
-		RangeStyleFunc:     Filled(colors.Accent),
+		RangeStyleFunc:     Filled(colors.AccentFill),
 		ThumbStyle: core.Style{Width: core.Pt(sliderKnobW), Height: core.Pt(sliderKnobH), CornerRadius: sliderKnobH / 2,
 			Transition: core.Transition{Duration: quick.Duration, Easing: core.EaseOut, Properties: core.TransitionTransform}},
 		ThumbStyleFunc: func() core.Style {

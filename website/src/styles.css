@@ -1,37 +1,37 @@
 /* NSGo's home page. The palette and roles follow the gallery's (ui/
-   theme.go): a warm charcoal page, warm paper in the light theme,
-   one orange accent and quiet terracotta. Muted and faint text carry a
+   theme.go): a neutral charcoal page, neutral paper in the light theme
+   and one blue accent. Muted and faint text carry a
    little more contrast than the app's for reading on the web. Surfaces
    are flat; hairlines and type carry the hierarchy. Highlights and
    shadows stay small: only the mobile menu casts one, with no gradients
    and no inset light. */
 
 :root {
-  --bg: #1a1816;
-  --surface: #22201d;
-  --inset: #151412;
-  --raised: #2e2b27;
-  --band: #151412;
-  --border: #36332e;
-  --border-strong: #47433c;
-  --line: #2e2b27;
-  --text: #eeeae2;
-  --muted: #a39c90;
-  --faint: #8a8378;
-  --accent: #ed986e;
-  --accent-fill: #ed986e;
-  --accent-fill-hover: #f2a67f;
-  --on-accent: #291b14;
-  --button: #eeeae2;
-  --on-button: #1f1d1a;
+  --bg: #181818;
+  --surface: #202020;
+  --inset: #141414;
+  --raised: #2b2b2b;
+  --band: #141414;
+  --border: #333333;
+  --border-strong: #434343;
+  --line: #2b2b2b;
+  --text: #eaeaea;
+  --muted: #9d9d9d;
+  --faint: #848484;
+  --accent: #0a84ff;
+  --accent-fill: #0a84ff;
+  --accent-fill-hover: #2793ff;
+  --on-accent: #ffffff;
+  --button: #eaeaea;
+  --on-button: #1d1d1d;
   --button-hover: #ffffff;
   --ok: #79bea1;
   --danger: #e58f95;
 
-  --code-bg: #151412;
-  --code-text: #e2dcd2;
-  --code-punctuation: #8f887d;
-  --code-comment: #8a8378;
+  --code-bg: #141414;
+  --code-text: #dddddd;
+  --code-punctuation: #898989;
+  --code-comment: #848484;
   --code-keyword: #e8a77f;
   --code-string: #9fc58a;
   --code-function: #94b9e0;
@@ -39,9 +39,9 @@
   --code-number: #e2b27a;
   --code-property: #d6b089;
 
-  --dot: rgb(238 234 226 / 7%);
-  --grid: rgb(238 234 226 / 4.5%);
-  --selection: rgb(237 152 110 / 24%);
+  --dot: rgb(234 234 234 / 7%);
+  --grid: rgb(234 234 234 / 4.5%);
+  --selection: rgb(10 132 255 / 24%);
   --shadow-menu: 0 10px 30px -22px rgb(0 0 0 / 48%);
 
   --font-sans:
@@ -54,31 +54,31 @@
 }
 
 html[data-theme='light'] {
-  --bg: #f5f3ef;
-  --surface: #fefefd;
-  --inset: #f2efea;
-  --raised: #fcfbf9;
-  --band: #efede8;
-  --border: #dbd7ce;
-  --border-strong: #c6c1b6;
-  --line: #e5e1d9;
-  --text: #2d2b27;
-  --muted: #72726a;
-  --faint: #736e64;
-  --accent: #b24318;
-  --accent-fill: #b24318;
-  --accent-fill-hover: #993a13;
+  --bg: #f3f3f3;
+  --surface: #fefefe;
+  --inset: #efefef;
+  --raised: #fbfbfb;
+  --band: #ededed;
+  --border: #d7d7d7;
+  --border-strong: #c1c1c1;
+  --line: #e1e1e1;
+  --text: #2b2b2b;
+  --muted: #717171;
+  --faint: #6e6e6e;
+  --accent: #006be0;
+  --accent-fill: #007aff;
+  --accent-fill-hover: #006be0;
   --on-accent: #ffffff;
-  --button: #2d2b27;
+  --button: #2b2b2b;
   --on-button: #ffffff;
-  --button-hover: #1f1d1a;
+  --button-hover: #1d1d1d;
   --ok: #047857;
   --danger: #b4444c;
 
-  --code-bg: #f2efea;
-  --code-text: #3a3631;
-  --code-punctuation: #66665e;
-  --code-comment: #6b665d;
+  --code-bg: #efefef;
+  --code-text: #373737;
+  --code-punctuation: #656565;
+  --code-comment: #666666;
   --code-keyword: #a44a1c;
   --code-string: #466d2e;
   --code-function: #305e9c;
@@ -86,10 +86,10 @@ html[data-theme='light'] {
   --code-number: #9a5a1e;
   --code-property: #82602a;
 
-  --dot: rgb(45 43 39 / 8%);
-  --grid: rgb(45 43 39 / 5%);
-  --selection: rgb(189 72 27 / 18%);
-  --shadow-menu: 0 10px 28px -22px rgb(45 40 30 / 20%);
+  --dot: rgb(43 43 43 / 8%);
+  --grid: rgb(43 43 43 / 5%);
+  --selection: rgb(0 122 255 / 18%);
+  --shadow-menu: 0 10px 28px -22px rgb(40 40 40 / 20%);
 
   color-scheme: light;
 }
