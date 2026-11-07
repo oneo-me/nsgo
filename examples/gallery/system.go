@@ -209,7 +209,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 		return l
 	}
 	return Card{Title: tr.SystemAlertsAndSheets(), Description: tr.SystemAlertdialogToast(), Flush: true, Children: []core.Node{
-		ui.Inset{Padding: 12, Exact: true, Children: []core.Node{
+		Inset{Children: []core.Node{
 			actionRow(cx, true, lucide.Check, colors.Up, tr.SystemAlert(), tr.SystemOneButton(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemSaved(), Description: tr.SystemYourChangesWereSaved(), Actions: []core.AlertAction{{Label: tr.SystemOk()}}},
 					func(string) { show(tr.SystemOk(), ToneUp) })

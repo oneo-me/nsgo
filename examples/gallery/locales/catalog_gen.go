@@ -2263,8 +2263,6 @@ type Translation struct {
 	DemoListDetail                               func() string
 	DemoTable                                    func() string
 	DemoTableDetail                              func() string
-	DemoInset                                    func() string
-	DemoInsetDetail                              func() string
 	DemoAccordion                                func() string
 	DemoAccordionDetail                          func() string
 	DemoDialog                                   func() string
@@ -4138,8 +4136,6 @@ const (
 	textDemoListDetail
 	textDemoTable
 	textDemoTableDetail
-	textDemoInset
-	textDemoInsetDetail
 	textDemoAccordion
 	textDemoAccordionDetail
 	textDemoDialog
@@ -6014,8 +6010,6 @@ var texts = map[string]*[numTexts]string{
 		"Rows to select, and nested items that expand",
 		"Table",
 		"A few rows the app writes out",
-		"Inset",
-		"A recessed surface for content",
 		"Accordion",
 		"Sections that open one or several at a time, and details under a summary",
 		"Dialog",
@@ -7885,8 +7879,6 @@ var texts = map[string]*[numTexts]string{
 		"صفوف للتحديد وعناصر متداخلة قابلة للتوسيع",
 		"جدول",
 		"صفوف قليلة يكتبها التطبيق",
-		"Inset",
-		"سطح غائر للمحتوى",
 		"أكورديون",
 		"أقسام تُفتح واحدًا أو أكثر معًا، وتفاصيل تحت ملخص",
 		"مربع حوار",
@@ -9756,8 +9748,6 @@ var texts = map[string]*[numTexts]string{
 		"可选择的行，以及可展开的嵌套项",
 		"表格",
 		"应用写出的少量行",
-		"Inset",
-		"让内容下沉的表面",
 		"手风琴",
 		"可逐个或同时展开的分区，以及摘要下的详情",
 		"对话框",
@@ -11627,8 +11617,6 @@ var texts = map[string]*[numTexts]string{
 		"可選取的列，以及可展開的巢狀項目",
 		"表格",
 		"應用程式寫出的少量列",
-		"Inset",
-		"讓內容下沉的表面",
 		"手風琴",
 		"可逐一或同時展開的區塊，以及摘要下的詳細內容",
 		"對話方塊",
@@ -17525,12 +17513,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoTableDetail != nil {
 		st[textDemoTableDetail] = t.DemoTableDetail()
-	}
-	if t.DemoInset != nil {
-		st[textDemoInset] = t.DemoInset()
-	}
-	if t.DemoInsetDetail != nil {
-		st[textDemoInsetDetail] = t.DemoInsetDetail()
 	}
 	if t.DemoAccordion != nil {
 		st[textDemoAccordion] = t.DemoAccordion()
@@ -36390,22 +36372,6 @@ func DemoTableDetail(cx *core.Scope) string { return For(cx).DemoTableDetail() }
 // DemoTableDetail says "A few rows the app writes out"
 // in the language of msgs.
 func (msgs Messages) DemoTableDetail() string { return msgs.text(textDemoTableDetail) }
-
-// DemoInset says "Inset"
-// in the language the app shows under cx.
-func DemoInset(cx *core.Scope) string { return For(cx).DemoInset() }
-
-// DemoInset says "Inset"
-// in the language of msgs.
-func (msgs Messages) DemoInset() string { return msgs.text(textDemoInset) }
-
-// DemoInsetDetail says "A recessed surface for content"
-// in the language the app shows under cx.
-func DemoInsetDetail(cx *core.Scope) string { return For(cx).DemoInsetDetail() }
-
-// DemoInsetDetail says "A recessed surface for content"
-// in the language of msgs.
-func (msgs Messages) DemoInsetDetail() string { return msgs.text(textDemoInsetDetail) }
 
 // DemoAccordion says "Accordion"
 // in the language the app shows under cx.

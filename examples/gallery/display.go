@@ -66,20 +66,6 @@ func avatarGroupCard(*core.Signal[string]) cardFunc {
 	}
 }
 
-func insetCard(*core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		padding, gap := core.NewSignal(cx, 12.0), core.NewSignal(cx, 8.0)
-		return Playground{Title: "Inset", UIOnly: true, Fill: true, Stage: func() core.Node {
-			return ui.Inset{Padding: core.Points(padding.Get()), Gap: core.Points(gap.Get()), Exact: true, Children: []core.Node{
-				ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Text),
-				ui.Text(tr.ControlsInvoicePaid(), 13, ui.Regular, colors.Muted),
-			}}
-		}, Knobs: []core.Node{numberKnob("Padding", padding, 0, 24, 2), numberKnob("Gap", gap, 0, 24, 2)}}
-	}
-}
-
 // demoImage is the gallery's icon, as a picture to show.
 func demoImage() core.ImageSource {
 	return core.ImageSource{Data: logoPNG, Size: core.Size{Width: 512, Height: 512}}

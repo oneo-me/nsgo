@@ -442,7 +442,7 @@ func formDemo(cx *core.Scope) core.Node {
 						}},
 						ui.Button{Text: tr.FormDone(), Variant: ui.ButtonSecondary, OnPress: func() { sheetOpen.Set(false) }},
 					}},
-					ui.Inset{Children: fields},
+					Inset{Gap: 10, Children: fields},
 				}},
 			}},
 		}}}}

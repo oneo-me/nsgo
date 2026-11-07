@@ -41,6 +41,21 @@ func (c Code) Render(cx *core.Scope) core.Node {
 	return t
 }
 
+// Inset is the recessed surface inside a card.
+type Inset struct {
+	Gap      core.Points
+	Children []core.Node
+}
+
+// Render implements core.Node.
+func (in Inset) Render(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	return core.View{StyleFunc: func() core.Style {
+		return core.Style{Background: colors.Inset(), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
+			Padding: core.All(12), Gap: in.Gap}
+	}, Children: in.Children}
+}
+
 // panelMotion eases a pressable panel between its states.
 var panelMotion = core.Transition{Duration: 120 * time.Millisecond, Easing: core.EaseOut,
 	Properties: core.TransitionBackground | core.TransitionBorder}

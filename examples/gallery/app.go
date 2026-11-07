@@ -107,7 +107,6 @@ func init() {
 		{"Plot", m.DemoPlot, m.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
 	}
 	containers := []demo{
-		{"Inset", m.DemoInset, m.DemoInsetDetail, lucide.PanelTop, eventsDemo(insetCard)},
 		{"Accordion", m.DemoAccordion, m.DemoAccordionDetail, lucide.Rows3, eventsDemo(accordionCard, collapsiblePlayground)},
 		{"Resizable", m.DemoResizable, m.DemoResizableDetail, lucide.PanelLeft, resizableDemo},
 		{"Dock", m.DemoDock, m.DemoDockDetail, lucide.AppWindow, dockDemo},

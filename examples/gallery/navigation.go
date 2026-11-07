@@ -83,7 +83,7 @@ func transparentPage(cx *core.Scope) base.NavPage {
 				core.Text{Content: tr.NavContentUnderTheHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: tr.NavTheCirclesStartAtThe(), Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
-			Appear{Index: 1, Children: []core.Node{ui.Inset{Children: []core.Node{insetsRow(cx)}}}},
+			Appear{Index: 1, Children: []core.Node{Inset{Children: []core.Node{insetsRow(cx)}}}},
 		}}}}
 }
 
