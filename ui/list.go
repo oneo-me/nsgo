@@ -12,9 +12,9 @@ type Selection = base.Selection
 // of any number.
 func NewSelection(cx *core.Scope, multiple bool) *Selection { return base.NewSelection(cx, multiple) }
 
-// List is base.List in Onevra's look: rounded rows, the chosen ones in the
-// selection's color and the keyboard's cursor ringed. Give it a height, or
-// let it fill what the app sizes.
+// List is base.List in Onevra's look: rounded rows, the chosen ones on a
+// faint fill of the text's color as a Sidebar's and the keyboard's cursor
+// ringed. Give it a height, or let it fill what the app sizes.
 type List struct {
 	Count func() int
 	// Key, Row, Selection, OnActivate, TapSelects, RowLabel and Columns
@@ -54,7 +54,7 @@ func rowLook(cx *core.Scope, interactive bool, style core.Style, styleFunc func(
 		c := colors.Now()
 		s := core.Style{Color: c.Text}
 		if interactive {
-			s.Selected = &core.Style{Background: c.Selection}
+			s.Selected = &core.Style{Background: Alpha(c.Text, 0.1)}
 			s.Focus = &core.Style{OutlineWidth: 2, OutlineColor: c.Info, OutlineOffset: -2}
 		}
 		s = s.Merge(style)

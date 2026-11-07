@@ -37,7 +37,7 @@ func TestListSelects(t *testing.T) {
 			t.Fatal("the list built rows far from what shows")
 		}
 		app.Press("label:Fruit 2")
-		if !app.Find("label:Fruit 2").Props.Selected || app.Find("label:Fruit 2").Style.Background != p.Selection {
+		if !app.Find("label:Fruit 2").Props.Selected || app.Find("label:Fruit 2").Style.Background != Alpha(p.Text, 0.1) {
 			t.Fatal("a pressed row is not selected")
 		}
 		app.Key("down")

@@ -15,7 +15,7 @@ func TestTree(t *testing.T) {
 		kids := map[any][]any{"src": {"src/app", "src/lib"}, "src/app": {"main.go"}, "docs": {"guide.md"}}
 		var open *core.Signal[[]string]
 		var sel *Selection
-		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+		app, p := start(t, e, func(cx *core.Scope) core.Node {
 			open = core.NewSignalFunc(cx, []string{"src"}, slices.Equal)
 			sel = NewSelection(cx, false)
 			return Tree{TestID: "tree", Roots: func() []any { return []any{"src", "docs", "README.md"} },
@@ -55,5 +55,14 @@ func TestTree(t *testing.T) {
 		if sel.Cursor() != "src/app" {
 			t.Fatalf("right into an expanded branch moved to %v, want its first child", sel.Cursor())
 		}
+		app.Press("label:docs")
+		if app.Exists("label:guide.md") {
+			t.Fatal("a press expanded a branch")
+		}
+		if got := app.Find("label:docs").Style.Background; got != Alpha(p.Text, 0.1) {
+			t.Fatalf("a selected row's background is %v, want the sidebar's", got)
+		}
+		app.Press("label:docs")
+		app.Find("label:guide.md")
 	})
 }

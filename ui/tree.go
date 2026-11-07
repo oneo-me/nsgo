@@ -9,9 +9,10 @@ import (
 )
 
 // Tree is base.Tree in Onevra's look: the app's nested items in rows
-// indented by depth, each branch with a chevron that expands it. It
-// keeps no state: the app says which keys are expanded and sets them
-// from OnExpand, and only the children of what is expanded are read.
+// indented by depth, each branch with a chevron that expands it, as a
+// double press does. It keeps no state: the app says which keys are
+// expanded and sets them from OnExpand, and only the children of what is
+// expanded are read.
 type Tree struct {
 	// Roots returns the top items' keys, comparable values such as IDs.
 	Roots func() []any

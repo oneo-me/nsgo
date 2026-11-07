@@ -323,8 +323,8 @@ type Tree struct {
 	// own, any number of rows when Multiple: Shift and Mod extend it as in
 	// a List. OnSelectedChange then hears nothing.
 	Selection *Selection
-	// SelectOnly has a press select a row and leave expanding to Row's
-	// TreeRow.Toggle, a chevron's.
+	// SelectOnly has a press select a row and leave expanding to a double
+	// press and Row's TreeRow.Toggle, a chevron's.
 	SelectOnly bool
 	// Label is what assistive technology calls the tree.
 	Label     string
@@ -683,6 +683,9 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 			root.Focus()
 		}
 		if e.Clicks == 2 {
+			if t.SelectOnly {
+				setOpen(n, !isOpen(n))
+			}
 			act(n)
 		}
 	}
