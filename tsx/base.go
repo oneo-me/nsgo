@@ -1,7 +1,6 @@
 package tsx
 
 import (
-	"math"
 	"reflect"
 	"slices"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/datatable"
 	"github.com/oneo-me/nsgo/base/dock"
-	"github.com/oneo-me/nsgo/base/plot"
 	"github.com/oneo-me/nsgo/base/toast"
 	"github.com/oneo-me/nsgo/core"
 )
@@ -38,15 +36,12 @@ var enumOptions = []Option{
 		"center": dock.Center}),
 	Enum(map[string]base.HandleEdge{"centered": base.HandleCentered, "leading": base.HandleLeading,
 		"trailing": base.HandleTrailing}),
-	Enum(map[string]plot.Curve{"linear": plot.CurveLinear, "natural": plot.CurveNatural,
-		"stepAfter": plot.CurveStepAfter}),
 	Enum(map[string]base.ResizeHandleState{"idle": base.HandleIdle, "hovered": base.HandleHovered,
 		"pressed": base.HandlePressed, "dragging": base.HandleDragging}),
 	Enum(map[string]toast.SwipeDirection{"off": toast.SwipeOff, "up": toast.SwipeUp, "down": toast.SwipeDown,
 		"left": toast.SwipeLeft, "right": toast.SwipeRight}),
 	Enum(map[string]toast.Status{"starting": toast.Starting, "present": toast.Present,
 		"ending": toast.Ending}),
-	Enum(map[string]plot.TooltipPlacement{"top": plot.TooltipTop, "pointer": plot.TooltipPointer}),
 	Enum(map[string]base.Reason{"cancel": base.ReasonCancel, "backdropPress": base.ReasonBackdropPress,
 		"swipe": base.ReasonSwipe, "pressOutside": base.ReasonPressOutside, "triggerPress": base.ReasonTriggerPress,
 		"hover": base.ReasonHover, "select": base.ReasonSelect, "contextMenu": base.ReasonContextMenu,
@@ -144,12 +139,6 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 		"Tooltip":             base.Tooltip{},
 	}, append(enumOptions, baseRenames...)...)
 	Register("nsgo/base", map[string]core.Node{"DockArea": dock.Area{}}, slices.Concat(enumOptions, baseRenames, dockOptions)...)
-	Register("nsgo/base/plot", map[string]core.Node{
-		"Plot": plot.Plot{},
-		"Line": plot.Line{},
-		"Area": plot.Area{},
-		"Grid": plot.Grid{},
-	}, append(append(enumOptions, baseRenames...), Rename("Tooltip", "tooltipContent"))...)
 }
 
 // baseRenames are the props whose NSH names base's fields do not give,
@@ -157,8 +146,7 @@ export interface DataTableSort { key: string; direction?: DataTableSortDirection
 var baseRenames = []Option{
 	Rename("NoRowSelect", "rowSelectable"), Rename("NoColumnSelect", "columnSelectable"),
 	Rename("CellSelect", "cellSelectable"), Rename("NoResizeColumns", "resizableColumns"),
-	Rename("NoMoveColumns", "movableColumns"), Rename("NoBounce", "bounces"), Rename("NoHover", "interactive"),
-	Rename("Status", "transitionStatus"),
+	Rename("NoMoveColumns", "movableColumns"), Rename("NoBounce", "bounces"), Rename("Status", "transitionStatus"),
 	Event("OnChange", "checked"), Event("OnOpenChange", "open", "reason"), Event("OnResize", "sizes"),
 	Event("OnColumnResize", "key", "width"), Event("OnSelectionChange", "selection"), Event("OnSortChange", "sort"),
 	custom("Text", tableText, "data?: readonly unknown[]", "dataStart?: number"),
@@ -177,40 +165,6 @@ var baseRenames = []Option{
 		"onVisibleRowsChange?: (e: { range: DataTableRange }) => void"),
 	custom("OnVisibleColumnsChange", rangeHandler("onVisibleColumnsChange"),
 		"onVisibleColumnsChange?: (e: { range: DataTableRange }) => void"),
-	custom("OnHoverChange", func(p *props, v reflect.Value) {
-		if h := p.handler("onHoverChange"); h != nil {
-			v.Set(reflect.ValueOf(func(index int) {
-				e := p.r.vm.NewObject()
-				_ = e.Set("index", goja.Null())
-				if index >= 0 {
-					_ = e.Set("index", index)
-				}
-				h(e)
-			}))
-		}
-	}, "onHoverChange?: (e: { index: number | null }) => void"),
-	custom("Y", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
-	custom("X", plotValues("x"), "data?: readonly any[]", plotAxis("x")),
-	custom("Y1", plotValues("y"), "data?: readonly any[]", plotAxis("y")),
-	custom("Y0", func(p *props, v reflect.Value) {
-		if p.has("y0") {
-			v.Set(reflect.ValueOf(func() float64 { return p.float("y0") }))
-		}
-	}, "y0?: number"),
-	typed("XScale", custom("XScale", plotScale("xScale"), "xScale?: Scale"), reflect.TypeFor[plot.Scale]()),
-	typed("YScale", custom("YScale", plotScale("yScale"), "yScale?: Scale"), reflect.TypeFor[plot.Scale]()),
-}
-
-func init() {
-	// A plot's scale as NSH's declares it; plotScale reads it.
-	Shape("Scale", `export type Scale = { type: "point" } | { type: "linear"; domain?: [number, number] };`,
-		func(plot.Scale) map[string]any { return nil }, nil)
-}
-
-// plotAxis declares a plot's axis: a row's key, a function of a row and
-// its index, or the values.
-func plotAxis(axis string) string {
-	return axis + "?: string | ((row: any, index: number) => number) | readonly number[]"
 }
 
 // target is { row, column }, leaving out the one that is -1, as NSH's
@@ -289,77 +243,4 @@ func tableRowClass(p *props, v reflect.Value) {
 		}
 		return ""
 	}))
-}
-
-// plotValues reads a plot's or a mark's values along axis: its prop, a
-// row's key or a function of a row and its index, over its rows or the
-// plot's.
-func plotValues(axis string) func(p *props, v reflect.Value) {
-	return func(p *props, v reflect.Value) {
-		r := p.r
-		owner := p
-		if !p.has("data") {
-			for n := p.n.parent; n != nil; n = n.parent {
-				if n.kind == kindFace && n.name == "Plot" {
-					owner = n.props
-					break
-				}
-			}
-		}
-		accessor := func() goja.Value {
-			if x := p.get(axis); defined(x) {
-				return x
-			}
-			return owner.get(axis)
-		}
-		if axis == "x" && !defined(core.Untracked(r.cx, accessor)) {
-			return
-		}
-		read := func() []float64 {
-			by := accessor()
-			if items := r.arrayItems(by); items != nil {
-				out := make([]float64, len(items))
-				for i, it := range items {
-					out[i] = it.ToFloat()
-				}
-				return out
-			}
-			rows := r.arrayItems(owner.get("data"))
-			out := make([]float64, len(rows))
-			for i, row := range rows {
-				var x goja.Value
-				if isFunction(by) {
-					x = r.call(by, row, r.vm.ToValue(i))
-				} else if o, ok := row.(*goja.Object); ok {
-					x = o.Get(by.String())
-				}
-				out[i] = math.NaN()
-				if defined(x) {
-					out[i] = x.ToFloat()
-				}
-			}
-			return out
-		}
-		v.Set(reflect.ValueOf(read))
-	}
-}
-
-// plotScale reads { type: "point" } or { type: "linear", domain }.
-func plotScale(prop string) func(p *props, v reflect.Value) {
-	return func(p *props, v reflect.Value) {
-		if !p.has(prop) {
-			return
-		}
-		v.Set(reflect.ValueOf(func() plot.Scale {
-			o := p.r.options(p.get(prop))
-			if o.str("type", "") == "point" {
-				return plot.PointScale()
-			}
-			var domain []float64
-			for _, d := range p.r.arrayItems(o.get("domain")) {
-				domain = append(domain, d.ToFloat())
-			}
-			return plot.LinearScale(domain...)
-		}))
-	}
 }

@@ -114,8 +114,8 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 	}}
 }
 
-// chartsDemo shows base's Plot with PlotLine, PlotArea and PlotGrid,
-// drawn natively from the app's rows: a week of visitors over the other
+// chartsDemo shows base's Plot with each of its marks, drawn natively from
+// the app's rows: a week of visitors over the other
 // week (dashed), with a legend, compact y labels and the hover's cross
 // line, dots (each series' own, in its color, ringed in the card's) and
 // tooltip gliding on the frame clock, and a list of sparklines, each with
@@ -123,7 +123,8 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 // come. Washes fade out toward the baseline (an area's background, a
 // gradient inside its shape). Grid lines are hairlines with a firmer
 // baseline; the tooltip floats in the room above the highest value and
-// stays within the plot's width at the first and last days.
+// stays within the plot's width at the first and last days. The cards of
+// the other marks are in charts_marks.go.
 func chartsDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	chartDays, chartWeekNames := chartDayNames(tr), []string{tr.ChartsLastWeek(), tr.ChartsThisWeek()}
@@ -193,7 +194,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 					Y:      rows,
 					// Room above the highest week for the tooltip.
 					YScale:           func() plot.Scale { return plot.LinearScale(0, visitorsTop) },
-					AppearGeneration: week.Get,
+					AppearGeneration: func() any { return week.Get() },
 					Motion: plot.Motion{
 						Appear:  &core.TimingConfig{Duration: 600 * time.Millisecond, Easing: core.Easing{Kind: core.EasingQuad, Mode: core.EaseModeOut}},
 						Enter:   &core.TimingConfig{Duration: 150 * time.Millisecond},
@@ -279,7 +280,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 	sparklines := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		return Card{Title: tr.ChartsSparklines(), Description: tr.ChartsAPlotPerRowOf(), Children: []core.Node{
-			core.List{TestID: "sparklines", Count: func() int { return len(tickers) }, Key: func(i int) any { return tickers[i].id },
+			plot.AppearScope{Children: []core.Node{core.List{TestID: "sparklines", Count: func() int { return len(tickers) }, Key: func(i int) any { return tickers[i].id },
 				EstimatedSize: 44, Style: core.Style{Height: core.Pt(44 * 6)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
 					colors := ui.ColorsOf(cx)
@@ -306,7 +307,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 						plot.Plot{
 							Y:                func() []float64 { return t().prices },
 							NoHover:          true,
-							AppearGeneration: func() int { return t().id },
+							AppearGeneration: func() any { return t().id },
 							Motion:           plot.Motion{Appear: &core.TimingConfig{Duration: 400 * time.Millisecond, Easing: core.Easing{Kind: core.EasingQuad, Mode: core.EaseModeOut}}},
 							LabelFunc: func() string {
 								dir := "down"
@@ -328,11 +329,12 @@ func chartsDemo(cx *core.Scope) core.Node {
 							core.Text{ContentFunc: changeText, Style: core.Style{FontVariant: core.FontTabularNums}, StyleFunc: func() core.Style { return core.Style{FontSize: detail, Color: tn().Color(cx)} }},
 						}},
 					}}
-				}},
+				}}}},
 		}}
 	}
 
-	return stagePage(cx, demoPage(cx, pageProps{flush: true}, visitorsCard, sparklines),
+	return stagePage(cx, demoPage(cx, pageProps{flush: true}, visitorsCard, sparklines, barsCard, bridgeCard, candlesCard,
+		shareCard, gaugeCard, scatterCard, heatmapCard, radarCard, flowsCard, marketCard),
 		Section{Title: tr.TerminalOptions(), Note: "plot.Plot", Children: []core.Node{
 			choiceKnob("Y", week, ui.Option[int]{Value: 0, Label: chartWeekNames[0]}, ui.Option[int]{Value: 1, Label: chartWeekNames[1]}),
 		}},

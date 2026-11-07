@@ -97,19 +97,33 @@ Popups are placed against what their trigger holds (`Overlay.AnchorContent`), th
 
 ## Charts
 
-`Plot` with `PlotLine`, `PlotArea` and `PlotGrid` ports `nsh/base/plot` (`nsh/website/elements/plot.md`). Each mark is a canvas filling the plot and the bleed around it its strokes and curves need; it records once when its points, the plot's size or scales change, and paints with the paint properties it inherits ([canvas](canvas.md#view-paints)).
+`base/plot` ports `nsh/base/plot` (`nsh/website/elements/plot.md`). A `Plot` holds the rows' columns, its scales and the hover; its marks (`Line`, `Area`, `Bar`, `Rule`, `Dot`, `Cell`, `Grid`, `Pie`, `Arc`, `RadialLine`, `RadialGrid`, `Sankey`, `Treemap`), `Axis` and `Label` draw what it holds. Each mark is a canvas filling the plot and the bleed around it its strokes and curves need, a canvas per slice, node, ribbon or class where each paints with styles of its own; it records once when its points, the plot's size or scales change, and paints with the paint properties it inherits ([canvas](canvas.md#view-paints)).
 
-- Marks reach their plot through a context key and add themselves to it: their extent makes the y domain when `YScale` gives none, and each has a hover dot.
-- The hover never records: the pointer moves animated values, the cross line, the dots and the tooltip glide on `Motion.Pointer` and fade on `Enter` and `Exit`, and the tooltip is clamped inside the plot by animated math from the plot's size and its own, as NSH's.
-- The appear clips the marks to an edge `Bind` animates from the leading edge, and records once more without the clip when it ends.
-- `plot.Area.BackgroundStyle` shows inside the shape through `FillBackgroundFromView`.
+- Marks reach their plot through a context key and add themselves to it: their extent makes the domain of the axis their values go along when the scale gives none, and each `Line` and `Area` has a hover dot. Marks that find rows themselves (a slice, a dot, a cell, a node) add a hit test, and with one the plot follows what it finds rather than the row nearest along the axis.
+- A band scale gives each row or category a band. Bars that share a `Stack` pile up from its first bar's base; the others stand side by side in a band.
+- `ColorScale` colors categories (`OrdinalColors`, d3's implicit domain) and numbers along a ramp mixed in OKLab (`SequentialColors`, `DivergingColors`), as a mark's paint where nothing sets one.
+- `Y2Scale` is a second y scale. While both y domains are automatic, they widen to the same number of nice steps, so one `Grid` serves both axes. A y `Axis`'s outside labels keep the scale's range inside the plot through insets; a label not laid out yet asks for the tallest one's room, as the steps depend on that room and the labels on the steps, which otherwise never settles (a departure from NSH).
+- The hover never records: the pointer moves animated values and lands in the same frame, a step of the keys or a screen reader glides on `Motion.Pointer`, the parts fade on `Enter` and `Exit`, and the tooltip is clamped inside the plot by animated math from the plot's size and its own, as NSH's.
+- The keys bind while the plot has the focus, Up and Down only over a grid and Escape only while a row is hovered, so they take nothing from the app around it.
+- The appear's time runs linearly and each mark eases its own slice: lines clip to an edge `Bind` animates and record once more without the clip when it ends, bars and cells grow, a pie sweeps. `AppearScope` remembers the generations that finished, so a list's row made again shows whole.
+- `Motion.Update` moves a linear domain (`tween`): places on the new scale show at `scale*at+offset`, two nodes the domain's ends drive, which paths record through (`Drawing.Transform` bound, undone before the stroke) and bound views derive from, so no mark records per frame. Marks with a pose of their own (`moves`) draw each number as a line from the old pose to the new one; a change while one runs reads how far it had gone and moves on from there. A slice's corners are not linear in its angles, so its numbers are sampled along the motion.
+- A moving rectangle with corners records its own arcs, each radius fitted to the rectangle by animated math, as no op takes a rounded rectangle's arguments by slot.
+- A `Sankey` lays out d3-sankey's algorithm with gpui-base's changes, a `Treemap` d3's squarified tiling over `stratify`.
+- `Area`'s, `Bar`'s, `RadialLine`'s and `Sankey`'s background shows inside the shape through `FillBackgroundFromView`.
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| Rows of objects and accessors by key or function | `Y`, `X` and a mark's `Y` as functions returning `[]float64`, NaN skipping a row | Go reads fields with code, so the app gives the column |
-| `Scale` objects | `PointScale()` and `LinearScale(domain...)` | A comparable value; the y axis is always linear |
-| `interactive` | `NoHover` | Go's zero value is the default |
+| Rows of objects and accessors by key or function | `Y`, `X`, a mark's `Value` as functions returning `[]float64`, NaN skipping a row, and `Color`, `Label` as `[]string`; `Count` where no column says how many rows | Go reads fields with code, so the app gives the column |
+| `PlotAxis`, `PlotLabel`, `PlotAppearScope` | `Axis`, `Label`, `AppearScope` | The package names them; TSX keeps NSH's |
+| `Scale` objects with `reverse` | `PointScale()`, `LinearScale(domain...)`, `BandScale(Band)`, `.Reversed()` | Each kind has its own constructor |
+| `base` and `y0` as a number or an accessor | `Base` and `Bases`, `Y0` and `Lows` | A field has one type |
+| `scale="y2"`, `stack`, `curve` as props | Plain fields of the mark | A mark's axis does not change as it lives |
+| `interactive`, `alignTicks` | `NoHover`, `NoAlignTicks` | Go's zero value is the default |
+| `inactiveOpacity` | `HoverDim`, as a pie's: what they lose | Go's zero value dims nothing |
 | `hoverDotClass` replaces `dotClass`, the styles each their own | `HoverDotStyle` merges over `DotStyle`, and `HoverDotClass` follows `DotClass` | The plot's shape and the mark's color combine |
+| `data-dark:` classes on labels | `DarkLabelStyle` and `DarkLabelClass` | A text takes no part states; TSX keeps Go's |
+| `curve` natural by default, linear on a radial line | `CurveDefault`, each mark's own | Go's zero value is one constant |
+| Classes as a string or a function of the row | `SliceClass` for every slice, `SliceClassOf` and `SliceStyleOf` per row | A field has one type, and the app reads its own rows by index |
 
 ## Tables
 

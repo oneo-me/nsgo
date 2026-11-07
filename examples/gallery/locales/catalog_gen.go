@@ -2040,6 +2040,27 @@ type Translation struct {
 	ChartsVisitorsPerDay                         func(monday string, sunday string) string
 	ChartsHoverValue                             func(day string, visitors string, other string, week string) string
 	ChartsPlotEvent                              func(day string, visitors string) string
+	ChartsBars                                   func() string
+	ChartsBarsNote                               func() string
+	ChartsBridge                                 func() string
+	ChartsBridgeNote                             func() string
+	ChartsCandles                                func() string
+	ChartsCandlesNote                            func() string
+	ChartsShare                                  func() string
+	ChartsShareNote                              func() string
+	ChartsGauge                                  func() string
+	ChartsGaugeNote                              func() string
+	ChartsScatter                                func() string
+	ChartsScatterNote                            func() string
+	ChartsHeatmap                                func() string
+	ChartsHeatmapNote                            func() string
+	ChartsRadar                                  func() string
+	ChartsRadarNote                              func() string
+	ChartsFlows                                  func() string
+	ChartsFlowsNote                              func() string
+	ChartsMarket                                 func() string
+	ChartsMarketNote                             func() string
+	ChartsNewData                                func() string
 	ShaderStartPressed                           func(count int) string
 	ShaderScaleIntensity                         func(scale string, intensity string) string
 	PhotosViews                                  func(count string) string
@@ -3948,6 +3969,27 @@ const (
 	textChartsSun
 	textChartsLastWeek
 	textChartsThisWeek
+	textChartsBars
+	textChartsBarsNote
+	textChartsBridge
+	textChartsBridgeNote
+	textChartsCandles
+	textChartsCandlesNote
+	textChartsShare
+	textChartsShareNote
+	textChartsGauge
+	textChartsGaugeNote
+	textChartsScatter
+	textChartsScatterNote
+	textChartsHeatmap
+	textChartsHeatmapNote
+	textChartsRadar
+	textChartsRadarNote
+	textChartsFlows
+	textChartsFlowsNote
+	textChartsMarket
+	textChartsMarketNote
+	textChartsNewData
 	textTextviewCopied
 	textTextviewCopyCode
 	textTextviewStreaming
@@ -5831,6 +5873,27 @@ var texts = map[string]*[numTexts]string{
 		"Sun",
 		"Last week",
 		"This week",
+		"Bars",
+		"Stacked and grouped in bands, an ordinal scale's colors, values at the bars' ends",
+		"Bridge",
+		"A base per row: each bar a step from where the last one ended",
+		"Candles",
+		"Rules from low to high under bars from open to close, volumes on a second scale",
+		"Share",
+		"A donut whose slices lift and sweep, with labels on leader lines",
+		"Gauge",
+		"Arcs that sweep round to a new value",
+		"Scatter",
+		"Dots whose area is a value, found by the nearest center",
+		"Heatmap",
+		"Cells on two band scales, a diverging ramp about zero; the arrows step across them",
+		"Radar",
+		"A radial line closed over its rings and spokes",
+		"Flows",
+		"A sankey of nodes and ribbons that dim away from the hovered node",
+		"Market",
+		"A treemap of sectors and their stocks, shaded by the day's change",
+		"New data",
 		"Copied",
 		"Copy code",
 		"Streaming",
@@ -7709,6 +7772,27 @@ var texts = map[string]*[numTexts]string{
 		"أحد",
 		"الأسبوع الماضي",
 		"هذا الأسبوع",
+		"الأعمدة",
+		"مكدسة ومجمعة في نطاقات بألوان مقياس ترتيبي وقيم عند نهايات الأعمدة",
+		"المخطط الجسري",
+		"قاعدة لكل صف: كل عمود خطوة من حيث انتهى السابق",
+		"الشموع",
+		"خطوط من الأدنى إلى الأعلى تحت أعمدة الافتتاح والإغلاق، والأحجام على مقياس ثانٍ",
+		"الحصة",
+		"مخطط حلقي تنبثق شرائحه وتدور، مع تسميات على خطوط إرشادية",
+		"المقياس",
+		"أقواس تدور إلى قيمة جديدة",
+		"التشتت",
+		"نقاط مساحتها قيمة، يُعثر عليها بأقرب مركز",
+		"الخريطة الحرارية",
+		"خلايا على مقياسي نطاق، بتدرج متشعب حول الصفر؛ تتنقل الأسهم بينها",
+		"الرادار",
+		"خط شعاعي مغلق فوق حلقاته وأشعته",
+		"التدفقات",
+		"مخطط سانكي من عقد وأشرطة تخفت بعيدًا عن العقدة المحددة",
+		"السوق",
+		"خريطة شجرية للقطاعات وأسهمها، ملونة بتغير اليوم",
+		"بيانات جديدة",
 		"تم النسخ",
 		"نسخ الشيفرة",
 		"البث",
@@ -9587,6 +9671,27 @@ var texts = map[string]*[numTexts]string{
 		"周日",
 		"上周",
 		"本周",
+		"柱状图",
+		"在条带中堆叠并分组，使用序数颜色比例尺，并在柱端标注数值",
+		"桥图",
+		"每行一个基线：每根柱从上一根结束处开始",
+		"K 线",
+		"从最低到最高的线段叠在开收盘柱之下，成交量使用第二比例尺",
+		"占比",
+		"切片可抬起并扫动的环形图，标签带引线",
+		"仪表",
+		"圆弧扫动到新值",
+		"散点图",
+		"面积表示数值的圆点，按最近圆心命中",
+		"热力图",
+		"两个条带比例尺上的单元格，以零为中心的发散色阶；方向键在其间移动",
+		"雷达图",
+		"闭合的径向线，覆盖在环和辐条之上",
+		"流向",
+		"由节点和条带组成的桑基图，非悬停节点的条带会变暗",
+		"市场",
+		"按板块和个股划分的矩形树图，按当日涨跌着色",
+		"新数据",
 		"已拷贝",
 		"拷贝代码",
 		"流式输出",
@@ -11465,6 +11570,27 @@ var texts = map[string]*[numTexts]string{
 		"週日",
 		"上週",
 		"本週",
+		"長條圖",
+		"在條帶中堆疊並分組，使用序數顏色比例尺，並在柱端標註數值",
+		"橋圖",
+		"每列一個基線：每根柱從上一根結束處開始",
+		"K 線",
+		"從最低到最高的線段疊在開收盤柱之下，成交量使用第二比例尺",
+		"佔比",
+		"切片可抬起並掃動的環形圖，標籤帶引線",
+		"儀表",
+		"圓弧掃動到新值",
+		"散佈圖",
+		"面積表示數值的圓點，按最近圓心命中",
+		"熱力圖",
+		"兩個條帶比例尺上的儲存格，以零為中心的發散色階；方向鍵在其間移動",
+		"雷達圖",
+		"閉合的徑向線，覆蓋在環和輻條之上",
+		"流向",
+		"由節點和條帶組成的桑基圖，非懸停節點的條帶會變暗",
+		"市場",
+		"按板塊和個股劃分的矩形樹圖，按當日漲跌著色",
+		"新資料",
 		"已複製",
 		"複製程式碼",
 		"流式輸出",
@@ -16897,6 +17023,69 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ChartsPlotEvent != nil {
 		s.ChartsPlotEvent = t.ChartsPlotEvent
+	}
+	if t.ChartsBars != nil {
+		st[textChartsBars] = t.ChartsBars()
+	}
+	if t.ChartsBarsNote != nil {
+		st[textChartsBarsNote] = t.ChartsBarsNote()
+	}
+	if t.ChartsBridge != nil {
+		st[textChartsBridge] = t.ChartsBridge()
+	}
+	if t.ChartsBridgeNote != nil {
+		st[textChartsBridgeNote] = t.ChartsBridgeNote()
+	}
+	if t.ChartsCandles != nil {
+		st[textChartsCandles] = t.ChartsCandles()
+	}
+	if t.ChartsCandlesNote != nil {
+		st[textChartsCandlesNote] = t.ChartsCandlesNote()
+	}
+	if t.ChartsShare != nil {
+		st[textChartsShare] = t.ChartsShare()
+	}
+	if t.ChartsShareNote != nil {
+		st[textChartsShareNote] = t.ChartsShareNote()
+	}
+	if t.ChartsGauge != nil {
+		st[textChartsGauge] = t.ChartsGauge()
+	}
+	if t.ChartsGaugeNote != nil {
+		st[textChartsGaugeNote] = t.ChartsGaugeNote()
+	}
+	if t.ChartsScatter != nil {
+		st[textChartsScatter] = t.ChartsScatter()
+	}
+	if t.ChartsScatterNote != nil {
+		st[textChartsScatterNote] = t.ChartsScatterNote()
+	}
+	if t.ChartsHeatmap != nil {
+		st[textChartsHeatmap] = t.ChartsHeatmap()
+	}
+	if t.ChartsHeatmapNote != nil {
+		st[textChartsHeatmapNote] = t.ChartsHeatmapNote()
+	}
+	if t.ChartsRadar != nil {
+		st[textChartsRadar] = t.ChartsRadar()
+	}
+	if t.ChartsRadarNote != nil {
+		st[textChartsRadarNote] = t.ChartsRadarNote()
+	}
+	if t.ChartsFlows != nil {
+		st[textChartsFlows] = t.ChartsFlows()
+	}
+	if t.ChartsFlowsNote != nil {
+		st[textChartsFlowsNote] = t.ChartsFlowsNote()
+	}
+	if t.ChartsMarket != nil {
+		st[textChartsMarket] = t.ChartsMarket()
+	}
+	if t.ChartsMarketNote != nil {
+		st[textChartsMarketNote] = t.ChartsMarketNote()
+	}
+	if t.ChartsNewData != nil {
+		st[textChartsNewData] = t.ChartsNewData()
 	}
 	if t.ShaderStartPressed != nil {
 		s.ShaderStartPressed = t.ShaderStartPressed
@@ -34066,6 +34255,174 @@ func (msgs Messages) ChartsPlotEvent(day string, visitors string) string {
 		}
 	}
 }
+
+// ChartsBars says "Bars"
+// in the language the app shows under cx.
+func ChartsBars(cx *core.Scope) string { return For(cx).ChartsBars() }
+
+// ChartsBars says "Bars"
+// in the language of msgs.
+func (msgs Messages) ChartsBars() string { return msgs.text(textChartsBars) }
+
+// ChartsBarsNote says "Stacked and grouped in bands, an ordinal scale's colors, values at the bars' ends"
+// in the language the app shows under cx.
+func ChartsBarsNote(cx *core.Scope) string { return For(cx).ChartsBarsNote() }
+
+// ChartsBarsNote says "Stacked and grouped in bands, an ordinal scale's colors, values at the bars' ends"
+// in the language of msgs.
+func (msgs Messages) ChartsBarsNote() string { return msgs.text(textChartsBarsNote) }
+
+// ChartsBridge says "Bridge"
+// in the language the app shows under cx.
+func ChartsBridge(cx *core.Scope) string { return For(cx).ChartsBridge() }
+
+// ChartsBridge says "Bridge"
+// in the language of msgs.
+func (msgs Messages) ChartsBridge() string { return msgs.text(textChartsBridge) }
+
+// ChartsBridgeNote says "A base per row: each bar a step from where the last one ended"
+// in the language the app shows under cx.
+func ChartsBridgeNote(cx *core.Scope) string { return For(cx).ChartsBridgeNote() }
+
+// ChartsBridgeNote says "A base per row: each bar a step from where the last one ended"
+// in the language of msgs.
+func (msgs Messages) ChartsBridgeNote() string { return msgs.text(textChartsBridgeNote) }
+
+// ChartsCandles says "Candles"
+// in the language the app shows under cx.
+func ChartsCandles(cx *core.Scope) string { return For(cx).ChartsCandles() }
+
+// ChartsCandles says "Candles"
+// in the language of msgs.
+func (msgs Messages) ChartsCandles() string { return msgs.text(textChartsCandles) }
+
+// ChartsCandlesNote says "Rules from low to high under bars from open to close, volumes on a second scale"
+// in the language the app shows under cx.
+func ChartsCandlesNote(cx *core.Scope) string { return For(cx).ChartsCandlesNote() }
+
+// ChartsCandlesNote says "Rules from low to high under bars from open to close, volumes on a second scale"
+// in the language of msgs.
+func (msgs Messages) ChartsCandlesNote() string { return msgs.text(textChartsCandlesNote) }
+
+// ChartsShare says "Share"
+// in the language the app shows under cx.
+func ChartsShare(cx *core.Scope) string { return For(cx).ChartsShare() }
+
+// ChartsShare says "Share"
+// in the language of msgs.
+func (msgs Messages) ChartsShare() string { return msgs.text(textChartsShare) }
+
+// ChartsShareNote says "A donut whose slices lift and sweep, with labels on leader lines"
+// in the language the app shows under cx.
+func ChartsShareNote(cx *core.Scope) string { return For(cx).ChartsShareNote() }
+
+// ChartsShareNote says "A donut whose slices lift and sweep, with labels on leader lines"
+// in the language of msgs.
+func (msgs Messages) ChartsShareNote() string { return msgs.text(textChartsShareNote) }
+
+// ChartsGauge says "Gauge"
+// in the language the app shows under cx.
+func ChartsGauge(cx *core.Scope) string { return For(cx).ChartsGauge() }
+
+// ChartsGauge says "Gauge"
+// in the language of msgs.
+func (msgs Messages) ChartsGauge() string { return msgs.text(textChartsGauge) }
+
+// ChartsGaugeNote says "Arcs that sweep round to a new value"
+// in the language the app shows under cx.
+func ChartsGaugeNote(cx *core.Scope) string { return For(cx).ChartsGaugeNote() }
+
+// ChartsGaugeNote says "Arcs that sweep round to a new value"
+// in the language of msgs.
+func (msgs Messages) ChartsGaugeNote() string { return msgs.text(textChartsGaugeNote) }
+
+// ChartsScatter says "Scatter"
+// in the language the app shows under cx.
+func ChartsScatter(cx *core.Scope) string { return For(cx).ChartsScatter() }
+
+// ChartsScatter says "Scatter"
+// in the language of msgs.
+func (msgs Messages) ChartsScatter() string { return msgs.text(textChartsScatter) }
+
+// ChartsScatterNote says "Dots whose area is a value, found by the nearest center"
+// in the language the app shows under cx.
+func ChartsScatterNote(cx *core.Scope) string { return For(cx).ChartsScatterNote() }
+
+// ChartsScatterNote says "Dots whose area is a value, found by the nearest center"
+// in the language of msgs.
+func (msgs Messages) ChartsScatterNote() string { return msgs.text(textChartsScatterNote) }
+
+// ChartsHeatmap says "Heatmap"
+// in the language the app shows under cx.
+func ChartsHeatmap(cx *core.Scope) string { return For(cx).ChartsHeatmap() }
+
+// ChartsHeatmap says "Heatmap"
+// in the language of msgs.
+func (msgs Messages) ChartsHeatmap() string { return msgs.text(textChartsHeatmap) }
+
+// ChartsHeatmapNote says "Cells on two band scales, a diverging ramp about zero; the arrows step across them"
+// in the language the app shows under cx.
+func ChartsHeatmapNote(cx *core.Scope) string { return For(cx).ChartsHeatmapNote() }
+
+// ChartsHeatmapNote says "Cells on two band scales, a diverging ramp about zero; the arrows step across them"
+// in the language of msgs.
+func (msgs Messages) ChartsHeatmapNote() string { return msgs.text(textChartsHeatmapNote) }
+
+// ChartsRadar says "Radar"
+// in the language the app shows under cx.
+func ChartsRadar(cx *core.Scope) string { return For(cx).ChartsRadar() }
+
+// ChartsRadar says "Radar"
+// in the language of msgs.
+func (msgs Messages) ChartsRadar() string { return msgs.text(textChartsRadar) }
+
+// ChartsRadarNote says "A radial line closed over its rings and spokes"
+// in the language the app shows under cx.
+func ChartsRadarNote(cx *core.Scope) string { return For(cx).ChartsRadarNote() }
+
+// ChartsRadarNote says "A radial line closed over its rings and spokes"
+// in the language of msgs.
+func (msgs Messages) ChartsRadarNote() string { return msgs.text(textChartsRadarNote) }
+
+// ChartsFlows says "Flows"
+// in the language the app shows under cx.
+func ChartsFlows(cx *core.Scope) string { return For(cx).ChartsFlows() }
+
+// ChartsFlows says "Flows"
+// in the language of msgs.
+func (msgs Messages) ChartsFlows() string { return msgs.text(textChartsFlows) }
+
+// ChartsFlowsNote says "A sankey of nodes and ribbons that dim away from the hovered node"
+// in the language the app shows under cx.
+func ChartsFlowsNote(cx *core.Scope) string { return For(cx).ChartsFlowsNote() }
+
+// ChartsFlowsNote says "A sankey of nodes and ribbons that dim away from the hovered node"
+// in the language of msgs.
+func (msgs Messages) ChartsFlowsNote() string { return msgs.text(textChartsFlowsNote) }
+
+// ChartsMarket says "Market"
+// in the language the app shows under cx.
+func ChartsMarket(cx *core.Scope) string { return For(cx).ChartsMarket() }
+
+// ChartsMarket says "Market"
+// in the language of msgs.
+func (msgs Messages) ChartsMarket() string { return msgs.text(textChartsMarket) }
+
+// ChartsMarketNote says "A treemap of sectors and their stocks, shaded by the day's change"
+// in the language the app shows under cx.
+func ChartsMarketNote(cx *core.Scope) string { return For(cx).ChartsMarketNote() }
+
+// ChartsMarketNote says "A treemap of sectors and their stocks, shaded by the day's change"
+// in the language of msgs.
+func (msgs Messages) ChartsMarketNote() string { return msgs.text(textChartsMarketNote) }
+
+// ChartsNewData says "New data"
+// in the language the app shows under cx.
+func ChartsNewData(cx *core.Scope) string { return For(cx).ChartsNewData() }
+
+// ChartsNewData says "New data"
+// in the language of msgs.
+func (msgs Messages) ChartsNewData() string { return msgs.text(textChartsNewData) }
 
 // ShaderStartPressed says "Start pressed {count, plural, one {# time} other {# times}}"
 // in the language the app shows under cx.

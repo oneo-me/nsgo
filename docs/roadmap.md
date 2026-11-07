@@ -4,15 +4,6 @@ This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`,
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
-## Components of 0.4.0: plots
-
-Independent of the other components. Done when the gallery's Charts page shows each mark.
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Marks | `components.md`, `nsh/crates/nsh-base/src/plot` | `Bar` (stacked, grouped, per-row bases), `Pie` and `Arc`, `PlotAxis`, `PlotLabel`, `RadialLine` and `RadialGrid`, `Sankey`, `Cell`, `Dot`, `Rule` and `Treemap` |
-| Scales and motion | `nsh/crates/nsh-base/src/plot` (`scale.rs`, `tween.rs`, `appear.rs`) | An ordinal `colorScale`, reversed and second y scales, domains that glide (`motion.update`) and marks that appear once (`PlotAppearScope`), the hover moved by keys and screen readers |
-
 ## Components of 0.4.0: the rich editor and the DataTable
 
 Each a project of its own.
@@ -120,7 +111,7 @@ These items wait for community contributions, and a change to one backend record
 | Touchpad glides over hosted views on Linux | — | A touchpad scroll that reaches the surface through a hosted view's shield, whose events no scroll controller sees, glides on as the surface's own do |
 | Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `combobox`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |
 | Font lists on Windows | `text.md` | A character the first family of a `fontFamily` list lacks comes from the next that has it through an `IDWriteFontFallback`, rather than from the system's fallback, as elsewhere |
-| Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows work there |
+| Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows, and a `Plot`'s keys, work there |
 | The mouse on Android | `api-naming.md` (`onMouseEnter`) | `NsgoView` reports the mouse's enter and leave with where it is, its moves with the keys and the button held, and a move with a button down, which needs `classes.dex` rebuilt |
 | Text selection reports on Android | NSGo's own (`text.md`) | `Selection.java` reports `EventSelectionChange` with the box of the texts selected to an area with `OnTextSelection`, as the other platforms do, with `classes.dex` rebuilt, so a `DiffView`'s frame follows the selection there |
 | Rounded borders on Android | NSGo's own (`styles.md`) | `Box` stops the fill under the border with `ViewStyle.Rim`, as the other backends do, so the fill stops showing past a rounded border, with `classes.dex` rebuilt |

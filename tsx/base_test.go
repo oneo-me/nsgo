@@ -285,3 +285,47 @@ mount(App);`, nsgotest.Size(1000, 700))
 	app.Press("id:unzoom")
 	app.WaitFor("text:zoomed null", time.Second)
 }
+
+func TestPlotMarks(t *testing.T) {
+	app := run(t, `import { mount } from "nsgo";
+import { Plot, Bar, Rule, Dot, Cell, Pie, Arc, RadialLine, RadialGrid, PlotAxis, PlotLabel, PlotAppearScope, Sankey, Treemap } from "nsgo/base/plot";
+const rows = [
+	{ name: "a", v: 10, lo: 2, group: "x", kind: "one" },
+	{ name: "b", v: 20, lo: 4, group: "x", kind: "two" },
+];
+const frame = { width: 200, height: 100 };
+mount(() => <PlotAppearScope>
+		<Plot testID="bars" data={rows} y="v" style={frame} xScale={{ type: "band", domain: ["a", "b"], paddingInner: 0.2 }}
+			colorScale={{ type: "ordinal", domain: ["one", "two"], range: ["#ff0000", "#0000ff"] }}>
+			<Bar color="kind" cornerRadii={{ topLeft: 2 }} inactiveOpacity={0.5} label={(d: any) => d.name + "!"} />
+			<Rule value="v" base="lo" />
+			<PlotAxis placement="left" ticks={2} />
+			<PlotAxis format={(v: number) => "row" + v} />
+			<PlotLabel texts={[{ text: "peak", x: 1, y: 20, align: "right" }]} />
+		</Plot>
+		<Plot testID="dots" data={rows} y="v" x="lo" xScale={{ type: "linear", domain: [0, 10] }} yScale={{ type: "linear", domain: [0, 20], reverse: true }} style={frame}>
+			<Dot r="v" rScale={{ type: "sqrt", range: [1, 8] }} />
+		</Plot>
+		<Plot testID="cells" data={rows} style={frame} xScale={{ type: "band" }} yScale={{ type: "band" }}
+			colorScale={{ type: "sequential", range: ["#ffffff", "#000000"] }}>
+			<Cell x="name" y="group" value="v" label="v" />
+		</Plot>
+		<Plot testID="pie" data={rows} y="v" style={frame}>
+			<Pie innerRadius="50%" label="name" hoverDim={0.2} sliceClass={(d: any) => d.v > 10 ? "fill-red-500" : "fill-blue-500"} />
+			<Arc innerRadius={10} outerRadius="40%" endAngle={2} />
+			<RadialGrid rings={[10, 20]} spokes />
+			<RadialLine closed />
+		</Plot>
+		<Plot testID="flows" data={rows} style={frame}>
+			<Sankey links={[{ source: 0, target: 1, value: 3 }]} nodeLabel="name" valueLabel={(d: any, v: number) => d.name + v} linkClass="fill-red-500" />
+		</Plot>
+		<Plot testID="tree" data={rows} style={frame}>
+			<Treemap id="name" value="v" label="name" paddingInner={2} />
+		</Plot>
+	</PlotAppearScope>);`)
+	for _, want := range []string{"id:bars", "text:a!", "text:row0", "text:peak", "id:dots", "text:10", "id:pie", "text:b", "text:b3"} {
+		if !app.Exists(want) {
+			t.Errorf("no %s:\n%s", want, app.Dump())
+		}
+	}
+}

@@ -56,7 +56,7 @@ func TestPlotDrawsItsMarksAndFollowsThePointer(t *testing.T) {
 				Tooltip:          core.View{TestID: "tip", Style: core.Style{Width: core.Pt(60), Height: core.Pt(20)}},
 				TooltipOffset:    4,
 				OnHoverChange:    func(i int) { hovered = append(hovered, i) },
-				AppearGeneration: week.Get,
+				AppearGeneration: func() any { return week.Get() },
 				Motion:           plot.Motion{Appear: &core.TimingConfig{Duration: 300 * time.Millisecond}},
 				Children: []core.Node{
 					plot.Grid{Y: func() []float64 { return []float64{0, 50, 100} }},

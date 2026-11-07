@@ -919,6 +919,12 @@ func TestCharts(t *testing.T) {
 	if n := len(app.Query("role:image")); n < 5 {
 		t.Fatalf("%d images, want the week's plot and a sparkline per row", n)
 	}
+	// A card for each of the other marks.
+	app.Find("id:bars-plot")
+	for _, title := range []string{"Bars", "Bridge", "Candles", "Share", "Gauge", "Scatter", "Heatmap", "Radar", "Flows", "Market"} {
+		app.Find("role:image " + title)
+	}
+	app.Press("role:button New data >> nth=0")
 }
 
 // TestDataTable selects a row of the million stocks, sorts by ID and
