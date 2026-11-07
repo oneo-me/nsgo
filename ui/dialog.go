@@ -74,7 +74,11 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 	}
 	popup := core.Style{Width: core.Pt(440), Padding: core.All(20), Gap: 12, Transition: dialogPop}
 	if d.Bare {
-		popup = core.Style{Overflow: core.Hidden, Transition: dialogPop}
+		// The clip is a view of its own: on Apple's targets a view that
+		// clips loses its outer shadow.
+		popup = core.Style{Transition: dialogPop}
+		body = []core.Node{core.View{Style: core.Style{Overflow: core.Hidden, CornerRadius: RadiusDialog - 1, BorderCurve: core.BorderCurveContinuous,
+			FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0)}, Children: body}}
 	}
 	spacer := func(grow float32) core.View {
 		return core.View{Style: core.Style{FlexGrow: grow, MinHeight: core.Pt(0)}, PointerEvents: core.PointerEventsNone}
@@ -85,7 +89,7 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 		PopupStyle: popup, StartingStyle: dialogStarting, EndingStyle: dialogEnding,
 		PopupStyleFunc: func() core.Style {
 			window, inset := cx.Env().Window(), dialogInset(cx, d.Inset)
-			finish := FinOf(cx).Menu()
+			finish := FinOf(cx).Dialog()
 			return finish.Over(core.Style{Background: Alpha(finish.Background, 0.96), Color: colors.Text(), CornerRadius: RadiusDialog, BorderCurve: core.BorderCurveContinuous, BorderWidth: 1,
 				MaxWidth: core.Pt(max(0, window.Width-2*inset)), MaxHeight: core.Pt(max(0, window.Height-2*inset)), FlexShrink: 0}).Merge(d.Style)
 		},

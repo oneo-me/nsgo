@@ -204,6 +204,21 @@ func (f Fins) Glass() Finish { return f.floating(f.shown().glass) }
 // reading.
 func (f Fins) Menu() Finish { return f.floating(f.shown().menu) }
 
+// Dialog is a modal panel over the dim: a deeper shadow than a menu's and
+// a solid rim, the page's color mixed with the text's as Onevra's is, as a
+// translucent one sinks into the dim and the shadow under it. Light takes
+// more of the text: at Onevra's mix its rim is the dimmed page's gray.
+func (f Fins) Dialog() Finish {
+	p := f.cx.Palette()
+	fin := f.floating(f.shown().dialog)
+	mix := float32(0.4)
+	if f.cx.Dark() {
+		mix = 0.25
+	}
+	fin.Border = Mix(p.Background, p.Text, mix)
+	return fin
+}
+
 // floating is fin over the page's color, rimmed with the border's.
 func (f Fins) floating(fin Finish) Finish {
 	p := f.cx.Palette()
@@ -248,7 +263,7 @@ func (f Finish) Over(s core.Style) core.Style { return f.Style().Merge(s) }
 // controls and the knob, and a soft one under what floats. Fins gives
 // what floats the theme's colors.
 type finishes struct {
-	card, inset, field, raised, light, accent, track, knob, pill, chip, glass, menu Finish
+	card, inset, field, raised, light, accent, track, knob, pill, chip, glass, menu, dialog Finish
 }
 
 // Shadow is one of CSS's box-shadow layers: x, y, blur, spread, color.
@@ -274,6 +289,7 @@ var darkFinishes = finishes{
 	pill:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.4)))},
 	glass:  Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(20)}},
 	menu:   Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.3))), Backdrop: []core.Filter{core.Blur(24)}},
+	dialog: Finish{Shadows: shadows(Shadow(0, 8, 24, 0, Black(0.45))), Backdrop: []core.Filter{core.Blur(24)}},
 }
 
 var lightFinishes = finishes{
@@ -282,6 +298,7 @@ var lightFinishes = finishes{
 	pill:   Finish{Shadows: shadows(Shadow(0, 1, 2, 0, Black(0.14)))},
 	glass:  Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(20)}},
 	menu:   Finish{Shadows: shadows(Shadow(0, 4, 16, 0, Black(0.14))), Backdrop: []core.Filter{core.Blur(24)}},
+	dialog: Finish{Shadows: shadows(Shadow(0, 8, 24, 0, Black(0.2))), Backdrop: []core.Filter{core.Blur(24)}},
 }
 
 // Mono is the monospaced family, for code (API names, identifiers).

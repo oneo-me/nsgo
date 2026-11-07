@@ -140,6 +140,15 @@ func (s *surface) keepGlassActive() {
 	s.glassActive = true
 }
 
+// fitBackdrop lays v's blur out for style vs.
+func (v *view) fitBackdrop(vs *driver.ViewStyle) {
+	b := objc.Send[apple.CGRect](v.native, selBounds)
+	apple.FitBackdrop(v.backdrop, vs, b.Size.Width, b.Size.Height)
+	if v.tint != 0 {
+		v.tint.Send(selSetFrame, objc.Send[apple.CGRect](v.backdrop, selBounds))
+	}
+}
+
 // setBackdrop gives v the backdrop its style asks for, or takes it away.
 func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	glass := vs.Glass != driver.GlassNone && objc.GetClass("NSGlassEffectView") != 0
@@ -164,20 +173,17 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 		v.backdrop.Send(selRelease)
 		v.glass = glass
 	}
-	radius := float64(max(vs.CornerRadius, vs.Corners.TopLeft))
 	if glass {
 		v.surface.keepGlassActive()
 		v.backdrop.Send(sel("setStyle:"), int(vs.Glass)-1)
-		v.backdrop.Send(sel("setCornerRadius:"), radius)
+		v.backdrop.Send(sel("setCornerRadius:"), float64(max(vs.CornerRadius, vs.Corners.TopLeft)))
 		return
 	}
 	v.backdrop.Send(selSetMaterial, backdropMaterial(vs.Material))
 	v.backdrop.Send(selSetBlendingMode, blendingWithinWindow)
 	v.backdrop.Send(selSetState, effectStateActive)
 	v.backdrop.Send(sel("setWantsLayer:"), true)
-	layer := v.backdrop.Send(selLayer)
-	layer.Send(sel("setCornerRadius:"), radius)
-	layer.Send(sel("setMasksToBounds:"), radius > 0)
+	v.fitBackdrop(vs)
 	if v.tint == 0 {
 		v.tint = objc.ID(objc.GetClass("NSView")).Send(selAlloc).Send(sel("initWithFrame:"), objc.Send[apple.CGRect](v.backdrop, selBounds))
 		v.tint.Send(selSetAutoresizingMask, widthHeightSizable)

@@ -10,12 +10,12 @@ func WarmDuskTheme() *core.Theme {
 	text, dark := core.RGB(0x33332f), core.RGB(0xeeeae2)
 	t.Light = core.Palette{
 		Background: core.RGB(0xfcfbf9), Surface: core.RGB(0xfefefd), SurfaceHover: core.RGB(0xeceae4), SurfacePressed: core.RGB(0xd9d7d2),
-		Border: text.Faded(0.20), Text: text, TextMuted: core.RGB(0x72726a),
+		Border: text.Faded(0.16), Text: text, TextMuted: core.RGB(0x72726a),
 		Accent: core.RGB(0xbd481b), AccentHover: core.RGB(0xa63f18), AccentPressed: core.RGB(0x8e3614), AccentText: core.RGB(0xffffff),
 		Danger: core.RGB(0xb4444c), Warning: core.RGB(0xb45309), Success: core.RGB(0x059669),
 		Selection: core.RGBA(0xe6652b, 0.22), Focus: core.RGBA(0xb94716, 0.55), Scrollbar: text.Faded(0.30),
 		Colors: map[string]core.Color{
-			"inset": core.RGB(0xf2f1ee), "raised": core.RGB(0xfefefd), "field": core.RGB(0xfdfdfc), "fieldBorder": text.Faded(0.20),
+			"inset": core.RGB(0xf2f1ee), "raised": core.RGB(0xfefefd), "field": core.RGB(0xfdfdfc), "fieldBorder": text.Faded(0.16),
 			"line": text.Faded(0.12), "faint": core.RGB(0xa29e95), "accentFill": core.RGB(0xbd481b),
 			"light": core.RGB(0x33332f), "onLight": core.RGB(0xfcfbf9), "track": core.RGB(0xc4c4bc), "knob": core.RGB(0xffffff),
 			"code": core.RGB(0x3a3631), "info": core.RGB(0x3d63d1), "down": core.RGB(0xb4444c),

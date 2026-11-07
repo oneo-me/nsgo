@@ -36,6 +36,9 @@ func TestDialog(t *testing.T) {
 			if d.Style.CornerRadius != RadiusDialog {
 				t.Fatal("the desktop dialog is not a rounded panel")
 			}
+			if _, _, _, a := d.Style.BorderColor.Components(); a != 1 || len(d.Style.Effects.Shadows) == 0 {
+				t.Fatalf("the desktop dialog's rim %v is not solid over a shadow", d.Style.BorderColor)
+			}
 		} else if d.Style.Background != p.Surface || d.Style.Corners.BottomLeft != 0 || d.Style.Corners.TopLeft == 0 {
 			t.Fatal("the phone dialog is not a sheet from the bottom")
 		}

@@ -339,6 +339,23 @@ func setCorners(layer objc.ID, r driver.Points, masked uint, continuous bool, w,
 	layer.Send(selSetCornerCurve, NSString(curve))
 }
 
+// FitBackdrop lays backdrop, the blur of a view of style vs and size w by
+// h, under the rim, on the view's curve: inside the border by whole points,
+// as a blur on a fraction of a point lands between pixels, the fill closing
+// the seam.
+func FitBackdrop(backdrop objc.ID, vs *driver.ViewStyle, w, h float64) {
+	var in driver.Points
+	if _, _, rimmed := vs.Rim(); rimmed {
+		in = driver.Points(math.Ceil(float64(vs.BorderWidth)))
+	}
+	r, i := max(vs.CornerRadius, vs.Corners.TopLeft), float64(in)
+	w, h = max(w-2*i, 0), max(h-2*i, 0)
+	backdrop.Send(selSetFrame, CGRect{Origin: CGPoint{X: i, Y: i}, Size: CGSize{Width: w, Height: h}})
+	layer := backdrop.Send(sel("layer"))
+	setCorners(layer, max(r-in, 0), 1|2|4|8, vs.ContinuousCorners, w, h)
+	layer.Send(selSetMasksToBounds, r > 0)
+}
+
 // cornersOf returns the radius radii share and the corners it rounds.
 func cornersOf(radii driver.Corners) (driver.Points, uint) {
 	var r driver.Points

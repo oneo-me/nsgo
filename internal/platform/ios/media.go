@@ -232,6 +232,9 @@ func (v *view) place(f driver.Bounds) {
 		apple.SetTransform(v.native.Send(selLayer), v.drawn.Transform)
 	}
 	apple.LayoutDecor(v.native.Send(selLayer))
+	if v.backdrop != 0 {
+		apple.FitBackdrop(v.backdrop, &v.style, float64(f.Size.Width), float64(f.Size.Height))
+	}
 	if v.componentView != 0 {
 		v.componentView.Send(selSetFrame, apple.Rect(0, 0, float64(f.Size.Width), float64(f.Size.Height)))
 	}

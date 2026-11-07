@@ -10,7 +10,7 @@ A `core.Theme` is one look in both appearances: a `Palette` for light and one fo
 | --- | --- |
 | `Background` | The page |
 | `Surface`, `SurfaceHover`, `SurfacePressed` | A card or control, under the pointer, held down |
-| `Border` | Edges and separators, the text's color at 20% in light and 16% in dark |
+| `Border` | Edges and separators, the text's color at 16% |
 | `Text`, `TextMuted` | Text and secondary text |
 | `Accent`, `AccentHover`, `AccentPressed`, `AccentText` | The accent fill, its states, what is drawn on it |
 | `Danger`, `Warning`, `Success` | Semantic colors |
@@ -18,7 +18,7 @@ A `core.Theme` is one look in both appearances: a `Palette` for light and one fo
 
 `Palette.Colors` holds roles a library or app adds by name (`inset`, `info`), which `Palette.Color` and `SetColor` reach as they reach the fields, by their names in lower camel case. Gradients, shadows and other finishes are not colors and stay in the library's code, chosen by `Dark`.
 
-Edges are translucent where Onevra's are solid, so one role holds on every surface and over what shows through glass. `ui.Alpha` replaces a color's opacity rather than scaling it, so a fainter edge takes `line`, the hairlines' role, not `Alpha(Border, …)`; `Mix` keeps working.
+Edges are translucent where Onevra's are solid, so one role holds on every surface and over what shows through glass. `ui.Alpha` replaces a color's opacity rather than scaling it, so a fainter edge takes `line`, the hairlines' role, not `Alpha(Border, …)`; `Mix` keeps working. A dialog's rim is the one solid edge (`Fins.Dialog`), mixed from the page and the text as Onevra's, with more of the text in light, since what shows through it there is the dim and its own shadow.
 
 ## Scope
 

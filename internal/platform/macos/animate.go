@@ -394,6 +394,9 @@ func (v *view) place(f driver.Bounds) {
 		apple.SetTransform(v.native.Send(selLayer), v.transform)
 	}
 	apple.LayoutDecor(v.native.Send(selLayer))
+	if v.backdrop != 0 && !v.glass {
+		v.fitBackdrop(&v.style)
+	}
 	if resized {
 		v.sizeContent()
 		if v.sc != nil {

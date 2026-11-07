@@ -187,13 +187,8 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	} else {
 		v.backdrop.Send(sel("setEffect:"), effect)
 	}
-	radius := float64(max(vs.CornerRadius, vs.Corners.TopLeft))
-	layer := v.backdrop.Send(selLayer)
-	layer.Send(sel("setCornerRadius:"), radius)
-	if vs.ContinuousCorners {
-		layer.Send(sel("setCornerCurve:"), apple.NSString("continuous"))
-	}
-	v.backdrop.Send(sel("setClipsToBounds:"), radius > 0)
+	b := objc.Send[apple.CGRect](v.native, selBounds)
+	apple.FitBackdrop(v.backdrop, vs, b.Size.Width, b.Size.Height)
 	if !glass {
 		v.backdrop.Send(sel("contentView")).Send(sel("setBackgroundColor:"), uiColor(vs.Background))
 	}

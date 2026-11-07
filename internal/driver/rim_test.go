@@ -8,10 +8,16 @@ func TestRim(t *testing.T) {
 	if !ok || rim != 0x7f7f7fff || inset != 3 {
 		t.Errorf("Rim() = %#x, %v, %v", uint32(rim), inset, ok)
 	}
+	solid := base
+	solid.Background, solid.BorderColor = 0xffffffeb, 0x808080ff
+	if rim, inset, ok := solid.Rim(); !ok || rim != solid.BorderColor || inset != 3 {
+		t.Errorf("over a see-through fill, Rim() = %#x, %v, %v", uint32(rim), inset, ok)
+	}
 	for name, change := range map[string]func(*ViewStyle){
 		"square":      func(vs *ViewStyle) { vs.CornerRadius = 0 },
 		"no border":   func(vs *ViewStyle) { vs.BorderWidth = 0 },
 		"clear":       func(vs *ViewStyle) { vs.BorderColor = 0 },
+		"no fill":     func(vs *ViewStyle) { vs.Background = 0 },
 		"see-through": func(vs *ViewStyle) { vs.Background = 0xffffffeb },
 		"dashed":      func(vs *ViewStyle) { vs.BorderStyle = BorderDashed },
 		"sides":       func(vs *ViewStyle) { vs.Borders = Edges{Top: 1} },
