@@ -81,7 +81,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 
 ## Following NSH's releases
 
-NSGo tracks NSH's releases, never its `main`: NSH's checkout (`../nsh`, [development](../../README.md#development)) is at the latest release tag, and the [roadmap](../roadmap.md) lists what NSGo still lacks of that release. One exception, decided by the user on 2026-11-03: the gallery's index is laid out as NSH's `main` lays out its own after 0.3.0, a demo per element. Its Primitives and Components are groups of their own rather than parts of an Elements group, and it has no search. It lists only the components NSGo has: those NSH 0.4.0 added join it as NSGo ports them. To move to a new release:
+NSGo tracks NSH's releases, never its `main`: NSH's checkout (`../nsh`, [development](../../README.md#development)) is at the latest release tag, and the [roadmap](../roadmap.md) lists what NSGo still lacks of that release. One exception, decided by the user on 2026-11-03: the gallery's index is laid out as NSH's `main` lays out its own after 0.3.0. Its Primitives and Components are groups of their own rather than parts of an Elements group, and it has no search. A second, decided on 2026-11-08: related components share a demo, named after its first, such as `Button` with the toggles and `Checkbox` with `Radio` and `Switch`. It lists only the components NSGo has: those NSH 0.4.0 added join it as NSGo ports them. To move to a new release:
 
 1. In NSH's checkout, run `git fetch --tags --force` and check out the release's tag.
 2. Read `git log <old tag>..<new tag>` there and the pages of `nsh/docs/dev/` it changed.

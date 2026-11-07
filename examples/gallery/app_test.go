@@ -256,7 +256,7 @@ func TestUIOnlyMarks(t *testing.T) {
 // one without in a column of formWidth.
 func TestFormsCenter(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "NumberInput")
+	open(app, "Input")
 	for _, name := range []string{"NumberInput", "base.NumberInput"} {
 		stage, box := app.Find("id:stage-"+name).Frame, app.Find("id:form-"+name).Frame
 		if got := box.Size.Width; got >= stage.Size.Width-32 {
@@ -361,10 +361,9 @@ func TestApplicationMenu(t *testing.T) {
 // TestControls uses a control of each page, each reporting its event.
 func TestControls(t *testing.T) {
 	app := startDesktop(t)
-	open(app, "Radio")
+	open(app, "Checkbox")
 	app.Press("id:stage-RadioGroup · Radio >> role:radio Banana")
 	app.Find("text:Radio: Banana")
-	open(app, "Checkbox")
 	app.Press("id:stage-Checkbox >> role:checkbox Starred")
 	app.Find("text:Checkbox: off")
 	open(app, "Tabs")
@@ -703,7 +702,7 @@ func TestBaseForms(t *testing.T) {
 	if !app.Find("id:base-button").Props.Disabled || !app.Find("id:button").Props.Disabled {
 		t.Fatal("the Disabled knob left a form enabled")
 	}
-	open(app, "Switch")
+	open(app, "Checkbox")
 	sw := "id:stage-base.Switch >> role:switch Starred"
 	app.Press(sw)
 	if app.Find(sw).Props.Checked {
@@ -1142,17 +1141,17 @@ func TestLanguageRemembered(t *testing.T) {
 // sidebar, a demo and base's own words.
 func TestGalleryLanguages(t *testing.T) {
 	for _, c := range []struct{ locale, nav, title, sort string }{
-		{"zh-CN", "单选框", "苹果", "按ID排序"},
-		{"zh-TW", "單選按鈕", "蘋果", "依ID排序"},
-		{"ar-EG", "زر اختيار", "تفاح", "الفرز حسب المعرّف"},
+		{"zh-CN", "复选框", "苹果", "按ID排序"},
+		{"zh-TW", "核取方塊", "蘋果", "依ID排序"},
+		{"ar-EG", "مربع اختيار", "تفاح", "الفرز حسب المعرّف"},
 	} {
 		t.Run(c.locale, func(t *testing.T) {
 			env := desktopEnv
 			env.Locale = c.locale
 			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
-			open(app, "Radio")
-			app.Find("id:nav-Radio >> text:" + c.nav)
-			app.Find("id:demo-Radio >> text:" + c.title + " >> nth=0")
+			open(app, "Checkbox")
+			app.Find("id:nav-Checkbox >> text:" + c.nav)
+			app.Find("id:demo-Checkbox >> text:" + c.title + " >> nth=0")
 			open(app, "DataTable")
 			app.Find("label:" + c.sort)
 		})
@@ -1296,8 +1295,8 @@ func TestTerminalPhoneSelect(t *testing.T) {
 
 // Each picker's page shows its base form.
 func TestPickerPages(t *testing.T) {
-	for name, title := range map[string]string{"Combobox": "base.Combobox", "DatePicker": "base.DatePicker",
-		"ColorPicker": "base.ColorPicker", "HoverCard": "base.HoverCard", "Command": "base.Command"} {
+	for name, title := range map[string]string{"Select": "base.Combobox", "DatePicker": "base.DatePicker",
+		"ColorPicker": "base.ColorPicker", "Popover": "base.HoverCard", "Command": "base.Command"} {
 		t.Run(name, func(t *testing.T) {
 			app := startDesktop(t)
 			open(app, name)
@@ -1329,7 +1328,6 @@ func TestPickerForms(t *testing.T) {
 	app.Press("id:stage-Select >> role:combobox")
 	app.Press("role:option Banana")
 	app.Find("text:Select: banana")
-	open(app, "Combobox")
 	app.Press("id:stage-Combobox >> role:button")
 	app.Press("role:option Cherry")
 	app.Find("text:Combobox: [cherry]")

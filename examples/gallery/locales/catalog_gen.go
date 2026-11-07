@@ -372,8 +372,6 @@ type Translation struct {
 	DemoWebViewAndVideoDetail                    func() string
 	DemoOverlay                                  func() string
 	DemoOverlayDetail                            func() string
-	DemoCollapsible                              func() string
-	DemoCollapsibleDetail                        func() string
 	DemoDataTable                                func() string
 	DemoDataTableDetail                          func() string
 	DemoDiffView                                 func() string
@@ -2242,82 +2240,45 @@ type Translation struct {
 	DemoListsDetail                              func() string
 	DemoButton                                   func() string
 	DemoButtonDetail                             func() string
-	DemoToggle                                   func() string
-	DemoToggleDetail                             func() string
 	DemoLink                                     func() string
 	DemoLinkDetail                               func() string
-	DemoHoldToConfirm                            func() string
-	DemoHoldToConfirmDetail                      func() string
 	DemoToolbar                                  func() string
 	DemoToolbarDetail                            func() string
-	DemoNumberInput                              func() string
-	DemoNumberInputDetail                        func() string
-	DemoTagInput                                 func() string
-	DemoTagInputDetail                           func() string
-	DemoOtpInput                                 func() string
-	DemoOtpInputDetail                           func() string
 	DemoCheckbox                                 func() string
 	DemoCheckboxDetail                           func() string
-	DemoRadio                                    func() string
-	DemoRadioDetail                              func() string
-	DemoSwitch                                   func() string
-	DemoSwitchDetail                             func() string
 	DemoSelect                                   func() string
 	DemoSelectDetail                             func() string
 	DemoSlider                                   func() string
 	DemoSliderDetail                             func() string
-	DemoRating                                   func() string
-	DemoRatingDetail                             func() string
 	DemoBadge                                    func() string
 	DemoBadgeDetail                              func() string
 	DemoAvatar                                   func() string
 	DemoAvatarDetail                             func() string
 	DemoImage                                    func() string
 	DemoImageDetail                              func() string
-	DemoImageCompare                             func() string
-	DemoImageCompareDetail                       func() string
 	DemoCarousel                                 func() string
 	DemoCarouselDetail                           func() string
 	DemoList                                     func() string
 	DemoListDetail                               func() string
-	DemoTree                                     func() string
-	DemoTreeDetail                               func() string
 	DemoTable                                    func() string
 	DemoTableDetail                              func() string
 	DemoInset                                    func() string
 	DemoInsetDetail                              func() string
 	DemoAccordion                                func() string
 	DemoAccordionDetail                          func() string
-	DemoSpinner                                  func() string
-	DemoSpinnerDetail                            func() string
-	DemoMeter                                    func() string
-	DemoMeterDetail                              func() string
-	DemoSkeleton                                 func() string
-	DemoSkeletonDetail                           func() string
 	DemoDialog                                   func() string
 	DemoDialogDetail                             func() string
-	DemoAlertDialog                              func() string
-	DemoAlertDialogDetail                        func() string
 	DemoSheet                                    func() string
-	DemoSheetDetail                              func() string
 	DemoPopover                                  func() string
 	DemoPopoverDetail                            func() string
-	DemoTooltip                                  func() string
-	DemoTooltipDetail                            func() string
-	DemoStepper                                  func() string
-	DemoStepperDetail                            func() string
 	DemoBreadcrumbs                              func() string
 	DemoBreadcrumbsDetail                        func() string
-	DemoPagination                               func() string
-	DemoPaginationDetail                         func() string
 	DemoSidebar                                  func() string
 	DemoSidebarDetail                            func() string
 	GroupInteraction                             func() string
 	GroupData                                    func() string
 	GroupContainers                              func() string
 	GroupDocuments                               func() string
-	DemoCombobox                                 func() string
-	DemoComboboxDetail                           func() string
 	DemoCommand                                  func() string
 	DemoCommandDetail                            func() string
 	DemoHoverCard                                func() string
@@ -2389,8 +2350,6 @@ const (
 	textDemoWebViewAndVideoDetail
 	textDemoOverlay
 	textDemoOverlayDetail
-	textDemoCollapsible
-	textDemoCollapsibleDetail
 	textDemoDataTable
 	textDemoDataTableDetail
 	textDemoDiffView
@@ -4153,82 +4112,45 @@ const (
 	textDemoListsDetail
 	textDemoButton
 	textDemoButtonDetail
-	textDemoToggle
-	textDemoToggleDetail
 	textDemoLink
 	textDemoLinkDetail
-	textDemoHoldToConfirm
-	textDemoHoldToConfirmDetail
 	textDemoToolbar
 	textDemoToolbarDetail
-	textDemoNumberInput
-	textDemoNumberInputDetail
-	textDemoTagInput
-	textDemoTagInputDetail
-	textDemoOtpInput
-	textDemoOtpInputDetail
 	textDemoCheckbox
 	textDemoCheckboxDetail
-	textDemoRadio
-	textDemoRadioDetail
-	textDemoSwitch
-	textDemoSwitchDetail
 	textDemoSelect
 	textDemoSelectDetail
 	textDemoSlider
 	textDemoSliderDetail
-	textDemoRating
-	textDemoRatingDetail
 	textDemoBadge
 	textDemoBadgeDetail
 	textDemoAvatar
 	textDemoAvatarDetail
 	textDemoImage
 	textDemoImageDetail
-	textDemoImageCompare
-	textDemoImageCompareDetail
 	textDemoCarousel
 	textDemoCarouselDetail
 	textDemoList
 	textDemoListDetail
-	textDemoTree
-	textDemoTreeDetail
 	textDemoTable
 	textDemoTableDetail
 	textDemoInset
 	textDemoInsetDetail
 	textDemoAccordion
 	textDemoAccordionDetail
-	textDemoSpinner
-	textDemoSpinnerDetail
-	textDemoMeter
-	textDemoMeterDetail
-	textDemoSkeleton
-	textDemoSkeletonDetail
 	textDemoDialog
 	textDemoDialogDetail
-	textDemoAlertDialog
-	textDemoAlertDialogDetail
 	textDemoSheet
-	textDemoSheetDetail
 	textDemoPopover
 	textDemoPopoverDetail
-	textDemoTooltip
-	textDemoTooltipDetail
-	textDemoStepper
-	textDemoStepperDetail
 	textDemoBreadcrumbs
 	textDemoBreadcrumbsDetail
-	textDemoPagination
-	textDemoPaginationDetail
 	textDemoSidebar
 	textDemoSidebarDetail
 	textGroupInteraction
 	textGroupData
 	textGroupContainers
 	textGroupDocuments
-	textDemoCombobox
-	textDemoComboboxDetail
 	textDemoCommand
 	textDemoCommandDetail
 	textDemoHoverCard
@@ -4301,8 +4223,6 @@ var texts = map[string]*[numTexts]string{
 		"Web views, video players and the app's own native views",
 		"Overlay",
 		"Content on top of the screen, outside the box that clips it",
-		"Collapsible",
-		"Details under a summary, kept while collapsed",
 		"DataTable",
 		"A million stocks of sixty columns, their quotes ticking every 33 ms, fixed columns, sorting, selection, resized and moved columns",
 		"DiffView",
@@ -4312,7 +4232,7 @@ var texts = map[string]*[numTexts]string{
 		"Editor",
 		"Code with highlighting, several carets, folding, find and replace, diagnostics, completion and definitions",
 		"Input",
-		"Inputs, keyboard types, the keyboard over the content",
+		"Text, numbers, tags and one-time codes, and the keyboard over the content",
 		"Menu",
 		"A menu bar, submenus, checkable items, context menus on rows",
 		"NavStack",
@@ -4320,7 +4240,7 @@ var texts = map[string]*[numTexts]string{
 		"Plot",
 		"A line and area plot with hover, grid lines and motion, sparklines in a list",
 		"Progress",
-		"A transfer the app drives, and one of unknown size",
+		"Bars, rings, spinners, meters and skeletons",
 		"Resizable",
 		"Panels resized by dragging the lines between them, within their ranges",
 		"Tabs",
@@ -6064,83 +5984,46 @@ var texts = map[string]*[numTexts]string{
 		"Lists",
 		"Columns, sticky sections, a chat, horizontal lists",
 		"Button",
-		"Text, icon and round buttons",
-		"Toggle",
-		"Buttons that stay pressed, alone or in a group",
+		"Text, icon, round, toggle and hold-to-confirm buttons",
 		"Link",
 		"Text that opens a place",
-		"HoldToConfirm",
-		"A press held long enough to act",
 		"Toolbar",
 		"A row of actions, docked or floating",
-		"NumberInput",
-		"A number to type or step",
-		"TagInput",
-		"Words collected as tags",
-		"OtpInput",
-		"A one-time code, a cell per character",
 		"Checkbox",
-		"On, off or partly on",
-		"Radio",
-		"One choice of a few",
-		"Switch",
-		"A setting on or off",
+		"Checkboxes, radio buttons and switches",
 		"Select",
-		"One choice from a popup",
+		"One choice from a popup, or a field that filters it",
 		"Slider",
-		"A number or a range on a track",
-		"Rating",
-		"A score of stars",
+		"A number or a range on a track, and a score of stars",
 		"Badge",
 		"A small label in a tone",
 		"Avatar",
 		"A person, alone or in a group",
 		"Image",
-		"A framed picture with its ratio",
-		"ImageCompare",
-		"Two sides split by a handle",
+		"A framed picture with its ratio, and two sides split by a handle",
 		"Carousel",
 		"Slides that snap into place",
 		"List",
-		"Rows to select with the pointer and keyboard",
-		"Tree",
-		"Nested items that expand",
+		"Rows to select, and nested items that expand",
 		"Table",
 		"A few rows the app writes out",
 		"Inset",
 		"A recessed surface for content",
 		"Accordion",
-		"Sections that open one or several at a time",
-		"Spinner",
-		"Work of unknown length",
-		"Meter",
-		"A value against its limit",
-		"Skeleton",
-		"The shape of content on its way",
+		"Sections that open one or several at a time, and details under a summary",
 		"Dialog",
-		"A modal surface over a dimmed app",
-		"AlertDialog",
-		"A question with actions to answer it",
+		"Modal surfaces, questions to answer and panels at an edge",
 		"Sheet",
-		"A panel at an edge of the window",
 		"Popover",
-		"A surface anchored to what opens it",
-		"Tooltip",
-		"A note while the pointer rests",
-		"Stepper",
-		"Where a person is in a flow",
+		"Surfaces anchored to what opens them, notes and previews on hover",
 		"Breadcrumbs",
-		"Where a person is in a hierarchy",
-		"Pagination",
-		"Pages of a long run",
+		"Where a person is in a hierarchy, in pages or in a flow",
 		"Sidebar",
 		"Sections to choose beside the content",
 		"Interaction",
 		"Data",
 		"Containers",
 		"Text and code",
-		"Combobox",
-		"A field that filters a list and picks from it",
 		"Command",
 		"A palette of commands to search and run",
 		"HoverCard",
@@ -6208,8 +6091,6 @@ var texts = map[string]*[numTexts]string{
 		"عروض الويب ومشغلات الفيديو وعروض التطبيق الأصلية",
 		"الطبقة العلوية",
 		"محتوى فوق الشاشة، خارج الإطار الذي يقصّه",
-		"قابل للطي",
-		"تفاصيل أسفل الملخص، تُحفظ أثناء الطي",
 		"جدول البيانات",
 		"مليون سهم في ستين عمودًا، أسعارها تتحدث كل 33 مللي ثانية، أعمدة ثابتة، فرز، تحديد، أعمدة يُغيّر حجمها وتُنقل",
 		"عارض الفروقات",
@@ -6219,7 +6100,7 @@ var texts = map[string]*[numTexts]string{
 		"المحرر",
 		"شيفرة مع تمييز، مؤشرات متعددة، طي، بحث واستبدال، تشخيصات، إكمال وتعريفات",
 		"حقل الإدخال",
-		"حقول الإدخال، أنواع لوحة المفاتيح، لوحة المفاتيح فوق المحتوى",
+		"نصوص وأرقام ووسوم ورموز لمرة واحدة، ولوحة المفاتيح فوق المحتوى",
 		"القائمة المنسدلة",
 		"شريط قوائم، قوائم فرعية، عناصر قابلة للتحديد، قوائم سياقية على الصفوف",
 		"مكدس التنقل",
@@ -6227,7 +6108,7 @@ var texts = map[string]*[numTexts]string{
 		"المخطط",
 		"مخطط خطي ومساحي مع تمرير ووخطوط شبكة وحركة، ومخططات مصغرة في قائمة",
 		"التقدم",
-		"نقل يتحكم فيه التطبيق، وآخر حجمه غير معروف",
+		"أشرطة وحلقات ومؤشرات تحميل ومقاييس وهياكل تحميل",
 		"قابل لتغيير الحجم",
 		"لوحات يتغير حجمها بسحب الخطوط بينها، ضمن حدودها",
 		"علامات التبويب",
@@ -7971,83 +7852,46 @@ var texts = map[string]*[numTexts]string{
 		"القائمة",
 		"أعمدة، أقسام مثبتة، دردشة، قوائم أفقية",
 		"زر",
-		"أزرار نصية وأيقونية ودائرية",
-		"تبديل",
-		"أزرار تبقى مضغوطة، منفردة أو في مجموعة",
+		"أزرار نصية وأيقونية ودائرية وتبديل وتأكيد بالضغط المطوّل",
 		"رابط",
 		"نص يفتح مكانًا",
-		"الضغط المطوّل للتأكيد",
-		"ضغطة تستمر بما يكفي لتنفيذ الإجراء",
 		"شريط الأدوات",
 		"صف من الإجراءات، ثابت أو عائم",
-		"حقل رقمي",
-		"رقم يُكتب أو يُزاد تدريجيًا",
-		"حقل الوسوم",
-		"كلمات تُجمع كوسوم",
-		"حقل رمز التحقق",
-		"رمز لمرة واحدة، خانة لكل حرف",
 		"مربع اختيار",
-		"مفعّل أو معطّل أو مفعّل جزئيًا",
-		"زر اختيار",
-		"خيار واحد من عدة خيارات",
-		"مفتاح",
-		"إعداد مفعّل أو معطّل",
+		"مربعات اختيار وأزرار اختيار ومفاتيح",
 		"قائمة اختيار",
-		"خيار واحد من قائمة منبثقة",
+		"خيار من قائمة منبثقة، أو حقل يصفّيها",
 		"شريط تمرير",
-		"رقم أو نطاق على مسار",
-		"تقييم",
-		"درجة بالنجوم",
+		"رقم أو نطاق على مسار، وتقييم بالنجوم",
 		"شارة",
 		"تسمية صغيرة بلون محدد",
 		"صورة رمزية",
 		"شخص منفرد أو ضمن مجموعة",
 		"صورة",
-		"صورة مؤطرة بنسبتها",
-		"مقارنة الصور",
-		"جانبان يفصلهما مقبض",
+		"صورة مؤطرة بنسبتها، وجانبان يفصلهما مقبض",
 		"عرض دوّار",
 		"شرائح تستقر في مكانها",
 		"قائمة",
-		"صفوف تُحدد بالمؤشر ولوحة المفاتيح",
-		"شجرة",
-		"عناصر متداخلة قابلة للتوسيع",
+		"صفوف للتحديد وعناصر متداخلة قابلة للتوسيع",
 		"جدول",
 		"صفوف قليلة يكتبها التطبيق",
 		"Inset",
 		"سطح غائر للمحتوى",
 		"أكورديون",
-		"أقسام تُفتح واحدًا أو أكثر في كل مرة",
-		"مؤشر تحميل",
-		"عمل غير معروف المدة",
-		"مقياس",
-		"قيمة مقابل حدها",
-		"هيكل تحميل",
-		"شكل المحتوى القادم",
+		"أقسام تُفتح واحدًا أو أكثر معًا، وتفاصيل تحت ملخص",
 		"مربع حوار",
-		"سطح مشروط فوق تطبيق معتم",
-		"مربع تنبيه",
-		"سؤال مع إجراءات للإجابة عنه",
+		"أسطح مشروطة وأسئلة للإجابة ولوحات عند الحافة",
 		"لوحة",
-		"لوحة عند حافة النافذة",
 		"نافذة منبثقة",
-		"سطح مثبت بما يفتحه",
-		"تلميح",
-		"ملاحظة أثناء توقف المؤشر",
-		"خطوات",
-		"موقع الشخص في مسار",
+		"أسطح مرتبطة بما يفتحها، وملاحظات ومعاينات عند التمرير",
 		"مسار التنقل",
-		"موقع الشخص في تسلسل هرمي",
-		"ترقيم الصفحات",
-		"صفحات لمحتوى طويل",
+		"موقع الشخص في تسلسل أو صفحات أو خطوات",
 		"شريط جانبي",
 		"أقسام للاختيار بجانب المحتوى",
 		"التفاعل",
 		"البيانات",
 		"الحاويات",
 		"النصوص والرموز",
-		"مربع تحرير وسرد",
-		"حقل يصفّي قائمة ويختار منها",
 		"لوحة الأوامر",
 		"ابحث عن الأوامر وشغّلها",
 		"بطاقة التمرير",
@@ -8115,8 +7959,6 @@ var texts = map[string]*[numTexts]string{
 		"网页视图、视频播放器和应用自己的原生视图",
 		"浮层",
 		"显示在屏幕最上层、超出裁剪它的容器的内容",
-		"可折叠",
-		"摘要下的详情，折叠时也会保留",
 		"数据表",
 		"一百万只股票、六十列，行情每 33 毫秒跳动，固定列、排序、选择、调整列宽和移动列",
 		"差异视图",
@@ -8126,7 +7968,7 @@ var texts = map[string]*[numTexts]string{
 		"编辑器",
 		"代码高亮、多光标、折叠、查找替换、诊断、补全和跳转定义",
 		"输入框",
-		"输入框、键盘类型、键盘遮挡内容",
+		"文本、数字、标签与一次性验证码，以及内容上方的键盘",
 		"菜单",
 		"菜单栏、子菜单、可勾选项、行上的上下文菜单",
 		"导航栈",
@@ -8134,7 +7976,7 @@ var texts = map[string]*[numTexts]string{
 		"图表",
 		"带悬停、网格线和动效的折线面积图，列表中的迷你图",
 		"进度",
-		"应用驱动的传输，以及大小未知的传输",
+		"进度条、进度环、加载指示器、仪表与骨架屏",
 		"可调整大小",
 		"拖动面板之间的分隔线调整大小，限制在各自范围内",
 		"标签页",
@@ -9878,83 +9720,46 @@ var texts = map[string]*[numTexts]string{
 		"列表",
 		"多列、吸顶分组、聊天、横向列表",
 		"按钮",
-		"文字、图标和圆形按钮",
-		"切换",
-		"保持按下状态的按钮，单个或成组",
+		"文字、图标、圆形、切换与长按确认按钮",
 		"链接",
 		"打开某处的文字",
-		"长按确认",
-		"按住足够久才执行",
 		"工具栏",
 		"一排操作，固定或悬浮",
-		"数字输入框",
-		"可输入或步进的数字",
-		"标签输入框",
-		"收集为标签的词",
-		"验证码输入框",
-		"一次性验证码，每个字符一格",
 		"复选框",
-		"开、关或部分选中",
-		"单选框",
-		"几项中选一项",
-		"开关",
-		"开启或关闭的设置",
+		"复选框、单选框与开关",
 		"下拉选择",
-		"从弹出列表选一项",
+		"从弹出列表选择，或用输入框筛选",
 		"滑块",
-		"轨道上的数值或范围",
-		"评分",
-		"星级评分",
+		"轨道上的数值或范围，以及星级评分",
 		"徽标",
 		"带色调的小标签",
 		"头像",
 		"单个或成组的人物",
 		"图片",
-		"带比例的图片框",
-		"图片对比",
-		"由手柄分开的两侧",
+		"按比例框定的图片，以及用手柄分隔的两侧对比",
 		"轮播",
 		"吸附到位的幻灯片",
 		"列表",
-		"可用指针和键盘选择的行",
-		"树",
-		"可展开的嵌套项",
+		"可选择的行，以及可展开的嵌套项",
 		"表格",
 		"应用写出的少量行",
 		"Inset",
 		"让内容下沉的表面",
 		"手风琴",
-		"一次打开一个或多个的分区",
-		"加载指示器",
-		"时长未知的工作",
-		"计量条",
-		"数值与上限的对比",
-		"骨架屏",
-		"即将出现的内容轮廓",
+		"可逐个或同时展开的分区，以及摘要下的详情",
 		"对话框",
-		"覆盖在变暗应用上的模态界面",
-		"警告对话框",
-		"带操作按钮的询问",
+		"模态界面、待回答的询问与窗口边缘的面板",
 		"面板",
-		"窗口边缘的面板",
 		"气泡",
-		"锚定在触发元素上的浮层",
-		"提示",
-		"指针停留时的说明",
-		"步骤条",
-		"用户在流程中的位置",
+		"锚定于触发元素的浮层，以及悬停时的提示与预览",
 		"面包屑",
-		"用户在层级中的位置",
-		"分页",
-		"长内容的分页",
+		"在层级、分页或流程中的当前位置",
 		"侧边栏",
 		"内容旁可选择的分区",
 		"交互",
 		"数据",
 		"容器",
 		"文本与代码",
-		"组合框",
-		"输入筛选列表并从中选择",
 		"命令面板",
 		"搜索并运行命令",
 		"悬停卡片",
@@ -10022,8 +9827,6 @@ var texts = map[string]*[numTexts]string{
 		"網頁檢視、影片播放器和應用自己的原生檢視",
 		"浮層",
 		"顯示在螢幕最上層、超出裁剪它的容器的內容",
-		"可摺疊",
-		"摘要下的詳情，摺疊時也會保留",
 		"資料表",
 		"一百萬只股票、六十列，行情每 33 毫秒跳動，固定列、排序、選擇、調整列寬和移動列",
 		"差異檢視",
@@ -10033,7 +9836,7 @@ var texts = map[string]*[numTexts]string{
 		"編輯器",
 		"程式碼高亮、多游標、摺疊、尋找與取代、診斷、補全和跳轉定義",
 		"輸入框",
-		"輸入框、鍵盤類型、鍵盤遮擋內容",
+		"文字、數字、標籤與一次性驗證碼，以及內容上方的鍵盤",
 		"選單",
 		"選單列、子選單、可勾選項、行上的上下文選單",
 		"導覽堆疊",
@@ -10041,7 +9844,7 @@ var texts = map[string]*[numTexts]string{
 		"圖表",
 		"帶懸停、網格線和動效的折線面積圖，列表中的迷你圖",
 		"進度",
-		"應用驅動的傳輸，以及大小未知的傳輸",
+		"進度列、進度環、載入指示器、儀表與骨架畫面",
 		"可調整大小",
 		"拖動面板之間的分隔線調整大小，限制在各自範圍內",
 		"標籤頁",
@@ -11785,83 +11588,46 @@ var texts = map[string]*[numTexts]string{
 		"列表",
 		"多列、吸頂分組、聊天、橫向列表",
 		"按鈕",
-		"文字、圖示和圓形按鈕",
-		"切換",
-		"保持按下狀態的按鈕，單個或成組",
+		"文字、圖示、圓形、切換與長按確認按鈕",
 		"連結",
 		"開啟某處的文字",
-		"長按確認",
-		"按住足夠久才執行",
 		"工具列",
 		"一排操作，固定或懸浮",
-		"數字輸入框",
-		"可輸入或步進的數字",
-		"標籤輸入框",
-		"收集為標籤的詞",
-		"驗證碼輸入框",
-		"一次性驗證碼，每個字元一格",
 		"核取方塊",
-		"開、關或部分選取",
-		"單選按鈕",
-		"幾項中選一項",
-		"開關",
-		"開啟或關閉的設定",
+		"核取方塊、單選按鈕與開關",
 		"下拉選擇",
-		"從彈出列表選一項",
+		"從彈出清單選擇，或用輸入框篩選",
 		"滑桿",
-		"軌道上的數值或範圍",
-		"評分",
-		"星級評分",
+		"軌道上的數值或範圍，以及星級評分",
 		"徽標",
 		"帶色調的小標籤",
 		"頭像",
 		"單個或成組的人物",
 		"圖片",
-		"帶比例的圖片框",
-		"圖片對比",
-		"由控點分開的兩側",
+		"按比例框定的圖片，以及用控點分隔的兩側對比",
 		"輪播",
 		"吸附到位的投影片",
 		"清單",
-		"可用指標和鍵盤選擇的列",
-		"樹",
-		"可展開的巢狀項目",
+		"可選取的列，以及可展開的巢狀項目",
 		"表格",
 		"應用程式寫出的少量列",
 		"Inset",
 		"讓內容下沉的表面",
 		"手風琴",
-		"一次開啟一個或多個的區段",
-		"載入指示器",
-		"時長未知的工作",
-		"計量條",
-		"數值與上限的對比",
-		"骨架屏",
-		"即將出現的內容輪廓",
+		"可逐一或同時展開的區塊，以及摘要下的詳細內容",
 		"對話方塊",
-		"覆蓋在變暗應用程式上的強制回應介面",
-		"警告對話方塊",
-		"帶操作按鈕的詢問",
+		"強制回應介面、待回答的詢問與視窗邊緣的面板",
 		"面板",
-		"視窗邊緣的面板",
 		"氣泡",
-		"錨定在觸發元素上的浮層",
-		"提示",
-		"指標停留時的說明",
-		"步驟條",
-		"使用者在流程中的位置",
+		"錨定於觸發元素的浮層，以及懸停時的提示與預覽",
 		"麵包屑",
-		"使用者在階層中的位置",
-		"分頁",
-		"長內容的分頁",
+		"在階層、分頁或流程中的目前位置",
 		"側邊欄",
 		"內容旁可選擇的區段",
 		"互動",
 		"資料",
 		"容器",
 		"文字與程式碼",
-		"組合框",
-		"輸入篩選清單並從中選擇",
 		"命令面板",
 		"搜尋並執行命令",
 		"懸停卡片",
@@ -12068,12 +11834,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoOverlayDetail != nil {
 		st[textDemoOverlayDetail] = t.DemoOverlayDetail()
-	}
-	if t.DemoCollapsible != nil {
-		st[textDemoCollapsible] = t.DemoCollapsible()
-	}
-	if t.DemoCollapsibleDetail != nil {
-		st[textDemoCollapsibleDetail] = t.DemoCollapsibleDetail()
 	}
 	if t.DemoDataTable != nil {
 		st[textDemoDataTable] = t.DemoDataTable()
@@ -17679,23 +17439,11 @@ func Supply(lang string, t Translation) {
 	if t.DemoButtonDetail != nil {
 		st[textDemoButtonDetail] = t.DemoButtonDetail()
 	}
-	if t.DemoToggle != nil {
-		st[textDemoToggle] = t.DemoToggle()
-	}
-	if t.DemoToggleDetail != nil {
-		st[textDemoToggleDetail] = t.DemoToggleDetail()
-	}
 	if t.DemoLink != nil {
 		st[textDemoLink] = t.DemoLink()
 	}
 	if t.DemoLinkDetail != nil {
 		st[textDemoLinkDetail] = t.DemoLinkDetail()
-	}
-	if t.DemoHoldToConfirm != nil {
-		st[textDemoHoldToConfirm] = t.DemoHoldToConfirm()
-	}
-	if t.DemoHoldToConfirmDetail != nil {
-		st[textDemoHoldToConfirmDetail] = t.DemoHoldToConfirmDetail()
 	}
 	if t.DemoToolbar != nil {
 		st[textDemoToolbar] = t.DemoToolbar()
@@ -17703,41 +17451,11 @@ func Supply(lang string, t Translation) {
 	if t.DemoToolbarDetail != nil {
 		st[textDemoToolbarDetail] = t.DemoToolbarDetail()
 	}
-	if t.DemoNumberInput != nil {
-		st[textDemoNumberInput] = t.DemoNumberInput()
-	}
-	if t.DemoNumberInputDetail != nil {
-		st[textDemoNumberInputDetail] = t.DemoNumberInputDetail()
-	}
-	if t.DemoTagInput != nil {
-		st[textDemoTagInput] = t.DemoTagInput()
-	}
-	if t.DemoTagInputDetail != nil {
-		st[textDemoTagInputDetail] = t.DemoTagInputDetail()
-	}
-	if t.DemoOtpInput != nil {
-		st[textDemoOtpInput] = t.DemoOtpInput()
-	}
-	if t.DemoOtpInputDetail != nil {
-		st[textDemoOtpInputDetail] = t.DemoOtpInputDetail()
-	}
 	if t.DemoCheckbox != nil {
 		st[textDemoCheckbox] = t.DemoCheckbox()
 	}
 	if t.DemoCheckboxDetail != nil {
 		st[textDemoCheckboxDetail] = t.DemoCheckboxDetail()
-	}
-	if t.DemoRadio != nil {
-		st[textDemoRadio] = t.DemoRadio()
-	}
-	if t.DemoRadioDetail != nil {
-		st[textDemoRadioDetail] = t.DemoRadioDetail()
-	}
-	if t.DemoSwitch != nil {
-		st[textDemoSwitch] = t.DemoSwitch()
-	}
-	if t.DemoSwitchDetail != nil {
-		st[textDemoSwitchDetail] = t.DemoSwitchDetail()
 	}
 	if t.DemoSelect != nil {
 		st[textDemoSelect] = t.DemoSelect()
@@ -17750,12 +17468,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoSliderDetail != nil {
 		st[textDemoSliderDetail] = t.DemoSliderDetail()
-	}
-	if t.DemoRating != nil {
-		st[textDemoRating] = t.DemoRating()
-	}
-	if t.DemoRatingDetail != nil {
-		st[textDemoRatingDetail] = t.DemoRatingDetail()
 	}
 	if t.DemoBadge != nil {
 		st[textDemoBadge] = t.DemoBadge()
@@ -17775,12 +17487,6 @@ func Supply(lang string, t Translation) {
 	if t.DemoImageDetail != nil {
 		st[textDemoImageDetail] = t.DemoImageDetail()
 	}
-	if t.DemoImageCompare != nil {
-		st[textDemoImageCompare] = t.DemoImageCompare()
-	}
-	if t.DemoImageCompareDetail != nil {
-		st[textDemoImageCompareDetail] = t.DemoImageCompareDetail()
-	}
 	if t.DemoCarousel != nil {
 		st[textDemoCarousel] = t.DemoCarousel()
 	}
@@ -17792,12 +17498,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.DemoListDetail != nil {
 		st[textDemoListDetail] = t.DemoListDetail()
-	}
-	if t.DemoTree != nil {
-		st[textDemoTree] = t.DemoTree()
-	}
-	if t.DemoTreeDetail != nil {
-		st[textDemoTreeDetail] = t.DemoTreeDetail()
 	}
 	if t.DemoTable != nil {
 		st[textDemoTable] = t.DemoTable()
@@ -17817,41 +17517,14 @@ func Supply(lang string, t Translation) {
 	if t.DemoAccordionDetail != nil {
 		st[textDemoAccordionDetail] = t.DemoAccordionDetail()
 	}
-	if t.DemoSpinner != nil {
-		st[textDemoSpinner] = t.DemoSpinner()
-	}
-	if t.DemoSpinnerDetail != nil {
-		st[textDemoSpinnerDetail] = t.DemoSpinnerDetail()
-	}
-	if t.DemoMeter != nil {
-		st[textDemoMeter] = t.DemoMeter()
-	}
-	if t.DemoMeterDetail != nil {
-		st[textDemoMeterDetail] = t.DemoMeterDetail()
-	}
-	if t.DemoSkeleton != nil {
-		st[textDemoSkeleton] = t.DemoSkeleton()
-	}
-	if t.DemoSkeletonDetail != nil {
-		st[textDemoSkeletonDetail] = t.DemoSkeletonDetail()
-	}
 	if t.DemoDialog != nil {
 		st[textDemoDialog] = t.DemoDialog()
 	}
 	if t.DemoDialogDetail != nil {
 		st[textDemoDialogDetail] = t.DemoDialogDetail()
 	}
-	if t.DemoAlertDialog != nil {
-		st[textDemoAlertDialog] = t.DemoAlertDialog()
-	}
-	if t.DemoAlertDialogDetail != nil {
-		st[textDemoAlertDialogDetail] = t.DemoAlertDialogDetail()
-	}
 	if t.DemoSheet != nil {
 		st[textDemoSheet] = t.DemoSheet()
-	}
-	if t.DemoSheetDetail != nil {
-		st[textDemoSheetDetail] = t.DemoSheetDetail()
 	}
 	if t.DemoPopover != nil {
 		st[textDemoPopover] = t.DemoPopover()
@@ -17859,29 +17532,11 @@ func Supply(lang string, t Translation) {
 	if t.DemoPopoverDetail != nil {
 		st[textDemoPopoverDetail] = t.DemoPopoverDetail()
 	}
-	if t.DemoTooltip != nil {
-		st[textDemoTooltip] = t.DemoTooltip()
-	}
-	if t.DemoTooltipDetail != nil {
-		st[textDemoTooltipDetail] = t.DemoTooltipDetail()
-	}
-	if t.DemoStepper != nil {
-		st[textDemoStepper] = t.DemoStepper()
-	}
-	if t.DemoStepperDetail != nil {
-		st[textDemoStepperDetail] = t.DemoStepperDetail()
-	}
 	if t.DemoBreadcrumbs != nil {
 		st[textDemoBreadcrumbs] = t.DemoBreadcrumbs()
 	}
 	if t.DemoBreadcrumbsDetail != nil {
 		st[textDemoBreadcrumbsDetail] = t.DemoBreadcrumbsDetail()
-	}
-	if t.DemoPagination != nil {
-		st[textDemoPagination] = t.DemoPagination()
-	}
-	if t.DemoPaginationDetail != nil {
-		st[textDemoPaginationDetail] = t.DemoPaginationDetail()
 	}
 	if t.DemoSidebar != nil {
 		st[textDemoSidebar] = t.DemoSidebar()
@@ -17900,12 +17555,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.GroupDocuments != nil {
 		st[textGroupDocuments] = t.GroupDocuments()
-	}
-	if t.DemoCombobox != nil {
-		st[textDemoCombobox] = t.DemoCombobox()
-	}
-	if t.DemoComboboxDetail != nil {
-		st[textDemoComboboxDetail] = t.DemoComboboxDetail()
 	}
 	if t.DemoCommand != nil {
 		st[textDemoCommand] = t.DemoCommand()
@@ -18396,22 +18045,6 @@ func DemoOverlayDetail(cx *core.Scope) string { return For(cx).DemoOverlayDetail
 // in the language of msgs.
 func (msgs Messages) DemoOverlayDetail() string { return msgs.text(textDemoOverlayDetail) }
 
-// DemoCollapsible says "Collapsible"
-// in the language the app shows under cx.
-func DemoCollapsible(cx *core.Scope) string { return For(cx).DemoCollapsible() }
-
-// DemoCollapsible says "Collapsible"
-// in the language of msgs.
-func (msgs Messages) DemoCollapsible() string { return msgs.text(textDemoCollapsible) }
-
-// DemoCollapsibleDetail says "Details under a summary, kept while collapsed"
-// in the language the app shows under cx.
-func DemoCollapsibleDetail(cx *core.Scope) string { return For(cx).DemoCollapsibleDetail() }
-
-// DemoCollapsibleDetail says "Details under a summary, kept while collapsed"
-// in the language of msgs.
-func (msgs Messages) DemoCollapsibleDetail() string { return msgs.text(textDemoCollapsibleDetail) }
-
 // DemoDataTable says "DataTable"
 // in the language the app shows under cx.
 func DemoDataTable(cx *core.Scope) string { return For(cx).DemoDataTable() }
@@ -18484,11 +18117,11 @@ func DemoInput(cx *core.Scope) string { return For(cx).DemoInput() }
 // in the language of msgs.
 func (msgs Messages) DemoInput() string { return msgs.text(textDemoInput) }
 
-// DemoInputDetail says "Inputs, keyboard types, the keyboard over the content"
+// DemoInputDetail says "Text, numbers, tags and one-time codes, and the keyboard over the content"
 // in the language the app shows under cx.
 func DemoInputDetail(cx *core.Scope) string { return For(cx).DemoInputDetail() }
 
-// DemoInputDetail says "Inputs, keyboard types, the keyboard over the content"
+// DemoInputDetail says "Text, numbers, tags and one-time codes, and the keyboard over the content"
 // in the language of msgs.
 func (msgs Messages) DemoInputDetail() string { return msgs.text(textDemoInputDetail) }
 
@@ -18548,11 +18181,11 @@ func DemoProgress(cx *core.Scope) string { return For(cx).DemoProgress() }
 // in the language of msgs.
 func (msgs Messages) DemoProgress() string { return msgs.text(textDemoProgress) }
 
-// DemoProgressDetail says "A transfer the app drives, and one of unknown size"
+// DemoProgressDetail says "Bars, rings, spinners, meters and skeletons"
 // in the language the app shows under cx.
 func DemoProgressDetail(cx *core.Scope) string { return For(cx).DemoProgressDetail() }
 
-// DemoProgressDetail says "A transfer the app drives, and one of unknown size"
+// DemoProgressDetail says "Bars, rings, spinners, meters and skeletons"
 // in the language of msgs.
 func (msgs Messages) DemoProgressDetail() string { return msgs.text(textDemoProgressDetail) }
 
@@ -36539,29 +36172,13 @@ func DemoButton(cx *core.Scope) string { return For(cx).DemoButton() }
 // in the language of msgs.
 func (msgs Messages) DemoButton() string { return msgs.text(textDemoButton) }
 
-// DemoButtonDetail says "Text, icon and round buttons"
+// DemoButtonDetail says "Text, icon, round, toggle and hold-to-confirm buttons"
 // in the language the app shows under cx.
 func DemoButtonDetail(cx *core.Scope) string { return For(cx).DemoButtonDetail() }
 
-// DemoButtonDetail says "Text, icon and round buttons"
+// DemoButtonDetail says "Text, icon, round, toggle and hold-to-confirm buttons"
 // in the language of msgs.
 func (msgs Messages) DemoButtonDetail() string { return msgs.text(textDemoButtonDetail) }
-
-// DemoToggle says "Toggle"
-// in the language the app shows under cx.
-func DemoToggle(cx *core.Scope) string { return For(cx).DemoToggle() }
-
-// DemoToggle says "Toggle"
-// in the language of msgs.
-func (msgs Messages) DemoToggle() string { return msgs.text(textDemoToggle) }
-
-// DemoToggleDetail says "Buttons that stay pressed, alone or in a group"
-// in the language the app shows under cx.
-func DemoToggleDetail(cx *core.Scope) string { return For(cx).DemoToggleDetail() }
-
-// DemoToggleDetail says "Buttons that stay pressed, alone or in a group"
-// in the language of msgs.
-func (msgs Messages) DemoToggleDetail() string { return msgs.text(textDemoToggleDetail) }
 
 // DemoLink says "Link"
 // in the language the app shows under cx.
@@ -36579,22 +36196,6 @@ func DemoLinkDetail(cx *core.Scope) string { return For(cx).DemoLinkDetail() }
 // in the language of msgs.
 func (msgs Messages) DemoLinkDetail() string { return msgs.text(textDemoLinkDetail) }
 
-// DemoHoldToConfirm says "HoldToConfirm"
-// in the language the app shows under cx.
-func DemoHoldToConfirm(cx *core.Scope) string { return For(cx).DemoHoldToConfirm() }
-
-// DemoHoldToConfirm says "HoldToConfirm"
-// in the language of msgs.
-func (msgs Messages) DemoHoldToConfirm() string { return msgs.text(textDemoHoldToConfirm) }
-
-// DemoHoldToConfirmDetail says "A press held long enough to act"
-// in the language the app shows under cx.
-func DemoHoldToConfirmDetail(cx *core.Scope) string { return For(cx).DemoHoldToConfirmDetail() }
-
-// DemoHoldToConfirmDetail says "A press held long enough to act"
-// in the language of msgs.
-func (msgs Messages) DemoHoldToConfirmDetail() string { return msgs.text(textDemoHoldToConfirmDetail) }
-
 // DemoToolbar says "Toolbar"
 // in the language the app shows under cx.
 func DemoToolbar(cx *core.Scope) string { return For(cx).DemoToolbar() }
@@ -36611,54 +36212,6 @@ func DemoToolbarDetail(cx *core.Scope) string { return For(cx).DemoToolbarDetail
 // in the language of msgs.
 func (msgs Messages) DemoToolbarDetail() string { return msgs.text(textDemoToolbarDetail) }
 
-// DemoNumberInput says "NumberInput"
-// in the language the app shows under cx.
-func DemoNumberInput(cx *core.Scope) string { return For(cx).DemoNumberInput() }
-
-// DemoNumberInput says "NumberInput"
-// in the language of msgs.
-func (msgs Messages) DemoNumberInput() string { return msgs.text(textDemoNumberInput) }
-
-// DemoNumberInputDetail says "A number to type or step"
-// in the language the app shows under cx.
-func DemoNumberInputDetail(cx *core.Scope) string { return For(cx).DemoNumberInputDetail() }
-
-// DemoNumberInputDetail says "A number to type or step"
-// in the language of msgs.
-func (msgs Messages) DemoNumberInputDetail() string { return msgs.text(textDemoNumberInputDetail) }
-
-// DemoTagInput says "TagInput"
-// in the language the app shows under cx.
-func DemoTagInput(cx *core.Scope) string { return For(cx).DemoTagInput() }
-
-// DemoTagInput says "TagInput"
-// in the language of msgs.
-func (msgs Messages) DemoTagInput() string { return msgs.text(textDemoTagInput) }
-
-// DemoTagInputDetail says "Words collected as tags"
-// in the language the app shows under cx.
-func DemoTagInputDetail(cx *core.Scope) string { return For(cx).DemoTagInputDetail() }
-
-// DemoTagInputDetail says "Words collected as tags"
-// in the language of msgs.
-func (msgs Messages) DemoTagInputDetail() string { return msgs.text(textDemoTagInputDetail) }
-
-// DemoOtpInput says "OtpInput"
-// in the language the app shows under cx.
-func DemoOtpInput(cx *core.Scope) string { return For(cx).DemoOtpInput() }
-
-// DemoOtpInput says "OtpInput"
-// in the language of msgs.
-func (msgs Messages) DemoOtpInput() string { return msgs.text(textDemoOtpInput) }
-
-// DemoOtpInputDetail says "A one-time code, a cell per character"
-// in the language the app shows under cx.
-func DemoOtpInputDetail(cx *core.Scope) string { return For(cx).DemoOtpInputDetail() }
-
-// DemoOtpInputDetail says "A one-time code, a cell per character"
-// in the language of msgs.
-func (msgs Messages) DemoOtpInputDetail() string { return msgs.text(textDemoOtpInputDetail) }
-
 // DemoCheckbox says "Checkbox"
 // in the language the app shows under cx.
 func DemoCheckbox(cx *core.Scope) string { return For(cx).DemoCheckbox() }
@@ -36667,45 +36220,13 @@ func DemoCheckbox(cx *core.Scope) string { return For(cx).DemoCheckbox() }
 // in the language of msgs.
 func (msgs Messages) DemoCheckbox() string { return msgs.text(textDemoCheckbox) }
 
-// DemoCheckboxDetail says "On, off or partly on"
+// DemoCheckboxDetail says "Checkboxes, radio buttons and switches"
 // in the language the app shows under cx.
 func DemoCheckboxDetail(cx *core.Scope) string { return For(cx).DemoCheckboxDetail() }
 
-// DemoCheckboxDetail says "On, off or partly on"
+// DemoCheckboxDetail says "Checkboxes, radio buttons and switches"
 // in the language of msgs.
 func (msgs Messages) DemoCheckboxDetail() string { return msgs.text(textDemoCheckboxDetail) }
-
-// DemoRadio says "Radio"
-// in the language the app shows under cx.
-func DemoRadio(cx *core.Scope) string { return For(cx).DemoRadio() }
-
-// DemoRadio says "Radio"
-// in the language of msgs.
-func (msgs Messages) DemoRadio() string { return msgs.text(textDemoRadio) }
-
-// DemoRadioDetail says "One choice of a few"
-// in the language the app shows under cx.
-func DemoRadioDetail(cx *core.Scope) string { return For(cx).DemoRadioDetail() }
-
-// DemoRadioDetail says "One choice of a few"
-// in the language of msgs.
-func (msgs Messages) DemoRadioDetail() string { return msgs.text(textDemoRadioDetail) }
-
-// DemoSwitch says "Switch"
-// in the language the app shows under cx.
-func DemoSwitch(cx *core.Scope) string { return For(cx).DemoSwitch() }
-
-// DemoSwitch says "Switch"
-// in the language of msgs.
-func (msgs Messages) DemoSwitch() string { return msgs.text(textDemoSwitch) }
-
-// DemoSwitchDetail says "A setting on or off"
-// in the language the app shows under cx.
-func DemoSwitchDetail(cx *core.Scope) string { return For(cx).DemoSwitchDetail() }
-
-// DemoSwitchDetail says "A setting on or off"
-// in the language of msgs.
-func (msgs Messages) DemoSwitchDetail() string { return msgs.text(textDemoSwitchDetail) }
 
 // DemoSelect says "Select"
 // in the language the app shows under cx.
@@ -36715,11 +36236,11 @@ func DemoSelect(cx *core.Scope) string { return For(cx).DemoSelect() }
 // in the language of msgs.
 func (msgs Messages) DemoSelect() string { return msgs.text(textDemoSelect) }
 
-// DemoSelectDetail says "One choice from a popup"
+// DemoSelectDetail says "One choice from a popup, or a field that filters it"
 // in the language the app shows under cx.
 func DemoSelectDetail(cx *core.Scope) string { return For(cx).DemoSelectDetail() }
 
-// DemoSelectDetail says "One choice from a popup"
+// DemoSelectDetail says "One choice from a popup, or a field that filters it"
 // in the language of msgs.
 func (msgs Messages) DemoSelectDetail() string { return msgs.text(textDemoSelectDetail) }
 
@@ -36731,29 +36252,13 @@ func DemoSlider(cx *core.Scope) string { return For(cx).DemoSlider() }
 // in the language of msgs.
 func (msgs Messages) DemoSlider() string { return msgs.text(textDemoSlider) }
 
-// DemoSliderDetail says "A number or a range on a track"
+// DemoSliderDetail says "A number or a range on a track, and a score of stars"
 // in the language the app shows under cx.
 func DemoSliderDetail(cx *core.Scope) string { return For(cx).DemoSliderDetail() }
 
-// DemoSliderDetail says "A number or a range on a track"
+// DemoSliderDetail says "A number or a range on a track, and a score of stars"
 // in the language of msgs.
 func (msgs Messages) DemoSliderDetail() string { return msgs.text(textDemoSliderDetail) }
-
-// DemoRating says "Rating"
-// in the language the app shows under cx.
-func DemoRating(cx *core.Scope) string { return For(cx).DemoRating() }
-
-// DemoRating says "Rating"
-// in the language of msgs.
-func (msgs Messages) DemoRating() string { return msgs.text(textDemoRating) }
-
-// DemoRatingDetail says "A score of stars"
-// in the language the app shows under cx.
-func DemoRatingDetail(cx *core.Scope) string { return For(cx).DemoRatingDetail() }
-
-// DemoRatingDetail says "A score of stars"
-// in the language of msgs.
-func (msgs Messages) DemoRatingDetail() string { return msgs.text(textDemoRatingDetail) }
 
 // DemoBadge says "Badge"
 // in the language the app shows under cx.
@@ -36795,29 +36300,13 @@ func DemoImage(cx *core.Scope) string { return For(cx).DemoImage() }
 // in the language of msgs.
 func (msgs Messages) DemoImage() string { return msgs.text(textDemoImage) }
 
-// DemoImageDetail says "A framed picture with its ratio"
+// DemoImageDetail says "A framed picture with its ratio, and two sides split by a handle"
 // in the language the app shows under cx.
 func DemoImageDetail(cx *core.Scope) string { return For(cx).DemoImageDetail() }
 
-// DemoImageDetail says "A framed picture with its ratio"
+// DemoImageDetail says "A framed picture with its ratio, and two sides split by a handle"
 // in the language of msgs.
 func (msgs Messages) DemoImageDetail() string { return msgs.text(textDemoImageDetail) }
-
-// DemoImageCompare says "ImageCompare"
-// in the language the app shows under cx.
-func DemoImageCompare(cx *core.Scope) string { return For(cx).DemoImageCompare() }
-
-// DemoImageCompare says "ImageCompare"
-// in the language of msgs.
-func (msgs Messages) DemoImageCompare() string { return msgs.text(textDemoImageCompare) }
-
-// DemoImageCompareDetail says "Two sides split by a handle"
-// in the language the app shows under cx.
-func DemoImageCompareDetail(cx *core.Scope) string { return For(cx).DemoImageCompareDetail() }
-
-// DemoImageCompareDetail says "Two sides split by a handle"
-// in the language of msgs.
-func (msgs Messages) DemoImageCompareDetail() string { return msgs.text(textDemoImageCompareDetail) }
 
 // DemoCarousel says "Carousel"
 // in the language the app shows under cx.
@@ -36843,29 +36332,13 @@ func DemoList(cx *core.Scope) string { return For(cx).DemoList() }
 // in the language of msgs.
 func (msgs Messages) DemoList() string { return msgs.text(textDemoList) }
 
-// DemoListDetail says "Rows to select with the pointer and keyboard"
+// DemoListDetail says "Rows to select, and nested items that expand"
 // in the language the app shows under cx.
 func DemoListDetail(cx *core.Scope) string { return For(cx).DemoListDetail() }
 
-// DemoListDetail says "Rows to select with the pointer and keyboard"
+// DemoListDetail says "Rows to select, and nested items that expand"
 // in the language of msgs.
 func (msgs Messages) DemoListDetail() string { return msgs.text(textDemoListDetail) }
-
-// DemoTree says "Tree"
-// in the language the app shows under cx.
-func DemoTree(cx *core.Scope) string { return For(cx).DemoTree() }
-
-// DemoTree says "Tree"
-// in the language of msgs.
-func (msgs Messages) DemoTree() string { return msgs.text(textDemoTree) }
-
-// DemoTreeDetail says "Nested items that expand"
-// in the language the app shows under cx.
-func DemoTreeDetail(cx *core.Scope) string { return For(cx).DemoTreeDetail() }
-
-// DemoTreeDetail says "Nested items that expand"
-// in the language of msgs.
-func (msgs Messages) DemoTreeDetail() string { return msgs.text(textDemoTreeDetail) }
 
 // DemoTable says "Table"
 // in the language the app shows under cx.
@@ -36907,61 +36380,13 @@ func DemoAccordion(cx *core.Scope) string { return For(cx).DemoAccordion() }
 // in the language of msgs.
 func (msgs Messages) DemoAccordion() string { return msgs.text(textDemoAccordion) }
 
-// DemoAccordionDetail says "Sections that open one or several at a time"
+// DemoAccordionDetail says "Sections that open one or several at a time, and details under a summary"
 // in the language the app shows under cx.
 func DemoAccordionDetail(cx *core.Scope) string { return For(cx).DemoAccordionDetail() }
 
-// DemoAccordionDetail says "Sections that open one or several at a time"
+// DemoAccordionDetail says "Sections that open one or several at a time, and details under a summary"
 // in the language of msgs.
 func (msgs Messages) DemoAccordionDetail() string { return msgs.text(textDemoAccordionDetail) }
-
-// DemoSpinner says "Spinner"
-// in the language the app shows under cx.
-func DemoSpinner(cx *core.Scope) string { return For(cx).DemoSpinner() }
-
-// DemoSpinner says "Spinner"
-// in the language of msgs.
-func (msgs Messages) DemoSpinner() string { return msgs.text(textDemoSpinner) }
-
-// DemoSpinnerDetail says "Work of unknown length"
-// in the language the app shows under cx.
-func DemoSpinnerDetail(cx *core.Scope) string { return For(cx).DemoSpinnerDetail() }
-
-// DemoSpinnerDetail says "Work of unknown length"
-// in the language of msgs.
-func (msgs Messages) DemoSpinnerDetail() string { return msgs.text(textDemoSpinnerDetail) }
-
-// DemoMeter says "Meter"
-// in the language the app shows under cx.
-func DemoMeter(cx *core.Scope) string { return For(cx).DemoMeter() }
-
-// DemoMeter says "Meter"
-// in the language of msgs.
-func (msgs Messages) DemoMeter() string { return msgs.text(textDemoMeter) }
-
-// DemoMeterDetail says "A value against its limit"
-// in the language the app shows under cx.
-func DemoMeterDetail(cx *core.Scope) string { return For(cx).DemoMeterDetail() }
-
-// DemoMeterDetail says "A value against its limit"
-// in the language of msgs.
-func (msgs Messages) DemoMeterDetail() string { return msgs.text(textDemoMeterDetail) }
-
-// DemoSkeleton says "Skeleton"
-// in the language the app shows under cx.
-func DemoSkeleton(cx *core.Scope) string { return For(cx).DemoSkeleton() }
-
-// DemoSkeleton says "Skeleton"
-// in the language of msgs.
-func (msgs Messages) DemoSkeleton() string { return msgs.text(textDemoSkeleton) }
-
-// DemoSkeletonDetail says "The shape of content on its way"
-// in the language the app shows under cx.
-func DemoSkeletonDetail(cx *core.Scope) string { return For(cx).DemoSkeletonDetail() }
-
-// DemoSkeletonDetail says "The shape of content on its way"
-// in the language of msgs.
-func (msgs Messages) DemoSkeletonDetail() string { return msgs.text(textDemoSkeletonDetail) }
 
 // DemoDialog says "Dialog"
 // in the language the app shows under cx.
@@ -36971,29 +36396,13 @@ func DemoDialog(cx *core.Scope) string { return For(cx).DemoDialog() }
 // in the language of msgs.
 func (msgs Messages) DemoDialog() string { return msgs.text(textDemoDialog) }
 
-// DemoDialogDetail says "A modal surface over a dimmed app"
+// DemoDialogDetail says "Modal surfaces, questions to answer and panels at an edge"
 // in the language the app shows under cx.
 func DemoDialogDetail(cx *core.Scope) string { return For(cx).DemoDialogDetail() }
 
-// DemoDialogDetail says "A modal surface over a dimmed app"
+// DemoDialogDetail says "Modal surfaces, questions to answer and panels at an edge"
 // in the language of msgs.
 func (msgs Messages) DemoDialogDetail() string { return msgs.text(textDemoDialogDetail) }
-
-// DemoAlertDialog says "AlertDialog"
-// in the language the app shows under cx.
-func DemoAlertDialog(cx *core.Scope) string { return For(cx).DemoAlertDialog() }
-
-// DemoAlertDialog says "AlertDialog"
-// in the language of msgs.
-func (msgs Messages) DemoAlertDialog() string { return msgs.text(textDemoAlertDialog) }
-
-// DemoAlertDialogDetail says "A question with actions to answer it"
-// in the language the app shows under cx.
-func DemoAlertDialogDetail(cx *core.Scope) string { return For(cx).DemoAlertDialogDetail() }
-
-// DemoAlertDialogDetail says "A question with actions to answer it"
-// in the language of msgs.
-func (msgs Messages) DemoAlertDialogDetail() string { return msgs.text(textDemoAlertDialogDetail) }
 
 // DemoSheet says "Sheet"
 // in the language the app shows under cx.
@@ -37003,14 +36412,6 @@ func DemoSheet(cx *core.Scope) string { return For(cx).DemoSheet() }
 // in the language of msgs.
 func (msgs Messages) DemoSheet() string { return msgs.text(textDemoSheet) }
 
-// DemoSheetDetail says "A panel at an edge of the window"
-// in the language the app shows under cx.
-func DemoSheetDetail(cx *core.Scope) string { return For(cx).DemoSheetDetail() }
-
-// DemoSheetDetail says "A panel at an edge of the window"
-// in the language of msgs.
-func (msgs Messages) DemoSheetDetail() string { return msgs.text(textDemoSheetDetail) }
-
 // DemoPopover says "Popover"
 // in the language the app shows under cx.
 func DemoPopover(cx *core.Scope) string { return For(cx).DemoPopover() }
@@ -37019,45 +36420,13 @@ func DemoPopover(cx *core.Scope) string { return For(cx).DemoPopover() }
 // in the language of msgs.
 func (msgs Messages) DemoPopover() string { return msgs.text(textDemoPopover) }
 
-// DemoPopoverDetail says "A surface anchored to what opens it"
+// DemoPopoverDetail says "Surfaces anchored to what opens them, notes and previews on hover"
 // in the language the app shows under cx.
 func DemoPopoverDetail(cx *core.Scope) string { return For(cx).DemoPopoverDetail() }
 
-// DemoPopoverDetail says "A surface anchored to what opens it"
+// DemoPopoverDetail says "Surfaces anchored to what opens them, notes and previews on hover"
 // in the language of msgs.
 func (msgs Messages) DemoPopoverDetail() string { return msgs.text(textDemoPopoverDetail) }
-
-// DemoTooltip says "Tooltip"
-// in the language the app shows under cx.
-func DemoTooltip(cx *core.Scope) string { return For(cx).DemoTooltip() }
-
-// DemoTooltip says "Tooltip"
-// in the language of msgs.
-func (msgs Messages) DemoTooltip() string { return msgs.text(textDemoTooltip) }
-
-// DemoTooltipDetail says "A note while the pointer rests"
-// in the language the app shows under cx.
-func DemoTooltipDetail(cx *core.Scope) string { return For(cx).DemoTooltipDetail() }
-
-// DemoTooltipDetail says "A note while the pointer rests"
-// in the language of msgs.
-func (msgs Messages) DemoTooltipDetail() string { return msgs.text(textDemoTooltipDetail) }
-
-// DemoStepper says "Stepper"
-// in the language the app shows under cx.
-func DemoStepper(cx *core.Scope) string { return For(cx).DemoStepper() }
-
-// DemoStepper says "Stepper"
-// in the language of msgs.
-func (msgs Messages) DemoStepper() string { return msgs.text(textDemoStepper) }
-
-// DemoStepperDetail says "Where a person is in a flow"
-// in the language the app shows under cx.
-func DemoStepperDetail(cx *core.Scope) string { return For(cx).DemoStepperDetail() }
-
-// DemoStepperDetail says "Where a person is in a flow"
-// in the language of msgs.
-func (msgs Messages) DemoStepperDetail() string { return msgs.text(textDemoStepperDetail) }
 
 // DemoBreadcrumbs says "Breadcrumbs"
 // in the language the app shows under cx.
@@ -37067,29 +36436,13 @@ func DemoBreadcrumbs(cx *core.Scope) string { return For(cx).DemoBreadcrumbs() }
 // in the language of msgs.
 func (msgs Messages) DemoBreadcrumbs() string { return msgs.text(textDemoBreadcrumbs) }
 
-// DemoBreadcrumbsDetail says "Where a person is in a hierarchy"
+// DemoBreadcrumbsDetail says "Where a person is in a hierarchy, in pages or in a flow"
 // in the language the app shows under cx.
 func DemoBreadcrumbsDetail(cx *core.Scope) string { return For(cx).DemoBreadcrumbsDetail() }
 
-// DemoBreadcrumbsDetail says "Where a person is in a hierarchy"
+// DemoBreadcrumbsDetail says "Where a person is in a hierarchy, in pages or in a flow"
 // in the language of msgs.
 func (msgs Messages) DemoBreadcrumbsDetail() string { return msgs.text(textDemoBreadcrumbsDetail) }
-
-// DemoPagination says "Pagination"
-// in the language the app shows under cx.
-func DemoPagination(cx *core.Scope) string { return For(cx).DemoPagination() }
-
-// DemoPagination says "Pagination"
-// in the language of msgs.
-func (msgs Messages) DemoPagination() string { return msgs.text(textDemoPagination) }
-
-// DemoPaginationDetail says "Pages of a long run"
-// in the language the app shows under cx.
-func DemoPaginationDetail(cx *core.Scope) string { return For(cx).DemoPaginationDetail() }
-
-// DemoPaginationDetail says "Pages of a long run"
-// in the language of msgs.
-func (msgs Messages) DemoPaginationDetail() string { return msgs.text(textDemoPaginationDetail) }
 
 // DemoSidebar says "Sidebar"
 // in the language the app shows under cx.
@@ -37138,22 +36491,6 @@ func GroupDocuments(cx *core.Scope) string { return For(cx).GroupDocuments() }
 // GroupDocuments says "Text and code"
 // in the language of msgs.
 func (msgs Messages) GroupDocuments() string { return msgs.text(textGroupDocuments) }
-
-// DemoCombobox says "Combobox"
-// in the language the app shows under cx.
-func DemoCombobox(cx *core.Scope) string { return For(cx).DemoCombobox() }
-
-// DemoCombobox says "Combobox"
-// in the language of msgs.
-func (msgs Messages) DemoCombobox() string { return msgs.text(textDemoCombobox) }
-
-// DemoComboboxDetail says "A field that filters a list and picks from it"
-// in the language the app shows under cx.
-func DemoComboboxDetail(cx *core.Scope) string { return For(cx).DemoComboboxDetail() }
-
-// DemoComboboxDetail says "A field that filters a list and picks from it"
-// in the language of msgs.
-func (msgs Messages) DemoComboboxDetail() string { return msgs.text(textDemoComboboxDetail) }
 
 // DemoCommand says "Command"
 // in the language the app shows under cx.

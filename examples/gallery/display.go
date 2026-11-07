@@ -157,7 +157,7 @@ func listCard(last *core.Signal[string]) cardFunc {
 	}
 }
 
-// fileTree is the Tree demo's project.
+// fileTree is the Tree card's project.
 var fileTree = map[any][]any{"source": {"source/app", "source/lib"}, "source/app": {"main.go", "view.go"}, "source/lib": {"store.go"}, "docs": {"guide.md"}}
 
 func treeCard(last *core.Signal[string]) cardFunc {
