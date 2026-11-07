@@ -37,25 +37,11 @@ type Collapsible struct {
 // Render implements core.Node.
 func (c Collapsible) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	env := cx.Env()
 	title := c.Trigger
 	if title == nil {
 		title = []core.Node{line(c.Text, TypeBody.Merge(core.Style{FlexShrink: 1}), 1)}
 	}
-	turn := disclosureArrow(cx, IconOf(func() *core.SVG {
-		if env.RTL() {
-			return lucide.ChevronLeft()
-		}
-		return lucide.ChevronRight()
-	}, iconSize, colors.Muted), func() float32 {
-		switch {
-		case !is(c.Open):
-			return 0
-		case env.RTL():
-			return -90
-		}
-		return 90
-	})
+	turn := disclosureArrow(cx, func() bool { return is(c.Open) })
 	children := append(append([]core.Node(nil), title...), turn)
 	indent := core.Points(2)
 	if c.Variant == CollapsibleArrowLeft {
@@ -75,13 +61,30 @@ func (c Collapsible) Render(cx *core.Scope) core.Node {
 			StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), Focus: FocusRing(cx, 2)} }, Children: children}}}
 }
 
-// disclosureArrow holds icon, turning it to the degrees it returns, in the
-// time a disclosure takes to open.
-func disclosureArrow(cx *core.Scope, icon core.Node, degrees func() float32) core.Node {
+// disclosureArrow is the arrow of what open says is open: it points along
+// the reading direction, and turns down as it opens, in the time a
+// disclosure takes to open.
+func disclosureArrow(cx *core.Scope, open func() bool) core.Node {
+	env := cx.Env()
+	icon := IconOf(func() *core.SVG {
+		if env.RTL() {
+			return lucide.ChevronLeft()
+		}
+		return lucide.ChevronRight()
+	}, iconSize, ColorsOf(cx).Muted)
 	s := core.Style{FlexShrink: 0}
 	if !ReduceMotion(cx) {
 		s.Transition = core.Transition{Duration: 200 * time.Millisecond, Easing: core.EaseOut, Properties: core.TransitionTransform}
 	}
-	return core.View{Style: s, StyleFunc: func() core.Style { return core.Style{Transform: core.Transform{Rotate: degrees()}} },
-		Children: []core.Node{icon}}
+	return core.View{Style: s, StyleFunc: func() core.Style {
+		var degrees float32
+		switch {
+		case !open():
+		case env.RTL():
+			degrees = -90
+		default:
+			degrees = 90
+		}
+		return core.Style{Transform: core.Transform{Rotate: degrees}}
+	}, Children: []core.Node{icon}}
 }

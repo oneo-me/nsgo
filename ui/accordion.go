@@ -6,7 +6,6 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
 // AccordionItem is one section of an Accordion.
@@ -57,12 +56,7 @@ func (a Accordion) Render(cx *core.Scope) core.Node {
 		CornerRadius: RadiusControl, Disabled: Dimmed()}
 	var sections []core.Node
 	for i, item := range a.Items {
-		turn := disclosureArrow(cx, Icon(lucide.ChevronDown, iconSize, colors.Muted), func() float32 {
-			if a.Open != nil && a.Open(i) {
-				return 180
-			}
-			return 0
-		})
+		turn := disclosureArrow(cx, func() bool { return a.Open != nil && a.Open(i) })
 		section := base.AccordionItem{Value: strconv.Itoa(i), Disabled: item.Disabled, TestID: item.TestID,
 			Children: []core.Node{
 				base.AccordionHeader{Children: []core.Node{base.AccordionTrigger{Label: item.Text, Style: face,
