@@ -36,8 +36,8 @@ var (
 // StyleLayer draws vs with a view's CALayer. An NSView whose layer it
 // is takes the layer's shadow, as AppKit copies a view's shadow onto its
 // layer. A style with a transition animates what it lists from the
-// values shown.
-func StyleLayer(layer objc.ID, vs *driver.ViewStyle, view objc.ID) {
+// values shown; was is the style last drawn, nil for none.
+func StyleLayer(layer objc.ID, was, vs *driver.ViewStyle, view objc.ID) {
 	tr := vs.Transition
 	var keys []string
 	var from []objc.ID
@@ -91,8 +91,14 @@ func StyleLayer(layer objc.ID, vs *driver.ViewStyle, view objc.ID) {
 			clear := CGColor(0)
 			start = objc.ID(clear).Send(sel("autorelease"))
 		}
-		anim := objc.ID(objc.GetClass("CABasicAnimation")).Send(sel("animationWithKeyPath:"), NSString(k))
-		anim.Send(sel("setFromValue:"), start)
+		var anim objc.ID
+		if k == "transform" {
+			anim = moveAnimation(layer, was, vs)
+		}
+		if anim == 0 {
+			anim = objc.ID(objc.GetClass("CABasicAnimation")).Send(sel("animationWithKeyPath:"), NSString(k))
+			anim.Send(sel("setFromValue:"), start)
+		}
 		anim.Send(sel("setDuration:"), tr.Duration.Seconds())
 		anim.Send(sel("setTimingFunction:"), timing(tr.Easing))
 		if tr.Delay > 0 {
@@ -114,11 +120,11 @@ func RestyleLayer(layer objc.ID, shown, vs *driver.ViewStyle, view objc.ID) {
 		// A view's first style shows at once, as CSS transitions none.
 		first := *vs
 		first.Transition = driver.Transition{}
-		StyleLayer(layer, &first, view)
+		StyleLayer(layer, nil, &first, view)
 		return
 	}
 	if shown == nil || vs.Transition.Duration > 0 || !onlyMoves(shown, vs) {
-		StyleLayer(layer, vs, view)
+		StyleLayer(layer, shown, vs, view)
 		return
 	}
 	if vs.Opacity != shown.Opacity {
@@ -216,21 +222,28 @@ type transform3D struct {
 	M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44 float64
 }
 
-// SetTransform sets a layer's transform to t around its transform
-// origin: its center, moved by its style's Origin. It works from wherever
-// the anchor point is, since AppKit keeps its layers' at their corner.
-func SetTransform(layer objc.ID, t driver.Transform) {
+// layerTransform is layer's transform for t around the transform origin
+// offset from its center, and that origin's distance from the anchor
+// point. It works from wherever the anchor point is, since AppKit keeps
+// its layers' at their corner.
+func layerTransform(layer objc.ID, t driver.Transform, offset driver.Point, z float64) (transform3D, float64) {
 	size := objc.Send[CGRect](layer, selBounds).Size
 	anchor := objc.Send[CGPoint](layer, sel("anchorPoint"))
 	ax, ay := anchor.X*size.Width, anchor.Y*size.Height
-	origin := driver.Point{X: driver.Points(size.Width / 2), Y: driver.Points(size.Height / 2)}
+	origin := driver.Point{X: driver.Points(size.Width/2) + offset.X, Y: driver.Points(size.Height/2) + offset.Y}
+	m := driver.Translate3D(-ax, -ay, z).Mul(t.Matrix(origin)).Mul(driver.Translate3D(ax, ay, -z))
+	return toCA(m), math.Hypot(float64(origin.X)-ax, float64(origin.Y)-ay)
+}
+
+// SetTransform sets a layer's transform to t around its transform
+// origin: its center, moved by its style's Origin.
+func SetTransform(layer objc.ID, t driver.Transform) {
+	var offset driver.Point
 	var z float64
 	if d := decors[layer]; d != nil {
-		origin.X += d.vs.Origin.X
-		origin.Y += d.vs.Origin.Y
-		z = float64(d.vs.OriginZ)
+		offset, z = d.vs.Origin, float64(d.vs.OriginZ)
 	}
-	m := toCA(driver.Translate3D(-ax, -ay, z).Mul(t.Matrix(origin)).Mul(driver.Translate3D(ax, ay, -z)))
+	m, _ := layerTransform(layer, t, offset, z)
 	if m == (transform3D{M11: 1, M22: 1, M33: 1, M44: 1}) {
 		delete(held, layer)
 	} else {
@@ -239,6 +252,62 @@ func SetTransform(layer objc.ID, t driver.Transform) {
 	setting = true
 	layer.Send(sel("setTransform:"), m)
 	setting = false
+}
+
+// move is a transform transition on a layer, from one style to another
+// over times of the media clock.
+type move struct {
+	from, to        driver.ViewStyle
+	begin, duration float64
+	curve           driver.Curve
+}
+
+// moves are the layers' latest transform transitions.
+var moves = map[objc.ID]*move{}
+
+// moveAnimation returns the animation that moves layer's transform from
+// what it shows to vs's and remembers it, or 0 if it cannot tell: the two
+// differ in matrices of the app's, or nothing was drawn yet. It steps
+// through the styles between, as Windows and Linux do. Between two
+// matrices Core Animation moves the anchor point in a straight line, so
+// a turn around any other point, as all of AppKit's layers make, would
+// swing off that point on the way.
+func moveAnimation(layer objc.ID, was, vs *driver.ViewStyle) objc.ID {
+	if was == nil {
+		delete(moves, layer)
+		return 0
+	}
+	from, now := *was, caCurrentMediaTime()
+	if m := moves[layer]; m != nil && now < m.begin+m.duration {
+		from = driver.MixStyles(m.from, m.to, m.curve.At((now-m.begin)/m.duration), driver.TransitionTransform)
+	}
+	if from.Transform.Then != vs.Transform.Then {
+		delete(moves, layer)
+		return 0
+	}
+	tr := vs.Transition
+	moves[layer] = &move{from: from, to: *vs, begin: now + tr.Delay.Seconds(), duration: tr.Duration.Seconds(), curve: tr.Easing}
+	values := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	_, radius := layerTransform(layer, vs.Transform, vs.Origin, float64(vs.OriginZ))
+	n := max(int(math.Ceil(turned(from.Transform, vs.Transform)/turnStep(radius))), 1)
+	for i := range n + 1 {
+		s := driver.MixStyles(from, *vs, float64(i)/float64(n), driver.TransitionTransform)
+		m, _ := layerTransform(layer, s.Transform, s.Origin, float64(vs.OriginZ))
+		values.Send(selAddObject, objc.ID(objc.GetClass("NSValue")).Send(sel("valueWithCATransform3D:"), m))
+	}
+	anim := objc.ID(objc.GetClass("CAKeyframeAnimation")).Send(selAnimationWithPath, NSString("transform"))
+	anim.Send(sel("setValues:"), values)
+	return anim
+}
+
+// turned returns the degrees t turns or slants through on the way to u.
+func turned(t, u driver.Transform) float64 {
+	var sum float64
+	for _, d := range []float32{u.Rotate - t.Rotate, u.RotateX - t.RotateX, u.RotateY - t.RotateY, u.RotateZ - t.RotateZ,
+		u.SkewX - t.SkewX, u.SkewY - t.SkewY} {
+		sum += math.Abs(float64(d))
+	}
+	return sum
 }
 
 var (
@@ -271,7 +340,10 @@ func HeldTransformMethods() []objc.MethodDef {
 
 // ForgetTransform forgets the transform SetTransform gave a layer that is
 // going away.
-func ForgetTransform(layer objc.ID) { delete(held, layer) }
+func ForgetTransform(layer objc.ID) {
+	delete(held, layer)
+	delete(moves, layer)
+}
 
 // SetSublayerTranslation moves layer's sublayers by (dx, dy) points, as a
 // scroll view shows an offset its bounds do not have yet.

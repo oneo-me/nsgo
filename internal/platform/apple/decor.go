@@ -201,7 +201,7 @@ func applyDecor(layer objc.ID, vs *driver.ViewStyle) {
 	if d == nil {
 		plain := !vs.Rounded() && vs.BorderStyle == 0 && vs.Outline == (driver.Outline{}) && e == nil &&
 			vs.Animation == (driver.KeyframeAnimation{}) && vs.ChildPerspective == 0 && !vs.BackfaceHidden &&
-			vs.BlendMode == 0
+			vs.BlendMode == 0 && vs.Origin == (driver.Point{}) && vs.OriginZ == 0
 		if plain {
 			return
 		}
@@ -928,17 +928,22 @@ func (d *decor) setKeyframes(layer objc.ID, a driver.KeyframeAnimation) {
 	}
 }
 
-// splitTurns adds steps to linear steps that turn too far for Core
-// Animation, which tweens matrices: a whole turn leaves one unchanged, so
-// a step turns at most a quarter turn. It also tweens their translation
-// in a straight line, so a center radius points away from the anchor
-// (AppKit keeps it at the corner) cuts across the arc it turns along:
-// steps stay short enough to keep it within a tenth of a point.
-func splitTurns(frames []driver.Keyframe, radius float64) []driver.Keyframe {
-	step := 90.0
+// turnStep is the most degrees a step between two matrices may turn for
+// Core Animation, which tweens matrices: a whole turn leaves one
+// unchanged, so a step turns at most a quarter turn. It also tweens their
+// translation in a straight line, so a center radius points away from
+// the anchor (AppKit keeps it at the corner) cuts across the arc it turns
+// along: steps stay short enough to keep it within a tenth of a point.
+func turnStep(radius float64) float64 {
 	if radius > 0.1 {
-		step = min(step, 2*math.Acos(1-0.1/radius)*180/math.Pi)
+		return min(90, 2*math.Acos(1-0.1/radius)*180/math.Pi)
 	}
+	return 90
+}
+
+// splitTurns adds steps to linear steps that turn further than turnStep.
+func splitTurns(frames []driver.Keyframe, radius float64) []driver.Keyframe {
+	step := turnStep(radius)
 	var out []driver.Keyframe
 	for i, k := range frames {
 		if i > 0 {
