@@ -157,6 +157,7 @@ type Translation struct {
 	Language                                     func() string
 	LanguageSystem                               func() string
 	Settings                                     func() string
+	SettingsMenuItem                             func() string
 	SettingsSearch                               func() string
 	SettingsSearchPlaceholder                    func() string
 	SettingsResults                              func() string
@@ -1986,8 +1987,6 @@ type Translation struct {
 	CollapsingRecent                             func() string
 	CollapsingThatSAll160Entries                 func() string
 	CollapsingAFooterAfterTheList                func() string
-	UiLightAppearance                            func() string
-	UiDarkAppearance                             func() string
 	UiBack                                       func() string
 	UiOnly                                       func() string
 	ViewerImage                                  func() string
@@ -2171,6 +2170,7 @@ const (
 	textLanguage
 	textLanguageSystem
 	textSettings
+	textSettingsMenuItem
 	textSettingsSearch
 	textSettingsSearchPlaceholder
 	textSettingsResults
@@ -3906,8 +3906,6 @@ const (
 	textCollapsingRecent
 	textCollapsingThatSAll160Entries
 	textCollapsingAFooterAfterTheList
-	textUiLightAppearance
-	textUiDarkAppearance
 	textUiBack
 	textUiOnly
 	textViewerImage
@@ -4079,6 +4077,7 @@ var texts = map[string]*[numTexts]string{
 		"Language",
 		"Follow system",
 		"Settings",
+		"Settings…",
 		"Search settings",
 		"Search",
 		"Results",
@@ -5814,8 +5813,6 @@ var texts = map[string]*[numTexts]string{
 		"Recent",
 		"That's all 160 entries",
 		"A footer after the list: the list keeps only the rows near the screen, at its full length in the page.",
-		"Light appearance",
-		"Dark appearance",
 		"Back",
 		"UI only",
 		"Image",
@@ -5982,6 +5979,7 @@ var texts = map[string]*[numTexts]string{
 		"语言",
 		"跟随系统",
 		"设置",
+		"设置…",
 		"搜索设置",
 		"搜索",
 		"搜索结果",
@@ -7717,8 +7715,6 @@ var texts = map[string]*[numTexts]string{
 		"最近",
 		"这就是全部 160 条记录",
 		"列表之后的页脚：列表只保留靠近屏幕的行，在页面中占据完整长度。",
-		"浅色外观",
-		"深色外观",
 		"返回",
 		"仅 UI",
 		"图片",
@@ -7932,6 +7928,9 @@ func Supply(lang string, t Translation) {
 	}
 	if t.Settings != nil {
 		st[textSettings] = t.Settings()
+	}
+	if t.SettingsMenuItem != nil {
+		st[textSettingsMenuItem] = t.SettingsMenuItem()
 	}
 	if t.SettingsSearch != nil {
 		st[textSettingsSearch] = t.SettingsSearch()
@@ -13420,12 +13419,6 @@ func Supply(lang string, t Translation) {
 	if t.CollapsingAFooterAfterTheList != nil {
 		st[textCollapsingAFooterAfterTheList] = t.CollapsingAFooterAfterTheList()
 	}
-	if t.UiLightAppearance != nil {
-		st[textUiLightAppearance] = t.UiLightAppearance()
-	}
-	if t.UiDarkAppearance != nil {
-		st[textUiDarkAppearance] = t.UiDarkAppearance()
-	}
 	if t.UiBack != nil {
 		st[textUiBack] = t.UiBack()
 	}
@@ -14018,6 +14011,14 @@ func Settings(cx *core.Scope) string { return For(cx).Settings() }
 // Settings says "Settings"
 // in the language of msgs.
 func (msgs Messages) Settings() string { return msgs.text(textSettings) }
+
+// SettingsMenuItem says "Settings…"
+// in the language the app shows under cx.
+func SettingsMenuItem(cx *core.Scope) string { return For(cx).SettingsMenuItem() }
+
+// SettingsMenuItem says "Settings…"
+// in the language of msgs.
+func (msgs Messages) SettingsMenuItem() string { return msgs.text(textSettingsMenuItem) }
 
 // SettingsSearch says "Search settings"
 // in the language the app shows under cx.
@@ -31209,22 +31210,6 @@ func CollapsingAFooterAfterTheList(cx *core.Scope) string {
 func (msgs Messages) CollapsingAFooterAfterTheList() string {
 	return msgs.text(textCollapsingAFooterAfterTheList)
 }
-
-// UiLightAppearance says "Light appearance"
-// in the language the app shows under cx.
-func UiLightAppearance(cx *core.Scope) string { return For(cx).UiLightAppearance() }
-
-// UiLightAppearance says "Light appearance"
-// in the language of msgs.
-func (msgs Messages) UiLightAppearance() string { return msgs.text(textUiLightAppearance) }
-
-// UiDarkAppearance says "Dark appearance"
-// in the language the app shows under cx.
-func UiDarkAppearance(cx *core.Scope) string { return For(cx).UiDarkAppearance() }
-
-// UiDarkAppearance says "Dark appearance"
-// in the language of msgs.
-func (msgs Messages) UiDarkAppearance() string { return msgs.text(textUiDarkAppearance) }
 
 // UiBack says "Back"
 // in the language the app shows under cx.

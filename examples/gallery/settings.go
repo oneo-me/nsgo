@@ -8,11 +8,25 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
+// settingsKey opens the settings.
+const settingsKey = "mod+,"
+
 // settingsButton opens the gallery's settings, at the start of the
 // sidebar's footer.
 func (g *gallery) settingsButton(cx *core.Scope) core.Node {
 	return ui.IconButton{Icon: lucide.Settings, Label: locales.Settings(cx), Size: 30, TestID: "settings",
-		OnPress: func() { g.settingsOpen.Set(true) }}
+		OnPress: g.showSettings}
+}
+
+// showSettings opens the settings: the wide layout's dialog, or the narrow
+// layout's tab.
+func (g *gallery) showSettings() {
+	if g.desktop() {
+		g.settingsOpen.Set(true)
+		return
+	}
+	g.tab.Set(settingsTab())
+	g.nav.SetRoutes(route{})
 }
 
 // settingsCategories are the gallery's settings.
@@ -54,8 +68,8 @@ func (g *gallery) settingsPage(cx *core.Scope) core.Node {
 		HideHeading: true, HideSearch: true, HideSidebar: true, EmptyText: locales.SettingsEmpty(cx)}
 }
 
-// themeKey keeps the appearance chosen in the settings or with the theme
-// toggle; without it the gallery follows the system's.
+// themeKey keeps the appearance chosen in the settings or the sidebar's
+// theme menu; without it the gallery follows the system's.
 const themeKey = "theme"
 
 // rememberAppearance shows the appearance chosen last time.

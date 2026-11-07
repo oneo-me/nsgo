@@ -5,6 +5,7 @@ languageName: 简体中文
 language: 语言
 languageSystem: 跟随系统
 settings: 设置
+settingsMenuItem: 设置…
 settingsSearch: 搜索设置
 settingsSearchPlaceholder: 搜索
 settingsResults: 搜索结果
@@ -1834,8 +1835,6 @@ collapsing160EntriesByWeek: "160 条记录，按周排列"
 collapsingRecent: "最近"
 collapsingThatSAll160Entries: "这就是全部 160 条记录"
 collapsingAFooterAfterTheList: "列表之后的页脚：列表只保留靠近屏幕的行，在页面中占据完整长度。"
-uiLightAppearance: "浅色外观"
-uiDarkAppearance: "深色外观"
 uiBack: "返回"
 uiOnly: "仅 UI"
 viewerImage: "图片"

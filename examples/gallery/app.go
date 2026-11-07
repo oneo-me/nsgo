@@ -383,6 +383,11 @@ func Root(cx *core.Scope) core.Node {
 	rememberLanguage(cx, g)
 	rememberAppearance(cx)
 	cx.Effect(func() { desktop.SetApplicationMenu(cx, g.menu(locales.For(cx))) })
+	// The application menu's Settings… takes the key where there is a
+	// menu bar.
+	if !hasWindow {
+		cx.OnKey(settingsKey, g.showSettings)
+	}
 
 	return core.Dynamic(func(cx *core.Scope) core.Node {
 		wide := desktopLayout.Get()
@@ -632,7 +637,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		cx.OnKey("mod+b", g.toggleSidebar)
 	}
 	tr := locales.For(cx)
-	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: append([]core.Node{g.searchButton(cx, tr)}, g.sidebar(tr)...), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeToggle(cx)},
+	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: append([]core.Node{g.searchButton(cx, tr)}, g.sidebar(tr)...), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeMenu(cx)},
 		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 212, MaxWidth: 360,
 		ResizeLabel: tr.AppResizeSidebar(),
@@ -735,6 +740,7 @@ func (g *gallery) menu(tr locales.Messages) []desktop.MenuItem {
 	return []desktop.MenuItem{
 		{Label: tr.AppGallery(), Items: []desktop.MenuItem{
 			{Role: desktop.MenuAbout}, {Separator: true},
+			{Label: tr.SettingsMenuItem(), Shortcut: settingsKey, OnSelect: choose(tr.SettingsMenuItem(), g.showSettings)}, {Separator: true},
 			{Role: desktop.MenuHide}, {Role: desktop.MenuHideOthers}, {Role: desktop.MenuShowAll}, {Separator: true},
 			{Role: desktop.MenuQuit},
 		}},

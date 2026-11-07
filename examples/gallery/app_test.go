@@ -14,6 +14,7 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
+	"github.com/oneo-me/nsgo/i18n"
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 
@@ -195,6 +196,28 @@ func TestNarrowDesktop(t *testing.T) {
 	app.Find("role:tablist Sections")
 }
 
+// TestSettingsMenuItem opens the settings from the application menu, as
+// the dialog in the wide layout and the tab in the narrow one.
+func TestSettingsMenuItem(t *testing.T) {
+	app := startDesktop(t)
+	app.ChooseMenu("Gallery", "Settings…")
+	app.Find("id:settings-dialog")
+	app.Press("id:settings-close")
+	app.Advance(200 * time.Millisecond)
+	app.WaitForGone("id:settings-dialog", time.Second)
+	app.Resize(400, 800)
+	app.ChooseMenu("Gallery", "Settings…")
+	app.Find("id:settings-page")
+}
+
+// TestSettingsKey opens the settings with their key where no menu bar
+// takes it.
+func TestSettingsKey(t *testing.T) {
+	app := startPhone(t)
+	app.Key(settingsKey)
+	app.Find("id:settings-page")
+}
+
 // TestSettingsFollowTheLayout turns the dialog into the tab and back.
 func TestSettingsFollowTheLayout(t *testing.T) {
 	app := startDesktop(t)
@@ -210,9 +233,26 @@ func TestSettingsFollowTheLayout(t *testing.T) {
 	app.Find("id:settings-dialog")
 }
 
+// TestThemeMenu chooses an appearance from the sidebar and keeps it, then
+// follows the system again.
+func TestThemeMenu(t *testing.T) {
+	app := startDesktop(t)
+	app.Press("id:theme-menu")
+	app.Press("role:menuitem Dark")
+	if got, _ := app.Storage().GetItem(themeKey); got != "dark" {
+		t.Fatalf("kept %q, want dark", got)
+	}
+	app.Press("id:theme-menu")
+	app.Press("role:menuitem System")
+	if _, ok := app.Storage().GetItem(themeKey); ok {
+		t.Error("following the system keeps a theme")
+	}
+}
+
 func TestThemeRemembered(t *testing.T) {
 	app := startDesktop(t, nsgotest.Storage(map[string]string{themeKey: "dark"}))
-	app.Find("role:button Light appearance")
+	app.Press("id:settings")
+	app.Find("id:theme >> text:Dark")
 }
 
 // TestEveryDemoBuilds opens each demo in both layouts and in the dark.
@@ -1035,7 +1075,13 @@ func TestAppearanceRestylesInPlace(t *testing.T) {
 			open(app, d.name)
 			app.FastForward(2 * time.Second)
 			before := viewIDs(rootOf(app.Find(shown)))
-			app.Press("role:button Dark appearance")
+			app.Press("id:theme-menu")
+			app.Press("role:menuitem Dark")
+			// Its status bar's tabs follow the appearance: they end their
+			// slide.
+			if d.name == "System" {
+				app.Advance(200 * time.Millisecond)
+			}
 			got := snapshot(app, shown, drawings)
 			checkKept(t, before, got)
 			// The gallery keeps its state in a global: the fresh build
@@ -1334,19 +1380,18 @@ func TestSidebarKeys(t *testing.T) {
 	}
 }
 
-// TestPseudoLocales chooses en-XA, which says the gallery's and base's
-// messages accented and bracketed, then ar-XB, which lays it out right to
-// left.
+// TestPseudoLocales starts in en-XA, which says the gallery's and base's
+// messages accented and bracketed, then in ar-XB, which lays it out right
+// to left.
 func TestPseudoLocales(t *testing.T) {
-	app := startDesktop(t)
-	ltr := app.Find("id:settings").Frame.Origin.X
+	ltr := startDesktop(t).Find("id:settings").Frame.Origin.X
+	env := desktopEnv
+	env.Locale = i18n.PseudoAccents
+	app := startDesktop(t, nsgotest.Environment(env))
 	app.Press("id:settings")
-	app.Press("id:language")
-	app.Press("text:[Éńğĺíśĥ ~~~]")
 	app.Find("text:[Śéťťíńğś ~~~]")
-	app.Press("id:language")
-	app.Press("text:\u200f\u202eEnglish\u202c\u200f")
-	if got := app.Find("id:settings").Frame.Origin.X; got <= ltr {
+	env.Locale = i18n.PseudoBidi
+	if got := startDesktop(t, nsgotest.Environment(env)).Find("id:settings").Frame.Origin.X; got <= ltr {
 		t.Errorf("in ar-XB the settings button is at %v, %v left to right", got, ltr)
 	}
 }

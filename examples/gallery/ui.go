@@ -49,39 +49,33 @@ func clampInt(v, lo, hi int) int {
 
 func clamp(v, lo, hi float64) float64 { return math.Min(math.Max(v, lo), hi) }
 
-// themeToggle switches the app between light and dark, whatever the
-// system shows: an icon button, as a toolbar's.
-func themeToggle(cx *core.Scope) core.Node {
-	name, label := toggleFace(cx)
-	return ui.IconButton{IconFunc: name, LabelFunc: label, Size: 30, OnPress: func() { flipAppearance(cx) }}
-}
-
-// toggleFace is a theme toggle's icon and label: the appearance it
-// switches to.
-func toggleFace(cx *core.Scope) (name func() *core.SVG, label func() string) {
-	tr := locales.For(cx)
-	name = func() *core.SVG {
-		if cx.Dark() {
+// themeMenu chooses the appearance from the sidebar: the system's, light
+// or dark. Its icon shows the choice.
+func themeMenu(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	item := func(a core.Appearance, text string) core.Node {
+		return ui.MenuItem{Text: text, Checked: func() bool { return cx.Env().Appearance() == a }, OnSelect: func() { setAppearance(cx, a) }}
+	}
+	icon := func() *core.SVG {
+		switch cx.Env().Appearance() {
+		case core.AppearanceLight:
 			return lucide.Sun()
+		case core.AppearanceDark:
+			return lucide.Moon()
 		}
-		return lucide.Moon()
+		return lucide.Monitor()
 	}
-	label = func() string {
-		if cx.Dark() {
-			return tr.UiLightAppearance()
-		}
-		return tr.UiDarkAppearance()
-	}
-	return name, label
-}
-
-// flipAppearance forces the appearance other than the one shown.
-func flipAppearance(cx *core.Scope) {
-	next := core.AppearanceDark
-	if cx.Dark() {
-		next = core.AppearanceLight
-	}
-	setAppearance(cx, next)
+	return ui.Menu{Placement: core.PlaceTop, Align: core.AlignEnd, Label: locales.Theme(cx), TestID: "theme-menu",
+		Face: core.View{StyleFunc: func() core.Style {
+			return core.Style{Width: core.Pt(30), Height: core.Pt(30), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 8,
+				GroupStyle: &core.GroupStyle{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Expanded: &core.Style{Background: colors.Hover()}}}
+		}, Children: []core.Node{ui.IconOf(icon, 18, colors.Muted)}},
+		Children: []core.Node{
+			item(core.AppearanceSystem, locales.ThemeSystem(cx)),
+			ui.MenuSeparator{},
+			item(core.AppearanceLight, locales.ThemeLight(cx)),
+			item(core.AppearanceDark, locales.ThemeDark(cx)),
+		}}
 }
 
 //go:embed assets/logo-dark.svg

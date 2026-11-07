@@ -19,6 +19,7 @@ languageSystem:
 settings:
   message: Settings
   description: The settings button's name and the settings' title.
+settingsMenuItem: Settings…
 settingsSearch: Search settings
 settingsSearchPlaceholder: Search
 settingsResults: Results
@@ -1871,8 +1872,6 @@ collapsing160EntriesByWeek: "160 entries, by week"
 collapsingRecent: "Recent"
 collapsingThatSAll160Entries: "That's all 160 entries"
 collapsingAFooterAfterTheList: "A footer after the list: the list keeps only the rows near the screen, at its full length in the page."
-uiLightAppearance: "Light appearance"
-uiDarkAppearance: "Dark appearance"
 uiBack: "Back"
 uiOnly: "UI only"
 viewerImage: "Image"

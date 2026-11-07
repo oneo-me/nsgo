@@ -77,7 +77,7 @@ Dates and times come from CLDR 48's data in `internal/cldr`: `go generate ./inte
 
 ### Pseudo locales
 
-`en-XA` and `ar-XB` test layouts before any translation exists, as Android's do. Every catalog matches them (`i18n.IsPseudo`), and says its source's messages transformed: `en-XA` accents their letters, lengthens them by a third and brackets them, `[Śóŕť ƀý Name ~~~]`, so text that stays plain is not in a catalog, cut text has too little room, and several brackets in a sentence are pieces a translation cannot reorder; `ar-XB` shows each word right to left and lays the app out so, so what does not mirror shows. What arguments write stays as written: the generated code marks it in the source's message (`i18n.Arg`) and `i18n.Pseudo` transforms the rest. `nsgo dev -lang en-XA` runs an app in one, as any other locale, and the gallery's language setting lists both.
+`en-XA` and `ar-XB` test layouts before any translation exists, as Android's do. Every catalog matches them (`i18n.IsPseudo`), and says its source's messages transformed: `en-XA` accents their letters, lengthens them by a third and brackets them, `[Śóŕť ƀý Name ~~~]`, so text that stays plain is not in a catalog, cut text has too little room, and several brackets in a sentence are pieces a translation cannot reorder; `ar-XB` shows each word right to left and lays the app out so, so what does not mirror shows. What arguments write stays as written: the generated code marks it in the source's message (`i18n.Arg`) and `i18n.Pseudo` transforms the rest. `nsgo dev -lang en-XA` runs an app in one, as any other locale.
 
 ## In TSX
 

@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/i18n"
 	"github.com/oneo-me/nsgo/icons/lucide"
 	"github.com/oneo-me/nsgo/ui"
 )
@@ -40,10 +39,9 @@ func languageName(cx *core.Scope, lang string) string {
 	return locales.In(lang).LanguageName()
 }
 
-// languageSelect chooses the language the gallery shows: the system's,
-// one of its catalogs', each named in itself, or a pseudo locale. Its button shows the
-// choice; base's components follow it, and ar-XB lays the gallery out
-// right to left.
+// languageSelect chooses the language the gallery shows: the system's or
+// one of its catalogs', each named in itself. Its button shows the choice;
+// base's components follow it.
 func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	item := func(lang string) core.Node {
@@ -53,9 +51,6 @@ func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 	for _, lang := range locales.Catalog.Languages() {
 		items = append(items, item(lang))
 	}
-	// The pseudo locales, which show untranslated, cut and unmirrored
-	// text.
-	items = append(items, ui.MenuSeparator{}, item(i18n.PseudoAccents), item(i18n.PseudoBidi))
 	name := ui.Textf(func() string { return languageName(cx, g.language.Get()) }, 13, ui.Medium, colors.Text)
 	name.MaxLines = 1
 	return ui.Menu{Align: core.AlignEnd, Label: locales.Language(cx), TestID: "language",
