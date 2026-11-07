@@ -54,6 +54,16 @@ type Translation struct {
 	ColorSaturationBrightness func() string
 	ColorHex                  func() string
 	ColorEyeDropper           func() string
+	ColorFormat               func() string
+	ColorCopy                 func() string
+	ColorRed                  func() string
+	ColorGreen                func() string
+	ColorBlue                 func() string
+	ColorHueDegrees           func() string
+	ColorSaturationPercent    func() string
+	ColorBrightnessPercent    func() string
+	ColorLightnessPercent     func() string
+	ColorOpacityPercent       func() string
 	CalendarPrevious          func() string
 	CalendarNext              func() string
 	ListClear                 func() string
@@ -82,6 +92,16 @@ const (
 	textColorSaturationBrightness
 	textColorHex
 	textColorEyeDropper
+	textColorFormat
+	textColorCopy
+	textColorRed
+	textColorGreen
+	textColorBlue
+	textColorHueDegrees
+	textColorSaturationPercent
+	textColorBrightnessPercent
+	textColorLightnessPercent
+	textColorOpacityPercent
 	textCalendarPrevious
 	textCalendarNext
 	textListClear
@@ -108,6 +128,16 @@ var texts = map[string]*[numTexts]string{
 		"Saturation and brightness",
 		"Hex color",
 		"Pick a color from the screen",
+		"Color format",
+		"Copy color",
+		"Red",
+		"Green",
+		"Blue",
+		"Hue degrees",
+		"Saturation percent",
+		"Brightness percent",
+		"Lightness percent",
+		"Opacity percent",
 		"Previous month",
 		"Next month",
 		"Clear",
@@ -129,6 +159,16 @@ var texts = map[string]*[numTexts]string{
 		"饱和度和亮度",
 		"十六进制颜色",
 		"从屏幕取色",
+		"颜色格式",
+		"复制颜色",
+		"红色",
+		"绿色",
+		"蓝色",
+		"色相角度",
+		"饱和度百分比",
+		"亮度百分比",
+		"明度百分比",
+		"不透明度百分比",
 		"上个月",
 		"下个月",
 		"清除",
@@ -205,6 +245,36 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ColorEyeDropper != nil {
 		st[textColorEyeDropper] = t.ColorEyeDropper()
+	}
+	if t.ColorFormat != nil {
+		st[textColorFormat] = t.ColorFormat()
+	}
+	if t.ColorCopy != nil {
+		st[textColorCopy] = t.ColorCopy()
+	}
+	if t.ColorRed != nil {
+		st[textColorRed] = t.ColorRed()
+	}
+	if t.ColorGreen != nil {
+		st[textColorGreen] = t.ColorGreen()
+	}
+	if t.ColorBlue != nil {
+		st[textColorBlue] = t.ColorBlue()
+	}
+	if t.ColorHueDegrees != nil {
+		st[textColorHueDegrees] = t.ColorHueDegrees()
+	}
+	if t.ColorSaturationPercent != nil {
+		st[textColorSaturationPercent] = t.ColorSaturationPercent()
+	}
+	if t.ColorBrightnessPercent != nil {
+		st[textColorBrightnessPercent] = t.ColorBrightnessPercent()
+	}
+	if t.ColorLightnessPercent != nil {
+		st[textColorLightnessPercent] = t.ColorLightnessPercent()
+	}
+	if t.ColorOpacityPercent != nil {
+		st[textColorOpacityPercent] = t.ColorOpacityPercent()
 	}
 	if t.CalendarPrevious != nil {
 		st[textCalendarPrevious] = t.CalendarPrevious()
@@ -401,6 +471,106 @@ func ColorEyeDropper(cx *core.Scope) string { return For(cx).ColorEyeDropper() }
 // ColorEyeDropper says "Pick a color from the screen"
 // in the language of msgs.
 func (msgs Messages) ColorEyeDropper() string { return msgs.text(textColorEyeDropper) }
+
+// ColorFormat says "Color format"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorFormat(cx *core.Scope) string { return For(cx).ColorFormat() }
+
+// ColorFormat says "Color format"
+// in the language of msgs.
+func (msgs Messages) ColorFormat() string { return msgs.text(textColorFormat) }
+
+// ColorCopy says "Copy color"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorCopy(cx *core.Scope) string { return For(cx).ColorCopy() }
+
+// ColorCopy says "Copy color"
+// in the language of msgs.
+func (msgs Messages) ColorCopy() string { return msgs.text(textColorCopy) }
+
+// ColorRed says "Red"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorRed(cx *core.Scope) string { return For(cx).ColorRed() }
+
+// ColorRed says "Red"
+// in the language of msgs.
+func (msgs Messages) ColorRed() string { return msgs.text(textColorRed) }
+
+// ColorGreen says "Green"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorGreen(cx *core.Scope) string { return For(cx).ColorGreen() }
+
+// ColorGreen says "Green"
+// in the language of msgs.
+func (msgs Messages) ColorGreen() string { return msgs.text(textColorGreen) }
+
+// ColorBlue says "Blue"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorBlue(cx *core.Scope) string { return For(cx).ColorBlue() }
+
+// ColorBlue says "Blue"
+// in the language of msgs.
+func (msgs Messages) ColorBlue() string { return msgs.text(textColorBlue) }
+
+// ColorHueDegrees says "Hue degrees"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorHueDegrees(cx *core.Scope) string { return For(cx).ColorHueDegrees() }
+
+// ColorHueDegrees says "Hue degrees"
+// in the language of msgs.
+func (msgs Messages) ColorHueDegrees() string { return msgs.text(textColorHueDegrees) }
+
+// ColorSaturationPercent says "Saturation percent"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorSaturationPercent(cx *core.Scope) string { return For(cx).ColorSaturationPercent() }
+
+// ColorSaturationPercent says "Saturation percent"
+// in the language of msgs.
+func (msgs Messages) ColorSaturationPercent() string { return msgs.text(textColorSaturationPercent) }
+
+// ColorBrightnessPercent says "Brightness percent"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorBrightnessPercent(cx *core.Scope) string { return For(cx).ColorBrightnessPercent() }
+
+// ColorBrightnessPercent says "Brightness percent"
+// in the language of msgs.
+func (msgs Messages) ColorBrightnessPercent() string { return msgs.text(textColorBrightnessPercent) }
+
+// ColorLightnessPercent says "Lightness percent"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorLightnessPercent(cx *core.Scope) string { return For(cx).ColorLightnessPercent() }
+
+// ColorLightnessPercent says "Lightness percent"
+// in the language of msgs.
+func (msgs Messages) ColorLightnessPercent() string { return msgs.text(textColorLightnessPercent) }
+
+// ColorOpacityPercent says "Opacity percent"
+// in the language the app shows under cx.
+//
+// What a styled picker says for this part.
+func ColorOpacityPercent(cx *core.Scope) string { return For(cx).ColorOpacityPercent() }
+
+// ColorOpacityPercent says "Opacity percent"
+// in the language of msgs.
+func (msgs Messages) ColorOpacityPercent() string { return msgs.text(textColorOpacityPercent) }
 
 // CalendarPrevious says "Previous month"
 // in the language the app shows under cx.

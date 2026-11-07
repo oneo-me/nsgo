@@ -43,8 +43,13 @@ type NumberInput struct {
 	// OnCommit leaves the field's text alone as the user types and takes
 	// it as it is left or Return pressed, for a Format of the app's.
 	OnCommit bool
-	// Snap rounds what is committed to Step, from Min.
-	Snap bool
+	// Live, with OnCommit, also reports what is typed as soon as it reads
+	// as a number in range, leaving the text alone until the field is left.
+	Live bool
+	// Snap rounds what is committed to Precision, or Step while that is 0,
+	// from Min.
+	Snap      bool
+	Precision float64
 	// IncrementLabel and DecrementLabel name the buttons for assistive
 	// technology, which otherwise steps the field itself.
 	IncrementLabel, DecrementLabel string
@@ -59,6 +64,9 @@ type NumberInput struct {
 	// OnChange receives the number the field reads as, nil while it reads
 	// as none, as the user types and steps.
 	OnChange func(value *float64)
+	// OnChangeEnd follows the OnChange calls of one change: a step, a
+	// scrub's release, or the field left or submitted after typing.
+	OnChangeEnd func()
 	// OnSubmit receives its value on Return, held to Min and Max.
 	OnSubmit func(value *float64)
 	// OnFocus and OnBlur follow the field.
@@ -113,6 +121,8 @@ type numberCtl struct {
 	// value follows it.
 	pendingNumber *float64
 	pendingText   string
+	// unsettled is a change reported whose end is not.
+	unsettled bool
 }
 
 func (c *numberCtl) bounds() (lo, hi *float64) {
@@ -172,7 +182,7 @@ func (c *numberCtl) textOf(n *float64) string {
 func (c *numberCtl) fit(v float64) float64 {
 	lo, hi := c.bounds()
 	if c.n.Snap {
-		step, from := c.step(), 0.0
+		step, from := cmp.Or(c.n.Precision, c.step()), 0.0
 		if lo != nil {
 			from = *lo
 		}
@@ -193,9 +203,26 @@ func (c *numberCtl) scrub(from float64, steps float64) {
 		c.text.Set(c.textOf(next))
 		c.held = next
 	}
+	c.unsettled = true
 	if c.n.OnChange != nil {
 		c.n.OnChange(next)
 	}
+}
+
+// settle reports the end of a change reported.
+func (c *numberCtl) settle() {
+	if c.unsettled {
+		c.unsettled = false
+		if c.n.OnChangeEnd != nil {
+			c.n.OnChangeEnd()
+		}
+	}
+}
+
+// inRange reports whether v is within the range.
+func (c *numberCtl) inRange(v float64) bool {
+	lo, hi := c.bounds()
+	return clampTo(v, lo, hi) == v
 }
 
 func (c *numberCtl) locked() bool { return is(c.n.Disabled) || is(c.n.Readonly) }
@@ -205,6 +232,7 @@ func (c *numberCtl) report(n *float64) {
 		return
 	}
 	c.held = n
+	c.unsettled = true
 	if c.n.OnChange != nil {
 		c.n.OnChange(n)
 	}
@@ -222,6 +250,9 @@ func numberOf(text string) *float64 {
 func (c *numberCtl) edit(typed string) {
 	if c.n.OnCommit {
 		c.text.Set(typed)
+		if n := c.numberOf(typed); c.n.Live && n != nil && core.Untracked(c.cx, func() bool { return c.inRange(*n) }) {
+			c.report(n)
+		}
 		return
 	}
 	normalized := normalizeNumberText(typed)
@@ -265,9 +296,11 @@ func (c *numberCtl) nudge(up bool, steps float64) {
 				c.pendingText = next
 			}
 		}
+		c.unsettled = true
 		if c.n.OnChange != nil {
 			c.n.OnChange(n)
 		}
+		c.settle()
 		return
 	}
 	if c.n.Format != nil {
@@ -275,6 +308,7 @@ func (c *numberCtl) nudge(up bool, steps float64) {
 	}
 	c.text.Set(next)
 	c.report(n)
+	c.settle()
 }
 
 // commit holds the field's number to the range, and shows the app's value;
@@ -298,6 +332,7 @@ func (c *numberCtl) commit() *float64 {
 	} else if typed != nil && *typed != *held {
 		c.text.Set(c.textOf(held))
 	}
+	c.settle()
 	return held
 }
 
@@ -456,6 +491,9 @@ func (n NumberInput) Render(cx *core.Scope) core.Node {
 					}
 				case core.GestureChanged, core.GestureEnded:
 					c.scrub(from, math.Round(float64(e.Translation.X)/distance))
+				}
+				if e.Phase != core.GestureBegan && e.Phase != core.GestureChanged {
+					c.settle()
 				}
 			},
 			Children: []core.Node{n.Scrub}}}

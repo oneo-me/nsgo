@@ -23,7 +23,10 @@ type ColorSlider struct {
 	TrackStyle core.Style
 	ThumbClass string
 	ThumbStyle core.Style
-	FillThumb  bool
+	// ThumbStyleFunc follows what it reads; the thumb shows data-dragging
+	// while it moves.
+	ThumbStyleFunc func() core.Style
+	FillThumb      bool
 	// CheckerboardColor shows squares CheckerboardSize wide, 4 when 0.
 	CheckerboardColor core.Color
 	CheckerboardSize  core.Points
@@ -47,6 +50,7 @@ func (c ColorSlider) Render(cx *core.Scope) core.Node {
 	disabled := func() bool { return is(c.Disabled) || picker.isDisabled() }
 	rail := core.NewSignal(cx, core.Bounds{})
 	var drag *float64
+	dragging := core.NewSignal(cx, false)
 	focused := core.NewSignal(cx, false)
 	value := func() float64 { return picker.model.Get().channel(space, channel) }
 	fraction := func() float64 { return spec.fraction(value()) }
@@ -91,6 +95,7 @@ func (c ColorSlider) Render(cx *core.Scope) core.Node {
 	release := func(core.ResponderEvent) {
 		if drag != nil {
 			drag = nil
+			dragging.Set(false)
 			picker.end()
 		}
 	}
@@ -162,7 +167,7 @@ func (c ColorSlider) Render(cx *core.Scope) core.Node {
 		Style:      core.Style{OverflowX: core.Hidden, OverflowY: core.Hidden, PointerEvents: core.PointerEventsNone}.Merge(c.TrackStyle),
 		PartStates: func() core.PartStates { return core.PartStates{Disabled: is(c.Disabled)} },
 		OnLayout:   func(b core.Bounds) { rail.Set(b) },
-		Children:   []core.Node{checkerboard(c.CheckerboardColor, cmpPoints(c.CheckerboardSize, 4)), colors}}
+		Children:   []core.Node{Checkerboard(c.CheckerboardColor, cmpPoints(c.CheckerboardSize, 4)), colors}}
 	thumb := core.View{Class: c.ThumbClass, Style: colorThumb.Merge(c.ThumbStyle),
 		StyleFunc: func() core.Style {
 			r, f := rail.Get(), float32(fraction())
@@ -182,9 +187,13 @@ func (c ColorSlider) Render(cx *core.Scope) core.Node {
 					s.Background = m.color()
 				}
 			}
+			if c.ThumbStyleFunc != nil {
+				s = s.Merge(c.ThumbStyleFunc())
+			}
 			return s
 		},
-		Disabled: disabled, Accessible: true, Role: core.RoleAdjustable, Label: c.Label,
+		PartStates: func() core.PartStates { return dragStates(dragging.Get()) },
+		Disabled:   disabled, Accessible: true, Role: core.RoleAdjustable, Label: c.Label,
 		AccessibilityValue: func() core.AccessibilityValue {
 			now := value()
 			return core.AccessibilityValue{Max: float32(spec.max), Now: float32(now), Text: spec.format(now)}
@@ -204,6 +213,7 @@ func (c ColorSlider) Render(cx *core.Scope) core.Node {
 			OnGrant: func(core.ResponderEvent) {
 				from := core.Untracked(cx, fraction) * length()
 				drag = &from
+				dragging.Set(true)
 			},
 			OnMove: dragTo, OnRelease: release, OnTerminate: release}}
 	return core.View{Class: c.Class, Style: c.Style, Disabled: disabled, NoFocus: true, TestID: c.TestID, OnLayout: c.OnLayout, Tooltip: c.Tooltip,
@@ -211,6 +221,7 @@ func (c ColorSlider) Render(cx *core.Scope) core.Node {
 			OnGrant: func(e core.ResponderEvent) {
 				at := along(e.Position)
 				drag = &at
+				dragging.Set(true)
 				setAt(at)
 			},
 			OnMove: dragTo, OnRelease: release, OnTerminate: release},

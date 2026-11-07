@@ -115,8 +115,8 @@ func init() {
 		Event("OnChange", "value", "formatted"), Event("OnChangeEnd", "value", "formatted"))...)
 	Register("nsgo/base", map[string]core.Node{
 		"ColorArea": base.ColorArea{}, "ColorSlider": base.ColorSlider{}, "ColorField": base.ColorField{},
-	}, colorOptions(Omit("Field"))...)
-	Register("nsgo/base", map[string]core.Node{"ColorSwatch": base.ColorSwatch{}}, colorOptions(Event("OnPress", "color"))...)
+	}, colorOptions(Omit("Field"), Omit("Number"))...)
+	Register("nsgo/base", map[string]core.Node{"ColorSwatch": base.ColorSwatch{}}, colorOptions()...)
 	Register("nsgo/base", map[string]core.Node{"ColorEyeDropper": base.ColorEyeDropper{}}, colorOptions(Event("OnPick", "color"))...)
 	Register("nsgo/base", map[string]core.Node{"Command": base.Command{}}, options(
 		Rename("NoSearch", "searchable"), Rename("NoFilter", "filterable"), Rename("NoSeparator", "separator"),

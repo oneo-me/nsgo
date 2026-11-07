@@ -6,6 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 )
 
@@ -113,5 +114,41 @@ func TestCalendarShortPageKeepsItsRows(t *testing.T) {
 	}
 	if got := app.Find("label:2000").Frame.Size.Height; got < 52 || got > 53 {
 		t.Fatalf("a year of four rows of 210 is %v high", got)
+	}
+}
+
+// A picker's parts do with no look what a styled one does: the channels
+// follow the notation's menu, in plain menus, and the color copies.
+func TestColorPickerPartsAlone(t *testing.T) {
+	var value core.Color
+	app := startDesktop(t, func(*core.Scope) core.Node {
+		return base.ColorPicker{DefaultValue: 0xff000080, OnChange: func(c core.Color, _ string) { value = c }, Children: []core.Node{
+			base.ColorChannels{}, base.ColorField{Channel: base.ChannelAlpha}, base.ColorField{Digits: true, Label: "Hex"}, base.ColorNotationMenu{}, base.ColorCopyMenu{}, base.ColorSwatch{TestID: "swatch", Style: core.Style{Width: core.Pt(20), Height: core.Pt(20)}}}}
+	})
+	app.Clear("label:Green")
+	app.Type("label:Green", "16")
+	if value != core.SetColor(0xff100080) {
+		t.Fatalf("green gave %x as it was typed", value)
+	}
+	if got := app.Find("label:Hex").Text; got != "FF1000" {
+		t.Fatalf("hex reads %q", got)
+	}
+	app.Press("label:Color format")
+	app.Press("label:HSLA")
+	app.Settle()
+	if app.Exists("label:Green") || !app.Exists("label:Lightness percent") {
+		t.Fatal("the menu did not change the channels")
+	}
+	if got := app.Find("label:Opacity percent").Text; got != "50.2%" {
+		t.Fatalf("opacity reads %q", got)
+	}
+	app.Press("label:Copy color")
+	app.Press("label:HEX")
+	app.Settle()
+	if app.Clipboard != "#ff100080" {
+		t.Fatalf("copied %q", app.Clipboard)
+	}
+	if app.Find("swatch").Events.Has(driver.EventPress) {
+		t.Fatal("a swatch takes presses")
 	}
 }

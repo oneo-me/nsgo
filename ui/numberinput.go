@@ -63,7 +63,6 @@ func decimals(step float64) int {
 
 // Render implements core.Node.
 func (n NumberInput) Render(cx *core.Scope) core.Node {
-	colors := ColorsOf(cx)
 	format := n.Format
 	if format == nil {
 		d := decimals(n.step())
@@ -90,29 +89,39 @@ func (n NumberInput) Render(cx *core.Scope) core.Node {
 			if v != nil && n.OnChange != nil {
 				n.OnChange(*v)
 			}
-		},
-		InputStyle: TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(32), Padding: core.Symmetric(0, 10)}),
-		InputStyleFunc: func() core.Style {
-			return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection, CaretColor: colors.Accent()}
-		},
-		Style: core.Style{Direction: core.Row, AlignItems: core.AlignStretch, Height: core.Pt(ButtonHeight), Width: core.Pt(160),
-			CornerRadius: RadiusControl, BorderWidth: 1, Overflow: core.Hidden, Transition: quick},
-		StyleFunc: func() core.Style {
-			return core.Style{BorderColor: colors.FieldBorder(), Background: colors.Field(),
-				Hover:    &core.Style{BorderColor: Mix(colors.FieldBorder(), colors.Text(), 0.25)},
-				Focus:    &core.Style{BorderColor: colors.Accent()},
-				Disabled: &core.Style{Opacity: core.Alpha(0.5), Background: colors.Inset(), BorderColor: colors.Border()}}.Merge(n.Style)
 		}}
 	if n.Max > n.Min {
 		in.Min, in.Max = number(n.Min), number(n.Max)
+	}
+	return n.look(cx, in)
+}
+
+// look is in in Onevra's look: what a base form with a number input of its
+// own takes, a scrub handle it brings included.
+func (n NumberInput) look(cx *core.Scope, in base.NumberInput) base.NumberInput {
+	colors := ColorsOf(cx)
+	in.InputStyle = TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(32), Padding: core.Symmetric(0, 10)})
+	in.InputStyleFunc = func() core.Style {
+		return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Now().Selection, CaretColor: colors.Accent()}
+	}
+	in.Style = core.Style{Direction: core.Row, AlignItems: core.AlignStretch, Height: core.Pt(ButtonHeight), Width: core.Pt(160),
+		CornerRadius: RadiusControl, BorderWidth: 1, Overflow: core.Hidden, Transition: quick}
+	in.StyleFunc = func() core.Style {
+		return core.Style{BorderColor: colors.FieldBorder(), Background: colors.Field(),
+			Hover:    &core.Style{BorderColor: Mix(colors.FieldBorder(), colors.Text(), 0.25)},
+			Focus:    &core.Style{BorderColor: colors.Accent()},
+			Disabled: &core.Style{Opacity: core.Alpha(0.5), Background: colors.Inset(), BorderColor: colors.Border()}}.Merge(n.Style)
 	}
 	if n.Leading != nil || n.LeadingText != "" {
 		in.Scrub = n.handle(cx)
 		if n.TestID != "" {
 			in.ScrubTestID = n.TestID + "-scrub"
 		}
-		in.ScrubStyle = core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, MinWidth: core.Pt(ButtonHeight - 6),
-			Padding: core.Edges{Left: 8}, Cursor: core.CursorColResize}
+	}
+	if in.Scrub != nil {
+		in.ScrubStyle = TypeLabel.Merge(core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, MinWidth: core.Pt(ButtonHeight - 6),
+			Padding: core.Edges{Left: 8}, Cursor: core.CursorColResize})
+		in.ScrubStyleFunc = Colored(colors.Muted)
 		in.InputStyle.Padding.Left = 4
 	}
 	if !n.HideSteppers {

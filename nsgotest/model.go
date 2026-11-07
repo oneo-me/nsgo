@@ -399,6 +399,14 @@ func (a *App) apply(b *driver.MountBatch) {
 				dirs = a.PickDirectories(*it.Directories)
 			}
 			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Data: dirs})
+		case driver.ItemPickScreenColor:
+			ev := driver.Event{Kind: driver.EventFiles, Count: it.Count}
+			if a.PickScreenColor != nil {
+				if c, ok := a.PickScreenColor(); ok {
+					ev.Data, ev.Finished = c, true
+				}
+			}
+			a.post(ev)
 		case driver.ItemSaveFile:
 			a.Saves = append(a.Saves, *it.Save)
 			ev := driver.Event{Kind: driver.EventFiles, Count: it.Count}

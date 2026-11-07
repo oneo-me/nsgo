@@ -151,6 +151,9 @@ type App struct {
 	// the user cancels.
 	Picks      []driver.PickRequest
 	PickImages func(r driver.PickRequest) []driver.PickedFile
+	// PickScreenColor answers Scope.PickScreenColor with the color the user
+	// samples; without it, or with false, the user cancels.
+	PickScreenColor func() (driver.Color, bool)
 	// FilePicks are the file picks the app asked for, oldest first.
 	// PickFiles answers each with the files the user picks; with none
 	// the user cancels.

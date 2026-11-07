@@ -19,6 +19,9 @@ type colorState struct {
 	model    *core.Signal[colorModel]
 	disabled func() bool
 	format   ColorFormat
+	noAlpha  bool
+	// notation is the place in colorNotations the channels spell it in.
+	notation *core.Signal[int]
 	report   func(c core.Color, formatted string, end bool)
 	reported []colorReport
 }
@@ -31,7 +34,7 @@ func colorStateOf(cx *core.Scope) *colorState {
 	if s := colorKey.Use(cx); s != nil {
 		return s
 	}
-	return &colorState{cx: cx, model: core.NewSignal(cx, colorModelOf(0))}
+	return &colorState{cx: cx, model: core.NewSignal(cx, colorModelOf(0)), notation: core.NewSignal(cx, 0)}
 }
 
 func (s *colorState) isDisabled() bool { return is(s.disabled) }
@@ -66,22 +69,26 @@ func (s *colorState) emit(end bool) {
 }
 
 // ColorPicker holds a color for its parts, ColorArea, ColorSlider,
-// ColorField, ColorSwatch and ColorEyeDropper, which the app lays out
-// inside it. Value makes the color controlled, with its own from
+// ColorField, ColorChannels, ColorSwatch, ColorEyeDropper, ColorNotationMenu
+// and ColorCopyMenu, which the app lays out inside it. Value makes the color controlled, with its own from
 // DefaultValue otherwise, black when 0. It keeps a color in every space,
 // so a gray keeps its hue. OnChange reports each change and OnChangeEnd
-// its end, with the color written as Format says.
+// its end, with the color written as Format says, which is also the
+// notation ColorChannels start in.
 type ColorPicker struct {
 	Value        func() core.Color
 	DefaultValue core.Color
 	Format       ColorFormat
-	Disabled     func() bool
-	OnChange     func(value core.Color, formatted string)
-	OnChangeEnd  func(value core.Color, formatted string)
-	Children     []core.Node
-	Class        string
-	Style        core.Style
-	TestID       string
+	// NoAlpha names the notations without their alpha, for a picker with
+	// no opacity part.
+	NoAlpha     bool
+	Disabled    func() bool
+	OnChange    func(value core.Color, formatted string)
+	OnChangeEnd func(value core.Color, formatted string)
+	Children    []core.Node
+	Class       string
+	Style       core.Style
+	TestID      string
 	// OnLayout and Tooltip are its view's, as a core.View's.
 	OnLayout func(core.Bounds)
 	Tooltip  core.Node
@@ -93,7 +100,8 @@ func (p ColorPicker) Render(cx *core.Scope) core.Node {
 	if p.Value != nil {
 		first = core.Untracked(cx, p.Value)
 	}
-	s := &colorState{cx: cx, model: core.NewSignal(cx, colorModelOf(first)), disabled: p.Disabled, format: p.Format,
+	s := &colorState{cx: cx, model: core.NewSignal(cx, colorModelOf(first)), disabled: p.Disabled, format: p.Format, noAlpha: p.NoAlpha,
+		notation: core.NewSignal(cx, colorNotationOf(p.Format)),
 		report: func(c core.Color, formatted string, end bool) {
 			f := p.OnChange
 			if end {
@@ -122,6 +130,17 @@ func (p ColorPicker) Render(cx *core.Scope) core.Node {
 	}
 	colorKey.Provide(cx, s)
 	return core.View{Class: p.Class, Style: p.Style, Disabled: p.Disabled, TestID: p.TestID, OnLayout: p.OnLayout, Tooltip: p.Tooltip, Children: p.Children}
+}
+
+// colorDragging is what a thumb shows while it moves.
+const colorDragging = "dragging"
+
+// dragStates are a thumb's states.
+func dragStates(dragging bool) core.PartStates {
+	if dragging {
+		return core.PartStates{Data: []string{colorDragging}}
+	}
+	return core.PartStates{}
 }
 
 // colorNudge is what a key does to a color's control.
@@ -179,9 +198,9 @@ var colorFill = core.Style{Position: core.Absolute, Top: core.Pt(0), Right: core
 // colorThumb centers a thumb on the point its Left and Top name.
 var colorThumb = core.Style{Position: core.Absolute, Transform: core.Transform{TranslateXPercent: -50, TranslateYPercent: -50}}
 
-// checkerboard draws squares of size in color under a color with alpha,
-// none while color is 0.
-func checkerboard(color core.Color, size core.Points) core.Node {
+// Checkerboard draws squares of size in color over its parent, under a
+// color with alpha, none while color is 0.
+func Checkerboard(color core.Color, size core.Points) core.Node {
 	if color == 0 {
 		return nil
 	}

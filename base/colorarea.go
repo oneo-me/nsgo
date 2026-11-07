@@ -13,13 +13,19 @@ type ColorArea struct {
 	Disabled   func() bool
 	PanelClass string
 	PanelStyle core.Style
-	ThumbClass string
-	ThumbStyle core.Style
-	FillThumb  bool
-	Class      string
-	Style      core.Style
-	Label      string
-	TestID     string
+	// PanelStyleFunc follows what it reads; the panel shows Focused while
+	// the keyboard is on the area.
+	PanelStyleFunc func() core.Style
+	ThumbClass     string
+	ThumbStyle     core.Style
+	// ThumbStyleFunc follows what it reads; the thumb shows data-dragging
+	// while it moves.
+	ThumbStyleFunc func() core.Style
+	FillThumb      bool
+	Class          string
+	Style          core.Style
+	Label          string
+	TestID         string
 	// OnLayout and Tooltip are its view's, as a core.View's.
 	OnLayout func(core.Bounds)
 	Tooltip  core.Node
@@ -31,6 +37,7 @@ func (a ColorArea) Render(cx *core.Scope) core.Node {
 	disabled := func() bool { return is(a.Disabled) || picker.isDisabled() }
 	var size core.Size
 	var drag *core.Point
+	dragging := core.NewSignal(cx, false)
 	focused := core.NewSignal(cx, false)
 	env := cx.Env()
 	place := func(at core.Point) {
@@ -68,12 +75,19 @@ func (a ColorArea) Render(cx *core.Scope) core.Node {
 	release := func(core.ResponderEvent) {
 		if drag != nil {
 			drag = nil
+			dragging.Set(false)
 			picker.end()
 		}
 	}
 	panel := core.View{Class: a.PanelClass, Style: colorFill.Merge(core.Style{OverflowX: core.Hidden, OverflowY: core.Hidden, PointerEvents: core.PointerEventsNone}).Merge(a.PanelStyle),
-		NoFocus: true, PartStates: func() core.PartStates { return core.PartStates{Disabled: is(a.Disabled)} },
-		StyleFunc: func() core.Style { return core.Style{Background: picker.model.Get().hueColor()} },
+		NoFocus: true, PartStates: func() core.PartStates { return core.PartStates{Disabled: is(a.Disabled), Focused: focused.Get()} },
+		StyleFunc: func() core.Style {
+			s := core.Style{Background: picker.model.Get().hueColor()}
+			if a.PanelStyleFunc != nil {
+				s = s.Merge(a.PanelStyleFunc())
+			}
+			return s
+		},
 		Children: []core.Node{
 			core.View{Style: colorFill, StyleFunc: func() core.Style {
 				// White at the least saturation's side.
@@ -96,9 +110,13 @@ func (a ColorArea) Render(cx *core.Scope) core.Node {
 			if a.FillThumb {
 				s.Background = m.opaque()
 			}
+			if a.ThumbStyleFunc != nil {
+				s = s.Merge(a.ThumbStyleFunc())
+			}
 			return s
 		},
-		Disabled: disabled, Accessible: true, Role: core.RoleAdjustable, Label: a.Label,
+		PartStates: func() core.PartStates { return dragStates(dragging.Get()) },
+		Disabled:   disabled, Accessible: true, Role: core.RoleAdjustable, Label: a.Label,
 		AccessibilityValue: func() core.AccessibilityValue {
 			m := picker.model.Get()
 			return core.AccessibilityValue{Max: 100, Now: float32(m.channel(ColorHSB, ChannelBrightness)), Text: m.format(ColorFormatHex)}
@@ -128,6 +146,7 @@ func (a ColorArea) Render(cx *core.Scope) core.Node {
 			OnGrant: func(e core.ResponderEvent) {
 				at := e.Position
 				drag = &at
+				dragging.Set(true)
 				place(at)
 			},
 			OnMove: func(e core.ResponderEvent) {

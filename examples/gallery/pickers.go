@@ -139,15 +139,13 @@ func timeFieldPlayground(last *core.Signal[string]) cardFunc {
 	}
 }
 
-var colorPresets = []core.Color{0xef4444ff, 0xf59e0bff, 0x22c55eff, 0x3b82f6ff, 0x8b5cf6ff, 0x3b82f680}
-
 func colorPickerPlayground(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		noAlpha, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
 		color := core.NewSignal[core.Color](cx, 0xc2410cff)
 		return Playground{Title: "ColorPicker", Base: baseColorPickerForm(cx, last, color, disabled), Stage: func() core.Node {
 			return core.Dynamic(func(*core.Scope) core.Node {
-				return ui.ColorPicker{Value: color.Get, Presets: colorPresets, NoAlpha: noAlpha.Get(), Disabled: disabled.Get,
+				return ui.ColorPicker{Value: color.Get, NoAlpha: noAlpha.Get(), Disabled: disabled.Get,
 					OnChange: func(c core.Color, _ string) { color.Set(c) }, OnChangeEnd: func(_ core.Color, formatted string) { last.Set("ColorPicker: " + formatted) }}
 			})
 		}, BaseKnobs: []core.Node{boolKnob("Disabled", disabled)}, Knobs: []core.Node{boolKnob("NoAlpha", noAlpha)}}
@@ -159,7 +157,7 @@ func colorWellPlayground(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		color := core.NewSignal[core.Color](cx, 0x3b82f6ff)
 		return Playground{Title: "ColorWell", Stage: func() core.Node {
-			return ui.ColorWell{Value: color.Get, Label: tr.DemoColorPicker(), Picker: ui.ColorPicker{Presets: colorPresets},
+			return ui.ColorWell{Value: color.Get, Label: tr.DemoColorPicker(),
 				OnChange: color.Set, OnOpenChange: func(_ bool, reason base.Reason) { last.Set("ColorWell: " + reason.String()) }}
 		}}
 	}
@@ -300,12 +298,6 @@ func baseColorPickerForm(cx *core.Scope, last *core.Signal[string], color *core.
 	thumb := "w-[14px] h-[14px] rounded-full border-2 border-white shadow"
 	track := "h-[10px] rounded-full"
 	slider := "h-[20px] justify-center"
-	swatches := []core.Color{0xef4444ff, 0x22c55eff, 0x3b82f6ff, 0x3b82f680}
-	presets := make([]core.Node, len(swatches))
-	for i, c := range swatches {
-		presets[i] = base.ColorSwatch{Color: func() core.Color { return c }, Class: "w-[24px] h-[24px] rounded-md selected:border-2",
-			CheckerboardColor: 0xccccccff, CheckerboardSize: 6}
-	}
 	return Form{Name: "base.ColorPicker", Fill: true, Stage: func() core.Node {
 		return base.ColorPicker{Value: color.Get, Format: base.ColorFormatHex, Disabled: disabled.Get, Style: core.Style{Gap: 8, MaxWidth: core.Pt(280)},
 			OnChange:    func(c core.Color, _ string) { color.Set(c) },
@@ -319,7 +311,9 @@ func baseColorPickerForm(cx *core.Scope, last *core.Signal[string], color *core.
 					base.ColorField{Label: "Hex", Style: core.Style{FlexGrow: 1, Height: core.Pt(32)}},
 					base.ColorEyeDropper{Label: tr.DemoColorPicker(), Style: bareBox, StyleFunc: bareInk(cx), Children: []core.Node{bareText(cx, "⌖")}},
 				}},
-				core.View{Style: core.Style{Direction: core.Row, Gap: 6}, Children: presets},
+				base.ColorChannels{Style: core.Style{Direction: core.Row, Gap: 8},
+					Number: func(in base.NumberInput) core.Node { in.Class = "flex-1 h-[32px]"; return in }},
+				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{base.ColorNotationMenu{}, base.ColorCopyMenu{}}},
 			}}
 	}}
 }

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -251,20 +252,136 @@ func TestTimeFieldEdits(t *testing.T) {
 	})
 }
 
-func TestColorPickerTakesAPreset(t *testing.T) {
-	each(t, func(t *testing.T, e core.Environment) {
-		last := ""
-		app, _ := start(t, e, func(*core.Scope) core.Node {
-			return ColorPicker{DefaultValue: 0xff0000ff, Presets: []core.Color{0x00ff00ff}, OnChangeEnd: func(_ core.Color, s string) { last = s }}
-		})
-		app.Press("label:#00ff00")
-		if last != "#00ff00" {
-			t.Fatalf("reported %q", last)
-		}
-		if got := app.Find("label:Hex color").Input.Disabled; got {
-			t.Fatal("the field is disabled")
-		}
+// TestColorPickerFields edits the color in every notation, keeping the
+// alpha through six digits and taking it from eight.
+func TestColorPickerFields(t *testing.T) {
+	var value core.Color
+	ended := 0
+	app, _ := start(t, envs()[0].Environment, func(*core.Scope) core.Node {
+		return ColorPicker{DefaultValue: 0xff000080, OnChange: func(c core.Color, _ string) { value = c }, OnChangeEnd: func(core.Color, string) { ended++ }}
 	})
+	retype := func(label, text string) {
+		t.Helper()
+		app.Clear("label:" + label)
+		app.Type("label:"+label, text)
+	}
+	if got := app.Find("label:Hex color").Text; got != "FF0000" {
+		t.Fatalf("hex reads %q", got)
+	}
+	if got := app.Find("label:Red").Text; got != "255" {
+		t.Fatalf("red reads %q", got)
+	}
+	retype("Hex color", "112233")
+	if value != core.SetColor(0x11223380) {
+		t.Fatalf("six digits gave %x, as they were typed with the alpha kept", value)
+	}
+	retype("Hex color", "44556640")
+	if value != core.SetColor(0x44556640) {
+		t.Fatalf("eight digits gave %x", value)
+	}
+	app.Focus("label:Green")
+	before := ended
+	retype("Green", "200")
+	if value != core.SetColor(0x44c86640) {
+		t.Fatalf("green gave %x as it was typed", value)
+	}
+	if ended != before {
+		t.Fatal("typing ended the change")
+	}
+	app.Focus("label:Opacity percent")
+	if got := app.Find("label:Hex color").Text; got != "44C866" {
+		t.Fatalf("hex follows as %q", got)
+	}
+	if ended != before+1 {
+		t.Fatalf("leaving a field ended the change %d times", ended-before)
+	}
+	retype("Opacity percent", "100%")
+	if value != core.SetColor(0x44c866ff) {
+		t.Fatalf("opacity gave %x", value)
+	}
+	app.Press("label:Color format")
+	app.Press("text:HSBA")
+	app.Settle()
+	if app.Exists("label:Red") {
+		t.Fatal("the format did not change the fields")
+	}
+	if got := app.Find("label:Hue degrees").Text; got != "135.5" {
+		t.Fatalf("hue reads %q", got)
+	}
+	if got := app.Find("label:Saturation percent").Text; !strings.HasSuffix(got, "%") {
+		t.Fatalf("saturation reads %q", got)
+	}
+	retype("Brightness percent", "0")
+	app.Focus("label:Saturation percent")
+	retype("Brightness percent", "78.4%")
+	app.Focus("label:Saturation percent")
+	if got := app.Find("label:Hue degrees").Text; got != "135.5" {
+		t.Fatalf("black lost the hue: %q", got)
+	}
+	app.Press("label:Color format")
+	app.Press("text:HSLA")
+	app.Settle()
+	app.Find("label:Lightness percent")
+}
+
+// TestColorPickerScrubs moves a channel by its letter, a change ending as
+// the drag does.
+func TestColorPickerScrubs(t *testing.T) {
+	var value core.Color
+	ended := 0
+	app, _ := start(t, envs()[0].Environment, func(*core.Scope) core.Node {
+		return ColorPicker{DefaultValue: 0x640000ff, OnChange: func(c core.Color, _ string) { value = c }, OnChangeEnd: func(core.Color, string) { ended++ }}
+	})
+	app.Pan(`text:"R"`, core.Point{X: 4}, core.Point{X: 10})
+	if value != core.SetColor(0x6e0000ff) {
+		t.Fatalf("a scrub of ten points gave %x", value)
+	}
+	if ended != 1 {
+		t.Fatalf("a scrub ended the change %d times", ended)
+	}
+}
+
+// TestColorPickerCopies writes the color in the menu's formats, and leaves
+// alpha out with NoAlpha.
+func TestColorPickerCopies(t *testing.T) {
+	app, _ := start(t, envs()[0].Environment, func(*core.Scope) core.Node {
+		return ColorPicker{DefaultValue: 0xff000080}
+	})
+	for item, want := range map[string]string{"RGBA": "rgb(255 0 0 / 0.5)", "HSBA": "hsb(0 100% 100% / 0.5)", "HSLA": "hsl(0 100% 50% / 0.5)", "HEX": "#ff000080"} {
+		app.Press("label:Copy color")
+		app.Press("role:menu >> text:" + item)
+		app.Settle()
+		if got := app.Clipboard; got != want {
+			t.Fatalf("%s copied %q, want %q", item, got, want)
+		}
+	}
+	plain, _ := start(t, envs()[0].Environment, func(*core.Scope) core.Node {
+		return ColorPicker{DefaultValue: 0xff0000ff, NoAlpha: true}
+	})
+	if plain.Exists("label:Opacity percent") || plain.Exists("label:Opacity") || plain.Find("label:Color format") == nil {
+		t.Fatal("NoAlpha kept the opacity")
+	}
+	plain.Find("text:RGB")
+}
+
+// TestColorPickerEyeDropper shows the eyedropper where there is a sampler,
+// and takes its color.
+func TestColorPickerEyeDropper(t *testing.T) {
+	app, _ := start(t, envs()[0].Environment, func(*core.Scope) core.Node { return ColorPicker{DefaultValue: 0xff0000ff} })
+	if app.Exists("label:Pick a color from the screen") {
+		t.Fatal("an eyedropper shows with no sampler")
+	}
+	env := desktopEnv
+	env.ScreenColor = true
+	var value core.Color
+	sampled, _ := start(t, env, func(*core.Scope) core.Node {
+		return ColorPicker{DefaultValue: 0xff0000ff, OnChangeEnd: func(c core.Color, _ string) { value = c }}
+	})
+	sampled.PickScreenColor = func() (driver.Color, bool) { return core.SetColor(0x00ff00ff), true }
+	sampled.Press("label:Pick a color from the screen")
+	if value != core.SetColor(0x00ff00ff) {
+		t.Fatalf("the eyedropper gave %x", value)
+	}
 }
 
 // On a desktop a select opens below its field, and with an option chosen

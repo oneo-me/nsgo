@@ -671,7 +671,7 @@ func (g *gallery) sidebar(tr locales.Messages) []core.Node {
 			for _, d := range grp.demos {
 				entries = append(entries, ui.SidebarItem{ID: d.name, Text: d.title(tr), Icon: d.icon, TestID: "nav-" + d.name})
 			}
-			sections = append(sections, ui.SidebarSection{Title: grp.title(tr), Items: entries, TestID: "nav-group-" + grp.name})
+			sections = append(sections, ui.SidebarSection{Title: grp.title(tr), Collapsible: true, Items: entries, TestID: "nav-group-" + grp.name})
 		}
 		lists = append(lists, core.View{Children: []core.Node{ui.Sidebar{TestID: "sidebar", Sections: sections, Selected: g.selected.Get, OnSelect: g.selectDemo}},
 			StyleFunc: func() core.Style {

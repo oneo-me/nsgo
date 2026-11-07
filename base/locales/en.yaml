@@ -28,6 +28,36 @@ colorHex:
 colorEyeDropper:
   message: "Pick a color from the screen"
   description: What a styled picker says for this part.
+colorFormat:
+  message: "Color format"
+  description: What a styled picker says for this part.
+colorCopy:
+  message: "Copy color"
+  description: What a styled picker says for this part.
+colorRed:
+  message: "Red"
+  description: What a styled picker says for this part.
+colorGreen:
+  message: "Green"
+  description: What a styled picker says for this part.
+colorBlue:
+  message: "Blue"
+  description: What a styled picker says for this part.
+colorHueDegrees:
+  message: "Hue degrees"
+  description: What a styled picker says for this part.
+colorSaturationPercent:
+  message: "Saturation percent"
+  description: What a styled picker says for this part.
+colorBrightnessPercent:
+  message: "Brightness percent"
+  description: What a styled picker says for this part.
+colorLightnessPercent:
+  message: "Lightness percent"
+  description: What a styled picker says for this part.
+colorOpacityPercent:
+  message: "Opacity percent"
+  description: What a styled picker says for this part.
 calendarPrevious:
   message: "Previous month"
   description: What a styled picker says for this part.

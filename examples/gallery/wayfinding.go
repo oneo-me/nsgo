@@ -136,7 +136,7 @@ func sidebarCard(last *core.Signal[string]) cardFunc {
 		return Card{Title: "Sidebar", UIOnly: true, Children: []core.Node{
 			core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220), AlignSelf: core.AlignCenter}, Children: []core.Node{
 				ui.Sidebar{Selected: selected.Get, OnSelect: func(id string) { selected.Set(id); last.Set("Sidebar: " + id) },
-					Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Items: items}}},
+					Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Collapsible: true, Items: items}}},
 			}},
 		}}
 	}
