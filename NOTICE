@@ -23,6 +23,11 @@ https://github.com/DioxusLabs/taffy, Copyright (c) 2018 Visly Inc. and
 Copyright (c) 2026 Taffy Authors, licensed under the MIT License. That directory's
 LICENSE file holds the full text.
 
+The fonts in internal/woff/testdata/ are Pacifico,
+https://github.com/googlefonts/Pacifico, Copyright 2018 The Pacifico Project
+Authors, licensed under the SIL Open Font License, Version 1.1. That
+directory's OFL.txt file holds the full text.
+
 The shader compiler in internal/shader and internal/shaderir is Ebitengine's
 Kage compiler, https://github.com/hajimehoshi/ebiten, Copyright 2020 The Ebiten
 Authors, licensed under the Apache License, Version 2.0, as MyGo,

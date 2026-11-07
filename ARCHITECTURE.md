@@ -90,7 +90,6 @@ Packages import only downward, which `layering_test.go` checks on every target; 
 Record a design question here, and confirm the answer with the user before choosing it.
 
 - **Signed packages and capabilities.** Port both for TSX modules only, Go code staying trusted, as [TSX](docs/architecture/tsx.md#sandbox) proposes?
-- **NSH 0.4.0's gallery and `process`.** [NSGo leaves the standard modules out](docs/architecture/nsh.md#what-nsgo-leaves-out), but 0.4.0's gallery shell reads `process.env` at start, so no demo or test runs. Give TSX a `process` of the environment alone (`env`, `platform`, `arch`), port the module, or rename the oracle's shell?
 - **Implicit presentations.** Components swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)). Make each one a field the app sets, and which form is the default?
 - **TSX on the browser's engine.** NSH 0.4.0 runs TSX on the page's own JavaScript engine on the web, keeping QuickJS on the native targets. Do the same, keeping goja off the web, or keep one engine on every target?
 

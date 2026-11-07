@@ -1,6 +1,6 @@
 # TSX and dynamic delivery
 
-NSGo runs TSX apps on NSH's design: they import `nsgo`, `nsgo/base`, `nsgo/mobile`, `nsgo/desktop` and `nsgo/test`, have NSH's props, events, style keys, Tailwind classes and behavior, and compile with `tsx/bundler`. Each part is a Go port of its NSH counterpart, so what NSH adds ports the same way (decided by the user, 2026-10-28); an NSH app runs once its imports name `nsgo` in place of `nsh`. `TestNSHGallery` checks it: NSH's gallery, imports renamed, opens every demo headless but those that run processes. The [roadmap](../roadmap.md#tsx-and-dynamic-delivery) orders what is left.
+NSGo runs TSX apps on NSH's design: they import `nsgo`, `nsgo/base`, `nsgo/mobile`, `nsgo/desktop` and `nsgo/test`, have NSH's props, events, style keys, Tailwind classes and behavior, and compile with `tsx/bundler`. Each part began as a Go port of its NSH counterpart. From 2026-11-08 TSX grows its own way (decided by the user): nothing checks it against NSH's apps, and an NSH app may need more than renamed imports. The [roadmap](../roadmap.md#tsx-and-dynamic-delivery) orders what is left.
 
 An app embeds its sources and names its entry; the `nsgo` tool compiles it ahead for its builds, and `go run` and `go test` compile it as it starts:
 

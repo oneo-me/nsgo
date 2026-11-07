@@ -19,8 +19,8 @@ func start(t *testing.T, entry string) *nsgotest.App {
 	return nsgotest.Start(t, compiler.App(os.DirFS("testdata"), entry))
 }
 
-// TestControlFlow runs flow.tsx through the steps NSH's headless runner
-// took on it, expecting the texts NSH showed.
+// TestControlFlow runs flow.tsx through its steps, reading the texts each
+// leaves.
 func TestControlFlow(t *testing.T) {
 	app := start(t, "flow.tsx")
 	steps := []struct {

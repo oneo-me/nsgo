@@ -1,6 +1,6 @@
 # NSGo and NSH
 
-NSGo ports the design of [Native Shell (NSH)](https://github.com/longbridge/nsh) to Go. The architecture, the names and the behavior apps see are NSH's; the language, the toolchain and a few platform mechanisms are Go's. This page says how the two relate as a whole, what NSGo adds and leaves out, and how it follows NSH's releases. Read it before porting NSH's work or departing from it.
+NSGo ports the design of [Native Shell (NSH)](https://github.com/longbridge/nsh) to Go. The architecture, the names and the behavior apps see are NSH's; the language, the toolchain and a few platform mechanisms are Go's. This page says how the two relate as a whole, what NSGo adds and leaves out, and how it reads NSH's releases. Read it before porting NSH's work or departing from it.
 
 Each subject records the departures of its own area ([by subject](#departures-by-subject)). This page holds only those that cut across subjects.
 
@@ -11,8 +11,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 - **The API.** Elements, props, events, style keys, Tailwind classes and `base`'s components keep NSH's names, with each API in NSH's home: `core`, `base`, `mobile` or `desktop`.
 - **The algorithms.** Solid's reactive graph, Taffy 0.15's layout (`internal/layout`, checked against Taffy's fixtures) and NSH's scroll physics, list virtualization, dock layout and data table.
 - **The rule that `base` has no look.** Components own behavior, state and accessibility, and the app styles every part.
-- **TSX apps.** An NSH app runs on NSGo once its imports name `nsgo` in place of `nsh` ([TSX](tsx.md)).
-- **Tests that act as a user.** Playwright-style selectors drive the app headless or with each platform's native input ([testing](testing.md)).
+- **Tests that act as a user.** Playwright-style selectors drive the app headless or with each platform's native input, in tests of NSGo's own ([testing](testing.md)).
 
 ## What differs
 
@@ -79,16 +78,14 @@ Each subject records the departures of its own area ([by subject](#departures-by
 - The GPUI backend and the LayerFS trial.
 - 32-bit Android (`armeabi-v7a`), since Go links android/arm only with cgo and an NDK.
 
-## Following NSH's releases
+## Reading NSH's releases
 
-NSGo tracks NSH's releases, never its `main`: NSH's checkout (`../nsh`, [development](../../README.md#development)) is at the latest release tag, and the [roadmap](../roadmap.md) lists what NSGo still lacks of that release. One exception, decided by the user on 2026-11-03: the gallery's index is laid out as NSH's `main` lays out its own after 0.3.0. Its Primitives and Components are groups of their own rather than parts of an Elements group, and it has no search. A second, decided on 2026-11-08: related components share a demo, named after its first, such as `Button` with the toggles and `Checkbox` with `Radio` and `Switch`. It lists only the components NSGo has: those NSH 0.4.0 added join it as NSGo ports them. To move to a new release:
+NSGo has grown from NSH and now goes its own way (decided by the user, 2026-11-08): TSX above all may depart from it, and no test runs NSH's apps, its compat cases or anything else from its checkout. Its releases stay a source of designs to port when they suit NSGo. NSH's checkout (`../nsh`, [development](../../README.md#development)) is at the latest release tag, and the [roadmap](../roadmap.md) lists what NSGo may still take from that release. The gallery goes its own way too: its index has Primitives and Components as groups of their own and no search (decided by the user, 2026-11-03), related components share a demo named after the first, such as `Button` with the toggles and `Checkbox` with `Radio` and `Switch` (2026-11-08), and it lists only the components NSGo has. To read a new release:
 
 1. In NSH's checkout, run `git fetch --tags --force` and check out the release's tag.
 2. Read `git log <old tag>..<new tag>` there and the pages of `nsh/docs/dev/` it changed.
-3. Compare the declarations NSH writes to `examples/gallery/.nsh/types/` when any `nsh` command runs on its gallery with those `tsx.WriteDeclarations` writes.
-4. Run NSH's apps as oracles, imports renamed, with `go test ./tsx`: its gallery (`TestNSHGallery`), its gallery's tests (`TestNSHGalleryTests`), its examples and their tests (`TestNSHExamples`), and the cases of `tests/compat/` (`TestNSHCompat`, whose `compatFailing` lists what fails). Each skips what needs the standard modules.
-5. Run the scenarios NSH's pages measure (`performance.md`, `data-table.md` and the other components' Performance sections, `web.md`) on NSH's build and on NSGo on one machine, each backend in turn, as [performance](performance.md#keeping-frames-cheap) does for the DataTable: matching the API leaves what a frame costs unchecked.
-6. Rewrite the roadmap from what these find, and update the subjects whose departures changed.
+3. Run the scenarios NSH's pages measure (`performance.md`, `data-table.md` and the other components' Performance sections, `web.md`) on NSH's build and on NSGo on one machine, each backend in turn, as [performance](performance.md#keeping-frames-cheap) does for the DataTable: matching the API leaves what a frame costs unchecked.
+4. Rewrite the roadmap from what these find, and update the subjects whose departures changed.
 
 ## Departures by subject
 

@@ -232,9 +232,9 @@ mount(() => <TextView markdown={"# Title\n\nSome **bold** text."} classes={{ hea
 	}
 }
 
-// TestDockAreaTakesNSHsShapes gives a DockArea NSH's gallery's layout,
+// TestDockAreaTakesLayoutsAndRenderFunctions gives a DockArea a layout,
 // panels and render functions, and reads back what it reports in them.
-func TestDockAreaTakesNSHsShapes(t *testing.T) {
+func TestDockAreaTakesLayoutsAndRenderFunctions(t *testing.T) {
 	app := run(t, `import { mount, signal, Text, View } from "nsgo";
 import { DockArea, Tabs, Tab, Button } from "nsgo/base";
 function App() {

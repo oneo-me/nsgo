@@ -115,13 +115,12 @@ func TestWOFFRefusesForgedSizes(t *testing.T) {
 	}
 }
 
-// NSH's Pacifico, the same font three ways; WOFF2's transforms are what
-// its compat cases import.
+// Pacifico, the same font three ways, unpacks to the same outlines.
 func TestWOFF2(t *testing.T) {
-	dir := filepath.Join("..", "..", "..", "nsh", "tests", "compat", "cases", "layout", "fonts")
+	dir := "testdata"
 	ttf, err := os.ReadFile(filepath.Join(dir, "Pacifico-Regular.ttf"))
 	if err != nil {
-		t.Skip("no NSH checkout:", err)
+		t.Fatal(err)
 	}
 	want := outlines(t, ttf)
 	for _, name := range []string{"Pacifico-Regular.woff", "Pacifico-Regular.woff2"} {

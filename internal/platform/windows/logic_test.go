@@ -728,7 +728,7 @@ func editModelOf(text string) *editModel {
 	return m
 }
 
-func TestEditModelEditsAsNSHs(t *testing.T) {
+func TestEditModelEdits(t *testing.T) {
 	eq := func(got, want any) {
 		t.Helper()
 		if got != want {

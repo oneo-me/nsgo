@@ -182,14 +182,12 @@ go test ./...
 bench/run.sh                                       # 测量行情表基准（见 bench/README.md）
 ```
 
-NSGo 以 NSH 作为参考实现，并只对齐 NSH 的各个发行版。将它克隆到仓库旁边的 `../nsh`，并检出它的最新发行版标签，不要用 `main`：
+NSGo 把 NSH 作为设计参考，测试都不依赖它。需要阅读时，将它克隆到仓库旁边的 `../nsh`，并检出它的最新发行版标签，不要用 `main`：
 
 ```sh
 git clone https://github.com/longbridge/nsh.git ../nsh
 git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 ```
-
-`go test ./tsx` 会从这份检出运行 NSH 的应用与兼容用例；设置了 `$NSH_DIR` 时改从该目录运行，找不到时跳过。
 
 修改代码前请先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [AGENTS.md](AGENTS.md)。
 

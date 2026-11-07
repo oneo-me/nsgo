@@ -7,14 +7,12 @@ import (
 	"time"
 )
 
-// NSH's class tests (nsh/crates/nsh-core/src/tailwind/tests.rs), ported:
-// one test each, its assertions on NSGo's Style. Where the models differ
-// the test checks the same behavior through NSGo's fields: state classes
+// Tailwind classes: one test each, its assertions on Style. State classes
 // are state styles rather than applied states, and a transform is fields
 // rather than a list of steps.
 
 // twEnv is a phone's light environment with DefaultTheme's palette, the
-// design tokens NSH's tests theme with.
+// design tokens these tests theme with.
 func twEnv() classEnv {
 	pal := DefaultTheme().Light
 	return classEnv{window: Size{Width: 390, Height: 844}, os: OSIOS, palette: &pal, tw: defaultTailwind}
@@ -65,7 +63,7 @@ func want[T comparable](t *testing.T, what string, got, want T) {
 	}
 }
 
-func TestNSHSpacingAndLayout(t *testing.T) {
+func TestSpacingAndLayout(t *testing.T) {
 	s := styled(t, "flex flex-row items-center justify-between gap-3 p-4 px-2 -mt-1 w-1/2 h-12 min-w-0")
 	want(t, "direction", s.Direction, Row)
 	want(t, "align", s.AlignItems, AlignCenter)
@@ -87,7 +85,7 @@ func TestNSHSpacingAndLayout(t *testing.T) {
 	want(t, "flex-1", s.FlexGrow, 1)
 }
 
-func TestNSHPhysicalClassesNameTheOtherSideRightToLeft(t *testing.T) {
+func TestPhysicalClassesNameTheOtherSideRightToLeft(t *testing.T) {
 	rtl := twEnv()
 	rtl.rtl = true
 	s := styled(t, "pl-4 mr-2 left-1", rtl)
@@ -103,7 +101,7 @@ func TestNSHPhysicalClassesNameTheOtherSideRightToLeft(t *testing.T) {
 	}
 }
 
-func TestNSHSpaceGivesTheChildrenMargins(t *testing.T) {
+func TestSpaceGivesTheChildrenMargins(t *testing.T) {
 	s, p := tw(t, "gap-2 space-x-4 -space-y-px")
 	want(t, "gap", s.Gap, 8)
 	want(t, "margin", s.Margin.Right, 0)
@@ -114,7 +112,7 @@ func TestNSHSpaceGivesTheChildrenMargins(t *testing.T) {
 	want(t, "space-y-reverse", p.reverseY, true)
 }
 
-func TestNSHWidthsWithoutAColorAreCurrentColor(t *testing.T) {
+func TestWidthsWithoutAColorAreCurrentColor(t *testing.T) {
 	red := tailwindPalette["red"][5]
 	s := styled(t, "border-t text-red-500 inset-ring")
 	want(t, "border", borderTop(s), red)
@@ -123,7 +121,7 @@ func TestNSHWidthsWithoutAColorAreCurrentColor(t *testing.T) {
 	want(t, "outline-red-500", s.OutlineColor, red)
 }
 
-func TestNSHLaterClassesWin(t *testing.T) {
+func TestLaterClassesWin(t *testing.T) {
 	s := styled(t, "p-4 p-2 bg-red-500 bg-blue-500")
 	want(t, "padding", s.Padding.Top, 8)
 	want(t, "background", s.Background, RGB(0x2b7fff))
@@ -133,7 +131,7 @@ func TestNSHLaterClassesWin(t *testing.T) {
 	}
 }
 
-func TestNSHColorsAndOpacity(t *testing.T) {
+func TestColorsAndOpacity(t *testing.T) {
 	s := styled(t, "bg-white/50 text-zinc-900 border border-[#ff0000] opacity-75")
 	want(t, "bg-white/50", s.Background, Color(0xffffff80))
 	want(t, "text", s.Color, Color(0x18181bff))
@@ -153,7 +151,7 @@ func TestNSHColorsAndOpacity(t *testing.T) {
 	want(t, "text-black/[0.5]", s.Color, Color(0x00000080))
 }
 
-func TestNSHThemeTokens(t *testing.T) {
+func TestThemeTokens(t *testing.T) {
 	light, dark := DefaultTheme().Light, DefaultTheme().Dark
 	token := func(p Palette, name string) Color {
 		c, ok := p.Color(name)
@@ -195,7 +193,7 @@ func TestNSHThemeTokens(t *testing.T) {
 	want(t, "unknown", len(unknownOf(defaultTailwind, "bg-nope text-(--nope) w-primary")), 3)
 }
 
-func TestNSHTailwindColorsWinOverTokensAndTokensComeFromTheTheme(t *testing.T) {
+func TestTailwindColorsWinOverTokensAndTokensComeFromTheTheme(t *testing.T) {
 	tws, err := ParseTailwind([]byte(`{ "colors": { "primary": "#ff0000" } }`))
 	if err != nil {
 		t.Fatal(err)
@@ -207,7 +205,7 @@ func TestNSHTailwindColorsWinOverTokensAndTokensComeFromTheTheme(t *testing.T) {
 	want(t, "bg-chart-up", styled(t, "bg-chart-up", env).Background, RGB(0x00ff00))
 }
 
-func TestNSHTypography(t *testing.T) {
+func TestTypography(t *testing.T) {
 	s := styled(t, "text-lg font-semibold italic tracking-wide leading-tight underline decoration-wavy decoration-red-500 uppercase text-center tabular-nums")
 	want(t, "size", s.FontSize, 18)
 	want(t, "weight", s.FontWeight, 600)
@@ -237,7 +235,7 @@ func TestNSHTypography(t *testing.T) {
 	want(t, "truncate", styled(t, "truncate").NumberOfLines, 1)
 }
 
-func TestNSHShadowsAndRings(t *testing.T) {
+func TestShadowsAndRings(t *testing.T) {
 	s := styled(t, "shadow-md")
 	want(t, "layers", len(s.Shadows), 2)
 	want(t, "offset", s.Shadows[0].Offset.Y, 4)
@@ -269,7 +267,7 @@ func TestNSHShadowsAndRings(t *testing.T) {
 	want(t, "drop-shadow-blue-500/50", s.Filters[0].Shadow.Color, Color(0x2b7fff80))
 }
 
-func TestNSHGradients(t *testing.T) {
+func TestGradients(t *testing.T) {
 	s := styled(t, "bg-linear-to-r from-blue-500 via-purple-500 via-40% to-pink-500")
 	g := s.Gradients[0]
 	want(t, "angle", g.Angle, 90)
@@ -291,7 +289,7 @@ func TestNSHGradients(t *testing.T) {
 	want(t, "repeating", [2]any{g.Repeating, g.Stops[1].At}, [2]any{true, Pt(10)})
 }
 
-func TestNSHStateBackgroundsShowOverGradients(t *testing.T) {
+func TestStateBackgroundsShowOverGradients(t *testing.T) {
 	s := styled(t, "bg-linear-to-b from-zinc-700 to-zinc-800 active:bg-zinc-600")
 	if len(s.Gradients) == 0 || s.Active == nil || s.Active.Background != tailwindPalette["zinc"][6] {
 		t.Fatalf("active: %+v", s.Active)
@@ -308,7 +306,7 @@ func TestNSHStateBackgroundsShowOverGradients(t *testing.T) {
 	}
 }
 
-func TestNSHTransforms(t *testing.T) {
+func TestTransforms(t *testing.T) {
 	tr := styled(t, "-translate-x-1/2 translate-y-2 rotate-45 scale-110").Transform
 	want(t, "translate-x", tr.TranslateXPercent, -50)
 	want(t, "translate-y", tr.TranslateY, 8)
@@ -325,7 +323,7 @@ func TestNSHTransforms(t *testing.T) {
 		RotateY: 12, SkewX: 1, SkewY: 2})
 }
 
-func TestNSHEffectsAndInteraction(t *testing.T) {
+func TestEffectsAndInteraction(t *testing.T) {
 	s := styled(t, "blur-sm brightness-125 backdrop-blur-md mix-blend-multiply outline-2 outline-offset-2 outline-blue-500 invisible cursor-pointer")
 	want(t, "filters", len(s.Filters), 2)
 	want(t, "blur", s.Filters[0], Filter{Kind: FilterBlur, Amount: 8})
@@ -365,7 +363,7 @@ func TestNSHEffectsAndInteraction(t *testing.T) {
 	want(t, "cursor", s.Cursor, CursorPointer)
 }
 
-func TestNSHTransitionsAndAnimations(t *testing.T) {
+func TestTransitionsAndAnimations(t *testing.T) {
 	tr := styled(t, "transition-colors duration-300 ease-out delay-75").Transition
 	want(t, "duration", tr.Duration, 300*time.Millisecond)
 	want(t, "delay", tr.Delay, 75*time.Millisecond)
@@ -378,7 +376,7 @@ func TestNSHTransitionsAndAnimations(t *testing.T) {
 	want(t, "animate-spin", styled(t, "animate-spin").Animation.Keyframes, KeyframesSpin)
 }
 
-func TestNSHDisplay(t *testing.T) {
+func TestDisplay(t *testing.T) {
 	dir := func(classes string, env ...classEnv) FlexDirection { return styled(t, classes, env...).Direction }
 	want(t, "flex", styled(t, "flex").Display, DisplayFlex)
 	want(t, "flex row", dir("flex"), Row)
@@ -399,7 +397,7 @@ func TestNSHDisplay(t *testing.T) {
 	want(t, "md:inline-block", styled(t, "hidden md:inline-block", twWide(800)).Display, DisplayBlock)
 }
 
-func TestNSHGrid(t *testing.T) {
+func TestGrid(t *testing.T) {
 	s := styled(t, "grid grid-cols-3 gap-2 col-span-2")
 	want(t, "grid", s.Display, DisplayGrid)
 	want(t, "cols", s.GridTemplateColumns, "repeat(3, minmax(0, 1fr))")
@@ -414,7 +412,7 @@ func TestNSHGrid(t *testing.T) {
 	want(t, "invalid placements set nothing", [2]any{s.GridColumn, s.GridAutoRows}, [2]any{GridLines{}, GridTracks("")})
 }
 
-func TestNSHAlignmentFollowsTailwindCSS(t *testing.T) {
+func TestAlignmentFollowsTailwindCSS(t *testing.T) {
 	for class, w := range map[string][2]any{
 		"justify-start": {Align(0), JustifyStart}, "justify-end": {Align(0), JustifyEnd},
 		"justify-center": {Align(0), JustifyCenter}, "justify-between": {Align(0), JustifySpaceBetween},
@@ -458,7 +456,7 @@ func TestNSHAlignmentFollowsTailwindCSS(t *testing.T) {
 	}
 }
 
-func TestNSHGridUtilitiesFollowTailwindCSS(t *testing.T) {
+func TestGridUtilitiesFollowTailwindCSS(t *testing.T) {
 	s := styled(t, "col-[number:2] row-span-[number:3] auto-cols-[length:13px]")
 	want(t, "col", s.GridColumn.Start, GridLine(2))
 	want(t, "row span", s.GridRow.Start, GridSpan(3))
@@ -469,7 +467,7 @@ func TestNSHGridUtilitiesFollowTailwindCSS(t *testing.T) {
 	want(t, "negatives", len(unknownOf(defaultTailwind, negatives)), 7)
 }
 
-func TestNSHVariants(t *testing.T) {
+func TestVariants(t *testing.T) {
 	l := defaultTailwind.parse("bg-white dark:bg-black md:p-8 hover:opacity-80 group-active:scale-95 ios:pt-1 android:pt-2 rtl:ml-2")
 	if len(l.unknown) > 0 || !l.env {
 		t.Errorf("unknown %q, env %v", l.unknown, l.env)
@@ -488,7 +486,7 @@ func TestNSHVariants(t *testing.T) {
 	want(t, "screen", [2]Length{s.Width, s.Height}, [2]Length{Pt(390), Pt(844)})
 }
 
-func TestNSHCheckedVariants(t *testing.T) {
+func TestCheckedVariants(t *testing.T) {
 	s := styled(t, "bg-white checked:bg-black")
 	if s.Checked == nil || s.Checked.Background != RGB(0) {
 		t.Errorf("checked: %+v", s.Checked)
@@ -500,7 +498,7 @@ func TestNSHCheckedVariants(t *testing.T) {
 	}
 }
 
-func TestNSHIndeterminateVariants(t *testing.T) {
+func TestIndeterminateVariants(t *testing.T) {
 	s := styled(t, "bg-white checked:bg-black indeterminate:bg-red-500")
 	if s.Indeterminate == nil || s.Indeterminate.Background != RGB(0xfb2c36) || s.Checked.Background != RGB(0) {
 		t.Errorf("indeterminate: %+v %+v", s.Indeterminate, s.Checked)
@@ -510,7 +508,7 @@ func TestNSHIndeterminateVariants(t *testing.T) {
 	}
 }
 
-func TestNSHGroups(t *testing.T) {
+func TestGroups(t *testing.T) {
 	want(t, "groups", strings.Join(defaultTailwind.parse("group/card p-2").groups, ","), "card")
 	s := styled(t, "opacity-100 group-hover/card:opacity-50")
 	if s.GroupStyle == nil || s.GroupStyle.Name != "card" || s.GroupStyle.Hover == nil ||
@@ -523,12 +521,12 @@ func TestNSHGroups(t *testing.T) {
 	want(t, "last:", s.Opacity, Alpha(0.25))
 }
 
-func TestNSHUnknownClassesAreReported(t *testing.T) {
+func TestUnknownUtilitiesAndVariantsAreReported(t *testing.T) {
 	want(t, "unknown", strings.Join(unknownOf(defaultTailwind, "p-4 bg-nope-500 flexx hover:wat antialiased"), " "),
 		"bg-nope-500 flexx hover:wat")
 }
 
-func TestNSHClassesWithoutANativeMeaningAreUnknown(t *testing.T) {
+func TestClassesWithoutANativeMeaningAreUnknown(t *testing.T) {
 	allUnknown := func(classes string) {
 		t.Helper()
 		got := unknownOf(defaultTailwind, classes)
@@ -563,7 +561,7 @@ func TestNSHClassesWithoutANativeMeaningAreUnknown(t *testing.T) {
 	}
 }
 
-func TestNSHPlaceholderAndProps(t *testing.T) {
+func TestPlaceholderAndProps(t *testing.T) {
 	s, _ := tw(t, "placeholder:text-zinc-400 selection:bg-blue-500 line-clamp-2 pointer-events-none select-none object-contain")
 	want(t, "placeholder", s.PlaceholderColor, RGB(0x9f9fa9))
 	want(t, "selection", s.SelectionColor, RGB(0x2b7fff))
@@ -579,12 +577,12 @@ func TestNSHPlaceholderAndProps(t *testing.T) {
 		"selection:text-blue-500 placeholder:italic placeholder:bg-red-500 selection:opacity-50")
 }
 
-func TestNSHFontTokensAreTailwindsSansAndMono(t *testing.T) {
+func TestFontTokensAreTailwindsSansAndMono(t *testing.T) {
 	want(t, "font-mono", styled(t, "font-mono").FontFamily, "monospace")
 	want(t, "font-[family-name:Fira_Code]", styled(t, "font-[family-name:Fira_Code]").FontFamily, "Fira Code")
 }
 
-func TestNSHCurrentColorsFollowTheCascadeAndInherit(t *testing.T) {
+func TestCurrentColorsFollowTheCascadeAndInherit(t *testing.T) {
 	for _, classes := range []string{
 		"text-red-500 border-2 border-blue-500 border-current ring ring-blue-500 ring-current outline-2 outline-blue-500 outline-current",
 		"text-red-500 border-current border-2 ring-current ring outline-current outline-2",
@@ -600,7 +598,7 @@ func TestNSHCurrentColorsFollowTheCascadeAndInherit(t *testing.T) {
 	want(t, "text-current", styled(t, "text-red-500 text-current").Color, 0)
 }
 
-func TestNSHArbitraryLengthsRequireCSSUnitsAndUseTheConfiguredRem(t *testing.T) {
+func TestArbitraryLengthsRequireCSSUnitsAndUseTheConfiguredRem(t *testing.T) {
 	ext, err := ParseTailwind([]byte("rem: 20"))
 	if err != nil {
 		t.Fatal(err)
@@ -615,7 +613,7 @@ func TestNSHArbitraryLengthsRequireCSSUnitsAndUseTheConfiguredRem(t *testing.T) 
 	want(t, "inset-s-4", styled(t, "inset-s-4").Left, styled(t, "start-4").Left)
 }
 
-func TestNSHConfiguredRemReachesCompositeCSSValues(t *testing.T) {
+func TestConfiguredRemReachesCompositeCSSValues(t *testing.T) {
 	ext, err := ParseTailwind([]byte("rem: 20"))
 	if err != nil {
 		t.Fatal(err)
@@ -626,7 +624,7 @@ func TestNSHConfiguredRemReachesCompositeCSSValues(t *testing.T) {
 	want(t, "shadow", [3]Points{sh.Offset.Y, sh.Blur, sh.Spread}, [3]Points{20, 40, 3})
 }
 
-func TestNSHObjectPositions(t *testing.T) {
+func TestObjectPositions(t *testing.T) {
 	at := func(class string) ObjectPosition { return styled(t, class).ObjectPosition }
 	pos := func(s string) ObjectPosition {
 		p, err := ParseObjectPosition(s)
@@ -652,7 +650,7 @@ func TestNSHObjectPositions(t *testing.T) {
 		"object-[sideways] object-[1px_2px_3px] object-middle")
 }
 
-func TestNSHVariantsSortAsTailwindSortsThem(t *testing.T) {
+func TestVariantsSortAsTailwindSortsThem(t *testing.T) {
 	pad := func(classes string, env classEnv) Points { return styled(t, classes, env).Padding.Left }
 	want(t, "max-md max-lg", pad("max-md:p-2 max-lg:p-4", twWide(600)), 8)
 	want(t, "max-lg max-md", pad("max-lg:p-4 max-md:p-2", twWide(600)), 8)
@@ -664,7 +662,7 @@ func TestNSHVariantsSortAsTailwindSortsThem(t *testing.T) {
 	}
 }
 
-func TestNSHBareValuesFollowTailwindsGrammar(t *testing.T) {
+func TestBareValuesFollowTailwindsGrammar(t *testing.T) {
 	for _, c := range strings.Fields(`p-.5 p-+4 m-1e1 border-1.5 ring-2.5 outline-0.5 duration-1.5 brightness-1.5 grow-1.5
 		line-clamp-1.5 z-+4 grid-cols-+2 decoration-px outline-px outline-offset-px underline-offset-px w-prose min-w-prose
 		size-screen w-1.5/2 from-10.5% p-[-4px] w-[-10px] gap-[-2px] rounded-[-4px] text-[-4px]`) {
@@ -683,12 +681,12 @@ func TestNSHBareValuesFollowTailwindsGrammar(t *testing.T) {
 	}
 }
 
-func TestNSHStickyIsPositionSticky(t *testing.T) {
+func TestStickyIsPositionSticky(t *testing.T) {
 	want(t, "sticky", styled(t, "sticky top-0").Position, Sticky)
 	want(t, "sticky absolute", styled(t, "sticky absolute").Position, Absolute)
 }
 
-func TestNSHSVGPaintUtilitiesFollowTailwindCSS(t *testing.T) {
+func TestSVGPaintUtilitiesFollowTailwindCSS(t *testing.T) {
 	s := styled(t, "fill-red-500/50 stroke-blue-500 stroke-2")
 	want(t, "fill", s.Fill, PaintColor(Color(0xfb2c3680)))
 	want(t, "stroke", s.Stroke, PaintColor(RGB(0x2b7fff)))
@@ -706,7 +704,7 @@ func TestNSHSVGPaintUtilitiesFollowTailwindCSS(t *testing.T) {
 	want(t, "stroke-primary", styled(t, "stroke-primary").Stroke, PaintColor(primary))
 }
 
-func TestNSHEnvInArbitrarySpacing(t *testing.T) {
+func TestEnvInArbitrarySpacing(t *testing.T) {
 	s := styled(t, "pb-[env(safe-area-inset-bottom)] pt-[calc(env(safe-area-inset-top)+8px)] "+
 		"mb-[env(keyboard-inset-height)] ml-[calc(4px_+_env(safe-area-inset-left))] px-[env(safe-area-inset-right,_4px)]")
 	want(t, "padding env", s.PaddingEnv, EnvAll(EnvSafeArea))

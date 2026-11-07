@@ -1,16 +1,12 @@
 # Roadmap
 
-This plan lists what NSGo still lacks of NSH's 0.4.0 release (tag `v0.4.0`, `e626a8dd`), in the order to build it. Each item names its NSH reference and the result that finishes it. What exists is in [ARCHITECTURE.md](../ARCHITECTURE.md), and what NSGo leaves out on purpose in [NSGo and NSH](architecture/nsh.md#what-nsgo-leaves-out). Design questions that block an item are in [Open questions](../ARCHITECTURE.md#open-questions).
+This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`, `e626a8dd`), in the order to build it, each with tests of NSGo's own. Each item names its NSH reference and the result that finishes it. What exists is in [ARCHITECTURE.md](../ARCHITECTURE.md), and what NSGo leaves out on purpose in [NSGo and NSH](architecture/nsh.md#what-nsgo-leaves-out). Design questions that block an item are in [Open questions](../ARCHITECTURE.md#open-questions).
 
-References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Following NSH's releases](architecture/nsh.md#following-nshs-releases) says how to rebuild this plan for NSH's next release.
-
-## NSH's apps on NSGo
-
-NSH's own apps and tests are the measure of alignment: each runs with its imports renamed from `nsh` to `nsgo`, and `go test ./tsx` runs its gallery, the gallery's tests, its examples with theirs, and its compat cases (`TestNSHGallery`, `TestNSHGalleryTests`, `TestNSHExamples`, `TestNSHCompat`). On 0.3.0 all of them passed but what needs the standard modules. Against 0.4.0 on 2026-11-07, 129 of the 162 compat cases that run, all 15 examples and 56 of the 353 gallery tests passed, and none of the gallery's 29 demos opened: its shell reads `process.env` as it starts, which waits for its [open question](../ARCHITECTURE.md#open-questions). The browser domain's one case importing `process` runs as a stub, so its others do. The sections below are what the rest fail on, each closed by the cases it names. `.nsgo/types` then exports the type names 0.4.0's `.nsh/types` does.
+References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
 ## Components of 0.4.0: plots
 
-Independent of the other components. Done when `base-plot` passes and the gallery's Charts page shows each mark.
+Independent of the other components. Done when the gallery's Charts page shows each mark.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
@@ -23,10 +19,10 @@ Each a project of its own.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Rich editor | `rich-editor.md` | `RichEditor`, a ProseMirror-style document with lists, mentions, tables (merged cells, resizing, reordering), a bubble menu, undo grouped by time and input methods composing in the line; the `base-rich-editor-*` cases pass |
-| The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns), and the app's `Scrollbar` drawn above its rows; `base-data-table` passes |
+| Rich editor | `rich-editor.md` | `RichEditor`, a ProseMirror-style document with lists, mentions, tables (merged cells, resizing, reordering), a bubble menu, undo grouped by time and input methods composing in the line |
+| The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns), and the app's `Scrollbar` drawn above its rows |
 | Tree without NSGo's extras | `nsh/crates/nsh-base/src/tree.rs` | `base.Tree` takes only NSH's props: its `Selection`, `SelectOnly` and `Folder` move to `ui.Tree`, and `Selection` leaves `base` for `ui` |
-| Editor and diff | `editor.md`, `diff.md` | The Editor's gutter and overview ruler decorations, the DiffView's scroll position and change positions reported; `base-editor` and `base-diff` pass |
+| Editor and diff | `editor.md`, `diff.md` | The Editor's gutter and overview ruler decorations, the DiffView's scroll position and change positions reported |
 
 ## Shaders and transitions
 
@@ -34,9 +30,9 @@ NSH 0.4.0's `Shader` draws a box with a WGSL `shade(uv)` (`shaders.md`); NSGo's 
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| WGSL for TSX | `shaders.md` (The contract, Validation and limits) | A TSX `Shader` compiles its WGSL into `internal/shaderir`, with NSH's built-ins, uniforms and limits, so `core-shader` passes on every backend |
+| WGSL for TSX | `shaders.md` (The contract, Validation and limits) | A TSX `Shader` compiles its WGSL into `internal/shaderir`, with NSH's built-ins, uniforms and limits on every backend |
 | Effects and transitions | `shaders.md` (Effects, transitions and pictures) | `ShaderEffect` draws a view's children through a shader, `ShaderTransition` changes them, and `ScreenEffect` and `ScreenTransition` cover the screen, picturing children only when they changed, as NSH's backends do |
-| Pages and dialogs | `shaders.md` (Pages and dialogs) | Pages a stack pushes and pops and dialogs that open and close come and go through a shader, with `core-shader-effects` and `base-transition-shader` passing |
+| Pages and dialogs | `shaders.md` (Pages and dialogs) | Pages a stack pushes and pops and dialogs that open and close come and go through a shader |
 
 ## TSX and dynamic delivery
 
@@ -56,7 +52,7 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 | Input sources | Not in NSH; Onevra's palette, macOS only | `Scope.SelectInputSource` selects a keyboard layout on Windows and Linux too |
 | Speech | `sandbox.md` (`speech`), `nsh`'s `Speech` | `Speech.start` sessions recognize speech on macOS and iOS and report their transcript |
 | The app's lifecycle | `nsh`'s `lifecycle()` (NSH `#747`) | `lifecycle()` reads, reactively, whether the app is `active`, `inactive` (visible without the focus) or in the `background`, which every backend reports |
-| Clipboard images as URLs | `api-naming.md` (Clipboard) | `readImage` promises a URL and rejects what cannot be read, on every backend (`mod-clipboard` passes) |
+| Clipboard images as URLs | `api-naming.md` (Clipboard) | `readImage` promises a URL and rejects what cannot be read, on every backend |
 | Web views of 0.4.0 | `macos.md` | macOS saves the downloads a web view's app opts into (`onDownload`, which no backend reports yet) to the app's data directory, and web views take trusted input (`sendInput`), which only a declared capability grants |
 
 ## Performance against NSH's baselines
@@ -132,7 +128,7 @@ These items wait for community contributions, and a change to one backend record
 | Recording on the other platforms | — | `microphone.Capture` records on Windows, Linux and Android (`AudioRecord` and `RECORD_AUDIO`, with `classes.dex` rebuilt), as it does on macOS and iOS |
 | Recording beside video on iOS | — | A video that starts playing with an audio session of its own keeps a recording going, which now loses the session to it, as `audiosession_ios.go` and `microphone` share the `AVAudioSession` without knowing of each other |
 | Levels and spin buttons | `elements.md` | `View.AccessibilityLevel` reaches the screen readers of macOS, iOS, Windows, Linux and Android as it does the web's `aria-level`, a `NumberInput`'s `RoleSpinButton` holds on the native text fields of iOS and Android, which take the role from their kind, and Android's `NsgoView` knows the role, with `classes.dex` rebuilt |
-| Bars in multiline inputs | `components.md` (Scroll bars) | A multiline `Input` reports its text's offset and takes `ScrollTo` on every backend, so `scrollbar={theme}` draws a `Scrollbar` over its text; `base-scrollbar`'s last step leaves `compatDepartures` |
+| Bars in multiline inputs | `components.md` (Scroll bars) | A multiline `Input` reports its text's offset and takes `ScrollTo` on every backend, so `scrollbar={theme}` draws a `Scrollbar` over its text |
 | Modal reports | `elements.md` (`<Dialog>`) | Every backend reports a modal shown once it is presented and gone once it is dismissed (`EventModalShown`, `EventModalDismissed`), and the insets a screen keeps clear of (`EventScreenInsets`), so `Dialog`'s `OnOpen` and `OnClose` follow the platform instead of the animation's timer |
 | Eyedroppers on the other desktops | `components.md` (`ColorEyeDropper`) | `Scope.PickScreenColor` works on Windows and Linux, where `ColorEyeDropper` is disabled, as NSH's is, or stays disabled by decision |
 | Real file drags | `file-drop.md` | A real drag from Finder and from a Linux file manager is checked to reach a view, as one from Explorer is |

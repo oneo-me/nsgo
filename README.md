@@ -182,14 +182,12 @@ go test ./...
 bench/run.sh                                       # measure the quotes benchmark (bench/README.md)
 ```
 
-NSGo uses NSH as its reference implementation, and aligns with its releases. Clone it beside the repository, as `../nsh`, and check out its latest release tag, never `main`:
+NSGo reads NSH as a design reference; none of its tests need it. To read it, clone it beside the repository, as `../nsh`, and check out its latest release tag, never `main`:
 
 ```sh
 git clone https://github.com/longbridge/nsh.git ../nsh
 git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 ```
-
-`go test ./tsx` runs NSH's apps and compat cases from that checkout, or from `$NSH_DIR` when set, and skips them without one.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md) before changing code.
 
