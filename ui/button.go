@@ -23,10 +23,9 @@ const (
 	ButtonPlain
 )
 
-// Button is Onevra's button, 28 pt tall: Text with an optional leading
-// Icon, or the Icon alone in a square. base.Button gives the behavior; the
-// look is ui's. Small is the same button, kept for callers that
-// ask for a dense one.
+// Button is Onevra's button, as tall as its Size: Text with an optional
+// leading Icon, or the Icon alone in a square. base.Button gives the
+// behavior; the look is ui's.
 type Button struct {
 	Text    string
 	Variant ButtonVariant
@@ -38,18 +37,18 @@ type Button struct {
 	Label    string
 	Disabled func() bool
 	// Flex grows it to share a row with its siblings.
-	Flex  float32
-	Small bool
-	// Size is the square of a button of an icon alone, ButtonHeight when 0,
-	// IconSize its glyph's, 14 when 0, and Tint its color, the look's when
-	// nil.
-	Size, IconSize core.Points
+	Flex float32
+	Size Size
+	// Side is the square of a button of an icon alone, its height when 0,
+	// to line it up with what is not a control's height. IconSize is its
+	// glyph's, the Size's when 0, and Tint its color, the look's when nil.
+	Side, IconSize core.Points
 	Tint           func() core.Color
 	TestID         string
 	OnPress        func()
 }
 
-// ButtonHeight is a button's height.
+// ButtonHeight is a button's height at SizeDefault.
 const ButtonHeight core.Points = 28
 
 // Render implements core.Node.
@@ -112,7 +111,7 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 	if b.Icon != nil {
 		glyph, tint := b.IconSize, b.Tint
 		if glyph == 0 {
-			glyph = 14
+			glyph = b.Size.glyph()
 		}
 		if tint == nil {
 			tint = fg
@@ -120,13 +119,13 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 		children = append(children, Icon(b.Icon, glyph, tint))
 	}
 	if b.Text != "" || b.Icon == nil {
-		children = append(children, Text(b.Text, 13, Regular, fg))
+		children = append(children, Text(b.Text, b.Size.text().FontSize, Regular, fg))
 	}
-	shape := core.Style{Height: core.Pt(ButtonHeight), Padding: core.Symmetric(0, 14)}
+	shape := core.Style{Height: core.Pt(b.Size.Height()), Padding: core.Symmetric(0, b.Size.inset())}
 	if b.Text == "" && b.Icon != nil {
-		side := b.Size
+		side := b.Side
 		if side == 0 {
-			side = ButtonHeight
+			side = b.Size.Height()
 		}
 		shape = core.Style{Width: core.Pt(side), Height: core.Pt(side)}
 	}

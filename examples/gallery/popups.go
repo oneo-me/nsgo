@@ -95,7 +95,7 @@ func menuItems(cx *core.Scope, last *core.Signal[string], checked, disabled *cor
 			ui.MenuItem{Text: tr.LibBanana(), OnSelect: choose(tr.LibBanana())},
 		}},
 		ui.MenuSeparator{},
-		ui.MenuItem{Text: tr.OverlayDeleteTheDraft(), Danger: true, OnSelect: choose(tr.OverlayDeleteTheDraft())},
+		ui.MenuItem{Text: tr.OverlayDeleteTheDraft(), Variant: ui.MenuItemDanger, OnSelect: choose(tr.OverlayDeleteTheDraft())},
 	}
 }
 

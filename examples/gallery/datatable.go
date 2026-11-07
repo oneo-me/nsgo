@@ -398,8 +398,8 @@ func dataTableDemo(cx *core.Scope) core.Node {
 		}},
 		Section{Title: tr.KitActions(), Note: "datatable.Ref", Children: []core.Node{
 			ui.Wrap{Children: []core.Node{
-				ui.Button{Text: tr.TableRow500000(), Label: tr.TableGoToRow500000(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { table.ScrollToRow(499_999, false) }},
-				ui.Button{Text: tr.TableIndicator30(), Label: tr.TableGoToIndicator30(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { table.ScrollToColumn("x30", false) }},
+				ui.Button{Text: tr.TableRow500000(), Label: tr.TableGoToRow500000(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { table.ScrollToRow(499_999, false) }},
+				ui.Button{Text: tr.TableIndicator30(), Label: tr.TableGoToIndicator30(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { table.ScrollToColumn("x30", false) }},
 			}},
 		}},
 		Section{Title: tr.TerminalStatus(), Note: "OnVisibleRowsChange", Children: []core.Node{

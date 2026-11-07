@@ -17,7 +17,7 @@ func TestHoldToConfirm(t *testing.T) {
 		confirms := 0
 		app, _ := start(t, e, func(cx *core.Scope) core.Node {
 			done = core.NewSignal(cx, false)
-			return HoldToConfirm{TestID: "hold", Text: "Hold to delete", ConfirmedText: "Deleted", Tone: HoldDanger,
+			return HoldToConfirm{TestID: "hold", Text: "Hold to delete", ConfirmedText: "Deleted", Variant: HoldDanger,
 				Confirmed: done.Get, OnConfirm: func() { confirms++; done.Set(true) }}
 		}, nsgotest.ManualFrames())
 		app.PressDown("hold")

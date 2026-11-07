@@ -159,7 +159,7 @@ func diffDemo(cx *core.Scope) core.Node {
 	last := core.NewSignal(cx, "—")
 	ref := &diff.Ref{}
 	small := func(label string, onPress func()) core.Node {
-		return ui.Button{Text: label, Variant: ui.ButtonSecondary, Small: true, OnPress: onPress}
+		return ui.Button{Text: label, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: onPress}
 	}
 	modes := []ui.Option[diff.Inline]{{Value: diff.InlineWordAlt, Label: tr.DiffWords()}, {Value: diff.InlineWord, Label: tr.DiffEachWord()},
 		{Value: diff.InlineChar, Label: tr.DiffCharacters()}, {Value: diff.InlineNone, Label: tr.DiffNone()}}
@@ -226,11 +226,11 @@ func diffDemo(cx *core.Scope) core.Node {
 		}},
 		Section{Title: tr.KitActions(), Note: "diff.Ref", Children: []core.Node{
 			ui.Wrap{Children: []core.Node{
-				ui.Button{Text: tr.DiffPreviousChange(), Icon: lucide.ArrowUp, Label: tr.DiffPreviousChange(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+				ui.Button{Text: tr.DiffPreviousChange(), Icon: lucide.ArrowUp, Label: tr.DiffPreviousChange(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() {
 					i, _ := ref.PreviousHunk()
 					last.Set(tr.DiffChange(i + 1))
 				}},
-				ui.Button{Text: tr.DiffNextChange(), Icon: lucide.ArrowDown, Label: tr.DiffNextChange(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+				ui.Button{Text: tr.DiffNextChange(), Icon: lucide.ArrowDown, Label: tr.DiffNextChange(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() {
 					i, _ := ref.NextHunk()
 					last.Set(tr.DiffChange(i + 1))
 				}},

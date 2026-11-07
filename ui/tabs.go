@@ -35,6 +35,7 @@ type Tabs[T comparable] struct {
 	// Equal fills the width with tabs of one width, instead of each
 	// fitting its content.
 	Equal bool
+	Size  Size
 	// Label names the list for assistive technology.
 	Label  string
 	TestID string
@@ -58,11 +59,12 @@ func (t Tabs[T]) Render(cx *core.Scope) core.Node {
 		return -1
 	}
 	list := core.Style{Direction: core.Row, Gap: 4}
+	height, text, pad := t.Size.Height(), t.Size.text(), t.Size.inset()-2
 	tab := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 6,
-		Padding: core.Symmetric(8, 12), CornerRadius: RadiusControl, FontSize: TypeBody.FontSize, LineHeight: TypeBody.LineHeight, FontWeight: Regular}
+		Padding: core.Symmetric(pad-4, pad), CornerRadius: RadiusControl, FontSize: text.FontSize, LineHeight: text.LineHeight, FontWeight: Regular}
 	if !underline {
 		list.Padding, list.Gap, list.CornerRadius = core.All(2), 2, RadiusFull
-		tab.Height, tab.Padding, tab.CornerRadius = core.Pt(ButtonHeight), core.Symmetric(0, 12), ButtonHeight/2
+		tab.Height, tab.Padding, tab.CornerRadius = core.Pt(height), core.Symmetric(0, pad), height/2
 	}
 	if t.Equal {
 		// A grid's tracks are one width whether the list fills its parent or
@@ -125,7 +127,7 @@ func (t Tabs[T]) Render(cx *core.Scope) core.Node {
 		if o.Content == nil {
 			children = nil
 			if o.Icon != nil {
-				children = append(children, Icon(o.Icon, iconSize, Inherited))
+				children = append(children, Icon(o.Icon, t.Size.mark(), Inherited))
 			}
 			if o.Label != "" {
 				children = append(children, core.Text{Content: o.Label, MaxLines: 1})

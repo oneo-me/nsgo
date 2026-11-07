@@ -780,7 +780,7 @@ func chatDemo(cx *core.Scope) core.Node {
 		}
 		if wide {
 			nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Margin: core.Edges{Left: 7}}, Children: []core.Node{
-				ui.Switch{Checked: worktree.Get, OnChange: worktree.Set, Label: tr.ChatWorktree(), Small: true},
+				ui.Switch{Checked: worktree.Get, OnChange: worktree.Set, Label: tr.ChatWorktree(), Size: ui.SizeSmall},
 				ui.Text(tr.ChatWorktree(), 12.5, ui.Regular, func() core.Color { return ui.Mix(colors.Text(), colors.Muted(), 0.45) }),
 			}})
 		}

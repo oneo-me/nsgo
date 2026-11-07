@@ -228,7 +228,7 @@ func dockDemo(cx *core.Scope) core.Node {
 					area.ToggleZoom(g)
 				}
 			}},
-			ui.Button{Text: tr.DockResetTheLayout(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { layout.Set(initialDock()) }},
+			ui.Button{Text: tr.DockResetTheLayout(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { layout.Set(initialDock()) }},
 			Note{Text: Hint(cx, tr.DockHoldATabToReorder(), tr.DockDragATabOntoAnother())},
 		}},
 		Section{Title: tr.TerminalStatus(), Note: "OnLayoutChange", Children: []core.Node{

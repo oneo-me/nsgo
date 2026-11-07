@@ -259,10 +259,11 @@ func chartsDemo(cx *core.Scope) core.Node {
 				Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
 					tr := locales.For(cx)
 					var flex float32
+					size := ui.SizeSmall
 					if !pointer {
-						flex = 1
+						flex, size = 1, ui.SizeDefault
 					}
-					return ui.Button{Text: switchLabel(), Variant: ui.ButtonSecondary, Small: pointer, Flex: flex, OnPress: func() {
+					return ui.Button{Text: switchLabel(), Variant: ui.ButtonSecondary, Size: size, Flex: flex, OnPress: func() {
 						week.Set(1 - week.GetUntracked())
 						hover.Set(-1)
 						if week.GetUntracked() == 0 {

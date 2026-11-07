@@ -38,16 +38,22 @@ func (k Knob) Render(cx *core.Scope) core.Node {
 
 // boolKnob sets a boolean prop.
 func boolKnob(name string, s *core.Signal[bool]) core.Node {
-	return Knob{Name: name, Tight: true, Control: ui.Switch{Checked: s.Get, OnChange: s.Set, Label: name, Small: true}}
+	return Knob{Name: name, Tight: true, Control: ui.Switch{Checked: s.Get, OnChange: s.Set, Label: name, Size: ui.SizeSmall}}
 }
 
-// choiceKnob sets a prop to one of options: a segmented control while
-// they fit one, else a select.
+// choiceKnob sets a prop to one of options: small tabs at the row's end
+// while they fit one, else a select.
 func choiceKnob[T comparable](name string, s *core.Signal[T], options ...ui.Option[T]) core.Node {
 	if len(options) > 4 {
 		return Knob{Name: name, Control: ui.Select[T]{Label: name, TestID: "knob-" + name, Options: options, Value: s.Get, OnChange: s.Set, Style: core.Style{Width: core.Pct(100)}}}
 	}
-	return Knob{Name: name, Control: ui.Tabs[T]{Equal: true, Label: name, Options: options, Value: s.Get, OnChange: s.Set}}
+	return Knob{Name: name, Tight: true, Control: ui.Tabs[T]{Size: ui.SizeSmall, Label: name, Options: options, Value: s.Get, OnChange: s.Set,
+		Style: core.Style{AlignSelf: core.AlignEnd}}}
+}
+
+// sizeKnob sets a component's size.
+func sizeKnob(s *core.Signal[ui.Size]) core.Node {
+	return choiceKnob("Size", s, options([]ui.Size{ui.SizeSmall, ui.SizeDefault, ui.SizeLarge}, "Small", "Default", "Large")...)
 }
 
 // numberKnob sets a number from lo to hi, step by step.

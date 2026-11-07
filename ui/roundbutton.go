@@ -2,16 +2,24 @@ package ui
 
 import "github.com/oneo-me/nsgo/core"
 
-// RoundButton is a round icon button, 32 pt unless Size says otherwise:
-// the inverse of the page as ButtonPrimary, the default, and Onevra's
-// raised toolbar face otherwise. IconFunc and LabelFunc replace Icon and
-// Label.
+// RoundButtonVariant is a RoundButton's look.
+type RoundButtonVariant uint8
+
+const (
+	// RoundButtonPrimary is the inverse of the page. It is the default.
+	RoundButtonPrimary RoundButtonVariant = iota
+	// RoundButtonRaised is Onevra's raised toolbar face.
+	RoundButtonRaised
+)
+
+// RoundButton is a round icon button, Size points across, 32 when 0.
+// IconFunc and LabelFunc replace Icon and Label.
 type RoundButton struct {
 	Icon      func() *core.SVG
 	IconFunc  func() *core.SVG
 	Label     string
 	LabelFunc func() string
-	Variant   ButtonVariant
+	Variant   RoundButtonVariant
 	Size      core.Points
 	OnPress   func()
 }
@@ -31,7 +39,7 @@ func (b RoundButton) Render(cx *core.Scope) core.Node {
 	if label == nil {
 		label = constant(b.Label)
 	}
-	primary := b.Variant == ButtonPrimary
+	primary := b.Variant == RoundButtonPrimary
 	fg := colors.Text
 	if primary {
 		fg = colors.OnLight

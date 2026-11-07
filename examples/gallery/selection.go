@@ -42,11 +42,11 @@ func radioCard(last *core.Signal[string]) cardFunc {
 func switchCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		checked, small := core.NewSignal(cx, true), core.NewSignal(cx, false)
+		checked, size := core.NewSignal(cx, true), core.NewSignal(cx, ui.SizeDefault)
 		return Playground{Title: "Switch", Stage: func() core.Node {
-			return ui.Switch{Label: tr.LibStarred(), Checked: checked.Get, Small: small.Get(),
+			return ui.Switch{Label: tr.LibStarred(), Checked: checked.Get, Size: size.Get(),
 				OnChange: func(v bool) { checked.Set(v); last.Set(fmt.Sprintf("Switch: %s", onOff(tr, v))) }}
-		}, Knobs: []core.Node{boolKnob("Checked", checked), boolKnob("Small", small)}}
+		}, Knobs: []core.Node{boolKnob("Checked", checked), sizeKnob(size)}}
 	}
 }
 

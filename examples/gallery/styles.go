@@ -418,7 +418,7 @@ func rightToLeft(cx *core.Scope) core.Node {
 		chips = append(chips, chip(colors.Info, tints.Info, n))
 	}
 	monoNote := func(s string) func() string { return label(s) }
-	return Card{Title: tr.StylesRightToLeft(), Description: "", Actions: []core.Node{ui.Button{Text: tr.StylesFlip(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { toggled(rtl) }}}, Children: []core.Node{
+	return Card{Title: tr.StylesRightToLeft(), Description: "", Actions: []core.Node{ui.Button{Text: tr.StylesFlip(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { toggled(rtl) }}}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			d := core.DirectionLTR
 			if rtl.Get() {

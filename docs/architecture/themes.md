@@ -55,9 +55,26 @@ An embedding host's `core.Tokens` go over every theme's palette by the same role
 
 ## ui
 
-`ui` styles `base`, as NSH's gallery does with `examples/nsh-gallery-ui`, in the look of Onevra's gallery, for apps and the gallery alike: flat bordered cards and controls, the controls 28 pt tall in 13 pt text on every device. It holds `ui.Theme`, the default with the gallery's roles in `Palette.Colors` derived as Onevra derives its own, `ui.WarmDuskTheme` (Warm Dusk, 暖暮), Onevra's warm palette and terracotta accent, which an app passes to `SetTheme` as it does `ui.Theme` and the gallery's settings offer, its finishes, which take what floats from the theme's colors, and motion, and components written as structs with a `Render` method (`ui.Button{Text: …, Variant: ui.ButtonSecondary, OnPress: …}`): controls, popups, menus, panels, navigation, shells, lists and a tree, form fields, settings, images, and `ui/chat`, a conversation (`chat.FloatingConversation`, `chat.Turn`, `chat.Composer` and their chips, pickers and meters, ported from Onevra's `chat`). What only the gallery's demos share is in `examples/gallery/parts.go`. Each reads its colors where it is built, so a subtree's theme reaches it, and reads `ui.ColorsOf`, `ui.TintsOf` and `ui.FinOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.Text()`), and a method value (`colors.Text`) is a color to hand on; `colors.Now()` reads them all at once for a `Draw`, and `ui.Themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build, and the package's own every component.
+`ui` styles `base`, as NSH's gallery does with `examples/nsh-gallery-ui`, in the look of Onevra's gallery, for apps and the gallery alike: flat bordered cards and controls, the controls 28 pt tall in 13 pt text by default and the same on every device. It holds `ui.Theme`, the default with the gallery's roles in `Palette.Colors` derived as Onevra derives its own, `ui.WarmDuskTheme` (Warm Dusk, 暖暮), Onevra's warm palette and terracotta accent, which an app passes to `SetTheme` as it does `ui.Theme` and the gallery's settings offer, its finishes, which take what floats from the theme's colors, and motion, and components written as structs with a `Render` method (`ui.Button{Text: …, Variant: ui.ButtonSecondary, OnPress: …}`): controls, popups, menus, panels, navigation, shells, lists and a tree, form fields, settings, images, and `ui/chat`, a conversation (`chat.FloatingConversation`, `chat.Turn`, `chat.Composer` and their chips, pickers and meters, ported from Onevra's `chat`). What only the gallery's demos share is in `examples/gallery/parts.go`. Each reads its colors where it is built, so a subtree's theme reaches it, and reads `ui.ColorsOf`, `ui.TintsOf` and `ui.FinOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.Text()`), and a method value (`colors.Text`) is a color to hand on; `colors.Now()` reads them all at once for a `Draw`, and `ui.Themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build, and the package's own every component.
 
 Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffView` a `StylesFunc`, `TextView` a `StyleOf`), as `core.Span` has, so an app restyles them in place too.
+
+### Variants and sizes
+
+Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws: `BadgeVariant`, `ButtonVariant`, `HoldVariant`, `MenuItemVariant`, `RoundButtonVariant`, `SpinnerVariant` and `TabsVariant`.
+
+Most components have one size, so controls line up without an app choosing. `Button`, `Tabs` and `Switch` take `Size`, a `ui.Size` whose zero value is the default:
+
+| `ui.Size` | Height | Text | Icon in a button |
+| --- | --- | --- | --- |
+| `SizeSmall` | 24 pt | 12 pt | 12 pt |
+| `SizeDefault` | 28 pt | 13 pt | 14 pt |
+| `SizeLarge` | 32 pt | 14 pt | 16 pt |
+
+A `Switch` has a track of its own: 30 × 16, 40 × 20 and 48 × 24 pt. `Size.Height` gives the height, for what lines up with a control.
+
+- `Size` is `core.Points` on `Avatar`, `AvatarGroup`, `IconButton`, `ProgressRing`, `RoundButton` and `Spinner`: each is one shape that lines up with what surrounds it at any scale. `Button.Side` is the same for a button of an icon alone, since `Menu` takes a `Button` as its trigger.
+- A field that changes a component's form or behavior is neither: `Pagination.Compact` and `Stepper.Compact` choose what shows, `Tabs.Equal` how tabs share the width, and `Dialog.Bare` what the surface leaves to its content.
 
 ## Departures from NSH
 

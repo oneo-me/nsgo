@@ -18,6 +18,7 @@ func tabsCard(last *core.Signal[string]) cardFunc {
 		selected := core.NewSignal(cx, 0)
 		variant := core.NewSignal(cx, ui.TabsSegmented)
 		equal, icons, content, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+		size := core.NewSignal(cx, ui.SizeDefault)
 		return Playground{Title: "Tabs", Fill: true, Stage: func() core.Node {
 			choices := []ui.Option[int]{{Value: 0, Label: tr.ControlsOverview()}, {Value: 1, Label: tr.ControlsActivity()}, {Value: 2, Label: tr.ControlsBilling(), Disabled: disabled.Get}}
 			if icons.Get() {
@@ -28,10 +29,11 @@ func tabsCard(last *core.Signal[string]) cardFunc {
 					choices[i].Content = countedTab(cx, choices[i].Label, func() int { return (i + 1) * 4 })
 				}
 			}
-			return ui.Tabs[int]{Variant: variant.Get(), Equal: equal.Get(), Options: choices, Value: selected.Get, Label: tr.DemoTabs(),
+			return ui.Tabs[int]{Variant: variant.Get(), Size: size.Get(), Equal: equal.Get(), Options: choices, Value: selected.Get, Label: tr.DemoTabs(),
 				OnChange: func(i int) { selected.Set(i); last.Set(fmt.Sprintf("Tabs: %d", i)) }}
 		}, Knobs: []core.Node{
 			choiceKnob("Variant", variant, options([]ui.TabsVariant{ui.TabsSegmented, ui.TabsUnderline}, "Segmented", "Underline")...),
+			sizeKnob(size),
 			boolKnob("Equal", equal), boolKnob("Icon", icons), boolKnob("Content", content), boolKnob("Disabled", disabled),
 		}}
 	}

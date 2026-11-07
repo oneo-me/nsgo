@@ -25,7 +25,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 		step := func(name func() *core.SVG, by int, label string) core.Node {
 			// The buttons are for the pointer; the screen reader adjusts
 			// the quantity itself.
-			return core.View{AccessibilityElementsHidden: always, Children: []core.Node{ui.RoundButton{Icon: name, Label: label, Variant: ui.ButtonSecondary, Size: 36, OnPress: func() { adjust(by) }}}}
+			return core.View{AccessibilityElementsHidden: always, Children: []core.Node{ui.RoundButton{Icon: name, Label: label, Variant: ui.RoundButtonRaised, Size: 36, OnPress: func() { adjust(by) }}}}
 		}
 		return Card{Title: tr.A11yValuesAndHints(), Description: tr.A11yAnAdjustableElementSwipeUp(), Children: []core.Node{
 			core.View{Role: core.RoleAdjustable, Label: tr.A11yQuantity(), Hint: tr.A11ySwipeUpOrDownTo(), TestID: "a11y-quantity",

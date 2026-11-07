@@ -21,13 +21,13 @@ func badgeCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		tone := core.NewSignal(cx, ui.ToneAccent)
-		outline := core.NewSignal(cx, false)
+		variant := core.NewSignal(cx, ui.BadgeTinted)
 		return Playground{Title: "Badge", UIOnly: true, Stage: func() core.Node {
-			return ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Outline: outline.Get()}
+			return ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Variant: variant.Get()}
 		}, Knobs: []core.Node{
 			choiceKnob("Tone", tone, options([]ui.Tone{ui.ToneNeutral, ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger},
 				"Neutral", "Accent", "Info", "Warn", "Up", "Danger")...),
-			boolKnob("Outline", outline),
+			choiceKnob("Variant", variant, options([]ui.BadgeVariant{ui.BadgeTinted, ui.BadgeOutline}, "Tinted", "Outline")...),
 		}}
 	}
 }

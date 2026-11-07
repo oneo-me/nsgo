@@ -12,13 +12,12 @@ type Switch struct {
 	Checked  func() bool
 	OnChange func(bool)
 	Label    string
-	// Small is the compact switch, for a row of chips.
-	Small bool
+	Size     Size
 }
 
 // Render implements core.Node.
 func (s Switch) Render(cx *core.Scope) core.Node {
-	look := NewSwitchLook(cx, s.Checked, s.Small)
+	look := NewSwitchLook(cx, s.Checked, s.Size)
 	// More to press on every side, without taking more room.
 	return base.Switch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label,
 		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8)},
@@ -32,14 +31,12 @@ type SwitchLook struct {
 	Track, Thumb func() core.Style
 }
 
-// NewSwitchLook makes a switch's look, 40 × 20 or, small, 30 × 16 for
-// dense rows. on is the value the app owns; the knob follows it.
-func NewSwitchLook(cx *core.Scope, on func() bool, small bool) SwitchLook {
+// NewSwitchLook makes a switch's look: 40 × 20, 30 × 16 small and 48 × 24
+// large. on is the value the app owns; the knob follows it.
+func NewSwitchLook(cx *core.Scope, on func() bool, size Size) SwitchLook {
 	colors := ColorsOf(cx)
-	width, height, pad := core.Points(40), core.Points(20), core.Points(2)
-	if small {
-		width, height = 30, 16
-	}
+	width, height := sized[core.Points](size, 40, 30, 48), sized[core.Points](size, 20, 16, 24)
+	const pad core.Points = 2
 	knobH := height - 2*pad
 	knobW := knobH * 1.3
 	start := 0.0

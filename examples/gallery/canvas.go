@@ -260,7 +260,7 @@ func areaChart(cx *core.Scope) core.Node {
 		d.SetFillColor(c.Raised).BeginPath().RoundRect(w0-right-lw, y(mean)-9, lw, 18, 9).Fill()
 		d.SetFillColor(c.Text).SetTextBaseline(core.BaselineMiddle).FillText(l, w0-right-lw+6, y(mean), f)
 	}
-	return Card{Title: tr.CanvasRelayThroughput(), Description: tr.CanvasAreaAverageHatching(), Actions: []core.Node{ui.Button{Text: tr.CanvasNew(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() {
+	return Card{Title: tr.CanvasRelayThroughput(), Description: tr.CanvasAreaAverageHatching(), Actions: []core.Node{ui.Button{Text: tr.CanvasNew(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() {
 		data.Set(freshData(func() float64 { return float64(time.Now().UnixNano()%1000) / 1000 }))
 		replay()
 	}}}, Children: []core.Node{
@@ -353,7 +353,7 @@ func ridgeline(cx *core.Scope) core.Node {
 			d.FillText(day(tr), 0, 30+float32(di)*step-2, f)
 		}
 	}
-	return Card{Title: tr.CanvasFootfallByHour(), Description: tr.CanvasRidgelineOneCurveADay(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+	return Card{Title: tr.CanvasFootfallByHour(), Description: tr.CanvasRidgelineOneCurveADay(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: replay}}, Children: []core.Node{
 		Caption{Label: tr.CanvasGateBLastWeek(), Note: label(tr.CanvasPeak12001400())},
 		core.Canvas{Style: core.Style{Height: core.Pt(210)}, Draw: draw, Label: tr.CanvasFootfallRidgeline()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{Legend{Color: colors.Accent, Label: tr.CanvasWeekday()}, Legend{Color: colors.Info, Label: tr.CanvasWeekend()}}},
@@ -462,7 +462,7 @@ func dumbbell(cx *core.Scope) core.Node {
 			d.SetFillColor(tn).FillText(l, width-d.MeasureText(l, f11), cy, f11)
 		}
 	}
-	return Card{Title: tr.CanvasRouteLatency(), Description: tr.CanvasDumbbellBeforeAfter(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Small: true, OnPress: replay}}, Children: []core.Node{
+	return Card{Title: tr.CanvasRouteLatency(), Description: tr.CanvasDumbbellBeforeAfter(), Actions: []core.Node{ui.Button{Text: tr.CanvasReplay(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: replay}}, Children: []core.Node{
 		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(30*len(routesLatency) + 24))}, Draw: draw, Label: tr.CanvasRouteLatency()},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node{
 			Legend{Color: colors.Muted, Label: tr.CanvasBefore()}, Legend{Color: colors.Accent, Label: tr.CanvasAfter()}, Legend{Color: colors.Danger, Label: tr.CanvasRegressed()},
@@ -622,7 +622,7 @@ func sketch(cx *core.Scope) core.Node {
 			d.Stroke()
 		}
 	}
-	return Card{Title: tr.CanvasSketch(), Description: Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Small: true, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
+	return Card{Title: tr.CanvasSketch(), Description: Hint(cx, tr.CanvasTouchDrawFromTheEngine(), tr.CanvasDragDrawFromTheEngine()), Actions: []core.Node{ui.Button{Text: tr.CanvasClear(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, Disabled: func() bool { return len(strokes.Get()) == 0 }, OnPress: func() { strokes.Set(nil) }}}, Children: []core.Node{
 		core.View{TestID: "sketch", Responder: &core.Responder{Claims: []core.TouchClaim{{}}, Keep: true,
 			OnGrant: func(e core.ResponderEvent) {
 				strokes.Update(func(s [][]core.Point) [][]core.Point { return append(s, []core.Point{e.Position}) })

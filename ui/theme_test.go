@@ -36,7 +36,7 @@ func showcase(cx *core.Scope) core.Node {
 			TagInput{Label: "Tags", Tags: tags.Get, OnChange: tags.Set}, Rating{Label: "Rating", Value: func() int { return 3 }},
 			HStack{Gap: 8, Children: []core.Node{
 				ToggleButton{Text: "Bold", On: on.Get, OnChange: on.Set}, ToggleButton{Icon: lucide.Star, Label: "Star"},
-				HoldToConfirm{Text: "Hold", Tone: HoldDanger}, HoldToConfirm{Text: "Done", ConfirmedText: "Done", Confirmed: on.Get},
+				HoldToConfirm{Text: "Hold", Variant: HoldDanger}, HoldToConfirm{Text: "Done", ConfirmedText: "Done", Confirmed: on.Get},
 			}},
 			Stepper{Current: func() int { return 1 }, OnSelect: func(int) {},
 				Steps: []StepperStep{{Label: "One"}, {Label: "Two", Description: "Now"}, {Label: "Three", Error: "Failed"}}},

@@ -4,8 +4,10 @@
 // below this one, as chat has. Icons are Lucide's accessors.
 //
 // The look is Onevra's: a warm page, demos on flat bordered cards under
-// bold titles, flat bordered controls 28 pt tall in 13 pt text, 8 pt
-// corners and one terracotta accent, the same sizes on every device.
+// bold titles, flat bordered controls 28 pt tall in 13 pt text by default,
+// 8 pt corners and one terracotta accent, the same sizes on every device.
+// A component takes its look from Variant; the few of several sizes take
+// Size, in size.go, or points where they are one shape at any scale.
 //
 // Components are structs with a Render method: the app sets the fields
 // and handles changes. Each reads its colors where it is built (ColorsOf,

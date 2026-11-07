@@ -21,7 +21,7 @@ func TestMenu(t *testing.T) {
 					Submenu{Text: "Share", Back: "Back", Children: []core.Node{
 						MenuItem{Text: "Email", OnSelect: func() { chosen = "email" }},
 					}},
-					MenuItem{Text: "Delete", Danger: true, OnSelect: func() { chosen = "delete" }},
+					MenuItem{Text: "Delete", Variant: MenuItemDanger, OnSelect: func() { chosen = "delete" }},
 				}},
 			}}
 		})

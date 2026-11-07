@@ -102,7 +102,7 @@ func environmentCard(cx *core.Scope) core.Node {
 					return ui.ToneInfo
 				}
 				return ui.ToneWarn
-			}, Outline: true},
+			}, Variant: ui.BadgeOutline},
 		}},
 	}}
 }
@@ -485,7 +485,7 @@ func windowCard(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
 	small := func(l string, fn func()) core.Node {
-		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
+		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn}
 	}
 	if !desktop.IsAvailable(cx) {
 		return Card{Title: tr.SystemWindow(), Description: tr.SystemTitleBarCommandsFrameAnd(), Actions: []core.Node{ui.Badge{Text: tr.SystemDesktop()}}, Children: []core.Node{
@@ -569,12 +569,12 @@ func clipboardCard(cx *core.Scope) core.Node {
 	status := core.NewSignal(cx, tr.SystemNothingReadYet())
 	image := core.NewSignalFunc(cx, (*core.ClipboardImage)(nil), func(a, b *core.ClipboardImage) bool { return a == b })
 	small := func(l string, fn func()) core.Node {
-		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
+		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn}
 	}
 	return Card{Title: tr.SystemClipboard(), Description: tr.SystemTextImagesAndTheFiles(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
 		ui.Input{Input: base.Input{Value: clip.Get, OnChange: clip.Set, Label: tr.SystemClipboardText()}},
 		ui.Wrap{Children: []core.Node{
-			ui.Button{Text: tr.SystemCopyText(), Small: true, OnPress: func() { cx.SetClipboard(clip.GetUntracked()) }},
+			ui.Button{Text: tr.SystemCopyText(), Size: ui.SizeSmall, OnPress: func() { cx.SetClipboard(clip.GetUntracked()) }},
 			small(tr.SystemPasteText(), func() { cx.ReadClipboard(func(s string) { status.Set(tr.SystemText() + s) }) }),
 			small(tr.SystemCopyLogo(), func() { cx.SetClipboardImage(logoPNG) }),
 			small(tr.SystemPasteImage(), func() {
@@ -635,7 +635,7 @@ func servicesCard(cx *core.Scope) core.Node {
 		return func() { cx.PickImages(o, func(files []core.PickedFile) { asked.Set(true); picked.Set(files) }) }
 	}
 	small := func(l string, fn func()) core.Node {
-		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
+		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn}
 	}
 	names := map[core.Appearance]string{core.AppearanceSystem: tr.SystemTheSystemS(), core.AppearanceLight: "light", core.AppearanceDark: "dark"}
 	return Card{Title: tr.SystemLinksPhotosAndAppearance(), Description: tr.SystemOpenurlPickimagesSetappearance(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
@@ -760,7 +760,7 @@ func filesCard(cx *core.Scope) core.Node {
 		})
 	}
 	small := func(l string, fn func()) core.Node {
-		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Small: true, OnPress: fn}
+		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn}
 	}
 	return Card{Title: tr.SystemFiles2(), Description: tr.SystemPickfilesSavefile(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
 		Caption{Label: "PickFiles"},

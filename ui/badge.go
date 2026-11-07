@@ -2,15 +2,25 @@ package ui
 
 import "github.com/oneo-me/nsgo/core"
 
-// Badge is a small label in a tinted capsule, as Onevra's: Text, or what
-// TextFunc returns, in Tone, or the one ToneFunc returns. Outline draws
-// only its rim.
+// BadgeVariant is a Badge's look.
+type BadgeVariant uint8
+
+const (
+	// BadgeTinted fills the capsule with a tint of the tone. It is the
+	// default.
+	BadgeTinted BadgeVariant = iota
+	// BadgeOutline draws only the capsule's rim.
+	BadgeOutline
+)
+
+// Badge is a small label in a capsule, as Onevra's: Text, or what TextFunc
+// returns, in Tone, or the one ToneFunc returns.
 type Badge struct {
 	Text     string
 	TextFunc func() string
 	Tone     Tone
 	ToneFunc func() Tone
-	Outline  bool
+	Variant  BadgeVariant
 }
 
 // Render implements core.Node.
@@ -35,7 +45,7 @@ func (b Badge) Render(cx *core.Scope) core.Node {
 	return core.View{Style: core.Style{Padding: core.Symmetric(2, 8), AlignSelf: core.AlignStart, CornerRadius: 12, JustifyContent: core.JustifyCenter, BorderWidth: 1},
 		StyleFunc: func() core.Style {
 			t := tone()
-			if b.Outline {
+			if b.Variant == BadgeOutline {
 				return core.Style{BorderColor: Mix(colors.Background(), t.Color(cx), 0.5)}
 			}
 			if t == ToneNeutral {

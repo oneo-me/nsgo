@@ -9,7 +9,7 @@ Every place a component in `base` or `ui` changes on its own by device, without 
 - Branch only for what a device cannot do, such as hover without a pointer, or for a form listed under [presentation](#presentation).
 - Use `ui.Touch` for a branch on input. Use `Env.Idiom` or `Env.OS` only when touch is not the reason.
 
-Sizes are constants for this reason: `ui.ButtonHeight` is 28 points and `ui.RowHeight` 36 on every device. A phone's controls are therefore smaller than the platforms' 44-point guidance unless the app sizes them.
+Sizes are constants for this reason: `ui.ButtonHeight` is 28 points, [`Button` and `Tabs`](themes.md#variants-and-sizes) taking another size when an app asks for one, and `ui.RowHeight` 36 on every device. A phone's controls are therefore smaller than the platforms' 44-point guidance unless the app sizes them.
 
 ## Presentation
 

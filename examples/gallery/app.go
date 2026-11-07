@@ -647,7 +647,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		cx.OnKey("mod+b", g.toggleSidebar)
 	}
 	tr := locales.For(cx)
-	return ui.SidebarShell{TestID: "shell", Sidebar: g.sidebar(tr), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeToggle(cx)},
+	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: g.sidebar(tr), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeToggle(cx)},
 		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 212, MaxWidth: 360,
 		ResizeLabel: tr.AppResizeSidebar(),
@@ -660,13 +660,27 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		})}}
 }
 
-// sidebar is the desktop layout's tabs above the selected one's list of
-// the demos by group. A list hidden keeps its scroll position.
-func (g *gallery) sidebar(tr locales.Messages) []core.Node {
+// sidebarTabs are the desktop layout's small tabs, at the end of the
+// sidebar's header: icons named in tooltips, as words in every language
+// would not fit beside the window controls and the sidebar's toggle.
+func (g *gallery) sidebarTabs(tr locales.Messages) core.Node {
 	var options []ui.Option[int]
+	for i, t := range tabs {
+		title := t.title(tr)
+		options = append(options, ui.Option[int]{Value: i, Label: title, TestID: "tab-" + t.id,
+			Content: core.Func(func(*core.Scope) core.Node {
+				return ui.Tooltip{Text: title, Trigger: ui.Icon(t.icon, 14, ui.Inherited)}
+			})})
+	}
+	return ui.Tabs[int]{Size: ui.SizeSmall, Options: options, Value: g.tab.Get, OnChange: func(i int) { g.selectDemo(g.picked[i]) }, Label: tr.AppSections(),
+		Style: core.Style{AlignSelf: core.AlignCenter}}
+}
+
+// sidebar is the selected tab's list of the demos by group. A list hidden
+// keeps its scroll position.
+func (g *gallery) sidebar(tr locales.Messages) []core.Node {
 	var lists []core.Node
 	for i, t := range tabs {
-		options = append(options, ui.Option[int]{Value: i, Label: t.title(tr), TestID: "tab-" + t.id})
 		var sections []ui.SidebarSection
 		for _, grp := range t.groups {
 			var entries []ui.SidebarItem
@@ -684,12 +698,7 @@ func (g *gallery) sidebar(tr locales.Messages) []core.Node {
 				return s
 			}})
 	}
-	return []core.Node{
-		core.View{Style: core.Style{FlexShrink: 0, Padding: core.Edges{Right: 12, Bottom: 8, Left: 12}}, Children: []core.Node{
-			ui.Tabs[int]{Equal: true, Options: options, Value: g.tab.Get, OnChange: func(i int) { g.selectDemo(g.picked[i]) }, Label: tr.AppSections()},
-		}},
-		core.View{Style: ui.FillRest, Children: lists},
-	}
+	return []core.Node{core.View{Style: ui.FillRest, Children: lists}}
 }
 
 // demoTitle is the selected demo's group and name, as a path, in the

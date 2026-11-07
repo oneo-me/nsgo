@@ -19,9 +19,10 @@ func buttonCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		variant := core.NewSignal(cx, ui.ButtonPrimary)
-		small, icon, iconOnly, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+		size := core.NewSignal(cx, ui.SizeDefault)
+		icon, iconOnly, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
 		return Playground{Title: "Button", Stage: func() core.Node {
-			b := ui.Button{Text: tr.OverlaySave(), Variant: variant.Get(), Small: small.Get(), Disabled: disabled.Get, Label: tr.OverlaySave(),
+			b := ui.Button{Text: tr.OverlaySave(), Variant: variant.Get(), Size: size.Get(), Disabled: disabled.Get, Label: tr.OverlaySave(),
 				TestID: "button", OnPress: pressed(cx, last, "Button")}
 			if icon.Get() || iconOnly.Get() {
 				b.Icon = lucide.Send
@@ -32,7 +33,7 @@ func buttonCard(last *core.Signal[string]) cardFunc {
 			return b
 		}, Knobs: []core.Node{
 			choiceKnob("Variant", variant, buttonVariants...),
-			boolKnob("Small", small), boolKnob("Icon", icon), boolKnob("Text = \"\"", iconOnly), boolKnob("Disabled", disabled),
+			sizeKnob(size), boolKnob("Icon", icon), boolKnob("Text = \"\"", iconOnly), boolKnob("Disabled", disabled),
 		}}
 	}
 }
@@ -40,7 +41,7 @@ func buttonCard(last *core.Signal[string]) cardFunc {
 func iconButtonCard(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		variant := core.NewSignal(cx, ui.ButtonSecondary)
+		variant := core.NewSignal(cx, ui.RoundButtonRaised)
 		size := core.NewSignal(cx, 32.0)
 		selected, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
 		return Playground{Title: "IconButton · RoundButton", Stage: func() core.Node {
@@ -50,7 +51,8 @@ func iconButtonCard(last *core.Signal[string]) cardFunc {
 				ui.RoundButton{Icon: lucide.Plus, Label: tr.LibMore(), Size: s, Variant: variant.Get(), OnPress: pressed(cx, last, "RoundButton")},
 			}}
 		}, Knobs: []core.Node{
-			numberKnob("Size", size, 24, 56, 4), choiceKnob("Variant", variant, buttonVariants...),
+			numberKnob("Size", size, 24, 56, 4),
+			choiceKnob("Variant", variant, options([]ui.RoundButtonVariant{ui.RoundButtonPrimary, ui.RoundButtonRaised}, "Primary", "Raised")...),
 			boolKnob("Selected", selected), boolKnob("Disabled", disabled),
 		}}
 	}
@@ -140,15 +142,15 @@ func otpInputCard(last *core.Signal[string]) cardFunc {
 func holdPlayground(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		tone := core.NewSignal(cx, ui.HoldDanger)
+		variant := core.NewSignal(cx, ui.HoldDanger)
 		seconds := core.NewSignal(cx, 1.2)
 		confirmed, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
 		return Playground{Title: "HoldToConfirm", UIOnly: true, Stage: func() core.Node {
-			return ui.HoldToConfirm{Text: tr.LibHoldToDelete(), ConfirmedText: tr.LibDeleted(), Tone: tone.Get(), Hint: tr.LibHold(),
+			return ui.HoldToConfirm{Text: tr.LibHoldToDelete(), ConfirmedText: tr.LibDeleted(), Variant: variant.Get(), Hint: tr.LibHold(),
 				Duration: secondsOf(seconds.Get()), Disabled: disabled.Get, Confirmed: confirmed.Get,
 				OnConfirm: func() { confirmed.Set(true); last.Set(tr.LibDeleted()) }}
 		}, Knobs: []core.Node{
-			choiceKnob("Tone", tone, options([]ui.HoldTone{ui.HoldAccent, ui.HoldDanger, ui.HoldNeutral}, "Accent", "Danger", "Neutral")...),
+			choiceKnob("Variant", variant, options([]ui.HoldVariant{ui.HoldAccent, ui.HoldDanger, ui.HoldNeutral}, "Accent", "Danger", "Neutral")...),
 			numberKnob("Duration", seconds, 0.4, 3, 0.2), boolKnob("Confirmed", confirmed), boolKnob("Disabled", disabled),
 		}}
 	}

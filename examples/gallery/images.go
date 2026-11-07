@@ -185,7 +185,7 @@ func placeholders(cx *core.Scope) core.Node {
 			imageNote(cx, fmt.Sprintf("%d ms", f.ms), false),
 		}})
 	}
-	return Card{Title: tr.ImagesPlaceholderAndFade(), Description: tr.ImagesAPlaceholderThenAFade(), Actions: []core.Node{ui.Button{Text: tr.ImagesReload(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
+	return Card{Title: tr.ImagesPlaceholderAndFade(), Description: tr.ImagesAPlaceholderThenAFade(), Actions: []core.Node{ui.Button{Text: tr.ImagesReload(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { seed.Update(func(n int) int { return n + 1 }) }}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: cells},
 	}, Footer: []core.Node{
 		Caption{Label: tr.ImagesLoads(), Note: func() string { return itoa(seed.Get()) }},

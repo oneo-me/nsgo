@@ -290,6 +290,31 @@ func TestPhoneRestoresDemo(t *testing.T) {
 	}
 }
 
+// TestSidebarTabsFit keeps the small tabs centered in the sidebar's header,
+// past the window controls and the toggle at its narrowest, in every
+// language.
+func TestSidebarTabsFit(t *testing.T) {
+	for _, locale := range []string{"en-US", "zh-Hans", "zh-Hant", "ar"} {
+		env := desktopEnv
+		env.Locale = locale
+		env.TitleBar = core.Edges{Top: 28, Left: 78}
+		app := startDesktop(t, nsgotest.Environment(env))
+		head := app.Find("id:sidebar-header").Frame
+		list := app.Find("id:tab-components").Parent.Frame
+		const narrowest, clearOfToggle = 212, 12 + 78 + 40
+		if room := core.Points(narrowest - clearOfToggle - 12); list.Size.Width > room {
+			t.Fatalf("%s: the tabs are %v wide, with %v of room", locale, list.Size.Width, room)
+		}
+		if h := app.Find("id:tab-components").Frame.Size.Height; h != ui.SizeSmall.Height() {
+			t.Fatalf("%s: a tab is %v tall, want the small size", locale, h)
+		}
+		if top, want := list.Origin.Y, (head.Size.Height-list.Size.Height)/2; top != want {
+			t.Fatalf("%s: the tabs are %v down the header, want centered at %v", locale, top, want)
+		}
+		app.Press("id:tab-basics")
+	}
+}
+
 func TestSidebarToggles(t *testing.T) {
 	app := startDesktop(t)
 	app.Press("role:button Toggle sidebar")

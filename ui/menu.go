@@ -51,6 +51,16 @@ func menuSurface(cx *core.Scope) (popup func() core.Style, backdrop core.Style) 
 	}, scrim
 }
 
+// MenuItemVariant is a MenuItem's look.
+type MenuItemVariant uint8
+
+const (
+	// MenuItemDefault is in the text's color.
+	MenuItemDefault MenuItemVariant = iota
+	// MenuItemDanger is in the danger color, for a destructive choice.
+	MenuItemDanger
+)
+
 // MenuItem is a choice of a menu. Checked, when set, keeps a check before
 // its text while it returns true, for an option of the menu.
 type MenuItem struct {
@@ -60,10 +70,9 @@ type MenuItem struct {
 	Shortcut string
 	// Leading goes before its text, after its check and icon, and Trailing
 	// at its end, where a button's presses stay its own.
-	Leading  core.Node
-	Trailing core.Node
-	// Danger colors a destructive choice.
-	Danger          bool
+	Leading         core.Node
+	Trailing        core.Node
+	Variant         MenuItemVariant
 	Checked         func() bool
 	Disabled        func() bool
 	OnSelect        func()
@@ -76,7 +85,7 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
 	style, look := menuRow(cx)
 	fg := colors.Text
-	if i.Danger {
+	if i.Variant == MenuItemDanger {
 		fg = colors.Danger
 	}
 	children := menuLeading(cx, i.Icon, i.Checked)

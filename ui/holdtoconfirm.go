@@ -7,12 +7,12 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// HoldTone is the color a HoldToConfirm fills with.
-type HoldTone uint8
+// HoldVariant is a HoldToConfirm's look: the color it fills with.
+type HoldVariant uint8
 
 const (
 	// HoldAccent fills with the accent.
-	HoldAccent HoldTone = iota
+	HoldAccent HoldVariant = iota
 	// HoldDanger tints the face and fills with the danger color, for an
 	// action that cannot be undone.
 	HoldDanger
@@ -42,7 +42,7 @@ type HoldToConfirm struct {
 	Text          string
 	ConfirmedText string
 	Icon          func() *core.SVG
-	Tone          HoldTone
+	Variant       HoldVariant
 	Duration      time.Duration
 	Confirmed     func() bool
 	OnConfirm     func()
@@ -64,7 +64,7 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 	still := ReduceMotion(cx)
 
 	ink, fillColor, onFill, border := colors.Text, colors.AccentFill, colors.OnAccent, colors.Border
-	switch h.Tone {
+	switch h.Variant {
 	case HoldDanger:
 		ink, fillColor, onFill = colors.Danger, colors.Danger, colors.Background
 		border = func() core.Color { return Mix(colors.Border(), colors.Danger(), 0.32) }

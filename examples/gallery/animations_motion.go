@@ -353,7 +353,7 @@ func keyframesMotions(cx *core.Scope) core.Node {
 					core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0),
 						Direction: core.Row}, Children: segments},
 				}},
-			ui.Button{Text: tr.AnimCharge(), Small: true, Variant: ui.ButtonSecondary, OnPress: charging},
+			ui.Button{Text: tr.AnimCharge(), Size: ui.SizeSmall, Variant: ui.ButtonSecondary, OnPress: charging},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
 			APILine{Label: tr.AnimASpriteSheetFrameBy(), Names: "StepsEasing(8)"},

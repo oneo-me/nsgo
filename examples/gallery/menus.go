@@ -504,8 +504,8 @@ func menusDemo(cx *core.Scope) core.Node {
 		if env := cx.Env(); env.Desktop() && env.OS() != core.OSMacOS && env.OS() != core.OSWeb {
 			children = append(children, Note{Text: tr.MenusSetmenubarHidesTheBarWindows()},
 				ui.HStack{Gap: 8, Children: []core.Node{
-					ui.Button{Text: tr.MenusAlwaysShown(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }},
-					ui.Button{Text: tr.MenusAutoHide(), Variant: ui.ButtonSecondary, Small: true, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
+					ui.Button{Text: tr.MenusAlwaysShown(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarShown) }},
+					ui.Button{Text: tr.MenusAutoHide(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
 				}})
 		}
 		return Card{Title: tr.MenusTheApplicationMenu(), Description: tr.MenusTheSystemSMenuBar(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: children}
