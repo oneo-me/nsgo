@@ -16,7 +16,8 @@ import (
 // plays it is the playback category in the spoken audio mode, else the
 // same mixing with others; once none plays it goes back to what it was
 // and is deactivated, telling the apps it interrupted that they may play
-// again. Only the main thread touches it.
+// again. Only the main thread touches it here; microphone holds it too
+// while it records.
 
 // audioCategory is a session's category, mode and options.
 type audioCategory struct {
