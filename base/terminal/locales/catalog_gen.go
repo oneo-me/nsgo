@@ -10,8 +10,8 @@ import (
 // Source is the language the messages are written in.
 const Source = "en"
 
-// Catalog holds the messages' languages: en, the source, zh-Hans, zh-Hant, and those other packages supply.
-var Catalog = i18n.NewCatalog("en", "zh-Hans", "zh-Hant")
+// Catalog holds the messages' languages: en, the source, zh-Hans, and those other packages supply.
+var Catalog = i18n.NewCatalog("en", "zh-Hans")
 
 // Messages say the messages in one language; with mark, the source's
 // with their arguments marked, which a pseudo locale transforms.
@@ -110,22 +110,6 @@ var texts = map[string]*[numTexts]string{
 		"End",
 		"向上翻页",
 		"向下翻页",
-	},
-	"zh-Hant": {
-		"[程序已結束]",
-		"[連線已中斷]",
-		"Esc",
-		"Tab",
-		"Ctrl",
-		"Alt",
-		"左方向鍵",
-		"右方向鍵",
-		"上方向鍵",
-		"下方向鍵",
-		"Home",
-		"End",
-		"向上翻頁",
-		"向下翻頁",
 	},
 }
 
@@ -253,8 +237,6 @@ func (msgs Messages) ProcessExitedWithCode(code int) string {
 			return "[Process exited with code " + msgs.arg(i18n.FormatNumber("en", float64(code))) + "]"
 		case "zh-Hans":
 			return "[进程已退出，退出码 " + i18n.FormatNumber("zh-Hans", float64(code)) + "]"
-		case "zh-Hant":
-			return "[程序已結束，結束代碼 " + i18n.FormatNumber("zh-Hant", float64(code)) + "]"
 		}
 	}
 }

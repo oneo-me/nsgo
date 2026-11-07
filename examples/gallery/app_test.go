@@ -335,7 +335,7 @@ func TestPhoneRestoresDemo(t *testing.T) {
 // past the window controls and the toggle at its narrowest, in every
 // language.
 func TestSidebarTabsFit(t *testing.T) {
-	for _, locale := range []string{"en-US", "zh-Hans", "zh-Hant", "ar"} {
+	for _, locale := range []string{"en-US", "zh-Hans", "ar-XB"} {
 		env := desktopEnv
 		env.Locale = locale
 		env.TitleBar = core.Edges{Top: 28, Left: 78}
@@ -1228,34 +1228,24 @@ func looks(v *nsgotest.View, drawings bool) []string {
 }
 
 // TestLanguageSetting chooses a language in the settings, which the
-// setting says its words in, base's components follow and the layout's
-// direction too, and keeps it.
+// setting says its words in, and keeps it.
 func TestLanguageSetting(t *testing.T) {
 	app := startDesktop(t)
-	ltr := app.Find("id:settings").Frame.Origin.X
 	app.Press("id:settings")
 	app.Find("id:settings-dialog")
 	app.Press("id:language")
-	app.Find("text:简体中文")
-	app.Press("text:العربية")
-	if got, _ := app.Storage().GetItem(languageKey); got != "ar" {
-		t.Errorf("kept %q, want ar", got)
+	app.Press("text:简体中文")
+	if got, _ := app.Storage().GetItem(languageKey); got != "zh-Hans" {
+		t.Errorf("kept %q, want zh-Hans", got)
 	}
 	// The settings stay open in the new language.
-	app.Find("text:الإعدادات")
-	// The sidebar's footer runs from the right: the settings button,
-	// first, moves toward its end.
-	if rtl := app.Find("id:settings").Frame.Origin.X; rtl <= ltr {
-		t.Errorf("the settings button at %v right to left, %v left to right", rtl, ltr)
-	}
+	app.Find("text:设置")
 	app.Press("id:language")
-	app.Press("text:اتباع النظام")
+	app.Press("text:跟随系统")
 	if _, ok := app.Storage().GetItem(languageKey); ok {
 		t.Error("following the system keeps a language")
 	}
-	if got := app.Find("id:settings").Frame.Origin.X; got != ltr {
-		t.Errorf("back to the system's English, the button is at %v, was %v", got, ltr)
-	}
+	app.Find("text:Settings")
 	app.Press("id:settings-close")
 	app.Advance(200 * time.Millisecond)
 	app.WaitForGone("id:settings-dialog", time.Second)
@@ -1284,22 +1274,14 @@ func TestLanguageRemembered(t *testing.T) {
 // TestGalleryLanguages shows the gallery in the user's language: the
 // sidebar, a demo and base's own words.
 func TestGalleryLanguages(t *testing.T) {
-	for _, c := range []struct{ locale, nav, title, sort string }{
-		{"zh-CN", "复选框", "苹果", "按ID排序"},
-		{"zh-TW", "核取方塊", "蘋果", "依ID排序"},
-		{"ar-EG", "مربع اختيار", "تفاح", "الفرز حسب المعرّف"},
-	} {
-		t.Run(c.locale, func(t *testing.T) {
-			env := desktopEnv
-			env.Locale = c.locale
-			app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
-			open(app, "Checkbox")
-			app.Find("id:nav-Checkbox >> text:" + c.nav)
-			app.Find("id:demo-Checkbox >> text:" + c.title + " >> nth=0")
-			open(app, "DataTable")
-			app.Find("label:" + c.sort)
-		})
-	}
+	env := desktopEnv
+	env.Locale = "zh-CN"
+	app := nsgotest.Start(t, Root, nsgotest.Size(1200, 800), nsgotest.Environment(env))
+	open(app, "Checkbox")
+	app.Find("id:nav-Checkbox >> text:复选框")
+	app.Find("id:demo-Checkbox >> text:苹果 >> nth=0")
+	open(app, "DataTable")
+	app.Find("label:按ID排序")
 }
 
 // TestSidebarResizes drags the sidebar's edge and restores its default

@@ -10,8 +10,8 @@ import (
 // Source is the language the messages are written in.
 const Source = "en"
 
-// Catalog holds the messages' languages: en, the source, zh-Hans, zh-Hant, and those other packages supply.
-var Catalog = i18n.NewCatalog("en", "zh-Hans", "zh-Hant")
+// Catalog holds the messages' languages: en, the source, zh-Hans, and those other packages supply.
+var Catalog = i18n.NewCatalog("en", "zh-Hans")
 
 // Messages say the messages in one language; with mark, the source's
 // with their arguments marked, which a pseudo locale transforms.
@@ -67,13 +67,6 @@ var texts = map[string]*[numTexts]string{
 	},
 	"zh-Hans": {
 		"备注",
-		"提示",
-		"重要",
-		"警告",
-		"注意",
-	},
-	"zh-Hant": {
-		"備註",
 		"提示",
 		"重要",
 		"警告",

@@ -12,7 +12,7 @@ func TestLabel(t *testing.T) {
 		role                   driver.MenuRole
 	}{
 		{lang: "zh-Hans", role: driver.MenuPaste, want: "粘贴"},
-		{lang: "zh-Hant", role: driver.MenuPaste, label: "Paste", want: "貼上"},
+		{lang: "zh-Hans", role: driver.MenuPaste, label: "Paste", want: "粘贴"},
 		{lang: "zh-Hans", role: driver.MenuQuit, app: "Neorio", want: "退出 Neorio"},
 		{lang: "en", role: driver.MenuAbout, app: "Neorio", want: "About Neorio"},
 		{lang: "en", role: driver.MenuAbout, want: "About"},

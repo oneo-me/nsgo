@@ -10,8 +10,8 @@ import (
 // Source is the language the messages are written in.
 const Source = "en"
 
-// Catalog holds the messages' languages: en, the source, zh-Hans, zh-Hant, and those other packages supply.
-var Catalog = i18n.NewCatalog("en", "zh-Hans", "zh-Hant")
+// Catalog holds the messages' languages: en, the source, zh-Hans, and those other packages supply.
+var Catalog = i18n.NewCatalog("en", "zh-Hans")
 
 // Messages say the messages in one language; with mark, the source's
 // with their arguments marked, which a pseudo locale transforms.
@@ -138,28 +138,6 @@ var texts = map[string]*[numTexts]string{
 		"进入全屏幕",
 		"退出全屏幕",
 		"关闭",
-	},
-	"zh-Hant": {
-		"編輯",
-		"視窗",
-		"關於",
-		"隱藏",
-		"隱藏其他",
-		"顯示全部",
-		"結束",
-		"還原",
-		"重做",
-		"剪下",
-		"複製",
-		"貼上",
-		"刪除",
-		"全選",
-		"最小化",
-		"縮放",
-		"切換全螢幕",
-		"進入全螢幕",
-		"結束全螢幕",
-		"關閉",
 	},
 }
 
@@ -327,8 +305,6 @@ func (msgs Messages) AboutApp(app string) string {
 			return "About " + msgs.arg(app)
 		case "zh-Hans":
 			return "关于 " + app
-		case "zh-Hant":
-			return "關於 " + app
 		}
 	}
 }
@@ -362,8 +338,6 @@ func (msgs Messages) HideApp(app string) string {
 			return "Hide " + msgs.arg(app)
 		case "zh-Hans":
 			return "隐藏 " + app
-		case "zh-Hant":
-			return "隱藏 " + app
 		}
 	}
 }
@@ -413,8 +387,6 @@ func (msgs Messages) QuitApp(app string) string {
 			return "Quit " + msgs.arg(app)
 		case "zh-Hans":
 			return "退出 " + app
-		case "zh-Hant":
-			return "結束 " + app
 		}
 	}
 }

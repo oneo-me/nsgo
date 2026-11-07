@@ -12,8 +12,8 @@ import (
 // Source is the language the messages are written in.
 const Source = "en"
 
-// Catalog holds the messages' languages: en, the source, zh-Hans, zh-Hant, and those other packages supply.
-var Catalog = i18n.NewCatalog("en", "zh-Hans", "zh-Hant")
+// Catalog holds the messages' languages: en, the source, zh-Hans, and those other packages supply.
+var Catalog = i18n.NewCatalog("en", "zh-Hans")
 
 // Messages say the messages in one language; with mark, the source's
 // with their arguments marked, which a pseudo locale transforms.
@@ -136,26 +136,6 @@ var texts = map[string]*[numTexts]string{
 		"没有匹配的命令",
 		"正在加载…",
 		"命令",
-	},
-	"zh-Hant": {
-		"全部展開",
-		"暫存",
-		"還原變更…",
-		"色相",
-		"不透明度",
-		"飽和度和亮度",
-		"十六進位顏色",
-		"從螢幕取色",
-		"上個月",
-		"下個月",
-		"清除",
-		"找不到結果",
-		"搜尋",
-		"搜尋指令",
-		"搜尋指令…",
-		"沒有符合的指令",
-		"正在載入…",
-		"指令",
 	},
 }
 
@@ -295,8 +275,6 @@ func (msgs Messages) SortBy(column string) string {
 			return "Sort by " + msgs.arg(column)
 		case "zh-Hans":
 			return "按" + column + "排序"
-		case "zh-Hant":
-			return "依" + column + "排序"
 		}
 	}
 }
@@ -331,8 +309,6 @@ func (msgs Messages) DiffUnchangedLines(n int) string {
 			return b.String()
 		case "zh-Hans":
 			return i18n.FormatNumber("zh-Hans", float64(n)) + " 行未修改"
-		case "zh-Hant":
-			return i18n.FormatNumber("zh-Hant", float64(n)) + " 行未修改"
 		}
 	}
 }
@@ -542,8 +518,6 @@ func (msgs Messages) CalendarMonth(d time.Time) string {
 			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "yMMMM"}))
 		case "zh-Hans":
 			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "yMMMM"})
-		case "zh-Hant":
-			return i18n.FormatDate("zh-Hant", d, i18n.DateOptions{Skeleton: "yMMMM"})
 		}
 	}
 }
@@ -569,8 +543,6 @@ func (msgs Messages) CalendarMonthName(d time.Time) string {
 			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "MMM"}))
 		case "zh-Hans":
 			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "MMM"})
-		case "zh-Hant":
-			return i18n.FormatDate("zh-Hant", d, i18n.DateOptions{Skeleton: "MMM"})
 		}
 	}
 }
@@ -596,8 +568,6 @@ func (msgs Messages) CalendarWeekday(d time.Time) string {
 			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "EEEEE"}))
 		case "zh-Hans":
 			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "EEEEE"})
-		case "zh-Hant":
-			return i18n.FormatDate("zh-Hant", d, i18n.DateOptions{Skeleton: "EEEEE"})
 		}
 	}
 }

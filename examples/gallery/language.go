@@ -42,7 +42,7 @@ func languageName(cx *core.Scope, lang string) string {
 
 // languageSelect chooses the language the gallery shows: the system's,
 // one of its catalogs', each named in itself, or a pseudo locale. Its button shows the
-// choice; base's components follow it, and Arabic lays the gallery out
+// choice; base's components follow it, and ar-XB lays the gallery out
 // right to left.
 func (g *gallery) languageSelect(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)

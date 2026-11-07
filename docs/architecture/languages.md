@@ -35,13 +35,13 @@ A message is formatted in its catalog's language: a translation's numbers and da
 
 A key that is an import path supplies that package's catalog in the file's language, under its keys, with its parameters. Apps supply languages NSGo does not translate to, or replace its words in one it does.
 
-NSGo's own catalogs are `base/locales`, `base/textview/locales`, `base/terminal/locales` and `desktop/locales`, in English, Simplified and Traditional Chinese. A component in another package gives that package catalogs of its own.
+NSGo's own catalogs are `base/locales`, `base/textview/locales`, `base/terminal/locales` and `desktop/locales`, in English and Simplified Chinese. A component in another package gives that package catalogs of its own.
 
-The gallery (`examples/gallery/locales`) says its interface in English, Simplified and Traditional Chinese and Arabic, and supplies Arabic to `base`'s and `desktop`'s catalogs. What a demo shows as content stays as written: code, documents, conversations and names. A message keeps an English ID where code or tests key on it, as a demo's `name`, and says its `title` through a method expression (`locales.Messages.DemoStocks`); Traditional Chinese was converted from Simplified with OpenCC's `s2twp`, then corrected by hand.
+The gallery (`examples/gallery/locales`) says its interface in English and Simplified Chinese. What a demo shows as content stays as written: code, documents, conversations and names. A message keeps an English ID where code or tests key on it, as a demo's `name`, and says its `title` through a method expression (`locales.Messages.DemoStocks`). Right-to-left layout is tested with `ar-XB`, not an Arabic catalog ([pseudo locales](#pseudo-locales)).
 
 ## Generated code
 
-The tool writes `catalog_gen.go` into the directory (`cmd/nsgo/i18n_gen.go`). A message without arguments is a string in a table per language, which one method looks up by a constant named after its key (`textDemoStocks`), so adding a message changes only its own lines; one with arguments is compiled to Go per language: a concatenation, or for plurals and selects a `switch` writing to a `strings.Builder`. An app links no YAML, catalog or message parser. The gallery's 1,900 messages in four languages add 1.3 MB to it (2026-11-02). Per key it writes:
+The tool writes `catalog_gen.go` into the directory (`cmd/nsgo/i18n_gen.go`). A message without arguments is a string in a table per language, which one method looks up by a constant named after its key (`textDemoStocks`), so adding a message changes only its own lines; one with arguments is compiled to Go per language: a concatenation, or for plurals and selects a `switch` writing to a `strings.Builder`. An app links no YAML, catalog or message parser. The gallery's 1,900 messages in two languages add 1.1 MB to it (2026-11-08). Per key it writes:
 
 - `Key(cx, args...)`, the message in the language the app shows under `cx`, which a binding (`ContentFunc`, `LabelFunc`) follows as the language changes;
 - `Messages.Key(args...)`, from `In(locale)` or `For(cx)`, for a language of the caller's choice;

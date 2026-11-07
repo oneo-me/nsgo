@@ -20,13 +20,13 @@ func TestMessagesFollowTheLanguage(t *testing.T) {
 	defer i18n.SetApp(nil)
 	app := run(t, `import { mount, Text } from "nsgo";
 import { language, messages, messagesIn } from "app/base-locales";
-mount(() => <Text testID="out">{[language(), messages.sortBy("名称"), messagesIn("zh-TW").sortBy("名稱")].join(" | ")}</Text>);`,
+mount(() => <Text testID="out">{[language(), messages.sortBy("名称"), messagesIn("zh-Hans").sortBy("名称")].join(" | ")}</Text>);`,
 		nsgotest.Environment(core.Environment{Locale: "zh-CN"}))
-	if got := app.Find("id:out").Text; got != "zh-Hans | 按名称排序 | 依名稱排序" {
+	if got := app.Find("id:out").Text; got != "zh-Hans | 按名称排序 | 按名称排序" {
 		t.Errorf("in Chinese: %q", got)
 	}
 	app.SetEnvironment(core.Environment{Locale: "en-US"})
-	if got := app.Find("id:out").Text; got != "en | Sort by 名称 | 依名稱排序" {
+	if got := app.Find("id:out").Text; got != "en | Sort by 名称 | 按名称排序" {
 		t.Errorf("in English: %q", got)
 	}
 	d := tsx.Declarations()["types/app/base-locales.d.ts"]
