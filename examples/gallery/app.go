@@ -1,10 +1,11 @@
 // Command gallery shows what NSGo apps are made of: core's elements and
 // services, and the components of base and ui, in NSH's gallery's design,
 // under two tabs. Components has the apps and a page per component, grouped
-// by what they do: its ui form with its props to set, then its base form
-// with every part's style written out, or a whole page for a complex one
-// with its options beside it. Basics has what they are made of. A wide window shows the tabs atop a
-// sidebar of the demos beside the selected one; a narrow one shows them,
+// by what they do: its base form with every part's style written out in
+// neutral colors, then its ui form with its props to set, or a whole page
+// for a complex one with its options beside it. Basics has what they are
+// made of. A wide window shows the tabs atop a sidebar of the demos beside
+// the selected one; a narrow one shows them,
 // and the settings, in a bar at the bottom, with demos pushed over it all.
 // Its look and components are package ui's, as NSH's are its
 // nsh-gallery-ui's.
@@ -80,7 +81,7 @@ func init() {
 		{"Photos", m.DemoPhotos, m.DemoPhotosDetail, lucide.Images, photosDemo},
 	}
 	actions := []demo{
-		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard)},
+		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, roundButtonCard)},
 		{"Toggle", m.DemoToggle, m.DemoToggleDetail, lucide.ToggleLeft, eventsDemo(toggleButtonCard, toggleGroupCard)},
 		{"Link", m.DemoLink, m.DemoLinkDetail, lucide.Link, eventsDemo(linkCard)},
 		{"HoldToConfirm", m.DemoHoldToConfirm, m.DemoHoldToConfirmDetail, lucide.Trash, eventsDemo(holdPlayground)},

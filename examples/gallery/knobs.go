@@ -13,6 +13,12 @@ import (
 // What sets a component's props beside it: knobs, each named after the
 // prop it sets, in a Playground's card or the panel of a stagePage.
 
+// knobSliderWidth is how wide a numberKnob's slider is.
+const knobSliderWidth core.Points = 180
+
+// formWidth is the most a Fill form takes of its stage, centered in it.
+const formWidth core.Points = 360
+
 // stageWidth is the narrowest pane that fits a stagePage's panel beside
 // its stage.
 const stageWidth core.Points = 760
@@ -52,15 +58,16 @@ func choiceKnob[T comparable](name string, s *core.Signal[T], options ...ui.Opti
 		Style: core.Style{AlignSelf: core.AlignEnd}}}
 }
 
-// numberKnob sets a number from lo to hi, step by step.
+// numberKnob sets a number from lo to hi, step by step: its value, then a
+// slider at the row's end.
 func numberKnob(name string, s *core.Signal[float64], lo, hi, step float64) core.Node {
-	return Knob{Name: name, Control: core.Func(func(cx *core.Scope) core.Node {
+	return Knob{Name: name, Tight: true, Control: core.Func(func(cx *core.Scope) core.Node {
 		value := ui.Textf(func() string { return fmt.Sprintf("%.4g", s.Get()) }, 12, ui.Regular, ui.ColorsOf(cx).Muted)
 		value.Style.MinWidth = core.Pt(32)
 		value.Style.TextAlign = core.TextAlignEnd
-		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
-			ui.Slider{Label: name, Min: lo, Max: hi, Step: step, Value: s.Get, OnChange: s.Set, Style: core.Style{FlexGrow: 1, FlexShrink: 1}},
+		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MaxWidth: core.Pct(100)}, Children: []core.Node{
 			ui.Tabular(value),
+			ui.Slider{Label: name, Min: lo, Max: hi, Step: step, Value: s.Get, OnChange: s.Set, Style: core.Style{Width: core.Pt(knobSliderWidth), FlexShrink: 1}},
 		}}
 	})}
 }
@@ -94,8 +101,8 @@ func options[T comparable](values []T, names ...string) []ui.Option[T] {
 }
 
 // Form is a form of a component on a Playground's stage. Stage builds it,
-// again whenever a signal it reads changes; Fill stretches it across the
-// stage, for what has no width of its own.
+// again whenever a signal it reads changes. It centers on the stage; Fill
+// gives what has no width of its own formWidth to stretch across.
 type Form struct {
 	Name  string
 	Fill  bool
@@ -147,17 +154,14 @@ func (p Playground) Render(cx *core.Scope) core.Node {
 // stage is the form on the pixel grid, with caption in its corner when it
 // shares the card with another form.
 func (f Form) stage(caption string) core.Node {
-	align := core.AlignCenter
+	s := core.Style{MinHeight: core.Pt(96), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(16)}
+	// As wide as the form, which then centers even if it starts itself.
+	box := core.Style{MaxWidth: core.Pct(100), AlignItems: core.AlignCenter}
 	if f.Fill {
-		align = core.AlignStretch
+		box = core.Style{Width: core.Pct(100), MaxWidth: core.Pt(formWidth), AlignItems: core.AlignStretch}
 	}
-	s := core.Style{MinHeight: core.Pt(96), AlignItems: align, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(16)}
-	var form core.Node = core.Dynamic(func(*core.Scope) core.Node { return f.Stage() })
-	if !f.Fill {
-		// As wide as the form, which then centers even if it starts itself.
-		form = core.View{Style: core.Style{MaxWidth: core.Pct(100), AlignItems: core.AlignCenter}, Children: []core.Node{form}}
-	}
-	children := []core.Node{form}
+	children := []core.Node{core.View{TestID: "form-" + f.Name, Style: box,
+		Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node { return f.Stage() })}}}
 	if caption != "" {
 		s.Padding.Top = 30
 		children = append(children, core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(14)},

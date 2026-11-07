@@ -72,7 +72,7 @@ func breadcrumbsCard(last *core.Signal[string]) cardFunc {
 		tr := locales.For(cx)
 		most := core.NewSignal(cx, 0.0)
 		path := []string{tr.ControlsApps(), tr.ControlsPhotos(), "2026", "Lisbon", "IMG_0042.heic"}
-		return Playground{Title: "Breadcrumbs", UIOnly: true, Fill: true, Stage: func() core.Node {
+		return Playground{Title: "Breadcrumbs", UIOnly: true, Stage: func() core.Node {
 			return ui.Breadcrumbs{Items: path, MaxItems: int(most.Get()), MoreLabel: tr.KitMore(),
 				OnSelect: func(i int) { last.Set("Breadcrumbs: " + path[i]) }}
 		}, Knobs: []core.Node{numberKnob("MaxItems", most, 0, 5, 1)}}

@@ -16,7 +16,8 @@ import (
 // The base forms: each component of package base as an app without package
 // ui writes it, behavior and accessibility from base and every part's style
 // spelled out here, above its ui form in the same Playground and set by the
-// same signals.
+// same signals. Each stays the simplest thing that shows the component, in
+// the text's color and grays: color is ui's.
 
 // bareBox is a plain pressable's shape.
 var bareBox = core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 6,
@@ -31,7 +32,7 @@ func bareInk(cx *core.Scope) func() core.Style {
 	return func() core.Style {
 		on := &core.Style{Background: colors.Pressed()}
 		return core.Style{Color: colors.Text(), BorderColor: colors.Line(), Hover: &core.Style{Background: colors.Hover()}, Active: on,
-			Selected: on, Pressed: on, Expanded: on, Focus: &core.Style{BorderColor: colors.Accent()}}
+			Selected: on, Pressed: on, Expanded: on, Focus: &core.Style{BorderColor: colors.Text()}}
 	}
 }
 
@@ -47,7 +48,7 @@ func bareRowInk(cx *core.Scope) func() core.Style {
 func bareField(cx *core.Scope) func() core.Style {
 	colors := ui.ColorsOf(cx)
 	return func() core.Style {
-		return core.Style{Color: colors.Text(), BorderColor: colors.Line(), Focus: &core.Style{BorderColor: colors.Accent()}}
+		return core.Style{Color: colors.Text(), BorderColor: colors.Line(), Focus: &core.Style{BorderColor: colors.Text()}}
 	}
 }
 
@@ -65,9 +66,9 @@ var barePanel = core.Style{Padding: core.All(12), Gap: 8, CornerRadius: 8, Borde
 // bareBackdrop dims what is under a modal.
 var bareBackdrop = core.Style{Background: ui.Black(0.45)}
 
-// bareAccent marks the selected tab: a Tabs' indicator takes one style,
-// which an appearance does not restyle.
-var bareAccent = core.RGB(0x3478f6)
+// bareIndicator marks the selected tab: a Tabs' indicator takes one style,
+// which an appearance does not restyle, so a gray that reads on both.
+var bareIndicator = core.RGB(0x808080)
 
 // bareText is a base form's words.
 func bareText(cx *core.Scope, s string) core.Text {
@@ -118,7 +119,7 @@ func baseLinkForm(cx *core.Scope, last *core.Signal[string], disabled *core.Sign
 	return Form{Name: "base.Link", Stage: func() core.Node {
 		return base.Link{Href: "/docs", OpenWith: base.LinkOpenApp, Disabled: disabled.Get, OnOpen: last.Set, Label: tr.LibReadDocs(),
 			Style:    core.Style{Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
-			Children: []core.Node{ui.Text(tr.LibReadDocs(), 13, ui.Regular, colors.Accent)}}
+			Children: []core.Node{ui.Text(tr.LibReadDocs(), 13, ui.Regular, colors.Text)}}
 	}}
 }
 
@@ -184,10 +185,10 @@ func baseCheckboxForm(cx *core.Scope, checked, partly, disabled *core.Signal[boo
 			Style:          core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
 			IndicatorStyle: core.Style{Width: core.Pt(16), Height: core.Pt(16), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: 4, BorderWidth: 1},
 			IndicatorStyleFunc: func() core.Style {
-				on := &core.Style{Background: colors.AccentFill(), BorderColor: colors.AccentFill()}
+				on := &core.Style{Background: colors.Text(), BorderColor: colors.Text()}
 				return core.Style{BorderColor: colors.Line(), Checked: on, Indeterminate: &core.Style{Background: colors.Line()}}
 			},
-			Indicator: ui.Text("✓", 11, ui.Semibold, colors.OnAccent), Children: []core.Node{bareText(cx, tr.LibStarred())}}
+			Indicator: ui.Text("✓", 11, ui.Semibold, colors.Background), Children: []core.Node{bareText(cx, tr.LibStarred())}}
 	}}
 }
 
@@ -199,7 +200,7 @@ func baseRadioForm(cx *core.Scope, picked *core.Signal[int], disabled *core.Sign
 		for i, name := range []string{tr.LibApple(), tr.LibBanana(), tr.LibCherry()} {
 			radios = append(radios, base.Radio{Label: name, Disabled: disabled.Get, Checked: func() bool { return picked.Get() == i }, OnChange: func(bool) { picked.Set(i) },
 				Style: bareBox, StyleFunc: func() core.Style {
-					return bareInk(cx)().Merge(core.Style{Checked: &core.Style{BorderColor: colors.Accent()}})
+					return bareInk(cx)().Merge(core.Style{Checked: &core.Style{BorderColor: colors.Text()}})
 				}, Children: []core.Node{bareText(cx, name)}})
 		}
 		return base.RadioGroup{Label: tr.LibFruit(), Style: core.Style{Direction: core.Row, Gap: 4}, Children: radios}
@@ -214,7 +215,7 @@ func baseSwitchForm(cx *core.Scope, checked, disabled *core.Signal[bool]) Form {
 			Style:      core.Style{Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
 			TrackStyle: core.Style{Width: core.Pt(36), Height: core.Pt(20), Padding: core.All(2), CornerRadius: 10},
 			TrackStyleFunc: func() core.Style {
-				return core.Style{Background: colors.Line(), Checked: &core.Style{Background: colors.Accent(), AlignItems: core.AlignEnd}}
+				return core.Style{Background: colors.Line(), Checked: &core.Style{Background: colors.Text(), AlignItems: core.AlignEnd}}
 			},
 			ThumbStyle: core.Style{Width: core.Pt(16), Height: core.Pt(16), CornerRadius: 8}, ThumbStyleFunc: ui.Filled(colors.Surface)}
 	}}
@@ -240,8 +241,8 @@ func baseSliderForm(cx *core.Scope, start, end, step *core.Signal[float64], rang
 			Style:          core.Style{Height: core.Pt(20), Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
 			TrackStyle:     core.Style{Height: core.Pt(20)},
 			IndicatorStyle: core.Style{Height: core.Pt(4), CornerRadius: 2, Margin: core.Edges{Top: 8}}, IndicatorStyleFunc: ui.Filled(colors.Line),
-			RangeStyle: core.Style{CornerRadius: 2}, RangeStyleFunc: ui.Filled(colors.Accent),
-			ThumbStyle: core.Style{Width: core.Pt(14), Height: core.Pt(14), CornerRadius: 7}, ThumbStyleFunc: ui.Filled(colors.Accent)}
+			RangeStyle: core.Style{CornerRadius: 2}, RangeStyleFunc: ui.Filled(colors.Text),
+			ThumbStyle: core.Style{Width: core.Pt(14), Height: core.Pt(14), CornerRadius: 7}, ThumbStyleFunc: ui.Filled(colors.Text)}
 	}}
 }
 
@@ -279,7 +280,7 @@ func baseCarouselForm(cx *core.Scope, last *core.Signal[string], count *core.Sig
 		var slides []core.Node
 		for i := range int(count.Get()) {
 			slides = append(slides, base.CarouselItem{Label: fmt.Sprintf("%d / %d", i+1, int(count.Get())), Style: core.Style{Width: core.Pt(200), Margin: core.Edges{Right: 8}},
-				Children: []core.Node{swatch(cx, tileTones[i%len(tileTones)], itoa(i+1))}})
+				Children: []core.Node{swatch(cx, ui.ToneNeutral, itoa(i+1))}})
 		}
 		return base.Carousel{Label: tr.DemoImage(), Looping: looping.Get(), Style: core.Style{Gap: 8}, OnChange: func(i int) { last.Set(fmt.Sprintf("Carousel: %d", i+1)) },
 			Children: []core.Node{
@@ -315,7 +316,7 @@ func baseProgressForm(cx *core.Scope, value *core.Signal[float64], indeterminate
 	return Form{Name: "base.Progress", Fill: true, Stage: func() core.Node {
 		return base.Progress{Label: tr.LibProgress(), Value: func() float32 { return float32(value.Get()) }, Indeterminate: indeterminate.Get,
 			TrackStyle: core.Style{Height: core.Pt(6), CornerRadius: 3, Overflow: core.Hidden}, TrackStyleFunc: ui.Filled(colors.Line),
-			IndicatorStyle: core.Style{Height: core.Pct(100)}, IndicatorStyleFunc: ui.Filled(colors.Accent)}
+			IndicatorStyle: core.Style{Height: core.Pct(100)}, IndicatorStyleFunc: ui.Filled(colors.Text)}
 	}}
 }
 
@@ -435,7 +436,7 @@ func baseTabsForm(cx *core.Scope, last *core.Signal[string], selected *core.Sign
 			tabs = append(tabs, tab)
 		}
 		return base.Tabs{Label: tr.DemoTabs(), Style: core.Style{Direction: core.Row, Gap: 4, Padding: core.Edges{Bottom: 2}}, Children: tabs,
-			IndicatorStyle: core.Style{Position: core.Absolute, Bottom: core.Pt(0), Height: core.Pt(2), Background: bareAccent}}
+			IndicatorStyle: core.Style{Position: core.Absolute, Bottom: core.Pt(0), Height: core.Pt(2), Background: bareIndicator}}
 	}}
 }
 

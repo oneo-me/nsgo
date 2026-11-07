@@ -252,6 +252,28 @@ func TestUIOnlyMarks(t *testing.T) {
 	app.Find("id:demo-Badge >> id:ui-only-Badge")
 }
 
+// TestFormsCenter centers a form with a width of its own on its stage, and
+// one without in a column of formWidth.
+func TestFormsCenter(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "NumberInput")
+	for _, name := range []string{"NumberInput", "base.NumberInput"} {
+		stage, box := app.Find("id:stage-"+name).Frame, app.Find("id:form-"+name).Frame
+		if got := box.Size.Width; got >= stage.Size.Width-32 {
+			t.Fatalf("%s is %v wide, the stage's whole width", name, got)
+		}
+		left := box.Origin.X - stage.Origin.X
+		if right := stage.Size.Width - left - box.Size.Width; left-right > 1 || right-left > 1 {
+			t.Fatalf("%s leaves %v and %v beside it", name, left, right)
+		}
+	}
+	open(app, "Slider")
+	stage, box := app.Find("id:stage-Slider").Frame, app.Find("id:form-Slider").Frame
+	if want := min(stage.Size.Width-32, formWidth); box.Size.Width != want {
+		t.Fatalf("the slider is %v wide, want %v", box.Size.Width, want)
+	}
+}
+
 func TestLayoutsKeepTheDemo(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Checkbox")

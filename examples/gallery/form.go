@@ -623,7 +623,7 @@ func numberInputCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	value, step := core.NewSignal(cx, 12.0), core.NewSignal(cx, 1.0)
 	hide, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-	return Playground{Title: "NumberInput", Fill: true, Base: baseNumberInputForm(cx, value, step, disabled), Stage: func() core.Node {
+	return Playground{Title: "NumberInput", Base: baseNumberInputForm(cx, value, step, disabled), Stage: func() core.Node {
 		return ui.NumberInput{Label: tr.LibFontSize(), Value: value.Get, OnChange: value.Set, Min: 0, Max: 100, Step: step.Get(), HideSteppers: hide.Get(),
 			LeadingText: "#", Disabled: disabled.Get}
 	}, BaseKnobs: []core.Node{numberKnob("Step", step, 1, 10, 1), boolKnob("Disabled", disabled)}, Knobs: []core.Node{boolKnob("HideSteppers", hide)}}
