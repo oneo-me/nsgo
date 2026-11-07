@@ -827,9 +827,9 @@ func chatDemo(cx *core.Scope) core.Node {
 				Animated: &core.AnimatedStyle{Opacity: bannerValue, TranslateY: ui.Lerp(bannerValue, -64, 0)}}, Children: []core.Node{
 				core.Dynamic(func(*core.Scope) core.Node {
 					off := bannerKind.Get() == "offline"
-					t, name, title, detail := ui.ToneUp, lucide.Check, tr.ChatBackOnline(), tr.ChatSendingYourMessage()
+					t, name, title, detail := ToneUp, lucide.Check, tr.ChatBackOnline(), tr.ChatSendingYourMessage()
 					if off {
-						t, name, title, detail = ui.ToneWarn, lucide.WifiOff, tr.ChatYouReOffline(), tr.ChatYourMessageSendsWhenThe()
+						t, name, title, detail = ToneWarn, lucide.WifiOff, tr.ChatYouReOffline(), tr.ChatYourMessageSendsWhenThe()
 					}
 					return core.View{StyleFunc: func() core.Style {
 						return fin.Menu().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(48), Padding: core.Symmetric(0, 14),

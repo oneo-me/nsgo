@@ -46,7 +46,7 @@ func accessibilityDemo(cx *core.Scope) core.Node {
 					Figure{Value: func() string { return itoa(n.Get()) }, Unit: "items"},
 					step(lucide.Plus, 1, tr.A11yMore()),
 				}},
-			ui.Meter{Value: func() float64 { return float64(n.Get()) / 10 }, Tone: ui.ToneAccent},
+			ui.Meter{Value: func() float64 { return float64(n.Get()) / 10 }, Variant: ui.MeterAccent},
 			APILine{Label: tr.A11yARangeValueAndThe(), Names: "RoleAdjustable"},
 		}}
 	}

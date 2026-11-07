@@ -118,7 +118,7 @@ func errorRow(cx *core.Scope, message func() string, onRetry func()) core.Node {
 	fin := ui.FinOf(cx)
 	return core.View{StyleFunc: func() core.Style {
 		return core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(12), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
-			Background: ui.ToneDanger.Tint(cx), BorderWidth: 1, BorderColor: ui.Alpha(colors.Danger(), 0.32)}
+			Background: ToneDanger.Tint(cx), BorderWidth: 1, BorderColor: ui.Alpha(colors.Danger(), 0.32)}
 	}, Children: []core.Node{
 		ui.Icon(lucide.CircleAlert, 18, colors.Danger),
 		core.Text{ContentFunc: message, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 13, LineHeight: 19}, StyleFunc: ui.Colored(colors.Text)},

@@ -79,7 +79,7 @@ func transparentPage(cx *core.Scope) base.NavPage {
 				return core.Style{Position: core.Absolute, Top: core.Pt(150), Left: core.Pt(-110), Width: core.Pt(260), Height: core.Pt(260), CornerRadius: 130, Background: tints.Info()}
 			}},
 			Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
-				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderTransparent", Tone: ui.ToneAccent}}},
+				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderTransparent", Variant: ui.BadgeAccent}}},
 				core.Text{Content: tr.NavContentUnderTheHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: tr.NavTheCirclesStartAtThe(), Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}}}},
@@ -130,8 +130,8 @@ func lockedPage(cx *core.Scope) base.NavPage {
 		tr.NavTheBackGestureIsOff(),
 		tr.NavTheBackGestureIsOff2()),
 		Section{Title: tr.NavLeaving(), Note: "NoPopOnSwipe", Children: []core.Node{core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
-			Stat{Label: tr.NavSwipeBack(), Value: label(tr.NavOff()), Tone: ui.ToneDanger, Width: core.Pct(50)},
-			Stat{Label: tr.NavBackButtons(), Value: label(tr.NavOn()), Tone: ui.ToneUp, Width: core.Pct(50)},
+			Stat{Label: tr.NavSwipeBack(), Value: label(tr.NavOff()), Tone: ToneDanger, Width: core.Pct(50)},
+			Stat{Label: tr.NavBackButtons(), Value: label(tr.NavOn()), Tone: ToneUp, Width: core.Pct(50)},
 		}}}}))
 	s.NoPopOnSwipe = true
 	return s
@@ -165,7 +165,7 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 			tr.NavTypeSomethingThenGoBack2()),
 			Card{Title: tr.NavDraft(), Description: "NoPopOnBack + OnBackPress", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				if draft.Get() != "" {
-					return ui.Badge{Text: tr.NavGuarded(), Tone: ui.ToneWarn}
+					return ui.Badge{Text: tr.NavGuarded(), Variant: ui.BadgeWarn}
 				}
 				return ui.Badge{Text: tr.NavEmpty()}
 			})}, Children: []core.Node{
@@ -190,7 +190,7 @@ func headerlessPage(cx *core.Scope) base.NavPage {
 	return base.NavPage{HeaderHidden: true, Children: []core.Node{core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: page, Children: []core.Node{
 		core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
 			Appear{Children: []core.Node{core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 12, Right: 4, Left: 4}}, Children: []core.Node{
-				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderHidden", Tone: ui.ToneAccent}}},
+				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: "HeaderHidden", Variant: ui.BadgeAccent}}},
 				core.Text{Content: tr.NavNoHeader(), Style: core.Style{FontSize: 30, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: tr.NavTheScreenOwnsTheWhole(),
 					Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
@@ -252,7 +252,7 @@ func modalBody(cx *core.Scope, title, noteText func() string, body func() string
 	return core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1}, StyleFunc: ui.Filled(colors.Background), Children: []core.Node{
 		core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 16}, Children: []core.Node{
 			core.View{Style: core.Style{Gap: 8, Padding: core.Edges{Top: 8, Right: 4, Left: 4}}, Children: []core.Node{
-				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{TextFunc: noteText, Tone: ui.ToneAccent}}},
+				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{TextFunc: noteText, Variant: ui.BadgeAccent}}},
 				core.Text{ContentFunc: title, Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{ContentFunc: body, Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
@@ -366,7 +366,7 @@ func navigationDemo(cx *core.Scope) core.Node {
 					return unit + tr.NavCaught()
 				}
 				return unit + tr.NavPopped()
-			}, Tone: ui.ToneAccent},
+			}, Tone: ToneAccent},
 			Note{TextFunc: func() string {
 				if intercept.Get() {
 					return tr.NavTheHandlerReturnsTrueBack()

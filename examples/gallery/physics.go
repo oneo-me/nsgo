@@ -160,7 +160,7 @@ func physicsDemo(cx *core.Scope) core.Node {
 					ui.Text(tr.PhysicsDragAndRelease(), 15, ui.Semibold, colors.Text),
 					core.Text{Content: Hint(cx, tr.PhysicsTapToPulseLongPress(), tr.PhysicsClickToPulsePressAnd()), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
-				ui.Badge{Text: tr.PhysicsUiThread(), Tone: ui.ToneAccent},
+				ui.Badge{Text: tr.PhysicsUiThread(), Variant: ui.BadgeAccent},
 			}}}},
 			core.View{OnLayout: func(b core.Bounds) { stageSize.Set(b.Size) }, StyleFunc: st, Children: []core.Node{
 				tether,
@@ -199,9 +199,9 @@ func physicsDemo(cx *core.Scope) core.Node {
 				core.View{Style: core.Style{Direction: core.Row, Padding: core.Symmetric(0, 4)}, Children: []core.Node{
 					Stat{Label: tr.PhysicsReleases(), Value: func() string { return itoa(releases.Get()) }, Width: core.Pct(30)},
 					core.Dynamic(func(*core.Scope) core.Node {
-						t := ui.ToneNeutral
+						t := ToneNeutral
 						if speed.Get() > 1500 {
-							t = ui.ToneWarn
+							t = ToneWarn
 						}
 						return Stat{Label: tr.PhysicsSpeed(), Value: func() string { return fmt.Sprintf("%d pt/s", speed.Get()) }, Tone: t, Width: core.Pct(34)}
 					}),

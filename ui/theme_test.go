@@ -21,7 +21,7 @@ func showcase(cx *core.Scope) core.Node {
 		HStack{Gap: 8, Children: []core.Node{
 			Button{Text: "Primary"}, Button{Text: "Accent", Variant: ButtonAccent}, Button{Icon: lucide.Plus, Label: "Add", Variant: ButtonGhost},
 			RoundButton{Icon: lucide.Play, Label: "Play"}, IconButton{Icon: lucide.Search, Label: "Search", Selected: on.Get},
-			Badge{Text: "New", Tone: ToneAccent}, Avatar{Name: "Ada Lovelace", Status: AvatarOnline},
+			Badge{Text: "New", Variant: BadgeAccent}, Avatar{Name: "Ada Lovelace", Status: AvatarOnline},
 			AvatarGroup{Members: []AvatarGroupMember{{Name: "Ada"}, {Name: "Alan"}, {Name: "Grace"}}, Max: 2},
 		}},
 		core.View{Style: core.Style{Gap: 12, Padding: core.All(14)}, StyleFunc: func() core.Style { return CardStyle(cx) }, Children: []core.Node{

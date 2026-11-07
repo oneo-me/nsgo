@@ -312,9 +312,9 @@ func composition(cx *core.Scope) core.Node {
 	spin, fade := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 1)
 	type state struct {
 		label string
-		tone  ui.Tone
+		tone  Tone
 	}
-	st := core.NewSignal(cx, state{"idle", ui.ToneNeutral})
+	st := core.NewSignal(cx, state{"idle", ToneNeutral})
 	var bounces []*core.Animation
 	for _, y := range ys {
 		bounces = append(bounces, core.Sequence(
@@ -345,12 +345,12 @@ func composition(cx *core.Scope) core.Node {
 	})
 	run := func(name string, a *core.Animation) func() {
 		return func() {
-			st.Set(state{name + tr.AnimRunning(), ui.ToneInfo})
+			st.Set(state{name + tr.AnimRunning(), ToneInfo})
 			runs = append(runs, cx.StartAnimation(a, func(finished bool) {
 				if finished {
-					st.Set(state{name + tr.AnimFinished(), ui.ToneAccent})
+					st.Set(state{name + tr.AnimFinished(), ToneAccent})
 				} else {
-					st.Set(state{name + tr.AnimStopped(), ui.ToneWarn})
+					st.Set(state{name + tr.AnimStopped(), ToneWarn})
 				}
 			}))
 		}
@@ -362,7 +362,7 @@ func composition(cx *core.Scope) core.Node {
 				Shadows: fin.Knob().Shadows, Animated: &core.AnimatedStyle{Opacity: fade, TranslateY: ys[i], Rotate: ui.Lerp(spin, 0, float64(i+1)*36)}}
 		}})
 	}
-	return Card{Title: tr.AnimComposition(), Description: tr.AnimEachStepStartsAsThe(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
+	return Card{Title: tr.AnimComposition(), Description: tr.AnimEachStepStartsAsThe(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Variant: s.tone.Badge()} })}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(116), Direction: core.Row, JustifyContent: core.JustifyCenter, AlignItems: core.AlignEnd, Gap: 12, Padding: core.Edges{Bottom: 14}},
 			Children: append([]core.Node{core.View{PointerEvents: core.PointerEventsNone, StyleFunc: func() core.Style {
 				return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(14),
@@ -391,11 +391,11 @@ func composition(cx *core.Scope) core.Node {
 var springKinds = []struct {
 	label              func(locales.Messages) string
 	stiffness, damping float64
-	tone               ui.Tone
+	tone               Tone
 }{
-	{locales.Messages.AnimGentle, 120, 14, ui.ToneInfo},
-	{locales.Messages.AnimWobbly, 180, 8, ui.ToneWarn},
-	{locales.Messages.AnimStiff, 400, 30, ui.ToneAccent},
+	{locales.Messages.AnimGentle, 120, 14, ToneInfo},
+	{locales.Messages.AnimWobbly, 180, 8, ToneWarn},
+	{locales.Messages.AnimStiff, 400, 30, ToneAccent},
 }
 
 const springTime = 1800 * time.Millisecond
@@ -535,7 +535,7 @@ func interpolations(cx *core.Scope) core.Node {
 		ui.Spring(cx, t, float64(v), core.SpringConfig{Stiffness: 140, Damping: 16})
 	}
 	const d core.Points = 128
-	return Card{Title: tr.AnimInterpolation(), Description: tr.AnimOneValueDrivesColorAngle(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("t = %d", at.Get()) }, Tone: ui.ToneAccent}}, Children: []core.Node{
+	return Card{Title: tr.AnimInterpolation(), Description: tr.AnimOneValueDrivesColorAngle(), Actions: []core.Node{ui.Badge{TextFunc: func() string { return fmt.Sprintf("t = %d", at.Get()) }, Variant: ui.BadgeAccent}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
 			core.View{Style: core.Style{Width: core.Pt(d), Height: core.Pt(d)}, Children: []core.Node{
 				dialFace(cx, d),

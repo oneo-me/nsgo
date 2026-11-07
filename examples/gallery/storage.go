@@ -71,7 +71,7 @@ func storageDemo(cx *core.Scope) core.Node {
 	launchesCard := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
-		return Card{Title: tr.StorageLaunches(), Description: tr.StorageCountedEachTimeThisDemo(), Actions: []core.Node{ui.Badge{Text: tr.StorageKept(), Tone: ui.ToneUp}}, Children: []core.Node{
+		return Card{Title: tr.StorageLaunches(), Description: tr.StorageCountedEachTimeThisDemo(), Actions: []core.Node{ui.Badge{Text: tr.StorageKept(), Variant: ui.BadgeUp}}, Children: []core.Node{
 			Figure{Value: func() string { return strconv.Itoa(shown.Get()) }, Note: func() string {
 				if shown.Get() == 1 {
 					return "opening"

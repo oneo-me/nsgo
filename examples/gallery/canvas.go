@@ -88,14 +88,14 @@ func dial(cx *core.Scope) core.Node {
 	}
 	a0, a1 := 0.75*math.Pi, 2.25*math.Pi
 	angle := core.Interpolate(needle, core.Interpolation{Input: []float64{0, 100}, Output: []float64{a0, a1}, Extrapolate: core.ExtrapolateExtend})
-	zone := func() ui.Tone {
+	zone := func() Tone {
 		switch l := load(); {
 		case l >= 85:
-			return ui.ToneDanger
+			return ToneDanger
 		case l >= 60:
-			return ui.ToneWarn
+			return ToneWarn
 		}
-		return ui.ToneUp
+		return ToneUp
 	}
 	draw := func(d *core.Drawing, size core.Size) {
 		c := colors.Now()
@@ -159,11 +159,11 @@ func dial(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				z := zone()
-				name := map[ui.Tone]string{ui.ToneDanger: tr.CanvasRedline(), ui.ToneWarn: tr.CanvasHigh(), ui.ToneUp: tr.CanvasNominal()}[z]
+				name := map[Tone]string{ToneDanger: tr.CanvasRedline(), ToneWarn: tr.CanvasHigh(), ToneUp: tr.CanvasNominal()}[z]
 				return Stat{Label: tr.CanvasZone(), Value: label(name), Tone: z, Width: core.Pct(33)}
 			}),
 			Stat{Label: tr.CanvasSpool(), Value: func() string { return thousands(int(load()*128)) + tr.CanvasRpm() }, Width: core.Pct(33)},
-			Stat{Label: tr.CanvasLimit(), Value: label("85 %"), Tone: ui.ToneDanger, Width: core.Pct(33)},
+			Stat{Label: tr.CanvasLimit(), Value: label("85 %"), Tone: ToneDanger, Width: core.Pct(33)},
 		}},
 	}}
 }
@@ -266,9 +266,9 @@ func areaChart(cx *core.Scope) core.Node {
 	}}}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			l, a := last(), avg()
-			t, sign := ui.ToneUp, "+"
+			t, sign := ToneUp, "+"
 			if l < a {
-				t, sign = ui.ToneDown, "−"
+				t, sign = ToneDown, "−"
 			}
 			return Figure{Value: label(fmt.Sprintf("%d.%d", l, (l*7)%10)), Unit: "k/s", Note: label(tr.CanvasVsAverage(fmt.Sprintf("%s%d", sign, max(l-a, a-l)))), Tone: t}
 		}),
@@ -405,7 +405,7 @@ func dotMatrix(cx *core.Scope) core.Node {
 			StyleFunc: ui.Filled(func() core.Color { return levels(cx)[i] })})
 	}
 	return Card{Title: tr.CanvasBeaconUptime(), Description: tr.CanvasDotMatrixOneColumnA(), Children: []core.Node{
-		Figure{Value: label("99.94"), Unit: "%", Note: label(tr.Canvas3Incidents()), Tone: ui.ToneDanger},
+		Figure{Value: label("99.94"), Unit: "%", Note: label(tr.Canvas3Incidents()), Tone: ToneDanger},
 		core.Canvas{Style: core.Style{Height: core.Pt(96)}, Draw: draw, Label: tr.CanvasUptimeMatrix()},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6}, Children: append(append([]core.Node{ui.Text(tr.CanvasLess(), 13, ui.Regular, colors.Muted)}, swatches...),
 			core.Text{Content: tr.CanvasMore(), Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)}, Legend{Color: colors.Danger, Label: tr.CanvasIncident()})},
@@ -512,13 +512,13 @@ func clock(cx *core.Scope) core.Node {
 var pathGlyphs = []struct {
 	name   func(locales.Messages) string
 	d      string
-	tone   ui.Tone
+	tone   Tone
 	stroke bool
 }{
-	{locales.Messages.CanvasHeart, "M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z", ui.ToneDanger, false},
-	{locales.Messages.CanvasStar, "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z", ui.ToneWarn, false},
-	{locales.Messages.CanvasBolt, "M13 2L3 14h7l-1 8 10-12h-7z", ui.ToneInfo, false},
-	{locales.Messages.CanvasCheck, "M20 6L9 17l-5-5", ui.ToneAccent, true},
+	{locales.Messages.CanvasHeart, "M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z", ToneDanger, false},
+	{locales.Messages.CanvasStar, "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z", ToneWarn, false},
+	{locales.Messages.CanvasBolt, "M13 2L3 14h7l-1 8 10-12h-7z", ToneInfo, false},
+	{locales.Messages.CanvasCheck, "M20 6L9 17l-5-5", ToneAccent, true},
 }
 
 // paths are SVG path data, parsed by core.

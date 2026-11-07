@@ -280,7 +280,7 @@ func flipCard(cx *core.Scope) core.Node {
 	}
 	// A face's background, gradient and rim, light then dark.
 	type paint struct{ bg, from, to, border core.Color }
-	face := func(light, dark paint, rotate core.AnimatedNode, badgeText string, t ui.Tone, degrees, title, body string) core.Node {
+	face := func(light, dark paint, rotate core.AnimatedNode, badgeText string, t Tone, degrees, title, body string) core.Node {
 		return core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), CornerRadius: ui.RadiusCard,
 			BorderCurve: core.BorderCurveContinuous, BorderWidth: 1, Padding: core.All(16), JustifyContent: core.JustifySpaceBetween, BackfaceHidden: true,
 			Transform: core.Transform{Perspective: 800}, Animated: &core.AnimatedStyle{RotateY: rotate}}, StyleFunc: func() core.Style {
@@ -290,16 +290,16 @@ func flipCard(cx *core.Scope) core.Node {
 			}
 			return core.Style{BorderColor: p.border, Background: p.bg, Gradients: []core.Gradient{core.LinearGradient(180, p.from, p.to)}, Shadows: sh}
 		}, Children: []core.Node{
-			core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{ui.Badge{Text: badgeText, Tone: t}, ui.Text(degrees, 13, ui.Regular, colors.Muted)}},
+			core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{ui.Badge{Text: badgeText, Variant: t.Badge()}, ui.Text(degrees, 13, ui.Regular, colors.Muted)}},
 			core.View{Style: core.Style{Gap: 2}, Children: []core.Node{ui.Text(title, 20, ui.Semibold, colors.Text), ui.Text(body, 13, ui.Regular, colors.Muted)}},
 		}}
 	}
 	front := face(paint{core.RGB(0xeef2fc), core.RGB(0xf0f4fd), core.RGB(0xebf0fb), core.RGB(0xcdd8f3)},
 		paint{core.RGB(0x1a2134), core.RGB(0x1e263b), core.RGB(0x1a2134), core.RGB(0x2b3a5c)},
-		angle, "front", ui.ToneInfo, "0°", Hint(cx, tr.StylesTapToFlip(), tr.StylesClickToFlip()), tr.StylesASpringTurnsItOn())
+		angle, "front", ToneInfo, "0°", Hint(cx, tr.StylesTapToFlip(), tr.StylesClickToFlip()), tr.StylesASpringTurnsItOn())
 	back := face(paint{core.RGB(0xfbefe6), core.RGB(0xfcf2ea), core.RGB(0xfaebe0), core.RGB(0xf0cdb3)},
 		paint{core.RGB(0x2a1d14), core.RGB(0x2f2116), core.RGB(0x291c13), core.RGB(0x4e3423)},
-		core.Add(angle, core.Constant(180)), "back", ui.ToneAccent, "180°", "BackfaceHidden", tr.StylesEachFaceHidesWhileTurned())
+		core.Add(angle, core.Constant(180)), "back", ToneAccent, "180°", "BackfaceHidden", tr.StylesEachFaceHidesWhileTurned())
 	return ui.Press{OnPress: flip, Scale: 0.98, Label: tr.StylesFlipTheCard(), Children: []core.Node{core.View{Style: core.Style{Height: core.Pt(132)}, Children: []core.Node{front, back}}}}
 }
 

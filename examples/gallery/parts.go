@@ -138,7 +138,7 @@ func (c Card) Render(cx *core.Scope) core.Node {
 		nodes := []core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: titles}}
 		if c.UIOnly {
 			nodes = append(nodes, core.View{TestID: "ui-only-" + c.Title, Style: core.Style{FlexShrink: 0}, Children: []core.Node{
-				ui.Badge{Text: locales.For(cx).UiOnly(), Tone: ui.ToneNeutral}}})
+				ui.Badge{Text: locales.For(cx).UiOnly(), Variant: ui.BadgeNeutral}}})
 		}
 		head = core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd, Gap: 10, Padding: core.Symmetric(0, 2)}, Children: append(nodes, c.Actions...)}
 	}
@@ -244,7 +244,7 @@ type Figure struct {
 	Value func() string
 	Unit  string
 	Note  func() string
-	Tone  ui.Tone
+	Tone  Tone
 }
 
 // Render implements core.Node.
@@ -266,7 +266,7 @@ func (f Figure) Render(cx *core.Scope) core.Node {
 type Stat struct {
 	Label string
 	Value func() string
-	Tone  ui.Tone
+	Tone  Tone
 	Width core.Length
 }
 

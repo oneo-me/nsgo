@@ -53,7 +53,7 @@ func environmentCard(cx *core.Scope) core.Node {
 	inset := func(f func(core.Edges) core.Points) func() string {
 		return func() string { return itoa(int(f(env.SafeArea()) + 0.5)) }
 	}
-	return Card{Title: tr.SystemEnvironment(), Description: tr.SystemUpdatesWhenTheWindowInsets(), Actions: []core.Node{ui.Badge{Text: tr.SystemLive(), Tone: ui.ToneUp}}, Children: []core.Node{
+	return Card{Title: tr.SystemEnvironment(), Description: tr.SystemUpdatesWhenTheWindowInsets(), Actions: []core.Node{ui.Badge{Text: tr.SystemLive(), Variant: ui.BadgeUp}}, Children: []core.Node{
 		core.View{Style: core.Style{Direction: core.Row, Gap: 16, AlignItems: core.AlignCenter}, Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 12}, Children: []core.Node{
 				core.View{Style: core.Style{Gap: 2}, Children: []core.Node{
@@ -62,9 +62,9 @@ func environmentCard(cx *core.Scope) core.Node {
 				}},
 				core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 					core.Dynamic(func(*core.Scope) core.Node {
-						t := ui.ToneNeutral
+						t := ToneNeutral
 						if env.KeyboardHeight() > 0 {
-							t = ui.ToneWarn
+							t = ToneWarn
 						}
 						return Stat{Label: tr.SystemKeyboard(), Value: func() string { return fmt.Sprintf("%d pt", int(env.KeyboardHeight()+0.5)) }, Tone: t, Width: core.Pct(50)}
 					}),
@@ -97,12 +97,12 @@ func environmentCard(cx *core.Scope) core.Node {
 					return tr.SystemDarkScheme()
 				}
 				return tr.SystemLightScheme()
-			}, ToneFunc: func() ui.Tone {
+			}, VariantFunc: func() ui.BadgeVariant {
 				if env.Dark() {
-					return ui.ToneInfo
+					return ui.BadgeInfo
 				}
-				return ui.ToneWarn
-			}, Variant: ui.BadgeOutline},
+				return ui.BadgeWarn
+			}},
 		}},
 	}}
 }
@@ -192,12 +192,12 @@ func dialogsCard(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	type answer struct {
 		text string
-		tone ui.Tone
+		tone Tone
 	}
 	ans := core.NewSignal(cx, answer{})
 	// The answer pops in each time it changes.
 	pop := core.NewAnimatedValue(cx, 1)
-	show := func(text string, t ui.Tone) {
+	show := func(text string, t Tone) {
 		ans.Set(answer{text, t})
 		pop.Set(0.85)
 		ui.Spring(cx, pop, 1, core.SpringConfig{Stiffness: 380, Damping: 18})
@@ -212,16 +212,16 @@ func dialogsCard(cx *core.Scope) core.Node {
 		ui.Inset{Padding: 12, Exact: true, Children: []core.Node{
 			actionRow(cx, true, lucide.Check, colors.Up, tr.SystemAlert(), tr.SystemOneButton(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemSaved(), Description: tr.SystemYourChangesWereSaved(), Actions: []core.AlertAction{{Label: tr.SystemOk()}}},
-					func(string) { show(tr.SystemOk(), ui.ToneUp) })
+					func(string) { show(tr.SystemOk(), ToneUp) })
 			}),
 			actionRow(cx, false, lucide.Bell, colors.Danger, tr.SystemConfirm(), tr.SystemCancelAndDestructiveButtons(), func() {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemDeleteThePhoto(), Description: tr.SystemThisCannotBeUndone(),
 					Actions:       []core.AlertAction{{Label: tr.SystemCancel(), Role: core.AlertCancel}, {Label: tr.SystemDelete(), Role: core.AlertDestructive}},
 					CloseOnEscape: core.ToggleOn, CloseOnBackdropPress: core.ToggleOn},
 					func(l string) {
-						t := ui.ToneNeutral
+						t := ToneNeutral
 						if l == tr.SystemDelete() {
-							t = ui.ToneDanger
+							t = ToneDanger
 						}
 						show(or(l), t)
 					})
@@ -230,9 +230,9 @@ func dialogsCard(cx *core.Scope) core.Node {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemUpdateAvailable(), Description: tr.SystemInstallItNow(),
 					Actions: []core.AlertAction{{Label: tr.SystemLater()}, {Label: tr.SystemNever(), Role: core.AlertCancel}, {Label: tr.SystemInstall()}}},
 					func(l string) {
-						t := ui.ToneNeutral
+						t := ToneNeutral
 						if l == tr.SystemInstall() {
-							t = ui.ToneInfo
+							t = ToneInfo
 						}
 						show(or(l), t)
 					})
@@ -241,9 +241,9 @@ func dialogsCard(cx *core.Scope) core.Node {
 				base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.SystemShareThePhoto(), Presentation: base.AlertPresentActionSheet,
 					Actions: []core.AlertAction{{Label: tr.SystemCancel(), Role: core.AlertCancel}, {Label: tr.SystemCopyLink()}, {Label: tr.SystemSave()}, {Label: tr.SystemDelete(), Role: core.AlertDestructive}}},
 					func(l string) {
-						t := ui.ToneAccent
+						t := ToneAccent
 						if l == tr.SystemDelete() {
-							t = ui.ToneDanger
+							t = ToneDanger
 						}
 						show(or(l), t)
 					})
@@ -259,7 +259,7 @@ func dialogsCard(cx *core.Scope) core.Node {
 				if a.text == "" {
 					return ui.Text(tr.SystemNoneYet(), 13, ui.Regular, colors.Faint)
 				}
-				return core.View{Style: core.Style{Animated: &core.AnimatedStyle{Scale: pop}}, Children: []core.Node{ui.Badge{Text: a.text, Tone: a.tone}}}
+				return core.View{Style: core.Style{Animated: &core.AnimatedStyle{Scale: pop}}, Children: []core.Node{ui.Badge{Text: a.text, Variant: a.tone.Badge()}}}
 			}),
 		}},
 	}}
@@ -311,7 +311,7 @@ func framesAndTimers(cx *core.Scope) core.Node {
 				ui.Text(tr.SystemFrameRate(), 12, ui.Regular, colors.Muted),
 				core.Dynamic(func(*core.Scope) core.Node {
 					if running.Get() {
-						return Figure{Value: func() string { return itoa(fps.Get()) }, Unit: "fps", Note: label("live"), Tone: ui.ToneUp}
+						return Figure{Value: func() string { return itoa(fps.Get()) }, Unit: "fps", Note: label("live"), Tone: ToneUp}
 					}
 					return Figure{Value: label("–"), Unit: "fps", Note: label("stopped")}
 				}),
@@ -323,7 +323,7 @@ func framesAndTimers(cx *core.Scope) core.Node {
 					core.View{Style: core.Style{Width: core.Pt(7), Height: core.Pt(7), CornerRadius: 3.5,
 						Animated: &core.AnimatedStyle{Opacity: ui.Lerp(beat, 0.25, 1), Scale: ui.Lerp(beat, 1, 1.6)}}, StyleFunc: ui.Filled(colors.Accent)},
 				}},
-				Figure{Value: func() string { return itoa(ticks.Get()) }, Note: label(tr.SystemEvery1S()), Tone: ui.ToneAccent},
+				Figure{Value: func() string { return itoa(ticks.Get()) }, Note: label(tr.SystemEvery1S()), Tone: ToneAccent},
 			}},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
@@ -338,7 +338,7 @@ func framesAndTimers(cx *core.Scope) core.Node {
 					return 0
 				}
 				return float64(fps.Get()) / 120
-			}, Tone: ui.ToneUp, Marker: 0.5},
+			}, Variant: ui.MeterUp, Marker: 0.5},
 		}},
 		core.Dynamic(func(*core.Scope) core.Node {
 			if running.Get() {
@@ -370,7 +370,7 @@ func shortcuts(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			core.Dynamic(func(*core.Scope) core.Node {
 				if on.Get() {
-					return ui.Badge{Text: tr.SystemLightOn(), Tone: ui.ToneUp}
+					return ui.Badge{Text: tr.SystemLightOn(), Variant: ui.BadgeUp}
 				}
 				return ui.Badge{Text: tr.SystemLightOff()}
 			}),
@@ -399,7 +399,7 @@ func networkCard(cx *core.Scope) core.Node {
 	type result struct {
 		posts []jsonPost
 		line  string
-		t     ui.Tone
+		t     Tone
 	}
 	res := core.NewSignalFunc(cx, result{}, func(a, b result) bool { return false })
 	loading := core.NewSignal(cx, false)
@@ -409,18 +409,18 @@ func networkCard(cx *core.Scope) core.Node {
 		// The request runs on a goroutine of its own; Post brings its
 		// result back to the engine.
 		go func() {
-			r := result{t: ui.ToneUp}
+			r := result{t: ToneUp}
 			resp, err := http.Get("https://jsonplaceholder.typicode.com/posts?_limit=3")
 			if err != nil {
-				r = result{line: err.Error(), t: ui.ToneDanger}
+				r = result{line: err.Error(), t: ToneDanger}
 			} else {
 				defer resp.Body.Close()
 				if err := json.NewDecoder(resp.Body).Decode(&r.posts); err != nil {
-					r = result{line: err.Error(), t: ui.ToneDanger}
+					r = result{line: err.Error(), t: ToneDanger}
 				} else {
 					r.line = fmt.Sprintf("HTTP %d · %d ms", resp.StatusCode, time.Since(started).Milliseconds())
 					if resp.StatusCode >= 400 {
-						r.t = ui.ToneDanger
+						r.t = ToneDanger
 					}
 				}
 			}
@@ -452,7 +452,7 @@ func networkCard(cx *core.Scope) core.Node {
 		core.Dynamic(func(*core.Scope) core.Node {
 			line, t := res.Get().line, res.Get().t
 			if loading.Get() {
-				line, t = "loading…", ui.ToneNeutral
+				line, t = "loading…", ToneNeutral
 			}
 			if line == "" {
 				return core.Group{}

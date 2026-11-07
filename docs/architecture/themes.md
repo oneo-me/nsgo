@@ -61,7 +61,7 @@ Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffVie
 
 ### Variants and sizes
 
-Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws: `BadgeVariant`, `ButtonVariant`, `HoldVariant`, `MenuItemVariant`, `RoundButtonVariant`, `SpinnerVariant` and `TabsVariant`.
+Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws, the color it shows included: `BadgeVariant`, `ButtonVariant`, `HoldVariant`, `MenuItemVariant`, `MeterVariant`, `RoundButtonVariant`, `SpinnerVariant` and `TabsVariant`.
 
 Most components have one size, so controls line up without an app choosing. `Button`, `Tabs` and `Switch` take `Size`, a `ui.Size` whose zero value is the default:
 

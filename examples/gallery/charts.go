@@ -85,7 +85,7 @@ func seriesKey(cx *core.Scope, dashed bool) core.Node {
 		dash := core.View{Style: core.Style{Width: core.Pt(4), Height: core.Pt(1.5)}, StyleFunc: ui.Filled(colors.Muted)}
 		return core.View{Style: core.Style{Width: core.Pt(10), Direction: core.Row, Gap: 2}, Children: []core.Node{dash, dash}}
 	}
-	return core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(2), CornerRadius: 1}, StyleFunc: ui.Filled(ui.ToneAccent.Shade(cx))}
+	return core.View{Style: core.Style{Width: core.Pt(10), Height: core.Pt(2), CornerRadius: 1}, StyleFunc: ui.Filled(ToneAccent.Shade(cx))}
 }
 
 // legendItem is the key, then the series' name.
@@ -236,7 +236,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 					Children: []core.Node{
 						plot.Grid{Y: func() []float64 { return []float64{1000, 2000, 3000} }, StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(colors.Line())} }},
 						// The line over it has the dot.
-						plot.Area{BackgroundStyleFunc: func() core.Style { return wash(ui.ToneAccent.Color(cx)) }, HoverDotStyle: core.Style{Display: core.DisplayNone}},
+						plot.Area{BackgroundStyleFunc: func() core.Style { return wash(ToneAccent.Color(cx)) }, HoverDotStyle: core.Style{Display: core.DisplayNone}},
 						plot.Grid{Y: func() []float64 { return []float64{0} }, StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(colors.Border())} }},
 						// Each week's dot in its line's color, ringed in the
 						// card's, so it cuts out of the line.
@@ -244,9 +244,9 @@ func chartsDemo(cx *core.Scope) core.Node {
 							return core.Style{Stroke: core.PaintColor(colors.Muted()), StrokeWidth: 1.5, StrokeDash: []core.Points{4, 4}}
 						},
 							HoverDotStyleFunc: func() core.Style { return core.Style{Background: colors.Muted(), BorderColor: colors.Surface()} }},
-						plot.Line{StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(ui.ToneAccent.Color(cx)), StrokeWidth: 2} },
+						plot.Line{StyleFunc: func() core.Style { return core.Style{Stroke: core.PaintColor(ToneAccent.Color(cx)), StrokeWidth: 2} },
 							HoverDotStyleFunc: func() core.Style {
-								return core.Style{Background: ui.ToneAccent.Color(cx), BorderColor: colors.Surface()}
+								return core.Style{Background: ToneAccent.Color(cx), BorderColor: colors.Surface()}
 							}},
 					},
 				},
@@ -287,11 +287,11 @@ func chartsDemo(cx *core.Scope) core.Node {
 					first := func() float64 { return t().prices[0] }
 					closing := func() float64 { p := t().prices; return p[len(p)-1] }
 					up := func() bool { return closing() >= first() }
-					tn := func() ui.Tone {
+					tn := func() Tone {
 						if up() {
-							return ui.ToneUp
+							return ToneUp
 						}
-						return ui.ToneDown
+						return ToneDown
 					}
 					change := func() float64 { return (closing() - first()) / first() * 100 }
 					changeText := func() string {

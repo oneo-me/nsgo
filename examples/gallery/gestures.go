@@ -110,8 +110,8 @@ func transformable(cx *core.Scope) core.Node {
 		}},
 		core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 			Stat{Label: tr.GestDrag(), Value: func() string { return fmt.Sprintf("%d pt", last.Get().drag) }, Width: core.Pct(33)},
-			Stat{Label: tr.GestScale(), Value: func() string { return fmt.Sprintf("%.2f×", last.Get().scale) }, Tone: ui.ToneAccent, Width: core.Pct(33)},
-			Stat{Label: tr.GestAngle(), Value: func() string { return fmt.Sprintf("%d°", int(math.Round(float64(last.Get().angle)))) }, Tone: ui.ToneInfo, Width: core.Pct(34)},
+			Stat{Label: tr.GestScale(), Value: func() string { return fmt.Sprintf("%.2f×", last.Get().scale) }, Tone: ToneAccent, Width: core.Pct(33)},
+			Stat{Label: tr.GestAngle(), Value: func() string { return fmt.Sprintf("%d°", int(math.Round(float64(last.Get().angle)))) }, Tone: ToneInfo, Width: core.Pct(34)},
 		}},
 		Note{Text: Hint(cx, tr.GestPinchAndRotateWithTwo(), tr.GestDragWithTheMousePinch())},
 		ui.Button{Text: tr.GestReset(), Variant: ui.ButtonSecondary, OnPress: reset},
@@ -127,12 +127,12 @@ func ball(cx *core.Scope) core.Node {
 	pos := core.NewSignal(cx, core.Point{})
 	type state struct {
 		label string
-		tone  ui.Tone
+		tone  Tone
 	}
-	st := core.NewSignal(cx, state{tr.GestIdle(), ui.ToneNeutral})
+	st := core.NewSignal(cx, state{tr.GestIdle(), ToneNeutral})
 	grab := core.NewAnimatedValue(cx, 0)
 	var start core.Point
-	return Card{Title: tr.GestTouchResponder(), Description: tr.GestPositionsGoThroughTheEngine(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Tone: s.tone} })}, Children: []core.Node{
+	return Card{Title: tr.GestTouchResponder(), Description: tr.GestPositionsGoThroughTheEngine(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node { s := st.Get(); return ui.Badge{Text: s.label, Variant: s.tone.Badge()} })}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style { return stage(cx, 200) }, Children: []core.Node{
 			dots(cx),
 			core.View{TestID: "ball", Responder: &core.Responder{
@@ -140,7 +140,7 @@ func ball(cx *core.Scope) core.Node {
 				OnGrant: func(core.ResponderEvent) {
 					start = pos.GetUntracked()
 					ui.Spring(cx, grab, 1, core.SpringConfig{Stiffness: 420, Damping: 24})
-					st.Set(state{tr.GestDragging(), ui.ToneAccent})
+					st.Set(state{tr.GestDragging(), ToneAccent})
 				},
 				OnMove: func(e core.ResponderEvent) {
 					pos.Set(core.Point{X: start.X + e.Gesture.Delta.X, Y: start.Y + e.Gesture.Delta.Y})
@@ -148,11 +148,11 @@ func ball(cx *core.Scope) core.Node {
 				OnRelease: func(e core.ResponderEvent) {
 					ui.Spring(cx, grab, 0, core.SpringConfig{Stiffness: 300, Damping: 20})
 					v := e.Gesture.Velocity
-					st.Set(state{fmt.Sprintf("%.2f, %.2f pt/ms", v.X/1000, v.Y/1000), ui.ToneInfo})
+					st.Set(state{fmt.Sprintf("%.2f, %.2f pt/ms", v.X/1000, v.Y/1000), ToneInfo})
 				},
 				OnTerminate: func(core.ResponderEvent) {
 					ui.Spring(cx, grab, 0, core.SpringConfig{})
-					st.Set(state{tr.GestTakenOver(), ui.ToneWarn})
+					st.Set(state{tr.GestTakenOver(), ToneWarn})
 				},
 			}, StyleFunc: func() core.Style {
 				p := pos.Get()
@@ -185,11 +185,11 @@ func touchPad(cx *core.Scope) core.Node {
 	names := map[core.TouchPhase]string{core.TouchStart: "start", core.TouchMove: "move", core.TouchEnd: "end", core.TouchCancel: "cancel"}
 	return Card{Title: tr.GestTouchEvents(), Description: Hint(cx, tr.GestStartMoveEndAndCancel(), tr.GestStartMoveEndAndCancel2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		n := len(fingers.Get())
-		t := ui.ToneNeutral
+		t := ToneNeutral
 		if n > 0 {
-			t = ui.ToneAccent
+			t = ToneAccent
 		}
-		return ui.Badge{Text: tr.GestDown(n), Tone: t}
+		return ui.Badge{Text: tr.GestDown(n), Variant: t.Badge()}
 	})}, Children: []core.Node{
 		core.View{TestID: "touch-pad", OnTouch: func(e core.TouchEvent) {
 			var down []finger
@@ -324,11 +324,11 @@ func hitSlop(cx *core.Scope) core.Node {
 	), 0), nil)
 	cx.Cleanup(run.Stop)
 	return Card{Title: tr.GestHitSlop(), Description: Hint(cx, tr.GestA12PtDotThat(), tr.GestA12PtDotThat2()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
-		t := ui.ToneNeutral
+		t := ToneNeutral
 		if taps.Get() > 0 {
-			t = ui.ToneAccent
+			t = ToneAccent
 		}
-		return ui.Badge{Text: tr.GestTaps(taps.Get()), Tone: t}
+		return ui.Badge{Text: tr.GestTaps(taps.Get()), Variant: t.Badge()}
 	})}, Children: []core.Node{
 		core.View{StyleFunc: centered(cx, 140), Children: []core.Node{
 			dots(cx),
@@ -355,7 +355,7 @@ func pointerEventsCard(cx *core.Scope) core.Node {
 	through := core.NewSignal(cx, 0)
 	warn := colors.Warn
 	hatch := func() core.Color { return ui.Alpha(warn(), 0.28) }
-	return Card{Title: tr.GestPointerEvents(), Description: Hint(cx, tr.GestAnOverlayThatLetsTaps(), tr.GestAnOverlayThatLetsClicks()), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(through.Get()) }, Tone: ui.ToneUp}}, Children: []core.Node{
+	return Card{Title: tr.GestPointerEvents(), Description: Hint(cx, tr.GestAnOverlayThatLetsTaps(), tr.GestAnOverlayThatLetsClicks()), Actions: []core.Node{ui.Badge{TextFunc: func() string { return itoa(through.Get()) }, Variant: ui.BadgeUp}}, Children: []core.Node{
 		core.View{Style: core.Style{Height: core.Pt(88)}, Children: []core.Node{
 			ui.Press{OnPress: func() { through.Update(func(n int) int { return n + 1 }) }, Scale: 0.98, Label: tr.GestButtonUnderAnOverlay(), Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 				core.View{StyleFunc: func() core.Style {
@@ -388,7 +388,7 @@ func hover(cx *core.Scope) core.Node {
 	at := core.NewSignal(cx, core.Point{})
 	return Card{Title: tr.GestHover(), Description: Hint(cx, tr.GestAPointerOverAView(), tr.GestTheMouseOverAView()), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if over.Get() {
-			return ui.Badge{Text: tr.GestOver(), Tone: ui.ToneAccent}
+			return ui.Badge{Text: tr.GestOver(), Variant: ui.BadgeAccent}
 		}
 		return ui.Badge{Text: tr.GestAway()}
 	})}, Children: []core.Node{
@@ -488,7 +488,7 @@ func accessibleRows(cx *core.Scope) core.Node {
 	}
 	return Card{Title: tr.GestAccessibility(), Description: tr.GestRolesLabelsAndHintsFor(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if l := last.Get(); l != "" {
-			return ui.Badge{Text: l, Tone: ui.ToneInfo}
+			return ui.Badge{Text: l, Variant: ui.BadgeInfo}
 		}
 		return core.Group{}
 	})}, Children: rows}

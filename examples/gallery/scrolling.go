@@ -13,11 +13,11 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-var scrollTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
+var scrollTones = []Tone{ToneAccent, ToneInfo, ToneWarn, ToneUp, ToneDanger}
 
 // backdrop is a dot matrix with a low-alpha area and a dashed reference
 // line: a page's backdrop.
-func backdrop(cx *core.Scope, t ui.Tone, seed float64) core.Node {
+func backdrop(cx *core.Scope, t Tone, seed float64) core.Node {
 	colors := ui.ColorsOf(cx)
 	dots, faint := colors.Border, colors.Faint
 	return core.Canvas{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0)},
@@ -59,13 +59,13 @@ func backdrop(cx *core.Scope, t ui.Tone, seed float64) core.Node {
 var pagerPages = []struct {
 	title       func(locales.Messages) string
 	value, note string
-	tone        ui.Tone
+	tone        Tone
 }{
-	{locales.Messages.ScrollRevenue, "48.2k", "+12 %", ui.ToneAccent},
-	{locales.Messages.ScrollSessions, "9,410", "+3 %", ui.ToneInfo},
-	{locales.Messages.ScrollLatency, "142", "ms p95", ui.ToneWarn},
-	{locales.Messages.ScrollUptime, "99.98", "%", ui.ToneUp},
-	{locales.Messages.ScrollErrors, "17", "−40 %", ui.ToneDanger},
+	{locales.Messages.ScrollRevenue, "48.2k", "+12 %", ToneAccent},
+	{locales.Messages.ScrollSessions, "9,410", "+3 %", ToneInfo},
+	{locales.Messages.ScrollLatency, "142", "ms p95", ToneWarn},
+	{locales.Messages.ScrollUptime, "99.98", "%", ToneUp},
+	{locales.Messages.ScrollErrors, "17", "−40 %", ToneDanger},
 }
 
 // surfaceBox is a scroll view's box inside a section, surfaceInk its
@@ -155,7 +155,7 @@ func snapCards(cx *core.Scope) core.Node {
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
 					colors := ui.ColorsOf(cx)
 					fin := ui.FinOf(cx)
-					t := func() ui.Tone { return scrollTones[r.Index()%len(scrollTones)] }
+					t := func() Tone { return scrollTones[r.Index()%len(scrollTones)] }
 					return core.View{StyleFunc: func() core.Style {
 						return fin.Raised().Over(core.Style{Width: core.Pt(size), Height: core.Pt(128), CornerRadius: 18, BorderCurve: core.BorderCurveContinuous,
 							Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(), Padding: core.All(16), JustifyContent: core.JustifySpaceBetween, Overflow: core.Hidden})
@@ -166,7 +166,7 @@ func snapCards(cx *core.Scope) core.Node {
 							}},
 							core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter}, Children: []core.Node{
 								core.Text{ContentFunc: func() string { return fmt.Sprintf("at %d pt", r.Index()*(size+gap)) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Faint)},
-								core.Dynamic(func(*core.Scope) core.Node { return ui.Badge{Text: toneNames[t()], Tone: t()} }),
+								core.Dynamic(func(*core.Scope) core.Node { return ui.Badge{Text: toneNames[t()], Variant: t().Badge()} }),
 							}},
 							ui.Textf(func() string { return tr.ListsCard(r.Index() + 1) }, 24, ui.Semibold, colors.Text),
 						}}
@@ -180,7 +180,7 @@ func snapCards(cx *core.Scope) core.Node {
 type logged struct {
 	name string
 	y    int
-	tone ui.Tone
+	tone Tone
 }
 
 // scrollEvents is OnScroll, drag and momentum events, NoScroll, NoBounces
@@ -192,7 +192,7 @@ func scrollEvents(cx *core.Scope) core.Node {
 	seen := core.NewSignal(cx, false)
 	log := core.NewSignalFunc(cx, []logged(nil), slices.Equal)
 	enabled, bounces, insetOn := core.NewSignal(cx, true), core.NewSignal(cx, true), core.NewSignal(cx, false)
-	noteEvent := func(name string, t ui.Tone) func(core.ScrollEvent) {
+	noteEvent := func(name string, t Tone) func(core.ScrollEvent) {
 		return func(e core.ScrollEvent) {
 			log.Update(func(l []logged) []logged {
 				out := append([]logged{{name, int(math.Round(float64(e.Offset.Y))), t}}, l...)
@@ -221,7 +221,7 @@ func scrollEvents(cx *core.Scope) core.Node {
 					return tr.ScrollScrollTheBox()
 				}
 				return fmt.Sprintf("/ %.0f", offset.Get().ContentSize.Height)
-			}, Tone: ui.ToneInfo}}},
+			}, Tone: ToneInfo}}},
 			ui.Textf(func() string {
 				if !seen.Get() {
 					return tr.ScrollViewportPt()
@@ -229,7 +229,7 @@ func scrollEvents(cx *core.Scope) core.Node {
 				return tr.ScrollViewport(fmt.Sprintf("%.0f", offset.Get().Size.Height))
 			}, 13, ui.Regular, colors.Faint),
 		}},
-		ui.Meter{Value: progress, Tone: ui.ToneInfo},
+		ui.Meter{Value: progress, Variant: ui.MeterInfo},
 		core.Scroll{TestID: "events-scroll", Style: surfaceBox(cx, 180), StyleFunc: surfaceInk(cx),
 			BehaviorFunc: func() core.ScrollBehavior {
 				b := core.ScrollBehavior{NoScroll: !enabled.Get(), NoBounces: !bounces.Get()}
@@ -239,10 +239,10 @@ func scrollEvents(cx *core.Scope) core.Node {
 				return b
 			},
 			OnScroll:          func(e core.ScrollEvent) { offset.Set(e); seen.Set(true) },
-			OnScrollDragStart: noteEvent(tr.ScrollBeginDrag(), ui.ToneAccent),
-			OnScrollDragEnd:   noteEvent(tr.ScrollEndDrag(), ui.ToneWarn),
-			OnMomentumStart:   noteEvent(tr.ScrollMomentumBegin(), ui.ToneInfo),
-			OnMomentumEnd:     noteEvent(tr.ScrollMomentumEnd(), ui.ToneUp),
+			OnScrollDragStart: noteEvent(tr.ScrollBeginDrag(), ToneAccent),
+			OnScrollDragEnd:   noteEvent(tr.ScrollEndDrag(), ToneWarn),
+			OnMomentumStart:   noteEvent(tr.ScrollMomentumBegin(), ToneInfo),
+			OnMomentumEnd:     noteEvent(tr.ScrollMomentumEnd(), ToneUp),
 			Children:          []core.Node{core.View{Style: core.Style{Padding: core.Symmetric(6, 0)}, Children: rows}}},
 		core.View{Style: core.Style{Gap: 6, MinHeight: core.Pt(100)}, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			l := log.Get()
@@ -301,10 +301,10 @@ func zoom(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignEnd}, Children: []core.Node{
 			core.View{Style: fill, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 				s := scale.Get()
-				noteText, t := "fit", ui.ToneInfo
+				noteText, t := "fit", ToneInfo
 				switch {
 				case s > 1.01:
-					noteText, t = tr.ScrollZoomedIn(), ui.ToneAccent
+					noteText, t = tr.ScrollZoomedIn(), ToneAccent
 				case s < 0.99:
 					noteText = tr.ScrollZoomedOut()
 				}
@@ -332,7 +332,7 @@ type post struct {
 	id    int
 	label string
 	fresh bool
-	tone  ui.Tone
+	tone  Tone
 }
 
 // feed is new items arriving at the top while the rows on screen stay
@@ -384,7 +384,7 @@ func feed(cx *core.Scope) core.Node {
 					}},
 					core.Dynamic(func(*core.Scope) core.Node {
 						if p().fresh {
-							return ui.Badge{Text: "new", Tone: ui.ToneAccent}
+							return ui.Badge{Text: "new", Variant: ui.BadgeAccent}
 						}
 						return ui.Text(fmt.Sprintf("#%d", p().id), 13, ui.Regular, colors.Faint)
 					}),

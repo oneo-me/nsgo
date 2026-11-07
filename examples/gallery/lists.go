@@ -14,10 +14,10 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-var listTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger, ui.ToneNeutral}
+var listTones = []Tone{ToneAccent, ToneInfo, ToneWarn, ToneUp, ToneDanger, ToneNeutral}
 
 // toneNames are the tones as words, for badges.
-var toneNames = map[ui.Tone]string{ui.ToneNeutral: "neutral", ui.ToneAccent: "accent", ui.ToneInfo: "info", ui.ToneWarn: "warn", ui.ToneDanger: "danger", ui.ToneUp: "up", ui.ToneDown: "down"}
+var toneNames = map[Tone]string{ToneNeutral: "neutral", ToneAccent: "accent", ToneInfo: "info", ToneWarn: "warn", ToneDanger: "danger", ToneUp: "up", ToneDown: "down"}
 
 // action is a small pill action for list headers (36 pt, 44 pt with its
 // hit slop).
@@ -40,7 +40,7 @@ func action(cx *core.Scope, label string, name func() *core.SVG, onPress func())
 type gridItem struct {
 	id     int
 	height core.Points
-	tone   ui.Tone
+	tone   Tone
 }
 
 // listGrid is columns (as many as fit in the desktop layout, at least
@@ -100,7 +100,7 @@ func listGrid(cx *core.Scope) core.Node {
 						return 0
 					}
 					return float64(last.Get()+1) / float64(len(items))
-				}, Tone: ui.ToneAccent},
+				}, Variant: ui.MeterAccent},
 				core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 					action(cx, tr.ListsJumpTo60(), lucide.ArrowDown, func() { ref.ScrollToIndexAt(60, 0.5, 0, true) }),
 					action(cx, tr.ListsEnd(), nil, func() { ref.ScrollToEnd(true) }),
@@ -163,7 +163,7 @@ type contactRow struct {
 	header            string
 	count             int
 	first, last, note string
-	tone              ui.Tone
+	tone              Tone
 	end               bool
 }
 
@@ -357,7 +357,7 @@ func ranges(tr locales.Messages) []string {
 
 type listEntry struct {
 	n    int
-	tone ui.Tone
+	tone Tone
 }
 
 // listMore is horizontal scrolling, pull to refresh on a plain scroll
@@ -480,7 +480,7 @@ func listMore(cx *core.Scope) core.Node {
 						Row: func(cx *core.Scope, r core.ListRow) core.Node {
 							colors := ui.ColorsOf(cx)
 							fin := ui.FinOf(cx)
-							t := func() ui.Tone { return listTones[r.Index()%(len(listTones)-1)] }
+							t := func() Tone { return listTones[r.Index()%(len(listTones)-1)] }
 							load := func() float64 { return float64((r.Index()*37)%100) / 100 }
 							return core.View{StyleFunc: func() core.Style {
 								return fin.Raised().Over(core.Style{Width: core.Pt(120), Height: core.Pt(124), CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous,
@@ -491,7 +491,7 @@ func listMore(cx *core.Scope) core.Node {
 									{ContentFunc: func() string { return itoa(int(load()*100 + 0.5)) }},
 									{Content: " %", Style: core.Style{FontSize: 13, FontWeight: ui.Medium}},
 								}, Style: core.Style{FontSize: 26, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
-								core.Dynamic(func(*core.Scope) core.Node { return ui.Meter{Value: load, Tone: t()} }),
+								core.Dynamic(func(*core.Scope) core.Node { return ui.Meter{Value: load, Variant: t().Meter()} }),
 							}}
 						}},
 				}}}},
@@ -525,7 +525,7 @@ func listMore(cx *core.Scope) core.Node {
 									return core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 2.5, Background: e().tone.Color(cx)}
 								}},
 								core.Text{ContentFunc: func() string { return tr.ListsItem(e().n) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
-								core.Dynamic(func(*core.Scope) core.Node { t := e().tone; return ui.Badge{Text: toneNames[t], Tone: t} }),
+								core.Dynamic(func(*core.Scope) core.Node { t := e().tone; return ui.Badge{Text: toneNames[t], Variant: t.Badge()} }),
 							}}
 						}},
 					core.Text{Spans: []core.Span{
@@ -603,7 +603,7 @@ func customIndicator(cx *core.Scope, pull *core.AnimatedValue, refreshing func()
 type pageRow struct {
 	week int
 	id   int
-	tone ui.Tone
+	tone Tone
 }
 
 func pageEntries(from, n int) []pageRow {
@@ -626,7 +626,7 @@ func entryRow(cx *core.Scope, e func() pageRow, label string) core.Node {
 			return core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 2.5, Background: e().tone.Color(cx)}
 		}},
 		core.Text{ContentFunc: func() string { return fmt.Sprintf("%s %d", label, e().id+1) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Text)},
-		core.Dynamic(func(*core.Scope) core.Node { t := e().tone; return ui.Badge{Text: toneNames[t], Tone: t} }),
+		core.Dynamic(func(*core.Scope) core.Node { t := e().tone; return ui.Badge{Text: toneNames[t], Variant: t.Badge()} }),
 	}}
 }
 

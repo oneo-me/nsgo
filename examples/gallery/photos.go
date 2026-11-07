@@ -14,13 +14,13 @@ import (
 type photo struct {
 	id            int
 	title, author string
-	tone          ui.Tone
+	tone          Tone
 	views         int
 }
 
 var (
 	photoAuthors = []string{"Ada", "Linus", "Grace", "Ken", "Barbara"}
-	photoTones   = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
+	photoTones   = []Tone{ToneAccent, ToneInfo, ToneWarn, ToneUp, ToneDanger}
 	photoPlaces  = []string{"Harbor", "Ridge", "Old town", "Dunes", "Canal", "Orchard", "Quarry", "Pier", "Meadow"}
 )
 
@@ -177,7 +177,7 @@ func photosDemo(cx *core.Scope) core.Node {
 						Children: []core.Node{logo(cx, 24)}},
 					core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 2}, Children: []core.Node{
 						ui.Text(tr.PhotosPhotoStream(), 15, ui.Semibold, colors.Text), ui.Text(tr.PhotosARecycledListOfRemote(), 13, ui.Regular, colors.Muted)}},
-					ui.Badge{Text: tr.PhotosRemote(), Tone: ui.ToneInfo},
+					ui.Badge{Text: tr.PhotosRemote(), Variant: ui.BadgeInfo},
 				}},
 				core.Text{Spans: []core.Span{
 					{ContentFunc: func() string { return thousands(len(photos.Get())) }},
@@ -189,9 +189,9 @@ func photosDemo(cx *core.Scope) core.Node {
 					Stat{Label: tr.PhotosPages(), Value: func() string { return itoa((len(photos.Get()) + photoPage - 1) / photoPage) }, Width: core.Pct(33)},
 					Stat{Label: tr.PhotosPerPage(), Value: label(itoa(photoPage)), Width: core.Pct(33)},
 					core.Dynamic(func(*core.Scope) core.Node {
-						t := ui.ToneNeutral
+						t := ToneNeutral
 						if refreshes.Get() > 0 {
-							t = ui.ToneAccent
+							t = ToneAccent
 						}
 						return Stat{Label: tr.PhotosRefreshes2(), Value: func() string { return itoa(refreshes.Get()) }, Tone: t, Width: core.Pct(33)}
 					}),

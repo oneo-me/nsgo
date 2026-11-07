@@ -6,21 +6,51 @@ import "github.com/oneo-me/nsgo/core"
 type BadgeVariant uint8
 
 const (
-	// BadgeTinted fills the capsule with a tint of the tone. It is the
-	// default.
-	BadgeTinted BadgeVariant = iota
+	// BadgeNeutral is the bordered surface. It is the default.
+	BadgeNeutral BadgeVariant = iota
+	// BadgeAccent tints the capsule with the accent.
+	BadgeAccent
+	// BadgeInfo tints the capsule with the info color.
+	BadgeInfo
+	// BadgeWarn tints the capsule with the warning color.
+	BadgeWarn
+	// BadgeDanger tints the capsule with the danger color.
+	BadgeDanger
+	// BadgeUp tints the capsule with the color of a rise.
+	BadgeUp
+	// BadgeDown tints the capsule with the color of a fall.
+	BadgeDown
 	// BadgeOutline draws only the capsule's rim.
 	BadgeOutline
 )
 
+// tint is the color a variant tints the capsule with, and false for a
+// variant with none.
+func (v BadgeVariant) tint(colors Colors) (core.Color, bool) {
+	switch v {
+	case BadgeAccent:
+		return colors.Accent(), true
+	case BadgeInfo:
+		return colors.Info(), true
+	case BadgeWarn:
+		return colors.Warn(), true
+	case BadgeDanger:
+		return colors.Danger(), true
+	case BadgeUp:
+		return colors.Up(), true
+	case BadgeDown:
+		return colors.Down(), true
+	}
+	return 0, false
+}
+
 // Badge is a small label in a capsule, as Onevra's: Text, or what TextFunc
-// returns, in Tone, or the one ToneFunc returns.
+// returns, in Variant, or the one VariantFunc returns.
 type Badge struct {
-	Text     string
-	TextFunc func() string
-	Tone     Tone
-	ToneFunc func() Tone
-	Variant  BadgeVariant
+	Text        string
+	TextFunc    func() string
+	Variant     BadgeVariant
+	VariantFunc func() BadgeVariant
 }
 
 // Render implements core.Node.
@@ -30,27 +60,28 @@ func (b Badge) Render(cx *core.Scope) core.Node {
 	if label == nil {
 		label = constant(b.Text)
 	}
-	tone := b.ToneFunc
-	if tone == nil {
-		tone = func() Tone { return b.Tone }
+	variant := b.VariantFunc
+	if variant == nil {
+		variant = func() BadgeVariant { return b.Variant }
 	}
-	// A tinted tone's text leans to the text's color, and its rim to the
+	// A tinted badge's text leans to the text's color, and its rim to the
 	// page's, as Onevra's badges do.
 	fg := func() core.Color {
-		if tone() == ToneNeutral {
-			return colors.Text()
+		if tint, ok := variant().tint(colors); ok {
+			return Mix(tint, colors.Text(), 0.3)
 		}
-		return Mix(tone().Color(cx), colors.Text(), 0.3)
+		return colors.Text()
 	}
 	return core.View{Style: core.Style{Padding: core.Symmetric(2, 8), AlignSelf: core.AlignStart, CornerRadius: 12, JustifyContent: core.JustifyCenter, BorderWidth: 1},
 		StyleFunc: func() core.Style {
-			t := tone()
-			if b.Variant == BadgeOutline {
-				return core.Style{BorderColor: Mix(colors.Background(), t.Color(cx), 0.5)}
+			v := variant()
+			if v == BadgeOutline {
+				return core.Style{BorderColor: Mix(colors.Background(), colors.Muted(), 0.5)}
 			}
-			if t == ToneNeutral {
+			tint, ok := v.tint(colors)
+			if !ok {
 				return core.Style{Background: colors.Surface(), BorderColor: colors.Border()}
 			}
-			return core.Style{Background: Mix(colors.Background(), t.Color(cx), 0.12), BorderColor: Mix(colors.Background(), t.Color(cx), 0.3)}
+			return core.Style{Background: Mix(colors.Background(), tint, 0.12), BorderColor: Mix(colors.Background(), tint, 0.3)}
 		}, Children: []core.Node{Textf(label, 11, Medium, fg)}}
 }

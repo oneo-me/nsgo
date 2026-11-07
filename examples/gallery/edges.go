@@ -13,18 +13,18 @@ import (
 // edgeMessages are the feed the edge effects demo scrolls.
 var edgeMessages = []struct {
 	from, line string
-	tone       ui.Tone
+	tone       Tone
 }{
-	{"Ada", "The engine notes are ready for review", ui.ToneAccent},
-	{"Grace", "Compiler build passed on all six targets", ui.ToneUp},
-	{"Linus", "Can we land the scheduler patch today?", ui.ToneInfo},
-	{"Margaret", "Flight software checklist, revision 4", ui.ToneWarn},
-	{"Alan", "Lunch at the usual place?", ui.ToneDanger},
-	{"Barbara", "Slides for Thursday's talk", ui.ToneAccent},
-	{"Dennis", "The new terminal font looks great", ui.ToneInfo},
-	{"Katherine", "Trajectory numbers attached", ui.ToneUp},
-	{"Ken", "Moving the meeting to 3 pm", ui.ToneWarn},
-	{"Radia", "Spanning tree diagram, final", ui.ToneDanger},
+	{"Ada", "The engine notes are ready for review", ToneAccent},
+	{"Grace", "Compiler build passed on all six targets", ToneUp},
+	{"Linus", "Can we land the scheduler patch today?", ToneInfo},
+	{"Margaret", "Flight software checklist, revision 4", ToneWarn},
+	{"Alan", "Lunch at the usual place?", ToneDanger},
+	{"Barbara", "Slides for Thursday's talk", ToneAccent},
+	{"Dennis", "The new terminal font looks great", ToneInfo},
+	{"Katherine", "Trajectory numbers attached", ToneUp},
+	{"Ken", "Moving the meeting to 3 pm", ToneWarn},
+	{"Radia", "Spanning tree diagram, final", ToneDanger},
 }
 
 // edgeEffects is a feed under a header and a toolbar, which its scroll

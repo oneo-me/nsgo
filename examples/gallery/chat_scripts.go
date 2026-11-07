@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
-
-	"github.com/oneo-me/nsgo/ui"
 )
 
 // The chat's fictional models: the picker changes the voice and whether
@@ -24,7 +22,7 @@ const (
 
 type chatSource struct {
 	title, site string
-	tone        ui.Tone
+	tone        Tone
 }
 
 // chatTool is a tool call: a web search, the weather or code run in a
@@ -145,10 +143,10 @@ var scenarios = []scenario{
 	}},
 	{id: "search", chip: "Search the web", prompt: "What changed in the latest release of the Harbor runtime?", model: "Swift", steps: []chatStep{
 		{tool: &chatTool{id: "search", kind: "search", state: toolPending, query: "Harbor runtime release notes", sources: []chatSource{
-			{"Harbor 4.2 release notes", "harbor.dev", ui.ToneAccent},
-			{"What's new in the Harbor scheduler", "blog.harbor.dev", ui.ToneInfo},
-			{"Benchmarks: Harbor 4.1 vs 4.2", "perfweekly.io", ui.ToneWarn},
-			{"Migrating to the new config format", "docs.harbor.dev", ui.ToneUp},
+			{"Harbor 4.2 release notes", "harbor.dev", ToneAccent},
+			{"What's new in the Harbor scheduler", "blog.harbor.dev", ToneInfo},
+			{"Benchmarks: Harbor 4.1 vs 4.2", "perfweekly.io", ToneWarn},
+			{"Migrating to the new config format", "docs.harbor.dev", ToneUp},
 		}}, ms: 1600},
 		{say: "Harbor **4.2** shipped last week. The highlights, from the release notes and two write-ups:\n\n- A new **work-stealing scheduler** that cuts tail latency by about 30 %.\n- Configuration moved to a single `harbor.toml`; the old flags still work for one more release.\n- Cold starts are roughly **2× faster** thanks to lazy module loading.\n\nThe benchmark post notes the gains are smallest on single-core machines."},
 	}},

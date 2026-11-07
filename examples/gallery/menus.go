@@ -327,7 +327,7 @@ func menusDemo(cx *core.Scope) core.Node {
 			}
 		}
 		show := func(at core.Point) { desktop.PopupMenu(cx, items(), at, nil) }
-		return Card{Title: tr.MenusThePlatformSMenu(), Description: tr.MenusPopupmenuShowsTheSystemS(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: []core.Node{
+		return Card{Title: tr.MenusThePlatformSMenu(), Description: tr.MenusPopupmenuShowsTheSystemS(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Variant: ui.BadgeInfo}}, Children: []core.Node{
 			core.View{TestID: "popup-area", Role: core.RoleButton, Label: tr.MenusShowTheNativeMenu(),
 				StyleFunc: func() core.Style {
 					return core.Style{Height: core.Pt(72), CornerRadius: ui.RadiusInset, Background: colors.Raised(), BorderWidth: 1, BorderColor: colors.Border(),
@@ -353,7 +353,7 @@ func menusDemo(cx *core.Scope) core.Node {
 					ui.Button{Text: tr.MenusAutoHide(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() { desktop.SetMenuBar(cx, desktop.MenuBarAutoHide) }},
 				}})
 		}
-		return Card{Title: tr.MenusTheApplicationMenu(), Description: tr.MenusTheSystemSMenuBar(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Tone: ui.ToneInfo}}, Children: children}
+		return Card{Title: tr.MenusTheApplicationMenu(), Description: tr.MenusTheSystemSMenuBar(), Actions: []core.Node{ui.Badge{Text: tr.MenusNative2(), Variant: ui.BadgeInfo}}, Children: children}
 	}
 
 	eventsCard := func(cx *core.Scope) core.Node {

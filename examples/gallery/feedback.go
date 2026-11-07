@@ -51,12 +51,12 @@ func spinnerPlayground(*core.Signal[string]) cardFunc {
 func meterCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		value, marker := core.NewSignal(cx, 0.6), core.NewSignal(cx, 0.8)
-		tone := core.NewSignal(cx, ui.ToneAccent)
+		variant := core.NewSignal(cx, ui.MeterAccent)
 		return Playground{Title: "Meter", UIOnly: true, Fill: true, Stage: func() core.Node {
-			return ui.Meter{Value: value.Get, Tone: tone.Get(), Marker: marker.Get()}
+			return ui.Meter{Value: value.Get, Variant: variant.Get(), Marker: marker.Get()}
 		}, Knobs: []core.Node{
 			numberKnob("Value", value, 0, 1, 0.05), numberKnob("Marker", marker, 0, 1, 0.05),
-			choiceKnob("Tone", tone, options([]ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneDanger}, "Accent", "Info", "Warn", "Danger")...),
+			choiceKnob("Variant", variant, options([]ui.MeterVariant{ui.MeterAccent, ui.MeterInfo, ui.MeterWarn, ui.MeterDanger}, "Accent", "Info", "Warn", "Danger")...),
 		}}
 	}
 }

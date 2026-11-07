@@ -24,7 +24,7 @@ func hairline(env *core.Env) core.Points {
 	return core.Points(1 / r)
 }
 
-var tileTones = []ui.Tone{ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger}
+var tileTones = []Tone{ToneAccent, ToneInfo, ToneWarn, ToneUp, ToneDanger}
 
 func layoutAnimations(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
@@ -95,7 +95,7 @@ func pressableSheet(cx *core.Scope) core.Node {
 			},
 			Children: []core.Node{
 				core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: tr.CompSheet(), Tone: ui.ToneAccent}}},
+					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{ui.Badge{Text: tr.CompSheet(), Variant: ui.BadgeAccent}}},
 					core.Text{Content: tr.CompASheet(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 					core.Text{Content: Hint(cx, tr.CompTapOutsideItOrPress(), tr.CompPressEscapeOrClickOutside()),
 						Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
@@ -156,7 +156,7 @@ func pressFeedback(cx *core.Scope) core.Node {
 				if disabled.Get() {
 					return ui.Badge{Text: tr.CompOff()}
 				}
-				return ui.Badge{Text: tr.CompOn(), Tone: ui.ToneUp}
+				return ui.Badge{Text: tr.CompOn(), Variant: ui.BadgeUp}
 			}))}},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
 			core.View{Style: fill, Children: []core.Node{Caption{Label: tr.CompLastPressed(), Note: last.Get}}},
@@ -241,7 +241,7 @@ func modalOptions(cx *core.Scope) core.Node {
 				Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1}, StyleFunc: ui.Filled(bg), Children: []core.Node{
 					core.View{Style: core.Style{PaddingEnv: core.EnvAll(core.EnvSafeArea), FlexGrow: 1, Padding: core.All(16), Gap: 12}, Children: []core.Node{
 						core.View{Style: core.Style{Direction: core.Row, Padding: core.Edges{Top: 8}}, Children: []core.Node{
-							ui.Badge{Text: map[bool]string{true: "translucent", false: tr.CompOpaqueBar()}[t], Tone: ui.ToneAccent}}},
+							ui.Badge{Text: map[bool]string{true: "translucent", false: tr.CompOpaqueBar()}[t], Variant: ui.BadgeAccent}}},
 						core.Text{Content: tr.CompADialog(), Style: core.Style{FontSize: 28, FontWeight: ui.Bold, LetterSpacing: -0.5}, StyleFunc: ui.Colored(colors.Text)},
 						core.Text{Content: map[bool]string{true: tr.CompOliveUnder(), false: tr.CompOliveBelow()}[t],
 							Style: core.Style{FontSize: 13, LineHeight: 21}, StyleFunc: ui.Colored(colors.Muted)},
@@ -275,7 +275,7 @@ func platformInfo(cx *core.Scope) core.Node {
 	}
 	announced := 0
 	target := &core.Ref{}
-	return Card{Title: tr.CompPlatform(), Description: tr.CompTheEnvironmentPixelratioAnnounce(), Actions: []core.Node{ui.Badge{Text: osName(env.OS()), Tone: ui.ToneAccent}}, Children: []core.Node{
+	return Card{Title: tr.CompPlatform(), Description: tr.CompTheEnvironmentPixelratioAnnounce(), Actions: []core.Node{ui.Badge{Text: osName(env.OS()), Variant: ui.BadgeAccent}}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			var nodes []core.Node
 			for i, r := range rows() {

@@ -17,15 +17,18 @@ import (
 // demoPeople are the avatars' names.
 var demoPeople = []string{"Ada Lovelace", "Grace Hopper", "Alan Turing", "Katherine Johnson", "Linus Pauling", "Edsger Dijkstra"}
 
+// badgeVariants are the badge's looks.
+var badgeVariants = []ui.BadgeVariant{ui.BadgeNeutral, ui.BadgeAccent, ui.BadgeInfo, ui.BadgeWarn, ui.BadgeDanger, ui.BadgeUp, ui.BadgeDown, ui.BadgeOutline}
+
 func badgeCard(*core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		tone := core.NewSignal(cx, ui.ToneAccent)
 		return Playground{Title: "Badge", UIOnly: true, Stage: func() core.Node {
-			return stageRow(ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Variant: ui.BadgeTinted}, ui.Badge{Text: tr.LibNewVersion(), Tone: tone.Get(), Variant: ui.BadgeOutline})
-		}, Knobs: []core.Node{
-			choiceKnob("Tone", tone, options([]ui.Tone{ui.ToneNeutral, ui.ToneAccent, ui.ToneInfo, ui.ToneWarn, ui.ToneUp, ui.ToneDanger},
-				"Neutral", "Accent", "Info", "Warn", "Up", "Danger")...),
+			var badges []core.Node
+			for _, v := range badgeVariants {
+				badges = append(badges, ui.Badge{Text: tr.LibNewVersion(), Variant: v})
+			}
+			return stageRow(badges...)
 		}}
 	}
 }
@@ -97,7 +100,7 @@ func imagePlayground(*core.Signal[string]) cardFunc {
 }
 
 // swatch is a slide or a side of a comparison: a tinted tile around text.
-func swatch(cx *core.Scope, t ui.Tone, text string) core.Node {
+func swatch(cx *core.Scope, t Tone, text string) core.Node {
 	return core.View{StyleFunc: func() core.Style {
 		return core.Style{FlexGrow: 1, MinHeight: core.Pt(120), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: ui.RadiusInset, Background: t.Tint(cx)}
 	}, Children: []core.Node{ui.Text(text, 15, ui.Semibold, t.Shade(cx))}}
@@ -109,7 +112,7 @@ func imageCompareCard(*core.Signal[string]) cardFunc {
 		position := core.NewSignal(cx, 50.0)
 		vertical := core.NewSignal(cx, false)
 		return Playground{Title: "ImageCompare", UIOnly: true, Fill: true, Stage: func() core.Node {
-			return ui.ImageCompare{Before: swatch(cx, ui.ToneInfo, tr.KitBefore()), After: swatch(cx, ui.ToneAccent, tr.KitAfter()), Vertical: vertical.Get(),
+			return ui.ImageCompare{Before: swatch(cx, ToneInfo, tr.KitBefore()), After: swatch(cx, ToneAccent, tr.KitAfter()), Vertical: vertical.Get(),
 				Position: func() float32 { return float32(position.Get()) }, OnChange: func(p float32) { position.Set(float64(p)) },
 				BeforeLabel: tr.KitBefore(), AfterLabel: tr.KitAfter(), Label: tr.DemoImage(), AspectRatio: 2}
 		}, Knobs: []core.Node{numberKnob("Position", position, 0, 100, 1), boolKnob("Vertical", vertical)}}

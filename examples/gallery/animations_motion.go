@@ -114,7 +114,7 @@ func motionPresets(cx *core.Scope) core.Node {
 			status.Set(tr.AnimTapATile())
 		}))
 	}
-	return Card{Title: tr.AnimMotionPresets(), Description: tr.AnimReadyMadeMotions(len(core.MotionPresets())), Actions: []core.Node{ui.Badge{TextFunc: status.Get, Tone: ui.ToneAccent}}, Children: []core.Node{
+	return Card{Title: tr.AnimMotionPresets(), Description: tr.AnimReadyMadeMotions(len(core.MotionPresets())), Actions: []core.Node{ui.Badge{TextFunc: status.Get, Variant: ui.BadgeAccent}}, Children: []core.Node{
 		core.Scroll{Horizontal: true, HideIndicator: true, Children: []core.Node{
 			base.Tabs{Label: tr.AnimKinds(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(4, 4)}, Children: chips}}},
 		core.Dynamic(func(cx *core.Scope) core.Node {

@@ -249,11 +249,11 @@ func imageInfo(cx *core.Scope) core.Node {
 			Caption{Label: "PrefetchImage", Note: prefetched.Get},
 			Caption{Label: "OnProgress", Note: func() string { return fmt.Sprintf("%.0f%% · %s", progress.Get()*100, status.Get()) }},
 			core.Dynamic(func(*core.Scope) core.Node {
-				t := ui.ToneAccent
+				t := ToneAccent
 				if progress.Get() >= 1 {
-					t = ui.ToneUp
+					t = ToneUp
 				}
-				return ui.Meter{Value: progress.Get, Tone: t}
+				return ui.Meter{Value: progress.Get, Variant: t.Meter()}
 			}),
 		}},
 		core.Show{When: show.Get, Else: func(*core.Scope) core.Node {
@@ -319,11 +319,11 @@ func imageEvents(cx *core.Scope) core.Node {
 			}
 			var badges []core.Node
 			for _, l := range e {
-				t := ui.ToneNeutral
+				t := ToneNeutral
 				if l == "OnLoad" {
-					t = ui.ToneUp
+					t = ToneUp
 				}
-				badges = append(badges, ui.Badge{Text: l, Tone: t})
+				badges = append(badges, ui.Badge{Text: l, Variant: t.Badge()})
 			}
 			return core.Group(badges)
 		})}},

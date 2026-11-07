@@ -113,9 +113,9 @@ func site(cx *core.Scope) core.Node {
 	}
 	return Card{Title: tr.MediaAWebSite(), Description: tr.MediaNavigationStateBackAndForward(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		if state.Get().Loading {
-			return ui.Badge{Text: tr.MediaLoading(), Tone: ui.ToneWarn}
+			return ui.Badge{Text: tr.MediaLoading(), Variant: ui.BadgeWarn}
 		}
-		return ui.Badge{Text: tr.MediaLoaded(), Tone: ui.ToneUp}
+		return ui.Badge{Text: tr.MediaLoaded(), Variant: ui.BadgeUp}
 	})}, Children: []core.Node{
 		core.View{StyleFunc: func() core.Style {
 			return fin.Track().Over(core.Style{Height: core.Pt(40), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(0, 14),
@@ -160,13 +160,13 @@ func player(cx *core.Scope) core.Node {
 	return Card{Title: tr.MediaVideo(), Description: tr.MediaThePlatformSPlayer(), Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 		switch {
 		case failed.Get():
-			return ui.Badge{Text: tr.MediaError(), Tone: ui.ToneDanger}
+			return ui.Badge{Text: tr.MediaError(), Variant: ui.BadgeDanger}
 		case buffering.Get():
-			return ui.Badge{Text: tr.MediaBuffering(), Tone: ui.ToneWarn}
+			return ui.Badge{Text: tr.MediaBuffering(), Variant: ui.BadgeWarn}
 		case paused.Get():
 			return ui.Badge{Text: tr.MediaPaused()}
 		}
-		return ui.Badge{Text: tr.MediaPlaying(), Tone: ui.ToneAccent}
+		return ui.Badge{Text: tr.MediaPlaying(), Variant: ui.BadgeAccent}
 	})}, Children: []core.Node{
 		core.Dynamic(func(*core.Scope) core.Node {
 			// The platform's controls are fixed as the player mounts.
@@ -192,7 +192,7 @@ func player(cx *core.Scope) core.Node {
 							return float64(pos.Get()) / float64(d)
 						}
 						return 0
-					}, Tone: ui.ToneAccent},
+					}, Variant: ui.MeterAccent},
 					core.View{Style: core.Style{Direction: core.Row}, Children: []core.Node{
 						core.Text{ContentFunc: func() string { return clockText(pos.Get()) }, Style: core.Style{FlexGrow: 1, FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 						ui.Textf(func() string { return clockText(dur.Get()) }, 13, ui.Regular, colors.Faint),

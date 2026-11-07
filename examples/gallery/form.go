@@ -190,7 +190,7 @@ func strength(p string) int {
 }
 
 var (
-	strengthTone = []ui.Tone{ui.ToneNeutral, ui.ToneDanger, ui.ToneWarn, ui.ToneInfo, ui.ToneUp}
+	strengthTone = []Tone{ToneNeutral, ToneDanger, ToneWarn, ToneInfo, ToneUp}
 )
 
 // formDemo is an account form in a scroll view: the focused input stays
@@ -206,7 +206,7 @@ func formDemo(cx *core.Scope) core.Node {
 	code, shout, notes := core.NewSignal(cx, ""), core.NewSignal(cx, ""), core.NewSignal(cx, "")
 	mode := core.NewSignal(cx, core.KeyboardDismissOnDrag)
 	type status struct {
-		t    ui.Tone
+		t    Tone
 		text string
 	}
 	result := core.NewSignal(cx, status{})
@@ -263,11 +263,11 @@ func formDemo(cx *core.Scope) core.Node {
 		cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)
 		switch issues {
 		case 0:
-			result.Set(status{ui.ToneUp, tr.FormAccountCreated(name.GetUntracked(), email.GetUntracked())})
+			result.Set(status{ToneUp, tr.FormAccountCreated(name.GetUntracked(), email.GetUntracked())})
 		case 1:
-			result.Set(status{ui.ToneDanger, tr.Form1FieldNeedsAttention()})
+			result.Set(status{ToneDanger, tr.Form1FieldNeedsAttention()})
 		default:
-			result.Set(status{ui.ToneDanger, tr.FormFieldsNeedAttention(issues)})
+			result.Set(status{ToneDanger, tr.FormFieldsNeedAttention(issues)})
 		}
 	}
 
@@ -276,11 +276,11 @@ func formDemo(cx *core.Scope) core.Node {
 		modeName := map[core.KeyboardDismissMode]string{core.KeyboardDismissNone: "none", core.KeyboardDismissOnDrag: "on-drag", core.KeyboardDismissInteractive: "interactive"}
 		return Card{Title: tr.FormKeyboard(), Description: "KeyboardDismissMode while dragging", Actions: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 			h := env.KeyboardHeight()
-			t := ui.ToneNeutral
+			t := ToneNeutral
 			if h > 0 {
-				t = ui.ToneAccent
+				t = ToneAccent
 			}
-			return ui.Badge{Text: fmt.Sprintf("%d pt", int(h+0.5)), Tone: t}
+			return ui.Badge{Text: fmt.Sprintf("%d pt", int(h+0.5)), Variant: t.Badge()}
 		})}, Children: []core.Node{
 			ui.Tabs[core.KeyboardDismissMode]{Equal: true, Options: []ui.Option[core.KeyboardDismissMode]{{Value: core.KeyboardDismissNone, Label: tr.FormNone()}, {Value: core.KeyboardDismissOnDrag, Label: tr.FormOnDrag()},
 				{Value: core.KeyboardDismissInteractive, Label: tr.FormInteractive()}}, Value: mode.Get, OnChange: mode.Set},
@@ -310,7 +310,7 @@ func formDemo(cx *core.Scope) core.Node {
 				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10}, Children: []core.Node{
 					core.View{Style: fill, Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node {
 						s := score()
-						return ui.Meter{Value: func() float64 { return float64(s) / 4 }, Tone: strengthTone[s]}
+						return ui.Meter{Value: func() float64 { return float64(s) / 4 }, Variant: strengthTone[s].Meter()}
 					})}},
 					core.Text{ContentFunc: func() string {
 						return []string{tr.FormEmpty(), tr.FormWeak(), tr.FormFair(), tr.FormGood(), tr.FormStrong()}[score()]
@@ -379,7 +379,7 @@ func formDemo(cx *core.Scope) core.Node {
 				formField(fieldProps{label: tr.FormNotes(), hint: func() string { return fmt.Sprintf("%d/280", len([]rune(notes.Get()))) }},
 					base.Input{Ref: refs[14], Multiline: true, MaxLength: 280, Value: notes.Get, OnChange: notes.Set, Placeholder: tr.FormReturnAddsALine(),
 						Style: core.Style{MinHeight: core.Pt(100)}}),
-				ui.Meter{Value: func() float64 { return float64(len([]rune(notes.Get()))) / 280 }, Tone: ui.ToneAccent},
+				ui.Meter{Value: func() float64 { return float64(len([]rune(notes.Get()))) / 280 }, Variant: ui.MeterAccent},
 			}},
 			autoGrow(),
 			formField(fieldProps{label: tr.FormNoCaret(), api: "HideCaret"}, base.Input{HideCaret: true, DefaultValue: tr.FormNoCaretHere()}),
@@ -395,16 +395,16 @@ func formDemo(cx *core.Scope) core.Node {
 			switch {
 			case r.text == "":
 				return core.Group{}
-			case r.t == ui.ToneUp:
-				return ui.Badge{Text: tr.FormSent(), Tone: ui.ToneUp}
+			case r.t == ToneUp:
+				return ui.Badge{Text: tr.FormSent(), Variant: ui.BadgeUp}
 			}
-			return ui.Badge{Text: tr.FormCheck(), Tone: ui.ToneDanger}
+			return ui.Badge{Text: tr.FormCheck(), Variant: ui.BadgeDanger}
 		})}, Children: []core.Node{
 			core.Show{When: func() bool { return result.Get().text != "" }, Then: func(*core.Scope) core.Node {
 				return core.Dynamic(func(*core.Scope) core.Node {
 					r := result.Get()
 					fg, bg, name := colors.Danger, tints.Danger, lucide.Bell
-					if r.t == ui.ToneUp {
+					if r.t == ToneUp {
 						fg, bg, name = colors.Up, tints.Up, lucide.Check
 					}
 					return core.View{TestID: "form-status", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.All(12),

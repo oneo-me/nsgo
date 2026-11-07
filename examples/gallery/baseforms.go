@@ -280,7 +280,7 @@ func baseCarouselForm(cx *core.Scope, last *core.Signal[string], count *core.Sig
 		var slides []core.Node
 		for i := range int(count.Get()) {
 			slides = append(slides, base.CarouselItem{Label: fmt.Sprintf("%d / %d", i+1, int(count.Get())), Style: core.Style{Width: core.Pt(200), Margin: core.Edges{Right: 8}},
-				Children: []core.Node{swatch(cx, ui.ToneNeutral, itoa(i+1))}})
+				Children: []core.Node{swatch(cx, ToneNeutral, itoa(i+1))}})
 		}
 		return base.Carousel{Label: tr.DemoImage(), Looping: looping.Get(), Style: core.Style{Gap: 8}, OnChange: func(i int) { last.Set(fmt.Sprintf("Carousel: %d", i+1)) },
 			Children: []core.Node{
