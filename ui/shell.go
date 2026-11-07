@@ -8,18 +8,27 @@ import (
 // The window shells fill the window with the app's content under a
 // header of their own, which drags the window: the sidebar reaches the
 // window's top beside the window controls, keeping clear of them, and
-// leaves a window material showing through. The app hides the system's
-// title bar for HeaderHeight with desktop.SetTitleBar and picks the
-// material (nsgo.WindowMaterial).
+// leaves a window material showing through. A shell hides the system's
+// title bar for HeaderHeight itself, so every app's window controls
+// center in the same header; the app picks the material
+// (nsgo.WindowMaterial).
 
-// HeaderHeight is the height of the shell's headers, which the app gives
-// desktop.SetTitleBar for the window controls to center in.
-const HeaderHeight core.Points = 40
+// HeaderHeight is the height of the shell's headers, which an app gives
+// desktop.SetTitleBar for a title bar of its own to match them.
+const HeaderHeight core.Points = 48
 
 // ShellHeaderHeight is a shell's header's height: HeaderHeight, or the
 // window controls' height where it is greater.
 func ShellHeaderHeight(cx *core.Scope) core.Points {
 	return max(HeaderHeight, desktop.TitleBar(cx).Top)
+}
+
+// hideTitleBar gives a desktop window's title bar over to the shell's
+// header.
+func hideTitleBar(cx *core.Scope) {
+	if desktop.IsAvailable(cx) {
+		desktop.SetTitleBar(cx, desktop.TitleBarHidden, HeaderHeight)
+	}
 }
 
 // Chrome is the background of the window's chrome (a title bar, the

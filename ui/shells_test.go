@@ -189,6 +189,23 @@ func TestPlainShell(t *testing.T) {
 	}
 }
 
+// TestShellTitleBar hides the title bar for the header on its own, in
+// every shell.
+func TestShellTitleBar(t *testing.T) {
+	for name, content := range map[string]core.Node{"sidebar": SidebarShell{}, "plain": PlainShell{}} {
+		app, _ := shell(t, windowEnv, func(cx *core.Scope) core.Node { return content })
+		var bar *core.WindowCommand
+		for i := range app.Window {
+			if app.Window[i].Action == core.WindowSetTitleBar {
+				bar = &app.Window[i]
+			}
+		}
+		if bar == nil || bar.TitleBar != core.TitleBarHidden || bar.Height != HeaderHeight {
+			t.Fatalf("%s shell's title bar command = %+v, want hidden for %v", name, bar, HeaderHeight)
+		}
+	}
+}
+
 // TestShellPhone keeps the header clear of the status bar and leaves the
 // window alone.
 func TestShellPhone(t *testing.T) {

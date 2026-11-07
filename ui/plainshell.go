@@ -22,6 +22,7 @@ type PlainShell struct {
 
 // Render implements core.Node.
 func (p PlainShell) Render(cx *core.Scope) core.Node {
+	hideTitleBar(cx)
 	colors := ColorsOf(cx)
 	lead := p.Leading
 	if lead == nil && p.Title != "" {

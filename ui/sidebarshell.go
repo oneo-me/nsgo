@@ -64,6 +64,7 @@ type SidebarShell struct {
 
 // Render implements core.Node.
 func (s SidebarShell) Render(cx *core.Scope) core.Node {
+	hideTitleBar(cx)
 	colors := ColorsOf(cx)
 	env := cx.Env()
 	open := s.Open

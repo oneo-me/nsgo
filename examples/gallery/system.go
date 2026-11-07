@@ -501,7 +501,7 @@ func windowCard(cx *core.Scope) core.Node {
 			return tr.SystemTitleBarInsets(float64(tb.Top), float64(tb.Left), float64(tb.Right))
 		}},
 		ui.Wrap{Children: []core.Node{
-			small(tr.SystemHideTitleBar(), func() { desktop.SetTitleBar(cx, desktop.TitleBarHidden, 40) }),
+			small(tr.SystemHideTitleBar(), func() { desktop.SetTitleBar(cx, desktop.TitleBarHidden, ui.HeaderHeight) }),
 			small(tr.SystemShowTitleBar(), func() { desktop.SetTitleBar(cx, desktop.TitleBarDefault, 0) }),
 		}},
 		Caption{Label: tr.SystemWindowControls()},
