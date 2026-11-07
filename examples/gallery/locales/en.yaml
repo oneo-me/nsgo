@@ -108,6 +108,7 @@ demoStorageDetail: "A launch count, a note saved as you type, the stored keys"
 demoAccessibility: "Accessibility"
 demoAccessibilityDetail: "Labels, values, actions, groups, live regions and focus"
 appNothingYet: nothing yet
+appSearchDemos: Search demos
 appToggleSidebar: Toggle sidebar
 appResizeSidebar: Resize sidebar
 appShowSidebar: Show Sidebar
@@ -2000,6 +2001,8 @@ demoDatePickerDetail: "Dates, ranges and times from a calendar"
 demoColorPicker: "ColorPicker"
 demoColorPickerDetail: "A color by area, channels, text and swatches"
 pickerFindCommand: "Find a command"
+pickerOpenCommandDialog: "Open as a dialog"
+pickerCommandFailed: "Search is unavailable"
 pickerNothingFound: "Nothing found"
 pickerPickDate: "Pick a date"
 pickerTime: "Time"

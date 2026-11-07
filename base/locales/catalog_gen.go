@@ -59,6 +59,11 @@ type Translation struct {
 	ListClear                 func() string
 	ListNothingFound          func() string
 	ListSearch                func() string
+	CommandSearch             func() string
+	CommandSearchPlaceholder  func() string
+	CommandNoMatches          func() string
+	CommandLoading            func() string
+	CommandList               func() string
 	CalendarMonth             func(d time.Time) string
 	CalendarMonthName         func(d time.Time) string
 	CalendarWeekday           func(d time.Time) string
@@ -81,6 +86,11 @@ const (
 	textListClear
 	textListNothingFound
 	textListSearch
+	textCommandSearch
+	textCommandSearchPlaceholder
+	textCommandNoMatches
+	textCommandLoading
+	textCommandList
 	numTexts
 )
 
@@ -101,6 +111,11 @@ var texts = map[string]*[numTexts]string{
 		"Clear",
 		"Nothing found",
 		"Search",
+		"Search commands",
+		"Search commands…",
+		"No matching commands",
+		"Loading…",
+		"Commands",
 	},
 	"zh-Hans": {
 		"全部展开",
@@ -116,6 +131,11 @@ var texts = map[string]*[numTexts]string{
 		"清除",
 		"未找到结果",
 		"搜索",
+		"搜索命令",
+		"搜索命令…",
+		"没有匹配的命令",
+		"正在加载…",
+		"命令",
 	},
 	"zh-Hant": {
 		"全部展開",
@@ -131,6 +151,11 @@ var texts = map[string]*[numTexts]string{
 		"清除",
 		"找不到結果",
 		"搜尋",
+		"搜尋指令",
+		"搜尋指令…",
+		"沒有符合的指令",
+		"正在載入…",
+		"指令",
 	},
 }
 
@@ -211,6 +236,21 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ListSearch != nil {
 		st[textListSearch] = t.ListSearch()
+	}
+	if t.CommandSearch != nil {
+		st[textCommandSearch] = t.CommandSearch()
+	}
+	if t.CommandSearchPlaceholder != nil {
+		st[textCommandSearchPlaceholder] = t.CommandSearchPlaceholder()
+	}
+	if t.CommandNoMatches != nil {
+		st[textCommandNoMatches] = t.CommandNoMatches()
+	}
+	if t.CommandLoading != nil {
+		st[textCommandLoading] = t.CommandLoading()
+	}
+	if t.CommandList != nil {
+		st[textCommandList] = t.CommandList()
 	}
 	if t.CalendarMonth != nil {
 		s.CalendarMonth = t.CalendarMonth
@@ -428,6 +468,58 @@ func ListSearch(cx *core.Scope) string { return For(cx).ListSearch() }
 // ListSearch says "Search"
 // in the language of msgs.
 func (msgs Messages) ListSearch() string { return msgs.text(textListSearch) }
+
+// CommandSearch says "Search commands"
+// in the language the app shows under cx.
+//
+// What screen readers say of a command palette's search field.
+func CommandSearch(cx *core.Scope) string { return For(cx).CommandSearch() }
+
+// CommandSearch says "Search commands"
+// in the language of msgs.
+func (msgs Messages) CommandSearch() string { return msgs.text(textCommandSearch) }
+
+// CommandSearchPlaceholder says "Search commands…"
+// in the language the app shows under cx.
+//
+// The hint in a command palette's empty search field.
+func CommandSearchPlaceholder(cx *core.Scope) string { return For(cx).CommandSearchPlaceholder() }
+
+// CommandSearchPlaceholder says "Search commands…"
+// in the language of msgs.
+func (msgs Messages) CommandSearchPlaceholder() string {
+	return msgs.text(textCommandSearchPlaceholder)
+}
+
+// CommandNoMatches says "No matching commands"
+// in the language the app shows under cx.
+//
+// What a command palette says while no command matches its query.
+func CommandNoMatches(cx *core.Scope) string { return For(cx).CommandNoMatches() }
+
+// CommandNoMatches says "No matching commands"
+// in the language of msgs.
+func (msgs Messages) CommandNoMatches() string { return msgs.text(textCommandNoMatches) }
+
+// CommandLoading says "Loading…"
+// in the language the app shows under cx.
+//
+// What a command palette says while a search is under way.
+func CommandLoading(cx *core.Scope) string { return For(cx).CommandLoading() }
+
+// CommandLoading says "Loading…"
+// in the language of msgs.
+func (msgs Messages) CommandLoading() string { return msgs.text(textCommandLoading) }
+
+// CommandList says "Commands"
+// in the language the app shows under cx.
+//
+// What screen readers say of a command palette's list of results.
+func CommandList(cx *core.Scope) string { return For(cx).CommandList() }
+
+// CommandList says "Commands"
+// in the language of msgs.
+func (msgs Messages) CommandList() string { return msgs.text(textCommandList) }
 
 // CalendarMonth says "{d, date, ::yMMMM}"
 // in the language the app shows under cx.

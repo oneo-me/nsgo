@@ -353,3 +353,120 @@ func TestMenusInAToolbar(t *testing.T) {
 		t.Fatal("the pointer over the other trigger did not move the menu there")
 	}
 }
+
+func commandApp(t *testing.T, c base.Command) *nsgotest.App {
+	t.Helper()
+	c.Label = "Commands"
+	c.SearchLabel = "Search"
+	c.Style = core.Style{Height: core.Pt(300)}
+	return nsgotest.Start(t, func(*core.Scope) core.Node { return c })
+}
+
+func TestCommandFilterNoFilterAndKeepsTheFieldWhileComposing(t *testing.T) {
+	var ran []string
+	var queries []string
+	app := commandApp(t, base.Command{
+		Items: func() []base.CommandItem {
+			return []base.CommandItem{{ID: "a", Label: "Alpha"}, {ID: "b", Label: "Beta"}}
+		},
+		Filter: func(items []base.CommandItem, query string) []base.CommandItem {
+			queries = append(queries, query)
+			return items[1:]
+		},
+		OnSelect: func(id string) { ran = append(ran, id) }, AutoFocus: true,
+	})
+	if app.Exists("role:option Alpha") || !app.Exists("role:option Beta") {
+		t.Fatal("Filter did not decide what shows")
+	}
+	app.Type("label:Search", "x")
+	if queries[len(queries)-1] != "x" {
+		t.Fatalf("Filter heard %v", queries)
+	}
+	app.Key("Enter")
+	if !slices.Equal(ran, []string{"b"}) {
+		t.Fatalf("ran %v", ran)
+	}
+	app.Compose("label:Search", "ni")
+	app.Key("Escape")
+	if app.Find("label:Search").Text != "x" {
+		t.Fatal("Escape cleared the query under a composition")
+	}
+	app.Compose("label:Search", "")
+	app.Key("Escape")
+	if app.Find("label:Search").Text != "" {
+		t.Fatal("Escape after the composition kept the query")
+	}
+}
+
+func TestCommandExpandsOnSearch(t *testing.T) {
+	ran := ""
+	app := commandApp(t, base.Command{ExpandOnSearch: true, AutoFocus: true, Empty: core.Text{Content: "Nothing"}, OnSelect: func(id string) { ran = id },
+		Items: func() []base.CommandItem { return []base.CommandItem{{ID: "a", Label: "Alpha"}} }})
+	if app.Exists("role:option Alpha") || app.Exists("text:Nothing") {
+		t.Fatal("rows before a query")
+	}
+	app.Type("label:Search", "  ")
+	app.Key("Enter")
+	if app.Exists("role:option Alpha") || ran != "" {
+		t.Fatal("spaces are no query")
+	}
+	app.Type("label:Search", "al")
+	if !app.Exists("role:option Alpha") {
+		t.Fatal("no rows with a query")
+	}
+	app.Key("Enter")
+	if ran != "a" {
+		t.Fatalf("ran %q", ran)
+	}
+}
+
+func TestCommandPendingAndError(t *testing.T) {
+	var loading *core.Signal[bool]
+	var failure *core.Signal[string]
+	ran := ""
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		loading, failure = core.NewSignal(cx, false), core.NewSignal(cx, "")
+		return base.Command{SearchLabel: "Search", AutoFocus: true, Loading: loading.Get, Error: failure.Get, OnSelect: func(id string) { ran = id },
+			Pending: core.Text{Content: "Wait"}, Empty: core.Text{Content: "Nothing"},
+			RenderError: func(message string) core.Node { return core.Text{Content: message} }, Style: core.Style{Height: core.Pt(300)},
+			Items: func() []base.CommandItem { return []base.CommandItem{{ID: "a", Label: "Alpha"}} }}
+	})
+	loading.Set(true)
+	app.Settle()
+	if app.Exists("role:option Alpha") || !app.Exists("text:Wait") || app.Exists("text:Nothing") {
+		t.Fatal("Pending does not replace the rows")
+	}
+	app.Key("Enter")
+	if ran != "" {
+		t.Fatal("chose while pending")
+	}
+	failure.Set("Offline")
+	app.Settle()
+	if !app.Exists("text:Offline") || app.Exists("text:Wait") {
+		t.Fatal("the error does not win")
+	}
+	loading.Set(false)
+	failure.Set("")
+	app.Settle()
+	if !app.Exists("role:option Alpha") {
+		t.Fatal("the rows did not come back")
+	}
+}
+
+func TestCommandInputSource(t *testing.T) {
+	var open *core.Signal[bool]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		open = core.NewSignal(cx, true)
+		return core.Show{When: open.Get, Then: func(*core.Scope) core.Node {
+			return base.Command{SearchLabel: "Search", AutoFocus: true, InputSource: "abc", Items: func() []base.CommandItem { return nil }}
+		}}
+	})
+	if app.InputSource != "abc" {
+		t.Fatalf("selected %q", app.InputSource)
+	}
+	open.Set(false)
+	app.Settle()
+	if app.InputSource != "" {
+		t.Fatalf("left %q", app.InputSource)
+	}
+}

@@ -67,3 +67,4 @@ Touch screens have no pointer, so these exist on desktops alone.
 | `ui.NavPage` | `NavHeader` in the page | iOS: the system's transparent header over the page, with its own glass, title and back button; content scrolls under it with a progressive blur. Android: `NavHeader` under the status bar |
 | `ui/chat` glass surfaces | macOS, iOS, Windows | No drawn rim, as the system's glass draws its own |
 | `ui/filepicker` | macOS | Shortcuts use Command instead of Control |
+| `base.Command`'s `InputSource` | macOS | Selects the keyboard input source; nothing elsewhere |

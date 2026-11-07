@@ -6,6 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/ui"
@@ -34,20 +35,43 @@ func commandPlayground(last *core.Signal[string]) cardFunc {
 	return func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		items := commandItems(tr)
-		return Playground{Title: "Command", Fill: true, Base: baseCommandForm(cx, last), Stage: func() core.Node {
+		expand, loading, failing, open := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+		failure := func() string {
+			if failing.Get() {
+				return tr.PickerCommandFailed()
+			}
+			return ""
+		}
+		palette := func(expanded bool) ui.Command {
 			return ui.Command{Items: func() []base.CommandItem { return items }, Placeholder: tr.PickerFindCommand(), Label: tr.DemoCommand(),
-				Style: core.Style{Height: core.Pt(280), MaxWidth: core.Pt(420)}, OnSelect: func(id string) { last.Set("Command: " + id) }}
-		}}
+				ExpandOnSearch: expanded, Loading: loading.Get, Error: failure}
+		}
+		return Playground{Title: "Command", Start: true, Base: baseCommandForm(cx, last), Stage: func() core.Node {
+			return core.Dynamic(func(*core.Scope) core.Node {
+				inline, dialog := palette(expand.Get()), palette(expand.Get())
+				inline.Style = core.Style{Height: core.Pt(280)}
+				inline.OnSelect = func(id string) { last.Set("Command: " + id) }
+				dialog.InputSource = commandInputSource
+				dialog.OnSelect = func(id string) {
+					open.Set(false)
+					last.Set("CommandDialog: " + id)
+				}
+				return core.View{Style: core.Style{Gap: 12, AlignItems: core.AlignStart}, Children: []core.Node{
+					core.View{Style: core.Style{AlignSelf: core.AlignStretch}, Children: []core.Node{inline}},
+					ui.Button{Text: tr.PickerOpenCommandDialog(), Variant: ui.ButtonSecondary, TestID: "open-command-dialog", OnPress: func() { open.Set(true) }},
+					ui.CommandDialog{TestID: "command-dialog", Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Command: dialog}}}
+			})
+		}, Knobs: []core.Node{boolKnob("ExpandOnSearch", expand), boolKnob("Loading", loading), boolKnob("Error", failing)}}
 	}
 }
 
 // commandItems are what a card's palette runs.
 func commandItems(tr locales.Messages) []base.CommandItem {
 	return []base.CommandItem{
-		{ID: "new", Label: tr.DemoDialog(), Shortcut: "mod+n", Group: tr.DemoMenu()},
-		{ID: "sheet", Label: tr.DemoSheet(), Keywords: []string{"panel"}, Group: tr.DemoMenu()},
-		{ID: "calendar", Label: tr.DemoDatePicker(), Group: tr.DemoSelect()},
-		{ID: "color", Label: tr.DemoColorPicker(), Group: tr.DemoSelect(), Disabled: true},
+		{ID: "new", Label: tr.DemoDialog(), Description: tr.DemoDialogDetail(), Shortcut: "mod+n", Group: tr.DemoMenu(), Icon: lucide.AppWindow()},
+		{ID: "sheet", Label: tr.DemoSheet(), Keywords: []string{"panel"}, Group: tr.DemoMenu(), Icon: lucide.Layers()},
+		{ID: "calendar", Label: tr.DemoDatePicker(), Group: tr.DemoSelect(), Icon: lucide.Calendar(), Trailing: ui.Badge{Text: tr.DemoSelect()}},
+		{ID: "color", Label: tr.DemoColorPicker(), Group: tr.DemoSelect(), Icon: lucide.Palette(), Disabled: true},
 	}
 }
 
@@ -190,7 +214,7 @@ func baseComboboxForm(cx *core.Scope, last *core.Signal[string], value *core.Sig
 func baseCommandForm(cx *core.Scope, last *core.Signal[string]) Form {
 	tr := locales.For(cx)
 	items := commandItems(tr)
-	return Form{Name: "base.Command", Fill: true, Stage: func() core.Node {
+	return Form{Name: "base.Command", Start: true, Stage: func() core.Node {
 		return base.Command{Items: func() []base.CommandItem { return items }, Placeholder: tr.PickerFindCommand(), Label: tr.DemoCommand(),
 			Style: core.Style{Height: core.Pt(240), Gap: 4}, SearchStyle: core.Style{Height: core.Pt(32)}, ItemClass: bareRows,
 			GroupStyle: core.Style{Padding: core.Symmetric(4, 8), Opacity: core.Alpha(0.6)}, SeparatorStyle: core.Style{Height: core.Pt(8)},

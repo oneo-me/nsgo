@@ -466,6 +466,12 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.Window = append(a.Window, *it.Window)
 		case driver.ItemAnnounce:
 			a.Announced = append(a.Announced, it.Value)
+		case driver.ItemInputSource:
+			if it.Value != "" {
+				a.inputSourceWas, a.InputSource = a.InputSource, it.Value
+			} else {
+				a.InputSource = a.inputSourceWas
+			}
 		case driver.ItemAlert:
 			a.alerts = append(a.alerts, *it.Alert)
 		case driver.ItemBlockNative:

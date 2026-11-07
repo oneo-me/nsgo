@@ -19,7 +19,7 @@ func init() {
 	Fields[base.SelectItem](map[string]string{})
 	Fields[base.SelectEntry](map[string]string{})
 	Fields[base.SelectGroup](map[string]string{})
-	Optional[base.CommandItem]("Keywords", "Group", "Shortcut", "Disabled", "Checked")
+	Optional[base.CommandItem]("Description", "Keywords", "Group", "Shortcut", "Icon", "Leading", "Trailing", "Disabled", "Checked")
 	Fields[base.CommandItem](map[string]string{"ID": "id"})
 	Fields[base.CommandEntry](map[string]string{"ID": "id"})
 	Fields[base.CommandGroup](map[string]string{})
@@ -120,7 +120,7 @@ func init() {
 	Register("nsgo/base", map[string]core.Node{"ColorEyeDropper": base.ColorEyeDropper{}}, colorOptions(Event("OnPick", "color"))...)
 	Register("nsgo/base", map[string]core.Node{"Command": base.Command{}}, options(
 		Rename("NoSearch", "searchable"), Rename("NoFilter", "filterable"), Rename("NoSeparator", "separator"),
-		Rename("SearchLabel", "searchAccessibilityLabel"), Omit("SearchField"),
+		Rename("SearchLabel", "searchAccessibilityLabel"), Omit("SearchField"), Omit("Filter"),
 		Event("OnSelect", "id"), Event("OnQueryChange", "query"),
 		custom("Query", optionalString("query"), "query?: string"),
 		custom("OnHighlightChange", func(p *props, v reflect.Value) {

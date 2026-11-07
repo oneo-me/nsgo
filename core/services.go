@@ -168,6 +168,20 @@ func (cx *Scope) Announce(text string) {
 	}
 }
 
+// SelectInputSource is the core's part of base.Command's InputSource: it
+// selects the keyboard input source of id, remembering the one it replaces.
+func (cx *Scope) SelectInputSource(id string) {
+	if t := cx.tree(); t != nil {
+		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemInputSource, Value: id})
+		t.changed = true
+	}
+}
+
+// RestoreInputSource is the core's part of base.Command's InputSource: it
+// goes back to the source SelectInputSource replaced, unless the user chose
+// another since.
+func (cx *Scope) RestoreInputSource() { cx.SelectInputSource("") }
+
 // MaxURLLength is the longest URL OpenURL opens, in bytes: a mailto:
 // link with a body fits.
 const MaxURLLength = 16 << 10

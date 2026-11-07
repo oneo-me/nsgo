@@ -106,6 +106,10 @@ const (
 	ItemReadClipboard
 	// ItemAnnounce has the screen reader say Value.
 	ItemAnnounce
+	// ItemInputSource selects the keyboard input source named Value, or
+	// with none goes back to the one it replaced, where the platform lets
+	// an app.
+	ItemInputSource
 	// ItemKeymap replaces the surface's keyboard shortcuts (Keys); the
 	// platform consumes matching key presses and reports EventKey.
 	ItemKeymap

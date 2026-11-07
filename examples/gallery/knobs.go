@@ -102,16 +102,19 @@ func options[T comparable](values []T, names ...string) []ui.Option[T] {
 
 // Form is a form of a component on a Playground's stage. Stage builds it,
 // again whenever a signal it reads changes. It centers on the stage; Fill
-// gives what has no width of its own formWidth to stretch across.
+// gives what has no width of its own formWidth to stretch across, and Start
+// stretches it across the whole stage from the top instead, for what lists
+// its results downward.
 type Form struct {
 	Name  string
 	Fill  bool
+	Start bool
 	Stage func() core.Node
 }
 
 // Playground is a card of a component, edge to edge, above the knobs that
 // set its props. Base is its form in package base, above Stage, its ui
-// form, Title and Fill being that form's. BaseKnobs set the props base has
+// form, Title, Fill and Start being that form's. BaseKnobs set the props base has
 // on both forms, and a hairline keeps Knobs, ui's own, under them. Stage
 // shows every variant at the default size; Sizes, a block of its own under
 // it, shows every size of the default variant.
@@ -120,6 +123,7 @@ type Playground struct {
 	Note      string
 	UIOnly    bool
 	Fill      bool
+	Start     bool
 	Base      Form
 	Stage     func() core.Node
 	Sizes     func() core.Node
@@ -131,7 +135,7 @@ type Playground struct {
 func (p Playground) Render(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	hairline := core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
-	form := Form{Name: p.Title, Fill: p.Fill, Stage: p.Stage}
+	form := Form{Name: p.Title, Fill: p.Fill, Start: p.Start, Stage: p.Stage}
 	stages := []core.Node{form.stage("")}
 	if p.Base.Stage != nil {
 		stages = []core.Node{p.Base.stage(p.Base.Name), hairline, form.stage("ui")}
@@ -159,6 +163,10 @@ func (f Form) stage(caption string) core.Node {
 	box := core.Style{MaxWidth: core.Pct(100), AlignItems: core.AlignCenter}
 	if f.Fill {
 		box = core.Style{Width: core.Pct(100), MaxWidth: core.Pt(formWidth), AlignItems: core.AlignStretch}
+	}
+	if f.Start {
+		s.AlignItems, s.JustifyContent = core.AlignStretch, core.JustifyStart
+		box = core.Style{AlignItems: core.AlignStretch}
 	}
 	children := []core.Node{core.View{TestID: "form-" + f.Name, Style: box,
 		Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node { return f.Stage() })}}}

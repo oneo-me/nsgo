@@ -1325,6 +1325,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 				s.window.Send(selMakeFirstResponer, objc.ID(0))
 			}
 			continue
+		case driver.ItemInputSource:
+			setInputSource(it.Value)
+			continue
 		case driver.ItemSetClipboard:
 			pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
 			pb.Send(sel("clearContents"))

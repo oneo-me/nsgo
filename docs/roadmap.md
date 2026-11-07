@@ -53,6 +53,7 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
+| Input sources | Not in NSH; Onevra's palette, macOS only | `Scope.SelectInputSource` selects a keyboard layout on Windows and Linux too |
 | Speech | `sandbox.md` (`speech`), `nsh`'s `Speech` | `Speech.start` sessions recognize speech on macOS and iOS and report their transcript |
 | The app's lifecycle | `nsh`'s `lifecycle()` (NSH `#747`) | `lifecycle()` reads, reactively, whether the app is `active`, `inactive` (visible without the focus) or in the `background`, which every backend reports |
 | Clipboard images as URLs | `api-naming.md` (Clipboard) | `readImage` promises a URL and rejects what cannot be read, on every backend (`mod-clipboard` passes) |

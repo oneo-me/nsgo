@@ -159,6 +159,7 @@ Package `desktop` is NSH's `nsh/desktop`: native controls, an app-drawn title ba
 Shortcuts are scoped to their owner: the platform matches key presses against the table synchronously and reports only matches.
 
 - An input method composing text keeps its keys on macOS and the web, so arrows still choose its candidates.
+- `Scope.SelectInputSource`, `base.Command`'s `InputSource`, selects an enabled keyboard input source on macOS through Text Input Sources, which need no field's input context, so restoring works after the field is gone. `RestoreInputSource` goes back unless the user chose another since. Other platforms ignore both ([roadmap](../roadmap.md#platform-services-of-040)); `nsgotest` records them in `App.InputSource`.
 - Each `KeyBinding` says whether it fires while a text input or web view has the focus, and on a held key's auto-repeats; `driver.FindKey` decides for every Go backend, Android's Java the same way.
 - By default (`KeyAuto`) a binding leaves an input the keys it uses (`EditsText`) and fires once while held; `OnKeyWith` asks for `KeyAlways`, `KeyNotEditing` and `Repeat`.
 - GTK flags no repeats, so Linux counts a key pressed again before its release; UIKit reports a held key once, so iOS repeats a binding on a timer.

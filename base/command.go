@@ -1,7 +1,8 @@
 package base
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 	"strings"
 
 	"github.com/oneo-me/nsgo/core"
@@ -10,13 +11,21 @@ import (
 // CommandItem is a command of a Command.
 type CommandItem struct {
 	ID, Label string
+	// Description says more of it, for the app's row to draw. Queries do
+	// not match it.
+	Description string
 	// Keywords are found as its Label is, without showing.
 	Keywords []string
-	// Group is the section it is in: adjacent items of one group show
-	// under one header.
+	// Group is the section it is in: the items of one group show together
+	// under one header, wherever they are among the items.
 	Group string
 	// Shortcut shows as what it is pressed with: "mod+n". The app binds it.
-	Shortcut          string
+	Shortcut string
+	// Icon is the glyph for the app's row to draw, and Leading content to
+	// draw in its place. Trailing is content for the row's end. Queries
+	// match none of them.
+	Icon              *core.SVG
+	Leading, Trailing core.Node
 	Disabled, Checked bool
 }
 
@@ -24,10 +33,13 @@ type CommandItem struct {
 // shortcut as this platform shows it.
 type CommandEntry struct {
 	ID, Label         string
+	Description       string
 	Keywords          []string
 	Group             string
 	Shortcut          string
 	ShortcutLabel     string
+	Icon              *core.SVG
+	Leading, Trailing core.Node
 	Disabled, Checked bool
 }
 
@@ -61,8 +73,9 @@ func (r *CommandRef) MatchedCount() int {
 }
 
 // Command is a command palette: a search field over the app's commands
-// filtered natively by label and keywords, in a virtualized list under
-// their sections' headers. The first enabled match is highlighted while
+// matched natively by FilterCommands, or the app's Filter, in a virtualized
+// list under their sections' headers, a section showing where its best
+// match ranks. The first enabled match is highlighted while
 // the field keeps the keyboard focus, so Up, Down, Page Up and Down move
 // it, Return chooses and Escape clears the query, then reports OnCancel.
 // Without a search field, Home, End, Space and letters by typeahead work
@@ -76,11 +89,34 @@ type Command struct {
 	// NoSearch shows no field, and every item.
 	NoSearch bool
 	// NoFilter leaves the items to the app, as a search it answers itself.
-	NoFilter    bool
+	NoFilter bool
+	// Filter replaces FilterCommands for a search of the items at hand: it
+	// gets them and the query, and must not change them.
+	Filter      func(items []CommandItem, query string) []CommandItem
 	Placeholder string
 	AutoFocus   bool
+	// ExpandOnSearch shows no rows, nor Empty, Pending or the error, until
+	// the query holds more than spaces, and ExpandedClass and ExpandedStyle
+	// join the command's from then on, for a height the rows fill.
+	ExpandOnSearch bool
+	ExpandedClass  string
+	ExpandedStyle  core.Style
 	// Loading says a search is under way: the list is busy and Empty waits.
 	Loading func() bool
+	// Pending takes the rows' place while Loading, and nothing can be
+	// chosen. Without it the rows stay as they were.
+	Pending core.Node
+	// Error says why there are no rows, empty while there is nothing to
+	// say: they go and nothing can be chosen, and RenderError draws it.
+	Error       func() string
+	RenderError func(message string) core.Node
+	// InputSource is the macOS input source to select once the search
+	// field has the keyboard, as "com.apple.keylayout.ABC" for Latin
+	// commands, restored as the command goes unless the user chose another
+	// meanwhile or KeepInputSource. A source that is not enabled changes
+	// nothing, nor does any other platform.
+	InputSource     string
+	KeepInputSource bool
 	// NoSeparator leaves the separators between sections out.
 	NoSeparator bool
 	// SearchLabel names the field for assistive technology, over Label.
@@ -128,26 +164,44 @@ type Command struct {
 	Tooltip  core.Node
 }
 
+// FilterCommands is the items the query's words all match, ignoring case,
+// without changing items: exact labels first, then labels they start,
+// labels holding them and last keywords holding them, ties in the items'
+// order. No words match every item.
+func FilterCommands(items []CommandItem, query string) []CommandItem {
+	x := newCommandIndex(items)
+	matches := x.matching(strings.ToLower(query), nil)
+	out := make([]CommandItem, len(matches))
+	for i, m := range matches {
+		out[i] = items[m]
+	}
+	return out
+}
+
 // commandIndex is what the palette keeps of its items for every query.
 type commandIndex struct {
 	items []CommandItem
-	// folded is what queries match, section each item's section's first
-	// item, and ids each ID's first item.
+	// folded is what queries match, its first labels[i] bytes the label,
+	// section each item's group's first item, and ids each ID's first item.
 	folded  []string
+	labels  []int
 	section []int
 	ids     map[string]int
 }
 
 func newCommandIndex(items []CommandItem) *commandIndex {
-	x := &commandIndex{items: items, folded: make([]string, len(items)), section: make([]int, len(items)), ids: make(map[string]int, len(items))}
-	start := 0
+	x := &commandIndex{items: items, folded: make([]string, len(items)), labels: make([]int, len(items)), section: make([]int, len(items)), ids: make(map[string]int, len(items))}
+	groups := make(map[string]int)
 	for i, item := range items {
-		if i > 0 && items[i-1].Group != item.Group {
+		start, ok := groups[item.Group]
+		if !ok {
 			start = i
+			groups[item.Group] = i
 		}
 		x.section[i] = start
 		var text strings.Builder
 		text.WriteString(strings.ToLower(item.Label))
+		x.labels[i] = text.Len()
 		for _, k := range item.Keywords {
 			text.WriteByte('\n')
 			text.WriteString(strings.ToLower(k))
@@ -160,23 +214,62 @@ func newCommandIndex(items []CommandItem) *commandIndex {
 	return x
 }
 
-// matching are the items whose folded text holds query, among among when
-// given: the matches of a query this one holds.
+// matching are the items query's words all match, best first, among among
+// when given: the matches of a query this one holds.
 func (x *commandIndex) matching(query string, among []int) []int {
-	out := make([]int, 0, len(x.items))
-	hit := func(i int) {
-		if query == "" || strings.Contains(x.folded[i], query) {
+	terms := strings.Fields(query)
+	if among == nil {
+		among = make([]int, len(x.items))
+		for i := range among {
+			among[i] = i
+		}
+	}
+	if len(terms) == 0 {
+		return among
+	}
+	type match struct{ item, score int }
+	found := make([]match, 0, len(among))
+	for _, i := range among {
+		if score, ok := x.score(i, terms); ok {
+			found = append(found, match{i, score})
+		}
+	}
+	slices.SortFunc(found, func(a, b match) int { return cmp.Or(cmp.Compare(a.score, b.score), cmp.Compare(a.item, b.item)) })
+	out := make([]int, len(found))
+	for i, m := range found {
+		out[i] = m.item
+	}
+	return out
+}
+
+// score is how far item i is from what terms ask, lower being better, and
+// whether they all match it.
+func (x *commandIndex) score(i int, terms []string) (int, bool) {
+	label, keywords := x.folded[i][:x.labels[i]], x.folded[i][x.labels[i]:]
+	score := 0
+	for _, term := range terms {
+		switch {
+		case label == term:
+		case strings.HasPrefix(label, term):
+			score++
+		case strings.Contains(label, term):
+			score += 2
+		case strings.Contains(keywords, term):
+			score += 3
+		default:
+			return 0, false
+		}
+	}
+	return score, true
+}
+
+// picked is the indices of what a Filter gave back, in its order.
+func (x *commandIndex) picked(items []CommandItem) []int {
+	out := make([]int, 0, len(items))
+	for _, item := range items {
+		if i, ok := x.ids[item.ID]; ok {
 			out = append(out, i)
 		}
-	}
-	if among != nil {
-		for _, i := range among {
-			hit(i)
-		}
-		return out
-	}
-	for i := range x.items {
-		hit(i)
 	}
 	return out
 }
@@ -204,48 +297,58 @@ type commandShown struct {
 	rows           []commandRow
 	items, enabled []rowItem
 	keys           []any
+	// at is each shown item's row.
+	at map[int]int
 }
 
 func newCommandShown(x *commandIndex, matches []int, separators bool) *commandShown {
-	s := &commandShown{rows: make([]commandRow, 0, len(matches))}
-	section := -1
+	s := &commandShown{rows: make([]commandRow, 0, len(matches)), at: make(map[int]int, len(matches))}
+	// The sections in the order of their best matches, each whole.
+	var sections []int
+	buckets := make(map[int][]int)
 	for _, i := range matches {
-		item := &x.items[i]
-		if start := x.section[i]; start != section {
-			// A separator only once a section was shown before this one:
-			// never leading, trailing or doubled.
-			if separators && section >= 0 {
-				s.keys = append(s.keys, commandSeparatorKey{start})
-				s.rows = append(s.rows, commandRow{kind: commandSeparatorRow, item: -1})
-			}
-			section = start
-			if item.Group != "" {
-				s.keys = append(s.keys, listHeaderKey{item.Group, start})
-				s.rows = append(s.rows, commandRow{kind: commandHeaderRow, heading: item.Group, first: start, item: -1})
-			}
+		start := x.section[i]
+		if _, ok := buckets[start]; !ok {
+			sections = append(sections, start)
 		}
-		at := rowItem{len(s.rows), i}
-		s.rows = append(s.rows, commandRow{item: i})
-		s.keys = append(s.keys, item.ID)
-		s.items = append(s.items, at)
-		if !item.Disabled {
-			s.enabled = append(s.enabled, at)
+		buckets[start] = append(buckets[start], i)
+	}
+	for n, start := range sections {
+		// A separator only once a section was shown before this one:
+		// never leading, trailing or doubled.
+		if separators && n > 0 {
+			s.keys = append(s.keys, commandSeparatorKey{start})
+			s.rows = append(s.rows, commandRow{kind: commandSeparatorRow, item: -1})
+		}
+		if group := x.items[start].Group; group != "" {
+			s.keys = append(s.keys, listHeaderKey{group, start})
+			s.rows = append(s.rows, commandRow{kind: commandHeaderRow, heading: group, first: start, item: -1})
+		}
+		for _, i := range buckets[start] {
+			item := &x.items[i]
+			at := rowItem{len(s.rows), i}
+			s.at[i] = at.row
+			s.rows = append(s.rows, commandRow{item: i})
+			s.keys = append(s.keys, item.ID)
+			s.items = append(s.items, at)
+			if !item.Disabled {
+				s.enabled = append(s.enabled, at)
+			}
 		}
 	}
 	return s
 }
 
 func (s *commandShown) rowOf(item int) int {
-	i := sort.Search(len(s.items), func(i int) bool { return s.items[i].item >= item })
-	if i < len(s.items) && s.items[i].item == item {
-		return s.items[i].row
+	if row, ok := s.at[item]; ok {
+		return row
 	}
 	return -1
 }
 
-func (s *commandShown) isEnabled(item int) bool {
-	i := sort.Search(len(s.enabled), func(i int) bool { return s.enabled[i].item >= item })
-	return i < len(s.enabled) && s.enabled[i].item == item
+func (s *commandShown) isEnabled(x *commandIndex, item int) bool {
+	_, ok := s.at[item]
+	return ok && !x.items[item].Disabled
 }
 
 // palette is a Command's state.
@@ -308,7 +411,7 @@ func (p *palette) follow(reset, initial bool) {
 	s, x := p.shown.GetUntracked(), p.index.GetUntracked()
 	next := -1
 	if !reset && p.highlighted != nil {
-		if i, ok := x.ids[*p.highlighted]; ok && s.isEnabled(i) {
+		if i, ok := x.ids[*p.highlighted]; ok && s.isEnabled(x, i) {
 			next = i
 		}
 	}
@@ -419,12 +522,26 @@ func (c Command) Render(cx *core.Scope) core.Node {
 	for i := range p.lit {
 		p.lit[i] = core.NewSignal(cx, -1)
 	}
+	expanded := func() bool { return !c.ExpandOnSearch || strings.TrimSpace(query()) != "" }
+	failure := func() string {
+		if c.Error != nil {
+			return c.Error()
+		}
+		return ""
+	}
+	pending := func() bool { return c.Pending != nil && is(c.Loading) }
 	p.index = core.NewMemoFunc(cx, func() *commandIndex { return newCommandIndex(c.Items()) }, func(a, b *commandIndex) bool { return a == b })
 	var lastIndex *commandIndex
 	var lastQuery string
 	var lastMatches []int
 	p.shown = core.NewMemoFunc(cx, func() *commandShown {
 		x := p.index.Get()
+		if !expanded() || failure() != "" || pending() {
+			return newCommandShown(x, nil, false)
+		}
+		if c.Filter != nil && !c.NoSearch && !c.NoFilter {
+			return newCommandShown(x, x.picked(c.Filter(x.items, query())), !c.NoSeparator)
+		}
 		q := ""
 		if !c.NoSearch && !c.NoFilter {
 			q = strings.ToLower(strings.TrimSpace(query()))
@@ -451,12 +568,27 @@ func (c Command) Render(cx *core.Scope) core.Node {
 		})
 	})
 	root, field := new(core.Ref), new(core.Ref)
-	fieldFocused, rootFocused := core.NewSignal(cx, false), core.NewSignal(cx, false)
+	fieldFocused, rootFocused, composing := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
 	focused := func() bool {
 		if c.NoSearch {
 			return rootFocused.Get()
 		}
-		return fieldFocused.Get()
+		// An input method keeps its keys while it composes.
+		return fieldFocused.Get() && !composing.Get()
+	}
+	if c.InputSource != "" && !c.NoSearch {
+		selected := false
+		cx.Effect(func() {
+			if !selected && fieldFocused.Get() && !composing.Get() {
+				selected = true
+				cx.SelectInputSource(c.InputSource)
+			}
+		})
+		cx.Cleanup(func() {
+			if selected && !c.KeepInputSource {
+				cx.RestoreInputSource()
+			}
+		})
 	}
 	edited := func(text string) {
 		if c.Query == nil || c.Query() == nil {
@@ -507,7 +639,7 @@ func (c Command) Render(cx *core.Scope) core.Node {
 		}
 		c.Ref.highlight = func(id string) bool {
 			i, ok := p.index.GetUntracked().ids[id]
-			if !ok || !p.shown.GetUntracked().isEnabled(i) {
+			if !ok || !p.shown.GetUntracked().isEnabled(p.index.GetUntracked(), i) {
 				return false
 			}
 			p.setHighlight(i, true)
@@ -532,7 +664,8 @@ func (c Command) Render(cx *core.Scope) core.Node {
 			// A touch keyboard's return key chooses and keeps the field.
 			SubmitBehavior: core.SubmitBehaviorSubmit, Class: c.SearchClass, Style: c.SearchStyle,
 			OnFocus: func() { fieldFocused.Set(true) }, OnBlur: func() { fieldFocused.Set(false) },
-			OnChange: edited, OnSubmit: func(string) { p.accept() }}))
+			OnCompositionChange: func(e core.Composition) { composing.Set(e.Composing) },
+			OnChange:            edited, OnSubmit: func(string) { p.accept() }}))
 		if c.SearchSuffix != nil {
 			bar = append(bar, c.SearchSuffix)
 		}
@@ -550,17 +683,53 @@ func (c Command) Render(cx *core.Scope) core.Node {
 		ViewabilityConfig:     core.ViewabilityConfig{ItemVisiblePercentThreshold: listInView},
 		OnViewableItemsChange: p.viewable}
 	children = append(children, core.Scroll{Role: core.RoleListbox, Label: c.Label, Busy: c.Loading, Class: c.ListClass,
-		Style: core.Style{FlexShrink: 1, MinHeight: core.Pt(0)}.Merge(c.ListStyle), Children: []core.Node{rows}})
+		Style: core.Style{FlexShrink: 1, MinHeight: core.Pt(0)}.Merge(c.ListStyle),
+		StyleFunc: func() core.Style {
+			if len(p.shown.Get().rows) == 0 {
+				return core.Style{Display: core.DisplayNone}
+			}
+			return core.Style{}
+		}, Children: []core.Node{rows}})
 	if c.Empty != nil {
 		// While a search is under way no item is no answer yet.
-		children = append(children, core.Show{When: func() bool { return len(p.shown.Get().rows) == 0 && !is(c.Loading) },
-			Then: func(*core.Scope) core.Node { return c.Empty }})
+		children = append(children, core.Show{When: func() bool {
+			return expanded() && len(p.shown.Get().rows) == 0 && !is(c.Loading) && failure() == ""
+		}, Then: func(*core.Scope) core.Node { return c.Empty }})
+	}
+	if c.Pending != nil {
+		children = append(children, core.Show{When: func() bool { return expanded() && pending() && failure() == "" },
+			Then: func(*core.Scope) core.Node { return c.Pending }})
+	}
+	if c.RenderError != nil {
+		children = append(children, core.Show{When: func() bool { return expanded() && failure() != "" },
+			Then: func(*core.Scope) core.Node {
+				return core.Dynamic(func(*core.Scope) core.Node { return c.RenderError(failure()) })
+			}})
 	}
 	if c.Footer != nil {
 		children = append(children, c.Footer)
 	}
 	children = append(children, keys, typed)
-	return core.View{Ref: root, Class: c.Class, Style: c.Style, StyleFunc: c.StyleFunc, TestID: c.TestID, OnLayout: c.OnLayout, Tooltip: c.Tooltip,
+	style, class := c.StyleFunc, func() string { return c.Class }
+	if c.ExpandOnSearch {
+		class = func() string {
+			if expanded() {
+				return c.Class + " " + c.ExpandedClass
+			}
+			return c.Class
+		}
+		style = func() core.Style {
+			var s core.Style
+			if c.StyleFunc != nil {
+				s = c.StyleFunc()
+			}
+			if expanded() {
+				s = s.Merge(c.ExpandedStyle)
+			}
+			return s
+		}
+	}
+	return core.View{Ref: root, ClassFunc: class, Style: c.Style, StyleFunc: style, TestID: c.TestID, OnLayout: c.OnLayout, Tooltip: c.Tooltip,
 		Focusable: func() bool { return c.NoSearch }, OnFocus: func() { rootFocused.Set(true) }, OnBlur: func() { rootFocused.Set(false) },
 		Children: children}
 }
@@ -597,8 +766,8 @@ func (p *palette) row(cx *core.Scope, r core.ListRow) core.Node {
 
 // commandEntry is item as RenderItem draws it.
 func commandEntry(cx *core.Scope, item CommandItem) CommandEntry {
-	e := CommandEntry{ID: item.ID, Label: item.Label, Keywords: item.Keywords, Group: item.Group, Shortcut: item.Shortcut,
-		Disabled: item.Disabled, Checked: item.Checked}
+	e := CommandEntry{ID: item.ID, Label: item.Label, Description: item.Description, Keywords: item.Keywords, Group: item.Group, Shortcut: item.Shortcut,
+		Icon: item.Icon, Leading: item.Leading, Trailing: item.Trailing, Disabled: item.Disabled, Checked: item.Checked}
 	if item.Shortcut != "" {
 		e.ShortcutLabel = core.Untracked(cx, func() string { return cx.KeyLabel(item.Shortcut) })
 	}

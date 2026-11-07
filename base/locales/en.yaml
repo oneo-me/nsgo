@@ -43,6 +43,21 @@ listNothingFound:
 listSearch:
   message: "Search"
   description: What a styled picker says for this part.
+commandSearch:
+  message: "Search commands"
+  description: What screen readers say of a command palette's search field.
+commandSearchPlaceholder:
+  message: "Search commands…"
+  description: The hint in a command palette's empty search field.
+commandNoMatches:
+  message: "No matching commands"
+  description: What a command palette says while no command matches its query.
+commandLoading:
+  message: "Loading…"
+  description: What a command palette says while a search is under way.
+commandList:
+  message: "Commands"
+  description: What screen readers say of a command palette's list of results.
 calendarMonth:
   message: "{d, date, ::yMMMM}"
   description: A date in a calendar's header, grid of months or weekday headings.

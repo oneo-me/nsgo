@@ -1321,6 +1321,26 @@ func TestPickersPick(t *testing.T) {
 	app.Find("text:base.Command: sheet")
 }
 
+// The sidebar's search and its key find a demo in any language and go to it,
+// starting over each time.
+func TestSearchGoesToADemo(t *testing.T) {
+	app := startDesktop(t)
+	app.Press("id:search")
+	app.Type("id:search-dialog >> role:textbox", "datatable")
+	app.Key("enter")
+	app.FastForward(time.Second)
+	app.Find("id:demo-DataTable")
+	app.Key("mod+k")
+	if got := app.Find("id:search-dialog >> role:textbox").Text; got != "" {
+		t.Fatalf("the search kept %q", got)
+	}
+	app.Key("escape")
+	app.FastForward(time.Second)
+	if app.Exists("id:search-dialog") {
+		t.Fatal("Escape left the search open")
+	}
+}
+
 // ui's forms pick in the running gallery.
 func TestPickerForms(t *testing.T) {
 	app := startDesktop(t)
@@ -1344,4 +1364,8 @@ func TestPickerForms(t *testing.T) {
 	open(app, "Command")
 	app.Press("id:stage-Command >> role:option Sheet")
 	app.Find("text:Command: sheet")
+	app.Press("id:open-command-dialog")
+	app.Type("id:command-dialog >> role:textbox", "sheet")
+	app.Key("enter")
+	app.Find("text:CommandDialog: sheet")
 }

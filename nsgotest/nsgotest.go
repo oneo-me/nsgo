@@ -138,6 +138,10 @@ type App struct {
 	ClipboardImage []byte
 	ClipboardFiles []string
 	Announced      []string
+	// InputSource is the keyboard input source the app selected, as a
+	// test sees it; inputSourceWas the one that selection replaced.
+	InputSource    string
+	inputSourceWas string
 	// OpenedURLs are the URLs the app opened, oldest first. OpenURL
 	// answers whether each opens; every one does when it is nil.
 	OpenedURLs []string

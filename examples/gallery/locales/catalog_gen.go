@@ -419,6 +419,7 @@ type Translation struct {
 	DemoAccessibility                            func() string
 	DemoAccessibilityDetail                      func() string
 	AppNothingYet                                func() string
+	AppSearchDemos                               func() string
 	AppToggleSidebar                             func() string
 	AppResizeSidebar                             func() string
 	AppShowSidebar                               func() string
@@ -2288,6 +2289,8 @@ type Translation struct {
 	DemoColorPicker                              func() string
 	DemoColorPickerDetail                        func() string
 	PickerFindCommand                            func() string
+	PickerOpenCommandDialog                      func() string
+	PickerCommandFailed                          func() string
 	PickerNothingFound                           func() string
 	PickerPickDate                               func() string
 	PickerTime                                   func() string
@@ -2397,6 +2400,7 @@ const (
 	textDemoAccessibility
 	textDemoAccessibilityDetail
 	textAppNothingYet
+	textAppSearchDemos
 	textAppToggleSidebar
 	textAppResizeSidebar
 	textAppShowSidebar
@@ -4160,6 +4164,8 @@ const (
 	textDemoColorPicker
 	textDemoColorPickerDetail
 	textPickerFindCommand
+	textPickerOpenCommandDialog
+	textPickerCommandFailed
 	textPickerNothingFound
 	textPickerPickDate
 	textPickerTime
@@ -4270,6 +4276,7 @@ var texts = map[string]*[numTexts]string{
 		"Accessibility",
 		"Labels, values, actions, groups, live regions and focus",
 		"nothing yet",
+		"Search demos",
 		"Toggle sidebar",
 		"Resize sidebar",
 		"Show Sidebar",
@@ -6033,6 +6040,8 @@ var texts = map[string]*[numTexts]string{
 		"ColorPicker",
 		"A color by area, channels, text and swatches",
 		"Find a command",
+		"Open as a dialog",
+		"Search is unavailable",
 		"Nothing found",
 		"Pick a date",
 		"Time",
@@ -6138,6 +6147,7 @@ var texts = map[string]*[numTexts]string{
 		"إمكانية الوصول",
 		"التسميات، القيم، الإجراءات، المجموعات، المناطق الحية والتركيز",
 		"لا شيء بعد",
+		"البحث في العروض",
 		"إظهار الشريط الجانبي أو إخفاؤه",
 		"تغيير عرض الشريط الجانبي",
 		"إظهار الشريط الجانبي",
@@ -7901,6 +7911,8 @@ var texts = map[string]*[numTexts]string{
 		"منتقي الألوان",
 		"لون عبر المساحة والقنوات والنص والعينات",
 		"ابحث عن أمر",
+		"فتح في مربع حوار",
+		"البحث غير متاح",
 		"لا توجد نتائج",
 		"اختر تاريخًا",
 		"الوقت",
@@ -8006,6 +8018,7 @@ var texts = map[string]*[numTexts]string{
 		"无障碍",
 		"标签、值、操作、分组、实时区域和焦点",
 		"暂无",
+		"搜索示例",
 		"显示或隐藏侧栏",
 		"调整侧栏宽度",
 		"显示侧栏",
@@ -9769,6 +9782,8 @@ var texts = map[string]*[numTexts]string{
 		"颜色选择器",
 		"用色域、通道、文本和色板选色",
 		"查找命令",
+		"在对话框中打开",
+		"搜索不可用",
 		"未找到结果",
 		"选择日期",
 		"时间",
@@ -9874,6 +9889,7 @@ var texts = map[string]*[numTexts]string{
 		"無障礙",
 		"標籤、值、操作、分組、即時區域和焦點",
 		"暫無",
+		"搜尋範例",
 		"顯示或隱藏側邊欄",
 		"調整側邊欄寬度",
 		"顯示側邊欄",
@@ -11637,6 +11653,8 @@ var texts = map[string]*[numTexts]string{
 		"顏色選擇器",
 		"用色域、通道、文字和色票選色",
 		"尋找命令",
+		"在對話方塊中開啟",
+		"無法使用搜尋",
 		"找不到結果",
 		"選擇日期",
 		"時間",
@@ -11975,6 +11993,9 @@ func Supply(lang string, t Translation) {
 	}
 	if t.AppNothingYet != nil {
 		st[textAppNothingYet] = t.AppNothingYet()
+	}
+	if t.AppSearchDemos != nil {
+		st[textAppSearchDemos] = t.AppSearchDemos()
 	}
 	if t.AppToggleSidebar != nil {
 		st[textAppToggleSidebar] = t.AppToggleSidebar()
@@ -17583,6 +17604,12 @@ func Supply(lang string, t Translation) {
 	if t.PickerFindCommand != nil {
 		st[textPickerFindCommand] = t.PickerFindCommand()
 	}
+	if t.PickerOpenCommandDialog != nil {
+		st[textPickerOpenCommandDialog] = t.PickerOpenCommandDialog()
+	}
+	if t.PickerCommandFailed != nil {
+		st[textPickerCommandFailed] = t.PickerCommandFailed()
+	}
 	if t.PickerNothingFound != nil {
 		st[textPickerNothingFound] = t.PickerNothingFound()
 	}
@@ -18422,6 +18449,14 @@ func AppNothingYet(cx *core.Scope) string { return For(cx).AppNothingYet() }
 // AppNothingYet says "nothing yet"
 // in the language of msgs.
 func (msgs Messages) AppNothingYet() string { return msgs.text(textAppNothingYet) }
+
+// AppSearchDemos says "Search demos"
+// in the language the app shows under cx.
+func AppSearchDemos(cx *core.Scope) string { return For(cx).AppSearchDemos() }
+
+// AppSearchDemos says "Search demos"
+// in the language of msgs.
+func (msgs Messages) AppSearchDemos() string { return msgs.text(textAppSearchDemos) }
 
 // AppToggleSidebar says "Toggle sidebar"
 // in the language the app shows under cx.
@@ -36563,6 +36598,22 @@ func PickerFindCommand(cx *core.Scope) string { return For(cx).PickerFindCommand
 // PickerFindCommand says "Find a command"
 // in the language of msgs.
 func (msgs Messages) PickerFindCommand() string { return msgs.text(textPickerFindCommand) }
+
+// PickerOpenCommandDialog says "Open as a dialog"
+// in the language the app shows under cx.
+func PickerOpenCommandDialog(cx *core.Scope) string { return For(cx).PickerOpenCommandDialog() }
+
+// PickerOpenCommandDialog says "Open as a dialog"
+// in the language of msgs.
+func (msgs Messages) PickerOpenCommandDialog() string { return msgs.text(textPickerOpenCommandDialog) }
+
+// PickerCommandFailed says "Search is unavailable"
+// in the language the app shows under cx.
+func PickerCommandFailed(cx *core.Scope) string { return For(cx).PickerCommandFailed() }
+
+// PickerCommandFailed says "Search is unavailable"
+// in the language of msgs.
+func (msgs Messages) PickerCommandFailed() string { return msgs.text(textPickerCommandFailed) }
 
 // PickerNothingFound says "Nothing found"
 // in the language the app shows under cx.

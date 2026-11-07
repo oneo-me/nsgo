@@ -258,6 +258,8 @@ type gallery struct {
 	// settingsQuery what they show.
 	settingsOpen                    *core.Signal[bool]
 	settingsCategory, settingsQuery *core.Signal[string]
+	// searchOpen is whether the demos' search shows.
+	searchOpen *core.Signal[bool]
 	// toastPlacement, toastReverse and toastSwipe are how toasts show, as
 	// the Toast demo sets them.
 	toastPlacement *core.Signal[ui.ToastPlacement]
@@ -354,6 +356,7 @@ func Root(cx *core.Scope) core.Node {
 		settingsOpen:     core.NewSignal(cx, false),
 		settingsCategory: core.NewSignal(cx, ""),
 		settingsQuery:    core.NewSignal(cx, ""),
+		searchOpen:       core.NewSignal(cx, false),
 		env:              env,
 		toastPlacement:   core.NewSignal(cx, ui.ToastBottomEnd),
 		toastReverse:     core.NewSignal(cx, false),
@@ -394,7 +397,7 @@ func Root(cx *core.Scope) core.Node {
 			} else {
 				children = []core.Node{g.phone(cx)}
 			}
-			children = append(children, g.toastView(wide))
+			children = append(children, g.searchDialog(cx), g.toastView(wide))
 			return core.View{StyleFunc: func() core.Style {
 				return fillPage.Merge(core.Style{Background: ui.Chrome(cx), Color: colors.Text()})
 			}, Children: children}
@@ -628,7 +631,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		cx.OnKey("mod+b", g.toggleSidebar)
 	}
 	tr := locales.For(cx)
-	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: g.sidebar(tr), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeToggle(cx)},
+	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: append([]core.Node{g.searchButton(cx, tr)}, g.sidebar(tr)...), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeToggle(cx)},
 		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 212, MaxWidth: 360,
 		ResizeLabel: tr.AppResizeSidebar(),

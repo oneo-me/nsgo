@@ -6,6 +6,7 @@ import (
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/icons/lucide"
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 )
@@ -79,6 +80,77 @@ func TestCommandRuns(t *testing.T) {
 			t.Fatal("no Empty while none matches")
 		}
 	})
+}
+
+func TestCommandShowsWhatAnItemSays(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		app, _ := start(t, e, func(*core.Scope) core.Node {
+			return Command{Style: core.Style{Height: core.Pt(200)}, Items: func() []base.CommandItem {
+				return []base.CommandItem{{ID: "a", Label: "Alpha", Description: "First letter", Icon: lucide.Settings(), Trailing: Badge{Text: "App"}, Group: "Letters"}}
+			}}
+		})
+		for _, want := range []string{"role:option Alpha", "text:First letter", "text:App", "text:Letters"} {
+			app.Find(want)
+		}
+		if !app.Exists("label:Search commands") {
+			t.Fatal("no words of its own")
+		}
+		app.Type("role:textbox", "zz")
+		if !app.Exists("text:No matching commands") {
+			t.Fatal("no words of its own for no matches")
+		}
+	})
+}
+
+func TestCommandDialogCancelsAfterClearing(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		var open *core.Signal[bool]
+		ran := ""
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			open = core.NewSignal(cx, false)
+			return CommandDialog{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Command: Command{OnSelect: func(id string) { ran = id; open.Set(false) },
+				Items: func() []base.CommandItem {
+					return []base.CommandItem{{ID: "a", Label: "Alpha"}, {ID: "b", Label: "Beta"}}
+				}}}
+		})
+		open.Set(true)
+		app.Settle()
+		if !app.Find("role:textbox").Focused {
+			t.Fatal("the search field has no keyboard")
+		}
+		app.Type("role:textbox", "be")
+		app.Key("escape")
+		if app.Find("role:textbox").Text != "" || !open.GetUntracked() {
+			t.Fatal("Escape did not clear the query first")
+		}
+		app.Key("escape")
+		if open.GetUntracked() {
+			t.Fatal("Escape with no query did not close")
+		}
+		open.Set(true)
+		app.Settle()
+		app.Type("role:textbox", "be")
+		app.Key("enter")
+		if ran != "b" || open.GetUntracked() {
+			t.Fatalf("ran %q, open %v", ran, open.GetUntracked())
+		}
+	})
+}
+
+func TestCommandDialogFitsTheFieldUntilASearch(t *testing.T) {
+	var open *core.Signal[bool]
+	app, _ := start(t, envs()[0].Environment, func(cx *core.Scope) core.Node {
+		open = core.NewSignal(cx, true)
+		return CommandDialog{Open: open.Get, TestID: "palette", Command: Command{ExpandOnSearch: true, Items: func() []base.CommandItem {
+			return []base.CommandItem{{ID: "a", Label: "Alpha"}}
+		}}}
+	})
+	app.Settle()
+	field := app.Find("id:palette").Frame.Size.Height
+	app.Type("role:textbox", "a")
+	if tall := app.Find("id:palette").Frame.Size.Height; field > 100 || tall < 400 {
+		t.Fatalf("%v before a search, %v after", field, tall)
+	}
 }
 
 func TestCalendarPicksADay(t *testing.T) {

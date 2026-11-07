@@ -27,7 +27,7 @@ var itemNames = map[ItemKind]string{
 	ItemScrollConfig: "scroll-config", ItemScrollContent: "scroll-content", ItemFocus: "focus",
 	ItemBlur: "blur", ItemImage: "image", ItemModal: "modal", ItemAlert: "alert",
 	ItemDismissKeyboard: "dismiss-keyboard", ItemScrollTo: "scroll-to", ItemCanvas: "canvas",
-	ItemSetClipboard: "set-clipboard", ItemReadClipboard: "read-clipboard", ItemAnnounce: "announce",
+	ItemSetClipboard: "set-clipboard", ItemReadClipboard: "read-clipboard", ItemAnnounce: "announce", ItemInputSource: "input-source",
 	ItemKeymap: "keymap", ItemStatusBar: "status-bar", ItemTitle: "title",
 	ItemBackUnhandled: "back-unhandled", ItemWindow: "window", ItemMenu: "menu", ItemWeb: "web",
 	ItemWebCommand: "web-command", ItemVideo: "video", ItemVideoSeek: "video-seek",
@@ -68,7 +68,7 @@ func (it *MountItem) TraceLine() string {
 	case ItemText:
 		fmt.Fprintf(&b, " %q", it.Text.Text)
 	case ItemInputValue, ItemTitle, ItemAnnounce, ItemAccessibilityLabel,
-		ItemSetClipboard, ItemOpenURL:
+		ItemSetClipboard, ItemOpenURL, ItemInputSource:
 		fmt.Fprintf(&b, " %q", it.Value)
 	case ItemViewProps:
 		if p := it.ViewProps; p.TestID != "" || p.Label != "" {
