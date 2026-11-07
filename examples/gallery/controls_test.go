@@ -24,7 +24,7 @@ func TestControlsOnThePlatform(t *testing.T) {
 	var tags *core.Signal[[]string]
 	var selection *ui.Selection
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		cx.SetTheme(ui.Theme())
+		cx.SetTheme(ui.DefaultTheme())
 		bold = core.NewSignal(cx, false)
 		open, rating = core.NewSignal(cx, false), core.NewSignal(cx, 0)
 		selection = ui.NewSelection(cx, false)

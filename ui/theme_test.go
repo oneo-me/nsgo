@@ -74,7 +74,7 @@ func showcase(cx *core.Scope) core.Node {
 // what floats follow the theme shown.
 func TestThemes(t *testing.T) {
 	headless(t)
-	th := Theme()
+	th := DefaultTheme()
 	if th.Light.Accent != core.RGB(0x007aff) || th.Dark.Accent != core.RGB(0x0a84ff) || th.Light.Colors["accentFill"] != th.Light.Accent {
 		t.Fatalf("default accent = %v", th.Light.Accent)
 	}

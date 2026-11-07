@@ -43,7 +43,7 @@ func start(t *testing.T, e core.Environment, content func(cx *core.Scope) core.N
 	t.Helper()
 	var shown Palette
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		cx.SetTheme(Theme())
+		cx.SetTheme(DefaultTheme())
 		colors := ColorsOf(cx)
 		shown = core.Untracked(cx, colors.Now)
 		return core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 12}, StyleFunc: Filled(colors.Background),

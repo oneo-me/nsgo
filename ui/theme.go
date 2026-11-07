@@ -8,9 +8,9 @@ import (
 
 // Colors are ui's colors where a scope is: each method reads its
 // color from the palette shown there, the theme's roles under the
-// ui's names and the ones Theme adds. A StyleFunc or Draw that calls
-// one follows the palette; a method value (colors.Muted) is a color to
-// hand to what reads it so.
+// ui's names and the ones DefaultTheme adds. A StyleFunc or Draw that
+// calls one follows the palette; a method value (colors.Muted) is a
+// color to hand to what reads it so.
 type Colors struct{ cx *core.Scope }
 
 // ColorsOf is ui's colors where cx is.
@@ -111,13 +111,13 @@ func Themed[T any](cx *core.Scope, build func() T) func() T {
 // Fixed is c as a color to hand to what takes one that may change.
 func Fixed(c core.Color) func() core.Color { return func() core.Color { return c } }
 
-// Theme returns ui's default theme: neutral grays and a blue accent
+// DefaultTheme returns ui's default theme: neutral grays and a blue accent
 // (core.DefaultTheme), with the roles ui adds in Palette.Colors, each
 // derived from Onevra's as its components derive theirs: insets and
 // tracks recess with the text's color, fields take the border, hairlines
 // a fainter text color, Light is the inverse of the page. WarmDuskTheme
 // is the other built-in theme.
-func Theme() *core.Theme {
+func DefaultTheme() *core.Theme {
 	t := core.DefaultTheme()
 	t.Light.Colors = map[string]core.Color{
 		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xfefefe), "field": core.RGB(0xfdfdfd), "fieldBorder": t.Light.Border,

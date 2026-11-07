@@ -23,7 +23,7 @@ func shell(t *testing.T, e core.Environment, content func(cx *core.Scope) core.N
 	t.Helper()
 	var shown Palette
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		cx.SetTheme(Theme())
+		cx.SetTheme(DefaultTheme())
 		shown = core.Untracked(cx, ColorsOf(cx).Now)
 		return core.Func(content)
 	}, size(e), nsgotest.Environment(e))

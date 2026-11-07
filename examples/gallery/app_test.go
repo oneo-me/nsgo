@@ -112,7 +112,7 @@ func TestPhoneTabs(t *testing.T) {
 	if got, _ := app.Storage().GetItem(themeKey); got != "dark" {
 		t.Fatalf("kept %q, want dark", got)
 	}
-	if got := app.Find("id:settings-page").Style.Background; got != ui.Theme().Dark.Background {
+	if got := app.Find("id:settings-page").Style.Background; got != ui.DefaultTheme().Dark.Background {
 		t.Fatalf("page = %x, want the dark background", got)
 	}
 	// One bar serves every tab, and pages pushed cover it.
@@ -131,7 +131,7 @@ func TestPhoneTabs(t *testing.T) {
 func TestColorThemeChosen(t *testing.T) {
 	app := startPhone(t)
 	openTab(app, settingsTab())
-	if got := app.Find("id:settings-page").Style.Background; got != ui.Theme().Light.Background {
+	if got := app.Find("id:settings-page").Style.Background; got != ui.DefaultTheme().Light.Background {
 		t.Fatalf("page = %x, want the default background", got)
 	}
 	app.Press("id:color-theme")
@@ -234,7 +234,7 @@ func TestEveryDemoBuilds(t *testing.T) {
 	env.Dark = true
 	wide.SetEnvironment(env)
 	wide.Find("id:demo-" + allDemos()[len(allDemos())-1].name)
-	if got := wide.Find("id:shell").Style.Background; got != ui.Theme().Dark.Colors["inset"] {
+	if got := wide.Find("id:shell").Style.Background; got != ui.DefaultTheme().Dark.Colors["inset"] {
 		t.Fatalf("sidebar = %x, want the dark inset", got)
 	}
 }

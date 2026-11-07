@@ -4,7 +4,7 @@ import "github.com/oneo-me/nsgo/core"
 
 // WarmDuskTheme returns Warm Dusk (暖暮), a built-in theme: Onevra's warm
 // paper and charcoal with its terracotta accent, which an app gives to
-// SetTheme as it does Theme.
+// SetTheme as it does DefaultTheme.
 func WarmDuskTheme() *core.Theme {
 	t := core.DefaultTheme()
 	text, dark := core.RGB(0x33332f), core.RGB(0xeeeae2)
