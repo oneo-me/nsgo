@@ -117,15 +117,26 @@ func collapsiblePlayground(cx *core.Scope) core.Node {
 
 func sidebarCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
 	selected := core.NewSignal(cx, tr.ControlsOverview())
 	var items []ui.SidebarItem
 	for _, name := range demoSections(tr) {
 		items = append(items, ui.SidebarItem{ID: name, Text: name})
 	}
+	// The buttons above the items: a search field, and an action selected
+	// while what it opens shows, as no item is.
+	const added = "new"
+	buttons := core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 8, Left: 12}, Gap: 2}, Children: []core.Node{
+		ui.SidebarButton{Variant: ui.SidebarButtonField, Icon: lucide.Search, Text: tr.AnimSearch(), Shortcut: "mod+k"},
+		ui.SidebarButton{Icon: lucide.SquarePen, Text: tr.MenusNewDocument(), Shortcut: "mod+n",
+			Selected: func() bool { return selected.Get() == added }, OnPress: func() { selected.Set(added) }},
+	}}
 	return Playground{Title: "Sidebar", UIOnly: true, Stage: func() core.Node {
-		return core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220)}, Children: []core.Node{
+		return core.View{Style: core.Style{Height: core.Pt(230), Width: core.Pt(220)}, Children: []core.Node{
+			buttons,
 			ui.Sidebar{Selected: selected.Get, OnSelect: selected.Set,
-				Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Collapsible: true, Items: items}}},
+				Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Collapsible: true, Items: items,
+					Trailing: ui.Text(fmt.Sprint(len(items)), 11, ui.Regular, colors.Muted)}}},
 		}}
 	}}
 }

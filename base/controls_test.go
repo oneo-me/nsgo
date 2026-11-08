@@ -151,3 +151,35 @@ func TestCarouselLoopingMargin(t *testing.T) {
 		}
 	}
 }
+
+// TestCollapsibleRevealsMeasured opens a revealing collapsible to its
+// content's height once the content is in, and takes the content out once
+// it has closed.
+func TestCollapsibleRevealsMeasured(t *testing.T) {
+	var open *core.Signal[bool]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		open = core.NewSignal(cx, false)
+		return core.View{Style: core.Style{Width: core.Pt(200)}, Children: []core.Node{
+			base.Collapsible{Open: open.Get, Reveal: func() bool { return true }, TestID: "more",
+				Content: core.View{TestID: "tall", Style: core.Style{Height: core.Pt(600)}}},
+		}}
+	})
+	if app.Exists("id:tall") {
+		t.Fatal("closed content is in the tree")
+	}
+	open.Set(true)
+	app.Settle()
+	app.FastForward(time.Second)
+	if got := app.Find("id:more").Frame.Size.Height; got != 600 {
+		t.Fatalf("opened to %v high, want the content's 600", got)
+	}
+	open.Set(false)
+	app.Settle()
+	if got := app.FindMounted("id:more").Frame.Size.Height; got != 0 || len(app.QueryMounted("id:tall")) != 1 {
+		t.Fatalf("closing is %v high: want 0 with the content kept while it springs", got)
+	}
+	app.FastForward(time.Second)
+	if len(app.QueryMounted("id:tall")) != 0 {
+		t.Fatal("the content stayed after closing")
+	}
+}

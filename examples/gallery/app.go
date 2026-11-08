@@ -647,7 +647,7 @@ func (g *gallery) desktopLayout(cx *core.Scope) core.Node {
 		cx.OnKey("mod+b", g.toggleSidebar)
 	}
 	tr := locales.For(cx)
-	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: append([]core.Node{g.searchButton(cx, tr)}, g.sidebar(tr)...), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeMenu(cx)},
+	return ui.SidebarShell{TestID: "shell", SidebarActions: []core.Node{g.sidebarTabs(tr)}, Sidebar: append([]core.Node{g.searchButton(tr)}, g.sidebar(tr)...), SidebarFooter: []core.Node{g.settingsButton(cx), ui.Spacer{}, themeMenu(cx)},
 		Open: g.sidebarOpen.Get, OnOpenChange: g.sidebarOpen.Set, ToggleLabel: tr.AppToggleSidebar(),
 		Width: g.sidebarWidth.Get, OnWidthChange: g.sidebarWidth.Set, DefaultWidth: sidebarWidth, MinWidth: 212, MaxWidth: 360,
 		ResizeLabel: tr.AppResizeSidebar(),

@@ -64,16 +64,9 @@ func (g *gallery) searchDialog(cx *core.Scope) core.Node {
 }
 
 // searchButton is the sidebar's way to searchDialog, with the key beside it.
-func (g *gallery) searchButton(cx *core.Scope, tr locales.Messages) core.Node {
-	colors := ui.ColorsOf(cx)
-	label := tr.AppSearchDemos()
-	return core.View{TestID: "search", Role: core.RoleButton, Label: label, OnPress: func(core.PressEvent) { g.searchOpen.Set(true) },
-		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(32), Padding: core.Symmetric(0, 8), CornerRadius: 8,
-			Margin: core.Edges{Right: 12, Bottom: 8, Left: 12}},
-		StyleFunc: func() core.Style { return core.Style{Background: ui.Alpha(colors.Text(), 0.06)} },
-		Children: []core.Node{
-			ui.Icon(lucide.Search, 16, colors.Muted),
-			core.Text{Content: label, MaxLines: 1, Style: ui.TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}), StyleFunc: ui.Colored(colors.Muted)},
-			core.Text{Content: cx.KeyLabel(searchKey), MaxLines: 1, Style: ui.TypeCaption, StyleFunc: ui.Colored(colors.Muted)},
-		}}
+func (g *gallery) searchButton(tr locales.Messages) core.Node {
+	return core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 8, Left: 12}}, Children: []core.Node{
+		ui.SidebarButton{TestID: "search", Variant: ui.SidebarButtonField, Icon: lucide.Search, Text: tr.AppSearchDemos(), Shortcut: searchKey,
+			OnPress: func() { g.searchOpen.Set(true) }},
+	}}
 }

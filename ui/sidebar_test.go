@@ -2,6 +2,7 @@ package ui
 
 import (
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -168,7 +169,7 @@ func TestSidebarTitleTakesNoRoom(t *testing.T) {
 		}
 	}
 	arrow := func(app *nsgotest.App) float32 {
-		return float32(app.Find("role:button Projects").Children[1].Style.Opacity)
+		return float32(app.Find("role:button Projects").Children[2].Style.Opacity)
 	}
 	if got := arrow(folding); got != 0 {
 		t.Fatalf("the arrow's opacity at rest is %v", got)
@@ -193,4 +194,98 @@ func absoluteY(v *nsgotest.View) driver.Points {
 		y += v.Frame.Origin.Y
 	}
 	return y
+}
+
+// TestSidebarSectionsChange lists items added after the sidebar showed,
+// in a section still folded as the user left it, its title the same view
+// with its count following, the keys moving through them, and an item's
+// Content in place of its text.
+func TestSidebarSectionsChange(t *testing.T) {
+	var items *core.Signal[[]string]
+	var selected *core.Signal[string]
+	app, _ := start(t, envs()[0].Environment, func(cx *core.Scope) core.Node {
+		items, selected = core.NewSignalFunc(cx, []string{"a"}, slices.Equal), core.NewSignal(cx, "a")
+		sections := func() []SidebarSection {
+			var list []SidebarItem
+			for _, id := range items.Get() {
+				list = append(list, SidebarItem{ID: id, Text: id, Content: Text("row "+id, 13, Regular, Inherited), TestID: id})
+			}
+			return []SidebarSection{{Items: list}, {Title: "Later", Collapsible: true, Items: []SidebarItem{{ID: "z", Text: "z", TestID: "z"}},
+				Trailing: Text(strconv.Itoa(len(list)), 11, Regular, Inherited)}}
+		}
+		return core.View{Style: core.Style{Height: core.Pt(400)}, Children: []core.Node{
+			Sidebar{Selected: selected.Get, OnSelect: selected.Set, SectionsFunc: sections}}}
+	})
+	app.Find("row a")
+	app.Press("role:button Later")
+	app.Settle()
+	app.FastForward(time.Second)
+	title := app.Find("role:button Later").ID
+	items.Set([]string{"a", "b"})
+	app.Settle()
+	if !app.Exists("b") || app.Exists("z") {
+		t.Fatal("the new item did not show, or the folded section opened again")
+	}
+	if app.Find("role:button Later").ID != title || !app.Exists("2") {
+		t.Fatal("the title was built again, or its count did not follow")
+	}
+	app.Press("a")
+	app.Key("down")
+	if got := selected.GetUntracked(); got != "b" {
+		t.Fatalf("down selected %q, want the new item", got)
+	}
+}
+
+// TestSidebarTrailing shows a collapsible title's count at its end until
+// the pointer brings the arrow there in its place, the count lingering
+// out of sight a moment after it leaves.
+func TestSidebarTrailing(t *testing.T) {
+	app, _ := start(t, desktopEnv, func(*core.Scope) core.Node {
+		sections := sidebarSections(nil, nil)
+		sections[1].Trailing = Text("2", 11, Regular, Inherited)
+		return core.View{Style: core.Style{Width: core.Pt(220), Height: core.Pt(400)}, Children: []core.Node{Sidebar{Sections: sections}}}
+	})
+	title := app.Find("role:button Projects")
+	trailing, arrow := title.Children[1], title.Children[2]
+	if trailing.Style.Opacity != 1 || arrow.Style.Opacity != 0 {
+		t.Fatalf("at rest the count's opacity is %v and the arrow's %v", trailing.Style.Opacity, arrow.Style.Opacity)
+	}
+	if end, arrowEnd := trailing.Frame.Origin.X+trailing.Frame.Size.Width-8, title.Frame.Size.Width-8; end != arrowEnd ||
+		arrow.Frame.Origin.X+arrow.Frame.Size.Width != arrowEnd {
+		t.Fatalf("the count ends at %v and the arrow at %v, want both at %v", end, arrow.Frame.Origin.X+arrow.Frame.Size.Width, arrowEnd)
+	}
+	// At rest, the count waits to come back and the arrow to go, past a
+	// moment's report of the pointer gone; the pointer swaps them at once.
+	if trailing.Style.Transition.Delay != sidebarLinger || arrow.Style.Transition.Delay != sidebarLinger {
+		t.Fatalf("the count comes back after %v and the arrow goes after %v", trailing.Style.Transition.Delay, arrow.Style.Transition.Delay)
+	}
+	app.Hover("role:button Projects")
+	title = app.Find("role:button Projects")
+	if title.Children[1].Style.Opacity != 0 || title.Children[2].Style.Opacity != 1 {
+		t.Fatal("the pointer did not swap the count for the arrow")
+	}
+	if title.Children[1].Style.Transition.Delay != 0 || title.Children[2].Style.Transition.Delay != 0 {
+		t.Fatal("the pointer waited to swap the count for the arrow")
+	}
+}
+
+// TestSidebarTitleHoldsItsArrow keeps a pressed title's arrow, and its
+// count away, through the fold, wherever the platform says the pointer is.
+func TestSidebarTitleHoldsItsArrow(t *testing.T) {
+	app, _ := start(t, desktopEnv, func(*core.Scope) core.Node {
+		sections := sidebarSections(nil, nil)
+		sections[1].Trailing = Text("2", 11, Regular, Inherited)
+		return core.View{Style: core.Style{Width: core.Pt(220), Height: core.Pt(400)}, Children: []core.Node{Sidebar{Sections: sections}}}
+	})
+	app.Press("role:button Projects")
+	app.HoverOut()
+	title := app.Find("role:button Projects")
+	if title.Children[1].Style.Opacity != 0 || title.Children[2].Style.Opacity != 1 {
+		t.Fatal("the count came back while the section folded")
+	}
+	app.FastForward(sidebarHold)
+	title = app.Find("role:button Projects")
+	if title.Children[1].Style.Opacity != 1 || title.Children[2].Style.Opacity != 0 {
+		t.Fatal("the count did not come back after the fold")
+	}
 }
