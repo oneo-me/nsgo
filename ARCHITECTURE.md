@@ -24,7 +24,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
 | `base/richeditor`, `ui/richeditor` | `nsh-base`'s `rich_editor` | `RichEditor`, a ProseMirror-style document with Tiptap's extensions, and its styled form ([rich editor](docs/architecture/richeditor.md)) |
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting, the rows a virtualized view makes, part styles and sheets |
-| `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff`, `tsx/richeditor` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
+| `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff`, `tsx/richeditor`, `tsx/ui` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own and `ui`'s as `nsgo/ui` ([TSX](docs/architecture/tsx.md)) |
 | `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; hot and split bundles |
 | `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, fetching a split one's chunks on the web, or compiles it as it starts |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
@@ -42,6 +42,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
+| `examples/gallery-tsx` | — | The gallery's Components in TSX on `nsgo/ui` and `nsgo/base`, with tests |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
 
 ## Platforms

@@ -2,6 +2,7 @@ package tsx
 
 import (
 	"reflect"
+	"slices"
 
 	"github.com/dop251/goja"
 
@@ -81,6 +82,15 @@ func init() {
 
 // dockOptions are DockArea's props in NSH's shapes.
 var dockOptions = []Option{
+	custom("Compact", func(p *props, v reflect.Value) {
+		switch {
+		case !p.has("compact"):
+		case p.bool("compact"):
+			v.Set(reflect.ValueOf(core.ToggleOn))
+		default:
+			v.Set(reflect.ValueOf(core.ToggleOff))
+		}
+	}, "compact?: boolean"),
 	Event("OnDockOpenChange", "placement", "open"), Event("OnLayoutChange", "layout"),
 	Event("OnPanelActiveChange", "panel", "active"), Event("OnPanelRemove", "panel"),
 	custom("OnZoomChange", func(p *props, v reflect.Value) {
@@ -118,6 +128,10 @@ var dockOptions = []Option{
 }
 
 // typed declares the types field's custom declarations name.
+// DockOptions are DockArea's props, for a package that registers a form
+// of it.
+func DockOptions() []Option { return append(slices.Clone(enumOptions), dockOptions...) }
+
 func typed(field string, o Option, types ...reflect.Type) Option {
 	return func(s *faceSpec) {
 		o(s)

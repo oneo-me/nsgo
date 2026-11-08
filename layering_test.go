@@ -60,6 +60,8 @@ var layers = []struct {
 	{"tsx/tsxtest", []string{"core", "internal/driver", "nsgotest", "tsx", "tsx/"}},
 	// The nsgo tool links the bundler, so it reaches no runtime.
 	{"tsx/bundler", []string{"core", "internal/driver", "internal/woff"}},
+	// nsgo/ui gives TSX ui's components, for the apps that import it.
+	{"tsx/ui", []string{"core", "base/", "ui/", "tsx", "tsx/"}},
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.

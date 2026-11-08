@@ -323,6 +323,10 @@ type shape struct {
 	name, decl string
 	encode     func(any) map[string]any
 	decode     func(map[string]any) any
+	// read and write, set by Convert, take the place of decode and encode
+	// for values that are not objects.
+	read  func(any) any
+	write func(any) any
 	// none, when set, is what null and undefined read as.
 	none any
 }
@@ -353,6 +357,20 @@ func Shape[T any](name, decl string, encode func(T) map[string]any, decode func(
 	s := shape{name: name, decl: decl, encode: func(v any) map[string]any { return encode(v.(T)) }}
 	if decode != nil {
 		s.decode = func(m map[string]any) any { return decode(m) }
+	}
+	shapes[reflect.TypeFor[T]()] = s
+}
+
+// Convert gives the values of T a JS form that need not be an object, as
+// a date is a string: read makes one from what JS gives (exported, its
+// numbers float64 or int64), and write, when set, the value JS gets. decl,
+// a TypeScript declaration of name, declares it.
+func Convert[T any](name, decl string, read func(any) T, write func(T) any) {
+	shapeMu.Lock()
+	defer shapeMu.Unlock()
+	s := shape{name: name, decl: decl, read: func(v any) any { return read(v) }}
+	if write != nil {
+		s.write = func(v any) any { return write(v.(T)) }
 	}
 	shapes[reflect.TypeFor[T]()] = s
 }
@@ -626,7 +644,11 @@ func planFields(t reflect.Type, spec *faceSpec) []field {
 		case base == "Class" && ft.Kind() == reflect.String:
 			plan.set = func(p *props, v reflect.Value) { v.SetString(p.class()) }
 		case base == "Children" && ft == nodesType:
-			plan.set = func(p *props, v reflect.Value) { v.Set(reflect.ValueOf(p.children())) }
+			plan.set = func(p *props, v reflect.Value) {
+				if p.has("children") {
+					v.Set(reflect.ValueOf(p.children()))
+				}
+			}
 		case ft == refType:
 			plan.set = func(p *props, v reflect.Value) { v.Set(reflect.ValueOf(p.n.ref)) }
 		case name == "Ref" && ft.Kind() == reflect.Pointer && ft.Elem().Kind() == reflect.Struct:
@@ -785,6 +807,10 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 		}
 		return out
 	}
+	if s, ok := shapeOf(t); ok && s.read != nil {
+		out.Set(reflect.ValueOf(s.read(v.Export())))
+		return out
+	}
 	if s, ok := shapeOf(t); ok && s.decode != nil {
 		if m, isMap := v.Export().(map[string]any); isMap {
 			out.Set(reflect.ValueOf(s.decode(m)))
@@ -935,6 +961,12 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 			out.Set(reflect.ValueOf(e))
 		}
 	case reflect.Func:
+		if !isFunction(v) && t.NumIn() == 0 && t.NumOut() == 1 {
+			// A data object's func() T takes a plain T too.
+			value := r.decode(v, t.Out(0))
+			out.Set(reflect.MakeFunc(t, func([]reflect.Value) []reflect.Value { return []reflect.Value{value} }))
+			break
+		}
 		if fn := v; isFunction(fn) && r.posting > 0 {
 			out.Set(r.callback(fn, t))
 		} else if isFunction(fn) {
@@ -970,6 +1002,12 @@ func (r *runtime) encode(v reflect.Value) goja.Value {
 		return goja.Undefined()
 	}
 	if s, ok := shapeOf(v.Type()); ok {
+		if s.write != nil {
+			return r.vm.ToValue(s.write(v.Interface()))
+		}
+		if s.encode == nil {
+			return goja.Undefined()
+		}
 		return r.encodeShaped(s.encode(v.Interface()))
 	}
 	if def := classOf(v.Type()); def != nil {

@@ -213,7 +213,8 @@ var typeRenames = map[string]string{"DockLayout": "DockAreaLayout", "Reason": "O
 	"TextViewCustom": "TextViewCustomNode"}
 
 // inlineTypes are the types NSH declares in place rather than by name.
-var inlineTypes = map[string]bool{"TextViewColumnAlign": true, "TextViewTableCell": true, "TextViewCodeBlockAction": true}
+// "Size" keeps ui.Size from hiding the Size of a point.
+var inlineTypes = map[string]bool{"Size": true, "TextViewColumnAlign": true, "TextViewTableCell": true, "TextViewCodeBlockAction": true}
 
 // namedMembers are the members of unions declared by name in them, as
 // NSH's are ({ type: "table" } & TextViewTable); the others are in place.
@@ -599,7 +600,12 @@ func (d *declarer) fields(t reflect.Type) []string {
 			if negated {
 				opt = "?"
 			}
-			out = append(out, fmt.Sprintf("%s%s: %s", name, opt, d.ts(f.Type)))
+			ts := d.ts(f.Type)
+			if f.Type.Kind() == reflect.Func && f.Type.NumIn() == 0 && f.Type.NumOut() == 1 && f.Type.Out(0) != nodeType {
+				// A data object's func() T takes a plain T too.
+				ts = d.ts(f.Type.Out(0)) + " | (" + ts + ")"
+			}
+			out = append(out, fmt.Sprintf("%s%s: %s", name, opt, ts))
 		}
 	}
 	return out

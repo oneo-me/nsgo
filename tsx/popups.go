@@ -99,8 +99,11 @@ func init() {
 			}
 			v.Set(reflect.ValueOf(presets))
 		}, "presets?: readonly { label: string; value: DatePickerValue }[]"))...)...)
-	Shape("DatePickerValue", `export type DatePickerValue = string | [string | null, string | null] | null;`,
-		func(base.DateValue) map[string]any { return nil }, nil)
+	Convert("DatePickerValue", `export type DatePickerValue = string | [string | null, string | null] | null;`,
+		readDateValue, writeDateValue)
+	Convert("TimeOfDayValue", `export type TimeOfDayValue = string;`,
+		func(v any) base.TimeOfDay { s, _ := v.(string); t, _ := base.ParseTimeOfDay(s); return t },
+		func(t base.TimeOfDay) any { return t.String() })
 	colorOptions := func(extra ...Option) []Option {
 		return options(append([]Option{
 			Enum(map[string]base.ColorSpace{"hsb": base.ColorHSB, "rgb": base.ColorRGB, "hsl": base.ColorHSL, "oklch": base.ColorOKLCH}),
@@ -227,7 +230,12 @@ func dateTime(v goja.Value) time.Time {
 	if !defined(v) {
 		return time.Time{}
 	}
-	text := strings.TrimSpace(v.String())
+	return dateText(v.String())
+}
+
+// dateText reads an ISO date, or a date and a time after T or a space.
+func dateText(s string) time.Time {
+	text := strings.TrimSpace(s)
 	date, clock, timed := strings.Cut(strings.Replace(text, " ", "T", 1), "T")
 	day, ok := base.ParseISODate(date)
 	if !ok {
@@ -251,6 +259,42 @@ func (r *runtime) dateValue(v goja.Value) base.DateValue {
 		return out
 	}
 	return base.DateValue{Start: dateTime(v)}
+}
+
+// readDateValue reads what Convert hands it as dateValue does.
+func readDateValue(v any) base.DateValue {
+	text := func(v any) time.Time {
+		s, _ := v.(string)
+		return dateText(s)
+	}
+	if items, ok := v.([]any); ok {
+		out := base.DateValue{Range: true}
+		if len(items) == 2 {
+			out.Start, out.End = text(items[0]), text(items[1])
+		}
+		return out
+	}
+	return base.DateValue{Start: text(v)}
+}
+
+// writeDateValue gives a date value in the forms dateValue reads.
+func writeDateValue(d base.DateValue) any {
+	if d.Range {
+		return []any{writeDate(d.Start), writeDate(d.End)}
+	}
+	return writeDate(d.Start)
+}
+
+// writeDate is t as an ISO date, with its time if it has one; null unset.
+func writeDate(t time.Time) any {
+	if t.IsZero() {
+		return nil
+	}
+	at := base.TimeOfDay{Hour: t.Hour(), Minute: t.Minute(), Second: t.Second()}
+	if at == (base.TimeOfDay{}) {
+		return base.ISODate(t)
+	}
+	return base.ISODate(t) + "T" + at.String()
 }
 
 func dateValueProp(prop string) func(p *props, v reflect.Value) {

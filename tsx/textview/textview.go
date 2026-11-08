@@ -9,8 +9,10 @@ import (
 	"github.com/oneo-me/nsgo/tsx"
 )
 
-func init() {
-	tsx.Register("nsgo/base", map[string]core.Node{"TextView": textview.TextView{}},
+// Options are TextView's props, for a package that registers a form of it
+// and says how it looks.
+func Options() []tsx.Option {
+	return []tsx.Option{
 		tsx.Event("OnImagePress", "image"),
 		tsx.Union[textview.Block](map[string]any{"paragraph": textview.Paragraph{}, "heading": textview.Heading{},
 			"blockquote": textview.Blockquote{}, "list": textview.List{}, "codeBlock": textview.CodeBlock{},
@@ -25,13 +27,16 @@ func init() {
 		tsx.Flag("OpenLinks", "links", "open", "TextViewLinks"),
 		// Go functions of Go values, for Go apps.
 		tsx.Omit("Highlighter", "CustomSpan"),
-		// TSX apps read documents in NSH's typography, under their own
-		// classes and styles; Go's TextView takes the app's.
-		tsx.Preset("StyleOf", typography),
 		tsx.Enum(map[string]textview.Alert{"caution": textview.AlertCaution, "important": textview.AlertImportant, "none": textview.AlertNone, "note": textview.AlertNote, "tip": textview.AlertTip, "warning": textview.AlertWarning}),
 		tsx.Enum(map[string]textview.ColumnAlign{"center": textview.AlignCenter, "left": textview.AlignLeft, "none": textview.AlignNone, "right": textview.AlignRight}),
 		tsx.Enum(map[string]textview.Part{"alert": textview.PartAlert, "alertCaution": textview.PartAlertCaution, "alertContent": textview.PartAlertContent, "alertImportant": textview.PartAlertImportant, "alertNote": textview.PartAlertNote, "alertTip": textview.PartAlertTip, "alertTitle": textview.PartAlertTitle, "alertWarning": textview.PartAlertWarning, "blockquote": textview.PartBlockquote, "code": textview.PartCode, "codeBlock": textview.PartCodeBlock, "codeBlockAction": textview.PartCodeBlockAction, "codeBlockCode": textview.PartCodeBlockCode, "codeBlockHeader": textview.PartCodeBlockHeader, "codeBlockScroll": textview.PartCodeBlockScroll, "custom": textview.PartCustom, "details": textview.PartDetails, "emphasis": textview.PartEmphasis, "footnote": textview.PartFootnote, "footnoteLabel": textview.PartFootnoteLabel, "footnoteReference": textview.PartFootnoteReference, "footnotes": textview.PartFootnotes, "heading": textview.PartHeading, "heading1": textview.PartHeading1, "heading2": textview.PartHeading2, "heading3": textview.PartHeading3, "heading4": textview.PartHeading4, "heading5": textview.PartHeading5, "heading6": textview.PartHeading6, "image": textview.PartImage, "keyboard": textview.PartKeyboard, "link": textview.PartLink, "list": textview.PartList, "listItem": textview.PartListItem, "listItemContent": textview.PartListItemContent, "listMarker": textview.PartListMarker, "mark": textview.PartMark, "math": textview.PartMath, "mathBlock": textview.PartMathBlock, "orderedList": textview.PartOrderedList, "paragraph": textview.PartParagraph, "root": textview.PartRoot, "rule": textview.PartRule, "small": textview.PartSmall, "strikethrough": textview.PartStrikethrough, "strong": textview.PartStrong, "subscript": textview.PartSubscript, "summary": textview.PartSummary, "summaryMarker": textview.PartSummaryMarker, "superscript": textview.PartSuperscript, "table": textview.PartTable, "tableActions": textview.PartTableActions, "tableCell": textview.PartTableCell, "tableHead": textview.PartTableHead, "tableHeaderCell": textview.PartTableHeaderCell, "tableRow": textview.PartTableRow, "tableScroll": textview.PartTableScroll, "taskDone": textview.PartTaskDone, "taskMarker": textview.PartTaskMarker, "taskMarkerChecked": textview.PartTaskMarkerChecked, "underline": textview.PartUnderline, "unorderedList": textview.PartUnorderedList}),
-	)
+	}
+}
+
+func init() {
+	// TSX apps read documents in NSH's typography, under their own classes
+	// and styles; Go's TextView takes the app's.
+	tsx.Register("nsgo/base", map[string]core.Node{"TextView": textview.TextView{}}, append(Options(), tsx.Preset("StyleOf", typography))...)
 	// NSH's static functions of TextView: a document of Markdown or HTML,
 	// as the view would read it, and a document's text.
 	tsx.RegisterStatics("nsgo/base", "TextView", map[string]any{

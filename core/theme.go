@@ -93,6 +93,21 @@ func (p *Palette) SetColor(name string, c Color) {
 // which classes name: bg-inset, text-muted-foreground.
 var themeColors sync.Map
 
+// noteColors makes the colors a theme holds names classes know, whether
+// SetColor or a literal Colors added them.
+func (t *Theme) noteColors() {
+	if t == nil {
+		return
+	}
+	for _, p := range []*Palette{&t.Light, &t.Dark} {
+		for name := range p.Colors {
+			if _, known := themeColors.LoadOrStore(name, struct{}{}); !known {
+				classCache.Clear()
+			}
+		}
+	}
+}
+
 // clone returns p with a Colors of its own.
 func (p Palette) clone() Palette {
 	p.Colors = maps.Clone(p.Colors)
@@ -334,6 +349,7 @@ type (
 // Called at the app's root it is the app's theme; a deeper call wins
 // for its subtree, so a sidebar or a panel can take another.
 func (cx *Scope) SetTheme(t *Theme) {
+	t.noteColors()
 	o := cx
 	if s, ok := o.values[scopeTheme{}].(*Signal[*Theme]); ok {
 		s.Set(t)

@@ -1,0 +1,4 @@
+{
+  "extends": "./.nsgo/tsconfig.json",
+  "include": ["**/*.ts", "**/*.tsx"]
+}

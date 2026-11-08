@@ -1,6 +1,6 @@
 # TSX and dynamic delivery
 
-NSGo runs TSX apps on NSH's design: they import `nsgo`, `nsgo/base`, `nsgo/mobile`, `nsgo/desktop` and `nsgo/test`, have NSH's props, events, style keys, Tailwind classes and behavior, and compile with `tsx/bundler`. Each part began as a Go port of its NSH counterpart. From 2026-11-08 TSX grows its own way (decided by the user): nothing checks it against NSH's apps, and an NSH app may need more than renamed imports. The [roadmap](../roadmap.md#tsx-and-dynamic-delivery) orders what is left.
+NSGo runs TSX apps on NSH's design: they import `nsgo`, `nsgo/base`, `nsgo/ui`, `nsgo/mobile`, `nsgo/desktop` and `nsgo/test`, have NSH's props, events, style keys, Tailwind classes and behavior, and compile with `tsx/bundler`. Each part began as a Go port of its NSH counterpart. From 2026-11-08 TSX grows its own way (decided by the user): nothing checks it against NSH's apps, and an NSH app may need more than renamed imports. The [roadmap](../roadmap.md#tsx-and-dynamic-delivery) orders what is left.
 
 An app embeds its sources and names its entry; the `nsgo` tool compiles it ahead for its builds, and `go run` and `go test` compile it as it starts:
 
@@ -11,7 +11,7 @@ var src embed.FS
 func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 ```
 
-`examples/tsx` is such an app: its modules, components, signals, inputs, lists and timers, styled with classes in light and dark, one column on phones and two from `md:`, a Go class and an async Go function of its own, and a timer module it loads with `import()`, with Go and TSX tests.
+`examples/tsx` is such an app: its modules, components, signals, inputs, lists and timers, styled with classes in light and dark, one column on phones and two from `md:`, a Go class and an async Go function of its own, and a timer module it loads with `import()`, with Go and TSX tests. `examples/gallery-tsx` is the gallery's Components in TSX, on `nsgo/ui` and `nsgo/base`, with knobs that set their props; the Go gallery's apps, Conversation and Terminal are not in it yet.
 
 ## The ports
 
@@ -110,6 +110,12 @@ The primitives that are not `core.Element`s (`Overlay`, `WebView`, `Video`, `Lis
 Every event passes one object, as NSH's do (`api-naming.md` (Payloads)). `tsx.Event` names its fields, as NSH's `#[args]` (`Event("OnOpenChange", "open", "reason")`). Without one, an event struct goes as it is, `Bounds` as `{ bounds }` and another value as `{ value }`; several arguments need the names, and `Register` panics without them, since Go keeps no parameter names.
 
 `nsgo/base` registers `base`'s components this way (`base.go`), with NSH's names where `base`'s differ and a few props shaped otherwise (`DataTable`'s `data`, `nsgo/base/plot`'s `data` and what its marks read of it (`plot.go`), `DockArea`'s `panels`, a list by `id`, and `renderPanel`'s `{ id }`). `List` is written out (`baselist.go`), each's items as `<List>`'s and its choices the props `selected` or `defaultSelected`, `onSelectedChange` and `multiple`, since JS has no `Selection`. A component's host props, NSH's `ComponentHostProps`, are its fields: `class`, `style`, `testID`, and `onLayout` and `tooltip` on each component whose root is a view of its own, which take a `core.View`'s. `ResizablePanel` is a part: its call is a value its group collects from its children. The navigation (`createNavStack`, `NavStack`, `NavPage`, on `base.Nav`), `Dialog`, `AlertDialog`, `ToastManager` and `ToastStack` are written out. `TextView`, `Editor`, `DiffView` and `RichEditor` link packages other apps should not, so `tsx/textview`, `tsx/editor`, `tsx/diff` and `tsx/richeditor` register them for an app that imports them.
+
+### Styled components
+
+`tsx/ui` gives TSX `ui`'s components as `nsgo/ui`, so a TSX app looks as a Go app does with no second implementation: an app imports it for its effect and sets `ui.DefaultTheme`, or another theme with `ui`'s roles, before it mounts. Each takes its Go fields as props, by `tsx.Register`; generic components take string values, and `Input` and `Field` take `base.Input`'s fields flat. What Go holds in Go values TSX holds in props: a `List`'s and a `Tree`'s selection are lists of keys, a `Tree`'s items are data, and the ref of `Toasts` shows them. `TextView` and `DiffView` here are `ui`'s forms, which take `Options` from `tsx/textview` and `tsx/diff`.
+
+An icon prop takes a name `ui.Icons` gave or an SVG document. An app lists the Lucide icons it uses, as `lucide` keeps no table of them, so the others stay out of its binary. `tsx.Convert` gives a Go type a JS form that need not be an object, as these icons and dates are: `base.DateValue` is `DatePickerValue`'s strings and `base.TimeOfDay` a string, in data objects and events too. In a data object a `func() T` takes a plain `T`.
 
 ### Modules
 

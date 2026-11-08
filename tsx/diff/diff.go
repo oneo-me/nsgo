@@ -9,8 +9,9 @@ import (
 	"github.com/oneo-me/nsgo/tsx"
 )
 
-func init() {
-	tsx.Register("nsgo/base", map[string]core.Node{"DiffView": diff.DiffView{}},
+// Options are DiffView's props, for a package that registers a form of it.
+func Options() []tsx.Option {
+	return []tsx.Option{
 		tsx.Enum(map[string]diff.Expansion{"down": diff.ExpandDown, "all": diff.ExpandEvery, "up": diff.ExpandUp}),
 		tsx.Flag("Unified", "layout", "unified", "DiffLayout"),
 		tsx.Event("OnChange", "change"), tsx.Event("OnLineNumberPress", "line"), tsx.Event("OnStatsChange", "stats"),
@@ -19,7 +20,11 @@ func init() {
 		tsx.Enum(map[string]diff.Indicators{"bars": diff.IndicatorBars, "classic": diff.IndicatorClassic, "none": diff.IndicatorNone}),
 		tsx.Enum(map[string]diff.Inline{"char": diff.InlineChar, "none": diff.InlineNone, "word": diff.InlineWord, "wordAlt": diff.InlineWordAlt}),
 		tsx.Enum(map[string]diff.Side{"new": diff.New, "old": diff.Old}),
-	)
+	}
+}
+
+func init() {
+	tsx.Register("nsgo/base", map[string]core.Node{"DiffView": diff.DiffView{}}, Options()...)
 	tsx.Required[diff.Change]("OldValue", "NewValue")
 	// NSH's lines count from 0, Go's from 1.
 	tsx.Shape("DiffHunk", `export interface DiffHunk { index: number; oldStart: number; oldLines: number; newStart: number; newLines: number; file: number }`,

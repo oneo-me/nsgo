@@ -1,0 +1,6 @@
+name: Gallery TSX
+id: dev.oneo.nsgo.gallerytsx
+version: 0.1.0
+
+dev:
+  target: native

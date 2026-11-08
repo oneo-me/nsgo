@@ -104,7 +104,7 @@ function App() {
 mount(App);
 ```
 
-TSX 从 `nsgo/base` 导入 `base` 的组件；应用注册自己的 Go 组件后也能导入它们：`tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` 之后，`import { Badge } from "app/native"` 会把 `Badge` 的字段当作 props；`tsx.RegisterFunctions` 导出 Go 函数，以 `context.Context` 为第一个参数的函数返回 Promise，`tsx.RegisterClass` 导出可在 TSX 中用 `new` 创建的 Go 类型。放一个继承 `.nsgo/tsconfig.json` 的 `tsconfig.json`，`go tool nsgo check` 就会检查应用并对 TSX 做类型检查；旁边用 `nsgo/test` 编写的 `*.test.tsx` 文件会和 Go 测试一起运行。
+TSX 从 `nsgo/base` 导入 `base` 的组件；应用导入 `tsx/ui` 并设置 `ui.DefaultTheme` 后，可从 `nsgo/ui` 导入 `ui` 的组件（见 `examples/gallery-tsx`）；应用注册自己的 Go 组件后也能导入它们：`tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` 之后，`import { Badge } from "app/native"` 会把 `Badge` 的字段当作 props；`tsx.RegisterFunctions` 导出 Go 函数，以 `context.Context` 为第一个参数的函数返回 Promise，`tsx.RegisterClass` 导出可在 TSX 中用 `new` 创建的 Go 类型。放一个继承 `.nsgo/tsconfig.json` 的 `tsconfig.json`，`go tool nsgo check` 就会检查应用并对 TSX 做类型检查；旁边用 `nsgo/test` 编写的 `*.test.tsx` 文件会和 Go 测试一起运行。
 
 在包旁边放一个 `nsgo.yaml`，写明应用名称和目标平台：
 
@@ -172,6 +172,7 @@ x86_64 模拟器目标 `android_x64` 还需要 Android NDK：Go 只能通过 cgo
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml 的 dev 目标，应用退出后随之退出
+go tool nsgo dev examples/gallery-tsx               # 用 TSX 编写的 gallery 组件
 go tool nsgo dev -target web examples/gallery       # 在浏览器中运行，直到中断
 go tool nsgo dev -target ios_simulator examples/gallery
 go tool nsgo dev -target ios examples/gallery       # 在已连接的 iPhone 上运行，由 Xcode 签名

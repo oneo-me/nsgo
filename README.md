@@ -104,7 +104,7 @@ function App() {
 mount(App);
 ```
 
-TSX imports `base`'s components from `nsgo/base`, and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props; `tsx.RegisterFunctions` exports Go functions, those taking a `context.Context` as promises, and `tsx.RegisterClass` Go types TSX makes with `new`. A `tsconfig.json` extending `.nsgo/tsconfig.json` lets `go tool nsgo check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
+TSX imports `base`'s components from `nsgo/base`, `ui`'s from `nsgo/ui` once the app imports `tsx/ui` and sets `ui.DefaultTheme` (`examples/gallery-tsx` shows them), and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props; `tsx.RegisterFunctions` exports Go functions, those taking a `context.Context` as promises, and `tsx.RegisterClass` Go types TSX makes with `new`. A `tsconfig.json` extending `.nsgo/tsconfig.json` lets `go tool nsgo check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
 
 Beside the package, `nsgo.yaml` names the app and its targets:
 
@@ -172,6 +172,7 @@ Run the gallery from the repository root: NSH's gallery in Go, a demo of each el
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml's dev target, exiting with the app
+go tool nsgo dev examples/gallery-tsx               # the gallery's components, written in TSX
 go tool nsgo dev -target web examples/gallery       # in the browser, serving until interrupted
 go tool nsgo dev -target ios_simulator examples/gallery
 go tool nsgo dev -target ios examples/gallery       # on the connected iPhone, signed by Xcode
