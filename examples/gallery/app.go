@@ -82,50 +82,50 @@ func init() {
 		{"Photos", m.DemoPhotos, m.DemoPhotosDetail, lucide.Images, photosDemo},
 	}
 	actions := []demo{
-		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, eventsDemo(buttonCard, iconButtonCard, toggleButtonCard, toggleGroupCard, holdPlayground)},
-		{"Link", m.DemoLink, m.DemoLinkDetail, lucide.Link, eventsDemo(linkCard)},
-		{"Toolbar", m.DemoToolbar, m.DemoToolbarDetail, lucide.PanelTop, eventsDemo(toolbarCard)},
+		{"Button", m.DemoButton, m.DemoButtonDetail, lucide.MousePointerClick, cardsDemo(buttonCard, iconButtonCard, toggleButtonCard, toggleGroupCard, holdPlayground)},
+		{"Link", m.DemoLink, m.DemoLinkDetail, lucide.Link, cardsDemo(linkCard)},
+		{"Toolbar", m.DemoToolbar, m.DemoToolbarDetail, lucide.PanelTop, cardsDemo(toolbarCard)},
 	}
 	inputs := []demo{
 		{"Input", m.DemoInput, m.DemoInputDetail, lucide.TextCursorInput, formDemo},
-		{"Checkbox", m.DemoCheckbox, m.DemoCheckboxDetail, lucide.SquareCheck, eventsDemo(checkboxCard, radioCard, switchCard)},
-		{"Select", m.DemoSelect, m.DemoSelectDetail, lucide.ChevronsUpDown, eventsDemo(selectPlayground, comboboxPlayground)},
-		{"DatePicker", m.DemoDatePicker, m.DemoDatePickerDetail, lucide.Calendar, eventsDemo(datePickerPlayground, calendarPlayground, timeFieldPlayground)},
-		{"ColorPicker", m.DemoColorPicker, m.DemoColorPickerDetail, lucide.Palette, eventsDemo(colorPickerPlayground, colorWellPlayground)},
-		{"Slider", m.DemoSlider, m.DemoSliderDetail, lucide.SlidersHorizontal, eventsDemo(sliderPlayground, ratingCard)},
+		{"Checkbox", m.DemoCheckbox, m.DemoCheckboxDetail, lucide.SquareCheck, cardsDemo(checkboxCard, radioCard, switchCard)},
+		{"Select", m.DemoSelect, m.DemoSelectDetail, lucide.ChevronsUpDown, cardsDemo(selectPlayground, comboboxPlayground)},
+		{"DatePicker", m.DemoDatePicker, m.DemoDatePickerDetail, lucide.Calendar, cardsDemo(datePickerPlayground, calendarPlayground, timeFieldPlayground)},
+		{"ColorPicker", m.DemoColorPicker, m.DemoColorPickerDetail, lucide.Palette, cardsDemo(colorPickerPlayground, colorWellPlayground)},
+		{"Slider", m.DemoSlider, m.DemoSliderDetail, lucide.SlidersHorizontal, cardsDemo(sliderPlayground, ratingCard)},
 	}
 	display := []demo{
-		{"Badge", m.DemoBadge, m.DemoBadgeDetail, lucide.Tag, eventsDemo(badgeCard)},
-		{"Avatar", m.DemoAvatar, m.DemoAvatarDetail, lucide.User, eventsDemo(avatarCard, avatarGroupCard)},
-		{"Image", m.DemoImage, m.DemoImageDetail, lucide.Image, eventsDemo(imagePlayground, imageCompareCard)},
-		{"Carousel", m.DemoCarousel, m.DemoCarouselDetail, lucide.GalleryHorizontal, eventsDemo(carouselCard)},
+		{"Badge", m.DemoBadge, m.DemoBadgeDetail, lucide.Tag, cardsDemo(badgeCard)},
+		{"Avatar", m.DemoAvatar, m.DemoAvatarDetail, lucide.User, cardsDemo(avatarCard, avatarGroupCard)},
+		{"Image", m.DemoImage, m.DemoImageDetail, lucide.Image, cardsDemo(imagePlayground, imageCompareCard)},
+		{"Carousel", m.DemoCarousel, m.DemoCarouselDetail, lucide.GalleryHorizontal, cardsDemo(carouselCard)},
 	}
 	data := []demo{
-		{"List", m.DemoList, m.DemoListDetail, lucide.List, eventsDemo(listCard, treeCard)},
-		{"Table", m.DemoTable, m.DemoTableDetail, lucide.Table, eventsDemo(plainCard(tableCard))},
+		{"List", m.DemoList, m.DemoListDetail, lucide.List, cardsDemo(listCard, treeCard)},
+		{"Table", m.DemoTable, m.DemoTableDetail, lucide.Table, cardsDemo(tableCard)},
 		{"DataTable", m.DemoDataTable, m.DemoDataTableDetail, lucide.Table, dataTableDemo},
 		{"CommitGraph", m.DemoCommitGraph, m.DemoCommitGraphDetail, lucide.GitGraph, commitGraphDemo},
 		{"Plot", m.DemoPlot, m.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
 	}
 	containers := []demo{
-		{"Accordion", m.DemoAccordion, m.DemoAccordionDetail, lucide.Rows3, eventsDemo(accordionCard, collapsiblePlayground)},
+		{"Accordion", m.DemoAccordion, m.DemoAccordionDetail, lucide.Rows3, cardsDemo(accordionCard, collapsiblePlayground)},
 		{"Resizable", m.DemoResizable, m.DemoResizableDetail, lucide.PanelLeft, resizableDemo},
 		{"Dock", m.DemoDock, m.DemoDockDetail, lucide.AppWindow, dockDemo},
 	}
 	feedback := []demo{
-		{"Progress", m.DemoProgress, m.DemoProgressDetail, lucide.LoaderCircle, eventsDemo(progressCard, progressRingCard, spinnerPlayground, meterCard, skeletonCard)},
-		{"Toast", m.DemoToast, m.DemoToastDetail, lucide.Bell, eventsDemo(toastPlayground)},
+		{"Progress", m.DemoProgress, m.DemoProgressDetail, lucide.LoaderCircle, cardsDemo(progressCard, progressRingCard, spinnerPlayground, meterCard, skeletonCard)},
+		{"Toast", m.DemoToast, m.DemoToastDetail, lucide.Bell, cardsDemo(toastPlayground)},
 	}
 	popups := []demo{
-		{"Dialog", m.DemoDialog, m.DemoDialogDetail, lucide.AppWindow, eventsDemo(dialogCard, alertDialogCard, sheetCard)},
-		{"Popover", m.DemoPopover, m.DemoPopoverDetail, lucide.MessageSquare, eventsDemo(popoverPlayground, tooltipPlayground, hoverCardPlayground)},
-		{"Command", m.DemoCommand, m.DemoCommandDetail, lucide.Search, eventsDemo(commandPlayground)},
+		{"Dialog", m.DemoDialog, m.DemoDialogDetail, lucide.AppWindow, cardsDemo(dialogCard, alertDialogCard, sheetCard)},
+		{"Popover", m.DemoPopover, m.DemoPopoverDetail, lucide.MessageSquare, cardsDemo(popoverPlayground, tooltipPlayground, hoverCardPlayground)},
+		{"Command", m.DemoCommand, m.DemoCommandDetail, lucide.Search, cardsDemo(commandPlayground)},
 		{"Menu", m.DemoMenu, m.DemoMenuDetail, lucide.Menu, menusDemo},
 	}
 	navigation := []demo{
-		{"Tabs", m.DemoTabs, m.DemoTabsDetail, lucide.NotebookTabs, eventsDemo(tabsCard)},
-		{"Breadcrumbs", m.DemoBreadcrumbs, m.DemoBreadcrumbsDetail, lucide.ChevronRight, eventsDemo(breadcrumbsCard, paginationCard, stepperPlayground)},
-		{"Sidebar", m.DemoSidebar, m.DemoSidebarDetail, lucide.PanelLeft, eventsDemo(sidebarCard)},
+		{"Tabs", m.DemoTabs, m.DemoTabsDetail, lucide.NotebookTabs, cardsDemo(tabsCard)},
+		{"Breadcrumbs", m.DemoBreadcrumbs, m.DemoBreadcrumbsDetail, lucide.ChevronRight, cardsDemo(breadcrumbsCard, paginationCard, stepperPlayground)},
+		{"Sidebar", m.DemoSidebar, m.DemoSidebarDetail, lucide.PanelLeft, cardsDemo(sidebarCard)},
 		{"NavStack", m.DemoNavStack, m.DemoNavStackDetail, lucide.PanelsTopLeft, navigationDemo},
 	}
 	documents := []demo{
@@ -145,7 +145,7 @@ func init() {
 			{"Canvas", m.DemoCanvas, m.DemoCanvasDetail, lucide.PenTool, canvasDemo},
 			{"Shader", m.DemoShader, m.DemoShaderDetail, lucide.Sparkles, shaderDemo},
 			{"WebView and Video", m.DemoWebViewAndVideo, m.DemoWebViewAndVideoDetail, lucide.Film, mediaDemo},
-			{"Overlay", m.DemoOverlay, m.DemoOverlayDetail, lucide.Layers, eventsDemo(overlayCard)},
+			{"Overlay", m.DemoOverlay, m.DemoOverlayDetail, lucide.Layers, cardsDemo(overlayCard)},
 		}},
 		{"Styling", m.GroupStyling, []demo{
 			{"Styles", m.DemoStyles, m.DemoStylesDetail, lucide.Palette, stylesDemo},

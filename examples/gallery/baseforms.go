@@ -275,7 +275,7 @@ func baseAvatarGroupForm(cx *core.Scope, limit *core.Signal[float64]) Form {
 	}}
 }
 
-func baseCarouselForm(cx *core.Scope, last *core.Signal[string], count *core.Signal[float64], looping *core.Signal[bool]) Form {
+func baseCarouselForm(cx *core.Scope, count *core.Signal[float64], looping *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.Carousel", Fill: true, Stage: func() core.Node {
 		var slides []core.Node
@@ -283,7 +283,7 @@ func baseCarouselForm(cx *core.Scope, last *core.Signal[string], count *core.Sig
 			slides = append(slides, base.CarouselItem{Label: fmt.Sprintf("%d / %d", i+1, int(count.Get())), Style: core.Style{Width: core.Pt(200), Margin: core.Edges{Right: 8}},
 				Children: []core.Node{swatch(cx, ToneNeutral, itoa(i+1))}})
 		}
-		return base.Carousel{Label: tr.DemoImage(), Looping: looping.Get(), Style: core.Style{Gap: 8}, OnChange: func(i int) { last.Set(fmt.Sprintf("Carousel: %d", i+1)) },
+		return base.Carousel{Label: tr.DemoImage(), Looping: looping.Get(), Style: core.Style{Gap: 8},
 			Children: []core.Node{
 				base.CarouselContent{Style: core.Style{AlignItems: core.AlignStretch}, Children: slides},
 				core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifyCenter, Gap: 4}, Children: []core.Node{
@@ -372,48 +372,47 @@ func baseToastForm(cx *core.Scope, last *core.Signal[string], swipe *core.Signal
 	}}
 }
 
-func baseDialogForm(cx *core.Scope, last *core.Signal[string], noEscape, noBackdrop *core.Signal[bool]) Form {
+func baseDialogForm(cx *core.Scope, noEscape, noBackdrop *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	open := core.NewSignal(cx, false)
 	return Form{Name: "base.Dialog", Stage: func() core.Node {
 		return core.Group{bareButton(cx, tr.KitOpen(), func() { open.Set(true) }),
 			base.Dialog{Open: open.Get, Label: tr.KitDialogTitle(), TestID: "base-dialog", NoCloseOnEscape: noEscape.Get(), NoCloseOnBackdropPress: noBackdrop.Get(),
-				OnOpenChange:  func(o bool, reason base.Reason) { open.Set(o); last.Set("base.Dialog: " + reason.String()) },
+				OnOpenChange:  func(o bool, _ base.Reason) { open.Set(o) },
 				BackdropStyle: bareBackdrop, PopupStyle: barePanel, PopupStyleFunc: barePopup(cx),
 				Children: []core.Node{bareText(cx, tr.KitDialogTitle()), bareButton(cx, tr.OverlayDone(), func() { open.Set(false) })}}}
 	}}
 }
 
-func baseAlertDialogForm(cx *core.Scope, last *core.Signal[string]) Form {
+func baseAlertDialogForm(cx *core.Scope) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.ShowAlertDialog", Stage: func() core.Node {
 		return bareButton(cx, tr.KitOpen(), func() {
 			base.ShowAlertDialog(cx, base.AlertDialog{Title: tr.KitDialogTitle(), Description: tr.KitDialogNote(),
-				Actions: []core.AlertAction{{Label: tr.KitCancel()}, {Label: tr.OverlayDone()}}}, func(label string) { last.Set("AlertDialog: " + label) })
+				Actions: []core.AlertAction{{Label: tr.KitCancel()}, {Label: tr.OverlayDone()}}}, nil)
 		})
 	}}
 }
 
-func baseSheetForm(cx *core.Scope, last *core.Signal[string], side *core.Signal[core.Placement], swipe *core.Signal[bool]) Form {
+func baseSheetForm(cx *core.Scope, side *core.Signal[core.Placement], swipe *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	open := core.NewSignal(cx, false)
 	return Form{Name: "base.Sheet", Stage: func() core.Node {
 		return core.Group{bareButton(cx, tr.OverlayShowTheSheet(), func() { open.Set(true) }),
 			base.Sheet{Open: open.Get, Side: side.Get(), CloseOnSwipe: swipe.Get(), Label: tr.OverlaySheet(),
-				OnOpenChange:  func(next bool, reason base.Reason) { open.Set(next); last.Set("base.Sheet: " + reason.String()) },
+				OnOpenChange:  func(next bool, _ base.Reason) { open.Set(next) },
 				BackdropStyle: bareBackdrop, PopupStyle: core.Style{Padding: core.All(16), Gap: 12}, PopupStyleFunc: ui.Filled(colors.Surface),
 				Children: []core.Node{bareText(cx, tr.OverlayTheBackdropEscapeAndBack()), bareButton(cx, tr.OverlayDone(), func() { open.Set(false) })}}}
 	}}
 }
 
-func basePopoverForm(cx *core.Scope, last *core.Signal[string], placement *core.Signal[core.Placement], align *core.Signal[core.Align]) Form {
+func basePopoverForm(cx *core.Scope, placement *core.Signal[core.Placement], align *core.Signal[core.Align]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.Popover", Stage: func() core.Node {
 		return base.Popover{Placement: placement.Get(), Align: align.Get(), Offset: 4, Margin: 8, Label: tr.OverlayPopover(), Style: bareBox, StyleFunc: bareInk(cx),
-			Trigger:      bareText(cx, tr.OverlayShowThePopover()),
-			OnOpenChange: func(_ bool, reason base.Reason) { last.Set("base.Popover: " + reason.String()) },
-			PopupStyle:   barePanel, PopupStyleFunc: barePopup(cx), Children: []core.Node{bareText(cx, tr.OverlayAPressOutsideEscapeOr())}}
+			Trigger:    bareText(cx, tr.OverlayShowThePopover()),
+			PopupStyle: barePanel, PopupStyleFunc: barePopup(cx), Children: []core.Node{bareText(cx, tr.OverlayAPressOutsideEscapeOr())}}
 	}}
 }
 
@@ -460,12 +459,12 @@ func baseContextMenuForm(cx *core.Scope, last *core.Signal[string], off *core.Si
 	}}
 }
 
-func baseTabsForm(cx *core.Scope, last *core.Signal[string], selected *core.Signal[int], disabled *core.Signal[bool]) Form {
+func baseTabsForm(cx *core.Scope, selected *core.Signal[int], disabled *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.Tabs · base.Tab", Stage: func() core.Node {
 		var tabs []core.Node
 		for i, name := range []string{tr.ControlsOverview(), tr.ControlsActivity(), tr.ControlsBilling()} {
-			tab := base.Tab{Label: name, Selected: func() bool { return selected.Get() == i }, OnPress: func(core.PressEvent) { selected.Set(i); last.Set(fmt.Sprintf("base.Tabs: %d", i)) },
+			tab := base.Tab{Label: name, Selected: func() bool { return selected.Get() == i }, OnPress: func(core.PressEvent) { selected.Set(i) },
 				Style: bareBox.Merge(core.Style{BorderWidth: 0}), StyleFunc: bareInk(cx), Children: []core.Node{bareText(cx, name)}}
 			if i == 2 {
 				tab.Disabled = disabled.Get

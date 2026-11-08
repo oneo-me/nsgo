@@ -1,7 +1,7 @@
 import { signal, Text, View } from "nsgo";
 import { createNavStack, NavPage, NavStack } from "nsgo/base";
 import { Breadcrumbs, Button, NavHeader, Pagination, Sidebar, Stepper, Tabs } from "nsgo/ui";
-import { BoolKnob, ChoiceKnob, Events, NumberKnob, Page, Playground, Row, StagePage, useEvents } from "../parts";
+import { BoolKnob, ChoiceKnob, NumberKnob, Page, Playground, Row, StagePage, useEvents } from "../parts";
 
 const sections = [
   { value: "account", label: "Account", icon: "user" },
@@ -54,8 +54,8 @@ export function BreadcrumbsDemo() {
   const step = signal(1);
   const vertical = signal(false);
   return (
-    <Events value={last()}>
-      <Playground title="Breadcrumbs" note="Collapses by the width it has." fill>
+    <Page>
+      <Playground title="Breadcrumbs" note="Collapses by the width it has." fill event={last()}>
         <Breadcrumbs items={path()} onSelect={({ index }) => log(`Went to ${path()[index]}`)()} />
       </Playground>
       <Playground
@@ -87,7 +87,7 @@ export function BreadcrumbsDemo() {
           steps={[{ label: "Cart" }, { label: "Address", description: "Where it goes" }, { label: "Payment" }, { label: "Done" }]}
         />
       </Playground>
-    </Events>
+    </Page>
   );
 }
 

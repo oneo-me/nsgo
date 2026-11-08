@@ -117,7 +117,9 @@ type Form struct {
 // form, Title, Fill and Start being that form's. BaseKnobs set the props base has
 // on both forms, and a hairline keeps Knobs, ui's own, under them. Stage
 // shows every variant at the default size; Sizes, a block of its own under
-// it, shows every size of the default variant.
+// it, shows every size of the default variant. Event, when set, is the
+// last thing the forms reported, under them, for what shows no change of
+// its own.
 type Playground struct {
 	Title     string
 	Note      string
@@ -129,6 +131,7 @@ type Playground struct {
 	Sizes     func() core.Node
 	BaseKnobs []core.Node
 	Knobs     []core.Node
+	Event     func() string
 }
 
 // Render implements core.Node.
@@ -142,6 +145,9 @@ func (p Playground) Render(cx *core.Scope) core.Node {
 	}
 	if p.Sizes != nil {
 		stages = append(stages, hairline, Form{Name: p.Title + "-sizes", Fill: p.Fill, Stage: p.Sizes}.stage("Size"))
+	}
+	if p.Event != nil {
+		stages = append(stages, hairline, eventLine(cx, p.Event))
 	}
 	knobs := slices.Clone(p.BaseKnobs)
 	if len(knobs) > 0 && len(p.Knobs) > 0 {
@@ -176,6 +182,22 @@ func (f Form) stage(caption string) core.Node {
 			Children: []core.Node{API{Text: caption}}})
 	}
 	return PixelGrid{TestID: "stage-" + f.Name, Style: s, Children: children}
+}
+
+// eventLine is the last event a playground's forms reported, a dash until
+// there is one.
+func eventLine(cx *core.Scope, last func() string) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(8, 16)}, Children: []core.Node{
+		ui.Text(tr.LastEvent(), 12, ui.Regular, colors.Muted),
+		core.Text{TestID: "last-event", MaxLines: 1, ContentFunc: func() string {
+			if e := last(); e != "" {
+				return e
+			}
+			return "—"
+		}, Style: core.Style{FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
+	}}
 }
 
 // wideStage reports whether the pane fits a stagePage's panel beside its

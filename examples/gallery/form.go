@@ -201,7 +201,6 @@ func formDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	env := cx.Env()
-	last := core.NewSignal(cx, "")
 	name, email, password := core.NewSignal(cx, ""), core.NewSignal(cx, ""), core.NewSignal(cx, "")
 	code, shout, notes := core.NewSignal(cx, ""), core.NewSignal(cx, ""), core.NewSignal(cx, "")
 	mode := core.NewSignal(cx, core.KeyboardDismissOnDrag)
@@ -447,9 +446,8 @@ func formDemo(cx *core.Scope) core.Node {
 			}},
 		}}}}
 
-	page := demoPage(cx, pageProps{behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardDismissMode: mode.Get()} }, after: []core.Node{dialog}},
-		inputPlayground, numberInputCard, tagInputCard, otpInputCard(last), keyboard, account, numbers, shipping, selection, textCard, submitCard, more)
-	return core.View{Style: fillPage, Children: []core.Node{page, eventBar(cx, last)}}
+	return demoPage(cx, pageProps{behaviorFunc: func() core.ScrollBehavior { return core.ScrollBehavior{KeyboardDismissMode: mode.Get()} }, after: []core.Node{dialog}},
+		inputPlayground, numberInputCard, tagInputCard, otpInputCard, keyboard, account, numbers, shipping, selection, textCard, submitCard, more)
 }
 
 // autoGrow is a multiline input that grows with its text

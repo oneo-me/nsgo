@@ -118,8 +118,7 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 // the app's rows: a week of visitors over the other
 // week (dashed), with a legend, compact y labels and the hover's cross
 // line, dots (each series' own, in its color, ringed in the card's) and
-// tooltip gliding on the frame clock, its options and last event in its
-// footer, and a list of sparklines, each with
+// tooltip gliding on the frame clock and its options in its footer, and a list of sparklines, each with
 // a wash in its tone and its change beside it, that draw in as their rows
 // come. Washes fade out toward the baseline (an area's background, a
 // gradient inside its shape). Grid lines are hairlines with a firmer
@@ -129,7 +128,6 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 func chartsDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	chartDays, chartWeekNames := chartDayNames(tr), []string{tr.ChartsLastWeek(), tr.ChartsThisWeek()}
-	last := core.NewSignal(cx, "—")
 	week := core.NewSignal(cx, 0)
 	pointer := shell.desktop()
 	gap := core.Points(12)
@@ -169,11 +167,6 @@ func chartsDemo(cx *core.Scope) core.Node {
 		setWeek := func(w int) {
 			week.Set(w)
 			hover.Set(-1)
-			if w == 0 {
-				last.Set(tr.ChartsPlotLastWeek())
-			} else {
-				last.Set(tr.ChartsPlotThisWeek())
-			}
 		}
 		return Card{Title: tr.ChartsVisitors(), Description: tr.ChartsAWeekOverTheOther(), Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
@@ -226,12 +219,9 @@ func chartsDemo(cx *core.Scope) core.Node {
 						}},
 					OnHoverChange: func(i int) {
 						hover.Set(i)
-						if i < 0 {
-							last.Set(tr.ChartsPlotLeft())
-							return
+						if i >= 0 {
+							tip.Set(i)
 						}
-						tip.Set(i)
-						last.Set(tr.ChartsPlotEvent(chartDays[i], visitors(rows()[i])))
 					},
 					Style: core.Style{FlexGrow: 1, Height: core.Pt(160)},
 					Children: []core.Node{
@@ -259,7 +249,6 @@ func chartsDemo(cx *core.Scope) core.Node {
 		}, Footer: []core.Node{
 			Knob{Name: "Y", Tight: true, Control: ui.Tabs[int]{Size: ui.SizeSmall, Label: "Y", Value: week.Get, OnChange: setWeek, Style: core.Style{AlignSelf: core.AlignEnd},
 				Options: []ui.Option[int]{{Value: 0, Label: chartWeekNames[0]}, {Value: 1, Label: chartWeekNames[1]}}}},
-			statusLine(cx, tr.ChartsLastEvent(), "charts-last-event", last.Get),
 		}}
 	}
 

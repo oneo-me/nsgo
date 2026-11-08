@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"slices"
 
 	"github.com/oneo-me/nsgo/base"
@@ -15,54 +14,51 @@ import (
 // What picks a value from a popup: ui's forms, and above each base's, which
 // takes its look part by part as a bare form does.
 
-func comboboxPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		multiple := core.NewSignal(cx, false)
-		value := core.NewSignalFunc(cx, []string(nil), slices.Equal[[]string])
-		choices := []ui.Option[string]{{Value: "apple", Label: tr.LibApple()}, {Value: "banana", Label: tr.LibBanana()}, {Value: "cherry", Label: tr.LibCherry()}}
-		return Playground{Title: "Combobox", Base: baseComboboxForm(cx, last, value, multiple), Stage: func() core.Node {
-			return core.Dynamic(func(*core.Scope) core.Node {
-				return ui.Combobox[string]{Options: choices, Multiple: multiple.Get(), Value: value.Get, Placeholder: tr.LibPickFruit(), Label: tr.LibFruit(),
-					Style:    core.Style{Width: core.Pt(240)},
-					OnChange: func(v []string) { value.Set(v); last.Set(fmt.Sprintf("Combobox: %v", v)) }}
-			})
-		}, BaseKnobs: []core.Node{boolKnob("Multiple", multiple)}}
-	}
+func comboboxPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	multiple := core.NewSignal(cx, false)
+	value := core.NewSignalFunc(cx, []string(nil), slices.Equal[[]string])
+	choices := []ui.Option[string]{{Value: "apple", Label: tr.LibApple()}, {Value: "banana", Label: tr.LibBanana()}, {Value: "cherry", Label: tr.LibCherry()}}
+	return Playground{Title: "Combobox", Base: baseComboboxForm(cx, value, multiple), Stage: func() core.Node {
+		return core.Dynamic(func(*core.Scope) core.Node {
+			return ui.Combobox[string]{Options: choices, Multiple: multiple.Get(), Value: value.Get, Placeholder: tr.LibPickFruit(), Label: tr.LibFruit(),
+				Style:    core.Style{Width: core.Pt(240)},
+				OnChange: value.Set}
+		})
+	}, BaseKnobs: []core.Node{boolKnob("Multiple", multiple)}}
 }
 
-func commandPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		items := commandItems(tr)
-		expand, loading, failing, open := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-		failure := func() string {
-			if failing.Get() {
-				return tr.PickerCommandFailed()
-			}
-			return ""
+func commandPlayground(cx *core.Scope) core.Node {
+	last := core.NewSignal(cx, "")
+	tr := locales.For(cx)
+	items := commandItems(tr)
+	expand, loading, failing, open := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+	failure := func() string {
+		if failing.Get() {
+			return tr.PickerCommandFailed()
 		}
-		palette := func(expanded bool) ui.Command {
-			return ui.Command{Items: func() []base.CommandItem { return items }, Placeholder: tr.PickerFindCommand(), Label: tr.DemoCommand(),
-				ExpandOnSearch: expanded, Loading: loading.Get, Error: failure}
-		}
-		return Playground{Title: "Command", Start: true, Base: baseCommandForm(cx, last), Stage: func() core.Node {
-			return core.Dynamic(func(*core.Scope) core.Node {
-				inline, dialog := palette(expand.Get()), palette(expand.Get())
-				inline.Style = core.Style{Height: core.Pt(280)}
-				inline.OnSelect = func(id string) { last.Set("Command: " + id) }
-				dialog.InputSource = commandInputSource
-				dialog.OnSelect = func(id string) {
-					open.Set(false)
-					last.Set("CommandDialog: " + id)
-				}
-				return core.View{Style: core.Style{Gap: 12, AlignItems: core.AlignStart}, Children: []core.Node{
-					core.View{Style: core.Style{AlignSelf: core.AlignStretch}, Children: []core.Node{inline}},
-					ui.Button{Text: tr.PickerOpenCommandDialog(), Variant: ui.ButtonSecondary, TestID: "open-command-dialog", OnPress: func() { open.Set(true) }},
-					ui.CommandDialog{TestID: "command-dialog", Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Command: dialog}}}
-			})
-		}, Knobs: []core.Node{boolKnob("ExpandOnSearch", expand), boolKnob("Loading", loading), boolKnob("Error", failing)}}
+		return ""
 	}
+	palette := func(expanded bool) ui.Command {
+		return ui.Command{Items: func() []base.CommandItem { return items }, Placeholder: tr.PickerFindCommand(), Label: tr.DemoCommand(),
+			ExpandOnSearch: expanded, Loading: loading.Get, Error: failure}
+	}
+	return Playground{Title: "Command", Event: last.Get, Start: true, Base: baseCommandForm(cx, last), Stage: func() core.Node {
+		return core.Dynamic(func(*core.Scope) core.Node {
+			inline, dialog := palette(expand.Get()), palette(expand.Get())
+			inline.Style = core.Style{Height: core.Pt(280)}
+			inline.OnSelect = func(id string) { last.Set("Command: " + id) }
+			dialog.InputSource = commandInputSource
+			dialog.OnSelect = func(id string) {
+				open.Set(false)
+				last.Set("CommandDialog: " + id)
+			}
+			return core.View{Style: core.Style{Gap: 12, AlignItems: core.AlignStart}, Children: []core.Node{
+				core.View{Style: core.Style{AlignSelf: core.AlignStretch}, Children: []core.Node{inline}},
+				ui.Button{Text: tr.PickerOpenCommandDialog(), Variant: ui.ButtonSecondary, TestID: "open-command-dialog", OnPress: func() { open.Set(true) }},
+				ui.CommandDialog{TestID: "command-dialog", Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Command: dialog}}}
+		})
+	}, Knobs: []core.Node{boolKnob("ExpandOnSearch", expand), boolKnob("Loading", loading), boolKnob("Error", failing)}}
 }
 
 // commandItems are what a card's palette runs.
@@ -75,92 +71,79 @@ func commandItems(tr locales.Messages) []base.CommandItem {
 	}
 }
 
-func hoverCardPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		placement := core.NewSignal(cx, core.PlaceBottom)
-		return Playground{Title: "HoverCard", Base: baseHoverCardForm(cx, last, placement), Stage: func() core.Node {
-			return ui.HoverCard{Placement: placement.Get(), OnOpenChange: func(_ bool, reason base.Reason) { last.Set("HoverCard: " + reason.String()) },
-				Trigger:  ui.Button{Text: tr.DemoHoverCard()},
-				Children: []core.Node{ui.Text(tr.DemoHoverCardDetail(), 13, ui.Regular, ui.ColorsOf(cx).Text)}}
-		}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...)}}
-	}
+func hoverCardPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	placement := core.NewSignal(cx, core.PlaceBottom)
+	return Playground{Title: "HoverCard", Base: baseHoverCardForm(cx, placement), Stage: func() core.Node {
+		return ui.HoverCard{Placement: placement.Get(),
+			Trigger:  ui.Button{Text: tr.DemoHoverCard()},
+			Children: []core.Node{ui.Text(tr.DemoHoverCardDetail(), 13, ui.Regular, ui.ColorsOf(cx).Text)}}
+	}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...)}}
 }
 
-func datePickerPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		ranged, timed, cleanable := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "DatePicker", Base: baseDatePickerForm(cx, last, ranged, timed, cleanable), Stage: func() core.Node {
-			return core.Dynamic(func(*core.Scope) core.Node {
-				precision := base.TimeNone
-				if timed.Get() {
-					precision = base.TimeMinute
-				}
-				return ui.DatePicker{Range: ranged.Get(), TimePrecision: precision, TimeLabel: tr.PickerTime(), Cleanable: cleanable.Get(),
-					Placeholder: tr.PickerPickDate(), OnChange: func(v base.DateValue) { last.Set("DatePicker: " + v.Format("%Y-%m-%d %H:%M")) }}
-			})
-		}, BaseKnobs: []core.Node{boolKnob("Range", ranged), boolKnob("TimePrecision", timed), boolKnob("Cleanable", cleanable)}}
-	}
+func datePickerPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	ranged, timed, cleanable := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+	return Playground{Title: "DatePicker", Base: baseDatePickerForm(cx, ranged, timed, cleanable), Stage: func() core.Node {
+		return core.Dynamic(func(*core.Scope) core.Node {
+			precision := base.TimeNone
+			if timed.Get() {
+				precision = base.TimeMinute
+			}
+			return ui.DatePicker{Range: ranged.Get(), TimePrecision: precision, TimeLabel: tr.PickerTime(), Cleanable: cleanable.Get(),
+				Placeholder: tr.PickerPickDate()}
+		})
+	}, BaseKnobs: []core.Node{boolKnob("Range", ranged), boolKnob("TimePrecision", timed), boolKnob("Cleanable", cleanable)}}
 }
 
-func calendarPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		ranged, months, weekends := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-		return Playground{Title: "Calendar", Base: baseCalendarForm(cx, last, ranged, months, weekends), Stage: func() core.Node {
-			return core.Dynamic(func(*core.Scope) core.Node {
-				c := ui.Calendar{Range: ranged.Get(), OnChange: func(v base.DateValue) { last.Set("Calendar: " + v.Format("%Y-%m-%d")) }}
-				if months.Get() {
-					c.NumberOfMonths = 2
-				}
-				if weekends.Get() {
-					c.DisabledMatcher = base.DaysOfWeek(0, 6)
-				}
-				return c
-			})
-		}, BaseKnobs: []core.Node{boolKnob("Range", ranged), boolKnob("Two months", months), boolKnob("No weekends", weekends)}}
-	}
+func calendarPlayground(cx *core.Scope) core.Node {
+	ranged, months, weekends := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
+	return Playground{Title: "Calendar", Base: baseCalendarForm(cx, ranged, months, weekends), Stage: func() core.Node {
+		return core.Dynamic(func(*core.Scope) core.Node {
+			c := ui.Calendar{Range: ranged.Get()}
+			if months.Get() {
+				c.NumberOfMonths = 2
+			}
+			if weekends.Get() {
+				c.DisabledMatcher = base.DaysOfWeek(0, 6)
+			}
+			return c
+		})
+	}, BaseKnobs: []core.Node{boolKnob("Range", ranged), boolKnob("Two months", months), boolKnob("No weekends", weekends)}}
 }
 
-func timeFieldPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		twelve := core.NewSignal(cx, false)
-		return Playground{Title: "TimeField", Base: baseTimeFieldForm(cx, last, twelve), Stage: func() core.Node {
-			return core.Dynamic(func(*core.Scope) core.Node {
-				cycle := base.HourCycle23
-				if twelve.Get() {
-					cycle = base.HourCycle12
-				}
-				return ui.TimeField{HourCycle: cycle, Label: tr.PickerTime(), DefaultValue: base.TimeOfDay{Hour: 9, Minute: 30},
-					OnChange: func(t base.TimeOfDay) { last.Set("TimeField: " + t.String()) }}
-			})
-		}, BaseKnobs: []core.Node{boolKnob("HourCycle12", twelve)}}
-	}
+func timeFieldPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	twelve := core.NewSignal(cx, false)
+	return Playground{Title: "TimeField", Base: baseTimeFieldForm(cx, twelve), Stage: func() core.Node {
+		return core.Dynamic(func(*core.Scope) core.Node {
+			cycle := base.HourCycle23
+			if twelve.Get() {
+				cycle = base.HourCycle12
+			}
+			return ui.TimeField{HourCycle: cycle, Label: tr.PickerTime(), DefaultValue: base.TimeOfDay{Hour: 9, Minute: 30}}
+		})
+	}, BaseKnobs: []core.Node{boolKnob("HourCycle12", twelve)}}
 }
 
-func colorPickerPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		noAlpha, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-		color := core.NewSignal[core.Color](cx, 0xc2410cff)
-		return Playground{Title: "ColorPicker", Base: baseColorPickerForm(cx, last, color, disabled), Stage: func() core.Node {
-			return core.Dynamic(func(*core.Scope) core.Node {
-				return ui.ColorPicker{Value: color.Get, NoAlpha: noAlpha.Get(), Disabled: disabled.Get,
-					OnChange: func(c core.Color, _ string) { color.Set(c) }, OnChangeEnd: func(_ core.Color, formatted string) { last.Set("ColorPicker: " + formatted) }}
-			})
-		}, BaseKnobs: []core.Node{boolKnob("Disabled", disabled)}, Knobs: []core.Node{boolKnob("NoAlpha", noAlpha)}}
-	}
+func colorPickerPlayground(cx *core.Scope) core.Node {
+	noAlpha, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
+	color := core.NewSignal[core.Color](cx, 0xc2410cff)
+	return Playground{Title: "ColorPicker", Base: baseColorPickerForm(cx, color, disabled), Stage: func() core.Node {
+		return core.Dynamic(func(*core.Scope) core.Node {
+			return ui.ColorPicker{Value: color.Get, NoAlpha: noAlpha.Get(), Disabled: disabled.Get,
+				OnChange: func(c core.Color, _ string) { color.Set(c) }}
+		})
+	}, BaseKnobs: []core.Node{boolKnob("Disabled", disabled)}, Knobs: []core.Node{boolKnob("NoAlpha", noAlpha)}}
 }
 
-func colorWellPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		color := core.NewSignal[core.Color](cx, 0x3b82f6ff)
-		return Playground{Title: "ColorWell", Stage: func() core.Node {
-			return ui.ColorWell{Value: color.Get, Label: tr.DemoColorPicker(),
-				OnChange: color.Set, OnOpenChange: func(_ bool, reason base.Reason) { last.Set("ColorWell: " + reason.String()) }}
-		}}
-	}
+func colorWellPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	color := core.NewSignal[core.Color](cx, 0x3b82f6ff)
+	return Playground{Title: "ColorWell", Stage: func() core.Node {
+		return ui.ColorWell{Value: color.Get, Label: tr.DemoColorPicker(),
+			OnChange: color.Set}
+	}}
 }
 
 // fruits are what a list of a card offers.
@@ -172,8 +155,16 @@ func fruits(tr locales.Messages) func() []base.SelectItem {
 // bareRows is a list's rows in a card's look.
 const bareRows = "group h-[32px] px-2 justify-center rounded-md focus:bg-black/10 dark:focus:bg-white/10 selected:font-semibold disabled:opacity-40"
 
-func baseSelectForm(cx *core.Scope, last, value *core.Signal[string], searchable, cleanable *core.Signal[bool]) Form {
+func baseSelectForm(cx *core.Scope, value *core.Signal[string], searchable, cleanable *core.Signal[bool]) Form {
 	tr := locales.For(cx)
+	picked := func() string {
+		for _, item := range fruits(tr)() {
+			if item.Value == value.Get() {
+				return item.Title
+			}
+		}
+		return tr.LibPickFruit()
+	}
 	return Form{Name: "base.Select", Stage: func() core.Node {
 		return base.Select{Items: fruits(tr), Value: func() *string {
 			if v := value.Get(); v != "" {
@@ -183,20 +174,18 @@ func baseSelectForm(cx *core.Scope, last, value *core.Signal[string], searchable
 		}, Searchable: searchable.Get, Cleanable: cleanable.Get(), SearchPlaceholder: tr.LibPickFruit(),
 			Label: tr.LibFruit(), Offset: 4, Margin: 8, Style: bareBox.Merge(core.Style{Width: core.Pt(200)}), StyleFunc: bareInk(cx),
 			PopupStyle: barePanel, PopupStyleFunc: barePopup(cx), ItemClass: bareRows, BackdropStyle: bareBackdrop,
-			Trigger: bareText(cx, tr.LibPickFruit()), ClearButton: bareText(cx, "×"), ClearButtonLabel: tr.LibFruit(),
+			Trigger: bareTextf(cx, picked), ClearButton: bareText(cx, "×"), ClearButtonLabel: tr.LibFruit(),
 			OnChange: func(v *string) {
 				if v == nil {
 					value.Set("")
-					last.Set("base.Select: null")
 					return
 				}
 				value.Set(*v)
-				last.Set("base.Select: " + *v)
 			}}
 	}}
 }
 
-func baseComboboxForm(cx *core.Scope, last *core.Signal[string], value *core.Signal[[]string], multiple *core.Signal[bool]) Form {
+func baseComboboxForm(cx *core.Scope, value *core.Signal[[]string], multiple *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.Combobox", Fill: true, Stage: func() core.Node {
 		return core.Dynamic(func(*core.Scope) core.Node {
@@ -204,7 +193,7 @@ func baseComboboxForm(cx *core.Scope, last *core.Signal[string], value *core.Sig
 				Style: bareBox, StyleFunc: bareField(cx), InputStyle: core.Style{FlexGrow: 1},
 				PopupStyle: barePanel, PopupStyleFunc: barePopup(cx), ItemClass: bareRows, BackdropStyle: bareBackdrop,
 				Empty:    bareText(cx, tr.PickerNothingFound()),
-				OnChange: func(v []string) { value.Set(v); last.Set(fmt.Sprintf("base.Combobox: %v", v)) }}
+				OnChange: value.Set}
 		})
 	}}
 }
@@ -225,13 +214,12 @@ func baseCommandForm(cx *core.Scope, last *core.Signal[string]) Form {
 	}}
 }
 
-func baseHoverCardForm(cx *core.Scope, last *core.Signal[string], placement *core.Signal[core.Placement]) Form {
+func baseHoverCardForm(cx *core.Scope, placement *core.Signal[core.Placement]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.HoverCard", Stage: func() core.Node {
 		return base.HoverCard{Placement: placement.Get(), Offset: 4, Margin: 8, PopupStyle: barePanel, PopupStyleFunc: barePopup(cx),
-			OnOpenChange: func(_ bool, reason base.Reason) { last.Set("base.HoverCard: " + reason.String()) },
-			Trigger:      core.View{Style: bareBox, StyleFunc: bareInk(cx), Children: []core.Node{bareText(cx, tr.DemoHoverCard())}},
-			Children:     []core.Node{bareText(cx, tr.DemoHoverCardDetail())}}
+			Trigger:  core.View{Style: bareBox, StyleFunc: bareInk(cx), Children: []core.Node{bareText(cx, tr.DemoHoverCard())}},
+			Children: []core.Node{bareText(cx, tr.DemoHoverCardDetail())}}
 	}}
 }
 
@@ -243,7 +231,7 @@ func bareCalendar() base.CalendarConfig {
 		ItemClass: "rounded-md selected:bg-blue-500 selected:text-white disabled:opacity-40 data-outside:opacity-40 data-today:font-semibold data-range-middle:bg-blue-500/20"}
 }
 
-func baseCalendarForm(cx *core.Scope, last *core.Signal[string], ranged, months, weekends *core.Signal[bool]) Form {
+func baseCalendarForm(cx *core.Scope, ranged, months, weekends *core.Signal[bool]) Form {
 	return Form{Name: "base.Calendar", Fill: true, Stage: func() core.Node {
 		return core.Dynamic(func(*core.Scope) core.Node {
 			config := bareCalendar()
@@ -253,13 +241,12 @@ func baseCalendarForm(cx *core.Scope, last *core.Signal[string], ranged, months,
 			if weekends.Get() {
 				config.DisabledMatcher = base.DaysOfWeek(0, 6)
 			}
-			return base.Calendar{Range: ranged.Get(), CalendarConfig: config,
-				OnChange: func(v base.DateValue) { last.Set("base.Calendar: " + v.Format("%Y-%m-%d")) }}
+			return base.Calendar{Range: ranged.Get(), CalendarConfig: config}
 		})
 	}}
 }
 
-func baseTimeFieldForm(cx *core.Scope, last *core.Signal[string], twelve *core.Signal[bool]) Form {
+func baseTimeFieldForm(cx *core.Scope, twelve *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.TimeField", Stage: func() core.Node {
 		return core.Dynamic(func(*core.Scope) core.Node {
@@ -268,14 +255,14 @@ func baseTimeFieldForm(cx *core.Scope, last *core.Signal[string], twelve *core.S
 				cycle = base.HourCycle12
 			}
 			return base.TimeField{HourCycle: cycle, Label: tr.PickerTime(), DefaultValue: base.TimeOfDay{Hour: 9, Minute: 30},
-				Style: bareBox, StyleFunc: bareField(cx), SegmentClass: "px-1 rounded focus:bg-blue-500 focus:text-white",
-				OnChange: func(t base.TimeOfDay) { last.Set("base.TimeField: " + t.String()) }}
+				Style: bareBox, StyleFunc: bareField(cx), SegmentClass: "px-1 rounded focus:bg-blue-500 focus:text-white"}
 		})
 	}}
 }
 
-func baseDatePickerForm(cx *core.Scope, last *core.Signal[string], ranged, timed, cleanable *core.Signal[bool]) Form {
+func baseDatePickerForm(cx *core.Scope, ranged, timed, cleanable *core.Signal[bool]) Form {
 	tr := locales.For(cx)
+	picked := core.NewSignal(cx, "")
 	return Form{Name: "base.DatePicker", Stage: func() core.Node {
 		return core.Dynamic(func(*core.Scope) core.Node {
 			precision := base.TimeNone
@@ -287,21 +274,31 @@ func baseDatePickerForm(cx *core.Scope, last *core.Signal[string], ranged, timed
 				Presets: []base.DatePreset{{Label: tr.PickerPickDate(), Value: base.DateValue{Start: base.NewDate(today.Year(), today.Month(), today.Day(), base.TimeOfDay{})}}},
 				Offset:  4, Margin: 8, Style: bareBox, StyleFunc: bareInk(cx), PopupStyle: barePanel, PopupStyleFunc: barePopup(cx), BackdropStyle: bareBackdrop,
 				SegmentClass: "px-1 rounded focus:bg-blue-500 focus:text-white", TimeFieldStyle: core.Style{Position: core.Relative}, TimeLabel: bareText(cx, tr.PickerTime()),
-				Trigger: bareText(cx, tr.PickerPickDate()), ClearButton: bareText(cx, "×"), ClearButtonLabel: tr.PickerPickDate(),
-				OnChange: func(v base.DateValue) { last.Set("base.DatePicker: " + v.Format("%Y-%m-%d %H:%M")) }}
+				Trigger: bareTextf(cx, func() string {
+					if p := picked.Get(); p != "" {
+						return p
+					}
+					return tr.PickerPickDate()
+				}), ClearButton: bareText(cx, "×"), ClearButtonLabel: tr.PickerPickDate(),
+				OnChange: func(v base.DateValue) {
+					format := "%Y-%m-%d"
+					if precision != base.TimeNone {
+						format += " %H:%M"
+					}
+					picked.Set(v.Format(format))
+				}}
 		})
 	}}
 }
 
-func baseColorPickerForm(cx *core.Scope, last *core.Signal[string], color *core.Signal[core.Color], disabled *core.Signal[bool]) Form {
+func baseColorPickerForm(cx *core.Scope, color *core.Signal[core.Color], disabled *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	thumb := "w-[14px] h-[14px] rounded-full border-2 border-white shadow"
 	track := "h-[10px] rounded-full"
 	slider := "h-[20px] justify-center"
 	return Form{Name: "base.ColorPicker", Fill: true, Stage: func() core.Node {
 		return base.ColorPicker{Value: color.Get, Format: base.ColorFormatHex, Disabled: disabled.Get, Style: core.Style{Gap: 8, MaxWidth: core.Pt(280)},
-			OnChange:    func(c core.Color, _ string) { color.Set(c) },
-			OnChangeEnd: func(_ core.Color, formatted string) { last.Set("base.ColorPicker: " + formatted) },
+			OnChange: func(c core.Color, _ string) { color.Set(c) },
 			Children: []core.Node{
 				base.ColorArea{Class: "h-[140px]", PanelClass: "rounded-lg", ThumbClass: thumb, FillThumb: true, Label: tr.DemoColorPicker()},
 				base.ColorSlider{Class: slider, Channel: base.ChannelHue, TrackClass: track, ThumbClass: thumb, FillThumb: true, Label: "Hue"},

@@ -420,17 +420,27 @@ func TestApplicationMenu(t *testing.T) {
 	}
 }
 
-// TestControls uses a control of each page, each reporting its event.
+// TestControls uses a control of each page, each showing what it was set
+// to.
 func TestControls(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Checkbox")
-	app.Press("id:stage-RadioGroup · Radio >> role:radio Banana")
-	app.Find("text:Radio: Banana")
-	app.Press("id:stage-Checkbox >> role:checkbox Starred")
-	app.Find("text:Checkbox: off")
+	radio := "id:stage-RadioGroup · Radio >> role:radio Banana"
+	app.Press(radio)
+	if !app.Find(radio).Props.Checked {
+		t.Fatal("the radio pressed is not checked")
+	}
+	checkbox := "id:stage-Checkbox >> role:checkbox Starred"
+	app.Press(checkbox)
+	if app.Find(checkbox).Props.Checked {
+		t.Fatal("the checkbox stayed checked")
+	}
 	open(app, "Tabs")
-	app.Press("id:stage-Tabs >> role:tab Activity >> nth=0")
-	app.Find("text:Tabs: 1")
+	tab := "id:stage-Tabs >> role:tab Activity >> nth=0"
+	app.Press(tab)
+	if !app.Find(tab).Props.Selected {
+		t.Fatal("the tab pressed is not selected")
+	}
 	open(app, "Breadcrumbs")
 	app.Find("id:stage-Breadcrumbs")
 	open(app, "Progress")
@@ -731,7 +741,7 @@ func TestMedia(t *testing.T) {
 		t.Fatalf("native view %+v", slider)
 	}
 	app.Emit("id:native-slider", "change", 0.25)
-	app.Find("text:Last event: change 0.25")
+	app.Find("text:0.25")
 }
 
 func TestSystem(t *testing.T) {
@@ -959,10 +969,8 @@ func TestCharts(t *testing.T) {
 	app.Find(plot)
 	// The pointer at the middle: Thursday, the fourth of seven days.
 	app.Hover(plot)
-	app.Find("text:Plot: Thu, 2,480")
 	app.Find("text:2,480 visitors")
 	app.Press("role:tab This week")
-	app.Find("text:Plot: this week")
 	app.Find("text:1,330 visitors")
 	if len(app.Query("text:NSHL")) == 0 {
 		t.Fatal("no sparkline rows")
@@ -1487,17 +1495,20 @@ func TestPickerPages(t *testing.T) {
 	}
 }
 
-// A base form picks in the running gallery: a date, then a color.
+// A base form picks in the running gallery: a fruit, a color the ui form
+// shows too, then a command.
 func TestPickersPick(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Select")
 	app.Press("id:stage-base.Select >> role:combobox")
 	app.Press("role:option Apple")
-	app.Find("text:base.Select: apple")
+	app.Find("id:stage-base.Select >> text:Apple")
 	open(app, "ColorPicker")
 	app.Clear("id:stage-base.ColorPicker >> label:Hex")
 	app.Type("id:stage-base.ColorPicker >> label:Hex", "#ef4444\n")
-	app.Find("text:base.ColorPicker: #ef4444")
+	if got := app.Find("id:stage-ColorPicker >> label:Hex color").Text; !strings.Contains(strings.ToLower(got), "ef4444") {
+		t.Fatalf("the ui form shows %q", got)
+	}
 	open(app, "Command")
 	app.Type("id:stage-base.Command >> label:Command", "sheet")
 	app.Key("enter")
@@ -1530,21 +1541,26 @@ func TestPickerForms(t *testing.T) {
 	open(app, "Select")
 	app.Press("id:stage-Select >> role:combobox")
 	app.Press("role:option Banana")
-	app.Find("text:Select: banana")
+	app.Find("id:stage-Select >> text:Banana")
 	app.Press("id:stage-Combobox >> role:button")
 	app.Press("role:option Cherry")
-	app.Find("text:Combobox: [cherry]")
+	app.Find("id:stage-Combobox >> text:Cherry")
 	open(app, "DatePicker")
-	app.Press("id:stage-Calendar >> label:2026-01-15")
-	app.Find("text:Calendar: 2026-01-15")
+	day := "id:stage-Calendar >> label:2026-01-15"
+	app.Press(day)
+	if !app.Find(day).Props.Selected {
+		t.Fatal("the day pressed is not selected")
+	}
 	app.Press("id:stage-DatePicker >> role:combobox")
 	// The calendars of the page show it too; the popup is the last.
 	app.Press("label:2026-01-20 >> nth=2")
-	app.Find("text:DatePicker: 2026-01-20 00:00")
+	app.Find("id:stage-DatePicker >> text:/2026/")
 	open(app, "ColorPicker")
 	app.Clear("id:stage-ColorPicker >> label:Hex color")
 	app.Type("id:stage-ColorPicker >> label:Hex color", "22c55e\n")
-	app.Find("text:ColorPicker: #22c55e")
+	if got := app.Find("id:stage-base.ColorPicker >> label:Hex").Text; !strings.Contains(strings.ToLower(got), "22c55e") {
+		t.Fatalf("the base form shows %q", got)
+	}
 	open(app, "Command")
 	app.Press("id:stage-Command >> role:option Sheet")
 	app.Find("text:Command: sheet")

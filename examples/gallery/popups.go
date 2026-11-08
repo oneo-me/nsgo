@@ -15,71 +15,63 @@ var placements = options([]core.Placement{core.PlaceBottom, core.PlaceTop, core.
 
 var aligns = options([]core.Align{core.AlignStart, core.AlignCenter, core.AlignEnd}, "Start", "Center", "End")
 
-func dialogCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		open := core.NewSignal(cx, false)
-		noEscape, noBackdrop, footer := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, true)
-		close := func() { open.Set(false) }
-		return Playground{Title: "Dialog", Base: baseDialogForm(cx, last, noEscape, noBackdrop), Stage: func() core.Node {
-			d := ui.Dialog{Open: open.Get, Title: tr.KitDialogTitle(), Description: tr.KitDialogNote(), Label: tr.KitDialogTitle(), TestID: "ui-dialog",
-				NoCloseOnEscape: noEscape.Get(), NoCloseOnBackdropPress: noBackdrop.Get(),
-				OnOpenChange: func(o bool, reason base.Reason) { open.Set(o); last.Set("Dialog: " + reason.String()) },
-				Children:     []core.Node{ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Text)}}
-			if footer.Get() {
-				d.Footer = []core.Node{ui.Spacer{}, ui.Button{Text: tr.OverlayDone(), OnPress: close}}
-			} else {
-				d.Children = append(d.Children, ui.Button{Text: tr.OverlayDone(), OnPress: close})
-			}
-			return core.Group{ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }}, d}
-		}, BaseKnobs: []core.Node{boolKnob("NoCloseOnEscape", noEscape), boolKnob("NoCloseOnBackdropPress", noBackdrop)}, Knobs: []core.Node{boolKnob("Footer", footer)}}
-	}
+func dialogCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	open := core.NewSignal(cx, false)
+	noEscape, noBackdrop, footer := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, true)
+	close := func() { open.Set(false) }
+	return Playground{Title: "Dialog", Base: baseDialogForm(cx, noEscape, noBackdrop), Stage: func() core.Node {
+		d := ui.Dialog{Open: open.Get, Title: tr.KitDialogTitle(), Description: tr.KitDialogNote(), Label: tr.KitDialogTitle(), TestID: "ui-dialog",
+			NoCloseOnEscape: noEscape.Get(), NoCloseOnBackdropPress: noBackdrop.Get(),
+			OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) },
+			Children:     []core.Node{ui.Text(tr.ControlsDeployedToProduction(), 13, ui.Regular, colors.Text)}}
+		if footer.Get() {
+			d.Footer = []core.Node{ui.Spacer{}, ui.Button{Text: tr.OverlayDone(), OnPress: close}}
+		} else {
+			d.Children = append(d.Children, ui.Button{Text: tr.OverlayDone(), OnPress: close})
+		}
+		return core.Group{ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }}, d}
+	}, BaseKnobs: []core.Node{boolKnob("NoCloseOnEscape", noEscape), boolKnob("NoCloseOnBackdropPress", noBackdrop)}, Knobs: []core.Node{boolKnob("Footer", footer)}}
 }
 
-func alertDialogCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		open := core.NewSignal(cx, false)
-		danger := core.NewSignal(cx, true)
-		return Playground{Title: "AlertDialog", Base: baseAlertDialogForm(cx, last), Stage: func() core.Node {
-			confirm := ui.AlertAction{Text: tr.OverlayDone(), OnPress: func() { open.Set(false); last.Set("AlertDialog: " + tr.OverlayDone()) }}
-			if danger.Get() {
-				confirm.Color = colors.Danger
-			}
-			return core.Group{
-				ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
-				ui.AlertDialog{Open: open.Get, Title: tr.KitDialogTitle(), Description: tr.KitDialogNote(),
-					OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) },
-					Actions:      []ui.AlertAction{{Text: tr.KitCancel(), Variant: ui.ButtonGhost, OnPress: func() { open.Set(false) }}, confirm}},
-			}
-		}, Knobs: []core.Node{boolKnob("Color", danger)}}
-	}
+func alertDialogCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	open := core.NewSignal(cx, false)
+	danger := core.NewSignal(cx, true)
+	return Playground{Title: "AlertDialog", Base: baseAlertDialogForm(cx), Stage: func() core.Node {
+		confirm := ui.AlertAction{Text: tr.OverlayDone(), OnPress: func() { open.Set(false) }}
+		if danger.Get() {
+			confirm.Color = colors.Danger
+		}
+		return core.Group{
+			ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
+			ui.AlertDialog{Open: open.Get, Title: tr.KitDialogTitle(), Description: tr.KitDialogNote(),
+				OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) },
+				Actions:      []ui.AlertAction{{Text: tr.KitCancel(), Variant: ui.ButtonGhost, OnPress: func() { open.Set(false) }}, confirm}},
+		}
+	}, Knobs: []core.Node{boolKnob("Color", danger)}}
 }
 
-func popoverPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		placement := core.NewSignal(cx, core.PlaceBottom)
-		align := core.NewSignal(cx, core.AlignCenter)
-		return Playground{Title: "Popover", Base: basePopoverForm(cx, last, placement, align), Stage: func() core.Node {
-			return ui.Popover{Trigger: ui.Button{Text: tr.OverlayShowThePopover(), Variant: ui.ButtonSecondary}, Placement: placement.Get(), Align: align.Get(),
-				Label: tr.OverlayPopover(), OnOpenChange: func(_ bool, reason base.Reason) { last.Set("Popover: " + reason.String()) },
-				Children: []core.Node{ui.Text(tr.OverlayAPressOutsideEscapeOr(), 13, ui.Regular, colors.Muted)}}
-		}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...), choiceKnob("Align", align, aligns...)}}
-	}
+func popoverPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	placement := core.NewSignal(cx, core.PlaceBottom)
+	align := core.NewSignal(cx, core.AlignCenter)
+	return Playground{Title: "Popover", Base: basePopoverForm(cx, placement, align), Stage: func() core.Node {
+		return ui.Popover{Trigger: ui.Button{Text: tr.OverlayShowThePopover(), Variant: ui.ButtonSecondary}, Placement: placement.Get(), Align: align.Get(),
+			Label:    tr.OverlayPopover(),
+			Children: []core.Node{ui.Text(tr.OverlayAPressOutsideEscapeOr(), 13, ui.Regular, colors.Muted)}}
+	}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...), choiceKnob("Align", align, aligns...)}}
 }
 
-func tooltipPlayground(*core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		placement := core.NewSignal(cx, core.PlaceTop)
-		return Playground{Title: "Tooltip", Base: baseTooltipForm(cx, placement), Stage: func() core.Node {
-			return ui.Tooltip{Text: tr.OverlaySavesTheDocument(), Placement: placement.Get(), Trigger: ui.Button{Text: tr.OverlaySave(), Variant: ui.ButtonSecondary, OnPress: func() {}}}
-		}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...)}}
-	}
+func tooltipPlayground(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	placement := core.NewSignal(cx, core.PlaceTop)
+	return Playground{Title: "Tooltip", Base: baseTooltipForm(cx, placement), Stage: func() core.Node {
+		return ui.Tooltip{Text: tr.OverlaySavesTheDocument(), Placement: placement.Get(), Trigger: ui.Button{Text: tr.OverlaySave(), Variant: ui.ButtonSecondary, OnPress: func() {}}}
+	}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...)}}
 }
 
 // menuItems are the items of the Menu and ContextMenu playgrounds.
@@ -99,29 +91,27 @@ func menuItems(cx *core.Scope, last *core.Signal[string], checked, disabled *cor
 	}
 }
 
-func menuPlayground(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		placement := core.NewSignal(cx, core.PlaceBottom)
-		align := core.NewSignal(cx, core.AlignStart)
-		checked, disabled := core.NewSignal(cx, true), core.NewSignal(cx, true)
-		return Playground{Title: "Menu · Submenu", Base: baseMenuForm(cx, last, placement, align), Stage: func() core.Node {
-			return ui.Menu{Trigger: ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary}, Placement: placement.Get(), Align: align.Get(), Label: tr.DemoMenu(), TestID: "ui-menu",
-				Children: menuItems(cx, last, checked, disabled)}
-		}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...), choiceKnob("Align", align, aligns...)},
-			Knobs: []core.Node{boolKnob("Checked", checked), boolKnob("Disabled", disabled)}}
-	}
+func menuPlayground(cx *core.Scope) core.Node {
+	last := core.NewSignal(cx, "")
+	tr := locales.For(cx)
+	placement := core.NewSignal(cx, core.PlaceBottom)
+	align := core.NewSignal(cx, core.AlignStart)
+	checked, disabled := core.NewSignal(cx, true), core.NewSignal(cx, true)
+	return Playground{Title: "Menu · Submenu", Event: last.Get, Base: baseMenuForm(cx, last, placement, align), Stage: func() core.Node {
+		return ui.Menu{Trigger: ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary}, Placement: placement.Get(), Align: align.Get(), Label: tr.DemoMenu(), TestID: "ui-menu",
+			Children: menuItems(cx, last, checked, disabled)}
+	}, BaseKnobs: []core.Node{choiceKnob("Placement", placement, placements...), choiceKnob("Align", align, aligns...)},
+		Knobs: []core.Node{boolKnob("Checked", checked), boolKnob("Disabled", disabled)}}
 }
 
-func contextMenuCard(last *core.Signal[string]) cardFunc {
-	return func(cx *core.Scope) core.Node {
-		tr := locales.For(cx)
-		colors := ui.ColorsOf(cx)
-		checked, off, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false), core.NewSignal(cx, true)
-		return Playground{Title: "ContextMenu", Fill: true, Base: baseContextMenuForm(cx, last, off), Stage: func() core.Node {
-			return ui.ContextMenu{Disabled: off.Get(), Children: menuItems(cx, last, checked, disabled),
-				Trigger: core.View{Style: core.Style{Height: core.Pt(64), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
-					Children: []core.Node{ui.Text(Hint(cx, tr.KitLongPressHere(), tr.KitRightClickHere()), 13, ui.Regular, colors.Muted)}}}
-		}, BaseKnobs: []core.Node{boolKnob("Disabled", off)}}
-	}
+func contextMenuCard(cx *core.Scope) core.Node {
+	last := core.NewSignal(cx, "")
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	checked, off, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false), core.NewSignal(cx, true)
+	return Playground{Title: "ContextMenu", Event: last.Get, Fill: true, Base: baseContextMenuForm(cx, last, off), Stage: func() core.Node {
+		return ui.ContextMenu{Disabled: off.Get(), Children: menuItems(cx, last, checked, disabled),
+			Trigger: core.View{Style: core.Style{Height: core.Pt(64), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
+				Children: []core.Node{ui.Text(Hint(cx, tr.KitLongPressHere(), tr.KitRightClickHere()), 13, ui.Regular, colors.Muted)}}}
+	}, BaseKnobs: []core.Node{boolKnob("Disabled", off)}}
 }

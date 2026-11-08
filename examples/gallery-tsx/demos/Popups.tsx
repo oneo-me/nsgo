@@ -18,20 +18,19 @@ import {
   Submenu,
   Tooltip,
 } from "nsgo/ui";
-import { BoolKnob, ChoiceKnob, Events, Page, Playground, Row, useEvents } from "../parts";
+import { BoolKnob, ChoiceKnob, Page, Playground, Row, useEvents } from "../parts";
 
 const placements = ["top", "bottom", "left", "right"] as const;
 const label = "text-[13px] text-text";
 
 export function DialogDemo() {
-  const { last, log } = useEvents();
   const dialog = signal(false);
   const alert = signal(false);
   const sheet = signal(false);
   const escape = signal(true);
   const backdrop = signal(true);
   return (
-    <Events value={last()}>
+    <Page>
       <Playground
         title="Dialog"
         knobs={
@@ -54,10 +53,7 @@ export function DialogDemo() {
             <Button text="Cancel" variant="secondary" onPress={() => dialog.set(false)} />,
             <Button
               text="Save"
-              onPress={() => {
-                dialog.set(false);
-                log("Saved")();
-              }}
+              onPress={() => dialog.set(false)}
             />,
           ]}
         >
@@ -77,10 +73,7 @@ export function DialogDemo() {
             {
               text: "Delete",
               variant: "accent",
-              onPress: () => {
-                alert.set(false);
-                log("Deleted")();
-              },
+              onPress: () => alert.set(false),
             },
           ]}
         />
@@ -95,7 +88,7 @@ export function DialogDemo() {
           </View>
         </Sheet>
       </Playground>
-    </Events>
+    </Page>
   );
 }
 
@@ -152,22 +145,23 @@ const commands = [
 ];
 
 export function CommandDemo() {
-  const { last, log } = useEvents();
+  const inline = useEvents();
+  const palette = useEvents();
   const open = signal(false);
   return (
-    <Events value={last()}>
-      <Playground title="Command" start>
+    <Page>
+      <Playground title="Command" start event={inline.last()}>
         <Command
           testID="command"
           accessibilityLabel="Commands"
           items={commands}
           placeholder="Type a command"
           empty="No results"
-          onSelect={({ id }) => log(`Ran ${id}`)()}
+          onSelect={({ id }) => inline.log(`Ran ${id}`)()}
           style={{ height: 280 }}
         />
       </Playground>
-      <Playground title="CommandDialog">
+      <Playground title="CommandDialog" event={palette.last()}>
         <Button text="Open the palette" variant="secondary" onPress={() => open.set(true)} />
         <CommandDialog
           testID="palette"
@@ -180,37 +174,38 @@ export function CommandDemo() {
             autoFocus: true,
             onSelect: (id: string) => {
               open.set(false);
-              log(`Ran ${id}`)();
+              palette.log(`Ran ${id}`)();
             },
           }}
         />
       </Playground>
-    </Events>
+    </Page>
   );
 }
 
 export function MenuDemo() {
-  const { last, log } = useEvents();
+  const menu = useEvents();
+  const context = useEvents();
   const wrap = signal(true);
   const ctx = signal(false);
   return (
-    <Events value={last()}>
-      <Playground title="Menu">
+    <Page>
+      <Playground title="Menu" event={menu.last()}>
         <Menu testID="menu" accessibilityLabel="File" trigger={{ text: "File", variant: "secondary" }}>
           <MenuLabel text="Document" />
-          <MenuItem text="New" icon="file-text" shortcut="mod+n" onSelect={log("New")} />
-          <MenuItem text="Open…" icon="folder" shortcut="mod+o" onSelect={log("Open")} />
+          <MenuItem text="New" icon="file-text" shortcut="mod+n" onSelect={menu.log("New")} />
+          <MenuItem text="Open…" icon="folder" shortcut="mod+o" onSelect={menu.log("Open")} />
           <MenuSeparator />
           <MenuItem text="Word wrap" checked={wrap()} onSelect={() => wrap.set(!wrap())} closeOnSelect={false} />
           <Submenu text="Share" icon="share">
-            <MenuItem text="Copy link" onSelect={log("Copy link")} />
-            <MenuItem text="Email" onSelect={log("Email")} />
+            <MenuItem text="Copy link" onSelect={menu.log("Copy link")} />
+            <MenuItem text="Email" onSelect={menu.log("Email")} />
           </Submenu>
           <MenuSeparator />
-          <MenuItem text="Delete" icon="trash" variant="danger" onSelect={log("Delete")} />
+          <MenuItem text="Delete" icon="trash" variant="danger" onSelect={menu.log("Delete")} />
         </Menu>
       </Playground>
-      <Playground title="ContextMenu" note="Right-click or long-press the area." fill>
+      <Playground title="ContextMenu" note="Right-click or long-press the area." fill event={context.last()}>
         <ContextMenu
           testID="context"
           open={ctx()}
@@ -221,11 +216,11 @@ export function MenuDemo() {
             </View>
           }
         >
-          <MenuItem text="Cut" shortcut="mod+x" onSelect={log("Cut")} />
-          <MenuItem text="Copy" shortcut="mod+c" onSelect={log("Copy")} />
-          <MenuItem text="Paste" shortcut="mod+v" onSelect={log("Paste")} />
+          <MenuItem text="Cut" shortcut="mod+x" onSelect={context.log("Cut")} />
+          <MenuItem text="Copy" shortcut="mod+c" onSelect={context.log("Copy")} />
+          <MenuItem text="Paste" shortcut="mod+v" onSelect={context.log("Paste")} />
         </ContextMenu>
       </Playground>
-    </Events>
+    </Page>
   );
 }

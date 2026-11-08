@@ -140,7 +140,6 @@ func TestDialog(t *testing.T) {
 	app.Press("text:Save")
 	app.Advance(time.Second)
 	app.WaitForGone("text:Rename the project", 2*time.Second)
-	has(t, app, "Saved")
 }
 
 func TestToast(t *testing.T) {

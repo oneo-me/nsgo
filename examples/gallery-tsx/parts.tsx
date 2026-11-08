@@ -42,7 +42,8 @@ export function Card(props: { title: string; note?: string; children?: JSX.Eleme
  * A card of a component above the knobs that set its props: the stage
  * centers its forms, `fill` stretches a form with no width of its own
  * across a centered column, and `start` lays what lists its results
- * downward across the stage from the top.
+ * downward across the stage from the top. `event`, the last thing its
+ * forms reported, shows under them for what shows no change of its own.
  */
 export function Playground(props: {
   title: string;
@@ -50,6 +51,7 @@ export function Playground(props: {
   fill?: boolean;
   start?: boolean;
   knobs?: JSX.Element;
+  event?: string;
   children?: JSX.Element;
 }) {
   const box = () => (props.start ? "items-stretch" : props.fill ? "w-full max-w-[360px] items-stretch" : "max-w-full items-center");
@@ -58,6 +60,12 @@ export function Playground(props: {
       <View testID={`stage-${props.title}`} class={`min-h-24 gap-2 p-4 ${props.start ? "items-stretch justify-start" : "items-center justify-center"}`}>
         <View testID={`form-${props.title}`} class={box()}>{props.children}</View>
       </View>
+      <If when={props.event !== undefined}>
+        <View class="flex-row items-center gap-2 border-t border-line px-4 py-2">
+          <Text class={note}>Last event</Text>
+          <Text testID="event" class="shrink font-mono text-[12px] text-text" style={{ numberOfLines: 1 }}>{props.event || "—"}</Text>
+        </View>
+      </If>
     </Card>
   );
 }
@@ -166,22 +174,8 @@ export function NumberKnob(props: { name: string; value: Signal<number>; min: nu
   );
 }
 
-/** What a demo's components report: `log` makes a handler that shows `text` in `Events`. */
+/** What a playground's forms report: `log` makes a handler that shows `text` as its `event`. */
 export function useEvents() {
   const last = signal("");
   return { last, log: (text: string) => () => last.set(text) };
-}
-
-/** A page of cards above a line of the last thing they reported. */
-export function Events(props: { value: string; children?: JSX.Element }) {
-  return (
-    <View class="min-h-0 flex-1">
-      <Page>{props.children}</Page>
-      <If when={props.value}>
-        <View class="border-t border-line bg-surface px-4 py-2">
-          <Text testID="event" class={note}>{props.value}</Text>
-        </View>
-      </If>
-    </View>
-  );
 }

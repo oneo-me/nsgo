@@ -181,7 +181,7 @@ func dockDemo(cx *core.Scope) core.Node {
 	fin := ui.FinOf(cx)
 	layout := core.NewSignalFunc(cx, initialDock(), func(a, b dock.Layout) bool { return false })
 	locked, closing := core.NewSignal(cx, false), core.NewSignal(cx, true)
-	last, zoomed := core.NewSignal(cx, "—"), core.NewSignal(cx, "")
+	zoomed := core.NewSignal(cx, "")
 	wide := core.Untracked(cx, cx.Env().Window).Width >= 600
 	showLeft, showBottom := core.NewSignal(cx, wide), core.NewSignal(cx, wide)
 	area := &dock.AreaRef{}
@@ -211,7 +211,7 @@ func dockDemo(cx *core.Scope) core.Node {
 					}
 				}
 				return core.Func(func(cx *core.Scope) core.Node {
-					return dockArea(cx, area, layout, locked, last, zoomed, showLeft, showBottom, panels, pointer, &current)
+					return dockArea(cx, area, layout, locked, zoomed, showLeft, showBottom, panels, pointer, &current)
 				})
 			})}},
 		}},
@@ -255,21 +255,18 @@ func dockDemo(cx *core.Scope) core.Node {
 				}
 				return tr.DockZoomedNone()
 			}, false),
-			status(func() string { return tr.DockLastEvent() + last.Get() }, false),
 		}})
 }
 
-func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layout], locked *core.Signal[bool], last, zoomed *core.Signal[string],
+func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layout], locked *core.Signal[bool], zoomed *core.Signal[string],
 	showLeft, showBottom *core.Signal[bool], panels map[string]dock.PanelOptions, pointer bool, current *string) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	return dock.Area{Ref: area, TestID: "dock", Layout: layout.Get, OnLayoutChange: layout.Set, Locked: locked.Get, Panels: panels,
-		OnPanelRemove: func(p string) { last.Set(tr.DockClosed() + dockTitle(tr, p)) },
 		OnPanelActiveChange: func(p string, active bool) {
 			if active {
 				*current = p
-				last.Set(tr.DockShowing() + dockTitle(tr, p))
 			}
 		},
 		OnZoomChange: zoomed.Set,

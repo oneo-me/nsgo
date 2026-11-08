@@ -377,11 +377,5 @@ func menusDemo(cx *core.Scope) core.Node {
 		}}
 	}
 
-	event := core.NewSignal(cx, "")
-	cx.Effect(func() {
-		if e := event.Get(); e != "" {
-			core.Untracked(cx, func() bool { log(e); return true })
-		}
-	})
-	return demoPage(cx, pageProps{}, menuPlayground(event), contextMenuCard(event), menuBar, rows, longList, commands, native, appMenu, eventsCard)
+	return demoPage(cx, pageProps{}, menuPlayground, contextMenuCard, menuBar, rows, longList, commands, native, appMenu, eventsCard)
 }

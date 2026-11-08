@@ -10,18 +10,20 @@ import {
   ToolbarGroup,
   ToolbarSeparator,
 } from "nsgo/ui";
-import { BoolKnob, ChoiceKnob, Events, NumberKnob, Page, Playground, Row, useEvents } from "../parts";
+import { BoolKnob, ChoiceKnob, NumberKnob, Page, Playground, Row, useEvents } from "../parts";
 
 const buttonVariants = ["primary", "secondary", "accent", "ghost", "plain"] as const;
 const sizes = ["small", "default", "large"] as const;
 
-function ButtonCard(props: { log: (text: string) => () => void }) {
+function ButtonCard() {
+  const { last, log } = useEvents();
   const disabled = signal(false);
   const size = signal<(typeof sizes)[number]>("default");
   const icon = signal(true);
   return (
     <Playground
       title="Button"
+      event={last()}
       knobs={
         <>
           <ChoiceKnob name="Size" value={size} options={sizes} />
@@ -39,7 +41,7 @@ function ButtonCard(props: { log: (text: string) => () => void }) {
               size={size()}
               disabled={disabled()}
               icon={icon() ? "plus" : undefined}
-              onPress={props.log(`Pressed ${v()}`)}
+              onPress={log(`Pressed ${v()}`)}
             />
           )}
         </Each>
@@ -48,13 +50,15 @@ function ButtonCard(props: { log: (text: string) => () => void }) {
   );
 }
 
-function IconButtonCard(props: { log: (text: string) => () => void }) {
+function IconButtonCard() {
+  const { last, log } = useEvents();
   const size = signal(28);
   const selected = signal(false);
   const disabled = signal(false);
   return (
     <Playground
       title="IconButton"
+      event={last()}
       knobs={
         <>
           <NumberKnob name="Size" value={size} min={20} max={48} step={2} />
@@ -73,7 +77,7 @@ function IconButtonCard(props: { log: (text: string) => () => void }) {
               size={size()}
               selected={selected()}
               disabled={disabled()}
-              onPress={props.log(`Pressed ${v()}`)}
+              onPress={log(`Pressed ${v()}`)}
             />
           )}
         </Each>
@@ -101,7 +105,7 @@ function ToggleCard() {
   );
 }
 
-function HoldCard(props: { log: (text: string) => () => void }) {
+function HoldCard() {
   const variant = signal<"accent" | "danger" | "neutral">("danger");
   const seconds = signal(1);
   return (
@@ -121,21 +125,19 @@ function HoldCard(props: { log: (text: string) => () => void }) {
         icon="trash"
         variant={variant()}
         duration={seconds() * 1000}
-        onConfirm={props.log("Confirmed")}
       />
     </Playground>
   );
 }
 
 export function ButtonDemo() {
-  const { last, log } = useEvents();
   return (
-    <Events value={last()}>
-      <ButtonCard log={log} />
-      <IconButtonCard log={log} />
+    <Page>
+      <ButtonCard />
+      <IconButtonCard />
       <ToggleCard />
-      <HoldCard log={log} />
-    </Events>
+      <HoldCard />
+    </Page>
   );
 }
 
@@ -143,15 +145,15 @@ export function LinkDemo() {
   const { last, log } = useEvents();
   const disabled = signal(false);
   return (
-    <Events value={last()}>
-      <Playground title="Link" knobs={<BoolKnob name="Disabled" value={disabled} />}>
+    <Page>
+      <Playground title="Link" event={last()} knobs={<BoolKnob name="Disabled" value={disabled} />}>
         <View class="flex-row flex-wrap items-center justify-center gap-1">
           <Text class="text-[13px] text-text">Read the</Text>
           <Link text="documentation" disabled={disabled()} onPress={log("Pressed the link")} />
           <Text class="text-[13px] text-text">first.</Text>
         </View>
       </Playground>
-    </Events>
+    </Page>
   );
 }
 
@@ -160,9 +162,10 @@ export function ToolbarDemo() {
   const axis = signal<"horizontal" | "vertical">("horizontal");
   const disabled = signal(false);
   return (
-    <Events value={last()}>
+    <Page>
       <Playground
         title="Toolbar"
+        event={last()}
         knobs={
           <>
             <ChoiceKnob name="Axis" value={axis} options={["horizontal", "vertical"]} />
@@ -184,6 +187,6 @@ export function ToolbarDemo() {
           <Button text="Share" variant="secondary" onPress={log("Share")} />
         </Toolbar>
       </Playground>
-    </Events>
+    </Page>
   );
 }

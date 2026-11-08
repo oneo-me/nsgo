@@ -119,7 +119,6 @@ var Parameters = map[string][]string{
 	"ScrollPosts":             {"count"},
 	"ChartsVisitorsPerDay":    {"monday", "sunday"},
 	"ChartsHoverValue":        {"day", "visitors", "other", "week"},
-	"ChartsPlotEvent":         {"day", "visitors"},
 	"ShaderStartPressed":      {"count"},
 	"ShaderScaleIntensity":    {"scale", "intensity"},
 	"PhotosViews":             {"count"},
@@ -237,7 +236,6 @@ type Translation struct {
 	ScrollPosts             func(count int) string
 	ChartsVisitorsPerDay    func(monday string, sunday string) string
 	ChartsHoverValue        func(day string, visitors string, other string, week string) string
-	ChartsPlotEvent         func(day string, visitors string) string
 	ShaderStartPressed      func(count int) string
 	ShaderScaleIntensity    func(scale string, intensity string) string
 	PhotosViews             func(count string) string
@@ -1701,9 +1699,6 @@ const (
 	textDockShowingDocks
 	textDockZoomed
 	textDockZoomedNone
-	textDockLastEvent
-	textDockClosed
-	textDockShowing
 	textDockResize
 	textDockClose2
 	textDockHide
@@ -1752,7 +1747,6 @@ const (
 	textOverlayABoxThatClipsIts
 	textOverlayClose
 	textOverlayOpenTheOverlay
-	textOverlayOverlayAt
 	textOverlayOutsideTheClippedBoxOn
 	textOverlayScrollThePageItFollows
 	textOverlayPopover
@@ -1763,7 +1757,6 @@ const (
 	textOverlaySheet
 	textOverlayAPanelAtTheBottom
 	textOverlayShowTheSheet
-	textOverlaySheet2
 	textOverlayTheBackdropEscapeAndBack
 	textOverlayDone
 	textOverlayDeleteTheDraft
@@ -1771,7 +1764,7 @@ const (
 	textOverlayToastUndone
 	textOverlayToastGone
 	textOverlayDismissAll
-	textOverlayLastEvent
+	textLastEvent
 	textMediaWebView
 	textMediaInlineHtmlWithMessagesBoth
 	textMediaFromThePage
@@ -1795,14 +1788,12 @@ const (
 	textMediaRestart
 	textMediaOwnControls
 	textMediaSystemControls
-	textMediaNoneYet
 	textMediaThisPlatformRegistersNoSlider
 	textMediaDraggingThePlatformSOwn
 	textMediaNativeViews
 	textMediaTheAppSOwnPlatform
 	textMediaNativeSlider
 	textMediaValue
-	textMediaLastEvent
 	textMediaSet08
 	textMediaResetCommand
 	textA11yValuesAndHints
@@ -1855,12 +1846,8 @@ const (
 	textChartsAWeekOverTheOther
 	textChartsTheLastDay
 	textChartsVisitors2
-	textChartsPlotLeft
-	textChartsPlotLastWeek
-	textChartsPlotThisWeek
 	textChartsSparklines
 	textChartsAPlotPerRowOf
-	textChartsLastEvent
 	textEdgesInbox
 	textEdgesSearch
 	textEdgesStarred
@@ -2021,15 +2008,12 @@ const (
 	textResizableDragALineBetweenTwo2
 	textResizableConsole
 	textResizableResizeTheSidebar
-	textResizableRow
 	textResizableFiles
 	textResizable120To360Pt
 	textResizableResizeTheConsole
-	textResizableColumn
 	textResizableEditor
 	textResizableTakesTheRoomTheOthers
 	textResizableHiddenItKeepsItsSize
-	textResizableLastResize
 	textCollapsing160EntriesByWeek
 	textCollapsingRecent
 	textCollapsingThatSAll160Entries
@@ -3645,9 +3629,6 @@ var keyOfText = [numTexts]string{
 	"dockShowingDocks",
 	"dockZoomed",
 	"dockZoomedNone",
-	"dockLastEvent",
-	"dockClosed",
-	"dockShowing",
 	"dockResize",
 	"dockClose2",
 	"dockHide",
@@ -3696,7 +3677,6 @@ var keyOfText = [numTexts]string{
 	"overlayABoxThatClipsIts",
 	"overlayClose",
 	"overlayOpenTheOverlay",
-	"overlayOverlayAt",
 	"overlayOutsideTheClippedBoxOn",
 	"overlayScrollThePageItFollows",
 	"overlayPopover",
@@ -3707,7 +3687,6 @@ var keyOfText = [numTexts]string{
 	"overlaySheet",
 	"overlayAPanelAtTheBottom",
 	"overlayShowTheSheet",
-	"overlaySheet2",
 	"overlayTheBackdropEscapeAndBack",
 	"overlayDone",
 	"overlayDeleteTheDraft",
@@ -3715,7 +3694,7 @@ var keyOfText = [numTexts]string{
 	"overlayToastUndone",
 	"overlayToastGone",
 	"overlayDismissAll",
-	"overlayLastEvent",
+	"lastEvent",
 	"mediaWebView",
 	"mediaInlineHtmlWithMessagesBoth",
 	"mediaFromThePage",
@@ -3739,14 +3718,12 @@ var keyOfText = [numTexts]string{
 	"mediaRestart",
 	"mediaOwnControls",
 	"mediaSystemControls",
-	"mediaNoneYet",
 	"mediaThisPlatformRegistersNoSlider",
 	"mediaDraggingThePlatformSOwn",
 	"mediaNativeViews",
 	"mediaTheAppSOwnPlatform",
 	"mediaNativeSlider",
 	"mediaValue",
-	"mediaLastEvent",
 	"mediaSet08",
 	"mediaResetCommand",
 	"a11yValuesAndHints",
@@ -3799,12 +3776,8 @@ var keyOfText = [numTexts]string{
 	"chartsAWeekOverTheOther",
 	"chartsTheLastDay",
 	"chartsVisitors2",
-	"chartsPlotLeft",
-	"chartsPlotLastWeek",
-	"chartsPlotThisWeek",
 	"chartsSparklines",
 	"chartsAPlotPerRowOf",
-	"chartsLastEvent",
 	"edgesInbox",
 	"edgesSearch",
 	"edgesStarred",
@@ -3965,15 +3938,12 @@ var keyOfText = [numTexts]string{
 	"resizableDragALineBetweenTwo2",
 	"resizableConsole",
 	"resizableResizeTheSidebar",
-	"resizableRow",
 	"resizableFiles",
 	"resizable120To360Pt",
 	"resizableResizeTheConsole",
-	"resizableColumn",
 	"resizableEditor",
 	"resizableTakesTheRoomTheOthers",
 	"resizableHiddenItKeepsItsSize",
-	"resizableLastResize",
 	"collapsing160EntriesByWeek",
 	"collapsingRecent",
 	"collapsingThatSAll160Entries",
@@ -5587,9 +5557,6 @@ var textsEn = i18n.NewTexts(""+
 	"Showing docks: "+
 	"Zoomed: "+
 	"Zoomed: none"+
-	"Last event: "+
-	"Closed "+
-	"Showing "+
 	"Resize"+
 	"Close "+
 	"Hide "+
@@ -5638,7 +5605,6 @@ var textsEn = i18n.NewTexts(""+
 	"A box that clips its content, with an overlay anchored inside it"+
 	"Close"+
 	"Open the overlay"+
-	"overlay at "+
 	"Outside the clipped box, on top of the page."+
 	"Scroll the page: it follows its anchor"+
 	"Popover"+
@@ -5649,7 +5615,6 @@ var textsEn = i18n.NewTexts(""+
 	"Sheet"+
 	"A panel at the bottom, over a backdrop"+
 	"Show the sheet"+
-	"sheet "+
 	"The backdrop, Escape and back close it."+
 	"Done"+
 	"Delete the draft"+
@@ -5681,14 +5646,12 @@ var textsEn = i18n.NewTexts(""+
 	"Restart"+
 	"Own controls"+
 	"System controls"+
-	"none yet"+
 	"This platform registers no slider, so the box stays empty."+
 	"Dragging the platform's own slider reports change events; the buttons set its value and send it a command."+
 	"Native views"+
 	"The app's own platform views in the tree"+
 	"Native slider"+
 	"Value"+
-	"Last event: "+
 	"Set 0.8"+
 	"Reset command"+
 	"Values and hints"+
@@ -5741,12 +5704,8 @@ var textsEn = i18n.NewTexts(""+
 	"A week over the other, with hover, grid lines and motion"+
 	", the last day"+
 	" visitors"+
-	"Plot: left"+
-	"Plot: last week"+
-	"Plot: this week"+
 	"Sparklines"+
 	"A plot per row of a list, drawn in as the row comes"+
-	"Last event"+
 	"Inbox"+
 	"Search"+
 	"Starred"+
@@ -5907,15 +5866,12 @@ var textsEn = i18n.NewTexts(""+
 	"Drag a line between two panels"+
 	"Console"+
 	"Resize the sidebar"+
-	"Row: "+
 	"Files"+
 	"120 to 360 pt"+
 	"Resize the console"+
-	"Column: "+
 	"Editor"+
 	"Takes the room the others leave"+
 	"Hidden, it keeps its size"+
-	"Last resize: "+
 	"160 entries, by week"+
 	"Recent"+
 	"That's all 160 entries"+
@@ -7526,9 +7482,6 @@ var textsEn = i18n.NewTexts(""+
 		15,
 		8,
 		12,
-		12,
-		7,
-		8,
 		6,
 		6,
 		5,
@@ -7577,7 +7530,6 @@ var textsEn = i18n.NewTexts(""+
 		64,
 		5,
 		16,
-		11,
 		44,
 		38,
 		7,
@@ -7588,7 +7540,6 @@ var textsEn = i18n.NewTexts(""+
 		5,
 		38,
 		14,
-		6,
 		39,
 		4,
 		16,
@@ -7620,14 +7571,12 @@ var textsEn = i18n.NewTexts(""+
 		7,
 		12,
 		15,
-		8,
 		58,
 		106,
 		12,
 		40,
 		13,
 		5,
-		12,
 		7,
 		13,
 		16,
@@ -7681,11 +7630,7 @@ var textsEn = i18n.NewTexts(""+
 		14,
 		9,
 		10,
-		15,
-		15,
-		10,
 		51,
-		10,
 		5,
 		6,
 		7,
@@ -7847,14 +7792,11 @@ var textsEn = i18n.NewTexts(""+
 		7,
 		18,
 		5,
-		5,
 		13,
 		18,
-		8,
 		6,
 		31,
 		25,
-		13,
 		20,
 		6,
 		22,
@@ -9468,9 +9410,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"显示的停靠栏："+
 	"已放大："+
 	"已放大：无"+
-	"最近事件："+
-	"已关闭 "+
-	"正在显示 "+
 	"调整大小"+
 	"关闭 "+
 	"隐藏 "+
@@ -9519,7 +9458,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"一个裁剪内容的框，浮层锚定在它里面"+
 	"关闭"+
 	"打开浮层"+
-	"浮层位于 "+
 	"在裁剪框之外，位于页面最上层。"+
 	"滚动页面：它会跟随锚点"+
 	"弹出框"+
@@ -9530,7 +9468,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"底部面板"+
 	"底部的面板，覆盖在背景遮罩上"+
 	"显示底部面板"+
-	"底部面板 "+
 	"背景遮罩、Escape 和返回键可以关闭它。"+
 	"完成"+
 	"删除草稿"+
@@ -9562,14 +9499,12 @@ var textsZhHans = i18n.NewTexts(""+
 	"重新开始"+
 	"自己的控件"+
 	"系统控件"+
-	"暂无"+
 	"这个平台没有注册滑块，所以这个框是空的。"+
 	"拖动平台自己的滑块会报告变化事件；按钮设置它的值并向它发送命令。"+
 	"原生视图"+
 	"树中应用自己的平台视图"+
 	"原生滑块"+
 	"值"+
-	"最近事件："+
 	"设为 0.8"+
 	"重置命令"+
 	"值和提示"+
@@ -9622,12 +9557,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"两周叠加对比，带悬停、网格线和动效"+
 	"，最后一天"+
 	" 位访客"+
-	"图表：已离开"+
-	"图表：上周"+
-	"图表：本周"+
 	"迷你图"+
 	"列表中每行一个图，行出现时绘制进场"+
-	"最近事件"+
 	"收件箱"+
 	"搜索"+
 	"已加星标"+
@@ -9788,15 +9719,12 @@ var textsZhHans = i18n.NewTexts(""+
 	"拖动两个面板之间的线"+
 	"控制台"+
 	"调整侧栏大小"+
-	"行："+
 	"文件"+
 	"120 到 360 pt"+
 	"调整控制台大小"+
-	"列："+
 	"编辑器"+
 	"占用其他面板留下的空间"+
 	"隐藏后保留大小"+
-	"最近调整："+
 	"160 条记录，按周排列"+
 	"最近"+
 	"这就是全部 160 条记录"+
@@ -11407,9 +11335,6 @@ var textsZhHans = i18n.NewTexts(""+
 		21,
 		12,
 		15,
-		15,
-		10,
-		13,
 		12,
 		7,
 		7,
@@ -11458,7 +11383,6 @@ var textsZhHans = i18n.NewTexts(""+
 		51,
 		6,
 		12,
-		13,
 		45,
 		33,
 		9,
@@ -11469,7 +11393,6 @@ var textsZhHans = i18n.NewTexts(""+
 		12,
 		42,
 		18,
-		13,
 		52,
 		6,
 		12,
@@ -11501,14 +11424,12 @@ var textsZhHans = i18n.NewTexts(""+
 		12,
 		15,
 		12,
-		6,
 		60,
 		96,
 		12,
 		33,
 		12,
 		3,
-		15,
 		10,
 		12,
 		12,
@@ -11561,12 +11482,8 @@ var textsZhHans = i18n.NewTexts(""+
 		51,
 		15,
 		10,
-		18,
-		15,
-		15,
 		9,
 		51,
-		12,
 		9,
 		6,
 		12,
@@ -11728,14 +11645,11 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		18,
 		6,
-		6,
 		14,
 		21,
-		6,
 		9,
 		33,
 		21,
-		15,
 		28,
 		6,
 		29,
@@ -12214,9 +12128,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ChartsHoverValue != nil {
 		s.ChartsHoverValue = t.ChartsHoverValue
-	}
-	if t.ChartsPlotEvent != nil {
-		s.ChartsPlotEvent = t.ChartsPlotEvent
 	}
 	if t.ShaderStartPressed != nil {
 		s.ShaderStartPressed = t.ShaderStartPressed
@@ -24695,27 +24606,6 @@ func DockZoomedNone(cx *core.Scope) string { return For(cx).DockZoomedNone() }
 // DockZoomedNone is the package's DockZoomedNone in the language of msgs.
 func (msgs Messages) DockZoomedNone() string { return msgs.text(textDockZoomedNone) }
 
-// DockLastEvent says "Last event: "
-// in the language the app shows under cx.
-func DockLastEvent(cx *core.Scope) string { return For(cx).DockLastEvent() }
-
-// DockLastEvent is the package's DockLastEvent in the language of msgs.
-func (msgs Messages) DockLastEvent() string { return msgs.text(textDockLastEvent) }
-
-// DockClosed says "Closed "
-// in the language the app shows under cx.
-func DockClosed(cx *core.Scope) string { return For(cx).DockClosed() }
-
-// DockClosed is the package's DockClosed in the language of msgs.
-func (msgs Messages) DockClosed() string { return msgs.text(textDockClosed) }
-
-// DockShowing says "Showing "
-// in the language the app shows under cx.
-func DockShowing(cx *core.Scope) string { return For(cx).DockShowing() }
-
-// DockShowing is the package's DockShowing in the language of msgs.
-func (msgs Messages) DockShowing() string { return msgs.text(textDockShowing) }
-
 // DockResize says "Resize"
 // in the language the app shows under cx.
 func DockResize(cx *core.Scope) string { return For(cx).DockResize() }
@@ -25078,13 +24968,6 @@ func OverlayOpenTheOverlay(cx *core.Scope) string { return For(cx).OverlayOpenTh
 // OverlayOpenTheOverlay is the package's OverlayOpenTheOverlay in the language of msgs.
 func (msgs Messages) OverlayOpenTheOverlay() string { return msgs.text(textOverlayOpenTheOverlay) }
 
-// OverlayOverlayAt says "overlay at "
-// in the language the app shows under cx.
-func OverlayOverlayAt(cx *core.Scope) string { return For(cx).OverlayOverlayAt() }
-
-// OverlayOverlayAt is the package's OverlayOverlayAt in the language of msgs.
-func (msgs Messages) OverlayOverlayAt() string { return msgs.text(textOverlayOverlayAt) }
-
 // OverlayOutsideTheClippedBoxOn says "Outside the clipped box, on top of the page."
 // in the language the app shows under cx.
 func OverlayOutsideTheClippedBoxOn(cx *core.Scope) string {
@@ -25169,13 +25052,6 @@ func OverlayShowTheSheet(cx *core.Scope) string { return For(cx).OverlayShowTheS
 // OverlayShowTheSheet is the package's OverlayShowTheSheet in the language of msgs.
 func (msgs Messages) OverlayShowTheSheet() string { return msgs.text(textOverlayShowTheSheet) }
 
-// OverlaySheet2 says "sheet "
-// in the language the app shows under cx.
-func OverlaySheet2(cx *core.Scope) string { return For(cx).OverlaySheet2() }
-
-// OverlaySheet2 is the package's OverlaySheet2 in the language of msgs.
-func (msgs Messages) OverlaySheet2() string { return msgs.text(textOverlaySheet2) }
-
 // OverlayTheBackdropEscapeAndBack says "The backdrop, Escape and back close it."
 // in the language the app shows under cx.
 func OverlayTheBackdropEscapeAndBack(cx *core.Scope) string {
@@ -25229,12 +25105,12 @@ func OverlayDismissAll(cx *core.Scope) string { return For(cx).OverlayDismissAll
 // OverlayDismissAll is the package's OverlayDismissAll in the language of msgs.
 func (msgs Messages) OverlayDismissAll() string { return msgs.text(textOverlayDismissAll) }
 
-// OverlayLastEvent says "Last event"
+// LastEvent says "Last event"
 // in the language the app shows under cx.
-func OverlayLastEvent(cx *core.Scope) string { return For(cx).OverlayLastEvent() }
+func LastEvent(cx *core.Scope) string { return For(cx).LastEvent() }
 
-// OverlayLastEvent is the package's OverlayLastEvent in the language of msgs.
-func (msgs Messages) OverlayLastEvent() string { return msgs.text(textOverlayLastEvent) }
+// LastEvent is the package's LastEvent in the language of msgs.
+func (msgs Messages) LastEvent() string { return msgs.text(textLastEvent) }
 
 // MediaWebView says "Web view"
 // in the language the app shows under cx.
@@ -25405,13 +25281,6 @@ func MediaSystemControls(cx *core.Scope) string { return For(cx).MediaSystemCont
 // MediaSystemControls is the package's MediaSystemControls in the language of msgs.
 func (msgs Messages) MediaSystemControls() string { return msgs.text(textMediaSystemControls) }
 
-// MediaNoneYet says "none yet"
-// in the language the app shows under cx.
-func MediaNoneYet(cx *core.Scope) string { return For(cx).MediaNoneYet() }
-
-// MediaNoneYet is the package's MediaNoneYet in the language of msgs.
-func (msgs Messages) MediaNoneYet() string { return msgs.text(textMediaNoneYet) }
-
 // MediaThisPlatformRegistersNoSlider says "This platform registers no slider, so the box stays empty."
 // in the language the app shows under cx.
 func MediaThisPlatformRegistersNoSlider(cx *core.Scope) string {
@@ -25461,13 +25330,6 @@ func MediaValue(cx *core.Scope) string { return For(cx).MediaValue() }
 
 // MediaValue is the package's MediaValue in the language of msgs.
 func (msgs Messages) MediaValue() string { return msgs.text(textMediaValue) }
-
-// MediaLastEvent says "Last event: "
-// in the language the app shows under cx.
-func MediaLastEvent(cx *core.Scope) string { return For(cx).MediaLastEvent() }
-
-// MediaLastEvent is the package's MediaLastEvent in the language of msgs.
-func (msgs Messages) MediaLastEvent() string { return msgs.text(textMediaLastEvent) }
 
 // MediaSet08 says "Set 0.8"
 // in the language the app shows under cx.
@@ -26158,27 +26020,6 @@ func ChartsVisitors2(cx *core.Scope) string { return For(cx).ChartsVisitors2() }
 // ChartsVisitors2 is the package's ChartsVisitors2 in the language of msgs.
 func (msgs Messages) ChartsVisitors2() string { return msgs.text(textChartsVisitors2) }
 
-// ChartsPlotLeft says "Plot: left"
-// in the language the app shows under cx.
-func ChartsPlotLeft(cx *core.Scope) string { return For(cx).ChartsPlotLeft() }
-
-// ChartsPlotLeft is the package's ChartsPlotLeft in the language of msgs.
-func (msgs Messages) ChartsPlotLeft() string { return msgs.text(textChartsPlotLeft) }
-
-// ChartsPlotLastWeek says "Plot: last week"
-// in the language the app shows under cx.
-func ChartsPlotLastWeek(cx *core.Scope) string { return For(cx).ChartsPlotLastWeek() }
-
-// ChartsPlotLastWeek is the package's ChartsPlotLastWeek in the language of msgs.
-func (msgs Messages) ChartsPlotLastWeek() string { return msgs.text(textChartsPlotLastWeek) }
-
-// ChartsPlotThisWeek says "Plot: this week"
-// in the language the app shows under cx.
-func ChartsPlotThisWeek(cx *core.Scope) string { return For(cx).ChartsPlotThisWeek() }
-
-// ChartsPlotThisWeek is the package's ChartsPlotThisWeek in the language of msgs.
-func (msgs Messages) ChartsPlotThisWeek() string { return msgs.text(textChartsPlotThisWeek) }
-
 // ChartsSparklines says "Sparklines"
 // in the language the app shows under cx.
 func ChartsSparklines(cx *core.Scope) string { return For(cx).ChartsSparklines() }
@@ -26192,13 +26033,6 @@ func ChartsAPlotPerRowOf(cx *core.Scope) string { return For(cx).ChartsAPlotPerR
 
 // ChartsAPlotPerRowOf is the package's ChartsAPlotPerRowOf in the language of msgs.
 func (msgs Messages) ChartsAPlotPerRowOf() string { return msgs.text(textChartsAPlotPerRowOf) }
-
-// ChartsLastEvent says "Last event"
-// in the language the app shows under cx.
-func ChartsLastEvent(cx *core.Scope) string { return For(cx).ChartsLastEvent() }
-
-// ChartsLastEvent is the package's ChartsLastEvent in the language of msgs.
-func (msgs Messages) ChartsLastEvent() string { return msgs.text(textChartsLastEvent) }
 
 // EdgesInbox says "Inbox"
 // in the language the app shows under cx.
@@ -26796,30 +26630,6 @@ func (msgs Messages) ChartsHoverValue(day string, visitors string, other string,
 			return msgs.arg(day) + ", " + msgs.arg(visitors) + " visitors, " + msgs.arg(other) + " " + msgs.arg(week)
 		case "zh-Hans":
 			return day + "，" + visitors + " 位访客，" + week + " " + other
-		}
-	}
-}
-
-// ChartsPlotEvent says "Plot: {day}, {visitors}"
-// in the language the app shows under cx.
-func ChartsPlotEvent(cx *core.Scope, day string, visitors string) string {
-	return For(cx).ChartsPlotEvent(day, visitors)
-}
-
-// ChartsPlotEvent is the package's ChartsPlotEvent in the language of msgs.
-func (msgs Messages) ChartsPlotEvent(day string, visitors string) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsPlotEvent(day, visitors))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ChartsPlotEvent; f != nil {
-			return f(day, visitors)
-		}
-		switch lang {
-		case "", "en":
-			return "Plot: " + msgs.arg(day) + ", " + msgs.arg(visitors)
-		case "zh-Hans":
-			return "图表：" + day + "，" + visitors
 		}
 	}
 }
@@ -27818,13 +27628,6 @@ func (msgs Messages) ResizableResizeTheSidebar() string {
 	return msgs.text(textResizableResizeTheSidebar)
 }
 
-// ResizableRow says "Row: "
-// in the language the app shows under cx.
-func ResizableRow(cx *core.Scope) string { return For(cx).ResizableRow() }
-
-// ResizableRow is the package's ResizableRow in the language of msgs.
-func (msgs Messages) ResizableRow() string { return msgs.text(textResizableRow) }
-
 // ResizableFiles says "Files"
 // in the language the app shows under cx.
 func ResizableFiles(cx *core.Scope) string { return For(cx).ResizableFiles() }
@@ -27847,13 +27650,6 @@ func ResizableResizeTheConsole(cx *core.Scope) string { return For(cx).Resizable
 func (msgs Messages) ResizableResizeTheConsole() string {
 	return msgs.text(textResizableResizeTheConsole)
 }
-
-// ResizableColumn says "Column: "
-// in the language the app shows under cx.
-func ResizableColumn(cx *core.Scope) string { return For(cx).ResizableColumn() }
-
-// ResizableColumn is the package's ResizableColumn in the language of msgs.
-func (msgs Messages) ResizableColumn() string { return msgs.text(textResizableColumn) }
 
 // ResizableEditor says "Editor"
 // in the language the app shows under cx.
@@ -27883,13 +27679,6 @@ func ResizableHiddenItKeepsItsSize(cx *core.Scope) string {
 func (msgs Messages) ResizableHiddenItKeepsItsSize() string {
 	return msgs.text(textResizableHiddenItKeepsItsSize)
 }
-
-// ResizableLastResize says "Last resize: "
-// in the language the app shows under cx.
-func ResizableLastResize(cx *core.Scope) string { return For(cx).ResizableLastResize() }
-
-// ResizableLastResize is the package's ResizableLastResize in the language of msgs.
-func (msgs Messages) ResizableLastResize() string { return msgs.text(textResizableLastResize) }
 
 // Collapsing160EntriesByWeek says "160 entries, by week"
 // in the language the app shows under cx.

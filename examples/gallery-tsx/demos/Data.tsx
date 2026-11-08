@@ -2,19 +2,21 @@ import { computed, signal, Text, token, View } from "nsgo";
 import { DataTable, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "nsgo/base";
 import { Area, Bar, Grid, Line, Pie, Plot, PlotAxis } from "nsgo/base/plot";
 import { Badge, CommitGraph, Icon, List, Tabs, Tree } from "nsgo/ui";
-import { BoolKnob, ChoiceKnob, Events, Page, Playground, Row, StagePage, Status, useEvents } from "../parts";
+import { BoolKnob, ChoiceKnob, Page, Playground, Row, StagePage, Status, useEvents } from "../parts";
 
 const tasks = Array.from({ length: 200 }, (_, i) => ({ id: `task-${i}`, title: `Task ${i + 1}`, done: i % 3 === 0 }));
 
 export function ListDemo() {
-  const { last, log } = useEvents();
+  const list = useEvents();
+  const tree = useEvents();
   const multiple = signal(false);
   const selected = signal<string[]>([]);
   return (
-    <Events value={last()}>
+    <Page>
       <Playground
         title="List"
         fill
+        event={list.last()}
         knobs={
           <>
             <BoolKnob name="Multiple" value={multiple} />
@@ -32,7 +34,7 @@ export function ListDemo() {
           tapSelects
           selected={selected()}
           onSelectedChange={({ selected: s }) => selected.set(s)}
-          onActivate={({ index }) => log(`Activated ${tasks[index].title}`)()}
+          onActivate={({ index }) => list.log(`Activated ${tasks[index].title}`)()}
           estimatedSize={32}
           style={{ height: 240 }}
           row={(i) => (
@@ -45,13 +47,13 @@ export function ListDemo() {
           )}
         />
       </Playground>
-      <Playground title="Tree" fill>
+      <Playground title="Tree" fill event={tree.last()}>
         <Tree
           testID="tree"
           accessibilityLabel="Files"
           toggleAccessibilityLabel="Expand"
           defaultExpanded={["source"]}
-          onActivate={({ id }) => log(`Activated ${id}`)()}
+          onActivate={({ id }) => tree.log(`Activated ${id}`)()}
           style={{ height: 220 }}
           items={[
             {
@@ -68,7 +70,7 @@ export function ListDemo() {
           ]}
         />
       </Playground>
-    </Events>
+    </Page>
   );
 }
 

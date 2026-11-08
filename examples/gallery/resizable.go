@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -10,14 +9,6 @@ import (
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
 	"github.com/oneo-me/nsgo/ui"
 )
-
-func roundSizes(sizes []core.Points) string {
-	parts := make([]string, len(sizes))
-	for i, s := range sizes {
-		parts[i] = fmt.Sprintf("%.0f", s)
-	}
-	return strings.Join(parts, " · ")
-}
 
 // pane is a panel's title and what it does.
 func pane(cx *core.Scope, title, detail string, size func() string) core.Node {
@@ -33,7 +24,7 @@ func pane(cx *core.Scope, title, detail string, size func() string) core.Node {
 // editor's frame, a sidebar beside an editor over a console, each handle
 // dragged within the panels' ranges; the console can be hidden and comes
 // back at its size. The drags run on the platform; the sizes are the
-// app's, reported when a drag ends.
+// app's.
 func resizableDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
@@ -48,21 +39,18 @@ func resizableDemo(cx *core.Scope) core.Node {
 	setSidebar := func(p core.Points) { sidebarValue.Set(float64(p)) }
 	setConsole := func(p core.Points) { consoleValue.Set(float64(p)) }
 	shown := core.NewSignal(cx, true)
-	last := core.NewSignal(cx, "—")
 	return stagePage(cx,
 		core.View{StyleFunc: func() core.Style {
 			return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), Overflow: core.Hidden, CornerRadius: 8, BorderWidth: 1, BorderColor: colors.Border(),
 				Background: colors.Background()}
 		}, Children: []core.Node{
 			base.ResizablePanelGroup{TestID: "panels", HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx), HandleLabel: tr.ResizableResizeTheSidebar(),
-				Style:    core.Style{FlexGrow: 1},
-				OnResize: func(s []core.Points) { last.Set(tr.ResizableRow() + roundSizes(s)) },
+				Style: core.Style{FlexGrow: 1},
 				Panels: []base.ResizablePanel{
 					{Size: sidebar, MinSize: 120, MaxSize: 360, OnResize: setSidebar, StyleFunc: ui.Filled(colors.Raised),
 						Children: []core.Node{pane(cx, tr.ResizableFiles(), tr.Resizable120To360Pt(), func() string { return tr.ResizableSidebarPt(fmt.Sprintf("%.0f", sidebar())) })}},
 					{MinSize: 160, Children: []core.Node{base.ResizablePanelGroup{Axis: base.Vertical, HandleStyleFunc: ui.HandleLine(cx), HandleThumbStyle: ui.HandleThumb(cx), HandleThumbStyleFunc: ui.HandleThumbColor(cx),
 						HandleLabel: tr.ResizableResizeTheConsole(), Style: core.Style{FlexGrow: 1},
-						OnResize: func(s []core.Points) { last.Set(tr.ResizableColumn() + roundSizes(s)) },
 						Panels: []base.ResizablePanel{
 							{MinSize: 80, Children: []core.Node{pane(cx, tr.ResizableEditor(), tr.ResizableTakesTheRoomTheOthers(), nil)}},
 							{Size: consoleSize, MinSize: 60, Visible: shown.Get, OnResize: setConsole, StyleFunc: ui.Filled(colors.Raised),
@@ -75,8 +63,5 @@ func resizableDemo(cx *core.Scope) core.Node {
 			numberKnob(tr.ResizableFiles(), sidebarValue, 120, 360, 10),
 			numberKnob(tr.ResizableConsole(), consoleValue, 60, 300, 10),
 			Note{Text: Hint(cx, tr.ResizableDragALineBetweenTwo(), tr.ResizableDragALineBetweenTwo2())},
-		}},
-		Section{Title: tr.TerminalStatus(), Note: "OnResize", Children: []core.Node{
-			core.Text{ContentFunc: func() string { return tr.ResizableLastResize() + last.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		}})
 }

@@ -19,7 +19,7 @@ import {
   TagInput,
   TimeField,
 } from "nsgo/ui";
-import { BoolKnob, ChoiceKnob, Events, NumberKnob, Page, Playground, Row, Status, useEvents } from "../parts";
+import { BoolKnob, ChoiceKnob, NumberKnob, Page, Playground, Row, Status } from "../parts";
 
 const fruits = ["Apple", "Banana", "Cherry", "Grape", "Lemon", "Mango", "Orange", "Peach"].map((f) => ({ value: f.toLowerCase(), label: f }));
 

@@ -210,9 +210,7 @@ func player(cx *core.Scope) core.Node {
 // nsgo.Component and shown by a Native element: the platform's slider.
 func nativeView(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
-	colors := ui.ColorsOf(cx)
 	value := core.NewSignal(cx, 0.4)
-	events := core.NewSignal(cx, tr.MediaNoneYet())
 	slider := &core.Ref{}
 	_, ok := components[sliderComponent]
 	noteText := tr.MediaThisPlatformRegistersNoSlider()
@@ -226,12 +224,10 @@ func nativeView(cx *core.Scope) core.Node {
 				if v, ok := data.(float64); ok && name == "change" {
 					value.Set(v)
 				}
-				events.Set(fmt.Sprintf("%s %v", name, data))
 			},
 			Style: core.Style{AlignSelf: core.AlignStretch, MinWidth: core.Pt(200), MinHeight: core.Pt(28)}},
 		Note{Text: noteText},
 		Caption{Label: tr.MediaValue(), Note: func() string { return fmt.Sprintf("%.2f", value.Get()) }},
-		core.Text{TestID: "native-value", ContentFunc: func() string { return tr.MediaLastEvent() + events.Get() }, Style: core.Style{FontSize: 12, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
 			ui.Cell{Child: ui.Button{Text: tr.MediaSet08(), Variant: ui.ButtonSecondary, OnPress: func() { value.Set(0.8) }}},
 			ui.Cell{Child: ui.Button{Text: tr.MediaResetCommand(), Variant: ui.ButtonSecondary, OnPress: func() { slider.Command("reset", nil) }}},
