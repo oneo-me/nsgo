@@ -1,0 +1,6 @@
+name: Orbit
+id: dev.oneo.nsgo.orbit
+version: 0.1.0
+
+dev:
+  target: native

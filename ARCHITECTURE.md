@@ -47,6 +47,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
 | `examples/gallery-tsx` | — | The gallery's Components in TSX, its apps among them, on `nsgo/ui`, `nsgo/ui/chat` and `nsgo/base`, with tests |
 | `examples/plugins` | — | A Go app running a signed TSX package in `tsx.View`, with tests refusing tampered, revoked and older ones |
+| `examples/orbit` | — | Six live native views on a ring in perspective, one animated angle turning the cards, a floor dial shader and the header, with tests |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
 
 ## Platforms
