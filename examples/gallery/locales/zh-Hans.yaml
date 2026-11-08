@@ -24,6 +24,10 @@ tabComponents: 组件
 tabBasics: 基础
 appSections: 分区
 settingsGeneral: 通用
+settingsHelp: 帮助
+settingsStats: 统计
+settingsStatsSend: 发送使用统计
+settingsStatsDetail: 发送打开了哪些示例及使用时长，不含个人信息，帮助改进 NSGo。
 settingsLanguageDetail: 示例库和 NSGo 组件使用的语言，以及阅读方向。
 appGallery: "示例库"
 groupApps: "应用"

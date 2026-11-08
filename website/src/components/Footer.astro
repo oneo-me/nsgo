@@ -69,7 +69,7 @@ const external = (href: string) => href.startsWith('http') || href === links.gal
           <a class="btn btn--light" href={docUrl(lang, 'getting-started')}>
             {copy.cta.primary}
           </a>
-          <a class="btn btn--ghost" href={links.gallery} target="_blank" rel="noopener noreferrer">
+          <a class="btn btn--ghost" href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
             {copy.cta.secondary}
           </a>
         </div>
@@ -97,6 +97,7 @@ const external = (href: string) => href.startsWith('http') || href === links.gal
                 <a
                   href={link.href}
                   {...(external(link.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  {...(link.href === links.gallery ? { 'data-umami-event': 'open-gallery' } : {})}
                 >
                   {link.label}
                 </a>

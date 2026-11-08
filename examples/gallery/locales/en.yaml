@@ -38,6 +38,10 @@ tabComponents: Components
 tabBasics: Basics
 appSections: Sections
 settingsGeneral: General
+settingsHelp: Help
+settingsStats: Statistics
+settingsStatsSend: Send usage statistics
+settingsStatsDetail: Send which demos are opened and for how long, with no personal data, to help improve NSGo.
 settingsLanguageDetail: The language the gallery and NSGo's components speak, and the direction they read in.
 appGallery: Gallery
 groupApps: "Apps"

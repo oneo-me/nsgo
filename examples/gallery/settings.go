@@ -44,7 +44,19 @@ func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 			ID: "colors", Title: locales.ColorTheme(cx), Description: locales.SettingsColorThemeDetail(cx),
 			Keywords: []string{"color", "palette", locales.ColorThemeDefault(cx), locales.ColorThemeWarmDusk(cx)},
 			Control:  g.colorThemeSelect(cx),
+		}}}}}, {ID: "help", Title: locales.SettingsHelp(cx), Icon: lucide.CircleQuestionMark,
+		Groups: []ui.SettingsGroup{{ID: "stats", Title: locales.SettingsStats(cx), Items: []ui.SettingsItem{{
+			ID: "send", Title: locales.SettingsStatsSend(cx), Description: locales.SettingsStatsDetail(cx),
+			Keywords: []string{"statistics", "analytics", "privacy", "telemetry", locales.SettingsStats(cx)},
+			Control:  statsSwitch(cx),
 		}}}}}}
+}
+
+// statsSwitch turns the usage statistics on or off.
+func statsSwitch(cx *core.Scope) core.Node {
+	on := core.NewSignal(cx, statsOn(cx))
+	return ui.Switch{Checked: on.Get, OnChange: func(v bool) { on.Set(v); setStatsOn(cx, v) },
+		Label: locales.SettingsStatsSend(cx)}
 }
 
 // settingsDialog is the gallery's settings in a dialog over the desktop

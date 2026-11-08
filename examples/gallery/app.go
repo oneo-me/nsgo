@@ -383,6 +383,7 @@ func Root(cx *core.Scope) core.Node {
 	rememberDemo(cx, g)
 	rememberLanguage(cx, g)
 	rememberAppearance(cx)
+	reportUsage(cx, g)
 	cx.Effect(func() { desktop.SetApplicationMenu(cx, g.menu(locales.For(cx))) })
 	// The application menu's Settings… takes the key where there is a
 	// menu bar.
@@ -441,15 +442,7 @@ func rememberDemo(cx *core.Scope, g *gallery) {
 		}
 	}
 	cx.Effect(func() {
-		open := g.selected.Get()
-		if !g.desktop() {
-			open = ""
-			for _, r := range g.nav.Routes() {
-				if r.demo != "" {
-					open = r.demo
-				}
-			}
-		}
+		open := g.shownDemo()
 		core.Untracked(cx, func() bool {
 			if open != "" {
 				store.SetItem(lastDemo, open)
@@ -459,6 +452,21 @@ func rememberDemo(cx *core.Scope, g *gallery) {
 			return true
 		})
 	})
+}
+
+// shownDemo is the demo shown: the selected one on a desktop, the one
+// pushed last on a phone, or none when a phone is on the tabs.
+func (g *gallery) shownDemo() string {
+	if g.desktop() {
+		return g.selected.Get()
+	}
+	open := ""
+	for _, r := range g.nav.Routes() {
+		if r.demo != "" {
+			open = r.demo
+		}
+	}
+	return open
 }
 
 // toggleSidebar hides or shows the desktop layout's sidebar.

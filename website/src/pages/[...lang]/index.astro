@@ -67,7 +67,7 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
         <a class="btn btn--primary btn--large" href={docUrl(lang, 'getting-started')}>
           {home.hero.start}
         </a>
-        <a class="btn btn--secondary btn--large" href={links.gallery} target="_blank" rel="noopener noreferrer">
+        <a class="btn btn--secondary btn--large" href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
           {home.hero.demo}
         </a>
       </div>
@@ -269,6 +269,7 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
               class="card"
               href={card.href}
               {...(card.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              {...(card.href === links.gallery ? { 'data-umami-event': 'open-gallery' } : {})}
             >
               <span class="card__icon"><Icon name={card.icon} size={18} /></span>
               <span class="card__title">{card.title}</span>

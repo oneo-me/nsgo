@@ -33,7 +33,7 @@ const languages: Record<Lang, string> = { en: 'English', zh: '简体中文' };
           {entry.dev && <span class="dev-dot" aria-hidden="true" />}
         </a>
       ))}
-      <a href={links.gallery} target="_blank" rel="noopener noreferrer">
+      <a href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
         {copy.demo}
         <Icon name="external" size={13} class="header__external" />
       </a>
