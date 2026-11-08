@@ -49,7 +49,7 @@ func alertDialogCard(cx *core.Scope) core.Node {
 			ui.Button{Text: tr.KitOpen(), Variant: ui.ButtonSecondary, OnPress: func() { open.Set(true) }},
 			ui.AlertDialog{Open: open.Get, Title: tr.KitDialogTitle(), Description: tr.KitDialogNote(),
 				OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) },
-				Actions:      []ui.AlertAction{{Text: tr.KitCancel(), Variant: ui.ButtonGhost, OnPress: func() { open.Set(false) }}, confirm}},
+				Actions:      []ui.AlertAction{{Text: tr.KitCancel(), Variant: ui.ButtonOutline, OnPress: func() { open.Set(false) }}, confirm}},
 		}
 	}, Knobs: []core.Node{boolKnob("Color", danger)}}
 }

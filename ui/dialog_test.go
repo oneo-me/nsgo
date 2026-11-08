@@ -23,7 +23,7 @@ func TestDialog(t *testing.T) {
 					Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) },
 					Children: []core.Node{Input{Input: base.Input{Label: "Name", DefaultValue: "report.pdf"}}},
 					Footer: []core.Node{Button{Variant: ButtonSecondary, Text: "Cancel", TestID: "cancel", OnPress: func() { open.Set(false) }},
-						Button{Variant: ButtonAccent, Text: "Rename"}}},
+						Button{Variant: ButtonPrimary, Text: "Rename"}}},
 				AlertDialog{TestID: "alert", Title: "Delete report.pdf?", Description: "This cannot be undone.",
 					Open: alert.Get, OnOpenChange: func(v bool, _ base.Reason) { alert.Set(v) },
 					Actions: []AlertAction{{Text: "Cancel", Variant: ButtonSecondary, TestID: "keep"},

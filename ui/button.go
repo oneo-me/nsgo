@@ -9,18 +9,17 @@ import (
 type ButtonVariant uint8
 
 const (
-	// ButtonPrimary is the inverse of the page: the text's color with the
-	// page's on it. It is the default.
+	// ButtonPrimary is filled with the accent, for the main action. It is
+	// the default.
 	ButtonPrimary ButtonVariant = iota
 	// ButtonSecondary is a quiet fill of the text's color.
 	ButtonSecondary
-	// ButtonAccent is filled with the accent, Onevra's primary.
-	ButtonAccent
-	// ButtonGhost is only a rim, Onevra's outline.
+	// ButtonOutline is only a rim.
+	ButtonOutline
+	// ButtonGhost has no rim or fill at rest, only a fill under the pointer
+	// and held down, as an IconButton's, such as a menu's trigger in a
+	// toolbar.
 	ButtonGhost
-	// ButtonPlain has no rim or fill at rest, as an IconButton, for a menu's
-	// trigger in a toolbar.
-	ButtonPlain
 )
 
 // Button is Onevra's button, as tall as its Size: Text with an optional
@@ -80,8 +79,6 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 	case b.Color != nil:
 		fg = Fixed(core.RGB(0xffffff))
 	case b.Variant == ButtonPrimary:
-		fg = colors.OnLight
-	case b.Variant == ButtonAccent:
 		fg = colors.OnAccent
 	}
 	// fill is the face at rest, under the pointer and held down.
@@ -92,9 +89,6 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 			c := b.Color()
 			return c, Mix(c, Black(1), 0.12), Mix(c, Black(1), 0.25), c
 		case b.Variant == ButtonPrimary:
-			c := colors.Light()
-			return c, Mix(c, colors.Background(), 0.12), Mix(c, colors.Background(), 0.25), c
-		case b.Variant == ButtonAccent:
 			p := cx.Palette()
 			return p.Accent, p.AccentHover, p.AccentPressed, p.Accent
 		case b.Variant == ButtonSecondary:
@@ -102,7 +96,7 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 			bg := colors.Surface()
 			return Mix(bg, text, 0.08), Mix(bg, text, 0.12), Mix(bg, text, 0.18), Mix(bg, text, 0.08)
 		}
-		if b.Variant == ButtonPlain {
+		if b.Variant == ButtonGhost {
 			return 0, colors.Hover(), colors.Pressed(), core.Transparent
 		}
 		return 0, colors.Hover(), colors.Pressed(), colors.Border()

@@ -111,7 +111,7 @@ func colorTools(cx *core.Scope) core.Node {
 	env := cx.Env()
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4}, Children: []core.Node{
 		base.ColorNotationMenu{Draw: func(parts base.ColorMenuParts) core.Node {
-			return Menu{Label: parts.Label, Trigger: Button{Variant: ButtonPlain}, Align: core.AlignStart, Children: items(parts),
+			return Menu{Label: parts.Label, Trigger: Button{Variant: ButtonGhost}, Align: core.AlignStart, Children: items(parts),
 				Face: core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, Padding: core.Symmetric(0, 8), Height: core.Pt(ButtonHeight)}, Children: []core.Node{
 					core.Text{ContentFunc: parts.Current, MaxLines: 1, Style: TypeBody, StyleFunc: Colored(colors.Text)},
 					Icon(lucide.ChevronDown, 12, colors.Muted)}}}
@@ -127,7 +127,7 @@ func colorTools(cx *core.Scope) core.Node {
 				Children: []core.Node{Icon(lucide.Pipette, 14, colors.Muted)}}
 		}},
 		base.ColorCopyMenu{Draw: func(parts base.ColorMenuParts) core.Node {
-			return Menu{Label: parts.Label, Trigger: Button{Variant: ButtonPlain, Icon: lucide.Copy, Side: colorTool, IconSize: 14, Tint: colors.Muted}, Align: core.AlignEnd, Children: items(parts)}
+			return Menu{Label: parts.Label, Trigger: Button{Variant: ButtonGhost, Icon: lucide.Copy, Side: colorTool, IconSize: 14, Tint: colors.Muted}, Align: core.AlignEnd, Children: items(parts)}
 		}},
 	}}
 }

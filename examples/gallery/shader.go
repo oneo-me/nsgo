@@ -185,7 +185,7 @@ func shaderDemo(cx *core.Scope) core.Node {
 				core.Text{Content: tr.ShaderSignalField(), Role: core.RoleHeader, Style: core.Style{FontSize: 22, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: Hint(cx, tr.ShaderPressAnywhereOnTheField(), tr.ShaderMoveThePointerOverThe()),
 					Style: core.Style{FontSize: 13, TextAlign: core.TextAlignCenter}, StyleFunc: ui.Colored(colors.Muted)},
-				ui.Button{Text: tr.ShaderStart(), Variant: ui.ButtonAccent, OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }},
+				ui.Button{Text: tr.ShaderStart(), Variant: ui.ButtonPrimary, OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }},
 				ui.Textf(func() string { return tr.ShaderStartPressed(presses.Get()) }, 13, ui.Regular, colors.Faint),
 			},
 		}

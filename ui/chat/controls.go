@@ -645,7 +645,7 @@ func (r ResultSummary) Render(cx *core.Scope) core.Node {
 		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), Gap: 4}, Children: titles},
 	}
 	if r.ActionLabel != "" {
-		head = append(head, ui.Button{Text: r.ActionLabel, Variant: ui.ButtonGhost, OnPress: r.OnAction})
+		head = append(head, ui.Button{Text: r.ActionLabel, Variant: ui.ButtonOutline, OnPress: r.OnAction})
 	}
 	row := func(i SummaryItem) core.Node {
 		label := ui.Text(i.Label, 13, ui.Regular, colors.Text)

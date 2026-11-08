@@ -12,7 +12,7 @@ import {
 } from "nsgo/ui";
 import { BoolKnob, ChoiceKnob, NumberKnob, Page, Playground, Row, useEvents } from "../parts";
 
-const buttonVariants = ["primary", "secondary", "accent", "ghost", "plain"] as const;
+const buttonVariants = ["primary", "secondary", "outline", "ghost"] as const;
 const sizes = ["small", "default", "large"] as const;
 
 function ButtonCard() {
@@ -68,7 +68,7 @@ function IconButtonCard() {
       }
     >
       <Row>
-        <Each of={["plain", "primary", "raised"] as const}>
+        <Each of={["ghost", "primary", "raised"] as const}>
           {(v) => (
             <IconButton
               icon="star"

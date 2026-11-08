@@ -72,8 +72,8 @@ func TestEveryDemoOpens(t *testing.T) {
 
 func TestButtonReports(t *testing.T) {
 	app := open(t, "Button")
-	app.Press("id:stage-Button >> text:accent")
-	has(t, app, "Pressed accent")
+	app.Press("id:stage-Button >> text:outline")
+	has(t, app, "Pressed outline")
 }
 
 func TestInput(t *testing.T) {

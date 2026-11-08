@@ -12,7 +12,7 @@ import (
 // What a press acts on, Pagination and OtpInput: each ui form under its base
 // form, with their props to set.
 
-var buttonVariants = []ui.ButtonVariant{ui.ButtonPrimary, ui.ButtonSecondary, ui.ButtonAccent, ui.ButtonGhost}
+var buttonVariants = []ui.ButtonVariant{ui.ButtonPrimary, ui.ButtonSecondary, ui.ButtonOutline, ui.ButtonGhost}
 
 func buttonCard(cx *core.Scope) core.Node {
 	last := core.NewSignal(cx, "")
@@ -57,7 +57,7 @@ func iconButtonCard(cx *core.Scope) core.Node {
 	selected, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	return Playground{Title: "IconButton", Event: last.Get, UIOnly: true, Stage: func() core.Node {
 		var buttons []core.Node
-		for _, v := range []ui.IconButtonVariant{ui.IconButtonPlain, ui.IconButtonPrimary, ui.IconButtonRaised} {
+		for _, v := range []ui.IconButtonVariant{ui.IconButtonGhost, ui.IconButtonPrimary, ui.IconButtonRaised} {
 			buttons = append(buttons, ui.IconButton{Icon: lucide.Star, Label: tr.LibStarred(), Variant: v, Size: core.Points(size.Get()), Selected: selected.Get, Disabled: disabled.Get, OnPress: pressed(cx, last, "IconButton")})
 		}
 		return stageRow(buttons...)

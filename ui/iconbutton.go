@@ -9,11 +9,12 @@ import (
 type IconButtonVariant uint8
 
 const (
-	// IconButtonPlain is a square with no fill at rest, as a toolbar's: a
+	// IconButtonGhost is a square with no fill at rest, as a toolbar's: a
 	// fill under the pointer, held down and while Selected. It is the
 	// default.
-	IconButtonPlain IconButtonVariant = iota
-	// IconButtonPrimary is a circle, the inverse of the page.
+	IconButtonGhost IconButtonVariant = iota
+	// IconButtonPrimary is a circle filled with the accent, for the main
+	// action.
 	IconButtonPrimary
 	// IconButtonRaised is a circle on Onevra's raised toolbar face.
 	IconButtonRaised
@@ -28,9 +29,9 @@ type IconButton struct {
 	Label     string
 	LabelFunc func() string
 	Variant   IconButtonVariant
-	// Size is 28 for IconButtonPlain and 32 for a circle when 0.
+	// Size is 28 for IconButtonGhost and 32 for a circle when 0.
 	Size core.Points
-	// IconSize is the glyph's, 60% of Size for IconButtonPlain and 45% for
+	// IconSize is the glyph's, 60% of Size for IconButtonGhost and 45% for
 	// a circle when 0, and Tint its color, the look's when nil.
 	IconSize core.Points
 	Tint     func() core.Color
@@ -42,7 +43,7 @@ type IconButton struct {
 
 // Render implements core.Node.
 func (b IconButton) Render(cx *core.Scope) core.Node {
-	if b.Variant != IconButtonPlain {
+	if b.Variant != IconButtonGhost {
 		return b.circle(cx)
 	}
 	colors := ColorsOf(cx)
@@ -76,13 +77,15 @@ func (b IconButton) circle(cx *core.Scope) core.Node {
 	if tint == nil {
 		tint = colors.Text
 		if primary {
-			tint = colors.OnLight
+			tint = colors.OnAccent
 		}
 	}
 	face := func() core.Style {
 		s := core.Style{Width: core.Pt(size), Height: core.Pt(size), CornerRadius: size / 2, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}
 		if primary {
-			s.Background = colors.Light()
+			p := cx.Palette()
+			s.Background = p.Accent
+			s.GroupStyle = &core.GroupStyle{Hover: &core.Style{Background: p.AccentHover}, Active: &core.Style{Background: p.AccentPressed}}
 		} else {
 			s = FinOf(cx).Raised().Over(s)
 			s.Background, s.BorderWidth, s.BorderColor = colors.Raised(), 1, colors.Border()

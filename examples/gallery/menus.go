@@ -73,7 +73,7 @@ func menusDemo(cx *core.Scope) core.Node {
 	}
 
 	barMenu := func(name string, children ...core.Node) ui.Menu {
-		return ui.Menu{OnOpenChange: changed(name), Label: name, Trigger: ui.Button{Text: name, Variant: ui.ButtonPlain}, Children: children}
+		return ui.Menu{OnOpenChange: changed(name), Label: name, Trigger: ui.Button{Text: name, Variant: ui.ButtonGhost}, Children: children}
 	}
 
 	menuBar := func(cx *core.Scope) core.Node {

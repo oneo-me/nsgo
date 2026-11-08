@@ -241,7 +241,7 @@ func imageInfo(cx *core.Scope) core.Node {
 				if show.Get() {
 					return ui.Button{Text: tr.ImagesHide(), Variant: ui.ButtonSecondary, OnPress: func() { show.Set(false) }}
 				}
-				return ui.Button{Text: tr.ImagesShow(), Variant: ui.ButtonAccent, OnPress: func() { show.Set(true) }}
+				return ui.Button{Text: tr.ImagesShow(), Variant: ui.ButtonPrimary, OnPress: func() { show.Set(true) }}
 			})},
 		}},
 		core.View{Style: core.Style{Gap: 8}, Children: []core.Node{

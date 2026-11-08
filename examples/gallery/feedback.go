@@ -107,7 +107,7 @@ func toastPlayground(cx *core.Scope) core.Node {
 	return Playground{Title: "Toasts · ToastContent", Event: last.Get, Base: baseToastForm(cx, last, swipe), Stage: func() core.Node {
 		return ui.HStack{Gap: 8, Children: []core.Node{
 			ui.Button{Text: tr.KitShow(), TestID: "toast-show", OnPress: show},
-			ui.Button{Text: tr.OverlayDismissAll(), Variant: ui.ButtonGhost, OnPress: shell.toasts.DismissAll},
+			ui.Button{Text: tr.OverlayDismissAll(), Variant: ui.ButtonOutline, OnPress: shell.toasts.DismissAll},
 		}}
 	}, BaseKnobs: []core.Node{
 		choiceKnob("SwipeDirection", swipe, options([]toast.SwipeDirection{toast.SwipeRight, toast.SwipeLeft, toast.SwipeOff}, "Right", "Left", "Off")...),

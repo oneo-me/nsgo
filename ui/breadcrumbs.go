@@ -69,7 +69,7 @@ func (b Breadcrumbs) Render(cx *core.Scope) core.Node {
 						for j := 1; j <= hidden; j++ {
 							items = append(items, MenuItem{Text: b.Items[j], OnSelect: func() { choose(j) }})
 						}
-						out = append(out, sep(), Menu{Trigger: Button{Variant: ButtonPlain, Icon: lucide.Ellipsis, Tint: colors.Muted, Label: more, Side: breadcrumbMore},
+						out = append(out, sep(), Menu{Trigger: Button{Variant: ButtonGhost, Icon: lucide.Ellipsis, Tint: colors.Muted, Label: more, Side: breadcrumbMore},
 							Label: more, Children: items})
 					}
 					continue

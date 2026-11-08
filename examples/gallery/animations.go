@@ -374,12 +374,12 @@ func composition(cx *core.Scope) core.Node {
 			ui.Cell{Child: ui.Button{Text: "Loop", Variant: ui.ButtonSecondary, OnPress: run("loop", pulse)}},
 		}},
 		core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-			ui.Cell{Child: ui.Button{Text: tr.AnimStop(), Variant: ui.ButtonGhost, Icon: lucide.Pause, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimStop(), Variant: ui.ButtonOutline, Icon: lucide.Pause, OnPress: func() {
 				for _, r := range runs {
 					r.Stop()
 				}
 			}}},
-			ui.Cell{Child: ui.Button{Text: tr.AnimReset(), Variant: ui.ButtonGhost, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimReset(), Variant: ui.ButtonOutline, OnPress: func() {
 				for _, r := range runs {
 					r.Reset()
 				}
@@ -680,7 +680,7 @@ func layoutAnimation(cx *core.Scope) core.Node {
 			ui.Cell{Child: ui.Button{Text: tr.AnimAdd(), Variant: ui.ButtonSecondary, Icon: lucide.Plus, Disabled: func() bool { return len(items.Get()) >= 8 }, OnPress: func() {
 				change(func() { items.Update(func(s []int) []int { return append(slices.Clone(s), next) }); next++ })
 			}}},
-			ui.Cell{Child: ui.Button{Text: tr.AnimRemove(), Variant: ui.ButtonGhost, Disabled: func() bool { return len(items.Get()) <= 1 }, OnPress: func() {
+			ui.Cell{Child: ui.Button{Text: tr.AnimRemove(), Variant: ui.ButtonOutline, Disabled: func() bool { return len(items.Get()) <= 1 }, OnPress: func() {
 				change(func() { items.Update(func(s []int) []int { return slices.Clone(s[1:]) }) })
 			}}},
 		}},

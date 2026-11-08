@@ -61,7 +61,7 @@ export function DialogDemo() {
         </Dialog>
       </Playground>
       <Playground title="AlertDialog">
-        <Button text="Delete…" variant="ghost" onPress={() => alert.set(true)} />
+        <Button text="Delete…" variant="outline" onPress={() => alert.set(true)} />
         <AlertDialog
           testID="alert"
           open={alert()}
@@ -72,7 +72,7 @@ export function DialogDemo() {
             { text: "Cancel", variant: "secondary", onPress: () => alert.set(false) },
             {
               text: "Delete",
-              variant: "accent",
+              variant: "primary",
               onPress: () => alert.set(false),
             },
           ]}
@@ -114,7 +114,7 @@ export function PopoverDemo() {
         </Popover>
       </Playground>
       <Playground title="Tooltip" knobs={<ChoiceKnob name="Placement" value={placement} options={placements} />}>
-        <Tooltip text="Saves the document" placement={placement()} trigger={<Button text="Hover me" variant="ghost" />} />
+        <Tooltip text="Saves the document" placement={placement()} trigger={<Button text="Hover me" variant="outline" />} />
       </Playground>
       <Playground title="HoverCard">
         <HoverCard

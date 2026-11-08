@@ -19,7 +19,7 @@ func showcase(cx *core.Scope) core.Node {
 	rows := []string{"One", "Two", "Three"}
 	return core.Scroll{TestID: "showcase", Style: core.Style{FlexGrow: 1}, Children: []core.Node{core.View{Style: core.Style{Gap: 12}, Children: []core.Node{
 		HStack{Gap: 8, Children: []core.Node{
-			Button{Text: "Primary"}, Button{Text: "Accent", Variant: ButtonAccent}, Button{Icon: lucide.Plus, Label: "Add", Variant: ButtonGhost},
+			Button{Text: "Primary"}, Button{Text: "Secondary", Variant: ButtonSecondary}, Button{Icon: lucide.Plus, Label: "Add", Variant: ButtonOutline},
 			IconButton{Variant: IconButtonPrimary, Icon: lucide.Play, Label: "Play"}, IconButton{Icon: lucide.Search, Label: "Search", Selected: on.Get},
 			Badge{Text: "New", Variant: BadgeAccent}, Avatar{Name: "Ada Lovelace", Status: AvatarOnline},
 			AvatarGroup{Members: []AvatarGroupMember{{Name: "Ada"}, {Name: "Alan"}, {Name: "Grace"}}, Max: 2},
