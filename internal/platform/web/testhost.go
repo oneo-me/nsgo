@@ -148,6 +148,15 @@ func (t *testSurface) Type(text string) error {
 
 func (t *testSurface) Key(key string) error { return t.do(map[string]any{"op": "key", "key": key}) }
 
+// Compose and Commit go through the browser's input method path.
+func (t *testSurface) Compose(text string) error {
+	return t.do(map[string]any{"op": "compose", "text": text})
+}
+
+func (t *testSurface) Commit(text string) error {
+	return t.do(map[string]any{"op": "commit", "text": text})
+}
+
 // Back is Escape, which the page takes as the back key.
 func (t *testSurface) Back() error { return t.Key("escape") }
 

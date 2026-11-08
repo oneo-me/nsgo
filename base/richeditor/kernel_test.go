@@ -404,3 +404,32 @@ func TestInputRulesAndKeymap(t *testing.T) {
 		t.Fatal(normalizeKey("Shift-Mod-b"))
 	}
 }
+
+func TestChainIsOneTransaction(t *testing.T) {
+	v, err := NewSession(SessionConfig{Extensions: StarterKit(StarterOptions{}), Markdown: "hello\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	insert := func(text string) Command {
+		return func(s *State, dispatch func(*Transaction)) bool {
+			if dispatch != nil {
+				dispatch(s.Tr().InsertText(text, -1, -1))
+			}
+			return true
+		}
+	}
+	v.Apply(v.State().Tr().SetSelection(TextSelectionAt(v.State().Doc, 6, 6)))
+	selectAll := v.Command("selectAll", nil)
+	if !v.Run(Chain(insert(" world"), selectAll, v.Command("toggleBold", nil))) {
+		t.Fatal("the chain did not apply")
+	}
+	if got := v.Markdown(); got != "**hello world**\n" {
+		t.Fatalf("chained to %q", got)
+	}
+	if UndoDepth(v.State()) != 1 {
+		t.Fatalf("a chain is %d undo steps", UndoDepth(v.State()))
+	}
+	if v.Can(Chain(insert("x"), func(*State, func(*Transaction)) bool { return false })) {
+		t.Fatal("a chain with a failing command can run")
+	}
+}

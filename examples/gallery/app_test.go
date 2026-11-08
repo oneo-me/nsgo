@@ -1564,6 +1564,26 @@ func TestRichEditorDemo(t *testing.T) {
 	}
 }
 
+func TestRichEditorDemoDragsBlocks(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "RichEditor")
+	app.Press("text:Release notes")
+	app.Settle()
+	below := func() bool {
+		return app.Find("text:Release notes").Frame.Origin.Y > app.Find(`text:"Type Markdown as you go: # and a space makes a heading, - a list, 1. a numbered one, > a quote, and @ mentions someone."`).Frame.Origin.Y
+	}
+	app.Drag("role:button Drag to move the block", core.Point{}, core.Point{Y: 40}, core.Point{Y: 90})
+	app.Settle()
+	if !below() {
+		t.Fatal("the heading did not move below the paragraph after it")
+	}
+	app.Press("role:toolbar Formatting >> role:button Undo")
+	app.Settle()
+	if below() {
+		t.Fatal("undo left the heading below")
+	}
+}
+
 func TestRichEditorDemoOnPhones(t *testing.T) {
 	app := startPhone(t)
 	openPhone(app, "RichEditor")
@@ -1604,5 +1624,32 @@ func TestRichEditorTakesTyping(t *testing.T) {
 	app.Type("role:textbox", "!")
 	if !strings.Contains(s.Text(), "!") {
 		t.Fatalf("typing left %q", s.Text())
+	}
+	// An input method composes in the line while the document waits, and
+	// its commit is one undo step.
+	before := s.Text()
+	changes := 0
+	stop := s.Subscribe(func(_ *richeditor.State, trs []*richeditor.Transaction) {
+		for _, tr := range trs {
+			if tr.DocChanged() {
+				changes++
+			}
+		}
+	})
+	defer stop()
+	app.Compose("role:textbox", "ni")
+	app.Find("text:Some bold text!ni")
+	if s.Text() != before {
+		t.Fatalf("the document did not wait for the composition: %q", s.Text())
+	}
+	app.Compose("role:textbox", "你")
+	app.Find("text:Some bold text!你")
+	app.Commit("role:textbox", "你")
+	app.Settle()
+	if !strings.Contains(s.Text(), "Some bold text!你") || app.Exists("text:Some bold text!你你") {
+		t.Fatalf("the commit left %q", s.Text())
+	}
+	if changes != 1 {
+		t.Fatalf("the commit took %d changes", changes)
 	}
 }

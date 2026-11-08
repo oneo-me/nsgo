@@ -18,8 +18,10 @@ type Styles struct {
 	Nodes, Marks map[string]core.Style
 	// Placeholder is the text of an empty document; Caret the caret, 2
 	// points wide unless it gives a width; Selection behind selected text;
-	// Composition what an input method composes.
-	Placeholder, Caret, Selection, Composition core.Style
+	// Composition what an input method composes; GapCursor the cursor
+	// between blocks, 20 by 2 points unless it gives a size; DropCursor
+	// the line where blocks a handle drags will land, 2 points tall.
+	Placeholder, Caret, Selection, Composition, GapCursor, DropCursor core.Style
 	// SelectedNode goes on the block a node selection holds, and SelectedCell
 	// on the box in each selected cell.
 	SelectedNode, SelectedCell core.Style
@@ -38,6 +40,7 @@ type Classes struct {
 	Content                                          string
 	Nodes, Marks                                     map[string]string
 	Placeholder, Caret, Selection, Composition       string
+	GapCursor, DropCursor                            string
 	SelectedNode, SelectedCell                       string
 	ListMarker, TaskCheckbox                         string
 	TableResizeHandle, TableGrip, TableDropIndicator string
@@ -179,6 +182,8 @@ type block struct {
 type textRun struct {
 	docAt, docLen, textAt, textLen int
 	atom                           bool
+	// before is a widget's that shows before a cursor at its place.
+	before bool
 }
 
 // piece is a span of a textblock.
@@ -188,6 +193,7 @@ type piece struct {
 	classes     []string
 	composition bool
 	leaf        *Node
+	widget      *Decoration
 }
 
 // rv is a View's controller.
@@ -223,6 +229,7 @@ type rv struct {
 	hasGoal              bool
 	press                pressState
 	tableDrag            *core.Signal[tableDragState]
+	blockDrag            *core.Signal[blockDragState]
 	hovered              *core.Signal[string]
 	stop                 func() bool
 }
@@ -251,12 +258,13 @@ func (p View) Render(cx *core.Scope) core.Node {
 	v := &rv{p: p, cx: cx, s: s, rev: core.NewSignal(cx, 0), geo: core.NewSignal(cx, 0), focused: core.NewSignal(cx, false),
 		composing: core.NewSignal(cx, ""), sink: core.NewSignal(cx, ""), content: new(core.Ref), vs: new(core.Ref), sinkRef: new(core.Ref),
 		viewport: core.NewSignal(cx, core.Size{}), scrollY: core.NewSignal(cx, core.Points(0)),
-		tableDrag: core.NewSignal(cx, tableDragState{}), hovered: core.NewSignal(cx, ""), tableList: core.NewSignalFunc(cx, []*block(nil), slices.Equal[[]*block])}
+		tableDrag: core.NewSignal(cx, tableDragState{}), blockDrag: core.NewSignal(cx, blockDragState{target: -1}), hovered: core.NewSignal(cx, ""), tableList: core.NewSignalFunc(cx, []*block(nil), slices.Equal[[]*block])}
 	v.looks = core.NewMemoFunc(cx, parseStyles(p), func(a, b *Styles) bool { return false })
 	v.root = v.newBlock(s.State().Doc, nil)
 	v.sync(s.State())
 	v.lastSel, v.lastDoc = s.State().Selection, s.State().Doc
-	h := &viewHandle{focus: v.sinkRef.Focus, blur: v.sinkRef.Blur, geometry: v}
+	h := &viewHandle{focus: v.sinkRef.Focus, blur: v.sinkRef.Blur, geometry: v, page: v,
+		dragBlock: v.dragBlock, dragTo: v.dragTo, endDrag: v.endDrag}
 	s.views = append(s.views, h)
 	stop := s.Subscribe(func(st *State, trs []*Transaction) { v.changed(st, trs) })
 	cx.Cleanup(func() {
@@ -437,25 +445,53 @@ func (v *rv) buildText(b *block) {
 	add := func(p piece, docAt, docLen int, atom bool) {
 		l := utf16Len(p.text)
 		pieces = append(pieces, p)
-		runs = append(runs, textRun{docAt, docLen, textAt, l, atom})
+		runs = append(runs, textRun{docAt, docLen, textAt, l, atom, p.widget != nil && p.widget.Side < 0})
 		textAt += l
 	}
+	var widgets []*Decoration
+	for _, d := range v.decos {
+		if d.Widget != nil && d.From >= start && d.From <= start+n.Content.Size {
+			widgets = append(widgets, &d)
+		}
+	}
+	slices.SortStableFunc(widgets, func(a, b *Decoration) int { return a.Side - b.Side })
+	widgetsAt := func(at int, before bool) {
+		for _, d := range widgets {
+			if d.From-start == at && (d.Side < 0) == before {
+				add(piece{text: "￼", widget: d, classes: []string{d.Class}}, at, 0, false)
+			}
+		}
+	}
+	// composed puts at a place its widgets before a cursor, the
+	// composition, then the widgets after it.
+	done := -1
 	composed := func(at int) {
+		if at == done {
+			return
+		}
+		done = at
+		widgetsAt(at, true)
 		if compAt == at {
 			add(piece{text: comp, composition: true}, at, 0, false)
 			compAt = -1
 		}
+		widgetsAt(at, false)
 	}
 	cuts := func(from, to int) []int {
 		out := []int{from, to}
 		if compAt > from && compAt < to {
 			out = append(out, compAt)
 		}
-		for _, d := range v.decos {
-			if !d.Node && d.From-start > from && d.From-start < to {
+		for _, d := range widgets {
+			if d.From-start > from && d.From-start < to {
 				out = append(out, d.From-start)
 			}
-			if !d.Node && d.To-start > from && d.To-start < to {
+		}
+		for _, d := range v.decos {
+			if d.Widget == nil && !d.Node && d.From-start > from && d.From-start < to {
+				out = append(out, d.From-start)
+			}
+			if d.Widget == nil && !d.Node && d.To-start > from && d.To-start < to {
 				out = append(out, d.To-start)
 			}
 		}
@@ -465,7 +501,7 @@ func (v *rv) buildText(b *block) {
 	classes := func(from, to int) []string {
 		var out []string
 		for _, d := range v.decos {
-			if !d.Node && d.Class != "" && d.From-start <= from && d.To-start >= to {
+			if d.Widget == nil && !d.Node && d.Class != "" && d.From-start <= from && d.To-start >= to {
 				out = append(out, d.Class)
 			}
 		}
@@ -503,28 +539,33 @@ func (v *rv) buildText(b *block) {
 }
 
 func samePiece(a, b piece) bool {
-	return a.text == b.text && a.composition == b.composition && a.leaf == b.leaf && marksEqual(a.marks, b.marks) && slices.Equal(a.classes, b.classes)
+	return a.text == b.text && a.composition == b.composition && a.leaf == b.leaf && marksEqual(a.marks, b.marks) && slices.Equal(a.classes, b.classes) &&
+		(a.widget == nil) == (b.widget == nil) && (a.widget == nil || a.widget.Key != "" && a.widget.Key == b.widget.Key && a.widget.Side == b.widget.Side)
 }
 
-// textOf is the text offset of document offset off.
+// textOf is the text offset of document offset off: after the widgets
+// before a cursor there, before the composition and the other widgets.
 func (b *block) textOf(off int) int {
+	t := 0
 	for _, r := range b.runs {
 		switch {
 		case r.docLen == 0:
-			continue
-		case off < r.docAt+r.docLen:
-			if r.atom {
+			if r.docAt != off {
+				continue
+			}
+			if !r.before {
 				return r.textAt
 			}
-			return r.textAt + max(off-r.docAt, 0)
-		case off == r.docAt+r.docLen:
-			return r.textAt + r.textLen
+			t = r.textAt + r.textLen
+		case off >= r.docAt+r.docLen:
+			t = r.textAt + r.textLen
+		case off <= r.docAt || r.atom:
+			return r.textAt
+		default:
+			return r.textAt + off - r.docAt
 		}
 	}
-	if n := len(b.runs); n > 0 {
-		return b.runs[n-1].textAt + b.runs[n-1].textLen
-	}
-	return 0
+	return t
 }
 
 // docOf is the document offset of text offset t: inside an atom, its nearer
@@ -582,6 +623,10 @@ func (v *rv) spans(b *block) []core.Span {
 	}
 	out := make([]core.Span, len(b.pieces))
 	for i, p := range b.pieces {
+		if w := p.widget; w != nil {
+			out[i] = core.Span{Class: w.Class, Attachment: core.Dynamic(func(cx *core.Scope) core.Node { return w.Widget(cx) })}
+			continue
+		}
 		st, class := v.markStyle(p, s)
 		out[i] = core.Span{Content: p.text, Style: st, Class: class}
 	}
@@ -754,7 +799,7 @@ func (v *rv) contentBox() core.Node {
 	} else {
 		box.OnPress = func(e core.PressEvent) { v.pressDown(e.Position, max(e.Clicks, 1), e.Modifiers) }
 	}
-	box.Children = []core.Node{v.selectionLayer(), v.kidViews(v.root), v.placeholder(), v.caret(), v.tableControls()}
+	box.Children = []core.Node{v.selectionLayer(), v.kidViews(v.root), v.placeholder(), v.caret(), v.gapCursor(), v.dropCursor(), v.tableControls()}
 	return box
 }
 
@@ -797,6 +842,25 @@ func (v *rv) caret() core.Node {
 				r, _ := v.CoordsAtPos(v.s.State().Selection.Head())
 				return core.Style{Position: core.Absolute, Left: core.Pt(core.Points(r.X)), Top: core.Pt(core.Points(r.Y)),
 					Width: core.Pt(2), Height: core.Pt(core.Points(r.Height))}.Merge(v.looks.Get().Caret)
+			}}
+	}}
+}
+
+// gapCursor is a line on the block after the gap, or under the one before.
+func (v *rv) gapCursor() core.Node {
+	shown := func() bool {
+		v.rev.Get()
+		_, ok := v.s.State().Selection.(*GapCursor)
+		return ok && v.focused.Get() && v.s.Editable()
+	}
+	return core.Show{When: shown, Then: func(cx *core.Scope) core.Node {
+		return core.View{Class: v.p.Classes.GapCursor, TestID: "rich-editor-gap-cursor", PointerEvents: core.PointerEventsNone,
+			StyleFunc: func() core.Style {
+				v.rev.Get()
+				v.geo.Get()
+				r, _ := v.gapBox(v.s.State().Selection.Head())
+				return core.Style{Position: core.Absolute, Left: core.Pt(core.Points(r.X)), Top: core.Pt(core.Points(r.Y) - 1),
+					Width: core.Pt(20), Height: core.Pt(2)}.Merge(v.looks.Get().GapCursor)
 			}}
 	}}
 }

@@ -119,7 +119,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
 - `ui` imports `base`, `core`, `mobile`, `desktop` and the icons; `base` never imports it.
-- `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`.
+- `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`, and `tsx/ui` with the packages below it the TSX packages that import `ui`.
 - `base/terminal` is the one package of `base` that is not portable: it loads libghostty-vt through purego, runs programs on desktops and remote sessions there and on iOS, and elsewhere builds to report that it cannot (`unportable` in `layering_test.go`).
 
 ## Why core and backends do not meet

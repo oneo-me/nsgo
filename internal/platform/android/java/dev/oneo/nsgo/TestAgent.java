@@ -142,6 +142,12 @@ final class TestAgent {
             case "type":
                 type(op.getString("text"));
                 break;
+            case "compose":
+                compose(op.getString("text"), false);
+                break;
+            case "commit":
+                compose(op.getString("text"), true);
+                break;
             case "key":
                 key(op.getString("key"));
                 break;
@@ -238,6 +244,27 @@ final class TestAgent {
                 if (ic != null) ic.commitText(s, 1);
             }
         }
+    }
+
+    /**
+     * Composes text in the focused field through its InputConnection, as an
+     * input method does, or commits it; composing nothing ends the
+     * composition.
+     */
+    private void compose(String text, boolean commit) {
+        View f = activity().getCurrentFocus();
+        InputConnection ic = f == null ? null : f.onCreateInputConnection(new EditorInfo());
+        if (ic == null) throw new IllegalStateException("no field has the keyboard");
+        ic.beginBatchEdit();
+        if (commit) {
+            ic.commitText(text, 1);
+        } else if (text.isEmpty()) {
+            ic.setComposingText("", 1);
+            ic.finishComposingText();
+        } else {
+            ic.setComposingText(text, 1);
+        }
+        ic.endBatchEdit();
     }
 
     private static int keyCode(String name) {

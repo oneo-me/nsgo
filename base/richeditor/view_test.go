@@ -211,3 +211,113 @@ func TestViewResizesAColumnByItsBand(t *testing.T) {
 		t.Fatalf("a drag is one undo step, took %d", got)
 	}
 }
+
+func TestViewDrawsAndFillsTheGapCursor(t *testing.T) {
+	s := session(t, "| a | b |\n| --- | --- |\n| c | d |\n")
+	app := nsgotest.Start(t, view(s), desktop())
+	app.Press("id:rich-editor-content")
+	s.Dispatch(s.State().Tr().SetSelection(richeditor.NewGapCursor(s.State().Doc.Resolve(0))))
+	app.Settle()
+	gap := app.Find("id:rich-editor-gap-cursor")
+	table := app.Find(`text:"a"`).Parent.Parent
+	if gap.Frame.Origin.Y > table.Frame.Origin.Y || gap.Frame.Size.Width != 20 {
+		t.Fatalf("gap cursor %+v over the table %+v", gap.Frame, table.Frame)
+	}
+	app.Compose("role:textbox", "x")
+	app.Type("role:textbox", "x")
+	app.Compose("role:textbox", "")
+	doc := s.State().Doc
+	if doc.Child(0).Type.Name != "paragraph" || doc.Child(0).TextContent() != "x" || doc.Child(1).Type.Name != "table" {
+		t.Fatalf("doc %s", doc)
+	}
+	if app.Exists("id:rich-editor-gap-cursor") {
+		t.Fatal("the gap cursor stays after typing")
+	}
+}
+
+func TestViewShowsWidgetDecorations(t *testing.T) {
+	widgets := &richeditor.Plugin{Key: "widgets", Decorations: func(st *richeditor.State) []richeditor.Decoration {
+		return []richeditor.Decoration{
+			{From: 3, To: 3, Key: "after", Widget: func(*core.Scope) core.Node {
+				return core.View{TestID: "widget", Style: core.Style{Width: core.Pt(30), Height: core.Pt(10)}}
+			}},
+			{From: 3, To: 3, Key: "before", Side: -1, Widget: func(*core.Scope) core.Node {
+				return core.View{TestID: "widget-before", Style: core.Style{Width: core.Pt(30), Height: core.Pt(10)}}
+			}},
+		}
+	}}
+	exts := append(richeditor.StarterKit(richeditor.StarterOptions{}), richeditor.Extension{Name: "widgets", Plugins: func(*richeditor.Schema) []*richeditor.Plugin { return []*richeditor.Plugin{widgets} }})
+	s, err := richeditor.NewSession(richeditor.SessionConfig{Extensions: exts, Markdown: "abcd\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := nsgotest.Start(t, view(s), desktop())
+	app.Press("id:rich-editor-content")
+	s.Dispatch(s.State().Tr().SetSelection(richeditor.TextSelectionAt(s.State().Doc, 3, 3)))
+	app.Settle()
+	before, after := app.Find("id:widget-before"), app.Find("id:widget")
+	caret := app.Find("id:rich-editor-caret")
+	bx, ax, cx := pageX(before), pageX(after), pageX(caret)
+	if !(bx+30 <= cx+1 && cx <= ax+1) {
+		t.Fatalf("caret at %v between the widgets at %v and %v", cx, bx, ax)
+	}
+	app.Type("role:textbox", "Z")
+	if got := s.Text(); got != "abZcd" {
+		t.Fatalf("typed %q: widgets took positions", got)
+	}
+}
+
+// pageX is a view's left in the surface.
+func pageX(v *nsgotest.View) core.Points {
+	x := v.Frame.Origin.X
+	for p := v.Parent; p != nil; p = p.Parent {
+		x += p.Frame.Origin.X - p.Offset.X
+	}
+	return x
+}
+
+func TestViewDragsABlockByAHandle(t *testing.T) {
+	s := session(t, "one\n\ntwo\n\nthree\n")
+	app := nsgotest.Start(t, view(s), desktop())
+	app.Settle()
+	if _, ok := s.PosAtPageCoords(0, 0); !ok {
+		t.Fatal("no page geometry")
+	}
+	start, ok := s.PageCoordsAtPos(2)
+	if !ok {
+		t.Fatal("no page coordinates")
+	}
+	if pos, _ := s.PosAtPageCoords(start.X, start.Y+start.Height/2); pos != 2 {
+		t.Fatalf("page point maps to %d", pos)
+	}
+	var drop richeditor.Rect2
+	app.Post(func() {
+		if !s.DragBlock(2, start.X-20, start.Y) {
+			t.Error("the drag did not start")
+		}
+		end := s.State().Doc.Content.Size - 1
+		last, _ := s.PageCoordsAtPos(end)
+		drop = last
+		s.DragTo(last.X-20, last.Y+last.Height-1)
+	})
+	app.Settle()
+	cursor := app.Find("id:rich-editor-drop-cursor")
+	if y := float64(cursor.Frame.Origin.Y); y < drop.Y {
+		t.Fatalf("drop cursor at %v, above the last line at %v", y, drop.Y)
+	}
+	app.Post(func() {
+		if !s.EndDrag() {
+			t.Error("not dropped")
+		}
+	})
+	app.Settle()
+	if got := s.Text(); got != "two\n\nthree\n\none" {
+		t.Fatalf("dropped to %q", got)
+	}
+	if app.Exists("id:rich-editor-drop-cursor") {
+		t.Fatal("the drop cursor stays")
+	}
+	if got := richeditor.UndoDepth(s.State()); got != 1 {
+		t.Fatalf("a drop is one undo step, took %d", got)
+	}
+}

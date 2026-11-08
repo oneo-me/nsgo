@@ -336,7 +336,8 @@ type Span struct {
 	// around it and takes its own presses. Style is then its view's
 	// style, and Style.VerticalAlign places it in its line, else the
 	// VerticalAlign of the one view Attachment makes. Copying text leaves
-	// attachments out.
+	// attachments out. A Text's SpansFunc makes its attachments' views
+	// again whenever its spans change.
 	Attachment Node
 }
 

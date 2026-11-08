@@ -384,6 +384,7 @@ type StarterOptions struct {
 	Levels                                              []int
 	History                                             HistoryOptions
 	NoHistory, NoTrailingNode, NoTaskList, NoTypography bool
+	NoGapCursor                                         bool
 	Link                                                LinkOptions
 }
 
@@ -587,6 +588,9 @@ func StarterKit(o StarterOptions) []Extension {
 	}
 	if !o.NoTypography {
 		out = append(out, Extension{Name: "typography", Rules: func(*Schema) []InputRule { return typographyRules() }})
+	}
+	if !o.NoGapCursor {
+		out = append(out, Extension{Name: "gapcursor", Plugins: func(*Schema) []*Plugin { return []*Plugin{GapCursorPlugin()} }})
 	}
 	return out
 }

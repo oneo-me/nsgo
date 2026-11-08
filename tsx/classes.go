@@ -161,7 +161,7 @@ func (r *runtime) class(def *classDef) *classObj {
 		}
 		ft := def.ctor.Type()
 		in := r.goArgs(ft, 0, call.Arguments)
-		out := r.guard(def.name, func() []reflect.Value { return def.ctor.Call(in) })
+		out := r.guard(def.name, func() []reflect.Value { return callIn(def.ctor, in) })
 		if err := trailingErr(ft, out); err != nil {
 			panic(r.goError(err))
 		}
@@ -311,7 +311,15 @@ func isAsync(t reflect.Type, first int) bool { return t.NumIn() > first && t.In(
 
 // goError is err as JS's Error, of its message.
 func (r *runtime) goError(err error) *goja.Object {
-	o, _ := r.vm.New(r.vm.Get("Error"), r.vm.ToValue(err.Error()))
+	ctor := "Error"
+	var named *JSError
+	if errors.As(err, &named) {
+		switch named.Name {
+		case "TypeError", "RangeError", "SyntaxError", "ReferenceError":
+			ctor = named.Name
+		}
+	}
+	o, _ := r.vm.New(r.vm.Get(ctor), r.vm.ToValue(err.Error()))
 	if code := core.ErrorCode(err); code != "" {
 		_ = o.Set("code", code)
 	}
@@ -323,13 +331,19 @@ func (r *runtime) goError(err error) *goja.Object {
 	return o
 }
 
+// JSError is an error JS throws as the built-in error Name names, a
+// TypeError or a RangeError, rather than an Error.
+type JSError struct{ Name, Message string }
+
+func (e *JSError) Error() string { return e.Message }
+
 // callGo calls fn, named name in errors, with JS's arguments: in the JS
 // call, or on a goroutine for a promise when fn is async.
 func (r *runtime) callGo(name string, fn reflect.Value, args []goja.Value) goja.Value {
 	ft := fn.Type()
 	if !isAsync(ft, 0) {
 		in := r.goArgs(ft, 0, args)
-		out := r.guard(name, func() []reflect.Value { return fn.Call(in) })
+		out := r.guard(name, func() []reflect.Value { return callIn(fn, in) })
 		if err := trailingErr(ft, out); err != nil {
 			panic(r.goError(err))
 		}
@@ -349,7 +363,7 @@ func (r *runtime) callGo(name string, fn reflect.Value, args []goja.Value) goja.
 		var failed any
 		func() {
 			defer func() { failed = recover() }()
-			out = fn.Call(in)
+			out = callIn(fn, in)
 		}()
 		r.cx.Post(func() {
 			r.inJS(func() {
@@ -380,6 +394,15 @@ func (r *runtime) guard(name string, call func() []reflect.Value) []reflect.Valu
 		}
 	}()
 	return call()
+}
+
+// callIn calls fn with what goArgs made, whose last is the variadic
+// parameters' slice when fn takes them.
+func callIn(fn reflect.Value, in []reflect.Value) []reflect.Value {
+	if fn.Type().IsVariadic() {
+		return fn.CallSlice(in)
+	}
+	return fn.Call(in)
 }
 
 // goArgs converts JS's arguments to ft's parameters from the first'th.

@@ -115,3 +115,42 @@ func TestSpanBackgrounds(t *testing.T) {
 		t.Error("a span without a background has one")
 	}
 }
+
+func TestSpansFuncAttachmentsFollowTheSpans(t *testing.T) {
+	var at *Signal[int]
+	h := newHost(t, Size{Width: 200, Height: 200}, func(cx *Scope) Node {
+		at = NewSignal(cx, 1)
+		return View{Style: Style{FontSize: 10}, Children: []Node{
+			Text{TestID: "text", SpansFunc: func() []Span {
+				box := Span{Attachment: View{TestID: "box", Style: Style{Width: Pt(10), Height: Pt(6)}}}
+				switch at.Get() {
+				case 0:
+					return []Span{{Content: "ab"}}
+				case 1:
+					return []Span{{Content: "a"}, box, {Content: "b"}}
+				}
+				return []Span{{Content: "ab"}, box}
+			}},
+		}}
+	})
+	h.commit()
+	text := h.find("text")
+	if got := text.text.text.Text; got != "a￼b" {
+		t.Fatalf("text = %q", got)
+	}
+	first := h.find("box").parent
+	if first.parent != text || first.frame.Origin.X != 6 {
+		t.Fatalf("attachment %v in %v", first.frame, first.parent)
+	}
+	at.Set(2)
+	h.commit()
+	moved := h.find("box").parent
+	if !first.deleted || moved.frame.Origin.X != 12 || len(text.children) != 1 {
+		t.Fatalf("attachment %v, old deleted %v, %d children", moved.frame, first.deleted, len(text.children))
+	}
+	at.Set(0)
+	h.commit()
+	if got := text.text.text.Text; got != "ab" || len(text.children) != 0 || !moved.deleted {
+		t.Fatalf("text %q with %d children", got, len(text.children))
+	}
+}

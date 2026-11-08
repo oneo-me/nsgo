@@ -278,6 +278,18 @@ func (t *target) hover(at driver.Point)      { t.check(t.surface.Hover(at)) }
 func (t *target) back()                      { t.check(t.surface.Back()) }
 
 func (t *target) typeText(v *View, text string) { t.check(t.surface.Type(text)) }
+func (t *target) compose(text string)           { t.ime(t.surface.Compose(text)) }
+func (t *target) commit(text string)            { t.ime(t.surface.Commit(text)) }
+
+// ime checks a composition step: a machine without an input method skips
+// the test.
+func (t *target) ime(err error) {
+	t.a.t.Helper()
+	if errors.Is(err, testhost.ErrNoInputMethod) {
+		t.a.t.Skipf("nsgotest: %s: %v", t.a.stepName, err)
+	}
+	t.check(err)
+}
 
 // clear selects the field's text and deletes it, as a keyboard does.
 func (t *target) clear(v *View) {

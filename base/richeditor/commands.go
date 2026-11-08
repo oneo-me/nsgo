@@ -23,6 +23,52 @@ func ChainCommands(cmds ...Command) Command {
 	}
 }
 
+// Chain runs commands one after another, each on the state the one before
+// left, and dispatches their changes as one transaction, as Tiptap's chain
+// does: it says whether every one applied. Without a dispatch each checks
+// on the state the ones before would leave.
+func Chain(cmds ...Command) Command {
+	return func(s *State, dispatch func(*Transaction)) bool {
+		tr, cur, all := s.Tr(), s, true
+		for _, c := range cmds {
+			var got *Transaction
+			if !c(cur, func(t *Transaction) { got = t }) {
+				all = false
+				continue
+			}
+			if got == nil || got.Err != nil {
+				continue
+			}
+			next, err := cur.applyInner(got)
+			if err != nil {
+				all = false
+				continue
+			}
+			for _, step := range got.Steps {
+				tr.Step(step)
+			}
+			if got.SelectionSet() {
+				tr.SetSelection(got.Selection().Bookmark().Resolve(tr.Doc))
+			}
+			if got.marksAt == len(got.Steps) && got.marks != nil {
+				tr.SetStoredMarks(got.marks)
+			}
+			for k, v := range got.meta {
+				tr.SetMeta(k, v)
+			}
+			if got.ScrolledIntoView() {
+				tr.ScrollIntoView()
+			}
+			tr.Origin = got.Origin
+			cur = next
+		}
+		if dispatch != nil && (tr.DocChanged() || tr.SelectionSet() || tr.StoredMarks() != nil) && tr.Err == nil {
+			dispatch(tr)
+		}
+		return all
+	}
+}
+
 // DeleteSelection deletes a selection that holds something.
 func DeleteSelection(s *State, dispatch func(*Transaction)) bool {
 	if s.Selection.Empty() {

@@ -968,5 +968,5 @@ func TableEditing() *Plugin {
 			return false
 		}
 		return c(v.State(), v.Dispatch)
-	}}
+	}, HandlePaste: pasteIntoTable}
 }

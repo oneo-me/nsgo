@@ -553,10 +553,19 @@ func (a *App) moveSelection(v *View, r driver.TextRange) {
 }
 
 // Compose has an input method compose text in the field selector names;
-// "" ends the composition, after the Type of what it commits. While it
-// lasts the field holds the values the app sets, as platforms do.
+// "" ends the composition, after the Type of what it commits, or Commit
+// commits it. While it lasts the field holds the values the app sets, as
+// platforms do. Under nsgo test -target it goes through the platform's
+// text input client, as an input method's does.
 func (a *App) Compose(selector, text string) {
 	a.t.Helper()
+	if a.target != nil {
+		a.step("compose(%s, %q)", selector, text)
+		a.Find(selector)
+		a.target.compose(text)
+		a.done()
+		return
+	}
 	v := a.Find(selector)
 	if text != "" {
 		v.Composing = text
@@ -575,6 +584,22 @@ func (a *App) Compose(selector, text string) {
 			v.Text = it.Value
 		}
 	}
+}
+
+// Commit has the input method composing in the field selector names
+// commit text, ending its composition: the Type of text, then the
+// composition's end, or the platform's commit under nsgo test -target.
+func (a *App) Commit(selector, text string) {
+	a.t.Helper()
+	if a.target != nil {
+		a.step("commit(%s, %q)", selector, text)
+		a.Find(selector)
+		a.target.commit(text)
+		a.done()
+		return
+	}
+	a.Type(selector, text)
+	a.Compose(selector, "")
 }
 
 // Key presses a key on a hardware keyboard, as the app's keymap reads it

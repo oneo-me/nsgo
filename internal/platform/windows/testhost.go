@@ -196,6 +196,54 @@ func (t *testSurface) Type(text string) error {
 	return nil
 }
 
+var (
+	immSetCompositionStringW = imm32.NewProc("ImmSetCompositionStringW")
+	immSetOpenStatus         = imm32.NewProc("ImmSetOpenStatus")
+	immGetOpenStatus         = imm32.NewProc("ImmGetOpenStatus")
+)
+
+const scsSetStr = 0x0009 // SCS_SETSTR: GCS_COMPREAD | GCS_COMPSTR
+
+// Compose has the window's IME compose text, through IMM as the IME's
+// own composition goes: the IME answers with WM_IME_COMPOSITION. A
+// machine whose input language has no IME composes nothing.
+func (t *testSurface) Compose(text string) error {
+	var err error
+	t.onMain(func() {
+		if t.w.focusedField() == nil {
+			err = errors.New("no field has the keyboard")
+			return
+		}
+		t.w.withContext(func(himc uintptr) {
+			if text == "" {
+				immNotifyIME.Call(himc, niCompositionStr, cpsCancel, 0)
+				return
+			}
+			if open, _, _ := immGetOpenStatus.Call(himc); open == 0 {
+				immSetOpenStatus.Call(himc, 1)
+			}
+			u := utf16.Encode([]rune(text))
+			if ok, _, _ := immSetCompositionStringW.Call(himc, scsSetStr, uintptr(unsafe.Pointer(&u[0])), uintptr(len(u)*2), 0, 0); ok == 0 {
+				err = testhost.ErrNoInputMethod
+			}
+		})
+	})
+	time.Sleep(30 * time.Millisecond)
+	return err
+}
+
+// Commit composes text and has the IME complete it, which commits it.
+func (t *testSurface) Commit(text string) error {
+	if err := t.Compose(text); err != nil {
+		return err
+	}
+	t.onMain(func() {
+		t.w.withContext(func(himc uintptr) { immNotifyIME.Call(himc, niCompositionStr, cpsComplete, 0) })
+	})
+	time.Sleep(30 * time.Millisecond)
+	return nil
+}
+
 // virtualKeys are the virtual-key codes of the keys tests name.
 var virtualKeys = map[string]uintptr{
 	"enter": vkReturn, "return": vkReturn, "escape": 0x1B, "backspace": 0x08, "tab": 0x09, "space": 0x20,

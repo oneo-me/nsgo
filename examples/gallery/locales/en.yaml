@@ -2084,6 +2084,9 @@ richTable:
 richMergeCells:
   message: "Merge cells"
   description: "The RichEditor demo: Merge cells."
+richDragBlock:
+  message: "Drag to move the block"
+  description: "The RichEditor demo: the handle beside the block holding the caret."
 richUndo:
   message: "Undo"
   description: "The RichEditor demo: Undo."

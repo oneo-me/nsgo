@@ -62,6 +62,7 @@ var layers = []struct {
 	{"tsx/bundler", []string{"core", "internal/driver", "internal/woff"}},
 	// nsgo/ui gives TSX ui's components, for the apps that import it.
 	{"tsx/ui", []string{"core", "base/", "ui/", "tsx", "tsx/"}},
+	{"tsx/ui/", []string{"core", "base/", "ui/", "tsx", "tsx/"}},
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.

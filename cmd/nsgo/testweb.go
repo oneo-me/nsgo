@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf16"
 )
 
 // webTestPage runs the test binary in the page: its arguments and
@@ -326,6 +327,15 @@ func (p *webPage) do(op webOp, data *any) error {
 			}
 		}
 		return nil
+	case "compose":
+		// Chrome's input method path: the page hears the composition
+		// events an IME's marked text makes.
+		n := len(utf16.Encode([]rune(op.Text)))
+		_, err := p.call("Input.imeSetComposition", map[string]any{"text": op.Text, "selectionStart": n, "selectionEnd": n})
+		return err
+	case "commit":
+		_, err := p.call("Input.insertText", map[string]any{"text": op.Text})
+		return err
 	case "key":
 		return p.key(op.Key)
 	case "screenshot":

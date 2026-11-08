@@ -40,6 +40,16 @@ type Session struct {
 type viewHandle struct {
 	focus, blur func()
 	geometry    Geometry
+	page        pageGeometry
+	dragBlock   func(pos int, x, y float64) bool
+	dragTo      func(x, y float64)
+	endDrag     func() bool
+}
+
+// pageGeometry answers Geometry's questions in surface points.
+type pageGeometry interface {
+	PageCoordsAtPos(pos int) (Rect2, bool)
+	PosAtPageCoords(x, y float64) (int, bool)
 }
 
 // Geometry answers where positions are, from the last view mounted.
@@ -211,8 +221,8 @@ func (v *Session) Blur() {
 }
 
 func (v *Session) geometry() Geometry {
-	if n := len(v.views); n > 0 {
-		return v.views[n-1].geometry
+	if h := v.view(); h != nil {
+		return h.geometry
 	}
 	return nil
 }
@@ -241,6 +251,56 @@ func (v *Session) SelectionRect() (Rect2, bool) {
 		return g.SelectionRect()
 	}
 	return Rect2{}, false
+}
+
+func (v *Session) view() *viewHandle {
+	if n := len(v.views); n > 0 {
+		return v.views[n-1]
+	}
+	return nil
+}
+
+// PageCoordsAtPos is CoordsAtPos in the surface's points, for what the app
+// places outside the editor, such as a block's handle.
+func (v *Session) PageCoordsAtPos(pos int) (Rect2, bool) {
+	v.state.Doc.Resolve(pos)
+	if h := v.view(); h != nil {
+		return h.page.PageCoordsAtPos(pos)
+	}
+	return Rect2{}, false
+}
+
+// PosAtPageCoords is PosAtCoords from a point of the surface.
+func (v *Session) PosAtPageCoords(x, y float64) (int, bool) {
+	if h := v.view(); h != nil {
+		return h.page.PosAtPageCoords(x, y)
+	}
+	return 0, false
+}
+
+// DragBlock starts a handle's drag at a point of the surface: it selects
+// the block at pos, a table too, and carries it, or the siblings a
+// selection over several covers when pos is in it, and says whether it
+// did. DragTo moves the drop cursor, and EndDrag drops them there, as one
+// undo step.
+func (v *Session) DragBlock(pos int, x, y float64) bool {
+	v.state.Doc.Resolve(pos)
+	h := v.view()
+	return h != nil && h.dragBlock(pos, x, y)
+}
+
+// DragTo moves a handle's drag to a point of the surface.
+func (v *Session) DragTo(x, y float64) {
+	if h := v.view(); h != nil {
+		h.dragTo(x, y)
+	}
+}
+
+// EndDrag drops what a handle carries where its drop cursor is, and says
+// whether the blocks moved.
+func (v *Session) EndDrag() bool {
+	h := v.view()
+	return h != nil && h.endDrag()
 }
 
 // TypeText types text as a user does: input rules first, then the stored

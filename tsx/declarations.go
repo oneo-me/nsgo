@@ -524,6 +524,9 @@ func (d *declarer) result(t reflect.Type) string {
 	switch {
 	case outs == 1:
 		return d.ts(t.Out(0))
+	case outs == 2 && t.Out(1).Kind() == reflect.Bool:
+		// A false ok is null (results).
+		return d.ts(t.Out(0)) + " | null"
 	case outs > 1:
 		return "unknown[]"
 	}

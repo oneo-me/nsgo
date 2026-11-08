@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -269,6 +270,44 @@ func (t *testSurface) Type(text string) error {
 		time.Sleep(30 * time.Millisecond)
 	}
 	return nil
+}
+
+// Compose marks text in the first responder as an input method does,
+// through UITextInput.
+func (t *testSurface) Compose(text string) error {
+	var err error
+	onMainSync(func() {
+		f := window.Send(sel("firstResponder"))
+		if f == 0 || !objc.Send[bool](f, sel("respondsToSelector:"), sel("setMarkedText:selectedRange:")) {
+			err = errors.New("no text input has the keyboard")
+			return
+		}
+		n := uint(len(utf16.Encode([]rune(text))))
+		f.Send(sel("setMarkedText:selectedRange:"), apple.NSString(text), apple.NSRange{Location: n})
+		if text == "" {
+			f.Send(sel("unmarkText"))
+		}
+	})
+	time.Sleep(30 * time.Millisecond)
+	return err
+}
+
+// Commit marks text and unmarks it, which keeps it, as an input method
+// commits.
+func (t *testSurface) Commit(text string) error {
+	var err error
+	onMainSync(func() {
+		f := window.Send(sel("firstResponder"))
+		if f == 0 || !objc.Send[bool](f, sel("respondsToSelector:"), sel("unmarkText")) {
+			err = errors.New("no text input has the keyboard")
+			return
+		}
+		n := uint(len(utf16.Encode([]rune(text))))
+		f.Send(sel("setMarkedText:selectedRange:"), apple.NSString(text), apple.NSRange{Location: n})
+		f.Send(sel("unmarkText"))
+	})
+	time.Sleep(30 * time.Millisecond)
+	return err
 }
 
 // usages are the USB HID keyboard usages of the keys tests name.

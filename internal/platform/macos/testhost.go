@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf16"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -348,6 +349,46 @@ func (t *testSurface) Type(text string) error {
 	}
 	return nil
 }
+
+// Compose marks text in the first responder as an input method does,
+// through NSTextInputClient: the field's editor shows it marked and
+// reports it, as it does a keyboard's composition.
+func (t *testSurface) Compose(text string) error {
+	var err error
+	onMainSync(func() {
+		r := t.s.window.Send(sel("firstResponder"))
+		if r == 0 || !objc.Send[bool](r, sel("respondsToSelector:"), sel("setMarkedText:selectedRange:replacementRange:")) {
+			err = errors.New("no text input client has the keyboard")
+			return
+		}
+		n := uint(len(utf16.Encode([]rune(text))))
+		r.Send(sel("setMarkedText:selectedRange:replacementRange:"), apple.NSString(text), apple.NSRange{Location: n}, apple.NSRange{Location: nsNotFound})
+		if text == "" {
+			r.Send(sel("unmarkText"))
+		}
+	})
+	time.Sleep(10 * time.Millisecond)
+	return err
+}
+
+// Commit inserts text over what is marked, which ends the composition, as
+// an input method commits.
+func (t *testSurface) Commit(text string) error {
+	var err error
+	onMainSync(func() {
+		r := t.s.window.Send(sel("firstResponder"))
+		if r == 0 || !objc.Send[bool](r, sel("respondsToSelector:"), sel("insertText:replacementRange:")) {
+			err = errors.New("no text input client has the keyboard")
+			return
+		}
+		r.Send(sel("insertText:replacementRange:"), apple.NSString(text), apple.NSRange{Location: nsNotFound})
+	})
+	time.Sleep(10 * time.Millisecond)
+	return err
+}
+
+// nsNotFound is NSNotFound, no range to replace: the marked text's.
+const nsNotFound = uint(1<<63 - 1)
 
 func (t *testSurface) Key(key string) error {
 	parts := strings.Split(strings.ToLower(key), "+")

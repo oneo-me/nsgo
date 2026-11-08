@@ -160,6 +160,39 @@ func richEditorDemo(cx *core.Scope) core.Node {
 			}
 			return ui.Toolbar{Label: tr.RichToolbar(), Children: marks()}
 		}}
+	// On desktops a handle beside the block holding the selection drags it
+	// to another place, which the editor's drop cursor shows.
+	handle := core.Show{When: func() bool { return core.Untracked(cx, cx.Env().Desktop) }, Then: func(cx *core.Scope) core.Node {
+		at := func() int {
+			rev.Get()
+			st := session.State()
+			from, _, ok := richeditor.DragSource(st, st.Selection.From())
+			if !ok {
+				return -1
+			}
+			if sel := richeditor.SelectionFindFrom(st.Doc.Resolve(from), 1, true); sel != nil {
+				return sel.Head()
+			}
+			return from
+		}
+		return core.Overlay{Placement: core.PlaceLeft, Offset: 2, TestID: "rich-drag-handle",
+			AnchorBounds: func() core.Bounds {
+				if pos := at(); pos >= 0 {
+					return ref.PageBounds(pos)
+				}
+				return core.Bounds{}
+			},
+			Children: []core.Node{core.View{Label: tr.RichDragBlock(), Role: core.RoleButton, NoFocus: true,
+				Style: core.Style{Width: core.Pt(14), Height: core.Pt(20), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
+				Responder: &core.Responder{Claims: []core.TouchClaim{{OnMove: true}}, Keep: true,
+					OnGrant: func(e core.ResponderEvent) {
+						session.DragBlock(session.State().Selection.From(), float64(e.PagePosition.X), float64(e.PagePosition.Y))
+					},
+					OnMove:      func(e core.ResponderEvent) { session.DragTo(float64(e.PagePosition.X), float64(e.PagePosition.Y)) },
+					OnRelease:   func(core.ResponderEvent) { session.EndDrag() },
+					OnTerminate: func(core.ResponderEvent) { session.DragTo(-1, -1e6); session.EndDrag() }},
+				Children: []core.Node{core.Icon{SVG: lucide.GripVertical(), Style: core.Style{Width: core.Pt(14), Height: core.Pt(14)}, StyleFunc: ui.Colored(colors.Muted)}}}}}
+	}}
 	source := core.Show{When: func() bool { return mode.Get() == "markdown" }, Then: func(*core.Scope) core.Node {
 		return core.Scroll{Style: core.Style{FlexBasis: core.Pt(180), FlexShrink: 0, BorderWidth: 1}, StyleFunc: func() core.Style {
 			return core.Style{BorderColor: colors.Border(), CornerRadius: ui.RadiusControl}
@@ -175,7 +208,7 @@ func richEditorDemo(cx *core.Scope) core.Node {
 		core.View{StyleFunc: func() core.Style {
 			return core.Style{FlexGrow: 1, FlexShrink: 1, MinHeight: core.Pt(0), CornerRadius: ui.RadiusInset, BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(), Overflow: core.Hidden}
 		}, Children: []core.Node{editor}},
-		mentions, source,
+		mentions, handle, source,
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifySpaceBetween}, Children: []core.Node{
 			status,
 			ui.Button{Text: tr.RichMarkdown(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() {

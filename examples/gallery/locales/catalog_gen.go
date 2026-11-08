@@ -2173,6 +2173,7 @@ type Translation struct {
 	RichQuote                                    func() string
 	RichTable                                    func() string
 	RichMergeCells                               func() string
+	RichDragBlock                                func() string
 	RichUndo                                     func() string
 	RichRedo                                     func() string
 	RichPlaceholder                              func() string
@@ -4099,6 +4100,7 @@ const (
 	textRichQuote
 	textRichTable
 	textRichMergeCells
+	textRichDragBlock
 	textRichUndo
 	textRichRedo
 	textRichPlaceholder
@@ -6024,6 +6026,7 @@ var texts = map[string]*[numTexts]string{
 		"Quote",
 		"Insert a table",
 		"Merge cells",
+		"Drag to move the block",
 		"Undo",
 		"Redo",
 		"Write something…",
@@ -7944,6 +7947,7 @@ var texts = map[string]*[numTexts]string{
 		"引用",
 		"插入表格",
 		"合并单元格",
+		"拖动以移动段落",
 		"撤销",
 		"重做",
 		"写点什么…",
@@ -14046,6 +14050,9 @@ func Supply(lang string, t Translation) {
 	}
 	if t.RichMergeCells != nil {
 		st[textRichMergeCells] = t.RichMergeCells()
+	}
+	if t.RichDragBlock != nil {
+		st[textRichDragBlock] = t.RichDragBlock()
 	}
 	if t.RichUndo != nil {
 		st[textRichUndo] = t.RichUndo()
@@ -33086,6 +33093,16 @@ func RichMergeCells(cx *core.Scope) string { return For(cx).RichMergeCells() }
 // RichMergeCells says "Merge cells"
 // in the language of msgs.
 func (msgs Messages) RichMergeCells() string { return msgs.text(textRichMergeCells) }
+
+// RichDragBlock says "Drag to move the block"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: the handle beside the block holding the caret.
+func RichDragBlock(cx *core.Scope) string { return For(cx).RichDragBlock() }
+
+// RichDragBlock says "Drag to move the block"
+// in the language of msgs.
+func (msgs Messages) RichDragBlock() string { return msgs.text(textRichDragBlock) }
 
 // RichUndo says "Undo"
 // in the language the app shows under cx.

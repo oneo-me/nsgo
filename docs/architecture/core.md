@@ -119,7 +119,7 @@ Style `Transition`s, animated values and layout animations run on the platform, 
 
 ## Mount protocol
 
-The protocol is defined in `mount.go` and `events.go`. Backends apply items in order on the main thread, in one hop per batch.
+The protocol is defined in `mount.go` and `events.go`. Backends apply items in order on the main thread, in one hop per batch. Android's Java runtime numbers the kinds in `Protocol.java`, which `TestJavaProtocolMatchesTheDriver` holds to the driver's by name, so a kind added to the driver means rebuilding `classes.dex`.
 
 - IDs are dense and reused after `ItemDelete`, possibly later in the same batch.
 - Backends create a view in `driver.DefaultViewStyle`, with no props and an empty event mask, so a new view's `ItemViewStyle`, `ItemViewProps` and `ItemEvents` come only when they differ, as NSH's do: they were 2,646 of the 18,252 items opening the gallery's DataTable. A view's first style shows at once; one that changes from the default in a later batch transitions. Android's `classes.dex` predates this, so its writer sends the three for each new view itself (`withDefaults`).

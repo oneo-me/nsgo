@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"time"
+
+	"github.com/oneo-me/nsgo/core"
 )
 
 // Origin says where a transaction comes from.
@@ -211,11 +213,17 @@ type Plugin struct {
 }
 
 // Decoration styles a range without changing the document: Class on the
-// range's text, or with Node on the block at From.
+// range's text, or with Node on the block at From. With Widget it is a view
+// in the text at From instead, taking no position: Side below zero puts it
+// before a cursor there, else after, and Key, when set, keeps its view
+// while the decoration stays.
 type Decoration struct {
 	From, To int
 	Class    string
 	Node     bool
+	Widget   func(cx *core.Scope) core.Node
+	Side     int
+	Key      string
 }
 
 // StateConfig makes a state: Doc, or an empty document of Schema.

@@ -136,6 +136,16 @@ func (t *testSurface) Type(text string) error {
 
 func (t *testSurface) Key(key string) error { return t.do(map[string]any{"op": "key", "key": key}) }
 
+// Compose and Commit go through the focused field's InputConnection, as
+// an input method's composition does.
+func (t *testSurface) Compose(text string) error {
+	return t.do(map[string]any{"op": "compose", "text": text})
+}
+
+func (t *testSurface) Commit(text string) error {
+	return t.do(map[string]any{"op": "commit", "text": text})
+}
+
 func (t *testSurface) Back() error { return t.do(map[string]any{"op": "back"}) }
 
 func (t *testSurface) Answer(id uint32, index int) error {

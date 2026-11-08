@@ -1519,6 +1519,9 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	}
 	t.followSpanClasses(n)
 	if v.SpansFunc != nil {
+		// attached owns the attachments' views, made again whenever the
+		// spans change, since a Node cannot be compared.
+		var attached *Scope
 		cx.renderEffect(func() {
 			spans := v.SpansFunc()
 			for i, sp := range spans {
@@ -1533,14 +1536,40 @@ func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 				if old.cls != nil {
 					own = old.cls.base
 				}
-				same = spans[i].Content == old.content && (old.cls == nil) == (spans[i].Class == "") &&
+				same = spans[i].Attachment == nil && old.attach == nil && spans[i].Content == old.content && (old.cls == nil) == (spans[i].Class == "") &&
 					(old.cls == nil || old.cls.list.class == spans[i].Class) && reflect.DeepEqual(spans[i].Style, own)
 			}
 			if same {
 				return
 			}
+			if attached != nil {
+				attached.Dispose()
+				attached = nil
+				for _, old := range n.text.spans {
+					if old.attach != nil {
+						t.discard(old.attach)
+					}
+				}
+				n.children = slices.DeleteFunc(n.children, func(c *node) bool { return c.deleted })
+				t.childrenChanged(n)
+				n.text.attachments = 0
+			}
 			n.text.spans = n.text.spans[:0]
 			for _, sp := range spans {
+				if sp.Attachment != nil {
+					if attached == nil {
+						attached = &Scope{}
+						cx.adopt(attached)
+					}
+					w := t.newNode(driver.KindView, n, attached)
+					w.attach = &attachNode{}
+					t.setClasses(w, sp.Class)
+					t.bindStyle(attached, w, sp.Style, nil)
+					t.within(attached, func() { t.mount(attached, w, sp.Attachment) })
+					n.text.spans = append(n.text.spans, spanNode{attach: w})
+					n.text.attachments++
+					continue
+				}
 				style, cls := t.spanStyle(n, sp.Class, sp.Style)
 				n.text.spans = append(n.text.spans, spanNode{content: sp.Content, style: style, cls: cls})
 			}

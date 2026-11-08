@@ -38,6 +38,11 @@ func (v *rv) textblockAt(pos int) *block {
 func (v *rv) CoordsAtPos(pos int) (Rect2, bool) {
 	b := v.textblockAt(pos)
 	if b == nil {
+		if GapCursorValid(v.s.State().Doc.Resolve(pos)) {
+			if r, ok := v.gapBox(pos); ok {
+				return r, true
+			}
+		}
 		for _, l := range v.leaves {
 			if l.pos == pos {
 				if r, ok := v.boxOf(l); ok {
@@ -242,4 +247,78 @@ func (v *rv) revealCaret() {
 	case r.Y+r.Height+margin > y+height:
 		v.vs.ScrollTo(core.Point{Y: core.Points(r.Y + r.Height + margin - height)}, false)
 	}
+}
+
+// eachBlock calls f on every block under b in document order, until f
+// returns false.
+func eachBlock(b *block, f func(*block) bool) bool {
+	for _, k := range b.kids.GetUntracked() {
+		if !f(k) || !eachBlock(k, f) {
+			return false
+		}
+	}
+	return true
+}
+
+// gapBox is a gap's place: the top of the block after it, else the bottom
+// of the one before.
+func (v *rv) gapBox(pos int) (Rect2, bool) {
+	var after, before *block
+	eachBlock(v.root, func(b *block) bool {
+		if b.pos == pos && after == nil {
+			after = b
+		}
+		if b.pos+b.nowNode.NodeSize() == pos {
+			before = b
+		}
+		return b.pos <= pos
+	})
+	if after != nil {
+		if r, ok := v.boxOf(after); ok {
+			return Rect2{r.X, r.Y, 0, 0}, true
+		}
+	}
+	if before != nil {
+		if r, ok := v.boxOf(before); ok {
+			return Rect2{r.X, r.Y + r.Height, 0, 0}, true
+		}
+	}
+	return Rect2{}, false
+}
+
+// gapAt is the gap a point is in: above, between or below the blocks of
+// the container it falls in, where a gap cursor may stand.
+func (v *rv) gapAt(x, y float64) (int, bool) { return v.gapIn(v.root, x, y) }
+
+func (v *rv) gapIn(b *block, x, y float64) (int, bool) {
+	kids := b.kids.GetUntracked()
+	valid := func(pos int) (int, bool) { return pos, GapCursorValid(v.s.State().Doc.Resolve(pos)) }
+	if tableRole(b.typ) == "table" {
+		for _, c := range kids {
+			if r, ok := v.boxOf(c); ok && x >= r.X && x < r.X+r.Width && y >= r.Y && y < r.Y+r.Height {
+				return v.gapIn(c, x, y)
+			}
+		}
+		return 0, false
+	}
+	for _, k := range kids {
+		r, ok := v.boxOf(k)
+		if !ok {
+			continue
+		}
+		if y < r.Y {
+			return valid(k.pos)
+		}
+		if y < r.Y+r.Height {
+			if k.typ.IsTextblock() || k.typ.IsAtom() {
+				return 0, false
+			}
+			return v.gapIn(k, x, y)
+		}
+	}
+	if n := len(kids); n > 0 {
+		last := kids[n-1]
+		return valid(last.pos + last.nowNode.NodeSize())
+	}
+	return 0, false
 }

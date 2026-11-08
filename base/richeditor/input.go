@@ -24,6 +24,8 @@ type pressState struct {
 	// blocks.
 	from, to int
 	last     core.Point
+	// mod held, a drag across blocks covers them whole on release.
+	mod bool
 }
 
 // sinkView is the invisible input at the caret that takes typing and input
@@ -92,6 +94,7 @@ func (v *rv) pasted(p core.PasteEvent) {
 func (v *rv) setComposing(text string) {
 	if v.composing.GetUntracked() == "" && text != "" {
 		v.compID++
+		v.s.OpenGap()
 	}
 	v.composing.Set(text)
 	if b := v.textblockAt(v.s.State().Selection.From()); b != nil {
@@ -379,9 +382,14 @@ func (v *rv) pressDown(pt core.Point, clicks int, mods core.Modifiers) {
 	if core.Untracked(v.cx, v.cx.Env().AppleKeys) {
 		mod = mods.Platform
 	}
+	// A press between blocks offers the plugins the gap's position.
+	at := pos
+	if gap, ok := v.gapAt(x, y); ok && !mods.Shift {
+		at = gap
+	}
 	st := v.s.State()
 	for _, p := range st.Plugins {
-		if p.HandleClick != nil && p.HandleClick(v.s, pos, clicks, mod) {
+		if p.HandleClick != nil && p.HandleClick(v.s, at, clicks, mod) {
 			return
 		}
 	}
@@ -390,7 +398,7 @@ func (v *rv) pressDown(pt core.Point, clicks int, mods core.Modifiers) {
 		return
 	}
 	r := st.Doc.Resolve(pos)
-	v.press = pressState{unit: max(min(clicks, 3), 1), anchor: pos, from: pos, to: pos, last: pt}
+	v.press = pressState{unit: max(min(clicks, 3), 1), anchor: pos, from: pos, to: pos, last: pt, mod: mod}
 	var sel Selection
 	switch {
 	case mods.Shift:
@@ -490,6 +498,35 @@ func (v *rv) stopEdge() {
 }
 
 func (v *rv) dragEnd() {
+	if v.press.dragging && v.press.mod {
+		v.coverBlocks()
+	}
 	v.press.dragging = false
 	v.stopEdge()
+}
+
+// coverBlocks widens a text selection across blocks to the whole of them,
+// Tiptap's NodeRange, ready for a handle to carry.
+func (v *rv) coverBlocks() {
+	st := v.s.State()
+	sel, ok := st.Selection.(*TextSelection)
+	if !ok || sel.FromPos().SameParent(sel.ToPos()) {
+		return
+	}
+	rng := sel.FromPos().BlockRange(sel.ToPos(), nil)
+	if rng == nil {
+		return
+	}
+	a := SelectionFindFrom(st.Doc.Resolve(rng.Start()), 1, true)
+	z := SelectionFindFrom(st.Doc.Resolve(rng.End()), -1, true)
+	if a == nil || z == nil {
+		return
+	}
+	anchor, head := a.From(), z.To()
+	if sel.Head() < sel.Anchor() {
+		anchor, head = head, anchor
+	}
+	if next := TextSelectionAt(st.Doc, anchor, head); !next.Eq(sel) {
+		v.s.Dispatch(st.Tr().SetSelection(next))
+	}
 }

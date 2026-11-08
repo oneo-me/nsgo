@@ -69,6 +69,13 @@ type Surface interface {
 	Hover(at driver.Point) error
 	// Type types text into the focused field, a key at a time.
 	Type(text string) error
+	// Compose has an input method compose text in the focused field
+	// through the platform's text input client, as one marks what it
+	// composes: "" ends the composition with nothing. Commit has it
+	// commit text there, ending the composition. Both answer
+	// ErrNoInputMethod where none can compose.
+	Compose(text string) error
+	Commit(text string) error
 	// Key presses a key with modifiers, as the keymap names them:
 	// "Enter", "Backspace", "Escape", "mod+a".
 	Key(key string) error
@@ -102,6 +109,10 @@ var host Host
 // ErrNoMenu is a platform's answer to a menu step where it shows no
 // native menus: a phone's, or the web's.
 var ErrNoMenu = errors.New("the platform shows no native menus")
+
+// ErrNoInputMethod is a composition step's answer where the machine has no
+// input method to compose with, as Windows without an IME.
+var ErrNoInputMethod = errors.New("no input method composes on this machine")
 
 // Register makes h the test host; a backend's init calls it.
 func Register(h Host) { host = h }

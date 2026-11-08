@@ -98,6 +98,8 @@ func styles(cx *core.Scope) richeditor.Styles {
 		Caret:        core.Style{Background: c.Accent},
 		Selection:    core.Style{Background: ui.Alpha(c.Accent, 0.25)},
 		Composition:  core.Style{TextDecoration: core.TextDecorationUnderline},
+		GapCursor:    core.Style{Background: c.Text},
+		DropCursor:   core.Style{Background: c.Accent},
 		SelectedNode: core.Style{OutlineWidth: 2, OutlineColor: c.Accent},
 		SelectedCell: core.Style{Background: ui.Alpha(c.Accent, 0.18)},
 		ListMarker:   core.Style{Color: c.Muted},
@@ -118,6 +120,8 @@ func merge(base, app richeditor.Styles) richeditor.Styles {
 	base.Caret = base.Caret.Merge(app.Caret)
 	base.Selection = base.Selection.Merge(app.Selection)
 	base.Composition = base.Composition.Merge(app.Composition)
+	base.GapCursor = base.GapCursor.Merge(app.GapCursor)
+	base.DropCursor = base.DropCursor.Merge(app.DropCursor)
 	base.SelectedNode = base.SelectedNode.Merge(app.SelectedNode)
 	base.SelectedCell = base.SelectedCell.Merge(app.SelectedCell)
 	base.ListMarker = base.ListMarker.Merge(app.ListMarker)

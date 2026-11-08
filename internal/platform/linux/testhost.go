@@ -239,6 +239,57 @@ func (t *testSurface) Type(text string) error {
 	return nil
 }
 
+// imWidget is the focused field's widget its input method reports to:
+// an entry's text, or a text view.
+func (t *testSurface) imWidget() (*view, uintptr, error) {
+	v := t.focused()
+	switch {
+	case v == nil:
+		return nil, 0, errors.New("no field has the keyboard")
+	case v.textView != 0:
+		return v, v.textView, nil
+	}
+	return v, gtkEditableGetDelegate(v.entry), nil
+}
+
+// Compose has the field's input method context preedit text, as GTK's
+// editors report an input method's: by their preedit-changed signal.
+func (t *testSurface) Compose(text string) error {
+	var err error
+	t.onLoop(func() {
+		var w uintptr
+		if _, w, err = t.imWidget(); err == nil {
+			gSignalEmitByName(w, cstr("preedit-changed"), cstr(text))
+		}
+	})
+	time.Sleep(10 * time.Millisecond)
+	return err
+}
+
+// Commit inserts text at the caret as the context's commit does, then
+// ends the preedit.
+func (t *testSurface) Commit(text string) error {
+	loadEditing()
+	var err error
+	t.onLoop(func() {
+		var v *view
+		var w uintptr
+		if v, w, err = t.imWidget(); err != nil {
+			return
+		}
+		if v.textView != 0 {
+			gtkTextBufferInsertAtCursor(v.buffer, cstr(text), -1)
+		} else {
+			at := textGetPosn(v.entry)
+			textInsert(v.entry, cstr(text), int32(len(text)), &at)
+			textSetPosn(v.entry, at)
+		}
+		gSignalEmitByName(w, cstr("preedit-changed"), cstr(""))
+	})
+	time.Sleep(10 * time.Millisecond)
+	return err
+}
+
 // keyvals are GDK's key values of the keys tests name.
 var keyvals = map[string]uint32{
 	"enter": 0xff0d, "return": 0xff0d, "escape": 0xff1b, "backspace": 0xff08, "tab": 0xff09, "space": 0x20,

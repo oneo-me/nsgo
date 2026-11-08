@@ -4,18 +4,6 @@ This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`,
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
-## The rich editor's rest
-
-What `RichEditor` still lacks of NSH's ([rich editor](architecture/richeditor.md)).
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| The JS API | `rich-editor.md` (The JS API, Extensions) | TSX apps make sessions with `createRichEditor`, its commands, plugins and `defineExtension`, rather than `tsx/richeditor`'s view of a Markdown text |
-| Block handles and drops | `rich-editor.md` (Handle drags) | `dragBlock`, `dragTo` and `endDrag` carry blocks with a drop cursor as one undo step, a page's coordinates beside the content's |
-| Cells pasted into tables | `rich-editor.md` (Tables) | Pasting cells over a cell selection fills them as prosemirror-tables' `clipCells` and `insertCells` do |
-| Widget decorations and the gap cursor | `rich-editor.md` (Plugins), `-gapcursor` | Plugins place views in the text, and a cursor stands where no textblock can |
-| Input methods and Android | — | A real input method's composition is checked in the line on every target, where only headless tests drive one so far, and the view runs on Android, which was built but not run (typing and presses pass on macOS, iOS, the web, Linux and Windows, 2026-11-08) |
-
 ## Shaders and transitions
 
 NSH 0.4.0's `Shader` draws a box with a WGSL `shade(uv)` (`shaders.md`); NSGo's shaders are Go ([shaders](architecture/shaders.md)).
