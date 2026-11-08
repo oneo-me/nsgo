@@ -949,7 +949,7 @@ func TestCollapsingHeader(t *testing.T) {
 	app.Find("id:footer >> text:That's all 160 entries")
 }
 
-// TestCharts hovers the week's plot, switches weeks and finds the
+// TestCharts hovers the week's plot, switches weeks with its knob and finds the
 // sparklines, a plot per row of a list.
 func TestCharts(t *testing.T) {
 	app := startDesktop(t)
@@ -961,7 +961,7 @@ func TestCharts(t *testing.T) {
 	app.Hover(plot)
 	app.Find("text:Plot: Thu, 2,480")
 	app.Find("text:2,480 visitors")
-	app.Press("role:button Show this week")
+	app.Press("role:tab This week")
 	app.Find("text:Plot: this week")
 	app.Find("text:1,330 visitors")
 	if len(app.Query("text:NSHL")) == 0 {

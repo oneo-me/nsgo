@@ -118,7 +118,8 @@ func tipValue(cx *core.Scope, value func() string, dashed bool) core.Node {
 // the app's rows: a week of visitors over the other
 // week (dashed), with a legend, compact y labels and the hover's cross
 // line, dots (each series' own, in its color, ringed in the card's) and
-// tooltip gliding on the frame clock, and a list of sparklines, each with
+// tooltip gliding on the frame clock, its options and last event in its
+// footer, and a list of sparklines, each with
 // a wash in its tone and its change beside it, that draw in as their rows
 // come. Washes fade out toward the baseline (an area's background, a
 // gradient inside its shape). Grid lines are hairlines with a firmer
@@ -165,15 +166,14 @@ func chartsDemo(cx *core.Scope) core.Node {
 		for _, d := range chartDays {
 			days = append(days, ui.Text(d, 12, ui.Regular, colors.Muted))
 		}
-		switchAlign := core.AlignStretch
-		if pointer {
-			switchAlign = core.AlignStart
-		}
-		switchLabel := func() string {
-			if week.Get() == 0 {
-				return tr.ChartsShowThisWeek()
+		setWeek := func(w int) {
+			week.Set(w)
+			hover.Set(-1)
+			if w == 0 {
+				last.Set(tr.ChartsPlotLastWeek())
+			} else {
+				last.Set(tr.ChartsPlotThisWeek())
 			}
-			return tr.ChartsShowLastWeek()
 		}
 		return Card{Title: tr.ChartsVisitors(), Description: tr.ChartsAWeekOverTheOther(), Children: []core.Node{
 			core.Dynamic(func(cx *core.Scope) core.Node {
@@ -256,30 +256,18 @@ func chartsDemo(cx *core.Scope) core.Node {
 			}},
 			core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween, Margin: core.Edges{Right: chartAxis + 8}},
 				Children: days},
-			core.View{Style: core.Style{Direction: core.Row, AlignSelf: switchAlign},
-				Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
-					tr := locales.For(cx)
-					var flex float32
-					size := ui.SizeSmall
-					if !pointer {
-						flex, size = 1, ui.SizeDefault
-					}
-					return ui.Button{Text: switchLabel(), Variant: ui.ButtonSecondary, Size: size, Flex: flex, OnPress: func() {
-						week.Set(1 - week.GetUntracked())
-						hover.Set(-1)
-						if week.GetUntracked() == 0 {
-							last.Set(tr.ChartsPlotLastWeek())
-						} else {
-							last.Set(tr.ChartsPlotThisWeek())
-						}
-					}}
-				})}},
+		}, Footer: []core.Node{
+			Knob{Name: "Y", Tight: true, Control: ui.Tabs[int]{Size: ui.SizeSmall, Label: "Y", Value: week.Get, OnChange: setWeek, Style: core.Style{AlignSelf: core.AlignEnd},
+				Options: []ui.Option[int]{{Value: 0, Label: chartWeekNames[0]}, {Value: 1, Label: chartWeekNames[1]}}}},
+			statusLine(cx, tr.ChartsLastEvent(), "charts-last-event", last.Get),
 		}}
 	}
 
 	sparklines := func(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
-		return Card{Title: tr.ChartsSparklines(), Description: tr.ChartsAPlotPerRowOf(), Children: []core.Node{
+		// Flush, so the list's scroll bar keeps to the card's edge; the rows
+		// take the card's padding.
+		return Card{Title: tr.ChartsSparklines(), Description: tr.ChartsAPlotPerRowOf(), Flush: true, Children: []core.Node{
 			plot.AppearScope{Children: []core.Node{core.List{TestID: "sparklines", Count: func() int { return len(tickers) }, Key: func(i int) any { return tickers[i].id },
 				EstimatedSize: 44, Style: core.Style{Height: core.Pt(44 * 6)},
 				Row: func(cx *core.Scope, r core.ListRow) core.Node {
@@ -302,7 +290,7 @@ func chartsDemo(cx *core.Scope) core.Node {
 						}
 						return fmt.Sprintf("%s%.2f%%", sign, math.Abs(change()))
 					}
-					return core.View{Style: core.Style{Height: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: gap}, Children: []core.Node{
+					return core.View{Style: core.Style{Height: core.Pt(44), Direction: core.Row, AlignItems: core.AlignCenter, Gap: gap, Padding: core.Symmetric(0, 14)}, Children: []core.Node{
 						core.Text{ContentFunc: func() string { return t().symbol }, Style: core.Style{Width: core.Pt(64), FontSize: label, FontFamily: ui.Mono}, StyleFunc: ui.Colored(colors.Text)},
 						plot.Plot{
 							Y:                func() []float64 { return t().prices },
@@ -333,12 +321,6 @@ func chartsDemo(cx *core.Scope) core.Node {
 		}}
 	}
 
-	return stagePage(cx, demoPage(cx, pageProps{flush: true}, visitorsCard, sparklines, barsCard, bridgeCard, candlesCard,
-		shareCard, gaugeCard, scatterCard, heatmapCard, radarCard, flowsCard, marketCard),
-		Section{Title: tr.TerminalOptions(), Note: "plot.Plot", Children: []core.Node{
-			choiceKnob("Y", week, ui.Option[int]{Value: 0, Label: chartWeekNames[0]}, ui.Option[int]{Value: 1, Label: chartWeekNames[1]}),
-		}},
-		Section{Title: tr.ChartsLastEvent(), Note: "OnHoverChange", Children: []core.Node{
-			core.Text{ContentFunc: last.Get, Style: core.Style{FontSize: 13, FontFamily: ui.Mono}, StyleFunc: ui.Colored(ui.ColorsOf(cx).Text)},
-		}})
+	return demoPage(cx, pageProps{}, visitorsCard, sparklines, barsCard, bridgeCard, candlesCard,
+		shareCard, gaugeCard, scatterCard, heatmapCard, radarCard, flowsCard, marketCard)
 }

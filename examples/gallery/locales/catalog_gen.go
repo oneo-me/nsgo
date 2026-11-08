@@ -1852,8 +1852,6 @@ const (
 	textScrollErrors
 	textDockOpen
 	textDockClosedState
-	textChartsShowThisWeek
-	textChartsShowLastWeek
 	textChartsVisitors
 	textChartsAWeekOverTheOther
 	textChartsTheLastDay
@@ -3799,8 +3797,6 @@ var keyOfText = [numTexts]string{
 	"scrollErrors",
 	"dockOpen",
 	"dockClosedState",
-	"chartsShowThisWeek",
-	"chartsShowLastWeek",
 	"chartsVisitors",
 	"chartsAWeekOverTheOther",
 	"chartsTheLastDay",
@@ -5744,8 +5740,6 @@ var textsEn = i18n.NewTexts(""+
 	"Errors"+
 	"open"+
 	"closed"+
-	"Show this week"+
-	"Show last week"+
 	"Visitors"+
 	"A week over the other, with hover, grid lines and motion"+
 	", the last day"+
@@ -7686,8 +7680,6 @@ var textsEn = i18n.NewTexts(""+
 		6,
 		4,
 		6,
-		14,
-		14,
 		8,
 		56,
 		14,
@@ -9631,8 +9623,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"错误"+
 	"打开"+
 	"关闭"+
-	"显示本周"+
-	"显示上周"+
 	"访客"+
 	"两周叠加对比，带悬停、网格线和动效"+
 	"，最后一天"+
@@ -11573,8 +11563,6 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		6,
-		12,
-		12,
 		6,
 		51,
 		15,
@@ -26154,20 +26142,6 @@ func (msgs Messages) ScrollPosts(count int) string {
 		}
 	}
 }
-
-// ChartsShowThisWeek says "Show this week"
-// in the language the app shows under cx.
-func ChartsShowThisWeek(cx *core.Scope) string { return For(cx).ChartsShowThisWeek() }
-
-// ChartsShowThisWeek is the package's ChartsShowThisWeek in the language of msgs.
-func (msgs Messages) ChartsShowThisWeek() string { return msgs.text(textChartsShowThisWeek) }
-
-// ChartsShowLastWeek says "Show last week"
-// in the language the app shows under cx.
-func ChartsShowLastWeek(cx *core.Scope) string { return For(cx).ChartsShowLastWeek() }
-
-// ChartsShowLastWeek is the package's ChartsShowLastWeek in the language of msgs.
-func (msgs Messages) ChartsShowLastWeek() string { return msgs.text(textChartsShowLastWeek) }
 
 // ChartsVisitors says "Visitors"
 // in the language the app shows under cx.
