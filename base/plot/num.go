@@ -144,7 +144,7 @@ func rectPath(d *core.Drawing, x, y, w, h num, c Corners) {
 			return constNum(0)
 		}
 		// The least of r and half each side, sides of at least 0.
-		return w.mul(constNum(0.5)).atMost(float32(r)).atMostOf(h.mul(constNum(0.5)), float32(r))
+		return w.mul(constNum(0.5)).atMostOf(h.mul(constNum(0.5)), float32(r))
 	}
 	tl, tr, br, bl := half(c.TopLeft), half(c.TopRight), half(c.BottomRight), half(c.BottomLeft)
 	right, bottom := x.add(w), y.add(h)
@@ -161,8 +161,9 @@ func rectPath(d *core.Drawing, x, y, w, h num, c Corners) {
 	d.ClosePath()
 }
 
-// atMostOf is the least of a and b, both between 0 and limit.
+// atMostOf is the least of a, b and limit, for a and b of at least 0.
 func (a num) atMostOf(b num, limit float32) num {
+	a, b = a.atMost(limit), b.atMost(limit)
 	if a.n == nil && b.n == nil {
 		return constNum(min(a.v, b.v))
 	}
@@ -172,7 +173,8 @@ func (a num) atMostOf(b num, limit float32) num {
 	if b.n == nil {
 		return a.atMost(b.v)
 	}
-	// (a + b - |a - b|) / 2, |x| an interpolation through 0.
+	// (a + b - |a - b|) / 2, |x| an interpolation through 0, exact as
+	// both are within limit.
 	l := float64(limit)
 	abs := core.Interpolate(a.sub(b).n, core.Interpolation{Input: []float64{-l, 0, l}, Output: []float64{l, 0, l}})
 	return a.add(b).sub(nodeNum(abs)).mul(constNum(0.5))

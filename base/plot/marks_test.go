@@ -647,3 +647,34 @@ func TestOutsideAPlotAMarkDrawsNothing(t *testing.T) {
 		t.Errorf("marks draw outside a plot:\n%s", d)
 	}
 }
+
+func TestMovingCornersKeepTheirRadius(t *testing.T) {
+	var first *core.Signal[float64]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		first = core.NewSignal(cx, 1.0)
+		return frame(plot.Plot{
+			Count:      func() int { return 4 },
+			Motion:     plot.Motion{Update: &core.TimingConfig{Duration: 200 * time.Millisecond}},
+			ColorScale: func() plot.ColorScale { return plot.OrdinalColors([]string{"g"}, core.RGB(0x336699)) },
+			Children: []core.Node{plot.Treemap{TestID: "tree",
+				ID: strs("a", "b", "c", "d"), Value: func() []float64 { return []float64{first.Get(), 1, 1, 1} },
+				Color: strs("g", "g", "g", "g"), Corners: plot.AllCorners(3),
+			}},
+		}, "plot")
+	})
+	first.Set(8)
+	app.Settle()
+	app.Advance(100 * time.Millisecond)
+	arcs := 0
+	for _, op := range canvases(app, "id:tree")[0].Ops {
+		if op.Kind == driver.DrawArc {
+			arcs++
+			if op.R > 3+1e-3 {
+				t.Fatalf("a moving corner's radius is %v, want at most 3", op.R)
+			}
+		}
+	}
+	if arcs == 0 {
+		t.Fatal("the moving nodes draw no arcs")
+	}
+}
