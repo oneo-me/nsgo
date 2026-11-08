@@ -419,8 +419,9 @@ html[data-theme='dark'] .theme-switch__sun {
   z-index: 40;
   border-bottom: 1px solid transparent;
   background: color-mix(in srgb, var(--bg) 64%, transparent);
+  /* Lightning CSS adds the -webkit- form; writing it after this one would
+     make the minifier drop the standard property that Chrome reads. */
   backdrop-filter: saturate(1.8) blur(20px);
-  -webkit-backdrop-filter: saturate(1.8) blur(20px);
   transition: border-color 0.2s ease;
 }
 
