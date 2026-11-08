@@ -594,18 +594,30 @@ events.onmessage = (e) => {
   if (kind !== "error") return;
   overlay?.remove();
   overlay = document.createElement("div");
-  overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(17,17,17,.94);color:#f2f2f2;padding:48px 20px;overflow:auto;font:13px ui-monospace,monospace";
+  overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(17,17,17,.6);padding:48px 24px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;font:13px system-ui;color:#f2f2f2";
+  const panel = document.createElement("div");
+  panel.style.cssText = "width:100%;max-width:720px;max-height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;padding:20px;border-radius:12px;background:#1c1c1c;border:1px solid rgba(255,255,255,.1)";
   const title = document.createElement("div");
   title.textContent = "Build failed";
-  title.style.cssText = "color:#ff5c5c;font:bold 18px system-ui;margin-bottom:12px";
+  title.style.cssText = "color:#ff5c5c;font:bold 18px system-ui";
   const text = document.createElement("pre");
   text.textContent = JSON.parse(rest.join(" "));
-  text.style.whiteSpace = "pre-wrap";
-  const copy = document.createElement("button");
-  copy.textContent = "Copy";
-  copy.onclick = (e) => { e.stopPropagation(); navigator.clipboard.writeText(text.textContent); };
-  overlay.append(title, text, copy);
-  overlay.onclick = () => { overlay.remove(); overlay = null; };
+  text.style.cssText = "margin:0;padding:12px;max-height:360px;overflow:auto;border-radius:8px;background:rgba(0,0,0,.35);white-space:pre-wrap;font:12px ui-monospace,monospace";
+  const button = (label, onclick) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.onclick = onclick;
+    b.style.cssText = "padding:6px 14px;border:0;border-radius:6px;background:rgba(255,255,255,.12);color:inherit;font:inherit";
+    return b;
+  };
+  const buttons = document.createElement("div");
+  buttons.style.cssText = "display:flex;gap:8px;justify-content:flex-end";
+  buttons.append(
+    button("Copy", () => navigator.clipboard.writeText(text.textContent)),
+    button("Reload", () => fetch("/_nsgo/reload", { method: "POST" })),
+  );
+  panel.append(title, text, buttons);
+  overlay.append(panel);
   document.body.append(overlay);
 };
 {{- end}}

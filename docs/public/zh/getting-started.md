@@ -42,7 +42,7 @@ go tool nsgo init
 go tool nsgo dev
 ```
 
-`dev` 为本机构建并打开应用。每次保存都会重新构建并重启应用；只改动 TSX 时，会直接更新正在运行的应用，并保留顶层 signal、导航栈和未改动组件的状态。构建失败会显示在应用上方，按 Command 或 Control+R 重新构建。在 `nsgo.yaml` 中设置 `dev.hot_reload: false` 则只运行一次。
+`dev` 为本机构建并打开应用。每次保存都会重新构建并重启应用；只改动 TSX 时，会直接更新正在运行的应用，并保留顶层 signal、导航栈和未改动组件的状态。构建失败会显示在应用上方，可复制错误或重新构建。在 `nsgo.yaml` 中设置 `dev.hot_reload: false` 则只运行一次。
 
 用 `-target` 在别处运行：
 

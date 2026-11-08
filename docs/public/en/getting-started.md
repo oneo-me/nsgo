@@ -42,7 +42,7 @@ go tool nsgo init
 go tool nsgo dev
 ```
 
-`dev` builds the app for this machine and opens it. On each save it rebuilds and restarts the app, and a change of TSX alone updates the running app in place, keeping top-level signals, navigation stacks and the state of the components it did not change. A failed build shows over the app; Command or Control+R builds again. `dev.hot_reload: false` in `nsgo.yaml` runs it once instead.
+`dev` builds the app for this machine and opens it. On each save it rebuilds and restarts the app, and a change of TSX alone updates the running app in place, keeping top-level signals, navigation stacks and the state of the components it did not change. A failed build shows over the app, with buttons to copy the error and to build again. `dev.hot_reload: false` in `nsgo.yaml` runs it once instead.
 
 Run it somewhere else with `-target`:
 

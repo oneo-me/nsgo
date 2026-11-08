@@ -22,9 +22,8 @@ var devLocale = ""
 var devServer = ""
 
 // devApp runs app under nsgo dev: build failures the server reports and
-// the app's own render failures show in an overlay over it, Command or
-// Control+R asks for a new build, and with -trace the server prints each
-// commit. On the web the page is served from the server and shows build
+// the app's own render failures show in an overlay over it, and with
+// -trace the server prints each commit. On the web the page is served from the server and shows build
 // failures itself.
 func devApp(app App) App {
 	if devLocale != "" {
@@ -54,18 +53,16 @@ func devApp(app App) App {
 	return func(cx *core.Scope) core.Node {
 		failure := core.NewSignal(cx, devFailure{})
 		go listenDev(server, func(f devFailure) { cx.Post(func() { failure.Set(f) }) })
-		cx.OnKeyWith("mod+r", core.KeyOptions{When: core.KeyAlways}, func() {
-			go http.Post(server+"/_nsgo/reload", "text/plain", nil)
-		})
+		reload := func() { go http.Post(server+"/_nsgo/reload", "text/plain", nil) }
 		return core.Group{
 			core.Catch{
 				Try: app,
 				Fallback: func(cx *core.Scope, err error, reset func()) core.Node {
-					return devOverlay(cx, devFailure{Title: "The app failed", Text: err.Error()}, reset)
+					return devOverlay(cx, devFailure{Title: "The app failed", Text: err.Error()}, reset, reload)
 				},
 			},
 			core.Show{When: func() bool { return failure.Get().Text != "" }, Then: func(cx *core.Scope) core.Node {
-				return devOverlay(cx, failure.Get(), func() { failure.Set(devFailure{}) })
+				return devOverlay(cx, failure.Get(), func() { failure.Set(devFailure{}) }, reload)
 			}},
 		}
 	}
@@ -102,26 +99,34 @@ func listenDev(server string, report func(devFailure)) {
 	}
 }
 
-// devOverlay covers the app with what failed: a press anywhere dismisses
-// it, Copy copies the text for a report.
-func devOverlay(cx *core.Scope, f devFailure, dismiss func()) core.Node {
-	text := core.Style{Color: core.RGB(0xf2f2f2), FontSize: 13}
-	button := core.Style{Padding: core.Symmetric(6, 12), CornerRadius: 6, Background: core.RGBA(0xffffff, 0.15)}
+// devOverlay covers the app with what failed: a centered panel of its
+// title, the text in a box that scrolls, and buttons to copy the text and
+// to build again.
+func devOverlay(cx *core.Scope, f devFailure, dismiss, reload func()) core.Node {
+	label := core.Style{Color: core.RGB(0xf2f2f2), FontSize: 13}
+	button := core.Style{Padding: core.Symmetric(6, 14), CornerRadius: 6, Background: core.RGBA(0xffffff, 0.12)}
 	return core.Modal{Animation: core.ModalNone, OnRequestClose: func(string) { dismiss() }, TestID: "nsgo-dev-overlay",
 		Children: []core.Node{core.View{
-			Style:   core.Style{FlexGrow: 1, Padding: core.Edges{Top: 56, Right: 20, Bottom: 32, Left: 20}, Gap: 12, Background: core.RGBA(0x111111, 0.94)},
-			OnPress: func(core.PressEvent) { dismiss() },
-			Children: []core.Node{
-				core.Text{Content: f.Title, Style: core.Style{Color: core.RGB(0xff5c5c), FontSize: 18, FontWeight: core.FontWeightBold}},
-				core.Scroll{Style: core.Style{FlexGrow: 1, FlexShrink: 1}, Children: []core.Node{
-					core.Text{Content: f.Text, Style: core.Style{Color: text.Color, FontSize: text.FontSize, FontFamily: core.FontMonospace}},
-				}},
-				core.View{Style: core.Style{Direction: core.Row, Gap: 12, AlignItems: core.AlignCenter}, Children: []core.Node{
-					core.View{Style: button, Role: core.RoleButton, OnPress: func(core.PressEvent) { cx.SetClipboard(f.Text) },
-						Children: []core.Node{core.Text{Content: "Copy", Style: text}}},
-					core.Text{Content: "Press anywhere to dismiss; save a fix or press " + cx.KeyLabel("mod+r") + " to build again.",
-						Style: core.Style{Color: core.RGBA(0xf2f2f2, 0.6), FontSize: 12, FlexShrink: 1}},
-				}},
-			},
+			Style: core.Style{FlexGrow: 1, Padding: core.Symmetric(48, 24), JustifyContent: core.JustifyCenter, AlignItems: core.AlignCenter,
+				Background: core.RGBA(0x111111, 0.6)},
+			Children: []core.Node{core.View{
+				Style: core.Style{Width: core.Pct(100), MaxWidth: core.Pt(720), MaxHeight: core.Pct(100), FlexShrink: 1, Padding: core.All(20), Gap: 16,
+					CornerRadius: 12, Background: core.RGB(0x1c1c1c), BorderWidth: 1, BorderColor: core.RGBA(0xffffff, 0.1)},
+				Children: []core.Node{
+					core.Text{Content: f.Title, Style: core.Style{Color: core.RGB(0xff5c5c), FontSize: 18, FontWeight: core.FontWeightBold}},
+					core.View{Style: core.Style{MaxHeight: core.Pt(360), FlexShrink: 1, CornerRadius: 8, Background: core.RGBA(0x000000, 0.35)},
+						Children: []core.Node{core.Scroll{Style: core.Style{FlexShrink: 1}, Children: []core.Node{
+							core.View{Style: core.Style{Padding: core.All(12)}, Children: []core.Node{
+								core.Text{Content: f.Text, Style: core.Style{Color: label.Color, FontSize: 12, FontFamily: core.FontMonospace}},
+							}},
+						}}}},
+					core.View{Style: core.Style{Direction: core.Row, Gap: 8, JustifyContent: core.JustifyEnd}, Children: []core.Node{
+						core.View{Style: button, Role: core.RoleButton, OnPress: func(core.PressEvent) { cx.SetClipboard(f.Text) },
+							Children: []core.Node{core.Text{Content: "Copy", Style: label}}},
+						core.View{Style: button, Role: core.RoleButton, OnPress: func(core.PressEvent) { reload() },
+							Children: []core.Node{core.Text{Content: "Reload", Style: label}}},
+					}},
+				},
+			}},
 		}}}
 }
