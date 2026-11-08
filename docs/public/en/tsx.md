@@ -52,6 +52,30 @@ tsx.RegisterFunctions("app/native", map[string]any{
 
 `import { Badge, greet } from "app/native"` then takes `Badge`'s fields as props and calls `greet`. Functions taking a `context.Context` become promises, and `tsx.RegisterClass` makes Go types classes TSX creates with `new`.
 
+## Signed packages
+
+An app can run TSX it downloads, such as its own screens delivered anew or plugins, once it verifies the package. Keep a root key offline and certify release keys with it, then sign the app in a directory with its `nsgo.yaml`:
+
+```sh
+go tool nsgo keygen root
+go tool nsgo keygen release
+go tool nsgo certify -root root.key -key release.pub -apps 'com.example.*'
+go tool nsgo publish -key release.key -cert release.cert plugin
+go tool nsgo verify -root root.pub plugin/dist/Plugin-1.0.0.nsgopkg
+```
+
+The app trusts `root.pub`, verifies the package off the engine's goroutine and shows it in `tsx.View`, sandboxed beside its own views:
+
+```go
+trust, err := pkg.OpenTrust(filepath.Join(cx.DataDir(), "trust"))
+trust.AddRoot(root)
+p, err := trust.Verify(data) // refuses tampered, revoked and older builds
+core.Catch{Try: tsx.View{Package: p}.Render, Fallback: failed}
+trust.Accept(p)              // once it ran, older builds are refused
+```
+
+`go tool nsgo revoke` signs a list of revoked release keys and packages for `Trust.UpdateRevocations`. `examples/plugins` is such an app.
+
 ## Editors and tests
 
 A `tsconfig.json` extending `.nsgo/tsconfig.json` gives editors the TSX's types, which `go tool nsgo dev` and `go tool nsgo check` write. `*.test.tsx` files beside the app, written with `nsgo/test`, run with its Go tests ([Testing](testing.md)).

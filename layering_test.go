@@ -63,17 +63,20 @@ var layers = []struct {
 	{"tsx/bundler", []string{"core", "internal/driver", "internal/woff"}},
 	// The JS engines' API reaches goja or the page, nothing of NSGo's.
 	{"tsx/internal/js", nil},
+	// Packages are signed and verified with the standard library alone,
+	// so the nsgo tool links them.
+	{"tsx/pkg", nil},
 	// nsgo/ui gives TSX ui's components, for the apps that import it.
 	{"tsx/ui", []string{"core", "base/", "ui/", "tsx", "tsx/"}},
 	{"tsx/ui/", []string{"core", "base/", "ui/", "tsx", "tsx/"}},
-	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler", "tsx/internal/js"}},
+	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler", "tsx/internal/js", "tsx/pkg"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
 	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
 	// The nsgo tool links no component or runtime, so changing them does
 	// not build it again; it writes TSX declarations by running the app.
-	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/bundler"}},
+	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/bundler", "tsx/pkg"}},
 	{"tools/", []string{"core"}},
 }
 

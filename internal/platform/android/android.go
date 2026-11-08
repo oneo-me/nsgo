@@ -335,6 +335,14 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 	}
 }
 
+// init points os.TempDir at the app's cache, as Android gives an app's
+// process no TMPDIR and its default, /data/local/tmp, is the shell's.
+func init() {
+	if dir := os.Getenv("NSGO_CACHE_DIR"); dir != "" && os.Getenv("TMPDIR") == "" {
+		os.Setenv("TMPDIR", dir)
+	}
+}
+
 // startEngine starts app's engine at size; test, when set, is what a test
 // host opens it with.
 func (s *surface) startEngine(app engine.App, size driver.Size, appearance driver.Appearance, test *testOpen) {

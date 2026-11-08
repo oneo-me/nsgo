@@ -34,7 +34,7 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 
 ## Weaknesses
 
-- **Early.** No release and no stable API yet; the [roadmap](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md) lists what is missing, such as more than one window on Windows and Linux, and signed TSX packages delivered at run time.
+- **Early.** No release and no stable API yet; the [roadmap](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md) lists what is missing, such as more than one window on Windows and Linux, and capabilities that limit what TSX delivered at run time may reach.
 - **A small ecosystem.** Few third-party components, examples or answers online, next to Flutter, React Native or Qt.
 - **Platforms differ.** Native views mean small differences between platforms, so an app needs checking on each. A framework that draws itself looks the same everywhere.
 - **Its own bridges.** On Android the Go program runs beside the Java runtime and talks to it over pipes, and on Linux users need GTK 4.14 or newer.
@@ -46,7 +46,7 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 NSGo ports NSH's design: the architecture, the backends, the API's names and `base`'s unstyled components are NSH's ([status](index.md#status)).
 
 - **Choose NSGo** to write apps in Go rather than Rust or TSX, to build every target from a Mac with Go and Xcode, or for what NSGo adds: GPU shaders written in Go, vector icons, a terminal, apps opening their own windows, panels and tray icons, and styled components in `ui`.
-- **Choose NSH** for a more mature project, TSX run by QuickJS with bytecode and heap limits, signed packages and a sandbox for TSX delivered at run time, the GPUI backend, or 32-bit Android.
+- **Choose NSH** for a more mature project, TSX run by QuickJS with bytecode and heap limits, capabilities for TSX delivered at run time, the GPUI backend, or 32-bit Android.
 
 ## MyGo
 

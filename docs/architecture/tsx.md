@@ -31,7 +31,7 @@ func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 | `nsh-js` `declarations.rs` | `tsx/declarations.go`, `tsx/types/*.d.ts` | `.nsgo/types` |
 | `nsh-testing`'s `nsh/test` | `tsx/tsxtest` | `*.test.tsx` as Go tests |
 | `nsh-core`'s `Op` | `core.Element` | Elements built one change at a time |
-| `nsh-package` | — | Signed packages ([open question](../../ARCHITECTURE.md#open-questions)) |
+| `nsh-package` | `tsx/pkg` | Signed packages, certificates, revocation lists and the trust store |
 | `nsh-platform-web`'s `src/browser/`, `web/browser/` | `tsx/internal/js` | The page's engine on the web |
 
 Read the NSH file before changing its port, and keep the port's names and order where Go allows, so NSH's next change maps onto it.
@@ -163,16 +163,24 @@ Under `nsgo dev` the tool compiles TSX ahead for hot updates (`bundler.CompileHo
 
 Limits and checks are Go's, never JS's, since a bundle holds only the app's code. `tsx.Sandboxed(name, bundle, limits)` runs a bundle within `tsx.Limits`, which the Go code running it sets: a time budget for loading and for each call into JS (NSH's 10 and 2 seconds in `DefaultLimits`), cut with `Runtime.Interrupt` as `ErrBudget`; a stack depth; and hardening, which deletes `eval`, has the `Function` constructors throw and freezes the built-in prototypes.
 
-The open question proposes that a Go app and its Go components, native code, stay trusted, and only TSX modules are sandboxed, signed and held to capabilities.
+Go code, an app's and its components', is trusted native code; only TSX modules are sandboxed, signed and held to capabilities (decided by the user, 2026-11-08).
 
-Without a heap limit a module can still exhaust memory. That suits the app's own screens; a store of untrusted modules needs an engine with one, which the `tsx` API leaves room for. Capabilities, signed packages and a host's `tsx.View` wait for their [open question](../../ARCHITECTURE.md#open-questions).
+Without a heap limit a module can still exhaust memory. That suits the app's own screens; a store of untrusted modules needs an engine with one, which the `tsx` API leaves room for. Capabilities wait for their [roadmap item](../roadmap.md#tsx-and-dynamic-delivery).
+
+## Signed packages
+
+`tsx/pkg` ports `nsh-package` on `crypto/ed25519` and `crypto/sha256` alone, so the `nsgo` tool links it; its package documentation holds the format, the trust model and how the format evolves. It is for code an app downloads: its own screens delivered anew, or plugins. Where packages come from, an update server or a store, is the app's.
+
+- **Keys.** An offline root certifies release keys for app IDs (`*`, `com.example.*` or an ID) and a time; packages carry their release key's certificate, so release keys rotate without app updates. Signatures are over a context per kind, a zero byte and the message's SHA-256.
+- **Packages** (`.nsgopkg`): a JSON header (the app's ID, name, version and build, the minimum runtime, the signing time, the certificate, a file table with SHA-256s, `critical`), the files, and the release key's signature of all before it. A package holds one file, the bundle `bundler.Compile` writes, whose assets and source map are inline, so nothing is extracted. Fields and file kinds a runtime does not know are left unused and listed in `Info.Ignored`, and one `critical` names makes it refuse the package.
+- **Runtime versions.** `pkg.RuntimeVersion` is 0.1.0 until NSGo's first release. A package names the oldest runtime it runs on, by default the signing tool's.
+- **Verifying.** `Trust.Verify` checks the certificate against the trusted roots, the release key and the package against the revocation list, the signature, the certificate covering the app and the signing time, never the current time, so a package outlives its certificate, the minimum runtime, the file table tiling the data and each hash, and the build against the highest accepted. `Accept` raises that floor once the host saw the package run, checking the revocations again. Revocation lists replace only older ones by sequence number. `OpenTrust(dir)` keeps both in `trust.json`, written whole and renamed; on the web, which has no files, `NewTrust` keeps them for the page's life.
+- **Running.** `tsx.View{Package: p}` runs a verified package where it is placed in a Go tree, within `DefaultLimits` unless `Limits` says otherwise, so a host shows plugins beside its own views; a package that throws as it loads panics into the nearest `core.Catch`. Verifying hashes the whole package, so hosts call it off the engine's goroutine. `examples/plugins` does all of this, with tests on every target.
+- **Tooling.** `nsgo keygen`, `certify`, `publish`, `verify` and `revoke` ([tool](tool.md#signed-packages)).
 
 ## Delivering (planned)
 
-- A host places `tsx.View` where a feature goes, given a verified package or a bundle of its own. The iOS and Android faces gain the same loading call.
-- Packages follow `.nshpkg`: a header (app ID, version, build, capabilities, minimum runtime, signing time, certificate, file table with SHA-256s), the files (source, source map, assets) and an Ed25519 signature over both.
-- Keys, certificates, revocation lists with sequence numbers, the trust store and rollback protection port as NSH has them, on `crypto/ed25519` and `crypto/sha256`. `nsgo keygen`, `certify`, `publish`, `verify` and `revoke` are NSH's commands.
-- Capabilities are declared under `capabilities:` in `nsgo.yaml` and carried in the package, with NSH's keys: `network`, `webview`, `openUrl`, `clipboard`, `picker`, `host`, `statusBar`. Go checks them where each request is made: `fetch`, remote images, web views, `OpenURL`, host calls.
+- Capabilities are declared under `capabilities:` in `nsgo.yaml` and carried in the package, with NSH's keys: `network`, `webview`, `openUrl`, `clipboard`, `picker`, `host`, `statusBar`. Go checks them where each request is made: `fetch`, remote images, web views, `OpenURL`, host calls. A runtime that cannot enforce them must refuse such packages, so the signer names `capabilities` in `critical` until every supported runtime knows it.
 - A package runs on every later runtime, so once TSX ships nothing its modules expose is removed or renamed, as NSH's `compatibility.md` rules.
 
 ## Store policies
@@ -191,6 +199,8 @@ Without a heap limit a module can still exhaust memory. That suits the app's own
 | Oxc, `jsx.rs`, rolldown | esbuild and a port of `jsx.rs` on goja's parser, over CommonJS | Go libraries, no Node; goja's parser reads no ES modules |
 | `nsh build` writes the bundle | The tool compiles ahead into the package through `-overlay`; `go run` and `go test` compile at start | Plain Go commands keep working; packages ship no compiler |
 | Bytecode in packages | Source only | goja saves no bytecode |
+| Assets in packages, extracted to a directory per package | One bundle with its assets inline, nothing extracted | The bundler already inlines assets; a package needs no files on disk |
+| Swift and Kotlin trust APIs (`NshTrust`, `openPackage`) | `tsx/pkg` and `tsx.View` in the Go app on every target | An NSGo app is Go on iOS and Android too, embedded or not ([embedding](embedding.md)) |
 | A heap limit | Time, stack and quotas | goja allocates from Go's heap |
 | Nodes released when collected | Released with their owner | Go's collector cannot tell the tree's handler closures from the app's references |
 | Rust components' JS face generated from specs | Go components read by reflection as they are made, declarations from their types | One registration call, no generator step; making a component is not a hot path |

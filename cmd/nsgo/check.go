@@ -14,7 +14,8 @@ import (
 
 // nsgo check: the catalogs and their code, go vet, then TypeScript's checker on the app's TSX against
 // the declarations its packages give (.nsgo/types). A directory without nsgo.yaml has no app's TSX
-// to check.
+// to check; one with nsgo.yaml but no Go, as a package's TSX app that a host runs, has nothing to
+// vet, and its TSX is checked against every module NSGo gives.
 
 // tsgo is TypeScript 7's compiler, built from its Go sources and cached
 // by Go, so checking needs only Go.
@@ -27,6 +28,9 @@ func check(ctx context.Context, p *project, target string) error {
 		return err
 	}
 	s.done("checked catalogs", "")
+	if !p.bare && !hasGo(p.Dir) {
+		return checkTSX(ctx, p)
+	}
 	s = begin("vetting")
 	if err := goTool(ctx, p.Dir, nil, "vet", "./..."); err != nil {
 		s.fail()
@@ -54,6 +58,11 @@ func check(ctx context.Context, p *project, target string) error {
 	if p.bare {
 		return nil
 	}
+	return checkTSX(ctx, p)
+}
+
+// checkTSX writes the app's types and type-checks its TSX.
+func checkTSX(ctx context.Context, p *project) error {
 	if err := writeTypes(ctx, p); err != nil {
 		return err
 	}
@@ -62,7 +71,7 @@ func check(ctx context.Context, p *project, target string) error {
 		return nil
 	}
 	config := filepath.Join(p.Dir, "tsconfig.json")
-	s = begin("type-checking")
+	s := begin("type-checking")
 	if err := goTool(ctx, p.Dir, nil, "run", tsgo, "-p", config, "--pretty", "false"); err != nil {
 		s.fail()
 		return err
@@ -145,6 +154,17 @@ func init() {
 }
 `
 
+// tsxModules are the packages registering every TSX module NSGo gives,
+// which a directory of TSX alone is checked against: a host decides
+// which its packages may import.
+var tsxModules = []string{"diff", "editor", "richeditor", "terminal", "textview", "ui", "ui/chat", "ui/richeditor"}
+
+// hasGo reports whether dir holds Go files.
+func hasGo(dir string) bool {
+	files, _ := filepath.Glob(filepath.Join(dir, "*.go"))
+	return len(files) > 0
+}
+
 // hasTSConfig reports whether the app has a tsconfig.json, as a TSX
 // app's does, extending .nsgo/tsconfig.json.
 func (p *project) hasTSConfig() bool {
@@ -171,6 +191,9 @@ func generateTypes(ctx context.Context, p *project) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
+	if !hasGo(p.Dir) {
+		return generateModuleTypes(ctx, p)
+	}
 	file, err := p.cacheFile("types", ".go", typesInit)
 	if err != nil {
 		return err
@@ -189,11 +212,36 @@ func generateTypes(ctx context.Context, p *project) error {
 		!strings.Contains(files, "zz_nsgo_types.go") {
 		return fmt.Errorf("cannot write types: %s is not a main package go adds zz_nsgo_types.go to (%s)", p.Dir, out)
 	}
+	return runTypes(ctx, p, "-overlay", ov, ".")
+}
+
+// generateModuleTypes writes the types of every module NSGo gives, for a
+// directory of TSX alone, from a main package of typesInit the tool makes
+// in its cache.
+func generateModuleTypes(ctx context.Context, p *project) error {
+	imports := ""
+	for _, m := range tsxModules {
+		imports += "\t_ \"github.com/oneo-me/nsgo/tsx/" + m + "\"\n"
+	}
+	src := strings.Replace(typesInit, "import (\n", "import (\n"+imports, 1) + "\nfunc main() {}\n"
+	pkgDir := p.cache("typesmain")
+	if err := os.MkdirAll(pkgDir, 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(pkgDir, "main.go"), []byte(src), 0o644); err != nil {
+		return err
+	}
+	return runTypes(ctx, p, "./"+filepath.ToSlash(filepath.Join(".nsgo", "typesmain")))
+}
+
+// runTypes builds the package of buildArgs with typesInit and runs it.
+func runTypes(ctx context.Context, p *project, buildArgs ...string) error {
+	dir := p.cache()
 	bin := filepath.Join(dir, "nsgo-types")
 	if runtime.GOOS == "windows" {
 		bin += ".exe"
 	}
-	if err := goTool(ctx, p.Dir, nil, "build", "-overlay", ov, "-o", bin, "."); err != nil {
+	if err := goTool(ctx, p.Dir, nil, append([]string{"build", "-o", bin}, buildArgs...)...); err != nil {
 		return err
 	}
 	// typesInit ends the program before main; the timeout guards the

@@ -6,12 +6,12 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## TSX and dynamic delivery
 
-What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)). Signed packages and capabilities wait for their [open question](../ARCHITECTURE.md#open-questions).
+What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Signed packages | `signed-packages.md` | `nsgo keygen`, `certify`, `publish` (signing a package again with another release key too), `verify` and `revoke` work; a Go, iOS and Android host verifies a package, runs it in `tsx.View`, and refuses tampered, revoked and older builds |
-| Capabilities and limits | `sandbox.md` | Every request a capability names (`fetch`, remote images, web views and their trusted input, `openUrl`, the clipboard, the picker, speech, host calls) is refused with `core.AccessDenied`, `ERR_ACCESS_DENIED` with `permission` and `resource` in JS (`fetch`'s a `TypeError` with them), without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
+| A package's trust on the web | `signed-packages.md` (Verification) | A web app's `Trust` keeps the revocation list and accepted builds in the page's storage across loads, as `OpenTrust` does in a directory elsewhere |
+| Capabilities and limits | `sandbox.md` | `nsgo.yaml`'s `capabilities:` travel in packages, which name them `critical`, and every request a capability names (`fetch`, remote images, web views and their trusted input, `openUrl`, the clipboard, the picker, speech, host calls) is refused with `core.AccessDenied`, `ERR_ACCESS_DENIED` with `permission` and `resource` in JS (`fetch`'s a `TypeError` with them), without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
 
 ## Performance against NSH's baselines
 

@@ -1,0 +1,4 @@
+name: Greeter
+id: dev.oneo.nsgo.plugins.greeter
+version: 1.0.0
+build_number: 1

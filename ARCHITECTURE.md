@@ -30,6 +30,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; hot and split bundles |
 | `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, fetching a split one's chunks on the web, or compiles it as it starts |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
+| `tsx/pkg` | `nsh-package` | Signed packages of TSX apps: keys, certificates, revocation lists and the `Trust` that verifies them for `tsx.View` ([signed packages](docs/architecture/tsx.md#signed-packages)) |
 | `i18n`, `*/locales`, `internal/cldr` | — | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on, formatting by CLDR's data; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |
 | `microphone` | — | Recording the default input on macOS and iOS, reporting `ErrUnsupported` elsewhere |
@@ -45,6 +46,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
 | `examples/gallery-tsx` | — | The gallery's Components in TSX, its apps among them, on `nsgo/ui`, `nsgo/ui/chat` and `nsgo/base`, with tests |
+| `examples/plugins` | — | A Go app running a signed TSX package in `tsx.View`, with tests refusing tampered, revoked and older ones |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
 
 ## Platforms
@@ -72,6 +74,7 @@ Packages import only downward, which `layering_test.go` checks on every target; 
 - The reactive graph belongs to the engine goroutine and never locks; other goroutines reach it through `Scope.Post`.
 - Text is prepared and laid out on the engine side through a platform `TextEngine`; the main thread only draws the result.
 - One engine is one app with no global state, so a host app embeds several; its windows are surfaces of that engine, a tree each. `tsx.Register` configures the process before apps start.
+- Go code, an app's and its components', is trusted native code; only TSX is signed, sandboxed and held to capabilities (decided by the user, 2026-11-08).
 - Layout (`internal/layout`) ports Taffy 0.15's algorithms step by step and passes every Taffy fixture that applies to NSH's features.
 
 ## Tool
@@ -94,7 +97,6 @@ Packages import only downward, which `layering_test.go` checks on every target; 
 
 Record a design question here, and confirm the answer with the user before choosing it.
 
-- **Signed packages and capabilities.** Port both for TSX modules only, Go code staying trusted, as [TSX](docs/architecture/tsx.md#sandbox) proposes?
 - **Implicit presentations.** Components swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)). Make each one a field the app sets, and which form is the default?
 
 ## Verification
