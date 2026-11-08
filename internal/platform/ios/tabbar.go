@@ -109,6 +109,14 @@ func (t *tabBar) SetProp(name string, value any) {
 		i, _ := value.(float64)
 		t.selected = int(i)
 		t.showSelected()
+	case "tint":
+		// The bar draws its selected item in its tintColor; none restores
+		// the inherited one.
+		tint := objc.ID(0)
+		if c, _ := value.(float64); c != 0 {
+			tint = uiColor(driver.Color(c))
+		}
+		t.bar.Send(sel("setTintColor:"), tint)
 	}
 }
 

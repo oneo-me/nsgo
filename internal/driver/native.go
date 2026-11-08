@@ -120,6 +120,7 @@ type AndroidEventMapper interface {
 
 // TabBarComponent is the native component iOS and Android register for
 // core.TabBar: the system's tab bar. Its props are "items", a list of
-// {"title", "icon"} maps, and "selectedIndex"; it emits "change" with the
-// index the user chose.
+// {"title", "icon"} maps, "selectedIndex" and "tint", the selected tab's
+// Color as a number (0: the system's); it emits "change" with the index
+// the user chose.
 const TabBarComponent = "nsgo/tab-bar"

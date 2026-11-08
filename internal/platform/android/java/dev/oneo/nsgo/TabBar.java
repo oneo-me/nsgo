@@ -21,7 +21,7 @@ import org.json.JSONObject;
 /**
  * core.TabBar's view, as NSH's TabBarComponent: Material 3's navigation
  * bar drawn with framework views, in its baseline colors for the
- * appearance shown. Each tab is an icon in an active indicator over its
+ * appearance shown and the selected tab in the theme's accent. Each tab is an icon in an active indicator over its
  * label; a press selects it at once and tells the listener. Native
  * components build it by reflection, so its constructor, setters and
  * listener are public.
@@ -34,6 +34,8 @@ public final class TabBar extends LinearLayout {
 
     private OnChangeListener listener;
     private int selected;
+    /** The theme's accent as ARGB (0: none): the selected tab's icon, label and indicator. */
+    private int tint;
     private final float density;
 
     public TabBar(Context context) {
@@ -86,6 +88,12 @@ public final class TabBar extends LinearLayout {
         restyle();
     }
 
+    /** Takes the theme's accent as ARGB, 0 for Material's colors. */
+    public void setTint(long argb) {
+        tint = (int) argb;
+        restyle();
+    }
+
     private View tab(int index, String title, String icon) {
         LinearLayout item = new LinearLayout(getContext());
         item.setOrientation(VERTICAL);
@@ -121,10 +129,16 @@ public final class TabBar extends LinearLayout {
     /** Colors each tab as selected or not. */
     private void restyle() {
         boolean night = night();
+        int idle = night ? 0xffcac4d0 : 0xff49454f;
         int indicator = night ? 0xff4a4458 : 0xffe8def8;
         int activeIcon = night ? 0xffe8def8 : 0xff1d192b;
-        int idle = night ? 0xffcac4d0 : 0xff49454f;
         int activeLabel = night ? 0xffe6e0e9 : 0xff1d1b20;
+        if (tint != 0) {
+            // The icon and label in the accent, over a faint pill of it.
+            indicator = (tint & 0x00ffffff) | (((tint >>> 24) * 0x1f / 0xff) << 24);
+            activeIcon = tint;
+            activeLabel = tint;
+        }
         for (int i = 0; i < getChildCount(); i++) {
             LinearLayout item = (LinearLayout) getChildAt(i);
             boolean on = i == selected;

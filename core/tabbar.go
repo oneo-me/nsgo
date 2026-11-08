@@ -3,7 +3,8 @@ package core
 import "github.com/oneo-me/nsgo/internal/driver"
 
 // TabBar is the core's part of mobile.TabBar, which apps use: the
-// system's tab bar, a native component iOS and Android register.
+// system's tab bar, a native component iOS and Android register. The
+// selected tab takes the theme's accent; the others keep the system's.
 type TabBar struct {
 	Items     []TabBarItem
 	ItemsFunc func() []TabBarItem
@@ -32,7 +33,7 @@ func (b TabBar) Render(cx *Scope) Node {
 }
 
 // native is the bar where the platform has one.
-func (b TabBar) native(*Scope) Node {
+func (b TabBar) native(cx *Scope) Node {
 	items := func() []TabBarItem {
 		if b.ItemsFunc != nil {
 			return b.ItemsFunc()
@@ -53,7 +54,8 @@ func (b TabBar) native(*Scope) Node {
 			if b.Selected != nil {
 				selected = b.Selected()
 			}
-			return map[string]any{"items": list, "selectedIndex": float64(selected)}
+			// One color, for the appearance shown: sent again when it changes.
+			return map[string]any{"items": list, "selectedIndex": float64(selected), "tint": float64(cx.Palette().Accent)}
 		},
 		OnEvent: func(name string, data any) {
 			if name != "change" || b.OnChange == nil {

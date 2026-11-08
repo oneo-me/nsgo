@@ -40,6 +40,11 @@ func (*tabBar) ViewProps(name string, value any) []driver.AndroidViewProp {
 	case "selectedIndex":
 		i, _ := value.(float64)
 		return []driver.AndroidViewProp{{Name: "selectedIndex", Value: int(i)}}
+	case "tint":
+		// As ARGB, which an int would overflow on its way through JSON.
+		c, _ := value.(float64)
+		rgba := uint32(c)
+		return []driver.AndroidViewProp{{Name: "tint", Value: int64(rgba>>8 | rgba<<24)}}
 	}
 	return nil
 }
