@@ -1,0 +1,113 @@
+---
+import { copies } from '../copy';
+import { docUrl, install, links, navPages, pageUrl, type Lang } from '../site';
+import CopyCommand from './CopyCommand.astro';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import SpeedLines from './SpeedLines.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const copy = copies[lang];
+const f = copy.footer;
+
+const columns = [
+  {
+    title: f.columns.product,
+    links: [
+      { label: copy.nav.pages.home, href: pageUrl(lang, 'home') },
+      ...navPages.map((page) => ({ label: copy.nav.pages[page.id], href: pageUrl(lang, page.id) })),
+      { label: copy.nav.demo, href: links.gallery },
+    ],
+  },
+  {
+    title: f.columns.resources,
+    links: [
+      { label: f.resources.architecture, href: links.architecture },
+      { label: f.resources.roadmap, href: links.roadmap },
+      { label: f.resources.changelog, href: links.changelog },
+      { label: f.resources.embedding, href: links.embedding },
+    ],
+  },
+  {
+    title: f.columns.community,
+    links: [
+      { label: f.community.github, href: links.repo },
+      { label: f.community.issues, href: links.issues },
+      { label: f.community.blog, href: links.blog },
+      { label: f.community.x, href: links.x },
+    ],
+  },
+  {
+    title: f.columns.legal,
+    links: [
+      { label: f.legal.license, href: links.license },
+      { label: f.legal.notice, href: links.notice },
+      { label: f.legal.nsh, href: links.nsh },
+    ],
+  },
+];
+const external = (href: string) => href.startsWith('http') || href === links.gallery;
+---
+
+<section class="container cta-wrap">
+  <div class="cta">
+    <SpeedLines class="cta__lines" size={320} />
+    <div class="cta__copy">
+      <h2>{copy.cta.title}</h2>
+      <p>{copy.cta.body}</p>
+    </div>
+    <div class="cta__actions">
+      <CopyCommand lang={lang} command={install} />
+      <div class="cta__buttons">
+        <a class="btn btn--light" href={docUrl(lang, 'getting-started')}>
+          {copy.cta.primary}
+        </a>
+        <a class="btn btn--ghost" href={links.gallery} target="_blank" rel="noopener noreferrer">
+          {copy.cta.secondary}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a class="brand" href={pageUrl(lang, 'home')}>
+          <Logo size={26} />
+          <span class="brand__name">NSGo</span>
+        </a>
+        <p>{f.tagline}</p>
+      </div>
+      {columns.map((column) => (
+        <div class="footer__column">
+          <h3>{column.title}</h3>
+          <ul>
+            {column.links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  {...(external(link.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+    <div class="footer__bottom">
+      <span>{f.bottom}</span>
+      <a href="#top" class="footer__top">
+        {f.top}
+        <Icon name="arrow-up" size={12} />
+      </a>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,111 @@
+---
+import { copies } from '../copy';
+import { langs, links, localePath, navPages, pageUrl, type Lang, type PageId } from '../site';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import Menu from './Menu.astro';
+import ThemeSwitch from './ThemeSwitch.astro';
+
+interface Props {
+  lang: Lang;
+  page?: PageId;
+  path: string;
+}
+
+const { lang, page, path } = Astro.props;
+const copy = copies[lang].nav;
+const home = pageUrl(lang, 'home');
+const languages: Record<Lang, string> = { en: 'English', zh: '简体中文' };
+---
+
+<header class="header" id="top">
+  <div class="container header__inner">
+    <a class="brand" href={home} aria-label="NSGo">
+      <Logo size={26} />
+      <span class="brand__name">NSGo</span>
+    </a>
+
+    <nav id="site-menu" class="header__links" aria-label={copy.primary}>
+      <a href={home} aria-current={page === 'home' ? 'page' : undefined}>{copy.pages.home}</a>
+      {navPages.map((entry) => (
+        <a href={pageUrl(lang, entry.id)} aria-current={entry.id === page ? 'page' : undefined}>
+          {copy.pages[entry.id]}
+          {entry.dev && <span class="dev-dot" aria-hidden="true" />}
+        </a>
+      ))}
+      <a href={links.gallery} target="_blank" rel="noopener noreferrer">
+        {copy.demo}
+        <Icon name="external" size={13} class="header__external" />
+      </a>
+      <a href={links.repo} target="_blank" rel="noopener noreferrer">
+        {copy.github}
+        <Icon name="external" size={13} class="header__external" />
+      </a>
+    </nav>
+
+    <div class="header__actions">
+      <Menu label={copy.language} align="end">
+        <span slot="trigger" class="menu__trigger-label">
+          <Icon name="languages" size={16} />
+          <span>{languages[lang]}</span>
+        </span>
+        {langs.map((other) => (
+          <a
+            class="menu__item"
+            role="menuitemradio"
+            aria-checked={other === lang ? 'true' : 'false'}
+            href={localePath(other, path)}
+            hreflang={other === 'zh' ? 'zh-CN' : 'en'}
+            lang={other === 'zh' ? 'zh-CN' : 'en'}
+            data-lang={other}
+          >
+            {languages[other]}
+            <Icon name="check" size={14} class="menu__check" />
+          </a>
+        ))}
+      </Menu>
+      <ThemeSwitch lang={lang} />
+      <button
+        type="button"
+        class="icon-button header__burger"
+        aria-expanded="false"
+        aria-controls="site-menu"
+        aria-label={copy.menu}
+        data-open-label={copy.close}
+        data-closed-label={copy.menu}
+      >
+        <Icon name="menu" size={18} class="header__burger-open" />
+        <Icon name="close" size={18} class="header__burger-close" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-lang]').forEach((link) => {
+    link.addEventListener('click', () => {
+      try {
+        localStorage.setItem('nsgo-lang', link.dataset.lang ?? 'en');
+      } catch {
+        // The link still opens the language.
+      }
+    });
+  });
+
+  const header = document.querySelector<HTMLElement>('.header');
+  const burger = document.querySelector<HTMLButtonElement>('.header__burger');
+  const setOpen = (open: boolean) => {
+    header?.classList.toggle('is-open', open);
+    burger?.setAttribute('aria-expanded', String(open));
+    burger?.setAttribute('aria-label', (open ? burger.dataset.openLabel : burger.dataset.closedLabel) ?? '');
+  };
+  const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 4);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+  burger?.addEventListener('click', () => setOpen(!header?.classList.contains('is-open')));
+  document.querySelectorAll('.header__links a').forEach((link) => link.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setOpen(false);
+  });
+  window.matchMedia('(min-width: 901px)').addEventListener('change', () => setOpen(false));
+</script>

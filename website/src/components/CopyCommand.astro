@@ -1,0 +1,51 @@
+---
+import { copies } from '../copy';
+import type { Lang } from '../site';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+  command: string;
+  class?: string;
+}
+
+const { lang, command, class: className } = Astro.props;
+const copy = copies[lang].ui;
+---
+
+<div class:list={['command', className]}>
+  <span class="command__prompt" aria-hidden="true">$</span>
+  <code>{command}</code>
+  <button
+    type="button"
+    class="command__copy"
+    data-copy={command}
+    data-copied={copy.copied}
+    aria-label={copy.copy}
+    title={copy.copy}
+  >
+    <Icon name="copy" size={14} class="command__icon" />
+    <Icon name="check" size={14} class="command__icon command__icon--done" />
+  </button>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.command__copy').forEach((button) => {
+    let timer: number | undefined;
+    const label = button.getAttribute('aria-label') ?? '';
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy ?? '');
+      } catch {
+        return;
+      }
+      button.classList.add('is-copied');
+      button.setAttribute('aria-label', button.dataset.copied ?? label);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        button.classList.remove('is-copied');
+        button.setAttribute('aria-label', label);
+      }, 1600);
+    });
+  });
+</script>

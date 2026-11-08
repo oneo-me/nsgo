@@ -109,9 +109,9 @@
       }
     </style>
     <script>
-      // The theme comes from the parent when embedded, otherwise from the
-      // site's stored preference, so the page never paints in the wrong
-      // appearance before the app starts.
+      // The theme comes from the URL, otherwise from the site's stored one,
+      // light unless dark or the system's, so the page never paints in the
+      // wrong appearance before the app starts.
       (function () {
         var params = new URLSearchParams(location.search);
         var theme = params.get('theme');
@@ -120,8 +120,8 @@
           try {
             stored = localStorage.getItem('nsgo-theme');
           } catch (error) {}
-          if (stored === 'light' || stored === 'dark') theme = stored;
-          else theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          var dark = stored === 'dark' || (stored === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+          theme = dark ? 'dark' : 'light';
         }
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;

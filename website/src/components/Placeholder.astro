@@ -1,0 +1,32 @@
+---
+import { copies } from '../copy';
+import Layout from '../layouts/Layout.astro';
+import { pageUrl, pages, type Lang } from '../site';
+import Icon from './Icon.astro';
+import SpeedLines from './SpeedLines.astro';
+
+interface Props {
+  lang: Lang;
+  page: 'showcases' | 'benchmarks';
+}
+
+const { lang, page } = Astro.props;
+const copy = copies[lang].placeholder;
+const text = copy.pages[page];
+const path = pages.find((entry) => entry.id === page)!.path;
+---
+
+<Layout lang={lang} page={page} path={path} title={text.title} description={text.lead}>
+  <section class="placeholder">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <SpeedLines class="placeholder__lines" size={56} />
+    <span class="pill">{copy.badge}</span>
+    <h1>{text.heading}</h1>
+    <p class="placeholder__lead">{text.lead}</p>
+    <p class="placeholder__note">{copy.note}</p>
+    <a class="btn btn--secondary" href={pageUrl(lang, 'home')}>
+      {copy.back}
+      <Icon name="arrow" size={14} />
+    </a>
+  </section>
+</Layout>

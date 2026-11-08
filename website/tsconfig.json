@@ -3,9 +3,6 @@
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "public/gallery"],
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "types": ["astro/client"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true

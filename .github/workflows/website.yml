@@ -9,6 +9,7 @@ on:
       - "go.mod"
       - "go.sum"
       - "examples/gallery/**"
+      - "docs/public/**"
       - "website/**"
       - ".github/workflows/website.yml"
   workflow_dispatch:

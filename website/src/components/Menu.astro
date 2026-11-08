@@ -1,0 +1,70 @@
+---
+// A button that drops down a list of links or choices. The trigger slot is
+// the button's content; the default slot holds the items, `.menu__item`s.
+import Icon from './Icon.astro';
+
+interface Props {
+  label: string;
+  class?: string;
+  align?: 'start' | 'end';
+}
+
+const { label, class: className, align = 'start' } = Astro.props;
+---
+
+<div class:list={['menu', `menu--${align}`, className]} data-menu>
+  <button type="button" class="menu__trigger" aria-haspopup="true" aria-expanded="false" aria-label={label} title={label}>
+    <slot name="trigger" />
+    <Icon name="chevron" size={14} class="menu__chevron" />
+  </button>
+  <div class="menu__list" role="menu" hidden>
+    <slot />
+  </div>
+</div>
+
+<script>
+  // One handler for every menu: a trigger opens its list, and a press
+  // elsewhere, Escape or choosing an item closes it.
+  const menus = Array.from(document.querySelectorAll<HTMLElement>('[data-menu]'));
+  const close = (menu: HTMLElement) => {
+    menu.querySelector('.menu__list')?.setAttribute('hidden', '');
+    menu.querySelector('.menu__trigger')?.setAttribute('aria-expanded', 'false');
+  };
+  menus.forEach((menu) => {
+    const trigger = menu.querySelector<HTMLButtonElement>('.menu__trigger');
+    const list = menu.querySelector<HTMLElement>('.menu__list');
+    trigger?.addEventListener('click', () => {
+      const open = list?.hasAttribute('hidden') ?? false;
+      menus.forEach(close);
+      if (!open || !list) return;
+      list.removeAttribute('hidden');
+      trigger.setAttribute('aria-expanded', 'true');
+      list.querySelector<HTMLElement>('.menu__item')?.focus();
+    });
+    list?.addEventListener('keydown', (event) => {
+      const items = Array.from(list.querySelectorAll<HTMLElement>('.menu__item'));
+      const index = items.indexOf(document.activeElement as HTMLElement);
+      const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
+      if (!step) return;
+      event.preventDefault();
+      items[(index + step + items.length) % items.length]?.focus();
+    });
+    list?.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).closest('.menu__item')) close(menu);
+    });
+  });
+  document.addEventListener('click', (event) => {
+    menus.forEach((menu) => {
+      if (!menu.contains(event.target as Node)) close(menu);
+    });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    menus.forEach((menu) => {
+      if (!menu.querySelector('.menu__list')?.hasAttribute('hidden')) {
+        close(menu);
+        menu.querySelector<HTMLElement>('.menu__trigger')?.focus();
+      }
+    });
+  });
+</script>

@@ -1,5 +1,5 @@
 // Builds the gallery for the web and puts it in public/gallery/ for the
-// site's Gallery links.
+// site's Demo page.
 //
 // The nsgo tool writes index.html, wasm_exec.js, resources, a
 // content-named wasm and nsgo.json, which names them. This script adds:

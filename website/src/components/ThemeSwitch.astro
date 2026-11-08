@@ -1,0 +1,51 @@
+---
+import { copies } from '../copy';
+import type { Lang } from '../site';
+import Icon from './Icon.astro';
+import Menu from './Menu.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const labels = copies[Astro.props.lang].nav.theme;
+const options = [
+  { value: 'light', icon: 'sun' },
+  { value: 'dark', icon: 'moon' },
+  { value: 'system', icon: 'monitor' },
+] as const;
+---
+
+<Menu label={labels.label} align="end" class="theme-menu">
+  <span slot="trigger" class="theme-menu__current">
+    {options.map((option) => (
+      <Icon name={option.icon} size={16} class={`theme-menu__icon theme-menu__icon--${option.value}`} />
+    ))}
+  </span>
+  {options.map((option) => (
+    <button type="button" class="menu__item" role="menuitemradio" aria-checked="false" data-theme-option={option.value}>
+      <Icon name={option.icon} size={15} />
+      {labels[option.value]}
+      <Icon name="check" size={14} class="menu__check" />
+    </button>
+  ))}
+</Menu>
+
+<script>
+  import { readPreference, setPreference } from '../scripts/theme';
+
+  const items = document.querySelectorAll<HTMLButtonElement>('[data-theme-option]');
+  const mark = () => {
+    const preference = readPreference();
+    document.documentElement.dataset.themePreference = preference;
+    items.forEach((item) => item.setAttribute('aria-checked', String(item.dataset.themeOption === preference)));
+  };
+  items.forEach((item) => {
+    item.addEventListener('click', () => {
+      const value = item.dataset.themeOption;
+      if (value === 'light' || value === 'dark' || value === 'system') setPreference(value);
+    });
+  });
+  document.addEventListener('nsgo-theme', mark);
+  mark();
+</script>

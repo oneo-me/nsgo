@@ -1,0 +1,137 @@
+---
+import { render } from 'astro:content';
+import Icon from '../components/Icon.astro';
+import { copies } from '../copy';
+import { groupDocs, type Doc } from '../lib/docs';
+import { docUrl, links, type Lang } from '../site';
+import Layout from './Layout.astro';
+import '../styles/docs.css';
+
+interface Props {
+  lang: Lang;
+  doc: Doc;
+  docs: Doc[];
+  prev?: Doc;
+  next?: Doc;
+}
+
+const { lang, doc, docs, prev, next } = Astro.props;
+const copy = copies[lang].docs;
+const { Content, headings } = await render(doc.entry);
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+const groups = groupDocs(docs);
+const source = `${doc.fallback ? 'en' : lang}/${doc.id}.md`;
+const path = doc.id === 'index' ? 'docs/' : `docs/${doc.id}/`;
+const title = `${doc.entry.data.title} — NSGo ${copy.title}`;
+const description = doc.entry.data.description ?? copy.description;
+---
+
+<Layout lang={lang} page="docs" path={path} title={title} description={description}>
+  <div class="container docs">
+    <aside class="docs__sidebar">
+      <details class="docs__nav" open>
+        <summary>{copy.pages}<Icon name="chevron" size={14} /></summary>
+        <nav aria-label={copy.title}>
+          {groups.map((group) => (
+            <div class="docs__group">
+              <p>{group.title}</p>
+              <ul>
+                {group.docs.map((item) => (
+                  <li>
+                    <a href={docUrl(lang, item.id)} aria-current={item.id === doc.id ? 'page' : undefined}>
+                      {item.entry.data.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </details>
+    </aside>
+
+    <article class="docs__main">
+      <p class="docs__group-name">{doc.entry.data.group}</p>
+      <h1>{doc.entry.data.title}</h1>
+      {doc.entry.data.description && <p class="docs__lead">{doc.entry.data.description}</p>}
+      {doc.fallback && <p class="docs__notice">{copy.fallback}</p>}
+      <div class="prose" lang={doc.fallback ? 'en' : undefined} data-copy={copies[lang].ui.copy} data-copied={copies[lang].ui.copied}>
+        <Content />
+      </div>
+
+      <a class="docs__edit" href={`${links.repo}/edit/main/docs/public/${source}`} target="_blank" rel="noopener noreferrer">
+        {copy.edit}
+        <Icon name="external" size={13} />
+      </a>
+
+      {(prev || next) && (
+        <nav class="docs__pager">
+          {prev ? (
+            <a href={docUrl(lang, prev.id)}>
+              <span>{copy.previous}</span>
+              <strong>{prev.entry.data.title}</strong>
+            </a>
+          ) : <span />}
+          {next && (
+            <a class="docs__pager-next" href={docUrl(lang, next.id)}>
+              <span>{copy.next}</span>
+              <strong>{next.entry.data.title}</strong>
+            </a>
+          )}
+        </nav>
+      )}
+    </article>
+
+    {toc.length > 0 && (
+      <nav class="docs__toc" aria-label={copy.onThisPage}>
+        <p>{copy.onThisPage}</p>
+        <ul>
+          {toc.map((heading) => (
+            <li class={`docs__toc-${heading.depth}`}>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+  </div>
+</Layout>
+
+<script>
+  // Each code block gets a copy button, and the contents follow the
+  // heading in view.
+  // On narrow screens the pages fold above the article.
+  const pagesNav = document.querySelector<HTMLDetailsElement>('.docs__nav');
+  if (pagesNav && window.matchMedia('(max-width: 820px)').matches) pagesNav.open = false;
+
+  const prose = document.querySelector<HTMLElement>('.prose');
+  document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
+    const button = document.createElement('button');
+    const label = prose?.dataset.copy ?? 'Copy';
+    button.type = 'button';
+    button.className = 'prose__copy';
+    button.textContent = label;
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pre.innerText);
+        button.textContent = prose?.dataset.copied ?? label;
+        window.setTimeout(() => (button.textContent = label), 1400);
+      } catch {
+        // The code can still be selected.
+      }
+    });
+    pre.append(button);
+  });
+
+  const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.docs__toc a'));
+  const headings = tocLinks
+    .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+    .filter((heading): heading is HTMLElement => heading !== null);
+  const mark = () => {
+    let current = headings[0];
+    for (const heading of headings) if (heading.getBoundingClientRect().top < 120) current = heading;
+    tocLinks.forEach((link) => link.classList.toggle('is-current', link.hash === `#${current?.id}`));
+  };
+  window.addEventListener('scroll', mark, { passive: true });
+  mark();
+</script>

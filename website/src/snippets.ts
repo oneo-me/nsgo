@@ -1,10 +1,6 @@
-import type { PrismTheme } from 'prism-react-renderer';
+// The home page's code, after README.md's Usage.
 
-export const snippets = [
-  {
-    id: 'app',
-    language: 'go',
-    code: `package main
+export const goApp = `package main
 
 import (
 	"fmt"
@@ -14,7 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-func App(cx *core.Scope) core.Node {
+func Root(cx *core.Scope) core.Node {
 	count := core.NewSignal(cx, 0)
 	return core.View{
 		Style: core.Style{Padding: core.All(24), Gap: 12},
@@ -39,67 +35,31 @@ func App(cx *core.Scope) core.Node {
 	}
 }
 
-func main() { nsgo.Run(App) }`,
-  },
-  {
-    id: 'test',
-    language: 'go',
-    code: `package main
+func main() { nsgo.Run(Root) }`;
 
-import (
-	"testing"
+export const tsxApp = `import { mount, signal, Text, View } from "nsgo";
 
-	"github.com/oneo-me/nsgo/nsgotest"
-)
+function App() {
+  const count = signal(0);
+  return (
+    <View class="gap-3 p-6">
+      <Text>Pressed {count()} times</Text>
+      <View
+        class="self-start rounded-lg bg-blue-500 px-3.5 py-1.5"
+        onPress={() => count.update((n) => n + 1)}
+      >
+        <Text class="text-white">Press me</Text>
+      </View>
+    </View>
+  );
+}
 
-func TestMain(m *testing.M) { nsgotest.Main(m) }
+mount(App);`;
+
+export const goTest = `func TestMain(m *testing.M) { nsgotest.Main(m) }
 
 func TestPress(t *testing.T) {
-	app := nsgotest.Start(t, App)
+	app := nsgotest.Start(t, Root)
 	app.Press("text:Press me")
 	app.Find("text:Pressed 1 times")
-}`,
-  },
-] as const;
-
-// Code colours are the site's tokens, so they follow the appearance.
-export const codeTheme: PrismTheme = {
-  plain: {
-    color: 'var(--code-text)',
-    backgroundColor: 'transparent',
-  },
-  styles: [
-    {
-      types: ['comment', 'prolog', 'doctype', 'cdata'],
-      style: { color: 'var(--code-comment)', fontStyle: 'italic' },
-    },
-    {
-      types: ['punctuation'],
-      style: { color: 'var(--code-punctuation)' },
-    },
-    {
-      types: ['keyword', 'operator', 'boolean', 'atrule'],
-      style: { color: 'var(--code-keyword)' },
-    },
-    {
-      types: ['string', 'char', 'attr-value'],
-      style: { color: 'var(--code-string)' },
-    },
-    {
-      types: ['function', 'method'],
-      style: { color: 'var(--code-function)' },
-    },
-    {
-      types: ['type', 'class-name', 'builtin'],
-      style: { color: 'var(--code-type)' },
-    },
-    {
-      types: ['number'],
-      style: { color: 'var(--code-number)' },
-    },
-    {
-      types: ['property', 'constant', 'symbol'],
-      style: { color: 'var(--code-property)' },
-    },
-  ],
-};
+}`;

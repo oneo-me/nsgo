@@ -1,0 +1,10 @@
+---
+import DocPage from '../../../layouts/DocPage.astro';
+import { docPaths, type Doc } from '../../../lib/docs';
+
+export const getStaticPaths = () => docPaths('zh');
+
+const props = Astro.props as { doc: Doc; docs: Doc[]; prev?: Doc; next?: Doc };
+---
+
+<DocPage lang="zh" {...props} />

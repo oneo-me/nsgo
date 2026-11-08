@@ -7,19 +7,15 @@
     "build": "bun run gallery && astro check && astro build",
     "preview": "astro preview",
     "gallery": "bun scripts/build-gallery.mjs",
-    "typecheck": "astro check"
+    "typecheck": "astro check",
+    "screenshots": "bun scripts/screenshots.mjs"
   },
   "dependencies": {
-    "@astrojs/react": "^7.1.2",
-    "astro": "^7.4.5",
-    "prism-react-renderer": "^2.4.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "@astrojs/markdown-satteri": "^0.4.7",
+    "astro": "^7.4.5"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
     "typescript": "^5.9.3"
   }
 }

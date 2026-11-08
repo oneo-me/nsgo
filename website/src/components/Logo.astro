@@ -1,0 +1,15 @@
+---
+import darkLogo from '../assets/logo-dark.svg?url';
+import lightLogo from '../assets/logo-light.svg?url';
+
+interface Props {
+  size?: number;
+}
+
+const { size = 26 } = Astro.props;
+---
+
+<span class="logo" style={`--logo-size: ${size}px`}>
+  <img class="logo--dark" src={darkLogo} width={size} height={size} alt="" draggable="false" />
+  <img class="logo--light" src={lightLogo} width={size} height={size} alt="" draggable="false" />
+</span>

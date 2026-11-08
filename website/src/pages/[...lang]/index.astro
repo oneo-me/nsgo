@@ -1,0 +1,347 @@
+---
+import { Code } from 'astro:components';
+import CopyCommand from '../../components/CopyCommand.astro';
+import Eyebrow from '../../components/Eyebrow.astro';
+import Icon, { type IconName } from '../../components/Icon.astro';
+import SpeedLines from '../../components/SpeedLines.astro';
+import { copies } from '../../copy';
+import Layout from '../../layouts/Layout.astro';
+import { docUrl, install, langOf, langPaths, links, pageUrl, platforms, shown } from '../../site';
+import { goApp, goTest, tsxApp } from '../../snippets';
+import desktopEn from '../../assets/screens/desktop-en.jpg';
+import desktopZh from '../../assets/screens/desktop-zh.jpg';
+import phoneEn from '../../assets/screens/phone-en.jpg';
+import phoneZh from '../../assets/screens/phone-zh.jpg';
+
+export const getStaticPaths = () => langPaths('home');
+
+const lang = langOf(Astro.params.lang);
+const copy = copies[lang];
+const home = copy.home;
+const f = home.features;
+const desktop = lang === 'zh' ? desktopZh : desktopEn;
+const phone = lang === 'zh' ? phoneZh : phoneEn;
+
+const tabs = [
+  { id: 'go', file: 'main.go', code: goApp, lang: 'go' },
+  { id: 'tsx', file: 'App.tsx', code: tsxApp, lang: 'tsx' },
+  { id: 'test', file: 'app_test.go', code: goTest, lang: 'go' },
+] as const;
+
+const next: { icon: IconName; title: string; body: string; href: string; external?: boolean }[] = [
+  { icon: 'book', ...copy.guides.docs, href: pageUrl(lang, 'docs') },
+  { icon: 'play', ...copy.guides.demo, href: links.gallery, external: true },
+  ...(shown('showcases') ? [{ icon: 'image' as const, ...copy.guides.showcases, href: pageUrl(lang, 'showcases') }] : []),
+  ...(shown('benchmarks') ? [{ icon: 'gauge' as const, ...copy.guides.benchmarks, href: pageUrl(lang, 'benchmarks') }] : []),
+  { icon: 'map', ...copy.guides.architecture, href: links.architecture, external: true },
+  { icon: 'github', ...copy.guides.github, href: links.repo, external: true },
+];
+---
+
+<Layout lang={lang} page="home" path="" title={home.title} description={home.description}>
+  <section class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="container hero__inner">
+      <span class="pill"><SpeedLines size={14} />{home.hero.badge}</span>
+      <h1>
+        {home.hero.title[0]}
+        <span class="gradient-text">{home.hero.title[1]}</span>
+      </h1>
+      <ul class="platforms" aria-label={home.hero.runsOn}>
+        {platforms.map((platform, index) => (
+          <li class="platform" style={`--i: ${index}`}>
+            <Icon name={platform.icon} size={18} />
+            {platform.name}
+          </li>
+        ))}
+      </ul>
+      <div class="platform-lines" aria-hidden="true">
+        {platforms.map((platform) => (
+          <p class="platform-line">
+            <strong>{platform.name}</strong>{home.hero.drawsWith[0]}<span>{platform.stack}</span>{home.hero.drawsWith[1]}
+          </p>
+        ))}
+      </div>
+      <p class="hero__lead">{home.hero.lead}</p>
+      <div class="hero__actions">
+        <a class="btn btn--primary btn--large" href={docUrl(lang, 'getting-started')}>
+          {home.hero.start}
+        </a>
+        <a class="btn btn--secondary btn--large" href={links.gallery} target="_blank" rel="noopener noreferrer">
+          {home.hero.demo}
+        </a>
+      </div>
+      <CopyCommand lang={lang} command={install} class="hero__command" />
+    </div>
+
+    <div class="container stage">
+      <figure class="screen">
+        <img src={desktop.src} width={desktop.width} height={desktop.height} alt={home.hero.desktopAlt} />
+      </figure>
+      <figure class="phone">
+        <img src={phone.src} width={phone.width} height={phone.height} alt={home.hero.phoneAlt} />
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="container">
+      <header class="section__head section__head--center">
+        <Eyebrow>{home.how.eyebrow}</Eyebrow>
+        <h2>{home.how.title}</h2>
+        <p>{home.how.lead}</p>
+      </header>
+      <ol class="flow">
+        {home.how.nodes.map((node, index) => (
+          <>
+            <li class:list={['flow__node', { 'flow__node--engine': index === 1 }]}>
+              <span class="flow__label">{node.label}</span>
+              <strong>{node.title}</strong>
+              <ul>
+                {node.items.map((item) => <li>{item}</li>)}
+              </ul>
+            </li>
+            {index < home.how.links.length && (
+              <li class="flow__link" aria-hidden="true">
+                <span class="flow__track"><i></i><i></i><i></i></span>
+                <span class="flow__caption">{home.how.links[index]}</span>
+              </li>
+            )}
+          </>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--soft" id="features">
+    <div class="container">
+      <header class="section__head">
+        <Eyebrow>{f.eyebrow}</Eyebrow>
+        <h2>{f.title}</h2>
+      </header>
+      <div class="bento">
+        <article class="bento__card bento__card--wide">
+          <span class="bento__icon"><Icon name="layers" size={18} /></span>
+          <h3>{f.native.title}</h3>
+          <p>{f.native.body}</p>
+          <ul class="stacks">
+            {platforms.map((platform) => (
+              <li>
+                <Icon name={platform.icon} size={15} />
+                <strong>{platform.name}</strong>
+                <span>{platform.stack}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+        <article class="bento__card">
+          <span class="bento__icon"><Icon name="bolt" size={18} /></span>
+          <h3>{f.reactive.title}</h3>
+          <p>{f.reactive.body}</p>
+          <div class="signal" aria-hidden="true">
+            <span class="signal__source">count</span>
+            <span class="signal__wire"></span>
+            <span class="signal__reader">Text</span>
+          </div>
+        </article>
+        <article class="bento__card">
+          <span class="bento__icon"><Icon name="layout" size={18} /></span>
+          <h3>{f.layout.title}</h3>
+          <p>{f.layout.body}</p>
+          <code class="bento__snippet">flex-row gap-3 p-6 md:grid-cols-2</code>
+        </article>
+        <article class="bento__card bento__card--wide">
+          <span class="bento__icon"><Icon name="box" size={18} /></span>
+          <h3>{f.components.title}</h3>
+          <p>{f.components.body}</p>
+          <ul class="chips">
+            {f.components.chips.map((chip) => <li>{chip}</li>)}
+          </ul>
+        </article>
+        <article class="bento__card">
+          <span class="bento__icon"><Icon name="code" size={18} /></span>
+          <h3>{f.tsx.title}</h3>
+          <p>{f.tsx.body}</p>
+        </article>
+        <article class="bento__card">
+          <span class="bento__icon"><Icon name="test" size={18} /></span>
+          <h3>{f.tests.title}</h3>
+          <p>{f.tests.body}</p>
+        </article>
+        <a class="bento__card bento__card--link" href={links.embedding} target="_blank" rel="noopener noreferrer">
+          <span class="bento__icon"><Icon name="external" size={18} /></span>
+          <h3>{f.embed.title}</h3>
+          <p>{f.embed.body}</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="code">
+    <div class="container code">
+      <div class="code__copy">
+        <header class="section__head">
+          <Eyebrow>{home.code.eyebrow}</Eyebrow>
+          <h2>{home.code.title}</h2>
+          <p>{home.code.lead}</p>
+        </header>
+        <ol class="code__points">
+          {home.code.points.map((point, index) => (
+            <li>
+              <span class="code__n">{index + 1}</span>
+              <div>
+                <strong>{point.title}</strong>
+                <p>{point.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div class="code__demo">
+        <div class="editor">
+          <div class="editor__tabs" role="tablist">
+            <span class="window__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            {tabs.map((tab, index) => (
+              <button
+                type="button"
+                role="tab"
+                id={`tab-${tab.id}`}
+                class="editor__tab"
+                aria-selected={index === 0 ? 'true' : 'false'}
+                aria-controls={`panel-${tab.id}`}
+                tabindex={index === 0 ? 0 : -1}
+              >
+                {tab.file}
+              </button>
+            ))}
+          </div>
+          {tabs.map((tab, index) => (
+            <div
+              class="editor__panel"
+              role="tabpanel"
+              id={`panel-${tab.id}`}
+              aria-labelledby={`tab-${tab.id}`}
+              hidden={index !== 0}
+            >
+              <Code code={tab.code} lang={tab.lang} theme="css-variables" />
+            </div>
+          ))}
+        </div>
+        <div class="result">
+          <span class="result__label">{home.code.result}</span>
+          <p class="result__count" data-count="0">Pressed 0 times</p>
+          <button type="button" class="result__press">Press me</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--soft" id="workflow">
+    <div class="container">
+      <header class="section__head section__head--center">
+        <Eyebrow>{home.workflow.eyebrow}</Eyebrow>
+        <h2>{home.workflow.title}</h2>
+        <p>{home.workflow.lead}</p>
+      </header>
+      <ol class="steps">
+        {home.workflow.steps.map((step, index) => (
+          <li class="step">
+            <span class="step__n">{String(index + 1).padStart(2, '0')}</span>
+            <h3>{step.title}</h3>
+            <p>{step.body}</p>
+            <code><span class="prompt">$ </span>{step.command}</code>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--next">
+    <div class="container">
+      <header class="section__head">
+        <Eyebrow>{home.next.eyebrow}</Eyebrow>
+        <h2>{home.next.title}</h2>
+      </header>
+      <ul class="cards">
+        {next.map((card) => (
+          <li>
+            <a
+              class="card"
+              href={card.href}
+              {...(card.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              <span class="card__icon"><Icon name={card.icon} size={18} /></span>
+              <span class="card__title">{card.title}</span>
+              <span class="card__body">{card.body}</span>
+              <Icon name={card.external ? 'external' : 'arrow'} size={16} class="card__arrow" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.editor__tab'));
+  const select = (tab: HTMLButtonElement) => {
+    tabs.forEach((other) => {
+      const selected = other === tab;
+      other.setAttribute('aria-selected', String(selected));
+      other.tabIndex = selected ? 0 : -1;
+      const panel = document.getElementById(other.getAttribute('aria-controls') ?? '');
+      if (panel) panel.hidden = !selected;
+    });
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => select(tab));
+    tab.addEventListener('keydown', (event) => {
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      const next = tabs[(index + step + tabs.length) % tabs.length]!;
+      select(next);
+      next.focus();
+    });
+  });
+
+  // The platforms take turns being lit, with the line under them naming
+  // what draws the lit one. Pointing at one lights and holds it; the turns
+  // stop when the reader asked for less motion.
+  const platformItems = Array.from(document.querySelectorAll<HTMLElement>('.platform'));
+  const platformLines = Array.from(document.querySelectorAll<HTMLElement>('.platform-line'));
+  let lit = 0;
+  let held = false;
+  const light = (index: number) => {
+    platformItems.forEach((item, i) => item.classList.toggle('is-lit', i === index));
+    platformLines.forEach((line, i) => line.classList.toggle('is-lit', i === index));
+  };
+  platformItems.forEach((item, index) => {
+    item.addEventListener('pointerenter', () => {
+      held = true;
+      lit = index;
+      light(index);
+    });
+    item.addEventListener('pointerleave', () => (held = false));
+  });
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    light(lit);
+  } else {
+    window.setTimeout(() => {
+      light(lit);
+      window.setInterval(() => {
+        if (held) return;
+        lit = (lit + 1) % platformItems.length;
+        light(lit);
+      }, 2200);
+    }, 900);
+  }
+
+  const count = document.querySelector<HTMLElement>('.result__count');
+  document.querySelector('.result__press')?.addEventListener('click', () => {
+    if (!count) return;
+    const n = Number(count.dataset.count) + 1;
+    count.dataset.count = String(n);
+    count.textContent = `Pressed ${n} times`;
+  });
+</script>

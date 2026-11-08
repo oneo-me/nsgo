@@ -1,0 +1,86 @@
+---
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { copies } from '../copy';
+import { langs, localePath, type Lang, type PageId } from '../site';
+import '../styles/global.css';
+
+interface Props {
+  lang: Lang;
+  /** The page the header marks as current, if it is one of the site's. */
+  page?: PageId;
+  title: string;
+  description: string;
+  /** The path below the language, which the language switch keeps. */
+  path: string;
+}
+
+const { lang, page, title, description, path } = Astro.props;
+const copy = copies[lang];
+const base = import.meta.env.BASE_URL;
+const site = Astro.site ?? Astro.url;
+const canonical = new URL(localePath(lang, path), site);
+const image = new URL(`${base}icon.png`, site);
+// Only the site's own pages have a Chinese twin to send a visitor to.
+const zhPath = page ? localePath('zh', path) : null;
+---
+
+<!doctype html>
+<html lang={lang === 'zh' ? 'zh-CN' : 'en'} data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" type="image/png" href={`${base}icon.png`} />
+    <link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
+    {page && <link rel="canonical" href={canonical} />}
+    {page && langs.map((other) => (
+      <link rel="alternate" hreflang={other === 'zh' ? 'zh-CN' : 'en'} href={new URL(localePath(other, path), site)} />
+    ))}
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:alt" content="The NSGo mark" />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline define:vars={{ lang, zhPath }}>
+      // Apply the stored appearance, light unless dark or the system's is
+      // chosen, before the first paint, and send a first visit from a
+      // Chinese browser to the Chinese page. A choice made with the language
+      // switch is kept in `nsgo-lang`.
+      (function () {
+        var theme = 'light';
+        var pref = null;
+        var stored = null;
+        try {
+          pref = localStorage.getItem('nsgo-theme');
+          if (pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)) theme = 'dark';
+          stored = localStorage.getItem('nsgo-lang');
+        } catch (error) {}
+        var root = document.documentElement;
+        root.dataset.theme = theme;
+        root.dataset.themePreference = pref === 'dark' || pref === 'system' ? pref : 'light';
+        root.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#0b0c0f' : '#ffffff');
+        if (lang !== 'en' || stored === 'en' || !zhPath) return;
+        var languages = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+        var chinese = languages.some(function (language) {
+          return String(language).toLowerCase().indexOf('zh') === 0;
+        });
+        if (stored === 'zh' || (!stored && chinese)) location.replace(zhPath + location.hash);
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{copy.nav.skip}</a>
+    <Header lang={lang} page={page} path={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+  </body>
+</html>

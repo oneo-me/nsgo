@@ -1,21 +1,19 @@
 import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
+import { satteri } from '@astrojs/markdown-satteri';
+import { docLinks } from './src/lib/doc-links.mjs';
 
-// The site is deployed under the repository path on GitHub Pages. The home
-// page is a client-only React island; docs pages are static Astro pages.
+const base = '/nsgo/';
+
+// The site is deployed under the repository path on GitHub Pages. Every
+// page is static; English is at the base and Chinese under zh/. The docs
+// are the repository's docs/public/.
 export default defineConfig({
   site: 'https://oneo-me.github.io',
-  base: '/nsgo/',
-  integrations: [react()],
+  base,
+  trailingSlash: 'always',
   markdown: {
-    // Shiki's CSS-variables theme lets docs.css reuse the site's code palette.
+    // Shiki's CSS-variables theme lets the site's tokens color code.
     shikiConfig: { theme: 'css-variables' },
-  },
-  vite: {
-    build: {
-      // The gallery's wasm and its gzip copy are generated into public/ by
-      // scripts/build-gallery.mjs; Vite only copies them.
-      chunkSizeWarningLimit: 700,
-    },
+    processor: satteri({ mdastPlugins: [docLinks({ base })] }),
   },
 });

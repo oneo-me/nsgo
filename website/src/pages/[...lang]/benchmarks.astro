@@ -1,0 +1,8 @@
+---
+import Placeholder from '../../components/Placeholder.astro';
+import { langOf, langPaths } from '../../site';
+
+export const getStaticPaths = () => langPaths('benchmarks');
+---
+
+<Placeholder lang={langOf(Astro.params.lang)} page="benchmarks" />

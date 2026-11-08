@@ -1,0 +1,68 @@
+---
+title: 组件与状态
+description: 元素、组件、signal 与样式。
+group: 指南
+order: 10
+---
+
+## 元素
+
+屏幕是一棵元素树，元素是 Go 结构体值。`core` 提供基本元素：`View`、`Text`、`Image`、`Scroll`、`Input` 等。`base` 提供无样式的控件，例如 `Button`、`Select` 和 `DatePicker`，它们的外观逐个部件取自你的样式；`ui` 则提供带外观和主题的同一批控件。
+
+```go
+core.View{
+	Style: core.Style{Padding: core.All(24), Gap: 12},
+	Children: []core.Node{
+		core.Text{Content: "Hello"},
+	},
+}
+```
+
+## 组件
+
+组件是一个接收 scope、返回元素的函数。它只运行一次，之后的变化由 signal 驱动。
+
+```go
+func Greeting(cx *core.Scope) core.Node {
+	return core.Text{Content: "Hello from NSGo"}
+}
+```
+
+带属性的组件是一个有 `Render` 方法的类型：
+
+```go
+type Badge struct{ Text string }
+
+func (b Badge) Render(*core.Scope) core.Node {
+	return core.Text{Content: b.Text}
+}
+```
+
+## Signal
+
+signal 保存一个值。在元素调用的函数（例如 `ContentFunc`）中读取它，就会让屏幕上的这一部分订阅它；值变化时，只有这一部分更新。
+
+```go
+count := core.NewSignal(cx, 0)
+
+core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", count.Get()) }}
+
+base.Button{
+	OnPress:  func(core.PressEvent) { count.Update(func(n int) int { return n + 1 }) },
+	Children: []core.Node{core.Text{Content: "Press me"}},
+}
+```
+
+## 样式
+
+`core.Style` 遵循 CSS：flexbox 与 grid、内外边距、圆角、边框、阴影、渐变、变换，以及 `Active` 等状态样式。元素也可以通过 `Class` 使用 Tailwind 类名：
+
+```go
+core.Text{Content: "Done", Class: "self-start rounded-full bg-zinc-100 px-3 py-1 text-sm"}
+```
+
+主题为 `ui` 的组件提供浅色与深色外观。
+
+## 桌面应用
+
+`nsgo.Run(Root)` 显示一个根视图。桌面应用也可以自己决定显示什么：`nsgo.Run(App)` 运行一次 `func App(app *core.Scope)`，由它通过 `desktop` 打开窗口、面板、托盘图标和全局快捷键。

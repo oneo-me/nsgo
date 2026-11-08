@@ -1,499 +1,337 @@
-export type Lang = 'en' | 'zh';
+import type { Lang, PageId } from './site';
 
-export const REPO = 'https://github.com/oneo-me/nsgo';
-
-export const links = {
-  repo: REPO,
-  gallery: `${import.meta.env.BASE_URL}gallery/loader.html`,
-  issues: `${REPO}/issues`,
-  readme: `${REPO}#usage`,
-  docs: `${import.meta.env.BASE_URL}docs/`,
-  architecture: `${REPO}/blob/main/ARCHITECTURE.md`,
-  roadmap: `${REPO}/blob/main/docs/roadmap.md`,
-  changelog: `${REPO}/blob/main/CHANGELOG.md`,
-  license: `${REPO}/blob/main/LICENSE`,
-  notice: `${REPO}/blob/main/NOTICE`,
-  embedding: `${REPO}/blob/main/docs/architecture/embedding.md`,
-  blog: 'https://oneo.me',
-  x: 'https://x.com/oneo666',
-  nsh: 'https://github.com/longbridge/nsh',
-  nshSite: 'https://nsh.dev',
-};
+// The site's words. Add English and Chinese together; Chinese headings,
+// titles and kickers omit the trailing 。, body sentences keep it.
 
 const en = {
-  meta: {
-    title: 'NSGo — Native UI, written in Go',
-    description:
-      'NSGo is a cross-platform native UI engine written in Go. Signals, layout and text run in Go; iOS, Android, macOS, Windows, Linux and the web draw with their own native views.',
-  },
   nav: {
     skip: 'Skip to content',
     primary: 'Primary',
-    links: [
-      { label: 'Gallery', href: links.gallery },
-      { label: 'Engine', href: '#engine' },
-      { label: 'Platforms', href: '#platforms' },
-      { label: 'Code', href: '#code' },
-      { label: 'Toolchain', href: '#toolchain' },
-      { label: 'Docs', href: links.docs },
-    ],
+    pages: {
+      home: 'Home',
+      docs: 'Docs',
+      showcases: 'Showcases',
+      benchmarks: 'Benchmarks',
+    } satisfies Record<PageId, string>,
+    demo: 'Live demo',
     github: 'GitHub',
     menu: 'Open menu',
     close: 'Close menu',
-    language: 'Switch to Chinese',
-    languageShort: '中文',
-    theme: {
-      label: 'Appearance',
-      system: 'Follow the system',
-      light: 'Light',
-      dark: 'Dark',
+    language: 'Language',
+    theme: { label: 'Appearance', light: 'Light', dark: 'Dark', system: 'System' },
+  },
+  home: {
+    title: 'NSGo — Write it once in Go, native on every platform',
+    description:
+      'NSGo is a cross-platform native UI framework. Write an app once in Go or TSX and run it on iOS, Android, macOS, Windows, Linux and the web with each platform’s own views.',
+    hero: {
+      badge: 'Open source · Early preview',
+      title: ['Write it once in Go.', 'Native on every platform.'],
+      lead: 'NSGo is a cross-platform UI framework. Your app’s state, layout and styles run in Go; iOS, Android, macOS, Windows, Linux and the web draw it with their own views.',
+      demo: 'Try the live demo',
+      start: 'Get started',
+      runsOn: 'Runs on',
+      // A platform's line under the row: Android draws with Android Views.
+      drawsWith: [' draws with ', ''],
+      desktopAlt: 'The NSGo gallery’s Stocks demo in its desktop layout, on the web backend',
+      phoneAlt: 'The NSGo gallery’s components in its phone layout, on the web backend',
+    },
+    how: {
+      eyebrow: 'How it works',
+      title: 'Go owns the app. The platform draws it.',
+      lead: 'No embedded browser and no custom renderer sit between your app and the screen: each update crosses to the main thread once, as one batch of only what changed.',
+      nodes: [
+        { label: 'Your app', title: 'Go or TSX', items: ['Components', 'Signals', 'Styles and Tailwind'] },
+        { label: 'NSGo engine', title: 'In Go', items: ['Reactive graph', 'Flexbox and grid', 'Text preparation'] },
+        { label: 'The platform', title: 'Native views', items: ['AppKit · UIKit', 'Android Views', 'Direct2D · GTK · DOM'] },
+      ],
+      links: ['renders', 'one batch per commit'],
+    },
+    features: {
+      eyebrow: 'What you get',
+      title: 'Everything an app needs, in one language.',
+      native: {
+        title: 'Truly native',
+        body: 'Each platform draws with its own views, text, scrolling and accessibility.',
+      },
+      reactive: {
+        title: 'A reactive engine',
+        body: 'Signals update only what reads them. Animation runs on the platform’s frame clock.',
+      },
+      layout: {
+        title: 'Layout and styles you know',
+        body: 'Flexbox and grid, CSS-like styles, Tailwind classes, light and dark themes, right-to-left languages.',
+      },
+      components: {
+        title: 'Components included',
+        body: 'Unstyled in base, ready to use in ui: from buttons and menus to whole tools.',
+        chips: ['DataTable', 'Charts', 'Code editor', 'Rich text', 'Terminal', 'Dock', 'Command palette', 'Date picker', 'Color picker', 'Toasts', 'Sheets', 'Menus'],
+      },
+      tsx: {
+        title: 'Go or TSX',
+        body: 'Components as Go values, or TSX with Tailwind classes, compiled ahead with no Node.',
+      },
+      tests: {
+        title: 'Tests that act like users',
+        body: 'Find a control by its text and press it, headless or in a real window.',
+      },
+      embed: {
+        title: 'Embeds anywhere',
+        body: 'Put an NSGo view inside an iOS, Android, desktop or web app.',
+      },
+    },
+    code: {
+      eyebrow: 'The API',
+      title: 'A component is just Go.',
+      lead: 'Elements are structs, state is a signal, and a test presses the button the way a user would.',
+      points: [
+        { title: 'No template language', body: 'A component is a function that returns elements.' },
+        { title: 'Fine-grained updates', body: 'Pressing changes the one text that reads the count.' },
+        { title: 'The same test everywhere', body: 'Headless in CI, or in a native window with screenshots.' },
+      ],
+      result: 'Result',
+    },
+    workflow: {
+      eyebrow: 'Workflow',
+      title: 'One tool, from first line to store.',
+      lead: 'nsgo creates, runs, tests and packages apps. It installs with Go and runs wherever Go does.',
+      steps: [
+        { title: 'Create', body: 'A Go, TSX or mixed app.', command: 'go tool nsgo init' },
+        { title: 'Run', body: 'Hot reload on every save.', command: 'go tool nsgo dev' },
+        { title: 'Test', body: 'Headless or in a native window.', command: 'go tool nsgo test' },
+        { title: 'Ship', body: 'Signed packages for each target.', command: 'go tool nsgo build' },
+      ],
+    },
+    next: { eyebrow: 'Next steps', title: 'Keep exploring.' },
+  },
+  guides: {
+    demo: { title: 'Live demo', body: 'The gallery of every component, full page in your browser.' },
+    docs: { title: 'Documentation', body: 'Guides and references for building with NSGo.' },
+    showcases: { title: 'Showcases', body: 'Apps people build with NSGo.' },
+    benchmarks: { title: 'Benchmarks', body: 'How fast NSGo starts, lays out and updates.' },
+    architecture: { title: 'Architecture', body: 'How the engine, backends and tool fit together.' },
+    github: { title: 'GitHub', body: 'The source, issues and discussions.' },
+  },
+  docs: {
+    title: 'Docs',
+    description: 'Guides for building apps with NSGo.',
+    pages: 'Pages',
+    onThisPage: 'On this page',
+    previous: 'Previous',
+    next: 'Next',
+    edit: 'Edit this page on GitHub',
+    fallback: 'This page is not translated yet, so it shows the English one.',
+  },
+  placeholder: {
+    badge: 'Dev only',
+    note: 'This page is a placeholder and is not published yet.',
+    back: 'Back home',
+    pages: {
+      showcases: {
+        title: 'Showcases — NSGo',
+        heading: 'Showcases',
+        lead: 'Apps built with NSGo, on every platform they run on.',
+      },
+      benchmarks: {
+        title: 'Benchmarks — NSGo',
+        heading: 'Benchmarks',
+        lead: 'Start-up, layout, update and memory measured on each platform.',
+      },
     },
   },
-  hero: {
-    eyebrow: 'Open source · Apache-2.0',
-    titleTop: 'Native UI,',
-    titleBefore: 'written in ',
-    titleAccent: 'Go',
-    titleAfter: '.',
-    lead: 'NSGo is a cross-platform native UI engine. Signals, layout and text run in Go; every platform draws with its own views.',
-    points: [
-      { title: 'One codebase', body: 'iOS, Android, macOS, Windows, Linux and the web.' },
-      { title: 'Native by default', body: 'Platform views, text and scrolling; the web uses the DOM.' },
-      { title: 'Go end to end', body: 'Signals, flexbox and grid, animation and tests in one language.' },
-    ],
-    source: 'View on GitHub',
-    architecture: 'Read the architecture',
-    runsOn: 'Runs on',
-    commandLabel: 'Start from the repository',
-    command: 'go tool nsgo dev examples/gallery',
-    commandCopy: 'Copy the command',
-  },
-  engine: {
-    kicker: 'The engine',
-    title: 'Native means the platform draws.',
-    lead: 'NSGo owns the app model, not the pixels. Each commit produces one batch of mount items, and a thin backend applies it to the platform’s own views.',
-    flow: [
-      { label: '01 · Go', title: 'Reactive model', body: 'signals · layout · text' },
-      { label: 'MountBatch', title: 'One commit', body: 'only what changed' },
-      { label: 'Platform', title: 'Native views', body: 'AppKit · Android · DOM' },
-    ],
-    flowNote: 'Styles, text and layout resolve in Go. Animation runs on the platform’s frame clock.',
-    layers: [
-      {
-        n: '01',
-        title: 'Go owns the model',
-        body: 'Components run once. Signals update what reads them, regions rebuild only what changed, and layout resolves the difference.',
-      },
-      {
-        n: '02',
-        title: 'One batch per commit',
-        body: 'Styles, text, layout and mount items cross in one hop. Transitions and animated values run without a commit per frame.',
-      },
-      {
-        n: '03',
-        title: 'The platform draws',
-        body: 'AppKit, Android Views, Direct2D, GTK 4 or DOM elements; CoreText, DirectWrite, Pango or the browser’s own text.',
-      },
-    ],
-  },
-  platforms: {
-    kicker: 'Platforms',
-    title: 'Six platforms. One toolchain.',
-    lead: 'Every target builds on macOS with Go. iOS links with Xcode; x86_64 Android uses an NDK.',
-    status: 'Runs',
-    items: [
-      {
-        id: 'ios',
-        name: 'iOS',
-        stack: 'UIKit · CoreText',
-        body: 'Linked with Xcode, running on devices and the simulator.',
-        command: 'ios',
-      },
-      {
-        id: 'android',
-        name: 'Android',
-        stack: 'Android Views · StaticLayout',
-        body: 'A Go process behind a prebuilt Java runtime.',
-        command: 'android_arm64',
-      },
-      {
-        id: 'macos',
-        name: 'macOS',
-        stack: 'AppKit · CoreText',
-        body: 'Reaches the system with purego; CGO stays off.',
-        command: 'macos_arm64',
-      },
-      {
-        id: 'windows',
-        name: 'Windows',
-        stack: 'Win32 · Direct2D · DirectWrite',
-        body: 'COM and the window system through syscall.',
-        command: 'windows_x64',
-      },
-      {
-        id: 'linux',
-        name: 'Linux',
-        stack: 'GTK 4 · Pango · Cairo',
-        body: 'Loaded with purego; GTK 4.14 or newer.',
-        command: 'linux_x64',
-      },
-      {
-        id: 'web',
-        name: 'Web',
-        stack: 'HTML · CSS · WebAssembly',
-        body: 'DOM elements on the web backend, as in the gallery above.',
-        command: 'web',
-      },
-    ],
-    footnote: 'Apps also embed in iOS, Android and Go desktop apps.',
-    footnoteLink: 'Embedding',
-  },
-  code: {
-    kicker: 'The API',
-    title: 'A component is a Go value.',
-    lead: 'Elements are structs and signals are functions. No template language and no runtime layer sit between your code and the engine.',
-    aside: [
-      {
-        title: 'No template language',
-        body: 'A component is a Go type with a Render method; elements are ordinary struct literals.',
-      },
-      {
-        title: 'No extra bindings',
-        body: 'One go get -tool installs nsgo; go tool nsgo runs it anywhere Go runs.',
-      },
-      {
-        title: 'Test like a user',
-        body: 'nsgotest finds a control by its text and presses it, headless or in a native window.',
-      },
-    ],
-    tabs: [{ file: 'main.go' }, { file: 'app_test.go' }],
-    testNote: 'The same test runs headless or in a native window.',
-    more: 'Getting started',
-  },
-  toolchain: {
-    kicker: 'Toolchain',
-    title: 'One tool, from source to store.',
-    lead: 'nsgo calls Go and Xcode, then packages each target. One executable covers the loop.',
-    terminalTitle: 'shell',
-    commands: [
-      { command: 'go tool nsgo dev examples/gallery', note: 'run with hot reload' },
-      { command: 'go tool nsgo test -target macos', note: 'native input and screenshots' },
-      { command: 'go tool nsgo build -target all examples/gallery', note: 'signed packages, one per target' },
-    ],
-    steps: [
-      {
-        n: '01',
-        title: 'Run',
-        body: 'Watches the packages the app imports and keeps the last good build running when a change fails.',
-        api: 'nsgo dev',
-      },
-      {
-        n: '02',
-        title: 'Test',
-        body: 'Runs the same tests headless or in a window, with native input and screenshots.',
-        api: 'nsgo test',
-      },
-      {
-        n: '03',
-        title: 'Ship',
-        body: 'Writes a signed .app, .ipa or .apk, Windows and Linux packages, or a static site. -embed builds a framework or AAR.',
-        api: 'nsgo build',
-      },
-    ],
-  },
-  open: {
-    kicker: 'Open source',
-    title: 'Early, open and readable.',
-    body: 'NSGo is an early Go port of Native Shell’s design. The engine, its tests and the gallery share one repository; ARCHITECTURE.md records every departure from NSH.',
-    attribution: 'Based on the design of Native Shell by Longbridge.',
-    links: [
-      { label: 'Architecture', href: links.architecture },
-      { label: 'Roadmap', href: links.roadmap },
-      { label: 'Changelog', href: links.changelog },
-    ],
-    ctaTitle: 'Build something that feels native.',
-    ctaBody: 'Start with the live gallery, then read the architecture or clone the repository.',
-    view: 'View the gallery',
-    github: 'Star on GitHub',
-    note: 'Apache-2.0 · no stable API yet',
+  cta: {
+    title: 'Start building with NSGo.',
+    body: 'Install the tool into your module, then create your first app.',
+    primary: 'Get started',
+    secondary: 'Try the live demo',
   },
   footer: {
-    tagline: 'Native UI, written in Go.',
-    columns: [
-      {
-        title: 'Project',
-        links: [
-          { label: 'Gallery', href: links.gallery },
-          { label: 'Architecture', href: links.architecture },
-          { label: 'Roadmap', href: links.roadmap },
-          { label: 'Changelog', href: links.changelog },
-        ],
-      },
-      {
-        title: 'Community',
-        links: [
-          { label: 'GitHub', href: links.repo },
-          { label: 'Issues', href: links.issues },
-          { label: 'Blog', href: links.blog },
-          { label: 'X @oneo666', href: links.x },
-        ],
-      },
-      {
-        title: 'License',
-        links: [
-          { label: 'Apache-2.0', href: links.license },
-          { label: 'NOTICE', href: links.notice },
-          { label: 'Native Shell', href: links.nsh },
-        ],
-      },
-    ],
-    bottom: '© 2026 ONEO. NSGo is a port of Native Shell and is not affiliated with or endorsed by Longbridge.',
+    tagline: 'Native apps for every platform, written in Go.',
+    columns: {
+      product: 'Product',
+      resources: 'Resources',
+      community: 'Community',
+      legal: 'Legal',
+    },
+    resources: { architecture: 'Architecture', roadmap: 'Roadmap', changelog: 'Changelog', embedding: 'Embedding' },
+    community: { github: 'GitHub', issues: 'Issues', blog: 'Blog', x: 'X @oneo666' },
+    legal: { license: 'Apache-2.0', notice: 'NOTICE', nsh: 'Native Shell' },
+    bottom: '© 2026 ONEO. NSGo ports the design of Native Shell and is not affiliated with or endorsed by Longbridge.',
     top: 'Back to top',
   },
-  ui: {
-    copy: 'Copy',
-    copied: 'Copied',
-    copyCommand: 'Copy command',
+  notFound: {
+    title: 'Page not found — NSGo',
+    heading: 'This page does not exist.',
+    body: 'It may have moved, or it has not been written yet.',
+    home: 'Back home',
   },
+  ui: { copy: 'Copy', copied: 'Copied' },
 };
 
 export type Copy = typeof en;
 
 const zh: Copy = {
-  meta: {
-    title: 'NSGo — 用 Go 编写的原生界面',
-    description:
-      'NSGo 是一个用 Go 编写的跨平台原生 UI 引擎。响应式状态、布局和文本在 Go 中运行，iOS、Android、macOS、Windows、Linux 和 Web 用各自的原生视图绘制。',
-  },
   nav: {
     skip: '跳到正文',
     primary: '主导航',
-    links: [
-      { label: 'Gallery', href: links.gallery },
-      { label: '引擎', href: '#engine' },
-      { label: '平台', href: '#platforms' },
-      { label: '代码', href: '#code' },
-      { label: '工具链', href: '#toolchain' },
-      { label: '文档', href: links.docs },
-    ],
+    pages: {
+      home: '首页',
+      docs: '文档',
+      showcases: '案例',
+      benchmarks: '性能',
+    },
+    demo: '在线体验',
     github: 'GitHub',
     menu: '打开菜单',
     close: '关闭菜单',
-    language: '切换到英文',
-    languageShort: 'EN',
-    theme: {
-      label: '外观',
-      system: '跟随系统',
-      light: '浅色',
-      dark: '深色',
+    language: '语言',
+    theme: { label: '外观', light: '浅色', dark: '深色', system: '跟随系统' },
+  },
+  home: {
+    title: 'NSGo — 用 Go 写一次，在每个平台原生运行',
+    description:
+      'NSGo 是一个跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，就能以各平台自己的视图运行在 iOS、Android、macOS、Windows、Linux 和 Web 上。',
+    hero: {
+      badge: '开源 · 早期预览',
+      title: ['用 Go 写一次', '在每个平台原生运行'],
+      lead: 'NSGo 是一个跨平台 UI 框架。应用的状态、布局和样式在 Go 中运行，再由 iOS、Android、macOS、Windows、Linux 和 Web 用各自的视图绘制。',
+      demo: '在线体验',
+      start: '快速开始',
+      runsOn: '运行于',
+      drawsWith: [' 上由 ', ' 绘制'],
+      desktopAlt: 'NSGo Gallery 的股票演示，桌面布局，运行在 Web 后端',
+      phoneAlt: 'NSGo Gallery 的组件列表，手机布局，运行在 Web 后端',
+    },
+    how: {
+      eyebrow: '工作原理',
+      title: 'Go 掌管应用，平台负责绘制',
+      lead: '应用和屏幕之间没有内嵌浏览器，也没有自绘渲染器：每次更新只跨到主线程一次，一批只带变化的部分。',
+      nodes: [
+        { label: '你的应用', title: 'Go 或 TSX', items: ['组件', 'signal', '样式与 Tailwind'] },
+        { label: 'NSGo 引擎', title: '运行在 Go 中', items: ['响应式图', 'flexbox 与 grid', '文本准备'] },
+        { label: '平台', title: '原生视图', items: ['AppKit · UIKit', 'Android View', 'Direct2D · GTK · DOM'] },
+      ],
+      links: ['渲染', '每次提交一批'],
+    },
+    features: {
+      eyebrow: '你能得到',
+      title: '应用所需的一切，都在一门语言里',
+      native: {
+        title: '真正的原生',
+        body: '每个平台用自己的视图、文本、滚动和无障碍来绘制。',
+      },
+      reactive: {
+        title: '响应式引擎',
+        body: 'signal 只更新读取它的地方，动画运行在平台的帧时钟上。',
+      },
+      layout: {
+        title: '熟悉的布局与样式',
+        body: 'flexbox 与 grid、类 CSS 样式、Tailwind 类名、浅色与深色主题、从右到左的语言。',
+      },
+      components: {
+        title: '内置组件',
+        body: 'base 里是无样式的，ui 里是开箱即用的：从按钮、菜单到完整的工具。',
+        chips: ['DataTable', '图表', '代码编辑器', '富文本', '终端', 'Dock', '命令面板', '日期选择', '颜色选择', 'Toast', 'Sheet', '菜单'],
+      },
+      tsx: {
+        title: 'Go 或 TSX',
+        body: '用 Go 值写组件，或用 TSX 配合 Tailwind 类名，提前编译，不需要 Node。',
+      },
+      tests: {
+        title: '像用户一样测试',
+        body: '按文本找到控件并按下它，无窗口或在真实窗口中运行。',
+      },
+      embed: {
+        title: '随处嵌入',
+        body: '把 NSGo 视图放进 iOS、Android、桌面或 Web 应用。',
+      },
+    },
+    code: {
+      eyebrow: 'API',
+      title: '组件就是 Go',
+      lead: '元素是结构体，状态是 signal，测试像用户一样按下按钮。',
+      points: [
+        { title: '没有模板语言', body: '组件就是返回元素的函数。' },
+        { title: '细粒度更新', body: '按下按钮，只有读取计数的那段文本会变。' },
+        { title: '同一个测试，到处运行', body: '在 CI 中无窗口运行，或在原生窗口中运行并截图。' },
+      ],
+      result: '运行效果',
+    },
+    workflow: {
+      eyebrow: '工作流',
+      title: '一个工具，从第一行代码到上架',
+      lead: 'nsgo 负责创建、运行、测试和打包应用。它随 Go 安装，在 Go 能运行的地方都能运行。',
+      steps: [
+        { title: '创建', body: 'Go、TSX 或混合应用。', command: 'go tool nsgo init' },
+        { title: '运行', body: '每次保存都热重载。', command: 'go tool nsgo dev' },
+        { title: '测试', body: '无窗口或原生窗口中运行。', command: 'go tool nsgo test' },
+        { title: '发布', body: '为每个目标打出签名的包。', command: 'go tool nsgo build' },
+      ],
+    },
+    next: { eyebrow: '下一步', title: '继续探索' },
+  },
+  guides: {
+    demo: { title: '在线体验', body: '包含全部组件的 Gallery，在浏览器中整页运行。' },
+    docs: { title: '文档', body: '用 NSGo 开发的指南与参考。' },
+    showcases: { title: '案例', body: '大家用 NSGo 做的应用。' },
+    benchmarks: { title: '性能', body: 'NSGo 的启动、布局和更新有多快。' },
+    architecture: { title: '架构', body: '引擎、后端和工具如何配合。' },
+    github: { title: 'GitHub', body: '源码、问题和讨论。' },
+  },
+  docs: {
+    title: '文档',
+    description: '用 NSGo 构建应用的指南。',
+    pages: '目录',
+    onThisPage: '本页内容',
+    previous: '上一页',
+    next: '下一页',
+    edit: '在 GitHub 上编辑此页',
+    fallback: '这一页还没有中文版，下面显示的是英文原文。',
+  },
+  placeholder: {
+    badge: '仅开发可见',
+    note: '这是一个占位页面，尚未发布。',
+    back: '返回首页',
+    pages: {
+      showcases: {
+        title: '案例 — NSGo',
+        heading: '案例',
+        lead: '用 NSGo 构建的应用，以及它们运行的平台。',
+      },
+      benchmarks: {
+        title: '性能 — NSGo',
+        heading: '性能',
+        lead: '在每个平台上测量启动、布局、更新和内存。',
+      },
     },
   },
-  hero: {
-    eyebrow: '开源 · Apache-2.0',
-    titleTop: '原生界面，',
-    titleBefore: '用 ',
-    titleAccent: 'Go',
-    titleAfter: ' 编写',
-    lead: 'NSGo 是一个跨平台原生 UI 引擎。响应式状态、布局和文本在 Go 中运行，每个平台用自己的视图绘制。',
-    points: [
-      { title: '一份代码', body: 'iOS、Android、macOS、Windows、Linux 和 Web。' },
-      { title: '真正的原生', body: '平台自己的视图、文本和滚动；Web 上则是 DOM。' },
-      { title: '全程 Go', body: 'signal、flexbox 与 grid、动画和测试，都在一门语言里。' },
-    ],
-    source: '在 GitHub 上查看',
-    architecture: '阅读架构',
-    runsOn: '运行于',
-    commandLabel: '从仓库开始',
-    command: 'go tool nsgo dev examples/gallery',
-    commandCopy: '复制命令',
-  },
-  engine: {
-    kicker: '引擎',
-    title: '原生，意味着由平台来绘制',
-    lead: 'NSGo 拥有应用模型，而不是像素。每次提交产生一批挂载项，由薄薄的后端应用到平台自己的视图上。',
-    flow: [
-      { label: '01 · Go', title: '响应式模型', body: 'signal · 布局 · 文本' },
-      { label: 'MountBatch', title: '一次提交', body: '只发送变化的部分' },
-      { label: '平台', title: '原生视图', body: 'AppKit · Android · DOM' },
-    ],
-    flowNote: '样式、文本和布局在 Go 中解析，动画运行在平台的帧时钟上。',
-    layers: [
-      {
-        n: '01',
-        title: 'Go 拥有模型',
-        body: '组件只运行一次。signal 更新读取它的地方，region 只重建变化的部分，布局计算出差异。',
-      },
-      {
-        n: '02',
-        title: '每次提交一批',
-        body: '样式、文本、布局和挂载项一次跨到主线程。过渡和动画值无需每帧提交。',
-      },
-      {
-        n: '03',
-        title: '平台负责绘制',
-        body: 'AppKit、Android View、Direct2D、GTK 4 或 DOM；CoreText、DirectWrite、Pango 或浏览器自己的文本。',
-      },
-    ],
-  },
-  platforms: {
-    kicker: '平台',
-    title: '六个平台，一套工具链',
-    lead: '每个目标都能在装有 Go 的 macOS 上构建。iOS 额外需要 Xcode；x86_64 Android 需要 NDK。',
-    status: '可运行',
-    items: [
-      {
-        id: 'ios',
-        name: 'iOS',
-        stack: 'UIKit · CoreText',
-        body: '用 Xcode 链接，在设备和模拟器上运行。',
-        command: 'ios',
-      },
-      {
-        id: 'android',
-        name: 'Android',
-        stack: 'Android View · StaticLayout',
-        body: 'Go 进程运行在预构建的 Java 运行时之后。',
-        command: 'android_arm64',
-      },
-      {
-        id: 'macos',
-        name: 'macOS',
-        stack: 'AppKit · CoreText',
-        body: '通过 purego 访问系统，无需 cgo。',
-        command: 'macos_arm64',
-      },
-      {
-        id: 'windows',
-        name: 'Windows',
-        stack: 'Win32 · Direct2D · DirectWrite',
-        body: '通过 syscall 使用 COM 和窗口系统。',
-        command: 'windows_x64',
-      },
-      {
-        id: 'linux',
-        name: 'Linux',
-        stack: 'GTK 4 · Pango · Cairo',
-        body: '用 purego 加载，需要 GTK 4.14 或更新版本。',
-        command: 'linux_x64',
-      },
-      {
-        id: 'web',
-        name: 'Web',
-        stack: 'HTML · CSS · WebAssembly',
-        body: 'Web 后端把应用映射为 DOM 元素，就像上面的 Gallery。',
-        command: 'web',
-      },
-    ],
-    footnote: '同一份代码也能嵌入 iOS、Android 和 Go 桌面应用。',
-    footnoteLink: '嵌入方式',
-  },
-  code: {
-    kicker: 'API',
-    title: '组件就是一个 Go 值',
-    lead: '元素是结构体，signal 是函数。没有模板语言，也没有横在你和引擎之间的运行时层。',
-    aside: [
-      {
-        title: '没有模板语言',
-        body: '组件是带 Render 方法的 Go 类型，元素是普通的结构体字面量。',
-      },
-      {
-        title: '没有额外的绑定',
-        body: '一条 go get -tool 安装 nsgo；go tool nsgo 在 Go 能运行的地方运行。',
-      },
-      {
-        title: '像用户一样测试',
-        body: 'nsgotest 按文本找到控件并按下它，可在无窗口或原生窗口中运行。',
-      },
-    ],
-    tabs: [{ file: 'main.go' }, { file: 'app_test.go' }],
-    testNote: '同一个测试，可以在无窗口环境运行，也可以在原生窗口中运行。',
-    more: '快速开始',
-  },
-  toolchain: {
-    kicker: '工具链',
-    title: '一个工具，从源码到商店',
-    lead: 'nsgo 调用 Go 和 Xcode，为每个目标打包。一条命令覆盖整个循环。',
-    terminalTitle: 'shell',
-    commands: [
-      { command: 'go tool nsgo dev examples/gallery', note: '热重载运行' },
-      { command: 'go tool nsgo test -target macos', note: '原生输入与截图' },
-      { command: 'go tool nsgo build -target all examples/gallery', note: '每个目标一个签名包' },
-    ],
-    steps: [
-      {
-        n: '01',
-        title: '运行',
-        body: '监听应用导入的包，构建失败时保留上一个可用版本继续运行。',
-        api: 'nsgo dev',
-      },
-      {
-        n: '02',
-        title: '测试',
-        body: '无窗口或原生窗口运行同一组测试，支持原生输入和截图。',
-        api: 'nsgo test',
-      },
-      {
-        n: '03',
-        title: '发布',
-        body: '写出签名的 .app、.ipa、.apk，Windows 和 Linux 的包目录，或一个静态网站；-embed 打包框架或 AAR。',
-        api: 'nsgo build',
-      },
-    ],
-  },
-  open: {
-    kicker: '开源',
-    title: '早期，开放，可阅读',
-    body: 'NSGo 是 Native Shell 设计的早期 Go 移植。引擎、测试和 Gallery 在同一个仓库里；ARCHITECTURE.md 记录每一处对 NSH 的偏离。',
-    attribution: '基于 Longbridge 的 Native Shell 设计。',
-    links: [
-      { label: '架构', href: links.architecture },
-      { label: '路线图', href: links.roadmap },
-      { label: '更新日志', href: links.changelog },
-    ],
-    ctaTitle: '做一个真正原生的应用',
-    ctaBody: '从在线 Gallery 开始，然后阅读架构或克隆仓库。',
-    view: '查看 Gallery',
-    github: '在 GitHub 上关注',
-    note: 'Apache-2.0 · 尚无稳定 API',
+  cta: {
+    title: '开始用 NSGo 构建',
+    body: '把工具安装到你的模块里，然后创建第一个应用。',
+    primary: '快速开始',
+    secondary: '在线体验',
   },
   footer: {
-    tagline: '用 Go 编写的原生界面',
-    columns: [
-      {
-        title: '项目',
-        links: [
-          { label: 'Gallery', href: links.gallery },
-          { label: '架构', href: links.architecture },
-          { label: '路线图', href: links.roadmap },
-          { label: '更新日志', href: links.changelog },
-        ],
-      },
-      {
-        title: '社区',
-        links: [
-          { label: 'GitHub', href: links.repo },
-          { label: 'Issues', href: links.issues },
-          { label: '博客', href: links.blog },
-          { label: 'X @oneo666', href: links.x },
-        ],
-      },
-      {
-        title: '许可',
-        links: [
-          { label: 'Apache-2.0', href: links.license },
-          { label: 'NOTICE', href: links.notice },
-          { label: 'Native Shell', href: links.nsh },
-        ],
-      },
-    ],
-    bottom: '© 2026 ONEO。NSGo 是 Native Shell 的移植，与 Longbridge 无隶属关系，也未获其背书。',
+    tagline: '用 Go 编写，在每个平台原生运行。',
+    columns: {
+      product: '产品',
+      resources: '资源',
+      community: '社区',
+      legal: '许可',
+    },
+    resources: { architecture: '架构', roadmap: '路线图', changelog: '更新日志', embedding: '嵌入' },
+    community: { github: 'GitHub', issues: 'Issues', blog: '博客', x: 'X @oneo666' },
+    legal: { license: 'Apache-2.0', notice: 'NOTICE', nsh: 'Native Shell' },
+    bottom: '© 2026 ONEO。NSGo 移植自 Native Shell 的设计，与 Longbridge 无隶属关系，也未获其背书。',
     top: '回到顶部',
   },
-  ui: {
-    copy: '复制',
-    copied: '已复制',
-    copyCommand: '复制命令',
+  notFound: {
+    title: '页面不存在 — NSGo',
+    heading: '这个页面不存在',
+    body: '它可能已经移动，或者还没有写好。',
+    home: '返回首页',
   },
+  ui: { copy: '复制', copied: '已复制' },
 };
 
 export const copies: Record<Lang, Copy> = { en, zh };

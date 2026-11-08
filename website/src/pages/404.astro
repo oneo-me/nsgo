@@ -1,0 +1,24 @@
+---
+import Icon from '../components/Icon.astro';
+import SpeedLines from '../components/SpeedLines.astro';
+import { copies } from '../copy';
+import Layout from '../layouts/Layout.astro';
+import { pageUrl } from '../site';
+
+// GitHub Pages serves one 404 for every language, so it speaks English.
+const copy = copies.en.notFound;
+---
+
+<Layout lang="en" path="" title={copy.title} description={copy.body}>
+  <section class="placeholder">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <SpeedLines class="placeholder__lines" size={56} />
+    <span class="pill">404</span>
+    <h1>{copy.heading}</h1>
+    <p class="placeholder__lead">{copy.body}</p>
+    <a class="btn btn--secondary" href={pageUrl('en', 'home')}>
+      {copy.home}
+      <Icon name="arrow" size={14} />
+    </a>
+  </section>
+</Layout>
