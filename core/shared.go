@@ -152,6 +152,8 @@ type (
 	GradientStop = driver.GradientStop
 	// Idiom is the kind of device, which decides how components present.
 	Idiom = driver.Idiom
+	// Lifecycle is whether the app is in use: Env.Lifecycle.
+	Lifecycle = driver.Lifecycle
 	// ImageScales is a set of ImageScaleValues: the variants an image asset
 	// ships in.
 	ImageScales = driver.ImageScales
@@ -235,6 +237,16 @@ type (
 	WebDownload = driver.WebDownload
 	// WebDownloadState is how far a WebDownload got.
 	WebDownloadState = driver.WebDownloadState
+	// WebInput is input a web view's page takes as the user's own
+	// (Ref.SendInput): WebClick, WebText or WebKey.
+	WebInput = driver.WebInput
+	// WebInputKind is what a WebInput gives.
+	WebInputKind = driver.WebInputKind
+	// SpeechRequest is what a speech session asks of the platform, as a
+	// test's model sees it.
+	SpeechRequest = driver.SpeechRequest
+	// SpeechCommand is what a SpeechRequest asks of its session.
+	SpeechCommand = driver.SpeechCommand
 	// PasteEvent is what the user pasted into an input, read from the clipboard
 	// as they pasted: its plain text (empty without any), files with their
 	// bytes, such as an image copied in another app, and the file: URLs of
@@ -423,6 +435,24 @@ const (
 	IdiomDesktop = driver.IdiomDesktop
 	IdiomMac     = driver.IdiomMac
 	IdiomTV      = driver.IdiomTV
+)
+
+const (
+	WebInputClick = driver.WebInputClick
+	WebInputText  = driver.WebInputText
+	WebInputKey   = driver.WebInputKey
+)
+
+const (
+	SpeechStart = driver.SpeechStart
+	SpeechStop  = driver.SpeechStop
+	SpeechAbort = driver.SpeechAbort
+)
+
+const (
+	LifecycleActive     = driver.LifecycleActive
+	LifecycleInactive   = driver.LifecycleInactive
+	LifecycleBackground = driver.LifecycleBackground
 )
 
 const (

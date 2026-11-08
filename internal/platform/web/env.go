@@ -67,6 +67,10 @@ func (s *surface) watchChanges() {
 	s.watchRatio(g.Get("devicePixelRatio").Float())
 	g.Call("addEventListener", "resize", w.changed)
 	g.Call("addEventListener", "languagechange", w.changed)
+	// The page's visibility and focus are the app's lifecycle.
+	g.Call("addEventListener", "focus", w.changed)
+	g.Call("addEventListener", "blur", w.changed)
+	s.doc.Call("addEventListener", "visibilitychange", w.changed)
 	if vv := g.Get("visualViewport"); vv.Truthy() {
 		vv.Call("addEventListener", "resize", w.changed)
 		vv.Call("addEventListener", "scroll", w.changed)
@@ -135,6 +139,12 @@ func (s *surface) environment() driver.Environment {
 	}
 	if w.desktop.Get("matches").Bool() {
 		env.Idiom = driver.IdiomDesktop
+	}
+	switch {
+	case s.doc.Get("visibilityState").String() == "hidden":
+		env.Lifecycle = driver.LifecycleBackground
+	case !s.doc.Call("hasFocus").Bool():
+		env.Lifecycle = driver.LifecycleInactive
 	}
 	if lang := g.Get("navigator").Get("language"); lang.Type() == js.TypeString {
 		env.Locale = lang.String()

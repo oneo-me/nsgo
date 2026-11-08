@@ -189,6 +189,9 @@ export declare const locale: Accessor<string>;
 export declare const platform: PlatformInfo;
 export declare const reduceMotion: Accessor<boolean>;
 export declare const screenReaderEnabled: Accessor<boolean>;
+/** Whether the app is in use: "inactive" shows it without the focus, "background" shows none of it. */
+export type Lifecycle = "active" | "inactive" | "background";
+export declare const lifecycle: Accessor<Lifecycle>;
 export declare const safeArea: Accessor<Edges>;
 export declare function safeAreaInsets(): Accessor<Edges>;
 export declare const keyboardFrame: Accessor<{ height: number; duration: number }>;
@@ -236,6 +239,28 @@ export interface PickImagesOptions { multiple?: boolean; limit?: number; maxDime
 export interface PickedImage { file: File; size: Size }
 export interface PickerModule { pickImages(options?: PickImagesOptions | null): Promise<PickedImage[]> }
 export declare const Picker: PickerModule;
+export interface SpeechStartOptions { lang?: string; interim?: boolean }
+/** Why a session ended early, named as the Web Speech API's errors. */
+export type SpeechErrorCode = "not-allowed" | "no-speech" | "audio-capture" | "network" | "language-not-supported" | "unavailable" | "failed";
+export interface SpeechResultEvent { text: string; isFinal: boolean }
+export interface SpeechEndEvent { text: string; error?: SpeechErrorCode }
+export interface SpeechSession {
+  on(event: "start", listener: () => void): () => void;
+  on(event: "result", listener: (e: SpeechResultEvent) => void): () => void;
+  on(event: "end", listener: (e: SpeechEndEvent) => void): () => void;
+  readonly text: string;
+  readonly ended: boolean;
+  /** The recognizer finishes: a last final result, then the end. */
+  stop(): void;
+  /** Ends at once. */
+  abort(): void;
+}
+export interface SpeechModule {
+  available(): Promise<boolean>;
+  /** One session at a time: a new one aborts the one running. A lang that is no language tag throws a RangeError. */
+  start(options?: SpeechStartOptions | null): SpeechSession;
+}
+export declare const Speech: SpeechModule;
 
 export type HostValue = null | boolean | number | string | HostValue[] | { [key: string]: HostValue };
 export interface HostSubscription { (): void; remove(): void }

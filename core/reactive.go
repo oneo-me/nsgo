@@ -116,6 +116,8 @@ type runtime struct {
 	dataDir        string
 	cacheDir       string
 	host           *hostApp
+	// speech is the speech session running, one per engine.
+	speech *SpeechSession
 	// windows are the main window's options where the platform opens
 	// windows (RootOptions.Windows); surfaces the trees of the windows,
 	// panels and tray views opened, keyed those opened with a key.

@@ -34,6 +34,7 @@ go tool nsgo build -target all examples/gallery     # every platform's packages 
 
 ```sh
 go tool nsgo check                 # vet every package
+go tool nsgo check -target all     # vet them for every target too
 go tool nsgo test                  # every package's tests
 go tool nsgo test -bench . ./core  # core's benchmarks
 bench/run.sh                       # measure the quotes benchmark

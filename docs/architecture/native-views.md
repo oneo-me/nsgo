@@ -17,6 +17,8 @@
 - Every page starts with `WebBridge`, defining `window.nsgo.postMessage(data)`, which reaches `OnMessage` as a string. `PostMessage` dispatches a `MessageEvent` on the page's window.
 - A page loads again only when the source or an injected script changes. Other settings apply to the live view.
 - Load start and load each come with a navigation state change, carrying `WebNavigation`. Errors arrive as `*WebError` with the failing URL.
+- A web view with `OnDownload` saves what its pages download, as NSH's macOS one does: core sends `WebConfig.DownloadDir`, the app's data directory's `downloads`, and Apple's host turns a main frame's response WebKit cannot show or marked an attachment, and a link asking for a download, into a `WKDownload` saved to `<id>/<file name>` under it, reporting its start, end and bytes or failure. Other targets save nothing ([roadmap](../roadmap.md#finish-the-existing-platforms)).
+- `Ref.SendInput` gives the page a click, typed text or a key as the user's own: macOS hands the `WKWebView` AppKit events, with each character's US key, so the page's events are trusted (`isTrusted`) and carry user activation, which `InjectJavaScript` cannot do. It takes the keyboard focus first. Other targets drop it, as NSH's do; TSX apps will need the `webview` capability's `input` for it ([roadmap](../roadmap.md#tsx-and-dynamic-delivery)).
 
 | Target | Host |
 | --- | --- |

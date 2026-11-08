@@ -1862,6 +1862,9 @@ func (t *Tree) Dispatch(ev driver.Event) {
 	case driver.EventMenuClosed:
 		t.popupClosed(ev.Count)
 		return
+	case driver.EventSpeech:
+		t.rt.speechEvent(ev)
+		return
 	case driver.EventImageInfo:
 		t.answerImageInfo(ev)
 		return

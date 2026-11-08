@@ -310,6 +310,9 @@ func (r *runner) open(call goja.FunctionCall) goja.Value {
 	if v := opt("reducedMotion"); v != nil {
 		env.ReduceMotion, envSet = v.ToBoolean(), true
 	}
+	if v := opt("speech"); v != nil {
+		env.Speech, envSet = v.ToBoolean(), true
+	}
 	if v := opt("platform"); v != nil {
 		env.OS, envSet = driver.OS(v.String()), true
 		if env.OS != driver.OSIOS && env.OS != driver.OSAndroid {
@@ -747,6 +750,20 @@ func (r *runner) app(a *nsgotest.App, tb *appTB, env driver.Environment, net *ne
 		return append([]map[string]any{}, net.requests...)
 	})
 	read("openedUrls", func(goja.FunctionCall) any { return append([]string{}, a.OpenedURLs...) })
+	read("speech", func(goja.FunctionCall) any {
+		if a.Speech == nil {
+			return nil
+		}
+		return map[string]any{"lang": a.Speech.Lang, "interim": a.Speech.Interim}
+	})
+	act("hearSpeech", func(c goja.FunctionCall) { a.HearSpeech(c.Argument(0).String(), c.Argument(1).ToBoolean()) })
+	act("endSpeech", func(c goja.FunctionCall) {
+		code := ""
+		if v := c.Argument(0); !goja.IsUndefined(v) && !goja.IsNull(v) {
+			code = v.String()
+		}
+		a.EndSpeech(code)
+	})
 	read("clipboard", func(goja.FunctionCall) any {
 		if a.Clipboard == "" {
 			return nil

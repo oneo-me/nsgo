@@ -123,6 +123,8 @@ const (
 	wmPaint         = 0x000F
 	wmEraseBkgnd    = 0x0014
 	wmSettingChange = 0x001A
+	wmShowWindow    = 0x0018
+	wmActivateApp   = 0x001C
 	wmKeyDown       = 0x0100
 	wmKeyUp         = 0x0101
 	wmChar          = 0x0102
@@ -923,6 +925,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemAnnounce:
 			w.uiaAnnounce(it.Value)
+			continue
+		case driver.ItemInputSource:
+			setInputSource(it.Value)
 			continue
 		case driver.ItemAccessibilityLabel:
 			if v := w.view(it.ID); v != nil {
@@ -1728,6 +1733,19 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmSettingChange:
 		// Theme ("ImmersiveColorSet"), locale and accessibility changes.
 		w.updateEnvironment()
+	case wmActivateApp:
+		// Sent to each top-level window of the thread: the embedded views
+		// on it follow too.
+		*appActive() = wParam != 0
+		for _, other := range windows {
+			if other.engine != nil {
+				other.updateEnvironment()
+			}
+		}
+	case wmShowWindow:
+		if w.engine != nil {
+			w.post(w.updateEnvironment) // once the window shows or hides
+		}
 	case wmSize:
 		if wParam != sizeMinimized {
 			width, height := int32(lParam&0xffff), int32(lParam>>16&0xffff)

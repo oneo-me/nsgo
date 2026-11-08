@@ -369,8 +369,9 @@ func readNavigation(r *reader) *driver.WebNavigation {
 }
 
 // readClipboard fills in what an EventClipboard carries in its data:
-// "image", the PNG's size and the PNG in base64, or "uri" lines of a
-// file's file: URL.
+// "image", the PNG's size and the PNG in base64, "toolarge" and its
+// bytes or "error" and why for one Java could not give, or "uri" lines of
+// a file's file: URL.
 func readClipboard(ev *driver.Event, data string) {
 	for _, line := range strings.Split(data, "\n") {
 		kind, rest, _ := strings.Cut(line, "\t")
@@ -384,9 +385,13 @@ func readClipboard(ev *driver.Event, data string) {
 			}
 			w, _ := strconv.Atoi(f[0])
 			h, _ := strconv.Atoi(f[1])
-			if b, err := base64.StdEncoding.DecodeString(f[2]); err == nil && len(b) <= driver.MaxClipboardImage {
-				ev.Data = &driver.ClipboardImage{PNG: b, Size: driver.Size{Width: driver.Points(w), Height: driver.Points(h)}}
-			}
+			b, err := base64.StdEncoding.DecodeString(f[2])
+			ev.Data = driver.ReadClipboardImage(b, driver.Size{Width: driver.Points(w), Height: driver.Points(h)}, err)
+		case "toolarge":
+			n, _ := strconv.Atoi(rest)
+			ev.Data = &driver.ClipboardImage{TooLarge: n}
+		case "error":
+			ev.Data = &driver.ClipboardImage{Err: rest}
 		}
 	}
 }
@@ -479,6 +484,12 @@ func readEnvironment(r *reader) driver.Environment {
 	env.ReduceMotion = flags&2 != 0
 	env.ScreenReader = flags&4 != 0
 	env.RTL = flags&8 != 0
+	switch {
+	case flags&32 != 0:
+		env.Lifecycle = driver.LifecycleBackground
+	case flags&16 != 0:
+		env.Lifecycle = driver.LifecycleInactive
+	}
 	env.Idiom = driver.Idiom(r.byte())
 	env.Locale = r.str()
 	// The toolbar's heights, without and with a large title.

@@ -578,7 +578,12 @@ func clipboardCard(cx *core.Scope) core.Node {
 			small(tr.SystemPasteText(), func() { cx.ReadClipboard(func(s string) { status.Set(tr.SystemText() + s) }) }),
 			small(tr.SystemCopyLogo(), func() { cx.SetClipboardImage(logoPNG) }),
 			small(tr.SystemPasteImage(), func() {
-				cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) {
+				cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool, err error) {
+					if err != nil {
+						image.Set(nil)
+						status.Set(err.Error())
+						return
+					}
 					if !ok {
 						image.Set(nil)
 						status.Set(tr.SystemTheClipboardHoldsNoImage())
@@ -671,6 +676,51 @@ func servicesCard(cx *core.Scope) core.Node {
 		Caption{Label: tr.SystemSetappearance(), Note: func() string { return tr.SystemForced() + names[env.Appearance()] }},
 		ui.Wrap{Children: []core.Node{small(tr.SystemSystem(), func() { cx.SetAppearance(core.AppearanceSystem) }), small(tr.SystemLight(), func() { cx.SetAppearance(core.AppearanceLight) }),
 			small(tr.SystemDark(), func() { cx.SetAppearance(core.AppearanceDark) })}},
+	}}
+}
+
+// speechCard is dictation and whether the app is in use.
+func speechCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	env := cx.Env()
+	heard := core.NewSignal(cx, "")
+	status := core.NewSignal(cx, tr.SystemSayAnything())
+	var session *core.SpeechSession
+	start := func() {
+		heard.Set("")
+		status.Set(tr.SystemListening())
+		session, _ = cx.StartSpeech(core.SpeechOptions{Interim: true,
+			OnResult: func(text string, _ bool) { heard.Set(text) },
+			OnEnd: func(text string, err error) {
+				heard.Set(text)
+				reason := "—"
+				if code, ok := err.(core.SpeechError); ok {
+					reason = string(code)
+				}
+				status.Set(tr.SystemSpeechEnded(reason))
+			}})
+	}
+	stop := func() {
+		if session != nil {
+			session.Stop()
+		}
+	}
+	return Card{Title: tr.SystemSpeechAndLifecycle(), Description: tr.SystemStartspeechLifecycle(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
+		Caption{Label: tr.SystemLifecycle(), Note: func() string { return env.Lifecycle().String() }},
+		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
+		Caption{Label: "StartSpeech"},
+		core.Dynamic(func(cx *core.Scope) core.Node {
+			if !env.CanRecognizeSpeech() {
+				return Note{Text: locales.For(cx).SystemNoSpeechHere()}
+			}
+			return ui.Wrap{Children: []core.Node{
+				ui.Button{Text: tr.SystemDictate(), Size: ui.SizeSmall, OnPress: start, TestID: "dictate"},
+				ui.Button{Text: tr.SystemStopDictating(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: stop, TestID: "stop-dictating"},
+			}}
+		}),
+		core.Text{ContentFunc: heard.Get, TestID: "heard", Style: core.Style{FontSize: 15}, StyleFunc: ui.Colored(colors.Text)},
+		core.Text{ContentFunc: status.Get, TestID: "speech-status", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 	}}
 }
 
@@ -842,9 +892,10 @@ func filesCard(cx *core.Scope) core.Node {
 
 // systemDemo is what the platform does for the app: the environment, the
 // status bar, alerts, frames and timers, shortcuts, the network, the
-// window, the clipboard, links, photos, the appearance and files.
+// window, the clipboard, links, photos, the appearance, dictation, the
+// lifecycle and files.
 func systemDemo(cx *core.Scope) core.Node {
-	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, filesCard)
+	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, speechCard, filesCard)
 }
 
 // yesNo says whether in tr's language.

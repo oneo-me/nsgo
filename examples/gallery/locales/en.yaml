@@ -2118,3 +2118,15 @@ richCount:
       type: int
     characters:
       type: int
+systemSpeechAndLifecycle: "Dictation and lifecycle"
+systemStartspeechLifecycle: "StartSpeech · Lifecycle"
+systemDictate: "Dictate"
+systemStopDictating: "Stop"
+systemSayAnything: "Say anything after Dictate"
+systemListening: "Listening…"
+systemNoSpeechHere: "This platform recognizes no speech"
+systemLifecycle: "Lifecycle"
+systemSpeechEnded: "Ended: {reason}"
+mediaSaved: "Saved"
+mediaClickThePage: "Click the page’s button"
+mediaSaveANote: "Save the page’s note"

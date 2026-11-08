@@ -5,7 +5,6 @@ package linux
 import (
 	"bytes"
 	"errors"
-	"image/png"
 	"strconv"
 	"strings"
 	"sync"
@@ -184,13 +183,10 @@ func (w *window) readClipboard(it *driver.MountItem) {
 		}
 		gdkClipboardReadTextureAsync(clip, 0, cbAsync, async(func(source, result uintptr) {
 			if texture := gdkClipboardReadTextureFinish(source, result, 0); texture != 0 {
-				if data := texturePNG(texture); len(data) <= driver.MaxClipboardImage {
-					if c, err := png.DecodeConfig(bytes.NewReader(data)); err == nil {
-						ev.Data = &driver.ClipboardImage{PNG: data,
-							Size: driver.Size{Width: driver.Points(c.Width), Height: driver.Points(c.Height)}}
-					}
-				}
+				ev.Data = driver.ClipboardPNG(texturePNG(texture))
 				gObjectUnref(texture)
+			} else {
+				ev.Data = driver.ReadClipboardImage(nil, driver.Size{}, errors.New("GDK read no texture"))
 			}
 			answer()
 		}))

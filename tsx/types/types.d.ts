@@ -673,6 +673,8 @@ export interface YNode {
   stopLoading(): void;
   injectJavaScript(script: string): void;
   postMessage(data: string): void;
+  /** WebView: gives the page input as the user's own, whose events are trusted (isTrusted): a click in CSS pixels of the viewport, text typed into what has the focus, or a key. It takes the keyboard focus; macOS only, elsewhere it does nothing. */
+  sendInput(input: { type: "click"; x: number; y: number } | { type: "text"; text: string } | { type: "key"; key: "Enter" | "Tab" | "Escape" | "Backspace" }): void;
   seek(seconds: number): void;
 }
 

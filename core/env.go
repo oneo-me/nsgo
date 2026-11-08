@@ -17,7 +17,7 @@ type Env struct {
 	keyboard             *Signal[Points]
 	keyboardDuration     *Signal[time.Duration]
 	dark, reduce, reader *Signal[bool]
-	screenColor          *Signal[bool]
+	screenColor, speech  *Signal[bool]
 	fontScale, ratio     *Signal[float32]
 	// locale and systemRTL are the platform's or the host's; forced is
 	// the locale Scope.SetLocale forces.
@@ -28,6 +28,7 @@ type Env struct {
 	os             *Signal[OS]
 	version        *Signal[OSVersion]
 	idiom          *Signal[Idiom]
+	lifecycle      *Signal[Lifecycle]
 	appearance     *Signal[Appearance]
 	// systemDark is the system's appearance, which a forced one hides.
 	systemDark bool
@@ -55,6 +56,7 @@ func newEnv(cx *Scope, app *Env) *Env {
 		systemRTL:        NewSignal(cx, false),
 		reader:           NewSignal(cx, false),
 		screenColor:      NewSignal(cx, false),
+		speech:           NewSignal(cx, false),
 		fontScale:        NewSignal(cx, float32(1)),
 		ratio:            NewSignal(cx, float32(1)),
 		locale:           NewSignal(cx, ""),
@@ -62,6 +64,7 @@ func newEnv(cx *Scope, app *Env) *Env {
 		os:               NewSignal(cx, OS("")),
 		version:          NewSignal(cx, OSVersion{}),
 		idiom:            NewSignal(cx, IdiomPhone),
+		lifecycle:        NewSignal(cx, LifecycleActive),
 		appearance:       NewSignal(cx, AppearanceSystem),
 		appleKeys:        NewSignal(cx, false),
 		material:         NewSignal(cx, WindowMaterialNone),
@@ -135,6 +138,7 @@ func (e *Env) set(v Environment) {
 	e.systemRTL.Set(v.RTL)
 	e.reader.Set(v.ScreenReader)
 	e.screenColor.Set(v.ScreenColor)
+	e.speech.Set(v.Speech)
 	e.fontScale.Set(v.FontScale)
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
@@ -142,6 +146,7 @@ func (e *Env) set(v Environment) {
 	e.version.Set(v.OSVersion)
 	e.appleKeys.Set(v.OS == OSMacOS || v.OS == OSIOS || v.AppleKeyboard)
 	e.idiom.Set(v.Idiom)
+	e.lifecycle.Set(v.Lifecycle)
 	e.material.Set(v.WindowMaterial)
 	e.headers = [2]Points{v.HeaderHeight, max(v.LargeHeaderHeight, v.HeaderHeight)}
 }
@@ -206,6 +211,10 @@ func (e *Env) ScreenReader() bool { return e.reader.Get() }
 // CanPickScreenColor reports whether Scope.PickScreenColor works here:
 // macOS and browsers with an EyeDropper.
 func (e *Env) CanPickScreenColor() bool { return e.screenColor.Get() }
+
+// CanRecognizeSpeech reports whether Scope.StartSpeech recognizes speech
+// here: macOS and iOS.
+func (e *Env) CanRecognizeSpeech() bool { return e.speech.Get() }
 
 // RTL reports whether the app lays out right to left: as the language it
 // shows is written (Language), else the locale it forces, else as the
@@ -296,6 +305,10 @@ func (e *Env) OSVersion() OSVersion { return e.version.Get() }
 
 // Idiom returns the kind of device.
 func (e *Env) Idiom() Idiom { return e.idiom.Get() }
+
+// Lifecycle returns whether the app is in use: active, inactive (shown
+// without the focus) or in the background.
+func (e *Env) Lifecycle() Lifecycle { return e.lifecycle.Get() }
 
 // AppleKeys reports whether shortcuts follow Apple's conventions: "mod"
 // is Command and labels use ⌘.

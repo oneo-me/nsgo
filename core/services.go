@@ -135,15 +135,25 @@ func (cx *Scope) HasClipboardText(done func(bool)) {
 }
 
 // ReadClipboardImage calls done with the clipboard's image as a PNG, or
-// ok false when it holds none or one over MaxClipboardImage bytes. On
-// iOS, reading it may show the system's paste notice.
-func (cx *Scope) ReadClipboardImage(done func(img ClipboardImage, ok bool)) {
+// ok false when it holds none. An image it cannot read, or whose PNG is
+// over MaxClipboardImage bytes (CodeQuotaExceeded), fails. On iOS,
+// reading it may show the system's paste notice.
+func (cx *Scope) ReadClipboardImage(done func(img ClipboardImage, ok bool, err error)) {
 	cx.readClipboard(driver.ClipboardReadImage, func(ev driver.Event) {
-		if img, ok := ev.Data.(*driver.ClipboardImage); ok && img != nil && len(img.PNG) > 0 {
-			done(*img, true)
-			return
+		img, _ := ev.Data.(*driver.ClipboardImage)
+		switch {
+		case img == nil:
+			done(ClipboardImage{}, false, nil)
+		case img.Err != "":
+			done(ClipboardImage{}, false, fmt.Errorf("nsgo: the clipboard's image cannot be read: %s", img.Err))
+		case img.TooLarge > 0:
+			done(ClipboardImage{}, false, &Error{Code: CodeQuotaExceeded,
+				Message: fmt.Sprintf("nsgo: the clipboard's image is %d bytes as a PNG, over %d", img.TooLarge, MaxClipboardImage)})
+		case len(img.PNG) == 0:
+			done(ClipboardImage{}, false, nil)
+		default:
+			done(*img, true, nil)
 		}
-		done(ClipboardImage{}, false)
 	})
 }
 
@@ -169,7 +179,11 @@ func (cx *Scope) Announce(text string) {
 }
 
 // SelectInputSource is the core's part of base.Command's InputSource: it
-// selects the keyboard input source of id, remembering the one it replaces.
+// selects the enabled keyboard input source of id, remembering the one it
+// replaces. An id is the platform's: a Text Input Sources ID on macOS
+// ("com.apple.keylayout.ABC"), a keyboard layout ID on Windows
+// ("00000409"), and a Fcitx 5 input method ("keyboard-us") or an IBus
+// engine ("xkb:us::eng") on Linux. Phones and the web ignore it.
 func (cx *Scope) SelectInputSource(id string) {
 	if t := cx.tree(); t != nil {
 		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemInputSource, Value: id})

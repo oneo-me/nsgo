@@ -744,6 +744,24 @@ func TestMedia(t *testing.T) {
 	app.Find("text:0.25")
 }
 
+// TestWebInput clicks the inline page's button and link as the user,
+// whose trusted click posts to the app and saves the page's note, where a
+// platform gives web views trusted input and saves their downloads.
+func TestWebInput(t *testing.T) {
+	if nsgotest.Target() != "macos" {
+		t.Skip("trusted web input and downloads are macOS's")
+	}
+	app := startDesktop(t)
+	open(app, "WebView and Video")
+	app.WaitFor("id:bridge", 10*time.Second)
+	// The page posts where its button is as it loads.
+	time.Sleep(2 * time.Second)
+	app.Press("id:click-page")
+	app.WaitFor("text:hello from the page", 10*time.Second)
+	app.Press("id:save-note")
+	app.WaitFor("text:note.txt, 19 B", 10*time.Second)
+}
+
 func TestSystem(t *testing.T) {
 	headless(t)
 	app := startDesktop(t)

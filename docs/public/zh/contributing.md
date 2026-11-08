@@ -34,6 +34,7 @@ go tool nsgo build -target all examples/gallery     # 在 examples/gallery/dist 
 
 ```sh
 go tool nsgo check                 # 检查所有包
+go tool nsgo check -target all     # 同时为每个目标平台检查
 go tool nsgo test                  # 运行所有包的测试
 go tool nsgo test -bench . ./core  # core 的基准测试
 bench/run.sh                       # 测量行情表基准

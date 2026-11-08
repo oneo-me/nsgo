@@ -75,7 +75,8 @@ final class Services {
 
     /**
      * Answers a clipboard read: the text, or in data "image", the PNG's
-     * size and its base64, or "uri" lines of local files' file: URLs; and
+     * size and its base64 ("toolarge" and its bytes past the limit, "error"
+     * and why for an image it cannot read), or "uri" lines of local files' file: URLs; and
      * in finished whether it has text or an image. Asking whether it has
      * one reads only the clip's description, so Android shows no paste
      * notice.
@@ -111,15 +112,25 @@ final class Services {
                 try {
                     byte[] bytes = read(context.getContentResolver(), uri);
                     Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    if (bitmap == null) continue;
+                    if (bitmap == null) {
+                        out.setLength(0);
+                        out.append("error\tno decoder reads its ").append(mime);
+                        continue;
+                    }
                     ByteArrayOutputStream png = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, png);
-                    if (png.size() > MAX_CLIPBOARD_IMAGE) return;
+                    out.setLength(0);
+                    if (png.size() > MAX_CLIPBOARD_IMAGE) {
+                        out.append("toolarge\t").append(png.size());
+                        break;
+                    }
                     out.append("image\t").append(bitmap.getWidth()).append('\t').append(bitmap.getHeight()).append('\t')
                             .append(Base64.encodeToString(png.toByteArray(), Base64.NO_WRAP));
                     break;
                 } catch (IOException | SecurityException e) {
-                    // An image the app may not read is none.
+                    // An image the app may not read fails its read, unless a later item reads.
+                    out.setLength(0);
+                    out.append("error\t").append(String.valueOf(e.getMessage()).replace('\n', ' '));
                 }
             }
         }

@@ -172,19 +172,25 @@ mount(App);`)
 }
 
 func TestTheEnvironment(t *testing.T) {
-	app := run(t, `import { colorScheme, mount, platform, setColorScheme, Text, View, windowSize } from "nsgo";
+	app := run(t, `import { colorScheme, lifecycle, mount, platform, setColorScheme, Text, View, windowSize } from "nsgo";
 function App() {
 	return <View testID="toggle" onPress={() => setColorScheme("dark")}>
-		<Text>{colorScheme() + " " + windowSize().width + " " + platform.select({ ios: "ios", default: "other" })}</Text>
+		<Text>{colorScheme() + " " + windowSize().width + " " + platform.select({ ios: "ios", default: "other" }) + " " + lifecycle()}</Text>
 	</View>;
 }
 mount(App);`, nsgotest.Environment(core.Environment{OS: core.OSIOS}))
-	if texts := app.Texts(); !slices.Contains(texts, "light 390 ios") {
+	if texts := app.Texts(); !slices.Contains(texts, "light 390 ios active") {
 		t.Fatalf("texts %q", texts)
 	}
 	app.Press("id:toggle")
-	if texts := app.Texts(); !slices.Contains(texts, "dark 390 ios") {
+	if texts := app.Texts(); !slices.Contains(texts, "dark 390 ios active") {
 		t.Errorf("after setColorScheme: %q", texts)
+	}
+	for _, state := range []core.Lifecycle{core.LifecycleInactive, core.LifecycleBackground} {
+		app.SetEnvironment(core.Environment{OS: core.OSIOS, Lifecycle: state})
+		if want := "dark 390 ios " + state.String(); !slices.Contains(app.Texts(), want) {
+			t.Errorf("texts %q, want %q", app.Texts(), want)
+		}
 	}
 }
 
@@ -233,4 +239,49 @@ function App() {
 }
 mount(App);`)
 	app.WaitFor("text:total 3", time.Second)
+}
+
+func TestSpeech(t *testing.T) {
+	app := run(t, `import { mount, signal, Speech, Text, View } from "nsgo";
+function App() {
+	const said = signal("idle");
+	const available = signal("?");
+	Speech.available().then((on) => available.set(String(on)));
+	let session = null;
+	return <View>
+		<View testID="start" style={{ height: 20 }} onPress={() => {
+			session = Speech.start({ lang: "en-US", interim: true });
+			session.on("result", (e) => said.set((e.isFinal ? "final " : "hearing ") + e.text));
+			session.on("end", (e) => said.set("ended " + e.text + " " + (e.error ?? "ok") + " " + session.ended));
+		}} />
+		<View testID="stop" style={{ height: 20 }} onPress={() => session.stop()} />
+		<View testID="bad" style={{ height: 20 }} onPress={() => {
+			try { Speech.start({ lang: "?" }); } catch (e) { said.set(e.name); }
+		}} />
+		<Text>{available() + " " + said()}</Text>
+	</View>;
+}
+mount(App);`, nsgotest.Environment(core.Environment{OS: core.OSIOS, Speech: true}))
+	app.Press("id:start")
+	if app.Speech == nil || app.Speech.Lang != "en-US" || !app.Speech.Interim {
+		t.Fatalf("session %+v", app.Speech)
+	}
+	app.HearSpeech("hello", false)
+	if !slices.Contains(app.Texts(), "true hearing hello") {
+		t.Fatalf("texts %q", app.Texts())
+	}
+	app.HearSpeech("hello there", false)
+	app.Press("id:stop")
+	if !slices.Contains(app.Texts(), "true ended hello there ok true") {
+		t.Fatalf("after stop: %q", app.Texts())
+	}
+	app.Press("id:start")
+	app.EndSpeech("no-speech")
+	if !slices.Contains(app.Texts(), "true ended  no-speech true") {
+		t.Fatalf("after no speech: %q", app.Texts())
+	}
+	app.Press("id:bad")
+	if !slices.Contains(app.Texts(), "true RangeError") {
+		t.Fatalf("a bad lang: %q", app.Texts())
+	}
 }

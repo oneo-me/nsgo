@@ -48,7 +48,7 @@ func commandPlayground(cx *core.Scope) core.Node {
 			inline, dialog := palette(expand.Get()), palette(expand.Get())
 			inline.Style = core.Style{Height: core.Pt(280)}
 			inline.OnSelect = func(id string) { last.Set("Command: " + id) }
-			dialog.InputSource = commandInputSource
+			dialog.InputSource = commandInputSource(cx)
 			dialog.OnSelect = func(id string) {
 				open.Set(false)
 				last.Set("CommandDialog: " + id)

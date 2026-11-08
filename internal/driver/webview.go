@@ -48,6 +48,9 @@ type WebConfig struct {
 	NoScroll                        bool
 	NoJavaScript                    bool
 	BackForwardGestures             bool
+	// DownloadDir is where the view saves what its pages download, a
+	// directory of its own for each (<id>/<file name>); "" saves nothing.
+	DownloadDir string
 }
 
 // WebCommand is what ItemWebCommand asks a web view to do.
@@ -63,6 +66,35 @@ const (
 	WebPostMessage
 	// WebInjectJavaScript runs Value in the page.
 	WebInjectJavaScript
+	// WebSendInput gives the page Data, a *WebInput, as the user's own
+	// input.
+	WebSendInput
+)
+
+// WebInput is input a web view's page takes as the user's hands give it:
+// its events are trusted (isTrusted), which no script it runs can make.
+type WebInput struct {
+	Kind WebInputKind
+	// Point is a click's, in CSS pixels from the viewport's top left, as
+	// getBoundingClientRect reports.
+	Point Point
+	// Text is what WebInputText types.
+	Text string
+	// Key is what WebInputKey presses, as KeyboardEvent.key names it:
+	// Enter, Tab, Escape or Backspace.
+	Key string
+}
+
+// WebInputKind is what a WebInput gives.
+type WebInputKind uint8
+
+const (
+	// WebInputClick is a primary click at Point.
+	WebInputClick WebInputKind = iota
+	// WebInputText types Text into what has the page's focus.
+	WebInputText
+	// WebInputKey presses and releases Key.
+	WebInputKey
 )
 
 // WebBridge is the script a platform runs at the start of every page

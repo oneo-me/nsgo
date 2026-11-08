@@ -40,6 +40,9 @@ var envExports = []export{
 	{"reduceMotion", func(r *runtime) js.Value {
 		return r.envAccessor(func(e *core.Env) any { return e.ReduceMotion() })
 	}},
+	{"lifecycle", func(r *runtime) js.Value {
+		return r.envAccessor(func(e *core.Env) any { return e.Lifecycle().String() })
+	}},
 	{"screenReaderEnabled", func(r *runtime) js.Value {
 		return r.envAccessor(func(e *core.Env) any { return e.ScreenReader() })
 	}},

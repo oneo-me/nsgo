@@ -219,6 +219,8 @@ const (
 	// EventLaunchAtLogin answers ItemLaunchAtLogin Count with whether the
 	// system starts the app at login (Finished).
 	EventLaunchAtLogin
+	// EventSpeech reports speech session Count (Data, a *SpeechEvent).
+	EventSpeech
 )
 
 // EventMask is a set of event kinds.

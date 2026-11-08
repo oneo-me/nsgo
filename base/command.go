@@ -110,11 +110,11 @@ type Command struct {
 	// say: they go and nothing can be chosen, and RenderError draws it.
 	Error       func() string
 	RenderError func(message string) core.Node
-	// InputSource is the macOS input source to select once the search
-	// field has the keyboard, as "com.apple.keylayout.ABC" for Latin
-	// commands, restored as the command goes unless the user chose another
-	// meanwhile or KeepInputSource. A source that is not enabled changes
-	// nothing, nor does any other platform.
+	// InputSource is the input source to select once the search field
+	// has the keyboard, as core.Scope.SelectInputSource names it
+	// ("com.apple.keylayout.ABC" for Latin commands on macOS), restored as the command goes unless
+	// the user chose another meanwhile or KeepInputSource. A source that
+	// is not enabled changes nothing.
 	InputSource     string
 	KeepInputSource bool
 	// NoSeparator leaves the separators between sections out.

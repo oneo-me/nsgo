@@ -20,7 +20,7 @@ import (
 // by Go, so checking needs only Go.
 const tsgo = "github.com/microsoft/typescript-go/cmd/tsgo@v0.0.0-20260820064610-89d5d5b2849a"
 
-func check(ctx context.Context, p *project) error {
+func check(ctx context.Context, p *project, target string) error {
 	s := begin("checking catalogs")
 	if err := p.prepareCatalogs(ctx, "./...", true); err != nil {
 		s.fail()
@@ -33,6 +33,24 @@ func check(ctx context.Context, p *project) error {
 		return err
 	}
 	s.done("vetted", "")
+	if target != "" {
+		names, err := expandTargets(strings.Split(target, ","))
+		if err != nil {
+			return err
+		}
+		for _, name := range names {
+			s = begin("vetting for %s", name)
+			env, err := vetEnv(ctx, name)
+			if err == nil {
+				err = goTool(ctx, p.Dir, env, "vet", "./...")
+			}
+			if err != nil {
+				s.fail()
+				return err
+			}
+			s.done("vetted for "+name, "")
+		}
+	}
 	if p.bare {
 		return nil
 	}
@@ -51,6 +69,32 @@ func check(ctx context.Context, p *project) error {
 	}
 	s.done("type-checked", "")
 	return nil
+}
+
+// vetEnv is the environment go vets a target's build in, as the target's
+// build sets it.
+func vetEnv(ctx context.Context, target string) ([]string, error) {
+	os, arch, _ := strings.Cut(target, "_")
+	switch os {
+	case "macos":
+		return []string{"GOOS=darwin", "GOARCH=" + goArch(arch), "CGO_ENABLED=0"}, nil
+	case "windows", "linux":
+		return []string{"GOOS=" + os, "GOARCH=" + goArch(arch), "CGO_ENABLED=0"}, nil
+	case "web":
+		return []string{"GOOS=js", "GOARCH=wasm"}, nil
+	case "ios":
+		return iosEnv(ctx, arch == "simulator")
+	case "android":
+		if arch == "arm64" {
+			return []string{"GOOS=android", "GOARCH=arm64", "CGO_ENABLED=0"}, nil
+		}
+		cc, err := androidClang(goArch(arch))
+		if err != nil {
+			return nil, err
+		}
+		return []string{"GOOS=android", "GOARCH=" + goArch(arch), "CGO_ENABLED=1", "CC=" + cc}, nil
+	}
+	return nil, fmt.Errorf("unknown target %q", target)
 }
 
 // typesInit is the file the tool adds to the app's main package, through

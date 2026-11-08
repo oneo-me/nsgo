@@ -116,25 +116,21 @@ func (w *window) readClipboard(it *driver.MountItem) {
 	w.engine.Dispatch(ev)
 }
 
-// pngOf returns the clipboard's PNG or bitmap as a PNG, nil when it is
-// neither or too large.
+// pngOf returns the clipboard's PNG or bitmap as a PNG, or why it could
+// not.
 func pngOf(data []byte) *driver.ClipboardImage {
 	if driver.SniffImage(data) != "image/png" {
 		m, err := bmp.Decode(bytes.NewReader(data))
 		if err != nil {
-			return nil
+			return driver.ReadClipboardImage(nil, driver.Size{}, err)
 		}
 		var b bytes.Buffer
-		if png.Encode(&b, m) != nil {
-			return nil
+		if err := png.Encode(&b, m); err != nil {
+			return driver.ReadClipboardImage(nil, driver.Size{}, err)
 		}
 		data = b.Bytes()
 	}
-	c, err := png.DecodeConfig(bytes.NewReader(data))
-	if err != nil || len(data) > driver.MaxClipboardImage {
-		return nil
-	}
-	return &driver.ClipboardImage{PNG: data, Size: driver.Size{Width: driver.Points(c.Width), Height: driver.Points(c.Height)}}
+	return driver.ClipboardPNG(data)
 }
 
 // setClipboardImage puts the image data encodes on the clipboard as a

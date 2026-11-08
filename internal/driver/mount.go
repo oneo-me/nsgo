@@ -285,6 +285,9 @@ const (
 	// batch, so the platform pictures it again once the batch is applied:
 	// an effect's or a transition's children, a screen shader's surface.
 	ItemShaderInput
+	// ItemSpeech starts, stops or aborts speech session Count (Speech);
+	// the platform reports it with EventSpeech carrying Count.
+	ItemSpeech
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -347,6 +350,8 @@ type MountItem struct {
 	Screen    *ScreenConfig
 	// Pick is ItemPickImages' request.
 	Pick *PickRequest
+	// Speech is an ItemSpeech's request.
+	Speech *SpeechRequest
 	// Files is ItemPickFiles' request, Save ItemSaveFile's,
 	// Directories ItemPickDirectories', Open ItemOpenFile's and
 	// ItemInstallPackage's and Share ItemShare's.

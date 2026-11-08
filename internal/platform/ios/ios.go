@@ -532,9 +532,40 @@ func (s *surface) environment() driver.Environment {
 		OS:               driver.OSIOS,
 		OSVersion:        osVersion(),
 		Idiom:            idiom,
+		Speech:           apple.SpeechAvailable(),
+		Lifecycle:        appLifecycle(),
 	}
 	env.HeaderHeight, env.LargeHeaderHeight = s.headers[0], s.headers[1]
 	return env
+}
+
+// lifecycleNote is the state each of UIApplication's notifications moves
+// to, which applicationState may not say yet as it is posted.
+var lifecycleNote = map[string]driver.Lifecycle{
+	"UIApplicationDidBecomeActiveNotification":     driver.LifecycleActive,
+	"UIApplicationWillResignActiveNotification":    driver.LifecycleInactive,
+	"UIApplicationDidEnterBackgroundNotification":  driver.LifecycleBackground,
+	"UIApplicationWillEnterForegroundNotification": driver.LifecycleInactive,
+}
+
+// lifecycleNow is the state the last notification moved to, 255 before
+// one.
+var lifecycleNow driver.Lifecycle = 255
+
+// appLifecycle is UIApplication's applicationState: inactive under an
+// incoming call, the app switcher or Control Center.
+func appLifecycle() driver.Lifecycle {
+	if lifecycleNow != 255 {
+		return lifecycleNow
+	}
+	const inactive, background = 1, 2
+	switch objc.Send[int](objc.ID(objc.GetClass("UIApplication")).Send(sel("sharedApplication")), sel("applicationState")) {
+	case inactive:
+		return driver.LifecycleInactive
+	case background:
+		return driver.LifecycleBackground
+	}
+	return driver.LifecycleActive
 }
 
 // refresh reports the environment to the engine if it changed.
@@ -557,6 +588,12 @@ func (s *surface) observe() {
 	for _, name := range []string{"UIContentSizeCategoryDidChangeNotification",
 		"UIAccessibilityReduceMotionStatusDidChangeNotification", "UIAccessibilityVoiceOverStatusDidChangeNotification"} {
 		on(apple.Global(uikitPath, name), refresh)
+	}
+	for name, state := range lifecycleNote {
+		on(apple.Global(uikitPath, name), func(objc.ID) {
+			lifecycleNow = state
+			s.refresh()
+		})
 	}
 	on(apple.Global("/System/Library/Frameworks/Foundation.framework/Foundation", "NSCurrentLocaleDidChangeNotification"), refresh)
 	on(apple.Global(uikitPath, "UIKeyboardWillChangeFrameNotification"), func(note objc.ID) { s.keyboardMoved(note, false) })
@@ -768,6 +805,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemDismissKeyboard:
 			s.native.Send(sel("endEditing:"), true)
+			continue
+		case driver.ItemSpeech:
+			apple.HandleSpeech(it.Count, *it.Speech, s.engine.Dispatch)
 			continue
 		case driver.ItemSetClipboard:
 			objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard")).Send(sel("setString:"), apple.NSString(it.Value))

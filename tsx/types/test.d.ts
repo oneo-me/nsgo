@@ -36,6 +36,8 @@ export interface OpenOptions {
   network?: "live" | Record<string, StubResponse | ((request: StubRequest) => StubResponse | Promise<StubResponse>)> | null;
   /** The text on the clipboard at the start. */
   clipboard?: string | null;
+  /** Whether the platform recognizes speech: without it, Speech sessions end with "unavailable". */
+  speech?: boolean | null;
 }
 /** A response open's network gives a request. */
 export interface StubResponse {
@@ -124,6 +126,12 @@ export declare class App {
   menu(): MenuEntry[] | null;
   /** The URLs the app opened: recorded, never opened. */
   openedUrls(): string[];
+  /** The speech session running, null when none is. */
+  speech(): { lang: string; interim: boolean } | null;
+  /** Has the session running hear `text`, the whole transcript so far, final once it will not change. */
+  hearSpeech(text: string, isFinal?: boolean): Promise<void>;
+  /** Ends the session running with what it heard and `error`, a SpeechErrorCode, if any. */
+  endSpeech(error?: string | null): Promise<void>;
   /** The text on the clipboard, null when it holds none. */
   clipboard(): string | null;
   /** The requests the app made, in order. */

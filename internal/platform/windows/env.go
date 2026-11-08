@@ -4,6 +4,7 @@ package windows
 
 import (
 	"strings"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -17,6 +18,10 @@ var (
 	getUserDefaultLocaleName = kernel32.NewProc("GetUserDefaultLocaleName")
 	getLocaleInfoEx          = kernel32.NewProc("GetLocaleInfoEx")
 	dwmSetWindowAttribute    = dwmapi.NewProc("DwmSetWindowAttribute")
+
+	isWindowVisible          = user32.NewProc("IsWindowVisible")
+	getForegroundWindow      = user32.NewProc("GetForegroundWindow")
+	getWindowThreadProcessID = user32.NewProc("GetWindowThreadProcessId")
 )
 
 const (
@@ -51,7 +56,35 @@ func (w *window) environment() driver.Environment {
 		Maximized:      w.zoomed(),
 		FullScreen:     w.chrome.fullScreen,
 		WindowFrame:    w.windowFrame(),
+		Lifecycle:      w.lifecycle(),
 	}
+}
+
+// appActive is whether the app is the active one, as the last
+// WM_ACTIVATEAPP said, which Windows sends per thread; before the first,
+// whether the foreground window is the process's.
+var appActive = sync.OnceValue(func() *bool {
+	active := false
+	if fg, _, _ := getForegroundWindow.Call(); fg != 0 {
+		var pid uint32
+		getWindowThreadProcessID.Call(fg, uintptr(unsafe.Pointer(&pid)))
+		active = pid == uint32(syscall.Getpid())
+	}
+	return &active
+})
+
+// lifecycle is whether the app is in use: in the background while the
+// window, an embedded view's root window, is minimized or hidden, active
+// while the app is the active one.
+func (w *window) lifecycle() driver.Lifecycle {
+	root := w.owner()
+	if visible, _, _ := isWindowVisible.Call(root); visible == 0 || isIconicWindow(root) {
+		return driver.LifecycleBackground
+	}
+	if *appActive() {
+		return driver.LifecycleActive
+	}
+	return driver.LifecycleInactive
 }
 
 // updateEnvironment reads the environment again, after Windows broadcast

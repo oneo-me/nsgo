@@ -2,6 +2,7 @@ package driver
 
 import (
 	"bytes"
+	"errors"
 	"image/png"
 )
 
@@ -382,16 +383,47 @@ const (
 )
 
 // MaxClipboardImage is the most bytes of a PNG a clipboard read returns:
-// a larger image reads as none, since the app's memory may not hold it.
+// a larger image is left out, since the app's memory may not hold it.
 const MaxClipboardImage = 48 << 20
 
-// ClipboardImage is an image read from the clipboard.
+// ClipboardImage is an image read from the clipboard, or why the one it
+// holds was not.
 type ClipboardImage struct {
 	// PNG is the image encoded as a PNG, which an ImageSource's Data
 	// shows.
 	PNG []byte
 	// Size is its size in pixels.
 	Size Size
+	// TooLarge is the bytes of a PNG over MaxClipboardImage, left out of
+	// PNG.
+	TooLarge int
+	// Err says why the image the clipboard holds could not be read.
+	Err string
+}
+
+// ReadClipboardImage is a platform's answer to a ClipboardReadImage from
+// what converting the clipboard's image to a PNG gave: nil when there was
+// nothing to convert.
+func ReadClipboardImage(png []byte, size Size, err error) *ClipboardImage {
+	switch {
+	case err != nil:
+		return &ClipboardImage{Err: err.Error()}
+	case len(png) > MaxClipboardImage:
+		return &ClipboardImage{Size: size, TooLarge: len(png)}
+	case len(png) == 0:
+		return nil
+	}
+	return &ClipboardImage{PNG: png, Size: size}
+}
+
+// ClipboardPNG is ReadClipboardImage of a PNG whose size it reads, which
+// fails for data that is no PNG.
+func ClipboardPNG(data []byte) *ClipboardImage {
+	if len(data) == 0 {
+		return ReadClipboardImage(nil, Size{}, errors.New("no PNG"))
+	}
+	c, err := png.DecodeConfig(bytes.NewReader(data))
+	return ReadClipboardImage(data, Size{Width: Points(c.Width), Height: Points(c.Height)}, err)
 }
 
 // MenuRole is a standard menu item the platform carries out, labelling it
@@ -550,11 +582,7 @@ func (c *MemoryClipboard) Take(it *MountItem) (ev Event, answer, taken bool) {
 			ev.Finished = c.Text != ""
 		case ClipboardReadImage:
 			if len(c.Image) > 0 {
-				img := &ClipboardImage{PNG: c.Image}
-				if cfg, err := png.DecodeConfig(bytes.NewReader(c.Image)); err == nil {
-					img.Size = Size{Width: Points(cfg.Width), Height: Points(cfg.Height)}
-				}
-				ev.Data = img
+				ev.Data = ClipboardPNG(c.Image)
 			}
 		case ClipboardReadHasImage:
 			ev.Finished = len(c.Image) > 0

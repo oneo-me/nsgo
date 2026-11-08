@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
 ## Requests and answers
 
@@ -8,13 +8,13 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile` and `CanInstallPackages`, and it records the shares, the packages installed, the install settings opened, the appearance, quits and the context menu shown.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile` and `CanInstallPackages`, and it records the shares, the packages installed, the install settings opened, the appearance, quits and the context menu shown. A speech session it runs hears what `HearSpeech` says and ends with `EndSpeech`.
 
 ## Clipboard
 
 `SetClipboard` and `SetClipboardImage` write; `ReadClipboard`, `ReadClipboardImage` and `ReadClipboardFiles` read; `HasClipboardText` and `HasClipboardImage` read only what the clipboard holds, so iOS and Android show no paste notice for them.
 
-- An image is read as a PNG and its size in pixels, none over 48 MB, as NSH's. One beside copied files is their icon, not the user's image, and reads as none.
+- An image is read as a PNG and its size in pixels. One whose PNG is over 48 MB fails with `CodeQuotaExceeded`, as NSH's, and one the platform cannot read or convert fails with why (`driver.ReadClipboardImage`), so `readImage` rejects both and resolves null only for none. One beside copied files is their icon, not the user's image, and reads as none.
 - Files are the `file:` URLs a file manager copied. Android and iOS rarely hold any, and the web has no access to them.
 
 | Target | Writes an image as | Reads an image from |
@@ -24,7 +24,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 | Windows | `PNG` and a DIB over white | `PNG`, else the DIB through `x/image/bmp` |
 | Linux | A `GdkTexture` | A texture, saved as PNG |
 | Android | A PNG `FileProvider` serves | An image URI, decoded and encoded as PNG |
-| Web | The PNG browsers take | `image/png`, with the page's permission |
+| Web | The PNG browsers take | `image/png`, with the page's permission: a refused read fails |
 
 Android's clipboard holds images only as content URIs, which the runtime's `FileProvider` serves ([sharing files](#opening-and-sharing-files)). NSH writes no images on Android.
 
@@ -107,6 +107,26 @@ Android hands files on as content URIs from the runtime's `FileProvider`, which 
 
 The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PACKAGES`, which stores review, so the runtime asks for nothing: an app lists it in `nsgo.yaml`'s `android.permissions` ([tool](tool.md)), an embedding host in its own manifest, and `InstallPackage` fails with that advice without it.
 
+## Speech
+
+`StartSpeech` recognizes what the user says, NSH's `Speech.start`: one session per engine, which a new one and its scope's end abort. It reports the whole transcript so far, before it is final with `Interim`, and ends once with the last one and a `SpeechError` named as the Web Speech API's (`not-allowed`, `no-speech`, `audio-capture`, `network`, `language-not-supported`, `unavailable`, `failed`). `Stop` has the recognizer finish what it heard; `Abort` ends it at once. A `Lang` of "" is the app's locale.
+
+- macOS and iOS (`apple/speech.go`) feed the Speech framework's recognizer from `AVAudioEngine`'s input, asking for speech recognition and the microphone once each. The app's Info.plist declares `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` (`nsgo.yaml`'s `apple.info`): without them a session ends `not-allowed`, since the system would end the app as it asks. iOS holds the audio session in the record category while it listens.
+- `Env.CanRecognizeSpeech` says the platform recognizes speech; elsewhere a session ends `unavailable` without asking it ([roadmap](../roadmap.md#finish-the-existing-platforms)).
+
+## The app's lifecycle
+
+`Env.Lifecycle`, NSH's `lifecycle()`, says whether the app is in use: `active`, `inactive` (shown without the focus) or `background` (none of it shows). Each backend reports it with the environment, as it changes.
+
+| Target | Background while | Active while |
+| --- | --- | --- |
+| macOS | The app is hidden, or `occlusionState` says none of it shows (minimized, covered, the screen locked) | It is the active app |
+| iOS | `applicationState` is background | It is active: not under a call, the app switcher or Control Center |
+| Android | `NsgoView`'s window is not visible | The window has the focus |
+| Windows | The window, an embedded view's root window, is minimized or hidden | The app is active (`WM_ACTIVATEAPP`) |
+| Linux | The surface is unmapped, or its toplevel minimized or suspended | One of the app's windows `is-active` |
+| Web | The document is hidden | The document has the focus |
+
 ## Appearance and quitting
 
 `SetAppearance` forces light or dark, and `nsgo.Appearance` starts the app in it. The core keeps the system's appearance beside the forced one and reports the one shown as `Env.Dark`, so platforms may report either. A subtree forces its own with `SetSubtreeAppearance` ([themes](themes.md#scope)).
@@ -159,7 +179,8 @@ Package `desktop` is NSH's `nsh/desktop`: native controls, an app-drawn title ba
 Shortcuts are scoped to their owner: the platform matches key presses against the table synchronously and reports only matches.
 
 - An input method composing text keeps its keys on macOS and the web, so arrows still choose its candidates.
-- `Scope.SelectInputSource`, `base.Command`'s `InputSource`, selects an enabled keyboard input source on macOS through Text Input Sources, which need no field's input context, so restoring works after the field is gone. `RestoreInputSource` goes back unless the user chose another since. Other platforms ignore both ([roadmap](../roadmap.md#platform-services-of-040)); `nsgotest` records them in `App.InputSource`.
+- `Scope.SelectInputSource`, `base.Command`'s `InputSource`, selects an enabled keyboard input source by the platform's ID, and `RestoreInputSource` goes back unless the user chose another since; phones and the web ignore both, and `nsgotest` records them in `App.InputSource`.
+- macOS selects through Text Input Sources (`com.apple.keylayout.ABC`), which need no field's input context, so restoring works after the field is gone. Windows activates a keyboard layout for the process by its KLID (`00000409`), unloading again one the user has not enabled. Linux asks the input method framework over D-Bus, off the main thread: Fcitx 5's input methods of the current group (`keyboard-us`), else IBus's engines (`xkb:us::eng`) on the bus its daemon names.
 - Each `KeyBinding` says whether it fires while a text input or web view has the focus, and on a held key's auto-repeats; `driver.FindKey` decides for every Go backend, Android's Java the same way.
 - By default (`KeyAuto`) a binding leaves an input the keys it uses (`EditsText`) and fires once while held; `OnKeyWith` asks for `KeyAlways`, `KeyNotEditing` and `Repeat`.
 - GTK flags no repeats, so Linux counts a key pressed again before its release; UIKit reports a held key once, so iOS repeats a binding on a timer.
@@ -181,4 +202,4 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 
 ## Verification
 
-`core` tests each request and answer; `examples/gallery` checks its System page with `nsgotest`. The Windows and Linux native tests drive the clipboard, frames, levels, the hiding menu bar, a context menu, the appearance and `Quit` in a window, and Windows' drawn alerts, hidden caption buttons and backdrops. Both pick a file, save a copy and cancel a save in the system's dialogs, Linux's in a process of its own without the portal, and Windows' open dialog also picks an image. `internal/platform/apple` checks HEIC and scaled picks and the uniform types of file picks; `picked` checks orientation and scaling. `WindowConstraints` were checked on a real AppKit window (2026-11-06) and have only been built for Windows and Linux. macOS, iOS, Android and the web were checked by running each service, except file picks and saves on macOS and iOS, which have not run yet.
+`core` tests each request and answer, speech sessions included; `examples/gallery` checks its System page with `nsgotest`. The Windows and Linux native tests switch input sources and back and follow the lifecycle through a minimize or a hide; Linux's switch ran with a second Fcitx 5 input method enabled (2026-11-08). Speech was checked on macOS only as far as its refusal without permission, which this machine's session gives: no transcript has been recognized yet. The Windows and Linux native tests drive the clipboard, frames, levels, the hiding menu bar, a context menu, the appearance and `Quit` in a window, and Windows' drawn alerts, hidden caption buttons and backdrops. Both pick a file, save a copy and cancel a save in the system's dialogs, Linux's in a process of its own without the portal, and Windows' open dialog also picks an image. `internal/platform/apple` checks HEIC and scaled picks and the uniform types of file picks; `picked` checks orientation and scaling. `WindowConstraints` were checked on a real AppKit window (2026-11-06) and have only been built for Windows and Linux. macOS, iOS, Android and the web were checked by running each service, except file picks and saves on macOS and iOS, which have not run yet.

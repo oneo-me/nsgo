@@ -1,9 +1,7 @@
 package nsgotest
 
 import (
-	"bytes"
 	"fmt"
-	"image/png"
 	"slices"
 	"strings"
 	"time"
@@ -499,6 +497,8 @@ func (a *App) apply(b *driver.MountBatch) {
 			} else {
 				a.InputSource = a.inputSourceWas
 			}
+		case driver.ItemSpeech:
+			a.speech(it.Count, *it.Speech)
 		case driver.ItemAlert:
 			a.alerts = append(a.alerts, *it.Alert)
 		case driver.ItemBlockNative:
@@ -516,6 +516,55 @@ func (a *App) apply(b *driver.MountBatch) {
 
 // post has ev reach the app when it next settles, as a platform's answer
 // does.
+// speech answers an ItemSpeech as a recognizer would: it listens once
+// started, and a stop finishes with what it heard.
+func (a *App) speech(id uint32, r driver.SpeechRequest) {
+	report := func(e driver.SpeechEvent) { a.post(driver.Event{Kind: driver.EventSpeech, Count: id, Data: &e}) }
+	switch r.Command {
+	case driver.SpeechStart:
+		a.Speech, a.speechID, a.speechText = &r, id, ""
+		report(driver.SpeechEvent{Phase: driver.SpeechStarted})
+	case driver.SpeechStop:
+		if a.speechID == id {
+			a.Speech = nil
+			report(driver.SpeechEvent{Phase: driver.SpeechResult, Text: a.speechText, Final: true})
+			report(driver.SpeechEvent{Phase: driver.SpeechEnded, Text: a.speechText})
+		}
+	case driver.SpeechAbort:
+		if a.speechID == id {
+			a.Speech = nil
+		}
+	}
+}
+
+// HearSpeech has the recognizer of the session running hear text, the
+// whole transcript so far, final once it will not change it, and settles.
+func (a *App) HearSpeech(text string, final bool) {
+	a.t.Helper()
+	if a.Speech == nil {
+		a.t.Fatal("nsgotest: no speech session runs")
+	}
+	a.speechText = text
+	if final || a.Speech.Interim {
+		a.post(driver.Event{Kind: driver.EventSpeech, Count: a.speechID,
+			Data: &driver.SpeechEvent{Phase: driver.SpeechResult, Text: text, Final: final}})
+	}
+	a.Settle()
+}
+
+// EndSpeech ends the session running with what it heard, and err, one of
+// driver's Speech errors or "" for none, and settles.
+func (a *App) EndSpeech(err string) {
+	a.t.Helper()
+	if a.Speech == nil {
+		a.t.Fatal("nsgotest: no speech session runs")
+	}
+	a.Speech = nil
+	a.post(driver.Event{Kind: driver.EventSpeech, Count: a.speechID,
+		Data: &driver.SpeechEvent{Phase: driver.SpeechEnded, Text: a.speechText, Error: err}})
+	a.Settle()
+}
+
 func (a *App) post(ev driver.Event) {
 	if a.target != nil {
 		// The platform answers itself.
@@ -536,11 +585,7 @@ func (a *App) readClipboard(it *driver.MountItem) {
 		ev.Finished = a.Clipboard != ""
 	case driver.ClipboardReadImage:
 		if len(a.ClipboardImage) > 0 {
-			img := &driver.ClipboardImage{PNG: a.ClipboardImage}
-			if c, err := png.DecodeConfig(bytes.NewReader(a.ClipboardImage)); err == nil {
-				img.Size = driver.Size{Width: driver.Points(c.Width), Height: driver.Points(c.Height)}
-			}
-			ev.Data = img
+			ev.Data = driver.ClipboardPNG(a.ClipboardImage)
 		}
 	case driver.ClipboardReadHasImage:
 		ev.Finished = len(a.ClipboardImage) > 0

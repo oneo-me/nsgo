@@ -12,7 +12,7 @@ import (
 
 // The services of nsgo (NSH's runtime registry): the keyboard, key
 // bindings, the clipboard, storage, the photo picker, opening URLs,
-// accessibility, images, the environment's insets, design tokens,
+// speech, accessibility, images, the environment's insets, design tokens,
 // resources and native components, each on core's API of the same
 // meaning. What answers later is a promise core's callback settles.
 
@@ -29,6 +29,7 @@ var serviceExports = []export{
 	{"Clipboard", (*runtime).clipboard},
 	{"Storage", (*runtime).storage},
 	{"Picker", (*runtime).picker},
+	{"Speech", (*runtime).speech},
 	fn("openUrl", func(r *runtime, call js.FunctionCall) js.Value {
 		p, resolve, _ := r.vm.NewPromise()
 		r.cx.OpenURL(arg(call, 0).String(), func(opened bool) { r.inJS(func() { _ = resolve(opened) }) })
@@ -152,16 +153,21 @@ func (r *runtime) clipboard() js.Value {
 		return r.vm.ToValue(p)
 	})
 	set("readImage", func(js.FunctionCall) js.Value {
-		p, done := r.promise()
-		r.cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) {
-			done(func() js.Value {
+		p, resolve, reject := r.vm.NewPromise()
+		r.cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool, err error) {
+			r.inJS(func() {
+				if err != nil {
+					_ = reject(r.goError(err))
+					return
+				}
 				if !ok {
-					return js.Null()
+					_ = resolve(js.Null())
+					return
 				}
 				o := r.vm.NewObject()
 				_ = o.Set("url", "data:image/png;base64,"+base64.StdEncoding.EncodeToString(img.PNG))
 				_ = o.Set("size", r.size(img.Size))
-				return o
+				_ = resolve(o)
 			})
 		})
 		return r.vm.ToValue(p)

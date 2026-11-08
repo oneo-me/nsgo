@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -36,7 +37,7 @@ func TestClipboardReads(t *testing.T) {
 	var files []string
 	cx.ReadClipboard(func(s string) { text = s })
 	cx.HasClipboardText(func(b bool) { has = b })
-	cx.ReadClipboardImage(func(i ClipboardImage, o bool) { img, ok = i, o })
+	cx.ReadClipboardImage(func(i ClipboardImage, o bool, _ error) { img, ok = i, o })
 	cx.HasClipboardImage(func(b bool) { hasImage = b })
 	cx.ReadClipboardFiles(func(u []string) { files = u })
 	cx.SetClipboardImage([]byte{1, 2, 3})
@@ -72,10 +73,23 @@ func TestClipboardReads(t *testing.T) {
 	if text != "hi" || !has || !ok || img.Size.Width != 2 || !hasImage || !slices.Equal(files, []string{"file:///a.txt"}) {
 		t.Fatalf("text %q has %v image %+v %v hasImage %v files %v", text, has, img, ok, hasImage, files)
 	}
-	cx.ReadClipboardImage(func(i ClipboardImage, o bool) { ok = o })
-	h.tree.Dispatch(driver.Event{Kind: driver.EventClipboard, Count: command(h.commit(), driver.ItemReadClipboard).Count})
-	if ok {
-		t.Fatal("a clipboard without an image reads as one")
+	var err error
+	read := func(data *driver.ClipboardImage) {
+		cx.ReadClipboardImage(func(_ ClipboardImage, o bool, e error) { ok, err = o, e })
+		h.tree.Dispatch(driver.Event{Kind: driver.EventClipboard, Count: command(h.commit(), driver.ItemReadClipboard).Count,
+			Data: data})
+	}
+	read(nil)
+	if ok || err != nil {
+		t.Fatalf("a clipboard without an image reads as one: %v", err)
+	}
+	read(&driver.ClipboardImage{TooLarge: MaxClipboardImage + 1})
+	if ok || ErrorCode(err) != CodeQuotaExceeded {
+		t.Fatalf("too large an image = %v %v", ok, err)
+	}
+	read(&driver.ClipboardImage{Err: "no decoder"})
+	if ok || err == nil || !strings.Contains(err.Error(), "no decoder") {
+		t.Fatalf("an unreadable image = %v %v", ok, err)
 	}
 }
 

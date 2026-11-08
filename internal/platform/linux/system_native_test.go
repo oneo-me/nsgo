@@ -106,7 +106,7 @@ func TestServicesReachGTK(t *testing.T) {
 	cx.Post(func() { cx.SetClipboardImage(b.Bytes()) })
 	if got := ask(func(say func(string)) {
 		cx.HasClipboardImage(func(has bool) {
-			cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) {
+			cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool, _ error) {
 				cx.HasClipboardText(func(text bool) { say(fmt.Sprintf("%v %v %v %v", has, ok, img.Size, text)) })
 			})
 		})

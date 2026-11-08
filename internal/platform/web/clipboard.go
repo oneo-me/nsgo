@@ -63,7 +63,7 @@ func (s *surface) copyByCommand(text string) {
 
 // readClipboard answers an ItemReadClipboard. The page reads the text,
 // and the PNG browsers put images on the clipboard as; it has no files.
-// What it may not read reads as nothing.
+// Text it may not read reads as nothing, an image as a failure.
 func (s *surface) readClipboard(it *driver.MountItem) {
 	ev := driver.Event{Kind: driver.EventClipboard, Count: it.Count}
 	answer := func() { s.engine.Dispatch(ev) }
@@ -87,6 +87,13 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 			answer()
 			return
 		}
+		// An image the page holds but may not read fails its read.
+		failed := func(err js.Value) {
+			if it.Clipboard == driver.ClipboardReadImage {
+				ev.Data = driver.ReadClipboardImage(nil, driver.Size{}, jsError(err))
+			}
+			answer()
+		}
 		then(c.Call("read"), func(items js.Value) {
 			want := "text/plain"
 			if it.Clipboard != driver.ClipboardReadHasText {
@@ -105,17 +112,14 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 					then(blob.Call("arrayBuffer"), func(buf js.Value) {
 						data := make([]byte, buf.Get("byteLength").Int())
 						js.CopyBytesToGo(data, js.Global().Get("Uint8Array").New(buf))
-						if c, err := png.DecodeConfig(bytes.NewReader(data)); err == nil && len(data) <= driver.MaxClipboardImage {
-							ev.Data = &driver.ClipboardImage{PNG: data,
-								Size: driver.Size{Width: driver.Points(c.Width), Height: driver.Points(c.Height)}}
-						}
+						ev.Data = driver.ClipboardPNG(data)
 						answer()
-					}, func(js.Value) { answer() })
-				}, func(js.Value) { answer() })
+					}, failed)
+				}, failed)
 				return
 			}
 			answer()
-		}, func(js.Value) { answer() })
+		}, failed)
 	}
 }
 

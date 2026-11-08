@@ -86,6 +86,9 @@ type window struct {
 	// window, its chrome and the main loop. app and opts start its engine
 	// once GTK first allocates it.
 	embedded bool
+	// watchedRoot is the window whose focus the surface follows, once
+	// mapped in one.
+	watchedRoot uintptr
 	// language is what the menus say (driver.ItemDirection).
 	language string
 	// dir is the app's direction (driver.ItemDirection) as GTK's, or 0
@@ -455,8 +458,11 @@ func (w *window) createWindow(opts Options) {
 	}
 }
 
-// setupSettings rereads the environment whenever GTK's settings change.
+// setupSettings rereads the environment whenever GTK's settings or the
+// app's lifecycle change.
 func (w *window) setupSettings() {
+	gSignalConnect(w.surface, "map", cbMapped, w.handle)
+	gSignalConnect(w.surface, "unmap", cbMapped, w.handle)
 	if settings := gtkSettingsGetDefault(); settings != 0 {
 		for _, name := range []string{"gtk-theme-name", "gtk-application-prefer-dark-theme", "gtk-xft-dpi", "gtk-enable-animations"} {
 			gSignalConnect(settings, "notify::"+name, cbSettingsChanged, w.handle)
@@ -683,6 +689,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemAnnounce:
 			w.announce(it.Value, false)
+			continue
+		case driver.ItemInputSource:
+			setInputSource(it.Value)
 			continue
 		case driver.ItemAccessibilityLabel:
 			if v := w.view(it.ID); v != nil {

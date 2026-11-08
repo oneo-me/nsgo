@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/oneo-me/nsgo/icons/lucide"
 	"strings"
 	"time"
+
+	"github.com/oneo-me/nsgo/icons/lucide"
 
 	"github.com/oneo-me/nsgo/core"
 
@@ -33,14 +35,21 @@ func inlinePage(cx *core.Scope) string {
   h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
   p { margin: 0 0 12px; color: ` + hex(colors.Muted) + `; font-size: 15px; }
   button { height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, #d6f78a 0%, #c1ea5c 100%); color: ` + hex(colors.OnAccent) + `; font-family: inherit; font-size: 15px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,` + fmt.Sprint(shine) + `); }
+  a { margin-left: 12px; color: inherit; }
   #got { margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid ` + hex(colors.Border) + `; color: ` + hex(colors.Muted) + `; font-size: 15px; }
 </style></head>
 <body>
 <h3>An inline page</h3>
 <p>HTML from a string. It sends messages to the app and receives them.</p>
-<button onclick="window.nsgo.postMessage('hello from the page')">Post to the app</button>
+<button id="post" onclick="window.nsgo.postMessage(event.isTrusted ? 'hello from the page' : 'an untrusted click')">Post to the app</button>
+<a id="save" download="note.txt" href="data:text/plain,Saved%20from%20the%20page">Save a note</a>
 <div id="got">No message from the app yet.</div>
-<script>window.addEventListener('message', (e) => { document.getElementById('got').textContent = 'From the app: ' + e.data; });</script>
+<script>
+window.addEventListener('message', (e) => { document.getElementById('got').textContent = 'From the app: ' + e.data; });
+// Where the button and the link are, for the app's trusted clicks.
+const at = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+window.nsgo.postMessage('at:' + JSON.stringify({ post: at('post'), save: at('save') }));
+</script>
 </body></html>`
 }
 
@@ -54,7 +63,25 @@ func messaging(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	message := core.NewSignal(cx, "")
 	sent := core.NewSignal(cx, 0)
+	saved := core.NewSignal(cx, "")
+	// Where the page's button and link are, which it posts as it loads.
+	var at struct{ Post, Save [2]core.Points }
 	web := &core.Ref{}
+	got := func(data string) {
+		if rest, ok := strings.CutPrefix(data, "at:"); ok {
+			_ = json.Unmarshal([]byte(rest), &at)
+			return
+		}
+		message.Set(data)
+	}
+	download := func(d core.WebDownload) {
+		switch d.State {
+		case core.WebDownloadFinished:
+			saved.Set(fmt.Sprintf("%s, %d B", d.Filename, d.Bytes))
+		case core.WebDownloadFailed:
+			saved.Set(d.Message)
+		}
+	}
 	or := func(s string) string {
 		if s == "" {
 			return "—"
@@ -62,7 +89,7 @@ func messaging(cx *core.Scope) core.Node {
 		return s
 	}
 	return Card{Title: tr.MediaWebView(), Description: tr.MediaInlineHtmlWithMessagesBoth(), Children: []core.Node{
-		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: message.Set},
+		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: got, OnDownload: download},
 		Caption{Label: tr.MediaFromThePage(), Note: func() string { return or(message.Get()) }},
 		Caption{Label: tr.MediaToThePage(), Note: func() string {
 			if sent.Get() == 0 {
@@ -70,9 +97,16 @@ func messaging(cx *core.Scope) core.Node {
 			}
 			return fmt.Sprintf("hi #%d", sent.Get())
 		}},
-		ui.Button{Text: tr.MediaPostToThePage(), OnPress: func() {
-			sent.Set(int(time.Now().UnixMilli() % 1000))
-			web.PostMessage(fmt.Sprintf("hi #%d", sent.GetUntracked()))
+		Caption{Label: tr.MediaSaved(), Note: func() string { return or(saved.Get()) }},
+		ui.Wrap{Children: []core.Node{
+			ui.Button{Text: tr.MediaPostToThePage(), OnPress: func() {
+				sent.Set(int(time.Now().UnixMilli() % 1000))
+				web.PostMessage(fmt.Sprintf("hi #%d", sent.GetUntracked()))
+			}},
+			ui.Button{Text: tr.MediaClickThePage(), Variant: ui.ButtonSecondary, TestID: "click-page",
+				OnPress: func() { web.SendInput(core.WebClick(at.Post[0], at.Post[1])) }},
+			ui.Button{Text: tr.MediaSaveANote(), Variant: ui.ButtonSecondary, TestID: "save-note",
+				OnPress: func() { web.SendInput(core.WebClick(at.Save[0], at.Save[1])) }},
 		}},
 	}}
 }

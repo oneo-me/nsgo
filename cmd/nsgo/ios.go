@@ -15,26 +15,34 @@ import (
 	"text/template"
 )
 
-// buildIOSApp writes <dir>/<name>.app for the simulator or for devices.
-// Device builds are left unsigned for the developer's own identity.
-func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (string, error) {
+// iosEnv is the environment go builds for iOS devices or the simulator
+// in: Go links iOS only through Xcode's linker; NSGo itself has no C.
+func iosEnv(ctx context.Context, simulator bool) ([]string, error) {
 	sdkName, triple := "iphoneos", "arm64-apple-ios15.0"
 	if simulator {
 		sdkName, triple = "iphonesimulator", "arm64-apple-ios15.0-simulator"
 	}
 	sdk, err := output(ctx, "xcrun", "--sdk", sdkName, "--show-sdk-path")
 	if err != nil {
-		return "", fmt.Errorf("the iOS SDK needs Xcode: %w", err)
+		return nil, fmt.Errorf("the iOS SDK needs Xcode: %w", err)
 	}
 	clang, err := output(ctx, "xcrun", "--sdk", sdkName, "-f", "clang")
 	if err != nil {
+		return nil, err
+	}
+	flags := "-isysroot " + sdk + " -target " + triple
+	return []string{"GOOS=ios", "GOARCH=arm64", "CGO_ENABLED=1",
+		"CC=" + clang + " " + flags, "CGO_CFLAGS=" + flags, "CGO_LDFLAGS=" + flags}, nil
+}
+
+// buildIOSApp writes <dir>/<name>.app for the simulator or for devices.
+// Device builds are left unsigned for the developer's own identity.
+func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (string, error) {
+	env, err := iosEnv(ctx, simulator)
+	if err != nil {
 		return "", err
 	}
-	// Go links iOS only through Xcode's linker; NSGo itself has no C.
-	flags := "-isysroot " + sdk + " -target " + triple
 	app := filepath.Join(dir, p.Name+".app")
-	env := []string{"GOOS=ios", "GOARCH=arm64", "CGO_ENABLED=1",
-		"CC=" + clang + " " + flags, "CGO_CFLAGS=" + flags, "CGO_LDFLAGS=" + flags}
 	// Go's runtime objects target a newer iOS than 15.0; the linker's
 	// warning about it is noise.
 	if err := goBuild(ctx, p, filepath.Join(app, p.Name), env, "-extldflags=-Wl,-w"); err != nil {

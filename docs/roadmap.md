@@ -13,16 +13,6 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 | Signed packages | `signed-packages.md` | `nsgo keygen`, `certify`, `publish` (signing a package again with another release key too), `verify` and `revoke` work; a Go, iOS and Android host verifies a package, runs it in `tsx.View`, and refuses tampered, revoked and older builds |
 | Capabilities and limits | `sandbox.md` | Every request a capability names (`fetch`, remote images, web views and their trusted input, `openUrl`, the clipboard, the picker, speech, host calls) is refused with `core.AccessDenied`, `ERR_ACCESS_DENIED` with `permission` and `resource` in JS (`fetch`'s a `TypeError` with them), without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
 
-## Platform services of 0.4.0
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| Input sources | Not in NSH; Onevra's palette, macOS only | `Scope.SelectInputSource` selects a keyboard layout on Windows and Linux too |
-| Speech | `sandbox.md` (`speech`), `nsh`'s `Speech` | `Speech.start` sessions recognize speech on macOS and iOS and report their transcript |
-| The app's lifecycle | `nsh`'s `lifecycle()` (NSH `#747`) | `lifecycle()` reads, reactively, whether the app is `active`, `inactive` (visible without the focus) or in the `background`, which every backend reports |
-| Clipboard images as URLs | `api-naming.md` (Clipboard) | `readImage` promises a URL and rejects what cannot be read, on every backend |
-| Web views of 0.4.0 | `macos.md` | macOS saves the downloads a web view's app opts into (`onDownload`, which no backend reports yet) to the app's data directory, and web views take trusted input (`sendInput`), which only a declared capability grants |
-
 ## Performance against NSH's baselines
 
 NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). Against 0.3.0 the DataTable kept up with NSH's headless, in headless Chrome, with no task over 50 ms, and on macOS, its cells moving with the content in each frame on every backend.
@@ -100,7 +90,13 @@ These items wait for community contributions, and a change to one backend record
 | Pasted HTML | `api-naming.md` (`PasteEvent`) | `onPaste`'s `html` holds the clipboard's HTML on Windows (`CF_HTML`), Linux (`text/html`) and Android (`ClipData.Item.getHtmlText`), as it does on macOS, iOS and the web |
 | Sharing on Windows, Linux and the web | — | `Share` shows Windows' share UI (`IDataTransferManagerInterop::ShowShareUIForWindow` with the files as `StorageFile`s), the desktop portal's or a Linux file manager's where one exists, and the web's `navigator.share` for text and files the app holds as bytes, rather than answering `NoShareSheet` |
 | Recording on the other platforms | — | `microphone.Capture` records on Windows, Linux and Android (`AudioRecord` and `RECORD_AUDIO`, with `classes.dex` rebuilt), as it does on macOS and iOS |
-| Recording beside video on iOS | — | A video that starts playing with an audio session of its own keeps a recording going, which now loses the session to it, as `audiosession_ios.go` and `microphone` share the `AVAudioSession` without knowing of each other |
+| Recording beside video on iOS | — | A video that starts playing with an audio session of its own keeps a recording or a speech session going, which now loses the session to it, as `audiosession_ios.go`, `speech_ios.go` and `microphone` share the `AVAudioSession` without knowing of each other |
+| Speech checked with a voice | `sandbox.md` (`speech`) | A session on a Mac and an iPhone, the permissions granted, reports the transcript of what is said; so far it was checked headless and as far as its refusal on a Mac whose session grants none (2026-11-08) |
+| Speech on the other platforms | — | `StartSpeech` recognizes on Android (`SpeechRecognizer`, with `RECORD_AUDIO` and `classes.dex` rebuilt), Windows (`Windows.Media.SpeechRecognition`) and the web (`SpeechRecognition` where the browser has it), rather than ending `unavailable` |
+| Web view downloads elsewhere | `macos.md` | A web view with `OnDownload` saves what its pages download on Windows (WebView2's `DownloadStarting`), Linux (WebKitGTK's `download-started`) and Android (`DownloadListener`, with `classes.dex` rebuilt), as Apple's do |
+| Trusted web input elsewhere | — | `Ref.SendInput` reaches the page as trusted input on Windows (WebView2's `SendMouseInput` and key messages), Linux and iOS, which drop it now |
+| The lifecycle of embedded views on Windows | `windows.md` (Environment) | A view embedded in another app's window follows that root window's minimize and restore, subclassed as NSH's `observe_root` does: it now reads them only as its own thread's activation changes |
+| The lifecycle on a Mac's screen | — | `Env.Lifecycle` is checked to read active and inactive on a Mac whose screen shows the app, and background as it is hidden or minimized: in this machine's session, whose screen is locked, AppKit reports the app occluded (2026-11-08) |
 | Levels and spin buttons | `elements.md` | `View.AccessibilityLevel` reaches the screen readers of macOS, iOS, Windows, Linux and Android as it does the web's `aria-level`, a `NumberInput`'s `RoleSpinButton` holds on the native text fields of iOS and Android, which take the role from their kind, and Android's `NsgoView` knows the role, with `classes.dex` rebuilt |
 | Bars in multiline inputs | `components.md` (Scroll bars) | A multiline `Input` reports its text's offset and takes `ScrollTo` on every backend, so `scrollbar={theme}` draws a `Scrollbar` over its text |
 | Modal reports | `elements.md` (`<Dialog>`) | Every backend reports a modal shown once it is presented and gone once it is dismissed (`EventModalShown`, `EventModalDismissed`), and the insets a screen keeps clear of (`EventScreenInsets`), so `Dialog`'s `OnOpen` and `OnClose` follow the platform instead of the animation's timer |

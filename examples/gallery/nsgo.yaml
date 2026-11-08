@@ -9,3 +9,8 @@ build:
   output: dist
   open: true
   targets: [all]
+
+apple:
+  info:
+    NSMicrophoneUsageDescription: The System page dictates what you say.
+    NSSpeechRecognitionUsageDescription: The System page turns what you say into text.

@@ -93,10 +93,11 @@ func main() {
 		}
 	case "check":
 		fs := flag.NewFlagSet("check", flag.ExitOnError)
+		target := fs.String("target", "", "also vet for these comma-separated `targets` (all for every one but android_x64)")
 		fs.Parse(args)
 		var p *project
 		if p, err = loadOrDir(treeOf(fs.Arg(0))); err == nil {
-			err = check(ctx, p)
+			err = check(ctx, p, *target)
 		}
 	case "i18n":
 		fs := flag.NewFlagSet("i18n", flag.ExitOnError)

@@ -24,7 +24,6 @@ import (
 )
 
 var (
-	isWindowVisible = user32.NewProc("IsWindowVisible")
 	getParent       = user32.NewProc("GetParent")
 	mapWindowPoints = user32.NewProc("MapWindowPoints")
 )

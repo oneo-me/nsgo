@@ -3,7 +3,12 @@
 package apple
 
 import (
+	"os"
+	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -67,7 +72,7 @@ func loadWebKit() {
 		}
 	}
 	var protocols []*objc.Protocol
-	for _, name := range []string{"WKNavigationDelegate", "WKScriptMessageHandler"} {
+	for _, name := range []string{"WKNavigationDelegate", "WKScriptMessageHandler", "WKDownloadDelegate"} {
 		if p := objc.GetProtocol(name); p != nil {
 			protocols = append(protocols, p)
 		}
@@ -84,7 +89,109 @@ func loadWebKit() {
 					w.Dispatch(driver.Event{Kind: driver.EventMessage, Text: GoString(body.Send(sel("description")))})
 				}
 			}},
+			// Downloads (WKDownload, macOS 11.3 and iOS 14.5), only for a
+			// view that saves them.
+			{Cmd: sel("webView:decidePolicyForNavigationAction:decisionHandler:"), Fn: func(self objc.ID, _ objc.SEL, _, action, decide objc.ID) {
+				const allow, download = 1, 2 // WKNavigationActionPolicy
+				policy := uintptr(allow)
+				if w := webHandlers[self]; w != nil && w.config.DownloadDir != "" &&
+					objc.Send[bool](action, sel("respondsToSelector:"), sel("shouldPerformDownload")) && objc.Send[bool](action, sel("shouldPerformDownload")) {
+					policy = download
+				}
+				CallBlock(decide, policy)
+			}},
+			{Cmd: sel("webView:decidePolicyForNavigationResponse:decisionHandler:"), Fn: func(self objc.ID, _ objc.SEL, _, response, decide objc.ID) {
+				const allow, download = 1, 2 // WKNavigationResponsePolicy
+				policy := uintptr(allow)
+				if w := webHandlers[self]; w != nil && w.config.DownloadDir != "" && objc.Send[bool](response, sel("isForMainFrame")) &&
+					(!objc.Send[bool](response, sel("canShowMIMEType")) || attachment(response.Send(sel("response")))) {
+					policy = download
+				}
+				CallBlock(decide, policy)
+			}},
+			{Cmd: sel("webView:navigationAction:didBecomeDownload:"), Fn: becameDownload},
+			{Cmd: sel("webView:navigationResponse:didBecomeDownload:"), Fn: becameDownload},
+			{Cmd: sel("download:decideDestinationUsingResponse:suggestedFilename:completionHandler:"),
+				Fn: func(self objc.ID, _ objc.SEL, d, _, name, done objc.ID) {
+					w, dl := webHandlers[self], downloads[d]
+					if w == nil || dl == nil {
+						CallBlock(done, 0)
+						return
+					}
+					dl.Filename = filepath.Base(GoString(name))
+					if dl.Filename == "." || dl.Filename == string(filepath.Separator) {
+						dl.Filename = "download"
+					}
+					dir := filepath.Join(w.config.DownloadDir, dl.ID)
+					if err := os.MkdirAll(dir, 0o755); err != nil {
+						dl.State, dl.Message = driver.WebDownloadFailed, err.Error()
+						w.download(d, dl)
+						CallBlock(done, 0)
+						return
+					}
+					dl.Path = filepath.Join(dir, dl.Filename)
+					w.download(d, &driver.WebDownload{State: driver.WebDownloadStarted, ID: dl.ID, URL: dl.URL, Filename: dl.Filename, Path: dl.Path})
+					CallBlock(done, uintptr(objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), NSString(dl.Path))))
+				}},
+			{Cmd: sel("downloadDidFinish:"), Fn: func(self objc.ID, _ objc.SEL, d objc.ID) {
+				if w, dl := webHandlers[self], downloads[d]; w != nil && dl != nil {
+					dl.State = driver.WebDownloadFinished
+					if info, err := os.Stat(dl.Path); err == nil {
+						dl.Bytes = info.Size()
+					}
+					w.download(d, dl)
+				}
+			}},
+			{Cmd: sel("download:didFailWithError:resumeData:"), Fn: func(self objc.ID, _ objc.SEL, d, err, _ objc.ID) {
+				if w, dl := webHandlers[self], downloads[d]; w != nil && dl != nil {
+					dl.State, dl.Message = driver.WebDownloadFailed, GoString(err.Send(sel("localizedDescription")))
+					w.download(d, dl)
+				}
+			}},
 		})
+}
+
+// downloads are the downloads running, by their WKDownload, each
+// retained until it ends.
+var (
+	downloads   = map[objc.ID]*driver.WebDownload{}
+	downloadSeq int
+)
+
+// becameDownload follows a navigation that became download d, which the
+// web view's handler then delegates.
+func becameDownload(self objc.ID, _ objc.SEL, _, _, d objc.ID) {
+	w := webHandlers[self]
+	if w == nil {
+		return
+	}
+	downloadSeq++
+	dl := &driver.WebDownload{ID: strconv.FormatInt(time.Now().UnixMilli(), 36) + "-" + strconv.Itoa(downloadSeq)}
+	if request := d.Send(sel("originalRequest")); request != 0 {
+		dl.URL = GoString(request.Send(sel("URL")).Send(sel("absoluteString")))
+	}
+	downloads[d.Send(sel("retain"))] = dl
+	d.Send(sel("setDelegate:"), w.handler)
+}
+
+// attachment reports whether an HTTP response asks to be saved
+// (Content-Disposition: attachment).
+func attachment(response objc.ID) bool {
+	if response == 0 || !objc.Send[bool](response, sel("isKindOfClass:"), objc.GetClass("NSHTTPURLResponse")) {
+		return false
+	}
+	v := GoString(response.Send(sel("valueForHTTPHeaderField:"), NSString("Content-Disposition")))
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(v)), "attachment")
+}
+
+// download reports dl, letting download d go once it ended.
+func (w *Web) download(d objc.ID, dl *driver.WebDownload) {
+	report := *dl
+	w.Dispatch(driver.Event{Kind: driver.EventDownload, Data: &report})
+	if dl.State != driver.WebDownloadStarted {
+		delete(downloads, d)
+		d.Send(sel("release"))
+	}
 }
 
 // NewWeb returns the web view of holder, empty until configured.

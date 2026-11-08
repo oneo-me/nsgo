@@ -133,7 +133,7 @@ type App struct {
 	// report takes what the app reports failing (Errors).
 	report func(error)
 	// Clipboard is the clipboard's text, ClipboardImage its image as the
-	// app last set it or reads it, and ClipboardFiles the file: URLs it
+	// app last set it or reads it (a read of what is no PNG fails), and ClipboardFiles the file: URLs it
 	// holds; Announced what screen readers were asked to say.
 	Clipboard      string
 	ClipboardImage []byte
@@ -143,6 +143,12 @@ type App struct {
 	// test sees it; inputSourceWas the one that selection replaced.
 	InputSource    string
 	inputSourceWas string
+	// Speech is the speech session running, nil without one, which
+	// HearSpeech and EndSpeech report to; sessions end unavailable unless
+	// the environment says Speech.
+	Speech     *driver.SpeechRequest
+	speechID   uint32
+	speechText string
 	// OpenedURLs are the URLs the app opened, oldest first. OpenURL
 	// answers whether each opens; every one does when it is nil.
 	OpenedURLs []string

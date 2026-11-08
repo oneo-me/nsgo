@@ -147,6 +147,7 @@ var Parameters = map[string][]string{
 	"KitPressed":              {"name"},
 	"RichHeading":             {"level"},
 	"RichCount":               {"words", "characters"},
+	"SystemSpeechEnded":       {"reason"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -264,6 +265,7 @@ type Translation struct {
 	KitPressed              func(name string) string
 	RichHeading             func(level int) string
 	RichCount               func(words int, characters int) string
+	SystemSpeechEnded       func(reason string) string
 }
 
 var supplied = map[string]Translation{}
@@ -2194,6 +2196,17 @@ const (
 	textRichRedo
 	textRichPlaceholder
 	textRichMarkdown
+	textSystemSpeechAndLifecycle
+	textSystemStartspeechLifecycle
+	textSystemDictate
+	textSystemStopDictating
+	textSystemSayAnything
+	textSystemListening
+	textSystemNoSpeechHere
+	textSystemLifecycle
+	textMediaSaved
+	textMediaClickThePage
+	textMediaSaveANote
 	numTexts
 )
 
@@ -4124,6 +4137,17 @@ var keyOfText = [numTexts]string{
 	"richRedo",
 	"richPlaceholder",
 	"richMarkdown",
+	"systemSpeechAndLifecycle",
+	"systemStartspeechLifecycle",
+	"systemDictate",
+	"systemStopDictating",
+	"systemSayAnything",
+	"systemListening",
+	"systemNoSpeechHere",
+	"systemLifecycle",
+	"mediaSaved",
+	"mediaClickThePage",
+	"mediaSaveANote",
 }
 
 // textsEn are the messages without arguments in en.
@@ -6051,7 +6075,18 @@ var textsEn = i18n.NewTexts(""+
 	"Undo"+
 	"Redo"+
 	"Write something…"+
-	"Markdown",
+	"Markdown"+
+	"Dictation and lifecycle"+
+	"StartSpeech · Lifecycle"+
+	"Dictate"+
+	"Stop"+
+	"Say anything after Dictate"+
+	"Listening…"+
+	"This platform recognizes no speech"+
+	"Lifecycle"+
+	"Saved"+
+	"Click the page’s button"+
+	"Save the page’s note",
 	[]uint16{
 		7,
 		7,
@@ -7977,6 +8012,17 @@ var textsEn = i18n.NewTexts(""+
 		4,
 		18,
 		8,
+		23,
+		24,
+		7,
+		4,
+		26,
+		12,
+		34,
+		9,
+		5,
+		25,
+		22,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -9904,7 +9950,18 @@ var textsZhHans = i18n.NewTexts(""+
 	"撤销"+
 	"重做"+
 	"写点什么…"+
-	"Markdown",
+	"Markdown"+
+	"听写与生命周期"+
+	"StartSpeech · Lifecycle"+
+	"听写"+
+	"停止"+
+	"按“听写”后说点什么"+
+	"正在聆听…"+
+	"此平台不识别语音"+
+	"生命周期"+
+	"已保存"+
+	"点击页面的按钮"+
+	"保存页面的笔记",
 	[]uint16{
 		6,
 		6,
@@ -11830,6 +11887,17 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		15,
 		8,
+		21,
+		24,
+		6,
+		6,
+		30,
+		15,
+		24,
+		12,
+		9,
+		21,
+		21,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -12212,6 +12280,9 @@ func Supply(lang string, t Translation) {
 	}
 	if t.RichCount != nil {
 		s.RichCount = t.RichCount
+	}
+	if t.SystemSpeechEnded != nil {
+		s.SystemSpeechEnded = t.SystemSpeechEnded
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -29368,3 +29439,108 @@ func (msgs Messages) RichCount(words int, characters int) string {
 		}
 	}
 }
+
+// SystemSpeechAndLifecycle says "Dictation and lifecycle"
+// in the language the app shows under cx.
+func SystemSpeechAndLifecycle(cx *core.Scope) string { return For(cx).SystemSpeechAndLifecycle() }
+
+// SystemSpeechAndLifecycle is the package's SystemSpeechAndLifecycle in the language of msgs.
+func (msgs Messages) SystemSpeechAndLifecycle() string {
+	return msgs.text(textSystemSpeechAndLifecycle)
+}
+
+// SystemStartspeechLifecycle says "StartSpeech · Lifecycle"
+// in the language the app shows under cx.
+func SystemStartspeechLifecycle(cx *core.Scope) string { return For(cx).SystemStartspeechLifecycle() }
+
+// SystemStartspeechLifecycle is the package's SystemStartspeechLifecycle in the language of msgs.
+func (msgs Messages) SystemStartspeechLifecycle() string {
+	return msgs.text(textSystemStartspeechLifecycle)
+}
+
+// SystemDictate says "Dictate"
+// in the language the app shows under cx.
+func SystemDictate(cx *core.Scope) string { return For(cx).SystemDictate() }
+
+// SystemDictate is the package's SystemDictate in the language of msgs.
+func (msgs Messages) SystemDictate() string { return msgs.text(textSystemDictate) }
+
+// SystemStopDictating says "Stop"
+// in the language the app shows under cx.
+func SystemStopDictating(cx *core.Scope) string { return For(cx).SystemStopDictating() }
+
+// SystemStopDictating is the package's SystemStopDictating in the language of msgs.
+func (msgs Messages) SystemStopDictating() string { return msgs.text(textSystemStopDictating) }
+
+// SystemSayAnything says "Say anything after Dictate"
+// in the language the app shows under cx.
+func SystemSayAnything(cx *core.Scope) string { return For(cx).SystemSayAnything() }
+
+// SystemSayAnything is the package's SystemSayAnything in the language of msgs.
+func (msgs Messages) SystemSayAnything() string { return msgs.text(textSystemSayAnything) }
+
+// SystemListening says "Listening…"
+// in the language the app shows under cx.
+func SystemListening(cx *core.Scope) string { return For(cx).SystemListening() }
+
+// SystemListening is the package's SystemListening in the language of msgs.
+func (msgs Messages) SystemListening() string { return msgs.text(textSystemListening) }
+
+// SystemNoSpeechHere says "This platform recognizes no speech"
+// in the language the app shows under cx.
+func SystemNoSpeechHere(cx *core.Scope) string { return For(cx).SystemNoSpeechHere() }
+
+// SystemNoSpeechHere is the package's SystemNoSpeechHere in the language of msgs.
+func (msgs Messages) SystemNoSpeechHere() string { return msgs.text(textSystemNoSpeechHere) }
+
+// SystemLifecycle says "Lifecycle"
+// in the language the app shows under cx.
+func SystemLifecycle(cx *core.Scope) string { return For(cx).SystemLifecycle() }
+
+// SystemLifecycle is the package's SystemLifecycle in the language of msgs.
+func (msgs Messages) SystemLifecycle() string { return msgs.text(textSystemLifecycle) }
+
+// SystemSpeechEnded says "Ended: {reason}"
+// in the language the app shows under cx.
+func SystemSpeechEnded(cx *core.Scope, reason string) string {
+	return For(cx).SystemSpeechEnded(reason)
+}
+
+// SystemSpeechEnded is the package's SystemSpeechEnded in the language of msgs.
+func (msgs Messages) SystemSpeechEnded(reason string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemSpeechEnded(reason))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].SystemSpeechEnded; f != nil {
+			return f(reason)
+		}
+		switch lang {
+		case "", "en":
+			return "Ended: " + msgs.arg(reason)
+		case "zh-Hans":
+			return "已结束：" + reason
+		}
+	}
+}
+
+// MediaSaved says "Saved"
+// in the language the app shows under cx.
+func MediaSaved(cx *core.Scope) string { return For(cx).MediaSaved() }
+
+// MediaSaved is the package's MediaSaved in the language of msgs.
+func (msgs Messages) MediaSaved() string { return msgs.text(textMediaSaved) }
+
+// MediaClickThePage says "Click the page’s button"
+// in the language the app shows under cx.
+func MediaClickThePage(cx *core.Scope) string { return For(cx).MediaClickThePage() }
+
+// MediaClickThePage is the package's MediaClickThePage in the language of msgs.
+func (msgs Messages) MediaClickThePage() string { return msgs.text(textMediaClickThePage) }
+
+// MediaSaveANote says "Save the page’s note"
+// in the language the app shows under cx.
+func MediaSaveANote(cx *core.Scope) string { return For(cx).MediaSaveANote() }
+
+// MediaSaveANote is the package's MediaSaveANote in the language of msgs.
+func (msgs Messages) MediaSaveANote() string { return msgs.text(textMediaSaveANote) }

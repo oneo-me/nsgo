@@ -96,21 +96,10 @@ type testSurface struct {
 	hovered []objc.ID
 }
 
-// Event types and modifier flags, from NSEvent.h.
-const (
-	evLeftDown, evLeftUp, evRightDown, evRightUp, evMoved, evLeftDragged = 1, 2, 3, 4, 5, 6
-	evKeyDown, evKeyUp                                                   = 10, 11
-	flagShift, flagControl, flagOption, flagCommand                      = 1 << 17, 1 << 18, 1 << 19, 1 << 20
-)
-
 // windowPoint is p, in the surface's points from its top left, in the
 // window's base coordinates.
 func (t *testSurface) windowPoint(p driver.Point) apple.CGPoint {
 	return objc.Send[apple.CGPoint](t.s.native, sel("convertPoint:toView:"), apple.CGPoint{X: float64(p.X), Y: float64(p.Y)}, objc.ID(0))
-}
-
-func uptime() float64 {
-	return objc.Send[float64](objc.ID(objc.GetClass("NSProcessInfo")).Send(sel("processInfo")), sel("systemUptime"))
 }
 
 // mouse posts a mouse event of kind at p to the application's queue.
@@ -294,26 +283,9 @@ func (t *testSurface) Hover(at driver.Point) error {
 	return nil
 }
 
-// keyCodes are the virtual key codes of the keys tests name, from
-// Carbon's Events.h.
-var keyCodes = map[string]uint16{
-	"enter": 36, "return": 36, "tab": 48, "space": 49, "backspace": 51, "escape": 53, "delete": 117,
-	"left": 123, "right": 124, "down": 125, "up": 126, "home": 115, "end": 119, "pageup": 116, "pagedown": 121,
-	"a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12, "w": 13,
-	"e": 14, "r": 15, "y": 16, "t": 17, "1": 18, "2": 19, "3": 20, "4": 21, "6": 22, "5": 23, "9": 25, "7": 26,
-	"8": 28, "0": 29, "o": 31, "u": 32, "i": 34, "p": 35, "l": 37, "j": 38, "k": 40, "n": 45, "m": 46,
-}
-
 // editActions are the Edit menu's items by their key, which Command
 // presses.
 var editActions = map[string]string{"a": "selectAll:", "c": "copy:", "v": "paste:", "x": "cut:", "z": "undo:"}
-
-// keyChars are what the special keys type, as AppKit reports them.
-var keyChars = map[string]string{
-	"enter": "\r", "return": "\r", "tab": "\t", "space": " ", "backspace": "\x7f", "escape": "\x1b",
-	"delete": "", "left": "", "right": "", "down": "", "up": "",
-	"home": "", "end": "", "pageup": "", "pagedown": "",
-}
 
 // key posts a key down and up with chars, ignoring is what it types
 // without modifiers.

@@ -38,6 +38,8 @@ type Environment struct {
 	ScreenReader bool
 	// ScreenColor says ItemPickScreenColor works here.
 	ScreenColor bool
+	// Speech says ItemSpeech recognizes speech here.
+	Speech bool
 	// RTL lays the app out right to left.
 	RTL bool
 	// PixelRatio is device pixels per point; 0 means 1.
@@ -57,6 +59,36 @@ type Environment struct {
 	// header a platform draws over screens, without the status bar, and
 	// with a large title. 0 where screens show their Header instead.
 	HeaderHeight, LargeHeaderHeight Points
+	// Lifecycle is whether the app is in use: the window's, an embedded
+	// surface's the host window's.
+	Lifecycle Lifecycle
+}
+
+// Lifecycle is whether the app is in use, as NSH's lifecycle() reads it.
+type Lifecycle uint8
+
+const (
+	// LifecycleActive is an app that shows and has the focus: on desktops
+	// one of its windows is the active one.
+	LifecycleActive Lifecycle = iota
+	// LifecycleInactive is an app that shows without the focus, as behind
+	// another app's window, an incoming call or the app switcher.
+	LifecycleInactive
+	// LifecycleBackground is an app none of which shows: hidden,
+	// minimized, covered where the system reports it, or in the
+	// background on phones.
+	LifecycleBackground
+)
+
+// String returns the state's name in TSX: active, inactive or background.
+func (l Lifecycle) String() string {
+	switch l {
+	case LifecycleInactive:
+		return "inactive"
+	case LifecycleBackground:
+		return "background"
+	}
+	return "active"
 }
 
 // OS names the operating system the app runs on.

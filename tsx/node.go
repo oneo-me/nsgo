@@ -172,6 +172,26 @@ func (n *node) PostMessage(data string) {
 	}
 }
 
+// SendInput gives a WebView's page input as the user's own: { type:
+// "click", x, y }, { type: "text", text } or { type: "key", key }.
+func (n *node) SendInput(input js.Value) {
+	if n.ref == nil {
+		return
+	}
+	o := opts{}
+	if obj, ok := input.(*js.Object); ok {
+		o = opts{obj}
+	}
+	switch o.str("type", "") {
+	case "click":
+		n.ref.SendInput(core.WebClick(core.Points(o.float("x", 0)), core.Points(o.float("y", 0))))
+	case "text":
+		n.ref.SendInput(core.WebText(o.str("text", "")))
+	case "key":
+		n.ref.SendInput(core.WebKey(o.str("key", "")))
+	}
+}
+
 // Seek jumps a Video to seconds.
 func (n *node) Seek(seconds float64) {
 	if n.ref != nil {

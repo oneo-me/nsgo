@@ -69,7 +69,79 @@ func (w *window) environment() driver.Environment {
 		Maximized:    w.win != 0 && gtkWindowIsMaximized(w.win) != 0,
 		FullScreen:   w.chrome.fullScreen,
 		WindowFrame:  frame,
+		Lifecycle:    w.lifecycle(),
 	}
+}
+
+// GdkToplevelState's flags that hide a window: minimized, and suspended
+// (on another workspace or covered, where the compositor says).
+const toplevelMinimized, toplevelSuspended = 1 << 0, 1 << 16
+
+// lifecycle is whether the app is in use: in the background while the
+// surface is unmapped or its window minimized or suspended, active while
+// one of the app's windows has the focus.
+func (w *window) lifecycle() driver.Lifecycle {
+	if w.surface == 0 || gtkWidgetGetMapped(w.surface) == 0 {
+		return driver.LifecycleBackground
+	}
+	if top := gtkNativeGetSurface(gtkWidgetGetNative(w.surface)); top != 0 &&
+		gdkToplevelGetState(top)&(toplevelMinimized|toplevelSuspended) != 0 {
+		return driver.LifecycleBackground
+	}
+	active := false
+	windowHandles.Range(func(_, v any) bool {
+		if other := v.(*window); !other.closing && other.rootWindow() != 0 && gtkWindowIsActive(other.rootWindow()) != 0 {
+			active = true
+		}
+		return !active
+	})
+	if active {
+		return driver.LifecycleActive
+	}
+	return driver.LifecycleInactive
+}
+
+// rootWindow is the GtkWindow the surface shows in, the host's for an
+// embedded one; 0 while it is in none.
+func (w *window) rootWindow() uintptr {
+	if w.win != 0 {
+		return w.win
+	}
+	if w.surface == 0 {
+		return 0
+	}
+	return gtkWidgetGetRoot(w.surface)
+}
+
+// mappedCallback follows the surface's map and unmap, and on the first
+// map its window's focus and its toplevel's state, which exist only once
+// it is in a window.
+func mappedCallback(widget, data uintptr) {
+	w := windowOf(data)
+	if w == nil || w.closing {
+		return
+	}
+	if gtkWidgetGetMapped(w.surface) != 0 && w.watchedRoot == 0 {
+		if root := w.rootWindow(); root != 0 {
+			w.watchedRoot = root
+			gSignalConnect(root, "notify::is-active", cbActivity, w.handle)
+			if top := gtkNativeGetSurface(gtkWidgetGetNative(w.surface)); top != 0 {
+				gSignalConnect(top, "notify::state", cbActivity, w.handle)
+			}
+		}
+	}
+	w.updateEnvironment()
+}
+
+// activityCallback reads every window's environment again as one's focus
+// or toplevel state changes, the app being active while any is.
+func activityCallback(object, pspec, data uintptr) {
+	windowHandles.Range(func(_, v any) bool {
+		if w := v.(*window); !w.closing {
+			w.updateEnvironment()
+		}
+		return true
+	})
 }
 
 // updateEnvironment reads the environment again and reports it when it

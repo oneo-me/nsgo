@@ -1,6 +1,10 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import (
+	"path/filepath"
+
+	"github.com/oneo-me/nsgo/internal/driver"
+)
 
 // WebView shows a web page in the platform's web view, which fills the
 // view and takes its own pointer, wheel and keyboard input. Pages reach
@@ -38,7 +42,9 @@ type WebView struct {
 	// OnMessage receives what the page posted, as a string.
 	OnMessage func(data string)
 	// OnDownload follows what the page downloads, which only a web view
-	// with one saves, to the app's data directory.
+	// with one saves, to downloads/<id>/ in the app's data directory:
+	// files WebKit cannot show and links that ask for a download, on
+	// macOS and iOS.
 	OnDownload func(WebDownload)
 	OnLayout   func(Bounds)
 	Ref        *Ref
@@ -87,6 +93,9 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 			NoScroll: w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
 		loadStart: w.OnLoadStart, load: w.OnLoad, navigation: w.OnNavigationStateChange,
 		loadError: w.OnError, message: w.OnMessage, download: w.OnDownload,
+	}
+	if w.OnDownload != nil && cx.rt.dataDir != "" {
+		n.web.config.DownloadDir = filepath.Join(cx.rt.dataDir, "downloads")
 	}
 	if w.SourceFunc != nil {
 		cx.renderEffect(func() {
@@ -183,3 +192,28 @@ func (r *Ref) PostMessage(data string) { r.webCommand(driver.WebPostMessage, dat
 
 // InjectJavaScript runs script in the web view's page.
 func (r *Ref) InjectJavaScript(script string) { r.webCommand(driver.WebInjectJavaScript, script) }
+
+// SendInput gives the web view's page input as the user's own, whose
+// events are trusted and carry user activation, which no script the page
+// runs can make: a click, typed text or a key. It takes the keyboard focus
+// first; macOS has it, other platforms drop it.
+func (r *Ref) SendInput(in WebInput) {
+	if r.n == nil || r.n.deleted || r.n.web == nil {
+		return
+	}
+	r.t.commands = append(r.t.commands, driver.MountItem{Kind: driver.ItemWebCommand, ID: r.n.id, WebCommand: driver.WebSendInput, Data: &in})
+	r.t.changed = true
+}
+
+// WebClick is a primary click at x, y in CSS pixels from the page's
+// viewport, as getBoundingClientRect reports them.
+func WebClick(x, y Points) WebInput {
+	return WebInput{Kind: driver.WebInputClick, Point: Point{X: x, Y: y}}
+}
+
+// WebText types text into what has the page's focus.
+func WebText(text string) WebInput { return WebInput{Kind: driver.WebInputText, Text: text} }
+
+// WebKey presses key, as KeyboardEvent.key names it: Enter, Tab, Escape
+// or Backspace.
+func WebKey(key string) WebInput { return WebInput{Kind: driver.WebInputKey, Key: key} }

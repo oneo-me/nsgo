@@ -879,6 +879,7 @@ func (s *surface) environment() driver.Environment {
 		ReduceMotion:   objc.Send[bool](ws, sel("accessibilityDisplayShouldReduceMotion")),
 		ScreenReader:   objc.Send[bool](ws, sel("isVoiceOverEnabled")),
 		ScreenColor:    true,
+		Speech:         apple.SpeechAvailable(),
 		RTL:            rtl,
 		PixelRatio:     s.backingScale(),
 		Locale:         locale,
@@ -890,7 +891,23 @@ func (s *surface) environment() driver.Environment {
 		Maximized:      !s.embedded && objc.Send[bool](s.window, sel("isZoomed")),
 		FullScreen:     !s.embedded && s.window != 0 && objc.Send[uint](s.window, selStyleMask)&maskFullScreen != 0,
 		WindowFrame:    s.windowFrame(),
+		Lifecycle:      appLifecycle(),
 	}
+}
+
+// appLifecycle is whether the app is in use, the embedding app's for an
+// embedded surface: in the background while hidden or none of its
+// windows shows (minimized or covered), active while it is the active app.
+func appLifecycle() driver.Lifecycle {
+	const occlusionVisible = 1 << 1
+	app := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	switch {
+	case objc.Send[bool](app, sel("isHidden")) || objc.Send[uint](app, sel("occlusionState"))&occlusionVisible == 0:
+		return driver.LifecycleBackground
+	case objc.Send[bool](app, sel("isActive")):
+		return driver.LifecycleActive
+	}
+	return driver.LifecycleInactive
 }
 
 // backingScale is the window's pixels per point, or the main screen's
@@ -971,7 +988,8 @@ func (s *surface) observe() {
 var appObserver objc.ID
 
 // observeApp watches, once for every surface, what the environment
-// comes from: accessibility settings and the locale.
+// comes from: accessibility settings, the locale and the app's activation,
+// hiding and occlusion.
 func observeApp() {
 	if appObserver != 0 {
 		return
@@ -987,6 +1005,11 @@ func observeApp() {
 		apple.Global(appKitPath, "NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification"), refresh)
 	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
 	apple.Observe(center, apple.Global(foundation, "NSCurrentLocaleDidChangeNotification"), refresh)
+	for _, name := range []string{"NSApplicationDidBecomeActiveNotification", "NSApplicationDidResignActiveNotification",
+		"NSApplicationDidHideNotification", "NSApplicationDidUnhideNotification",
+		"NSApplicationDidChangeOcclusionStateNotification"} {
+		apple.Observe(center, apple.Global(appKitPath, name), refresh)
+	}
 	appObserver = objc.ID(classObserver).Send(selNew)
 	ws.Send(sel("addObserver:forKeyPath:options:context:"), appObserver, apple.NSString("voiceOverEnabled"), uint(0), uintptr(0))
 }
@@ -1332,6 +1355,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemInputSource:
 			setInputSource(it.Value)
 			continue
+		case driver.ItemSpeech:
+			apple.HandleSpeech(it.Count, *it.Speech, s.engine.Dispatch)
+			continue
 		case driver.ItemSetClipboard:
 			pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
 			pb.Send(sel("clearContents"))
@@ -1507,6 +1533,12 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.web.Configure(it.Web)
 			views[v.web.View()] = v
 		case driver.ItemWebCommand:
+			if in, ok := it.Data.(*driver.WebInput); ok && it.WebCommand == driver.WebSendInput {
+				if web := v.web.View(); web != 0 {
+					sendWebInput(web, *in)
+				}
+				break
+			}
 			v.web.Command(it.WebCommand, it.Value)
 		case driver.ItemVideo:
 			delete(views, v.video.View())

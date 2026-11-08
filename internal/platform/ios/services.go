@@ -81,9 +81,7 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 		id := it.Count
 		go func() {
 			ev := driver.Event{Kind: driver.EventClipboard, Count: id}
-			if png, size, err := apple.PNG(data); err == nil && len(png) <= driver.MaxClipboardImage {
-				ev.Data = &driver.ClipboardImage{PNG: png, Size: size}
-			}
+			ev.Data = driver.ReadClipboardImage(apple.PNG(data))
 			s.engine.Dispatch(ev)
 		}()
 		return

@@ -308,6 +308,19 @@ public class NsgoView extends FrameLayout {
         systemBars();
     }
 
+    /** The app's lifecycle follows the window's focus and visibility. */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        environment();
+    }
+
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        environment();
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         accessibility.removeTouchExplorationStateChangeListener(screenReader);
@@ -533,8 +546,9 @@ public class NsgoView extends FrameLayout {
 
     /**
      * Sends the environment if it changed: before START, then whenever the
-     * insets, the configuration or an accessibility setting change. The
-     * keyboard takes the system's default duration.
+     * insets, the configuration, an accessibility setting or the window's
+     * focus and visibility change. The keyboard takes the system's default
+     * duration.
      */
     private void environment() {
         if (process == null) return;
@@ -556,7 +570,13 @@ public class NsgoView extends FrameLayout {
             d.writeFloat(keyboard / density);
             d.writeFloat(hostFontScale > 0 ? hostFontScale : config.fontScale);
             d.writeFloat(density);
-            d.writeByte((dark ? 1 : 0) | (reduceMotion ? 2 : 0) | (reader ? 4 : 0) | (rtl ? 8 : 0));
+            // In the background while the window does not show, inactive
+            // while it shows without the focus, as under a dialog of
+            // another app or the notification shade.
+            boolean background = getWindowVisibility() != View.VISIBLE;
+            boolean inactive = !background && !hasWindowFocus();
+            d.writeByte((dark ? 1 : 0) | (reduceMotion ? 2 : 0) | (reader ? 4 : 0) | (rtl ? 8 : 0)
+                    | (inactive ? 16 : 0) | (background ? 32 : 0));
             int idiom = config.smallestScreenWidthDp >= 600 ? Protocol.IDIOM_TABLET : Protocol.IDIOM_PHONE;
             if ((config.uiMode & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION) {
                 idiom = Protocol.IDIOM_TV;

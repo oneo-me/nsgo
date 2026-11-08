@@ -28,8 +28,7 @@ var (
 	getDlgItem        = user32.NewProc("GetDlgItem")
 	getGUIThreadInfo  = user32.NewProc("GetGUIThreadInfo")
 
-	getWindowThreadProcessID = user32.NewProc("GetWindowThreadProcessId")
-	sendMessage              = user32.NewProc("SendMessageW")
+	sendMessage = user32.NewProc("SendMessageW")
 )
 
 // TestServicesReachTheSystem puts an image and files on the clipboard
@@ -83,7 +82,7 @@ func TestServicesReachTheSystem(t *testing.T) {
 	cx.Post(func() { cx.SetClipboardImage(b.Bytes()) })
 	got := ask(func(say func(string)) {
 		cx.HasClipboardImage(func(has bool) {
-			cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) {
+			cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool, _ error) {
 				say(fmt.Sprintf("%v %v %v %d", has, ok, img.Size, len(img.PNG)))
 			})
 		})
@@ -105,7 +104,7 @@ func TestServicesReachTheSystem(t *testing.T) {
 		putClipboard(w.hwnd, cfDIB, dib)
 	})
 	if got := ask(func(say func(string)) {
-		cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) { say(fmt.Sprintf("%v %v", ok, img.Size)) })
+		cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool, _ error) { say(fmt.Sprintf("%v %v", ok, img.Size)) })
 	}); got != "true {2 2}" {
 		t.Errorf("bitmap = %s", got)
 	}
