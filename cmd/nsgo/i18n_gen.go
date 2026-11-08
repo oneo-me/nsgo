@@ -69,17 +69,25 @@ func (c *catalog) generate() ([]byte, error) {
 	}
 	g.p("}")
 	g.p("")
-	g.p("// Translation is a language's messages another package supplies; a nil")
-	g.p("// field leaves the message to the catalog.")
+	g.p("// Translation is a language's messages another package supplies:")
+	g.p("// those without arguments in Texts, by key, and a function for each")
+	g.p("// of the others; a key or a field left out leaves the message to the")
+	g.p("// catalog.")
 	g.p("type Translation struct {")
+	g.p("\tTexts map[string]string")
 	for _, key := range c.keys {
-		g.p("\t%s func(%s) string", exportName(key), signature(c.params[key]))
+		if len(c.params[key]) > 0 {
+			g.p("\t%s func(%s) string", exportName(key), signature(c.params[key]))
+		}
 	}
 	g.p("}")
 	g.p("")
 	// Messages without arguments are constants: a table per language,
 	// which one method looks up, rather than code per message. Each has
-	// a named index, so adding a message changes no other's code.
+	// a named index, so adding a message changes no other's lines, and
+	// each language's are one string and their lengths, which the linker
+	// writes as they are, where a map of strings would be code storing
+	// each as the program starts.
 	index := map[string]string{}
 	for _, key := range c.keys {
 		if len(c.params[key]) == 0 {
@@ -89,7 +97,7 @@ func (c *catalog) generate() ([]byte, error) {
 	g.p("var supplied = map[string]Translation{}")
 	g.p("")
 	if len(index) > 0 {
-		g.p("// The indexes of the messages without arguments in texts.")
+		g.p("// The indexes of the messages without arguments in the tables.")
 		g.p("const (")
 		first := true
 		for _, key := range c.keys {
@@ -105,44 +113,79 @@ func (c *catalog) generate() ([]byte, error) {
 		g.p("\tnumTexts")
 		g.p(")")
 		g.p("")
-		g.p("// texts are the messages without arguments, by language, in the")
-		g.p("// order of their indexes; \"\" where a language lacks one.")
-		g.p("var texts = map[string]*[numTexts]string{")
-		for _, lang := range langs {
-			g.p("\t%q: {", lang)
-			for _, key := range c.keys {
-				if _, ok := index[key]; !ok {
-					continue
-				}
-				text := ""
-				if m := c.files[lang].msgs[key]; m != nil {
-					text = constantText(m.parts)
-				}
-				g.p("\t\t%s,", strconv.Quote(text))
+		g.p("// keyOfText is the key of the message without arguments at each")
+		g.p("// index, by which Supply reads a Translation's Texts.")
+		g.p("var keyOfText = [numTexts]string{")
+		for _, key := range c.keys {
+			if _, ok := index[key]; ok {
+				g.p("\t%q,", key)
 			}
-			g.p("\t},")
 		}
 		g.p("}")
 		g.p("")
+		for _, lang := range langs {
+			var texts []string
+			for _, key := range c.keys {
+				if _, ok := index[key]; ok {
+					text := ""
+					if m := c.files[lang].msgs[key]; m != nil {
+						text = constantText(m.parts)
+					}
+					if len(text) > math.MaxUint16 {
+						return nil, fmt.Errorf("%s: %s in %s is longer than %d bytes", c.dir, key, lang, math.MaxUint16)
+					}
+					texts = append(texts, text)
+				}
+			}
+			g.p("// %s are the messages without arguments in %s.", textsName(lang), lang)
+			g.p("var %s = i18n.NewTexts(\"\"+", textsName(lang))
+			for i, text := range texts {
+				end := "+"
+				if i == len(texts)-1 {
+					end = ","
+				}
+				g.p("\t%s%s", strconv.Quote(text), end)
+			}
+			g.p("\t[]uint16{")
+			for _, text := range texts {
+				g.p("\t\t%d,", len(text))
+			}
+			g.p("\t})")
+			g.p("")
+		}
+		g.p("// texts returns the messages without arguments in lang, nil for a")
+		g.p("// language the catalog lacks.")
+		g.p("func texts(lang string) *i18n.Texts {")
+		g.p("\tswitch lang {")
+		for _, lang := range langs {
+			g.p("\tcase %q:", lang)
+			g.p("\t\treturn %s", textsName(lang))
+		}
+		g.p("\t}")
+		g.p("\treturn nil")
+		g.p("}")
+		g.p("")
 		g.p("// suppliedTexts are the messages without arguments other packages")
-		g.p("// supply, as texts are.")
+		g.p("// supply, by language and index.")
 		g.p("var suppliedTexts = map[string]*[numTexts]string{}")
 		g.p("")
 		g.p("// text says the message without arguments at i in the language of msgs,")
 		g.p("// else of the languages it falls back to, else of the source.")
 		g.p("func (msgs Messages) text(i int) string {")
 		g.p("\tif i18n.IsPseudo(msgs.lang) {")
-		g.p("\t\treturn i18n.Pseudo(msgs.lang, texts[Source][i])")
+		g.p("\t\treturn i18n.Pseudo(msgs.lang, %s.At(i))", textsName(c.source))
 		g.p("\t}")
 		g.p("\tfor lang := msgs.lang; ; lang = i18n.Parent(lang) {")
 		g.p("\t\tif t := suppliedTexts[lang]; t != nil && t[i] != \"\" {")
 		g.p("\t\t\treturn t[i]")
 		g.p("\t\t}")
 		g.p("\t\tif lang == \"\" {")
-		g.p("\t\t\treturn texts[Source][i]")
+		g.p("\t\t\treturn %s.At(i)", textsName(c.source))
 		g.p("\t\t}")
-		g.p("\t\tif t := texts[lang]; t != nil && t[i] != \"\" {")
-		g.p("\t\t\treturn t[i]")
+		g.p("\t\tif t := texts(lang); t != nil {")
+		g.p("\t\t\tif s := t.At(i); s != \"\" {")
+		g.p("\t\t\t\treturn s")
+		g.p("\t\t\t}")
 		g.p("\t\t}")
 		g.p("\t}")
 		g.p("}")
@@ -152,25 +195,32 @@ func (c *catalog) generate() ([]byte, error) {
 	g.p("// nsgo writes the calls, in the package that supplies them, which runs")
 	g.p("// them as it initializes.")
 	g.p("func Supply(lang string, t Translation) {")
-	g.p("\ts := supplied[lang]")
 	if len(index) > 0 {
-		g.p("\tst := suppliedTexts[lang]")
-		g.p("\tif st == nil {")
-		g.p("\t\tst = new([numTexts]string)")
-		g.p("\t\tsuppliedTexts[lang] = st")
+		g.p("\tif len(t.Texts) > 0 {")
+		g.p("\t\tst := suppliedTexts[lang]")
+		g.p("\t\tif st == nil {")
+		g.p("\t\t\tst = new([numTexts]string)")
+		g.p("\t\t\tsuppliedTexts[lang] = st")
+		g.p("\t\t}")
+		g.p("\t\tfor i, key := range keyOfText {")
+		g.p("\t\t\tif s, ok := t.Texts[key]; ok {")
+		g.p("\t\t\t\tst[i] = s")
+		g.p("\t\t\t}")
+		g.p("\t\t}")
 		g.p("\t}")
 	}
-	for _, key := range c.keys {
-		name := exportName(key)
-		g.p("\tif t.%s != nil {", name)
-		if i, ok := index[key]; ok {
-			g.p("\t\tst[%s] = t.%s()", i, name)
-		} else {
-			g.p("\t\ts.%s = t.%s", name, name)
+	if len(index) < len(c.keys) {
+		g.p("\ts := supplied[lang]")
+		for _, key := range c.keys {
+			if _, ok := index[key]; !ok {
+				name := exportName(key)
+				g.p("\tif t.%s != nil {", name)
+				g.p("\t\ts.%s = t.%s", name, name)
+				g.p("\t}")
+			}
 		}
-		g.p("\t}")
+		g.p("\tsupplied[lang] = s")
 	}
-	g.p("\tsupplied[lang] = s")
 	g.p("\tCatalog.Add(lang)")
 	g.p("}")
 	if len(index) < len(c.keys) {
@@ -202,8 +252,7 @@ func (c *catalog) generate() ([]byte, error) {
 		}
 		g.p("func %s(%s) string { return For(cx).%s(%s) }", name, cxParams, name, arguments(params))
 		g.p("")
-		g.p("// %s says %s", name, strconv.Quote(m.text))
-		g.p("// in the language of msgs.")
+		g.p("// %s is the package's %s in the language of msgs.", name, name)
 		if i, ok := index[key]; ok {
 			g.p("func (msgs Messages) %s() string { return msgs.text(%s) }", name, i)
 			continue
@@ -288,7 +337,22 @@ func (c *catalog) writeSupplies(g *goWriter) error {
 		}
 		pkg := g.use(e.s.importPath)
 		g.p("\t%s.Supply(%q, %s.Translation{", pkg, e.lang, pkg)
+		var texts, funcs []string
 		for _, key := range e.s.keys {
+			if len(t.params[key]) == 0 {
+				texts = append(texts, key)
+			} else {
+				funcs = append(funcs, key)
+			}
+		}
+		if len(texts) > 0 {
+			g.p("\t\tTexts: map[string]string{")
+			for _, key := range texts {
+				g.p("\t\t\t%q: %s,", key, strconv.Quote(constantText(e.s.msgs[key].parts)))
+			}
+			g.p("\t\t},")
+		}
+		for _, key := range funcs {
 			params := t.params[key]
 			g.p("\t\t%s: func(%s) string {", exportName(key), signature(params))
 			g.say(e.s.msgs[key].parts, e.lang, params, "\t\t\t")
@@ -510,6 +574,17 @@ func dateOptions(a msgArg) string {
 		return "i18n.DateOptions{Time: " + style + "}"
 	}
 	return "i18n.DateOptions{Date: i18n.ShortStyle, Time: i18n.ShortStyle}"
+}
+
+// textsName is the name of lang's table of messages without arguments:
+// textsEn, textsZhHans.
+func textsName(lang string) string {
+	var b strings.Builder
+	b.WriteString("texts")
+	for _, part := range strings.Split(lang, "-") {
+		b.WriteString(strings.ToUpper(part[:1]) + part[1:])
+	}
+	return b.String()
 }
 
 func caseParts(ch msgChoice, key string) []msgPart {

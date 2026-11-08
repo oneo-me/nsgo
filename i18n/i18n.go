@@ -151,3 +151,29 @@ func Pseudo(lang, s string) string { return cldr.Pseudolocalize(lang, s) }
 // Arg marks what an argument wrote in a message Pseudo transforms, which
 // keeps it as written. The code nsgo writes calls it.
 func Arg(s string) string { return cldr.ArgStart + s + cldr.ArgEnd }
+
+// Texts are a catalog's messages without arguments in one language, by
+// index: their text one after another, each as long in bytes as lens
+// says, 0 where the language lacks one. The code nsgo writes holds a
+// language's as one string, which the linker writes as it is, rather
+// than a string for each, whose header the program must fix up.
+type Texts struct {
+	text string
+	lens []uint16
+	once sync.Once
+	ends []uint32
+}
+
+// NewTexts returns the texts in text, as long as lens says.
+func NewTexts(text string, lens []uint16) *Texts { return &Texts{text: text, lens: lens} }
+
+// At returns the message at i, "" where the language lacks it.
+func (t *Texts) At(i int) string {
+	t.once.Do(func() {
+		t.ends = make([]uint32, len(t.lens)+1)
+		for j, n := range t.lens {
+			t.ends[j+1] = t.ends[j] + uint32(n)
+		}
+	})
+	return t.text[t.ends[i]:t.ends[i+1]]
+}

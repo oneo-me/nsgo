@@ -191,6 +191,9 @@ func loadCatalog(dir, source string) (*catalog, diags) {
 		}
 		names[strings.ToLower(name)] = key
 		c.params[key] = sourceParams(m, src.path, &ds)
+		if name == "Texts" && len(c.params[key]) > 0 {
+			ds.errorf(src.path, m.line, "%s makes Translation's field Texts, which holds the messages without arguments", key)
+		}
 		checkPluralCases(m, source, src.path, &ds)
 	}
 	for _, f := range c.files {

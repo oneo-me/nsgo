@@ -41,50 +41,22 @@ var Parameters = map[string][]string{
 	"CalendarWeekday":    {"d"},
 }
 
-// Translation is a language's messages another package supplies; a nil
-// field leaves the message to the catalog.
+// Translation is a language's messages another package supplies:
+// those without arguments in Texts, by key, and a function for each
+// of the others; a key or a field left out leaves the message to the
+// catalog.
 type Translation struct {
-	SortBy                    func(column string) string
-	DiffUnchangedLines        func(n int) string
-	DiffExpandAll             func() string
-	DiffStage                 func() string
-	DiffDiscardChanges        func() string
-	CollapseMerge             func() string
-	ExpandMerge               func() string
-	ColorHue                  func() string
-	ColorAlpha                func() string
-	ColorSaturationBrightness func() string
-	ColorHex                  func() string
-	ColorEyeDropper           func() string
-	ColorFormat               func() string
-	ColorCopy                 func() string
-	ColorRed                  func() string
-	ColorGreen                func() string
-	ColorBlue                 func() string
-	ColorHueDegrees           func() string
-	ColorSaturationPercent    func() string
-	ColorBrightnessPercent    func() string
-	ColorLightnessPercent     func() string
-	ColorOpacityPercent       func() string
-	CalendarPrevious          func() string
-	CalendarNext              func() string
-	ListClear                 func() string
-	ListNothingFound          func() string
-	ListSearch                func() string
-	CommandSearch             func() string
-	CommandSearchPlaceholder  func() string
-	CommandNoMatches          func() string
-	CommandLoading            func() string
-	CommandList               func() string
-	CalendarMonth             func(d time.Time) string
-	CalendarMonthName         func(d time.Time) string
-	CalendarWeekday           func(d time.Time) string
-	BreadcrumbsMore           func() string
+	Texts              map[string]string
+	SortBy             func(column string) string
+	DiffUnchangedLines func(n int) string
+	CalendarMonth      func(d time.Time) string
+	CalendarMonthName  func(d time.Time) string
+	CalendarWeekday    func(d time.Time) string
 }
 
 var supplied = map[string]Translation{}
 
-// The indexes of the messages without arguments in texts.
+// The indexes of the messages without arguments in the tables.
 const (
 	textDiffExpandAll = iota
 	textDiffStage
@@ -120,96 +92,209 @@ const (
 	numTexts
 )
 
-// texts are the messages without arguments, by language, in the
-// order of their indexes; "" where a language lacks one.
-var texts = map[string]*[numTexts]string{
-	"en": {
-		"Expand all",
-		"Stage",
-		"Discard Changes…",
-		"Collapse Merge",
-		"Expand Merge",
-		"Hue",
-		"Opacity",
-		"Saturation and brightness",
-		"Hex color",
-		"Pick a color from the screen",
-		"Color format",
-		"Copy color",
-		"Red",
-		"Green",
-		"Blue",
-		"Hue degrees",
-		"Saturation percent",
-		"Brightness percent",
-		"Lightness percent",
-		"Opacity percent",
-		"Previous month",
-		"Next month",
-		"Clear",
-		"Nothing found",
-		"Search",
-		"Search commands",
-		"Search commands…",
-		"No matching commands",
-		"Loading…",
-		"Commands",
-		"More",
-	},
-	"zh-Hans": {
-		"全部展开",
-		"暂存",
-		"还原更改…",
-		"折叠合并",
-		"展开合并",
-		"色相",
-		"不透明度",
-		"饱和度和亮度",
-		"十六进制颜色",
-		"从屏幕取色",
-		"颜色格式",
-		"复制颜色",
-		"红色",
-		"绿色",
-		"蓝色",
-		"色相角度",
-		"饱和度百分比",
-		"亮度百分比",
-		"明度百分比",
-		"不透明度百分比",
-		"上个月",
-		"下个月",
-		"清除",
-		"未找到结果",
-		"搜索",
-		"搜索命令",
-		"搜索命令…",
-		"没有匹配的命令",
-		"正在加载…",
-		"命令",
-		"更多",
-	},
+// keyOfText is the key of the message without arguments at each
+// index, by which Supply reads a Translation's Texts.
+var keyOfText = [numTexts]string{
+	"diffExpandAll",
+	"diffStage",
+	"diffDiscardChanges",
+	"collapseMerge",
+	"expandMerge",
+	"colorHue",
+	"colorAlpha",
+	"colorSaturationBrightness",
+	"colorHex",
+	"colorEyeDropper",
+	"colorFormat",
+	"colorCopy",
+	"colorRed",
+	"colorGreen",
+	"colorBlue",
+	"colorHueDegrees",
+	"colorSaturationPercent",
+	"colorBrightnessPercent",
+	"colorLightnessPercent",
+	"colorOpacityPercent",
+	"calendarPrevious",
+	"calendarNext",
+	"listClear",
+	"listNothingFound",
+	"listSearch",
+	"commandSearch",
+	"commandSearchPlaceholder",
+	"commandNoMatches",
+	"commandLoading",
+	"commandList",
+	"breadcrumbsMore",
+}
+
+// textsEn are the messages without arguments in en.
+var textsEn = i18n.NewTexts(""+
+	"Expand all"+
+	"Stage"+
+	"Discard Changes…"+
+	"Collapse Merge"+
+	"Expand Merge"+
+	"Hue"+
+	"Opacity"+
+	"Saturation and brightness"+
+	"Hex color"+
+	"Pick a color from the screen"+
+	"Color format"+
+	"Copy color"+
+	"Red"+
+	"Green"+
+	"Blue"+
+	"Hue degrees"+
+	"Saturation percent"+
+	"Brightness percent"+
+	"Lightness percent"+
+	"Opacity percent"+
+	"Previous month"+
+	"Next month"+
+	"Clear"+
+	"Nothing found"+
+	"Search"+
+	"Search commands"+
+	"Search commands…"+
+	"No matching commands"+
+	"Loading…"+
+	"Commands"+
+	"More",
+	[]uint16{
+		10,
+		5,
+		18,
+		14,
+		12,
+		3,
+		7,
+		25,
+		9,
+		28,
+		12,
+		10,
+		3,
+		5,
+		4,
+		11,
+		18,
+		18,
+		17,
+		15,
+		14,
+		10,
+		5,
+		13,
+		6,
+		15,
+		18,
+		20,
+		10,
+		8,
+		4,
+	})
+
+// textsZhHans are the messages without arguments in zh-Hans.
+var textsZhHans = i18n.NewTexts(""+
+	"全部展开"+
+	"暂存"+
+	"还原更改…"+
+	"折叠合并"+
+	"展开合并"+
+	"色相"+
+	"不透明度"+
+	"饱和度和亮度"+
+	"十六进制颜色"+
+	"从屏幕取色"+
+	"颜色格式"+
+	"复制颜色"+
+	"红色"+
+	"绿色"+
+	"蓝色"+
+	"色相角度"+
+	"饱和度百分比"+
+	"亮度百分比"+
+	"明度百分比"+
+	"不透明度百分比"+
+	"上个月"+
+	"下个月"+
+	"清除"+
+	"未找到结果"+
+	"搜索"+
+	"搜索命令"+
+	"搜索命令…"+
+	"没有匹配的命令"+
+	"正在加载…"+
+	"命令"+
+	"更多",
+	[]uint16{
+		12,
+		6,
+		15,
+		12,
+		12,
+		6,
+		12,
+		18,
+		18,
+		15,
+		12,
+		12,
+		6,
+		6,
+		6,
+		12,
+		18,
+		15,
+		15,
+		21,
+		9,
+		9,
+		6,
+		15,
+		6,
+		12,
+		15,
+		21,
+		15,
+		6,
+		6,
+	})
+
+// texts returns the messages without arguments in lang, nil for a
+// language the catalog lacks.
+func texts(lang string) *i18n.Texts {
+	switch lang {
+	case "en":
+		return textsEn
+	case "zh-Hans":
+		return textsZhHans
+	}
+	return nil
 }
 
 // suppliedTexts are the messages without arguments other packages
-// supply, as texts are.
+// supply, by language and index.
 var suppliedTexts = map[string]*[numTexts]string{}
 
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
 func (msgs Messages) text(i int) string {
 	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, texts[Source][i])
+		return i18n.Pseudo(msgs.lang, textsEn.At(i))
 	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
 			return t[i]
 		}
 		if lang == "" {
-			return texts[Source][i]
+			return textsEn.At(i)
 		}
-		if t := texts[lang]; t != nil && t[i] != "" {
-			return t[i]
+		if t := texts(lang); t != nil {
+			if s := t.At(i); s != "" {
+				return s
+			}
 		}
 	}
 }
@@ -218,107 +303,24 @@ func (msgs Messages) text(i int) string {
 // nsgo writes the calls, in the package that supplies them, which runs
 // them as it initializes.
 func Supply(lang string, t Translation) {
-	s := supplied[lang]
-	st := suppliedTexts[lang]
-	if st == nil {
-		st = new([numTexts]string)
-		suppliedTexts[lang] = st
+	if len(t.Texts) > 0 {
+		st := suppliedTexts[lang]
+		if st == nil {
+			st = new([numTexts]string)
+			suppliedTexts[lang] = st
+		}
+		for i, key := range keyOfText {
+			if s, ok := t.Texts[key]; ok {
+				st[i] = s
+			}
+		}
 	}
+	s := supplied[lang]
 	if t.SortBy != nil {
 		s.SortBy = t.SortBy
 	}
 	if t.DiffUnchangedLines != nil {
 		s.DiffUnchangedLines = t.DiffUnchangedLines
-	}
-	if t.DiffExpandAll != nil {
-		st[textDiffExpandAll] = t.DiffExpandAll()
-	}
-	if t.DiffStage != nil {
-		st[textDiffStage] = t.DiffStage()
-	}
-	if t.DiffDiscardChanges != nil {
-		st[textDiffDiscardChanges] = t.DiffDiscardChanges()
-	}
-	if t.CollapseMerge != nil {
-		st[textCollapseMerge] = t.CollapseMerge()
-	}
-	if t.ExpandMerge != nil {
-		st[textExpandMerge] = t.ExpandMerge()
-	}
-	if t.ColorHue != nil {
-		st[textColorHue] = t.ColorHue()
-	}
-	if t.ColorAlpha != nil {
-		st[textColorAlpha] = t.ColorAlpha()
-	}
-	if t.ColorSaturationBrightness != nil {
-		st[textColorSaturationBrightness] = t.ColorSaturationBrightness()
-	}
-	if t.ColorHex != nil {
-		st[textColorHex] = t.ColorHex()
-	}
-	if t.ColorEyeDropper != nil {
-		st[textColorEyeDropper] = t.ColorEyeDropper()
-	}
-	if t.ColorFormat != nil {
-		st[textColorFormat] = t.ColorFormat()
-	}
-	if t.ColorCopy != nil {
-		st[textColorCopy] = t.ColorCopy()
-	}
-	if t.ColorRed != nil {
-		st[textColorRed] = t.ColorRed()
-	}
-	if t.ColorGreen != nil {
-		st[textColorGreen] = t.ColorGreen()
-	}
-	if t.ColorBlue != nil {
-		st[textColorBlue] = t.ColorBlue()
-	}
-	if t.ColorHueDegrees != nil {
-		st[textColorHueDegrees] = t.ColorHueDegrees()
-	}
-	if t.ColorSaturationPercent != nil {
-		st[textColorSaturationPercent] = t.ColorSaturationPercent()
-	}
-	if t.ColorBrightnessPercent != nil {
-		st[textColorBrightnessPercent] = t.ColorBrightnessPercent()
-	}
-	if t.ColorLightnessPercent != nil {
-		st[textColorLightnessPercent] = t.ColorLightnessPercent()
-	}
-	if t.ColorOpacityPercent != nil {
-		st[textColorOpacityPercent] = t.ColorOpacityPercent()
-	}
-	if t.CalendarPrevious != nil {
-		st[textCalendarPrevious] = t.CalendarPrevious()
-	}
-	if t.CalendarNext != nil {
-		st[textCalendarNext] = t.CalendarNext()
-	}
-	if t.ListClear != nil {
-		st[textListClear] = t.ListClear()
-	}
-	if t.ListNothingFound != nil {
-		st[textListNothingFound] = t.ListNothingFound()
-	}
-	if t.ListSearch != nil {
-		st[textListSearch] = t.ListSearch()
-	}
-	if t.CommandSearch != nil {
-		st[textCommandSearch] = t.CommandSearch()
-	}
-	if t.CommandSearchPlaceholder != nil {
-		st[textCommandSearchPlaceholder] = t.CommandSearchPlaceholder()
-	}
-	if t.CommandNoMatches != nil {
-		st[textCommandNoMatches] = t.CommandNoMatches()
-	}
-	if t.CommandLoading != nil {
-		st[textCommandLoading] = t.CommandLoading()
-	}
-	if t.CommandList != nil {
-		st[textCommandList] = t.CommandList()
 	}
 	if t.CalendarMonth != nil {
 		s.CalendarMonth = t.CalendarMonth
@@ -328,9 +330,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.CalendarWeekday != nil {
 		s.CalendarWeekday = t.CalendarWeekday
-	}
-	if t.BreadcrumbsMore != nil {
-		st[textBreadcrumbsMore] = t.BreadcrumbsMore()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -351,8 +350,7 @@ func (msgs Messages) arg(s string) string {
 // What screen readers say of a data table column's sort button.
 func SortBy(cx *core.Scope, column string) string { return For(cx).SortBy(column) }
 
-// SortBy says "Sort by {column}"
-// in the language of msgs.
+// SortBy is the package's SortBy in the language of msgs.
 func (msgs Messages) SortBy(column string) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SortBy(column))
@@ -376,8 +374,7 @@ func (msgs Messages) SortBy(column string) string {
 // What a diff says of the unchanged lines it collapses.
 func DiffUnchangedLines(cx *core.Scope, n int) string { return For(cx).DiffUnchangedLines(n) }
 
-// DiffUnchangedLines says "{n, plural, one {# unchanged line} other {# unchanged lines}}"
-// in the language of msgs.
+// DiffUnchangedLines is the package's DiffUnchangedLines in the language of msgs.
 func (msgs Messages) DiffUnchangedLines(n int) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.DiffUnchangedLines(n))
@@ -410,8 +407,7 @@ func (msgs Messages) DiffUnchangedLines(n int) string {
 // What screen readers say of the button showing all of a diff's collapsed lines.
 func DiffExpandAll(cx *core.Scope) string { return For(cx).DiffExpandAll() }
 
-// DiffExpandAll says "Expand all"
-// in the language of msgs.
+// DiffExpandAll is the package's DiffExpandAll in the language of msgs.
 func (msgs Messages) DiffExpandAll() string { return msgs.text(textDiffExpandAll) }
 
 // DiffStage says "Stage"
@@ -420,8 +416,7 @@ func (msgs Messages) DiffExpandAll() string { return msgs.text(textDiffExpandAll
 // The button staging the lines of a diff's change for a commit.
 func DiffStage(cx *core.Scope) string { return For(cx).DiffStage() }
 
-// DiffStage says "Stage"
-// in the language of msgs.
+// DiffStage is the package's DiffStage in the language of msgs.
 func (msgs Messages) DiffStage() string { return msgs.text(textDiffStage) }
 
 // DiffDiscardChanges says "Discard Changes…"
@@ -430,8 +425,7 @@ func (msgs Messages) DiffStage() string { return msgs.text(textDiffStage) }
 // The button that, after asking, throws away the lines of a diff's change.
 func DiffDiscardChanges(cx *core.Scope) string { return For(cx).DiffDiscardChanges() }
 
-// DiffDiscardChanges says "Discard Changes…"
-// in the language of msgs.
+// DiffDiscardChanges is the package's DiffDiscardChanges in the language of msgs.
 func (msgs Messages) DiffDiscardChanges() string { return msgs.text(textDiffDiscardChanges) }
 
 // CollapseMerge says "Collapse Merge"
@@ -440,8 +434,7 @@ func (msgs Messages) DiffDiscardChanges() string { return msgs.text(textDiffDisc
 // What screen readers say of a commit graph's button hiding the commits a merge brings in.
 func CollapseMerge(cx *core.Scope) string { return For(cx).CollapseMerge() }
 
-// CollapseMerge says "Collapse Merge"
-// in the language of msgs.
+// CollapseMerge is the package's CollapseMerge in the language of msgs.
 func (msgs Messages) CollapseMerge() string { return msgs.text(textCollapseMerge) }
 
 // ExpandMerge says "Expand Merge"
@@ -450,8 +443,7 @@ func (msgs Messages) CollapseMerge() string { return msgs.text(textCollapseMerge
 // What screen readers say of a commit graph's button showing the commits a merge brings in.
 func ExpandMerge(cx *core.Scope) string { return For(cx).ExpandMerge() }
 
-// ExpandMerge says "Expand Merge"
-// in the language of msgs.
+// ExpandMerge is the package's ExpandMerge in the language of msgs.
 func (msgs Messages) ExpandMerge() string { return msgs.text(textExpandMerge) }
 
 // ColorHue says "Hue"
@@ -460,8 +452,7 @@ func (msgs Messages) ExpandMerge() string { return msgs.text(textExpandMerge) }
 // What a styled picker says for this part.
 func ColorHue(cx *core.Scope) string { return For(cx).ColorHue() }
 
-// ColorHue says "Hue"
-// in the language of msgs.
+// ColorHue is the package's ColorHue in the language of msgs.
 func (msgs Messages) ColorHue() string { return msgs.text(textColorHue) }
 
 // ColorAlpha says "Opacity"
@@ -470,8 +461,7 @@ func (msgs Messages) ColorHue() string { return msgs.text(textColorHue) }
 // What a styled picker says for this part.
 func ColorAlpha(cx *core.Scope) string { return For(cx).ColorAlpha() }
 
-// ColorAlpha says "Opacity"
-// in the language of msgs.
+// ColorAlpha is the package's ColorAlpha in the language of msgs.
 func (msgs Messages) ColorAlpha() string { return msgs.text(textColorAlpha) }
 
 // ColorSaturationBrightness says "Saturation and brightness"
@@ -480,8 +470,7 @@ func (msgs Messages) ColorAlpha() string { return msgs.text(textColorAlpha) }
 // What a styled picker says for this part.
 func ColorSaturationBrightness(cx *core.Scope) string { return For(cx).ColorSaturationBrightness() }
 
-// ColorSaturationBrightness says "Saturation and brightness"
-// in the language of msgs.
+// ColorSaturationBrightness is the package's ColorSaturationBrightness in the language of msgs.
 func (msgs Messages) ColorSaturationBrightness() string {
 	return msgs.text(textColorSaturationBrightness)
 }
@@ -492,8 +481,7 @@ func (msgs Messages) ColorSaturationBrightness() string {
 // What a styled picker says for this part.
 func ColorHex(cx *core.Scope) string { return For(cx).ColorHex() }
 
-// ColorHex says "Hex color"
-// in the language of msgs.
+// ColorHex is the package's ColorHex in the language of msgs.
 func (msgs Messages) ColorHex() string { return msgs.text(textColorHex) }
 
 // ColorEyeDropper says "Pick a color from the screen"
@@ -502,8 +490,7 @@ func (msgs Messages) ColorHex() string { return msgs.text(textColorHex) }
 // What a styled picker says for this part.
 func ColorEyeDropper(cx *core.Scope) string { return For(cx).ColorEyeDropper() }
 
-// ColorEyeDropper says "Pick a color from the screen"
-// in the language of msgs.
+// ColorEyeDropper is the package's ColorEyeDropper in the language of msgs.
 func (msgs Messages) ColorEyeDropper() string { return msgs.text(textColorEyeDropper) }
 
 // ColorFormat says "Color format"
@@ -512,8 +499,7 @@ func (msgs Messages) ColorEyeDropper() string { return msgs.text(textColorEyeDro
 // What a styled picker says for this part.
 func ColorFormat(cx *core.Scope) string { return For(cx).ColorFormat() }
 
-// ColorFormat says "Color format"
-// in the language of msgs.
+// ColorFormat is the package's ColorFormat in the language of msgs.
 func (msgs Messages) ColorFormat() string { return msgs.text(textColorFormat) }
 
 // ColorCopy says "Copy color"
@@ -522,8 +508,7 @@ func (msgs Messages) ColorFormat() string { return msgs.text(textColorFormat) }
 // What a styled picker says for this part.
 func ColorCopy(cx *core.Scope) string { return For(cx).ColorCopy() }
 
-// ColorCopy says "Copy color"
-// in the language of msgs.
+// ColorCopy is the package's ColorCopy in the language of msgs.
 func (msgs Messages) ColorCopy() string { return msgs.text(textColorCopy) }
 
 // ColorRed says "Red"
@@ -532,8 +517,7 @@ func (msgs Messages) ColorCopy() string { return msgs.text(textColorCopy) }
 // What a styled picker says for this part.
 func ColorRed(cx *core.Scope) string { return For(cx).ColorRed() }
 
-// ColorRed says "Red"
-// in the language of msgs.
+// ColorRed is the package's ColorRed in the language of msgs.
 func (msgs Messages) ColorRed() string { return msgs.text(textColorRed) }
 
 // ColorGreen says "Green"
@@ -542,8 +526,7 @@ func (msgs Messages) ColorRed() string { return msgs.text(textColorRed) }
 // What a styled picker says for this part.
 func ColorGreen(cx *core.Scope) string { return For(cx).ColorGreen() }
 
-// ColorGreen says "Green"
-// in the language of msgs.
+// ColorGreen is the package's ColorGreen in the language of msgs.
 func (msgs Messages) ColorGreen() string { return msgs.text(textColorGreen) }
 
 // ColorBlue says "Blue"
@@ -552,8 +535,7 @@ func (msgs Messages) ColorGreen() string { return msgs.text(textColorGreen) }
 // What a styled picker says for this part.
 func ColorBlue(cx *core.Scope) string { return For(cx).ColorBlue() }
 
-// ColorBlue says "Blue"
-// in the language of msgs.
+// ColorBlue is the package's ColorBlue in the language of msgs.
 func (msgs Messages) ColorBlue() string { return msgs.text(textColorBlue) }
 
 // ColorHueDegrees says "Hue degrees"
@@ -562,8 +544,7 @@ func (msgs Messages) ColorBlue() string { return msgs.text(textColorBlue) }
 // What a styled picker says for this part.
 func ColorHueDegrees(cx *core.Scope) string { return For(cx).ColorHueDegrees() }
 
-// ColorHueDegrees says "Hue degrees"
-// in the language of msgs.
+// ColorHueDegrees is the package's ColorHueDegrees in the language of msgs.
 func (msgs Messages) ColorHueDegrees() string { return msgs.text(textColorHueDegrees) }
 
 // ColorSaturationPercent says "Saturation percent"
@@ -572,8 +553,7 @@ func (msgs Messages) ColorHueDegrees() string { return msgs.text(textColorHueDeg
 // What a styled picker says for this part.
 func ColorSaturationPercent(cx *core.Scope) string { return For(cx).ColorSaturationPercent() }
 
-// ColorSaturationPercent says "Saturation percent"
-// in the language of msgs.
+// ColorSaturationPercent is the package's ColorSaturationPercent in the language of msgs.
 func (msgs Messages) ColorSaturationPercent() string { return msgs.text(textColorSaturationPercent) }
 
 // ColorBrightnessPercent says "Brightness percent"
@@ -582,8 +562,7 @@ func (msgs Messages) ColorSaturationPercent() string { return msgs.text(textColo
 // What a styled picker says for this part.
 func ColorBrightnessPercent(cx *core.Scope) string { return For(cx).ColorBrightnessPercent() }
 
-// ColorBrightnessPercent says "Brightness percent"
-// in the language of msgs.
+// ColorBrightnessPercent is the package's ColorBrightnessPercent in the language of msgs.
 func (msgs Messages) ColorBrightnessPercent() string { return msgs.text(textColorBrightnessPercent) }
 
 // ColorLightnessPercent says "Lightness percent"
@@ -592,8 +571,7 @@ func (msgs Messages) ColorBrightnessPercent() string { return msgs.text(textColo
 // What a styled picker says for this part.
 func ColorLightnessPercent(cx *core.Scope) string { return For(cx).ColorLightnessPercent() }
 
-// ColorLightnessPercent says "Lightness percent"
-// in the language of msgs.
+// ColorLightnessPercent is the package's ColorLightnessPercent in the language of msgs.
 func (msgs Messages) ColorLightnessPercent() string { return msgs.text(textColorLightnessPercent) }
 
 // ColorOpacityPercent says "Opacity percent"
@@ -602,8 +580,7 @@ func (msgs Messages) ColorLightnessPercent() string { return msgs.text(textColor
 // What a styled picker says for this part.
 func ColorOpacityPercent(cx *core.Scope) string { return For(cx).ColorOpacityPercent() }
 
-// ColorOpacityPercent says "Opacity percent"
-// in the language of msgs.
+// ColorOpacityPercent is the package's ColorOpacityPercent in the language of msgs.
 func (msgs Messages) ColorOpacityPercent() string { return msgs.text(textColorOpacityPercent) }
 
 // CalendarPrevious says "Previous month"
@@ -612,8 +589,7 @@ func (msgs Messages) ColorOpacityPercent() string { return msgs.text(textColorOp
 // What a styled picker says for this part.
 func CalendarPrevious(cx *core.Scope) string { return For(cx).CalendarPrevious() }
 
-// CalendarPrevious says "Previous month"
-// in the language of msgs.
+// CalendarPrevious is the package's CalendarPrevious in the language of msgs.
 func (msgs Messages) CalendarPrevious() string { return msgs.text(textCalendarPrevious) }
 
 // CalendarNext says "Next month"
@@ -622,8 +598,7 @@ func (msgs Messages) CalendarPrevious() string { return msgs.text(textCalendarPr
 // What a styled picker says for this part.
 func CalendarNext(cx *core.Scope) string { return For(cx).CalendarNext() }
 
-// CalendarNext says "Next month"
-// in the language of msgs.
+// CalendarNext is the package's CalendarNext in the language of msgs.
 func (msgs Messages) CalendarNext() string { return msgs.text(textCalendarNext) }
 
 // ListClear says "Clear"
@@ -632,8 +607,7 @@ func (msgs Messages) CalendarNext() string { return msgs.text(textCalendarNext) 
 // What a styled picker says for this part.
 func ListClear(cx *core.Scope) string { return For(cx).ListClear() }
 
-// ListClear says "Clear"
-// in the language of msgs.
+// ListClear is the package's ListClear in the language of msgs.
 func (msgs Messages) ListClear() string { return msgs.text(textListClear) }
 
 // ListNothingFound says "Nothing found"
@@ -642,8 +616,7 @@ func (msgs Messages) ListClear() string { return msgs.text(textListClear) }
 // What a styled picker says for this part.
 func ListNothingFound(cx *core.Scope) string { return For(cx).ListNothingFound() }
 
-// ListNothingFound says "Nothing found"
-// in the language of msgs.
+// ListNothingFound is the package's ListNothingFound in the language of msgs.
 func (msgs Messages) ListNothingFound() string { return msgs.text(textListNothingFound) }
 
 // ListSearch says "Search"
@@ -652,8 +625,7 @@ func (msgs Messages) ListNothingFound() string { return msgs.text(textListNothin
 // What a styled picker says for this part.
 func ListSearch(cx *core.Scope) string { return For(cx).ListSearch() }
 
-// ListSearch says "Search"
-// in the language of msgs.
+// ListSearch is the package's ListSearch in the language of msgs.
 func (msgs Messages) ListSearch() string { return msgs.text(textListSearch) }
 
 // CommandSearch says "Search commands"
@@ -662,8 +634,7 @@ func (msgs Messages) ListSearch() string { return msgs.text(textListSearch) }
 // What screen readers say of a command palette's search field.
 func CommandSearch(cx *core.Scope) string { return For(cx).CommandSearch() }
 
-// CommandSearch says "Search commands"
-// in the language of msgs.
+// CommandSearch is the package's CommandSearch in the language of msgs.
 func (msgs Messages) CommandSearch() string { return msgs.text(textCommandSearch) }
 
 // CommandSearchPlaceholder says "Search commands…"
@@ -672,8 +643,7 @@ func (msgs Messages) CommandSearch() string { return msgs.text(textCommandSearch
 // The hint in a command palette's empty search field.
 func CommandSearchPlaceholder(cx *core.Scope) string { return For(cx).CommandSearchPlaceholder() }
 
-// CommandSearchPlaceholder says "Search commands…"
-// in the language of msgs.
+// CommandSearchPlaceholder is the package's CommandSearchPlaceholder in the language of msgs.
 func (msgs Messages) CommandSearchPlaceholder() string {
 	return msgs.text(textCommandSearchPlaceholder)
 }
@@ -684,8 +654,7 @@ func (msgs Messages) CommandSearchPlaceholder() string {
 // What a command palette says while no command matches its query.
 func CommandNoMatches(cx *core.Scope) string { return For(cx).CommandNoMatches() }
 
-// CommandNoMatches says "No matching commands"
-// in the language of msgs.
+// CommandNoMatches is the package's CommandNoMatches in the language of msgs.
 func (msgs Messages) CommandNoMatches() string { return msgs.text(textCommandNoMatches) }
 
 // CommandLoading says "Loading…"
@@ -694,8 +663,7 @@ func (msgs Messages) CommandNoMatches() string { return msgs.text(textCommandNoM
 // What a command palette says while a search is under way.
 func CommandLoading(cx *core.Scope) string { return For(cx).CommandLoading() }
 
-// CommandLoading says "Loading…"
-// in the language of msgs.
+// CommandLoading is the package's CommandLoading in the language of msgs.
 func (msgs Messages) CommandLoading() string { return msgs.text(textCommandLoading) }
 
 // CommandList says "Commands"
@@ -704,8 +672,7 @@ func (msgs Messages) CommandLoading() string { return msgs.text(textCommandLoadi
 // What screen readers say of a command palette's list of results.
 func CommandList(cx *core.Scope) string { return For(cx).CommandList() }
 
-// CommandList says "Commands"
-// in the language of msgs.
+// CommandList is the package's CommandList in the language of msgs.
 func (msgs Messages) CommandList() string { return msgs.text(textCommandList) }
 
 // CalendarMonth says "{d, date, ::yMMMM}"
@@ -714,8 +681,7 @@ func (msgs Messages) CommandList() string { return msgs.text(textCommandList) }
 // A date in a calendar's header, grid of months or weekday headings.
 func CalendarMonth(cx *core.Scope, d time.Time) string { return For(cx).CalendarMonth(d) }
 
-// CalendarMonth says "{d, date, ::yMMMM}"
-// in the language of msgs.
+// CalendarMonth is the package's CalendarMonth in the language of msgs.
 func (msgs Messages) CalendarMonth(d time.Time) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CalendarMonth(d))
@@ -739,8 +705,7 @@ func (msgs Messages) CalendarMonth(d time.Time) string {
 // A date in a calendar's header, grid of months or weekday headings.
 func CalendarMonthName(cx *core.Scope, d time.Time) string { return For(cx).CalendarMonthName(d) }
 
-// CalendarMonthName says "{d, date, ::MMM}"
-// in the language of msgs.
+// CalendarMonthName is the package's CalendarMonthName in the language of msgs.
 func (msgs Messages) CalendarMonthName(d time.Time) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CalendarMonthName(d))
@@ -764,8 +729,7 @@ func (msgs Messages) CalendarMonthName(d time.Time) string {
 // A date in a calendar's header, grid of months or weekday headings.
 func CalendarWeekday(cx *core.Scope, d time.Time) string { return For(cx).CalendarWeekday(d) }
 
-// CalendarWeekday says "{d, date, ::EEEEE}"
-// in the language of msgs.
+// CalendarWeekday is the package's CalendarWeekday in the language of msgs.
 func (msgs Messages) CalendarWeekday(d time.Time) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CalendarWeekday(d))
@@ -789,6 +753,5 @@ func (msgs Messages) CalendarWeekday(d time.Time) string {
 // What screen readers say of the button listing a breadcrumb path's collapsed ancestors.
 func BreadcrumbsMore(cx *core.Scope) string { return For(cx).BreadcrumbsMore() }
 
-// BreadcrumbsMore says "More"
-// in the language of msgs.
+// BreadcrumbsMore is the package's BreadcrumbsMore in the language of msgs.
 func (msgs Messages) BreadcrumbsMore() string { return msgs.text(textBreadcrumbsMore) }

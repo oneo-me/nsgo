@@ -37,37 +37,20 @@ var Parameters = map[string][]string{
 	"QuitApp":  {"app"},
 }
 
-// Translation is a language's messages another package supplies; a nil
-// field leaves the message to the catalog.
+// Translation is a language's messages another package supplies:
+// those without arguments in Texts, by key, and a function for each
+// of the others; a key or a field left out leaves the message to the
+// catalog.
 type Translation struct {
-	Edit             func() string
-	Window           func() string
-	About            func() string
-	AboutApp         func(app string) string
-	Hide             func() string
-	HideApp          func(app string) string
-	HideOthers       func() string
-	ShowAll          func() string
-	Quit             func() string
-	QuitApp          func(app string) string
-	Undo             func() string
-	Redo             func() string
-	Cut              func() string
-	Copy             func() string
-	Paste            func() string
-	Delete           func() string
-	SelectAll        func() string
-	Minimize         func() string
-	Zoom             func() string
-	ToggleFullScreen func() string
-	EnterFullScreen  func() string
-	ExitFullScreen   func() string
-	Close            func() string
+	Texts    map[string]string
+	AboutApp func(app string) string
+	HideApp  func(app string) string
+	QuitApp  func(app string) string
 }
 
 var supplied = map[string]Translation{}
 
-// The indexes of the messages without arguments in texts.
+// The indexes of the messages without arguments in the tables.
 const (
 	textEdit = iota
 	textWindow
@@ -92,74 +75,154 @@ const (
 	numTexts
 )
 
-// texts are the messages without arguments, by language, in the
-// order of their indexes; "" where a language lacks one.
-var texts = map[string]*[numTexts]string{
-	"en": {
-		"Edit",
-		"Window",
-		"About",
-		"Hide",
-		"Hide Others",
-		"Show All",
-		"Quit",
-		"Undo",
-		"Redo",
-		"Cut",
-		"Copy",
-		"Paste",
-		"Delete",
-		"Select All",
-		"Minimize",
-		"Zoom",
-		"Toggle Full Screen",
-		"Enter Full Screen",
-		"Exit Full Screen",
-		"Close",
-	},
-	"zh-Hans": {
-		"编辑",
-		"窗口",
-		"关于",
-		"隐藏",
-		"隐藏其他",
-		"全部显示",
-		"退出",
-		"撤销",
-		"重做",
-		"剪切",
-		"复制",
-		"粘贴",
-		"删除",
-		"全选",
-		"最小化",
-		"缩放",
-		"切换全屏幕",
-		"进入全屏幕",
-		"退出全屏幕",
-		"关闭",
-	},
+// keyOfText is the key of the message without arguments at each
+// index, by which Supply reads a Translation's Texts.
+var keyOfText = [numTexts]string{
+	"edit",
+	"window",
+	"about",
+	"hide",
+	"hideOthers",
+	"showAll",
+	"quit",
+	"undo",
+	"redo",
+	"cut",
+	"copy",
+	"paste",
+	"delete",
+	"selectAll",
+	"minimize",
+	"zoom",
+	"toggleFullScreen",
+	"enterFullScreen",
+	"exitFullScreen",
+	"close",
+}
+
+// textsEn are the messages without arguments in en.
+var textsEn = i18n.NewTexts(""+
+	"Edit"+
+	"Window"+
+	"About"+
+	"Hide"+
+	"Hide Others"+
+	"Show All"+
+	"Quit"+
+	"Undo"+
+	"Redo"+
+	"Cut"+
+	"Copy"+
+	"Paste"+
+	"Delete"+
+	"Select All"+
+	"Minimize"+
+	"Zoom"+
+	"Toggle Full Screen"+
+	"Enter Full Screen"+
+	"Exit Full Screen"+
+	"Close",
+	[]uint16{
+		4,
+		6,
+		5,
+		4,
+		11,
+		8,
+		4,
+		4,
+		4,
+		3,
+		4,
+		5,
+		6,
+		10,
+		8,
+		4,
+		18,
+		17,
+		16,
+		5,
+	})
+
+// textsZhHans are the messages without arguments in zh-Hans.
+var textsZhHans = i18n.NewTexts(""+
+	"编辑"+
+	"窗口"+
+	"关于"+
+	"隐藏"+
+	"隐藏其他"+
+	"全部显示"+
+	"退出"+
+	"撤销"+
+	"重做"+
+	"剪切"+
+	"复制"+
+	"粘贴"+
+	"删除"+
+	"全选"+
+	"最小化"+
+	"缩放"+
+	"切换全屏幕"+
+	"进入全屏幕"+
+	"退出全屏幕"+
+	"关闭",
+	[]uint16{
+		6,
+		6,
+		6,
+		6,
+		12,
+		12,
+		6,
+		6,
+		6,
+		6,
+		6,
+		6,
+		6,
+		6,
+		9,
+		6,
+		15,
+		15,
+		15,
+		6,
+	})
+
+// texts returns the messages without arguments in lang, nil for a
+// language the catalog lacks.
+func texts(lang string) *i18n.Texts {
+	switch lang {
+	case "en":
+		return textsEn
+	case "zh-Hans":
+		return textsZhHans
+	}
+	return nil
 }
 
 // suppliedTexts are the messages without arguments other packages
-// supply, as texts are.
+// supply, by language and index.
 var suppliedTexts = map[string]*[numTexts]string{}
 
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
 func (msgs Messages) text(i int) string {
 	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, texts[Source][i])
+		return i18n.Pseudo(msgs.lang, textsEn.At(i))
 	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
 			return t[i]
 		}
 		if lang == "" {
-			return texts[Source][i]
+			return textsEn.At(i)
 		}
-		if t := texts[lang]; t != nil && t[i] != "" {
-			return t[i]
+		if t := texts(lang); t != nil {
+			if s := t.At(i); s != "" {
+				return s
+			}
 		}
 	}
 }
@@ -168,80 +231,27 @@ func (msgs Messages) text(i int) string {
 // nsgo writes the calls, in the package that supplies them, which runs
 // them as it initializes.
 func Supply(lang string, t Translation) {
+	if len(t.Texts) > 0 {
+		st := suppliedTexts[lang]
+		if st == nil {
+			st = new([numTexts]string)
+			suppliedTexts[lang] = st
+		}
+		for i, key := range keyOfText {
+			if s, ok := t.Texts[key]; ok {
+				st[i] = s
+			}
+		}
+	}
 	s := supplied[lang]
-	st := suppliedTexts[lang]
-	if st == nil {
-		st = new([numTexts]string)
-		suppliedTexts[lang] = st
-	}
-	if t.Edit != nil {
-		st[textEdit] = t.Edit()
-	}
-	if t.Window != nil {
-		st[textWindow] = t.Window()
-	}
-	if t.About != nil {
-		st[textAbout] = t.About()
-	}
 	if t.AboutApp != nil {
 		s.AboutApp = t.AboutApp
-	}
-	if t.Hide != nil {
-		st[textHide] = t.Hide()
 	}
 	if t.HideApp != nil {
 		s.HideApp = t.HideApp
 	}
-	if t.HideOthers != nil {
-		st[textHideOthers] = t.HideOthers()
-	}
-	if t.ShowAll != nil {
-		st[textShowAll] = t.ShowAll()
-	}
-	if t.Quit != nil {
-		st[textQuit] = t.Quit()
-	}
 	if t.QuitApp != nil {
 		s.QuitApp = t.QuitApp
-	}
-	if t.Undo != nil {
-		st[textUndo] = t.Undo()
-	}
-	if t.Redo != nil {
-		st[textRedo] = t.Redo()
-	}
-	if t.Cut != nil {
-		st[textCut] = t.Cut()
-	}
-	if t.Copy != nil {
-		st[textCopy] = t.Copy()
-	}
-	if t.Paste != nil {
-		st[textPaste] = t.Paste()
-	}
-	if t.Delete != nil {
-		st[textDelete] = t.Delete()
-	}
-	if t.SelectAll != nil {
-		st[textSelectAll] = t.SelectAll()
-	}
-	if t.Minimize != nil {
-		st[textMinimize] = t.Minimize()
-	}
-	if t.Zoom != nil {
-		st[textZoom] = t.Zoom()
-	}
-	if t.ToggleFullScreen != nil {
-		st[textToggleFullScreen] = t.ToggleFullScreen()
-	}
-	if t.EnterFullScreen != nil {
-		st[textEnterFullScreen] = t.EnterFullScreen()
-	}
-	if t.ExitFullScreen != nil {
-		st[textExitFullScreen] = t.ExitFullScreen()
-	}
-	if t.Close != nil {
-		st[textClose] = t.Close()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -262,8 +272,7 @@ func (msgs Messages) arg(s string) string {
 // The title of the menu of the text editing items.
 func Edit(cx *core.Scope) string { return For(cx).Edit() }
 
-// Edit says "Edit"
-// in the language of msgs.
+// Edit is the package's Edit in the language of msgs.
 func (msgs Messages) Edit() string { return msgs.text(textEdit) }
 
 // Window says "Window"
@@ -272,16 +281,14 @@ func (msgs Messages) Edit() string { return msgs.text(textEdit) }
 // The title of the menu of the window items.
 func Window(cx *core.Scope) string { return For(cx).Window() }
 
-// Window says "Window"
-// in the language of msgs.
+// Window is the package's Window in the language of msgs.
 func (msgs Messages) Window() string { return msgs.text(textWindow) }
 
 // About says "About"
 // in the language the app shows under cx.
 func About(cx *core.Scope) string { return For(cx).About() }
 
-// About says "About"
-// in the language of msgs.
+// About is the package's About in the language of msgs.
 func (msgs Messages) About() string { return msgs.text(textAbout) }
 
 // AboutApp says "About {app}"
@@ -290,8 +297,7 @@ func (msgs Messages) About() string { return msgs.text(textAbout) }
 // The macOS app menu's item, which names the app.
 func AboutApp(cx *core.Scope, app string) string { return For(cx).AboutApp(app) }
 
-// AboutApp says "About {app}"
-// in the language of msgs.
+// AboutApp is the package's AboutApp in the language of msgs.
 func (msgs Messages) AboutApp(app string) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AboutApp(app))
@@ -313,8 +319,7 @@ func (msgs Messages) AboutApp(app string) string {
 // in the language the app shows under cx.
 func Hide(cx *core.Scope) string { return For(cx).Hide() }
 
-// Hide says "Hide"
-// in the language of msgs.
+// Hide is the package's Hide in the language of msgs.
 func (msgs Messages) Hide() string { return msgs.text(textHide) }
 
 // HideApp says "Hide {app}"
@@ -323,8 +328,7 @@ func (msgs Messages) Hide() string { return msgs.text(textHide) }
 // The macOS app menu's item, which names the app.
 func HideApp(cx *core.Scope, app string) string { return For(cx).HideApp(app) }
 
-// HideApp says "Hide {app}"
-// in the language of msgs.
+// HideApp is the package's HideApp in the language of msgs.
 func (msgs Messages) HideApp(app string) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.HideApp(app))
@@ -346,24 +350,21 @@ func (msgs Messages) HideApp(app string) string {
 // in the language the app shows under cx.
 func HideOthers(cx *core.Scope) string { return For(cx).HideOthers() }
 
-// HideOthers says "Hide Others"
-// in the language of msgs.
+// HideOthers is the package's HideOthers in the language of msgs.
 func (msgs Messages) HideOthers() string { return msgs.text(textHideOthers) }
 
 // ShowAll says "Show All"
 // in the language the app shows under cx.
 func ShowAll(cx *core.Scope) string { return For(cx).ShowAll() }
 
-// ShowAll says "Show All"
-// in the language of msgs.
+// ShowAll is the package's ShowAll in the language of msgs.
 func (msgs Messages) ShowAll() string { return msgs.text(textShowAll) }
 
 // Quit says "Quit"
 // in the language the app shows under cx.
 func Quit(cx *core.Scope) string { return For(cx).Quit() }
 
-// Quit says "Quit"
-// in the language of msgs.
+// Quit is the package's Quit in the language of msgs.
 func (msgs Messages) Quit() string { return msgs.text(textQuit) }
 
 // QuitApp says "Quit {app}"
@@ -372,8 +373,7 @@ func (msgs Messages) Quit() string { return msgs.text(textQuit) }
 // The macOS app menu's item, which names the app.
 func QuitApp(cx *core.Scope, app string) string { return For(cx).QuitApp(app) }
 
-// QuitApp says "Quit {app}"
-// in the language of msgs.
+// QuitApp is the package's QuitApp in the language of msgs.
 func (msgs Messages) QuitApp(app string) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.QuitApp(app))
@@ -395,40 +395,35 @@ func (msgs Messages) QuitApp(app string) string {
 // in the language the app shows under cx.
 func Undo(cx *core.Scope) string { return For(cx).Undo() }
 
-// Undo says "Undo"
-// in the language of msgs.
+// Undo is the package's Undo in the language of msgs.
 func (msgs Messages) Undo() string { return msgs.text(textUndo) }
 
 // Redo says "Redo"
 // in the language the app shows under cx.
 func Redo(cx *core.Scope) string { return For(cx).Redo() }
 
-// Redo says "Redo"
-// in the language of msgs.
+// Redo is the package's Redo in the language of msgs.
 func (msgs Messages) Redo() string { return msgs.text(textRedo) }
 
 // Cut says "Cut"
 // in the language the app shows under cx.
 func Cut(cx *core.Scope) string { return For(cx).Cut() }
 
-// Cut says "Cut"
-// in the language of msgs.
+// Cut is the package's Cut in the language of msgs.
 func (msgs Messages) Cut() string { return msgs.text(textCut) }
 
 // Copy says "Copy"
 // in the language the app shows under cx.
 func Copy(cx *core.Scope) string { return For(cx).Copy() }
 
-// Copy says "Copy"
-// in the language of msgs.
+// Copy is the package's Copy in the language of msgs.
 func (msgs Messages) Copy() string { return msgs.text(textCopy) }
 
 // Paste says "Paste"
 // in the language the app shows under cx.
 func Paste(cx *core.Scope) string { return For(cx).Paste() }
 
-// Paste says "Paste"
-// in the language of msgs.
+// Paste is the package's Paste in the language of msgs.
 func (msgs Messages) Paste() string { return msgs.text(textPaste) }
 
 // Delete says "Delete"
@@ -437,62 +432,54 @@ func (msgs Messages) Paste() string { return msgs.text(textPaste) }
 // The item of a text field's context menu that removes the selection.
 func Delete(cx *core.Scope) string { return For(cx).Delete() }
 
-// Delete says "Delete"
-// in the language of msgs.
+// Delete is the package's Delete in the language of msgs.
 func (msgs Messages) Delete() string { return msgs.text(textDelete) }
 
 // SelectAll says "Select All"
 // in the language the app shows under cx.
 func SelectAll(cx *core.Scope) string { return For(cx).SelectAll() }
 
-// SelectAll says "Select All"
-// in the language of msgs.
+// SelectAll is the package's SelectAll in the language of msgs.
 func (msgs Messages) SelectAll() string { return msgs.text(textSelectAll) }
 
 // Minimize says "Minimize"
 // in the language the app shows under cx.
 func Minimize(cx *core.Scope) string { return For(cx).Minimize() }
 
-// Minimize says "Minimize"
-// in the language of msgs.
+// Minimize is the package's Minimize in the language of msgs.
 func (msgs Messages) Minimize() string { return msgs.text(textMinimize) }
 
 // Zoom says "Zoom"
 // in the language the app shows under cx.
 func Zoom(cx *core.Scope) string { return For(cx).Zoom() }
 
-// Zoom says "Zoom"
-// in the language of msgs.
+// Zoom is the package's Zoom in the language of msgs.
 func (msgs Messages) Zoom() string { return msgs.text(textZoom) }
 
 // ToggleFullScreen says "Toggle Full Screen"
 // in the language the app shows under cx.
 func ToggleFullScreen(cx *core.Scope) string { return For(cx).ToggleFullScreen() }
 
-// ToggleFullScreen says "Toggle Full Screen"
-// in the language of msgs.
+// ToggleFullScreen is the package's ToggleFullScreen in the language of msgs.
 func (msgs Messages) ToggleFullScreen() string { return msgs.text(textToggleFullScreen) }
 
 // EnterFullScreen says "Enter Full Screen"
 // in the language the app shows under cx.
 func EnterFullScreen(cx *core.Scope) string { return For(cx).EnterFullScreen() }
 
-// EnterFullScreen says "Enter Full Screen"
-// in the language of msgs.
+// EnterFullScreen is the package's EnterFullScreen in the language of msgs.
 func (msgs Messages) EnterFullScreen() string { return msgs.text(textEnterFullScreen) }
 
 // ExitFullScreen says "Exit Full Screen"
 // in the language the app shows under cx.
 func ExitFullScreen(cx *core.Scope) string { return For(cx).ExitFullScreen() }
 
-// ExitFullScreen says "Exit Full Screen"
-// in the language of msgs.
+// ExitFullScreen is the package's ExitFullScreen in the language of msgs.
 func (msgs Messages) ExitFullScreen() string { return msgs.text(textExitFullScreen) }
 
 // Close says "Close"
 // in the language the app shows under cx.
 func Close(cx *core.Scope) string { return For(cx).Close() }
 
-// Close says "Close"
-// in the language of msgs.
+// Close is the package's Close in the language of msgs.
 func (msgs Messages) Close() string { return msgs.text(textClose) }

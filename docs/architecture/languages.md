@@ -41,11 +41,11 @@ The gallery (`examples/gallery/locales`) says its interface in English and Simpl
 
 ## Generated code
 
-The tool writes `catalog_gen.go` into the directory (`cmd/nsgo/i18n_gen.go`). A message without arguments is a string in a table per language, which one method looks up by a constant named after its key (`textDemoStocks`), so adding a message changes only its own lines; one with arguments is compiled to Go per language: a concatenation, or for plurals and selects a `switch` writing to a `strings.Builder`. An app links no YAML, catalog or message parser. The gallery's 1,900 messages in two languages add 1.1 MB to it (2026-11-08). Per key it writes:
+The tool writes `catalog_gen.go` into the directory (`cmd/nsgo/i18n_gen.go`). A message without arguments is in a table per language, which one method looks up by a constant named after its key (`textDemoStocks`): the language's messages as one string and their lengths (`i18n.Texts`), which the linker writes as they are, where a string apiece or a map of them would cost a header and a fixup each, or code storing each as the program starts. One with arguments is compiled to Go per language: a concatenation, or for plurals and selects a `switch` writing to a `strings.Builder`. Adding a message changes only its own lines. An app links no YAML, catalog or message parser. The gallery's 1,900 messages in two languages add 1.0 MB to its macOS binary, of which the tables saved 200 KB, and embedding the YAML for a parser to read as the app runs would add 280 KB more (2026-11-08). Per key it writes:
 
 - `Key(cx, args...)`, the message in the language the app shows under `cx`, which a binding (`ContentFunc`, `LabelFunc`) follows as the language changes;
 - `Messages.Key(args...)`, from `In(locale)` or `For(cx)`, for a language of the caller's choice;
-- a field of `Translation`, a function another package's code fills through `Supply(lang, t)` as it initializes;
+- an entry in `Translation`, which another package's code fills through `Supply(lang, t)` as it initializes: a message without arguments under its key in `Texts`, one with them as a field of its own, a function;
 - its parameters' names in `Parameters`, for TSX ([in TSX](#in-tsx)).
 
 A method looks a language up in what was supplied, then the catalog's own, then along `i18n.Parent`'s CLDR parents (`en-AU`, `en-001`, `en`), then in the source. `Source` and `Catalog` name the languages; the app's catalogs call `i18n.SetApp(Catalog)`.

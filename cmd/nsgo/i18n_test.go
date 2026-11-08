@@ -223,6 +223,7 @@ filesSelected: "{count, plural, =0 {Keine Dateien ausgewählt} one {# Datei ausg
 greeting: "Hallo, {name}!"
 github.com/oneo-me/nsgo/base/locales:
   sortBy: "Nach {column} sortieren"
+  diffExpandAll: "Alle aufklappen"
 `,
 		"locales/en-GB.yaml":  `greeting: "Hiya, {name}!"`,
 		"locales/ar.yaml":     `due: "{d, date, medium}"`,
@@ -275,6 +276,8 @@ func TestMessages(t *testing.T) {
 		{locales.In("ar-XB").Positional("1", "2"), "\u200f1\u200f \u200f\u202eof\u202c\u200f \u200f2\u200f"},
 		{baselocales.In("en-XA").SortBy("Name"), "[Śóŕť ƀý Name ~~~]"},
 		{baselocales.In("de-AT").SortBy("Name"), "Nach Name sortieren"},
+		{baselocales.In("de-AT").DiffExpandAll(), "Alle aufklappen"},
+		{baselocales.In("fr").DiffExpandAll(), "Expand all"},
 		{baselocales.In("zh-CN").SortBy("名称"), "按名称排序"},
 		{baselocales.In("fr").SortBy("Nom"), "Sort by Nom"},
 	} {

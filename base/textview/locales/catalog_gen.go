@@ -33,19 +33,17 @@ func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{}
 
-// Translation is a language's messages another package supplies; a nil
-// field leaves the message to the catalog.
+// Translation is a language's messages another package supplies:
+// those without arguments in Texts, by key, and a function for each
+// of the others; a key or a field left out leaves the message to the
+// catalog.
 type Translation struct {
-	AlertNote      func() string
-	AlertTip       func() string
-	AlertImportant func() string
-	AlertWarning   func() string
-	AlertCaution   func() string
+	Texts map[string]string
 }
 
 var supplied = map[string]Translation{}
 
-// The indexes of the messages without arguments in texts.
+// The indexes of the messages without arguments in the tables.
 const (
 	textAlertNote = iota
 	textAlertTip
@@ -55,44 +53,79 @@ const (
 	numTexts
 )
 
-// texts are the messages without arguments, by language, in the
-// order of their indexes; "" where a language lacks one.
-var texts = map[string]*[numTexts]string{
-	"en": {
-		"Note",
-		"Tip",
-		"Important",
-		"Warning",
-		"Caution",
-	},
-	"zh-Hans": {
-		"备注",
-		"提示",
-		"重要",
-		"警告",
-		"注意",
-	},
+// keyOfText is the key of the message without arguments at each
+// index, by which Supply reads a Translation's Texts.
+var keyOfText = [numTexts]string{
+	"alertNote",
+	"alertTip",
+	"alertImportant",
+	"alertWarning",
+	"alertCaution",
+}
+
+// textsEn are the messages without arguments in en.
+var textsEn = i18n.NewTexts(""+
+	"Note"+
+	"Tip"+
+	"Important"+
+	"Warning"+
+	"Caution",
+	[]uint16{
+		4,
+		3,
+		9,
+		7,
+		7,
+	})
+
+// textsZhHans are the messages without arguments in zh-Hans.
+var textsZhHans = i18n.NewTexts(""+
+	"备注"+
+	"提示"+
+	"重要"+
+	"警告"+
+	"注意",
+	[]uint16{
+		6,
+		6,
+		6,
+		6,
+		6,
+	})
+
+// texts returns the messages without arguments in lang, nil for a
+// language the catalog lacks.
+func texts(lang string) *i18n.Texts {
+	switch lang {
+	case "en":
+		return textsEn
+	case "zh-Hans":
+		return textsZhHans
+	}
+	return nil
 }
 
 // suppliedTexts are the messages without arguments other packages
-// supply, as texts are.
+// supply, by language and index.
 var suppliedTexts = map[string]*[numTexts]string{}
 
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
 func (msgs Messages) text(i int) string {
 	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, texts[Source][i])
+		return i18n.Pseudo(msgs.lang, textsEn.At(i))
 	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
 			return t[i]
 		}
 		if lang == "" {
-			return texts[Source][i]
+			return textsEn.At(i)
 		}
-		if t := texts[lang]; t != nil && t[i] != "" {
-			return t[i]
+		if t := texts(lang); t != nil {
+			if s := t.At(i); s != "" {
+				return s
+			}
 		}
 	}
 }
@@ -101,28 +134,18 @@ func (msgs Messages) text(i int) string {
 // nsgo writes the calls, in the package that supplies them, which runs
 // them as it initializes.
 func Supply(lang string, t Translation) {
-	s := supplied[lang]
-	st := suppliedTexts[lang]
-	if st == nil {
-		st = new([numTexts]string)
-		suppliedTexts[lang] = st
+	if len(t.Texts) > 0 {
+		st := suppliedTexts[lang]
+		if st == nil {
+			st = new([numTexts]string)
+			suppliedTexts[lang] = st
+		}
+		for i, key := range keyOfText {
+			if s, ok := t.Texts[key]; ok {
+				st[i] = s
+			}
+		}
 	}
-	if t.AlertNote != nil {
-		st[textAlertNote] = t.AlertNote()
-	}
-	if t.AlertTip != nil {
-		st[textAlertTip] = t.AlertTip()
-	}
-	if t.AlertImportant != nil {
-		st[textAlertImportant] = t.AlertImportant()
-	}
-	if t.AlertWarning != nil {
-		st[textAlertWarning] = t.AlertWarning()
-	}
-	if t.AlertCaution != nil {
-		st[textAlertCaution] = t.AlertCaution()
-	}
-	supplied[lang] = s
 	Catalog.Add(lang)
 }
 
@@ -132,8 +155,7 @@ func Supply(lang string, t Translation) {
 // The title of a Markdown alert of information users should notice ("> [!NOTE]").
 func AlertNote(cx *core.Scope) string { return For(cx).AlertNote() }
 
-// AlertNote says "Note"
-// in the language of msgs.
+// AlertNote is the package's AlertNote in the language of msgs.
 func (msgs Messages) AlertNote() string { return msgs.text(textAlertNote) }
 
 // AlertTip says "Tip"
@@ -142,8 +164,7 @@ func (msgs Messages) AlertNote() string { return msgs.text(textAlertNote) }
 // The title of a Markdown alert of advice ("> [!TIP]").
 func AlertTip(cx *core.Scope) string { return For(cx).AlertTip() }
 
-// AlertTip says "Tip"
-// in the language of msgs.
+// AlertTip is the package's AlertTip in the language of msgs.
 func (msgs Messages) AlertTip() string { return msgs.text(textAlertTip) }
 
 // AlertImportant says "Important"
@@ -152,8 +173,7 @@ func (msgs Messages) AlertTip() string { return msgs.text(textAlertTip) }
 // The title of a Markdown alert of what users need to know ("> [!IMPORTANT]").
 func AlertImportant(cx *core.Scope) string { return For(cx).AlertImportant() }
 
-// AlertImportant says "Important"
-// in the language of msgs.
+// AlertImportant is the package's AlertImportant in the language of msgs.
 func (msgs Messages) AlertImportant() string { return msgs.text(textAlertImportant) }
 
 // AlertWarning says "Warning"
@@ -162,8 +182,7 @@ func (msgs Messages) AlertImportant() string { return msgs.text(textAlertImporta
 // The title of a Markdown alert of what needs attention at once ("> [!WARNING]").
 func AlertWarning(cx *core.Scope) string { return For(cx).AlertWarning() }
 
-// AlertWarning says "Warning"
-// in the language of msgs.
+// AlertWarning is the package's AlertWarning in the language of msgs.
 func (msgs Messages) AlertWarning() string { return msgs.text(textAlertWarning) }
 
 // AlertCaution says "Caution"
@@ -172,6 +191,5 @@ func (msgs Messages) AlertWarning() string { return msgs.text(textAlertWarning) 
 // The title of a Markdown alert of an action's risks ("> [!CAUTION]").
 func AlertCaution(cx *core.Scope) string { return For(cx).AlertCaution() }
 
-// AlertCaution says "Caution"
-// in the language of msgs.
+// AlertCaution is the package's AlertCaution in the language of msgs.
 func (msgs Messages) AlertCaution() string { return msgs.text(textAlertCaution) }

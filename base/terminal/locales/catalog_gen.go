@@ -35,29 +35,18 @@ var Parameters = map[string][]string{
 	"ProcessExitedWithCode": {"code"},
 }
 
-// Translation is a language's messages another package supplies; a nil
-// field leaves the message to the catalog.
+// Translation is a language's messages another package supplies:
+// those without arguments in Texts, by key, and a function for each
+// of the others; a key or a field left out leaves the message to the
+// catalog.
 type Translation struct {
-	ProcessExited         func() string
+	Texts                 map[string]string
 	ProcessExitedWithCode func(code int) string
-	Disconnected          func() string
-	KeyEscape             func() string
-	KeyTab                func() string
-	KeyControl            func() string
-	KeyAlt                func() string
-	KeyLeft               func() string
-	KeyRight              func() string
-	KeyUp                 func() string
-	KeyDown               func() string
-	KeyHome               func() string
-	KeyEnd                func() string
-	KeyPageUp             func() string
-	KeyPageDown           func() string
 }
 
 var supplied = map[string]Translation{}
 
-// The indexes of the messages without arguments in texts.
+// The indexes of the messages without arguments in the tables.
 const (
 	textProcessExited = iota
 	textDisconnected
@@ -76,62 +65,124 @@ const (
 	numTexts
 )
 
-// texts are the messages without arguments, by language, in the
-// order of their indexes; "" where a language lacks one.
-var texts = map[string]*[numTexts]string{
-	"en": {
-		"[Process exited]",
-		"[Disconnected]",
-		"Esc",
-		"Tab",
-		"Ctrl",
-		"Alt",
-		"Left arrow",
-		"Right arrow",
-		"Up arrow",
-		"Down arrow",
-		"Home",
-		"End",
-		"Page up",
-		"Page down",
-	},
-	"zh-Hans": {
-		"[进程已退出]",
-		"[连接已断开]",
-		"Esc",
-		"Tab",
-		"Ctrl",
-		"Alt",
-		"左方向键",
-		"右方向键",
-		"上方向键",
-		"下方向键",
-		"Home",
-		"End",
-		"向上翻页",
-		"向下翻页",
-	},
+// keyOfText is the key of the message without arguments at each
+// index, by which Supply reads a Translation's Texts.
+var keyOfText = [numTexts]string{
+	"processExited",
+	"disconnected",
+	"keyEscape",
+	"keyTab",
+	"keyControl",
+	"keyAlt",
+	"keyLeft",
+	"keyRight",
+	"keyUp",
+	"keyDown",
+	"keyHome",
+	"keyEnd",
+	"keyPageUp",
+	"keyPageDown",
+}
+
+// textsEn are the messages without arguments in en.
+var textsEn = i18n.NewTexts(""+
+	"[Process exited]"+
+	"[Disconnected]"+
+	"Esc"+
+	"Tab"+
+	"Ctrl"+
+	"Alt"+
+	"Left arrow"+
+	"Right arrow"+
+	"Up arrow"+
+	"Down arrow"+
+	"Home"+
+	"End"+
+	"Page up"+
+	"Page down",
+	[]uint16{
+		16,
+		14,
+		3,
+		3,
+		4,
+		3,
+		10,
+		11,
+		8,
+		10,
+		4,
+		3,
+		7,
+		9,
+	})
+
+// textsZhHans are the messages without arguments in zh-Hans.
+var textsZhHans = i18n.NewTexts(""+
+	"[进程已退出]"+
+	"[连接已断开]"+
+	"Esc"+
+	"Tab"+
+	"Ctrl"+
+	"Alt"+
+	"左方向键"+
+	"右方向键"+
+	"上方向键"+
+	"下方向键"+
+	"Home"+
+	"End"+
+	"向上翻页"+
+	"向下翻页",
+	[]uint16{
+		17,
+		17,
+		3,
+		3,
+		4,
+		3,
+		12,
+		12,
+		12,
+		12,
+		4,
+		3,
+		12,
+		12,
+	})
+
+// texts returns the messages without arguments in lang, nil for a
+// language the catalog lacks.
+func texts(lang string) *i18n.Texts {
+	switch lang {
+	case "en":
+		return textsEn
+	case "zh-Hans":
+		return textsZhHans
+	}
+	return nil
 }
 
 // suppliedTexts are the messages without arguments other packages
-// supply, as texts are.
+// supply, by language and index.
 var suppliedTexts = map[string]*[numTexts]string{}
 
 // text says the message without arguments at i in the language of msgs,
 // else of the languages it falls back to, else of the source.
 func (msgs Messages) text(i int) string {
 	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, texts[Source][i])
+		return i18n.Pseudo(msgs.lang, textsEn.At(i))
 	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if t := suppliedTexts[lang]; t != nil && t[i] != "" {
 			return t[i]
 		}
 		if lang == "" {
-			return texts[Source][i]
+			return textsEn.At(i)
 		}
-		if t := texts[lang]; t != nil && t[i] != "" {
-			return t[i]
+		if t := texts(lang); t != nil {
+			if s := t.At(i); s != "" {
+				return s
+			}
 		}
 	}
 }
@@ -140,56 +191,21 @@ func (msgs Messages) text(i int) string {
 // nsgo writes the calls, in the package that supplies them, which runs
 // them as it initializes.
 func Supply(lang string, t Translation) {
+	if len(t.Texts) > 0 {
+		st := suppliedTexts[lang]
+		if st == nil {
+			st = new([numTexts]string)
+			suppliedTexts[lang] = st
+		}
+		for i, key := range keyOfText {
+			if s, ok := t.Texts[key]; ok {
+				st[i] = s
+			}
+		}
+	}
 	s := supplied[lang]
-	st := suppliedTexts[lang]
-	if st == nil {
-		st = new([numTexts]string)
-		suppliedTexts[lang] = st
-	}
-	if t.ProcessExited != nil {
-		st[textProcessExited] = t.ProcessExited()
-	}
 	if t.ProcessExitedWithCode != nil {
 		s.ProcessExitedWithCode = t.ProcessExitedWithCode
-	}
-	if t.Disconnected != nil {
-		st[textDisconnected] = t.Disconnected()
-	}
-	if t.KeyEscape != nil {
-		st[textKeyEscape] = t.KeyEscape()
-	}
-	if t.KeyTab != nil {
-		st[textKeyTab] = t.KeyTab()
-	}
-	if t.KeyControl != nil {
-		st[textKeyControl] = t.KeyControl()
-	}
-	if t.KeyAlt != nil {
-		st[textKeyAlt] = t.KeyAlt()
-	}
-	if t.KeyLeft != nil {
-		st[textKeyLeft] = t.KeyLeft()
-	}
-	if t.KeyRight != nil {
-		st[textKeyRight] = t.KeyRight()
-	}
-	if t.KeyUp != nil {
-		st[textKeyUp] = t.KeyUp()
-	}
-	if t.KeyDown != nil {
-		st[textKeyDown] = t.KeyDown()
-	}
-	if t.KeyHome != nil {
-		st[textKeyHome] = t.KeyHome()
-	}
-	if t.KeyEnd != nil {
-		st[textKeyEnd] = t.KeyEnd()
-	}
-	if t.KeyPageUp != nil {
-		st[textKeyPageUp] = t.KeyPageUp()
-	}
-	if t.KeyPageDown != nil {
-		st[textKeyPageDown] = t.KeyPageDown()
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -210,8 +226,7 @@ func (msgs Messages) arg(s string) string {
 // The line a terminal writes under a program's output once the program ended with code 0.
 func ProcessExited(cx *core.Scope) string { return For(cx).ProcessExited() }
 
-// ProcessExited says "[Process exited]"
-// in the language of msgs.
+// ProcessExited is the package's ProcessExited in the language of msgs.
 func (msgs Messages) ProcessExited() string { return msgs.text(textProcessExited) }
 
 // ProcessExitedWithCode says "[Process exited with code {code}]"
@@ -222,8 +237,7 @@ func ProcessExitedWithCode(cx *core.Scope, code int) string {
 	return For(cx).ProcessExitedWithCode(code)
 }
 
-// ProcessExitedWithCode says "[Process exited with code {code}]"
-// in the language of msgs.
+// ProcessExitedWithCode is the package's ProcessExitedWithCode in the language of msgs.
 func (msgs Messages) ProcessExitedWithCode(code int) string {
 	if i18n.IsPseudo(msgs.lang) {
 		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ProcessExitedWithCode(code))
@@ -247,8 +261,7 @@ func (msgs Messages) ProcessExitedWithCode(code int) string {
 // The line a terminal connected to a stream, such as an SSH session, writes once the stream ended.
 func Disconnected(cx *core.Scope) string { return For(cx).Disconnected() }
 
-// Disconnected says "[Disconnected]"
-// in the language of msgs.
+// Disconnected is the package's Disconnected in the language of msgs.
 func (msgs Messages) Disconnected() string { return msgs.text(textDisconnected) }
 
 // KeyEscape says "Esc"
@@ -257,8 +270,7 @@ func (msgs Messages) Disconnected() string { return msgs.text(textDisconnected) 
 // The Escape key on the bar of keys over a touch screen's keyboard, as keyboards label it.
 func KeyEscape(cx *core.Scope) string { return For(cx).KeyEscape() }
 
-// KeyEscape says "Esc"
-// in the language of msgs.
+// KeyEscape is the package's KeyEscape in the language of msgs.
 func (msgs Messages) KeyEscape() string { return msgs.text(textKeyEscape) }
 
 // KeyTab says "Tab"
@@ -267,8 +279,7 @@ func (msgs Messages) KeyEscape() string { return msgs.text(textKeyEscape) }
 // The Tab key on the bar of keys over a touch screen's keyboard.
 func KeyTab(cx *core.Scope) string { return For(cx).KeyTab() }
 
-// KeyTab says "Tab"
-// in the language of msgs.
+// KeyTab is the package's KeyTab in the language of msgs.
 func (msgs Messages) KeyTab() string { return msgs.text(textKeyTab) }
 
 // KeyControl says "Ctrl"
@@ -277,8 +288,7 @@ func (msgs Messages) KeyTab() string { return msgs.text(textKeyTab) }
 // The Control key on the bar of keys over a touch screen's keyboard, which applies to the next key.
 func KeyControl(cx *core.Scope) string { return For(cx).KeyControl() }
 
-// KeyControl says "Ctrl"
-// in the language of msgs.
+// KeyControl is the package's KeyControl in the language of msgs.
 func (msgs Messages) KeyControl() string { return msgs.text(textKeyControl) }
 
 // KeyAlt says "Alt"
@@ -287,8 +297,7 @@ func (msgs Messages) KeyControl() string { return msgs.text(textKeyControl) }
 // The Alt key on the bar of keys over a touch screen's keyboard, which applies to the next key.
 func KeyAlt(cx *core.Scope) string { return For(cx).KeyAlt() }
 
-// KeyAlt says "Alt"
-// in the language of msgs.
+// KeyAlt is the package's KeyAlt in the language of msgs.
 func (msgs Messages) KeyAlt() string { return msgs.text(textKeyAlt) }
 
 // KeyLeft says "Left arrow"
@@ -297,8 +306,7 @@ func (msgs Messages) KeyAlt() string { return msgs.text(textKeyAlt) }
 // What screen readers say of the left arrow key on the bar of keys.
 func KeyLeft(cx *core.Scope) string { return For(cx).KeyLeft() }
 
-// KeyLeft says "Left arrow"
-// in the language of msgs.
+// KeyLeft is the package's KeyLeft in the language of msgs.
 func (msgs Messages) KeyLeft() string { return msgs.text(textKeyLeft) }
 
 // KeyRight says "Right arrow"
@@ -307,8 +315,7 @@ func (msgs Messages) KeyLeft() string { return msgs.text(textKeyLeft) }
 // What screen readers say of the right arrow key on the bar of keys.
 func KeyRight(cx *core.Scope) string { return For(cx).KeyRight() }
 
-// KeyRight says "Right arrow"
-// in the language of msgs.
+// KeyRight is the package's KeyRight in the language of msgs.
 func (msgs Messages) KeyRight() string { return msgs.text(textKeyRight) }
 
 // KeyUp says "Up arrow"
@@ -317,8 +324,7 @@ func (msgs Messages) KeyRight() string { return msgs.text(textKeyRight) }
 // What screen readers say of the up arrow key on the bar of keys.
 func KeyUp(cx *core.Scope) string { return For(cx).KeyUp() }
 
-// KeyUp says "Up arrow"
-// in the language of msgs.
+// KeyUp is the package's KeyUp in the language of msgs.
 func (msgs Messages) KeyUp() string { return msgs.text(textKeyUp) }
 
 // KeyDown says "Down arrow"
@@ -327,8 +333,7 @@ func (msgs Messages) KeyUp() string { return msgs.text(textKeyUp) }
 // What screen readers say of the down arrow key on the bar of keys.
 func KeyDown(cx *core.Scope) string { return For(cx).KeyDown() }
 
-// KeyDown says "Down arrow"
-// in the language of msgs.
+// KeyDown is the package's KeyDown in the language of msgs.
 func (msgs Messages) KeyDown() string { return msgs.text(textKeyDown) }
 
 // KeyHome says "Home"
@@ -337,8 +342,7 @@ func (msgs Messages) KeyDown() string { return msgs.text(textKeyDown) }
 // The Home key on the bar of keys.
 func KeyHome(cx *core.Scope) string { return For(cx).KeyHome() }
 
-// KeyHome says "Home"
-// in the language of msgs.
+// KeyHome is the package's KeyHome in the language of msgs.
 func (msgs Messages) KeyHome() string { return msgs.text(textKeyHome) }
 
 // KeyEnd says "End"
@@ -347,8 +351,7 @@ func (msgs Messages) KeyHome() string { return msgs.text(textKeyHome) }
 // The End key on the bar of keys.
 func KeyEnd(cx *core.Scope) string { return For(cx).KeyEnd() }
 
-// KeyEnd says "End"
-// in the language of msgs.
+// KeyEnd is the package's KeyEnd in the language of msgs.
 func (msgs Messages) KeyEnd() string { return msgs.text(textKeyEnd) }
 
 // KeyPageUp says "Page up"
@@ -357,8 +360,7 @@ func (msgs Messages) KeyEnd() string { return msgs.text(textKeyEnd) }
 // What screen readers say of the Page Up key on the bar of keys.
 func KeyPageUp(cx *core.Scope) string { return For(cx).KeyPageUp() }
 
-// KeyPageUp says "Page up"
-// in the language of msgs.
+// KeyPageUp is the package's KeyPageUp in the language of msgs.
 func (msgs Messages) KeyPageUp() string { return msgs.text(textKeyPageUp) }
 
 // KeyPageDown says "Page down"
@@ -367,6 +369,5 @@ func (msgs Messages) KeyPageUp() string { return msgs.text(textKeyPageUp) }
 // What screen readers say of the Page Down key on the bar of keys.
 func KeyPageDown(cx *core.Scope) string { return For(cx).KeyPageDown() }
 
-// KeyPageDown says "Page down"
-// in the language of msgs.
+// KeyPageDown is the package's KeyPageDown in the language of msgs.
 func (msgs Messages) KeyPageDown() string { return msgs.text(textKeyPageDown) }
