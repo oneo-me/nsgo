@@ -638,6 +638,8 @@ const (
 	textSystemPickAPhoto
 	textSystemUpTo4800Px
 	textSystemNoPhotoPicked
+	textSystemTakeAPhoto
+	textSystemPhotoFailed
 	textSystemHeicArrivesAsJpegLarge
 	textSystemSetappearance
 	textSystemForced
@@ -2579,6 +2581,8 @@ var keyOfText = [numTexts]string{
 	"systemPickAPhoto",
 	"systemUpTo4800Px",
 	"systemNoPhotoPicked",
+	"systemTakeAPhoto",
+	"systemPhotoFailed",
 	"systemHeicArrivesAsJpegLarge",
 	"systemSetappearance",
 	"systemForced",
@@ -4511,13 +4515,15 @@ var textsEn = i18n.NewTexts(""+
 	"Opened "+
 	"Nothing opened "+
 	"Links, photos and appearance"+
-	"OpenURL · PickImages · SetAppearance"+
+	"OpenURL · PickImages · TakePhoto · SetAppearance"+
 	"The website"+
 	"An email"+
 	"Refused URL"+
 	"Pick a photo"+
 	"Up to 4, 800 px"+
 	"No photo picked"+
+	"Take a photo"+
+	"No photo: "+
 	"HEIC arrives as JPEG, large photos scaled down when asked"+
 	"SetAppearance"+
 	"forced: "+
@@ -6447,13 +6453,15 @@ var textsEn = i18n.NewTexts(""+
 		7,
 		15,
 		28,
-		38,
+		51,
 		11,
 		8,
 		11,
 		12,
 		15,
 		15,
+		12,
+		10,
 		57,
 		13,
 		8,
@@ -8386,13 +8394,15 @@ var textsZhHans = i18n.NewTexts(""+
 	"已打开 "+
 	"未打开 "+
 	"链接、照片和外观"+
-	"OpenURL · PickImages · SetAppearance"+
+	"OpenURL · PickImages · TakePhoto · SetAppearance"+
 	"网站"+
 	"一封邮件"+
 	"被拒绝的 URL"+
 	"选取一张照片"+
 	"最多 4 张，800 px"+
 	"未选取照片"+
+	"拍一张照片"+
+	"未能拍照："+
 	"HEIC 会转成 JPEG，大照片会按要求缩小"+
 	"SetAppearance"+
 	"强制："+
@@ -10322,12 +10332,14 @@ var textsZhHans = i18n.NewTexts(""+
 		10,
 		10,
 		24,
-		38,
+		51,
 		6,
 		12,
 		16,
 		18,
 		21,
+		15,
+		15,
 		15,
 		49,
 		13,
@@ -14960,7 +14972,7 @@ func (msgs Messages) SystemLinksPhotosAndAppearance() string {
 	return msgs.text(textSystemLinksPhotosAndAppearance)
 }
 
-// SystemOpenurlPickimagesSetappearance says "OpenURL · PickImages · SetAppearance"
+// SystemOpenurlPickimagesSetappearance says "OpenURL · PickImages · TakePhoto · SetAppearance"
 // in the language the app shows under cx.
 func SystemOpenurlPickimagesSetappearance(cx *core.Scope) string {
 	return For(cx).SystemOpenurlPickimagesSetappearance()
@@ -15012,6 +15024,20 @@ func SystemNoPhotoPicked(cx *core.Scope) string { return For(cx).SystemNoPhotoPi
 
 // SystemNoPhotoPicked is the package's SystemNoPhotoPicked in the language of msgs.
 func (msgs Messages) SystemNoPhotoPicked() string { return msgs.text(textSystemNoPhotoPicked) }
+
+// SystemTakeAPhoto says "Take a photo"
+// in the language the app shows under cx.
+func SystemTakeAPhoto(cx *core.Scope) string { return For(cx).SystemTakeAPhoto() }
+
+// SystemTakeAPhoto is the package's SystemTakeAPhoto in the language of msgs.
+func (msgs Messages) SystemTakeAPhoto() string { return msgs.text(textSystemTakeAPhoto) }
+
+// SystemPhotoFailed says "No photo: "
+// in the language the app shows under cx.
+func SystemPhotoFailed(cx *core.Scope) string { return For(cx).SystemPhotoFailed() }
+
+// SystemPhotoFailed is the package's SystemPhotoFailed in the language of msgs.
+func (msgs Messages) SystemPhotoFailed() string { return msgs.text(textSystemPhotoFailed) }
 
 // SystemHeicArrivesAsJpegLarge says "HEIC arrives as JPEG, large photos scaled down when asked"
 // in the language the app shows under cx.

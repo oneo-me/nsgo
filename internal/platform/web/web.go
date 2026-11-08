@@ -1330,6 +1330,9 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)
 			continue
+		case driver.ItemTakePhoto:
+			s.takePhoto(*it.Pick, it.Count)
+			continue
 		case driver.ItemPickFiles:
 			s.pickFiles(*it.Files, it.Count)
 			continue

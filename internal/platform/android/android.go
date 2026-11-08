@@ -484,6 +484,7 @@ func readEnvironment(r *reader) driver.Environment {
 	env.ReduceMotion = flags&2 != 0
 	env.ScreenReader = flags&4 != 0
 	env.RTL = flags&8 != 0
+	env.Camera = flags&64 != 0
 	switch {
 	case flags&32 != 0:
 		env.Lifecycle = driver.LifecycleBackground
@@ -1271,10 +1272,10 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 		case driver.ItemOpenURL:
 			w.u32(it.Count)
 			w.str(it.Value)
-		case driver.ItemPickImages:
-			// The request, as Picker.java reads it: the limit, the longest
+		case driver.ItemPickImages, driver.ItemTakePhoto:
+			// The request, as NsgoView reads it: the limit, the longest
 			// side (0: any), the JPEG quality (0: the default, keeping
-			// JPEGs) and whether the stored format stays.
+			// a pick's JPEGs) and whether the stored format stays.
 			r := it.Pick
 			w.u32(it.Count)
 			w.u32(uint32(r.Limit))

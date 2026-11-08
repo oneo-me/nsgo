@@ -40,6 +40,8 @@ type Environment struct {
 	ScreenColor bool
 	// Speech says ItemSpeech recognizes speech here.
 	Speech bool
+	// Camera says ItemTakePhoto shows a camera here.
+	Camera bool
 	// RTL lays the app out right to left.
 	RTL bool
 	// PixelRatio is device pixels per point; 0 means 1.

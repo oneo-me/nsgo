@@ -67,6 +67,12 @@ public class NsgoActivity extends Activity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(request, permissions, results);
+        view.permissionResult(request, permissions, results);
+    }
+
+    @Override
     protected void onDestroy() {
         view.stop();
         super.onDestroy();

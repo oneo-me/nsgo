@@ -237,7 +237,14 @@ export declare const Storage: StorageModule;
 export type PickFormat = "compatible" | "current";
 export interface PickImagesOptions { multiple?: boolean; limit?: number; maxDimension?: number; quality?: number; format?: PickFormat }
 export interface PickedImage { file: File; size: Size }
-export interface PickerModule { pickImages(options?: PickImagesOptions | null): Promise<PickedImage[]> }
+export interface TakePhotoOptions { maxDimension?: number; quality?: number }
+export interface PickerModule {
+  pickImages(options?: PickImagesOptions | null): Promise<PickedImage[]>;
+  /** Whether takePhoto shows a camera here. */
+  canTakePhoto(): Promise<boolean>;
+  /** The photo the user takes with the system's camera, a JPEG; null when they cancel. */
+  takePhoto(options?: TakePhotoOptions | null): Promise<PickedImage | null>;
+}
 export declare const Picker: PickerModule;
 export interface SpeechStartOptions { lang?: string; interim?: boolean }
 /** Why a session ended early, named as the Web Speech API's errors. */

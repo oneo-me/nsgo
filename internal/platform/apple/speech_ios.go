@@ -34,9 +34,9 @@ func holdSpeechSession() (leave func(), err error) {
 	return restore, nil
 }
 
-// declaresUsage reports whether the app's Info.plist declares key, as iOS
+// DeclaresUsage reports whether the app's Info.plist declares key, as iOS
 // ends an app that asks for what it declares no reason for.
-func declaresUsage(key string) bool {
+func DeclaresUsage(key string) bool {
 	bundle := objc.ID(objc.GetClass("NSBundle")).Send(sel("mainBundle"))
 	return bundle.Send(sel("objectForInfoDictionaryKey:"), NSString(key)) != 0
 }

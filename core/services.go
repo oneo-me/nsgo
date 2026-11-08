@@ -368,6 +368,54 @@ func (cx *Scope) PickImages(o PickOptions, done func(files []PickedFile)) {
 	})
 }
 
+// PhotoOptions say how TakePhoto prepares the photo taken.
+type PhotoOptions struct {
+	// MaxDimension scales a photo whose longer side has more pixels down
+	// to it; 0 keeps its size.
+	MaxDimension int
+	// Quality is the quality the JPEG is encoded at, from 0 (smallest) to
+	// 1; 0 means 0.9.
+	Quality float32
+}
+
+// ErrNoCamera is TakePhoto's failure where Env.CanTakePhoto is false.
+var ErrNoCamera = errors.New("core: no camera to take a photo with")
+
+// TakePhoto shows the system's camera for the user to take one photo
+// and calls done with it, a JPEG turned upright and prepared as o says,
+// or with nil when they cancelled; err says what failed, such as a
+// refused permission or ErrNoCamera. iOS shows UIImagePickerController
+// and needs NSCameraUsageDescription in the app's Info.plist; Android
+// starts the camera app, and the web a file chooser that offers it.
+func (cx *Scope) TakePhoto(o PhotoOptions, done func(photo *PickedFile, err error)) {
+	t := cx.tree()
+	if t == nil {
+		return
+	}
+	if !Untracked(cx, cx.Env().CanTakePhoto) {
+		if done != nil {
+			done(nil, ErrNoCamera)
+		}
+		return
+	}
+	r := driver.PickRequest{Limit: 1, MaxDimension: max(o.MaxDimension, 0), Quality: min(max(o.Quality, 0), 1)}
+	t.request(cx, driver.MountItem{Kind: driver.ItemTakePhoto, Pick: &r}, func(ev driver.Event) {
+		if done == nil {
+			return
+		}
+		if ev.Text != "" {
+			done(nil, errors.New(ev.Text))
+			return
+		}
+		files, _ := ev.Data.([]driver.PickedFile)
+		if files = driver.FinishPick(r, files, nil); len(files) == 0 {
+			done(nil, nil)
+			return
+		}
+		done(&files[0], nil)
+	})
+}
+
 // PickFilesOptions say which files PickFiles offers.
 type PickFilesOptions struct {
 	// Multiple lets the user pick several files, at most Limit (0: up to

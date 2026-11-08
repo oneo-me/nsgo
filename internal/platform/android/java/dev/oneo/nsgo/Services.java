@@ -57,6 +57,14 @@ final class Services {
     /** The request codes of the photo picker's, the file picker's, the save dialog's and the folder picker's activities. */
     static final int PICK_REQUEST = 0x6e73, FILES_REQUEST = 0x6e74, SAVE_REQUEST = 0x6e75, FOLDER_REQUEST = 0x6e76;
 
+    /** The request codes of the camera's activity and of the camera permission's prompt. */
+    static final int PHOTO_REQUEST = 0x6e77, CAMERA_PERMISSION_REQUEST = 0x6e78;
+
+    /** The directory in the app's cache the camera writes photos to, which FileProvider lets it write. */
+    static final String CAMERA_DIR = "nsgo-camera";
+
+    static final String CAMERA_PERMISSION = "android.permission.CAMERA";
+
     /** The directory in the app's cache picked files are copied to, as Go's File.Temporary says. */
     static final String FILES_DIR = "nsgo-files";
 
@@ -347,6 +355,62 @@ final class Services {
         } catch (ActivityNotFoundException e) {
             return false;
         }
+    }
+
+    /** Whether the device has a camera an app takes photos with. */
+    static boolean hasCamera(Context context) {
+        return context.getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_CAMERA_ANY);
+    }
+
+    /**
+     * Whether the camera app must wait for the user to allow the camera:
+     * an app whose manifest asks for CAMERA, and has not been granted it,
+     * cannot start one. One that does not ask needs no permission.
+     */
+    static boolean needsCameraPermission(Context context) {
+        if (context.checkSelfPermission(CAMERA_PERMISSION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        try {
+            String[] asked = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), android.content.pm.PackageManager.GET_PERMISSIONS)
+                    .requestedPermissions;
+            return asked != null && java.util.Arrays.asList(asked).contains(CAMERA_PERMISSION);
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Starts the camera app to take one photo into a new file of the
+     * cache's nsgo-camera, which it writes through FileProvider, and
+     * returns the file; it fails when no activity takes photos.
+     */
+    static File startPhoto(Activity activity) throws IOException {
+        File dir = new File(activity.getCacheDir(), CAMERA_DIR);
+        if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot make " + dir);
+        String name = new java.text.SimpleDateFormat("'IMG_'yyyyMMdd_HHmmss", java.util.Locale.ROOT)
+                .format(new java.util.Date());
+        File photo = new File(dir, name + ".jpg");
+        for (int n = 2; !photo.createNewFile(); n++) photo = new File(dir, name + "_" + n + ".jpg");
+        Uri uri = photoURI(activity, photo);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        // The clip carries the grant to camera apps that read it from there.
+        intent.setClipData(ClipData.newRawUri("", uri));
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            activity.startActivityForResult(intent, PHOTO_REQUEST);
+        } catch (ActivityNotFoundException | SecurityException e) {
+            photo.delete();
+            throw new IOException("no camera app takes photos", e);
+        }
+        return photo;
+    }
+
+    /** The URI the camera app writes photo through, and the app reads it back from. */
+    static Uri photoURI(Context context, File photo) throws IOException {
+        return FileProvider.uri(context, photo, photo.getName(), "image/jpeg");
     }
 
     /** The images a picker's result names, at most the pick's limit. */

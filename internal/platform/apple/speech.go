@@ -73,7 +73,7 @@ func HandleSpeech(id uint32, r driver.SpeechRequest, dispatch func(driver.Event)
 			return
 		}
 		for _, key := range []string{"NSMicrophoneUsageDescription", "NSSpeechRecognitionUsageDescription"} {
-			if !declaresUsage(key) {
+			if !DeclaresUsage(key) {
 				// The system would end the app as it asks.
 				log.Printf("nsgo: speech needs %s in the app's Info.plist (nsgo.yaml's apple.info)", key)
 				s.finish(run, driver.SpeechNotAllowed)

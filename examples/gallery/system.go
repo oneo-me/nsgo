@@ -636,8 +636,25 @@ func servicesCard(cx *core.Scope) core.Node {
 	}
 	picked := core.NewSignalFunc(cx, []core.PickedFile(nil), func(a, b []core.PickedFile) bool { return false })
 	asked := core.NewSignal(cx, false)
+	// failed says why the last photo was not taken, "" when none failed.
+	failed := core.NewSignal(cx, "")
 	pick := func(o core.PickOptions) func() {
-		return func() { cx.PickImages(o, func(files []core.PickedFile) { asked.Set(true); picked.Set(files) }) }
+		return func() {
+			cx.PickImages(o, func(files []core.PickedFile) { asked.Set(true); failed.Set(""); picked.Set(files) })
+		}
+	}
+	takePhoto := func() {
+		cx.TakePhoto(core.PhotoOptions{MaxDimension: 2048}, func(photo *core.PickedFile, err error) {
+			asked.Set(true)
+			failed.Set("")
+			picked.Set(nil)
+			switch {
+			case err != nil:
+				failed.Set(err.Error())
+			case photo != nil:
+				picked.Set([]core.PickedFile{*photo})
+			}
+		})
 	}
 	small := func(l string, fn func()) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn}
@@ -650,12 +667,17 @@ func servicesCard(cx *core.Scope) core.Node {
 		core.Text{ContentFunc: opened.Get, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},
 		Caption{Label: "PickImages"},
-		ui.Wrap{Children: []core.Node{small(tr.SystemPickAPhoto(), pick(core.PickOptions{})), small(tr.SystemUpTo4800Px(), pick(core.PickOptions{Multiple: true, Limit: 4, MaxDimension: 800}))}},
+		ui.Wrap{Children: []core.Node{small(tr.SystemPickAPhoto(), pick(core.PickOptions{})), small(tr.SystemUpTo4800Px(), pick(core.PickOptions{Multiple: true, Limit: 4, MaxDimension: 800})),
+			ui.Button{Text: tr.SystemTakeAPhoto(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: takePhoto, TestID: "take-photo",
+				Disabled: func() bool { return !env.CanTakePhoto() }}}},
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			tr := locales.For(cx)
 			colors := ui.ColorsOf(cx)
 			files := picked.Get()
 			if len(files) == 0 {
+				if why := failed.Get(); why != "" {
+					return Note{Text: tr.SystemPhotoFailed() + why}
+				}
 				if asked.Get() {
 					return Note{Text: tr.SystemNoPhotoPicked()}
 				}

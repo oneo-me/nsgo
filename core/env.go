@@ -18,6 +18,7 @@ type Env struct {
 	keyboardDuration     *Signal[time.Duration]
 	dark, reduce, reader *Signal[bool]
 	screenColor, speech  *Signal[bool]
+	camera               *Signal[bool]
 	fontScale, ratio     *Signal[float32]
 	// locale and systemRTL are the platform's or the host's; forced is
 	// the locale Scope.SetLocale forces.
@@ -57,6 +58,7 @@ func newEnv(cx *Scope, app *Env) *Env {
 		reader:           NewSignal(cx, false),
 		screenColor:      NewSignal(cx, false),
 		speech:           NewSignal(cx, false),
+		camera:           NewSignal(cx, false),
 		fontScale:        NewSignal(cx, float32(1)),
 		ratio:            NewSignal(cx, float32(1)),
 		locale:           NewSignal(cx, ""),
@@ -139,6 +141,7 @@ func (e *Env) set(v Environment) {
 	e.reader.Set(v.ScreenReader)
 	e.screenColor.Set(v.ScreenColor)
 	e.speech.Set(v.Speech)
+	e.camera.Set(v.Camera)
 	e.fontScale.Set(v.FontScale)
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
@@ -215,6 +218,10 @@ func (e *Env) CanPickScreenColor() bool { return e.screenColor.Get() }
 // CanRecognizeSpeech reports whether Scope.StartSpeech recognizes speech
 // here: macOS and iOS.
 func (e *Env) CanRecognizeSpeech() bool { return e.speech.Get() }
+
+// CanTakePhoto reports whether Scope.TakePhoto shows a camera here: iOS
+// and Android devices with one, and browsers on touch screens.
+func (e *Env) CanTakePhoto() bool { return e.camera.Get() }
 
 // RTL reports whether the app lays out right to left: as the language it
 // shows is written (Language), else the locale it forces, else as the

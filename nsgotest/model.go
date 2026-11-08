@@ -401,6 +401,19 @@ func (a *App) apply(b *driver.MountBatch) {
 				files = a.PickImages(*it.Pick)
 			}
 			a.post(driver.Event{Kind: driver.EventPick, Count: it.Count, Data: files})
+		case driver.ItemTakePhoto:
+			a.Photos = append(a.Photos, *it.Pick)
+			ev := driver.Event{Kind: driver.EventPick, Count: it.Count}
+			if a.TakePhoto != nil {
+				photo, err := a.TakePhoto(*it.Pick)
+				switch {
+				case err != nil:
+					ev.Text = err.Error()
+				case photo != nil:
+					ev.Data = []driver.PickedFile{*photo}
+				}
+			}
+			a.post(ev)
 		case driver.ItemPickFiles:
 			a.FilePicks = append(a.FilePicks, *it.Files)
 			var files []driver.File

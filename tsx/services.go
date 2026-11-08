@@ -248,16 +248,44 @@ func (r *runtime) picker() js.Value {
 			done(func() js.Value {
 				out := make([]any, len(files))
 				for i, f := range files {
-					o := r.vm.NewObject()
-					_ = o.Set("file", r.newFile(f.Data, f.Name, f.MIME))
-					_ = o.Set("size", r.size(f.Size))
-					out[i] = o
+					out[i] = r.pickedImage(f)
 				}
 				return r.vm.NewArray(out...)
 			})
 		})
 		return r.vm.ToValue(p)
 	}))
+	_ = o.Set("canTakePhoto", r.function(func(js.FunctionCall) js.Value {
+		p, resolve, _ := r.vm.NewPromise()
+		_ = resolve(core.Untracked(r.cx, r.cx.Env().CanTakePhoto))
+		return r.vm.ToValue(p)
+	}))
+	_ = o.Set("takePhoto", r.function(func(call js.FunctionCall) js.Value {
+		op := r.options(arg(call, 0))
+		opts := core.PhotoOptions{MaxDimension: int(op.float("maxDimension", 0)), Quality: float32(op.float("quality", 0))}
+		p, resolve, reject := r.vm.NewPromise()
+		r.cx.TakePhoto(opts, func(photo *core.PickedFile, err error) {
+			r.inJS(func() {
+				switch {
+				case err != nil:
+					_ = reject(r.goError(err))
+				case photo == nil:
+					_ = resolve(js.Null())
+				default:
+					_ = resolve(r.pickedImage(*photo))
+				}
+			})
+		})
+		return r.vm.ToValue(p)
+	}))
+	return o
+}
+
+// pickedImage is f as a PickedImage: a File and its size.
+func (r *runtime) pickedImage(f core.PickedFile) *js.Object {
+	o := r.vm.NewObject()
+	_ = o.Set("file", r.newFile(f.Data, f.Name, f.MIME))
+	_ = o.Set("size", r.size(f.Size))
 	return o
 }
 

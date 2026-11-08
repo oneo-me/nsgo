@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -189,6 +190,44 @@ func TestPickImages(t *testing.T) {
 	cx.PickImages(PickOptions{Multiple: true}, nil)
 	if r := command(h.commit(), driver.ItemPickImages).Pick; r.Limit != MaxPicked {
 		t.Fatalf("a pick without a limit asks for %d", r.Limit)
+	}
+}
+
+func TestTakePhoto(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	var got *PickedFile
+	var gotErr error
+	answered := 0
+	take := func(p *PickedFile, err error) { got, gotErr = p, err; answered++ }
+	cx.TakePhoto(PhotoOptions{}, take)
+	if answered != 1 || !errors.Is(gotErr, ErrNoCamera) || command(h.commit(), driver.ItemTakePhoto) != nil {
+		t.Fatalf("without a camera: %+v, %v", got, gotErr)
+	}
+	h.tree.SetEnvironment(Environment{Camera: true})
+	h.commit()
+	cx.TakePhoto(PhotoOptions{MaxDimension: 2048, Quality: 3}, take)
+	it := command(h.commit(), driver.ItemTakePhoto)
+	if it == nil || *it.Pick != (driver.PickRequest{Limit: 1, MaxDimension: 2048, Quality: 1}) {
+		t.Fatalf("photo = %+v", it)
+	}
+	jpeg := []byte{0xFF, 0xD8, 0xFF, 0xE0}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventPick, Count: it.Count, Data: []driver.PickedFile{{Name: "IMG_7", Data: jpeg}}})
+	if answered != 2 || gotErr != nil || got == nil || got.Name != "IMG_7.jpg" || got.MIME != "image/jpeg" {
+		t.Fatalf("photo taken = %+v, %v", got, gotErr)
+	}
+	cx.TakePhoto(PhotoOptions{}, take)
+	it = command(h.commit(), driver.ItemTakePhoto)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventPick, Count: it.Count})
+	if answered != 3 || got != nil || gotErr != nil {
+		t.Fatalf("a cancel answers %+v, %v", got, gotErr)
+	}
+	cx.TakePhoto(PhotoOptions{}, take)
+	it = command(h.commit(), driver.ItemTakePhoto)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventPick, Count: it.Count, Text: "camera access denied"})
+	if answered != 4 || got != nil || gotErr == nil || gotErr.Error() != "camera access denied" {
+		t.Fatalf("a failure answers %+v, %v", got, gotErr)
 	}
 }
 

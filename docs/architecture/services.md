@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
 ## Requests and answers
 
@@ -8,7 +8,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile` and `CanInstallPackages`, and it records the shares, the packages installed, the install settings opened, the appearance, quits and the context menu shown. A speech session it runs hears what `HearSpeech` says and ends with `EndSpeech`.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `TakePhoto` (recording `Photos`), `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile` and `CanInstallPackages`, and it records the shares, the packages installed, the install settings opened, the appearance, quits and the context menu shown. A speech session it runs hears what `HearSpeech` says and ends with `EndSpeech`.
 
 ## Clipboard
 
@@ -61,6 +61,18 @@ Windows checks the registry first because the shell asks the user for an app for
 | Web | `<input type=file>`, which needs the press's user activation | `internal/platform/picked` |
 
 `picked` decodes in Go, which reads no HEIC, so those pickers offer only the formats it reads unless `PickCurrent`. It turns JPEGs upright by their EXIF orientation and scales with Catmull-Rom.
+
+## Taking a photo
+
+`TakePhoto` shows the system's camera for one photo, which NSH has not: a `PickRequest` of one whose JPEG is always encoded again, upright and at the quality asked for (0.9 by default), scaled to `MaxDimension`, and answered by `EventPick` as a pick is. `done` gets nil for a cancel and an error for a failure, such as a refused permission. `Env.CanTakePhoto` says the platform shows a camera; elsewhere `TakePhoto` fails with `ErrNoCamera` without asking it.
+
+| Target | Camera | Permission |
+| --- | --- | --- |
+| iOS | `UIImagePickerController`, where `isSourceTypeAvailable` says the device has a camera, which the simulator has not | `AVCaptureDevice`'s, asked once; the Info.plist declares `NSCameraUsageDescription` (`nsgo.yaml`'s `apple.info`), without which a photo fails, since the system would end the app as it asks |
+| Android | `ACTION_IMAGE_CAPTURE`, where the device has `FEATURE_CAMERA_ANY`; the camera app writes into a file of the cache's `nsgo-camera`, the only files `FileProvider` opens for writing, which Java prepares and deletes | None, unless the manifest asks for `CAMERA`, which the camera app then needs granted: Java asks for it first (`permissionResult`) |
+| Web | `<input type=file capture=environment>` on touch screens (`pointer: coarse`), which mobile browsers open as the camera; prepared by `internal/platform/picked` | The browser's |
+
+The desktops show no camera ([roadmap](../roadmap.md#finish-the-existing-platforms)).
 
 ## Files
 
@@ -199,6 +211,7 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 | `openUrl` throws for a refused URL | `OpenURL` answers false; `CheckURL` says why | A callback has no exception to throw |
 | No images written on Android | `FileProvider` serves them | The clipboard holds images only as content URIs |
 | Picked images become `File`s whose bytes stay native | `PickedFile` holds the bytes | Go apps hold bytes directly |
+| No camera | `TakePhoto` through the system's camera UI | Apps take a photo without a camera view of their own |
 
 ## Verification
 

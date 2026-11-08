@@ -14,3 +14,4 @@ apple:
   info:
     NSMicrophoneUsageDescription: The System page dictates what you say.
     NSSpeechRecognitionUsageDescription: The System page turns what you say into text.
+    NSCameraUsageDescription: The System page takes a photo with the camera.

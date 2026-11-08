@@ -127,6 +127,7 @@ final class Protocol {
     static final int ITEM_INSTALL_PACKAGE = 65;
     static final int ITEM_CAN_INSTALL_PACKAGES = 66;
     static final int ITEM_INSTALL_SETTINGS = 67;
+    static final int ITEM_TAKE_PHOTO = 78;
 
     // View kinds, as in core/mount.go.
     static final int KIND_VIEW = 1;

@@ -125,6 +125,8 @@ func (s *surface) environment() driver.Environment {
 	}
 	env := driver.Environment{
 		ScreenColor: js.Global().Get("EyeDropper").Truthy(),
+		// Browsers on touch screens open the camera for an input's capture.
+		Camera: g.Call("matchMedia", "(pointer: coarse)").Get("matches").Bool(),
 		SafeArea: driver.Edges{
 			Top: length("paddingTop"), Right: length("paddingRight"),
 			Bottom: length("paddingBottom"), Left: length("paddingLeft"),

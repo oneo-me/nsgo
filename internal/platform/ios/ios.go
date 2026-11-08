@@ -533,6 +533,7 @@ func (s *surface) environment() driver.Environment {
 		OSVersion:        osVersion(),
 		Idiom:            idiom,
 		Speech:           apple.SpeechAvailable(),
+		Camera:           cameraAvailable(),
 		Lifecycle:        appLifecycle(),
 	}
 	env.HeaderHeight, env.LargeHeaderHeight = s.headers[0], s.headers[1]
@@ -825,6 +826,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)
+			continue
+		case driver.ItemTakePhoto:
+			s.takePhoto(*it.Pick, it.Count)
 			continue
 		case driver.ItemPickFiles:
 			s.pickFiles(*it.Files, it.Count)

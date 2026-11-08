@@ -576,7 +576,7 @@ public class NsgoView extends FrameLayout {
             boolean background = getWindowVisibility() != View.VISIBLE;
             boolean inactive = !background && !hasWindowFocus();
             d.writeByte((dark ? 1 : 0) | (reduceMotion ? 2 : 0) | (reader ? 4 : 0) | (rtl ? 8 : 0)
-                    | (inactive ? 16 : 0) | (background ? 32 : 0));
+                    | (inactive ? 16 : 0) | (background ? 32 : 0) | (Services.hasCamera(getContext()) ? 64 : 0));
             int idiom = config.smallestScreenWidthDp >= 600 ? Protocol.IDIOM_TABLET : Protocol.IDIOM_PHONE;
             if ((config.uiMode & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION) {
                 idiom = Protocol.IDIOM_TV;
@@ -612,6 +612,10 @@ public class NsgoView extends FrameLayout {
     /** The file pick or save the documents UI answers. */
     private Services.Documents documents;
 
+    /** The photo the camera app takes, or that waits for the camera permission, and the file it writes. */
+    private Services.Pick photo;
+    private java.io.File photoFile;
+
     /** Dark as shown: the app's forced appearance, else the host's, else the system's. */
     private boolean dark() {
         if (appearance != 0) return appearance == Protocol.APPEARANCE_DARK;
@@ -639,8 +643,15 @@ public class NsgoView extends FrameLayout {
         }
     }
 
-    /** Hears the activity's results: the photo picker's images, and the documents UI's files, folders and saves. */
+    /**
+     * Hears the activity's results: the photo picker's images, the camera
+     * app's photo, and the documents UI's files, folders and saves.
+     */
     public void activityResult(int request, int result, android.content.Intent data) {
+        if (request == Services.PHOTO_REQUEST) {
+            photoResult(result);
+            return;
+        }
         if (request == Services.FILES_REQUEST || request == Services.SAVE_REQUEST || request == Services.FOLDER_REQUEST) {
             documentsResult(request, result, data);
             return;
@@ -656,7 +667,87 @@ public class NsgoView extends FrameLayout {
     }
 
     private void answerPick(Services.Pick p, String files) {
-        event(Protocol.EVENT_PICK, 0, p.count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, files, false);
+        answerPick(p, files, "");
+    }
+
+    private void answerPick(Services.Pick p, String files, String error) {
+        event(Protocol.EVENT_PICK, 0, p.count, 0, 0, error, 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, files, false);
+    }
+
+    /**
+     * Takes photo p: asks for the camera first where the app's manifest
+     * asks for CAMERA, then starts the camera app, answering the photo it
+     * replaces.
+     */
+    private void takePhoto(Services.Pick p) {
+        if (photo != null) answerPick(photo, "");
+        photo = null;
+        Activity activity = activity();
+        if (activity == null) {
+            answerPick(p, "", "no activity shows the camera");
+            return;
+        }
+        photo = p;
+        if (Services.needsCameraPermission(activity)) {
+            activity.requestPermissions(new String[] {Services.CAMERA_PERMISSION}, Services.CAMERA_PERMISSION_REQUEST);
+            return;
+        }
+        startPhoto(activity);
+    }
+
+    private void startPhoto(Activity activity) {
+        try {
+            photoFile = Services.startPhoto(activity);
+        } catch (java.io.IOException e) {
+            Services.Pick p = photo;
+            photo = null;
+            answerPick(p, "", String.valueOf(e.getMessage()));
+        }
+    }
+
+    /**
+     * Hears the activity's permission prompts: the camera's, which a
+     * photo waits for. A host's activity passes its own here.
+     */
+    public void permissionResult(int request, String[] permissions, int[] results) {
+        if (request != Services.CAMERA_PERMISSION_REQUEST || photo == null) return;
+        Activity activity = activity();
+        boolean granted = results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        if (granted && activity != null) {
+            startPhoto(activity);
+            return;
+        }
+        Services.Pick p = photo;
+        photo = null;
+        answerPick(p, "", "camera access denied");
+    }
+
+    /** Prepares the photo the camera app wrote off the UI thread, then deletes its file. */
+    private void photoResult(int result) {
+        Services.Pick p = photo;
+        java.io.File f = photoFile;
+        photo = null;
+        photoFile = null;
+        if (p == null || f == null) return;
+        if (result != Activity.RESULT_OK || f.length() == 0) {
+            f.delete();
+            answerPick(p, "");
+            return;
+        }
+        Context context = getContext().getApplicationContext();
+        new Thread(() -> {
+            String files = "";
+            try {
+                java.util.List<android.net.Uri> uris = new java.util.ArrayList<>();
+                uris.add(Services.photoURI(context, f));
+                files = Services.prepare(context, uris, p);
+            } catch (java.io.IOException e) {
+                // Answered with nothing, as a photo that cannot be read.
+            } finally {
+                f.delete();
+            }
+            answerPick(p, files);
+        }, "nsgo-photo").start();
     }
 
     /**
@@ -1933,6 +2024,16 @@ public class NsgoView extends FrameLayout {
                 Activity activity = activity();
                 if (activity != null && Services.startPick(activity, p)) pick = p;
                 else answerPick(p, "");
+                break;
+            }
+            case Protocol.ITEM_TAKE_PHOTO: {
+                // As a pick of one, always encoded again so the photo comes
+                // upright at the quality asked for.
+                long count = in.readInt() & 0xffffffffL;
+                int limit = in.readInt(), maxDimension = in.readInt();
+                float quality = in.readFloat();
+                in.readUnsignedByte();
+                takePhoto(new Services.Pick(count, limit, maxDimension, quality > 0 ? quality : 0.9f, false));
                 break;
             }
             case Protocol.ITEM_PICK_FILES: {

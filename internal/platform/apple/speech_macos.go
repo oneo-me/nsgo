@@ -14,11 +14,11 @@ import (
 // holdSpeechSession does nothing on macOS, whose input needs no session.
 func holdSpeechSession() (leave func(), err error) { return func() {}, nil }
 
-// declaresUsage reports whether the app macOS asks on behalf of declares
+// DeclaresUsage reports whether the app macOS asks on behalf of declares
 // key in its Info.plist: the responsible process, which an app started
 // from another app is not, and which the system ends this one for when it
 // declares none. Where the system cannot name that process, it says yes.
-func declaresUsage(key string) bool {
+func DeclaresUsage(key string) bool {
 	responsible, err := purego.Dlsym(purego.RTLD_DEFAULT, "responsibility_get_pid_responsible_for_pid")
 	if err != nil {
 		return true

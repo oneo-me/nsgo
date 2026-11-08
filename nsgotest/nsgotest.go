@@ -158,6 +158,11 @@ type App struct {
 	// the user cancels.
 	Picks      []driver.PickRequest
 	PickImages func(r driver.PickRequest) []driver.PickedFile
+	// Photos are the photos the app asked to take, oldest first, where
+	// the environment says Camera. TakePhoto answers each with the photo
+	// the user takes, or with why it failed; with none the user cancels.
+	Photos    []driver.PickRequest
+	TakePhoto func(r driver.PickRequest) (*driver.PickedFile, error)
 	// PickScreenColor answers Scope.PickScreenColor with the color the user
 	// samples; without it, or with false, the user cancels.
 	PickScreenColor func() (driver.Color, bool)

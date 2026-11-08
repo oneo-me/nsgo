@@ -288,6 +288,11 @@ const (
 	// ItemSpeech starts, stops or aborts speech session Count (Speech);
 	// the platform reports it with EventSpeech carrying Count.
 	ItemSpeech
+	// ItemTakePhoto shows the system's camera to take one photo, prepared
+	// as Pick says; the platform answers with EventPick carrying Count,
+	// Text saying what failed. Sent only where the environment says
+	// Camera.
+	ItemTakePhoto
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -348,7 +353,7 @@ type MountItem struct {
 	Sticky    []StickyCell
 	StatusBar *StatusBarConfig
 	Screen    *ScreenConfig
-	// Pick is ItemPickImages' request.
+	// Pick is ItemPickImages' and ItemTakePhoto's request.
 	Pick *PickRequest
 	// Speech is an ItemSpeech's request.
 	Speech *SpeechRequest

@@ -173,10 +173,24 @@ func (s *surface) openURL(u string, id uint32) {
 
 // pickImages shows the browser's file chooser for images and prepares
 // the ones chosen as r asks; a cancelled chooser answers with none.
-func (s *surface) pickImages(r driver.PickRequest, id uint32) {
+func (s *surface) pickImages(r driver.PickRequest, id uint32) { s.chooseImages(r, id, false) }
+
+// takePhoto shows the file chooser of an input that asks for the rear
+// camera, which mobile browsers open, and prepares the photo always
+// encoded again, upright; others offer files.
+func (s *surface) takePhoto(r driver.PickRequest, id uint32) {
+	r.Quality = r.JPEGQuality()
+	s.chooseImages(r, id, true)
+}
+
+// chooseImages shows the file chooser for images, or the camera.
+func (s *surface) chooseImages(r driver.PickRequest, id uint32, camera bool) {
 	input := s.doc.Call("createElement", "input")
 	input.Set("type", "file")
-	if r.Format == driver.PickCompatible {
+	if camera {
+		input.Set("accept", "image/*")
+		input.Call("setAttribute", "capture", "environment")
+	} else if r.Format == driver.PickCompatible {
 		input.Set("accept", "image/jpeg,image/png,image/gif,image/webp")
 	} else {
 		input.Set("accept", "image/*")

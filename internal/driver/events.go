@@ -168,8 +168,9 @@ const (
 	// EventOpenURL answers ItemOpenURL Count with whether the URL opened
 	// (Finished).
 	EventOpenURL
-	// EventPick answers ItemPickImages Count with the files picked (Data,
-	// a []PickedFile), none when the user cancelled.
+	// EventPick answers ItemPickImages or ItemTakePhoto Count with the
+	// files picked or the photo taken (Data, a []PickedFile), none when the
+	// user cancelled; a photo that failed says why in Text.
 	EventPick
 	// EventMenuClosed answers ItemPopupMenu Count once its menu closed,
 	// after the EventMenu of an item chosen.

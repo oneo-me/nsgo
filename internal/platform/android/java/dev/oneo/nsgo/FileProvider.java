@@ -16,7 +16,8 @@ import java.util.List;
 /**
  * Serves the app's files to the apps it hands them to: the image it put
  * on the clipboard, a file it opens in another app and the files it
- * shares. The manifest declares it unexported with grantUriPermissions,
+ * shares; and lets the camera app write the photo it takes into the
+ * file of the cache's nsgo-camera made for it. The manifest declares it unexported with grantUriPermissions,
  * so only an app granted a URI reads its file, and names its authority
  * after the app's package.
  *
@@ -79,7 +80,23 @@ public final class FileProvider extends ContentProvider {
 
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
-        return ParcelFileDescriptor.open(file(uri), ParcelFileDescriptor.MODE_READ_ONLY);
+        File f = file(uri);
+        if (mode.contains("w")) {
+            if (!photo(f)) throw new FileNotFoundException(uri + " is not writable");
+            return ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_WRITE_ONLY
+                    | ParcelFileDescriptor.MODE_TRUNCATE);
+        }
+        return ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+    }
+
+    /** Whether f is a file Services.startPhoto made for the camera to write. */
+    private boolean photo(File f) {
+        try {
+            String dir = new File(getContext().getCacheDir(), Services.CAMERA_DIR).getCanonicalPath() + File.separator;
+            return f.getCanonicalPath().startsWith(dir);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @Override
