@@ -84,7 +84,11 @@ func registerInput() {
 			apple.Super(self, cmd, note)
 			inputOf(self).changed()
 		}},
-		{Cmd: sel("controlTextDidEndEditing:"), Fn: func(self objc.ID, _ objc.SEL, _ objc.ID) { inputOf(self).focusChanged(false) }},
+		{Cmd: sel("controlTextDidEndEditing:"), Fn: func(self objc.ID, _ objc.SEL, _ objc.ID) {
+			if in := inputOf(self); in != nil && !in.stillEditing() {
+				in.focusChanged(false)
+			}
+		}},
 		{Cmd: sel("becomeFirstResponder"), Fn: fieldFocused},
 		{Cmd: selControlCommand, Fn: func(self objc.ID, _ objc.SEL, _, tv objc.ID, cmd objc.SEL) bool {
 			return inputOf(self).command(tv, cmd)
@@ -300,6 +304,15 @@ func (in *input) editor() objc.ID {
 		return in.field
 	}
 	return in.field.Send(selCurrentEditor)
+}
+
+// stillEditing reports whether a field's editor still has the keyboard
+// focus. AppKit tells a field reopened in a dialog that its editing ended
+// as it lays the field out, while it goes on editing: no blur.
+func (in *input) stillEditing() bool {
+	e := in.editor()
+	w := in.field.Send(selWindow)
+	return e != 0 && w != 0 && w.Send(sel("firstResponder")) == e
 }
 
 func (in *input) text() string {

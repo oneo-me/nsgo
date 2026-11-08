@@ -1546,6 +1546,17 @@ func TestSearchGoesToADemo(t *testing.T) {
 	if got := app.Find("id:search-dialog >> role:textbox").Text; got != "" {
 		t.Fatalf("the search kept %q", got)
 	}
+	first := app.Find("id:search-dialog >> role:option Stocks").Style.Background
+	app.Key("down")
+	app.Settle()
+	if app.Find("id:search-dialog >> role:option AI Chat").Style.Background != first {
+		t.Fatal("Down did not move the highlight")
+	}
+	app.Key("up")
+	app.Settle()
+	if app.Find("id:search-dialog >> role:option Stocks").Style.Background != first {
+		t.Fatal("Up did not move the highlight back")
+	}
 	app.Key("escape")
 	app.FastForward(time.Second)
 	if app.Exists("id:search-dialog") {
