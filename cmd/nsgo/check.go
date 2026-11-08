@@ -13,7 +13,8 @@ import (
 )
 
 // nsgo check: the catalogs and their code, go vet, then TypeScript's checker on the app's TSX against
-// the declarations its packages give (.nsgo/types).
+// the declarations its packages give (.nsgo/types). A directory without nsgo.yaml has no app's TSX
+// to check.
 
 // tsgo is TypeScript 7's compiler, built from its Go sources and cached
 // by Go, so checking needs only Go.
@@ -32,6 +33,9 @@ func check(ctx context.Context, p *project) error {
 		return err
 	}
 	s.done("vetted", "")
+	if p.bare {
+		return nil
+	}
 	if err := writeTypes(ctx, p); err != nil {
 		return err
 	}

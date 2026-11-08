@@ -154,7 +154,7 @@ go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 
 `-embed` 则把应用打包给你自己的 iOS 或 Android 应用：一个 XCFramework（加 `-dynamic` 则由动态框架组成）或 AAR，由其中的 `NSGoView` 或 `NsgoView` 显示。Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用网站中的 `nsgo.js`。宿主由网页提供，或是 `nsgo.yaml` 的 `web.host` 指定的模块。参见 `examples/embed-*`。
 
-`go tool nsgo test` 运行应用的测试（包括 `*.test.tsx`），每个测试输出一行；`-run` 筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`；加上 `-fps` 时，会在 `macos`、`windows`、`linux` 和 `ios_simulator` 上每秒记录一次性能监视器的读数。传入 TSX 入口时，`go tool nsgo test App.tsx < steps.ts` 会打开应用并执行标准输入中的步骤，写法与 `*.test.tsx` 测试的函数体相同，`app` 即该应用。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
+`go tool nsgo test` 运行应用的测试（包括 `*.test.tsx`），每个测试输出一行；`-run` 筛选测试，`-bench` 改为运行基准测试并为每个结果输出一行，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时。传入没有 `nsgo.yaml` 的目录（例如库或模块根目录）时，`test` 和 `check` 会处理其下的所有包；目录也可以像 Go 的包模式那样以 `/...` 结尾；`--` 之后的参数交给 `go test`。`-target` 让测试在 `macos`、`windows`、`linux`、`web`（Chrome、Chromium 或 Edge 中）、`ios_simulator` 或 `android` 上运行，每个测试一个进程，截图保存在 `.nsgo/test/screenshots`；加上 `-fps` 时，会在 `macos`、`windows`、`linux` 和 `ios_simulator` 上每秒记录一次性能监视器的读数。传入 TSX 入口时，`go tool nsgo test App.tsx < steps.ts` 会打开应用并执行标准输入中的步骤，写法与 `*.test.tsx` 测试的函数体相同，`app` 即该应用。`build.targets` 和 `-target` 都接受 `all`，表示仅需 Go 和 Xcode 的所有平台；安装 NDK 后可再加上 `android_x64`。
 
 参数会覆盖它们对应的 `nsgo.yaml` 值，例如 `-target`、`-version` 或 `-output`；dev 和 build 都接受 `-device` 选择 iPhone、模拟器或 Android 设备，build 的 `-team` 为 iPhone 的包签名，dev 的 `-port` 指定其服务器端口。`-h` 会列出全部参数。
 
@@ -179,7 +179,9 @@ go tool nsgo dev -target ios examples/gallery       # 在已连接的 iPhone 上
 go tool nsgo dev -target android examples/gallery   # 在已连接的设备或模拟器上运行，通过 adb
 go tool nsgo build examples/gallery                 # 在 examples/gallery/dist 中生成发布包
 go tool nsgo build -target all examples/gallery     # 生成所有平台的发布包
-go test ./...
+go tool nsgo check                                 # 检查所有包
+go tool nsgo test                                  # 运行所有包的测试
+go tool nsgo test -bench . ./core                  # core 的基准测试
 bench/run.sh                                       # 测量行情表基准（见 bench/README.md）
 ```
 

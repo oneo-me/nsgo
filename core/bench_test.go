@@ -11,7 +11,7 @@ import (
 // The commit's benchmarks, NSH's bench_view_tick, bench_high_frequency
 // and list scrolling, on the approximate text engine:
 //
-//	go test ./core -run '^$' -bench . -benchmem
+//	go tool nsgo test -bench . ./core -- -benchmem
 
 // benchTree mounts app in a size surface and commits it once, without
 // the tests' check of every commit.

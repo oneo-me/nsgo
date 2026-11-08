@@ -20,6 +20,7 @@ import (
 // testOptions are nsgo test's flags.
 type testOptions struct {
 	run    string // the tests to run, as go test's -run
+	bench  string // the benchmarks to run, as go test's -bench
 	junit  string // where to write a JUnit report
 	trace  bool   // print each step's batches and commit times
 	target string // the platform to run on; headless when ""
@@ -43,6 +44,7 @@ type testResult struct {
 	Status        string // pass, fail or skip
 	Elapsed       time.Duration
 	Output        string
+	reported      int // how much of a benchmark's Output it reported
 }
 
 // testRun gathers what go test -json reports.
@@ -65,6 +67,9 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 	if opts.fps && !slices.Contains([]string{"macos", "windows", "linux", "ios_simulator"}, opts.target) {
 		return errors.New("test: -fps goes with -target macos, windows, linux or ios_simulator, whose monitors it reads")
 	}
+	if opts.bench != "" && (opts.target != "" || p.steps != nil) {
+		return errors.New("test: -bench runs headless, on the package's tests")
+	}
 	if opts.target != "" {
 		return runTargetTests(ctx, p, opts)
 	}
@@ -72,6 +77,13 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 		opts.run = "^" + stepsTest + "$"
 	}
 	args := []string{"test", "-json"}
+	if opts.bench != "" {
+		// Benchmarks alone, unless -run names tests to run with them.
+		args = append(args, "-bench", opts.bench)
+		if opts.run == "" {
+			opts.run = "^$"
+		}
+	}
 	if opts.run != "" {
 		args = append(args, "-run", opts.run)
 	}
@@ -104,9 +116,11 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 }
 
 // loadForTest reads the app's nsgo.yaml; a directory without one still
-// has tests to run headless. Given an app's TSX entry, it reads its
+// has tests to run headless. dir may end in /..., as go's patterns do,
+// which names the same tree. Given an app's TSX entry, it reads its
 // directory's, and the steps standard input holds, none from a terminal.
 func loadForTest(dir string, stdin *os.File) (*project, error) {
+	dir = treeOf(dir)
 	if ext := filepath.Ext(dir); (ext == ".tsx" || ext == ".ts") && !strings.HasSuffix(dir, ".test"+ext) {
 		if fi, err := os.Stat(dir); err != nil || fi.IsDir() {
 			return nil, fmt.Errorf("test: no entry %s", dir)
@@ -126,18 +140,21 @@ func loadForTest(dir string, stdin *os.File) (*project, error) {
 		p.steps = s
 		return p, nil
 	}
-	p, err := load(dir)
-	if errors.Is(err, os.ErrNotExist) {
-		if dir == "" {
-			dir = "."
-		}
-		abs, absErr := filepath.Abs(dir)
-		if absErr != nil {
-			return nil, absErr
-		}
-		return &project{Dir: abs, Name: filepath.Base(abs)}, nil
+	return loadOrDir(dir)
+}
+
+// treeOf is the directory a go pattern ending in /... names, or dir.
+func treeOf(dir string) string {
+	if dir == "..." {
+		return "."
 	}
-	return p, err
+	if t, ok := strings.CutSuffix(filepath.ToSlash(dir), "/..."); ok {
+		if t == "" {
+			return "/"
+		}
+		return filepath.FromSlash(t)
+	}
+	return dir
 }
 
 // hasPackage reports whether go test's arguments name packages.
@@ -206,6 +223,9 @@ func (r *testRun) event(ev testEvent) {
 	switch ev.Action {
 	case "output":
 		t.Output += ev.Output
+		if strings.HasPrefix(ev.Test, "Benchmark") {
+			r.benchmark(t)
+		}
 		if r.trace && !strings.HasPrefix(ev.Output, "=== ") && !strings.HasPrefix(ev.Output, "--- ") {
 			fmt.Fprint(r.out, ev.Output)
 		}
@@ -214,6 +234,24 @@ func (r *testRun) event(ev testEvent) {
 		delete(r.running, key)
 		r.results = append(r.results, t)
 		r.print(t)
+	}
+}
+
+// benchmark reports each result line a benchmark has printed whole as a
+// passed test, since go test -json ends benchmarks with no event.
+func (r *testRun) benchmark(t *testResult) {
+	for {
+		line, _, ok := strings.Cut(t.Output[t.reported:], "\n")
+		if !ok {
+			return
+		}
+		t.reported += len(line) + 1
+		if !strings.Contains(line, " ns/op") {
+			continue
+		}
+		res := &testResult{Package: t.Package, Name: t.Name, Status: "pass", Output: line}
+		r.results = append(r.results, res)
+		fmt.Fprintf(r.out, "%s✓ %s\n", margin, strings.Join(strings.Fields(line), " "))
 	}
 }
 
@@ -236,7 +274,9 @@ func (r *testRun) print(t *testResult) {
 func (r *testRun) finish(opts testOptions, waitErr error) error {
 	var passed, failed, skipped int
 	for _, t := range r.results {
-		if strings.Contains(t.Name, "/") {
+		// Subtests count with their test; a benchmark's every result
+		// counts, its subbenchmarks' too.
+		if strings.Contains(t.Name, "/") && !strings.HasPrefix(t.Name, "Benchmark") {
 			continue
 		}
 		switch t.Status {

@@ -5,15 +5,18 @@
 //	nsgo dev   [-target T] [-hot-reload=false] [-trace] [flags] [dir]
 //	                                                      run the app and rebuild it on changes
 //	nsgo build [-target all|T,...] [flags] [dir]         build packages for nsgo.yaml's targets or all platforms
-//	nsgo test  [-run R] [-junit F] [-trace] [-target T [-fps]] [dir | entry] [-- go test flags]
-//	                                                      run the app's tests, or an entry with the steps
-//	                                                      of standard input, headless or on a platform
+//	nsgo test  [-run R] [-bench R] [-junit F] [-trace] [-target T [-fps]] [dir | entry] [-- go test flags]
+//	                                                      run the app's tests or benchmarks, or an entry
+//	                                                      with the steps of standard input, headless or
+//	                                                      on a platform
 //	nsgo check [dir]                                     vet the app and type-check its TSX
 //	nsgo i18n  [-source L] [dir]                         check catalogs and write their Go code
 //
 // dir is the app's directory, holding nsgo.yaml and its main package; it
-// defaults to the current directory. Flags replace the nsgo.yaml values
-// they name; -h lists them.
+// defaults to the current directory, and may end in /..., as go's
+// patterns do. test and check also take a directory without nsgo.yaml,
+// such as a library or a module's root, and run on every package under
+// it. Flags replace the nsgo.yaml values they name; -h lists them.
 package main
 
 import (
@@ -68,6 +71,7 @@ func main() {
 		fs := flag.NewFlagSet("test", flag.ExitOnError)
 		var o testOptions
 		fs.StringVar(&o.run, "run", "", "run only the tests matching this `regexp`, as go test's -run")
+		fs.StringVar(&o.bench, "bench", "", "run the benchmarks matching this `regexp`, as go test's -bench, and no tests unless -run names them")
 		fs.StringVar(&o.junit, "junit", "", "write a JUnit XML report to `file`")
 		fs.BoolVar(&o.trace, "trace", false, "print each step's mount items and commit times")
 		fs.StringVar(&o.target, "target", "", "run on a `platform`: macos, windows, linux, web, ios_simulator or android (default: headless)")
@@ -91,7 +95,7 @@ func main() {
 		fs := flag.NewFlagSet("check", flag.ExitOnError)
 		fs.Parse(args)
 		var p *project
-		if p, err = load(fs.Arg(0)); err == nil {
+		if p, err = loadOrDir(treeOf(fs.Arg(0))); err == nil {
 			err = check(ctx, p)
 		}
 	case "i18n":
@@ -124,7 +128,7 @@ func usage() {
   nsgo init  [-template go|tsx|mixed] [-name N] [-module M] [dir]
   nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload=false] [-release] [-trace] [-lang L] [-device D] [-port N] [-open=false] [dir]
   nsgo build [-target all|macos_arm64,windows_x64,linux_x64,ios,web,...] [-output DIR] [-open] [-run [-device D]] [dir]
-  nsgo test  [-run REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android [-fps]] [dir | App.tsx < steps] [-- go test flags]
+  nsgo test  [-run REGEXP] [-bench REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android [-fps]] [dir | App.tsx < steps] [-- go test flags]
   nsgo check [dir]
   nsgo i18n  [-source L] [dir]
 

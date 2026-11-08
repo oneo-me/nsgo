@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,6 +29,10 @@ type project struct {
 	// testBinary builds the package's tests with the nsgotest tag in
 	// place of the app, for nsgo test -target.
 	testBinary bool
+	// bare records that the directory has no nsgo.yaml: a library, or a
+	// module's root, that nsgo test and nsgo check take as a tree of
+	// packages.
+	bare bool
 	// steps, when set, are what nsgo test <entry> runs in place of the
 	// package's tests: the steps of standard input on the app at entry.
 	steps *steps
@@ -147,6 +152,26 @@ func (p *project) openOutput() bool {
 // when the app does.
 func (p *project) hotReload() bool {
 	return p.Dev.HotReload == nil || *p.Dev.HotReload
+}
+
+// loadOrDir is load, or for a directory without nsgo.yaml a bare project
+// named after it.
+func loadOrDir(dir string) (*project, error) {
+	p, err := load(dir)
+	if !errors.Is(err, os.ErrNotExist) {
+		return p, err
+	}
+	if dir == "" {
+		dir = "."
+	}
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, err
+	}
+	if fi, err := os.Stat(abs); err != nil || !fi.IsDir() {
+		return nil, fmt.Errorf("no directory %s", dir)
+	}
+	return &project{Dir: abs, Name: filepath.Base(abs), bare: true}, nil
 }
 
 func load(dir string) (*project, error) {

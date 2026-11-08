@@ -236,7 +236,7 @@ func (p *project) tsxTestFile() (string, error) {
 		}
 		name := d.Name()
 		if d.IsDir() {
-			if path != p.Dir && (strings.HasPrefix(name, ".") || name == "node_modules" || name == p.Build.Output) {
+			if path != p.Dir && (strings.HasPrefix(name, ".") || name == "node_modules" || name == "testdata" || name == p.Build.Output || ownsTree(path)) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -323,4 +323,15 @@ func packageName(dir string) (string, error) {
 		return f.Name.Name, nil
 	}
 	return "", fmt.Errorf("%s has no Go package", dir)
+}
+
+// ownsTree reports whether dir is an app or a module of its own, whose
+// TSX tests are not its parent's.
+func ownsTree(dir string) bool {
+	for _, name := range []string{"nsgo.yaml", "go.mod"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
+			return true
+		}
+	}
+	return false
 }

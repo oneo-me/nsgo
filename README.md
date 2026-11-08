@@ -154,7 +154,7 @@ go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 
 `-embed` packages the app for an iOS or Android app of your own instead: an XCFramework (of dynamic frameworks with `-dynamic`) or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`. The host is the page's, or the module `nsgo.yaml`'s `web.host` names. See `examples/embed-*`.
 
-`go tool nsgo test` runs the app's tests, its `*.test.tsx` among them, with a line per test; `-run` filters them, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`, and with `-fps` logs the performance monitor's readings each second on `macos`, `windows`, `linux` and `ios_simulator`. Given a TSX entry, `go tool nsgo test App.tsx < steps.ts` opens the app and runs the steps standard input holds, as a `*.test.tsx` test's body with `app` the app. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
+`go tool nsgo test` runs the app's tests, its `*.test.tsx` among them, with a line per test; `-run` filters them, `-bench` runs benchmarks instead, a line per result, `-junit report.xml` writes a JUnit report and `-trace` prints each step's mount items and commit times. Given a directory without `nsgo.yaml`, such as a library or the module's root, `test` and `check` take every package under it, and a directory may end in `/...` as Go's patterns do; flags after `--` go to `go test`. `-target` runs them on `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` or `android`, a process per test, saving screenshots in `.nsgo/test/screenshots`, and with `-fps` logs the performance monitor's readings each second on `macos`, `windows`, `linux` and `ios_simulator`. Given a TSX entry, `go tool nsgo test App.tsx < steps.ts` opens the app and runs the steps standard input holds, as a `*.test.tsx` test's body with `app` the app. `build.targets` and `-target` accept `all` for every platform that needs only Go and Xcode; add `android_x64` when an NDK is installed.
 
 Flags replace the `nsgo.yaml` values they name, such as `-target`, `-version` or `-output`; `dev` and `build` take `-device` for an iPhone, simulator or Android device, `build` `-team` to sign the iPhone's package, and `dev` `-port` for its server. `-h` lists every flag.
 
@@ -179,7 +179,9 @@ go tool nsgo dev -target ios examples/gallery       # on the connected iPhone, s
 go tool nsgo dev -target android examples/gallery   # on the connected device or emulator, over adb
 go tool nsgo build examples/gallery                 # release packages in examples/gallery/dist
 go tool nsgo build -target all examples/gallery     # every platform's release packages
-go test ./...
+go tool nsgo check                                 # vet every package
+go tool nsgo test                                  # every package's tests
+go tool nsgo test -bench . ./core                  # core's benchmarks
 bench/run.sh                                       # measure the quotes benchmark (bench/README.md)
 ```
 

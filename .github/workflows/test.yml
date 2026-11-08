@@ -27,12 +27,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev xvfb
       - name: Vet
-        run: go vet ./...
+        run: go tool nsgo check
       - name: Test
         env:
           GDK_BACKEND: x11
           GSK_RENDERER: cairo
-        run: xvfb-run -a go test ./...
+        run: xvfb-run -a go tool nsgo test
 
   apple:
     runs-on: macos-latest
@@ -45,6 +45,6 @@ jobs:
           go-version: "1.26.x"
           cache: true
       - name: Vet
-        run: go vet ./internal/platform/apple
+        run: go tool nsgo check ./internal/platform/apple
       - name: Test
-        run: go test ./internal/platform/apple
+        run: go tool nsgo test ./internal/platform/apple
