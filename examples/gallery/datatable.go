@@ -412,9 +412,6 @@ func dataTableDemo(cx *core.Scope) core.Node {
 		}})
 }
 
-// tableDemo is base's Table.
-func tableDemo(cx *core.Scope) core.Node { return demoPage(cx, pageProps{}, tableCard) }
-
 // tableCard is base's Table around a few rows the app writes out, as NSH's
 // website shows it: the parts give screen readers a table, the styles its
 // look.
@@ -457,8 +454,8 @@ func tableCard(cx *core.Scope) core.Node {
 	for i, title := range []string{tr.TableInvoice(), tr.TableStatus(), tr.TableMethod(), tr.TableAmount()} {
 		head = append(head, cell(i, true, i == 3, title))
 	}
-	return Card{Title: tr.TableTable(), Description: tr.TableAFewRowsTheApp(), Children: []core.Node{
-		base.Table{Label: tr.TableRecentInvoices(), Children: []core.Node{
+	return Playground{Title: "Table", Note: tr.TableAFewRowsTheApp(), Fill: true, Stage: func() core.Node {
+		return base.Table{Label: tr.TableRecentInvoices(), Children: []core.Node{
 			base.TableHeader{Children: []core.Node{base.TableRow{Style: line, StyleFunc: lineColor, Children: head}}},
 			base.TableBody{Children: body},
 			base.TableFooter{Children: []core.Node{base.TableRow{Children: []core.Node{
@@ -467,6 +464,6 @@ func tableCard(cx *core.Scope) core.Node {
 			base.TableCaption{Style: core.Style{Padding: core.Symmetric(8, 12)}, Children: []core.Node{
 				core.Text{Content: tr.TableAListOfYourRecent(), Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 			}},
-		}},
+		}}
 	}}
 }

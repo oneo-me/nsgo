@@ -133,11 +133,11 @@ func sidebarCard(last *core.Signal[string]) cardFunc {
 		for _, name := range demoSections(tr) {
 			items = append(items, ui.SidebarItem{ID: name, Text: name})
 		}
-		return Card{Title: "Sidebar", UIOnly: true, Children: []core.Node{
-			core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220), AlignSelf: core.AlignCenter}, Children: []core.Node{
+		return Playground{Title: "Sidebar", UIOnly: true, Stage: func() core.Node {
+			return core.View{Style: core.Style{Height: core.Pt(150), Width: core.Pt(220)}, Children: []core.Node{
 				ui.Sidebar{Selected: selected.Get, OnSelect: func(id string) { selected.Set(id); last.Set("Sidebar: " + id) },
 					Sections: []ui.SidebarSection{{Title: tr.ControlsApps(), Collapsible: true, Items: items}}},
-			}},
+			}}
 		}}
 	}
 }

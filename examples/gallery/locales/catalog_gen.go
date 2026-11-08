@@ -1168,7 +1168,6 @@ const (
 	textTableStatus
 	textTableMethod
 	textTableAmount
-	textTableTable
 	textTableAFewRowsTheApp
 	textTableRecentInvoices
 	textTableTotal
@@ -3113,7 +3112,6 @@ var keyOfText = [numTexts]string{
 	"tableStatus",
 	"tableMethod",
 	"tableAmount",
-	"tableTable",
 	"tableAFewRowsTheApp",
 	"tableRecentInvoices",
 	"tableTotal",
@@ -5056,7 +5054,6 @@ var textsEn = i18n.NewTexts(""+
 	"Status"+
 	"Method"+
 	"Amount"+
-	"Table"+
 	"A few rows the app writes out, with a table's roles"+
 	"Recent invoices"+
 	"Total"+
@@ -6996,7 +6993,6 @@ var textsEn = i18n.NewTexts(""+
 		6,
 		6,
 		6,
-		5,
 		51,
 		15,
 		5,
@@ -8939,7 +8935,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"状态"+
 	"方式"+
 	"金额"+
-	"表格"+
 	"应用写出的几行数据，带表格的角色"+
 	"最近的发票"+
 	"合计"+
@@ -10874,7 +10869,6 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		6,
 		9,
-		6,
 		6,
 		6,
 		6,
@@ -19664,13 +19658,6 @@ func TableAmount(cx *core.Scope) string { return For(cx).TableAmount() }
 
 // TableAmount is the package's TableAmount in the language of msgs.
 func (msgs Messages) TableAmount() string { return msgs.text(textTableAmount) }
-
-// TableTable says "Table"
-// in the language the app shows under cx.
-func TableTable(cx *core.Scope) string { return For(cx).TableTable() }
-
-// TableTable is the package's TableTable in the language of msgs.
-func (msgs Messages) TableTable() string { return msgs.text(textTableTable) }
 
 // TableAFewRowsTheApp says "A few rows the app writes out, with a table's roles"
 // in the language the app shows under cx.
