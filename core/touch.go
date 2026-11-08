@@ -548,4 +548,32 @@ type GestureEvent struct {
 	Phase    GesturePhase
 	Value    float32
 	Velocity float32
+	// Position is the gesture's center in the view, where the fingers
+	// are or the pointer over a touchpad is; a rotation's is the origin.
+	Position Point
+}
+
+// WheelEvent is a turn of the mouse wheel or a scroll on a touchpad over a
+// view (View.OnWheel). Delta is how far it moves the content, positive
+// right and down: a wheel's notch counts its lines at 40 points on macOS,
+// iOS and the web, 33 on Windows and Linux, as browsers scroll about 100
+// points a notch.
+type WheelEvent struct {
+	// Position is the pointer's place in the view.
+	Position  Point
+	Delta     Point
+	Modifiers Modifiers
+	// Touchpad marks a touch surface's scroll, a Magic Mouse's included:
+	// what a canvas pans by where a wheel's notches zoom it.
+	Touchpad bool
+	// Phase is a touchpad's gesture: GestureBegan as the fingers start,
+	// GestureChanged as they move, GestureEnded as they lift. Where the
+	// system carries the content on after them, as macOS and the web do,
+	// its momentum reports more GestureChanged and a GestureEnded of its
+	// own. A wheel's notches are GestureChanged.
+	Phase GesturePhase
+	// Velocity, on GestureEnded, is how fast the fingers moved the content
+	// as they lifted, in points a second, where the platform's momentum
+	// does not follow them; the view carries it on itself (Decay).
+	Velocity Point
 }

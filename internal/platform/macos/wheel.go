@@ -48,6 +48,8 @@ type wheels struct {
 	last       time.Duration
 	// chain is the scroll views an event is over, innermost first.
 	chain []*view
+	// taker is the view with OnWheel a gesture and its momentum go to.
+	taker *view
 }
 
 // alive reports whether v is a scroll view still mounted.
@@ -65,6 +67,9 @@ func scrollWheel(self objc.ID, cmd objc.SEL, event objc.ID) {
 	}
 	s := v.surface
 	defer s.measuring(true)()
+	if s.wheelTaken(event) {
+		return
+	}
 	s.wheels.chain = s.scrollsAt(event)
 	if !s.wheelEvent(event) {
 		// What no view takes goes to the host's views around the surface.
@@ -301,6 +306,81 @@ func (s *surface) endMomentum() {
 type thumbDrag struct {
 	view *view
 	from driver.Point // where it was grabbed, in the view
+}
+
+// wheelTaken sends a wheel or trackpad event to the view with OnWheel
+// under the pointer, unless a scroll view inside it is there, and reports
+// whether one took it. A trackpad gesture and the system's momentum after
+// it stay on the view it began on.
+func (s *surface) wheelTaken(event objc.ID) bool {
+	phase, momentum := objc.Send[uint](event, sel("phase")), objc.Send[uint](event, sel("momentumPhase"))
+	w := &s.wheels
+	if momentum == 0 && (phase == 0 || phase&(phaseBegan|phaseMayBegin) != 0) {
+		w.taker = nil
+		for _, v := range s.viewsAt(event) {
+			if v.sc != nil {
+				break
+			}
+			if v.events.Has(driver.EventWheel) {
+				w.taker = v
+				break
+			}
+		}
+	}
+	v := w.taker
+	if v == nil || int(v.id) >= len(s.views) || s.views[v.id] != v {
+		w.taker = nil
+		return false
+	}
+	ev := v.pointer(driver.EventWheel, event)
+	// AppKit's deltas move the content, as the event's do. Only touch
+	// surfaces report phases; a wheel's lines count 40 points, as in
+	// browsers.
+	ev.Delta = driver.Point{X: driver.Points(objc.Send[float64](event, sel("scrollingDeltaX"))),
+		Y: driver.Points(objc.Send[float64](event, sel("scrollingDeltaY")))}
+	ev.Precise = phase != 0 || momentum != 0
+	if !objc.Send[bool](event, sel("hasPreciseScrollingDeltas")) {
+		ev.Delta.X, ev.Delta.Y = ev.Delta.X*40, ev.Delta.Y*40
+	}
+	switch {
+	case phase&phaseMayBegin != 0:
+		return true
+	case phase&phaseBegan != 0:
+		ev.Phase = driver.GestureBegan
+	case momentum&(phaseEnded|phaseCancelled) != 0:
+		ev.Phase = driver.GestureEnded
+		w.taker = nil
+	case phase&(phaseEnded|phaseCancelled) != 0:
+		// The view keeps the momentum that may follow.
+		ev.Phase = driver.GestureEnded
+	default:
+		ev.Phase = driver.GestureChanged
+	}
+	v.report(ev)
+	return true
+}
+
+// viewsAt returns the views under a mouse event, innermost first.
+func (s *surface) viewsAt(event objc.ID) []*view {
+	up := s.native.Send(selSuperview)
+	if up == 0 {
+		return nil
+	}
+	loc := objc.Send[apple.CGPoint](event, selLocationInWindow)
+	if event.Send(selWindow) == 0 {
+		loc = objc.Send[apple.CGPoint](s.window, sel("convertPointFromScreen:"), loc)
+	}
+	p := objc.Send[apple.CGPoint](up, selConvertPoint, loc, objc.ID(0))
+	rawHit = true
+	hit := s.native.Send(sel("hitTest:"), p)
+	rawHit = false
+	var out []*view
+	for n := hit; n != 0 && n != up; n = n.Send(selSuperview) {
+		if v := views[n]; v != nil && v.native == n && int(v.id) < len(s.views) && s.views[v.id] == v {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // scrollsAt returns the scroll views under a mouse event, innermost first.

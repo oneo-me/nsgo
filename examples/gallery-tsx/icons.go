@@ -26,6 +26,7 @@ func init() {
 		"folder":              lucide.Folder,
 		"gallery-horizontal":  lucide.GalleryHorizontal,
 		"git-graph":           lucide.GitGraph,
+		"workflow":            lucide.Workflow,
 		"image":               lucide.Image,
 		"inbox":               lucide.Inbox,
 		"italic":              lucide.Italic,

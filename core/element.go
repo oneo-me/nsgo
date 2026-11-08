@@ -128,6 +128,12 @@ type View struct {
 	// OnRotation a two-finger rotation.
 	OnPinch    func(GestureEvent)
 	OnRotation func(GestureEvent)
+	// OnWheel takes the mouse wheel's turns and touchpads' scrolls over
+	// the view, before the scroll views around it, for what pans and
+	// zooms itself, such as a canvas; content that scrolls takes a
+	// Scroll. A scroll view inside the view takes its own first. Turns
+	// with Control held stay pinches where the platform makes them one.
+	OnWheel func(WheelEvent)
 	// PanValues are animated values a drag on the view moves on the
 	// platform's main thread, by its translation from where they were as
 	// it began, with no engine work per move. They need no OnPan.

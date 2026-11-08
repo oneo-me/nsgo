@@ -1,7 +1,7 @@
 import { computed, signal, Text, token, View } from "nsgo";
 import { DataTable, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "nsgo/base";
 import { Area, Bar, Grid, Line, Pie, Plot, PlotAxis } from "nsgo/base/plot";
-import { Badge, CommitGraph, Icon, List, Tabs, Tree } from "nsgo/ui";
+import { Badge, CommitGraph, Flow, FlowCard, Icon, List, Tabs, Tree } from "nsgo/ui";
 import { BoolKnob, ChoiceKnob, Page, Playground, Row, StagePage, Status, useEvents } from "../parts";
 
 const tasks = Array.from({ length: 200 }, (_, i) => ({ id: `task-${i}`, title: `Task ${i + 1}`, done: i % 3 === 0 }));
@@ -194,6 +194,51 @@ export function CommitGraphDemo() {
           commits={commits}
           onActivate={({ commit }) => log(commit.subject ?? "")()}
           style={{ flexGrow: 1 }}
+        />
+      </View>
+    </StagePage>
+  );
+}
+
+const plan = [
+  { id: "survey", title: "Survey", detail: "Collect requirements" },
+  { id: "design", title: "Design", detail: "Sketch the approach" },
+  { id: "prototype", title: "Prototype", detail: "Try the riskiest part" },
+  { id: "review", title: "Review", detail: "Decide what ships" },
+];
+
+export function FlowDiagramDemo() {
+  const selected = signal("");
+  const leftToRight = signal(false);
+  return (
+    <StagePage
+      panel={
+        <>
+          <BoolKnob name="LeftToRight" value={leftToRight} />
+          <Status label="Selected" value={selected() || "—"} testID="flow-selected" />
+        </>
+      }
+    >
+      <View class="flex-1 overflow-hidden rounded-lg border border-border bg-background">
+        <Flow
+          testID="flow"
+          accessibilityLabel="Project plan"
+          direction={leftToRight() ? "left-to-right" : "top-to-bottom"}
+          data={{
+            nodes: plan.map((p) => ({
+              id: p.id,
+              label: p.title,
+              content: <FlowCard title={p.title} description={p.detail} variant={p.id === "review" ? "accent" : "default"} />,
+            })),
+            edges: [
+              { source: "survey", target: "design" },
+              { source: "survey", target: "prototype", dashed: true, label: "informs" },
+              { source: "design", target: "review" },
+              { source: "prototype", target: "review" },
+            ],
+          }}
+          selected={selected()}
+          onSelect={({ id }) => selected.set(id)}
         />
       </View>
     </StagePage>

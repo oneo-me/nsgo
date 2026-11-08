@@ -158,6 +158,26 @@ Popups are placed against what their trigger holds (`Overlay.AnchorContent`), th
 
 `ui/commitgraph.View` is `ui.List` with `Graph`, refs, subject, author, hash and date, in Onegit's palette. It keeps no second state: its `History` is `base/commitgraph`'s, and only the columns are its own.
 
+## Flow diagram
+
+`base/flow` ports Onevra's flow diagram; NSH has none. `layout` is pure: a layered (Sugiyama) drawing that breaks cycles, ranks nodes by longest path and then toward their neighbours' median, orders ranks by barycenters to cut crossings, places nodes by isotonic regression and routes edges through dummies as orthogonal lines on tracks of their own. Bends are kept few: a run of an edge that leaves or reaches a node settles on its middle where its corridors allow, else straight off it rather than bending, and edges of both styles reaching a node's shared side from either hand join it on one track.
+
+- `View` lays out again when the data, the direction or a node's measured size changes (`OnLayout` of its box). A change of topology moves nodes on springs for 600 ms after it; sizes settling outside that place them at once, as Onevra's.
+- Nodes, the plane and the camera move on the platform's frame clock: each node's place and the camera are animated values, a drag pans by `PanValues`, and the edges' canvas binds every point of a route to its ends' places while they move (`route.at`), each point following the end it is nearer along the route, so no commit runs per frame. At rest the drawing binds nothing.
+- Dashes are the canvas's own, a piece per straight run and bend, each piece's offset anchored to the plane as Onevra's hand-made dashes are, so edges sharing a track dash in step.
+- One layer over the plane takes the pointer and finds the node under it from the camera and the layout, as Onevra's `hit` does, since hit tests follow frames rather than transforms: presses select and open, hovers emphasize a node's edges, and what a node holds takes no pointer. Nodes take the keyboard and assistive technology's presses themselves, and the camera follows the focused one.
+- `OnWheel` zooms around the pointer for a wheel, Control or Command held, and pans for a touchpad's two fingers or a sideways wheel; a pinch zooms around its `Position`, a double press on empty space zooms in, or out with Shift, and a finger let go glides.
+
+`ui/flow.View` is `View` with Onevra's palette, the accent's selection ring and focus ring, and `Card`, a node's default face, its border a `CardVariant`.
+
+| Onevra | NSGo | Why |
+| --- | --- | --- |
+| The view redraws edges and moves nodes each frame | Animated values and bound canvas arguments | The engine sends what animates once ([boundaries](../../ARCHITECTURE.md#boundaries)) |
+| Hand-made dashes along flattened bends | The canvas's dashes, a piece at a time | Fewer points to bind while nodes move |
+| A pointing hand over nodes | The platform's arrow | Pressables keep it ([components](../../AGENTS.md#components)) |
+| `Card`'s `Border` color | `CardVariant` | `ui` takes color from variants |
+| Content inside a node takes the pointer | Only the keyboard and assistive technology reach it | Hit tests ignore transforms ([roadmap](../roadmap.md#finish-the-existing-platforms)) |
+
 ## Resizable panels
 
 `ResizablePanelGroup` ports `gpui-base`'s sizing (`resizeState`, tested as NSH tests it), filling its container unless the app sizes it: a drag grows the panel before its handle by taking from the panels after it, nearest first, as far as their minimums allow, and shrinking below a minimum takes from the panels before.

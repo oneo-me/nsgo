@@ -194,7 +194,11 @@ func trackpad(self, event objc.ID, kind driver.EventKind, initial, delta float64
 	case phase&phaseCancelled != 0:
 		report, *slot = driver.GestureCancelled, nil
 	}
-	t.view.report(driver.Event{Kind: kind, Phase: report, Value: float32(t.value),
-		Velocity: driver.Point{X: driver.Points(t.velocity)}})
+	ev := driver.Event{Kind: kind, Phase: report, Value: float32(t.value), Velocity: driver.Point{X: driver.Points(t.velocity)}}
+	if kind == driver.EventPinch {
+		// A pinch zooms around the pointer over the trackpad.
+		ev.Point = t.view.pointer(kind, event).Point
+	}
+	t.view.report(ev)
 	return true
 }

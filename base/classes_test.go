@@ -23,7 +23,7 @@ import (
 // beside it, as NSH pairs them: Style and Class, PopupStyle and
 // PopupClass, Styles and Classes.
 func TestEveryPartStyleHasAClass(t *testing.T) {
-	for _, dir := range []string{".", "datatable", "diff", "dock", "editor", "plot", "textview", "toast"} {
+	for _, dir := range []string{".", "datatable", "diff", "dock", "editor", "flow", "plot", "textview", "toast"} {
 		name := dir
 		if dir == "." {
 			name = "base"

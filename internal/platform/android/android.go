@@ -273,6 +273,11 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				}
 				s.unstage(ev.Count)
 			}
+			if ev.Kind == driver.EventWheel {
+				// A wheel's delta comes as the velocity, and whether a
+				// touchpad turned it as the value.
+				ev.Delta, ev.Velocity, ev.Precise, ev.Value = ev.Velocity, driver.Point{}, ev.Value != 0, 0
+			}
 			if ev.Kind == driver.EventPan {
 				// A pan's start and end carry its bound values as the size.
 				ev.Values, ev.Size = driver.Point{X: ev.Size.Width, Y: ev.Size.Height}, driver.Size{}

@@ -877,3 +877,14 @@ func Damaged(before, after []driver.DrawOp) (area CGRect, whole bool) {
 	y1 := math.Ceil(float64(d.Origin.Y+d.Size.Height) + aa)
 	return Rect(x0, y0, x1-x0, y1-y0), false
 }
+
+// RasterStep is how many times its pixels a layer scaled by scale draws
+// its content at: 1 up to its own size, then in steps of a half up to 4,
+// so its text and drawings stay sharp while a zoom redraws them only as
+// it passes a step.
+func RasterStep(scale float32) float64 {
+	if !(scale > 1) {
+		return 1
+	}
+	return min(math.Ceil(float64(scale)*2)/2, 4)
+}

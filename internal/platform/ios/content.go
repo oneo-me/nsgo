@@ -59,7 +59,7 @@ func drawContent(_ objc.ID, _ objc.SEL, layer objc.ID, ctx uintptr) {
 		if v.drawing != nil {
 			ops := v.surface.animator.CanvasOps(v.id, v.drawing)
 			apple.Play(ctx, ops, apple.CanvasHost{
-				Ratio: float64(v.surface.env.PixelRatio), Redraw: v.redraw, Owner: v, BaseUp: baseUp})
+				Ratio: v.contentScale(), Redraw: v.redraw, Owner: v, BaseUp: baseUp})
 			v.played = append(v.played[:0], ops...)
 			return
 		}
@@ -84,7 +84,7 @@ func (v *view) newContent() {
 	// Canvases are drawn on Core Animation's threads: paths and gradients
 	// cost more than glyphs.
 	layer.Send(sel("setDrawsAsynchronously:"), v.kind == driver.KindCanvas)
-	layer.Send(sel("setContentsScale:"), float64(v.surface.env.PixelRatio))
+	layer.Send(sel("setContentsScale:"), v.contentScale())
 	layer.Send(sel("setZPosition:"), apple.Z(contentZ))
 	v.native.Send(selLayer).Send(sel("addSublayer:"), layer)
 	layer.Send(selRelease)

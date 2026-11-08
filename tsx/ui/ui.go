@@ -25,6 +25,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 	"github.com/oneo-me/nsgo/ui/commitgraph"
 	uidiff "github.com/oneo-me/nsgo/ui/diff"
+	uiflow "github.com/oneo-me/nsgo/ui/flow"
 )
 
 const module = "nsgo/ui"
@@ -102,6 +103,8 @@ var enums = []tsx.Option{
 		"hsb": base.ColorFormatHSB, "oklch": base.ColorFormatOKLCH}),
 	tsx.Enum(map[string]core.ResizeMode{"cover": core.Cover, "contain": core.Contain, "stretch": core.Stretch, "center": core.Center}),
 	tsx.Enum(map[string]commitgraph.RefKind{"branch": commitgraph.RefBranch, "remote": commitgraph.RefRemote, "tag": commitgraph.RefTag, "head": commitgraph.RefHead}),
+	tsx.Enum(map[string]uiflow.Direction{"top-to-bottom": uiflow.TopToBottom, "left-to-right": uiflow.LeftToRight}),
+	tsx.Enum(map[string]uiflow.CardVariant{"default": uiflow.CardDefault, "accent": uiflow.CardAccent}),
 }
 
 // options are enums with what one Register adds.
@@ -177,6 +180,8 @@ func init() {
 	tsx.Register(module, map[string]core.Node{"DockArea": ui.DockArea{}}, tsx.DockOptions()...)
 	tsx.Register(module, map[string]core.Node{"DockTabLabel": ui.DockTabLabel{}}, options()...)
 	tsx.Register(module, map[string]core.Node{"CommitGraph": commitgraph.View{}}, options(tsx.Omit("Selection"), tsx.Event("OnActivate", "commit"))...)
+	tsx.Register(module, map[string]core.Node{"Flow": uiflow.View{}}, options(tsx.Omit("State"), tsx.Event("OnSelect", "id"), tsx.Event("OnOpen", "id"))...)
+	tsx.Register(module, map[string]core.Node{"FlowCard": uiflow.Card{}}, options()...)
 	tsx.Register(module, map[string]core.Node{"DiffView": uidiff.View{}}, tsxdiff.Options()...)
 	tsx.Register(module, map[string]core.Node{"TextView": ui.TextView{}}, append(tsxtextview.Options(), tsx.Omit("StyleOf"))...)
 	tsx.Register(module, map[string]core.Node{"Input": Input{}, "Field": Field{}}, options(tsx.Event("OnChange", "value"), tsx.Event("OnSubmit", "text"))...)

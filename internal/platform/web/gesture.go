@@ -74,6 +74,8 @@ type wheelPinch struct {
 	rotation float64
 	timer    js.Value
 	rate     gestureRate
+	// at is where the pinch is about, in the view.
+	at driver.Point
 }
 
 type gestures struct {
@@ -325,14 +327,15 @@ func (s *surface) moveTwoFinger(t *twoFinger) {
 }
 
 func (s *surface) sendTwoFinger(t *twoFinger, phase driver.GesturePhase) {
-	s.sendPinch(t.view, phase, t.scale, t.rotation, &t.gestureRate)
+	s.sendPinch(t.view, phase, t.scale, t.rotation, &t.gestureRate, (t.a.x+t.b.x)/2, (t.a.y+t.b.y)/2)
 }
 
 // sendPinch reports a pinch's scale and a rotation's angle to v, each if
-// v follows it.
-func (s *surface) sendPinch(v *view, phase driver.GesturePhase, scale, rotation float64, r *gestureRate) {
+// v follows it, the pinch about client point x, y.
+func (s *surface) sendPinch(v *view, phase driver.GesturePhase, scale, rotation float64, r *gestureRate, x, y float64) {
+	px, py := v.localPoint(x, y)
 	s.send(v, driver.Event{Kind: driver.EventPinch, Phase: phase, Value: float32(scale),
-		Velocity: driver.Point{X: driver.Points(r.scaleSpeed)}})
+		Velocity: driver.Point{X: driver.Points(r.scaleSpeed)}, Point: driver.Point{X: driver.Points(px), Y: driver.Points(py)}})
 	s.send(v, driver.Event{Kind: driver.EventRotation, Phase: phase, Value: float32(rotation),
 		Velocity: driver.Point{X: driver.Points(r.rotateSpeed)}})
 }
@@ -366,8 +369,10 @@ func (s *surface) wheelZoom(e js.Value) {
 	}
 	w.scale *= math.Exp(-dy / 100)
 	w.rate.update(e.Get("timeStamp").Float(), w.scale, 0)
+	px, py := w.view.localPoint(e.Get("clientX").Float(), e.Get("clientY").Float())
+	w.at = driver.Point{X: driver.Points(px), Y: driver.Points(py)}
 	s.send(w.view, driver.Event{Kind: driver.EventPinch, Phase: driver.GestureChanged, Value: float32(w.scale),
-		Velocity: driver.Point{X: driver.Points(w.rate.scaleSpeed)}})
+		Velocity: driver.Point{X: driver.Points(w.rate.scaleSpeed)}, Point: w.at})
 	if w.timer.Truthy() {
 		js.Global().Call("clearTimeout", w.timer)
 	}
@@ -376,7 +381,7 @@ func (s *surface) wheelZoom(e js.Value) {
 
 func (s *surface) endWheelPinch(w *wheelPinch, phase driver.GesturePhase) {
 	s.send(w.view, driver.Event{Kind: driver.EventPinch, Phase: phase, Value: float32(w.scale),
-		Velocity: driver.Point{X: driver.Points(w.rate.scaleSpeed)}})
+		Velocity: driver.Point{X: driver.Points(w.rate.scaleSpeed)}, Point: w.at})
 }
 
 // safariGesture follows Safari's gesture events, its trackpad's pinches
@@ -418,7 +423,7 @@ func (s *surface) safariGesture(e js.Value, phase driver.GesturePhase) {
 	if phase == driver.GestureEnded {
 		g.wheel = nil
 	}
-	s.sendPinch(w.view, phase, w.scale, w.rotation, &w.rate)
+	s.sendPinch(w.view, phase, w.scale, w.rotation, &w.rate, e.Get("clientX").Float(), e.Get("clientY").Float())
 }
 
 // touchAction is what touches on a view with gestures leave to the

@@ -106,3 +106,6 @@ calendarWeekday:
 breadcrumbsMore:
   message: "More"
   description: What screen readers say of the button listing a breadcrumb path's collapsed ancestors.
+flowLabel:
+  message: "{nodes, plural, one {# node} other {# nodes}}, {edges, plural, one {# edge} other {# edges}}"
+  description: What screen readers say of a flow diagram the app gives no label, its counts of nodes and edges.

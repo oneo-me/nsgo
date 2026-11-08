@@ -66,6 +66,9 @@ func (s *surface) wheelScroll(e js.Value) {
 		unit = float64(s.size().Height)
 	}
 	dx, dy := e.Get("deltaX").Float()*unit, e.Get("deltaY").Float()*unit
+	if s.wheelTaken(e, dx, dy) {
+		return
+	}
 	if e.Get("shiftKey").Bool() && dx == 0 {
 		dx, dy = dy, 0
 	}
@@ -258,4 +261,32 @@ func (s *surface) stopGlide(v *view, to [2]float64) {
 func (s *surface) ownEnd(v *view) {
 	v.sc.ownEnd = &[2]float64{v.el.Get("scrollLeft").Float(), v.el.Get("scrollTop").Float()}
 	s.scrollEvent(v, driver.EventScrollEnd)
+}
+
+// wheelTaken sends a wheel or touchpad event of (dx, dy) to the view with
+// OnWheel under it, unless a scroll view inside it is, and reports whether
+// one took it. Browsers give scrolls no device or phases: one of pixels
+// smaller than a notch is a touchpad's, whose momentum the browser sends
+// on where the system has it.
+func (s *surface) wheelTaken(e js.Value, dx, dy float64) bool {
+	for el := e.Get("target"); el.Truthy() && !el.Equal(s.host); el = el.Get("parentElement") {
+		v := s.viewOf(el)
+		if v == nil {
+			continue
+		}
+		if v.kind == driver.KindScroll {
+			return false
+		}
+		if !v.events.Has(driver.EventWheel) {
+			continue
+		}
+		e.Call("preventDefault")
+		ev := s.pointer(v, driver.EventWheel, e)
+		ev.Phase = driver.GestureChanged
+		ev.Delta = driver.Point{X: driver.Points(-dx), Y: driver.Points(-dy)}
+		ev.Precise = e.Get("deltaMode").Int() == 0 && max(math.Abs(dx), math.Abs(dy)) < wheelNotch
+		s.send(v, ev)
+		return true
+	}
+	return false
 }

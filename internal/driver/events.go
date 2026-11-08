@@ -186,6 +186,12 @@ const (
 	// nothing in motion ended, or a glide, a snap, an animated scroll or
 	// the wheel's turns did; with the offset as EventScroll's.
 	EventScrollEnd
+	// EventWheel is a mouse wheel's turn or a touchpad's scroll over a
+	// view at Point, moving the content by Delta, with the Modifiers held.
+	// Precise marks a touch surface's, whose gesture reports its Phase;
+	// a wheel's turns are GestureChanged. A gesture let go where the
+	// platform has no momentum of its own ends with its Velocity.
+	EventWheel
 	// EventFiles answers ItemPickFiles Count with the files picked (Data,
 	// a []File), ItemPickDirectories Count with the folders picked (a
 	// []Directory), none when the user cancelled, ItemSaveFile Count
@@ -270,6 +276,9 @@ type Event struct {
 	// Values are the values a pan moves as it begins and ends
 	// (Animator.Gesture).
 	Values Point
+	// Delta and Precise are a wheel's (EventWheel).
+	Delta   Point
+	Precise bool
 }
 
 // Mergeable reports whether a later event of the same kind and view

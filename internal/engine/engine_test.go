@@ -299,3 +299,20 @@ func values(m map[driver.NodeID]string) func(func(string) bool) {
 		}
 	}
 }
+
+// TestWheelTurnsAddUp merges a view's queued wheel turns by adding their
+// deltas, where other moves replace each other, and keeps a touchpad's
+// apart from a wheel's.
+func TestWheelTurnsAddUp(t *testing.T) {
+	e := &Engine{runner: &runner{}}
+	turn := func(dy driver.Points, precise bool) {
+		e.push(message{event: driver.Event{Kind: driver.EventWheel, ID: 7, Phase: driver.GestureChanged, Delta: driver.Point{Y: dy}, Precise: precise}})
+	}
+	turn(10, false)
+	turn(15, false)
+	turn(4, true)
+	q := e.take()
+	if len(q) != 2 || q[0].event.Delta.Y != 25 || q[1].event.Delta.Y != 4 {
+		t.Fatalf("queued %+v", q)
+	}
+}

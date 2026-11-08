@@ -1,7 +1,7 @@
 import type { JSX } from "nsgo";
 import { ButtonDemo, LinkDemo, ToolbarDemo } from "./demos/Actions";
 import { AccordionDemo, DockDemo, ResizableDemo } from "./demos/Containers";
-import { CommitGraphDemo, DataTableDemo, ListDemo, PlotDemo, TableDemo } from "./demos/Data";
+import { CommitGraphDemo, DataTableDemo, FlowDiagramDemo, ListDemo, PlotDemo, TableDemo } from "./demos/Data";
 import { AvatarDemo, BadgeDemo, CarouselDemo, ImageDemo } from "./demos/Display";
 import { DiffDemo, EditorDemo, TextViewDemo } from "./demos/Documents";
 import { ProgressDemo, ToastDemo } from "./demos/Feedback";
@@ -72,6 +72,7 @@ export const groups: Group[] = [
       { name: "DataTable", icon: "table", screen: DataTableDemo },
       { name: "CommitGraph", icon: "git-graph", screen: CommitGraphDemo },
       { name: "Plot", icon: "chart-spline", screen: PlotDemo },
+      { name: "FlowDiagram", icon: "workflow", screen: FlowDiagramDemo },
     ],
   },
   {

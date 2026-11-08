@@ -285,6 +285,7 @@ type handlers struct {
 	loadError                            func(error)
 	pan                                  func(PanEvent)
 	pinch, rotation                      func(GestureEvent)
+	wheel                                func(WheelEvent)
 	fileEnter, fileLeave                 func()
 	fileDrop                             func([]string)
 	action                               func(string)
@@ -1419,7 +1420,7 @@ func (t *Tree) setViewParts(n *node, v View) {
 		mouseEnter: v.OnMouseEnter, mouseLeave: v.OnMouseLeave, mouseMove: v.OnMouseMove,
 		textSelection: v.OnTextSelection,
 		layout:        v.OnLayout, contextMenu: v.OnContextMenu, touch: v.OnTouch, touchCapture: v.OnTouchCapture,
-		pan: v.OnPan, pinch: v.OnPinch, rotation: v.OnRotation,
+		pan: v.OnPan, pinch: v.OnPinch, rotation: v.OnRotation, wheel: v.OnWheel,
 		fileEnter: v.OnFileDragEnter, fileLeave: v.OnFileDragLeave, fileDrop: v.OnFileDrop,
 		focus: v.OnFocus, blur: v.OnBlur, transitionEnd: v.OnTransitionEnd}
 	n.h.action = v.OnAccessibilityAction
@@ -2039,7 +2040,16 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			fn = h.rotation
 		}
 		if fn != nil {
-			t.within(n.owner, func() { fn(GestureEvent{Phase: ev.Phase, Value: ev.Value, Velocity: float32(ev.Velocity.X)}) })
+			t.within(n.owner, func() {
+				fn(GestureEvent{Phase: ev.Phase, Value: ev.Value, Velocity: float32(ev.Velocity.X), Position: ev.Point})
+			})
+		}
+	case driver.EventWheel:
+		if h.wheel != nil {
+			t.within(n.owner, func() {
+				h.wheel(WheelEvent{Position: ev.Point, Delta: ev.Delta, Modifiers: ev.Modifiers, Touchpad: ev.Precise,
+					Phase: ev.Phase, Velocity: ev.Velocity})
+			})
 		}
 	case driver.EventContextMenu:
 		if h.contextMenu != nil && !n.props.Disabled {
@@ -2322,6 +2332,7 @@ func (n *node) events() driver.EventMask {
 	bit(driver.EventPan, n.panning)
 	bit(driver.EventPinch, n.pinching)
 	bit(driver.EventRotation, n.rotating)
+	bit(driver.EventWheel, h.wheel != nil)
 	bit(driver.EventFileDragEnter, h.fileEnter != nil)
 	bit(driver.EventFileDragLeave, h.fileLeave != nil)
 	bit(driver.EventFileDrop, h.fileDrop != nil)

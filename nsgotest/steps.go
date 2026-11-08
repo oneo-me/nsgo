@@ -91,6 +91,28 @@ func (a *App) Press(selector string) {
 	a.t.Helper()
 	a.step("press(%s)", selector)
 	v, at, index := a.pressTarget(selector)
+	a.pressAt(v, at, index)
+}
+
+// PressAt presses the view selector matches at a point in it, or what is
+// pressable there, as Press does its middle: for what finds its own
+// targets under the pointer, such as a canvas.
+func (a *App) PressAt(selector string, at driver.Point) {
+	a.t.Helper()
+	a.step("pressAt(%s, %v, %v)", selector, at.X, at.Y)
+	m := a.pick(selector, "view", func(m *View) (*View, bool) { return m, true })
+	o := m.surfaceFrame().Origin
+	page := driver.Point{X: o.X + at.X, Y: o.Y + at.Y}
+	v := a.pressableAt(page)
+	if v == nil {
+		a.t.Fatalf("nsgotest: nothing pressable at %v in %q\n%s", at, selector, a.Dump())
+	}
+	a.pressAt(v, page, 0)
+}
+
+// pressAt presses v at the surface point at.
+func (a *App) pressAt(v *View, at driver.Point, index int) {
+	a.t.Helper()
 	if a.target != nil {
 		a.target.press(at, 0)
 		a.done()

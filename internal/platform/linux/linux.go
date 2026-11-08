@@ -146,18 +146,20 @@ type window struct {
 	components driver.NativeComponents
 	drop       fileDrop
 
-	lastPointer   driver.Point
-	down          driver.Event  // the last press: modifiers and click count
-	mouse         finger.Mouse  // finger 0 of the views' touches
-	paste         *pasting      // the paste whose clipboard is being read
-	pointerIn     bool          // the pointer is over the surface, at lastPointer
-	hovered       hover.Tracker // the views under it that follow hovers
-	pointerState  uint32        // its modifiers and buttons at its last move
-	shielding     bool          // a press kept from a hosted control goes on
-	panning       *pan
-	bars          []*view  // the scroll views under the pointer, which show their bars
-	barDrag       *barDrag // the bar the pointer drags
-	pinching      *twoFinger
+	lastPointer  driver.Point
+	down         driver.Event  // the last press: modifiers and click count
+	mouse        finger.Mouse  // finger 0 of the views' touches
+	paste        *pasting      // the paste whose clipboard is being read
+	pointerIn    bool          // the pointer is over the surface, at lastPointer
+	hovered      hover.Tracker // the views under it that follow hovers
+	pointerState uint32        // its modifiers and buttons at its last move
+	shielding    bool          // a press kept from a hosted control goes on
+	panning      *pan
+	bars         []*view  // the scroll views under the pointer, which show their bars
+	barDrag      *barDrag // the bar the pointer drags
+	pinching     *twoFinger
+	// wheelTaker is the view with OnWheel a touchpad scroll goes to.
+	wheelTaker    *view
 	rotating      *twoFinger
 	closing       bool
 	lastWidth     driver.Points

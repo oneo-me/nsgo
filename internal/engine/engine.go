@@ -512,7 +512,7 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 // push queues m and wakes the engine. A mergeable event replaces one of
 // the same kind for the same view still queued, a resize the last resize
 // of the same surface, and a frame request the one still queued, so
-// bursts cost one update each.
+// bursts cost one update each. A wheel's turns add up into the one queued.
 func (e *Engine) push(m message) {
 	e.mu.Lock()
 	merged := false
@@ -523,6 +523,14 @@ func (e *Engine) push(m message) {
 		case m.resize != nil && q.resize != nil && same:
 			// The commit at the newest size answers the waits for both.
 			m.resized = append(q.resized, m.resized...)
+			*q = m
+			merged = true
+		case same && m.event.Kind == driver.EventWheel && q.event.Kind == driver.EventWheel && q.event.ID == m.event.ID &&
+			m.event.Phase == driver.GestureChanged && q.event.Phase == driver.GestureChanged &&
+			m.event.Precise == q.event.Precise && m.event.Modifiers == q.event.Modifiers:
+			// Turns add up, where other moves replace each other.
+			m.event.Delta.X += q.event.Delta.X
+			m.event.Delta.Y += q.event.Delta.Y
 			*q = m
 			merged = true
 		case m.frame && q.frame,

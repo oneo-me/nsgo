@@ -36,6 +36,10 @@ type testEvent struct {
 	Test    string
 	Elapsed float64
 	Output  string
+	// ImportPath names what a build-output event's compiler output is
+	// of, which FailedBuild names on the package's fail event.
+	ImportPath  string
+	FailedBuild string
 }
 
 // testResult is one test's outcome.
@@ -54,8 +58,10 @@ type testRun struct {
 	// packages hold what a package printed outside its tests, such as
 	// build errors, and whether it failed.
 	packages map[string]*testResult
-	trace    bool
-	out      io.Writer
+	// builds hold the compiler's output by import path.
+	builds map[string]string
+	trace  bool
+	out    io.Writer
 }
 
 // runTests runs the app's tests headless, or on a target, printing a line
@@ -198,6 +204,13 @@ func (r *testRun) read(in io.Reader) {
 }
 
 func (r *testRun) event(ev testEvent) {
+	if ev.Action == "build-output" {
+		if r.builds == nil {
+			r.builds = map[string]string{}
+		}
+		r.builds[ev.ImportPath] += ev.Output
+		return
+	}
 	if ev.Test == "" {
 		pkg := r.packages[ev.Package]
 		if pkg == nil {
@@ -209,6 +222,8 @@ func (r *testRun) event(ev testEvent) {
 			pkg.Output += ev.Output
 		case "fail":
 			pkg.Status = "fail"
+			// A package that did not build shows why.
+			pkg.Output += r.builds[ev.FailedBuild]
 		case "pass", "skip":
 			pkg.Status = ev.Action
 		}

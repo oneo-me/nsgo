@@ -61,6 +61,7 @@ var (
 	selPinchAction        = sel("nsgoPinch:")
 	selRotateAction       = sel("nsgoRotate:")
 	selHoverAction        = sel("nsgoHover:")
+	selWheelAction        = sel("nsgoWheel:")
 	classPanGate          objc.Class
 )
 
@@ -163,6 +164,7 @@ func gestureMethods() []objc.MethodDef {
 			transformed(self, r, driver.EventRotation, sel("rotation"))
 		}},
 		{Cmd: selHoverAction, Fn: hovered},
+		{Cmd: selWheelAction, Fn: wheeled},
 		{Cmd: sel("gestureRecognizer:shouldRecognizeSimultaneouslyWithGestureRecognizer:"),
 			Fn: func(self objc.ID, _ objc.SEL, r, other objc.ID) bool { return other.Send(selView) == self }},
 	}
@@ -206,6 +208,18 @@ func (v *view) setGestures(m driver.EventMask) {
 		r.Send(selSetDeleg, v.native)
 		return r
 	})
+	// UIScrollTypeMask: continuous for a trackpad, discrete for a wheel.
+	scrollOnly := func(mask int) func() objc.ID {
+		return func() objc.ID {
+			r := newRecognizer(objc.GetClass("UIPanGestureRecognizer"), selWheelAction)
+			r.Send(sel("setAllowedScrollTypesMask:"), mask)
+			r.Send(sel("setAllowedTouchTypes:"), objc.ID(objc.GetClass("NSArray")).Send(sel("array")))
+			r.Send(selSetDeleg, v.native)
+			return r
+		}
+	}
+	toggle(m.Has(driver.EventWheel), &v.scrolls, scrollOnly(1))
+	toggle(m.Has(driver.EventWheel), &v.notches, scrollOnly(2))
 	hover := m.Has(driver.EventMouseEnter) || m.Has(driver.EventMouseLeave) || m.Has(driver.EventMouseMove)
 	toggle(hover, &v.hover, func() objc.ID {
 		return newRecognizer(objc.GetClass("UIHoverGestureRecognizer"), selHoverAction)
@@ -361,6 +375,46 @@ func transformed(self, r objc.ID, kind driver.EventKind, value objc.SEL) {
 	default:
 		return
 	}
-	v.report(driver.Event{Kind: kind, Phase: phase, Value: float32(objc.Send[float64](r, value)),
-		Velocity: driver.Point{X: driver.Points(objc.Send[float64](r, sel("velocity")))}})
+	ev := driver.Event{Kind: kind, Phase: phase, Value: float32(objc.Send[float64](r, value)),
+		Velocity: driver.Point{X: driver.Points(objc.Send[float64](r, sel("velocity")))}}
+	if kind == driver.EventPinch {
+		at := objc.Send[apple.CGPoint](r, selLocationInView, self)
+		ev.Point = driver.Point{X: driver.Points(at.X), Y: driver.Points(at.Y)}
+	}
+	v.report(ev)
+}
+
+// wheeled follows a scroll-only pan, a trackpad's two fingers or a mouse
+// wheel's turns, as wheel events: the translation's steps move the
+// content, and the fingers let go at their velocity, which no momentum
+// of UIKit's follows.
+func wheeled(self objc.ID, _ objc.SEL, r objc.ID) {
+	v := views[self]
+	if v == nil {
+		return
+	}
+	at := objc.Send[apple.CGPoint](r, selLocationInView, self)
+	t := objc.Send[apple.CGPoint](r, sel("translationInView:"), self)
+	r.Send(sel("setTranslation:inView:"), apple.CGPoint{}, self)
+	ev := driver.Event{Kind: driver.EventWheel, Point: driver.Point{X: driver.Points(at.X), Y: driver.Points(at.Y)},
+		Delta: driver.Point{X: driver.Points(t.X), Y: driver.Points(t.Y)}, Precise: r == v.scrolls,
+		Modifiers: apple.Modifiers(objc.Send[uint](r, sel("modifierFlags")))}
+	switch objc.Send[int](r, selState) {
+	case stateBegan:
+		ev.Phase = driver.GestureBegan
+		if !ev.Precise {
+			ev.Phase = driver.GestureChanged
+		}
+	case stateChanged:
+		ev.Phase = driver.GestureChanged
+	case stateEnded, stateCancelled:
+		if !ev.Precise {
+			return
+		}
+		vel := objc.Send[apple.CGPoint](r, sel("velocityInView:"), self)
+		ev.Phase, ev.Velocity = driver.GestureEnded, driver.Point{X: driver.Points(vel.X), Y: driver.Points(vel.Y)}
+	default:
+		return
+	}
+	v.report(ev)
 }

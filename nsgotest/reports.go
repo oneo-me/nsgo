@@ -37,7 +37,8 @@ func (a *App) Report(ev driver.Event) {
 	a.dispatch(ev)
 }
 
-// Pan drags the view selector matches, or the one around it with a pan,
+// Pan drags the view selector matches, or the one around it or under its
+// middle with a pan,
 // through each translation in turn, then lets go.
 func (a *App) Pan(selector string, translations ...driver.Point) {
 	a.t.Helper()
@@ -55,7 +56,49 @@ func (a *App) Pan(selector string, translations ...driver.Point) {
 func (a *App) Pinch(selector string, scales ...float32) {
 	a.t.Helper()
 	v := a.gestureView(selector, driver.EventPinch)
-	a.gesture(v, driver.EventPinch, len(scales), func(ev *driver.Event, i int) { ev.Value = scales[i] })
+	at, _ := v.center()
+	a.gesture(v, driver.EventPinch, len(scales), func(ev *driver.Event, i int) { ev.Value, ev.Point = scales[i], at })
+}
+
+// Wheel turns the mouse wheel over the middle of the view selector
+// matches, or the one around it that takes the wheel, moving the content
+// by delta, with mods held.
+func (a *App) Wheel(selector string, delta driver.Point, mods driver.Modifiers) {
+	a.t.Helper()
+	v := a.gestureView(selector, driver.EventWheel)
+	at, _ := v.center()
+	a.dispatch(driver.Event{Kind: driver.EventWheel, ID: v.ID, Phase: driver.GestureChanged, Point: at, Delta: delta, Modifiers: mods})
+}
+
+// TouchpadScroll scrolls two fingers on a touchpad over the middle of the
+// view selector matches, or the one around it that takes the wheel,
+// moving the content by each delta in turn, and lifts them at velocity,
+// which the platform's momentum follows when zero. On a target it is the
+// platform's trackpad gesture by the deltas' sum, without momentum.
+func (a *App) TouchpadScroll(selector string, velocity driver.Point, deltas ...driver.Point) {
+	a.t.Helper()
+	v := a.gestureView(selector, driver.EventWheel)
+	at, page := v.center()
+	if a.target != nil {
+		// The platform's trackpad gesture, by the deltas' sum, its offset
+		// against the content's way.
+		var sum driver.Point
+		for _, d := range deltas {
+			sum.X, sum.Y = sum.X-d.X, sum.Y-d.Y
+		}
+		a.step("touchpadScroll(%s, %v, %v)", selector, sum.X, sum.Y)
+		a.target.check(a.target.surface.Scroll(page, sum))
+		a.done()
+		return
+	}
+	ev := driver.Event{Kind: driver.EventWheel, ID: v.ID, Point: at, Precise: true, Phase: driver.GestureBegan}
+	a.dispatch(ev)
+	for _, d := range deltas {
+		ev.Phase, ev.Delta = driver.GestureChanged, d
+		a.dispatch(ev)
+	}
+	ev.Phase, ev.Delta, ev.Velocity = driver.GestureEnded, driver.Point{}, velocity
+	a.dispatch(ev)
 }
 
 // Rotate rotates the view selector matches, or the one around it with a
@@ -68,9 +111,18 @@ func (a *App) Rotate(selector string, angles ...float32) {
 
 func (a *App) gestureView(selector string, kind driver.EventKind) *View {
 	a.t.Helper()
-	for p := a.Find(selector); p != nil; p = p.Parent {
+	m := a.Find(selector)
+	for p := m; p != nil; p = p.Parent {
 		if p.Events.Has(kind) {
 			return p
+		}
+	}
+	// Else what a pointer at its middle finds, as over a layer that takes
+	// the gestures of what lies under it.
+	if m != nil {
+		_, at := m.center()
+		if v := a.viewAt(at, func(v *View) bool { return v.Events.Has(kind) }); v != nil {
+			return v
 		}
 	}
 	a.t.Fatalf("nsgotest: no gesture view at %q", selector)

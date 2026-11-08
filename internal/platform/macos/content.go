@@ -131,7 +131,7 @@ func (v *view) drawLayer() objc.ID {
 	layer.Send(selActions, contentActions)
 	layer.Send(selSetDelegate, contentDrawer)
 	layer.Send(selSetNeedsDisplayOnResize, true)
-	layer.Send(selSetContentsScale, float64(v.surface.env.PixelRatio))
+	layer.Send(selSetContentsScale, v.contentScale())
 	layer.Send(selSetZPosition, apple.Z(contentZ))
 	layer.Send(selSetFrame, v.contentFrame())
 	v.native.Send(selLayer).Send(sel("addSublayer:"), layer)
@@ -248,7 +248,7 @@ func (s *surface) rescale() {
 		if v == nil || v.contentLayer == 0 {
 			continue
 		}
-		v.contentLayer.Send(selSetContentsScale, float64(s.env.PixelRatio))
+		v.contentLayer.Send(selSetContentsScale, v.contentScale())
 		v.redraw()
 	}
 }
@@ -336,7 +336,7 @@ func (v *view) paintCanvas(ctx uintptr, layer objc.ID, baseUp bool) {
 	c := &v.canvas
 	c.count(time.Now())
 	ops := v.surface.animator.CanvasOps(v.id, v.drawing)
-	host := apple.CanvasHost{Ratio: float64(v.surface.env.PixelRatio), Redraw: v.redraw, Owner: v, BaseUp: baseUp}
+	host := apple.CanvasHost{Ratio: v.contentScale(), Redraw: v.redraw, Owner: v, BaseUp: baseUp}
 	w, h := float64(v.frame.Size.Width), float64(v.frame.Size.Height)
 	if kept := v.staticLayer(ctx, ops, w, h, host); kept != nil {
 		kept.Draw(ctx, w, h)
@@ -358,7 +358,7 @@ func (v *view) staticLayer(ctx uintptr, ops []driver.DrawOp, w, h float64, host 
 	if c.split.At == 0 || c.split.At >= len(ops) {
 		return nil
 	}
-	scale := float64(v.surface.env.PixelRatio)
+	scale := v.contentScale()
 	pw, ph := int(math.Ceil(w*scale)), int(math.Ceil(h*scale))
 	if l := c.layer; l != nil && l.Drawing == v.drawing && l.Width == pw && l.Height == ph {
 		return l

@@ -16,7 +16,7 @@ func TestMain(m *testing.M) { nsgotest.Main(m) }
 
 // names are the demos, in the sidebar's order.
 var names = []string{"Stocks", "AI Chat", "Photos", "Button", "Link", "Toolbar", "Input", "Checkbox", "Select", "DatePicker", "ColorPicker", "Slider", "Badge", "Avatar", "Image",
-	"Carousel", "List", "Table", "DataTable", "CommitGraph", "Plot", "Accordion", "Resizable", "Dock", "Progress", "Toast", "Dialog", "Popover",
+	"Carousel", "List", "Table", "DataTable", "CommitGraph", "Plot", "FlowDiagram", "Accordion", "Resizable", "Dock", "Progress", "Toast", "Dialog", "Popover",
 	"Command", "Menu", "Tabs", "Breadcrumbs", "Sidebar", "NavStack", "Conversation", "Editor", "RichEditor", "DiffView", "Terminal", "TextView"}
 
 // startDesktop starts the gallery in its wide layout, which phones show
@@ -375,4 +375,16 @@ func TestRichEditor(t *testing.T) {
 	if app.Find("id:rich-words").Text == "0" {
 		t.Error("the document has no words")
 	}
+}
+
+// TestFlowDiagram lays the plan out from TSX's data, cards made by JSX in
+// it, and selects a step.
+func TestFlowDiagram(t *testing.T) {
+	app := open(t, "FlowDiagram")
+	app.Find("flow >> text:Prototype")
+	app.AccessibilityAction("flow >> label:Design", "activate")
+	if got := app.Find("id:flow-selected").Text; got != "design" {
+		t.Fatalf("selected %q", got)
+	}
+	app.Screenshot("flow-diagram")
 }

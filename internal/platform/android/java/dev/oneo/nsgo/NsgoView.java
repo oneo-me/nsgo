@@ -39,6 +39,7 @@ import android.util.TypedValue;
 import android.view.Choreographer;
 import android.view.DisplayCutout;
 import android.view.Gravity;
+import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -3327,9 +3328,14 @@ public class NsgoView extends FrameLayout {
             }
             return false;
         } : null);
-        // A secondary click is no touch; it comes as a generic motion.
-        view.setOnGenericMotionListener(n.has(Protocol.EVENT_CONTEXT_MENU) ? (v, e) -> {
-            if (e.getActionMasked() != MotionEvent.ACTION_BUTTON_PRESS
+        // A secondary click is no touch, nor is a wheel's turn: they come as
+        // generic motions.
+        view.setOnGenericMotionListener(n.has(Protocol.EVENT_CONTEXT_MENU) || n.has(Protocol.EVENT_WHEEL) ? (v, e) -> {
+            if (e.getActionMasked() == MotionEvent.ACTION_SCROLL && n.has(Protocol.EVENT_WHEEL)) {
+                wheel(n, e);
+                return true;
+            }
+            if (!n.has(Protocol.EVENT_CONTEXT_MENU) || e.getActionMasked() != MotionEvent.ACTION_BUTTON_PRESS
                     || e.getActionButton() != MotionEvent.BUTTON_SECONDARY) {
                 return false;
             }
@@ -3896,7 +3902,8 @@ public class NsgoView extends FrameLayout {
             scale = 1;
             scaleVelocity = 0;
             claim(pinch);
-            gesture(pinch, Protocol.EVENT_PINCH, Protocol.GESTURE_BEGAN, 0, 0, 0, 0, scale);
+            float[] f = focus(pinch, d);
+            gesture(pinch, Protocol.EVENT_PINCH, Protocol.GESTURE_BEGAN, f[0], f[1], 0, 0, scale);
             return true;
         }
 
@@ -3907,7 +3914,8 @@ public class NsgoView extends FrameLayout {
             long dt = d.getTimeDelta();
             if (dt > 0) scaleVelocity = (next - scale) * 1000f / dt;
             scale = next;
-            gesture(pinch, Protocol.EVENT_PINCH, Protocol.GESTURE_CHANGED, 0, 0, scaleVelocity, 0, scale);
+            float[] f = focus(pinch, d);
+            gesture(pinch, Protocol.EVENT_PINCH, Protocol.GESTURE_CHANGED, f[0], f[1], scaleVelocity, 0, scale);
             return true;
         }
 
@@ -3917,7 +3925,16 @@ public class NsgoView extends FrameLayout {
             pinching = false;
             pinchTookPress = false;
             int phase = cancelling ? Protocol.GESTURE_CANCELLED : Protocol.GESTURE_ENDED;
-            gesture(pinch, Protocol.EVENT_PINCH, phase, 0, 0, scaleVelocity, 0, scale);
+            float[] f = focus(pinch, d);
+            gesture(pinch, Protocol.EVENT_PINCH, phase, f[0], f[1], scaleVelocity, 0, scale);
+        }
+
+        /** Where a pinch is about, in n's points. */
+        private float[] focus(Node n, ScaleGestureDetector d) {
+            int[] root = new int[2], at = new int[2];
+            getLocationInWindow(root);
+            n.view.getLocationInWindow(at);
+            return new float[] {(d.getFocusX() - at[0] + root[0]) / density, (d.getFocusY() - at[1] + root[1]) / density};
         }
 
         /**
@@ -3980,6 +3997,21 @@ public class NsgoView extends FrameLayout {
             float h = values != null && values.length == 2 ? values[1] : 0;
             if (n.has(kind)) event(kind, n.id, 0, x, y, "", w, h, 0, phase, vx, vy, value, null);
         }
+    }
+
+    /**
+     * Reports a wheel's turn over n, at e's place in n: a notch moves the
+     * content about 100 points, three lines of 33, as browsers scroll;
+     * a touchpad's scroll moves it by its axes' points.
+     */
+    private void wheel(Node n, MotionEvent e) {
+        boolean touchpad = e.isFromSource(InputDevice.SOURCE_TOUCHPAD);
+        float unit = touchpad ? 1 : 99;
+        // Positive axes show what is above or right, as a wheel turned away
+        // or tilted right does.
+        float dx = -e.getAxisValue(MotionEvent.AXIS_HSCROLL) * unit, dy = e.getAxisValue(MotionEvent.AXIS_VSCROLL) * unit;
+        event(Protocol.EVENT_WHEEL, n.id, 0, e.getX() / density, e.getY() / density, "", 0, 0, 0, Protocol.GESTURE_CHANGED,
+                dx, dy, touchpad ? 1 : 0, null, 0, 0, false, "", false, 0, 0, modifiers(e.getMetaState()));
     }
 
     /** Whether a drag of n translated by (dx, dy) points activates its pan (1), fails it (-1) or is undecided (0). */

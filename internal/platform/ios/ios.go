@@ -43,6 +43,9 @@ type view struct {
 	events  driver.EventMask
 	// contentLayer draws a text's or a canvas's content.
 	contentLayer objc.ID
+	// rasterStep is how many times its pixels the content inside v draws
+	// at, as v's scale has it (rasterscale.go); 0 is 1.
+	rasterStep float64
 	// axNodes are a canvas's named parts, its accessibility elements.
 	axNodes []objc.ID
 	// backdrop is the view's backdrop blur or Liquid Glass.
@@ -80,6 +83,9 @@ type view struct {
 	handoff              bool    // its pan hands off from the scroll views inside it
 	pan, pinch, rotation objc.ID // the recognizers of the gestures it follows
 	hover                objc.ID // its UIHoverGestureRecognizer while it follows hovers
+	// scrolls and notches are its scroll-only pans while it takes the
+	// wheel: a trackpad's two fingers and a mouse wheel's turns.
+	scrolls, notches objc.ID
 
 	// A text's content and selection, whether a view is an area, and the
 	// long press that selects in it.

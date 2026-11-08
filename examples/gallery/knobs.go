@@ -184,6 +184,15 @@ func (f Form) stage(caption string) core.Node {
 	return PixelGrid{TestID: "stage-" + f.Name, Style: s, Children: children}
 }
 
+// panelStage is the form's stage in a stagePage's panel, bordered as a
+// card's stages are by their card.
+func (f Form) panelStage(cx *core.Scope, caption string) core.Node {
+	colors := ui.ColorsOf(cx)
+	return core.View{Style: core.Style{BorderWidth: 1, CornerRadius: ui.RadiusInset, BorderCurve: core.BorderCurveContinuous, Overflow: core.Hidden},
+		StyleFunc: func() core.Style { return core.Style{BorderColor: colors.Border()} },
+		Children:  []core.Node{f.stage(caption)}}
+}
+
 // eventLine is the last event a playground's forms reported, a dash until
 // there is one.
 func eventLine(cx *core.Scope, last func() string) core.Node {

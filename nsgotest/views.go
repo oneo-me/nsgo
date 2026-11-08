@@ -121,6 +121,7 @@ const (
 	EventKey                   = driver.EventKey
 	EventPan                   = driver.EventPan
 	EventPinch                 = driver.EventPinch
+	EventWheel                 = driver.EventWheel
 	EventRotation              = driver.EventRotation
 	EventMenu                  = driver.EventMenu
 	EventMessage               = driver.EventMessage

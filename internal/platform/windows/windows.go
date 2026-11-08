@@ -1294,6 +1294,42 @@ func (w *window) moveOffset(v *view, offset driver.Point) {
 	w.engine.Dispatch(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: scrollbar.Clamp(&v.scroll, v.frame.Size, v.size, offset), Count: v.applied})
 }
 
+// wheelNotch is how far the content under a view taking the wheel moves
+// for a notch: three lines of 33 points, as browsers scroll about 100.
+const wheelNotch driver.Points = 99
+
+// wheelTaken sends a wheel's turn of delta at p to the innermost view with
+// OnWheel under it, unless a scroll view inside it is there, and reports
+// whether one took it. A precision touchpad's scrolls are turns of less
+// than a notch; Windows sends its momentum on as more of them.
+func (w *window) wheelTaken(p driver.Point, delta int16, tilt bool) bool {
+	root := w.view(w.root)
+	if root == nil {
+		return false
+	}
+	under, _ := viewsAt(root, p, func(v *view) bool { return v.kind == driver.KindScroll || v.events.Has(driver.EventWheel) }, nil)
+	if len(under) == 0 {
+		return false
+	}
+	v := under[len(under)-1]
+	if v.kind == driver.KindScroll {
+		return false
+	}
+	b, _ := w.surfaceBounds(v)
+	d := driver.Points(delta) / 120 * wheelNotch
+	ev := driver.Event{Kind: driver.EventWheel, ID: v.id, Phase: driver.GestureChanged, Point: driver.Point{X: p.X - b.Origin.X, Y: p.Y - b.Origin.Y},
+		Page: p, Modifiers: modifiers(), Precise: delta%120 != 0}
+	// A turn away from the user shows what is above; a tilt right, what
+	// is right.
+	if tilt {
+		ev.Delta.X = -d
+	} else {
+		ev.Delta.Y = d
+	}
+	w.engine.Dispatch(ev)
+	return true
+}
+
 // wheel scrolls the innermost scroll view under at that can still move
 // in the wheel's direction. A wheel goes to the views along its axis, as
 // a browser's does, so a vertical wheel scrolls the page around a
@@ -1968,6 +2004,9 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		}
 		// A precision touchpad's pinch comes as turns with Control held.
 		if message == wmMouseWheel && wParam&mkControl != 0 && w.wheelPinch(w.point(at.X, at.Y), delta) {
+			return 0
+		}
+		if w.wheelTaken(w.point(at.X, at.Y), delta, message == wmMouseHWheel) {
 			return 0
 		}
 		w.wheel(w.point(at.X, at.Y), driver.Points(delta)/120, message == wmMouseHWheel)

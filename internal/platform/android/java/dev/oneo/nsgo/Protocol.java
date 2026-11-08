@@ -198,7 +198,8 @@ final class Protocol {
     static final int EVENT_BACK_STARTED = 58;
     static final int EVENT_BACK_CANCELLED = 59;
     static final int EVENT_SCROLL_END = 60;
-    static final int EVENT_FILES = 61;
+    static final int EVENT_WHEEL = 61;
+    static final int EVENT_FILES = 62;
 
     // core.PointerEvents.
     static final int POINTER_EVENTS_NONE = 1;

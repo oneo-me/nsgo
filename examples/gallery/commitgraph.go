@@ -106,5 +106,5 @@ func commitGraphDemo(cx *core.Scope) core.Node {
 			Commits:    func() []uigraph.Commit { return commits },
 			OnActivate: func(c uigraph.Commit) { last.Set(c.Subject) }}}},
 		statusLine(cx, tr.CommitGraphActivated(), "commit-activated", last.Get),
-		baseCommitGraphForm(cx, last).stage("base"))
+		baseCommitGraphForm(cx, last).panelStage(cx, "base"))
 }

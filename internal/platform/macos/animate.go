@@ -326,6 +326,7 @@ func (v *view) restyle() {
 // styleLayer draws vs with v's layer, only what changed since it was
 // last drawn when that is all an animation moves.
 func (v *view) styleLayer(vs *driver.ViewStyle) {
+	v.followScale(vs)
 	// A view created by an earlier batch shows the default style.
 	var shown *driver.ViewStyle
 	if v.styled || v.born != v.surface.batch {

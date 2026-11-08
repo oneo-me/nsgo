@@ -83,6 +83,8 @@ type twoFinger struct {
 	velocity  float32
 	lastTime  time.Time
 	startDist float64 // a touch pinch's distance between the fingers when it began
+	// at is where a pinch is about, in client points.
+	at driver.Point
 }
 
 // configureGestures asks Windows for pinches and rotations, and turns
@@ -205,8 +207,13 @@ func (w *window) reportGesture(g *twoFinger, phase driver.GesturePhase, value fl
 	if phase == driver.GestureBegan {
 		velocity = 0
 	}
-	w.gestured(driver.Event{Kind: g.kind, ID: g.v.id, Phase: phase, Value: value,
-		Velocity: driver.Point{X: driver.Points(velocity)}})
+	ev := driver.Event{Kind: g.kind, ID: g.v.id, Phase: phase, Value: value, Velocity: driver.Point{X: driver.Points(velocity)}}
+	if g.kind == driver.EventPinch {
+		if b, ok := w.surfaceBounds(g.v); ok {
+			ev.Point = driver.Point{X: g.at.X - b.Origin.X, Y: g.at.Y - b.Origin.Y}
+		}
+	}
+	w.gestured(ev)
 }
 
 // gesture handles WM_GESTURE and reports whether it did.
@@ -229,12 +236,15 @@ func (w *window) gesture(lParam uintptr) bool {
 	if kind == driver.EventRotation {
 		slot = &w.rotation
 	}
+	at := point{int32(gi.Location[0]), int32(gi.Location[1])}
+	screenToClient.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
+	if g := *slot; g != nil {
+		g.at = w.point(at.X, at.Y)
+	}
 	if gi.Flags&gfBegin != 0 {
 		*slot = nil
-		at := point{int32(gi.Location[0]), int32(gi.Location[1])}
-		screenToClient.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
 		if v := w.gestureView(w.point(at.X, at.Y), kind); v != nil {
-			*slot = &twoFinger{v: v, kind: kind, startDist: float64(uint32(gi.Arguments))}
+			*slot = &twoFinger{v: v, kind: kind, startDist: float64(uint32(gi.Arguments)), at: w.point(at.X, at.Y)}
 			w.reportGesture(*slot, driver.GestureBegan, rest(kind))
 		}
 	} else if g := *slot; g != nil && !g.v.deleted {
@@ -282,8 +292,10 @@ func (w *window) wheelPinch(p driver.Point, delta int16) bool {
 		}
 		g = &twoFinger{v: v, kind: driver.EventPinch}
 		w.wheelPinching = g
+		g.at = p
 		w.reportGesture(g, driver.GestureBegan, 1)
 	}
+	g.at = p
 	// A notch of a mouse wheel scales by about a fifth.
 	w.reportGesture(g, driver.GestureChanged, g.value*float32(math.Pow(2, float64(delta)/120/4)))
 	setTimer.Call(w.hwnd, pinchTimer, pinchIdleMillis, 0)

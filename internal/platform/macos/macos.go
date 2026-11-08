@@ -103,6 +103,9 @@ type view struct {
 	// contentLayer is what a text or canvas draws into (content.go);
 	// stale says its content changed while it could not be seen.
 	contentLayer objc.ID
+	// rasterStep is how many times its pixels the content inside v draws
+	// at, as v's scale has it (rasterscale.go); 0 is 1.
+	rasterStep float64
 	// axNodes are a canvas's named parts, its accessibility children.
 	axNodes []objc.ID
 	stale   bool

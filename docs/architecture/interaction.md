@@ -72,6 +72,18 @@ The core keeps one focus per surface for `focus-within:` and `FocusWithin`: inpu
 - A drag or wheel turn scrolls the innermost scroll view under it that can move its content that way, so an inner one passes on only at its edge. A touch or trackpad gesture keeps the scroll view it began with. Android still uses its scroll views' own handling.
 - Desktop scroll bars show while their scroll view moves and while the pointer is over it, and can be dragged: the view's own indicator on macOS, `internal/platform/scrollbar`'s on Windows and Linux (Windows fades it as macOS does), and the browser's on the web.
 - `View.PanValues` binds a drag to animated values: the platform moves them before it reports each move, so the view follows on the main thread, as NSH's bound values do. A drag through `OnPan` and a signal costs a commit per turn.
+- A pinch reports its `Position` in the view: the fingers' middle, or the pointer over a trackpad, so a canvas zooms around it.
+
+`View.OnWheel`, which NSH lacks, takes the wheel and touchpad scrolls over a view before the scroll views around it, for what pans and zooms itself, such as a flow diagram; a scroll view inside the view takes its own first. `WheelEvent.Delta` is how far the content moves, a notch about 100 points as browsers scroll, and `Touchpad` tells a touch surface's scroll from a wheel's turns. The engine adds queued turns of one view up rather than replacing them.
+
+| Target | Takes | Touchpad | Glide after the fingers |
+| --- | --- | --- | --- |
+| macOS | `scrollWheel:` before the surface routes it to scroll views; a gesture and its momentum keep their view | A phase, which only touch surfaces report | The system's momentum, as more changes and an end |
+| iOS | Two scroll-only `UIPanGestureRecognizer`s: continuous for a trackpad, discrete for a wheel | The continuous one | The view's own, from the end's `Velocity` |
+| Web | The `wheel` event before the page's scroll handling, prevented | Pixels smaller than a notch | The browser's momentum, as more changes |
+| Windows | `WM_MOUSEWHEEL` and `WM_MOUSEHWHEEL` before the scroll views | Turns of less than a notch | The system's, as more turns |
+| Linux | The scroll controller before the scroll views; a touchpad keeps its view until `decelerate` | GTK's surface unit, or deltas of points before 4.8 | The view's own, from the end's `Velocity` |
+| Android | `ACTION_SCROLL` generic motions on the view | `SOURCE_TOUCHPAD` | None yet |
 
 ## File drops
 

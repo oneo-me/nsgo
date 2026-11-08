@@ -39,6 +39,7 @@ var Parameters = map[string][]string{
 	"CalendarMonth":      {"d"},
 	"CalendarMonthName":  {"d"},
 	"CalendarWeekday":    {"d"},
+	"FlowLabel":          {"nodes", "edges"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -52,6 +53,7 @@ type Translation struct {
 	CalendarMonth      func(d time.Time) string
 	CalendarMonthName  func(d time.Time) string
 	CalendarWeekday    func(d time.Time) string
+	FlowLabel          func(nodes int, edges int) string
 }
 
 var supplied = map[string]Translation{}
@@ -330,6 +332,9 @@ func Supply(lang string, t Translation) {
 	}
 	if t.CalendarWeekday != nil {
 		s.CalendarWeekday = t.CalendarWeekday
+	}
+	if t.FlowLabel != nil {
+		s.FlowLabel = t.FlowLabel
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -755,3 +760,45 @@ func BreadcrumbsMore(cx *core.Scope) string { return For(cx).BreadcrumbsMore() }
 
 // BreadcrumbsMore is the package's BreadcrumbsMore in the language of msgs.
 func (msgs Messages) BreadcrumbsMore() string { return msgs.text(textBreadcrumbsMore) }
+
+// FlowLabel says "{nodes, plural, one {# node} other {# nodes}}, {edges, plural, one {# edge} other {# edges}}"
+// in the language the app shows under cx.
+//
+// What screen readers say of a flow diagram the app gives no label, its counts of nodes and edges.
+func FlowLabel(cx *core.Scope, nodes int, edges int) string { return For(cx).FlowLabel(nodes, edges) }
+
+// FlowLabel is the package's FlowLabel in the language of msgs.
+func (msgs Messages) FlowLabel(nodes int, edges int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.FlowLabel(nodes, edges))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].FlowLabel; f != nil {
+			return f(nodes, edges)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			switch i18n.Cardinal("en", float64(nodes)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(nodes))))
+				b.WriteString(" node")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(nodes))))
+				b.WriteString(" nodes")
+			}
+			b.WriteString(", ")
+			switch i18n.Cardinal("en", float64(edges)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(edges))))
+				b.WriteString(" edge")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(edges))))
+				b.WriteString(" edges")
+			}
+			return b.String()
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(nodes)) + " 个节点，" + i18n.FormatNumber("zh-Hans", float64(edges)) + " 条边"
+		}
+	}
+}

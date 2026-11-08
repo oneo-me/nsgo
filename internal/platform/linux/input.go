@@ -394,6 +394,7 @@ func scrollCallback(controller uintptr, dx, dy float64, data uintptr) int32 {
 func scrollBeginCallback(_, data uintptr) {
 	if w := windowOf(data); w != nil {
 		w.stopWheelGlide()
+		w.wheelTaker = nil // the scroll finds its view anew
 	}
 }
 
@@ -412,7 +413,52 @@ func scrollDecelerateCallback(controller uintptr, vx, vy float64, data uintptr) 
 	if state&gdkShift != 0 {
 		vx, vy = vy, 0
 	}
+	if v := w.wheelTaker; v != nil {
+		w.wheelTaker = nil
+		if !v.deleted {
+			// GTK leaves the glide to the view, which carries the content
+			// on at the fingers' velocity.
+			ev := w.wheelEventAt(v, w.lastPointer, state)
+			ev.Phase, ev.Precise, ev.Velocity = driver.GestureEnded, true, driver.Point{X: driver.Points(-vx), Y: driver.Points(-vy)}
+			w.engine.Dispatch(ev)
+		}
+		return
+	}
 	w.wheelGlide(float32(vx/1000), float32(vy/1000))
+}
+
+// wheelTaken sends a wheel turn or touchpad scroll of (dx, dy), in
+// points, at p to the innermost view with OnWheel under it, unless a
+// scroll view inside it is there, and reports whether one took it. A
+// touchpad's scroll stays on the view it began on until its fingers lift.
+func (w *window) wheelTaken(state uint32, p driver.Point, dx, dy float64, touchpad bool) bool {
+	v := w.wheelTaker
+	if v == nil || v.deleted || !touchpad {
+		w.wheelTaker = nil
+		root := w.view(w.root)
+		if root == nil {
+			return false
+		}
+		under, _ := viewsAt(root, p, func(v *view) bool { return v.kind == driver.KindScroll || v.events.Has(driver.EventWheel) }, nil)
+		if len(under) == 0 || under[len(under)-1].kind == driver.KindScroll {
+			return false
+		}
+		v = under[len(under)-1]
+		if touchpad {
+			w.wheelTaker = v
+		}
+	}
+	ev := w.wheelEventAt(v, p, state)
+	ev.Phase, ev.Precise, ev.Delta = driver.GestureChanged, touchpad, driver.Point{X: driver.Points(-dx), Y: driver.Points(-dy)}
+	w.engine.Dispatch(ev)
+	return true
+}
+
+// wheelEventAt is a wheel event at surface point p over v.
+func (w *window) wheelEventAt(v *view, p driver.Point, state uint32) driver.Event {
+	b, _ := w.surfaceBounds(v)
+	return driver.Event{Kind: driver.EventWheel, ID: v.id, Point: driver.Point{X: p.X - b.Origin.X, Y: p.Y - b.Origin.Y}, Page: p,
+		Modifiers: modifiers(state)}
 }
 
 // controllerPoints reports whether a scroll controller's events come in
@@ -434,8 +480,14 @@ func (w *window) wheelEvent(state uint32, at driver.Point, dx, dy float64, inPoi
 	}
 	// GTK's wheel turns come as whole units; a touchpad's as points, which
 	// only their size tells before 4.8.
+	units := !inPoints && math.Abs(dx) <= 3 && math.Abs(dy) <= 3
+	// A view taking the wheel moves a notch three lines of 33 points, as
+	// browsers scroll about 100.
+	if units && w.wheelTaken(state, at, dx*99, dy*99, false) || !units && w.wheelTaken(state, at, dx, dy, true) {
+		return
+	}
 	notch := 48.0
-	if !inPoints && math.Abs(dx) <= 3 && math.Abs(dy) <= 3 {
+	if units {
 		dx, dy = dx*notch, dy*notch
 	}
 	w.wheel(at, dx, dy)
@@ -607,7 +659,17 @@ func (w *window) reportTwoFinger(kind driver.EventKind, value float32) {
 	}
 	g.value, g.lastTime, g.velocity = value, now, velocity
 	w.reportGesture(driver.Event{Kind: kind, ID: g.v.id, Phase: driver.GestureChanged, Value: value,
-		Velocity: driver.Point{X: driver.Points(velocity)}})
+		Velocity: driver.Point{X: driver.Points(velocity)}, Point: w.pinchPoint(g.v, kind, w.lastPointer)})
+}
+
+// pinchPoint is where a pinch at surface point p is about in v; other
+// gestures have none.
+func (w *window) pinchPoint(v *view, kind driver.EventKind, p driver.Point) driver.Point {
+	if kind != driver.EventPinch {
+		return driver.Point{}
+	}
+	b, _ := w.surfaceBounds(v)
+	return driver.Point{X: p.X - b.Origin.X, Y: p.Y - b.Origin.Y}
 }
 
 // rest is a gesture's value when it begins.
@@ -641,7 +703,8 @@ func (w *window) wheelPinch(p driver.Point, delta float64) {
 		w.reportGesture(driver.Event{Kind: driver.EventPinch, ID: v.id, Phase: driver.GestureBegan, Value: 1})
 	}
 	g.value *= float32(math.Pow(2, -delta/20))
-	w.reportGesture(driver.Event{Kind: driver.EventPinch, ID: g.v.id, Phase: driver.GestureChanged, Value: g.value})
+	w.reportGesture(driver.Event{Kind: driver.EventPinch, ID: g.v.id, Phase: driver.GestureChanged, Value: g.value,
+		Point: w.pinchPoint(g.v, driver.EventPinch, p)})
 	if w.pinchTimeout != 0 {
 		gSourceRemove(w.pinchTimeout)
 	}

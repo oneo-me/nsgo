@@ -148,6 +148,9 @@ var Parameters = map[string][]string{
 	"RichHeading":             {"level"},
 	"RichCount":               {"words", "characters"},
 	"SystemSpeechEnded":       {"reason"},
+	"FlowLabel":               {"nodes", "links"},
+	"FlowNewStep":             {"number"},
+	"FlowExperiment":          {"number"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -266,6 +269,9 @@ type Translation struct {
 	RichHeading             func(level int) string
 	RichCount               func(words int, characters int) string
 	SystemSpeechEnded       func(reason string) string
+	FlowLabel               func(nodes int, links int) string
+	FlowNewStep             func(number int) string
+	FlowExperiment          func(number int) string
 }
 
 var supplied = map[string]Translation{}
@@ -2209,6 +2215,47 @@ const (
 	textMediaSaved
 	textMediaClickThePage
 	textMediaSaveANote
+	textDemoFlowDiagram
+	textDemoFlowDiagramDetail
+	textFlowEmpty
+	textFlowAdd
+	textFlowReset
+	textFlowLeftToRight
+	textFlowEmptyState
+	textFlowZoomIn
+	textFlowZoomOut
+	textFlowFit
+	textFlowSelected
+	textFlowOpened
+	textFlowNewStepDetail
+	textFlowDone
+	textFlowRunning
+	textFlowPlanned
+	textFlowWaiting
+	textFlowDependsOn
+	textFlowInforms
+	textFlowGoal
+	textFlowGoalDetail
+	textFlowAudit
+	textFlowAuditDetail
+	textFlowContent
+	textFlowContentDetail
+	textFlowNavigation
+	textFlowNavigationDetail
+	textFlowSpeed
+	textFlowSpeedDetail
+	textFlowMenus
+	textFlowMenusDetail
+	textFlowRetest
+	textFlowRetestDetail
+	textFlowImages
+	textFlowImagesDetail
+	textFlowReview
+	textFlowReviewDetail
+	textFlowReady
+	textFlowReadyDetail
+	textFlowNotes
+	textFlowNotesDetail
 	numTexts
 )
 
@@ -4152,6 +4199,47 @@ var keyOfText = [numTexts]string{
 	"mediaSaved",
 	"mediaClickThePage",
 	"mediaSaveANote",
+	"demoFlowDiagram",
+	"demoFlowDiagramDetail",
+	"flowEmpty",
+	"flowAdd",
+	"flowReset",
+	"flowLeftToRight",
+	"flowEmptyState",
+	"flowZoomIn",
+	"flowZoomOut",
+	"flowFit",
+	"flowSelected",
+	"flowOpened",
+	"flowNewStepDetail",
+	"flowDone",
+	"flowRunning",
+	"flowPlanned",
+	"flowWaiting",
+	"flowDependsOn",
+	"flowInforms",
+	"flowGoal",
+	"flowGoalDetail",
+	"flowAudit",
+	"flowAuditDetail",
+	"flowContent",
+	"flowContentDetail",
+	"flowNavigation",
+	"flowNavigationDetail",
+	"flowSpeed",
+	"flowSpeedDetail",
+	"flowMenus",
+	"flowMenusDetail",
+	"flowRetest",
+	"flowRetestDetail",
+	"flowImages",
+	"flowImagesDetail",
+	"flowReview",
+	"flowReviewDetail",
+	"flowReady",
+	"flowReadyDetail",
+	"flowNotes",
+	"flowNotesDetail",
 }
 
 // textsEn are the messages without arguments in en.
@@ -6092,7 +6180,48 @@ var textsEn = i18n.NewTexts(""+
 	"Lifecycle"+
 	"Saved"+
 	"Click the page’s button"+
-	"Save the page’s note",
+	"Save the page’s note"+
+	"FlowDiagram"+
+	"A plan laid out in ranks along its links, with orthogonal routes, selection, a camera that pans and zooms, and steps that move as the plan changes"+
+	"No steps planned yet"+
+	"Add a step"+
+	"Remove added steps"+
+	"Lay out left to right"+
+	"Show the empty state"+
+	"Zoom in"+
+	"Zoom out"+
+	"Fit view"+
+	"Selected"+
+	"Opened"+
+	"Added to watch the layout adapt"+
+	"Done"+
+	"In progress"+
+	"Planned"+
+	"Waiting"+
+	"depends on"+
+	"informs"+
+	"Launch the redesigned website"+
+	"Goal defined"+
+	"Audit the current site"+
+	"Inventory pages, traffic and gaps"+
+	"Rewrite the key pages"+
+	"Shorter copy for the top ten pages"+
+	"Prototype the navigation"+
+	"Compare two menu structures"+
+	"Measure page speed"+
+	"Lab and field measurements"+
+	"Short menus test best"+
+	"From the navigation prototype"+
+	"Retest on the staging server"+
+	"Waiting for the server to return"+
+	"Images slow the home page"+
+	"From the speed measurements"+
+	"Review the launch"+
+	"Check that every goal is met"+
+	"Ready to launch"+
+	"The launch review passed"+
+	"Write the release notes"+
+	"Summarize what changed",
 	[]uint16{
 		7,
 		7,
@@ -8030,6 +8159,47 @@ var textsEn = i18n.NewTexts(""+
 		9,
 		5,
 		25,
+		22,
+		11,
+		146,
+		20,
+		10,
+		18,
+		21,
+		20,
+		7,
+		8,
+		8,
+		8,
+		6,
+		31,
+		4,
+		11,
+		7,
+		7,
+		10,
+		7,
+		29,
+		12,
+		22,
+		33,
+		21,
+		34,
+		24,
+		27,
+		18,
+		26,
+		21,
+		29,
+		28,
+		32,
+		25,
+		27,
+		17,
+		28,
+		15,
+		24,
+		23,
 		22,
 	})
 
@@ -9971,7 +10141,48 @@ var textsZhHans = i18n.NewTexts(""+
 	"生命周期"+
 	"已保存"+
 	"点击页面的按钮"+
-	"保存页面的笔记",
+	"保存页面的笔记"+
+	"流程图"+
+	"沿关联分层排列的计划，正交连线、选择、可平移缩放的视图，以及随计划变化移动的步骤"+
+	"还没有计划步骤"+
+	"添加步骤"+
+	"移除新增步骤"+
+	"从左到右排列"+
+	"显示空状态"+
+	"放大"+
+	"缩小"+
+	"适应视图"+
+	"已选中"+
+	"已打开"+
+	"新增后布局会自动调整"+
+	"完成"+
+	"进行中"+
+	"计划中"+
+	"等待中"+
+	"依赖"+
+	"参考"+
+	"上线改版后的网站"+
+	"目标已确定"+
+	"盘点现有网站"+
+	"梳理页面、流量与不足"+
+	"重写关键页面"+
+	"精简访问量前十页面的文案"+
+	"原型验证导航"+
+	"对比两种菜单结构"+
+	"测量页面速度"+
+	"实验室与真实环境测量"+
+	"精简菜单测试效果最好"+
+	"来自导航原型"+
+	"在预发布服务器上复测"+
+	"等待服务器恢复"+
+	"图片拖慢了首页"+
+	"来自速度测量"+
+	"评审上线"+
+	"确认每个目标都已达成"+
+	"可以上线"+
+	"上线评审已通过"+
+	"撰写发布说明"+
+	"总结改动内容",
 	[]uint16{
 		6,
 		6,
@@ -11910,6 +12121,47 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		21,
 		21,
+		9,
+		120,
+		21,
+		12,
+		18,
+		18,
+		15,
+		6,
+		6,
+		12,
+		9,
+		9,
+		30,
+		6,
+		9,
+		9,
+		9,
+		6,
+		6,
+		24,
+		15,
+		18,
+		30,
+		18,
+		36,
+		18,
+		24,
+		18,
+		30,
+		30,
+		18,
+		30,
+		21,
+		21,
+		18,
+		12,
+		30,
+		12,
+		21,
+		18,
+		18,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -12295,6 +12547,15 @@ func Supply(lang string, t Translation) {
 	}
 	if t.SystemSpeechEnded != nil {
 		s.SystemSpeechEnded = t.SystemSpeechEnded
+	}
+	if t.FlowLabel != nil {
+		s.FlowLabel = t.FlowLabel
+	}
+	if t.FlowNewStep != nil {
+		s.FlowNewStep = t.FlowNewStep
+	}
+	if t.FlowExperiment != nil {
+		s.FlowExperiment = t.FlowExperiment
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -29570,3 +29831,376 @@ func MediaSaveANote(cx *core.Scope) string { return For(cx).MediaSaveANote() }
 
 // MediaSaveANote is the package's MediaSaveANote in the language of msgs.
 func (msgs Messages) MediaSaveANote() string { return msgs.text(textMediaSaveANote) }
+
+// DemoFlowDiagram says "FlowDiagram"
+// in the language the app shows under cx.
+func DemoFlowDiagram(cx *core.Scope) string { return For(cx).DemoFlowDiagram() }
+
+// DemoFlowDiagram is the package's DemoFlowDiagram in the language of msgs.
+func (msgs Messages) DemoFlowDiagram() string { return msgs.text(textDemoFlowDiagram) }
+
+// DemoFlowDiagramDetail says "A plan laid out in ranks along its links, with orthogonal routes, selection, a camera that pans and zooms, and steps that move as the plan changes"
+// in the language the app shows under cx.
+func DemoFlowDiagramDetail(cx *core.Scope) string { return For(cx).DemoFlowDiagramDetail() }
+
+// DemoFlowDiagramDetail is the package's DemoFlowDiagramDetail in the language of msgs.
+func (msgs Messages) DemoFlowDiagramDetail() string { return msgs.text(textDemoFlowDiagramDetail) }
+
+// FlowLabel says "Plan with {nodes, plural, one {# step} other {# steps}} and {links, plural, one {# link} other {# links}}. Click a step to select it, double-click to open it, drag to pan, and use the wheel or pinch to zoom."
+// in the language the app shows under cx.
+func FlowLabel(cx *core.Scope, nodes int, links int) string { return For(cx).FlowLabel(nodes, links) }
+
+// FlowLabel is the package's FlowLabel in the language of msgs.
+func (msgs Messages) FlowLabel(nodes int, links int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.FlowLabel(nodes, links))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].FlowLabel; f != nil {
+			return f(nodes, links)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			b.WriteString("Plan with ")
+			switch i18n.Cardinal("en", float64(nodes)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(nodes))))
+				b.WriteString(" step")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(nodes))))
+				b.WriteString(" steps")
+			}
+			b.WriteString(" and ")
+			switch i18n.Cardinal("en", float64(links)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(links))))
+				b.WriteString(" link")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(links))))
+				b.WriteString(" links")
+			}
+			b.WriteString(". Click a step to select it, double-click to open it, drag to pan, and use the wheel or pinch to zoom.")
+			return b.String()
+		case "zh-Hans":
+			return "包含 " + i18n.FormatNumber("zh-Hans", float64(nodes)) + " 个步骤和 " + i18n.FormatNumber("zh-Hans", float64(links)) + " 条关联的计划。点击步骤可选中，双击可打开，拖动画布可平移，滚轮或双指捏合可缩放。"
+		}
+	}
+}
+
+// FlowEmpty says "No steps planned yet"
+// in the language the app shows under cx.
+func FlowEmpty(cx *core.Scope) string { return For(cx).FlowEmpty() }
+
+// FlowEmpty is the package's FlowEmpty in the language of msgs.
+func (msgs Messages) FlowEmpty() string { return msgs.text(textFlowEmpty) }
+
+// FlowAdd says "Add a step"
+// in the language the app shows under cx.
+func FlowAdd(cx *core.Scope) string { return For(cx).FlowAdd() }
+
+// FlowAdd is the package's FlowAdd in the language of msgs.
+func (msgs Messages) FlowAdd() string { return msgs.text(textFlowAdd) }
+
+// FlowReset says "Remove added steps"
+// in the language the app shows under cx.
+func FlowReset(cx *core.Scope) string { return For(cx).FlowReset() }
+
+// FlowReset is the package's FlowReset in the language of msgs.
+func (msgs Messages) FlowReset() string { return msgs.text(textFlowReset) }
+
+// FlowLeftToRight says "Lay out left to right"
+// in the language the app shows under cx.
+func FlowLeftToRight(cx *core.Scope) string { return For(cx).FlowLeftToRight() }
+
+// FlowLeftToRight is the package's FlowLeftToRight in the language of msgs.
+func (msgs Messages) FlowLeftToRight() string { return msgs.text(textFlowLeftToRight) }
+
+// FlowEmptyState says "Show the empty state"
+// in the language the app shows under cx.
+func FlowEmptyState(cx *core.Scope) string { return For(cx).FlowEmptyState() }
+
+// FlowEmptyState is the package's FlowEmptyState in the language of msgs.
+func (msgs Messages) FlowEmptyState() string { return msgs.text(textFlowEmptyState) }
+
+// FlowZoomIn says "Zoom in"
+// in the language the app shows under cx.
+func FlowZoomIn(cx *core.Scope) string { return For(cx).FlowZoomIn() }
+
+// FlowZoomIn is the package's FlowZoomIn in the language of msgs.
+func (msgs Messages) FlowZoomIn() string { return msgs.text(textFlowZoomIn) }
+
+// FlowZoomOut says "Zoom out"
+// in the language the app shows under cx.
+func FlowZoomOut(cx *core.Scope) string { return For(cx).FlowZoomOut() }
+
+// FlowZoomOut is the package's FlowZoomOut in the language of msgs.
+func (msgs Messages) FlowZoomOut() string { return msgs.text(textFlowZoomOut) }
+
+// FlowFit says "Fit view"
+// in the language the app shows under cx.
+func FlowFit(cx *core.Scope) string { return For(cx).FlowFit() }
+
+// FlowFit is the package's FlowFit in the language of msgs.
+func (msgs Messages) FlowFit() string { return msgs.text(textFlowFit) }
+
+// FlowSelected says "Selected"
+// in the language the app shows under cx.
+func FlowSelected(cx *core.Scope) string { return For(cx).FlowSelected() }
+
+// FlowSelected is the package's FlowSelected in the language of msgs.
+func (msgs Messages) FlowSelected() string { return msgs.text(textFlowSelected) }
+
+// FlowOpened says "Opened"
+// in the language the app shows under cx.
+func FlowOpened(cx *core.Scope) string { return For(cx).FlowOpened() }
+
+// FlowOpened is the package's FlowOpened in the language of msgs.
+func (msgs Messages) FlowOpened() string { return msgs.text(textFlowOpened) }
+
+// FlowNewStep says "Follow-up step {number, number}"
+// in the language the app shows under cx.
+func FlowNewStep(cx *core.Scope, number int) string { return For(cx).FlowNewStep(number) }
+
+// FlowNewStep is the package's FlowNewStep in the language of msgs.
+func (msgs Messages) FlowNewStep(number int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.FlowNewStep(number))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].FlowNewStep; f != nil {
+			return f(number)
+		}
+		switch lang {
+		case "", "en":
+			return "Follow-up step " + msgs.arg(i18n.FormatNumber("en", float64(number)))
+		case "zh-Hans":
+			return "后续步骤 " + i18n.FormatNumber("zh-Hans", float64(number))
+		}
+	}
+}
+
+// FlowNewStepDetail says "Added to watch the layout adapt"
+// in the language the app shows under cx.
+func FlowNewStepDetail(cx *core.Scope) string { return For(cx).FlowNewStepDetail() }
+
+// FlowNewStepDetail is the package's FlowNewStepDetail in the language of msgs.
+func (msgs Messages) FlowNewStepDetail() string { return msgs.text(textFlowNewStepDetail) }
+
+// FlowExperiment says "Experiment #{number, number}"
+// in the language the app shows under cx.
+func FlowExperiment(cx *core.Scope, number int) string { return For(cx).FlowExperiment(number) }
+
+// FlowExperiment is the package's FlowExperiment in the language of msgs.
+func (msgs Messages) FlowExperiment(number int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.FlowExperiment(number))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].FlowExperiment; f != nil {
+			return f(number)
+		}
+		switch lang {
+		case "", "en":
+			return "Experiment #" + msgs.arg(i18n.FormatNumber("en", float64(number)))
+		case "zh-Hans":
+			return "实验 #" + i18n.FormatNumber("zh-Hans", float64(number))
+		}
+	}
+}
+
+// FlowDone says "Done"
+// in the language the app shows under cx.
+func FlowDone(cx *core.Scope) string { return For(cx).FlowDone() }
+
+// FlowDone is the package's FlowDone in the language of msgs.
+func (msgs Messages) FlowDone() string { return msgs.text(textFlowDone) }
+
+// FlowRunning says "In progress"
+// in the language the app shows under cx.
+func FlowRunning(cx *core.Scope) string { return For(cx).FlowRunning() }
+
+// FlowRunning is the package's FlowRunning in the language of msgs.
+func (msgs Messages) FlowRunning() string { return msgs.text(textFlowRunning) }
+
+// FlowPlanned says "Planned"
+// in the language the app shows under cx.
+func FlowPlanned(cx *core.Scope) string { return For(cx).FlowPlanned() }
+
+// FlowPlanned is the package's FlowPlanned in the language of msgs.
+func (msgs Messages) FlowPlanned() string { return msgs.text(textFlowPlanned) }
+
+// FlowWaiting says "Waiting"
+// in the language the app shows under cx.
+func FlowWaiting(cx *core.Scope) string { return For(cx).FlowWaiting() }
+
+// FlowWaiting is the package's FlowWaiting in the language of msgs.
+func (msgs Messages) FlowWaiting() string { return msgs.text(textFlowWaiting) }
+
+// FlowDependsOn says "depends on"
+// in the language the app shows under cx.
+func FlowDependsOn(cx *core.Scope) string { return For(cx).FlowDependsOn() }
+
+// FlowDependsOn is the package's FlowDependsOn in the language of msgs.
+func (msgs Messages) FlowDependsOn() string { return msgs.text(textFlowDependsOn) }
+
+// FlowInforms says "informs"
+// in the language the app shows under cx.
+func FlowInforms(cx *core.Scope) string { return For(cx).FlowInforms() }
+
+// FlowInforms is the package's FlowInforms in the language of msgs.
+func (msgs Messages) FlowInforms() string { return msgs.text(textFlowInforms) }
+
+// FlowGoal says "Launch the redesigned website"
+// in the language the app shows under cx.
+func FlowGoal(cx *core.Scope) string { return For(cx).FlowGoal() }
+
+// FlowGoal is the package's FlowGoal in the language of msgs.
+func (msgs Messages) FlowGoal() string { return msgs.text(textFlowGoal) }
+
+// FlowGoalDetail says "Goal defined"
+// in the language the app shows under cx.
+func FlowGoalDetail(cx *core.Scope) string { return For(cx).FlowGoalDetail() }
+
+// FlowGoalDetail is the package's FlowGoalDetail in the language of msgs.
+func (msgs Messages) FlowGoalDetail() string { return msgs.text(textFlowGoalDetail) }
+
+// FlowAudit says "Audit the current site"
+// in the language the app shows under cx.
+func FlowAudit(cx *core.Scope) string { return For(cx).FlowAudit() }
+
+// FlowAudit is the package's FlowAudit in the language of msgs.
+func (msgs Messages) FlowAudit() string { return msgs.text(textFlowAudit) }
+
+// FlowAuditDetail says "Inventory pages, traffic and gaps"
+// in the language the app shows under cx.
+func FlowAuditDetail(cx *core.Scope) string { return For(cx).FlowAuditDetail() }
+
+// FlowAuditDetail is the package's FlowAuditDetail in the language of msgs.
+func (msgs Messages) FlowAuditDetail() string { return msgs.text(textFlowAuditDetail) }
+
+// FlowContent says "Rewrite the key pages"
+// in the language the app shows under cx.
+func FlowContent(cx *core.Scope) string { return For(cx).FlowContent() }
+
+// FlowContent is the package's FlowContent in the language of msgs.
+func (msgs Messages) FlowContent() string { return msgs.text(textFlowContent) }
+
+// FlowContentDetail says "Shorter copy for the top ten pages"
+// in the language the app shows under cx.
+func FlowContentDetail(cx *core.Scope) string { return For(cx).FlowContentDetail() }
+
+// FlowContentDetail is the package's FlowContentDetail in the language of msgs.
+func (msgs Messages) FlowContentDetail() string { return msgs.text(textFlowContentDetail) }
+
+// FlowNavigation says "Prototype the navigation"
+// in the language the app shows under cx.
+func FlowNavigation(cx *core.Scope) string { return For(cx).FlowNavigation() }
+
+// FlowNavigation is the package's FlowNavigation in the language of msgs.
+func (msgs Messages) FlowNavigation() string { return msgs.text(textFlowNavigation) }
+
+// FlowNavigationDetail says "Compare two menu structures"
+// in the language the app shows under cx.
+func FlowNavigationDetail(cx *core.Scope) string { return For(cx).FlowNavigationDetail() }
+
+// FlowNavigationDetail is the package's FlowNavigationDetail in the language of msgs.
+func (msgs Messages) FlowNavigationDetail() string { return msgs.text(textFlowNavigationDetail) }
+
+// FlowSpeed says "Measure page speed"
+// in the language the app shows under cx.
+func FlowSpeed(cx *core.Scope) string { return For(cx).FlowSpeed() }
+
+// FlowSpeed is the package's FlowSpeed in the language of msgs.
+func (msgs Messages) FlowSpeed() string { return msgs.text(textFlowSpeed) }
+
+// FlowSpeedDetail says "Lab and field measurements"
+// in the language the app shows under cx.
+func FlowSpeedDetail(cx *core.Scope) string { return For(cx).FlowSpeedDetail() }
+
+// FlowSpeedDetail is the package's FlowSpeedDetail in the language of msgs.
+func (msgs Messages) FlowSpeedDetail() string { return msgs.text(textFlowSpeedDetail) }
+
+// FlowMenus says "Short menus test best"
+// in the language the app shows under cx.
+func FlowMenus(cx *core.Scope) string { return For(cx).FlowMenus() }
+
+// FlowMenus is the package's FlowMenus in the language of msgs.
+func (msgs Messages) FlowMenus() string { return msgs.text(textFlowMenus) }
+
+// FlowMenusDetail says "From the navigation prototype"
+// in the language the app shows under cx.
+func FlowMenusDetail(cx *core.Scope) string { return For(cx).FlowMenusDetail() }
+
+// FlowMenusDetail is the package's FlowMenusDetail in the language of msgs.
+func (msgs Messages) FlowMenusDetail() string { return msgs.text(textFlowMenusDetail) }
+
+// FlowRetest says "Retest on the staging server"
+// in the language the app shows under cx.
+func FlowRetest(cx *core.Scope) string { return For(cx).FlowRetest() }
+
+// FlowRetest is the package's FlowRetest in the language of msgs.
+func (msgs Messages) FlowRetest() string { return msgs.text(textFlowRetest) }
+
+// FlowRetestDetail says "Waiting for the server to return"
+// in the language the app shows under cx.
+func FlowRetestDetail(cx *core.Scope) string { return For(cx).FlowRetestDetail() }
+
+// FlowRetestDetail is the package's FlowRetestDetail in the language of msgs.
+func (msgs Messages) FlowRetestDetail() string { return msgs.text(textFlowRetestDetail) }
+
+// FlowImages says "Images slow the home page"
+// in the language the app shows under cx.
+func FlowImages(cx *core.Scope) string { return For(cx).FlowImages() }
+
+// FlowImages is the package's FlowImages in the language of msgs.
+func (msgs Messages) FlowImages() string { return msgs.text(textFlowImages) }
+
+// FlowImagesDetail says "From the speed measurements"
+// in the language the app shows under cx.
+func FlowImagesDetail(cx *core.Scope) string { return For(cx).FlowImagesDetail() }
+
+// FlowImagesDetail is the package's FlowImagesDetail in the language of msgs.
+func (msgs Messages) FlowImagesDetail() string { return msgs.text(textFlowImagesDetail) }
+
+// FlowReview says "Review the launch"
+// in the language the app shows under cx.
+func FlowReview(cx *core.Scope) string { return For(cx).FlowReview() }
+
+// FlowReview is the package's FlowReview in the language of msgs.
+func (msgs Messages) FlowReview() string { return msgs.text(textFlowReview) }
+
+// FlowReviewDetail says "Check that every goal is met"
+// in the language the app shows under cx.
+func FlowReviewDetail(cx *core.Scope) string { return For(cx).FlowReviewDetail() }
+
+// FlowReviewDetail is the package's FlowReviewDetail in the language of msgs.
+func (msgs Messages) FlowReviewDetail() string { return msgs.text(textFlowReviewDetail) }
+
+// FlowReady says "Ready to launch"
+// in the language the app shows under cx.
+func FlowReady(cx *core.Scope) string { return For(cx).FlowReady() }
+
+// FlowReady is the package's FlowReady in the language of msgs.
+func (msgs Messages) FlowReady() string { return msgs.text(textFlowReady) }
+
+// FlowReadyDetail says "The launch review passed"
+// in the language the app shows under cx.
+func FlowReadyDetail(cx *core.Scope) string { return For(cx).FlowReadyDetail() }
+
+// FlowReadyDetail is the package's FlowReadyDetail in the language of msgs.
+func (msgs Messages) FlowReadyDetail() string { return msgs.text(textFlowReadyDetail) }
+
+// FlowNotes says "Write the release notes"
+// in the language the app shows under cx.
+func FlowNotes(cx *core.Scope) string { return For(cx).FlowNotes() }
+
+// FlowNotes is the package's FlowNotes in the language of msgs.
+func (msgs Messages) FlowNotes() string { return msgs.text(textFlowNotes) }
+
+// FlowNotesDetail says "Summarize what changed"
+// in the language the app shows under cx.
+func FlowNotesDetail(cx *core.Scope) string { return For(cx).FlowNotesDetail() }
+
+// FlowNotesDetail is the package's FlowNotesDetail in the language of msgs.
+func (msgs Messages) FlowNotesDetail() string { return msgs.text(textFlowNotesDetail) }

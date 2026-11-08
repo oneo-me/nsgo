@@ -106,6 +106,7 @@ func init() {
 		{"DataTable", m.DemoDataTable, m.DemoDataTableDetail, lucide.Table, dataTableDemo},
 		{"CommitGraph", m.DemoCommitGraph, m.DemoCommitGraphDetail, lucide.GitGraph, commitGraphDemo},
 		{"Plot", m.DemoPlot, m.DemoPlotDetail, lucide.ChartSpline, chartsDemo},
+		{"FlowDiagram", m.DemoFlowDiagram, m.DemoFlowDiagramDetail, lucide.Workflow, flowDemo},
 	}
 	containers := []demo{
 		{"Accordion", m.DemoAccordion, m.DemoAccordionDetail, lucide.Rows3, cardsDemo(accordionCard, collapsiblePlayground)},
