@@ -65,4 +65,4 @@ core.Text{Content: "Done", Class: "self-start rounded-full bg-zinc-100 px-3 py-1
 
 ## 桌面应用
 
-`nsgo.Run(Root)` 显示一个根视图。桌面应用也可以自己决定显示什么：`nsgo.Run(App)` 运行一次 `func App(app *core.Scope)`，由它通过 `desktop` 打开窗口、面板、托盘图标和全局快捷键。
+`nsgo.Run(Root)` 显示一个根视图。桌面应用也可以自己决定显示什么：`nsgo.Run(App)` 运行一次 `func App(app *core.Scope)`，由它通过 `desktop` 打开窗口、面板、托盘图标和全局快捷键，它们共享它的 signal。目前仅支持 macOS；`examples/tray` 不出现在程序坞中，只驻留在菜单栏。

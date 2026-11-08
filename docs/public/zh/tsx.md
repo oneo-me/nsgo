@@ -33,11 +33,11 @@ function App() {
 mount(App);
 ```
 
-`go tool nsgo init -template tsx` 会写出这样一个应用。`nsgo dev` 和 `nsgo build` 会提前编译 TSX，所以发布的包里不带编译器，也不需要 Node。
+`go tool nsgo init -template tsx` 会写出这样一个应用，`examples/tsx` 也是一个例子。`nsgo dev` 和 `nsgo build` 会提前编译 TSX，所以发布的包里不带编译器；`go run` 和 `go test` 则在应用启动时编译。两种方式都不需要 Node。
 
 ## 组件与模块
 
-TSX 从 `nsgo` 导入基本元素，从 `nsgo/base` 导入 `base` 的组件；应用导入 `tsx/ui` 并设置 `ui.DefaultTheme` 后，还能从 `nsgo/ui` 导入 `ui` 的组件。
+TSX 从 `nsgo` 导入基本元素，从 `nsgo/base` 导入 `base` 的组件；应用导入 `tsx/ui` 并设置 `ui.DefaultTheme` 后，还能从 `nsgo/ui` 导入 `ui` 的组件；`examples/gallery-tsx` 展示了这些组件。
 
 ## 在 TSX 中使用 Go
 

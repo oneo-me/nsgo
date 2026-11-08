@@ -45,7 +45,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 
 ## Verification
 
-Run `go tool nsgo check` and `go tool nsgo test` from the repository root, never `go vet`, `go test`, `go build` or `go run` directly; when the tool cannot do something an app or this repository needs, extend the tool. The development setup lives in [README.md](README.md#development).
+Run `go tool nsgo check` and `go tool nsgo test` from the repository root, never `go vet`, `go test`, `go build` or `go run` directly; when the tool cannot do something an app or this repository needs, extend the tool. The development setup lives in [Contributing](docs/public/en/contributing.md).
 
 Run `bun run build` in `website/` when changing the website; it type-checks the site and rebuilds the gallery it embeds.
 

@@ -52,7 +52,6 @@ const repo = 'https://github.com/oneo-me/nsgo';
 export const links = {
   repo,
   issues: `${repo}/issues`,
-  readme: `${repo}#usage`,
   architecture: `${repo}/blob/main/ARCHITECTURE.md`,
   roadmap: `${repo}/blob/main/docs/roadmap.md`,
   changelog: `${repo}/blob/main/CHANGELOG.md`,

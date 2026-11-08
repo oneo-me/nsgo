@@ -9,7 +9,10 @@ order: 2
 
 - [Go](https://go.dev/dl/) 1.26 or later.
 - To build for iOS, a Mac with Xcode. Every other target builds from macOS with Go alone; the x86_64 Android emulator's also needs an Android NDK.
-- To run on Linux, GTK 4.14 or newer, Pango and Cairo; WebKitGTK 6.0 for web views.
+- To run on an iPhone, an Apple ID in Xcode's Accounts and the iPhone trusted, with Developer Mode on.
+- To run on Android, `adb` from the Android SDK's platform-tools.
+- To run on Windows, Go alone, which also builds the Windows and web packages.
+- To run on Linux, GTK 4.14 or newer, Pango and Cairo; WebKitGTK 6.0 for web views and GStreamer plug-ins for videos.
 
 ## Create an app
 
@@ -39,7 +42,7 @@ go tool nsgo init
 go tool nsgo dev
 ```
 
-`dev` builds the app for this machine and opens it. On each save it rebuilds and restarts the app, and a change of TSX alone updates the running app in place. A failed build shows over the app; Command or Control+R builds again.
+`dev` builds the app for this machine and opens it. On each save it rebuilds and restarts the app, and a change of TSX alone updates the running app in place, keeping top-level signals, navigation stacks and the state of the components it did not change. A failed build shows over the app; Command or Control+R builds again. `dev.hot_reload: false` in `nsgo.yaml` runs it once instead.
 
 Run it somewhere else with `-target`:
 
@@ -49,13 +52,15 @@ go tool nsgo dev -target ios_simulator  # in the iOS simulator
 go tool nsgo dev -target android        # on a connected device or emulator
 ```
 
+`-device` picks the iPhone, simulator or Android device, `-port` the web server's port, `-trace` prints each commit of the running app with its time and mount items, and `-fps` shows the performance monitor on macOS, iOS, Windows and Linux. `-h` lists every flag.
+
 ## The project
 
 Beside `nsgo.yaml`, an app may have:
 
-- `resources/`: files the app ships, such as images it loads with `asset:` and fonts.
+- `resources/`: files the app ships, such as images it loads with `asset:` and fonts it registers with `nsgo.Fonts("fonts/Brand.ttf")`.
 - `assets/`: project files that do not ship, such as `AppIcon.icon` and `Icon.png`.
-- `locales/`: the app's messages, a YAML file per language.
+- `locales/`: the app's messages, a YAML file per language ([Localization](localization.md)).
 
 ## Next
 

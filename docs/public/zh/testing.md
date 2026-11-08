@@ -27,7 +27,9 @@ func TestPress(t *testing.T) {
 go tool nsgo test
 ```
 
-`test` 每个测试输出一行。`-run` 像 `go test` 一样筛选测试，`-junit report.xml` 写出 JUnit 报告，`-bench` 改为运行基准测试。
+`test` 每个测试输出一行。`-run` 像 `go test` 一样筛选测试，`-junit report.xml` 写出 JUnit 报告，`-trace` 打印每一步的挂载项和提交耗时，`-bench` 改为运行基准测试，每个结果输出一行。`--` 之后的参数交给 `go test`。
+
+传入没有 `nsgo.yaml` 的目录（例如库或模块根目录）时，`test` 会处理其下的所有包；目录也可以像 Go 的包模式那样以 `/...` 结尾。`go tool nsgo check` 以同样的方式选取并检查包。
 
 ## 在平台上运行
 
@@ -37,8 +39,14 @@ go tool nsgo test
 go tool nsgo test -target macos
 ```
 
-可用的目标有 `macos`、`windows`、`linux`、`web`（在 Chrome、Chromium 或 Edge 中）、`ios_simulator` 和 `android`。每个测试在独立的进程中运行，`app.Screenshot("name")` 会把截图保存到 `.nsgo/test/screenshots`。
+可用的目标有 `macos`、`windows`、`linux`、`web`（在 Chrome、Chromium 或 Edge 中）、`ios_simulator` 和 `android`，或 `all`。每个测试在独立的进程中运行，`app.Screenshot("name")` 会把截图保存到 `.nsgo/test/screenshots`，`-fps` 会在 `macos`、`windows`、`linux` 和 `ios_simulator` 上每秒记录一次性能监视器的读数。
 
 ## TSX 测试
 
 TSX 应用中用 `nsgo/test` 编写的 `*.test.tsx` 文件会随 Go 测试一起运行。
+
+不写测试文件也能驱动 TSX 应用：传入它的入口，并从标准输入提供步骤，写法与 `*.test.tsx` 测试的函数体相同，`app` 即该应用：
+
+```sh
+go tool nsgo test App.tsx < steps.ts
+```

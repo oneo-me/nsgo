@@ -27,7 +27,9 @@ func TestPress(t *testing.T) {
 go tool nsgo test
 ```
 
-`test` prints a line per test. `-run` picks tests as `go test`'s does, `-junit report.xml` writes a JUnit report and `-bench` runs benchmarks instead.
+`test` prints a line per test. `-run` picks tests as `go test`'s does, `-junit report.xml` writes a JUnit report, `-trace` prints each step's mount items and commit times and `-bench` runs benchmarks instead, a line per result. Flags after `--` go to `go test`.
+
+Given a directory without `nsgo.yaml`, such as a library or the module's root, `test` takes every package under it; a directory may also end in `/...`, as Go's patterns do. `go tool nsgo check` takes packages the same way and vets them.
 
 ## Run on a platform
 
@@ -37,8 +39,14 @@ The same tests run in a real window with the platform's own input:
 go tool nsgo test -target macos
 ```
 
-The targets are `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` and `android`. Each test runs in a process of its own, and `app.Screenshot("name")` saves screenshots in `.nsgo/test/screenshots`.
+The targets are `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator` and `android`, or `all`. Each test runs in a process of its own, `app.Screenshot("name")` saves screenshots in `.nsgo/test/screenshots`, and `-fps` logs the performance monitor's readings each second on `macos`, `windows`, `linux` and `ios_simulator`.
 
 ## TSX tests
 
 A TSX app's `*.test.tsx` files, written with `nsgo/test`, run with its Go tests.
+
+To script a TSX app without a test file, pass its entry and the steps on standard input, written as a `*.test.tsx` test's body with `app` the app:
+
+```sh
+go tool nsgo test App.tsx < steps.ts
+```

@@ -4,7 +4,7 @@ NSGo is a Go port of the design of [Native Shell (NSH)](https://github.com/longb
 
 ## Reference implementation
 
-NSH, checked out beside the repository at its latest release ([development](README.md#development)), is a reference, not a constraint ([principles](AGENTS.md#principles)): port its design rather than its code. [NSGo and NSH](docs/architecture/nsh.md) says what NSGo keeps, changes, adds and leaves out.
+NSH, checked out beside the repository at its latest release ([contributing](docs/public/en/contributing.md#nsh)), is a reference, not a constraint ([principles](AGENTS.md#principles)): port its design rather than its code. [NSGo and NSH](docs/architecture/nsh.md) says what NSGo keeps, changes, adds and leaves out.
 
 ## Code map
 

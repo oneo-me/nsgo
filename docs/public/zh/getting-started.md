@@ -9,7 +9,10 @@ order: 2
 
 - [Go](https://go.dev/dl/) 1.26 或更新版本。
 - 构建 iOS 需要装有 Xcode 的 Mac。其他目标在 macOS 上只需 Go 即可构建；x86_64 Android 模拟器的目标另需 Android NDK。
-- 在 Linux 上运行需要 GTK 4.14 或更新版本、Pango 和 Cairo；网页视图需要 WebKitGTK 6.0。
+- 在 iPhone 上运行需要在 Xcode 的 Accounts 中登录 Apple ID，并信任这台 iPhone、开启开发者模式。
+- 在 Android 上运行需要 Android SDK platform-tools 中的 `adb`。
+- 在 Windows 上运行只需 Go，它也能构建 Windows 和 Web 包。
+- 在 Linux 上运行需要 GTK 4.14 或更新版本、Pango 和 Cairo；网页视图需要 WebKitGTK 6.0，视频需要 GStreamer 插件。
 
 ## 创建应用
 
@@ -39,7 +42,7 @@ go tool nsgo init
 go tool nsgo dev
 ```
 
-`dev` 为本机构建并打开应用。每次保存都会重新构建并重启应用；只改动 TSX 时，会直接更新正在运行的应用。构建失败会显示在应用上方，按 Command 或 Control+R 重新构建。
+`dev` 为本机构建并打开应用。每次保存都会重新构建并重启应用；只改动 TSX 时，会直接更新正在运行的应用，并保留顶层 signal、导航栈和未改动组件的状态。构建失败会显示在应用上方，按 Command 或 Control+R 重新构建。在 `nsgo.yaml` 中设置 `dev.hot_reload: false` 则只运行一次。
 
 用 `-target` 在别处运行：
 
@@ -49,13 +52,15 @@ go tool nsgo dev -target ios_simulator  # 在 iOS 模拟器中
 go tool nsgo dev -target android        # 在连接的设备或模拟器上
 ```
 
+`-device` 选择 iPhone、模拟器或 Android 设备，`-port` 指定网页服务器的端口，`-trace` 打印运行中应用的每次提交及其耗时和挂载项，`-fps` 在 macOS、iOS、Windows 和 Linux 上显示性能监视器。`-h` 列出全部参数。
+
 ## 项目结构
 
 在 `nsgo.yaml` 旁边，应用还可以有：
 
-- `resources/`：随应用发布的文件，例如用 `asset:` 加载的图片和字体。
+- `resources/`：随应用发布的文件，例如用 `asset:` 加载的图片，以及用 `nsgo.Fonts("fonts/Brand.ttf")` 注册的字体。
 - `assets/`：不随应用发布的项目文件，例如 `AppIcon.icon` 和 `Icon.png`。
-- `locales/`：应用的文案，每种语言一个 YAML 文件。
+- `locales/`：应用的文案，每种语言一个 YAML 文件（[本地化](localization.md)）。
 
 ## 下一步
 

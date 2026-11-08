@@ -33,11 +33,11 @@ function App() {
 mount(App);
 ```
 
-`go tool nsgo init -template tsx` writes one. `nsgo dev` and `nsgo build` compile the TSX ahead of time, so packages ship no compiler and no Node is needed.
+`go tool nsgo init -template tsx` writes one, and `examples/tsx` is another. `nsgo dev` and `nsgo build` compile the TSX ahead of time, so packages ship no compiler; `go run` and `go test` compile it as the app starts. No Node is needed either way.
 
 ## Components and modules
 
-TSX imports the primitives from `nsgo`, `base`'s components from `nsgo/base` and `ui`'s from `nsgo/ui`, once the app imports `tsx/ui` and sets `ui.DefaultTheme`.
+TSX imports the primitives from `nsgo`, `base`'s components from `nsgo/base` and `ui`'s from `nsgo/ui`, once the app imports `tsx/ui` and sets `ui.DefaultTheme`; `examples/gallery-tsx` shows them.
 
 ## Go from TSX
 
