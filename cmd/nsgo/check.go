@@ -39,11 +39,11 @@ func check(ctx context.Context, p *project) error {
 	if err := writeTypes(ctx, p); err != nil {
 		return err
 	}
-	config := filepath.Join(p.Dir, "tsconfig.json")
-	if _, err := os.Stat(config); err != nil {
+	if !p.hasTSConfig() {
 		note("no tsconfig.json: nothing to type-check (a TSX app's extends .nsgo/tsconfig.json)")
 		return nil
 	}
+	config := filepath.Join(p.Dir, "tsconfig.json")
 	s = begin("type-checking")
 	if err := goTool(ctx, p.Dir, nil, "run", tsgo, "-p", config, "--pretty", "false"); err != nil {
 		s.fail()
@@ -100,6 +100,13 @@ func init() {
 	os.Exit(0)
 }
 `
+
+// hasTSConfig reports whether the app has a tsconfig.json, as a TSX
+// app's does, extending .nsgo/tsconfig.json.
+func (p *project) hasTSConfig() bool {
+	_, err := os.Stat(filepath.Join(p.Dir, "tsconfig.json"))
+	return err == nil
+}
 
 // writeTypes writes the declarations of the modules the app's TSX can
 // import to .nsgo/types, running its main package with typesInit. It

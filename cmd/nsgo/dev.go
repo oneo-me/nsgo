@@ -52,7 +52,8 @@ type devOptions struct {
 // builds and starts it again. It exits once the app does. With nsgo.yaml's
 // hot reload it rebuilds and restarts the app whenever a Go file it
 // compiles from, go.mod, nsgo.yaml or a catalog changes, and keeps the
-// running app when a build fails.
+// running app when a build fails. After each Go build of an app with a
+// tsconfig.json it writes the TSX's types to .nsgo/types, for editors.
 func dev(ctx context.Context, p *project, opts devOptions) error {
 	p.prepareDev(opts)
 	srv, err := startDevServer(opts.port)
@@ -141,6 +142,13 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 			}
 			srv.send("ok", "")
 			srv.send("reload", "")
+			// Editors read the TSX's types from .nsgo/types; a Go build
+			// may have registered new ones.
+			if p.hasTSConfig() {
+				if err := writeTypes(ctx, p); err != nil && ctx.Err() == nil {
+					warn("%v", err)
+				}
+			}
 		}
 		first = false
 		if reason := waitForChange(ctx, p, srv, dirs, sources, fingerprint, exited); reason != nil {

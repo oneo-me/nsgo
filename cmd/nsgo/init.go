@@ -73,7 +73,7 @@ func initApp(dir, name, module, kind string) error {
 		detail("next: go tool nsgo dev %s", rel(dir))
 	}
 	if kind != "go" {
-		detail("nsgo check writes the TSX's types to .nsgo/types and checks it")
+		detail("nsgo dev and nsgo check write the TSX's types to .nsgo/types for editors; check also type-checks it")
 	}
 	return nil
 }

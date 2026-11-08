@@ -104,7 +104,7 @@ function App() {
 mount(App);
 ```
 
-TSX imports `base`'s components from `nsgo/base`, `ui`'s from `nsgo/ui` once the app imports `tsx/ui` and sets `ui.DefaultTheme` (`examples/gallery-tsx` shows them), and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props; `tsx.RegisterFunctions` exports Go functions, those taking a `context.Context` as promises, and `tsx.RegisterClass` Go types TSX makes with `new`. A `tsconfig.json` extending `.nsgo/tsconfig.json` lets `go tool nsgo check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
+TSX imports `base`'s components from `nsgo/base`, `ui`'s from `nsgo/ui` once the app imports `tsx/ui` and sets `ui.DefaultTheme` (`examples/gallery-tsx` shows them), and an app's own Go components once it registers them: `tsx.Register("app/native", map[string]core.Node{"Badge": Badge{}})` makes `import { Badge } from "app/native"` take `Badge`'s fields as props; `tsx.RegisterFunctions` exports Go functions, those taking a `context.Context` as promises, and `tsx.RegisterClass` Go types TSX makes with `new`. A `tsconfig.json` extending `.nsgo/tsconfig.json` gives editors the TSX's types, which `go tool nsgo dev` and `go tool nsgo check` write to `.nsgo/types`, and lets `check` vet the app and type-check its TSX, and `*.test.tsx` files beside it, written with `nsgo/test`, run with its Go tests.
 
 Beside the package, `nsgo.yaml` names the app and its targets:
 
