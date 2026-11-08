@@ -31,8 +31,13 @@ var serviceExports = []export{
 	{"Picker", (*runtime).picker},
 	{"Speech", (*runtime).speech},
 	fn("openUrl", func(r *runtime, call js.FunctionCall) js.Value {
-		p, resolve, _ := r.vm.NewPromise()
-		r.cx.OpenURL(arg(call, 0).String(), func(opened bool) { r.inJS(func() { _ = resolve(opened) }) })
+		p, resolve, reject := r.vm.NewPromise()
+		u := arg(call, 0).String()
+		if err := r.checkAccess(core.AccessRequest{Permission: core.AccessOpenURL, Resource: u}); err != nil {
+			_ = reject(r.goError(err))
+			return r.vm.ToValue(p)
+		}
+		r.cx.OpenURL(u, func(opened bool) { r.inJS(func() { _ = resolve(opened) }) })
 		return r.vm.ToValue(p)
 	}),
 	fn("announce", func(r *runtime, call js.FunctionCall) js.Value {
@@ -115,6 +120,18 @@ func (r *runtime) keymap() js.Value {
 	return o
 }
 
+// refused is a promise rejected with the refusal of permission, nil
+// when it is granted.
+func (r *runtime) refused(permission string) js.Value {
+	err := r.checkAccess(core.AccessRequest{Permission: permission})
+	if err == nil {
+		return nil
+	}
+	p, _, reject := r.vm.NewPromise()
+	_ = reject(r.goError(err))
+	return r.vm.ToValue(p)
+}
+
 // promise returns a promise and a function settling it on the engine
 // goroutine with what make gives.
 func (r *runtime) promise() (*js.Promise, func(v func() js.Value)) {
@@ -124,7 +141,14 @@ func (r *runtime) promise() (*js.Promise, func(v func() js.Value)) {
 
 func (r *runtime) clipboard() js.Value {
 	o := r.vm.NewObject()
-	set := func(name string, f func(call js.FunctionCall) js.Value) { _ = o.Set(name, r.function(f)) }
+	set := func(name string, f func(call js.FunctionCall) js.Value) {
+		_ = o.Set(name, r.function(func(call js.FunctionCall) js.Value {
+			if p := r.refused(core.AccessClipboard); p != nil {
+				return p
+			}
+			return f(call)
+		}))
+	}
 	set("writeText", func(call js.FunctionCall) js.Value {
 		r.cx.SetClipboard(arg(call, 0).String())
 		p, done := r.promise()
@@ -237,6 +261,9 @@ func (r *runtime) storage() js.Value {
 func (r *runtime) picker() js.Value {
 	o := r.vm.NewObject()
 	_ = o.Set("pickImages", r.function(func(call js.FunctionCall) js.Value {
+		if p := r.refused(core.AccessPicker); p != nil {
+			return p
+		}
 		op := r.options(arg(call, 0))
 		opts := core.PickOptions{Multiple: op.bool("multiple", false), Limit: int(op.float("limit", 0)),
 			MaxDimension: int(op.float("maxDimension", 0)), Quality: float32(op.float("quality", 0))}
@@ -261,6 +288,9 @@ func (r *runtime) picker() js.Value {
 		return r.vm.ToValue(p)
 	}))
 	_ = o.Set("takePhoto", r.function(func(call js.FunctionCall) js.Value {
+		if p := r.refused(core.AccessPicker); p != nil {
+			return p
+		}
 		op := r.options(arg(call, 0))
 		opts := core.PhotoOptions{MaxDimension: int(op.float("maxDimension", 0)), Quality: float32(op.float("quality", 0))}
 		p, resolve, reject := r.vm.NewPromise()
@@ -491,6 +521,9 @@ func (r *runtime) nativeModule(call js.FunctionCall) js.Value {
 // on<Event> handlers.
 func (r *runtime) nativeComponent(call js.FunctionCall) js.Value {
 	name := arg(call, 0).String()
+	if r.sandbox != nil && !r.sandbox.importsNative(name) {
+		panic(r.vm.NewTypeError("nsgo: native component %q is not given to this sandbox (Sandbox.Modules)", name))
+	}
 	spec := r.options(arg(call, 1))
 	var names, events []string
 	for _, p := range r.arrayItems(spec.get("props")) {

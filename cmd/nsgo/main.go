@@ -2,7 +2,7 @@
 //
 //	nsgo init  [-template go|tsx|mixed] [-name N] [-module M] [dir]
 //	                                                      write a new app
-//	nsgo dev   [-target T] [-hot-reload=false] [-trace] [flags] [dir]
+//	nsgo dev   [-target T] [-hot-reload=false] [-trace] [-limits[=L]] [flags] [dir]
 //	                                                      run the app and rebuild it on changes
 //	nsgo build [-target all|T,...] [flags] [dir]         build packages for nsgo.yaml's targets or all platforms
 //	nsgo test  [-run R] [-bench R] [-junit F] [-trace] [-target T [-fps]] [dir | entry] [-- go test flags]

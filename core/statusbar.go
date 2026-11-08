@@ -70,7 +70,7 @@ type statusLayer struct {
 // and modals' settings, with the fields patch sets. Desktops and the web
 // have no status bar.
 func (cx *Scope) SetStatusBar(patch StatusBarSetting) {
-	if t := cx.tree(); t != nil {
+	if t := cx.tree(); t != nil && !cx.denied(AccessRequest{Permission: AccessStatusBar}) {
 		t.status.base = patch.over(t.status.base)
 		t.changed = true
 	}
@@ -79,7 +79,7 @@ func (cx *Scope) SetStatusBar(patch StatusBarSetting) {
 // bindStatusBar gives n a layer of status bar settings: the static one,
 // or fn's while it changes.
 func (t *Tree) bindStatusBar(cx *Scope, n *node, s StatusBarSetting, fn func() StatusBarSetting) {
-	if s == (StatusBarSetting{}) && fn == nil {
+	if s == (StatusBarSetting{}) && fn == nil || cx.denied(AccessRequest{Permission: AccessStatusBar}) {
 		return
 	}
 	l := &statusLayer{n: n, setting: s}

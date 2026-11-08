@@ -5,13 +5,17 @@ import (
 	"crypto/ed25519"
 	"embed"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/oneo-me/nsgo/tsx"
 	"github.com/oneo-me/nsgo/tsx/bundler"
 	"github.com/oneo-me/nsgo/tsx/pkg"
 )
@@ -24,26 +28,56 @@ var pluginSrc embed.FS
 
 const wait = 10 * time.Second
 
-func TestRunsThePackage(t *testing.T) {
+func TestInstallsAndRunsThePackages(t *testing.T) {
 	app := nsgotest.Start(t, Root)
-	app.WaitFor("id:waves", wait)
+	app.WaitFor("id:install", wait)
+	if texts := strings.Join(app.Texts(), "\n"); !strings.Contains(texts, "It may call the app's greet") {
+		t.Fatalf("the consent says %q", texts)
+	}
+	app.Press("id:install")
+	app.WaitUntil(wait, func() bool { return app.Exists("id:greeting") && app.Find("id:greeting").Text == "Hello from the host" })
 	app.Press("id:wave")
 	app.Press("id:wave")
 	if got := app.Find("id:waves").Text; got != "Waved 2 times" {
 		t.Fatalf("the package shows %q\n%s", got, app.Dump())
+	}
+	// The waves are in the plugin's part of the storage, not the app's.
+	if keys := app.Storage().Keys(); len(keys) != 0 {
+		t.Fatalf("the app's storage lists %v", keys)
+	}
+	app.WaitUntil(wait, func() bool { return app.Find("id:search").Text == "Found [signed sandboxed]" })
+}
+
+func TestInstallsWhole(t *testing.T) {
+	if runtime.GOOS == "js" {
+		t.Skip("the web has no files: it installs in memory")
+	}
+	dir := t.TempDir()
+	p, err := pkg.Inspect(greeter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := install(dir, &pkg.Package{Info: *p}, greeter); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := os.ReadFile(filepath.Join(dir, "dev.oneo.nsgo.plugins.greeter.nsgopkg")); err != nil || !bytes.Equal(b, greeter) {
+		t.Fatalf("installed %d bytes, %v", len(b), err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "dev.oneo.nsgo.plugins.greeter.nsgopkg.tmp")); err == nil {
+		t.Fatal("the temporary file stayed")
 	}
 }
 
 // refusal starts a host of data and returns why it refused it.
 func refusal(t *testing.T, data []byte, trust *pkg.Trust) string {
 	t.Helper()
-	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return Host(cx, data, trust) })
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return Host(cx, data, trust, "") })
 	app.WaitUntil(wait, func() bool { return strings.HasPrefix(app.Find("id:status").Text, "Refused") })
 	return app.Find("id:status").Text
 }
 
 func TestRefusesATamperedPackage(t *testing.T) {
-	data := bytes.Clone(plugin)
+	data := bytes.Clone(greeter)
 	data[len(data)-100] ^= 1
 	trust := pkg.NewTrust()
 	root, _ := pkg.DecodePublicKey(rootKey)
@@ -132,12 +166,14 @@ func TestRefusesAnOlderBuild(t *testing.T) {
 			core.View{TestID: "older", Class: "h-10", OnPress: func(core.PressEvent) { swapped.Set(true) }},
 			core.Dynamic(func(cx *core.Scope) core.Node {
 				if swapped.Get() {
-					return Host(cx, older, trust)
+					return Host(cx, older, trust, "")
 				}
-				return Host(cx, newer, trust)
+				return Host(cx, newer, trust, "")
 			}),
 		}}
 	})
+	app.WaitFor("id:install", wait)
+	app.Press("id:install")
 	app.WaitFor("id:waves", wait)
 	app.WaitUntil(wait, func() bool { b, _ := trust.AcceptedBuild("dev.oneo.nsgo.plugins.greeter"); return b == 2 })
 	app.Press("id:older")
@@ -145,4 +181,38 @@ func TestRefusesAnOlderBuild(t *testing.T) {
 	if got := app.Find("id:status").Text; !strings.Contains(got, "older") {
 		t.Fatal(got)
 	}
+}
+
+// TestWebViewStaysOnItsHosts has a package's web view, which may show
+// example.com alone, try to leave its page: the platform refuses it as it
+// starts.
+func TestWebViewStaysOnItsHosts(t *testing.T) {
+	switch nsgotest.Target() {
+	case "":
+		t.Skip("headless, no page navigates")
+	case "web":
+		t.Skip("an <iframe>'s navigations are not checked on the web (roadmap)")
+	}
+	s := newSigner(t)
+	code, err := bundler.Compile(fstest.MapFS{"App.tsx": {Data: []byte(`import { mount, signal, Text, View, WebView } from "nsgo";
+const refused = signal("");
+const page = "<p>away</p><script>setTimeout(() => { location.href = 'https://evil.invalid/'; }, 300);</script>";
+mount(() => <View style={{ flex: 1 }}>
+	<Text testID="refused">{refused}</Text>
+	<WebView style={{ height: 200 }} html={page} baseUrl="https://example.com/" onError={(e) => refused.set(e.message)} />
+</View>);`)}}, "App.tsx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := pkg.Build(pkg.Contents{App: pkg.App{ID: "dev.oneo.nsgo.plugins.web", Build: 1}, Source: code,
+		Capabilities: pkg.Capabilities{WebView: &pkg.WebView{Hosts: []string{"example.com"}}}}, s.release, s.cert)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := s.trust().Verify(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return tsx.View{Package: p} })
+	app.WaitUntil(20*time.Second, func() bool { return strings.Contains(app.Find("id:refused").Text, "evil.invalid") })
 }

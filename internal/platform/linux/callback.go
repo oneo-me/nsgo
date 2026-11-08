@@ -40,6 +40,7 @@ var (
 
 	cbWebLoadChanged uintptr
 	cbWebLoadFailed  uintptr
+	cbWebPolicy      uintptr
 	cbWebMessage     uintptr
 	cbWebMap         uintptr
 	cbWebKey         uintptr
@@ -104,6 +105,7 @@ func init() {
 
 	cbWebLoadChanged = newCallback(webLoadChangedCallback)
 	cbWebLoadFailed = newCallback(webLoadFailedCallback)
+	cbWebPolicy = newCallback(webPolicyCallback)
 	cbWebMessage = newCallback(webMessageCallback)
 	cbWebMap = newCallback(webMapCallback)
 	cbWebKey = newCallback(webKeyCallback)

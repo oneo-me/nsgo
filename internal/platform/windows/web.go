@@ -252,8 +252,16 @@ func (wv *webView) listen() {
 		if wv.closed {
 			return
 		}
+		a := (*comObject)(args)
 		nav := wv.navigation(true)
-		nav.URL = (*comObject)(args).getString(navigationStartingGetUri)
+		nav.URL = a.getString(navigationStartingGetUri)
+		// A restricted view's page goes only where its config allows;
+		// NavigationStarting is the top level's.
+		if !wv.config.Navigable(nav.URL) {
+			a.call(navigationStartingPutCancel, 1)
+			wv.report(driver.Event{Kind: driver.EventError, Text: driver.RefusedNavigation(nav.URL), Navigation: &nav})
+			return
+		}
 		wv.navigated(nav, driver.EventLoadStart, driver.EventNavigationStateChange)
 	}))
 	web.subscribe(webAddNavigationCompleted, newHandler(&iidNavigationCompleted, func(_ uintptr, args unsafe.Pointer) {

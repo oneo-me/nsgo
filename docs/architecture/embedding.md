@@ -37,7 +37,7 @@ On the web each app is a Go program of its own, and a page shows several. `nsgo 
 - `HandleOpenURL` sees the URLs `Scope.OpenURL` opens, once they pass `CheckURL`, before the platform: the host answers once, and false hands the URL to the platform.
 - Values cross as JSON, encoded and decoded again even in Go, so a Go host sees what Swift and Java see: maps, slices, strings, `float64`, booleans and nil.
 
-`HandleDefault` answers every name without a handler of its own, for a host that looks names up itself, as a page does. `nsgotest.Host` runs an app with a channel, so a test plays the host.
+`HandleDefault` answers every name without a handler of its own, for a host that looks names up itself, as a page does. `Scope.ProvideHost` gives a subtree a channel of its own in place of the app's, none for nil, which a Go app answers itself: `tsx.View` gives a package so its `Sandbox.Host`. `nsgotest.Host` runs an app with a channel, so a test plays the host.
 
 ### On the web
 

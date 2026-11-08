@@ -12,6 +12,8 @@ import (
 type imageNode struct {
 	config driver.ImageConfig
 	sent   driver.ImageConfig // as resolved for the pixel ratio
+	// refused and refusedPlaceholder are the URIs Access refused last.
+	refused, refusedPlaceholder string
 }
 
 func (t *Tree) mountImage(cx *Scope, parent *node, v Image) {
@@ -57,6 +59,12 @@ func (cx *Scope) ImageSize(src ImageSource, done func(pixels Size, err error)) {
 	t := cx.tree()
 	if t == nil {
 		return
+	}
+	if len(src.Data) == 0 {
+		if err := sourceRefusal(cx.current(), AccessNetwork, src.URI); err != nil {
+			done(Size{}, err)
+			return
+		}
 	}
 	t.alertID++
 	if t.imageInfos == nil {

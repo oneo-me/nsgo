@@ -49,11 +49,18 @@ func build(fsys fs.FS, entry string, hot bool) (string, error) {
 		entryPoint = hotEntry
 		plugins = append([]api.Plugin{hotPlugin(entry)}, plugins...)
 	}
+	// The entry's exports, a plugin's functions (tsx.Load), are a global
+	// of the script's.
+	globalName := "__nsgo_exports"
+	if hot {
+		globalName = ""
+	}
 	result := api.Build(api.BuildOptions{
 		EntryPoints: []string{entryPoint},
 		Bundle:      true,
 		Write:       false,
 		Format:      api.FormatIIFE,
+		GlobalName:  globalName,
 		Platform:    api.PlatformNeutral,
 		Target:      api.ES2020,
 		Supported:   gojaLacks,

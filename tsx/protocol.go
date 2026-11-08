@@ -139,7 +139,7 @@ func (r *runtime) decodeProp(n *node, name string, v js.Value) bool {
 // first one makes the view, moving the children made already into it.
 func (r *runtime) scrollContent(n *node, name string, v js.Value) {
 	if n.content == nil {
-		n.content = core.NewElement(r.cx, core.View{})
+		n.content = r.newCoreElement(r.cx, core.View{})
 		for _, c := range n.children {
 			if c.kind != kindRaw {
 				n.elem.Remove(c.elem)

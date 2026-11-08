@@ -93,9 +93,9 @@ func (r *runtime) hostComponent(tag string) js.Value {
 // fallback(error, reset) is called with what was thrown.
 func (r *runtime) errorBoundary(call js.FunctionCall) js.Value {
 	props := arg(call, 0).ToObject(r.vm)
-	n := &node{r: r, kind: kindRegion, elem: core.NewElement(r.cx, nil)}
+	n := &node{r: r, kind: kindRegion, elem: r.newCoreElement(r.cx, nil)}
 	region := func(value js.Value) core.Node {
-		inner := &node{r: r, kind: kindRegion, elem: core.NewElement(r.cx, nil)}
+		inner := &node{r: r, kind: kindRegion, elem: r.newCoreElement(r.cx, nil)}
 		r.insertValue(inner, value, nil)
 		return inner.elem
 	}

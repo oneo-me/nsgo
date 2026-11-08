@@ -100,6 +100,8 @@ type faceSpec struct {
 	types map[string][]reflect.Type
 	// events are the names of what events give their handlers, by field.
 	events map[string][]string
+	// unsandboxed keeps the components from sandboxed bundles.
+	unsandboxed bool
 }
 
 func newSpec(opts []Option) *faceSpec {
@@ -179,6 +181,11 @@ func Flag(field, prop, on, choices string) Option {
 	return custom(field, func(p *props, v reflect.Value) { v.SetBool(p.str(prop) == on) }, prop+"?: "+choices)
 }
 
+// Unsandboxed keeps the components from the bundles a Sandbox runs, such
+// as plugins, unless its Modules names them: what reaches past the
+// capabilities, as a terminal starts programs.
+func Unsandboxed() Option { return func(s *faceSpec) { s.unsandboxed = true } }
+
 // Omit leaves fields out of a Go component's TSX face: what JS has no use
 // for, as a Go function of Go values.
 func Omit(fields ...string) Option {
@@ -209,11 +216,23 @@ func custom(field string, set func(p *props, v reflect.Value), decls ...string) 
 	}
 }
 
-// registered are the modules apps registered: their exports by name.
+// registered are the modules apps registered: their exports by name;
+// unsandboxed those sandboxed bundles get only as Sandbox.Modules says.
 var (
-	registryMu sync.Mutex
-	registered = map[string][]export{}
+	registryMu  sync.Mutex
+	registered  = map[string][]export{}
+	unsandboxed = map[string]bool{}
 )
+
+// markUnsandboxed keeps module's export name from sandboxed bundles. The
+// caller holds registryMu.
+func markUnsandboxed(module, name string) { unsandboxed[module+"."+name] = true }
+
+func isUnsandboxed(module, name string) bool {
+	registryMu.Lock()
+	defer registryMu.Unlock()
+	return unsandboxed[module+"."+name]
+}
 
 // Register makes Go components importable from module in TSX: each value
 // of components is a component's zero value, a struct implementing
@@ -233,13 +252,16 @@ func Register(module string, components map[string]core.Node, opts ...Option) {
 		f := goFace(t, spec)
 		registeredTypes[module] = append(registeredTypes[module], registeredType{name, t, spec})
 		registered[module] = append(registered[module], faceExport(name, f))
+		if spec.unsandboxed {
+			markUnsandboxed(module, name)
+		}
 	}
 }
 
 // RegisterFunctions makes Go functions importable from module in TSX,
 // and nativeModule(module) gives them too, as an embedding app's UI set
 // exports its functions: each value of funcs is a func, exported under
-// its key. JS's arguments convert to its parameters and its result back,
+// its key. Sandboxed bundles get them only as Sandbox.Modules says. JS's arguments convert to its parameters and its result back,
 // structs as objects with lower-camel keys; a non-nil error it returns
 // last throws. A func taking a context.Context first is async: it runs
 // on a goroutine and JS gets a promise (classes.go). Register them before
@@ -257,6 +279,7 @@ func RegisterFunctions(module string, funcs map[string]any) {
 		registered[module] = append(registered[module], export{name, func(r *runtime) js.Value {
 			return r.function(func(call js.FunctionCall) js.Value { return r.callGo(qualified, v, call.Arguments) })
 		}})
+		markUnsandboxed(module, name)
 	}
 }
 

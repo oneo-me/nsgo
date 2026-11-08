@@ -92,8 +92,22 @@ func loadWebKit() {
 			// Downloads (WKDownload, macOS 11.3 and iOS 14.5), only for a
 			// view that saves them.
 			{Cmd: sel("webView:decidePolicyForNavigationAction:decisionHandler:"), Fn: func(self objc.ID, _ objc.SEL, _, action, decide objc.ID) {
-				const allow, download = 1, 2 // WKNavigationActionPolicy
+				const cancel, allow, download = 0, 1, 2 // WKNavigationActionPolicy
 				policy := uintptr(allow)
+				// A restricted view's page goes only where its config
+				// allows at the top level; a new window's has no frame.
+				if w := webHandlers[self]; w != nil && w.config.Restricted {
+					frame := action.Send(sel("targetFrame"))
+					if frame == 0 || objc.Send[bool](frame, sel("isMainFrame")) {
+						url := GoString(action.Send(sel("request")).Send(sel("URL")).Send(sel("absoluteString")))
+						if !w.config.Navigable(url) {
+							CallBlock(decide, cancel)
+							w.Dispatch(driver.Event{Kind: driver.EventError, Text: driver.RefusedNavigation(url),
+								Navigation: &driver.WebNavigation{URL: url}})
+							return
+						}
+					}
+				}
 				if w := webHandlers[self]; w != nil && w.config.DownloadDir != "" &&
 					objc.Send[bool](action, sel("respondsToSelector:"), sel("shouldPerformDownload")) && objc.Send[bool](action, sel("shouldPerformDownload")) {
 					policy = download

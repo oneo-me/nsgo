@@ -17,6 +17,9 @@ func (r *runtime) speech() js.Value {
 		return r.vm.ToValue(p)
 	}))
 	_ = o.Set("start", r.function(func(call js.FunctionCall) js.Value {
+		if err := r.checkAccess(core.AccessRequest{Permission: core.AccessSpeech}); err != nil {
+			panic(r.goError(err))
+		}
 		op := r.options(arg(call, 0))
 		listeners := map[string][]*js.Value{}
 		emit := func(name string, e js.Value) {

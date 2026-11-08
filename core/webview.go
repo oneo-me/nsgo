@@ -1,7 +1,9 @@
 package core
 
 import (
+	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/oneo-me/nsgo/internal/driver"
 )
@@ -78,6 +80,8 @@ type webNode struct {
 	loadError                   func(error)
 	message                     func(string)
 	download                    func(WebDownload)
+	// refused is the source Access refused last.
+	refused string
 }
 
 func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
@@ -105,6 +109,27 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 			}
 		})
 	}
+}
+
+// restrictWeb holds c to the Access of n's owner: a source it refuses
+// shows nothing, the platform refuses navigations to hosts it does not
+// allow, and nothing is downloaded.
+func (t *Tree) restrictWeb(n *node, c *driver.WebConfig) {
+	a := accessOf(n.owner)
+	if a == nil {
+		return
+	}
+	wn := n.web
+	report := func(err error) {
+		if wn.loadError != nil {
+			wn.loadError(&WebError{URL: c.Source.Src, Message: err.Error()})
+		}
+	}
+	t.refuseSource(n, AccessWebView, &c.Source.Src, &wn.refused, report)
+	if c.Source.BaseURL != "" && sourceRefusal(n.owner, AccessWebView, c.Source.BaseURL) != nil {
+		c.Source.BaseURL = ""
+	}
+	c.Restricted, c.Hosts, c.DownloadDir = true, strings.Join(a.WebHosts(), " "), ""
 }
 
 // How far a WebDownload got.
@@ -199,6 +224,10 @@ func (r *Ref) InjectJavaScript(script string) { r.webCommand(driver.WebInjectJav
 // first; macOS has it, other platforms drop it.
 func (r *Ref) SendInput(in WebInput) {
 	if r.n == nil || r.n.deleted || r.n.web == nil {
+		return
+	}
+	if r.t.rt.restricted && refusal(accessOf(r.n.owner), AccessRequest{Permission: AccessWebView, Method: AccessInput}) != nil {
+		log.Printf("nsgo: a web view's trusted input needs the %q capability's input", AccessWebView)
 		return
 	}
 	r.t.commands = append(r.t.commands, driver.MountItem{Kind: driver.ItemWebCommand, ID: r.n.id, WebCommand: driver.WebSendInput, Data: &in})

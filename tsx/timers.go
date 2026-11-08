@@ -20,6 +20,14 @@ type timers struct {
 	stop map[int64]func() bool
 }
 
+// timerQuota throws when a sandbox's waiting timers, or frame callbacks,
+// number its quota.
+func (r *runtime) timerQuota(waiting int) {
+	if r.sandbox != nil && r.limits.Timers > 0 && waiting >= r.limits.Timers {
+		panic(r.goError(quota("timers", r.limits.Timers)))
+	}
+}
+
 func (r *runtime) installTimers() {
 	r.timers.stop = map[int64]func() bool{}
 	set := func(repeat bool) func(js.FunctionCall) js.Value {
@@ -27,6 +35,7 @@ func (r *runtime) installTimers() {
 			fn := arg(call, 0)
 			d := time.Duration(max(arg(call, 1).ToFloat(), 0) * float64(time.Millisecond))
 			args := call.Arguments[min(2, len(call.Arguments)):]
+			r.timerQuota(len(r.timers.stop))
 			r.timers.next++
 			id := r.timers.next
 			// An interval keeps its cadence: each run is due an interval
@@ -67,6 +76,7 @@ func (r *runtime) installTimers() {
 	frames := map[int64]func(){}
 	_ = r.vm.Set("requestAnimationFrame", r.function(func(call js.FunctionCall) js.Value {
 		fn := arg(call, 0)
+		r.timerQuota(len(frames))
 		r.timers.next++
 		id := r.timers.next
 		r.cx.Run(func() {

@@ -103,6 +103,9 @@ type runtime struct {
 	// the outermost of which has the time budget.
 	limits Limits
 	depth  int
+	// sandbox is a sandboxed runtime's state (Sandbox), nil for the
+	// app's own code.
+	sandbox *sandboxed
 	// origin is when performance.now() and frames' times count from.
 	origin time.Time
 	// classes are the Go classes made in this VM; posting counts the
@@ -173,8 +176,14 @@ func (r *runtime) require(name string) js.Value {
 	if !ok {
 		panic(r.vm.NewTypeError("nsgo: no module %q", name))
 	}
+	if r.sandbox != nil && !r.sandbox.importsModule(name) {
+		panic(r.vm.NewTypeError("nsgo: module %q is not given to this sandbox (Sandbox.Modules)", name))
+	}
 	m := r.vm.NewObject()
 	for _, e := range exports {
+		if r.sandbox != nil && isUnsandboxed(name, e.name) && !r.sandbox.importsExport(name, e.name) {
+			continue
+		}
 		_ = m.Set(e.name, e.make(r))
 	}
 	r.addStatics(name, m)
@@ -199,11 +208,11 @@ func (r *runtime) call(fn js.Value, args ...js.Value) js.Value {
 	if !ok {
 		panic(r.vm.NewTypeError("nsgo: %s is not a function", fn))
 	}
-	var v js.Value
+	v := js.Undefined()
 	var err error
 	r.within(r.limits.Call, func() { v, err = f(js.Undefined(), args...) })
 	if err != nil {
-		panic(err)
+		panic(r.failure(err))
 	}
 	return v
 }

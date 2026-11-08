@@ -693,6 +693,10 @@ func (t *Tree) emitParts(n *node) bool {
 		c.Position = n.style.ObjectPosition
 		c.Source = t.pickScale(c.Source)
 		c.Placeholder = t.pickScale(c.Placeholder)
+		if t.rt.restricted {
+			t.refuseImage(n, &c.Source, &im.refused, n.h.loadError)
+			t.refuseImage(n, &c.Placeholder, &im.refusedPlaceholder, n.h.loadError)
+		}
 		if first || !c.Same(im.sent) {
 			im.sent = c
 			add(driver.MountItem{Kind: driver.ItemImage, ID: n.id, Image: &c})
@@ -716,8 +720,12 @@ func (t *Tree) emitParts(n *node) bool {
 			add(driver.MountItem{Kind: driver.ItemShader, ID: n.id, Shader: sn.sent})
 		}
 	case n.web != nil:
-		if wn := n.web; first || wn.config != wn.sent {
-			c := wn.config
+		wn := n.web
+		c := wn.config
+		if t.rt.restricted {
+			t.restrictWeb(n, &c)
+		}
+		if first || c != wn.sent {
 			wn.sent = c
 			add(driver.MountItem{Kind: driver.ItemWeb, ID: n.id, Web: &c})
 		}
@@ -727,6 +735,9 @@ func (t *Tree) emitParts(n *node) bool {
 		vn := n.video
 		c := vn.config
 		c.ResizeMode = n.resizeMode(c.ResizeMode, Contain)
+		if t.rt.restricted {
+			t.refuseSource(n, AccessNetwork, &c.Source, &vn.refused, vn.loadError)
+		}
 		if first || c != vn.sent {
 			vn.sent = c
 			add(driver.MountItem{Kind: driver.ItemVideo, ID: n.id, Video: &c})

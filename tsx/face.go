@@ -40,7 +40,7 @@ type props struct {
 // props set on it when obj is nil.
 func (r *runtime) newFaceNode(name string, f face, obj *js.Object) *node {
 	n := &node{r: r, kind: kindFace, name: name, ref: &core.Ref{}, face: f,
-		elem: core.NewElement(r.cx, nil), content: core.NewElement(r.cx, nil)}
+		elem: r.newCoreElement(r.cx, nil), content: r.newCoreElement(r.cx, nil)}
 	n.props = &props{r: r, n: n, obj: obj}
 	if obj == nil {
 		n.signals = map[string]*core.Signal[js.Value]{}
@@ -214,7 +214,7 @@ type lazy struct {
 func (l lazy) Render(cx *core.Scope) core.Node {
 	var e *core.Element
 	cx.Run(func() {
-		n := &node{r: l.r, kind: kindRegion, elem: core.NewElement(cx, nil), parent: l.owner}
+		n := &node{r: l.r, kind: kindRegion, elem: l.r.newCoreElement(cx, nil), parent: l.owner}
 		l.r.insertValue(n, l.r.accessor(l.get), nil)
 		e = n.elem
 	})
@@ -223,7 +223,7 @@ func (l lazy) Render(cx *core.Scope) core.Node {
 
 // region is a region element showing what get returns, as children.
 func (r *runtime) region(get func() js.Value) *core.Element {
-	n := &node{r: r, kind: kindRegion, elem: core.NewElement(r.cx, nil)}
+	n := &node{r: r, kind: kindRegion, elem: r.newCoreElement(r.cx, nil)}
 	r.insertValue(n, r.accessor(get), nil)
 	return n.elem
 }

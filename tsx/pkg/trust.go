@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
-	"path/filepath"
 	"slices"
 	"sync"
 )
@@ -28,18 +26,17 @@ type trustState struct {
 	Builds      map[string]uint64 `json:"builds,omitempty"`
 }
 
-// stateFile holds a Trust's state in its directory.
-const stateFile = "trust.json"
-
 // NewTrust returns a Trust whose state lasts as long as it does.
 func NewTrust() *Trust { return &Trust{state: trustState{Builds: map[string]uint64{}}} }
 
 // OpenTrust returns a Trust whose state is kept in dir, made when first
-// written, so rollback protection and revocations survive restarts.
+// written, so rollback protection and revocations survive restarts. On
+// the web, which has no files, the page's localStorage keeps it under a
+// key of dir's.
 func OpenTrust(dir string) (*Trust, error) {
 	t := NewTrust()
 	t.dir = dir
-	data, err := os.ReadFile(filepath.Join(dir, stateFile))
+	data, err := readState(dir)
 	if errors.Is(err, fs.ErrNotExist) {
 		return t, nil
 	}
@@ -143,8 +140,7 @@ func (t *Trust) AcceptedBuild(app string) (uint64, bool) {
 	return b, ok
 }
 
-// save writes the state whole, then renames it into place, so a crash
-// never leaves half a file.
+// save writes the state whole.
 func (t *Trust) save() error {
 	if t.dir == "" {
 		return nil
@@ -153,14 +149,7 @@ func (t *Trust) save() error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(t.dir, 0o755); err != nil {
-		return fmt.Errorf("%w: %v", ErrState, err)
-	}
-	tmp := filepath.Join(t.dir, stateFile+".tmp")
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return fmt.Errorf("%w: %v", ErrState, err)
-	}
-	if err := os.Rename(tmp, filepath.Join(t.dir, stateFile)); err != nil {
+	if err := writeState(t.dir, data); err != nil {
 		return fmt.Errorf("%w: %v", ErrState, err)
 	}
 	return nil

@@ -10,8 +10,8 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| A package's trust on the web | `signed-packages.md` (Verification) | A web app's `Trust` keeps the revocation list and accepted builds in the page's storage across loads, as `OpenTrust` does in a directory elsewhere |
-| Capabilities and limits | `sandbox.md` | `nsgo.yaml`'s `capabilities:` travel in packages, which name them `critical`, and every request a capability names (`fetch`, remote images, web views and their trusted input, `openUrl`, the clipboard, the picker, speech, host calls) is refused with `core.AccessDenied`, `ERR_ACCESS_DENIED` with `permission` and `resource` in JS (`fetch`'s a `TypeError` with them), without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
+| A heap limit | `sandbox.md` (Limits) | A sandboxed module that keeps or allocates past `Limits.Memory` stops as one past its node quota does, on goja (no other engine, decided by the user, 2026-11-09); until then a package's root is trusted not to exhaust memory |
+| A web view's navigations on the web | `sandbox.md` (Enforced in Rust: top-level web view navigations) | A sandboxed web view's page on the web navigates only to the hosts `webview` grants, as on the other targets |
 
 ## Performance against NSH's baselines
 

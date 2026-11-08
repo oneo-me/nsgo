@@ -105,6 +105,9 @@ func (t *Tree) mountCanvas(cx *Scope, parent *node, c Canvas) {
 			return
 		}
 		t.pickDrawingScales(d)
+		if t.rt.restricted {
+			t.refuseDrawingImages(n, d)
+		}
 		cn.drawing, cn.fresh = d, true
 		t.touch(n)
 	})
@@ -116,6 +119,19 @@ func (t *Tree) pickDrawingScales(d *Drawing) {
 	for i := range d.Ops {
 		if op := &d.Ops[i]; op.Kind == driver.DrawImage && op.Image != nil && op.Image.Scales != 0 {
 			src := t.pickScale(*op.Image)
+			op.Image = &src
+		}
+	}
+}
+
+// refuseDrawingImages drops the images of d the Access of n's owner
+// refuses.
+func (t *Tree) refuseDrawingImages(n *node, d *Drawing) {
+	for i := range d.Ops {
+		if op := &d.Ops[i]; op.Kind == driver.DrawImage && op.Image != nil {
+			src := *op.Image
+			var refused string
+			t.refuseImage(n, &src, &refused, nil)
 			op.Image = &src
 		}
 	}

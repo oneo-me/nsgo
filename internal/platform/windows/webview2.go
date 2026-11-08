@@ -121,7 +121,8 @@ const (
 	settingsPutIsSwipeNavigationEnabled = 32
 
 	// ICoreWebView2NavigationStartingEventArgs
-	navigationStartingGetUri = 3
+	navigationStartingGetUri    = 3
+	navigationStartingPutCancel = 8
 
 	// ICoreWebView2NavigationCompletedEventArgs
 	navigationGetIsSuccess      = 3

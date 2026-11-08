@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -71,6 +73,10 @@ type project struct {
 		Client bool   `yaml:"-"`
 		Trace  bool   `yaml:"-"`
 		Lang   string `yaml:"-"`
+		// Limits runs a TSX app sandboxed, as tsx.View would, within
+		// these limits (tsx.ParseLimits) and its capabilities: nsgo dev
+		// -limits sets it.
+		Limits string `yaml:"-"`
 	} `yaml:"dev"`
 	// Theme is a TSX app's theme file, relative to nsgo.yaml: a theme
 	// core.ParseTheme reads, NSGo's or a shadcn/ui one, which the
@@ -79,6 +85,9 @@ type project struct {
 	// Tailwind extends Tailwind's default theme for a TSX app's classes,
 	// as core.ParseTailwind reads it; the compiler checks it.
 	Tailwind yaml.Node `yaml:"tailwind"`
+	// Capabilities are what a TSX app's code may reach once signed into a
+	// package (nsgo publish), and under nsgo dev -limits.
+	Capabilities yaml.Node `yaml:"capabilities"`
 	// StatusBar is a TSX app's default status bar on iOS and Android,
 	// under its pages' and dialogs': foreground (auto, light or dark) and
 	// hidden.
@@ -193,6 +202,9 @@ func load(dir string) (*project, error) {
 	if p.Name == "" {
 		return nil, fmt.Errorf("nsgo.yaml: name is required")
 	}
+	if _, err := p.capabilities(); err != nil {
+		return nil, err
+	}
 	if p.ID == "" {
 		p.ID = generatedID(p.Name)
 		p.idDefault = true
@@ -284,6 +296,13 @@ func (p *project) ldflags(extra ...string) string {
 	}
 	if p.Dev.Client && p.Dev.Lang != "" {
 		flags += fmt.Sprintf(" -X %s.devLocale=%s", pkg, p.Dev.Lang)
+	}
+	if p.Dev.Client && p.Dev.Limits != "" {
+		flags += fmt.Sprintf(" -X '%s.devLimits=%s'", compilerPath, p.Dev.Limits)
+		if caps, _ := p.capabilities(); caps != nil {
+			data, _ := json.Marshal(caps)
+			flags += fmt.Sprintf(" -X %s.devCapabilities=%s", compilerPath, base64.RawURLEncoding.EncodeToString(data))
+		}
 	}
 	if p.Release {
 		flags += " -s -w"

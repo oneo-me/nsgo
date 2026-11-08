@@ -32,12 +32,17 @@ type Contents struct {
 	// MinRuntime is the oldest runtime the package runs on,
 	// MAJOR.MINOR.PATCH, RuntimeVersion when empty and never newer.
 	MinRuntime string
+	// Capabilities are what its code may reach.
+	Capabilities Capabilities
 }
 
 // Info is what a package says of itself.
 type Info struct {
 	App        App
 	MinRuntime string
+	// Capabilities are what its code may reach, as this runtime reads
+	// them: what it does not know is in Ignored and not granted.
+	Capabilities Capabilities
 	// CreatedAt is when it was signed, by the release key KeyID, which
 	// Certificate certifies.
 	CreatedAt   time.Time
@@ -75,10 +80,16 @@ type header struct {
 	Certificate *Certificate      `json:"certificate"`
 	Files       []json.RawMessage `json:"files"`
 	Critical    []string          `json:"critical,omitempty"`
+	// Capabilities is read leniently (ParseCapabilities).
+	Capabilities json.RawMessage `json:"capabilities,omitempty"`
 }
 
+// capabilitiesKey names the capabilities in the header, and in its
+// critical list: a runtime that does not know them would grant all.
+const capabilitiesKey = "capabilities"
+
 var (
-	headerFields = []string{"app", "minRuntime", "createdAt", "certificate", "files", "critical"}
+	headerFields = []string{"app", "minRuntime", "createdAt", "certificate", "files", "critical", capabilitiesKey}
 	appFields    = []string{"id", "name", "version", "build"}
 	fileFields   = []string{"path", "kind", "offset", "size", "sha256"}
 )
@@ -116,7 +127,14 @@ func Build(contents Contents, key ed25519.PrivateKey, cert *Certificate) ([]byte
 	if !utf8.ValidString(contents.Source) {
 		return nil, fmt.Errorf("%w: the source is not UTF-8", ErrFormat)
 	}
-	return assemble(contents.App, min, []byte(contents.Source), key, cert, createdAt)
+	caps, err := json.Marshal(contents.Capabilities)
+	if err != nil {
+		return nil, err
+	}
+	if _, _, err := ParseCapabilities(caps, true); err != nil {
+		return nil, err
+	}
+	return assemble(contents.App, min, caps, []byte(contents.Source), key, cert, createdAt)
 }
 
 func checkApp(a App) error {
@@ -138,13 +156,14 @@ func checkSigner(key ed25519.PrivateKey, cert *Certificate, app string, at time.
 	return info.covers(app, at)
 }
 
-func assemble(app App, min string, source []byte, key ed25519.PrivateKey, cert *Certificate, at time.Time) ([]byte, error) {
+func assemble(app App, min string, caps json.RawMessage, source []byte, key ed25519.PrivateKey, cert *Certificate, at time.Time) ([]byte, error) {
 	sum := sha256.Sum256(source)
 	file, err := json.Marshal(fileEntry{Path: sourcePath, Kind: sourceKey, Size: uint64(len(source)), SHA256: hex.EncodeToString(sum[:])})
 	if err != nil {
 		return nil, err
 	}
-	h, err := json.Marshal(header{App: app, MinRuntime: min, CreatedAt: at.Unix(), Certificate: cert, Files: []json.RawMessage{file}})
+	h, err := json.Marshal(header{App: app, MinRuntime: min, CreatedAt: at.Unix(), Certificate: cert, Files: []json.RawMessage{file},
+		Capabilities: caps, Critical: []string{capabilitiesKey}})
 	if err != nil {
 		return nil, err
 	}
@@ -348,6 +367,15 @@ func (p *parsed) contents(data []byte) (*Package, error) {
 		KeyID: KeyID(cert.Key), Certificate: p.h.Certificate, SHA256: hex.EncodeToString(sum[:]),
 		Ignored: slices.Clone(p.ignored),
 	}}
+	// A package without capabilities is granted none.
+	if len(p.h.Capabilities) > 0 {
+		caps, ignored, err := ParseCapabilities(p.h.Capabilities, false)
+		if err != nil {
+			return nil, err
+		}
+		pkg.Capabilities = caps
+		pkg.Ignored = append(pkg.Ignored, ignored...)
+	}
 	sources := 0
 	for _, f := range files {
 		if !f.known {

@@ -54,7 +54,18 @@ tsx.RegisterFunctions("app/native", map[string]any{
 
 ## Signed packages
 
-An app can run TSX it downloads, such as its own screens delivered anew or plugins, once it verifies the package. Keep a root key offline and certify release keys with it, then sign the app in a directory with its `nsgo.yaml`:
+An app can run TSX it downloads, such as its own screens delivered anew or plugins, once it verifies the package. Declare what the package's code may reach in its `nsgo.yaml`; it is refused everything else:
+
+```yaml
+capabilities:
+  network:
+    hosts: [api.example.com, "*.cdn.example.com"]
+  open_url: true # or { schemes: [https] }
+  host: [search, "player.*"] # the app's handlers it may call
+  # webview: { hosts: [...], input: true }, clipboard, picker, speech, status_bar
+```
+
+Keep a root key offline and certify release keys with it, then sign the app in that directory:
 
 ```sh
 go tool nsgo keygen root
@@ -64,17 +75,20 @@ go tool nsgo publish -key release.key -cert release.cert plugin
 go tool nsgo verify -root root.pub plugin/dist/Plugin-1.0.0.nsgopkg
 ```
 
-The app trusts `root.pub`, verifies the package off the engine's goroutine and shows it in `tsx.View`, sandboxed beside its own views:
+The app trusts `root.pub`, verifies the package off the engine's goroutine and shows it in `tsx.View`, sandboxed beside its own views. The package reaches the app only through the host channel the view gives it, and keeps its own part of the app's storage:
 
 ```go
 trust, err := pkg.OpenTrust(filepath.Join(cx.DataDir(), "trust"))
 trust.AddRoot(root)
 p, err := trust.Verify(data) // refuses tampered, revoked and older builds
-core.Catch{Try: tsx.View{Package: p}.Render, Fallback: failed}
-trust.Accept(p)              // once it ran, older builds are refused
+channel := core.NewHost()
+channel.Handle("search", func(c *core.HostCall) { c.Resolve(results(c.Data)) })
+view := tsx.View{Package: p, Sandbox: tsx.Sandbox{Host: channel}}
+core.Catch{Try: view.Render, Fallback: failed}
+trust.Accept(p) // once it ran, older builds are refused
 ```
 
-`go tool nsgo revoke` signs a list of revoked release keys and packages for `Trust.UpdateRevocations`. `examples/plugins` is such an app.
+`Sandbox.Grant` gives it less than it declares, `Sandbox.Limits` other time budgets and quotas, and `Sandbox.Modules` Go functions and components beyond NSGo's own. A package whose entry exports functions is a plugin of functions: `tsx.Load(cx, p, tsx.Sandbox{})` runs it unseen and `Plugin.Call` calls them. `go tool nsgo dev -limits` runs an app as such a view would, and `go tool nsgo revoke` signs a list of revoked release keys and packages for `Trust.UpdateRevocations`. `examples/plugins` asks the user to grant a package's capabilities, installs it and runs it.
 
 ## Editors and tests
 

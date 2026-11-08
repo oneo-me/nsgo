@@ -168,6 +168,8 @@ func init() {
 	tsx.Register("nsgo/base", map[string]core.Node{"Terminal": Terminal{}},
 		tsx.Enum(map[string]terminal.CursorStyle{"block": terminal.CursorBlock, "bar": terminal.CursorBar, "underline": terminal.CursorUnderline}),
 		tsx.Event("OnTitle", "title"), tsx.Event("OnExit", "code"), tsx.Event("OnSizeChange", "cols", "rows"),
+		// It starts programs, past any capability.
+		tsx.Unsandboxed(),
 	)
 	tsx.RegisterFunctions("nsgo/base", map[string]any{
 		// terminalThemes are the names of Ghostty's themes.

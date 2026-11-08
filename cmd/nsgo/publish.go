@@ -136,7 +136,15 @@ func publish(o publishOptions, path string) error {
 		return err
 	}
 	app := pkg.App{ID: p.ID, Name: p.Name, Version: p.Version, Build: uint64(p.versionCode())}
-	data, err := pkg.Build(pkg.Contents{App: app, Source: source, MinRuntime: o.minRuntime}, key, cert)
+	contents := pkg.Contents{App: app, Source: source, MinRuntime: o.minRuntime}
+	caps, err := p.capabilities()
+	if err != nil {
+		return err
+	}
+	if caps != nil {
+		contents.Capabilities = *caps
+	}
+	data, err := pkg.Build(contents, key, cert)
 	if err != nil {
 		return err
 	}
@@ -234,6 +242,13 @@ func verifyPackage(o verifyOptions, path string) error {
 	detail("signed %s, for runtime %s or newer", info.CreatedAt.Format(time.DateTime), info.MinRuntime)
 	detail("certified by root %s for %s until %s", cert.Signer, strings.Join(cert.Apps, ", "), cert.NotAfter.Format(time.DateOnly))
 	detail("sha256 %s", info.SHA256)
+	if lines := describeCapabilities(info.Capabilities); len(lines) == 0 {
+		detail("capabilities: none")
+	} else {
+		for _, l := range lines {
+			detail("may reach %s", l)
+		}
+	}
 	for _, i := range info.Ignored {
 		warn("this runtime leaves out %s", i)
 	}

@@ -116,7 +116,12 @@ Style `Transition`s, animated values and layout animations run on the platform, 
 - Native targets keep `storage.json` in the data directory: `engine.OpenFileStorage` returns one store per file in the process and rewrites the file on a goroutine of its own.
 - A file that does not parse is set aside as `storage.json.corrupt`, and one that cannot be read leaves changes in memory. Platforms call `engine.SyncStorage` as the process ends.
 - The web keeps entries in `localStorage` under `nsgo:<app id>:`.
+- `Scope.ProvideStorage(name, quota)` gives a subtree a partition: its keys are stored under a prefix starting with a zero byte, which the app's own `Storage` neither lists nor clears, and hold at most `quota` bytes besides the app's quota. A partition's `Clear`, and the app's while partitions hold entries, remove key by key.
 - `Scope.DataDir` and `Scope.CacheDir` are named by the app's ID, which the tool passes from `nsgo.yaml`: `engine.AppDirs` on Apple platforms, Windows and Linux, the files and cache directories the runtime passes on Android, and none on the web. The engine makes them as it starts.
+
+## Access
+
+`Scope.ProvideAccess` holds a subtree to a `core.Access`, NSH's `nsh_core::access`, for code a host did not write ([sandbox](tsx.md#sandbox)); one below another is held to both. Core asks it where it makes requests, by the owner of the node or the call, so nothing is checked until an app provides one (`runtime.restricted`): images, videos, canvas and shader images at commit, a web view's source and the hosts its platform lets it navigate to (`WebConfig.Restricted`, `Hosts`), `Ref.SendInput`, `ImageSize`, `OpenURL`, status bars and host calls. `Scope.CheckAccess` answers code that makes requests of its own.
 
 ## Mount protocol
 

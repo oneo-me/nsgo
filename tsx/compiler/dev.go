@@ -4,6 +4,7 @@ package compiler
 
 import (
 	"bufio"
+	"encoding/base64"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,12 +14,18 @@ import (
 
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/tsx"
+	"github.com/oneo-me/nsgo/tsx/pkg"
 )
 
 // devServer is nsgo dev's server, set with -ldflags -X for targets that
 // pass the app no environment, as nsgo's own; NSGO_DEV_SERVER overrides
 // it, and on the web the page's origin is it.
 var devServer = ""
+
+// devLimits, set by nsgo dev -limits, has the app run sandboxed within
+// them (tsx.ParseLimits), held to devCapabilities, nsgo.yaml's as
+// base64url JSON, when it declares any.
+var devLimits, devCapabilities string
 
 // run runs bundle code under nsgo dev: each bundle the server compiles
 // from a save replaces it, in a VM of its own, with no Go build.
@@ -33,6 +40,12 @@ func run(cx *core.Scope, entry, code string) core.Node {
 	if server == "" {
 		return tsx.App(entry, code)(cx)
 	}
+	if devLimits != "" {
+		s := devSandbox()
+		current := core.NewSignal(cx, code)
+		go followBundles(server, entry, func(next string) { cx.Post(func() { current.Set(next) }) })
+		return core.Dynamic(func(cx *core.Scope) core.Node { return tsx.Sandboxed(entry, current.Get(), s)(cx) })
+	}
 	if hot(code) {
 		// A hot bundle updates in place: what did not change keeps its
 		// state.
@@ -43,6 +56,28 @@ func run(cx *core.Scope, entry, code string) core.Node {
 	current := core.NewSignal(cx, code)
 	go followBundles(server, entry, func(next string) { cx.Post(func() { current.Set(next) }) })
 	return core.Dynamic(func(cx *core.Scope) core.Node { return tsx.App(entry, current.Get())(cx) })
+}
+
+// devSandbox is the sandbox nsgo dev -limits runs the app in: what a
+// host's View would give a package of it, but for every module.
+func devSandbox() tsx.Sandbox {
+	limits, err := tsx.ParseLimits(devLimits)
+	if err != nil {
+		panic(err)
+	}
+	s := tsx.Sandbox{Limits: &limits, Modules: []string{"*"}}
+	if devCapabilities != "" {
+		data, err := base64.RawURLEncoding.DecodeString(devCapabilities)
+		if err != nil {
+			panic(err)
+		}
+		caps, _, err := pkg.ParseCapabilities(data, false)
+		if err != nil {
+			panic(err)
+		}
+		s.Capabilities = &caps
+	}
+	return s
 }
 
 // hot reports whether a bundle was compiled for hot updates

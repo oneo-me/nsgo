@@ -439,7 +439,7 @@ mount(() => <Text testID="spin" onPress={() => { for (;;) {} }}>{made + " " + fr
 	limits.Call = 50 * time.Millisecond
 	var failed error
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		return core.Catch{Try: tsx.Sandboxed("App.tsx", code, limits), Fallback: func(cx *core.Scope, err error, _ func()) core.Node {
+		return core.Catch{Try: tsx.Sandboxed("App.tsx", code, tsx.Sandbox{Limits: &limits}), Fallback: func(cx *core.Scope, err error, _ func()) core.Node {
 			failed = err
 			return core.Text{Content: "cut"}
 		}}

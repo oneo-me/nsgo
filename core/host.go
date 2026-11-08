@@ -229,8 +229,11 @@ type hostApp struct {
 
 type hostListener struct{ fn func(data any) }
 
-// attachHost makes rt the app h serves, taking the events kept for it.
-func (rt *runtime) attachHost(h *Host) {
+// attachHost makes rt the app h serves.
+func (rt *runtime) attachHost(h *Host) { rt.host = rt.serve(h) }
+
+// serve makes an app end of h on rt, taking the events kept for it.
+func (rt *runtime) serve(h *Host) *hostApp {
 	a := &hostApp{h: h, rt: rt, listeners: map[string][]*hostListener{}}
 	h.mu.Lock()
 	a.params = h.params
@@ -240,15 +243,19 @@ func (rt *runtime) attachHost(h *Host) {
 	if a.params == nil {
 		a.params = map[string]any{}
 	}
-	rt.host = a
-	if pending {
+	if pending && rt.post != nil {
 		rt.post(func() { a.drain() })
 	}
+	return a
 }
 
 // detachHost leaves h's events still queued for the next app.
 func (rt *runtime) detachHost() {
-	a := rt.host
+	rt.host.detach()
+	rt.host = nil
+}
+
+func (a *hostApp) detach() {
 	if a == nil {
 		return
 	}
@@ -257,7 +264,40 @@ func (rt *runtime) detachHost() {
 		a.h.app = nil
 	}
 	a.h.mu.Unlock()
-	rt.host = nil
+}
+
+// hostKey is where ProvideHost keeps an owner's host.
+type hostKey struct{}
+
+// ProvideHost has the current owner and what it owns reach h in place
+// of the app's host, until the owner is disposed: CallHost, PostHost,
+// OnHostEvent, HostParams and the URLs OpenURL offers h's handler. nil
+// leaves them with no host. A host app gives each view of code it did
+// not write a channel of its own this way (tsx.View).
+func (cx *Scope) ProvideHost(h *Host) {
+	o := cx.current()
+	var a *hostApp
+	if h != nil {
+		a = cx.rt.serve(h)
+		o.addCleanup(a.detach)
+	}
+	if o.values == nil {
+		o.values = map[any]any{}
+	}
+	o.values[hostKey{}] = a
+	cx.rt.hostScoped = true
+}
+
+// hostApp is the host the current owner reaches.
+func (cx *Scope) hostApp() *hostApp {
+	if cx.rt.hostScoped {
+		for s := cx.current(); s != nil; s = s.parent {
+			if a, ok := s.values[hostKey{}]; ok {
+				return a.(*hostApp)
+			}
+		}
+	}
+	return cx.rt.host
 }
 
 // drain delivers the events queued since the last drain.
@@ -288,13 +328,13 @@ func (a *hostApp) deliver(ev hostEvent) {
 }
 
 // HasHost reports whether a host embeds the app, to answer its calls.
-func (cx *Scope) HasHost() bool { return cx.rt.host != nil }
+func (cx *Scope) HasHost() bool { return cx.hostApp() != nil }
 
 // HostParams returns the parameters the embedding host gave the app
 // before it started (Host.SetParams): an empty map without a host or
 // any.
 func (cx *Scope) HostParams() map[string]any {
-	if a := cx.rt.host; a != nil {
+	if a := cx.hostApp(); a != nil {
 		return a.params
 	}
 	return map[string]any{}
@@ -305,7 +345,7 @@ func (cx *Scope) HostParams() map[string]any {
 // the app had a listener of name are kept for it: the first listener
 // hears them, in order, once the code adding it has run.
 func (cx *Scope) OnHostEvent(name string, fn func(data any)) {
-	a := cx.rt.host
+	a := cx.hostApp()
 	if a == nil {
 		return
 	}
@@ -369,9 +409,13 @@ func (cx *Scope) CallHostTimeout(name string, data any, timeout time.Duration, d
 			})
 		}
 	}
-	a := rt.host
+	a := cx.hostApp()
 	if a == nil {
 		finish(nil, &Error{Code: CodeUnavailable, Message: "core: no host embeds the app", Err: ErrNoHostHandler})
+		return
+	}
+	if err := cx.CheckAccess(AccessRequest{Permission: AccessHost, Resource: name}); err != nil {
+		finish(nil, err)
 		return
 	}
 	fn := a.h.handler(name)
@@ -409,8 +453,8 @@ func (cx *Scope) CallHostTimeout(name string, data any, timeout time.Duration, d
 // PostHost sends data to the embedding host's handler of name, which has
 // nothing to answer. Without a host or a handler it is dropped.
 func (cx *Scope) PostHost(name string, data any) {
-	a := cx.rt.host
-	if a == nil {
+	a := cx.hostApp()
+	if a == nil || cx.denied(AccessRequest{Permission: AccessHost, Resource: name}) {
 		return
 	}
 	fn := a.h.handler(name)

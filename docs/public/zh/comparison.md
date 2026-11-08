@@ -34,7 +34,7 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 
 ## 劣势
 
-- **还很早期。** 尚无发布版本和稳定 API；[路线图](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md)列出了缺少的部分，例如 Windows 和 Linux 上的多窗口，以及限制运行时下发的 TSX 可访问范围的 capabilities。
+- **还很早期。** 尚无发布版本和稳定 API；[路线图](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md)列出了缺少的部分，例如 Windows 和 Linux 上的多窗口，以及运行时下发的 TSX 的堆限制。
 - **生态很小。** 与 Flutter、React Native 或 Qt 相比，第三方组件、示例和网上的答案都很少。
 - **平台之间有差异。** 原生视图意味着各平台之间存在细微差别，应用需要在每个平台上检查。自绘框架在哪里看起来都一样。
 - **自己的桥接方式。** 在 Android 上，Go 程序运行在 Java 运行时旁边，通过管道与它通信；Linux 用户需要 GTK 4.14 或更新版本。
@@ -46,7 +46,7 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 NSGo 移植了 NSH 的设计：架构、后端、API 的命名和 `base` 中无样式的组件都来自 NSH（[现状](index.md#现状)）。
 
 - **选择 NSGo**：想用 Go 而不是 Rust 或 TSX 写应用，想在 Mac 上只用 Go 和 Xcode 构建所有目标，或者需要 NSGo 新增的能力：用 Go 编写的 GPU 着色器、矢量图标、终端、应用自行打开的窗口、面板和托盘图标，以及 `ui` 中带样式的组件。
-- **选择 NSH**：想要更成熟的项目，需要由 QuickJS 运行、带字节码和堆限制的 TSX，运行时下发 TSX 的 capabilities，GPUI 后端，或 32 位 Android。
+- **选择 NSH**：想要更成熟的项目，需要由 QuickJS 运行、带字节码和堆限制的 TSX，GPUI 后端，或 32 位 Android。
 
 ## MyGo
 

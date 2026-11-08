@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -102,6 +103,31 @@ type devFlags struct {
 	release   bool
 	trace     bool
 	lang      string
+	limits    limitsFlag
+}
+
+// limitsFlag is -limits: alone the sandbox's default limits, or limits
+// as tsx.ParseLimits reads them (-limits=nodes=1000,call=500ms).
+type limitsFlag string
+
+func (l *limitsFlag) String() string   { return string(*l) }
+func (l *limitsFlag) IsBoolFlag() bool { return true }
+
+func (l *limitsFlag) Set(v string) error {
+	switch v {
+	case "true":
+		v = "default"
+	case "false":
+		v = ""
+	}
+	for _, kv := range strings.Split(v, ",") {
+		if k, _, _ := strings.Cut(kv, "="); v != "" && v != "default" &&
+			!slices.Contains([]string{"load", "call", "stack", "nodes", "timers", "requests", "body", "storage"}, k) {
+			return fmt.Errorf("no limit %q: load, call, stack, nodes, timers, requests, body or storage", k)
+		}
+	}
+	*l = limitsFlag(v)
+	return nil
 }
 
 func bindDevFlags(fs *flag.FlagSet) *devFlags {
@@ -116,11 +142,13 @@ func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	fs.BoolVar(&f.trace, "trace", false, "print each commit's time and mount items from the running app")
 	fs.StringVar(&f.lang, "lang", "", "run the app in this `locale`, as de or zh-Hant, or a pseudo locale: en-XA accents and lengthens its messages, ar-XB mirrors them")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` the iOS target signs with (default: the team Xcode last used)")
+	fs.Var(&f.limits, "limits", "run a TSX app sandboxed, as tsx.View runs a package: within the default limits, or those given (`load=10s,call=2s,stack=1000,nodes=200000,timers=10000,requests=32,body=67108864,storage=1048576`), and nsgo.yaml's capabilities")
 	return f
 }
 
 func (f *devFlags) apply(p *project) {
 	f.overrides.apply(p)
+	p.Dev.Limits = string(f.limits)
 	f.target.replace(&p.Dev.Target)
 	if f.hotReload.set {
 		p.Dev.HotReload = &f.hotReload.value

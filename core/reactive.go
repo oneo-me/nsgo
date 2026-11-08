@@ -116,6 +116,15 @@ type runtime struct {
 	dataDir        string
 	cacheDir       string
 	host           *hostApp
+	// restricted says an owner was given an Access (ProvideAccess), so
+	// requests look for one.
+	restricted bool
+	// storageScoped says an owner was given a partition (ProvideStorage).
+	storageScoped bool
+	// hostScoped says an owner was given a host (ProvideHost).
+	hostScoped bool
+	// refusals are the capabilities a refusal was logged of.
+	refusals map[string]bool
 	// speech is the speech session running, one per engine.
 	speech *SpeechSession
 	// windows are the main window's options where the platform opens

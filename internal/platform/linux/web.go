@@ -56,6 +56,10 @@ var (
 	webkitUserStyleSheetUnref            func(uintptr)
 	webkitNetworkErrorQuark              func() uint32
 	webkitPolicyErrorQuark               func() uint32
+	webkitNavigationDecisionGetAction    func(uintptr) uintptr
+	webkitNavigationActionGetRequest     func(uintptr) uintptr
+	webkitURIRequestGetURI               func(uintptr) uintptr
+	webkitPolicyDecisionIgnore           func(uintptr)
 	jscValueToString                     func(uintptr) uintptr
 )
 
@@ -120,6 +124,10 @@ func bindWebKit(webkit, jsc uintptr) {
 	reg(&webkitUserStyleSheetUnref, "webkit_user_style_sheet_unref")
 	reg(&webkitNetworkErrorQuark, "webkit_network_error_quark")
 	reg(&webkitPolicyErrorQuark, "webkit_policy_error_quark")
+	reg(&webkitNavigationDecisionGetAction, "webkit_navigation_policy_decision_get_navigation_action")
+	reg(&webkitNavigationActionGetRequest, "webkit_navigation_action_get_request")
+	reg(&webkitURIRequestGetURI, "webkit_uri_request_get_uri")
+	reg(&webkitPolicyDecisionIgnore, "webkit_policy_decision_ignore")
 	purego.RegisterLibFunc(&jscValueToString, jsc, "jsc_value_to_string")
 }
 
@@ -133,6 +141,7 @@ const (
 	webkitLoadFinished     = 3
 	webkitNetworkCancelled = 302 // WEBKIT_NETWORK_ERROR_CANCELLED
 	webkitPolicyInterrupt  = 102 // WEBKIT_POLICY_ERROR_FRAME_LOAD_INTERRUPTED_BY_POLICY_CHANGE
+	webkitNewWindowAction  = 1   // WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION
 	webkitCookieSQLite     = 1   // WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
 	gtkOverflowHidden      = 1
 )
@@ -266,6 +275,7 @@ func (w *window) makeWeb(v *view) {
 	w.host(v, &wv.hosted, wv.widget, true)
 	w.connect(v, wv.widget, "load-changed", cbWebLoadChanged)
 	w.connect(v, wv.widget, "load-failed", cbWebLoadFailed)
+	w.connect(v, wv.widget, "decide-policy", cbWebPolicy)
 	w.connect(v, wv.widget, "map", cbWebMap)
 	w.connect(v, wv.content, "script-message-received::"+webHandler, cbWebMessage)
 
@@ -477,6 +487,24 @@ func webLoadFailedCallback(page uintptr, event uint32, uri, gerr uintptr, data u
 		}
 	}
 	return 1 // the app shows failures itself, without WebKit's error page
+}
+
+// webPolicyCallback refuses the navigations a restricted view's config
+// does not allow: the top level's (decide-policy's navigation actions)
+// and new windows'.
+func webPolicyCallback(page, decision uintptr, kind uint32, data uintptr) int32 {
+	w, v := webOf(data, page)
+	if v == nil || !v.web.config.Restricted || kind > webkitNewWindowAction {
+		return 0
+	}
+	url := goString(webkitURIRequestGetURI(webkitNavigationActionGetRequest(webkitNavigationDecisionGetAction(decision))))
+	if v.web.config.Navigable(url) {
+		return 0
+	}
+	webkitPolicyDecisionIgnore(decision)
+	w.report(v, driver.Event{Kind: driver.EventError, ID: v.id, Text: driver.RefusedNavigation(url),
+		Navigation: &driver.WebNavigation{URL: url}})
+	return 1
 }
 
 func webMessageCallback(content, value uintptr, data uintptr) {

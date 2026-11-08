@@ -288,7 +288,7 @@ func (cx *Scope) OpenURL(u string, done func(opened bool)) {
 			done(ok)
 		}
 	}
-	if CheckURL(u) != nil {
+	if CheckURL(u) != nil || cx.denied(AccessRequest{Permission: AccessOpenURL, Resource: u}) {
 		answer(false)
 		return
 	}
@@ -301,7 +301,7 @@ func (cx *Scope) OpenURL(u string, done func(opened bool)) {
 		}
 		t.request(o, driver.MountItem{Kind: driver.ItemOpenURL, Value: u}, func(ev driver.Event) { answer(ev.Finished) })
 	}
-	asked := cx.rt.host.openURL(u, func(handled bool) {
+	asked := cx.hostApp().openURL(u, func(handled bool) {
 		if handled {
 			cx.rt.run(o, func() { answer(true) })
 		} else {

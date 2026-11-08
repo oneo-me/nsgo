@@ -84,6 +84,8 @@ type videoNode struct {
 	end          func()
 	buffer       func(bool)
 	loadError    func(error)
+	// refused is the source Access refused last.
+	refused string
 }
 
 func (t *Tree) mountVideo(cx *Scope, parent *node, v Video) {

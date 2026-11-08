@@ -502,13 +502,32 @@ func (r *runtime) fetch(call js.FunctionCall) js.Value {
 		body = bytes.Clone(r.bytes(b))
 	}
 	redirect, done, fail := arg(call, 4).String(), arg(call, 5), arg(call, 6)
+	opts := fetchOptions{redirect: redirect, fetcher: fetcherKey.Use(r.cx), body: r.limits.Body}
+	if r.sandbox != nil {
+		if err := r.fetchAllowed(target, method, len(body)); err != nil {
+			r.call(fail, r.typeError(err))
+			return r.function(func(js.FunctionCall) js.Value { return js.Undefined() })
+		}
+		// Each hop of a redirect is checked as the request was.
+		opts.check = func(u, m string) error {
+			return r.checkAccess(core.AccessRequest{Permission: core.AccessNetwork, Resource: u, Method: m})
+		}
+		r.sandbox.requests++
+	} else {
+		opts.body = 0
+	}
 	// A request belongs to the app, not to the owner that sent it: only
 	// its AbortSignal, or the app's end, cancels it.
 	var ctx context.Context
 	var cancel context.CancelFunc
 	r.cx.Run(func() { ctx, cancel = context.WithCancel(r.cx.Context()) })
-	answer := func(fn func()) { r.cx.Post(func() { r.inJS(fn) }) }
-	fetcher := fetcherKey.Use(r.cx)
+	finished := false
+	answer := func(fn func()) {
+		r.cx.Post(func() {
+			r.fetchDone(&finished)
+			r.inJS(fn)
+		})
+	}
 	asset, shipped := r.assets[target]
 	go func() {
 		var res *fetched
@@ -516,11 +535,13 @@ func (r *runtime) fetch(call js.FunctionCall) js.Value {
 		if strings.HasPrefix(target, "asset:") {
 			res, err = fetchAsset(target, asset, shipped)
 		} else {
-			res, err = doFetch(ctx, target, method, headers, body, redirect, fetcher)
+			res, err = doFetch(ctx, target, method, headers, body, opts)
 		}
 		if err != nil {
 			if ctx.Err() == nil {
-				answer(func() { r.call(fail, r.vm.ToValue(err.Error())) })
+				answer(func() { r.call(fail, r.typeError(err)) })
+			} else {
+				r.cx.Post(func() { r.fetchDone(&finished) })
 			}
 			return
 		}
@@ -555,9 +576,62 @@ type fetched struct {
 
 var errRedirect = errors.New("redirect mode is set to error")
 
+// fetchOptions are how doFetch fetches: the redirect mode, the Fetcher
+// (nil: the network), the check of each hop's URL and method (nil: none)
+// and the most bytes a body may hold (0: any).
+type fetchOptions struct {
+	redirect string
+	fetcher  Fetcher
+	check    func(url, method string) error
+	body     int
+}
+
+// fetchAllowed is the refusal of a sandbox's fetch: a file on the device,
+// a URL its capabilities do not grant, a body past its limit, or one
+// request more than its quota.
+func (r *runtime) fetchAllowed(target, method string, body int) error {
+	if r.sandbox.caps && strings.HasPrefix(strings.ToLower(target), "file:") {
+		return core.AccessDenied(core.AccessNetwork, target)
+	}
+	if !strings.HasPrefix(target, "data:") && !strings.HasPrefix(target, "asset:") {
+		if err := r.checkAccess(core.AccessRequest{Permission: core.AccessNetwork, Resource: target, Method: method}); err != nil {
+			return err
+		}
+	}
+	if l := r.limits.Body; l > 0 && body > l {
+		return quota("bytes of a request's body", l)
+	}
+	if l := r.limits.Requests; l > 0 && r.sandbox.requests >= l {
+		return quota("requests", l)
+	}
+	return nil
+}
+
+// fetchDone counts a sandbox's request finished, once.
+func (r *runtime) fetchDone(finished *bool) {
+	if r.sandbox != nil && !*finished {
+		*finished = true
+		r.sandbox.requests--
+	}
+}
+
+// typeError is err as the TypeError a failed fetch rejects with, with
+// its code, permission and resource.
+func (r *runtime) typeError(err error) *js.Object {
+	o := r.goError(&JSError{Name: "TypeError", Message: err.Error()})
+	if code := core.ErrorCode(err); code != "" {
+		_ = o.Set("code", code)
+	}
+	var coded *core.Error
+	if errors.As(err, &coded) && coded.Permission != "" {
+		_ = o.Set("permission", coded.Permission)
+		_ = o.Set("resource", coded.Resource)
+	}
+	return o
+}
+
 // doFetch fetches target: http(s), data: and file: URLs.
-func doFetch(ctx context.Context, target, method string, headers [][2]string, body []byte, redirect string,
-	fetcher Fetcher) (*fetched, error) {
+func doFetch(ctx context.Context, target, method string, headers [][2]string, body []byte, o fetchOptions) (*fetched, error) {
 	u, err := url.Parse(target)
 	if err != nil {
 		return nil, err
@@ -586,12 +660,17 @@ func doFetch(ctx context.Context, target, method string, headers [][2]string, bo
 		req.Header.Add(h[0], h[1])
 	}
 	client := &http.Client{}
-	if fetcher != nil {
-		client.Transport = roundTrip(fetcher)
+	if o.fetcher != nil {
+		client.Transport = roundTrip(o.fetcher)
 	}
 	redirected := false
-	client.CheckRedirect = func(*http.Request, []*http.Request) error {
-		switch redirect {
+	client.CheckRedirect = func(req *http.Request, _ []*http.Request) error {
+		if o.check != nil {
+			if err := o.check(req.URL.String(), req.Method); err != nil {
+				return err
+			}
+		}
+		switch o.redirect {
 		case "error":
 			return errRedirect
 		case "manual":
@@ -605,9 +684,16 @@ func doFetch(ctx context.Context, target, method string, headers [][2]string, bo
 		return nil, err
 	}
 	defer res.Body.Close()
-	b, err := io.ReadAll(res.Body)
+	read := io.Reader(res.Body)
+	if o.body > 0 {
+		read = io.LimitReader(res.Body, int64(o.body)+1)
+	}
+	b, err := io.ReadAll(read)
 	if err != nil {
 		return nil, err
+	}
+	if o.body > 0 && len(b) > o.body {
+		return nil, quota("bytes of a response's body", o.body)
 	}
 	f := &fetched{status: res.StatusCode, statusText: strings.TrimSpace(strings.TrimPrefix(res.Status, strconv.Itoa(res.StatusCode))),
 		url: res.Request.URL.String(), redirected: redirected, body: b}

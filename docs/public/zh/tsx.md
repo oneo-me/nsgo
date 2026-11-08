@@ -54,7 +54,18 @@ tsx.RegisterFunctions("app/native", map[string]any{
 
 ## 签名包
 
-应用可以运行它下载的 TSX，例如重新下发的自身页面或插件，前提是先验证包。根密钥离线保存，用它为发布密钥签发证书，然后在带 `nsgo.yaml` 的目录中签名应用：
+应用可以运行它下载的 TSX，例如重新下发的自身页面或插件，前提是先验证包。在包的 `nsgo.yaml` 中声明它的代码可以访问什么，其余一律拒绝：
+
+```yaml
+capabilities:
+  network:
+    hosts: [api.example.com, "*.cdn.example.com"]
+  open_url: true # 或 { schemes: [https] }
+  host: [search, "player.*"] # 它可以调用的应用处理函数
+  # webview: { hosts: [...], input: true }、clipboard、picker、speech、status_bar
+```
+
+根密钥离线保存，用它为发布密钥签发证书，然后在该目录中签名应用：
 
 ```sh
 go tool nsgo keygen root
@@ -64,17 +75,20 @@ go tool nsgo publish -key release.key -cert release.cert plugin
 go tool nsgo verify -root root.pub plugin/dist/Plugin-1.0.0.nsgopkg
 ```
 
-应用信任 `root.pub`，在引擎协程之外验证包，再用 `tsx.View` 在沙箱中把它显示在自己的视图旁：
+应用信任 `root.pub`，在引擎协程之外验证包，再用 `tsx.View` 在沙箱中把它显示在自己的视图旁。包只能通过视图给它的 host 通道访问应用，并拥有应用存储中属于自己的一部分：
 
 ```go
 trust, err := pkg.OpenTrust(filepath.Join(cx.DataDir(), "trust"))
 trust.AddRoot(root)
 p, err := trust.Verify(data) // 拒绝被篡改、已吊销和更旧的构建
-core.Catch{Try: tsx.View{Package: p}.Render, Fallback: failed}
-trust.Accept(p)              // 运行之后，更旧的构建会被拒绝
+channel := core.NewHost()
+channel.Handle("search", func(c *core.HostCall) { c.Resolve(results(c.Data)) })
+view := tsx.View{Package: p, Sandbox: tsx.Sandbox{Host: channel}}
+core.Catch{Try: view.Render, Fallback: failed}
+trust.Accept(p) // 运行之后，更旧的构建会被拒绝
 ```
 
-`go tool nsgo revoke` 签署吊销发布密钥和包的列表，供 `Trust.UpdateRevocations` 使用。`examples/plugins` 就是这样的应用。
+`Sandbox.Grant` 让它得到比声明更少的权限，`Sandbox.Limits` 设置其他时间预算和配额，`Sandbox.Modules` 给它 NSGo 自带之外的 Go 函数和组件。入口导出函数的包是函数型插件：`tsx.Load(cx, p, tsx.Sandbox{})` 在后台运行它，`Plugin.Call` 调用这些函数。`go tool nsgo dev -limits` 像这样的视图一样运行应用，`go tool nsgo revoke` 签署吊销发布密钥和包的列表，供 `Trust.UpdateRevocations` 使用。`examples/plugins` 会请用户授予包声明的权限，再安装并运行它。
 
 ## 编辑器与测试
 

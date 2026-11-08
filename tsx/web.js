@@ -1874,7 +1874,8 @@
             r.type = "basic";
             resolve(r);
           },
-          (message) => reject(new TypeError(message)),
+          // Go makes the TypeError, with a refusal's code.
+          (error) => reject(error),
         );
         req.signal.addEventListener("abort", () => {
           cancel();

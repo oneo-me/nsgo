@@ -17,6 +17,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -58,6 +59,9 @@ final class WebNode {
     private String src = "", html = "", baseURL = "";
     private String injected = "", injectedBefore = "", userAgent = "";
     private boolean noScroll;
+    /** Whether top-level navigations go only to hosts, space-separated patterns (WebConfig.Navigable). */
+    private boolean restricted;
+    private String[] hosts = new String[0];
 
     /** The theme the page's prefers-color-scheme follows from Android 13. */
     private final ContextThemeWrapper themed;
@@ -106,7 +110,36 @@ final class WebNode {
         }
     }
 
+    /** Whether the page may go to url at the top level, as driver.WebConfig.Navigable says. */
+    boolean navigable(String url) {
+        if (!restricted) return true;
+        android.net.Uri uri = android.net.Uri.parse(url);
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
+        switch (scheme) {
+            case "about": case "data": case "blob": return true;
+            case "http": case "https": break;
+            default: return false;
+        }
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
+        if (host.endsWith(".")) host = host.substring(0, host.length() - 1);
+        for (String p : hosts) {
+            p = p.toLowerCase(Locale.ROOT);
+            if (p.equals("*") || p.equals(host) || p.startsWith("*.") && host.endsWith(p.substring(1))) return true;
+        }
+        return false;
+    }
+
     private final class Client extends WebViewClient {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView web, WebResourceRequest request) {
+            if (!request.isForMainFrame()) return false;
+            String url = request.getUrl().toString();
+            if (navigable(url)) return false;
+            reporter.report(Protocol.EVENT_ERROR, "nsgo: the web view may not navigate to " + url
+                    + " (the webview capability's hosts)", new Navigation(url, "", false, false, false));
+            return true;
+        }
+
         @Override
         public void onPageStarted(WebView web, String url, Bitmap favicon) {
             // android.webkit cannot run a script at document start: only
@@ -147,6 +180,9 @@ final class WebNode {
         String userAgent = Protocol.readString(in);
         int flags = in.readUnsignedByte();
         boolean noScroll = Protocol.flag(flags, 0), noJavaScript = Protocol.flag(flags, 1);
+        restricted = Protocol.flag(flags, 2);
+        String hosts = Protocol.readString(in).trim();
+        this.hosts = hosts.isEmpty() ? new String[0] : hosts.split(" +");
 
         boolean reload = !configured || !src.equals(this.src) || !html.equals(this.html)
                 || !baseURL.equals(this.baseURL) || !injected.equals(this.injected)

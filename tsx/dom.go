@@ -130,19 +130,19 @@ func (r *runtime) newElement(tag string) *node {
 	switch tag {
 	case "view":
 		n.kind = kindView
-		n.elem = core.NewElement(r.cx, n.view)
+		n.elem = r.newCoreElement(r.cx, n.view)
 	case "text":
 		n.kind = kindText
-		n.elem = core.NewElement(r.cx, n.text)
+		n.elem = r.newCoreElement(r.cx, n.text)
 	case "scroll":
 		n.kind = kindScroll
-		n.elem = core.NewElement(r.cx, n.scroll)
+		n.elem = r.newCoreElement(r.cx, n.scroll)
 	case "input":
 		n.kind = kindInput
-		n.elem = core.NewElement(r.cx, n.input)
+		n.elem = r.newCoreElement(r.cx, n.input)
 	case "image":
 		n.kind = kindImage
-		n.elem = core.NewElement(r.cx, n.image)
+		n.elem = r.newCoreElement(r.cx, n.image)
 	default:
 		panic(r.vm.NewTypeError("nsgo: no element %q yet", tag))
 	}

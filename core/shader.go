@@ -253,7 +253,12 @@ func (t *Tree) mountShader(cx *Scope, parent *node, s Shader) {
 		d := s.Program.values(s.Uniforms, u)
 		s.Program.builtins(d, clock, nil, 0)
 		for _, img := range images {
-			d.Images = append(d.Images, t.pickScale(img))
+			img = t.pickScale(img)
+			if t.rt.restricted {
+				var refused string
+				t.refuseImage(n, &img, &refused, nil)
+			}
+			d.Images = append(d.Images, img)
 		}
 		if old := sn.sent; old != nil && slices.Equal(old.Lanes, d.Lanes) && slices.Equal(old.Nodes, d.Nodes) &&
 			slices.EqualFunc(old.Images, d.Images, ImageSource.Same) {
