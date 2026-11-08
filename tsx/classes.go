@@ -12,7 +12,7 @@ import (
 	"sync"
 	"weak"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -97,7 +97,7 @@ func RegisterClass[T any](module, name string, c Class[T]) {
 	defer registryMu.Unlock()
 	classes[t] = def
 	registeredClasses[module] = append(registeredClasses[module], def)
-	registered[module] = append(registered[module], export{name, func(r *runtime) goja.Value { return r.class(def).ctor }})
+	registered[module] = append(registered[module], export{name, func(r *runtime) js.Value { return r.class(def).ctor }})
 }
 
 // classDef is a registered class.
@@ -134,15 +134,15 @@ func classOf(t reflect.Type) *classDef {
 
 // classObj is a class in one VM.
 type classObj struct {
-	ctor, proto *goja.Object
+	ctor, proto *js.Object
 }
 
 // vmClasses are a VM's classes and the objects of their instances.
 type vmClasses struct {
 	made map[*classDef]*classObj
-	slot *goja.Symbol
+	slot *js.Symbol
 	mu   sync.Mutex
-	objs map[any]weak.Pointer[goja.Object]
+	objs map[any]weak.Pointer[js.Object]
 }
 
 // class is def in this VM, made on first use.
@@ -152,10 +152,10 @@ func (r *runtime) class(def *classDef) *classObj {
 	}
 	if r.classes.made == nil {
 		r.classes.made = map[*classDef]*classObj{}
-		r.classes.objs = map[any]weak.Pointer[goja.Object]{}
-		r.classes.slot = goja.NewSymbol("nsgo.instance")
+		r.classes.objs = map[any]weak.Pointer[js.Object]{}
+		r.classes.slot = js.NewSymbol("nsgo.instance")
 	}
-	ctor := r.vm.ToValue(func(call goja.ConstructorCall) *goja.Object {
+	ctor := r.vm.ToValue(func(call js.ConstructorCall) *js.Object {
 		if !def.ctor.IsValid() {
 			panic(r.vm.NewTypeError("%s has no constructor: Go makes its instances", def.name))
 		}
@@ -170,13 +170,13 @@ func (r *runtime) class(def *classDef) *classObj {
 		}
 		r.bind(def, call.This, out[0])
 		return call.This
-	}).(*goja.Object)
-	proto := ctor.Get("prototype").(*goja.Object)
+	}).(*js.Object)
+	proto := ctor.Get("prototype").(*js.Object)
 	c := &classObj{ctor: ctor, proto: proto}
 	r.classes.made[def] = c
 	for _, m := range def.methods {
 		name := def.name + "." + lowerCamel(m.Name)
-		_ = proto.Set(lowerCamel(m.Name), r.function(func(call goja.FunctionCall) goja.Value {
+		_ = proto.Set(lowerCamel(m.Name), r.function(func(call js.FunctionCall) js.Value {
 			return r.callGo(name, r.receiver(def, call.This, name).Method(m.Index), call.Arguments)
 		}))
 	}
@@ -187,23 +187,23 @@ func (r *runtime) class(def *classDef) *classObj {
 	slices.Sort(getters)
 	for _, g := range getters {
 		name, get := def.name+"."+lowerCamel(g), def.getters[g]
-		var setter goja.Value
+		var setter js.Value
 		if s, ok := def.setters[g]; ok {
-			setter = r.function(func(call goja.FunctionCall) goja.Value {
+			setter = r.function(func(call js.FunctionCall) js.Value {
 				return r.callGo(name, r.receiver(def, call.This, name).Method(s.Index), call.Arguments)
 			})
 		}
-		_ = proto.DefineAccessorProperty(lowerCamel(g), r.function(func(call goja.FunctionCall) goja.Value {
+		_ = proto.DefineAccessorProperty(lowerCamel(g), r.function(func(call js.FunctionCall) js.Value {
 			return r.callGo(name, r.receiver(def, call.This, name).Method(get.Index), nil)
-		}), setter, goja.FLAG_FALSE, goja.FLAG_TRUE)
+		}), setter, js.FLAG_FALSE, js.FLAG_TRUE)
 	}
-	dispose := r.function(func(call goja.FunctionCall) goja.Value {
-		o, ok := call.This.(*goja.Object)
+	dispose := r.function(func(call js.FunctionCall) js.Value {
+		o, ok := call.This.(*js.Object)
 		if !ok {
-			return goja.Undefined()
+			return js.Undefined()
 		}
 		if p, ok := o.GetSymbol(r.classes.slot).Export().(*goInstance); ok {
-			_ = o.SetSymbol(r.classes.slot, goja.Undefined())
+			_ = o.SetSymbol(r.classes.slot, js.Undefined())
 			r.classes.mu.Lock()
 			delete(r.classes.objs, def.key(p.v.Interface()))
 			r.classes.mu.Unlock()
@@ -213,15 +213,15 @@ func (r *runtime) class(def *classDef) *classObj {
 				}
 			}
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
 	_ = proto.Set("dispose", dispose)
 	// esbuild's lowering of using reads Symbol.dispose, else this.
 	disposeKey, _ := r.vm.RunString(`Symbol.dispose ?? Symbol.for("Symbol.dispose")`)
-	_ = proto.DefineDataPropertySymbol(disposeKey.(*goja.Symbol), dispose, goja.FLAG_TRUE, goja.FLAG_FALSE, goja.FLAG_TRUE)
+	_ = proto.DefineDataPropertySymbol(disposeKey.(*js.Symbol), dispose, js.FLAG_TRUE, js.FLAG_FALSE, js.FLAG_TRUE)
 	for _, s := range def.statics {
 		name := def.name + "." + s.name
-		_ = ctor.Set(s.name, r.function(func(call goja.FunctionCall) goja.Value {
+		_ = ctor.Set(s.name, r.function(func(call js.FunctionCall) js.Value {
 			return r.callGo(name, s.fn, call.Arguments)
 		}))
 	}
@@ -233,8 +233,8 @@ func (r *runtime) class(def *classDef) *classObj {
 type goInstance struct{ v reflect.Value }
 
 // bind makes o the object of instance v.
-func (r *runtime) bind(def *classDef, o *goja.Object, v reflect.Value) {
-	_ = o.DefineDataPropertySymbol(r.classes.slot, r.vm.ToValue(&goInstance{v}), goja.FLAG_TRUE, goja.FLAG_FALSE, goja.FLAG_FALSE)
+func (r *runtime) bind(def *classDef, o *js.Object, v reflect.Value) {
+	_ = o.DefineDataPropertySymbol(r.classes.slot, r.vm.ToValue(&goInstance{v}), js.FLAG_TRUE, js.FLAG_FALSE, js.FLAG_FALSE)
 	key := def.key(v.Interface())
 	r.classes.mu.Lock()
 	r.classes.objs[key] = weak.Make(o)
@@ -249,9 +249,9 @@ func (r *runtime) bind(def *classDef, o *goja.Object, v reflect.Value) {
 }
 
 // instanceObject is v's object, the one it has while that lives.
-func (r *runtime) instanceObject(def *classDef, v reflect.Value) goja.Value {
+func (r *runtime) instanceObject(def *classDef, v reflect.Value) js.Value {
 	if v.IsNil() {
-		return goja.Null()
+		return js.Null()
 	}
 	c := r.class(def)
 	r.classes.mu.Lock()
@@ -269,13 +269,13 @@ func (r *runtime) instanceObject(def *classDef, v reflect.Value) goja.Value {
 }
 
 // instanceOf is the *T v holds, or a TypeError naming what.
-func (r *runtime) instanceOf(def *classDef, v goja.Value, what string) reflect.Value {
-	if o, ok := v.(*goja.Object); ok && r.classes.slot != nil {
+func (r *runtime) instanceOf(def *classDef, v js.Value, what string) reflect.Value {
+	if o, ok := v.(*js.Object); ok && r.classes.slot != nil {
 		if s := o.GetSymbol(r.classes.slot); s != nil {
 			if p, ok := s.Export().(*goInstance); ok && p.v.Type() == def.t {
 				return p.v
 			}
-			if s == goja.Undefined() && o.Get("dispose") != nil {
+			if s == js.Undefined() && o.Get("dispose") != nil {
 				panic(r.vm.NewTypeError("%s: %s is disposed", what, def.name))
 			}
 		}
@@ -284,16 +284,16 @@ func (r *runtime) instanceOf(def *classDef, v goja.Value, what string) reflect.V
 }
 
 // receiver is the instance a member was called on.
-func (r *runtime) receiver(def *classDef, this goja.Value, member string) reflect.Value {
+func (r *runtime) receiver(def *classDef, this js.Value, member string) reflect.Value {
 	return r.instanceOf(def, this, member+": this")
 }
 
-func describe(v goja.Value) string {
+func describe(v js.Value) string {
 	if !defined(v) {
 		return v.String()
 	}
-	if o, ok := v.(*goja.Object); ok {
-		if c, ok := o.Get("constructor").(*goja.Object); ok {
+	if o, ok := v.(*js.Object); ok {
+		if c, ok := o.Get("constructor").(*js.Object); ok {
 			if n := c.Get("name"); defined(n) && n.String() != "" && n.String() != "Object" {
 				return "a " + n.String()
 			}
@@ -310,7 +310,7 @@ var contextType = reflect.TypeFor[context.Context]()
 func isAsync(t reflect.Type, first int) bool { return t.NumIn() > first && t.In(first) == contextType }
 
 // goError is err as JS's Error, of its message.
-func (r *runtime) goError(err error) *goja.Object {
+func (r *runtime) goError(err error) *js.Object {
 	ctor := "Error"
 	var named *JSError
 	if errors.As(err, &named) {
@@ -339,7 +339,7 @@ func (e *JSError) Error() string { return e.Message }
 
 // callGo calls fn, named name in errors, with JS's arguments: in the JS
 // call, or on a goroutine for a promise when fn is async.
-func (r *runtime) callGo(name string, fn reflect.Value, args []goja.Value) goja.Value {
+func (r *runtime) callGo(name string, fn reflect.Value, args []js.Value) js.Value {
 	ft := fn.Type()
 	if !isAsync(ft, 0) {
 		in := r.goArgs(ft, 0, args)
@@ -387,7 +387,7 @@ func (r *runtime) guard(name string, call func() []reflect.Value) []reflect.Valu
 	defer func() {
 		if p := recover(); p != nil {
 			switch p.(type) {
-			case *goja.Object, *goja.Exception, *goja.InterruptedError, *goja.StackOverflowError:
+			case *js.Object, *js.Exception, *js.InterruptedError, *js.StackOverflowError:
 				panic(p)
 			}
 			panic(r.goError(fmt.Errorf("%s: %v", name, p)))
@@ -406,8 +406,13 @@ func callIn(fn reflect.Value, in []reflect.Value) []reflect.Value {
 }
 
 // goArgs converts JS's arguments to ft's parameters from the first'th.
-func (r *runtime) goArgs(ft reflect.Type, first int, args []goja.Value) []reflect.Value {
+func (r *runtime) goArgs(ft reflect.Type, first int, args []js.Value) []reflect.Value {
 	in := make([]reflect.Value, ft.NumIn())
+	if first < len(in) && ft.In(first) == scopeType {
+		// A leading scope is the app's, as a component's is its own.
+		in[first] = reflect.ValueOf(r.cx)
+		first++
+	}
 	for i := first; i < len(in); i++ {
 		t := ft.In(i)
 		j := i - first
@@ -419,7 +424,7 @@ func (r *runtime) goArgs(ft reflect.Type, first int, args []goja.Value) []reflec
 			in[i] = rest
 			continue
 		}
-		v := goja.Undefined()
+		v := js.Undefined()
 		if j < len(args) {
 			v = args[j]
 		}
@@ -438,19 +443,19 @@ func trailingErr(ft reflect.Type, out []reflect.Value) error {
 
 // goResult is what JS gets of a call's results: undefined for none, the
 // trailing error left out.
-func (r *runtime) goResult(ft reflect.Type, out []reflect.Value) goja.Value {
+func (r *runtime) goResult(ft reflect.Type, out []reflect.Value) js.Value {
 	if n := len(out); n > 0 && ft.Out(n-1) == errorType {
 		out = out[:n-1]
 	}
 	if len(out) == 0 {
-		return goja.Undefined()
+		return js.Undefined()
 	}
 	return r.results(out, ft, nil)
 }
 
 // callback is a JS function given to an async call as a Go func of type
 // t: run on the engine goroutine, waited for when it has results.
-func (r *runtime) callback(fn goja.Value, t reflect.Type) reflect.Value {
+func (r *runtime) callback(fn js.Value, t reflect.Type) reflect.Value {
 	var ctx context.Context
 	r.cx.Run(func() { ctx = r.cx.Context() })
 	return reflect.MakeFunc(t, func(in []reflect.Value) []reflect.Value {
@@ -463,7 +468,7 @@ func (r *runtime) callback(fn goja.Value, t reflect.Type) reflect.Value {
 			return outs
 		}
 		done := make(chan []reflect.Value, 1)
-		settle := func(v goja.Value, err error) {
+		settle := func(v js.Value, err error) {
 			res := slices.Clone(outs)
 			for i := range res {
 				if t.Out(i) == errorType {
@@ -478,22 +483,22 @@ func (r *runtime) callback(fn goja.Value, t reflect.Type) reflect.Value {
 		}
 		r.cx.Post(func() {
 			r.inJS(func() {
-				f, _ := goja.AssertFunction(fn)
-				v, err := f(goja.Undefined(), r.encodeAll(in)...)
+				f, _ := js.AssertFunction(fn)
+				v, err := f(js.Undefined(), r.encodeAll(in)...)
 				if err != nil {
-					v = goja.Undefined()
-				} else if _, ok := v.Export().(*goja.Promise); ok {
-					then, _ := goja.AssertFunction(v.ToObject(r.vm).Get("then"))
-					_, _ = then(v, r.function(func(c goja.FunctionCall) goja.Value {
+					v = js.Undefined()
+				} else if _, ok := v.Export().(*js.Promise); ok {
+					then, _ := js.AssertFunction(v.ToObject(r.vm).Get("then"))
+					_, _ = then(v, r.function(func(c js.FunctionCall) js.Value {
 						settle(c.Argument(0), nil)
-						return goja.Undefined()
-					}), r.function(func(c goja.FunctionCall) goja.Value {
+						return js.Undefined()
+					}), r.function(func(c js.FunctionCall) js.Value {
 						settle(nil, jsError(c.Argument(0)))
-						return goja.Undefined()
+						return js.Undefined()
 					}))
 					return
 				}
-				if ex, ok := err.(*goja.Exception); ok {
+				if ex, ok := err.(*js.Exception); ok {
 					err = jsError(ex.Value())
 				}
 				settle(v, err)
@@ -508,8 +513,8 @@ func (r *runtime) callback(fn goja.Value, t reflect.Type) reflect.Value {
 	})
 }
 
-func (r *runtime) encodeAll(in []reflect.Value) []goja.Value {
-	args := make([]goja.Value, len(in))
+func (r *runtime) encodeAll(in []reflect.Value) []js.Value {
+	args := make([]js.Value, len(in))
 	for i, a := range in {
 		args[i] = r.encode(a)
 	}
@@ -517,8 +522,8 @@ func (r *runtime) encodeAll(in []reflect.Value) []goja.Value {
 }
 
 // jsError is what JS threw or rejected with as a Go error.
-func jsError(v goja.Value) error {
-	if o, ok := v.(*goja.Object); ok {
+func jsError(v js.Value) error {
+	if o, ok := v.(*js.Object); ok {
 		if m := o.Get("message"); defined(m) {
 			return fmt.Errorf("%s", m.String())
 		}

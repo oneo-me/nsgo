@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -13,14 +13,14 @@ import (
 //
 // [embedding]: docs/architecture/embedding.md
 
-func (r *runtime) host() goja.Value {
+func (r *runtime) host() js.Value {
 	o := r.vm.NewObject()
-	set := func(name string, f func(call goja.FunctionCall) goja.Value) { _ = o.Set(name, r.function(f)) }
-	set("available", func(goja.FunctionCall) goja.Value { return r.vm.ToValue(r.cx.HasHost()) })
-	_ = o.DefineAccessorProperty("params", r.function(func(goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall) js.Value) { _ = o.Set(name, r.function(f)) }
+	set("available", func(js.FunctionCall) js.Value { return r.vm.ToValue(r.cx.HasHost()) })
+	_ = o.DefineAccessorProperty("params", r.function(func(js.FunctionCall) js.Value {
 		return r.vm.ToValue(r.cx.HostParams())
-	}), nil, goja.FLAG_FALSE, goja.FLAG_TRUE)
-	set("call", func(call goja.FunctionCall) goja.Value {
+	}), nil, js.FLAG_FALSE, js.FLAG_TRUE)
+	set("call", func(call js.FunctionCall) js.Value {
 		p, resolve, reject := r.vm.NewPromise()
 		name, data := arg(call, 0).String(), exportJSON(arg(call, 1))
 		if !r.cx.HasHost() {
@@ -51,19 +51,19 @@ func (r *runtime) host() goja.Value {
 		}
 		return r.vm.ToValue(p)
 	})
-	set("post", func(call goja.FunctionCall) goja.Value {
+	set("post", func(call js.FunctionCall) js.Value {
 		r.cx.PostHost(arg(call, 0).String(), exportJSON(arg(call, 1)))
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	set("on", func(call goja.FunctionCall) goja.Value {
+	set("on", func(call js.FunctionCall) js.Value {
 		name, listener := arg(call, 0).String(), arg(call, 1)
 		owner := r.cx.Child()
 		owner.Run(func() {
 			owner.OnHostEvent(name, func(data any) { r.call(listener, r.vm.ToValue(data)) })
 		})
-		remove := r.function(func(goja.FunctionCall) goja.Value {
+		remove := r.function(func(js.FunctionCall) js.Value {
 			owner.Dispose()
-			return goja.Undefined()
+			return js.Undefined()
 		})
 		_ = remove.Set("remove", remove)
 		return remove
@@ -72,7 +72,7 @@ func (r *runtime) host() goja.Value {
 }
 
 // exportJSON is a JS value as the host channel's JSON takes it.
-func exportJSON(v goja.Value) any {
+func exportJSON(v js.Value) any {
 	if !defined(v) {
 		return nil
 	}

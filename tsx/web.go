@@ -16,7 +16,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 	"golang.org/x/net/idna"
 
 	"github.com/oneo-me/nsgo/core"
@@ -28,12 +28,12 @@ import (
 //go:embed web.js
 var webSource string
 
-var webProgram = goja.MustCompile("web.js", webSource, true)
+var webProgram = js.MustCompile("web.js", webSource, true)
 
 //go:embed intl.js
 var intlSource string
 
-var intlProgram = goja.MustCompile("intl.js", intlSource, true)
+var intlProgram = js.MustCompile("intl.js", intlSource, true)
 
 // A Fetcher answers an app's http and https requests in place of the
 // network: a test's stand-in network.
@@ -60,50 +60,54 @@ func (r *runtime) installWeb() {
 	if err != nil {
 		panic(err)
 	}
-	install, _ := goja.AssertFunction(v)
+	install, _ := js.AssertFunction(v)
 	natives := r.webNatives()
-	out, err := install(goja.Undefined(), r.vm.GlobalObject(), natives)
+	out, err := install(js.Undefined(), r.vm.GlobalObject(), natives)
 	if err != nil {
 		panic(err)
 	}
 	r.web = out.ToObject(r.vm)
+	if js.Browser {
+		// The page's Intl is the browser's own.
+		return
+	}
 	v, err = r.vm.RunProgram(intlProgram)
 	if err != nil {
 		panic(err)
 	}
-	install, _ = goja.AssertFunction(v)
-	if _, err := install(goja.Undefined(), r.vm.GlobalObject(), r.intlNatives()); err != nil {
+	install, _ = js.AssertFunction(v)
+	if _, err := install(js.Undefined(), r.vm.GlobalObject(), r.intlNatives()); err != nil {
 		panic(err)
 	}
 }
 
 // newFile makes a File of data.
-func (r *runtime) newFile(data []byte, name, mime string) goja.Value {
+func (r *runtime) newFile(data []byte, name, mime string) js.Value {
 	return r.call(r.web.Get("newFile"), r.vm.ToValue(r.vm.NewArrayBuffer(data)), r.vm.ToValue(name), r.vm.ToValue(mime))
 }
 
 // pastedFile is a pasted file as a File.
-func (r *runtime) pastedFile(f core.PastedFile) goja.Value {
+func (r *runtime) pastedFile(f core.PastedFile) js.Value {
 	return r.newFile(f.Data, f.Name, f.MIME)
 }
 
-func (r *runtime) webNatives() *goja.Object {
+func (r *runtime) webNatives() *js.Object {
 	n := r.vm.NewObject()
-	set := func(name string, f func(call goja.FunctionCall) goja.Value) { _ = n.Set(name, r.function(f)) }
-	set("now", func(goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall) js.Value) { _ = n.Set(name, r.function(f)) }
+	set("now", func(js.FunctionCall) js.Value {
 		return r.vm.ToValue(r.millis(r.cx.Now()))
 	})
-	set("utf8Encode", func(call goja.FunctionCall) goja.Value {
+	set("utf8Encode", func(call js.FunctionCall) js.Value {
 		return r.vm.ToValue(r.vm.NewArrayBuffer([]byte(arg(call, 0).String())))
 	})
-	set("utf8Decode", func(call goja.FunctionCall) goja.Value {
+	set("utf8Decode", func(call js.FunctionCall) js.Value {
 		b := r.bytes(arg(call, 0))
 		if arg(call, 1).ToBoolean() && !utf8.Valid(b) {
-			return goja.Null()
+			return js.Null()
 		}
 		return r.vm.ToValue(strings.ToValidUTF8(string(b), "�"))
 	})
-	set("atob", func(call goja.FunctionCall) goja.Value {
+	set("atob", func(call js.FunctionCall) js.Value {
 		s := strings.Map(func(c rune) rune {
 			if c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r' {
 				return -1
@@ -115,7 +119,7 @@ func (r *runtime) webNatives() *goja.Object {
 		}
 		b, err := base64.StdEncoding.DecodeString(s)
 		if err != nil {
-			return goja.Null()
+			return js.Null()
 		}
 		runes := make([]rune, len(b))
 		for i, c := range b {
@@ -123,44 +127,44 @@ func (r *runtime) webNatives() *goja.Object {
 		}
 		return r.vm.ToValue(string(runes))
 	})
-	set("btoa", func(call goja.FunctionCall) goja.Value {
+	set("btoa", func(call js.FunctionCall) js.Value {
 		s := arg(call, 0).String()
 		b := make([]byte, 0, len(s))
 		for _, c := range s {
 			if c > 0xff {
-				return goja.Null()
+				return js.Null()
 			}
 			b = append(b, byte(c))
 		}
 		return r.vm.ToValue(base64.StdEncoding.EncodeToString(b))
 	})
-	set("formEncode", func(call goja.FunctionCall) goja.Value {
+	set("formEncode", func(call js.FunctionCall) js.Value {
 		return r.vm.ToValue(formEncode(arg(call, 0).String()))
 	})
-	set("formDecode", func(call goja.FunctionCall) goja.Value {
+	set("formDecode", func(call js.FunctionCall) js.Value {
 		s := arg(call, 0).String()
 		if d, err := url.QueryUnescape(s); err == nil {
 			return r.vm.ToValue(d)
 		}
 		return r.vm.ToValue(strings.ReplaceAll(s, "+", " "))
 	})
-	set("parseURL", func(call goja.FunctionCall) goja.Value {
+	set("parseURL", func(call js.FunctionCall) js.Value {
 		var base string
 		if defined(arg(call, 1)) {
 			base = arg(call, 1).String()
 		}
 		u, ok := parseURL(arg(call, 0).String(), base)
 		if !ok {
-			return goja.Null()
+			return js.Null()
 		}
 		return r.urlParts(u)
 	})
 	// A setter's URL is normalized again: a host lowercased, a default
 	// port dropped, a path encoded.
-	set("setURL", func(call goja.FunctionCall) goja.Value {
+	set("setURL", func(call js.FunctionCall) js.Value {
 		u, ok := parseURL(arg(call, 0).String(), "")
 		if !ok {
-			return goja.Null()
+			return js.Null()
 		}
 		v := arg(call, 2).String()
 		switch arg(call, 1).String() {
@@ -203,12 +207,12 @@ func (r *runtime) webNatives() *goja.Object {
 		}
 		u, ok = normalizeURL(u)
 		if !ok {
-			return goja.Null()
+			return js.Null()
 		}
 		return r.urlParts(u)
 	})
-	set("baseURL", func(goja.FunctionCall) goja.Value { return r.vm.ToValue(r.base) })
-	set("blobURL", func(call goja.FunctionCall) goja.Value {
+	set("baseURL", func(js.FunctionCall) js.Value { return r.vm.ToValue(r.base) })
+	set("blobURL", func(call js.FunctionCall) js.Value {
 		r.blobSeq++
 		url := fmt.Sprintf("blob:nsgo/%d", r.blobSeq)
 		if r.blobs == nil {
@@ -217,14 +221,14 @@ func (r *runtime) webNatives() *goja.Object {
 		r.blobs[url] = blobEntry{bytes.Clone(r.bytes(arg(call, 0))), arg(call, 1).String()}
 		return r.vm.ToValue(url)
 	})
-	set("revokeBlobURL", func(call goja.FunctionCall) goja.Value {
+	set("revokeBlobURL", func(call js.FunctionCall) js.Value {
 		delete(r.blobs, arg(call, 0).String())
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	set("blobOf", func(call goja.FunctionCall) goja.Value {
+	set("blobOf", func(call js.FunctionCall) js.Value {
 		b, ok := r.blobs[arg(call, 0).String()]
 		if !ok {
-			return goja.Null()
+			return js.Null()
 		}
 		o := r.vm.NewObject()
 		_ = o.Set("bytes", r.vm.NewArrayBuffer(bytes.Clone(b.bytes)))
@@ -242,15 +246,15 @@ type blobEntry struct {
 }
 
 // bytes reads an ArrayBuffer or a view of one.
-func (r *runtime) bytes(v goja.Value) []byte {
+func (r *runtime) bytes(v js.Value) []byte {
 	switch x := v.Export().(type) {
-	case goja.ArrayBuffer:
+	case js.ArrayBuffer:
 		return x.Bytes()
 	case []byte:
 		return x
 	}
-	if o, ok := v.(*goja.Object); ok {
-		if buf, ok := o.Get("buffer").Export().(goja.ArrayBuffer); ok {
+	if o, ok := v.(*js.Object); ok {
+		if buf, ok := o.Get("buffer").Export().(js.ArrayBuffer); ok {
 			off, n := int(o.Get("byteOffset").ToInteger()), int(o.Get("byteLength").ToInteger())
 			return buf.Bytes()[off : off+n]
 		}
@@ -447,7 +451,7 @@ func formEncode(s string) string {
 	return b.String()
 }
 
-func (r *runtime) urlParts(u *url.URL) *goja.Object {
+func (r *runtime) urlParts(u *url.URL) *js.Object {
 	o := r.vm.NewObject()
 	href := u.String()
 	_ = o.Set("href", href)
@@ -484,7 +488,7 @@ func (r *runtime) urlParts(u *url.URL) *goja.Object {
 // fetch is fetch's request: fetch(url, method, headers, body, redirect,
 // done, fail). It runs on a goroutine of its own, answers on the engine
 // goroutine, and returns a function that cancels it.
-func (r *runtime) fetch(call goja.FunctionCall) goja.Value {
+func (r *runtime) fetch(call js.FunctionCall) js.Value {
 	target, method := arg(call, 0).String(), arg(call, 1).String()
 	var headers [][2]string
 	for _, h := range r.arrayItems(arg(call, 2)) {
@@ -535,9 +539,9 @@ func (r *runtime) fetch(call goja.FunctionCall) goja.Value {
 			r.call(done, o)
 		})
 	}()
-	return r.function(func(goja.FunctionCall) goja.Value {
+	return r.function(func(js.FunctionCall) js.Value {
 		cancel()
-		return goja.Undefined()
+		return js.Undefined()
 	})
 }
 

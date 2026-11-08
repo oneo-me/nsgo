@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -43,7 +43,7 @@ type node struct {
 	elem     *core.Element // nil for raw text
 	parent   *node
 	children []*node
-	obj      *goja.Object
+	obj      *js.Object
 	// The props of its kind; Style, Class and the states' styles come from
 	// the fields below.
 	view   core.View
@@ -66,14 +66,14 @@ type node struct {
 	platform map[string][]string
 	// values are a host element's props as set, to make them again when
 	// one is unset.
-	values map[string]goja.Value
+	values map[string]js.Value
 
 	// A face node's: what makes its component, its props, the region
 	// element its children go in, and whether the component was made.
 	name    string
 	face    face
 	props   *props
-	signals map[string]*core.Signal[goja.Value]
+	signals map[string]*core.Signal[js.Value]
 	content *core.Element
 	mounted bool
 	// A scroll view's content view's (contentStyle, contentClass).
@@ -90,16 +90,16 @@ func (n *node) box() *core.Element {
 }
 
 // value is n's JS object.
-func (n *node) value() *goja.Object {
+func (n *node) value() *js.Object {
 	if n.obj == nil {
-		n.obj = n.r.vm.ToValue(n).(*goja.Object)
+		n.obj = n.r.vm.ToValue(n).(*js.Object)
 	}
 	return n.obj
 }
 
 // nodeOf returns the node v is, or nil.
-func (r *runtime) nodeOf(v goja.Value) *node {
-	if o, ok := v.(*goja.Object); ok {
+func (r *runtime) nodeOf(v js.Value) *node {
+	if o, ok := v.(*js.Object); ok {
 		if n, ok := o.Export().(*node); ok && n.r == r {
 			return n
 		}
@@ -107,7 +107,7 @@ func (r *runtime) nodeOf(v goja.Value) *node {
 	return nil
 }
 
-func (r *runtime) mustNode(v goja.Value) *node {
+func (r *runtime) mustNode(v js.Value) *node {
 	n := r.nodeOf(v)
 	if n == nil {
 		panic(r.vm.NewTypeError("nsgo: not a node"))
@@ -116,7 +116,7 @@ func (r *runtime) mustNode(v goja.Value) *node {
 }
 
 // element is `element(tag)`: a new element of a host tag.
-func (r *runtime) element(call goja.FunctionCall) goja.Value {
+func (r *runtime) element(call js.FunctionCall) js.Value {
 	tag := arg(call, 0).String()
 	return r.newElement(tag).value()
 }
@@ -150,48 +150,48 @@ func (r *runtime) newElement(tag string) *node {
 }
 
 // text is `text(value)`: a new raw text node.
-func (r *runtime) textNode(call goja.FunctionCall) goja.Value {
+func (r *runtime) textNode(call js.FunctionCall) js.Value {
 	return r.newRaw(arg(call, 0).String()).value()
 }
 
 func (r *runtime) newRaw(s string) *node { return &node{r: r, kind: kindRaw, raw: s} }
 
 // append is `append(parent, child)`: a static child at the end.
-func (r *runtime) append(call goja.FunctionCall) goja.Value {
+func (r *runtime) append(call js.FunctionCall) js.Value {
 	p, child := r.mustNode(arg(call, 0)), arg(call, 1)
 	if c := r.nodeOf(child); c != nil {
 		r.insertBefore(p, c, nil)
 	} else {
 		r.insertValue(p, child, nil)
 	}
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // insert is `insert(parent, value, marker)`: children before marker, or
 // at the end.
-func (r *runtime) insert(call goja.FunctionCall) goja.Value {
+func (r *runtime) insert(call js.FunctionCall) js.Value {
 	r.insertValue(r.mustNode(arg(call, 0)), arg(call, 1), r.nodeOf(arg(call, 2)))
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // prop is `prop(node, name, value)`.
-func (r *runtime) prop(call goja.FunctionCall) goja.Value {
+func (r *runtime) prop(call js.FunctionCall) js.Value {
 	r.setProp(r.mustNode(arg(call, 0)), arg(call, 1).String(), arg(call, 2))
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // bindProp is `bindProp(node, name, fn)`: the prop set to what fn returns,
 // again when what it read changes.
-func (r *runtime) bindProp(call goja.FunctionCall) goja.Value {
+func (r *runtime) bindProp(call js.FunctionCall) js.Value {
 	n, name, fn := r.mustNode(arg(call, 0)), arg(call, 1).String(), arg(call, 2)
 	r.cx.RenderEffect(func() { r.setProp(n, name, r.call(fn)) })
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // component is `component(Comp, props)`: a component's call, untracked.
-func (r *runtime) component(call goja.FunctionCall) goja.Value {
+func (r *runtime) component(call js.FunctionCall) js.Value {
 	comp, props := arg(call, 0), arg(call, 1)
-	return core.Untracked(r.cx, func() goja.Value { return r.call(comp, props) })
+	return core.Untracked(r.cx, func() js.Value { return r.call(comp, props) })
 }
 
 // insertBefore puts c among p's children before marker, or at the end.
@@ -316,7 +316,7 @@ type item struct {
 
 // insertValue inserts value into p before marker: once for a static
 // value, kept up to date by a render effect for a dynamic one.
-func (r *runtime) insertValue(p *node, value goja.Value, marker *node) {
+func (r *runtime) insertValue(p *node, value js.Value, marker *node) {
 	if r.isDynamic(value, 0) {
 		shown := new([]*node)
 		if isFunction(value) {
@@ -335,7 +335,7 @@ func (r *runtime) insertValue(p *node, value goja.Value, marker *node) {
 // the functions it returns, tracked. An array holding functions gets an
 // effect of its own, made again only when this one runs again, so a
 // change in one of its functions runs only that one.
-func (r *runtime) insertRun(p, marker *node, value goja.Value, shown *[]*node) {
+func (r *runtime) insertRun(p, marker *node, value js.Value, shown *[]*node) {
 	for depth := 0; isFunction(value); depth++ {
 		if depth > maxDepth {
 			panic(r.vm.NewTypeError("nsgo: children nested too deeply"))
@@ -351,7 +351,7 @@ func (r *runtime) insertRun(p, marker *node, value goja.Value, shown *[]*node) {
 
 // insertItems inserts an array holding functions: each function gets a
 // memo of its own, and one render effect shows them all.
-func (r *runtime) insertItems(p, marker *node, items goja.Value, shown *[]*node) {
+func (r *runtime) insertItems(p, marker *node, items js.Value, shown *[]*node) {
 	if memos := r.memoizeRun(items); memos != nil {
 		items = memos
 	}
@@ -360,7 +360,7 @@ func (r *runtime) insertItems(p, marker *node, items goja.Value, shown *[]*node)
 
 // memoizeRun returns a copy of an array of children holding functions,
 // with a memo for each function; nil otherwise.
-func (r *runtime) memoizeRun(value goja.Value) goja.Value {
+func (r *runtime) memoizeRun(value js.Value) js.Value {
 	items := r.arrayItems(value)
 	functions := 0
 	for _, v := range items {
@@ -384,8 +384,8 @@ func (r *runtime) memoizeRun(value goja.Value) goja.Value {
 
 // itemMemo is a memo of fn, one function of an array of children; a
 // function fn returns gets a memo of its own, under this one.
-func (r *runtime) itemMemo(fn goja.Value) goja.Value {
-	m := core.NewMemoFunc(r.cx, func() goja.Value {
+func (r *runtime) itemMemo(fn js.Value) js.Value {
+	m := core.NewMemoFunc(r.cx, func() js.Value {
 		v := r.call(fn)
 		if isFunction(v) {
 			return r.itemMemo(v)
@@ -397,7 +397,7 @@ func (r *runtime) itemMemo(fn goja.Value) goja.Value {
 
 // show shows value in p before marker in place of the nodes shown holds,
 // which then holds the new ones.
-func (r *runtime) show(p, marker *node, value goja.Value, shown *[]*node) {
+func (r *runtime) show(p, marker *node, value js.Value, shown *[]*node) {
 	items := r.resolve(value, nil, 0)
 	old := *shown
 	var reuse *node
@@ -411,17 +411,17 @@ func (r *runtime) show(p, marker *node, value goja.Value, shown *[]*node) {
 
 // resolve appends what value shows: functions called, arrays flattened,
 // strings and numbers as text, nothing for null, undefined and booleans.
-func (r *runtime) resolve(value goja.Value, out []item, depth int) []item {
+func (r *runtime) resolve(value js.Value, out []item, depth int) []item {
 	if depth > maxDepth {
 		panic(r.vm.NewTypeError("nsgo: children nested too deeply"))
 	}
-	if value == nil || goja.IsUndefined(value) || goja.IsNull(value) {
+	if value == nil || js.IsUndefined(value) || js.IsNull(value) {
 		return out
 	}
 	if n := r.nodeOf(value); n != nil {
 		return append(out, item{node: n})
 	}
-	if o, ok := value.(*goja.Object); ok {
+	if o, ok := value.(*js.Object); ok {
 		switch {
 		case isFunction(o):
 			return r.resolve(r.call(o), out, depth+1)
@@ -465,7 +465,7 @@ func (r *runtime) materialize(items []item, reuse *node) []*node {
 
 // isDynamic reports whether value holds a function, directly or in nested
 // arrays: its children change over time.
-func (r *runtime) isDynamic(value goja.Value, depth int) bool {
+func (r *runtime) isDynamic(value js.Value, depth int) bool {
 	if isFunction(value) {
 		return true
 	}
@@ -480,31 +480,31 @@ func (r *runtime) isDynamic(value goja.Value, depth int) bool {
 	return false
 }
 
-func (r *runtime) isArray(v goja.Value) bool {
-	o, ok := v.(*goja.Object)
+func (r *runtime) isArray(v js.Value) bool {
+	o, ok := v.(*js.Object)
 	return ok && o.ClassName() == "Array"
 }
 
 // arrayItems returns the values of an array, none for other values.
 // item is item i of array v, nil past its end or when v is no array.
-func (r *runtime) item(v goja.Value, i int) goja.Value {
+func (r *runtime) item(v js.Value, i int) js.Value {
 	if !r.isArray(v) || i < 0 {
 		return nil
 	}
-	o := v.(*goja.Object)
+	o := v.(*js.Object)
 	if int64(i) >= o.Get("length").ToInteger() {
 		return nil
 	}
 	return o.Get(strconv.Itoa(i))
 }
 
-func (r *runtime) arrayItems(v goja.Value) []goja.Value {
+func (r *runtime) arrayItems(v js.Value) []js.Value {
 	if !r.isArray(v) {
 		return nil
 	}
-	o := v.(*goja.Object)
+	o := v.(*js.Object)
 	n := int(o.Get("length").ToInteger())
-	out := make([]goja.Value, n)
+	out := make([]js.Value, n)
 	for i := range out {
 		out[i] = o.Get(strconv.Itoa(i))
 	}
@@ -607,18 +607,18 @@ func (r *runtime) reconcile(p *node, old, b []*node, marker *node) {
 // cond is `cond(when, then, otherwise)`: what then() renders while when()
 // is truthy, else what otherwise() renders, each branch rendered once per
 // change of truthiness, under the branch's memo.
-func (r *runtime) cond(call goja.FunctionCall) goja.Value {
+func (r *runtime) cond(call js.FunctionCall) js.Value {
 	when, then, otherwise := arg(call, 0), arg(call, 1), arg(call, 2)
 	truthy := core.NewMemo(r.cx, func() bool { return r.call(when).ToBoolean() })
-	branch := core.NewMemoFunc(r.cx, func() goja.Value {
+	branch := core.NewMemoFunc(r.cx, func() js.Value {
 		b := otherwise
 		if truthy.Get() {
 			b = then
 		}
 		if !isFunction(b) {
-			return goja.Undefined()
+			return js.Undefined()
 		}
-		return core.Untracked(r.cx, func() goja.Value { return r.call(b) })
+		return core.Untracked(r.cx, func() js.Value { return r.call(b) })
 	}, strictEquals)
 	return r.accessor(branch.Get)
 }
@@ -626,15 +626,15 @@ func (r *runtime) cond(call goja.FunctionCall) goja.Value {
 // row is a row of each.
 type row struct {
 	key         any
-	item, index *core.Signal[goja.Value]
+	item, index *core.Signal[js.Value]
 	scope       *core.Scope
-	output      goja.Value
+	output      js.Value
 }
 
 // each is `each(list, render, key)`: render(item, index) for each item of
 // list() (both accessors), one row per key (key(item, index), the index
 // for key "index", or the item itself) kept while the key stays.
-func (r *runtime) each(call goja.FunctionCall) goja.Value {
+func (r *runtime) each(call js.FunctionCall) js.Value {
 	list, render, keyFn := arg(call, 0), arg(call, 1), arg(call, 2)
 	keyed := isFunction(keyFn)
 	byIndex := !keyed && keyFn.ExportType() != nil && keyFn.ExportType().Kind() == reflect.String &&
@@ -642,7 +642,7 @@ func (r *runtime) each(call goja.FunctionCall) goja.Value {
 	// The rows go with the owner each is called under, not the memo.
 	home := r.cx.Child()
 	var rows []*row
-	m := core.NewMemoFunc(r.cx, func() goja.Value {
+	m := core.NewMemoFunc(r.cx, func() js.Value {
 		items := r.arrayItems(r.call(list))
 		var outputs []any
 		home.Run(func() {
@@ -653,7 +653,7 @@ func (r *runtime) each(call goja.FunctionCall) goja.Value {
 			next := make([]*row, 0, len(items))
 			for i, it := range items {
 				index := r.vm.ToValue(i)
-				var kv goja.Value
+				var kv js.Value
 				switch {
 				case byIndex:
 					kv = index
@@ -696,11 +696,11 @@ func (r *runtime) each(call goja.FunctionCall) goja.Value {
 
 // keyOf is the key rows are matched by: objects by identity, other values
 // by value, numbers as SameValueZero compares them.
-func keyOf(v goja.Value) any {
-	if o, ok := v.(*goja.Object); ok {
+func keyOf(v js.Value) any {
+	if o, ok := v.(*js.Object); ok {
 		return o
 	}
-	if v == nil || goja.IsUndefined(v) {
+	if v == nil || js.IsUndefined(v) {
 		return nil
 	}
 	switch x := v.Export().(type) {
@@ -718,22 +718,22 @@ func keyOf(v goja.Value) any {
 
 // mount is `mount(App, props)`: App rendered into the surface; it returns
 // a function that removes it.
-func (r *runtime) mount(call goja.FunctionCall) goja.Value {
+func (r *runtime) mount(call js.FunctionCall) js.Value {
 	app, props := arg(call, 0), arg(call, 1)
-	if _, ok := props.(*goja.Object); !ok {
+	if _, ok := props.(*js.Object); !ok {
 		props = r.vm.NewObject()
 	}
 	before := slices.Clone(r.root.children)
 	owner := r.cx.Child()
 	owner.Run(func() { r.insertValue(r.root, r.call(app, props), nil) })
-	return r.function(func(goja.FunctionCall) goja.Value {
+	return r.function(func(js.FunctionCall) js.Value {
 		owner.Dispose()
 		for _, c := range slices.Clone(r.root.children) {
 			if !slices.Contains(before, c) {
 				r.removeChild(r.root, c)
 			}
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
 }
 
@@ -752,18 +752,18 @@ const mergeSource = `(function (...sources) {
 // for the compiler's component calls of them (const C = c ? If : View).
 func (r *runtime) installGlobals() {
 	vm := r.vm
-	_ = vm.Set("If", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = vm.Set("If", r.function(func(call js.FunctionCall) js.Value {
 		props := call.Argument(0).ToObject(vm)
-		return r.cond(goja.FunctionCall{Arguments: []goja.Value{
-			r.accessor(func() goja.Value { return props.Get("when") }),
-			r.accessor(func() goja.Value { return props.Get("children") }),
-			r.accessor(func() goja.Value { return props.Get("else") }),
+		return r.cond(js.FunctionCall{Arguments: []js.Value{
+			r.accessor(func() js.Value { return props.Get("when") }),
+			r.accessor(func() js.Value { return props.Get("children") }),
+			r.accessor(func() js.Value { return props.Get("else") }),
 		}})
 	}))
-	_ = vm.Set("Each", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = vm.Set("Each", r.function(func(call js.FunctionCall) js.Value {
 		props := call.Argument(0).ToObject(vm)
-		return r.each(goja.FunctionCall{Arguments: []goja.Value{
-			r.accessor(func() goja.Value { return props.Get("of") }),
+		return r.each(js.FunctionCall{Arguments: []js.Value{
+			r.accessor(func() js.Value { return props.Get("of") }),
 			props.Get("children"),
 			props.Get("key"),
 		}})

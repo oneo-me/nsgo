@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -26,7 +26,7 @@ var touchProps = map[string]bool{
 
 // touches makes v's OnTouch and Responder from n's touch props.
 func (r *runtime) touches(n *node, v *core.View) {
-	get := func(name string) goja.Value {
+	get := func(name string) js.Value {
 		if h := n.values[name]; isFunction(h) {
 			return h
 		}
@@ -44,9 +44,9 @@ func (r *runtime) touches(n *node, v *core.View) {
 				return func(e core.TouchEvent) {
 					if h := get(phases[e.Phase][capture]); h != nil {
 						ev := r.touchEvent(e)
-						_ = ev.Set("stopPropagation", r.function(func(goja.FunctionCall) goja.Value {
+						_ = ev.Set("stopPropagation", r.function(func(js.FunctionCall) js.Value {
 							e.StopPropagation()
-							return goja.Undefined()
+							return js.Undefined()
 						}))
 						r.call(h, ev)
 					}
@@ -115,13 +115,13 @@ func (r *runtime) touches(n *node, v *core.View) {
 	v.Responder = &resp
 }
 
-func isBool(v goja.Value) bool {
+func isBool(v js.Value) bool {
 	_, ok := v.Export().(bool)
 	return ok
 }
 
 // touchPoint is a finger as a TouchPoint.
-func (r *runtime) touchPoint(id int, at, page core.Point, ms float64) *goja.Object {
+func (r *runtime) touchPoint(id int, at, page core.Point, ms float64) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("identifier", id)
 	_ = o.Set("locationX", js32(at.X))
@@ -135,11 +135,11 @@ func (r *runtime) touchPoint(id int, at, page core.Point, ms float64) *goja.Obje
 
 // touchEvent is a TouchEvent as a GestureResponderEvent about its first
 // changed finger.
-func (r *runtime) touchEvent(e core.TouchEvent) *goja.Object {
+func (r *runtime) touchEvent(e core.TouchEvent) *js.Object {
 	ms := float64(e.Time.Microseconds()) / 1000
 	lifted := e.Phase == core.TouchEnd || e.Phase == core.TouchCancel
 	var down, changed []any
-	var about *goja.Object
+	var about *js.Object
 	for _, t := range e.Touches {
 		p := r.touchPoint(t.ID, t.Position, t.PagePosition, ms)
 		if t.Changed {
@@ -158,19 +158,19 @@ func (r *runtime) touchEvent(e core.TouchEvent) *goja.Object {
 	return r.finishEvent(about, down, changed)
 }
 
-func (r *runtime) finishEvent(e *goja.Object, down, changed []any) *goja.Object {
+func (r *runtime) finishEvent(e *js.Object, down, changed []any) *js.Object {
 	_ = e.Set("touches", r.vm.NewArray(down...))
 	_ = e.Set("changedTouches", r.vm.NewArray(changed...))
 	_ = e.Set("nativeEvent", e)
-	_ = e.Set("stopPropagation", r.function(func(goja.FunctionCall) goja.Value { return goja.Undefined() }))
+	_ = e.Set("stopPropagation", r.function(func(js.FunctionCall) js.Value { return js.Undefined() }))
 	return e
 }
 
 // responderKey holds a responder event's gesture on its JS event.
-var responderKey = goja.NewSymbol("nsgo.responder")
+var responderKey = js.NewSymbol("nsgo.responder")
 
 // responderEvent is what a responder handler gets.
-func (r *runtime) responderEvent(e core.ResponderEvent) *goja.Object {
+func (r *runtime) responderEvent(e core.ResponderEvent) *js.Object {
 	ms := float64(e.Time.Microseconds()) / 1000
 	o := r.touchPoint(0, e.Position, e.PagePosition, ms)
 	self := r.touchPoint(0, e.Position, e.PagePosition, ms)
@@ -180,7 +180,7 @@ func (r *runtime) responderEvent(e core.ResponderEvent) *goja.Object {
 }
 
 // gestureState is a ResponderGestureState of e's gesture.
-func (r *runtime) gestureState(e core.ResponderEvent, stateID int) *goja.Object {
+func (r *runtime) gestureState(e core.ResponderEvent, stateID int) *js.Object {
 	g := e.Gesture
 	o := r.vm.NewObject()
 	_ = o.Set("moveX", js32(g.Position.X))
@@ -199,13 +199,13 @@ func (r *runtime) gestureState(e core.ResponderEvent, stateID int) *goja.Object 
 
 // panResponder is PanResponder: create(config) gives panHandlers, the
 // responder props that call config's handlers with the gesture state.
-func (r *runtime) panResponder() goja.Value {
+func (r *runtime) panResponder() js.Value {
 	m := r.vm.NewObject()
-	_ = m.Set("create", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = m.Set("create", r.function(func(call js.FunctionCall) js.Value {
 		config := arg(call, 0).ToObject(r.vm)
 		stateID := 0
-		gesture := func(e goja.Value) (goja.Value, goja.Value) {
-			if o, ok := e.(*goja.Object); ok {
+		gesture := func(e js.Value) (js.Value, js.Value) {
+			if o, ok := e.(*js.Object); ok {
 				if s := o.GetSymbol(responderKey); s != nil {
 					if ev, ok := s.Export().(*core.ResponderEvent); ok {
 						return e, r.gestureState(*ev, stateID)
@@ -216,8 +216,8 @@ func (r *runtime) panResponder() goja.Value {
 		}
 		// handler forwards a responder prop to config's callback, with def
 		// as its answer when config has none.
-		handler := func(name string, def goja.Value, after func()) goja.Value {
-			return r.function(func(call goja.FunctionCall) goja.Value {
+		handler := func(name string, def js.Value, after func()) js.Value {
+			return r.function(func(call js.FunctionCall) js.Value {
 				e, gs := gesture(arg(call, 0))
 				res := def
 				if cb := config.Get(name); isFunction(cb) {
@@ -230,7 +230,7 @@ func (r *runtime) panResponder() goja.Value {
 					after()
 				}
 				if res == nil {
-					return goja.Undefined()
+					return js.Undefined()
 				}
 				return res
 			})
@@ -248,7 +248,7 @@ func (r *runtime) panResponder() goja.Value {
 		}
 		// The grant blocks the scroll views around unless
 		// onShouldBlockNativeResponder says otherwise.
-		_ = h.Set("onResponderGrant", r.function(func(call goja.FunctionCall) goja.Value {
+		_ = h.Set("onResponderGrant", r.function(func(call js.FunctionCall) js.Value {
 			e, gs := gesture(arg(call, 0))
 			if cb := config.Get("onPanResponderGrant"); isFunction(cb) {
 				r.call(cb, e, gs)

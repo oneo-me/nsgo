@@ -3,7 +3,7 @@ package tsx
 import (
 	"slices"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -27,7 +27,7 @@ var stateProps = map[string]func(s *core.Style) **core.Style{
 }
 
 // setProp sets prop name of n to v and gives n its props again.
-func (r *runtime) setProp(n *node, name string, v goja.Value) {
+func (r *runtime) setProp(n *node, name string, v js.Value) {
 	switch {
 	case n.kind == kindRaw || n.kind == kindRegion:
 		panic(r.vm.NewTypeError("nsgo: a text node has no props"))
@@ -58,7 +58,7 @@ func (r *runtime) setProp(n *node, name string, v goja.Value) {
 		return
 	}
 	if n.values == nil {
-		n.values = map[string]goja.Value{}
+		n.values = map[string]js.Value{}
 	}
 	n.values[name] = v
 	if r.decodeProp(n, name, v) {
@@ -68,12 +68,12 @@ func (r *runtime) setProp(n *node, name string, v goja.Value) {
 
 // platformProp sets the keys of a platform's object (ios={{…}}) as props
 // where it applies, clearing those it no longer has.
-func (r *runtime) platformProp(n *node, name string, v goja.Value) {
+func (r *runtime) platformProp(n *node, name string, v js.Value) {
 	if !slices.Contains(r.platformKeys(), name) {
 		return
 	}
 	var keys []string
-	if o, ok := v.(*goja.Object); ok {
+	if o, ok := v.(*js.Object); ok {
 		keys = o.Keys()
 		for _, k := range keys {
 			r.setProp(n, k, o.Get(k))
@@ -81,7 +81,7 @@ func (r *runtime) platformProp(n *node, name string, v goja.Value) {
 	}
 	for _, k := range n.platform[name] {
 		if !slices.Contains(keys, k) {
-			r.setProp(n, k, goja.Undefined())
+			r.setProp(n, k, js.Undefined())
 		}
 	}
 	if n.platform == nil {
@@ -91,7 +91,7 @@ func (r *runtime) platformProp(n *node, name string, v goja.Value) {
 }
 
 // decodeProp decodes prop name into n's props, reporting whether n has it.
-func (r *runtime) decodeProp(n *node, name string, v goja.Value) bool {
+func (r *runtime) decodeProp(n *node, name string, v js.Value) bool {
 	switch name {
 	case "style":
 		n.style = r.style(v)
@@ -137,7 +137,7 @@ func (r *runtime) decodeProp(n *node, name string, v goja.Value) bool {
 // scrollContent sets a scroll view's contentStyle or contentClass: a view
 // around its content, which scrolls with it and holds its children. The
 // first one makes the view, moving the children made already into it.
-func (r *runtime) scrollContent(n *node, name string, v goja.Value) {
+func (r *runtime) scrollContent(n *node, name string, v js.Value) {
 	if n.content == nil {
 		n.content = core.NewElement(r.cx, core.View{})
 		for _, c := range n.children {

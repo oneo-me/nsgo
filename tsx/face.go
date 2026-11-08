@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 	"slices"
 
 	"github.com/oneo-me/nsgo/core"
@@ -33,17 +33,17 @@ type props struct {
 	cx *core.Scope
 	// obj is a component's props object; a host tag's props are n's
 	// signals.
-	obj *goja.Object
+	obj *js.Object
 }
 
 // newFaceNode makes a node showing what f makes of props obj, or of the
 // props set on it when obj is nil.
-func (r *runtime) newFaceNode(name string, f face, obj *goja.Object) *node {
+func (r *runtime) newFaceNode(name string, f face, obj *js.Object) *node {
 	n := &node{r: r, kind: kindFace, name: name, ref: &core.Ref{}, face: f,
 		elem: core.NewElement(r.cx, nil), content: core.NewElement(r.cx, nil)}
 	n.props = &props{r: r, n: n, obj: obj}
 	if obj == nil {
-		n.signals = map[string]*core.Signal[goja.Value]{}
+		n.signals = map[string]*core.Signal[js.Value]{}
 	}
 	return n
 }
@@ -62,10 +62,10 @@ func (r *runtime) mountFace(n *node) {
 }
 
 // signal is a host tag's prop name, made unset on first use.
-func (n *node) signal(name string) *core.Signal[goja.Value] {
+func (n *node) signal(name string) *core.Signal[js.Value] {
 	s, ok := n.signals[name]
 	if !ok {
-		s = core.NewSignalFunc[goja.Value](n.r.cx, goja.Undefined(), strictEquals)
+		s = core.NewSignalFunc[js.Value](n.r.cx, js.Undefined(), strictEquals)
 		n.signals[name] = s
 	}
 	return s
@@ -73,13 +73,13 @@ func (n *node) signal(name string) *core.Signal[goja.Value] {
 
 // get reads prop name, tracked: the current platform's object's (ios,
 // android, desktop, web) when the props lack it.
-func (p *props) get(name string) goja.Value {
+func (p *props) get(name string) js.Value {
 	v := p.own(name)
 	if defined(v) {
 		return v
 	}
 	for _, k := range p.r.platformKeys() {
-		if o, ok := p.own(k).(*goja.Object); ok {
+		if o, ok := p.own(k).(*js.Object); ok {
 			if v := o.Get(name); defined(v) {
 				return v
 			}
@@ -88,7 +88,7 @@ func (p *props) get(name string) goja.Value {
 	return v
 }
 
-func (p *props) own(name string) goja.Value {
+func (p *props) own(name string) js.Value {
 	if p.obj != nil {
 		return p.obj.Get(name)
 	}
@@ -96,8 +96,8 @@ func (p *props) own(name string) goja.Value {
 }
 
 // peek reads prop name untracked.
-func (p *props) peek(name string) goja.Value {
-	return core.Untracked(p.r.cx, func() goja.Value { return p.get(name) })
+func (p *props) peek(name string) js.Value {
+	return core.Untracked(p.r.cx, func() js.Value { return p.get(name) })
 }
 
 // has reports whether prop name is set, untracked: a component reads
@@ -187,7 +187,7 @@ func (p *props) children() []core.Node {
 	if p.obj == nil {
 		return []core.Node{p.n.content}
 	}
-	return []core.Node{lazy{p.r, p.n, func() goja.Value { return p.obj.Get("children") }}}
+	return []core.Node{lazy{p.r, p.n, func() js.Value { return p.obj.Get("children") }}}
 }
 
 // slot is what prop name renders, as a node; nil when it is absent as
@@ -196,7 +196,7 @@ func (p *props) slot(name string) core.Node {
 	if !p.has(name) {
 		return nil
 	}
-	return lazy{p.r, p.n, func() goja.Value { return p.get(name) }}
+	return lazy{p.r, p.n, func() js.Value { return p.get(name) }}
 }
 
 // lazy is a region made as core renders it, under the scope it renders
@@ -207,7 +207,7 @@ func (p *props) slot(name string) core.Node {
 type lazy struct {
 	r     *runtime
 	owner *node
-	get   func() goja.Value
+	get   func() js.Value
 }
 
 // Render implements core.Node.
@@ -222,7 +222,7 @@ func (l lazy) Render(cx *core.Scope) core.Node {
 }
 
 // region is a region element showing what get returns, as children.
-func (r *runtime) region(get func() goja.Value) *core.Element {
+func (r *runtime) region(get func() js.Value) *core.Element {
 	n := &node{r: r, kind: kindRegion, elem: core.NewElement(r.cx, nil)}
 	r.insertValue(n, r.accessor(get), nil)
 	return n.elem
@@ -247,15 +247,15 @@ func (f faceTooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(boo
 
 // handler returns a caller of prop name's current function, nil when it
 // is none as the face reads it.
-func (p *props) handler(name string) func(args ...goja.Value) goja.Value {
+func (p *props) handler(name string) func(args ...js.Value) js.Value {
 	if !isFunction(p.get(name)) {
 		return nil
 	}
-	return func(args ...goja.Value) goja.Value {
+	return func(args ...js.Value) js.Value {
 		if h := p.peek(name); isFunction(h) {
 			return p.r.call(h, args...)
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}
 }
 

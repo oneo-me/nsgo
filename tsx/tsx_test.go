@@ -1,7 +1,8 @@
 package tsx_test
 
 import (
-	"os"
+	"embed"
+	"io/fs"
 	"slices"
 	"testing"
 	"testing/fstest"
@@ -13,10 +14,17 @@ import (
 	"github.com/oneo-me/nsgo/tsx/compiler"
 )
 
+// testdata is embedded, so the tests read it where its directory is not,
+// as in a browser.
+//
+//go:embed testdata
+var testdata embed.FS
+
 // start compiles an app of testdata and runs it headless.
 func start(t *testing.T, entry string) *nsgotest.App {
 	t.Helper()
-	return nsgotest.Start(t, compiler.App(os.DirFS("testdata"), entry))
+	dir, _ := fs.Sub(testdata, "testdata")
+	return nsgotest.Start(t, compiler.App(dir, entry))
 }
 
 // TestControlFlow runs flow.tsx through its steps, reading the texts each

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -23,11 +23,11 @@ func TestTransitionPropertiesNameLayout(t *testing.T) {
 
 // decoding is a runtime with no app, for what decodes values alone.
 func decoding() *runtime {
-	return &runtime{vm: goja.New(), warned: map[string]bool{}}
+	return &runtime{vm: js.New(), warned: map[string]bool{}}
 }
 
 // jsValue evaluates a JS expression in r.
-func jsValue(t *testing.T, r *runtime, expr string) goja.Value {
+func jsValue(t *testing.T, r *runtime, expr string) js.Value {
 	t.Helper()
 	v, err := r.vm.RunString("(" + expr + ")")
 	if err != nil {
@@ -198,10 +198,10 @@ func TestStyleKeysSetTheirFields(t *testing.T) {
 		`{fontWeight: "bold"}`:                          func(s core.Style) bool { return s.FontWeight == core.FontWeight(700) },
 		`{fontVariant: ["small-caps", "tabular-nums"]}`: func(s core.Style) bool { return s.FontVariant != core.FontVariantNormal },
 	}
-	for js, ok := range cases {
-		t.Run(js, func(t *testing.T) {
+	for src, ok := range cases {
+		t.Run(src, func(t *testing.T) {
 			r := decoding()
-			s := r.style(jsValue(t, r, js))
+			s := r.style(jsValue(t, r, src))
 			if !ok(s) {
 				t.Errorf("decoded %+v", s)
 			}

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -54,7 +55,14 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	defer runner.close()
 	shots := filepath.Join(p.Dir, ".nsgo", "test", "screenshots", opts.target)
 	r := &testRun{running: map[string]*testResult{}, packages: map[string]*testResult{}, trace: opts.trace, out: os.Stderr}
-	env := []string{"NSGO_TEST_TARGET=" + opts.target}
+	// A package that links no platform, as a library's, runs headless in
+	// the target's runtime: the web's engine, say.
+	env := []string{}
+	if hosted, err := linksPlatform(ctx, p); err != nil {
+		return err
+	} else if hosted {
+		env = append(env, "NSGO_TEST_TARGET="+opts.target)
+	}
 	if opts.trace {
 		env = append(env, "NSGO_TEST_TRACE=1")
 	}
@@ -105,6 +113,18 @@ func (t traceWriter) Write(b []byte) (int, error) {
 		}
 	}
 	return len(b), nil
+}
+
+// linksPlatform reports whether the package's tests link NSGo's root
+// package, which links the platform's test host.
+func linksPlatform(ctx context.Context, p *project) (bool, error) {
+	cmd := exec.CommandContext(ctx, "go", "list", "-test", "-deps", "-f", "{{.ImportPath}}", ".")
+	cmd.Dir = p.Dir
+	out, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("go list: %w", err)
+	}
+	return slices.Contains(strings.Fields(string(out)), "github.com/oneo-me/nsgo"), nil
 }
 
 // listTests lists the package's tests that run matches, as go test -list

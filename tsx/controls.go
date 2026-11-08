@@ -3,7 +3,7 @@ package tsx
 import (
 	"reflect"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -63,7 +63,7 @@ func init() {
 		custom("Children", func(p *props, v reflect.Value) {
 			var nodes []core.Node
 			for _, item := range p.r.arrayItems(p.get("children")) {
-				nodes = append(nodes, lazy{p.r, p.n, func() goja.Value { return item }})
+				nodes = append(nodes, lazy{p.r, p.n, func() js.Value { return item }})
 			}
 			v.Set(reflect.ValueOf(nodes))
 		}, "children?: JSX.Element | readonly JSX.Element[]"))...)
@@ -107,7 +107,7 @@ func init() {
 }
 
 // sliderValue reads a number or [start, end].
-func sliderValue(r *runtime, v goja.Value) base.SliderValue {
+func sliderValue(r *runtime, v js.Value) base.SliderValue {
 	if items := r.arrayItems(v); len(items) == 2 {
 		return base.RangeValue(items[0].ToFloat(), items[1].ToFloat())
 	}
@@ -139,8 +139,8 @@ func sliderEvent(prop string) func(p *props, v reflect.Value) {
 
 // scrollbarTheme is the ScrollbarTheme a view's scrollbar prop gives, nil
 // for true, false and none.
-func (r *runtime) scrollbarTheme(v goja.Value) core.ScrollbarMaker {
-	o, ok := v.(*goja.Object)
+func (r *runtime) scrollbarTheme(v js.Value) core.ScrollbarMaker {
+	o, ok := v.(*js.Object)
 	if !ok || !defined(v) {
 		return nil
 	}

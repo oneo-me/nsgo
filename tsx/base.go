@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/datatable"
@@ -170,7 +170,7 @@ var baseRenames = []Option{
 
 // target is { row, column }, leaving out the one that is -1, as NSH's
 // DataTableTarget does.
-func (r *runtime) target(row, column int) *goja.Object {
+func (r *runtime) target(row, column int) *js.Object {
 	o := r.vm.NewObject()
 	if row >= 0 {
 		_ = o.Set("row", row)
@@ -197,7 +197,7 @@ func rangeHandler(prop string) func(p *props, v reflect.Value) {
 }
 
 // tableRow is row of a DataTable's data, whose first row is dataStart.
-func tableRow(p *props, row int) goja.Value {
+func tableRow(p *props, row int) js.Value {
 	return p.r.item(p.get("data"), row-p.int("dataStart"))
 }
 
@@ -212,7 +212,7 @@ func tableText(p *props, v reflect.Value) {
 		if column < 0 || column >= len(cols) {
 			return ""
 		}
-		o, ok := tableRow(p, row).(*goja.Object)
+		o, ok := tableRow(p, row).(*js.Object)
 		if !ok {
 			return ""
 		}

@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -68,7 +68,7 @@ func dialogFace(p *props) core.Node {
 }
 
 // statusBar reads { foreground, hidden, animated }.
-func (r *runtime) statusBar(v goja.Value) core.StatusBarSetting {
+func (r *runtime) statusBar(v js.Value) core.StatusBarSetting {
 	o := r.options(v)
 	var s core.StatusBarSetting
 	if o.o == nil {
@@ -93,9 +93,9 @@ func (r *runtime) statusBar(v goja.Value) core.StatusBarSetting {
 // called with the props object compiled JSX passes. Its component is made
 // as the node is inserted, so it knows its parents (a Plot's marks), and
 // its children as the component places them (props.children).
-func (r *runtime) faceComponent(name string, f face) goja.Value {
-	return r.function(func(call goja.FunctionCall) goja.Value {
-		obj, ok := arg(call, 0).(*goja.Object)
+func (r *runtime) faceComponent(name string, f face) js.Value {
+	return r.function(func(call js.FunctionCall) js.Value {
+		obj, ok := arg(call, 0).(*js.Object)
 		if !ok {
 			obj = r.vm.NewObject()
 		}
@@ -107,5 +107,5 @@ func (r *runtime) faceComponent(name string, f face) goja.Value {
 
 // faceExport exports a face as a component.
 func faceExport(name string, f face) export {
-	return export{name, func(r *runtime) goja.Value { return r.faceComponent(name, f) }}
+	return export{name, func(r *runtime) js.Value { return r.faceComponent(name, f) }}
 }

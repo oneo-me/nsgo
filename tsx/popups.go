@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -173,7 +173,7 @@ func stringOrNull(s *string) any {
 }
 
 // stringList reads an array of strings.
-func (r *runtime) stringList(v goja.Value) []string {
+func (r *runtime) stringList(v js.Value) []string {
 	var out []string
 	for _, item := range r.arrayItems(v) {
 		out = append(out, item.String())
@@ -226,7 +226,7 @@ func calendarOptions() []Option {
 }
 
 // dateTime reads an ISO date, or a date and a time after T or a space.
-func dateTime(v goja.Value) time.Time {
+func dateTime(v js.Value) time.Time {
 	if !defined(v) {
 		return time.Time{}
 	}
@@ -249,8 +249,8 @@ func dateText(s string) time.Time {
 }
 
 // dateValue reads a date, [start, end], or null.
-func (r *runtime) dateValue(v goja.Value) base.DateValue {
-	if o, ok := v.(*goja.Object); ok && o.ClassName() == "Array" {
+func (r *runtime) dateValue(v js.Value) base.DateValue {
+	if o, ok := v.(*js.Object); ok && o.ClassName() == "Array" {
 		items := r.arrayItems(v)
 		out := base.DateValue{Range: true}
 		if len(items) == 2 {
@@ -348,10 +348,10 @@ func dateMatcher(p *props, v reflect.Value) {
 		return
 	}
 	r := p.r
-	var fn goja.Value
+	var fn js.Value
 	var answers map[time.Time]bool
 	var match func(time.Time) bool
-	var last goja.Value
+	var last js.Value
 	read := func() func(time.Time) bool {
 		m := p.get("disabledMatcher")
 		if m == last {
@@ -370,7 +370,7 @@ func dateMatcher(p *props, v reflect.Value) {
 				}
 				return answer
 			}
-		case m.(*goja.Object).ClassName() == "Array":
+		case m.(*js.Object).ClassName() == "Array":
 			var days []int
 			for _, d := range r.arrayItems(m) {
 				days = append(days, int(d.ToInteger()))

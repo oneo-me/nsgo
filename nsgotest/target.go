@@ -111,6 +111,16 @@ func (a *App) startTarget(app func(cx *core.Scope) core.Node) {
 		a.t.Fatalf("nsgotest: the platform cannot open the app: %v", err)
 	}
 	t.surface = s
+	// The first batch can take longer than a step's quiet time to come,
+	// as on Windows, where the window opens first.
+	for deadline := time.Now().Add(settleWait); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+		t.mu.Lock()
+		came := len(t.batches) > 0
+		t.mu.Unlock()
+		if came {
+			break
+		}
+	}
 	t.settle()
 }
 

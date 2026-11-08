@@ -1,6 +1,6 @@
 package tsx
 
-import "github.com/dop251/goja"
+import "github.com/oneo-me/nsgo/tsx/internal/js"
 
 // The modules a bundle requires (NSH's modules.rs): nsgo, the API apps
 // write against, nsgo/base, and nsgo:rt, what compiled JSX calls.
@@ -8,24 +8,24 @@ import "github.com/dop251/goja"
 // export is one export of a module and how a VM makes it.
 type export struct {
 	name string
-	make func(r *runtime) goja.Value
+	make func(r *runtime) js.Value
 }
 
 // fn exports a function of the runtime.
-func fn(name string, f func(r *runtime, call goja.FunctionCall) goja.Value) export {
-	return export{name, func(r *runtime) goja.Value {
-		return r.function(func(call goja.FunctionCall) goja.Value { return f(r, call) })
+func fn(name string, f func(r *runtime, call js.FunctionCall) js.Value) export {
+	return export{name, func(r *runtime) js.Value {
+		return r.function(func(call js.FunctionCall) js.Value { return f(r, call) })
 	}}
 }
 
 // host exports a primitive as a component.
 func host(name, tag string) export {
-	return export{name, func(r *runtime) goja.Value { return r.hostComponent(tag) }}
+	return export{name, func(r *runtime) js.Value { return r.hostComponent(tag) }}
 }
 
 // script exports what a JS source evaluates to.
 func script(name, src string) export {
-	return export{name, func(r *runtime) goja.Value {
+	return export{name, func(r *runtime) js.Value {
 		v, err := r.vm.RunString(src)
 		if err != nil {
 			panic(err)

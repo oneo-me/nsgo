@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -18,7 +18,7 @@ import (
 
 // style decodes a style object, an array of them (later ones winning,
 // falsy entries skipped) or nothing.
-func (r *runtime) style(v goja.Value) core.Style {
+func (r *runtime) style(v js.Value) core.Style {
 	var s core.Style
 	if items := r.arrayItems(v); items != nil {
 		for _, it := range items {
@@ -26,7 +26,7 @@ func (r *runtime) style(v goja.Value) core.Style {
 		}
 		return s
 	}
-	o, ok := v.(*goja.Object)
+	o, ok := v.(*js.Object)
 	if !ok {
 		return s
 	}
@@ -75,7 +75,7 @@ func animated(s *core.Style) *core.AnimatedStyle {
 }
 
 // styleKey sets one key of NSH's style objects.
-func (r *runtime) styleKey(s *core.Style, key string, v goja.Value) {
+func (r *runtime) styleKey(s *core.Style, key string, v js.Value) {
 	if !defined(v) {
 		return
 	}
@@ -594,7 +594,7 @@ func (r *runtime) animatedKey(s *core.Style, key string, n core.AnimatedNode) {
 
 // axes reads CSS's two-value keys, translate and scale: a value, "x y" or
 // a list; y is nil without one, and x for none.
-func (r *runtime) axes(v goja.Value) (x, y goja.Value) {
+func (r *runtime) axes(v js.Value) (x, y js.Value) {
 	items := r.arrayItems(v)
 	if str, ok := v.Export().(string); ok {
 		if str = strings.TrimSpace(str); str == "none" {
@@ -615,7 +615,7 @@ func (r *runtime) axes(v goja.Value) (x, y goja.Value) {
 }
 
 // translation reads a length or a percentage of a transform; nil is 0.
-func (r *runtime) translation(key string, v goja.Value) (core.Points, bool) {
+func (r *runtime) translation(key string, v js.Value) (core.Points, bool) {
 	if v == nil {
 		return 0, false
 	}
@@ -633,7 +633,7 @@ func (r *runtime) translation(key string, v goja.Value) (core.Points, bool) {
 }
 
 // rotate reads CSS's rotate: degrees, an angle, or an axis and an angle.
-func (r *runtime) rotate(s *core.Style, v goja.Value) {
+func (r *runtime) rotate(s *core.Style, v js.Value) {
 	str, isString := v.Export().(string)
 	if !isString {
 		s.Transform.Rotate = float32(finite(v))
@@ -664,7 +664,7 @@ func (r *runtime) rotate(s *core.Style, v goja.Value) {
 
 // shadows reads a CSS list of shadows or a list of layers, { x, y, blur,
 // spread, color, inset }.
-func (r *runtime) shadows(key string, v goja.Value) []core.BoxShadow {
+func (r *runtime) shadows(key string, v js.Value) []core.BoxShadow {
 	items := r.arrayItems(v)
 	if items == nil {
 		sh, ok := cssShadows(v.String())
@@ -687,7 +687,7 @@ func (r *runtime) shadows(key string, v goja.Value) []core.BoxShadow {
 // transform reads a transform: CSS's string, or a list of steps. The
 // steps stay in order in Transforms, unless some are animated, which go
 // in Transform's fields, in their order, with the others.
-func (r *runtime) transform(s *core.Style, v goja.Value) {
+func (r *runtime) transform(s *core.Style, v js.Value) {
 	if str, ok := v.Export().(string); ok {
 		steps, err := core.ParseTransform(str)
 		if err != nil {
@@ -703,7 +703,7 @@ func (r *runtime) transform(s *core.Style, v goja.Value) {
 	}
 	var t core.Transform
 	for _, step := range r.arrayItems(v) {
-		o, ok := step.(*goja.Object)
+		o, ok := step.(*js.Object)
 		if !ok {
 			continue
 		}
@@ -774,10 +774,10 @@ func (r *runtime) transform(s *core.Style, v goja.Value) {
 }
 
 // transformSteps reads a list of steps, false if one is animated.
-func (r *runtime) transformSteps(v goja.Value) ([]core.TransformStep, bool) {
+func (r *runtime) transformSteps(v js.Value) ([]core.TransformStep, bool) {
 	out := []core.TransformStep{}
 	for _, step := range r.arrayItems(v) {
-		o, ok := step.(*goja.Object)
+		o, ok := step.(*js.Object)
 		if !ok {
 			continue
 		}
@@ -822,7 +822,7 @@ func (r *runtime) transformSteps(v goja.Value) ([]core.TransformStep, bool) {
 }
 
 // degrees reads an angle: a number of degrees or "45deg".
-func (r *runtime) degrees(v goja.Value) float32 {
+func (r *runtime) degrees(v js.Value) float32 {
 	if str, ok := v.Export().(string); ok {
 		return float32(angleDegrees(str))
 	}
@@ -840,7 +840,7 @@ func sided(keep, side core.Sides, physical bool) core.Sides {
 // flex is CSS's shorthand: a number is grow with a basis of 0, "none",
 // "auto" and "initial" its keywords, or grow, shrink and basis written
 // out ("2 0 50%"). React Native's negative factors are no CSS.
-func (r *runtime) flex(s *core.Style, key string, v goja.Value) {
+func (r *runtime) flex(s *core.Style, key string, v js.Value) {
 	text, isString := v.Export().(string)
 	if !isString {
 		f := float32(finite(v))
@@ -901,7 +901,7 @@ func flexBasis(s string) (core.Length, bool) {
 
 // edge sets a margin's or a padding's sides: a number, a percentage,
 // "auto" (margins), env() or calc(env() + length).
-func (r *runtime) edge(s *core.Style, key string, v goja.Value, margin bool, sides core.Sides) {
+func (r *runtime) edge(s *core.Style, key string, v js.Value, margin bool, sides core.Sides) {
 	var amount core.Points
 	env := core.EnvNone
 	auto, percent := false, false
@@ -1004,14 +1004,14 @@ func transitionProperties(s string) core.TransitionProperty {
 	return p
 }
 
-func (r *runtime) duration(key string, v goja.Value) time.Duration {
+func (r *runtime) duration(key string, v js.Value) time.Duration {
 	ms, ok := cssDuration(v.String())
 	r.check(key, v, ok)
 	return millis(ms)
 }
 
 // paint reads none, currentColor or a color.
-func (r *runtime) paint(key string, v goja.Value) core.Paint {
+func (r *runtime) paint(key string, v js.Value) core.Paint {
 	switch v.String() {
 	case "none":
 		return core.PaintNone
@@ -1022,13 +1022,13 @@ func (r *runtime) paint(key string, v goja.Value) core.Paint {
 }
 
 // offset reads { width, height }.
-func (r *runtime) offset(v goja.Value) core.Point {
+func (r *runtime) offset(v js.Value) core.Point {
 	o := r.options(v)
 	return core.Point{X: core.Points(o.float("width", 0)), Y: core.Points(o.float("height", 0))}
 }
 
 // check warns once about a value of key that did not read.
-func (r *runtime) check(key string, v goja.Value, ok bool) {
+func (r *runtime) check(key string, v js.Value, ok bool) {
 	if !ok {
 		r.warn("style key %q has no value %q", key, v.String())
 	}
@@ -1074,7 +1074,7 @@ var aligns = map[string]core.Align{"stretch": core.AlignStretch, "flex-start": c
 	"baseline": core.AlignBaseline, "space-evenly": core.AlignSpaceEvenly, "normal": 0, "auto": 0}
 
 // pick returns the value a keyword names, warning about one it lacks.
-func pick[T any](r *runtime, key string, v goja.Value, values map[string]T) T {
+func pick[T any](r *runtime, key string, v js.Value, values map[string]T) T {
 	t, ok := values[v.String()]
 	if !ok {
 		r.warn("style key %q has no value %q", key, v.String())
@@ -1083,7 +1083,7 @@ func pick[T any](r *runtime, key string, v goja.Value, values map[string]T) T {
 }
 
 // emOf reads a length in em, "0.1em", of the element's font size.
-func emOf(v goja.Value) (float32, bool) {
+func emOf(v js.Value) (float32, bool) {
 	str, ok := v.Export().(string)
 	if !ok {
 		return 0, false
@@ -1096,7 +1096,7 @@ func emOf(v goja.Value) (float32, bool) {
 	return float32(f), ok
 }
 
-func points(v goja.Value) core.Points {
+func points(v js.Value) core.Points {
 	if str, ok := v.Export().(string); ok {
 		l, _ := cssLength(str)
 		return l
@@ -1106,7 +1106,7 @@ func points(v goja.Value) core.Points {
 
 // finite is v as a number, 0 for one that is not finite (NaN from a
 // sum over a missing value), which a style leaves unset.
-func finite(v goja.Value) float64 {
+func finite(v js.Value) float64 {
 	f := v.ToFloat()
 	if math.IsNaN(f) || math.IsInf(f, 0) {
 		return 0
@@ -1116,7 +1116,7 @@ func finite(v goja.Value) float64 {
 
 // length decodes a number (points), a length or percentage string, or
 // "auto"; min-content and the like are auto.
-func (r *runtime) length(key string, v goja.Value) core.Length {
+func (r *runtime) length(key string, v js.Value) core.Length {
 	s, isString := v.Export().(string)
 	if !isString {
 		return core.Pt(core.Points(finite(v)))
@@ -1133,7 +1133,7 @@ func (r *runtime) length(key string, v goja.Value) core.Length {
 }
 
 // minimum is a length for a minimum size, where "auto" is written out.
-func (r *runtime) minimum(key string, v goja.Value) core.Length {
+func (r *runtime) minimum(key string, v js.Value) core.Length {
 	if s, ok := v.Export().(string); ok && s == "auto" {
 		return core.AutoMinimum
 	}
@@ -1142,7 +1142,7 @@ func (r *runtime) minimum(key string, v goja.Value) core.Length {
 
 // aspectRatio is width over height: a number, CSS's "16 / 9", or "auto"
 // for none.
-func (r *runtime) aspectRatio(key string, v goja.Value) float32 {
+func (r *runtime) aspectRatio(key string, v js.Value) float32 {
 	text, isString := v.Export().(string)
 	if !isString {
 		return float32(finite(v))
@@ -1177,7 +1177,7 @@ func intrinsic(s string) (core.Length, bool) {
 	return core.Length{}, false
 }
 
-func (r *runtime) color(key string, v goja.Value) core.Color {
+func (r *runtime) color(key string, v js.Value) core.Color {
 	c, err := core.ParseColor(v.String())
 	if err != nil {
 		r.warn("style key %q: %v", key, err)
@@ -1187,7 +1187,7 @@ func (r *runtime) color(key string, v goja.Value) core.Color {
 
 // fontWeight decodes "normal", "bold" or a weight from 1 to 1000, as a
 // number or a string.
-func (r *runtime) fontWeight(v goja.Value) core.FontWeight {
+func (r *runtime) fontWeight(v js.Value) core.FontWeight {
 	switch s := v.String(); s {
 	case "normal":
 		return core.FontWeightNormal

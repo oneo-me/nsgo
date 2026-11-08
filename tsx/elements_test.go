@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -445,6 +446,9 @@ mount(() => <Text testID="spin" onPress={() => { for (;;) {} }}>{made + " " + fr
 	})
 	if got := app.Find("id:spin").Text; got != "refused frozen undefined" {
 		t.Errorf("hardening: %q", got)
+	}
+	if runtime.GOOS == "js" {
+		t.Skip("the page's engine cannot be interrupted: a web app's time budgets are the browser's")
 	}
 	app.Press("id:spin")
 	if failed == nil || !strings.Contains(failed.Error(), "time budget") {

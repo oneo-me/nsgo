@@ -9,7 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 )
 
 // registeredMessages is a package of catalogs registered for TSX, for
@@ -44,12 +44,12 @@ func RegisterMessages[M any](module string, in func(locale string) M, params map
 		}
 		return "en"
 	}
-	object := func(r *runtime, locale func() string) goja.Value {
+	object := func(r *runtime, locale func() string) js.Value {
 		o := r.vm.NewObject()
 		for i := range t.NumMethod() {
 			m := t.Method(i)
 			name := messageName(m.Name)
-			_ = o.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+			_ = o.Set(name, r.function(func(call js.FunctionCall) js.Value {
 				recv := reflect.ValueOf(in(locale()))
 				ft := m.Type
 				args := []reflect.Value{recv}
@@ -62,15 +62,15 @@ func RegisterMessages[M any](module string, in func(locale string) M, params map
 		return o
 	}
 	registered[module] = append(registered[module],
-		export{"messages", func(r *runtime) goja.Value { return object(r, func() string { return lang(r) }) }},
-		export{"messagesIn", func(r *runtime) goja.Value {
-			return r.function(func(call goja.FunctionCall) goja.Value {
+		export{"messages", func(r *runtime) js.Value { return object(r, func() string { return lang(r) }) }},
+		export{"messagesIn", func(r *runtime) js.Value {
+			return r.function(func(call js.FunctionCall) js.Value {
 				locale := call.Argument(0).String()
 				return object(r, func() string { return locale })
 			})
 		}},
-		export{"language", func(r *runtime) goja.Value {
-			return r.function(func(goja.FunctionCall) goja.Value { return r.vm.ToValue(lang(r)) })
+		export{"language", func(r *runtime) js.Value {
+			return r.function(func(js.FunctionCall) js.Value { return r.vm.ToValue(lang(r)) })
 		}},
 	)
 }
@@ -83,7 +83,7 @@ func messageName(method string) string {
 
 // messageArg reads a JS argument as a message's parameter: a string, a
 // number, a Date or any value.
-func messageArg(v goja.Value, t reflect.Type) reflect.Value {
+func messageArg(v js.Value, t reflect.Type) reflect.Value {
 	out := reflect.New(t).Elem()
 	if !defined(v) {
 		return out

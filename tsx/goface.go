@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -254,8 +254,8 @@ func RegisterFunctions(module string, funcs map[string]any) {
 		}
 		registeredFuncs[module] = append(registeredFuncs[module], registeredFunc{name, t})
 		v, qualified := reflect.ValueOf(fn), module+"."+name
-		registered[module] = append(registered[module], export{name, func(r *runtime) goja.Value {
-			return r.function(func(call goja.FunctionCall) goja.Value { return r.callGo(qualified, v, call.Arguments) })
+		registered[module] = append(registered[module], export{name, func(r *runtime) js.Value {
+			return r.function(func(call js.FunctionCall) js.Value { return r.callGo(qualified, v, call.Arguments) })
 		}})
 	}
 }
@@ -284,17 +284,17 @@ type static struct {
 var statics = map[string][]static{}
 
 // addStatics sets module m's components' static functions.
-func (r *runtime) addStatics(module string, m *goja.Object) {
+func (r *runtime) addStatics(module string, m *js.Object) {
 	registryMu.Lock()
 	list := statics[module]
 	registryMu.Unlock()
 	for _, s := range list {
-		c, ok := m.Get(s.component).(*goja.Object)
+		c, ok := m.Get(s.component).(*js.Object)
 		if !ok {
 			continue
 		}
 		ft := s.fn.Type()
-		_ = c.Set(s.name, r.function(func(call goja.FunctionCall) goja.Value {
+		_ = c.Set(s.name, r.function(func(call js.FunctionCall) js.Value {
 			in := make([]reflect.Value, ft.NumIn())
 			skip := 0
 			if len(in) > 0 && ft.In(0) == scopeType {
@@ -383,14 +383,14 @@ func shapeOf(t reflect.Type) (shape, bool) {
 }
 
 // encodeShaped is a Shape's encoding as a JS object.
-func (r *runtime) encodeShaped(m map[string]any) goja.Value {
+func (r *runtime) encodeShaped(m map[string]any) js.Value {
 	if m == nil {
-		return goja.Null()
+		return js.Null()
 	}
 	o := r.vm.NewObject()
 	for k, v := range m {
 		if v == nil {
-			_ = o.Set(k, goja.Null())
+			_ = o.Set(k, js.Null())
 			continue
 		}
 		_ = o.Set(k, r.encode(reflect.ValueOf(v)))
@@ -399,7 +399,7 @@ func (r *runtime) encodeShaped(m map[string]any) goja.Value {
 }
 
 // partKey holds what a part's call made: a value its parent collects.
-var partKey = goja.NewSymbol("nsgo.part")
+var partKey = js.NewSymbol("nsgo.part")
 
 // part is a part's call: what builds its value from its props.
 type part struct {
@@ -422,9 +422,9 @@ func registerPart(module, name string, zero any, opts ...Option) {
 	parts[t] = true
 	var once sync.Once
 	var fields []field
-	registered[module] = append(registered[module], export{name, func(r *runtime) goja.Value {
-		return r.function(func(call goja.FunctionCall) goja.Value {
-			obj, ok := arg(call, 0).(*goja.Object)
+	registered[module] = append(registered[module], export{name, func(r *runtime) js.Value {
+		return r.function(func(call js.FunctionCall) js.Value {
+			obj, ok := arg(call, 0).(*js.Object)
 			if !ok {
 				obj = r.vm.NewObject()
 			}
@@ -445,10 +445,10 @@ func registerPart(module, name string, zero any, opts ...Option) {
 }
 
 // partsOf collects the values of parts of type t among children.
-func (r *runtime) partsOf(children goja.Value, t reflect.Type) reflect.Value {
+func (r *runtime) partsOf(children js.Value, t reflect.Type) reflect.Value {
 	out := reflect.MakeSlice(reflect.SliceOf(t), 0, 4)
-	var walk func(v goja.Value, depth int)
-	walk = func(v goja.Value, depth int) {
+	var walk func(v js.Value, depth int)
+	walk = func(v js.Value, depth int) {
 		if depth > maxDepth || !defined(v) {
 			return
 		}
@@ -462,7 +462,7 @@ func (r *runtime) partsOf(children goja.Value, t reflect.Type) reflect.Value {
 			}
 			return
 		}
-		if o, ok := v.(*goja.Object); ok {
+		if o, ok := v.(*js.Object); ok {
 			if s := o.GetSymbol(partKey); s != nil {
 				if pt, ok := s.Export().(*part); ok && pt.t == t {
 					out = reflect.Append(out, pt.build())
@@ -514,7 +514,7 @@ var (
 	boundsType    = reflect.TypeFor[core.Bounds]()
 	imageType     = reflect.TypeFor[core.ImageSource]()
 	pressType     = reflect.TypeFor[core.PressEvent]()
-	gojaValueType = reflect.TypeFor[goja.Value]()
+	gojaValueType = reflect.TypeFor[js.Value]()
 	errorType     = reflect.TypeFor[error]()
 	easingType    = reflect.TypeFor[core.Easing]()
 	regexpType    = reflect.TypeFor[*regexp.Regexp]()
@@ -749,7 +749,7 @@ func setter(t reflect.Type, prop string) func(p *props, v reflect.Value) {
 			}
 			r := p.r
 			v.Set(reflect.MakeFunc(t, func(in []reflect.Value) []reflect.Value {
-				args := make([]goja.Value, len(in))
+				args := make([]js.Value, len(in))
 				for i, a := range in {
 					args[i] = r.encode(a)
 				}
@@ -781,8 +781,8 @@ func renderSetter(t reflect.Type, prop string) func(p *props, v reflect.Value) {
 			fn := p.peek(prop)
 			// Arguments that are getters are read as the region renders,
 			// so it renders again as they change.
-			return []reflect.Value{reflect.ValueOf(core.Node(lazy{r, p.n, func() goja.Value {
-				var args []goja.Value
+			return []reflect.Value{reflect.ValueOf(core.Node(lazy{r, p.n, func() js.Value {
+				var args []js.Value
 				for _, a := range in {
 					switch {
 					case a.Type() == scopeType:
@@ -799,7 +799,7 @@ func renderSetter(t reflect.Type, prop string) func(p *props, v reflect.Value) {
 }
 
 // decode reads v as a value of t.
-func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
+func (r *runtime) decode(v js.Value, t reflect.Type) reflect.Value {
 	out := reflect.New(t).Elem()
 	if !defined(v) {
 		if s, ok := shapeOf(t); ok && s.none != nil {
@@ -868,7 +868,7 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 		}
 		return out
 	case nodeType:
-		out.Set(reflect.ValueOf(core.Node(r.region(func() goja.Value { return v }))))
+		out.Set(reflect.ValueOf(core.Node(r.region(func() js.Value { return v }))))
 		return out
 	case easingType:
 		e, _ := r.easing(v)
@@ -877,7 +877,7 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 	case regexpType:
 		// A pattern's source, or a RegExp's.
 		src := v.String()
-		if o, ok := v.(*goja.Object); ok && o.ClassName() == "RegExp" {
+		if o, ok := v.(*js.Object); ok && o.ClassName() == "RegExp" {
 			src = o.Get("source").String()
 		}
 		if re, err := regexp.Compile(src); err == nil {
@@ -916,7 +916,7 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 		}
 		out.Set(s)
 	case reflect.Map:
-		o, ok := v.(*goja.Object)
+		o, ok := v.(*js.Object)
 		if !ok {
 			break
 		}
@@ -929,7 +929,7 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 		out.Set(reflect.New(t.Elem()))
 		out.Elem().Set(r.decode(v, t.Elem()))
 	case reflect.Struct:
-		o, ok := v.(*goja.Object)
+		o, ok := v.(*js.Object)
 		if !ok {
 			break
 		}
@@ -951,7 +951,7 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 		enumMu.RLock()
 		members := unions[t]
 		enumMu.RUnlock()
-		if o, ok := v.(*goja.Object); ok && members != nil {
+		if o, ok := v.(*js.Object); ok && members != nil {
 			if m, ok := members[stringOf(o.Get("type"))]; ok {
 				out.Set(r.decode(v, m))
 			}
@@ -971,7 +971,7 @@ func (r *runtime) decode(v goja.Value, t reflect.Type) reflect.Value {
 			out.Set(r.callback(fn, t))
 		} else if isFunction(fn) {
 			out.Set(reflect.MakeFunc(t, func(in []reflect.Value) []reflect.Value {
-				args := make([]goja.Value, len(in))
+				args := make([]js.Value, len(in))
 				for i, a := range in {
 					args[i] = r.encode(a)
 				}
@@ -997,16 +997,16 @@ func setInt(v reflect.Value, n int64) {
 
 // encode gives a Go value to JS: events as NSH's objects, enums by name,
 // structs as objects of their fields' props.
-func (r *runtime) encode(v reflect.Value) goja.Value {
+func (r *runtime) encode(v reflect.Value) js.Value {
 	if !v.IsValid() {
-		return goja.Undefined()
+		return js.Undefined()
 	}
 	if s, ok := shapeOf(v.Type()); ok {
 		if s.write != nil {
 			return r.vm.ToValue(s.write(v.Interface()))
 		}
 		if s.encode == nil {
-			return goja.Undefined()
+			return js.Undefined()
 		}
 		return r.encodeShaped(s.encode(v.Interface()))
 	}
@@ -1028,11 +1028,11 @@ func (r *runtime) encode(v reflect.Value) goja.Value {
 		return r.vm.ToValue(float64(v.Interface().(time.Duration).Microseconds()) / 1000)
 	case errorType:
 		if v.IsNil() {
-			return goja.Null()
+			return js.Null()
 		}
 		return r.goError(v.Interface().(error))
 	case scopeType:
-		return goja.Undefined()
+		return js.Undefined()
 	}
 	enumMu.RLock()
 	names, isEnum := enums[v.Type()]
@@ -1070,7 +1070,7 @@ func (r *runtime) encode(v reflect.Value) goja.Value {
 		return r.vm.NewArray(out...)
 	case reflect.Pointer:
 		if v.IsNil() {
-			return goja.Null()
+			return js.Null()
 		}
 		if v.Type().Elem().Kind() == reflect.Struct && v.Type().NumMethod() > 0 {
 			return r.vm.ToValue(v.Interface()) // a ref: its methods
@@ -1078,11 +1078,11 @@ func (r *runtime) encode(v reflect.Value) goja.Value {
 		return r.encode(v.Elem())
 	case reflect.Interface:
 		if v.IsNil() {
-			return goja.Null()
+			return js.Null()
 		}
 		out := r.encode(v.Elem())
 		if tag := unionTag(v.Type(), v.Elem().Type()); tag != "" {
-			if o, ok := out.(*goja.Object); ok {
+			if o, ok := out.(*js.Object); ok {
 				_ = o.Set("type", tag)
 			}
 		}
@@ -1103,10 +1103,10 @@ func registeredExports(name string) ([]export, bool) {
 
 // results is what a ref method returned as JS sees it: null for a false
 // trailing ok, an object of several.
-func (r *runtime) results(out []reflect.Value, ft reflect.Type, names []string) goja.Value {
+func (r *runtime) results(out []reflect.Value, ft reflect.Type, names []string) js.Value {
 	if n := len(out); n > 1 && ft.Out(n-1).Kind() == reflect.Bool {
 		if !out[n-1].Bool() {
-			return goja.Null()
+			return js.Null()
 		}
 		out = out[:n-1]
 	}
@@ -1131,14 +1131,14 @@ var resultNames = map[string][]string{"VisibleRows": {"start", "end"}, "VisibleC
 // refObject is a component's ref as JS sees it: its methods, their
 // arguments read as their types, and what they return in a promise, a
 // trailing ok giving null when false.
-func (r *runtime) refObject(ref reflect.Value) *goja.Object {
+func (r *runtime) refObject(ref reflect.Value) *js.Object {
 	o := r.vm.NewObject()
 	t := ref.Type()
 	for i := range t.NumMethod() {
 		m := t.Method(i)
 		fn := ref.Method(i)
 		names := resultNames[m.Name]
-		_ = o.Set(lowerCamel(m.Name), r.function(func(call goja.FunctionCall) goja.Value {
+		_ = o.Set(lowerCamel(m.Name), r.function(func(call js.FunctionCall) js.Value {
 			ft := fn.Type()
 			in := make([]reflect.Value, ft.NumIn())
 			for j := range in {
@@ -1146,7 +1146,7 @@ func (r *runtime) refObject(ref reflect.Value) *goja.Object {
 			}
 			out := fn.Call(in)
 			if len(out) == 0 {
-				return goja.Undefined()
+				return js.Undefined()
 			}
 			// What a method returns comes in a promise, as NSH's queries,
 			// which cross to the engine thread, do.

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -202,19 +203,41 @@ func waitForChange(ctx context.Context, p *project, srv *devServer, dirs, source
 				return nil
 			}
 			if now := scan(sources); now != tsx {
-				time.Sleep(100 * time.Millisecond)
-				tsx = scan(sources)
+				tsx = settled(sources, now)
 				reloadBundles(p, srv)
 			}
 		}
 	}
 }
 
+// settled waits until the files listed stop changing, as an editor or a
+// copy writes them, and returns their fingerprint then.
+func settled(files []string, last string) string {
+	for range 20 {
+		time.Sleep(100 * time.Millisecond)
+		now := scan(files)
+		if now == last {
+			break
+		}
+		last = now
+	}
+	return last
+}
+
+// unreadable matches a compile's failure to open a source, which on
+// Windows a file still held by what writes it gives.
+var unreadable = regexp.MustCompile(`: open [^:\n]+: `)
+
 // reloadBundles compiles the app's TSX again and sends the running apps
-// the bundles, or the failure to show over them.
+// the bundles, or the failure to show over them. A source that cannot be
+// opened yet is read again a few times first.
 func reloadBundles(p *project, srv *devServer) {
 	progress := begin("compiling TSX")
 	bundles, err := compileBundles(p.Dir, true)
+	for try := 0; err != nil && try < 5 && unreadable.MatchString(err.Error()); try++ {
+		time.Sleep(200 * time.Millisecond)
+		bundles, err = compileBundles(p.Dir, true)
+	}
 	if err != nil {
 		progress.fail()
 		srv.send("error", strings.TrimSpace(err.Error()))

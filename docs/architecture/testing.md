@@ -35,11 +35,11 @@ Each step then takes frames while an animation that ends runs or a list binds th
 
 ## On a platform
 
-`nsgo test -target <t>` builds the package's tests with the `nsgotest` tag as the target's package and runs each test in a process of its own (`cmd/nsgo/testtarget.go`). Each `Start` of a test opens another window on a desktop; a phone and a page show one app, so a test's second `Start` skips there. The test's `TestMain` calls `nsgotest.Main`, which gives the main thread to the backend's test host (`internal/testhost`) and runs the tests beside it.
+`nsgo test -target <t>` builds the package's tests with the `nsgotest` tag as the target's package and runs each test in a process of its own (`cmd/nsgo/testtarget.go`). A package whose tests link no backend runs them headless in the target's process, giving the page its turn as each settles on the web, where the promise reactions of a TSX app wait for it. Each `Start` of a test opens another window on a desktop; a phone and a page show one app, so a test's second `Start` skips there. The test's `TestMain` calls `nsgotest.Main`, which gives the main thread to the backend's test host (`internal/testhost`) and runs the tests beside it.
 
 `nsgotest.Start` then has the host open the app as its `Run` would, with the engine's `Observe`, `Event` and `Pin` options, the test's clock and a clipboard of its own: the model follows the batches the real engine sends and the scroll, focus and text events the platform reports, and the test's environment pins the appearance, locale, text size and reduced motion.
 
-Steps resolve on the model, scroll the view into view a gesture at a time, and act through the host's native input; a step ends once no batch came and nothing animated for 100 ms, 5 seconds at most. Storage is a memory store in a temporary data directory, which the test reads through a graph of its own. Screenshots go to the tool as base64 lines in chunks, which it saves under `.nsgo/test/screenshots/<target>`.
+Steps resolve on the model, scroll the view into view a gesture at a time, and act through the host's native input; a step ends once no batch came and nothing animated for 100 ms, 5 seconds at most, and `Start` first waits for the app's first batch, which comes late on Windows. Storage is a memory store in a temporary data directory, which the test reads through a graph of its own. Screenshots go to the tool as base64 lines in chunks, which it saves under `.nsgo/test/screenshots/<target>`.
 
 | Target | Input | Screenshots | Quiet |
 | --- | --- | --- | --- |

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 	"golang.org/x/text/collate"
 	"golang.org/x/text/currency"
 	"golang.org/x/text/feature/plural"
@@ -19,7 +19,7 @@ import (
 // English names. Number's, Date's and String's locale methods use them.
 
 // locale is the locale an Intl call names, else the environment's.
-func (r *runtime) locale(v goja.Value) language.Tag {
+func (r *runtime) locale(v js.Value) language.Tag {
 	name := ""
 	if items := r.arrayItems(v); len(items) > 0 {
 		name = items[0].String()
@@ -324,18 +324,18 @@ func (r *runtime) withOpts(o opts, kv ...string) opts {
 	return opts{out}
 }
 
-func (r *runtime) intlNatives() *goja.Object {
+func (r *runtime) intlNatives() *js.Object {
 	n := r.vm.NewObject()
-	set := func(name string, f func(call goja.FunctionCall) goja.Value) { _ = n.Set(name, r.function(f)) }
-	set("number", func(call goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall) js.Value) { _ = n.Set(name, r.function(f)) }
+	set("number", func(call js.FunctionCall) js.Value {
 		return r.vm.ToValue(r.formatNumber(arg(call, 0).ToFloat(), r.locale(arg(call, 1)), r.options(arg(call, 2))))
 	})
-	set("date", func(call goja.FunctionCall) goja.Value {
+	set("date", func(call js.FunctionCall) js.Value {
 		ms := arg(call, 0).ToFloat()
 		t := time.UnixMilli(int64(ms)).In(time.Local)
 		return r.vm.ToValue(r.formatDate(t, r.options(arg(call, 2)), stringOf(arg(call, 3))))
 	})
-	set("plural", func(call goja.FunctionCall) goja.Value {
+	set("plural", func(call js.FunctionCall) js.Value {
 		tag, x := r.locale(arg(call, 1)), arg(call, 0).ToFloat()
 		rules := plural.Cardinal
 		if r.options(arg(call, 2)).str("type", "cardinal") == "ordinal" {
@@ -353,7 +353,7 @@ func (r *runtime) intlNatives() *goja.Object {
 		}
 		return r.vm.ToValue(form)
 	})
-	set("compare", func(call goja.FunctionCall) goja.Value {
+	set("compare", func(call js.FunctionCall) js.Value {
 		o := r.options(arg(call, 3))
 		var copts []collate.Option
 		if o.str("sensitivity", "") == "base" || o.str("sensitivity", "") == "accent" {
@@ -365,6 +365,6 @@ func (r *runtime) intlNatives() *goja.Object {
 		c := collate.New(r.locale(arg(call, 2)), copts...)
 		return r.vm.ToValue(c.CompareString(arg(call, 0).String(), arg(call, 1).String()))
 	})
-	set("locale", func(call goja.FunctionCall) goja.Value { return r.vm.ToValue(r.locale(arg(call, 0)).String()) })
+	set("locale", func(call js.FunctionCall) js.Value { return r.vm.ToValue(r.locale(arg(call, 0)).String()) })
 	return n
 }

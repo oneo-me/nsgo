@@ -667,10 +667,10 @@ func (r *runner) app(a *nsgotest.App, tb *appTB, env driver.Environment, net *ne
 	act("paste", func(c goja.FunctionCall) {
 		var pc struct {
 			Text string
-			URIs []string `json:"uris"`
+			Uris []string
 		}
 		_ = r.vm.ExportTo(c.Argument(1), &pc)
-		a.Paste(sel(c), driver.PasteEvent{Text: pc.Text, URIs: pc.URIs})
+		a.Paste(sel(c), driver.PasteEvent{Text: pc.Text, URIs: pc.Uris})
 	})
 	timeout := func(v goja.Value) time.Duration {
 		if o, ok := v.(*goja.Object); ok {

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/dock"
@@ -97,7 +97,7 @@ var dockOptions = []Option{
 		if h := p.handler("onZoomChange"); h != nil {
 			v.Set(reflect.ValueOf(func(key string) {
 				e := p.r.vm.NewObject()
-				_ = e.Set("panel", goja.Null())
+				_ = e.Set("panel", js.Null())
 				if key != "" {
 					_ = e.Set("panel", key)
 				}

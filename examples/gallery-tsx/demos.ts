@@ -5,6 +5,12 @@ import { CommitGraphDemo, DataTableDemo, ListDemo, PlotDemo, TableDemo } from ".
 import { AvatarDemo, BadgeDemo, CarouselDemo, ImageDemo } from "./demos/Display";
 import { DiffDemo, EditorDemo, TextViewDemo } from "./demos/Documents";
 import { ProgressDemo, ToastDemo } from "./demos/Feedback";
+import { TerminalDemo } from "./demos/Terminal";
+import { ConversationDemo } from "./demos/Conversation";
+import { ChatDemo } from "./demos/Chat";
+import { PhotosDemo } from "./demos/Photos";
+import { RichEditorDemo } from "./demos/RichEditor";
+import { StocksDemo } from "./demos/Stocks";
 import { CheckboxDemo, ColorPickerDemo, DatePickerDemo, InputDemo, SelectDemo, SliderDemo } from "./demos/Inputs";
 import { BreadcrumbsDemo, NavStackDemo, SidebarDemo, TabsDemo } from "./demos/Navigation";
 import { CommandDemo, DialogDemo, MenuDemo, PopoverDemo } from "./demos/Popups";
@@ -22,6 +28,14 @@ export interface Group {
 
 /** The gallery's Components by what they do, as the Go gallery lists them. */
 export const groups: Group[] = [
+  {
+    name: "Apps",
+    demos: [
+      { name: "Stocks", icon: "chart-candlestick", screen: StocksDemo },
+      { name: "AI Chat", icon: "message-circle", screen: ChatDemo },
+      { name: "Photos", icon: "images", screen: PhotosDemo },
+    ],
+  },
   {
     name: "Actions",
     demos: [
@@ -96,8 +110,11 @@ export const groups: Group[] = [
   {
     name: "Documents",
     demos: [
+      { name: "Conversation", icon: "messages-square", screen: ConversationDemo },
       { name: "Editor", icon: "code", screen: EditorDemo },
+      { name: "RichEditor", icon: "pencil-line", screen: RichEditorDemo },
       { name: "DiffView", icon: "file-diff", screen: DiffDemo },
+      { name: "Terminal", icon: "terminal", screen: TerminalDemo },
       { name: "TextView", icon: "file-text", screen: TextViewDemo },
     ],
   },

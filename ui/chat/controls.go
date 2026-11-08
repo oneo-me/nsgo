@@ -713,15 +713,24 @@ const chatShimmerPeriod = 1800 * time.Millisecond
 // mask the platform moves, so it costs no commits. Reduced motion shows
 // plain text.
 type Shimmer struct {
-	Text             func() string
-	Size             core.Points
+	Text func() string
+	Size core.Points
+	// Color is the text's, the muted text's when nil, and Highlight the
+	// band's, the text's when nil.
 	Color, Highlight func() core.Color
 	Style            core.Style
 }
 
 // Render implements core.Node.
 func (s Shimmer) Render(cx *core.Scope) core.Node {
+	colors := tonesOf(cx)
 	color := s.Color
+	if color == nil {
+		color = colors.Muted
+	}
+	if s.Highlight == nil {
+		s.Highlight = colors.Text
+	}
 	base := core.Text{ContentFunc: s.Text, MaxLines: 1, Style: core.Style{FontSize: s.Size, FlexShrink: 1, MinWidth: core.Pt(0)}, StyleFunc: ui.Colored(color)}
 	if ui.ReduceMotion(cx) {
 		base.Style = base.Style.Merge(s.Style)

@@ -39,6 +39,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -380,9 +381,21 @@ func (a *App) Settle() {
 		more := len(a.posts) > 0
 		a.mu.Unlock()
 		if b == nil && len(posts) == 0 && !more {
-			return
+			if runtime.GOOS != "js" || !a.yieldToPage() {
+				return
+			}
 		}
 	}
+}
+
+// yieldToPage lets the page's engine run what it queued, as the reactions
+// of the promises a TSX app settled, which run only once Go gives the page
+// its turn, and reports whether that posted anything.
+func (a *App) yieldToPage() bool {
+	time.Sleep(time.Millisecond)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return len(a.posts) > 0
 }
 
 // Post runs fn on the test's goroutine as the next step or wait settles:

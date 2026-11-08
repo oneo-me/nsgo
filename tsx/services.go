@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -17,11 +17,11 @@ import (
 // meaning. What answers later is a promise core's callback settles.
 
 var serviceExports = []export{
-	{"Keyboard", func(r *runtime) goja.Value {
+	{"Keyboard", func(r *runtime) js.Value {
 		o := r.vm.NewObject()
-		_ = o.Set("dismiss", r.function(func(goja.FunctionCall) goja.Value {
+		_ = o.Set("dismiss", r.function(func(js.FunctionCall) js.Value {
 			r.cx.DismissKeyboard()
-			return goja.Undefined()
+			return js.Undefined()
 		}))
 		return o
 	}},
@@ -29,26 +29,26 @@ var serviceExports = []export{
 	{"Clipboard", (*runtime).clipboard},
 	{"Storage", (*runtime).storage},
 	{"Picker", (*runtime).picker},
-	fn("openUrl", func(r *runtime, call goja.FunctionCall) goja.Value {
+	fn("openUrl", func(r *runtime, call js.FunctionCall) js.Value {
 		p, resolve, _ := r.vm.NewPromise()
 		r.cx.OpenURL(arg(call, 0).String(), func(opened bool) { r.inJS(func() { _ = resolve(opened) }) })
 		return r.vm.ToValue(p)
 	}),
-	fn("announce", func(r *runtime, call goja.FunctionCall) goja.Value {
+	fn("announce", func(r *runtime, call js.FunctionCall) js.Value {
 		r.cx.Announce(arg(call, 0).String())
-		return goja.Undefined()
+		return js.Undefined()
 	}),
-	fn("setAccessibilityFocus", func(r *runtime, call goja.FunctionCall) goja.Value {
+	fn("setAccessibilityFocus", func(r *runtime, call js.FunctionCall) js.Value {
 		if n := r.nodeOf(arg(call, 0)); n != nil && n.ref != nil {
 			n.ref.SetAccessibilityFocus()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}),
-	{"safeArea", func(r *runtime) goja.Value {
-		return r.accessor(func() goja.Value { return r.edgesValue(r.cx.Env().SafeArea()) })
+	{"safeArea", func(r *runtime) js.Value {
+		return r.accessor(func() js.Value { return r.edgesValue(r.cx.Env().SafeArea()) })
 	}},
-	{"keyboardFrame", func(r *runtime) goja.Value {
-		return r.accessor(func() goja.Value {
+	{"keyboardFrame", func(r *runtime) js.Value {
+		return r.accessor(func() js.Value {
 			e := r.cx.Env()
 			o := r.vm.NewObject()
 			_ = o.Set("height", js32(e.KeyboardHeight()))
@@ -74,13 +74,13 @@ func hexColor(c core.Color) string {
 // handler }, options), each binding going with the owner it was made
 // under or by the function bind returns; label(keystroke) is the
 // platform's way of writing it.
-func (r *runtime) keymap() goja.Value {
+func (r *runtime) keymap() js.Value {
 	o := r.vm.NewObject()
-	_ = o.Set("bind", r.function(func(call goja.FunctionCall) goja.Value {
-		bindings := map[string]goja.Value{}
+	_ = o.Set("bind", r.function(func(call js.FunctionCall) js.Value {
+		bindings := map[string]js.Value{}
 		var order []string
 		options := arg(call, 2)
-		if m, ok := arg(call, 0).(*goja.Object); ok && !isFunction(m) {
+		if m, ok := arg(call, 0).(*js.Object); ok && !isFunction(m) {
 			for _, k := range m.Keys() {
 				bindings[k], order = m.Get(k), append(order, k)
 			}
@@ -103,12 +103,12 @@ func (r *runtime) keymap() goja.Value {
 				})
 			}
 		})
-		return r.function(func(goja.FunctionCall) goja.Value {
+		return r.function(func(js.FunctionCall) js.Value {
 			owner.Dispose()
-			return goja.Undefined()
+			return js.Undefined()
 		})
 	}))
-	_ = o.Set("label", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = o.Set("label", r.function(func(call js.FunctionCall) js.Value {
 		return r.vm.ToValue(r.cx.KeyLabel(arg(call, 0).String()))
 	}))
 	return o
@@ -116,31 +116,31 @@ func (r *runtime) keymap() goja.Value {
 
 // promise returns a promise and a function settling it on the engine
 // goroutine with what make gives.
-func (r *runtime) promise() (*goja.Promise, func(v func() goja.Value)) {
+func (r *runtime) promise() (*js.Promise, func(v func() js.Value)) {
 	p, resolve, _ := r.vm.NewPromise()
-	return p, func(v func() goja.Value) { r.inJS(func() { _ = resolve(v()) }) }
+	return p, func(v func() js.Value) { r.inJS(func() { _ = resolve(v()) }) }
 }
 
-func (r *runtime) clipboard() goja.Value {
+func (r *runtime) clipboard() js.Value {
 	o := r.vm.NewObject()
-	set := func(name string, f func(call goja.FunctionCall) goja.Value) { _ = o.Set(name, r.function(f)) }
-	set("writeText", func(call goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall) js.Value) { _ = o.Set(name, r.function(f)) }
+	set("writeText", func(call js.FunctionCall) js.Value {
 		r.cx.SetClipboard(arg(call, 0).String())
 		p, done := r.promise()
-		done(goja.Undefined)
+		done(js.Undefined)
 		return r.vm.ToValue(p)
 	})
-	set("readText", func(goja.FunctionCall) goja.Value {
+	set("readText", func(js.FunctionCall) js.Value {
 		p, done := r.promise()
-		r.cx.ReadClipboard(func(text string) { done(func() goja.Value { return r.vm.ToValue(text) }) })
+		r.cx.ReadClipboard(func(text string) { done(func() js.Value { return r.vm.ToValue(text) }) })
 		return r.vm.ToValue(p)
 	})
-	set("hasText", func(goja.FunctionCall) goja.Value {
+	set("hasText", func(js.FunctionCall) js.Value {
 		p, done := r.promise()
-		r.cx.HasClipboardText(func(has bool) { done(func() goja.Value { return r.vm.ToValue(has) }) })
+		r.cx.HasClipboardText(func(has bool) { done(func() js.Value { return r.vm.ToValue(has) }) })
 		return r.vm.ToValue(p)
 	})
-	set("writeImage", func(call goja.FunctionCall) goja.Value {
+	set("writeImage", func(call js.FunctionCall) js.Value {
 		p, resolve, reject := r.vm.NewPromise()
 		data, err := imageBytes(arg(call, 0).String())
 		if err != nil {
@@ -148,15 +148,15 @@ func (r *runtime) clipboard() goja.Value {
 			return r.vm.ToValue(p)
 		}
 		r.cx.SetClipboardImage(data)
-		_ = resolve(goja.Undefined())
+		_ = resolve(js.Undefined())
 		return r.vm.ToValue(p)
 	})
-	set("readImage", func(goja.FunctionCall) goja.Value {
+	set("readImage", func(js.FunctionCall) js.Value {
 		p, done := r.promise()
 		r.cx.ReadClipboardImage(func(img core.ClipboardImage, ok bool) {
-			done(func() goja.Value {
+			done(func() js.Value {
 				if !ok {
-					return goja.Null()
+					return js.Null()
 				}
 				o := r.vm.NewObject()
 				_ = o.Set("url", "data:image/png;base64,"+base64.StdEncoding.EncodeToString(img.PNG))
@@ -166,14 +166,14 @@ func (r *runtime) clipboard() goja.Value {
 		})
 		return r.vm.ToValue(p)
 	})
-	set("hasImage", func(goja.FunctionCall) goja.Value {
+	set("hasImage", func(js.FunctionCall) js.Value {
 		p, done := r.promise()
-		r.cx.HasClipboardImage(func(has bool) { done(func() goja.Value { return r.vm.ToValue(has) }) })
+		r.cx.HasClipboardImage(func(has bool) { done(func() js.Value { return r.vm.ToValue(has) }) })
 		return r.vm.ToValue(p)
 	})
-	set("readFiles", func(goja.FunctionCall) goja.Value {
+	set("readFiles", func(js.FunctionCall) js.Value {
 		p, done := r.promise()
-		r.cx.ReadClipboardFiles(func(uris []string) { done(func() goja.Value { return r.vm.ToValue(uris) }) })
+		r.cx.ReadClipboardFiles(func(uris []string) { done(func() js.Value { return r.vm.ToValue(uris) }) })
 		return r.vm.ToValue(p)
 	})
 	return o
@@ -191,11 +191,11 @@ func imageBytes(src string) ([]byte, error) {
 	return []byte(data), nil
 }
 
-func (r *runtime) storage() goja.Value {
+func (r *runtime) storage() js.Value {
 	o := r.vm.NewObject()
 	s := r.cx.Storage()
-	set := func(name string, f func(call goja.FunctionCall) (goja.Value, error)) {
-		_ = o.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall) (js.Value, error)) {
+		_ = o.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			p, resolve, reject := r.vm.NewPromise()
 			v, err := f(call)
 			if err != nil {
@@ -206,31 +206,31 @@ func (r *runtime) storage() goja.Value {
 			return r.vm.ToValue(p)
 		}))
 	}
-	set("getItem", func(call goja.FunctionCall) (goja.Value, error) {
+	set("getItem", func(call js.FunctionCall) (js.Value, error) {
 		v, ok := s.GetItem(arg(call, 0).String())
 		if !ok {
-			return goja.Null(), nil
+			return js.Null(), nil
 		}
 		return r.vm.ToValue(v), nil
 	})
-	set("setItem", func(call goja.FunctionCall) (goja.Value, error) {
-		return goja.Undefined(), s.SetItem(arg(call, 0).String(), arg(call, 1).String())
+	set("setItem", func(call js.FunctionCall) (js.Value, error) {
+		return js.Undefined(), s.SetItem(arg(call, 0).String(), arg(call, 1).String())
 	})
-	set("removeItem", func(call goja.FunctionCall) (goja.Value, error) {
+	set("removeItem", func(call js.FunctionCall) (js.Value, error) {
 		s.RemoveItem(arg(call, 0).String())
-		return goja.Undefined(), nil
+		return js.Undefined(), nil
 	})
-	set("keys", func(goja.FunctionCall) (goja.Value, error) { return r.vm.ToValue(s.Keys()), nil })
-	set("clear", func(goja.FunctionCall) (goja.Value, error) {
+	set("keys", func(js.FunctionCall) (js.Value, error) { return r.vm.ToValue(s.Keys()), nil })
+	set("clear", func(js.FunctionCall) (js.Value, error) {
 		s.Clear()
-		return goja.Undefined(), nil
+		return js.Undefined(), nil
 	})
 	return o
 }
 
-func (r *runtime) picker() goja.Value {
+func (r *runtime) picker() js.Value {
 	o := r.vm.NewObject()
-	_ = o.Set("pickImages", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = o.Set("pickImages", r.function(func(call js.FunctionCall) js.Value {
 		op := r.options(arg(call, 0))
 		opts := core.PickOptions{Multiple: op.bool("multiple", false), Limit: int(op.float("limit", 0)),
 			MaxDimension: int(op.float("maxDimension", 0)), Quality: float32(op.float("quality", 0))}
@@ -239,7 +239,7 @@ func (r *runtime) picker() goja.Value {
 		}
 		p, done := r.promise()
 		r.cx.PickImages(opts, func(files []core.PickedFile) {
-			done(func() goja.Value {
+			done(func() js.Value {
 				out := make([]any, len(files))
 				for i, f := range files {
 					o := r.vm.NewObject()
@@ -256,9 +256,9 @@ func (r *runtime) picker() goja.Value {
 }
 
 // imageModule adds Image's functions to the Image component.
-func (r *runtime) imageModule() goja.Value {
-	img := r.hostComponent("image").(*goja.Object)
-	_ = img.Set("getSize", r.function(func(call goja.FunctionCall) goja.Value {
+func (r *runtime) imageModule() js.Value {
+	img := r.hostComponent("image").(*js.Object)
+	_ = img.Set("getSize", r.function(func(call js.FunctionCall) js.Value {
 		p, resolve, reject := r.vm.NewPromise()
 		r.cx.ImageSize(r.imageSource(arg(call, 0)), func(px core.Size, err error) {
 			r.inJS(func() {
@@ -271,9 +271,9 @@ func (r *runtime) imageModule() goja.Value {
 		})
 		return r.vm.ToValue(p)
 	}))
-	_ = img.Set("prefetch", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = img.Set("prefetch", r.function(func(call js.FunctionCall) js.Value {
 		p, done := r.promise()
-		r.cx.PrefetchImage(r.imageSource(arg(call, 0)), func(ok bool) { done(func() goja.Value { return r.vm.ToValue(ok) }) })
+		r.cx.PrefetchImage(r.imageSource(arg(call, 0)), func(ok bool) { done(func() js.Value { return r.vm.ToValue(ok) }) })
 		return r.vm.ToValue(p)
 	}))
 	return img
@@ -282,25 +282,25 @@ func (r *runtime) imageModule() goja.Value {
 // resource is resource([source,] fetcher, options): an accessor of what
 // fetcher resolves with, loaded again when source changes, with
 // loading, error, state, refetch and mutate (NSH's resource.rs).
-func (r *runtime) resource(call goja.FunctionCall) goja.Value {
-	source, fetcher, options := goja.Value(nil), arg(call, 0), arg(call, 1)
+func (r *runtime) resource(call js.FunctionCall) js.Value {
+	source, fetcher, options := js.Value(nil), arg(call, 0), arg(call, 1)
 	if isFunction(arg(call, 1)) {
 		source, fetcher, options = arg(call, 0), arg(call, 1), arg(call, 2)
 	}
 	opt := r.options(options)
 	initial := opt.get("initialValue")
 	if initial == nil {
-		initial = goja.Undefined()
+		initial = js.Undefined()
 	}
 	value := core.NewSignalFunc(r.cx, initial, strictEquals)
 	state := core.NewSignal(r.cx, "unresolved")
 	if defined(initial) {
 		state.Set("ready")
 	}
-	errv := core.NewSignalFunc[goja.Value](r.cx, goja.Undefined(), strictEquals)
+	errv := core.NewSignalFunc[js.Value](r.cx, js.Undefined(), strictEquals)
 	var run int
-	var abort goja.Value
-	load := func(src goja.Value, refetching bool) {
+	var abort js.Value
+	load := func(src js.Value, refetching bool) {
 		run++
 		mine := run
 		if abort != nil {
@@ -317,7 +317,7 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 		} else {
 			state.Set("pending")
 		}
-		settle := func(v goja.Value, failed bool) {
+		settle := func(v js.Value, failed bool) {
 			if mine != run {
 				return
 			}
@@ -331,17 +331,17 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 					state.Set("errored")
 					return
 				}
-				errv.Set(goja.Undefined())
+				errv.Set(js.Undefined())
 				value.Set(v)
 				state.Set("ready")
 			})
 		}
-		var res goja.Value
-		var thrown goja.Value
+		var res js.Value
+		var thrown js.Value
 		func() {
 			defer func() {
 				if x := recover(); x != nil {
-					if ex, ok := x.(*goja.Exception); ok {
+					if ex, ok := x.(*js.Exception); ok {
 						thrown = ex.Value()
 						return
 					}
@@ -358,16 +358,16 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 			settle(thrown, true)
 			return
 		}
-		if p, ok := res.Export().(*goja.Promise); ok {
+		if p, ok := res.Export().(*js.Promise); ok {
 			then := r.vm.ToValue(p).ToObject(r.vm).Get("then")
 			r.call2(then, r.vm.ToValue(p),
-				r.function(func(c goja.FunctionCall) goja.Value { settle(arg(c, 0), false); return goja.Undefined() }),
-				r.function(func(c goja.FunctionCall) goja.Value { settle(arg(c, 0), true); return goja.Undefined() }))
+				r.function(func(c js.FunctionCall) js.Value { settle(arg(c, 0), false); return js.Undefined() }),
+				r.function(func(c js.FunctionCall) js.Value { settle(arg(c, 0), true); return js.Undefined() }))
 			return
 		}
 		settle(res, false)
 	}
-	var current goja.Value
+	var current js.Value
 	if source == nil {
 		core.Untracked(r.cx, func() bool { load(nil, false); return true })
 	} else {
@@ -385,20 +385,20 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 	}
 	// It reads the latest value, failed or not, as NSH's does: error()
 	// says why a load failed.
-	read := r.accessor(func() goja.Value { return value.Get() })
-	_ = read.Set("loading", r.function(func(goja.FunctionCall) goja.Value {
+	read := r.accessor(func() js.Value { return value.Get() })
+	_ = read.Set("loading", r.function(func(js.FunctionCall) js.Value {
 		s := state.Get()
 		return r.vm.ToValue(s == "pending" || s == "refreshing")
 	}))
-	_ = read.Set("error", r.function(func(goja.FunctionCall) goja.Value { return errv.Get() }))
-	_ = read.Set("state", r.function(func(goja.FunctionCall) goja.Value { return r.vm.ToValue(state.Get()) }))
-	_ = read.Set("refetch", r.function(func(goja.FunctionCall) goja.Value {
+	_ = read.Set("error", r.function(func(js.FunctionCall) js.Value { return errv.Get() }))
+	_ = read.Set("state", r.function(func(js.FunctionCall) js.Value { return r.vm.ToValue(state.Get()) }))
+	_ = read.Set("refetch", r.function(func(js.FunctionCall) js.Value {
 		if source == nil {
 			load(nil, true)
 		} else if defined(current) {
 			load(current, true)
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}))
 	// The owner's end aborts the load still running.
 	r.cx.Cleanup(func() {
@@ -409,12 +409,12 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 			r.call2(ctl.ToObject(r.vm).Get("abort"), ctl)
 		}
 	})
-	_ = read.Set("mutate", r.function(func(c goja.FunctionCall) goja.Value {
+	_ = read.Set("mutate", r.function(func(c js.FunctionCall) js.Value {
 		v := arg(c, 0)
 		run++
 		r.cx.Batch(func() {
 			value.Set(v)
-			errv.Set(goja.Undefined())
+			errv.Set(js.Undefined())
 			state.Set("ready")
 		})
 		return v
@@ -423,8 +423,8 @@ func (r *runtime) resource(call goja.FunctionCall) goja.Value {
 }
 
 // call2 calls fn with this.
-func (r *runtime) call2(fn, this goja.Value, args ...goja.Value) goja.Value {
-	f, ok := goja.AssertFunction(fn)
+func (r *runtime) call2(fn, this js.Value, args ...js.Value) js.Value {
+	f, ok := js.AssertFunction(fn)
 	if !ok {
 		panic(r.vm.NewTypeError("nsgo: %s is not a function", fn))
 	}
@@ -439,12 +439,12 @@ func (r *runtime) call2(fn, this goja.Value, args ...goja.Value) goja.Value {
 // specifier names, NSGo's own or one the app's Go code registered
 // (Register), the object an import gives, which the app types itself.
 // Without one it throws a ReferenceError naming it.
-func (r *runtime) nativeModule(call goja.FunctionCall) goja.Value {
+func (r *runtime) nativeModule(call js.FunctionCall) js.Value {
 	name := arg(call, 0).String()
 	_, builtIn := moduleTable[name]
 	if _, ok := registeredExports(name); !ok && !builtIn {
 		ref, _ := r.vm.RunString("ReferenceError")
-		ctor, _ := goja.AssertConstructor(ref)
+		ctor, _ := js.AssertConstructor(ref)
 		e, _ := ctor(nil, r.vm.ToValue(fmt.Sprintf("nativeModule: no module %q is registered", name)))
 		panic(e)
 	}
@@ -455,7 +455,7 @@ func (r *runtime) nativeModule(call goja.FunctionCall) goja.Value {
 // component showing the native component the embedding app registered
 // under name, its props sent as they change and its events given to
 // on<Event> handlers.
-func (r *runtime) nativeComponent(call goja.FunctionCall) goja.Value {
+func (r *runtime) nativeComponent(call js.FunctionCall) js.Value {
 	name := arg(call, 0).String()
 	spec := r.options(arg(call, 1))
 	var names, events []string
@@ -505,7 +505,7 @@ func (r *runtime) nativeComponent(call goja.FunctionCall) goja.Value {
 // registerFont is `registerFont(base64)`, which a compiled font import
 // calls as its module runs: the font registered with the platform before
 // the app mounts, so its first frame shows it (Scope.RegisterFont).
-func (r *runtime) registerFont(call goja.FunctionCall) goja.Value {
+func (r *runtime) registerFont(call js.FunctionCall) js.Value {
 	data, err := base64.StdEncoding.DecodeString(arg(call, 0).String())
 	if err == nil {
 		err = r.cx.RegisterFont(data)
@@ -513,18 +513,18 @@ func (r *runtime) registerFont(call goja.FunctionCall) goja.Value {
 	if err != nil {
 		r.warn("a font did not register: %v", err)
 	}
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // registerAsset is `registerAsset(url, dataURL)`, which a compiled image
 // import calls as its module runs: what its asset: URL reads, for the
 // images and fetches that name it.
-func (r *runtime) registerAsset(call goja.FunctionCall) goja.Value {
+func (r *runtime) registerAsset(call js.FunctionCall) js.Value {
 	if r.assets == nil {
 		r.assets = map[string]string{}
 	}
 	r.assets[arg(call, 0).String()] = arg(call, 1).String()
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // assetData is what the platform loads for an image's url: the bytes a
@@ -539,14 +539,14 @@ func (r *runtime) assetData(url string) string {
 // setup is `setup({ theme, tailwind })`, which compiled bundles call
 // first: the theme file and the Tailwind theme nsgo.yaml gives, the
 // app's.
-func (r *runtime) setup(call goja.FunctionCall) goja.Value {
+func (r *runtime) setup(call js.FunctionCall) js.Value {
 	o := r.options(arg(call, 0))
 	if sb := o.get("statusBar"); defined(sb) {
 		r.cx.SetStatusBar(r.statusBar(sb))
 	}
 	theme, tw := o.str("theme", ""), o.str("tailwind", "")
 	if theme == "" && tw == "" {
-		return goja.Undefined()
+		return js.Undefined()
 	}
 	t := r.cx.Theme().Clone()
 	if theme != "" {
@@ -562,13 +562,13 @@ func (r *runtime) setup(call goja.FunctionCall) goja.Value {
 		}
 	}
 	r.cx.SetTheme(t)
-	return goja.Undefined()
+	return js.Undefined()
 }
 
 // token is `token(name)`: the design token name of the theme in the
 // appearance shown, followed as it changes: a color as #rrggbbaa, a
 // length as points, else its text; undefined for none.
-func (r *runtime) token(call goja.FunctionCall) goja.Value {
+func (r *runtime) token(call js.FunctionCall) js.Value {
 	name := strings.TrimPrefix(arg(call, 0).String(), "--")
 	p := r.cx.Palette()
 	if c, ok := p.Color(name); ok {
@@ -576,7 +576,7 @@ func (r *runtime) token(call goja.FunctionCall) goja.Value {
 	}
 	v, ok := r.cx.Theme().Tokens[name]
 	if !ok {
-		return goja.Undefined()
+		return js.Undefined()
 	}
 	if l, ok := cssLength(v); ok {
 		return r.vm.ToValue(js32(l))

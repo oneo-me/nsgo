@@ -172,7 +172,7 @@ x86_64 模拟器目标 `android_x64` 还需要 Android NDK：Go 只能通过 cgo
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml 的 dev 目标，应用退出后随之退出
-go tool nsgo dev examples/gallery-tsx               # 用 TSX 编写的 gallery 组件
+go tool nsgo dev examples/gallery-tsx               # 用 TSX 编写的 gallery 组件和应用
 go tool nsgo dev -target web examples/gallery       # 在浏览器中运行，直到中断
 go tool nsgo dev -target ios_simulator examples/gallery
 go tool nsgo dev -target ios examples/gallery       # 在已连接的 iPhone 上运行，由 Xcode 签名

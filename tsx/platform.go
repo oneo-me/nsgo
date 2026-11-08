@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/desktop"
@@ -14,15 +14,15 @@ import (
 
 func init() {
 	moduleTable["nsgo/mobile"] = []export{
-		{"isAvailable", func(r *runtime) goja.Value { return r.vm.ToValue(mobile.IsAvailable(r.cx)) }},
+		{"isAvailable", func(r *runtime) js.Value { return r.vm.ToValue(mobile.IsAvailable(r.cx)) }},
 		faceExport("InputAccessoryView", accessoryFace),
 		faceExport("TabBar", tabBarFace),
 		{"BackHandler", (*runtime).backHandler},
 	}
 	moduleTable["nsgo/desktop"] = []export{
-		{"isAvailable", func(r *runtime) goja.Value { return r.vm.ToValue(desktop.IsAvailable(r.cx)) }},
-		{"titleBar", func(r *runtime) goja.Value {
-			return r.accessor(func() goja.Value {
+		{"isAvailable", func(r *runtime) js.Value { return r.vm.ToValue(desktop.IsAvailable(r.cx)) }},
+		{"titleBar", func(r *runtime) js.Value {
+			return r.accessor(func() js.Value {
 				e := desktop.TitleBar(r.cx)
 				o := r.vm.NewObject()
 				_ = o.Set("height", js32(e.Top))
@@ -68,9 +68,9 @@ func tabBarFace(p *props) core.Node {
 // backHandler is BackHandler: onBackPress(listener) adds a listener of
 // Android's back button, removed by what it returns or with the owner it
 // was added under; exitApp ends the app.
-func (r *runtime) backHandler() goja.Value {
+func (r *runtime) backHandler() js.Value {
 	o := r.vm.NewObject()
-	_ = o.Set("onBackPress", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = o.Set("onBackPress", r.function(func(call js.FunctionCall) js.Value {
 		fn := arg(call, 0)
 		owner := r.cx.Child()
 		owner.Run(func() {
@@ -79,14 +79,14 @@ func (r *runtime) backHandler() goja.Value {
 				return isBool(res) && res.ToBoolean()
 			})
 		})
-		return r.function(func(goja.FunctionCall) goja.Value {
+		return r.function(func(js.FunctionCall) js.Value {
 			owner.Dispose()
-			return goja.Undefined()
+			return js.Undefined()
 		})
 	}))
-	_ = o.Set("exitApp", r.function(func(goja.FunctionCall) goja.Value {
+	_ = o.Set("exitApp", r.function(func(js.FunctionCall) js.Value {
 		mobile.ExitApp(r.cx)
-		return goja.Undefined()
+		return js.Undefined()
 	}))
 	return o
 }
@@ -98,7 +98,7 @@ var menuRoles = map[string]core.MenuRole{"about": core.MenuAbout, "hide": core.M
 	"toggleFullScreen": core.MenuToggleFullScreen, "close": core.MenuClose}
 
 // menuItems reads a menu's items, falsy ones left out.
-func (r *runtime) menuItems(v goja.Value) []core.MenuItem {
+func (r *runtime) menuItems(v js.Value) []core.MenuItem {
 	var out []core.MenuItem
 	for _, it := range r.arrayItems(v) {
 		if !it.ToBoolean() {
@@ -121,34 +121,34 @@ func (r *runtime) menuItems(v goja.Value) []core.MenuItem {
 	return out
 }
 
-func (r *runtime) menuModule() goja.Value {
+func (r *runtime) menuModule() js.Value {
 	o := r.vm.NewObject()
-	_ = o.Set("setApplicationMenu", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = o.Set("setApplicationMenu", r.function(func(call js.FunctionCall) js.Value {
 		desktop.SetApplicationMenu(r.cx, r.menuItems(arg(call, 0)))
-		return goja.Undefined()
+		return js.Undefined()
 	}))
-	_ = o.Set("popup", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = o.Set("popup", r.function(func(call js.FunctionCall) js.Value {
 		p, resolve, _ := r.vm.NewPromise()
 		var at core.Point
-		if a, ok := arg(call, 1).(*goja.Object); ok {
+		if a, ok := arg(call, 1).(*js.Object); ok {
 			at = r.pointOf(a)
 		}
-		desktop.PopupMenu(r.cx, r.menuItems(arg(call, 0)), at, func() { r.inJS(func() { _ = resolve(goja.Undefined()) }) })
+		desktop.PopupMenu(r.cx, r.menuItems(arg(call, 0)), at, func() { r.inJS(func() { _ = resolve(js.Undefined()) }) })
 		return r.vm.ToValue(p)
 	}))
 	return o
 }
 
-func (r *runtime) windowModule() goja.Value {
+func (r *runtime) windowModule() js.Value {
 	o := r.vm.NewObject()
-	set := func(name string, f func(call goja.FunctionCall)) {
-		_ = o.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall)) {
+		_ = o.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			f(call)
-			return goja.Undefined()
+			return js.Undefined()
 		}))
 	}
-	set("setTitle", func(call goja.FunctionCall) { desktop.SetTitle(r.cx, arg(call, 0).String()) })
-	set("setTitleBar", func(call goja.FunctionCall) {
+	set("setTitle", func(call js.FunctionCall) { desktop.SetTitle(r.cx, arg(call, 0).String()) })
+	set("setTitleBar", func(call js.FunctionCall) {
 		style := map[string]core.TitleBarStyle{"default": core.TitleBarDefault, "hidden": core.TitleBarHidden}[stringOf(arg(call, 0))]
 		var h core.Points
 		if defined(arg(call, 1)) {
@@ -156,32 +156,32 @@ func (r *runtime) windowModule() goja.Value {
 		}
 		desktop.SetTitleBar(r.cx, style, h)
 	})
-	set("setMenuBar", func(call goja.FunctionCall) {
+	set("setMenuBar", func(call js.FunctionCall) {
 		desktop.SetMenuBar(r.cx, map[string]core.MenuBarMode{"shown": core.MenuBarShown,
 			"autoHide": core.MenuBarAutoHide}[stringOf(arg(call, 0))])
 	})
-	set("minimize", func(goja.FunctionCall) { desktop.MinimizeWindow(r.cx) })
-	set("toggleMaximize", func(goja.FunctionCall) { desktop.ToggleMaximize(r.cx) })
-	set("toggleFullScreen", func(goja.FunctionCall) { desktop.ToggleFullScreen(r.cx) })
-	set("setFrame", func(call goja.FunctionCall) {
+	set("minimize", func(js.FunctionCall) { desktop.MinimizeWindow(r.cx) })
+	set("toggleMaximize", func(js.FunctionCall) { desktop.ToggleMaximize(r.cx) })
+	set("toggleFullScreen", func(js.FunctionCall) { desktop.ToggleFullScreen(r.cx) })
+	set("setFrame", func(call js.FunctionCall) {
 		f := r.options(arg(call, 0))
 		origin, size := r.options(f.get("origin")), r.options(f.get("size"))
 		desktop.SetWindowFrame(r.cx, core.WindowFrame{X: core.Points(origin.float("x", 0)),
 			Y: core.Points(origin.float("y", 0)), Move: origin.o != nil, Width: core.Points(size.float("width", 0)),
 			Height: core.Points(size.float("height", 0)), Animated: f.bool("animated", false)})
 	})
-	set("setLevel", func(call goja.FunctionCall) {
+	set("setLevel", func(call js.FunctionCall) {
 		desktop.SetWindowLevel(r.cx, map[string]core.WindowLevel{"normal": core.WindowLevelNormal,
 			"floating": core.WindowLevelFloating, "desktopIcon": core.WindowLevelDesktop}[stringOf(arg(call, 0))])
 	})
-	set("setConstraints", func(call goja.FunctionCall) {
+	set("setConstraints", func(call js.FunctionCall) {
 		c := r.options(arg(call, 0))
 		desktop.SetWindowConstraints(r.cx, core.WindowConstraints{MinWidth: core.Points(c.float("minWidth", 0)),
 			MinHeight: core.Points(c.float("minHeight", 0)), MaxWidth: core.Points(c.float("maxWidth", 0)),
 			MaxHeight: core.Points(c.float("maxHeight", 0)), NoResize: !c.bool("resizable", true),
 			NoMinimize: !c.bool("minimizable", true), NoMaximize: !c.bool("maximizable", true)})
 	})
-	set("orderFront", func(goja.FunctionCall) { desktop.OrderFront(r.cx) })
-	set("close", func(goja.FunctionCall) { desktop.CloseWindow(r.cx) })
+	set("orderFront", func(js.FunctionCall) { desktop.OrderFront(r.cx) })
+	set("close", func(js.FunctionCall) { desktop.CloseWindow(r.cx) })
 	return o
 }

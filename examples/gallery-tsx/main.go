@@ -12,11 +12,14 @@ import (
 	"github.com/oneo-me/nsgo/desktop"
 	"github.com/oneo-me/nsgo/tsx/compiler"
 	_ "github.com/oneo-me/nsgo/tsx/editor"
+	_ "github.com/oneo-me/nsgo/tsx/terminal"
+	_ "github.com/oneo-me/nsgo/tsx/ui/chat"
+	_ "github.com/oneo-me/nsgo/tsx/ui/richeditor"
 	_ "github.com/oneo-me/nsgo/tsx/ui"
 	"github.com/oneo-me/nsgo/ui"
 )
 
-//go:embed *.tsx *.ts demos/*.tsx
+//go:embed *.tsx *.ts demos/*.tsx demos/*.ts
 var src embed.FS
 
 var app = compiler.App(src, "App.tsx")

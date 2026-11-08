@@ -6,13 +6,10 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## TSX and dynamic delivery
 
-What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)). Signed packages and capabilities wait for their [open question](../ARCHITECTURE.md#open-questions), and running TSX on the browser's engine for its own.
+What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)). Signed packages and capabilities wait for their [open question](../ARCHITECTURE.md#open-questions).
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| TSX on the other targets | `tooling.md` (Dev server, `nsh test`) | `examples/tsx` updates in place on a save under `nsgo dev` on the web, Windows, Linux, the iOS simulator and Android, and passes its Go and TSX tests under `nsgo test -target` on the last four, as it does on macOS, and for its tests on the web, since 2026-11-04 |
-| The gallery in TSX | Not in NSH | `examples/gallery-tsx` also shows the gallery's apps, Conversation (`ui/chat`) and Terminal, and passes its tests under `nsgo test -target` on every target; so far it runs on macOS and headless |
-| TSX on the browser's engine | `web.md` (The browser's JavaScript engine) | On the web a TSX app runs as ES modules on the page's own JavaScript engine, in an iframe realm per run, rather than on goja compiled to WebAssembly |
 | Signed packages | `signed-packages.md` | `nsgo keygen`, `certify`, `publish` (signing a package again with another release key too), `verify` and `revoke` work; a Go, iOS and Android host verifies a package, runs it in `tsx.View`, and refuses tampered, revoked and older builds |
 | Capabilities and limits | `sandbox.md` | Every request a capability names (`fetch`, remote images, web views and their trusted input, `openUrl`, the clipboard, the picker, speech, host calls) is refused with `core.AccessDenied`, `ERR_ACCESS_DENIED` with `permission` and `resource` in JS (`fetch`'s a `TypeError` with them), without it. Quotas cut a module's nodes, timers, host calls and requests, a host sets a view's limits, and `nsgo dev -limits` runs an app under them |
 
@@ -79,7 +76,6 @@ What `base/terminal` still lacks of a terminal app's features, Ghostty's the ref
 | Keybinds, zoom, the context menu and secondary clicks | `keybind`, `right-click-action` | Ghostty's actions bind to keys over the defaults, zoom changes the font's size, and a secondary click shows Copy, Paste, Select All and Clear |
 | Drawn box characters, blinking and contrast | `cursor-style-blink`, `minimum-contrast`, `window-padding-color` | Box drawing, blocks and Powerline's separators are drawn so lines join, the cursor blinks, and minimum contrast and padding colors apply |
 | Search, images and shell integration | Find, the Kitty graphics protocol, `shell-integration` | A search highlights matches, programs show images, and OSC 133 prompts take Option+click to move the cursor |
-| TSX | — | TSX apps import the terminal as `tsx/editor` registers `Editor` |
 
 ## Finish the existing platforms
 
@@ -96,6 +92,7 @@ These items wait for community contributions, and a change to one backend record
 | Touchpad glides over hosted views on Linux | — | A touchpad scroll that reaches the surface through a hosted view's shield, whose events no scroll controller sees, glides on as the surface's own do |
 | Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `combobox`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |
 | Font lists on Windows | `text.md` | A character the first family of a `fontFamily` list lacks comes from the next that has it through an `IDWriteFontFallback`, rather than from the system's fallback, as elsewhere |
+| Table headers on phones | — | A `DataTable`'s sort control takes a tap in the iOS simulator, as it does on desktops and the web; the gallery's TSX `TestDataTableSorts` sees none there (2026-11-08) and runs on desktops alone |
 | Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows, and a `Plot`'s keys, work there |
 | The mouse on Android | `api-naming.md` (`onMouseEnter`) | `NsgoView` reports the mouse's enter and leave with where it is, its moves with the keys and the button held, and a move with a button down, which needs `classes.dex` rebuilt |
 | Text selection reports on Android | NSGo's own (`text.md`) | `Selection.java` reports `EventSelectionChange` with the box of the texts selected to an area with `OnTextSelection`, as the other platforms do, with `classes.dex` rebuilt, so a `DiffView`'s frame follows the selection there |

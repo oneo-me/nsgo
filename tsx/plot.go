@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base/plot"
 	"github.com/oneo-me/nsgo/core"
@@ -55,7 +55,7 @@ var plotProps = []Option{
 		if h := p.handler("onHoverChange"); h != nil {
 			v.Set(reflect.ValueOf(func(index int) {
 				e := p.r.vm.NewObject()
-				_ = e.Set("index", goja.Null())
+				_ = e.Set("index", js.Null())
 				if index >= 0 {
 					_ = e.Set("index", index)
 				}
@@ -130,7 +130,7 @@ func classProp(name, row string) string {
 }
 
 // isKey reports whether v is a key of the rows, or the values themselves.
-func isKey(v goja.Value) bool {
+func isKey(v js.Value) bool {
 	switch v.Export().(type) {
 	case string, []any:
 		return true
@@ -161,7 +161,7 @@ func plotCount(p *props, v reflect.Value) {
 
 // readRows calls set with the value each row gives by, a key, a function of
 // a row and its index, or the values, over owner's rows.
-func readRows(p, owner *props, by goja.Value, set func(i int, x goja.Value), size func(n int)) {
+func readRows(p, owner *props, by js.Value, set func(i int, x js.Value), size func(n int)) {
 	r := p.r
 	if items := r.arrayItems(by); items != nil {
 		size(len(items))
@@ -173,10 +173,10 @@ func readRows(p, owner *props, by goja.Value, set func(i int, x goja.Value), siz
 	rows := r.arrayItems(owner.get("data"))
 	size(len(rows))
 	for i, row := range rows {
-		var x goja.Value
+		var x js.Value
 		if isFunction(by) {
 			x = r.call(by, row, r.vm.ToValue(i))
-		} else if o, ok := row.(*goja.Object); ok {
+		} else if o, ok := row.(*js.Object); ok {
 			x = o.Get(by.String())
 		}
 		set(i, x)
@@ -188,13 +188,13 @@ func readRows(p, owner *props, by goja.Value, set func(i int, x goja.Value), siz
 // plot's.
 func plotColumn(names ...string) func(p *props, v reflect.Value) {
 	return func(p *props, v reflect.Value) {
-		accessor := func() goja.Value {
+		accessor := func() js.Value {
 			for _, name := range names {
 				if x := p.get(name); defined(x) {
 					return x
 				}
 			}
-			return goja.Undefined()
+			return js.Undefined()
 		}
 		if defined(core.Untracked(p.r.cx, accessor)) {
 			setRead(v, p, plotOwner(p), accessor)
@@ -209,17 +209,17 @@ func plotPerRow(prop string) func(p *props, v reflect.Value) {
 		if !defined(x) || !isFunction(x) && !isKey(x) {
 			return
 		}
-		setRead(v, p, plotOwner(p), func() goja.Value { return p.get(prop) })
+		setRead(v, p, plotOwner(p), func() js.Value { return p.get(prop) })
 	}
 }
 
 // setRead sets v, a function returning a column, to read accessor's.
-func setRead(v reflect.Value, p, owner *props, accessor func() goja.Value) {
+func setRead(v reflect.Value, p, owner *props, accessor func() js.Value) {
 	switch v.Interface().(type) {
 	case func() []string:
 		v.Set(reflect.ValueOf(func() []string {
 			var out []string
-			readRows(p, owner, accessor(), func(i int, x goja.Value) {
+			readRows(p, owner, accessor(), func(i int, x js.Value) {
 				if defined(x) {
 					out[i] = stringOf(x)
 				}
@@ -229,7 +229,7 @@ func setRead(v reflect.Value, p, owner *props, accessor func() goja.Value) {
 	default:
 		v.Set(reflect.ValueOf(func() []float64 {
 			var out []float64
-			readRows(p, owner, accessor(), func(i int, x goja.Value) {
+			readRows(p, owner, accessor(), func(i int, x js.Value) {
 				out[i] = math.NaN()
 				if defined(x) {
 					out[i] = x.ToFloat()
@@ -332,7 +332,7 @@ func plotCorners(p *props, v reflect.Value) {
 	if !defined(x) {
 		return
 	}
-	if _, ok := x.(*goja.Object); !ok {
+	if _, ok := x.(*js.Object); !ok {
 		v.Set(reflect.ValueOf(plot.AllCorners(core.Points(x.ToFloat()))))
 		return
 	}

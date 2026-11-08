@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -12,7 +12,7 @@ import (
 // which the stack reads as it is a part, not a node.
 
 // navKey holds a JS stack's base.Nav.
-var navKey = goja.NewSymbol("nsgo.nav")
+var navKey = js.NewSymbol("nsgo.nav")
 
 func init() {
 	moduleTable["nsgo/base"] = append(moduleTable["nsgo/base"],
@@ -24,17 +24,17 @@ func init() {
 
 // createNavStack is createNavStack(routes): routes() and the stack's
 // changes.
-func (r *runtime) createNavStack(call goja.FunctionCall) goja.Value {
+func (r *runtime) createNavStack(call js.FunctionCall) js.Value {
 	nav := base.NewNav(r.cx, r.arrayItems(arg(call, 0))...)
 	o := r.vm.NewObject()
 	_ = o.SetSymbol(navKey, nav)
-	set := func(name string, f func(call goja.FunctionCall)) {
-		_ = o.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call js.FunctionCall)) {
+		_ = o.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			f(call)
-			return goja.Undefined()
+			return js.Undefined()
 		}))
 	}
-	_ = o.Set("routes", r.accessor(func() goja.Value {
+	_ = o.Set("routes", r.accessor(func() js.Value {
 		routes := nav.Routes()
 		out := make([]any, len(routes))
 		for i, rt := range routes {
@@ -42,20 +42,20 @@ func (r *runtime) createNavStack(call goja.FunctionCall) goja.Value {
 		}
 		return r.vm.NewArray(out...)
 	}))
-	set("push", func(call goja.FunctionCall) { nav.Push(arg(call, 0)) })
-	set("pop", func(call goja.FunctionCall) {
+	set("push", func(call js.FunctionCall) { nav.Push(arg(call, 0)) })
+	set("pop", func(call js.FunctionCall) {
 		n := 1
 		if defined(arg(call, 0)) {
 			n = int(arg(call, 0).ToInteger())
 		}
 		nav.Pop(n)
 	})
-	set("popToRoot", func(goja.FunctionCall) { nav.PopToRoot() })
-	set("replace", func(call goja.FunctionCall) { nav.Replace(arg(call, 0)) })
-	set("setRoutes", func(call goja.FunctionCall) {
+	set("popToRoot", func(js.FunctionCall) { nav.PopToRoot() })
+	set("replace", func(call js.FunctionCall) { nav.Replace(arg(call, 0)) })
+	set("setRoutes", func(call js.FunctionCall) {
 		nav.SetRoutesKeeping(strictEquals, r.arrayItems(arg(call, 0))...)
 	})
-	set("remove", func(call goja.FunctionCall) {
+	set("remove", func(call js.FunctionCall) {
 		// The topmost of the pages of route, as NSH's remove.
 		route := arg(call, 0)
 		count := 0
@@ -67,7 +67,7 @@ func (r *runtime) createNavStack(call goja.FunctionCall) goja.Value {
 			}
 		})
 		seen := 0
-		nav.Remove(func(v goja.Value) bool {
+		nav.Remove(func(v js.Value) bool {
 			if v.StrictEquals(route) {
 				seen++
 				return seen == count
@@ -78,10 +78,10 @@ func (r *runtime) createNavStack(call goja.FunctionCall) goja.Value {
 	return o
 }
 
-func (r *runtime) navOf(v goja.Value) *base.Nav[goja.Value] {
-	if o, ok := v.(*goja.Object); ok {
+func (r *runtime) navOf(v js.Value) *base.Nav[js.Value] {
+	if o, ok := v.(*js.Object); ok {
 		if s := o.GetSymbol(navKey); s != nil {
-			if n, ok := s.Export().(*base.Nav[goja.Value]); ok {
+			if n, ok := s.Export().(*base.Nav[js.Value]); ok {
 				return n
 			}
 		}
@@ -105,17 +105,17 @@ func navStackFace(p *props) core.Node {
 	return n
 }
 
-func (r *runtime) navStack(p *props, nav *base.Nav[goja.Value], style core.Style) core.Node {
+func (r *runtime) navStack(p *props, nav *base.Nav[js.Value], style core.Style) core.Node {
 	render := p.peek("children")
-	stack := nav.Stack(style, func(cx *core.Scope, route goja.Value, depth func() int) base.NavPage {
-		index := r.accessor(func() goja.Value { return r.vm.ToValue(depth()) })
-		var out goja.Value
+	stack := nav.Stack(style, func(cx *core.Scope, route js.Value, depth func() int) base.NavPage {
+		index := r.accessor(func() js.Value { return r.vm.ToValue(depth()) })
+		var out js.Value
 		cx.Run(func() { out = r.call(render, route, index) })
 		if pg := r.pageOf(out); pg != nil {
 			return pg.build()
 		}
 		// What the function rendered, in a page around it.
-		return base.NavPage{Children: []core.Node{r.region(func() goja.Value { return out })}}
+		return base.NavPage{Children: []core.Node{r.region(func() js.Value { return out })}}
 	})
 	if st, ok := stack.(core.Stack); ok {
 		st.TestID = p.str("testID")
@@ -127,8 +127,8 @@ func (r *runtime) navStack(p *props, nav *base.Nav[goja.Value], style core.Style
 // page is a NavPage's call: what builds its screen.
 type page struct{ build func() base.NavPage }
 
-func (r *runtime) pageOf(v goja.Value) *page {
-	if o, ok := v.(*goja.Object); ok {
+func (r *runtime) pageOf(v js.Value) *page {
+	if o, ok := v.(*js.Object); ok {
 		if s := o.GetSymbol(navKey); s != nil {
 			if pg, ok := s.Export().(*page); ok {
 				return pg
@@ -149,8 +149,8 @@ var screenAnimations = map[string]core.ScreenAnimation{"slide": core.ScreenDefau
 	"none": core.ScreenNone}
 
 // navPage is NavPage(props): a page its stack reads.
-func (r *runtime) navPage(call goja.FunctionCall) goja.Value {
-	obj, ok := arg(call, 0).(*goja.Object)
+func (r *runtime) navPage(call js.FunctionCall) js.Value {
+	obj, ok := arg(call, 0).(*js.Object)
 	if !ok {
 		obj = r.vm.NewObject()
 	}

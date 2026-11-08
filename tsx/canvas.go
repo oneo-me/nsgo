@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -17,7 +17,7 @@ import (
 // again.
 
 // canvasKey holds the Go side of a context, a path or a gradient.
-var canvasKey = goja.NewSymbol("nsgo.canvas")
+var canvasKey = js.NewSymbol("nsgo.canvas")
 
 // canvasFace is a <Canvas>'s.
 func canvasFace(p *props) core.Node {
@@ -44,7 +44,7 @@ func canvasFace(p *props) core.Node {
 }
 
 // canvas is `Canvas(props)`.
-func (r *runtime) canvas(call goja.FunctionCall) goja.Value {
+func (r *runtime) canvas(call js.FunctionCall) js.Value {
 	obj := arg(call, 0).ToObject(r.vm)
 	n := r.newFaceNode("Canvas", canvasFace, obj)
 	r.applyRef(obj.Get("ref"), n, "")
@@ -56,7 +56,7 @@ func (r *runtime) canvas(call goja.FunctionCall) goja.Value {
 // keep: paints, the font, the shadow and the dash.
 type context2D struct {
 	r       *runtime
-	obj     *goja.Object
+	obj     *js.Object
 	d       *core.Drawing
 	size    core.Size
 	st      ctxState
@@ -65,7 +65,7 @@ type context2D struct {
 }
 
 type ctxState struct {
-	fill, stroke   goja.Value
+	fill, stroke   js.Value
 	lineWidth      float64
 	lineCap        string
 	lineJoin       string
@@ -100,27 +100,27 @@ func (c *context2D) begin(d *core.Drawing, size core.Size) {
 
 // num reads a CanvasNumber, binding arg of the last operation when it is
 // an animated node; bind runs after the operation is recorded.
-func (c *context2D) num(v goja.Value) (float32, core.AnimatedNode) {
+func (c *context2D) num(v js.Value) (float32, core.AnimatedNode) {
 	if n := c.r.animatedNodeOf(v); n != nil {
 		return 0, n
 	}
 	return float32(v.ToFloat()), nil
 }
 
-func (c *context2D) newContextObject() *goja.Object {
+func (c *context2D) newContextObject() *js.Object {
 	r := c.r
 	o := r.vm.NewObject()
 	if cls := r.canvasClasses.context; cls != nil {
-		_ = o.SetPrototype(cls.Get("prototype").(*goja.Object))
+		_ = o.SetPrototype(cls.Get("prototype").(*js.Object))
 	}
 	_ = o.SetSymbol(canvasKey, c)
-	method := func(name string, f func(call goja.FunctionCall) goja.Value) {
+	method := func(name string, f func(call js.FunctionCall) js.Value) {
 		_ = o.Set(name, r.function(f))
 	}
 	// op records an operation whose numeric arguments are args, bound to
 	// the animated nodes among them by slots.
 	op := func(name string, slots []core.DrawArg, record func(d *core.Drawing, x []float32)) {
-		method(name, func(call goja.FunctionCall) goja.Value {
+		method(name, func(call js.FunctionCall) js.Value {
 			x := make([]float32, len(slots))
 			var nodes []core.AnimatedNode
 			for i := range slots {
@@ -138,7 +138,7 @@ func (c *context2D) newContextObject() *goja.Object {
 					c.d.Bind(slots[i], n)
 				}
 			}
-			return goja.Undefined()
+			return js.Undefined()
 		})
 	}
 	xy := []core.DrawArg{core.ArgX, core.ArgY}
@@ -149,7 +149,7 @@ func (c *context2D) newContextObject() *goja.Object {
 		func(d *core.Drawing, x []float32) { d.QuadTo(x[0], x[1], x[2], x[3]) })
 	op("bezierCurveTo", []core.DrawArg{core.ArgX1, core.ArgY1, core.ArgX2, core.ArgY2, core.ArgX, core.ArgY},
 		func(d *core.Drawing, x []float32) { d.CubicTo(x[0], x[1], x[2], x[3], x[4], x[5]) })
-	method("arc", func(call goja.FunctionCall) goja.Value {
+	method("arc", func(call js.FunctionCall) js.Value {
 		slots := []core.DrawArg{core.ArgX, core.ArgY, core.ArgR, core.ArgA0, core.ArgA1}
 		x := make([]float32, 5)
 		nodes := make([]core.AnimatedNode, 5)
@@ -162,37 +162,37 @@ func (c *context2D) newContextObject() *goja.Object {
 				c.d.Bind(slots[i], n)
 			}
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("arcTo", func(call goja.FunctionCall) goja.Value {
+	method("arcTo", func(call js.FunctionCall) js.Value {
 		x := make([]float32, 5)
 		for i := range x {
 			x[i], _ = c.num(arg(call, i))
 		}
 		c.d.ArcTo(x[0], x[1], x[2], x[3], x[4])
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("ellipse", func(call goja.FunctionCall) goja.Value {
+	method("ellipse", func(call js.FunctionCall) js.Value {
 		x := make([]float32, 7)
 		for i := range x {
 			x[i], _ = c.num(arg(call, i))
 		}
 		c.d.EllipseArc(x[0], x[1], x[2], x[3], x[4], x[5], x[6], arg(call, 7).ToBoolean())
-		return goja.Undefined()
+		return js.Undefined()
 	})
 	op("rect", rect, func(d *core.Drawing, x []float32) { d.Rect(x[0], x[1], x[2], x[3]) })
-	method("roundRect", func(call goja.FunctionCall) goja.Value {
+	method("roundRect", func(call js.FunctionCall) js.Value {
 		x := make([]float32, 4)
 		for i := range x {
 			x[i], _ = c.num(arg(call, i))
 		}
 		tl, tr, br, bl := c.radii(arg(call, 4))
 		c.d.RoundRectCorners(x[0], x[1], x[2], x[3], tl, tr, br, bl)
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("closePath", func(goja.FunctionCall) goja.Value {
+	method("closePath", func(js.FunctionCall) js.Value {
 		c.d.ClosePath()
-		return goja.Undefined()
+		return js.Undefined()
 	})
 	op("translate", xy, func(d *core.Drawing, x []float32) { d.Translate(x[0], x[1]) })
 	op("scale", xy, func(d *core.Drawing, x []float32) { d.Scale(x[0], x[1]) })
@@ -200,13 +200,13 @@ func (c *context2D) newContextObject() *goja.Object {
 	six := []core.DrawArg{core.ArgX1, core.ArgY1, core.ArgX2, core.ArgY2, core.ArgX, core.ArgY}
 	op("transform", six, func(d *core.Drawing, x []float32) { d.Transform(x[0], x[1], x[2], x[3], x[4], x[5]) })
 	op("setTransform", six, func(d *core.Drawing, x []float32) { d.SetTransform(x[0], x[1], x[2], x[3], x[4], x[5]) })
-	method("resetTransform", func(goja.FunctionCall) goja.Value {
+	method("resetTransform", func(js.FunctionCall) js.Value {
 		c.d.ResetTransform()
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("beginPath", func(goja.FunctionCall) goja.Value {
+	method("beginPath", func(js.FunctionCall) js.Value {
 		c.d.BeginPath()
-		return goja.Undefined()
+		return js.Undefined()
 	})
 	op("fillRect", rect, func(d *core.Drawing, x []float32) {
 		c.applyFill()
@@ -217,20 +217,20 @@ func (c *context2D) newContextObject() *goja.Object {
 		d.StrokeRect(x[0], x[1], x[2], x[3])
 	})
 	op("clearRect", rect, func(d *core.Drawing, x []float32) { d.Clear(x[0], x[1], x[2], x[3]) })
-	method("save", func(goja.FunctionCall) goja.Value {
+	method("save", func(js.FunctionCall) js.Value {
 		c.stack = append(c.stack, c.st)
 		c.st.dash = append([]float32(nil), c.st.dash...)
 		c.d.Save()
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("restore", func(goja.FunctionCall) goja.Value {
+	method("restore", func(js.FunctionCall) js.Value {
 		if n := len(c.stack); n > 0 {
 			c.st, c.stack = c.stack[n-1], c.stack[:n-1]
 			c.d.Restore()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("setLineDash", func(call goja.FunctionCall) goja.Value {
+	method("setLineDash", func(call js.FunctionCall) js.Value {
 		c.st.dash = nil
 		for _, v := range r.arrayItems(arg(call, 0)) {
 			c.st.dash = append(c.st.dash, float32(v.ToFloat()))
@@ -239,16 +239,16 @@ func (c *context2D) newContextObject() *goja.Object {
 			c.st.dash = append(c.st.dash, c.st.dash...)
 		}
 		c.d.SetLineDash(c.st.dash...)
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("getLineDash", func(goja.FunctionCall) goja.Value {
+	method("getLineDash", func(js.FunctionCall) js.Value {
 		out := make([]any, len(c.st.dash))
 		for i, d := range c.st.dash {
 			out[i] = js32(d)
 		}
 		return r.vm.NewArray(out...)
 	})
-	method("fill", func(call goja.FunctionCall) goja.Value {
+	method("fill", func(call js.FunctionCall) js.Value {
 		path, rule := c.pathAndRule(call)
 		c.applyFill()
 		switch {
@@ -259,18 +259,18 @@ func (c *context2D) newContextObject() *goja.Object {
 		default:
 			c.d.Fill()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("stroke", func(call goja.FunctionCall) goja.Value {
+	method("stroke", func(call js.FunctionCall) js.Value {
 		c.applyStroke()
 		if path := r.pathOf(arg(call, 0)); path != nil {
 			c.d.StrokePath(path)
 		} else {
 			c.d.Stroke()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	method("clip", func(call goja.FunctionCall) goja.Value {
+	method("clip", func(call js.FunctionCall) js.Value {
 		path, rule := c.pathAndRule(call)
 		switch {
 		case path != nil:
@@ -280,10 +280,10 @@ func (c *context2D) newContextObject() *goja.Object {
 		default:
 			c.d.Clip()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	text := func(stroke bool) func(call goja.FunctionCall) goja.Value {
-		return func(call goja.FunctionCall) goja.Value {
+	text := func(stroke bool) func(call js.FunctionCall) js.Value {
+		return func(call js.FunctionCall) js.Value {
 			s := arg(call, 0).String()
 			x, nx := c.num(arg(call, 1))
 			y, ny := c.num(arg(call, 2))
@@ -301,12 +301,12 @@ func (c *context2D) newContextObject() *goja.Object {
 			if ny != nil {
 				c.d.Bind(core.ArgY, ny)
 			}
-			return goja.Undefined()
+			return js.Undefined()
 		}
 	}
 	method("fillText", text(false))
 	method("strokeText", text(true))
-	method("measureText", func(call goja.FunctionCall) goja.Value {
+	method("measureText", func(call js.FunctionCall) js.Value {
 		m := c.d.TextMetrics(arg(call, 0).String(), c.font())
 		out := r.vm.NewObject()
 		_ = out.Set("width", js32(m.Width))
@@ -314,7 +314,7 @@ func (c *context2D) newContextObject() *goja.Object {
 		_ = out.Set("fontBoundingBoxDescent", js32(m.Descent))
 		return out
 	})
-	method("isPointInPath", func(call goja.FunctionCall) goja.Value {
+	method("isPointInPath", func(call js.FunctionCall) js.Value {
 		if path := r.pathOf(arg(call, 0)); path != nil {
 			return r.vm.ToValue(c.d.PathContains(path, float32(arg(call, 1).ToFloat()), float32(arg(call, 2).ToFloat()),
 				fillRule(arg(call, 3))))
@@ -322,25 +322,25 @@ func (c *context2D) newContextObject() *goja.Object {
 		return r.vm.ToValue(c.d.IsPointInPath(float32(arg(call, 0).ToFloat()), float32(arg(call, 1).ToFloat()),
 			fillRule(arg(call, 2))))
 	})
-	method("isPointInStroke", func(call goja.FunctionCall) goja.Value {
+	method("isPointInStroke", func(call js.FunctionCall) js.Value {
 		if path := r.pathOf(arg(call, 0)); path != nil {
 			return r.vm.ToValue(c.d.StrokeContains(path, float32(arg(call, 1).ToFloat()), float32(arg(call, 2).ToFloat())))
 		}
 		return r.vm.ToValue(c.d.IsPointInStroke(float32(arg(call, 0).ToFloat()), float32(arg(call, 1).ToFloat())))
 	})
-	method("createLinearGradient", func(call goja.FunctionCall) goja.Value {
+	method("createLinearGradient", func(call js.FunctionCall) js.Value {
 		f := floats(call, 4)
 		return r.newGradient(core.CanvasLinear(f[0], f[1], f[2], f[3]))
 	})
-	method("createRadialGradient", func(call goja.FunctionCall) goja.Value {
+	method("createRadialGradient", func(call js.FunctionCall) js.Value {
 		f := floats(call, 6)
 		return r.newGradient(core.CanvasRadial(f[0], f[1], f[2], f[3], f[4], f[5]))
 	})
-	method("createConicGradient", func(call goja.FunctionCall) goja.Value {
+	method("createConicGradient", func(call js.FunctionCall) js.Value {
 		f := floats(call, 3)
 		return r.newGradient(core.CanvasConic(f[0], f[1], f[2]))
 	})
-	method("drawImage", func(call goja.FunctionCall) goja.Value {
+	method("drawImage", func(call js.FunctionCall) js.Value {
 		src := r.imageSource(arg(call, 0))
 		f := make([]float32, len(call.Arguments)-1)
 		for i := range f {
@@ -354,26 +354,26 @@ func (c *context2D) newContextObject() *goja.Object {
 		case 8:
 			c.d.DrawImageFrom(src, f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7])
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	})
 
-	prop := func(name string, get func() goja.Value, set func(v goja.Value)) {
-		_ = o.DefineAccessorProperty(name, r.function(func(goja.FunctionCall) goja.Value { return get() }),
-			r.function(func(call goja.FunctionCall) goja.Value {
+	prop := func(name string, get func() js.Value, set func(v js.Value)) {
+		_ = o.DefineAccessorProperty(name, r.function(func(js.FunctionCall) js.Value { return get() }),
+			r.function(func(call js.FunctionCall) js.Value {
 				set(arg(call, 0))
-				return goja.Undefined()
-			}), goja.FLAG_FALSE, goja.FLAG_TRUE)
+				return js.Undefined()
+			}), js.FLAG_FALSE, js.FLAG_TRUE)
 	}
-	str := func(p *string, apply func()) (func() goja.Value, func(goja.Value)) {
-		return func() goja.Value { return r.vm.ToValue(*p) }, func(v goja.Value) {
+	str := func(p *string, apply func()) (func() js.Value, func(js.Value)) {
+		return func() js.Value { return r.vm.ToValue(*p) }, func(v js.Value) {
 			*p = v.String()
 			if apply != nil {
 				apply()
 			}
 		}
 	}
-	num := func(p *float64, arg core.DrawArg, apply func(x float32)) (func() goja.Value, func(goja.Value)) {
-		return func() goja.Value { return r.vm.ToValue(*p) }, func(v goja.Value) {
+	num := func(p *float64, arg core.DrawArg, apply func(x float32)) (func() js.Value, func(js.Value)) {
+		return func() js.Value { return r.vm.ToValue(*p) }, func(v js.Value) {
 			x, n := c.num(v)
 			*p = js32(x)
 			apply(x)
@@ -382,8 +382,8 @@ func (c *context2D) newContextObject() *goja.Object {
 			}
 		}
 	}
-	prop("fillStyle", func() goja.Value { return c.st.fill }, func(v goja.Value) { c.st.fill = v })
-	prop("strokeStyle", func() goja.Value { return c.st.stroke }, func(v goja.Value) { c.st.stroke = v })
+	prop("fillStyle", func() js.Value { return c.st.fill }, func(v js.Value) { c.st.fill = v })
+	prop("strokeStyle", func() js.Value { return c.st.stroke }, func(v js.Value) { c.st.stroke = v })
 	g, s := num(&c.st.lineWidth, core.ArgW, func(x float32) { c.d.SetLineWidth(x) })
 	prop("lineWidth", g, s)
 	g, s = num(&c.st.dashOffset, core.ArgW, func(x float32) { c.d.SetLineDashOffset(x) })
@@ -414,7 +414,7 @@ func (c *context2D) newContextObject() *goja.Object {
 	prop("shadowColor", g, s)
 	for name, p := range map[string]*float64{"shadowBlur": &c.st.shadowBlur, "shadowOffsetX": &c.st.shadowX,
 		"shadowOffsetY": &c.st.shadowY} {
-		prop(name, func() goja.Value { return r.vm.ToValue(*p) }, func(v goja.Value) {
+		prop(name, func() js.Value { return r.vm.ToValue(*p) }, func(v js.Value) {
 			*p = v.ToFloat()
 			shadow()
 		})
@@ -428,12 +428,12 @@ func (c *context2D) newContextObject() *goja.Object {
 	g, s = str(&c.st.textBaseline, nil)
 	prop("textBaseline", g, s)
 	canvas := r.vm.NewObject()
-	_ = canvas.DefineAccessorProperty("width", r.function(func(goja.FunctionCall) goja.Value {
+	_ = canvas.DefineAccessorProperty("width", r.function(func(js.FunctionCall) js.Value {
 		return r.vm.ToValue(js32(c.size.Width))
-	}), nil, goja.FLAG_FALSE, goja.FLAG_TRUE)
-	_ = canvas.DefineAccessorProperty("height", r.function(func(goja.FunctionCall) goja.Value {
+	}), nil, js.FLAG_FALSE, js.FLAG_TRUE)
+	_ = canvas.DefineAccessorProperty("height", r.function(func(js.FunctionCall) js.Value {
 		return r.vm.ToValue(js32(c.size.Height))
-	}), nil, goja.FLAG_FALSE, goja.FLAG_TRUE)
+	}), nil, js.FLAG_FALSE, js.FLAG_TRUE)
 	_ = o.Set("canvas", canvas)
 	return o
 }
@@ -445,7 +445,7 @@ func (r *runtime) newContext() *context2D {
 	return c
 }
 
-func floats(call goja.FunctionCall, n int) []float32 {
+func floats(call js.FunctionCall, n int) []float32 {
 	out := make([]float32, n)
 	for i := range out {
 		out[i] = float32(arg(call, i).ToFloat())
@@ -454,7 +454,7 @@ func floats(call goja.FunctionCall, n int) []float32 {
 }
 
 // radii reads roundRect's radii: one, or 2 to 4 as CSS's border-radius.
-func (c *context2D) radii(v goja.Value) (tl, tr, br, bl float32) {
+func (c *context2D) radii(v js.Value) (tl, tr, br, bl float32) {
 	items := c.r.arrayItems(v)
 	if items == nil {
 		if !defined(v) {
@@ -480,7 +480,7 @@ func (c *context2D) radii(v goja.Value) (tl, tr, br, bl float32) {
 	return
 }
 
-func fillRule(v goja.Value) core.FillRule {
+func fillRule(v js.Value) core.FillRule {
 	if stringOf(v) == "evenodd" {
 		return core.EvenOdd
 	}
@@ -488,7 +488,7 @@ func fillRule(v goja.Value) core.FillRule {
 }
 
 // pathAndRule reads fill's and clip's arguments: [path], [rule].
-func (c *context2D) pathAndRule(call goja.FunctionCall) (*core.Path, core.FillRule) {
+func (c *context2D) pathAndRule(call js.FunctionCall) (*core.Path, core.FillRule) {
 	if p := c.r.pathOf(arg(call, 0)); p != nil {
 		return p, fillRule(arg(call, 1))
 	}
@@ -497,7 +497,7 @@ func (c *context2D) pathAndRule(call goja.FunctionCall) (*core.Path, core.FillRu
 
 // paint sets fill or stroke to v: a color, a gradient or an animated
 // color.
-func (c *context2D) paint(v goja.Value, fill bool) {
+func (c *context2D) paint(v js.Value, fill bool) {
 	if g := c.r.gradientOf(v); g != nil {
 		if fill {
 			c.d.SetFillGradient(g)
@@ -589,16 +589,16 @@ var compositeOps = map[string]core.CompositeOp{"source-over": core.CompositeSour
 
 // canvasClasses are Path2D, CanvasRenderingContext2D and CanvasGradient.
 type canvasClasses struct {
-	path, gradient, context *goja.Object
+	path, gradient, context *js.Object
 }
 
 func (r *runtime) installCanvas() {
 	vm := r.vm
 	// A context comes from a Canvas's draw; its class is for instanceof.
-	r.canvasClasses.context = vm.ToValue(func(goja.ConstructorCall) *goja.Object {
+	r.canvasClasses.context = vm.ToValue(func(js.ConstructorCall) *js.Object {
 		panic(vm.NewTypeError("nsgo: a CanvasRenderingContext2D is a Canvas's draw's"))
-	}).(*goja.Object)
-	path := vm.ToValue(func(call goja.ConstructorCall) *goja.Object {
+	}).(*js.Object)
+	path := vm.ToValue(func(call js.ConstructorCall) *js.Object {
 		p := &core.Path{}
 		switch a := call.Argument(0); {
 		case r.pathOf(a) != nil:
@@ -612,51 +612,51 @@ func (r *runtime) installCanvas() {
 		}
 		_ = call.This.SetSymbol(canvasKey, p)
 		return nil
-	}).(*goja.Object)
-	proto := path.Get("prototype").(*goja.Object)
-	pm := func(name string, n int, f func(p *core.Path, x []float32, call goja.FunctionCall)) {
-		_ = proto.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+	}).(*js.Object)
+	proto := path.Get("prototype").(*js.Object)
+	pm := func(name string, n int, f func(p *core.Path, x []float32, call js.FunctionCall)) {
+		_ = proto.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			p := r.pathOf(call.This)
 			if p == nil {
 				panic(vm.NewTypeError("nsgo: %s of something that is not a Path2D", name))
 			}
 			f(p, floats(call, n), call)
-			return goja.Undefined()
+			return js.Undefined()
 		}))
 	}
-	pm("moveTo", 2, func(p *core.Path, x []float32, _ goja.FunctionCall) { p.MoveTo(x[0], x[1]) })
-	pm("lineTo", 2, func(p *core.Path, x []float32, _ goja.FunctionCall) { p.LineTo(x[0], x[1]) })
-	pm("quadraticCurveTo", 4, func(p *core.Path, x []float32, _ goja.FunctionCall) { p.QuadTo(x[0], x[1], x[2], x[3]) })
-	pm("bezierCurveTo", 6, func(p *core.Path, x []float32, _ goja.FunctionCall) {
+	pm("moveTo", 2, func(p *core.Path, x []float32, _ js.FunctionCall) { p.MoveTo(x[0], x[1]) })
+	pm("lineTo", 2, func(p *core.Path, x []float32, _ js.FunctionCall) { p.LineTo(x[0], x[1]) })
+	pm("quadraticCurveTo", 4, func(p *core.Path, x []float32, _ js.FunctionCall) { p.QuadTo(x[0], x[1], x[2], x[3]) })
+	pm("bezierCurveTo", 6, func(p *core.Path, x []float32, _ js.FunctionCall) {
 		p.CubicTo(x[0], x[1], x[2], x[3], x[4], x[5])
 	})
-	pm("arc", 5, func(p *core.Path, x []float32, call goja.FunctionCall) {
+	pm("arc", 5, func(p *core.Path, x []float32, call js.FunctionCall) {
 		p.Arc(x[0], x[1], x[2], x[3], x[4], arg(call, 5).ToBoolean())
 	})
-	pm("arcTo", 5, func(p *core.Path, x []float32, _ goja.FunctionCall) { p.ArcTo(x[0], x[1], x[2], x[3], x[4]) })
-	pm("ellipse", 7, func(p *core.Path, x []float32, call goja.FunctionCall) {
+	pm("arcTo", 5, func(p *core.Path, x []float32, _ js.FunctionCall) { p.ArcTo(x[0], x[1], x[2], x[3], x[4]) })
+	pm("ellipse", 7, func(p *core.Path, x []float32, call js.FunctionCall) {
 		p.EllipseArc(x[0], x[1], x[2], x[3], x[4], x[5], x[6], arg(call, 7).ToBoolean())
 	})
-	pm("rect", 4, func(p *core.Path, x []float32, _ goja.FunctionCall) { p.Rect(x[0], x[1], x[2], x[3]) })
-	pm("roundRect", 4, func(p *core.Path, x []float32, call goja.FunctionCall) {
+	pm("rect", 4, func(p *core.Path, x []float32, _ js.FunctionCall) { p.Rect(x[0], x[1], x[2], x[3]) })
+	pm("roundRect", 4, func(p *core.Path, x []float32, call js.FunctionCall) {
 		var c context2D
 		c.r = r
 		tl, tr, br, bl := c.radii(arg(call, 4))
 		p.RoundRectCorners(x[0], x[1], x[2], x[3], tl, tr, br, bl)
 	})
-	pm("closePath", 0, func(p *core.Path, _ []float32, _ goja.FunctionCall) { p.ClosePath() })
-	pm("addPath", 0, func(p *core.Path, _ []float32, call goja.FunctionCall) {
+	pm("closePath", 0, func(p *core.Path, _ []float32, _ js.FunctionCall) { p.ClosePath() })
+	pm("addPath", 0, func(p *core.Path, _ []float32, call js.FunctionCall) {
 		if q := r.pathOf(arg(call, 0)); q != nil {
 			p.AddPath(q)
 		}
 	})
 	r.canvasClasses.path = path
 
-	grad := vm.ToValue(func(call goja.ConstructorCall) *goja.Object {
+	grad := vm.ToValue(func(call js.ConstructorCall) *js.Object {
 		panic(vm.NewTypeError("nsgo: CanvasGradient is made by a context's create…Gradient"))
-	}).(*goja.Object)
-	gproto := grad.Get("prototype").(*goja.Object)
-	_ = gproto.Set("addColorStop", r.function(func(call goja.FunctionCall) goja.Value {
+	}).(*js.Object)
+	gproto := grad.Get("prototype").(*js.Object)
+	_ = gproto.Set("addColorStop", r.function(func(call js.FunctionCall) js.Value {
 		g := r.gradientOf(call.This)
 		if g == nil {
 			panic(vm.NewTypeError("nsgo: addColorStop of something that is not a CanvasGradient"))
@@ -670,20 +670,20 @@ func (r *runtime) installCanvas() {
 			panic(vm.NewTypeError("nsgo: %v", err))
 		}
 		g.Stops = append(g.Stops, core.GradientStop{Offset: float32(off), Color: col})
-		return goja.Undefined()
+		return js.Undefined()
 	}))
 	r.canvasClasses.gradient = grad
 }
 
-func (r *runtime) newGradient(g *core.CanvasGradient) *goja.Object {
+func (r *runtime) newGradient(g *core.CanvasGradient) *js.Object {
 	o := r.vm.NewObject()
-	_ = o.SetPrototype(r.canvasClasses.gradient.Get("prototype").(*goja.Object))
+	_ = o.SetPrototype(r.canvasClasses.gradient.Get("prototype").(*js.Object))
 	_ = o.SetSymbol(canvasKey, g)
 	return o
 }
 
-func (r *runtime) symbolValue(v goja.Value) any {
-	o, ok := v.(*goja.Object)
+func (r *runtime) symbolValue(v js.Value) any {
+	o, ok := v.(*js.Object)
 	if !ok {
 		return nil
 	}
@@ -694,12 +694,12 @@ func (r *runtime) symbolValue(v goja.Value) any {
 	return s.Export()
 }
 
-func (r *runtime) pathOf(v goja.Value) *core.Path {
+func (r *runtime) pathOf(v js.Value) *core.Path {
 	p, _ := r.symbolValue(v).(*core.Path)
 	return p
 }
 
-func (r *runtime) gradientOf(v goja.Value) *core.CanvasGradient {
+func (r *runtime) gradientOf(v js.Value) *core.CanvasGradient {
 	g, _ := r.symbolValue(v).(*core.CanvasGradient)
 	return g
 }
@@ -707,7 +707,7 @@ func (r *runtime) gradientOf(v goja.Value) *core.CanvasGradient {
 // canvasExports are nsgo's canvas classes.
 var canvasExports = []export{
 	fn("Canvas", (*runtime).canvas),
-	{"Path2D", func(r *runtime) goja.Value { return r.canvasClasses.path }},
-	{"CanvasGradient", func(r *runtime) goja.Value { return r.canvasClasses.gradient }},
-	{"CanvasRenderingContext2D", func(r *runtime) goja.Value { return r.canvasClasses.context }},
+	{"Path2D", func(r *runtime) js.Value { return r.canvasClasses.path }},
+	{"CanvasGradient", func(r *runtime) js.Value { return r.canvasClasses.gradient }},
+	{"CanvasRenderingContext2D", func(r *runtime) js.Value { return r.canvasClasses.context }},
 }

@@ -11,7 +11,7 @@ var src embed.FS
 func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 ```
 
-`examples/tsx` is such an app: its modules, components, signals, inputs, lists and timers, styled with classes in light and dark, one column on phones and two from `md:`, a Go class and an async Go function of its own, and a timer module it loads with `import()`, with Go and TSX tests. `examples/gallery-tsx` is the gallery's Components in TSX, on `nsgo/ui` and `nsgo/base`, with knobs that set their props; the Go gallery's apps, Conversation and Terminal are not in it yet.
+`examples/tsx` is such an app: its modules, components, signals, inputs, lists and timers, styled with classes in light and dark, one column on phones and two from `md:`, a Go class and an async Go function of its own, and a timer module it loads with `import()`, with Go and TSX tests. `examples/gallery-tsx` is the gallery's Components in TSX, on `nsgo/ui`, `nsgo/ui/chat` and `nsgo/base`, with knobs that set their props: its apps (Stocks, AI Chat streaming scripted replies, Photos), the Conversation, the Terminal over a demo session of its own Go on phones, and the RichEditor among them, with tests in its wide and phone layouts on every target.
 
 ## The ports
 
@@ -32,19 +32,22 @@ func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 | `nsh-testing`'s `nsh/test` | `tsx/tsxtest` | `*.test.tsx` as Go tests |
 | `nsh-core`'s `Op` | `core.Element` | Elements built one change at a time |
 | `nsh-package` | — | Signed packages ([open question](../../ARCHITECTURE.md#open-questions)) |
+| `nsh-platform-web`'s `src/browser/`, `web/browser/` | `tsx/internal/js` | The page's engine on the web |
 
 Read the NSH file before changing its port, and keep the port's names and order where Go allows, so NSH's next change maps onto it.
 
-## The engine
+## The engines
 
-goja runs the JS: pure Go, so it builds for every target, `js/wasm` included. The alternatives fail a [principle](../../AGENTS.md#principles) or a target:
+goja runs the JS on every target but the web: pure Go, so it builds everywhere. On the web the page's own engine runs it, as NSH 0.4.0's does (decided by the user, 2026-11-08), which keeps goja out of the WebAssembly (13 MB less in `examples/tsx`'s package). `tsx/internal/js` is the one API both share, goja's: on goja its types under other names (`goja.go`), on the web the part `tsx` uses over `syscall/js` (`browser.go`), so the runtime is written once. Its tests (`js_test.go`) hold both to the same behavior.
+
+The alternatives to goja fail a [principle](../../AGENTS.md#principles) or a target:
 
 | Engine | Verdict |
 | --- | --- |
 | QuickJS through cgo, NSH's | cgo and C on every target |
 | `modernc.org/quickjs` (QuickJS translated to Go) | Linux only |
 | QuickJS in WebAssembly on wazero | iOS forbids generated code, so wazero interprets an interpreter there |
-| The system's (JavaScriptCore, the browser's) | A bridge per platform; Android's runs only out of process |
+| The system's (JavaScriptCore) | A bridge per platform; Android's runs only out of process |
 
 What goja lacks, and the answer:
 
@@ -54,6 +57,16 @@ What goja lacks, and the answer:
 - **A turn after the effects**: goja runs promise continuations as the outermost JS call returns, which may be an effect's, so they run untracked (`AsyncContextTracker`), as QuickJS's run after the effect in NSH.
 - **`Intl` and locale methods**: goja has none (its `toLocaleString` reads a radix), so `intl.go` gives `Intl.NumberFormat`, `PluralRules` and `Collator` CLDR's data through `golang.org/x/text`, dates in English, and patches `Number`, `Date` and `String`'s locale methods.
 - **Speed**: slower than QuickJS on pure JS, so NSH's first performance rule matters more: only the app's code is JS.
+
+### The page's engine
+
+Each `js.Runtime` on the web is a realm of its own, a hidden iframe of the page's origin, removed with the app: a bundle runs in it as a script, and what the runtime installs (`require`, `nsgo:rt`, the web APIs, timers on the app's clock, `Date` reading it) is its globals, as on goja. The iframe is no sandbox: the app has the page's authority.
+
+- Primitives are copied into Go and objects are handles; Go functions are JS functions calling back through one `syscall/js` function by ID, Go values objects whose prototype holds their type's methods and fields, both let go of when JS collects them (`FinalizationRegistry`). Values export as goja's do (integers as `int64`, arrays as `[]any`), so the runtime reads them alike.
+- What JS throws comes back as an `*Exception`, its stack read through the bundle's source map as goja reads it; a JS error a Go function panics with is thrown in JS; any other Go panic unwinds JS and goes on in the Go code that called it, even if JS caught it.
+- Promise reactions and the browser's own callbacks run once Go gives the page its turn, after the engine's commit, not as the outermost call returns. What they call of Go runs under the app's root, untracked, and a commit follows (`engine_browser.go`). `nsgotest`'s headless runs give the page its turn as they settle on the web.
+- The page's `Intl` is the browser's; `intl.go` is goja's alone.
+- The page's engine cannot be interrupted, so `Sandboxed`'s time budgets do not hold on the web; its stack depth is the browser's, and its hardening applies.
 
 ## Compiling
 
@@ -109,11 +122,11 @@ The primitives that are not `core.Element`s (`Overlay`, `WebView`, `Video`, `Lis
 
 Every event passes one object, as NSH's do (`api-naming.md` (Payloads)). `tsx.Event` names its fields, as NSH's `#[args]` (`Event("OnOpenChange", "open", "reason")`). Without one, an event struct goes as it is, `Bounds` as `{ bounds }` and another value as `{ value }`; several arguments need the names, and `Register` panics without them, since Go keeps no parameter names.
 
-`nsgo/base` registers `base`'s components this way (`base.go`), with NSH's names where `base`'s differ and a few props shaped otherwise (`DataTable`'s `data`, `nsgo/base/plot`'s `data` and what its marks read of it (`plot.go`), `DockArea`'s `panels`, a list by `id`, and `renderPanel`'s `{ id }`). `List` is written out (`baselist.go`), each's items as `<List>`'s and its choices the props `selected` or `defaultSelected`, `onSelectedChange` and `multiple`, since JS has no `Selection`. A component's host props, NSH's `ComponentHostProps`, are its fields: `class`, `style`, `testID`, and `onLayout` and `tooltip` on each component whose root is a view of its own, which take a `core.View`'s. `ResizablePanel` is a part: its call is a value its group collects from its children. The navigation (`createNavStack`, `NavStack`, `NavPage`, on `base.Nav`), `Dialog`, `AlertDialog`, `ToastManager` and `ToastStack` are written out. `TextView`, `Editor`, `DiffView` and `RichEditor` link packages other apps should not, so `tsx/textview`, `tsx/editor`, `tsx/diff` and `tsx/richeditor` register them for an app that imports them; `tsx/richeditor` adds the rich editor's sessions, commands and extensions ([rich editor](richeditor.md#tsx)), and `tsx/ui/richeditor` its styled form in `nsgo/ui`.
+`nsgo/base` registers `base`'s components this way (`base.go`), with NSH's names where `base`'s differ and a few props shaped otherwise (`DataTable`'s `data`, `nsgo/base/plot`'s `data` and what its marks read of it (`plot.go`), `DockArea`'s `panels`, a list by `id`, and `renderPanel`'s `{ id }`). `List` is written out (`baselist.go`), each's items as `<List>`'s and its choices the props `selected` or `defaultSelected`, `onSelectedChange` and `multiple`, since JS has no `Selection`. A component's host props, NSH's `ComponentHostProps`, are its fields: `class`, `style`, `testID`, and `onLayout` and `tooltip` on each component whose root is a view of its own, which take a `core.View`'s. `ResizablePanel` is a part: its call is a value its group collects from its children. The navigation (`createNavStack`, `NavStack`, `NavPage`, on `base.Nav`), `Dialog`, `AlertDialog`, `ToastManager` and `ToastStack` are written out. `TextView`, `Editor`, `DiffView`, `RichEditor` and `Terminal` link packages other apps should not, so `tsx/textview`, `tsx/editor`, `tsx/diff`, `tsx/richeditor` and `tsx/terminal` register them for an app that imports them; `Terminal` starts its session from its props (`command`, `conn`, `cursor`), a change of them starting another, while its view's (`theme`, `fontSize`, the key bar's) follow, and its ref copies, pastes and reads the title and directory; `tsx/richeditor` adds the rich editor's sessions, commands and extensions ([rich editor](richeditor.md#tsx)), and `tsx/ui/richeditor` its styled form in `nsgo/ui`.
 
 ### Styled components
 
-`tsx/ui` gives TSX `ui`'s components as `nsgo/ui`, so a TSX app looks as a Go app does with no second implementation: an app imports it for its effect and sets `ui.DefaultTheme`, or another theme with `ui`'s roles, before it mounts. Each takes its Go fields as props, by `tsx.Register`; generic components take string values, and `Input` and `Field` take `base.Input`'s fields flat. What Go holds in Go values TSX holds in props: a `List`'s and a `Tree`'s selection are lists of keys, a `Tree`'s items are data, and the ref of `Toasts` shows them. `TextView` and `DiffView` here are `ui`'s forms, which take `Options` from `tsx/textview` and `tsx/diff`.
+`tsx/ui` gives TSX `ui`'s components as `nsgo/ui`, so a TSX app looks as a Go app does with no second implementation: an app imports it for its effect and sets `ui.DefaultTheme`, or another theme with `ui`'s roles, before it mounts. Each takes its Go fields as props, by `tsx.Register`; generic components take string values, and `Input` and `Field` take `base.Input`'s fields flat. What Go holds in Go values TSX holds in props: a `List`'s and a `Tree`'s selection are lists of keys, a `Tree`'s items are data, and the ref of `Toasts` shows them. `TextView` and `DiffView` here are `ui`'s forms, which take `Options` from `tsx/textview` and `tsx/diff`. `tsx/ui/chat` gives `ui/chat` as `nsgo/ui/chat`, with `ConversationState` a class its transcript, turns and composer share (`new ConversationState()`: a Go constructor or function taking a leading `*core.Scope` gets the app's).
 
 An icon prop takes a name `ui.Icons` gave or an SVG document. An app lists the Lucide icons it uses, as `lucide` keeps no table of them, so the others stay out of its binary. `tsx.Convert` gives a Go type a JS form that need not be an object, as these icons and dates are: `base.DateValue` is `DatePickerValue`'s strings and `base.TimeOfDay` a string, in data objects and events too. In a data object a `func() T` takes a plain `T`.
 
@@ -139,7 +152,7 @@ An icon prop takes a name `ui.Icons` gave or an SVG document. An app lists the L
 
 ## Developing
 
-Under `nsgo dev` the tool compiles TSX ahead for hot updates (`bundler.CompileHot`), and a save that changes only the bundle's files compiles it again and sends it over `/_nsgo/events`, with no Go build. `compiler.App`, built with the dev client, follows the server and runs the new bundle in the same VM (`tsx.Hot`). The hot transform and registry (`hot.go`) port NSH's (`tooling.md`, "Hot module replacement"), and `hot_test.go` ports `nsh-engine/tests/engine/hot.rs`:
+Under `nsgo dev` the tool compiles TSX ahead for hot updates (`bundler.CompileHot`), and a save that changes only the bundle's files compiles it again once they stop changing, reading again a file its writer still holds, as Windows refuses, and sends it over `/_nsgo/events`, with no Go build, on every target. `compiler.App`, built with the dev client, follows the server and runs the new bundle in the same VM (`tsx.Hot`). The hot transform and registry (`hot.go`) port NSH's (`tooling.md`, "Hot module replacement"), and `hot_test.go` ports `nsh-engine/tests/engine/hot.rs`:
 
 - A hot bundle's modules go through a registry, which esbuild's module wrapper calls: a newer bundle runs again the modules whose code changed, and the importers of those that do not take their own updates, up to the entry. A module takes its own when all it exports are components. Importers keep a facade of a module's current exports.
 - Top-level components, capitalized functions whose code has JSX, render through proxies that stay the same across updates, each a memo of its component's newest code. Its signature is its code and its module's code outside components, so an edit renders again the instances whose signature changed, and those of the modules run again because a module they import changed; their own state starts afresh, everything else keeps its.
@@ -174,6 +187,7 @@ Without a heap limit a module can still exhaust memory. That suits the app's own
 | NSH | NSGo | Why |
 | --- | --- | --- |
 | QuickJS | goja | No C and no cgo, on every target |
+| The web's app as ES modules from blob URLs, with the browser's `fetch`, streams and URLs | The bundle as a script, with `web.js`'s APIs over Go's, as on goja | esbuild already links the app into one script, which then starts as it loads; `asset:` URLs, the test network and `WithFetcher` answer the same on every target |
 | Oxc, `jsx.rs`, rolldown | esbuild and a port of `jsx.rs` on goja's parser, over CommonJS | Go libraries, no Node; goja's parser reads no ES modules |
 | `nsh build` writes the bundle | The tool compiles ahead into the package through `-overlay`; `go run` and `go test` compile at start | Plain Go commands keep working; packages ship no compiler |
 | Bytecode in packages | Source only | goja saves no bytecode |

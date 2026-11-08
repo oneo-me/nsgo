@@ -4,20 +4,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
 
 // setProps sets each prop of the JS object js on a new T through set,
 // failing on one it does not have.
-func setProps[T any](t *testing.T, r *runtime, set func(*runtime, *T, string, goja.Value) bool, js string) *T {
+func setProps[T any](t *testing.T, r *runtime, set func(*runtime, *T, string, js.Value) bool, src string) *T {
 	t.Helper()
 	p := new(T)
-	o := jsValue(t, r, js).ToObject(r.vm)
+	o := jsValue(t, r, src).ToObject(r.vm)
 	for _, name := range o.Keys() {
 		if !set(r, p, name, o.Get(name)) {
-			t.Fatalf("%s: no prop %q", js, name)
+			t.Fatalf("%s: no prop %q", src, name)
 		}
 	}
 	return p
@@ -63,9 +63,9 @@ func TestViewPropsSetTheirFields(t *testing.T) {
 		`{windowDrag: false}`:                  func(p *core.View) bool { return p.Desktop.WindowDrag == core.WindowDragOff },
 		`{onPanStart: null, onPinchEnd: null}`: func(p *core.View) bool { return true },
 	}
-	for js, ok := range cases {
-		t.Run(js, func(t *testing.T) {
-			if p := setProps(t, decoding(), (*runtime).viewProp, js); !ok(p) {
+	for src, ok := range cases {
+		t.Run(src, func(t *testing.T) {
+			if p := setProps(t, decoding(), (*runtime).viewProp, src); !ok(p) {
 				t.Errorf("decoded %+v", p)
 			}
 		})

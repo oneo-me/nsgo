@@ -17,9 +17,10 @@ nsgo
 │
 ├── Entry points
 │   ├── nsgo (root)                      Picks a backend and starts the app
-│   ├── tsx                              Runs TSX apps on goja
+│   ├── tsx                              Runs TSX apps on goja, or the page's engine
+│   │   ├── internal/js                  The engines' one API
 │   │   ├── bundler, compiler            Compiles and loads their bundles
-│   │   ├── textview, editor, diff       Register base's optional components
+│   │   ├── textview, editor, diff, terminal  Register base's optional components
 │   │   └── tsxtest                      Runs *.test.tsx as Go tests
 │   └── nsgotest                         Runs apps in tests, headless or on a target
 │
@@ -119,7 +120,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
 - `ui` imports `base`, `core`, `mobile`, `desktop` and the icons; `base` never imports it.
-- `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`, and `tsx/ui` with the packages below it the TSX packages that import `ui`.
+- `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`, and `tsx/ui` with the packages below it the TSX packages that import `ui`. `tsx/internal/js`, the engines' API, imports nothing of NSGo's, and on the web reaches the page through `syscall/js`.
 - `base/terminal` is the one package of `base` that is not portable: it loads libghostty-vt through purego, runs programs on desktops and remote sessions there and on iOS, and elsewhere builds to report that it cannot (`unportable` in `layering_test.go`).
 
 ## Why core and backends do not meet

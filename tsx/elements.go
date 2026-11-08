@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -72,14 +72,14 @@ func overlayFace(p *props) core.Node {
 }
 
 // anchorBounds reads an anchor that is a point or bounds.
-func (r *runtime) anchorBounds(v goja.Value) core.Bounds {
-	o, ok := v.(*goja.Object)
+func (r *runtime) anchorBounds(v js.Value) core.Bounds {
+	o, ok := v.(*js.Object)
 	if !ok {
 		return core.Bounds{}
 	}
-	if origin, ok := o.Get("origin").(*goja.Object); ok {
+	if origin, ok := o.Get("origin").(*js.Object); ok {
 		b := core.Bounds{Origin: r.pointOf(origin)}
-		if size, ok := o.Get("size").(*goja.Object); ok {
+		if size, ok := o.Get("size").(*js.Object); ok {
 			b.Size = r.sizeOf(size)
 		}
 		return b
@@ -87,11 +87,11 @@ func (r *runtime) anchorBounds(v goja.Value) core.Bounds {
 	return core.Bounds{Origin: r.pointOf(o)}
 }
 
-func (r *runtime) pointOf(o *goja.Object) core.Point {
+func (r *runtime) pointOf(o *js.Object) core.Point {
 	return core.Point{X: core.Points(opts{o}.float("x", 0)), Y: core.Points(opts{o}.float("y", 0))}
 }
 
-func (r *runtime) sizeOf(o *goja.Object) core.Size {
+func (r *runtime) sizeOf(o *js.Object) core.Size {
 	return core.Size{Width: core.Points(opts{o}.float("width", 0)), Height: core.Points(opts{o}.float("height", 0))}
 }
 
@@ -141,7 +141,7 @@ func webViewFace(p *props) core.Node {
 
 // webDownload is { state, id, url, filename, path }, with bytes once
 // finished and message when it failed.
-func (r *runtime) webDownload(d core.WebDownload) *goja.Object {
+func (r *runtime) webDownload(d core.WebDownload) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("state", [...]string{"started", "finished", "failed"}[d.State])
 	_ = o.Set("id", d.ID)
@@ -157,7 +157,7 @@ func (r *runtime) webDownload(d core.WebDownload) *goja.Object {
 	return o
 }
 
-func (r *runtime) webNavigation(n core.WebNavigation) *goja.Object {
+func (r *runtime) webNavigation(n core.WebNavigation) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("url", n.URL)
 	_ = o.Set("title", n.Title)
@@ -227,7 +227,7 @@ func videoFace(p *props) core.Node {
 
 // list is `list(props)`, what <List> compiles to: a lazy list of each's
 // items, a row rendered by children(item, index) per cell.
-func (r *runtime) list(call goja.FunctionCall) goja.Value {
+func (r *runtime) list(call js.FunctionCall) js.Value {
 	obj := arg(call, 0).ToObject(r.vm)
 	n := r.newFaceNode("List", listFace, obj)
 	n.horizontal = opts{obj}.bool("horizontal", false)
@@ -304,15 +304,15 @@ func listFace(p *props) core.Node {
 	case defined(off):
 		l.StickyHeaderOffset = core.Points(off.ToFloat())
 	}
-	if m, ok := p.get("maintainVisibleContentPosition").(*goja.Object); ok {
+	if m, ok := p.get("maintainVisibleContentPosition").(*js.Object); ok {
 		l.MaintainVisibleContentPosition = &core.VisibleContentPosition{
 			AutoscrollToBottomThreshold: core.Points(opts{m}.float("autoscrollToBottomThreshold", 0))}
 	}
-	if c, ok := p.get("contentStyle").(*goja.Object); ok {
+	if c, ok := p.get("contentStyle").(*js.Object); ok {
 		o := opts{c}
 		l.Gap, l.ColumnGap = core.Points(o.float("gap", o.float("rowGap", 0))), core.Points(o.float("columnGap", 0))
 	}
-	if c, ok := p.get("viewabilityConfig").(*goja.Object); ok {
+	if c, ok := p.get("viewabilityConfig").(*js.Object); ok {
 		o := opts{c}
 		l.ViewabilityConfig = core.ViewabilityConfig{
 			ViewAreaCoveragePercentThreshold: float32(o.float("viewAreaCoverageThreshold", 0)) * 100,
@@ -326,7 +326,7 @@ func listFace(p *props) core.Node {
 	}
 	if h := p.handler("onViewableItemsChange"); h != nil {
 		l.OnViewableItemsChange = func(v core.ViewableItems) {
-			tokens := func(ts []core.ViewToken) goja.Value {
+			tokens := func(ts []core.ViewToken) js.Value {
 				out := make([]any, len(ts))
 				for i, t := range ts {
 					o := r.vm.NewObject()
@@ -350,7 +350,7 @@ func listFace(p *props) core.Node {
 // listRows is what a list reads of each's items.
 type listRows struct {
 	count func() int
-	item  func(i int) goja.Value
+	item  func(i int) js.Value
 	key   func(i int) any
 	row   func(cx *core.Scope, row core.ListRow) core.Node
 }
@@ -358,12 +358,12 @@ type listRows struct {
 // listRows reads each and keyExtractor, a row rendered by
 // children(item, index) per cell.
 func (r *runtime) listRows(p *props) listRows {
-	items := core.NewMemoFunc(r.cx, func() []goja.Value { return r.arrayItems(p.get("each")) }, nil)
-	item := func(i int) goja.Value {
+	items := core.NewMemoFunc(r.cx, func() []js.Value { return r.arrayItems(p.get("each")) }, nil)
+	item := func(i int) js.Value {
 		if all := items.Get(); i >= 0 && i < len(all) {
 			return all[i]
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}
 	key := func(i int) any { return keyOf(item(i)) }
 	if isFunction(p.get("keyExtractor")) {
@@ -374,17 +374,17 @@ func (r *runtime) listRows(p *props) listRows {
 	}
 	row := func(cx *core.Scope, row core.ListRow) core.Node {
 		render := p.peek("children")
-		index := r.accessor(func() goja.Value { return r.vm.ToValue(row.Index()) })
+		index := r.accessor(func() js.Value { return r.vm.ToValue(row.Index()) })
 		// A row the list is about to take away keeps its last item, as
 		// its bindings may read it once more as the items shrink.
-		last := goja.Undefined()
-		it := r.accessor(func() goja.Value {
+		last := js.Undefined()
+		it := r.accessor(func() js.Value {
 			if i := row.Index(); i >= 0 && i < len(items.Get()) {
 				last = item(i)
 			}
 			return last
 		})
-		return r.region(func() goja.Value { return r.call(render, it, index) })
+		return r.region(func() js.Value { return r.call(render, it, index) })
 	}
 	return listRows{count: func() int { return len(items.Get()) }, item: item, key: key, row: row}
 }
@@ -394,7 +394,7 @@ func (r *runtime) listSlot(p *props, name string) core.Node {
 	if !p.has(name) {
 		return nil
 	}
-	return r.region(func() goja.Value {
+	return r.region(func() js.Value {
 		v := p.get(name)
 		if isFunction(v) {
 			return r.call(v)
@@ -405,11 +405,11 @@ func (r *runtime) listSlot(p *props, name string) core.Node {
 
 // tokenKey is a viewability token's key: the keyExtractor's, else the
 // item's key or id, else its index.
-func (r *runtime) tokenKey(t core.ViewToken, item goja.Value) string {
+func (r *runtime) tokenKey(t core.ViewToken, item js.Value) string {
 	if s, ok := t.Key.(string); ok {
 		return s
 	}
-	if o, ok := item.(*goja.Object); ok {
+	if o, ok := item.(*js.Object); ok {
 		for _, k := range []string{"key", "id"} {
 			if v := o.Get(k); defined(v) {
 				return v.String()
@@ -420,7 +420,7 @@ func (r *runtime) tokenKey(t core.ViewToken, item goja.Value) string {
 }
 
 // ints reads an array of numbers.
-func (r *runtime) ints(v goja.Value) []int {
+func (r *runtime) ints(v js.Value) []int {
 	items := r.arrayItems(v)
 	if items == nil {
 		return nil

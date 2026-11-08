@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -31,35 +31,35 @@ type compositeRef struct {
 
 // animClasses are the VM's animation classes.
 type animClasses struct {
-	key                 *goja.Symbol
-	nodeProto, valProto *goja.Object
-	nodeClass, valClass *goja.Object
-	compProto           *goja.Object
+	key                 *js.Symbol
+	nodeProto, valProto *js.Object
+	nodeClass, valClass *js.Object
+	compProto           *js.Object
 	// clamps are the diffClamp nodes made, by their arguments.
-	clamps map[diffClampKey]goja.Value
+	clamps map[diffClampKey]js.Value
 }
 
 func (r *runtime) installAnimated() {
 	a := &r.anim
-	a.key = goja.NewSymbol("nsgo.animated")
+	a.key = js.NewSymbol("nsgo.animated")
 	vm := r.vm
 
-	a.nodeClass = vm.ToValue(func(call goja.ConstructorCall) *goja.Object { return nil }).(*goja.Object)
-	a.nodeProto = a.nodeClass.Get("prototype").(*goja.Object)
-	a.valClass = vm.ToValue(func(call goja.ConstructorCall) *goja.Object {
+	a.nodeClass = vm.ToValue(func(call js.ConstructorCall) *js.Object { return nil }).(*js.Object)
+	a.nodeProto = a.nodeClass.Get("prototype").(*js.Object)
+	a.valClass = vm.ToValue(func(call js.ConstructorCall) *js.Object {
 		v := core.NewAnimatedValue(r.cx, call.Argument(0).ToFloat())
 		if !defined(call.Argument(0)) {
 			v = core.NewAnimatedValue(r.cx, 0)
 		}
 		_ = call.This.SetSymbol(a.key, &animatedRef{node: v, value: v})
 		return nil
-	}).(*goja.Object)
-	a.valProto = a.valClass.Get("prototype").(*goja.Object)
+	}).(*js.Object)
+	a.valProto = a.valClass.Get("prototype").(*js.Object)
 	_ = a.valProto.SetPrototype(a.nodeProto)
 	_ = a.valClass.SetPrototype(a.nodeClass)
 
-	method := func(proto *goja.Object, name string, f func(this *animatedRef, call goja.FunctionCall) goja.Value) {
-		_ = proto.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+	method := func(proto *js.Object, name string, f func(this *animatedRef, call js.FunctionCall) js.Value) {
+		_ = proto.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			ref := r.animatedRefOf(call.This)
 			if ref == nil {
 				panic(vm.NewTypeError("nsgo: %s of something that is not an animated node", name))
@@ -67,63 +67,63 @@ func (r *runtime) installAnimated() {
 			return f(ref, call)
 		}))
 	}
-	method(a.nodeProto, "interpolate", func(this *animatedRef, call goja.FunctionCall) goja.Value {
+	method(a.nodeProto, "interpolate", func(this *animatedRef, call js.FunctionCall) js.Value {
 		return r.wrapNode(core.Interpolate(this.node, r.interpolation(arg(call, 0))))
 	})
-	method(a.nodeProto, "diffClamp", func(this *animatedRef, call goja.FunctionCall) goja.Value {
+	method(a.nodeProto, "diffClamp", func(this *animatedRef, call js.FunctionCall) js.Value {
 		return r.diffClamp(this.node, call.Argument(0), call.Argument(1), call.Argument(2))
 	})
 	for name, op := range map[string]func(a, b core.AnimatedNode) core.AnimatedNode{
 		"add": core.Add, "sub": core.Sub, "mul": core.Mul, "div": core.Div, "mod": core.Mod} {
-		method(a.nodeProto, name, func(this *animatedRef, call goja.FunctionCall) goja.Value {
+		method(a.nodeProto, name, func(this *animatedRef, call js.FunctionCall) js.Value {
 			return r.wrapNode(op(this.node, r.operand(arg(call, 0))))
 		})
 	}
 
-	value := func(name string, f func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value) {
-		method(a.valProto, name, func(this *animatedRef, call goja.FunctionCall) goja.Value {
+	value := func(name string, f func(v *core.AnimatedValue, call js.FunctionCall) js.Value) {
+		method(a.valProto, name, func(this *animatedRef, call js.FunctionCall) js.Value {
 			if this.value == nil {
 				panic(vm.NewTypeError("nsgo: %s of an animated node that is not a value", name))
 			}
 			return f(this.value, call)
 		})
 	}
-	value("set", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("set", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		v.Set(arg(call, 0).ToFloat())
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	value("stop", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("stop", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		v.Stop()
 		return r.readValue(v)
 	})
-	value("getValue", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value { return r.readValue(v) })
-	value("setOffset", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("getValue", func(v *core.AnimatedValue, call js.FunctionCall) js.Value { return r.readValue(v) })
+	value("setOffset", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		v.SetOffset(arg(call, 0).ToFloat())
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	value("flattenOffset", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("flattenOffset", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		v.FlattenOffset()
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	value("extractOffset", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("extractOffset", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		v.ExtractOffset()
-		return goja.Undefined()
+		return js.Undefined()
 	})
-	value("timing", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("timing", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		return r.play(core.Timing(v, arg(call, 0).ToFloat(), r.timingConfig(arg(call, 1))))
 	})
-	value("spring", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("spring", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		return r.play(core.Spring(v, arg(call, 0).ToFloat(), r.springConfig(arg(call, 1))))
 	})
-	value("decay", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("decay", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		return r.play(core.Decay(v, r.decayConfig(arg(call, 0))))
 	})
-	value("keyframes", func(v *core.AnimatedValue, call goja.FunctionCall) goja.Value {
+	value("keyframes", func(v *core.AnimatedValue, call js.FunctionCall) js.Value {
 		return r.play(core.ValueKeyframes(v, r.keyframeTiming(arg(call, 1)), r.keyframeStops(arg(call, 0))...))
 	})
 
 	a.compProto = vm.NewObject()
-	_ = a.compProto.Set("start", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = a.compProto.Set("start", r.function(func(call js.FunctionCall) js.Value {
 		c := r.compositeOf(call.This)
 		cb := arg(call, 0)
 		p, resolve, _ := vm.NewPromise()
@@ -142,23 +142,23 @@ func (r *runtime) installAnimated() {
 		})
 		return vm.ToValue(p)
 	}))
-	_ = a.compProto.Set("stop", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = a.compProto.Set("stop", r.function(func(call js.FunctionCall) js.Value {
 		if c := r.compositeOf(call.This); c.run != nil {
 			c.run.Stop()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}))
-	_ = a.compProto.Set("reset", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = a.compProto.Set("reset", r.function(func(call js.FunctionCall) js.Value {
 		if c := r.compositeOf(call.This); c.run != nil {
 			c.run.Reset()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}))
 }
 
 // animatedRefOf returns what v holds when it is an animated node.
-func (r *runtime) animatedRefOf(v goja.Value) *animatedRef {
-	o, ok := v.(*goja.Object)
+func (r *runtime) animatedRefOf(v js.Value) *animatedRef {
+	o, ok := v.(*js.Object)
 	if !ok {
 		return nil
 	}
@@ -170,14 +170,14 @@ func (r *runtime) animatedRefOf(v goja.Value) *animatedRef {
 	return ref
 }
 
-func (r *runtime) animatedNodeOf(v goja.Value) core.AnimatedNode {
+func (r *runtime) animatedNodeOf(v js.Value) core.AnimatedNode {
 	if ref := r.animatedRefOf(v); ref != nil {
 		return ref.node
 	}
 	return nil
 }
 
-func (r *runtime) animatedValueOf(v goja.Value) *core.AnimatedValue {
+func (r *runtime) animatedValueOf(v js.Value) *core.AnimatedValue {
 	if ref := r.animatedRefOf(v); ref != nil {
 		return ref.value
 	}
@@ -185,7 +185,7 @@ func (r *runtime) animatedValueOf(v goja.Value) *core.AnimatedValue {
 }
 
 // wrapNode makes a JS AnimatedNode of n.
-func (r *runtime) wrapNode(n core.AnimatedNode) *goja.Object {
+func (r *runtime) wrapNode(n core.AnimatedNode) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.SetPrototype(r.anim.nodeProto)
 	_ = o.SetSymbol(r.anim.key, &animatedRef{node: n})
@@ -193,7 +193,7 @@ func (r *runtime) wrapNode(n core.AnimatedNode) *goja.Object {
 }
 
 // wrapValue makes a JS AnimatedValue of v.
-func (r *runtime) wrapValue(v *core.AnimatedValue) *goja.Object {
+func (r *runtime) wrapValue(v *core.AnimatedValue) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.SetPrototype(r.anim.valProto)
 	_ = o.SetSymbol(r.anim.key, &animatedRef{node: v, value: v})
@@ -201,7 +201,7 @@ func (r *runtime) wrapValue(v *core.AnimatedValue) *goja.Object {
 }
 
 // operand is a node or a number.
-func (r *runtime) operand(v goja.Value) core.AnimatedNode {
+func (r *runtime) operand(v js.Value) core.AnimatedNode {
 	if n := r.animatedNodeOf(v); n != nil {
 		return n
 	}
@@ -211,20 +211,20 @@ func (r *runtime) operand(v goja.Value) core.AnimatedNode {
 // diffClamp gives the node that clamps n's changes to lo and hi, one per
 // input, bounds and snapping, as NSH's graph shares them: the
 // Animated.diffClamp and the method of the same arguments are one node.
-func (r *runtime) diffClamp(n core.AnimatedNode, lo, hi, options goja.Value) goja.Value {
+func (r *runtime) diffClamp(n core.AnimatedNode, lo, hi, options js.Value) js.Value {
 	snap := r.options(options).bool("snap", false)
 	key := diffClampKey{n, lo.ToFloat(), hi.ToFloat(), snap}
 	if v, ok := r.anim.clamps[key]; ok {
 		return v
 	}
-	var v goja.Value
+	var v js.Value
 	if snap {
 		v = r.wrapNode(core.SnappingDiffClamp(n, key.lo, key.hi))
 	} else {
 		v = r.wrapNode(core.DiffClamp(n, key.lo, key.hi))
 	}
 	if r.anim.clamps == nil {
-		r.anim.clamps = map[diffClampKey]goja.Value{}
+		r.anim.clamps = map[diffClampKey]js.Value{}
 	}
 	r.anim.clamps[key] = v
 	return v
@@ -237,14 +237,14 @@ type diffClampKey struct {
 }
 
 // readValue is a promise of v's value on the platform.
-func (r *runtime) readValue(v *core.AnimatedValue) goja.Value {
+func (r *runtime) readValue(v *core.AnimatedValue) js.Value {
 	p, resolve, _ := r.vm.NewPromise()
 	v.Read(r.cx, func(x float64) { r.inJS(func() { _ = resolve(x) }) })
 	return r.vm.ToValue(p)
 }
 
 // play runs a on the platform: a promise of whether it finished.
-func (r *runtime) play(a *core.Animation) goja.Value {
+func (r *runtime) play(a *core.Animation) js.Value {
 	p, resolve, _ := r.vm.NewPromise()
 	r.cx.StartAnimation(a, func(finished bool) { r.inJS(func() { _ = resolve(finished) }) })
 	return r.vm.ToValue(p)
@@ -253,23 +253,23 @@ func (r *runtime) play(a *core.Animation) goja.Value {
 // inJS runs fn as a call into JS, so the promise jobs it queues run as it
 // returns.
 func (r *runtime) inJS(fn func()) {
-	r.call(r.function(func(goja.FunctionCall) goja.Value {
+	r.call(r.function(func(js.FunctionCall) js.Value {
 		fn()
-		return goja.Undefined()
+		return js.Undefined()
 	}))
 }
 
 // composite makes a CompositeAnimation of what anim makes, made again at
 // each start.
-func (r *runtime) composite(anim func() *core.Animation) *goja.Object {
+func (r *runtime) composite(anim func() *core.Animation) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.SetPrototype(r.anim.compProto)
 	_ = o.SetSymbol(r.anim.key, &compositeRef{anim: anim})
 	return o
 }
 
-func (r *runtime) compositeOf(v goja.Value) *compositeRef {
-	if o, ok := v.(*goja.Object); ok {
+func (r *runtime) compositeOf(v js.Value) *compositeRef {
+	if o, ok := v.(*js.Object); ok {
 		if s := o.GetSymbol(r.anim.key); s != nil {
 			if c, ok := s.Export().(*compositeRef); ok {
 				return c
@@ -280,7 +280,7 @@ func (r *runtime) compositeOf(v goja.Value) *compositeRef {
 }
 
 // composites reads a list of CompositeAnimations.
-func (r *runtime) composites(v goja.Value) []*compositeRef {
+func (r *runtime) composites(v js.Value) []*compositeRef {
 	items := r.arrayItems(v)
 	out := make([]*compositeRef, len(items))
 	for i, it := range items {
@@ -299,7 +299,7 @@ func anims(cs []*compositeRef) []*core.Animation {
 
 func millis(v float64) time.Duration { return time.Duration(v * float64(time.Millisecond)) }
 
-func (r *runtime) timingConfig(v goja.Value) core.TimingConfig {
+func (r *runtime) timingConfig(v js.Value) core.TimingConfig {
 	o := r.options(v)
 	c := core.TimingConfig{Duration: millis(o.float("duration", 500)), Delay: millis(o.float("delay", 0))}
 	if e, ok := r.easing(o.get("easing")); ok {
@@ -310,13 +310,13 @@ func (r *runtime) timingConfig(v goja.Value) core.TimingConfig {
 	return c
 }
 
-func (r *runtime) springConfig(v goja.Value) core.SpringConfig {
+func (r *runtime) springConfig(v js.Value) core.SpringConfig {
 	o := r.options(v)
 	return core.SpringConfig{Stiffness: o.float("stiffness", 0), Damping: o.float("damping", 0),
 		Mass: o.float("mass", 0), Velocity: o.float("velocity", 0)}
 }
 
-func (r *runtime) decayConfig(v goja.Value) core.DecayConfig {
+func (r *runtime) decayConfig(v js.Value) core.DecayConfig {
 	o := r.options(v)
 	c := core.DecayConfig{Velocity: o.float("velocity", 0), Deceleration: o.float("deceleration", 0),
 		Bounce: o.float("bounce", 0)}
@@ -351,7 +351,7 @@ var stepPositions = map[string]core.StepPosition{"jump-start": core.JumpStart, "
 
 // easing decodes a name, [x1, y1, x2, y2], { curve, param, mode } or
 // { steps, position }; false for anything else.
-func (r *runtime) easing(v goja.Value) (core.Easing, bool) {
+func (r *runtime) easing(v js.Value) (core.Easing, bool) {
 	if !defined(v) {
 		return core.Easing{}, false
 	}
@@ -364,7 +364,7 @@ func (r *runtime) easing(v goja.Value) (core.Easing, bool) {
 		}
 		return core.BezierEasing(core.Curve{X1: p(0), Y1: p(1), X2: p(2), Y2: p(3)}), true
 	}
-	if o, ok := v.(*goja.Object); ok {
+	if o, ok := v.(*js.Object); ok {
 		op := opts{o}
 		if op.has("steps") {
 			n := int(min(max(op.float("steps", 1), 1), 10000))
@@ -382,7 +382,7 @@ func (r *runtime) easing(v goja.Value) (core.Easing, bool) {
 }
 
 // interpolation decodes interpolate's config.
-func (r *runtime) interpolation(v goja.Value) core.Interpolation {
+func (r *runtime) interpolation(v js.Value) core.Interpolation {
 	o := r.options(v)
 	var in core.Interpolation
 	for _, x := range r.arrayItems(o.get("inputRange")) {
@@ -427,7 +427,7 @@ func angleDegrees(s string) float64 {
 }
 
 // keyframeValue reads a keyframe's value: a number or an angle.
-func keyframeValue(v goja.Value) (float64, bool) {
+func keyframeValue(v js.Value) (float64, bool) {
 	if !defined(v) {
 		return 0, false
 	}
@@ -440,7 +440,7 @@ func keyframeValue(v goja.Value) (float64, bool) {
 
 // keyframeStops reads keyframes: numbers spread evenly, or { offset?,
 // value, easing? }.
-func (r *runtime) keyframeStops(v goja.Value) []core.KeyframeStop {
+func (r *runtime) keyframeStops(v js.Value) []core.KeyframeStop {
 	items := r.arrayItems(v)
 	var out []core.KeyframeStop
 	for i, it := range items {
@@ -450,7 +450,7 @@ func (r *runtime) keyframeStops(v goja.Value) []core.KeyframeStop {
 		} else {
 			at = 1
 		}
-		if o, ok := it.(*goja.Object); ok {
+		if o, ok := it.(*js.Object); ok {
 			op := opts{o}
 			x, ok := keyframeValue(op.get("value"))
 			if !ok {
@@ -472,7 +472,7 @@ func (r *runtime) keyframeStops(v goja.Value) []core.KeyframeStop {
 
 // keyframeTiming reads { duration, delay, easing, iterations, direction },
 // with CSS's defaults.
-func (r *runtime) keyframeTiming(v goja.Value) core.KeyframeTiming {
+func (r *runtime) keyframeTiming(v js.Value) core.KeyframeTiming {
 	o := r.options(v)
 	t := core.KeyframeTiming{Duration: millis(max(o.float("duration", 300), 0)), Delay: millis(max(o.float("delay", 0), 0))}
 	if e, ok := r.easing(o.get("easing")); ok {
@@ -504,7 +504,7 @@ var channelOrder = []string{"opacity", "translateX", "translateY", "rotate", "ro
 
 // motionSpec reads a preset's name or { keyframes, ...timing }, keyframes
 // being channels' keyframes or a list of frames of channels.
-func (r *runtime) motionSpec(v goja.Value) (core.MotionSpec, bool) {
+func (r *runtime) motionSpec(v js.Value) (core.MotionSpec, bool) {
 	if !defined(v) {
 		return core.MotionSpec{}, false
 	}
@@ -516,7 +516,7 @@ func (r *runtime) motionSpec(v goja.Value) (core.MotionSpec, bool) {
 		}
 		return core.MotionSpec{}, false
 	}
-	o, ok := v.(*goja.Object)
+	o, ok := v.(*js.Object)
 	if !ok {
 		return core.MotionSpec{}, false
 	}
@@ -526,7 +526,7 @@ func (r *runtime) motionSpec(v goja.Value) (core.MotionSpec, bool) {
 		for _, name := range channelOrder {
 			var stops []core.KeyframeStop
 			for i, it := range items {
-				f, ok := it.(*goja.Object)
+				f, ok := it.(*js.Object)
 				if !ok {
 					continue
 				}
@@ -548,7 +548,7 @@ func (r *runtime) motionSpec(v goja.Value) (core.MotionSpec, bool) {
 				spec.Tracks = append(spec.Tracks, core.MotionTrack{Channel: motionChannels[name], Stops: stops})
 			}
 		}
-	} else if f, ok := frames.(*goja.Object); ok {
+	} else if f, ok := frames.(*js.Object); ok {
 		for _, name := range f.Keys() {
 			c, ok := motionChannels[name]
 			if !ok {
@@ -565,7 +565,7 @@ func (r *runtime) motionSpec(v goja.Value) (core.MotionSpec, bool) {
 }
 
 // withTiming lays play options' timing over spec's.
-func (r *runtime) withTiming(spec core.MotionSpec, options goja.Value) core.MotionSpec {
+func (r *runtime) withTiming(spec core.MotionSpec, options js.Value) core.MotionSpec {
 	o := r.options(options)
 	if o.o == nil {
 		return spec
@@ -591,9 +591,9 @@ func (r *runtime) withTiming(spec core.MotionSpec, options goja.Value) core.Moti
 
 // animatedExports are the animation API of nsgo.
 var animatedExports = []export{
-	{"AnimatedNode", func(r *runtime) goja.Value { return r.anim.nodeClass }},
-	{"AnimatedValue", func(r *runtime) goja.Value { return r.anim.valClass }},
-	fn("createAnimatedValue", func(r *runtime, call goja.FunctionCall) goja.Value {
+	{"AnimatedNode", func(r *runtime) js.Value { return r.anim.nodeClass }},
+	{"AnimatedValue", func(r *runtime) js.Value { return r.anim.valClass }},
+	fn("createAnimatedValue", func(r *runtime, call js.FunctionCall) js.Value {
 		x := 0.0
 		if defined(arg(call, 0)) {
 			x = arg(call, 0).ToFloat()
@@ -607,44 +607,44 @@ var animatedExports = []export{
 	{"LayoutAnimation", (*runtime).layoutAnimationModule},
 }
 
-func (r *runtime) animatedModule() goja.Value {
+func (r *runtime) animatedModule() js.Value {
 	m := r.vm.NewObject()
-	set := func(name string, f func(call goja.FunctionCall) goja.Value) { _ = m.Set(name, r.function(f)) }
-	value := func(v goja.Value) *core.AnimatedValue {
+	set := func(name string, f func(call js.FunctionCall) js.Value) { _ = m.Set(name, r.function(f)) }
+	value := func(v js.Value) *core.AnimatedValue {
 		x := r.animatedValueOf(v)
 		if x == nil {
 			panic(r.vm.NewTypeError("nsgo: not an AnimatedValue"))
 		}
 		return x
 	}
-	set("timing", func(call goja.FunctionCall) goja.Value {
+	set("timing", func(call js.FunctionCall) js.Value {
 		v, cfg := value(arg(call, 0)), arg(call, 1)
 		to, c := r.options(cfg).float("toValue", 0), r.timingConfig(cfg)
 		return r.composite(func() *core.Animation { return core.Timing(v, to, c) })
 	})
-	set("spring", func(call goja.FunctionCall) goja.Value {
+	set("spring", func(call js.FunctionCall) js.Value {
 		v, cfg := value(arg(call, 0)), arg(call, 1)
 		to, c := r.options(cfg).float("toValue", 0), r.springConfig(cfg)
 		return r.composite(func() *core.Animation { return core.Spring(v, to, c) })
 	})
-	set("decay", func(call goja.FunctionCall) goja.Value {
+	set("decay", func(call js.FunctionCall) js.Value {
 		v, c := value(arg(call, 0)), r.decayConfig(arg(call, 1))
 		return r.composite(func() *core.Animation { return core.Decay(v, c) })
 	})
-	set("keyframes", func(call goja.FunctionCall) goja.Value {
+	set("keyframes", func(call js.FunctionCall) js.Value {
 		v, cfg := value(arg(call, 0)), arg(call, 1)
 		t, stops := r.keyframeTiming(cfg), r.keyframeStops(r.options(cfg).get("keyframes"))
 		return r.composite(func() *core.Animation { return core.ValueKeyframes(v, t, stops...) })
 	})
-	set("sequence", func(call goja.FunctionCall) goja.Value {
+	set("sequence", func(call js.FunctionCall) js.Value {
 		cs := r.composites(arg(call, 0))
 		return r.composite(func() *core.Animation { return core.Sequence(anims(cs)...) })
 	})
-	set("parallel", func(call goja.FunctionCall) goja.Value {
+	set("parallel", func(call js.FunctionCall) js.Value {
 		cs := r.composites(arg(call, 0))
 		return r.composite(func() *core.Animation { return core.Parallel(anims(cs)...) })
 	})
-	set("stagger", func(call goja.FunctionCall) goja.Value {
+	set("stagger", func(call js.FunctionCall) js.Value {
 		d, cs := millis(arg(call, 0).ToFloat()), r.composites(arg(call, 1))
 		from := r.options(arg(call, 2)).get("from")
 		return r.composite(func() *core.Animation {
@@ -667,11 +667,11 @@ func (r *runtime) animatedModule() goja.Value {
 			return core.Parallel(out...)
 		})
 	})
-	set("delay", func(call goja.FunctionCall) goja.Value {
+	set("delay", func(call js.FunctionCall) js.Value {
 		d := millis(arg(call, 0).ToFloat())
 		return r.composite(func() *core.Animation { return core.Delay(d) })
 	})
-	set("loop", func(call goja.FunctionCall) goja.Value {
+	set("loop", func(call js.FunctionCall) js.Value {
 		c, o := r.compositeOf(arg(call, 0)), r.options(arg(call, 1))
 		n := -1
 		if it := o.float("iterations", -1); it >= 0 {
@@ -684,30 +684,30 @@ func (r *runtime) animatedModule() goja.Value {
 	})
 	for name, op := range map[string]func(a, b core.AnimatedNode) core.AnimatedNode{
 		"add": core.Add, "subtract": core.Sub, "multiply": core.Mul, "divide": core.Div, "modulo": core.Mod} {
-		set(name, func(call goja.FunctionCall) goja.Value {
+		set(name, func(call js.FunctionCall) js.Value {
 			return r.wrapNode(op(r.operand(arg(call, 0)), r.operand(arg(call, 1))))
 		})
 	}
-	set("diffClamp", func(call goja.FunctionCall) goja.Value {
+	set("diffClamp", func(call js.FunctionCall) js.Value {
 		return r.diffClamp(r.operand(arg(call, 0)), call.Argument(1), call.Argument(2), call.Argument(3))
 	})
-	set("sampleSpring", func(call goja.FunctionCall) goja.Value {
+	set("sampleSpring", func(call js.FunctionCall) js.Value {
 		o := r.options(arg(call, 0))
 		return r.vm.ToValue(core.SampleSpring(o.float("from", 0), o.float("toValue", 0), r.springConfig(arg(call, 0))))
 	})
-	set("sampleDecay", func(call goja.FunctionCall) goja.Value {
+	set("sampleDecay", func(call js.FunctionCall) js.Value {
 		o := r.options(arg(call, 0))
 		return r.vm.ToValue(core.SampleDecay(o.float("from", 0), r.decayConfig(arg(call, 0))))
 	})
 	return m
 }
 
-func (r *runtime) easingModule() goja.Value {
+func (r *runtime) easingModule() js.Value {
 	m := r.vm.NewObject()
 	for _, name := range []string{"linear", "ease"} {
 		_ = m.Set(name, name)
 	}
-	curve := func(name string, param any) *goja.Object {
+	curve := func(name string, param any) *js.Object {
 		o := r.vm.NewObject()
 		_ = o.Set("curve", name)
 		if param != nil {
@@ -721,7 +721,7 @@ func (r *runtime) easingModule() goja.Value {
 	}
 	for _, name := range []string{"poly", "elastic", "back"} {
 		def := easingCurves[name].param
-		_ = m.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+		_ = m.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			p := def
 			if defined(arg(call, 0)) {
 				p = arg(call, 0).ToFloat()
@@ -729,10 +729,10 @@ func (r *runtime) easingModule() goja.Value {
 			return curve(name, p)
 		}))
 	}
-	_ = m.Set("bezier", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = m.Set("bezier", r.function(func(call js.FunctionCall) js.Value {
 		return r.vm.NewArray(arg(call, 0), arg(call, 1), arg(call, 2), arg(call, 3))
 	}))
-	_ = m.Set("steps", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = m.Set("steps", r.function(func(call js.FunctionCall) js.Value {
 		o := r.vm.NewObject()
 		_ = o.Set("steps", arg(call, 0))
 		if defined(arg(call, 1)) {
@@ -741,13 +741,13 @@ func (r *runtime) easingModule() goja.Value {
 		return o
 	}))
 	for _, mode := range []string{"in", "out", "inOut"} {
-		_ = m.Set(mode, r.function(func(call goja.FunctionCall) goja.Value {
+		_ = m.Set(mode, r.function(func(call js.FunctionCall) js.Value {
 			e := arg(call, 0)
 			if items := r.arrayItems(e); items != nil && mode == "out" && len(items) == 4 {
 				f := func(i int) float64 { return 1 - items[i].ToFloat() }
 				return r.vm.NewArray(f(2), f(3), f(0), f(1))
 			}
-			if o, ok := e.(*goja.Object); ok && r.arrayItems(e) == nil {
+			if o, ok := e.(*js.Object); ok && r.arrayItems(e) == nil {
 				c := r.vm.NewObject()
 				for _, k := range o.Keys() {
 					_ = c.Set(k, o.Get(k))
@@ -766,7 +766,7 @@ func (r *runtime) easingModule() goja.Value {
 			return e
 		}))
 	}
-	_ = m.Set("sample", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = m.Set("sample", r.function(func(call js.FunctionCall) js.Value {
 		e, _ := r.easing(arg(call, 0))
 		return r.vm.ToValue(core.SampleEasing(e, int(arg(call, 1).ToInteger())))
 	}))
@@ -781,7 +781,7 @@ var layoutProperties = map[string]core.LayoutProperty{"opacity": core.LayoutOpac
 	"scaleXY": core.LayoutScale, "scale": core.LayoutScale}
 
 // layoutAnimation decodes { duration, create, update, delete }.
-func (r *runtime) layoutAnimation(v goja.Value) core.LayoutAnimation {
+func (r *runtime) layoutAnimation(v js.Value) core.LayoutAnimation {
 	o := r.options(v)
 	duration := o.float("duration", 0)
 	phase := func(k string) *core.LayoutTransition {
@@ -801,8 +801,8 @@ func (r *runtime) layoutAnimation(v goja.Value) core.LayoutAnimation {
 }
 
 // layoutPreset is { duration, create, update, delete } of NSH's presets.
-func (r *runtime) layoutPreset(duration float64, kind, property string) *goja.Object {
-	phase := func(withProperty bool) *goja.Object {
+func (r *runtime) layoutPreset(duration float64, kind, property string) *js.Object {
+	phase := func(withProperty bool) *js.Object {
 		p := r.vm.NewObject()
 		_ = p.Set("type", kind)
 		if withProperty {
@@ -821,17 +821,17 @@ func (r *runtime) layoutPreset(duration float64, kind, property string) *goja.Ob
 	return o
 }
 
-func (r *runtime) layoutAnimationModule() goja.Value {
+func (r *runtime) layoutAnimationModule() js.Value {
 	m := r.vm.NewObject()
-	_ = m.Set("configureNext", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = m.Set("configureNext", r.function(func(call js.FunctionCall) js.Value {
 		r.cx.AnimateLayout(r.layoutAnimation(arg(call, 0)))
 		if end := arg(call, 1); isFunction(end) {
 			d := r.options(arg(call, 0)).float("duration", 0)
 			r.cx.AfterFunc(millis(d), func() { r.call(end) })
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}))
-	_ = m.Set("create", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = m.Set("create", r.function(func(call js.FunctionCall) js.Value {
 		kind, property := "easeInEaseOut", "opacity"
 		if defined(arg(call, 1)) {
 			kind = arg(call, 1).String()
@@ -841,7 +841,7 @@ func (r *runtime) layoutAnimationModule() goja.Value {
 		}
 		return r.layoutPreset(arg(call, 0).ToFloat(), kind, property)
 	}))
-	names := func(list ...string) *goja.Object {
+	names := func(list ...string) *js.Object {
 		o := r.vm.NewObject()
 		for _, n := range list {
 			_ = o.Set(n, n)
@@ -850,7 +850,7 @@ func (r *runtime) layoutAnimationModule() goja.Value {
 	}
 	_ = m.Set("Types", names("easeInEaseOut", "spring", "linear", "easeIn", "easeOut", "keyboard"))
 	_ = m.Set("Properties", names("opacity", "scaleXY"))
-	presets := map[string]*goja.Object{
+	presets := map[string]*js.Object{
 		"easeInEaseOut": r.layoutPreset(300, "easeInEaseOut", "opacity"),
 		"linear":        r.layoutPreset(500, "linear", "opacity"),
 		"spring":        r.layoutPreset(700, "spring", "opacity"),
@@ -859,7 +859,7 @@ func (r *runtime) layoutAnimationModule() goja.Value {
 	for _, name := range []string{"easeInEaseOut", "linear", "spring"} {
 		_ = p.Set(name, presets[name])
 		preset := presets[name]
-		_ = m.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
+		_ = m.Set(name, r.function(func(call js.FunctionCall) js.Value {
 			return r.call(m.Get("configureNext"), preset, arg(call, 0))
 		}))
 	}
@@ -868,7 +868,7 @@ func (r *runtime) layoutAnimationModule() goja.Value {
 }
 
 // motions are the presets as data: { kind, keyframes, ...timing }.
-func (r *runtime) motions() goja.Value {
+func (r *runtime) motions() js.Value {
 	m := r.vm.NewObject()
 	kinds := map[core.MotionKind]string{core.MotionEnter: "enter", core.MotionExit: "exit",
 		core.MotionAttention: "attention", core.MotionLoop: "loop"}
@@ -905,7 +905,7 @@ func (r *runtime) motions() goja.Value {
 }
 
 // createMotion is `createMotion({ initial, enter, ...play options })`.
-func (r *runtime) createMotion(call goja.FunctionCall) goja.Value {
+func (r *runtime) createMotion(call js.FunctionCall) js.Value {
 	opt := arg(call, 0)
 	o := r.options(opt)
 	var enter *core.MotionSpec
@@ -922,15 +922,15 @@ func (r *runtime) createMotion(call goja.FunctionCall) goja.Value {
 		}
 	}
 	obj := r.vm.NewObject()
-	values := map[string]*goja.Object{}
+	values := map[string]*js.Object{}
 	for _, name := range channelOrder {
 		values[name] = r.wrapValue(m.Value(motionChannels[name]))
 		_ = obj.Set(name, values[name])
 	}
-	scale := func(axis string) goja.Value {
+	scale := func(axis string) js.Value {
 		return r.wrapNode(core.Mul(m.Value(core.MotionScale), m.Value(motionChannels[axis])))
 	}
-	step := func(k string, v goja.Value) *goja.Object {
+	step := func(k string, v js.Value) *js.Object {
 		s := r.vm.NewObject()
 		_ = s.Set(k, v)
 		return s
@@ -944,18 +944,18 @@ func (r *runtime) createMotion(call goja.FunctionCall) goja.Value {
 	_ = obj.Set("style", style)
 	_ = obj.Set("transform", transform)
 	var run *core.AnimationRun
-	spec := func(v, options goja.Value) core.MotionSpec {
+	spec := func(v, options js.Value) core.MotionSpec {
 		s, ok := r.motionSpec(v)
 		if !ok {
 			panic(r.vm.NewTypeError("nsgo: no motion %s", v))
 		}
 		return r.withTiming(s, options)
 	}
-	reduced := func(options goja.Value) bool {
+	reduced := func(options js.Value) bool {
 		return !r.options(options).bool("ignoreReduceMotion", o.bool("ignoreReduceMotion", false)) &&
 			core.Untracked(r.cx, func() bool { return r.cx.Env().ReduceMotion() })
 	}
-	_ = obj.Set("play", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = obj.Set("play", r.function(func(call js.FunctionCall) js.Value {
 		s, options := spec(arg(call, 0), arg(call, 1)), arg(call, 1)
 		if run != nil {
 			run.Stop()
@@ -966,17 +966,17 @@ func (r *runtime) createMotion(call goja.FunctionCall) goja.Value {
 		})
 		return r.vm.ToValue(p)
 	}))
-	_ = obj.Set("animation", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = obj.Set("animation", r.function(func(call js.FunctionCall) js.Value {
 		s, options := spec(arg(call, 0), arg(call, 1)), arg(call, 1)
 		return r.composite(func() *core.Animation { return m.Animation(s, reduced(options)) })
 	}))
-	_ = obj.Set("stop", r.function(func(goja.FunctionCall) goja.Value {
+	_ = obj.Set("stop", r.function(func(js.FunctionCall) js.Value {
 		if run != nil {
 			run.Stop()
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}))
-	_ = obj.Set("reset", r.function(func(goja.FunctionCall) goja.Value {
+	_ = obj.Set("reset", r.function(func(js.FunctionCall) js.Value {
 		if run != nil {
 			run.Stop()
 		}
@@ -987,7 +987,7 @@ func (r *runtime) createMotion(call goja.FunctionCall) goja.Value {
 			}
 			m.Value(motionChannels[name]).Set(v)
 		}
-		return goja.Undefined()
+		return js.Undefined()
 	}))
 	return obj
 }

@@ -20,7 +20,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 | NSH | NSGo | Why |
 | --- | --- | --- |
 | A Rust core; apps in TSX, Rust components optional | A Go core; apps in Go, TSX on top of it | Go apps are native code compiled with the engine |
-| QuickJS, a C library, runs every app | goja, written in Go, runs TSX apps only | No C and no cgo on any target |
+| QuickJS, a C library, runs every native app | goja, written in Go, runs TSX apps only, and the page's engine on the web as NSH's | No C and no cgo on any target |
 | The `taffy` crate | A Go port of Taffy 0.15's algorithms | Go has no Taffy; its fixtures prove the port |
 
 ### Go's API shape
@@ -74,7 +74,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 
 - The standard modules (`fs/promises`, `process`, `net`, `buffer`, ...) and WebSockets. Go apps use Go's libraries with `Scope.Post`, and TSX modules reach the host app instead.
 - `EngineContext`, since a host gives each engine's app function its values directly.
-- QuickJS's bytecode and heap limit: goja has neither ([TSX](tsx.md#the-engine)).
+- QuickJS's bytecode and heap limit: goja has neither ([TSX](tsx.md#the-engines)).
 - The GPUI backend and the LayerFS trial.
 - 32-bit Android (`armeabi-v7a`), since Go links android/arm only with cgo and an NDK.
 

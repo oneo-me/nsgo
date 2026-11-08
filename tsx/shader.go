@@ -3,7 +3,7 @@ package tsx
 import (
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -42,8 +42,8 @@ func (r *runtime) program(src string) *core.ShaderProgram {
 // uniforms decodes a uniforms object for p: numbers, booleans, CSS
 // colors, animated nodes and lists of them two levels deep. A name the
 // program lacks is left out, once logged.
-func (r *runtime) uniforms(p *core.ShaderProgram, v goja.Value) core.Uniforms {
-	o, ok := v.(*goja.Object)
+func (r *runtime) uniforms(p *core.ShaderProgram, v js.Value) core.Uniforms {
+	o, ok := v.(*js.Object)
 	if !ok || p == nil {
 		return nil
 	}
@@ -60,14 +60,14 @@ func (r *runtime) uniforms(p *core.ShaderProgram, v goja.Value) core.Uniforms {
 	return u
 }
 
-func (r *runtime) uniform(v goja.Value, depth int) any {
+func (r *runtime) uniform(v js.Value, depth int) any {
 	if !defined(v) {
 		return nil
 	}
 	if n := r.animatedNodeOf(v); n != nil {
 		return n
 	}
-	if o, ok := v.(*goja.Object); ok && depth < 2 && o.ClassName() == "Array" {
+	if o, ok := v.(*js.Object); ok && depth < 2 && o.ClassName() == "Array" {
 		var out []any
 		for _, k := range o.Keys() {
 			if x := r.uniform(o.Get(k), depth+1); x != nil {
@@ -201,7 +201,7 @@ func screenTransitionFace(p *props) core.Node {
 // transitionShader decodes a page's or a dialog's transitionShader:
 // { source, uniforms, duration }.
 func (p *props) transitionShader() *core.TransitionShader {
-	o, ok := p.get("transitionShader").(*goja.Object)
+	o, ok := p.get("transitionShader").(*js.Object)
 	if !ok {
 		return nil
 	}

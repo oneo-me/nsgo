@@ -256,7 +256,24 @@ func keyboardImpl() objc.ID {
 	return objc.ID(class).Send(sel("activeInstance"))
 }
 
+// typeLatin switches the keyboard to US English as typing starts, so the
+// keys a test presses type their letters whatever the simulator's language
+// makes the keyboard, as a pinyin one would compose them into characters.
+func typeLatin() {
+	ctl := objc.ID(objc.GetClass("UIKeyboardInputModeController"))
+	mode := objc.ID(objc.GetClass("UIKeyboardInputMode"))
+	if ctl == 0 || mode == 0 {
+		return
+	}
+	ctl = ctl.Send(sel("sharedInputModeController"))
+	en := mode.Send(sel("keyboardInputModeWithIdentifier:"), apple.NSString("en_US@sw=QWERTY;hw=Automatic"))
+	if ctl != 0 && en != 0 {
+		ctl.Send(sel("setCurrentInputMode:"), en)
+	}
+}
+
 func (t *testSurface) Type(text string) error {
+	onMainSync(typeLatin)
 	for _, r := range text {
 		onMainSync(func() {
 			if kb := keyboardImpl(); kb != 0 {

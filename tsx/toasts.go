@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/base/toast"
@@ -27,9 +27,9 @@ var alertRoles = map[string]core.AlertRole{"default": core.AlertDefault, "cancel
 
 // alertDialog is AlertDialog: show(options) resolves with the chosen
 // action's id, else its label, or null when closed without one.
-func (r *runtime) alertDialog() goja.Value {
+func (r *runtime) alertDialog() js.Value {
 	o := r.vm.NewObject()
-	_ = o.Set("show", r.function(func(call goja.FunctionCall) goja.Value {
+	_ = o.Set("show", r.function(func(call js.FunctionCall) js.Value {
 		opt := r.options(arg(call, 0))
 		d := base.AlertDialog{Title: opt.str("title", ""), Description: opt.str("description", "")}
 		if opt.str("presentation", "") == "actionSheet" {
@@ -61,10 +61,10 @@ func (r *runtime) alertDialog() goja.Value {
 		}
 		p, done := r.promise()
 		base.ShowAlertDialog(r.cx, d, func(label string) {
-			done(func() goja.Value {
+			done(func() js.Value {
 				switch id, ok := ids[label]; {
 				case label == "":
-					return goja.Null()
+					return js.Null()
 				case ok:
 					return r.vm.ToValue(id)
 				}
@@ -77,11 +77,11 @@ func (r *runtime) alertDialog() goja.Value {
 }
 
 // toastKey holds a JS ToastManager's toast.Manager.
-var toastKey = goja.NewSymbol("nsgo.toasts")
+var toastKey = js.NewSymbol("nsgo.toasts")
 
-type toastManager = toast.Manager[string, goja.Value]
+type toastManager = toast.Manager[string, js.Value]
 
-func (r *runtime) toastMotion(v goja.Value) toast.Motion {
+func (r *runtime) toastMotion(v js.Value) toast.Motion {
 	o := r.options(v)
 	return toast.Motion{Duration: millis(o.float("duration", 0)), ExitDuration: millis(o.float("exitDuration", 0)),
 		CollapsedPeek: core.Points(o.float("collapsedPeek", 0)), ExpandedGap: core.Points(o.float("expandedGap", 0)),
@@ -90,16 +90,16 @@ func (r *runtime) toastMotion(v goja.Value) toast.Motion {
 
 // toastManagerClass is the ToastManager class: base's manager on the
 // app's clock.
-func (r *runtime) toastManagerClass() goja.Value {
-	class := r.vm.ToValue(func(call goja.ConstructorCall) *goja.Object {
+func (r *runtime) toastManagerClass() js.Value {
+	class := r.vm.ToValue(func(call js.ConstructorCall) *js.Object {
 		m := &toastManager{Motion: r.toastMotion(call.Argument(0))}
 		_ = call.This.SetSymbol(toastKey, m)
 		return nil
-	}).(*goja.Object)
-	proto := class.Get("prototype").(*goja.Object)
-	method := func(name string, f func(m *toastManager, call goja.FunctionCall) goja.Value) {
-		_ = proto.Set(name, r.function(func(call goja.FunctionCall) goja.Value {
-			o, _ := call.This.(*goja.Object)
+	}).(*js.Object)
+	proto := class.Get("prototype").(*js.Object)
+	method := func(name string, f func(m *toastManager, call js.FunctionCall) js.Value) {
+		_ = proto.Set(name, r.function(func(call js.FunctionCall) js.Value {
+			o, _ := call.This.(*js.Object)
 			var m *toastManager
 			if o != nil {
 				if s := o.GetSymbol(toastKey); s != nil {
@@ -113,7 +113,7 @@ func (r *runtime) toastManagerClass() goja.Value {
 		}))
 	}
 	now := func() time.Time { return r.cx.Now() }
-	entry := func(e toast.Entry[string, goja.Value]) *goja.Object {
+	entry := func(e toast.Entry[string, js.Value]) *js.Object {
 		o := r.vm.NewObject()
 		_ = o.Set("id", e.ID)
 		_ = o.Set("value", e.Value)
@@ -121,7 +121,7 @@ func (r *runtime) toastManagerClass() goja.Value {
 			toast.Ending: "ending"}[e.Status])
 		return o
 	}
-	entries := func(es []toast.Entry[string, goja.Value]) goja.Value {
+	entries := func(es []toast.Entry[string, js.Value]) js.Value {
 		out := make([]any, len(es))
 		for i, e := range es {
 			out[i] = entry(e)
@@ -129,28 +129,28 @@ func (r *runtime) toastManagerClass() goja.Value {
 		return r.vm.NewArray(out...)
 	}
 	// strings is a JS array of ids, empty without any.
-	strings := func(ids []string) goja.Value {
+	strings := func(ids []string) js.Value {
 		out := make([]any, len(ids))
 		for i, id := range ids {
 			out[i] = id
 		}
 		return r.vm.NewArray(out...)
 	}
-	method("push", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("push", func(m *toastManager, call js.FunctionCall) js.Value {
 		timeout := millis(r.options(arg(call, 2)).float("timeout", 4000))
 		old, ok := m.Push(arg(call, 0).String(), arg(call, 1), timeout, now())
 		if !ok {
-			return goja.Null()
+			return js.Null()
 		}
 		return old
 	})
-	method("dismiss", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("dismiss", func(m *toastManager, call js.FunctionCall) js.Value {
 		return r.vm.ToValue(m.Dismiss(arg(call, 0).String(), now()))
 	})
-	method("dismissAll", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("dismissAll", func(m *toastManager, call js.FunctionCall) js.Value {
 		return strings(m.DismissAll(now()))
 	})
-	method("advance", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("advance", func(m *toastManager, call js.FunctionCall) js.Value {
 		a := m.Advance(now(), arg(call, 0).ToBoolean())
 		o := r.vm.NewObject()
 		_ = o.Set("changed", a.Changed)
@@ -159,22 +159,22 @@ func (r *runtime) toastManagerClass() goja.Value {
 		_ = o.Set("removed", entries(a.Removed))
 		return o
 	})
-	method("entries", func(m *toastManager, call goja.FunctionCall) goja.Value { return entries(m.Entries()) })
-	method("visible", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("entries", func(m *toastManager, call js.FunctionCall) js.Value { return entries(m.Entries()) })
+	method("visible", func(m *toastManager, call js.FunctionCall) js.Value {
 		return entries(m.Visible(int(arg(call, 0).ToInteger())))
 	})
-	method("get", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("get", func(m *toastManager, call js.FunctionCall) js.Value {
 		v, ok := m.Get(arg(call, 0).String())
 		if !ok {
-			return goja.Null()
+			return js.Null()
 		}
 		return v
 	})
-	method("len", func(m *toastManager, call goja.FunctionCall) goja.Value { return r.vm.ToValue(m.Len()) })
-	method("isEmpty", func(m *toastManager, call goja.FunctionCall) goja.Value { return r.vm.ToValue(m.Len() == 0) })
-	method("dispose", func(m *toastManager, call goja.FunctionCall) goja.Value {
+	method("len", func(m *toastManager, call js.FunctionCall) js.Value { return r.vm.ToValue(m.Len()) })
+	method("isEmpty", func(m *toastManager, call js.FunctionCall) js.Value { return r.vm.ToValue(m.Len() == 0) })
+	method("dispose", func(m *toastManager, call js.FunctionCall) js.Value {
 		m.DismissAll(now())
-		return goja.Undefined()
+		return js.Undefined()
 	})
 	return class
 }
@@ -185,10 +185,10 @@ func toastStackFace(p *props) core.Node {
 	// The children made again only as what they read changes, as <Each>
 	// keeps its rows: made at each read, they would be other nodes, which
 	// the stack could not match.
-	children := core.NewMemoFunc(r.cx, func() goja.Value { return p.get("children") }, nil)
-	return toast.Stack[goja.Value, any]{
-		Toasts: func() []goja.Value {
-			var out []goja.Value
+	children := core.NewMemoFunc(r.cx, func() js.Value { return p.get("children") }, nil)
+	return toast.Stack[js.Value, any]{
+		Toasts: func() []js.Value {
+			var out []js.Value
 			for _, it := range r.resolve(children.Get(), nil, 0) {
 				if it.node != nil {
 					out = append(out, it.node.value())
@@ -196,9 +196,9 @@ func toastStackFace(p *props) core.Node {
 			}
 			return out
 		},
-		Key: func(v goja.Value) any { return keyOf(v) },
-		Toast: func(cx *core.Scope, item func() goja.Value) core.Node {
-			return r.region(func() goja.Value { return item() })
+		Key: func(v js.Value) any { return keyOf(v) },
+		Toast: func(cx *core.Scope, item func() js.Value) core.Node {
+			return r.region(func() js.Value { return item() })
 		},
 		Motion:          r.toastMotion(p.get("motion")),
 		Placement:       r.decode(p.get("placement"), reflect.TypeFor[toast.Anchor]()).Interface().(toast.Anchor),
@@ -215,7 +215,7 @@ func toastStackFace(p *props) core.Node {
 	}
 }
 
-func callIf(p *props, name string, args ...goja.Value) {
+func callIf(p *props, name string, args ...js.Value) {
 	if h := p.handler(name); h != nil {
 		h(args...)
 	}

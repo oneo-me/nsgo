@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -28,7 +28,7 @@ func (n *node) Blur() {
 }
 
 // SetSelection selects start..end of an <Input>, a caret without end.
-func (n *node) SetSelection(start int, end goja.Value) {
+func (n *node) SetSelection(start int, end js.Value) {
 	if n.ref == nil {
 		return
 	}
@@ -40,7 +40,7 @@ func (n *node) SetSelection(start int, end goja.Value) {
 }
 
 // Command calls command name of a native component with args.
-func (n *node) Command(name string, args goja.Value) {
+func (n *node) Command(name string, args js.Value) {
 	if n.ref == nil {
 		return
 	}
@@ -52,7 +52,7 @@ func (n *node) Command(name string, args goja.Value) {
 }
 
 // ScrollTo scrolls a <Scroll> or a List to { x, y, animated }.
-func (n *node) ScrollTo(options goja.Value) {
+func (n *node) ScrollTo(options js.Value) {
 	if n.ref == nil {
 		return
 	}
@@ -61,7 +61,7 @@ func (n *node) ScrollTo(options goja.Value) {
 }
 
 // ZoomTo zooms a zoomable <Scroll> to { scale, x, y, animated }.
-func (n *node) ZoomTo(options goja.Value) {
+func (n *node) ZoomTo(options js.Value) {
 	if n.ref == nil {
 		return
 	}
@@ -74,7 +74,7 @@ func (n *node) ZoomTo(options goja.Value) {
 }
 
 // ScrollToOffset scrolls a List to { offset } along its axis.
-func (n *node) ScrollToOffset(options goja.Value) {
+func (n *node) ScrollToOffset(options js.Value) {
 	if n.ref == nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (n *node) ScrollToOffset(options goja.Value) {
 
 // ScrollToIndex scrolls item { index } of a List into view, placed by
 // viewPosition and viewOffset.
-func (n *node) ScrollToIndex(options goja.Value) {
+func (n *node) ScrollToIndex(options js.Value) {
 	if n.ref == nil {
 		return
 	}
@@ -98,7 +98,7 @@ func (n *node) ScrollToIndex(options goja.Value) {
 }
 
 // ScrollToEnd scrolls a <Scroll> or a List to its content's end.
-func (n *node) ScrollToEnd(options goja.Value) {
+func (n *node) ScrollToEnd(options js.Value) {
 	if n.ref != nil {
 		n.ref.ScrollToEnd(n.r.options(options).bool("animated", true))
 	}
@@ -106,12 +106,12 @@ func (n *node) ScrollToEnd(options goja.Value) {
 
 // Measure resolves with { bounds, pagePosition } once this turn's changes
 // are laid out, or null when the view is not in the tree.
-func (n *node) Measure() *goja.Promise {
+func (n *node) Measure() *js.Promise {
 	p, resolve, _ := n.r.vm.NewPromise()
 	answer := func(frame, page core.Bounds, ok bool) {
 		n.r.inJS(func() {
 			if !ok {
-				_ = resolve(goja.Null())
+				_ = resolve(js.Null())
 				return
 			}
 			o := n.r.vm.NewObject()
@@ -180,14 +180,14 @@ func (n *node) Seek(seconds float64) {
 }
 
 // opts reads an options object: absent keys take the defaults given.
-type opts struct{ o *goja.Object }
+type opts struct{ o *js.Object }
 
-func (r *runtime) options(v goja.Value) opts {
-	o, _ := v.(*goja.Object)
+func (r *runtime) options(v js.Value) opts {
+	o, _ := v.(*js.Object)
 	return opts{o}
 }
 
-func (o opts) get(k string) goja.Value {
+func (o opts) get(k string) js.Value {
 	if o.o == nil {
 		return nil
 	}
@@ -218,9 +218,9 @@ func (o opts) str(k, def string) string {
 }
 
 // defined reports whether v is a value: not missing, undefined or null.
-func defined(v goja.Value) bool { return v != nil && !goja.IsUndefined(v) && !goja.IsNull(v) }
+func defined(v js.Value) bool { return v != nil && !js.IsUndefined(v) && !js.IsNull(v) }
 
-func (r *runtime) bounds(b core.Bounds) *goja.Object {
+func (r *runtime) bounds(b core.Bounds) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("origin", r.point(b.Origin))
 	_ = o.Set("size", r.size(b.Size))

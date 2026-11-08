@@ -490,11 +490,14 @@ func (d *declarer) function(f registeredFunc) {
 }
 
 // signature is a Go call's parameters and result from its first'th
-// parameter, as callGo gives them: an async call's context left out and
-// its result a promise, its error result thrown.
+// parameter, as callGo gives them: an async call's context and a leading
+// scope left out and its result a promise, its error result thrown.
 func (d *declarer) signature(t reflect.Type, first int) string {
 	async := isAsync(t, first)
 	if async {
+		first++
+	}
+	if first < t.NumIn() && t.In(first) == scopeType {
 		first++
 	}
 	d.async = async

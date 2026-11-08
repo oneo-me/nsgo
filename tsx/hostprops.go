@@ -1,7 +1,7 @@
 package tsx
 
 import (
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 	"strconv"
 
 	"github.com/oneo-me/nsgo/core"
@@ -12,7 +12,7 @@ import (
 // of core's elements lacks is logged once.
 
 // viewProp sets a prop of a <View>, reporting whether it has it.
-func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
+func (r *runtime) viewProp(p *core.View, name string, v js.Value) bool {
 	if touchProps[name] {
 		return true // made with the others as the props apply (touches)
 	}
@@ -78,7 +78,7 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 		if n := r.nodeOf(v); n != nil && n.kind == kindFace && n.name == "Tooltip" && n.face != nil {
 			p.Tooltip = faceTooltip{n}
 		} else {
-			p.Tooltip = r.region(func() goja.Value { return v })
+			p.Tooltip = r.region(func() js.Value { return v })
 		}
 	case "focusable":
 		on := v.ToBoolean()
@@ -178,7 +178,7 @@ func (r *runtime) viewProp(p *core.View, name string, v goja.Value) bool {
 // gestures makes v's OnPan, OnPinch and OnRotation from n's gesture
 // props: a gesture's start and end, the moves driving animated values.
 func (r *runtime) gestures(n *node, v *core.View) {
-	get := func(name string) goja.Value {
+	get := func(name string) js.Value {
 		if h := n.values[name]; isFunction(h) {
 			return h
 		}
@@ -243,7 +243,7 @@ var liveRegions = map[string]core.LiveRegion{"none": core.LiveRegionNone, "polit
 	"assertive": core.LiveRegionAssertive}
 
 // textProp sets a prop of a <Text>, reporting whether it has it.
-func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
+func (r *runtime) textProp(p *core.Text, name string, v js.Value) bool {
 	switch name {
 	case "testID":
 		p.TestID = stringOf(v)
@@ -296,7 +296,7 @@ func (r *runtime) textProp(p *core.Text, name string, v goja.Value) bool {
 }
 
 // scrollProp sets a prop of a <Scroll>, reporting whether it has it.
-func (r *runtime) scrollProp(p *core.Scroll, name string, v goja.Value) bool {
+func (r *runtime) scrollProp(p *core.Scroll, name string, v js.Value) bool {
 	if r.behaviorProp(&p.Behavior, name, v) {
 		return true
 	}
@@ -362,7 +362,7 @@ func (r *runtime) scrollProp(p *core.Scroll, name string, v goja.Value) bool {
 
 // behaviorProp sets a prop of how a scroll view scrolls (NSH's
 // ScrollingHostProps), reporting whether it is one.
-func (r *runtime) behaviorProp(b *core.ScrollBehavior, name string, v goja.Value) bool {
+func (r *runtime) behaviorProp(b *core.ScrollBehavior, name string, v js.Value) bool {
 	switch name {
 	case "pagingEnabled":
 		b.Paging = v.ToBoolean()
@@ -414,7 +414,7 @@ func (r *runtime) behaviorProp(b *core.ScrollBehavior, name string, v goja.Value
 }
 
 // scrollBehavior reads the props of how a scroll view scrolls.
-func (r *runtime) scrollBehavior(get func(string) goja.Value) core.ScrollBehavior {
+func (r *runtime) scrollBehavior(get func(string) js.Value) core.ScrollBehavior {
 	var b core.ScrollBehavior
 	for _, name := range []string{"pagingEnabled", "snapToInterval", "snapToOffsets", "snapToAlignment",
 		"decelerationRate", "bounces", "contentInset", "keyboardShouldPersistTaps", "keyboardDismissMode",
@@ -427,15 +427,15 @@ func (r *runtime) scrollBehavior(get func(string) goja.Value) core.ScrollBehavio
 }
 
 // caller calls v when it is a function; nil otherwise.
-func (r *runtime) caller(v goja.Value) func(args ...goja.Value) goja.Value {
+func (r *runtime) caller(v js.Value) func(args ...js.Value) js.Value {
 	if !isFunction(v) {
 		return nil
 	}
-	return func(args ...goja.Value) goja.Value { return r.call(v, args...) }
+	return func(args ...js.Value) js.Value { return r.call(v, args...) }
 }
 
 // scrollHandler gives h { offset }, the content offset of scroll events.
-func (r *runtime) scrollHandler(h func(args ...goja.Value) goja.Value) func(core.ScrollEvent) {
+func (r *runtime) scrollHandler(h func(args ...js.Value) js.Value) func(core.ScrollEvent) {
 	if h == nil {
 		return nil
 	}
@@ -447,14 +447,14 @@ func (r *runtime) scrollHandler(h func(args ...goja.Value) goja.Value) func(core
 }
 
 // scrollEventHandler gives v whole scroll events.
-func (r *runtime) scrollEventHandler(v goja.Value) func(core.ScrollEvent) {
+func (r *runtime) scrollEventHandler(v js.Value) func(core.ScrollEvent) {
 	if !isFunction(v) {
 		return nil
 	}
 	return func(e core.ScrollEvent) { r.call(v, r.scrollEvent(e)) }
 }
 
-func (r *runtime) scrollEvent(e core.ScrollEvent) *goja.Object {
+func (r *runtime) scrollEvent(e core.ScrollEvent) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("offset", r.point(e.Offset))
 	_ = o.Set("contentSize", r.size(e.ContentSize))
@@ -495,7 +495,7 @@ var autoCompletes = map[string]core.AutoComplete{"off": core.AutoCompleteOff, "n
 	"birthdate": core.AutoCompleteBirthdate}
 
 // inputProp sets a prop of an <Input>, reporting whether it has it.
-func (r *runtime) inputProp(p *core.Input, name string, v goja.Value) bool {
+func (r *runtime) inputProp(p *core.Input, name string, v js.Value) bool {
 	switch name {
 	case "value":
 		s := stringOf(v)
@@ -640,7 +640,7 @@ func (r *runtime) inputProp(p *core.Input, name string, v goja.Value) bool {
 }
 
 // imageProp sets a prop of an <Image>, reporting whether it has it.
-func (r *runtime) imageProp(p *core.Image, name string, v goja.Value) bool {
+func (r *runtime) imageProp(p *core.Image, name string, v js.Value) bool {
 	switch name {
 	case "src":
 		p.Source = r.imageSource(v)
@@ -694,8 +694,8 @@ func (r *runtime) imageProp(p *core.Image, name string, v goja.Value) bool {
 
 // imageSource reads a URL, an ImageAsset ({ url, size, scales }) or
 // { uri, width, height }.
-func (r *runtime) imageSource(v goja.Value) core.ImageSource {
-	o, ok := v.(*goja.Object)
+func (r *runtime) imageSource(v js.Value) core.ImageSource {
+	o, ok := v.(*js.Object)
 	if !ok {
 		src := core.ImageSource{URI: r.assetData(stringOf(v))}
 		// A blob: URL's bytes go to the platform, which cannot read it.
@@ -709,7 +709,7 @@ func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 	if b, ok := r.blobs[src.URI]; ok {
 		src.Data = b.bytes
 	}
-	if s, ok := o.Get("size").(*goja.Object); ok {
+	if s, ok := o.Get("size").(*js.Object); ok {
 		src.Size = r.sizeOf(s)
 	} else if op.has("width") && op.has("height") {
 		src.Size = core.Size{Width: core.Points(op.float("width", 0)), Height: core.Points(op.float("height", 0))}
@@ -721,7 +721,7 @@ func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 		}
 		src.Scales = core.ScalesOf(fs...)
 	}
-	if vs, ok := o.Get("variants").(*goja.Object); ok {
+	if vs, ok := o.Get("variants").(*js.Object); ok {
 		src.Variants = map[float32]string{}
 		for _, k := range vs.Keys() {
 			if s, err := strconv.ParseFloat(k, 32); err == nil {
@@ -733,7 +733,7 @@ func (r *runtime) imageSource(v goja.Value) core.ImageSource {
 }
 
 // textHandler wraps a JS handler of a text: onChange({ value }).
-func (r *runtime) textHandler(v goja.Value) func(string) {
+func (r *runtime) textHandler(v js.Value) func(string) {
 	if !isFunction(v) {
 		return nil
 	}
@@ -745,8 +745,8 @@ func (r *runtime) textHandler(v goja.Value) func(string) {
 }
 
 // classList reads `classList`: the classes whose values are truthy.
-func (r *runtime) classList(v goja.Value) string {
-	o, ok := v.(*goja.Object)
+func (r *runtime) classList(v js.Value) string {
+	o, ok := v.(*js.Object)
 	if !ok {
 		return ""
 	}
@@ -780,8 +780,8 @@ var pointerEvents = map[string]core.PointerEvents{"auto": core.PointerEventsAuto
 	"box-none": core.PointerEventsBoxNone, "box-only": core.PointerEventsBoxOnly}
 
 // edges reads a number for every side, or { top, right, bottom, left }.
-func (r *runtime) edges(v goja.Value) core.Edges {
-	if o, ok := v.(*goja.Object); ok {
+func (r *runtime) edges(v js.Value) core.Edges {
+	if o, ok := v.(*js.Object); ok {
 		op := opts{o}
 		return core.Edges{Top: core.Points(op.float("top", 0)), Right: core.Points(op.float("right", 0)),
 			Bottom: core.Points(op.float("bottom", 0)), Left: core.Points(op.float("left", 0))}
@@ -789,14 +789,14 @@ func (r *runtime) edges(v goja.Value) core.Edges {
 	return core.All(core.Points(v.ToFloat()))
 }
 
-func (r *runtime) size(s core.Size) *goja.Object {
+func (r *runtime) size(s core.Size) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("width", js32(s.Width))
 	_ = o.Set("height", js32(s.Height))
 	return o
 }
 
-func (r *runtime) point(p core.Point) *goja.Object {
+func (r *runtime) point(p core.Point) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("x", js32(p.X))
 	_ = o.Set("y", js32(p.Y))
@@ -804,21 +804,21 @@ func (r *runtime) point(p core.Point) *goja.Object {
 }
 
 // sizeEvent is { size }.
-func (r *runtime) sizeEvent(s core.Size) *goja.Object {
+func (r *runtime) sizeEvent(s core.Size) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("size", r.size(s))
 	return o
 }
 
 // handler wraps a JS event handler; nil for anything but a function.
-func (r *runtime) handler(v goja.Value) func() {
+func (r *runtime) handler(v js.Value) func() {
 	if !isFunction(v) {
 		return nil
 	}
 	return func() { r.call(v) }
 }
 
-func (r *runtime) pressHandler(v goja.Value) func(core.PressEvent) {
+func (r *runtime) pressHandler(v js.Value) func(core.PressEvent) {
 	if !isFunction(v) {
 		return nil
 	}
@@ -826,14 +826,14 @@ func (r *runtime) pressHandler(v goja.Value) func(core.PressEvent) {
 }
 
 // pressEvent is { position, pagePosition, modifiers, clickCount }.
-func (r *runtime) pressEvent(e core.PressEvent) *goja.Object {
+func (r *runtime) pressEvent(e core.PressEvent) *js.Object {
 	o := r.pointerEvent(e.Position, e.PagePosition, e.Modifiers)
 	_ = o.Set("clickCount", e.Clicks)
 	return o
 }
 
 // pointerEvent is { position, pagePosition, modifiers }.
-func (r *runtime) pointerEvent(at, page core.Point, mods core.Modifiers) *goja.Object {
+func (r *runtime) pointerEvent(at, page core.Point, mods core.Modifiers) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("position", r.point(at))
 	_ = o.Set("pagePosition", r.point(page))
@@ -850,13 +850,13 @@ func (r *runtime) pointerEvent(at, page core.Point, mods core.Modifiers) *goja.O
 var mouseButtons = map[core.MouseButton]string{core.MouseButtonLeft: "left", core.MouseButtonRight: "right",
 	core.MouseButtonMiddle: "middle", core.MouseButtonBack: "back", core.MouseButtonForward: "forward"}
 
-func (r *runtime) mouseHandler(v goja.Value) func(core.MouseEvent) {
+func (r *runtime) mouseHandler(v js.Value) func(core.MouseEvent) {
 	if !isFunction(v) {
 		return nil
 	}
 	return func(e core.MouseEvent) {
 		o := r.pointerEvent(e.Position, e.PagePosition, e.Modifiers)
-		_ = o.Set("pressedButton", goja.Null())
+		_ = o.Set("pressedButton", js.Null())
 		if b, ok := mouseButtons[e.PressedButton]; ok {
 			_ = o.Set("pressedButton", b)
 		}
@@ -864,7 +864,7 @@ func (r *runtime) mouseHandler(v goja.Value) func(core.MouseEvent) {
 	}
 }
 
-func (r *runtime) layoutHandler(v goja.Value) func(core.Bounds) {
+func (r *runtime) layoutHandler(v js.Value) func(core.Bounds) {
 	if !isFunction(v) {
 		return nil
 	}
@@ -872,13 +872,13 @@ func (r *runtime) layoutHandler(v goja.Value) func(core.Bounds) {
 }
 
 // layoutEvent is { bounds }.
-func (r *runtime) layoutEvent(b core.Bounds) *goja.Object {
+func (r *runtime) layoutEvent(b core.Bounds) *js.Object {
 	o := r.vm.NewObject()
 	_ = o.Set("bounds", r.bounds(b))
 	return o
 }
 
-func stringOf(v goja.Value) string {
+func stringOf(v js.Value) string {
 	if !defined(v) {
 		return ""
 	}

@@ -172,7 +172,7 @@ Run the gallery from the repository root: NSH's gallery in Go, a demo of each el
 
 ```sh
 go tool nsgo dev examples/gallery                   # nsgo.yaml's dev target, exiting with the app
-go tool nsgo dev examples/gallery-tsx               # the gallery's components, written in TSX
+go tool nsgo dev examples/gallery-tsx               # the gallery's components and apps, written in TSX
 go tool nsgo dev -target web examples/gallery       # in the browser, serving until interrupted
 go tool nsgo dev -target ios_simulator examples/gallery
 go tool nsgo dev -target ios examples/gallery       # on the connected iPhone, signed by Xcode

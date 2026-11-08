@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/oneo-me/nsgo/tsx/internal/js"
 
 	"github.com/oneo-me/nsgo/core"
 )
@@ -92,15 +92,15 @@ const hardenSource = `(function (g) {
 	}
 })`
 
-var hardenProgram = goja.MustCompile("harden.js", hardenSource, true)
+var hardenProgram = js.MustCompile("harden.js", hardenSource, true)
 
 func (r *runtime) harden() {
 	v, err := r.vm.RunProgram(hardenProgram)
 	if err != nil {
 		panic(err)
 	}
-	f, _ := goja.AssertFunction(v)
-	if _, err := f(goja.Undefined(), r.vm.GlobalObject()); err != nil {
+	f, _ := js.AssertFunction(v)
+	if _, err := f(js.Undefined(), r.vm.GlobalObject()); err != nil {
 		panic(err)
 	}
 }
