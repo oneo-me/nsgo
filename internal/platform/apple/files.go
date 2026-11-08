@@ -21,8 +21,8 @@ var families = map[string]string{
 	"font": "public.font", "model": "public.3d-content",
 }
 
-// utType returns the UTType class, loading its framework.
-func utType() objc.ID {
+// UTType is the UTType class, its framework loaded.
+func UTType() objc.ID {
 	utiOnce.Do(func() {
 		purego.Dlopen("/System/Library/Frameworks/UniformTypeIdentifiers.framework/UniformTypeIdentifiers", purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	})
@@ -33,7 +33,7 @@ func utType() objc.ID {
 // NSOpenPanel and UIDocumentPickerViewController: every file, as
 // public.data, when r names none or one the system has no type for.
 func ContentTypes(r driver.FilesRequest) objc.ID {
-	class := utType()
+	class := UTType()
 	types := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
 	byExtension := func(ext string) objc.ID {
 		return class.Send(sel("typeWithFilenameExtension:"), NSString(ext))
@@ -78,5 +78,5 @@ func SaveType(name string) objc.ID {
 	if i <= 0 || i == len(name)-1 {
 		return 0
 	}
-	return utType().Send(sel("typeWithFilenameExtension:"), NSString(name[i+1:]))
+	return UTType().Send(sel("typeWithFilenameExtension:"), NSString(name[i+1:]))
 }

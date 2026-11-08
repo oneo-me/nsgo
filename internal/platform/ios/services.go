@@ -258,6 +258,8 @@ var (
 type documentRequest struct {
 	id    uint32
 	limit int
+	// folders says the pick is of folders.
+	folders bool
 	// staged is the directory of the file a save exports, removed once
 	// the picker closed; "" for a pick.
 	staged string
@@ -282,6 +284,8 @@ func (s *surface) presentDocuments(picker objc.ID, req documentRequest) {
 			if req.staged != "" {
 				os.RemoveAll(req.staged)
 				ev.Finished = urls != 0 && objc.Send[int](urls, sel("count")) > 0
+			} else if urls != 0 && req.folders {
+				ev.Data = pickedFolders(urls, req.limit)
 			} else if urls != 0 {
 				var files []driver.File
 				apple.ForEach(urls, func(u objc.ID) {
@@ -316,6 +320,32 @@ func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
 		Send(sel("initForOpeningContentTypes:asCopy:"), apple.ContentTypes(r), true)
 	picker.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
 	s.presentDocuments(picker, documentRequest{id: id, limit: r.Limit})
+}
+
+// pickDirectories presents UIDocumentPickerViewController for folders,
+// which it opens where they are rather than copying them; picking needs
+// no permission.
+func (s *surface) pickDirectories(r driver.DirectoriesRequest, id uint32) {
+	folder := apple.UTType().Send(sel("typeWithIdentifier:"), apple.NSString("public.folder"))
+	types := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), folder)
+	picker := objc.ID(objc.GetClass("UIDocumentPickerViewController")).Send(selAlloc).
+		Send(sel("initForOpeningContentTypes:asCopy:"), types, false)
+	picker.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
+	s.presentDocuments(picker, documentRequest{id: id, limit: r.Limit, folders: true})
+}
+
+// pickedFolders are the folders a document picker opened, at most limit.
+// Each stays in its security scope while the app runs, so the app reads
+// it by its path, as on the desktops.
+func pickedFolders(urls objc.ID, limit int) []driver.Directory {
+	var dirs []driver.Directory
+	apple.ForEach(urls, func(u objc.ID) {
+		if len(dirs) < max(limit, 1) {
+			u.Send(sel("startAccessingSecurityScopedResource"))
+			dirs = append(dirs, driver.Directory{Name: apple.GoString(u.Send(sel("lastPathComponent"))), Path: apple.GoString(u.Send(sel("path")))})
+		}
+	})
+	return dirs
 }
 
 // saveFile presents UIDocumentPickerViewController exporting a copy of

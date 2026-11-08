@@ -39,6 +39,7 @@ func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{
 	"MenusViewState":          {"sidebar", "statusBar", "zoom"},
+	"SystemFolderItems":       {"count"},
 	"SystemCounted":           {"n"},
 	"SystemTitleBarInsets":    {"top", "left", "right"},
 	"SystemClipboardImage":    {"width", "height", "bytes"},
@@ -531,6 +532,7 @@ type Translation struct {
 	SystemPdfsAndImages                          func() string
 	SystemPickAFolder                            func() string
 	SystemNoFolderPicked                         func() string
+	SystemFolderItems                            func(count int) string
 	SystemSaveATextFile                          func() string
 	SystemSaveTheFilePicked                      func() string
 	SystemPickAFileFirst                         func() string
@@ -9197,6 +9199,9 @@ func Supply(lang string, t Translation) {
 	if t.SystemNoFolderPicked != nil {
 		st[textSystemNoFolderPicked] = t.SystemNoFolderPicked()
 	}
+	if t.SystemFolderItems != nil {
+		s.SystemFolderItems = t.SystemFolderItems
+	}
 	if t.SystemSaveATextFile != nil {
 		st[textSystemSaveATextFile] = t.SystemSaveATextFile()
 	}
@@ -17397,6 +17402,44 @@ func SystemNoFolderPicked(cx *core.Scope) string { return For(cx).SystemNoFolder
 // SystemNoFolderPicked says "No folder picked"
 // in the language of msgs.
 func (msgs Messages) SystemNoFolderPicked() string { return msgs.text(textSystemNoFolderPicked) }
+
+// SystemFolderItems says "{count, plural, one {# item} other {# items}}"
+// in the language the app shows under cx.
+func SystemFolderItems(cx *core.Scope, count int) string { return For(cx).SystemFolderItems(count) }
+
+// SystemFolderItems says "{count, plural, one {# item} other {# items}}"
+// in the language of msgs.
+func (msgs Messages) SystemFolderItems(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemFolderItems(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].SystemFolderItems; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			switch i18n.Cardinal("en", float64(count)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" item")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" items")
+			}
+			return b.String()
+		case "zh-Hans":
+			var b strings.Builder
+			switch i18n.Cardinal("zh-Hans", float64(count)) {
+			default:
+				b.WriteString(i18n.FormatNumber("zh-Hans", float64(count)))
+				b.WriteString(" 项")
+			}
+			return b.String()
+		}
+	}
+}
 
 // SystemSaveATextFile says "Save a text file"
 // in the language the app shows under cx.

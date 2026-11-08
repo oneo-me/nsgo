@@ -434,11 +434,14 @@ type PickDirectoriesOptions struct {
 
 // PickDirectories shows the system's folder picker and calls done with
 // the folders the user picked, or none when they cancelled; err says
-// what failed. Each is the user's own folder on disk: NSOpenPanel on
-// macOS, IFileOpenDialog on Windows and GtkFileDialog, through the
-// desktop portal where there is one, on Linux. The pickers need no
-// permission. iOS, Android and the web have none yet and answer with an
-// error.
+// what failed. Each is the user's own folder, which the app reads as an
+// fs.FS: NSOpenPanel on macOS, IFileOpenDialog on Windows, GtkFileDialog,
+// through the desktop portal where there is one, on Linux and
+// UIDocumentPickerViewController on iOS give its path; Android's document
+// tree picker and the web's folder picker give none, so the Directory
+// reads through the platform and the app reads it off the engine's
+// goroutine. Android and the web pick one folder. The pickers need no
+// permission.
 func (cx *Scope) PickDirectories(o PickDirectoriesOptions, done func(dirs []Directory, err error)) {
 	t := cx.tree()
 	if t == nil {

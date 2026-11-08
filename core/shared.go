@@ -382,8 +382,8 @@ type (
 	// FilesRequest is a file pick as the platform carries it out,
 	// PickFilesOptions resolved.
 	FilesRequest = driver.FilesRequest
-	// Directory is a folder the user picked: its name and where it is on
-	// disk.
+	// Directory is a folder the user picked, read as an fs.FS: its name,
+	// and where it is on disk where it has a path.
 	Directory = driver.Directory
 	// DirectoriesRequest is a folder pick as the platform carries it out,
 	// PickDirectoriesOptions resolved.

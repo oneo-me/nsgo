@@ -16,17 +16,21 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ext.SdkExtensions;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Base64;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +38,8 @@ import java.util.List;
  * The services NsgoView performs for the app beyond its views: the
  * clipboard's images and files, opening URLs, the photo picker, whose
  * images it prepares as Go's driver.PickRequest says, the documents UI's
- * file picks and saves, and opening and sharing the app's files, which
- * FileProvider serves.
+ * file and folder picks and saves, reading the folders picked for Go, and
+ * opening and sharing the app's files, which FileProvider serves.
  */
 final class Services {
     private Services() {}
@@ -50,8 +54,8 @@ final class Services {
     /** The largest PNG a clipboard read answers with, as driver.MaxClipboardImage. */
     private static final int MAX_CLIPBOARD_IMAGE = 48 << 20;
 
-    /** The request codes of the photo picker's, the file picker's and the save dialog's activities. */
-    static final int PICK_REQUEST = 0x6e73, FILES_REQUEST = 0x6e74, SAVE_REQUEST = 0x6e75;
+    /** The request codes of the photo picker's, the file picker's, the save dialog's and the folder picker's activities. */
+    static final int PICK_REQUEST = 0x6e73, FILES_REQUEST = 0x6e74, SAVE_REQUEST = 0x6e75, FOLDER_REQUEST = 0x6e76;
 
     /** The directory in the app's cache picked files are copied to, as Go's File.Temporary says. */
     static final String FILES_DIR = "nsgo-files";
@@ -354,17 +358,25 @@ final class Services {
         return uris;
     }
 
-    /** A file pick or a save the documents UI answers: Go's request number and what it asked for. */
+    /** A file or folder pick or a save the documents UI answers: Go's request number and what it asked for. */
     static final class Documents {
         final long count;
         final int limit;
         /** The file a save copies, null for a pick. */
         final String from;
+        /** Whether it picks a folder. */
+        final boolean folder;
 
-        Documents(long count, int limit, String from) {
+        Documents(long count, int limit, String from, boolean folder) {
             this.count = count;
             this.limit = Math.max(limit, 1);
             this.from = from;
+            this.folder = folder;
+        }
+
+        /** The request code of the activity that answers it. */
+        int request() {
+            return folder ? FOLDER_REQUEST : from == null ? FILES_REQUEST : SAVE_REQUEST;
         }
     }
 
@@ -380,6 +392,81 @@ final class Services {
         if (types.length > 1) intent.putExtra(Intent.EXTRA_MIME_TYPES, types);
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, limit > 1);
         return start(activity, intent, FILES_REQUEST);
+    }
+
+    /** Starts the documents UI to pick a folder, which grants its tree, not a path. */
+    static boolean startFolder(Activity activity) {
+        return start(activity, new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), FOLDER_REQUEST);
+    }
+
+    /**
+     * The folder picked as Go's readFolders reads it: a line of its name,
+     * the tree's URI and its root document's ID.
+     */
+    static String pickedTree(Context context, Uri tree) {
+        String root = DocumentsContract.getTreeDocumentId(tree);
+        String name = displayName(context.getContentResolver(), DocumentsContract.buildDocumentUriUsingTree(tree, root));
+        return name.replace('\t', ' ').replace('\n', ' ') + '\t' + tree + '\t' + root + '\n';
+    }
+
+    /**
+     * Lists the folder document of a tree as Go's tree.List reads it: the
+     * count, then each child's name, document ID, whether it is a folder,
+     * size (-1 when its provider does not say) and modification time in
+     * milliseconds (0: unknown).
+     */
+    static void listFolder(Context context, String tree, String document, DataOutputStream out) throws IOException {
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(Uri.parse(tree), document);
+        String[] columns = {DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_SIZE,
+                DocumentsContract.Document.COLUMN_LAST_MODIFIED};
+        try (Cursor c = context.getContentResolver().query(children, columns, null, null, null)) {
+            if (c == null) throw new IOException("no listing for " + children);
+            out.writeInt(c.getCount());
+            while (c.moveToNext()) {
+                Protocol.writeString(out, c.isNull(0) ? "" : c.getString(0));
+                Protocol.writeString(out, c.getString(1));
+                out.writeByte(DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(2)) ? 1 : 0);
+                out.writeLong(c.isNull(3) ? -1 : c.getLong(3));
+                out.writeLong(c.isNull(4) ? 0 : c.getLong(4));
+            }
+        } catch (RuntimeException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Reads at most n bytes of a tree's document from off, fewer only at
+     * its end: in place where its provider gives a file, else skipping
+     * through its stream.
+     */
+    static byte[] readDocument(Context context, String tree, String document, long off, int n) throws IOException {
+        ContentResolver resolver = context.getContentResolver();
+        Uri uri = DocumentsContract.buildDocumentUriUsingTree(Uri.parse(tree), document);
+        ByteBuffer buf = ByteBuffer.allocate(n);
+        try {
+            try (android.os.ParcelFileDescriptor fd = resolver.openFileDescriptor(uri, "r");
+                    FileChannel ch = new FileInputStream(fd.getFileDescriptor()).getChannel()) {
+                while (buf.hasRemaining() && ch.read(buf, off + buf.position()) > 0) {}
+            } catch (IOException e) {
+                // A pipe, which cannot read in place.
+                buf.clear();
+                try (InputStream in = resolver.openInputStream(uri)) {
+                    if (in == null) throw new IOException("no stream for " + uri);
+                    for (long skip = off; skip > 0; ) {
+                        long s = in.skip(skip);
+                        if (s <= 0) return new byte[0];
+                        skip -= s;
+                    }
+                    for (int r; buf.hasRemaining() && (r = in.read(buf.array(), buf.position(), buf.remaining())) > 0; ) {
+                        buf.position(buf.position() + r);
+                    }
+                }
+            }
+        } catch (RuntimeException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+        return java.util.Arrays.copyOf(buf.array(), buf.position());
     }
 
     /** Starts the documents UI to create a document named name of type mime. */

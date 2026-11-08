@@ -790,7 +790,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.pickFiles(*it.Files, it.Count)
 			continue
 		case driver.ItemPickDirectories:
-			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
+			s.pickDirectories(*it.Directories, it.Count)
 			continue
 		case driver.ItemOpenFile:
 			s.openFile(*it.Open, it.Count)

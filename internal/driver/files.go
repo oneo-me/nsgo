@@ -3,6 +3,7 @@ package driver
 import (
 	"bytes"
 	"io"
+	"io/fs"
 	"mime"
 	"os"
 	"path/filepath"
@@ -62,12 +63,42 @@ type DirectoriesRequest struct {
 	Limit int
 }
 
-// Directory is a folder the user picked.
+// Directory is a folder the user picked, which reads what it holds as
+// an fs.FS: names are slash-separated inside it, "." for itself.
 type Directory struct {
 	// Name is its name as the user saw it.
 	Name string
-	// Path is where it is on disk.
+	// Path is where it is on disk, "" on Android and the web, where FS
+	// reads it.
 	Path string
+	// FS reads a folder that has no Path.
+	FS fs.FS
+}
+
+// Open opens the file or folder at name inside d.
+func (d Directory) Open(name string) (fs.File, error) { return d.fsys().Open(name) }
+
+// ReadDir reads the folder at name inside d, sorted by name.
+func (d Directory) ReadDir(name string) ([]fs.DirEntry, error) { return fs.ReadDir(d.fsys(), name) }
+
+// Stat describes the file or folder at name inside d.
+func (d Directory) Stat(name string) (fs.FileInfo, error) { return fs.Stat(d.fsys(), name) }
+
+func (d Directory) fsys() fs.FS {
+	switch {
+	case d.FS != nil:
+		return d.FS
+	case d.Path != "":
+		return os.DirFS(d.Path)
+	}
+	return noFS{}
+}
+
+// noFS is a Directory with neither a path nor an FS, which holds nothing.
+type noFS struct{}
+
+func (noFS) Open(name string) (fs.File, error) {
+	return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
 }
 
 // NoDirectoryPicker is what a platform without a folder picker answers
@@ -228,7 +259,7 @@ func FinishDirectories(r DirectoriesRequest, dirs []Directory) []Directory {
 		dirs = dirs[:n]
 	}
 	for i := range dirs {
-		if d := &dirs[i]; d.Name == "" {
+		if d := &dirs[i]; d.Name == "" && d.Path != "" {
 			d.Name = filepath.Base(d.Path)
 		}
 	}

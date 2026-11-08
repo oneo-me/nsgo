@@ -78,6 +78,9 @@ const (
 	// msgFontData is a font the app registers as it runs, its bytes with
 	// its face's family, weight and slant, before the text that uses it.
 	msgFontData = 14
+	// msgFolder lists a folder of a picked tree or reads part of its file
+	// (folders.go).
+	msgFolder = 15
 
 	// Java to Go.
 	msgStart       = 1
@@ -92,6 +95,7 @@ const (
 	msgHost        = 10 // the embedding host's part of the channel (host.go)
 	msgCaretLines  = 11 // a text layout's lines and clusters, answering msgCarets
 	msgFrame       = 12 // a Choreographer frame began, answering msgWantFrame
+	msgFolderReply = 13 // a folder's entries or a file's bytes, answering msgFolder
 )
 
 // The parts of an image view's request msgImage carries.
@@ -135,6 +139,8 @@ type surface struct {
 	// to for Java to copy, by save, until it answers; smu guards them.
 	smu    sync.Mutex
 	staged map[uint32]string
+	// folders are the folder picks and reads Java has yet to answer.
+	folders folders
 
 	// testReply takes the runtime's answers to a test host's steps.
 	testReply func(r *reader)
@@ -260,7 +266,11 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 			case driver.EventPick:
 				ev.Data = readPicked(data)
 			case driver.EventFiles:
-				ev.Data = readFiles(data)
+				if s.pickedFolders(ev.Count) {
+					ev.Data = s.readFolders(data)
+				} else {
+					ev.Data = readFiles(data)
+				}
 				s.unstage(ev.Count)
 			}
 			if ev.Kind == driver.EventPan {
@@ -300,6 +310,8 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 			if s.engine != nil {
 				s.engine.SetEnvironment(env)
 			}
+		case msgFolderReply:
+			s.folderReply(&r)
 		case msgTestReply:
 			if s.testReply != nil {
 				s.testReply(&r)
@@ -719,20 +731,21 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	b = withoutEffects(b)
 	requests, loads := s.trackImages(b)
 	s.stage(b)
+	for i := range b.Items {
+		if it := &b.Items[i]; it.Kind == driver.ItemPickDirectories {
+			s.pickFolders(it.Count)
+		}
+	}
 	natives := s.trackNatives(b)
 	shaders := s.trackShaders(b)
 	s.send(msgBatch, func(w *writer) { encode(w, b, requests, natives, shaders) })
 	for _, l := range loads {
 		go s.load(l)
 	}
-	// Go loads the images Java shows, so it answers ImageSize too, and
-	// folder picks, which Java has no picker for.
+	// Go loads the images Java shows, so it answers ImageSize too.
 	for i := range b.Items {
-		switch it := b.Items[i]; it.Kind {
-		case driver.ItemImageInfo:
+		if it := b.Items[i]; it.Kind == driver.ItemImageInfo {
 			go s.engine.Dispatch(imageload.Info(&it, imagedecode.Size))
-		case driver.ItemPickDirectories:
-			go s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Text: driver.NoDirectoryPicker})
 		}
 	}
 }
@@ -1266,6 +1279,9 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			for _, t := range types {
 				w.str(t)
 			}
+		case driver.ItemPickDirectories:
+			w.u32(it.Count)
+			w.u32(uint32(it.Directories.Limit))
 		case driver.ItemSaveFile:
 			// The file Java copies to where the user chose, "" for a save
 			// that failed already, then the name and type suggested.

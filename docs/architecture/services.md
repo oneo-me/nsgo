@@ -69,17 +69,17 @@ Windows checks the registry first because the shell asks the user for an app for
 - A picked `File` is on disk: the user's own on desktops, a copy in the app's storage on iOS and Android (`Temporary`) that the app deletes. The web has no disk, so `File.Open` reads the file's `Blob` a slice at a time. `FinishFiles` fills names, sizes, modification times and types.
 - `SaveFile` copies the file at `SaveOptions.Path`, or `Data` where it names none. Desktops write through a temporary file beside the destination (`SaveRequest.SaveTo`), so a write that fails leaves nothing where the user chose. iOS and Android save only files on disk, so `Data` and a name other than the file's are staged in a directory that is removed once the dialog answers (`SaveRequest.Stage`).
 - `PickScreenColor` lets the user pick a color anywhere on the screen, with `NSColorSampler` on macOS and the browser's `EyeDropper`, where `Env.CanPickScreenColor` says so.
-- `PickDirectories` picks folders apart from files, so a caller that wants files gets no folders to filter out. A `Directory` is the user's folder on disk, with its name and path.
+- `PickDirectories` picks folders apart from files, so a caller that wants files gets no folders to filter out. A `Directory` is an `fs.FS` of the user's folder: on desktops and iOS it reads the folder on disk at `Path`, which iOS keeps in its security scope while the app runs; Android and the web have no path, so it reads through `Directory.FS`, waiting for the platform, and the app reads it off the engine's goroutine. `driver.FolderFS` makes that `FS` of a platform's listings and reads, finding a name through the listings it remembers and listing a folder afresh whenever it is read.
 - `done` tells a cancel from a failure: no files or folders, or `saved == false`, with a nil error, against the error the platform reported.
 
 | Target | Picker | Folder picker | Save dialog |
 | --- | --- | --- | --- |
 | macOS | An `NSOpenPanel` sheet with `UTType`s | An `NSOpenPanel` sheet for directories | An `NSSavePanel` sheet, keeping the name's extension |
-| iOS | `UIDocumentPickerViewController` copying into the app's `tmp` | None: an error ([roadmap](../roadmap.md#finish-the-existing-platforms)) | The same, exporting a copy of the staged file |
-| Android | `ACTION_OPEN_DOCUMENT`; Java copies each document into the cache's `nsgo-files` | None: an error | `ACTION_CREATE_DOCUMENT`; Java copies the file in and deletes the document when that fails |
+| iOS | `UIDocumentPickerViewController` copying into the app's `tmp` | The same for `public.folder`, opening the folders where they are | The same, exporting a copy of the staged file |
+| Android | `ACTION_OPEN_DOCUMENT`; Java copies each document into the cache's `nsgo-files` | `ACTION_OPEN_DOCUMENT_TREE`, one folder, whose tree Java lists and reads a megabyte at a time for Go (`msgFolder`); the grant lasts until the device restarts | `ACTION_CREATE_DOCUMENT`; Java copies the file in and deletes the document when that fails |
 | Windows | `GetOpenFileNameW` | `IFileOpenDialog` with `FOS_PICKFOLDERS`, which comdlg32 has no peer of; Windows 11's Home, not on disk, opens the profile | `GetSaveFileNameW`, asking before replacing a file |
 | Linux | `GtkFileDialog`, filtering by MIME type and suffix | `GtkFileDialog`'s folder selection | `GtkFileDialog`'s save |
-| Web | `<input type=file>` | None: an error | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
+| Web | `<input type=file>` | One folder: `showDirectoryPicker`, whose handles read it as the app opens it, else `<input webkitdirectory>`, which lists it whole and leaves out the folders holding no files | `showSaveFilePicker`, whose writable commits whole or not at all; a download where the browser has none or the press's user activation is gone, which counts as saved |
 
 ## Opening and sharing files
 

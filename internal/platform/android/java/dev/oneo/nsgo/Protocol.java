@@ -26,6 +26,7 @@ final class Protocol {
     static final int CARETS = 12;
     static final int WANT_FRAME = 13;
     static final int FONT_DATA = 14;
+    static final int FOLDER = 15;
 
     // Java to Go.
     static final int START = 1;
@@ -40,6 +41,11 @@ final class Protocol {
     static final int HOST = 10;
     static final int CARET_LINES = 11;
     static final int FRAME = 12;
+    static final int FOLDER_REPLY = 13;
+
+    // What a FOLDER message asks, as folders.go has them.
+    static final int FOLDER_LIST = 0;
+    static final int FOLDER_READ = 1;
 
     // The parts of a HOST message, and of a HOST_CALL, as host.go has them.
     static final int HOST_EVENT = 1;
@@ -115,6 +121,7 @@ final class Protocol {
     static final int ITEM_PICK_FILES = 58;
     static final int ITEM_SAVE_FILE = 59;
     static final int ITEM_DIRECTION = 60;
+    static final int ITEM_PICK_DIRECTORIES = 62;
     static final int ITEM_OPEN_FILE = 63;
     static final int ITEM_SHARE = 64;
     static final int ITEM_INSTALL_PACKAGE = 65;

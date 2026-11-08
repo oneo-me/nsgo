@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
@@ -771,9 +772,17 @@ func TestSystem(t *testing.T) {
 	}
 	app.PickDirectories = func(core.DirectoriesRequest) []core.Directory { return []core.Directory{{Path: dir}} }
 	app.Press("role:button Pick a folder")
-	if got := app.Find("id:picked-folder-0").Text; app.DirectoryPicks[0].Limit != 1 || got != filepath.Base(dir)+" · "+dir {
-		t.Fatalf("picked folder = %q, pick %+v", got, app.DirectoryPicks[0])
+	app.WaitFor("text:"+filepath.Base(dir)+" · 1 item", 5*time.Second)
+	if app.DirectoryPicks[0].Limit != 1 {
+		t.Fatalf("pick %+v", app.DirectoryPicks[0])
 	}
+	// A folder without a path, as Android and the web pick, reads
+	// through its FS.
+	app.PickDirectories = func(core.DirectoriesRequest) []core.Directory {
+		return []core.Directory{{Name: "Music", FS: fstest.MapFS{"a.flac": {}, "b/c.flac": {}}}}
+	}
+	app.Press("role:button Pick a folder")
+	app.WaitFor("text:Music · 2 items", 5*time.Second)
 	app.PickDirectories = nil
 	app.Press("role:button Pick a folder")
 	app.Find("text:No folder picked")

@@ -127,6 +127,12 @@ public class NsgoView extends FrameLayout {
         t.setDaemon(true);
         return t;
     });
+    /** Lists and reads the folders the user picked for Go, a few at a time. */
+    private final ExecutorService folders = Executors.newFixedThreadPool(4, r -> {
+        Thread t = new Thread(r, "nsgo-folders");
+        t.setDaemon(true);
+        return t;
+    });
     /** Nodes reporting presses outside them, on the UI thread. */
     private final ArrayList<Node> outside = new ArrayList<>();
     private final int[] location = new int[2];
@@ -447,6 +453,7 @@ public class NsgoView extends FrameLayout {
             network = null;
         }
         decoder.shutdownNow();
+        folders.shutdownNow();
         if (process != null) process.destroy();
         destroyComponents();
     }
@@ -493,6 +500,9 @@ public class NsgoView extends FrameLayout {
                         break;
                     case Protocol.HOST_CALL:
                         host.message(message);
+                        break;
+                    case Protocol.FOLDER:
+                        folders.execute(() -> folder(message));
                         break;
                     case Protocol.WANT_FRAME:
                         ui.post(() -> {
@@ -609,9 +619,9 @@ public class NsgoView extends FrameLayout {
         }
     }
 
-    /** Hears the activity's results: the photo picker's images, and the documents UI's files and saves. */
+    /** Hears the activity's results: the photo picker's images, and the documents UI's files, folders and saves. */
     public void activityResult(int request, int result, android.content.Intent data) {
-        if (request == Services.FILES_REQUEST || request == Services.SAVE_REQUEST) {
+        if (request == Services.FILES_REQUEST || request == Services.SAVE_REQUEST || request == Services.FOLDER_REQUEST) {
             documentsResult(request, result, data);
             return;
         }
@@ -629,17 +639,25 @@ public class NsgoView extends FrameLayout {
         event(Protocol.EVENT_PICK, 0, p.count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, files, false);
     }
 
-    /** Copies the files picked into the cache, or the file saved to the document created, off the UI thread. */
+    /**
+     * Copies the files picked into the cache, or the file saved to the
+     * document created, off the UI thread; names the folder picked, which
+     * Go reads through folder.
+     */
     private void documentsResult(int request, int result, android.content.Intent data) {
         Services.Documents d = documents;
-        if (d == null || (d.from == null) != (request == Services.FILES_REQUEST)) return;
+        if (d == null || d.request() != request) return;
         documents = null;
         android.net.Uri created = data != null ? data.getData() : null;
-        if (result != Activity.RESULT_OK || d.from != null && created == null) {
+        if (result != Activity.RESULT_OK || (d.from != null || d.folder) && created == null) {
             answerDocuments(d, "", "", false);
             return;
         }
         Context context = getContext().getApplicationContext();
+        if (d.folder) {
+            answerDocuments(d, Services.pickedTree(context, created), "", false);
+            return;
+        }
         java.util.List<android.net.Uri> uris = Services.picked(data, d.limit);
         if (d.from == null && uris.isEmpty()) {
             answerDocuments(d, "", "", false);
@@ -941,6 +959,45 @@ public class NsgoView extends FrameLayout {
         } catch (IOException e) {
             Log.w(TAG, "app process unreachable", e);
         }
+    }
+
+    /**
+     * Answers a FOLDER message off the reader thread: lists a folder of a
+     * tree the user picked or reads part of its file, as folders.go asks,
+     * its answer after the request's number and an error, "" for none.
+     */
+    private void folder(DataInputStream in) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(bytes);
+        int id = 0;
+        try {
+            id = in.readInt();
+            int op = in.readUnsignedByte();
+            String tree = Protocol.readString(in), document = Protocol.readString(in);
+            ByteArrayOutputStream body = new ByteArrayOutputStream();
+            DataOutputStream b = new DataOutputStream(body);
+            Context context = getContext().getApplicationContext();
+            try {
+                if (op == Protocol.FOLDER_LIST) {
+                    Services.listFolder(context, tree, document, b);
+                } else {
+                    long off = in.readLong();
+                    byte[] read = Services.readDocument(context, tree, document, off, in.readInt());
+                    b.writeInt(read.length);
+                    b.write(read);
+                }
+                out.writeInt(id);
+                Protocol.writeString(out, "");
+                body.writeTo(out);
+            } catch (IOException | SecurityException e) {
+                bytes.reset();
+                out.writeInt(id);
+                Protocol.writeString(out, String.valueOf(e.getMessage()));
+            }
+        } catch (IOException impossible) {
+            throw new AssertionError(impossible);
+        }
+        write(Protocol.FOLDER_REPLY, bytes.toByteArray());
     }
 
     /** Answers the test step id: an error, else the step's data. */
@@ -1863,7 +1920,14 @@ public class NsgoView extends FrameLayout {
                 int limit = in.readInt();
                 String[] types = new String[in.readInt()];
                 for (int i = 0; i < types.length; i++) types[i] = Protocol.readString(in);
-                startDocuments(new Services.Documents(count, limit, null), a -> Services.startFiles(a, limit, types));
+                startDocuments(new Services.Documents(count, limit, null, false), a -> Services.startFiles(a, limit, types));
+                break;
+            }
+            case Protocol.ITEM_PICK_DIRECTORIES: {
+                long count = in.readInt() & 0xffffffffL;
+                // The tree picker picks one folder, whatever the limit.
+                in.readInt();
+                startDocuments(new Services.Documents(count, 1, null, true), Services::startFolder);
                 break;
             }
             case Protocol.ITEM_SAVE_FILE: {
@@ -1871,7 +1935,7 @@ public class NsgoView extends FrameLayout {
                 String from = Protocol.readString(in), name = Protocol.readString(in), mime = Protocol.readString(in);
                 // No file: Go failed the save already.
                 if (!from.isEmpty()) {
-                    startDocuments(new Services.Documents(count, 1, from), a -> Services.startSave(a, name, mime));
+                    startDocuments(new Services.Documents(count, 1, from, false), a -> Services.startSave(a, name, mime));
                 }
                 break;
             }

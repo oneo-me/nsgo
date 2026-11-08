@@ -695,7 +695,8 @@ func filesCard(cx *core.Scope) core.Node {
 			})
 		}
 	}
-	folders := core.NewSignalFunc(cx, []core.Directory(nil), func(a, b []core.Directory) bool { return false })
+	// folders are the folders picked, each with what it holds once read.
+	folders := core.NewSignalFunc(cx, []string(nil), func(a, b []string) bool { return false })
 	pickFolders := func() {
 		cx.PickDirectories(core.PickDirectoriesOptions{}, func(dirs []core.Directory, err error) {
 			switch {
@@ -706,7 +707,28 @@ func filesCard(cx *core.Scope) core.Node {
 			default:
 				status.Set(tr.SystemPicked(len(dirs)))
 			}
-			folders.Set(dirs)
+			rows := make([]string, len(dirs))
+			for i, d := range dirs {
+				rows[i] = d.Name
+			}
+			folders.Set(rows)
+			// A folder without a path waits for the platform to list it,
+			// so it is read off the engine's goroutine.
+			for i, d := range dirs {
+				go func() {
+					entries, err := d.ReadDir(".")
+					row := d.Name + " · " + tr.SystemFolderItems(len(entries))
+					if err != nil {
+						row = d.Name + " · " + err.Error()
+					}
+					cx.Post(func() {
+						if rows := folders.Get(); i < len(rows) && rows[i] == d.Name {
+							rows[i] = row
+							folders.Set(rows)
+						}
+					})
+				}()
+			}
 		})
 	}
 	save := func(o core.SaveOptions) {
@@ -780,8 +802,8 @@ func filesCard(cx *core.Scope) core.Node {
 		core.Dynamic(func(cx *core.Scope) core.Node {
 			colors := ui.ColorsOf(cx)
 			var rows []core.Node
-			for i, d := range folders.Get() {
-				rows = append(rows, core.Text{Content: d.Name + " · " + d.Path,
+			for i, row := range folders.Get() {
+				rows = append(rows, core.Text{Content: row,
 					TestID: fmt.Sprintf("picked-folder-%d", i), MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Text)})
 			}
 			return core.View{Style: core.Style{Gap: 4}, Children: rows}
