@@ -65,7 +65,7 @@ func (g *gallery) searchDialog(cx *core.Scope) core.Node {
 
 // searchButton is the sidebar's way to searchDialog, with the key beside it.
 func (g *gallery) searchButton(tr locales.Messages) core.Node {
-	return core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 8, Left: 12}}, Children: []core.Node{
+	return core.View{Style: core.Style{Padding: core.Edges{Right: 10, Bottom: 8, Left: 10}}, Children: []core.Node{
 		ui.SidebarButton{TestID: "search", Variant: ui.SidebarButtonField, Icon: lucide.Search, Text: tr.AppSearchDemos(), Shortcut: searchKey,
 			OnPress: func() { g.searchOpen.Set(true) }},
 	}}

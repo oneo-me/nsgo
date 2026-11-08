@@ -187,7 +187,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 		if sec.Title != "" {
 			title := Text(sec.Title, 11, Bold, colors.Muted)
 			title.Role, title.MaxLines = core.RoleHeader, 1
-			title.Style.Padding = core.Edges{Top: 4, Right: 8, Bottom: 2, Left: 8}
+			title.Style.Padding = core.Symmetric(3, 8)
 			title.Style.FlexGrow, title.Style.FlexShrink = 1, 1
 			heading = core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)},
 				Children: []core.Node{title, sidebarTrailing(cx, trailing, nil)}}
@@ -230,13 +230,13 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 		})
 		if sec.Title != "" && sec.Collapsible {
 			return base.Collapsible{Open: open, Reveal: func() bool { return true }, TestID: sec.TestID, Children: []core.Node{heading},
-				Content: core.View{Style: core.Style{Padding: core.Edges{Top: 4}, Gap: 4}, Children: []core.Node{items}}}
+				Content: core.View{Style: core.Style{Padding: core.Edges{Top: 2}, Gap: 2}, Children: []core.Node{items}}}
 		}
 		nodes := []core.Node{items}
 		if heading != nil {
 			nodes = []core.Node{heading, items}
 		}
-		return core.View{TestID: sec.TestID, Style: core.Style{Gap: 4}, Children: nodes}
+		return core.View{TestID: sec.TestID, Style: core.Style{Gap: 2}, Children: nodes}
 	}
 	list := func() []SidebarSection { return s.Sections }
 	if s.SectionsFunc != nil {
@@ -263,7 +263,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 	return core.Scroll{Ref: scroll, TestID: s.TestID, Style: FillRest, OnScroll: func(e core.ScrollEvent) { offset = e.Offset.Y },
 		Children: []core.Node{core.View{Ref: content, OnPress: func(core.PressEvent) { take() },
 			OnFocus: func() { focused.Set(true); take() }, OnBlur: func() { focused.Set(false); taking.Set(0) },
-			Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 12, Left: 12}, Gap: 12}, Children: []core.Node{body, bindings}}}}
+			Style: core.Style{Padding: core.Edges{Right: 10, Bottom: 12, Left: 10}, Gap: 10}, Children: []core.Node{body, bindings}}}}
 }
 
 // keyedSection is a section under the key that keeps it while the

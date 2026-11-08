@@ -126,7 +126,7 @@ func sidebarCard(cx *core.Scope) core.Node {
 	// The buttons above the items: a search field, and an action selected
 	// while what it opens shows, as no item is.
 	const added = "new"
-	buttons := core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 8, Left: 12}, Gap: 2}, Children: []core.Node{
+	buttons := core.View{Style: core.Style{Padding: core.Edges{Right: 10, Bottom: 8, Left: 10}, Gap: 2}, Children: []core.Node{
 		ui.SidebarButton{Variant: ui.SidebarButtonField, Icon: lucide.Search, Text: tr.AnimSearch(), Shortcut: "mod+k"},
 		ui.SidebarButton{Icon: lucide.SquarePen, Text: tr.MenusNewDocument(), Shortcut: "mod+n",
 			Selected: func() bool { return selected.Get() == added }, OnPress: func() { selected.Set(added) }},

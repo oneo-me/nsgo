@@ -13,7 +13,7 @@ const (
 	// It is the default.
 	SidebarButtonPlain SidebarButtonVariant = iota
 	// SidebarButtonField is a search field's: always a quiet fill, deeper
-	// while pressed, its text muted, for what opens a search.
+	// while the pointer is over it, its text muted, for what opens a search.
 	SidebarButtonField
 )
 
@@ -63,7 +63,7 @@ func (b SidebarButton) Render(cx *core.Scope) core.Node {
 		StyleFunc: func() core.Style {
 			s := core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, Focus: FocusRing(cx, -2)}
 			if b.Variant == SidebarButtonField {
-				s.Background, s.Active = Alpha(colors.Text(), 0.06), &core.Style{Background: Alpha(colors.Text(), 0.1)}
+				s.Background, s.Hover = Alpha(colors.Text(), 0.06), &core.Style{Background: Alpha(colors.Text(), 0.1)}
 			}
 			return s
 		},
