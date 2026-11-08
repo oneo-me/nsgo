@@ -468,7 +468,8 @@ func (w *window) frame() {
 	if w.baseComposed && w.backdrop != backdropNone {
 		clear = colorF{}
 	}
-	whole := fresh || c != nil || w.swap.composed || len(w.hosts) > 0
+	// An effect's pictures reach past what a change damages.
+	whole := fresh || c != nil || w.swap.composed || len(w.hosts) > 0 || len(w.effects) > 0
 	changed, drawn, changedAll, all := w.frameDamage(client, whole)
 	if all {
 		p.setTransform(identity)
@@ -782,10 +783,12 @@ func (p *painter) drawContent(v *view, s *driver.ViewStyle, world matrix) {
 			p.draw(c, world, c.frame.Origin.X-v.offset.X, c.frame.Origin.Y-v.offset.Y)
 		}
 	}
-	for i, c := range v.children {
-		drawLeaving(i)
-		f := frameOf(c)
-		p.draw(c, world, f.Origin.X-v.offset.X, f.Origin.Y-v.offset.Y)
+	if e := p.w.effectOn(v); e == nil || !p.drawEffect(e, v, world) {
+		for i, c := range v.children {
+			drawLeaving(i)
+			f := frameOf(c)
+			p.draw(c, world, f.Origin.X-v.offset.X, f.Origin.Y-v.offset.Y)
+		}
 	}
 	drawLeaving(math.MaxInt)
 	p.perspective, p.perspectiveOf = perspective, of

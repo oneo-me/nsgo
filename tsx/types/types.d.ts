@@ -547,6 +547,68 @@ export interface VideoHostProps {
 }
 export interface VideoProps extends Omit<ViewProps, "children">, VideoHostProps {}
 
+/** A shader's uniform: a number, a boolean, a CSS color, an animated
+ * value, or a list of them (a vector, an array of vec4f). */
+export type UniformValue = number | boolean | string | AnimatedNode | UniformValue[];
+/** The values of the members of a shader's `struct Uniforms`, by name. */
+export type Uniforms = Record<string, UniformValue>;
+/** What every shader element takes. */
+export interface ShaderHostProps {
+  uniforms?: Uniforms;
+  /** Stops its clock, `nsh.time`. */
+  paused?: boolean;
+}
+/** An effect's: `nsh.progress`, and how far beyond its box, in points, it
+ * draws and its pictures reach. */
+export interface ShaderEffectHostProps {
+  progress?: number | AnimatedNode;
+  maxSampleOffset?: number;
+}
+/** A transition's: it runs when `value` changes (not its first), for
+ * `duration` milliseconds (300 by default); without a `source` it
+ * cross-fades, unless `fallback` is "none". */
+export interface ShaderTransitionHostProps {
+  value?: string | number | boolean;
+  duration?: number;
+  fallback?: "crossfade" | "none";
+  maxSampleOffset?: number;
+}
+/** `<Shader>`: a view whose box a WGSL shader draws, under its children. */
+export interface ShaderProps extends ViewProps, ShaderHostProps {
+  /** The WGSL defining `fn shade(uv: vec2f) -> vec4f`. */
+  source: string;
+}
+/** `<ShaderEffect>`: a view whose children draw through a WGSL shader,
+ * which reads what they draw with `sample_content(uv)`. */
+export interface ShaderEffectProps extends ViewProps, ShaderHostProps, ShaderEffectHostProps {
+  source?: string;
+}
+/** `<ShaderTransition>`: a view whose children change through a WGSL
+ * shader when its `value` changes: `sample_from(uv)` is what they drew,
+ * `sample_to(uv)` what they draw now, `nsh.progress` 0 to 1. */
+export interface ShaderTransitionProps extends ViewProps, ShaderHostProps, ShaderTransitionHostProps {
+  source?: string;
+}
+/** `<ScreenEffect>`: the whole surface drawn through a WGSL shader, which
+ * reads it with `sample_content(uv)`. It takes no space and has no
+ * children. */
+export interface ScreenEffectProps extends ShaderHostProps, ShaderEffectHostProps {
+  source?: string;
+}
+/** `<ScreenTransition>`: the whole surface changing through a WGSL shader
+ * when its `value` changes. */
+export interface ScreenTransitionProps extends ShaderHostProps, ShaderTransitionHostProps {
+  source?: string;
+}
+/** A page's or a dialog's shader: it comes and goes through it instead of
+ * its `animation`, the lower side `sample_from`, the upper `sample_to`,
+ * for `duration` milliseconds (350 by default). */
+export interface TransitionShader {
+  source: string;
+  uniforms?: Uniforms;
+  duration?: number;
+}
+
 // The base components' host props (nsgo/base's Input, Dialog, NavPage).
 export type KeyboardType = "default" | "number-pad" | "decimal-pad" | "numeric" | "numbers-and-punctuation" | "email-address" | "phone-pad" | "url";
 export type ReturnKeyType = "default" | "done" | "go" | "next" | "search" | "send";
@@ -590,7 +652,7 @@ export interface AndroidDialogHostProps { statusBarTranslucent?: boolean }
 export type ScreenAnimation = "default" | "slide" | "fade" | "none";
 export type HeaderSystemItem = "add" | "done" | "close" | "edit" | "compose" | "search" | "share" | "trash" | "save" | "cancel";
 /** A page's own props. */
-export interface NavPageHostProps { title?: string; headerVisible?: boolean; headerLargeTitle?: boolean; headerTransparent?: boolean; headerBackTitle?: string; headerBackVisible?: boolean; popOnSwipe?: boolean; popOnBack?: boolean; animation?: ScreenAnimation; statusBar?: StatusBar }
+export interface NavPageHostProps { title?: string; headerVisible?: boolean; headerLargeTitle?: boolean; headerTransparent?: boolean; headerBackTitle?: string; headerBackVisible?: boolean; popOnSwipe?: boolean; popOnBack?: boolean; animation?: ScreenAnimation; transitionShader?: TransitionShader; statusBar?: StatusBar }
 export interface IOSNavPageHostProps { headerRightSystemItem?: HeaderSystemItem }
 
 /** A node: what an element is, with its view's methods. */

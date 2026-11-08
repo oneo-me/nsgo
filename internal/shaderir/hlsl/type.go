@@ -163,6 +163,14 @@ func (c *compileContext) builtinFuncString(f shaderir.BuiltinFunc) string {
 		return "ddy"
 	case shaderir.TexelAt:
 		return "?(__texelAt)"
+	case shaderir.RoundEven:
+		return "round"
+	case shaderir.FloatBitsToInt:
+		return "asint"
+	case shaderir.FloatBitsToUint:
+		return "asuint"
+	case shaderir.IntBitsToFloat, shaderir.UintBitsToFloat:
+		return "asfloat"
 	default:
 		return string(f)
 	}

@@ -90,6 +90,11 @@ type view struct {
 	video  *video
 	native *component
 	shader *glShaderView
+	// fx is its effect, transition or navigation shader, fxArea the area
+	// of the effect drawn over its children, its own or a screen
+	// shader's (effect.go).
+	fx     *effect
+	fxArea uintptr
 
 	// What animates: the style after the first, and the scroll offset.
 	styled     bool

@@ -101,8 +101,10 @@ type shaderView struct {
 	dirty               bool
 	lanes               []float64
 	buf                 []byte
-	// images are the images' textures, by ImageSource.Key.
-	images map[string]*d3dImage
+	// images are the images' textures, by ImageSource.Key; pictures what
+	// a WGSL program reads instead, an effect's (effect.go).
+	images   map[string]*d3dImage
+	pictures [4]*pictureTex
 }
 
 // d3dImage is an image's texture and its view, w by h pixels.
@@ -136,7 +138,10 @@ func (w *window) setShader(v *view, sh *driver.Shader) {
 // changedShaders marks the shader views whose animated lanes changed.
 func (w *window) changedShaders() {
 	w.animator.ChangedShaders(func(id driver.NodeID) {
-		if v := w.view(id); v != nil && v.shaderView != nil {
+		if v := w.view(id); v != nil && v.fx != nil && v.fx.sv != nil {
+			v.fx.sv.dirty = true
+			w.redrawAll()
+		} else if v != nil && v.shaderView != nil {
 			v.shaderView.dirty = true
 			w.redrawView(v)
 		}
@@ -292,6 +297,13 @@ func (sv *shaderView) render(p *painter, prog *d3dProgram, width, height float32
 	sv.lanes[0], sv.lanes[1], sv.lanes[2] = float64(width), float64(height), float64(p.scale)
 	srvs := make([]uintptr, prog.textures)
 	for i := range prog.textures {
+		if sv.shader.Program.WGSL {
+			if pic := sv.pictures[i]; pic != nil && pic.srv != nil {
+				srvs[i] = pic.srv.ptr()
+				sv.lanes[3+2*i], sv.lanes[4+2*i] = float64(pic.pw), float64(pic.ph)
+			}
+			continue
+		}
 		if i < len(sv.shader.Images) {
 			if im := sv.image(w, g, sv.shader.Images[i]); im != nil {
 				srvs[i] = im.srv.ptr()

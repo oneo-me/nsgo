@@ -161,6 +161,9 @@ func (v *view) children() objc.ID {
 	if v.sc != nil && v.sc.zoom != 0 {
 		return v.sc.zoom
 	}
+	if v.container != 0 {
+		return v.container
+	}
 	return v.native
 }
 

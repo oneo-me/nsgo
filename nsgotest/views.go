@@ -4,7 +4,30 @@ import "github.com/oneo-me/nsgo/internal/driver"
 
 // The types of the view model, which mirrors what the platforms mount.
 
+// Shader is what a view's shader draws: its role, the program's lanes and
+// the nodes that drive them, the pictures it reads and a transition's
+// state.
+type Shader struct {
+	Role               ShaderRole
+	WGSL               bool
+	Lanes              []float64
+	Nodes              []ShaderNode
+	Pictures           Pictures
+	Overflow           float64
+	Running, Backwards bool
+}
+
 type (
+	// ShaderRole is what a shader draws: a fill, an effect, a transition,
+	// the screen or a change of pages.
+	ShaderRole = driver.ShaderRole
+	// ShaderNode binds a lane of a shader's uniforms to an animated node.
+	ShaderNode = driver.ShaderNode
+	// Channel is what a shader lane reads of a node: its number or a
+	// channel of its color.
+	Channel = driver.Channel
+	// Pictures is a set of the pictures a shader reads.
+	Pictures = driver.Pictures
 	// AnimatedProp is a view property an animated node drives.
 	AnimatedProp = driver.AnimatedProp
 	// AnimatedValues are the bound properties of a view, as the animator last
@@ -126,6 +149,19 @@ const (
 	EventTouch                 = driver.EventTouch
 	EventCaretMove             = driver.EventCaretMove
 	EventPaste                 = driver.EventPaste
+)
+
+const (
+	ShaderFill             = driver.ShaderFill
+	ShaderEffect           = driver.ShaderEffect
+	ShaderTransition       = driver.ShaderTransition
+	ShaderScreen           = driver.ShaderScreen
+	ShaderScreenTransition = driver.ShaderScreenTransition
+	ShaderNav              = driver.ShaderNav
+	PictureContent         = driver.PictureContent
+	PictureBackdrop        = driver.PictureBackdrop
+	PictureFrom            = driver.PictureFrom
+	PictureTo              = driver.PictureTo
 )
 
 const (

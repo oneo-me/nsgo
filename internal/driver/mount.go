@@ -182,7 +182,9 @@ const (
 	// responder, from taking the touches until they end, or lets them
 	// again with no ID.
 	ItemBlockNative
-	// ItemShader sets a shader view's program and uniforms (Shader).
+	// ItemShader sets a shader view's program and uniforms (Shader), or a
+	// view's effect, transition or screen shader (Shader.Role), nil
+	// Shader taking it away.
 	ItemShader
 	// ItemSetClipboardImage puts the encoded image Data ([]byte) on the
 	// clipboard.
@@ -271,6 +273,15 @@ const (
 	// ItemLaunchAtLogin asks whether the system starts the app at login;
 	// the platform answers with EventLaunchAtLogin carrying Count.
 	ItemLaunchAtLogin
+	// ItemShaderTransition starts view ID's shader transition, or a
+	// page's or a dialog's (ShaderTransition, ShaderNav): it comes first in
+	// its batch, so the platform pictures what the view shows before the
+	// batch as the transition's first side.
+	ItemShaderTransition
+	// ItemShaderInput says what view ID's shader pictures changed in the
+	// batch, so the platform pictures it again once the batch is applied:
+	// an effect's or a transition's children, a screen shader's surface.
+	ItemShaderInput
 )
 
 // MountItem is one change to the native views. Kind says which fields

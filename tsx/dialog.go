@@ -22,6 +22,7 @@ func dialogFace(p *props) core.Node {
 	d := base.Dialog{
 		Animation: map[string]core.ModalAnimation{"slide": core.ModalSlide, "fade": core.ModalFade,
 			"none": core.ModalNone}[p.str("animation")],
+		TransitionShader:       p.transitionShader(),
 		NoCloseOnEscape:        !p.boolOr("closeOnEscape", true),
 		NoCloseOnBackdropPress: !p.boolOr("closeOnBackdropPress", true),
 		NoCloseOnSwipe:         !p.boolOr("closeOnSwipe", true),

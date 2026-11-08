@@ -164,6 +164,19 @@ func callType(e *Expr, env TypeEnv) Type {
 	case Min, Max:
 		// A vector comes first when vectors and scalars mix.
 		return TypeOf(&args[0], env)
+	case FloatBitsToInt, FloatBitsToUint, IntBitsToFloat, UintBitsToFloat:
+		s := Float
+		switch callee.BuiltinFunc {
+		case FloatBitsToInt:
+			s = Int
+		case FloatBitsToUint:
+			s = Uint
+		}
+		n := TypeOf(&args[0], env).VectorElementCount()
+		if n < 2 {
+			return Type{Main: s}
+		}
+		return Type{Main: VectorOf(s, n)}
 	}
 	return operandType(args, env)
 }

@@ -243,6 +243,9 @@ func (s *surface) tick(period time.Duration) {
 		s.stepMotions(now)
 		s.applyAnimated()
 	})
+	if dirty || selecting {
+		s.staleEffects()
+	}
 	s.drawShaders()
 	s.startImages()
 	if len(s.motions) > 0 {

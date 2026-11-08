@@ -79,6 +79,14 @@ type View struct {
 	// arguments are bound to.
 	Drawing *driver.Drawing
 	Ops     []driver.DrawOp
+	// Shader is what the view's shader draws, a shader view's fill or a
+	// view's effect, transition or navigation shader, nil for none.
+	// ShaderStarts counts the transitions it started
+	// (ItemShaderTransition), ShaderInputs the batches that said its
+	// pictures changed (ItemShaderInput).
+	Shader       *Shader
+	ShaderStarts int
+	ShaderInputs int
 	// Node is the part of a drawing a view of a canvas's names: a canvas
 	// shows each of its drawing's nodes as a child, which selectors find
 	// by its label (label: and text:), test ID and role, and which presses
@@ -316,6 +324,16 @@ func (a *App) apply(b *driver.MountBatch) {
 			v.NativeCommands = append(v.NativeCommands, NativeCommand{it.Value, it.Data})
 		case driver.ItemCanvas:
 			a.drawCanvas(v, it.Drawing)
+		case driver.ItemShader:
+			v.Shader = nil
+			if sh := it.Shader; sh != nil {
+				v.Shader = &Shader{Role: sh.Role, WGSL: sh.Program != nil && sh.Program.WGSL, Lanes: sh.Lanes, Nodes: sh.Nodes,
+					Pictures: sh.Pictures, Overflow: sh.Overflow, Running: sh.Running, Backwards: sh.Backwards}
+			}
+		case driver.ItemShaderTransition:
+			v.ShaderStarts++
+		case driver.ItemShaderInput:
+			v.ShaderInputs++
 		case driver.ItemAnimation:
 			a.anim.Apply(it.Animation)
 			for _, op := range it.Animation {

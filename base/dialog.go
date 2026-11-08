@@ -15,7 +15,10 @@ type Dialog struct {
 	OnClose      func()
 	OnCancel     func()
 
-	Animation              core.ModalAnimation
+	Animation core.ModalAnimation
+	// TransitionShader, when set, is how the dialog comes and goes
+	// instead of Animation, where the platform draws it.
+	TransitionShader       *core.TransitionShader
 	NoCloseOnEscape        bool
 	NoCloseOnBackdropPress bool
 	// Presentation and NoCloseOnSwipe are iOS's, IOS and Android hold the
@@ -110,7 +113,7 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 		}
 		report(open)()
 	})
-	m := core.Modal{Animation: d.Animation, Presentation: d.Presentation, NoCloseOnSwipe: d.NoCloseOnSwipe,
+	m := core.Modal{Animation: d.Animation, TransitionShader: d.TransitionShader, Presentation: d.Presentation, NoCloseOnSwipe: d.NoCloseOnSwipe,
 		NoCloseOnEscape: d.NoCloseOnEscape, NoCloseOnBackdropPress: d.NoCloseOnBackdropPress,
 		IOS: d.IOS, Android: d.Android, StatusBar: d.StatusBar, StatusBarFunc: d.StatusBarFunc, Class: d.LayerClass,
 		OnShown: report(true), OnDismissed: report(false),

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 
 	"github.com/oneo-me/nsgo/examples/gallery/locales"
@@ -225,8 +226,129 @@ func shaderDemo(cx *core.Scope) core.Node {
 			APILine{Label: tr.ShaderCompiledOnceAsTheProgram(), Names: "MustCompileShader"},
 		}}
 	}
-	return demoPage(cx, pageProps{}, background, images, source)
+	return demoPage(cx, pageProps{}, background, images, wgslEffect, wgslTransition, wgslPages, source)
 }
+
+// wgslEffect is core.ShaderEffect: a card drawn through a wave, which
+// still takes presses under it.
+func wgslEffect(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	presses := core.NewSignal(cx, 0)
+	return Card{Title: tr.ShaderEffect(), Description: tr.ShaderEffectDetail(), Children: []core.Node{
+		core.ShaderEffect{Program: waveProgram, MaxSampleOffset: 8, TestID: "wave-effect",
+			Style: core.Style{AlignSelf: core.AlignCenter}, Children: []core.Node{
+				core.View{StyleFunc: func() core.Style {
+					return core.Style{Width: core.Pt(280), Padding: core.All(20), Gap: 10, CornerRadius: 12, AlignItems: core.AlignCenter,
+						Background: colors.Accent(), BorderWidth: 1, BorderColor: colors.Line()}
+				}, Children: []core.Node{
+					core.Text{Content: tr.ShaderThroughAWave(), Style: core.Style{FontSize: 20, FontWeight: ui.Semibold, Color: core.RGB(0xffffff)}},
+					core.Text{Content: tr.ShaderTheCardStillTakesPresses(), Style: core.Style{FontSize: 13, Color: core.RGB(0xffffff)}},
+					ui.Button{Text: tr.ShaderStart(), Variant: ui.ButtonSecondary, TestID: "wave-button",
+						OnPress: func() { presses.Update(func(n int) int { return n + 1 }) }},
+					ui.Textf(func() string { return tr.ShaderStartPressed(presses.Get()) }, 13, ui.Regular, func() core.Color { return core.RGB(0xffffff) }),
+				}},
+			}},
+		APILine{Label: tr.ShaderWavesRunThroughTheChildren(), Names: "ShaderEffect, CompileWGSL"},
+	}}
+}
+
+// wgslTransition is core.ShaderTransition: a dissolve between two panels.
+func wgslTransition(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	second := core.NewSignal(cx, false)
+	panel := func(title string, bg func() core.Color) core.Node {
+		return core.View{StyleFunc: func() core.Style {
+			return core.Style{Width: core.Pt(280), Height: core.Pt(120), CornerRadius: 12, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
+				Background: bg()}
+		}, Children: []core.Node{core.Text{Content: title, Style: core.Style{FontSize: 18, FontWeight: ui.Semibold, Color: core.RGB(0xffffff)}}}}
+	}
+	return Card{Title: tr.ShaderTransition(), Description: tr.ShaderTransitionDetail(), Children: []core.Node{
+		core.View{Style: core.Style{AlignItems: core.AlignCenter, Gap: 12}, Children: []core.Node{
+			core.ShaderTransition{Program: dissolveProgram, Duration: 700 * time.Millisecond, TestID: "dissolve",
+				Value: func() any { return second.Get() }, Children: []core.Node{
+					core.Show{When: second.Get, Then: func(*core.Scope) core.Node { return panel(tr.ShaderSecondPanel(), colors.Accent) },
+						Else: func(*core.Scope) core.Node { return panel(tr.ShaderFirstPanel(), colors.Muted) }},
+				}},
+			ui.Button{Text: tr.ShaderNext(), Variant: ui.ButtonSecondary, TestID: "dissolve-next",
+				OnPress: func() { second.Set(!second.GetUntracked()) }},
+		}},
+		APILine{Label: tr.ShaderValueRunsIt(), Names: "ShaderTransition.Value"},
+	}}
+}
+
+// wgslPages is a page's TransitionShader: a circle that opens the page
+// over its stack and closes it as it pops.
+func wgslPages(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	nav := base.NewNav(cx, "home")
+	shader := &core.TransitionShader{Program: circleProgram, Duration: 500 * time.Millisecond}
+	return Card{Title: tr.ShaderPages(), Description: tr.ShaderPagesDetail(), Children: []core.Node{
+		core.View{StyleFunc: func() core.Style {
+			return core.Style{Height: core.Pt(180), CornerRadius: 12, Overflow: core.Hidden, BorderWidth: 1, BorderColor: colors.Line()}
+		}, Children: []core.Node{
+			nav.Stack(core.Style{FlexGrow: 1}, func(cx *core.Scope, route string, _ func() int) base.NavPage {
+				home := route == "home"
+				bg, title, label := colors.Background, tr.ShaderHome(), tr.ShaderOpenAPage()
+				if !home {
+					bg, title, label = colors.Accent, tr.ShaderAPage(), tr.ShaderBack()
+				}
+				return base.NavPage{Title: title, TransitionShader: shader, HeaderHidden: true,
+					StyleFunc: func() core.Style {
+						return core.Style{Background: bg(), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12}
+					},
+					Children: []core.Node{
+						core.Text{Content: title, Style: core.Style{FontSize: 18, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
+						ui.Button{Text: label, Variant: ui.ButtonSecondary, TestID: "page-" + route, OnPress: func() {
+							if home {
+								nav.Push("page")
+							} else {
+								nav.Pop(1)
+							}
+						}},
+					}}
+			}),
+		}},
+		APILine{Label: tr.ShaderPushedAndPoppedThrough(), Names: "NavPage.TransitionShader"},
+	}}
+}
+
+var (
+	waveProgram     = core.MustCompileWGSL(waveSource)
+	dissolveProgram = core.MustCompileWGSL(dissolveSource)
+	circleProgram   = core.MustCompileWGSL(circleSource)
+)
+
+const waveSource = `fn shade(uv: vec2f) -> vec4f {
+	let px = 1.0 / max(nsh.size, vec2f(1.0));
+	let dx = 4.0 * px.x * sin(uv.y * 16.0 + nsh.time * 3.0);
+	let dy = 4.0 * px.y * cos(uv.x * 12.0 + nsh.time * 2.0);
+	return sample_content(uv + vec2f(dx, dy));
+}
+`
+
+const dissolveSource = `fn hash(p: vec2f) -> f32 {
+	var q = bitcast<vec2u>(vec2i(floor(p)));
+	q = q * vec2u(1597334673u, 3812015801u);
+	return f32(((q.x ^ q.y) * 1597334673u) >> 8u) / 16777216.0;
+}
+
+fn shade(uv: vec2f) -> vec4f {
+	let n = hash(uv * nsh.size / 6.0);
+	let edge = smoothstep(n - 0.08, n + 0.08, nsh.progress * 1.16 - 0.08);
+	return mix(sample_from(uv), sample_to(uv), edge);
+}
+`
+
+const circleSource = `fn shade(uv: vec2f) -> vec4f {
+	let p = (uv - 0.5) * nsh.size;
+	let r = length(nsh.size) * 0.5 * nsh.progress;
+	let inside = 1.0 - smoothstep(r - 2.0, r, length(p));
+	return mix(sample_from(uv), sample_to(uv), inside);
+}
+`
 
 // rippleProgram stretches image 0 over the view, its rows waving.
 var rippleProgram = core.MustCompileShader(rippleSource)

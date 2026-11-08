@@ -4,6 +4,7 @@
 import type {
   Bounds, Edges, ImageAsset, ImageProps, JSX, ListProps, OS, OverlayProps, Point, ScrollProps, Size,
   TextProps, TouchProps, VideoProps, ViewProps, WebViewProps, YNode, GestureResponderEvent, ResponderGestureState,
+  ShaderProps, ShaderEffectProps, ShaderTransitionProps, ScreenEffectProps, ScreenTransitionProps,
 } from "./types";
 
 export type * from "./types";
@@ -58,6 +59,11 @@ export declare function Overlay(props: OverlayProps): YNode;
 export declare function List<T>(props: ListProps<T>): YNode;
 export declare function WebView(props: WebViewProps): YNode;
 export declare function Video(props: VideoProps): YNode;
+export declare function Shader(props: ShaderProps): YNode;
+export declare function ShaderEffect(props: ShaderEffectProps): YNode;
+export declare function ShaderTransition(props: ShaderTransitionProps): YNode;
+export declare function ScreenEffect(props: ScreenEffectProps): YNode;
+export declare function ScreenTransition(props: ScreenTransitionProps): YNode;
 export type ImageSize = Size;
 export interface ImageModule {
   getSize(src: string | ImageAsset): Promise<ImageSize>;

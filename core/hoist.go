@@ -119,6 +119,11 @@ func (t *Tree) mountModal(cx *Scope, parent *node, m Modal) {
 		n.props.Role = RoleDialog
 	}
 	t.bindStatusBar(cx, n, m.StatusBar, m.StatusBarFunc)
+	if ts := m.TransitionShader; ts != nil {
+		host := n.hoist.host
+		t.navShader(host, ts, false)
+		cx.Cleanup(func() { t.navShader(host, ts, true) })
+	}
 	// What a modal's content keeps clear of is the surface's safe area, or
 	// what the platform reported of a modal it sized.
 	inner := cx.Child()

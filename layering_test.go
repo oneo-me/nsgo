@@ -27,7 +27,8 @@ var layers = []struct {
 	{"internal/driver", []string{"internal/shaderir"}},
 	{"internal/shaderir/", []string{"internal/shaderir"}},
 	{"internal/shader", []string{"internal/shaderir"}},
-	{"core", []string{"internal/driver", "internal/layout", "internal/shader", "internal/shaderir"}},
+	{"internal/shader/wgsl", []string{"internal/shaderir"}},
+	{"core", []string{"internal/driver", "internal/layout", "internal/shader", "internal/shader/wgsl", "internal/shaderir"}},
 	{"internal/engine", []string{"core", "internal/driver", "internal/testhost"}},
 	{"internal/testhost", []string{"core", "internal/driver"}},
 	{"internal/platform/android/runtime", nil},
@@ -84,7 +85,7 @@ var platformShared = []string{
 
 // portable lists the packages that build unchanged for every target: no
 // purego, syscall or unsafe.
-var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shaderir/", "internal/engine",
+var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shader/wgsl", "internal/shaderir/", "internal/engine",
 	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx"}
 
 // unportable are the packages among portable's that reach the system: the

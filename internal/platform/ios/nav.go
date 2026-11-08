@@ -593,12 +593,12 @@ func (s *surface) touchStack(stack *view) {
 	}
 	c := stackChange{stack: stack, was: s.tops[stack]}
 	sl := s.slides[stack]
-	if was := c.was; was != nil && (sl == nil || !sl.swipe) && s.views[was.id] == was && was.native.Send(selSuperview) == stack.native {
+	if was := c.was; was != nil && (sl == nil || !sl.swipe) && s.views[was.id] == was && was.native.Send(selSuperview) == stack.children() {
 		if c.snap = was.native.Send(sel("snapshotViewAfterScreenUpdates:"), false); c.snap != 0 {
 			c.snap.Send(sel("retain"))
 			c.frame = objc.Send[apple.CGRect](was.native, sel("frame"))
 		}
-		for _, sub := range apple.Subviews(stack.native) {
+		for _, sub := range apple.Subviews(stack.children()) {
 			if sub == was.native {
 				break
 			}
@@ -612,7 +612,7 @@ func (s *surface) touchStack(stack *view) {
 
 // topScreen returns the last screen of stack the core shows.
 func (s *surface) topScreen(stack *view) *view {
-	subs := apple.Subviews(stack.native)
+	subs := apple.Subviews(stack.children())
 	for i := len(subs) - 1; i >= 0; i-- {
 		if v := views[subs[i]]; v != nil && v.bar != nil && !v.style.Hidden {
 			return v
@@ -662,6 +662,11 @@ func (s *surface) slideScreens(c stackChange, now *view) {
 	if c.snap == 0 {
 		return
 	}
+	if s.navigating(c.stack) {
+		// The page's shader draws the change.
+		s.dropSnapshot(c.snap)
+		return
+	}
 	sl := &slide{stack: c.stack, top: now, snap: c.snap}
 	from, to := 1.0, 0.0
 	pop := slices.Contains(c.under, now)
@@ -684,9 +689,9 @@ func (s *surface) slideScreens(c stackChange, now *view) {
 	c.snap.Send(selSetFrame, c.frame)
 	c.snap.Send(sel("setUserInteractionEnabled:"), false)
 	if pop {
-		c.stack.native.Send(selAddSubview, c.snap)
+		c.stack.children().Send(selAddSubview, c.snap)
 	} else {
-		c.stack.native.Send(selInsertBelow, c.snap, now.native)
+		c.stack.children().Send(selInsertBelow, c.snap, now.native)
 	}
 	s.startSlide(sl)
 	s.animateSlide(sl, from, to, slideSeconds)
@@ -734,7 +739,7 @@ func (s *surface) startSlide(sl *slide) {
 	sl.dim.Send(sel("setAlpha:"), 0.0)
 	sl.dim.Send(selSetFrame, objc.Send[apple.CGRect](sl.stack.native, selBounds))
 	top, _ := s.slideViews(sl)
-	sl.stack.native.Send(selInsertBelow, sl.dim, top)
+	sl.stack.children().Send(selInsertBelow, sl.dim, top)
 }
 
 // placeSlide puts the top screen of sl a fraction p of the way off, as a

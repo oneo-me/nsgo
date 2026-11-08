@@ -47,7 +47,7 @@ func (v *view) sizeShader() {
 // shadeLater draws v once the batch or the frame is applied, or soon on
 // the main thread when neither applies, as after a program compiled.
 func (s *surface) shadeLater(v *view) {
-	if v.shader == nil {
+	if v.shader == nil && v.fx == nil {
 		return
 	}
 	for _, w := range s.shading {
@@ -70,10 +70,11 @@ func (s *surface) drawShaders() {
 		}
 	})
 	for _, v := range s.shading {
-		if s.views[v.id] == v {
+		if s.views[v.id] == v && v.shader != nil {
 			v.shader.Draw(func(lanes []float64) { s.animator.ShaderLanes(v.id, lanes) })
 		}
 	}
 	clear(s.shading)
 	s.shading = s.shading[:0]
+	s.drawEffects()
 }

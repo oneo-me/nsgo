@@ -171,6 +171,14 @@ func builtinFuncString(f shaderir.BuiltinFunc) string {
 		return "rsqrt"
 	case shaderir.TexelAt:
 		return "?(__texelAt)"
+	case shaderir.RoundEven:
+		return "rint"
+	case shaderir.FloatBitsToInt:
+		return "as_type_int"
+	case shaderir.FloatBitsToUint:
+		return "as_type_uint"
+	case shaderir.IntBitsToFloat, shaderir.UintBitsToFloat:
+		return "as_type_float"
 	}
 	return string(f)
 }

@@ -335,6 +335,18 @@ const (
 	DiscardF    BuiltinFunc = "discard"
 	TexelAt     BuiltinFunc = "__texelAt"
 	FrontFacing BuiltinFunc = "frontfacing"
+
+	// Added by NSGo for WGSL (package shader/wgsl), which Kage does not
+	// name: GLSL's names, which the writers map to their languages'.
+	Trunc           BuiltinFunc = "trunc"
+	RoundEven       BuiltinFunc = "roundEven"
+	Sinh            BuiltinFunc = "sinh"
+	Cosh            BuiltinFunc = "cosh"
+	Tanh            BuiltinFunc = "tanh"
+	FloatBitsToInt  BuiltinFunc = "floatBitsToInt"
+	FloatBitsToUint BuiltinFunc = "floatBitsToUint"
+	IntBitsToFloat  BuiltinFunc = "intBitsToFloat"
+	UintBitsToFloat BuiltinFunc = "uintBitsToFloat"
 )
 
 func ParseBuiltinFunc(str string) (BuiltinFunc, bool) {

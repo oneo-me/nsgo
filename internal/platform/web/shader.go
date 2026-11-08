@@ -131,7 +131,7 @@ func (s *surface) queueShader(v *view) {
 // for the frame to draw.
 func (s *surface) changedShaders() {
 	s.animator.ChangedShaders(func(id driver.NodeID) {
-		if v := s.view(id); v != nil && v.gl != nil {
+		if v := s.view(id); v != nil && v.gl != nil && v.fx == nil {
 			s.queueShader(v)
 		}
 	})
@@ -140,57 +140,69 @@ func (s *surface) changedShaders() {
 // drawShaders draws the shader views waiting to, in an animation frame.
 func (s *surface) drawShaders() {
 	for _, v := range s.shading {
-		if s.view(v.id) == v {
+		if s.view(v.id) == v && v.gl != nil {
 			s.drawShader(v)
 		}
 	}
 	clear(s.shading)
 	s.shading = s.shading[:0]
+	s.drawEffects()
 }
 
 func (s *surface) drawShader(v *view) {
 	g := v.gl
+	w := math.Max(float64(v.size.Width-v.border.Left-v.border.Right), 0)
+	h := math.Max(float64(v.size.Height-v.border.Top-v.border.Bottom), 0)
+	s.drawGL(g, v.inner, v.id, w, h, func(i int) (js.Value, float64, float64) {
+		if i < len(g.shader.Images) {
+			if t, ok := s.texture(v, g.shader.Images[i]); ok {
+				return t.tex, t.w, t.h
+			}
+		}
+		return js.Undefined(), 0, 0
+	})
+}
+
+// drawGL draws g's shader on canvas, w by h points, its animated lanes
+// those of view id's, with the textures textures gives: undefined for one
+// that reads as transparent. It reports whether it drew.
+func (s *surface) drawGL(g *glShader, canvas js.Value, id driver.NodeID, w, h float64, textures func(i int) (js.Value, float64, float64)) bool {
 	gl := g.gl
 	if gl.IsNull() || g.shader == nil || g.failed && g.program == g.shader.Program {
-		return
+		return false
 	}
 	if g.program != g.shader.Program && !g.link(g.shader.Program) {
-		return
+		return false
 	}
 	ratio := float64(s.env.PixelRatio)
 	if ratio <= 0 {
 		ratio = 1
 	}
-	w := math.Max(float64(v.size.Width-v.border.Left-v.border.Right), 0)
-	h := math.Max(float64(v.size.Height-v.border.Top-v.border.Bottom), 0)
 	pw, ph := math.Ceil(w*ratio), math.Ceil(h*ratio)
 	if pw == 0 || ph == 0 {
-		return
+		return false
 	}
-	if v.inner.Get("width").Float() != pw || v.inner.Get("height").Float() != ph {
-		v.inner.Set("width", pw)
-		v.inner.Set("height", ph)
+	if canvas.Get("width").Float() != pw || canvas.Get("height").Float() != ph {
+		canvas.Set("width", pw)
+		canvas.Set("height", ph)
 	}
 
 	bridge := 3 + 2*g.textureCount
 	n := bridge + len(g.shader.Lanes)
 	g.lanes = append(g.lanes[:0], make([]float64, n)...)
 	copy(g.lanes[bridge:], g.shader.Lanes)
-	s.animator.ShaderLanes(v.id, g.lanes[bridge:])
+	s.animator.ShaderLanes(id, g.lanes[bridge:])
 	g.lanes[0], g.lanes[1], g.lanes[2] = w, h, ratio
 	for i := range g.textureCount {
 		gl.Call("activeTexture", gl.Get("TEXTURE0").Int()+i)
-		var t glTexture
-		if i < len(g.shader.Images) {
-			t, _ = s.texture(v, g.shader.Images[i])
-		}
-		if t.tex.IsUndefined() {
-			// An image not loaded reads as transparent: no texture.
+		tex, tw, th := textures(i)
+		if tex.IsUndefined() {
+			// What is not loaded reads as transparent: no texture.
 			gl.Call("bindTexture", gl.Get("TEXTURE_2D"), js.Null())
 			continue
 		}
-		gl.Call("bindTexture", gl.Get("TEXTURE_2D"), t.tex)
-		g.lanes[3+2*i], g.lanes[4+2*i] = t.w, t.h
+		gl.Call("bindTexture", gl.Get("TEXTURE_2D"), tex)
+		g.lanes[3+2*i], g.lanes[4+2*i] = tw, th
 	}
 	clear(g.buf)
 	shaderir.PutLanes(g.buf, g.offsets, g.types, g.lanes, 4)
@@ -204,6 +216,7 @@ func (s *surface) drawShader(v *view) {
 	gl.Call("clearColor", 0, 0, 0, 0)
 	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 	gl.Call("drawArrays", gl.Get("TRIANGLES"), 0, 3)
+	return true
 }
 
 // link translates p for WebGL and links it, reporting whether it can draw.

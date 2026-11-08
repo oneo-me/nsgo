@@ -139,6 +139,9 @@ func (w *window) showAnimated() {
 	w.changedNatives()
 	w.changedShaders()
 	w.repinBound()
+	if w.animator.Running() {
+		w.staleEffects()
+	}
 }
 
 // monotonic is the animator's clock: time since the window opened.

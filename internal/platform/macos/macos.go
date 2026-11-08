@@ -118,6 +118,7 @@ type view struct {
 	played    []driver.DrawOp       // the ops it last drew, its bound arguments' values in place
 	canvas    canvasPaint           // how it paints (content.go)
 	shader    *apple.ShaderLayer    // a shader view's (shader.go)
+	fx        *effect               // its effect, transition or navigation shader (effect.go)
 	web       *apple.Web            // a web view's
 	video     *apple.Video          // a video's
 
@@ -232,6 +233,9 @@ type surface struct {
 	// shading are the shader views to draw once the batch or the frame
 	// is applied.
 	shading []*view
+	// effects are the views with an effect, a transition or a navigation
+	// shader (effect.go).
+	effects map[*view]bool
 
 	// The frame clock and what it animates.
 	animator *driver.Animator
@@ -709,7 +713,7 @@ func openWindow(app engine.App, opts Options, test *testWindow) *surface {
 // host's view.
 func newSurface(opts Options, embedded bool) *surface {
 	s := &surface{epoch: time.Now(), motions: map[*view]*motion{}, movers: map[*view]struct{}{},
-		inside:     map[*view]struct{}{},
+		inside: map[*view]struct{}{}, effects: map[*view]bool{},
 		components: opts.Components, embedded: embedded, appearance: opts.Appearance}
 	s.appName = opts.Title
 	s.native = objc.ID(classSurface).Send(selAlloc).Send(sel("initWithFrame:"),
@@ -1519,7 +1523,18 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.setCanvasNodes(it.Drawing.Nodes)
 			v.redraw()
 		case driver.ItemShader:
-			s.setShader(v, it.Shader)
+			if v.kind == driver.KindShader && it.Shader != nil && it.Shader.Role == driver.ShaderFill {
+				s.setShader(v, it.Shader)
+			} else {
+				s.setEffect(v, it.Shader)
+			}
+		case driver.ItemShaderTransition:
+			s.startTransition(v)
+		case driver.ItemShaderInput:
+			if v.fx != nil {
+				v.fx.stale = true
+				s.shadeLater(v)
+			}
 		case driver.ItemScrollTo:
 			if v.sc != nil {
 				v.scrollTo(it.Point, it.Animated)
@@ -1612,7 +1627,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 func (s *surface) finish() {
 	s.startImages()
 	for _, v := range s.presenting {
-		if s.views[v.id] == v && v.native.Send(selSuperview) != 0 {
+		if s.views[v.id] == v && v.native.Send(selSuperview) != 0 && !s.navigating(v.up) {
 			h := objc.Send[apple.CGRect](v.native.Send(selSuperview), selBounds).Size.Height
 			apple.AnimateIn(v.native.Send(selLayer), v.animation, h, s.env.ReduceMotion)
 		}
@@ -1697,6 +1712,10 @@ func (s *surface) delete(v *view, kept bool) {
 	v.releaseCanvasNodes()
 	if v.shader != nil {
 		v.shader.Release()
+	}
+	s.endEffect(v)
+	if v.content != v.native && v.sc == nil {
+		delete(views, v.content)
 	}
 	v.layout.Release()
 	if v.image != nil {

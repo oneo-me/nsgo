@@ -78,6 +78,9 @@ var (
 // present brings modal v in.
 func (w *window) present(v *view) {
 	anim := v.modal
+	if w.navigating(w.view(w.root)) {
+		return // the dialog's shader draws its coming
+	}
 	if anim == driver.ModalSlide && w.env.ReduceMotion {
 		anim = driver.ModalFade
 	}

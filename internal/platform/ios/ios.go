@@ -71,6 +71,8 @@ type view struct {
 	drawing    *driver.Drawing    // a canvas's
 	played     []driver.DrawOp    // the ops it last drew, its bound arguments' values in place
 	shader     *apple.ShaderLayer // a shader view's (shader.go)
+	fx         *effect            // its effect, transition or navigation shader (effect.go)
+	container  objc.ID            // what holds its children under an effect, once it has one
 	web        *apple.Web         // a web view's
 	video      *apple.Video       // a video's
 
@@ -189,6 +191,11 @@ type surface struct {
 	// shading are the shader views to draw once the batch or the frame
 	// is applied.
 	shading []*view
+	// effects are the views with an effect, a transition or a navigation
+	// shader (effect.go); root is the root view's, which screen shaders
+	// draw over.
+	effects map[*view]bool
+	root    driver.NodeID
 
 	selecting *selection
 
@@ -388,7 +395,7 @@ func Run(root engine.App, opts Options) {
 // newSurface is the surface the scene shows root in; a test host's has no
 // root until the test opens one.
 func newSurface(root engine.App, opts Options) *surface {
-	s := &surface{app: root, id: opts.ID, epoch: time.Now(), motions: map[*view]*motion{}, tops: map[*view]*view{}, slides: map[*view]*slide{}, appearance: opts.Appearance,
+	s := &surface{app: root, id: opts.ID, epoch: time.Now(), motions: map[*view]*motion{}, tops: map[*view]*view{}, effects: map[*view]bool{}, slides: map[*view]*slide{}, appearance: opts.Appearance,
 		components: opts.Components, unknown: map[string]bool{}, accessories: map[driver.NodeID]*view{},
 		perfOn: opts.Perf}
 	s.animator = driver.NewAnimator(func(e driver.Event) { s.engine.Dispatch(e) })
@@ -940,7 +947,18 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.setCanvasNodes(it.Drawing.Nodes)
 			v.redraw()
 		case driver.ItemShader:
-			s.setShader(v, it.Shader)
+			if v.kind == driver.KindShader && it.Shader != nil && it.Shader.Role == driver.ShaderFill {
+				s.setShader(v, it.Shader)
+			} else {
+				s.setEffect(v, it.Shader)
+			}
+		case driver.ItemShaderTransition:
+			s.startTransition(v)
+		case driver.ItemShaderInput:
+			if v.fx != nil {
+				v.fx.stale = true
+				s.shadeLater(v)
+			}
 		case driver.ItemScrollTo:
 			size := objc.Send[apple.CGSize](v.native, sel("contentSize"))
 			in := objc.Send[edgeInsets](v.native, sel("adjustedContentInset"))
@@ -1018,6 +1036,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			}
 		}
 	}
+	s.root = b.Root
 	if root := s.views[b.Root]; root.native.Send(selSuperview) != s.native {
 		s.native.Send(selAddSubview, root.native)
 	}
@@ -1041,7 +1060,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 func (s *surface) finish() {
 	s.startImages()
 	for _, v := range s.presenting {
-		if s.views[v.id] == v && v.native.Send(selSuperview) != 0 {
+		if s.views[v.id] == v && v.native.Send(selSuperview) != 0 && !s.navigating(s.views[s.root]) {
 			h := objc.Send[apple.CGRect](v.native.Send(selSuperview), selBounds).Size.Height
 			apple.AnimateIn(v.native.Send(selLayer), v.modal.Animation, h, s.env.ReduceMotion)
 		}
@@ -1163,6 +1182,10 @@ func (s *surface) delete(v *view, kept bool) {
 	}
 	if v.video != nil {
 		v.video.Close()
+	}
+	s.endEffect(v)
+	if v.container != 0 {
+		delete(views, v.container)
 	}
 	if v.shader != nil {
 		v.shader.Release()

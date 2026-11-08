@@ -63,7 +63,7 @@ nsgo
 ├── Core
 │   ├── core                             Elements, styles, reactive graph, shadow tree
 │   ├── internal/layout                  Block, flexbox and grid layout
-│   └── internal/shader                  The shader compiler
+│   └── internal/shader, shader/wgsl     The shader compilers
 │
 ├── Protocol
 │   ├── internal/woff                    WOFF and WOFF2 fonts unpacked, for the bundler
@@ -114,8 +114,8 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 
 - Apps may import any public package directly, `core` included. `core` and `nsgotest` alias the internal types their API reaches (`TestPublicAPINamesNoInternalType`).
 - `internal/driver` imports from the module only `internal/shaderir`, for the shader programs it carries.
-- `core` imports only `internal/driver`, `internal/layout` and the shader compiler (`internal/shader`, `internal/shaderir`).
-- Backends import `internal/driver`, `internal/engine`, `desktop/locales`, their shared packages and the shader writers, never the compiler, which only `core` links.
+- `core` imports only `internal/driver`, `internal/layout` and the shader compilers (`internal/shader`, `internal/shader/wgsl`, `internal/shaderir`).
+- Backends import `internal/driver`, `internal/engine`, `desktop/locales`, their shared packages and the shader writers, never the compilers, which only `core` links.
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
 - `ui` imports `base`, `core`, `mobile`, `desktop` and the icons; `base` never imports it.
@@ -134,7 +134,7 @@ Backends reach `core` only through the engine and `core` imports no backend, so 
 
 `microphone` stands apart from the layers, as recording has nothing to do with views: it loads the system's audio libraries through purego, holds iOS's audio session of its own while it records, and elsewhere builds to report that it cannot.
 
-Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base` but for `base/terminal`, `ui`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compiler and `internal/engine`. No package has cgo files or hand-written C.
+Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base` but for `base/terminal`, `ui`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compilers and `internal/engine`. No package has cgo files or hand-written C.
 
 ## Backends
 

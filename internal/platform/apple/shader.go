@@ -49,6 +49,18 @@ type ShaderLayer struct {
 	textures []objc.ID
 	sizes    [][2]float64
 	sources  []driver.ImageSource
+	// pictures are what a WGSL program reads in place of images: content,
+	// backdrop, from and to (SetPictures).
+	pictures [4]*Picture
+}
+
+// SetPictures gives a WGSL program the pictures it reads; a nil one, or
+// one not taken yet, reads as transparent.
+func (l *ShaderLayer) SetPictures(p [4]*Picture) { l.pictures = p }
+
+// Drawable reports whether the layer has a program ready to draw.
+func (l *ShaderLayer) Drawable() bool {
+	return l.shader != nil && l.pipe != nil && l.pipe.state != 0
 }
 
 // shaderRender is what the main thread hands a layer's render goroutine:
@@ -193,7 +205,12 @@ func (l *ShaderLayer) Draw(animated func(lanes []float64)) {
 	textures := make([]objc.ID, p.textures)
 	for i := range p.textures {
 		textures[i] = blankTexture()
-		if i < len(l.textures) && l.textures[i] != 0 {
+		if l.shader.Program.WGSL {
+			if pic := l.pictures[i]; pic != nil && pic.tex != 0 {
+				textures[i] = pic.tex
+				l.lanes[3+2*i], l.lanes[4+2*i] = float64(pic.w), float64(pic.h)
+			}
+		} else if i < len(l.textures) && l.textures[i] != 0 {
 			textures[i] = l.textures[i]
 			l.lanes[3+2*i], l.lanes[4+2*i] = l.sizes[i][0], l.sizes[i][1]
 		}
@@ -342,17 +359,19 @@ type mtlRegion struct {
 	X, Y, Z, W, H, D uint
 }
 
+func loadBitmaps() {
+	cg := load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
+	purego.RegisterLibFunc(&cgBitmapContextCreate, cg, "CGBitmapContextCreate")
+	purego.RegisterLibFunc(&cgBitmapContextGetData, cg, "CGBitmapContextGetData")
+}
+
 // textureOf returns image's pixels, w by h, as a Metal texture of
 // premultiplied BGRA, top row first, or 0.
 func textureOf(image uintptr, w, h int) objc.ID {
 	if w <= 0 || h <= 0 {
 		return 0
 	}
-	bitmapsLoaded.Do(func() {
-		cg := load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
-		purego.RegisterLibFunc(&cgBitmapContextCreate, cg, "CGBitmapContextCreate")
-		purego.RegisterLibFunc(&cgBitmapContextGetData, cg, "CGBitmapContextGetData")
-	})
+	bitmapsLoaded.Do(loadBitmaps)
 	const premultipliedFirst, byteOrder32Little = 2, 2 << 12
 	ctx := cgBitmapContextCreate(0, uintptr(w), uintptr(h), 8, uintptr(w*4), srgb, premultipliedFirst|byteOrder32Little)
 	if ctx == 0 {

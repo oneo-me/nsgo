@@ -1842,6 +1842,24 @@ type Translation struct {
 	ShaderTheSource                              func() string
 	ShaderGoSSyntaxCheckedAnd                    func() string
 	ShaderCompiledOnceAsTheProgram               func() string
+	ShaderEffect                                 func() string
+	ShaderEffectDetail                           func() string
+	ShaderThroughAWave                           func() string
+	ShaderTheCardStillTakesPresses               func() string
+	ShaderWavesRunThroughTheChildren             func() string
+	ShaderTransition                             func() string
+	ShaderTransitionDetail                       func() string
+	ShaderFirstPanel                             func() string
+	ShaderSecondPanel                            func() string
+	ShaderNext                                   func() string
+	ShaderValueRunsIt                            func() string
+	ShaderPages                                  func() string
+	ShaderPagesDetail                            func() string
+	ShaderHome                                   func() string
+	ShaderOpenAPage                              func() string
+	ShaderAPage                                  func() string
+	ShaderBack                                   func() string
+	ShaderPushedAndPoppedThrough                 func() string
 	PhotosPhoto                                  func() string
 	PhotosRefreshes                              func() string
 	PhotosRefresh                                func() string
@@ -3798,6 +3816,24 @@ const (
 	textShaderTheSource
 	textShaderGoSSyntaxCheckedAnd
 	textShaderCompiledOnceAsTheProgram
+	textShaderEffect
+	textShaderEffectDetail
+	textShaderThroughAWave
+	textShaderTheCardStillTakesPresses
+	textShaderWavesRunThroughTheChildren
+	textShaderTransition
+	textShaderTransitionDetail
+	textShaderFirstPanel
+	textShaderSecondPanel
+	textShaderNext
+	textShaderValueRunsIt
+	textShaderPages
+	textShaderPagesDetail
+	textShaderHome
+	textShaderOpenAPage
+	textShaderAPage
+	textShaderBack
+	textShaderPushedAndPoppedThrough
 	textPhotosPhoto
 	textPhotosRefreshes
 	textPhotosRefresh
@@ -5724,6 +5760,24 @@ var texts = map[string]*[numTexts]string{
 		"The source",
 		"Go's syntax, checked and written as MSL, GLSL or HLSL",
 		"Compiled once, as the program loads",
+		"Effect",
+		"Children drawn through a WGSL program, which reads them with sample_content",
+		"Through a wave",
+		"The card under it still takes presses.",
+		"Waves run through what the children draw",
+		"Transition",
+		"A dissolve from what the children showed to what they show",
+		"First panel",
+		"Second panel",
+		"Next",
+		"A new value runs it",
+		"Pages",
+		"A page that comes and goes through a circle",
+		"Home",
+		"Open a page",
+		"A page",
+		"Back",
+		"Pushed and popped through its transition shader",
 		"Photo",
 		" refreshes. ",
 		"Refresh",
@@ -7645,6 +7699,24 @@ var texts = map[string]*[numTexts]string{
 		"源代码",
 		"Go 语法，经过检查并写成 MSL、GLSL 或 HLSL",
 		"程序加载时编译一次",
+		"效果",
+		"子视图经 WGSL 程序绘制，程序用 sample_content 读取它们",
+		"穿过波纹",
+		"下面的卡片仍然响应按压。",
+		"波纹穿过子视图绘制的内容",
+		"转场",
+		"从子视图之前的样子溶解到现在的样子",
+		"第一个面板",
+		"第二个面板",
+		"下一个",
+		"值一变就运行",
+		"页面",
+		"页面经一个圆形着色器进出",
+		"首页",
+		"打开一个页面",
+		"一个页面",
+		"返回",
+		"经转场着色器推入与弹出",
 		"照片",
 		" 次刷新。",
 		"刷新",
@@ -13057,6 +13129,60 @@ func Supply(lang string, t Translation) {
 	}
 	if t.ShaderCompiledOnceAsTheProgram != nil {
 		st[textShaderCompiledOnceAsTheProgram] = t.ShaderCompiledOnceAsTheProgram()
+	}
+	if t.ShaderEffect != nil {
+		st[textShaderEffect] = t.ShaderEffect()
+	}
+	if t.ShaderEffectDetail != nil {
+		st[textShaderEffectDetail] = t.ShaderEffectDetail()
+	}
+	if t.ShaderThroughAWave != nil {
+		st[textShaderThroughAWave] = t.ShaderThroughAWave()
+	}
+	if t.ShaderTheCardStillTakesPresses != nil {
+		st[textShaderTheCardStillTakesPresses] = t.ShaderTheCardStillTakesPresses()
+	}
+	if t.ShaderWavesRunThroughTheChildren != nil {
+		st[textShaderWavesRunThroughTheChildren] = t.ShaderWavesRunThroughTheChildren()
+	}
+	if t.ShaderTransition != nil {
+		st[textShaderTransition] = t.ShaderTransition()
+	}
+	if t.ShaderTransitionDetail != nil {
+		st[textShaderTransitionDetail] = t.ShaderTransitionDetail()
+	}
+	if t.ShaderFirstPanel != nil {
+		st[textShaderFirstPanel] = t.ShaderFirstPanel()
+	}
+	if t.ShaderSecondPanel != nil {
+		st[textShaderSecondPanel] = t.ShaderSecondPanel()
+	}
+	if t.ShaderNext != nil {
+		st[textShaderNext] = t.ShaderNext()
+	}
+	if t.ShaderValueRunsIt != nil {
+		st[textShaderValueRunsIt] = t.ShaderValueRunsIt()
+	}
+	if t.ShaderPages != nil {
+		st[textShaderPages] = t.ShaderPages()
+	}
+	if t.ShaderPagesDetail != nil {
+		st[textShaderPagesDetail] = t.ShaderPagesDetail()
+	}
+	if t.ShaderHome != nil {
+		st[textShaderHome] = t.ShaderHome()
+	}
+	if t.ShaderOpenAPage != nil {
+		st[textShaderOpenAPage] = t.ShaderOpenAPage()
+	}
+	if t.ShaderAPage != nil {
+		st[textShaderAPage] = t.ShaderAPage()
+	}
+	if t.ShaderBack != nil {
+		st[textShaderBack] = t.ShaderBack()
+	}
+	if t.ShaderPushedAndPoppedThrough != nil {
+		st[textShaderPushedAndPoppedThrough] = t.ShaderPushedAndPoppedThrough()
 	}
 	if t.PhotosPhoto != nil {
 		st[textPhotosPhoto] = t.PhotosPhoto()
@@ -29800,6 +29926,162 @@ func ShaderCompiledOnceAsTheProgram(cx *core.Scope) string {
 // in the language of msgs.
 func (msgs Messages) ShaderCompiledOnceAsTheProgram() string {
 	return msgs.text(textShaderCompiledOnceAsTheProgram)
+}
+
+// ShaderEffect says "Effect"
+// in the language the app shows under cx.
+func ShaderEffect(cx *core.Scope) string { return For(cx).ShaderEffect() }
+
+// ShaderEffect says "Effect"
+// in the language of msgs.
+func (msgs Messages) ShaderEffect() string { return msgs.text(textShaderEffect) }
+
+// ShaderEffectDetail says "Children drawn through a WGSL program, which reads them with sample_content"
+// in the language the app shows under cx.
+func ShaderEffectDetail(cx *core.Scope) string { return For(cx).ShaderEffectDetail() }
+
+// ShaderEffectDetail says "Children drawn through a WGSL program, which reads them with sample_content"
+// in the language of msgs.
+func (msgs Messages) ShaderEffectDetail() string { return msgs.text(textShaderEffectDetail) }
+
+// ShaderThroughAWave says "Through a wave"
+// in the language the app shows under cx.
+func ShaderThroughAWave(cx *core.Scope) string { return For(cx).ShaderThroughAWave() }
+
+// ShaderThroughAWave says "Through a wave"
+// in the language of msgs.
+func (msgs Messages) ShaderThroughAWave() string { return msgs.text(textShaderThroughAWave) }
+
+// ShaderTheCardStillTakesPresses says "The card under it still takes presses."
+// in the language the app shows under cx.
+func ShaderTheCardStillTakesPresses(cx *core.Scope) string {
+	return For(cx).ShaderTheCardStillTakesPresses()
+}
+
+// ShaderTheCardStillTakesPresses says "The card under it still takes presses."
+// in the language of msgs.
+func (msgs Messages) ShaderTheCardStillTakesPresses() string {
+	return msgs.text(textShaderTheCardStillTakesPresses)
+}
+
+// ShaderWavesRunThroughTheChildren says "Waves run through what the children draw"
+// in the language the app shows under cx.
+func ShaderWavesRunThroughTheChildren(cx *core.Scope) string {
+	return For(cx).ShaderWavesRunThroughTheChildren()
+}
+
+// ShaderWavesRunThroughTheChildren says "Waves run through what the children draw"
+// in the language of msgs.
+func (msgs Messages) ShaderWavesRunThroughTheChildren() string {
+	return msgs.text(textShaderWavesRunThroughTheChildren)
+}
+
+// ShaderTransition says "Transition"
+// in the language the app shows under cx.
+func ShaderTransition(cx *core.Scope) string { return For(cx).ShaderTransition() }
+
+// ShaderTransition says "Transition"
+// in the language of msgs.
+func (msgs Messages) ShaderTransition() string { return msgs.text(textShaderTransition) }
+
+// ShaderTransitionDetail says "A dissolve from what the children showed to what they show"
+// in the language the app shows under cx.
+func ShaderTransitionDetail(cx *core.Scope) string { return For(cx).ShaderTransitionDetail() }
+
+// ShaderTransitionDetail says "A dissolve from what the children showed to what they show"
+// in the language of msgs.
+func (msgs Messages) ShaderTransitionDetail() string { return msgs.text(textShaderTransitionDetail) }
+
+// ShaderFirstPanel says "First panel"
+// in the language the app shows under cx.
+func ShaderFirstPanel(cx *core.Scope) string { return For(cx).ShaderFirstPanel() }
+
+// ShaderFirstPanel says "First panel"
+// in the language of msgs.
+func (msgs Messages) ShaderFirstPanel() string { return msgs.text(textShaderFirstPanel) }
+
+// ShaderSecondPanel says "Second panel"
+// in the language the app shows under cx.
+func ShaderSecondPanel(cx *core.Scope) string { return For(cx).ShaderSecondPanel() }
+
+// ShaderSecondPanel says "Second panel"
+// in the language of msgs.
+func (msgs Messages) ShaderSecondPanel() string { return msgs.text(textShaderSecondPanel) }
+
+// ShaderNext says "Next"
+// in the language the app shows under cx.
+func ShaderNext(cx *core.Scope) string { return For(cx).ShaderNext() }
+
+// ShaderNext says "Next"
+// in the language of msgs.
+func (msgs Messages) ShaderNext() string { return msgs.text(textShaderNext) }
+
+// ShaderValueRunsIt says "A new value runs it"
+// in the language the app shows under cx.
+func ShaderValueRunsIt(cx *core.Scope) string { return For(cx).ShaderValueRunsIt() }
+
+// ShaderValueRunsIt says "A new value runs it"
+// in the language of msgs.
+func (msgs Messages) ShaderValueRunsIt() string { return msgs.text(textShaderValueRunsIt) }
+
+// ShaderPages says "Pages"
+// in the language the app shows under cx.
+func ShaderPages(cx *core.Scope) string { return For(cx).ShaderPages() }
+
+// ShaderPages says "Pages"
+// in the language of msgs.
+func (msgs Messages) ShaderPages() string { return msgs.text(textShaderPages) }
+
+// ShaderPagesDetail says "A page that comes and goes through a circle"
+// in the language the app shows under cx.
+func ShaderPagesDetail(cx *core.Scope) string { return For(cx).ShaderPagesDetail() }
+
+// ShaderPagesDetail says "A page that comes and goes through a circle"
+// in the language of msgs.
+func (msgs Messages) ShaderPagesDetail() string { return msgs.text(textShaderPagesDetail) }
+
+// ShaderHome says "Home"
+// in the language the app shows under cx.
+func ShaderHome(cx *core.Scope) string { return For(cx).ShaderHome() }
+
+// ShaderHome says "Home"
+// in the language of msgs.
+func (msgs Messages) ShaderHome() string { return msgs.text(textShaderHome) }
+
+// ShaderOpenAPage says "Open a page"
+// in the language the app shows under cx.
+func ShaderOpenAPage(cx *core.Scope) string { return For(cx).ShaderOpenAPage() }
+
+// ShaderOpenAPage says "Open a page"
+// in the language of msgs.
+func (msgs Messages) ShaderOpenAPage() string { return msgs.text(textShaderOpenAPage) }
+
+// ShaderAPage says "A page"
+// in the language the app shows under cx.
+func ShaderAPage(cx *core.Scope) string { return For(cx).ShaderAPage() }
+
+// ShaderAPage says "A page"
+// in the language of msgs.
+func (msgs Messages) ShaderAPage() string { return msgs.text(textShaderAPage) }
+
+// ShaderBack says "Back"
+// in the language the app shows under cx.
+func ShaderBack(cx *core.Scope) string { return For(cx).ShaderBack() }
+
+// ShaderBack says "Back"
+// in the language of msgs.
+func (msgs Messages) ShaderBack() string { return msgs.text(textShaderBack) }
+
+// ShaderPushedAndPoppedThrough says "Pushed and popped through its transition shader"
+// in the language the app shows under cx.
+func ShaderPushedAndPoppedThrough(cx *core.Scope) string {
+	return For(cx).ShaderPushedAndPoppedThrough()
+}
+
+// ShaderPushedAndPoppedThrough says "Pushed and popped through its transition shader"
+// in the language of msgs.
+func (msgs Messages) ShaderPushedAndPoppedThrough() string {
+	return msgs.text(textShaderPushedAndPoppedThrough)
 }
 
 // PhotosPhoto says "Photo"

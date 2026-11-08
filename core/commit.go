@@ -45,6 +45,19 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 		}
 		t.commitRound()
 	}
+	t.markShaderInputs()
+	if len(t.shaderStarts) > 0 {
+		// The platform pictures what a transition starts from before it
+		// applies the rest.
+		starts := make([]driver.MountItem, 0, len(t.shaderStarts))
+		for _, id := range t.shaderStarts {
+			if n := t.nodes[id]; n != nil && !n.deleted {
+				starts = append(starts, driver.MountItem{Kind: driver.ItemShaderTransition, ID: id})
+			}
+		}
+		t.shaderStarts = t.shaderStarts[:0]
+		t.items = slices.Insert(t.items, 0, starts...)
+	}
 	t.paceLater()
 	t.timeTransitionEnds()
 	if driver.CheckCommits && !t.changed {
@@ -152,6 +165,7 @@ func (t *Tree) commitRound() {
 	live := t.stacks[:0]
 	for _, s := range t.stacks {
 		if !s.deleted {
+			t.navigate(s, t.topScreen(s))
 			t.showTop(s)
 			t.markScreens(s)
 			live = append(live, s)
@@ -729,6 +743,7 @@ func (t *Tree) emitParts(n *node) bool {
 	if sc := n.screen; sc != nil && sc.native {
 		t.emitScreen(n)
 	}
+	t.emitFx(n)
 	return styled
 }
 

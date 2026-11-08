@@ -37,6 +37,9 @@ func (s *surface) tick(now time.Duration) {
 	s.ticking = false
 	s.animator.Step(now)
 	s.applyAnimated()
+	if s.animator.Running() {
+		s.staleEffects()
+	}
 	s.changedShaders()
 	s.drawShaders()
 	if s.frameWanted {

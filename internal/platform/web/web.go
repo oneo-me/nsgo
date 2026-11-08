@@ -107,24 +107,28 @@ type surface struct {
 	host js.Value
 	// rtl is the app's direction (driver.ItemDirection), which alerts lay
 	// their buttons out in.
-	rtl        bool
-	root       *view
-	measure    js.Value   // a hidden element text is measured in
-	measureCSS *cssBox    // its style
-	widths     textWidths // texts measured on a canvas
-	paragraphs map[paragraphKey]*paragraphStyle
-	classes    classSheet
-	css        cssText       // the buffer CSS for a class is built in
-	dom        dom           // frames and texts applied in bulk (dom.go)
-	parked     js.Value      // a hidden, inert element removed views wait in
-	measuring  *preparedText // the text measure holds
-	metrics    js.Value      // a canvas's 2D context, for fonts' metrics
-	engine     *engine.Engine
-	views      []*view // index is NodeID
-	press      press
-	touch      fingers
-	covers     []covered // what the modals made inert, oldest first
-	history    history
+	rtl  bool
+	root *view
+	// effects are the views with an effect, a transition or a navigation
+	// shader (effect.go); effectStyled whether their style sheet is in.
+	effects      map[*view]bool
+	effectStyled bool
+	measure      js.Value   // a hidden element text is measured in
+	measureCSS   *cssBox    // its style
+	widths       textWidths // texts measured on a canvas
+	paragraphs   map[paragraphKey]*paragraphStyle
+	classes      classSheet
+	css          cssText       // the buffer CSS for a class is built in
+	dom          dom           // frames and texts applied in bulk (dom.go)
+	parked       js.Value      // a hidden, inert element removed views wait in
+	measuring    *preparedText // the text measure holds
+	metrics      js.Value      // a canvas's 2D context, for fonts' metrics
+	engine       *engine.Engine
+	views        []*view // index is NodeID
+	press        press
+	touch        fingers
+	covers       []covered // what the modals made inert, oldest first
+	history      history
 	// whole is set when the app fills the page; an app in an element of
 	// it takes the page's keys only after a press in it, pressedIn, or
 	// while the focus is in it, as another app on the page has them
@@ -214,6 +218,7 @@ type view struct {
 	image     *image
 	drawing   *driver.Drawing // a canvas's
 	gl        *glShader       // a shader view's
+	fx        *effect         // its effect, transition or navigation shader (effect.go)
 	web       *webFrame       // a web view's
 	video     *video          // a video's
 	modal     driver.ModalAnimation
@@ -321,7 +326,7 @@ func open(app engine.App, opts Options, test *testOpen) *surface {
 		base.Set("textContent", baseCSS)
 		doc.Get("head").Call("appendChild", base)
 	}
-	s := &surface{doc: doc, host: host, components: opts.Components, unknown: map[string]bool{}, dom: newDOM()}
+	s := &surface{doc: doc, host: host, components: opts.Components, unknown: map[string]bool{}, dom: newDOM(), effects: map[*view]bool{}}
 	s.animator = driver.NewAnimator(func(e driver.Event) { s.engine.Dispatch(e) })
 	// Inside the host, measured text inherits what drawn text does.
 	s.measure = doc.Call("createElement", "div")
@@ -1443,6 +1448,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 				v.el.Call("remove")
 			}
 			s.animator.Forget(v.id)
+			s.endEffect(v)
 			if s.drag == v {
 				s.drag = nil
 			}
@@ -1551,8 +1557,17 @@ func (s *surface) Mount(b *driver.MountBatch) {
 				s.setDrawing(v, it.Drawing)
 			}
 		case driver.ItemShader:
-			if v.gl != nil {
+			if v.gl != nil && it.Shader != nil && it.Shader.Role == driver.ShaderFill {
 				s.setShader(v, it.Shader)
+			} else {
+				s.setEffect(v, it.Shader)
+			}
+		case driver.ItemShaderTransition:
+			s.startTransition(v)
+		case driver.ItemShaderInput:
+			if v.fx != nil {
+				v.fx.stale = true
+				s.startTicking()
 			}
 		case driver.ItemScrollTo:
 			if v.kind == driver.KindScroll {
@@ -1912,6 +1927,9 @@ func transitionCSS(t driver.Transition) string {
 // fades what would slide.
 func (s *surface) present(v *view) {
 	anim := v.modal
+	if s.navigating(s.root) {
+		return // the dialog's shader draws its coming
+	}
 	if anim == driver.ModalSlide && s.env.ReduceMotion {
 		anim = driver.ModalFade
 	}

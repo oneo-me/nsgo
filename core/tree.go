@@ -32,39 +32,45 @@ type Tree struct {
 	reported Environment
 	// id numbers an opened surface's tree, 0 the first's; window is its
 	// handle, closed set once it is gone.
-	id          uint32
-	window      *Window
-	closed      bool
-	rt          *runtime
-	text        driver.TextEngine
-	nodes       []*node // index is NodeID; 0 is unused
-	free        []NodeID
-	view        *node // the surface's root view
-	touches     touchState
-	size        Size
-	changed     bool
-	deleted     []NodeID
-	commands    []driver.MountItem
-	moves       []move
-	items       []driver.MountItem
-	laidOut     []*node
-	transits    []*node // nodes whose next frame their layout transition moves
-	ending      []*node // nodes with OnTransitionEnd restyled since the last commit
-	reports     []report
-	stacks      []*node
-	lists       []*node
-	accessories []*node
-	headerViews []*node
-	status      statusBars
-	anim        animations
-	layoutAnim  *LayoutAnimation
-	fontScale   float32
-	alerts      map[uint32]alertWait
-	waits       map[uint32]wait
-	imageInfos  map[uint32]imageInfoWait
-	keys        []*keyBinding
-	keysChanged bool
-	backs       []*backHandler
+	id       uint32
+	window   *Window
+	closed   bool
+	rt       *runtime
+	text     driver.TextEngine
+	nodes    []*node // index is NodeID; 0 is unused
+	free     []NodeID
+	view     *node // the surface's root view
+	touches  touchState
+	size     Size
+	changed  bool
+	deleted  []NodeID
+	commands []driver.MountItem
+	moves    []move
+	items    []driver.MountItem
+	laidOut  []*node
+	transits []*node // nodes whose next frame their layout transition moves
+	ending   []*node // nodes with OnTransitionEnd restyled since the last commit
+	reports  []report
+	stacks   []*node
+	// pictured are the nodes whose shaders read pictures; shaderStarts
+	// the transitions starting in the next batch, which come first in it;
+	// navTops each stack's top screen as the last commit showed it.
+	pictured     []*node
+	shaderStarts []NodeID
+	navTops      map[*node]*node
+	lists        []*node
+	accessories  []*node
+	headerViews  []*node
+	status       statusBars
+	anim         animations
+	layoutAnim   *LayoutAnimation
+	fontScale    float32
+	alerts       map[uint32]alertWait
+	waits        map[uint32]wait
+	imageInfos   map[uint32]imageInfoWait
+	keys         []*keyBinding
+	keysChanged  bool
+	backs        []*backHandler
 	// peeking is the screen a back gesture may uncover (Tree.peek).
 	peeking *node
 	// history is the depth ItemHistory last sent, which historyAgain
@@ -199,6 +205,7 @@ type node struct {
 	list   *listNode
 	canvas *canvasNode
 	shader *shaderNode
+	fx     *fxNode // an effect's, a transition's or a navigation's shader
 	icon   *iconNode
 	web    *webNode
 	video  *videoNode
@@ -916,6 +923,22 @@ func (t *Tree) mount(cx *Scope, parent *node, el Node) {
 		t.mountModal(cx, parent, el)
 	case *Modal:
 		t.mountModal(cx, parent, *el)
+	case ShaderEffect:
+		t.mountShaderEffect(cx, parent, el)
+	case *ShaderEffect:
+		t.mountShaderEffect(cx, parent, *el)
+	case ShaderTransition:
+		t.mountShaderTransition(cx, parent, el)
+	case *ShaderTransition:
+		t.mountShaderTransition(cx, parent, *el)
+	case ScreenEffect:
+		t.mountScreenEffect(cx, parent, el)
+	case *ScreenEffect:
+		t.mountScreenEffect(cx, parent, *el)
+	case ScreenTransition:
+		t.mountScreenTransition(cx, parent, el)
+	case *ScreenTransition:
+		t.mountScreenTransition(cx, parent, *el)
 	case Stack:
 		t.mountStack(cx, parent, el)
 	case *Stack:

@@ -6,6 +6,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/shaderir"
 	"github.com/oneo-me/nsgo/internal/shaderir/glsl"
+	"slices"
 )
 
 // Shaders draw with OpenGL ES 3.0 in the Java runtime's ShaderNode, a
@@ -134,4 +135,26 @@ func writeShader(w *writer, sh *driver.Shader, it shaderItem) {
 	for _, img := range sh.Images {
 		w.str(img.Key())
 	}
+}
+
+// withoutEffects leaves out of b what the Java runtime does not draw yet:
+// effects, transitions and navigation shaders, and their starts and
+// pictures, so their children show as they are and pages and dialogs
+// come with their own motion.
+func withoutEffects(b *driver.MountBatch) *driver.MountBatch {
+	effect := func(it *driver.MountItem) bool {
+		switch it.Kind {
+		case driver.ItemShaderTransition, driver.ItemShaderInput:
+			return true
+		case driver.ItemShader:
+			return it.Shader == nil || it.Shader.Role != driver.ShaderFill
+		}
+		return false
+	}
+	if !slices.ContainsFunc(b.Items, func(it driver.MountItem) bool { return effect(&it) }) {
+		return b
+	}
+	out := *b
+	out.Items = slices.DeleteFunc(slices.Clone(b.Items), func(it driver.MountItem) bool { return effect(&it) })
+	return &out
 }

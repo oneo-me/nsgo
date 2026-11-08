@@ -812,6 +812,9 @@ const (
 // which apps use. Mounting it presents it, and removing it dismisses it.
 type Modal struct {
 	Animation ModalAnimation
+	// TransitionShader, when set, is how it comes and goes instead,
+	// where the platform draws it.
+	TransitionShader *TransitionShader
 	// Presentation is how it covers the screen on iOS; other platforms
 	// ignore it and cover the host.
 	Presentation ModalPresentation
@@ -902,6 +905,9 @@ type Screen struct {
 	// Animation is how the screen enters and leaves (iOS slides it by
 	// default).
 	Animation ScreenAnimation
+	// TransitionShader, when set, is how it enters and leaves instead,
+	// where the platform draws it.
+	TransitionShader *TransitionShader
 	// StatusBar is set over the app's status bar while the screen is in
 	// the tree and not popped.
 	StatusBar     StatusBarSetting

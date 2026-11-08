@@ -4,7 +4,7 @@
 import type { Accessor, Easing } from "./index";
 import type {
   AndroidDialogHostProps, ColorValue, CommonProps, DialogHostProps, InputHostProps, IOSDialogHostProps, IOSInputHostProps,
-  IOSNavPageHostProps, IOSProps, JSX, ListItemsProps, NavPageHostProps, StyleProp, TextStyle, ViewStyle, YNode,
+  IOSNavPageHostProps, IOSProps, JSX, ListItemsProps, NavPageHostProps, StyleProp, TextStyle, TransitionShader, ViewStyle, YNode,
 } from "./types";
 
 export interface IOSInputProps extends IOSProps, IOSInputHostProps {}
@@ -30,6 +30,7 @@ export interface DialogProps extends DialogHostProps {
   testID?: string;
   open?: boolean;
   animation?: "slide" | "fade" | "none";
+  transitionShader?: TransitionShader;
   onOpen?: () => void;
   onClose?: () => void;
   onCancel?: () => void;

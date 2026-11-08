@@ -180,6 +180,7 @@ func (r *runtime) navPage(call goja.FunctionCall) goja.Value {
 			TestID:            p.str("testID"),
 			HeaderClass:       p.str("headerClass"),
 			Animation:         screenAnimations[p.str("animation")],
+			TransitionShader:  p.transitionShader(),
 		}
 		s.IOS.HeaderRightSystemItem = headerItems[p.str("headerRightSystemItem")]
 		if p.has("headerStyle") {

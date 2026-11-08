@@ -3,9 +3,12 @@ package core
 import (
 	"fmt"
 	"slices"
+	"sync"
+	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/shader"
+	"github.com/oneo-me/nsgo/internal/shader/wgsl"
 	"github.com/oneo-me/nsgo/internal/shaderir"
 )
 
@@ -36,10 +39,17 @@ import (
 //
 // Each platform translates the program for its GPU once, the first time a
 // view shows it.
+//
+// A program may be written in WGSL instead (CompileWGSL), as TSX apps
+// write theirs and as effects and transitions need.
 type ShaderProgram struct {
 	p        *driver.ShaderProgram
 	uniforms map[string]uniformSlot
 	lanes    int
+	// animated is whether a WGSL program reads nsh.time; pictures what
+	// it samples.
+	animated bool
+	pictures driver.Pictures
 }
 
 // uniformSlot is where a uniform's lanes lie among the program's own,
@@ -75,6 +85,80 @@ func CompileShader(src string) (*ShaderProgram, error) {
 	return sp, nil
 }
 
+// CompileWGSL compiles a shader written in WGSL, as NSH's are: it defines
+//
+//	fn shade(uv: vec2f) -> vec4f
+//
+// the straight (not premultiplied) sRGB color of the point uv of the
+// view's box, 0 to 1 from its top left corner, with whatever helpers and
+// consts it needs. It reads nsh.size (the box in points), nsh.time
+// (seconds since the shader appeared, standing still while paused),
+// nsh.scale (pixels a point), nsh.progress (an effect's progress or how
+// far a transition is, 0 to 1) and nsh.overflow (MaxSampleOffset). When
+// it declares struct Uniforms, of f32, i32, u32, vec2f, vec3f, vec4f and
+// array<vec4f, N> members in at most 4096 bytes, it reads them through
+// uniforms, which Uniforms sets by name. sample_content, sample_backdrop,
+// sample_from and sample_to read what an effect or a transition pictures
+// at a point of the box, straight, transparent outside the picture.
+//
+// Its errors give the source's lines and columns. A source compiles once
+// for the process, as an app sets the same one again.
+func CompileWGSL(src string) (*ShaderProgram, error) {
+	wgslCache.Lock()
+	defer wgslCache.Unlock()
+	if c, ok := wgslCache.programs[src]; ok {
+		return c.p, c.err
+	}
+	p, err := compileWGSL(src)
+	if len(wgslCache.programs) >= 64 {
+		clear(wgslCache.programs)
+	}
+	wgslCache.programs[src] = compiledWGSL{p, err}
+	return p, err
+}
+
+// wgslCache holds the programs compiled so far, by their source, up to
+// 64, as NSH's cache does: apps set one source on many views, in list
+// rows and on every hot reload.
+var wgslCache = struct {
+	sync.Mutex
+	programs map[string]compiledWGSL
+}{programs: map[string]compiledWGSL{}}
+
+type compiledWGSL struct {
+	p   *ShaderProgram
+	err error
+}
+
+func compileWGSL(src string) (*ShaderProgram, error) {
+	c, err := wgsl.Compile(src)
+	if err != nil {
+		return nil, err
+	}
+	sp := &ShaderProgram{p: &driver.ShaderProgram{IR: c.IR, WGSL: true}, uniforms: map[string]uniformSlot{},
+		animated: c.Animated, pictures: driver.Pictures(c.Inputs)}
+	lane := wgsl.BuiltinLanes
+	for _, u := range c.Uniforms {
+		sp.uniforms[u.Name] = uniformSlot{lane: lane, n: u.Lanes, vec3: u.Vec3}
+		lane += u.Lanes
+	}
+	sp.lanes = lane
+	return sp, nil
+}
+
+// MustCompileWGSL is CompileWGSL for a source that is part of the
+// program: it panics when it does not compile.
+func MustCompileWGSL(src string) *ShaderProgram {
+	p, err := CompileWGSL(src)
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
+// crossfade is the transitions' default program.
+var crossfade = sync.OnceValue(func() *ShaderProgram { return MustCompileWGSL(wgsl.Crossfade) })
+
 // MustCompileShader is CompileShader for a source that is part of the
 // program, such as a package variable's: it panics when it does not
 // compile.
@@ -84,6 +168,13 @@ func MustCompileShader(src string) *ShaderProgram {
 		panic(err)
 	}
 	return p
+}
+
+// HasUniform reports whether the program has a uniform named name, which
+// Uniforms may set.
+func (p *ShaderProgram) HasUniform(name string) bool {
+	_, ok := p.uniforms[name]
+	return ok
 }
 
 // Uniforms are the values of a shader's uniform variables, by name. A
@@ -107,15 +198,23 @@ type Shader struct {
 	Program      *ShaderProgram
 	Uniforms     Uniforms
 	UniformsFunc func() Uniforms
+	// Paused stops a WGSL program's clock, nsh.time; PausedFunc, when
+	// set, says so as the graph changes.
+	Paused     bool
+	PausedFunc func() bool
 	// Images are what the program's image0At to image3At read, in order,
 	// loaded as an Image loads its source.
 	Images     []ImageSource
 	ImagesFunc func() []ImageSource
-	Style      Style
-	StyleFunc  func() Style
-	OnPress    func(PressEvent)
-	OnLayout   func(Bounds)
-	Ref        *Ref
+	// Class is Tailwind CSS classes, as View's.
+	Class     string
+	Style     Style
+	StyleFunc func() Style
+	// Children draw over the shader.
+	Children []Node
+	OnPress  func(PressEvent)
+	OnLayout func(Bounds)
+	Ref      *Ref
 	// Label names what the shader shows for assistive technology, which
 	// skips an unlabeled shader as a decoration.
 	Label  string
@@ -132,7 +231,11 @@ type shaderNode struct {
 
 func (t *Tree) mountShader(cx *Scope, parent *node, s Shader) {
 	n := t.newNode(driver.KindShader, parent, cx)
+	t.setClasses(n, s.Class)
 	t.bindStyle(cx, n, s.Style, s.StyleFunc)
+	for _, c := range s.Children {
+		t.mount(cx, n, c)
+	}
 	t.setRef(n, s.Ref)
 	n.h = handlers{press: s.OnPress, layout: s.OnLayout}
 	role := RoleNone
@@ -145,8 +248,10 @@ func (t *Tree) mountShader(cx *Scope, parent *node, s Shader) {
 	if s.Program == nil {
 		return
 	}
+	clock := t.bindClock(cx, n, s.Program, s.Paused, s.PausedFunc)
 	set := func(u Uniforms, images []ImageSource) {
 		d := s.Program.values(s.Uniforms, u)
+		s.Program.builtins(d, clock, nil, 0)
 		for _, img := range images {
 			d.Images = append(d.Images, t.pickScale(img))
 		}
@@ -174,10 +279,92 @@ func (t *Tree) mountShader(cx *Scope, parent *node, s Shader) {
 	})
 }
 
+// builtins writes a WGSL program's built-in lanes into d: the clock's
+// node, the progress (a node or a number) and the overflow.
+func (p *ShaderProgram) builtins(d *driver.Shader, clock *shaderClock, progress AnimatedNode, overflow float64) {
+	if !p.p.WGSL {
+		return
+	}
+	d.Pictures = p.pictures
+	d.Lanes[2] = overflow
+	d.Overflow = overflow
+	var nodes []driver.ShaderNode
+	if clock != nil {
+		nodes = append(nodes, driver.ShaderNode{Lane: 0, Node: clock.v.id})
+	}
+	if progress != nil {
+		if a := progress.animated(); a != nil {
+			nodes = append(nodes, driver.ShaderNode{Lane: 1, Node: a.id})
+		} else if c, ok := progress.(Constant); ok {
+			d.Lanes[1] = float64(c)
+		}
+	}
+	d.Nodes = append(nodes, d.Nodes...)
+}
+
+// shaderClock is a WGSL program's nsh.time: a value the platform moves
+// one a second on its frame clock, standing still while paused. Each run
+// goes an hour and the next starts where it ended.
+type shaderClock struct {
+	v       *AnimatedValue
+	run     *AnimationRun
+	elapsed float64 // the seconds run before since
+	since   time.Time
+	running bool
+}
+
+const clockSpan = time.Hour
+
+// bindClock gives n the clock of a program reading nsh.time, running
+// unless paused, or nil for one that does not.
+func (t *Tree) bindClock(cx *Scope, n *node, p *ShaderProgram, paused bool, pausedFunc func() bool) *shaderClock {
+	if p == nil || !p.animated {
+		return nil
+	}
+	c := &shaderClock{v: NewAnimatedValue(cx, 0)}
+	if pausedFunc == nil {
+		c.set(cx, paused)
+		return c
+	}
+	cx.renderEffect(func() { c.set(cx, pausedFunc()) })
+	return c
+}
+
+func (c *shaderClock) set(cx *Scope, paused bool) {
+	if paused != c.running {
+		return
+	}
+	now := cx.tree().rt.clock.Now()
+	if paused {
+		c.elapsed += now.Sub(c.since).Seconds()
+		c.running = false
+		Untracked(cx, func() struct{} {
+			c.run.Stop()
+			c.v.Set(c.elapsed)
+			return struct{}{}
+		})
+		return
+	}
+	c.since, c.running = now, true
+	Untracked(cx, func() struct{} { c.loop(cx); return struct{}{} })
+}
+
+func (c *shaderClock) loop(cx *Scope) {
+	from := c.elapsed
+	c.v.Set(from)
+	span := clockSpan.Seconds()
+	c.run = cx.StartAnimation(Timing(c.v, from+span, TimingConfig{Duration: clockSpan, Easing: Easing{Bezier: Linear}}), func(finished bool) {
+		if finished && c.running {
+			c.elapsed, c.since = from+span, cx.tree().rt.clock.Now()
+			c.loop(cx)
+		}
+	})
+}
+
 // values returns what a shader view draws with base's uniforms and over's
 // over them: a uniform over names replaces base's value whole.
 func (p *ShaderProgram) values(base, over Uniforms) *driver.Shader {
-	w := laneWriter{lanes: make([]float64, p.lanes), nodes: make([]uint32, p.lanes)}
+	w := laneWriter{lanes: make([]float64, p.lanes), nodes: make([]uint32, p.lanes), channels: make([]driver.Channel, p.lanes)}
 	for _, u := range [2]Uniforms{base, over} {
 		for name, v := range u {
 			slot, ok := p.uniforms[name]
@@ -191,9 +378,13 @@ func (p *ShaderProgram) values(base, over Uniforms) *driver.Shader {
 		}
 	}
 	d := &driver.Shader{Program: p.p, Lanes: w.lanes}
+	if p.p.WGSL {
+		// A uniform named like a built-in lane cannot write over it.
+		clear(w.nodes[:wgsl.BuiltinLanes])
+	}
 	for lane, node := range w.nodes {
 		if node != 0 {
-			d.Nodes = append(d.Nodes, driver.ShaderNode{Lane: lane, Node: node})
+			d.Nodes = append(d.Nodes, driver.ShaderNode{Lane: lane, Node: node, Channel: w.channels[lane]})
 		}
 	}
 	return d
@@ -202,11 +393,12 @@ func (p *ShaderProgram) values(base, over Uniforms) *driver.Shader {
 // laneWriter writes uniforms' values into their lanes, and the animated
 // nodes that drive lanes.
 type laneWriter struct {
-	lanes   []float64
-	nodes   []uint32
-	at, end int
-	name    string
-	vec3    bool
+	lanes    []float64
+	nodes    []uint32
+	channels []driver.Channel
+	at, end  int
+	name     string
+	vec3     bool
 }
 
 func (w *laneWriter) lane(x float64, node uint32) {
@@ -252,7 +444,23 @@ func (w *laneWriter) put(v any) {
 			w.lane(a, 0)
 		}
 	case AnimatedNode:
-		w.lane(0, x.animated().id)
+		a := x.animated()
+		if a == nil {
+			w.lane(float64(x.(Constant)), 0)
+			return
+		}
+		if !a.color {
+			w.lane(0, a.id)
+			return
+		}
+		// A color node fills a color's lanes, as a Color does.
+		for c := driver.ChannelRed; c <= driver.ChannelAlpha; c++ {
+			if c == driver.ChannelAlpha && w.vec3 {
+				break
+			}
+			w.channels[min(w.at, len(w.channels)-1)] = c
+			w.lane(0, a.id)
+		}
 	case []float64:
 		for _, e := range x {
 			w.lane(e, 0)

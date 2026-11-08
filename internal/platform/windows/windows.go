@@ -265,6 +265,7 @@ type view struct {
 	canvasCache canvasCache
 	// shaderView is a shader view's Direct3D state.
 	shaderView *shaderView
+	fx         *effect // its effect, transition or navigation shader (effect.go)
 	// glass is the textures its Liquid Glass draws through.
 	glass *glassView
 
@@ -344,8 +345,11 @@ type window struct {
 	tasks []func()
 
 	// The main thread's.
-	views    []*view // index is NodeID
-	root     driver.NodeID
+	views []*view // index is NodeID
+	root  driver.NodeID
+	// effects are the views with an effect, a transition or a navigation
+	// shader (effect.go).
+	effects  map[*view]bool
 	env      driver.Environment // the last reported
 	alerts   []driver.AlertConfig
 	alerting bool
@@ -1047,8 +1051,16 @@ func (w *window) apply(b *driver.MountBatch) {
 			v.drawing = it.Drawing
 			w.animator.BindCanvas(v.id, it.Drawing.Slots)
 		case driver.ItemShader:
-			if it.Shader != nil {
+			if v.kind == driver.KindShader && it.Shader != nil && it.Shader.Role == driver.ShaderFill {
 				w.setShader(v, it.Shader)
+			} else {
+				w.setEffect(v, it.Shader)
+			}
+		case driver.ItemShaderTransition:
+			w.startTransition(v)
+		case driver.ItemShaderInput:
+			if v.fx != nil {
+				w.redrawAll()
 			}
 		case driver.ItemWeb:
 			if v.kind == driver.KindWeb && it.Web != nil {
@@ -1183,6 +1195,7 @@ func (w *window) destroy(v *view) {
 	v.shadow.release()
 	v.shadow = nil
 	v.shaderView.release()
+	w.endEffect(v)
 	v.glass.release()
 	v.shaderView = nil
 	v.canvasCache.release()

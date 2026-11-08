@@ -698,7 +698,7 @@ func (a *Animator) ShaderLanes(view NodeID, lanes []float64) {
 	}
 	for _, b := range sh.nodes {
 		if n := a.nodes[b.Node]; n != nil && b.Lane >= 0 && b.Lane < len(lanes) {
-			lanes[b.Lane], _ = a.eval(n)
+			lanes[b.Lane] = b.Channel.Of(a.eval(n))
 		}
 	}
 }
@@ -718,7 +718,7 @@ func (a *Animator) ChangedShaders(fn func(view NodeID)) {
 		for i, b := range sh.nodes {
 			var v float64
 			if n := a.nodes[b.Node]; n != nil {
-				v, _ = a.eval(n)
+				v = b.Channel.Of(a.eval(n))
 			}
 			if v != sh.sent[i] {
 				sh.sent[i], changed = v, true

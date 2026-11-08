@@ -58,7 +58,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 
 ## What NSGo adds
 
-- GPU shaders written in Go, compiled for each backend ([shaders](shaders.md)).
+- GPU shaders written in Go besides NSH's WGSL, both compiled for each backend by NSGo's own front ends rather than naga and wgpu ([shaders](shaders.md)).
 - Icons as vector elements and the bundled Lucide pack, where NSH loads SVG files as images ([icons](icons.md)).
 - Scroll edge effects under the app's bars, after iOS 26's ([scrolling](scrolling.md#edge-effects)).
 - Apps that open their windows, panels and tray icons themselves, on one engine, with global shortcuts and shutdown modes, after Avalonia's ([application and windows](application.md#departures-from-nsh)).

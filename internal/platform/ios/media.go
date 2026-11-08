@@ -101,6 +101,9 @@ func (s *surface) tick() {
 		s.stepMotions(now)
 		s.applyAnimated()
 	})
+	if s.animator.Running() || len(s.motions) > 0 {
+		s.staleEffects()
+	}
 	s.drawShaders()
 	s.startImages()
 	if s.frameWanted {

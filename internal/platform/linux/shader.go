@@ -41,8 +41,10 @@ type glShaderView struct {
 	lanes   []float64
 	buf     []byte
 	// textures are the images' textures, by ImageSource.Key, with their
-	// sizes in pixels.
+	// sizes in pixels; pictures what a WGSL program reads instead, an
+	// effect's (effect.go).
 	textures map[string]glTexture
+	pictures [4]*glPicture
 }
 
 type glTexture struct {
@@ -248,7 +250,9 @@ func (w *window) setShader(v *view, sh *driver.Shader) {
 // changed.
 func (w *window) changedShaders() {
 	w.animator.ChangedShaders(func(id driver.NodeID) {
-		if v := w.view(id); v != nil && v.shader != nil {
+		if v := w.view(id); v != nil && v.fx != nil && v.fx.gl != nil {
+			gtkGLAreaQueueRender(v.fx.gl.area)
+		} else if v != nil && v.shader != nil {
 			gtkGLAreaQueueRender(v.shader.area)
 		}
 	})
@@ -256,21 +260,32 @@ func (w *window) changedShaders() {
 
 func shaderRenderCallback(area, context, data uintptr) uintptr {
 	w, v := nativeOf(data, area)
-	if v == nil || v.shader == nil {
+	if v == nil {
 		return 0
 	}
-	w.drawShader(v, context)
+	switch {
+	case v.fx != nil && v.fx.gl != nil && v.fx.gl.area == area:
+		w.drawGL(v.fx.gl, v.id, context)
+	case v.shader != nil:
+		w.drawShader(v, context)
+	default:
+		return 0
+	}
 	return 1
 }
 
 // shaderUnrealizeCallback deletes the area's GL objects with its context.
 func shaderUnrealizeCallback(area, data uintptr) {
 	_, v := nativeOf(data, area)
-	if v == nil || v.shader == nil {
+	if v == nil {
 		return
 	}
 	gtkGLAreaMakeCurrent(area)
-	v.shader.deleteGL()
+	if v.fx != nil && v.fx.gl != nil && v.fx.gl.area == area {
+		v.fx.gl.deleteGL()
+	} else if v.shader != nil {
+		v.shader.deleteGL()
+	}
 }
 
 func (g *glShaderView) deleteGL() {
@@ -289,12 +304,21 @@ func (g *glShaderView) deleteGL() {
 	for _, t := range g.textures {
 		glDeleteTextures(1, &t.id)
 	}
+	for _, pic := range g.pictures {
+		if pic != nil && pic.tex != 0 {
+			glDeleteTextures(1, &pic.tex)
+			pic.tex = 0
+		}
+	}
 	g.prog, g.ubo, g.vao, g.program, g.textures = 0, 0, 0, nil, nil
 }
 
 // drawShader draws v's program in its area's context, made current.
-func (w *window) drawShader(v *view, context uintptr) {
-	g := v.shader
+func (w *window) drawShader(v *view, context uintptr) { w.drawGL(v.shader, v.id, context) }
+
+// drawGL draws g's program in its area's context, made current, with
+// view id's animated lanes.
+func (w *window) drawGL(g *glShaderView, id driver.NodeID, context uintptr) {
 	if g.shader == nil || gtkGLAreaGetError(g.area) != 0 {
 		return
 	}
@@ -310,13 +334,18 @@ func (w *window) drawShader(v *view, context uintptr) {
 	bridge := 3 + 2*g.count
 	g.lanes = append(g.lanes[:0], make([]float64, bridge+len(g.shader.Lanes))...)
 	copy(g.lanes[bridge:], g.shader.Lanes)
-	w.animator.ShaderLanes(v.id, g.lanes[bridge:])
+	w.animator.ShaderLanes(id, g.lanes[bridge:])
 	g.lanes[0], g.lanes[1], g.lanes[2] = width, height, scale
 	for i := range g.count {
 		glActiveTexture(glTexture0 + uint32(i))
 		var t glTexture
-		if i < len(g.shader.Images) {
-			t = w.shaderTexture(v, g.shader.Images[i])
+		switch {
+		case g.shader.Program.WGSL:
+			if pic := g.pictures[i]; pic != nil {
+				t = pic.texture()
+			}
+		case i < len(g.shader.Images):
+			t = w.shaderTexture(w.view(id), g.shader.Images[i])
 		}
 		glBindTexture(glTexture2D, t.id)
 		g.lanes[3+2*i], g.lanes[4+2*i] = t.w, t.h

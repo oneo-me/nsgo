@@ -112,7 +112,14 @@ func (w *window) snapshotView(v *view, snap uintptr) {
 		sh.pushClip(cur)
 	}
 	w.snapshotContent(v, s, cur)
-	for c := gtkWidgetGetFirstChild(v.widget); c != 0; c = gtkWidgetGetNextSibling(c) {
+	drawn := false
+	if e := w.effectOn(v); e != nil {
+		drawn = w.snapshotEffect(e, v, cur)
+	}
+	for c := gtkWidgetGetFirstChild(v.widget); c != 0 && !drawn; c = gtkWidgetGetNextSibling(c) {
+		if c == v.fxArea {
+			continue // drawn only while its effect shows
+		}
 		// A view inserted since the last layout has no allocation until
 		// the next frame's; a snapshot taken between skips it.
 		if r, ok := lookupWidget(c); ok && r.v != nil && gtkWidgetGetWidth(c) == 0 && gtkWidgetGetHeight(c) == 0 &&

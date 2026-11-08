@@ -26,6 +26,24 @@ int4 sign(int4 x) {
 	return int4(x > 0) - int4(x < 0);
 }
 
+// WGSL's bitcasts (package shader/wgsl), by width.
+int as_type_int(float x) { return as_type<int>(x); }
+int2 as_type_int(float2 x) { return as_type<int2>(x); }
+int3 as_type_int(float3 x) { return as_type<int3>(x); }
+int4 as_type_int(float4 x) { return as_type<int4>(x); }
+uint as_type_uint(float x) { return as_type<uint>(x); }
+uint2 as_type_uint(float2 x) { return as_type<uint2>(x); }
+uint3 as_type_uint(float3 x) { return as_type<uint3>(x); }
+uint4 as_type_uint(float4 x) { return as_type<uint4>(x); }
+float as_type_float(int x) { return as_type<float>(x); }
+float2 as_type_float(int2 x) { return as_type<float2>(x); }
+float3 as_type_float(int3 x) { return as_type<float3>(x); }
+float4 as_type_float(int4 x) { return as_type<float4>(x); }
+float as_type_float(uint x) { return as_type<float>(x); }
+float2 as_type_float(uint2 x) { return as_type<float2>(x); }
+float3 as_type_float(uint3 x) { return as_type<float3>(x); }
+float4 as_type_float(uint4 x) { return as_type<float4>(x); }
+
 struct Uniforms {
 	float2 U0;
 	float U1;

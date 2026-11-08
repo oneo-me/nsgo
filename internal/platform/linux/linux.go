@@ -108,8 +108,11 @@ type window struct {
 	tasks []func()
 
 	// The main thread's. views is indexed by NodeID.
-	views     []*view
-	root      driver.NodeID
+	views []*view
+	root  driver.NodeID
+	// effects are the views with an effect, a transition or a navigation
+	// shader (effect.go).
+	effects   map[*view]bool
 	entries   map[uintptr]*view
 	natives   map[uintptr]*view // by the objects of hosted widgets
 	appID     string
@@ -816,8 +819,16 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.setCanvas(v, it.Drawing)
 			w.setCanvasParts(v, it.Drawing.Nodes)
 		case driver.ItemShader:
-			if it.Shader != nil {
+			if v.kind == driver.KindShader && it.Shader != nil && it.Shader.Role == driver.ShaderFill {
 				w.setShader(v, it.Shader)
+			} else {
+				w.setEffect(v, it.Shader)
+			}
+		case driver.ItemShaderTransition:
+			w.startTransition(v)
+		case driver.ItemShaderInput:
+			if v.fx != nil {
+				w.redrawEffect(v)
 			}
 		case driver.ItemWeb:
 			w.configureWeb(v, it.Web)
@@ -916,6 +927,7 @@ func (w *window) setRoot(id driver.NodeID) {
 // delete drops v and its subtree. The engine deletes the children too,
 // so they are detached but their own items release what they hold.
 func (w *window) delete(v *view) {
+	w.endEffect(v)
 	w.forgetDestination(v)
 	w.hovered.Forget(v.id)
 	v.detach()

@@ -4,16 +4,6 @@ This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`,
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
-## Shaders and transitions
-
-NSH 0.4.0's `Shader` draws a box with a WGSL `shade(uv)` (`shaders.md`); NSGo's shaders are Go ([shaders](architecture/shaders.md)).
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| WGSL for TSX | `shaders.md` (The contract, Validation and limits) | A TSX `Shader` compiles its WGSL into `internal/shaderir`, with NSH's built-ins, uniforms and limits on every backend |
-| Effects and transitions | `shaders.md` (Effects, transitions and pictures) | `ShaderEffect` draws a view's children through a shader, `ShaderTransition` changes them, and `ScreenEffect` and `ScreenTransition` cover the screen, picturing children only when they changed, as NSH's backends do |
-| Pages and dialogs | `shaders.md` (Pages and dialogs) | Pages a stack pushes and pops and dialogs that open and close come and go through a shader |
-
 ## TSX and dynamic delivery
 
 What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)). Signed packages and capabilities wait for their [open question](../ARCHITECTURE.md#open-questions), and running TSX on the browser's engine for its own.
@@ -97,6 +87,11 @@ These items wait for community contributions, and a change to one backend record
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
+| Shader effects on Android | `shaders.md` (Effects, transitions and pictures) | The Java runtime pictures an effect's or a transition's children and the surface into textures its GL thread reads, draws the shader over them and runs pages' and dialogs' `TransitionShader`, and shader lanes read a color node's channels, with `classes.dex` rebuilt; today its backend leaves effects out |
+| Backdrops on Windows and Linux | `shaders.md` (Effects, transitions and pictures) | `sample_backdrop` reads what the window drew behind the view, as it does on macOS, iOS and the web, rather than transparency |
+| The rest of WGSL | `shaders.md` (Validation and limits) | `var<private>` globals, structs of the app's own, non-square matrices and the bit-counting, packing, `modf` and `frexp` built-ins compile into `shaderir` |
+| Effects on Linux checked by pixels | — | The gallery's `TestShaderEffects` screenshots show the effects under `nsgo test -target linux`; it passes there, but its captures of the Shader page come out blank, effects switched off too, while `HEAD`'s capture of that page did not (2026-11-08) |
+| Effects on an iPhone | — | The gallery's `TestShaderEffectsPhone` passes under `nsgo test -target ios_simulator` and on a device; gallery tests there skip as they start (2026-11-08) |
 | Transitions beside animated values | — | A view with `Style.Animated` bound still runs its `Transition` for the properties not bound on macOS, iOS and the web, as Windows and Linux mix them; `Toast` keeps its translation on a view of its own until then |
 | Touchpad glides over hosted views on Linux | — | A touchpad scroll that reaches the surface through a hosted view's shield, whose events no scroll controller sees, glides on as the surface's own do |
 | Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `combobox`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |

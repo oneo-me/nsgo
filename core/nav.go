@@ -360,6 +360,17 @@ func headerID(n *node) NodeID {
 	return n.id
 }
 
+// topScreen is stack n's top screen that has not been popped.
+func (t *Tree) topScreen(n *node) *node {
+	var top *node
+	for _, c := range n.flatChildren() {
+		if c.screen != nil && !c.screen.popped && !c.deleted {
+			top = c
+		}
+	}
+	return top
+}
+
 // showTop hides every screen of stack n but its top one.
 func (t *Tree) showTop(n *node) {
 	var top *node
