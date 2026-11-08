@@ -54,9 +54,12 @@ func TestPlatformHearsLanguage(t *testing.T) {
 	if app.Language != "en-US" {
 		t.Errorf("the system's: %q", app.Language)
 	}
+	if app.LanguageForced {
+		t.Error("the system's language is forced")
+	}
 	app.Press("id:force")
-	if app.Language != "zh-Hans" {
-		t.Errorf("forced: %q", app.Language)
+	if app.Language != "zh-Hans" || !app.LanguageForced {
+		t.Errorf("forced: %q, forced %v", app.Language, app.LanguageForced)
 	}
 }
 

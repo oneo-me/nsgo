@@ -26,6 +26,7 @@ var (
 	selMainQueue     = sel("mainQueue")
 	selCount         = sel("count")
 	selObjectAtIndex = sel("objectAtIndex:")
+	selObjectForKey  = sel("objectForKey:")
 )
 
 func loadSystem() {
@@ -211,4 +212,80 @@ func KeyNames(name string, flags uint) []string {
 		strings.Join(append(append([]string{"mod"}, mods...), name), "+"),
 		strings.Join(append(append([]string{}, mods...), "meta", name), "+"),
 	}
+}
+
+// The defaults keys of a language the app forces: AppleLanguages, which
+// the system reads as the app launches, as System Settings' language of
+// an app sets it, and NSGoLanguage, what NSGo last wrote there.
+const (
+	appleLanguagesKey = "AppleLanguages"
+	pinnedLanguageKey = "NSGoLanguage"
+)
+
+// PinLanguage keeps lang, the language the app forces, for what the
+// system says in the app from its next launch: the bundle's name in the
+// menu bar, the items it adds to menus, its panels and its controls'
+// words, which follow the languages of the launch and not the app's.
+// "" lets them follow the user's languages again, unless the user chose
+// the app's language in System Settings since. A pseudo locale has no
+// localization of the system's, and pins nothing; neither does a process
+// outside a bundle.
+func PinLanguage(lang string) {
+	if lang == "en-XA" || lang == "ar-XB" { // i18n's pseudo locales
+		lang = ""
+	}
+	id := objc.ID(objc.GetClass("NSBundle")).Send(sel("mainBundle")).Send(sel("bundleIdentifier"))
+	if id == 0 {
+		return
+	}
+	defaults := objc.ID(objc.GetClass("NSUserDefaults")).Send(sel("standardUserDefaults"))
+	var pinned, chosen string
+	if domain := defaults.Send(sel("persistentDomainForName:"), id); domain != 0 {
+		pinned = GoString(domain.Send(selObjectForKey, NSString(pinnedLanguageKey)))
+		if langs := domain.Send(selObjectForKey, NSString(appleLanguagesKey)); langs != 0 && objc.Send[uint](langs, selCount) > 0 {
+			chosen = GoString(langs.Send(selObjectAtIndex, uint(0)))
+		}
+	}
+	switch {
+	case lang != "" && (lang != pinned || lang != chosen):
+		langs := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), NSString(lang))
+		defaults.Send(sel("setObject:forKey:"), langs, NSString(appleLanguagesKey))
+		defaults.Send(sel("setObject:forKey:"), NSString(lang), NSString(pinnedLanguageKey))
+	case lang == "" && pinned != "":
+		if chosen == pinned {
+			defaults.Send(sel("removeObjectForKey:"), NSString(appleLanguagesKey))
+		}
+		defaults.Send(sel("removeObjectForKey:"), NSString(pinnedLanguageKey))
+	}
+}
+
+// BundleName returns the app's name in lang as its bundle's
+// InfoPlist.strings says it, in the localization that suits lang best;
+// "" when the bundle names it in none.
+func BundleName(lang string) string {
+	if lang == "" {
+		return ""
+	}
+	bundle := objc.ID(objc.GetClass("NSBundle")).Send(sel("mainBundle"))
+	prefs := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), NSString(lang))
+	locs := objc.ID(objc.GetClass("NSBundle")).Send(sel("preferredLocalizationsFromArray:forPreferences:"),
+		bundle.Send(sel("localizations")), prefs)
+	if locs == 0 || objc.Send[uint](locs, selCount) == 0 {
+		return ""
+	}
+	path := bundle.Send(sel("pathForResource:ofType:inDirectory:forLocalization:"), NSString("InfoPlist"), NSString("strings"),
+		objc.ID(0), locs.Send(selObjectAtIndex, uint(0)))
+	if path == 0 {
+		return ""
+	}
+	strs := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithContentsOfFile:"), path)
+	if strs == 0 {
+		return ""
+	}
+	for _, key := range []string{"CFBundleDisplayName", "CFBundleName"} {
+		if name := GoString(strs.Send(selObjectForKey, NSString(key))); name != "" {
+			return name
+		}
+	}
+	return ""
 }

@@ -486,7 +486,7 @@ func (a *App) apply(b *driver.MountBatch) {
 		case driver.ItemModal:
 			v.Modal = *it.Modal
 		case driver.ItemDirection:
-			a.Language = it.Language
+			a.Language, a.LanguageForced = it.Language, it.Forced
 		case driver.ItemMenu:
 			a.Menu = it.Menu
 		case driver.ItemWindow:

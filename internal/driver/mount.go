@@ -222,9 +222,12 @@ const (
 	ItemSaveFile
 	// ItemDirection says whether the app lays out right to left (RTL), as
 	// the language it shows is written, whatever the system's, and that
-	// language (Language): on its first commit and when either changes.
+	// language (Language), and whether the app forces it (Forced,
+	// Scope.SetLocale): on its first commit and when any changes.
 	// Platforms whose own motion follows a direction, as iOS's navigation,
-	// take it, and those that draw menus label them in the language.
+	// take it, those that draw menus label them in the language, and Apple
+	// platforms keep a forced one for what the system says in later
+	// launches.
 	ItemDirection
 	// ItemPickScreenColor lets the user pick a color on the screen: the
 	// system's color sampler or the browser's EyeDropper, answered with
@@ -304,10 +307,12 @@ type MountItem struct {
 	Animated bool
 	// Clipboard is what an ItemReadClipboard reads.
 	Clipboard ClipboardRead
-	// Appearance is ItemAppearance's, RTL and Language ItemDirection's.
+	// Appearance is ItemAppearance's, RTL, Language and Forced
+	// ItemDirection's.
 	Appearance Appearance
 	RTL        bool
 	Language   string
+	Forced     bool
 	Events     EventMask
 
 	ViewStyle *ViewStyle

@@ -589,8 +589,13 @@ func (s *surface) item(e driver.MenuEntry) objc.ID {
 	return it
 }
 
-// name is the app's name, for the app menu's items.
+// name is the app's name, for the app menu's items: in the menus'
+// language as the bundle says it, else the app's title, else the name
+// the system gives it in the languages it launched in.
 func (s *surface) name() string {
+	if name := apple.BundleName(s.language); name != "" {
+		return name
+	}
 	if s.appName == "" {
 		s.appName = apple.GoString(objc.ID(objc.GetClass("NSRunningApplication")).
 			Send(sel("currentApplication")).Send(sel("localizedName")))

@@ -155,12 +155,14 @@ func (t *Tree) commitRound() {
 		t.fontScale = scale
 		t.fullRound = true
 	}
-	if rtl, lang := t.root.Env().rtl.GetUntracked(), t.shownLanguage(); rtl != t.rtl || lang != t.language || !t.directionSent {
+	env := t.root.Env()
+	rtl, lang, forced := env.rtl.GetUntracked(), t.shownLanguage(), env.forced.GetUntracked() != ""
+	if rtl != t.rtl || lang != t.language || forced != t.forced || !t.directionSent {
 		if rtl != t.rtl {
 			t.setRTL(rtl)
 		}
-		t.language, t.directionSent = lang, true
-		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemDirection, RTL: rtl, Language: lang})
+		t.language, t.forced, t.directionSent = lang, forced, true
+		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemDirection, RTL: rtl, Language: lang, Forced: forced})
 	}
 	live := t.stacks[:0]
 	for _, s := range t.stacks {

@@ -208,8 +208,11 @@ type App struct {
 	// Keymap is the keyboard shortcuts the app binds; Title its title.
 	Keymap []string
 	Title  string
-	// Language is the language the platform labels its menus in.
-	Language string
+	// Language is the language the platform labels its menus in, and
+	// LanguageForced whether the app forces it (core.Scope.SetLocale),
+	// which Apple platforms keep for the system's words in later launches.
+	Language       string
+	LanguageForced bool
 	// Menu is the application menu the app set; Window the window
 	// commands it sent, oldest first.
 	Menu   []driver.MenuEntry

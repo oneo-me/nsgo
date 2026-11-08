@@ -804,6 +804,14 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemDirection:
 			s.rtl, s.directed = it.RTL, true
 			s.applyDirection()
+			// An embedding host owns its languages.
+			if !s.embedded {
+				pinned := ""
+				if it.Forced {
+					pinned = it.Language
+				}
+				apple.PinLanguage(pinned)
+			}
 			continue
 		case driver.ItemAppearance:
 			s.appearance = it.Appearance

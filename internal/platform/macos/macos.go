@@ -1379,9 +1379,16 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemDirection:
 			s.rtl, s.directed = it.RTL, true
 			s.directTree(s.native)
+			// An embedding host owns its menu bar and its languages.
+			if !s.embedded {
+				pinned := ""
+				if it.Forced {
+					pinned = it.Language
+				}
+				apple.PinLanguage(pinned)
+			}
 			if it.Language != s.language {
 				s.language = it.Language
-				// An embedding host owns its menu bar.
 				if !s.embedded {
 					s.relabelMenus()
 				}
