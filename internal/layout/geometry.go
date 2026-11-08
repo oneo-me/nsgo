@@ -238,8 +238,6 @@ func fsubOpt(a float32, b Opt) float32 {
 }
 
 // round rounds half up, as Taffy's rounding does.
-func round(v float32) float32 { return float32(math.Floor(float64(v + 0.5))) }
-
 func floor32(v float32) float32 { return float32(math.Floor(float64(v))) }
 
 func ceil32(v float32) float32 { return float32(math.Ceil(float64(v))) }

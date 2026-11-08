@@ -87,6 +87,7 @@ func writeAnimation(w *writer, ops []driver.AnimationOp) {
 			w.flags(o.Animation != nil)
 			if o.Animation != nil {
 				writeSpec(w, o.Animation)
+				w.f64(o.Animation.FrameRate)
 			}
 		case driver.AnimBind:
 			w.u32(uint32(o.View))

@@ -14,8 +14,21 @@ import (
 // against their host. Styles map onto CSS with React Native's defaults, as
 // NSH maps its styles onto Taffy's.
 
-// ceil rounds text sizes up so that rendering never truncates a glyph.
-func ceil(p Points) Points { return Points(math.Ceil(float64(p))) }
+// ceil rounds a text's size up to a device pixel of ratio pixels per
+// point, as NSH's ceil_to_pixel does, so that rendering never truncates a
+// glyph. A size that is a whole pixel but for float32 (56 / 2.625 * 2.625
+// is 56.000004) stays that pixel; one really over it takes the next.
+func ceil(p Points, ratio float32) Points {
+	if ratio <= 0 {
+		ratio = 1
+	}
+	v := float32(p)
+	up := max(float32(math.Ceil(float64(v*ratio-1e-3))), 0) / ratio
+	if up < v {
+		up += 1 / ratio
+	}
+	return Points(up)
+}
 
 // borders returns the border widths layout uses.
 func (s *Style) borders() Edges {
@@ -69,7 +82,7 @@ func (n *node) Measure(known layout.Size[layout.Opt], available layout.Size[layo
 		if n.text.prepared != nil {
 			m = n.text.size(width)
 		}
-		m = Size{Width: ceil(m.Width), Height: ceil(m.Height)}
+		m = Size{Width: ceil(m.Width, n.text.ratio), Height: ceil(m.Height, n.text.ratio)}
 	case n.input != nil:
 		m = n.input.measure(known, available)
 	case n.image != nil:
@@ -181,7 +194,7 @@ func (t *Tree) relayoutBoundaries() bool {
 			}
 			continue
 		}
-		layout.RoundFrom(b, origin)
+		layout.RoundFrom(b, origin, t.ratio)
 		t.syncFrames(b)
 		relaid = true
 	}
@@ -543,7 +556,7 @@ func (t *Tree) layoutRoot(root *node, space Size, fill bool) {
 		Width:  layout.Definite(float32(space.Width)),
 		Height: layout.Definite(float32(space.Height)),
 	})
-	layout.Round(root)
+	layout.Round(root, t.ratio)
 }
 
 // syncFrames sets the frames of n's children from their layouts, and
@@ -573,8 +586,8 @@ func (t *Tree) syncFrames(n *node) {
 		// As NSH's frame walk does, a hidden subtree gets empty frames and
 		// content boxes, whatever its layout kept.
 		hidden := n.hidden || c.style.Display == DisplayNone
-		moved := hidden != c.hidden
-		if moved {
+		shown := hidden != c.hidden
+		if shown {
 			c.hidden = hidden
 			t.mark(c)
 		}
@@ -584,11 +597,14 @@ func (t *Tree) syncFrames(n *node) {
 		if c.follow != nil {
 			f = t.laidFollower(c, f)
 		}
-		moved = t.setFrame(c, f) || moved
-		// An absolute view is its subtree's containing block, so all of
-		// it is rounded through it: when layout rounded nothing under it
-		// since and it stays where it was, nothing under it moved.
-		if !moved && !c.layoutDirty && c.style.Position == Absolute && c.synced == c.lstate.Rounds() &&
+		t.setFrame(c, f)
+		// A positioned view is the containing block of what is absolute
+		// inside it, so all of its subtree is rounded through it: when
+		// layout rounded nothing under it since, its children's frames
+		// relative to it stand, wherever it moved, as NSH's frame walk
+		// skips a subtree moved by whole pixels. A static one's absolute
+		// views are placed past it, by its ancestors' frames.
+		if !shown && !c.layoutDirty && c.style.Position != Static && c.synced == c.lstate.Rounds() &&
 			!t.syncContent(c) {
 			continue
 		}
@@ -658,6 +674,15 @@ func (t *Tree) setRTL(rtl bool) {
 			if n.env != nil {
 				t.restyle(n)
 			}
+		}
+	}
+	t.relayoutAll()
+}
+
+// relayoutAll drops every node's layout and lays the tree out again.
+func (t *Tree) relayoutAll() {
+	for _, n := range t.nodes {
+		if n != nil {
 			n.lstyleOK = false
 			n.lstate.Invalidate()
 		}

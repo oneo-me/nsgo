@@ -1,6 +1,9 @@
 package layout
 
-import "sync/atomic"
+import (
+	"math"
+	"sync/atomic"
+)
 
 // Compute lays out the tree under root in the available space, which is
 // usually the viewport, and stores every node's [State.Unrounded] layout.
@@ -326,24 +329,57 @@ func performChildLayout(n Node, known, parentSize Size[Opt], available Size[Avai
 	})
 }
 
-// Round snaps the Unrounded layouts of the tree under root to whole pixels,
-// storing them as [State.Rounded]. It rounds edges' cumulative positions
-// rather than each size, so that adjacent boxes stay adjacent.
-func Round(root Node) { roundLayout(root, 0, 0) }
+// Round snaps the Unrounded layouts of the tree under root to device
+// pixels of ratio pixels per point (0 is 1), storing them as
+// [State.Rounded]. It rounds edges' cumulative positions rather than each
+// size, so that adjacent boxes stay adjacent.
+func Round(root Node, ratio float32) { roundLayout(root, 0, 0, pixels(ratio)) }
+
+// pixels is ratio, with 0 and less meaning one pixel per point.
+func pixels(ratio float32) float64 {
+	if ratio <= 0 {
+		return 1
+	}
+	return float64(ratio)
+}
+
+// pixel is the device pixel Round puts v on, counted from the root's
+// origin. v is a float32 sum of offsets, a hair off the position it
+// stands for, and dividing by a fractional ratio is never exact: snapped
+// to a 64th of a pixel first, an edge on a half pixel (a 28 point row at
+// 2.625 is 73.5 pixels) rounds the same way wherever a scroll puts it.
+func pixel(v float32, ratio float64) float64 {
+	p := float64(v) * ratio
+	return math.Floor(math.Round(p*64)/64 + 0.5)
+}
+
+// span is the distance in points from from to to, each rounded to a
+// device pixel, computed from the whole pixels between them: the same
+// pixels give the same float32 wherever they are, so a frame that stays
+// on its pixels compares equal as a scroll moves the edges.
+func span(from, to float32, ratio float64) float32 {
+	return float32((pixel(to, ratio) - pixel(from, ratio)) / ratio)
+}
 
 // sameSnap reports whether children carried from a and from b snap to
-// the same pixels relative to them: a and b are equal, or whole points
-// both, as a box scrolled by whole points is (round(x+k) is round(x)+k).
-func sameSnap(a, b Point[float32]) bool {
-	whole := func(p Point[float32]) bool { return p.X == floor32(p.X) && p.Y == floor32(p.Y) }
-	return a == b || whole(a) && whole(b)
+// the same pixels relative to them: a and b are equal, or a whole number
+// of device pixels apart, as a box scrolled by whole pixels is
+// (pixel(x+k) is pixel(x)+k).
+func sameSnap(a, b Point[float32], ratio float64) bool {
+	return a == b || frac(a.X, ratio) == frac(b.X, ratio) && frac(a.Y, ratio) == frac(b.Y, ratio)
+}
+
+// frac is where in its device pixel v falls, in 64ths.
+func frac(v float32, ratio float64) float64 {
+	p := math.Round(float64(v) * ratio * 64)
+	return p - 64*math.Floor(p/64)
 }
 
 // passes counts layout passes (Compute, Relayout) across the process'
 // engines; a node keeps the pass that last laid its children out.
 var passes atomic.Uint64
 
-func roundLayout(n Node, cumulativeX, cumulativeY float32) {
+func roundLayout(n Node, cumulativeX, cumulativeY float32, ratio float64) {
 	st := n.LayoutState()
 	u := st.Unrounded
 	l := u
@@ -352,36 +388,39 @@ func roundLayout(n Node, cumulativeX, cumulativeY float32) {
 	cumulativeX += u.Location.X
 	cumulativeY += u.Location.Y
 
-	l.Location.X = round(cumulativeX) - round(parentX)
-	l.Location.Y = round(cumulativeY) - round(parentY)
-	l.Size.Width = round(cumulativeX+u.Size.Width) - round(cumulativeX)
-	l.Size.Height = round(cumulativeY+u.Size.Height) - round(cumulativeY)
-	l.ScrollbarSize.Width = round(u.ScrollbarSize.Width)
-	l.ScrollbarSize.Height = round(u.ScrollbarSize.Height)
-	l.Border.Left = round(cumulativeX+u.Border.Left) - round(cumulativeX)
-	l.Border.Right = round(cumulativeX+u.Size.Width) - round(cumulativeX+u.Size.Width-u.Border.Right)
-	l.Border.Top = round(cumulativeY+u.Border.Top) - round(cumulativeY)
-	l.Border.Bottom = round(cumulativeY+u.Size.Height) - round(cumulativeY+u.Size.Height-u.Border.Bottom)
-	l.Padding.Left = round(cumulativeX+u.Padding.Left) - round(cumulativeX)
-	l.Padding.Right = round(cumulativeX+u.Size.Width) - round(cumulativeX+u.Size.Width-u.Padding.Right)
-	l.Padding.Top = round(cumulativeY+u.Padding.Top) - round(cumulativeY)
-	l.Padding.Bottom = round(cumulativeY+u.Size.Height) - round(cumulativeY+u.Size.Height-u.Padding.Bottom)
+	x, y := cumulativeX, cumulativeY
+	right, bottom := x+u.Size.Width, y+u.Size.Height
+	l.Location.X = span(parentX, x, ratio)
+	l.Location.Y = span(parentY, y, ratio)
+	l.Size.Width = span(x, right, ratio)
+	l.Size.Height = span(y, bottom, ratio)
+	l.ScrollbarSize.Width = span(0, u.ScrollbarSize.Width, ratio)
+	l.ScrollbarSize.Height = span(0, u.ScrollbarSize.Height, ratio)
+	l.Border.Left = span(x, x+u.Border.Left, ratio)
+	l.Border.Right = span(right-u.Border.Right, right, ratio)
+	l.Border.Top = span(y, y+u.Border.Top, ratio)
+	l.Border.Bottom = span(bottom-u.Border.Bottom, bottom, ratio)
+	l.Padding.Left = span(x, x+u.Padding.Left, ratio)
+	l.Padding.Right = span(right-u.Padding.Right, right, ratio)
+	l.Padding.Top = span(y, y+u.Padding.Top, ratio)
+	l.Padding.Bottom = span(bottom-u.Padding.Bottom, bottom, ratio)
 
 	o := u.ScrollableOverflow
-	l.ScrollableOverflow.Left = round(cumulativeX+o.Left) - round(cumulativeX)
-	l.ScrollableOverflow.Right = round(cumulativeX+o.Right) - round(cumulativeX)
-	l.ScrollableOverflow.Top = round(cumulativeY+o.Top) - round(cumulativeY)
-	l.ScrollableOverflow.Bottom = round(cumulativeY+o.Bottom) - round(cumulativeY)
+	l.ScrollableOverflow.Left = span(x, x+o.Left, ratio)
+	l.ScrollableOverflow.Right = span(x, x+o.Right, ratio)
+	l.ScrollableOverflow.Top = span(y, y+o.Top, ratio)
+	l.ScrollableOverflow.Bottom = span(y, y+o.Bottom, ratio)
 
 	st.Rounded = l
 
 	// The children's layouts and where they are carried from are those
 	// they were snapped with: their rounding stands.
 	origin := Point[float32]{cumulativeX, cumulativeY}
-	if st.kidsRounded && st.kidsPerformed == st.performed && sameSnap(st.kidsOrigin, origin) {
+	if st.kidsRounded && st.kidsPerformed == st.performed && st.kidsRatio == ratio &&
+		sameSnap(st.kidsOrigin, origin, ratio) {
 		return
 	}
-	st.kidsRounded, st.kidsPerformed, st.kidsOrigin = true, st.performed, origin
+	st.kidsRounded, st.kidsPerformed, st.kidsOrigin, st.kidsRatio = true, st.performed, origin, ratio
 	st.rounds++
 
 	// In-flow children are rounded relative to this node. Out-of-flow ones
@@ -392,10 +431,10 @@ func roundLayout(n Node, cumulativeX, cumulativeY float32) {
 		child := n.Child(i)
 		cs := child.Style()
 		if !(cs.Position.isOutOfFlow() && cs.Display != DisplayNone) {
-			roundLayout(child, cumulativeX, cumulativeY)
+			roundLayout(child, cumulativeX, cumulativeY, ratio)
 		}
 	}
 	for _, child := range st.hoisted {
-		roundLayout(child, cumulativeX, cumulativeY)
+		roundLayout(child, cumulativeX, cumulativeY, ratio)
 	}
 }

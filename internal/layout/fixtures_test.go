@@ -506,7 +506,7 @@ func runFixture(t *testing.T, data []byte) {
 
 	Compute(root, available)
 	if useRounding {
-		Round(root)
+		Round(root, 1)
 	}
 
 	if !matches(root, want, useRounding) {
@@ -685,7 +685,7 @@ func BenchmarkFixtures(b *testing.B) {
 			reset(t.root)
 			b.StartTimer()
 			Compute(t.root, t.available)
-			Round(t.root)
+			Round(t.root, 1)
 		}
 	}
 }

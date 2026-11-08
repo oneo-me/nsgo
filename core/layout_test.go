@@ -328,3 +328,79 @@ func TestNestedRelayoutBoundariesBothLayOut(t *testing.T) {
 	// The commit checks itself against a full layout (CheckCommits).
 	h.commit()
 }
+
+func TestLayoutRoundsToDevicePixels(t *testing.T) {
+	const ratio = 2.625
+	h := newHost(t, Size{Width: 200, Height: 200}, func(cx *Scope) Node {
+		return View{Style: Style{AlignItems: AlignStart}, Children: []Node{
+			View{Style: Style{Margin: Edges{Top: 4}, Height: Pt(30)}, TestID: "scroll", Children: []Node{
+				View{Style: Style{Height: Pt(30), Width: Pt(30), BorderWidth: 1}, TestID: "chip"},
+			}},
+			View{Style: Style{Height: Pt(28.2)}, TestID: "row"},
+		}}
+	})
+	h.tree.SetEnvironment(Environment{PixelRatio: ratio})
+	h.commit()
+	onPixels := func(v Points) bool {
+		p := float64(v) * ratio
+		return p-float64(int(p+0.5)) < 1e-3 && float64(int(p+0.5))-p < 1e-3
+	}
+	for _, id := range []string{"scroll", "chip", "row"} {
+		f := h.find(id).frame
+		for _, v := range []Points{f.Origin.X, f.Origin.Y, f.Size.Width, f.Size.Height} {
+			if !onPixels(v) {
+				t.Errorf("%s = %v, off the device pixels", id, f)
+			}
+		}
+	}
+	// 4 points down is 10.5 pixels: the scroll view and the chip as tall
+	// as it are one height, not a pixel apart.
+	if s, c := h.find("scroll").frame.Size.Height, h.find("chip").frame.Size.Height; s != c {
+		t.Errorf("scroll view %v tall, chip %v", s, c)
+	}
+}
+
+func TestTextRoundsUpToADevicePixel(t *testing.T) {
+	for _, c := range []struct {
+		p     Points
+		ratio float32
+		want  Points
+	}{
+		{56 / 2.625, 2.625, 56 / 2.625},
+		{21.4, 2.625, 57 / 2.625},
+		{20.5, 1, 21},
+		{20, 1, 20},
+		{20.25, 2, 20.5},
+	} {
+		if got := ceil(c.p, c.ratio); float64(got)*float64(c.ratio)-float64(c.want)*float64(c.ratio) > 1e-3 ||
+			float64(c.want)*float64(c.ratio)-float64(got)*float64(c.ratio) > 1e-3 {
+			t.Errorf("ceil(%v, %v) = %v, want %v", c.p, c.ratio, got, c.want)
+		}
+	}
+}
+
+func TestFramesMovedByWholePixelsAreNotSentAgain(t *testing.T) {
+	const ratio = 2.625
+	var top *Signal[Points]
+	h := newHost(t, Size{Width: 200, Height: 2000}, func(cx *Scope) Node {
+		top = NewSignal(cx, Points(0))
+		rows := make([]Node, 40)
+		for i := range rows {
+			rows[i] = View{Style: Style{Height: Pt(28)}, Children: []Node{View{Style: Style{Height: Pt(10)}}}}
+		}
+		return View{Children: []Node{
+			View{StyleFunc: func() Style { return Style{Margin: Edges{Top: top.Get()}} }, TestID: "box", Children: rows},
+		}}
+	})
+	h.tree.SetEnvironment(Environment{PixelRatio: ratio})
+	h.commit()
+	box := h.find("box")
+	for px := 1; px < 400; px++ {
+		top.Set(Points(float32(px) / ratio))
+		for _, it := range h.commit().Items {
+			if it.Kind == driver.ItemFrame && it.ID != box.id && it.ID != box.parent.id {
+				t.Fatalf("pixel %d: view %d's frame %v sent again", px, it.ID, it.Frame)
+			}
+		}
+	}
+}

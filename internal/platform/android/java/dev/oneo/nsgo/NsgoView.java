@@ -188,6 +188,8 @@ public class NsgoView extends FrameLayout {
             event(Protocol.EVENT_ANIMATION, 0, id, 0, 0, "", 0, 0, 0, 0, 0, 0, value, null, 0, 0, false, "",
                     finished));
     private final Choreographer.FrameCallback tick = this::tick;
+    /** A new node's style and props, as the first batch encoded them (startDefault). */
+    private byte[] defaultStyle, defaultProps;
     private boolean ticking, frameWanted;
     private final LinkedHashSet<Node> moving = new LinkedHashSet<>();
     private final ArrayList<Ghost> ghosts = new ArrayList<>();
@@ -1729,11 +1731,19 @@ public class NsgoView extends FrameLayout {
                     }
                 }
             }
+            // The first batch carries a new view's default style and props.
+            if (in.readUnsignedByte() != 0) {
+                defaultStyle = new byte[in.readInt()];
+                in.readFully(defaultStyle);
+                defaultProps = new byte[in.readInt()];
+                in.readFully(defaultProps);
+            }
             for (int i = 0, count = in.readInt(); i < count; i++) {
                 int kind = in.readUnsignedByte();
                 int id = in.readInt();
                 if (kind == Protocol.ITEM_CREATE) {
                     Node n = create(id, in.readUnsignedByte());
+                    startDefault(n);
                     if (layoutCreate != null || layoutUpdate != null) created.add(id);
                     // Show the root at once, so text fields can take focus
                     // while the rest of its first batch mounts.
@@ -1752,6 +1762,19 @@ public class NsgoView extends FrameLayout {
         if (animator.running()) startTicking();
         // The selection keeps to its texts, and goes with its area.
         if (selection != null) post(this::refreshSelection);
+    }
+
+    /**
+     * Starts new node n in the default style with no props and no events, as
+     * android.go's first batch gave them: the core sends each only once it
+     * differs.
+     */
+    private void startDefault(Node n) throws IOException {
+        if (defaultStyle == null) return;
+        style(n, new DataInputStream(new ByteArrayInputStream(defaultStyle)));
+        n.fresh = true;
+        props(n, new DataInputStream(new ByteArrayInputStream(defaultProps)));
+        events(n, 0);
     }
 
     private void show(View root) {
@@ -3093,7 +3116,9 @@ public class NsgoView extends FrameLayout {
         }
         if (n.animator != null) n.animator.cancel(); // n.shown is where it stopped
         runKeyframes(n, keyframes);
-        if (duration == 0 || n.shown == null) {
+        boolean fresh = n.fresh;
+        n.fresh = false;
+        if (duration == 0 || n.shown == null || fresh) {
             n.shown = look;
             paint(n);
             return;
@@ -4146,6 +4171,8 @@ public class NsgoView extends FrameLayout {
         /** The view's background, the look it shows and the transition moving it. */
         Box background;
         Look shown;
+        /** Whether it still shows the default style startDefault gave it, which the first style replaces. */
+        boolean fresh;
         /** Whether the node is a selection area (driver.ViewProps.SelectionArea). */
         boolean selectionArea;
         /** The ripple's flags, color and radius, as ripple() takes them. */

@@ -186,6 +186,8 @@ final class Animator {
         double aConst, bConst;
         Interpolation interpolation;
         Spec animation;
+        /** A run's AtFrameRate, 0 for every frame. */
+        double frameRate;
     }
 
     /**
@@ -505,7 +507,10 @@ final class Animator {
                 break;
             case START:
                 o.id = in.readInt();
-                if (in.readUnsignedByte() != 0) o.animation = Spec.read(in);
+                if (in.readUnsignedByte() != 0) {
+                    o.animation = Spec.read(in);
+                    o.frameRate = in.readDouble();
+                }
                 break;
             case BIND:
                 o.view = in.readInt();
@@ -588,7 +593,7 @@ final class Animator {
             }
             case START: {
                 if (o.animation == null) return;
-                Run r = new Run(o.id, build(o.animation));
+                Run r = new Run(o.id, build(o.animation), o.frameRate);
                 List<Integer> moved = new ArrayList<>();
                 r.root.values(moved);
                 double[] starts = new double[moved.size() * 2];
@@ -742,6 +747,12 @@ final class Animator {
         now = seconds(nanos);
         for (Run r : new ArrayList<>(runs.values())) {
             if (runs.get(r.id) != r) continue;
+            // A run with a frame rate moves only when its next frame is due.
+            if (r.rate > 0) {
+                if (r.moved && now - r.last < 1 / r.rate - FRAME_SLACK) continue;
+                r.last = now;
+                r.moved = true;
+            }
             if (r.root.step(this, now)) end(r, true);
         }
         for (ANode n : new ArrayList<>(settling)) {
@@ -1022,12 +1033,24 @@ final class Animator {
     private static final class Run {
         final int id;
         final Step root;
+        /** Its frame rate, 0 for every step; last is when it last moved, once moved. */
+        final double rate;
+        double last;
+        boolean moved;
 
-        Run(int id, Step root) {
+        Run(int id, Step root, double rate) {
             this.id = id;
             this.root = root;
+            this.rate = rate;
         }
     }
+
+    /**
+     * How early a run's frame may land, in seconds, as core's frameSlack: a
+     * display frame a little before the rate's own would otherwise wait for
+     * the one after it, halving the rate.
+     */
+    private static final double FRAME_SLACK = 0.002;
 
     /** A node of a running animation's tree. */
     private abstract static class Step {

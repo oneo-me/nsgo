@@ -54,11 +54,13 @@ type State struct {
 	// performed is the pass (passes) that last laid the node's children
 	// out, writing their Unrounded layouts. Round snaps the children again
 	// only when that pass is not the one their Rounded layouts came of
-	// (kidsPerformed), or when the node's own position moved (kidsOrigin):
-	// a tree laid out from its caches but for one path rounds that path.
+	// (kidsPerformed), when the node's own position moved off its pixels
+	// (kidsOrigin), or when the pixels changed (kidsRatio): a tree laid
+	// out from its caches but for one path rounds that path.
 	performed     uint64
 	kidsPerformed uint64
 	kidsOrigin    Point[float32]
+	kidsRatio     float64
 	kidsRounded   bool
 	// rounds counts the times Round snapped the children.
 	rounds uint64

@@ -210,6 +210,8 @@ type surface struct {
 	epoch    time.Time
 	link     objc.ID // the CADisplayLink
 	ticking  bool
+	// pace is the rate the link is slowed to, 0 for the screen's highest.
+	pace float64
 	// frameWanted is set while the app waits for a display frame.
 	frameWanted bool
 	motions     map[*view]*motion

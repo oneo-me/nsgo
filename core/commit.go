@@ -151,11 +151,18 @@ func (t *Tree) checkCommit() {
 func (t *Tree) commitRound() {
 	t.changed = false
 	t.fullRound, t.full = t.full, false
-	if scale := t.root.Env().fontScale.GetUntracked(); scale != t.fontScale {
+	env := t.root.Env()
+	if scale := env.fontScale.GetUntracked(); scale != t.fontScale {
 		t.fontScale = scale
 		t.fullRound = true
 	}
-	env := t.root.Env()
+	if ratio := env.ratio.GetUntracked(); ratio != t.ratio {
+		// Texts round up to the new pixels and frames to them, so every
+		// layout is laid out again.
+		t.ratio = ratio
+		t.fullRound = true
+		t.relayoutAll()
+	}
 	rtl, lang, forced := env.rtl.GetUntracked(), t.shownLanguage(), env.forced.GetUntracked() != ""
 	if rtl != t.rtl || lang != t.language || forced != t.forced || !t.directionSent {
 		if rtl != t.rtl {
@@ -319,6 +326,9 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 			tn.resent = true
 			t.markLayout(n)
 		}
+		if tn.ratio != t.ratio {
+			tn.ratio, tn.minWidth = t.ratio, -1
+		}
 		tn.engine, tn.measures = t.text, &t.measures
 		if inherited.TextAlignVertical != tn.alignV {
 			tn.alignV = inherited.TextAlignVertical
@@ -406,6 +416,7 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 			p.Release()
 			t.markLayout(n)
 		}
+		in.ratio = t.ratio
 		t.prepareInput(n)
 	}
 	if n.text != nil {
@@ -775,7 +786,7 @@ func (t *Tree) emitText(n *node) {
 	}
 	if tn.noWrap {
 		// Unwrapped lines overflow the box.
-		box.Size.Width = max(box.Size.Width, ceil(prepared.Measure(Auto).Width))
+		box.Size.Width = max(box.Size.Width, ceil(prepared.Measure(Auto).Width, t.ratio))
 	}
 	l := prepared.Layout(box.Size)
 	tn.layout = l

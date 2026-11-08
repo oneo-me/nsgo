@@ -23,7 +23,7 @@ type animatorBatch struct {
 }
 
 // animatorScenario exercises every node kind, easing family, driver and
-// composite, an interruption and a read.
+// composite, an interruption, a read and slowed runs.
 func animatorScenario() []animatorBatch {
 	const (
 		a, b, c, d, e, f, g = 1, 2, 3, 4, 5, 6, 7
@@ -43,6 +43,10 @@ func animatorScenario() []animatorBatch {
 	timing := func(v uint32, to float64, ms int, e driver.Easing) *driver.Animation {
 		return &driver.Animation{Kind: driver.AnimationTiming, Value: v, To: to,
 			Timing: driver.TimingConfig{Duration: time.Duration(ms) * time.Millisecond, Easing: e}}
+	}
+	slowed := func(an *driver.Animation, rate float64) *driver.Animation {
+		an.FrameRate = rate
+		return an
 	}
 	start := func(id uint32, an *driver.Animation) driver.AnimationOp {
 		return driver.AnimationOp{Kind: driver.AnimStart, ID: id, Animation: an}
@@ -98,7 +102,9 @@ func animatorScenario() []animatorBatch {
 			{Kind: driver.AnimSetOffset, Node: a, Value: 5},
 			{Kind: driver.AnimRead, Node: a, ID: 9},
 			start(5, timing(a, 80, 400, driver.Easing{Kind: driver.EasingCubic, Mode: driver.EaseModeOut})),
-			start(7, timing(f, 5, 2000, driver.Easing{Kind: driver.EasingSteps, Param: 3, Steps: driver.JumpNone})),
+			start(7, slowed(timing(f, 5, 2000, driver.Easing{Kind: driver.EasingSteps, Param: 3, Steps: driver.JumpNone}), 20)),
+			// A slowed run moves only on its own frames.
+			start(8, slowed(timing(e, 0, 1500, driver.Easing{}), 12)),
 		}},
 		// Resets put a finished run's values and a running one's back.
 		{at: 2300 * time.Millisecond, ops: []driver.AnimationOp{

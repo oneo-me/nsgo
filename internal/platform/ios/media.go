@@ -4,6 +4,7 @@ package ios
 
 import (
 	"log"
+	"math"
 	"time"
 
 	"github.com/ebitengine/purego/objc"
@@ -51,9 +52,11 @@ func (s *surface) layoutStart(tr *driver.LayoutTransition) time.Duration {
 
 func (s *surface) startTicking() {
 	if s.ticking {
+		s.setPace()
 		return
 	}
 	s.ticking = true
+	s.pace = s.wantedPace()
 	if s.link == 0 {
 		// A link needs the view in a window: without one, the next mount
 		// asks again.
@@ -63,16 +66,44 @@ func (s *surface) startTicking() {
 			return
 		}
 		s.link = link.Send(sel("retain"))
-		// A link left at its default runs at 60 Hz on a ProMotion iPhone.
-		screen := objc.ID(objc.GetClass("UIScreen")).Send(sel("mainScreen"))
-		if fps := objc.Send[int](screen, sel("maximumFramesPerSecond")); fps > 0 {
-			s.link.Send(sel("setPreferredFramesPerSecond:"), fps)
-		}
+		s.link.Send(sel("setPreferredFramesPerSecond:"), s.framesPerSecond())
 		s.link.Send(sel("addToRunLoop:forMode:"), objc.ID(objc.GetClass("NSRunLoop")).Send(sel("mainRunLoop")),
 			apple.CommonModes())
 		return
 	}
+	s.link.Send(sel("setPreferredFramesPerSecond:"), s.framesPerSecond())
 	s.link.Send(sel("setPaused:"), false)
+}
+
+// framesPerSecond is what the link asks for: the pace, or the screen's
+// highest rate, as a link left at its default runs at 60 Hz on a
+// ProMotion iPhone.
+func (s *surface) framesPerSecond() int {
+	if s.pace > 0 {
+		return max(int(math.Ceil(s.pace)), 1)
+	}
+	screen := objc.ID(objc.GetClass("UIScreen")).Send(sel("mainScreen"))
+	return max(objc.Send[int](screen, sel("maximumFramesPerSecond")), 0)
+}
+
+// wantedPace is the rate the frame clock need run at, as macOS's: the
+// animations' own when they are all it steps, else the screen's highest.
+// Batches apply as they land, so none waits for a slowed frame.
+func (s *surface) wantedPace() float64 {
+	if len(s.motions) > 0 || len(s.ghosts) > 0 || s.frameWanted || s.selecting != nil || s.perf != nil {
+		return 0
+	}
+	return s.animator.FrameRate()
+}
+
+// setPace moves the running link to the rate wanted now.
+func (s *surface) setPace() {
+	if pace := s.wantedPace(); pace != s.pace {
+		s.pace = pace
+		if s.link != 0 {
+			s.link.Send(sel("setPreferredFramesPerSecond:"), s.framesPerSecond())
+		}
+	}
 }
 
 func (s *surface) stopTicking() {
@@ -115,7 +146,9 @@ func (s *surface) tick() {
 	// A monitor closes a frame at every refresh.
 	if !s.animator.Running() && len(s.motions) == 0 && len(s.ghosts) == 0 && !s.frameWanted && s.perf == nil {
 		s.stopTicking()
+		return
 	}
+	s.setPace()
 }
 
 func (s *surface) applyAnimated() {

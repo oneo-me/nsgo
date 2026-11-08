@@ -99,10 +99,12 @@ func MeasuresAsBefore(n Node) bool {
 	return true
 }
 
-// RoundFrom snaps the Unrounded layouts of n's subtree to whole pixels,
+// RoundFrom snaps the Unrounded layouts of n's subtree to device pixels,
 // as Round does for a whole tree, where origin is the unrounded position
 // of the box n's location is relative to in its layout root.
-func RoundFrom(n Node, origin Point[float32]) { roundLayout(n, origin.X, origin.Y) }
+func RoundFrom(n Node, origin Point[float32], ratio float32) {
+	roundLayout(n, origin.X, origin.Y, pixels(ratio))
+}
 
 // sameOutput reports whether two outputs are the same.
 func sameOutput(a, b *layoutOutput) bool {

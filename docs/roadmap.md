@@ -15,15 +15,12 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 
 ## Performance against NSH's baselines
 
-NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). Against 0.3.0 the DataTable kept up with NSH's headless, in headless Chrome, with no task over 50 ms, and on macOS, its cells moving with the content in each frame on every backend.
+NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). Against 0.3.0 the DataTable kept up with NSH's in headless Chrome, with no task over 50 ms, and on macOS, its cells moving with the content in each frame on every backend; against 0.4.0 the DataTable and the Animations page send about as many items as NSH's headless, in a tenth of its time or less.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Device pixels | `performance.md`, `geometry.md` | Layout rounds to device pixels rather than whole points, frames that stay on their pixels are not sent again, and a subtree that moved by whole pixels skips its frames, as NSH's `#557`, `#617` and `#637` do |
-| 0.4.0's baselines | `data-table.md` (Performance), `performance.md` | The DataTable's scroll (a frame crossing no row 4 items in ~1.2 ms, a few rows ~35–50 in ~2 ms, no views made), its tick and the Animations page cost what NSH 0.4.0's build does on the same machine, headless, in headless Chrome and on macOS |
+| 0.4.0's baselines in browsers and windows | `data-table.md` (Performance), `performance.md` | The DataTable's scroll and tick and the Animations page cost what NSH 0.4.0's build does on the same machine in headless Chrome and on macOS, as they do headless (2026-11-08), measured on a Mac whose screen is unlocked |
 | The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, and a stack's slides cost on Windows, Linux, iOS and Android what NSH's do there (Pixel 10 Pro: ~870 views, commits at 3 and 7 ms at the median and 90th percentile, slides on whole pixels), measured on those machines and on NSH's builds for them |
-| Slowed animations | NSGo's own (`animation.md`) | Android's Java animator honors `AtFrameRate` with `classes.dex` rebuilt, and iOS slows its `CADisplayLink` as macOS does, keeping batches from waiting on it |
-| Android's new views | `nsh/AGENTS.md` (Performance rules, 4) | `NsgoView` starts a node in the default style with no props and no events, and `classes.dex` is rebuilt, so the Go side stops sending the three for every new view (`withDefaults`) |
 
 ## Motion
 
@@ -86,6 +83,7 @@ These items wait for community contributions, and a change to one backend record
 | Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows, and a `Plot`'s keys, work there |
 | The mouse on Android | `api-naming.md` (`onMouseEnter`) | `NsgoView` reports the mouse's enter and leave with where it is, its moves with the keys and the button held, and a move with a button down, which needs `classes.dex` rebuilt |
 | Text selection reports on Android | NSGo's own (`text.md`) | `Selection.java` reports `EventSelectionChange` with the box of the texts selected to an area with `OnTextSelection`, as the other platforms do, with `classes.dex` rebuilt, so a `DiffView`'s frame follows the selection there |
+| Android's runtime of 2026-11-08 on a device | — | A DataTable scroll at a fractional density sends a few items between window shifts on a device, and slowed runs keep their rate there, with the `classes.dex` that starts each view in the default style the first batch carries and holds runs to `AtFrameRate`; the gallery's Android tests pass with it on an x86_64 emulator at 2.625 as before it (2026-11-08) |
 | Rounded borders on Android | NSGo's own (`styles.md`) | `Box` stops the fill under the border with `ViewStyle.Rim`, as the other backends do, so the fill stops showing past a rounded border, with `classes.dex` rebuilt |
 | Pasted HTML | `api-naming.md` (`PasteEvent`) | `onPaste`'s `html` holds the clipboard's HTML on Windows (`CF_HTML`), Linux (`text/html`) and Android (`ClipData.Item.getHtmlText`), as it does on macOS, iOS and the web |
 | Sharing on Windows, Linux and the web | — | `Share` shows Windows' share UI (`IDataTransferManagerInterop::ShowShareUIForWindow` with the files as `StorageFile`s), the desktop portal's or a Linux file manager's where one exists, and the web's `navigator.share` for text and files the app holds as bytes, rather than answering `NoShareSheet` |

@@ -120,8 +120,10 @@ type surface struct {
 	ratio atomic.Uint32 // the pixel ratio's float32 bits, for rasterizing SVG
 
 	// On the engine goroutine.
-	images   map[driver.NodeID]*imageView
-	requests uint32 // the last image request number
+	// defaultsSent is set once a batch carried the defaults.
+	defaultsSent bool
+	images       map[driver.NodeID]*imageView
+	requests     uint32 // the last image request number
 	// canvasImages are the images canvases and shaders asked for, by their
 	// key; programs the shader programs translated, numbered from
 	// nextProgram.
@@ -755,7 +757,9 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	}
 	natives := s.trackNatives(b)
 	shaders := s.trackShaders(b)
-	s.send(msgBatch, func(w *writer) { encode(w, b, requests, natives, shaders) })
+	first := !s.defaultsSent
+	s.defaultsSent = true
+	s.send(msgBatch, func(w *writer) { encode(w, b, first, requests, natives, shaders) })
 	for _, l := range loads {
 		go s.load(l)
 	}
@@ -971,75 +975,40 @@ const webInterface = "nsgo"
 const webBridge = "(function (n) { if (n) window." + webInterface +
 	" = { postMessage: function (data) { n.postMessage(String(data)); } }; })(window." + webInterface + ");"
 
-// withDefaults returns items with a default style, props and events
-// after each create its batch sends none of them for: the core sends
-// them only when they differ, and NsgoView's nodes, from the classes.dex
-// built before that, have no state until they come.
-func withDefaults(items []driver.MountItem) []driver.MountItem {
-	const style, props, events = 1, 2, 4
-	var sent map[driver.NodeID]uint8
-	for i := range items {
-		switch it := &items[i]; it.Kind {
-		case driver.ItemCreate:
-			if sent == nil {
-				sent = map[driver.NodeID]uint8{}
-			}
-			sent[it.ID] = 0
-		case driver.ItemViewStyle:
-			if has, ok := sent[it.ID]; ok {
-				sent[it.ID] = has | style
-			}
-		case driver.ItemViewProps:
-			if has, ok := sent[it.ID]; ok {
-				sent[it.ID] = has | props
-			}
-		case driver.ItemEvents:
-			if has, ok := sent[it.ID]; ok {
-				sent[it.ID] = has | events
-			}
-		}
-	}
-	if sent == nil {
-		return items
-	}
-	out := make([]driver.MountItem, 0, len(items)+3*len(sent))
-	for _, it := range items {
-		out = append(out, it)
-		if it.Kind != driver.ItemCreate {
-			continue
-		}
-		has := sent[it.ID]
-		if has&style == 0 {
-			out = append(out, driver.MountItem{Kind: driver.ItemViewStyle, ID: it.ID, ViewStyle: &defaultStyle})
-		}
-		if has&props == 0 {
-			out = append(out, driver.MountItem{Kind: driver.ItemViewProps, ID: it.ID, ViewProps: &defaultProps})
-		}
-		if has&events == 0 {
-			out = append(out, driver.MountItem{Kind: driver.ItemEvents, ID: it.ID})
-		}
-	}
-	return out
-}
-
-var (
-	defaultStyle = driver.DefaultViewStyle
-	defaultProps driver.ViewProps
-)
+// defaults are a new view's style and props as writeViewStyle and
+// writeViewProps write them, which a surface's first batch carries:
+// NsgoView starts each view it creates in them, with no events, so the
+// core sends neither for a view that keeps them.
+var defaults = sync.OnceValue(func() []byte {
+	style, props := driver.DefaultViewStyle, driver.ViewProps{}
+	var sw, pw writer
+	writeViewStyle(&sw, &style)
+	writeViewProps(&pw, &props)
+	var w writer
+	w.u32(uint32(len(sw.buf)))
+	w.buf = append(w.buf, sw.buf...)
+	w.u32(uint32(len(pw.buf)))
+	w.buf = append(w.buf, pw.buf...)
+	return w.buf
+})
 
 // encode writes a batch in the format NsgoView.mount reads: each item is
 // its kind, its ID and the fields of that kind; requests numbers its
 // ItemImage items in order, and natives says what its ItemNative items
 // send. Kinds it does not know, ItemBackUnhandled and the desktop-only
 // ItemWindow and ItemMenu, which Java ignores, have no fields. The batch's
-// layout animation comes before its items.
-func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []nativeItem, shaders []shaderItem) {
+// layout animation comes before its items, and the first batch's defaults
+// after it.
+func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, natives []nativeItem, shaders []shaderItem) {
 	w.u32(uint32(b.Root))
 	writeLayoutAnimation(w, b.LayoutAnimation)
-	items := withDefaults(b.Items)
-	w.u32(uint32(len(items)))
-	for i := range items {
-		it := &items[i]
+	w.flags(first)
+	if first {
+		w.buf = append(w.buf, defaults()...)
+	}
+	w.u32(uint32(len(b.Items)))
+	for i := range b.Items {
+		it := &b.Items[i]
 		w.byte(byte(it.Kind))
 		w.u32(uint32(it.ID))
 		switch it.Kind {
@@ -1052,50 +1021,7 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 			w.bounds(it.Frame)
 			writeLayoutTransition(w, it.Transition)
 		case driver.ItemViewStyle:
-			v := it.ViewStyle
-			w.u32(uint32(v.Background))
-			w.points(v.CornerRadius)
-			w.points(v.BorderWidth)
-			w.u32(uint32(v.BorderColor))
-			// Each side's border, all 0 unless they differ.
-			b, c := v.Borders, v.BorderColors
-			w.points(b.Top)
-			w.points(b.Right)
-			w.points(b.Bottom)
-			w.points(b.Left)
-			w.u32(uint32(c.Top))
-			w.u32(uint32(c.Right))
-			w.u32(uint32(c.Bottom))
-			w.u32(uint32(c.Left))
-			w.float(v.Opacity)
-			// Android draws shadows from elevation, which has no offset:
-			// the view's own, cast in the system's black, else its style's.
-			shadow, radius := v.ShadowColor, v.ShadowRadius
-			if v.Elevation > 0 && (shadow&0xff == 0 || radius <= 0) {
-				shadow, radius = driver.RGB(0), v.Elevation
-			}
-			w.u32(uint32(shadow))
-			w.points(radius)
-			w.u32(uint32(v.TintColor))
-			// The scales as they are, 0 unset, for Java to combine with
-			// animated ones as core.Transform.Scales does.
-			tr := v.Transform.InPlane()
-			w.points(tr.TranslateX)
-			w.points(tr.TranslateY)
-			w.floats(tr.Scale, tr.ScaleX, tr.ScaleY)
-			// Android turns a view in its plane once: RotateZ joins Rotate,
-			// which is exact unless RotateX or RotateY tilt it between.
-			w.float(tr.Rotate + tr.RotateZ)
-			tn := v.Transition
-			w.u32(uint32(max(tn.Duration.Milliseconds(), 0)))
-			w.u32(uint32(max(tn.Delay.Milliseconds(), 0)))
-			w.float(tn.Easing.X1)
-			w.float(tn.Easing.Y1)
-			w.float(tn.Easing.X2)
-			w.float(tn.Easing.Y2)
-			w.byte(byte(tn.Properties))
-			w.flags(v.Clip, v.Hidden, v.ContinuousCorners, v.BackfaceHidden)
-			writeDecor(w, v)
+			writeViewStyle(w, it.ViewStyle)
 		case driver.ItemText:
 			t := it.Text
 			var layout uint32
@@ -1136,50 +1062,7 @@ func encode(w *writer, b *driver.MountBatch, requests []uint32, natives []native
 		case driver.ItemEvents:
 			w.u64(uint64(it.Events))
 		case driver.ItemViewProps:
-			p := it.ViewProps
-			w.byte(byte(p.Role))
-			w.flags(p.Disabled, p.Selected, p.Checked, p.Indeterminate)
-			w.str(p.Label)
-			w.str(p.TestID)
-			// Java decides when a drag activates the pan.
-			a := p.PanActivation
-			w.points(a.ActiveOffsetX)
-			w.points(a.ActiveOffsetY)
-			w.points(a.FailOffsetX)
-			w.points(a.FailOffsetY)
-			// Accessibility beyond the role, label and states.
-			w.str(p.Hint)
-			w.flags(p.Expandable, p.Expanded, p.ElementsHidden, p.Value.IsRange())
-			w.byte(byte(p.Accessible))
-			w.byte(byte(p.LiveRegion))
-			w.float(p.Value.Min)
-			w.float(p.Value.Max)
-			w.float(p.Value.Now)
-			w.str(p.Value.Text)
-			actions := p.ActionList()
-			w.u32(uint32(len(actions)))
-			for _, act := range actions {
-				w.str(act.Name)
-				w.str(act.Label)
-			}
-			// The runtime routes touches by them and times long presses.
-			w.byte(byte(p.PointerEvents))
-			w.points(p.HitSlop.Top)
-			w.points(p.HitSlop.Right)
-			w.points(p.HitSlop.Bottom)
-			w.points(p.HitSlop.Left)
-			w.u32(uint32(max(p.DelayLongPress.Milliseconds(), 0)))
-			if r := p.Ripple; r != nil {
-				w.flags(true, r.Borderless, r.Foreground)
-				w.u32(uint32(r.Color))
-				w.points(r.Radius)
-			} else {
-				w.byte(0)
-			}
-			// Selections run on the UI thread (Selection.java).
-			w.flags(p.SelectionArea)
-			w.byte(byte(p.Selectable))
-			w.u32(uint32(p.SelectionColor))
+			writeViewProps(w, it.ViewProps)
 		case driver.ItemScrollConfig:
 			c := it.Scroll
 			b := &c.Behavior
@@ -1817,4 +1700,98 @@ func writeDecoration(w *writer, t *driver.TextStyle) {
 		offset = o
 	}
 	w.points(offset)
+}
+
+// writeViewStyle writes a view's style as NsgoView.style reads it.
+func writeViewStyle(w *writer, v *driver.ViewStyle) {
+	w.u32(uint32(v.Background))
+	w.points(v.CornerRadius)
+	w.points(v.BorderWidth)
+	w.u32(uint32(v.BorderColor))
+	// Each side's border, all 0 unless they differ.
+	b, c := v.Borders, v.BorderColors
+	w.points(b.Top)
+	w.points(b.Right)
+	w.points(b.Bottom)
+	w.points(b.Left)
+	w.u32(uint32(c.Top))
+	w.u32(uint32(c.Right))
+	w.u32(uint32(c.Bottom))
+	w.u32(uint32(c.Left))
+	w.float(v.Opacity)
+	// Android draws shadows from elevation, which has no offset:
+	// the view's own, cast in the system's black, else its style's.
+	shadow, radius := v.ShadowColor, v.ShadowRadius
+	if v.Elevation > 0 && (shadow&0xff == 0 || radius <= 0) {
+		shadow, radius = driver.RGB(0), v.Elevation
+	}
+	w.u32(uint32(shadow))
+	w.points(radius)
+	w.u32(uint32(v.TintColor))
+	// The scales as they are, 0 unset, for Java to combine with
+	// animated ones as core.Transform.Scales does.
+	tr := v.Transform.InPlane()
+	w.points(tr.TranslateX)
+	w.points(tr.TranslateY)
+	w.floats(tr.Scale, tr.ScaleX, tr.ScaleY)
+	// Android turns a view in its plane once: RotateZ joins Rotate,
+	// which is exact unless RotateX or RotateY tilt it between.
+	w.float(tr.Rotate + tr.RotateZ)
+	tn := v.Transition
+	w.u32(uint32(max(tn.Duration.Milliseconds(), 0)))
+	w.u32(uint32(max(tn.Delay.Milliseconds(), 0)))
+	w.float(tn.Easing.X1)
+	w.float(tn.Easing.Y1)
+	w.float(tn.Easing.X2)
+	w.float(tn.Easing.Y2)
+	w.byte(byte(tn.Properties))
+	w.flags(v.Clip, v.Hidden, v.ContinuousCorners, v.BackfaceHidden)
+	writeDecor(w, v)
+}
+
+// writeViewProps writes a view's props as NsgoView.props reads it.
+func writeViewProps(w *writer, p *driver.ViewProps) {
+	w.byte(byte(p.Role))
+	w.flags(p.Disabled, p.Selected, p.Checked, p.Indeterminate)
+	w.str(p.Label)
+	w.str(p.TestID)
+	// Java decides when a drag activates the pan.
+	a := p.PanActivation
+	w.points(a.ActiveOffsetX)
+	w.points(a.ActiveOffsetY)
+	w.points(a.FailOffsetX)
+	w.points(a.FailOffsetY)
+	// Accessibility beyond the role, label and states.
+	w.str(p.Hint)
+	w.flags(p.Expandable, p.Expanded, p.ElementsHidden, p.Value.IsRange())
+	w.byte(byte(p.Accessible))
+	w.byte(byte(p.LiveRegion))
+	w.float(p.Value.Min)
+	w.float(p.Value.Max)
+	w.float(p.Value.Now)
+	w.str(p.Value.Text)
+	actions := p.ActionList()
+	w.u32(uint32(len(actions)))
+	for _, act := range actions {
+		w.str(act.Name)
+		w.str(act.Label)
+	}
+	// The runtime routes touches by them and times long presses.
+	w.byte(byte(p.PointerEvents))
+	w.points(p.HitSlop.Top)
+	w.points(p.HitSlop.Right)
+	w.points(p.HitSlop.Bottom)
+	w.points(p.HitSlop.Left)
+	w.u32(uint32(max(p.DelayLongPress.Milliseconds(), 0)))
+	if r := p.Ripple; r != nil {
+		w.flags(true, r.Borderless, r.Foreground)
+		w.u32(uint32(r.Color))
+		w.points(r.Radius)
+	} else {
+		w.byte(0)
+	}
+	// Selections run on the UI thread (Selection.java).
+	w.flags(p.SelectionArea)
+	w.byte(byte(p.Selectable))
+	w.u32(uint32(p.SelectionColor))
 }

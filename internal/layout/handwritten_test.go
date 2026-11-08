@@ -43,7 +43,7 @@ func (n *testNode) layout() Layout { return n.state.Rounded }
 // computeLayout is TaffyTree::compute_layout with rounding enabled.
 func computeLayout(root *testNode, available Size[AvailableSpace]) {
 	Compute(root, available)
-	Round(root)
+	Round(root, 1)
 }
 
 func pxSize(w, h float32) Size[Length] { return Size[Length]{Px(w), Px(h)} }

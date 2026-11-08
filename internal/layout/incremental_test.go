@@ -34,7 +34,7 @@ func TestABoundaryRelaysOutAlone(t *testing.T) {
 	if !Relayout(cell) {
 		t.Fatal("a fixed cell gave back another output for a wider word")
 	}
-	RoundFrom(cell, root.state.Unrounded.Location)
+	RoundFrom(cell, root.state.Unrounded.Location, 1)
 	if w := leaf.layout().Size.Width; w != 40 {
 		t.Errorf("the word is %v wide, want 40", w)
 	}

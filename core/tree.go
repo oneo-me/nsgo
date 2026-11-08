@@ -65,12 +65,14 @@ type Tree struct {
 	anim         animations
 	layoutAnim   *LayoutAnimation
 	fontScale    float32
-	alerts       map[uint32]alertWait
-	waits        map[uint32]wait
-	imageInfos   map[uint32]imageInfoWait
-	keys         []*keyBinding
-	keysChanged  bool
-	backs        []*backHandler
+	// ratio is the device pixels per point layout rounds to.
+	ratio       float32
+	alerts      map[uint32]alertWait
+	waits       map[uint32]wait
+	imageInfos  map[uint32]imageInfoWait
+	keys        []*keyBinding
+	keysChanged bool
+	backs       []*backHandler
 	// peeking is the screen a back gesture may uncover (Tree.peek).
 	peeking *node
 	// history is the depth ItemHistory last sent, which historyAgain
@@ -330,6 +332,8 @@ type textNode struct {
 	// caches while it is not negative.
 	engine   driver.TextEngine
 	minWidth Points
+	// ratio is the device pixels per point its sizes round up to.
+	ratio float32
 	// hash is text's layout hash, which measures keys its sizes by.
 	hash     uint64
 	measures *measureCache
@@ -367,7 +371,7 @@ func (tn *textNode) minContent() Points {
 			w = p.Measure(Auto).Width
 			p.Release()
 		}
-		tn.minWidth = max(tn.minWidth, ceil(w))
+		tn.minWidth = max(tn.minWidth, ceil(w, tn.ratio))
 	}
 	return tn.minWidth
 }
@@ -462,7 +466,9 @@ type inputNode struct {
 	// input shows without a SelectionColor of its style's.
 	themeSelection, themeCaret Color
 	lineH                      Points
-	lineFor                    driver.TextStyle
+	// ratio is the device pixels per point its sizes round up to.
+	ratio   float32
+	lineFor driver.TextStyle
 	// noScale and maxScale limit the user's text size setting.
 	noScale  bool
 	maxScale float32
@@ -625,7 +631,7 @@ func NewTree(root *Scope, text driver.TextEngine) *Tree {
 // newTree returns an empty tree under root, which becomes the graph's
 // first unless one is.
 func newTree(root *Scope, text driver.TextEngine) *Tree {
-	t := &Tree{root: root, rt: root.rt, text: text, nodes: []*node{nil}, measures: newMeasureCache()}
+	t := &Tree{root: root, rt: root.rt, text: text, nodes: []*node{nil}, measures: newMeasureCache(), ratio: 1}
 	t.anim.t = t
 	if root.rt.tree != nil {
 		root.surf = t

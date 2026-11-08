@@ -255,6 +255,12 @@ func (t *dataTable) windows(cx *core.Scope) tableWindows {
 	w.shownCols = core.NewSignal(cx, [2]int{})
 	cx.Effect(func() {
 		vs, ve := t.visibleRows()
+		// As many rows as the viewport can show at any offset, so the
+		// window keeps its length as a scroll moves a row in and out at
+		// each edge and no slot is hidden and shown again.
+		if g := t.geo(); g.rowHeight > 0 {
+			ve = max(ve, min(vs+int(math.Ceil(g.y.viewport/float64(g.rowHeight)))+1, t.rowCount()))
+		}
 		rows.Set(rowWindow(vs, ve, t.rowCount()))
 		rowOrigin.Set(vs / rowChunk * rowChunk)
 		cvs, cve := t.visibleCols()
@@ -391,19 +397,25 @@ func (t *dataTable) regionBox(which tableRegion) core.Style {
 }
 
 // scrollOrigin is where the scrolling region's columns are placed from,
-// scrolled, in whole points as layout rounds frames: at a fraction the
-// cells' texts would round to another point as it changes, and every
+// scrolled, on whole device pixels as layout rounds frames: off them the
+// cells' texts would round to another pixel as it changes, and every
 // cell's frame would be sent again at each scroll frame.
 func (t *dataTable) scrollOrigin(w tableWindows) float32 {
 	g := t.geo()
-	return float32(math.Round(t.scrollStart(w.colOrigin.Get()) - g.cx))
+	return float32(t.onPixel(t.scrollStart(w.colOrigin.Get()) - g.cx))
 }
 
 // rowsTop is where the rows' chunk is placed from in the body, scrolled,
-// in whole points, as scrollOrigin is for the columns.
+// on whole device pixels, as scrollOrigin is for the columns.
 func (t *dataTable) rowsTop(w tableWindows) float64 {
 	g := t.geo()
-	return math.Round(float64(w.rowOrigin.Get())*float64(g.rowHeight) - g.cy)
+	return t.onPixel(float64(w.rowOrigin.Get())*float64(g.rowHeight) - g.cy)
+}
+
+// onPixel rounds points to the surface's device pixels.
+func (t *dataTable) onPixel(points float64) float64 {
+	ratio := float64(max(t.cx.Env().PixelRatio(), 1e-6))
+	return math.Round(points*ratio) / ratio
 }
 
 // tableFollow moves the body with the scroll views in the frame they

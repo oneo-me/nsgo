@@ -91,7 +91,7 @@ func (t *Tree) prepareInput(n *node) {
 // measure is a field's content size: a line at the default width, or a
 // multiline field's text wrapped at its width.
 func (in *inputNode) measure(known layout.Size[layout.Opt], available layout.Size[layout.AvailableSpace]) Size {
-	m := Size{Width: defaultInputWidth, Height: ceil(in.lineH)}
+	m := Size{Width: defaultInputWidth, Height: ceil(in.lineH, in.ratio)}
 	if in.measured.prepared == nil {
 		return m
 	}
@@ -101,7 +101,7 @@ func (in *inputNode) measure(known layout.Size[layout.Opt], available layout.Siz
 	} else if known.Width.Valid {
 		width = Points(known.Width.Value)
 	}
-	m.Height = max(m.Height, ceil(in.measured.prepared.Measure(max(width, 0)).Height))
+	m.Height = max(m.Height, ceil(in.measured.prepared.Measure(max(width, 0)).Height, in.ratio))
 	return m
 }
 
@@ -113,14 +113,14 @@ func (t *Tree) reportContentSize(n *node) {
 	if in.contentSize == nil {
 		return
 	}
-	size := Size{Width: 0, Height: ceil(in.lineH)}
+	size := Size{Width: 0, Height: ceil(in.lineH, t.ratio)}
 	if in.sized.prepared != nil {
 		width := Auto
 		if in.config.Multiline {
 			width = in.config.Content.Size.Width
 		}
 		m := in.sized.prepared.Measure(width)
-		size = Size{Width: ceil(m.Width), Height: ceil(m.Height)}
+		size = Size{Width: ceil(m.Width, t.ratio), Height: ceil(m.Height, t.ratio)}
 	}
 	if in.reportedOK && size == in.reported {
 		return
