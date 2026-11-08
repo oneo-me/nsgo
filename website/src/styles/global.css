@@ -45,7 +45,7 @@
     -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', Roboto, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  --header-height: 64px;
+  --header-height: 56px;
   --radius: 18px;
 
   color-scheme: light;
@@ -418,9 +418,9 @@ html[data-theme='dark'] .theme-switch__sun {
   top: 0;
   z-index: 40;
   border-bottom: 1px solid transparent;
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
-  backdrop-filter: saturate(1.8) blur(18px);
-  -webkit-backdrop-filter: saturate(1.8) blur(18px);
+  background: color-mix(in srgb, var(--bg) 64%, transparent);
+  backdrop-filter: saturate(1.8) blur(20px);
+  -webkit-backdrop-filter: saturate(1.8) blur(20px);
   transition: border-color 0.2s ease;
 }
 
@@ -460,7 +460,7 @@ html[data-theme='dark'] .theme-switch__sun {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
+  height: 32px;
   padding: 0 12px;
   border-radius: 10px;
   color: var(--muted);
@@ -805,29 +805,6 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
 .screen img {
   width: 100%;
   height: auto;
-}
-
-/* The traffic lights of the code editor's bar. */
-.window__dots {
-  position: absolute;
-  left: 14px;
-  display: flex;
-  gap: 7px;
-}
-
-.window__dots i {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: #ff5f57;
-}
-
-.window__dots i:nth-child(2) {
-  background: #febc2e;
-}
-
-.window__dots i:nth-child(3) {
-  background: #28c840;
 }
 
 .phone {
@@ -1378,25 +1355,18 @@ html[data-theme='dark'] .phone {
 }
 
 .editor__tabs {
-  position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 44px;
-  padding: 0 12px 0 76px;
+  gap: 20px;
+  padding: 0 22px;
   border-bottom: 1px solid var(--editor-border);
-  background: var(--editor-bar);
-}
-
-.editor__tabs .window__dots {
-  top: 16px;
 }
 
 .editor__tab {
-  height: 34px;
-  padding: 0 14px;
+  height: 44px;
+  margin-bottom: -1px;
+  padding: 0;
   border: 0;
-  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--editor-muted);
   font-family: var(--font-mono);
@@ -1409,7 +1379,7 @@ html[data-theme='dark'] .phone {
 }
 
 .editor__tab[aria-selected='true'] {
-  background: var(--editor);
+  border-bottom-color: var(--editor-text);
   color: var(--editor-text);
 }
 

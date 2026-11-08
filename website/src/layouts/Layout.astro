@@ -81,6 +81,6 @@ const zhPath = page ? localePath('zh', path) : null;
     <main id="main">
       <slot />
     </main>
-    <Footer lang={lang} />
+    <Footer lang={lang} cta={page === 'home'} />
   </body>
 </html>

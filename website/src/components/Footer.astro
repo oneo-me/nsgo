@@ -8,9 +8,11 @@ import SpeedLines from './SpeedLines.astro';
 
 interface Props {
   lang: Lang;
+  /** Whether the call to action shows above the footer, which only the home page wants. */
+  cta?: boolean;
 }
 
-const { lang } = Astro.props;
+const { lang, cta = false } = Astro.props;
 const copy = copies[lang];
 const f = copy.footer;
 
@@ -53,26 +55,28 @@ const columns = [
 const external = (href: string) => href.startsWith('http') || href === links.gallery;
 ---
 
-<section class="container cta-wrap">
-  <div class="cta">
-    <SpeedLines class="cta__lines" size={320} />
-    <div class="cta__copy">
-      <h2>{copy.cta.title}</h2>
-      <p>{copy.cta.body}</p>
-    </div>
-    <div class="cta__actions">
-      <CopyCommand lang={lang} command={install} />
-      <div class="cta__buttons">
-        <a class="btn btn--light" href={docUrl(lang, 'getting-started')}>
-          {copy.cta.primary}
-        </a>
-        <a class="btn btn--ghost" href={links.gallery} target="_blank" rel="noopener noreferrer">
-          {copy.cta.secondary}
-        </a>
+{cta && (
+  <section class="container cta-wrap">
+    <div class="cta">
+      <SpeedLines class="cta__lines" size={320} />
+      <div class="cta__copy">
+        <h2>{copy.cta.title}</h2>
+        <p>{copy.cta.body}</p>
+      </div>
+      <div class="cta__actions">
+        <CopyCommand lang={lang} command={install} />
+        <div class="cta__buttons">
+          <a class="btn btn--light" href={docUrl(lang, 'getting-started')}>
+            {copy.cta.primary}
+          </a>
+          <a class="btn btn--ghost" href={links.gallery} target="_blank" rel="noopener noreferrer">
+            {copy.cta.secondary}
+          </a>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+)}
 
 <footer class="footer">
   <div class="container">
