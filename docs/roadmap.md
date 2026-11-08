@@ -4,16 +4,17 @@ This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`,
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
-## Components of 0.4.0: the rich editor and the DataTable
+## The rich editor's rest
 
-Each a project of its own.
+What `RichEditor` still lacks of NSH's ([rich editor](architecture/richeditor.md)).
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Rich editor | `rich-editor.md` | `RichEditor`, a ProseMirror-style document with lists, mentions, tables (merged cells, resizing, reordering), a bubble menu, undo grouped by time and input methods composing in the line |
-| The DataTable of 0.4.0 | `data-table.md` | A body that takes no pointer under a hit layer of scroll views, rows and scrolling columns as slots reused for the rows in reach, a bounded extent past what 32-bit offsets hold, one `onSelectionChange` and Rust-made rows (`DataTableRows` from columns), and the app's `Scrollbar` drawn above its rows |
-| Tree without NSGo's extras | `nsh/crates/nsh-base/src/tree.rs` | `base.Tree` takes only NSH's props: its `SelectOnly` and `Folder` move to `ui.Tree`, and a tree's `Selection` with them, `base.List` keeping the type in `base` |
-| Editor and diff | `editor.md`, `diff.md` | The Editor's gutter and overview ruler decorations, the DiffView's scroll position and change positions reported |
+| The JS API | `rich-editor.md` (The JS API, Extensions) | TSX apps make sessions with `createRichEditor`, its commands, plugins and `defineExtension`, rather than `tsx/richeditor`'s view of a Markdown text |
+| Block handles and drops | `rich-editor.md` (Handle drags) | `dragBlock`, `dragTo` and `endDrag` carry blocks with a drop cursor as one undo step, a page's coordinates beside the content's |
+| Cells pasted into tables | `rich-editor.md` (Tables) | Pasting cells over a cell selection fills them as prosemirror-tables' `clipCells` and `insertCells` do |
+| Widget decorations and the gap cursor | `rich-editor.md` (Plugins), `-gapcursor` | Plugins place views in the text, and a cursor stands where no textblock can |
+| Input methods and Android | — | A real input method's composition is checked in the line on every target, where only headless tests drive one so far, and the view runs on Android, which was built but not run (typing and presses pass on macOS, iOS, the web, Linux and Windows, 2026-11-08) |
 
 ## Shaders and transitions
 

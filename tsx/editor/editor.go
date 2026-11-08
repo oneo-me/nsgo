@@ -15,6 +15,8 @@ func init() {
 		tsx.Enum(map[string]editor.DefinitionTrigger{"hover": editor.DefinitionHover, "key": editor.DefinitionKey, "press": editor.DefinitionPress}),
 		tsx.Enum(map[string]editor.Severity{"error": editor.SeverityError, "hint": editor.SeverityHint, "info": editor.SeverityInfo, "warning": editor.SeverityWarning}),
 		tsx.Enum(map[string]editor.DiagnosticTag{"unnecessary": editor.TagUnnecessary, "deprecated": editor.TagDeprecated}),
+		tsx.Enum(map[string]editor.GutterPlacement{"lines": editor.GutterLines, "before": editor.GutterBefore}),
+		tsx.Enum(map[string]editor.OverviewRulerLane{"center": editor.LaneCenter, "left": editor.LaneLeft, "right": editor.LaneRight, "full": editor.LaneFull}),
 		// TSX apps edit in NSH's look of diagnostics, under their own
 		// classes and styles; Go's Editor takes the app's.
 		tsx.Preset("Under", look),

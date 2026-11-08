@@ -41,7 +41,7 @@ func TestTree(t *testing.T) {
 		}
 		app.Press("label:src/app >> role:button Expand")
 		app.Find("label:main.go")
-		app.Press("label:src/app")
+		app.Press(`text:"src/app"`)
 		app.Key("left")
 		app.WaitForGone("label:main.go", 0)
 		app.Key("left")
@@ -55,14 +55,14 @@ func TestTree(t *testing.T) {
 		if sel.Cursor() != "src/app" {
 			t.Fatalf("right into an expanded branch moved to %v, want its first child", sel.Cursor())
 		}
-		app.Press("label:docs")
+		app.Press(`text:"docs"`)
 		if app.Exists("label:guide.md") {
 			t.Fatal("a press expanded a branch")
 		}
-		if got := app.Find("label:docs").Style.Background; got != Alpha(p.Text, 0.1) {
+		if got := app.Find(`text:"docs"`).Parent.Parent.Style.Background; got != Alpha(p.Text, 0.1) {
 			t.Fatalf("a selected row's background is %v, want the sidebar's", got)
 		}
-		app.Press("label:docs")
+		app.Press(`text:"docs"`)
 		app.Find("label:guide.md")
 	})
 }

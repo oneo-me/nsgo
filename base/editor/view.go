@@ -93,6 +93,7 @@ func (p Editor) Render(cx *core.Scope) core.Node {
 					Children: []core.Node{e.gutter(), text},
 				}},
 			},
+			e.overviewRuler(),
 			e.sinkView(),
 			e.completionList(),
 			core.Show{When: func() bool { return e.focused.Get() && e.composing.Get() == "" }, Then: func(cx *core.Scope) core.Node {
@@ -121,10 +122,8 @@ func (e *ed) rows() []int {
 }
 
 func (e *ed) gutter() core.Node {
-	if e.p.NoLineNumbers && e.p.NoFolding {
-		return core.Group{}
-	}
 	s, c := e.styles, &e.p.Classes
+	reach := core.NewMemo(e.cx, e.reach)
 	return core.View{
 		Class: c.Gutter,
 		StyleFunc: func() core.Style {
@@ -154,7 +153,7 @@ func (e *ed) gutter() core.Node {
 				}
 				return false
 			}
-			var children []core.Node
+			children := []core.Node{e.gutterMarks(cx, row, reach.Get)}
 			if !e.p.NoLineNumbers {
 				children = append(children, core.Text{
 					ContentFunc: func() string {
@@ -217,8 +216,13 @@ func (e *ed) gutter() core.Node {
 			}
 			return core.View{
 				StyleFunc: func() core.Style {
+					e.textRev.Get()
+					padding := core.Edges{Left: 12 + core.Points(e.stripWidth()), Right: 4}
+					if e.p.NoLineNumbers && e.p.NoFolding {
+						padding = core.Edges{}
+					}
 					return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(core.Points(float32(row()) * e.lh)),
-						Height: core.Pt(core.Points(e.lh)), Direction: core.Row, Padding: core.Edges{Left: 12, Right: 4}}
+						Height: core.Pt(core.Points(e.lh)), Direction: core.Row, Padding: padding}
 				},
 				Children: children,
 			}

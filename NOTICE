@@ -13,6 +13,11 @@ core/tailwind_palette.go is Tailwind CSS's default palette,
 https://github.com/tailwindlabs/tailwindcss, Copyright (c) Tailwind Labs, Inc.,
 licensed under the MIT License, converted to sRGB as NSH converts it.
 
+base/richeditor ports ProseMirror, https://prosemirror.net, Copyright (c) 2015-2017
+by Marijn Haverbeke and others, and follows Tiptap, https://tiptap.dev, Copyright
+(c) Tiptap GmbH, both licensed under the MIT License: their structures, algorithms,
+names and command semantics apply to what it ports.
+
 The Lucide icon set in icons/lucide comes from
 https://github.com/lucide-icons/lucide, Copyright (c) 2026 Lucide Icons and
 Contributors, licensed under the ISC License, together with Feather's MIT

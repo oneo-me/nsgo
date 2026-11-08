@@ -129,6 +129,9 @@ func (w *window) pointerDown(at driver.Point, button uint32, device uintptr, sta
 		w.pressConsumed = true
 		return
 	}
+	if button == 1 {
+		w.pressEdge(driver.EventPressDown, at)
+	}
 	if button == 1 && !touch && w.selectPress(at, w.down.Modifiers, clicks) {
 		w.pressConsumed = true
 		w.panning = nil
@@ -141,6 +144,28 @@ func (w *window) pointerDown(at driver.Point, button uint32, device uintptr, sta
 	if button == 1 && !w.pressConsumed {
 		w.startLongPress(at)
 	}
+}
+
+// pressEdge reports kind, a press going down or up at at, to the innermost
+// view there that takes presses, if it hears kind.
+func (w *window) pressEdge(kind driver.EventKind, at driver.Point) {
+	root := w.view(w.root)
+	if root == nil {
+		return
+	}
+	v := hit(root, at, func(v *view) bool {
+		m := v.events
+		return m.Has(driver.EventPress) || m.Has(driver.EventLongPress) || m.Has(driver.EventPressDown) || m.Has(driver.EventPressUp)
+	})
+	if v == nil || !v.events.Has(kind) {
+		return
+	}
+	ev := w.down
+	ev.Kind, ev.ID, ev.Page = kind, v.id, at
+	if b, ok := w.surfaceBounds(v); ok {
+		ev.Point = driver.Point{X: at.X - b.Origin.X, Y: at.Y - b.Origin.Y}
+	}
+	w.engine.Dispatch(ev)
 }
 
 func clickReleasedCallback(gesture uintptr, n int32, x, y float64, data uintptr) {
@@ -156,6 +181,7 @@ func (w *window) pointerUp(at driver.Point) {
 	w.selectUp()
 	w.touch(w.mouse.Up(at))
 	w.cancelLongPress()
+	w.pressEdge(driver.EventPressUp, at)
 	if w.pressConsumed || w.panning != nil && w.panning.active {
 		return
 	}

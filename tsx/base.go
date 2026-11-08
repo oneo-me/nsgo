@@ -17,7 +17,7 @@ import (
 // nsh/base gives their props where base's differ; Input and Dialog are
 // the runtime's, and List, the navigation, AlertDialog and ToastManager
 // are written out (baselist.go, navigation.go, toasts.go). TextView, Editor and DiffView
-// link packages of their own, so tsx/textview, tsx/editor and tsx/diff
+// link packages of their own, so tsx/textview, tsx/editor, tsx/diff and tsx/richeditor
 // register them.
 
 // enumOptions name the values of the enums base's and core's props take.
@@ -149,6 +149,7 @@ var baseRenames = []Option{
 	Rename("NoMoveColumns", "movableColumns"), Rename("NoBounce", "bounces"), Rename("Status", "transitionStatus"),
 	Event("OnChange", "checked"), Event("OnOpenChange", "open", "reason"), Event("OnResize", "sizes"),
 	Event("OnColumnResize", "key", "width"), Event("OnSelectionChange", "selection"), Event("OnSortChange", "sort"),
+	Omit("Data", "DataStart"),
 	custom("Text", tableText, "data?: readonly unknown[]", "dataStart?: number"),
 	custom("RowCount", tableRowCount, "rowCount?: number"),
 	custom("RowClass", tableRowClass, "rowClasses?: readonly string[]"),

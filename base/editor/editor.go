@@ -93,9 +93,11 @@ type ed struct {
 	matches   []span
 	scope     []span
 	marks     []mark
-	comp      completion
-	compSel   int
-	nextID    int
+	// strip says the gutter holds its strip of marks.
+	strip   bool
+	comp    completion
+	compSel int
+	nextID  int
 	// nextInline numbers the inline completion requests apart.
 	nextInline int
 	// The pending definition request and the hover.
@@ -233,12 +235,9 @@ func (e *ed) follow() {
 	// Soft wrap follows the width.
 	if e.p.SoftWrap {
 		e.cx.Effect(func() {
-			w := e.viewport.Get().Width
+			e.viewport.Get()
 			e.cx.Untrack(func() {
-				cols := max(int((float32(w)-e.gutterWidth()-2*pad)/e.charW), 8)
-				if cols != e.st.wrap {
-					e.st.wrap = cols
-					e.st.relayout()
+				if e.wrapToWidth() {
 					e.textRev.Update(inc)
 				}
 			})
@@ -252,6 +251,22 @@ func (e *ed) follow() {
 			e.cx.Untrack(func() { e.highlight(s, end) })
 		})
 	}
+}
+
+// wrapToWidth wraps soft-wrapped text at the columns the viewport holds,
+// and says whether they changed.
+func (e *ed) wrapToWidth() bool {
+	if !e.p.SoftWrap {
+		return false
+	}
+	w := e.viewport.GetUntracked().Width
+	cols := max(int((float32(w)-e.gutterWidth()-2*pad)/e.charW), 8)
+	if cols == e.st.wrap {
+		return false
+	}
+	e.st.wrap = cols
+	e.st.relayout()
+	return true
 }
 
 func inc(n int) int { return n + 1 }
@@ -884,9 +899,9 @@ func (e *ed) posAt(pt core.Point) pos {
 
 func (e *ed) gutterWidth() float32 {
 	if e.p.NoLineNumbers && e.p.NoFolding {
-		return 0
+		return e.stripWidth()
 	}
-	w := float32(0)
+	w := e.stripWidth()
 	if !e.p.NoLineNumbers {
 		w += float32(max(len(itoa(e.st.r().lines())), 2))*e.charW + 12
 	}
@@ -1119,7 +1134,16 @@ func (e *ed) setMarks(diags []Diagnostic, decos []Decoration) {
 		e.marks = append(e.marks, mark{from: e.pos(d.Range.Start), to: e.pos(d.Range.End), deco: &d})
 	}
 	sort.SliceStable(e.marks, func(i, j int) bool { return e.marks[i].from.less(e.marks[j].from) })
-	e.marksRev.Update(inc)
+	strip := e.hasGutterMarks()
+	e.cx.Batch(func() {
+		e.marksRev.Update(inc)
+		if strip != e.strip {
+			// The text moves over or back, and may wrap otherwise.
+			e.strip = strip
+			e.wrapToWidth()
+			e.textRev.Update(inc)
+		}
+	})
 }
 
 // fold folds or unfolds the fold starting on line, or the innermost one

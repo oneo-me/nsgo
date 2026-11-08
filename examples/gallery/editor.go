@@ -318,7 +318,9 @@ func editorDemo(cx *core.Scope) core.Node {
 		}
 		var out []editor.Decoration
 		for _, c := range found.Get().colors {
-			out = append(out, editor.Decoration{Range: c.rng, Style: core.Style{Background: ui.Alpha(c.color, 0.25)}})
+			mark := core.Style{Background: c.color}
+			out = append(out, editor.Decoration{Range: c.rng, Style: core.Style{Background: ui.Alpha(c.color, 0.25)},
+				Gutter: &editor.GutterMark{Style: mark}, OverviewRuler: &editor.OverviewRulerMark{Style: mark}})
 		}
 		if lit := flash.Get(); lit != nil {
 			out = append(out, editor.Decoration{Range: *lit, Style: core.Style{Background: ui.Alpha(colors.Accent(), 0.25)},

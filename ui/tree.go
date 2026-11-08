@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
@@ -12,7 +13,9 @@ import (
 // indented by depth, each branch with a chevron that expands it, as a
 // double press does. It keeps no state: the app says which keys are
 // expanded and sets them from OnExpand, and only the children of what is
-// expanded are read.
+// expanded are read. A press only selects, the rows a multiple Selection
+// holds by Shift and Mod as in a List, which assistive technology hears
+// for the cursor's row alone.
 type Tree struct {
 	// Roots returns the top items' keys, comparable values such as IDs.
 	Roots func() []any
@@ -65,20 +68,24 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 	id := func(key any) string { return fmt.Sprintf("%T:%v", key, key) }
 	byID := map[string]any{}
 	var ids []string
+	// standIn is a child no row shows: it makes a collapsed branch a
+	// folder without reading its children's children.
+	standIn := func(id string) []base.TreeItem { return []base.TreeItem{{ID: id + "\x00"}} }
 	var items func(keys []any) []base.TreeItem
 	items = func(keys []any) []base.TreeItem {
 		out := make([]base.TreeItem, 0, len(keys))
 		for _, key := range keys {
-			item := base.TreeItem{ID: id(key), Key: key}
+			item := base.TreeItem{ID: id(key)}
 			byID[item.ID] = key
 			if tr.RowLabel != nil {
 				item.Label = tr.RowLabel(key)
 			}
 			if kids := children(key); len(kids) > 0 {
-				item.Folder = true
 				if expanded(key) {
 					ids = append(ids, item.ID)
 					item.Children = items(kids)
+				} else {
+					item.Children = standIn(item.ID)
 				}
 			}
 			out = append(out, item)
@@ -97,9 +104,51 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 	if selection == nil {
 		selection = NewSelection(cx, false)
 	}
+	// shownKeys are the rows' keys in order: what the walk holds is what
+	// shows, but for the stand-ins.
+	shownKeys := func() []any {
+		var keys []any
+		var push func(items []base.TreeItem)
+		push = func(items []base.TreeItem) {
+			for i := range items {
+				if key, ok := byID[items[i].ID]; ok {
+					keys = append(keys, key)
+					push(items[i].Children)
+				}
+			}
+		}
+		push(walked.GetUntracked())
+		return keys
+	}
+	desktop := cx.Env().Desktop
+	// choose selects key as a press does: in a multiple Selection Shift
+	// takes the rows from the anchor and Mod toggles it.
+	choose := func(key any, e core.PressEvent) {
+		if !selection.Multiple() {
+			selection.Set(key)
+			return
+		}
+		switch m := e.Modifiers; {
+		case m.Shift && selection.Anchor() != nil:
+			anchor := selection.Anchor()
+			keys := shownKeys()
+			from, to := slices.Index(keys, anchor), slices.Index(keys, key)
+			if from < 0 {
+				from = to
+			}
+			selection.SetRange(anchor, key, keys[min(from, to):max(from, to)+1]...)
+		case m.Platform || m.Control || !core.Untracked(cx, desktop):
+			selection.Toggle(key)
+		default:
+			selection.Set(key)
+		}
+	}
 	const indent = iconSize + 4
+	surface := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(RowHeight - 8), Padding: core.Symmetric(0, 4),
+		CornerRadius: RadiusControl, MinWidth: core.Pt(0), Cursor: core.CursorDefault}.Merge(tr.RowStyle)
 	row := func(cx *core.Scope, r base.TreeRow) core.Node {
-		item := TreeItem{Row: r.Row, Key: r.Key, Depth: func() int { return r.Entry().Depth },
+		key := func() any { return byID[r.Entry().ID] }
+		item := TreeItem{Row: r.Row, Key: key, Depth: func() int { return r.Entry().Depth },
 			Branch: func() bool { return r.Entry().Folder }, Expanded: r.Expanded}
 		chevron := base.Button{Label: tr.ToggleLabel, NoFocus: true, Expanded: item.Expanded,
 			AccessibilityElementsHidden: func() bool { return !item.Branch() },
@@ -124,9 +173,23 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 		if tr.Row != nil {
 			content = append(content, tr.Row(cx, item))
 		}
-		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, FlexGrow: 1, MinWidth: core.Pt(0)},
-			StyleFunc: func() core.Style { return core.Style{Padding: core.Edges{Left: core.Points(item.Depth()) * indent}} },
-			Children:  content}
+		// The surface fills the row and takes its presses, which would
+		// expand a folder in base.Tree, and shows every row selected.
+		return core.View{Style: surface, StyleFunc: rowLook(cx, true, core.Style{}, tr.RowStyleFunc),
+			Selected: func() bool { return selection.Has(key()) },
+			OnPress: func(e core.PressEvent) {
+				choose(key(), e)
+				r.TakeKeys()
+				if e.Clicks == 2 {
+					r.Toggle()
+					if tr.OnActivate != nil {
+						tr.OnActivate(key())
+					}
+				}
+			},
+			Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, FlexGrow: 1, MinWidth: core.Pt(0)},
+				StyleFunc: func() core.Style { return core.Style{Padding: core.Edges{Left: core.Points(item.Depth()) * indent}} },
+				Children:  content}}}
 	}
 	var action func(string)
 	if tr.OnActivate != nil {
@@ -137,25 +200,33 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 			tr.OnExpand(byID[id], open)
 		}
 	}
-	rowStyle := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(RowHeight - 8), Padding: core.Symmetric(0, 4),
-		CornerRadius: RadiusControl, MinWidth: core.Pt(0), Cursor: core.CursorDefault}
 	size := tr.EstimatedSize
 	if size == 0 {
 		size = RowHeight
 	}
-	return base.Tree{Items: walked.Get, Selection: selection, SelectOnly: true,
+	return base.Tree{Items: walked.Get,
 		Expanded: func() []string {
 			walked.Get()
 			return ids
 		},
-		OnExpand:      func(id string) { onExpand(id, true) },
-		OnCollapse:    func(id string) { onExpand(id, false) },
-		OnAction:      action,
-		Row:           row,
-		EstimatedSize: size, Empty: tr.Empty, Label: tr.Label, ListRef: tr.Ref, TestID: tr.TestID,
-		Style:         core.Style{MinHeight: core.Pt(0), CornerRadius: RadiusControl}.Merge(tr.Style),
-		StyleFunc:     func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
-		ListStyle:     core.Style{Padding: core.All(4)},
-		ItemStyle:     rowStyle.Merge(tr.RowStyle),
-		ItemStyleFunc: rowLook(cx, true, core.Style{}, tr.RowStyleFunc)}
+		Selected: func() *string {
+			if key := selection.Cursor(); key != nil {
+				s := id(key)
+				return &s
+			}
+			return nil
+		},
+		OnSelectedChange: func(id string) { selection.Set(byID[id]) },
+		OnExpand:         func(id string) { onExpand(id, true) },
+		OnCollapse:       func(id string) { onExpand(id, false) },
+		OnAction:         action,
+		Row:              row,
+		EstimatedSize:    size, Empty: tr.Empty, Label: tr.Label, ListRef: tr.Ref, TestID: tr.TestID,
+		Style:     core.Style{MinHeight: core.Pt(0), CornerRadius: RadiusControl}.Merge(tr.Style),
+		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		ListStyle: core.Style{Padding: core.All(4)},
+		ItemStyle: core.Style{CornerRadius: RadiusControl, MinWidth: core.Pt(0)},
+		ItemStyleFunc: func() core.Style {
+			return core.Style{Focus: &core.Style{OutlineWidth: 2, OutlineColor: colors.Now().Info, OutlineOffset: -2}}
+		}}
 }

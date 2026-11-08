@@ -145,6 +145,8 @@ var Parameters = map[string][]string{
 	"TerminalSizeCells":       {"cols", "rows"},
 	"TerminalUnavailable":     {"reason"},
 	"KitPressed":              {"name"},
+	"RichHeading":             {"level"},
+	"RichCount":               {"words", "characters"},
 }
 
 // Translation is a language's messages another package supplies; a nil
@@ -2157,6 +2159,26 @@ type Translation struct {
 	PickerNothingFound                           func() string
 	PickerPickDate                               func() string
 	PickerTime                                   func() string
+	DemoRichEditor                               func() string
+	DemoRichEditorDetail                         func() string
+	RichBold                                     func() string
+	RichItalic                                   func() string
+	RichStrike                                   func() string
+	RichCode                                     func() string
+	RichHighlight                                func() string
+	RichToolbar                                  func() string
+	RichBulletList                               func() string
+	RichOrderedList                              func() string
+	RichTaskList                                 func() string
+	RichQuote                                    func() string
+	RichTable                                    func() string
+	RichMergeCells                               func() string
+	RichUndo                                     func() string
+	RichRedo                                     func() string
+	RichPlaceholder                              func() string
+	RichMarkdown                                 func() string
+	RichHeading                                  func(level int) string
+	RichCount                                    func(words int, characters int) string
 }
 
 var supplied = map[string]Translation{}
@@ -4063,6 +4085,24 @@ const (
 	textPickerNothingFound
 	textPickerPickDate
 	textPickerTime
+	textDemoRichEditor
+	textDemoRichEditorDetail
+	textRichBold
+	textRichItalic
+	textRichStrike
+	textRichCode
+	textRichHighlight
+	textRichToolbar
+	textRichBulletList
+	textRichOrderedList
+	textRichTaskList
+	textRichQuote
+	textRichTable
+	textRichMergeCells
+	textRichUndo
+	textRichRedo
+	textRichPlaceholder
+	textRichMarkdown
 	numTexts
 )
 
@@ -5970,6 +6010,24 @@ var texts = map[string]*[numTexts]string{
 		"Nothing found",
 		"Pick a date",
 		"Time",
+		"RichEditor",
+		"Lists, mentions, tables and a bubble menu over a ProseMirror-style document",
+		"Bold",
+		"Italic",
+		"Strikethrough",
+		"Inline code",
+		"Highlight",
+		"Formatting",
+		"Bullet list",
+		"Numbered list",
+		"Task list",
+		"Quote",
+		"Insert a table",
+		"Merge cells",
+		"Undo",
+		"Redo",
+		"Write something…",
+		"Markdown",
 	},
 	"zh-Hans": {
 		"画廊",
@@ -7872,6 +7930,24 @@ var texts = map[string]*[numTexts]string{
 		"未找到结果",
 		"选择日期",
 		"时间",
+		"富文本编辑器",
+		"基于 ProseMirror 式文档的列表、提及、表格与气泡菜单",
+		"粗体",
+		"斜体",
+		"删除线",
+		"行内代码",
+		"高亮",
+		"格式",
+		"项目符号列表",
+		"编号列表",
+		"任务列表",
+		"引用",
+		"插入表格",
+		"合并单元格",
+		"撤销",
+		"重做",
+		"写点什么…",
+		"Markdown",
 	},
 }
 
@@ -13928,6 +14004,66 @@ func Supply(lang string, t Translation) {
 	}
 	if t.PickerTime != nil {
 		st[textPickerTime] = t.PickerTime()
+	}
+	if t.DemoRichEditor != nil {
+		st[textDemoRichEditor] = t.DemoRichEditor()
+	}
+	if t.DemoRichEditorDetail != nil {
+		st[textDemoRichEditorDetail] = t.DemoRichEditorDetail()
+	}
+	if t.RichBold != nil {
+		st[textRichBold] = t.RichBold()
+	}
+	if t.RichItalic != nil {
+		st[textRichItalic] = t.RichItalic()
+	}
+	if t.RichStrike != nil {
+		st[textRichStrike] = t.RichStrike()
+	}
+	if t.RichCode != nil {
+		st[textRichCode] = t.RichCode()
+	}
+	if t.RichHighlight != nil {
+		st[textRichHighlight] = t.RichHighlight()
+	}
+	if t.RichToolbar != nil {
+		st[textRichToolbar] = t.RichToolbar()
+	}
+	if t.RichBulletList != nil {
+		st[textRichBulletList] = t.RichBulletList()
+	}
+	if t.RichOrderedList != nil {
+		st[textRichOrderedList] = t.RichOrderedList()
+	}
+	if t.RichTaskList != nil {
+		st[textRichTaskList] = t.RichTaskList()
+	}
+	if t.RichQuote != nil {
+		st[textRichQuote] = t.RichQuote()
+	}
+	if t.RichTable != nil {
+		st[textRichTable] = t.RichTable()
+	}
+	if t.RichMergeCells != nil {
+		st[textRichMergeCells] = t.RichMergeCells()
+	}
+	if t.RichUndo != nil {
+		st[textRichUndo] = t.RichUndo()
+	}
+	if t.RichRedo != nil {
+		st[textRichRedo] = t.RichRedo()
+	}
+	if t.RichPlaceholder != nil {
+		st[textRichPlaceholder] = t.RichPlaceholder()
+	}
+	if t.RichMarkdown != nil {
+		st[textRichMarkdown] = t.RichMarkdown()
+	}
+	if t.RichHeading != nil {
+		s.RichHeading = t.RichHeading
+	}
+	if t.RichCount != nil {
+		s.RichCount = t.RichCount
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -32810,3 +32946,235 @@ func PickerTime(cx *core.Scope) string { return For(cx).PickerTime() }
 // PickerTime says "Time"
 // in the language of msgs.
 func (msgs Messages) PickerTime() string { return msgs.text(textPickerTime) }
+
+// DemoRichEditor says "RichEditor"
+// in the language the app shows under cx.
+//
+// A demo's title.
+func DemoRichEditor(cx *core.Scope) string { return For(cx).DemoRichEditor() }
+
+// DemoRichEditor says "RichEditor"
+// in the language of msgs.
+func (msgs Messages) DemoRichEditor() string { return msgs.text(textDemoRichEditor) }
+
+// DemoRichEditorDetail says "Lists, mentions, tables and a bubble menu over a ProseMirror-style document"
+// in the language the app shows under cx.
+//
+// The RichEditor demo's description.
+func DemoRichEditorDetail(cx *core.Scope) string { return For(cx).DemoRichEditorDetail() }
+
+// DemoRichEditorDetail says "Lists, mentions, tables and a bubble menu over a ProseMirror-style document"
+// in the language of msgs.
+func (msgs Messages) DemoRichEditorDetail() string { return msgs.text(textDemoRichEditorDetail) }
+
+// RichBold says "Bold"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Bold.
+func RichBold(cx *core.Scope) string { return For(cx).RichBold() }
+
+// RichBold says "Bold"
+// in the language of msgs.
+func (msgs Messages) RichBold() string { return msgs.text(textRichBold) }
+
+// RichItalic says "Italic"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Italic.
+func RichItalic(cx *core.Scope) string { return For(cx).RichItalic() }
+
+// RichItalic says "Italic"
+// in the language of msgs.
+func (msgs Messages) RichItalic() string { return msgs.text(textRichItalic) }
+
+// RichStrike says "Strikethrough"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Strikethrough.
+func RichStrike(cx *core.Scope) string { return For(cx).RichStrike() }
+
+// RichStrike says "Strikethrough"
+// in the language of msgs.
+func (msgs Messages) RichStrike() string { return msgs.text(textRichStrike) }
+
+// RichCode says "Inline code"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Inline code.
+func RichCode(cx *core.Scope) string { return For(cx).RichCode() }
+
+// RichCode says "Inline code"
+// in the language of msgs.
+func (msgs Messages) RichCode() string { return msgs.text(textRichCode) }
+
+// RichHighlight says "Highlight"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Highlight.
+func RichHighlight(cx *core.Scope) string { return For(cx).RichHighlight() }
+
+// RichHighlight says "Highlight"
+// in the language of msgs.
+func (msgs Messages) RichHighlight() string { return msgs.text(textRichHighlight) }
+
+// RichToolbar says "Formatting"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Formatting.
+func RichToolbar(cx *core.Scope) string { return For(cx).RichToolbar() }
+
+// RichToolbar says "Formatting"
+// in the language of msgs.
+func (msgs Messages) RichToolbar() string { return msgs.text(textRichToolbar) }
+
+// RichBulletList says "Bullet list"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Bullet list.
+func RichBulletList(cx *core.Scope) string { return For(cx).RichBulletList() }
+
+// RichBulletList says "Bullet list"
+// in the language of msgs.
+func (msgs Messages) RichBulletList() string { return msgs.text(textRichBulletList) }
+
+// RichOrderedList says "Numbered list"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Numbered list.
+func RichOrderedList(cx *core.Scope) string { return For(cx).RichOrderedList() }
+
+// RichOrderedList says "Numbered list"
+// in the language of msgs.
+func (msgs Messages) RichOrderedList() string { return msgs.text(textRichOrderedList) }
+
+// RichTaskList says "Task list"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Task list.
+func RichTaskList(cx *core.Scope) string { return For(cx).RichTaskList() }
+
+// RichTaskList says "Task list"
+// in the language of msgs.
+func (msgs Messages) RichTaskList() string { return msgs.text(textRichTaskList) }
+
+// RichQuote says "Quote"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Quote.
+func RichQuote(cx *core.Scope) string { return For(cx).RichQuote() }
+
+// RichQuote says "Quote"
+// in the language of msgs.
+func (msgs Messages) RichQuote() string { return msgs.text(textRichQuote) }
+
+// RichTable says "Insert a table"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Insert a table.
+func RichTable(cx *core.Scope) string { return For(cx).RichTable() }
+
+// RichTable says "Insert a table"
+// in the language of msgs.
+func (msgs Messages) RichTable() string { return msgs.text(textRichTable) }
+
+// RichMergeCells says "Merge cells"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Merge cells.
+func RichMergeCells(cx *core.Scope) string { return For(cx).RichMergeCells() }
+
+// RichMergeCells says "Merge cells"
+// in the language of msgs.
+func (msgs Messages) RichMergeCells() string { return msgs.text(textRichMergeCells) }
+
+// RichUndo says "Undo"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Undo.
+func RichUndo(cx *core.Scope) string { return For(cx).RichUndo() }
+
+// RichUndo says "Undo"
+// in the language of msgs.
+func (msgs Messages) RichUndo() string { return msgs.text(textRichUndo) }
+
+// RichRedo says "Redo"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Redo.
+func RichRedo(cx *core.Scope) string { return For(cx).RichRedo() }
+
+// RichRedo says "Redo"
+// in the language of msgs.
+func (msgs Messages) RichRedo() string { return msgs.text(textRichRedo) }
+
+// RichPlaceholder says "Write something…"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Write something….
+func RichPlaceholder(cx *core.Scope) string { return For(cx).RichPlaceholder() }
+
+// RichPlaceholder says "Write something…"
+// in the language of msgs.
+func (msgs Messages) RichPlaceholder() string { return msgs.text(textRichPlaceholder) }
+
+// RichMarkdown says "Markdown"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: Markdown.
+func RichMarkdown(cx *core.Scope) string { return For(cx).RichMarkdown() }
+
+// RichMarkdown says "Markdown"
+// in the language of msgs.
+func (msgs Messages) RichMarkdown() string { return msgs.text(textRichMarkdown) }
+
+// RichHeading says "Heading {level}"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: a heading level's button.
+func RichHeading(cx *core.Scope, level int) string { return For(cx).RichHeading(level) }
+
+// RichHeading says "Heading {level}"
+// in the language of msgs.
+func (msgs Messages) RichHeading(level int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.RichHeading(level))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].RichHeading; f != nil {
+			return f(level)
+		}
+		switch lang {
+		case "", "en":
+			return "Heading " + msgs.arg(i18n.FormatNumber("en", float64(level)))
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(level)) + " 级标题"
+		}
+	}
+}
+
+// RichCount says "{words} words, {characters} characters"
+// in the language the app shows under cx.
+//
+// The RichEditor demo: the document's counts.
+func RichCount(cx *core.Scope, words int, characters int) string {
+	return For(cx).RichCount(words, characters)
+}
+
+// RichCount says "{words} words, {characters} characters"
+// in the language of msgs.
+func (msgs Messages) RichCount(words int, characters int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.RichCount(words, characters))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].RichCount; f != nil {
+			return f(words, characters)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatNumber("en", float64(words))) + " words, " + msgs.arg(i18n.FormatNumber("en", float64(characters))) + " characters"
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(words)) + " 词，" + i18n.FormatNumber("zh-Hans", float64(characters)) + " 字符"
+		}
+	}
+}

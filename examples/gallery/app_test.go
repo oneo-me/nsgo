@@ -18,7 +18,9 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 
+	"github.com/oneo-me/nsgo/base/richeditor"
 	"github.com/oneo-me/nsgo/ui"
+	uirich "github.com/oneo-me/nsgo/ui/richeditor"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.
@@ -1541,4 +1543,66 @@ func TestPickerForms(t *testing.T) {
 	app.Type("id:command-dialog >> role:textbox", "sheet")
 	app.Key("enter")
 	app.Find("text:CommandDialog: sheet")
+}
+
+func TestRichEditorDemo(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "RichEditor")
+	app.Find("text:Release notes")
+	app.Find("role:toolbar Formatting")
+	app.Press("text:Release notes")
+	app.Type("role:textbox", " @al")
+	app.Find("role:menuitem >> nth=0")
+	app.Key("enter")
+	if app.Exists("role:menuitem") {
+		t.Fatal("the mention list stays after choosing")
+	}
+	app.Find("text:@Alan Turing")
+	app.Press("role:toolbar Formatting >> role:button Undo")
+	if app.Exists("text:@Alan Turing") {
+		t.Fatal("undo left the mention")
+	}
+}
+
+func TestRichEditorDemoOnPhones(t *testing.T) {
+	app := startPhone(t)
+	openPhone(app, "RichEditor")
+	app.Find("text:Release notes")
+	app.Find("id:rich-editor-content")
+	app.Press("text:Release notes")
+	app.Type("role:textbox", "!")
+	if !strings.Contains(strings.Join(app.Texts(), "\n"), "!") {
+		t.Fatal("what was typed does not show")
+	}
+}
+
+// TestRichEditorTakesTyping lays a document out and types into it on the
+// platform's text engine and input, under nsgo test -target.
+func TestRichEditorTakesTyping(t *testing.T) {
+	s, err := richeditor.NewSession(richeditor.SessionConfig{
+		Extensions: append(richeditor.StarterKit(richeditor.StarterOptions{}), richeditor.TableKit(richeditor.TableOptions{})),
+		Markdown:   "# Title\n\nSome **bold** text\n\n| a | b |\n| --- | --- |\n| c | d |\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		cx.SetTheme(ui.DefaultTheme())
+		return uirich.View{Editor: s, Label: "Doc", Style: core.Style{Width: core.Pt(360), Height: core.Pt(400)}}
+	})
+	app.Find("text:Title")
+	if h := app.Find("text:Title").Frame.Size.Height; h < 30 {
+		t.Fatalf("a heading's line is %v tall", h)
+	}
+	if a, d := app.Find(`text:"a"`).Parent, app.Find(`text:"d"`).Parent; a.Frame.Origin.X == d.Frame.Origin.X {
+		t.Fatalf("the table's cells stack: %+v %+v", a.Frame, d.Frame)
+	}
+	app.Press("text:Some bold text")
+	app.Settle()
+	if _, ok := s.State().Selection.(*richeditor.TextSelection); !ok || s.State().Selection.FromPos().Parent().TextContent() != "Some bold text" {
+		t.Fatalf("a press landed in %q", s.State().Selection.FromPos().Parent().TextContent())
+	}
+	app.Type("role:textbox", "!")
+	if !strings.Contains(s.Text(), "!") {
+		t.Fatalf("typing left %q", s.Text())
+	}
 }

@@ -17,13 +17,14 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base` | `nsh-base` | Unstyled components, a file each: controls, popups, navigation, panels and tables ([components](docs/architecture/components.md)) |
 | `base/datatable`, `base/dock`, `base/plot`, `base/toast` | `nsh-base` | Complex components, a package each: a virtualized table, a dock, charts and toasts |
 | `base/commitgraph` | — | A Git history's revision graph: its layout, collapsed merges and a row's drawing ([commit graph](docs/architecture/components.md#commit-graph)) |
-| `ui`, `ui/chat`, `ui/filepicker`, `ui/diff`, `ui/commitgraph` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, Onevra's conversation, a file picker and the styled forms of `base/diff` and `base/commitgraph` as packages ([themes](docs/architecture/themes.md#ui)) |
+| `ui`, `ui/chat`, `ui/filepicker`, `ui/diff`, `ui/commitgraph`, `ui/richeditor` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, Onevra's conversation, a file picker and the styled forms of `base/diff`, `base/commitgraph` and `base/richeditor` as packages ([themes](docs/architecture/themes.md#ui)) |
 | `mobile`, `desktop` | `nsh/mobile`, `nsh/desktop` | What only phones have (the tab bar) and only desktops (the window, menus) |
 | `base/textview`, `base/textview/highlight` | `nsh-base`'s `text_view`, `highlight` | `TextView`: Markdown, HTML or the app's blocks, and its code highlighting ([text view](docs/architecture/textview.md)) |
 | `base/terminal`, `tools/libghostty` | — (Ghostty's libghostty-vt) | `Terminal` and its `View`: a program in a pseudo-terminal with libghostty-vt loaded through purego, and the command building the library ([terminal](docs/architecture/terminal.md)) |
 | `base/editor`, `base/diff` | `nsh-base`'s `editor`, `diff` | `Editor`, a code editor, and `DiffView`, the changes between texts or of a patch ([editor](docs/architecture/editor.md)) |
+| `base/richeditor`, `ui/richeditor` | `nsh-base`'s `rich_editor` | `RichEditor`, a ProseMirror-style document with Tiptap's extensions, and its styled form ([rich editor](docs/architecture/richeditor.md)) |
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting, the rows a virtualized view makes, part styles and sheets |
-| `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
+| `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff`, `tsx/richeditor` | `nsh-js` | TSX apps on goja with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own ([TSX](docs/architecture/tsx.md)) |
 | `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; hot and split bundles |
 | `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, fetching a split one's chunks on the web, or compiles it as it starts |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
@@ -120,6 +121,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Device differences](docs/architecture/device-differences.md) | A component that changes by device, input or width |
 | [Text view](docs/architecture/textview.md) | `TextView`, its parsers, parts or highlighting |
 | [Editor](docs/architecture/editor.md) | `Editor`, `DiffView` or their highlighting |
+| [Rich editor](docs/architecture/richeditor.md) | `RichEditor`, its kernel, extensions or formats |
 | [Terminal](docs/architecture/terminal.md) | `base/terminal`, its emulator binding or pseudo-terminals |
 | [Languages](docs/architecture/languages.md) | `i18n`, a package's catalogs or the code `nsgo` writes from them |
 | [Icons](docs/architecture/icons.md) | SVG parsing, `core.Icon` or the Lucide pack |

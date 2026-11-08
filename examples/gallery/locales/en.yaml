@@ -2042,3 +2042,71 @@ pickerCommandFailed: "Search is unavailable"
 pickerNothingFound: "Nothing found"
 pickerPickDate: "Pick a date"
 pickerTime: "Time"
+demoRichEditor:
+  message: "RichEditor"
+  description: "A demo's title."
+demoRichEditorDetail:
+  message: "Lists, mentions, tables and a bubble menu over a ProseMirror-style document"
+  description: "The RichEditor demo's description."
+richBold:
+  message: "Bold"
+  description: "The RichEditor demo: Bold."
+richItalic:
+  message: "Italic"
+  description: "The RichEditor demo: Italic."
+richStrike:
+  message: "Strikethrough"
+  description: "The RichEditor demo: Strikethrough."
+richCode:
+  message: "Inline code"
+  description: "The RichEditor demo: Inline code."
+richHighlight:
+  message: "Highlight"
+  description: "The RichEditor demo: Highlight."
+richToolbar:
+  message: "Formatting"
+  description: "The RichEditor demo: Formatting."
+richBulletList:
+  message: "Bullet list"
+  description: "The RichEditor demo: Bullet list."
+richOrderedList:
+  message: "Numbered list"
+  description: "The RichEditor demo: Numbered list."
+richTaskList:
+  message: "Task list"
+  description: "The RichEditor demo: Task list."
+richQuote:
+  message: "Quote"
+  description: "The RichEditor demo: Quote."
+richTable:
+  message: "Insert a table"
+  description: "The RichEditor demo: Insert a table."
+richMergeCells:
+  message: "Merge cells"
+  description: "The RichEditor demo: Merge cells."
+richUndo:
+  message: "Undo"
+  description: "The RichEditor demo: Undo."
+richRedo:
+  message: "Redo"
+  description: "The RichEditor demo: Redo."
+richPlaceholder:
+  message: "Write something…"
+  description: "The RichEditor demo: Write something…."
+richMarkdown:
+  message: "Markdown"
+  description: "The RichEditor demo: Markdown."
+richHeading:
+  message: "Heading {level}"
+  description: "The RichEditor demo: a heading level's button."
+  placeholders:
+    level:
+      type: int
+richCount:
+  message: "{words} words, {characters} characters"
+  description: "The RichEditor demo: the document's counts."
+  placeholders:
+    words:
+      type: int
+    characters:
+      type: int

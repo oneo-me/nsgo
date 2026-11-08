@@ -301,6 +301,8 @@ type textNode struct {
 	text     driver.AttributedText // what was prepared
 	style    driver.TextStyle
 	prepared driver.PreparedText
+	// layout is the layout sent last, which Ref's text queries read.
+	layout driver.TextLayout
 	// fitted is the text shrunk to fit its box, when fit shrank it.
 	fitted   driver.PreparedText
 	stale    bool // content or style changed since prepared

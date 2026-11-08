@@ -253,6 +253,11 @@ type DataTable struct {
 	// in a column, by its index in Columns.
 	RowCount func() int
 	Text     func(row, column int) string
+	// Data holds the rows from DataStart, read by the columns' keys, in
+	// place of Text: rows outside it show empty until it has them, and
+	// RowCount, when nil, is where it ends.
+	Data      func() *Rows
+	DataStart func() int
 	// RowStyle is a row's own look, after the row's parts, and RowClass
 	// its classes, after the row's parts' classes.
 	RowClass func(row int) string
@@ -299,6 +304,8 @@ type DataTable struct {
 	// ends.
 	NoScrollbar, NoVerticalScrollbar, NoHorizontalScrollbar bool
 	NoBounce                                                bool
+	// Bar draws the scroll bars, over the app's (Scope.SetScrollbars).
+	Bar core.ScrollbarMaker
 	// RenderCell and RenderHeaderCell draw the cells and the titles in
 	// place of their texts, once per slot, the cell it shows changing as
 	// the table scrolls.
@@ -526,18 +533,24 @@ type dataTable struct {
 	sizes            *core.Memo[tableGeo]
 	vscroll, hscroll *core.Ref
 	stripRef         *core.Ref
-	vstripRef        *core.Ref
 	colsWin          *window.Rows
 	resizing         int
 	resizeFrom       float32
 	handleTap        int
 	handleTapAt      time.Time
 	// hlead is which of the horizontal strip (true) and the horizontal
-	// scroll view moved last; vlead the vertical pair's.
-	hlead, vlead tableLead
+	// scroll view moved last.
+	hlead tableLead
 	// follow moves the body with the scroll views on the main thread
 	// (datatable_view.go).
 	follow tableFollow
+}
+
+func (t *dataTable) dataStart() int {
+	if t.p.DataStart == nil {
+		return 0
+	}
+	return max(t.p.DataStart(), 0)
 }
 
 func newDataTable(cx *core.Scope, p DataTable) *dataTable {
@@ -546,8 +559,8 @@ func newDataTable(cx *core.Scope, p DataTable) *dataTable {
 		scrollX: core.NewSignal(cx, core.Points(0)), scrollY: core.NewSignal(cx, core.Points(0)),
 		viewport: core.NewSignal(cx, core.Size{}), hover: core.NewSignal(cx, -1), focused: core.NewSignal(cx, false),
 		drag: core.NewSignal(cx, tableDrag{from: -1}), vscroll: &core.Ref{}, hscroll: &core.Ref{},
-		stripRef: &core.Ref{}, vstripRef: &core.Ref{},
-		colsWin: window.New(1, 3), resizing: -1, handleTap: -1}
+		stripRef: &core.Ref{},
+		colsWin:  window.New(1, 3), resizing: -1, handleTap: -1}
 	if p.Ref != nil {
 		p.Ref.t = t
 	}
@@ -659,6 +672,13 @@ func (t *dataTable) rowHeaderShown() bool {
 func (t *dataTable) cellSelect() bool { return t.p.CellSelect != nil && t.p.CellSelect() }
 
 func (t *dataTable) rowCount() int {
+	if t.p.RowCount == nil && t.p.Data != nil {
+		rows := t.p.Data()
+		if rows == nil {
+			return 0
+		}
+		return t.dataStart() + rows.Len()
+	}
 	if t.p.RowCount == nil {
 		return 0
 	}
@@ -667,6 +687,12 @@ func (t *dataTable) rowCount() int {
 
 // cellText is the text of row's cell in column def (tracked).
 func (t *dataTable) cellText(row, def int) string {
+	if t.p.Data != nil && t.p.Text == nil && def >= 0 && def < len(t.st.defs) {
+		if rows := t.p.Data(); rows != nil {
+			return rows.Text(row-t.dataStart(), t.st.defs[def].Key)
+		}
+		return ""
+	}
 	if t.p.Text == nil || row < 0 || def < 0 || def >= len(t.st.defs) {
 		return ""
 	}

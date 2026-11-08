@@ -446,3 +446,52 @@ func TestLinesRevertAndAcceptApart(t *testing.T) {
 		t.Fatalf("revert %q %q", o, n)
 	}
 }
+
+func TestDiffViewReportsItsPosition(t *testing.T) {
+	var old, new strings.Builder
+	for i := range 200 {
+		line := "line " + strconv.Itoa(i) + "\n"
+		old.WriteString(line)
+		if i%50 == 25 {
+			line = "changed " + strconv.Itoa(i) + "\n"
+		}
+		new.WriteString(line)
+	}
+	oldText, newText := old.String(), new.String()
+	ref := &Ref{}
+	var scrolled []core.ScrollEvent
+	var bounds [][]HunkBounds
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return DiffView{OldValue: func() string { return oldText }, NewValue: func() string { return newText }, Ref: ref, LineHeight: 20,
+			OnScroll:           func(e core.ScrollEvent) { scrolled = append(scrolled, e) },
+			OnHunkBoundsChange: func(b []HunkBounds) { bounds = append(bounds, b) },
+			Style:              core.Style{Width: core.Pt(400), Height: core.Pt(200)}}
+	})
+	app.Settle()
+	if len(scrolled) == 0 || scrolled[len(scrolled)-1].Size.Height != 200 || scrolled[len(scrolled)-1].ContentSize.Height <= 200 {
+		t.Fatalf("scroll reports %+v", scrolled)
+	}
+	if len(bounds) != 1 || len(bounds[0]) != 4 {
+		t.Fatalf("bounds reports %+v", bounds)
+	}
+	first := bounds[0][1]
+	if first.Index != 1 || first.Bounds.Size.Width != 400 || first.Bounds.Size.Height != 20 {
+		t.Fatalf("change 1's box is %+v", first)
+	}
+	if got := ref.HunkBounds(); !slices.Equal(got, bounds[0]) {
+		t.Fatalf("HunkBounds is %+v, want the report", got)
+	}
+	reports := len(scrolled)
+	ref.SetScrollOffset(100)
+	app.Settle()
+	if ref.ScrollOffset() != 100 || len(scrolled) != reports+1 || scrolled[reports].Offset.Y != 100 {
+		t.Fatalf("after SetScrollOffset: %v, %+v", ref.ScrollOffset(), scrolled[reports:])
+	}
+	ref.SetScrollOffset(1e6)
+	if want := scrolled[0].ContentSize.Height - 200; ref.ScrollOffset() != want {
+		t.Fatalf("clamped to %v, want %v", ref.ScrollOffset(), want)
+	}
+	if len(bounds) != 1 {
+		t.Fatal("a scroll reported the changes' boxes again")
+	}
+}

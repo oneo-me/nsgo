@@ -2,6 +2,7 @@ package datatable_test
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"testing"
 
@@ -182,7 +183,7 @@ func TestDataTableReadsTheCellsNearTheView(t *testing.T) {
 	app.Find(fmt.Sprintf("text:R%dC1·1", rows[0]+1))
 }
 
-// TestDataTableScrollsByDrag scrolls the table's own scroll view, under
+// TestDataTableScrollsByDrag scrolls the table's own scroll view, over
 // the body, which takes no pointer.
 func TestDataTableScrollsByDrag(t *testing.T) {
 	var ref datatable.Ref
@@ -196,13 +197,56 @@ func TestDataTableScrollsByDrag(t *testing.T) {
 			Style:    core.Style{Width: core.Pt(400), Height: core.Pt(332)},
 		}
 	}, nsgotest.Size(400, 400), nsgotest.Environment(core.Environment{OS: core.OSMacOS, Idiom: core.IdiomDesktop}))
-	if got := app.Find("id:data-table-vscrollbar").Frame.Size.Width; got != 12 {
-		t.Fatalf("the vertical bar band is %v wide, want 12", got)
-	}
 	from, _ := ref.VisibleRows()
 	app.Scroll("id:data-table-scroll", 120)
 	app.Settle()
 	if to, _ := ref.VisibleRows(); to <= from {
 		t.Fatalf("visible rows %v after scrolling, want past %v", to, from)
+	}
+}
+
+// TestDataTableHitLayerLiesOverTheBody keeps the scroll views above the
+// rows' backgrounds, so a selected row cannot cover the bar.
+func TestDataTableHitLayerLiesOverTheBody(t *testing.T) {
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return datatable.DataTable{TestID: "table",
+			Columns: func() []datatable.Column { return tableColumns(3) }, RowCount: func() int { return 100 },
+			Text:  func(row, col int) string { return fmt.Sprintf("R%dC%d", row, col) },
+			Style: core.Style{Width: core.Pt(400), Height: core.Pt(332)}}
+	}, nsgotest.Size(400, 400))
+	scroll := app.Find("id:data-table-scroll")
+	over := scroll.Parent.Children[slices.Index(scroll.Parent.Children, scroll)+1:]
+	cell := app.Find(`text:"R0C0"`)
+	for cell.Parent != scroll.Parent {
+		cell = cell.Parent
+	}
+	if slices.Contains(over, cell) || cell == scroll {
+		t.Fatal("cells lie over the hit layer")
+	}
+}
+
+// TestDataTableReadsRowsAColumnAtATime shows typed columns by key from
+// DataStart, gaps as nothing, and rises and falls from numbers.
+func TestDataTableReadsRowsAColumnAtATime(t *testing.T) {
+	rise, fall := core.RGB(0x00ff00), core.RGB(0xff0000)
+	rows := datatable.NewRows(3).Texts("name", []string{"Ann", "Bob", "Cy"}).
+		Numbers("change", []float64{1.5, -2, math.NaN()}).Bools("open", []bool{true, false})
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return datatable.DataTable{
+			Columns: func() []datatable.Column {
+				return []datatable.Column{{Key: "name"}, {Key: "open"}, {Key: "missing"},
+					{Key: "change", PositiveStyle: core.Style{Color: rise}, NegativeStyle: core.Style{Color: fall}}}
+			},
+			Data: func() *datatable.Rows { return rows }, DataStart: func() int { return 2 },
+			Style: core.Style{Width: core.Pt(600), Height: core.Pt(332)}}
+	}, nsgotest.Size(600, 400))
+	for _, want := range []string{`text:"Ann"`, `text:"true"`, `text:"false"`, `text:"1.5"`, `text:"-2"`} {
+		app.Find(want)
+	}
+	if rows.Len() != 3 || rows.Text(1, "change") != "-2" || rows.Text(2, "change") != "" || rows.Text(2, "open") != "" || rows.Text(9, "name") != "" {
+		t.Fatalf("cells read %q %q %q", rows.Text(1, "change"), rows.Text(2, "change"), rows.Text(2, "open"))
+	}
+	if got := app.Find(`text:"-2"`).TextStyle.Color; got != fall {
+		t.Fatalf("a fall's color is %v", got)
 	}
 }

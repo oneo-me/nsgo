@@ -14,25 +14,24 @@ import (
 
 // The table's view, in layers:
 //
-//   - the hit layer: a vertical scroll view of a horizontal one of an empty
-//     box of the content's size, scaled past a few million points. The
-//     platforms scroll it, and its box takes presses, hovers and the
-//     context menu;
-//   - the body over it, taking no pointer: the cells of the rows and
-//     columns in view and a reach around them, placed where the table last
-//     scrolled to, in three regions: the row numbers, the fixed columns
-//     (which move with the rows only) and the scrolling columns;
-//   - the header above it: group labels and titles in the same regions,
+//   - the body, taking no pointer: the cells of the rows and columns in
+//     view and a reach around them, placed where the table last scrolled
+//     to, in three regions: the row numbers, the fixed columns (which move
+//     with the rows only) and the scrolling columns;
+//   - the hit layer over it: a vertical scroll view of a horizontal one of
+//     an empty box of the content's size, scaled past a few million
+//     points. The platforms scroll it, its box takes presses, hovers and
+//     the context menu, and it draws nothing but its scroll bar, which so
+//     lies over the rows' backgrounds;
+//   - the header above them: group labels and titles in the same regions,
 //     the columns' resize handles and the drop line of a column moved;
 //   - on desktops, a horizontal scroll bar over the body's bottom edge
 //     that moves the table's horizontal scroll view, whose own bar lies at
-//     the end of a content as tall as all the rows, and a vertical one
-//     over its right edge that moves the table's vertical one.
+//     the end of a content as tall as all the rows.
 
 const (
-	// stripHeight and stripWidth are the desktops' scroll bar bands.
+	// stripHeight is the desktops' horizontal scroll bar band.
 	stripHeight = 12
-	stripWidth  = 12
 	// dropLine is the drop line's width.
 	dropLine = 2
 	// stripEcho is how long after a move of one of the two horizontal
@@ -53,10 +52,9 @@ func (p DataTable) Render(cx *core.Scope) core.Node {
 			Style:    fill0(),
 			OnLayout: func(b core.Bounds) { t.viewport.Set(b.Size) },
 			Children: []core.Node{
-				t.hitLayer(),
 				t.body(),
+				t.hitLayer(),
 				t.header(),
-				t.vstrip(),
 				t.strip(),
 				t.overlays(),
 				core.Show{When: t.focused.Get, Then: func(cx *core.Scope) core.Node {
@@ -121,14 +119,9 @@ func (t *dataTable) hitLayer() core.Node {
 	}
 	return core.Scroll{
 		Ref: t.vscroll, TestID: "data-table-scroll", Behavior: behavior, OffsetValues: core.AnimatedXY{Y: t.follow.offY},
-		HideIndicator: p.NoScrollbar || p.NoVerticalScrollbar || t.cx.Env().Desktop(),
-		StyleFunc:     t.below,
-		OnScroll: func(e core.ScrollEvent) {
-			t.scrollY.Set(e.Offset.Y)
-			if t.vlead.take(false) {
-				t.vstripRef.ScrollTo(core.Point{Y: e.Offset.Y}, false)
-			}
-		},
+		HideIndicator: p.NoScrollbar || p.NoVerticalScrollbar, Bar: p.Bar,
+		StyleFunc: t.below,
+		OnScroll:  func(e core.ScrollEvent) { t.scrollY.Set(e.Offset.Y) },
 		Children: []core.Node{core.View{
 			Style:     core.Style{Direction: core.Row, AlignItems: core.AlignStretch},
 			StyleFunc: func() core.Style { return core.Style{Height: px(t.sizes.Get().y.extent())} },
@@ -168,36 +161,6 @@ func (l *tableLead) take(side bool) bool {
 	return true
 }
 
-// vstrip is the desktops' vertical scroll bar: a band over the body's
-// right edge whose own scroll view the bar belongs to, moving the
-// table's.
-func (t *dataTable) vstrip() core.Node {
-	p := t.p
-	return core.Show{
-		When: func() bool {
-			g := t.sizes.Get()
-			return t.cx.Env().Desktop() && !p.NoScrollbar && !p.NoVerticalScrollbar && g.y.extent() > g.y.viewport
-		},
-		Then: func(cx *core.Scope) core.Node {
-			z := core.Pt(0)
-			return core.Scroll{
-				Ref: t.vstripRef, TestID: "data-table-vscrollbar",
-				StyleFunc: func() core.Style {
-					return core.Style{Position: core.Absolute, Top: px(t.sizes.Get().header), Right: z, Bottom: z, Width: px(stripWidth)}
-				},
-				OnScroll: func(e core.ScrollEvent) {
-					if t.vlead.take(true) && math.Abs(float64(e.Offset.Y-t.scrollY.GetUntracked())) > 0.5 {
-						t.vscroll.ScrollTo(core.Point{Y: e.Offset.Y}, false)
-					}
-				},
-				Children: []core.Node{core.View{StyleFunc: func() core.Style {
-					return core.Style{Width: px(1), Height: px(t.sizes.Get().y.extent())}
-				}}},
-			}
-		},
-	}
-}
-
 // strip is the desktops' horizontal scroll bar: a band over the body's
 // bottom edge whose own scroll view the bar belongs to, moving the
 // table's.
@@ -211,7 +174,7 @@ func (t *dataTable) strip() core.Node {
 		Then: func(cx *core.Scope) core.Node {
 			z := core.Pt(0)
 			return core.Scroll{
-				Horizontal: true, Ref: t.stripRef, TestID: "data-table-scrollbar",
+				Horizontal: true, Ref: t.stripRef, TestID: "data-table-scrollbar", Bar: p.Bar,
 				Style: core.Style{Position: core.Absolute, Left: z, Right: z, Bottom: z, Height: px(stripHeight)},
 				OnScroll: func(e core.ScrollEvent) {
 					if t.hlead.take(true) && math.Abs(float64(e.Offset.X-t.scrollX.GetUntracked())) > 0.5 {

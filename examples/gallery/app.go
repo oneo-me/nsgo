@@ -131,6 +131,7 @@ func init() {
 	documents := []demo{
 		{"Conversation", m.DemoConversation, m.DemoConversationDetail, lucide.MessagesSquare, conversationDemo},
 		{"Editor", m.DemoEditor, m.DemoEditorDetail, lucide.Code, editorDemo},
+		{"RichEditor", m.DemoRichEditor, m.DemoRichEditorDetail, lucide.PencilLine, richEditorDemo},
 		{"DiffView", m.DemoDiffView, m.DemoDiffViewDetail, lucide.FileDiff, diffDemo},
 		{"Terminal", m.DemoTerminal, m.DemoTerminalDetail, lucide.Terminal, terminalDemo},
 		{"TextView", m.DemoTextView, m.DemoTextViewDetail, lucide.FileText, textViewDemo},
@@ -545,7 +546,7 @@ func (g *gallery) section(cx *core.Scope, i int) base.NavPage {
 // fixedDemos are the demos that fill the page rather than scroll under a
 // large title.
 var fixedDemos = map[string]bool{"Stocks": true, "AI Chat": true, "Conversation": true, "Photos": true, "Lists": true, "DataTable": true, "CommitGraph": true, "DiffView": true, "Dock": true,
-	"Editor": true, "Plot": true, "Resizable": true, "Terminal": true, "TextView": true, "Physics": true, "Collapsing header": true}
+	"Editor": true, "RichEditor": true, "Plot": true, "Resizable": true, "Terminal": true, "TextView": true, "Physics": true, "Collapsing header": true}
 
 // largeTitle gives page p iOS's large title, over no background until the
 // content scrolls under the system's blurred bar.

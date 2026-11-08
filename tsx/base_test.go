@@ -9,6 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/nsgotest"
 	"github.com/oneo-me/nsgo/tsx"
+	_ "github.com/oneo-me/nsgo/tsx/richeditor"
 	_ "github.com/oneo-me/nsgo/tsx/textview"
 )
 
@@ -228,6 +229,15 @@ func TestTextViewRendersMarkdown(t *testing.T) {
 import { TextView } from "nsgo/base";
 mount(() => <TextView markdown={"# Title\n\nSome **bold** text."} classes={{ heading1: "text-2xl" }} />);`)
 	if !app.Exists("text:Title") {
+		t.Errorf("the document shows %q", app.Texts())
+	}
+}
+
+func TestRichEditorEditsMarkdown(t *testing.T) {
+	app := run(t, `import { mount } from "nsgo";
+import { RichEditor } from "nsgo/base";
+mount(() => <RichEditor markdown={"# Title\n\nSome **bold** text."} placeholder="Write" style={{ width: 400, height: 200 }} />);`)
+	if !app.Exists("text:Title") || !app.Exists("text:Some bold text") {
 		t.Errorf("the document shows %q", app.Texts())
 	}
 }

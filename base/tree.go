@@ -14,16 +14,11 @@ type TreeItem struct {
 	// ID identifies it in Expanded, Selected and the events: unique in the
 	// tree, never its label.
 	ID string
-	// Key is what a Selection holds for it, ID when nil.
-	Key any
 	// Label is what its row shows, what assistive technology says and
 	// what typeahead matches.
 	Label string
 	// Children make it a folder that expands and collapses.
 	Children []TreeItem
-	// Folder makes it one with no Children given yet, for items whose
-	// children are read only as they expand.
-	Folder bool
 	// Disabled can't be selected, expanded or collapsed by the user.
 	Disabled bool
 }
@@ -44,8 +39,6 @@ const treeRoot = -1
 // treeNode is a node of the flattened items.
 type treeNode struct {
 	id, label string
-	key       any
-	foldered  bool
 	parent    int
 	depth     int
 	// end is the index past its subtree.
@@ -53,7 +46,7 @@ type treeNode struct {
 	disabled bool
 }
 
-func (n *treeNode) folder(at int) bool { return n.foldered || n.end > at+1 }
+func (n *treeNode) folder(at int) bool { return n.end > at+1 }
 
 // treeFlat is the items depth first, made once per change of them.
 type treeFlat struct {
@@ -74,11 +67,7 @@ func (f *treeFlat) push(items []TreeItem, parent, depth int) {
 	for i := range items {
 		item := &items[i]
 		at := len(f.nodes)
-		key := item.Key
-		if key == nil {
-			key = item.ID
-		}
-		f.nodes = append(f.nodes, treeNode{id: item.ID, key: key, label: item.Label, parent: parent, depth: depth, end: at + 1, disabled: item.Disabled, foldered: item.Folder})
+		f.nodes = append(f.nodes, treeNode{id: item.ID, label: item.Label, parent: parent, depth: depth, end: at + 1, disabled: item.Disabled})
 		if _, ok := f.index[item.ID]; !ok {
 			f.index[item.ID] = at
 		}
@@ -90,19 +79,6 @@ func (f *treeFlat) push(items []TreeItem, parent, depth int) {
 func (f *treeFlat) find(id string) int {
 	if at, ok := f.index[id]; ok {
 		return at
-	}
-	return -1
-}
-
-// findKey is the node a Selection's key names, -1 for none.
-func (f *treeFlat) findKey(key any) int {
-	if key == nil {
-		return -1
-	}
-	for i := range f.nodes {
-		if f.nodes[i].key == key {
-			return i
-		}
 	}
 	return -1
 }
@@ -319,13 +295,6 @@ type Tree struct {
 	// Reveal springs the rows after an item to their places as it expands
 	// and collapses, as Collapsible's Reveal does.
 	Reveal bool
-	// Selection holds the selection in place of Selected and the tree's
-	// own, any number of rows when Multiple: Shift and Mod extend it as in
-	// a List. OnSelectedChange then hears nothing.
-	Selection *Selection
-	// SelectOnly has a press select a row and leave expanding to a double
-	// press and Row's TreeRow.Toggle, a chevron's.
-	SelectOnly bool
 	// Label is what assistive technology calls the tree.
 	Label     string
 	ListClass string
@@ -368,12 +337,14 @@ type Tree struct {
 // TreeRow is the item a cell of a Tree shows, as signals.
 type TreeRow struct {
 	Row core.ListRow
-	// Entry is what the item is, and Key what a Selection holds for it.
+	// Entry is what the item is.
 	Entry func() TreeEntry
-	Key   func() any
 	// Expanded says it is expanded, and Toggle expands or collapses it.
 	Expanded func() bool
 	Toggle   func()
+	// TakeKeys has the keys go on from a press the row's content took, as
+	// from a press on the row.
+	TakeKeys func()
 }
 
 // TreeRef is a Tree's ref.
@@ -427,9 +398,6 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 	open := core.NewMemoFunc(cx, func() []int { return flat.Get().open(expanded()) }, slices.Equal[[]int])
 	shown := core.NewMemoFunc(cx, func() []int { return treeRows(flat.Get(), open.Get()) }, slices.Equal[[]int])
 	current := core.NewMemo(cx, func() int {
-		if t.Selection != nil {
-			return flat.Get().findKey(t.Selection.Cursor())
-		}
 		if id := selected(); id != "" {
 			return flat.Get().find(id)
 		}
@@ -542,10 +510,7 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 			return
 		}
 		id := f.nodes[n].id
-		switch {
-		case t.Selection != nil:
-			t.Selection.Set(f.nodes[n].key)
-		case core.Untracked(cx, selected) != id:
+		if core.Untracked(cx, selected) != id {
 			if t.Selected == nil {
 				ownSelected.Set(id)
 			}
@@ -641,51 +606,21 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 		selectNode(treeTyped(untrackedFlat(), shown.GetUntracked(), current.GetUntracked(), prefix), true)
 	})
 	desktop := env.Desktop
-	// selectPressed selects n as a press does: in a multiple Selection
-	// Shift takes the rows from the anchor and Mod toggles it.
-	selectPressed := func(n int, e core.PressEvent) {
-		s := t.Selection
-		if s == nil || !s.Multiple() {
-			selectNode(n, false)
-			return
-		}
-		f, rows := untrackedFlat(), shown.GetUntracked()
-		key := f.nodes[n].key
-		switch m := e.Modifiers; {
-		case m.Shift && s.anchor != nil:
-			from, to := treeRowOf(rows, f.findKey(s.anchor)), treeRowOf(rows, n)
-			if from < 0 {
-				from = to
-			}
-			anchor := s.anchor
-			keys := []any{}
-			for r := min(from, to); r <= max(from, to); r++ {
-				keys = append(keys, f.nodes[rows[r]].key)
-			}
-			s.SetRange(anchor, key, keys...)
-		case m.Platform || m.Control || !core.Untracked(cx, desktop):
-			s.Toggle(key)
-		default:
-			s.Set(key)
+	// The keys go on from the row pressed.
+	takeKeys := func() {
+		held.Update(func(n int) int { return n + 1 })
+		if core.Untracked(cx, desktop) && !focused.GetUntracked() {
+			root.Focus()
 		}
 	}
 	press := func(n int, e core.PressEvent) {
 		if core.Untracked(cx, func() bool { return is(t.Disabled) }) || !untrackedFlat().enabled(n) {
 			return
 		}
-		selectPressed(n, e)
-		if !t.SelectOnly {
-			setOpen(n, !isOpen(n))
-		}
-		// The keys go on from the row pressed.
-		held.Update(func(n int) int { return n + 1 })
-		if core.Untracked(cx, desktop) && !focused.GetUntracked() {
-			root.Focus()
-		}
+		selectNode(n, false)
+		setOpen(n, !isOpen(n))
+		takeKeys()
 		if e.Clicks == 2 {
-			if t.SelectOnly {
-				setOpen(n, !isOpen(n))
-			}
 			act(n)
 		}
 	}
@@ -736,13 +671,7 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 			return TreeEntry{}
 		})
 		disabled := core.NewMemo(cx, func() bool { return is(t.Disabled) || entry.Get().Disabled })
-		isSelected := func() bool {
-			n := node.Get()
-			if t.Selection != nil {
-				return n >= 0 && t.Selection.Has(flat.Get().nodes[n].key)
-			}
-			return n >= 0 && litSelected.is(n)
-		}
+		isSelected := func() bool { n := node.Get(); return n >= 0 && litSelected.is(n) }
 		atCursor := func() bool { n := node.Get(); return n >= 0 && litCursor.is(n) }
 		me := new(core.Ref)
 		cx.Effect(func() {
@@ -767,13 +696,7 @@ func (t Tree) Render(cx *core.Scope) core.Node {
 		v.Expandable = func() bool { return entry.Get().Folder }
 		switch {
 		case t.Row != nil:
-			v.Children = []core.Node{t.Row(cx, TreeRow{Row: r, Entry: entry.Get, Expanded: v.Expanded,
-				Key: func() any {
-					if n := node.Get(); n >= 0 {
-						return flat.Get().nodes[n].key
-					}
-					return nil
-				},
+			v.Children = []core.Node{t.Row(cx, TreeRow{Row: r, Entry: entry.Get, Expanded: v.Expanded, TakeKeys: takeKeys,
 				Toggle: func() {
 					if n := node.GetUntracked(); n >= 0 && !core.Untracked(cx, disabled.Get) {
 						setOpen(n, !isOpen(n))

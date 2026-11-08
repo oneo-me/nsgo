@@ -2,6 +2,7 @@ package editor_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -278,5 +279,72 @@ func TestSoftKeyboard(t *testing.T) {
 	app.KeyPress("label:Code", "Backspace")
 	if value != "ab" {
 		t.Errorf("value = %q after Backspace", value)
+	}
+}
+
+func TestEditorMarksTheGutterAndOverviewRuler(t *testing.T) {
+	var text strings.Builder
+	for i := range 100 {
+		text.WriteString("line " + strconv.Itoa(i) + "\n")
+	}
+	marks := []editor.Decoration{}
+	var set *core.Signal[[]editor.Decoration]
+	bar := core.Style{Background: core.RGB(0x00ff00)}
+	lane := core.Style{Background: core.RGB(0x0000ff)}
+	line := func(n int) editor.Position { return editor.Position{Line: n} }
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		set = core.NewSignalFunc(cx, marks, func(a, b []editor.Decoration) bool { return false })
+		return editor.Editor{DefaultValue: text.String(), LineHeight: 20, Decorations: set.Get, TestID: "ed",
+			Styles: editor.Styles{OverviewRuler: core.Style{Width: core.Pt(30)}},
+			Style:  core.Style{Width: core.Pt(400), Height: core.Pt(200)}}
+	})
+	numberX := func() core.Points { return app.Find(`text:"1"`).Parent.Parent.Frame.Size.Width }
+	before := numberX()
+	set.Set([]editor.Decoration{
+		// Lines 1 and 2: the range ends at line 3's start.
+		{Range: editor.Range{Start: line(1), End: line(3)}, Gutter: &editor.GutterMark{Style: bar},
+			OverviewRuler: &editor.OverviewRulerMark{Lane: editor.LaneRight, Style: lane}},
+		{Range: editor.Range{Start: line(5), End: line(5)}, Gutter: &editor.GutterMark{Placement: editor.GutterBefore, Style: bar}},
+		{Range: editor.Range{Start: line(50), End: line(50)}, OverviewRuler: &editor.OverviewRulerMark{Lane: editor.LaneFull, Style: lane}},
+	})
+	app.Settle()
+	if after := numberX(); after != before+3 {
+		t.Fatalf("the numbers moved from %v to %v, want the strip's 3 points", before, after)
+	}
+	painted := func(color core.Color) []*nsgotest.View {
+		var out []*nsgotest.View
+		var walk func(v *nsgotest.View)
+		walk = func(v *nsgotest.View) {
+			if v.Style.Background == color {
+				out = append(out, v)
+			}
+			for _, c := range v.Children {
+				walk(c)
+			}
+		}
+		walk(app.Find("ed"))
+		return out
+	}
+	bars := painted(bar.Background)
+	if len(bars) != 3 {
+		t.Fatalf("%d gutter marks, want lines 1, 2 and 5's boundary", len(bars))
+	}
+	for _, v := range bars[:2] {
+		if b := v.Frame; b.Size.Width != 3 || b.Size.Height != 20 {
+			t.Fatalf("a line's bar is %+v", b)
+		}
+	}
+	if b := bars[2].Frame; b.Size.Width != 3 || b.Size.Height != 2 || b.Origin.Y != -1 {
+		t.Fatalf("a boundary's line is %+v", b)
+	}
+	rulers := painted(lane.Background)
+	if len(rulers) != 2 {
+		t.Fatalf("%d ruler marks, want 2", len(rulers))
+	}
+	if b := rulers[0].Frame; b.Size.Width != 10 || b.Origin.X != 20 || b.Size.Height != 6 {
+		t.Fatalf("a right lane's mark is %+v of a 30-point ruler", b)
+	}
+	if b := rulers[1].Frame; b.Size.Width != 30 || b.Origin.Y <= 0 {
+		t.Fatalf("a full lane's mark is %+v", b)
 	}
 }

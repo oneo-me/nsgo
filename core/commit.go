@@ -761,6 +761,7 @@ func (t *Tree) emitText(n *node) {
 		box.Size.Width = max(box.Size.Width, ceil(prepared.Measure(Auto).Width))
 	}
 	l := prepared.Layout(box.Size)
+	tn.layout = l
 	if tn.attachments > 0 {
 		t.placeAttachments(n, l)
 	}

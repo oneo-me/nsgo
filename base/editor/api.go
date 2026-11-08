@@ -141,6 +141,11 @@ type Decoration struct {
 	// Token colors the range as the highlighting colors a token of its
 	// kind.
 	Token TokenKind
+	// Gutter is a mark in the strip before the line numbers, and
+	// OverviewRuler one on the strip along the right edge. An empty range
+	// keeps its place through edits.
+	Gutter        *GutterMark
+	OverviewRuler *OverviewRulerMark
 }
 
 // TokenKind is a kind of token the highlighting colors: comment,
@@ -362,6 +367,9 @@ type Styles struct {
 	// ShowWhitespaces; Ruler the line at each of Rulers' columns, 1 point
 	// wide unless it gives a width.
 	Whitespace, Ruler core.Style
+	// OverviewRuler is the strip of decorations' marks along the right
+	// edge, 14 points wide unless it gives a width.
+	OverviewRuler core.Style
 }
 
 // Classes are Tailwind classes of the editor's parts, by Styles' names:
@@ -377,6 +385,7 @@ type Classes struct {
 	DiagnosticError, DiagnosticWarning, DiagnosticInfo, DiagnosticHint string
 	UnnecessaryText, DeprecatedText                                    string
 	SelectionHandle                                                    string
+	OverviewRuler                                                      string
 	CompletionMenu, CompletionItem, SelectedCompletionItem             string
 	CompletionMatch, CompletionDetail, CompletionKind                  string
 	CompletionDocumentation                                            string
@@ -438,6 +447,8 @@ type Editor struct {
 	Search                 func() Search
 	Diagnostics            func() []Diagnostic
 	Decorations            func() []Decoration
+	// GutterDecorationsWidth is the gutter's strip of marks, 3 when 0.
+	GutterDecorationsWidth core.Points
 	// Completion asks for completions as typing goes (OnCompletionRequest)
 	// and for an inline completion once it pauses
 	// (OnInlineCompletionRequest); ShowCompletions asks without it.

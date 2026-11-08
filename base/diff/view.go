@@ -218,6 +218,11 @@ type DiffView struct {
 	// otherwise.
 	OnStatsChange func(Stats)
 	OnFileToggle  func(File)
+	// OnScroll receives the rows' scroll position from the first layout
+	// on, with each scroll, resize or relayout that changes it.
+	OnScroll func(core.ScrollEvent)
+	// OnHunkBoundsChange receives each change's box when one moves.
+	OnHunkBoundsChange func([]HunkBounds)
 	// OnError receives a patch that cannot be read.
 	OnError func(error)
 }
@@ -380,6 +385,7 @@ func (p DiffView) Render(cx *core.Scope) core.Node {
 		t := texts.Get()
 		cx.Untrack(func() { v.load(t[0], t[1], t[2]) })
 	})
+	v.reportPosition()
 	return core.View{
 		Class:     p.Class,
 		Style:     merge(core.Style{Overflow: core.Hidden}, p.Style),

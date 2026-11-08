@@ -14,7 +14,7 @@ func init() {
 		tsx.Enum(map[string]diff.Expansion{"down": diff.ExpandDown, "all": diff.ExpandEvery, "up": diff.ExpandUp}),
 		tsx.Flag("Unified", "layout", "unified", "DiffLayout"),
 		tsx.Event("OnChange", "change"), tsx.Event("OnLineNumberPress", "line"), tsx.Event("OnStatsChange", "stats"),
-		tsx.Event("OnLineSelectionChange", "range"), tsx.Event("OnFileToggle", "file"),
+		tsx.Event("OnLineSelectionChange", "range"), tsx.Event("OnFileToggle", "file"), tsx.Event("OnHunkBoundsChange", "hunks"),
 		tsx.Enum(map[string]diff.FileStatus{"added": diff.FileAdded, "copied": diff.FileCopied, "deleted": diff.FileDeleted, "modified": diff.FileModified, "renamed": diff.FileRenamed}),
 		tsx.Enum(map[string]diff.Indicators{"bars": diff.IndicatorBars, "classic": diff.IndicatorClassic, "none": diff.IndicatorNone}),
 		tsx.Enum(map[string]diff.Inline{"char": diff.InlineChar, "none": diff.InlineNone, "word": diff.InlineWord, "wordAlt": diff.InlineWordAlt}),

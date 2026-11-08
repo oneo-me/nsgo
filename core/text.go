@@ -297,3 +297,55 @@ func (a approxText) carets(lines []approxLine, boxes []TextLine) driver.CaretLay
 }
 
 func (approxText) Release() {}
+
+// TextCaretAt returns the caret nearest p, a point in the text's frame, after
+// the last commit: its UTF-16 offset, and upstream when it stays at the end
+// of a wrapped line. False while the text is not laid out.
+func (r *Ref) TextCaretAt(p Point) (offset int, upstream, ok bool) {
+	tn := r.laidOut()
+	if tn == nil {
+		return 0, false, false
+	}
+	c := driver.HitTest(tn.layout, Point{X: p.X - tn.shownBox.Origin.X, Y: p.Y - tn.shownBox.Origin.Y})
+	return c.Offset, c.Affinity == driver.Upstream, true
+}
+
+// TextCaretBox returns the caret's box at UTF-16 offset, a box of no width
+// as tall as its line, in the text's frame; upstream takes the earlier line
+// where one offset is at both.
+func (r *Ref) TextCaretBox(offset int, upstream bool) (Bounds, bool) {
+	tn := r.laidOut()
+	if tn == nil {
+		return Bounds{}, false
+	}
+	affinity := driver.Downstream
+	if upstream {
+		affinity = driver.Upstream
+	}
+	b, ok := driver.CaretRect(tn.layout, driver.Caret{Offset: offset, Affinity: affinity})
+	b.Origin.X += tn.shownBox.Origin.X
+	b.Origin.Y += tn.shownBox.Origin.Y
+	return b, ok
+}
+
+// TextRangeBoxes returns the line-high boxes of the UTF-16 range from start
+// to end, in the text's frame.
+func (r *Ref) TextRangeBoxes(start, end int) []Bounds {
+	tn := r.laidOut()
+	if tn == nil {
+		return nil
+	}
+	boxes := driver.RangeRects(tn.layout, start, end, nil)
+	for i := range boxes {
+		boxes[i].Origin.X += tn.shownBox.Origin.X
+		boxes[i].Origin.Y += tn.shownBox.Origin.Y
+	}
+	return boxes
+}
+
+func (r *Ref) laidOut() *textNode {
+	if r == nil || r.n == nil || r.n.deleted || r.n.text == nil || r.n.text.layout == nil {
+		return nil
+	}
+	return r.n.text
+}
