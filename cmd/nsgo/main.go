@@ -83,7 +83,7 @@ func main() {
 		fs.StringVar(&o.bench, "bench", "", "run the benchmarks matching this `regexp`, as go test's -bench, and no tests unless -run names them")
 		fs.StringVar(&o.junit, "junit", "", "write a JUnit XML report to `file`")
 		fs.BoolVar(&o.trace, "trace", false, "print each step's mount items and commit times")
-		fs.StringVar(&o.target, "target", "", "run on a `platform`: macos, windows, linux, web, ios_simulator or android (default: headless)")
+		fs.StringVar(&o.target, "target", "", "run on a `platform`: macos, windows, linux, web, ios_simulator, tvos_simulator or android (default: headless)")
 		fs.StringVar(&o.device, "device", "", "the simulator, by name or UDID, or the adb device the target runs on")
 		fs.BoolVar(&o.fps, "fps", false, "log the performance monitor's readings once a second (with -target macos, windows, linux or ios_simulator)")
 		fs.Func("env", "set `KEY=VALUE` in the tests' environment, a phone's too; repeat for more", func(kv string) error {
@@ -187,9 +187,9 @@ func main() {
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage:
   nsgo init  [-template go|tsx|mixed] [-name N] [-module M] [dir]
-  nsgo dev   [-target native|web|ios|ios_simulator|android] [-hot-reload=false] [-release] [-trace] [-lang L] [-device D] [-port N] [-open=false] [dir]
+  nsgo dev   [-target native|web|ios|ios_simulator|tvos|tvos_simulator|android] [-hot-reload=false] [-release] [-trace] [-lang L] [-device D] [-port N] [-open=false] [dir]
   nsgo build [-target all|macos_arm64,windows_x64,linux_x64,ios,web,...] [-output DIR] [-open] [-run [-device D]] [dir]
-  nsgo test  [-run REGEXP] [-bench REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|android [-fps]] [dir | App.tsx < steps] [-- go test flags]
+  nsgo test  [-run REGEXP] [-bench REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|tvos_simulator|android [-fps]] [dir | App.tsx < steps] [-- go test flags]
   nsgo check [dir]
   nsgo i18n  [-source L] [dir]
   nsgo keygen name

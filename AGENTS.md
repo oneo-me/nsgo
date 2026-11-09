@@ -18,6 +18,8 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - When `core` implements another package's API, its exported part names that package in its comment.
 - Write configuration files people edit by hand in YAML, never JSON, including ones ported from NSH's JSON files.
 - Mark unimplemented designs as goals or open questions; never document them as existing behavior.
+- Do nothing implicitly by device: no size, form or behavior that changes on its own for a desktop, a phone or a TV, such as larger controls on desktops and smaller ones on phones. Such changes belong to a component's author: `ui` and apps may make them, `core` and `base` never.
+- Use native views, at MyGo's quality: a component shows the same on every platform. What one platform has natively, such as iOS's Liquid Glass, others imitate the same way rather than drop.
 
 ## Components
 

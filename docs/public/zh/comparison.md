@@ -11,7 +11,7 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 
 | 框架 | 语言 | 绘制方式 | 目标平台 |
 | --- | --- | --- | --- |
-| NSGo | Go、TSX | 各平台自己的视图 | iOS、Android、macOS、Windows、Linux、Web |
+| NSGo | Go、TSX | 各平台自己的视图 | iOS、tvOS、Android、macOS、Windows、Linux、Web |
 | [NSH](https://nsh.dev) | Rust、TSX | 各平台自己的视图 | iOS、Android、macOS、Windows、Linux、Web |
 | [MyGo](https://github.com/egoist/mygo) | Go、网页 | 自己的 GPU 渲染器，或系统 WebView | macOS、Windows、Linux、Web |
 | [Fyne](https://fyne.io)、[Gio](https://gioui.org) | Go | 自己的渲染器 | 桌面、手机、Web |
@@ -29,7 +29,7 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 - **原生视图。** 文本、输入法、选择、滚动、无障碍和菜单都是平台自己的，应用在每个平台上的表现符合用户预期；自绘框架则要逐一重新实现它们。
 - **细粒度更新。** 组件只运行一次，signal 只更新读取它的地方，没有虚拟 DOM，也没有每帧都要比对的视图函数；动画运行在平台的帧时钟上。
 - **只有 Go。** 引擎、布局和后端都是 Go，Go 应用不需要 C、cgo 或 JavaScript 引擎。所有目标都能在装有 Go 和 Xcode 的 Mac 上构建：不需要 NDK、Android SDK、JDK、GTK 或 Windows 工具链。
-- **覆盖所有平台。** 手机、桌面和 Web 共用一个引擎、一套 API 和一种测试方式，应用还能嵌入已有的 iOS、Android、Go 桌面和 Web 应用。
+- **覆盖所有平台。** 手机、电视、桌面和 Web 共用一个引擎、一套 API 和一种测试方式，应用还能嵌入已有的 iOS、Android、Go 桌面和 Web 应用。
 - **可选 TSX。** 界面可以用 TSX 和 Tailwind 类名编写，与 Go 组件运行在同一个引擎上。
 
 ## 劣势

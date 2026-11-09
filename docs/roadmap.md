@@ -68,6 +68,21 @@ What package `widget` lacks of WidgetKit, and of widgets elsewhere ([tool](archi
 | Widgets of sandboxed Mac apps | `com.apple.security.application-groups` | A macOS app in the App Sandbox, as the Mac App Store's, shares its timelines through `apple.app_group` and a provisioning profile, where it cannot write the home directory the extension reads |
 | Widgets on Android | `AppWidgetProvider`, `RemoteViews` | The same timelines show in App Widgets drawn by the Java runtime, with `classes.dex` rebuilt |
 
+## Apple TV
+
+tvOS runs on iOS's backend, its remote moving a focus ([keyboard focus](architecture/interaction.md#keyboard-focus)); what it still lacks:
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| A real Apple TV | — | `nsgo dev -target tvos` and `nsgo build -target tvos -run` sign, install and run the gallery on a paired Apple TV, as they do on an iPhone; so far it ran in the simulator alone |
+| Sizes for a room | — | Apps can read across a room: `ui`'s 28-point controls and 13-point text at 1920×1080 points read small from a couch, so `ui` or the app takes larger sizes there, never `core` or `base`, an [open question](../ARCHITECTURE.md#open-questions) until the user decides |
+| The focus's look | — | A focused view lifts as tvOS's do, scaled with a shadow, or keeps `ui.FocusRing` by decision; the ring shows today |
+| Device branches out of `base` | — | `base.Menu`, `Select`, `ContextMenu` and `base/dock.Area` change form by `Env.Desktop` or width no more, against the rule that `base` does nothing by device: `ui` or a field the app sets chooses, so a TV's popups show at their trigger rather than as touch sheets |
+| Scrolling with the remote's surface | — | A scroll view with nothing focusable in it, such as a long text, scrolls as the remote's touch surface swipes, which only the focus moving scrolls now |
+| What tvOS has not | — | Web views (no WebKit), the camera, the photo picker, speech, recording and the clipboard report `ErrUnsupported` or their platform's refusal on tvOS, each checked from the gallery, rather than failing as they reach a missing class |
+| The terminal and embedding on tvOS | — | `tools/libghostty` builds libghostty-vt for tvOS and its simulator, and `-embed` builds a tvOS framework |
+| tvOS tests' settling | — | A test step on the tvOS simulator settles once a dialog's transition ends, rather than after `settleWait`'s 5 seconds: an `nsgo.opacity` animation stays on its layer there |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

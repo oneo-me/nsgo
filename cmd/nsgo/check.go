@@ -91,8 +91,9 @@ func vetEnv(ctx context.Context, target string) ([]string, error) {
 		return []string{"GOOS=" + os, "GOARCH=" + goArch(arch), "CGO_ENABLED=0"}, nil
 	case "web":
 		return []string{"GOOS=js", "GOARCH=wasm"}, nil
-	case "ios":
-		return iosEnv(ctx, arch == "simulator")
+	case "ios", "tvos":
+		sys, _, _ := appleOSOf(os)
+		return iosEnv(ctx, sys, arch == "simulator")
 	case "android":
 		if arch == "arm64" {
 			return []string{"GOOS=android", "GOARCH=arm64", "CGO_ENABLED=0"}, nil

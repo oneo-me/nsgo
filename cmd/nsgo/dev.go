@@ -468,14 +468,16 @@ func sessionFor(p *project, opts devOptions) (session, error) {
 		return session{}, fmt.Errorf("native development runs on macOS, Windows and Linux; use -target web")
 	case "web":
 		return webSession(opts), nil
-	case "ios":
-		return iosDeviceSession(opts), nil
-	case "ios_simulator":
-		return iosSession(opts), nil
+	case "ios", "tvos":
+		sys, _, _ := appleOSOf(p.Dev.Target)
+		return iosDeviceSession(sys, opts), nil
+	case "ios_simulator", "tvos_simulator":
+		sys, _, _ := appleOSOf(p.Dev.Target)
+		return iosSession(sys, opts), nil
 	case "android":
 		return androidSession(opts), nil
 	default:
-		return session{}, fmt.Errorf("unknown dev target %q; use native, web, ios, ios_simulator or android", p.Dev.Target)
+		return session{}, fmt.Errorf("unknown dev target %q; use native, web, ios, ios_simulator, tvos, tvos_simulator or android", p.Dev.Target)
 	}
 }
 

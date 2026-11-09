@@ -60,21 +60,28 @@ func addMacLibraries(ctx context.Context, p *project, app, arch string) error {
 	return run(ctx, "codesign", "--force", "--sign", "-", dst)
 }
 
-// addIOSFrameworks puts the native libraries the app links into its
+// addIOSFrameworks puts the native libraries the app links for sys into its
 // Frameworks as frameworks: signed ad hoc for the simulator, left for the
 // app's signing on devices (signFrameworks).
-func addIOSFrameworks(ctx context.Context, p *project, app string, env []string, simulator bool) error {
+func addIOSFrameworks(ctx context.Context, p *project, sys *appleOS, app string, env []string, simulator bool) error {
 	dir, err := linkedDir(ctx, p, env, ghosttyPackage)
 	if err != nil || dir == "" {
 		return err
 	}
-	build, platform := "ios-arm64", "iPhoneOS"
+	build := sys.target + "-arm64"
 	if simulator {
-		build, platform = "iossimulator-arm64", "iPhoneSimulator"
+		build = sys.target + "simulator-arm64"
+	}
+	lib := filepath.Join(dir, "lib", build, "libghostty-vt.dylib")
+	if _, err := os.Stat(lib); err != nil && sys != iOS {
+		// tools/libghostty builds no tvOS library yet; the terminal then
+		// reports it missing.
+		detail("no libghostty-vt for %s: the terminal will not start", sys.name)
+		return nil
 	}
 	fw := filepath.Join(app, "Frameworks", ghosttyFramework)
 	binary := filepath.Join(fw, "GhosttyVT")
-	if err := copyLibrary(filepath.Join(dir, "lib", build, "libghostty-vt.dylib"), binary); err != nil {
+	if err := copyLibrary(lib, binary); err != nil {
 		return err
 	}
 	if err := run(ctx, "install_name_tool", "-id", "@rpath/"+ghosttyFramework+"/GhosttyVT", binary); err != nil {
@@ -90,8 +97,8 @@ func addIOSFrameworks(ctx context.Context, p *project, app string, env []string,
 	<key>CFBundlePackageType</key><string>FMWK</string>
 	<key>CFBundleShortVersionString</key><string>1.0</string>
 	<key>CFBundleVersion</key><string>1</string>
-	<key>CFBundleSupportedPlatforms</key><array><string>` + platform + `</string></array>
-	<key>MinimumOSVersion</key><string>15.0</string>
+	<key>CFBundleSupportedPlatforms</key><array><string>` + sys.platformName(simulator) + `</string></array>
+	<key>MinimumOSVersion</key><string>` + sys.minimum + `</string>
 </dict>
 </plist>
 `

@@ -24,10 +24,10 @@ build_number: 1         # CFBundleVersion 和 Android 的 versionCode；省略�
 # theme: theme.json     # TSX 应用的主题：NSGo 的主题或 shadcn/ui 主题
 # i18n: { dir: locales, source: en }  # 应用的文案目录及其编写语言
 icon:
-  apple: assets/AppIcon.icon  # macOS 和 iOS，或仅用于 macOS 的 .icns
+  apple: assets/AppIcon.icon  # macOS 和 iOS，或仅用于 macOS 的 .icns；tvOS 用 PNG 分层
   png: assets/Icon.png        # 其他所有目标
 dev:
-  target: native        # native、web、ios、ios_simulator 或 android
+  target: native        # native、web、ios、ios_simulator、tvos、tvos_simulator 或 android
   hot_reload: true      # false 时只构建一次，不监听文件
   fps: false            # true 时显示性能监视器
   # icon: { png: assets/Icon-dev.png }  # 在 dev 构建中替换 icon 的文件；默认取 assets/*-dev.*
@@ -35,7 +35,7 @@ build:
   output: dist
   open: false           # true 时构建后打开输出目录
   fps: false            # 同 dev.fps，作用于发布包
-  targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, android_arm64, web]
+  targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
 ```
 

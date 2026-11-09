@@ -15,15 +15,15 @@ import (
 	"time"
 )
 
-// iosTestRunner installs the test build in a simulator (-device's, else
-// the booted one, else the newest iPhone) and launches it for each test,
-// its output streamed back.
-func iosTestRunner(ctx context.Context, p *project, dir string, opts testOptions) (targetRunner, error) {
-	app, err := buildIOSApp(ctx, p, dir, true)
+// iosTestRunner installs the test build in sys's simulator (-device's,
+// else the booted one, else the newest iPhone or Apple TV) and launches
+// it for each test, its output streamed back.
+func iosTestRunner(ctx context.Context, p *project, sys *appleOS, dir string, opts testOptions) (targetRunner, error) {
+	app, err := buildIOSApp(ctx, p, sys, dir, true)
 	if err != nil {
 		return targetRunner{}, err
 	}
-	udid, err := bootSimulator(ctx, opts.device)
+	udid, err := bootSimulator(ctx, sys, opts.device)
 	if err != nil {
 		return targetRunner{}, err
 	}

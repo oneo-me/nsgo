@@ -309,6 +309,10 @@ func idiomName(i core.Idiom) string {
 		return "tablet"
 	case core.IdiomDesktop:
 		return "desktop"
+	case core.IdiomMac:
+		return "mac"
+	case core.IdiomTV:
+		return "tv"
 	}
 	return "unknown"
 }

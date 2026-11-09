@@ -15,36 +15,109 @@ import (
 	"text/template"
 )
 
-// iosEnv is the environment go builds for iOS devices or the simulator
-// in: Go links iOS only through Xcode's linker; NSGo itself has no C.
-func iosEnv(ctx context.Context, simulator bool) ([]string, error) {
-	sdkName, triple := "iphoneos", "arm64-apple-ios15.0"
-	if simulator {
-		sdkName, triple = "iphonesimulator", "arm64-apple-ios15.0-simulator"
+// appleOS is iOS or tvOS: what their builds, bundles, simulators and
+// devices differ in. Both build GOOS=ios; tvOS links with its own SDK,
+// and the UIKit backend finds out at run time which it runs on.
+type appleOS struct {
+	name    string // "iOS"
+	target  string // the devices' target; the simulator's adds _simulator
+	sdk     string // the devices' SDK; the simulator's ends in simulator
+	minimum string // MinimumOSVersion
+	device  string // what names its devices and simulators, "iPhone"
+	// families are TARGETED_DEVICE_FAMILY and UIDeviceFamily; idioms are
+	// actool's target devices.
+	families []int
+	idioms   []string
+	// platform is CFBundleSupportedPlatforms' devices' name; the
+	// simulator's ends in Simulator.
+	platform string
+	// deployment is the Xcode setting holding minimum.
+	deployment string
+	plist      *template.Template
+}
+
+var (
+	iOS = &appleOS{name: "iOS", target: "ios", sdk: "iphoneos", minimum: "15.0", device: "iPhone",
+		families: []int{1, 2}, idioms: []string{"iphone", "ipad"}, platform: "iPhone",
+		deployment: "IPHONEOS_DEPLOYMENT_TARGET", plist: iosPlist}
+	tvOS = &appleOS{name: "tvOS", target: "tvos", sdk: "appletvos", minimum: "17.0", device: "Apple TV",
+		families: []int{3}, idioms: []string{"tv"}, platform: "AppleTV",
+		deployment: "TVOS_DEPLOYMENT_TARGET", plist: tvosPlist}
+)
+
+// appleOSOf is the OS of a target, an Apple TV's or an iPhone's, and
+// whether it is the simulator's.
+func appleOSOf(target string) (sys *appleOS, simulator, ok bool) {
+	name, sim := strings.CutSuffix(target, "_simulator")
+	for _, sys := range []*appleOS{iOS, tvOS} {
+		if sys.target == name {
+			return sys, sim, true
+		}
 	}
+	return nil, false, false
+}
+
+// sdkName is the SDK the devices or the simulator build with.
+func (sys *appleOS) sdkName(simulator bool) string {
+	if simulator {
+		return strings.TrimSuffix(sys.sdk, "os") + "simulator"
+	}
+	return sys.sdk
+}
+
+// triple is clang's target.
+func (sys *appleOS) triple(simulator bool) string {
+	t := "arm64-apple-" + sys.target + sys.minimum
+	if simulator {
+		t += "-simulator"
+	}
+	return t
+}
+
+// platformName is CFBundleSupportedPlatforms' entry.
+func (sys *appleOS) platformName(simulator bool) string {
+	if simulator {
+		return sys.platform + "Simulator"
+	}
+	return sys.platform + "OS"
+}
+
+// familyList is TARGETED_DEVICE_FAMILY's value, "1,2".
+func (sys *appleOS) familyList() string {
+	parts := make([]string, len(sys.families))
+	for i, f := range sys.families {
+		parts[i] = strconv.Itoa(f)
+	}
+	return strings.Join(parts, ",")
+}
+
+// iosEnv is the environment go builds for sys's devices or simulator in:
+// Go links iOS and tvOS only through Xcode's linker; NSGo itself has no C.
+func iosEnv(ctx context.Context, sys *appleOS, simulator bool) ([]string, error) {
+	sdkName := sys.sdkName(simulator)
 	sdk, err := output(ctx, "xcrun", "--sdk", sdkName, "--show-sdk-path")
 	if err != nil {
-		return nil, fmt.Errorf("the iOS SDK needs Xcode: %w", err)
+		return nil, fmt.Errorf("the %s SDK needs Xcode: %w", sys.name, err)
 	}
 	clang, err := output(ctx, "xcrun", "--sdk", sdkName, "-f", "clang")
 	if err != nil {
 		return nil, err
 	}
-	flags := "-isysroot " + sdk + " -target " + triple
+	flags := "-isysroot " + sdk + " -target " + sys.triple(simulator)
 	return []string{"GOOS=ios", "GOARCH=arm64", "CGO_ENABLED=1",
 		"CC=" + clang + " " + flags, "CGO_CFLAGS=" + flags, "CGO_LDFLAGS=" + flags}, nil
 }
 
-// buildIOSApp writes <dir>/<name>.app for the simulator or for devices.
+// buildIOSApp writes <dir>/<name>.app for sys's simulator or devices.
 // Device builds are left unsigned for the developer's own identity.
-func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (string, error) {
-	env, err := iosEnv(ctx, simulator)
+func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simulator bool) (string, error) {
+	env, err := iosEnv(ctx, sys, simulator)
 	if err != nil {
 		return "", err
 	}
 	app := filepath.Join(dir, p.Name+".app")
-	// Go's runtime objects target a newer iOS than 15.0; the linker's
-	// warning about it is noise.
+	// Go's runtime objects target a newer OS than the minimum; the
+	// linker's warning about it is noise.
 	if err := goBuild(ctx, p, filepath.Join(app, p.Name), env, "-extldflags=-Wl,-w"); err != nil {
 		return "", err
 	}
@@ -54,7 +127,7 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	if err := copyMobileResources(p, app); err != nil {
 		return "", err
 	}
-	icon, err := writeIOSIcon(ctx, p, app, simulator)
+	icon, err := writeIOSIcon(ctx, p, sys, app, simulator)
 	if err != nil {
 		return "", err
 	}
@@ -62,20 +135,31 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	if err != nil {
 		return "", err
 	}
-	if err := writePlist(filepath.Join(app, "Info.plist"), p, iosPlist, icon+"\n"+names+"\n"+p.widgetPlist(true)); err != nil {
+	// An Apple TV has no widgets.
+	widgets := sys == iOS && len(p.Widgets) > 0
+	if sys != iOS && len(p.Widgets) > 0 {
+		detail("no widgets on %s: they are left out", sys.name)
+	}
+	extra := icon + "\n" + names + "\n\t<key>CFBundleSupportedPlatforms</key><array><string>" + sys.platformName(simulator) + "</string></array>"
+	if widgets {
+		extra += "\n" + p.widgetPlist(true)
+	}
+	if err := writePlist(filepath.Join(app, "Info.plist"), p, sys.plist, extra); err != nil {
 		return "", err
 	}
-	if err := addIOSFrameworks(ctx, p, app, env, simulator); err != nil {
+	if err := addIOSFrameworks(ctx, p, sys, app, env, simulator); err != nil {
 		return "", err
 	}
-	if err := addIOSWidgets(ctx, p, app, simulator); err != nil {
-		return "", err
+	if widgets {
+		if err := addIOSWidgets(ctx, p, app, simulator); err != nil {
+			return "", err
+		}
 	}
 	if !simulator {
 		return app, nil
 	}
 	stage("signing")
-	if len(p.Widgets) == 0 {
+	if !widgets {
 		return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 	}
 	// The simulator grants the app group from an ad hoc signature's
@@ -117,22 +201,45 @@ var iosPlist = template.Must(template.New("ios").Parse(plistHead + `	<key>Minimu
 </plist>
 `))
 
-// iosSession installs the app on the simulator -device names, or the
+// tvosPlist is iosPlist for an Apple TV, which keeps an app light unless
+// it says it follows the system's appearance.
+var tvosPlist = template.Must(template.New("tvos").Parse(plistHead + `	<key>MinimumOSVersion</key><string>17.0</string>
+	<key>UILaunchScreen</key><dict/>
+	<key>UIDeviceFamily</key><array><integer>3</integer></array>
+	<key>UIUserInterfaceStyle</key><string>{{if eq .Appearance "light"}}Light{{else if eq .Appearance "dark"}}Dark{{else}}Automatic{{end}}</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key><false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array><dict>
+				<key>UISceneConfigurationName</key><string>Default</string>
+				<key>UISceneDelegateClassName</key><string>NsgoSceneDelegate</string>
+			</dict></array>
+		</dict>
+	</dict>
+</dict>
+</plist>
+`))
+
+// iosSession installs the app on sys's simulator -device names, or the
 // booted one, booting one when none is, and streams its output here.
-func iosSession(opts devOptions) session {
+func iosSession(sys *appleOS, opts devOptions) session {
+	cache := sys.target + "_simulator"
 	return session{
 		build: func(ctx context.Context, p *project) error {
-			dir := p.cache("dev", "ios_simulator")
+			dir := p.cache("dev", cache)
 			os.RemoveAll(dir)
-			_, err := buildIOSApp(ctx, p, dir, true)
+			_, err := buildIOSApp(ctx, p, sys, dir, true)
 			return err
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
-			udid, err := bootSimulator(ctx, opts.device)
+			udid, err := bootSimulator(ctx, sys, opts.device)
 			if err != nil {
 				return app{}, err
 			}
-			bundle := filepath.Join(p.cache("dev", "ios_simulator"), p.Name+".app")
+			bundle := filepath.Join(p.cache("dev", cache), p.Name+".app")
 			if err := run(ctx, "xcrun", "simctl", "install", udid, bundle); err != nil {
 				return app{}, err
 			}
@@ -154,21 +261,21 @@ func iosSession(opts devOptions) session {
 }
 
 // iosDeviceSession builds, signs and installs the app on a connected
-// iPhone, and streams its output here until it exits.
-func iosDeviceSession(opts devOptions) session {
+// iPhone or Apple TV, and streams its output here until it exits.
+func iosDeviceSession(sys *appleOS, opts devOptions) session {
 	return session{
 		build: func(ctx context.Context, p *project) error {
-			dir := p.cache("dev", "ios")
+			dir := p.cache("dev", sys.target)
 			os.RemoveAll(dir)
-			// The iPhone reaches the dev server over the LAN.
+			// The device reaches the dev server over the LAN.
 			if lan := opts.server.lanURLs(); len(lan) > 0 {
 				p.devURL = lan[0]
 			}
-			_, err := buildIOSApp(ctx, p, filepath.Join(dir, "app"), false)
+			_, err := buildIOSApp(ctx, p, sys, filepath.Join(dir, "app"), false)
 			return err
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
-			device, err := selectIOSDevice(ctx, opts.device)
+			device, err := selectIOSDevice(ctx, sys, opts.device)
 			if err != nil {
 				return app{}, err
 			}
@@ -176,8 +283,8 @@ func iosDeviceSession(opts devOptions) session {
 			if err != nil {
 				return app{}, err
 			}
-			dir := p.cache("dev", "ios")
-			if err := installOnIOSDevice(ctx, p, filepath.Join(dir, "app", p.Name+".app"), filepath.Join(dir, "sign"), team, device); err != nil {
+			dir := p.cache("dev", sys.target)
+			if err := installOnIOSDevice(ctx, p, sys, filepath.Join(dir, "app", p.Name+".app"), filepath.Join(dir, "sign"), team, device); err != nil {
 				return app{}, err
 			}
 			event("launch %s on %s", p.ID, device.Name)
@@ -193,8 +300,8 @@ func iosDeviceSession(opts devOptions) session {
 
 // installOnIOSDevice signs app for device with Xcode, working in work,
 // and installs it there.
-func installOnIOSDevice(ctx context.Context, p *project, app, work, team string, device iosDevice) error {
-	signed, err := signIOSApp(ctx, p, app, work, team, device)
+func installOnIOSDevice(ctx context.Context, p *project, sys *appleOS, app, work, team string, device iosDevice) error {
+	signed, err := signIOSApp(ctx, p, sys, app, work, team, device)
 	if err != nil {
 		return err
 	}
@@ -207,7 +314,7 @@ func installOnIOSDevice(ctx context.Context, p *project, app, work, team string,
 // needs from the developer account in Xcode. The generated project holds
 // a script that copies the app's build product into Xcode's, which Xcode
 // then signs; work is Xcode's intermediate and output directory.
-func signIOSApp(ctx context.Context, p *project, app, work, team string, device iosDevice) (string, error) {
+func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team string, device iosDevice) (string, error) {
 	project := filepath.Join(work, "Nsgo.xcodeproj")
 	if err := os.RemoveAll(work); err != nil {
 		return "", err
@@ -229,13 +336,7 @@ func signIOSApp(ctx context.Context, p *project, app, work, team string, device 
 	if err != nil {
 		return "", err
 	}
-	err = iosProject.Execute(f, map[string]string{
-		"Name":   p.Name,
-		"App":    p.Name + ".app",
-		"ID":     p.ID,
-		"Team":   team,
-		"Script": iosSignScript,
-	})
+	err = iosProject.Execute(f, iosProjectData(p, sys, team))
 	if closeErr := f.Close(); err == nil {
 		err = closeErr
 	}
@@ -251,7 +352,7 @@ func signIOSApp(ctx context.Context, p *project, app, work, team string, device 
 		"-project", project,
 		"-target", "Nsgo",
 		"-configuration", "Release",
-		"-destination", "platform=iOS,id="+device.UDID,
+		"-destination", "platform="+sys.name+",id="+device.UDID,
 		"-allowProvisioningUpdates",
 		"-allowProvisioningDeviceRegistration",
 		"CONFIGURATION_BUILD_DIR="+products,
@@ -265,6 +366,21 @@ func signIOSApp(ctx context.Context, p *project, app, work, team string, device 
 		return "", fmt.Errorf("Xcode did not sign the app: %w", err)
 	}
 	return signed, nil
+}
+
+// iosProjectData fills iosProject in for p on sys, signed by team.
+func iosProjectData(p *project, sys *appleOS, team string) map[string]string {
+	return map[string]string{
+		"Name":       p.Name,
+		"App":        p.Name + ".app",
+		"ID":         p.ID,
+		"Team":       team,
+		"Script":     iosSignScript,
+		"SDK":        sys.sdk,
+		"Deployment": sys.deployment,
+		"Minimum":    sys.minimum,
+		"Families":   sys.familyList(),
+	}
 }
 
 // iosSignScript replaces Xcode's empty app with the Go build's contents,
@@ -300,9 +416,10 @@ func iosTeam(ctx context.Context, flag string) (string, error) {
 	return "", errors.New("no Apple developer team: pass -team with your team ID, or select one in Xcode's Settings > Accounts")
 }
 
-// iosDevice is a physical iPhone connected to this Mac.
+// iosDevice is a physical iPhone or Apple TV this Mac knows.
 type iosDevice struct {
 	Name          string
+	Platform      string // "iOS", "tvOS"
 	UDID          string
 	Serial        string
 	ECID          int64
@@ -327,6 +444,7 @@ type devicectlDevice struct {
 	} `json:"deviceProperties"`
 	HardwareProperties struct {
 		Reality      string `json:"reality"`
+		Platform     string `json:"platform"`
 		UDID         string `json:"udid"`
 		SerialNumber string `json:"serialNumber"`
 		ECID         int64  `json:"ecid"`
@@ -338,6 +456,7 @@ type devicectlDevice struct {
 	Properties struct {
 		Hardware struct {
 			Reality      string `json:"reality"`
+			Platform     string `json:"platform"`
 			UDID         string `json:"udid"`
 			SerialNumber string `json:"serialNumber"`
 			ECID         int64  `json:"ecid"`
@@ -365,6 +484,17 @@ func (d devicectlDevice) reality() string {
 		return d.HardwareProperties.Reality
 	}
 	return d.Properties.Hardware.Reality
+}
+
+// platform is the device's OS; older Xcodes say none, only of iPhones.
+func (d devicectlDevice) platform() string {
+	if d.HardwareProperties.Platform != "" {
+		return d.HardwareProperties.Platform
+	}
+	if d.Properties.Hardware.Platform != "" {
+		return d.Properties.Hardware.Platform
+	}
+	return "iOS"
 }
 
 func (d devicectlDevice) udid() string {
@@ -432,6 +562,7 @@ func parseIOSDevices(data []byte) ([]iosDevice, error) {
 		}
 		devices = append(devices, iosDevice{
 			Name:          d.name(),
+			Platform:      d.platform(),
 			UDID:          d.udid(),
 			Serial:        d.serial(),
 			ECID:          d.ecid(),
@@ -443,21 +574,21 @@ func parseIOSDevices(data []byte) ([]iosDevice, error) {
 	return devices, nil
 }
 
-// selectIOSDevice picks the iPhone named by -device, or the only one
+// selectIOSDevice picks sys's device named by -device, or the only one
 // connected.
-func selectIOSDevice(ctx context.Context, wanted string) (iosDevice, error) {
+func selectIOSDevice(ctx context.Context, sys *appleOS, wanted string) (iosDevice, error) {
 	devices, err := iosDevices(ctx)
 	if err != nil {
 		return iosDevice{}, err
 	}
-	return pickIOSDevice(devices, wanted)
+	return pickIOSDevice(sys, devices, wanted)
 }
 
-// pickIOSDevice chooses from the devices this Mac knows.
-func pickIOSDevice(devices []iosDevice, wanted string) (iosDevice, error) {
+// pickIOSDevice chooses from sys's devices this Mac knows.
+func pickIOSDevice(sys *appleOS, devices []iosDevice, wanted string) (iosDevice, error) {
 	var paired, connected []iosDevice
 	for _, d := range devices {
-		if d.Paired {
+		if d.Platform == sys.name && d.Paired {
 			paired = append(paired, d)
 			if d.Connected {
 				connected = append(connected, d)
@@ -471,19 +602,21 @@ func pickIOSDevice(devices []iosDevice, wanted string) (iosDevice, error) {
 				return withDeveloperMode(d)
 			}
 		}
-		return iosDevice{}, fmt.Errorf("no iOS device %q is paired with this Mac; it lists %s", wanted, iosDeviceNames(paired))
+		return iosDevice{}, fmt.Errorf("no %s device %q is paired with this Mac; it lists %s", sys.name, wanted, iosDeviceNames(paired))
 	}
 	switch {
+	case len(paired) == 0 && sys == tvOS:
+		return iosDevice{}, errors.New("no Apple TV is paired with this Mac: pair one in Xcode's Devices window from the Apple TV's Settings > Remotes and Devices > Remote App and Devices")
 	case len(paired) == 0:
 		return iosDevice{}, errors.New("no iPhone is paired with this Mac: connect one, trust it, and turn on Developer Mode in Settings > Privacy & Security")
 	case len(connected) == 1:
 		return withDeveloperMode(connected[0])
 	case len(connected) > 1:
-		return iosDevice{}, fmt.Errorf("several iPhones are connected: pass -device with one of %s", iosDeviceNames(connected))
+		return iosDevice{}, fmt.Errorf("several %ss are connected: pass -device with one of %s", sys.device, iosDeviceNames(connected))
 	case len(paired) == 1:
 		return withDeveloperMode(paired[0])
 	}
-	return iosDevice{}, fmt.Errorf("several iPhones are paired with this Mac: pass -device with one of %s", iosDeviceNames(paired))
+	return iosDevice{}, fmt.Errorf("several %ss are paired with this Mac: pass -device with one of %s", sys.device, iosDeviceNames(paired))
 }
 
 // withDeveloperMode rejects a device that cannot run development builds.
@@ -520,21 +653,21 @@ func runXcodebuild(ctx context.Context, args ...string) error {
 	return fmt.Errorf("xcodebuild %s: %w\n%s", strings.Join(args, " "), err, strings.Join(lines, "\n"))
 }
 
-// simulator is an iOS simulator this Mac has.
+// simulator is an iOS or tvOS simulator this Mac has.
 type simulator struct {
 	UDID, Name, State, Runtime string
 }
 
-// simulators lists the available simulators, newest runtime first.
-func simulators(ctx context.Context) ([]simulator, error) {
+// simulators lists sys's available simulators, newest runtime first.
+func simulators(ctx context.Context, sys *appleOS) ([]simulator, error) {
 	out, err := output(ctx, "xcrun", "simctl", "list", "devices", "available", "-j")
 	if err != nil {
-		return nil, fmt.Errorf("the iOS simulator needs Xcode: %w", err)
+		return nil, fmt.Errorf("the %s simulator needs Xcode: %w", sys.name, err)
 	}
-	return parseSimulators([]byte(out))
+	return parseSimulators(sys, []byte(out))
 }
 
-func parseSimulators(data []byte) ([]simulator, error) {
+func parseSimulators(sys *appleOS, data []byte) ([]simulator, error) {
 	var list struct {
 		Devices map[string][]struct {
 			UDID, Name, State string
@@ -545,7 +678,7 @@ func parseSimulators(data []byte) ([]simulator, error) {
 	}
 	var out []simulator
 	for rt, ds := range list.Devices {
-		if !strings.Contains(rt, "iOS") {
+		if !strings.Contains(rt, ".SimRuntime."+sys.name+"-") {
 			continue
 		}
 		for _, d := range ds {
@@ -563,7 +696,7 @@ func parseSimulators(data []byte) ([]simulator, error) {
 
 // runtimeVersion orders runtimes such as ...SimRuntime.iOS-18-2.
 func runtimeVersion(rt string) int {
-	_, v, _ := strings.Cut(rt, "iOS-")
+	_, v, _ := strings.Cut(rt, "OS-")
 	major, rest, _ := strings.Cut(v, "-")
 	minor, _, _ := strings.Cut(rest, "-")
 	a, _ := strconv.Atoi(major)
@@ -573,8 +706,9 @@ func runtimeVersion(rt string) int {
 
 // pickSimulator chooses the simulator wanted names, by name or UDID (a
 // booted one of that name first, then the newest runtime's), or without a
-// name the booted one, else the newest iPhone.
-func pickSimulator(sims []simulator, wanted string) (simulator, error) {
+// name the booted one, else the newest of sys's device, an iPhone or an
+// Apple TV.
+func pickSimulator(sys *appleOS, sims []simulator, wanted string) (simulator, error) {
 	var match []simulator
 	for _, s := range sims {
 		if wanted == "" || s.UDID == wanted || strings.EqualFold(s.Name, wanted) {
@@ -587,7 +721,7 @@ func pickSimulator(sims []simulator, wanted string) (simulator, error) {
 		}
 	}
 	for _, s := range match {
-		if wanted != "" || strings.Contains(s.Name, "iPhone") {
+		if wanted != "" || strings.Contains(s.Name, sys.device) {
 			return s, nil
 		}
 	}
@@ -600,17 +734,17 @@ func pickSimulator(sims []simulator, wanted string) (simulator, error) {
 		}
 		return simulator{}, fmt.Errorf("no simulator named %q; Xcode has %s", wanted, strings.Join(names, ", "))
 	}
-	return simulator{}, fmt.Errorf("no iPhone simulator is installed; add one in Xcode")
+	return simulator{}, fmt.Errorf("no %s simulator is installed; add one in Xcode", sys.device)
 }
 
 // bootSimulator boots the simulator wanted names (or picks one) unless it
 // runs, shows the Simulator app and returns its UDID.
-func bootSimulator(ctx context.Context, wanted string) (string, error) {
-	sims, err := simulators(ctx)
+func bootSimulator(ctx context.Context, sys *appleOS, wanted string) (string, error) {
+	sims, err := simulators(ctx, sys)
 	if err != nil {
 		return "", err
 	}
-	sim, err := pickSimulator(sims, wanted)
+	sim, err := pickSimulator(sys, sims, wanted)
 	if err != nil {
 		return "", err
 	}
@@ -736,8 +870,8 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				SDKROOT = iphoneos;
+				{{.Deployment}} = {{.Minimum}};
+				SDKROOT = {{.SDK}};
 			};
 			name = Debug;
 		};
@@ -747,8 +881,8 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				SDKROOT = iphoneos;
+				{{.Deployment}} = {{.Minimum}};
+				SDKROOT = {{.SDK}};
 			};
 			name = Release;
 		};
@@ -759,11 +893,11 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 				DEVELOPMENT_TEAM = {{pbx .Team}};
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				{{.Deployment}} = {{.Minimum}};
 				PRODUCT_BUNDLE_IDENTIFIER = {{pbx .ID}};
 				PRODUCT_NAME = {{pbx .Name}};
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SDKROOT = {{.SDK}};
+				TARGETED_DEVICE_FAMILY = {{pbx .Families}};
 			};
 			name = Debug;
 		};
@@ -774,11 +908,11 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 				DEVELOPMENT_TEAM = {{pbx .Team}};
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				{{.Deployment}} = {{.Minimum}};
 				PRODUCT_BUNDLE_IDENTIFIER = {{pbx .ID}};
 				PRODUCT_NAME = {{pbx .Name}};
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SDKROOT = {{.SDK}};
+				TARGETED_DEVICE_FAMILY = {{pbx .Families}};
 			};
 			name = Release;
 		};

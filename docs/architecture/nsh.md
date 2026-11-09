@@ -56,6 +56,15 @@ Each subject records the departures of its own area ([by subject](#departures-by
 | A runtime library loads an app's bundle | The framework, library or program is the app | Go apps are compiled with the engine |
 | The GPUI backend embeds apps in GPUI apps | Desktops embed with `nsgo.NewView` on their own backend | One backend per desktop to keep |
 
+### Consistency across platforms
+
+NSGo departs from NSH and from MyGo, Onevra's framework, in the same direction.
+
+| NSH | MyGo | NSGo |
+| --- | --- | --- |
+| Native views, each showing as its platform draws it | Draws every view itself, alike everywhere | Native views, alike everywhere at MyGo's quality: a component one platform has natively, such as iOS's Liquid Glass, others imitate the same way |
+| Components may change by device | — | `core` and `base` change nothing by device on their own; sizes and forms by device are the component author's, `ui`'s or the app's ([device differences](device-differences.md)) |
+
 ## What NSGo adds
 
 - GPU shaders written in Go besides NSH's WGSL, both compiled for each backend by NSGo's own front ends rather than naga and wgpu ([shaders](shaders.md)).

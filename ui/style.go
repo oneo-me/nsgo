@@ -38,9 +38,13 @@ const (
 func constant(s string) func() string { return func() string { return s } }
 
 // Touch reports whether the device takes touches rather than a pointer,
-// for what a pointer alone can do. A control's size is the same on every
+// for what a pointer alone can do: a desktop's pointer and a TV's remote,
+// which moves a focus, take none. A control's size is the same on every
 // device.
-func Touch(cx *core.Scope) bool { return !core.Untracked(cx, cx.Env().Desktop) }
+func Touch(cx *core.Scope) bool {
+	idiom := core.Untracked(cx, cx.Env().Idiom)
+	return idiom != core.IdiomDesktop && idiom != core.IdiomTV
+}
 
 // RowHeight is a row's height.
 const RowHeight core.Points = 36

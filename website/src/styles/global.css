@@ -829,7 +829,7 @@ html[data-theme='dark'] .phone {
   border-radius: 34px;
 }
 
-/* The six platforms under the title: they rise in one after another,
+/* The platforms under the title: they rise in one after another,
    then take turns being lit, each the same size lit or not. */
 .platforms {
   display: flex;

@@ -7,6 +7,10 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -82,5 +86,52 @@ func TestIconResource(t *testing.T) {
 	}
 	if _, err := iconResource(images, []int{16, 32}, "riscv64"); err == nil {
 		t.Error("riscv64 made a resource")
+	}
+}
+
+func TestTVBrandAssets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("compiles an asset catalog")
+	}
+	if _, err := exec.LookPath("xcrun"); err != nil {
+		t.Skip("needs Xcode's actool")
+	}
+	catalog := filepath.Join(t.TempDir(), "Assets.xcassets")
+	if err := writeTVBrandAssets(filepath.Join(catalog, "AppIcon.brandassets"), testIcon(256)); err != nil {
+		t.Fatal(err)
+	}
+	front, err := os.ReadFile(filepath.Join(catalog, "AppIcon.brandassets", "App Icon.imagestack", "Front.imagestacklayer", "Content.imageset", "front@2x.png"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := png.Decode(bytes.NewReader(front))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b := img.Bounds(); b.Dx() != 800 || b.Dy() != 480 {
+		t.Errorf("the icon's front layer at 2x is %v, want 800x480", b)
+	}
+	if _, _, _, a := img.At(0, 0).RGBA(); a != 0 {
+		t.Error("the front layer covers its corner; the back layer would not show")
+	}
+	plist, err := compileIcon(t.Context(), catalog, t.TempDir(), "appletvsimulator", "17.0", []string{"tv"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(plist, "CFBundleIcons") {
+		t.Errorf("actool named no icon: %q", plist)
+	}
+}
+
+func TestEdgeColor(t *testing.T) {
+	img := image.NewNRGBA(image.Rect(0, 0, 8, 8))
+	for y := range 8 {
+		for x := range 8 {
+			img.Set(x, y, color.NRGBA{0x20, 0x40, 0x80, 0xff})
+		}
+	}
+	img.Set(4, 4, color.NRGBA{0xff, 0, 0, 0xff})
+	if r, g, b, a := edgeColor(img).RGBA(); r>>8 != 0x20 || g>>8 != 0x40 || b>>8 != 0x80 || a != 0xffff {
+		t.Errorf("edge color = %x %x %x %x, want the border's 20 40 80, opaque", r>>8, g>>8, b>>8, a)
 	}
 }

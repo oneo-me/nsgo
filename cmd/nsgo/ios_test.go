@@ -62,47 +62,42 @@ func TestParseIOSDevicesProperties(t *testing.T) {
 }
 
 func TestPickIOSDevice(t *testing.T) {
-	oneo := iosDevice{Name: "ONEO", UDID: "00008160-001204C424C1400A", Serial: "GH9J3JXYD2", ECID: 5071790057537546, Paired: true, Connected: true, DeveloperMode: true}
-	other := iosDevice{Name: "Other", UDID: "00008160-000000000000000", Paired: true, Connected: true, DeveloperMode: true}
-	off := iosDevice{Name: "Off", UDID: "00008160-111111111111111", Paired: true, Connected: true}
+	oneo := iosDevice{Name: "ONEO", Platform: "iOS", UDID: "00008160-001204C424C1400A", Serial: "GH9J3JXYD2", ECID: 5071790057537546, Paired: true, Connected: true, DeveloperMode: true}
+	other := iosDevice{Name: "Other", Platform: "iOS", UDID: "00008160-000000000000000", Paired: true, Connected: true, DeveloperMode: true}
+	off := iosDevice{Name: "Off", Platform: "iOS", UDID: "00008160-111111111111111", Paired: true, Connected: true}
 	for _, wanted := range []string{"", "ONEO", "oneo", "00008160-001204C424C1400A", "GH9J3JXYD2", "5071790057537546"} {
-		got, err := pickIOSDevice([]iosDevice{oneo}, wanted)
+		got, err := pickIOSDevice(iOS, []iosDevice{oneo}, wanted)
 		if err != nil {
 			t.Errorf("pick %q: %v", wanted, err)
 		} else if got != oneo {
 			t.Errorf("pick %q = %+v, want ONEO", wanted, got)
 		}
 	}
-	if _, err := pickIOSDevice([]iosDevice{oneo}, "missing"); err == nil || !strings.Contains(err.Error(), "ONEO") {
+	if _, err := pickIOSDevice(iOS, []iosDevice{oneo}, "missing"); err == nil || !strings.Contains(err.Error(), "ONEO") {
 		t.Errorf("pick missing: %v, want an error listing ONEO", err)
 	}
-	if _, err := pickIOSDevice([]iosDevice{oneo, other}, ""); err == nil || !strings.Contains(err.Error(), "-device") {
+	if _, err := pickIOSDevice(iOS, []iosDevice{oneo, other}, ""); err == nil || !strings.Contains(err.Error(), "-device") {
 		t.Errorf("pick ambiguous: %v, want an error asking for -device", err)
 	}
 	other.Connected = false
-	if got, err := pickIOSDevice([]iosDevice{oneo, other}, ""); err != nil || got != oneo {
+	if got, err := pickIOSDevice(iOS, []iosDevice{oneo, other}, ""); err != nil || got != oneo {
 		t.Errorf("pick the connected device = %+v, %v", got, err)
 	}
-	if got, err := pickIOSDevice([]iosDevice{oneo, other}, "Other"); err != nil || got != other {
+	if got, err := pickIOSDevice(iOS, []iosDevice{oneo, other}, "Other"); err != nil || got != other {
 		t.Errorf("pick Other = %+v, %v", got, err)
 	}
-	if _, err := pickIOSDevice([]iosDevice{off}, ""); err == nil || !strings.Contains(err.Error(), "Developer Mode") {
+	if _, err := pickIOSDevice(iOS, []iosDevice{off}, ""); err == nil || !strings.Contains(err.Error(), "Developer Mode") {
 		t.Errorf("pick developer mode off: %v, want an error about Developer Mode", err)
 	}
-	if _, err := pickIOSDevice([]iosDevice{{Name: "Unpaired"}}, ""); err == nil || !strings.Contains(err.Error(), "no iPhone") {
+	if _, err := pickIOSDevice(iOS, []iosDevice{{Name: "Unpaired", Platform: "iOS"}}, ""); err == nil || !strings.Contains(err.Error(), "no iPhone") {
 		t.Errorf("pick unpaired: %v, want an error about no iPhone", err)
 	}
 }
 
 func TestIOSProject(t *testing.T) {
 	var b strings.Builder
-	err := iosProject.Execute(&b, map[string]string{
-		"Name":   "Gallery",
-		"App":    "Gallery.app",
-		"ID":     "dev.oneo.nsgo.gallery",
-		"Team":   "TEAM123",
-		"Script": iosSignScript,
-	})
+	p := &project{Name: "Gallery", ID: "dev.oneo.nsgo.gallery"}
+	err := iosProject.Execute(&b, iosProjectData(p, iOS, "TEAM123"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,10 +107,83 @@ func TestIOSProject(t *testing.T) {
 		`DEVELOPMENT_TEAM = "TEAM123";`,
 		`path = "Gallery.app";`,
 		`shellScript = "set -e\n`,
+		`SDKROOT = iphoneos;`,
+		`IPHONEOS_DEPLOYMENT_TARGET = 15.0;`,
+		`TARGETED_DEVICE_FAMILY = "1,2";`,
 	} {
 		if !strings.Contains(b.String(), want) {
 			t.Errorf("project does not contain %q", want)
 		}
+	}
+}
+
+func TestTVOSProject(t *testing.T) {
+	var b strings.Builder
+	p := &project{Name: "Gallery", ID: "dev.oneo.nsgo.gallery"}
+	if err := iosProject.Execute(&b, iosProjectData(p, tvOS, "TEAM123")); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`SDKROOT = appletvos;`, `TVOS_DEPLOYMENT_TARGET = 17.0;`, `TARGETED_DEVICE_FAMILY = "3";`} {
+		if !strings.Contains(b.String(), want) {
+			t.Errorf("project does not contain %q", want)
+		}
+	}
+	if strings.Contains(b.String(), "iphoneos") {
+		t.Error("the Apple TV's project names the iPhone's SDK")
+	}
+}
+
+func TestAppleOSOf(t *testing.T) {
+	for target, want := range map[string]struct {
+		sys       *appleOS
+		simulator bool
+		sdk       string
+		triple    string
+	}{
+		"ios":            {iOS, false, "iphoneos", "arm64-apple-ios15.0"},
+		"ios_simulator":  {iOS, true, "iphonesimulator", "arm64-apple-ios15.0-simulator"},
+		"tvos":           {tvOS, false, "appletvos", "arm64-apple-tvos17.0"},
+		"tvos_simulator": {tvOS, true, "appletvsimulator", "arm64-apple-tvos17.0-simulator"},
+	} {
+		sys, simulator, ok := appleOSOf(target)
+		if !ok || sys != want.sys || simulator != want.simulator {
+			t.Errorf("appleOSOf(%q) = %v, %v, %v", target, sys, simulator, ok)
+			continue
+		}
+		if got := sys.sdkName(simulator); got != want.sdk {
+			t.Errorf("%s's SDK = %s, want %s", target, got, want.sdk)
+		}
+		if got := sys.triple(simulator); got != want.triple {
+			t.Errorf("%s's triple = %s, want %s", target, got, want.triple)
+		}
+	}
+	if _, _, ok := appleOSOf("macos_arm64"); ok {
+		t.Error("macos_arm64 is an iOS or tvOS target")
+	}
+}
+
+func TestPickDeviceOfItsOS(t *testing.T) {
+	devices, err := parseIOSDevices([]byte(`{"result": {"devices": [
+		{"deviceProperties": {"name": "ONEO", "developerModeStatus": "enabled"},
+		 "hardwareProperties": {"reality": "physical", "platform": "iOS", "udid": "PHONE"},
+		 "connectionProperties": {"pairingState": "paired", "tunnelState": "connected"}},
+		{"deviceProperties": {"name": "Living Room", "developerModeStatus": "enabled"},
+		 "hardwareProperties": {"reality": "physical", "platform": "tvOS", "udid": "TV"},
+		 "connectionProperties": {"pairingState": "paired", "tunnelState": "connected"}}]}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d, err := pickIOSDevice(iOS, devices, ""); err != nil || d.UDID != "PHONE" {
+		t.Errorf("pick an iPhone = %+v, %v", d, err)
+	}
+	if d, err := pickIOSDevice(tvOS, devices, ""); err != nil || d.UDID != "TV" {
+		t.Errorf("pick an Apple TV = %+v, %v", d, err)
+	}
+	if _, err := pickIOSDevice(tvOS, devices, "ONEO"); err == nil {
+		t.Error("an iPhone was picked as an Apple TV")
+	}
+	if _, err := pickIOSDevice(tvOS, devices[:1], ""); err == nil || !strings.Contains(err.Error(), "no Apple TV") {
+		t.Errorf("pick with no Apple TV: %v, want an error about no Apple TV", err)
 	}
 }
 

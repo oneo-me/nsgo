@@ -8,7 +8,7 @@ order: 2
 ## 环境要求
 
 - [Go](https://go.dev/dl/) 1.26 或更新版本。
-- 构建 iOS 需要装有 Xcode 的 Mac。其他目标在 macOS 上只需 Go 即可构建；x86_64 Android 模拟器的目标另需 Android NDK。
+- 构建 iOS 和 tvOS 需要装有 Xcode 的 Mac。其他目标在 macOS 上只需 Go 即可构建；x86_64 Android 模拟器的目标另需 Android NDK。
 - 在 iPhone 上运行需要在 Xcode 的 Accounts 中登录 Apple ID，并信任这台 iPhone、开启开发者模式。
 - 在 Android 上运行需要 Android SDK platform-tools 中的 `adb`。
 - 在 Windows 上运行只需 Go，它也能构建 Windows 和 Web 包。
@@ -49,10 +49,11 @@ go tool nsgo dev
 ```sh
 go tool nsgo dev -target web            # 在浏览器中
 go tool nsgo dev -target ios_simulator  # 在 iOS 模拟器中
+go tool nsgo dev -target tvos_simulator # 在 Apple TV 模拟器中
 go tool nsgo dev -target android        # 在连接的设备或模拟器上
 ```
 
-`-device` 选择 iPhone、模拟器或 Android 设备，`-port` 指定网页服务器的端口，`-trace` 打印运行中应用的每次提交及其耗时和挂载项，`-fps` 在 macOS、iOS、Windows 和 Linux 上显示性能监视器。`-h` 列出全部参数。
+`-device` 选择 iPhone、Apple TV、模拟器或 Android 设备，`-port` 指定网页服务器的端口，`-trace` 打印运行中应用的每次提交及其耗时和挂载项，`-fps` 在 macOS、iOS、Windows 和 Linux 上显示性能监视器。`-h` 列出全部参数。
 
 ## 项目结构
 

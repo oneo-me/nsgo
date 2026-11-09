@@ -11,7 +11,7 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 
 | Framework | Language | Draws with | Targets |
 | --- | --- | --- | --- |
-| NSGo | Go, TSX | Each platform's views | iOS, Android, macOS, Windows, Linux, web |
+| NSGo | Go, TSX | Each platform's views | iOS, tvOS, Android, macOS, Windows, Linux, web |
 | [NSH](https://nsh.dev) | Rust, TSX | Each platform's views | iOS, Android, macOS, Windows, Linux, web |
 | [MyGo](https://github.com/egoist/mygo) | Go, web pages | Its own GPU renderer, or the system webview | macOS, Windows, Linux, web |
 | [Fyne](https://fyne.io), [Gio](https://gioui.org) | Go | Their own renderer | Desktops, phones, web |
@@ -29,7 +29,7 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 - **Native views.** Text, input methods, selection, scrolling, accessibility and menus are the platform's own, so an app behaves as users expect there, where a framework that draws itself rebuilds each of them.
 - **Fine-grained updates.** Components run once and signals update only what reads them, with no virtual DOM or per-frame view function to diff; animation runs on the platform's frame clock.
 - **Go only.** The engine, layout and backends are Go, with no C, no cgo and no JavaScript engine for Go apps. Every target builds from a Mac with Go and Xcode: no NDK, Android SDK, JDK, GTK or Windows toolchain.
-- **Every platform.** Phones, desktops and the web share one engine, one API and one test model, and apps can embed in existing iOS, Android, Go desktop and web apps.
+- **Every platform.** Phones, TVs, desktops and the web share one engine, one API and one test model, and apps can embed in existing iOS, Android, Go desktop and web apps.
 - **TSX when wanted.** Screens can be written in TSX with Tailwind classes, on the same engine as Go components.
 
 ## Weaknesses

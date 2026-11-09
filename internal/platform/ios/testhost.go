@@ -54,7 +54,31 @@ func (host) Open(root func(cx *core.Scope) core.Node, o testhost.Options) (testh
 	if err := loadHID(); err != nil {
 		return nil, err
 	}
+	if err := awaitActive(); err != nil {
+		return nil, err
+	}
 	return &testSurface{s: runner, test: test}, nil
+}
+
+// awaitActive waits for an Apple TV app to become active, as it does a
+// moment after launching: only then does UIKit give a view the focus.
+func awaitActive() error {
+	if !onTV() {
+		return nil
+	}
+	for range 100 {
+		var active bool
+		onMainSync(func() {
+			const stateActive = 0
+			app := objc.ID(apple.Class("UIApplication")).Send(sel("sharedApplication"))
+			active = objc.Send[int](app, sel("applicationState")) == stateActive
+		})
+		if active {
+			return nil
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	return errors.New("the app did not become active")
 }
 
 func onMainSync(fn func()) {
@@ -391,6 +415,11 @@ func (t *testSurface) Key(key string) error {
 	case "enter", "return":
 		var done bool
 		onMainSync(func() {
+			// An Apple TV's keyboard Return is the remote's select button
+			// unless a field is being edited.
+			if onTV() && !t.s.editing() {
+				return
+			}
 			if kb := keyboardImpl(); kb != 0 && window.Send(sel("firstResponder")) != 0 {
 				kb.Send(sel("addInputString:"), apple.NSString("\n"))
 				done = true

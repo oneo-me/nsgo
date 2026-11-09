@@ -5,7 +5,7 @@ group: Start
 order: 1
 ---
 
-NSGo is a cross-platform native UI framework written in Go. You write an app once, in Go or in TSX, and it runs on iOS, Android, macOS, Windows, Linux and the web, drawn by each platform's own views.
+NSGo is a cross-platform native UI framework written in Go. You write an app once, in Go or in TSX, and it runs on iOS, tvOS, Android, macOS, Windows, Linux and the web, drawn by each platform's own views.
 
 ## What you write
 

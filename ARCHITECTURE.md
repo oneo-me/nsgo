@@ -54,12 +54,13 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 
 ## Platforms
 
-Every target builds on macOS with Go; iOS also needs Xcode, and x86_64 Android an NDK's clang.
+Every target builds on macOS with Go; iOS and tvOS also need Xcode, and x86_64 Android an NDK's clang.
 
 | Target | Package | Reaches the system through | Status |
 | --- | --- | --- | --- |
 | macOS | `internal/platform/macos` | purego and the Objective-C runtime; `CGO_ENABLED=0` | Runs |
 | iOS | `internal/platform/ios` | The same; cgo only to link with Xcode's linker, and for an embedded framework's one export | Runs in the simulator and on devices |
+| tvOS | `internal/platform/ios` | iOS's backend linked with tvOS's SDK (Go's `GOOS=ios`), the remote moving a focus | Runs in the simulator |
 | Web | `internal/platform/web` | `syscall/js` in WebAssembly; DOM elements | Runs |
 | Windows | `internal/platform/windows` | `syscall` and COM: Direct2D, DirectWrite, WebView2, Media Foundation | Runs |
 | Linux | `internal/platform/linux` | GTK 4, Pango and Cairo loaded with purego; WebKitGTK and GStreamer | Runs |
@@ -101,6 +102,7 @@ Packages import only downward, which `layering_test.go` checks on every target; 
 Record a design question here, and confirm the answer with the user before choosing it.
 
 - **Implicit presentations.** Components swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)). Make each one a field the app sets, and which form is the default?
+- **Sizes on a TV.** `ui`'s sizes are constants on every device, but a TV is read from across a room. Since `core` scales nothing by device, does `ui` take larger sizes on a TV, or leave them to the app ([roadmap](docs/roadmap.md#apple-tv))?
 
 ## Verification
 

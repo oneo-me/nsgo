@@ -67,8 +67,10 @@ type view struct {
 	image     *apple.ImageView
 	modal     driver.ModalConfig // a modal's
 	presented bool               // whether a modal was inserted yet
-	sheet     *sheet             // a modal presented as a sheet
-	bar       *navBar            // a screen's system header
+	// focusBefore is what had the focus as a modal came (focus.go).
+	focusBefore *view
+	sheet       *sheet  // a modal presented as a sheet
+	bar         *navBar // a screen's system header
 	// headerWrap holds a header view in its screen's bar.
 	headerWrap objc.ID
 	drawing    *driver.Drawing    // a canvas's
@@ -176,8 +178,10 @@ type surface struct {
 	keys []driver.KeyBinding // the keymap's bindings
 	// held is the binding a held key fires again, on a timer of its own:
 	// UIKit reports a held key's press once.
-	held        string
-	heldStop    chan struct{}
+	held     string
+	heldStop chan struct{}
+	// menuHeld: the remote's Menu button is down and went back.
+	menuHeld    bool
 	statusBar   int // the UIStatusBarStyle the controller asks for
 	hideBar     bool
 	barAnimated bool
@@ -191,6 +195,13 @@ type surface struct {
 	tops    map[*view]*view
 	slides  map[*view]*slide
 	changes []stackChange
+	// history is how many entries back goes through (ItemHistory).
+	history int
+	// On an Apple TV (focus.go): modals are those shown, oldest first;
+	// focused is the view with the focus, focusBack the one to give it
+	// back to as a modal goes.
+	modals             []*view
+	focused, focusBack *view
 
 	// What a batch touched, finished once its frames are set.
 	images, presenting []*view
@@ -304,6 +315,7 @@ func loadUIKit() {
 		{Cmd: sel("touchesCancelled:withEvent:"), Fn: touchesCancelled},
 	}
 	common = append(common, accessMethods()...)
+	common = append(common, focusMethods()...)
 	common = append(common, gestureMethods()...)
 	common = append(common, navMethods()...)
 	registerGestures()
@@ -312,7 +324,7 @@ func loadUIKit() {
 	registerSelection()
 	registerContent()
 	registerCanvasNodes()
-	classView = register("NsgoView", uiView, nil, common)
+	classView = register("NsgoView", uiView, nil, slices.Concat(common, pressMethods()))
 	surfaceMethods = append(common,
 		objc.MethodDef{Cmd: sel("layoutSubviews"), Fn: surfaceLayout},
 		objc.MethodDef{Cmd: selApply, Fn: surfaceApply},
@@ -349,6 +361,7 @@ func loadUIKit() {
 		{Cmd: sel("pressesBegan:withEvent:"), Fn: pressesBegan},
 		{Cmd: sel("pressesEnded:withEvent:"), Fn: pressesEnded},
 		{Cmd: sel("pressesCancelled:withEvent:"), Fn: pressesEnded},
+		{Cmd: sel("preferredFocusEnvironments"), Fn: controllerPreferredFocus},
 		{Cmd: sel("copy:"), Fn: controllerCopy},
 		{Cmd: sel("selectAll:"), Fn: controllerSelectAll},
 		{Cmd: sel("canPerformAction:withSender:"), Fn: controllerCanPerform},
@@ -513,10 +526,12 @@ func (s *surface) environment() driver.Environment {
 	body := objc.ID(apple.Class("UIFont")).Send(sel("preferredFontForTextStyle:"),
 		apple.Global(uikitPath, "UIFontTextStyleBody"))
 	idiom := driver.IdiomPhone
-	const pad, mac = 1, 5
+	const pad, tv, mac = 1, 2, 5
 	switch objc.Send[int](objc.ID(apple.Class("UIDevice")).Send(sel("currentDevice")), sel("userInterfaceIdiom")) {
 	case pad:
 		idiom = driver.IdiomTablet
+	case tv:
+		idiom = driver.IdiomTV
 	case mac:
 		idiom = driver.IdiomMac
 	}
@@ -897,7 +912,10 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemStatusBar:
 			s.setStatusBar(it.StatusBar)
 			continue
-		case driver.ItemTitle, driver.ItemBackUnhandled, driver.ItemBackPreview, driver.ItemHistory, driver.ItemWindow, driver.ItemMenu:
+		case driver.ItemHistory:
+			s.history = int(it.Count)
+			continue
+		case driver.ItemTitle, driver.ItemBackUnhandled, driver.ItemBackPreview, driver.ItemWindow, driver.ItemMenu:
 			continue
 		}
 		v := s.views[it.ID]
@@ -1123,6 +1141,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 // loads at the views' sizes and modals' entrances.
 func (s *surface) finish() {
 	s.startImages()
+	s.updateModals()
 	for _, v := range s.presenting {
 		if s.views[v.id] == v && v.native.Send(selSuperview) != 0 && !s.navigating(s.views[s.root]) {
 			h := objc.Send[apple.CGRect](v.native.Send(selSuperview), selBounds).Size.Height
@@ -1385,16 +1404,7 @@ func touchesBegan(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
 	v.pressAt.Count = uint32(max(objc.Send[int](touch, sel("tapCount")), 1))
 	// A long press on a text's span is the span's.
 	v.pressAt.Index = v.indexAt(objc.Send[apple.CGPoint](touch, selLocationInView, self))
-	v.pressed(driver.EventPressDown)
-	if v.events.Has(driver.EventLongPress) {
-		e, long := v.surface.engine, v.pressAt
-		long.Kind, long.ID = driver.EventLongPress, v.id
-		time.AfterFunc(v.longPressDelay(), func() {
-			if v.pressing.Load() && v.longFired.CompareAndSwap(false, true) {
-				e.Dispatch(long)
-			}
-		})
-	}
+	v.beginPress()
 }
 
 func touchesCancelled(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
@@ -1448,6 +1458,13 @@ var keyNames = map[int]string{
 // and passes the rest on.
 func pressesBegan(self objc.ID, cmd objc.SEL, presses, event objc.ID) {
 	app := pressSurface(self)
+
+	if app != nil && app.engine != nil && app.menuGoesBack(presses) {
+		// The remote's Menu button: back, rather than out of the app.
+		app.engine.Dispatch(driver.Event{Kind: driver.EventBack})
+		app.menuHeld = true
+		return
+	}
 	binding, consumed := "", false
 	if app != nil && app.engine != nil && len(app.keys) > 0 {
 		apple.ForEach(presses, func(press objc.ID) {
@@ -1486,9 +1503,16 @@ func pressSurface(self objc.ID) *surface {
 
 // pressesEnded stops repeating a held key's binding.
 func pressesEnded(self objc.ID, cmd objc.SEL, presses, event objc.ID) {
-	if app := pressSurface(self); app != nil && app.heldStop != nil {
+	app := pressSurface(self)
+	if app != nil && app.heldStop != nil {
 		close(app.heldStop)
 		app.heldStop, app.held = nil, ""
+	}
+	if app != nil && app.menuHeld && hasPress(presses, pressMenu) {
+		// The Menu press that went back ends here too, or UIKit would
+		// leave the app at its end.
+		app.menuHeld = false
+		return
 	}
 	apple.Super(self, cmd, presses, event)
 }

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/png"
 	"io/fs"
 	"os"
@@ -97,9 +98,16 @@ func readIcon(path string) (image.Image, error) {
 	return img, nil
 }
 
-// scaledPNG encodes img at size×size pixels, averaging the source pixels
-// each one covers.
+// scaledPNG encodes img scaled to size×size pixels.
 func scaledPNG(img image.Image, size int) []byte {
+	var out bytes.Buffer
+	png.Encode(&out, scaled(img, size))
+	return out.Bytes()
+}
+
+// scaled is img at size×size pixels, averaging the source pixels each one
+// covers.
+func scaled(img image.Image, size int) *image.NRGBA {
 	b := img.Bounds()
 	dst := image.NewNRGBA(image.Rect(0, 0, size, size))
 	for y := range size {
@@ -120,9 +128,7 @@ func scaledPNG(img image.Image, size int) []byte {
 			dst.Set(x, y, color.RGBA64{uint16(r / n), uint16(g / n), uint16(bl / n), uint16(a / n)})
 		}
 	}
-	var out bytes.Buffer
-	png.Encode(&out, dst)
-	return out.Bytes()
+	return dst
 }
 
 // writeMacIcon puts the app's icon into a macOS bundle's Resources and
@@ -131,7 +137,7 @@ func scaledPNG(img image.Image, size int) []byte {
 func writeMacIcon(ctx context.Context, p *project, resources string) (string, error) {
 	switch filepath.Ext(p.Icon.Apple) {
 	case ".icon":
-		return compileIcon(ctx, p.Icon.Apple, resources, "macosx", "11.0")
+		return compileIcon(ctx, p.Icon.Apple, resources, "macosx", "11.0", nil)
 	case ".icns":
 		data, err := os.ReadFile(p.Icon.Apple)
 		if err != nil {
@@ -177,16 +183,14 @@ func icns(img image.Image) []byte {
 	return out.Bytes()
 }
 
-// writeIOSIcon compiles the app's icon into an iOS bundle and returns the
-// Info.plist entries naming it: the Icon Composer .icon when there is
-// one, else the PNG through an asset catalog.
-func writeIOSIcon(ctx context.Context, p *project, app string, simulator bool) (string, error) {
-	sdk := "iphoneos"
-	if simulator {
-		sdk = "iphonesimulator"
-	}
-	if filepath.Ext(p.Icon.Apple) == ".icon" {
-		return compileIcon(ctx, p.Icon.Apple, app, sdk, "15.0")
+// writeIOSIcon compiles the app's icon into an iOS or tvOS bundle and
+// returns the Info.plist entries naming it: on iOS the Icon Composer
+// .icon when there is one, else the PNG through an asset catalog; on tvOS
+// the PNG as the layered icon and top shelf images the Apple TV asks for.
+func writeIOSIcon(ctx context.Context, p *project, sys *appleOS, app string, simulator bool) (string, error) {
+	sdk := sys.sdkName(simulator)
+	if sys == iOS && filepath.Ext(p.Icon.Apple) == ".icon" {
+		return compileIcon(ctx, p.Icon.Apple, app, sdk, sys.minimum, sys.idioms)
 	}
 	img, err := p.iconImage()
 	if img == nil || err != nil {
@@ -197,18 +201,138 @@ func writeIOSIcon(ctx context.Context, p *project, app string, simulator bool) (
 		return "", err
 	}
 	defer os.RemoveAll(tmp)
-	set := filepath.Join(tmp, "Assets.xcassets", "AppIcon.appiconset")
-	if err := os.MkdirAll(set, 0o755); err != nil {
+	catalog := filepath.Join(tmp, "Assets.xcassets")
+	if sys == tvOS {
+		err = writeTVBrandAssets(filepath.Join(catalog, "AppIcon.brandassets"), img)
+	} else {
+		err = writeDir(filepath.Join(catalog, "AppIcon.appiconset"), map[string][]byte{
+			"Icon.png":      scaledPNG(img, 1024),
+			"Contents.json": []byte(`{"images":[{"filename":"Icon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"nsgo","version":1}}`),
+		})
+	}
+	if err != nil {
 		return "", err
 	}
-	if err := os.WriteFile(filepath.Join(set, "Icon.png"), scaledPNG(img, 1024), 0o644); err != nil {
-		return "", err
+	return compileIcon(ctx, catalog, app, sdk, sys.minimum, sys.idioms)
+}
+
+// writeDir writes files into dir, making it.
+func writeDir(dir string, files map[string][]byte) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
 	}
-	contents := `{"images":[{"filename":"Icon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"nsgo","version":1}}`
-	if err := os.WriteFile(filepath.Join(set, "Contents.json"), []byte(contents), 0o644); err != nil {
-		return "", err
+	for name, data := range files {
+		if err := os.WriteFile(filepath.Join(dir, name), data, 0o644); err != nil {
+			return err
+		}
 	}
-	return compileIcon(ctx, filepath.Join(tmp, "Assets.xcassets"), app, sdk, "15.0")
+	return nil
+}
+
+// catalogInfo is the info every asset catalog's Contents.json ends with.
+const catalogInfo = `"info":{"author":"nsgo","version":1}`
+
+// writeTVBrandAssets writes an Apple TV's icons from a square icon: the
+// app icon and its App Store form as two layers the focus tilts apart,
+// the icon over its own edges' color, and the top shelf images, the icon
+// centered on that color.
+func writeTVBrandAssets(dir string, icon image.Image) error {
+	back := edgeColor(icon)
+	stack := func(name, idiom string, w, h int, scales ...int) error {
+		layer := func(layer string, draw func(w, h int) []byte) error {
+			files := map[string][]byte{}
+			var images []string
+			for _, scale := range scales {
+				file := fmt.Sprintf("%s@%dx.png", strings.ToLower(layer), scale)
+				files[file] = draw(w*scale, h*scale)
+				images = append(images, fmt.Sprintf(`{"filename":%q,"idiom":%q,"scale":"%dx"}`, file, idiom, scale))
+			}
+			files["Contents.json"] = []byte(`{"images":[` + strings.Join(images, ",") + `],` + catalogInfo + `}`)
+			d := filepath.Join(dir, name+".imagestack", layer+".imagestacklayer")
+			if err := writeDir(filepath.Join(d, "Content.imageset"), files); err != nil {
+				return err
+			}
+			return writeDir(d, map[string][]byte{"Contents.json": []byte(`{` + catalogInfo + `}`)})
+		}
+		if err := layer("Front", func(w, h int) []byte { return tvImage(icon, nil, w, h) }); err != nil {
+			return err
+		}
+		if err := layer("Back", func(w, h int) []byte { return tvImage(nil, back, w, h) }); err != nil {
+			return err
+		}
+		return writeDir(filepath.Join(dir, name+".imagestack"), map[string][]byte{
+			"Contents.json": []byte(`{"layers":[{"filename":"Front.imagestacklayer"},{"filename":"Back.imagestacklayer"}],` + catalogInfo + `}`),
+		})
+	}
+	if err := stack("App Icon", "tv", 400, 240, 1, 2); err != nil {
+		return err
+	}
+	if err := stack("App Icon - App Store", "tv-marketing", 1280, 768, 1); err != nil {
+		return err
+	}
+	shelf := func(name string, w, h int) error {
+		return writeDir(filepath.Join(dir, name+".imageset"), map[string][]byte{
+			"shelf@1x.png": tvImage(icon, back, w, h),
+			"shelf@2x.png": tvImage(icon, back, w*2, h*2),
+			"Contents.json": []byte(`{"images":[{"filename":"shelf@1x.png","idiom":"tv","scale":"1x"},` +
+				`{"filename":"shelf@2x.png","idiom":"tv","scale":"2x"}],` + catalogInfo + `}`),
+		})
+	}
+	if err := shelf("Top Shelf Image", 1920, 720); err != nil {
+		return err
+	}
+	if err := shelf("Top Shelf Image Wide", 2320, 720); err != nil {
+		return err
+	}
+	return writeDir(dir, map[string][]byte{"Contents.json": []byte(`{"assets":[` +
+		`{"filename":"App Icon - App Store.imagestack","idiom":"tv","role":"primary-app-icon","size":"1280x768"},` +
+		`{"filename":"App Icon.imagestack","idiom":"tv","role":"primary-app-icon","size":"400x240"},` +
+		`{"filename":"Top Shelf Image Wide.imageset","idiom":"tv","role":"top-shelf-image-wide","size":"2320x720"},` +
+		`{"filename":"Top Shelf Image.imageset","idiom":"tv","role":"top-shelf-image","size":"1920x720"}],` + catalogInfo + `}`)})
+}
+
+// tvImage draws a w×h PNG: back filling it, if any, and icon over it,
+// if any, centered at three quarters of its height.
+func tvImage(icon image.Image, back color.Color, w, h int) []byte {
+	dst := image.NewNRGBA(image.Rect(0, 0, w, h))
+	if back != nil {
+		draw.Draw(dst, dst.Bounds(), image.NewUniform(back), image.Point{}, draw.Src)
+	}
+	if icon != nil {
+		size := h * 3 / 4
+		at := image.Pt((w-size)/2, (h-size)/2)
+		draw.Draw(dst, image.Rectangle{Min: at, Max: at.Add(image.Pt(size, size))}, scaled(icon, size), image.Point{}, draw.Over)
+	}
+	var out bytes.Buffer
+	png.Encode(&out, dst)
+	return out.Bytes()
+}
+
+// edgeColor is the opaque average of img's edge pixels, the color a
+// full-bleed icon's background has.
+func edgeColor(img image.Image) color.Color {
+	b := img.Bounds()
+	var r, g, bl, n uint64
+	add := func(x, y int) {
+		cr, cg, cb, ca := img.At(x, y).RGBA()
+		if ca == 0 {
+			return
+		}
+		// Unpremultiply, so the edge's antialiasing does not darken it.
+		r, g, bl, n = r+uint64(cr)*0xffff/uint64(ca), g+uint64(cg)*0xffff/uint64(ca), bl+uint64(cb)*0xffff/uint64(ca), n+1
+	}
+	for x := b.Min.X; x < b.Max.X; x++ {
+		add(x, b.Min.Y)
+		add(x, b.Max.Y-1)
+	}
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		add(b.Min.X, y)
+		add(b.Max.X-1, y)
+	}
+	if n == 0 {
+		return color.Black
+	}
+	return color.RGBA64{uint16(r / n), uint16(g / n), uint16(bl / n), 0xffff}
 }
 
 // compileIcon runs actool on an Icon Composer .icon or an asset catalog
@@ -217,14 +341,14 @@ func writeIOSIcon(ctx context.Context, p *project, app string, simulator bool) (
 // takes seconds, so the user's cache keeps its output by actool's
 // version, the arguments and the input's files, and builds after the
 // first copy it.
-func compileIcon(ctx context.Context, input, out, platform, minimum string) (string, error) {
+func compileIcon(ctx context.Context, input, out, platform, minimum string, idioms []string) (string, error) {
 	name := "AppIcon"
 	if filepath.Ext(input) == ".icon" {
 		name = strings.TrimSuffix(filepath.Base(input), ".icon")
 	}
 	args := []string{"--platform", platform, "--minimum-deployment-target", minimum, "--app-icon", name}
-	if platform != "macosx" {
-		args = append(args, "--target-device", "iphone", "--target-device", "ipad")
+	for _, idiom := range idioms {
+		args = append(args, "--target-device", idiom)
 	}
 	version, err := output(ctx, "xcrun", "actool", "--version")
 	if err != nil {

@@ -175,7 +175,9 @@ func (v *view) setGestures(m driver.EventMask) {
 	toggle := func(want bool, r *objc.ID, make func() objc.ID) {
 		switch {
 		case want && *r == 0:
-			*r = make()
+			if *r = make(); *r == 0 {
+				return
+			}
 			v.native.Send(sel("addGestureRecognizer:"), *r)
 			(*r).Send(selRelease)
 		case !want && *r != 0:
@@ -185,6 +187,10 @@ func (v *view) setGestures(m driver.EventMask) {
 		}
 	}
 	newRecognizer := func(class objc.Class, action objc.SEL) objc.ID {
+		if class == 0 {
+			// tvOS has no pinch, rotation or hover recognizers.
+			return 0
+		}
 		target, a := v.native, action
 		if action == 0 {
 			target = 0

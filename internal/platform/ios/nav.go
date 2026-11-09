@@ -233,6 +233,10 @@ func (s *surface) styleBar(b *navBar, c *driver.ScreenConfig) {
 		tint = uiColor(c.TintColor)
 	}
 	b.bar.Send(sel("setTintColor:"), tint)
+	if onTV() {
+		// tvOS refuses UINavigationBarAppearance.
+		return
+	}
 	a := objc.ID(apple.Class("UINavigationBarAppearance")).Send(selNew)
 	switch {
 	case c.HeaderTransparent, c.LargeTitle && !b.collapsed:

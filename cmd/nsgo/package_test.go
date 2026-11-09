@@ -77,7 +77,8 @@ func TestWebReleasesNameFilesByContent(t *testing.T) {
 }
 
 func TestSimulatorsArePickedByName(t *testing.T) {
-	sims, err := parseSimulators([]byte(`{"devices": {
+	sims, err := parseSimulators(iOS, []byte(`{"devices": {
+		"com.apple.CoreSimulator.SimRuntime.tvOS-27-0": [{"udid": "T", "name": "Apple TV 4K (3rd generation)", "state": "Booted"}],
 		"com.apple.CoreSimulator.SimRuntime.iOS-17-5": [{"udid": "A", "name": "iPhone 15", "state": "Shutdown"}],
 		"com.apple.CoreSimulator.SimRuntime.iOS-18-2": [{"udid": "B", "name": "iPhone 16", "state": "Shutdown"},
 			{"udid": "C", "name": "iPad Air", "state": "Booted"}]}}`))
@@ -85,13 +86,30 @@ func TestSimulatorsArePickedByName(t *testing.T) {
 		t.Fatal(err)
 	}
 	for wanted, udid := range map[string]string{"": "C", "iphone 15": "A", "B": "B", "iPad Air": "C"} {
-		s, err := pickSimulator(sims, wanted)
+		s, err := pickSimulator(iOS, sims, wanted)
 		if err != nil || s.UDID != udid {
 			t.Errorf("pick %q = %v, %v; want %s", wanted, s, err, udid)
 		}
 	}
-	if _, err := pickSimulator(sims, "Vision"); err == nil {
+	if _, err := pickSimulator(iOS, sims, "Vision"); err == nil {
 		t.Error("an unknown name picked a simulator")
+	}
+}
+
+func TestTVSimulatorsArePickedApart(t *testing.T) {
+	data := []byte(`{"devices": {
+		"com.apple.CoreSimulator.SimRuntime.iOS-27-0": [{"udid": "P", "name": "iPhone 18 Pro", "state": "Booted"}],
+		"com.apple.CoreSimulator.SimRuntime.tvOS-26-0": [{"udid": "A", "name": "Apple TV", "state": "Shutdown"}],
+		"com.apple.CoreSimulator.SimRuntime.tvOS-27-0": [{"udid": "B", "name": "Apple TV 4K (3rd generation)", "state": "Shutdown"}]}}`)
+	sims, err := parseSimulators(tvOS, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s, err := pickSimulator(tvOS, sims, ""); err != nil || s.UDID != "B" {
+		t.Errorf("pick an Apple TV = %v, %v; want the newest, B", s, err)
+	}
+	if _, err := pickSimulator(tvOS, sims, "iPhone 18 Pro"); err == nil {
+		t.Error("an iPhone was picked as an Apple TV")
 	}
 }
 
