@@ -189,6 +189,12 @@ func videoURL(url, path string) objc.ID {
 	return nsURL.Send(sel("fileURLWithPath:"), NSString(path))
 }
 
+// local reports whether a located source is a file: a path, or a file URL.
+func local(url string) bool {
+	scheme, _, _ := strings.Cut(url, "://")
+	return url == "" || strings.EqualFold(scheme, "file")
+}
+
 // videoAsset is the AVURLAsset of source, 0 when it has none. A local file
 // asks for precise duration and timing: AVFoundation otherwise estimates the
 // timing of a variable-bitrate file such as a FLAC, and a seek lands on a
@@ -200,7 +206,7 @@ func videoAsset(source string) objc.ID {
 		return 0
 	}
 	options := objc.ID(0)
-	if url == "" {
+	if local(url) {
 		options = objc.ID(Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"),
 			objc.ID(Class("NSNumber")).Send(sel("numberWithBool:"), true),
 			NSString("AVURLAssetPreferPreciseDurationAndTimingKey"))

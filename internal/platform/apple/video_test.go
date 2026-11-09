@@ -26,6 +26,20 @@ func TestLocate(t *testing.T) {
 	}
 }
 
+func TestLocal(t *testing.T) {
+	for url, want := range map[string]bool{
+		"":                          true,
+		"file:///tmp/a.flac":        true,
+		"FILE:///tmp/a.flac":        true,
+		"https://example.com/a.mp4": false,
+		"http://example.com/file":   false,
+	} {
+		if got := local(url); got != want {
+			t.Errorf("local(%q) = %v, want %v", url, got, want)
+		}
+	}
+}
+
 func TestCMTime(t *testing.T) {
 	if got := cmTimeOf(1500 * time.Millisecond); got.Value != 900 || got.Timescale != 600 || got.Flags != 1 {
 		t.Errorf("cmTimeOf(1.5s) = %+v", got)
