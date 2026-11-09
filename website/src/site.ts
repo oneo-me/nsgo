@@ -70,6 +70,7 @@ export const install = 'go get -tool github.com/oneo-me/nsgo/cmd/nsgo';
 export const platforms: { name: string; icon: IconName; stack: string; target: string }[] = [
   { name: 'iOS', icon: 'smartphone', stack: 'UIKit · CoreText', target: 'ios' },
   { name: 'tvOS', icon: 'tv', stack: 'UIKit · CoreText', target: 'tvos' },
+  { name: 'watchOS', icon: 'watch', stack: 'SwiftUI · CoreText', target: 'watchos' },
   { name: 'Android', icon: 'android', stack: 'Android Views', target: 'android_arm64' },
   { name: 'macOS', icon: 'laptop', stack: 'AppKit · CoreText', target: 'macos_arm64' },
   { name: 'Windows', icon: 'windows', stack: 'Direct2D · DirectWrite', target: 'windows_x64' },

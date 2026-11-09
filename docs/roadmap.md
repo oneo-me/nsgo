@@ -83,6 +83,19 @@ tvOS runs on iOS's backend, its remote moving a focus ([keyboard focus](architec
 | The terminal and embedding on tvOS | — | `tools/libghostty` builds libghostty-vt for tvOS and its simulator, and `-embed` builds a tvOS framework |
 | tvOS tests' settling | — | A test step on the tvOS simulator settles once a dialog's transition ends, rather than after `settleWait`'s 5 seconds: an `nsgo.opacity` animation stays on its layer there |
 
+## Apple Watch
+
+watchOS runs in a SwiftUI host, its views nodes Go draws into ([platforms](../ARCHITECTURE.md#platforms)); what it still lacks:
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| A real Apple Watch | — | `nsgo dev -target watchos` and `nsgo build -target watchos -run` sign, install and run the gallery on a paired Series 9 or later, reading `os_proc_available_memory` there, as so far it ran in the simulator alone |
+| The App Store's package | — | `nsgo build -target watchos` writes what App Store Connect takes for a watch-only app, its iOS stub included, signed with `sign.profile` |
+| A lighter engine | — | `core`'s node holds its static style shared rather than copied, and its own fields packed: about 6 KB a node now, two `Style`s of 1.3 KB among them, which a watch pays most for |
+| The Digital Crown and native touches | — | A view that pans or turns a value takes the crown's rotation, and the test host posts touches SwiftUI sees, so tests reach its scrolls and text fields as a finger does |
+| Leaving views animated | `animation.md` | A commit's layout animation takes views out with its Delete, which leave at once on a watch now |
+| What watchOS has not | — | Web views, video, native components and shaders (no WebKit, AVKit views or Metal), the clipboard, pickers, files, sharing and speech report `ErrUnsupported`, each checked from the gallery; the views show empty boxes and the services answer unsupported now |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

@@ -1,4 +1,4 @@
-//go:build ios && !nsgoembed
+//go:build ios && !nsgoembed && !nsgowatch
 
 package nsgo
 

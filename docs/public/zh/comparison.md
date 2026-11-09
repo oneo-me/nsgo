@@ -11,7 +11,7 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 
 | 框架 | 语言 | 绘制方式 | 目标平台 |
 | --- | --- | --- | --- |
-| NSGo | Go、TSX | 各平台自己的视图 | iOS、tvOS、Android、macOS、Windows、Linux、Web |
+| NSGo | Go、TSX | 各平台自己的视图 | iOS、tvOS、watchOS、Android、macOS、Windows、Linux、Web |
 | [NSH](https://nsh.dev) | Rust、TSX | 各平台自己的视图 | iOS、Android、macOS、Windows、Linux、Web |
 | [MyGo](https://github.com/egoist/mygo) | Go、网页 | 自己的 GPU 渲染器，或系统 WebView | macOS、Windows、Linux、Web |
 | [Fyne](https://fyne.io)、[Gio](https://gioui.org) | Go | 自己的渲染器 | 桌面、手机、Web |

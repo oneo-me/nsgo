@@ -174,7 +174,7 @@ export interface CanvasRenderingContext2D extends CanvasProperties, CanvasContex
 export interface PlatformInfo {
   readonly os: OS;
   readonly version: string;
-  readonly idiom: "phone" | "pad" | "desktop" | "mac" | "tv" | "";
+  readonly idiom: "phone" | "pad" | "desktop" | "mac" | "tv" | "watch" | "";
   readonly catalyst: boolean;
   select<T>(spec: PlatformSelectSpec<T>): T | undefined;
 }

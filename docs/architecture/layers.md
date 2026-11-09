@@ -149,6 +149,7 @@ Each `internal/platform/<target>` maps the same protocol onto its system ([platf
 | `linux` | A GTK widget per view that draws itself with Cairo |
 | `web` | An absolutely positioned element per view |
 | `android` | An Android view per node, in the Java process the Go executable talks to over pipes |
+| `watchos` | A SwiftUI view per node in the host linked into the executable, its look a Canvas Go draws with Core Graphics |
 
 The other packages under `internal/platform` hold what two or more backends share, such as `apple` for macOS and iOS or `hover` and `textselect` for Windows and Linux. Move code there once a second backend needs it, and add it to `platformShared` in `layering_test.go`.
 

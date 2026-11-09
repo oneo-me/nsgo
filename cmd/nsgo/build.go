@@ -132,6 +132,7 @@ var targets = []string{
 	"linux_arm64", "linux_x64",
 	"ios", "ios_simulator",
 	"tvos", "tvos_simulator",
+	"watchos", "watchos_simulator",
 	"android_arm64", "android_x64",
 	"web",
 }
@@ -190,6 +191,9 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		return signMacApp(ctx, p, app)
 	case "windows_arm64", "windows_x64":
 		return buildWindows(ctx, p, dir, goArch(arch))
+	case "watchos":
+		_, err := buildWatchApp(ctx, p, dir, false)
+		return err
 	case "ios", "tvos":
 		sys, _, _ := appleOSOf(target)
 		app, err := buildIOSApp(ctx, p, sys, dir, false)
@@ -201,7 +205,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		}
 		stage("packaging the IPA")
 		return writeIPA(app, filepath.Join(dir, p.Name+".ipa"))
-	case "ios_simulator", "tvos_simulator":
+	case "ios_simulator", "tvos_simulator", "watchos_simulator":
 		sys, _, _ := appleOSOf(target)
 		_, err := buildIOSApp(ctx, p, sys, dir, true)
 		return err

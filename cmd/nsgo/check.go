@@ -94,6 +94,9 @@ func vetEnv(ctx context.Context, target string) ([]string, error) {
 	case "ios", "tvos":
 		sys, _, _ := appleOSOf(os)
 		return iosEnv(ctx, sys, arch == "simulator")
+	case "watchos":
+		env, err := iosEnv(ctx, watchOS, arch == "simulator")
+		return append(env, "GOFLAGS=-tags=nsgowatch"), err
 	case "android":
 		if arch == "arm64" {
 			return []string{"GOOS=android", "GOARCH=arm64", "CGO_ENABLED=0"}, nil

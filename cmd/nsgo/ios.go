@@ -15,9 +15,10 @@ import (
 	"text/template"
 )
 
-// appleOS is iOS or tvOS: what their builds, bundles, simulators and
-// devices differ in. Both build GOOS=ios; tvOS links with its own SDK,
-// and the UIKit backend finds out at run time which it runs on.
+// appleOS is iOS, tvOS or watchOS: what their builds, bundles,
+// simulators and devices differ in. All build GOOS=ios; tvOS links with
+// its own SDK, and the UIKit backend finds out at run time which it runs
+// on; watchOS's apps are SwiftUI hosts of their own (watchos.go).
 type appleOS struct {
 	name    string // "iOS"
 	target  string // the devices' target; the simulator's adds _simulator
@@ -49,7 +50,7 @@ var (
 // whether it is the simulator's.
 func appleOSOf(target string) (sys *appleOS, simulator, ok bool) {
 	name, sim := strings.CutSuffix(target, "_simulator")
-	for _, sys := range []*appleOS{iOS, tvOS} {
+	for _, sys := range []*appleOS{iOS, tvOS, watchOS} {
 		if sys.target == name {
 			return sys, sim, true
 		}
@@ -111,6 +112,9 @@ func iosEnv(ctx context.Context, sys *appleOS, simulator bool) ([]string, error)
 // buildIOSApp writes <dir>/<name>.app for sys's simulator or devices.
 // Device builds are left unsigned for the developer's own identity.
 func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simulator bool) (string, error) {
+	if sys == watchOS {
+		return buildWatchApp(ctx, p, dir, simulator)
+	}
 	env, err := iosEnv(ctx, sys, simulator)
 	if err != nil {
 		return "", err

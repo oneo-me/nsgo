@@ -54,19 +54,20 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 
 ## Platforms
 
-Every target builds on macOS with Go; iOS and tvOS also need Xcode, and x86_64 Android an NDK's clang.
+Every target builds on macOS with Go; iOS, tvOS and watchOS also need Xcode, and x86_64 Android an NDK's clang.
 
 | Target | Package | Reaches the system through | Status |
 | --- | --- | --- | --- |
 | macOS | `internal/platform/macos` | purego and the Objective-C runtime; `CGO_ENABLED=0` | Runs |
 | iOS | `internal/platform/ios` | The same; cgo only to link with Xcode's linker, and for an embedded framework's one export | Runs in the simulator and on devices |
 | tvOS | `internal/platform/ios` | iOS's backend linked with tvOS's SDK (Go's `GOOS=ios`), the remote moving a focus | Runs in the simulator |
+| watchOS | `internal/platform/watchos` | A SwiftUI host the tool links into the Go executable (`GOOS=ios`, arm64 alone: Series 9, Ultra 2 and later), each view a node Go draws into with Core Graphics | Runs in the simulator |
 | Web | `internal/platform/web` | `syscall/js` in WebAssembly; DOM elements | Runs |
 | Windows | `internal/platform/windows` | `syscall` and COM: Direct2D, DirectWrite, WebView2, Media Foundation | Runs |
 | Linux | `internal/platform/linux` | GTK 4, Pango and Cairo loaded with purego; WebKitGTK and GStreamer | Runs |
 | Android | `internal/platform/android` | A Go executable the prebuilt Java runtime starts and talks to over pipes | Runs on arm64 devices and x86_64 emulators |
 
-Android runs the app as a second process because Go builds Android shared libraries only with cgo and the NDK, and executables without cgo for arm64 only. iOS forbids child processes, so it links in-process with Xcode.
+Android runs the app as a second process because Go builds Android shared libraries only with cgo and the NDK, and executables without cgo for arm64 only. iOS forbids child processes, so it links in-process with Xcode. watchOS has no public UIKit or Core Animation, so its views are SwiftUI's in `cmd/nsgo/watch/Host.swift`, which places, clips and scrolls them; Go keeps their state, hit-tests touches, runs what animates on the host's frames, and builds only the views within a screen of what each scroll view shows, as a watch has the memory for a screen's views, not a page's.
 
 ## Boundaries
 

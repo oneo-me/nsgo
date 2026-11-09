@@ -63,7 +63,7 @@ func (r *runtime) platform() js.Value {
 	core.Untracked(r.cx, func() bool {
 		os, version = e.OS(), e.OSVersion().String()
 		idiom = map[core.Idiom]string{core.IdiomPhone: "phone", core.IdiomTablet: "pad", core.IdiomDesktop: "desktop",
-			core.IdiomMac: "mac", core.IdiomTV: "tv"}[e.Idiom()]
+			core.IdiomMac: "mac", core.IdiomTV: "tv", core.IdiomWatch: "watch"}[e.Idiom()]
 		return true
 	})
 	o := r.vm.NewObject()

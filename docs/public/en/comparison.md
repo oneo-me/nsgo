@@ -11,7 +11,7 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 
 | Framework | Language | Draws with | Targets |
 | --- | --- | --- | --- |
-| NSGo | Go, TSX | Each platform's views | iOS, tvOS, Android, macOS, Windows, Linux, web |
+| NSGo | Go, TSX | Each platform's views | iOS, tvOS, watchOS, Android, macOS, Windows, Linux, web |
 | [NSH](https://nsh.dev) | Rust, TSX | Each platform's views | iOS, Android, macOS, Windows, Linux, web |
 | [MyGo](https://github.com/egoist/mygo) | Go, web pages | Its own GPU renderer, or the system webview | macOS, Windows, Linux, web |
 | [Fyne](https://fyne.io), [Gio](https://gioui.org) | Go | Their own renderer | Desktops, phones, web |

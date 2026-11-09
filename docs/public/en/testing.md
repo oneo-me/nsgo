@@ -39,7 +39,7 @@ The same tests run in a real window with the platform's own input:
 go tool nsgo test -target macos
 ```
 
-The targets are `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator`, `tvos_simulator` (the remote's arrows, Return as its select button and Escape as Menu) and `android`, or `all`. Each test runs in a process of its own, `app.Screenshot("name")` saves screenshots in `.nsgo/test/screenshots`, and `-fps` logs the performance monitor's readings each second on `macos`, `windows`, `linux` and `ios_simulator`. `-env KEY=VALUE` sets a variable of the tests' environment, which a phone's tests see no other way.
+The targets are `macos`, `windows`, `linux`, `web` (in Chrome, Chromium or Edge), `ios_simulator`, `tvos_simulator` (the remote's arrows, Return as its select button and Escape as Menu), `watchos_simulator` and `android`, or `all`. Each test runs in a process of its own, `app.Screenshot("name")` saves screenshots in `.nsgo/test/screenshots`, and `-fps` logs the performance monitor's readings each second on `macos`, `windows`, `linux` and `ios_simulator`. `-env KEY=VALUE` sets a variable of the tests' environment, which a phone's tests see no other way.
 
 To measure rather than check, start with `nsgotest.Measure()`: the app runs on the system's clock, `Advance` waits as long as it moves, and steps wait only for what animates to rest. `app.Mark("name")` names what the readings from there on measure, and `app.Mark("-")` ends it; the marks print with or without `-fps`.
 

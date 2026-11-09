@@ -199,7 +199,7 @@ func runnable(target string) bool {
 	switch target {
 	case "web", "android_arm64", "android_x64":
 		return true
-	case "ios", "ios_simulator", "tvos", "tvos_simulator":
+	case "ios", "ios_simulator", "tvos", "tvos_simulator", "watchos", "watchos_simulator":
 		return runtime.GOOS == "darwin"
 	case "macos_" + arch:
 		return runtime.GOOS == "darwin"
@@ -223,7 +223,7 @@ func runPackage(ctx context.Context, p *project, target, dir string) error {
 		return serveSite(ctx, dir)
 	case strings.HasPrefix(target, "macos_"):
 		return run(ctx, "open", "-n", filepath.Join(dir, p.Name+".app"))
-	case target == "ios" || target == "tvos":
+	case target == "ios" || target == "tvos" || target == "watchos":
 		sys, _, _ := appleOSOf(target)
 		device, err := selectIOSDevice(ctx, sys, p.Build.device)
 		if err != nil {
@@ -237,7 +237,7 @@ func runPackage(ctx context.Context, p *project, target, dir string) error {
 			return err
 		}
 		return run(ctx, "xcrun", "devicectl", "device", "process", "launch", "--terminate-existing", "--device", device.UDID, p.ID)
-	case target == "ios_simulator" || target == "tvos_simulator":
+	case target == "ios_simulator" || target == "tvos_simulator" || target == "watchos_simulator":
 		sys, _, _ := appleOSOf(target)
 		udid, err := bootSimulator(ctx, sys, p.Build.device)
 		if err != nil {

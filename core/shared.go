@@ -435,6 +435,7 @@ const (
 	IdiomDesktop = driver.IdiomDesktop
 	IdiomMac     = driver.IdiomMac
 	IdiomTV      = driver.IdiomTV
+	IdiomWatch   = driver.IdiomWatch
 )
 
 const (

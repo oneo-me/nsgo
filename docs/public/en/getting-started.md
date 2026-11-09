@@ -8,7 +8,7 @@ order: 2
 ## Requirements
 
 - [Go](https://go.dev/dl/) 1.26 or later.
-- To build for iOS and tvOS, a Mac with Xcode. Every other target builds from macOS with Go alone; the x86_64 Android emulator's also needs an Android NDK.
+- To build for iOS, tvOS and watchOS, a Mac with Xcode. Every other target builds from macOS with Go alone; the x86_64 Android emulator's also needs an Android NDK.
 - To run on an iPhone, an Apple ID in Xcode's Accounts and the iPhone trusted, with Developer Mode on.
 - To run on Android, `adb` from the Android SDK's platform-tools.
 - To run on Windows, Go alone, which also builds the Windows and web packages.
@@ -50,10 +50,11 @@ Run it somewhere else with `-target`:
 go tool nsgo dev -target web            # in the browser
 go tool nsgo dev -target ios_simulator  # in the iOS simulator
 go tool nsgo dev -target tvos_simulator # in the Apple TV simulator
+go tool nsgo dev -target watchos_simulator # in the Apple Watch simulator
 go tool nsgo dev -target android        # on a connected device or emulator
 ```
 
-`-device` picks the iPhone, Apple TV, simulator or Android device, `-port` the web server's port, `-trace` prints each commit of the running app with its time and mount items, and `-fps` shows the performance monitor on macOS, iOS, Windows and Linux. `-h` lists every flag.
+`-device` picks the iPhone, Apple TV, Apple Watch, simulator or Android device, `-port` the web server's port, `-trace` prints each commit of the running app with its time and mount items, and `-fps` shows the performance monitor on macOS, iOS, Windows and Linux. `-h` lists every flag.
 
 ## The project
 

@@ -414,7 +414,9 @@ type ImageView struct {
 	Dispatch func(driver.Event)
 
 	layer, picture, mask objc.ID
-	config               driver.ImageConfig
+	// changed is a drawn image's (NewDrawnImage), which has no layers.
+	changed func()
+	config  driver.ImageConfig
 	tint                 driver.Color
 	corners              driver.ViewStyle // its corners: CornerRadius, Corners, ContinuousCorners
 	bounds               CGSize
@@ -431,6 +433,11 @@ type ImageView struct {
 	quiet   bool // the pending load decodes the source shown again, larger
 	closed  bool
 }
+
+// NewDrawnImage is an ImageView with no layer, for a backend that draws
+// it itself (Draw): changed runs on the main thread each time what it
+// shows changes.
+func NewDrawnImage(changed func()) *ImageView { return &ImageView{changed: changed} }
 
 // NewImageView adds an image layer to host, a view's layer.
 func NewImageView(host objc.ID) *ImageView {
@@ -471,6 +478,9 @@ func (iv *ImageView) SetStyle(vs *driver.ViewStyle) {
 // setCorners clips the image to the view's corners where they share a
 // radius, as the view's layer clips them.
 func (iv *ImageView) setCorners() {
+	if iv.layer == 0 {
+		return
+	}
 	w, h := iv.bounds.Width, iv.bounds.Height
 	var r driver.Points
 	var masked uint
@@ -619,6 +629,12 @@ func (iv *ImageView) fitted() CGRect {
 // render shows the image in the picture layer: as it is, or as a template
 // the tint fills through a mask of the image's alpha.
 func (iv *ImageView) render(fade time.Duration) {
+	if iv.layer == 0 {
+		if iv.changed != nil {
+			iv.changed()
+		}
+		return
+	}
 	WithoutAnimation(func() {
 		iv.layer.Send(selSetFrame, Rect(0, 0, iv.bounds.Width, iv.bounds.Height))
 		fit := iv.fitted()
@@ -657,6 +673,41 @@ func (iv *ImageView) render(fade time.Duration) {
 		}
 		target.Send(selSetContentsScale, scale)
 	})
+}
+
+// Draw draws a drawn image's picture into ctx, a context of the view's
+// box with its y axis down: fitted, clipped to the view's corners, and
+// filled with the tint through its alpha where the style tints it.
+func (iv *ImageView) Draw(ctx uintptr) {
+	if iv.image == 0 || ctx == 0 {
+		return
+	}
+	fit := iv.fitted()
+	cgContextSaveGState(ctx)
+	defer cgContextRestoreGState(ctx)
+	w, h := iv.bounds.Width, iv.bounds.Height
+	if radii := iv.corners.Radii(driver.Size{Width: driver.Points(w), Height: driver.Points(h)}); radii != (driver.Corners{}) {
+		cgContextBeginPath(ctx)
+		path := cgPath(driver.RoundedRect(nil, 0, 0, w, h, radii, iv.corners.ContinuousCorners, false))
+		cgContextAddPath(ctx, path)
+		Release(path)
+		cgContextClip(ctx)
+	} else {
+		cgContextClipToRect(ctx, Rect(0, 0, w, h))
+	}
+	// Images draw bottom up: flip them into the top-down space.
+	cgContextTranslateCTM(ctx, fit.Origin.X, fit.Origin.Y+fit.Size.Height)
+	cgContextScaleCTM(ctx, 1, -1)
+	box := Rect(0, 0, fit.Size.Width, fit.Size.Height)
+	if iv.tint == 0 {
+		cgContextDrawImage(ctx, box, iv.image)
+		return
+	}
+	cgContextClipToMask(ctx, box, iv.image)
+	color := CGColor(iv.tint)
+	cgContextSetFillColor(ctx, color)
+	Release(color)
+	cgContextFillRect(ctx, box)
 }
 
 // Close stops loading and lets the image go; the view is being deleted.

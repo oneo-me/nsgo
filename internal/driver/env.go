@@ -118,6 +118,8 @@ const (
 	IdiomMac
 	// IdiomTV is a television, such as Android TV.
 	IdiomTV
+	// IdiomWatch is a watch: Apple Watch.
+	IdiomWatch
 )
 
 // OSVersion is an operating system's version.

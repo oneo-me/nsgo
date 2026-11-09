@@ -52,6 +52,7 @@ var (
 	cgContextBeginTransparency   func(ctx, aux uintptr)
 	cgContextEndTransparency     func(ctx uintptr)
 	cgContextDrawImage           func(ctx uintptr, r CGRect, image uintptr)
+	cgContextClipToMask          func(ctx uintptr, r CGRect, mask uintptr)
 	cgGradientCreate             func(space uintptr, components, locations *float64, count uintptr) uintptr
 	cgImageCreateWithImageInRect func(image uintptr, r CGRect) uintptr
 	cgPathCreateWithRoundedRect  func(r CGRect, rw, rh float64, transform uintptr) uintptr
@@ -128,6 +129,7 @@ func loadCanvas(cg uintptr) {
 		purego.SyscallN(addRects, ctx, uintptr(unsafe.Pointer(unsafe.SliceData(rects))), uintptr(len(rects)))
 	}
 	reg(&cgContextDrawImage, cg, "CGContextDrawImage")
+	reg(&cgContextClipToMask, cg, "CGContextClipToMask")
 	reg(&cgContextDrawLinearGradient, cg, "CGContextDrawLinearGradient")
 	reg(&cgContextDrawRadialGradient, cg, "CGContextDrawRadialGradient")
 	// macOS 14 and iOS 17 draw conic gradients; earlier systems draw

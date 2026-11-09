@@ -24,10 +24,10 @@ build_number: 1         # CFBundleVersion and Android's versionCode; else from v
 # theme: theme.json     # a TSX app's theme: NSGo's or a shadcn/ui one
 # i18n: { dir: locales, source: en }  # the app's catalogs and the language they are written in
 icon:
-  apple: assets/AppIcon.icon  # macOS and iOS, or an .icns for macOS; tvOS layers the PNG
+  apple: assets/AppIcon.icon  # macOS, iOS and watchOS, or an .icns for macOS; tvOS layers the PNG
   png: assets/Icon.png        # every other target
 dev:
-  target: native        # native, web, ios, ios_simulator, tvos, tvos_simulator or android
+  target: native        # native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator or android
   hot_reload: true      # false builds once, watching no files
   fps: false            # true shows the performance monitor
   # icon: { png: assets/Icon-dev.png }  # replaces icon's files in dev's builds; defaults to assets/*-dev.*
@@ -35,7 +35,7 @@ build:
   output: dist
   open: false           # true opens the output directory after building
   fps: false            # as dev.fps, for packages
-  targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, android_arm64, web]
+  targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
 ```
 

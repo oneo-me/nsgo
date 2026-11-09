@@ -313,6 +313,8 @@ func idiomName(i core.Idiom) string {
 		return "mac"
 	case core.IdiomTV:
 		return "tv"
+	case core.IdiomWatch:
+		return "watch"
 	}
 	return "unknown"
 }
