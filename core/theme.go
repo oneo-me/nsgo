@@ -145,15 +145,15 @@ func DefaultTheme() *Theme {
 	text, dark := RGB(0x333333), RGB(0xeaeaea)
 	t := &Theme{
 		Light: Palette{
-			Background: RGB(0xffffff), Surface: RGB(0xffffff), SurfaceHover: RGB(0xeaeaea), SurfacePressed: RGB(0xd7d7d7),
-			Border: text.Faded(0.16), Text: text, TextMuted: RGB(0x717171),
+			Background: RGB(0xffffff), Surface: RGB(0xffffff), SurfaceHover: text.Faded(0.08), SurfacePressed: text.Faded(0.14),
+			Border: text.Faded(0.16), Text: text, TextMuted: text.Faded(0.55),
 			Accent: RGB(0x007aff), AccentHover: RGB(0x006be0), AccentPressed: RGB(0x005cbf), AccentText: RGB(0xffffff),
 			Danger: RGB(0xb4444c), Warning: RGB(0xb45309), Success: RGB(0x059669),
 			Selection: RGBA(0x007aff, 0.22), Focus: RGBA(0x007aff, 0.55), Scrollbar: text.Faded(0.30),
 		},
 		Dark: Palette{
-			Background: RGB(0x1f1f1f), Surface: RGB(0x292929), SurfaceHover: RGB(0x333333), SurfacePressed: RGB(0x3c3c3c),
-			Border: dark.Faded(0.16), Text: dark, TextMuted: RGB(0xb7b7b7),
+			Background: RGB(0x1f1f1f), Surface: RGB(0x292929), SurfaceHover: dark.Faded(0.08), SurfacePressed: dark.Faded(0.14),
+			Border: dark.Faded(0.16), Text: dark, TextMuted: dark.Faded(0.55),
 			Accent: RGB(0x0a84ff), AccentHover: RGB(0x2793ff), AccentPressed: RGB(0x0974e0), AccentText: RGB(0xffffff),
 			Danger: RGB(0xe58f95), Warning: RGB(0xe6b567), Success: RGB(0x79bea1),
 			Selection: RGBA(0x0a84ff, 0.24), Focus: RGBA(0x0a84ff, 0.8), Scrollbar: dark.Faded(0.35),

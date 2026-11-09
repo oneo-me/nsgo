@@ -91,9 +91,10 @@ func TestThemes(t *testing.T) {
 	}
 	for _, theme := range []*core.Theme{th, WarmDuskTheme()} {
 		for _, p := range []core.Palette{theme.Light, theme.Dark} {
-			for _, edge := range []core.Color{p.Border, p.Colors["fieldBorder"], p.Colors["line"]} {
-				if _, _, _, a := edge.Components(); a >= 1 || Alpha(edge, 1) != Alpha(p.Text, 1) {
-					t.Fatalf("edge %v is not a translucent %v", edge, p.Text)
+			for _, c := range []core.Color{p.Border, p.TextMuted, p.SurfaceHover, p.SurfacePressed, p.Scrollbar,
+				p.Colors["fieldBorder"], p.Colors["line"], p.Colors["faint"], p.Colors["track"]} {
+				if _, _, _, a := c.Components(); a >= 1 || Alpha(c, 1) != Alpha(p.Text, 1) {
+					t.Fatalf("overlay %v is not a translucent %v", c, p.Text)
 				}
 			}
 		}

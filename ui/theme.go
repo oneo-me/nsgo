@@ -121,14 +121,14 @@ func DefaultTheme() *core.Theme {
 	t := core.DefaultTheme()
 	t.Light.Colors = map[string]core.Color{
 		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xffffff), "field": core.RGB(0xfdfdfd), "fieldBorder": t.Light.Border,
-		"line": t.Light.Text.Faded(0.12), "faint": core.RGB(0x9e9e9e), "accentFill": core.RGB(0x007aff),
-		"light": core.RGB(0x333333), "onLight": core.RGB(0xffffff), "track": core.RGB(0xc3c3c3), "knob": core.RGB(0xffffff),
+		"line": t.Light.Text.Faded(0.12), "faint": t.Light.Text.Faded(0.38), "accentFill": core.RGB(0x007aff),
+		"light": core.RGB(0x333333), "onLight": core.RGB(0xffffff), "track": t.Light.Text.Faded(0.25), "knob": core.RGB(0xffffff),
 		"code": core.RGB(0x373737), "info": core.RGB(0x0891b2), "down": core.RGB(0xb4444c),
 	}
 	t.Dark.Colors = map[string]core.Color{
 		"inset": core.RGB(0x282828), "raised": core.RGB(0x333333), "field": core.RGB(0x242424), "fieldBorder": t.Dark.Border,
-		"line": t.Dark.Text.Faded(0.10), "faint": core.RGB(0x7f7f7f), "accentFill": core.RGB(0x0a84ff),
-		"light": core.RGB(0xeaeaea), "onLight": core.RGB(0x1f1f1f), "track": core.RGB(0x646464), "knob": core.RGB(0xf5f5f5),
+		"line": t.Dark.Text.Faded(0.10), "faint": t.Dark.Text.Faded(0.38), "accentFill": core.RGB(0x0a84ff),
+		"light": core.RGB(0xeaeaea), "onLight": core.RGB(0x1f1f1f), "track": t.Dark.Text.Faded(0.28), "knob": core.RGB(0xf5f5f5),
 		"code": core.RGB(0xdddddd), "info": core.RGB(0x64d2ff), "down": core.RGB(0xe58f95),
 	}
 	return t

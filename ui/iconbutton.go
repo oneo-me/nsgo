@@ -53,7 +53,7 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 	}
 	tint := b.Tint
 	if tint == nil {
-		tint = colors.Muted
+		tint = colors.Text
 	}
 	return base.Button{OnPress: func(core.PressEvent) { b.OnPress() }, Label: b.Label, LabelFunc: b.LabelFunc,
 		Selected: b.Selected, Disabled: b.Disabled, TestID: b.TestID, Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff},
