@@ -57,3 +57,19 @@ func TestInitTemplates(t *testing.T) {
 		})
 	}
 }
+
+func TestDirAppName(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.Mkdir("my.app", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir("my.app")
+	for dir, want := range map[string]string{".": "my-app", "": "my-app", "../2048 game": "game", "Hello World": "Hello World"} {
+		if got, err := dirAppName(dir); err != nil || got != want {
+			t.Errorf("dirAppName(%q) = %q, %v; want %q", dir, got, err, want)
+		}
+	}
+	if _, err := dirAppName("../应用"); err == nil {
+		t.Error("named an app after a directory with no letters it can use")
+	}
+}

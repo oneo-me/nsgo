@@ -23,7 +23,10 @@ func initApp(dir, name, module, kind string) error {
 		return fmt.Errorf("init: no template %q; use %s", kind, strings.Join(templates, ", "))
 	}
 	if name == "" {
-		name = filepath.Base(dir)
+		var err error
+		if name, err = dirAppName(dir); err != nil {
+			return err
+		}
 	}
 	if !regexp.MustCompile(`^[A-Za-z][A-Za-z0-9 _-]*$`).MatchString(name) {
 		return fmt.Errorf("init: %q is not an app name; use letters, digits, spaces, - and _", name)
@@ -76,6 +79,22 @@ func initApp(dir, name, module, kind string) error {
 		detail("nsgo dev and nsgo check write the TSX's types to .nsgo/types for editors; check also type-checks it")
 	}
 	return nil
+}
+
+// dirAppName names an app after its directory, made absolute so that .
+// names the current one, without what an app's name cannot hold.
+func dirAppName(dir string) (string, error) {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+	base := filepath.Base(abs)
+	name := strings.Trim(regexp.MustCompile(`[^A-Za-z0-9 _-]+`).ReplaceAllString(base, "-"), " _-")
+	name = strings.TrimLeft(name, "0123456789 _-")
+	if name == "" {
+		return "", fmt.Errorf("init: cannot name an app after %q; give one with -name", base)
+	}
+	return name, nil
 }
 
 var initYAML = template.Must(template.New("yaml").Parse(`name: {{.Name}}
