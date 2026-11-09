@@ -315,3 +315,54 @@ func TestRubberBandClamp(t *testing.T) {
 		t.Errorf("before the start: %v, want %v", before, -(past - 100))
 	}
 }
+
+func TestMatchedViewsCountAsOne(t *testing.T) {
+	var open *Signal[bool]
+	var cx0 *Scope
+	h := newHost(t, Size{Width: 300, Height: 300}, func(cx *Scope) Node {
+		cx0 = cx
+		open = NewSignal(cx, false)
+		return Show{When: open.Get,
+			Then: func(cx *Scope) Node {
+				return View{TestID: "page", Children: []Node{
+					View{TestID: "hero", MatchID: "photo", Style: Style{Width: Pt(300), Height: Pt(200)}},
+				}}
+			},
+			Else: func(cx *Scope) Node {
+				return View{TestID: "thumb", MatchID: "photo", Style: Style{Width: Pt(40), Height: Pt(40)}}
+			},
+		}
+	})
+	h.commit()
+	thumb := h.find("thumb").id
+	matches := func(b *driver.MountBatch) (out []driver.MountItem) {
+		deleted := false
+		for _, it := range b.Items {
+			switch it.Kind {
+			case driver.ItemDelete:
+				deleted = true
+			case driver.ItemMatch:
+				if deleted {
+					t.Fatal("a match came after a delete")
+				}
+				out = append(out, it)
+			}
+		}
+		return out
+	}
+	// Without a layout animation the views come and go as any.
+	open.Set(true)
+	if m := matches(h.commit()); len(m) != 0 {
+		t.Fatalf("matched without a layout animation: %v", m)
+	}
+	open.Set(false)
+	h.commit()
+	thumb = h.find("thumb").id
+
+	cx0.AnimateLayout(LayoutEaseInEaseOutPreset)
+	open.Set(true)
+	m := matches(h.commit())
+	if len(m) != 1 || m[0].ID != h.find("hero").id || m[0].Before != thumb {
+		t.Fatalf("matches %+v, want the hero taking thumb %d's place", m, thumb)
+	}
+}

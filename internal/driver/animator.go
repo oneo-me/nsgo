@@ -215,7 +215,7 @@ func (a *Animator) apply(o *AnimationOp) {
 	case AnimCreateValue:
 		a.nodes[o.Node] = &anode{kind: o.Kind, value: o.Value}
 		a.touch()
-	case AnimCreateInterpolate, AnimCreateMath, AnimCreateDiffClamp:
+	case AnimCreateInterpolate, AnimCreateMath, AnimCreateDiffClamp, AnimCreateRubberBand:
 		a.nodes[o.Node] = &anode{kind: o.Kind, op: *o}
 		a.touch()
 	case AnimSet, AnimSetOffset, AnimFlattenOffset, AnimExtractOffset, AnimStopValue:
@@ -467,7 +467,7 @@ func (a *Animator) dependsOn(id uint32, ids [2]uint32) bool {
 		return false
 	}
 	switch n.kind {
-	case AnimCreateInterpolate, AnimCreateDiffClamp:
+	case AnimCreateInterpolate, AnimCreateDiffClamp, AnimCreateRubberBand:
 		return a.dependsOn(n.op.Input, ids)
 	case AnimCreateMath:
 		return a.dependsOn(n.op.A.Node, ids) || a.dependsOn(n.op.B.Node, ids)
@@ -913,6 +913,12 @@ func (a *Animator) eval(n *anode) (float64, Color) {
 		}
 		n.lastIn = in
 		n.num = n.last
+	case AnimCreateRubberBand:
+		in := 0.0
+		if src := a.nodes[n.op.Input]; src != nil {
+			in, _ = a.eval(src)
+		}
+		n.num = RubberBand(in, n.op.Min, n.op.Max, n.op.Value)
 	}
 	return n.num, n.color
 }

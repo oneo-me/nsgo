@@ -121,6 +121,36 @@ func (s *surface) appear(v *view, lb *layoutBatch) {
 	s.touched(v)
 }
 
+// contentAt returns where v's content shows on the screen: its frame mid
+// animation, carried through its parents', less the scroll offsets.
+func contentAt(v *view) driver.Point {
+	var at driver.Point
+	for p := v; p != nil; p = p.parent {
+		o := p.shownFrame().Origin
+		at.X += o.X - p.offset.X
+		at.Y += o.Y - p.offset.Y
+	}
+	return at
+}
+
+// match moves v, which the batch made, from where old, which it deletes,
+// shows, with the batch's Update rather than appearing, and hides old at
+// once (driver.ItemMatch).
+func (s *surface) match(v, old *view, lb *layoutBatch) {
+	if lb == nil || lb.anim.Update == nil || old == nil || v.parent == nil || old.parent == nil {
+		return
+	}
+	was, in := contentAt(old.parent), contentAt(v.parent)
+	o := old.shownFrame()
+	from := driver.Bounds{Origin: driver.Point{X: was.X + o.Origin.X - in.X, Y: was.Y + o.Origin.Y - in.Y}, Size: o.Size}
+	old.style.Hidden = true
+	s.touched(old)
+	m := s.motionOf(v)
+	m.fade, m.part = nil, 1
+	m.move, m.moveStart, m.from, m.shown = lb.anim.Update, time.Now(), from, from
+	s.touched(v)
+}
+
 func (s *surface) motionOf(v *view) *motion {
 	if v.moving == nil {
 		v.moving = &motion{part: 1, shown: v.frame}

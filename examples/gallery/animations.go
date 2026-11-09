@@ -736,8 +736,9 @@ func transitions(cx *core.Scope) core.Node {
 
 // animationsDemo is the platform's animation graph: loops, ready-made
 // motions and keyframes, groups, easing curves, springs, interpolation,
-// DiffClamp, layout animation and style transitions.
+// DiffClamp, layout animation, shared elements, exits, resisting drags
+// and style transitions.
 func animationsDemo(cx *core.Scope) core.Node {
 	return demoPage(cx, pageProps{}, hero, motionPresets, staggeredEntrance, keyframesMotions, aurora, easingPlot, easingRace, composition, springs, interpolations,
-		hidingHeader, layoutAnimation, transitions)
+		hidingHeader, layoutAnimation, sharedElements, exits, resistingDrags, transitions)
 }

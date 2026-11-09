@@ -77,7 +77,8 @@ type layoutBatch struct {
 	anim     *driver.LayoutAnimation
 	now      time.Time
 	created  map[*view]bool
-	inserted []*view // the views created and inserted
+	inserted []*view        // the views created and inserted
+	matched  map[*view]bool // created views that move from a deleted one's frame
 }
 
 // layoutBatch returns what b animates, or nil when it animates nothing:
@@ -126,11 +127,44 @@ func (w *window) appear(lb *layoutBatch) {
 		return
 	}
 	for _, v := range lb.inserted {
-		if !v.deleted && v.parent != nil && !lb.created[v.parent] {
+		if !v.deleted && v.parent != nil && !lb.created[v.parent] && !lb.matched[v] {
 			v.fading = &fading{start: lb.now, tr: *lb.anim.Create}
 			w.animate(v)
 		}
 	}
+}
+
+// shownAt returns where v shows in the window: its frame mid animation
+// carried through its parents' frames and scroll offsets.
+func shownAt(v *view) driver.Bounds {
+	b := frameOf(v)
+	for p := v.parent; p != nil; p = p.parent {
+		o := frameOf(p).Origin
+		b.Origin.X += o.X - p.offset.X
+		b.Origin.Y += o.Y - p.offset.Y
+	}
+	return b
+}
+
+// match moves v, which the batch created, from where old, which it
+// deletes, shows, on the batch's Update rather than appearing, and hides
+// old at once (driver.ItemMatch).
+func (w *window) match(v, old *view, lb *layoutBatch) {
+	if lb == nil || lb.anim.Update == nil || old == nil || v.parent == nil || !w.shown(old) {
+		return
+	}
+	was, in := shownAt(old), shownAt(v.parent)
+	in.Origin.X -= v.parent.offset.X
+	in.Origin.Y -= v.parent.offset.Y
+	from := driver.Bounds{Origin: driver.Point{X: was.Origin.X - in.Origin.X, Y: was.Origin.Y - in.Origin.Y}, Size: was.Size}
+	if lb.matched == nil {
+		lb.matched = map[*view]bool{}
+	}
+	lb.matched[v] = true
+	w.redrawView(old)
+	old.style.Hidden = true
+	v.moving = &moving{from: from, start: lb.now, tr: *lb.anim.Update, shown: from}
+	w.animate(v)
 }
 
 // leave keeps v, which a batch deletes, drawn as a batch's Delete fades or

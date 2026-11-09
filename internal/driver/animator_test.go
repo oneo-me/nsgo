@@ -125,6 +125,38 @@ func TestAnimatorPanAndMath(t *testing.T) {
 	}
 }
 
+func TestRubberBandResistsAPanPastItsBounds(t *testing.T) {
+	a := NewAnimator(func(Event) {})
+	a.Apply([]AnimationOp{
+		{Kind: AnimCreateValue, Node: 1},
+		{Kind: AnimCreateRubberBand, Node: 2, Input: 1, Min: -50, Max: 50, Value: 200},
+		{Kind: AnimBindPan, View: 7, X: 1},
+		{Kind: AnimBind, View: 7, Prop: PropTranslateX, Node: 2},
+	})
+	var last Points
+	for i, x := range []Points{0, 40, 100, 200, 400, -300} {
+		phase := GestureChanged
+		if i == 0 {
+			phase = GestureBegan
+		}
+		a.Gesture(&Event{Kind: EventPan, ID: 7, Phase: phase, Point: Point{X: x}})
+		v, _ := a.Values(7)
+		want := Points(RubberBand(float64(x), -50, 50, 200))
+		if v.TranslateX != want {
+			t.Fatalf("at %v the view is at %v, want %v", x, v.TranslateX, want)
+		}
+		switch {
+		case x <= 50 && x >= -50 && v.TranslateX != x:
+			t.Fatalf("at %v within the bounds the view is at %v", x, v.TranslateX)
+		case x > 50 && (v.TranslateX <= last || v.TranslateX >= 50+200 || float64(v.TranslateX) >= float64(x)):
+			t.Fatalf("at %v past the bound the view is at %v after %v", x, v.TranslateX, last)
+		case x < -50 && (v.TranslateX >= -50 || v.TranslateX <= -250):
+			t.Fatalf("at %v past the lower bound the view is at %v", x, v.TranslateX)
+		}
+		last = v.TranslateX
+	}
+}
+
 func TestGesturesMoveTheirValuesFromWhereTheyWere(t *testing.T) {
 	a := NewAnimator(func(Event) {})
 	a.Apply([]AnimationOp{

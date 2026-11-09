@@ -753,6 +753,8 @@ func (w *window) apply(b *driver.MountBatch) {
 			}
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
+		case driver.ItemMatch:
+			w.match(v, w.view(it.Before), lb)
 		case driver.ItemFrame:
 			old := v.shownFrame().Size
 			w.framed(v, it, lb)

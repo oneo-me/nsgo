@@ -375,6 +375,13 @@ func (m *Motion) Play(spec MotionSpec, done func(finished bool)) *AnimationRun {
 	return m.cx.StartAnimation(m.Animation(spec, reduced), done)
 }
 
+// Exit plays spec as the motion's view leaves the Presence branch it is
+// in (Scope.OnExit), which keeps the view until spec ends: a sheet or a
+// toast built with an exit leaves with it, whatever removes it.
+func (m *Motion) Exit(spec MotionSpec) {
+	m.cx.OnExit(func(done func()) { m.Play(spec, func(bool) { done() }) })
+}
+
 // MotionKind is what a preset is for.
 type MotionKind uint8
 

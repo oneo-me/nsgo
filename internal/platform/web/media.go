@@ -170,7 +170,34 @@ func (s *surface) appear(v *view, lb *layoutBatch, parent driver.NodeID) {
 	if tr.Property == driver.LayoutScale {
 		from = map[string]any{"scale": "0"}
 	}
-	v.el.Call("animate", []any{from, map[string]any{}}, timing(tr))
+	v.appearAnim = v.el.Call("animate", []any{from, map[string]any{}}, timing(tr))
+}
+
+// match moves v, which the batch created, from where old, which it
+// deletes, shows, on the batch's Update rather than appearing, and hides
+// old at once (driver.ItemMatch). Both rectangles are the page's, so the
+// difference between them carries v's frame to where old shows.
+func (s *surface) match(v, old *view, lb *layoutBatch) {
+	if lb == nil || lb.anim.Update == nil || old == nil || !v.framed || !old.el.Get("isConnected").Bool() ||
+		!v.el.Get("isConnected").Bool() {
+		return
+	}
+	if v.appearAnim.Truthy() {
+		v.appearAnim.Call("cancel")
+		v.appearAnim = js.Undefined()
+	}
+	was, now := old.el.Call("getBoundingClientRect"), v.el.Call("getBoundingClientRect")
+	f := v.frame
+	dx := driver.Points(was.Get("left").Float() - now.Get("left").Float())
+	dy := driver.Points(was.Get("top").Float() - now.Get("top").Float())
+	from := map[string]any{"left": px(f.Origin.X + dx), "top": px(f.Origin.Y + dy),
+		"width": px(driver.Points(was.Get("width").Float())), "height": px(driver.Points(was.Get("height").Float()))}
+	to := map[string]any{"left": px(f.Origin.X), "top": px(f.Origin.Y), "width": px(f.Size.Width), "height": px(f.Size.Height)}
+	setStyle(old.el, map[string]string{"visibility": "hidden"})
+	if v.layoutAnim.Truthy() {
+		v.layoutAnim.Call("cancel")
+	}
+	v.layoutAnim = v.el.Call("animate", []any{from, to}, timing(lb.anim.Update))
 }
 
 // vanish keeps a deleted view's element where it is while it fades or

@@ -41,6 +41,7 @@ final class Animator {
     static final int RESET = 19;
     static final int FORGET_RUN = 20;
     static final int BIND_PULL = 21;
+    static final int CREATE_RUBBER_BAND = 22;
 
     // Bound properties, as core.AnimatedProp.
     static final int PROP_OPACITY = 0;
@@ -499,6 +500,12 @@ final class Animator {
                 o.max = in.readDouble();
                 o.snap = in.readUnsignedByte() != 0;
                 break;
+            case CREATE_RUBBER_BAND:
+                o.input = in.readInt();
+                o.min = in.readDouble();
+                o.max = in.readDouble();
+                o.value = in.readDouble();
+                break;
             case READ:
             case STOP:
             case RESET:
@@ -547,7 +554,8 @@ final class Animator {
             }
             case CREATE_INTERPOLATE:
             case CREATE_MATH:
-            case CREATE_DIFF_CLAMP: {
+            case CREATE_DIFF_CLAMP:
+            case CREATE_RUBBER_BAND: {
                 ANode n = new ANode();
                 n.kind = o.kind;
                 n.op = o;
@@ -800,6 +808,7 @@ final class Animator {
         switch (n.kind) {
             case CREATE_INTERPOLATE:
             case CREATE_DIFF_CLAMP:
+            case CREATE_RUBBER_BAND:
                 return dependsOn(n.op.input, ids);
             case CREATE_MATH:
                 return dependsOn(n.op.aNode, ids) || dependsOn(n.op.bNode, ids);
@@ -1011,10 +1020,25 @@ final class Animator {
                 n.num = n.last;
                 break;
             }
+            case CREATE_RUBBER_BAND: {
+                double in = 0;
+                ANode src = nodes.get(n.op.input);
+                if (src != null) in = eval(src);
+                n.num = rubberBand(in, n.op.min, n.op.max, n.op.value);
+                break;
+            }
             default:
                 break;
         }
         return n.num;
+    }
+
+    /** driver.RubberBand: x resisted past lo and hi, by at most dimension. */
+    static double rubberBand(double x, double lo, double hi, double dimension) {
+        if (x >= lo && x <= hi) return x;
+        double over = x < lo ? lo - x : x - hi;
+        double band = dimension <= 0 ? 0 : (1 - 1 / (over * 0.55 / dimension + 1)) * dimension;
+        return x < lo ? lo - band : hi + band;
     }
 
     /** Go's math.Mod: the remainder with x's sign, as Java's % on doubles. */

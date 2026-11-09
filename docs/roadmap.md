@@ -14,16 +14,6 @@ NSH records what its hot paths cost (`data-table.md` (Performance), `performance
 | GTK frames | `performance.md` (Linux) | The DataTable's scroll costs on Linux what NSH's does (5.4 ms a frame and 51% of a core against 2.2 ms and 32%), and its ticks and the stack's slides too (16% and 10% against 14% and 6%); most of a scrolling frame is GTK's own snapshot and rendering under its main loop (2026-11-09) |
 | Windows and Android | `data-table.md` (Performance) | The DataTable's scroll and the stack's slides on Windows (41–44% and 28–29% against 30–32% and 20–22%, 2026-11-09) and the DataTable's scroll on Android (125% against 111% on the emulator) cost what NSH's do; and on a Pixel 10 Pro the table holds about NSH's ~870 views, commits at 3 and 7 ms at the median and 90th percentile, and slides on whole pixels |
 
-## Motion
-
-What components still lack to move as their parts come, go and travel (#19), which NSH lacks as well (`animation.md`, the table beside gpui-base's).
-
-| Item | Reference | Done when |
-| --- | --- | --- |
-| Exits | NSH's gap for gpui-base's `Presence`; Motion's `AnimatePresence` | A region like `Show` keeps what it held after its condition turns false until an exit the app plays ends, so a sheet's or a toast's parts leave with their motion without the component tracking it |
-| Shared elements | SwiftUI's `matchedGeometryEffect`, Motion's `layoutId` | Views a commit removes and inserts under one match ID count as one: the new view moves from the frame the old one showed, with the commit's layout animation |
-| Resisting drags | `RubberBandClamp` | A node resists a value past its bounds on the frame clock, so a drag bound with `PanValues` slows at its ends without a commit per move |
-
 ## Application and windows
 
 What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference.

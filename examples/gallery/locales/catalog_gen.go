@@ -1373,6 +1373,18 @@ const (
 	textAnimAStyleSTransitionAnimates
 	textAnimColorCornersTransformOpacityAndFrame
 	textAnimToggle
+	textAnimExits
+	textAnimWhatARegionHeldLeaves
+	textAnimChangesSaved
+	textAnimLeavesWithItsOwnMotion
+	textAnimShow
+	textAnimHide
+	textAnimSharedElements
+	textAnimViewsOfOneMatchIDAreOne
+	textAnimATileOpensIntoItsPanel
+	textAnimResistingDrags
+	textAnimADragSlowsPastItsEnds
+	textAnimOnTheFrameClockNoCommits
 	textAnimGentle
 	textAnimWobbly
 	textAnimStiff
@@ -3399,6 +3411,18 @@ var keyOfText = [numTexts]string{
 	"animAStyleSTransitionAnimates",
 	"animColorCornersTransformOpacityAndFrame",
 	"animToggle",
+	"animExits",
+	"animWhatARegionHeldLeaves",
+	"animChangesSaved",
+	"animLeavesWithItsOwnMotion",
+	"animShow",
+	"animHide",
+	"animSharedElements",
+	"animViewsOfOneMatchIDAreOne",
+	"animATileOpensIntoItsPanel",
+	"animResistingDrags",
+	"animADragSlowsPastItsEnds",
+	"animOnTheFrameClockNoCommits",
 	"animGentle",
 	"animWobbly",
 	"animStiff",
@@ -5423,6 +5447,18 @@ var textsEn = i18n.NewTexts(""+
 	"A style's Transition animates its changes"+
 	"Color, corners, transform, opacity and frame"+
 	"Toggle"+
+	"Exits"+
+	"What a region held stays until its exit ends"+
+	"Changes saved"+
+	"Leaves with its own motion, whatever removes it"+
+	"Show"+
+	"Hide"+
+	"Shared elements"+
+	"Views of one match ID move as one across a commit"+
+	"A tile opens into its panel and back"+
+	"Resisting drags"+
+	"A drag slows past its ends and springs back"+
+	"On the frame clock, with no commit per move"+
 	"Gentle"+
 	"Wobbly"+
 	"Stiff"+
@@ -7444,6 +7480,18 @@ var textsEn = i18n.NewTexts(""+
 		41,
 		44,
 		6,
+		5,
+		44,
+		13,
+		47,
+		4,
+		4,
+		15,
+		49,
+		36,
+		15,
+		43,
+		43,
 		6,
 		6,
 		5,
@@ -9468,6 +9516,18 @@ var textsZhHans = i18n.NewTexts(""+
 	"样式的 Transition 为它的变化添加动画"+
 	"颜色、圆角、变换、不透明度和位置尺寸"+
 	"切换"+
+	"退场"+
+	"区域里的内容会留到退场动画结束"+
+	"已保存更改"+
+	"无论被谁移除，都带着自己的动效离开"+
+	"显示"+
+	"隐藏"+
+	"共享元素"+
+	"同一匹配 ID 的视图在提交前后作为一个整体移动"+
+	"方块展开成面板，再收回"+
+	"阻尼拖动"+
+	"拖过两端会变慢，松手后弹回"+
+	"运行在帧时钟上，每次移动无需提交"+
 	"柔和"+
 	"摇晃"+
 	"硬朗"+
@@ -11489,6 +11549,18 @@ var textsZhHans = i18n.NewTexts(""+
 		48,
 		54,
 		6,
+		6,
+		45,
+		15,
+		51,
+		6,
+		6,
+		12,
+		64,
+		33,
+		12,
+		39,
+		48,
 		6,
 		6,
 		6,
@@ -21978,6 +22050,104 @@ func AnimToggle(cx *core.Scope) string { return For(cx).AnimToggle() }
 
 // AnimToggle is the package's AnimToggle in the language of msgs.
 func (msgs Messages) AnimToggle() string { return msgs.text(textAnimToggle) }
+
+// AnimExits says "Exits"
+// in the language the app shows under cx.
+func AnimExits(cx *core.Scope) string { return For(cx).AnimExits() }
+
+// AnimExits is the package's AnimExits in the language of msgs.
+func (msgs Messages) AnimExits() string { return msgs.text(textAnimExits) }
+
+// AnimWhatARegionHeldLeaves says "What a region held stays until its exit ends"
+// in the language the app shows under cx.
+func AnimWhatARegionHeldLeaves(cx *core.Scope) string { return For(cx).AnimWhatARegionHeldLeaves() }
+
+// AnimWhatARegionHeldLeaves is the package's AnimWhatARegionHeldLeaves in the language of msgs.
+func (msgs Messages) AnimWhatARegionHeldLeaves() string {
+	return msgs.text(textAnimWhatARegionHeldLeaves)
+}
+
+// AnimChangesSaved says "Changes saved"
+// in the language the app shows under cx.
+func AnimChangesSaved(cx *core.Scope) string { return For(cx).AnimChangesSaved() }
+
+// AnimChangesSaved is the package's AnimChangesSaved in the language of msgs.
+func (msgs Messages) AnimChangesSaved() string { return msgs.text(textAnimChangesSaved) }
+
+// AnimLeavesWithItsOwnMotion says "Leaves with its own motion, whatever removes it"
+// in the language the app shows under cx.
+func AnimLeavesWithItsOwnMotion(cx *core.Scope) string { return For(cx).AnimLeavesWithItsOwnMotion() }
+
+// AnimLeavesWithItsOwnMotion is the package's AnimLeavesWithItsOwnMotion in the language of msgs.
+func (msgs Messages) AnimLeavesWithItsOwnMotion() string {
+	return msgs.text(textAnimLeavesWithItsOwnMotion)
+}
+
+// AnimShow says "Show"
+// in the language the app shows under cx.
+func AnimShow(cx *core.Scope) string { return For(cx).AnimShow() }
+
+// AnimShow is the package's AnimShow in the language of msgs.
+func (msgs Messages) AnimShow() string { return msgs.text(textAnimShow) }
+
+// AnimHide says "Hide"
+// in the language the app shows under cx.
+func AnimHide(cx *core.Scope) string { return For(cx).AnimHide() }
+
+// AnimHide is the package's AnimHide in the language of msgs.
+func (msgs Messages) AnimHide() string { return msgs.text(textAnimHide) }
+
+// AnimSharedElements says "Shared elements"
+// in the language the app shows under cx.
+func AnimSharedElements(cx *core.Scope) string { return For(cx).AnimSharedElements() }
+
+// AnimSharedElements is the package's AnimSharedElements in the language of msgs.
+func (msgs Messages) AnimSharedElements() string { return msgs.text(textAnimSharedElements) }
+
+// AnimViewsOfOneMatchIDAreOne says "Views of one match ID move as one across a commit"
+// in the language the app shows under cx.
+func AnimViewsOfOneMatchIDAreOne(cx *core.Scope) string { return For(cx).AnimViewsOfOneMatchIDAreOne() }
+
+// AnimViewsOfOneMatchIDAreOne is the package's AnimViewsOfOneMatchIDAreOne in the language of msgs.
+func (msgs Messages) AnimViewsOfOneMatchIDAreOne() string {
+	return msgs.text(textAnimViewsOfOneMatchIDAreOne)
+}
+
+// AnimATileOpensIntoItsPanel says "A tile opens into its panel and back"
+// in the language the app shows under cx.
+func AnimATileOpensIntoItsPanel(cx *core.Scope) string { return For(cx).AnimATileOpensIntoItsPanel() }
+
+// AnimATileOpensIntoItsPanel is the package's AnimATileOpensIntoItsPanel in the language of msgs.
+func (msgs Messages) AnimATileOpensIntoItsPanel() string {
+	return msgs.text(textAnimATileOpensIntoItsPanel)
+}
+
+// AnimResistingDrags says "Resisting drags"
+// in the language the app shows under cx.
+func AnimResistingDrags(cx *core.Scope) string { return For(cx).AnimResistingDrags() }
+
+// AnimResistingDrags is the package's AnimResistingDrags in the language of msgs.
+func (msgs Messages) AnimResistingDrags() string { return msgs.text(textAnimResistingDrags) }
+
+// AnimADragSlowsPastItsEnds says "A drag slows past its ends and springs back"
+// in the language the app shows under cx.
+func AnimADragSlowsPastItsEnds(cx *core.Scope) string { return For(cx).AnimADragSlowsPastItsEnds() }
+
+// AnimADragSlowsPastItsEnds is the package's AnimADragSlowsPastItsEnds in the language of msgs.
+func (msgs Messages) AnimADragSlowsPastItsEnds() string {
+	return msgs.text(textAnimADragSlowsPastItsEnds)
+}
+
+// AnimOnTheFrameClockNoCommits says "On the frame clock, with no commit per move"
+// in the language the app shows under cx.
+func AnimOnTheFrameClockNoCommits(cx *core.Scope) string {
+	return For(cx).AnimOnTheFrameClockNoCommits()
+}
+
+// AnimOnTheFrameClockNoCommits is the package's AnimOnTheFrameClockNoCommits in the language of msgs.
+func (msgs Messages) AnimOnTheFrameClockNoCommits() string {
+	return msgs.text(textAnimOnTheFrameClockNoCommits)
+}
 
 // AnimGentle says "Gentle"
 // in the language the app shows under cx.

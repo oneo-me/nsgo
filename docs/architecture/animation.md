@@ -30,7 +30,7 @@ The app builds a graph once: `AnimatedValue`s, nodes derived with `Interpolate` 
 - `View.PanValues` has drags move values by their translation, `PinchValue` scales a value by a pinch and `RotationValue` turns one by a rotation, each from where the value was as the gesture began, so a gesture grabs a value an animation is moving (`Animator.Gesture`). A pan's start and end report the values in `PanEvent.Values`, to snap from. `Scroll.OffsetValues` follows a scroll view's offset. Each moves in the frame the pointer or the content does.
 - Nodes also drive a `Shader`'s uniform lanes and a `Canvas`'s drawing arguments, which the backend draws again when one changes ([shaders](shaders.md), [canvas](canvas.md)).
 - Values are released with the owner that made them; derived nodes with the owner running when they were made.
-- `ProjectDecay` returns where a decay brings a value to rest, to choose the point a released drag snaps to, and `RubberBandClamp` resists a value past its bounds as a scroll view's edge does. Both are plain functions for handlers, not nodes.
+- `ProjectDecay` returns where a decay brings a value to rest, to choose the point a released drag snaps to, and `RubberBandClamp` resists a value past its bounds as a scroll view's edge does: plain functions for handlers. `Resist` is `RubberBandClamp` as a node, so a view bound to it through a value `PanValues` drags slows at its ends on the frame clock; the value keeps the drag's own translation, which a pan's end reports to spring back from.
 
 The graph travels as `ItemAnimation`, after the batch's views. Each backend keeps a `driver.Animator`, applies the ops, steps it once a frame while a run is live and draws what `Changed` reports with `AnimatedValues.Apply` over the view's style. Finished runs and reads come back as `EventAnimation`.
 
@@ -53,7 +53,12 @@ A display link runs only in the run loop mode object it is given: Foundation's `
 - Delete: the top view of each subtree the batch deletes keeps drawing where it was while it fades or shrinks away, its ID already free for reuse. Views it holds go with it.
 - A view whose style's `Transition` lists `TransitionLayout` (`transition-all`; TSX's `transitionProperty` `all`, `width`, `height`, `inset` and their kin) moves and resizes the same way, on its transition's timing and easing, when a change to its own style gives it a new frame. Its `ItemFrame` carries the `LayoutTransition`; a batch's `Update` wins. Its parent's resize alone moves it at once, as CSS transitions a percentage width only when the width changes. What it holds and its siblings take their new frames at once, so it suits a view nothing follows, such as a progress bar's indicator; a section that opens and pushes what is below it wants `AnimateLayout`.
 - Reduced motion turns layout animations off. Web Animations play them on the web, springs sampled into CSS `linear()`.
+- A view with a `MatchID` that a batch with an `Update` creates, while it deletes a view with the same ID, is that view moved, as SwiftUI's `matchedGeometryEffect` and Motion's `layoutId`: the core sends `ItemMatch` after the round's inserts and before its deletes, and the backend moves the new view from where the old one shows, scroll offsets and a running animation included, hiding the old one at once rather than fading it. Inside a subtree the batch inserts, the view still shows as that subtree's top appears.
 - `LayoutKeyboard` is the software keyboard's curve, which a style's `EnvKeyboard` terms animate on: UIKit's as a Bézier, timed from the keyboard notification on iOS however late the batch arrives, and on Android the IME's `WindowInsetsAnimation`: its interpolator and duration, from where its motion already is.
+
+## Exits
+
+`Presence` is `Show` whose branches leave with their exits, gpui-base's `Presence` and Motion's `AnimatePresence`, which NSH lacks. A part of a branch registers an exit with `Scope.OnExit`, and `Motion.Exit` registers one that plays a `MotionSpec`; when `When` changes, the branch stays before the new one until every exit has called its `done`, while `Scope.Present` reads false in it. A branch with none goes at once. A leaving branch never comes back: the new value builds a branch beside it, or once it is gone with `Wait`. Exits run in the core, so the backends learn nothing new.
 
 ## Where Go departs from NSH
 
@@ -63,4 +68,5 @@ A display link runs only in the run loop mode object it is given: Foundation's `
 | Optional velocities | `Velocity` 0 keeps the value's current velocity | Zero values are defaults |
 | `Easing` as data decoded in Rust | `Easing` values with a `Kind` and `Mode`; zero is linear | Zero values are defaults |
 | A transition's properties are drawn ones; `width` and the like are unknown | `TransitionLayout` moves the frame a view's own style change sets | A component animates its own size without animating the rest of the commit |
+| No presence: an exit is awaited, then the view removed | `Presence` with `Scope.OnExit` and `Motion.Exit` | A component's parts leave with their motion whatever removes them |
 | No transition end | `OnTransitionEnd`, timed by the core | A popup leaves the tree once its exit transition is over |

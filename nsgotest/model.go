@@ -140,6 +140,16 @@ func (a *App) AnimatedValue(node uint32) float64 {
 	return v
 }
 
+// Animated returns the style the view selector matches shows: its own,
+// with the animated values bound to it drawn over it as the platform's
+// animator has them.
+func (a *App) Animated(selector string) driver.ViewStyle {
+	a.t.Helper()
+	v := a.Find(selector)
+	vals, _ := a.anim.Values(v.ID)
+	return vals.Apply(v.Style)
+}
+
 // NativeCommand is a command a native view received.
 type NativeCommand struct {
 	Name string

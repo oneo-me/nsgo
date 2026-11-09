@@ -52,6 +52,9 @@ type Tree struct {
 	ending   []*node // nodes with OnTransitionEnd restyled since the last commit
 	reports  []report
 	stacks   []*node
+	// matchGone and matchNew are the views with a MatchID the round
+	// deletes and creates, which emitMatches pairs.
+	matchGone, matchNew []*node
 	// pictured are the nodes whose shaders read pictures; shaderStarts
 	// the transitions starting in the next batch, which come first in it;
 	// navTops each stack's top screen as the last commit showed it.
@@ -163,6 +166,7 @@ type node struct {
 
 	responder *Responder // a view's part in the touch responder
 	follow    *following // what its frame follows (View.Follow)
+	match     string     // View.MatchID
 	// tip is the tooltip's: what shows it as the pointer comes onto the
 	// view, and hides it as the pointer leaves or presses.
 	tip *tooltipHooks
@@ -862,6 +866,9 @@ func (t *Tree) discard(n *node) {
 	if n.kind != 0 {
 		if n.created {
 			t.deleted = append(t.deleted, n.id)
+			if n.match != "" {
+				t.matchGone = append(t.matchGone, n)
+			}
 		} else {
 			t.nodes[n.id] = nil
 			t.free = append(t.free, n.id)
@@ -1431,6 +1438,7 @@ func (t *Tree) setViewParts(n *node, v View) {
 		focus: v.OnFocus, blur: v.OnBlur, transitionEnd: v.OnTransitionEnd}
 	n.h.action = v.OnAccessibilityAction
 	n.responder = v.Responder
+	n.match = v.MatchID
 	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
 		WindowDrag: v.Desktop.WindowDrag, SelectionArea: v.Selectable, PointerEvents: v.PointerEvents, HitSlop: v.HitSlop,
 		DelayLongPress: v.DelayLongPress, NoFocus: v.NoFocus, Ripple: v.Android.Ripple}

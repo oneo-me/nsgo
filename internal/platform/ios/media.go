@@ -317,6 +317,36 @@ func (s *surface) appear(v *view, lb *layoutBatch, parent driver.NodeID) {
 	s.startTicking()
 }
 
+// match moves v, which the batch created, from where old, which it
+// deletes, shows in v's parent, on the batch's Update rather than
+// appearing, and hides old at once (driver.ItemMatch).
+func (s *surface) match(v, old *view, lb *layoutBatch) {
+	if lb == nil || lb.anim.Update == nil || old == nil || !old.framed || !v.framed {
+		return
+	}
+	up := v.native.Send(selSuperview)
+	if up == 0 || old.native.Send(selSuperview) == 0 {
+		return
+	}
+	r := objc.Send[apple.CGRect](up, sel("convertRect:fromView:"), objc.Send[apple.CGRect](old.native, selBounds), old.native)
+	from := driver.Bounds{
+		Origin: driver.Point{X: driver.Points(r.Origin.X) - v.shift.X, Y: driver.Points(r.Origin.Y) - v.shift.Y},
+		Size:   driver.Size{Width: driver.Points(r.Size.Width), Height: driver.Points(r.Size.Height)},
+	}
+	old.native.Send(selSetHidden, true)
+	m := s.motions[v]
+	if m == nil {
+		m = &motion{}
+		s.motions[v] = m
+	}
+	to := v.frame
+	m.appear = nil
+	m.from, m.to, m.frame, m.start = from, to, lb.anim.Update, s.layoutStart(lb.anim.Update)
+	v.place(from)
+	v.restyle()
+	s.startTicking()
+}
+
 func (s *surface) vanish(v *view, lb *layoutBatch) bool {
 	if lb == nil || lb.anim.Delete == nil || !v.framed {
 		return false

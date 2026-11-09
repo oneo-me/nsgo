@@ -246,7 +246,8 @@ type view struct {
 	a11yFocus bool
 
 	// style is the view's own, which its animated values draw over;
-	// layoutAnim the layout animation moving it.
+	// layoutAnim the layout animation moving it, appearAnim the one
+	// bringing it in.
 	style driver.ViewStyle
 	// keyframes is the keyframe animation the Web Animations in running
 	// play.
@@ -255,6 +256,7 @@ type view struct {
 	animated   driver.AnimatedValues
 	framed     bool
 	layoutAnim js.Value
+	appearAnim js.Value
 
 	component      driver.NativeComponent // a native view's
 	componentTried bool
@@ -1494,6 +1496,9 @@ func (s *surface) Mount(b *driver.MountBatch) {
 			if v.input != nil {
 				v.input.listeners.release()
 			}
+		case driver.ItemMatch:
+			s.dom.flush()
+			s.match(v, s.view(it.Before), lb)
 		case driver.ItemFrame:
 			v.frame = it.Frame
 			switch {

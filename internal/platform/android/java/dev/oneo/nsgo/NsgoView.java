@@ -1844,6 +1844,9 @@ public class NsgoView extends FrameLayout {
                 setFrame(n, new float[] {in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()},
                         LayoutTransition.read(in));
                 break;
+            case Protocol.ITEM_MATCH:
+                match(n, nodes.get(in.readInt()));
+                break;
             case Protocol.ITEM_OVERFLOW: {
                 float[] area = {in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()};
                 n.area = area[2] > 0 && area[3] > 0 ? area : null;
@@ -2434,6 +2437,39 @@ public class NsgoView extends FrameLayout {
         }
         n.motion = null;
         place(n, f);
+    }
+
+    /**
+     * Moves n, which the batch created, from where old, which it deletes,
+     * shows, on the batch's Update rather than appearing, and hides old at
+     * once (core's ItemMatch). The views the batch created are not laid
+     * out yet, so n's parent is found through their frames from the
+     * nearest view that is.
+     */
+    private void match(Node n, Node old) {
+        if (layoutUpdate == null || old == null || n.frame == null || !old.view.isAttachedToWindow()) return;
+        float x = 0, y = 0;
+        Node p = n.up;
+        for (; p != null && created.contains(p.id) && p.frame != null; p = p.up) {
+            x += p.frame[0];
+            y += p.frame[1];
+        }
+        if (p == null || !p.children.isAttachedToWindow()) return;
+        int[] in = new int[2], was = new int[2];
+        p.children.getLocationInWindow(in);
+        old.view.getLocationInWindow(was);
+        float[] from = {(was[0] - in[0]) / density - x, (was[1] - in[1]) / density - y,
+                old.view.getWidth() / density, old.view.getHeight() / density};
+        old.view.setVisibility(View.INVISIBLE);
+        n.appear = null;
+        n.from = from;
+        n.to = n.frame;
+        n.motion = layoutUpdate;
+        n.motionStart = batchTime;
+        place(n, from);
+        paint(n);
+        moving.add(n);
+        startTicking();
     }
 
     /**

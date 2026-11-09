@@ -254,6 +254,10 @@ const (
 	// far it is pulled past its top: 0 at rest, the room kept above the
 	// content while it refreshes.
 	AnimBindPull
+	// AnimCreateRubberBand makes Node follow Input but resist it past Min
+	// and Max, never by more than Value, the size of what moves
+	// (RubberBand).
+	AnimCreateRubberBand
 )
 
 // AnimationOp is one change to the animation graph.
@@ -377,6 +381,26 @@ func layoutSpring(damping, x float64) float64 {
 	wd := w * math.Sqrt(1-zeta*zeta)
 	env := math.Exp(-zeta * w * x)
 	return 1 - env*(math.Cos(wd*x)+zeta*w/wd*math.Sin(wd*x))
+}
+
+// RubberBand resists x past lo and hi as a scroll view's edge resists a
+// drag, with UIKit's constant: past a bound it moves less the farther it
+// goes, never more than dimension, the size of what moves.
+func RubberBand(x, lo, hi, dimension float64) float64 {
+	const c = 0.55
+	band := func(over float64) float64 {
+		if dimension <= 0 {
+			return 0
+		}
+		return (1 - 1/(over*c/dimension+1)) * dimension
+	}
+	switch {
+	case x < lo:
+		return lo - band(lo-x)
+	case x > hi:
+		return hi + band(x-hi)
+	}
+	return x
 }
 
 // LerpBounds interpolates a frame from a to b at progress p, never to a

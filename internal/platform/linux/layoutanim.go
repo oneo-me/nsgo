@@ -140,6 +140,42 @@ func (w *window) inserted(v, parent *view, lb *layoutBatch) {
 	w.moved(v)
 }
 
+// contentAt returns where v's content shows in the window: its frame mid
+// animation, carried through its parents', less the scroll offsets.
+func contentAt(v *view) driver.Point {
+	var at driver.Point
+	for p := v; p != nil; p = p.parent {
+		o := p.shownFrame().Origin
+		at.X += o.X - p.offset.X
+		at.Y += o.Y - p.offset.Y
+	}
+	return at
+}
+
+// match moves v, which the commit made, from where old, which it
+// deletes, shows, with lb's Update rather than appearing, and hides old
+// at once (driver.ItemMatch).
+func (w *window) match(v, old *view, lb *layoutBatch) {
+	if lb == nil || lb.anim.Update == nil || old == nil || v.parent == nil || old.parent == nil || old.style.Hidden {
+		return
+	}
+	was, in := contentAt(old.parent), contentAt(v.parent)
+	o := old.shownFrame()
+	from := driver.Bounds{Origin: driver.Point{X: was.X + o.Origin.X - in.X, Y: was.Y + o.Origin.Y - in.Y}, Size: o.Size}
+	if l := v.layout; l != nil && l.fade != nil && !l.out {
+		l.fade, l.shownPart = nil, 1
+	}
+	old.style.Hidden = true
+	w.showWidget(old)
+	w.moved(old)
+	l := w.layoutOf(v)
+	l.move, l.moveStart, l.from, l.shown = lb.anim.Update, lb.at, from, from
+	if v.widget != 0 {
+		gtkWidgetQueueAllocate(v.widget)
+	}
+	w.moved(v)
+}
+
 // retiring reports whether v, deleted by the commit, leaves animated:
 // when lb has a Delete and v is the top of the subtree deleted, still
 // shown in a live parent.

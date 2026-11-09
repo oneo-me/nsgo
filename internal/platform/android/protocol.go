@@ -80,6 +80,11 @@ func writeAnimation(w *writer, ops []driver.AnimationOp) {
 			w.f64(o.Min)
 			w.f64(o.Max)
 			w.flags(o.Snap)
+		case driver.AnimCreateRubberBand:
+			w.u32(o.Input)
+			w.f64(o.Min)
+			w.f64(o.Max)
+			w.f64(o.Value)
 		case driver.AnimRead, driver.AnimStop, driver.AnimReset, driver.AnimForgetRun:
 			w.u32(o.ID)
 		case driver.AnimStart:

@@ -1506,6 +1506,8 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemFrame:
 			s.setFrame(v, it, lb)
 			s.repick = true
+		case driver.ItemMatch:
+			s.match(v, s.views[it.Before], lb)
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
 		case driver.ItemViewStyle:

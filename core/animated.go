@@ -105,6 +105,17 @@ func SnappingDiffClamp(in AnimatedNode, min, max float64) AnimatedNode {
 		Max: max, Snap: true})
 }
 
+// Resist follows in but resists it past min and max as
+// RubberBandClamp does, on the frame clock: bound to a view's translation
+// with in a value PanValues drags, it slows the drag at its ends with no
+// commit per move. in keeps the unresisted value, which a pan's end
+// reports to snap back from.
+func Resist(in AnimatedNode, min, max, dimension float64) AnimatedNode {
+	src := in.animated()
+	return src.t.anim.derive(src, driver.AnimationOp{Kind: driver.AnimCreateRubberBand, Input: src.id, Min: min,
+		Max: max, Value: dimension})
+}
+
 // Constant is a fixed operand for Add, Sub, Mul, Div and Mod.
 type Constant float64
 
@@ -340,21 +351,9 @@ func ProjectDecay(from float64, c DecayConfig) float64 {
 // RubberBandClamp resists x past lo and hi as a scroll view's edge
 // resists a drag, with UIKit's constant: past a bound it moves less the
 // farther it goes, never more than dimension, the size of what moves.
+// Resist is the node that does it on the frame clock.
 func RubberBandClamp(x, lo, hi, dimension float64) float64 {
-	const c = 0.55
-	band := func(over float64) float64 {
-		if dimension <= 0 {
-			return 0
-		}
-		return (1 - 1/(over*c/dimension+1)) * dimension
-	}
-	switch {
-	case x < lo:
-		return lo - band(lo-x)
-	case x > hi:
-		return hi + band(x-hi)
-	}
-	return x
+	return driver.RubberBand(x, lo, hi, dimension)
 }
 
 func decayDefaults(c DecayConfig) DecayConfig {

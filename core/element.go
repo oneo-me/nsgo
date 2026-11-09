@@ -85,6 +85,13 @@ type View struct {
 	// when it moves to another view.
 	Follow           func() *Ref
 	FollowTransition *LayoutTransition
+	// MatchID makes the view one with a view of the same ID that the
+	// commit inserting it removes, as SwiftUI's matchedGeometryEffect and
+	// Motion's layoutId: under Scope.AnimateLayout's Update, it moves and
+	// resizes from the frame the removed view showed, which leaves at
+	// once, rather than appearing with Create. A thumbnail and the page
+	// it opens into share one, so the picture travels between them.
+	MatchID string
 	// OnFocus and OnBlur follow the keyboard focus to and from a view that
 	// takes presses or is Focusable, on macOS and the web; a click presses
 	// without focusing.

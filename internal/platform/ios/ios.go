@@ -974,6 +974,8 @@ func (s *surface) apply(b *driver.MountBatch) {
 			s.appear(v, lb, it.Parent)
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
+		case driver.ItemMatch:
+			s.match(v, s.views[it.Before], lb)
 		case driver.ItemFrame:
 			if it.Frame.Size == (driver.Size{}) && s.covered(v) {
 				break

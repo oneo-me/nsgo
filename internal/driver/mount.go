@@ -293,6 +293,13 @@ const (
 	// Text saying what failed. Sent only where the environment says
 	// Camera.
 	ItemTakePhoto
+	// ItemMatch has view ID, which the batch creates and inserts, move and
+	// resize from the frame view Before shows, which the batch deletes,
+	// on the batch's LayoutAnimation Update instead of appearing with its
+	// Create; Before stops showing at once (View.MatchID). It comes after
+	// the round's inserts and before its deletes, so both views are in
+	// place, and only in a batch whose LayoutAnimation has an Update.
+	ItemMatch
 )
 
 // MountItem is one change to the native views. Kind says which fields

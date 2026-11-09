@@ -1028,6 +1028,8 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 		case driver.ItemFrame:
 			w.bounds(it.Frame)
 			writeLayoutTransition(w, it.Transition)
+		case driver.ItemMatch:
+			w.u32(uint32(it.Before))
 		case driver.ItemViewStyle:
 			writeViewStyle(w, it.ViewStyle)
 		case driver.ItemText:

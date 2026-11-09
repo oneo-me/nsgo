@@ -221,6 +221,7 @@ func (t *Tree) commitRound() {
 	t.emitHistory()
 	t.items = append(t.items, t.commands...)
 	t.commands = t.commands[:0]
+	t.emitMatches()
 	t.emitDeletes()
 	for _, id := range t.deleted {
 		t.nodes[id] = nil
@@ -626,6 +627,9 @@ func (t *Tree) emitParts(n *node) bool {
 	styled := false
 	if first {
 		add(driver.MountItem{Kind: driver.ItemCreate, ID: n.id, View: n.kind})
+		if n.match != "" {
+			t.matchNew = append(t.matchNew, n)
+		}
 		n.created = true
 	}
 	// What goes into an item is a copy made only when it is sent: the
@@ -901,6 +905,29 @@ func (n *node) viewStyle() driver.ViewStyle {
 		vs.Effects = n.sent.viewStyle.Effects
 	}
 	return vs
+}
+
+// emitMatches sends ItemMatch for each view the round creates with the
+// MatchID of one it deletes, after the inserts, so the backend has both
+// in place, and before the deletes. Only a layout animation's Update
+// moves it; otherwise the views come and go as any.
+func (t *Tree) emitMatches() {
+	if a := t.layoutAnim; a != nil && a.Update != nil && len(t.matchGone) > 0 && len(t.matchNew) > 0 {
+		gone := make(map[string]*node, len(t.matchGone))
+		for _, n := range t.matchGone {
+			gone[n.match] = n
+		}
+		for _, n := range t.matchNew {
+			if g := gone[n.match]; g != nil && !n.deleted {
+				delete(gone, n.match)
+				t.items = append(t.items, driver.MountItem{Kind: driver.ItemMatch, ID: n.id, Before: g.id})
+			}
+		}
+	}
+	clear(t.matchGone)
+	t.matchGone = t.matchGone[:0]
+	clear(t.matchNew)
+	t.matchNew = t.matchNew[:0]
 }
 
 // emitDeletes deletes the views discarded since the last round. They go
