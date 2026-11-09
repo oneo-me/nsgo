@@ -533,8 +533,13 @@ func macSession(opts devOptions) session {
 		build: func(ctx context.Context, p *project) error {
 			dir := p.cache("dev", "macos")
 			os.RemoveAll(dir)
-			_, err := buildMacApp(ctx, p, dir, runtime.GOARCH)
-			return err
+			app, err := buildMacApp(ctx, p, dir, runtime.GOARCH)
+			if err != nil || len(p.Widgets) == 0 {
+				return err
+			}
+			// The app starts from its binary, which registers no extension
+			// with the system: register its widgets.
+			return run(ctx, "pluginkit", "-a", macWidgetsAppex(app))
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
 			bin := filepath.Join(p.cache("dev", "macos"), p.Name+".app", "Contents", "MacOS", p.Name)

@@ -10,6 +10,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - Keep tests NSGo's own: no test reads NSH's checkout, runs NSH's apps or cases, or holds NSGo to what NSH does. TSX above all grows its own way from here (decided by the user, 2026-11-08).
 - Assume only macOS, Xcode and Go on a user's machine. Building every target except the x86_64 emulator's from there must need nothing else: no NDK, Android SDK, JDK, GTK or Windows toolchain.
 - Never hand-write C. Reach system APIs through purego or `syscall`, and use cgo only where Go itself demands it: linking for iOS and x86_64 Android, and the one function an embedded iOS framework exports, which the tool generates.
+- Write Swift only where an Apple API has no other interface: the widget extension and its reload library in `cmd/nsgo/widgets`, which the tool compiles with Xcode's swiftc and apps never write (decided by the user, 2026-11-09).
 - Prebuild what users cannot build with Go and Xcode, such as the Android runtime's `classes.dex` and `classes.jar`, and commit it with the command that rebuilds it (`internal/platform/android/runtime/build.sh`).
 - When implementing, fixing or optimizing anything, check whether other targets' backends need the same change, and make it or record the gap in the [roadmap](docs/roadmap.md).
 - Keep each package's imports within the [dependency graph](ARCHITECTURE.md#boundaries); `layering_test.go` checks it.

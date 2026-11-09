@@ -34,6 +34,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `i18n`, `*/locales`, `internal/cldr` | — | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on, formatting by CLDR's data; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |
 | `microphone` | — | Recording the default input on macOS and iOS, reporting `ErrUnsupported` elsewhere |
+| `widget` | — | Timelines of views that macOS and iOS widgets show, drawn by a SwiftUI extension the tool compiles ([widgets](docs/architecture/tool.md#widgets)) |
 | `nsgotest` | `nsh-testing` | App tests, headless or on a platform ([testing](docs/architecture/testing.md)) |
 | `internal/testhost` | `nsh-testing`'s agent | A backend's test host for `nsgotest`: the main thread, native input, screenshots |
 | `internal/driver` | `nsh-core`'s mount protocol | The mount protocol, events and `TextEngine`; what every backend runs, such as the `Animator` |
@@ -48,6 +49,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/gallery-tsx` | — | The gallery's Components in TSX, its apps among them, on `nsgo/ui`, `nsgo/ui/chat` and `nsgo/base`, with tests |
 | `examples/plugins` | — | A Go app installing signed TSX packages once the user grants their capabilities, running one in `tsx.View` and calling another's functions, with tests refusing tampered, revoked and older ones |
 | `examples/orbit` | — | Six live native views on a ring in perspective, one animated angle turning the cards, a floor dial shader and the header, with tests |
+| `examples/widgets` | — | A counter whose macOS and iOS widgets show its count in each family, with tests |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
 
 ## Platforms

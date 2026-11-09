@@ -48,9 +48,34 @@ sign:
   identity: "Apple Development: you@example.com (ABCDE12345)"  # signs the macOS app, else ad hoc
   profile: assets/AppStore.mobileprovision  # signs the IPA
   keystore: assets/release.p12              # signs APKs, with key_alias
+  # widgets_profile: assets/Widgets.mobileprovision  # signs the IPA's widget extension
 ```
 
 The keystore's passwords come from `NSGO_KEYSTORE_PASSWORD` and `NSGO_KEY_PASSWORD`. `-team` signs the iPhone's package.
+
+## Widgets
+
+Widgets show a glance of the app on the Home Screen and the Lock Screen of iPhones and iPads, and on the Mac's desktop and in Notification Center. List their kinds in `nsgo.yaml`, and give each what to show with package `widget`:
+
+```yaml
+widgets:
+  - kind: counter
+    name: Counter                 # shown in the system's gallery of widgets
+    description: Shows the count.
+    families: [small, medium, circular]  # also large, extra_large, rectangular and inline
+# apple: { app_group: group.dev.example.hello }  # the iOS app group, group.<id> by default
+```
+
+```go
+err := widget.Update("counter", widget.Entry{
+	View: widget.Column{Style: widget.Style{Gap: 4}, Children: []widget.View{
+		widget.Text{Content: "Count", Style: widget.Style{TextStyle: widget.Caption, Color: widget.Secondary}},
+		widget.Text{Content: strconv.Itoa(n), Style: widget.Style{FontSize: 44, FontWeight: core.FontWeightBold}},
+	}},
+})
+```
+
+`build` and `dev` compile a widget extension into the macOS and iOS packages with Xcode's Swift compiler. It draws the views with SwiftUI and runs none of the app's code, so a widget shows the timeline the app wrote last, whether the app runs or not: call `Update` whenever what it shows changes. `widget.Date` with `Relative` or `Timer` keeps counting by itself. `Entry.URL` and `Style.Link` open URLs when a widget is tapped. On iOS the app and its widgets share an app group: for devices, enable it for both `<id>` and `<id>.widgets`, and sign the extension with `sign.widgets_profile`. The repository's `examples/widgets` is a counter with widgets, and the gallery's Widgets demo fills every family.
 
 ## Embed in another app
 

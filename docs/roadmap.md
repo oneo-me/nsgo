@@ -56,6 +56,18 @@ What `base/terminal` still lacks of a terminal app's features, Ghostty's the ref
 | Drawn box characters, blinking and contrast | `cursor-style-blink`, `minimum-contrast`, `window-padding-color` | Box drawing, blocks and Powerline's separators are drawn so lines join, the cursor blinks, and minimum contrast and padding colors apply |
 | Search, images and shell integration | Find, the Kitty graphics protocol, `shell-integration` | A search highlights matches, programs show images, and OSC 133 prompts take Option+click to move the cursor |
 
+## Widgets
+
+What package `widget` lacks of WidgetKit, and of widgets elsewhere ([tool](architecture/tool.md#widgets)).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Widgets on devices Xcode signs | `signIOSApp`'s project | Xcode's project gets an app extension target signed automatically beside the app's, so `nsgo dev -target ios` and `-run` on an iPhone keep the widgets they now leave out |
+| The app's own links | `CFBundleURLTypes`, `application:openURLs:` | `nsgo.yaml` declares URL schemes and a tap's `Entry.URL` or `Style.Link` of one reaches the running app, which now only opens |
+| Interactive widgets | `Button(intent:)`, `appintentsmetadataprocessor` | A button in a widget runs a Go handler the app declares, as an `AppIntent` the tool compiles with its metadata, without opening the app |
+| Widgets of sandboxed Mac apps | `com.apple.security.application-groups` | A macOS app in the App Sandbox, as the Mac App Store's, shares its timelines through `apple.app_group` and a provisioning profile, where it cannot write the home directory the extension reads |
+| Widgets on Android | `AppWidgetProvider`, `RemoteViews` | The same timelines show in App Widgets drawn by the Java runtime, with `classes.dex` rebuilt |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

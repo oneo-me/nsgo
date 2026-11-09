@@ -162,6 +162,7 @@ func init() {
 		{"Platform", m.GroupPlatform, []demo{
 			{"System", m.DemoSystem, m.DemoSystemDetail, lucide.Cpu, systemDemo},
 			{"Storage", m.DemoStorage, m.DemoStorageDetail, lucide.Database, storageDemo},
+			{"Widgets", m.DemoWidgets, m.DemoWidgetsDetail, lucide.LayoutDashboard, widgetsDemo},
 			{"Accessibility", m.DemoAccessibility, m.DemoAccessibilityDetail, lucide.Accessibility, accessibilityDemo},
 		}},
 	}
@@ -375,6 +376,7 @@ func Root(cx *core.Scope) core.Node {
 	})
 	g.desktop = desktopLayout.Get
 	shell = g
+	showWidgets(cx)
 
 	hasWindow := desktop.IsAvailable(cx)
 	if hasWindow {

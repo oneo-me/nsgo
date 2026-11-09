@@ -21,6 +21,9 @@ var layers = []struct {
 }{
 	{"internal/layout", nil},
 	{"microphone", nil},
+	// Widgets take core's colors, edges and fonts, and reach WidgetKit
+	// through the files and the library the tool's extension shares.
+	{"widget", []string{"core"}},
 	{"internal/woff", nil},
 	{"internal/cldr/", nil},
 	{"internal/cldr", nil},
@@ -72,7 +75,7 @@ var layers = []struct {
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler", "tsx/internal/js", "tsx/pkg"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
-	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "examples/"}},
+	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "widget", "examples/"}},
 	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
 	// The nsgo tool links no component or runtime, so changing them does
 	// not build it again; it writes TSX declarations by running the app.

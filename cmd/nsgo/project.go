@@ -109,7 +109,13 @@ type project struct {
 	// their Info.plist, such as NSMicrophoneUsageDescription.
 	Apple struct {
 		Info map[string]string `yaml:"info"`
+		// AppGroup is the app group an iOS app shares with its widgets,
+		// group.<id> by default.
+		AppGroup string `yaml:"app_group"`
 	} `yaml:"apple"`
+	// Widgets are the kinds of the app's widgets, which nsgo build puts
+	// into its macOS and iOS packages as a widget extension (widgets.go).
+	Widgets []widgetKind `yaml:"widgets"`
 	// Android is the Android target's: Permissions are the permissions
 	// its manifest asks for beyond the runtime's, such as
 	// REQUEST_INSTALL_PACKAGES, which a name without a dot is under
@@ -239,7 +245,10 @@ func load(dir string) (*project, error) {
 	if p.I18n.Source == "" {
 		p.I18n.Source = "en"
 	}
-	for _, path := range []*string{&p.Sign.Profile, &p.Sign.Keystore} {
+	if err := p.validateWidgets(); err != nil {
+		return nil, fmt.Errorf("nsgo.yaml: %w", err)
+	}
+	for _, path := range []*string{&p.Sign.Profile, &p.Sign.WidgetsProfile, &p.Sign.Keystore} {
 		if *path != "" {
 			*path = p.resolve(*path)
 		}

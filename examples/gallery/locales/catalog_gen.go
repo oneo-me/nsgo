@@ -151,6 +151,12 @@ var Parameters = map[string][]string{
 	"FlowLabel":               {"nodes", "links"},
 	"FlowNewStep":             {"number"},
 	"FlowExperiment":          {"number"},
+	"WidgetsWrittenAt":        {"time_"},
+	"WidgetsSteps":            {"count"},
+	"WidgetsPercent":          {"count"},
+	"WidgetsMinutes":          {"count"},
+	"WidgetsHours":            {"count"},
+	"WidgetsOfGoal":           {"goal"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -272,6 +278,12 @@ type Translation struct {
 	FlowLabel               func(nodes int, links int) string
 	FlowNewStep             func(number int) string
 	FlowExperiment          func(number int) string
+	WidgetsWrittenAt        func(time_ string) string
+	WidgetsSteps            func(count int) string
+	WidgetsPercent          func(count int) string
+	WidgetsMinutes          func(count int) string
+	WidgetsHours            func(count int) string
+	WidgetsOfGoal           func(goal int) string
 }
 
 var supplied = map[string]Translation{}
@@ -388,6 +400,8 @@ const (
 	textDemoStorageDetail
 	textDemoAccessibility
 	textDemoAccessibilityDetail
+	textDemoWidgets
+	textDemoWidgetsDetail
 	textAppNothingYet
 	textAppSearchDemos
 	textAppToggleSidebar
@@ -2256,6 +2270,46 @@ const (
 	textFlowReadyDetail
 	textFlowNotes
 	textFlowNotesDetail
+	textWidgetsContent
+	textWidgetsContentDetail
+	textWidgetsStepsKnob
+	textWidgetsGoalKnob
+	textWidgetsAccentKnob
+	textWidgetsTimelineKnob
+	textWidgetsBlue
+	textWidgetsGreen
+	textWidgetsOrange
+	textWidgetsPink
+	textWidgetsUpdateNow
+	textWidgetsShowPlaceholders
+	textWidgetsHowToAdd
+	textWidgetsFamilies
+	textWidgetsFamiliesDetail
+	textWidgetsSmallDetail
+	textWidgetsMediumDetail
+	textWidgetsLargeDetail
+	textWidgetsExtraLargeDetail
+	textWidgetsCircularDetail
+	textWidgetsRectangularDetail
+	textWidgetsInlineDetail
+	textWidgetsPhoto
+	textWidgetsPhotoDetail
+	textWidgetsActivity
+	textWidgetsMove
+	textWidgetsExercise
+	textWidgetsStand
+	textWidgetsExerciseDetail
+	textWidgetsStandDetail
+	textWidgetsNextHourIn
+	textWidgetsDocs
+	textWidgetsWritten
+	textWidgetsQuote
+	textWidgetsRounded
+	textWidgetsMonospaced
+	textWidgetsSerif
+	textWidgetsSmallCaps
+	textWidgetsColors
+	textWidgetsPhotoTitle
 	numTexts
 )
 
@@ -2372,6 +2426,8 @@ var keyOfText = [numTexts]string{
 	"demoStorageDetail",
 	"demoAccessibility",
 	"demoAccessibilityDetail",
+	"demoWidgets",
+	"demoWidgetsDetail",
 	"appNothingYet",
 	"appSearchDemos",
 	"appToggleSidebar",
@@ -4240,6 +4296,46 @@ var keyOfText = [numTexts]string{
 	"flowReadyDetail",
 	"flowNotes",
 	"flowNotesDetail",
+	"widgetsContent",
+	"widgetsContentDetail",
+	"widgetsStepsKnob",
+	"widgetsGoalKnob",
+	"widgetsAccentKnob",
+	"widgetsTimelineKnob",
+	"widgetsBlue",
+	"widgetsGreen",
+	"widgetsOrange",
+	"widgetsPink",
+	"widgetsUpdateNow",
+	"widgetsShowPlaceholders",
+	"widgetsHowToAdd",
+	"widgetsFamilies",
+	"widgetsFamiliesDetail",
+	"widgetsSmallDetail",
+	"widgetsMediumDetail",
+	"widgetsLargeDetail",
+	"widgetsExtraLargeDetail",
+	"widgetsCircularDetail",
+	"widgetsRectangularDetail",
+	"widgetsInlineDetail",
+	"widgetsPhoto",
+	"widgetsPhotoDetail",
+	"widgetsActivity",
+	"widgetsMove",
+	"widgetsExercise",
+	"widgetsStand",
+	"widgetsExerciseDetail",
+	"widgetsStandDetail",
+	"widgetsNextHourIn",
+	"widgetsDocs",
+	"widgetsWritten",
+	"widgetsQuote",
+	"widgetsRounded",
+	"widgetsMonospaced",
+	"widgetsSerif",
+	"widgetsSmallCaps",
+	"widgetsColors",
+	"widgetsPhotoTitle",
 }
 
 // textsEn are the messages without arguments in en.
@@ -4354,6 +4450,8 @@ var textsEn = i18n.NewTexts(""+
 	"A launch count, a note saved as you type, the stored keys"+
 	"Accessibility"+
 	"Labels, values, actions, groups, live regions and focus"+
+	"Widgets"+
+	"Timelines the Home Screen, the Lock Screen and the desktop show in every size"+
 	"nothing yet"+
 	"Search demos"+
 	"Toggle sidebar"+
@@ -6221,7 +6319,47 @@ var textsEn = i18n.NewTexts(""+
 	"Ready to launch"+
 	"The launch review passed"+
 	"Write the release notes"+
-	"Summarize what changed",
+	"Summarize what changed"+
+	"What the widgets show"+
+	"Each change writes the timelines, which the system shows without the app"+
+	"Steps"+
+	"Goal"+
+	"Accent"+
+	"Timeline"+
+	"Blue"+
+	"Green"+
+	"Orange"+
+	"Pink"+
+	"Update now"+
+	"Show placeholders"+
+	"Add the Gallery's widgets from the system's: Edit Widgets on the Mac's desktop, or a long press on the Home Screen or the Lock Screen. With Timeline on, Activity walks on for five minutes by itself."+
+	"Sizes"+
+	"What each family shows of package widget"+
+	"A symbol and a headline, a ring with its share over it, text that shrinks to fit"+
+	"Three bars, a timer counting to the next hour and a link that opens the docs"+
+	"Rows of symbols on rounded squares between dividers, the date and when the app wrote it"+
+	"The large widget beside rounded, monospaced, serif and small-capital fonts and the system's colors"+
+	"A gauge in the Lock Screen's tint around a symbol and a figure"+
+	"A headline, the steps and a bar, accented where the system tints"+
+	"A symbol and the steps beside the Lock Screen's clock"+
+	"Photo"+
+	"A picture the gallery draws behind the widget, covering it, under the date"+
+	"Activity"+
+	"Move"+
+	"Exercise"+
+	"Stand"+
+	"A minute for every 250 steps"+
+	"An hour for every 800 steps"+
+	"Next hour in"+
+	"Docs"+
+	"Written"+
+	"Widgets show what the app wrote last, whether it runs or not."+
+	"Rounded"+
+	"Monospaced"+
+	"Serif"+
+	"Small capitals"+
+	"Colors"+
+	"A walk in the light",
 	[]uint16{
 		7,
 		7,
@@ -6333,6 +6471,8 @@ var textsEn = i18n.NewTexts(""+
 		57,
 		13,
 		55,
+		7,
+		77,
 		11,
 		12,
 		14,
@@ -8201,6 +8341,46 @@ var textsEn = i18n.NewTexts(""+
 		24,
 		23,
 		22,
+		21,
+		72,
+		5,
+		4,
+		6,
+		8,
+		4,
+		5,
+		6,
+		4,
+		10,
+		17,
+		198,
+		5,
+		40,
+		80,
+		76,
+		87,
+		98,
+		62,
+		64,
+		53,
+		5,
+		74,
+		8,
+		4,
+		8,
+		5,
+		28,
+		27,
+		12,
+		4,
+		7,
+		61,
+		7,
+		10,
+		5,
+		14,
+		6,
+		19,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -8315,6 +8495,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"启动次数、随输入保存的笔记、已存储的键"+
 	"无障碍"+
 	"标签、值、操作、分组、实时区域和焦点"+
+	"小组件"+
+	"主屏幕、锁屏和桌面上各种尺寸的小组件所显示的时间线"+
 	"暂无"+
 	"搜索示例"+
 	"显示或隐藏侧栏"+
@@ -10182,7 +10364,47 @@ var textsZhHans = i18n.NewTexts(""+
 	"可以上线"+
 	"上线评审已通过"+
 	"撰写发布说明"+
-	"总结改动内容",
+	"总结改动内容"+
+	"小组件显示的内容"+
+	"每次改动都会写入时间线，系统无需运行应用即可显示"+
+	"步数"+
+	"目标"+
+	"强调色"+
+	"时间线"+
+	"蓝"+
+	"绿"+
+	"橙"+
+	"粉"+
+	"立即更新"+
+	"显示占位内容"+
+	"从系统中添加 Gallery 的小组件：在 Mac 桌面上选择“编辑小组件”，或在主屏幕、锁屏上长按。开启时间线后，Activity 会在接下来五分钟内自行更新。"+
+	"尺寸"+
+	"每种尺寸展示的 widget 包能力"+
+	"符号与标题、带百分比的圆环、自动缩小以适应空间的文字"+
+	"三条进度条、倒数到下一个整点的计时器，以及打开文档的链接"+
+	"以分隔线隔开、带圆角方块符号的列表行，日期和应用写入的时间"+
+	"大号小组件，旁边是圆体、等宽、衬线和小型大写字体及系统颜色"+
+	"锁屏着色的圆环，环绕符号和数字"+
+	"标题、步数和进度条，系统着色时突出强调部分"+
+	"锁屏时钟旁的符号和步数"+
+	"照片"+
+	"Gallery 绘制的图片铺满小组件背景，上面显示日期"+
+	"健身"+
+	"活动"+
+	"锻炼"+
+	"站立"+
+	"每 250 步计 1 分钟"+
+	"每 800 步计 1 小时"+
+	"距下一个整点"+
+	"文档"+
+	"写入于"+
+	"无论应用是否在运行，小组件都显示它最后写入的内容。"+
+	"圆体"+
+	"等宽"+
+	"衬线"+
+	"小型大写"+
+	"颜色"+
+	"在光中漫步",
 	[]uint16{
 		6,
 		6,
@@ -10294,6 +10516,8 @@ var textsZhHans = i18n.NewTexts(""+
 		57,
 		9,
 		54,
+		9,
+		75,
 		6,
 		12,
 		21,
@@ -12162,6 +12386,46 @@ var textsZhHans = i18n.NewTexts(""+
 		21,
 		18,
 		18,
+		24,
+		72,
+		6,
+		6,
+		9,
+		9,
+		3,
+		3,
+		3,
+		3,
+		12,
+		18,
+		197,
+		6,
+		38,
+		78,
+		84,
+		87,
+		87,
+		45,
+		63,
+		33,
+		6,
+		65,
+		6,
+		6,
+		6,
+		6,
+		23,
+		23,
+		18,
+		6,
+		9,
+		75,
+		6,
+		6,
+		6,
+		12,
+		6,
+		15,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -12556,6 +12820,24 @@ func Supply(lang string, t Translation) {
 	}
 	if t.FlowExperiment != nil {
 		s.FlowExperiment = t.FlowExperiment
+	}
+	if t.WidgetsWrittenAt != nil {
+		s.WidgetsWrittenAt = t.WidgetsWrittenAt
+	}
+	if t.WidgetsSteps != nil {
+		s.WidgetsSteps = t.WidgetsSteps
+	}
+	if t.WidgetsPercent != nil {
+		s.WidgetsPercent = t.WidgetsPercent
+	}
+	if t.WidgetsMinutes != nil {
+		s.WidgetsMinutes = t.WidgetsMinutes
+	}
+	if t.WidgetsHours != nil {
+		s.WidgetsHours = t.WidgetsHours
+	}
+	if t.WidgetsOfGoal != nil {
+		s.WidgetsOfGoal = t.WidgetsOfGoal
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -13361,6 +13643,20 @@ func DemoAccessibilityDetail(cx *core.Scope) string { return For(cx).DemoAccessi
 
 // DemoAccessibilityDetail is the package's DemoAccessibilityDetail in the language of msgs.
 func (msgs Messages) DemoAccessibilityDetail() string { return msgs.text(textDemoAccessibilityDetail) }
+
+// DemoWidgets says "Widgets"
+// in the language the app shows under cx.
+func DemoWidgets(cx *core.Scope) string { return For(cx).DemoWidgets() }
+
+// DemoWidgets is the package's DemoWidgets in the language of msgs.
+func (msgs Messages) DemoWidgets() string { return msgs.text(textDemoWidgets) }
+
+// DemoWidgetsDetail says "Timelines the Home Screen, the Lock Screen and the desktop show in every size"
+// in the language the app shows under cx.
+func DemoWidgetsDetail(cx *core.Scope) string { return For(cx).DemoWidgetsDetail() }
+
+// DemoWidgetsDetail is the package's DemoWidgetsDetail in the language of msgs.
+func (msgs Messages) DemoWidgetsDetail() string { return msgs.text(textDemoWidgetsDetail) }
 
 // AppNothingYet says "nothing yet"
 // in the language the app shows under cx.
@@ -30204,3 +30500,426 @@ func FlowNotesDetail(cx *core.Scope) string { return For(cx).FlowNotesDetail() }
 
 // FlowNotesDetail is the package's FlowNotesDetail in the language of msgs.
 func (msgs Messages) FlowNotesDetail() string { return msgs.text(textFlowNotesDetail) }
+
+// WidgetsContent says "What the widgets show"
+// in the language the app shows under cx.
+func WidgetsContent(cx *core.Scope) string { return For(cx).WidgetsContent() }
+
+// WidgetsContent is the package's WidgetsContent in the language of msgs.
+func (msgs Messages) WidgetsContent() string { return msgs.text(textWidgetsContent) }
+
+// WidgetsContentDetail says "Each change writes the timelines, which the system shows without the app"
+// in the language the app shows under cx.
+func WidgetsContentDetail(cx *core.Scope) string { return For(cx).WidgetsContentDetail() }
+
+// WidgetsContentDetail is the package's WidgetsContentDetail in the language of msgs.
+func (msgs Messages) WidgetsContentDetail() string { return msgs.text(textWidgetsContentDetail) }
+
+// WidgetsStepsKnob says "Steps"
+// in the language the app shows under cx.
+func WidgetsStepsKnob(cx *core.Scope) string { return For(cx).WidgetsStepsKnob() }
+
+// WidgetsStepsKnob is the package's WidgetsStepsKnob in the language of msgs.
+func (msgs Messages) WidgetsStepsKnob() string { return msgs.text(textWidgetsStepsKnob) }
+
+// WidgetsGoalKnob says "Goal"
+// in the language the app shows under cx.
+func WidgetsGoalKnob(cx *core.Scope) string { return For(cx).WidgetsGoalKnob() }
+
+// WidgetsGoalKnob is the package's WidgetsGoalKnob in the language of msgs.
+func (msgs Messages) WidgetsGoalKnob() string { return msgs.text(textWidgetsGoalKnob) }
+
+// WidgetsAccentKnob says "Accent"
+// in the language the app shows under cx.
+func WidgetsAccentKnob(cx *core.Scope) string { return For(cx).WidgetsAccentKnob() }
+
+// WidgetsAccentKnob is the package's WidgetsAccentKnob in the language of msgs.
+func (msgs Messages) WidgetsAccentKnob() string { return msgs.text(textWidgetsAccentKnob) }
+
+// WidgetsTimelineKnob says "Timeline"
+// in the language the app shows under cx.
+func WidgetsTimelineKnob(cx *core.Scope) string { return For(cx).WidgetsTimelineKnob() }
+
+// WidgetsTimelineKnob is the package's WidgetsTimelineKnob in the language of msgs.
+func (msgs Messages) WidgetsTimelineKnob() string { return msgs.text(textWidgetsTimelineKnob) }
+
+// WidgetsBlue says "Blue"
+// in the language the app shows under cx.
+func WidgetsBlue(cx *core.Scope) string { return For(cx).WidgetsBlue() }
+
+// WidgetsBlue is the package's WidgetsBlue in the language of msgs.
+func (msgs Messages) WidgetsBlue() string { return msgs.text(textWidgetsBlue) }
+
+// WidgetsGreen says "Green"
+// in the language the app shows under cx.
+func WidgetsGreen(cx *core.Scope) string { return For(cx).WidgetsGreen() }
+
+// WidgetsGreen is the package's WidgetsGreen in the language of msgs.
+func (msgs Messages) WidgetsGreen() string { return msgs.text(textWidgetsGreen) }
+
+// WidgetsOrange says "Orange"
+// in the language the app shows under cx.
+func WidgetsOrange(cx *core.Scope) string { return For(cx).WidgetsOrange() }
+
+// WidgetsOrange is the package's WidgetsOrange in the language of msgs.
+func (msgs Messages) WidgetsOrange() string { return msgs.text(textWidgetsOrange) }
+
+// WidgetsPink says "Pink"
+// in the language the app shows under cx.
+func WidgetsPink(cx *core.Scope) string { return For(cx).WidgetsPink() }
+
+// WidgetsPink is the package's WidgetsPink in the language of msgs.
+func (msgs Messages) WidgetsPink() string { return msgs.text(textWidgetsPink) }
+
+// WidgetsUpdateNow says "Update now"
+// in the language the app shows under cx.
+func WidgetsUpdateNow(cx *core.Scope) string { return For(cx).WidgetsUpdateNow() }
+
+// WidgetsUpdateNow is the package's WidgetsUpdateNow in the language of msgs.
+func (msgs Messages) WidgetsUpdateNow() string { return msgs.text(textWidgetsUpdateNow) }
+
+// WidgetsShowPlaceholders says "Show placeholders"
+// in the language the app shows under cx.
+func WidgetsShowPlaceholders(cx *core.Scope) string { return For(cx).WidgetsShowPlaceholders() }
+
+// WidgetsShowPlaceholders is the package's WidgetsShowPlaceholders in the language of msgs.
+func (msgs Messages) WidgetsShowPlaceholders() string { return msgs.text(textWidgetsShowPlaceholders) }
+
+// WidgetsWrittenAt says "Written at {time}"
+// in the language the app shows under cx.
+func WidgetsWrittenAt(cx *core.Scope, time_ string) string { return For(cx).WidgetsWrittenAt(time_) }
+
+// WidgetsWrittenAt is the package's WidgetsWrittenAt in the language of msgs.
+func (msgs Messages) WidgetsWrittenAt(time_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.WidgetsWrittenAt(time_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].WidgetsWrittenAt; f != nil {
+			return f(time_)
+		}
+		switch lang {
+		case "", "en":
+			return "Written at " + msgs.arg(time_)
+		case "zh-Hans":
+			return "写入于 " + time_
+		}
+	}
+}
+
+// WidgetsHowToAdd says "Add the Gallery's widgets from the system's: Edit Widgets on the Mac's desktop, or a long press on the Home Screen or the Lock Screen. With Timeline on, Activity walks on for five minutes by itself."
+// in the language the app shows under cx.
+func WidgetsHowToAdd(cx *core.Scope) string { return For(cx).WidgetsHowToAdd() }
+
+// WidgetsHowToAdd is the package's WidgetsHowToAdd in the language of msgs.
+func (msgs Messages) WidgetsHowToAdd() string { return msgs.text(textWidgetsHowToAdd) }
+
+// WidgetsFamilies says "Sizes"
+// in the language the app shows under cx.
+func WidgetsFamilies(cx *core.Scope) string { return For(cx).WidgetsFamilies() }
+
+// WidgetsFamilies is the package's WidgetsFamilies in the language of msgs.
+func (msgs Messages) WidgetsFamilies() string { return msgs.text(textWidgetsFamilies) }
+
+// WidgetsFamiliesDetail says "What each family shows of package widget"
+// in the language the app shows under cx.
+func WidgetsFamiliesDetail(cx *core.Scope) string { return For(cx).WidgetsFamiliesDetail() }
+
+// WidgetsFamiliesDetail is the package's WidgetsFamiliesDetail in the language of msgs.
+func (msgs Messages) WidgetsFamiliesDetail() string { return msgs.text(textWidgetsFamiliesDetail) }
+
+// WidgetsSmallDetail says "A symbol and a headline, a ring with its share over it, text that shrinks to fit"
+// in the language the app shows under cx.
+func WidgetsSmallDetail(cx *core.Scope) string { return For(cx).WidgetsSmallDetail() }
+
+// WidgetsSmallDetail is the package's WidgetsSmallDetail in the language of msgs.
+func (msgs Messages) WidgetsSmallDetail() string { return msgs.text(textWidgetsSmallDetail) }
+
+// WidgetsMediumDetail says "Three bars, a timer counting to the next hour and a link that opens the docs"
+// in the language the app shows under cx.
+func WidgetsMediumDetail(cx *core.Scope) string { return For(cx).WidgetsMediumDetail() }
+
+// WidgetsMediumDetail is the package's WidgetsMediumDetail in the language of msgs.
+func (msgs Messages) WidgetsMediumDetail() string { return msgs.text(textWidgetsMediumDetail) }
+
+// WidgetsLargeDetail says "Rows of symbols on rounded squares between dividers, the date and when the app wrote it"
+// in the language the app shows under cx.
+func WidgetsLargeDetail(cx *core.Scope) string { return For(cx).WidgetsLargeDetail() }
+
+// WidgetsLargeDetail is the package's WidgetsLargeDetail in the language of msgs.
+func (msgs Messages) WidgetsLargeDetail() string { return msgs.text(textWidgetsLargeDetail) }
+
+// WidgetsExtraLargeDetail says "The large widget beside rounded, monospaced, serif and small-capital fonts and the system's colors"
+// in the language the app shows under cx.
+func WidgetsExtraLargeDetail(cx *core.Scope) string { return For(cx).WidgetsExtraLargeDetail() }
+
+// WidgetsExtraLargeDetail is the package's WidgetsExtraLargeDetail in the language of msgs.
+func (msgs Messages) WidgetsExtraLargeDetail() string { return msgs.text(textWidgetsExtraLargeDetail) }
+
+// WidgetsCircularDetail says "A gauge in the Lock Screen's tint around a symbol and a figure"
+// in the language the app shows under cx.
+func WidgetsCircularDetail(cx *core.Scope) string { return For(cx).WidgetsCircularDetail() }
+
+// WidgetsCircularDetail is the package's WidgetsCircularDetail in the language of msgs.
+func (msgs Messages) WidgetsCircularDetail() string { return msgs.text(textWidgetsCircularDetail) }
+
+// WidgetsRectangularDetail says "A headline, the steps and a bar, accented where the system tints"
+// in the language the app shows under cx.
+func WidgetsRectangularDetail(cx *core.Scope) string { return For(cx).WidgetsRectangularDetail() }
+
+// WidgetsRectangularDetail is the package's WidgetsRectangularDetail in the language of msgs.
+func (msgs Messages) WidgetsRectangularDetail() string {
+	return msgs.text(textWidgetsRectangularDetail)
+}
+
+// WidgetsInlineDetail says "A symbol and the steps beside the Lock Screen's clock"
+// in the language the app shows under cx.
+func WidgetsInlineDetail(cx *core.Scope) string { return For(cx).WidgetsInlineDetail() }
+
+// WidgetsInlineDetail is the package's WidgetsInlineDetail in the language of msgs.
+func (msgs Messages) WidgetsInlineDetail() string { return msgs.text(textWidgetsInlineDetail) }
+
+// WidgetsPhoto says "Photo"
+// in the language the app shows under cx.
+func WidgetsPhoto(cx *core.Scope) string { return For(cx).WidgetsPhoto() }
+
+// WidgetsPhoto is the package's WidgetsPhoto in the language of msgs.
+func (msgs Messages) WidgetsPhoto() string { return msgs.text(textWidgetsPhoto) }
+
+// WidgetsPhotoDetail says "A picture the gallery draws behind the widget, covering it, under the date"
+// in the language the app shows under cx.
+func WidgetsPhotoDetail(cx *core.Scope) string { return For(cx).WidgetsPhotoDetail() }
+
+// WidgetsPhotoDetail is the package's WidgetsPhotoDetail in the language of msgs.
+func (msgs Messages) WidgetsPhotoDetail() string { return msgs.text(textWidgetsPhotoDetail) }
+
+// WidgetsActivity says "Activity"
+// in the language the app shows under cx.
+func WidgetsActivity(cx *core.Scope) string { return For(cx).WidgetsActivity() }
+
+// WidgetsActivity is the package's WidgetsActivity in the language of msgs.
+func (msgs Messages) WidgetsActivity() string { return msgs.text(textWidgetsActivity) }
+
+// WidgetsSteps says "{count, plural, one {# step} other {# steps}}"
+// in the language the app shows under cx.
+func WidgetsSteps(cx *core.Scope, count int) string { return For(cx).WidgetsSteps(count) }
+
+// WidgetsSteps is the package's WidgetsSteps in the language of msgs.
+func (msgs Messages) WidgetsSteps(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.WidgetsSteps(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].WidgetsSteps; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			var b strings.Builder
+			switch i18n.Cardinal("en", float64(count)) {
+			case i18n.One:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" step")
+			default:
+				b.WriteString(msgs.arg(i18n.FormatNumber("en", float64(count))))
+				b.WriteString(" steps")
+			}
+			return b.String()
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(count)) + " 步"
+		}
+	}
+}
+
+// WidgetsPercent says "{count, number}%"
+// in the language the app shows under cx.
+func WidgetsPercent(cx *core.Scope, count int) string { return For(cx).WidgetsPercent(count) }
+
+// WidgetsPercent is the package's WidgetsPercent in the language of msgs.
+func (msgs Messages) WidgetsPercent(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.WidgetsPercent(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].WidgetsPercent; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + "%"
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(count)) + "%"
+		}
+	}
+}
+
+// WidgetsMove says "Move"
+// in the language the app shows under cx.
+func WidgetsMove(cx *core.Scope) string { return For(cx).WidgetsMove() }
+
+// WidgetsMove is the package's WidgetsMove in the language of msgs.
+func (msgs Messages) WidgetsMove() string { return msgs.text(textWidgetsMove) }
+
+// WidgetsExercise says "Exercise"
+// in the language the app shows under cx.
+func WidgetsExercise(cx *core.Scope) string { return For(cx).WidgetsExercise() }
+
+// WidgetsExercise is the package's WidgetsExercise in the language of msgs.
+func (msgs Messages) WidgetsExercise() string { return msgs.text(textWidgetsExercise) }
+
+// WidgetsStand says "Stand"
+// in the language the app shows under cx.
+func WidgetsStand(cx *core.Scope) string { return For(cx).WidgetsStand() }
+
+// WidgetsStand is the package's WidgetsStand in the language of msgs.
+func (msgs Messages) WidgetsStand() string { return msgs.text(textWidgetsStand) }
+
+// WidgetsMinutes says "{count, number} min"
+// in the language the app shows under cx.
+func WidgetsMinutes(cx *core.Scope, count int) string { return For(cx).WidgetsMinutes(count) }
+
+// WidgetsMinutes is the package's WidgetsMinutes in the language of msgs.
+func (msgs Messages) WidgetsMinutes(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.WidgetsMinutes(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].WidgetsMinutes; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " min"
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(count)) + " 分钟"
+		}
+	}
+}
+
+// WidgetsHours says "{count, number} h"
+// in the language the app shows under cx.
+func WidgetsHours(cx *core.Scope, count int) string { return For(cx).WidgetsHours(count) }
+
+// WidgetsHours is the package's WidgetsHours in the language of msgs.
+func (msgs Messages) WidgetsHours(count int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.WidgetsHours(count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].WidgetsHours; f != nil {
+			return f(count)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(i18n.FormatNumber("en", float64(count))) + " h"
+		case "zh-Hans":
+			return i18n.FormatNumber("zh-Hans", float64(count)) + " 小时"
+		}
+	}
+}
+
+// WidgetsOfGoal says "Of {goal, number} steps"
+// in the language the app shows under cx.
+func WidgetsOfGoal(cx *core.Scope, goal int) string { return For(cx).WidgetsOfGoal(goal) }
+
+// WidgetsOfGoal is the package's WidgetsOfGoal in the language of msgs.
+func (msgs Messages) WidgetsOfGoal(goal int) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.WidgetsOfGoal(goal))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].WidgetsOfGoal; f != nil {
+			return f(goal)
+		}
+		switch lang {
+		case "", "en":
+			return "Of " + msgs.arg(i18n.FormatNumber("en", float64(goal))) + " steps"
+		case "zh-Hans":
+			return "目标 " + i18n.FormatNumber("zh-Hans", float64(goal)) + " 步"
+		}
+	}
+}
+
+// WidgetsExerciseDetail says "A minute for every 250 steps"
+// in the language the app shows under cx.
+func WidgetsExerciseDetail(cx *core.Scope) string { return For(cx).WidgetsExerciseDetail() }
+
+// WidgetsExerciseDetail is the package's WidgetsExerciseDetail in the language of msgs.
+func (msgs Messages) WidgetsExerciseDetail() string { return msgs.text(textWidgetsExerciseDetail) }
+
+// WidgetsStandDetail says "An hour for every 800 steps"
+// in the language the app shows under cx.
+func WidgetsStandDetail(cx *core.Scope) string { return For(cx).WidgetsStandDetail() }
+
+// WidgetsStandDetail is the package's WidgetsStandDetail in the language of msgs.
+func (msgs Messages) WidgetsStandDetail() string { return msgs.text(textWidgetsStandDetail) }
+
+// WidgetsNextHourIn says "Next hour in"
+// in the language the app shows under cx.
+func WidgetsNextHourIn(cx *core.Scope) string { return For(cx).WidgetsNextHourIn() }
+
+// WidgetsNextHourIn is the package's WidgetsNextHourIn in the language of msgs.
+func (msgs Messages) WidgetsNextHourIn() string { return msgs.text(textWidgetsNextHourIn) }
+
+// WidgetsDocs says "Docs"
+// in the language the app shows under cx.
+func WidgetsDocs(cx *core.Scope) string { return For(cx).WidgetsDocs() }
+
+// WidgetsDocs is the package's WidgetsDocs in the language of msgs.
+func (msgs Messages) WidgetsDocs() string { return msgs.text(textWidgetsDocs) }
+
+// WidgetsWritten says "Written"
+// in the language the app shows under cx.
+func WidgetsWritten(cx *core.Scope) string { return For(cx).WidgetsWritten() }
+
+// WidgetsWritten is the package's WidgetsWritten in the language of msgs.
+func (msgs Messages) WidgetsWritten() string { return msgs.text(textWidgetsWritten) }
+
+// WidgetsQuote says "Widgets show what the app wrote last, whether it runs or not."
+// in the language the app shows under cx.
+func WidgetsQuote(cx *core.Scope) string { return For(cx).WidgetsQuote() }
+
+// WidgetsQuote is the package's WidgetsQuote in the language of msgs.
+func (msgs Messages) WidgetsQuote() string { return msgs.text(textWidgetsQuote) }
+
+// WidgetsRounded says "Rounded"
+// in the language the app shows under cx.
+func WidgetsRounded(cx *core.Scope) string { return For(cx).WidgetsRounded() }
+
+// WidgetsRounded is the package's WidgetsRounded in the language of msgs.
+func (msgs Messages) WidgetsRounded() string { return msgs.text(textWidgetsRounded) }
+
+// WidgetsMonospaced says "Monospaced"
+// in the language the app shows under cx.
+func WidgetsMonospaced(cx *core.Scope) string { return For(cx).WidgetsMonospaced() }
+
+// WidgetsMonospaced is the package's WidgetsMonospaced in the language of msgs.
+func (msgs Messages) WidgetsMonospaced() string { return msgs.text(textWidgetsMonospaced) }
+
+// WidgetsSerif says "Serif"
+// in the language the app shows under cx.
+func WidgetsSerif(cx *core.Scope) string { return For(cx).WidgetsSerif() }
+
+// WidgetsSerif is the package's WidgetsSerif in the language of msgs.
+func (msgs Messages) WidgetsSerif() string { return msgs.text(textWidgetsSerif) }
+
+// WidgetsSmallCaps says "Small capitals"
+// in the language the app shows under cx.
+func WidgetsSmallCaps(cx *core.Scope) string { return For(cx).WidgetsSmallCaps() }
+
+// WidgetsSmallCaps is the package's WidgetsSmallCaps in the language of msgs.
+func (msgs Messages) WidgetsSmallCaps() string { return msgs.text(textWidgetsSmallCaps) }
+
+// WidgetsColors says "Colors"
+// in the language the app shows under cx.
+func WidgetsColors(cx *core.Scope) string { return For(cx).WidgetsColors() }
+
+// WidgetsColors is the package's WidgetsColors in the language of msgs.
+func (msgs Messages) WidgetsColors() string { return msgs.text(textWidgetsColors) }
+
+// WidgetsPhotoTitle says "A walk in the light"
+// in the language the app shows under cx.
+func WidgetsPhotoTitle(cx *core.Scope) string { return For(cx).WidgetsPhotoTitle() }
+
+// WidgetsPhotoTitle is the package's WidgetsPhotoTitle in the language of msgs.
+func (msgs Messages) WidgetsPhotoTitle() string { return msgs.text(textWidgetsPhotoTitle) }

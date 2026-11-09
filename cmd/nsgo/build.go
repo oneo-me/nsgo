@@ -349,7 +349,10 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err != nil {
 		return "", err
 	}
-	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist, icon+"\n"+names); err != nil {
+	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist, icon+"\n"+names+"\n"+p.widgetPlist(false)); err != nil {
+		return "", err
+	}
+	if err := addMacWidgets(ctx, p, app, arch); err != nil {
 		return "", err
 	}
 	stage("signing")

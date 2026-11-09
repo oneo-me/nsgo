@@ -134,7 +134,7 @@ Backends reach `core` only through the engine and `core` imports no backend, so 
 
 `nsgotest` is a backend of its own: headless, without the engine, applying each batch to a model of the native views. On a platform, it drives a backend's test host through `internal/testhost`.
 
-`microphone` stands apart from the layers, as recording has nothing to do with views: it loads the system's audio libraries through purego, holds iOS's audio session of its own while it records, and elsewhere builds to report that it cannot.
+`microphone` stands apart from the layers, as recording has nothing to do with views: it loads the system's audio libraries through purego, holds iOS's audio session of its own while it records, and elsewhere builds to report that it cannot. `widget` stands apart too, as widgets are drawn by an extension the tool compiles rather than by the engine: it imports only `core`, for its colors, edges and fonts, writes timelines for the extension and loads the extension's reload library through purego ([tool](tool.md#widgets)).
 
 Portable packages build unchanged for every target, with no purego, `syscall` or `unsafe`: `core`, `base` but for `base/terminal`, `ui`, `i18n`, `mobile`, `desktop`, `icons`, `tsx`, `nsgotest`, `internal/driver`, `internal/layout`, `internal/testhost`, the shader compilers and `internal/engine`. No package has cgo files or hand-written C.
 

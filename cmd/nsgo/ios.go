@@ -62,17 +62,30 @@ func buildIOSApp(ctx context.Context, p *project, dir string, simulator bool) (s
 	if err != nil {
 		return "", err
 	}
-	if err := writePlist(filepath.Join(app, "Info.plist"), p, iosPlist, icon+"\n"+names); err != nil {
+	if err := writePlist(filepath.Join(app, "Info.plist"), p, iosPlist, icon+"\n"+names+"\n"+p.widgetPlist(true)); err != nil {
 		return "", err
 	}
 	if err := addIOSFrameworks(ctx, p, app, env, simulator); err != nil {
 		return "", err
 	}
-	if simulator {
-		stage("signing")
+	if err := addIOSWidgets(ctx, p, app, simulator); err != nil {
+		return "", err
+	}
+	if !simulator {
+		return app, nil
+	}
+	stage("signing")
+	if len(p.Widgets) == 0 {
 		return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 	}
-	return app, nil
+	// The simulator grants the app group from an ad hoc signature's
+	// entitlements.
+	ents, err := writeEntitlements(p.groupEntitlements())
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(ents)
+	return app, run(ctx, "codesign", "--force", "--sign", "-", "--entitlements", ents, app)
 }
 
 // The SDK requires the scene life cycle; platform/ios registers
@@ -230,6 +243,9 @@ func signIOSApp(ctx context.Context, p *project, app, work, team string, device 
 		return "", err
 	}
 	products := filepath.Join(work, "products")
+	if len(p.Widgets) > 0 {
+		warn("the widgets are left out: Xcode signs the app alone for devices; nsgo build -target ios with sign.profile and sign.widgets_profile keeps them")
+	}
 	event("sign for %s with Xcode", device.Name)
 	if err := runXcodebuild(ctx,
 		"-project", project,
@@ -252,14 +268,15 @@ func signIOSApp(ctx context.Context, p *project, app, work, team string, device 
 }
 
 // iosSignScript replaces Xcode's empty app with the Go build's contents,
-// except its Info.plist, which Xcode processes itself.
+// except its Info.plist, which Xcode processes itself, and the widget
+// extension, which Xcode's project has no target to sign.
 const iosSignScript = `set -e
 app="$CODESIGNING_FOLDER_PATH"
 mkdir -p "$app"
 for file in "$SRCROOT/unsigned"/*; do
 	name=$(basename "$file")
 	case "$name" in
-		Info.plist|PkgInfo|_CodeSignature|embedded.mobileprovision) continue ;;
+		Info.plist|PkgInfo|_CodeSignature|embedded.mobileprovision|PlugIns) continue ;;
 	esac
 	cp -R "$file" "$app/"
 done

@@ -68,6 +68,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 - Images on Android's clipboard, through a content provider ([services](services.md#where-nsgo-departs-from-nsh)).
 - File pickers and save dialogs for files of any type, streamed rather than passed through the platform's bridge ([services](services.md#files)).
 - A terminal running programs with Ghostty's emulator ([terminal](terminal.md)).
+- Widgets on macOS and iOS, timelines of views the app writes and a SwiftUI extension the tool compiles draws ([tool](tool.md#widgets)).
 - Message catalogs each package owns, in YAML, compiled to Go by the tool, which an app supplies in more languages, where NSH leaves translations to apps ([languages](languages.md)).
 
 ## What NSGo leaves out

@@ -5,6 +5,16 @@ version: 0.1.0
 dev:
   target: native
 
+widgets:
+  - kind: activity
+    name: Activity
+    description: The day's steps toward a goal, in every size.
+    families: [small, medium, large, extra_large, circular, rectangular, inline]
+  - kind: photo
+    name: Photo
+    description: The date over a picture the gallery draws.
+    families: [small, medium, large, extra_large]
+
 build:
   output: dist
   open: true

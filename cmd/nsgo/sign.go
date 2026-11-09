@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -33,6 +34,9 @@ type signing struct {
 	// Profile is the provisioning profile the iOS package carries and
 	// takes its entitlements from; wildcard profiles sign the app's ID.
 	Profile string `yaml:"profile"`
+	// WidgetsProfile is the provisioning profile of the iOS package's
+	// widget extension, <id>.widgets, granting the app group.
+	WidgetsProfile string `yaml:"widgets_profile"`
 	// Keystore signs Android packages: a PKCS#12 or JKS file, KeyAlias
 	// naming its key when it holds several. Without it they carry the
 	// project's debug key.
@@ -99,6 +103,11 @@ func signMacApp(ctx context.Context, p *project, app string) error {
 			return err
 		}
 	}
+	if appex := macWidgetsAppex(app); len(p.Widgets) > 0 {
+		if err := signMacWidgets(ctx, p, appex, p.Sign.Identity); err != nil {
+			return err
+		}
+	}
 	return run(ctx, "codesign", "--force", "--sign", p.Sign.Identity, app)
 }
 
@@ -129,6 +138,9 @@ func signForStore(ctx context.Context, p *project, app string) error {
 	// Devices refuse an app signed with the wildcard itself, as Xcode
 	// knows: a wildcard profile signs the app's own ID.
 	entitlements["application-identifier"] = signedAppID(appID, p.ID)
+	if groups, _ := entitlements["com.apple.security.application-groups"].([]any); len(p.Widgets) > 0 && !slices.Contains(groups, any(p.appGroup())) {
+		return fmt.Errorf("the provisioning profile does not grant the app group %s, which the app shares with its widgets", p.appGroup())
+	}
 	identity := p.Sign.Identity
 	if identity == "" {
 		if identity, err = profileIdentity(ctx, profile); err != nil {
@@ -146,6 +158,9 @@ func signForStore(ctx context.Context, p *project, app string) error {
 	detail("sign with %s", identity)
 	stage("signing")
 	if err := signFrameworks(ctx, app, identity); err != nil {
+		return err
+	}
+	if err := signIOSWidgets(ctx, p, app, identity); err != nil {
 		return err
 	}
 	return run(ctx, "codesign", "--force", "--sign", identity, "--entitlements", ents, "--generate-entitlement-der", app)
