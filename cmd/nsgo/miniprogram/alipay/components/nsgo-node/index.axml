@@ -1,0 +1,105 @@
+<!-- A view's element by its kind, at its frame (node.f), with its style
+     (node.s), what animates over it (node.a) and its frame's transition
+     (node.tr). Alipay binds handlers by name alone, so every view binds
+     them and index.js keeps an event for the innermost view that takes
+     it; a view that captures touches is a branch of its own, whose
+     catchTouchMove keeps its scroll views from scrolling. -->
+<import-sjs name="m" from="./index.sjs" />
+<scroll-view
+  a:if="{{node.k === 'scroll'}}"
+  class="n"
+  style="{{m.box(node)}}"
+  scroll-x="{{node.sc ? node.sc.h && !node.sc.off : false}}"
+  scroll-y="{{node.sc ? !node.sc.h && !node.sc.off : true}}"
+  scroll-top="{{node.so ? node.so[1] : ''}}"
+  scroll-left="{{node.so ? node.so[0] : ''}}"
+  scroll-with-animation="{{node.so ? node.so[2] : false}}"
+  refresher-enabled="{{node.sc ? node.sc.rf : false}}"
+  refresher-triggered="{{node.sc ? node.sc.rt : false}}"
+  onRefresherRefresh="onRefresh"
+  onScroll="onScroll"
+  onTouchStart="onDragStart"
+  onTouchEnd="onDragEnd"
+  onTouchCancel="onDragEnd"
+>
+  <view class="content" style="width:{{node.cs ? node.cs[0] : node.f[2]}}px;height:{{node.cs ? node.cs[1] : node.f[3]}}px">
+    <nsgo-node a:for="{{node.c}}" a:key="id" node="{{item}}" onNsgo="onNsgo" />
+  </view>
+</scroll-view>
+<view a:elif="{{node.k === 'input'}}" class="n" style="{{m.box(node)}}">
+  <block a:if="{{node.fd}}">
+    <textarea
+      a:if="{{node.fd.ml}}"
+      class="field"
+      style="{{m.field(node)}}"
+      value="{{node.v}}"
+      placeholder="{{node.fd.ph}}"
+      placeholder-style="{{node.fd.phs}}"
+      maxlength="{{node.fd.max}}"
+      disabled="{{node.fd.off}}"
+      focus="{{node.fo}}"
+      selection-start="{{node.sel ? node.sel[0] : -1}}"
+      selection-end="{{node.sel ? node.sel[1] : -1}}"
+      confirm-type="{{node.fd.nl ? 'return' : node.fd.confirm}}"
+      show-count="{{false}}"
+      onInput="onInput"
+      onConfirm="onConfirm"
+      onFocus="onFocus"
+      onBlur="onBlur"
+    />
+    <input
+      a:else
+      class="field"
+      style="{{m.field(node)}}"
+      value="{{node.v}}"
+      type="{{node.fd.type}}"
+      password="{{node.fd.pw}}"
+      placeholder="{{node.fd.ph}}"
+      placeholder-style="{{node.fd.phs}}"
+      maxlength="{{node.fd.max}}"
+      disabled="{{node.fd.off}}"
+      focus="{{node.fo}}"
+      selection-start="{{node.sel ? node.sel[0] : -1}}"
+      selection-end="{{node.sel ? node.sel[1] : -1}}"
+      confirm-type="{{node.fd.confirm}}"
+      confirm-hold="{{node.fd.hold}}"
+      onInput="onInput"
+      onConfirm="onConfirm"
+      onFocus="onFocus"
+      onBlur="onBlur"
+    />
+  </block>
+  <nsgo-node a:for="{{node.c}}" a:key="id" node="{{item}}" onNsgo="onNsgo" />
+</view>
+<view
+  a:elif="{{node.tc}}"
+  class="n"
+  style="{{m.box(node)}}"
+  onTap="onTap"
+  onLongTap="onLongPress"
+  onTouchStart="onTouch"
+  catchTouchMove="onTouch"
+  onTouchEnd="onTouch"
+  onTouchCancel="onTouch"
+>
+  <image a:if="{{node.k === 'image' && node.im}}" class="fill" src="{{node.im.src}}" mode="{{node.im.mode}}" onLoad="onLoad" onError="onError" />
+  <image a:if="{{node.cv}}" class="fill" src="{{node.cv}}" mode="scaleToFill" />
+  <text a:for="{{node.t ? node.t.r : []}}" a:for-item="r" class="line" style="{{m.run(node.t, r)}}">{{r[0]}}</text>
+  <nsgo-node a:for="{{node.c}}" a:key="id" node="{{item}}" onNsgo="onNsgo" />
+</view>
+<view
+  a:else
+  class="n"
+  style="{{m.box(node)}}"
+  onTap="onTap"
+  onLongTap="onLongPress"
+  onTouchStart="onTouch"
+  onTouchMove="onTouch"
+  onTouchEnd="onTouch"
+  onTouchCancel="onTouch"
+>
+  <image a:if="{{node.k === 'image' && node.im}}" class="fill" src="{{node.im.src}}" mode="{{node.im.mode}}" onLoad="onLoad" onError="onError" />
+  <image a:if="{{node.cv}}" class="fill" src="{{node.cv}}" mode="scaleToFill" />
+  <text a:for="{{node.t ? node.t.r : []}}" a:for-item="r" class="line" style="{{m.run(node.t, r)}}">{{r[0]}}</text>
+  <nsgo-node a:for="{{node.c}}" a:key="id" node="{{item}}" onNsgo="onNsgo" />
+</view>

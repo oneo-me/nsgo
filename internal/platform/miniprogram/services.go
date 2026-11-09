@@ -10,12 +10,14 @@ import (
 	"github.com/oneo-me/nsgo/internal/driver"
 )
 
-// Services are the mini program's own: alerts and action sheets are
-// WeChat's dialogs, the clipboard and storage its APIs, pictures come
+// Services are the mini program's own: alerts and action sheets are the
+// platform's dialogs, the clipboard and storage its APIs, pictures come
 // from its media picker, and the page's navigation bar shows the title.
-// Requests it has no API for are answered at once, as failed.
+// Requests it has no API for are answered at once, as failed. The
+// runtime's api.js gives every platform's APIs WeChat's names, options
+// and results.
 
-// call calls API name of wx with opts, and done with its result once it
+// call calls API name with opts, and done with its result once it
 // succeeds or fails.
 func (s *surface) call(name string, opts map[string]any, done func(res js.Value, ok bool)) {
 	var success, fail js.Func
@@ -29,11 +31,11 @@ func (s *surface) call(name string, opts map[string]any, done func(res js.Value,
 	success = js.FuncOf(func(_ js.Value, args []js.Value) any { finish(first(args), true); return nil })
 	fail = js.FuncOf(func(_ js.Value, args []js.Value) any { finish(first(args), false); return nil })
 	opts["success"], opts["fail"] = success, fail
-	if fn := s.wx.Get(name); fn.Type() != js.TypeFunction {
+	if fn := s.api.Get(name); fn.Type() != js.TypeFunction {
 		finish(js.Undefined(), false)
 		return
 	}
-	s.wx.Call(name, opts)
+	s.api.Call(name, opts)
 }
 
 func first(args []js.Value) js.Value {
@@ -53,14 +55,14 @@ func (s *surface) service(it *driver.MountItem) {
 	case driver.ItemReadClipboard:
 		s.readClipboard(it)
 	case driver.ItemSetClipboardImage:
-		// WeChat's clipboard holds text alone.
+		// Mini programs' clipboards hold text alone.
 	case driver.ItemTitle:
 		s.call("setNavigationBarTitle", map[string]any{"title": it.Value}, nil)
 	case driver.ItemDismissKeyboard:
 		s.call("hideKeyboard", map[string]any{}, nil)
 	case driver.ItemOpenURL:
 		// A mini program opens no other app nor browser: the link goes on
-		// the clipboard for the user to paste, as WeChat's own pages do.
+		// the clipboard for the user to paste, as the platforms' own pages do.
 		s.call("setClipboardData", map[string]any{"data": it.Value}, nil)
 		s.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: it.Count})
 	case driver.ItemPickImages:
@@ -94,7 +96,7 @@ func (s *surface) service(it *driver.MountItem) {
 	}
 }
 
-// alert shows WeChat's modal for one or two actions, its action sheet
+// alert shows the platform's modal for one or two actions, its action sheet
 // for more or for a sheet. The sheet lists the actions but the cancel
 // one, which its own cancel button is.
 func (s *surface) alert(c *driver.AlertConfig) {
@@ -193,7 +195,7 @@ func (s *surface) readFile(p string) ([]byte, bool) {
 				ok = false
 			}
 		}()
-		buf := s.wx.Call("getFileSystemManager").Call("readFileSync", p)
+		buf := s.api.Call("getFileSystemManager").Call("readFileSync", p)
 		arr := js.Global().Get("Uint8Array").New(buf)
 		data = make([]byte, arr.Length())
 		js.CopyBytesToGo(data, arr)
@@ -202,7 +204,7 @@ func (s *surface) readFile(p string) ([]byte, bool) {
 	return data, ok
 }
 
-// pickImages shows WeChat's media picker for images from source, the
+// pickImages shows the platform's media picker for images from source, the
 // album or the camera.
 func (s *surface) pickImages(r driver.PickRequest, count uint32, source string) {
 	answer := func(files []driver.PickedFile, failed string) {
@@ -237,8 +239,8 @@ func (s *surface) pickImages(r driver.PickRequest, count uint32, source string) 
 	})
 }
 
-// pickFiles picks files from a WeChat chat, the only files a mini
-// program reaches.
+// pickFiles picks files from a chat, the only files a mini program
+// reaches, where the platform has them.
 func (s *surface) pickFiles(r driver.FilesRequest, count uint32) {
 	answer := func(files []driver.File) {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: count, Data: files})
@@ -260,7 +262,7 @@ func (s *surface) pickFiles(r driver.FilesRequest, count uint32) {
 	})
 }
 
-// openFile opens a document in WeChat's viewer.
+// openFile opens a document in the platform's viewer.
 func (s *surface) openFile(f *driver.SharedFile, count uint32) {
 	if f == nil || f.Path == "" {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: count, Text: driver.NoFileOpener})
@@ -325,7 +327,7 @@ func (s *surface) setNavigationColors(dark bool) {
 // storage keeps the app's entries in the mini program's storage, each
 // under its key with the app's prefix.
 type storage struct {
-	wx     js.Value
+	api    js.Value
 	prefix string
 }
 
@@ -336,11 +338,11 @@ func (st *storage) Load() (entries map[string]string, err error) {
 			log.Printf("nsgo: the app's storage could not be read: %v", r)
 		}
 	}()
-	keys := st.wx.Call("getStorageInfoSync").Get("keys")
+	keys := st.api.Call("getStorageInfoSync").Get("keys")
 	for i := range keys.Length() {
 		k := keys.Index(i).String()
 		if len(k) >= len(st.prefix) && k[:len(st.prefix)] == st.prefix {
-			if v := st.wx.Call("getStorageSync", k); v.Type() == js.TypeString {
+			if v := st.api.Call("getStorageSync", k); v.Type() == js.TypeString {
 				entries[k[len(st.prefix):]] = v.String()
 			}
 		}
@@ -357,14 +359,14 @@ func (st *storage) Write(c driver.StorageChange) {
 	}()
 	switch c.Op {
 	case driver.StorageSet:
-		st.wx.Call("setStorageSync", st.prefix+c.Key, c.Value)
+		st.api.Call("setStorageSync", st.prefix+c.Key, c.Value)
 	case driver.StorageRemove:
-		st.wx.Call("removeStorageSync", st.prefix+c.Key)
+		st.api.Call("removeStorageSync", st.prefix+c.Key)
 	case driver.StorageClear:
-		keys := st.wx.Call("getStorageInfoSync").Get("keys")
+		keys := st.api.Call("getStorageInfoSync").Get("keys")
 		for i := range keys.Length() {
 			if k := keys.Index(i).String(); len(k) >= len(st.prefix) && k[:len(st.prefix)] == st.prefix {
-				st.wx.Call("removeStorageSync", k)
+				st.api.Call("removeStorageSync", k)
 			}
 		}
 	}

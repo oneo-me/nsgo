@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "nsgo-node": "/components/nsgo-node/index"
+  },
+  "allowsBounceVertical": "NO"
+}

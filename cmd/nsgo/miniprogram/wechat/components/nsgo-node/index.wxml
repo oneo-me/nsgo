@@ -5,22 +5,7 @@
      going down and up the innermost that follows them (mut-bind), and
      touches every view that follows them, the nearest that captures them
      keeping its scroll views from scrolling. -->
-<wxs module="m">
-  module.exports = {
-    box: function (n) {
-      return 'left:' + n.f[0] + 'px;top:' + n.f[1] + 'px;width:' + n.f[2] + 'px;height:' + n.f[3] + 'px;' +
-        n.s + n.a + (n.tr ? 'transition:' + n.tr + ';' : '')
-    },
-    run: function (t, r) {
-      return 'left:' + (t.x + r[1]) + 'px;top:' + (t.y + r[2]) + 'px;line-height:' + r[3] + 'px;' + t.s[r[4]] +
-        (t.sh ? 'text-shadow:' + t.sh + ';' : '')
-    },
-    field: function (n) {
-      var i = n.fd
-      return 'left:' + i.x + 'px;top:' + i.y + 'px;width:' + i.w + 'px;height:' + i.h + 'px;' + i.css
-    },
-  }
-</wxs>
+<wxs module="m" src="./index.wxs" />
 <scroll-view
   wx:if="{{node.k === 'scroll'}}"
   id="n"

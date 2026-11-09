@@ -1,0 +1,32 @@
+/* Every view sits at the frame NSGo laid it out at, in its parent's
+   padding box. */
+.n {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+}
+.content {
+  position: relative;
+}
+/* Lines are placed where NSGo measured them: the render layer never
+   wraps. */
+.line {
+  position: absolute;
+  white-space: pre;
+}
+/* A text field sits in its content box. */
+.field {
+  position: absolute;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+/* A canvas's picture and an image fill their view, under its children. */
+.fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}

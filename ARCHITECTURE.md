@@ -66,7 +66,7 @@ Every target builds on macOS with Go; iOS, tvOS and watchOS also need Xcode, and
 | Windows | `internal/platform/windows` | `syscall` and COM: Direct2D, DirectWrite, WebView2, Media Foundation | Runs |
 | Linux | `internal/platform/linux` | GTK 4, Pango and Cairo loaded with purego; WebKitGTK and GStreamer | Runs |
 | Android | `internal/platform/android` | A Go executable the prebuilt Java runtime starts and talks to over pipes | Runs on arm64 devices and x86_64 emulators |
-| WeChat mini programs | `internal/platform/miniprogram` | `syscall/js` in WebAssembly in the logic layer; a runtime that hands the render layer a tree of views with `setData` | Runs in a stand-in host; unchecked in WeChat |
+| Mini programs: WeChat, QQ, Alipay, Douyin | `internal/platform/miniprogram` | `syscall/js` in WebAssembly in the logic layer; a runtime that hands the render layer a tree of views with `setData`, through each platform's APIs and markup | Runs in a stand-in host; unchecked in the platforms' tools |
 
 A mini program runs the engine in its logic layer, which has no DOM: text breaks into lines there on an offscreen canvas's widths, and the render layer draws views and lines where they were placed ([mini programs](docs/architecture/miniprogram.md)). Android runs the app as a second process because Go builds Android shared libraries only with cgo and the NDK, and executables without cgo for arm64 only. iOS forbids child processes, so it links in-process with Xcode. watchOS has no public UIKit or Core Animation, so its views are SwiftUI's in `cmd/nsgo/watch/Host.swift`, which places, clips and scrolls them; Go keeps their state, hit-tests touches, runs what animates on the host's frames, and builds only the views within a screen of what each scroll view shows, as a watch has the memory for a screen's views, not a page's.
 
@@ -138,7 +138,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Icons](docs/architecture/icons.md) | SVG parsing, `core.Icon` or the Lucide pack |
 | [Performance](docs/architecture/performance.md) | The performance monitor, a frame clock or a per-frame path |
 | [Embedding](docs/architecture/embedding.md) | `nsgo.NewView`, the host channel or `-embed` packages |
-| [Mini programs](docs/architecture/miniprogram.md) | The mini program backend, its runtime or the `miniprogram` target |
+| [Mini programs](docs/architecture/miniprogram.md) | The mini program backend, its runtime or the `miniprogram_*` targets |
 | [Testing](docs/architecture/testing.md) | `nsgotest`, its steps or a backend's test host |
 | [Tool](docs/architecture/tool.md) | `nsgo`: the dev server, tests on targets, packages or signing |
 | [TSX and dynamic delivery](docs/architecture/tsx.md) | TSX, signed packages or the sandbox |

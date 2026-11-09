@@ -132,7 +132,7 @@ func (l *limitsFlag) Set(v string) error {
 
 func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	f := &devFlags{overrides: bindOverrides(fs)}
-	f.target = stringFlag(fs, "target", "`target` to use: native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android (a device or emulator) or miniprogram (default: nsgo.yaml's dev.target)")
+	f.target = stringFlag(fs, "target", "`target` to use: native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android (a device or emulator), miniprogram_wechat, miniprogram_qq, miniprogram_alipay or miniprogram_douyin (default: nsgo.yaml's dev.target)")
 	f.hotReload = boolFlag(fs, "hot-reload", "rebuild and restart on changes (default: nsgo.yaml's dev.hot_reload, else true)")
 	f.fps = boolFlag(fs, "fps", "show the performance monitor (default: nsgo.yaml's dev.fps)")
 	fs.IntVar(&f.port, "port", 8080, "the dev server's `port`, which serves the web target; the next free one when taken")

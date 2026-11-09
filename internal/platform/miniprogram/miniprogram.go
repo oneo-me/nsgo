@@ -1,6 +1,7 @@
 //go:build js && wasm
 
-// Package miniprogram is NSGo's WeChat mini program backend: the engine
+// Package miniprogram is NSGo's mini program backend, for WeChat, QQ,
+// Alipay and Douyin alike: the engine
 // and the app run in WebAssembly in the mini program's logic layer, each
 // batch becomes operations its runtime applies to a tree of plain objects
 // and hands the render layer with setData, and one recursive component
@@ -11,7 +12,9 @@
 //
 // The runtime (cmd/nsgo/miniprogram) starts the module with Go's
 // wasm_exec.js in a global object of its own, nsgoMP being the bridge:
-// what it calls in Go, Go sets on it, and what Go calls it provides.
+// what it calls in Go, Go sets on it, and what Go calls it provides,
+// the platform's APIs (api) among them, as WeChat's whichever platform it
+// is.
 package miniprogram
 
 import (
@@ -36,8 +39,9 @@ type Options struct {
 
 // surface is the app's page: the engine's platform.
 type surface struct {
-	bridge  js.Value
-	wx      js.Value
+	bridge js.Value
+	// api is the platform's APIs, with WeChat's names and options.
+	api     js.Value
 	m       *mounter
 	text    *TextEngine
 	engine  *engine.Engine
@@ -57,7 +61,8 @@ type surface struct {
 // not return.
 func Run(app engine.App, opts Options) {
 	g := js.Global()
-	s := &surface{bridge: g.Get("nsgoMP"), wx: g.Get("wx"), started: time.Now(),
+	bridge := g.Get("nsgoMP")
+	s := &surface{bridge: bridge, api: bridge.Get("api"), started: time.Now(),
 		images: map[string]*canvasImage{}, files: map[string]string{}}
 	s.text = NewTextEngine(measurer{s.bridge})
 	s.m = newMounter(s)
@@ -71,7 +76,7 @@ func Run(app engine.App, opts Options) {
 	}
 	s.engine = engine.Start(s, app, engine.Options{
 		Size: s.size(), Environment: s.env, Appearance: opts.Appearance,
-		Storage: engine.NewStorage(&storage{wx: s.wx, prefix: "nsgo:" + id + ":"}),
+		Storage: engine.NewStorage(&storage{api: s.api, prefix: "nsgo:" + id + ":"}),
 	})
 	s.bridge.Set("event", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		s.event(args)
@@ -270,7 +275,7 @@ func (s *surface) paint(id driver.NodeID, ops []driver.DrawOp, size driver.Size)
 	}
 	w, h := float64(size.Width), float64(size.Height)
 	if !s.canvas.Truthy() {
-		s.canvas = s.wx.Call("createOffscreenCanvas", map[string]any{"type": "2d", "width": 1, "height": 1})
+		s.canvas = s.api.Call("createOffscreenCanvas", map[string]any{"type": "2d", "width": 1, "height": 1})
 	}
 	c := s.canvas
 	// Setting the size clears the canvas and resets its context.
@@ -312,7 +317,7 @@ func (s *surface) canvasImage(src driver.ImageSource, id driver.NodeID) *canvasI
 		return im
 	}
 	if !s.canvas.Truthy() {
-		s.canvas = s.wx.Call("createOffscreenCanvas", map[string]any{"type": "2d", "width": 1, "height": 1})
+		s.canvas = s.api.Call("createOffscreenCanvas", map[string]any{"type": "2d", "width": 1, "height": 1})
 	}
 	im := &canvasImage{img: s.canvas.Call("createImage")}
 	s.images[key] = im
@@ -351,10 +356,10 @@ func (s *surface) imageURL(src driver.ImageSource) string {
 		case "image/svg+xml":
 			ext = ".svg"
 		}
-		path := s.wx.Get("env").Get("USER_DATA_PATH").String() + "/nsgo-image-" + strconv.Itoa(len(s.files)) + ext
+		path := s.api.Get("env").Get("USER_DATA_PATH").String() + "/nsgo-image-" + strconv.Itoa(len(s.files)) + ext
 		data := js.Global().Get("Uint8Array").New(len(src.Data))
 		js.CopyBytesToJS(data, src.Data)
-		s.wx.Call("getFileSystemManager").Call("writeFileSync", path, data.Get("buffer"))
+		s.api.Call("getFileSystemManager").Call("writeFileSync", path, data.Get("buffer"))
 		s.files[key] = path
 		return path
 	}

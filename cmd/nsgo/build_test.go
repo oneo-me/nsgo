@@ -20,8 +20,10 @@ func TestExpandAllTargets(t *testing.T) {
 	if slices.Contains(got, "android_x64") {
 		t.Error("all includes android_x64, which needs an NDK")
 	}
-	if slices.Contains(got, "miniprogram") {
-		t.Error("all includes miniprogram, which only some apps fit")
+	for _, mp := range miniProgramTargets() {
+		if slices.Contains(got, mp) {
+			t.Errorf("all includes %s, which only some apps fit", mp)
+		}
 	}
 }
 
@@ -30,8 +32,8 @@ func TestExpandTargetsDropsDuplicates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != len(targets)-1 {
-		t.Fatalf("expandTargets = %v, want %d targets: all but miniprogram", got, len(targets)-1)
+	if want := len(targets) - len(miniProgramPlatforms); len(got) != want {
+		t.Fatalf("expandTargets = %v, want %d targets: all but the mini programs", got, want)
 	}
 	if got[0] != "macos_arm64" || got[len(got)-1] != "android_x64" {
 		t.Errorf("order: got %v, want macos_arm64 first and android_x64 last", got)

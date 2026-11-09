@@ -11,7 +11,7 @@ order: 40
 go tool nsgo build
 ```
 
-`build` writes a stripped release package for each target `nsgo.yaml` lists, into `dist/<name>-<version>-<target>`: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site, whose page fetches each TSX module an `import()` names when the import runs. `-target` replaces the list, and `all` means every target that needs only Go and Xcode; add `android_x64` when an Android NDK is installed, and `miniprogram` for a [WeChat mini program](#wechat-mini-programs). `-run` starts the package built for this machine, or installs it on the iPhone, simulator or Android device `-device` picks.
+`build` writes a stripped release package for each target `nsgo.yaml` lists, into `dist/<name>-<version>-<target>`: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site, whose page fetches each TSX module an `import()` names when the import runs. `-target` replaces the list, and `all` means every target that needs only Go and Xcode; add `android_x64` when an Android NDK is installed, and `miniprogram_wechat`, `miniprogram_qq`, `miniprogram_alipay` or `miniprogram_douyin` for a [mini program](#mini-programs). `-run` starts the package built for this machine, or installs it on the iPhone, simulator or Android device `-device` picks.
 
 ## nsgo.yaml
 
@@ -27,7 +27,7 @@ icon:
   apple: assets/AppIcon.icon  # macOS, iOS and watchOS, or an .icns for macOS; tvOS layers the PNG
   png: assets/Icon.png        # every other target
 dev:
-  target: native        # native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android or miniprogram
+  target: native        # native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android or miniprogram_<platform>
   hot_reload: true      # false builds once, watching no files
   fps: false            # true shows the performance monitor
   # icon: { png: assets/Icon-dev.png }  # replaces icon's files in dev's builds; defaults to assets/*-dev.*
@@ -37,7 +37,7 @@ build:
   fps: false            # as dev.fps, for packages
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
-# miniprogram: { appid: wx0123456789abcdef, custom_navigation: false }  # the WeChat mini program's
+# miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # the mini programs'
 ```
 
 Flags replace the values they name, such as `-target`, `-version` or `-output`; `-h` lists them all.
@@ -62,16 +62,25 @@ The app hears the files with `desktop.OnOpenFiles`, which also takes those named
 desktop.OnOpenFiles(cx, func(paths []string) { open(paths[0]) })
 ```
 
-## WeChat mini programs
+## Mini programs
 
 ```sh
-go tool nsgo build -target miniprogram -run
-go tool nsgo dev -target miniprogram
+go tool nsgo build -target miniprogram_wechat -run
+go tool nsgo dev -target miniprogram_alipay
 ```
 
-The `miniprogram` target writes a project for [WeChat DevTools](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html), which `-run` and `dev` open in it once its service port is on (Settings, Security); `dev` builds again as you save, and DevTools reloads. `miniprogram.appid` gives the mini program's AppID, else DevTools previews it with its tourist one. WeChat's navigation bar shows the app's title; with `custom_navigation`, the app fills the page and its safe area keeps it clear of the menu button.
+Each target writes a project for its platform's developer tool, which `-run` and `dev` open; `dev` builds again as you save, and the tool reloads:
 
-A mini program runs Go apps alone, not TSX, and WeChat holds the app's compressed module to 2 MB: an app of a few screens fits, and `build` says when one does not. Shaders draw nothing there, and web views, videos, native components and the app's font files are not shown yet.
+| Target | Platform | Tool |
+| --- | --- | --- |
+| `miniprogram_wechat` | WeChat | [WeChat DevTools](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html), with its service port on (Settings, Security) |
+| `miniprogram_qq` | QQ | [QQ's developer tool](https://q.qq.com/wiki/tools/devtool/), on macOS |
+| `miniprogram_alipay` | Alipay | [Alipay's Mini Program Studio](https://opendocs.alipay.com/mini/ide/download), on macOS |
+| `miniprogram_douyin` | Douyin and ByteDance's other apps | [Douyin's developer tool](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/developer-instrument/download/developer-instrument-update-and-download), on macOS |
+
+`miniprogram.appid` gives the mini program's AppID on each platform (`wechat`, `qq`, `alipay`, `douyin`); without one, WeChat DevTools previews it with its tourist AppID and the other tools ask for one. The platform's navigation bar shows the app's title; with `custom_navigation`, the app fills the page and its safe area keeps it clear of the menu button. QQ, Alipay and Douyin have not been tried in their tools yet, and Alipay does not yet take back through the app, keyframes or the keyboard's height.
+
+A mini program runs Go apps alone, not TSX, and the platforms hold the app's compressed module to 2 MB: an app of a few screens fits, and `build` says when one does not. Shaders draw nothing there, and web views, videos, native components and the app's font files are not shown yet.
 
 ## Sign
 

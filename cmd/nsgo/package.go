@@ -199,8 +199,6 @@ func runnable(target string) bool {
 	switch target {
 	case "web", "android_arm64", "android_x64":
 		return true
-	case "miniprogram":
-		return devToolsCLI() != ""
 	case "ios", "ios_simulator", "tvos", "tvos_simulator", "watchos", "watchos_simulator":
 		return runtime.GOOS == "darwin"
 	case "macos_" + arch:
@@ -209,6 +207,9 @@ func runnable(target string) bool {
 		return runtime.GOOS == "linux"
 	case "windows_" + arch:
 		return runtime.GOOS == "windows"
+	}
+	if mp, ok := miniProgramPlatformOf(target); ok {
+		return canOpenMiniProgram(mp)
 	}
 	return false
 }
@@ -223,8 +224,9 @@ func runPackage(ctx context.Context, p *project, target, dir string) error {
 	switch {
 	case target == "web":
 		return serveSite(ctx, dir)
-	case target == "miniprogram":
-		return openMiniProgram(ctx, dir)
+	case strings.HasPrefix(target, "miniprogram_"):
+		mp, _ := miniProgramPlatformOf(target)
+		return openMiniProgram(ctx, mp, dir)
 	case strings.HasPrefix(target, "macos_"):
 		return run(ctx, "open", "-n", filepath.Join(dir, p.Name+".app"))
 	case target == "ios" || target == "tvos" || target == "watchos":

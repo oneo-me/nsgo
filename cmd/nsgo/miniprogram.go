@@ -17,11 +17,15 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-// The miniprogram target writes a WeChat mini program project: the
-// runtime (miniprogram/, embedded here), the app's module brotli
-// compressed in a subpackage of its own, as WXWebAssembly loads only files
-// of the code package and WeChat caps each package at 2 MB, and the files
-// WeChat DevTools reads.
+// The miniprogram_<platform> targets write a mini program project for
+// WeChat, QQ, Alipay or Douyin: the runtime (miniprogram/, embedded
+// here), the app's module brotli compressed in a subpackage of its own, as
+// WXWebAssembly and its likes load only files of the code package and
+// each package holds at most 2 MB, and the files the platform's developer
+// tool reads. The module and the runtime's logic (miniprogram/common) are
+// the same on every platform; the render layer is WeChat's
+// (miniprogram/wechat), its markup rewritten for QQ and Douyin, or
+// Alipay's own (miniprogram/alipay).
 
 //go:embed miniprogram
 var miniprogramRuntime embed.FS
@@ -30,9 +34,59 @@ var miniprogramRuntime embed.FS
 // subpackage included.
 const packageLimit = 2 << 20
 
-// touristAppID is the AppID WeChat DevTools previews projects without
-// one of their own with.
-const touristAppID = "touristappid"
+// miniProgramPlatform is a platform mini programs run on: the files it
+// reads and the developer tool that opens them.
+type miniProgramPlatform struct {
+	// name follows miniprogram_ in the target's name and names the
+	// platform in nsgo.yaml's miniprogram.appid and the runtime's
+	// config.js; title in messages.
+	name, title string
+	// markup, style and script are the extensions of its templates,
+	// styles and template scripts. prefix begins its directives (wx:if)
+	// and tag is its template scripts' element, which WeChat's markup is
+	// rewritten with; Alipay's markup is its own.
+	markup, style, script, prefix, tag string
+	// project is the file its tool reads the project from, tourist the
+	// AppID it previews a project without one of its own with.
+	project, tourist string
+	// tool is its developer tool on macOS, download where to get it.
+	tool, download string
+}
+
+var miniProgramPlatforms = []miniProgramPlatform{
+	{name: "wechat", title: "WeChat", markup: "wxml", style: "wxss", script: "wxs", prefix: "wx:", tag: "wxs",
+		project: "project.config.json", tourist: "touristappid", tool: "/Applications/wechatwebdevtools.app",
+		download: "https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html"},
+	{name: "qq", title: "QQ", markup: "qml", style: "qss", script: "qs", prefix: "qq:", tag: "qs",
+		project: "project.config.json", tool: "/Applications/QQ小程序开发者工具.app",
+		download: "https://q.qq.com/wiki/tools/devtool/"},
+	{name: "alipay", title: "Alipay", markup: "axml", style: "acss", script: "sjs",
+		project: "mini.project.json", tool: "/Applications/小程序开发者工具.app",
+		download: "https://opendocs.alipay.com/mini/ide/download"},
+	{name: "douyin", title: "Douyin", markup: "ttml", style: "ttss", script: "sjs", prefix: "tt:", tag: "sjs",
+		project: "project.config.json", tool: "/Applications/抖音开发者工具.app",
+		download: "https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/developer-instrument/download/developer-instrument-update-and-download"},
+}
+
+// miniProgramTargets are the mini program targets' names.
+func miniProgramTargets() []string {
+	out := make([]string, len(miniProgramPlatforms))
+	for i, mp := range miniProgramPlatforms {
+		out[i] = "miniprogram_" + mp.name
+	}
+	return out
+}
+
+// miniProgramPlatformOf returns the platform of a mini program target.
+func miniProgramPlatformOf(target string) (miniProgramPlatform, bool) {
+	name, ok := strings.CutPrefix(target, "miniprogram_")
+	for _, mp := range miniProgramPlatforms {
+		if ok && mp.name == name {
+			return mp, true
+		}
+	}
+	return miniProgramPlatform{}, false
+}
 
 // miniprogramSubpackage is the subpackage the module is in.
 const miniprogramSubpackage = "nsgo-app"
@@ -44,7 +98,7 @@ var miniprogramTags = []string{"nsgominiprogram", "nsgo_noshader"}
 // buildMiniProgram writes the project to dir. The module is built with
 // encoding/json's first implementation, which is smaller, and when it is
 // still too large for its package, again without inlining.
-func buildMiniProgram(ctx context.Context, p *project, dir string) error {
+func buildMiniProgram(ctx context.Context, p *project, mp miniProgramPlatform, dir string) error {
 	// Stripped always, as anything larger does not load; and without the
 	// dev client, as the logic layer makes no requests to a dev server.
 	release, client := p.Release, p.Dev.Client
@@ -82,11 +136,11 @@ func buildMiniProgram(ctx context.Context, p *project, dir string) error {
 			formatSize(int64(len(module))), formatSize(packageLimit))
 	}
 	stage("writing the project")
-	if err := writeMiniProgram(p, dir, module); err != nil {
+	if err := writeMiniProgram(p, mp, dir, module); err != nil {
 		return err
 	}
 	if main := dirSize(dir) - dirSize(filepath.Join(dir, miniprogramSubpackage)); main > packageLimit {
-		warn("the main package is %s, past WeChat's %s: move resources the app does not need out", formatSize(main), formatSize(packageLimit))
+		warn("the main package is %s, past %s's %s: move resources the app does not need out", formatSize(main), mp.title, formatSize(packageLimit))
 	}
 	return nil
 }
@@ -124,28 +178,36 @@ func buildMiniProgramModule(ctx context.Context, p *project, wasm string, env, f
 // miniprogramConfig is nsgo/config.js: what the runtime starts the app
 // with.
 type miniprogramConfig struct {
+	Platform         string            `json:"platform"`
 	Wasm             string            `json:"wasm"`
 	Subpackage       string            `json:"subpackage"`
 	CustomNavigation bool              `json:"customNavigation"`
 	Env              map[string]string `json:"env"`
 }
 
-// writeMiniProgram writes the runtime, module and project files to dir.
-// A project written before keeps its AppID, which WeChat DevTools writes
-// when it imports one with a test account.
-func writeMiniProgram(p *project, dir string, module []byte) error {
-	err := fs.WalkDir(miniprogramRuntime, "miniprogram", func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-		data, err := miniprogramRuntime.ReadFile(path)
+// writeMiniProgram writes the runtime, module and project files for mp to
+// dir. A project written before keeps its AppID, which a developer tool
+// writes when it imports one with a test account.
+func writeMiniProgram(p *project, mp miniProgramPlatform, dir string, module []byte) error {
+	layer := "wechat"
+	if mp.name == "alipay" {
+		layer = "alipay"
+	}
+	for _, root := range []string{"common", layer} {
+		err := fs.WalkDir(miniprogramRuntime, "miniprogram/"+root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return err
+			}
+			data, err := miniprogramRuntime.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			name, data := mp.rewrite(strings.TrimPrefix(path, "miniprogram/"+root+"/"), data)
+			return writeFile(filepath.Join(dir, name), data)
+		})
 		if err != nil {
 			return err
 		}
-		return writeFile(filepath.Join(dir, strings.TrimPrefix(path, "miniprogram/")), data)
-	})
-	if err != nil {
-		return err
 	}
 	goroot, err := exec.Command("go", "env", "GOROOT").Output()
 	if err != nil {
@@ -158,7 +220,7 @@ func writeMiniProgram(p *project, dir string, module []byte) error {
 	if err := writeFile(filepath.Join(dir, "nsgo", "wasm_exec.js"), miniprogramExec(exec)); err != nil {
 		return err
 	}
-	cfg := miniprogramConfig{Wasm: "/" + miniprogramSubpackage + "/app.wasm.br", Subpackage: miniprogramSubpackage,
+	cfg := miniprogramConfig{Platform: mp.name, Wasm: "/" + miniprogramSubpackage + "/app.wasm.br", Subpackage: miniprogramSubpackage,
 		CustomNavigation: p.MiniProgram.CustomNavigation, Env: map[string]string{}}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
@@ -173,7 +235,7 @@ func writeMiniProgram(p *project, dir string, module []byte) error {
 	}
 	// A subpackage holds at least one page.
 	for name, text := range map[string]string{
-		"index.js": "Page({})\n", "index.json": "{}\n", "index.wxml": "<view />\n", "index.wxss": "",
+		"index.js": "Page({})\n", "index.json": "{}\n", "index." + mp.markup: "<view />\n", "index." + mp.style: "",
 	} {
 		if err := writeFile(filepath.Join(sub, name), []byte(text)); err != nil {
 			return err
@@ -182,55 +244,14 @@ func writeMiniProgram(p *project, dir string, module []byte) error {
 	if err := copyResources(p, filepath.Join(dir, "resources")); err != nil {
 		return err
 	}
-	window := map[string]any{"navigationBarTitleText": p.Name, "navigationBarBackgroundColor": "#ffffff",
-		"navigationBarTextStyle": "black", "backgroundColor": "#ffffff"}
-	if p.Appearance == "dark" {
-		window["navigationBarBackgroundColor"], window["navigationBarTextStyle"], window["backgroundColor"] =
-			"#000000", "white", "#000000"
+	files := map[string]any{"app.json": mp.app(p)}
+	if project := mp.projectFile(p, dir); project != nil {
+		files[mp.project] = project
 	}
-	if p.MiniProgram.CustomNavigation {
-		window["navigationStyle"] = "custom"
+	if mp.name == "wechat" {
+		files["sitemap.json"] = map[string]any{"rules": []any{map[string]any{"action": "allow", "page": "*"}}}
 	}
-	app := map[string]any{
-		"pages":           []string{"pages/index/index"},
-		"subPackages":     []any{map[string]any{"root": miniprogramSubpackage, "name": miniprogramSubpackage, "pages": []string{"index"}}},
-		"preloadRule":     map[string]any{"pages/index/index": map[string]any{"network": "all", "packages": []string{miniprogramSubpackage}}},
-		"window":          window,
-		"style":           "v2",
-		"sitemapLocation": "sitemap.json",
-		"lazyCodeLoading": "requiredComponents",
-	}
-	if p.Appearance == "" {
-		app["darkmode"] = false
-	}
-	appid := p.MiniProgram.AppID
-	if appid == "" {
-		var kept struct {
-			AppID string `json:"appid"`
-		}
-		if data, err := os.ReadFile(filepath.Join(dir, "project.config.json")); err == nil && json.Unmarshal(data, &kept) == nil &&
-			kept.AppID != touristAppID {
-			appid = kept.AppID
-		}
-	}
-	if appid == "" {
-		appid = touristAppID
-	}
-	project := map[string]any{
-		"description": p.Name + " (" + p.ID + "), an NSGo app",
-		"appid":       appid,
-		"projectname": p.Name,
-		"compileType": "miniprogram",
-		"libVersion":  "3.0.0",
-		// urlCheck is off: an app's images reach any host while it is
-		// developed; a released mini program lists its domains.
-		"setting":     map[string]any{"es6": true, "enhance": true, "minified": true, "urlCheck": false},
-		"packOptions": map[string]any{"ignore": []any{}, "include": []any{}},
-	}
-	for name, v := range map[string]any{
-		"app.json": app, "project.config.json": project,
-		"sitemap.json": map[string]any{"rules": []any{map[string]any{"action": "allow", "page": "*"}}},
-	} {
+	for name, v := range files {
 		data, err := json.MarshalIndent(v, "", "  ")
 		if err != nil {
 			return err
@@ -240,6 +261,100 @@ func writeMiniProgram(p *project, dir string, module []byte) error {
 		}
 	}
 	return nil
+}
+
+// rewrite returns a file of WeChat's render layer, its name and contents,
+// as mp reads it: with mp's extensions, directives and template scripts.
+// Other files stay as they are.
+func (mp miniProgramPlatform) rewrite(name string, data []byte) (string, []byte) {
+	if mp.name == "wechat" || mp.name == "alipay" {
+		return name, data
+	}
+	base, ext, _ := strings.Cut(filepath.Base(name), ".")
+	switch ext {
+	case "wxml":
+		text := strings.NewReplacer(`wx:`, mp.prefix, "<wxs ", "<"+mp.tag+" ", `src="./index.wxs"`, `src="./index.`+mp.script+`"`).
+			Replace(string(data))
+		return filepath.Join(filepath.Dir(name), base+"."+mp.markup), []byte(text)
+	case "wxss":
+		return filepath.Join(filepath.Dir(name), base+"."+mp.style), data
+	case "wxs":
+		return filepath.Join(filepath.Dir(name), base+"."+mp.script), data
+	}
+	return name, data
+}
+
+// app is mp's app.json: the page, the module's subpackage, loaded with
+// it, and the window, colored for the app's appearance.
+func (mp miniProgramPlatform) app(p *project) map[string]any {
+	dark := p.Appearance == "dark"
+	back := map[bool]string{false: "#ffffff", true: "#000000"}[dark]
+	app := map[string]any{
+		"pages":       []string{"pages/index/index"},
+		"subPackages": []any{map[string]any{"root": miniprogramSubpackage, "name": miniprogramSubpackage, "pages": []string{"index"}}},
+		"preloadRule": map[string]any{"pages/index/index": map[string]any{"network": "all", "packages": []string{miniprogramSubpackage}}},
+	}
+	if mp.name == "alipay" {
+		window := map[string]any{"defaultTitle": p.Name, "titleBarColor": back, "backgroundColor": back}
+		if p.MiniProgram.CustomNavigation {
+			window["transparentTitle"] = "always"
+		}
+		app["window"] = window
+		return app
+	}
+	window := map[string]any{"navigationBarTitleText": p.Name, "navigationBarBackgroundColor": back,
+		"navigationBarTextStyle": map[bool]string{false: "black", true: "white"}[dark], "backgroundColor": back}
+	if p.MiniProgram.CustomNavigation {
+		window["navigationStyle"] = "custom"
+	}
+	app["window"] = window
+	if mp.name == "wechat" {
+		app["style"] = "v2"
+		app["sitemapLocation"] = "sitemap.json"
+		app["lazyCodeLoading"] = "requiredComponents"
+		if p.Appearance == "" {
+			app["darkmode"] = false
+		}
+	}
+	return app
+}
+
+// projectFile is the project file mp's developer tool reads, with
+// nsgo.yaml's AppID, else the one the file holds, else mp's tourist one.
+// QQ and Douyin's tools ask for an AppID when there is none.
+func (mp miniProgramPlatform) projectFile(p *project, dir string) map[string]any {
+	if mp.name == "alipay" {
+		return map[string]any{"format": 2, "compileType": "mini", "compileOptions": map[string]any{"component2": true}}
+	}
+	appid := p.MiniProgram.AppID[mp.name]
+	if appid == "" {
+		var kept struct {
+			AppID string `json:"appid"`
+		}
+		if data, err := os.ReadFile(filepath.Join(dir, mp.project)); err == nil && json.Unmarshal(data, &kept) == nil &&
+			kept.AppID != mp.tourist {
+			appid = kept.AppID
+		}
+	}
+	if appid == "" {
+		appid = mp.tourist
+	}
+	project := map[string]any{
+		"description": p.Name + " (" + p.ID + "), an NSGo app",
+		"projectname": p.Name,
+		"compileType": "miniprogram",
+		// urlCheck is off: an app's images reach any host while it is
+		// developed; a released mini program lists its domains.
+		"setting":     map[string]any{"es6": true, "enhance": true, "minified": true, "urlCheck": false},
+		"packOptions": map[string]any{"ignore": []any{}, "include": []any{}},
+	}
+	if appid != "" {
+		project["appid"] = appid
+	}
+	if mp.name == "wechat" {
+		project["libVersion"] = "3.0.0"
+	}
+	return project
 }
 
 // miniprogramExec is Go's wasm_exec.js as a module the runtime calls with
@@ -265,19 +380,20 @@ func writeFile(path string, data []byte) error {
 }
 
 // miniprogramSession writes the project into the dev cache and opens it in
-// WeChat DevTools once, which compiles it again as each build changes it.
-func miniprogramSession() session {
+// mp's developer tool once, which compiles it again as each build changes
+// it.
+func miniprogramSession(mp miniProgramPlatform) session {
 	var once sync.Once
+	dir := func(p *project) string { return p.cache("dev", "miniprogram_"+mp.name) }
 	return session{
 		build: func(ctx context.Context, p *project) error {
-			return buildMiniProgram(ctx, p, p.cache("dev", "miniprogram"))
+			return buildMiniProgram(ctx, p, mp, dir(p))
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
 			var err error
 			once.Do(func() {
-				dir := p.cache("dev", "miniprogram")
-				note("%s", rel(dir))
-				err = openMiniProgram(ctx, dir)
+				note("%s", rel(dir(p)))
+				err = openMiniProgram(ctx, mp, dir(p))
 			})
 			return app{stop: func() {}}, err
 		},
@@ -302,16 +418,32 @@ func devToolsCLI() string {
 	return ""
 }
 
-// openMiniProgram opens the project in WeChat DevTools, whose service
-// port must be on (Settings, Security).
-func openMiniProgram(ctx context.Context, dir string) error {
-	cli := devToolsCLI()
-	if cli == "" {
-		return fmt.Errorf("WeChat DevTools is not installed: get it at https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html, then open %s", rel(dir))
+// canOpenMiniProgram reports whether this machine opens mp's projects:
+// WeChat's with DevTools' command line, the others' tools on macOS.
+func canOpenMiniProgram(mp miniProgramPlatform) bool {
+	if mp.name == "wechat" {
+		return devToolsCLI() != ""
 	}
+	if runtime.GOOS != "darwin" {
+		return false
+	}
+	_, err := os.Stat(mp.tool)
+	return err == nil
+}
+
+// openMiniProgram opens the project in mp's developer tool: WeChat
+// DevTools through its command line, whose service port must be on
+// (Settings, Security), and the others as macOS opens a folder in an app.
+func openMiniProgram(ctx context.Context, mp miniProgramPlatform, dir string) error {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
 	}
-	return run(ctx, cli, "open", "--project", abs)
+	if !canOpenMiniProgram(mp) {
+		return fmt.Errorf("%s's developer tool is not installed here: get it at %s, then open %s", mp.title, mp.download, rel(dir))
+	}
+	if mp.name == "wechat" {
+		return run(ctx, devToolsCLI(), "open", "--project", abs)
+	}
+	return run(ctx, "open", "-a", mp.tool, abs)
 }

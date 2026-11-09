@@ -17,8 +17,10 @@ Page({
     if (this.app) this.app.stop()
   },
 
+  // An nsgo event: WeChat, QQ and Douyin's component event, whose detail
+  // it is, or what Alipay's component hands its onNsgo prop.
   onNsgo(e) {
-    if (this.app) this.app.event(...e.detail)
+    if (this.app) this.app.event(...(Array.isArray(e) ? e : e.detail))
   },
 
   // The page container left with the back: the app goes back, and shows

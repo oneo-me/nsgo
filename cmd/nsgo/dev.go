@@ -476,10 +476,12 @@ func sessionFor(p *project, opts devOptions) (session, error) {
 		return iosSession(sys, opts), nil
 	case "android":
 		return androidSession(opts), nil
-	case "miniprogram":
-		return miniprogramSession(), nil
 	default:
-		return session{}, fmt.Errorf("unknown dev target %q; use native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android or miniprogram", p.Dev.Target)
+		if mp, ok := miniProgramPlatformOf(p.Dev.Target); ok {
+			return miniprogramSession(mp), nil
+		}
+		return session{}, fmt.Errorf("unknown dev target %q; use native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android or %s",
+			p.Dev.Target, strings.Join(miniProgramTargets(), ", "))
 	}
 }
 

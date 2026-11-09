@@ -23,11 +23,11 @@ const en = {
   home: {
     title: 'NSGo — Write it once in Go, native on every platform',
     description:
-      'NSGo is a cross-platform native UI framework. Write an app once in Go or TSX and run it on iOS, tvOS, watchOS, Android, macOS, Windows, Linux and the web with each platform’s own views, and Go apps in WeChat mini programs.',
+      'NSGo is a cross-platform native UI framework. Write an app once in Go or TSX and run it on iOS, tvOS, watchOS, Android, macOS, Windows, Linux and the web with each platform’s own views, and Go apps in WeChat, QQ, Alipay and Douyin mini programs.',
     hero: {
       badge: 'Open source · Early preview',
       title: ['Write it once in Go.', 'Native on every platform.'],
-      lead: 'NSGo is a cross-platform UI framework. Your app’s state, layout and styles run in Go; iOS, tvOS, watchOS, Android, macOS, Windows, Linux, the web and WeChat mini programs draw it with their own views.',
+      lead: 'NSGo is a cross-platform UI framework. Your app’s state, layout and styles run in Go; iOS, tvOS, watchOS, Android, macOS, Windows, Linux, the web and mini programs draw it with their own views.',
       demo: 'Try the live demo',
       start: 'Get started',
       runsOn: 'Runs on',
@@ -190,11 +190,11 @@ const zh: Copy = {
   home: {
     title: 'NSGo — 用 Go 写一次，在每个平台原生运行',
     description:
-      'NSGo 是一个跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，就能以各平台自己的视图运行在 iOS、tvOS、watchOS、Android、macOS、Windows、Linux、Web 和微信小程序 上。',
+      'NSGo 是一个跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，就能以各平台自己的视图运行在 iOS、tvOS、watchOS、Android、macOS、Windows、Linux、Web 上，Go 应用还能运行在微信、QQ、支付宝和抖音小程序中。',
     hero: {
       badge: '开源 · 早期预览',
       title: ['用 Go 写一次', '在每个平台原生运行'],
-      lead: 'NSGo 是一个跨平台 UI 框架。应用的状态、布局和样式在 Go 中运行，再由 iOS、tvOS、watchOS、Android、macOS、Windows、Linux、Web 和微信小程序 用各自的视图绘制。',
+      lead: 'NSGo 是一个跨平台 UI 框架。应用的状态、布局和样式在 Go 中运行，再由 iOS、tvOS、watchOS、Android、macOS、Windows、Linux、Web 和各家小程序用各自的视图绘制。',
       demo: '在线体验',
       start: '快速开始',
       runsOn: '运行于',

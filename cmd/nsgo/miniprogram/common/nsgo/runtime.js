@@ -6,7 +6,8 @@
 //
 // The mini program has neither globalThis's browser objects nor
 // WebAssembly: Go runs in a global object of its own, g, holding what
-// syscall/js and wasm_exec.js reach, the wx APIs among them.
+// syscall/js and wasm_exec.js reach, and calls the platform's APIs
+// through the bridge's api, which api.js gives WeChat's shape.
 //
 // Everything the mini program provides comes through host, so tests run
 // it with stand-ins.
@@ -16,6 +17,16 @@
 const { Tree } = require('./tree.js')
 const goExec = require('./wasm_exec.js')
 const config = require('./config.js')
+const { globalOf, apiOf } = require('./api.js')
+
+// Where each platform loads WebAssembly from the code package: its own
+// object, as WeChat's WXWebAssembly, then the standard one.
+const LOADERS = {
+  wechat: ['WXWebAssembly'],
+  qq: ['QQWebAssembly', 'WebAssembly'],
+  douyin: ['TTWebAssembly', 'WebAssembly'],
+  alipay: ['WebAssembly'],
+}
 
 function utf8Encode(text) {
   const out = []
@@ -80,46 +91,78 @@ class TextDecoder {
 }
 
 /** The mini program's APIs the runtime uses. */
-function wxHost() {
-  /* global wx, WXWebAssembly */
-  const canvas = wx.createOffscreenCanvas({ type: '2d', width: 1, height: 1 })
+function mpHost(platform = config.platform || 'wechat') {
+  const api = apiOf(platform, globalOf(platform))
+  const canvas = api.createOffscreenCanvas({ type: '2d', width: 1, height: 1 })
   const context = canvas.getContext('2d')
   return {
-    wx,
-    instantiate: (path, imports) => WXWebAssembly.instantiate(path, imports),
+    api,
+    instantiate: (path, imports) => instantiate(LOADERS[platform] || LOADERS.wechat, path, imports),
     loadSubpackage: (name) =>
       new Promise((resolve, reject) => {
-        if (!wx.loadSubpackage) return resolve()
-        wx.loadSubpackage({ name, success: resolve, fail: reject })
+        if (!api.loadSubpackage) return resolve()
+        api.loadSubpackage({ name, success: resolve, fail: reject })
       }),
     measure(font, text) {
       context.font = font
       return context.measureText(text).width
     },
-    device,
+    device: () => device(api),
     now: () => Date.now(),
     setTimeout: (f, ms) => setTimeout(f, ms),
     clearTimeout: (t) => clearTimeout(t),
     on(name, f) {
-      if (typeof wx[name] === 'function') wx[name](f)
+      if (typeof api[name] === 'function') api[name](f)
     },
   }
+}
+
+/** The global object name names, as mini programs run no code they
+ * build, Function('return this') included. */
+function loader(name) {
+  /* global WXWebAssembly, QQWebAssembly, TTWebAssembly */
+  switch (name) {
+    case 'WXWebAssembly':
+      return typeof WXWebAssembly !== 'undefined' ? WXWebAssembly : undefined
+    case 'QQWebAssembly':
+      return typeof QQWebAssembly !== 'undefined' ? QQWebAssembly : undefined
+    case 'TTWebAssembly':
+      return typeof TTWebAssembly !== 'undefined' ? TTWebAssembly : undefined
+  }
+  return typeof WebAssembly !== 'undefined' ? WebAssembly : undefined
+}
+
+/** Instantiates the module at path, in the code package, with the first
+ * of loaders, the names of global objects, that takes it. */
+function instantiate(loaders, path, imports) {
+  const found = loaders.map(loader).filter((l) => l && typeof l.instantiate === 'function')
+  let i = 0
+  const next = (error) => {
+    if (i >= found.length) {
+      return Promise.reject(error || new Error('nsgo: this mini program loads no WebAssembly (' + loaders.join(', ') + ')'))
+    }
+    return Promise.resolve()
+      .then(() => found[i++].instantiate(path, imports))
+      .catch(next)
+  }
+  return next()
 }
 
 /** What Go reads of the page and the device (miniprogram.go's
  * environment): the page's size, the safe area within it, the
  * appearance and the system. */
-function device() {
-  const win = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
-  const base = wx.getAppBaseInfo ? wx.getAppBaseInfo() : wx.getSystemInfoSync()
-  const dev = wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync()
+function device(api) {
+  const win = api.getWindowInfo ? api.getWindowInfo() : api.getSystemInfoSync()
+  const base = api.getAppBaseInfo ? api.getAppBaseInfo() : api.getSystemInfoSync()
+  const dev = api.getDeviceInfo ? api.getDeviceInfo() : api.getSystemInfoSync()
   const safe = win.safeArea || { top: 0, left: 0, right: win.windowWidth, bottom: win.screenHeight }
-  // The page starts under WeChat's navigation bar, or at the screen's
-  // top with a custom one, whose capsule button the app keeps clear of.
+  // The page starts under the platform's navigation bar, or at the
+  // screen's top with a custom one, whose capsule button the app keeps
+  // clear of.
   let top = 0
   const pageTop = win.screenHeight - win.windowHeight
   if (config.customNavigation) {
-    const menu = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null
+    const menu = api.getMenuButtonBoundingClientRect ? api.getMenuButtonBoundingClientRect() : null
     const status = win.statusBarHeight || safe.top || 0
     top = menu && menu.bottom ? menu.bottom + (menu.top - status) : status
   }
@@ -141,9 +184,11 @@ function device() {
   }
 }
 
-/** NSGo's OS of wx.getDeviceInfo()'s platform (ios, android, ohos, mac,
- * windows; devtools, whose system names the simulated device's). */
+/** NSGo's OS of getDeviceInfo()'s platform (ios, android, ohos, mac,
+ * windows, in any case; devtools, whose system names the simulated
+ * device's). */
 function osOf(platform = '', system = '') {
+  platform = String(platform).toLowerCase()
   const name = platform === 'devtools' ? String(system).split(' ')[0].toLowerCase() : platform
   if (name === 'android' || name === 'ohos') return 'android'
   if (name === 'mac' || name === 'macos') return 'macos'
@@ -188,7 +233,6 @@ function goGlobal(host, bridge) {
         return a
       },
     },
-    wx: host.wx,
     nsgoMP: bridge,
   }
   g.globalThis = g
@@ -199,7 +243,7 @@ function goGlobal(host, bridge) {
  * Starts the app in page, a Page whose data has root and ov; resolves to
  * the running app (event, stop).
  */
-function start(page, host = wxHost()) {
+function start(page, host = mpHost()) {
   const tree = new Tree()
   let flushQueued = false
   let stopped = false
@@ -221,6 +265,8 @@ function start(page, host = wxHost()) {
   const bridge = {
     // Set by Go: event(name, id, ...).
     event: null,
+    // The platform's APIs, as WeChat's (api.js).
+    api: host.api,
     ready: () => ready(),
     device: () => host.device(),
     measure: (font, text) => host.measure(font, text),
@@ -236,8 +282,8 @@ function start(page, host = wxHost()) {
       }, 16)
     },
     navigationColors(front, back) {
-      if (!config.customNavigation && host.wx && host.wx.setNavigationBarColor) {
-        host.wx.setNavigationBarColor({ frontColor: front, backgroundColor: back })
+      if (!config.customNavigation && host.api && host.api.setNavigationBarColor) {
+        host.api.setNavigationBarColor({ frontColor: front, backgroundColor: back })
       }
     },
   }
@@ -276,4 +322,4 @@ function start(page, host = wxHost()) {
     })
 }
 
-module.exports = { start, device, osOf, utf8Encode, utf8Decode, goGlobal }
+module.exports = { start, device, osOf, instantiate, utf8Encode, utf8Decode, goGlobal }

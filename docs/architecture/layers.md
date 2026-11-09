@@ -50,7 +50,7 @@ nsgo
 │       ├── linux                        GTK 4
 │       ├── android                      Java runtime over pipes
 │       ├── web                          WebAssembly and the DOM
-│       ├── miniprogram                  WebAssembly in a WeChat mini program
+│       ├── miniprogram                  WebAssembly in a WeChat, QQ, Alipay or Douyin mini program
 │       ├── apple                        Shared by macOS and iOS
 │       ├── webstyle, canvas2d           Shared CSS and 2D canvas player of the web and mini programs
 │       ├── field, hover, finger         Shared input

@@ -1,21 +1,22 @@
-# WeChat mini programs
+# Mini programs
 
-The `miniprogram` target runs a Go app in a WeChat mini program, as NSH's community platform `nsh-platform-miniprogram` runs NSH's Rust apps. Read this before changing `internal/platform/miniprogram`, its runtime in `cmd/nsgo/miniprogram` or how the tool builds it.
+The `miniprogram_wechat`, `miniprogram_qq`, `miniprogram_alipay` and `miniprogram_douyin` targets run a Go app in a mini program, as NSH's community platform `nsh-platform-miniprogram` runs NSH's Rust apps in WeChat's. Read this before changing `internal/platform/miniprogram`, its runtime in `cmd/nsgo/miniprogram` or how the tool builds it.
 
 ## Layers
 
 A mini program has two layers: the logic layer runs JavaScript without a DOM, and the render layer, a web view, draws the page's WXML from the data the logic layer sets with `setData`. NSGo runs entirely in the logic layer:
 
 ```text
-logic layer
+logic layer (miniprogram/common)
   app.wasm.br           The engine and the app, Go for js/wasm, tagged nsgominiprogram
-                        and nsgo_noshader, loaded with WXWebAssembly
+                        and nsgo_noshader, loaded with WXWebAssembly or its likes
   nsgo/wasm_exec.js     Go's own, as a function of the globals it reaches
   nsgo/runtime.js       The bridge (nsgoMP), the offscreen canvas text is measured on,
                         the device, and the events of the page
+  nsgo/api.js           The platform's APIs with WeChat's names, options and results
   nsgo/tree.js          The views as plain objects; each turn's batches become the
                         fewest setData paths
-render layer
+render layer (miniprogram/wechat, miniprogram/alipay)
   pages/index           The root view, then the modals, and a page container that
                         takes the back gesture while back goes through the app
   components/nsgo-node  A view at its frame, with its style, runs, picture, image or
@@ -29,6 +30,21 @@ render layer
 - Animated values run on the engine's `Animator`, frames timed by the runtime, and go to the render layer as an inline style over the view's. Keyframes and modal presentations run in the render layer through the component's `animate`, with no work per frame.
 - Styles are the web's CSS, written by `webstyle`.
 
+## Platforms
+
+One module and one logic layer serve every platform; `config.js` names the platform, and the tool writes its render layer and project files:
+
+| Platform | API object | WebAssembly | Render layer | Project file | Tool |
+| --- | --- | --- | --- | --- | --- |
+| WeChat | `wx` | `WXWebAssembly` | `wechat/` | `project.config.json` | DevTools' command line |
+| QQ | `qq` | `QQWebAssembly`, then `WebAssembly` | `wechat/` as `.qml`, `.qss`, `qs` and `qq:` | `project.config.json` | its app on macOS |
+| Douyin and ByteDance's other apps | `tt` | `TTWebAssembly`, then `WebAssembly` | `wechat/` as `.ttml`, `.ttss`, `sjs` and `tt:` | `project.config.json` | its app on macOS |
+| Alipay | `my` | `WebAssembly` | `alipay/` | `mini.project.json` | its app on macOS |
+
+- Go calls the platform only through `nsgoMP.api`, which `api.js` makes from its object: WeChat's as it is, QQ and Douyin's with `chooseImage` standing in for `chooseMedia` where it is missing, and Alipay's translated call by call (`confirm` and `alert` for `showModal`, `{ key }` storage, `setNavigationBar`). An API a platform lacks stays undefined, and Go answers its request as failed.
+- The runtime tries the platform's loaders in order, each with the module's path in the package; a platform that loads none fails to start, with the loaders it tried.
+- Alipay names handlers statically and has no `mut-bind`, page container or component `animate`: every view binds every handler and `nsgo-node` keeps an event for the innermost view that takes it, by its time; a capturing view is a branch of its own with `catchTouchMove`; its scroll views' touches stand for their drags; back leaves the page and keyframes do not run. Events reach the page through the `onNsgo` prop each parent hands its children, as Alipay's components trigger no events their pages hear.
+
 ## Input
 
 Taps go to the innermost view that takes them (`catchtap`), presses going down and up to the innermost that follows them (`mut-bind`), and touches to every view that follows them: the runtime numbers each touch event, so the views it bubbles through add nothing, and a finger belongs to the view it went down on. A pan that fails on vertical drags leaves them to the scroll views around it; others capture the drags they start (`catchtouchmove`), as a mini program cannot decide on a drag as it moves.
@@ -37,11 +53,11 @@ Text fields are WeChat's `input` and `textarea` in their content box, which leav
 
 ## Services
 
-Alerts are WeChat's modal or action sheet, the clipboard holds text, storage is the mini program's under the app's prefix, photos come from `chooseMedia` and files from a chat (`chooseMessageFile`). A link goes on the clipboard, as a mini program opens no browser. Requests WeChat has no API for are answered as failed.
+Alerts are the platform's modal or action sheet, the clipboard holds text, storage is the mini program's under the app's prefix, photos come from `chooseMedia` and files from a chat (`chooseMessageFile`, which Alipay lacks). A link goes on the clipboard, as a mini program opens no browser. Requests the platform has no API for are answered as failed.
 
 ## The package
 
-`WXWebAssembly` loads only files of the code package, `.wasm.br` among them, and WeChat holds each package to 2 MB, so the module goes in a subpackage of its own, which the page loads before it, and its size decides which apps fit:
+`WXWebAssembly` and its likes load only files of the code package, `.wasm.br` among them, and every platform holds each package to 2 MB, so the module goes in a subpackage of its own, which the page loads before it, and its size decides which apps fit:
 
 - `nsgo_noshader` leaves the shader compilers out of `core` (`shader_nocompile.go`), as the render layer draws no shader: programs compile to none and take any uniform.
 - The module is built with `GOEXPERIMENT=nojsonv2`, encoding/json's smaller first implementation, and again without inlining when it is still too large.

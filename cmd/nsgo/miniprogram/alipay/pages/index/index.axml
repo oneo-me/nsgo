@@ -1,0 +1,6 @@
+<!-- The app's root view, then its modals over it. Alipay has no page
+     container: back leaves the page. -->
+<view class="nsgo-root">
+  <nsgo-node a:if="{{root}}" node="{{root}}" onNsgo="onNsgo" />
+  <nsgo-node a:for="{{ov}}" a:key="id" node="{{item}}" onNsgo="onNsgo" />
+</view>

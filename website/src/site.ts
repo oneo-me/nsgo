@@ -76,5 +76,5 @@ export const platforms: { name: string; icon: IconName; stack: string; target: s
   { name: 'Windows', icon: 'windows', stack: 'Direct2D · DirectWrite', target: 'windows_x64' },
   { name: 'Linux', icon: 'terminal', stack: 'GTK 4 · Pango', target: 'linux_x64' },
   { name: 'Web', icon: 'globe', stack: 'WebAssembly · DOM', target: 'web' },
-  { name: 'WeChat', icon: 'message', stack: 'Mini Program · WXML', target: 'miniprogram' },
+  { name: 'Mini programs', icon: 'message', stack: 'WeChat · QQ · Alipay · Douyin', target: 'miniprogram_wechat' },
 ];
