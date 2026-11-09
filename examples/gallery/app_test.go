@@ -1448,6 +1448,15 @@ func TestTerminal(t *testing.T) {
 	app.Key("enter")
 	titled := func() bool { return app.Find("id:terminal-title").Text == "nsgo-terminal-test" }
 	app.WaitUntil(10*time.Second, titled)
+	// Once another field takes the focus, the terminal's keys leave it.
+	app.Press("id:search")
+	app.Type("id:search-dialog >> role:textbox", "ab")
+	app.Key("backspace")
+	if got := app.Find("id:search-dialog >> role:textbox").Text; got != "a" {
+		t.Errorf("Backspace left the search %q: the terminal kept its keys", got)
+	}
+	app.Key("escape")
+	app.FastForward(time.Second)
 	app.Screenshot("terminal")
 	app.Press("text:Dracula")
 	app.Press("text:Bar")

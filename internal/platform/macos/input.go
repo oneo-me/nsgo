@@ -85,9 +85,21 @@ func registerInput() {
 			inputOf(self).changed()
 		}},
 		{Cmd: sel("controlTextDidEndEditing:"), Fn: func(self objc.ID, _ objc.SEL, _ objc.ID) {
-			if in := inputOf(self); in != nil && !in.stillEditing() {
-				in.focusChanged(false)
+			in := inputOf(self)
+			if in == nil {
+				return
 			}
+			if !in.stillEditing() {
+				in.focusChanged(false)
+				return
+			}
+			// The field editor posts this from resignFirstResponder, still
+			// the window's first responder: ask again once the focus moved.
+			apple.OnMain(func() {
+				if v := views[in.field]; v != nil && v.input == in && !in.stillEditing() {
+					in.focusChanged(false)
+				}
+			})
 		}},
 		{Cmd: sel("becomeFirstResponder"), Fn: fieldFocused},
 		{Cmd: selControlCommand, Fn: func(self objc.ID, _ objc.SEL, _, tv objc.ID, cmd objc.SEL) bool {
