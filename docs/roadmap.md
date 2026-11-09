@@ -59,6 +59,19 @@ What package `widget` lacks of WidgetKit, and of widgets elsewhere ([tool](archi
 | Widgets of sandboxed Mac apps | `com.apple.security.application-groups` | A macOS app in the App Sandbox, as the Mac App Store's, shares its timelines through `apple.app_group` and a provisioning profile, where it cannot write the home directory the extension reads |
 | Widgets on Android | `AppWidgetProvider`, `RemoteViews` | The same timelines show in App Widgets drawn by the Java runtime, with `classes.dex` rebuilt |
 
+## App Clips
+
+What `app_clip` lacks of App Clips ([tool](architecture/tool.md#app-clips)).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| A clip on an iPhone | `startIOSDeviceClip` | `nsgo dev -target ios -clip <url>` signs, installs and opens the clip on an iPhone with a paid team, and its QR code opens it through Local Experiences; it is written but unchecked, as only a personal team was at hand |
+| Clips in apps Xcode signs | `signIOSApp`'s project | Xcode's project gets an App Clip target embedded in the app's, so `nsgo dev -target ios` and `-run` on an iPhone keep the clip they now leave out |
+| Getting the full app | `SKOverlay.AppClipConfiguration` | `mobile` shows the App Store's overlay offering the full app from a clip, through purego |
+| Handing data to the full app | App groups | The clip and the app share `apple.app_group`'s container, so the app finds what the clip stored once installed |
+| Links into the full app | `applinks:`, `CFBundleURLTypes` | The full app takes universal links and URL schemes into `mobile.OpenedURL`, as the clip takes its invocation |
+| Opened links elsewhere | `Intent.getData`, `location.href` | Android's App Links and the web page's address reach `mobile.OpenedURL` as iOS's links do, which reads "" there now |
+
 ## Apple TV
 
 tvOS runs on iOS's backend, its remote moving a focus ([keyboard focus](architecture/interaction.md#keyboard-focus)); what it still lacks:

@@ -15,6 +15,7 @@ require (
 	golang.org/x/image v0.45.0
 	golang.org/x/net v0.58.0
 	golang.org/x/text v0.43.0
+	rsc.io/qr v0.2.0
 )
 
 require (

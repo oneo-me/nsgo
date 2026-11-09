@@ -40,6 +40,10 @@ type project struct {
 	steps *steps
 	// split, set while a web release builds, holds its split bundles.
 	split *splitBundles
+	// clipParent is the app's ID when this is its App Clip's project
+	// (clipProject), and parentClip the app's app_clip.
+	clipParent string
+	parentClip *appClip
 
 	Name    string `yaml:"name"`
 	ID      string `yaml:"id"`
@@ -127,6 +131,9 @@ type project struct {
 	// Widgets are the kinds of the app's widgets, which nsgo build puts
 	// into its macOS and iOS packages as a widget extension (widgets.go).
 	Widgets []widgetKind `yaml:"widgets"`
+	// AppClip is the app's App Clip, which nsgo build nests in its iOS
+	// package (appclip.go).
+	AppClip *appClip `yaml:"app_clip"`
 	// Android is the Android target's: Permissions are the permissions
 	// its manifest asks for beyond the runtime's, such as
 	// REQUEST_INSTALL_PACKAGES, which a name without a dot is under
@@ -262,7 +269,10 @@ func load(dir string) (*project, error) {
 	if err := p.validateWidgets(); err != nil {
 		return nil, fmt.Errorf("nsgo.yaml: %w", err)
 	}
-	for _, path := range []*string{&p.Sign.Profile, &p.Sign.WidgetsProfile, &p.Sign.Keystore} {
+	if err := p.validateAppClip(); err != nil {
+		return nil, fmt.Errorf("nsgo.yaml: %w", err)
+	}
+	for _, path := range []*string{&p.Sign.Profile, &p.Sign.WidgetsProfile, &p.Sign.ClipProfile, &p.Sign.Keystore} {
 		if *path != "" {
 			*path = p.resolve(*path)
 		}

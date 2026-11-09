@@ -37,6 +37,9 @@ type signing struct {
 	// WidgetsProfile is the provisioning profile of the iOS package's
 	// widget extension, <id>.widgets, granting the app group.
 	WidgetsProfile string `yaml:"widgets_profile"`
+	// ClipProfile is the provisioning profile of the iOS package's App
+	// Clip, app_clip.id.
+	ClipProfile string `yaml:"clip_profile"`
 	// Keystore signs Android packages: a PKCS#12 or JKS file, KeyAlias
 	// naming its key when it holds several. Without it they carry the
 	// project's debug key.
@@ -141,6 +144,9 @@ func signForStore(ctx context.Context, p *project, app string) error {
 	if groups, _ := entitlements["com.apple.security.application-groups"].([]any); len(p.Widgets) > 0 && !slices.Contains(groups, any(p.appGroup())) {
 		return fmt.Errorf("the provisioning profile does not grant the app group %s, which the app shares with its widgets", p.appGroup())
 	}
+	if _, ok := entitlements["com.apple.developer.associated-appclip-app-identifiers"]; p.AppClip != nil && !ok {
+		return fmt.Errorf("the provisioning profile does not tie %s to its App Clip: add the clip's target to the App ID's App Clip capability", p.ID)
+	}
 	identity := p.Sign.Identity
 	if identity == "" {
 		if identity, err = profileIdentity(ctx, profile); err != nil {
@@ -161,6 +167,9 @@ func signForStore(ctx context.Context, p *project, app string) error {
 		return err
 	}
 	if err := signIOSWidgets(ctx, p, app, identity); err != nil {
+		return err
+	}
+	if err := signIOSClip(ctx, p, app, identity); err != nil {
 		return err
 	}
 	return run(ctx, "codesign", "--force", "--sign", identity, "--entitlements", ents, "--generate-entitlement-der", app)

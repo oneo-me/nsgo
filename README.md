@@ -28,7 +28,7 @@
 
 ## Status
 
-NSGo is early, with no release or stable API yet. It runs on macOS, iOS, tvOS, watchOS, Windows, Linux, the web, Android and WeChat, QQ, Alipay and Douyin mini programs, and apps embed in iOS, Android and Go desktop apps of their own; [ARCHITECTURE.md](ARCHITECTURE.md#platforms) tracks each target.
+NSGo is early, with no release or stable API yet. It runs on macOS, iOS and its App Clips, tvOS, watchOS, Windows, Linux, the web, Android and WeChat, QQ, Alipay and Douyin mini programs, and apps embed in iOS, Android and Go desktop apps of their own; [ARCHITECTURE.md](ARCHITECTURE.md#platforms) tracks each target.
 
 ## Getting started
 

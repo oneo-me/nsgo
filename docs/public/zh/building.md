@@ -90,6 +90,7 @@ sign:
   profile: assets/AppStore.mobileprovision  # 为 IPA 签名
   keystore: assets/release.p12              # 与 key_alias 一起为 APK 签名
   # widgets_profile: assets/Widgets.mobileprovision  # 为 IPA 中的小组件扩展签名
+  # clip_profile: assets/Clip.mobileprovision        # 为 IPA 中的轻 App 签名
 ```
 
 密钥库的密码来自 `NSGO_KEYSTORE_PASSWORD` 和 `NSGO_KEY_PASSWORD`。`-team` 用于为 iPhone 包签名。
@@ -117,6 +118,23 @@ err := widget.Update("counter", widget.Entry{
 ```
 
 `build` 和 `dev` 会用 Xcode 的 Swift 编译器把小组件扩展编进 macOS 和 iOS 包。扩展用 SwiftUI 绘制这些视图，不运行应用的任何代码，因此无论应用是否在运行，小组件都显示应用最后写入的时间线：内容变化时调用 `Update` 即可。`widget.Date` 配合 `Relative` 或 `Timer` 会自己持续计时。`Entry.URL` 和 `Style.Link` 在点击小组件时打开链接。在 iOS 上，应用与小组件共享一个 App Group：真机上需要为 `<id>` 和 `<id>.widgets` 都开启它，并用 `sign.widgets_profile` 为扩展签名。仓库中的 `examples/widgets` 是一个带小组件的计数器，gallery 的 Widgets 演示则覆盖了所有尺寸。
+
+## 轻 App（App Clip）
+
+轻 App 是 iOS 应用中的一小部分，用户从链接、App Clip 码或 NFC 标签打开它，无需安装应用。`app_clip` 把它编进 iOS 包，它有自己的 main 包，只链接自己显示的内容：
+
+```yaml
+app_clip:
+  main: ./clip              # 轻 App 的 main 包，默认为应用自己的
+  domains: [example.com]    # 哪些域名的链接打开它
+  # name: Hello Clip        # 默认为 "<name> Clip"
+  # id: dev.example.hello.Clip  # 默认为 <id>.Clip
+  # minimum: "17.0"         # 默认 16.0；17.0 在只从链接打开时允许 100 MB
+  # notifications: true     # 请求一天内的通知
+  # location: true          # 让轻 App 确认打开它的位置
+```
+
+轻 App 用 `mobile.OpenedURL` 读取打开它的链接，再从另一个链接打开时它随之变化；`mobile.IsAppClip` 说明代码是否作为轻 App 运行。系统下载的轻 App 最大 15 MB，iOS 17 起只从链接打开时最大 100 MB，超出时 `build` 会拒绝；链接 `ui` 的轻 App 约 11 MB。`dev -target ios_simulator -clip https://example.com/order?table=12` 在模拟器中单独运行轻 App，如同从该链接打开；`-target ios` 则在 iPhone 上运行，并打印该链接的二维码：在“设置 → 开发者 → Local Experiences”中登记这个链接后，用相机扫码即可打开轻 App。Apple 只为 Apple Developer Program 的团队签名轻 App，个人团队不行。上架 App Store 时需要为 `<id>` 开启 App Clips，用 `sign.clip_profile` 为轻 App 签名，并在这些域名上提供 apple-app-site-association 文件。仓库中的 `examples/appclip` 是一个咖啡馆，它的轻 App 在桌边点单。
 
 ## 嵌入其他应用
 

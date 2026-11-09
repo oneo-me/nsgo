@@ -32,6 +32,19 @@ func IsAvailable(cx *core.Scope) bool {
 	return os == core.OSIOS || os == core.OSAndroid
 }
 
+// IsAppClip reports whether the app runs as an iOS App Clip, the part of
+// an app nsgo.yaml's app_clip builds, which the system runs from a link,
+// a code or an NFC tag without installing the app. An app whose clip is
+// its own package shows the clip's screens when it does.
+func IsAppClip(cx *core.Scope) bool { return cx.Env().AppClip() }
+
+// OpenedURL returns the web link that last opened the app: on iOS an App
+// Clip's invocation, such as https://example.com/order?table=12, which
+// says what the clip shows; "" when no link opened it, and elsewhere. It
+// changes as a link opens the running app again, so what reads it in a
+// component follows.
+func OpenedURL(cx *core.Scope) string { return cx.Env().OpenedURL() }
+
 // ExitApp leaves the app on Android as its back button does when nothing
 // in the app takes it: the task's root activity goes to the background,
 // any other finishes. iOS apps never leave themselves, so it does nothing

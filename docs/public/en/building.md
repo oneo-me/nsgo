@@ -90,6 +90,7 @@ sign:
   profile: assets/AppStore.mobileprovision  # signs the IPA
   keystore: assets/release.p12              # signs APKs, with key_alias
   # widgets_profile: assets/Widgets.mobileprovision  # signs the IPA's widget extension
+  # clip_profile: assets/Clip.mobileprovision        # signs the IPA's App Clip
 ```
 
 The keystore's passwords come from `NSGO_KEYSTORE_PASSWORD` and `NSGO_KEY_PASSWORD`. `-team` signs the iPhone's package.
@@ -117,6 +118,23 @@ err := widget.Update("counter", widget.Entry{
 ```
 
 `build` and `dev` compile a widget extension into the macOS and iOS packages with Xcode's Swift compiler. It draws the views with SwiftUI and runs none of the app's code, so a widget shows the timeline the app wrote last, whether the app runs or not: call `Update` whenever what it shows changes. `widget.Date` with `Relative` or `Timer` keeps counting by itself. `Entry.URL` and `Style.Link` open URLs when a widget is tapped. On iOS the app and its widgets share an app group: for devices, enable it for both `<id>` and `<id>.widgets`, and sign the extension with `sign.widgets_profile`. The repository's `examples/widgets` is a counter with widgets, and the gallery's Widgets demo fills every family.
+
+## App Clips
+
+An App Clip is a small part of an iOS app that runs from a link, a code or an NFC tag without installing the app. `app_clip` builds one into the iOS package, from a main package of its own so it links only what it shows:
+
+```yaml
+app_clip:
+  main: ./clip              # the clip's main package, the app's own by default
+  domains: [example.com]    # whose links open it
+  # name: Hello Clip        # "<name> Clip" by default
+  # id: dev.example.hello.Clip  # <id>.Clip by default
+  # minimum: "17.0"         # 16.0 by default; 17.0 allows 100 MB when only links open it
+  # notifications: true     # ask for notifications for a day
+  # location: true          # let the clip confirm where it was opened
+```
+
+The clip reads the link that opened it with `mobile.OpenedURL`, which changes as another link opens it again, and `mobile.IsAppClip` says whether the code runs as one. The system downloads a clip of up to 15 MB, or 100 MB from iOS 17 when only links open it, and `build` refuses a larger one; a clip linking `ui` takes about 11 MB. `dev -target ios_simulator -clip https://example.com/order?table=12` runs the clip alone in the simulator, opened from that link, and `-target ios` on an iPhone, printing the link's QR code: list the link in Settings > Developer > Local Experiences and the camera opens the clip from it. Apple signs App Clips only for teams of the Apple Developer Program, not personal teams. For the App Store, enable App Clips for `<id>`, sign the clip with `sign.clip_profile`, and serve the apple-app-site-association file of the domains. The repository's `examples/appclip` is a café whose clip orders at a table.
 
 ## Embed in another app
 

@@ -67,14 +67,38 @@ export const links = {
 
 export const install = 'go get -tool github.com/oneo-me/nsgo/cmd/nsgo';
 
-export const platforms: { name: string; icon: IconName; stack: string; target: string }[] = [
-  { name: 'iOS', icon: 'smartphone', stack: 'UIKit · CoreText', target: 'ios' },
-  { name: 'tvOS', icon: 'tv', stack: 'UIKit · CoreText', target: 'tvos' },
-  { name: 'watchOS', icon: 'watch', stack: 'SwiftUI · CoreText', target: 'watchos' },
-  { name: 'Android', icon: 'android', stack: 'Android Views', target: 'android_arm64' },
-  { name: 'macOS', icon: 'laptop', stack: 'AppKit · CoreText', target: 'macos_arm64' },
-  { name: 'Windows', icon: 'windows', stack: 'Direct2D · DirectWrite', target: 'windows_x64' },
-  { name: 'Linux', icon: 'terminal', stack: 'GTK 4 · Pango', target: 'linux_x64' },
-  { name: 'Web', icon: 'globe', stack: 'WebAssembly · DOM', target: 'web' },
-  { name: 'Mini programs', icon: 'message', stack: 'WeChat · QQ · Alipay · Douyin', target: 'miniprogram_wechat' },
+/**
+ * The platforms NSGo runs on, each shown on its own, with its kind and what
+ * draws it; zh names one in Chinese where its users call it otherwise.
+ */
+export type PlatformKind = 'app' | 'web' | 'mini';
+
+export const platforms: { name: string; zh?: string; kind: PlatformKind; icon: IconName; stack: string }[] = [
+  { name: 'iOS', kind: 'app', icon: 'smartphone', stack: 'UIKit · CoreText' },
+  { name: 'App Clips', zh: '轻 App', kind: 'app', icon: 'scan', stack: 'UIKit · CoreText' },
+  { name: 'tvOS', kind: 'app', icon: 'tv', stack: 'UIKit · CoreText' },
+  { name: 'watchOS', kind: 'app', icon: 'watch', stack: 'SwiftUI · CoreText' },
+  { name: 'macOS', kind: 'app', icon: 'laptop', stack: 'AppKit · CoreText' },
+  { name: 'Android', kind: 'app', icon: 'android', stack: 'Android Views' },
+  { name: 'Windows', kind: 'app', icon: 'windows', stack: 'Direct2D · DirectWrite' },
+  { name: 'Linux', kind: 'app', icon: 'terminal', stack: 'GTK 4 · Pango' },
+  { name: 'Web', kind: 'web', icon: 'globe', stack: 'WebAssembly · DOM' },
+  { name: 'WeChat', zh: '微信', kind: 'mini', icon: 'chats', stack: 'WebAssembly · WXML' },
+  { name: 'QQ', kind: 'mini', icon: 'bird', stack: 'WebAssembly · QML' },
+  { name: 'Alipay', zh: '支付宝', kind: 'mini', icon: 'wallet', stack: 'WebAssembly · AXML' },
+  { name: 'Douyin', zh: '抖音', kind: 'mini', icon: 'music', stack: 'WebAssembly · TTML' },
 ];
+
+/** platformName is how lang names a platform. */
+export const platformName = (platform: (typeof platforms)[number], lang: string) =>
+  (lang === 'zh' && platform.zh) || platform.name;
+
+/**
+ * platformRows are the rows the home page shows platforms in, by kind: apps
+ * on their own, then the web and mini programs.
+ */
+export const platformRows: PlatformKind[][] = [['app'], ['web', 'mini']];
+
+/** platformsOf are the platforms of a kind, with their place among all of them. */
+export const platformsOf = (kind: PlatformKind) =>
+  platforms.flatMap((platform, index) => (platform.kind === kind ? [{ platform, index }] : []));

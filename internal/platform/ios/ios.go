@@ -390,7 +390,8 @@ func loadUIKit() {
 	// The SDK requires the scene life cycle; Info.plist names this class.
 	register("NsgoSceneDelegate", apple.Class("UIResponder"),
 		[]*objc.Protocol{objc.GetProtocol("UIWindowSceneDelegate")},
-		[]objc.MethodDef{{Cmd: sel("scene:willConnectToSession:options:"), Fn: sceneWillConnect}})
+		[]objc.MethodDef{{Cmd: sel("scene:willConnectToSession:options:"), Fn: sceneWillConnect},
+			{Cmd: sel("scene:continueUserActivity:"), Fn: sceneContinueActivity}})
 }
 
 func register(name string, super objc.Class, protocols []*objc.Protocol, methods []objc.MethodDef) objc.Class {
@@ -442,6 +443,7 @@ func runUIKit(opts Options) {
 var window, controller objc.ID
 
 func sceneWillConnect(self objc.ID, _ objc.SEL, scene, session, options objc.ID) {
+	takeConnectionActivities(options)
 	window = objc.ID(apple.Class("UIWindow")).Send(selAlloc).Send(sel("initWithWindowScene:"), scene)
 	bounds := objc.Send[apple.CGRect](window, selBounds)
 	controller = objc.ID(classController).Send(selNew)
@@ -564,6 +566,8 @@ func (s *surface) environment() driver.Environment {
 		Speech:           apple.SpeechAvailable(),
 		Camera:           cameraAvailable(),
 		Lifecycle:        appLifecycle(),
+		AppClip:          appClip(),
+		OpenedURL:        openedURL,
 	}
 	env.HeaderHeight, env.LargeHeaderHeight = s.headers[0], s.headers[1]
 	return env

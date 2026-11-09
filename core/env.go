@@ -30,6 +30,8 @@ type Env struct {
 	version        *Signal[OSVersion]
 	idiom          *Signal[Idiom]
 	lifecycle      *Signal[Lifecycle]
+	appClip        *Signal[bool]
+	openedURL      *Signal[string]
 	appearance     *Signal[Appearance]
 	// systemDark is the system's appearance, which a forced one hides.
 	systemDark bool
@@ -67,6 +69,8 @@ func newEnv(cx *Scope, app *Env) *Env {
 		version:          NewSignal(cx, OSVersion{}),
 		idiom:            NewSignal(cx, IdiomPhone),
 		lifecycle:        NewSignal(cx, LifecycleActive),
+		appClip:          NewSignal(cx, false),
+		openedURL:        NewSignal(cx, ""),
 		appearance:       NewSignal(cx, AppearanceSystem),
 		appleKeys:        NewSignal(cx, false),
 		material:         NewSignal(cx, WindowMaterialNone),
@@ -150,6 +154,8 @@ func (e *Env) set(v Environment) {
 	e.appleKeys.Set(v.OS == OSMacOS || v.OS == OSIOS || v.AppleKeyboard)
 	e.idiom.Set(v.Idiom)
 	e.lifecycle.Set(v.Lifecycle)
+	e.appClip.Set(v.AppClip)
+	e.openedURL.Set(v.OpenedURL)
 	e.material.Set(v.WindowMaterial)
 	e.headers = [2]Points{v.HeaderHeight, max(v.LargeHeaderHeight, v.HeaderHeight)}
 }
@@ -316,6 +322,14 @@ func (e *Env) Idiom() Idiom { return e.idiom.Get() }
 // Lifecycle returns whether the app is in use: active, inactive (shown
 // without the focus) or in the background.
 func (e *Env) Lifecycle() Lifecycle { return e.lifecycle.Get() }
+
+// AppClip reports whether the app runs as an iOS App Clip: the core's
+// part of mobile.IsAppClip, which apps use.
+func (e *Env) AppClip() bool { return e.appClip.Get() }
+
+// OpenedURL returns the web link that last opened the app, "" when none
+// did: the core's part of mobile.OpenedURL, which apps use.
+func (e *Env) OpenedURL() string { return e.openedURL.Get() }
 
 // AppleKeys reports whether shortcuts follow Apple's conventions: "mod"
 // is Command and labels use ⌘.

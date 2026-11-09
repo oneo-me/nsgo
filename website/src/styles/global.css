@@ -832,11 +832,31 @@ html[data-theme='dark'] .phone {
 /* The platforms under the title: they rise in one after another,
    then take turns being lit, each the same size lit or not. */
 .platforms {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  justify-items: center;
   gap: 10px;
   margin-top: 26px;
+}
+
+/* A row holds kinds of platforms, each led by its name. */
+.platforms__row,
+.platforms__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.platforms__row {
+  column-gap: 28px;
+}
+
+.platforms__kind {
+  margin-right: 2px;
+  color: var(--faint);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .platform {
@@ -942,7 +962,6 @@ html[data-theme='dark'] .phone {
     padding: 0 12px;
     font-size: 14px;
   }
-
 }
 
 /* How it works: the app, the engine and the platform, with updates
@@ -1158,9 +1177,16 @@ html[data-theme='dark'] .phone {
 
 .stacks {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
+  margin-top: 8px;
+}
+
+.stacks__kind {
   margin-top: 18px;
+  color: var(--faint);
+  font-size: 12.5px;
+  font-weight: 500;
 }
 
 .stacks li {

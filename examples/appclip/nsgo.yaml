@@ -1,0 +1,16 @@
+name: Cafe
+id: dev.oneo.nsgo.cafe
+version: 0.1.0
+
+# The App Clip a table's code opens: its own package, so it links only
+# the order it shows.
+app_clip:
+  main: ./clip
+  domains: [cafe.example.com]
+  notifications: true
+
+dev:
+  target: ios_simulator
+
+build:
+  targets: [ios_simulator]

@@ -103,6 +103,7 @@ type devFlags struct {
 	release   bool
 	trace     bool
 	lang      string
+	clip      string
 	limits    limitsFlag
 }
 
@@ -142,6 +143,7 @@ func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	fs.BoolVar(&f.trace, "trace", false, "print each commit's time and mount items from the running app")
 	fs.StringVar(&f.lang, "lang", "", "run the app in this `locale`, as de or zh-Hant, or a pseudo locale: en-XA accents and lengthens its messages, ar-XB mirrors them")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` the iOS target signs with (default: the team Xcode last used)")
+	fs.StringVar(&f.clip, "clip", "", "with -target ios or ios_simulator, run nsgo.yaml's App Clip alone, opened from this `url`, in place of the app")
 	fs.Var(&f.limits, "limits", "run a TSX app sandboxed, as tsx.View runs a package: within the default limits, or those given (`load=10s,call=2s,stack=1000,nodes=200000,timers=10000,requests=32,body=67108864,storage=1048576`), and nsgo.yaml's capabilities")
 	return f
 }

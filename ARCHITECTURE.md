@@ -50,6 +50,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/plugins` | — | A Go app installing signed TSX packages once the user grants their capabilities, running one in `tsx.View` and calling another's functions, with tests refusing tampered, revoked and older ones |
 | `examples/orbit` | — | Six live native views on a ring in perspective, one animated angle turning the cards, a floor dial shader and the header, with tests |
 | `examples/widgets` | — | A counter whose macOS and iOS widgets show its count in each family, with tests |
+| `examples/appclip` | — | A café whose iOS App Clip, a package of its own, orders at the table its link names, with tests |
 | `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
 
 ## Platforms
@@ -59,7 +60,7 @@ Every target builds on macOS with Go; iOS, tvOS and watchOS also need Xcode, and
 | Target | Package | Reaches the system through | Status |
 | --- | --- | --- | --- |
 | macOS | `internal/platform/macos` | purego and the Objective-C runtime; `CGO_ENABLED=0` | Runs |
-| iOS | `internal/platform/ios` | The same; cgo only to link with Xcode's linker, and for an embedded framework's one export | Runs in the simulator and on devices |
+| iOS | `internal/platform/ios` | The same; cgo only to link with Xcode's linker, and for an embedded framework's one export | Runs in the simulator and on devices; App Clips in the simulator |
 | tvOS | `internal/platform/ios` | iOS's backend linked with tvOS's SDK (Go's `GOOS=ios`), the remote moving a focus | Runs in the simulator |
 | watchOS | `internal/platform/watchos` | A SwiftUI host the tool links into the Go executable (`GOOS=ios`, arm64 alone: Series 9, Ultra 2 and later), each view a node Go draws into with Core Graphics | Runs in the simulator |
 | Web | `internal/platform/web` | `syscall/js` in WebAssembly; DOM elements | Runs |

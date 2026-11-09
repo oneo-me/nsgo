@@ -6,7 +6,7 @@ import Icon, { type IconName } from '../../components/Icon.astro';
 import SpeedLines from '../../components/SpeedLines.astro';
 import { copies } from '../../copy';
 import Layout from '../../layouts/Layout.astro';
-import { docUrl, install, langOf, langPaths, links, pageUrl, platforms, shown } from '../../site';
+import { docUrl, install, langOf, langPaths, links, pageUrl, platformName, platformRows, platforms, platformsOf, shown } from '../../site';
 import { goApp, goTest, tsxApp } from '../../snippets';
 import desktopEn from '../../assets/screens/desktop-en.jpg';
 import desktopZh from '../../assets/screens/desktop-zh.jpg';
@@ -47,18 +47,27 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
         {home.hero.title[0]}
         <span class="gradient-text">{home.hero.title[1]}</span>
       </h1>
-      <ul class="platforms" aria-label={home.hero.runsOn}>
-        {platforms.map((platform, index) => (
-          <li class="platform" style={`--i: ${index}`}>
-            <Icon name={platform.icon} size={18} />
-            {platform.name}
-          </li>
+      <div class="platforms" role="group" aria-label={home.hero.runsOn}>
+        {platformRows.map((kinds) => (
+          <div class="platforms__row">
+            {kinds.map((kind) => (
+              <ul class="platforms__group" aria-label={home.hero.kinds[kind]}>
+                <li class="platforms__kind" aria-hidden="true">{home.hero.kinds[kind]}</li>
+                {platformsOf(kind).map(({ platform, index }) => (
+                  <li class="platform" style={`--i: ${index}`}>
+                    <Icon name={platform.icon} size={18} />
+                    {platformName(platform, lang)}
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </div>
         ))}
-      </ul>
+      </div>
       <div class="platform-lines" aria-hidden="true">
         {platforms.map((platform) => (
           <p class="platform-line">
-            <strong>{platform.name}</strong>{home.hero.drawsWith[0]}<span>{platform.stack}</span>{home.hero.drawsWith[1]}
+            <strong>{platformName(platform, lang)}</strong>{home.hero.drawsWith[0]}<span>{platform.stack}</span>{home.hero.drawsWith[1]}
           </p>
         ))}
       </div>
@@ -124,15 +133,20 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
           <span class="bento__icon"><Icon name="layers" size={18} /></span>
           <h3>{f.native.title}</h3>
           <p>{f.native.body}</p>
-          <ul class="stacks">
-            {platforms.map((platform) => (
-              <li>
-                <Icon name={platform.icon} size={15} />
-                <strong>{platform.name}</strong>
-                <span>{platform.stack}</span>
-              </li>
-            ))}
-          </ul>
+          {platformRows.flat().map((kind) => (
+            <>
+              <h4 class="stacks__kind">{home.hero.kinds[kind]}</h4>
+              <ul class="stacks">
+                {platformsOf(kind).map(({ platform }) => (
+                  <li>
+                    <Icon name={platform.icon} size={15} />
+                    <strong>{platformName(platform, lang)}</strong>
+                    <span>{platform.stack}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ))}
         </article>
         <article class="bento__card">
           <span class="bento__icon"><Icon name="bolt" size={18} /></span>

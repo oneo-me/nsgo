@@ -148,6 +148,9 @@ func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simu
 	if widgets {
 		extra += "\n" + p.widgetPlist(true)
 	}
+	if clip := p.clipPlist(); clip != "" {
+		extra += "\n" + clip
+	}
 	if err := writePlist(filepath.Join(app, "Info.plist"), p, sys.plist, extra); err != nil {
 		return "", err
 	}
@@ -159,27 +162,35 @@ func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simu
 			return "", err
 		}
 	}
+	if sys == iOS {
+		if err := addIOSAppClip(ctx, p, app, simulator); err != nil {
+			return "", err
+		}
+	} else if p.AppClip != nil {
+		detail("no App Clip on %s: it is left out", sys.name)
+	}
 	if !simulator {
 		return app, nil
 	}
 	stage("signing")
-	if !widgets {
+	ents := p.simulatorEntitlements()
+	if len(ents) == 0 {
 		return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 	}
-	// The simulator grants the app group from an ad hoc signature's
-	// entitlements.
-	ents, err := writeEntitlements(p.groupEntitlements())
+	// The simulator grants the app group, and ties an app to its clip,
+	// from an ad hoc signature's entitlements.
+	path, err := writeEntitlements(ents)
 	if err != nil {
 		return "", err
 	}
-	defer os.Remove(ents)
-	return app, run(ctx, "codesign", "--force", "--sign", "-", "--entitlements", ents, app)
+	defer os.Remove(path)
+	return app, run(ctx, "codesign", "--force", "--sign", "-", "--entitlements", path, app)
 }
 
 // The SDK requires the scene life cycle; platform/ios registers
 // NsgoSceneDelegate. An iPhone grants display links more than 60 Hz only
 // to apps that set CADisableMinimumFrameDurationOnPhone.
-var iosPlist = template.Must(template.New("ios").Parse(plistHead + `	<key>MinimumOSVersion</key><string>15.0</string>
+var iosPlist = template.Must(template.New("ios").Parse(plistHead + `	<key>MinimumOSVersion</key><string>{{.IOSMinimum}}</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key><true/>
 	<key>UILaunchScreen</key><dict/>
 	<key>UIRequiresFullScreen</key><true/>
@@ -244,6 +255,19 @@ func iosSession(sys *appleOS, opts devOptions) session {
 				return app{}, err
 			}
 			bundle := filepath.Join(p.cache("dev", cache), p.Name+".app")
+			if opts.clip != "" {
+				stop, wait, err := startIOSClip(ctx, p, udid, bundle, opts.clip, opts.server.url())
+				if err != nil {
+					return app{}, err
+				}
+				return app{
+					stop: func() {
+						stop()
+						exec.Command("xcrun", "simctl", "terminate", udid, p.AppClip.ID).Run()
+					},
+					wait: wait,
+				}, nil
+			}
 			if err := run(ctx, "xcrun", "simctl", "install", udid, bundle); err != nil {
 				return app{}, err
 			}
@@ -288,6 +312,9 @@ func iosDeviceSession(sys *appleOS, opts devOptions) session {
 				return app{}, err
 			}
 			dir := p.cache("dev", sys.target)
+			if opts.clip != "" {
+				return startIOSDeviceClip(ctx, p, filepath.Join(dir, "app", p.Name+".app"), filepath.Join(dir, "sign-clip"), team, device, opts.clip)
+			}
 			if err := installOnIOSDevice(ctx, p, sys, filepath.Join(dir, "app", p.Name+".app"), filepath.Join(dir, "sign"), team, device); err != nil {
 				return app{}, err
 			}
@@ -336,11 +363,27 @@ func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team s
 	if err := os.Symlink(app, filepath.Join(work, "unsigned")); err != nil {
 		return "", err
 	}
+	data := iosProjectData(p, sys, team)
+	if p.clipParent != "" {
+		// Xcode registers an App Clip's App ID under its parent's from
+		// these entitlements, and fills in the team's prefix.
+		ents := map[string]any{
+			"com.apple.developer.on-demand-install-capable":      true,
+			"com.apple.developer.parent-application-identifiers": []any{"$(AppIdentifierPrefix)" + p.clipParent},
+		}
+		if domains := p.parentClip.Domains; len(domains) > 0 {
+			ents["com.apple.developer.associated-domains"] = clipDomains(domains)
+		}
+		if err := os.WriteFile(filepath.Join(work, "Clip.entitlements"), encodePlist(ents), 0o644); err != nil {
+			return "", err
+		}
+		data["Entitlements"] = "Clip.entitlements"
+	}
 	f, err := os.Create(filepath.Join(project, "project.pbxproj"))
 	if err != nil {
 		return "", err
 	}
-	err = iosProject.Execute(f, iosProjectData(p, sys, team))
+	err = iosProject.Execute(f, data)
 	if closeErr := f.Close(); err == nil {
 		err = closeErr
 	}
@@ -350,6 +393,9 @@ func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team s
 	products := filepath.Join(work, "products")
 	if len(p.Widgets) > 0 {
 		warn("the widgets are left out: Xcode signs the app alone for devices; nsgo build -target ios with sign.profile and sign.widgets_profile keeps them")
+	}
+	if p.AppClip != nil {
+		warn("the App Clip is left out: Xcode signs the app alone for devices; nsgo dev -clip runs the clip alone, and nsgo build -target ios with sign.profile and sign.clip_profile keeps it")
 	}
 	event("sign for %s with Xcode", device.Name)
 	if err := runXcodebuild(ctx,
@@ -372,31 +418,38 @@ func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team s
 	return signed, nil
 }
 
-// iosProjectData fills iosProject in for p on sys, signed by team.
+// iosProjectData fills iosProject in for p on sys, signed by team: an
+// app's, or an App Clip's, whose product type Xcode signs as one.
 func iosProjectData(p *project, sys *appleOS, team string) map[string]string {
-	return map[string]string{
-		"Name":       p.Name,
-		"App":        p.Name + ".app",
-		"ID":         p.ID,
-		"Team":       team,
-		"Script":     iosSignScript,
-		"SDK":        sys.sdk,
-		"Deployment": sys.deployment,
-		"Minimum":    sys.minimum,
-		"Families":   sys.familyList(),
+	data := map[string]string{
+		"Name":        p.Name,
+		"App":         p.Name + ".app",
+		"ID":          p.ID,
+		"Team":        team,
+		"Script":      iosSignScript,
+		"SDK":         sys.sdk,
+		"Deployment":  sys.deployment,
+		"Minimum":     sys.minimum,
+		"Families":    sys.familyList(),
+		"ProductType": "com.apple.product-type.application",
 	}
+	if p.clipParent != "" {
+		data["Minimum"] = p.IOSMinimum()
+		data["ProductType"] = "com.apple.product-type.application.on-demand-install-capable"
+	}
+	return data
 }
 
 // iosSignScript replaces Xcode's empty app with the Go build's contents,
 // except its Info.plist, which Xcode processes itself, and the widget
-// extension, which Xcode's project has no target to sign.
+// extension and the App Clip, which Xcode's project has no target to sign.
 const iosSignScript = `set -e
 app="$CODESIGNING_FOLDER_PATH"
 mkdir -p "$app"
 for file in "$SRCROOT/unsigned"/*; do
 	name=$(basename "$file")
 	case "$name" in
-		Info.plist|PkgInfo|_CodeSignature|embedded.mobileprovision|PlugIns) continue ;;
+		Info.plist|PkgInfo|_CodeSignature|embedded.mobileprovision|PlugIns|AppClips) continue ;;
 	esac
 	cp -R "$file" "$app/"
 done
@@ -815,7 +868,7 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			name = Nsgo;
 			productName = Nsgo;
 			productReference = AA0000000000000000000001 /* Nsgo.app */;
-			productType = "com.apple.product-type.application";
+			productType = {{pbx .ProductType}};
 		};
 /* End PBXNativeTarget section */
 
@@ -893,6 +946,9 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 		AA000000000000000000000B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+{{- with .Entitlements}}
+				CODE_SIGN_ENTITLEMENTS = {{pbx .}};
+{{- end}}
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = {{pbx .Team}};
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -908,6 +964,9 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 		AA000000000000000000000C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+{{- with .Entitlements}}
+				CODE_SIGN_ENTITLEMENTS = {{pbx .}};
+{{- end}}
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = {{pbx .Team}};
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;

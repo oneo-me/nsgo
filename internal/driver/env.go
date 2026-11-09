@@ -64,6 +64,11 @@ type Environment struct {
 	// Lifecycle is whether the app is in use: the window's, an embedded
 	// surface's the host window's.
 	Lifecycle Lifecycle
+	// AppClip says the app runs as an iOS App Clip, and OpenedURL is the
+	// web link that last opened it: the clip's invocation, or a universal
+	// link; "" when none did.
+	AppClip   bool
+	OpenedURL string
 }
 
 // Lifecycle is whether the app is in use, as NSH's lifecycle() reads it.

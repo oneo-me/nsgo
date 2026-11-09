@@ -45,6 +45,7 @@ type devOptions struct {
 	release bool   // build as nsgo build does, for measuring
 	trace   bool   // print the running app's commits
 	lang    string // the locale to run the app in
+	clip    string // the URL the App Clip opens from, run in the app's place
 	server  *devServer
 }
 
@@ -455,6 +456,14 @@ func (s *devServer) events(w http.ResponseWriter, r *http.Request) {
 
 // sessionFor picks how dev builds and shows nsgo.yaml's target.
 func sessionFor(p *project, opts devOptions) (session, error) {
+	if opts.clip != "" {
+		switch {
+		case p.AppClip == nil:
+			return session{}, fmt.Errorf("-clip: nsgo.yaml has no app_clip")
+		case p.Dev.Target != "ios_simulator" && p.Dev.Target != "ios":
+			return session{}, fmt.Errorf("-clip runs the App Clip on an iPhone or its simulator: use -target ios or ios_simulator")
+		}
+	}
 	switch p.Dev.Target {
 	case "native":
 		switch runtime.GOOS {
