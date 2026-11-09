@@ -7,6 +7,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // Text selection is the browser's own. A text with SelectableOn is
@@ -36,7 +37,7 @@ func (s *surface) setSelection(v *view, p *driver.ViewProps) {
 				v.inner.Get("classList").Call("remove", "nsgo-selection")
 			} else {
 				v.inner.Get("classList").Call("add", "nsgo-selection")
-				v.textCSS.set1("--nsgo-selection", cssColor(p.SelectionColor))
+				v.textCSS.set1("--nsgo-selection", webstyle.Color(p.SelectionColor))
 			}
 		}
 	}

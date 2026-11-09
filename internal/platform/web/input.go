@@ -8,6 +8,7 @@ import (
 
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/platform/field"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // Text fields follow NSH's web backend: an <input>, or a <textarea> when
@@ -222,20 +223,20 @@ func (s *surface) setInput(v *view, c *driver.InputConfig) {
 	case c.HideCaret:
 		css["caret-color"] = "transparent"
 	case c.Caret() != 0:
-		css["caret-color"] = cssColor(c.Caret())
+		css["caret-color"] = webstyle.Color(c.Caret())
 	}
 	classes := el.Get("classList")
 	if c.SelectionColor != 0 {
 		s.selectionStyle()
 		classes.Call("add", "nsgo-selection")
-		css["--nsgo-selection"] = cssColor(c.Highlight())
+		css["--nsgo-selection"] = webstyle.Color(c.Highlight())
 	} else {
 		classes.Call("remove", "nsgo-selection")
 	}
 	if c.PlaceholderColor != 0 {
 		s.fieldStyle()
 		classes.Call("add", "nsgo-placeholder")
-		css["--nsgo-placeholder"] = cssColor(c.PlaceholderColor)
+		css["--nsgo-placeholder"] = webstyle.Color(c.PlaceholderColor)
 	} else {
 		classes.Call("remove", "nsgo-placeholder")
 	}

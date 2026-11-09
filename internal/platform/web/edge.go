@@ -8,6 +8,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // A scroll view's edge effect at a side is a band over the content that
@@ -46,8 +47,8 @@ func (s *surface) placeEdges(v *view) {
 			v.el.Call("appendChild", *el)
 		}
 		r := driver.BandRect(driver.Side(side), inner, band)
-		setStyle(*el, map[string]string{"position": "sticky", "left": px(r.Origin.X), "top": px(r.Origin.Y),
-			"width": px(r.Size.Width), "height": px(r.Size.Height), "margin-bottom": px(-r.Size.Height),
+		setStyle(*el, map[string]string{"position": "sticky", "left": webstyle.Px(r.Origin.X), "top": webstyle.Px(r.Origin.Y),
+			"width": webstyle.Px(r.Size.Width), "height": webstyle.Px(r.Size.Height), "margin-bottom": webstyle.Px(-r.Size.Height),
 			"pointer-events": "none"})
 		el.Set("innerHTML", edgeHTML(e, driver.Side(side), r.Size))
 	}
@@ -68,15 +69,15 @@ func edgeHTML(e *driver.ScrollEdge, side driver.Side, size driver.Size) string {
 		}
 		var stops strings.Builder
 		for _, st := range e.SoftTint(driver.EdgeTint) {
-			fmt.Fprintf(&stops, ", %s %g%%", cssColor(st.Color), st.Offset*100)
+			fmt.Fprintf(&stops, ", %s %g%%", webstyle.Color(st.Color), st.Offset*100)
 		}
 		b.WriteString(layer(fmt.Sprintf("background:linear-gradient(%s%s)", dir, stops.String())))
 		return b.String()
 	}
 	b.WriteString(layer(fmt.Sprintf("backdrop-filter:blur(%gpx);-webkit-backdrop-filter:blur(%[1]gpx);background:%s",
-		driver.HardEdgeBlur, cssColor(e.Tint.Faded(driver.EdgeTint)))))
+		driver.HardEdgeBlur, webstyle.Color(e.Tint.Faded(driver.EdgeTint)))))
 	line := driver.HairlineRect(side, size)
 	b.WriteString(fmt.Sprintf(`<div style="position:absolute;left:%s;top:%s;width:%s;height:%s;background:%s"></div>`,
-		px(line.Origin.X), px(line.Origin.Y), px(line.Size.Width), px(line.Size.Height), cssColor(e.Line)))
+		webstyle.Px(line.Origin.X), webstyle.Px(line.Origin.Y), webstyle.Px(line.Size.Width), webstyle.Px(line.Size.Height), webstyle.Color(e.Line)))
 	return b.String()
 }

@@ -28,7 +28,7 @@
 
 ## Status
 
-NSGo is early, with no release or stable API yet. It runs on macOS, iOS, tvOS, watchOS, Windows, Linux, the web and Android, and apps embed in iOS, Android and Go desktop apps of their own; [ARCHITECTURE.md](ARCHITECTURE.md#platforms) tracks each target.
+NSGo is early, with no release or stable API yet. It runs on macOS, iOS, tvOS, watchOS, Windows, Linux, the web, Android and WeChat mini programs, and apps embed in iOS, Android and Go desktop apps of their own; [ARCHITECTURE.md](ARCHITECTURE.md#platforms) tracks each target.
 
 ## Getting started
 
@@ -39,7 +39,7 @@ go mod init example.com/hello
 go get github.com/oneo-me/nsgo
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 go tool nsgo init   # -template tsx for a TSX app
-go tool nsgo dev    # -target web, ios_simulator, tvos_simulator, watchos_simulator or android to run elsewhere
+go tool nsgo dev    # -target web, ios_simulator, tvos_simulator, watchos_simulator, android or miniprogram to run elsewhere
 ```
 
 An app is Go components that return elements, with signals updating what reads them:

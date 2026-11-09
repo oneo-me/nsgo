@@ -87,6 +87,19 @@ watchOS runs in a SwiftUI host, its views nodes Go draws into ([platforms](../AR
 | Leaving views animated | `animation.md` | A commit's layout animation takes views out with its Delete, which leave at once on a watch now |
 | What watchOS has not | — | Web views, video, native components and shaders (no WebKit, AVKit views or Metal), the clipboard, pickers, files, sharing and speech report `ErrUnsupported`, each checked from the gallery; the views show empty boxes and the services answer unsupported now |
 
+## WeChat mini programs
+
+Go apps run in a mini program through a runtime checked in a stand-in host alone ([mini programs](architecture/miniprogram.md)); what it still lacks:
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| WeChat itself | `nsh-platform-miniprogram`'s README | `examples/embedded` runs in WeChat DevTools and on an iPhone and an Android phone: text lines where they were measured, taps, pans in and beside scroll views, text fields and the keyboard's height, modals, keyframes through `animate`, back through the page container, alerts, storage and photos, with what differs fixed |
+| Tests on the target | `testing.md` | `nsgo test -target miniprogram` runs an app's tests in DevTools through its automator, with native taps and screenshots, as the other targets' test hosts do |
+| Frame rate | `performance.md` | A scroll with sticky headers and a pan holds 60 frames a second on a mid-range Android phone, with setData's paths per frame measured; what each costs decides whether bound values move in the render layer instead |
+| Larger apps | — | An app of `ui`'s common components fits WeChat's 2 MB, by what the module links (encoding/json, CLDR's data, unused components) rather than by turning inlining off |
+| What WeChat draws | — | The app's font files (`loadFontFace`), images tinted with `TintColor`, inline views aligned off the baseline, selection areas and videos (`<video>`) |
+| What a mini program has not | — | Web views (`<web-view>` fills a page of its own), native components, shaders and TSX report `ErrUnsupported` or refuse to build, each checked |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

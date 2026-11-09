@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // The animation graph runs in Go on the page's main thread, stepped by
@@ -67,8 +68,8 @@ func (s *surface) applyAnimated() {
 			"transition": "", "-webkit-text-fill-color": "", "border-color": "", "will-change": ""}
 		if vals.Set != 0 {
 			vs := vals.Apply(v.style)
-			style["opacity"], style["transform"] = opacityCSS(vs.Opacity), transformCSS(vs.Transform)
-			style["background-color"], style["box-shadow"] = fillCSS(vs.Background), shadowCSS(&vs)
+			style["opacity"], style["transform"] = webstyle.Opacity(vs.Opacity), webstyle.Transform(vs.Transform)
+			style["background-color"], style["box-shadow"] = webstyle.Fill(vs.Background), webstyle.Shadow(&vs)
 			// A bound value moves at once; the view's transition is for
 			// its style's changes.
 			style["transition"] = "none"
@@ -88,12 +89,12 @@ func (s *surface) applyAnimated() {
 				style["box-shadow"] = "none"
 			}
 			if vals.Has(driver.PropBorderColor) {
-				style["border-color"] = cssColor(vs.BorderColor)
+				style["border-color"] = webstyle.Color(vs.BorderColor)
 			}
 			// A bound color fills every glyph, the spans' too, which
 			// inherit the fill color over their own.
 			if vals.Has(driver.PropTextColor) {
-				style["-webkit-text-fill-color"] = cssColor(vals.TextColor)
+				style["-webkit-text-fill-color"] = webstyle.Color(vals.TextColor)
 			}
 		}
 		v.css().set(style)
@@ -156,7 +157,7 @@ func (s *surface) moveFrame(v *view, it *driver.MountItem, lb *layoutBatch) {
 	if v.layoutAnim.Truthy() {
 		v.layoutAnim.Call("cancel")
 	}
-	to := map[string]any{"left": px(f.Origin.X), "top": px(f.Origin.Y), "width": px(f.Size.Width), "height": px(f.Size.Height)}
+	to := map[string]any{"left": webstyle.Px(f.Origin.X), "top": webstyle.Px(f.Origin.Y), "width": webstyle.Px(f.Size.Width), "height": webstyle.Px(f.Size.Height)}
 	v.layoutAnim = v.el.Call("animate", []any{from, to}, timing(tr))
 }
 
@@ -190,9 +191,9 @@ func (s *surface) match(v, old *view, lb *layoutBatch) {
 	f := v.frame
 	dx := driver.Points(was.Get("left").Float() - now.Get("left").Float())
 	dy := driver.Points(was.Get("top").Float() - now.Get("top").Float())
-	from := map[string]any{"left": px(f.Origin.X + dx), "top": px(f.Origin.Y + dy),
-		"width": px(driver.Points(was.Get("width").Float())), "height": px(driver.Points(was.Get("height").Float()))}
-	to := map[string]any{"left": px(f.Origin.X), "top": px(f.Origin.Y), "width": px(f.Size.Width), "height": px(f.Size.Height)}
+	from := map[string]any{"left": webstyle.Px(f.Origin.X + dx), "top": webstyle.Px(f.Origin.Y + dy),
+		"width": webstyle.Px(driver.Points(was.Get("width").Float())), "height": webstyle.Px(driver.Points(was.Get("height").Float()))}
+	to := map[string]any{"left": webstyle.Px(f.Origin.X), "top": webstyle.Px(f.Origin.Y), "width": webstyle.Px(f.Size.Width), "height": webstyle.Px(f.Size.Height)}
 	setStyle(old.el, map[string]string{"visibility": "hidden"})
 	if v.layoutAnim.Truthy() {
 		v.layoutAnim.Call("cancel")

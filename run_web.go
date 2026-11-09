@@ -1,4 +1,4 @@
-//go:build js && wasm
+//go:build js && wasm && !nsgominiprogram
 
 package nsgo
 

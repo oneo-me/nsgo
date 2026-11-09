@@ -36,6 +36,7 @@ var layers = []struct {
 	{"internal/testhost", []string{"core", "internal/driver"}},
 	{"internal/platform/android/runtime", nil},
 	{"internal/platform/apple", append([]string{"internal/driver"}, platformShared...)},
+	{"internal/platform/canvas2d", []string{"internal/driver", "internal/platform/webstyle"}},
 	{"internal/platform/canvastest", []string{"internal/driver"}},
 	{"internal/platform/field", []string{"internal/driver"}},
 	{"internal/platform/finger", []string{"internal/driver"}},
@@ -49,6 +50,7 @@ var layers = []struct {
 	{"internal/platform/queue", []string{"internal/driver"}},
 	{"internal/platform/scrollbar", []string{"internal/driver"}},
 	{"internal/platform/textselect", []string{"internal/driver"}},
+	{"internal/platform/webstyle", []string{"internal/driver"}},
 	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales"}, platformShared...)},
 	{"nsgotest", []string{"core", "internal/driver", "internal/testhost"}},
 	{"", []string{"core", "internal/engine", "internal/platform/"}},
@@ -86,9 +88,9 @@ var layers = []struct {
 // platformShared is the code several backends share, with the shader
 // writers but not the compiler, which only the core links.
 var platformShared = []string{
-	"internal/platform/apple", "internal/platform/canvastest", "internal/platform/field", "internal/platform/finger",
+	"internal/platform/apple", "internal/platform/canvas2d", "internal/platform/canvastest", "internal/platform/field", "internal/platform/finger",
 	"internal/platform/fontfile", "internal/platform/hover", "internal/platform/imagedecode", "internal/platform/imageload", "internal/platform/menutext", "internal/platform/perfhud", "internal/platform/picked", "internal/platform/queue", "internal/platform/scrollbar",
-	"internal/platform/textselect", "internal/shaderir/",
+	"internal/platform/textselect", "internal/platform/webstyle", "internal/shaderir/",
 }
 
 // portable lists the packages that build unchanged for every target: no

@@ -1,0 +1,14 @@
+<!-- The app's root view, then its modals over it. While back goes through
+     the app, an empty page container takes the back button, gesture and
+     key, which then go to the app instead of leaving the mini program. -->
+<view class="nsgo-root">
+  <nsgo-node wx:if="{{root}}" node="{{root}}" bind:nsgo="onNsgo" />
+  <nsgo-node wx:for="{{ov}}" wx:key="id" node="{{item}}" bind:nsgo="onNsgo" />
+  <page-container
+    show="{{back}}"
+    overlay="{{false}}"
+    duration="{{0}}"
+    custom-style="height:0;overflow:hidden;"
+    bind:beforeleave="onBack"
+  />
+</view>

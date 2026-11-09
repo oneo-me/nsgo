@@ -9,6 +9,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // Effects, transitions and navigation shaders (driver.Shader.Role) draw
@@ -413,7 +414,7 @@ func (s *surface) drawEffect(v *view) {
 	}
 	fx.stale = false
 	w, h := float64(host.size.Width)+2*ov, float64(host.size.Height)+2*ov
-	setStyle(fx.canvas, map[string]string{"left": px(driver.Points(-ov)), "top": px(driver.Points(-ov)), "width": px(driver.Points(w)), "height": px(driver.Points(h))})
+	setStyle(fx.canvas, map[string]string{"left": webstyle.Px(driver.Points(-ov)), "top": webstyle.Px(driver.Points(-ov)), "width": webstyle.Px(driver.Points(w)), "height": webstyle.Px(driver.Points(h))})
 	if !s.drawGL(fx.gl, fx.canvas, v.id, w, h, func(i int) (js.Value, float64, float64) {
 		pic := &fx.pics[i]
 		if pic.canvas.IsUndefined() || pic.w == 0 {

@@ -8,6 +8,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // Scroll views, as NSH's web backend scrolls them: the browser scrolls,
@@ -169,15 +170,15 @@ func (v *view) placeContent() {
 		transform = "scale(" + strconv.FormatFloat(z, 'g', -1, 64) + ")"
 	}
 	setStyle(v.content, map[string]string{
-		"left": px(in.Left - b.Left + driver.Points(ox)), "top": px(in.Top - b.Top + driver.Points(oy+sc.pull)),
-		"width": px(v.scroll.Width - b.Left), "height": px(v.scroll.Height - b.Top), "transform": transform,
+		"left": webstyle.Px(in.Left - b.Left + driver.Points(ox)), "top": webstyle.Px(in.Top - b.Top + driver.Points(oy+sc.pull)),
+		"width": webstyle.Px(v.scroll.Width - b.Left), "height": webstyle.Px(v.scroll.Height - b.Top), "transform": transform,
 	})
 	setStyle(sc.spacer, map[string]string{
-		"width":  px(driver.Points(w+ox) + in.Left + in.Right - b.Left),
-		"height": px(driver.Points(h+oy+sc.pull) + in.Top + in.Bottom - b.Top),
+		"width":  webstyle.Px(driver.Points(w+ox) + in.Left + in.Right - b.Left),
+		"height": webstyle.Px(driver.Points(h+oy+sc.pull) + in.Top + in.Bottom - b.Top),
 	})
 	if sc.spinner.Truthy() {
-		setStyle(sc.spinner, map[string]string{"top": px((driver.RefreshSpace-22)/2 - b.Top)})
+		setStyle(sc.spinner, map[string]string{"top": webstyle.Px((driver.RefreshSpace-22)/2 - b.Top)})
 	}
 	v.snapMarkers()
 }
@@ -204,10 +205,10 @@ func (v *view) snapMarkers() {
 		for _, p := range points {
 			m := v.el.Get("ownerDocument").Call("createElement", "div")
 			m.Set("className", "nsgo-snap")
-			at := px(p + lead - v.border.Top)
+			at := webstyle.Px(p + lead - v.border.Top)
 			style := map[string]string{"top": at, "left": "0"}
 			if sc.config.Horizontal {
-				style = map[string]string{"left": px(p + lead - v.border.Left), "top": "0"}
+				style = map[string]string{"left": webstyle.Px(p + lead - v.border.Left), "top": "0"}
 			}
 			if stop {
 				style["scroll-snap-stop"] = "always"

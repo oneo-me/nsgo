@@ -105,6 +105,14 @@ type project struct {
 	Web struct {
 		Host string `yaml:"host"`
 	} `yaml:"web"`
+	// MiniProgram is the WeChat mini program target's: AppID is the mini
+	// program's, WeChat DevTools' tourist one when empty, and
+	// CustomNavigation hides WeChat's navigation bar, so the app fills
+	// the page and draws its own, clear of the capsule button.
+	MiniProgram struct {
+		AppID            string `yaml:"appid"`
+		CustomNavigation bool   `yaml:"custom_navigation"`
+	} `yaml:"miniprogram"`
 	// Apple is the macOS and iOS targets': Info holds string entries for
 	// their Info.plist, such as NSMicrophoneUsageDescription.
 	Apple struct {

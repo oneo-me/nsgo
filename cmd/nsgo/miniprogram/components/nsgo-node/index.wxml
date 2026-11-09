@@ -1,0 +1,133 @@
+<!-- A view's element by its kind, at its frame (node.f), with its style
+     (node.s), what animates over it (node.a) and its frame's transition
+     (node.tr). Handlers are bound only where the view takes the event:
+     a tap reaches the innermost view that takes taps (catchtap), presses
+     going down and up the innermost that follows them (mut-bind), and
+     touches every view that follows them, the nearest that captures them
+     keeping its scroll views from scrolling. -->
+<wxs module="m">
+  module.exports = {
+    box: function (n) {
+      return 'left:' + n.f[0] + 'px;top:' + n.f[1] + 'px;width:' + n.f[2] + 'px;height:' + n.f[3] + 'px;' +
+        n.s + n.a + (n.tr ? 'transition:' + n.tr + ';' : '')
+    },
+    run: function (t, r) {
+      return 'left:' + (t.x + r[1]) + 'px;top:' + (t.y + r[2]) + 'px;line-height:' + r[3] + 'px;' + t.s[r[4]] +
+        (t.sh ? 'text-shadow:' + t.sh + ';' : '')
+    },
+    field: function (n) {
+      var i = n.fd
+      return 'left:' + i.x + 'px;top:' + i.y + 'px;width:' + i.w + 'px;height:' + i.h + 'px;' + i.css
+    },
+  }
+</wxs>
+<scroll-view
+  wx:if="{{node.k === 'scroll'}}"
+  id="n"
+  class="n"
+  style="{{m.box(node)}}"
+  scroll-x="{{node.sc ? node.sc.h && !node.sc.off : false}}"
+  scroll-y="{{node.sc ? !node.sc.h && !node.sc.off : true}}"
+  scroll-top="{{node.so ? node.so[1] : ''}}"
+  scroll-left="{{node.so ? node.so[0] : ''}}"
+  scroll-with-animation="{{node.so ? node.so[2] : false}}"
+  enhanced="{{true}}"
+  show-scrollbar="{{node.sc ? !node.sc.hide : true}}"
+  bounces="{{node.sc ? node.sc.bounce : true}}"
+  paging-enabled="{{node.sc ? node.sc.paging : false}}"
+  refresher-enabled="{{node.sc ? node.sc.rf : false}}"
+  refresher-triggered="{{node.sc ? node.sc.rt : false}}"
+  bindrefresherrefresh="onRefresh"
+  bindscroll="onScroll"
+  binddragstart="onDragStart"
+  binddragend="onDragEnd"
+>
+  <view class="content" style="width:{{node.cs ? node.cs[0] : node.f[2]}}px;height:{{node.cs ? node.cs[1] : node.f[3]}}px">
+    <nsgo-node wx:for="{{node.c}}" wx:key="id" node="{{item}}" />
+  </view>
+</scroll-view>
+<view wx:elif="{{node.k === 'input'}}" id="n" class="n" style="{{m.box(node)}}">
+  <block wx:if="{{node.fd}}">
+    <textarea
+      wx:if="{{node.fd.ml}}"
+      class="field"
+      style="{{m.field(node)}}"
+      value="{{node.v}}"
+      placeholder="{{node.fd.ph}}"
+      placeholder-style="{{node.fd.phs}}"
+      maxlength="{{node.fd.max}}"
+      disabled="{{node.fd.off}}"
+      focus="{{node.fo}}"
+      selection-start="{{node.sel ? node.sel[0] : -1}}"
+      selection-end="{{node.sel ? node.sel[1] : -1}}"
+      confirm-type="{{node.fd.nl ? 'return' : node.fd.confirm}}"
+      confirm-hold="{{node.fd.hold}}"
+      show-confirm-bar="{{false}}"
+      disable-default-padding="{{true}}"
+      adjust-position="{{false}}"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+      bindfocus="onFocus"
+      bindblur="onBlur"
+      bindkeyboardheightchange="onKeyboard"
+    />
+    <input
+      wx:else
+      class="field"
+      style="{{m.field(node)}}"
+      value="{{node.v}}"
+      type="{{node.fd.type}}"
+      password="{{node.fd.pw}}"
+      placeholder="{{node.fd.ph}}"
+      placeholder-style="{{node.fd.phs}}"
+      maxlength="{{node.fd.max}}"
+      disabled="{{node.fd.off}}"
+      focus="{{node.fo}}"
+      selection-start="{{node.sel ? node.sel[0] : -1}}"
+      selection-end="{{node.sel ? node.sel[1] : -1}}"
+      confirm-type="{{node.fd.confirm}}"
+      confirm-hold="{{node.fd.hold}}"
+      adjust-position="{{false}}"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+      bindfocus="onFocus"
+      bindblur="onBlur"
+      bindkeyboardheightchange="onKeyboard"
+    />
+  </block>
+  <nsgo-node wx:for="{{node.c}}" wx:key="id" node="{{item}}" />
+</view>
+<view
+  wx:else
+  id="n"
+  class="n"
+  style="{{m.box(node)}}"
+  catchtap="{{node.p ? 'onTap' : ''}}"
+  catchlongpress="{{node.lp ? 'onLongPress' : ''}}"
+  mut-bind:touchstart="{{node.io ? 'onPressIn' : ''}}"
+  mut-bind:touchend="{{node.io ? 'onPressOut' : ''}}"
+  mut-bind:touchcancel="{{node.io ? 'onPressOut' : ''}}"
+  bindtouchstart="{{node.tf ? 'onTouch' : ''}}"
+  bindtouchmove="{{node.tf && !node.tc ? 'onTouch' : ''}}"
+  catchtouchmove="{{node.tc ? 'onTouch' : ''}}"
+  bindtouchend="{{node.tf ? 'onTouch' : ''}}"
+  bindtouchcancel="{{node.tf ? 'onTouch' : ''}}"
+>
+  <image
+    wx:if="{{node.k === 'image' && node.im}}"
+    class="fill"
+    src="{{node.im.src}}"
+    mode="{{node.im.mode}}"
+    bindload="onLoad"
+    binderror="onError"
+  />
+  <image wx:if="{{node.cv}}" class="fill" src="{{node.cv}}" mode="scaleToFill" />
+  <text
+    wx:for="{{node.t ? node.t.r : []}}"
+    wx:for-item="r"
+   
+    class="line"
+    style="{{m.run(node.t, r)}}"
+  >{{r[0]}}</text>
+  <nsgo-node wx:for="{{node.c}}" wx:key="id" node="{{item}}" />
+</view>

@@ -11,7 +11,7 @@ order: 40
 go tool nsgo build
 ```
 
-`build` 为 `nsgo.yaml` 列出的每个目标写出精简的发布包，放在 `dist/<name>-<version>-<target>`：`.app`、`.ipa`、`.apk`、Windows 和 Linux 的目录，或一个网站，网站页面会在 `import()` 执行时才获取它指定的 TSX 模块。`-target` 替换目标列表，`all` 表示所有只需 Go 和 Xcode 的目标；安装 Android NDK 后可再加上 `android_x64`。`-run` 启动为本机构建的包，或把它安装到 `-device` 选中的 iPhone、模拟器或 Android 设备上。
+`build` 为 `nsgo.yaml` 列出的每个目标写出精简的发布包，放在 `dist/<name>-<version>-<target>`：`.app`、`.ipa`、`.apk`、Windows 和 Linux 的目录，或一个网站，网站页面会在 `import()` 执行时才获取它指定的 TSX 模块。`-target` 替换目标列表，`all` 表示所有只需 Go 和 Xcode 的目标；安装 Android NDK 后可再加上 `android_x64`，`miniprogram` 则构建[微信小程序](#微信小程序)。`-run` 启动为本机构建的包，或把它安装到 `-device` 选中的 iPhone、模拟器或 Android 设备上。
 
 ## nsgo.yaml
 
@@ -27,7 +27,7 @@ icon:
   apple: assets/AppIcon.icon  # macOS、iOS 和 watchOS，或仅用于 macOS 的 .icns；tvOS 用 PNG 分层
   png: assets/Icon.png        # 其他所有目标
 dev:
-  target: native        # native、web、ios、ios_simulator、tvos、tvos_simulator、watchos、watchos_simulator 或 android
+  target: native        # native、web、ios、ios_simulator、tvos、tvos_simulator、watchos、watchos_simulator、android 或 miniprogram
   hot_reload: true      # false 时只构建一次，不监听文件
   fps: false            # true 时显示性能监视器
   # icon: { png: assets/Icon-dev.png }  # 在 dev 构建中替换 icon 的文件；默认取 assets/*-dev.*
@@ -37,6 +37,7 @@ build:
   fps: false            # 同 dev.fps，作用于发布包
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
+# miniprogram: { appid: wx0123456789abcdef, custom_navigation: false }  # 微信小程序的设置
 ```
 
 命令行参数会替换同名的值，例如 `-target`、`-version` 或 `-output`；`-h` 列出全部参数。
@@ -60,6 +61,17 @@ file_types:
 ```go
 desktop.OnOpenFiles(cx, func(paths []string) { open(paths[0]) })
 ```
+
+## 微信小程序
+
+```sh
+go tool nsgo build -target miniprogram -run
+go tool nsgo dev -target miniprogram
+```
+
+`miniprogram` 目标写出一个[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)项目。在开发者工具中开启服务端口（设置 → 安全设置）后，`-run` 和 `dev` 会用它打开项目；`dev` 在你保存时重新构建，开发者工具随之刷新。`miniprogram.appid` 设置小程序的 AppID，没有时开发者工具以测试号预览。微信的导航栏显示应用的标题；开启 `custom_navigation` 后应用占满页面，安全区让它避开右上角的胶囊按钮。
+
+小程序只运行 Go 应用，不运行 TSX，且微信把应用压缩后的模块限制在 2 MB 以内：几个页面的应用放得下，放不下时 `build` 会说明。着色器在小程序中不绘制，网页视图、视频、原生组件和应用自带的字体文件暂不显示。
 
 ## 签名
 

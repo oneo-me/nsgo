@@ -7,9 +7,6 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/shader"
-	"github.com/oneo-me/nsgo/internal/shader/wgsl"
-	"github.com/oneo-me/nsgo/internal/shaderir"
 )
 
 // ShaderProgram is a fragment shader written in Go's syntax: Ebitengine's
@@ -50,6 +47,9 @@ type ShaderProgram struct {
 	// it samples.
 	animated bool
 	pictures driver.Pictures
+	// uncompiled is a program of a build without the compilers
+	// (shader_nocompile.go), which takes any uniform.
+	uncompiled bool
 }
 
 // uniformSlot is where a uniform's lanes lie among the program's own,
@@ -62,28 +62,7 @@ type uniformSlot struct {
 
 // CompileShader compiles a shader's source, as ShaderProgram describes
 // it. Its errors give the source's lines.
-func CompileShader(src string) (*ShaderProgram, error) {
-	p, err := shader.CompileFragment([]byte(src))
-	if err != nil {
-		return nil, err
-	}
-	sp := &ShaderProgram{p: &driver.ShaderProgram{IR: p}, uniforms: map[string]uniformSlot{}}
-	lane := 0
-	for i, name := range p.UniformNames {
-		if name == shader.RectSizeUniform || name == shader.ScaleUniform || name == shader.ImageSizesUniform {
-			continue
-		}
-		t := p.Uniforms[i]
-		n := t.DwordCount()
-		if t.Main == shaderir.Array {
-			t = t.Sub[0]
-		}
-		sp.uniforms[name] = uniformSlot{lane: lane, n: n, vec3: t.Main == shaderir.Vec3}
-		lane += n
-	}
-	sp.lanes = lane
-	return sp, nil
-}
+func CompileShader(src string) (*ShaderProgram, error) { return compileFragment(src) }
 
 // CompileWGSL compiles a shader written in WGSL, as NSH's are: it defines
 //
@@ -130,22 +109,6 @@ type compiledWGSL struct {
 	err error
 }
 
-func compileWGSL(src string) (*ShaderProgram, error) {
-	c, err := wgsl.Compile(src)
-	if err != nil {
-		return nil, err
-	}
-	sp := &ShaderProgram{p: &driver.ShaderProgram{IR: c.IR, WGSL: true}, uniforms: map[string]uniformSlot{},
-		animated: c.Animated, pictures: driver.Pictures(c.Inputs)}
-	lane := wgsl.BuiltinLanes
-	for _, u := range c.Uniforms {
-		sp.uniforms[u.Name] = uniformSlot{lane: lane, n: u.Lanes, vec3: u.Vec3}
-		lane += u.Lanes
-	}
-	sp.lanes = lane
-	return sp, nil
-}
-
 // MustCompileWGSL is CompileWGSL for a source that is part of the
 // program: it panics when it does not compile.
 func MustCompileWGSL(src string) *ShaderProgram {
@@ -157,7 +120,7 @@ func MustCompileWGSL(src string) *ShaderProgram {
 }
 
 // crossfade is the transitions' default program.
-var crossfade = sync.OnceValue(func() *ShaderProgram { return MustCompileWGSL(wgsl.Crossfade) })
+var crossfade = sync.OnceValue(func() *ShaderProgram { return MustCompileWGSL(crossfadeSource) })
 
 // MustCompileShader is CompileShader for a source that is part of the
 // program, such as a package variable's: it panics when it does not
@@ -373,6 +336,9 @@ func (p *ShaderProgram) values(base, over Uniforms) *driver.Shader {
 	for _, u := range [2]Uniforms{base, over} {
 		for name, v := range u {
 			slot, ok := p.uniforms[name]
+			if !ok && p.uncompiled {
+				continue
+			}
 			if !ok {
 				panic(fmt.Sprintf("core: the shader has no uniform %s", name))
 			}
@@ -385,7 +351,7 @@ func (p *ShaderProgram) values(base, over Uniforms) *driver.Shader {
 	d := &driver.Shader{Program: p.p, Lanes: w.lanes}
 	if p.p.WGSL {
 		// A uniform named like a built-in lane cannot write over it.
-		clear(w.nodes[:wgsl.BuiltinLanes])
+		clear(w.nodes[:builtinLanes])
 	}
 	for lane, node := range w.nodes {
 		if node != 0 {

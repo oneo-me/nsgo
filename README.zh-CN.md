@@ -28,7 +28,7 @@
 
 ## 状态
 
-NSGo 处于早期阶段，尚无发布版本或稳定的 API。它可在 macOS、iOS、tvOS、watchOS、Windows、Linux、Web 和 Android 上运行，应用也可嵌入独立的 iOS、Android 和 Go 桌面应用；各平台进度见 [ARCHITECTURE.md](ARCHITECTURE.md#platforms)。
+NSGo 处于早期阶段，尚无发布版本或稳定的 API。它可在 macOS、iOS、tvOS、watchOS、Windows、Linux、Web、Android 和微信小程序上运行，应用也可嵌入独立的 iOS、Android 和 Go 桌面应用；各平台进度见 [ARCHITECTURE.md](ARCHITECTURE.md#platforms)。
 
 ## 快速开始
 
@@ -39,7 +39,7 @@ go mod init example.com/hello
 go get github.com/oneo-me/nsgo
 go get -tool github.com/oneo-me/nsgo/cmd/nsgo
 go tool nsgo init   # 加 -template tsx 创建 TSX 应用
-go tool nsgo dev    # 加 -target web、ios_simulator、tvos_simulator、watchos_simulator 或 android 在别处运行
+go tool nsgo dev    # 加 -target web、ios_simulator、tvos_simulator、watchos_simulator、android 或 miniprogram 在别处运行
 ```
 
 应用由返回元素的 Go 组件构成，signal 变化时只更新读取它的部分：

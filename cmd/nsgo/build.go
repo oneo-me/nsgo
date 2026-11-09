@@ -134,12 +134,13 @@ var targets = []string{
 	"tvos", "tvos_simulator",
 	"watchos", "watchos_simulator",
 	"android_arm64", "android_x64",
-	"web",
+	"web", "miniprogram",
 }
 
 // expandTargets replaces "all" with every target that needs only Go and
 // Xcode, checks every name and drops duplicates, so each package is built
-// once. android_x64 stays out of "all" because it needs an NDK.
+// once. android_x64 stays out of "all" because it needs an NDK, and
+// miniprogram because it takes only Go apps that fit WeChat's package.
 func expandTargets(names []string) ([]string, error) {
 	var out []string
 	for _, name := range names {
@@ -159,11 +160,12 @@ func expandTargets(names []string) ([]string, error) {
 }
 
 // goAndXcodeTargets are the packages a Mac with Go and Xcode can build.
-// android_x64 is omitted: Go links android/amd64 only with cgo, so it needs an NDK.
+// android_x64 is omitted: Go links android/amd64 only with cgo, so it needs
+// an NDK; and miniprogram, which only some apps fit.
 func goAndXcodeTargets() []string {
-	out := make([]string, 0, len(targets)-1)
+	out := make([]string, 0, len(targets)-2)
 	for _, target := range targets {
-		if target != "android_x64" {
+		if target != "android_x64" && target != "miniprogram" {
 			out = append(out, target)
 		}
 	}
@@ -211,6 +213,8 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		return err
 	case "web":
 		return buildWeb(ctx, p, dir, false)
+	case "miniprogram":
+		return buildMiniProgram(ctx, p, dir)
 	case "linux_arm64", "linux_x64":
 		return buildLinux(ctx, p, dir, goArch(arch))
 	case "android_arm64", "android_x64":

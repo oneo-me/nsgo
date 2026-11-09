@@ -11,6 +11,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // image is what an image view draws: its source over its placeholder.
@@ -218,10 +219,10 @@ func (p *picture) look(im *image, box driver.Size) map[string]string {
 	}
 	url := cssURL(p.url)
 	b := im.config.ResizeMode.Fit(p.natural(), box, im.config.Position)
-	size := px(b.Size.Width) + " " + px(b.Size.Height)
-	at := px(b.Origin.X) + " " + px(b.Origin.Y)
+	size := webstyle.Px(b.Size.Width) + " " + webstyle.Px(b.Size.Height)
+	at := webstyle.Px(b.Origin.X) + " " + webstyle.Px(b.Origin.Y)
 	if im.tint != 0 {
-		style["background-color"] = cssColor(im.tint)
+		style["background-color"] = webstyle.Color(im.tint)
 		style["mask-image"], style["-webkit-mask-image"] = url, url
 		style["mask-size"], style["-webkit-mask-size"] = size, size
 		style["mask-position"], style["-webkit-mask-position"] = at, at
@@ -231,7 +232,7 @@ func (p *picture) look(im *image, box driver.Size) map[string]string {
 		style["background-position"] = at
 	}
 	if b := im.config.BlurRadius; b > 0 {
-		style["filter"] = "blur(" + px(b) + ")"
+		style["filter"] = "blur(" + webstyle.Px(b) + ")"
 	}
 	return style
 }

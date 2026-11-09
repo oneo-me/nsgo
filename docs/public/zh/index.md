@@ -5,7 +5,7 @@ group: 开始
 order: 1
 ---
 
-NSGo 是一个用 Go 编写的跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，它就能运行在 iOS、tvOS、watchOS、Android、macOS、Windows、Linux 和 Web 上，由每个平台自己的视图绘制。
+NSGo 是一个用 Go 编写的跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，它就能运行在 iOS、tvOS、watchOS、Android、macOS、Windows、Linux 和 Web 上，由每个平台自己的视图绘制；Go 应用还能运行在微信小程序中。
 
 ## 你要写什么
 

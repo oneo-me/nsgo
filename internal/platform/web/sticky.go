@@ -7,6 +7,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // Sticky list cells stick with the browser's position: sticky, as NSH's
@@ -169,7 +170,7 @@ func (s *surface) placeTrack(cell *view) {
 	if horizontal {
 		w, h = length, 0
 	}
-	setStyle(cell.track, map[string]string{"left": px(f.Origin.X), "top": px(f.Origin.Y), "width": px(w), "height": px(h)})
+	setStyle(cell.track, map[string]string{"left": webstyle.Px(f.Origin.X), "top": webstyle.Px(f.Origin.Y), "width": webstyle.Px(w), "height": webstyle.Px(h)})
 	start := r.Start
 	if r.Node != 0 {
 		// The inset follows its animated value.
@@ -177,8 +178,8 @@ func (s *surface) placeTrack(cell *view) {
 			start += r.Inset - driver.Points(v)
 		}
 	}
-	inset := px(at + origin - start)
-	style := map[string]string{"left": "auto", "top": inset, "width": px(f.Size.Width), "height": px(f.Size.Height)}
+	inset := webstyle.Px(at + origin - start)
+	style := map[string]string{"left": "auto", "top": inset, "width": webstyle.Px(f.Size.Width), "height": webstyle.Px(f.Size.Height)}
 	if horizontal {
 		style["left"], style["top"] = inset, "auto"
 	}

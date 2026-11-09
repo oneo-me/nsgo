@@ -23,6 +23,7 @@ import (
 
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 	"github.com/oneo-me/nsgo/internal/testhost"
 )
 
@@ -489,32 +490,6 @@ func setAttr(el js.Value, name, value string) {
 	}
 }
 
-func px(p driver.Points) string {
-	var b [24]byte
-	return string(append(strconv.AppendFloat(b[:0], float64(p), 'g', -1, 32), "px"...))
-}
-
-func cssColor(c driver.Color) string {
-	r, g, b, a := c.Components()
-	return fmt.Sprintf("rgba(%d,%d,%d,%g)", int(r*255+0.5), int(g*255+0.5), int(b*255+0.5), a)
-}
-
-// fillCSS is the CSS of a background or border color, "" for none.
-func fillCSS(c driver.Color) string {
-	if c == 0 {
-		return ""
-	}
-	return cssColor(c)
-}
-
-// opacityCSS is the CSS of an opacity, "" for opaque.
-func opacityCSS(o float32) string {
-	if o == 1 {
-		return ""
-	}
-	return fmt.Sprint(o)
-}
-
 // place sets v's element at frame f, sending only the edges that
 // changed since it last placed it: scrolling a table moves its rows'
 // tops alone.
@@ -526,7 +501,7 @@ func (v *view) place(f driver.Bounds) {
 	v.placed, v.placedOK = f, true
 	set := func(k string, was, now driver.Points) {
 		if !ok || was != now {
-			v.elStyle.Call("setProperty", cssName(k), px(now))
+			v.elStyle.Call("setProperty", cssName(k), webstyle.Px(now))
 		}
 	}
 	set("left", old.Origin.X, f.Origin.X)
@@ -537,8 +512,8 @@ func (v *view) place(f driver.Bounds) {
 
 func frameStyle(f driver.Bounds) map[string]string {
 	return map[string]string{
-		"left": px(f.Origin.X), "top": px(f.Origin.Y),
-		"width": px(f.Size.Width), "height": px(f.Size.Height),
+		"left": webstyle.Px(f.Origin.X), "top": webstyle.Px(f.Origin.Y),
+		"width": webstyle.Px(f.Size.Width), "height": webstyle.Px(f.Size.Height),
 	}
 }
 
@@ -564,7 +539,7 @@ func fontStyle(t driver.TextStyle) map[string]string {
 	}
 	lineHeight := "normal"
 	if t.LineHeight > 0 {
-		lineHeight = px(t.LineHeight)
+		lineHeight = webstyle.Px(t.LineHeight)
 	}
 	align := "start"
 	switch t.Align {
@@ -588,14 +563,14 @@ func fontStyle(t driver.TextStyle) map[string]string {
 	}
 	decorationColor := "currentcolor"
 	if t.DecorationColor != 0 {
-		decorationColor = cssColor(t.DecorationColor)
+		decorationColor = webstyle.Color(t.DecorationColor)
 	}
 	thickness, offset := "auto", "auto"
 	if t.DecorationThickness > 0 {
-		thickness = px(t.DecorationThickness)
+		thickness = webstyle.Px(t.DecorationThickness)
 	}
 	if o, ok := t.UnderlineOffset.Points(); ok {
-		offset = px(o)
+		offset = webstyle.Px(o)
 	}
 	direction := "ltr"
 	if t.RTL {
@@ -615,10 +590,10 @@ func fontStyle(t driver.TextStyle) map[string]string {
 		numeric = strings.Join(nums, " ")
 	}
 	return map[string]string{
-		"font-family": family, "font-size": px(t.Font.Size), "font-weight": fmt.Sprint(t.Font.Weight),
-		"font-style": italic, "line-height": lineHeight, "letter-spacing": px(t.LetterSpacing),
-		"color": cssColor(t.Color), "text-align": align, "text-decoration-line": decoration,
-		"text-decoration-style": decorationStyles[t.DecorationStyle], "text-decoration-color": decorationColor,
+		"font-family": family, "font-size": webstyle.Px(t.Font.Size), "font-weight": fmt.Sprint(t.Font.Weight),
+		"font-style": italic, "line-height": lineHeight, "letter-spacing": webstyle.Px(t.LetterSpacing),
+		"color": webstyle.Color(t.Color), "text-align": align, "text-decoration-line": decoration,
+		"text-decoration-style": webstyle.DecorationStyles[t.DecorationStyle], "text-decoration-color": decorationColor,
 		"text-decoration-thickness": thickness, "text-underline-offset": offset,
 		"font-variant-caps": caps, "font-variant-numeric": numeric, "direction": direction,
 	}
@@ -631,20 +606,6 @@ var numericVariants = [...]struct {
 }{
 	{driver.FontOldstyleNums, "oldstyle-nums"}, {driver.FontLiningNums, "lining-nums"},
 	{driver.FontTabularNums, "tabular-nums"}, {driver.FontProportionalNums, "proportional-nums"},
-}
-
-// decorationStyles are the CSS of the decoration styles.
-var decorationStyles = map[driver.TextDecorationStyle]string{
-	0: "solid", driver.DecorationSolid: "solid", driver.DecorationDouble: "double", driver.DecorationDotted: "dotted",
-	driver.DecorationDashed: "dashed", driver.DecorationWavy: "wavy",
-}
-
-// textShadow is the CSS of a text shadow.
-func textShadow(s driver.TextShadow) string {
-	if s.Color == 0 {
-		return "none"
-	}
-	return fmt.Sprintf("%s %s %s %s", px(s.Offset.X), px(s.Offset.Y), px(s.Radius), cssColor(s.Color))
 }
 
 // richText is text with the CSS that lays it out: one style for the
@@ -720,7 +681,7 @@ func (l *textLayout) caretLines() driver.CaretLayout {
 	p := &preparedText{s: l.s, richText: l.richText}
 	m := p.hold()
 	defer p.Release()
-	l.s.measureCSS.set1("width", px(l.width))
+	l.s.measureCSS.set1("width", webstyle.Px(l.width))
 	l.s.measureCSS.set1("max-width", "none")
 	l.s.measureCSS.set1("white-space", whiteSpace(l.oneLine))
 	defer l.s.measureCSS.set1("white-space", whiteSpace(false))
@@ -841,8 +802,8 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 		// A background is the span's inline box: from its font's ascent to
 		// its descent, a rounded box on every line, changing no line.
 		if bg := sp.Background; bg.Color != 0 {
-			css["background-color"] = cssColor(bg.Color)
-			css["border-radius"] = px(bg.Radius)
+			css["background-color"] = webstyle.Color(bg.Color)
+			css["border-radius"] = webstyle.Px(bg.Radius)
 			css["box-decoration-break"], css["-webkit-box-decoration-break"] = "clone", "clone"
 		}
 		spans = append(spans, span{start, end, css, sp.Link})
@@ -892,7 +853,7 @@ func (s *surface) paragraphStyle(t *driver.AttributedText) *paragraphStyle {
 	// last text's.
 	style["display"], style["-webkit-box-orient"], style["-webkit-line-clamp"], style["overflow"] =
 		"block", "", "", "visible"
-	style["text-shadow"] = textShadow(t.Shadow)
+	style["text-shadow"] = webstyle.TextShadow(t.Shadow)
 	var drawn map[string]string
 	if t.MaxLines > 0 {
 		style["display"], style["-webkit-box-orient"], style["-webkit-line-clamp"], style["overflow"] =
@@ -1003,7 +964,7 @@ func (r *richText) appendText(doc, el js.Value, start, end int) {
 		ph.Call("setAttribute", "data-attachment", i)
 		setStyle(ph, map[string]string{
 			"display": "inline-block", "vertical-align": align,
-			"width": px(a.Size.Width), "height": px(a.Size.Height),
+			"width": webstyle.Px(a.Size.Width), "height": webstyle.Px(a.Size.Height),
 			"user-select": "none", "-webkit-user-select": "none",
 		})
 		el.Call("appendChild", ph)
@@ -1056,7 +1017,7 @@ func (p *preparedText) Measure(maxWidth driver.Points) driver.Size {
 	m := p.hold()
 	limit := "none"
 	if !maxWidth.IsAuto() {
-		limit = px(maxWidth)
+		limit = webstyle.Px(maxWidth)
 	}
 	p.s.measureCSS.set1("max-width", limit)
 	r := m.Call("getBoundingClientRect")
@@ -1087,7 +1048,7 @@ func (l *textLayout) TextLines() []driver.TextLine {
 	p := &preparedText{s: l.s, richText: l.richText}
 	m := p.hold()
 	defer p.Release()
-	l.s.measureCSS.set1("width", px(l.width))
+	l.s.measureCSS.set1("width", webstyle.Px(l.width))
 	l.s.measureCSS.set1("max-width", "none")
 	l.s.measureCSS.set1("white-space", whiteSpace(l.oneLine))
 	defer l.s.measureCSS.set1("white-space", whiteSpace(false))
@@ -1234,7 +1195,7 @@ func (p *preparedText) Layout(size driver.Size) driver.TextLayout {
 		return l
 	}
 	m := p.hold()
-	p.s.measureCSS.set1("width", px(size.Width))
+	p.s.measureCSS.set1("width", webstyle.Px(size.Width))
 	p.s.measureCSS.set1("max-width", "none")
 	r := m.Call("getBoundingClientRect")
 	left, top := r.Get("left").Float(), r.Get("top").Float()
@@ -1788,29 +1749,29 @@ func viewCSS(c *cssText, vs *driver.ViewStyle, size driver.Size, kind driver.Vie
 	if vs.Hidden {
 		c.add("display", "none")
 	}
-	c.add("background-color", fillCSS(vs.Background))
-	c.add("opacity", opacityCSS(vs.Opacity))
-	c.add("transform", transformCSS(vs.Transform))
-	c.add("transition", transitionCSS(vs.Transition))
+	c.add("background-color", webstyle.Fill(vs.Background))
+	c.add("opacity", webstyle.Opacity(vs.Opacity))
+	c.add("transform", webstyle.Transform(vs.Transform))
+	c.add("transition", webstyle.Transition(vs.Transition))
 	decorCSS(c, vs, size)
 	border, colors := driver.All(vs.BorderWidth), driver.AllColors(vs.BorderColor)
 	if vs.Borders != (driver.Edges{}) {
 		border, colors = vs.Borders, vs.BorderColors
 	}
-	if ls := lineStyle(vs.BorderStyle); ls != "solid" {
+	if ls := webstyle.LineStyle(vs.BorderStyle); ls != "solid" {
 		c.add("border-style", ls)
 	}
 	if border != (driver.Edges{}) {
 		if border == driver.All(border.Top) {
-			c.add("border-width", px(border.Top))
+			c.add("border-width", webstyle.Px(border.Top))
 		} else {
-			c.add("border-width", px(border.Top)+" "+px(border.Right)+" "+px(border.Bottom)+" "+px(border.Left))
+			c.add("border-width", webstyle.Px(border.Top)+" "+webstyle.Px(border.Right)+" "+webstyle.Px(border.Bottom)+" "+webstyle.Px(border.Left))
 		}
 	}
 	if colors == driver.AllColors(colors.Top) {
-		c.add("border-color", fillCSS(colors.Top))
+		c.add("border-color", webstyle.Fill(colors.Top))
 	} else {
-		c.add("border-color", cssColor(colors.Top)+" "+cssColor(colors.Right)+" "+cssColor(colors.Bottom)+" "+cssColor(colors.Left))
+		c.add("border-color", webstyle.Color(colors.Top)+" "+webstyle.Color(colors.Right)+" "+webstyle.Color(colors.Bottom)+" "+webstyle.Color(colors.Left))
 	}
 	if kind != driver.KindScroll && vs.Clip {
 		c.add("overflow", clipOverflow())
@@ -1852,7 +1813,7 @@ func (s *surface) setFeel(v *view) {
 // unborder places el, framed from its parent view's origin, where the
 // frame says: CSS places it inside the parent's border b.
 func unborder(el js.Value, b driver.Edges) {
-	setStyle(el, map[string]string{"margin-left": px(-b.Left), "margin-top": px(-b.Top)})
+	setStyle(el, map[string]string{"margin-left": webstyle.Px(-b.Left), "margin-top": webstyle.Px(-b.Top)})
 }
 
 // unborder places v's element inside its parent's border b, unless it is
@@ -1862,77 +1823,6 @@ func (v *view) unborder(b driver.Edges) {
 		v.unbordered = b
 		unborder(v.el, b)
 	}
-}
-
-// transformCSS is t around the view's transform origin, in its order:
-// perspective, translate, rotate, rotateX, rotateY, rotateZ, skew, then
-// scale.
-func transformCSS(t driver.Transform) string {
-	if t == (driver.Transform{}) {
-		return ""
-	}
-	sx, sy := t.Scales()
-	var b strings.Builder
-	if t.Perspective > 0 {
-		fmt.Fprintf(&b, "perspective(%s) ", px(t.Perspective))
-	}
-	fmt.Fprintf(&b, "translate(%s, %s) rotate(%gdeg)", px(t.TranslateX), px(t.TranslateY), t.Rotate)
-	if !t.Flat() {
-		fmt.Fprintf(&b, " rotateX(%gdeg) rotateY(%gdeg)", t.RotateX, t.RotateY)
-	}
-	if t.RotateZ != 0 {
-		fmt.Fprintf(&b, " rotate(%gdeg)", t.RotateZ)
-	}
-	if t.SkewX != 0 || t.SkewY != 0 {
-		fmt.Fprintf(&b, " skew(%gdeg, %gdeg)", t.SkewX, t.SkewY)
-	}
-	fmt.Fprintf(&b, " scale(%g, %g)", sx, sy)
-	if t.Then != (driver.Matrix3D{}) {
-		b.WriteString(" matrix3d(")
-		for i, v := range t.Then {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			fmt.Fprintf(&b, "%g", v)
-		}
-		b.WriteByte(')')
-	}
-	return b.String()
-}
-
-// transitionProperties are the CSS properties of each transition
-// property.
-var transitionProperties = []struct {
-	property driver.TransitionProperty
-	css      []string
-}{
-	{driver.TransitionOpacity, []string{"opacity"}},
-	{driver.TransitionBackground, []string{"background-color"}},
-	{driver.TransitionTransform, []string{"transform"}},
-	{driver.TransitionBorder, []string{"border-width", "border-color", "border-radius", "outline-color", "outline-width", "outline-offset"}},
-	{driver.TransitionShadow, []string{"box-shadow"}},
-}
-
-// transitionCSS animates the listed properties from what the view shows
-// to what the same style change sets.
-func transitionCSS(t driver.Transition) string {
-	if t.Duration <= 0 {
-		return ""
-	}
-	easing := "linear"
-	if c := t.Easing; c != (driver.Curve{}) {
-		easing = fmt.Sprintf("cubic-bezier(%g, %g, %g, %g)", c.X1, c.Y1, c.X2, c.Y2)
-	}
-	timing := fmt.Sprintf(" %gms %s %gms", float64(t.Duration)/1e6, easing, float64(t.Delay)/1e6)
-	var parts []string
-	for _, p := range transitionProperties {
-		if t.Properties == 0 || t.Properties&p.property != 0 {
-			for _, name := range p.css {
-				parts = append(parts, name+timing)
-			}
-		}
-	}
-	return strings.Join(parts, ", ")
 }
 
 // present animates a modal in as it is first inserted; reduced motion
@@ -1989,10 +1879,10 @@ func (s *surface) setText(v *view, t *driver.TextContent) {
 			s.dom.whiteSpace(v.id, l.oneLine)
 		}
 	} else {
-		v.textCSS.set1("left", px(c.Origin.X))
-		v.textCSS.set1("top", px(c.Origin.Y))
-		v.textCSS.set1("width", px(c.Size.Width))
-		v.textCSS.set1("height", px(c.Size.Height))
+		v.textCSS.set1("left", webstyle.Px(c.Origin.X))
+		v.textCSS.set1("top", webstyle.Px(c.Origin.Y))
+		v.textCSS.set1("width", webstyle.Px(c.Size.Width))
+		v.textCSS.set1("height", webstyle.Px(c.Size.Height))
 		v.textCSS.set1("white-space", whiteSpace(l.oneLine))
 	}
 	v.textBox, v.textBoxOK, v.oneLine = c, true, l.oneLine

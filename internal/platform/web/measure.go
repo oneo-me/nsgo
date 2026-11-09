@@ -8,6 +8,7 @@ import (
 	"syscall/js"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/platform/webstyle"
 )
 
 // A text of one style on one line is measured with a canvas's
@@ -41,10 +42,10 @@ func canvasFont(t driver.TextStyle) (lineFont, bool) {
 	if t.Font.Italic {
 		style = "italic"
 	}
-	font := style + " " + strconv.Itoa(int(t.Font.Weight)) + " " + px(t.Font.Size) + " " + cssFamily(t.Font.Family)
+	font := style + " " + strconv.Itoa(int(t.Font.Weight)) + " " + webstyle.Px(t.Font.Size) + " " + cssFamily(t.Font.Family)
 	line := font + "/normal"
 	if t.LineHeight > 0 {
-		line = font + "/" + px(t.LineHeight)
+		line = font + "/" + webstyle.Px(t.LineHeight)
 	}
 	return lineFont{font: font, line: line}, true
 }
