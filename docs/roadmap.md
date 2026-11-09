@@ -4,15 +4,6 @@ This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`,
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
-## TSX and dynamic delivery
-
-What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
-
-| Item | NSH reference | Done when |
-| --- | --- | --- |
-| A heap limit | `sandbox.md` (Limits) | A sandboxed module that keeps or allocates past `Limits.Memory` stops as one past its node quota does, on goja (no other engine, decided by the user, 2026-11-09); until then a package's root is trusted not to exhaust memory |
-| A web view's navigations on the web | `sandbox.md` (Enforced in Rust: top-level web view navigations) | A sandboxed web view's page on the web navigates only to the hosts `webview` grants, as on the other targets |
-
 ## Performance against NSH's baselines
 
 NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, and on macOS for the DataTable and the stack, NSGo costs what NSH does or less; what is left:
@@ -114,3 +105,12 @@ These items wait for community contributions, and a change to one backend record
 | Web views under overlays on macOS | — | A `WKWebView` covered by an overlay is checked to take no hovers or cursor from its own tracking area, and stopped from taking them if it does, as inputs' editors are ([cursors](architecture/interaction.md#cursors)) |
 | The system's words in a forced language elsewhere | — | What Android, Windows and Linux say in the app themselves, such as text selection menus, file dialogs and GTK's widgets, follows the language `SetLocale` forces, as it does on macOS and iOS from the next launch ([languages](architecture/languages.md#the-tool)): Android 13's `LocaleManager.setApplicationLocales`, Windows' `SetThreadPreferredUILanguages` |
 | Native direction on devices | — | The app's direction ([languages](architecture/languages.md#which-language)) is checked to mirror the native controls on an iPhone, an Android device, Windows and Linux, where it was only built (2026-11-04), and on macOS, where headless tests ran |
+
+## TSX and dynamic delivery
+
+What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| A heap limit | `sandbox.md` (Limits) | A sandboxed module that keeps or allocates past `Limits.Memory` stops as one past its node quota does, on goja (no other engine, decided by the user, 2026-11-09); until then a package's root is trusted not to exhaust memory |
+| A web view's navigations on the web | `sandbox.md` (Enforced in Rust: top-level web view navigations) | A sandboxed web view's page on the web navigates only to the hosts `webview` grants, as on the other targets |
