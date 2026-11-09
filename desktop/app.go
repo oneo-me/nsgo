@@ -74,6 +74,13 @@ func MainWindow(cx *core.Scope) *Window { return cx.MainWindow() }
 // handler the main window shows and takes the focus.
 func OnReopen(cx *core.Scope, fn func()) { cx.OnReopen(fn) }
 
+// OnOpenFiles runs fn with the paths of files the system asks the app to
+// open: the file types nsgo.yaml's file_types declares, opened from the
+// Finder, the Dock or Open With, and on Windows and Linux the files named
+// on the command line. Files the app launched to open wait for the first
+// handler.
+func OnOpenFiles(cx *core.Scope, fn func(paths []string)) { cx.OnOpenFiles(fn) }
+
 // NewTray adds a tray icon, which the current owner keeps: an image, or a
 // view that draws it and may change, a panel its primary click shows
 // under it, and a menu its secondary click shows.

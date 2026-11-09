@@ -558,6 +558,8 @@ func Run(app engine.App, opts Options) {
 	showWindow.Call(hwnd, swShow)
 	if opts.test != nil {
 		opts.test.ready <- w
+	} else if paths := engine.LaunchFiles(); len(paths) > 0 {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
 	}
 
 	var m msg

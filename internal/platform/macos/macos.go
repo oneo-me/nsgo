@@ -652,6 +652,23 @@ func startApp(opts Options) objc.ID {
 			return false
 		},
 	}, {
+		// Files of the types the app declares, opened from the Finder,
+		// the Dock or Open With; at launch, this comes before the app's
+		// first frame, and the core keeps them for its handler
+		// (core.Scope.OnOpenFiles).
+		Cmd: sel("application:openURLs:"),
+		Fn: func(self objc.ID, _ objc.SEL, app, urls objc.ID) {
+			var paths []string
+			apple.ForEach(urls, func(u objc.ID) {
+				if objc.Send[bool](u, sel("isFileURL")) {
+					paths = append(paths, apple.GoString(u.Send(sel("path"))))
+				}
+			})
+			if len(paths) > 0 && !finished && own != nil && own.engine != nil {
+				own.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
+			}
+		},
+	}, {
 		Cmd: sel("applicationWillTerminate:"),
 		Fn:  func(self objc.ID, _ objc.SEL, note objc.ID) { engine.SyncStorage() },
 	}})).Send(selNew)

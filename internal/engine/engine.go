@@ -5,6 +5,7 @@ package engine
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
@@ -569,6 +570,23 @@ func (e *Engine) Dispatch(ev driver.Event) {
 		e.event(ev)
 	}
 	e.push(message{surface: e.surface, event: ev})
+}
+
+// LaunchFiles returns the files the command line names, as absolute
+// paths: what Windows and Linux launch an app with to open, which their
+// backends send it as EventOpenFiles. Other arguments are left to the
+// app.
+func LaunchFiles() []string {
+	var paths []string
+	for _, arg := range os.Args[1:] {
+		if fi, err := os.Stat(arg); err != nil || !fi.Mode().IsRegular() {
+			continue
+		}
+		if abs, err := filepath.Abs(arg); err == nil {
+			paths = append(paths, abs)
+		}
+	}
+	return paths
 }
 
 // Sync returns once the engine ran what was posted to it before, as a

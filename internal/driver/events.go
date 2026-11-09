@@ -218,6 +218,9 @@ const (
 	// EventReopen reports that the user opened the app again while it
 	// ran: from the Dock, or by launching it a second time.
 	EventReopen
+	// EventOpenFiles reports files the system asks the app to open (Data,
+	// a []string of paths): from the Finder, or named when it launched.
+	EventOpenFiles
 	// EventTray reports a click on tray icon Count: Index 0 for the
 	// primary button, 1 for the secondary.
 	EventTray

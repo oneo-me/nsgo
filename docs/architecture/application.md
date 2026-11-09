@@ -44,6 +44,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - A close the user asks for is `EventWindowClose`: the window's `OnClosing` handlers run newest first and may cancel it, as a window that hides instead does. `Window.Close` and its owner going close it without asking.
 - `nsgo.SetMainView` sets the main view: it opens the main window at `nsgo.WindowSize` and makes it main, and a later call replaces the view in it. `nsgo.Run(Root)` is `SetMainView(Root)`.
 - `OnReopen` hears a click on the Dock icon and a second launch (`EventReopen`); without a handler the main window shows and takes the focus.
+- `OnOpenFiles` hears files the system opens with the app (`EventOpenFiles`): on macOS `application:openURLs:` for the types `file_types` registers, on Windows and Linux the files named on the command line. Files come before the app's first view builds when they launched it, so the core keeps those until a handler registers and posts them to it.
 - `nsgo.HideDock` starts the app as an accessory app, before AppKit's loop runs, so its icon never shows in the Dock; `SetDockVisible` changes the activation policy later, as apps do while their settings show. macOS runs one instance of a bundle and reopens it.
 - `SetLaunchAtLogin` and `LaunchAtLogin` register and read `SMAppService.mainAppService`, which takes only apps in a bundle.
 

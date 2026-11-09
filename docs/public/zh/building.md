@@ -41,6 +41,26 @@ build:
 
 命令行参数会替换同名的值，例如 `-target`、`-version` 或 `-output`；`-h` 列出全部参数。
 
+## 文件类型
+
+`file_types` 让 macOS 应用能从访达、程序坞和“打开方式”打开它的文档：
+
+```yaml
+file_types:
+  - name: Flow File
+    extensions: [flow]
+    # id: dev.example.hello.flow   # 默认为 <id>.<第一个扩展名>；用别人的 ID 则导入该类型
+    # icon: assets/Flow.icns       # 或正方形 PNG
+    # role: viewer                 # 默认为 editor
+    # conforms: [public.json]      # 默认为 public.data
+```
+
+应用用 `desktop.OnOpenFiles` 接收这些文件，在 Windows 和 Linux 上它也接收命令行中给出的文件。启动应用时带来的文件会等到第一个处理函数注册：
+
+```go
+desktop.OnOpenFiles(cx, func(paths []string) { open(paths[0]) })
+```
+
 ## 签名
 
 ```yaml

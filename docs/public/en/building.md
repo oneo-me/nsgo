@@ -41,6 +41,26 @@ build:
 
 Flags replace the values they name, such as `-target`, `-version` or `-output`; `-h` lists them all.
 
+## File types
+
+`file_types` makes a macOS app open its documents from the Finder, the Dock and Open With:
+
+```yaml
+file_types:
+  - name: Flow File
+    extensions: [flow]
+    # id: dev.example.hello.flow   # <id>.<first extension> by default; another's ID imports its type
+    # icon: assets/Flow.icns       # or a square PNG
+    # role: viewer                 # editor by default
+    # conforms: [public.json]      # public.data by default
+```
+
+The app hears the files with `desktop.OnOpenFiles`, which also takes those named on the command line on Windows and Linux. Files that launched the app wait for the first handler:
+
+```go
+desktop.OnOpenFiles(cx, func(paths []string) { open(paths[0]) })
+```
+
 ## Sign
 
 ```yaml

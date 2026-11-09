@@ -387,3 +387,40 @@ func TestWindowFrame(t *testing.T) {
 		t.Fatalf("reported frame %+v", env.WindowFrame())
 	}
 }
+
+func TestOpenFilesWaitForAHandler(t *testing.T) {
+	var posted []func()
+	root := NewRoot(RootOptions{Post: func(fn func()) { posted = append(posted, fn) }, Clock: NewManualClock(time.Unix(0, 0))})
+	tree := NewTree(root, ApproxTextEngine{})
+	var opened [][]string
+	handle := NewSignal(root, false)
+	tree.Mount(func(cx *Scope) Node {
+		return Show{When: handle.Get, Then: func(cx *Scope) Node {
+			cx.OnOpenFiles(func(paths []string) { opened = append(opened, paths) })
+			return nil
+		}}
+	})
+	tree.Commit()
+	open := func(paths ...string) {
+		tree.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
+	}
+	open("/a.flow")
+	open("/b.flow")
+	handle.Set(true)
+	tree.Commit()
+	for len(posted) > 0 {
+		fn := posted[0]
+		posted = posted[1:]
+		fn()
+	}
+	open("/c.flow")
+	if want := [][]string{{"/a.flow", "/b.flow"}, {"/c.flow"}}; !slices.EqualFunc(opened, want, slices.Equal) {
+		t.Errorf("opened %q, want %q", opened, want)
+	}
+	handle.Set(false)
+	tree.Commit()
+	open("/d.flow")
+	if len(opened) != 2 {
+		t.Errorf("a disposed handler heard %q", opened[2:])
+	}
+}

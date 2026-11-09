@@ -140,6 +140,10 @@ type runtime struct {
 	main, ownMain *Window
 	mainView      *Signal[func(cx *Scope) Node]
 	reopens       []*reopenHandler
+	// opens hear the files the system opens with the app; openPending
+	// are those that came before any did.
+	opens       []*openFilesHandler
+	openPending []string
 	trays         map[uint32]*Tray
 	trayID        uint32
 	hotKeys       []*hotKey

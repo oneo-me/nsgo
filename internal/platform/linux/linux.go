@@ -232,6 +232,9 @@ func Run(app engine.App, opts Options) {
 	if err != nil {
 		panic("nsgo: " + err.Error())
 	}
+	if paths := engine.LaunchFiles(); len(paths) > 0 {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
+	}
 	w.run()
 	w.stop()
 }

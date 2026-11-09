@@ -356,7 +356,11 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err != nil {
 		return "", err
 	}
-	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist, icon+"\n"+names+"\n"+p.widgetPlist(false)); err != nil {
+	if err := p.writeFileTypeIcons(resources); err != nil {
+		return "", err
+	}
+	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist,
+		icon+"\n"+names+"\n"+p.fileTypesPlist()+"\n"+p.widgetPlist(false)); err != nil {
 		return "", err
 	}
 	if err := addMacWidgets(ctx, p, app, arch); err != nil {

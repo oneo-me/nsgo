@@ -25,7 +25,8 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 | Tray icons on Windows | `Shell_NotifyIcon` | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
 | Tray icons on Linux | StatusNotifierItem over D-Bus | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
 | Global shortcuts on Windows and Linux | `RegisterHotKey`; `XGrabKey`, the GlobalShortcuts portal | A shortcut shows a panel from any app, on Wayland once the user grants it |
-| One instance on Windows and Linux | A named mutex and pipe; a Unix socket | A second launch hands its arguments to the running app, which hears `OnReopen` |
+| One instance on Windows and Linux | A named mutex and pipe; a Unix socket | A second launch hands its arguments to the running app, which hears `OnReopen`, and the files it names `OnOpenFiles` |
+| File types on Windows, Linux and iOS | `HKCU\Software\Classes` and `SHChangeNotify`; a `.desktop` entry's `MimeType` with a shared MIME-info package; `CFBundleDocumentTypes` with `scene:openURLContexts:` | Their packages register `file_types` as the macOS app does, and opening such a file reaches `OnOpenFiles`, which on Windows and Linux now hears only the files named at launch |
 | Launch at login on Windows and Linux | The `Run` registry key; an XDG autostart entry | `SetLaunchAtLogin` starts the app at login and `LaunchAtLogin` reads it |
 
 ## Terminal
