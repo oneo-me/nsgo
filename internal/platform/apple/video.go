@@ -180,17 +180,32 @@ func locate(source, root string) (url, path string, ok bool) {
 	return "", source, true
 }
 
-// videoURL is the NSURL of source, 0 when it has none.
-func videoURL(source string) objc.ID {
-	url, path, ok := locate(source, imageload.ResourceRoot)
+// videoURL is the NSURL of a located source: a URL, or a file path.
+func videoURL(url, path string) objc.ID {
 	nsURL := objc.ID(Class("NSURL"))
-	switch {
-	case !ok:
-		return 0
-	case url != "":
+	if url != "" {
 		return nsURL.Send(sel("URLWithString:"), NSString(url))
 	}
 	return nsURL.Send(sel("fileURLWithPath:"), NSString(path))
+}
+
+// videoAsset is the AVURLAsset of source, 0 when it has none. A local file
+// asks for precise duration and timing: AVFoundation otherwise estimates the
+// timing of a variable-bitrate file such as a FLAC, and a seek lands on a
+// sample other than the one asked for while it still reports the time asked
+// for, so what plays and what the player says disagree.
+func videoAsset(source string) objc.ID {
+	url, path, ok := locate(source, imageload.ResourceRoot)
+	if !ok {
+		return 0
+	}
+	options := objc.ID(0)
+	if url == "" {
+		options = objc.ID(Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"),
+			objc.ID(Class("NSNumber")).Send(sel("numberWithBool:"), true),
+			NSString("AVURLAssetPreferPreciseDurationAndTimingKey"))
+	}
+	return objc.ID(Class("AVURLAsset")).Send(sel("URLAssetWithURL:options:"), videoURL(url, path), options)
 }
 
 // open starts playing the source, or nothing.
@@ -202,13 +217,14 @@ func (v *Video) open() {
 	if source == "" {
 		return
 	}
-	url := videoURL(source)
-	if url == 0 {
+	asset := videoAsset(source)
+	if asset == 0 {
 		st.failed = true
 		v.Dispatch(driver.Event{Kind: driver.EventError, Text: source + ": cannot resolve the video's location"})
 		return
 	}
-	v.player = objc.ID(Class("AVPlayer")).Send(sel("playerWithURL:"), url).Send(sel("retain"))
+	item := objc.ID(Class("AVPlayerItem")).Send(sel("playerItemWithAsset:"), asset)
+	v.player = objc.ID(Class("AVPlayer")).Send(sel("playerWithPlayerItem:"), item).Send(sel("retain"))
 	v.Dispatch(driver.Event{Kind: driver.EventLoadStart})
 	// The end of the item: report it, and loop if asked.
 	ended := objc.NewBlock(func(objc.Block, objc.ID) {
