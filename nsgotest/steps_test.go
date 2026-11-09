@@ -163,6 +163,34 @@ func TestPressesAndLongPressesSendWhatPlatformsSend(t *testing.T) {
 	}
 }
 
+func TestDragAtStartsWhereItSays(t *testing.T) {
+	var start core.Point
+	app := Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Style: core.Style{Padding: core.All(20)}, Children: []core.Node{
+			core.View{TestID: "pad", Style: core.Style{Height: core.Pt(100)}, OnTouch: func(e core.TouchEvent) {
+				if e.Phase == core.TouchStart {
+					start = e.Touches[0].Position
+				}
+			}},
+		}}
+	})
+	app.DragAt("id:pad", core.Point{X: 10, Y: 30}, core.Point{X: 40})
+	if start != (core.Point{X: 10, Y: 30}) {
+		t.Fatalf("the finger went down at %v", start)
+	}
+}
+
+func TestLongPressSelectsText(t *testing.T) {
+	app := Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Children: []core.Node{
+			core.Text{Content: "Select me", Selectable: core.SelectableOn},
+			core.View{Selectable: true, Children: []core.Node{core.Text{Content: "In an area"}}},
+		}}
+	})
+	app.LongPress("text:Select me")
+	app.LongPress("text:In an area")
+}
+
 func TestTypingIsKeyByKey(t *testing.T) {
 	var keys, changes []string
 	var submitted string

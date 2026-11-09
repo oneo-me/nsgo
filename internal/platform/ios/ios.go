@@ -97,6 +97,8 @@ type view struct {
 	selStart, selEnd int // UTF-16
 	area             bool
 	longPress        objc.ID
+	selTap           objc.ID // an area's tap (selection.go)
+	tsel             *textSelection // a selectable text's own selection (textinput.go)
 
 	// props are the view's last props; the rest what access.go last
 	// gave UIKit.
@@ -231,6 +233,9 @@ type surface struct {
 	unknown     map[string]bool
 	// accessories are the inputs each InputAccessoryView rides above.
 	accessories map[driver.NodeID]*view
+	// ownTexts are the selectable texts, which select on their own
+	// outside areas (textinput.go).
+	ownTexts map[driver.NodeID]*view
 }
 
 // edgeInsets is UIEdgeInsets.
@@ -325,6 +330,7 @@ func loadUIKit() {
 	registerContent()
 	registerCanvasNodes()
 	classView = register("NsgoView", uiView, nil, slices.Concat(common, pressMethods()))
+	registerTextInput(slices.Concat(common, pressMethods()))
 	surfaceMethods = append(common,
 		objc.MethodDef{Cmd: sel("layoutSubviews"), Fn: surfaceLayout},
 		objc.MethodDef{Cmd: selApply, Fn: surfaceApply},
@@ -417,7 +423,7 @@ func Run(root engine.App, opts Options) {
 // root until the test opens one.
 func newSurface(root engine.App, opts Options) *surface {
 	s := &surface{app: root, id: opts.ID, epoch: time.Now(), motions: map[*view]*motion{}, tops: map[*view]*view{}, effects: map[*view]bool{}, slides: map[*view]*slide{}, appearance: opts.Appearance,
-		components: opts.Components, unknown: map[string]bool{}, accessories: map[driver.NodeID]*view{},
+		components: opts.Components, unknown: map[string]bool{}, accessories: map[driver.NodeID]*view{}, ownTexts: map[driver.NodeID]*view{},
 		perfOn: opts.Perf}
 	s.animator = driver.NewAnimator(func(e driver.Event) { s.engine.Dispatch(e) })
 	return s
@@ -771,6 +777,7 @@ func watcherBegan(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
 		s := v.surface
 		apple.ForEach(touches, s.pressOutside)
 		apple.ForEach(touches, s.clearTouched)
+		apple.ForEach(touches, s.resignTouched)
 	}
 	// Failing at once keeps the watcher out of every other gesture.
 	const failed = 5
@@ -1071,6 +1078,12 @@ func (s *surface) apply(b *driver.MountBatch) {
 				v.redraw()
 			}
 			v.setSelectable()
+			if v.kind == driver.KindText && v.selectable == driver.SelectableOn {
+				s.ownTexts[v.id] = v
+			} else {
+				delete(s.ownTexts, v.id)
+			}
+			v.updateOwnSelection()
 		case driver.ItemEvents:
 			v.events = it.Events
 			if v.input != nil {
@@ -1087,6 +1100,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			v.layout, _ = it.Text.Layout.(*apple.Layout)
 			v.box = it.Text.Content
 			v.sizeContent()
+			if it.Text.Text != v.plain {
+				v.textReplaced()
+			}
 			v.textChanged(it.Text.Text)
 			v.redraw()
 		case driver.ItemInput:
@@ -1125,6 +1141,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 	s.slideStacks()
 	s.finish()
 	s.refreshSelection()
+	for _, v := range s.ownTexts {
+		v.updateOwnSelection()
+	}
 	apple.WithoutAnimation(func() {
 		if lb != nil {
 			s.stepMotions(s.clock())
@@ -1177,6 +1196,8 @@ func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
 		v.native.Send(sel("setClipsToBounds:"), true)
 	case driver.KindInput:
 		v.newInput()
+	case driver.KindText:
+		v.native = objc.ID(classText).Send(selNew)
 	default:
 		v.native = objc.ID(classView).Send(selNew)
 	}
@@ -1209,6 +1230,11 @@ func (s *surface) create(kind driver.ViewKind, id driver.NodeID) *view {
 // delete releases v; kept leaves its native where it is, going away.
 func (s *surface) delete(v *view, kept bool) {
 	v.releaseCanvasNodes()
+	if v.tsel != nil {
+		v.resignText()
+		v.tsel = nil
+	}
+	delete(s.ownTexts, v.id)
 	if v.sc != nil {
 		for i := range v.sc.edges {
 			if ev := &v.sc.edges[i]; ev.holder != 0 {
@@ -1334,6 +1360,21 @@ func hitTest(self objc.ID, cmd objc.SEL, p apple.CGPoint, event objc.ID) objc.ID
 	if !frame.Contains(at) {
 		if objc.Send[bool](self, sel("isHidden")) || !objc.Send[bool](self, sel("isUserInteractionEnabled")) {
 			return 0
+		}
+		// A selection's knobs stand out of its text or its area.
+		if v.reachesEnds(p) {
+			return self
+		}
+		if sl := v.surface.selecting; sl != nil && sl.area == v {
+			for _, h := range sl.handles {
+				if h == 0 {
+					continue
+				}
+				local := objc.Send[apple.CGPoint](self, sel("convertPoint:toView:"), p, h)
+				if hit := h.Send(cmd, local, event); hit != 0 {
+					return hit
+				}
+			}
 		}
 		if children {
 			subs := self.Send(sel("subviews"))

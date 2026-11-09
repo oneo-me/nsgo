@@ -102,7 +102,7 @@ A final layout answers where its carets are, as NSH's `TextEngine` hit testing d
 
 ## Text selection
 
-Selection follows NSH's: one selection runs across the texts of a selection area (a `View` with `Selectable`, NSH's selectable views), in document order, as a web page's does. A `Text` with `SelectableOn` outside any area is an area of its own; one with `SelectableOff` stays out. The highlight is the inherited `SelectionColor`, else the platform's.
+Selection follows NSH's: one selection runs across the texts of a selection area (a `View` with `Selectable`, NSH's selectable views), in document order, as a web page's does. A `Text` with `SelectableOn` outside any area is an area of its own, which iOS hands to UIKit as NSH does; one with `SelectableOff` stays out. The highlight is the inherited `SelectionColor`, else the platform's.
 
 - `ViewProps` carries `SelectionArea` (the view's `Selectable`), `Selectable` and `SelectionColor`, so a selection never waits for the engine.
 - An area with `OnTextSelection` hears `EventSelectionChange` with the box of the texts its selection touches (`SelectionModel.Extent`, the range's box on the web), each time it moves. Android does not report it yet.
@@ -111,6 +111,7 @@ Selection follows NSH's: one selection runs across the texts of a selection area
 - Offsets are UTF-16. `Text` joins texts on one row with a tab and others with a line break, leaving attachments out.
 - macOS takes mouse presses in an area before its views see them and shows the I-beam over its texts; fields and gestures keep theirs. A press on a button or a link presses it unless it drags 10 points first, then selects, as NSH's does. The surface becomes first responder for Copy, Select All and Escape.
 - Windows and Linux select as macOS does, with drags, double clicks for words, triple clicks for a text and Shift to extend, and answer Ctrl+C, Ctrl+A and Escape; each draws the highlight under the glyphs.
-- iOS selects with a long press anywhere in an area, buttons and links too, but on fields, gestures and views with a long press of their own, then by words as the finger drags, and shows the edit menu; the view controller answers Copy and Select All. Handles drawn as UIKit's move the ends.
+- iOS selects in an area with a long press anywhere in it, buttons and links too, but on fields, gestures and views with a long press of their own, then by words as the finger drags, and shows the edit menu over the selection; the view controller answers Copy and Select All. Handles drawn as UIKit's, a 16-point knob in the selection's color made opaque where NSH's is 11 points in the tint, move the ends and take touches 22 points around their bars, which the area's long press and tap leave to them and the scroll views around wait for. A tap on the selection shows or hides the menu, and one off it clears the selection.
+- A selectable text outside an area adopts `UITextInput` and a non-editable `UITextInteraction`, as NSH's does: UIKit selects, draws the highlight and handles in its tint (the `SelectionColor` made opaque) and shows its menu, Look Up, Translate and Share included. The text takes touches near its selection's ends, where the knobs stand out of it, and a touch going down outside it ends the selection, as one outside an area does.
 - Android selects a word with a long press, as its text views do, with the system's handles and a floating toolbar for Copy and Select all.
 - The web uses the browser's own selection through `user-select`, and a `copy` handler joins texts as the model does.

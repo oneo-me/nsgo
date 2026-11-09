@@ -61,6 +61,27 @@ func (a *App) Drag(selector string, path ...driver.Point) {
 	if a.target != nil {
 		start = a.target.reveal(v)
 	}
+	a.drag(v, start, path)
+}
+
+// DragAt drags as Drag does from a point of the view selector matches,
+// in its coordinates, rather than its middle: for what a finger takes by
+// a part of its own, such as a selection's handle.
+func (a *App) DragAt(selector string, at driver.Point, path ...driver.Point) {
+	a.t.Helper()
+	a.step("dragAt(%s, %v, %v)", selector, at, path)
+	v := a.pick(selector, "view", func(m *View) (*View, bool) { return m, true })
+	if a.target != nil {
+		a.target.reveal(v)
+	}
+	o := v.surfaceFrame().Origin
+	a.drag(v, driver.Point{X: o.X + at.X, Y: o.Y + at.Y}, path)
+}
+
+// drag puts a finger on v at the surface point start and moves it
+// through path, offsets from start.
+func (a *App) drag(v *View, start driver.Point, path []driver.Point) {
+	a.t.Helper()
 	points := make([]driver.Point, len(path))
 	for i, d := range path {
 		points[i] = driver.Point{X: start.X + d.X, Y: start.Y + d.Y}

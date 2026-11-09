@@ -276,7 +276,8 @@ func (a *App) half(selector string, kind driver.EventKind) {
 }
 
 // LongPress holds a finger on what selector names, or the nearest view
-// around it that hears long presses, presses or touches, for its
+// around it that hears long presses, presses or touches or selects text
+// (a selection area, or a selectable text), for its
 // DelayLongPress (500 ms by default) of the clock's time, as a long
 // press does: PressDown, LongPress, then PressUp, and no Press.
 func (a *App) LongPress(selector string) {
@@ -285,7 +286,8 @@ func (a *App) LongPress(selector string) {
 	var match *View
 	v := a.pick(selector, "pressable view", func(m *View) (*View, bool) {
 		t := m.upTo(func(v *View) bool {
-			return v.Events.Has(driver.EventLongPress) || pressable(v) || v.Events.Has(driver.EventTouch)
+			return v.Events.Has(driver.EventLongPress) || pressable(v) || v.Events.Has(driver.EventTouch) ||
+				v.Props.SelectionArea || v.Kind == driver.KindText && v.Props.Selectable == driver.SelectableOn
 		})
 		match = m
 		return t, t != nil && !m.disabled(t)
