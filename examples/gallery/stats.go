@@ -13,12 +13,13 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// The gallery counts its use in the NSGo site's Umami, on every target
-// and the web included, under a site of its own: a pageview for each demo
-// shown, tagged with the platform and carrying a random ID kept in the
-// storage, so that one install is one visitor. Builds of nsgo dev
-// (statsBuild) and test binaries report nothing, and the settings turn it
-// off.
+// The gallery counts its use in the NSGo site's Umami, on every native
+// target, under a site of its own: a pageview for each demo shown, tagged
+// with the platform and carrying a random ID kept in the storage, so that
+// one install is one visitor. Builds of nsgo dev (statsBuild) and test
+// binaries report nothing, and the settings turn it off. The web reports
+// nothing either: its loader counts it as a page of the site, in the
+// site's own Umami.
 const (
 	statsURL     = "https://umami.oneo.me/api/send"
 	statsWebsite = "b859a9e2-44b7-4050-b2cd-c8092bff3bb3"
@@ -39,6 +40,12 @@ const (
 	statsBeat = time.Minute
 	statsIdle = 5 * time.Minute
 )
+
+// statsShown reports whether the gallery counts its use where it runs,
+// and so shows the settings' switch: everywhere but the web.
+func statsShown(cx *core.Scope) bool {
+	return cx.Env().OS() != core.OSWeb
+}
 
 // statsOn reports whether the settings leave the statistics on.
 func statsOn(cx *core.Scope) bool {
@@ -73,7 +80,7 @@ type statsPayload struct {
 // heartbeats while it is read. Events are made on the graph's goroutine
 // and sent from another, oldest first; one that fails is dropped.
 func reportUsage(cx *core.Scope, g *gallery) {
-	if !statsBuild || testing.Testing() {
+	if !statsBuild || testing.Testing() || !statsShown(cx) {
 		return
 	}
 	store := cx.Storage()
@@ -149,7 +156,7 @@ func sendStats(queue <-chan statsPayload, agent string) {
 
 // statsAgent is the User-Agent a native gallery sends, as a browser on
 // the platform would say it, for Umami to tell the system and not take it
-// for a bot as it does Go's own. The web's browser sends its own.
+// for a bot as it does Go's own.
 func statsAgent(os core.OS) string {
 	platforms := map[core.OS]string{
 		core.OSMacOS:   "Macintosh; Intel Mac OS X 10_15_7",

@@ -31,7 +31,7 @@ func (g *gallery) showSettings() {
 
 // settingsCategories are the gallery's settings.
 func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
-	return []ui.SettingsCategory{{ID: "general", Title: locales.SettingsGeneral(cx), Icon: lucide.Settings,
+	categories := []ui.SettingsCategory{{ID: "general", Title: locales.SettingsGeneral(cx), Icon: lucide.Settings,
 		Groups: []ui.SettingsGroup{{ID: "general", Items: []ui.SettingsItem{{
 			ID: "language", Title: locales.Language(cx), Description: locales.SettingsLanguageDetail(cx),
 			Keywords: append([]string{"language", languageName(cx, "")}, languageNames()...),
@@ -44,12 +44,16 @@ func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 			ID: "colors", Title: locales.ColorTheme(cx), Description: locales.SettingsColorThemeDetail(cx),
 			Keywords: []string{"color", "palette", locales.ColorThemeDefault(cx), locales.ColorThemeWarmDusk(cx)},
 			Control:  g.colorThemeSelect(cx),
-		}}}}}, {ID: "help", Title: locales.SettingsHelp(cx), Icon: lucide.CircleQuestionMark,
+		}}}}}}
+	if !statsShown(cx) {
+		return categories
+	}
+	return append(categories, ui.SettingsCategory{ID: "help", Title: locales.SettingsHelp(cx), Icon: lucide.CircleQuestionMark,
 		Groups: []ui.SettingsGroup{{ID: "stats", Title: locales.SettingsStats(cx), Items: []ui.SettingsItem{{
 			ID: "send", Title: locales.SettingsStatsSend(cx), Description: locales.SettingsStatsDetail(cx),
 			Keywords: []string{"statistics", "analytics", "privacy", "telemetry", locales.SettingsStats(cx)},
 			Control:  statsSwitch(cx),
-		}}}}}}
+		}}}}})
 }
 
 // statsSwitch turns the usage statistics on or off.

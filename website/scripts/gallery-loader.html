@@ -128,6 +128,13 @@
         if (params.get('embed') === '1') document.documentElement.setAttribute('data-embed', '');
       })();
     </script>
+    <!-- The web gallery counts as a page of the site, in the site's Umami
+         (src/layouts/Layout.astro); the app itself reports nothing here. -->
+    <script
+      defer
+      src="https://umami.oneo.me/script.js"
+      data-website-id="e8174058-eb31-40f8-bf9c-4ddc9ca5f4ac"
+      data-domains="oneo-me.github.io,nsgo.oneo.me"></script>
   </head>
   <body>
     <div class="boot" role="status" aria-live="polite">
