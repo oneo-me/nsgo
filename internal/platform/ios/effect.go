@@ -181,7 +181,7 @@ func (s *surface) mask(fx *effect, on bool) {
 	apple.WithoutAnimation(func() {
 		if on {
 			if emptyMask == 0 {
-				emptyMask = objc.ID(objc.GetClass("CALayer")).Send(selNew)
+				emptyMask = objc.ID(apple.Class("CALayer")).Send(selNew)
 			}
 			layer.Send(sel("setMask:"), emptyMask)
 		} else {

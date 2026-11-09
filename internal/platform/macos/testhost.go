@@ -64,7 +64,7 @@ func onMainSync(fn func()) {
 	callsMu.Unlock()
 	if caller == 0 {
 		callerOnce.Do(func() {
-			class := apple.RegisterClass("NsgoTestCaller", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
+			class := apple.RegisterClass("NsgoTestCaller", apple.Class("NSObject"), nil, []objc.MethodDef{{
 				Cmd: sel("call"),
 				Fn: func(objc.ID, objc.SEL) {
 					callsMu.Lock()
@@ -106,7 +106,7 @@ func (t *testSurface) windowPoint(p driver.Point) apple.CGPoint {
 func (t *testSurface) mouse(kind uint, p driver.Point, clicks int) {
 	onMainSync(func() {
 		w := t.s.window
-		ev := objc.ID(objc.GetClass("NSEvent")).Send(
+		ev := objc.ID(apple.Class("NSEvent")).Send(
 			sel("mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:"),
 			kind, t.windowPoint(p), uint(0), uptime(), objc.Send[int](w, sel("windowNumber")), objc.ID(0), 0, clicks, float32(1))
 		nsApp().Send(sel("postEvent:atStart:"), ev, false)
@@ -200,7 +200,7 @@ func (t *testSurface) Scroll(at driver.Point, delta driver.Point) error {
 			cgEventSetIntegerValueField(ev, scrollPhase, phase)
 			cgEventSetIntegerValueField(ev, continuous, 1)
 			cgEventSetLocation(ev, t.screenPoint(at))
-			ns := objc.ID(objc.GetClass("NSEvent")).Send(sel("eventWithCGEvent:"), ev)
+			ns := objc.ID(apple.Class("NSEvent")).Send(sel("eventWithCGEvent:"), ev)
 			// AppKit hands wheels to the window under the system's pointer,
 			// which a test leaves where the user has it: the view under at
 			// takes it, and passes it up as a real one.
@@ -223,7 +223,7 @@ func (t *testSurface) Scroll(at driver.Point, delta driver.Point) error {
 func (t *testSurface) screenPoint(p driver.Point) apple.CGPoint {
 	wp := t.windowPoint(p)
 	sp := objc.Send[apple.CGPoint](t.s.window, sel("convertPointToScreen:"), wp)
-	screens := objc.ID(objc.GetClass("NSScreen")).Send(sel("screens"))
+	screens := objc.ID(apple.Class("NSScreen")).Send(sel("screens"))
 	main := screens.Send(sel("objectAtIndex:"), uint(0))
 	h := objc.Send[apple.CGRect](main, sel("frame")).Size.Height
 	return apple.CGPoint{X: sp.X, Y: h - sp.Y}
@@ -272,7 +272,7 @@ func (t *testSurface) Hover(at driver.Point) error {
 		}
 		t.hovered = under
 		if len(under) > 0 {
-			ev := objc.ID(objc.GetClass("NSEvent")).Send(
+			ev := objc.ID(apple.Class("NSEvent")).Send(
 				sel("mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:"),
 				uint(evMoved), t.windowPoint(at), uint(0), uptime(), objc.Send[int](t.s.window, sel("windowNumber")), objc.ID(0), 0, 0, float32(0))
 			for _, n := range under {
@@ -297,7 +297,7 @@ func (t *testSurface) key(code uint16, flags uint, chars, ignoring string) {
 			// which purego, giving each a slot, would not: one word carries
 			// both.
 			stacked := uint64(code) << 16
-			ev := objc.ID(objc.GetClass("NSEvent")).Send(
+			ev := objc.ID(apple.Class("NSEvent")).Send(
 				sel("keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:"),
 				kind, apple.CGPoint{}, flags, uptime(), objc.Send[int](t.s.window, sel("windowNumber")), objc.ID(0),
 				apple.NSString(chars), apple.NSString(ignoring), stacked)
@@ -408,7 +408,7 @@ func (t *testSurface) Back() error {
 	var editing bool
 	onMainSync(func() {
 		r := t.s.window.Send(sel("firstResponder"))
-		editing = r != 0 && objc.Send[bool](r, sel("isKindOfClass:"), objc.ID(objc.GetClass("NSText")))
+		editing = r != 0 && objc.Send[bool](r, sel("isKindOfClass:"), objc.ID(apple.Class("NSText")))
 	})
 	if editing {
 		t.Key("escape")
@@ -453,7 +453,7 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 		v.Send(sel("cacheDisplayInRect:toBitmapImageRep:"), bounds, rep)
 		const pngType = 4
 		data := rep.Send(sel("representationUsingType:properties:"), uint(pngType),
-			objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionary")))
+			objc.ID(apple.Class("NSDictionary")).Send(sel("dictionary")))
 		if data == 0 {
 			return
 		}
@@ -516,7 +516,7 @@ func menuItem(menu objc.ID, id uint32) (item, in objc.ID) {
 func (t *testSurface) ChooseMenu(id uint32) error {
 	var err error
 	onMainSync(func() {
-		main := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")).Send(sel("mainMenu"))
+		main := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")).Send(sel("mainMenu"))
 		item, menu := menuItem(main, id)
 		if item == 0 {
 			err = fmt.Errorf("the main menu has no item %d", id)

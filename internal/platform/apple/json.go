@@ -24,18 +24,18 @@ func JSONObject(v any) objc.ID {
 		return 0
 	}
 	const fragmentsAllowed = 4
-	return objc.ID(objc.GetClass("NSJSONSerialization")).Send(sel("JSONObjectWithData:options:error:"),
+	return objc.ID(Class("NSJSONSerialization")).Send(sel("JSONObjectWithData:options:error:"),
 		NSData(b), uint(fragmentsAllowed), uintptr(0))
 }
 
 // GoJSON returns Foundation's object o as Go's decoded JSON: maps,
 // slices, strings, float64, bool or nil.
 func GoJSON(o objc.ID) any {
-	if o == 0 || o == objc.ID(objc.GetClass("NSNull")).Send(sel("null")) {
+	if o == 0 || o == objc.ID(Class("NSNull")).Send(sel("null")) {
 		return nil
 	}
 	const fragmentsAllowed = 4
-	data := objc.ID(objc.GetClass("NSJSONSerialization")).Send(sel("dataWithJSONObject:options:error:"),
+	data := objc.ID(Class("NSJSONSerialization")).Send(sel("dataWithJSONObject:options:error:"),
 		o, uint(fragmentsAllowed), uintptr(0))
 	var v any
 	if json.Unmarshal(Bytes(data), &v) != nil {

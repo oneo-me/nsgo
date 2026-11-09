@@ -63,7 +63,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - iOS slides the screens and their bars as `UINavigationController` pushes and pops: 0.35 s on the keyboard's curve, the screen below moving 30% of the width under a dimming view.
 - `Screen.Animation` fades the screen instead or shows it at once: a push takes the pushed screen's, a pop the popped one's.
 - `HeaderClass` gives the system header its colors as classes (`bg-*`, `text-*`, `tint-*`) under `HeaderStyle`.
-- A hidden screen has no layout, so a batch that changes a stack first snapshots the screen it shows, and the slide moves that snapshot; the swipe back moves the screens themselves.
+- A hidden screen has no layout, so iOS keeps the layout the screen a batch hides or pops last showed: it skips the frames of no size inside it, and keeps a popped screen's views until its slide ends. The slide moves the screens themselves, as the swipe back does; a snapshot cost a push 5–13 ms of the main thread in the simulator, waiting on the render server.
 - Each platform measures its bar with what it holds and reports it (`EventScreenHeader`), which replaces the environment's estimate; the insets a screen reports (`EventScreenInsets`) replace those the core derives.
 - A transparent header and a large title lay the content under them: each vertical scroll view whose top they cover gets that part as `ScrollConfig.HeaderInset`, added to its top content inset.
 - iOS collapses a large title into the bar once its scroll view scrolled half the title's row under it, and brings it back above that, as UIKit's navigation controller does; the bar has no background until it collapses, then the system's blur.

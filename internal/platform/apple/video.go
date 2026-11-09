@@ -81,7 +81,7 @@ func loadAVFoundation() bool {
 		if avFoundation && runtime.GOOS != "ios" {
 			// A layer-hosting view showing the player layer, which lets
 			// the pointer through to the node's view.
-			classVideoLayerView = RegisterClass("NsgoVideoLayerView", objc.GetClass("NSView"), nil, []objc.MethodDef{
+			classVideoLayerView = RegisterClass("NsgoVideoLayerView", Class("NSView"), nil, []objc.MethodDef{
 				{Cmd: sel("isFlipped"), Fn: func(objc.ID, objc.SEL) bool { return true }},
 				{Cmd: sel("hitTest:"), Fn: func(objc.ID, objc.SEL, CGPoint) objc.ID { return 0 }},
 			})
@@ -105,7 +105,7 @@ func playerClass(controls bool, name string) objc.Class {
 	if !controls || !loadAVKit() {
 		return 0
 	}
-	return objc.GetClass(name)
+	return Class(name)
 }
 
 // NewVideo returns the video of holder, empty until configured.
@@ -183,7 +183,7 @@ func locate(source, root string) (url, path string, ok bool) {
 // videoURL is the NSURL of source, 0 when it has none.
 func videoURL(source string) objc.ID {
 	url, path, ok := locate(source, imageload.ResourceRoot)
-	nsURL := objc.ID(objc.GetClass("NSURL"))
+	nsURL := objc.ID(Class("NSURL"))
 	switch {
 	case !ok:
 		return 0
@@ -208,7 +208,7 @@ func (v *Video) open() {
 		v.Dispatch(driver.Event{Kind: driver.EventError, Text: source + ": cannot resolve the video's location"})
 		return
 	}
-	v.player = objc.ID(objc.GetClass("AVPlayer")).Send(sel("playerWithURL:"), url).Send(sel("retain"))
+	v.player = objc.ID(Class("AVPlayer")).Send(sel("playerWithURL:"), url).Send(sel("retain"))
 	v.Dispatch(driver.Event{Kind: driver.EventLoadStart})
 	// The end of the item: report it, and loop if asked.
 	ended := objc.NewBlock(func(objc.Block, objc.ID) {
@@ -225,8 +225,8 @@ func (v *Video) open() {
 			v.player.Send(sel("play"))
 		}
 	})
-	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
-	queue := objc.ID(objc.GetClass("NSOperationQueue")).Send(selMainQueue)
+	center := objc.ID(Class("NSNotificationCenter")).Send(sel("defaultCenter"))
+	queue := objc.ID(Class("NSOperationQueue")).Send(selMainQueue)
 	v.endToken = center.Send(selAddObserver, NSString("AVPlayerItemDidPlayToEndTimeNotification"),
 		v.player.Send(sel("currentItem")), queue, ended).Send(sel("retain"))
 	ended.Release()
@@ -241,7 +241,7 @@ func (v *Video) close() {
 		v.player.Send(sel("removeTimeObserver:"), v.timeToken)
 	}
 	if v.endToken != 0 {
-		objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter")).Send(sel("removeObserver:"), v.endToken)
+		objc.ID(Class("NSNotificationCenter")).Send(sel("defaultCenter")).Send(sel("removeObserver:"), v.endToken)
 	}
 	for _, id := range []objc.ID{v.timeToken, v.endToken} {
 		if id != 0 {
@@ -283,7 +283,7 @@ func (v *Video) show() {
 		shown.Send(sel("setPlayer:"), v.player)
 		const inline = 1 // AVPlayerViewControlsStyleInline
 		shown.Send(sel("setControlsStyle:"), inline)
-	} else if c := objc.GetClass("AVPlayerLayer"); c != 0 {
+	} else if c := Class("AVPlayerLayer"); c != 0 {
 		v.layer = objc.ID(c).Send(sel("playerLayerWithPlayer:"), v.player).Send(sel("retain"))
 		shown = objc.ID(classVideoLayerView).Send(sel("alloc")).Send(sel("initWithFrame:"), CGRect{})
 		// Layer-hosting: the player layer is the view's own, so it
@@ -318,7 +318,7 @@ func (v *Video) attach() {
 			ctrl.Send(sel("didMoveToParentViewController:"), parent)
 		}
 		v.controller = ctrl
-	} else if c := objc.GetClass("AVPlayerLayer"); c != 0 {
+	} else if c := Class("AVPlayerLayer"); c != 0 {
 		v.layer = objc.ID(c).Send(sel("playerLayerWithPlayer:"), v.player).Send(sel("retain"))
 		WithoutAnimation(func() {
 			v.layer.Send(sel("setFrame:"), bounds)
@@ -330,7 +330,7 @@ func (v *Video) attach() {
 // parentController is the nearest view controller of the holder, else
 // Parent: the view joins the window after its video is configured.
 func (v *Video) parentController() objc.ID {
-	vc := objc.GetClass("UIViewController")
+	vc := Class("UIViewController")
 	for r := v.holder.Send(sel("nextResponder")); r != 0; r = r.Send(sel("nextResponder")) {
 		if objc.Send[bool](r, sel("isKindOfClass:"), vc) {
 			return r

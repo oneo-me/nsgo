@@ -147,7 +147,7 @@ func newScroll(v *view) {
 	v.native.Send(selSetDeleg, v.native)
 	v.native.Send(sel("setContentInsetAdjustmentBehavior:"), 2) // never
 	v.sc = &scrollState{}
-	tap := objc.ID(objc.GetClass("UITapGestureRecognizer")).Send(selAlloc).
+	tap := objc.ID(apple.Class("UITapGestureRecognizer")).Send(selAlloc).
 		Send(sel("initWithTarget:action:"), v.native, selDismissKeyboard)
 	tap.Send(sel("setCancelsTouchesInView:"), false)
 	tap.Send(selSetDeleg, v.native)
@@ -288,7 +288,7 @@ func (v *view) setRefreshable(on, refreshing bool) {
 	s := v.sc
 	switch {
 	case on && s.refresh == 0:
-		r := objc.ID(objc.GetClass("UIRefreshControl")).Send(selNew)
+		r := objc.ID(apple.Class("UIRefreshControl")).Send(selNew)
 		const valueChanged = 1 << 12
 		r.Send(sel("addTarget:action:forControlEvents:"), v.native, selRefreshed, uint(valueChanged))
 		v.native.Send(sel("setRefreshControl:"), r)
@@ -324,7 +324,7 @@ func (v *view) setZoomable(on bool) {
 	s := v.sc
 	switch {
 	case on && s.zoom == 0:
-		z := objc.ID(objc.GetClass("UIView")).Send(selNew)
+		z := objc.ID(apple.Class("UIView")).Send(selNew)
 		for _, child := range subviews(v.native) {
 			if views[child] != nil {
 				z.Send(selAddSubview, child)
@@ -538,7 +538,7 @@ func dismissKeyboardTap(self objc.ID, _ objc.SEL, _ objc.ID) {
 func scrollTapReceives(self objc.ID, cmd objc.SEL, r, touch objc.ID) bool {
 	v := scrollView(self)
 	if v == nil || r != v.sc.tap {
-		if objc.Send[bool](objc.ID(objc.GetClass("UIScrollView")), sel("instancesRespondToSelector:"), cmd) {
+		if objc.Send[bool](objc.ID(apple.Class("UIScrollView")), sel("instancesRespondToSelector:"), cmd) {
 			return apple.SendSuper[bool](self, cmd, r, touch)
 		}
 		return true

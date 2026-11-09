@@ -4,6 +4,8 @@ package ios
 
 import (
 	"github.com/ebitengine/purego/objc"
+
+	"github.com/oneo-me/nsgo/internal/platform/apple"
 )
 
 // UISemanticContentAttribute's forced directions.
@@ -21,7 +23,7 @@ var selSetSemantic = sel("setSemanticContentAttribute:")
 // pickers'; an embedded surface leaves the host's views alone.
 func (s *surface) applyDirection() {
 	if !s.embedded {
-		objc.ID(objc.GetClass("UIView")).Send(sel("appearance")).Send(selSetSemantic, s.semantic())
+		objc.ID(apple.Class("UIView")).Send(sel("appearance")).Send(selSetSemantic, s.semantic())
 	}
 	s.directTree(s.native)
 }

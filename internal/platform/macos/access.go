@@ -146,7 +146,7 @@ func (v *view) axRole() [2]string {
 }
 
 func nsNumber(f float64) objc.ID {
-	return objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithDouble:"), f)
+	return objc.ID(apple.Class("NSNumber")).Send(sel("numberWithDouble:"), f)
 }
 
 func nsOrNil(s string) objc.ID {
@@ -158,7 +158,7 @@ func nsOrNil(s string) objc.ID {
 
 // nsArray returns an autoreleased array of items.
 func nsArray(items []objc.ID) objc.ID {
-	class := objc.ID(objc.GetClass("NSArray"))
+	class := objc.ID(apple.Class("NSArray"))
 	if len(items) == 0 {
 		return class.Send(sel("array"))
 	}
@@ -306,7 +306,7 @@ func (v *view) updateAccessibility() {
 		case p.Checked || p.Selected || p.Pressed:
 			n = 1
 		}
-		native.Send(selSetAccessibilityValue, objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithInt:"), n))
+		native.Send(selSetAccessibilityValue, objc.ID(apple.Class("NSNumber")).Send(sel("numberWithInt:"), n))
 	case val.Text != "":
 		native.Send(selSetAccessibilityValue, apple.NSString(val.Text))
 	}
@@ -319,7 +319,7 @@ func (v *view) updateAccessibility() {
 		if label == "" {
 			label = a.Name
 		}
-		act := objc.ID(objc.GetClass("NSAccessibilityCustomAction")).Send(selAlloc).Send(
+		act := objc.ID(apple.Class("NSAccessibilityCustomAction")).Send(selAlloc).Send(
 			sel("initWithName:target:selector:"), apple.NSString(label), native, selCustomAction)
 		custom = append(custom, act)
 	}
@@ -388,7 +388,7 @@ func (v *view) focusAccessibility() {
 			w.Send(selMakeFirstResponer, v.input.field)
 		}
 	}
-	info := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"),
+	info := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"),
 		nsArray([]objc.ID{target}), apple.Global(appKitPath, "NSAccessibilityUIElementsKey"))
 	axPost()(target, apple.Global(appKitPath, "NSAccessibilityLayoutChangedNotification"), info)
 }
@@ -402,10 +402,10 @@ func announceWith(text string, live driver.LiveRegion) {
 		priority = 90 // NSAccessibilityPriorityHigh
 	}
 	keys := []objc.ID{apple.Global(appKitPath, "NSAccessibilityAnnouncementKey"), apple.Global(appKitPath, "NSAccessibilityPriorityKey")}
-	values := []objc.ID{apple.NSString(text), objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithInt:"), priority)}
-	info := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObjects:forKeys:count:"),
+	values := []objc.ID{apple.NSString(text), objc.ID(apple.Class("NSNumber")).Send(sel("numberWithInt:"), priority)}
+	info := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObjects:forKeys:count:"),
 		unsafe.Pointer(&values[0]), unsafe.Pointer(&keys[0]), uint(len(keys)))
-	app := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	app := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	axPost()(app, apple.Global(appKitPath, "NSAccessibilityAnnouncementRequestedNotification"), info)
 	runtime.KeepAlive(keys)
 	runtime.KeepAlive(values)

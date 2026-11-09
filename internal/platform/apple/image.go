@@ -367,15 +367,15 @@ func blur(img uintptr, radius float64) (out uintptr) {
 	ciOnce.Do(func() {
 		load("/System/Library/Frameworks/CoreImage.framework/CoreImage")
 		withPool(func() {
-			ciContext = objc.ID(objc.GetClass("CIContext")).Send(sel("contextWithOptions:"), objc.ID(0)).Send(sel("retain"))
+			ciContext = objc.ID(Class("CIContext")).Send(sel("contextWithOptions:"), objc.ID(0)).Send(sel("retain"))
 		})
 	})
 	withPool(func() {
-		in := objc.ID(objc.GetClass("CIImage")).Send(sel("imageWithCGImage:"), img)
+		in := objc.ID(Class("CIImage")).Send(sel("imageWithCGImage:"), img)
 		extent := objc.Send[CGRect](in, sel("extent"))
-		f := objc.ID(objc.GetClass("CIFilter")).Send(sel("filterWithName:"), NSString("CIGaussianBlur"))
+		f := objc.ID(Class("CIFilter")).Send(sel("filterWithName:"), NSString("CIGaussianBlur"))
 		f.Send(sel("setValue:forKey:"), in.Send(sel("imageByClampingToExtent")), NSString("inputImage"))
-		f.Send(sel("setValue:forKey:"), objc.ID(objc.GetClass("NSNumber")).Send(selNumberWithDouble, radius), NSString("inputRadius"))
+		f.Send(sel("setValue:forKey:"), objc.ID(Class("NSNumber")).Send(selNumberWithDouble, radius), NSString("inputRadius"))
 		out = objc.Send[uintptr](ciContext, sel("createCGImage:fromRect:"), f.Send(sel("outputImage")), extent)
 	})
 	return out
@@ -434,7 +434,7 @@ type ImageView struct {
 
 // NewImageView adds an image layer to host, a view's layer.
 func NewImageView(host objc.ID) *ImageView {
-	layer := objc.ID(objc.GetClass("CALayer"))
+	layer := objc.ID(Class("CALayer"))
 	iv := &ImageView{layer: layer.Send(selNew), picture: layer.Send(selNew)}
 	iv.layer.Send(selSetMasksToBounds, true)
 	iv.layer.Send(sel("addSublayer:"), iv.picture)
@@ -629,7 +629,7 @@ func (iv *ImageView) render(fade time.Duration) {
 			iv.picture.Send(selSetMask, objc.ID(0))
 		} else {
 			if iv.mask == 0 {
-				iv.mask = objc.ID(objc.GetClass("CALayer")).Send(selNew)
+				iv.mask = objc.ID(Class("CALayer")).Send(selNew)
 			}
 			iv.mask.Send(selSetFrame, Rect(0, 0, fit.Size.Width, fit.Size.Height))
 			color := CGColor(iv.tint)
@@ -640,7 +640,7 @@ func (iv *ImageView) render(fade time.Duration) {
 			target = iv.mask
 		}
 		if fade > 0 {
-			t := objc.ID(objc.GetClass("CATransition")).Send(sel("animation"))
+			t := objc.ID(Class("CATransition")).Send(sel("animation"))
 			t.Send(sel("setType:"), NSString("fade"))
 			t.Send(sel("setDuration:"), fade.Seconds())
 			target.Send(selAddAnimation, t, NSString("contents"))
@@ -680,9 +680,9 @@ var selRemoveAnimationForKey = sel("removeAnimationForKey:")
 // each for its delay: a discrete keyframe animation, which Core Animation
 // runs without the app.
 func frameAnimation(d *decoded) objc.ID {
-	values := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
-	times := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
-	number := objc.ID(objc.GetClass("NSNumber"))
+	values := objc.ID(Class("NSMutableArray")).Send(sel("array"))
+	times := objc.ID(Class("NSMutableArray")).Send(sel("array"))
+	number := objc.ID(Class("NSNumber"))
 	total := 0.0
 	for _, delay := range d.delays {
 		total += delay
@@ -694,7 +694,7 @@ func frameAnimation(d *decoded) objc.ID {
 		at += d.delays[i]
 	}
 	times.Send(sel("addObject:"), number.Send(selNumberWithDouble, 1.0))
-	anim := objc.ID(objc.GetClass("CAKeyframeAnimation")).Send(sel("animationWithKeyPath:"), NSString("contents"))
+	anim := objc.ID(Class("CAKeyframeAnimation")).Send(sel("animationWithKeyPath:"), NSString("contents"))
 	anim.Send(sel("setValues:"), values)
 	anim.Send(sel("setKeyTimes:"), times)
 	anim.Send(sel("setCalculationMode:"), NSString("discrete"))
@@ -716,15 +716,15 @@ func AnimateIn(layer objc.ID, a driver.ModalAnimation, distance float64, reduceM
 	if a == driver.ModalSlide && reduceMotion {
 		a = driver.ModalFade
 	}
-	number := objc.ID(objc.GetClass("NSNumber"))
-	basic := objc.ID(objc.GetClass("CABasicAnimation"))
+	number := objc.ID(Class("NSNumber"))
+	basic := objc.ID(Class("CABasicAnimation"))
 	var anim objc.ID
 	switch a {
 	case driver.ModalSlide:
 		anim = basic.Send(sel("animationWithKeyPath:"), NSString("transform.translation.y"))
 		anim.Send(sel("setFromValue:"), number.Send(selNumberWithDouble, distance))
 		anim.Send(sel("setDuration:"), 0.3)
-		anim.Send(sel("setTimingFunction:"), objc.ID(objc.GetClass("CAMediaTimingFunction")).Send(
+		anim.Send(sel("setTimingFunction:"), objc.ID(Class("CAMediaTimingFunction")).Send(
 			sel("functionWithName:"), NSString("easeOut")))
 	case driver.ModalFade:
 		anim = basic.Send(sel("animationWithKeyPath:"), NSString("opacity"))

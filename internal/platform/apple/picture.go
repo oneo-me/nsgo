@@ -37,7 +37,7 @@ func (p *Picture) Take(layer objc.ID, x, y, w, h, scale float64, hide objc.ID) b
 		if p.ctx == 0 {
 			return false
 		}
-		desc := objc.ID(objc.GetClass("MTLTextureDescriptor")).Send(
+		desc := objc.ID(Class("MTLTextureDescriptor")).Send(
 			sel("texture2DDescriptorWithPixelFormat:width:height:mipmapped:"), uint(mtlPixelFormatBGRA8Unorm), uint(pw), uint(ph), false)
 		p.tex = mtlDevice.Send(sel("newTextureWithDescriptor:"), desc)
 		p.w, p.h = pw, ph

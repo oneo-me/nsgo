@@ -35,7 +35,7 @@ var (
 // cameraAvailable is Environment.Camera: the device has a camera the
 // picker shows, which the simulator has not.
 var cameraAvailable = sync.OnceValue(func() bool {
-	return objc.Send[bool](objc.ID(objc.GetClass("UIImagePickerController")), sel("isSourceTypeAvailable:"), sourceCamera)
+	return objc.Send[bool](objc.ID(apple.Class("UIImagePickerController")), sel("isSourceTypeAvailable:"), sourceCamera)
 })
 
 // takePhoto has the user allow the camera, asking once, then presents it
@@ -57,7 +57,7 @@ func (s *surface) takePhoto(r driver.PickRequest, id uint32) {
 		fail("AVFoundation is missing")
 		return
 	}
-	device, video := objc.ID(objc.GetClass("AVCaptureDevice")), apple.Global(avFoundationPath, "AVMediaTypeVideo")
+	device, video := objc.ID(apple.Class("AVCaptureDevice")), apple.Global(avFoundationPath, "AVMediaTypeVideo")
 	switch objc.Send[int](device, sel("authorizationStatusForMediaType:"), video) {
 	case cameraAllowed:
 		s.presentCamera(r, id)
@@ -119,7 +119,7 @@ func (s *surface) presentCamera(r driver.PickRequest, id uint32) {
 				s.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: req.id, Data: []driver.PickedFile{f}})
 			}()
 		}
-		classCamera = register("NsgoCameraDelegate", objc.GetClass("NSObject"), protocols, []objc.MethodDef{{
+		classCamera = register("NsgoCameraDelegate", apple.Class("NSObject"), protocols, []objc.MethodDef{{
 			Cmd: sel("imagePickerController:didFinishPickingMediaWithInfo:"),
 			Fn:  func(self objc.ID, _ objc.SEL, picker, info objc.ID) { answer(self, picker, info) },
 		}, {
@@ -127,7 +127,7 @@ func (s *surface) presentCamera(r driver.PickRequest, id uint32) {
 			Fn:  func(self objc.ID, _ objc.SEL, picker objc.ID) { answer(self, picker, 0) },
 		}})
 	})
-	picker := objc.ID(objc.GetClass("UIImagePickerController")).Send(selAlloc).Send(sel("init"))
+	picker := objc.ID(apple.Class("UIImagePickerController")).Send(selAlloc).Send(sel("init"))
 	defer picker.Send(selRelease)
 	picker.Send(sel("setSourceType:"), sourceCamera)
 	delegate := objc.ID(classCamera).Send(selNew)

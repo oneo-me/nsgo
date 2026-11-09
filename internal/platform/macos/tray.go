@@ -51,7 +51,7 @@ func (s *surface) applyTray(cfg driver.TrayConfig) {
 		tr = &tray{owner: s}
 		tr.item = statusBar().Send(sel("statusItemWithLength:"), float64(-1)).Send(sel("retain"))
 		if trayTarget == 0 {
-			classTray = register("NsgoTrayTarget", objc.GetClass("NSObject"), nil, []objc.MethodDef{
+			classTray = register("NsgoTrayTarget", apple.Class("NSObject"), nil, []objc.MethodDef{
 				{Cmd: selTray, Fn: trayClicked},
 			})
 			trayTarget = objc.ID(classTray).Send(selNew)
@@ -68,9 +68,9 @@ func (s *surface) applyTray(cfg driver.TrayConfig) {
 	button := tr.item.Send(sel("button"))
 	var image objc.ID
 	if len(cfg.Icon) > 0 && cfg.View == 0 {
-		data := objc.ID(objc.GetClass("NSData")).Send(sel("dataWithBytes:length:"),
+		data := objc.ID(apple.Class("NSData")).Send(sel("dataWithBytes:length:"),
 			unsafe.Pointer(&cfg.Icon[0]), uint(len(cfg.Icon)))
-		image = objc.ID(objc.GetClass("NSImage")).Send(selAlloc).Send(sel("initWithData:"), data)
+		image = objc.ID(apple.Class("NSImage")).Send(selAlloc).Send(sel("initWithData:"), data)
 		if image != 0 {
 			// As tall as the menu bar's icons, keeping its proportions.
 			size := objc.Send[apple.CGSize](image, sel("size"))
@@ -126,7 +126,7 @@ func removeTrays() {
 }
 
 func statusBar() objc.ID {
-	return objc.ID(objc.GetClass("NSStatusBar")).Send(sel("systemStatusBar"))
+	return objc.ID(apple.Class("NSStatusBar")).Send(sel("systemStatusBar"))
 }
 
 // trayClicked reports a click on an icon's button: a right click or a

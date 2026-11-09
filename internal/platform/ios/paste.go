@@ -28,7 +28,7 @@ func pasteMethods() []objc.MethodDef {
 		{Cmd: sel("canPerformAction:withSender:"), Fn: func(self objc.ID, cmd objc.SEL, action objc.SEL, sender objc.ID) bool {
 			if in := inputOf(self); action == sel("paste:") && in != nil && in.fs.Events.Has(driver.EventPaste) &&
 				!in.fs.Config.Readonly {
-				pb := objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
+				pb := objc.ID(apple.Class("UIPasteboard")).Send(sel("generalPasteboard"))
 				if objc.Send[bool](pb, sel("hasImages")) || objc.Send[bool](pb, sel("hasURLs")) {
 					return true // images and files too
 				}
@@ -50,7 +50,7 @@ func pasteInto(editor objc.ID) bool {
 	if in == nil || !in.fs.Events.Has(driver.EventPaste) {
 		return true
 	}
-	pb := objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
+	pb := objc.ID(apple.Class("UIPasteboard")).Send(sel("generalPasteboard"))
 	p := &driver.PasteEvent{Text: apple.GoString(pb.Send(sel("string")))}
 	if d := pb.Send(sel("dataForPasteboardType:"), apple.NSString("public.html")); d != 0 {
 		p.HTML = string(apple.Bytes(d))

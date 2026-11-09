@@ -49,7 +49,7 @@ func (v *view) placeEdges() {
 			ev.holder.Send(selSetWantsLayer, true)
 			v.native.Send(selAddSubviewPositioned, ev.holder, viewAbove, v.content)
 			ev.holder.Send(selRelease)
-			ev.backdrop = objc.ID(objc.GetClass("CABackdropLayer")).Send(selNew)
+			ev.backdrop = objc.ID(apple.Class("CABackdropLayer")).Send(selNew)
 			ev.holder.Send(selLayer).Send(sel("addSublayer:"), ev.backdrop)
 			ev.backdrop.Send(selRelease)
 		}

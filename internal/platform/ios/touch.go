@@ -42,7 +42,7 @@ func registerTouches() {
 		}
 	}
 	no := func(objc.ID, objc.SEL, objc.ID) bool { return false }
-	classTracker = register("NsgoTouchTracker", objc.GetClass("UIGestureRecognizer"), nil, []objc.MethodDef{
+	classTracker = register("NsgoTouchTracker", apple.Class("UIGestureRecognizer"), nil, []objc.MethodDef{
 		{Cmd: sel("touchesBegan:withEvent:"), Fn: report(driver.GestureBegan)},
 		{Cmd: sel("touchesMoved:withEvent:"), Fn: report(driver.GestureChanged)},
 		{Cmd: sel("touchesEnded:withEvent:"), Fn: report(driver.GestureEnded)},
@@ -157,7 +157,7 @@ func (s *surface) blockNative(v *view) {
 		return
 	}
 	for n := v.native.Send(selSuperview); n != 0; n = n.Send(selSuperview) {
-		if objc.Send[bool](n, sel("isKindOfClass:"), objc.GetClass("UIScrollView")) {
+		if objc.Send[bool](n, sel("isKindOfClass:"), apple.Class("UIScrollView")) {
 			pan := n.Send(sel("panGestureRecognizer"))
 			pan.Send(sel("setEnabled:"), false)
 			f.blocked = append(f.blocked, pan.Send(sel("retain")))

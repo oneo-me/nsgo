@@ -142,7 +142,7 @@ func (o *surface) openSurface(cfg driver.SurfaceConfig) {
 func newPanel(cfg driver.SurfaceConfig) objc.ID {
 	if classPanel == 0 {
 		yes := func(objc.ID, objc.SEL) bool { return true }
-		classPanel = register("NsgoPanel", objc.GetClass("NSPanel"), nil, []objc.MethodDef{
+		classPanel = register("NsgoPanel", apple.Class("NSPanel"), nil, []objc.MethodDef{
 			{Cmd: sel("canBecomeKeyWindow"), Fn: yes},
 		})
 	}
@@ -178,7 +178,7 @@ func (s *surface) attach(app *engine.Engine) {
 	}
 	s.observe()
 	if s.hideOnBlur {
-		center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
+		center := objc.ID(apple.Class("NSNotificationCenter")).Send(sel("defaultCenter"))
 		s.stops = append(s.stops, apple.Observe(center, apple.Global(appKitPath, "NSWindowDidResignKeyNotification"),
 			func(note objc.ID) {
 				if note.Send(sel("object")) == s.window && objc.Send[bool](s.window, sel("isVisible")) {
@@ -221,8 +221,8 @@ func (s *surface) showPanel(anchor uint32) {
 		frame.Origin.X = icon.Origin.X + icon.Size.Width/2 - frame.Size.Width/2
 		frame.Origin.Y = icon.Origin.Y - frame.Size.Height - 6
 	} else {
-		mouse := objc.Send[apple.CGPoint](objc.ID(objc.GetClass("NSEvent")), sel("mouseLocation"))
-		screens := objc.ID(objc.GetClass("NSScreen")).Send(sel("screens"))
+		mouse := objc.Send[apple.CGPoint](objc.ID(apple.Class("NSEvent")), sel("mouseLocation"))
+		screens := objc.ID(apple.Class("NSScreen")).Send(sel("screens"))
 		for i := range objc.Send[int](screens, sel("count")) {
 			sc := screens.Send(sel("objectAtIndex:"), i)
 			r := objc.Send[apple.CGRect](sc, sel("frame"))
@@ -233,7 +233,7 @@ func (s *surface) showPanel(anchor uint32) {
 			}
 		}
 		if screen == 0 {
-			screen = objc.ID(objc.GetClass("NSScreen")).Send(sel("mainScreen"))
+			screen = objc.ID(apple.Class("NSScreen")).Send(sel("mainScreen"))
 		}
 		r := objc.Send[apple.CGRect](screen, sel("frame"))
 		frame.Origin.X = r.Origin.X + (r.Size.Width-frame.Size.Width)/2
@@ -308,14 +308,14 @@ func setDock(on bool) {
 // smAppService is ServiceManagement's SMAppService, loaded once; nil
 // before macOS 13.
 func smAppService() objc.ID {
-	if cls := objc.GetClass("SMAppService"); cls != 0 {
+	if cls := apple.Class("SMAppService"); cls != 0 {
 		return objc.ID(cls)
 	}
 	if _, err := purego.Dlopen("/System/Library/Frameworks/ServiceManagement.framework/ServiceManagement",
 		purego.RTLD_NOW|purego.RTLD_GLOBAL); err != nil {
 		return 0
 	}
-	return objc.ID(objc.GetClass("SMAppService"))
+	return objc.ID(apple.Class("SMAppService"))
 }
 
 // setLaunchAtLogin registers the app as a login item, or unregisters it.

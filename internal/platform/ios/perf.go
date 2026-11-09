@@ -57,23 +57,23 @@ func newHud(s *surface, monitor *engine.PerfMonitor) *hud {
 		if uikit, err := purego.Dlopen(uikitPath, purego.RTLD_NOW); err == nil {
 			purego.RegisterLibFunc(&uiGraphicsGetCx, uikit, "UIGraphicsGetCurrentContext")
 		}
-		classPerfTrace = register("NsgoPerfTrace", objc.GetClass("UIView"), nil, []objc.MethodDef{
+		classPerfTrace = register("NsgoPerfTrace", apple.Class("UIView"), nil, []objc.MethodDef{
 			{Cmd: sel("drawRect:"), Fn: drawPerfTrace},
 		})
 	})
-	panel := objc.ID(objc.GetClass("UIView")).Send(selAlloc).Send(sel("initWithFrame:"), apple.Rect(0, 0, 0, 0))
+	panel := objc.ID(apple.Class("UIView")).Send(selAlloc).Send(sel("initWithFrame:"), apple.Rect(0, 0, 0, 0))
 	panel.Send(sel("setUserInteractionEnabled:"), false)
 	panel.Send(sel("setBackgroundColor:"), uiColor(engine.PerfPanelColor))
 	panel.Send(selLayer).Send(sel("setCornerRadius:"), engine.PerfRadius)
 	panel.Send(sel("setAccessibilityElementsHidden:"), true)
-	label := objc.ID(objc.GetClass("UILabel")).Send(selAlloc).Send(sel("initWithFrame:"), apple.Rect(0, 0, 0, 0))
+	label := objc.ID(apple.Class("UILabel")).Send(selAlloc).Send(sel("initWithFrame:"), apple.Rect(0, 0, 0, 0))
 	label.Send(sel("setNumberOfLines:"), 0)
-	label.Send(selSetFont, objc.ID(objc.GetClass("UIFont")).Send(sel("monospacedSystemFontOfSize:weight:"),
+	label.Send(selSetFont, objc.ID(apple.Class("UIFont")).Send(sel("monospacedSystemFontOfSize:weight:"),
 		engine.PerfFontSize, 0.0))
 	label.Send(selSetTextColor, uiColor(engine.PerfTextColor))
 	trace := objc.ID(classPerfTrace).Send(selAlloc).Send(sel("initWithFrame:"), apple.Rect(0, 0, 0, 0))
 	trace.Send(sel("setOpaque:"), false)
-	trace.Send(sel("setBackgroundColor:"), objc.ID(objc.GetClass("UIColor")).Send(sel("clearColor")))
+	trace.Send(sel("setBackgroundColor:"), objc.ID(apple.Class("UIColor")).Send(sel("clearColor")))
 	panel.Send(selAddSubview, label)
 	panel.Send(selAddSubview, trace)
 	label.Send(selRelease)

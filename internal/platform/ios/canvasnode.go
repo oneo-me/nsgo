@@ -25,7 +25,7 @@ type axNode struct {
 }
 
 func registerCanvasNodes() {
-	canvasNodeClass = register("NsgoCanvasNode", objc.GetClass("UIAccessibilityElement"), nil, []objc.MethodDef{
+	canvasNodeClass = register("NsgoCanvasNode", apple.Class("UIAccessibilityElement"), nil, []objc.MethodDef{
 		{Cmd: sel("accessibilityActivate"), Fn: canvasNodeActivate},
 	})
 }
@@ -81,7 +81,7 @@ func (v *view) releaseCanvasNodes() {
 
 // nsArray returns an autoreleased array of items, empty for none.
 func nsArray(items []objc.ID) objc.ID {
-	a := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	a := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 	for _, it := range items {
 		a.Send(sel("addObject:"), it)
 	}

@@ -68,7 +68,7 @@ func (s *surface) frameRateRange() frameRateRange {
 	max := float32(60)
 	screen := s.window.Send(sel("screen"))
 	if screen == 0 {
-		screen = objc.ID(objc.GetClass("NSScreen")).Send(sel("mainScreen"))
+		screen = objc.ID(apple.Class("NSScreen")).Send(sel("mainScreen"))
 	}
 	if screen != 0 {
 		if n := objc.Send[int](screen, sel("maximumFramesPerSecond")); n >= 1 {
@@ -138,13 +138,13 @@ func (s *surface) setPace() {
 // repeating returns a retained timer that sends action to target every
 // interval seconds in the main run loop's common modes.
 func repeating(interval float64, target objc.ID, action objc.SEL) objc.ID {
-	t := objc.ID(objc.GetClass("NSTimer")).Send(sel("timerWithTimeInterval:target:selector:userInfo:repeats:"),
+	t := objc.ID(apple.Class("NSTimer")).Send(sel("timerWithTimeInterval:target:selector:userInfo:repeats:"),
 		interval, target, action, objc.ID(0), true).Send(sel("retain"))
 	mainLoop().Send(sel("addTimer:forMode:"), t, apple.CommonModes())
 	return t
 }
 
-func mainLoop() objc.ID { return objc.ID(objc.GetClass("NSRunLoop")).Send(sel("mainRunLoop")) }
+func mainLoop() objc.ID { return objc.ID(apple.Class("NSRunLoop")).Send(sel("mainRunLoop")) }
 
 func invalidate(t *objc.ID) {
 	if *t != 0 {

@@ -360,7 +360,7 @@ func surfaceCopy(self objc.ID, _ objc.SEL, _ objc.ID) {
 		return
 	}
 	s.selecting.list()
-	pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
+	pb := objc.ID(apple.Class("NSPasteboard")).Send(sel("generalPasteboard"))
 	pb.Send(sel("clearContents"))
 	pb.Send(sel("setString:forType:"), apple.NSString(s.selecting.model.Text(s.selecting)), apple.NSString(pasteboardText))
 }
@@ -389,7 +389,7 @@ func (v *view) selectionColor() (color uintptr, owned bool) {
 	if v.selColor != 0 {
 		return apple.CGColor(v.selColor), true
 	}
-	ns := objc.ID(objc.GetClass("NSColor")).Send(sel("selectedTextBackgroundColor"))
+	ns := objc.ID(apple.Class("NSColor")).Send(sel("selectedTextBackgroundColor"))
 	return objc.Send[uintptr](ns, sel("CGColor")), false
 }
 

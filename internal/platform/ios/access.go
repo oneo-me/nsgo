@@ -286,7 +286,7 @@ func (v *view) updateAccessibility() {
 		if label == "" {
 			label = a.Name
 		}
-		act := objc.ID(objc.GetClass("UIAccessibilityCustomAction")).Send(selAlloc).Send(
+		act := objc.ID(apple.Class("UIAccessibilityCustomAction")).Send(selAlloc).Send(
 			sel("initWithName:target:selector:"), apple.NSString(label), native, selCustomAction)
 		custom = append(custom, act)
 	}
@@ -294,7 +294,7 @@ func (v *view) updateAccessibility() {
 		v.axCustom = len(custom) > 0
 		arr := objc.ID(0)
 		if len(custom) > 0 {
-			arr = objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObjects:count:"),
+			arr = objc.ID(apple.Class("NSArray")).Send(sel("arrayWithObjects:count:"),
 				unsafe.Pointer(&custom[0]), uint(len(custom)))
 			runtime.KeepAlive(custom)
 		}

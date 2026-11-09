@@ -54,7 +54,7 @@ var loadSpeech = sync.OnceValue(func() bool {
 	if _, err := purego.Dlopen(avPath, purego.RTLD_NOW|purego.RTLD_GLOBAL); err != nil {
 		return false
 	}
-	return objc.GetClass("SFSpeechRecognizer") != 0 && objc.GetClass("AVAudioEngine") != 0
+	return Class("SFSpeechRecognizer") != 0 && Class("AVAudioEngine") != 0
 })
 
 // HandleSpeech carries out an ItemSpeech for session id, on the main
@@ -105,7 +105,7 @@ func HandleSpeech(id uint32, r driver.SpeechRequest, dispatch func(driver.Event)
 // authorize has the user allow speech recognition and the microphone,
 // asking once each, then runs next; a refusal ends the session.
 func (s *speechState) authorize(run *speechRun, next func()) {
-	recognizer := objc.ID(objc.GetClass("SFSpeechRecognizer"))
+	recognizer := objc.ID(Class("SFSpeechRecognizer"))
 	switch objc.Send[int](recognizer, sel("authorizationStatus")) {
 	case authAllowed:
 	case authNotAsked:
@@ -125,7 +125,7 @@ func (s *speechState) authorize(run *speechRun, next func()) {
 		s.finish(run, driver.SpeechNotAllowed)
 		return
 	}
-	device, media := objc.ID(objc.GetClass("AVCaptureDevice")), Global(avPath, "AVMediaTypeAudio")
+	device, media := objc.ID(Class("AVCaptureDevice")), Global(avPath, "AVMediaTypeAudio")
 	switch objc.Send[int](device, sel("authorizationStatusForMediaType:"), media) {
 	case authAllowed:
 		if !run.done {
@@ -155,9 +155,9 @@ func (s *speechState) begin(run *speechRun, lang string) {
 	if run.done || s.run != run {
 		return
 	}
-	alloc := objc.ID(objc.GetClass("SFSpeechRecognizer")).Send(sel("alloc"))
+	alloc := objc.ID(Class("SFSpeechRecognizer")).Send(sel("alloc"))
 	if lang != "" {
-		locale := objc.ID(objc.GetClass("NSLocale")).Send(sel("localeWithLocaleIdentifier:"), NSString(lang))
+		locale := objc.ID(Class("NSLocale")).Send(sel("localeWithLocaleIdentifier:"), NSString(lang))
 		run.recognizer = alloc.Send(sel("initWithLocale:"), locale)
 	} else {
 		run.recognizer = alloc.Send(sel("init"))
@@ -176,14 +176,14 @@ func (s *speechState) begin(run *speechRun, lang string) {
 		return
 	}
 	run.leave = leave
-	run.engine = objc.ID(objc.GetClass("AVAudioEngine")).Send(sel("new"))
+	run.engine = objc.ID(Class("AVAudioEngine")).Send(sel("new"))
 	input := run.engine.Send(sel("inputNode"))
 	format := input.Send(sel("outputFormatForBus:"), uint(0))
 	if input == 0 || format == 0 || objc.Send[float64](format, sel("sampleRate")) == 0 {
 		s.finish(run, driver.SpeechAudioCapture)
 		return
 	}
-	run.request = objc.ID(objc.GetClass("SFSpeechAudioBufferRecognitionRequest")).Send(sel("new"))
+	run.request = objc.ID(Class("SFSpeechAudioBufferRecognitionRequest")).Send(sel("new"))
 	run.request.Send(sel("setShouldReportPartialResults:"), run.interim)
 	request := run.request
 	// On the audio thread: the request takes buffers from any thread.

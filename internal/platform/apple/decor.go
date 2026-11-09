@@ -145,7 +145,7 @@ func boxPath(x, y, w, h float64, corners driver.Corners, continuous bool) uintpt
 // newLayer returns a new layer of class, at z under host's other layers
 // of higher z; host keeps it.
 func newLayer(host objc.ID, class string, z float64) objc.ID {
-	l := objc.ID(objc.GetClass(class)).Send(selNew)
+	l := objc.ID(Class(class)).Send(selNew)
 	l.Send(selSetZPos, Z(z))
 	host.Send(selInsertSublayer, l, uint32(0))
 	l.Send(selRelease)
@@ -168,9 +168,9 @@ func dropAll(ls *[]objc.ID) {
 
 // numbers returns a new autoreleased NSArray of NSNumbers.
 func numbers(vs ...float64) objc.ID {
-	a := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	a := objc.ID(Class("NSMutableArray")).Send(sel("array"))
 	for _, v := range vs {
-		a.Send(selAddObject, objc.ID(objc.GetClass("NSNumber")).Send(selNumberWithDouble, v))
+		a.Send(selAddObject, objc.ID(Class("NSNumber")).Send(selNumberWithDouble, v))
 	}
 	return a
 }
@@ -461,7 +461,7 @@ func (d *decor) layoutShape(layer objc.ID, w, h float64, radii driver.Corners) {
 	if vs.Clip {
 		layer.Send(selSetMasksToBounds, false)
 		if d.clip == 0 {
-			d.clip = objc.ID(objc.GetClass("CAShapeLayer")).Send(selNew)
+			d.clip = objc.ID(Class("CAShapeLayer")).Send(selNew)
 		}
 		d.clip.Send(selSetFrame, CGRect{Size: CGSize{Width: w, Height: h}})
 		d.clip.Send(selSetPath, path)
@@ -571,7 +571,7 @@ func (d *decor) layoutShadows(layer objc.ID, shadows []driver.BoxShadow, w, h fl
 		}
 		mask := l.Send(sel("mask"))
 		if mask == 0 {
-			mask = objc.ID(objc.GetClass("CAShapeLayer")).Send(selNew)
+			mask = objc.ID(Class("CAShapeLayer")).Send(selNew)
 			l.Send(selSetMask, mask)
 			mask.Send(selRelease)
 		}
@@ -655,7 +655,7 @@ func (d *decor) shape(l objc.ID, w, h float64, radii driver.Corners) {
 		path := boxPath(0, 0, w, h, radii, d.vs.ContinuousCorners)
 		m := l.Send(sel("mask"))
 		if m == 0 {
-			m = objc.ID(objc.GetClass("CAShapeLayer")).Send(selNew)
+			m = objc.ID(Class("CAShapeLayer")).Send(selNew)
 			l.Send(selSetMask, m)
 			m.Send(selRelease)
 		}
@@ -671,7 +671,7 @@ func (d *decor) shape(l objc.ID, w, h float64, radii driver.Corners) {
 
 // paintGradient makes gradient layer g draw p on a w by h box.
 func paintGradient(g objc.ID, p *driver.GradientPaint, w, h float64) {
-	colors := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	colors := objc.ID(Class("NSMutableArray")).Send(sel("array"))
 	var at []float64
 	for _, s := range p.Stops {
 		c := CGColor(s.Color)
@@ -786,7 +786,7 @@ func (d *decor) layoutMask(layer objc.ID, p *driver.GradientPaint, w, h float64)
 		return
 	}
 	if d.mask == 0 {
-		d.mask = objc.ID(objc.GetClass("CAGradientLayer")).Send(selNew)
+		d.mask = objc.ID(Class("CAGradientLayer")).Send(selNew)
 	}
 	d.mask.Send(selSetFrame, CGRect{Size: CGSize{Width: w, Height: h}})
 	paintGradient(d.mask, p, w, h)
@@ -812,9 +812,9 @@ func (d *decor) layoutFilters(layer objc.ID, filters []driver.Filter) {
 		layer.Send(selSetFilters, objc.ID(0))
 		return
 	}
-	list := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
-	ci := objc.ID(objc.GetClass("CIFilter"))
-	vector := objc.ID(objc.GetClass("CIVector"))
+	list := objc.ID(Class("NSMutableArray")).Send(sel("array"))
+	ci := objc.ID(Class("CIFilter"))
+	vector := objc.ID(Class("CIVector"))
 	if color {
 		f := ci.Send(selFilterWithName, NSString("CIColorMatrix"))
 		for i, key := range []string{"inputRVector", "inputGVector", "inputBVector", "inputAVector"} {
@@ -827,7 +827,7 @@ func (d *decor) layoutFilters(layer objc.ID, filters []driver.Filter) {
 	}
 	if blur > 0 {
 		f := ci.Send(selFilterWithName, NSString("CIGaussianBlur"))
-		f.Send(selSetValueForKey, objc.ID(objc.GetClass("NSNumber")).Send(selNumberWithDouble, float64(blur)),
+		f.Send(selSetValueForKey, objc.ID(Class("NSNumber")).Send(selNumberWithDouble, float64(blur)),
 			NSString("inputRadius"))
 		list.Send(selAddObject, f)
 	}
@@ -863,7 +863,7 @@ func blendFilter(b driver.BlendMode) objc.ID {
 	if ci == "" {
 		ci = "CI" + string(name[0]-'a'+'A') + name[1:] + "BlendMode"
 	}
-	return objc.ID(objc.GetClass("CIFilter")).Send(selFilterWithName, NSString(ci))
+	return objc.ID(Class("CIFilter")).Send(selFilterWithName, NSString(ci))
 }
 
 // layoutPerspective gives the children the view's perspective, seen from
@@ -909,13 +909,13 @@ func (d *decor) setKeyframes(layer objc.ID, a driver.KeyframeAnimation) {
 	anchor := objc.Send[CGPoint](layer, sel("anchorPoint"))
 	cx, cy := (0.5-anchor.X)*b.Size.Width, (0.5-anchor.Y)*b.Size.Height
 	frames = splitTurns(frames, math.Hypot(cx, cy))
-	moves := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	moves := objc.ID(Class("NSMutableArray")).Send(sel("array"))
 	var fades, times []float64
-	timings := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	timings := objc.ID(Class("NSMutableArray")).Send(sel("array"))
 	for i, k := range frames {
 		t := driver.Transform{TranslateY: driver.Points(k.TranslateY) * driver.Points(b.Size.Height), Rotate: k.Rotate, Scale: k.Scale}
 		m := driver.Translate3D(cx, cy, 0).Mul(t.Matrix(driver.Point{})).Mul(driver.Translate3D(-cx, -cy, 0))
-		moves.Send(selAddObject, objc.ID(objc.GetClass("NSValue")).Send(sel("valueWithCATransform3D:"), toCA(m)))
+		moves.Send(selAddObject, objc.ID(Class("NSValue")).Send(sel("valueWithCATransform3D:"), toCA(m)))
 		fades = append(fades, float64(k.Opacity)-1)
 		times = append(times, float64(k.Offset))
 		if i < len(frames)-1 {
@@ -926,7 +926,7 @@ func (d *decor) setKeyframes(layer objc.ID, a driver.KeyframeAnimation) {
 		key    string
 		values objc.ID
 	}{{"transform", moves}, {"opacity", numbers(fades...)}} {
-		anim := objc.ID(objc.GetClass("CAKeyframeAnimation")).Send(selAnimationWithPath, NSString(kv.key))
+		anim := objc.ID(Class("CAKeyframeAnimation")).Send(selAnimationWithPath, NSString(kv.key))
 		anim.Send(sel("setValues:"), kv.values)
 		anim.Send(sel("setKeyTimes:"), numbers(times...))
 		anim.Send(sel("setTimingFunctions:"), timings)

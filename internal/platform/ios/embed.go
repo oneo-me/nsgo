@@ -50,7 +50,7 @@ func StartEmbedded(resources string) {
 	}
 	loadUIKit()
 	apple.RegisterFonts(embedOpts.Fonts)
-	classContext = register("NSGoComponentContext", objc.GetClass("NSObject"), nil, []objc.MethodDef{
+	classContext = register("NSGoComponentContext", apple.Class("NSObject"), nil, []objc.MethodDef{
 		{Cmd: sel("emit:data:"), Fn: func(self objc.ID, _ objc.SEL, name, data objc.ID) {
 			if cx := contexts[self]; cx != nil {
 				cx.Emit(apple.GoString(name), apple.GoJSON(data))
@@ -64,7 +64,7 @@ func StartEmbedded(resources string) {
 	})
 	// Not a subclass of NsgoSurface: apple.Super finds the superclass from
 	// the nearest of NSGo's classes, so one may not inherit another's.
-	register("NSGoView", objc.GetClass("UIView"), nil, append(slices.Clone(surfaceMethods), embedMethods()...))
+	register("NSGoView", apple.Class("UIView"), nil, append(slices.Clone(surfaceMethods), embedMethods()...))
 }
 
 // embedState is what an NSGoView holds of the host's settings: the
@@ -399,7 +399,7 @@ func (s *surface) routeURLs(block objc.ID) {
 	s.host.Channel.HandleOpenURL(func(u string, answer func(bool)) {
 		apple.OnMain(func() {
 			b := s.embed.onOpenURL
-			url := objc.ID(objc.GetClass("NSURL")).Send(sel("URLWithString:"), apple.NSString(u))
+			url := objc.ID(apple.Class("NSURL")).Send(sel("URLWithString:"), apple.NSString(u))
 			answer(b != 0 && url != 0 && byte(apple.CallBlock(b, uintptr(url))) != 0)
 		})
 	})

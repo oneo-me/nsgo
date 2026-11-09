@@ -22,7 +22,7 @@ import (
 
 // nativeEdges reports whether UIKit has scroll edge effects to hide.
 var nativeEdges = sync.OnceValue(func() bool {
-	return objc.Send[bool](objc.ID(objc.GetClass("UIScrollView")), sel("instancesRespondToSelector:"), sel("topEdgeEffect"))
+	return objc.Send[bool](objc.ID(apple.Class("UIScrollView")), sel("instancesRespondToSelector:"), sel("topEdgeEffect"))
 })
 
 // edgeEffectSels are the UIScrollEdgeEffects of each side.
@@ -55,11 +55,11 @@ func (v *view) placeEdges() {
 			continue
 		}
 		if ev.holder == 0 {
-			ev.holder = objc.ID(objc.GetClass("UIView")).Send(selNew)
+			ev.holder = objc.ID(apple.Class("UIView")).Send(selNew)
 			ev.holder.Send(sel("setUserInteractionEnabled:"), false)
 			// Above the content, which goes in the same view.
 			ev.holder.Send(selLayer).Send(sel("setZPosition:"), 1000.0)
-			ev.backdrop = objc.ID(objc.GetClass("CABackdropLayer")).Send(selNew)
+			ev.backdrop = objc.ID(apple.Class("CABackdropLayer")).Send(selNew)
 			ev.holder.Send(selLayer).Send(sel("addSublayer:"), ev.backdrop)
 			ev.backdrop.Send(selRelease)
 			v.native.Send(selAddSubview, ev.holder)

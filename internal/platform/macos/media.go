@@ -77,7 +77,7 @@ func nativeView(view any) objc.ID {
 var pasteboardFileURL = "public.file-url"
 
 func (s *surface) acceptFiles() {
-	types := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), apple.NSString(pasteboardFileURL))
+	types := objc.ID(apple.Class("NSArray")).Send(sel("arrayWithObject:"), apple.NSString(pasteboardFileURL))
 	s.native.Send(sel("registerForDraggedTypes:"), types)
 }
 
@@ -180,10 +180,10 @@ func droppedFiles(info objc.ID) []string { return fileURLs(info.Send(sel("draggi
 
 // fileURLs returns the file: URLs of the local files pasteboard pb holds.
 func fileURLs(pb objc.ID) []string {
-	classes := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), objc.ID(objc.GetClass("NSURL")))
+	classes := objc.ID(apple.Class("NSArray")).Send(sel("arrayWithObject:"), objc.ID(apple.Class("NSURL")))
 	key := apple.NSString("NSPasteboardURLReadingFileURLsOnlyKey")
-	yes := objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), true)
-	opts := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), yes, key)
+	yes := objc.ID(apple.Class("NSNumber")).Send(sel("numberWithBool:"), true)
+	opts := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), yes, key)
 	list := pb.Send(sel("readObjectsForClasses:options:"), classes, opts)
 	n := objc.Send[uint](list, sel("count"))
 	var uris []string

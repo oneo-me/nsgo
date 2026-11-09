@@ -1243,7 +1243,7 @@ var whenScrolling struct {
 // the user shows it only while scrolling.
 func (v *view) hovered() {
 	if time.Since(whenScrolling.read) > time.Second {
-		defaults := objc.ID(objc.GetClass("NSUserDefaults")).Send(sel("standardUserDefaults"))
+		defaults := objc.ID(apple.Class("NSUserDefaults")).Send(sel("standardUserDefaults"))
 		whenScrolling.on = apple.GoString(defaults.Send(sel("stringForKey:"), apple.NSString("AppleShowScrollBars"))) == "WhenScrolling"
 		whenScrolling.read = time.Now()
 	}
@@ -1294,7 +1294,7 @@ func (v *view) overlayLayer() objc.ID {
 		v.native.Send(selAddSubview, s.overlay)
 		s.overlay.Send(selRelease)
 	}
-	layer := objc.ID(objc.GetClass("CALayer")).Send(selNew)
+	layer := objc.ID(apple.Class("CALayer")).Send(selNew)
 	layer.Send(sel("setAnchorPoint:"), apple.CGPoint{})
 	s.overlay.Send(selLayer).Send(sel("addSublayer:"), layer)
 	layer.Send(selRelease)
@@ -1365,7 +1365,7 @@ func (v *view) updateSpinner() {
 	if s.spinner == 0 {
 		s.spinner = v.overlayLayer()
 		for i := range refreshSpokes {
-			spoke := objc.ID(objc.GetClass("CALayer")).Send(selNew)
+			spoke := objc.ID(apple.Class("CALayer")).Send(selNew)
 			spoke.Send(sel("setBounds:"), apple.Rect(0, 0, 2.5, 5.5))
 			spoke.Send(sel("setCornerRadius:"), 1.25)
 			// Each 7.25 points from the center, pointing outwards.

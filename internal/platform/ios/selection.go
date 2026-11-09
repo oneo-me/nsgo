@@ -164,7 +164,7 @@ func (s *selection) placeHandles() {
 // newHandle makes handle h's view in the area: a bar and a knob in the
 // tint color, which a pan drags.
 func (s *selection) newHandle(h int) objc.ID {
-	view := func() objc.ID { return objc.ID(objc.GetClass("UIView")).Send(selNew) }
+	view := func() objc.ID { return objc.ID(apple.Class("UIView")).Send(selNew) }
 	handle := view()
 	handle.Send(sel("setTag:"), h)
 	tint := s.area.native.Send(sel("tintColor"))
@@ -177,7 +177,7 @@ func (s *selection) newHandle(h int) objc.ID {
 		handle.Send(selAddSubview, part)
 		part.Send(selRelease)
 	}
-	pan := objc.ID(objc.GetClass("UIPanGestureRecognizer")).Send(selAlloc).Send(
+	pan := objc.ID(apple.Class("UIPanGestureRecognizer")).Send(selAlloc).Send(
 		sel("initWithTarget:action:"), selector, selHandleAction)
 	handle.Send(sel("addGestureRecognizer:"), pan)
 	pan.Send(selRelease)
@@ -236,7 +236,7 @@ var (
 )
 
 func registerSelection() {
-	classSelector = register("NsgoSelector", objc.GetClass("NSObject"), nil, []objc.MethodDef{
+	classSelector = register("NsgoSelector", apple.Class("NSObject"), nil, []objc.MethodDef{
 		{Cmd: selSelectAction, Fn: selectLongPress},
 		{Cmd: selHandleAction, Fn: selectHandle},
 		{Cmd: sel("gestureRecognizer:shouldReceiveTouch:"), Fn: selectReceives},
@@ -250,7 +250,7 @@ func (v *view) setSelectable() {
 	want := v.area || v.kind == driver.KindText && v.selectable == driver.SelectableOn
 	switch {
 	case want && v.longPress == 0:
-		v.longPress = objc.ID(objc.GetClass("UILongPressGestureRecognizer")).Send(selAlloc).Send(
+		v.longPress = objc.ID(apple.Class("UILongPressGestureRecognizer")).Send(selAlloc).Send(
 			sel("initWithTarget:action:"), selector, selSelectAction)
 		v.longPress.Send(selSetDeleg, selector)
 		v.native.Send(sel("addGestureRecognizer:"), v.longPress)
@@ -331,18 +331,18 @@ func (s *selection) point(r objc.ID) driver.Point {
 // UIMenuController before.
 func (s *selection) showMenu(p driver.Point) {
 	at := apple.CGPoint{X: float64(p.X), Y: float64(p.Y)}
-	if class := objc.GetClass("UIEditMenuInteraction"); class != 0 {
+	if class := apple.Class("UIEditMenuInteraction"); class != 0 {
 		if s.menu == 0 {
 			s.menu = objc.ID(class).Send(selAlloc).Send(sel("initWithDelegate:"), objc.ID(0))
 			s.area.native.Send(sel("addInteraction:"), s.menu)
 			s.menu.Send(selRelease)
 		}
-		config := objc.ID(objc.GetClass("UIEditMenuConfiguration")).Send(
+		config := objc.ID(apple.Class("UIEditMenuConfiguration")).Send(
 			sel("configurationWithIdentifier:sourcePoint:"), objc.ID(0), at)
 		s.menu.Send(sel("presentEditMenuWithConfiguration:"), config)
 		return
 	}
-	menu := objc.ID(objc.GetClass("UIMenuController")).Send(sel("sharedMenuController"))
+	menu := objc.ID(apple.Class("UIMenuController")).Send(sel("sharedMenuController"))
 	menu.Send(sel("showMenuFromView:rect:"), s.area.native, apple.Rect(at.X, at.Y, 1, 1))
 }
 
@@ -406,7 +406,7 @@ func controllerCopy(_ objc.ID, _ objc.SEL, _ objc.ID) {
 		return
 	}
 	sl.list()
-	pb := objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
+	pb := objc.ID(apple.Class("UIPasteboard")).Send(sel("generalPasteboard"))
 	pb.Send(sel("setString:"), apple.NSString(sl.model.Text(sl)))
 }
 

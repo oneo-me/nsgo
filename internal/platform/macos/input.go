@@ -99,10 +99,10 @@ func registerInput() {
 	}
 	registerPaste()
 	delegate := []*objc.Protocol{objc.GetProtocol("NSTextFieldDelegate")}
-	classField = register("NsgoField", objc.GetClass("NSTextField"), delegate, fieldMethods)
-	classSecureField = register("NsgoSecureField", objc.GetClass("NSSecureTextField"), delegate, fieldMethods)
-	classSecureEditor = register("NsgoSecureEditor", objc.GetClass("NSSecureTextView"), nil, editorCursor())
-	classTextView = register("NsgoTextView", objc.GetClass("NSTextView"),
+	classField = register("NsgoField", apple.Class("NSTextField"), delegate, fieldMethods)
+	classSecureField = register("NsgoSecureField", apple.Class("NSSecureTextField"), delegate, fieldMethods)
+	classSecureEditor = register("NsgoSecureEditor", apple.Class("NSSecureTextView"), nil, editorCursor())
+	classTextView = register("NsgoTextView", apple.Class("NSTextView"),
 		[]*objc.Protocol{objc.GetProtocol("NSTextViewDelegate")}, append(editorCursor(), []objc.MethodDef{
 			{Cmd: sel("textDidChange:"), Fn: func(self objc.ID, _ objc.SEL, _ objc.ID) { inputOf(self).changed() }},
 			{Cmd: selShouldChange, Fn: func(self objc.ID, _ objc.SEL, tv objc.ID, r apple.NSRange, repl objc.ID) bool {
@@ -181,7 +181,7 @@ func (in *input) quietEditor() {
 	if e == 0 {
 		return
 	}
-	if e.Send(sel("class")) == objc.ID(objc.GetClass("NSSecureTextView")) {
+	if e.Send(sel("class")) == objc.ID(apple.Class("NSSecureTextView")) {
 		loadSetClass()
 		objectSetClass(e, classSecureEditor)
 		areas := e.Send(sel("trackingAreas"))
@@ -207,7 +207,7 @@ func inputOf(editor objc.ID) *input {
 func (in *input) showsIBeam(hit objc.ID) bool {
 	if in.multiline {
 		return objc.Send[bool](in.field, sel("isSelectable")) &&
-			!objc.Send[bool](hit, sel("isKindOfClass:"), objc.GetClass("NSScroller"))
+			!objc.Send[bool](hit, sel("isKindOfClass:"), apple.Class("NSScroller"))
 	}
 	return objc.Send[bool](in.field, sel("isEnabled"))
 }
@@ -236,7 +236,7 @@ func (v *view) setEditor(multiline, masked bool) {
 		}
 	}
 	if multiline {
-		scroll := objc.ID(objc.GetClass("NSScrollView")).Send(selNew)
+		scroll := objc.ID(apple.Class("NSScrollView")).Send(selNew)
 		scroll.Send(sel("setBorderType:"), 0)
 		scroll.Send(sel("setDrawsBackground:"), false)
 		scroll.Send(sel("setHasVerticalScroller:"), true)
@@ -259,7 +259,7 @@ func (v *view) setEditor(multiline, masked bool) {
 		scroll.Send(sel("setDocumentView:"), tv)
 		scroll.Send(sel("setDocumentCursor:"), objc.ID(0))
 		tv.Send(selRelease)
-		label := objc.ID(objc.GetClass("NSTextField")).Send(sel("labelWithString:"), apple.NSString(""))
+		label := objc.ID(apple.Class("NSTextField")).Send(sel("labelWithString:"), apple.NSString(""))
 		label.Send(selSetHidden, true)
 		label.Send(sel("cell")).Send(sel("setWraps:"), true)
 		v.native.Send(selAddSubview, label)
@@ -642,15 +642,15 @@ func (in *input) styleEditor() {
 		caret = nsColor(c.Caret())
 	}
 	if c.HideCaret {
-		caret = objc.ID(objc.GetClass("NSColor")).Send(sel("clearColor"))
+		caret = objc.ID(apple.Class("NSColor")).Send(sel("clearColor"))
 	}
 	e.Send(sel("setInsertionPointColor:"), caret)
-	highlight := objc.ID(objc.GetClass("NSColor")).Send(sel("selectedTextBackgroundColor"))
+	highlight := objc.ID(apple.Class("NSColor")).Send(sel("selectedTextBackgroundColor"))
 	if h := c.Highlight(); h != 0 {
 		highlight = nsColor(h)
 	}
 	if key := textAttrs().background; key != 0 {
-		attrs := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), highlight, key)
+		attrs := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), highlight, key)
 		e.Send(sel("setSelectedTextAttributes:"), attrs)
 	}
 	e.Send(sel("setContinuousSpellCheckingEnabled:"), !c.NoAutoCorrect)
@@ -674,7 +674,7 @@ func (in *input) followAccent(editor objc.ID) {
 	if _, composing := in.markedText(); in.embedded || composing || accent == 0 || accent == appAccent {
 		return
 	}
-	app, set := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")), sel("_setAccentColor:")
+	app, set := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")), sel("_setAccentColor:")
 	if !objc.Send[bool](app, sel("respondsToSelector:"), set) {
 		return
 	}
@@ -772,10 +772,10 @@ func setPlaceholder(f objc.ID, text string, font objc.ID, color driver.Color) {
 		f.Send(selSetPlaceholder, apple.NSString(text))
 		return
 	}
-	attrs := objc.ID(objc.GetClass("NSMutableDictionary")).Send(sel("dictionary"))
+	attrs := objc.ID(apple.Class("NSMutableDictionary")).Send(sel("dictionary"))
 	attrs.Send(sel("setObject:forKey:"), font, a.font)
 	attrs.Send(sel("setObject:forKey:"), nsColor(color), a.color)
-	str := objc.ID(objc.GetClass("NSAttributedString")).Send(selAlloc).Send(
+	str := objc.ID(apple.Class("NSAttributedString")).Send(selAlloc).Send(
 		sel("initWithString:attributes:"), apple.NSString(text), attrs)
 	f.Send(sel("setPlaceholderAttributedString:"), str)
 	str.Send(selRelease)
@@ -867,9 +867,9 @@ func fieldSelectionChanged(self objc.ID, cmd objc.SEL, note objc.ID) {
 // superResponds reports whether AppKit's class of the field implements
 // cmd.
 func superResponds(self objc.ID, cmd objc.SEL) bool {
-	super := objc.GetClass("NSTextField")
+	super := apple.Class("NSTextField")
 	if self.Class() == classSecureField {
-		super = objc.GetClass("NSSecureTextField")
+		super = apple.Class("NSSecureTextField")
 	}
 	return objc.Send[bool](objc.ID(super), sel("instancesRespondToSelector:"), cmd)
 }

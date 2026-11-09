@@ -306,7 +306,7 @@ var (
 var views = map[objc.ID]*view{}
 
 var (
-	sel = objc.RegisterName
+	sel = apple.Sel
 
 	selAlloc, selInit, selNew       = sel("alloc"), sel("init"), sel("new")
 	selRelease                      = sel("release")
@@ -357,7 +357,7 @@ func loadAppKit() {
 	if _, err := purego.Dlopen("/System/Library/Frameworks/AppKit.framework/AppKit", purego.RTLD_NOW|purego.RTLD_GLOBAL); err != nil {
 		panic(err)
 	}
-	nsView := objc.GetClass("NSView")
+	nsView := apple.Class("NSView")
 	common := []objc.MethodDef{
 		{Cmd: sel("makeBackingLayer"), Fn: makeBackingLayer},
 		{Cmd: sel("isFlipped"), Fn: func(self objc.ID, _ objc.SEL) bool { return true }},
@@ -384,7 +384,7 @@ func loadAppKit() {
 	// NSGo's own windows place the traffic lights again after each layout
 	// pass: macOS 27's AppKit puts them back whenever it lays the title
 	// bar out, which no notification tells.
-	classWindow = register("NsgoWindow", objc.GetClass("NSWindow"), nil, []objc.MethodDef{{
+	classWindow = register("NsgoWindow", apple.Class("NSWindow"), nil, []objc.MethodDef{{
 		Cmd: sel("layoutIfNeeded"),
 		Fn: func(self objc.ID, cmd objc.SEL) {
 			apple.Super(self, cmd)
@@ -394,7 +394,7 @@ func loadAppKit() {
 		},
 	}})
 	// The material sits behind the app's views and takes no press.
-	classMaterial = register("NsgoMaterialView", objc.GetClass("NSVisualEffectView"), nil, []objc.MethodDef{{
+	classMaterial = register("NsgoMaterialView", apple.Class("NSVisualEffectView"), nil, []objc.MethodDef{{
 		Cmd: sel("hitTest:"),
 		Fn:  func(objc.ID, objc.SEL, apple.CGPoint) objc.ID { return 0 },
 	}})
@@ -444,7 +444,7 @@ func loadAppKit() {
 		objc.MethodDef{Cmd: sel("performDragOperation:"), Fn: performDrag},
 		objc.MethodDef{Cmd: sel("scrollWheel:"), Fn: scrollWheel},
 	))
-	classObserver = register("NsgoObserver", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
+	classObserver = register("NsgoObserver", apple.Class("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("observeValueForKeyPath:ofObject:change:context:"),
 		Fn: func(self objc.ID, _ objc.SEL, path, object, change objc.ID, ctx uintptr) {
 			apple.OnMain(func() {
@@ -474,7 +474,7 @@ func loadAppKit() {
 	registerInput()
 	registerContent()
 	registerCanvasNodes()
-	classMenuTarget = register("NsgoMenuTarget", objc.GetClass("NSObject"), nil, []objc.MethodDef{
+	classMenuTarget = register("NsgoMenuTarget", apple.Class("NSObject"), nil, []objc.MethodDef{
 		{Cmd: selMenuChosen, Fn: menuChosen},
 		{Cmd: selMenuFullScreen, Fn: menuFullScreen},
 		{Cmd: sel("validateMenuItem:"), Fn: validateMenu},
@@ -615,7 +615,7 @@ func surfaceMoved(self objc.ID, cmd objc.SEL) {
 func startApp(opts Options) objc.ID {
 	loadAppKit()
 	apple.RegisterFonts(opts.Fonts)
-	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	nsApp := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	// An accessory app set so before the loop runs never shows in the
 	// Dock, as LSUIElement would.
 	policy := policyRegular
@@ -626,7 +626,7 @@ func startApp(opts Options) objc.ID {
 	defaultLanguage, _ = apple.Locale()
 	defaultMenu = mainMenu(defaultLanguage)
 	nsApp.Send(sel("setMainMenu:"), defaultMenu)
-	delegate := objc.ID(register("NsgoAppDelegate", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
+	delegate := objc.ID(register("NsgoAppDelegate", apple.Class("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("applicationShouldTerminateAfterLastWindowClosed:"),
 		Fn:  func(self objc.ID, _ objc.SEL, app objc.ID) bool { return false },
 	}, {
@@ -726,7 +726,7 @@ func newSurface(opts Options, embedded bool) *surface {
 	// Moves over the whole surface set the cursor (updateCursor), and
 	// AppKit asks for it as the mouse comes in.
 	const mouseMoved, cursorUpdate, activeInActiveApp, inVisibleRect = 0x02, 0x04, 0x40, 0x200
-	area := objc.ID(objc.GetClass("NSTrackingArea")).Send(selAlloc).Send(sel("initWithRect:options:owner:userInfo:"),
+	area := objc.ID(apple.Class("NSTrackingArea")).Send(selAlloc).Send(sel("initWithRect:options:owner:userInfo:"),
 		apple.Rect(0, 0, 0, 0), uint(mouseMoved|cursorUpdate|activeInActiveApp|inVisibleRect), s.native, objc.ID(0))
 	s.native.Send(sel("addTrackingArea:"), area)
 	area.Send(selRelease)
@@ -822,7 +822,7 @@ func finish() {
 	// stop: takes effect after the next event, and a close from the app
 	// or a timer is none: post one.
 	const applicationDefined = 15
-	event := objc.ID(objc.GetClass("NSEvent")).Send(
+	event := objc.ID(apple.Class("NSEvent")).Send(
 		sel("otherEventWithType:location:modifierFlags:timestamp:windowNumber:context:subtype:data1:data2:"),
 		uint(applicationDefined), apple.CGPoint{}, uint(0), float64(0), 0, objc.ID(0), int16(0), 0, 0)
 	if event != 0 {
@@ -834,7 +834,7 @@ func finish() {
 // deprecated but still the request the system honors soonest, and
 // macOS 14's replacement, activate, is asynchronous.
 func activateApp() {
-	app := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	app := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	if objc.Send[bool](app, sel("respondsToSelector:"), sel("activateIgnoringOtherApps:")) {
 		app.Send(sel("activateIgnoringOtherApps:"), true)
 	} else {
@@ -846,13 +846,13 @@ func activateApp() {
 func mainMenu(lang string) objc.ID {
 	msgs := locales.In(lang)
 	menu := func(title string) objc.ID {
-		return objc.ID(objc.GetClass("NSMenu")).Send(selAlloc).Send(sel("initWithTitle:"), apple.NSString(title))
+		return objc.ID(apple.Class("NSMenu")).Send(selAlloc).Send(sel("initWithTitle:"), apple.NSString(title))
 	}
 	item := func(m objc.ID, title, action, key string) {
 		m.Send(sel("addItemWithTitle:action:keyEquivalent:"), apple.NSString(title), sel(action), apple.NSString(key))
 	}
 	submenu := func(bar, m objc.ID) {
-		it := objc.ID(objc.GetClass("NSMenuItem")).Send(selNew)
+		it := objc.ID(apple.Class("NSMenuItem")).Send(selNew)
 		it.Send(sel("setSubmenu:"), m)
 		bar.Send(sel("addItem:"), it)
 	}
@@ -873,7 +873,7 @@ func mainMenu(lang string) objc.ID {
 
 // environment returns what AppKit tells about where the app runs.
 func (s *surface) environment() driver.Environment {
-	ws := objc.ID(objc.GetClass("NSWorkspace")).Send(sel("sharedWorkspace"))
+	ws := objc.ID(apple.Class("NSWorkspace")).Send(sel("sharedWorkspace"))
 	locale, rtl := apple.Locale()
 	appearance := apple.GoString(s.native.Send(sel("effectiveAppearance")).Send(sel("name")))
 	return driver.Environment{
@@ -903,7 +903,7 @@ func (s *surface) environment() driver.Environment {
 // windows shows (minimized or covered), active while it is the active app.
 func appLifecycle() driver.Lifecycle {
 	const occlusionVisible = 1 << 1
-	app := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	app := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	switch {
 	case objc.Send[bool](app, sel("isHidden")) || objc.Send[uint](app, sel("occlusionState"))&occlusionVisible == 0:
 		return driver.LifecycleBackground
@@ -919,7 +919,7 @@ func (s *surface) backingScale() float32 {
 	if s.window != 0 {
 		return float32(objc.Send[float64](s.window, sel("backingScaleFactor")))
 	}
-	if screen := objc.ID(objc.GetClass("NSScreen")).Send(sel("mainScreen")); screen != 0 {
+	if screen := objc.ID(apple.Class("NSScreen")).Send(sel("mainScreen")); screen != 0 {
 		return float32(objc.Send[float64](screen, sel("backingScaleFactor")))
 	}
 	return 2
@@ -947,7 +947,7 @@ func (s *surface) refresh() {
 // key and mouse events.
 func (s *surface) observe() {
 	observeApp()
-	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
+	center := objc.ID(apple.Class("NSNotificationCenter")).Send(sel("defaultCenter"))
 	for _, name := range []string{"NSWindowDidResizeNotification", "NSWindowDidMoveNotification",
 		"NSWindowDidEnterFullScreenNotification", "NSWindowDidExitFullScreenNotification"} {
 		s.stops = append(s.stops, apple.Observe(center, apple.Global(appKitPath, name), func(note objc.ID) {
@@ -977,7 +977,7 @@ func (s *surface) observe() {
 
 	const keyDown, leftDown, leftUp, mouseMoved, leftDragged, rightDown, otherDown, rightDragged, otherDragged, wheel, flags = 1 << 10, 1 << 1, 1 << 2, 1 << 5, 1 << 6, 1 << 3, 1 << 25, 1 << 7, 1 << 27, 1 << 22, 1 << 12
 	handler := objc.NewBlock(func(_ objc.Block, event objc.ID) objc.ID { return s.filter(event) })
-	nsEvent := objc.ID(objc.GetClass("NSEvent"))
+	nsEvent := objc.ID(apple.Class("NSEvent"))
 	monitor := nsEvent.Send(sel("addLocalMonitorForEventsMatchingMask:handler:"),
 		uint64(keyDown|leftDown|leftUp|mouseMoved|leftDragged|rightDown|otherDown|rightDragged|otherDragged|wheel|flags), handler).Send(sel("retain"))
 	handler.Release()
@@ -1003,10 +1003,10 @@ func observeApp() {
 			s.refresh()
 		}
 	}
-	ws := objc.ID(objc.GetClass("NSWorkspace")).Send(sel("sharedWorkspace"))
+	ws := objc.ID(apple.Class("NSWorkspace")).Send(sel("sharedWorkspace"))
 	apple.Observe(ws.Send(sel("notificationCenter")),
 		apple.Global(appKitPath, "NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification"), refresh)
-	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
+	center := objc.ID(apple.Class("NSNotificationCenter")).Send(sel("defaultCenter"))
 	apple.Observe(center, apple.Global(foundation, "NSCurrentLocaleDidChangeNotification"), refresh)
 	for _, name := range []string{"NSApplicationDidBecomeActiveNotification", "NSApplicationDidResignActiveNotification",
 		"NSApplicationDidHideNotification", "NSApplicationDidUnhideNotification",
@@ -1116,7 +1116,7 @@ func (s *surface) hasKeys() bool {
 	if first == 0 || first == s.window {
 		return !s.embedded
 	}
-	return objc.Send[bool](first, sel("isKindOfClass:"), objc.GetClass("NSView")) &&
+	return objc.Send[bool](first, sel("isKindOfClass:"), apple.Class("NSView")) &&
 		objc.Send[bool](first, sel("isDescendantOf:"), s.native)
 }
 
@@ -1186,10 +1186,10 @@ func (s *surface) composing() bool {
 // editing reports whether keys go to a text field or a web page.
 func (s *surface) editing() bool {
 	first := s.window.Send(sel("firstResponder"))
-	if objc.Send[bool](first, sel("isKindOfClass:"), objc.GetClass("NSText")) {
+	if objc.Send[bool](first, sel("isKindOfClass:"), apple.Class("NSText")) {
 		return true
 	}
-	for n := first; n != 0 && objc.Send[bool](n, sel("isKindOfClass:"), objc.GetClass("NSView")); n = n.Send(selSuperview) {
+	for n := first; n != 0 && objc.Send[bool](n, sel("isKindOfClass:"), apple.Class("NSView")); n = n.Send(selSuperview) {
 		if v := views[n]; v != nil && v.kind == driver.KindWeb {
 			return true
 		}
@@ -1228,7 +1228,7 @@ func (s *surface) pressOutside(event objc.ID) {
 // alert shows a as a sheet on the window. The Cancel action answers
 // Escape; the sheet's answer goes to the engine as EventAlert.
 func (s *surface) alert(a *driver.AlertConfig) {
-	alert := objc.ID(objc.GetClass("NSAlert")).Send(selNew)
+	alert := objc.ID(apple.Class("NSAlert")).Send(selNew)
 	alert.Send(sel("setMessageText:"), apple.NSString(a.Title))
 	alert.Send(sel("setInformativeText:"), apple.NSString(a.Message))
 	// order[i] is the action of the alert's button i: an action sheet's
@@ -1362,7 +1362,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			apple.HandleSpeech(it.Count, *it.Speech, s.engine.Dispatch)
 			continue
 		case driver.ItemSetClipboard:
-			pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
+			pb := objc.ID(apple.Class("NSPasteboard")).Send(sel("generalPasteboard"))
 			pb.Send(sel("clearContents"))
 			pb.Send(sel("setString:forType:"), apple.NSString(it.Value), apple.NSString(pasteboardText))
 			continue
@@ -1818,7 +1818,7 @@ func trackingArea(view objc.ID, moves bool) objc.ID {
 	if moves {
 		options |= mouseMoved
 	}
-	area := objc.ID(objc.GetClass("NSTrackingArea")).Send(selAlloc).Send(
+	area := objc.ID(apple.Class("NSTrackingArea")).Send(selAlloc).Send(
 		sel("initWithRect:options:owner:userInfo:"), apple.Rect(0, 0, 0, 0), options, view, objc.ID(0))
 	view.Send(sel("addTrackingArea:"), area)
 	return area
@@ -1832,7 +1832,7 @@ func (v *view) dispatch(kind driver.EventKind) {
 // and the keys and the button held now.
 func (v *view) mouseAt(kind driver.EventKind, loc apple.CGPoint) {
 	p := objc.Send[apple.CGPoint](v.native, selConvertPoint, loc, objc.ID(0))
-	flags := objc.Send[uint](objc.ID(objc.GetClass("NSEvent")), sel("modifierFlags"))
+	flags := objc.Send[uint](objc.ID(apple.Class("NSEvent")), sel("modifierFlags"))
 	v.report(driver.Event{Kind: kind, Point: driver.Point{X: driver.Points(p.X), Y: driver.Points(p.Y)}, Page: v.page(loc),
 		Modifiers: apple.Modifiers(flags), Button: pressedButton()})
 }
@@ -1850,7 +1850,7 @@ func (v *view) mouse(kind driver.EventKind, event objc.ID) {
 // pressedButton is the button held down: the first of those AppKit says
 // are, each a bit by its number, as Windows' and the DOM's.
 func pressedButton() driver.MouseButton {
-	buttons := objc.Send[uint](objc.ID(objc.GetClass("NSEvent")), sel("pressedMouseButtons"))
+	buttons := objc.Send[uint](objc.ID(apple.Class("NSEvent")), sel("pressedMouseButtons"))
 	for i, b := range []driver.MouseButton{driver.MouseButtonLeft, driver.MouseButtonRight, driver.MouseButtonMiddle,
 		driver.MouseButtonBack, driver.MouseButtonForward} {
 		if buttons&(1<<i) != 0 {
@@ -1905,7 +1905,7 @@ func (v *view) report(e driver.Event) {
 
 func nsColor(c driver.Color) objc.ID {
 	r, g, b, a := c.Components()
-	return objc.ID(objc.GetClass("NSColor")).Send(sel("colorWithSRGBRed:green:blue:alpha:"), r, g, b, a)
+	return objc.ID(apple.Class("NSColor")).Send(sel("colorWithSRGBRed:green:blue:alpha:"), r, g, b, a)
 }
 
 // hitTest lets presses on text and plain containers through to the
@@ -2203,9 +2203,9 @@ func covers(v *view, hit objc.ID) bool {
 // began with.
 func (s *surface) updateCursor(hit, up objc.ID, always bool) {
 	if !always {
-		app := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+		app := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 		if !objc.Send[bool](app, sel("isActive")) ||
-			objc.Send[uint](objc.ID(objc.GetClass("NSEvent")), sel("pressedMouseButtons")) != 0 {
+			objc.Send[uint](objc.ID(apple.Class("NSEvent")), sel("pressedMouseButtons")) != 0 {
 			return
 		}
 	}
@@ -2214,7 +2214,7 @@ func (s *surface) updateCursor(hit, up objc.ID, always bool) {
 		return
 	}
 	c := nsCursor(cursor)
-	if always || objc.ID(objc.GetClass("NSCursor")).Send(sel("currentCursor")) != c {
+	if always || objc.ID(apple.Class("NSCursor")).Send(sel("currentCursor")) != c {
 		c.Send(sel("set"))
 	}
 }
@@ -2276,7 +2276,7 @@ const (
 // nsCursor is the AppKit cursor of c. AppKit has no public wait, progress,
 // help or zoom cursors: those show the arrow.
 func nsCursor(c driver.Cursor) objc.ID {
-	class := objc.ID(objc.GetClass("NSCursor"))
+	class := objc.ID(apple.Class("NSCursor"))
 	pick := func(name string) objc.ID { return class.Send(sel(name)) }
 	switch c {
 	case driver.CursorPointer:
@@ -2317,9 +2317,9 @@ var invisibleNS objc.ID
 // invisibleCursor is a cursor that draws nothing.
 func invisibleCursor() objc.ID {
 	if invisibleNS == 0 {
-		image := objc.ID(objc.GetClass("NSImage")).Send(sel("alloc"))
+		image := objc.ID(apple.Class("NSImage")).Send(sel("alloc"))
 		image = image.Send(sel("initWithSize:"), apple.CGSize{Width: 1, Height: 1})
-		invisibleNS = objc.ID(objc.GetClass("NSCursor")).Send(sel("alloc"))
+		invisibleNS = objc.ID(apple.Class("NSCursor")).Send(sel("alloc"))
 		invisibleNS = invisibleNS.Send(sel("initWithImage:hotSpot:"), image, apple.CGPoint{})
 		image.Send(selRelease)
 	}

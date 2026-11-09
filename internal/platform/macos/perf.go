@@ -104,8 +104,8 @@ func newHud(s *surface, monitor *engine.PerfMonitor) *hud {
 	layer.Send(selSetCornerRadius, 8.0)
 	trackingArea(panel, false).Send(selRelease)
 
-	label := objc.ID(objc.GetClass("NSTextField")).Send(sel("labelWithString:"), apple.NSString(""))
-	font := objc.ID(objc.GetClass("NSFont")).Send(sel("monospacedSystemFontOfSize:weight:"), 10.5, 0.0)
+	label := objc.ID(apple.Class("NSTextField")).Send(sel("labelWithString:"), apple.NSString(""))
+	font := objc.ID(apple.Class("NSFont")).Send(sel("monospacedSystemFontOfSize:weight:"), 10.5, 0.0)
 	label.Send(selSetFont, font)
 	label.Send(selSetTextColor, nsColor(engine.PerfTextColor))
 	label.Send(selSetAccessibilityElement, false)
@@ -217,7 +217,7 @@ func (h *hud) stop() {
 // HUD is first shown.
 func registerPerfClasses() {
 	perfClassOnce.Do(func() {
-		nsView := objc.GetClass("NSView")
+		nsView := apple.Class("NSView")
 		passThrough := func(objc.ID, objc.SEL, apple.CGPoint) objc.ID { return 0 }
 		// Tracking areas ignore hitTest, and a transparent view keeps its
 		// own; a hidden one would not report the pointer leaving.
@@ -244,7 +244,7 @@ func drawPerfTrace(self objc.ID, _ objc.SEL, _ apple.CGRect) {
 	if h == nil {
 		return
 	}
-	context := objc.ID(objc.GetClass("NSGraphicsContext")).Send(selCurrentContext)
+	context := objc.ID(apple.Class("NSGraphicsContext")).Send(selCurrentContext)
 	if context == 0 {
 		return
 	}

@@ -135,7 +135,7 @@ func enqueue(event uintptr) {
 	context := objc.Send[uint32](window, sel("_contextId"))
 	hidSetSender(event, testSender)
 	bksDigitizerInfo(event, context, 0, 0, 0, 0, 0)
-	objc.ID(objc.GetClass("UIApplication")).Send(sel("sharedApplication")).Send(sel("_enqueueHIDEvent:"), event)
+	objc.ID(apple.Class("UIApplication")).Send(sel("sharedApplication")).Send(sel("_enqueueHIDEvent:"), event)
 	apple.Release(event)
 }
 
@@ -181,7 +181,7 @@ func touch(p driver.Point, ph phase) {
 func focusAt(p driver.Point) {
 	onMainSync(func() {
 		hit := window.Send(sel("hitTest:withEvent:"), apple.CGPoint{X: float64(p.X), Y: float64(p.Y)}, objc.ID(0))
-		field, text := objc.ID(objc.GetClass("UITextField")), objc.ID(objc.GetClass("UITextView"))
+		field, text := objc.ID(apple.Class("UITextField")), objc.ID(apple.Class("UITextView"))
 		for v := hit; v != 0; v = v.Send(sel("superview")) {
 			if objc.Send[bool](v, sel("isKindOfClass:"), field) || objc.Send[bool](v, sel("isKindOfClass:"), text) {
 				if !objc.Send[bool](v, sel("isFirstResponder")) && objc.Send[bool](v, sel("canBecomeFirstResponder")) {
@@ -249,7 +249,7 @@ func (t *testSurface) Hover(driver.Point) error { return nil }
 // types into the first responder as its keys do, asking the field's
 // delegate first.
 func keyboardImpl() objc.ID {
-	class := objc.GetClass("UIKeyboardImpl")
+	class := apple.Class("UIKeyboardImpl")
 	if class == 0 {
 		return 0
 	}
@@ -260,8 +260,8 @@ func keyboardImpl() objc.ID {
 // keys a test presses type their letters whatever the simulator's language
 // makes the keyboard, as a pinyin one would compose them into characters.
 func typeLatin() {
-	ctl := objc.ID(objc.GetClass("UIKeyboardInputModeController"))
-	mode := objc.ID(objc.GetClass("UIKeyboardInputMode"))
+	ctl := objc.ID(apple.Class("UIKeyboardInputModeController"))
+	mode := objc.ID(apple.Class("UIKeyboardInputMode"))
 	if ctl == 0 || mode == 0 {
 		return
 	}
@@ -469,7 +469,7 @@ func (t *testSurface) Answer(id uint32, index int) error {
 
 // findLabel finds the label reading text in v.
 func findLabel(v objc.ID, text string) objc.ID {
-	if objc.Send[bool](v, sel("isKindOfClass:"), objc.ID(objc.GetClass("UILabel"))) &&
+	if objc.Send[bool](v, sel("isKindOfClass:"), objc.ID(apple.Class("UILabel"))) &&
 		apple.GoString(v.Send(sel("text"))) == text {
 		return v
 	}
@@ -486,7 +486,7 @@ func (t *testSurface) Screenshot() ([]byte, error) {
 	var png []byte
 	onMainSync(func() {
 		bounds := objc.Send[apple.CGRect](window, selBounds)
-		renderer := objc.ID(objc.GetClass("UIGraphicsImageRenderer")).Send(selAlloc).Send(sel("initWithBounds:"), bounds)
+		renderer := objc.ID(apple.Class("UIGraphicsImageRenderer")).Send(selAlloc).Send(sel("initWithBounds:"), bounds)
 		draw := objc.NewBlock(func(_ objc.Block, _ objc.ID) {
 			objc.Send[bool](window, sel("drawViewHierarchyInRect:afterScreenUpdates:"), bounds, true)
 		})
@@ -542,7 +542,7 @@ func layersAnimating(layer objc.ID) bool {
 }
 
 func gliding(v objc.ID) bool {
-	if objc.Send[bool](v, sel("isKindOfClass:"), objc.ID(objc.GetClass("UIScrollView"))) && objc.Send[bool](v, sel("isDecelerating")) {
+	if objc.Send[bool](v, sel("isKindOfClass:"), objc.ID(apple.Class("UIScrollView"))) && objc.Send[bool](v, sel("isDecelerating")) {
 		return true
 	}
 	subs := v.Send(sel("subviews"))

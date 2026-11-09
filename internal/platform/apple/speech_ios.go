@@ -12,7 +12,7 @@ import (
 // dictation, as long as the session runs, then gives back what it was,
 // letting the apps it interrupted play again.
 func holdSpeechSession() (leave func(), err error) {
-	shared := objc.ID(objc.GetClass("AVAudioSession")).Send(sel("sharedInstance"))
+	shared := objc.ID(Class("AVAudioSession")).Send(sel("sharedInstance"))
 	if shared == 0 {
 		return nil, errors.New("apple: no audio session")
 	}
@@ -37,6 +37,6 @@ func holdSpeechSession() (leave func(), err error) {
 // DeclaresUsage reports whether the app's Info.plist declares key, as iOS
 // ends an app that asks for what it declares no reason for.
 func DeclaresUsage(key string) bool {
-	bundle := objc.ID(objc.GetClass("NSBundle")).Send(sel("mainBundle"))
+	bundle := objc.ID(Class("NSBundle")).Send(sel("mainBundle"))
 	return bundle.Send(sel("objectForInfoDictionaryKey:"), NSString(key)) != 0
 }

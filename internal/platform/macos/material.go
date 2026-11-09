@@ -81,7 +81,7 @@ func (s *surface) setMaterial(m driver.WindowMaterial) {
 			s.effect.Send(sel("removeFromSuperview"))
 			s.effect = 0
 			s.window.Send(selSetOpaque, true)
-			s.window.Send(selSetBackgroundColor, objc.ID(objc.GetClass("NSColor")).Send(sel("windowBackgroundColor")))
+			s.window.Send(selSetBackgroundColor, objc.ID(apple.Class("NSColor")).Send(sel("windowBackgroundColor")))
 		}
 		s.material = driver.WindowMaterialNone
 		return
@@ -95,7 +95,7 @@ func (s *surface) setMaterial(m driver.WindowMaterial) {
 		s.native.Send(selAddSubviewPositioned, s.effect, viewBelow, objc.ID(0))
 		s.effect.Send(selRelease)
 		s.window.Send(selSetOpaque, false)
-		s.window.Send(selSetBackgroundColor, objc.ID(objc.GetClass("NSColor")).Send(selClearColor))
+		s.window.Send(selSetBackgroundColor, objc.ID(apple.Class("NSColor")).Send(selClearColor))
 	}
 	s.effect.Send(selSetMaterial, code)
 	s.material = m
@@ -151,7 +151,7 @@ func (v *view) fitBackdrop(vs *driver.ViewStyle) {
 
 // setBackdrop gives v the backdrop its style asks for, or takes it away.
 func (v *view) setBackdrop(vs *driver.ViewStyle) {
-	glass := vs.Glass != driver.GlassNone && objc.GetClass("NSGlassEffectView") != 0
+	glass := vs.Glass != driver.GlassNone && apple.Class("NSGlassEffectView") != 0
 	want := vs.Effects.BackdropBlur() > 0 || glass
 	if !want || glass != v.glass {
 		if v.backdrop != 0 {
@@ -165,7 +165,7 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	if v.backdrop == 0 {
 		class := classMaterial
 		if glass {
-			class = objc.GetClass("NSGlassEffectView")
+			class = apple.Class("NSGlassEffectView")
 		}
 		v.backdrop = objc.ID(class).Send(selAlloc).Send(sel("initWithFrame:"), objc.Send[apple.CGRect](v.native, selBounds))
 		v.backdrop.Send(selSetAutoresizingMask, widthHeightSizable)
@@ -185,7 +185,7 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	v.backdrop.Send(sel("setWantsLayer:"), true)
 	v.fitBackdrop(vs)
 	if v.tint == 0 {
-		v.tint = objc.ID(objc.GetClass("NSView")).Send(selAlloc).Send(sel("initWithFrame:"), objc.Send[apple.CGRect](v.backdrop, selBounds))
+		v.tint = objc.ID(apple.Class("NSView")).Send(selAlloc).Send(sel("initWithFrame:"), objc.Send[apple.CGRect](v.backdrop, selBounds))
 		v.tint.Send(selSetAutoresizingMask, widthHeightSizable)
 		v.tint.Send(sel("setWantsLayer:"), true)
 		v.backdrop.Send(sel("addSubview:"), v.tint)

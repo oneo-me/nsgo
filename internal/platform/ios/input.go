@@ -80,9 +80,9 @@ func registerInput() {
 			in.fs.Key("Backspace")
 		}
 	}}
-	classField = register("NsgoField", objc.GetClass("UITextField"), nil,
+	classField = register("NsgoField", apple.Class("UITextField"), nil,
 		append([]objc.MethodDef{caretRect, deleteBackward}, pasteMethods()...))
-	classTextView = register("NsgoTextView", objc.GetClass("UITextView"), nil, append(pasteMethods(), caretRect, deleteBackward,
+	classTextView = register("NsgoTextView", apple.Class("UITextView"), nil, append(pasteMethods(), caretRect, deleteBackward,
 		// Shift and Option with Return break the line of a text view whose
 		// Return submits, as chat apps do on hardware keyboards.
 		objc.MethodDef{Cmd: sel("keyCommands"), Fn: func(self objc.ID, cmd objc.SEL) objc.ID {
@@ -91,12 +91,12 @@ func registerInput() {
 			if in == nil || in.fs.Config.Submit() == driver.SubmitBehaviorNewline {
 				return inherited
 			}
-			commands := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+			commands := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 			if inherited != 0 {
 				commands.Send(sel("addObjectsFromArray:"), inherited)
 			}
 			for _, mods := range []int{1 << 17, 1 << 19} { // Shift, Option
-				c := objc.ID(objc.GetClass("UIKeyCommand")).Send(sel("keyCommandWithInput:modifierFlags:action:"),
+				c := objc.ID(apple.Class("UIKeyCommand")).Send(sel("keyCommandWithInput:modifierFlags:action:"),
 					apple.NSString("\r"), mods, sel("nsgoInsertLineBreak:"))
 				c.Send(sel("setWantsPriorityOverSystemBehavior:"), true)
 				commands.Send(sel("addObject:"), c)
@@ -145,11 +145,11 @@ func (v *view) setEditor(multiline bool) {
 	}
 	if multiline {
 		tv := objc.ID(classTextView).Send(selNew)
-		tv.Send(sel("setBackgroundColor:"), objc.ID(objc.GetClass("UIColor")).Send(sel("clearColor")))
+		tv.Send(sel("setBackgroundColor:"), objc.ID(apple.Class("UIColor")).Send(sel("clearColor")))
 		tv.Send(sel("setTextContainerInset:"), edgeInsets{})
 		tv.Send(sel("textContainer")).Send(sel("setLineFragmentPadding:"), 0.0)
 		tv.Send(selSetDeleg, v.native)
-		label := objc.ID(objc.GetClass("UILabel")).Send(selNew)
+		label := objc.ID(apple.Class("UILabel")).Send(selNew)
 		label.Send(sel("setNumberOfLines:"), 0)
 		label.Send(selSetHidden, true)
 		v.native.Send(selAddSubview, label)
@@ -411,7 +411,7 @@ var contentTypes = map[driver.AutoComplete]string{
 
 func uiColor(c driver.Color) objc.ID {
 	r, g, b, a := c.Components()
-	return objc.ID(objc.GetClass("UIColor")).Send(sel("colorWithRed:green:blue:alpha:"), r, g, b, a)
+	return objc.ID(apple.Class("UIColor")).Send(sel("colorWithRed:green:blue:alpha:"), r, g, b, a)
 }
 
 // configure is ItemInput.
@@ -452,10 +452,10 @@ func (v *view) configure(c *driver.InputConfig) {
 		f.Send(sel("setEditable:"), !c.Disabled)
 		f.Send(sel("setSelectable:"), !c.Disabled)
 	} else {
-		attrs := objc.ID(objc.GetClass("NSMutableDictionary")).Send(sel("dictionary"))
+		attrs := objc.ID(apple.Class("NSMutableDictionary")).Send(sel("dictionary"))
 		attrs.Send(sel("setObject:forKey:"), uiColor(placeholder), apple.Global(uikitPath, "NSForegroundColorAttributeName"))
 		attrs.Send(sel("setObject:forKey:"), objc.ID(font), apple.Global(uikitPath, "NSFontAttributeName"))
-		str := objc.ID(objc.GetClass("NSAttributedString")).Send(selAlloc).Send(
+		str := objc.ID(apple.Class("NSAttributedString")).Send(selAlloc).Send(
 			sel("initWithString:attributes:"), apple.NSString(c.Placeholder), attrs)
 		f.Send(sel("setAttributedPlaceholder:"), str)
 		str.Send(selRelease)

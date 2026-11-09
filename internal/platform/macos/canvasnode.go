@@ -25,7 +25,7 @@ type axNode struct {
 }
 
 func registerCanvasNodes() {
-	canvasNodeClass = register("NsgoCanvasNode", objc.GetClass("NSAccessibilityElement"), nil, []objc.MethodDef{
+	canvasNodeClass = register("NsgoCanvasNode", apple.Class("NSAccessibilityElement"), nil, []objc.MethodDef{
 		{Cmd: sel("accessibilityPerformPress"), Fn: canvasNodePress},
 	})
 }

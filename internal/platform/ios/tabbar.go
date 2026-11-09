@@ -26,7 +26,7 @@ var (
 )
 
 func registerTabBar() {
-	class := register("NsgoTabBarDelegate", objc.GetClass("NSObject"),
+	class := register("NsgoTabBarDelegate", apple.Class("NSObject"),
 		[]*objc.Protocol{objc.GetProtocol("UITabBarDelegate")}, []objc.MethodDef{
 			{Cmd: sel("tabBar:didSelectItem:"), Fn: func(_ objc.ID, _ objc.SEL, bar, item objc.ID) {
 				t := tabBars[bar]
@@ -47,7 +47,7 @@ func newTabBar(cx *driver.NativeContext) driver.NativeComponent {
 	if tabBarDelegate == 0 {
 		registerTabBar()
 	}
-	t := &tabBar{cx: cx, bar: objc.ID(objc.GetClass("UITabBar")).Send(selNew)}
+	t := &tabBar{cx: cx, bar: objc.ID(apple.Class("UITabBar")).Send(selNew)}
 	t.bar.Send(selSetDeleg, tabBarDelegate)
 	tabBars[t.bar] = t
 	t.measure()
@@ -63,7 +63,7 @@ func (t *tabBar) measure() {
 	}
 	var bottom float64
 	if objc.Send[objc.ID](t.bar, sel("window")) == 0 {
-		app := objc.ID(objc.GetClass("UIApplication")).Send(sel("sharedApplication"))
+		app := objc.ID(apple.Class("UIApplication")).Send(sel("sharedApplication"))
 		if window := objc.Send[objc.ID](app, sel("keyWindow")); window != 0 {
 			bottom = objc.Send[edgeInsets](window, sel("safeAreaInsets")).Bottom
 		}
@@ -86,7 +86,7 @@ func (t *tabBar) SetProp(name string, value any) {
 	switch name {
 	case "items":
 		list, _ := value.([]any)
-		array := objc.ID(objc.GetClass("NSMutableArray")).Send(selNew)
+		array := objc.ID(apple.Class("NSMutableArray")).Send(selNew)
 		t.items = t.items[:0]
 		for i, it := range list {
 			tab, _ := it.(map[string]any)
@@ -94,9 +94,9 @@ func (t *tabBar) SetProp(name string, value any) {
 			icon, _ := tab["icon"].(string)
 			var image objc.ID
 			if icon != "" {
-				image = objc.ID(objc.GetClass("UIImage")).Send(sel("systemImageNamed:"), apple.NSString(icon))
+				image = objc.ID(apple.Class("UIImage")).Send(sel("systemImageNamed:"), apple.NSString(icon))
 			}
-			item := objc.ID(objc.GetClass("UITabBarItem")).Send(selAlloc).
+			item := objc.ID(apple.Class("UITabBarItem")).Send(selAlloc).
 				Send(sel("initWithTitle:image:tag:"), apple.NSString(title), image, i)
 			t.items = append(t.items, item)
 			array.Send(sel("addObject:"), item)

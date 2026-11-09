@@ -59,9 +59,9 @@ func Bytes(data objc.ID) []byte {
 // NSData returns an autoreleased NSData holding a copy of b.
 func NSData(b []byte) objc.ID {
 	if len(b) == 0 {
-		return objc.ID(objc.GetClass("NSData")).Send(sel("data"))
+		return objc.ID(Class("NSData")).Send(sel("data"))
 	}
-	return objc.ID(objc.GetClass("NSData")).Send(sel("dataWithBytes:length:"), unsafe.Pointer(&b[0]), uint(len(b)))
+	return objc.ID(Class("NSData")).Send(sel("dataWithBytes:length:"), unsafe.Pointer(&b[0]), uint(len(b)))
 }
 
 // Encode decodes data upright, scales it so its longer side has at most

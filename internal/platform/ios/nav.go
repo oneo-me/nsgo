@@ -80,7 +80,7 @@ var orientationMasks = map[driver.Orientation]uint{
 }
 
 func registerNav() {
-	classNavDelegate = register("NsgoNavDelegate", objc.GetClass("NSObject"),
+	classNavDelegate = register("NsgoNavDelegate", apple.Class("NSObject"),
 		[]*objc.Protocol{objc.GetProtocol("UINavigationBarDelegate")}, []objc.MethodDef{
 			// The bar's background reaches up under the status bar where
 			// the screen does.
@@ -100,7 +100,7 @@ func registerNav() {
 			}},
 		})
 	navDelegate = objc.ID(classNavDelegate).Send(selNew)
-	classSheet = register("NsgoSheetController", objc.GetClass("UIViewController"),
+	classSheet = register("NsgoSheetController", apple.Class("UIViewController"),
 		[]*objc.Protocol{objc.GetProtocol("UIAdaptivePresentationControllerDelegate")}, []objc.MethodDef{
 			{Cmd: sel("viewDidLayoutSubviews"), Fn: func(self objc.ID, cmd objc.SEL) {
 				apple.Super(self, cmd)
@@ -156,7 +156,7 @@ func navMethods() []objc.MethodDef {
 // headerHeights measures a navigation bar on this device, as NSH does:
 // its height, and with a large title the 52-point row large titles add.
 func headerHeights() [2]driver.Points {
-	bar := objc.ID(objc.GetClass("UINavigationBar")).Send(selNew)
+	bar := objc.ID(apple.Class("UINavigationBar")).Send(selNew)
 	h := objc.Send[apple.CGSize](bar, sel("sizeThatFits:"), apple.CGSize{Width: 390}).Height
 	bar.Send(selRelease)
 	if h <= 0 {
@@ -170,7 +170,7 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 	b := v.bar
 	if b == nil {
 		b = &navBar{}
-		b.bar = objc.ID(objc.GetClass("UINavigationBar")).Send(selNew)
+		b.bar = objc.ID(apple.Class("UINavigationBar")).Send(selNew)
 		b.bar.Send(selSetDeleg, navDelegate)
 		s.direct(b.bar)
 		const flexibleWidth = 2
@@ -181,8 +181,8 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 		}
 		// Outside a navigation controller the bar has no margins of its own.
 		b.bar.Send(sel("setLayoutMargins:"), edgeInsets{Left: 16, Right: 16})
-		b.item = objc.ID(objc.GetClass("UINavigationItem")).Send(selNew)
-		b.back = objc.ID(objc.GetClass("UINavigationItem")).Send(selNew)
+		b.item = objc.ID(apple.Class("UINavigationItem")).Send(selNew)
+		b.back = objc.ID(apple.Class("UINavigationItem")).Send(selNew)
 		v.native.Send(selAddSubview, b.bar)
 		bars[b.bar] = v
 		v.bar = b
@@ -211,7 +211,7 @@ func (s *surface) configureScreen(v *view, c *driver.ScreenConfig) {
 		if c.CanGoBack {
 			items = []objc.ID{b.back, b.item}
 		}
-		array := objc.ID(objc.GetClass("NSMutableArray")).Send(selNew)
+		array := objc.ID(apple.Class("NSMutableArray")).Send(selNew)
 		for _, it := range items {
 			array.Send(sel("addObject:"), it)
 		}
@@ -233,7 +233,7 @@ func (s *surface) styleBar(b *navBar, c *driver.ScreenConfig) {
 		tint = uiColor(c.TintColor)
 	}
 	b.bar.Send(sel("setTintColor:"), tint)
-	a := objc.ID(objc.GetClass("UINavigationBarAppearance")).Send(selNew)
+	a := objc.ID(apple.Class("UINavigationBarAppearance")).Send(selNew)
 	switch {
 	case c.HeaderTransparent, c.LargeTitle && !b.collapsed:
 		a.Send(sel("configureWithTransparentBackground"))
@@ -244,11 +244,11 @@ func (s *surface) styleBar(b *navBar, c *driver.ScreenConfig) {
 		// From iOS 26 the default background has no blur of its own.
 		const systemChromeMaterial = 10
 		a.Send(sel("configureWithDefaultBackground"))
-		a.Send(sel("setBackgroundEffect:"), objc.ID(objc.GetClass("UIBlurEffect")).Send(sel("effectWithStyle:"), systemChromeMaterial))
+		a.Send(sel("setBackgroundEffect:"), objc.ID(apple.Class("UIBlurEffect")).Send(sel("effectWithStyle:"), systemChromeMaterial))
 	}
 	if c.TitleColor != 0 {
 		key := apple.Global(uikitPath, "NSForegroundColorAttributeName")
-		attrs := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), uiColor(c.TitleColor), key)
+		attrs := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), uiColor(c.TitleColor), key)
 		a.Send(sel("setTitleTextAttributes:"), attrs)
 		a.Send(sel("setLargeTitleTextAttributes:"), attrs)
 	}
@@ -256,7 +256,7 @@ func (s *surface) styleBar(b *navBar, c *driver.ScreenConfig) {
 		// The back button's title takes the tint only through the
 		// appearance's button styles.
 		key := apple.Global(uikitPath, "NSForegroundColorAttributeName")
-		attrs := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), tint, key)
+		attrs := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), tint, key)
 		for _, part := range []string{"buttonAppearance", "backButtonAppearance"} {
 			a.Send(sel(part)).Send(sel("normal")).Send(sel("setTitleTextAttributes:"), attrs)
 		}
@@ -354,7 +354,7 @@ func (s *surface) followLargeTitle(sv *view, offset driver.Points) {
 		s.layoutBar(screen)
 		b.bar.Send(sel("layoutIfNeeded"))
 	})
-	objc.ID(objc.GetClass("UIView")).Send(sel("animateWithDuration:animations:"), 0.25, animations)
+	objc.ID(apple.Class("UIView")).Send(sel("animateWithDuration:animations:"), 0.25, animations)
 	animations.Release()
 }
 
@@ -376,7 +376,7 @@ func (s *surface) rightItem(v *view, c *driver.ScreenConfig) objc.ID {
 		}
 		// The screen's view is the target, which UIKit holds weakly; it
 		// outlives the button.
-		b.system = objc.ID(objc.GetClass("UIBarButtonItem")).Send(selAlloc).
+		b.system = objc.ID(apple.Class("UIBarButtonItem")).Send(selAlloc).
 			Send(sel("initWithBarButtonSystemItem:target:action:"), code, v.native, selHeaderItem)
 		b.systemKind = c.RightSystemItem
 	}
@@ -394,12 +394,12 @@ func (s *surface) symbolItems(v *view, c *driver.ScreenConfig) objc.ID {
 	if b.symbols != 0 {
 		b.symbols.Send(selRelease)
 	}
-	class := objc.ID(objc.GetClass("UIBarButtonItem"))
-	array := objc.ID(objc.GetClass("NSMutableArray")).Send(selNew)
+	class := objc.ID(apple.Class("UIBarButtonItem"))
+	array := objc.ID(apple.Class("NSMutableArray")).Send(selNew)
 	lines := strings.Split(c.RightSymbols, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		name, label, _ := strings.Cut(lines[i], "\t")
-		image := objc.ID(objc.GetClass("UIImage")).Send(sel("systemImageNamed:"), apple.NSString(name))
+		image := objc.ID(apple.Class("UIImage")).Send(sel("systemImageNamed:"), apple.NSString(name))
 		const plain = 0
 		item := class.Send(selAlloc).Send(sel("initWithImage:style:target:action:"), image, plain, v.native, selHeaderItem)
 		item.Send(sel("setTag:"), i)
@@ -464,7 +464,7 @@ func (s *surface) barItem(id driver.NodeID) objc.ID {
 	if wrap == 0 {
 		return 0
 	}
-	item := objc.ID(objc.GetClass("UIBarButtonItem")).Send(selAlloc).Send(sel("initWithCustomView:"), wrap)
+	item := objc.ID(apple.Class("UIBarButtonItem")).Send(selAlloc).Send(sel("initWithCustomView:"), wrap)
 	item.Send(sel("autorelease"))
 	return item
 }
@@ -478,7 +478,7 @@ func (s *surface) headerWrap(id driver.NodeID) objc.ID {
 	}
 	v := s.views[id]
 	if v.headerWrap == 0 {
-		v.headerWrap = objc.ID(objc.GetClass("UIView")).Send(selNew)
+		v.headerWrap = objc.ID(apple.Class("UIView")).Send(selNew)
 		v.headerWrap.Send(selAddSubview, v.native)
 	}
 	s.sizeHeaderWrap(v)
@@ -503,7 +503,7 @@ func (s *surface) setSwipeBack(v *view) {
 	b := v.bar
 	switch {
 	case want && b.edge == 0:
-		b.edge = objc.ID(objc.GetClass("UIScreenEdgePanGestureRecognizer")).Send(selAlloc).
+		b.edge = objc.ID(apple.Class("UIScreenEdgePanGestureRecognizer")).Send(selAlloc).
 			Send(sel("initWithTarget:action:"), v.native, selEdgeSwipe)
 		v.native.Send(sel("addGestureRecognizer:"), b.edge)
 		b.edge.Send(selRelease)
@@ -543,10 +543,13 @@ func (s *surface) screenBelow(v *view) *view {
 // screen comes in from the trailing edge over the one it covers, which
 // moves 30% of the way the other way and dims; a pop is the reverse. The
 // core only shows and hides screens, laying out none it hides, so the
-// first item of a batch that changes a stack's screens snapshots the
-// screen it shows, and once the batch is applied a new top screen slides
-// in over that snapshot or the snapshot slides off it. A swipe back is a
-// slide of the screens themselves, which the core lays out for it.
+// first item of a batch that changes a stack's screens notes the screen
+// it shows, and once the batch is applied a new top screen slides in over
+// that screen or that screen slides off it: one the batch hid shows until
+// its slide ends, and one it deleted keeps its native views, as it last
+// drew, until then. A snapshot of it cost a push 5–13 ms of the main
+// thread in the simulator, waiting on the render server. A swipe back is
+// a slide of the screens themselves, which the core lays out for it.
 
 const (
 	// slideSeconds is how long a push or a pop takes, on the keyboard's
@@ -561,10 +564,11 @@ const (
 )
 
 // slide is a stack's top screen moving over the one below it. A nil
-// screen is snap, the screen the stack showed, as it last drew.
+// screen is gone, the native of the screen the stack showed, which the
+// batch deleted.
 type slide struct {
 	stack, top, below *view
-	snap, dim         objc.ID // dim is a black view between them
+	gone, dim         objc.ID // dim is a black view between them
 	// swipe follows the finger; popped says it let the top screen go.
 	swipe, popped bool
 	ended         bool
@@ -574,19 +578,21 @@ type slide struct {
 }
 
 // stackChange is a stack whose screens a batch changes: the screen it
-// showed, a snapshot of it where it was, and the screens under it.
+// showed, whether that screen may slide (it is in place and no swipe
+// moves it), its native kept once the batch deletes it (gone), and the
+// screens under it.
 type stackChange struct {
 	stack, was *view
-	snap       objc.ID
-	frame      apple.CGRect
+	slides     bool
+	gone       objc.ID
 	under      []*view
 }
 
 // stackOf returns the stack screen v is in, or nil.
 func (s *surface) stackOf(v *view) *view { return views[v.native.Send(selSuperview)] }
 
-// touchStack notes that the batch changes the screens of stack, keeping
-// how the screen it shows looks before the batch hides or deletes it.
+// touchStack notes that the batch changes the screens of stack, and the
+// screen it shows before the batch hides or deletes it.
 func (s *surface) touchStack(stack *view) {
 	if stack == nil || slices.ContainsFunc(s.changes, func(c stackChange) bool { return c.stack == stack }) {
 		return
@@ -594,10 +600,7 @@ func (s *surface) touchStack(stack *view) {
 	c := stackChange{stack: stack, was: s.tops[stack]}
 	sl := s.slides[stack]
 	if was := c.was; was != nil && (sl == nil || !sl.swipe) && s.views[was.id] == was && was.native.Send(selSuperview) == stack.children() {
-		if c.snap = was.native.Send(sel("snapshotViewAfterScreenUpdates:"), false); c.snap != 0 {
-			c.snap.Send(sel("retain"))
-			c.frame = objc.Send[apple.CGRect](was.native, sel("frame"))
-		}
+		c.slides = true
 		for _, sub := range apple.Subviews(stack.children()) {
 			if sub == was.native {
 				break
@@ -626,12 +629,12 @@ func (s *surface) topScreen(stack *view) *view {
 func (s *surface) slideStacks() {
 	for _, c := range s.changes {
 		if s.views[c.stack.id] != c.stack {
-			s.dropSnapshot(c.snap)
+			dropGone(c.gone)
 			continue
 		}
 		now := s.topScreen(c.stack)
 		if now == c.was {
-			s.dropSnapshot(c.snap)
+			dropGone(c.gone)
 			continue
 		}
 		if sl := s.slides[c.stack]; sl != nil {
@@ -640,61 +643,124 @@ func (s *surface) slideStacks() {
 		s.tops[c.stack] = now
 		if now == nil {
 			delete(s.tops, c.stack)
-			s.dropSnapshot(c.snap)
+			dropGone(c.gone)
 			continue
 		}
-		s.slideScreens(c, now)
+		if !s.slideScreens(c, now) {
+			dropGone(c.gone)
+		}
 	}
 	clear(s.changes)
 	s.changes = s.changes[:0]
 }
 
-// dropSnapshot releases a snapshot no slide shows.
-func (s *surface) dropSnapshot(snap objc.ID) {
-	if snap != 0 {
-		snap.Send(selRelease)
+// coverScreens notes the stacks whose top screen items hide, before any
+// is applied: the core lays a hidden screen out at no size, and the
+// screen slides under the one pushed over it as it last drew.
+func (s *surface) coverScreens(items []driver.MountItem) {
+	for i := range items {
+		it := &items[i]
+		if it.Kind != driver.ItemViewStyle || !it.ViewStyle.Hidden || int(it.ID) >= len(s.views) {
+			continue
+		}
+		if v := s.views[it.ID]; v != nil && v.bar != nil && !v.style.Hidden {
+			s.touchStack(s.stackOf(v))
+		}
+	}
+}
+
+// covered reports whether v is a screen a stack showed before the batch
+// hid it, or inside one, whose layout at no size it keeps until the core
+// shows the screen again and lays it out.
+func (s *surface) covered(v *view) bool {
+	for _, c := range s.changes {
+		if c.slides && c.gone == 0 && (v == c.was || objc.Send[bool](v.native, sel("isDescendantOfView:"), c.was.native)) {
+			return true
+		}
+	}
+	return false
+}
+
+// keepScreen keeps v's native in place when v is a screen a stack showed
+// before the batch deleted it, for its slide off; it reports whether it
+// kept it.
+func (s *surface) keepScreen(v *view) bool {
+	for i := range s.changes {
+		if c := &s.changes[i]; c.was == v && c.slides && c.gone == 0 {
+			c.gone = v.native.Send(sel("retain"))
+			c.gone.Send(sel("setUserInteractionEnabled:"), false)
+			return true
+		}
+	}
+	return false
+}
+
+// inGone reports whether native is inside a screen keepScreen kept,
+// which keeps its subviews until it goes.
+func (s *surface) inGone(native objc.ID) bool {
+	for _, c := range s.changes {
+		if c.gone != 0 && objc.Send[bool](native, sel("isDescendantOfView:"), c.gone) {
+			return true
+		}
+	}
+	return false
+}
+
+// dropGone takes a kept screen away.
+func dropGone(gone objc.ID) {
+	if gone != 0 {
+		gone.Send(selRemoveFromSuperview)
+		gone.Send(selRelease)
 	}
 }
 
 // slideScreens slides stack c from the screen it showed to now: a pop
-// when now was under it, else a push.
-func (s *surface) slideScreens(c stackChange, now *view) {
-	if c.snap == 0 {
-		return
+// when now was under it, else a push. It reports whether a slide shows
+// the screen c kept.
+func (s *surface) slideScreens(c stackChange, now *view) bool {
+	if !c.slides {
+		return false
 	}
 	if s.navigating(c.stack) {
 		// The page's shader draws the change.
-		s.dropSnapshot(c.snap)
-		return
+		return false
 	}
-	sl := &slide{stack: c.stack, top: now, snap: c.snap}
+	// The screen it showed is still there, hidden, or gone.
+	var was *view
+	if c.gone == 0 {
+		if s.views[c.was.id] != c.was || c.was.native.Send(selSuperview) != c.stack.children() {
+			return false
+		}
+		was = c.was
+	}
+	sl := &slide{stack: c.stack, top: now, below: was, gone: c.gone}
 	from, to := 1.0, 0.0
 	pop := slices.Contains(c.under, now)
 	// A push takes the pushed screen's animation, a pop the popped one's.
 	anim := screenAnimation(now)
 	if pop {
-		sl.top, sl.below = nil, now
+		sl.top, sl.below = was, now
 		from, to = 0, 1
 		anim = screenAnimation(c.was)
 	}
 	if anim == driver.ScreenNone {
-		s.dropSnapshot(c.snap)
-		return
+		return false
 	}
 	sl.fade = anim == driver.ScreenFade
 	if s.slideWidth(sl) == 0 {
-		s.dropSnapshot(c.snap)
-		return
+		return false
 	}
-	c.snap.Send(selSetFrame, c.frame)
-	c.snap.Send(sel("setUserInteractionEnabled:"), false)
-	if pop {
-		c.stack.children().Send(selAddSubview, c.snap)
+	if was != nil {
+		was.native.Send(selSetHidden, false)
+	}
+	if top, below := s.slideViews(sl); pop {
+		c.stack.children().Send(selAddSubview, top)
 	} else {
-		c.stack.children().Send(selInsertBelow, c.snap, now.native)
+		c.stack.children().Send(selInsertBelow, below, now.native)
 	}
 	s.startSlide(sl)
 	s.animateSlide(sl, from, to, slideSeconds)
+	return true
 }
 
 // screenAnimation is how screen v enters and leaves.
@@ -711,7 +777,7 @@ func (s *surface) slideViews(sl *slide) (top, below objc.ID) {
 	native := func(v *view) objc.ID {
 		switch {
 		case v == nil:
-			return sl.snap
+			return sl.gone
 		case s.views[v.id] == v:
 			return v.native
 		}
@@ -733,8 +799,8 @@ func (s *surface) slideWidth(sl *slide) float64 {
 // startSlide puts the dimming view under the top screen of sl.
 func (s *surface) startSlide(sl *slide) {
 	s.slides[sl.stack] = sl
-	sl.dim = objc.ID(objc.GetClass("UIView")).Send(selNew)
-	sl.dim.Send(sel("setBackgroundColor:"), objc.ID(objc.GetClass("UIColor")).Send(sel("blackColor")))
+	sl.dim = objc.ID(apple.Class("UIView")).Send(selNew)
+	sl.dim.Send(sel("setBackgroundColor:"), objc.ID(apple.Class("UIColor")).Send(sel("blackColor")))
 	sl.dim.Send(sel("setUserInteractionEnabled:"), false)
 	sl.dim.Send(sel("setAlpha:"), 0.0)
 	sl.dim.Send(selSetFrame, objc.Send[apple.CGRect](sl.stack.native, selBounds))
@@ -762,7 +828,7 @@ func (s *surface) animateSlide(sl *slide, from, to, seconds float64) {
 	sl.stack.native.Send(sel("setUserInteractionEnabled:"), false)
 	w := s.slideWidth(sl)
 	top, below := s.slideViews(sl)
-	tx := objc.ID(objc.GetClass("CATransaction"))
+	tx := objc.ID(apple.Class("CATransaction"))
 	tx.Send(sel("begin"))
 	done := objc.NewBlock(func(objc.Block) { s.endSlide(sl) })
 	tx.Send(sel("setCompletionBlock:"), done)
@@ -786,14 +852,14 @@ func slideLayer(view objc.ID, key string, from, to, seconds float64, additive bo
 	if view == 0 {
 		return
 	}
-	number := objc.ID(objc.GetClass("NSNumber"))
+	number := objc.ID(apple.Class("NSNumber"))
 	c := driver.KeyboardCurve
-	anim := objc.ID(objc.GetClass("CABasicAnimation")).Send(sel("animationWithKeyPath:"), apple.NSString(key))
+	anim := objc.ID(apple.Class("CABasicAnimation")).Send(sel("animationWithKeyPath:"), apple.NSString(key))
 	anim.Send(sel("setFromValue:"), number.Send(sel("numberWithDouble:"), from))
 	anim.Send(sel("setToValue:"), number.Send(sel("numberWithDouble:"), to))
 	anim.Send(sel("setAdditive:"), additive)
 	anim.Send(sel("setDuration:"), seconds)
-	anim.Send(sel("setTimingFunction:"), objc.ID(objc.GetClass("CAMediaTimingFunction")).Send(
+	anim.Send(sel("setTimingFunction:"), objc.ID(apple.Class("CAMediaTimingFunction")).Send(
 		sel("functionWithControlPoints::::"), c.X1, c.Y1, c.X2, c.Y2))
 	anim.Send(sel("setFillMode:"), apple.NSString("forwards"))
 	anim.Send(sel("setRemovedOnCompletion:"), false)
@@ -819,11 +885,14 @@ func (s *surface) endSlide(sl *slide) {
 			n.Send(selLayer).Send(sel("removeAnimationForKey:"), apple.NSString(slideKey))
 		}
 	}
-	if sl.snap != 0 {
-		sl.snap.Send(selRemoveFromSuperview)
-		sl.snap.Send(selRelease)
-	}
+	dropGone(sl.gone)
 	if !sl.swipe {
+		// The screen it covered hides as the core has it.
+		for _, v := range []*view{sl.top, sl.below} {
+			if v != nil && s.views[v.id] == v {
+				v.native.Send(selSetHidden, v.style.Hidden)
+			}
+		}
 		return
 	}
 	for _, v := range []*view{sl.top, sl.below} {
@@ -902,7 +971,7 @@ func (s *surface) presentSheet(v *view) {
 	c := v.modal
 	ctrl := objc.ID(classSheet).Send(selNew)
 	container := ctrl.Send(sel("view"))
-	container.Send(sel("setBackgroundColor:"), objc.ID(objc.GetClass("UIColor")).Send(sel("systemBackgroundColor")))
+	container.Send(sel("setBackgroundColor:"), objc.ID(apple.Class("UIColor")).Send(sel("systemBackgroundColor")))
 	container.Send(selAddSubview, v.native)
 	const pageSheet, formSheet = 1, 2
 	style := pageSheet
@@ -1019,7 +1088,7 @@ func (s *surface) setStatusBar(c *driver.StatusBarConfig) {
 		return
 	}
 	block := objc.NewBlock(func(objc.Block) { update() })
-	objc.ID(objc.GetClass("UIView")).Send(sel("animateWithDuration:animations:"), 0.25, block)
+	objc.ID(apple.Class("UIView")).Send(sel("animateWithDuration:animations:"), 0.25, block)
 	block.Release()
 }
 

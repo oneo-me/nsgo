@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	sel = objc.RegisterName
+	sel = Sel
 
 	selSetBackgroundColor = sel("setBackgroundColor:")
 	selSetCornerRadius    = sel("setCornerRadius:")
@@ -99,7 +99,7 @@ func StyleLayer(layer objc.ID, was, vs *driver.ViewStyle, view objc.ID) {
 			anim = moveAnimation(layer, was, vs)
 		}
 		if anim == 0 {
-			anim = objc.ID(objc.GetClass("CABasicAnimation")).Send(sel("animationWithKeyPath:"), NSString(k))
+			anim = objc.ID(Class("CABasicAnimation")).Send(sel("animationWithKeyPath:"), NSString(k))
 			anim.Send(sel("setFromValue:"), start)
 		}
 		anim.Send(sel("setDuration:"), tr.Duration.Seconds())
@@ -180,9 +180,9 @@ func setViewShadow(view objc.ID, sh driver.BoxShadow) {
 		view.Send(selSetShadow, objc.ID(0))
 		return
 	}
-	ns := objc.ID(objc.GetClass("NSShadow")).Send(selNew)
+	ns := objc.ID(Class("NSShadow")).Send(selNew)
 	ref := CGColor(sh.Color)
-	ns.Send(sel("setShadowColor:"), objc.ID(objc.GetClass("NSColor")).Send(sel("colorWithCGColor:"), ref))
+	ns.Send(sel("setShadowColor:"), objc.ID(Class("NSColor")).Send(sel("colorWithCGColor:"), ref))
 	Release(ref)
 	ns.Send(sel("setShadowOffset:"), CGSize{Width: float64(sh.Offset.X), Height: float64(sh.Offset.Y)})
 	ns.Send(sel("setShadowBlurRadius:"), float64(sh.Blur)/2)
@@ -212,7 +212,7 @@ func transitionKeys(p driver.TransitionProperty) []string {
 
 // timing returns the CAMediaTimingFunction of a curve.
 func timing(c driver.Curve) objc.ID {
-	fn := objc.ID(objc.GetClass("CAMediaTimingFunction"))
+	fn := objc.ID(Class("CAMediaTimingFunction"))
 	if c == (driver.Curve{}) {
 		return fn.Send(sel("functionWithName:"), NSString("linear"))
 	}
@@ -362,15 +362,15 @@ func moveAnimation(layer objc.ID, was, vs *driver.ViewStyle) objc.ID {
 	}
 	tr := vs.Transition
 	moves[layer] = &move{from: from, to: *vs, begin: now + tr.Delay.Seconds(), duration: tr.Duration.Seconds(), curve: tr.Easing}
-	values := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	values := objc.ID(Class("NSMutableArray")).Send(sel("array"))
 	_, radius := layerTransform(layer, vs.Transform, vs.Origin, float64(vs.OriginZ))
 	n := max(int(math.Ceil(turned(from.Transform, vs.Transform)/turnStep(radius))), 1)
 	for i := range n + 1 {
 		s := driver.MixStyles(from, *vs, float64(i)/float64(n), driver.TransitionTransform)
 		m, _ := layerTransform(layer, s.Transform, s.Origin, float64(vs.OriginZ))
-		values.Send(selAddObject, objc.ID(objc.GetClass("NSValue")).Send(sel("valueWithCATransform3D:"), m))
+		values.Send(selAddObject, objc.ID(Class("NSValue")).Send(sel("valueWithCATransform3D:"), m))
 	}
-	anim := objc.ID(objc.GetClass("CAKeyframeAnimation")).Send(selAnimationWithPath, NSString("transform"))
+	anim := objc.ID(Class("CAKeyframeAnimation")).Send(selAnimationWithPath, NSString("transform"))
 	anim.Send(sel("setValues:"), values)
 	return anim
 }

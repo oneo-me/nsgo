@@ -43,15 +43,15 @@ var (
 const contentZ = -1
 
 func registerContent() {
-	drawer := register("NsgoContentDrawer", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
+	drawer := register("NsgoContentDrawer", apple.Class("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("drawLayer:inContext:"),
 		Fn:  drawContent,
 	}})
 	contentDrawer = objc.ID(drawer).Send(selNew)
-	null := objc.ID(objc.GetClass("NSNull")).Send(sel("null"))
+	null := objc.ID(apple.Class("NSNull")).Send(sel("null"))
 	keys := []string{"contents", "bounds", "position", "frame", "hidden", "contentsScale",
 		"onOrderIn", "onOrderOut", "sublayers"}
-	dict := objc.ID(objc.GetClass("NSMutableDictionary")).Send(selNew)
+	dict := objc.ID(apple.Class("NSMutableDictionary")).Send(selNew)
 	for _, k := range keys {
 		dict.Send(sel("setObject:forKey:"), null, apple.NSString(k))
 	}
@@ -127,7 +127,7 @@ func (v *view) drawLayer() objc.ID {
 	if v.contentLayer != 0 {
 		return v.contentLayer
 	}
-	layer := objc.ID(objc.GetClass("CALayer")).Send(selNew)
+	layer := objc.ID(apple.Class("CALayer")).Send(selNew)
 	layer.Send(selActions, contentActions)
 	layer.Send(selSetDelegate, contentDrawer)
 	layer.Send(selSetNeedsDisplayOnResize, true)

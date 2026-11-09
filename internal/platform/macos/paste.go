@@ -25,12 +25,12 @@ func registerPaste() {
 			apple.Super(self, cmd, sender)
 		}
 	}
-	classFieldEditor = register("NsgoFieldEditor", objc.GetClass("NSTextView"), nil, append(editorCursor(), []objc.MethodDef{
+	classFieldEditor = register("NsgoFieldEditor", apple.Class("NSTextView"), nil, append(editorCursor(), []objc.MethodDef{
 		{Cmd: sel("paste:"), Fn: paste},
 		{Cmd: sel("pasteAsPlainText:"), Fn: paste},
 		{Cmd: sel("validateUserInterfaceItem:"), Fn: validatePaste},
 	}...))
-	classFieldCell = register("NsgoFieldCell", objc.GetClass("NSTextFieldCell"), nil, []objc.MethodDef{{
+	classFieldCell = register("NsgoFieldCell", apple.Class("NSTextFieldCell"), nil, []objc.MethodDef{{
 		Cmd: sel("fieldEditorForView:"),
 		Fn: func(self objc.ID, _ objc.SEL, control objc.ID) objc.ID {
 			v := views[control]
@@ -45,7 +45,7 @@ func registerPaste() {
 			return s.fieldEditor
 		},
 	}})
-	classWindowDelegate = register("NsgoWindowDelegate", objc.GetClass("NSObject"),
+	classWindowDelegate = register("NsgoWindowDelegate", apple.Class("NSObject"),
 		[]*objc.Protocol{objc.GetProtocol("NSWindowDelegate")}, []objc.MethodDef{{
 			// An opened window's close is the app's to decide
 			// (core.Window.OnClosing), which destroys it.
@@ -120,7 +120,7 @@ func pasteInto(editor objc.ID) bool {
 // pasted reads the general pasteboard as a paste: its text, its local
 // files, or else its image, as a PNG or a JPEG, which is what apps read.
 func pasted() *driver.PasteEvent {
-	pb := objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
+	pb := objc.ID(apple.Class("NSPasteboard")).Send(sel("generalPasteboard"))
 	p := &driver.PasteEvent{HTML: apple.GoString(pb.Send(sel("stringForType:"), apple.NSString("public.html"))),
 		Text: apple.GoString(pb.Send(sel("stringForType:"), apple.NSString(pasteboardText))),
 		URIs: fileURLs(pb)}

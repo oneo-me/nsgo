@@ -99,7 +99,7 @@ func (v *view) focusable() bool {
 // presses a view without focusing it.
 func (s *surface) clicking() bool {
 	const leftDown, rightDown, otherDown = 1, 3, 25
-	e := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")).Send(sel("currentEvent"))
+	e := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")).Send(sel("currentEvent"))
 	if e == 0 {
 		return false
 	}
@@ -118,7 +118,7 @@ func (s *surface) focusedPressable() bool {
 // NSTextField rather than the shared field editor it edits in.
 func (s *surface) modalCame(v *view) {
 	first := s.window.Send(sel("firstResponder"))
-	if objc.Send[bool](first, sel("isKindOfClass:"), objc.GetClass("NSTextView")) &&
+	if objc.Send[bool](first, sel("isKindOfClass:"), apple.Class("NSTextView")) &&
 		objc.Send[bool](first, sel("isFieldEditor")) {
 		first = first.Send(sel("delegate"))
 	}
@@ -144,7 +144,7 @@ func (s *surface) modalGone(v *view) {
 	defer back.Send(selRelease)
 	// A newer modal that remembered a view of v remembers v's instead.
 	for _, m := range s.modals[i:] {
-		if m.focusBefore != 0 && objc.Send[bool](m.focusBefore, sel("isKindOfClass:"), objc.GetClass("NSView")) &&
+		if m.focusBefore != 0 && objc.Send[bool](m.focusBefore, sel("isKindOfClass:"), apple.Class("NSView")) &&
 			objc.Send[bool](m.focusBefore, sel("isDescendantOf:"), v.native) {
 			m.focusBefore.Send(selRelease)
 			m.focusBefore = back.Send(sel("retain"))

@@ -6,13 +6,13 @@ References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH
 
 ## Performance against NSH's baselines
 
-NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, and on macOS for the DataTable and the stack, NSGo costs what NSH does or less; what is left:
+NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, on macOS for the DataTable and the stack, and in the iOS simulator, NSGo costs what NSH does or less; what is left:
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| Animated layers on Apple platforms | `performance.md` (The performance monitor) | The gallery's Animations page costs on macOS what NSH's does (13–15% of a core against 8%, 1.1–1.5 ms against 0.5 ms a frame), and an iOS push does not hold a frame over 3 ms (p95 9 ms, the new page's 115 items against NSH's 42) |
-| GTK frames | `performance.md` (Linux) | The DataTable's scroll costs on Linux what NSH's does (5.4 ms a frame and 51% of a core against 2.2 ms and 32%), and its ticks and the stack's slides too (16% and 10% against 14% and 6%) |
-| Windows and Android | `data-table.md` (Performance) | The stack's slides on Windows (25–31% against 18–24%) and the DataTable's scroll on Android (125% against 111% on the emulator) cost what NSH's do; and on a Pixel 10 Pro the table holds about NSH's ~870 views, commits at 3 and 7 ms at the median and 90th percentile, and slides on whole pixels |
+| Animated layers on macOS | `performance.md` (The performance monitor) | The gallery's Animations page costs on macOS what NSH's does (13–15% of a core against 8%, 1.1–1.5 ms against 0.5 ms a frame), measured at 120 Hz on a Mac whose screen is unlocked: with it locked both builds' display links stall (2026-11-09). NSGo's samples spend frames in AppKit's window layout pass (`_findAnySubviewNeedingAutoLayoutEngine`), which NSH's do not |
+| GTK frames | `performance.md` (Linux) | The DataTable's scroll costs on Linux what NSH's does (5.4 ms a frame and 51% of a core against 2.2 ms and 32%), and its ticks and the stack's slides too (16% and 10% against 14% and 6%); most of a scrolling frame is GTK's own snapshot and rendering under its main loop (2026-11-09) |
+| Windows and Android | `data-table.md` (Performance) | The DataTable's scroll and the stack's slides on Windows (41–44% and 28–29% against 30–32% and 20–22%, 2026-11-09) and the DataTable's scroll on Android (125% against 111% on the emulator) cost what NSH's do; and on a Pixel 10 Pro the table holds about NSH's ~870 views, commits at 3 and 7 ms at the median and 90th percentile, and slides on whole pixels |
 
 ## Motion
 

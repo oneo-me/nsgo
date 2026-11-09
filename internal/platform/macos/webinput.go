@@ -19,7 +19,7 @@ const (
 )
 
 func uptime() float64 {
-	return objc.Send[float64](objc.ID(objc.GetClass("NSProcessInfo")).Send(sel("processInfo")), sel("systemUptime"))
+	return objc.Send[float64](objc.ID(apple.Class("NSProcessInfo")).Send(sel("processInfo")), sel("systemUptime"))
 }
 
 // keyCodes are the virtual key codes of the US layout's keys by what
@@ -75,7 +75,7 @@ func sendWebInput(web objc.ID, in driver.WebInput) {
 			if kind == evLeftUp {
 				pressure = 0
 			}
-			ev := objc.ID(objc.GetClass("NSEvent")).Send(
+			ev := objc.ID(apple.Class("NSEvent")).Send(
 				sel("mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:"),
 				kind, at, uint(0), uptime(), number, objc.ID(0), 0, 1, pressure)
 			if kind == evLeftDown {
@@ -128,7 +128,7 @@ func webKey(web objc.ID, window int, chars, plain string, code uint16, shift boo
 		// which purego, giving each a slot, would not: one word carries
 		// both.
 		stacked := uint64(code) << 16
-		ev := objc.ID(objc.GetClass("NSEvent")).Send(
+		ev := objc.ID(apple.Class("NSEvent")).Send(
 			sel("keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:"),
 			kind, apple.CGPoint{}, flags, uptime(), window, objc.ID(0), apple.NSString(chars), apple.NSString(plain), stacked)
 		if kind == evKeyDown {

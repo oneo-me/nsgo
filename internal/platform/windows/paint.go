@@ -114,6 +114,11 @@ type painter struct {
 	dc     *comObject
 	scale  float32 // pixels per point
 	m      matrix  // the world transform: the drawn view's points to the target's DIPs
+	// sent is the transform the device context holds, once set says it
+	// is known: most views draw at their parent's after their children,
+	// and each message costs a system call.
+	sent   matrix
+	set    bool
 	brush  *comObject
 	pushed []pushed
 	// alpha is the opacity of what is drawn now: its views', multiplied.
@@ -182,6 +187,15 @@ func (p *painter) solid(c driver.Color) *comObject {
 // setTransform makes m the world transform.
 func (p *painter) setTransform(m matrix) {
 	p.m = m
+	p.send(m)
+}
+
+// send sets the device context's transform to m, unless it holds m.
+func (p *painter) send(m matrix) {
+	if p.set && p.sent == m {
+		return
+	}
+	p.sent, p.set = m, true
 	t := m.d2d()
 	p.dc.call(rtSetTransform, uintptr(unsafe.Pointer(&t)))
 }
@@ -350,8 +364,7 @@ func (p *painter) realize() {
 		}
 		p.dc.call(dcSetTarget, target.ptr())
 		p.dc.call(rtBeginDraw)
-		t := identity.d2d()
-		p.dc.call(rtSetTransform, uintptr(unsafe.Pointer(&t)))
+		p.send(identity)
 		clear := colorF{}
 		p.dc.call(rtClear, uintptr(unsafe.Pointer(&clear)))
 	})
@@ -717,10 +730,12 @@ func (p *painter) drawContent(v *view, s *driver.ViewStyle, world matrix) {
 	// An image is clipped to its corners without Clip, as its layer clips
 	// it on Apple and as Linux and the web clip it.
 	clip := s.Clip || v.kind == driver.KindScroll || v.kind == driver.KindImage
+	// The view's own content stays inside it; a box with none, as most of
+	// a table's are, pushes no clip for it.
+	contained := !clip && (v.text != nil || v.kind != driver.KindView && v.kind != driver.KindModal)
 	if clip {
 		p.pushClipBox(&b)
-	} else {
-		// The view's own content stays inside it.
+	} else if contained {
 		p.pushClipRect(bounds)
 	}
 	switch v.kind {
@@ -769,7 +784,7 @@ func (p *painter) drawContent(v *view, s *driver.ViewStyle, world matrix) {
 			v.text.draw(p, x, y)
 		}
 	}
-	if !clip {
+	if contained {
 		p.pop()
 	}
 	// The children, with those going drawn where they were among them,
@@ -1015,6 +1030,26 @@ func (p *painter) drawBorder(s *driver.ViewStyle, width, height, radius float32)
 		}
 		return
 	}
+	first, same := driver.Color(0), true
+	for i := range 4 {
+		if widths[i] > 0 {
+			if first == 0 {
+				first = colors[i]
+			} else if colors[i] != first {
+				same = false
+			}
+		}
+	}
+	if same && radius <= 0 {
+		// Square sides of one color, such as a row's rule, fill as
+		// rectangles: a ring is a geometry made again each frame.
+		top, right, bottom, left := widths[0], widths[1], widths[2], widths[3]
+		p.fillRect(rectF{0, 0, width, min(top, height)}, first)
+		p.fillRect(rectF{0, max(height-bottom, top), width, height}, first)
+		p.fillRect(rectF{0, top, min(left, width), height - bottom}, first)
+		p.fillRect(rectF{max(width-right, left), top, width, height - bottom}, first)
+		return
+	}
 	// The ring between the border box and the padding box.
 	outer := corners{{radius, radius}, {radius, radius}, {radius, radius}, {radius, radius}}
 	figures := []roundedFigure{{rectF{0, 0, width, height}, outer}}
@@ -1026,16 +1061,6 @@ func (p *painter) drawBorder(s *driver.ViewStyle, width, height, radius float32)
 		return
 	}
 	defer ring.release()
-	first, same := driver.Color(0), true
-	for i := range 4 {
-		if widths[i] > 0 {
-			if first == 0 {
-				first = colors[i]
-			} else if colors[i] != first {
-				same = false
-			}
-		}
-	}
 	if same {
 		p.fillGeometry(ring, first)
 		return

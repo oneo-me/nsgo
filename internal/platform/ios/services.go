@@ -19,7 +19,7 @@ import (
 // files and saves, the share sheet, and the app's appearance.
 
 func generalPasteboard() objc.ID {
-	return objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard"))
+	return objc.ID(apple.Class("UIPasteboard")).Send(sel("generalPasteboard"))
 }
 
 // The pasteboard types of images, in the order a read prefers them.
@@ -92,7 +92,7 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 // openURL opens u in the app that handles it and reports whether one
 // did.
 func (s *surface) openURL(u string, id uint32) {
-	nsURL := objc.ID(objc.GetClass("NSURL")).Send(sel("URLWithString:"), apple.NSString(u))
+	nsURL := objc.ID(apple.Class("NSURL")).Send(sel("URLWithString:"), apple.NSString(u))
 	if nsURL == 0 {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: id})
 		return
@@ -100,8 +100,8 @@ func (s *surface) openURL(u string, id uint32) {
 	done := objc.NewBlock(func(_ objc.Block, ok bool) {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: id, Finished: ok})
 	})
-	app := objc.ID(objc.GetClass("UIApplication")).Send(sel("sharedApplication"))
-	opts := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionary"))
+	app := objc.ID(apple.Class("UIApplication")).Send(sel("sharedApplication"))
+	opts := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionary"))
 	app.Send(sel("openURL:options:completionHandler:"), nsURL, opts, done)
 	done.Release()
 }
@@ -110,12 +110,12 @@ func (s *surface) openURL(u string, id uint32) {
 // choose one, from the root's center; none shows when no app opens its
 // type.
 func (s *surface) openFile(f driver.SharedFile, id uint32) {
-	u := objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(f.Path))
+	u := objc.ID(apple.Class("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(f.Path))
 	if s.opening != 0 {
 		s.opening.Send(sel("dismissMenuAnimated:"), false)
 		s.opening.Send(selRelease)
 	}
-	s.opening = objc.ID(objc.GetClass("UIDocumentInteractionController")).Send(sel("interactionControllerWithURL:"), u)
+	s.opening = objc.ID(apple.Class("UIDocumentInteractionController")).Send(sel("interactionControllerWithURL:"), u)
 	s.opening.Send(sel("retain"))
 	s.opening.Send(sel("setName:"), apple.NSString(f.Name))
 	b := objc.Send[apple.CGRect](s.native, selBounds)
@@ -127,19 +127,19 @@ func (s *surface) openFile(f driver.SharedFile, id uint32) {
 // share presents UIActivityViewController for r's files, under their
 // names, and text; on iPads it is a popover pointing at r.From.
 func (s *surface) share(r driver.ShareRequest, id uint32) {
-	items := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	items := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 	for _, f := range r.Files {
 		path, err := f.Stage(filepath.Join(os.TempDir(), "nsgo-share"))
 		if err != nil {
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: err.Error()})
 			return
 		}
-		items.Send(sel("addObject:"), objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
+		items.Send(sel("addObject:"), objc.ID(apple.Class("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
 	}
 	if r.Text != "" {
 		items.Send(sel("addObject:"), apple.NSString(r.Text))
 	}
-	ctrl := objc.ID(objc.GetClass("UIActivityViewController")).Send(selAlloc).
+	ctrl := objc.ID(apple.Class("UIActivityViewController")).Send(selAlloc).
 		Send(sel("initWithActivityItems:applicationActivities:"), items, objc.ID(0))
 	defer ctrl.Send(selRelease)
 	if pop := ctrl.Send(sel("popoverPresentationController")); pop != 0 {
@@ -179,7 +179,7 @@ func (s *surface) pickImages(r driver.PickRequest, id uint32) {
 		if p := objc.GetProtocol("PHPickerViewControllerDelegate"); p != nil {
 			protocols = append(protocols, p)
 		}
-		classPicker = register("NsgoPickerDelegate", objc.GetClass("NSObject"), protocols, []objc.MethodDef{{
+		classPicker = register("NsgoPickerDelegate", apple.Class("NSObject"), protocols, []objc.MethodDef{{
 			Cmd: sel("picker:didFinishPicking:"),
 			Fn: func(self objc.ID, _ objc.SEL, picker, results objc.ID) {
 				picker.Send(sel("dismissViewControllerAnimated:completion:"), true, objc.ID(0))
@@ -197,15 +197,15 @@ func (s *surface) pickImages(r driver.PickRequest, id uint32) {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventPick, Count: id})
 		return
 	}
-	config := objc.ID(objc.GetClass("PHPickerConfiguration")).Send(selAlloc).Send(sel("init"))
+	config := objc.ID(apple.Class("PHPickerConfiguration")).Send(selAlloc).Send(sel("init"))
 	defer config.Send(selRelease)
 	config.Send(sel("setSelectionLimit:"), max(r.Limit, 1))
-	config.Send(sel("setFilter:"), objc.ID(objc.GetClass("PHPickerFilter")).Send(sel("imagesFilter")))
+	config.Send(sel("setFilter:"), objc.ID(apple.Class("PHPickerFilter")).Send(sel("imagesFilter")))
 	if objc.Send[bool](config, sel("respondsToSelector:"), sel("setSelection:")) {
 		const ordered = 1
 		config.Send(sel("setSelection:"), ordered)
 	}
-	picker := objc.ID(objc.GetClass("PHPickerViewController")).Send(selAlloc).Send(sel("initWithConfiguration:"), config)
+	picker := objc.ID(apple.Class("PHPickerViewController")).Send(selAlloc).Send(sel("initWithConfiguration:"), config)
 	defer picker.Send(selRelease)
 	delegate := objc.ID(classPicker).Send(selNew)
 	pickerRequests[delegate] = pickRequest{r, id}
@@ -295,7 +295,7 @@ func (s *surface) presentDocuments(picker objc.ID, req documentRequest) {
 			}
 			s.engine.Dispatch(ev)
 		}
-		classDocuments = register("NsgoDocumentPickerDelegate", objc.GetClass("NSObject"), protocols, []objc.MethodDef{{
+		classDocuments = register("NsgoDocumentPickerDelegate", apple.Class("NSObject"), protocols, []objc.MethodDef{{
 			Cmd: sel("documentPicker:didPickDocumentsAtURLs:"),
 			Fn:  func(self objc.ID, _ objc.SEL, _, urls objc.ID) { answer(self, urls) },
 		}, {
@@ -314,7 +314,7 @@ func (s *surface) presentDocuments(picker objc.ID, req documentRequest) {
 // offers, which copies the ones picked into the app's temporary
 // directory; picking needs no permission.
 func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
-	picker := objc.ID(objc.GetClass("UIDocumentPickerViewController")).Send(selAlloc).
+	picker := objc.ID(apple.Class("UIDocumentPickerViewController")).Send(selAlloc).
 		Send(sel("initForOpeningContentTypes:asCopy:"), apple.ContentTypes(r), true)
 	picker.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
 	s.presentDocuments(picker, documentRequest{id: id, limit: r.Limit})
@@ -325,8 +325,8 @@ func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
 // no permission.
 func (s *surface) pickDirectories(r driver.DirectoriesRequest, id uint32) {
 	folder := apple.UTType().Send(sel("typeWithIdentifier:"), apple.NSString("public.folder"))
-	types := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), folder)
-	picker := objc.ID(objc.GetClass("UIDocumentPickerViewController")).Send(selAlloc).
+	types := objc.ID(apple.Class("NSArray")).Send(sel("arrayWithObject:"), folder)
+	picker := objc.ID(apple.Class("UIDocumentPickerViewController")).Send(selAlloc).
 		Send(sel("initForOpeningContentTypes:asCopy:"), types, false)
 	picker.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
 	s.presentDocuments(picker, documentRequest{id: id, limit: r.Limit, folders: true})
@@ -354,9 +354,9 @@ func (s *surface) saveFile(r driver.SaveRequest, id uint32) {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: err.Error()})
 		return
 	}
-	urls := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
-	urls.Send(sel("addObject:"), objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
-	picker := objc.ID(objc.GetClass("UIDocumentPickerViewController")).Send(selAlloc).
+	urls := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
+	urls.Send(sel("addObject:"), objc.ID(apple.Class("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
+	picker := objc.ID(apple.Class("UIDocumentPickerViewController")).Send(selAlloc).
 		Send(sel("initForExportingURLs:asCopy:"), urls, true)
 	s.presentDocuments(picker, documentRequest{id: id, staged: filepath.Dir(path)})
 }
@@ -384,13 +384,13 @@ func uiStyle(a driver.Appearance) int {
 // osVersion returns iOS's version.
 func osVersion() driver.OSVersion {
 	type version struct{ Major, Minor, Patch int }
-	v := objc.Send[version](objc.ID(objc.GetClass("NSProcessInfo")).Send(sel("processInfo")), sel("operatingSystemVersion"))
+	v := objc.Send[version](objc.ID(apple.Class("NSProcessInfo")).Send(sel("processInfo")), sel("operatingSystemVersion"))
 	return driver.OSVersion{Major: v.Major, Minor: v.Minor}
 }
 
 // onMac reports whether the app is an iPhone or iPad app running on a
 // Mac.
 func onMac() bool {
-	info := objc.ID(objc.GetClass("NSProcessInfo")).Send(sel("processInfo"))
+	info := objc.ID(apple.Class("NSProcessInfo")).Send(sel("processInfo"))
 	return objc.Send[bool](info, sel("respondsToSelector:"), sel("isiOSAppOnMac")) && objc.Send[bool](info, sel("isiOSAppOnMac"))
 }

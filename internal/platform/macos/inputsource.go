@@ -51,7 +51,7 @@ func currentInputSource() string {
 // there is one.
 func selectInputSource(id string) bool {
 	tis := inputSources()
-	filter := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), apple.NSString(id), tis.id)
+	filter := objc.ID(apple.Class("NSDictionary")).Send(sel("dictionaryWithObject:forKey:"), apple.NSString(id), tis.id)
 	found := objc.ID(tis.find(uintptr(filter), false))
 	defer apple.Release(uintptr(found))
 	return found != 0 && found.Send(sel("count")) != 0 && tis.sel(uintptr(found.Send(sel("firstObject")))) == 0

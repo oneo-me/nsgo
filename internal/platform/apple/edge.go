@@ -22,8 +22,8 @@ type ScrollEdge struct {
 // points, y growing down.
 func (p *ScrollEdge) Paint(e *driver.ScrollEdge, s driver.Side, w, h float64) {
 	if p.Tint == 0 {
-		p.Tint = objc.ID(objc.GetClass("CAGradientLayer")).Send(selNew)
-		p.Line = objc.ID(objc.GetClass("CALayer")).Send(selNew)
+		p.Tint = objc.ID(Class("CAGradientLayer")).Send(selNew)
+		p.Line = objc.ID(Class("CALayer")).Send(selNew)
 	}
 	x0, y0, x1, y1 := driver.EdgeLine(s)
 	gradient := func(g objc.ID, stops ...driver.GradientStop) {
@@ -66,9 +66,9 @@ const variableBlurSpread = 2
 // growing toward a soft side, or an even one.
 func EdgeBlur(s driver.Side, d driver.EdgeEffect) objc.ID {
 	number := func(f float64) objc.ID {
-		return objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithDouble:"), f)
+		return objc.ID(Class("NSNumber")).Send(sel("numberWithDouble:"), f)
 	}
-	filter := objc.ID(objc.GetClass("CAFilter"))
+	filter := objc.ID(Class("CAFilter"))
 	set := func(f objc.ID, key string, value objc.ID) {
 		f.Send(sel("setValue:forKey:"), value, NSString(key))
 	}
@@ -83,8 +83,8 @@ func EdgeBlur(s driver.Side, d driver.EdgeEffect) objc.ID {
 	}
 	// What is past the band's edges blurs in as if it went on, as
 	// AppKit's edges have it, rather than as clear.
-	set(f, "inputNormalizeEdges", objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), true))
-	return objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), f)
+	set(f, "inputNormalizeEdges", objc.ID(Class("NSNumber")).Send(sel("numberWithBool:"), true))
+	return objc.ID(Class("NSArray")).Send(sel("arrayWithObject:"), f)
 }
 
 // fadeImages are the soft edges' masks, by side, made on first use.

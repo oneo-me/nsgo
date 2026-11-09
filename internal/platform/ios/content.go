@@ -30,13 +30,13 @@ var (
 const contentZ = -1
 
 func registerContent() {
-	drawer := register("NsgoContentDrawer", objc.GetClass("NSObject"), nil, []objc.MethodDef{{
+	drawer := register("NsgoContentDrawer", apple.Class("NSObject"), nil, []objc.MethodDef{{
 		Cmd: sel("drawLayer:inContext:"),
 		Fn:  drawContent,
 	}})
 	contentDrawer = objc.ID(drawer).Send(selNew)
-	null := objc.ID(objc.GetClass("NSNull")).Send(sel("null"))
-	dict := objc.ID(objc.GetClass("NSMutableDictionary")).Send(selNew)
+	null := objc.ID(apple.Class("NSNull")).Send(sel("null"))
+	dict := objc.ID(apple.Class("NSMutableDictionary")).Send(selNew)
 	for _, k := range []string{"contents", "bounds", "position", "frame", "hidden", "contentsScale",
 		"onOrderIn", "onOrderOut", "sublayers"} {
 		dict.Send(sel("setObject:forKey:"), null, apple.NSString(k))
@@ -77,7 +77,7 @@ func drawContent(_ objc.ID, _ objc.SEL, layer objc.ID, ctx uintptr) {
 
 // newContent gives text or canvas view v its content layer.
 func (v *view) newContent() {
-	layer := objc.ID(objc.GetClass("CALayer")).Send(selNew)
+	layer := objc.ID(apple.Class("CALayer")).Send(selNew)
 	layer.Send(sel("setActions:"), contentActions)
 	layer.Send(sel("setDelegate:"), contentDrawer)
 	layer.Send(sel("setNeedsDisplayOnBoundsChange:"), true)
@@ -158,7 +158,7 @@ func blurStyle(m driver.BackdropMaterial) int {
 
 // setBackdrop gives v the backdrop its style asks for, or takes it away.
 func (v *view) setBackdrop(vs *driver.ViewStyle) {
-	glass := vs.Glass != driver.GlassNone && objc.GetClass("UIGlassEffect") != 0
+	glass := vs.Glass != driver.GlassNone && apple.Class("UIGlassEffect") != 0
 	want := vs.Effects.BackdropBlur() > 0 || glass
 	if !want || glass != v.glass {
 		if v.backdrop != 0 {
@@ -171,12 +171,12 @@ func (v *view) setBackdrop(vs *driver.ViewStyle) {
 	}
 	var effect objc.ID
 	if glass {
-		effect = objc.ID(objc.GetClass("UIGlassEffect")).Send(sel("effectWithStyle:"), int(vs.Glass)-1)
+		effect = objc.ID(apple.Class("UIGlassEffect")).Send(sel("effectWithStyle:"), int(vs.Glass)-1)
 	} else {
-		effect = objc.ID(objc.GetClass("UIBlurEffect")).Send(sel("effectWithStyle:"), blurStyle(vs.Material))
+		effect = objc.ID(apple.Class("UIBlurEffect")).Send(sel("effectWithStyle:"), blurStyle(vs.Material))
 	}
 	if v.backdrop == 0 {
-		v.backdrop = objc.ID(objc.GetClass("UIVisualEffectView")).Send(selAlloc).Send(sel("initWithEffect:"), effect)
+		v.backdrop = objc.ID(apple.Class("UIVisualEffectView")).Send(selAlloc).Send(sel("initWithEffect:"), effect)
 		v.backdrop.Send(selSetFrame, objc.Send[apple.CGRect](v.native, selBounds))
 		const flexible = 2 | 16 // width and height
 		v.backdrop.Send(sel("setAutoresizingMask:"), flexible)

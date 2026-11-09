@@ -60,14 +60,14 @@ func (s *surface) startTicking() {
 	if s.link == 0 {
 		// A link needs the view in a window: without one, the next mount
 		// asks again.
-		link := objc.ID(objc.GetClass("CADisplayLink")).Send(sel("displayLinkWithTarget:selector:"), s.native, selTick)
+		link := objc.ID(apple.Class("CADisplayLink")).Send(sel("displayLinkWithTarget:selector:"), s.native, selTick)
 		if link == 0 {
 			s.ticking = false
 			return
 		}
 		s.link = link.Send(sel("retain"))
 		s.link.Send(sel("setPreferredFramesPerSecond:"), s.framesPerSecond())
-		s.link.Send(sel("addToRunLoop:forMode:"), objc.ID(objc.GetClass("NSRunLoop")).Send(sel("mainRunLoop")),
+		s.link.Send(sel("addToRunLoop:forMode:"), objc.ID(apple.Class("NSRunLoop")).Send(sel("mainRunLoop")),
 			apple.CommonModes())
 		return
 	}
@@ -82,7 +82,7 @@ func (s *surface) framesPerSecond() int {
 	if s.pace > 0 {
 		return max(int(math.Ceil(s.pace)), 1)
 	}
-	screen := objc.ID(objc.GetClass("UIScreen")).Send(sel("mainScreen"))
+	screen := objc.ID(apple.Class("UIScreen")).Send(sel("mainScreen"))
 	return max(objc.Send[int](screen, sel("maximumFramesPerSecond")), 0)
 }
 
@@ -254,17 +254,25 @@ func (s *surface) setFrame(v *view, it *driver.MountItem, lb *layoutBatch) {
 }
 
 // place sets v's frame and what follows it. Bounds and center, unlike
-// the frame, hold with a transform; the bounds' origin is a scroll view's
-// offset.
+// the frame, hold with a transform, which a style or a screen's swipe
+// sets; the bounds' origin is a scroll view's offset. A view with neither
+// takes its frame in one message: each with a struct costs purego about
+// two microseconds, most of what placing a pushed screen's views cost.
 func (v *view) place(f driver.Bounds) {
 	resized := f.Size != v.frame.Size
 	v.frame, v.framed = f, true
-	b := objc.Send[apple.CGRect](v.native, selBounds)
-	b.Size = apple.CGSize{Width: float64(f.Size.Width), Height: float64(f.Size.Height)}
-	v.native.Send(sel("setBounds:"), b)
-	v.native.Send(sel("setCenter:"), apple.CGPoint{X: float64(f.Origin.X + v.shift.X + f.Size.Width/2),
-		Y: float64(f.Origin.Y + v.shift.Y + f.Size.Height/2)})
-	if v.styled && v.drawn.Transform != (driver.Transform{}) {
+	transformed := v.styled && v.drawn.Transform != (driver.Transform{})
+	if !transformed && v.bar == nil && v.kind != driver.KindScroll {
+		v.native.Send(selSetFrame, apple.Rect(float64(f.Origin.X+v.shift.X), float64(f.Origin.Y+v.shift.Y),
+			float64(f.Size.Width), float64(f.Size.Height)))
+	} else {
+		b := objc.Send[apple.CGRect](v.native, selBounds)
+		b.Size = apple.CGSize{Width: float64(f.Size.Width), Height: float64(f.Size.Height)}
+		v.native.Send(sel("setBounds:"), b)
+		v.native.Send(sel("setCenter:"), apple.CGPoint{X: float64(f.Origin.X + v.shift.X + f.Size.Width/2),
+			Y: float64(f.Origin.Y + v.shift.Y + f.Size.Height/2)})
+	}
+	if transformed {
 		// Its origin is a point of the old size.
 		apple.SetTransform(v.native.Send(selLayer), v.drawn.Transform)
 	}

@@ -144,7 +144,7 @@ func NewShaderLayer(scale float64) *ShaderLayer {
 	if !loadMetal() {
 		return nil
 	}
-	layer := objc.ID(objc.GetClass("CAMetalLayer")).Send(selNew)
+	layer := objc.ID(Class("CAMetalLayer")).Send(selNew)
 	layer.Send(sel("setDevice:"), mtlDevice)
 	layer.Send(sel("setPixelFormat:"), uint(mtlPixelFormatBGRA8Unorm))
 	layer.Send(sel("setFramebufferOnly:"), true)
@@ -263,7 +263,7 @@ func (r *shaderRender) loop() {
 // encodeShader draws state with the uniforms in buf into drawable and
 // presents it.
 func encodeShader(drawable, state objc.ID, buf []byte, textures []objc.ID) {
-	pass := objc.ID(objc.GetClass("MTLRenderPassDescriptor")).Send(sel("renderPassDescriptor"))
+	pass := objc.ID(Class("MTLRenderPassDescriptor")).Send(sel("renderPassDescriptor"))
 	att := pass.Send(selColorAttachments).Send(selObjectAtIndexedSubscript, uint(0))
 	att.Send(sel("setTexture:"), drawable.Send(sel("texture")))
 	att.Send(sel("setLoadAction:"), uint(mtlLoadActionClear))
@@ -379,7 +379,7 @@ func textureOf(image uintptr, w, h int) objc.ID {
 	}
 	defer Release(ctx)
 	cgContextDrawImage(ctx, Rect(0, 0, float64(w), float64(h)), image)
-	desc := objc.ID(objc.GetClass("MTLTextureDescriptor")).Send(
+	desc := objc.ID(Class("MTLTextureDescriptor")).Send(
 		sel("texture2DDescriptorWithPixelFormat:width:height:mipmapped:"), uint(mtlPixelFormatBGRA8Unorm), uint(w), uint(h), false)
 	t := mtlDevice.Send(sel("newTextureWithDescriptor:"), desc)
 	if t == 0 {
@@ -393,7 +393,7 @@ func textureOf(image uintptr, w, h int) objc.ID {
 // blankTexture is a transparent pixel, which an image not loaded reads.
 func blankTexture() objc.ID {
 	if blank == 0 {
-		desc := objc.ID(objc.GetClass("MTLTextureDescriptor")).Send(
+		desc := objc.ID(Class("MTLTextureDescriptor")).Send(
 			sel("texture2DDescriptorWithPixelFormat:width:height:mipmapped:"), uint(mtlPixelFormatBGRA8Unorm), uint(1), uint(1), false)
 		blank = mtlDevice.Send(sel("newTextureWithDescriptor:"), desc)
 		var px [4]byte
@@ -487,7 +487,7 @@ func metalPipelineState(src string) (objc.ID, string) {
 	fragment := lib.Send(sel("newFunctionWithName:"), NSString("nsgoFragment"))
 	defer vertex.Send(selRelease)
 	defer fragment.Send(selRelease)
-	desc := objc.ID(objc.GetClass("MTLRenderPipelineDescriptor")).Send(selNew)
+	desc := objc.ID(Class("MTLRenderPipelineDescriptor")).Send(selNew)
 	defer desc.Send(selRelease)
 	desc.Send(sel("setVertexFunction:"), vertex)
 	desc.Send(sel("setFragmentFunction:"), fragment)

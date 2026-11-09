@@ -319,7 +319,7 @@ func (s *surface) barHeight() driver.Points {
 	w := s.window
 	mask := objc.Send[uint](w, selStyleMask)
 	frame := objc.Send[apple.CGRect](w, sel("frame"))
-	content := objc.Send[apple.CGRect](objc.ID(objc.GetClass("NSWindow")), selContentRectForFrame,
+	content := objc.Send[apple.CGRect](objc.ID(apple.Class("NSWindow")), selContentRectForFrame,
 		frame, mask&^maskFullSize)
 	if h := frame.Size.Height - content.Size.Height; h > 0 {
 		return driver.Points(h)
@@ -386,7 +386,7 @@ func (s *surface) dragWindow(event objc.ID) bool {
 		return false
 	}
 	if objc.Send[int](event, sel("clickCount")) == 2 {
-		defaults := objc.ID(objc.GetClass("NSUserDefaults")).Send(sel("standardUserDefaults"))
+		defaults := objc.ID(apple.Class("NSUserDefaults")).Send(sel("standardUserDefaults"))
 		switch apple.GoString(defaults.Send(sel("stringForKey:"), apple.NSString("AppleActionOnDoubleClick"))) {
 		case "Minimize":
 			s.window.Send(sel("miniaturize:"), objc.ID(0))
@@ -431,7 +431,7 @@ func (v *view) takesPointer() bool {
 
 // setMenu makes entries the menu bar, or restores the default one.
 func (s *surface) setMenu(entries []driver.MenuEntry) {
-	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	nsApp := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	if s.menu != 0 {
 		defer s.menu.Send(selRelease)
 		s.menu = 0
@@ -443,7 +443,7 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 	}
 	s.ensureMenuTarget()
 	clear(s.notInText)
-	bar := objc.ID(objc.GetClass("NSMenu")).Send(selNew)
+	bar := objc.ID(apple.Class("NSMenu")).Send(selNew)
 	for _, e := range entries {
 		if e.Separator {
 			continue
@@ -465,7 +465,7 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 // relabelMenus says the menu bar again in the surface's language.
 func (s *surface) relabelMenus() {
 	if s.language != defaultLanguage {
-		nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+		nsApp := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 		old := defaultMenu
 		defaultLanguage, defaultMenu = s.language, mainMenu(s.language)
 		if nsApp.Send(sel("mainMenu")) == old {
@@ -488,7 +488,7 @@ func (s *surface) holder(label string, disabled bool, items []driver.MenuEntry) 
 	if disabled {
 		action = selMenuDisabled
 	}
-	it := objc.ID(objc.GetClass("NSMenuItem")).Send(selAlloc).Send(sel("initWithTitle:action:keyEquivalent:"),
+	it := objc.ID(apple.Class("NSMenuItem")).Send(selAlloc).Send(sel("initWithTitle:action:keyEquivalent:"),
 		apple.NSString(label), action, apple.NSString(""))
 	sub := s.submenu(label, items)
 	it.Send(sel("setSubmenu:"), sub)
@@ -498,13 +498,13 @@ func (s *surface) holder(label string, disabled bool, items []driver.MenuEntry) 
 
 // submenu returns a new menu of items.
 func (s *surface) submenu(title string, items []driver.MenuEntry) objc.ID {
-	m := objc.ID(objc.GetClass("NSMenu")).Send(selAlloc).Send(sel("initWithTitle:"), apple.NSString(title))
+	m := objc.ID(apple.Class("NSMenu")).Send(selAlloc).Send(sel("initWithTitle:"), apple.NSString(title))
 	lastSeparator := true
 	for _, e := range items {
 		switch {
 		case e.Separator:
 			if !lastSeparator {
-				m.Send(sel("addItem:"), objc.ID(objc.GetClass("NSMenuItem")).Send(sel("separatorItem")))
+				m.Send(sel("addItem:"), objc.ID(apple.Class("NSMenuItem")).Send(sel("separatorItem")))
 				lastSeparator = true
 			}
 			continue
@@ -558,7 +558,7 @@ func (s *surface) item(e driver.MenuEntry) objc.ID {
 	case e.ID != 0:
 		action = selMenuChosen
 	}
-	it := objc.ID(objc.GetClass("NSMenuItem")).Send(selAlloc).Send(sel("initWithTitle:action:keyEquivalent:"),
+	it := objc.ID(apple.Class("NSMenuItem")).Send(selAlloc).Send(sel("initWithTitle:action:keyEquivalent:"),
 		apple.NSString(title), action, apple.NSString(key))
 	if key != "" {
 		it.Send(sel("setKeyEquivalentModifierMask:"), mods)
@@ -597,7 +597,7 @@ func (s *surface) name() string {
 		return name
 	}
 	if s.appName == "" {
-		s.appName = apple.GoString(objc.ID(objc.GetClass("NSRunningApplication")).
+		s.appName = apple.GoString(objc.ID(apple.Class("NSRunningApplication")).
 			Send(sel("currentApplication")).Send(sel("localizedName")))
 	}
 	return s.appName
@@ -678,7 +678,7 @@ func validateMenu(self objc.ID, _ objc.SEL, item objc.ID) bool {
 		return true
 	}
 	const keyDown = 10 // NSEventTypeKeyDown
-	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication"))
+	nsApp := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	e := nsApp.Send(sel("currentEvent"))
 	return e == 0 || objc.Send[uint](e, sel("type")) != keyDown || !s.editing()
 }
@@ -686,7 +686,7 @@ func validateMenu(self objc.ID, _ objc.SEL, item objc.ID) bool {
 // validateFullScreen enables a full screen item while a window has the
 // keyboard focus, and titles it by what choosing it does there.
 func (s *surface) validateFullScreen(item objc.ID) bool {
-	w := objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")).Send(sel("keyWindow"))
+	w := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")).Send(sel("keyWindow"))
 	if w == 0 {
 		return false
 	}
@@ -704,7 +704,7 @@ func (s *surface) validateFullScreen(item objc.ID) bool {
 
 // menuFullScreen toggles the window with the keyboard focus.
 func menuFullScreen(objc.ID, objc.SEL, objc.ID) {
-	objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")).Send(sel("keyWindow")).Send(sel("toggleFullScreen:"), objc.ID(0))
+	objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")).Send(sel("keyWindow")).Send(sel("toggleFullScreen:"), objc.ID(0))
 }
 
 // menuChosen reports a chosen menu item's ID to its surface.

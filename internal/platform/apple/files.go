@@ -26,7 +26,7 @@ func UTType() objc.ID {
 	utiOnce.Do(func() {
 		purego.Dlopen("/System/Library/Frameworks/UniformTypeIdentifiers.framework/UniformTypeIdentifiers", purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	})
-	return objc.ID(objc.GetClass("UTType"))
+	return objc.ID(Class("UTType"))
 }
 
 // ContentTypes returns the UTTypes of the files r offers, for
@@ -34,7 +34,7 @@ func UTType() objc.ID {
 // public.data, when r names none or one the system has no type for.
 func ContentTypes(r driver.FilesRequest) objc.ID {
 	class := UTType()
-	types := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	types := objc.ID(Class("NSMutableArray")).Send(sel("array"))
 	byExtension := func(ext string) objc.ID {
 		return class.Send(sel("typeWithFilenameExtension:"), NSString(ext))
 	}
@@ -65,7 +65,7 @@ func ContentTypes(r driver.FilesRequest) objc.ID {
 		}
 	}
 	if every {
-		types = objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+		types = objc.ID(Class("NSMutableArray")).Send(sel("array"))
 		types.Send(sel("addObject:"), class.Send(sel("typeWithIdentifier:"), NSString("public.data")))
 	}
 	return types

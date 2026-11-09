@@ -19,7 +19,7 @@ import (
 // window's frame and level.
 
 func generalPasteboard() objc.ID {
-	return objc.ID(objc.GetClass("NSPasteboard")).Send(sel("generalPasteboard"))
+	return objc.ID(apple.Class("NSPasteboard")).Send(sel("generalPasteboard"))
 }
 
 // The pasteboard types of images, in the order a read prefers them.
@@ -28,7 +28,7 @@ var imageTypes = []string{"public.png", "public.tiff", "public.jpeg", "public.he
 // setClipboardImage puts the image data encodes on the pasteboard as a
 // PNG and a TIFF, which every Mac app reads.
 func setClipboardImage(data []byte) {
-	img := objc.ID(objc.GetClass("NSImage")).Send(selAlloc).Send(sel("initWithData:"), apple.NSData(data))
+	img := objc.ID(apple.Class("NSImage")).Send(selAlloc).Send(sel("initWithData:"), apple.NSData(data))
 	if img == 0 {
 		return
 	}
@@ -46,7 +46,7 @@ func setClipboardImage(data []byte) {
 // availableType returns the first of types the pasteboard holds, "" for
 // none, without reading its data.
 func availableType(pb objc.ID, types []string) string {
-	arr := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	arr := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 	for _, t := range types {
 		arr.Send(sel("addObject:"), apple.NSString(t))
 	}
@@ -88,10 +88,10 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 // openURL opens u with the app the system picks and reports whether one
 // took it.
 func (s *surface) openURL(u string, id uint32) {
-	nsURL := objc.ID(objc.GetClass("NSURL")).Send(sel("URLWithString:"), apple.NSString(u))
+	nsURL := objc.ID(apple.Class("NSURL")).Send(sel("URLWithString:"), apple.NSString(u))
 	opened := false
 	if nsURL != 0 {
-		ws := objc.ID(objc.GetClass("NSWorkspace")).Send(sel("sharedWorkspace"))
+		ws := objc.ID(apple.Class("NSWorkspace")).Send(sel("sharedWorkspace"))
 		opened = objc.Send[bool](ws, sel("openURL:"), nsURL)
 	}
 	s.engine.Dispatch(driver.Event{Kind: driver.EventOpenURL, Count: id, Finished: opened})
@@ -100,8 +100,8 @@ func (s *surface) openURL(u string, id uint32) {
 // openFile opens f in the app Launch Services associates with it, and
 // reports whether one did: none when no app opens its type.
 func (s *surface) openFile(f driver.SharedFile, id uint32) {
-	u := objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(f.Path))
-	ws := objc.ID(objc.GetClass("NSWorkspace")).Send(sel("sharedWorkspace"))
+	u := objc.ID(apple.Class("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(f.Path))
+	ws := objc.ID(apple.Class("NSWorkspace")).Send(sel("sharedWorkspace"))
 	ev := driver.Event{Kind: driver.EventFiles, Count: id}
 	if ws.Send(sel("URLForApplicationToOpenURL:"), u) != 0 {
 		ev.Finished = objc.Send[bool](ws, sel("openURL:"), u)
@@ -115,14 +115,14 @@ func (s *surface) openFile(f driver.SharedFile, id uint32) {
 // share shows NSSharingServicePicker for r's files, under their names,
 // and text, pointing at r.From.
 func (s *surface) share(r driver.ShareRequest, id uint32) {
-	items := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	items := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 	for _, f := range r.Files {
 		path, err := f.Stage(filepath.Join(os.TempDir(), "nsgo-share"))
 		if err != nil {
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id, Text: err.Error()})
 			return
 		}
-		items.Send(sel("addObject:"), objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
+		items.Send(sel("addObject:"), objc.ID(apple.Class("NSURL")).Send(sel("fileURLWithPath:"), apple.NSString(path)))
 	}
 	if r.Text != "" {
 		items.Send(sel("addObject:"), apple.NSString(r.Text))
@@ -130,7 +130,7 @@ func (s *surface) share(r driver.ShareRequest, id uint32) {
 	if s.sharing != 0 {
 		s.sharing.Send(selRelease)
 	}
-	s.sharing = objc.ID(objc.GetClass("NSSharingServicePicker")).Send(selAlloc).Send(sel("initWithItems:"), items)
+	s.sharing = objc.ID(apple.Class("NSSharingServicePicker")).Send(selAlloc).Send(sel("initWithItems:"), items)
 	from := r.From
 	if from == (driver.Bounds{}) {
 		b := objc.Send[apple.CGRect](s.native, sel("bounds"))
@@ -146,11 +146,11 @@ func (s *surface) share(r driver.ShareRequest, id uint32) {
 // pickImages shows an open panel as a sheet on the window for the
 // images r asks for, then prepares the ones chosen off the main thread.
 func (s *surface) pickImages(r driver.PickRequest, id uint32) {
-	panel := objc.ID(objc.GetClass("NSOpenPanel")).Send(sel("openPanel"))
+	panel := objc.ID(apple.Class("NSOpenPanel")).Send(sel("openPanel"))
 	panel.Send(sel("setCanChooseFiles:"), true)
 	panel.Send(sel("setCanChooseDirectories:"), false)
 	panel.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
-	types := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+	types := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 	if r.Format == driver.PickCompatible {
 		// HEIC and the others become JPEG, so any image will do.
 		types.Send(sel("addObject:"), apple.NSString("public.image"))
@@ -190,7 +190,7 @@ func (s *surface) pickImages(r driver.PickRequest, id uint32) {
 // pickFiles shows an open panel as a sheet on the window for the files
 // r offers and answers with their paths.
 func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
-	panel := objc.ID(objc.GetClass("NSOpenPanel")).Send(sel("openPanel"))
+	panel := objc.ID(apple.Class("NSOpenPanel")).Send(sel("openPanel"))
 	panel.Send(sel("setCanChooseFiles:"), true)
 	panel.Send(sel("setCanChooseDirectories:"), false)
 	panel.Send(sel("setAllowsMultipleSelection:"), r.Limit > 1)
@@ -213,7 +213,7 @@ func (s *surface) pickFiles(r driver.FilesRequest, id uint32) {
 // pickDirectories shows an open panel as a sheet on the window for
 // folders and answers with their paths.
 func (s *surface) pickDirectories(r driver.DirectoriesRequest, id uint32) {
-	panel := objc.ID(objc.GetClass("NSOpenPanel")).Send(sel("openPanel"))
+	panel := objc.ID(apple.Class("NSOpenPanel")).Send(sel("openPanel"))
 	panel.Send(sel("setCanChooseFiles:"), false)
 	panel.Send(sel("setCanChooseDirectories:"), true)
 	panel.Send(sel("setCanCreateDirectories:"), true)
@@ -236,11 +236,11 @@ func (s *surface) pickDirectories(r driver.DirectoriesRequest, id uint32) {
 // saveFile shows a save panel as a sheet on the window for the file r
 // suggests, then saves it where the user chose off the main thread.
 func (s *surface) saveFile(r driver.SaveRequest, id uint32) {
-	panel := objc.ID(objc.GetClass("NSSavePanel")).Send(sel("savePanel"))
+	panel := objc.ID(apple.Class("NSSavePanel")).Send(sel("savePanel"))
 	panel.Send(sel("setNameFieldStringValue:"), apple.NSString(r.Name))
 	panel.Send(sel("setCanCreateDirectories:"), true)
 	if t := apple.SaveType(r.Name); t != 0 {
-		types := objc.ID(objc.GetClass("NSMutableArray")).Send(sel("array"))
+		types := objc.ID(apple.Class("NSMutableArray")).Send(sel("array"))
 		types.Send(sel("addObject:"), t)
 		panel.Send(sel("setAllowedContentTypes:"), types)
 		panel.Send(sel("setAllowsOtherFileTypes:"), true)
@@ -335,14 +335,14 @@ func (s *surface) applyAppearance() {
 func nsAppearance(a driver.Appearance) objc.ID {
 	switch a {
 	case driver.AppearanceLight:
-		return objc.ID(objc.GetClass("NSAppearance")).Send(sel("appearanceNamed:"), apple.NSString("NSAppearanceNameAqua"))
+		return objc.ID(apple.Class("NSAppearance")).Send(sel("appearanceNamed:"), apple.NSString("NSAppearanceNameAqua"))
 	case driver.AppearanceDark:
-		return objc.ID(objc.GetClass("NSAppearance")).Send(sel("appearanceNamed:"), apple.NSString("NSAppearanceNameDarkAqua"))
+		return objc.ID(apple.Class("NSAppearance")).Send(sel("appearanceNamed:"), apple.NSString("NSAppearanceNameDarkAqua"))
 	}
 	return 0
 }
 
-func nsApp() objc.ID { return objc.ID(objc.GetClass("NSApplication")).Send(sel("sharedApplication")) }
+func nsApp() objc.ID { return objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")) }
 
 // setWindowFrame moves and sizes the window. f's corner is from the main
 // screen's top left, y down, and AppKit's frames from its bottom left, y
@@ -364,7 +364,7 @@ func (s *surface) setWindowFrame(f driver.WindowFrame) {
 	frame.Size.Width += float64(fit.Width - size.Width)
 	frame.Size.Height += float64(fit.Height - size.Height)
 	if f.Move {
-		screens := objc.ID(objc.GetClass("NSScreen")).Send(sel("screens"))
+		screens := objc.ID(apple.Class("NSScreen")).Send(sel("screens"))
 		if objc.Send[uint](screens, sel("count")) > 0 {
 			main := objc.Send[apple.CGRect](screens.Send(sel("objectAtIndex:"), uint(0)), sel("frame"))
 			top = main.Origin.Y + main.Size.Height - float64(f.Y)
@@ -395,7 +395,7 @@ func (s *surface) windowFrame() driver.WindowFrame {
 // screenFrames returns each screen's rectangle named by selector, the
 // main screen first, in AppKit's coordinates.
 func screenFrames(selector string) []apple.CGRect {
-	screens := objc.ID(objc.GetClass("NSScreen")).Send(sel("screens"))
+	screens := objc.ID(apple.Class("NSScreen")).Send(sel("screens"))
 	frames := make([]apple.CGRect, objc.Send[uint](screens, sel("count")))
 	for i := range frames {
 		frames[i] = objc.Send[apple.CGRect](screens.Send(sel("objectAtIndex:"), uint(i)), sel(selector))
@@ -472,7 +472,7 @@ func (s *surface) orderFront() {
 // osVersion returns macOS's version.
 func osVersion() driver.OSVersion {
 	type version struct{ Major, Minor, Patch int }
-	v := objc.Send[version](objc.ID(objc.GetClass("NSProcessInfo")).Send(sel("processInfo")), sel("operatingSystemVersion"))
+	v := objc.Send[version](objc.ID(apple.Class("NSProcessInfo")).Send(sel("processInfo")), sel("operatingSystemVersion"))
 	return driver.OSVersion{Major: v.Major, Minor: v.Minor}
 }
 
@@ -491,14 +491,14 @@ func readPicked(path string) (driver.PickedFile, bool) {
 
 // pickScreenColor shows the system's color sampler, answering id.
 func (s *surface) pickScreenColor(id uint32) {
-	sampler := objc.ID(objc.GetClass("NSColorSampler")).Send(sel("alloc")).Send(sel("init"))
+	sampler := objc.ID(apple.Class("NSColorSampler")).Send(sel("alloc")).Send(sel("init"))
 	done := objc.NewBlock(func(_ objc.Block, color objc.ID) {
 		defer sampler.Send(selRelease)
 		if color == 0 {
 			s.engine.Dispatch(driver.Event{Kind: driver.EventFiles, Count: id})
 			return
 		}
-		srgb := objc.ID(objc.GetClass("NSColorSpace")).Send(sel("sRGBColorSpace"))
+		srgb := objc.ID(apple.Class("NSColorSpace")).Send(sel("sRGBColorSpace"))
 		c := color.Send(sel("colorUsingColorSpace:"), srgb)
 		part := func(name string) uint32 {
 			v := objc.Send[float64](c, sel(name))

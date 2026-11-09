@@ -52,7 +52,7 @@ func audioPlaying(key *Video, session driver.AudioSession) {
 	if wanted == audio.applied {
 		return
 	}
-	shared := objc.ID(objc.GetClass("AVAudioSession")).Send(sel("sharedInstance"))
+	shared := objc.ID(Class("AVAudioSession")).Send(sel("sharedInstance"))
 	if shared == 0 {
 		return
 	}

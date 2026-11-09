@@ -77,7 +77,7 @@ func loadWebKit() {
 			protocols = append(protocols, p)
 		}
 	}
-	classWebHandler = RegisterClass("NsgoWebHandler", objc.GetClass("NSObject"), protocols,
+	classWebHandler = RegisterClass("NsgoWebHandler", Class("NSObject"), protocols,
 		[]objc.MethodDef{
 			nav("webView:didStartProvisionalNavigation:", true, driver.EventLoadStart, driver.EventNavigationStateChange),
 			nav("webView:didFinishNavigation:", false, driver.EventLoad, driver.EventNavigationStateChange),
@@ -145,7 +145,7 @@ func loadWebKit() {
 					}
 					dl.Path = filepath.Join(dir, dl.Filename)
 					w.download(d, &driver.WebDownload{State: driver.WebDownloadStarted, ID: dl.ID, URL: dl.URL, Filename: dl.Filename, Path: dl.Path})
-					CallBlock(done, uintptr(objc.ID(objc.GetClass("NSURL")).Send(sel("fileURLWithPath:"), NSString(dl.Path))))
+					CallBlock(done, uintptr(objc.ID(Class("NSURL")).Send(sel("fileURLWithPath:"), NSString(dl.Path))))
 				}},
 			{Cmd: sel("downloadDidFinish:"), Fn: func(self objc.ID, _ objc.SEL, d objc.ID) {
 				if w, dl := webHandlers[self], downloads[d]; w != nil && dl != nil {
@@ -191,7 +191,7 @@ func becameDownload(self objc.ID, _ objc.SEL, _, _, d objc.ID) {
 // attachment reports whether an HTTP response asks to be saved
 // (Content-Disposition: attachment).
 func attachment(response objc.ID) bool {
-	if response == 0 || !objc.Send[bool](response, sel("isKindOfClass:"), objc.GetClass("NSHTTPURLResponse")) {
+	if response == 0 || !objc.Send[bool](response, sel("isKindOfClass:"), Class("NSHTTPURLResponse")) {
 		return false
 	}
 	v := GoString(response.Send(sel("valueForHTTPHeaderField:"), NSString("Content-Disposition")))
@@ -248,12 +248,12 @@ func (w *Web) Configure(c *driver.WebConfig) {
 
 func (w *Web) make() {
 	loadWebKit()
-	config := objc.ID(objc.GetClass("WKWebViewConfiguration")).Send(sel("new"))
+	config := objc.ID(Class("WKWebViewConfiguration")).Send(sel("new"))
 	w.handler = objc.ID(classWebHandler).Send(sel("new"))
 	webHandlers[w.handler] = w
 	config.Send(sel("userContentController")).Send(sel("addScriptMessageHandler:name:"), w.handler, NSString(messageHandler))
 	bounds := objc.Send[CGRect](w.holder, sel("bounds"))
-	w.web = objc.ID(objc.GetClass("WKWebView")).Send(sel("alloc")).Send(sel("initWithFrame:configuration:"), bounds, config)
+	w.web = objc.ID(Class("WKWebView")).Send(sel("alloc")).Send(sel("initWithFrame:configuration:"), bounds, config)
 	config.Send(sel("release"))
 	w.web.Send(sel("setNavigationDelegate:"), w.handler)
 	const flexibleSize = 2 | 16 // width and height, in AppKit and UIKit alike
@@ -262,7 +262,7 @@ func (w *Web) make() {
 	// background shows the view's own, as its style expects. iOS keeps
 	// WebKit's, as NSH does.
 	if runtime.GOOS != "ios" {
-		no := objc.ID(objc.GetClass("NSNumber")).Send(sel("numberWithBool:"), false)
+		no := objc.ID(Class("NSNumber")).Send(sel("numberWithBool:"), false)
 		w.web.Send(sel("setValue:forKey:"), no, NSString("drawsBackground"))
 	}
 	w.holder.Send(sel("addSubview:"), w.web)
@@ -276,7 +276,7 @@ func (w *Web) addScripts() {
 		if source == "" {
 			return
 		}
-		script := objc.ID(objc.GetClass("WKUserScript")).Send(sel("alloc")).Send(
+		script := objc.ID(Class("WKUserScript")).Send(sel("alloc")).Send(
 			sel("initWithSource:injectionTime:forMainFrameOnly:"), NSString(source), at, true)
 		content.Send(sel("addUserScript:"), script)
 		script.Send(sel("release"))
@@ -302,14 +302,14 @@ func (w *Web) load() {
 	case src.Src != "":
 		// A URL NSURL cannot parse loads nothing.
 		if url := nsURL(src.Src); url != 0 {
-			request := objc.ID(objc.GetClass("NSURLRequest")).Send(sel("requestWithURL:"), url)
+			request := objc.ID(Class("NSURLRequest")).Send(sel("requestWithURL:"), url)
 			w.web.Send(sel("loadRequest:"), request)
 		}
 	}
 }
 
 func nsURL(s string) objc.ID {
-	return objc.ID(objc.GetClass("NSURL")).Send(sel("URLWithString:"), NSString(s))
+	return objc.ID(Class("NSURL")).Send(sel("URLWithString:"), NSString(s))
 }
 
 // navigated reports the page's state as kinds.

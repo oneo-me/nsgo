@@ -117,7 +117,7 @@ func (r *ring) layout(layer objc.ID, tr *driver.Transition) {
 			side := r.sides[i]
 			fresh := side == 0
 			if fresh {
-				side = objc.ID(objc.GetClass("CAShapeLayer")).Send(selNew)
+				side = objc.ID(Class("CAShapeLayer")).Send(selNew)
 				side.Send(sel("setFillRule:"), NSString("even-odd"))
 				layer.Send(sel("insertSublayer:atIndex:"), side, uint32(0))
 				r.sides[i] = side
@@ -135,7 +135,7 @@ func (r *ring) layout(layer objc.ID, tr *driver.Transition) {
 				continue
 			}
 			if mask == 0 {
-				mask = objc.ID(objc.GetClass("CAShapeLayer")).Send(selNew)
+				mask = objc.ID(Class("CAShapeLayer")).Send(selNew)
 				side.Send(selSetMask, mask)
 				mask.Send(selRelease)
 			}
@@ -163,7 +163,7 @@ func animate(layer objc.ID, key string, tr *driver.Transition, fresh bool, set f
 	if from == 0 {
 		return
 	}
-	anim := objc.ID(objc.GetClass("CABasicAnimation")).Send(sel("animationWithKeyPath:"), NSString(key))
+	anim := objc.ID(Class("CABasicAnimation")).Send(sel("animationWithKeyPath:"), NSString(key))
 	anim.Send(sel("setFromValue:"), from)
 	anim.Send(sel("setDuration:"), tr.Duration.Seconds())
 	anim.Send(sel("setTimingFunction:"), timing(tr.Easing))

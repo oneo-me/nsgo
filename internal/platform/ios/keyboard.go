@@ -55,6 +55,6 @@ func (s *surface) keepFocusedClear() {
 	animations := objc.NewBlock(func(objc.Block) {
 		scroll.native.Send(sel("scrollRectToVisible:animated:"), r, false)
 	})
-	objc.ID(objc.GetClass("UIView")).Send(sel("animateWithDuration:animations:"), s.keyboardDuration.Seconds(), animations)
+	objc.ID(apple.Class("UIView")).Send(sel("animateWithDuration:animations:"), s.keyboardDuration.Seconds(), animations)
 	animations.Release()
 }

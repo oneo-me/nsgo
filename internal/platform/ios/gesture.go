@@ -66,7 +66,7 @@ var (
 )
 
 func registerGestures() {
-	classPanGate = register("NsgoPanGate", objc.GetClass("UIGestureRecognizer"), nil, []objc.MethodDef{
+	classPanGate = register("NsgoPanGate", apple.Class("UIGestureRecognizer"), nil, []objc.MethodDef{
 		{Cmd: sel("touchesBegan:withEvent:"), Fn: gateBegan},
 		{Cmd: sel("touchesMoved:withEvent:"), Fn: gateMoved},
 		{Cmd: sel("touchesEnded:withEvent:"), Fn: func(self objc.ID, _ objc.SEL, touches, _ objc.ID) {
@@ -106,7 +106,7 @@ func (g *panGate) handOff(touch objc.ID) {
 	if !g.view.handoff {
 		return
 	}
-	scrollClass := objc.GetClass("UIScrollView")
+	scrollClass := apple.Class("UIScrollView")
 	for n := touch.Send(selView); n != 0 && n != g.view.native; n = n.Send(selSuperview) {
 		if !objc.Send[bool](n, selIsKindOf, scrollClass) || !objc.Send[bool](n, sel("isScrollEnabled")) {
 			continue
@@ -199,21 +199,21 @@ func (v *view) setGestures(m driver.EventMask) {
 		return r
 	})
 	toggle(m.Has(driver.EventPinch), &v.pinch, func() objc.ID {
-		r := newRecognizer(objc.GetClass("UIPinchGestureRecognizer"), selPinchAction)
+		r := newRecognizer(apple.Class("UIPinchGestureRecognizer"), selPinchAction)
 		r.Send(selSetDeleg, v.native)
 		return r
 	})
 	toggle(m.Has(driver.EventRotation), &v.rotation, func() objc.ID {
-		r := newRecognizer(objc.GetClass("UIRotationGestureRecognizer"), selRotateAction)
+		r := newRecognizer(apple.Class("UIRotationGestureRecognizer"), selRotateAction)
 		r.Send(selSetDeleg, v.native)
 		return r
 	})
 	// UIScrollTypeMask: continuous for a trackpad, discrete for a wheel.
 	scrollOnly := func(mask int) func() objc.ID {
 		return func() objc.ID {
-			r := newRecognizer(objc.GetClass("UIPanGestureRecognizer"), selWheelAction)
+			r := newRecognizer(apple.Class("UIPanGestureRecognizer"), selWheelAction)
 			r.Send(sel("setAllowedScrollTypesMask:"), mask)
-			r.Send(sel("setAllowedTouchTypes:"), objc.ID(objc.GetClass("NSArray")).Send(sel("array")))
+			r.Send(sel("setAllowedTouchTypes:"), objc.ID(apple.Class("NSArray")).Send(sel("array")))
 			r.Send(selSetDeleg, v.native)
 			return r
 		}
@@ -222,7 +222,7 @@ func (v *view) setGestures(m driver.EventMask) {
 	toggle(m.Has(driver.EventWheel), &v.notches, scrollOnly(2))
 	hover := m.Has(driver.EventMouseEnter) || m.Has(driver.EventMouseLeave) || m.Has(driver.EventMouseMove)
 	toggle(hover, &v.hover, func() objc.ID {
-		return newRecognizer(objc.GetClass("UIHoverGestureRecognizer"), selHoverAction)
+		return newRecognizer(apple.Class("UIHoverGestureRecognizer"), selHoverAction)
 	})
 }
 
@@ -349,7 +349,7 @@ func gateLifted(self, touches objc.ID, how int) {
 // the gate's view.
 func gateHoldsBack(self objc.ID, _ objc.SEL, other objc.ID) bool {
 	view, scroll := self.Send(selView), other.Send(selView)
-	if view == 0 || scroll == 0 || !objc.Send[bool](scroll, sel("isKindOfClass:"), objc.GetClass("UIScrollView")) {
+	if view == 0 || scroll == 0 || !objc.Send[bool](scroll, sel("isKindOfClass:"), apple.Class("UIScrollView")) {
 		return false
 	}
 	return scroll.Send(sel("panGestureRecognizer")) == other && objc.Send[bool](view, sel("isDescendantOfView:"), scroll)

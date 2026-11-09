@@ -42,7 +42,7 @@ func scrollPanShouldBegin(self objc.ID, cmd objc.SEL, r objc.ID) bool {
 		d = objc.Send[apple.CGPoint](r, selVelocity, self)
 	}
 	if d != (apple.CGPoint{}) && !canScroll(self, d) {
-		scrollClass := objc.GetClass("UIScrollView")
+		scrollClass := apple.Class("UIScrollView")
 		for p := self.Send(selSuperview); p != 0; p = p.Send(selSuperview) {
 			if objc.Send[bool](p, selIsKindOf, scrollClass) && canScroll(p, d) {
 				return false
@@ -59,16 +59,16 @@ func scrollPanShouldBegin(self objc.ID, cmd objc.SEL, r objc.ID) bool {
 func scrollPanWaits(self objc.ID, cmd objc.SEL, r, other objc.ID) bool {
 	if r == self.Send(selPanRecognizer) {
 		inner := other.Send(selView)
-		if inner != 0 && inner != self && objc.Send[bool](inner, selIsKindOf, objc.GetClass("UIScrollView")) &&
+		if inner != 0 && inner != self && objc.Send[bool](inner, selIsKindOf, apple.Class("UIScrollView")) &&
 			inner.Send(selPanRecognizer) == other && objc.Send[bool](inner, selIsDescendant, self) {
 			return true
 		}
-		if inner != 0 && objc.Send[bool](other, selIsKindOf, objc.GetClass("UIScreenEdgePanGestureRecognizer")) &&
+		if inner != 0 && objc.Send[bool](other, selIsKindOf, apple.Class("UIScreenEdgePanGestureRecognizer")) &&
 			objc.Send[bool](self, selIsDescendant, inner) {
 			return true
 		}
 	}
-	if objc.Send[bool](objc.ID(objc.GetClass("UIScrollView")), sel("instancesRespondToSelector:"), cmd) {
+	if objc.Send[bool](objc.ID(apple.Class("UIScrollView")), sel("instancesRespondToSelector:"), cmd) {
 		return apple.SendSuper[bool](self, cmd, r, other)
 	}
 	return false

@@ -107,7 +107,7 @@ func withPool(fn func()) {
 // WithoutAnimation runs fn with Core Animation's implicit animations off,
 // so layers a backend adds itself change at once.
 func WithoutAnimation(fn func()) {
-	tx := objc.ID(objc.GetClass("CATransaction"))
+	tx := objc.ID(Class("CATransaction"))
 	tx.Send(sel("begin"))
 	tx.Send(sel("setDisableActions:"), true)
 	fn()
@@ -121,7 +121,7 @@ func Observe(center, name objc.ID, fn func(note objc.ID)) (stop func()) {
 		return func() {}
 	}
 	block := objc.NewBlock(func(_ objc.Block, note objc.ID) { fn(note) })
-	queue := objc.ID(objc.GetClass("NSOperationQueue")).Send(selMainQueue)
+	queue := objc.ID(Class("NSOperationQueue")).Send(selMainQueue)
 	token := center.Send(selAddObserver, name, objc.ID(0), queue, block).Send(sel("retain"))
 	block.Release()
 	return func() {
@@ -165,7 +165,7 @@ var (
 // Locale returns the user's locale as a BCP 47 tag, and whether their
 // first preferred language is written right to left.
 func Locale() (tag string, rtl bool) {
-	nsLocale := objc.ID(objc.GetClass("NSLocale"))
+	nsLocale := objc.ID(Class("NSLocale"))
 	id := GoString(nsLocale.Send(sel("currentLocale")).Send(sel("localeIdentifier")))
 	if i := strings.IndexByte(id, '@'); i >= 0 {
 		id = id[:i]
@@ -182,7 +182,7 @@ func Locale() (tag string, rtl bool) {
 
 // ForEach calls fn with each object of an NSArray or NSSet.
 func ForEach(collection objc.ID, fn func(objc.ID)) {
-	if objc.Send[bool](collection, sel("isKindOfClass:"), objc.GetClass("NSSet")) {
+	if objc.Send[bool](collection, sel("isKindOfClass:"), Class("NSSet")) {
 		collection = collection.Send(sel("allObjects"))
 	}
 	n := objc.Send[uint](collection, selCount)
@@ -234,11 +234,11 @@ func PinLanguage(lang string) {
 	if lang == "en-XA" || lang == "ar-XB" { // i18n's pseudo locales
 		lang = ""
 	}
-	id := objc.ID(objc.GetClass("NSBundle")).Send(sel("mainBundle")).Send(sel("bundleIdentifier"))
+	id := objc.ID(Class("NSBundle")).Send(sel("mainBundle")).Send(sel("bundleIdentifier"))
 	if id == 0 {
 		return
 	}
-	defaults := objc.ID(objc.GetClass("NSUserDefaults")).Send(sel("standardUserDefaults"))
+	defaults := objc.ID(Class("NSUserDefaults")).Send(sel("standardUserDefaults"))
 	var pinned, chosen string
 	if domain := defaults.Send(sel("persistentDomainForName:"), id); domain != 0 {
 		pinned = GoString(domain.Send(selObjectForKey, NSString(pinnedLanguageKey)))
@@ -248,7 +248,7 @@ func PinLanguage(lang string) {
 	}
 	switch {
 	case lang != "" && (lang != pinned || lang != chosen):
-		langs := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), NSString(lang))
+		langs := objc.ID(Class("NSArray")).Send(sel("arrayWithObject:"), NSString(lang))
 		defaults.Send(sel("setObject:forKey:"), langs, NSString(appleLanguagesKey))
 		defaults.Send(sel("setObject:forKey:"), NSString(lang), NSString(pinnedLanguageKey))
 	case lang == "" && pinned != "":
@@ -266,9 +266,9 @@ func BundleName(lang string) string {
 	if lang == "" {
 		return ""
 	}
-	bundle := objc.ID(objc.GetClass("NSBundle")).Send(sel("mainBundle"))
-	prefs := objc.ID(objc.GetClass("NSArray")).Send(sel("arrayWithObject:"), NSString(lang))
-	locs := objc.ID(objc.GetClass("NSBundle")).Send(sel("preferredLocalizationsFromArray:forPreferences:"),
+	bundle := objc.ID(Class("NSBundle")).Send(sel("mainBundle"))
+	prefs := objc.ID(Class("NSArray")).Send(sel("arrayWithObject:"), NSString(lang))
+	locs := objc.ID(Class("NSBundle")).Send(sel("preferredLocalizationsFromArray:forPreferences:"),
 		bundle.Send(sel("localizations")), prefs)
 	if locs == 0 || objc.Send[uint](locs, selCount) == 0 {
 		return ""
@@ -278,7 +278,7 @@ func BundleName(lang string) string {
 	if path == 0 {
 		return ""
 	}
-	strs := objc.ID(objc.GetClass("NSDictionary")).Send(sel("dictionaryWithContentsOfFile:"), path)
+	strs := objc.ID(Class("NSDictionary")).Send(sel("dictionaryWithContentsOfFile:"), path)
 	if strs == 0 {
 		return ""
 	}

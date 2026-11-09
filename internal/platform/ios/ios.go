@@ -237,7 +237,7 @@ var views = map[objc.ID]*view{}
 var runner *surface
 
 var (
-	sel = objc.RegisterName
+	sel = apple.Sel
 
 	selAlloc, selNew                 = sel("alloc"), sel("new")
 	selRelease                       = sel("release")
@@ -296,7 +296,7 @@ func loadUIKit() {
 	purego.RegisterLibFunc(&uiAccessibilityPost, uikit, "UIAccessibilityPostNotification")
 	loadAccessibility(uikit)
 
-	uiView := objc.GetClass("UIView")
+	uiView := apple.Class("UIView")
 	common := []objc.MethodDef{
 		{Cmd: sel("hitTest:withEvent:"), Fn: hitTest},
 		{Cmd: sel("touchesBegan:withEvent:"), Fn: touchesBegan},
@@ -331,7 +331,7 @@ func loadUIKit() {
 		}},
 	)
 	classSurface = register("NsgoSurface", uiView, nil, surfaceMethods)
-	classController = register("NsgoViewController", objc.GetClass("UIViewController"), nil, []objc.MethodDef{
+	classController = register("NsgoViewController", apple.Class("UIViewController"), nil, []objc.MethodDef{
 		{Cmd: sel("preferredStatusBarStyle"), Fn: func(objc.ID, objc.SEL) int { return runner.statusBar }},
 		{Cmd: sel("prefersStatusBarHidden"), Fn: func(objc.ID, objc.SEL) bool { return runner.hideBar }},
 		{Cmd: sel("preferredStatusBarUpdateAnimation"), Fn: func(objc.ID, objc.SEL) int { return runner.barAnimation() }},
@@ -355,21 +355,21 @@ func loadUIKit() {
 	})
 	// The watcher sees every touch going down in the surface, before its
 	// views do, and lets it through.
-	classWatcher = register("NsgoTouchWatcher", objc.GetClass("UIGestureRecognizer"), nil, []objc.MethodDef{
+	classWatcher = register("NsgoTouchWatcher", apple.Class("UIGestureRecognizer"), nil, []objc.MethodDef{
 		{Cmd: sel("touchesBegan:withEvent:"), Fn: watcherBegan},
 	})
 	classInput = register("NsgoInput", uiView, []*objc.Protocol{objc.GetProtocol("UITextFieldDelegate"),
 		objc.GetProtocol("UITextViewDelegate")}, append(common, inputMethods()...))
 	registerInput()
-	classScroll = register("NsgoScrollView", objc.GetClass("UIScrollView"),
+	classScroll = register("NsgoScrollView", apple.Class("UIScrollView"),
 		[]*objc.Protocol{objc.GetProtocol("UIScrollViewDelegate")},
 		append(append(scrollMethods(), behaviorMethods()...), objc.MethodDef{Cmd: sel("scrollViewDidScroll:"), Fn: scrolled}))
-	register("NsgoAppDelegate", objc.GetClass("UIResponder"),
+	register("NsgoAppDelegate", apple.Class("UIResponder"),
 		[]*objc.Protocol{objc.GetProtocol("UIApplicationDelegate")},
 		[]objc.MethodDef{{Cmd: sel("application:didFinishLaunchingWithOptions:"),
 			Fn: func(self objc.ID, _ objc.SEL, application, options objc.ID) bool { return true }}})
 	// The SDK requires the scene life cycle; Info.plist names this class.
-	register("NsgoSceneDelegate", objc.GetClass("UIResponder"),
+	register("NsgoSceneDelegate", apple.Class("UIResponder"),
 		[]*objc.Protocol{objc.GetProtocol("UIWindowSceneDelegate")},
 		[]objc.MethodDef{{Cmd: sel("scene:willConnectToSession:options:"), Fn: sceneWillConnect}})
 }
@@ -423,7 +423,7 @@ func runUIKit(opts Options) {
 var window, controller objc.ID
 
 func sceneWillConnect(self objc.ID, _ objc.SEL, scene, session, options objc.ID) {
-	window = objc.ID(objc.GetClass("UIWindow")).Send(selAlloc).Send(sel("initWithWindowScene:"), scene)
+	window = objc.ID(apple.Class("UIWindow")).Send(selAlloc).Send(sel("initWithWindowScene:"), scene)
 	bounds := objc.Send[apple.CGRect](window, selBounds)
 	controller = objc.ID(classController).Send(selNew)
 	s := runner
@@ -507,14 +507,14 @@ func (s *surface) environment() driver.Environment {
 	traits := s.native.Send(sel("traitCollection"))
 	scale := objc.Send[float64](traits, sel("displayScale"))
 	if scale <= 0 {
-		scale = objc.Send[float64](objc.ID(objc.GetClass("UIScreen")).Send(sel("mainScreen")), sel("scale"))
+		scale = objc.Send[float64](objc.ID(apple.Class("UIScreen")).Send(sel("mainScreen")), sel("scale"))
 	}
 	// The body text style is 17 points at the default text size.
-	body := objc.ID(objc.GetClass("UIFont")).Send(sel("preferredFontForTextStyle:"),
+	body := objc.ID(apple.Class("UIFont")).Send(sel("preferredFontForTextStyle:"),
 		apple.Global(uikitPath, "UIFontTextStyleBody"))
 	idiom := driver.IdiomPhone
 	const pad, mac = 1, 5
-	switch objc.Send[int](objc.ID(objc.GetClass("UIDevice")).Send(sel("currentDevice")), sel("userInterfaceIdiom")) {
+	switch objc.Send[int](objc.ID(apple.Class("UIDevice")).Send(sel("currentDevice")), sel("userInterfaceIdiom")) {
 	case pad:
 		idiom = driver.IdiomTablet
 	case mac:
@@ -568,7 +568,7 @@ func appLifecycle() driver.Lifecycle {
 		return lifecycleNow
 	}
 	const inactive, background = 1, 2
-	switch objc.Send[int](objc.ID(objc.GetClass("UIApplication")).Send(sel("sharedApplication")), sel("applicationState")) {
+	switch objc.Send[int](objc.ID(apple.Class("UIApplication")).Send(sel("sharedApplication")), sel("applicationState")) {
 	case inactive:
 		return driver.LifecycleInactive
 	case background:
@@ -591,7 +591,7 @@ func (s *surface) refresh() {
 // observe watches the notifications parts of the environment change with,
 // until the surface closes.
 func (s *surface) observe() {
-	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(sel("defaultCenter"))
+	center := objc.ID(apple.Class("NSNotificationCenter")).Send(sel("defaultCenter"))
 	refresh := func(objc.ID) { s.refresh() }
 	on := func(name objc.ID, fn func(objc.ID)) { s.stops = append(s.stops, apple.Observe(center, name, fn)) }
 	for _, name := range []string{"UIContentSizeCategoryDidChangeNotification",
@@ -619,7 +619,7 @@ func (s *surface) viewController() objc.ID {
 		return controller
 	}
 	for r := s.native.Send(sel("nextResponder")); r != 0; r = r.Send(sel("nextResponder")) {
-		if objc.Send[bool](r, sel("isKindOfClass:"), objc.GetClass("UIViewController")) {
+		if objc.Send[bool](r, sel("isKindOfClass:"), apple.Class("UIViewController")) {
 			return r
 		}
 	}
@@ -647,7 +647,7 @@ func (s *surface) keyboardMoved(note objc.ID, hiding bool) {
 	s.keyboard = 0
 	if frame := get("UIKeyboardFrameEndUserInfoKey"); !hiding && frame != 0 {
 		end := objc.Send[apple.CGRect](frame, sel("CGRectValue"))
-		space := objc.ID(objc.GetClass("UIScreen")).Send(sel("mainScreen")).Send(sel("coordinateSpace"))
+		space := objc.ID(apple.Class("UIScreen")).Send(sel("mainScreen")).Send(sel("coordinateSpace"))
 		if w := s.uiWindow(); w != 0 {
 			space = w.Send(sel("screen")).Send(sel("coordinateSpace"))
 		}
@@ -667,7 +667,7 @@ func (s *surface) alert(a *driver.AlertConfig) {
 	if a.Sheet {
 		style = styleSheet
 	}
-	ctrl := objc.ID(objc.GetClass("UIAlertController")).Send(sel("alertControllerWithTitle:message:preferredStyle:"),
+	ctrl := objc.ID(apple.Class("UIAlertController")).Send(sel("alertControllerWithTitle:message:preferredStyle:"),
 		apple.NSString(a.Title), apple.NSString(a.Message), style)
 	s.directTree(ctrl.Send(sel("view")))
 	id := a.ID
@@ -678,7 +678,7 @@ func (s *surface) alert(a *driver.AlertConfig) {
 			}
 			s.engine.Dispatch(driver.Event{Kind: driver.EventAlert, Count: id, Index: index})
 		})
-		action := objc.ID(objc.GetClass("UIAlertAction")).Send(sel("actionWithTitle:style:handler:"),
+		action := objc.ID(apple.Class("UIAlertAction")).Send(sel("actionWithTitle:style:handler:"),
 			apple.NSString(label), style, handler)
 		handler.Release()
 		ctrl.Send(sel("addAction:"), action)
@@ -709,7 +709,7 @@ func (s *surface) alert(a *driver.AlertConfig) {
 			handler := objc.NewBlock(func(_ objc.Block, _ objc.ID) {
 				s.engine.Dispatch(driver.Event{Kind: driver.EventAlert, Count: id, Index: -1})
 			})
-			action := objc.ID(objc.GetClass("UIAlertAction")).Send(sel("actionWithTitle:style:handler:"),
+			action := objc.ID(apple.Class("UIAlertAction")).Send(sel("actionWithTitle:style:handler:"),
 				objc.ID(0), actionCancel, handler)
 			handler.Release()
 			ctrl.Send(sel("addAction:"), action)
@@ -794,6 +794,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {
 		lb = &layoutBatch{anim: b.LayoutAnimation, created: map[driver.NodeID]bool{}, deleted: map[objc.ID]bool{}}
 	}
+	s.coverScreens(b.Items)
 	for i := range b.Items {
 		it := &b.Items[i]
 		switch it.Kind {
@@ -819,7 +820,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			apple.HandleSpeech(it.Count, *it.Speech, s.engine.Dispatch)
 			continue
 		case driver.ItemSetClipboard:
-			objc.ID(objc.GetClass("UIPasteboard")).Send(sel("generalPasteboard")).Send(sel("setString:"), apple.NSString(it.Value))
+			objc.ID(apple.Class("UIPasteboard")).Send(sel("generalPasteboard")).Send(sel("setString:"), apple.NSString(it.Value))
 			continue
 		case driver.ItemReadClipboard:
 			s.readClipboard(it)
@@ -905,7 +906,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			if v.bar != nil {
 				s.touchStack(s.stackOf(v))
 			}
-			s.delete(v, s.vanish(v, lb))
+			s.delete(v, s.keepScreen(v) || s.vanish(v, lb))
 		case driver.ItemRemove:
 			if v.bar != nil {
 				s.touchStack(s.stackOf(v))
@@ -949,6 +950,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemOverflow:
 			v.overflow = it.Frame
 		case driver.ItemFrame:
+			if it.Frame.Size == (driver.Size{}) && s.covered(v) {
+				break
+			}
 			s.setFrame(v, it, lb)
 			if v.bar != nil {
 				s.layoutBar(v)
@@ -1214,7 +1218,7 @@ func (s *surface) delete(v *view, kept bool) {
 		v.headerWrap.Send(selRemoveFromSuperview)
 		v.headerWrap.Send(selRelease)
 	}
-	if !kept && !s.inGhost(v.native) {
+	if !kept && !s.inGhost(v.native) && !s.inGone(v.native) {
 		v.native.Send(selRemoveFromSuperview)
 	}
 	s.animator.Forget(v.id)
