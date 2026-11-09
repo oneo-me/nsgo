@@ -90,8 +90,14 @@ func (a *App) startTarget(app func(cx *core.Scope) core.Node) {
 	})
 	a.t.Cleanup(a.root.Dispose)
 	a.anim = driver.NewAnimator(func(driver.Event) {})
+	// A nil clock is the system's; a nil *ManualClock would not be.
+	var clock core.Clock = a.Clock
+	if a.measure {
+		clock = nil
+		driver.CheckCommits = false
+	}
 	s, err := h.Open(app, testhost.Options{
-		Size: a.size, Environment: a.env, Storage: a.store, Host: a.host, Clock: a.Clock,
+		Size: a.size, Environment: a.env, Storage: a.store, Host: a.host, Clock: clock,
 		FPS: os.Getenv("NSGO_TEST_FPS") != "",
 		Observe: func(b *driver.MountBatch) {
 			t.mu.Lock()
@@ -126,6 +132,15 @@ func (a *App) startTarget(app func(cx *core.Scope) core.Node) {
 
 // drain applies what came since the last call, reporting whether
 // anything did.
+// drainEvents is drain, reporting only whether events came.
+func (t *target) drainEvents() bool {
+	t.mu.Lock()
+	events := len(t.events)
+	t.mu.Unlock()
+	t.drain()
+	return events > 0
+}
+
 func (t *target) drain() bool {
 	t.mu.Lock()
 	batches, events := t.batches, t.events
@@ -159,15 +174,27 @@ func (t *target) drain() bool {
 // quietFor, settleWait at most, applying what came.
 func (t *target) settle() {
 	deadline := time.Now().Add(settleWait)
+	if t.a.measure {
+		// An app measured may commit as long as it runs, as a ticking
+		// table does, and asking the platform what animates walks its
+		// views: a step waits quietFor for what it set off to land and
+		// for the platform's events to stop, then only for what it moved
+		// to rest, looking seldom, so the readings are the app's.
+		quiet := time.Now()
+		for {
+			t.runPosts()
+			if t.drainEvents() {
+				quiet = time.Now()
+			}
+			if time.Since(quiet) >= quietFor && !t.surface.Animating() || time.Now().After(deadline) {
+				return
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
 	quiet := time.Now()
 	for {
-		t.a.mu.Lock()
-		posts := t.a.posts
-		t.a.posts = nil
-		t.a.mu.Unlock()
-		for _, fn := range posts {
-			fn()
-		}
+		t.runPosts()
 		if t.drain() || t.surface.Animating() {
 			quiet = time.Now()
 		}
@@ -175,6 +202,17 @@ func (t *target) settle() {
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// runPosts runs what the test's own graph posted.
+func (t *target) runPosts() {
+	t.a.mu.Lock()
+	posts := t.a.posts
+	t.a.posts = nil
+	t.a.mu.Unlock()
+	for _, fn := range posts {
+		fn()
 	}
 }
 
@@ -239,6 +277,12 @@ func (t *target) menu(step func(testhost.Surface) error) {
 // a frame at a time, settling between, when run, else at once. The
 // platform's own animations run in real time.
 func (t *target) advance(d time.Duration, run bool) {
+	if t.a.measure {
+		time.Sleep(d)
+		t.runPosts()
+		t.drain()
+		return
+	}
 	if !run {
 		t.a.Clock.Jump(d)
 		t.settle()

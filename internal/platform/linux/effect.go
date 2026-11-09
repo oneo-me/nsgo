@@ -76,7 +76,6 @@ var (
 	gdkTextureGetWidth       func(uintptr) int32
 	gdkTextureGetHeight      func(uintptr) int32
 	gtkSnapshotScale         func(uintptr, float32, float32)
-	gtkSnapshotTranslate     func(uintptr, *graphenePoint)
 	effectsBound             bool
 )
 
@@ -91,7 +90,6 @@ func bindEffects() {
 	purego.RegisterLibFunc(&gdkTextureGetWidth, gtkLib, "gdk_texture_get_width")
 	purego.RegisterLibFunc(&gdkTextureGetHeight, gtkLib, "gdk_texture_get_height")
 	purego.RegisterLibFunc(&gtkSnapshotScale, gtkLib, "gtk_snapshot_scale")
-	purego.RegisterLibFunc(&gtkSnapshotTranslate, gtkLib, "gtk_snapshot_translate")
 }
 
 // setEffect gives v its effect, transition or navigation shader, or takes

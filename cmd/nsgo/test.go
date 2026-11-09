@@ -26,7 +26,10 @@ type testOptions struct {
 	target string // the platform to run on; headless when ""
 	fps    bool   // log the performance monitor's readings on target
 	device string // the simulator or device a mobile target runs on
-	args   []string
+	// env are the tests' KEY=VALUE variables, on every target: a
+	// phone's tests see no others of this machine's.
+	env  []string
+	args []string
 }
 
 // testEvent is a line of go test -json (test2json's format).
@@ -114,7 +117,7 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 	}
 	cmd := exec.CommandContext(ctx, "go", args...)
 	cmd.Dir = p.Dir
-	cmd.Env = os.Environ()
+	cmd.Env = append(os.Environ(), opts.env...)
 	if opts.trace {
 		cmd.Env = append(cmd.Env, "NSGO_TEST_TRACE=1")
 	}

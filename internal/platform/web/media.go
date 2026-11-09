@@ -64,7 +64,7 @@ func (s *surface) applyAnimated() {
 		// What animates goes inline over the view's class; once nothing
 		// does, the class shows.
 		style := map[string]string{"opacity": "", "transform": "", "background-color": "", "box-shadow": "",
-			"transition": "", "-webkit-text-fill-color": "", "border-color": ""}
+			"transition": "", "-webkit-text-fill-color": "", "border-color": "", "will-change": ""}
 		if vals.Set != 0 {
 			vs := vals.Apply(v.style)
 			style["opacity"], style["transform"] = opacityCSS(vs.Opacity), transformCSS(vs.Transform)
@@ -77,6 +77,9 @@ func (s *surface) applyAnimated() {
 			}
 			if style["transform"] == "" {
 				style["transform"] = "none"
+			}
+			if vals.Has(driver.PropTranslateX) || vals.Has(driver.PropTranslateY) {
+				style["will-change"] = "transform"
 			}
 			if style["background-color"] == "" {
 				style["background-color"] = "transparent"

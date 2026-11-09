@@ -52,6 +52,8 @@ Steps resolve on the model, scroll the view into view a gesture at a time, and a
 
 Alerts are answered at their buttons: an `NSAlert`'s, a `UIAlertController`'s label, the web's DOM button, Windows' drawn button, GTK's button, the `AlertDialog`'s. `ChooseMenu` and `ChoosePopup` choose the native menus' items: the main menu's on macOS, the menu bar's on Windows and Linux, and the context menu showing; phones and the web, which show no native menus, skip the test. `Advance` moves the test's clock a frame at a time, and after each step waits for the engine to run what the step's timers posted (`Surface.Sync`), so the timers they set, an interval's next run, fall due within the same advance; the app's frames follow the clock. What the test reports for a platform (`Load`, `Navigate`, `ImageSizes` and the like) and `ManualFrames` skip the test on a platform; `nsgotest.Target` names it, for tests that check only the headless model.
 
+`Measure` runs the app as its users do, for the performance scenarios (`examples/gallery/perf_test.go`): on the system's clock, so `Advance` sleeps, with `driver.CheckCommits` off, and with steps that wait quietFor for their events and then only for the platform to stop animating, looked at every 50 ms. A ticking app never stops committing, so waiting for quiet held each step the whole 5 seconds, and asking the platform what animates walks its views: on the iOS simulator that polling was most of a ticking DataTable's 31% of a core, against the app's 6%.
+
 The test agent's Java ships in every APK, but the runtime takes a test from the launch intent only in a debuggable build, which `nsgo test` makes, so no other app sets the process's arguments or environment.
 
 ## TSX tests

@@ -39,7 +39,9 @@ go tool nsgo test
 go tool nsgo test -target macos
 ```
 
-可用的目标有 `macos`、`windows`、`linux`、`web`（在 Chrome、Chromium 或 Edge 中）、`ios_simulator` 和 `android`，或 `all`。每个测试在独立的进程中运行，`app.Screenshot("name")` 会把截图保存到 `.nsgo/test/screenshots`，`-fps` 会在 `macos`、`windows`、`linux` 和 `ios_simulator` 上每秒记录一次性能监视器的读数。
+可用的目标有 `macos`、`windows`、`linux`、`web`（在 Chrome、Chromium 或 Edge 中）、`ios_simulator` 和 `android`，或 `all`。每个测试在独立的进程中运行，`app.Screenshot("name")` 会把截图保存到 `.nsgo/test/screenshots`，`-fps` 会在 `macos`、`windows`、`linux` 和 `ios_simulator` 上每秒记录一次性能监视器的读数。`-env KEY=VALUE` 为测试设置环境变量，手机上的测试只能这样拿到变量。
+
+要测量而不是检查时，用 `nsgotest.Measure()` 启动：应用运行在系统时钟上，`Advance` 会真实等待相应时长，各步骤只等待正在进行的动画停下。`app.Mark("name")` 标出此后的读数测的是什么，`app.Mark("-")` 结束标记；无论是否加 `-fps`，标记都会打印出来。
 
 ## TSX 测试
 

@@ -1110,7 +1110,7 @@ func (t *Tree) restyle(n *node) bool {
 	// Roots are placed by style the layout leaves out of theirs.
 	if n.lstyleOK && !n.isRoot && n.hoist == nil {
 		t.lscratch = n.layoutStyle()
-		if reflect.DeepEqual(&t.lscratch, &n.lstyle) {
+		if t.lscratch.Equal(&n.lstyle) {
 			return false
 		}
 	}

@@ -3,6 +3,8 @@
 package macos
 
 import (
+	"github.com/ebitengine/purego/objc"
+
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/platform/apple"
 )
@@ -44,21 +46,18 @@ func (v *view) followScale(vs *driver.ViewStyle) {
 		return
 	}
 	v.rasterStep = step
-	for _, w := range v.surface.views {
-		if w == nil || w.contentLayer == 0 || !w.inside(v) {
-			continue
+	// The views inside v, from its native view down: going up from each
+	// of the window's views took a few percent of a core on the gallery's
+	// Animations page, whose rings pass a step every loop.
+	var walk func(n objc.ID)
+	walk = func(n objc.ID) {
+		if w := views[n]; w != nil && w.native == n && w.contentLayer != 0 {
+			w.contentLayer.Send(selSetContentsScale, w.contentScale())
+			w.redraw()
 		}
-		w.contentLayer.Send(selSetContentsScale, w.contentScale())
-		w.redraw()
-	}
-}
-
-// inside reports whether v is o or a view within it.
-func (v *view) inside(o *view) bool {
-	for n := v; n != nil; n = n.parentView() {
-		if n == o {
-			return true
+		for _, c := range apple.Subviews(n) {
+			walk(c)
 		}
 	}
-	return false
+	walk(v.native)
 }

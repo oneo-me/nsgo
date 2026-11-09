@@ -57,7 +57,7 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	r := &testRun{running: map[string]*testResult{}, packages: map[string]*testResult{}, trace: opts.trace, out: os.Stderr}
 	// A package that links no platform, as a library's, runs headless in
 	// the target's runtime: the web's engine, say.
-	env := []string{}
+	env := slices.Clone(opts.env)
 	if hosted, err := linksPlatform(ctx, p); err != nil {
 		return err
 	} else if hosted {
@@ -71,10 +71,7 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	}
 	for _, name := range names {
 		var out bytes.Buffer
-		w := io.Writer(&out)
-		if opts.trace || opts.fps {
-			w = io.MultiWriter(&out, traceWriter{r.out, opts.trace, opts.fps})
-		}
+		w := io.MultiWriter(&out, traceWriter{r.out, opts.trace, opts.fps})
 		tctx, cancel := context.WithTimeout(ctx, testTimeout)
 		started := time.Now()
 		code, err := runner.run(tctx, []string{"-test.run", "^" + regexp.QuoteMeta(name) + "$", "-test.v"}, env, w)
@@ -97,7 +94,10 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	return r.finish(opts, nil)
 }
 
-// traceWriter passes a test's trace lines on as they come.
+// traceWriter passes a test's trace lines on as they come: the batches
+// with trace, the performance monitor's readings with fps, and the marks
+// of what they measure (nsgotest's Mark) always, so a run without the
+// monitor can be timed by them too.
 type traceWriter struct {
 	w          io.Writer
 	trace, fps bool
@@ -108,7 +108,7 @@ func (t traceWriter) Write(b []byte) (int, error) {
 		switch {
 		case t.trace && (strings.HasPrefix(line, "──") || strings.HasPrefix(line, "   ")):
 			io.WriteString(t.w, line)
-		case t.fps && strings.Contains(line, "nsgo: perf "):
+		case strings.Contains(line, "nsgo: perf ") && (t.fps || strings.Contains(line, "nsgo: perf mark ")):
 			io.WriteString(t.w, margin+line[strings.Index(line, "nsgo: perf ")+len("nsgo: "):])
 		}
 	}

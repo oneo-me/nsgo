@@ -29,7 +29,12 @@ type Animator struct {
 	starts   map[NodeID][4]float64
 	report   func(Event)
 	gen      uint64 // bumped when any value changes
-	changed  map[NodeID]bool
+	// changed are the views Changed reports next, and viewsStale says
+	// every bound view may have: a value changing marks them all with a
+	// flag, as setting each in the map every frame cost most of a frame
+	// of the gallery's Animations page.
+	changed    map[NodeID]bool
+	viewsStale bool
 	now      float64 // seconds of the last step
 	finished []Event
 
@@ -309,9 +314,7 @@ func (a *Animator) apply(o *AnimationOp) {
 // touch notes that values changed, so bound views are evaluated again.
 func (a *Animator) touch() {
 	a.gen++
-	for id := range a.views {
-		a.changed[id] = true
-	}
+	a.viewsStale = true
 	a.shadersStale = true
 	a.canvasesStale = true
 	a.nativesStale = true
@@ -502,6 +505,16 @@ func (a *Animator) Changed(fn func(view NodeID, v AnimatedValues)) {
 			vw.sent = vals
 		}
 		fn(id, vals)
+	}
+	if !a.viewsStale {
+		return
+	}
+	a.viewsStale = false
+	for id, vw := range a.views {
+		if vals := a.evalView(vw); vals != vw.sent {
+			vw.sent = vals
+			fn(id, vals)
+		}
 	}
 }
 

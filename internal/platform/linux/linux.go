@@ -131,8 +131,10 @@ type window struct {
 	// canvases to draw again when one loads.
 	canvasImages  canvasImages
 	canvasWaiting map[string][]*view
-	// hiddenCanvases wait out of sight to be drawn (raster.go).
+	// hiddenCanvases wait out of sight to be drawn (raster.go), and
+	// revealDue says a layout since the last frame may have shown some.
 	hiddenCanvases []*view
+	revealDue      bool
 	// hud is the performance panel, when the app shows one (perf.go).
 	hud *hud
 	// stickyBound are the scroll views with sticky cells whose insets

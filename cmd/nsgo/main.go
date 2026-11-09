@@ -34,6 +34,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -85,6 +86,13 @@ func main() {
 		fs.StringVar(&o.target, "target", "", "run on a `platform`: macos, windows, linux, web, ios_simulator or android (default: headless)")
 		fs.StringVar(&o.device, "device", "", "the simulator, by name or UDID, or the adb device the target runs on")
 		fs.BoolVar(&o.fps, "fps", false, "log the performance monitor's readings once a second (with -target macos, windows, linux or ios_simulator)")
+		fs.Func("env", "set `KEY=VALUE` in the tests' environment, a phone's too; repeat for more", func(kv string) error {
+			if k, _, ok := strings.Cut(kv, "="); !ok || k == "" {
+				return fmt.Errorf("-env wants KEY=VALUE, not %q", kv)
+			}
+			o.env = append(o.env, kv)
+			return nil
+		})
 		fs.Parse(args)
 		rest := fs.Args()
 		dir := ""

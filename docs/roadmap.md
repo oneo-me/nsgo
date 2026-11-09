@@ -15,12 +15,13 @@ What TSX still lacks of NSH's ([TSX and dynamic delivery](architecture/tsx.md)).
 
 ## Performance against NSH's baselines
 
-NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on this machine is the measure: each item runs one scenario on both galleries ([performance](architecture/performance.md#keeping-frames-cheap) says how). Against 0.3.0 the DataTable kept up with NSH's in headless Chrome, with no task over 50 ms, and on macOS, its cells moving with the content in each frame on every backend; against 0.4.0 the DataTable and the Animations page send about as many items as NSH's headless, in a tenth of its time or less.
+NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, and on macOS for the DataTable and the stack, NSGo costs what NSH does or less; what is left:
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
-| 0.4.0's baselines in browsers and windows | `data-table.md` (Performance), `performance.md` | The DataTable's scroll and tick and the Animations page cost what NSH 0.4.0's build does on the same machine in headless Chrome and on macOS, as they do headless (2026-11-08), measured on a Mac whose screen is unlocked |
-| The other platforms | `data-table.md` (Performance) | The DataTable's scroll, still and ticking, and a stack's slides cost on Windows, Linux, iOS and Android what NSH's do there (Pixel 10 Pro: ~870 views, commits at 3 and 7 ms at the median and 90th percentile, slides on whole pixels), measured on those machines and on NSH's builds for them |
+| Animated layers on Apple platforms | `performance.md` (The performance monitor) | The gallery's Animations page costs on macOS what NSH's does (13–15% of a core against 8%, 1.1–1.5 ms against 0.5 ms a frame), and an iOS push does not hold a frame over 3 ms (p95 9 ms, the new page's 115 items against NSH's 42) |
+| GTK frames | `performance.md` (Linux) | The DataTable's scroll costs on Linux what NSH's does (5.4 ms a frame and 51% of a core against 2.2 ms and 32%), and its ticks and the stack's slides too (16% and 10% against 14% and 6%) |
+| Windows and Android | `data-table.md` (Performance) | The stack's slides on Windows (25–31% against 18–24%) and the DataTable's scroll on Android (125% against 111% on the emulator) cost what NSH's do; and on a Pixel 10 Pro the table holds about NSH's ~870 views, commits at 3 and 7 ms at the median and 90th percentile, and slides on whole pixels |
 
 ## Motion
 

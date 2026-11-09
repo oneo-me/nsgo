@@ -4,10 +4,13 @@ package apple
 
 import (
 	"math"
+	"runtime"
 	"strings"
 	"structs"
 	"time"
+	"unsafe"
 
+	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -227,8 +230,9 @@ type transform3D struct {
 // point. It works from wherever the anchor point is, since AppKit keeps
 // its layers' at their corner.
 func layerTransform(layer objc.ID, t driver.Transform, offset driver.Point, z float64) (transform3D, float64) {
-	size := objc.Send[CGRect](layer, selBounds).Size
-	anchor := objc.Send[CGPoint](layer, sel("anchorPoint"))
+	bindTransforms()
+	size := layerBounds(layer, selBounds).Size
+	anchor := layerAnchor(layer, selAnchorPoint)
 	ax, ay := anchor.X*size.Width, anchor.Y*size.Height
 	origin := driver.Point{X: driver.Points(size.Width/2) + offset.X, Y: driver.Points(size.Height/2) + offset.Y}
 	m := driver.Translate3D(-ax, -ay, z).Mul(t.Matrix(origin)).Mul(driver.Translate3D(ax, ay, -z))
@@ -249,9 +253,80 @@ func SetTransform(layer objc.ID, t driver.Transform) {
 	} else {
 		held[layer] = m
 	}
-	setting = true
-	layer.Send(sel("setTransform:"), m)
-	setting = false
+	setLayerTransform(layer, m)
+}
+
+// The messages that move a layer every frame of an animation, registered
+// once: objc.Send registers a function, checking a struct's fields, on
+// every call.
+var (
+	selAnchorPoint, selSetTransform objc.SEL
+	layerBounds                     func(objc.ID, objc.SEL) CGRect
+	layerAnchor                     func(objc.ID, objc.SEL) CGPoint
+	classGetMethodImplementation    func(objc.Class, objc.SEL) uintptr
+	// setTransforms are the setTransform: implementations SetTransform
+	// calls, by the layer's class.
+	setTransforms = map[objc.Class]setTransformImp{}
+	// transformArg is the matrix setLayerTransform passes by address.
+	transformArg transform3D
+)
+
+// setTransformImp is a class's setTransform: implementation: its address,
+// and the function that calls it with reflection where it cannot be
+// called through purego.SyscallN.
+type setTransformImp struct {
+	imp uintptr
+	fn  func(objc.ID, objc.SEL, transform3D)
+}
+
+func bindTransforms() {
+	if layerBounds != nil {
+		return
+	}
+	lib := load("/usr/lib/libobjc.A.dylib")
+	selAnchorPoint, selSetTransform = sel("anchorPoint"), sel("setTransform:")
+	// A CGRect comes back through memory on x86-64 (objc_msgSend_stret)
+	// and in registers on arm64.
+	rect := "objc_msgSend"
+	if runtime.GOARCH == "amd64" {
+		rect = "objc_msgSend_stret"
+	}
+	purego.RegisterLibFunc(&layerBounds, lib, rect)
+	purego.RegisterLibFunc(&layerAnchor, lib, "objc_msgSend")
+	purego.RegisterLibFunc(&classGetMethodImplementation, lib, "class_getMethodImplementation")
+}
+
+// setLayerTransform sets layer's transform to m. On a layer of an NSGo
+// class it calls the superclass's setTransform: past HeldTransformMethods'
+// override, which only passes what SetTransform sets on: the message, the
+// override's call back into Go and its message to the superclass each
+// passed the 128-byte matrix through reflection, most of what animating a
+// layer cost.
+func setLayerTransform(layer objc.ID, m transform3D) {
+	bindTransforms()
+	c := layer.Class()
+	imp, ok := setTransforms[c]
+	if !ok {
+		k := ownClass(layer)
+		if ownClasses[k] {
+			k = k.SuperClass()
+		} else {
+			k = c
+		}
+		imp.imp = classGetMethodImplementation(k, selSetTransform)
+		if runtime.GOARCH != "arm64" {
+			purego.RegisterFunc(&imp.fn, imp.imp)
+		}
+		setTransforms[c] = imp
+	}
+	if imp.fn != nil {
+		imp.fn(layer, selSetTransform, m)
+		return
+	}
+	// arm64 passes a struct of over 16 bytes that is no homogeneous
+	// aggregate of four floats or fewer as the address of a copy.
+	transformArg = m
+	purego.SyscallN(imp.imp, uintptr(layer), uintptr(selSetTransform), uintptr(unsafe.Pointer(&transformArg)))
 }
 
 // move is a transform transition on a layer, from one style to another
@@ -311,10 +386,8 @@ func turned(t, u driver.Transform) float64 {
 }
 
 var (
-	// held are the transforms SetTransform gave layers; setting says it
-	// is setting one.
-	held    = map[objc.ID]transform3D{}
-	setting bool
+	// held are the transforms SetTransform gave layers.
+	held = map[objc.ID]transform3D{}
 )
 
 // HeldTransformMethods are the methods of a CALayer subclass that keeps
@@ -323,7 +396,7 @@ var (
 func HeldTransformMethods() []objc.MethodDef {
 	return []objc.MethodDef{
 		{Cmd: sel("setTransform:"), Fn: func(self objc.ID, cmd objc.SEL, m transform3D) {
-			if h, ok := held[self]; ok && !setting {
+			if h, ok := held[self]; ok {
 				m = h
 			}
 			Super(self, cmd, m)

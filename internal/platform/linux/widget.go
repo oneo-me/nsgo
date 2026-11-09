@@ -170,11 +170,10 @@ func viewSizeAllocateCallback(widget uintptr, width, height, baseline int32) {
 	}
 	if r.v == nil {
 		r.w.allocateSurface(width, height)
-		r.w.revealCanvases()
-		return
+	} else {
+		r.w.allocateView(r.v)
 	}
-	r.w.allocateView(r.v)
-	r.w.revealCanvases()
+	r.w.revealDue = true
 }
 
 func viewSnapshotCallback(widget, snapshot uintptr) {
@@ -387,6 +386,13 @@ func allocateNative(widget uintptr, b driver.Bounds) {
 // snapshotSurface paints the root's background over the surface, then
 // the root view.
 func (w *window) snapshotSurface(snap uintptr) {
+	// The frame's layout is done: the canvases it showed draw in it.
+	// Looking after each view's allocation, every hidden canvas's way up
+	// its ancestors, took a twentieth of a fast scroll's frame.
+	if w.revealDue {
+		w.revealDue = false
+		w.revealCanvases()
+	}
 	bg := driver.RGB(0xffffff)
 	root := w.view(w.root)
 	if root != nil {
@@ -452,6 +458,10 @@ var (
 	gtkSnapshotPop               func(uintptr)
 	gtkSnapshotPushBlend         func(uintptr, int32)
 	gtkSnapshotAppendNode        func(uintptr, uintptr)
+	gtkSnapshotAppendLayout      func(uintptr, uintptr, *gdkRGBA)
+	gtkSnapshotSave              func(uintptr)
+	gtkSnapshotTranslate         func(uintptr, *graphenePoint)
+	gtkSnapshotRestore           func(uintptr)
 	gskRenderNodeDraw            func(uintptr, uintptr)
 	gskRenderNodeUnref           func(uintptr)
 	gskTransformTranslate        func(uintptr, *graphenePoint) uintptr
@@ -505,6 +515,10 @@ func bindWidget() {
 	gtk(&gtkSnapshotPop, "gtk_snapshot_pop")
 	gtk(&gtkSnapshotPushBlend, "gtk_snapshot_push_blend")
 	gtk(&gtkSnapshotAppendNode, "gtk_snapshot_append_node")
+	gtk(&gtkSnapshotAppendLayout, "gtk_snapshot_append_layout")
+	gtk(&gtkSnapshotSave, "gtk_snapshot_save")
+	gtk(&gtkSnapshotTranslate, "gtk_snapshot_translate")
+	gtk(&gtkSnapshotRestore, "gtk_snapshot_restore")
 	gtk(&gskRenderNodeDraw, "gsk_render_node_draw")
 	gtk(&gskRenderNodeUnref, "gsk_render_node_unref")
 	gtk(&gskTransformTranslate, "gsk_transform_translate")

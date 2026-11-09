@@ -38,6 +38,7 @@ package nsgotest
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -110,6 +111,20 @@ func NoCaretMoves() Option {
 func ManualFrames() Option {
 	return func(a *App) { a.manualFrames = true }
 }
+
+// Measure runs the app as it runs for its users, for a measurement on a
+// target: on the system's clock, so Advance waits as long as it moves,
+// with its commits unchecked (driver.CheckCommits), whose check lays
+// every node out again, and with steps that wait only for what animates
+// to rest, not for the app to stop committing. Headless, it does nothing.
+func Measure() Option {
+	return func(a *App) { a.measure = true }
+}
+
+// Mark names what the performance monitor's readings measure from here
+// on, a line of nsgo test -fps's output among them ("perf mark name");
+// "-" ends it. It logs as the monitor does, so the two keep their order.
+func (a *App) Mark(name string) { log.Print("nsgo: perf mark ", name) }
 
 // Errors hands what the app reports failing to report instead of failing
 // the test, as a host's overlay shows it while the app runs on. It
@@ -269,6 +284,8 @@ type App struct {
 	target *target
 	// manualFrames keeps steps from waiting for animations.
 	manualFrames bool
+	// measure runs a target's app as its users do (Measure).
+	measure bool
 	// host is the embedding host's channel, nil without one.
 	host *core.Host
 	// bound are the views' gesture and scroll bindings.
@@ -491,7 +508,8 @@ func (a *App) wantsFrame() bool {
 
 // Advance moves the clock by d, runs the timers and display frames that
 // come due and settles. A frame runs every FrameInterval while the app
-// waits for one, as a display's frames do.
+// waits for one, as a display's frames do. Measuring on a target, it
+// waits d.
 func (a *App) Advance(d time.Duration) {
 	a.t.Helper()
 	if a.target != nil {

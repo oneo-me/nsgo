@@ -861,6 +861,56 @@ func (l *textLayout) ensure(cr uintptr) {
 	pangoCairoUpdateLayout(cr, l.layout)
 }
 
+// snapshot appends the text with its top-left at x, y to snap as draw
+// paints it, its glyphs as GSK text nodes, which the renderer draws from
+// its glyph cache, as NSH's backend does: a Cairo node of the text was
+// rastered on the CPU each time its view was drawn again, most of the
+// main thread's frame in a fast scroll of a table. The decoration lines
+// Pango cannot draw stay Cairo's.
+func (l *textLayout) snapshot(snap uintptr, x, y driver.Points) {
+	if l.text == "" {
+		return
+	}
+	for i, r := range l.under {
+		rr := roundedRect(float32(r.x)+float32(x), float32(r.y)+float32(y), float32(r.w), float32(r.h), float32(r.r))
+		fillRounded(snap, &rr, l.underColors[i])
+	}
+	l.ensure(scratchCairo())
+	clip := l.maxLines > 0 && l.ellipsize == driver.EllipsizeClip
+	if clip {
+		gtkSnapshotPushClip(snap, &grapheneRect{float32(x), float32(y), float32(l.width), float32(l.height)})
+	}
+	gtkSnapshotSave(snap)
+	gtkSnapshotTranslate(snap, &graphenePoint{float32(x), float32(y)})
+	// Every span sets its color; this is what none would.
+	black := gdkRGBA{a: 1}
+	gtkSnapshotAppendLayout(snap, l.layout, &black)
+	gtkSnapshotRestore(snap)
+	if len(l.over) > 0 {
+		bounds := grapheneRect{float32(x) - textOverhang, float32(y) - textOverhang,
+			float32(l.width) + 2*textOverhang, float32(l.height) + 2*textOverhang}
+		cr := gtkSnapshotAppendCairo(snap, &bounds)
+		for _, d := range l.over {
+			d.draw(cr, float64(x), float64(y))
+		}
+		cairoDestroy(cr)
+	}
+	if clip {
+		gtkSnapshotPop(snap)
+	}
+}
+
+// scratch is the Cairo context the main thread makes and updates text
+// layouts with outside a drawing: an image's, as the nodes' were.
+var scratch uintptr
+
+func scratchCairo() uintptr {
+	if scratch == 0 {
+		scratch = cairoCreate(cairoImageSurfaceCreate(0, 1, 1))
+	}
+	return scratch
+}
+
 // draw paints the text with its top-left at x, y: its spans'
 // backgrounds, then its glyphs and their lines.
 func (l *textLayout) draw(cr uintptr, x, y driver.Points) {

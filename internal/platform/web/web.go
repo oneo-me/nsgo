@@ -109,6 +109,10 @@ type surface struct {
 	// their buttons out in.
 	rtl  bool
 	root *view
+	// scrollsDue are the scroll views whose moves wait for reportScrolls
+	// (scrollSoon).
+	scrollsDue    []*view
+	reportScrolls js.Func
 	// effects are the views with an effect, a transition or a navigation
 	// shader (effect.go); effectStyled whether their style sheet is in.
 	effects      map[*view]bool

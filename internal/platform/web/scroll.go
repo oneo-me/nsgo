@@ -60,8 +60,10 @@ type scrollState struct {
 	// core's in flight goes, in scrollLeft and scrollTop; tracks the
 	// sticky cells by ID.
 	applied uint32
-	smooth  *[2]float64
-	tracks  map[driver.NodeID]*view
+	// due is set while a move waits to be reported (scrollSoon).
+	due    bool
+	smooth *[2]float64
+	tracks map[driver.NodeID]*view
 	// glide is the wheel's (wheel.go); driven counts what scrolls the view
 	// here, meanwhile the browser's scrollend is not the end, and ownEnd is
 	// where such a scroll ended, whose scrollend is not another.
@@ -281,8 +283,13 @@ var clipOverflow = func() func() string {
 	}
 }()
 
-// scrollEvent reports kind on scroll view v at its offset and zoom.
+// scrollEvent reports kind on scroll view v at its offset and zoom, after
+// the move it has waiting (scrollSoon).
 func (s *surface) scrollEvent(v *view, kind driver.EventKind) {
+	if v.sc.due && kind != driver.EventScroll {
+		v.sc.due = false
+		s.scrollEvent(v, driver.EventScroll)
+	}
 	if kind == driver.EventScrollEnd {
 		// At rest: the values that snap as a scroll ends settle.
 		s.animator.Settle(v.id)
@@ -313,7 +320,39 @@ func (s *surface) scrolled(v *view) {
 		sc.momentum = true
 		s.scrollEvent(v, driver.EventMomentumStart)
 	}
-	s.scrollEvent(v, driver.EventScroll)
+	s.scrollSoon(v)
+}
+
+// scrollSoon reports v's move in a task of its own after the frame. The
+// browser fires scroll events in a frame's rendering steps, so a commit
+// the event ran there, applied at once, lengthened the frame past the
+// display's: a fast scroll of the ticking DataTable drew every other
+// frame. The bound values that follow the offset have already moved
+// (scrolled), so what shows keeps up; the commit lands a frame later, as
+// a wheel's did from its own events.
+func (s *surface) scrollSoon(v *view) {
+	if v.sc.due {
+		return
+	}
+	v.sc.due = true
+	s.scrollsDue = append(s.scrollsDue, v)
+	if len(s.scrollsDue) > 1 {
+		return
+	}
+	if s.reportScrolls.IsUndefined() {
+		s.reportScrolls = js.FuncOf(func(js.Value, []js.Value) any {
+			due := s.scrollsDue
+			s.scrollsDue = nil
+			for _, v := range due {
+				if v.sc.due && s.view(v.id) == v {
+					v.sc.due = false
+					s.scrollEvent(v, driver.EventScroll)
+				}
+			}
+			return nil
+		})
+	}
+	js.Global().Call("setTimeout", s.reportScrolls, 0)
 }
 
 func (s *surface) scrollEnded(v *view) {
