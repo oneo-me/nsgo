@@ -115,6 +115,20 @@ Go apps run in a mini program through a runtime checked in a stand-in host alone
 | What WeChat draws | — | The app's font files (`loadFontFace`), images tinted with `TintColor`, inline views aligned off the baseline, selection areas and videos (`<video>`) |
 | What a mini program has not | — | Web views (`<web-view>` fills a page of its own), native components, shaders and TSX report `ErrUnsupported` or refuse to build, each checked |
 
+## Installers
+
+What the desktop installers ([tool](architecture/tool.md#installers)) still lack.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Notarization checked | — | A Developer ID build is accepted by the notary service and opens from a download without Gatekeeper's warning; so far the hardened runtime's signature was checked with a development identity, and the submission as far as notarytool's credentials (2026-11-10) |
+| Windows installers with Go and Xcode | — | `build` makes the Windows installer without makensis, which a Mac needs from Homebrew |
+| Signed Windows installers | `signtool`, NSIS's `!uninstfinalize` | A certificate in `sign` signs the executable and the installer |
+| Checked Linux packages | `pacman -U`, `dpkg -i` | The Debian package installs on Debian and Ubuntu and the Arch one with `pacman -U`, as `install.sh` runs them, which so far were only read by `bsdtar` and `pacman -Qip` (2026-11-10), and the Arch package carries `.MTREE` for `pacman -Qk` |
+| Install scripts from GitHub | — | `install.sh` and `install.ps1` install from a published release; so far they installed from the releases directory served on each machine (2026-11-10) |
+| The Windows installer's pages | — | Its directory, progress and finish pages, in Chinese among others, are checked on a screen; so far the installer ran silently alone (2026-11-10) |
+| File types in installers | — | The Windows installer and the Linux packages register `file_types`, as the macOS app does ([application and windows](#application-and-windows)) |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.

@@ -51,7 +51,8 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `examples/orbit` | — | Six live native views on a ring in perspective, one animated angle turning the cards, a floor dial shader and the header, with tests |
 | `examples/widgets` | — | A counter whose macOS and iOS widgets show its count in each family, with tests |
 | `examples/appclip` | — | A café whose iOS App Clip, a package of its own, orders at the table its link names, with tests |
-| `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go |
+| `examples/hello` | — | A greeting in English and Chinese, small enough for every target, mini programs included, and an App Clip greeting the name its link gives, to try the packages and installers, with tests |
+| `cmd/nsgo` | `nsh-cli` | The `nsgo` tool, run on an app's `nsgo.yaml` ([tool](docs/architecture/tool.md)); `apk` signs Android packages in Go, and `install` holds the scripts installing a release from GitHub |
 
 ## Platforms
 
@@ -91,6 +92,7 @@ Packages import only downward, which `layering_test.go` checks on every target; 
 - Targets name an OS and an architecture (`macos_arm64`, `windows_x64`), so each package holds one binary.
 - A TSX app's bundles are compiled ahead into its package, so packages ship no compiler.
 - A package's catalogs compile to Go committed beside them, so apps parse no catalog and `go build` needs no tool.
+- Desktop installers are written in Go where they can be: Linux packages and disk images' layouts, with `hdiutil` for the image; the Windows installer alone takes another tool, NSIS's `makensis`, and without it the package keeps the script ([installers](docs/architecture/tool.md#installers)).
 
 ## Core flows
 

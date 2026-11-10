@@ -477,10 +477,11 @@ func writeLinuxIcon(p *project, dir string) error {
 }
 
 // desktopData is what a desktop entry says: the app's name, in its other
-// languages by locale too, its executable and its icon.
+// languages by locale too, its executable and its icon, and for an
+// installed app its windows' class, which docks match them by.
 type desktopData struct {
-	Name, Exec, ID string
-	Names          [][2]string
+	Name, Exec, ID, WMClass string
+	Names                   [][2]string
 }
 
 var desktopEntry = template.Must(template.New("desktop").Parse(`[Desktop Entry]
@@ -492,6 +493,9 @@ Name[{{index . 0}}]={{index . 1}}
 Exec="{{.Exec}}"
 Icon={{.ID}}
 Terminal=false
+{{- if .WMClass}}
+StartupWMClass={{.WMClass}}
+{{- end}}
 `))
 
 // writeWindowsIcon writes the icon as a resource object into the app's

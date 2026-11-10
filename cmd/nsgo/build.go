@@ -33,7 +33,26 @@ func buildAll(ctx context.Context, p *project) error {
 	var total int64
 	started := time.Now()
 	header(p.Name, p.Version, strings.Join(buildTargets, ", "))
+	if p.Build.all {
+		// Say what all left out that the build does not add.
+		var out []string
+		if !slices.Contains(buildTargets, "android_x64") {
+			out = append(out, "android_x64, which needs an NDK")
+		}
+		if !slices.ContainsFunc(buildTargets, func(t string) bool { return strings.HasPrefix(t, "miniprogram_") }) {
+			out = append(out, "the mini programs, which take Go apps of 2 MB (miniprogram)")
+		}
+		if len(out) > 0 {
+			detail("all leaves out %s", strings.Join(out, " and "))
+		}
+	}
+	if err := p.checkNotarizing(); err != nil {
+		return err
+	}
 	if err := p.prepareCatalogs(ctx, ".", false); err != nil {
+		return err
+	}
+	if err := p.cleanReleaseDir(); err != nil {
 		return err
 	}
 	for i, target := range buildTargets {
@@ -59,6 +78,13 @@ func buildAll(ctx context.Context, p *project) error {
 		total += size
 		progress.done(fmt.Sprintf("%sbuilt %s", count, target), formatSize(size))
 		detail("→ %s", rel(dir))
+		for _, file := range p.released {
+			detail("→ %s", rel(file))
+		}
+		p.released = nil
+	}
+	if err := p.writeInstallScripts(); err != nil {
+		return err
 	}
 	buildSummary(p, len(buildTargets), total, time.Since(started))
 	if p.openOutput() {
@@ -138,6 +164,9 @@ var targets = []string{
 	"miniprogram_wechat", "miniprogram_qq", "miniprogram_alipay", "miniprogram_douyin",
 }
 
+// miniProgramGroup names every mini program target at once.
+const miniProgramGroup = "miniprogram"
+
 // expandTargets replaces "all" with every target that needs only Go and
 // Xcode, checks every name and drops duplicates, so each package is built
 // once. android_x64 stays out of "all" because it needs an NDK, and
@@ -147,10 +176,18 @@ func expandTargets(names []string) ([]string, error) {
 	var out []string
 	for _, name := range names {
 		expanded := []string{name}
-		if name == "all" {
+		switch {
+		case name == "all":
 			expanded = goAndXcodeTargets()
-		} else if !slices.Contains(targets, name) {
-			return nil, fmt.Errorf("unknown target %q; use all or one of %s", name, strings.Join(targets, ", "))
+		case name == miniProgramGroup:
+			expanded = nil
+			for _, t := range targets {
+				if strings.HasPrefix(t, "miniprogram_") {
+					expanded = append(expanded, t)
+				}
+			}
+		case !slices.Contains(targets, name):
+			return nil, fmt.Errorf("unknown target %q; use all, miniprogram or one of %s", name, strings.Join(targets, ", "))
 		}
 		for _, target := range expanded {
 			if !slices.Contains(out, target) {
@@ -192,9 +229,28 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err != nil {
 			return err
 		}
-		return signMacApp(ctx, p, app)
+		if err := signMacApp(ctx, p, app); err != nil {
+			return err
+		}
+		dmg := ""
+		if p.installers() {
+			if dmg, err = buildDMG(ctx, p, app, dir, arch); err != nil {
+				return err
+			}
+		}
+		if err := notarizeMac(ctx, p, app, dmg); err != nil {
+			return err
+		}
+		return p.releaseAssets(dmg)
 	case "windows_arm64", "windows_x64":
-		return buildWindows(ctx, p, dir, goArch(arch))
+		if err := buildWindows(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
+			return err
+		}
+		setup, err := buildNSIS(ctx, p, dir, arch)
+		if err != nil {
+			return err
+		}
+		return p.releaseAssets(setup)
 	case "watchos":
 		_, err := buildWatchApp(ctx, p, dir, false)
 		return err
@@ -208,21 +264,41 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 			return err
 		}
 		stage("packaging the IPA")
-		return writeIPA(app, filepath.Join(dir, p.Name+".ipa"))
+		ipa := filepath.Join(dir, p.Name+".ipa")
+		if err := writeIPA(app, ipa); err != nil {
+			return err
+		}
+		return p.releaseCopy(ipa, fmt.Sprintf("%s-%s-%s.ipa", p.packageSlug(), p.Version, target))
 	case "ios_simulator", "tvos_simulator", "watchos_simulator":
 		sys, _, _ := appleOSOf(target)
 		_, err := buildIOSApp(ctx, p, sys, dir, true)
 		return err
 	case "web":
-		return buildWeb(ctx, p, dir, false)
+		if err := buildWeb(ctx, p, dir, false); err != nil {
+			return err
+		}
+		return p.releaseTree(dir, "web")
 	case "linux_arm64", "linux_x64":
-		return buildLinux(ctx, p, dir, goArch(arch))
+		if err := buildLinux(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
+			return err
+		}
+		deb, pkg, err := buildLinuxPackages(p, dir, goArch(arch))
+		if err != nil {
+			return err
+		}
+		return p.releaseAssets(deb, pkg)
 	case "android_arm64", "android_x64":
-		_, err := buildAndroidAPK(ctx, p, dir, goArch(arch))
-		return err
+		apk, err := buildAndroidAPK(ctx, p, dir, goArch(arch))
+		if err != nil {
+			return err
+		}
+		return p.releaseCopy(apk, fmt.Sprintf("%s-%s-%s.apk", p.packageSlug(), p.Version, arch))
 	}
 	if mp, ok := miniProgramPlatformOf(target); ok {
-		return buildMiniProgram(ctx, p, mp, dir)
+		if err := buildMiniProgram(ctx, p, mp, dir); err != nil {
+			return err
+		}
+		return p.releaseTree(dir, "miniprogram/"+mp.name)
 	}
 	return fmt.Errorf("unknown target %q; use all or one of %s", target, strings.Join(targets, ", "))
 }

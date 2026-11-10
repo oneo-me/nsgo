@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -44,6 +45,9 @@ type project struct {
 	// (clipProject), and parentClip the app's app_clip.
 	clipParent string
 	parentClip *appClip
+	// released lists the files nsgo build put in the release directory
+	// for the target it builds.
+	released []string
 
 	Name    string `yaml:"name"`
 	ID      string `yaml:"id"`
@@ -141,6 +145,35 @@ type project struct {
 	Android struct {
 		Permissions []string `yaml:"permissions"`
 	} `yaml:"android"`
+	// MacOS is the macOS target's disk image: DMGBackground, a PNG with
+	// an optional @2x twin, is the picture behind its window, which takes
+	// its size, else a built-in arrow; DMGIcon, an .icns or a square PNG,
+	// is the volume's icon, else the app's.
+	MacOS struct {
+		DMGBackground string `yaml:"dmg_background"`
+		DMGIcon       string `yaml:"dmg_icon"`
+	} `yaml:"macos"`
+	// Windows is the Windows installer's: InstallerIcon and
+	// UninstallerIcon, an .ico or a square PNG, are the icons of the
+	// setup program and the uninstaller, else the app's.
+	Windows struct {
+		InstallerIcon   string `yaml:"installer_icon"`
+		UninstallerIcon string `yaml:"uninstaller_icon"`
+	} `yaml:"windows"`
+	// Linux is the Linux target's: Maintainer is who its Debian and Arch
+	// packages name as theirs, "Name <email>", else the app's name.
+	Linux struct {
+		Maintainer string `yaml:"maintainer"`
+	} `yaml:"linux"`
+	// Releases is where the app is published: GitHub, a repository
+	// ("owner/name") whose releases, tagged TagPrefix (v by default) and
+	// the version, hold build.output's releases directory, which the
+	// install scripts download from (release.go); by default the one the
+	// Git remote origin names.
+	Releases struct {
+		GitHub    string  `yaml:"github"`
+		TagPrefix *string `yaml:"tag_prefix"`
+	} `yaml:"release"`
 	// Mobile is the iOS and Android targets': ExcludeResources are paths in
 	// resources/ their packages leave out, such as what only desktops run.
 	Mobile struct {
@@ -156,10 +189,17 @@ type project struct {
 		// FPS shows the performance monitor over the packages; it
 		// defaults to false.
 		FPS bool `yaml:"fps"`
+		// Installers packages the desktop targets for users to install
+		// (installer.go): a disk image on macOS, an NSIS installer
+		// on Windows, Debian and Arch packages on Linux; it defaults to
+		// true.
+		Installers *bool `yaml:"installers"`
 		// run starts the package built for this machine afterwards (-run),
 		// on device (-device), an iPhone signed for team (-team);
 		// embed packages the app for host apps of their own (-embed).
-		run, embed   bool
+		run, embed bool
+		// all records that the targets were given as all.
+		all          bool
 		dynamic      bool
 		device, team string
 	} `yaml:"build"`
@@ -178,6 +218,12 @@ type icons struct {
 // openOutput reports whether nsgo build opens its output directory.
 func (p *project) openOutput() bool {
 	return p.Build.Open != nil && *p.Build.Open
+}
+
+// installers reports whether nsgo build packages desktop targets for
+// users to install, unless build.installers turns it off.
+func (p *project) installers() bool {
+	return p.Build.Installers == nil || *p.Build.Installers
 }
 
 // hotReload reports whether nsgo dev rebuilds the app on changes, unless
@@ -244,6 +290,9 @@ func load(dir string) (*project, error) {
 	if p.Window != nil {
 		return nil, fmt.Errorf("nsgo.yaml: window is set in Go now: nsgo.Run(Root, nsgo.WindowSize(width, height)), or desktop.WindowOptions")
 	}
+	if owner, name, ok := strings.Cut(p.Releases.GitHub, "/"); p.Releases.GitHub != "" && (!ok || owner == "" || name == "" || strings.Contains(name, "/")) {
+		return nil, fmt.Errorf("nsgo.yaml: release.github %q is not owner/name", p.Releases.GitHub)
+	}
 	if p.Dev.Target == "" {
 		p.Dev.Target = "native"
 	}
@@ -280,12 +329,16 @@ func load(dir string) (*project, error) {
 	if len(p.Build.Targets) == 0 {
 		p.Build.Targets = []string{"macos_" + goArchName(runtime.GOARCH)}
 	}
+	p.Build.all = slices.Contains(p.Build.Targets, "all")
 	expanded, err := expandTargets(p.Build.Targets)
 	if err != nil {
 		return nil, fmt.Errorf("nsgo.yaml: %w", err)
 	}
 	p.Build.Targets = expanded
 	if err := p.resolveIcons(); err != nil {
+		return nil, fmt.Errorf("nsgo.yaml: %w", err)
+	}
+	if err := p.resolveInstallerFiles(); err != nil {
 		return nil, fmt.Errorf("nsgo.yaml: %w", err)
 	}
 	return p, nil

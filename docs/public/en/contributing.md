@@ -7,7 +7,7 @@ order: 100
 
 ## Requirements
 
-macOS with Xcode and Go 1.26 or later builds every target for arm64, Android's APK included. Running on devices needs what [Your first app](getting-started.md#requirements) lists, and the x86_64 Android emulator's target, `android_x64`, an Android NDK, since Go links android/amd64 only with cgo.
+macOS with Xcode and Go 1.26 or later builds every target for arm64, Android's APK included. Running on devices needs what [Your first app](getting-started.md#requirements) lists, and the x86_64 Android emulator's target, `android_x64`, an Android NDK, since Go links android/amd64 only with cgo. The Windows installer needs NSIS (`brew install makensis`); without it `build` leaves its script.
 
 ```sh
 git clone https://github.com/oneo-me/nsgo.git
@@ -27,7 +27,7 @@ go tool nsgo dev -target web examples/gallery       # in the browser, serving un
 go tool nsgo dev -target ios_simulator examples/gallery
 go tool nsgo dev -target ios examples/gallery       # on the connected iPhone, signed by Xcode
 go tool nsgo dev -target android examples/gallery   # on the connected device or emulator, over adb
-go tool nsgo build -target all examples/gallery     # every platform's packages in examples/gallery/dist
+go tool nsgo build -target all examples/gallery     # every platform's packages in examples/gallery/dist, what to hand out in dist/releases
 ```
 
 ## Check and test

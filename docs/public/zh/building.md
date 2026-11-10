@@ -1,6 +1,6 @@
 ---
 title: 构建与发布
-description: 为每个平台打包应用、签名，并把它嵌入其他应用。
+description: 为每个平台打包应用、生成安装程序、签名与公证，发布到 GitHub，并把它嵌入其他应用。
 group: 指南
 order: 50
 ---
@@ -11,7 +11,19 @@ order: 50
 go tool nsgo build
 ```
 
-`build` 为 `nsgo.yaml` 列出的每个目标写出精简的发布包，放在 `dist/<name>-<version>-<target>`：`.app`、`.ipa`、`.apk`、Windows 和 Linux 的目录，或一个网站，网站页面会在 `import()` 执行时才获取它指定的 TSX 模块。`-target` 替换目标列表，`all` 表示所有只需 Go 和 Xcode 的目标；安装 Android NDK 后可再加上 `android_x64`，`miniprogram_wechat`、`miniprogram_qq`、`miniprogram_alipay` 或 `miniprogram_douyin` 则构建[小程序](#小程序)。`-run` 启动为本机构建的包，或把它安装到 `-device` 选中的 iPhone、模拟器或 Android 设备上。
+`build` 为 `nsgo.yaml` 列出的每个目标写出精简的发布包，放在 `dist/<name>-<version>-<target>`：`.app`、`.ipa`、`.apk`、Windows 和 Linux 的目录，或一个网站，网站页面会在 `import()` 执行时才获取它指定的 TSX 模块。`-target` 替换目标列表，`all` 表示所有只需 Go 和 Xcode 的目标；安装 Android NDK 后可再加上 `android_x64`；`miniprogram` 构建全部[小程序](#小程序)，也可单独指定 `miniprogram_wechat`、`miniprogram_qq`、`miniprogram_alipay` 或 `miniprogram_douyin`。`-run` 启动为本机构建的包，或把它安装到 `-device` 选中的 iPhone、模拟器或 Android 设备上。
+
+所有要交付出去的东西都在 `dist/releases`，只需看这一个目录：
+
+| `dist/releases` 中 | 内容 |
+| --- | --- |
+| `*.dmg`、`*-setup.exe`、`*.deb`、`*.pkg.tar.gz` | macOS、Windows 和 Linux 的[安装程序](#安装程序) |
+| `*-ios.ipa`、`*-tvos.ipa`、`*.apk` | iOS、tvOS 和 Android 的包，用于商店或设备 |
+| `install.sh`、`install.ps1` | 从 [GitHub Releases](#发布到-github) 安装应用的脚本 |
+| `web/` | 网站，原样部署即可 |
+| `miniprogram/<平台>/` | 各小程序的项目，用对应开发者工具上传 |
+
+其中每个文件旁都有 `.sha256`。构建其他版本时会先清空该目录；同一版本的构建（包括在其他机器上的）会往里追加。模拟器和 watchOS 的包留在各自的 `dist/<name>-<version>-<target>` 目录中。
 
 ## nsgo.yaml
 
@@ -35,12 +47,60 @@ build:
   output: dist
   open: false           # true 时构建后打开输出目录
   fps: false            # 同 dev.fps，作用于发布包
+  installers: true      # false 时不生成磁盘映像、Windows 安装程序和 Linux 软件包
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
+# linux: { maintainer: "Jane Doe <jane@example.com>" }  # Linux 软件包的维护者，省略时为应用名
+# release: { github: me/hello }  # 安装脚本从其 Releases 安装的 GitHub 仓库，省略时取 Git 远程 origin 的；tag_prefix 默认为 v
 # miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # 小程序的设置
 ```
 
 命令行参数会替换同名的值，例如 `-target`、`-version` 或 `-output`；`-h` 列出全部参数。
+
+## 安装程序
+
+对桌面目标，`build` 会把供用户安装的文件写到 `dist/releases`，每个文件旁附带 `.sha256` 校验和：
+
+| 目标 | 安装程序 |
+| --- | --- |
+| macOS | `<name>-<version>-<arch>.dmg`，打开后显示应用、一个箭头和“应用程序”文件夹的链接，提示把应用拖过去，用 `sign.identity` 签名并[公证](#公证) |
+| Windows | `<name>-<version>-<arch>-setup.exe`，[NSIS](https://nsis.sourceforge.io) 安装程序，为当前用户安装，再次安装时装回用户之前选的目录，应用运行中会先关闭它，带开始菜单快捷方式、可选的桌面快捷方式，以及只删除自己装过的文件的卸载程序 |
+| Linux | 供 Debian 和 Ubuntu 使用的 `<name>_<version>_<arch>.deb`，以及供 Arch Linux 使用的 `<name>-<version>-1-<arch>.pkg.tar.gz`，把应用装到 `/opt/<name>`，并带命令、桌面入口和图标 |
+
+Windows 安装程序需要 NSIS 的编译器，在 Mac 上用 `brew install makensis` 安装，因此 Mac 可以构建全部安装程序；没有它时，`build` 把脚本 `<name>.nsi` 留在包里，在任何系统上都可原样编译。安装程序提供应用文案中 NSIS 有翻译的语言，包括简体和繁体中文，并按系统语言选择。`-installers=false` 或 `build.installers: false` 只构建包本身。
+
+安装程序可以使用应用自己的图片和图标，未指定时使用应用图标或内置图片：
+
+```yaml
+macos:
+  dmg_background: assets/DMGBackground.png  # 磁盘映像窗口的背景，窗口按它的点尺寸设定大小
+  dmg_icon: assets/DMGIcon.png              # 磁盘映像的图标：.icns 或正方形 PNG
+windows:
+  installer_icon: assets/Setup.png          # 安装程序的图标：.ico 或正方形 PNG
+  uninstaller_icon: assets/Uninstall.png    # 卸载程序的图标
+```
+
+背景 PNG 旁放一张两倍尺寸的同名图（例如 `DMGBackground@2x.png`），在 Retina 屏幕上就能保持清晰。应用图标位于距左边四分之一处，“应用程序”位于距右边四分之一处，图标连同下方的名称整体上下居中，内置图片的箭头就画在它们之间；自定义背景时请为它们留出位置。Linux 软件包没有专门的图片，安装的是应用图标。
+
+## 发布到 GitHub
+
+`dist/releases` 还会包含 `install.sh` 和 `install.ps1`，它们从 `release.github` 指定的 GitHub 仓库的 Releases 安装应用；未指定时取应用 Git 远程 `origin` 所在的仓库，两者都没有时 `build` 不写脚本并给出提示。把其中顶层的文件（不含 `web/` 和 `miniprogram/`）上传到标签为 `v<version>` 的 Release：
+
+```sh
+gh release create v1.2.0 dist/releases/*.*
+```
+
+之后用户用一行命令即可安装或更新应用，构建时会打印出来：
+
+```sh
+curl -fsSL https://github.com/me/hello/releases/latest/download/install.sh | sh    # macOS 和 Linux
+```
+
+```powershell
+irm https://github.com/me/hello/releases/latest/download/install.ps1 | iex         # Windows
+```
+
+在 macOS 上，脚本把应用从磁盘映像复制到 `/Applications`，无写权限时复制到 `~/Applications`；在 Linux 上通过 `sudo` 用 `pacman` 安装 Arch 软件包，否则用 `apt-get` 或 `dpkg` 安装 Debian 软件包；在 Windows 上静默运行安装程序，装到应用已安装的目录。安装前都会先核对校验和。`<NAME>_VERSION`（应用名的大写形式，例如 `HELLO_VERSION=1.1.0`）安装其他版本，`<NAME>_DOWNLOAD_URL` 从镜像下载。
 
 ## 文件类型
 
@@ -69,7 +129,7 @@ go tool nsgo build -target miniprogram_wechat -run
 go tool nsgo dev -target miniprogram_alipay
 ```
 
-每个目标写出对应平台开发者工具的项目，`-run` 和 `dev` 会用该工具打开；`dev` 在你保存时重新构建，工具随之刷新：
+每个目标写出对应平台开发者工具的项目，也放在 `dist/releases/miniprogram/<平台>`，`-run` 和 `dev` 会用该工具打开；`dev` 在你保存时重新构建，工具随之刷新：
 
 | 目标 | 平台 | 工具 |
 | --- | --- | --- |
@@ -94,6 +154,22 @@ sign:
 ```
 
 密钥库的密码来自 `NSGO_KEYSTORE_PASSWORD` 和 `NSGO_KEY_PASSWORD`。`-team` 用于为 iPhone 包签名。
+
+### 公证
+
+经 Apple 公证的应用在 Mac 上下载后打开时不会出现 Gatekeeper 警告。用 Developer ID 签名，并指定 notarytool 存在钥匙串中的凭据：
+
+```sh
+xcrun notarytool store-credentials hello --apple-id you@example.com --team-id ABCDE12345
+```
+
+```yaml
+sign:
+  identity: "Developer ID Application: Example Inc (ABCDE12345)"
+  notarize: hello   # 上面的钥匙串配置；也可用 -notarize hello
+```
+
+之后 `build` 会以强化运行时签名，提交磁盘映像，等待 Apple 的结果（通常几分钟），并把公证票据装订到磁盘映像和应用上；被拒时会打印 Apple 的日志。在 CI 中可用 `NSGO_NOTARY_KEY`、`NSGO_NOTARY_KEY_ID` 和 `NSGO_NOTARY_ISSUER`（App Store Connect API 密钥的 `.p8` 文件、ID 和 issuer）代替钥匙串配置。强化运行时默认禁止使用麦克风和摄像头，`apple.info` 含 `NSMicrophoneUsageDescription` 或 `NSCameraUsageDescription` 时，`build` 会为应用声明相应权限。
 
 ## 小组件
 

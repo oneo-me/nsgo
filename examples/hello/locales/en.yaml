@@ -1,0 +1,12 @@
+appName:
+  message: Hello
+  description: The app's name, which its packages list it under in each language.
+greeting: Hello, {name}!
+world:
+  message: world
+  description: Who the greeting greets before anyone typed a name.
+namePlaceholder: Your name
+sayHello: Say hello
+said:
+  message: "{count, plural, =0 {Not said yet} one {Said # time} other {Said # times}}"
+  description: How many times the button said hello.

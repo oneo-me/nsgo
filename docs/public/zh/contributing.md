@@ -7,7 +7,7 @@ order: 100
 
 ## 环境要求
 
-装有 Xcode 的 macOS 和 Go 1.26 或更新版本即可构建 arm64 的所有目标，包括 Android 的 APK。在设备上运行所需的条件见[第一个应用](getting-started.md#环境要求)；x86_64 Android 模拟器目标 `android_x64` 还需要 Android NDK，因为 Go 只能通过 cgo 链接 android/amd64。
+装有 Xcode 的 macOS 和 Go 1.26 或更新版本即可构建 arm64 的所有目标，包括 Android 的 APK。在设备上运行所需的条件见[第一个应用](getting-started.md#环境要求)；x86_64 Android 模拟器目标 `android_x64` 还需要 Android NDK，因为 Go 只能通过 cgo 链接 android/amd64。Windows 安装程序需要 NSIS（`brew install makensis`），没有时 `build` 只留下它的脚本。
 
 ```sh
 git clone https://github.com/oneo-me/nsgo.git
@@ -27,7 +27,7 @@ go tool nsgo dev -target web examples/gallery       # 在浏览器中运行，�
 go tool nsgo dev -target ios_simulator examples/gallery
 go tool nsgo dev -target ios examples/gallery       # 在已连接的 iPhone 上运行，由 Xcode 签名
 go tool nsgo dev -target android examples/gallery   # 在已连接的设备或模拟器上运行，通过 adb
-go tool nsgo build -target all examples/gallery     # 在 examples/gallery/dist 中生成所有平台的包
+go tool nsgo build -target all examples/gallery     # 在 examples/gallery/dist 中生成所有平台的包，交付物在 dist/releases
 ```
 
 ## 检查与测试

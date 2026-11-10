@@ -1,6 +1,6 @@
 ---
 title: Building and shipping
-description: Package an app for every platform, sign it and embed it in other apps.
+description: Package an app for every platform, make installers, sign and notarize it, publish it on GitHub and embed it in other apps.
 group: Guides
 order: 50
 ---
@@ -11,7 +11,19 @@ order: 50
 go tool nsgo build
 ```
 
-`build` writes a stripped release package for each target `nsgo.yaml` lists, into `dist/<name>-<version>-<target>`: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site, whose page fetches each TSX module an `import()` names when the import runs. `-target` replaces the list, and `all` means every target that needs only Go and Xcode; add `android_x64` when an Android NDK is installed, and `miniprogram_wechat`, `miniprogram_qq`, `miniprogram_alipay` or `miniprogram_douyin` for a [mini program](#mini-programs). `-run` starts the package built for this machine, or installs it on the iPhone, simulator or Android device `-device` picks.
+`build` writes a stripped release package for each target `nsgo.yaml` lists, into `dist/<name>-<version>-<target>`: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site, whose page fetches each TSX module an `import()` names when the import runs. `-target` replaces the list, and `all` means every target that needs only Go and Xcode; add `android_x64` when an Android NDK is installed, and `miniprogram`, or `miniprogram_wechat`, `miniprogram_qq`, `miniprogram_alipay` or `miniprogram_douyin` alone, for [mini programs](#mini-programs). `-run` starts the package built for this machine, or installs it on the iPhone, simulator or Android device `-device` picks.
+
+Everything to hand out lands in `dist/releases`, the only directory to look in:
+
+| In `dist/releases` | What |
+| --- | --- |
+| `*.dmg`, `*-setup.exe`, `*.deb`, `*.pkg.tar.gz` | [Installers](#installers) for macOS, Windows and Linux |
+| `*-ios.ipa`, `*-tvos.ipa`, `*.apk` | The iOS, tvOS and Android packages, for the stores or devices |
+| `install.sh`, `install.ps1` | Scripts installing the app from [GitHub releases](#publish-on-github) |
+| `web/` | The site, to serve as it is |
+| `miniprogram/<platform>/` | Each mini program's project, to upload from its developer tool |
+
+Each file there has its `.sha256` beside it. A build of another version empties the directory first; builds of the same version, on other machines too, add to it. Simulators' and watchOS's packages stay in their `dist/<name>-<version>-<target>` directories.
 
 ## nsgo.yaml
 
@@ -35,12 +47,60 @@ build:
   output: dist
   open: false           # true opens the output directory after building
   fps: false            # as dev.fps, for packages
+  installers: true      # false leaves out the disk image, the Windows installer and the Linux packages
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
+# linux: { maintainer: "Jane Doe <jane@example.com>" }  # the Linux packages' maintainer, else the app's name
+# release: { github: me/hello }  # the GitHub repository the install scripts install from, else the Git remote origin's; tag_prefix: v by default
 # miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # the mini programs'
 ```
 
 Flags replace the values they name, such as `-target`, `-version` or `-output`; `-h` lists them all.
+
+## Installers
+
+For the desktop targets, `build` writes what users install the app from into `dist/releases`, each with a `.sha256` checksum:
+
+| Target | Installer |
+| --- | --- |
+| macOS | `<name>-<version>-<arch>.dmg`, a disk image showing the app, an arrow and a link to Applications to drag it to, signed with `sign.identity` and [notarized](#notarize) |
+| Windows | `<name>-<version>-<arch>-setup.exe`, an [NSIS](https://nsis.sourceforge.io) installer that installs for the user, again in the folder the user chose before, closing the app if it runs, with a Start menu shortcut, an optional desktop one and an uninstaller that removes only what it installed |
+| Linux | `<name>_<version>_<arch>.deb` for Debian and Ubuntu, and `<name>-<version>-1-<arch>.pkg.tar.gz` for Arch Linux, which install the app in `/opt/<name>` with a command, its desktop entry and icon |
+
+The Windows installer needs NSIS's compiler, on a Mac `brew install makensis`, so a Mac builds every installer; without it `build` leaves the script, `<name>.nsi`, in the package, which compiles anywhere as it is. The installer speaks the languages of the app's catalogs that NSIS translates, Simplified and Traditional Chinese included, picking the system's. `-installers=false` or `build.installers: false` builds the packages alone.
+
+The installers take pictures and icons of the app's own; each is the app's icon or the built-in picture otherwise:
+
+```yaml
+macos:
+  dmg_background: assets/DMGBackground.png  # the disk image's window, which takes its size in points
+  dmg_icon: assets/DMGIcon.png              # the disk image's icon: an .icns or a square PNG
+windows:
+  installer_icon: assets/Setup.png          # the setup program's icon: an .ico or a square PNG
+  uninstaller_icon: assets/Uninstall.png    # the uninstaller's
+```
+
+A background PNG with a twin twice its size, such as `DMGBackground@2x.png`, stays sharp on Retina screens. The app's icon sits a quarter in from the left, Applications a quarter in from the right, each with its name centered from top to bottom, where the built-in picture draws its arrow; leave room for them in a background of your own. The Linux packages have no pictures of their own; they install the app's icon.
+
+## Publish on GitHub
+
+`dist/releases` also holds `install.sh` and `install.ps1`, which install the app from the releases of the GitHub repository `release.github` names, else the one the app's Git remote `origin` is on; without either `build` writes none and says so. Upload its files, the top level without `web/` and `miniprogram/`, to the release tagged `v<version>`:
+
+```sh
+gh release create v1.2.0 dist/releases/*.*
+```
+
+Users then install or update the app with one line, which the build prints:
+
+```sh
+curl -fsSL https://github.com/me/hello/releases/latest/download/install.sh | sh    # macOS and Linux
+```
+
+```powershell
+irm https://github.com/me/hello/releases/latest/download/install.ps1 | iex         # Windows
+```
+
+On macOS the script copies the app from the disk image into `/Applications`, or `~/Applications` when it cannot write there; on Linux it installs the Arch package with `pacman`, else the Debian one with `apt-get` or `dpkg`, through `sudo`; on Windows it runs the installer silently, which installs where the app already is. Each checks the file against its checksum first. `<NAME>_VERSION`, the app's name in capitals, such as `HELLO_VERSION=1.1.0`, installs another release, and `<NAME>_DOWNLOAD_URL` downloads from a mirror.
 
 ## File types
 
@@ -69,7 +129,7 @@ go tool nsgo build -target miniprogram_wechat -run
 go tool nsgo dev -target miniprogram_alipay
 ```
 
-Each target writes a project for its platform's developer tool, which `-run` and `dev` open; `dev` builds again as you save, and the tool reloads:
+Each target writes a project for its platform's developer tool, also in `dist/releases/miniprogram/<platform>`, which `-run` and `dev` open; `dev` builds again as you save, and the tool reloads:
 
 | Target | Platform | Tool |
 | --- | --- | --- |
@@ -94,6 +154,22 @@ sign:
 ```
 
 The keystore's passwords come from `NSGO_KEYSTORE_PASSWORD` and `NSGO_KEY_PASSWORD`. `-team` signs the iPhone's package.
+
+### Notarize
+
+Apps downloaded on a Mac open without Gatekeeper's warning once Apple has notarized them. Sign with a Developer ID and name the credentials notarytool keeps in your keychain:
+
+```sh
+xcrun notarytool store-credentials hello --apple-id you@example.com --team-id ABCDE12345
+```
+
+```yaml
+sign:
+  identity: "Developer ID Application: Example Inc (ABCDE12345)"
+  notarize: hello   # the keychain profile above; or -notarize hello
+```
+
+`build` then signs with the hardened runtime, submits the disk image, waits for Apple's verdict, a few minutes, and staples the ticket to the image and the app; a rejection prints Apple's log. In CI, `NSGO_NOTARY_KEY`, `NSGO_NOTARY_KEY_ID` and `NSGO_NOTARY_ISSUER`, an App Store Connect API key's `.p8` file, ID and issuer, take the profile's place. The hardened runtime denies the microphone and the camera unless the app claims them, which `build` does when `apple.info` has `NSMicrophoneUsageDescription` or `NSCameraUsageDescription`.
 
 ## Widgets
 

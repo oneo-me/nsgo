@@ -1,0 +1,6 @@
+appName: 你好
+greeting: 你好，{name}！
+world: 世界
+namePlaceholder: 你的名字
+sayHello: 打个招呼
+said: "{count, plural, =0 {还没打过招呼} other {打了 # 次招呼}}"

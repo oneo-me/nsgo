@@ -363,7 +363,11 @@ func signMacWidgets(ctx context.Context, p *project, appex, identity string) err
 		return err
 	}
 	defer os.Remove(ents)
-	return run(ctx, "codesign", "--force", "--sign", identity, "--entitlements", ents, appex)
+	args := []string{"--force", "--sign", identity, "--entitlements", ents}
+	if identity != "-" && p.notarizing() {
+		args = append(args, "--options", "runtime", "--timestamp")
+	}
+	return run(ctx, "codesign", append(args, appex)...)
 }
 
 // addIOSWidgets puts the widget extension and the reload framework into

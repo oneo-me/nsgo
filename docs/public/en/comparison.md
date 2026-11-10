@@ -39,7 +39,7 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 - **Platforms differ.** Native views mean small differences between platforms, so an app needs checking on each. A framework that draws itself looks the same everywhere.
 - **Its own bridges.** On Android the Go program runs beside the Java runtime and talks to it over pipes, and on Linux users need GTK 4.14 or newer.
 - **TSX is interpreted.** TSX runs in goja, a JavaScript interpreter written in Go, slower than the engines React Native or Electron use.
-- **Shipping is basic.** `nsgo build` packages and signs apps, but makes no installers and offers no automatic updates.
+- **No automatic updates.** `nsgo build` makes installers, notarizes macOS apps and writes scripts that install from GitHub releases, but installed apps do not update themselves.
 
 ## NSH
 

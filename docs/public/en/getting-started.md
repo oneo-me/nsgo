@@ -241,7 +241,7 @@ go tool nsgo test
 go tool nsgo build
 ```
 
-`build` writes a release package for each target `nsgo.yaml` lists, into `dist/<name>-<version>-<target>`: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site. [Building and shipping](building.md) covers signing, icons, widgets, App Clips and the App Store.
+`build` writes a release package for each target `nsgo.yaml` lists, into `dist/<name>-<version>-<target>`: an `.app`, an `.ipa`, an `.apk`, Windows' and Linux's directories, or a web site. Everything to hand out also lands in `dist/releases`: the disk image, setup program, Debian and Arch packages, IPAs, APKs, the site, mini programs, and scripts that install the app from your GitHub releases. [Building and shipping](building.md) covers installers, signing and notarization, publishing, icons, widgets, App Clips and the App Store.
 
 ## Next
 

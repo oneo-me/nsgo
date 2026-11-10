@@ -166,6 +166,7 @@ type buildFlags struct {
 	output  *override[string]
 	open    *boolOverride
 	fps     *boolOverride
+	install *boolOverride
 	run     bool
 	embed   bool
 	dynamic bool
@@ -176,10 +177,11 @@ type buildFlags struct {
 
 func bindBuildFlags(fs *flag.FlagSet) *buildFlags {
 	f := &buildFlags{overrides: bindOverrides(fs)}
-	f.targets = stringFlag(fs, "target", "comma-separated `targets`, or all for every platform Go and Xcode build (default: nsgo.yaml's build.targets)")
+	f.targets = stringFlag(fs, "target", "comma-separated `targets`: all for every platform Go and Xcode build, miniprogram for every mini program, or their names (default: nsgo.yaml's build.targets)")
 	f.output = stringFlag(fs, "output", "the `output` directory (default: nsgo.yaml's build.output)")
 	f.open = boolFlag(fs, "open", "open the output directory (default: nsgo.yaml's build.open)")
 	f.fps = boolFlag(fs, "fps", "show the performance monitor (default: nsgo.yaml's build.fps)")
+	f.install = boolFlag(fs, "installers", "package macOS, Windows and Linux targets for users to install: a disk image, an NSIS installer, Debian and Arch packages (default: nsgo.yaml's build.installers, else true)")
 	fs.BoolVar(&f.run, "run", false, "start the package built for this machine: the app, the iPhone's, simulator's or Android device's, or the site served")
 	fs.StringVar(&f.device, "device", "", "the `device` -run starts the package on: an iPhone's name, UDID, serial or ECID, a simulator's name or UDID, or an adb serial or emulator's AVD name (default: the only one connected, or the booted simulator)")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` -run signs the iPhone's package with (default: the team Xcode last used)")
@@ -193,6 +195,7 @@ func (f *buildFlags) apply(p *project) {
 	f.overrides.apply(p)
 	if f.targets.set {
 		p.Build.Targets = strings.Split(f.targets.value, ",")
+		p.Build.all = slices.Contains(p.Build.Targets, "all")
 	}
 	if f.output.set {
 		p.Build.Output = p.resolve(f.output.value)
@@ -201,6 +204,9 @@ func (f *buildFlags) apply(p *project) {
 		p.Build.Open = &f.open.value
 	}
 	f.fps.replace(&p.Build.FPS)
+	if f.install.set {
+		p.Build.Installers = &f.install.value
+	}
 	p.Build.run, p.Build.embed, p.Build.dynamic = f.run, f.embed, f.dynamic
 	p.Build.device, p.Build.team = f.device, f.team
 	f.sign.apply(p)

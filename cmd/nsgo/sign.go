@@ -45,11 +45,17 @@ type signing struct {
 	// project's debug key.
 	Keystore string `yaml:"keystore"`
 	KeyAlias string `yaml:"key_alias"`
+	// Notarize is the notarytool keychain profile (xcrun notarytool
+	// store-credentials) the macOS package is notarized with, signed by
+	// Identity, a Developer ID. NSGO_NOTARY_KEY, NSGO_NOTARY_KEY_ID and
+	// NSGO_NOTARY_ISSUER, an App Store Connect API key, notarize without
+	// one, as CI does.
+	Notarize string `yaml:"notarize"`
 }
 
 // signFlags are nsgo build's flags that replace nsgo.yaml's sign values.
 type signFlags struct {
-	identity, profile, keystore, alias *override[string]
+	identity, profile, keystore, alias, notarize *override[string]
 }
 
 func (f *signFlags) bind(fs *flag.FlagSet) {
@@ -57,6 +63,7 @@ func (f *signFlags) bind(fs *flag.FlagSet) {
 	f.profile = stringFlag(fs, "profile", "the iOS provisioning `profile` (default: nsgo.yaml's sign.profile)")
 	f.keystore = stringFlag(fs, "keystore", "the Android `keystore`, PKCS#12 or JKS; NSGO_KEYSTORE_PASSWORD and NSGO_KEY_PASSWORD give its passwords (default: nsgo.yaml's sign.keystore)")
 	f.alias = stringFlag(fs, "key-alias", "the `alias` of the keystore's key (default: nsgo.yaml's sign.key_alias, else its only key)")
+	f.notarize = stringFlag(fs, "notarize", "the notarytool keychain `profile` the macOS package is notarized with (default: nsgo.yaml's sign.notarize)")
 }
 
 func (f *signFlags) apply(p *project) {
@@ -68,6 +75,7 @@ func (f *signFlags) apply(p *project) {
 		p.Sign.Keystore = p.resolve(f.keystore.value)
 	}
 	f.alias.replace(&p.Sign.KeyAlias)
+	f.notarize.replace(&p.Sign.Notarize)
 }
 
 // releaseKey is the key release APKs are signed with: the keystore's, or
@@ -102,7 +110,7 @@ func signMacApp(ctx context.Context, p *project, app string) error {
 	stage("signing")
 	libs, _ := filepath.Glob(filepath.Join(app, "Contents", "Frameworks", "*.dylib"))
 	for _, lib := range libs {
-		if err := run(ctx, "codesign", "--force", "--sign", p.Sign.Identity, lib); err != nil {
+		if err := run(ctx, "codesign", p.macSignArgs(lib)...); err != nil {
 			return err
 		}
 	}
@@ -111,7 +119,41 @@ func signMacApp(ctx context.Context, p *project, app string) error {
 			return err
 		}
 	}
-	return run(ctx, "codesign", "--force", "--sign", p.Sign.Identity, app)
+	args := p.macSignArgs(app)
+	if ents := p.hardenedEntitlements(); p.notarizing() && len(ents) > 0 {
+		path, err := writeEntitlements(ents)
+		if err != nil {
+			return err
+		}
+		defer os.Remove(path)
+		args = append(args[:len(args)-1], "--entitlements", path, app)
+	}
+	return run(ctx, "codesign", args...)
+}
+
+// macSignArgs are codesign's arguments signing path with sign.identity:
+// for notarization with the hardened runtime and a secure timestamp, which
+// the notary service requires of every executable.
+func (p *project) macSignArgs(path string) []string {
+	args := []string{"--force", "--sign", p.Sign.Identity}
+	if p.notarizing() && p.Sign.Identity != "-" {
+		args = append(args, "--options", "runtime", "--timestamp")
+	}
+	return append(args, path)
+}
+
+// hardenedEntitlements are what the hardened runtime denies unless the app
+// claims it, as the Info.plist entries apple.info gives ask for: the
+// microphone and the camera.
+func (p *project) hardenedEntitlements() map[string]any {
+	ents := map[string]any{}
+	if p.Apple.Info["NSMicrophoneUsageDescription"] != "" {
+		ents["com.apple.security.device.audio-input"] = true
+	}
+	if p.Apple.Info["NSCameraUsageDescription"] != "" {
+		ents["com.apple.security.device.camera"] = true
+	}
+	return ents
 }
 
 // signForStore signs an iOS device build with the project's provisioning

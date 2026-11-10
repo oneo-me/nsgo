@@ -241,7 +241,7 @@ go tool nsgo test
 go tool nsgo build
 ```
 
-`build` 为 `nsgo.yaml` 列出的每个目标写出发布包，放到 `dist/<名称>-<版本>-<目标>`：`.app`、`.ipa`、`.apk`、Windows 和 Linux 的目录，或一个网站。[构建与发布](building.md)介绍签名、图标、小组件、轻 App 和 App Store。
+`build` 为 `nsgo.yaml` 列出的每个目标写出发布包，放到 `dist/<名称>-<版本>-<目标>`：`.app`、`.ipa`、`.apk`、Windows 和 Linux 的目录，或一个网站。所有要交付出去的东西也都会放到 `dist/releases`：磁盘映像、安装程序、Debian 和 Arch 软件包、IPA、APK、网站、小程序，以及从你的 GitHub Releases 安装应用的脚本。[构建与发布](building.md)介绍安装程序、签名与公证、发布、图标、小组件、轻 App 和 App Store。
 
 ## 下一步
 
