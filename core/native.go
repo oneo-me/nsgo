@@ -40,6 +40,8 @@ type Native struct {
 // Render implements Node.
 func (v Native) Render(*Scope) Node { return v }
 
+func (v Native) mountIn(t *Tree, cx *Scope, parent *node) { t.mountNative(cx, parent, v) }
+
 type nativeNode struct {
 	component string
 	props     map[string]any

@@ -42,7 +42,7 @@ A web release's bundles are split ([TSX](tsx.md#split-bundles)): `buildWeb` writ
 
 ## Packages
 
-`nsgo build` strips symbols, paths and VCS stamps (`nsgo dev` keeps symbols unless `-release`) and writes a directory per target under `build.output`:
+`nsgo build` strips symbols, paths and VCS stamps (`nsgo dev` keeps symbols unless `-release`) and writes a directory per target under `build.output`. Every build of an app, its tests' on a target too, takes `GOEXPERIMENT=nojsonv2`, encoding/json's first implementation, about 1 MB smaller on the web, 450 KB on Android and 100 to 450 KB on desktops, unless its packages or dependencies import `encoding/json/v2` or `jsontext`, or `GOEXPERIMENT` names the experiment (`smallJSON` in `build.go`):
 
 - macOS: `<name>.app`, signed with `sign.identity`, else ad hoc. iOS and tvOS: `<name>.app` and `<name>.ipa`, signed with `sign.profile`, else unsigned; tvOS's are iOS's (`appleOS` in `ios.go`) with its SDK, `GOOS=ios` still, its device family and an icon the Apple TV layers. watchOS: `<name>.app` alone, the Go executable built with the `nsgowatch` tag and the SwiftUI host (`watch/Host.swift`, `watchos.go`) compiled by swiftc into an object its external linker takes, ad hoc signed for the simulator and unsigned for devices; a watch-only app, arm64 alone, so watchOS 26 on Series 9, Ultra 2 and later. Android: `<name>.apk`, signed with `sign.keystore`, else the project's debug key.
 - Windows and Linux: the executable with the resources beside it.

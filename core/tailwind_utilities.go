@@ -2,7 +2,6 @@ package core
 
 import (
 	"math"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -1763,18 +1762,48 @@ func (t *tailwindTheme) layers(v string, theme map[string][]BoxShadow) ([]BoxSha
 	return list, alpha, true
 }
 
-var remLength = regexp.MustCompile(`(-?[0-9]*\.?[0-9]+)rem\b`)
-
 // css is an arbitrary CSS value with its rems the theme's: core's CSS
 // parsers take rem as 16 points.
 func (t *tailwindTheme) css(a string) string {
 	if t.rem == 16 {
 		return a
 	}
-	return remLength.ReplaceAllStringFunc(a, func(m string) string {
-		n, _ := strconv.ParseFloat(strings.TrimSuffix(m, "rem"), 64)
+	return replaceRems(a, func(n float64) string {
 		return strconv.FormatFloat(n*float64(t.rem), 'f', -1, 64) + "px"
 	})
+}
+
+// replaceRems returns s with each length in rem, such as 1.5rem or
+// -.25rem, replaced by what fn returns for its number. It is scanned by
+// hand rather than with a regular expression, so apps link none for it.
+func replaceRems(s string, fn func(n float64) string) string {
+	var b strings.Builder
+	last := 0
+	for i := 0; i < len(s); i++ {
+		j := i
+		if s[j] == '-' {
+			j++
+		}
+		k := j
+		for k < len(s) && ('0' <= s[k] && s[k] <= '9' || s[k] == '.') {
+			k++
+		}
+		num := s[j:k]
+		if num == "" || strings.Count(num, ".") > 1 || num[len(num)-1] == '.' ||
+			!strings.HasPrefix(s[k:], "rem") || k+3 < len(s) && isWordByte(s[k+3]) {
+			continue
+		}
+		n, _ := strconv.ParseFloat(s[i:k], 64)
+		b.WriteString(s[last:i])
+		b.WriteString(fn(n))
+		last = k + 3
+		i = last - 1
+	}
+	if last == 0 {
+		return s
+	}
+	b.WriteString(s[last:])
+	return b.String()
 }
 
 // insetRing parses inset ring widths: inset-ring (1), inset-ring-2.

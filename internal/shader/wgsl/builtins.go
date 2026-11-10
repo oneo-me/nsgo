@@ -1,17 +1,28 @@
 package wgsl
 
 import (
+	"sync"
+
 	"github.com/oneo-me/nsgo/internal/shaderir"
 )
 
 type builtinFunc func(c *checker, args []value, pos int, out *[]shaderir.Stmt) value
 
-// builtinFuncs are WGSL's built-in functions a fragment shader may call
-// that the IR's languages share.
-var builtinFuncs map[string]builtinFunc
+// builtin returns the WGSL built-in function a fragment shader may call
+// by name, of those the IR's languages share, or nil. The table is built
+// on first use, so apps that compile no shader link none of it.
+func builtin(name string) builtinFunc {
+	builtinTable.Do(initBuiltins)
+	return builtinTable.funcs[name]
+}
 
-func init() {
-	builtinFuncs = map[string]builtinFunc{
+var builtinTable struct {
+	sync.Once
+	funcs map[string]builtinFunc
+}
+
+func initBuiltins() {
+	builtinFuncs := map[string]builtinFunc{
 		"select": selectFunc, "all": allAny(true), "any": allAny(false),
 		"length": floatScalar(shaderir.Length, 1), "distance": floatScalar(shaderir.Distance, 2), "dot": floatScalar(shaderir.Dot, 2),
 		"cross": crossFunc, "transpose": transposeFunc,
@@ -37,6 +48,7 @@ func init() {
 	} {
 		builtinFuncs[name] = floats(f, 1)
 	}
+	builtinTable.funcs = builtinFuncs
 }
 
 func arity(args []value, n int, pos int, name string) {

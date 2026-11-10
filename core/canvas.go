@@ -39,6 +39,8 @@ type Canvas struct {
 // Render implements Node.
 func (c Canvas) Render(*Scope) Node { return c }
 
+func (c Canvas) mountIn(t *Tree, cx *Scope, parent *node) { t.mountCanvas(cx, parent, c) }
+
 type canvasNode struct {
 	draw    func(*Drawing, Size)
 	size    *Signal[Size]

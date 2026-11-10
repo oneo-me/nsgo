@@ -910,90 +910,8 @@ func (t *Tree) mount(cx *Scope, parent *node, el Node) {
 	t.checkTwins(el)
 	switch el := el.(type) {
 	case nil:
-	case View:
-		t.mountView(cx, parent, el)
-	case *View:
-		t.mountView(cx, parent, *el)
-	case Text:
-		t.mountText(cx, parent, el)
-	case *Text:
-		t.mountText(cx, parent, *el)
-	case Input:
-		t.mountInput(cx, parent, el)
-	case *Input:
-		t.mountInput(cx, parent, *el)
-	case Scroll:
-		t.mountScroll(cx, parent, el)
-	case *Scroll:
-		t.mountScroll(cx, parent, *el)
-	case Image:
-		t.mountImage(cx, parent, el)
-	case *Image:
-		t.mountImage(cx, parent, *el)
-	case Overlay:
-		t.mountOverlay(cx, parent, el)
-	case *Overlay:
-		t.mountOverlay(cx, parent, *el)
-	case Modal:
-		t.mountModal(cx, parent, el)
-	case *Modal:
-		t.mountModal(cx, parent, *el)
-	case ShaderEffect:
-		t.mountShaderEffect(cx, parent, el)
-	case *ShaderEffect:
-		t.mountShaderEffect(cx, parent, *el)
-	case ShaderTransition:
-		t.mountShaderTransition(cx, parent, el)
-	case *ShaderTransition:
-		t.mountShaderTransition(cx, parent, *el)
-	case ScreenEffect:
-		t.mountScreenEffect(cx, parent, el)
-	case *ScreenEffect:
-		t.mountScreenEffect(cx, parent, *el)
-	case ScreenTransition:
-		t.mountScreenTransition(cx, parent, el)
-	case *ScreenTransition:
-		t.mountScreenTransition(cx, parent, *el)
-	case Stack:
-		t.mountStack(cx, parent, el)
-	case *Stack:
-		t.mountStack(cx, parent, *el)
-	case Screen:
-		t.mountScreen(cx, parent, el)
-	case *Screen:
-		t.mountScreen(cx, parent, *el)
-	case Canvas:
-		t.mountCanvas(cx, parent, el)
-	case *Canvas:
-		t.mountCanvas(cx, parent, *el)
-	case Shader:
-		t.mountShader(cx, parent, el)
-	case *Shader:
-		t.mountShader(cx, parent, *el)
-	case Icon:
-		t.mountIcon(cx, parent, el)
-	case *Icon:
-		t.mountIcon(cx, parent, *el)
-	case WebView:
-		t.mountWebView(cx, parent, el)
-	case *WebView:
-		t.mountWebView(cx, parent, *el)
-	case Video:
-		t.mountVideo(cx, parent, el)
-	case *Video:
-		t.mountVideo(cx, parent, *el)
-	case Native:
-		t.mountNative(cx, parent, el)
-	case *Native:
-		t.mountNative(cx, parent, *el)
-	case InputAccessoryView:
-		t.mountAccessory(cx, parent, el)
-	case *InputAccessoryView:
-		t.mountAccessory(cx, parent, *el)
-	case List:
-		t.mountList(cx, parent, el)
-	case *List:
-		t.mountList(cx, parent, *el)
+	case mounter:
+		el.mountIn(t, cx, parent)
 	case Group:
 		for _, c := range el {
 			t.mount(cx, parent, c)
@@ -1014,6 +932,13 @@ func (t *Tree) mount(cx *Scope, parent *node, el Node) {
 		child := cx.Child()
 		t.within(child, func() { t.mount(child, parent, el.Render(child)) })
 	}
+}
+
+// mounter is an element the tree mounts: each element's own method,
+// rather than a case here, links its mounting only into apps that make
+// one.
+type mounter interface {
+	mountIn(t *Tree, cx *Scope, parent *node)
 }
 
 type regionMounter interface {

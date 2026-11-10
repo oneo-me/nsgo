@@ -3,19 +3,11 @@
 package web
 
 import (
-	"bytes"
-	stdimage "image"
-	_ "image/gif"
-	_ "image/jpeg"
-	"image/png"
 	"strings"
 	"syscall/js"
 	"time"
 
-	_ "golang.org/x/image/webp"
-
 	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/picked"
 )
 
 // then calls done with what promise resolves to, or fail with why it is
@@ -131,19 +123,18 @@ func (s *surface) setClipboardImage(data []byte) {
 	if !c.Truthy() || !c.Get("write").Truthy() || !item.Truthy() {
 		return
 	}
-	if driver.SniffImage(data) != "image/png" {
-		m, _, err := stdimage.Decode(bytes.NewReader(data))
-		if err != nil {
-			return
-		}
-		var b bytes.Buffer
-		if png.Encode(&b, m) != nil {
-			return
-		}
-		data = b.Bytes()
+	write := func(png []byte) {
+		then(c.Call("write", []any{item.New(map[string]any{"image/png": blobOf(png, "image/png")})}),
+			func(js.Value) {}, func(js.Value) {})
 	}
-	then(c.Call("write", []any{item.New(map[string]any{"image/png": blobOf(data, "image/png")})}),
-		func(js.Value) {}, func(js.Value) {})
+	mime := driver.SniffImage(data)
+	if mime == "image/png" {
+		write(data)
+		return
+	}
+	decodeImage(data, mime, func(bitmap js.Value) {
+		encodeImage(bitmap, bitmap.Get("width").Int(), bitmap.Get("height").Int(), "image/png", 1, write, func() {})
+	}, func() {})
 }
 
 // blobOf returns a Blob of data of type mime.
@@ -224,11 +215,11 @@ func (s *surface) chooseImages(r driver.PickRequest, id uint32, camera bool) {
 				files[i].Data = make([]byte, buf.Get("byteLength").Int())
 				js.CopyBytesToGo(files[i].Data, js.Global().Get("Uint8Array").New(buf))
 				if left--; left == 0 {
-					answer(picked.Prepare(r, files))
+					preparePicked(r, files, answer)
 				}
 			}, func(js.Value) {
 				if left--; left == 0 {
-					answer(picked.Prepare(r, files))
+					preparePicked(r, files, answer)
 				}
 			})
 		}

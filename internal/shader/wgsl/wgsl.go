@@ -100,7 +100,7 @@ func Compile(src string) (*Program, error) {
 	if len(src) > MaxSourceBytes {
 		return nil, &Error{Message: fmt.Sprintf("the source takes %d bytes, more than %d", len(src), MaxSourceBytes)}
 	}
-	full := src + "\n" + builtins
+	full := src + "\n" + builtinSource()
 	var p *Program
 	err := catch(func() {
 		m, err := parse(full)
@@ -183,11 +183,11 @@ func renumber(p *shaderir.Program, removed int) {
 	walk(p.FragmentFunc.Block)
 }
 
-// builtins is the source after the app's: the pictures' samplers and the
-// entry point, which clamps shade's color and premultiplies it. A picture
-// covers the surface, the box and the overflow beyond each side, and is
-// read between its pixels, transparent outside it.
-var builtins = func() string {
+// builtinSource is the source after the app's: the pictures' samplers
+// and the entry point, which clamps shade's color and premultiplies it. A
+// picture covers the surface, the box and the overflow beyond each side,
+// and is read between its pixels, transparent outside it.
+func builtinSource() string {
 	var b strings.Builder
 	b.WriteString(`
 fn __nsh_picture(uv: vec2f) -> vec2f {
@@ -229,7 +229,7 @@ fn __nsh_fragment(pos: vec2f) -> vec4f {
 }
 `)
 	return b.String()
-}()
+}
 
 // Crossfade is the transitions' default program: from sample_from to
 // sample_to as nsh.progress goes from 0 to 1.

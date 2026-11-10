@@ -174,7 +174,7 @@ func TestDiskCacheTrims(t *testing.T) {
 	os.WriteFile(old, []byte("x"), 0o644)
 	os.Chtimes(old, now.Add(-2*time.Hour), now.Add(-2*time.Hour))
 	for i := range 10 {
-		e := &cached{url: "https://example.com/" + string(rune('a'+i)), stored: now, header: http.Header{},
+		e := &cached{url: "https://example.com/" + string(rune('a'+i)), stored: now, header: Header{},
 			body: []byte(strings.Repeat("x", 450))}
 		dc.write(e)
 		os.Chtimes(dc.path(e.url), now.Add(time.Duration(i)*time.Second), now.Add(time.Duration(i)*time.Second))
@@ -191,7 +191,7 @@ func TestDiskCacheTrims(t *testing.T) {
 		t.Fatal("an old temporary file was kept")
 	}
 	// Images larger than an eighth of the cache are not kept.
-	big := &cached{url: "https://example.com/big", header: http.Header{}, body: make([]byte, 600)}
+	big := &cached{url: "https://example.com/big", header: Header{}, body: make([]byte, 600)}
 	if big.storable(4000) {
 		t.Fatal("an image over an eighth of the cache is kept")
 	}

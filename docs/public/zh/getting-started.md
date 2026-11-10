@@ -12,7 +12,7 @@ order: 2
 - 在 iPhone 上运行需要在 Xcode 的 Accounts 中登录 Apple ID，并信任这台 iPhone、开启开发者模式。
 - 在 Android 上运行需要 Android SDK platform-tools 中的 `adb`。
 - 在 Windows 上运行只需 Go，它也能构建 Windows 和 Web 包。
-- 在 Linux 上运行需要 GTK 4.14 或更新版本、Pango 和 Cairo；网页视图需要 WebKitGTK 6.0，视频需要 GStreamer 插件。
+- 在 Linux 上运行需要 GTK 4.14 或更新版本、Pango 和 Cairo；网络图片需要 libsoup 3，网页视图需要 WebKitGTK 6.0，视频需要 GStreamer 插件。
 
 ## 创建应用
 

@@ -303,6 +303,10 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}
+	env, err := smallJSON(ctx, p, env, tags)
+	if err != nil {
+		return err
+	}
 	stage("compiling Go")
 	if len(files) > 0 {
 		ov, err := p.overlay(files)
@@ -322,6 +326,42 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 		return fmt.Errorf("go %s failed\n%s", args[0], strings.TrimSpace(output.String()))
 	}
 	return nil
+}
+
+// smallJSON returns env with GOEXPERIMENT=nojsonv2 added: encoding/json's
+// first implementation, which links into a page about 1 MB smaller than
+// the one on encoding/json/v2 Go builds by default, into an Android app
+// about 450 KB and into a desktop one 100 to 450 KB. An app whose
+// packages or dependencies import encoding/json/v2 or jsontext keeps
+// them, as does one whose environment sets the experiment either way.
+func smallJSON(ctx context.Context, p *project, env, tags []string) ([]string, error) {
+	for _, e := range append(os.Environ(), env...) {
+		if v, ok := strings.CutPrefix(e, "GOEXPERIMENT="); ok && strings.Contains(v, "jsonv2") {
+			return env, nil
+		}
+	}
+	args := []string{"list", "-deps", "-f", `{{if not .Standard}}{{join .Imports "\n"}}{{end}}`}
+	if p.testBinary {
+		args = append(args, "-test")
+	}
+	if len(tags) > 0 {
+		args = append(args, "-tags", strings.Join(tags, ","))
+	}
+	cmd := exec.CommandContext(ctx, "go", append(args, ".")...)
+	cmd.Dir = p.Dir
+	cmd.Env = append(os.Environ(), env...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("go list: %w\n%s", err, stderr.Bytes())
+	}
+	for line := range strings.SplitSeq(string(out), "\n") {
+		if line == "encoding/json/v2" || line == "encoding/json/jsontext" {
+			return env, nil
+		}
+	}
+	return append(env, "GOEXPERIMENT="+experiments("nojsonv2")), nil
 }
 
 func run(ctx context.Context, name string, args ...string) error {

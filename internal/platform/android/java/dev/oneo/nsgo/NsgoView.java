@@ -208,6 +208,8 @@ public class NsgoView extends FrameLayout {
 
     /** The channel to the embedding app, and its settings over the system's. */
     private final Host host = new Host(this);
+    /** Downloads the app's images, as its Go process asks. */
+    private final Downloads downloads = new Downloads(this::write);
     private java.util.Locale hostLocale;
     private float hostFontScale;
     private int hostAppearance;
@@ -519,6 +521,9 @@ public class NsgoView extends FrameLayout {
                         break;
                     case Protocol.FOLDER:
                         folders.execute(() -> folder(message));
+                        break;
+                    case Protocol.FETCH:
+                        downloads.message(message);
                         break;
                     case Protocol.WANT_FRAME:
                         ui.post(() -> {

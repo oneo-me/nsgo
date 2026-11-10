@@ -21,7 +21,6 @@ import (
 	"go/ast"
 	gconstant "go/constant"
 	"go/token"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -57,7 +56,16 @@ func argCountErrorPos(e *ast.CallExpr, argPositions []token.Pos, n int) token.Po
 // enormous number (e.g. 1<<(1<<40)) and exhaust memory.
 const maxConstShift = 1 << 16
 
-var textureVariableRe = regexp.MustCompile(`\A__t(\d+)\z`)
+// textureVariable returns the index a texture variable's name, __t
+// and digits, holds.
+func textureVariable(name string) (int, bool) {
+	digits, ok := strings.CutPrefix(name, "__t")
+	if !ok || digits == "" || strings.Trim(digits, "0123456789") != "" {
+		return 0, false
+	}
+	i, err := strconv.Atoi(digits)
+	return i, err == nil
+}
 
 // shiftCount validates the constant shift count c of the operator op and returns it.
 func (cs *compileState) shiftCount(pos token.Pos, op token.Token, c gconstant.Value) (uint, bool) {
@@ -1454,8 +1462,7 @@ func (cs *compileState) parseIdent(block *block, e *ast.Ident, markLocalVariable
 			BuiltinFunc: f,
 		}, shaderir.Type{}, true
 	}
-	if m := textureVariableRe.FindStringSubmatch(e.Name); m != nil {
-		i, _ := strconv.Atoi(m[1])
+	if i, ok := textureVariable(e.Name); ok {
 		if i >= cs.ir.TextureCount {
 			cs.addError(e.Pos(), fmt.Sprintf("texture index out of range: %s", e.Name))
 			return shaderir.Expr{}, shaderir.Type{}, false

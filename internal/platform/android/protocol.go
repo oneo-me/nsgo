@@ -268,6 +268,14 @@ func (r *reader) u64() uint64 {
 func (r *reader) float() float32        { return math.Float32frombits(r.u32()) }
 func (r *reader) points() driver.Points { return driver.Points(r.float()) }
 
+// bytes reads a length and that many bytes.
+func (r *reader) bytes() []byte {
+	n := min(int(r.u32()), len(r.buf))
+	b := r.buf[:n:n]
+	r.buf = r.buf[n:]
+	return b
+}
+
 func (r *reader) str() string {
 	n := int(r.u32())
 	if n > len(r.buf) {

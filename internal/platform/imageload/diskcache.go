@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -12,8 +11,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"net/http"
-	"net/textproto"
 	"os"
 	"path/filepath"
 	"slices"
@@ -91,7 +88,7 @@ func newDiskCache(dir string, limit int64) *diskCache {
 type cached struct {
 	url    string
 	stored time.Time // when the response was received
-	header http.Header
+	header Header
 	body   []byte
 	path   string
 	mtime  time.Time
@@ -111,28 +108,24 @@ func (c *diskCache) fetch(ctx context.Context, url string, progress Progress) ([
 		c.touch(e, now)
 		return e.body, nil
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
+	header := Header{}
 	if e != nil {
 		if tag := e.header.Get("Etag"); tag != "" {
-			req.Header.Set("If-None-Match", tag)
+			header.Set("If-None-Match", tag)
 		}
 		if lm := e.header.Get("Last-Modified"); lm != "" {
-			req.Header.Set("If-Modified-Since", lm)
+			header.Set("If-Modified-Since", lm)
 		}
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := get(ctx, url, header, progress)
 	if err != nil {
 		if e != nil && e.servesStale() && ctx.Err() == nil {
 			return e.body, nil
 		}
 		return nil, err
 	}
-	defer resp.Body.Close()
 	switch {
-	case resp.StatusCode == http.StatusNotModified && e != nil:
+	case resp.Status == 304 && e != nil:
 		for _, k := range keptHeaders {
 			if v := resp.Header.Values(k); len(v) > 0 {
 				e.header[k] = v
@@ -141,12 +134,9 @@ func (c *diskCache) fetch(ctx context.Context, url string, progress Progress) ([
 		e.stored = c.now()
 		c.write(e)
 		return e.body, nil
-	case resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNonAuthoritativeInfo:
-		body, err := readAll(resp.Body, resp.ContentLength, progress)
-		if err != nil {
-			return nil, err
-		}
-		fresh := &cached{url: url, stored: c.now(), header: http.Header{}, body: body}
+	case resp.Status == 200 || resp.Status == 203:
+		body := resp.Body
+		fresh := &cached{url: url, stored: c.now(), header: Header{}, body: body}
 		for _, k := range keptHeaders {
 			if v := resp.Header.Values(k); len(v) > 0 {
 				fresh.header[k] = v
@@ -158,18 +148,17 @@ func (c *diskCache) fetch(ctx context.Context, url string, progress Progress) ([
 			c.remove(e.path)
 		}
 		return body, nil
-	case resp.StatusCode >= 500 && e != nil && e.servesStale():
-		io.Copy(io.Discard, resp.Body)
+	case resp.Status >= 500 && e != nil && e.servesStale():
 		return e.body, nil
-	case resp.StatusCode >= 400 && resp.StatusCode < 500 && e != nil:
+	case resp.Status >= 400 && resp.Status < 500 && e != nil:
 		c.remove(e.path)
 	}
-	return nil, fmt.Errorf("imageload: %s: %s", url, resp.Status)
+	return nil, fmt.Errorf("imageload: %s: status %d", url, resp.Status)
 }
 
 // directives returns the Cache-Control directives of h, lower-cased, with
 // their values.
-func directives(h http.Header) map[string]string {
+func directives(h Header) map[string]string {
 	d := map[string]string{}
 	for _, line := range h.Values("Cache-Control") {
 		for part := range strings.SplitSeq(line, ",") {
@@ -207,18 +196,18 @@ func (e *cached) lifetime() time.Duration {
 		}
 		return 0
 	}
-	date, dateErr := http.ParseTime(e.header.Get("Date"))
+	date, dateErr := parseTime(e.header.Get("Date"))
 	if dateErr != nil {
 		date = e.stored
 	}
 	if v := e.header.Get("Expires"); v != "" {
-		expires, err := http.ParseTime(v)
+		expires, err := parseTime(v)
 		if err != nil {
 			return 0
 		}
 		return max(expires.Sub(date), 0)
 	}
-	if lm, err := http.ParseTime(e.header.Get("Last-Modified")); err == nil && lm.Before(date) {
+	if lm, err := parseTime(e.header.Get("Last-Modified")); err == nil && lm.Before(date) {
 		return min(date.Sub(lm)/10, maxHeuristic)
 	}
 	return 0
@@ -286,10 +275,16 @@ func (c *diskCache) write(e *cached) {
 	}
 	path := c.path(e.url)
 	data := encodeEntry(e)
-	var tag [8]byte
-	rand.Read(tag[:])
-	tmp := filepath.Join(c.dir, "tmp-"+hex.EncodeToString(tag[:]))
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	f, err := os.CreateTemp(c.dir, "tmp-")
+	if err != nil {
+		return
+	}
+	tmp := f.Name()
+	_, err = f.Write(data)
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
 		os.Remove(tmp)
 		return
 	}
@@ -419,13 +414,25 @@ func decodeEntry(data []byte) (*cached, error) {
 	if err != nil {
 		return nil, errEntry
 	}
-	mime, err := textproto.NewReader(r).ReadMIMEHeader()
-	if err != nil {
-		return nil, errEntry
+	header := Header{}
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			return nil, errEntry
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			break
+		}
+		k, v, ok := strings.Cut(line, ":")
+		if !ok {
+			return nil, errEntry
+		}
+		header.Add(k, strings.TrimSpace(v))
 	}
 	body, err := io.ReadAll(r)
 	if err != nil {
 		return nil, errEntry
 	}
-	return &cached{url: strings.TrimSuffix(url, "\n"), stored: time.Unix(0, nanos), header: http.Header(mime), body: body}, nil
+	return &cached{url: strings.TrimSuffix(url, "\n"), stored: time.Unix(0, nanos), header: header, body: body}, nil
 }

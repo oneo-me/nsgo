@@ -54,7 +54,7 @@ func (c *checker) call(x *callExpr, out *[]shaderir.Stmt, asStmt bool) value {
 	if strings.HasPrefix(name, "__") && x.fn.pos >= c.user {
 		return c.intrinsic(x, out)
 	}
-	if f := builtinFuncs[name]; f != nil {
+	if f := builtin(name); f != nil {
 		args := make([]value, len(x.args))
 		for i, a := range x.args {
 			args[i] = c.expr(a, out)

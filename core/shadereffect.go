@@ -47,6 +47,8 @@ type ShaderEffect struct {
 // Render implements Node.
 func (e ShaderEffect) Render(*Scope) Node { return e }
 
+func (e ShaderEffect) mountIn(t *Tree, cx *Scope, parent *node) { t.mountShaderEffect(cx, parent, e) }
+
 // ShaderTransition shows its children as they are, and draws them
 // through a WGSL program as they change: when Value's result changes
 // (not its first), sample_from(uv) is a picture of what they showed,
@@ -76,6 +78,10 @@ type ShaderTransition struct {
 // Render implements Node.
 func (e ShaderTransition) Render(*Scope) Node { return e }
 
+func (e ShaderTransition) mountIn(t *Tree, cx *Scope, parent *node) {
+	t.mountShaderTransition(cx, parent, e)
+}
+
 // ScreenEffect draws the whole surface through a WGSL program, which
 // reads it with sample_content(uv). It takes no space and has no
 // children; dialogs a platform presents in windows of their own are
@@ -95,6 +101,8 @@ type ScreenEffect struct {
 // Render implements Node.
 func (e ScreenEffect) Render(*Scope) Node { return e }
 
+func (e ScreenEffect) mountIn(t *Tree, cx *Scope, parent *node) { t.mountScreenEffect(cx, parent, e) }
+
 // ScreenTransition draws the whole surface through a WGSL program as it
 // changes, when Value's result changes, as ShaderTransition does its
 // children.
@@ -112,6 +120,10 @@ type ScreenTransition struct {
 
 // Render implements Node.
 func (e ScreenTransition) Render(*Scope) Node { return e }
+
+func (e ScreenTransition) mountIn(t *Tree, cx *Scope, parent *node) {
+	t.mountScreenTransition(cx, parent, e)
+}
 
 // TransitionShader is a WGSL program a page (Screen) or a dialog (Modal)
 // comes and goes through instead of its Animation: sample_from(uv) is the

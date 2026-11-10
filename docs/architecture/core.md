@@ -144,7 +144,7 @@ The departures of Go's API shape as a whole are in [NSGo and NSH](nsh.md#gos-api
 | --- | --- | --- |
 | `MountItem` enum | One struct with a `Kind` and pointers to large parts | No allocation per item kind; easy to encode across a pipe |
 | `accessibilityActions` as a list in the props | `ViewProps.Actions` points at the element's list, never changed | `ViewProps` stays comparable, so the core diffs it with `!=` |
-| Per-platform image loading and caching | One Go loader, `internal/platform/imageload` | Written once; platforms only decode and draw |
+| Per-platform image loading and caching | One Go loader, `internal/platform/imageload`, over each system's HTTP client | Written once; platforms only download, decode and draw |
 
 ## TSX
 

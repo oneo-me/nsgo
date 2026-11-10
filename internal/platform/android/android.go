@@ -81,6 +81,8 @@ const (
 	// msgFolder lists a folder of a picked tree or reads part of its file
 	// (folders.go).
 	msgFolder = 15
+	// msgFetch starts or cancels an image's download (fetch.go).
+	msgFetch = 16
 
 	// Java to Go.
 	msgStart       = 1
@@ -96,6 +98,7 @@ const (
 	msgCaretLines  = 11 // a text layout's lines and clusters, answering msgCarets
 	msgFrame       = 12 // a Choreographer frame began, answering msgWantFrame
 	msgFolderReply = 13 // a folder's entries or a file's bytes, answering msgFolder
+	msgFetched     = 14 // a download's progress or response, answering msgFetch
 )
 
 // The parts of an image view's request msgImage carries.
@@ -143,6 +146,8 @@ type surface struct {
 	staged map[uint32]string
 	// folders are the folder picks and reads Java has yet to answer.
 	folders folders
+	// downloads are the image downloads Java has yet to finish.
+	downloads downloads
 
 	// testReply takes the runtime's answers to a test host's steps.
 	testReply func(r *reader)
@@ -319,6 +324,8 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 			}
 		case msgFolderReply:
 			s.folderReply(&r)
+		case msgFetched:
+			s.fetched(&r)
 		case msgTestReply:
 			if s.testReply != nil {
 				s.testReply(&r)
@@ -354,6 +361,7 @@ func (s *surface) startEngine(app engine.App, size driver.Size, appearance drive
 		// A phone's screen is what it is.
 		eopts.Size = size
 	}
+	imageload.HTTP = s.httpGet
 	imageload.UseDiskCache(eopts.CacheDir)
 	s.engine = engine.Start(s, app, eopts)
 	close(s.started)

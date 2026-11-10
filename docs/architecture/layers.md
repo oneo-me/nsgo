@@ -58,7 +58,8 @@ nsgo
 │       ├── imagedecode, imageload       Shared images
 │       ├── menutext                     Shared menu labels
 │       ├── picked, fontfile             Shared picked photos and font files
-│       └── queue, perfhud, canvastest   Shared batches, readings and test drawings
+│       ├── queue, perfhud               Shared batches and readings
+│       └── canvastest, imageloadtest    Shared test drawings and HTTP client checks
 │
 ├── Engine
 │   ├── internal/engine                  One app on its goroutine, a batch per commit
@@ -154,6 +155,16 @@ Each `internal/platform/<target>` maps the same protocol onto its system ([platf
 | `watchos` | A SwiftUI view per node in the host linked into the executable, its look a Canvas Go draws with Core Graphics |
 
 The other packages under `internal/platform` hold what two or more backends share, such as `apple` for macOS and iOS or `hover` and `textselect` for Windows and Linux. Move code there once a second backend needs it, and add it to `platformShared` in `layering_test.go`.
+
+## What an app links
+
+Go's linker keeps what a reachable function, method or package initializer reaches, so each package keeps what only some apps use out of reach of the rest:
+
+- An element mounts through its own method (`mountIn`), not a case of the tree's type switch, so the elements an app never makes leave their code out.
+- No package variable, `init` or package-level regular expression reaches a compiler, codec or table that only some apps need: build it on first use inside a function, as `core`'s default transition program and WGSL's built-ins are.
+- A backend leaves to the system what it has: images download through its HTTP client (`imageload.HTTP`), the web decodes and encodes images with the browser's codecs, and only Android imports `archive/zip`, for its APK.
+
+`TestMinimalAppLinks` (`linked_test.go`) builds an app showing one text (`testdata/minimal`) for each target and fails when another package reaches what `unlinked` lists: Go's HTTP and TLS stack, the shader compilers, and on the web Go's image codecs. Such an app's release build went from 11.5 to 12.3 MB natively and 13.7 MB on the web to 7.5 to 8.1 MB and 10.3 MB with these rules and the tool's smaller encoding/json ([packages](tool.md#packages)) (2026-11-10). A backend's handling of every mount item still links into every app, its shaders' writers among them, since the linker cannot follow an item's kind, and Android keeps Go's DNS resolver for apps' own networking.
 
 ## A button, top to bottom
 

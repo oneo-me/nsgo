@@ -36,13 +36,13 @@ const MaxImages = 4
 // pixels.
 func BridgeLanes(p *shaderir.Program) int { return 3 + 2*p.TextureCount }
 
-// imageCall finds the image functions a source calls.
-var imageCall = regexp.MustCompile(`\bimage([0-9])(At|Size)\b`)
-
 // imagesOf returns how many images src reads: one more than the highest
 // index of an image function it calls.
 func imagesOf(src []byte) (int, error) {
 	n := 0
+	// Compiled here, not at package level, so apps that compile no shader
+	// link no regular expressions for it.
+	imageCall := regexp.MustCompile(`\bimage([0-9])(At|Size)\b`)
 	for _, m := range imageCall.FindAllSubmatch(src, -1) {
 		i, _ := strconv.Atoi(string(m[1]))
 		if i >= MaxImages {
@@ -79,11 +79,12 @@ func image%[1]dAt(pos vec2) vec4 {
 	return b.String()
 }
 
-// bridge is the source appended to a shader: the uniform variables that
-// only platforms set, the functions that read them, and the vertex entry
-// point, which only gives the fragment entry point its arguments:
+// bridgeSource is the source appended to a shader: the uniform variables
+// that only platforms set, the functions that read them, and the vertex
+// entry point, which only gives the fragment entry point its arguments:
 // platforms draw with vertex stages of their own.
-var bridge = fmt.Sprintf(`
+func bridgeSource() string {
+	return fmt.Sprintf(`
 %s
 
 var %s vec2
@@ -104,6 +105,7 @@ func %s(dst vec2, pos vec2) (vec4, vec2) {
 }
 %s
 `, InternalRegionBegin, RectSizeUniform, ScaleUniform, vertexEntry, InternalRegionEnd)
+}
 
 const vertexEntry = "__vertex"
 
@@ -118,6 +120,7 @@ func CompileFragment(src []byte) (*shaderir.Program, error) {
 	var b bytes.Buffer
 	b.Write(src)
 	// One internal region holds the bridge and the image functions.
+	bridge := bridgeSource()
 	end := bytes.LastIndex([]byte(bridge), []byte(InternalRegionEnd))
 	b.WriteString(bridge[:end])
 	b.WriteString(imageBridge(images))

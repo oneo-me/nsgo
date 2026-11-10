@@ -27,6 +27,7 @@ final class Protocol {
     static final int WANT_FRAME = 13;
     static final int FONT_DATA = 14;
     static final int FOLDER = 15;
+    static final int FETCH = 16;
 
     // Java to Go.
     static final int START = 1;
@@ -42,10 +43,18 @@ final class Protocol {
     static final int CARET_LINES = 11;
     static final int FRAME = 12;
     static final int FOLDER_REPLY = 13;
+    static final int FETCHED = 14;
 
     // What a FOLDER message asks, as folders.go has them.
     static final int FOLDER_LIST = 0;
     static final int FOLDER_READ = 1;
+
+    // What a FETCH message asks and the parts of a FETCHED, as fetch.go
+    // has them.
+    static final int FETCH_START = 0;
+    static final int FETCH_CANCEL = 1;
+    static final int FETCHED_PROGRESS = 0;
+    static final int FETCHED_DONE = 1;
 
     // The parts of a HOST message, and of a HOST_CALL, as host.go has them.
     static final int HOST_EVENT = 1;

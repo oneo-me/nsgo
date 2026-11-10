@@ -125,6 +125,8 @@ type List struct {
 // Render implements Node.
 func (l List) Render(*Scope) Node { return l }
 
+func (l List) mountIn(t *Tree, cx *Scope, parent *node) { t.mountList(cx, parent, l) }
+
 // ListViewport is what a list scrolls in.
 type ListViewport uint8
 

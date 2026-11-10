@@ -12,7 +12,7 @@ order: 2
 - To run on an iPhone, an Apple ID in Xcode's Accounts and the iPhone trusted, with Developer Mode on.
 - To run on Android, `adb` from the Android SDK's platform-tools.
 - To run on Windows, Go alone, which also builds the Windows and web packages.
-- To run on Linux, GTK 4.14 or newer, Pango and Cairo; WebKitGTK 6.0 for web views and GStreamer plug-ins for videos.
+- To run on Linux, GTK 4.14 or newer, Pango and Cairo; libsoup 3 for images from the network, WebKitGTK 6.0 for web views and GStreamer plug-ins for videos.
 
 ## Create an app
 

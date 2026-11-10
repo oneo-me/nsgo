@@ -119,8 +119,18 @@ func MustCompileWGSL(src string) *ShaderProgram {
 	return p
 }
 
-// crossfade is the transitions' default program.
-var crossfade = sync.OnceValue(func() *ShaderProgram { return MustCompileWGSL(crossfadeSource) })
+// crossfade is the transitions' default program, compiled on first use:
+// a package variable's initializer would link the compiler into every
+// app.
+func crossfade() *ShaderProgram {
+	crossfadeProgram.Do(func() { crossfadeProgram.p = MustCompileWGSL(crossfadeSource) })
+	return crossfadeProgram.p
+}
+
+var crossfadeProgram struct {
+	sync.Once
+	p *ShaderProgram
+}
 
 // MustCompileShader is CompileShader for a source that is part of the
 // program, such as a package variable's: it panics when it does not
@@ -186,6 +196,8 @@ type Shader struct {
 
 // Render implements Node.
 func (s Shader) Render(*Scope) Node { return s }
+
+func (s Shader) mountIn(t *Tree, cx *Scope, parent *node) { t.mountShader(cx, parent, s) }
 
 type shaderNode struct {
 	sent  *driver.Shader

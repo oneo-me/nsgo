@@ -17,6 +17,10 @@ type InputAccessoryView struct {
 // Render implements Node.
 func (a InputAccessoryView) Render(*Scope) Node { return a }
 
+func (a InputAccessoryView) mountIn(t *Tree, cx *Scope, parent *node) {
+	t.mountAccessory(cx, parent, a)
+}
+
 type accessoryNode struct {
 	name  string
 	width Points // the surface's, which it takes

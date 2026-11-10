@@ -68,6 +68,8 @@ type Video struct {
 // Render implements Node.
 func (v Video) Render(*Scope) Node { return v }
 
+func (v Video) mountIn(t *Tree, cx *Scope, parent *node) { t.mountVideo(cx, parent, v) }
+
 // VideoInfo is what a video reports when it loads. Duration is 0 for a
 // stream without one, such as a live broadcast.
 type VideoInfo struct {

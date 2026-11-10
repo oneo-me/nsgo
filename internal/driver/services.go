@@ -1,9 +1,8 @@
 package driver
 
 import (
-	"bytes"
+	"encoding/binary"
 	"errors"
-	"image/png"
 )
 
 // AlertConfig is a native alert: a title, a message and its buttons.
@@ -422,8 +421,18 @@ func ClipboardPNG(data []byte) *ClipboardImage {
 	if len(data) == 0 {
 		return ReadClipboardImage(nil, Size{}, errors.New("no PNG"))
 	}
-	c, err := png.DecodeConfig(bytes.NewReader(data))
-	return ReadClipboardImage(data, Size{Width: Points(c.Width), Height: Points(c.Height)}, err)
+	size, err := pngSize(data)
+	return ReadClipboardImage(data, size, err)
+}
+
+// pngSize reads a PNG's size from its header, so reading one links no
+// decoder.
+func pngSize(data []byte) (Size, error) {
+	if len(data) < 24 || SniffImage(data) != "image/png" || string(data[12:16]) != "IHDR" {
+		return Size{}, errors.New("no PNG")
+	}
+	w, h := binary.BigEndian.Uint32(data[16:]), binary.BigEndian.Uint32(data[20:])
+	return Size{Width: Points(w), Height: Points(h)}, nil
 }
 
 // MenuRole is a standard menu item the platform carries out, labelling it

@@ -258,6 +258,8 @@ type HintTooltip interface {
 // Render implements Node.
 func (v View) Render(*Scope) Node { return v }
 
+func (v View) mountIn(t *Tree, cx *Scope, parent *node) { t.mountView(cx, parent, v) }
+
 // PartStates are the states a part of a control is styled in: its Style's
 // Checked, Indeterminate, Selected and Disabled merge in while they hold.
 type PartStates struct {
@@ -329,6 +331,8 @@ type Text struct {
 
 // Render implements Node.
 func (t Text) Render(*Scope) Node { return t }
+
+func (x Text) mountIn(t *Tree, cx *Scope, parent *node) { t.mountText(cx, parent, x) }
 
 // Span is a run of a Text with a style of its own.
 type Span struct {
@@ -457,6 +461,8 @@ type Input struct {
 // Render implements Node.
 func (i Input) Render(*Scope) Node { return i }
 
+func (i Input) mountIn(t *Tree, cx *Scope, parent *node) { t.mountInput(cx, parent, i) }
+
 // Scroll scrolls its children, laid out as a column (or a row when
 // Horizontal) as long as they need. Like React Native's ScrollView, it
 // shrinks to fit its parent (FlexShrink 1) unless its style says else.
@@ -537,6 +543,8 @@ type Scroll struct {
 
 // Render implements Node.
 func (s Scroll) Render(*Scope) Node { return s }
+
+func (s Scroll) mountIn(t *Tree, cx *Scope, parent *node) { t.mountScroll(cx, parent, s) }
 
 // Ref refers to a mounted element: an overlay's anchor, focus, its
 // bounds. Its zero value is ready to use; pass its address in an
@@ -734,6 +742,8 @@ type Image struct {
 // Render implements Node.
 func (i Image) Render(*Scope) Node { return i }
 
+func (i Image) mountIn(t *Tree, cx *Scope, parent *node) { t.mountImage(cx, parent, i) }
+
 // Src returns a source for uri.
 func Src(uri string) ImageSource { return ImageSource{URI: uri} }
 
@@ -798,6 +808,8 @@ type Overlay struct {
 
 // Render implements Node.
 func (o Overlay) Render(*Scope) Node { return o }
+
+func (o Overlay) mountIn(t *Tree, cx *Scope, parent *node) { t.mountOverlay(cx, parent, o) }
 
 // OverlayPosition is where an anchored overlay went: the side of its
 // anchor, its frame in its host and the room on that side inside the
@@ -866,6 +878,8 @@ type Modal struct {
 // Render implements Node.
 func (m Modal) Render(*Scope) Node { return m }
 
+func (m Modal) mountIn(t *Tree, cx *Scope, parent *node) { t.mountModal(cx, parent, m) }
+
 // Stack shows the last of its screens: the core's part of base.Nav's
 // Stack, which apps use. Pushing is adding a screen, popping is removing
 // it. Back pops the top screen, which reports OnDismiss and stays hidden
@@ -878,6 +892,8 @@ type Stack struct {
 
 // Render implements Node.
 func (s Stack) Render(*Scope) Node { return s }
+
+func (s Stack) mountIn(t *Tree, cx *Scope, parent *node) { t.mountStack(cx, parent, s) }
 
 // Screen is one page of a Stack, filling it: the core's part of
 // base.NavPage, which apps use.
@@ -947,3 +963,5 @@ type Screen struct {
 
 // Render implements Node.
 func (s Screen) Render(*Scope) Node { return s }
+
+func (s Screen) mountIn(t *Tree, cx *Scope, parent *node) { t.mountScreen(cx, parent, s) }

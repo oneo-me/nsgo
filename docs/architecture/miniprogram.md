@@ -60,7 +60,7 @@ Alerts are the platform's modal or action sheet, the clipboard holds text, stora
 `WXWebAssembly` and its likes load only files of the code package, `.wasm.br` among them, and every platform holds each package to 2 MB, so the module goes in a subpackage of its own, which the page loads before it, and its size decides which apps fit:
 
 - `nsgo_noshader` leaves the shader compilers out of `core` (`shader_nocompile.go`), as the render layer draws no shader: programs compile to none and take any uniform.
-- The module is built with `GOEXPERIMENT=nojsonv2`, encoding/json's smaller first implementation, and again without inlining when it is still too large.
+- The module is built with `GOEXPERIMENT=nojsonv2`, encoding/json's smaller first implementation, as every app's is where it can be ([packages](tool.md#packages)), and again without inlining when it is still too large.
 - TSX does not run: a mini program evaluates no code it did not ship, which the page's engine needs, and goja does not fit. The tool refuses apps that link `tsx`.
 
 `examples/embedded` compresses to 1.9 MB. NSH's gallery in Go does not fit.

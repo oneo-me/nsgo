@@ -85,7 +85,7 @@ func (c *checker) declare(name string, pos int, sym *symbol) {
 	if c.scope.names[name] != nil {
 		fail(pos, "%s is declared twice", name)
 	}
-	if c.scope == c.global && builtinFuncs[name] != nil && pos < c.user {
+	if c.scope == c.global && builtin(name) != nil && pos < c.user {
 		fail(pos, "%s is a built-in function", name)
 	}
 	sym.name = name

@@ -33,6 +33,8 @@ type Icon struct {
 // Render implements Node.
 func (i Icon) Render(*Scope) Node { return i }
 
+func (i Icon) mountIn(t *Tree, cx *Scope, parent *node) { t.mountIcon(cx, parent, i) }
+
 // SVGView draws an SVG document as authored, as an <svg> written inline in
 // a web page: in its own colors, sized by its width and height, else its
 // viewBox, where Style sets no size. Its shapes are vectors, sharp at any

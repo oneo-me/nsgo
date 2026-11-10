@@ -7,14 +7,12 @@
 package imageload
 
 import (
-	"archive/zip"
 	"container/list"
 	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -51,31 +49,6 @@ func readResource(path string) ([]byte, error) {
 		return readAPKAsset(path)
 	}
 	return os.ReadFile(filepath.Join(ResourceRoot, filepath.FromSlash(path)))
-}
-
-var apk = sync.OnceValues(func() (*zip.ReadCloser, error) {
-	// The runtime starts the app from the extracted native libraries,
-	// lib/<abi> beside the installed base.apk.
-	exe, err := os.Executable()
-	if err != nil {
-		return nil, err
-	}
-	return zip.OpenReader(filepath.Join(filepath.Dir(exe), "..", "..", "base.apk"))
-})
-
-// readAPKAsset reads path from the assets of the APK the app runs from,
-// where packaging puts its resources.
-func readAPKAsset(path string) ([]byte, error) {
-	r, err := apk()
-	if err != nil {
-		return nil, err
-	}
-	f, err := r.Open("assets/" + path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return io.ReadAll(f)
 }
 
 // CacheBytes bounds the cache.
@@ -197,24 +170,21 @@ func fetch(ctx context.Context, uri string, progress Progress) ([]byte, error) {
 		if c := disk.Load(); c != nil {
 			return c.fetch(ctx, uri, progress)
 		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+		resp, err := get(ctx, uri, Header{}, progress)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
+		if resp.Status != 200 {
+			return nil, fmt.Errorf("imageload: %s: status %d", uri, resp.Status)
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("imageload: %s: %s", uri, resp.Status)
-		}
-		return readAll(resp.Body, resp.ContentLength, progress)
+		return resp.Body, nil
 	}
 	return os.ReadFile(uri)
 }
 
-func readAll(r io.Reader, total int64, progress Progress) ([]byte, error) {
+// ReadAll reads r to its end, total bytes long or 0 when unknown,
+// calling progress as it goes: what an HTTP client reads a body with.
+func ReadAll(r io.Reader, total int64, progress Progress) ([]byte, error) {
 	buf := make([]byte, 0, max(total, 32<<10))
 	for {
 		if len(buf) == cap(buf) {

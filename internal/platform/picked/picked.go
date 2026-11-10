@@ -1,10 +1,10 @@
 // Package picked prepares the images a user picked as a PickRequest
 // asks, in pure Go, for the backends whose pickers hand over files as
-// they are: Windows, Linux and the web. It reads each file's type and
-// size, applies a JPEG's EXIF orientation, scales what is larger than
-// the request's MaxDimension and encodes again what needs it, as NSH's
-// pickers do; Apple platforms and Android do the same with their own
-// codecs.
+// they are: Windows and Linux. It reads each file's type and size,
+// applies a JPEG's EXIF orientation, scales what is larger than the
+// request's MaxDimension and encodes again what needs it, as NSH's
+// pickers do; Apple platforms, Android and the web do the same with their
+// own codecs.
 package picked
 
 import (

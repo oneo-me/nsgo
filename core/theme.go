@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"maps"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -309,8 +308,75 @@ func (t *Theme) readVars(theme, light, dark map[string]string) error {
 	return nil
 }
 
-// varRef finds var(--name) and var(--name, fallback).
-var varRef = regexp.MustCompile(`var\(--([A-Za-z0-9_-]+)(?:\s*,\s*([^()]*))?\)`)
+// replaceVarRefs returns v with each var(--name) and var(--name,
+// fallback) in it replaced by what fn returns for it. It is scanned by
+// hand rather than with a regular expression, so apps link none for it.
+func replaceVarRefs(v string, fn func(name, fallback string) string) string {
+	var b strings.Builder
+	last := 0
+	for i := 0; ; {
+		at := strings.Index(v[i:], "var(--")
+		if at < 0 {
+			break
+		}
+		start := i + at
+		end, name, fallback, ok := varRefAt(v, start+len("var(--"))
+		if !ok {
+			i = start + 1
+			continue
+		}
+		b.WriteString(v[last:start])
+		b.WriteString(fn(name, fallback))
+		last, i = end, end
+	}
+	if last == 0 {
+		return v
+	}
+	b.WriteString(v[last:])
+	return b.String()
+}
+
+// varRefAt reads the rest of a var( from v[i:], just past its "--": the
+// name, then ")" or, after a comma and spaces, the fallback up to it.
+func varRefAt(v string, i int) (end int, name, fallback string, ok bool) {
+	j := i
+	for j < len(v) && (isWordByte(v[j]) || v[j] == '-') {
+		j++
+	}
+	if j == i {
+		return 0, "", "", false
+	}
+	name = v[i:j]
+	if j < len(v) && v[j] == ')' {
+		return j + 1, name, "", true
+	}
+	k := j
+	for k < len(v) && isCSSSpace(v[k]) {
+		k++
+	}
+	if k == len(v) || v[k] != ',' {
+		return 0, "", "", false
+	}
+	k++
+	for k < len(v) && isCSSSpace(v[k]) {
+		k++
+	}
+	close := strings.IndexAny(v[k:], "()")
+	if close < 0 || v[k+close] != ')' {
+		return 0, "", "", false
+	}
+	return k + close + 1, name, v[k : k+close], true
+}
+
+// isWordByte reports whether c is a letter, a digit or an underscore.
+func isWordByte(c byte) bool {
+	return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '_'
+}
+
+// isCSSSpace reports whether c is a space as \s matches one.
+func isCSSSpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r'
+}
 
 // resolveVar is variable name's value with the variables it names
 // replaced by theirs.
@@ -323,12 +389,11 @@ func resolveVar(vars map[string]string, name string, depth int) (string, error) 
 		return "", fmt.Errorf("no variable --%s", name)
 	}
 	var err error
-	out := varRef.ReplaceAllStringFunc(v, func(m string) string {
-		g := varRef.FindStringSubmatch(m)
-		r, e := resolveVar(vars, g[1], depth+1)
+	out := replaceVarRefs(v, func(name, fallback string) string {
+		r, e := resolveVar(vars, name, depth+1)
 		if e != nil {
-			if g[2] != "" {
-				return g[2]
+			if fallback != "" {
+				return fallback
 			}
 			err = e
 		}

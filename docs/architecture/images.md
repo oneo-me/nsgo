@@ -22,6 +22,8 @@
 
 Every native backend loads `http(s)` images through `imageload`, which keeps their bytes in a disk cache under the app's cache directory (`imageload.UseDiskCache`, 256 MiB), as NSH's `DiskCache`. The web leaves caching to the browser.
 
+`imageload` downloads through the system's HTTP client, which each backend sets as `imageload.HTTP`, so apps link no Go HTTP and TLS stack: URLSession on Apple platforms, WinHTTP, libsoup 3 on Linux, and on Android the runtime's `HttpURLConnection`, which Java runs for the Go process (`msgFetch`, `fetch.go` and `Downloads.java`). Downloads follow the system's proxies, certificates and policies: a plain `http` image needs App Transport Security's exception on Apple platforms (`apple.info`) and cleartext traffic allowed on Android, as web views and videos do.
+
 - The policy is RFC 9111's for a private cache, simplified as NSH's: `200` and `203` are kept unless `no-store`, `Vary: *` or over an eighth of the cache.
 - A copy is fresh for `max-age`, else `Expires` less `Date`, else a tenth of the time since `Last-Modified`, at most 7 days, less its age; `no-cache` or no freshness makes it stale at once.
 - A stale copy is revalidated with its ETag and `Last-Modified`: `304` refreshes its headers, `4xx` drops it, and a failed request or a `5xx` serves it unless `must-revalidate` or `no-cache`.
@@ -51,4 +53,4 @@ Its scanline rasterizer computes exact coverage across each row with 16 samples 
 
 ## Verification
 
-`go test ./internal/platform/imageload` checks the disk cache's policy against a test server. `go test ./internal/platform/imagedecode` checks decoded frames, rasterized pixels and the bounds; the Windows and Linux native tests check animated GIFs and SVG pixels in a window. The Windows and Linux native tests also check a fit at a position, `Center`'s natural size, blur, fade and `ImageSize` in a window. The gallery's Images page shows every resize mode, blur, placeholders and fades, `ImageSize`, `PrefetchImage` and progress, an animated GIF and WebP, and SVG, plain and tinted.
+`go test ./internal/platform/imageload` checks the disk cache's policy against a test server, and each backend's tests hold its HTTP client to the same checks (`imageloadtest.CheckHTTP`). `go test ./internal/platform/imagedecode` checks decoded frames, rasterized pixels and the bounds; the Windows and Linux native tests check animated GIFs and SVG pixels in a window. The Windows and Linux native tests also check a fit at a position, `Center`'s natural size, blur, fade and `ImageSize` in a window. The gallery's Images page shows every resize mode, blur, placeholders and fades, `ImageSize`, `PrefetchImage` and progress, an animated GIF and WebP, and SVG, plain and tinted.

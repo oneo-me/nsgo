@@ -58,9 +58,9 @@ Windows checks the registry first because the shell asks the user for an app for
 | Android | The Photo Picker from API 33 (30 with its extension), else the documents UI | `ImageDecoder` in `Services.java` |
 | Windows | `GetOpenFileNameW`, from a message of its own | `internal/platform/picked` |
 | Linux | `GtkFileDialog` | `internal/platform/picked` |
-| Web | `<input type=file>`, which needs the press's user activation | `internal/platform/picked` |
+| Web | `<input type=file>`, which needs the press's user activation | The browser's codecs, through `createImageBitmap` and a canvas (`web/picked.go`) |
 
-`picked` decodes in Go, which reads no HEIC, so those pickers offer only the formats it reads unless `PickCurrent`. It turns JPEGs upright by their EXIF orientation and scales with Catmull-Rom.
+`picked` decodes in Go, which reads no HEIC, so those pickers offer only the formats it reads unless `PickCurrent`. It turns JPEGs upright by their EXIF orientation and scales with Catmull-Rom. The web does the same with the browser's codecs, so pages link no Go image codec.
 
 ## Taking a photo
 
@@ -70,7 +70,7 @@ Windows checks the registry first because the shell asks the user for an app for
 | --- | --- | --- |
 | iOS | `UIImagePickerController`, where `isSourceTypeAvailable` says the device has a camera, which the simulator has not | `AVCaptureDevice`'s, asked once; the Info.plist declares `NSCameraUsageDescription` (`nsgo.yaml`'s `apple.info`), without which a photo fails, since the system would end the app as it asks |
 | Android | `ACTION_IMAGE_CAPTURE`, where the device has `FEATURE_CAMERA_ANY`; the camera app writes into a file of the cache's `nsgo-camera`, the only files `FileProvider` opens for writing, which Java prepares and deletes | None, unless the manifest asks for `CAMERA`, which the camera app then needs granted: Java asks for it first (`permissionResult`) |
-| Web | `<input type=file capture=environment>` on touch screens (`pointer: coarse`), which mobile browsers open as the camera; prepared by `internal/platform/picked` | The browser's |
+| Web | `<input type=file capture=environment>` on touch screens (`pointer: coarse`), which mobile browsers open as the camera; prepared with the browser's codecs | The browser's |
 
 The desktops show no camera ([roadmap](../roadmap.md#finish-the-existing-platforms)).
 
@@ -215,4 +215,4 @@ Shortcuts are scoped to their owner: the platform matches key presses against th
 
 ## Verification
 
-`core` tests each request and answer, speech sessions included; `examples/gallery` checks its System page with `nsgotest`. The Windows and Linux native tests switch input sources and back and follow the lifecycle through a minimize or a hide; Linux's switch ran with a second Fcitx 5 input method enabled (2026-11-08). Speech was checked on macOS only as far as its refusal without permission, which this machine's session gives: no transcript has been recognized yet. The Windows and Linux native tests drive the clipboard, frames, levels, the hiding menu bar, a context menu, the appearance and `Quit` in a window, and Windows' drawn alerts, hidden caption buttons and backdrops. Both pick a file, save a copy and cancel a save in the system's dialogs, Linux's in a process of its own without the portal, and Windows' open dialog also picks an image. `internal/platform/apple` checks HEIC and scaled picks and the uniform types of file picks; `picked` checks orientation and scaling. `WindowConstraints` were checked on a real AppKit window (2026-11-06) and have only been built for Windows and Linux. macOS, iOS, Android and the web were checked by running each service, except file picks and saves on macOS and iOS, which have not run yet.
+`core` tests each request and answer, speech sessions included; `examples/gallery` checks its System page with `nsgotest`. The Windows and Linux native tests switch input sources and back and follow the lifecycle through a minimize or a hide; Linux's switch ran with a second Fcitx 5 input method enabled (2026-11-08). Speech was checked on macOS only as far as its refusal without permission, which this machine's session gives: no transcript has been recognized yet. The Windows and Linux native tests drive the clipboard, frames, levels, the hiding menu bar, a context menu, the appearance and `Quit` in a window, and Windows' drawn alerts, hidden caption buttons and backdrops. Both pick a file, save a copy and cancel a save in the system's dialogs, Linux's in a process of its own without the portal, and Windows' open dialog also picks an image. `internal/platform/apple` checks HEIC and scaled picks and the uniform types of file picks; `picked` checks orientation and scaling, and `TestPreparePicked` the web's scaling and encoding, run as WebAssembly in Chrome. `WindowConstraints` were checked on a real AppKit window (2026-11-06) and have only been built for Windows and Linux. macOS, iOS, Android and the web were checked by running each service, except file picks and saves on macOS and iOS, which have not run yet.

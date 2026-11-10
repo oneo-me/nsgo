@@ -57,6 +57,8 @@ type WebView struct {
 // Render implements Node.
 func (w WebView) Render(*Scope) Node { return w }
 
+func (w WebView) mountIn(t *Tree, cx *Scope, parent *node) { t.mountWebView(cx, parent, w) }
+
 // WebSrc returns the source loading the page at url.
 func WebSrc(url string) WebSource { return WebSource{Src: url} }
 
