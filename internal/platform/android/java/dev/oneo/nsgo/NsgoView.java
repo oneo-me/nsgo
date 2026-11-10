@@ -139,6 +139,8 @@ public class NsgoView extends FrameLayout {
     private final int[] location = new int[2];
     private Process process;
     private DataOutputStream out;
+    // The engine's flags the app starts with (--nsgo-fps).
+    private final ArrayList<String> flags = new ArrayList<>();
     // The test nsgo test -target android runs, and its agent.
     private String test;
     private TestAgent agent;
@@ -346,6 +348,23 @@ public class NsgoView extends FrameLayout {
     }
 
     /**
+     * Takes the engine's flags from a launch intent's extras named nsgo-,
+     * as nsgo dev passes them: a true boolean is a flag alone
+     * (--ez nsgo-fps true is --nsgo-fps), anything else its value
+     * (--es nsgo-lang de is --nsgo-lang=de).
+     */
+    void setFlags(android.os.Bundle extras) {
+        flags.clear();
+        if (extras == null) return;
+        for (String key : extras.keySet()) {
+            if (!key.startsWith("nsgo-")) continue;
+            Object value = extras.get(key);
+            if (Boolean.TRUE.equals(value)) flags.add("--" + key);
+            else if (value != null && !(value instanceof Boolean)) flags.add("--" + key + "=" + value);
+        }
+    }
+
+    /**
      * Sets the launch parameters the app reads (core.Scope.HostParams), as
      * maps, lists and plain values; before the app starts, as the view
      * first gets a size.
@@ -440,6 +459,7 @@ public class NsgoView extends FrameLayout {
         File exe = new File(getContext().getApplicationInfo().nativeLibraryDir, "libnsgo.so");
         try {
             ProcessBuilder builder = new ProcessBuilder(exe.getAbsolutePath());
+            builder.command().addAll(flags);
             File data = storage != null ? storage : getContext().getFilesDir();
             builder.environment().put("NSGO_DATA_DIR", data.getAbsolutePath());
             builder.environment().put("NSGO_CACHE_DIR", getContext().getCacheDir().getAbsolutePath());

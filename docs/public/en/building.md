@@ -41,12 +41,10 @@ icon:
 dev:
   target: native        # native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android or miniprogram_<platform>
   hot_reload: true      # false builds once, watching no files
-  fps: false            # true shows the performance monitor
   # icon: { png: assets/Icon-dev.png }  # replaces icon's files in dev's builds; defaults to assets/*-dev.*
 build:
   output: dist
   open: false           # true opens the output directory after building
-  fps: false            # as dev.fps, for packages
   installers: true      # false leaves out the disk image, the Windows installer and the Linux packages
   jobs: 0               # how many targets build at once; 0 is half the CPUs, 1 one after another
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
@@ -57,6 +55,23 @@ build:
 ```
 
 Flags replace the values they name, such as `-target`, `-version` or `-output`; `-h` lists them all.
+
+Every build of an app, packages included, takes NSGo's own flags as it starts, which override `nsgo.yaml` and the app's code and never reach the app's own flags:
+
+| Flag | Effect |
+| --- | --- |
+| `--nsgo-fps` | Shows the performance monitor on macOS, iOS, Windows and Linux |
+| `--nsgo-lang=zh-Hans` | Starts the app in a locale, a pseudo locale too |
+| `--nsgo-appearance=dark` | Starts the app `light`, `dark` or following the `system` |
+
+```sh
+./Hello --nsgo-fps                                   # Windows and Linux
+open Hello.app --args --nsgo-fps                     # macOS
+xcrun simctl launch booted dev.example.hello --nsgo-fps
+adb shell am start -n dev.example.hello/dev.oneo.nsgo.NsgoActivity --ez nsgo-fps true --es nsgo-lang de
+```
+
+On the web they go in the page's query: `?nsgo-fps&nsgo-lang=de`.
 
 ## Installers
 

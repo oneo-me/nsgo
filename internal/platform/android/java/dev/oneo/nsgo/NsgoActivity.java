@@ -36,6 +36,7 @@ public class NsgoActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false);
         // The view lays itself out behind the system bars and styles them.
         view = new NsgoView(this);
+        view.setFlags(getIntent().getExtras());
         view.setTest(getIntent().getStringExtra(TestAgent.EXTRA));
         setContentView(view);
     }

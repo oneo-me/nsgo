@@ -13,10 +13,6 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// devLocale is the locale nsgo dev -lang runs the app in, set with
-// -ldflags -X.
-var devLocale = ""
-
 // devServer is nsgo dev's server, set with -ldflags -X for targets that
 // pass the app no environment; NSGO_DEV_SERVER overrides it.
 var devServer = ""
@@ -26,13 +22,6 @@ var devServer = ""
 // -trace the server prints each commit. On the web the page is served from the server and shows build
 // failures itself.
 func devApp(app App) App {
-	if devLocale != "" {
-		inner := app
-		app = func(cx *core.Scope) core.Node {
-			cx.SetLocale(devLocale)
-			return inner(cx)
-		}
-	}
 	server := devServer
 	if s := os.Getenv("NSGO_DEV_SERVER"); s != "" {
 		server = s

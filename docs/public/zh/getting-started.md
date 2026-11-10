@@ -56,7 +56,7 @@ go tool nsgo dev -target watchos_simulator  # 在 Apple Watch 模拟器中
 go tool nsgo dev -target android            # 在已连接的设备或模拟器上
 ```
 
-`-device` 选择 iPhone、Apple TV、Apple Watch、模拟器或 Android 设备，`-port` 设置 Web 服务器端口，`-trace` 打印运行中应用的每次提交及其时间和挂载项，`-fps` 在 macOS、iOS、Windows 和 Linux 上显示性能监视器。`-h` 列出所有参数。
+`-device` 选择 iPhone、Apple TV、Apple Watch、模拟器或 Android 设备，`-port` 设置 Web 服务器端口，`-trace` 打印运行中应用的每次提交及其时间和挂载项，`-fps` 和 `-lang` 以 [NSGo 的参数](building.md) `--nsgo-fps` 和 `--nsgo-lang` 启动应用。`-h` 列出所有参数。
 
 ## 构建待办应用
 

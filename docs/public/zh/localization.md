@@ -28,7 +28,7 @@ appName:
 go tool nsgo dev -lang en-XA
 ```
 
-会以伪语言运行应用，显示未翻译和被截断的文本。
+会以伪语言运行应用，显示未翻译和被截断的文本。任何构建在启动时都接受这个参数：`--nsgo-lang=en-XA`。
 
 ## NSGo 自己的文案
 

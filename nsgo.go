@@ -14,7 +14,8 @@
 //	}
 //
 // Build tags pick the backend. The nsgo tool sets the app's name and ID
-// from nsgo.yaml.
+// from nsgo.yaml. The engine's own command-line flags, such as --nsgo-fps,
+// leave os.Args before main runs (launchFlags).
 package nsgo
 
 import (
@@ -26,7 +27,6 @@ import (
 var (
 	name = "NSGo"
 	id   = ""
-	fps  = "0"
 	// appearance is nsgo.yaml's: "light" or "dark" starts the app in it.
 	appearance = ""
 )
@@ -52,11 +52,12 @@ type Main interface {
 // (desktop.SetShutdownMode) or core.Scope.Quit, its storage written, so
 // main can clean up; on iOS, Android and the web it never returns.
 func Run[M Main](main M, opts ...Option) {
-	o := options{monitor: fps == "1", width: 480, height: 640, appearance: map[string]core.Appearance{
+	o := options{width: 480, height: 640, appearance: map[string]core.Appearance{
 		"light": core.AppearanceLight, "dark": core.AppearanceDark}[appearance]}
 	for _, fn := range opts {
 		fn(&o)
 	}
+	launch.apply(&o)
 	o.constraints = o.constraints.Normalized()
 	if o.frame.Width > 0 && o.frame.Height > 0 {
 		o.width, o.height = o.frame.Width, o.frame.Height
@@ -65,9 +66,9 @@ func Run[M Main](main M, opts ...Option) {
 	o.width, o.height = size.Width, size.Height
 	switch m := any(main).(type) {
 	case func(cx *core.Scope) core.Node:
-		run(devApp(m), nil, o)
+		run(devApp(launch.localized(m)), nil, o)
 	case func(app *core.Scope):
-		run(nil, m, o)
+		run(nil, launch.localizedApp(m), o)
 	}
 }
 
@@ -106,7 +107,7 @@ type options struct {
 	components core.NativeComponents
 	// fonts are the font files to register, under the app's resources.
 	fonts []string
-	// monitor shows the performance monitor over the app (macOS).
+	// monitor shows the performance monitor over the app: --nsgo-fps.
 	monitor bool
 	// material is the material behind the main window's content, and
 	// width and height its size.
@@ -162,13 +163,6 @@ func WindowConstraints(c core.WindowConstraints) Option {
 // its icon never shows there. desktop.SetDockVisible changes it later.
 func HideDock() Option {
 	return func(o *options) { o.hideDock = true }
-}
-
-// FPS shows (or hides) the performance monitor over the app: frame rate,
-// frame and commit costs, CPU, GPU and memory. nsgo.yaml's dev.fps and
-// build.fps, or the nsgo tool's -fps flag, turn it on.
-func FPS(on bool) Option {
-	return func(o *options) { o.monitor = on }
 }
 
 // WindowMaterial starts the main window with material behind its content,

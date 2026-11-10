@@ -1,6 +1,6 @@
 # Performance
 
-The performance monitor measures what a surface's frames and commits cost while it runs, for a panel over the app (`dev.fps`, `build.fps` or `nsgo.FPS`). It follows NSH's `nsh_engine::perf` and macOS HUD. Read this before changing `internal/engine/perf.go`, a backend's `perf.go`, its frame clock or anything that runs every frame.
+The performance monitor measures what a surface's frames and commits cost while it runs, for a panel over the app (`--nsgo-fps`). It follows NSH's `nsh_engine::perf` and macOS HUD. Read this before changing `internal/engine/perf.go`, a backend's `perf.go`, its frame clock or anything that runs every frame.
 
 ## Measuring
 
@@ -17,7 +17,7 @@ The performance monitor measures what a surface's frames and commits cost while 
 
 ## The panel
 
-`nsgo dev` passes `-X github.com/oneo-me/nsgo.fps=1` when `dev.fps` is true and `nsgo build` when `build.fps` is; both default to false and `-fps` or `-fps=false` overrides them. `nsgo.Run` turns the flag into the backend's monitor, and `nsgo.FPS(true)` does the same from an app run with `go run`; embedded views and target tests have none. macOS, iOS, Windows and Linux show one; Android and the web accept the option and ignore it.
+Any build shows one when started with `--nsgo-fps` (`flags.go`), and `nsgo dev -fps` starts it so; `nsgo.Run` turns the flag into the backend's monitor, and embedded views and target tests have none. Without the flag nothing is installed, so a build costs the same with the monitor's code as without it; with it, the frame clock runs every refresh, so measure with and read CPU without it. macOS, iOS, Windows and Linux show one; Android and the web accept the option and ignore it.
 
 The panel sits at the top right of the surface (below the safe area on iOS), lets the pointer through, and is redrawn every 500 ms; on macOS it fades out while the pointer is over it. Its sizes, colors and trace are `engine`'s (`perfpanel.go`), and `internal/platform/perfhud` reads the process' CPU and memory for every backend:
 

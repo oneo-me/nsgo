@@ -85,6 +85,10 @@ export async function mount(element, url, options = {}) {
   }
 
   const go = new Go();
+  // The page's nsgo- parameters are the engine's flags: ?nsgo-fps&nsgo-lang=de.
+  for (const [k, v] of new URLSearchParams(location.search)) {
+    if (k.startsWith("nsgo-")) go.argv.push(v === "" ? `--${k}` : `--${k}=${v}`);
+  }
   go.env = { NSGO_BASE: at(".") };
   if (config.resources) go.env.NSGO_RESOURCES = JSON.stringify(config.resources);
   if (host != null) go.env.NSGO_HOST = key;

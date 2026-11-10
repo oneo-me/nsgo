@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,7 +45,8 @@ type devOptions struct {
 	team    string // the Apple developer team the iOS target signs with
 	release bool   // build as nsgo build does, for measuring
 	trace   bool   // print the running app's commits
-	lang    string // the locale to run the app in
+	fps     bool   // show the performance monitor: --nsgo-fps
+	lang    string // the locale to run the app in: --nsgo-lang
 	clip    string // the URL the App Clip opens from, run in the app's place
 	server  *devServer
 }
@@ -167,12 +169,24 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	}
 }
 
-// prepareDev sets what dev's builds carry: the monitor dev.fps asks for,
-// the dev client, -trace's commits and the dev icons; -release strips
-// them as nsgo build does, keeping the monitor for measuring.
+// prepareDev sets what dev's builds carry: the dev client, -trace's
+// commits and the dev icons; -release strips them as nsgo build does.
 func (p *project) prepareDev(opts devOptions) {
-	p.Perf, p.Release, p.Dev.Client, p.Dev.Trace, p.Dev.Lang = p.Dev.FPS, opts.release, true, opts.trace, opts.lang
+	p.Release, p.Dev.Client, p.Dev.Trace = opts.release, true, opts.trace
 	p.useDevIcons()
+}
+
+// appFlags are the engine's flags dev starts the app with: -fps's
+// --nsgo-fps and -lang's --nsgo-lang.
+func (o devOptions) appFlags() []string {
+	var flags []string
+	if o.fps {
+		flags = append(flags, "--nsgo-fps")
+	}
+	if o.lang != "" {
+		flags = append(flags, "--nsgo-lang="+o.lang)
+	}
+	return flags
 }
 
 // waitForChange returns nil once dev should build again: a reload asked
@@ -558,7 +572,7 @@ func macSession(opts devOptions) session {
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
 			bin := filepath.Join(p.cache("dev", "macos"), p.Name+".app", "Contents", "MacOS", p.Name)
-			stop, wait, err := startProcessEnv(devEnv(opts), bin)
+			stop, wait, err := startProcessEnv(devEnv(opts), bin, opts.appFlags()...)
 			if err != nil {
 				return app{}, err
 			}
@@ -581,7 +595,7 @@ func windowsSession(opts devOptions) session {
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
 			bin := filepath.Join(p.cache("dev", "windows"), p.Name+".exe")
-			stop, wait, err := startProcessEnv(devEnv(opts), bin)
+			stop, wait, err := startProcessEnv(devEnv(opts), bin, opts.appFlags()...)
 			if err != nil {
 				return app{}, err
 			}
@@ -604,7 +618,7 @@ func linuxSession(opts devOptions) session {
 		},
 		start: func(ctx context.Context, p *project) (app, error) {
 			bin := filepath.Join(p.cache("dev", "linux"), p.Name)
-			stop, wait, err := startProcessEnv(devEnv(opts), bin)
+			stop, wait, err := startProcessEnv(devEnv(opts), bin, opts.appFlags()...)
 			if err != nil {
 				return app{}, err
 			}
@@ -624,10 +638,11 @@ func webSession(opts devOptions) session {
 		start: func(ctx context.Context, p *project) (app, error) {
 			once.Do(func() {
 				opts.server.serve(p.cache("dev", "web"))
-				url := fmt.Sprintf("http://localhost:%d/", opts.server.port)
+				query := webQuery(opts.appFlags())
+				url := fmt.Sprintf("http://localhost:%d/%s", opts.server.port, query)
 				note("%s", link(url))
 				for _, lan := range opts.server.lanURLs() {
-					detail("%s", link(lan+"/"))
+					detail("%s", link(lan+"/"+query))
 				}
 				if opts.open {
 					name, args := openCommand(url)
@@ -637,6 +652,23 @@ func webSession(opts devOptions) session {
 			return app{stop: func() {}}, nil
 		},
 	}
+}
+
+// webQuery passes the engine's flags in the page's query, which nsgo.js
+// gives the app as flags again: ?nsgo-fps&nsgo-lang=de.
+func webQuery(flags []string) string {
+	var params []string
+	for _, f := range flags {
+		name, value, ok := strings.Cut(strings.TrimPrefix(f, "--"), "=")
+		if ok {
+			name += "=" + neturl.QueryEscape(value)
+		}
+		params = append(params, name)
+	}
+	if len(params) == 0 {
+		return ""
+	}
+	return "?" + strings.Join(params, "&")
 }
 
 // startProcess runs a command with its output above the tool's lines. stop

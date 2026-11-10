@@ -21,9 +21,6 @@ type project struct {
 	// Release strips symbols and debug information for the smallest
 	// binaries; nsgo build sets it, nsgo dev does not.
 	Release bool `yaml:"-"`
-	// Perf shows the performance monitor: nsgo dev sets it from Dev.FPS
-	// and nsgo build from Build.FPS.
-	Perf bool `yaml:"-"`
 	// idDefault records that nsgo.yaml gave no id, so it follows the name.
 	idDefault bool
 	// devURL is the dev server's address for targets that pass the app no
@@ -71,16 +68,13 @@ type project struct {
 		// HotReload rebuilds and restarts the app when a watched file
 		// changes; it defaults to true.
 		HotReload *bool `yaml:"hot_reload"`
-		// FPS shows the performance monitor over dev's builds; it
-		// defaults to false.
-		FPS bool `yaml:"fps"`
+		// FPS is no longer nsgo.yaml's: apps take --nsgo-fps.
+		FPS any `yaml:"fps"`
 		// Client builds the dev client in, which connects to nsgo dev's
 		// server: nsgo dev sets it. Trace has the client send the server
-		// each commit: nsgo dev -trace sets it. Lang is the locale the
-		// client runs the app in: nsgo dev -lang sets it.
-		Client bool   `yaml:"-"`
-		Trace  bool   `yaml:"-"`
-		Lang   string `yaml:"-"`
+		// each commit: nsgo dev -trace sets it.
+		Client bool `yaml:"-"`
+		Trace  bool `yaml:"-"`
 		// Limits runs a TSX app sandboxed, as tsx.View would, within
 		// these limits (tsx.ParseLimits) and its capabilities: nsgo dev
 		// -limits sets it.
@@ -186,9 +180,8 @@ type project struct {
 		// Open shows the output directory once the build finishes; it
 		// defaults to false.
 		Open *bool `yaml:"open"`
-		// FPS shows the performance monitor over the packages; it
-		// defaults to false.
-		FPS bool `yaml:"fps"`
+		// FPS is no longer nsgo.yaml's: apps take --nsgo-fps.
+		FPS any `yaml:"fps"`
 		// Installers packages the desktop targets for users to install
 		// (installer.go): a disk image on macOS, an NSIS installer
 		// on Windows, Debian and Arch packages on Linux; it defaults to
@@ -293,6 +286,9 @@ func load(dir string) (*project, error) {
 	if p.Window != nil {
 		return nil, fmt.Errorf("nsgo.yaml: window is set in Go now: nsgo.Run(Root, nsgo.WindowSize(width, height)), or desktop.WindowOptions")
 	}
+	if p.Dev.FPS != nil || p.Build.FPS != nil {
+		return nil, fmt.Errorf("nsgo.yaml: fps is gone: start the app with --nsgo-fps, or run nsgo dev -fps")
+	}
 	if owner, name, ok := strings.Cut(p.Releases.GitHub, "/"); p.Releases.GitHub != "" && (!ok || owner == "" || name == "" || strings.Contains(name, "/")) {
 		return nil, fmt.Errorf("nsgo.yaml: release.github %q is not owner/name", p.Releases.GitHub)
 	}
@@ -366,14 +362,10 @@ func (p *project) cache(parts ...string) string {
 	return filepath.Join(append([]string{p.Dir, ".nsgo"}, parts...)...)
 }
 
-// ldflags passes nsgo.yaml's name and ID, and the performance monitor, to
-// nsgo.Run.
+// ldflags passes nsgo.yaml's name and ID to nsgo.Run.
 func (p *project) ldflags(extra ...string) string {
 	const pkg = "github.com/oneo-me/nsgo"
 	flags := fmt.Sprintf("-X '%s.name=%s' -X '%s.id=%s'", pkg, p.Name, pkg, p.ID)
-	if p.Perf {
-		flags += fmt.Sprintf(" -X '%s.fps=1'", pkg)
-	}
 	if p.Appearance != "" {
 		flags += fmt.Sprintf(" -X %s.appearance=%s", pkg, p.Appearance)
 	}
@@ -382,9 +374,6 @@ func (p *project) ldflags(extra ...string) string {
 	}
 	if p.Dev.Client && p.Dev.Trace {
 		flags += fmt.Sprintf(" -X %s.devTrace=1", pkg)
-	}
-	if p.Dev.Client && p.Dev.Lang != "" {
-		flags += fmt.Sprintf(" -X %s.devLocale=%s", pkg, p.Dev.Lang)
 	}
 	if p.Dev.Client && p.Dev.Limits != "" {
 		flags += fmt.Sprintf(" -X '%s.devLimits=%s'", compilerPath, p.Dev.Limits)

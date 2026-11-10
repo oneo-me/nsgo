@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -217,62 +218,35 @@ func TestBuildFlagsAbsoluteOutput(t *testing.T) {
 	}
 }
 
-func TestFPS(t *testing.T) {
+func TestAppFlags(t *testing.T) {
 	dir := t.TempDir()
-	write := func(yaml string) {
-		if err := os.WriteFile(filepath.Join(dir, "nsgo.yaml"), []byte(yaml), 0o644); err != nil {
-			t.Fatal(err)
-		}
+	if err := os.WriteFile(filepath.Join(dir, "nsgo.yaml"), []byte("name: App\ndev: { fps: true }\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
-	devFPS := func(args ...string) bool {
-		p, err := load(dir)
-		if err != nil {
-			t.Fatal(err)
-		}
-		fs := flag.NewFlagSet("dev", flag.ContinueOnError)
-		f := bindDevFlags(fs)
-		if err := fs.Parse(args); err != nil {
-			t.Fatal(err)
-		}
-		f.apply(p)
-		return p.Dev.FPS
-	}
-	buildFPS := func(args ...string) bool {
-		p, err := load(dir)
-		if err != nil {
-			t.Fatal(err)
-		}
-		fs := flag.NewFlagSet("build", flag.ContinueOnError)
-		f := bindBuildFlags(fs)
-		if err := fs.Parse(args); err != nil {
-			t.Fatal(err)
-		}
-		f.apply(p)
-		return p.Build.FPS
+	if _, err := load(dir); err == nil || !strings.Contains(err.Error(), "--nsgo-fps") {
+		t.Errorf("dev.fps: %v", err)
 	}
 
-	write("name: App\n")
-	if devFPS() || buildFPS() {
-		t.Error("fps is on by default")
+	fs := flag.NewFlagSet("dev", flag.ContinueOnError)
+	f := bindDevFlags(fs)
+	if err := fs.Parse([]string{"-fps", "-lang", "zh-Hans"}); err != nil {
+		t.Fatal(err)
 	}
-	if !devFPS("-fps") || !buildFPS("-fps") {
-		t.Error("-fps did not turn the monitor on")
+	opts := devOptions{fps: f.fps, lang: f.lang}
+	if got := opts.appFlags(); !slices.Equal(got, []string{"--nsgo-fps", "--nsgo-lang=zh-Hans"}) {
+		t.Errorf("appFlags = %q", got)
 	}
-
-	write("name: App\ndev: { fps: true }\nbuild: { fps: true }\n")
-	if !devFPS() || !buildFPS() {
-		t.Error("dev.fps or build.fps did not turn the monitor on")
+	if got := androidExtras(opts.appFlags()); !slices.Equal(got, []string{"--ez", "nsgo-fps", "true", "--es", "nsgo-lang", "zh-Hans"}) {
+		t.Errorf("androidExtras = %q", got)
 	}
-	if devFPS("-fps=false") || buildFPS("-fps=false") {
-		t.Error("-fps=false did not turn the monitor off")
+	if got := webQuery(opts.appFlags()); got != "?nsgo-fps&nsgo-lang=zh-Hans" {
+		t.Errorf("webQuery = %q", got)
 	}
-
-	p := &project{Name: "App", ID: "com.example.app", Perf: true}
-	if !strings.Contains(p.ldflags(), "github.com/oneo-me/nsgo.fps=1") {
-		t.Errorf("ldflags with the monitor = %q", p.ldflags())
+	if got := (devOptions{}).appFlags(); got != nil {
+		t.Errorf("appFlags without -fps or -lang = %q", got)
 	}
-	p.Perf = false
-	if strings.Contains(p.ldflags(), "fps=1") {
-		t.Errorf("ldflags without the monitor = %q", p.ldflags())
+	p := &project{Name: "App", ID: "com.example.app"}
+	if strings.Contains(p.ldflags(), "fps") {
+		t.Errorf("ldflags = %q", p.ldflags())
 	}
 }

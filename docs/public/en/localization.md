@@ -28,7 +28,7 @@ The package imports `locales/`. `dev`, `build` and `test` check the catalogs and
 go tool nsgo dev -lang en-XA
 ```
 
-runs the app in a pseudo locale that shows untranslated and cut text.
+runs the app in a pseudo locale that shows untranslated and cut text. Any build takes it as it starts: `--nsgo-lang=en-XA`.
 
 ## NSGo's own words
 

@@ -356,6 +356,11 @@
             .then(function (compiled) {
               setProgress('start', 94, compiled.total, compiled.total, 'Starting the Go runtime…');
               var go = new Go();
+              // The page's nsgo- parameters are the engine's flags, as
+              // nsgo.js passes them: ?nsgo-lang=de&nsgo-appearance=dark.
+              params.forEach(function (value, key) {
+                if (key.indexOf('nsgo-') === 0) go.argv.push(value === '' ? '--' + key : '--' + key + '=' + value);
+              });
               return WebAssembly.instantiate(compiled.module, go.importObject).then(function (instance) {
                 globalThis.nsgoResources = __RESOURCES__;
                 // Let the loader paint before Go's first commit takes the thread.

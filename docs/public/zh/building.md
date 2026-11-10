@@ -41,12 +41,10 @@ icon:
 dev:
   target: native        # native、web、ios、ios_simulator、tvos、tvos_simulator、watchos、watchos_simulator、android 或 miniprogram_<平台>
   hot_reload: true      # false 时只构建一次，不监听文件
-  fps: false            # true 时显示性能监视器
   # icon: { png: assets/Icon-dev.png }  # 在 dev 构建中替换 icon 的文件；默认取 assets/*-dev.*
 build:
   output: dist
   open: false           # true 时构建后打开输出目录
-  fps: false            # 同 dev.fps，作用于发布包
   installers: true      # false 时不生成磁盘映像、Windows 安装程序和 Linux 软件包
   jobs: 0               # 同时构建的目标数；0 为 CPU 数的一半，1 为逐个构建
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
@@ -57,6 +55,23 @@ build:
 ```
 
 命令行参数会替换同名的值，例如 `-target`、`-version` 或 `-output`；`-h` 列出全部参数。
+
+应用的每个构建（包括发布包）在启动时都接受 NSGo 自己的参数。它们优先于 `nsgo.yaml` 和应用代码中的设置，也不会传到应用自己的参数解析中：
+
+| 参数 | 作用 |
+| --- | --- |
+| `--nsgo-fps` | 在 macOS、iOS、Windows 和 Linux 上显示性能监视器 |
+| `--nsgo-lang=zh-Hans` | 以某个语言区域启动应用，也可以是伪语言区域 |
+| `--nsgo-appearance=dark` | 以 `light`、`dark` 或跟随系统（`system`）的外观启动应用 |
+
+```sh
+./Hello --nsgo-fps                                   # Windows 和 Linux
+open Hello.app --args --nsgo-fps                     # macOS
+xcrun simctl launch booted dev.example.hello --nsgo-fps
+adb shell am start -n dev.example.hello/dev.oneo.nsgo.NsgoActivity --ez nsgo-fps true --es nsgo-lang de
+```
+
+在 Web 上，这些参数写在页面的查询字符串中：`?nsgo-fps&nsgo-lang=de`。
 
 ## 安装程序
 

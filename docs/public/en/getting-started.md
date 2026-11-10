@@ -56,7 +56,7 @@ go tool nsgo dev -target watchos_simulator  # in the Apple Watch simulator
 go tool nsgo dev -target android            # on a connected device or emulator
 ```
 
-`-device` picks the iPhone, Apple TV, Apple Watch, simulator or Android device, `-port` the web server's port, `-trace` prints each commit of the running app with its time and mount items, and `-fps` shows the performance monitor on macOS, iOS, Windows and Linux. `-h` lists every flag.
+`-device` picks the iPhone, Apple TV, Apple Watch, simulator or Android device, `-port` the web server's port, `-trace` prints each commit of the running app with its time and mount items, and `-fps` and `-lang` start the app with [NSGo's flags](building.md) `--nsgo-fps` and `--nsgo-lang`. `-h` lists every flag.
 
 ## Build the todo app
 

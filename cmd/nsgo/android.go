@@ -195,6 +195,22 @@ func parseKey(data []byte) (*apk.Key, error) {
 	return key, nil
 }
 
+// androidExtras passes the engine's flags as an intent's extras, which
+// the activity gives the app as flags again: --nsgo-fps as --ez nsgo-fps
+// true, --nsgo-lang=de as --es nsgo-lang de.
+func androidExtras(flags []string) []string {
+	var extras []string
+	for _, f := range flags {
+		name, value, ok := strings.Cut(strings.TrimPrefix(f, "--"), "=")
+		if ok {
+			extras = append(extras, "--es", name, value)
+		} else {
+			extras = append(extras, "--ez", name, "true")
+		}
+	}
+	return extras
+}
+
 // androidSession installs the app on the connected device each build and
 // streams its log here until it exits. It builds for the device's own ABI,
 // so a device and an emulator need no flag.
@@ -238,7 +254,8 @@ func androidSession(opts devOptions) session {
 			if err != nil {
 				return app{}, err
 			}
-			if err := d.run(ctx, "shell", "am", "start", "-S", "-n", p.ID+androidComponent); err != nil {
+			start := append([]string{"shell", "am", "start", "-S", "-n", p.ID + androidComponent}, androidExtras(opts.appFlags())...)
+			if err := d.run(ctx, start...); err != nil {
 				stopLog()
 				return app{}, err
 			}

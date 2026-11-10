@@ -273,7 +273,8 @@ func iosSession(sys *appleOS, opts devOptions) session {
 			}
 			// The simulator shares this Mac's network.
 			env := []string{"SIMCTL_CHILD_NSGO_DEV_SERVER=" + opts.server.url()}
-			stop, wait, err := startProcessEnv(env, "xcrun", "simctl", "launch", "--console-pty", "--terminate-running-process", udid, p.ID)
+			args := append([]string{"simctl", "launch", "--console-pty", "--terminate-running-process", udid, p.ID}, opts.appFlags()...)
+			stop, wait, err := startProcessEnv(env, "xcrun", args...)
 			if err != nil {
 				return app{}, err
 			}
@@ -319,8 +320,8 @@ func iosDeviceSession(sys *appleOS, opts devOptions) session {
 				return app{}, err
 			}
 			event("launch %s on %s", p.ID, device.Name)
-			stop, wait, err := startProcess("xcrun", "devicectl", "device", "process", "launch",
-				"--console", "--terminate-existing", "--device", device.UDID, p.ID)
+			stop, wait, err := startProcess("xcrun", append([]string{"devicectl", "device", "process", "launch",
+				"--console", "--terminate-existing", "--device", device.UDID, p.ID}, opts.appFlags()...)...)
 			if err != nil {
 				return app{}, err
 			}

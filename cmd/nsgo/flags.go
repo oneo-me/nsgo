@@ -95,7 +95,7 @@ type devFlags struct {
 	*overrides
 	target    *override[string]
 	hotReload *boolOverride
-	fps       *boolOverride
+	fps       bool
 	port      int
 	open      bool
 	device    string
@@ -135,13 +135,13 @@ func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	f := &devFlags{overrides: bindOverrides(fs)}
 	f.target = stringFlag(fs, "target", "`target` to use: native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android (a device or emulator), miniprogram_wechat, miniprogram_qq, miniprogram_alipay or miniprogram_douyin (default: nsgo.yaml's dev.target)")
 	f.hotReload = boolFlag(fs, "hot-reload", "rebuild and restart on changes (default: nsgo.yaml's dev.hot_reload, else true)")
-	f.fps = boolFlag(fs, "fps", "show the performance monitor (default: nsgo.yaml's dev.fps)")
+	fs.BoolVar(&f.fps, "fps", false, "start the app with --nsgo-fps, showing the performance monitor")
 	fs.IntVar(&f.port, "port", 8080, "the dev server's `port`, which serves the web target; the next free one when taken")
 	fs.BoolVar(&f.open, "open", true, "open the web target in the browser")
 	fs.StringVar(&f.device, "device", "", "the `device` to run on: an iPhone's name, UDID, serial or ECID, a simulator's name or UDID, or an adb serial or emulator's AVD name (default: the only one connected, or the booted simulator)")
-	fs.BoolVar(&f.release, "release", false, "build stripped release binaries, as nsgo build does, keeping dev's performance monitor")
+	fs.BoolVar(&f.release, "release", false, "build stripped release binaries, as nsgo build does, for measuring with -fps")
 	fs.BoolVar(&f.trace, "trace", false, "print each commit's time and mount items from the running app")
-	fs.StringVar(&f.lang, "lang", "", "run the app in this `locale`, as de or zh-Hant, or a pseudo locale: en-XA accents and lengthens its messages, ar-XB mirrors them")
+	fs.StringVar(&f.lang, "lang", "", "start the app with --nsgo-lang, in this `locale`, as de or zh-Hant, or a pseudo locale: en-XA accents and lengthens its messages, ar-XB mirrors them")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` the iOS target signs with (default: the team Xcode last used)")
 	fs.StringVar(&f.clip, "clip", "", "with -target ios or ios_simulator, run nsgo.yaml's App Clip alone, opened from this `url`, in place of the app")
 	fs.Var(&f.limits, "limits", "run a TSX app sandboxed, as tsx.View runs a package: within the default limits, or those given (`load=10s,call=2s,stack=1000,nodes=200000,timers=10000,requests=32,body=67108864,storage=1048576`), and nsgo.yaml's capabilities")
@@ -155,7 +155,6 @@ func (f *devFlags) apply(p *project) {
 	if f.hotReload.set {
 		p.Dev.HotReload = &f.hotReload.value
 	}
-	f.fps.replace(&p.Dev.FPS)
 }
 
 // buildFlags are nsgo build's flags; those that name an nsgo.yaml value
@@ -165,7 +164,6 @@ type buildFlags struct {
 	targets *override[string]
 	output  *override[string]
 	open    *boolOverride
-	fps     *boolOverride
 	install *boolOverride
 	jobs    *override[int]
 	run     bool
@@ -181,7 +179,6 @@ func bindBuildFlags(fs *flag.FlagSet) *buildFlags {
 	f.targets = stringFlag(fs, "target", "comma-separated `targets`: all for every platform Go and Xcode build, miniprogram for every mini program, or their names (default: nsgo.yaml's build.targets)")
 	f.output = stringFlag(fs, "output", "the `output` directory (default: nsgo.yaml's build.output)")
 	f.open = boolFlag(fs, "open", "open the output directory (default: nsgo.yaml's build.open)")
-	f.fps = boolFlag(fs, "fps", "show the performance monitor (default: nsgo.yaml's build.fps)")
 	f.install = boolFlag(fs, "installers", "package macOS, Windows and Linux targets for users to install: a disk image, an NSIS installer, Debian and Arch packages (default: nsgo.yaml's build.installers, else true)")
 	f.jobs = intFlag(fs, "jobs", "how many targets build at once (default: nsgo.yaml's build.jobs, else half the CPUs)")
 	fs.BoolVar(&f.run, "run", false, "start the package built for this machine: the app, the iPhone's, simulator's or Android device's, or the site served")
@@ -205,7 +202,6 @@ func (f *buildFlags) apply(p *project) {
 	if f.open.set {
 		p.Build.Open = &f.open.value
 	}
-	f.fps.replace(&p.Build.FPS)
 	if f.install.set {
 		p.Build.Installers = &f.install.value
 	}
