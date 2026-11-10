@@ -319,6 +319,28 @@ func TestSidebarShellRightPanel(t *testing.T) {
 	}
 }
 
+// A panel's open state that follows more than itself slides the panel
+// only when it changes, leaving the app's other changes unanimated.
+func TestSidebarShellSlidesOnlyAsItOpens(t *testing.T) {
+	var set func(int)
+	app, _ := shell(t, windowEnv, func(cx *core.Scope) core.Node {
+		rev := core.NewSignal(cx, 0)
+		set = rev.Set
+		open := func() bool { rev.Get(); return true }
+		// The content changes with the state, as a tree's rows would.
+		grows := core.View{StyleFunc: func() core.Style { return core.Style{Height: core.Pt(core.Points(20 + 20*rev.Get()))} }}
+		return SidebarShell{Content: []core.Node{grows}, Right: []core.Node{core.View{Style: FillRest}},
+			Open: open, RightOpen: open, RightWidth: func() core.Points { return 300 }, TestID: "shell"}
+	})
+	app.Settle()
+	app.LayoutAnimation = nil
+	app.Post(func() { set(1) })
+	app.Settle()
+	if app.LayoutAnimation != nil {
+		t.Fatal("a change of the app's state slid the panels")
+	}
+}
+
 // TestTabShellArrows moves between the tabs with the arrows, one Tab stop,
 // where the system's tab bar is not available.
 func TestTabShellArrows(t *testing.T) {

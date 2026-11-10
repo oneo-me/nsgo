@@ -210,17 +210,19 @@ func (s SidebarShell) Render(cx *core.Scope) core.Node {
 
 // slideShown is whether a panel that open shows is seen: it hides once the
 // content has slid over it, out of the pointer's and screen readers' way.
+// Only a change of open slides: open may follow more of the app's state,
+// whose other changes would otherwise animate whatever moves with them.
 func slideShown(cx *core.Scope, open func() bool) *core.Signal[bool] {
 	env := cx.Env()
-	shown := core.NewSignal(cx, core.Untracked(cx, open))
-	first := true
+	was := core.Untracked(cx, open)
+	shown := core.NewSignal(cx, was)
 	var stop func() bool
 	cx.Effect(func() {
 		o := open()
-		if first {
-			first = false
+		if o == was {
 			return
 		}
+		was = o
 		cx.Untrack(func() {
 			if !env.ReduceMotion() {
 				cx.AnimateLayout(core.LayoutAnimation{Update: &core.LayoutTransition{Curve: core.LayoutEaseInEaseOut, Duration: sidebarSlide}})
