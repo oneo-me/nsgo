@@ -385,19 +385,25 @@ func TestMiniProgramTargetGroup(t *testing.T) {
 }
 
 // The install scripts name the app's repository, files and version, and
-// the shell one parses.
+// the shell one parses; builds with no desktop package write none.
 func TestInstallScripts(t *testing.T) {
 	dir := t.TempDir()
 	p := &project{Dir: dir, Name: "My App", ID: "dev.example.app", Version: "1.2.0-beta.1"}
 	p.Build.Output = filepath.Join(dir, "dist")
-	if err := p.writeInstallScripts(); err != nil {
+	if err := p.writeInstallScripts([]string{"macos_arm64"}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(filepath.Join(p.releaseDir(), "install.sh")); err == nil {
 		t.Fatal("scripts written without release.github")
 	}
 	p.Releases.GitHub = "me/my-app"
-	if err := p.writeInstallScripts(); err != nil {
+	if err := p.writeInstallScripts([]string{"web", "android_arm64"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(p.releaseDir(), "install.sh")); err == nil {
+		t.Fatal("scripts written without a desktop target")
+	}
+	if err := p.writeInstallScripts([]string{"web", "linux_x64"}); err != nil {
 		t.Fatal(err)
 	}
 	sh, _ := os.ReadFile(filepath.Join(p.releaseDir(), "install.sh"))

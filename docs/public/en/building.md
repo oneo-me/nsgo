@@ -85,7 +85,7 @@ A background PNG with a twin twice its size, such as `DMGBackground@2x.png`, sta
 
 ## Publish on GitHub
 
-`dist/releases` also holds `install.sh` and `install.ps1`, which install the app from the releases of the GitHub repository `release.github` names, else the one the app's Git remote `origin` is on; without either `build` writes none and says so. Upload its files, the top level without `web/` and `miniprogram/`, to the release tagged `v<version>`:
+When the build has a macOS, Windows or Linux target, `dist/releases` also holds `install.sh` and `install.ps1`, which install the app from the releases of the GitHub repository `release.github` names, else the one the app's Git remote `origin` is on; without either `build` writes none and says so. Upload its files, the top level without `web/` and `miniprogram/`, to the release tagged `v<version>`:
 
 ```sh
 gh release create v1.2.0 dist/releases/*.*

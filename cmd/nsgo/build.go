@@ -63,7 +63,7 @@ func buildAll(ctx context.Context, p *project) error {
 	if err != nil {
 		return err
 	}
-	if err := p.writeInstallScripts(); err != nil {
+	if err := p.writeInstallScripts(buildTargets); err != nil {
 		return err
 	}
 	buildSummary(p, len(buildTargets), total, time.Since(started))

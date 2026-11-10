@@ -85,7 +85,7 @@ windows:
 
 ## 发布到 GitHub
 
-`dist/releases` 还会包含 `install.sh` 和 `install.ps1`，它们从 `release.github` 指定的 GitHub 仓库的 Releases 安装应用；未指定时取应用 Git 远程 `origin` 所在的仓库，两者都没有时 `build` 不写脚本并给出提示。把其中顶层的文件（不含 `web/` 和 `miniprogram/`）上传到标签为 `v<version>` 的 Release：
+构建包含 macOS、Windows 或 Linux 目标时，`dist/releases` 还会包含 `install.sh` 和 `install.ps1`，它们从 `release.github` 指定的 GitHub 仓库的 Releases 安装应用；未指定时取应用 Git 远程 `origin` 所在的仓库，两者都没有时 `build` 不写脚本并给出提示。把其中顶层的文件（不含 `web/` 和 `miniprogram/`）上传到标签为 `v<version>` 的 Release：
 
 ```sh
 gh release create v1.2.0 dist/releases/*.*

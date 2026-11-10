@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -164,10 +165,11 @@ var installPs1 string
 // writeInstallScripts writes install.sh, for macOS and Linux, and
 // install.ps1, for Windows, into the release directory. Uploaded with each
 // release, the latest's are at releases/latest/download/, and install that
-// release's version, or <SLUG>_VERSION's. Without a GitHub repository it
-// writes none and says how to name one.
-func (p *project) writeInstallScripts() error {
-	if !p.installers() {
+// release's version, or <SLUG>_VERSION's. They install only the desktop
+// packages, so a build of none of targets' macOS, Windows or Linux writes
+// none. Without a GitHub repository it writes none and says how to name one.
+func (p *project) writeInstallScripts(targets []string) error {
+	if !p.installers() || !slices.ContainsFunc(targets, desktopTarget) {
 		return nil
 	}
 	repo := p.githubRepository()
@@ -214,6 +216,13 @@ func (p *project) writeInstallScripts() error {
 	detail("→ curl -fsSL %sinstall.sh | sh", base)
 	detail("→ irm %sinstall.ps1 | iex", base)
 	return nil
+}
+
+// desktopTarget reports whether target is macOS, Windows or Linux, whose
+// packages the install scripts install.
+func desktopTarget(target string) bool {
+	sys, _, _ := strings.Cut(target, "_")
+	return sys == "macos" || sys == "windows" || sys == "linux"
 }
 
 // envName is the prefix of an install script's environment variables:
