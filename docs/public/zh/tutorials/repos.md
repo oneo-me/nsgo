@@ -2,10 +2,10 @@
 title: 示例：GitHub 热门仓库
 description: 从 GitHub API 列出 star 最多的 Go 仓库，在 goroutine 中加载，并显示加载指示、错误和重试。
 group: 入门
-order: 12
+order: 13
 ---
 
-本教程构建一个列出 GitHub 上 star 最多的 Go 仓库的应用。它涵盖了每个与服务器通信的应用都需要的东西：不阻塞界面的请求、加载指示、可以重试的错误，以及不依赖网络的测试。环境准备见[示例：待办应用](../getting-started.md)。
+本教程构建一个列出 GitHub 上 star 最多的 Go 仓库的应用。它涵盖了每个与服务器通信的应用都需要的东西：不阻塞界面的请求、加载指示、可以重试的错误，以及不依赖网络的测试。开始前先完成[环境准备](../getting-started.md)。
 
 ## 创建应用
 

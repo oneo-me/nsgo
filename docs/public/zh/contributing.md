@@ -7,7 +7,7 @@ order: 80
 
 ## 环境要求
 
-装有 Xcode 的 macOS 和 Go 1.26 或更新版本即可构建 arm64 的所有目标，包括 Android 的 APK。在设备上运行所需的条件见[示例：待办应用](getting-started.md#环境要求)；x86_64 Android 模拟器目标 `android_x64` 还需要 Android NDK，因为 Go 只能通过 cgo 链接 android/amd64。Windows 安装程序需要 NSIS（`brew install makensis`），没有时 `build` 只留下它的脚本。
+装有 Xcode 的 macOS 和 Go 1.26 或更新版本即可构建 arm64 的所有目标，包括 Android 的 APK。在设备上运行所需的条件见[环境准备](getting-started.md#环境要求)；x86_64 Android 模拟器目标 `android_x64` 还需要 Android NDK，因为 Go 只能通过 cgo 链接 android/amd64。Windows 安装程序需要 NSIS（`brew install makensis`），没有时 `build` 只留下它的脚本。
 
 ```sh
 git clone https://github.com/oneo-me/nsgo.git

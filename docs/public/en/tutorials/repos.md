@@ -2,10 +2,10 @@
 title: "Example: Popular GitHub repositories"
 description: List the most-starred Go repositories from GitHub's API, loading on a goroutine with a spinner, errors and a retry.
 group: Get started
-order: 12
+order: 13
 ---
 
-This tutorial builds an app that lists the most-starred Go repositories on GitHub. It covers what every app that talks to a server needs: a request that does not block the screen, a loading indicator, an error with a retry, and a test that runs without the network. It assumes the setup of [Example: A todo app](../getting-started.md).
+This tutorial builds an app that lists the most-starred Go repositories on GitHub. It covers what every app that talks to a server needs: a request that does not block the screen, a loading indicator, an error with a retry, and a test that runs without the network. It assumes the [setup](../getting-started.md).
 
 ## Create the app
 

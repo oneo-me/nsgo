@@ -179,4 +179,4 @@ Register the component in the host: `app.register(component:)` and an `NSGoCompo
 
 - [Platform services](services.md): what the app asks the platform for.
 - [Building and shipping](building.md): the packages `-embed` makes, and signing them.
-- [Example: A todo app](getting-started.md): the app a host embeds.
+- [Example: A todo app](tutorials/todo.md): the app a host embeds.

@@ -179,4 +179,4 @@ core.Native{
 
 - [平台服务](services.md)：应用向平台请求什么。
 - [构建与发布](building.md)：`-embed` 生成什么包，以及如何签名。
-- [示例：待办应用](getting-started.md)：宿主嵌入的应用。
+- [示例：待办应用](tutorials/todo.md)：宿主嵌入的应用。

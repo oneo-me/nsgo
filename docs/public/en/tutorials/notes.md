@@ -2,10 +2,10 @@
 title: "Example: A notes app"
 description: Build a notes app with a navigation stack, a multiline editor and notes kept on the device.
 group: Get started
-order: 11
+order: 12
 ---
 
-This tutorial builds a notes app: a list of notes, a page that edits one, and notes that are still there when the app starts again. It assumes the setup of [Example: A todo app](../getting-started.md).
+This tutorial builds a notes app: a list of notes, a page that edits one, and notes that are still there when the app starts again. It assumes the [setup](../getting-started.md).
 
 ## Create the app
 
