@@ -1824,43 +1824,43 @@ html[data-theme='dark'] .phone {
   }
 }
 
-/* Showcases ------------------------------------------------------- */
+/* Showcases and Components ----------------------------------------- */
 
-.showcases-hero {
+.collection-hero {
   padding: 48px 0 0;
 }
 
-.showcases-hero__inner {
+.collection-hero__inner {
   display: grid;
   justify-items: start;
   gap: 10px;
   max-width: 720px;
 }
 
-.showcases-hero h1 {
+.collection-hero h1 {
   font-size: clamp(32px, 4.4vw, 44px);
   font-weight: 800;
   line-height: 1.04;
   letter-spacing: -0.045em;
 }
 
-.showcases-hero__lead {
+.collection-hero__lead {
   color: var(--muted);
   font-size: clamp(16px, 1.8vw, 17.5px);
   line-height: 1.7;
 }
 
-.showcases {
+.collection {
   padding: 32px 0 72px;
 }
 
-.showcase-grid {
+.collection-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
-.showcase-card {
+.collection-card {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1873,18 +1873,18 @@ html[data-theme='dark'] .phone {
     transform 0.15s ease;
 }
 
-.showcase-card:hover {
+.collection-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow);
   transform: translateY(-2px);
 }
 
-.showcase-card__screen {
+.collection-card__screen {
   border-bottom: 1px solid var(--border);
   background: var(--soft);
 }
 
-.showcase-card__screen img {
+.collection-card__screen img {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 10;
@@ -1892,7 +1892,7 @@ html[data-theme='dark'] .phone {
   object-position: top center;
 }
 
-.showcase-card__body {
+.collection-card__body {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -1900,40 +1900,81 @@ html[data-theme='dark'] .phone {
   padding: 14px 16px 16px;
 }
 
-.showcase-card__body h2 {
+.collection-card__body h2 {
   font-size: 17px;
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.02em;
 }
 
-.showcase-card__summary {
+.collection-card__summary {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
 }
 
-.showcase-card__summary code {
+.collection-card__summary code {
   padding: 1px 5px;
   border-radius: 5px;
   background: var(--soft);
   font-size: 0.92em;
 }
 
-.showcase-card__summary a {
+.collection-card__summary a {
   color: var(--blue-ink);
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.showcase-card__platforms {
+.collection-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.collection-card__kind,
+.collection-card__official {
+  display: inline-flex;
+  align-items: center;
+  height: 21px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.collection-card__official {
+  background: var(--blue-soft);
+  color: var(--blue-ink);
+}
+
+.collection-card__command {
+  width: 100%;
+  height: 34px;
+  margin-top: 2px;
+  padding: 0 3px 0 10px;
+  gap: 6px;
+  border-radius: 9px;
+  font-size: 11.5px;
+}
+
+.collection-card__command .command__copy {
+  width: 26px;
+  height: 26px;
+}
+
+.collection-card__platforms {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.showcase-card__platforms li {
+.collection-card__platforms li {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1946,11 +1987,11 @@ html[data-theme='dark'] .phone {
   font-weight: 500;
 }
 
-.showcase-card__platforms svg {
+.collection-card__platforms svg {
   color: var(--faint);
 }
 
-.showcase-card__foot {
+.collection-card__foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1958,20 +1999,19 @@ html[data-theme='dark'] .phone {
   gap: 8px;
   margin-top: auto;
   padding-top: 10px;
-  border-top: 1px solid var(--border);
 }
 
-.showcase-card__author {
+.collection-card__author {
   color: var(--faint);
   font-size: 12.5px;
 }
 
-.showcase-card__links {
+.collection-card__links {
   display: flex;
   gap: 12px;
 }
 
-.showcase-card__links a {
+.collection-card__links a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1980,11 +2020,11 @@ html[data-theme='dark'] .phone {
   font-weight: 600;
 }
 
-.showcase-card__links a:hover {
+.collection-card__links a:hover {
   color: var(--blue);
 }
 
-.showcase-submit {
+.collection-submit {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1997,13 +2037,13 @@ html[data-theme='dark'] .phone {
   background: var(--soft);
 }
 
-.showcase-submit h2 {
+.collection-submit h2 {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-.showcase-submit p {
+.collection-submit p {
   max-width: 640px;
   margin-top: 4px;
   color: var(--muted);
@@ -2011,17 +2051,17 @@ html[data-theme='dark'] .phone {
 }
 
 @media (max-width: 1000px) {
-  .showcase-grid {
+  .collection-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .showcase-grid {
+  .collection-grid {
     grid-template-columns: 1fr;
   }
 
-  .showcase-submit {
+  .collection-submit {
     margin-top: 40px;
     padding: 24px;
   }

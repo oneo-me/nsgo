@@ -26,6 +26,7 @@ needs that value changed.
 | --- | --- | --- |
 | Home | `/` | Yes |
 | Docs | `/docs/` | Yes |
+| Components | `/components/` | Yes |
 | Showcases | `/showcases/` | Yes |
 | Benchmarks | `/benchmarks/` | Dev only, a placeholder |
 
@@ -51,15 +52,19 @@ with `loader.html`, which reports its download, decompression, compilation
 and start progress and follows the site's appearance. All of `public/`'s
 builds are generated and ignored.
 
-## Showcases
+## Showcases and components
 
 The Showcases page lists apps built with NSGo, read from the Markdown
-documents in `docs/public/cases/`. Each document is one app: a `#` name, a
-paragraph about it, a list of `platforms`, `site`, `source` and `author`
-details, and a screenshot beside it. The folder's README says how to write
-one and the page's call to action opens it, so a showcase is one document
-and one image in a pull request. `src/lib/cases.ts` parses them and fails the
-build with the document's line when one breaks that shape.
+documents in `docs/public/cases/`; the Components page lists libraries that
+extend NSGo, read from `docs/public/components/`. Each document is one
+entry: a `#` name, a paragraph about it, a list of details, and a
+screenshot beside it. The Showcases documents give `platforms`, `site`,
+`source` and `author`; the Components documents give `kind` and `package`,
+and may give `site`, `source`, `author` and `official`. Each folder's README
+says how to write one and the page's call to action opens it, so an entry
+is one document and one image in a pull request. `src/lib/cases.ts` and
+`src/lib/components.ts` read them through `src/lib/collection.ts`, which
+fails the build with the document's line when one breaks that shape.
 
 ## Docs
 

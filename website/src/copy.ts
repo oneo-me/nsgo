@@ -10,6 +10,7 @@ const en = {
     pages: {
       home: 'Home',
       docs: 'Docs',
+      components: 'Components',
       showcases: 'Showcases',
       benchmarks: 'Benchmarks',
     } satisfies Record<PageId, string>,
@@ -109,6 +110,7 @@ const en = {
   guides: {
     demo: { title: 'Live demo', body: 'The gallery of every component, full page in your browser.' },
     docs: { title: 'Documentation', body: 'Tutorials, the toolchain, components and core concepts for building apps with NSGo.' },
+    components: { title: 'Components', body: 'Icon packs, controls and whole views from NSGo and the community.' },
     showcases: { title: 'Showcases', body: 'Apps people build with NSGo.' },
     benchmarks: { title: 'Benchmarks', body: 'How fast NSGo starts, lays out and updates.' },
     architecture: { title: 'Architecture', body: 'How the engine, backends and tool fit together.' },
@@ -124,6 +126,21 @@ const en = {
     edit: 'Edit this page on GitHub',
     fallback: 'This page is not translated yet, so it shows the English one.',
     live: { loading: 'Loading the preview…', failed: 'The preview could not start.' },
+  },
+  components: {
+    title: 'Components — NSGo',
+    description: 'Component libraries for NSGo: icon packs, controls and whole views from NSGo and the community.',
+    heading: 'Components beyond the core.',
+    lead: 'Libraries from NSGo and the community that go beyond the built-in controls, from icon packs to whole views.',
+    official: 'Official',
+    visit: 'Open',
+    source: 'Source',
+    by: 'By',
+    submit: {
+      title: 'Built a component for NSGo?',
+      body: 'Add a Markdown document to docs/public/components with a sentence, its import path and a screenshot, then open a pull request.',
+      action: 'Add your component',
+    },
   },
   showcases: {
     title: 'Showcases — NSGo',
@@ -190,6 +207,7 @@ const zh: Copy = {
     pages: {
       home: '首页',
       docs: '文档',
+      components: '组件',
       showcases: '案例',
       benchmarks: '性能',
     },
@@ -287,6 +305,7 @@ const zh: Copy = {
   guides: {
     demo: { title: '在线体验', body: '包含全部组件的 Gallery，在浏览器中整页运行。' },
     docs: { title: '文档', body: '用 NSGo 开发应用的教程、工具链、组件和核心概念。' },
+    components: { title: '组件', body: '来自 NSGo 官方和社区的图标包、控件和完整视图。' },
     showcases: { title: '案例', body: '大家用 NSGo 做的应用。' },
     benchmarks: { title: '性能', body: 'NSGo 的启动、布局和更新有多快。' },
     architecture: { title: '架构', body: '引擎、后端和工具如何配合。' },
@@ -302,6 +321,21 @@ const zh: Copy = {
     edit: '在 GitHub 上编辑此页',
     fallback: '这一页还没有中文版，下面显示的是英文原文。',
     live: { loading: '正在加载预览…', failed: '预览无法启动。' },
+  },
+  components: {
+    title: '组件 — NSGo',
+    description: 'NSGo 的组件库：来自 NSGo 官方和社区的图标包、控件和完整视图。',
+    heading: '核心之外的组件',
+    lead: '来自 NSGo 官方和社区的组件库，从图标包到完整视图，补上内置组件之外的能力。',
+    official: '官方',
+    visit: '打开',
+    source: '源码',
+    by: '作者',
+    submit: {
+      title: '为 NSGo 写了组件？',
+      body: '在 docs/public/components 里加一个 Markdown 文档，写一句话、包路径并附上截图，然后提交 pull request。',
+      action: '添加你的组件',
+    },
   },
   showcases: {
     title: '案例 — NSGo',

@@ -6,11 +6,12 @@ import type { IconName } from './components/Icon.astro';
 export type Lang = 'en' | 'zh';
 export const langs: Lang[] = ['en', 'zh'];
 
-export type PageId = 'home' | 'docs' | 'showcases' | 'benchmarks';
+export type PageId = 'home' | 'docs' | 'components' | 'showcases' | 'benchmarks';
 
 export const pages: { id: PageId; path: string; dev?: boolean }[] = [
   { id: 'home', path: '' },
   { id: 'docs', path: 'docs/' },
+  { id: 'components', path: 'components/' },
   { id: 'showcases', path: 'showcases/' },
   { id: 'benchmarks', path: 'benchmarks/', dev: true },
 ];
@@ -61,6 +62,8 @@ export const links = {
   gallery: `${import.meta.env.BASE_URL}gallery/loader.html`,
   /** The folder a contributor adds a case to. */
   cases: `${repo}/tree/main/docs/public/cases`,
+  /** The folder a contributor adds a component to. */
+  components: `${repo}/tree/main/docs/public/components`,
   blog: 'https://oneo.me',
   x: 'https://x.com/oneo666',
   nsh: 'https://github.com/longbridge/nsh',

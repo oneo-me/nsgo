@@ -9,6 +9,9 @@ GitHub; `website/` builds them into the site.
   Chinese shows the English one there, with a notice.
 - `cases/` holds the apps the website's Showcases page lists, one Markdown
   document each; it is not part of the docs' navigation.
+- `components/` holds the component libraries the website's Components
+  page lists, one Markdown document each beside its screenshot; it is not
+  part of the docs' navigation.
 - Front matter gives each page its `title`, an optional `description`, its
   sidebar `group`, in the page's language, and its `order` in the sidebar.
   Pages without a group, the introduction and the comparison, come first.

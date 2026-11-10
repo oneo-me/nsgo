@@ -50,6 +50,8 @@ From the library's root, `go tool nsgo test` takes every package, and `-target m
 
 A component library is a Go module: apps `go get` it and import its packages. Keep its unstyled and styled forms in separate packages when both exist, so an app with a look of its own imports no styles it does not use.
 
+The site's [Components](https://oneo-me.github.io/nsgo/components/) page lists libraries others can use; add a document and a screenshot to `docs/public/components/` to offer yours.
+
 TSX apps reach Go components once they are registered, in an `init` function:
 
 ```go

@@ -12,21 +12,21 @@ const copy = copies[lang].showcases;
 ---
 
 <Layout lang={lang} page="showcases" path="showcases/" title={copy.title} description={copy.description}>
-  <section class="showcases-hero">
+  <section class="collection-hero">
     <div class="container">
-      <div class="showcases-hero__inner">
+      <div class="collection-hero__inner">
         <h1>{copy.heading}</h1>
-        <p class="showcases-hero__lead">{copy.lead}</p>
+        <p class="collection-hero__lead">{copy.lead}</p>
       </div>
     </div>
   </section>
 
-  <section class="showcases">
+  <section class="collection">
     <div class="container">
-      <div class="showcase-grid">
+      <div class="collection-grid">
         {cases.map((entry) => (
-          <article class="showcase-card">
-            <figure class="showcase-card__screen">
+          <article class="collection-card">
+            <figure class="collection-card__screen">
               <img
                 src={entry.screen.src}
                 width={entry.screen.width}
@@ -35,11 +35,11 @@ const copy = copies[lang].showcases;
                 loading="lazy"
               />
             </figure>
-            <div class="showcase-card__body">
+            <div class="collection-card__body">
               <h2>{entry.name}</h2>
-              <p class="showcase-card__summary" set:html={entry.summary} />
+              <p class="collection-card__summary" set:html={entry.summary} />
               {entry.platforms.length > 0 && (
-                <ul class="showcase-card__platforms" aria-label={copy.platforms}>
+                <ul class="collection-card__platforms" aria-label={copy.platforms}>
                   {entry.platforms.map((platform) => (
                     <li>
                       <Icon name={platform.icon} size={13} />
@@ -49,9 +49,9 @@ const copy = copies[lang].showcases;
                 </ul>
               )}
               {(entry.author || entry.site || entry.source) && (
-                <footer class="showcase-card__foot">
-                  {entry.author && <span class="showcase-card__author">{copy.by} {entry.author}</span>}
-                  <span class="showcase-card__links">
+                <footer class="collection-card__foot">
+                  {entry.author && <span class="collection-card__author">{copy.by} {entry.author}</span>}
+                  <span class="collection-card__links">
                     {entry.site && (
                       <a
                         href={entry.site}
@@ -82,7 +82,7 @@ const copy = copies[lang].showcases;
         ))}
       </div>
 
-      <aside class="showcase-submit">
+      <aside class="collection-submit">
         <div>
           <h2>{copy.submit.title}</h2>
           <p>{copy.submit.body}</p>

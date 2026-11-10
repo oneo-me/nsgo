@@ -1,0 +1,93 @@
+---
+import CopyCommand from '../../components/CopyCommand.astro';
+import Icon from '../../components/Icon.astro';
+import { copies } from '../../copy';
+import Layout from '../../layouts/Layout.astro';
+import { components } from '../../lib/components';
+import { langOf, langPaths, links } from '../../site';
+
+export const getStaticPaths = () => langPaths('components');
+
+const lang = langOf(Astro.params.lang);
+const copy = copies[lang].components;
+---
+
+<Layout lang={lang} page="components" path="components/" title={copy.title} description={copy.description}>
+  <section class="collection-hero">
+    <div class="container">
+      <div class="collection-hero__inner">
+        <h1>{copy.heading}</h1>
+        <p class="collection-hero__lead">{copy.lead}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="collection">
+    <div class="container">
+      <div class="collection-grid">
+        {components.map((entry) => (
+          <article class="collection-card">
+            <figure class="collection-card__screen">
+              <img
+                src={entry.screen.src}
+                width={entry.screen.width}
+                height={entry.screen.height}
+                alt={entry.screen.alt}
+                loading="lazy"
+              />
+            </figure>
+            <div class="collection-card__body">
+              <div class="collection-card__head">
+                <h2>{entry.name}</h2>
+                <span class="collection-card__kind">{entry.kind}</span>
+                {entry.official && <span class="collection-card__official">{copy.official}</span>}
+              </div>
+              <p class="collection-card__summary" set:html={entry.summary} />
+              <CopyCommand lang={lang} command={`go get ${entry.package}`} class="collection-card__command" />
+              {(entry.author || entry.site || entry.source) && (
+                <footer class="collection-card__foot">
+                  {entry.author && <span class="collection-card__author">{copy.by} {entry.author}</span>}
+                  <span class="collection-card__links">
+                    {entry.site && (
+                      <a
+                        href={entry.site}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${copy.visit}: ${entry.name}`}
+                      >
+                        {copy.visit}
+                        <Icon name="external" size={12} />
+                      </a>
+                    )}
+                    {entry.source && (
+                      <a
+                        href={entry.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${copy.source}: ${entry.name}`}
+                      >
+                        {copy.source}
+                        <Icon name="github" size={12} />
+                      </a>
+                    )}
+                  </span>
+                </footer>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <aside class="collection-submit">
+        <div>
+          <h2>{copy.submit.title}</h2>
+          <p>{copy.submit.body}</p>
+        </div>
+        <a class="btn btn--primary" href={links.components} target="_blank" rel="noopener noreferrer">
+          {copy.submit.action}
+          <Icon name="arrow" size={14} />
+        </a>
+      </aside>
+    </div>
+  </section>
+</Layout>

@@ -52,6 +52,7 @@ const tabs = [
 
 const next: { icon: IconName; title: string; body: string; href: string; external?: boolean }[] = [
   { icon: 'book', ...copy.guides.docs, href: pageUrl(lang, 'docs') },
+  ...(shown('components') ? [{ icon: 'box' as const, ...copy.guides.components, href: pageUrl(lang, 'components') }] : []),
   { icon: 'play', ...copy.guides.demo, href: links.gallery, external: true },
   ...(shown('showcases') ? [{ icon: 'image' as const, ...copy.guides.showcases, href: pageUrl(lang, 'showcases') }] : []),
   ...(shown('benchmarks') ? [{ icon: 'gauge' as const, ...copy.guides.benchmarks, href: pageUrl(lang, 'benchmarks') }] : []),
