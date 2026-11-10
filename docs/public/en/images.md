@@ -1,8 +1,8 @@
 ---
 title: Images and icons
 description: Show a picture from a URL, the app's resources or bytes, and draw Lucide icons and SVGs.
-group: Building UI
-order: 14
+group: Core concepts
+order: 54
 ---
 
 ## A picture

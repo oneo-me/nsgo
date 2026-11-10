@@ -2,7 +2,7 @@
 title: Scroll
 description: The platform's scroll view, with paging, snapping, zoom and refresh.
 group: Components
-order: 68
+order: 39
 ---
 
 `core.Scroll` is the platform's own scroll view. Its children are laid out in a column, or a row with `Horizontal`, and it fills its container while the content scrolls.

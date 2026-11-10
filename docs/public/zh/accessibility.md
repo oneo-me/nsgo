@@ -1,8 +1,8 @@
 ---
 title: 无障碍
 description: 面向屏幕阅读器和键盘的标签、角色、值、操作和焦点。
-group: 构建界面
-order: 21
+group: 核心概念
+order: 61
 ---
 
 ## 屏幕阅读器读到什么

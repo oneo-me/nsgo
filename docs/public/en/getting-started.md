@@ -1,8 +1,8 @@
 ---
-title: Your first app
+title: "Example: A todo app"
 description: Install NSGo and build a small todo app step by step.
-group: Start
-order: 2
+group: Get started
+order: 10
 ---
 
 This tutorial builds a small todo app: add items, check them off and delete them. After the requirements, it takes about ten minutes.
@@ -56,7 +56,7 @@ go tool nsgo dev -target watchos_simulator  # in the Apple Watch simulator
 go tool nsgo dev -target android            # on a connected device or emulator
 ```
 
-`-device` picks the iPhone, Apple TV, Apple Watch, simulator or Android device, `-port` the web server's port, `-trace` prints each commit of the running app with its time and mount items, and `-fps` and `-lang` start the app with [NSGo's flags](building.md) `--nsgo-fps` and `--nsgo-lang`. `-h` lists every flag.
+[Running and debugging](debugging.md) covers devices, tracing updates, the performance monitor and other languages.
 
 ## Build the todo app
 
@@ -135,7 +135,7 @@ func Root(cx *core.Scope) core.Node {
 	}
 
 	return core.View{
-		Style: core.Style{FlexGrow: 1, Padding: core.All(24), PaddingEnv: core.EnvAll(core.EnvSafeArea), Gap: 16},
+		Style: core.Style{FlexGrow: 1, FlexShrink: 1, Padding: core.All(24), PaddingEnv: core.EnvAll(core.EnvSafeArea), Gap: 16},
 		StyleFunc: func() core.Style {
 			return core.Style{Background: colors.Background()}
 		},
@@ -190,7 +190,7 @@ Save the file and the app restarts. Type a task, press **Add** and check it off.
 
 **Updates replace the slice.** `items.Update` returns a new slice, so the list's identity and the row keys decide what stays on screen. `nextID` gives each todo an ID, and `core.List`'s `Key` uses it; without a stable key, rows would reuse their cells for other items.
 
-**The screen is a tree of boxes.** `Root` returns a `core.View` with `FlexGrow: 1`, padding, a gap and the safe area's insets. The input row sets `Direction: core.Row`; everything else is the default column.
+**The screen is a tree of boxes.** `Root` returns a `core.View` with padding, a gap and the safe area's insets. `FlexGrow: 1` and `FlexShrink: 1` make it fill the window and no more, so a long list scrolls inside it instead of stretching it past the window's edge. The input row sets `Direction: core.Row`; everything else is the default column.
 
 **The input is controlled.** `draft.Get` is the field's value and `draft.Set` receives each change. `OnSubmit` adds a task when Return is pressed, and `add` clears the draft, so the field empties itself.
 
@@ -245,6 +245,7 @@ go tool nsgo build
 
 ## Next
 
+- [Example: A notes app](tutorials/notes.md) and [Example: Popular GitHub repositories](tutorials/repos.md): two more apps, step by step.
 - [Components and state](components.md): elements, components, signals and regions in more depth.
 - [Layout](layout.md) and [Styles and themes](styles.md): the screen's structure and look.
 - [Lists and scrolling](lists.md): long lists, sticky headers and loading more.

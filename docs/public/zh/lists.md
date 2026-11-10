@@ -1,8 +1,8 @@
 ---
 title: 列表与滚动
 description: 带原生手势的滚动视图，以及为任意数量条目回收行的列表。
-group: 构建界面
-order: 15
+group: 核心概念
+order: 55
 ---
 
 ## 滚动视图

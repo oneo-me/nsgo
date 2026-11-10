@@ -1,8 +1,8 @@
 ---
-title: 第一个应用
+title: 示例：待办应用
 description: 安装 NSGo，并一步一步构建一个小型待办应用。
-group: 开始
-order: 2
+group: 入门
+order: 10
 ---
 
 本教程构建一个小型待办应用：添加条目、勾选完成、删除条目。装好环境后，大约十分钟可以完成。
@@ -56,7 +56,7 @@ go tool nsgo dev -target watchos_simulator  # 在 Apple Watch 模拟器中
 go tool nsgo dev -target android            # 在已连接的设备或模拟器上
 ```
 
-`-device` 选择 iPhone、Apple TV、Apple Watch、模拟器或 Android 设备，`-port` 设置 Web 服务器端口，`-trace` 打印运行中应用的每次提交及其时间和挂载项，`-fps` 和 `-lang` 以 [NSGo 的参数](building.md) `--nsgo-fps` 和 `--nsgo-lang` 启动应用。`-h` 列出所有参数。
+设备选择、追踪更新、性能监视器和其他语言见[运行与调试](debugging.md)。
 
 ## 构建待办应用
 
@@ -135,7 +135,7 @@ func Root(cx *core.Scope) core.Node {
 	}
 
 	return core.View{
-		Style: core.Style{FlexGrow: 1, Padding: core.All(24), PaddingEnv: core.EnvAll(core.EnvSafeArea), Gap: 16},
+		Style: core.Style{FlexGrow: 1, FlexShrink: 1, Padding: core.All(24), PaddingEnv: core.EnvAll(core.EnvSafeArea), Gap: 16},
 		StyleFunc: func() core.Style {
 			return core.Style{Background: colors.Background()}
 		},
@@ -190,7 +190,7 @@ func Root(cx *core.Scope) core.Node {
 
 **更新会替换切片。** `items.Update` 返回一个新切片，列表的身份和行的 key 决定哪些内容留在屏幕上。`nextID` 给每个待办一个 ID，`core.List` 的 `Key` 使用它；没有稳定的 key，行会把自己的单元格复用给其他条目。
 
-**屏幕是一棵盒子树。** `Root` 返回一个 `core.View`，带 `FlexGrow: 1`、内边距、间距和安全区域内边距。输入行设置 `Direction: core.Row`，其余部分使用默认的纵向排列。
+**屏幕是一棵盒子树。** `Root` 返回一个 `core.View`，带内边距、间距和安全区域内边距。`FlexGrow: 1` 和 `FlexShrink: 1` 让它恰好填满窗口，所以长列表会在其中滚动，而不是把它撑出窗口边缘。输入行设置 `Direction: core.Row`，其余部分使用默认的纵向排列。
 
 **输入框是受控的。** `draft.Get` 是输入框的值，`draft.Set` 接收每次变化。按下回车时 `OnSubmit` 添加任务，`add` 清空草稿，因此输入框会自己清空。
 
@@ -245,6 +245,7 @@ go tool nsgo build
 
 ## 下一步
 
+- [示例：笔记应用](tutorials/notes.md)和[示例：GitHub 热门仓库](tutorials/repos.md)：再一步步做两个应用。
 - [组件与状态](components.md)：更深入地了解元素、组件、signal 和区域。
 - [布局](layout.md)和[样式与主题](styles.md)：界面的结构和外观。
 - [列表与滚动](lists.md)：长列表、固定表头和加载更多。

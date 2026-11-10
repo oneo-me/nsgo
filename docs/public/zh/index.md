@@ -1,7 +1,6 @@
 ---
 title: 简介
 description: NSGo 是什么、运行在哪些平台上，以及它如何工作。
-group: 开始
 order: 1
 ---
 
@@ -9,17 +8,14 @@ NSGo 是一个用 Go 编写的跨平台原生 UI 框架。用 Go 或 TSX 写一�
 
 ## 你要写什么
 
-应用是一个 Go main 包。组件返回元素：视图、文本、图片、输入框，以及 `base` 和 `ui` 中的控件。状态存放在 signal 里，signal 变化时只有读取它的地方会更新。
+应用是一个 Go main 包。组件返回元素：视图、文本、图片、输入框，以及 `ui` 中的控件。状态存放在 signal 里，signal 变化时只有读取它的地方会更新。
 
 ```go
 func Root(cx *core.Scope) core.Node {
 	count := core.NewSignal(cx, 0)
 	return core.View{Style: core.Style{Padding: core.All(24), Gap: 12}, Children: []core.Node{
 		core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", count.Get()) }},
-		base.Button{
-			OnPress:  func(core.PressEvent) { count.Update(func(n int) int { return n + 1 }) },
-			Children: []core.Node{core.Text{Content: "Press me"}},
-		},
+		ui.Button{Text: "Press me", OnPress: func() { count.Update(func(n int) int { return n + 1 }) }},
 	}}
 }
 ```
@@ -47,11 +43,12 @@ NSGo 还处于早期：尚无稳定 API，也还没有发布版本，缺少的�
 
 ## 如何阅读这些文档
 
-每个页面只回答一个问题。除非页面另有说明，代码示例都是组件中的片段：`cx` 是组件收到的 `*core.Scope`。`base` 组件没有外观，样式来自应用；`ui` 组件是同一批控件在 Onevra 外观下的形式。
+每个页面只回答一个问题。除非页面另有说明，代码示例都是组件中的片段：`cx` 是组件收到的 `*core.Scope`。应用使用 `ui` 的组件，采用 Onevra 外观；`base` 是同一批控件的无外观形式，供组件作者使用。
 
-- [第一个应用](getting-started.md)：一步一步构建一个小型待办应用。
-- [构建界面](components.md)：元素、组件、signal、[布局](layout.md)、[样式](styles.md)、[文本](text.md)、[列表](lists.md)、[导航](navigation.md)和[表单](forms.md)。
-- [组件参考](ui.md)：最常用的组件，每个都有 `base` 和 `ui` 两种形式。
-- [指南](tsx.md)：[TSX 应用](tsx.md)、[测试](testing.md)、[本地化](localization.md)、[构建](building.md)和[嵌入](embedding.md)。
-- [参与开发](contributing.md)：从源码构建 NSGo 和网站。
+- **入门**：一步一步做示例应用：[待办应用](getting-started.md)、[笔记应用](tutorials/notes.md)和[GitHub 热门仓库](tutorials/repos.md)。
+- **工具链**：[运行与调试](debugging.md)、[测试](testing.md)、[构建与发布](building.md)和[嵌入](embedding.md)。
+- **组件**：[最常用的组件](ui.md)，以及它们的变体、状态和无障碍。
+- **核心概念**：[组件与状态](components.md)、[布局](layout.md)、[样式](styles.md)、[文本](text.md)、[列表](lists.md)、[导航](navigation.md)、[表单](forms.md)、[本地化](localization.md)、[TSX](tsx.md) 等。
+- **编写组件**：[给别人的应用用的组件](authoring/index.md)，无样式和带样式两种形式。
+- **参与项目**：[从源码构建 NSGo](contributing.md)、了解代码结构并提交改动。
 - [在线体验](https://oneo-me.github.io/nsgo/gallery/loader.html)：在浏览器中查看全部组件。

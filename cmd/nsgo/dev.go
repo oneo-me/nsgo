@@ -82,11 +82,11 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		// may need. One listing serves both, listed again when the
 		// catalogs' new code may import more.
 		stage(ctx, "generating catalogs")
-		pkgs, catalogErr := goPackages(ctx, p.Dir, true, ".")
+		pkgs, catalogErr := p.appPackages(ctx, ".")
 		if catalogErr == nil {
 			var wrote bool
 			if wrote, catalogErr = p.writeCatalogs(ctx, pkgs, false); wrote {
-				pkgs, _ = goPackages(ctx, p.Dir, true, ".")
+				pkgs, _ = p.appPackages(ctx, ".")
 			}
 		}
 		stage(ctx, "finding sources")

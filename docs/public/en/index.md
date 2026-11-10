@@ -1,7 +1,6 @@
 ---
 title: Introduction
 description: What NSGo is, what it runs on and how it works.
-group: Start
 order: 1
 ---
 
@@ -9,17 +8,14 @@ NSGo is a cross-platform native UI framework written in Go. You write an app onc
 
 ## What you write
 
-An app is a Go main package. Its components return elements: views, text, images, inputs and the controls in `base` and `ui`. State lives in signals, and only what reads a signal updates when it changes.
+An app is a Go main package. Its components return elements: views, text, images, inputs and the controls in `ui`. State lives in signals, and only what reads a signal updates when it changes.
 
 ```go
 func Root(cx *core.Scope) core.Node {
 	count := core.NewSignal(cx, 0)
 	return core.View{Style: core.Style{Padding: core.All(24), Gap: 12}, Children: []core.Node{
 		core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", count.Get()) }},
-		base.Button{
-			OnPress:  func(core.PressEvent) { count.Update(func(n int) int { return n + 1 }) },
-			Children: []core.Node{core.Text{Content: "Press me"}},
-		},
+		ui.Button{Text: "Press me", OnPress: func() { count.Update(func(n int) int { return n + 1 }) }},
 	}}
 }
 ```
@@ -47,11 +43,12 @@ NSGo is early: it has no stable API or release yet, and what is missing is in th
 
 ## How to read the docs
 
-Every page answers one question. A code example is a fragment of a component unless the page says otherwise: `cx` is the `*core.Scope` a component receives. `base` components have no look and take their styles from the app; `ui` components are the same controls in Onevra's look.
+Every page answers one question. A code example is a fragment of a component unless the page says otherwise: `cx` is the `*core.Scope` a component receives. Apps use `ui`'s components, in Onevra's look; `base` holds the same controls without a look, for authors of components.
 
-- [Your first app](getting-started.md): build a small todo app step by step.
-- [Building UI](components.md): elements, components, signals, [layout](layout.md), [styles](styles.md), [text](text.md), [lists](lists.md), [navigation](navigation.md) and [forms](forms.md).
-- [Component reference](ui.md): the most-used components, each with its `base` and `ui` forms.
-- [Guides](tsx.md): [TSX apps](tsx.md), [testing](testing.md), [localization](localization.md), [building](building.md) and [embedding](embedding.md).
-- [Contributing](contributing.md): build NSGo and the website from source.
+- **Get started**: example apps built step by step, [a todo app](getting-started.md), [a notes app](tutorials/notes.md) and [popular GitHub repositories](tutorials/repos.md).
+- **Toolchain**: [running and debugging](debugging.md), [testing](testing.md), [building and shipping](building.md) and [embedding](embedding.md).
+- **Components**: [the most-used components](ui.md), their variants, states and accessibility.
+- **Core concepts**: [components and state](components.md), [layout](layout.md), [styles](styles.md), [text](text.md), [lists](lists.md), [navigation](navigation.md), [forms](forms.md), [localization](localization.md), [TSX](tsx.md) and the rest.
+- **Writing components**: [components for other people's apps](authoring/index.md), unstyled and styled.
+- **Contributing**: [build NSGo from source](contributing.md), find your way around it and send a change.
 - The [live demo](https://oneo-me.github.io/nsgo/gallery/loader.html): every component, in your browser.

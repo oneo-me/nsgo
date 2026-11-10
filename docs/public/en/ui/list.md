@@ -2,10 +2,10 @@
 title: List
 description: Rows of any number, built only in view, with selection and activation.
 group: Components
-order: 67
+order: 38
 ---
 
-`core.List` renders rows on a native scroll view and builds only the rows near the screen. `base.List` adds selection, activation and the keyboard; `ui.List` is `base.List` in Onevra's look.
+`ui.List` renders rows on a native scroll view and builds only the rows near the screen, with selection, activation and the keyboard in Onevra's look.
 
 ```go
 ui.List{
@@ -24,8 +24,8 @@ ui.List{
 `Count` says how many rows there are and `Row` builds one. `Key` gives a row its identity: rows that stay keep their cells and their state as rows come and go above them. Use an ID rather than the index when rows can be added, removed or reordered; the index is a signal that follows the cell as it shows another row.
 
 ```go
-core.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(cx *core.Scope, row core.ListRow) core.Node {
-	return core.View{Style: core.Style{Padding: core.All(12)}, Children: []core.Node{core.Text{Content: items[row.Index()].Title}}}
+ui.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(cx *core.Scope, row core.ListRow) core.Node {
+	return ui.Text(items[row.Index()].Title, 13, ui.Regular, colors.Text)
 }}
 ```
 
@@ -37,10 +37,10 @@ core.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(c
 
 ## Selection and activation
 
-`base.List` and `ui.List` take a `Selection`, made with `base.NewSelection(cx, multiple)`. Keys, labels, activation and the keyboard follow it: Up, Down, Home and End move the cursor, Shift extends, Mod+A chooses all, Space toggles in a multiple selection, and Enter or a double click activates a row.
+`ui.List` takes a `Selection`, made with `ui.NewSelection(cx, multiple)`. Keys, labels, activation and the keyboard follow it: Up, Down, Home and End move the cursor, Shift extends, Mod+A chooses all, Space toggles in a multiple selection, and Enter or a double click activates a row.
 
 ```go
-selected := base.NewSelection(cx, true)
+selected := ui.NewSelection(cx, true)
 ui.List{
 	Count: count, Key: func(i int) any { return items[i].ID },
 	Selection: selected,
@@ -54,7 +54,7 @@ ui.List{
 
 ## Loading and scrolling
 
-`OnLoadMore` runs as the end comes near, once per number of rows. `Ref` scrolls with `ScrollToIndexAt`, `ScrollToEnd` and `ScrollToIndex`. `core.List` also has `OnLoadMoreAtStart`, `Inverted` for a chat, `StickyHeaderIndices`, `MaintainVisibleContentPosition`, `Viewport` and `ViewabilityConfig` for the low-level cases.
+`OnLoadMore` runs as the end comes near, once per number of rows. `Ref` scrolls with `ScrollToIndexAt`, `ScrollToEnd` and `ScrollToIndex`. `core.List`, the plain list under it, also has `OnLoadMoreAtStart`, `Inverted` for a chat, `StickyHeaderIndices`, `MaintainVisibleContentPosition`, `Viewport` and `ViewabilityConfig` for the low-level cases ([Lists and scrolling](../lists.md)).
 
 ## Accessibility
 

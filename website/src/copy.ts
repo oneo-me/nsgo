@@ -107,7 +107,7 @@ const en = {
   },
   guides: {
     demo: { title: 'Live demo', body: 'The gallery of every component, full page in your browser.' },
-    docs: { title: 'Documentation', body: 'Guides and a component reference for building apps with NSGo.' },
+    docs: { title: 'Documentation', body: 'Tutorials, the toolchain, components and core concepts for building apps with NSGo.' },
     showcases: { title: 'Showcases', body: 'Apps people build with NSGo.' },
     benchmarks: { title: 'Benchmarks', body: 'How fast NSGo starts, lays out and updates.' },
     architecture: { title: 'Architecture', body: 'How the engine, backends and tool fit together.' },
@@ -284,7 +284,7 @@ const zh: Copy = {
   },
   guides: {
     demo: { title: '在线体验', body: '包含全部组件的 Gallery，在浏览器中整页运行。' },
-    docs: { title: '文档', body: '用 NSGo 开发应用的指南和组件参考。' },
+    docs: { title: '文档', body: '用 NSGo 开发应用的教程、工具链、组件和核心概念。' },
     showcases: { title: '案例', body: '大家用 NSGo 做的应用。' },
     benchmarks: { title: '性能', body: 'NSGo 的启动、布局和更新有多快。' },
     architecture: { title: '架构', body: '引擎、后端和工具如何配合。' },

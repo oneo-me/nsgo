@@ -1,13 +1,13 @@
 ---
 title: Forms
 description: Text fields, focus, the software keyboard, switches, pickers and validation.
-group: Building UI
-order: 18
+group: Core concepts
+order: 57
 ---
 
 ## Text fields
 
-`base.Input` is the platform's text field. With `Value` it is controlled: the app holds the value and updates it in `OnChange`; with `DefaultValue` it keeps its own. `ui.Input` and `ui.Field` wrap it in `ui`'s look.
+`ui.Input` is the platform's text field in `ui`'s look, and takes the field's settings as a `base.Input`. With `Value` it is controlled: the app holds the value and updates it in `OnChange`; with `DefaultValue` it keeps its own.
 
 ```go
 name, email := core.NewSignal(cx, ""), &core.Ref{}
@@ -31,7 +31,7 @@ ui.Input{Input: base.Input{
 
 ```go
 email := &core.Ref{}
-base.Input{Ref: email, Placeholder: "you@example.com"}
+ui.Input{Input: base.Input{Ref: email, Placeholder: "you@example.com"}}
 email.Focus()
 ```
 
@@ -58,7 +58,7 @@ core.Scroll{Behavior: core.ScrollBehavior{
 
 ## Choices
 
-`base.Switch` is a setting that takes effect at once, `base.Checkbox` is checked, unchecked or indeterminate, and `base.Radio` is one of a `base.RadioGroup`. `base.Select` opens a list of `base.SelectItem`s from a trigger on desktops and as a sheet on touch screens. The `ui` forms are `ui.Switch`, `ui.Checkbox`, `ui.Tabs` and `ui.Select[T]`.
+`ui.Switch` is a setting that takes effect at once, `ui.Checkbox` is checked, unchecked or indeterminate, and `ui.Radio` is one of a `ui.RadioGroup`. `ui.Select[T]` opens a list of options from a trigger on desktops and as a sheet on touch screens, and `ui.Tabs[T]` shows a few at once.
 
 ```go
 notifications := core.NewSignal(cx, true)
@@ -73,34 +73,40 @@ ui.Select[string]{
 }
 ```
 
-`base.NumberInput` steps and scrubs a number with bounds, `base.DatePicker` and `base.TimeField` edit dates and times, `base.ColorPicker` edits a color, `base.OtpInput` takes a one-time code, and `ui.TagInput` edits a list of tags. `ui.Input`, `ui.NumberInput`, `ui.DatePicker` and `ui.ColorPicker` are the styled forms.
+`ui.NumberInput` steps and scrubs a number with bounds, `ui.DatePicker` and `ui.TimeField` edit dates and times, `ui.ColorPicker` edits a color, `ui.OtpInput` takes a one-time code, and `ui.TagInput` edits a list of tags.
+
+```go
+quantity := core.NewSignal(cx, 1.0)
+ui.NumberInput{Value: quantity.Get, OnChange: quantity.Set, Min: 1, Max: 99, Step: 1, Label: "Quantity"}
+```
 
 ## Validation
 
-The app owns the rules: a signal holds the error, `OnBlur` or `OnSubmit` sets it, and the field's look follows it. `Style.Active`, `Style.Focus` and `Style.Disabled` color the state, and a `core.Show` adds a message.
+The app owns the rules: a signal holds the error, `OnBlur` or `OnSubmit` sets it, and a `core.Show` adds a message under the field while there is one.
 
 ```go
 address := core.NewSignal(cx, "")
 err := core.NewSignal(cx, "")
-base.Input{
-	Value:    address.Get,
-	OnChange: address.Set,
-	OnSubmit: func(string) {
-		if !strings.Contains(address.Get(), "@") {
-			err.Set("Enter an email address.")
-		}
+colors := ui.ColorsOf(cx)
+core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
+	ui.Input{Input: base.Input{
+		Value:    address.Get,
+		OnChange: func(v string) { address.Set(v); err.Set("") },
+		Label:    "Email",
+		OnSubmit: func(string) {
+			if !strings.Contains(address.Get(), "@") {
+				err.Set("Enter an email address.")
+			}
+		},
+	}},
+	core.Show{
+		When: func() bool { return err.Get() != "" },
+		Then: func(*core.Scope) core.Node { return ui.Textf(err.Get, 12, ui.Regular, colors.Danger) },
 	},
-	StyleFunc: func() core.Style {
-		c := core.RGB(0xd1d5db)
-		if err.Get() != "" {
-			c = core.RGB(0xb4444c)
-		}
-		return core.Style{BorderWidth: 1, BorderColor: c}
-	},
-}
+}}
 ```
 
-`cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)` animates a message that appears, and `base.Input.OnSubmit` with `ReturnKeyNext` moves the keyboard to the next field.
+`cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)` animates a message that appears, and `OnSubmit` with `ReturnKeyNext` moves the keyboard to the next field.
 
 ## Next
 

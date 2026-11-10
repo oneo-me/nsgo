@@ -2,10 +2,10 @@
 title: Tabs
 description: A tab list, a segmented control and the system tab bar.
 group: Components
-order: 69
+order: 40
 ---
 
-`ui.Tabs[T]` chooses one of a few values and shows the content beside it; `base.Tabs` is the tab list without a look, and `base.Tab` one tab of it. A tab list is one Tab stop: the arrows move through the tabs.
+`ui.Tabs[T]` chooses one of a few values, as a segmented control or a tab list; the app shows the chosen value's content beside it. A tab list is one Tab stop: the arrows move through the tabs.
 
 ```go
 section := core.NewSignal(cx, "overview")
@@ -31,19 +31,6 @@ ui.Tabs[string]{Variant: ui.TabsUnderline, Equal: true, Size: ui.SizeSmall, Opti
 
 An option can carry an `Icon`, a `Disabled` function, a `Content` node and a `TestID`. `Content` replaces the label and inherits the tab's text style.
 
-## The base tabs
-
-`base.Tabs` holds `base.Tab`s and draws the indicator from `IndicatorStyle`; the app keeps which tab is selected and shows its content beside the list. `base.Tab.OnPress` runs on every press, the selected one's included.
-
-```go
-base.Tabs{Label: "Sections", IndicatorStyle: core.Style{Height: core.Pt(2), Background: core.RGB(0x007aff)}, Children: []core.Node{
-	base.Tab{Label: "Overview", Selected: func() bool { return section.Get() == "overview" },
-		OnPress: func(core.PressEvent) { section.Set("overview") }, Children: []core.Node{core.Text{Content: "Overview"}}},
-	base.Tab{Label: "Activity", Selected: func() bool { return section.Get() == "activity" },
-		OnPress: func(core.PressEvent) { section.Set("activity") }, Children: []core.Node{core.Text{Content: "Activity"}}},
-}}
-```
-
 ## Tab bars
 
 `ui.TabShell` puts the same tabs in a sidebar on wide windows and a bar on narrow ones. `mobile.TabBar` is the system's tab bar on iOS and Android, with `mobile.TabBarItem{Title, Icon}`, `Selected` and `OnChange`; elsewhere it takes no room, so show `ui.Tabs` there.
@@ -54,7 +41,7 @@ The list reports `RoleTabList`, each tab `RoleTab`, and the selected tab its sta
 
 ## Platform
 
-iOS and Android show the system's tab bar with their own look and gestures; macOS, Windows, Linux and the web draw `base.Tabs` and `ui.Tabs`. The app's content is the same on every target.
+iOS and Android show the system's tab bar with their own look and gestures; macOS, Windows, Linux and the web show `ui.Tabs`. The app's content is the same on every target.
 
 ## Related
 
@@ -62,3 +49,4 @@ iOS and Android show the system's tab bar with their own look and gestures; macO
 - [Menu](menu.md): commands rather than sections.
 - [Select](select.md): many options in a list.
 - The gallery's Tabs and NavStack pages.
+- [Unstyled components](../authoring/base.md#tabs): `base.Tabs`, for tabs of a look of your own.

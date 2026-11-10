@@ -1,8 +1,8 @@
 ---
 title: Canvas and shaders
 description: Draw 2D graphics on the engine, and fill a view with a GPU fragment shader.
-group: Building UI
-order: 20
+group: Core concepts
+order: 59
 ---
 
 ## A canvas

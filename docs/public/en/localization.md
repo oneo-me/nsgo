@@ -1,8 +1,8 @@
 ---
 title: Localization
 description: Translate an app's messages and follow the language it shows.
-group: Guides
-order: 45
+group: Core concepts
+order: 62
 ---
 
 ## Messages

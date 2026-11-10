@@ -1,8 +1,8 @@
 ---
 title: 测试
 description: 像用户一样测试应用，可以无窗口运行，也可以在原生窗口中运行。
-group: 指南
-order: 40
+group: 工具链
+order: 21
 ---
 
 ## 一个测试

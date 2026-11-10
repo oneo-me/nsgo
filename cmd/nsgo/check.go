@@ -208,9 +208,20 @@ func generateTypes(ctx context.Context, p *project) error {
 	if err != nil {
 		return err
 	}
-	list := exec.CommandContext(ctx, "go", "list", "-overlay", ov, "-f", "{{.Name}} {{.GoFiles}}", ".")
-	list.Dir = p.Dir
-	out, err := list.CombinedOutput()
+	listTypes := func() ([]byte, error) {
+		list := exec.CommandContext(ctx, "go", "list", "-overlay", ov, "-f", "{{.Name}} {{.GoFiles}}", ".")
+		list.Dir = p.Dir
+		return list.CombinedOutput()
+	}
+	out, err := listTypes()
+	// The types import tsx, which go mod tidy, not seeing them, may have
+	// left out what it needs.
+	if err != nil && lacksModule(string(out)) {
+		if err := p.tidy(ctx); err != nil {
+			return err
+		}
+		out, err = listTypes()
+	}
 	if err != nil {
 		return fmt.Errorf("go list failed\n%s", strings.TrimSpace(string(out)))
 	}

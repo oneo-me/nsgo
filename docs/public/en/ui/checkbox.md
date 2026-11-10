@@ -2,41 +2,32 @@
 title: Checkbox
 description: A check box, checked, unchecked or indeterminate.
 group: Components
-order: 63
+order: 34
 ---
 
-`base.Checkbox` is a check box with no look; `ui.Checkbox` is the same control with Onevra's box and a label. It holds no value: the app says whether it is checked and updates that in `OnChange`.
+`ui.Checkbox` is a check box in Onevra's look, with a label beside it. It holds no value: the app says whether it is checked and updates that in `OnChange`.
 
 ```go
 done := core.NewSignal(cx, false)
 ui.Checkbox{Checked: done.Get, OnChange: done.Set, Text: "Remember me"}
 ```
 
-## The base checkbox
-
-`base.Checkbox` takes a style for the box, one for the indicator and the app's mark inside it. The app shows the mark from the value it owns.
-
-```go
-base.Checkbox{
-	Checked:  done.Get,
-	OnChange: done.Set,
-	Label:    "Remember me",
-	Style:          core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8},
-	IndicatorStyle: core.Style{Width: core.Pt(18), Height: core.Pt(18), BorderWidth: 1, CornerRadius: 5},
-	Indicator:      core.Icon{SVG: lucide.Check, Style: core.Style{FontSize: 14}},
-	Children: []core.Node{core.Text{Content: "Remember me"}},
-}
-```
-
-`Indeterminate` is neither checked nor unchecked, for a "select all" over a partial selection; a press then asks for checked. `Disabled` stops presses and the focus.
-
 ## Content
 
-`ui.Checkbox` shows `Text` or the app's `Children` beside its box. `Label` replaces both for assistive technology, and `Hint` says what it is for. A checkbox in a row or a list usually lets the row handle the press too; give the box a `HitSlop` so the whole area is easy to press.
+`ui.Checkbox` shows `Text` or the app's `Children` beside its box. `Label` replaces both for assistive technology, and `Hint` says what it is for.
 
 ## States
 
-The box follows the checked state for assistive technology and the theme. `Style`, `StyleFunc` and the state styles add the app's own look, and the indicator can take its state from the box without becoming a second stop.
+`Indeterminate` is neither checked nor unchecked, for a "select all" over a partial selection; a press then asks for checked. `Disabled` stops presses and the focus.
+
+```go
+ui.Checkbox{
+	Checked:       func() bool { return chosen.Get() == len(files) },
+	Indeterminate: func() bool { return chosen.Get() > 0 && chosen.Get() < len(files) },
+	OnChange:      chooseAll,
+	Text:          "Select all",
+}
+```
 
 ## Accessibility
 
@@ -51,4 +42,5 @@ The box is drawn by the app, not a platform control, so it looks the same everyw
 - [Switch](switch.md): a setting that takes effect at once.
 - [Forms](../forms.md): choices in a form.
 - [List](list.md): checkboxes in rows.
-- The gallery's Checkbox page, with its `base` and `ui` forms.
+- The gallery's Checkbox page.
+- [Unstyled components](../authoring/base.md#checkbox): `base.Checkbox`, for a box of a look of your own.

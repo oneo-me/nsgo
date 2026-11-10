@@ -1,8 +1,8 @@
 ---
 title: 图片与图标
 description: 显示来自 URL、应用资源或字节的图片，并绘制 Lucide 图标和 SVG。
-group: 构建界面
-order: 14
+group: 核心概念
+order: 54
 ---
 
 ## 一张图片

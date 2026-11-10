@@ -321,3 +321,20 @@ func TestMessages(t *testing.T) {
 		t.Errorf("check after a change: %v", err)
 	}
 }
+
+func TestLacksModule(t *testing.T) {
+	for _, c := range []struct {
+		err  string
+		want bool
+	}{
+		{"missing go.sum entry for module providing package github.com/yuin/goldmark (imported by github.com/oneo-me/nsgo/base/textview); to add:", true},
+		{"no required module provides package example.com/x; to add it:", true},
+		{"go: updates to go.mod needed; to update it:\n\tgo mod tidy", true},
+		{"cannot find package \"fmtx\" in GOROOT", false},
+		{"", false},
+	} {
+		if got := lacksModule(c.err); got != c.want {
+			t.Errorf("lacksModule(%q) = %v, want %v", c.err, got, c.want)
+		}
+	}
+}

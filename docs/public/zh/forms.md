@@ -1,13 +1,13 @@
 ---
 title: 表单
 description: 文本框、焦点、软件键盘、开关、选择器和校验。
-group: 构建界面
-order: 18
+group: 核心概念
+order: 57
 ---
 
 ## 文本框
 
-`base.Input` 是平台的文本框。设置 `Value` 后它是受控的：应用保存值并在 `OnChange` 中更新；设置 `DefaultValue` 后它自己保存值。`ui.Input` 和 `ui.Field` 用 `ui` 的外观包住它。
+`ui.Input` 是 `ui` 外观的平台文本框，以 `base.Input` 接收输入框的设置。设置 `Value` 后它是受控的：应用保存值并在 `OnChange` 中更新；设置 `DefaultValue` 后它自己保存值。
 
 ```go
 name, email := core.NewSignal(cx, ""), &core.Ref{}
@@ -31,7 +31,7 @@ ui.Input{Input: base.Input{
 
 ```go
 email := &core.Ref{}
-base.Input{Ref: email, Placeholder: "you@example.com"}
+ui.Input{Input: base.Input{Ref: email, Placeholder: "you@example.com"}}
 email.Focus()
 ```
 
@@ -58,7 +58,7 @@ core.Scroll{Behavior: core.ScrollBehavior{
 
 ## 选择
 
-`base.Switch` 是立即生效的设置，`base.Checkbox` 有选中、未选中和不确定三种状态，`base.Radio` 是 `base.RadioGroup` 中的一个选项。`base.Select` 在桌面端从触发器打开 `base.SelectItem` 列表，在触摸屏上作为 sheet 打开。`ui` 中的表单是 `ui.Switch`、`ui.Checkbox`、`ui.Tabs` 和 `ui.Select[T]`。
+`ui.Switch` 是立即生效的设置，`ui.Checkbox` 有选中、未选中和不确定三种状态，`ui.Radio` 是 `ui.RadioGroup` 中的一个选项。`ui.Select[T]` 在桌面端从触发器打开选项列表，在触摸屏上作为 sheet 打开；`ui.Tabs[T]` 同时显示少量选项。
 
 ```go
 notifications := core.NewSignal(cx, true)
@@ -73,34 +73,40 @@ ui.Select[string]{
 }
 ```
 
-`base.NumberInput` 带边界地步进和拖动数字，`base.DatePicker` 和 `base.TimeField` 编辑日期和时间，`base.ColorPicker` 编辑颜色，`base.OtpInput` 输入一次性验证码，`ui.TagInput` 编辑一组标签。`ui.Input`、`ui.NumberInput`、`ui.DatePicker` 和 `ui.ColorPicker` 是带样式形式。
+`ui.NumberInput` 带边界地步进和拖动数字，`ui.DatePicker` 和 `ui.TimeField` 编辑日期和时间，`ui.ColorPicker` 编辑颜色，`ui.OtpInput` 输入一次性验证码，`ui.TagInput` 编辑一组标签。
+
+```go
+quantity := core.NewSignal(cx, 1.0)
+ui.NumberInput{Value: quantity.Get, OnChange: quantity.Set, Min: 1, Max: 99, Step: 1, Label: "数量"}
+```
 
 ## 校验
 
-规则由应用自己保存：一个 signal 保存错误，`OnBlur` 或 `OnSubmit` 设置它，字段的外观跟随它。`Style.Active`、`Style.Focus` 和 `Style.Disabled` 给状态上色，`core.Show` 添加提示。
+规则由应用自己保存：一个 signal 保存错误，`OnBlur` 或 `OnSubmit` 设置它，有错误时 `core.Show` 在输入框下方添加提示。
 
 ```go
 address := core.NewSignal(cx, "")
 err := core.NewSignal(cx, "")
-base.Input{
-	Value:    address.Get,
-	OnChange: address.Set,
-	OnSubmit: func(string) {
-		if !strings.Contains(address.Get(), "@") {
-			err.Set("请输入邮箱地址。")
-		}
+colors := ui.ColorsOf(cx)
+core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
+	ui.Input{Input: base.Input{
+		Value:    address.Get,
+		OnChange: func(v string) { address.Set(v); err.Set("") },
+		Label:    "邮箱",
+		OnSubmit: func(string) {
+			if !strings.Contains(address.Get(), "@") {
+				err.Set("请输入邮箱地址。")
+			}
+		},
+	}},
+	core.Show{
+		When: func() bool { return err.Get() != "" },
+		Then: func(*core.Scope) core.Node { return ui.Textf(err.Get, 12, ui.Regular, colors.Danger) },
 	},
-	StyleFunc: func() core.Style {
-		c := core.RGB(0xd1d5db)
-		if err.Get() != "" {
-			c = core.RGB(0xb4444c)
-		}
-		return core.Style{BorderWidth: 1, BorderColor: c}
-	},
-}
+}}
 ```
 
-`cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)` 让出现的提示有动画，带 `ReturnKeyNext` 的 `base.Input.OnSubmit` 把键盘移到下一个字段。
+`cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)` 让出现的提示有动画，带 `ReturnKeyNext` 的 `OnSubmit` 把键盘移到下一个字段。
 
 ## 下一步
 

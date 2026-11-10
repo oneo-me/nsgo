@@ -1,8 +1,8 @@
 ---
 title: Text
 description: Show text with spans, fonts, decorations, selection and documents.
-group: Building UI
-order: 13
+group: Core concepts
+order: 53
 ---
 
 ## A text

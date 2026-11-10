@@ -1,8 +1,8 @@
 ---
 title: 本地化
 description: 翻译应用的文案，并跟随应用显示的语言。
-group: 指南
-order: 45
+group: 核心概念
+order: 62
 ---
 
 ## 文案

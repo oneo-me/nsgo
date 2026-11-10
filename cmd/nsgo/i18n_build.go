@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/text/language"
@@ -46,13 +47,14 @@ type goPackage struct {
 	importPath, dir string
 	main            bool     // in the main module
 	standard        bool     // in the standard library
+	err             string   // why it cannot be loaded, such as a module go.mod lacks
 	embeds          []string // the files it embeds, relative to dir
 }
 
 // goPackages lists pkgs, from dir, with -deps their dependencies too.
 func goPackages(ctx context.Context, dir string, deps bool, pkgs ...string) ([]goPackage, error) {
 	args := []string{"list", "-e", "-f",
-		"{{.ImportPath}}\t{{.Dir}}\t{{if .Module}}{{.Module.Main}}{{end}}\t{{.Standard}}{{range .EmbedFiles}}\t{{.}}{{end}}"}
+		"{{.ImportPath}}\t{{.Dir}}\t{{if .Module}}{{.Module.Main}}{{end}}\t{{.Standard}}\t{{if .Error}}{{printf \"%q\" .Error.Err}}{{end}}{{range .EmbedFiles}}\t{{.}}{{end}}"}
 	if deps {
 		args = append(args, "-deps")
 	}
@@ -67,12 +69,74 @@ func goPackages(ctx context.Context, dir string, deps bool, pkgs ...string) ([]g
 	var list []goPackage
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		f := strings.Split(line, "\t")
-		// A package without Go files yet has no directory.
+		// A package without Go files yet has no directory. The last line's
+		// empty error, trimmed, leaves it a field short.
 		if len(f) >= 4 {
-			list = append(list, goPackage{importPath: f[0], dir: f[1], main: f[2] == "true", standard: f[3] == "true", embeds: f[4:]})
+			g := goPackage{importPath: f[0], dir: f[1], main: f[2] == "true", standard: f[3] == "true"}
+			if len(f) >= 5 {
+				g.err, _ = strconv.Unquote(f[4])
+				g.embeds = f[5:]
+			}
+			list = append(list, g)
 		}
 	}
 	return list, nil
+}
+
+// appPackages is goPackages of pattern in the app's directory, with its
+// dependencies. When one comes from a module the app's go.mod or go.sum
+// lacks, as after pasting an app that imports ui into a new module, it runs
+// go mod tidy and lists them again, so the build that follows finds them.
+func (p *project) appPackages(ctx context.Context, pattern string) ([]goPackage, error) {
+	pkgs, err := goPackages(ctx, p.Dir, true, pattern)
+	if err != nil || !slices.ContainsFunc(pkgs, func(g goPackage) bool { return lacksModule(g.err) }) {
+		return pkgs, err
+	}
+	if err := p.tidy(ctx); err != nil {
+		return nil, err
+	}
+	return goPackages(ctx, p.Dir, true, pattern)
+}
+
+// nsgoModule is NSGo's module path.
+const nsgoModule = "github.com/oneo-me/nsgo"
+
+// tidy runs go mod tidy in the app's module, then requires what tsx needs,
+// which the types nsgo check and dev write import through an overlay that
+// go mod tidy cannot see, at the NSGo version the app requires.
+func (p *project) tidy(ctx context.Context) error {
+	stage(ctx, "running go mod tidy")
+	gocmd := func(args ...string) error {
+		cmd := exec.CommandContext(ctx, "go", args...)
+		cmd.Dir = p.Dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("go %s failed\n%s", strings.Join(args, " "), strings.TrimSpace(string(out)))
+		}
+		return nil
+	}
+	if err := gocmd("mod", "tidy"); err != nil {
+		return err
+	}
+	// NSGo's own module, and one it replaces with a directory, has no
+	// version to require tsx at; tidy keeps all its packages' needs.
+	cmd := exec.CommandContext(ctx, "go", "list", "-m", "-f", "{{if not .Main}}{{if not .Replace}}{{.Version}}{{end}}{{end}}", nsgoModule)
+	cmd.Dir = p.Dir
+	if out, err := cmd.Output(); err == nil {
+		if v := strings.TrimSpace(string(out)); v != "" {
+			if err := gocmd("get", nsgoModule+"/tsx@"+v); err != nil {
+				return err
+			}
+		}
+	}
+	detailIn(ctx, "ran go mod tidy for the modules the app's imports need")
+	return nil
+}
+
+// lacksModule reports whether go list's error for a package says the main
+// module's go.mod or go.sum lacks what provides it.
+func lacksModule(err string) bool {
+	return strings.Contains(err, "missing go.sum entry") || strings.Contains(err, "no required module provides package") ||
+		strings.Contains(err, "updates to go.mod needed")
 }
 
 // resolve finds the catalogs each catalog's files supply, loading those
@@ -202,7 +266,7 @@ func (cs *catalogSet) write(check bool) (wrote bool, err error) {
 // catalogs (nsgo.yaml's i18n) and every package of catalogs the packages
 // compile. With check it only reports what is out of date.
 func (p *project) prepareCatalogs(ctx context.Context, pattern string, check bool) error {
-	pkgs, err := goPackages(ctx, p.Dir, true, pattern)
+	pkgs, err := p.appPackages(ctx, pattern)
 	if err != nil {
 		return err
 	}

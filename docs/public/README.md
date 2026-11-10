@@ -1,7 +1,8 @@
 # Public docs
 
 The guides the website publishes at <https://oneo-me.github.io/nsgo/docs/>,
-written for people building apps with NSGo. They read as they are on
+for people building apps with NSGo, then for authors of components and
+people working on NSGo. They read as they are on
 GitHub; `website/` builds them into the site.
 
 - `en/` and `zh/` mirror each other path for path. A page missing in
@@ -10,6 +11,11 @@ GitHub; `website/` builds them into the site.
   document each; it is not part of the docs' navigation.
 - Front matter gives each page its `title`, an optional `description`, its
   sidebar `group`, in the page's language, and its `order` in the sidebar.
+  Pages without a group, the introduction and the comparison, come first.
+  The groups follow a reader's way in: Get started (tutorials, in
+  `tutorials/` after `getting-started.md`), Toolchain, Components (`ui/`),
+  Core concepts, Writing components (`authoring/`) and Contributing
+  (`contributing/`).
 - `index.md` is the docs' first page. Link between pages with relative
   `.md` links (`[Testing](testing.md#run-on-a-platform)`); the site rewrites
   them.

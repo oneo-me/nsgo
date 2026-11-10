@@ -1,8 +1,8 @@
 ---
 title: 样式与主题
 description: 类型化样式、Tailwind 类名、状态样式，以及浅色和深色主题。
-group: 构建界面
-order: 12
+group: 核心概念
+order: 52
 ---
 
 ## 样式

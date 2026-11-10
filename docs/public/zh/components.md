@@ -1,13 +1,13 @@
 ---
 title: 组件与状态
 description: 元素、组件、signal 与样式。
-group: 构建界面
-order: 10
+group: 核心概念
+order: 50
 ---
 
 ## 元素
 
-屏幕是一棵元素树，元素是 Go 结构体值。`core` 提供基本元素：`View`、`Text`、`Image`、`Scroll`、`Input` 等。`base` 提供无样式的控件，例如 `Button`、`Select` 和 `DatePicker`，它们的外观逐个部件取自你的样式；`ui` 则提供带外观和主题的同一批控件。
+屏幕是一棵元素树，元素是 Go 结构体值。`core` 提供基本元素：`View`、`Text`、`Image`、`Scroll`、`Input` 等。`ui` 提供应用使用的控件，例如 `Button`、`Select` 和 `DatePicker`，外观跟随主题。（`base` 提供同一批控件的无外观形式，供[组件作者](authoring/index.md)使用。）
 
 ```go
 core.View{
@@ -47,10 +47,7 @@ count := core.NewSignal(cx, 0)
 
 core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", count.Get()) }}
 
-base.Button{
-	OnPress:  func(core.PressEvent) { count.Update(func(n int) int { return n + 1 }) },
-	Children: []core.Node{core.Text{Content: "Press me"}},
-}
+ui.Button{Text: "Press me", OnPress: func() { count.Update(func(n int) int { return n + 1 }) }}
 ```
 
 ## 样式

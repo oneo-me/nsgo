@@ -1,8 +1,8 @@
 ---
 title: Building and shipping
 description: Package an app for every platform, make installers, sign and notarize it, publish it on GitHub and embed it in other apps.
-group: Guides
-order: 50
+group: Toolchain
+order: 22
 ---
 
 ## Build
@@ -56,22 +56,7 @@ build:
 
 Flags replace the values they name, such as `-target`, `-version` or `-output`; `-h` lists them all.
 
-Every build of an app, packages included, takes NSGo's own flags as it starts, which override `nsgo.yaml` and the app's code and never reach the app's own flags:
-
-| Flag | Effect |
-| --- | --- |
-| `--nsgo-fps` | Shows the performance monitor on macOS, iOS, Windows and Linux |
-| `--nsgo-lang=zh-Hans` | Starts the app in a locale, a pseudo locale too |
-| `--nsgo-appearance=dark` | Starts the app `light`, `dark` or following the `system` |
-
-```sh
-./Hello --nsgo-fps                                   # Windows and Linux
-open Hello.app --args --nsgo-fps                     # macOS
-xcrun simctl launch booted dev.example.hello --nsgo-fps
-adb shell am start -n dev.example.hello/dev.oneo.nsgo.NsgoActivity --ez nsgo-fps true --es nsgo-lang de
-```
-
-On the web they go in the page's query: `?nsgo-fps&nsgo-lang=de`.
+Every build also takes NSGo's own flags as it starts, such as `--nsgo-fps` ([Running and debugging](debugging.md#flags-of-every-build)).
 
 ## Installers
 

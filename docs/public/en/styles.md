@@ -1,8 +1,8 @@
 ---
 title: Styles and themes
 description: Typed styles, Tailwind classes, state styles, and light and dark themes.
-group: Building UI
-order: 12
+group: Core concepts
+order: 52
 ---
 
 ## A style

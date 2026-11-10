@@ -2,7 +2,7 @@
 title: 文本
 description: 段落、span、链接、字体和文档。
 group: 组件
-order: 61
+order: 32
 ---
 
 `core.Text` 是一个由平台文本引擎排版的段落。`ui.Text` 和 `ui.Textf` 是 `ui` 字体下的一行辅助函数；元素仍然是 `core.Text`，因此同样接受 `Style` 和 `Spans`。

@@ -1,13 +1,13 @@
 ---
-title: 参与开发
+title: 开发环境
 description: 从源码构建 NSGo，运行 gallery 并测试改动。
-group: 项目
-order: 100
+group: 参与项目
+order: 80
 ---
 
 ## 环境要求
 
-装有 Xcode 的 macOS 和 Go 1.26 或更新版本即可构建 arm64 的所有目标，包括 Android 的 APK。在设备上运行所需的条件见[第一个应用](getting-started.md#环境要求)；x86_64 Android 模拟器目标 `android_x64` 还需要 Android NDK，因为 Go 只能通过 cgo 链接 android/amd64。Windows 安装程序需要 NSIS（`brew install makensis`），没有时 `build` 只留下它的脚本。
+装有 Xcode 的 macOS 和 Go 1.26 或更新版本即可构建 arm64 的所有目标，包括 Android 的 APK。在设备上运行所需的条件见[示例：待办应用](getting-started.md#环境要求)；x86_64 Android 模拟器目标 `android_x64` 还需要 Android NDK，因为 Go 只能通过 cgo 链接 android/amd64。Windows 安装程序需要 NSIS（`brew install makensis`），没有时 `build` 只留下它的脚本。
 
 ```sh
 git clone https://github.com/oneo-me/nsgo.git
@@ -49,15 +49,7 @@ git clone https://github.com/longbridge/nsh.git ../nsh
 git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 ```
 
-## 网站
+## 下一步
 
-网站是 `website/` 中的 Astro 站点，这些文档位于 `docs/public/`。它需要 [Bun](https://bun.com) 1.4 或更新版本：
-
-```sh
-cd website
-bun install
-bun run dev    # 访问 http://localhost:4321/nsgo/
-bun run build
-```
-
-`website/README.md` 说明了网站如何构建和发布。
+- [代码结构](contributing/codebase.md)：NSGo 的各部分在哪里。
+- [提交改动](contributing/changes.md)：一个 pull request 需要什么。

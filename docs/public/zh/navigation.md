@@ -1,41 +1,40 @@
 ---
 title: 导航
 description: 原生导航栈、系统标题栏、模态、菜单和标签栏。
-group: 构建界面
-order: 17
+group: 核心概念
+order: 56
 ---
 
 ## 导航栈
 
-`base.Nav` 保存一种路由类型的栈：`Push` 添加页面，`Pop` 移除顶部页面，`PopToRoot` 回到第一页，`Replace` 替换顶部页面。它的 `Stack` 把每个路由渲染成一页，顶部页面显示时，下面的页面保持挂载和状态。
+`base.NewNav` 保存一种路由类型的栈：`Push` 添加页面，`Pop` 移除顶部页面，`PopToRoot` 回到第一页，`Replace` 替换顶部页面。它的 `Stack` 把每个路由渲染成一页，顶部页面显示时，下面的页面保持挂载和状态。`ui.NavPage` 给每页加上 `ui` 的背景和一个 `ui.NavHeader`，包含标题、返回按钮和其他按钮。
 
 ```go
 nav := base.NewNav(cx, "inbox")
 
-func Inbox(cx *core.Scope) core.Node {
-	return nav.Stack(core.Style{FlexGrow: 1}, func(cx *core.Scope, route string, depth func() int) base.NavPage {
-		if route == "inbox" {
-			return base.NavPage{Title: "收件箱", Children: []core.Node{
-				ui.Button{Text: "打开一条消息", OnPress: func() { nav.Push("message") }},
-			}}
-		}
-		return base.NavPage{Title: "消息", Children: []core.Node{
-			ui.Button{Text: "返回", Variant: ui.ButtonSecondary, OnPress: func() { nav.Pop(1) }},
-		}}
+return nav.Stack(core.Style{FlexGrow: 1}, func(cx *core.Scope, route string, depth func() int) base.NavPage {
+	if route == "inbox" {
+		return ui.NavPage(cx, base.NavPage{Title: "收件箱", Children: []core.Node{
+			ui.Button{Text: "打开一条消息", OnPress: func() { nav.Push("message") }},
+		}}, ui.NavHeader{})
+	}
+	return ui.NavPage(cx, base.NavPage{Title: "消息"}, ui.NavHeader{
+		OnBack: func() { nav.Pop(1) }, BackLabel: "收件箱",
+		Trailing: []core.Node{ui.IconButton{Icon: lucide.Archive, Label: "归档", Variant: ui.IconButtonGhost, OnPress: archive}},
 	})
-}
+})
 ```
 
-在 iOS 和 Android 上，平台根据页面的 `Title` 和选项绘制系统标题栏，带返回按钮和转场；在 macOS、Windows、Linux 和 Web 上，页面设置 `Header` 时自己绘制。`HeaderLargeTitle` 请求 iOS 的大标题，`HeaderTransparent` 让内容在标题栏下方，`HeaderHidden` 隐藏标题栏，`HeaderLeft`、`HeaderTitle` 和 `HeaderRight` 放置应用自己的视图。`HeaderStyle` 和 `HeaderClass` 给标题栏上色：`Background`、标题的 `Color` 和按钮的 `TintColor`。
+在 iOS 和 Android 上，平台根据页面标题和标题栏的按钮绘制系统标题栏，带返回按钮和转场；在 macOS、Windows、Linux 和 Web 上由 `ui` 绘制。
 
 `NoPopOnBack` 在按下返回时保留页面，`OnBackPress` 听到返回，`NoPopOnSwipe` 关闭 iOS 的边缘滑动返回。`cx.OnBackPress(func() bool)` 在栈之前给应用一个处理器，用于未保存的更改。`OnDismiss` 报告用户已经弹出页面，栈会把页面移除。
 
 ## 模态
 
-`base.Dialog` 在变暗的应用上显示一个表面，在触摸屏上从底部出现；`base.Sheet` 在某一侧显示面板。两者都接收 `Open`、`OnOpenChange`、内容和动效，除非另有设置，Escape 和点击背景都会关闭。
+`ui.Dialog` 在变暗的应用上显示一个表面，在触摸屏上从底部出现；`ui.Sheet` 从底部显示面板。除非另有设置，Escape 和点击背景都会关闭它们。
 
 ```go
-base.Dialog{
+ui.Dialog{
 	Open:         dialog.Get,
 	OnOpenChange: func(open bool, _ base.Reason) { dialog.Set(open) },
 	Title:        "重命名",
@@ -48,17 +47,17 @@ base.Dialog{
 }
 ```
 
-`base.ShowAlertDialog` 显示系统的警告框或操作表，按钮按角色区分（`core.AlertCancel`、`core.AlertDestructive`）。`base.AlertDialog`、`base.Popover` 和 `base/toast` 覆盖其余系统表面。`ui.Dialog`、`ui.Sheet` 和 `ui.AlertDialog` 是同一批组件的带样式形式。
+`ui.AlertDialog` 请用户确认，`cx.ShowAlert` 显示系统自己的警告框或操作表（[对话框](ui/dialog.md)）。
 
 ## 菜单
 
-`base.Menu` 从触发器打开 `base.MenuItem`：桌面端在触发器旁，触摸屏上作为 sheet。条目通过 `OnSelect` 报告选择，除非 `NoCloseOnSelect` 否则关闭菜单，并可用 `Checked` 变成可勾选条目。`base.ContextMenu` 用右键或长按做同样的事，`base.Popover`、`base.HoverCard` 和 `base.Tooltip` 显示其他锚定内容。
+`ui.Menu` 从一个按钮打开 `ui.MenuItem`：桌面端在按钮旁，触摸屏上作为 sheet。`ui.ContextMenu` 用右键或长按做同样的事，`ui.Popover`、`ui.HoverCard` 和 `ui.Tooltip` 显示其他锚定内容。
 
 ```go
-base.Menu{Trigger: ui.Button{Text: "操作", Variant: ui.ButtonSecondary}, Children: []core.Node{
-	base.MenuItem{Label: "重命名", OnSelect: rename},
-	base.MenuItem{Label: "复制", OnSelect: duplicate},
-	base.MenuItem{Label: "删除", OnSelect: delete},
+ui.Menu{Trigger: ui.Button{Text: "操作", Variant: ui.ButtonSecondary}, Children: []core.Node{
+	ui.MenuItem{Text: "重命名", OnSelect: rename},
+	ui.MenuItem{Text: "复制一份", OnSelect: duplicate},
+	ui.MenuItem{Text: "删除", Variant: ui.MenuItemDanger, OnSelect: remove},
 }}
 ```
 

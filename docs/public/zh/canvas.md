@@ -1,8 +1,8 @@
 ---
 title: 画布与着色器
 description: 在引擎上绘制 2D 图形，并用 GPU 片元着色器填满一个视图。
-group: 构建界面
-order: 20
+group: 核心概念
+order: 59
 ---
 
 ## 画布

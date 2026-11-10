@@ -1,8 +1,8 @@
 ---
 title: Animation
 description: Transitions, animated values, layout animation and motion presets that run on the platform's frame clock.
-group: Building UI
-order: 16
+group: Core concepts
+order: 58
 ---
 
 ## Animated values

@@ -1,13 +1,13 @@
 ---
 title: Components and state
 description: Elements, components, signals and styles.
-group: Building UI
-order: 10
+group: Core concepts
+order: 50
 ---
 
 ## Elements
 
-The screen is a tree of elements, which are Go struct values. `core` has the primitives: `View`, `Text`, `Image`, `Scroll`, `Input` and more. `base` has unstyled controls, such as `Button`, `Select` and `DatePicker`, which take their look part by part from your styles; `ui` has the same controls with a look and themes.
+The screen is a tree of elements, which are Go struct values. `core` has the primitives: `View`, `Text`, `Image`, `Scroll`, `Input` and more. `ui` has the controls an app uses, such as `Button`, `Select` and `DatePicker`, in a look that follows the theme. (`base` holds the same controls without a look, for [component authors](authoring/index.md).)
 
 ```go
 core.View{
@@ -47,10 +47,7 @@ count := core.NewSignal(cx, 0)
 
 core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", count.Get()) }}
 
-base.Button{
-	OnPress:  func(core.PressEvent) { count.Update(func(n int) int { return n + 1 }) },
-	Children: []core.Node{core.Text{Content: "Press me"}},
-}
+ui.Button{Text: "Press me", OnPress: func() { count.Update(func(n int) int { return n + 1 }) }}
 ```
 
 ## Styles

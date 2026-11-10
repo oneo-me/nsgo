@@ -1,8 +1,8 @@
 ---
 title: Accessibility
 description: Labels, roles, values, actions and focus for screen readers and keyboards.
-group: Building UI
-order: 21
+group: Core concepts
+order: 61
 ---
 
 ## What a screen reader reads

@@ -1,8 +1,8 @@
 ---
 title: Testing
 description: Test an app the way a user uses it, headless or in a native window.
-group: Guides
-order: 40
+group: Toolchain
+order: 21
 ---
 
 ## A test

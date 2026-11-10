@@ -1,8 +1,8 @@
 ---
 title: 动画
 description: 过渡、动画值、布局动画和动效预设，全部运行在平台的帧时钟上。
-group: 构建界面
-order: 16
+group: 核心概念
+order: 58
 ---
 
 ## 动画值

@@ -2,10 +2,10 @@
 title: 标签页
 description: 标签列表、分段控件和系统标签栏。
 group: 组件
-order: 69
+order: 40
 ---
 
-`ui.Tabs[T]` 从几个值中选一个，并在旁边显示内容；`base.Tabs` 是没有外观的标签列表，`base.Tab` 是其中一个标签。标签列表是一个 Tab 停靠点：方向键在其中移动。
+`ui.Tabs[T]` 以分段控件或标签列表的形式从几个值中选一个，应用在旁边显示所选值的内容。标签列表是一个 Tab 停靠点：方向键在其中移动。
 
 ```go
 section := core.NewSignal(cx, "overview")
@@ -31,19 +31,6 @@ ui.Tabs[string]{Variant: ui.TabsUnderline, Equal: true, Size: ui.SizeSmall, Opti
 
 选项可以带 `Icon`、`Disabled` 函数、`Content` 节点和 `TestID`。`Content` 替代标签文字，并继承标签的文本样式。
 
-## 基础标签页
-
-`base.Tabs` 保存 `base.Tab`，由 `IndicatorStyle` 绘制指示器；应用保存当前选中的标签，并在列表旁显示对应内容。`base.Tab.OnPress` 在每次按压时运行，包括已选中的标签。
-
-```go
-base.Tabs{Label: "分区", IndicatorStyle: core.Style{Height: core.Pt(2), Background: core.RGB(0x007aff)}, Children: []core.Node{
-	base.Tab{Label: "概览", Selected: func() bool { return section.Get() == "overview" },
-		OnPress: func(core.PressEvent) { section.Set("overview") }, Children: []core.Node{core.Text{Content: "概览"}}},
-	base.Tab{Label: "动态", Selected: func() bool { return section.Get() == "activity" },
-		OnPress: func(core.PressEvent) { section.Set("activity") }, Children: []core.Node{core.Text{Content: "动态"}}},
-}}
-```
-
 ## 标签栏
 
 `ui.TabShell` 在宽窗口把同一批标签放进侧边栏，在窄窗口放进底部栏。`mobile.TabBar` 是 iOS 和 Android 的系统标签栏，使用 `mobile.TabBarItem{Title, Icon}`、`Selected` 和 `OnChange`；其他平台上它不占空间，因此在那里显示 `ui.Tabs`。
@@ -54,7 +41,7 @@ base.Tabs{Label: "分区", IndicatorStyle: core.Style{Height: core.Pt(2), Backgr
 
 ## 平台
 
-iOS 和 Android 显示系统标签栏，带各自的外观和手势；macOS、Windows、Linux 和 Web 绘制 `base.Tabs` 和 `ui.Tabs`。应用的内容在每个目标上相同。
+iOS 和 Android 显示系统标签栏，带各自的外观和手势；macOS、Windows、Linux 和 Web 显示 `ui.Tabs`。应用的内容在每个目标上相同。
 
 ## 相关
 
@@ -62,3 +49,4 @@ iOS 和 Android 显示系统标签栏，带各自的外观和手势；macOS、Wi
 - [菜单](menu.md)：命令而不是分区。
 - [选择器](select.md)：在列表中选择多项。
 - gallery 的 Tabs 和 NavStack 页面。
+- [无样式组件](../authoring/base.md#tabs)：`base.Tabs`，用于自己设计外观的标签页。

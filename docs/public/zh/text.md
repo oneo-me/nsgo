@@ -1,8 +1,8 @@
 ---
 title: 文本
 description: 用 span、字体、装饰、选择和文档展示文本。
-group: 构建界面
-order: 13
+group: 核心概念
+order: 53
 ---
 
 ## 一段文本

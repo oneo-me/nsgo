@@ -1,8 +1,8 @@
 ---
 title: Platform services
 description: Alerts, the clipboard, files, photos, sharing, storage, speech, networking and the app's lifecycle.
-group: Building UI
-order: 19
+group: Core concepts
+order: 60
 ---
 
 ## Alerts and the clipboard

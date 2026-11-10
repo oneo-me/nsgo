@@ -1,11 +1,11 @@
 ---
 title: Dialog
-description: A modal surface, a sheet and the system's alert.
+description: A modal surface, a sheet and an alert.
 group: Components
-order: 70
+order: 41
 ---
 
-`ui.Dialog` is a modal surface over a dimmed app, a sheet from the bottom on touch screens. `base.Dialog` is the same layer without a look, and `base.Sheet` is a panel at one edge.
+`ui.Dialog` is a modal surface over a dimmed app, a sheet from the bottom on touch screens. `ui.Sheet` is a panel from the bottom, and `ui.AlertDialog` asks the user to confirm.
 
 ```go
 open := core.NewSignal(cx, false)
@@ -22,31 +22,42 @@ ui.Dialog{
 }
 ```
 
-## The base dialog
+## Opening and closing
 
-`base.Dialog` takes its backdrop, layer and popup styles, an `Animation` or a `TransitionShader`, and the app's children. `Open`, `DefaultOpen` and `OnOpenChange` control it; `OnOpen`, `OnClose` and `OnCancel` report what happened.
+The app holds whether the dialog is open. `OnOpenChange` hears every change the dialog asks for, with a `base.Reason` that tells a press outside from Escape or back; `OnClose` runs once it has closed. `NoCloseOnEscape` and `NoCloseOnBackdropPress` keep Escape and a press outside from closing it.
 
-`NoCloseOnEscape` and `NoCloseOnBackdropPress` keep Escape and a press outside from closing it; `NoCloseOnSwipe` does the same for iOS's swipe. `Presentation` chooses the iOS presentation, and `StatusBar` changes the bar while it is open.
+`Title` and `Description` head the surface and `Footer` holds its buttons. `Bare` leaves the whole surface to `Children`, for a dialog of the app's own layout, and `Inset` sets its padding.
 
-## Sheets and alerts
+## Sheets
 
-`base.Sheet` is a panel at an edge, with a backdrop and the app's content; with `CloseOnSwipe` a bottom sheet follows a downward drag and closes past a threshold. `base.ShowAlertDialog` shows the system's alert or action sheet with buttons by role.
+`ui.Sheet` is a panel at the bottom over a dimmed backdrop; a press on the backdrop, Escape or back calls `OnClose`.
 
 ```go
-base.ShowAlertDialog(cx, base.AlertDialog{
-	Title: "Delete the note?",
-	Actions: []core.AlertAction{
-		{Label: "Cancel", Role: core.AlertCancel},
-		{Label: "Delete", Role: core.AlertDestructive},
-	},
-}, func(label string) { if label == "Delete" { remove() } })
+ui.Sheet{Open: filters.Get, OnClose: func() { filters.Set(false) }, Children: filterControls}
 ```
 
-`base.AlertDialog` is the content of that alert, with the platform drawing it. `base.Popover` and `base.Menu` are anchored surfaces rather than modals.
+## Alerts
+
+`ui.AlertDialog` asks the user to confirm or acknowledge something. Each action closes it, and a press outside does not.
+
+```go
+ui.AlertDialog{
+	Open:         confirm.Get,
+	OnOpenChange: func(v bool, _ base.Reason) { confirm.Set(v) },
+	Title:        "Delete the note?",
+	Description:  "This cannot be undone.",
+	Actions: []ui.AlertAction{
+		{Text: "Cancel", Variant: ui.ButtonSecondary},
+		{Text: "Delete", Color: colors.Danger, OnPress: remove},
+	},
+}
+```
+
+For the system's own alert or action sheet, use `cx.ShowAlert` ([Platform services](../services.md#alerts-and-the-clipboard)).
 
 ## Behavior
 
-A modal blocks the app behind it, takes the keyboard focus and closes on Escape and back unless told not to. A sheet follows a downward drag and closes past a threshold. `OnOpenChange` receives a `base.Reason`, so the app can tell a press outside from a button.
+A modal blocks the app behind it, takes the keyboard focus and closes on Escape and back unless told not to. On touch screens a dialog is a sheet that follows a downward drag and closes past a threshold.
 
 ## Accessibility
 
@@ -54,7 +65,7 @@ The dialog reports `RoleDialog` and reads its title, or `Label` when the title i
 
 ## Platform
 
-On iOS a dialog can be a full screen, page sheet or form sheet, and a sheet follows the system's swipe. On Android and touch screens it is a sheet from the bottom; on desktops it is a centered surface with a backdrop. The content is the same; only the presentation changes.
+On Android and touch screens a dialog is a sheet from the bottom; on desktops it is a centered surface with a backdrop. The content is the same; only the presentation changes.
 
 ## Related
 
@@ -62,3 +73,4 @@ On iOS a dialog can be a full screen, page sheet or form sheet, and a sheet foll
 - [Menu](menu.md): anchored commands and context menus.
 - [Accessibility](../accessibility.md): focus and dialog roles.
 - The gallery's Dialog, Sheet and AlertDialog pages.
+- [Unstyled components](../authoring/base.md#dialog): `base.Dialog` and `base.Sheet`, with iOS's presentations and motion of your own.

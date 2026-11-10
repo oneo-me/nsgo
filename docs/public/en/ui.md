@@ -1,11 +1,11 @@
 ---
 title: Component reference
-description: The most-used components, each with its base and ui forms, states and accessibility.
+description: The most-used components, their variants, states and accessibility.
 group: Components
-order: 59
+order: 30
 ---
 
-Most components have two forms where both exist: `base` is unstyled and takes its look from the app, and `ui` is the same control in Onevra's look. This reference starts with the components an app reaches for first; each page starts with the shortest example, then covers its parts, states and accessibility. The gallery covers every component, including those without a page here yet.
+These are `ui`'s components, in Onevra's look and following the theme. This reference starts with the components an app reaches for first; each page starts with the shortest example, then covers its parts, states and accessibility. The gallery covers every component, including those without a page here yet.
 
 The [gallery](https://oneo-me.github.io/nsgo/gallery/loader.html) runs a demo of every component in the browser.
 
@@ -38,10 +38,11 @@ The [gallery](https://oneo-me.github.io/nsgo/gallery/loader.html) runs a demo of
 
 ## More
 
-The gallery covers the rest: tables, charts, the code editor, rich text, the terminal, the dock, the command palette, color and date pickers, toasts and more. Each is in `base` and `ui`, with a demo beside it.
+The gallery covers the rest: tables, charts, the code editor, rich text, the terminal, the dock, the command palette, color and date pickers, toasts and more. Each has a demo there.
 
 ## Next
 
 - [Components and state](components.md): how a component returns elements and how signals update them.
-- [Styles and themes](styles.md): the look `base` takes from the app.
+- [Styles and themes](styles.md): the theme components take their colors from.
+- [Unstyled components](authoring/base.md): the same controls without a look, for a look of your own.
 - [Accessibility](accessibility.md): labels, roles and values for every control.

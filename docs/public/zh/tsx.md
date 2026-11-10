@@ -1,8 +1,8 @@
 ---
 title: TSX 应用
 description: 用 TSX 和 Tailwind 类名编写应用，提前编译，不需要 Node。
-group: 指南
-order: 30
+group: 核心概念
+order: 63
 ---
 
 ## TSX 应用

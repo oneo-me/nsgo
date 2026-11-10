@@ -1,8 +1,8 @@
 ---
 title: 布局
 description: Flexbox、grid、尺寸与定位，以及安全区域和键盘如何参与布局。
-group: 构建界面
-order: 11
+group: 核心概念
+order: 51
 ---
 
 ## 盒子
@@ -33,6 +33,8 @@ core.View{Style: core.Style{Direction: core.Row, Gap: 16}, Children: []core.Node
 ```
 
 没有指定宽高时，内容决定盒子的大小。`core.MinContent`、`core.MaxContent` 和 `core.FitContent` 采用 CSS 的同名尺寸：文本的 min-content 宽度是最宽单词的宽度。`MinWidth: core.Pt(0)` 让文本在行内收缩并换行，否则它的自然宽度会把整行撑宽。
+
+填满窗口的页面要设置 `FlexGrow: 1` 和 `FlexShrink: 1`，它和需要滚动的列表或滚动视图之间的每一层盒子也是如此。只设置 `FlexGrow` 时，盒子会长到内容的大小，长列表会把它撑出窗口，而不是在里面滚动。
 
 ## Grid
 

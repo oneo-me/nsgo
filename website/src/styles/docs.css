@@ -24,6 +24,11 @@
   margin-top: 20px;
 }
 
+/* The pages above the groups read as the first group's, without a title. */
+.docs__group--top + .docs__group {
+  margin-top: 16px;
+}
+
 .docs__toc p {
   margin-bottom: 8px;
   padding: 0 12px;

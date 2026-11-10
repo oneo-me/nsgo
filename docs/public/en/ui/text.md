@@ -2,7 +2,7 @@
 title: Text
 description: Paragraphs, spans, links, fonts and documents.
 group: Components
-order: 61
+order: 32
 ---
 
 `core.Text` is one paragraph typeset by the platform's text engine. `ui.Text` and `ui.Textf` are helpers for a line in `ui`'s type; the element is still a `core.Text`, so it takes `Style` and `Spans` too.

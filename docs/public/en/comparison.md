@@ -1,8 +1,7 @@
 ---
 title: Compared with other frameworks
 description: Where NSGo fits beside NSH, MyGo and other UI frameworks, and what it gives up.
-group: Start
-order: 3
+order: 2
 ---
 
 NSGo's place among UI frameworks comes from three choices: apps are written in Go (or TSX on top of it), each platform draws with its own views, and one codebase covers phones, desktops and the web. Other frameworks make other choices, and each choice costs something.

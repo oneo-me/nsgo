@@ -1,8 +1,8 @@
 ---
 title: Embedding
 description: Put an NSGo app inside an iOS, Android, desktop or web app of your own.
-group: Guides
-order: 55
+group: Toolchain
+order: 23
 ---
 
 ## Build an embeddable app
@@ -179,4 +179,4 @@ Register the component in the host: `app.register(component:)` and an `NSGoCompo
 
 - [Platform services](services.md): what the app asks the platform for.
 - [Building and shipping](building.md): the packages `-embed` makes, and signing them.
-- [Your first app](getting-started.md): the app a host embeds.
+- [Example: A todo app](getting-started.md): the app a host embeds.

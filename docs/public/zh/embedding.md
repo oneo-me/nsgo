@@ -1,8 +1,8 @@
 ---
 title: 嵌入
 description: 把 NSGo 应用放进你自己的 iOS、Android、桌面或网页应用。
-group: 指南
-order: 55
+group: 工具链
+order: 23
 ---
 
 ## 构建可嵌入的应用
@@ -179,4 +179,4 @@ core.Native{
 
 - [平台服务](services.md)：应用向平台请求什么。
 - [构建与发布](building.md)：`-embed` 生成什么包，以及如何签名。
-- [第一个应用](getting-started.md)：宿主嵌入的应用。
+- [示例：待办应用](getting-started.md)：宿主嵌入的应用。

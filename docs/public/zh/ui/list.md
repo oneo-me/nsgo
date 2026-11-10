@@ -2,10 +2,10 @@
 title: 列表
 description: 任意数量的行，只构建显示中的部分，支持选择与激活。
 group: 组件
-order: 67
+order: 38
 ---
 
-`core.List` 在原生滚动视图上显示行，只构建屏幕附近的行。`base.List` 加上选择、激活和键盘；`ui.List` 是 `base.List` 在 Onevra 外观下的形式。
+`ui.List` 在原生滚动视图上显示行，只构建屏幕附近的行，并以 Onevra 外观提供选择、激活和键盘操作。
 
 ```go
 ui.List{
@@ -24,8 +24,8 @@ ui.List{
 `Count` 说明有多少行，`Row` 构建一行。`Key` 给每一行一个身份：保留下来的行在上下增删时保留自己的单元格和状态。行会新增、删除或重排时使用 ID 而不是下标；下标是一个跟随单元格显示其他行的 signal。
 
 ```go
-core.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(cx *core.Scope, row core.ListRow) core.Node {
-	return core.View{Style: core.Style{Padding: core.All(12)}, Children: []core.Node{core.Text{Content: items[row.Index()].Title}}}
+ui.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(cx *core.Scope, row core.ListRow) core.Node {
+	return ui.Text(items[row.Index()].Title, 13, ui.Regular, colors.Text)
 }}
 ```
 
@@ -37,10 +37,10 @@ core.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(c
 
 ## 选择与激活
 
-`base.List` 和 `ui.List` 接受 `Selection`，用 `base.NewSelection(cx, multiple)` 创建。Key、标签、激活和键盘都跟随它：上、下、Home 和 End 移动光标，Shift 扩展，Mod+A 全选，空格在多选时切换当前行，Enter 或双击激活一行。
+`ui.List` 接受 `Selection`，用 `ui.NewSelection(cx, multiple)` 创建。Key、标签、激活和键盘都跟随它：上、下、Home 和 End 移动光标，Shift 扩展，Mod+A 全选，空格在多选时切换当前行，Enter 或双击激活一行。
 
 ```go
-selected := base.NewSelection(cx, true)
+selected := ui.NewSelection(cx, true)
 ui.List{
 	Count:      count,
 	Key:        func(i int) any { return items[i].ID },
@@ -55,7 +55,7 @@ ui.List{
 
 ## 加载与滚动
 
-`OnLoadMore` 在接近末尾时运行，每批行只运行一次。`Ref` 用 `ScrollToIndexAt`、`ScrollToEnd` 和 `ScrollToIndex` 滚动。`core.List` 还有 `OnLoadMoreAtStart`、用于聊天的 `Inverted`、`StickyHeaderIndices`、`MaintainVisibleContentPosition`、`Viewport` 和 `ViewabilityConfig` 这些低层能力。
+`OnLoadMore` 在接近末尾时运行，每批行只运行一次。`Ref` 用 `ScrollToIndexAt`、`ScrollToEnd` 和 `ScrollToIndex` 滚动。它下层的普通列表 `core.List` 还有 `OnLoadMoreAtStart`、用于聊天的 `Inverted`、`StickyHeaderIndices`、`MaintainVisibleContentPosition`、`Viewport` 和 `ViewabilityConfig` 这些低层能力（[列表与滚动](../lists.md)）。
 
 ## 无障碍
 

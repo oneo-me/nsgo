@@ -2,10 +2,10 @@
 title: Input
 description: The platform's text field, controlled or not, with focus and the software keyboard.
 group: Components
-order: 62
+order: 33
 ---
 
-`base.Input` is the platform's text field, one line unless `Multiline`. `ui.Input` is the same field with Onevra's look, and `ui.Field` puts it in a labelled field's rim.
+`ui.Input` is the platform's text field in Onevra's look, one line unless `Multiline`. It takes the field's settings as a `base.Input`, the same in every styled field; `ui.Field` puts them in a borderless field's rim, for a field the app sizes itself.
 
 ```go
 name := core.NewSignal(cx, "")
@@ -23,8 +23,8 @@ With `Value`, the field is controlled: the app holds the value and updates it in
 
 ```go
 draft := core.NewSignal(cx, "")
-base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "New task",
-	OnSubmit: func(string) { add(); draft.Set("") }}
+ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "New task",
+	OnSubmit: func(string) { add(); draft.Set("") }}}
 ```
 
 ## Fields
@@ -32,8 +32,8 @@ base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "New task",
 `Multiline` wraps and grows with its text unless its style sizes it. `Masked` hides the characters, `Readonly` and `Disabled` stop edits, and `MaxLength` caps the UTF-16 units the user enters. `Placeholder` can be a function with `PlaceholderFunc`.
 
 ```go
-base.Input{Masked: true, Value: password.Get, OnChange: password.Set,
-	KeyboardType: core.KeyboardDefault, AutoComplete: core.AutoCompletePassword}
+ui.Input{Input: base.Input{Masked: true, Value: password.Get, OnChange: password.Set,
+	AutoComplete: core.AutoCompletePassword}}
 ```
 
 `KeyboardType` picks a software keyboard (`KeyboardEmail`, `KeyboardNumber`, `KeyboardURL` and the rest), `ReturnKeyType` labels its return key, and `SubmitBehavior` says whether Return submits or breaks a multiline line. `AutoCapitalize`, `NoAutoCorrect` and `AutoComplete` tune the system's help.
@@ -44,7 +44,7 @@ base.Input{Masked: true, Value: password.Get, OnChange: password.Set,
 
 ```go
 email := &core.Ref{}
-base.Input{Ref: email, Placeholder: "you@example.com"}
+ui.Input{Input: base.Input{Ref: email, Placeholder: "you@example.com"}}
 email.Focus()
 ```
 
@@ -52,16 +52,19 @@ The software keyboard covers the bottom of a phone. Put `core.EnvKeyboard` on th
 
 ## Validation
 
-The app owns the rules. A signal holds the error, `OnBlur` or `OnSubmit` sets it, and a `StyleFunc` colors the field from it. The error text is a `core.Text` with `LiveRegionPolite` if it should be announced.
+The app owns the rules. A signal holds the error, `OnBlur` or `OnSubmit` sets it, and a message under the field shows it ([Forms](../forms.md#validation)).
 
 ```go
 err := core.NewSignal(cx, "")
-base.Input{Value: email.Get, OnChange: email.Set,
-	OnSubmit: func(string) { if !strings.Contains(email.Get(), "@") { err.Set("Enter an email address.") } },
-	StyleFunc: func() core.Style {
-		if err.Get() != "" { return core.Style{BorderWidth: 1, BorderColor: core.RGB(0xb4444c)} }
-		return core.Style{}
-	}}
+core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
+	ui.Input{Input: base.Input{Value: email.Get, OnChange: email.Set, Label: "Email",
+		OnSubmit: func(string) {
+			if !strings.Contains(email.Get(), "@") {
+				err.Set("Enter an email address.")
+			}
+		}}},
+	ui.Textf(err.Get, 12, ui.Regular, colors.Danger),
+}}
 ```
 
 ## Accessibility

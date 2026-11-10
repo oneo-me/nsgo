@@ -67,7 +67,7 @@ says how to write them. `src/content.config.ts` loads `en/` and `zh/`;
 language, the Chinese one where it exists and the English one with a notice
 where it does not (`src/lib/docs.ts`). `src/lib/doc-links.mjs`, a Sätteri
 plugin, turns the relative `.md` links between pages into the site's URLs.
-A page has the sidebar of its language's groups, its contents, the previous
+A page has the sidebar of its language's groups, under the pages without one, its contents, the previous
 and next pages, an edit link and copy buttons on its code; the styles are in
 `src/styles/docs.css`.
 

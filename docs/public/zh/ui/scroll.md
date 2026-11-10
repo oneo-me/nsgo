@@ -2,7 +2,7 @@
 title: 滚动
 description: 平台的滚动视图，支持分页、吸附、缩放和下拉刷新。
 group: 组件
-order: 68
+order: 39
 ---
 
 `core.Scroll` 是平台自己的滚动视图。它的子元素按纵向排开，设置 `Horizontal` 后按横向排开；它填满容器，内容在其中滚动。

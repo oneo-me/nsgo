@@ -12,7 +12,8 @@ export interface Doc {
 }
 
 export interface DocGroup {
-  title: string;
+  /** Undefined for the pages listed above the groups. */
+  title?: string;
   docs: Doc[];
 }
 

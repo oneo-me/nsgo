@@ -1,8 +1,8 @@
 ---
 title: Lists and scrolling
 description: Scroll views with native gestures, and lists that recycle rows for any number of items.
-group: Building UI
-order: 15
+group: Core concepts
+order: 55
 ---
 
 ## A scroll view

@@ -1,8 +1,8 @@
 ---
 title: 构建与发布
 description: 为每个平台打包应用、生成安装程序、签名与公证，发布到 GitHub，并把它嵌入其他应用。
-group: 指南
-order: 50
+group: 工具链
+order: 22
 ---
 
 ## 构建
@@ -56,22 +56,7 @@ build:
 
 命令行参数会替换同名的值，例如 `-target`、`-version` 或 `-output`；`-h` 列出全部参数。
 
-应用的每个构建（包括发布包）在启动时都接受 NSGo 自己的参数。它们优先于 `nsgo.yaml` 和应用代码中的设置，也不会传到应用自己的参数解析中：
-
-| 参数 | 作用 |
-| --- | --- |
-| `--nsgo-fps` | 在 macOS、iOS、Windows 和 Linux 上显示性能监视器 |
-| `--nsgo-lang=zh-Hans` | 以某个语言区域启动应用，也可以是伪语言区域 |
-| `--nsgo-appearance=dark` | 以 `light`、`dark` 或跟随系统（`system`）的外观启动应用 |
-
-```sh
-./Hello --nsgo-fps                                   # Windows 和 Linux
-open Hello.app --args --nsgo-fps                     # macOS
-xcrun simctl launch booted dev.example.hello --nsgo-fps
-adb shell am start -n dev.example.hello/dev.oneo.nsgo.NsgoActivity --ez nsgo-fps true --es nsgo-lang de
-```
-
-在 Web 上，这些参数写在页面的查询字符串中：`?nsgo-fps&nsgo-lang=de`。
+每个构建在启动时还接受 NSGo 自己的参数，例如 `--nsgo-fps`（[运行与调试](debugging.md#所有构建都接受的参数)）。
 
 ## 安装程序
 

@@ -2,10 +2,10 @@
 title: 滑块
 description: 沿轨道选择一个值或一个范围，支持键盘和指针。
 group: 组件
-order: 66
+order: 37
 ---
 
-`base.Slider` 沿轨道选值，并负责拖动、步进和键盘；`ui.Slider` 是同一个控件在 Onevra 轨道和旋钮下的形式。单个值是单个旋钮；`High` 让它成为一个范围。
+`ui.Slider` 是 Onevra 外观的滑块，沿轨道选值，并负责拖动、步进和键盘。单个值是单个旋钮；`High` 让它成为一个范围。
 
 ```go
 volume := core.NewSignal(cx, 40.0)
@@ -27,30 +27,18 @@ ui.Slider{
 }
 ```
 
-## 基础滑块
+## 步进与值
 
-`base.Slider` 接受 `base.SliderValue`：`base.SingleValue(v)` 或 `base.RangeValue(low, high)`。轨道、指示器、范围和旋钮可以分别设置样式，因此应用自己的设计不需要 `ui`。
+`Step` 让值吸附；步进为 0 时可以取任意值。`ValueText` 改变辅助技术读出的值，`Disabled` 停用它。
 
 ```go
-level := core.NewSignal(cx, 3.0)
-base.Slider{
-	Value:    func() base.SliderValue { return base.SingleValue(level.Get()) },
-	OnChange: func(v base.SliderValue) { level.Set(v.End) },
-	Min:      func() float64 { return 0 },
-	Max:      func() float64 { return 10 },
-	Step:     func() float64 { return 1 },
-	Label:    "等级",
-	Style:      core.Style{Height: core.Pt(28)},
-	TrackStyle: core.Style{Height: core.Pt(4), CornerRadius: 2},
-	ThumbStyle: core.Style{Width: core.Pt(18), Height: core.Pt(18), CornerRadius: 9},
-}
+ui.Slider{Value: speed.Get, OnChange: speed.Set, Min: 0.5, Max: 2, Step: 0.25, Label: "速度",
+	ValueText: func(v float64) string { return fmt.Sprintf("%g×", v) }}
 ```
-
-`Axis` 让它垂直，`ValueText` 改变辅助技术读出的值。`Step` 让值吸附；步进为 0 时可以取任意值。`Marks` 在指示器上放置应用自己的刻度。
 
 ## 行为
 
-拖动跟随指针，并在移动时报告 `OnChange`；停止后 `OnChangeEnd` 报告值。方向键按一步移动获得焦点的旋钮，Home 和 End 到两端，Page Up 和 Page Down 移动更远。`Step` 大于 0 时，`ui.Slider` 在轨道下标记最多 60 个刻度。
+拖动跟随指针，并在移动时报告 `OnChange`。方向键按一步移动获得焦点的旋钮，Home 和 End 到两端，Page Up 和 Page Down 移动更远。`Step` 大于 0 时，`ui.Slider` 在轨道下标记最多 60 个刻度。
 
 ## 无障碍
 
@@ -65,3 +53,4 @@ base.Slider{
 - [表单](../forms.md)：表单中的滑块。
 - [无障碍](../accessibility.md)：值和可调节角色。
 - gallery 的 Slider、RangeSlider 和 Rating 页面。
+- [无样式组件](../authoring/base.md#slider)：`base.Slider`，可以垂直放置并带自定义刻度。

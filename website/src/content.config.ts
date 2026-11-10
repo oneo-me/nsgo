@@ -10,8 +10,8 @@ const docs = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),
-    /** The sidebar's group, in the page's language. */
-    group: z.string(),
+    /** The sidebar's group, in the page's language; a page without one is listed above the groups. */
+    group: z.string().optional(),
     order: z.number(),
   }),
 });

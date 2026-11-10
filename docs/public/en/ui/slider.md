@@ -2,10 +2,10 @@
 title: Slider
 description: One value, or a range, along a track with the keyboard and the pointer.
 group: Components
-order: 66
+order: 37
 ---
 
-`base.Slider` picks a value along a track and owns the drag, the step and the keyboard; `ui.Slider` is the same control with Onevra's track and knob. One value is a single knob; `High` makes a range of two.
+`ui.Slider` picks a value along a track in Onevra's look, with the drag, the step and the keyboard. One value is a single knob; `High` makes a range of two.
 
 ```go
 volume := core.NewSignal(cx, 40.0)
@@ -27,30 +27,18 @@ ui.Slider{
 }
 ```
 
-## The base slider
+## Steps and values
 
-`base.Slider` takes a `base.SliderValue`: `base.SingleValue(v)` or `base.RangeValue(low, high)`. It styles the track, the indicator, the range and the thumbs separately, so a design of the app's own needs no `ui`.
+`Step` snaps the value; a step of 0 takes any value. `ValueText` changes what assistive technology reads as the value, and `Disabled` stops it.
 
 ```go
-level := core.NewSignal(cx, 3.0)
-base.Slider{
-	Value: func() base.SliderValue { return base.SingleValue(level.Get()) },
-	OnChange: func(v base.SliderValue) { level.Set(v.End) },
-	Min: func() float64 { return 0 },
-	Max: func() float64 { return 10 },
-	Step: func() float64 { return 1 },
-	Label: "Level",
-	Style: core.Style{Height: core.Pt(28)},
-	TrackStyle: core.Style{Height: core.Pt(4), CornerRadius: 2},
-	ThumbStyle: core.Style{Width: core.Pt(18), Height: core.Pt(18), CornerRadius: 9},
-}
+ui.Slider{Value: speed.Get, OnChange: speed.Set, Min: 0.5, Max: 2, Step: 0.25, Label: "Speed",
+	ValueText: func(v float64) string { return fmt.Sprintf("%g×", v) }}
 ```
-
-`Axis` makes it vertical, and `ValueText` changes what assistive technology reads as the value. `Step` snaps; a step of 0 takes any value. `Marks` places the app's own ticks on the indicator.
 
 ## Behavior
 
-A drag follows the pointer and reports `OnChange` while it moves; `OnChangeEnd` reports the value once it stops. The arrow keys move a focused knob by a step, Home and End go to the ends, and Page Up and Page Down move further. `ui.Slider` marks the steps under the track when `Step` is above 0, up to 60 marks.
+A drag follows the pointer and reports `OnChange` while it moves. The arrow keys move a focused knob by a step, Home and End go to the ends, and Page Up and Page Down move further. `ui.Slider` marks the steps under the track when `Step` is above 0, up to 60 marks.
 
 ## Accessibility
 
@@ -65,3 +53,4 @@ The track is drawn by the app and the same size everywhere. Presses, focus and t
 - [Forms](../forms.md): sliders in a form.
 - [Accessibility](../accessibility.md): values and adjustable roles.
 - The gallery's Slider, RangeSlider and Rating pages.
+- [Unstyled components](../authoring/base.md#slider): `base.Slider`, vertical and with marks of your own.

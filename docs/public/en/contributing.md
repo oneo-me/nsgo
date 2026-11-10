@@ -1,13 +1,13 @@
 ---
-title: Contributing
+title: Development setup
 description: Build NSGo from source, run the gallery and test a change.
-group: Project
-order: 100
+group: Contributing
+order: 80
 ---
 
 ## Requirements
 
-macOS with Xcode and Go 1.26 or later builds every target for arm64, Android's APK included. Running on devices needs what [Your first app](getting-started.md#requirements) lists, and the x86_64 Android emulator's target, `android_x64`, an Android NDK, since Go links android/amd64 only with cgo. The Windows installer needs NSIS (`brew install makensis`); without it `build` leaves its script.
+macOS with Xcode and Go 1.26 or later builds every target for arm64, Android's APK included. Running on devices needs what [Example: A todo app](getting-started.md#requirements) lists, and the x86_64 Android emulator's target, `android_x64`, an Android NDK, since Go links android/amd64 only with cgo. The Windows installer needs NSIS (`brew install makensis`); without it `build` leaves its script.
 
 ```sh
 git clone https://github.com/oneo-me/nsgo.git
@@ -49,15 +49,7 @@ git clone https://github.com/longbridge/nsh.git ../nsh
 git -C ../nsh checkout "$(git -C ../nsh describe --tags --abbrev=0)"
 ```
 
-## The website
+## Next
 
-The website is an Astro site in `website/`, with these docs in `docs/public/`. It needs [Bun](https://bun.com) 1.4 or later:
-
-```sh
-cd website
-bun install
-bun run dev    # at http://localhost:4321/nsgo/
-bun run build
-```
-
-`website/README.md` says how the site is built and published.
+- [The codebase](contributing/codebase.md): where each part of NSGo lives.
+- [Making a change](contributing/changes.md): what a pull request needs.

@@ -1,11 +1,11 @@
 ---
 title: 对话框
-description: 模态表面、sheet 和系统警告框。
+description: 模态表面、sheet 和警告框。
 group: 组件
-order: 70
+order: 41
 ---
 
-`ui.Dialog` 是变暗的应用上方的模态表面，在触摸屏上从底部出现成一个 sheet。`base.Dialog` 是同一个层没有外观的形式，`base.Sheet` 则是从某一侧出现。
+`ui.Dialog` 是覆盖在变暗的应用上的模态表面，在触摸屏上是从底部弹出的 sheet。`ui.Sheet` 是从底部弹出的面板，`ui.AlertDialog` 请用户确认。
 
 ```go
 open := core.NewSignal(cx, false)
@@ -22,39 +22,50 @@ ui.Dialog{
 }
 ```
 
-## 基础对话框
+## 打开与关闭
 
-`base.Dialog` 接受背景、层和弹出层的样式，一个 `Animation` 或 `TransitionShader`，以及应用的子元素。`Open`、`DefaultOpen` 和 `OnOpenChange` 控制它；`OnOpen`、`OnClose` 和 `OnCancel` 报告发生的事情。
+对话框是否打开由应用保存。`OnOpenChange` 收到对话框请求的每次变化，附带一个 `base.Reason`，用来区分点击外部、Escape 和返回；`OnClose` 在关闭完成后运行。`NoCloseOnEscape` 和 `NoCloseOnBackdropPress` 让 Escape 和点击外部不关闭它。
 
-`NoCloseOnEscape` 和 `NoCloseOnBackdropPress` 阻止 Escape 或点击外部关闭；`NoCloseOnSwipe` 对 iOS 的滑动关闭做同样的事。`Presentation` 选择 iOS 的呈现方式，`StatusBar` 在打开时改变状态栏。
+`Title` 和 `Description` 位于表面顶部，`Footer` 放按钮。`Bare` 把整个表面交给 `Children`，用于应用自己布局的对话框，`Inset` 设置它的内边距。
 
-## Sheet 与警告框
+## Sheet
 
-`base.Sheet` 是某一侧的面板，带背景和应用的内容；设置 `CloseOnSwipe` 后，底部 sheet 会跟随向下拖动，并在超过阈值时关闭。`base.ShowAlertDialog` 显示系统的警告框或操作表，按钮按角色区分。
+`ui.Sheet` 是覆盖在变暗背景上的底部面板；点击背景、Escape 或返回会调用 `OnClose`。
 
 ```go
-base.ShowAlertDialog(cx, base.AlertDialog{
-	Title: "删除这条笔记？",
-	Actions: []core.AlertAction{
-		{Label: "取消", Role: core.AlertCancel},
-		{Label: "删除", Role: core.AlertDestructive},
-	},
-}, func(label string) { if label == "删除" { remove() } })
+ui.Sheet{Open: filters.Get, OnClose: func() { filters.Set(false) }, Children: filterControls}
 ```
 
-`base.AlertDialog` 是那个警告框的内容，由平台绘制。`base.Popover` 和 `base.Menu` 是锚定表面，不是模态。
+## 警告框
+
+`ui.AlertDialog` 请用户确认或知悉某件事。每个操作都会关闭它，点击外部则不会。
+
+```go
+ui.AlertDialog{
+	Open:         confirm.Get,
+	OnOpenChange: func(v bool, _ base.Reason) { confirm.Set(v) },
+	Title:        "删除这条笔记？",
+	Description:  "此操作无法撤销。",
+	Actions: []ui.AlertAction{
+		{Text: "取消", Variant: ui.ButtonSecondary},
+		{Text: "删除", Color: colors.Danger, OnPress: remove},
+	},
+}
+```
+
+要显示系统自己的警告框或操作表，用 `cx.ShowAlert`（[平台服务](../services.md#警告框与剪贴板)）。
 
 ## 行为
 
-模态会挡住后面的应用，取得键盘焦点，除非另有设置，Escape 和返回会关闭它。sheet 会跟随向下拖动，超过阈值后关闭。`OnOpenChange` 收到 `base.Reason`，应用可以区分点击外部和按钮。
+模态框会阻挡后面的应用，获得键盘焦点，除非另有设置，否则按 Escape 或返回会关闭。在触摸屏上，对话框是一个 sheet，跟随向下拖动，超过阈值后关闭。
 
 ## 无障碍
 
-对话框报告 `RoleDialog`，朗读标题，标题不够时用 `Label`。打开时焦点进入其中，关闭时返回；背景不是停靠点。底部的按钮保留自己的角色和标签。
+对话框报告 `RoleDialog` 并读出标题，标题不够时读出 `Label`。打开时焦点移入，关闭时焦点返回；背景不是停靠点。底部按钮保留各自的角色和标签。
 
 ## 平台
 
-在 iOS 上，对话框可以是全屏、page sheet 或 form sheet，sheet 跟随系统的滑动。在 Android 和触摸屏上它是底部 sheet；在桌面上它是带背景的居中表面。内容相同，只有呈现方式变化。
+在 Android 和触摸屏上，对话框是从底部弹出的 sheet；在桌面上是带背景的居中表面。内容相同，只是呈现方式不同。
 
 ## 相关
 
@@ -62,3 +73,4 @@ base.ShowAlertDialog(cx, base.AlertDialog{
 - [菜单](menu.md)：锚定命令和上下文菜单。
 - [无障碍](../accessibility.md)：焦点和对话框角色。
 - gallery 的 Dialog、Sheet 和 AlertDialog 页面。
+- [无样式组件](../authoring/base.md#dialog)：`base.Dialog` 和 `base.Sheet`，带 iOS 的呈现方式和自定义动画。
