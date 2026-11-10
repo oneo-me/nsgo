@@ -88,8 +88,8 @@ func stageRows(forms ...core.Node) core.Node {
 	return core.View{Style: core.Style{Gap: 12}, Children: rows}
 }
 
-// sizes are a component's sizes, small to large.
-var sizes = []ui.Size{ui.SizeSmall, ui.SizeDefault, ui.SizeLarge}
+// sizes are a component's sizes, small to large, each labeled by its name.
+var sizes = options([]ui.Size{ui.SizeSmall, ui.SizeDefault, ui.SizeLarge}, "Small", "Default", "Large")
 
 // options are a choiceKnob's options, each labeled by the value's name.
 func options[T comparable](values []T, names ...string) []ui.Option[T] {
@@ -101,25 +101,26 @@ func options[T comparable](values []T, names ...string) []ui.Option[T] {
 }
 
 // Form is a form of a component on a Playground's stage. Stage builds it,
-// again whenever a signal it reads changes. It centers on the stage; Fill
-// gives what has no width of its own formWidth to stretch across, and Start
-// stretches it across the whole stage from the top instead, for what lists
-// its results downward.
+// again whenever a signal it reads changes, and Sizes, when set, a row of
+// its sizes under it. It centers on the stage; Fill gives what has no width
+// of its own formWidth to stretch across, and Start stretches it across the
+// whole stage from the top instead, for what lists its results downward.
 type Form struct {
 	Name  string
 	Fill  bool
 	Start bool
 	Stage func() core.Node
+	Sizes func() core.Node
 }
 
 // Playground is a card of a component, edge to edge, above the knobs that
-// set its props. Base is its form in package base, above Stage, its ui
-// form, Title, Fill and Start being that form's. BaseKnobs set the props base has
-// on both forms, and a hairline keeps Knobs, ui's own, under them. Stage
-// shows every variant at the default size; Sizes, a block of its own under
-// it, shows every size of the default variant. Event, when set, is the
-// last thing the forms reported, under them, for what shows no change of
-// its own.
+// set its props. Stage is its ui form, Title, Fill and Start being that
+// form's, and Base, when set, its form in package base, on a tab of its own
+// beside ui's, which comes first. BaseKnobs set the props base has on both
+// forms, and a hairline keeps Knobs, ui's own, under them. Stage shows every
+// variant at the default size; Sizes, a row under it, shows every size of
+// the default variant. Event, when set, is the last thing the forms
+// reported, under them, for what shows no change of its own.
 type Playground struct {
 	Title     string
 	Note      string
@@ -138,13 +139,19 @@ type Playground struct {
 func (p Playground) Render(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	hairline := core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
-	form := Form{Name: p.Title, Fill: p.Fill, Start: p.Start, Stage: p.Stage}
+	form := Form{Name: p.Title, Fill: p.Fill, Start: p.Start, Stage: p.Stage, Sizes: p.Sizes}
 	stages := []core.Node{form.stage("")}
+	var actions []core.Node
 	if p.Base.Stage != nil {
-		stages = []core.Node{p.Base.stage(p.Base.Name), hairline, form.stage("ui")}
-	}
-	if p.Sizes != nil {
-		stages = append(stages, hairline, Form{Name: p.Title + "-sizes", Fill: p.Fill, Stage: p.Sizes}.stage("Size"))
+		base := core.NewSignal(cx, false)
+		actions = []core.Node{ui.Tabs[bool]{Size: ui.SizeSmall, Label: p.Title + " package", TestID: "package-" + p.Title,
+			Options: []ui.Option[bool]{{Value: false, Label: locales.For(cx).Styled()}, {Value: true, Label: "Base"}}, Value: base.Get, OnChange: base.Set}}
+		stages = []core.Node{core.Dynamic(func(*core.Scope) core.Node {
+			if base.Get() {
+				return p.Base.stage("")
+			}
+			return form.stage("")
+		})}
 	}
 	if p.Event != nil {
 		stages = append(stages, hairline, eventLine(cx, p.Event))
@@ -158,24 +165,27 @@ func (p Playground) Render(cx *core.Scope) core.Node {
 	if len(knobs) > 0 {
 		footer = []core.Node{core.View{Style: core.Style{Gap: 2}, Children: knobs}}
 	}
-	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Flush: true, Children: stages, Footer: footer}
+	return Card{Title: p.Title, Description: p.Note, UIOnly: p.UIOnly, Actions: actions, Flush: true, Children: stages, Footer: footer}
 }
 
 // stage is the form on the pixel grid, with caption in its corner when it
-// shares the card with another form.
+// shares a panel with another form.
 func (f Form) stage(caption string) core.Node {
 	s := core.Style{MinHeight: core.Pt(96), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(16)}
 	// As wide as the form, which then centers even if it starts itself.
-	box := core.Style{MaxWidth: core.Pct(100), AlignItems: core.AlignCenter}
+	box := core.Style{MaxWidth: core.Pct(100), AlignItems: core.AlignCenter, Gap: 16}
 	if f.Fill {
-		box = core.Style{Width: core.Pct(100), MaxWidth: core.Pt(formWidth), AlignItems: core.AlignStretch}
+		box = core.Style{Width: core.Pct(100), MaxWidth: core.Pt(formWidth), AlignItems: core.AlignStretch, Gap: 16}
 	}
 	if f.Start {
 		s.AlignItems, s.JustifyContent = core.AlignStretch, core.JustifyStart
-		box = core.Style{AlignItems: core.AlignStretch}
+		box = core.Style{AlignItems: core.AlignStretch, Gap: 16}
 	}
-	children := []core.Node{core.View{TestID: "form-" + f.Name, Style: box,
-		Children: []core.Node{core.Dynamic(func(*core.Scope) core.Node { return f.Stage() })}}}
+	rows := []core.Node{core.Dynamic(func(*core.Scope) core.Node { return f.Stage() })}
+	if f.Sizes != nil {
+		rows = append(rows, core.Dynamic(func(*core.Scope) core.Node { return f.Sizes() }))
+	}
+	children := []core.Node{core.View{TestID: "form-" + f.Name, Style: box, Children: rows}}
 	if caption != "" {
 		s.Padding.Top = 30
 		children = append(children, core.View{PointerEvents: core.PointerEventsNone, Style: core.Style{Position: core.Absolute, Top: core.Pt(8), Left: core.Pt(14)},
@@ -256,10 +266,4 @@ func statusLine(cx *core.Scope, label, id string, value func() string) core.Node
 		core.Text{ContentFunc: value, TestID: id, Style: core.Style{FlexGrow: 1, FlexShrink: 1, FontSize: 12, FontFamily: ui.Mono, TextAlign: core.TextAlignEnd},
 			StyleFunc: ui.Colored(colors.Text)},
 	}}
-}
-
-// pressed reports a press of the component named name.
-func pressed(cx *core.Scope, last *core.Signal[string], name string) func() {
-	tr := locales.For(cx)
-	return func() { last.Set(tr.KitPressed(name)) }
 }

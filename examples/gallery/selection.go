@@ -39,7 +39,7 @@ func switchCard(cx *core.Scope) core.Node {
 	return Playground{Title: "Switch", Base: baseSwitchForm(cx, checked, disabled), Stage: func() core.Node {
 		var switches []core.Node
 		for _, size := range sizes {
-			switches = append(switches, ui.Switch{Label: tr.LibStarred(), Checked: checked.Get, Size: size,
+			switches = append(switches, ui.Switch{Label: tr.LibStarred(), Checked: checked.Get, Size: size.Value,
 				OnChange: checked.Set})
 		}
 		return stageRow(switches...)

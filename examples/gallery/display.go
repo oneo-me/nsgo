@@ -17,15 +17,15 @@ import (
 // demoPeople are the avatars' names.
 var demoPeople = []string{"Ada Lovelace", "Grace Hopper", "Alan Turing", "Katherine Johnson", "Linus Pauling", "Edsger Dijkstra"}
 
-// badgeVariants are the badge's looks.
-var badgeVariants = []ui.BadgeVariant{ui.BadgeNeutral, ui.BadgeAccent, ui.BadgeInfo, ui.BadgeWarn, ui.BadgeDanger, ui.BadgeUp, ui.BadgeDown, ui.BadgeOutline}
+// badgeVariants are the badge's looks, each labeled by its name.
+var badgeVariants = options([]ui.BadgeVariant{ui.BadgeNeutral, ui.BadgeAccent, ui.BadgeInfo, ui.BadgeWarn, ui.BadgeDanger, ui.BadgeUp, ui.BadgeDown, ui.BadgeOutline},
+	"Neutral", "Accent", "Info", "Warn", "Danger", "Up", "Down", "Outline")
 
 func badgeCard(cx *core.Scope) core.Node {
-	tr := locales.For(cx)
 	return Playground{Title: "Badge", UIOnly: true, Stage: func() core.Node {
 		var badges []core.Node
 		for _, v := range badgeVariants {
-			badges = append(badges, ui.Badge{Text: tr.LibNewVersion(), Variant: v})
+			badges = append(badges, ui.Badge{Text: v.Label, Variant: v.Value})
 		}
 		return stageRow(badges...)
 	}}

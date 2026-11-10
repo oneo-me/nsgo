@@ -12,14 +12,14 @@ import (
 // What a press acts on, Pagination and OtpInput: each ui form under its base
 // form, with their props to set.
 
-var buttonVariants = []ui.ButtonVariant{ui.ButtonPrimary, ui.ButtonSecondary, ui.ButtonOutline, ui.ButtonGhost}
+// buttonVariants are the button's looks, each labeled by its name.
+var buttonVariants = options([]ui.ButtonVariant{ui.ButtonPrimary, ui.ButtonSecondary, ui.ButtonOutline, ui.ButtonGhost}, "Primary", "Secondary", "Outline", "Ghost")
 
 func buttonCard(cx *core.Scope) core.Node {
-	last := core.NewSignal(cx, "")
-	tr := locales.For(cx)
 	selected, icon, iconOnly, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
-	button := func() ui.Button {
-		b := ui.Button{Text: tr.OverlaySave(), Disabled: disabled.Get, Label: tr.OverlaySave(), OnPress: pressed(cx, last, "Button")}
+	// button says name, its variant's or size's, as its text.
+	button := func(name string) ui.Button {
+		b := ui.Button{Text: name, Disabled: disabled.Get, Label: name, OnPress: func() {}}
 		if icon.Get() || iconOnly.Get() {
 			b.Icon = lucide.Send
 		}
@@ -28,12 +28,12 @@ func buttonCard(cx *core.Scope) core.Node {
 		}
 		return b
 	}
-	return Playground{Title: "Button", Event: last.Get, Base: baseButtonForm(cx, last, selected, disabled), Stage: func() core.Node {
+	return Playground{Title: "Button", Base: baseButtonForm(cx, selected, disabled), Stage: func() core.Node {
 		var buttons []core.Node
 		for _, v := range buttonVariants {
-			b := button()
-			b.Variant = v
-			if v == ui.ButtonPrimary {
+			b := button(v.Label)
+			b.Variant = v.Value
+			if v.Value == ui.ButtonPrimary {
 				b.TestID = "button"
 			}
 			buttons = append(buttons, b)
@@ -42,8 +42,8 @@ func buttonCard(cx *core.Scope) core.Node {
 	}, Sizes: func() core.Node {
 		var buttons []core.Node
 		for _, size := range sizes {
-			b := button()
-			b.Size = size
+			b := button(size.Label)
+			b.Size = size.Value
 			buttons = append(buttons, b)
 		}
 		return stageRow(buttons...)
@@ -51,14 +51,13 @@ func buttonCard(cx *core.Scope) core.Node {
 }
 
 func iconButtonCard(cx *core.Scope) core.Node {
-	last := core.NewSignal(cx, "")
 	tr := locales.For(cx)
 	size := core.NewSignal(cx, 32.0)
 	selected, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-	return Playground{Title: "IconButton", Event: last.Get, UIOnly: true, Stage: func() core.Node {
+	return Playground{Title: "IconButton", UIOnly: true, Stage: func() core.Node {
 		var buttons []core.Node
 		for _, v := range []ui.IconButtonVariant{ui.IconButtonGhost, ui.IconButtonPrimary, ui.IconButtonRaised} {
-			buttons = append(buttons, ui.IconButton{Icon: lucide.Star, Label: tr.LibStarred(), Variant: v, Size: core.Points(size.Get()), Selected: selected.Get, Disabled: disabled.Get, OnPress: pressed(cx, last, "IconButton")})
+			buttons = append(buttons, ui.IconButton{Icon: lucide.Star, Label: tr.LibStarred(), Variant: v, Size: core.Points(size.Get()), Selected: selected.Get, Disabled: disabled.Get, OnPress: func() {}})
 		}
 		return stageRow(buttons...)
 	}, Knobs: []core.Node{
@@ -90,15 +89,14 @@ func toggleGroupCard(cx *core.Scope) core.Node {
 }
 
 func toolbarCard(cx *core.Scope) core.Node {
-	last := core.NewSignal(cx, "")
 	tr := locales.For(cx)
 	axis := core.NewSignal(cx, base.Horizontal)
 	bold, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
-	return Playground{Title: "Toolbar", Event: last.Get, Base: baseToolbarForm(cx, last, axis, bold, disabled), Stage: func() core.Node {
+	return Playground{Title: "Toolbar", Base: baseToolbarForm(cx, axis, bold, disabled), Stage: func() core.Node {
 		return ui.Toolbar{Axis: axis.Get(), Label: tr.LibFormatting(), Disabled: disabled.Get, Children: []core.Node{
 			ui.ToolbarGroup{Label: tr.LibHistory(), Children: []core.Node{
-				ui.IconButton{Icon: lucide.Undo2, Label: tr.LibUndo(), OnPress: pressed(cx, last, tr.LibUndo())},
-				ui.IconButton{Icon: lucide.Redo2, Label: tr.LibRedo(), OnPress: pressed(cx, last, tr.LibRedo())},
+				ui.IconButton{Icon: lucide.Undo2, Label: tr.LibUndo(), OnPress: func() {}},
+				ui.IconButton{Icon: lucide.Redo2, Label: tr.LibRedo(), OnPress: func() {}},
 			}},
 			ui.ToolbarSeparator{},
 			ui.ToggleButton{Icon: lucide.Bold, Label: tr.LibBold(), On: bold.Get, OnChange: bold.Set},
@@ -107,11 +105,10 @@ func toolbarCard(cx *core.Scope) core.Node {
 }
 
 func linkCard(cx *core.Scope) core.Node {
-	last := core.NewSignal(cx, "")
 	tr := locales.For(cx)
 	disabled := core.NewSignal(cx, false)
-	return Playground{Title: "Link", Event: last.Get, Base: baseLinkForm(cx, last, disabled), Stage: func() core.Node {
-		return ui.Link{Text: tr.LibReadDocs(), Href: "/docs", OpenWith: base.LinkOpenApp, Disabled: disabled.Get, OnOpen: last.Set}
+	return Playground{Title: "Link", Base: baseLinkForm(cx, disabled), Stage: func() core.Node {
+		return ui.Link{Text: tr.LibReadDocs(), Href: "/docs", OpenWith: base.LinkOpenApp, Disabled: disabled.Get, OnOpen: func(string) {}}
 	}, BaseKnobs: []core.Node{boolKnob("Disabled", disabled)}}
 }
 
@@ -141,8 +138,8 @@ func holdPlayground(cx *core.Scope) core.Node {
 	confirmed, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	return Playground{Title: "HoldToConfirm", UIOnly: true, Stage: func() core.Node {
 		var holds []core.Node
-		for _, v := range []ui.HoldVariant{ui.HoldAccent, ui.HoldDanger, ui.HoldNeutral} {
-			holds = append(holds, ui.HoldToConfirm{Text: tr.LibHoldToDelete(), ConfirmedText: tr.LibDeleted(), Variant: v, Hint: tr.LibHold(),
+		for _, v := range options([]ui.HoldVariant{ui.HoldAccent, ui.HoldDanger, ui.HoldNeutral}, "Accent", "Danger", "Neutral") {
+			holds = append(holds, ui.HoldToConfirm{Text: v.Label, ConfirmedText: tr.LibDeleted(), Variant: v.Value, Hint: tr.LibHold(),
 				Duration: secondsOf(seconds.Get()), Disabled: disabled.Get, Confirmed: confirmed.Get,
 				OnConfirm: func() { confirmed.Set(true) }})
 		}

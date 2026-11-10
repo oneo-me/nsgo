@@ -58,6 +58,10 @@ func open(app *nsgotest.App, name string) {
 	app.Press("id:nav-" + name)
 }
 
+// showBase shows the base form of the playground titled title, on the tab
+// beside its ui form's.
+func showBase(app *nsgotest.App, title string) { app.Press("id:package-" + title + " >> role:tab Base") }
+
 // openTab chooses a tab of the phone layout's system tab bar.
 func openTab(app *nsgotest.App, i int) { app.Emit("id:tab-bar", "change", float64(i)) }
 
@@ -303,6 +307,7 @@ func TestBaseListForm(t *testing.T) {
 	if app.Exists("id:ui-only-List") {
 		t.Fatal("List is marked though base has one")
 	}
+	showBase(app, "List")
 	row := "id:stage-base.List >> role:option Grace Hopper"
 	app.Press(row)
 	if !app.Find(row).Props.Selected {
@@ -320,6 +325,9 @@ func TestFormsCenter(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Input")
 	for _, name := range []string{"NumberInput", "base.NumberInput"} {
+		if name == "base.NumberInput" {
+			showBase(app, "NumberInput")
+		}
 		stage, box := app.Find("id:stage-"+name).Frame, app.Find("id:form-"+name).Frame
 		if got := box.Size.Width; got >= stage.Size.Width-32 {
 			t.Fatalf("%s is %v wide, the stage's whole width", name, got)
@@ -904,31 +912,40 @@ func TestToastOptions(t *testing.T) {
 	}
 }
 
-// TestBaseForms shows a component's base form above its ui form, with
-// base's behavior under the look its page writes out and one knob for a
-// prop both have.
+// TestBaseForms shows a component's ui form, then its base form on the tab
+// beside it, with base's behavior under the look its page writes out and
+// one knob for a prop both have.
 func TestBaseForms(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Button")
-	app.Press("id:base-button")
-	app.Find("text:base.Button pressed")
-	if base, form := app.Find("id:stage-base.Button"), app.Find("id:stage-Button"); base.Frame.Origin.Y >= form.Frame.Origin.Y {
-		t.Fatalf("the base form is at %v, the ui form at %v", base.Frame.Origin, form.Frame.Origin)
+	app.Find("id:stage-Button")
+	if app.Exists("id:stage-base.Button") {
+		t.Fatal("the base form shows before its tab is chosen")
 	}
 	app.Press("role:switch Disabled >> nth=0")
-	if !app.Find("id:base-button").Props.Disabled || !app.Find("id:button").Props.Disabled {
-		t.Fatal("the Disabled knob left a form enabled")
+	if !app.Find("id:button").Props.Disabled {
+		t.Fatal("the Disabled knob left the ui form enabled")
+	}
+	showBase(app, "Button")
+	if app.Exists("id:stage-Button") {
+		t.Fatal("the ui form stayed beside the base form")
+	}
+	if !app.Find("id:base-button").Props.Disabled {
+		t.Fatal("the Disabled knob left the base form enabled")
 	}
 	open(app, "Checkbox")
+	showBase(app, "Switch")
 	sw := "id:stage-base.Switch >> role:switch Starred"
 	app.Press(sw)
 	if app.Find(sw).Props.Checked {
 		t.Fatal("base.Switch stayed on")
 	}
 	open(app, "Dialog")
+	showBase(app, "Dialog")
 	app.Press("id:stage-base.Dialog >> role:button Open")
 	app.Find("id:base-dialog")
 	open(app, "Menu")
+	showBase(app, "Menu · Submenu")
 	app.Press("id:stage-base.Menu >> role:button Open")
 	app.Press("role:menuitem Copy")
 	app.Find("text:base.Menu: Copy")
@@ -942,13 +959,8 @@ func TestPlaygrounds(t *testing.T) {
 	if app.Find("id:button").Props.Disabled {
 		t.Fatal("the button starts disabled")
 	}
-	app.Press("id:button")
-	app.Find("text:Button pressed")
-	if got := len(app.Query("id:stage-Button >> role:button Save")); got != 4 {
-		t.Fatalf("%d variants on the stage", got)
-	}
-	if got := len(app.Query("id:stage-Button-sizes >> role:button Save")); got != 3 {
-		t.Fatalf("%d sizes on the stage", got)
+	for _, name := range []string{"Primary", "Secondary", "Outline", "Ghost", "Small", "Default", "Large"} {
+		app.Find("id:stage-Button >> role:button " + name)
 	}
 	app.Press("role:switch Disabled >> nth=0")
 	if !app.Find("id:button").Props.Disabled {
@@ -1517,6 +1529,7 @@ func TestPickerPages(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			app := startDesktop(t)
 			open(app, name)
+			showBase(app, strings.TrimPrefix(title, "base."))
 			app.Find("id:stage-" + title)
 		})
 	}
@@ -1527,16 +1540,20 @@ func TestPickerPages(t *testing.T) {
 func TestPickersPick(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Select")
+	showBase(app, "Select")
 	app.Press("id:stage-base.Select >> role:combobox")
 	app.Press("role:option Apple")
 	app.Find("id:stage-base.Select >> text:Apple")
 	open(app, "ColorPicker")
+	showBase(app, "ColorPicker")
 	app.Clear("id:stage-base.ColorPicker >> label:Hex")
 	app.Type("id:stage-base.ColorPicker >> label:Hex", "#ef4444\n")
+	app.Press("id:package-ColorPicker >> role:tab Styled")
 	if got := app.Find("id:stage-ColorPicker >> label:Hex color").Text; !strings.Contains(strings.ToLower(got), "ef4444") {
 		t.Fatalf("the ui form shows %q", got)
 	}
 	open(app, "Command")
+	showBase(app, "Command")
 	app.Type("id:stage-base.Command >> label:Command", "sheet")
 	app.Key("enter")
 	app.Find("text:base.Command: sheet")
@@ -1590,12 +1607,13 @@ func TestPickerForms(t *testing.T) {
 		t.Fatal("the day pressed is not selected")
 	}
 	app.Press("id:stage-DatePicker >> role:combobox")
-	// The calendars of the page show it too; the popup is the last.
-	app.Press("label:2026-01-20 >> nth=2")
+	// The page's calendar shows it too; the popup is the last.
+	app.Press("label:2026-01-20 >> nth=1")
 	app.Find("id:stage-DatePicker >> text:/2026/")
 	open(app, "ColorPicker")
 	app.Clear("id:stage-ColorPicker >> label:Hex color")
 	app.Type("id:stage-ColorPicker >> label:Hex color", "22c55e\n")
+	showBase(app, "ColorPicker")
 	if got := app.Find("id:stage-base.ColorPicker >> label:Hex").Text; !strings.Contains(strings.ToLower(got), "22c55e") {
 		t.Fatalf("the base form shows %q", got)
 	}

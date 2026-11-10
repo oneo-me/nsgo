@@ -64,13 +64,12 @@ func stepperPlayground(cx *core.Scope) core.Node {
 }
 
 func breadcrumbsCard(cx *core.Scope) core.Node {
-	last := core.NewSignal(cx, "")
 	tr := locales.For(cx)
 	width := core.NewSignal(cx, 480.0)
 	path := []string{tr.ControlsApps(), tr.ControlsPhotos(), "2026", "Lisbon", "IMG_0042.heic"}
-	return Playground{Title: "Breadcrumbs", Event: last.Get, UIOnly: true, Stage: func() core.Node {
+	return Playground{Title: "Breadcrumbs", UIOnly: true, Stage: func() core.Node {
 		return core.View{Style: core.Style{Width: core.Pt(core.Points(width.Get())), MaxWidth: core.Pct(100)}, Children: []core.Node{
-			ui.Breadcrumbs{Items: path, OnSelect: func(i int) { last.Set("Breadcrumbs: " + path[i]) }}}}
+			ui.Breadcrumbs{Items: path, OnSelect: func(int) {}}}}
 	}, Knobs: []core.Node{numberKnob("Width", width, 120, 480, 20)}}
 }
 

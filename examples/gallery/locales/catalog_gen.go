@@ -144,7 +144,6 @@ var Parameters = map[string][]string{
 	"CollapsingMinutes":       {"count"},
 	"TerminalSizeCells":       {"cols", "rows"},
 	"TerminalUnavailable":     {"reason"},
-	"KitPressed":              {"name"},
 	"RichHeading":             {"level"},
 	"RichCount":               {"words", "characters"},
 	"SystemSpeechEnded":       {"reason"},
@@ -271,7 +270,6 @@ type Translation struct {
 	CollapsingMinutes       func(count int) string
 	TerminalSizeCells       func(cols int, rows int) string
 	TerminalUnavailable     func(reason string) string
-	KitPressed              func(name string) string
 	RichHeading             func(level int) string
 	RichCount               func(words int, characters int) string
 	SystemSpeechEnded       func(reason string) string
@@ -2072,7 +2070,6 @@ const (
 	textLibOneTimeCode
 	textLibStarred
 	textLibHold
-	textLibHoldToDelete
 	textLibDeleted
 	textLibCheckout
 	textLibCart
@@ -2092,7 +2089,6 @@ const (
 	textLibStepComplete
 	textLibStepFailed
 	textLibFiles
-	textLibNewVersion
 	textLibChangesSaved
 	textLibThreeFiles
 	textLibVolume
@@ -2135,6 +2131,7 @@ const (
 	textTerminalSelectAll
 	textTerminalKeyBar
 	textTerminalKeyBarNote
+	textStyled
 	textKitRating
 	textKitBefore
 	textKitAfter
@@ -4110,7 +4107,6 @@ var keyOfText = [numTexts]string{
 	"libOneTimeCode",
 	"libStarred",
 	"libHold",
-	"libHoldToDelete",
 	"libDeleted",
 	"libCheckout",
 	"libCart",
@@ -4130,7 +4126,6 @@ var keyOfText = [numTexts]string{
 	"libStepComplete",
 	"libStepFailed",
 	"libFiles",
-	"libNewVersion",
 	"libChangesSaved",
 	"libThreeFiles",
 	"libVolume",
@@ -4173,6 +4168,7 @@ var keyOfText = [numTexts]string{
 	"terminalSelectAll",
 	"terminalKeyBar",
 	"terminalKeyBarNote",
+	"styled",
 	"kitRating",
 	"kitBefore",
 	"kitAfter",
@@ -6146,7 +6142,6 @@ var textsEn = i18n.NewTexts(""+
 	"One-time code"+
 	"Starred"+
 	"Hold to confirm"+
-	"Hold to delete"+
 	"Deleted"+
 	"Checkout"+
 	"Cart"+
@@ -6166,7 +6161,6 @@ var textsEn = i18n.NewTexts(""+
 	"completed"+
 	"failed"+
 	"Project files"+
-	"A new version is available"+
 	"Changes saved"+
 	"3 files"+
 	"Volume"+
@@ -6209,6 +6203,7 @@ var textsEn = i18n.NewTexts(""+
 	"Select all"+
 	"Key bar"+
 	"Over a touch screen's keyboard"+
+	"Styled"+
 	"Rating"+
 	"Before"+
 	"After"+
@@ -8179,7 +8174,6 @@ var textsEn = i18n.NewTexts(""+
 		13,
 		7,
 		15,
-		14,
 		7,
 		8,
 		4,
@@ -8199,7 +8193,6 @@ var textsEn = i18n.NewTexts(""+
 		9,
 		6,
 		13,
-		26,
 		13,
 		7,
 		6,
@@ -8242,6 +8235,7 @@ var textsEn = i18n.NewTexts(""+
 		10,
 		7,
 		30,
+		6,
 		6,
 		6,
 		5,
@@ -10215,7 +10209,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"验证码"+
 	"已加星标"+
 	"按住确认"+
-	"按住删除"+
 	"已删除"+
 	"结账"+
 	"购物车"+
@@ -10235,7 +10228,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"已完成"+
 	"失败"+
 	"项目文件"+
-	"有新版本可用"+
 	"更改已保存"+
 	"3 个文件"+
 	"音量"+
@@ -10278,6 +10270,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"全选"+
 	"按键栏"+
 	"显示在触屏的软键盘上方"+
+	"样式"+
 	"评分"+
 	"之前"+
 	"之后"+
@@ -12248,7 +12241,6 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		12,
 		12,
-		12,
 		9,
 		6,
 		9,
@@ -12268,7 +12260,6 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		6,
 		12,
-		18,
 		15,
 		11,
 		6,
@@ -12311,6 +12302,7 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		9,
 		33,
+		6,
 		6,
 		6,
 		6,
@@ -12871,9 +12863,6 @@ func Supply(lang string, t Translation) {
 	}
 	if t.TerminalUnavailable != nil {
 		s.TerminalUnavailable = t.TerminalUnavailable
-	}
-	if t.KitPressed != nil {
-		s.KitPressed = t.KitPressed
 	}
 	if t.RichHeading != nil {
 		s.RichHeading = t.RichHeading
@@ -28929,13 +28918,6 @@ func LibHold(cx *core.Scope) string { return For(cx).LibHold() }
 // LibHold is the package's LibHold in the language of msgs.
 func (msgs Messages) LibHold() string { return msgs.text(textLibHold) }
 
-// LibHoldToDelete says "Hold to delete"
-// in the language the app shows under cx.
-func LibHoldToDelete(cx *core.Scope) string { return For(cx).LibHoldToDelete() }
-
-// LibHoldToDelete is the package's LibHoldToDelete in the language of msgs.
-func (msgs Messages) LibHoldToDelete() string { return msgs.text(textLibHoldToDelete) }
-
 // LibDeleted says "Deleted"
 // in the language the app shows under cx.
 func LibDeleted(cx *core.Scope) string { return For(cx).LibDeleted() }
@@ -29068,13 +29050,6 @@ func LibFiles(cx *core.Scope) string { return For(cx).LibFiles() }
 
 // LibFiles is the package's LibFiles in the language of msgs.
 func (msgs Messages) LibFiles() string { return msgs.text(textLibFiles) }
-
-// LibNewVersion says "A new version is available"
-// in the language the app shows under cx.
-func LibNewVersion(cx *core.Scope) string { return For(cx).LibNewVersion() }
-
-// LibNewVersion is the package's LibNewVersion in the language of msgs.
-func (msgs Messages) LibNewVersion() string { return msgs.text(textLibNewVersion) }
 
 // LibChangesSaved says "Changes saved"
 // in the language the app shows under cx.
@@ -29418,27 +29393,12 @@ func TerminalKeyBarNote(cx *core.Scope) string { return For(cx).TerminalKeyBarNo
 // TerminalKeyBarNote is the package's TerminalKeyBarNote in the language of msgs.
 func (msgs Messages) TerminalKeyBarNote() string { return msgs.text(textTerminalKeyBarNote) }
 
-// KitPressed says "{name} pressed"
+// Styled says "Styled"
 // in the language the app shows under cx.
-func KitPressed(cx *core.Scope, name string) string { return For(cx).KitPressed(name) }
+func Styled(cx *core.Scope) string { return For(cx).Styled() }
 
-// KitPressed is the package's KitPressed in the language of msgs.
-func (msgs Messages) KitPressed(name string) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.KitPressed(name))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].KitPressed; f != nil {
-			return f(name)
-		}
-		switch lang {
-		case "", "en":
-			return msgs.arg(name) + " pressed"
-		case "zh-Hans":
-			return "已按下 " + name
-		}
-	}
-}
+// Styled is the package's Styled in the language of msgs.
+func (msgs Messages) Styled() string { return msgs.text(textStyled) }
 
 // KitRating says "Rating"
 // in the language the app shows under cx.

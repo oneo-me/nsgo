@@ -87,11 +87,11 @@ func bareButton(cx *core.Scope, text string, press func()) core.Node {
 		Children: []core.Node{bareText(cx, text)}}
 }
 
-func baseButtonForm(cx *core.Scope, last *core.Signal[string], selected, disabled *core.Signal[bool]) Form {
+func baseButtonForm(cx *core.Scope, selected, disabled *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	return Form{Name: "base.Button", Stage: func() core.Node {
 		return base.Button{Label: tr.OverlaySave(), Selected: selected.Get, Disabled: disabled.Get, TestID: "base-button", Style: bareBox, StyleFunc: bareInk(cx),
-			OnPress: func(core.PressEvent) { pressed(cx, last, "base.Button")() }, Children: []core.Node{bareText(cx, tr.OverlaySave())}}
+			OnPress: func(core.PressEvent) {}, Children: []core.Node{bareText(cx, tr.OverlaySave())}}
 	}}
 }
 
@@ -114,17 +114,17 @@ func baseToggleGroupForm(cx *core.Scope, bold, italic, disabled *core.Signal[boo
 	}}
 }
 
-func baseLinkForm(cx *core.Scope, last *core.Signal[string], disabled *core.Signal[bool]) Form {
+func baseLinkForm(cx *core.Scope, disabled *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	return Form{Name: "base.Link", Stage: func() core.Node {
-		return base.Link{Href: "/docs", OpenWith: base.LinkOpenApp, Disabled: disabled.Get, OnOpen: last.Set, Label: tr.LibReadDocs(),
+		return base.Link{Href: "/docs", OpenWith: base.LinkOpenApp, Disabled: disabled.Get, OnOpen: func(string) {}, Label: tr.LibReadDocs(),
 			Style:    core.Style{Disabled: &core.Style{Opacity: core.Alpha(0.4)}},
 			Children: []core.Node{ui.Text(tr.LibReadDocs(), 13, ui.Regular, colors.Text)}}
 	}}
 }
 
-func baseToolbarForm(cx *core.Scope, last *core.Signal[string], axis *core.Signal[base.Axis], bold, disabled *core.Signal[bool]) Form {
+func baseToolbarForm(cx *core.Scope, axis *core.Signal[base.Axis], bold, disabled *core.Signal[bool]) Form {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	return Form{Name: "base.Toolbar", Stage: func() core.Node {
@@ -135,8 +135,8 @@ func baseToolbarForm(cx *core.Scope, last *core.Signal[string], axis *core.Signa
 		return base.Toolbar{Axis: axis.Get(), Label: tr.LibFormatting(), Disabled: disabled.Get, Style: core.Style{Direction: direction, AlignItems: core.AlignCenter, Gap: 4},
 			Children: []core.Node{
 				base.ToolbarGroup{Label: tr.LibHistory(), Style: core.Style{Direction: direction, Gap: 4}, Children: []core.Node{
-					bareButton(cx, tr.LibUndo(), pressed(cx, last, tr.LibUndo())),
-					bareButton(cx, tr.LibRedo(), pressed(cx, last, tr.LibRedo())),
+					bareButton(cx, tr.LibUndo(), func() {}),
+					bareButton(cx, tr.LibRedo(), func() {}),
 				}},
 				base.ToolbarSeparator{Style: rule, StyleFunc: ui.Filled(colors.Line)},
 				base.Toggle{Label: tr.LibBold(), Pressed: bold.Get, OnChange: bold.Set, Style: bareBox, StyleFunc: bareInk(cx), Children: []core.Node{bareText(cx, tr.LibBold())}},
