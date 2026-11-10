@@ -299,12 +299,14 @@
         }
 
         function start() {
-          var canGzip = typeof DecompressionStream !== 'undefined';
-          var url = canGzip ? '__GZIP__' : '__WASM__';
-          var expected = canGzip ? __GZIP_SIZE__ : __WASM_SIZE__;
+          var url = '__GZIP__';
+          var expected = __GZIP_SIZE__;
 
           if (typeof WebAssembly === 'undefined' || typeof Go === 'undefined') {
             return Promise.reject(new Error('This browser cannot run WebAssembly.'));
+          }
+          if (typeof DecompressionStream === 'undefined') {
+            return Promise.reject(new Error('This browser cannot decompress the engine.'));
           }
 
           setProgress('prepare', 2, 0, expected, 'Preparing WebAssembly…');
@@ -327,7 +329,6 @@
               });
             })
             .then(function (download) {
-              if (!canGzip) return download;
               setProgress('decompress', 67, download.total, download.total, 'Decompressing the engine…');
               return decompress(download.buffer).then(function (raw) {
                 setProgress(

@@ -4,11 +4,16 @@
 // The nsgo tool writes index.html, wasm_exec.js, resources, a
 // content-named wasm and nsgo.json, which names them. This script adds:
 //
-//   loader.html    the same app behind a progress-reporting loader
+//   loader.html    the same app behind a progress-reporting loader,
+//                  also written over index.html
 //   app.wasm.gzip  the engine compressed, because Go's wasm is large.
 //                  The extension is .gzip, not .gz: static servers send a
 //                  .gz with Content-Encoding: gzip, and the loader wants
 //                  the compressed bytes themselves.
+//
+// It then removes the uncompressed wasm and nsgo.json, which names it:
+// the wasm is most of the site's bytes, and GitHub Pages can take longer
+// than deploy-pages' ten-minute limit to sync it.
 //
 // public/gallery/ is generated: do not edit it.
 import { execFileSync } from 'node:child_process';
@@ -87,13 +92,14 @@ try {
 
   const loader = readFileSync(path.join(here, 'gallery-loader.html'), 'utf8')
     .replaceAll('__EXEC__', exec)
-    .replaceAll('__WASM__', wasm)
     .replaceAll('__GZIP__', gzip)
     .replaceAll('__RESOURCES__', resources)
-    .replaceAll('__WASM_SIZE__', String(wasmBytes))
     .replaceAll('__GZIP_SIZE__', String(compressed.length))
     .replaceAll('__ICON__', icon);
   writeFileSync(path.join(galleryDir, 'loader.html'), loader);
+  writeFileSync(path.join(galleryDir, 'index.html'), loader);
+  rmSync(wasmPath);
+  rmSync(path.join(galleryDir, 'nsgo.json'));
 
   const mb = (bytes) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   console.log(`Gallery ready: ${wasm} ${mb(wasmBytes)} (${mb(compressed.length)} gzip)`);
