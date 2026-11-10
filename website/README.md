@@ -24,7 +24,7 @@ needs that value changed.
 | --- | --- | --- |
 | Home | `/` | Yes |
 | Docs | `/docs/` | Yes |
-| Showcases | `/showcases/` | Dev only, a placeholder |
+| Showcases | `/showcases/` | Yes |
 | Benchmarks | `/benchmarks/` | Dev only, a placeholder |
 
 `src/site.ts` lists the pages; one marked `dev` is built, linked from the
@@ -48,6 +48,16 @@ which is generated and ignored: `loader.html`, the content-named wasm, a
 `.gzip` copy and the resources. `loader.html` reports its download,
 decompression, compilation and start progress, and follows the site's
 appearance.
+
+## Showcases
+
+The Showcases page lists apps built with NSGo, read from the Markdown
+documents in `docs/public/cases/`. Each document is one app: a `#` name, a
+paragraph about it, a list of `platforms`, `site`, `source` and `author`
+details, and a screenshot beside it. The folder's README says how to write
+one and the page's call to action opens it, so a showcase is one document
+and one image in a pull request. `src/lib/cases.ts` parses them and fails the
+build with the document's line when one breaks that shape.
 
 ## Docs
 

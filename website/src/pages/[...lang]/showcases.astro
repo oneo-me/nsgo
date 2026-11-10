@@ -1,8 +1,100 @@
 ---
-import Placeholder from '../../components/Placeholder.astro';
-import { langOf, langPaths } from '../../site';
+import Eyebrow from '../../components/Eyebrow.astro';
+import Icon from '../../components/Icon.astro';
+import { copies } from '../../copy';
+import Layout from '../../layouts/Layout.astro';
+import { cases } from '../../lib/cases';
+import { langOf, langPaths, links, platformName } from '../../site';
 
 export const getStaticPaths = () => langPaths('showcases');
+
+const lang = langOf(Astro.params.lang);
+const copy = copies[lang].showcases;
 ---
 
-<Placeholder lang={langOf(Astro.params.lang)} page="showcases" />
+<Layout lang={lang} page="showcases" path="showcases/" title={copy.title} description={copy.description}>
+  <section class="showcases-hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="showcases-hero__inner">
+        <Eyebrow>{copy.eyebrow}</Eyebrow>
+        <h1>{copy.heading}</h1>
+        <p class="showcases-hero__lead">{copy.lead}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="showcases">
+    <div class="container">
+      <div class="showcase-grid">
+        {cases.map((entry) => (
+          <article class="showcase-card">
+            <figure class="showcase-card__screen">
+              <img
+                src={entry.screen.src}
+                width={entry.screen.width}
+                height={entry.screen.height}
+                alt={entry.screen.alt}
+                loading="lazy"
+              />
+            </figure>
+            <div class="showcase-card__body">
+              <h2>{entry.name}</h2>
+              <p class="showcase-card__summary" set:html={entry.summary} />
+              {entry.platforms.length > 0 && (
+                <ul class="showcase-card__platforms" aria-label={copy.platforms}>
+                  {entry.platforms.map((platform) => (
+                    <li>
+                      <Icon name={platform.icon} size={13} />
+                      {platformName(platform, lang)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(entry.author || entry.site || entry.source) && (
+                <footer class="showcase-card__foot">
+                  {entry.author && <span class="showcase-card__author">{copy.by} {entry.author}</span>}
+                  <span class="showcase-card__links">
+                    {entry.site && (
+                      <a
+                        href={entry.site}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${copy.visit}: ${entry.name}`}
+                      >
+                        {copy.visit}
+                        <Icon name="external" size={12} />
+                      </a>
+                    )}
+                    {entry.source && (
+                      <a
+                        href={entry.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${copy.source}: ${entry.name}`}
+                      >
+                        {copy.source}
+                        <Icon name="github" size={12} />
+                      </a>
+                    )}
+                  </span>
+                </footer>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <aside class="showcase-submit">
+        <div>
+          <h2>{copy.submit.title}</h2>
+          <p>{copy.submit.body}</p>
+        </div>
+        <a class="btn btn--primary" href={links.cases} target="_blank" rel="noopener noreferrer">
+          {copy.submit.action}
+          <Icon name="arrow" size={14} />
+        </a>
+      </aside>
+    </div>
+  </section>
+</Layout>

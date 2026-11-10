@@ -11,7 +11,7 @@ export type PageId = 'home' | 'docs' | 'showcases' | 'benchmarks';
 export const pages: { id: PageId; path: string; dev?: boolean }[] = [
   { id: 'home', path: '' },
   { id: 'docs', path: 'docs/' },
-  { id: 'showcases', path: 'showcases/', dev: true },
+  { id: 'showcases', path: 'showcases/' },
   { id: 'benchmarks', path: 'benchmarks/', dev: true },
 ];
 
@@ -59,6 +59,8 @@ export const links = {
   notice: `${repo}/blob/main/NOTICE`,
   /** The gallery's web build, opened full page in a new tab. */
   gallery: `${import.meta.env.BASE_URL}gallery/loader.html`,
+  /** The folder a contributor adds a case to. */
+  cases: `${repo}/tree/main/docs/public/cases`,
   blog: 'https://oneo.me',
   x: 'https://x.com/oneo666',
   nsh: 'https://github.com/longbridge/nsh',

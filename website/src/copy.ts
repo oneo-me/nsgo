@@ -123,16 +123,27 @@ const en = {
     edit: 'Edit this page on GitHub',
     fallback: 'This page is not translated yet, so it shows the English one.',
   },
+  showcases: {
+    title: 'Showcases — NSGo',
+    description: 'Apps and demos built with NSGo, and what they run on.',
+    eyebrow: 'Showcases',
+    heading: 'Built with NSGo.',
+    lead: 'Sample apps to try and apps people make with NSGo, on every platform it runs on.',
+    platforms: 'Platforms',
+    visit: 'Open',
+    source: 'Source',
+    by: 'By',
+    submit: {
+      title: 'Made something with NSGo?',
+      body: 'Add a Markdown document to docs/public/cases with a sentence and a screenshot, then open a pull request.',
+      action: 'Add your showcase',
+    },
+  },
   placeholder: {
     badge: 'Dev only',
     note: 'This page is a placeholder and is not published yet.',
     back: 'Back home',
     pages: {
-      showcases: {
-        title: 'Showcases — NSGo',
-        heading: 'Showcases',
-        lead: 'Apps built with NSGo, on every platform they run on.',
-      },
       benchmarks: {
         title: 'Benchmarks — NSGo',
         heading: 'Benchmarks',
@@ -290,16 +301,27 @@ const zh: Copy = {
     edit: '在 GitHub 上编辑此页',
     fallback: '这一页还没有中文版，下面显示的是英文原文。',
   },
+  showcases: {
+    title: '案例 — NSGo',
+    description: '用 NSGo 构建的应用与示例，以及它们运行的平台。',
+    eyebrow: '案例',
+    heading: '用 NSGo 构建',
+    lead: '可以马上试试的示例，以及大家用 NSGo 做出的应用，运行在它支持的每个平台上。',
+    platforms: '平台',
+    visit: '打开',
+    source: '源码',
+    by: '作者',
+    submit: {
+      title: '用 NSGo 做了东西？',
+      body: '在 docs/public/cases 里加一个 Markdown 文档，写一句话、附上截图，然后提交 pull request。',
+      action: '添加你的案例',
+    },
+  },
   placeholder: {
     badge: '仅开发可见',
     note: '这是一个占位页面，尚未发布。',
     back: '返回首页',
     pages: {
-      showcases: {
-        title: '案例 — NSGo',
-        heading: '案例',
-        lead: '用 NSGo 构建的应用，以及它们运行的平台。',
-      },
       benchmarks: {
         title: '性能 — NSGo',
         heading: '性能',

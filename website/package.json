@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.7",
-    "astro": "^7.4.5"
+    "astro": "^7.4.5",
+    "mdast-util-from-markdown": "^2.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
