@@ -13,7 +13,7 @@ nsgo
 ├── Apps
 │   ├── examples/gallery, tray, tsx      Demos of what apps are made of
 │   ├── examples/embedded, embed-*       An embeddable app and its hosts
-│   └── bench/quotes                     Benchmarks
+│   └── benchmark                        The same apps on other frameworks
 │
 ├── Entry points
 │   ├── nsgo (root)                      Picks a backend and starts the app
@@ -100,7 +100,7 @@ The `nsgo` tool links no component or runtime, so changing them does not rebuild
 A line means "imports". `layering_test.go` checks the graph on every target, and fails on an import no rule allows.
 
 ```text
-                     apps (examples/*, bench/*)
+                     apps (examples/*)
          ┌───────────────────────┼────────────────────┐
          │                       │                    │
     nsgo (root)         tsx, tsx/compiler         nsgotest

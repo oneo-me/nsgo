@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-10",
+  "machine": {
+    "os": "windows",
+    "arch": "amd64",
+    "cpu": "Intel(R) Core(TM) Ultra 9 285K",
+    "memory": 67939209216
+  },
+  "runs": 3,
+  "seconds": 10,
+  "versions": {
+    "gpui": "gpui-kit 0.9.1, gpui-pre 0.3.12",
+    "gpui-fast": "gpui-kit 0.9.1, gpui-fast 0.1.14",
+    "mygo": "v0.8.3",
+    "nsgo": "03896f1",
+    "nsh": "0.4.0"
+  },
+  "size": {
+    "gpui": 19033088,
+    "gpui-fast": 21434880,
+    "mygo": 11047424,
+    "nsgo": 8365056,
+    "nsh": 45385216
+  },
+  "cases": {
+    "counter": {
+      "gpui": {
+        "startup": 186.9,
+        "memory": 61423616,
+        "cpu": 0.5,
+        "compositor": 129.2
+      },
+      "gpui-fast": {
+        "startup": 187.7,
+        "memory": 63504384,
+        "cpu": 0.2
+      },
+      "mygo": {
+        "startup": 165.4,
+        "memory": 62693376,
+        "cpu": 0,
+        "compositor": 0.3
+      },
+      "nsgo": {
+        "startup": 160.7,
+        "memory": 59203584,
+        "cpu": 0
+      },
+      "nsh": {
+        "startup": 160.7,
+        "memory": 60264448,
+        "cpu": 0
+      }
+    },
+    "list": {
+      "gpui": {
+        "startup": 184.6,
+        "memory": 63328256,
+        "cpu": 12.2,
+        "compositor": 125.5,
+        "fps": 260
+      },
+      "gpui-fast": {
+        "startup": 188.8,
+        "memory": 70451200,
+        "cpu": 10.8,
+        "compositor": 126.6,
+        "fps": 260
+      },
+      "mygo": {
+        "startup": 28.7,
+        "memory": 77238272,
+        "cpu": 30.5,
+        "compositor": 104.2,
+        "fps": 259.1
+      },
+      "nsgo": {
+        "startup": 21.3,
+        "memory": 71467008,
+        "cpu": 27.7,
+        "compositor": 127.2,
+        "fps": 260
+      },
+      "nsh": {
+        "startup": 161,
+        "memory": 64917504,
+        "cpu": 23.1,
+        "compositor": 125.6,
+        "fps": 260
+      }
+    },
+    "quotes": {
+      "gpui": {
+        "startup": 186.3,
+        "memory": 67190784,
+        "cpu": 39.4,
+        "compositor": 124.8,
+        "fps": 260
+      },
+      "gpui-fast": {
+        "startup": 184.4,
+        "memory": 71110656,
+        "cpu": 17.5,
+        "compositor": 123.6,
+        "fps": 260
+      },
+      "mygo": {
+        "startup": 30,
+        "memory": 87756800,
+        "cpu": 39.7,
+        "compositor": 87.5,
+        "fps": 258.6
+      },
+      "nsgo": {
+        "startup": 156.3,
+        "memory": 76222464,
+        "cpu": 47,
+        "compositor": 128.6,
+        "fps": 259.9
+      },
+      "nsh": {
+        "startup": 160.6,
+        "memory": 68284416,
+        "cpu": 33.7,
+        "compositor": 124.1,
+        "fps": 260
+      }
+    }
+  },
+  "compositorAtRest": {
+    "counter": 0.8,
+    "list": 0.6,
+    "quotes": 0.8
+  }
+}

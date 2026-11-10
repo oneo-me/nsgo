@@ -1,8 +1,280 @@
 ---
-import Placeholder from '../../components/Placeholder.astro';
-import { langOf, langPaths } from '../../site';
+import Icon from '../../components/Icon.astro';
+import { copies } from '../../copy';
+import Layout from '../../layouts/Layout.astro';
+import {
+  caseIds,
+  desktops,
+  features,
+  formatBytes,
+  formatMs,
+  formatPercent,
+  frameworks,
+  results,
+  supportText,
+  type CaseId,
+  type FrameworkId,
+  type Measure,
+  type Results,
+} from '../../lib/benchmarks';
+import { langOf, langPaths, links } from '../../site';
+import '../../styles/benchmarks.css';
 
 export const getStaticPaths = () => langPaths('benchmarks');
+
+const lang = langOf(Astro.params.lang);
+const copy = copies[lang].benchmarks;
+const first = desktops.find((d) => results[d.id])?.id ?? desktops[0].id;
+
+/** A chart: a bar a framework, and its value; bars of two parts stack. */
+interface Chart {
+  title: string;
+  note?: string;
+  rows: Row[];
+  max: number;
+  /** Whether more is better, as frames are. */
+  higher?: boolean;
+}
+
+interface Row {
+  id: FrameworkId;
+  name: string;
+  color: string;
+  parts: number[];
+  label: string;
+  failed?: boolean;
+}
+
+const total = (row: Row) => row.parts.reduce((a, b) => a + b, 0);
+
+/** The rows best first, those that failed last. */
+function ranked(rows: Row[], higher = false): Row[] {
+  return rows.sort((a, b) => Number(!!a.failed) - Number(!!b.failed) || (higher ? total(b) - total(a) : total(a) - total(b)));
+}
+
+function chart(
+  r: Results,
+  c: CaseId,
+  title: string,
+  value: (m: Measure) => number[] | undefined,
+  label: (v: number[]) => string,
+  note?: string,
+  higher = false,
+): Chart {
+  const rows = frameworks.map((f) => {
+    const m = r.cases[c]?.[f.id];
+    const parts = m && !m.error ? value(m) : undefined;
+    return { id: f.id, name: f.name, color: f.color, parts: parts ?? [], label: parts ? label(parts) : copy.failed, failed: !parts };
+  });
+  const max = Math.max(...rows.map(total), 1e-9);
+  return { title, note, rows: ranked(rows, higher), max, higher };
+}
+
+function charts(r: Results, c: CaseId): Chart[] {
+  const startup = chart(r, c, copy.metrics.startup, (m) => [m.startup], ([v]) => formatMs(v));
+  const memory = chart(r, c, copy.metrics.memory, (m) => [m.memory], ([v]) => formatBytes(v));
+  if (c === 'counter') {
+    const rows = frameworks.map((f) => {
+      const size = r.size[f.id];
+      return { id: f.id, name: f.name, color: f.color, parts: size ? [size] : [], label: size ? formatBytes(size) : copy.failed, failed: !size };
+    });
+    const size = { title: copy.metrics.size, rows: ranked(rows), max: Math.max(...rows.map(total), 1) };
+    return [startup, memory, size];
+  }
+  const cpu = chart(
+    r,
+    c,
+    copy.metrics.cpu,
+    (m) => [m.cpu, m.compositor ?? 0],
+    ([app, comp]) => formatPercent(app + comp),
+    copy.cpuNote,
+  );
+  const fps = chart(r, c, copy.metrics.fps, (m) => (m.fps ? [m.fps] : undefined), ([v]) => v.toFixed(0), copy.fpsNote, true);
+  return [cpu, memory, fps];
+}
+
+const date = (iso: string) =>
+  new Date(iso).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
 
-<Placeholder lang={langOf(Astro.params.lang)} page="benchmarks" />
+<Layout lang={lang} page="benchmarks" path="benchmarks/" title={copy.title} description={copy.description}>
+  <section class="bench-hero">
+    <div class="container">
+      <h1>{copy.heading}</h1>
+      <p class="bench-hero__lead">{copy.lead}</p>
+      <ul class="bench-hero__frameworks">
+        {frameworks.map((f) => (
+          <li style={`--fw: ${f.color}`}>
+            <a href={f.url} target="_blank" rel="noopener noreferrer"><i />{f.name}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="bench-results" data-desktop={first}>
+    <div class="container">
+      {caseIds.map((c) => (
+        <article class="bench-case">
+          <header class="bench-case__head">
+            <div>
+              <h2>{copy.cases[c].title}</h2>
+              <p>{copy.cases[c].body}</p>
+            </div>
+            <div class="bench-switch" role="group" aria-label={copy.desktops}>
+              {desktops.map((d) => (
+                <button type="button" data-desktop={d.id} aria-pressed={d.id === first ? 'true' : 'false'}>
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          </header>
+          {desktops.map((d) => {
+            const r = results[d.id];
+            return (
+              <div class="bench-panel" data-for={d.id}>
+                {r ? (
+                  <div class="bench-charts">
+                    {charts(r, c).map((ch) => (
+                      <figure class="bench-chart">
+                        <figcaption>
+                          <span class="bench-chart__title">{ch.title}</span>
+                          <span class="bench-chart__hint">{ch.higher ? copy.higher : copy.lower}</span>
+                        </figcaption>
+                        <ul>
+                          {ch.rows.map((row) => (
+                            <li class:list={['bench-bar', { 'is-nsgo': row.id === 'nsgo', 'is-failed': row.failed }]} style={`--fw: ${row.color}`}>
+                              <span class="bench-bar__name"><i />{row.name}</span>
+                              <span class="bench-bar__track">
+                                {row.parts.map((v, i) => (
+                                  <span
+                                    class:list={['bench-bar__fill', { 'bench-bar__fill--second': i > 0 }]}
+                                    style={`width: ${(v / ch.max) * 100}%`}
+                                  />
+                                ))}
+                              </span>
+                              <span class="bench-bar__value">{row.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {ch.title === copy.metrics.cpu && (
+                          <p class="bench-legend">
+                            <span><i class="bench-legend__app" />{copy.app}</span>
+                            <span><i class="bench-legend__compositor" />{copy.compositor}</span>
+                          </p>
+                        )}
+                        {ch.note && <p class="bench-chart__note">{ch.note}</p>}
+                      </figure>
+                    ))}
+                  </div>
+                ) : (
+                  <p class="bench-missing">{copy.missing}</p>
+                )}
+              </div>
+            );
+          })}
+        </article>
+      ))}
+
+      {desktops.map((d) => {
+        const r = results[d.id];
+        return r && (
+          <div class="bench-panel bench-about" data-for={d.id}>
+            <p>{copy.machine(date(r.date), r.machine.cpu, formatBytes(r.machine.memory), r.runs, r.seconds)}</p>
+            <dl class="bench-versions">
+              <dt>{copy.versions}</dt>
+              {frameworks.map((f) => r.versions[f.id] && (
+                <dd><b>{f.name}</b> {r.versions[f.id]}</dd>
+              ))}
+            </dl>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <section class="bench-section bench-section--soft">
+    <div class="container">
+      <div class="bench-section__head">
+        <h2>{copy.features.title}</h2>
+      </div>
+      <div class="bench-table-wrap">
+        <table class="bench-table">
+          <thead>
+            <tr>
+              <th />
+              {frameworks.map((f) => <th scope="col" class:list={{ 'is-nsgo': f.id === 'nsgo' }}>{f.name}</th>)}
+            </tr>
+          </thead>
+          {features.map((group) => (
+            <tbody>
+              <tr class="bench-table__group">
+                <th scope="rowgroup" colspan={frameworks.length + 1}>{group[lang]}</th>
+              </tr>
+              {group.rows.map((row) => (
+                <tr>
+                  <th scope="row">{row[lang]}</th>
+                  {frameworks.map((f) => {
+                    const v = row.values[f.id];
+                    const text = supportText(v, lang);
+                    return (
+                      <td class:list={{ 'is-nsgo': f.id === 'nsgo' }}>
+                        {text ? (
+                          <span class="bench-table__text">{text}</span>
+                        ) : v ? (
+                          <span class="bench-table__yes" aria-label={copy.features.yes}><Icon name="check" size={16} /></span>
+                        ) : (
+                          <span class="bench-table__no" aria-label={copy.features.no}>—</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          ))}
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="bench-section">
+    <div class="container">
+      <div class="bench-section__head">
+        <h2>{copy.method.title}</h2>
+      </div>
+      <ul class="bench-method">
+        {copy.method.items.map((item) => <li>{item}</li>)}
+      </ul>
+      <aside class="bench-fair">
+        <div>
+          <h2>{copy.fair.title}</h2>
+          <p>{copy.fair.body}</p>
+        </div>
+        <div class="bench-fair__actions">
+          <a class="btn btn--secondary" href={links.benchmark} target="_blank" rel="noopener noreferrer">
+            {copy.method.source}
+            <Icon name="github" size={14} />
+          </a>
+          <a class="btn btn--primary" href={links.issues} target="_blank" rel="noopener noreferrer">
+            {copy.fair.action}
+            <Icon name="arrow" size={14} />
+          </a>
+        </div>
+      </aside>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  // Every case's switch shows one desktop's results, all of them at once.
+  const results = document.querySelector<HTMLElement>('.bench-results')!;
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('.bench-switch button')];
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      const desktop = button.dataset.desktop!;
+      results.dataset.desktop = desktop;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.desktop === desktop));
+    });
+  }
+</script>

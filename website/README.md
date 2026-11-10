@@ -28,12 +28,11 @@ needs that value changed.
 | Docs | `/docs/` | Yes |
 | Components | `/components/` | Yes |
 | Showcases | `/showcases/` | Yes |
-| Benchmarks | `/benchmarks/` | Dev only, a placeholder |
+| Benchmarks | `/benchmarks/` | Yes |
 
 `src/site.ts` lists the pages; one marked `dev` is built, linked from the
 header, the footer and the home page's next steps, and marked with a dot
-only by the dev server. Publishing a page means filling it and dropping
-`dev`.
+only by the dev server, until it is filled and published.
 
 Each page but the docs is a file in `src/pages/[...lang]/` whose
 `getStaticPaths` is `langPaths(id)`: English at the base, Chinese under
@@ -71,6 +70,14 @@ English document's file name; they give the name, the paragraph, an
 optional screenshot and the details that read differently, such as a
 component's `kind`. A language without a translation shows English, and
 the page marks that paragraph's language for screen readers.
+
+## Benchmarks
+
+The Benchmarks page shows `benchmark/results/`, which `benchmark/runner`
+writes on each desktop ([benchmark](../benchmark/README.md)): bar charts a
+case, with a switch beside each case's title that shows every case on one
+desktop, and a table of where each framework runs, whose rows are in
+`src/lib/benchmarks.ts`. A desktop without results says so.
 
 ## Docs
 

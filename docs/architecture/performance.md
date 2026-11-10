@@ -45,7 +45,7 @@ Apple platforms read memory with `proc_pid_rusage`'s physical footprint; macOS r
 
 ## Keeping frames cheap
 
-Every frame runs the commit on the engine goroutine and, on the main thread, the batch, the tick and the drawing of what changed. `bench/quotes` measures these paths ([benchmarks](../../bench/README.md)); compare its `CPU per commit`, and the panel's `MAIN` and `CORE`, before and after changing them. The core's own benchmarks (`go test ./core -run '^$' -bench .`) time commits on the approximate text engine, as NSH's `bench_view_tick` and `bench_high_frequency` do:
+Every frame runs the commit on the engine goroutine and, on the main thread, the batch, the tick and the drawing of what changed. The quotes and list cases of `benchmark/` measure these paths against other frameworks ([benchmarks](../../benchmark/README.md)); compare their CPU, and the panel's `MAIN` and `CORE`, before and after changing them. The core's own benchmarks (`go test ./core -run '^$' -bench .`) time commits on the approximate text engine, as NSH's `bench_view_tick` and `bench_high_frequency` do:
 
 | Benchmark | Per commit, M1 Max | Items |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ Every frame runs the commit on the engine goroutine and, on the main thread, the
 
 - A commit visits only what changed, lays out only what changes reach, and skips texts that measure as before ([commit](core.md#commit)). Text sizes are cached per engine ([text](text.md#text-and-drawing)) and lists pace their binds ([lists](scrolling.md#lists)).
 
-- The engine's OS thread has the main thread's quality of service on Apple platforms (`engine.Options.Thread`, `apple.RaiseThread`), as NSH's does: at the default class macOS may run it on efficiency cores. Raised, `bench/quotes` commits about 15% faster, and steadily under load.
+- The engine's OS thread has the main thread's quality of service on Apple platforms (`engine.Options.Thread`, `apple.RaiseThread`), as NSH's does: at the default class macOS may run it on efficiency cores. Raised, a 40-row quote table ticking every frame commits about 15% faster, and steadily under load.
 - The cores clock down between frames, so a commit in the app takes longer than the same work in a Go benchmark; measure a change both ways.
 - A commit allocates only what it sends: compare a node's values on the stack and copy them into an item once they changed, and prepare a text from the node's own copy, which an interface call would otherwise move to the heap. Flex layout reuses its item buffers and each container its list of out-of-flow boxes (`State.spare`), which a table's absolutely placed cells allocated per row every layout. The reactive graph links a computation and a source with one slice of pairs a side, and effects keep their function without a wrapper: half the objects the collector marks of a table's cells.
 - A new view's default style, empty props and empty event mask are not sent ([mount protocol](core.md#mount-protocol)): the gallery's start went from 4,605 items to 3,186, and opening the DataTable at 1200×800 from 13,763 to 11,676.

@@ -78,7 +78,6 @@ var layers = []struct {
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
 	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "widget", "examples/"}},
-	{"bench/", []string{"", "core", "base/", "mobile", "desktop", "icons/"}},
 	// The nsgo tool links no component or runtime, so changing them does
 	// not build it again; it writes TSX declarations by running the app.
 	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/bundler", "tsx/pkg"}},

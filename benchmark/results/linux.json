@@ -1,0 +1,133 @@
+{
+  "date": "2026-11-10",
+  "machine": {
+    "os": "linux",
+    "arch": "amd64",
+    "cpu": "AMD Ryzen 9 6900HX with Radeon Graphics",
+    "memory": 31247392768
+  },
+  "runs": 3,
+  "seconds": 10,
+  "versions": {
+    "gpui": "gpui-kit 0.9.1, gpui-pre 0.3.12",
+    "gpui-fast": "gpui-kit 0.9.1, gpui-fast 0.1.14",
+    "mygo": "v0.8.3",
+    "nsgo": "03896f1",
+    "nsh": "0.4.0"
+  },
+  "size": {
+    "gpui": 38737936,
+    "gpui-fast": 41107856,
+    "mygo": 10480416,
+    "nsgo": 7895488,
+    "nsh": 40097112
+  },
+  "cases": {
+    "counter": {
+      "gpui": {
+        "startup": 96.3,
+        "memory": 39224320,
+        "cpu": 0
+      },
+      "gpui-fast": {
+        "startup": 97.3,
+        "memory": 53777408,
+        "cpu": 0
+      },
+      "mygo": {
+        "startup": 98.1,
+        "memory": 70514688,
+        "cpu": 0
+      },
+      "nsgo": {
+        "startup": 81.2,
+        "memory": 47592448,
+        "cpu": 0
+      },
+      "nsh": {
+        "startup": 90,
+        "memory": 49953792,
+        "cpu": 0
+      }
+    },
+    "list": {
+      "gpui": {
+        "startup": 80.1,
+        "memory": 52577280,
+        "cpu": 6.5,
+        "compositor": 4.1,
+        "fps": 60
+      },
+      "gpui-fast": {
+        "startup": 93.6,
+        "memory": 58565632,
+        "cpu": 5.7,
+        "compositor": 4.1,
+        "fps": 60
+      },
+      "mygo": {
+        "startup": 85.8,
+        "memory": 85861376,
+        "cpu": 8.1,
+        "compositor": 3.1,
+        "fps": 60
+      },
+      "nsgo": {
+        "startup": 82.4,
+        "memory": 56001536,
+        "cpu": 9.6,
+        "compositor": 3.8,
+        "fps": 61.2
+      },
+      "nsh": {
+        "startup": 94.6,
+        "memory": 52085760,
+        "cpu": 6.6,
+        "compositor": 4.4,
+        "fps": 60
+      }
+    },
+    "quotes": {
+      "gpui": {
+        "startup": 79.6,
+        "memory": 54772736,
+        "cpu": 17.1,
+        "compositor": 4.1,
+        "fps": 60
+      },
+      "gpui-fast": {
+        "startup": 86.5,
+        "memory": 59315200,
+        "cpu": 11,
+        "compositor": 4.1,
+        "fps": 60
+      },
+      "mygo": {
+        "startup": 86.6,
+        "memory": 93316096,
+        "cpu": 12.3,
+        "compositor": 3.3,
+        "fps": 60
+      },
+      "nsgo": {
+        "startup": 87.8,
+        "memory": 61109248,
+        "cpu": 20.3,
+        "compositor": 3.7,
+        "fps": 60
+      },
+      "nsh": {
+        "startup": 90.7,
+        "memory": 55459840,
+        "cpu": 15,
+        "compositor": 4.4,
+        "fps": 60
+      }
+    }
+  },
+  "compositorAtRest": {
+    "counter": 0,
+    "list": 0,
+    "quotes": 0
+  }
+}

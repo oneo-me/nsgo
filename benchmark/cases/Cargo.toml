@@ -1,0 +1,8 @@
+[package]
+name = "cases"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Its own workspace, apart from any around it.
+[workspace]

@@ -13,7 +13,7 @@ export const pages: { id: PageId; path: string; dev?: boolean }[] = [
   { id: 'docs', path: 'docs/' },
   { id: 'components', path: 'components/' },
   { id: 'showcases', path: 'showcases/' },
-  { id: 'benchmarks', path: 'benchmarks/', dev: true },
+  { id: 'benchmarks', path: 'benchmarks/' },
 ];
 
 export function shown(id: PageId): boolean {
@@ -64,6 +64,8 @@ export const links = {
   cases: `${repo}/tree/main/docs/public/cases`,
   /** The folder a contributor adds a component to. */
   components: `${repo}/tree/main/docs/public/components`,
+  /** The Benchmarks page's apps and runner. */
+  benchmark: `${repo}/tree/main/benchmark`,
   blog: 'https://oneo.me',
   x: 'https://x.com/oneo666',
   nsh: 'https://github.com/longbridge/nsh',

@@ -1,0 +1,19 @@
+[package]
+name = "nsgo-benchmark-gpui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Its own workspace, apart from any around it.
+[workspace]
+
+[dependencies]
+gpui-kit = "0.9.1"
+cases = { path = "../cases" }
+
+[features]
+# GPUI Kit on GPUI Fast rather than upstream GPUI's snapshot.
+fast = ["gpui-kit/gpui-fast"]
+
+[profile.release]
+strip = true

@@ -37,7 +37,7 @@ go tool nsgo check                 # 检查所有包
 go tool nsgo check -target all     # 同时为每个目标平台检查
 go tool nsgo test                  # 运行所有包的测试
 go tool nsgo test -bench . ./core  # core 的基准测试
-bench/run.sh                       # 测量行情表基准
+(cd benchmark && go run ./runner)  # 与其他框架对比测量
 ```
 
 ## NSH
