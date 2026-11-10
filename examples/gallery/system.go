@@ -572,7 +572,7 @@ func clipboardCard(cx *core.Scope) core.Node {
 		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn}
 	}
 	return Card{Title: tr.SystemClipboard(), Description: tr.SystemTextImagesAndTheFiles(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
-		ui.Input{Input: base.Input{Value: clip.Get, OnChange: clip.Set, Label: tr.SystemClipboardText()}},
+		ui.Input{Value: clip.Get, OnChange: clip.Set, Label: tr.SystemClipboardText()},
 		ui.Wrap{Children: []core.Node{
 			ui.Button{Text: tr.SystemCopyText(), Size: ui.SizeSmall, OnPress: func() { cx.SetClipboard(clip.GetUntracked()) }},
 			small(tr.SystemPasteText(), func() { cx.ReadClipboard(func(s string) { status.Set(tr.SystemText() + s) }) }),

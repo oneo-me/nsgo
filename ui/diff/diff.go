@@ -14,7 +14,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// View is diff.DiffView in ui's look, as Onevra's: 12 point text on 18
+// View is diff.DiffView in ui's look: 12 point text on 18
 // point lines (FontSize and LineHeight replace them), added and deleted
 // lines tinted across their gutters in MyGo's change colors, in the darker
 // appearance more, the words changed in them over the tint, a solid bar on

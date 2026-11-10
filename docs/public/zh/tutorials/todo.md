@@ -22,7 +22,7 @@ go tool nsgo dev
 
 生成的应用是一个计数器。把 `app.go` 的全部内容替换为：
 
-```go
+```go program height=480
 package main
 
 import (
@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 	"github.com/oneo-me/nsgo/ui"
@@ -102,8 +101,8 @@ func Root(cx *core.Scope) core.Node {
 		Children: []core.Node{
 			ui.Text("待办", 28, ui.Bold, colors.Text),
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-				ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "要做什么？",
-					OnSubmit: func(string) { add() }, TestID: "draft", Style: core.Style{FlexGrow: 1}}},
+				ui.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "要做什么？",
+					OnSubmit: func(string) { add() }, TestID: "draft", Style: core.Style{FlexGrow: 1}},
 				ui.Button{Text: "添加", Icon: lucide.Plus, OnPress: add, TestID: "add"},
 			}},
 			ui.Textf(func() string { return fmt.Sprintf("%d 项未完成", left()) }, 13, ui.Regular, colors.Muted),

@@ -64,7 +64,7 @@ func mono(content string, color core.Color) core.Node {
 
 // Root is the app: the dial, the ring and what steers it.
 func Root(cx *core.Scope) core.Node {
-	theme := ui.DefaultTheme()
+	theme := core.DefaultTheme()
 	theme.Light.Accent, theme.Light.Colors["accentFill"] = ink, ink
 	cx.SetTheme(theme)
 

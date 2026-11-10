@@ -5,7 +5,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// Switch is an on and off switch in Onevra's look: base.Switch, the knob
+// Switch is an on and off switch in ui's look: base.Switch, the knob
 // sliding across and the track changing color on the platform. Label is
 // what assistive technology reads.
 type Switch struct {
@@ -24,7 +24,7 @@ func (s Switch) Render(cx *core.Scope) core.Node {
 		TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb}
 }
 
-// SwitchLook is Onevra's switch as the styles of base.Switch's parts: a
+// SwitchLook is ui's switch as the styles of base.Switch's parts: a
 // track that turns to the accent and a capsule knob that slides across,
 // both on the platform.
 type SwitchLook struct {

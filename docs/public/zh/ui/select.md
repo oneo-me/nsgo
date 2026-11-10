@@ -7,7 +7,7 @@ order: 36
 
 `ui.Select[T]` 从一组任意可比较类型的值中选一个。桌面端列表在触发器下方打开；触摸屏上它是一个 sheet。
 
-```go
+```go preview=select/basic height=280
 size := core.NewSignal(cx, "m")
 ui.Select[string]{
 	Options:  []ui.Option[string]{{Value: "s", Label: "小"}, {Value: "m", Label: "中"}, {Value: "l", Label: "大"}},
@@ -21,7 +21,7 @@ ui.Select[string]{
 
 `Options` 由 `ui.Option[T]` 组成，每项有 `Value`、`Label`，以及可选的 `Icon`、`Disabled` 函数或应用自己的 `Content`。未选择时显示 `Placeholder`。`Searchable` 允许输入过滤列表，`OnClear` 显示清除按钮，`Disabled` 停用它。
 
-```go
+```go preview=select/searchable height=400
 ui.Select[string]{
 	Options:           languages,
 	Value:             language.Get,

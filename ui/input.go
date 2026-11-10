@@ -5,15 +5,15 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// Input is a base.Input styled as Onevra's text box, 28 pt tall, or
-// Multiline growing from three lines: its rim darker under the pointer
-// and the accent while focused.
-type Input struct{ Input base.Input }
+// Input is the platform's text field with base.Input's fields, styled as
+// a text box 28 pt tall, or Multiline growing from three lines: its rim
+// darker under the pointer and the accent while focused.
+type Input base.Input
 
 // Render implements core.Node.
 func (f Input) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	in := f.Input
+	in := base.Input(f)
 	focused := core.NewSignal(cx, false)
 	onFocus, onBlur := in.OnFocus, in.OnBlur
 	in.OnFocus = func() {

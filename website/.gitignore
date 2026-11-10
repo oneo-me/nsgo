@@ -1,5 +1,8 @@
 node_modules/
 dist/
 .astro/
-.gallery-build/
+.web-build/
+.apps-build/
 public/gallery/
+public/previews/
+public/programs/

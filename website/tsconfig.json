@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "public/gallery"],
+  "exclude": ["dist", "public/gallery", "public/previews", "public/programs"],
   "compilerOptions": {
     "noUnusedLocals": true,
     "noUnusedParameters": true,

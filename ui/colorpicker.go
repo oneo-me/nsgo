@@ -23,10 +23,10 @@ const (
 	colorCheckers core.Color  = 0xcdcdcdff
 )
 
-// ColorPicker is Onevra's color view: a saturation and brightness plane,
+// ColorPicker is a color view: a saturation and brightness plane,
 // hue and opacity sliders, the fields in RGB, HSB or HSL, hex and opacity,
 // and a menu that copies the color, 256 pt wide: base.ColorPicker's parts
-// in a look. Beyond Onevra's, an eyedropper shows where the platform has
+// in a look. An eyedropper shows where the platform has
 // one (core.Env.CanPickScreenColor).
 type ColorPicker struct {
 	Value        func() core.Color
@@ -153,7 +153,7 @@ func colorHexField(cx *core.Scope) core.Node {
 			}}}}
 }
 
-// ColorWell is Onevra's color picker: a swatch 48 × 32 that opens a
+// ColorWell is a color picker: a swatch 48 × 32 that opens a
 // ColorPicker beside it.
 type ColorWell struct {
 	Value func() core.Color

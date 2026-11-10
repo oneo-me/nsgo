@@ -20,7 +20,7 @@ func scrollbarLook(cx *core.Scope, horizontal bool) *base.ScrollbarLook {
 		}}
 }
 
-// ScrollbarTheme is Onevra's bars for every scroll view and list, which
+// ScrollbarTheme is ui's bars for every scroll view and list, which
 // base.SetScrollbarTheme installs over the platform's indicators: they
 // show while a view scrolls, as the platforms' overlay scrollers do, and
 // fade out.
@@ -29,7 +29,7 @@ func ScrollbarTheme(cx *core.Scope) *base.ScrollbarTheme {
 		Vertical: scrollbarLook(cx, false), Horizontal: scrollbarLook(cx, true)}
 }
 
-// Scrollbar is a bar of Onevra's look for a scroll view or list it names,
+// Scrollbar is a bar of ui's look for a scroll view or list it names,
 // which the app places over the target's edge. The app turns the target's
 // own indicator off with HideIndicator.
 type Scrollbar struct {

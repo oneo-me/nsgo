@@ -54,7 +54,7 @@ func greet(names ...string) string {
 }
 ` + filler + `
 func main() {
-	fmt.Println(greet("MyGo", "Onevra"))
+	fmt.Println(greet("MyGo", "NSGo"))
 }
 `
 

@@ -79,7 +79,7 @@ var clearStyle = core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: co
 // searchField is a list's search field: ui's Input.
 func searchField(in core.Input) core.Node {
 	in.Style = in.Style.Merge(core.Style{Margin: core.Edges{Bottom: 4}})
-	return Input{Input: in}
+	return Input(in)
 }
 
 // emptyList is what a list shows while nothing matches.

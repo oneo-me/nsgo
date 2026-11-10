@@ -7,8 +7,8 @@ import (
 )
 
 // Colors are ui's colors where a scope is: each method reads its
-// color from the palette shown there, the theme's roles under the
-// ui's names and the ones DefaultTheme adds. A StyleFunc or Draw that
+// color from the palette shown there, the theme's roles under ui's
+// names and the ones core.DefaultTheme adds to Palette.Colors. A StyleFunc or Draw that
 // calls one follows the palette; a method value (colors.Muted) is a
 // color to hand to what reads it so.
 type Colors struct{ cx *core.Scope }
@@ -111,29 +111,6 @@ func Themed[T any](cx *core.Scope, build func() T) func() T {
 // Fixed is c as a color to hand to what takes one that may change.
 func Fixed(c core.Color) func() core.Color { return func() core.Color { return c } }
 
-// DefaultTheme returns ui's default theme: neutral grays and a blue accent
-// (core.DefaultTheme), with the roles ui adds in Palette.Colors, each
-// derived from Onevra's as its components derive theirs: insets and
-// tracks recess with the text's color, fields take the border, hairlines
-// a fainter text color, Light is the inverse of the page. WarmDuskTheme
-// is the other built-in theme.
-func DefaultTheme() *core.Theme {
-	t := core.DefaultTheme()
-	t.Light.Colors = map[string]core.Color{
-		"inset": core.RGB(0xf1f1f1), "raised": core.RGB(0xffffff), "field": core.RGB(0xfdfdfd), "fieldBorder": t.Light.Border,
-		"line": t.Light.Text.Faded(0.12), "faint": t.Light.Text.Faded(0.38), "accentFill": core.RGB(0x007aff),
-		"light": core.RGB(0x333333), "onLight": core.RGB(0xffffff), "track": t.Light.Text.Faded(0.25), "knob": core.RGB(0xffffff),
-		"code": core.RGB(0x373737), "info": core.RGB(0x0891b2), "down": core.RGB(0xb4444c),
-	}
-	t.Dark.Colors = map[string]core.Color{
-		"inset": core.RGB(0x282828), "raised": core.RGB(0x333333), "field": core.RGB(0x242424), "fieldBorder": t.Dark.Border,
-		"line": t.Dark.Text.Faded(0.10), "faint": t.Dark.Text.Faded(0.38), "accentFill": core.RGB(0x0a84ff),
-		"light": core.RGB(0xeaeaea), "onLight": core.RGB(0x1f1f1f), "track": t.Dark.Text.Faded(0.28), "knob": core.RGB(0xf5f5f5),
-		"code": core.RGB(0xdddddd), "info": core.RGB(0x64d2ff), "down": core.RGB(0xe58f95),
-	}
-	return t
-}
-
 // Tints are translucent tints of the tones where a scope is, for fills
 // behind text, read as ColorsOf's are.
 type Tints struct{ cx *core.Scope }
@@ -205,9 +182,9 @@ func (f Fins) Glass() Finish { return f.floating(f.shown().glass) }
 func (f Fins) Menu() Finish { return f.floating(f.shown().menu) }
 
 // Dialog is a modal panel over the dim: a deeper shadow than a menu's and
-// a solid rim, the page's color mixed with the text's as Onevra's is, as a
+// a solid rim, the page's color mixed with the text's, as a
 // translucent one sinks into the dim and the shadow under it. Light takes
-// more of the text: at Onevra's mix its rim is the dimmed page's gray.
+// more of the text: at that mix its rim is the dimmed page's gray.
 func (f Fins) Dialog() Finish {
 	p := f.cx.Palette()
 	fin := f.floating(f.shown().dialog)
@@ -259,7 +236,7 @@ func (f Finish) Style() core.Style {
 // Over merges the finish into s, keeping what s sets.
 func (f Finish) Over(s core.Style) core.Style { return f.Style().Merge(s) }
 
-// finishes are Onevra's: flat surfaces, a hairline shadow under raised
+// finishes are NSGo's: flat surfaces, a hairline shadow under raised
 // controls and the knob, and a soft one under what floats. Fins gives
 // what floats the theme's colors.
 type finishes struct {

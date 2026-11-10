@@ -10,7 +10,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// Palette is a theme's colors in one appearance. Its roles are Onevra's;
+// Palette is a theme's colors in one appearance. Its roles are NSGo's;
 // Colors holds the ones a component library or an app adds, by name.
 type Palette struct {
 	// Background is the page; Surface a card or control on it, under
@@ -138,8 +138,12 @@ func (t *Theme) Clone() *Theme {
 	return &c
 }
 
-// DefaultTheme returns Onevra's theme, which a tree shows until the app
-// sets one: warm neutrals with a terracotta accent, lifted in dark.
+// DefaultTheme returns NSGo's theme, which a tree shows until the app
+// sets one: neutral grays with a blue accent. Its Colors hold shadcn/ui's
+// tokens, which theme files and classes name, and the roles package ui's
+// components read (ui.Colors): insets and tracks recess with the text's
+// color, fields take the border, hairlines a fainter text color, light
+// is the inverse of the page.
 func DefaultTheme() *Theme {
 	text, dark := RGB(0x333333), RGB(0xeaeaea)
 	t := &Theme{
@@ -169,12 +173,28 @@ func DefaultTheme() *Theme {
 			t.Dark.SetColor(name, c)
 		}
 	}
+	for name, c := range map[string]Color{
+		"inset": RGB(0xf1f1f1), "raised": RGB(0xffffff), "field": RGB(0xfdfdfd), "fieldBorder": t.Light.Border,
+		"line": text.Faded(0.12), "faint": text.Faded(0.38), "accentFill": RGB(0x007aff),
+		"light": RGB(0x333333), "onLight": RGB(0xffffff), "track": text.Faded(0.25), "knob": RGB(0xffffff),
+		"code": RGB(0x373737), "info": RGB(0x0891b2), "down": RGB(0xb4444c),
+	} {
+		t.Light.SetColor(name, c)
+	}
+	for name, c := range map[string]Color{
+		"inset": RGB(0x282828), "raised": RGB(0x333333), "field": RGB(0x242424), "fieldBorder": t.Dark.Border,
+		"line": dark.Faded(0.10), "faint": dark.Faded(0.38), "accentFill": RGB(0x0a84ff),
+		"light": RGB(0xeaeaea), "onLight": RGB(0x1f1f1f), "track": dark.Faded(0.28), "knob": RGB(0xf5f5f5),
+		"code": RGB(0xdddddd), "info": RGB(0x64d2ff), "down": RGB(0xe58f95),
+	} {
+		t.Dark.SetColor(name, c)
+	}
 	return t
 }
 
 // shadcnLight and shadcnDark are shadcn/ui's neutral tokens, NSH's
-// defaults, which a theme file replaces. Those that name a role of
-// Onevra's (background, border, accent) keep Onevra's.
+// defaults, which a theme file replaces. Those that name a role of the
+// palette's (background, border, accent) keep NSGo's.
 var shadcnLight = map[string]Color{
 	"foreground": RGB(0x0a0a0a), "card": RGB(0xffffff), "card-foreground": RGB(0x0a0a0a), "popover": RGB(0xffffff),
 	"popover-foreground": RGB(0x0a0a0a), "primary": RGB(0x171717), "primary-foreground": RGB(0xfafafa),

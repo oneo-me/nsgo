@@ -9,7 +9,7 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Tree is base.Tree in Onevra's look: the app's nested items in rows
+// Tree is base.Tree in ui's look: the app's nested items in rows
 // indented by depth, each branch with a chevron that expands it, as a
 // double press does. It keeps no state: the app says which keys are
 // expanded and sets them from OnExpand, and only the children of what is

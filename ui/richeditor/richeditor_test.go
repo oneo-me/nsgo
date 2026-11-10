@@ -7,7 +7,6 @@ import (
 	"github.com/oneo-me/nsgo/base/richeditor"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/ui"
 	uirich "github.com/oneo-me/nsgo/ui/richeditor"
 )
 
@@ -20,7 +19,7 @@ func TestViewTakesTyping(t *testing.T) {
 		t.Fatal(err)
 	}
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		cx.SetTheme(ui.DefaultTheme())
+		cx.SetTheme(core.DefaultTheme())
 		return uirich.View{Editor: s, Label: "Doc", Style: core.Style{Width: core.Pt(360), Height: core.Pt(400)}}
 	})
 	app.Find("text:Title")

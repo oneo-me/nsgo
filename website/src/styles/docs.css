@@ -327,6 +327,35 @@
   margin: 0;
 }
 
+/* A live preview sits on the code block it runs, which joins it below. The
+   app fills the box; until it runs, the box says why it is empty. */
+.live {
+  position: relative;
+  height: var(--live-height);
+  margin-top: 4px;
+  overflow: hidden;
+  border: 1px solid var(--editor-border);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  background: var(--soft);
+}
+
+.live[data-status]:not(.is-running)::before {
+  content: attr(data-status);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+  font-size: 13px;
+}
+
+.live + .prose__code pre,
+.live + pre {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 .prose__copy {
   position: absolute;
   top: 6px;

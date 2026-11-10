@@ -14,7 +14,7 @@ NSGo is one Go module. Apps import its packages from the top; each platform's ba
 | `nsgo` (the root) | `nsgo.Run` and `nsgo.NewView`, picking a backend by build tags |
 | `core` | The app's API: elements, styles, classes, themes, signals and services; layout and text preparation |
 | `base` | Unstyled components, a file each, and complex ones as packages (`base/dock`, `base/editor`) |
-| `ui` | `base`'s components in Onevra's look, and packages such as `ui/chat` |
+| `ui` | `base`'s components with a look, and packages such as `ui/chat` |
 | `mobile`, `desktop` | What only phones or only desktops have |
 | `tsx` | TSX apps, their bundler and compiler, and the modules they import |
 | `i18n`, `*/locales` | Message catalogs and the code generated from them |

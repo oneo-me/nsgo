@@ -7,7 +7,7 @@ order: 40
 
 `ui.Tabs[T]` 以分段控件或标签列表的形式从几个值中选一个，应用在旁边显示所选值的内容。标签列表是一个 Tab 停靠点：方向键在其中移动。
 
-```go
+```go preview=tabs/basic
 section := core.NewSignal(cx, "overview")
 ui.Tabs[string]{
 	Options: []ui.Option[string]{
@@ -25,7 +25,7 @@ ui.Tabs[string]{
 
 `Variant` 是 `TabsSegmented`（默认，凸起的指示块在凹陷轨道中）或 `TabsUnderline`（选中标签下方的强调线）。`Size` 是 `SizeDefault`、`SizeSmall` 或 `SizeLarge`，`Equal` 让每个标签等宽，而不是按标签文字适应。
 
-```go
+```go preview=tabs/underline
 ui.Tabs[string]{Variant: ui.TabsUnderline, Equal: true, Size: ui.SizeSmall, Options: tabs, Value: section.Get, OnChange: section.Set}
 ```
 

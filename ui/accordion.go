@@ -17,7 +17,7 @@ type AccordionItem struct {
 }
 
 // Accordion is a bordered box of sections divided by hairlines, as
-// Onevra's, on base.Accordion: each title a heading over a button, each
+// ui's, on base.Accordion: each title a heading over a button, each
 // panel a region that springs open. The app keeps which are open: one at a
 // time, or any.
 type Accordion struct {

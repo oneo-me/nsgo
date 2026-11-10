@@ -7,7 +7,7 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Command is a command palette as Raycast's and Onevra's: a bare search
+// Command is a command palette as Raycast's: a bare search
 // field over the app's commands, ranked as they match and under their
 // sections, the first one lit and Return running it. A row shows an icon,
 // a label with a description, and the item's Trailing and shortcut at its

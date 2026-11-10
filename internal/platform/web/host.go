@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall/js"
 
+	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/engine"
 )
 
@@ -23,9 +24,14 @@ import (
 //	openURL(id, url)        a URL the app opens, answered with opened, or
 //	                        absent when the host routes none
 //	events                  what the page sent before the app ran
+//	environment             the page's settings, as the native hosts'
+//	                        (engine.HostEnvironment): appearance,
+//	                        locale and fontScale
 //
-// The app sets deliver(name, data), which hears each event the page
-// sends, and reply(id, ok, value) and opened(id, handled).
+// call is absent when the page has no host to answer; the app's calls
+// then fail. The app sets deliver(name, data), which hears each event the
+// page sends, setEnvironment(data), which takes the page's settings from
+// then on, and reply(id, ok, value) and opened(id, handled).
 
 // pageHost is the app's end of the bridge.
 type pageHost struct {
@@ -37,9 +43,10 @@ type pageHost struct {
 	urls   map[int]func(bool)
 }
 
-// connectHost returns the channel the bridge in global feeds; without one
-// the app runs with no host.
-func connectHost(global string) engine.HostOptions {
+// connectHost returns the channel and the settings the bridge in global
+// feeds; without one the app runs with no host. apply hears each change
+// of the settings.
+func connectHost(global string, apply func(engine.HostEnvironment)) engine.HostOptions {
 	if global == "" {
 		return engine.HostOptions{}
 	}
@@ -56,7 +63,19 @@ func connectHost(global string) engine.HostOptions {
 		}
 		h.ch.SetParams(params)
 	}
-	h.ch.HandleDefault(h.call)
+	settings := &engine.HostSettings{}
+	if e := bridge.Get("environment"); e.Type() == js.TypeString {
+		settings.Environment = hostEnvironment(e.String())
+		apply(settings.Environment)
+	}
+	h.set("setEnvironment", func(args []js.Value) {
+		env := hostEnvironment(args[0].String())
+		settings.SetEnvironment(env)
+		apply(env)
+	})
+	if bridge.Get("call").Type() == js.TypeFunction {
+		h.ch.HandleDefault(h.call)
+	}
 	if bridge.Get("openURL").Type() == js.TypeFunction {
 		h.ch.HandleOpenURL(h.openURL)
 	}
@@ -95,7 +114,27 @@ func connectHost(global string) engine.HostOptions {
 		}
 		bridge.Set("events", js.Null())
 	}
-	return engine.HostOptions{Channel: h.ch}
+	return engine.HostOptions{Channel: h.ch, Settings: settings}
+}
+
+// hostEnvironment reads the page's settings, JSON text.
+func hostEnvironment(data string) engine.HostEnvironment {
+	var page struct {
+		Appearance string  `json:"appearance"`
+		Locale     string  `json:"locale"`
+		FontScale  float32 `json:"fontScale"`
+	}
+	if err := json.Unmarshal([]byte(data), &page); err != nil {
+		log.Printf("nsgo: the page's settings: %v", err)
+	}
+	env := engine.HostEnvironment{Locale: page.Locale, FontScale: page.FontScale}
+	switch page.Appearance {
+	case "light":
+		env.Appearance = driver.AppearanceLight
+	case "dark":
+		env.Appearance = driver.AppearanceDark
+	}
+	return env
 }
 
 // set gives the bridge fn as its method name, for the page's life.

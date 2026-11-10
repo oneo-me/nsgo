@@ -161,7 +161,7 @@ When the app ends by itself, and which of its windows a close keeps, is its shut
 Package `desktop` is NSH's `nsh/desktop`: native controls, an app-drawn title bar, and the menus below. Its functions call the `Scope` methods of the same names, the core's part.
 
 - `SetTitleBar` hides the system title bar and gives the app's bar its height, in which the platform centers its controls. `TitleBar` then reports the area they keep, and views with `Desktop.WindowDrag` drag the window.
-- macOS centers the traffic lights in the bar, 16 points from the left, as Onevra does; Windows draws Onevra's rounded caption buttons; Linux reports the bar's height and the app draws its buttons.
+- macOS centers the traffic lights in the bar, 16 points from the left; Windows draws rounded caption buttons of NSGo's; Linux reports the bar's height and the app draws its buttons.
 - `SetWindowControls` hides those controls for the app's own, or moves the traffic lights, as Electron's `trafficLightPosition` does: the close button's top left from the window's, zero X or Y keeping the default.
 - macOS 27's AppKit puts the traffic lights back whenever it lays the title bar out, without a notification, so NSGo's `NSWindow` subclass places them after each `layoutIfNeeded`. Hiding and showing them makes AppKit place them again once the app's position goes, as Electron's `window_buttons_proxy.mm` notes.
 - `Maximized` reports a maximized or zoomed window, so an app-drawn maximize button can show restore, and `FullScreen` one in full screen.

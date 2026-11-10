@@ -211,7 +211,7 @@ func (s ToastSwipe) direction(p ToastPlacement, rtl bool) toast.SwipeDirection {
 	return toast.SwipeDown
 }
 
-// Toasts is Onevra's toasts, a Toaster's, over the window inside the safe
+// Toasts is ui's toasts, a Toaster's, over the window inside the safe
 // area: glass cards up to 360 points wide, the newest in front and older
 // ones tucked behind it, fanning out under the pointer or a finger.
 // Reverse puts the newest farthest from the edge, as a list growing away

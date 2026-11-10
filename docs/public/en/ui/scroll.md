@@ -7,7 +7,7 @@ order: 39
 
 `core.Scroll` is the platform's own scroll view. Its children are laid out in a column, or a row with `Horizontal`, and it fills its container while the content scrolls.
 
-```go
+```go preview=scroll/basic height=240
 core.Scroll{Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 	core.View{Style: core.Style{Padding: core.All(16), Gap: 12}, Children: rows},
 }}
@@ -19,7 +19,7 @@ The padding goes on the content, not the scroll view, so the scroll bar stays ag
 
 `Behavior` chooses how it scrolls: `Paging`, `SnapToInterval` or `SnapToOffsets` with `SnapToAlignment`, a `DecelerationRate`, `NoBounces`, `ContentInset`, and the keyboard's rules.
 
-```go
+```go preview=scroll/paging height=240
 core.Scroll{
 	Behavior: core.ScrollBehavior{
 		Paging:                    true,

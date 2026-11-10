@@ -10,7 +10,7 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// NumberInput is base.NumberInput in Onevra's look, with buttons stacked at
+// NumberInput is base.NumberInput in ui's look, with buttons stacked at
 // its end on desktops, a minus and a plus on touch screens. What is typed
 // is read as the field is left or Return pressed, and kept to the range
 // and the step; text that is no number gives the value back. A drag across
@@ -96,7 +96,7 @@ func (n NumberInput) Render(cx *core.Scope) core.Node {
 	return n.look(cx, in)
 }
 
-// look is in in Onevra's look: what a base form with a number input of its
+// look is in in ui's look: what a base form with a number input of its
 // own takes, a scrub handle it brings included.
 func (n NumberInput) look(cx *core.Scope, in base.NumberInput) base.NumberInput {
 	colors := ColorsOf(cx)

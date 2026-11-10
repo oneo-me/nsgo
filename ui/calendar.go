@@ -11,7 +11,7 @@ import (
 )
 
 // Calendar is a month of days to pick a date from, or with Range a start
-// and an end, in Onevra's fixed-size look: a selected day in the accent,
+// and an end, in a fixed-size look: a selected day in the accent,
 // today ringed, the days around the month muted. Its title toggles jump to
 // months and years, and its days are one Tab stop whose keys move through
 // them, turning the months.
@@ -45,7 +45,7 @@ func calendarStyle(months int) core.Style {
 	return core.Style{Width: core.Pt(n*calendarWidth + (n-1)*calendarGap)}
 }
 
-// calendarConfig is a calendar's parts in Onevra's look.
+// calendarConfig is a calendar's parts in ui's look.
 func calendarConfig(cx *core.Scope, months, firstDay int, disabled func(time.Time) bool) base.CalendarConfig {
 	colors := ColorsOf(cx)
 	cell := core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: RadiusControl - 2, Disabled: Dimmed()}

@@ -7,7 +7,7 @@ order: 32
 
 `core.Text` is one paragraph typeset by the platform's text engine. `ui.Text` and `ui.Textf` are helpers for a line in `ui`'s type; the element is still a `core.Text`, so it takes `Style` and `Spans` too.
 
-```go
+```go preview=text/basic
 ui.Text("Settings", 20, ui.Bold, colors.Text)
 ui.Textf(func() string { return fmt.Sprintf("%d files", n.Get()) }, 13, ui.Regular, colors.Muted)
 ```
@@ -25,7 +25,7 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", co
 
 `Spans` makes a text of runs, each with a style of its own. A span with `OnPress` is a link, and its `Background` and `CornerRadius` draw behind its characters on every line. `SpansFunc` gives the runs again when what it reads changes, for highlighted code or a changing sentence.
 
-```go
+```go preview=text/spans
 core.Text{Style: core.Style{FontSize: 15}, Spans: []core.Span{
 	{Content: "Read the "},
 	{Content: "guide", Style: core.Style{TextDecoration: core.TextDecorationUnderline}, OnPress: openGuide},
@@ -49,7 +49,7 @@ Register packaged fonts with `nsgo.Fonts` before the first view, or register a f
 
 `base/textview.TextView` shows Markdown or HTML with the same primitives: headings, paragraphs, lists, tables, code, footnotes, alerts, images, formulas and links. `textview.Parse` reads Markdown and `textview.ParseHTML` HTML, and `Options.Streaming` repairs a document still arriving.
 
-```go
+```go preview=text/document height=240
 textview.TextView{Markdown: "## Notes\n\nA **native** document.", Styles: ui.TextViewStyles(cx),
 	OnLinkPress: func(e textview.LinkPressEvent) { open(e.URL) }}
 ```

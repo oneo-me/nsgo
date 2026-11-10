@@ -37,7 +37,7 @@ mount(App);
 
 ## Components and modules
 
-TSX imports the primitives from `nsgo`, `base`'s components from `nsgo/base` and `ui`'s from `nsgo/ui`, once the app imports `tsx/ui` and sets `ui.DefaultTheme`; `examples/gallery-tsx` shows them.
+TSX imports the primitives from `nsgo`, `base`'s components from `nsgo/base` and `ui`'s from `nsgo/ui`, once the app imports `tsx/ui`; `examples/gallery-tsx` shows them.
 
 ## Go from TSX
 

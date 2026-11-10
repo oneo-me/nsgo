@@ -4,9 +4,11 @@
 //   import { mount } from "https://example.com/app/nsgo.0123456789.js";
 //   const player = await mount(element, "https://example.com/app/nsgo.json", {
 //     params: { user: "Ada" },
+//     appearance: "dark",
 //     host: { call(name, args) { ... } },
 //   });
 //   player.hostEvent("message", { text: "Order filled" });
+//   player.setAppearance("light");
 //
 // nsgo.json names the app's files relative to itself. The host answers
 // the app's calls: call(name, args) returns the result or a promise of
@@ -16,6 +18,13 @@
 // the app opens and returns, or resolves with, whether it took one.
 // Without a host option the host is nsgo.json's host module's, whose
 // createHost(player) returns it, or a promise of it.
+//
+// appearance ("light", "dark" or "system"), locale (a BCP 47 tag) and
+// fontScale stand in for the system's, as a native host's settings do;
+// the player's setAppearance, setLocale and setFontScale change them.
+// module, a compiled WebAssembly.Module or a promise of one, spares
+// fetching and compiling the wasm, so a page showing the app many times,
+// or the wasm compressed, compiles it once.
 
 let apps = 0;
 
@@ -27,11 +36,25 @@ export async function mount(element, url, options = {}) {
   const base = new URL(url ?? ".", document.baseURI);
   const config = options.config ?? (await (await fetch(base)).json());
   const at = (name) => new URL(name, base).href;
-  const wasm = fetch(at(config.wasm));
+  const wasm = options.module ? null : fetch(at(config.wasm));
   if (typeof globalThis.Go !== "function") await loadScript(at(config.exec));
 
   const key = `nsgoHost${++apps}`;
-  const bridge = { params: JSON.stringify(options.params ?? {}), events: [] };
+  const environment = {
+    appearance: options.appearance ?? "system",
+    locale: options.locale ?? "",
+    fontScale: options.fontScale ?? 0,
+  };
+  const bridge = {
+    params: JSON.stringify(options.params ?? {}),
+    environment: JSON.stringify(environment),
+    events: [],
+  };
+  const setting = (name) => (value) => {
+    environment[name] = value;
+    bridge.environment = JSON.stringify(environment);
+    bridge.setEnvironment?.(bridge.environment);
+  };
   const player = {
     // hostEvent sends the app an event; a payload that is not JSON
     // throws here.
@@ -41,6 +64,14 @@ export async function mount(element, url, options = {}) {
       if (bridge.deliver) bridge.deliver(String(name), data);
       else bridge.events.push([String(name), data]);
     },
+    // setAppearance shows the app "light" or "dark", or "system" to
+    // follow the system again; an appearance the app forces still wins.
+    setAppearance: setting("appearance"),
+    // setLocale has the app format for a BCP 47 tag, or "" for the
+    // browser's language.
+    setLocale: setting("locale"),
+    // setFontScale sets the text size multiplier, or 0 for the browser's.
+    setFontScale: setting("fontScale"),
   };
   let host = options.host;
   if (host === undefined && config.host) {
@@ -48,9 +79,12 @@ export async function mount(element, url, options = {}) {
     host = await module.createHost?.(player);
     if (typeof host?.call !== "function") throw new Error("the app's host could not be loaded");
   }
+  // An app in an element or with a host has the bridge; one filling the
+  // page alone runs with no host.
+  const bridged = element != null || host != null;
+  if (bridged) globalThis[key] = bridge;
   if (host != null) {
     if (typeof host.call !== "function") throw new TypeError("a host has a call function");
-    globalThis[key] = bridge;
     bridge.call = (id, name, data, post) => {
       const args = JSON.parse(data);
       const fn = post && typeof host.post === "function" ? host.post : host.call;
@@ -91,12 +125,14 @@ export async function mount(element, url, options = {}) {
   }
   go.env = { NSGO_BASE: at(".") };
   if (config.resources) go.env.NSGO_RESOURCES = JSON.stringify(config.resources);
-  if (host != null) go.env.NSGO_HOST = key;
+  if (bridged) go.env.NSGO_HOST = key;
   if (element) {
     element.dataset.nsgoMount = key;
     go.env.NSGO_MOUNT = `[data-nsgo-mount="${key}"]`;
   }
-  const { instance } = await WebAssembly.instantiateStreaming(wasm, go.importObject);
+  const instance = options.module
+    ? await WebAssembly.instantiate(await options.module, go.importObject)
+    : (await WebAssembly.instantiateStreaming(wasm, go.importObject)).instance;
   go.run(instance);
   return player;
 }

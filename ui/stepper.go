@@ -28,7 +28,7 @@ type StepperStep struct {
 	Error       string
 }
 
-// Stepper is Onevra's stepper, where a person is in a flow of steps, for
+// Stepper is a stepper, where a person is in a flow of steps, for
 // onboarding, checkout and setup: completed steps show a check, the
 // current one a ring around its number and failed ones an alert, and the
 // track between them fills up to the current step, one connector after

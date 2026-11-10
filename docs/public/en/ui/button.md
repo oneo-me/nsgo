@@ -5,9 +5,9 @@ group: Components
 order: 31
 ---
 
-`ui.Button` is a push button in Onevra's look, with the variants and sizes a window needs. `OnPress` runs on a completed press.
+`ui.Button` is a push button in `ui`'s look, with the variants and sizes a window needs. `OnPress` runs on a completed press.
 
-```go
+```go preview=button/basic
 ui.Button{Text: "Save", OnPress: save}
 ui.Button{Text: "Cancel", Variant: ui.ButtonSecondary, OnPress: cancel}
 ```
@@ -16,7 +16,7 @@ ui.Button{Text: "Cancel", Variant: ui.ButtonSecondary, OnPress: cancel}
 
 `ui.Button.Variant` is `ButtonPrimary` (the default), `ButtonSecondary`, `ButtonOutline` or `ButtonGhost`. `Size` is `SizeDefault` (28 points), `SizeSmall` (24) or `SizeLarge` (32).
 
-```go
+```go preview=button/variants
 ui.Button{Text: "Delete", Variant: ui.ButtonOutline, OnPress: remove}
 ui.Button{Text: "Continue", Size: ui.SizeLarge, OnPress: next}
 ui.Button{Text: "Save", Icon: lucide.Check, Flex: 1, OnPress: save}
@@ -26,7 +26,7 @@ ui.Button{Text: "Save", Icon: lucide.Check, Flex: 1, OnPress: save}
 
 A button of an icon alone is `ui.IconButton`, with `Variant` `IconButtonGhost` or `IconButtonRaised`, a `Size` in points and a `Label` for assistive technology. A `ui.Button` with `Icon` and no `Text` is a square too, and needs `Label`.
 
-```go
+```go preview=button/icon
 ui.IconButton{Icon: lucide.Trash, Label: "Delete", Variant: ui.IconButtonGhost, OnPress: remove}
 ```
 

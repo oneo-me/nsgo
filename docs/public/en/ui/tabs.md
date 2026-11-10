@@ -7,7 +7,7 @@ order: 40
 
 `ui.Tabs[T]` chooses one of a few values, as a segmented control or a tab list; the app shows the chosen value's content beside it. A tab list is one Tab stop: the arrows move through the tabs.
 
-```go
+```go preview=tabs/basic
 section := core.NewSignal(cx, "overview")
 ui.Tabs[string]{
 	Options: []ui.Option[string]{
@@ -25,7 +25,7 @@ ui.Tabs[string]{
 
 `Variant` is `TabsSegmented` (the default, a raised thumb in a recessed track) or `TabsUnderline` (an accent line under the selected tab). `Size` is `SizeDefault`, `SizeSmall` or `SizeLarge`, and `Equal` gives every tab the same width instead of fitting its label.
 
-```go
+```go preview=tabs/underline
 ui.Tabs[string]{Variant: ui.TabsUnderline, Equal: true, Size: ui.SizeSmall, Options: tabs, Value: section.Get, OnChange: section.Set}
 ```
 

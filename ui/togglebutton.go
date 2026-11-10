@@ -5,7 +5,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// ToggleButton is Onevra's toggle button, 28 pt tall: a quiet bordered
+// ToggleButton is a toggle button, 28 pt tall: a quiet bordered
 // face while off, filled with the accent while On, Text with an optional
 // leading Icon or the Icon alone. A press asks OnChange for the other
 // state; assistive technology hears a toggle button, and in a ToggleGroup

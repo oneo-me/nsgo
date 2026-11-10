@@ -39,7 +39,7 @@ ui.Dialog{
 	OnOpenChange: func(open bool, _ base.Reason) { dialog.Set(open) },
 	Title:        "重命名",
 	Description:  "新名称会显示在所有地方。",
-	Children:     []core.Node{ui.Input{Input: base.Input{Value: name.Get, OnChange: name.Set}}},
+	Children:     []core.Node{ui.Input{Value: name.Get, OnChange: name.Set}},
 	Footer: []core.Node{
 		ui.Button{Text: "取消", Variant: ui.ButtonSecondary, OnPress: func() { dialog.Set(false) }},
 		ui.Button{Text: "保存", OnPress: save},

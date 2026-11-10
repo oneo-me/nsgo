@@ -5,9 +5,9 @@ group: Components
 order: 38
 ---
 
-`ui.List` renders rows on a native scroll view and builds only the rows near the screen, with selection, activation and the keyboard in Onevra's look.
+`ui.List` renders rows on a native scroll view and builds only the rows near the screen, with selection, activation and the keyboard.
 
-```go
+```go preview=list/basic height=280
 ui.List{
 	Count:         func() int { return len(items) },
 	Key:           func(i int) any { return items[i].ID },
@@ -39,7 +39,7 @@ ui.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(cx 
 
 `ui.List` takes a `Selection`, made with `ui.NewSelection(cx, multiple)`. Keys, labels, activation and the keyboard follow it: Up, Down, Home and End move the cursor, Shift extends, Mod+A chooses all, Space toggles in a multiple selection, and Enter or a double click activates a row.
 
-```go
+```go preview=list/selection height=320
 selected := ui.NewSelection(cx, true)
 ui.List{
 	Count: count, Key: func(i int) any { return items[i].ID },

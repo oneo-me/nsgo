@@ -135,7 +135,7 @@ func showTheme(cx *core.Scope, name string) {
 		cx.SetTheme(ui.WarmDuskTheme())
 		return
 	}
-	cx.SetTheme(ui.DefaultTheme())
+	cx.SetTheme(core.DefaultTheme())
 }
 
 // rememberTheme shows the built-in theme chosen last time.

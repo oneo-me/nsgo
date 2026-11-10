@@ -67,7 +67,7 @@ func (c Combobox[T]) Render(cx *core.Scope) core.Node {
 		Offset: 4, Margin: 8, Label: c.Label, TestID: c.TestID, Style: core.Style{Position: core.Relative, AlignItems: core.AlignCenter}.Merge(c.Style),
 		Field: func(in core.Input) core.Node {
 			in.Style = in.Style.Merge(core.Style{FlexGrow: 1, FlexShrink: 1, Padding: core.Edges{Left: 10, Right: 28}})
-			return Input{Input: in}
+			return Input(in)
 		},
 		TriggerButton: Icon(lucide.ChevronDown, iconSize-2, ColorsOf(cx).Muted),
 		TriggerButtonStyle: core.Style{Position: core.Absolute, Top: core.Pt(0), Bottom: core.Pt(0), Right: core.Pt(0), Width: core.Pt(28),

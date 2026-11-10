@@ -11,7 +11,7 @@ import (
 // pixelGridSpacing is the distance between a PixelGrid's lines.
 const pixelGridSpacing = 22
 
-// PixelGrid is a box of Children on Onevra's line grid, turned 45° about
+// PixelGrid is a box of Children on a line grid, turned 45° about
 // its center: the page's background shows through, so a component looks
 // as it does in an app. Only the grid clips to the box.
 type PixelGrid struct {

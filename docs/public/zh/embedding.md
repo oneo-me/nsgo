@@ -137,6 +137,8 @@ player.hostEvent("message", { text: "来自页面的问候" });
 
 没有 `host` 选项时，加载器导入 `nsgo.yaml` 中 `web.host` 指定的模块，并等待它的 `createHost(player)`。元素或框架中的应用把浏览器历史标题交给页面管理。
 
+`appearance`（`"light"`、`"dark"` 或 `"system"`）、`locale` 和 `fontScale` 代替浏览器的设置，与原生宿主的设置相同；之后可以用 player 的 `setAppearance`、`setLocale` 和 `setFontScale` 修改。`module` 是编译好的 `WebAssembly.Module` 或它的 promise，省去下载和编译 wasm，这样页面多次挂载同一个应用，或者以压缩形式提供 wasm 时，只需编译一次。
+
 ```yaml
 web:
   host: host.js

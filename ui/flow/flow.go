@@ -1,4 +1,4 @@
-// Package flow is base/flow's styled form: a directed diagram in Onevra's
+// Package flow is base/flow's styled form: a directed diagram in ui's
 // look, its lines in the muted text's color, the hovered and selected
 // node's in the accent, and Card, a node's default face.
 package flow
@@ -23,7 +23,7 @@ const (
 	LeftToRight = baseflow.LeftToRight
 )
 
-// View is base/flow's View in Onevra's look; its fields are base's. While
+// View is base/flow's View in ui's look; its fields are base's. While
 // there are no nodes Empty shows, else EmptyText, an em dash when empty,
 // in the muted text's color.
 type View struct {

@@ -62,7 +62,7 @@ core.View{Class: "flex items-center gap-3 rounded-xl border border-zinc-200 bg-w
 
 ## 主题
 
-`core.Theme` 是同一种外观在浅色和深色下的定义：两套 `Palette`、一个圆角半径和字体系列。调色板的角色有 `Background`、`Surface`、`Text`、`TextMuted`、`Border`、`Accent`、`AccentText`、`Danger`、`Warning`、`Success`、`Selection`、`Focus` 和 `Scrollbar`；`Colors` 保存组件库添加的角色，例如 `inset` 和 `raised`。`core.DefaultTheme()` 是带蓝色强调色的中性主题，`ui.DefaultTheme()` 加上 `ui` 的角色，`ui.WarmDuskTheme()` 是 Onevra 的暖色调色板。
+`core.Theme` 是同一种外观在浅色和深色下的定义：两套 `Palette`、一个圆角半径和字体系列。调色板的角色有 `Background`、`Surface`、`Text`、`TextMuted`、`Border`、`Accent`、`AccentText`、`Danger`、`Warning`、`Success`、`Selection`、`Focus` 和 `Scrollbar`；`Colors` 保存组件库添加的角色，例如 `inset` 和 `raised`。`core.DefaultTheme()` 是带蓝色强调色的中性主题，包含 `ui` 的角色，应用设置其他主题前显示的就是它；`ui.WarmDuskTheme()` 是暖色调色板。
 
 ```go
 theme := core.DefaultTheme()

@@ -82,7 +82,14 @@ const description = doc.entry.data.description ?? copy.description;
       <h1 tabindex="-1">{doc.entry.data.title}</h1>
       {doc.entry.data.description && <p class="docs__lead">{doc.entry.data.description}</p>}
       {doc.fallback && <p class="docs__notice">{copy.fallback}</p>}
-      <div class="prose" lang={doc.fallback ? 'en' : undefined} data-copied={copies[lang].ui.copied}>
+      <div
+        class="prose"
+        lang={doc.fallback ? 'en' : undefined}
+        data-copied={copies[lang].ui.copied}
+        data-locale={lang === 'zh' && !doc.fallback ? 'zh-Hans' : 'en'}
+        data-live-loading={copy.live.loading}
+        data-live-failed={copy.live.failed}
+      >
         <Content />
       </div>
 
@@ -133,8 +140,11 @@ const description = doc.entry.data.description ?? copy.description;
 
 <script>
   // Opening another page replaces only the article and its contents, so the
-  // sidebar keeps its folds and scroll. Each code block gets a copy button,
-  // and the contents follow the heading in view.
+  // sidebar keeps its folds and scroll, unless an app runs in the page's
+  // live previews. Each code block gets a copy button, each live preview
+  // its app, and the contents follow the heading in view.
+  import { hasLive, mountLive } from '../scripts/live';
+
   const sidebar = document.querySelector<HTMLElement>('.docs__sidebar')!;
   const pagesNav = sidebar.querySelector<HTMLDetailsElement>('.docs__nav')!;
   const narrow = window.matchMedia('(max-width: 820px)');
@@ -213,6 +223,7 @@ const description = doc.entry.data.description ?? copy.description;
       });
       code.append(pre, copy);
     });
+    mountLive(document.querySelector('.prose')!);
 
     // Hashes are percent-encoded, so links pair with headings by decoded id.
     tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.docs__toc a'));
@@ -244,6 +255,10 @@ const description = doc.entry.data.description ?? copy.description;
 
   let shown = location.pathname;
   async function show(url: URL, scroll: number | null) {
+    if (hasLive()) {
+      location.href = url.href;
+      return;
+    }
     shown = url.pathname;
     let page: Document;
     try {

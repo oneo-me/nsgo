@@ -2,15 +2,17 @@
 
 The site at <https://oneo-me.github.io/nsgo/>: static Astro pages in English
 and Chinese, with no UI framework, and the docs built from the repository's
-`docs/public/`. Its Live demo links open the gallery's web build, compiled
-by `nsgo`, full page in a new tab.
+`docs/public/`, whose marked code blocks run in the page. Its Live demo
+links open the gallery's web build, compiled by `nsgo`, full page in a new
+tab.
 
 ```sh
 bun install
-bun run dev          # build public/gallery/, then serve the site at /nsgo/
-bun run build        # build the gallery, typecheck, then build dist/
+bun run dev          # build the gallery and the docs' apps, then serve the site at /nsgo/
+bun run build        # build them, typecheck, then build dist/
 bun run preview      # serve dist/
-bun run gallery      # rebuild only the gallery artifacts
+bun run gallery      # rebuild only the gallery
+bun run live         # rebuild only the docs' apps
 bun run screenshots  # retake the home page's screens of the gallery
 ```
 
@@ -42,12 +44,12 @@ Chinese headings, titles and kickers omit the trailing `。`; body sentences
 keep it. `src/layouts/Layout.astro` gives every page the header, the call to
 action and the footer.
 
-`scripts/build-gallery.mjs` runs `go tool nsgo build -target web
-examples/gallery` from the repository root and writes `public/gallery/`,
-which is generated and ignored: `loader.html`, the content-named wasm, a
-`.gzip` copy and the resources. `loader.html` reports its download,
-decompression, compilation and start progress, and follows the site's
-appearance.
+`scripts/web-build.mjs` builds an app with `go tool nsgo build -target web`
+from the repository root into a folder of `public/`, keeping its wasm only
+as a `.gzip` copy. `scripts/build-gallery.mjs` writes `public/gallery/`
+with `loader.html`, which reports its download, decompression, compilation
+and start progress and follows the site's appearance. All of `public/`'s
+builds are generated and ignored.
 
 ## Showcases
 
@@ -67,6 +69,16 @@ says how to write them. `src/content.config.ts` loads `en/` and `zh/`;
 language, the Chinese one where it exists and the English one with a notice
 where it does not (`src/lib/docs.ts`). `src/lib/doc-links.mjs`, a Sätteri
 plugin, turns the relative `.md` links between pages into the site's URLs.
+`src/lib/live.mjs` puts a box before each code block marked
+`preview=<demo>` or `program` (`docs/public/README.md`), and
+`scripts/build-live.mjs` builds what the boxes run: `examples/previews`,
+one app for every component example, into `public/previews/`, and each
+program block's code into `public/programs/<hash>/`, so a program whose
+code a translation shares is built once. `src/scripts/live.ts` mounts a
+box's app through the tool's loader once it nears the window, compiling
+each wasm once a page, in the site's appearance, which it follows, and the
+page's language. A Go program cannot be stopped, so leaving a page whose
+apps started loads the next page whole.
 A page has the sidebar of its language's groups, under the pages without one, its contents, the previous
 and next pages, an edit link and copy buttons on its code; the styles are in
 `src/styles/docs.css`.

@@ -14,7 +14,7 @@ NSGo 是一个 Go module。应用从上层导入它的包；各平台的后端�
 | `nsgo`（根目录） | `nsgo.Run` 和 `nsgo.NewView`，按构建标签选择后端 |
 | `core` | 应用的 API：元素、样式、class、主题、signal 和服务；布局与文本准备 |
 | `base` | 无样式组件，每个一个文件，复杂组件各自成包（`base/dock`、`base/editor`） |
-| `ui` | Onevra 外观下的 `base` 组件，以及 `ui/chat` 等包 |
+| `ui` | 带外观的 `base` 组件，以及 `ui/chat` 等包 |
 | `mobile`、`desktop` | 只有手机或只有桌面才有的功能 |
 | `tsx` | TSX 应用、它的打包器和编译器，以及它导入的模块 |
 | `i18n`、`*/locales` | 消息目录和由它生成的代码 |

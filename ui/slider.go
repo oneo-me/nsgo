@@ -18,7 +18,7 @@ const (
 	sliderTicks = 60
 )
 
-// Slider is base.Slider in Onevra's look: a white capsule knob on a thin
+// Slider is base.Slider in ui's look: a white capsule knob on a thin
 // track that stays inside its ends, or with High two that pick a range
 // from Value up to High. Step above 0 snaps the values to steps from Min
 // and marks them under the track, up to 60 of them; at 0 the keys move a

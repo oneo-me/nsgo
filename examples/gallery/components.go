@@ -177,7 +177,7 @@ func accessory(cx *core.Scope) core.Node {
 		captionText = tr.CompDesktopsHaveNoSoftwareKeyboard()
 	}
 	return Card{Title: tr.CompInputAccessory(), Description: tr.CompABarOverTheSoftware(), Actions: []core.Node{ui.Badge{Text: "iOS · Android"}}, Children: []core.Node{
-		ui.Input{Input: base.Input{Ref: input, Value: value.Get, OnChange: value.Set, Placeholder: tr.CompFocusMe(), InputAccessoryViewID: "counter", TestID: "accessory-field"}},
+		ui.Input{Ref: input, Value: value.Get, OnChange: value.Set, Placeholder: tr.CompFocusMe(), InputAccessoryViewID: "counter", TestID: "accessory-field"},
 		Caption{Label: captionText, Note: func() string { return `InputAccessoryViewID: "counter"` }},
 		mobile.InputAccessoryView{ID: "counter", TestID: "accessory-bar", StyleFunc: ui.Filled(colors.Surface), Children: []core.Node{
 			core.View{StyleFunc: func() core.Style {
@@ -215,7 +215,7 @@ func avoidingPage(cx *core.Scope) base.NavPage {
 					core.Text{Content: note, Style: core.Style{FontSize: 13, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)},
 				}},
 				ui.Spacer{},
-				ui.Input{Input: base.Input{Placeholder: tr.CompTypeHere()}},
+				ui.Input{Placeholder: tr.CompTypeHere()},
 			}},
 		}}
 	}))

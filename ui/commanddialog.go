@@ -7,7 +7,7 @@ import (
 )
 
 // CommandDialog hosts a Command in a modal surface, or a sheet on touch
-// screens, as Onevra's: 640 points wide and its rows 440 tall. It takes the
+// screens: 640 points wide and its rows 440 tall. It takes the
 // keyboard as it opens and gives it back as it closes; the app binds what
 // opens it, and closes it from the palette's OnSelect. With
 // ExpandOnSearch it fits the field until the query holds more than spaces.

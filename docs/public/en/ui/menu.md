@@ -7,7 +7,7 @@ order: 42
 
 `ui.Menu` opens `ui.MenuItem`s from a button: beside it on desktops, as a sheet on touch screens. `ui.ContextMenu` opens the same items at the pointer.
 
-```go
+```go preview=menu/basic height=280
 ui.Menu{Trigger: ui.Button{Text: "Actions", Variant: ui.ButtonSecondary}, Children: []core.Node{
 	ui.MenuItem{Text: "Rename", Icon: lucide.Pencil, OnSelect: rename},
 	ui.MenuItem{Text: "Duplicate", Shortcut: "mod+d", OnSelect: duplicate},
@@ -22,7 +22,7 @@ The menu opens and closes itself; `Open` and `OnOpenChange` let the app hold it.
 
 A `ui.MenuItem` shows `Text`, an optional `Icon` and a `Shortcut` (`"mod+c"`, written the platform's way on desktops), and reports `OnSelect`, closing the menu unless `NoCloseOnSelect`. `Disabled` turns it off, `Checked` shows a check beside it, and `Variant: ui.MenuItemDanger` marks a destructive one. `ui.MenuLabel` heads a group and `ui.MenuSeparator` divides them. A `ui.Submenu` holds more items and opens beside the item or, on touch screens, in the sheet in place of the ones around it.
 
-```go
+```go preview=menu/checked height=320
 ui.Menu{Trigger: ui.Button{Text: "View", Variant: ui.ButtonGhost}, Children: []core.Node{
 	ui.MenuLabel{Text: "Sort by"},
 	ui.MenuItem{Text: "Name", Checked: func() bool { return sort.Get() == "name" }, OnSelect: func() { sort.Set("name") }},
@@ -39,7 +39,7 @@ ui.Menu{Trigger: ui.Button{Text: "View", Variant: ui.ButtonGhost}, Children: []c
 
 `ui.ContextMenu` opens its items on a secondary click, or a long press on touch screens, at the pointer over its `Trigger`.
 
-```go
+```go preview=menu/context height=220
 ui.ContextMenu{Trigger: fileRow, Children: []core.Node{
 	ui.MenuItem{Text: "Open", OnSelect: open},
 	ui.MenuItem{Text: "Delete", Variant: ui.MenuItemDanger, OnSelect: remove},

@@ -5,26 +5,26 @@ group: 组件
 order: 33
 ---
 
-`ui.Input` 是 Onevra 外观的平台文本框，除非设置 `Multiline`，否则只有一行。它以 `base.Input` 接收输入框的设置，所有带样式的输入框都是如此；`ui.Field` 把这些设置放进无边框的字段容器，用于应用自己设置尺寸的输入框。
+`ui.Input` 是 `ui` 外观的平台文本框，除非设置 `Multiline`，否则只有一行。它的字段与 `base.Input` 相同，所有带样式的输入框都是如此；`ui.Field` 是放在无边框容器里的同一种输入框，用于应用自己设置尺寸的输入框。
 
-```go
+```go preview=input/basic
 name := core.NewSignal(cx, "")
-ui.Input{Input: base.Input{
+ui.Input{
 	Value:       name.Get,
 	OnChange:    name.Set,
 	Placeholder: "你的名字",
 	TestID:      "name",
-}}
+}
 ```
 
 ## 受控与非受控
 
 设置 `Value` 后输入框是受控的：应用保存值，并在 `OnChange` 中更新它。设置 `DefaultValue` 后输入框自己保存值。受控输入框可以通过把值设为 `""` 来清空。
 
-```go
+```go preview=input/submit
 draft := core.NewSignal(cx, "")
-ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "新任务",
-	OnSubmit: func(string) { add(); draft.Set("") }}}
+ui.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "新任务",
+	OnSubmit: func(string) { add(); draft.Set("") }}
 ```
 
 ## 字段
@@ -32,8 +32,8 @@ ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "
 `Multiline` 让文本换行并随之增长，除非样式指定了尺寸。`Masked` 隐藏字符，`Readonly` 和 `Disabled` 阻止编辑，`MaxLength` 限制用户输入的 UTF-16 单元数。`Placeholder` 可以用 `PlaceholderFunc` 跟随变化。
 
 ```go
-ui.Input{Input: base.Input{Masked: true, Value: password.Get, OnChange: password.Set,
-	AutoComplete: core.AutoCompletePassword}}
+ui.Input{Masked: true, Value: password.Get, OnChange: password.Set,
+	AutoComplete: core.AutoCompletePassword}
 ```
 
 `KeyboardType` 选择软件键盘（`KeyboardEmail`、`KeyboardNumber`、`KeyboardURL` 等），`ReturnKeyType` 设置回车键的标签，`SubmitBehavior` 决定回车是提交还是换行。`AutoCapitalize`、`NoAutoCorrect` 和 `AutoComplete` 调整系统的辅助行为。
@@ -44,7 +44,7 @@ ui.Input{Input: base.Input{Masked: true, Value: password.Get, OnChange: password
 
 ```go
 email := &core.Ref{}
-ui.Input{Input: base.Input{Ref: email, Placeholder: "you@example.com"}}
+ui.Input{Ref: email, Placeholder: "you@example.com"}
 email.Focus()
 ```
 
@@ -54,15 +54,17 @@ email.Focus()
 
 规则由应用自己保存。一个 signal 保存错误，`OnBlur` 或 `OnSubmit` 设置它，输入框下方的提示显示它（[表单](../forms.md#校验)）。
 
-```go
+```go preview=input/validation
 err := core.NewSignal(cx, "")
 core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
-	ui.Input{Input: base.Input{Value: email.Get, OnChange: email.Set, Label: "邮箱",
+	ui.Input{Value: email.Get, OnChange: email.Set, Label: "邮箱",
 		OnSubmit: func(string) {
 			if !strings.Contains(email.Get(), "@") {
 				err.Set("请输入邮箱地址。")
+			} else {
+				err.Set("")
 			}
-		}}},
+		}},
 	ui.Textf(err.Get, 12, ui.Regular, colors.Danger),
 }}
 ```

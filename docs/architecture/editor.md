@@ -55,7 +55,7 @@ Highlighting stays off the engine goroutine: a job lexes a snapshot of up to 200
 | `ropey` | Lines in chunks | Lines are what every part reads; chunks bound an edit's work |
 | `register_language` and `register_highlighter`, kept per engine | A `Highlighter` prop: a function from a language's name to the app's highlighter | A prop needs no registry, and an engine holds no state beside its app |
 | syntect's state kept every 16 lines | chroma from a line at column 0 before the change, until its tokens meet the old ones | chroma keeps no state to resume from |
-| A unified diff's two number columns | One column: the new line's number, the old one's on deleted lines | The look Onevra's diffs have, and more room for the text |
+| A unified diff's two number columns | One column: the new line's number, the old one's on deleted lines | A simpler look, and more room for the text |
 | Changed words as span backgrounds | Boxes behind the text, as tall as the line, one a word across its tokens | A span's background is a box a token and a font tall |
 | Actions per change, always shown | `RenderRegionActions` too, on the change under the pointer or the lines selected | Staging and discarding take any lines, as Git clients do |
 | imara-diff's histogram with git's indent heuristic | Myers after the common prefix and suffix | One algorithm in Go, no dependency |

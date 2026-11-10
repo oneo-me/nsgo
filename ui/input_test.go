@@ -3,7 +3,6 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 )
 
@@ -13,9 +12,9 @@ func TestInput(t *testing.T) {
 	each(t, func(t *testing.T, e core.Environment) {
 		app, p := start(t, e, func(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Gap: 8}, Children: []core.Node{
-				Input{Input: base.Input{Label: "Email", TestID: "email", Placeholder: "name@example.com"}},
-				Input{Input: base.Input{Label: "Notes", TestID: "notes", Multiline: true}},
-				Input{Input: base.Input{Label: "Off", TestID: "off", Disabled: func() bool { return true }}},
+				Input{Label: "Email", TestID: "email", Placeholder: "name@example.com"},
+				Input{Label: "Notes", TestID: "notes", Multiline: true},
+				Input{Label: "Off", TestID: "off", Disabled: func() bool { return true }},
 			}}
 		})
 		if f := app.Find("email"); f.Frame.Size.Height != ButtonHeight || f.Style.BorderColor != p.FieldBorder {

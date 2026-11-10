@@ -35,7 +35,7 @@ func start(t *testing.T, e core.Environment, content func(cx *core.Scope) core.N
 		size = nsgotest.Size(390, 844)
 	}
 	return nsgotest.Start(t, func(cx *core.Scope) core.Node {
-		cx.SetTheme(ui.DefaultTheme())
+		cx.SetTheme(core.DefaultTheme())
 		colors := ui.ColorsOf(cx)
 		return core.View{Style: core.Style{FlexGrow: 1, Padding: core.All(16), Gap: 12}, StyleFunc: ui.Filled(colors.Background),
 			Children: []core.Node{core.Func(content)}}

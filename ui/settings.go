@@ -8,7 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Settings is Onevra's settings surface: categories in a sidebar beside
+// Settings is a settings surface: categories in a sidebar beside
 // the selected one's groups of rows, and a search through every row. It
 // fills its parent, which gives it a finite height and its background,
 // and can sit in a dialog or a window's pane.
@@ -359,7 +359,7 @@ func (s Settings) row(cx *core.Scope, item SettingsItem, stacked bool, testID st
 	return core.View{TestID: testID, Style: style, Children: children}
 }
 
-// SettingsDialog is Settings in a Dialog, as Onevra hosts it: the surface
+// SettingsDialog is Settings in a Dialog, hosted so: the surface
 // holds nothing else, and Content builds the Settings, told when the width
 // it is given is narrow.
 type SettingsDialog struct {

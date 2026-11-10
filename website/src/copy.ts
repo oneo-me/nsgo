@@ -122,6 +122,7 @@ const en = {
     next: 'Next',
     edit: 'Edit this page on GitHub',
     fallback: 'This page is not translated yet, so it shows the English one.',
+    live: { loading: 'Loading the preview…', failed: 'The preview could not start.' },
   },
   showcases: {
     title: 'Showcases — NSGo',
@@ -299,6 +300,7 @@ const zh: Copy = {
     next: '下一页',
     edit: '在 GitHub 上编辑此页',
     fallback: '这一页还没有中文版，下面显示的是英文原文。',
+    live: { loading: '正在加载预览…', failed: '预览无法启动。' },
   },
   showcases: {
     title: '案例 — NSGo',

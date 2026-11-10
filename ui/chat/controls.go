@@ -256,7 +256,7 @@ func (p Picker) Render(cx *core.Scope) core.Node {
 	var body []core.Node
 	if p.SearchLabel != "" && len(p.Options) > threshold {
 		body = append(body, core.View{Style: core.Style{Padding: core.Edges{Top: 8, Right: 8, Left: 8}}, Children: []core.Node{
-			ui.Input{Input: base.Input{Value: query.Get, OnChange: query.Set, Placeholder: p.SearchLabel, Label: p.SearchLabel, AutoFocus: true}},
+			ui.Input{Value: query.Get, OnChange: query.Set, Placeholder: p.SearchLabel, Label: p.SearchLabel, AutoFocus: true},
 		}})
 	}
 	body = append(body, core.Dynamic(func(cx *core.Scope) core.Node {

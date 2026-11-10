@@ -31,7 +31,7 @@ func showcase(cx *core.Scope) core.Node {
 			Tabs[int]{Options: []Option[int]{{Value: 0, Label: "One"}, {Value: 1, Label: "Two"}}, Value: tab.Get, OnChange: tab.Set},
 			Tabs[int]{Variant: TabsUnderline, Options: []Option[int]{{Value: 0, Label: "One"}, {Value: 1, Label: "Two"}}, Value: tab.Get, OnChange: tab.Set},
 			Progress{Label: "Progress", Value: func() float32 { return 40 }}, Meter{Value: func() float64 { return 0.4 }},
-			Input{Input: base.Input{Label: "Name", Placeholder: "Name"}},
+			Input{Label: "Name", Placeholder: "Name"},
 			NumberInput{Label: "Count", Value: value.Get, OnChange: value.Set, LeadingText: "W"},
 			TagInput{Label: "Tags", Tags: tags.Get, OnChange: tags.Set}, Rating{Label: "Rating", Value: func() int { return 3 }},
 			HStack{Gap: 8, Children: []core.Node{
@@ -74,7 +74,7 @@ func showcase(cx *core.Scope) core.Node {
 // what floats follow the theme shown.
 func TestThemes(t *testing.T) {
 	headless(t)
-	th := DefaultTheme()
+	th := core.DefaultTheme()
 	if th.Light.Accent != core.RGB(0x007aff) || th.Dark.Accent != core.RGB(0x0a84ff) || th.Light.Colors["accentFill"] != th.Light.Accent {
 		t.Fatalf("default accent = %v", th.Light.Accent)
 	}

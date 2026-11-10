@@ -5,7 +5,7 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// ButtonVariant is a button's look, one of Onevra's.
+// ButtonVariant is a button's look, one of ui's.
 type ButtonVariant uint8
 
 const (
@@ -22,7 +22,7 @@ const (
 	ButtonGhost
 )
 
-// Button is Onevra's button, as tall as its Size: Text with an optional
+// Button is ui's button, as tall as its Size: Text with an optional
 // leading Icon, or the Icon alone in a square. base.Button gives the
 // behavior; the look is ui's.
 type Button struct {
@@ -92,7 +92,7 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 			p := cx.Palette()
 			return p.Accent, p.AccentHover, p.AccentPressed, p.Accent
 		case b.Variant == ButtonSecondary:
-			// Over the card it sits on, as Onevra's is over the page.
+			// Over the card it sits on, as it would be over the page.
 			bg := colors.Surface()
 			return Mix(bg, text, 0.08), Mix(bg, text, 0.12), Mix(bg, text, 0.18), Mix(bg, text, 0.08)
 		}

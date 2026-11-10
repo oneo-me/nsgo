@@ -1,6 +1,6 @@
 // Package ui gives TSX nsgo/ui, package ui's components as Go components,
-// for an app that imports this package for its effect and sets
-// ui.DefaultTheme, or another theme with ui's roles, before it starts.
+// for an app that imports this package for its effect; a theme of its
+// own needs ui's roles, as core.DefaultTheme and ui.WarmDuskTheme have.
 //
 // Each takes its Go fields as props (tsx.Register): variants by name, and
 // icons as a name Icons gives or an SVG document. Generic components take
@@ -62,9 +62,10 @@ func readIcon(v any) *core.SVG {
 	return nil
 }
 
-// roleTokens declares the roles ui's themes add as names token() reads.
+// roleTokens declares the colors the default theme adds, ui's roles
+// among them, as names token() reads.
 func roleTokens() string {
-	names := slices.Sorted(maps.Keys(ui.DefaultTheme().Light.Colors))
+	names := slices.Sorted(maps.Keys(core.DefaultTheme().Light.Colors))
 	var b strings.Builder
 	b.WriteString("declare module \"nsgo\" {\n  interface Tokens {\n")
 	for _, n := range names {
@@ -184,25 +185,13 @@ func init() {
 	tsx.Register(module, map[string]core.Node{"FlowCard": uiflow.Card{}}, options()...)
 	tsx.Register(module, map[string]core.Node{"DiffView": uidiff.View{}}, tsxdiff.Options()...)
 	tsx.Register(module, map[string]core.Node{"TextView": ui.TextView{}}, append(tsxtextview.Options(), tsx.Omit("StyleOf"))...)
-	tsx.Register(module, map[string]core.Node{"Input": Input{}, "Field": Field{}}, options(tsx.Event("OnChange", "value"), tsx.Event("OnSubmit", "text"))...)
+	tsx.Register(module, map[string]core.Node{"Input": ui.Input{}, "Field": ui.Field{}}, options(tsx.Event("OnChange", "value"), tsx.Event("OnSubmit", "text"))...)
 	tsx.Register(module, map[string]core.Node{"Icon": Icon{}}, options()...)
 	tsx.Register(module, map[string]core.Node{"List": List{}}, options(tsx.Event("OnSelectedChange", "selected"), tsx.Event("OnActivate", "index"))...)
 	tsx.Register(module, map[string]core.Node{"Tree": Tree{}}, options(tsx.Event("OnSelectedChange", "selected"), tsx.Event("OnActivate", "id"))...)
 	tsx.Register(module, map[string]core.Node{"Toasts": Toasts{}}, options()...)
 	tsx.Register(module, map[string]core.Node{"TabShell": TabShell{}}, options(tsx.Event("OnChange", "index"))...)
 }
-
-// Input is ui.Input with base.Input's fields as its props.
-type Input struct{ base.Input }
-
-// Render implements core.Node.
-func (i Input) Render(*core.Scope) core.Node { return ui.Input{Input: i.Input} }
-
-// Field is ui.Field with base.Input's fields as its props.
-type Field struct{ base.Input }
-
-// Render implements core.Node.
-func (f Field) Render(*core.Scope) core.Node { return ui.Field{Input: f.Input} }
 
 // Icon draws Name, Size points square in Color, the text's when nil.
 type Icon struct {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/oneo-me/nsgo/internal/engine"
 )
 
 // then calls done with what promise resolves to, or fail with why it is
@@ -232,8 +233,14 @@ func (s *surface) chooseImages(r driver.PickRequest, id uint32, camera bool) {
 }
 
 // setAppearance has the browser draw its own parts, such as form
-// controls and scroll bars, in a, or as the system's appearance asks.
+// controls and scroll bars, in a, the appearance the app forces, or else
+// as the page's host or the system's appearance asks. An app in an element
+// sets its element's, leaving the page's to the page.
 func (s *surface) setAppearance(a driver.Appearance) {
+	s.forced = a
+	if a == driver.AppearanceSystem {
+		a = s.hosted
+	}
 	scheme := ""
 	switch a {
 	case driver.AppearanceLight:
@@ -241,7 +248,17 @@ func (s *surface) setAppearance(a driver.Appearance) {
 	case driver.AppearanceDark:
 		scheme = "dark"
 	}
-	s.doc.Get("documentElement").Get("style").Set("colorScheme", scheme)
+	target := s.host
+	if s.whole {
+		target = s.doc.Get("documentElement")
+	}
+	target.Get("style").Set("colorScheme", scheme)
+}
+
+// setHostEnvironment follows the appearance the page's host sets.
+func (s *surface) setHostEnvironment(env engine.HostEnvironment) {
+	s.hosted = env.Appearance
+	s.setAppearance(s.forced)
 }
 
 // announce has screen readers say text: each message is a new node of a

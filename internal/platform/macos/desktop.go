@@ -17,7 +17,7 @@ import (
 // The window's chrome, as NSH's macOS chrome.rs does it. A hidden title
 // bar gives the window a full-size content view under a transparent,
 // untitled title bar, with the traffic lights centered in the app's bar,
-// where Onevra puts them: 16 points in from the left edge, or where the
+// where NSGo puts them: 16 points in from the left edge, or where the
 // app's WindowControls put them, as MyGo's TrafficLightPosition does.
 // Env.TitleBar reports the bar's height and the traffic lights' width,
 // nothing in full screen. A left press on a window drag handle moves the
@@ -237,7 +237,7 @@ func (s *surface) applyTitleBar() {
 
 // layoutTrafficLights puts the traffic lights in the app's bar: the
 // close button's top left corner at the app's TrafficLights, by default
-// 16 points in from the window's left edge as Onevra places them and
+// 16 points in from the window's left edge as NSGo places them and
 // centered in the bar. Without a bar height or a position of the app's
 // they stay where AppKit lays them out. AppKit puts them back whenever it
 // lays the title bar out, so this runs after each of the window's layout

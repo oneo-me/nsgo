@@ -5,9 +5,9 @@ group: 组件
 order: 37
 ---
 
-`ui.Slider` 是 Onevra 外观的滑块，沿轨道选值，并负责拖动、步进和键盘。单个值是单个旋钮；`High` 让它成为一个范围。
+`ui.Slider` 是 `ui` 外观的滑块，沿轨道选值，并负责拖动、步进和键盘。单个值是单个旋钮；`High` 让它成为一个范围。
 
-```go
+```go preview=slider/basic
 volume := core.NewSignal(cx, 40.0)
 ui.Slider{Value: volume.Get, OnChange: volume.Set, Min: 0, Max: 100, Step: 5, Label: "音量"}
 ```
@@ -16,7 +16,7 @@ ui.Slider{Value: volume.Get, OnChange: volume.Set, Min: 0, Max: 100, Step: 5, La
 
 设置 `High` 和 `OnHighChange` 可以选择两个值。`Value` 是低端。`LowLabel` 和 `HighLabel` 为辅助技术命名两个旋钮。
 
-```go
+```go preview=slider/range
 price := core.NewSignal(cx, 20.0)
 ceiling := core.NewSignal(cx, 80.0)
 ui.Slider{
@@ -31,7 +31,7 @@ ui.Slider{
 
 `Step` 让值吸附；步进为 0 时可以取任意值。`ValueText` 改变辅助技术读出的值，`Disabled` 停用它。
 
-```go
+```go preview=slider/format
 ui.Slider{Value: speed.Get, OnChange: speed.Set, Min: 0.5, Max: 2, Step: 0.25, Label: "速度",
 	ValueText: func(v float64) string { return fmt.Sprintf("%g×", v) }}
 ```

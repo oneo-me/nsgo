@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/nsgotest"
 	"github.com/oneo-me/nsgo/ui"
@@ -56,7 +55,7 @@ func TestWatchInput(t *testing.T) {
 	var submitted string
 	app := startWatch(t, func(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{Padding: core.All(8)}, Children: []core.Node{
-			ui.Input{Input: base.Input{TestID: "name", Placeholder: "Name", OnSubmit: func(s string) { submitted = s }}},
+			ui.Input{TestID: "name", Placeholder: "Name", OnSubmit: func(s string) { submitted = s }},
 		}}
 	})
 	app.Focus("id:name")

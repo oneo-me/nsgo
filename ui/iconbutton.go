@@ -16,7 +16,7 @@ const (
 	// IconButtonPrimary is a circle filled with the accent, for the main
 	// action.
 	IconButtonPrimary
-	// IconButtonRaised is a circle on Onevra's raised toolbar face.
+	// IconButtonRaised is a circle on a raised toolbar face.
 	IconButtonRaised
 )
 

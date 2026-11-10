@@ -43,7 +43,7 @@ NSGo is early: it has no stable API or release yet, and what is missing is in th
 
 ## How to read the docs
 
-Every page answers one question. A code example is a fragment of a component unless the page says otherwise: `cx` is the `*core.Scope` a component receives. Apps use `ui`'s components, in Onevra's look; `base` holds the same controls without a look, for authors of components.
+Every page answers one question. A code example is a fragment of a component unless the page says otherwise: `cx` is the `*core.Scope` a component receives. Apps use `ui`'s components, which have a look; `base` holds the same controls without a look, for authors of components.
 
 - **Get started**: [setup](getting-started.md), then example apps built step by step, [a todo app](tutorials/todo.md), [a notes app](tutorials/notes.md) and [popular GitHub repositories](tutorials/repos.md).
 - **Toolchain**: [running and debugging](debugging.md), [testing](testing.md), [building and shipping](building.md) and [embedding](embedding.md).

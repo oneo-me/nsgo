@@ -22,7 +22,7 @@ go tool nsgo dev
 
 Replace the whole of `app.go`:
 
-```go
+```go program height=480
 package main
 
 import (

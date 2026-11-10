@@ -16,7 +16,6 @@ import (
 	_ "github.com/oneo-me/nsgo/tsx/ui/chat"
 	_ "github.com/oneo-me/nsgo/tsx/ui/richeditor"
 	_ "github.com/oneo-me/nsgo/tsx/ui"
-	"github.com/oneo-me/nsgo/ui"
 )
 
 //go:embed *.tsx *.ts demos/*.tsx demos/*.ts
@@ -24,11 +23,8 @@ var src embed.FS
 
 var app = compiler.App(src, "App.tsx")
 
-// Root is the app in ui's theme, whose roles its components read.
-func Root(cx *core.Scope) core.Node {
-	cx.SetTheme(ui.DefaultTheme())
-	return app(cx)
-}
+// Root is the app.
+func Root(cx *core.Scope) core.Node { return app(cx) }
 
 func main() {
 	nsgo.Run(Root, nsgo.WindowSize(1080, 760), nsgo.WindowMaterial(desktop.WindowMaterialSidebar))

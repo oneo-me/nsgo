@@ -18,7 +18,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base/datatable`, `base/dock`, `base/plot`, `base/toast` | `nsh-base` | Complex components, a package each: a virtualized table, a dock, charts and toasts |
 | `base/commitgraph` | — | A Git history's revision graph: its layout, collapsed merges and a row's drawing ([commit graph](docs/architecture/components.md#commit-graph)) |
 | `base/flow` | — | A directed diagram: its layered layout, orthogonal routes and camera ([flow diagram](docs/architecture/components.md#flow-diagram)) |
-| `ui`, `ui/chat`, `ui/filepicker`, `ui/diff`, `ui/commitgraph`, `ui/flow`, `ui/richeditor` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, Onevra's conversation, a file picker and the styled forms of `base/diff`, `base/commitgraph`, `base/flow` and `base/richeditor` as packages ([themes](docs/architecture/themes.md#ui)) |
+| `ui`, `ui/chat`, `ui/filepicker`, `ui/diff`, `ui/commitgraph`, `ui/flow`, `ui/richeditor` | `examples/nsh-gallery-ui` | Styled components on `base`, a file each, a conversation, a file picker and the styled forms of `base/diff`, `base/commitgraph`, `base/flow` and `base/richeditor` as packages ([themes](docs/architecture/themes.md#ui)) |
 | `mobile`, `desktop` | `nsh/mobile`, `nsh/desktop` | What only phones have (the tab bar) and only desktops (the window, menus) |
 | `base/textview`, `base/textview/highlight` | `nsh-base`'s `text_view`, `highlight` | `TextView`: Markdown, HTML or the app's blocks, and its code highlighting ([text view](docs/architecture/textview.md)) |
 | `base/terminal`, `tools/libghostty` | — (Ghostty's libghostty-vt) | `Terminal` and its `View`: a program in a pseudo-terminal with libghostty-vt loaded through purego, and the command building the library ([terminal](docs/architecture/terminal.md)) |
@@ -44,6 +44,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `internal/platform/<target>` | `nsh-platform-*` | Native view mounting, text engine and input for one target |
 | `internal/platform/*` | Platforms' shared code | What backends share: `apple` for macOS and iOS, `webstyle` and `canvas2d` for the web and mini programs, images ([images](docs/architecture/images.md)), picked photos, process readings |
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
+| `examples/previews` | | The docs' component examples, one demo per marked code block, in one web build the website mounts per block |
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
 | `examples/tsx` | — | An app written in TSX and styled with Tailwind classes, with tests |
 | `examples/gallery-tsx` | — | The gallery's Components in TSX, its apps among them, on `nsgo/ui`, `nsgo/ui/chat` and `nsgo/base`, with tests |

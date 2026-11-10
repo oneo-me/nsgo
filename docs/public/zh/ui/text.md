@@ -7,7 +7,7 @@ order: 32
 
 `core.Text` 是一个由平台文本引擎排版的段落。`ui.Text` 和 `ui.Textf` 是 `ui` 字体下的一行辅助函数；元素仍然是 `core.Text`，因此同样接受 `Style` 和 `Spans`。
 
-```go
+```go preview=text/basic
 ui.Text("设置", 20, ui.Bold, colors.Text)
 ui.Textf(func() string { return fmt.Sprintf("%d 个文件", n.Get()) }, 13, ui.Regular, colors.Muted)
 ```
@@ -25,7 +25,7 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("按了 %d 次", count
 
 `Spans` 把文本拆成若干段，每段有自己的样式。带 `OnPress` 的 span 是链接，它的 `Background` 和 `CornerRadius` 在每一行的字符后面绘制。`SpansFunc` 在读取的值变化时重新给出 span，适合代码高亮或会变化的句子。
 
-```go
+```go preview=text/spans
 core.Text{Style: core.Style{FontSize: 15}, Spans: []core.Span{
 	{Content: "开始前请阅读"},
 	{Content: "指南", Style: core.Style{TextDecoration: core.TextDecorationUnderline}, OnPress: openGuide},
@@ -49,7 +49,7 @@ core.Text{Content: "fn main() {}", Style: core.Style{FontFamily: core.FontMonosp
 
 `base/textview.TextView` 用相同的原语显示 Markdown 或 HTML：标题、段落、列表、表格、代码、脚注、提示块、图片、公式和链接。`textview.Parse` 读取 Markdown，`textview.ParseHTML` 读取 HTML，`Options.Streaming` 修复仍在到达的文档。
 
-```go
+```go preview=text/document height=240
 textview.TextView{Markdown: "## 笔记\n\n一份 **原生** 文档。", Styles: ui.TextViewStyles(cx),
 	OnLinkPress: func(e textview.LinkPressEvent) { open(e.URL) }}
 ```

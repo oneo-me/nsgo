@@ -137,6 +137,8 @@ player.hostEvent("message", { text: "Hello from the page" });
 
 Without a `host` option the loader imports the module `nsgo.yaml`'s `web.host` names and awaits its `createHost(player)`. An app in an element or a frame leaves the browser's history and title to the page.
 
+`appearance` (`"light"`, `"dark"` or `"system"`), `locale` and `fontScale` stand in for the browser's, as a native host's settings do, and the player's `setAppearance`, `setLocale` and `setFontScale` change them later. `module`, a compiled `WebAssembly.Module` or a promise of one, spares fetching and compiling the wasm, so a page mounting the app many times, or serving the wasm compressed, compiles it once.
+
 ```yaml
 web:
   host: host.js

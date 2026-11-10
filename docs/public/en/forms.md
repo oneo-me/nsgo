@@ -7,18 +7,18 @@ order: 57
 
 ## Text fields
 
-`ui.Input` is the platform's text field in `ui`'s look, and takes the field's settings as a `base.Input`. With `Value` it is controlled: the app holds the value and updates it in `OnChange`; with `DefaultValue` it keeps its own.
+`ui.Input` is the platform's text field in `ui`'s look, with `base.Input`'s fields. With `Value` it is controlled: the app holds the value and updates it in `OnChange`; with `DefaultValue` it keeps its own.
 
 ```go
 name, email := core.NewSignal(cx, ""), &core.Ref{}
 
-ui.Input{Input: base.Input{
+ui.Input{
 	Value:         name.Get,
 	OnChange:      name.Set,
 	Placeholder:   "Your name",
 	ReturnKeyType: core.ReturnKeyNext,
 	OnSubmit:      func(string) { email.Focus() },
-}}
+}
 ```
 
 `Masked` hides the characters, `Readonly` and `Disabled` stop edits, and `Multiline` wraps the text and grows with it unless its style sizes it. `KeyboardType` picks the software keyboard (`core.KeyboardEmail`, `core.KeyboardNumber`, `core.KeyboardURL` and the rest), `AutoComplete` tells the system what the field holds for autofill, and `MaxLength` caps the UTF-16 units the user enters. `AutoCapitalize` and `NoAutoCorrect` tune the keyboard's behavior.
@@ -31,7 +31,7 @@ ui.Input{Input: base.Input{
 
 ```go
 email := &core.Ref{}
-ui.Input{Input: base.Input{Ref: email, Placeholder: "you@example.com"}}
+ui.Input{Ref: email, Placeholder: "you@example.com"}
 email.Focus()
 ```
 
@@ -89,7 +89,7 @@ address := core.NewSignal(cx, "")
 err := core.NewSignal(cx, "")
 colors := ui.ColorsOf(cx)
 core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
-	ui.Input{Input: base.Input{
+	ui.Input{
 		Value:    address.Get,
 		OnChange: func(v string) { address.Set(v); err.Set("") },
 		Label:    "Email",
@@ -98,7 +98,7 @@ core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
 				err.Set("Enter an email address.")
 			}
 		},
-	}},
+	},
 	core.Show{
 		When: func() bool { return err.Get() != "" },
 		Then: func(*core.Scope) core.Node { return ui.Textf(err.Get, 12, ui.Regular, colors.Danger) },

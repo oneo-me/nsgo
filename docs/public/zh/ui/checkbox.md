@@ -5,9 +5,9 @@ group: 组件
 order: 34
 ---
 
-`ui.Checkbox` 是 Onevra 外观的复选框，旁边带标签。它不保存值：应用说明它是否选中，并在 `OnChange` 中更新。
+`ui.Checkbox` 是 `ui` 外观的复选框，旁边带标签。它不保存值：应用说明它是否选中，并在 `OnChange` 中更新。
 
-```go
+```go preview=checkbox/basic
 done := core.NewSignal(cx, false)
 ui.Checkbox{Checked: done.Get, OnChange: done.Set, Text: "记住我"}
 ```
@@ -20,7 +20,7 @@ ui.Checkbox{Checked: done.Get, OnChange: done.Set, Text: "记住我"}
 
 `Indeterminate` 既非选中也非未选中，用于部分选中时的“全选”；此时按下会请求选中。`Disabled` 阻止按压和焦点。
 
-```go
+```go preview=checkbox/indeterminate height=220
 ui.Checkbox{
 	Checked:       func() bool { return chosen.Get() == len(files) },
 	Indeterminate: func() bool { return chosen.Get() > 0 && chosen.Get() < len(files) },

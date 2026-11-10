@@ -6,7 +6,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/ui"
 )
@@ -104,7 +103,7 @@ func typeset(cx *core.Scope) core.Node {
 				return core.Style{FontSize: 46, LineHeight: 50, FontWeight: core.FontWeight(weight.Get()), LetterSpacing: -1, Color: ink,
 					NumberOfLines: 2, TextAlign: core.TextAlignCenter, Padding: core.Symmetric(0, 12)}
 			}}),
-		ui.Input{Input: base.Input{TestID: "typeset-input", Value: text.Get, OnChange: text.Set, Placeholder: "Type here", MaxLength: 40}},
+		ui.Input{TestID: "typeset-input", Value: text.Get, OnChange: text.Set, Placeholder: "Type here", MaxLength: 40},
 		reading("Weight", func() string {
 			return fmt.Sprintf("%.0f · %d glyphs", weight.Get(), utf8.RuneCountInString(text.Get()))
 		}),

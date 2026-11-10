@@ -5,9 +5,9 @@ group: Components
 order: 34
 ---
 
-`ui.Checkbox` is a check box in Onevra's look, with a label beside it. It holds no value: the app says whether it is checked and updates that in `OnChange`.
+`ui.Checkbox` is a check box in `ui`'s look, with a label beside it. It holds no value: the app says whether it is checked and updates that in `OnChange`.
 
-```go
+```go preview=checkbox/basic
 done := core.NewSignal(cx, false)
 ui.Checkbox{Checked: done.Get, OnChange: done.Set, Text: "Remember me"}
 ```
@@ -20,7 +20,7 @@ ui.Checkbox{Checked: done.Get, OnChange: done.Set, Text: "Remember me"}
 
 `Indeterminate` is neither checked nor unchecked, for a "select all" over a partial selection; a press then asks for checked. `Disabled` stops presses and the focus.
 
-```go
+```go preview=checkbox/indeterminate height=220
 ui.Checkbox{
 	Checked:       func() bool { return chosen.Get() == len(files) },
 	Indeterminate: func() bool { return chosen.Get() > 0 && chosen.Get() < len(files) },

@@ -49,7 +49,7 @@ Hard-coded colors break in dark mode and under an app's theme; take every color 
 A color the palette has no role for goes in `Palette.Colors` under a name of yours, set in both appearances. Apps override it in code or in their theme file, under `light` and `dark`:
 
 ```go
-theme := ui.DefaultTheme()
+theme := core.DefaultTheme()
 theme.Light.SetColor("chip", core.RGB(0xeef5ff))
 theme.Dark.SetColor("chip", core.RGB(0x1b2a3d))
 cx.SetTheme(theme)

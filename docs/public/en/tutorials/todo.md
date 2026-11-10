@@ -22,7 +22,7 @@ go tool nsgo dev
 
 The generated app is a counter. Replace the whole of `app.go` with this app:
 
-```go
+```go program height=480
 package main
 
 import (
@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 	"github.com/oneo-me/nsgo/ui"
@@ -102,8 +101,8 @@ func Root(cx *core.Scope) core.Node {
 		Children: []core.Node{
 			ui.Text("Todos", 28, ui.Bold, colors.Text),
 			core.View{Style: core.Style{Direction: core.Row, Gap: 8}, Children: []core.Node{
-				ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "What needs doing?",
-					OnSubmit: func(string) { add() }, TestID: "draft", Style: core.Style{FlexGrow: 1}}},
+				ui.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: "What needs doing?",
+					OnSubmit: func(string) { add() }, TestID: "draft", Style: core.Style{FlexGrow: 1}},
 				ui.Button{Text: "Add", Icon: lucide.Plus, OnPress: add, TestID: "add"},
 			}},
 			ui.Textf(func() string { return fmt.Sprintf("%d left", left()) }, 13, ui.Regular, colors.Muted),

@@ -69,7 +69,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 | --- | --- | --- |
 | `run_app` shows one `AppView` in one window; more windows are a host's, an engine each | One engine with a surface per window, panel and tray view, which the app opens as Avalonia's apps do | Go code is trusted and in one process, so windows share signals instead of crossing a host channel |
 | `keep_alive_on_close`, macOS only | `SetShutdownMode` and a cancelable `OnClosing` | Tray and background apps outlive their windows |
-| No tray, panels, global shortcuts, Dock policy or launch at login | `desktop` has them | The desktop apps Onevra's users write need them |
+| No tray, panels, global shortcuts, Dock policy or launch at login | `desktop` has them | Desktop apps need them |
 | `nsh.json`'s window size | `nsgo.WindowSize`, `nsgo.WindowConstraints` and `WindowOptions` | An app opens windows of different sizes, or none |
 
 ## Verification

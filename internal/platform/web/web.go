@@ -139,6 +139,10 @@ type surface struct {
 	// while the focus is in it, as another app on the page has them
 	// otherwise.
 	whole, pressedIn bool
+	// forced is the appearance the app forces and hosted the one the
+	// page's host sets, which the browser's own parts follow
+	// (setAppearance).
+	forced, hosted driver.Appearance
 	clicks           clicks
 	timer            js.Value // the pending long press
 	longPress        js.Func
@@ -365,7 +369,7 @@ func open(app engine.App, opts Options, test *testOpen) *surface {
 		Storage: engine.NewStorage(newLocalStorage(opts.ID)),
 	}
 	if test == nil {
-		eopts.Host = connectHost(opts.Host)
+		eopts.Host = connectHost(opts.Host, s.setHostEnvironment)
 	} else {
 		eopts.UseTest(test.options, &test.pin)
 		// The page's size, which the test sets, is the surface's.

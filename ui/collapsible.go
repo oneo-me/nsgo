@@ -20,7 +20,7 @@ const (
 )
 
 // Collapsible is a titled region whose Content the trigger shows and hides
-// with a spring, as Onevra's: a title beside an arrow, as wide as they are.
+// with a spring: a title beside an arrow, as wide as they are.
 type Collapsible struct {
 	Open         func() bool
 	OnOpenChange func(open bool)

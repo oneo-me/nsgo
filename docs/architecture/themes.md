@@ -4,7 +4,7 @@ How an app, a component library and an embedding host give the UI its colors in 
 
 ## Model
 
-A `core.Theme` is one look in both appearances: a `Palette` for light and one for dark, a corner radius and font families. Its roles are Onevra's (its `theme` package), and `DefaultTheme` holds a look with no character of its own, neutral grays and macOS's blue as the accent, `#007AFF` in light and `#0A84FF` in dark:
+A `core.Theme` is one look in both appearances: a `Palette` for light and one for dark, a corner radius and font families. Its roles are NSGo's, and `DefaultTheme`, which a tree shows until the app sets a theme, holds a look with no character of its own and every role `ui` reads, neutral grays and macOS's blue as the accent, `#007AFF` in light and `#0A84FF` in dark:
 
 | Role | What it colors |
 | --- | --- |
@@ -18,7 +18,7 @@ A `core.Theme` is one look in both appearances: a `Palette` for light and one fo
 
 `Palette.Colors` holds roles a library or app adds by name (`inset`, `info`), which `Palette.Color` and `SetColor` reach as they reach the fields, by their names in lower camel case. Gradients, shadows and other finishes are not colors and stay in the library's code, chosen by `Dark`.
 
-Overlays (muted and faint text, hover, press, edges, scroll bars, switch tracks) are the text's color at a lower opacity, so one role holds on every surface and over glass. `ui.Alpha` replaces a color's opacity rather than scaling it, so a fainter edge takes `line`, the hairlines' role, not `Alpha(Border, …)`; `Mix` keeps working. A dialog's rim is the one solid edge (`Fins.Dialog`), mixed from the page and the text as Onevra's, with more of the text in light, since what shows through it there is the dim and its own shadow.
+Overlays (muted and faint text, hover, press, edges, scroll bars, switch tracks) are the text's color at a lower opacity, so one role holds on every surface and over glass. `ui.Alpha` replaces a color's opacity rather than scaling it, so a fainter edge takes `line`, the hairlines' role, not `Alpha(Border, …)`; `Mix` keeps working. A dialog's rim is the one solid edge (`Fins.Dialog`), mixed from the page and the text, with more of the text in light, since what shows through it there is the dim and its own shadow.
 
 ## Scope
 
@@ -45,7 +45,7 @@ dark:
 
 Values are CSS colors. JSON is YAML, so a theme exported as JSON reads too.
 
-It reads a shadcn/ui theme file too, as NSH's apps write theirs: the CSS variables of `cssVars`' `theme`, `light` and `dark` sections, where a value may name another (`var(--brand)`) and dark's go over light's. A variable that is a color is a role of the palettes, which classes name (`bg-muted-foreground`); the others are `Theme.Tokens` (`radius-card: 16px`), `radius`, `font-sans` and `font-mono` setting `Radius`, `Sans` and `Mono` too. `DefaultTheme` holds shadcn/ui's neutral tokens under their names, but those that name Onevra's roles (`background`, `border`, `accent`), so NSH's apps without a theme of their own still resolve them. A TSX app names its theme file in `nsgo.yaml`'s `theme`, and TSX's `token(name)` reads a color or a token of it.
+It reads a shadcn/ui theme file too, as NSH's apps write theirs: the CSS variables of `cssVars`' `theme`, `light` and `dark` sections, where a value may name another (`var(--brand)`) and dark's go over light's. A variable that is a color is a role of the palettes, which classes name (`bg-muted-foreground`); the others are `Theme.Tokens` (`radius-card: 16px`), `radius`, `font-sans` and `font-mono` setting `Radius`, `Sans` and `Mono` too. `DefaultTheme` holds shadcn/ui's neutral tokens under their names, but those that name the palette's roles (`background`, `border`, `accent`), so NSH's apps without a theme of their own still resolve them. A TSX app names its theme file in `nsgo.yaml`'s `theme`, and TSX's `token(name)` reads a color or a token of it.
 
 ## Tailwind
 
@@ -57,7 +57,7 @@ An embedding host's `core.Tokens` go over every theme's palette by the same role
 
 ## ui
 
-`ui` styles `base`, as NSH's gallery does with `examples/nsh-gallery-ui`, in the look of Onevra's gallery, for apps and the gallery alike: flat bordered cards and controls, the controls 28 pt tall in 13 pt text by default and the same on every device. It holds `ui.DefaultTheme`, the default with the gallery's roles in `Palette.Colors` derived as Onevra derives its own, `ui.WarmDuskTheme` (Warm Dusk, 暖暮), Onevra's warm palette and terracotta accent, which an app passes to `SetTheme` as it does `ui.DefaultTheme` and the gallery's settings offer, its finishes, which take what floats from the theme's colors, and motion, and components written as structs with a `Render` method (`ui.Button{Text: …, Variant: ui.ButtonSecondary, OnPress: …}`): controls, popups, menus, panels, navigation, shells, lists and a tree, form fields, settings, images, and `ui/chat`, a conversation (`chat.FloatingConversation`, `chat.Turn`, `chat.Composer` and their chips, pickers and meters, ported from Onevra's `chat`). What only the gallery's demos share is in `examples/gallery/parts.go`. Each reads its colors where it is built, so a subtree's theme reaches it, and reads `ui.ColorsOf`, `ui.TintsOf` and `ui.FinOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.Text()`), and a method value (`colors.Text`) is a color to hand on; `colors.Now()` reads them all at once for a `Draw`, and `ui.Themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build, and the package's own every component.
+`ui` styles `base`, as NSH's gallery does with `examples/nsh-gallery-ui`, in NSGo's own look, for apps and the gallery alike: flat bordered cards and controls, the controls 28 pt tall in 13 pt text by default and the same on every device. Its components read their roles from `Palette.Colors`, which `core.DefaultTheme` holds, so an app needs no theme to show them right. It holds `ui.WarmDuskTheme` (Warm Dusk, 暖暮), a warm palette with a terracotta accent, which an app passes to `SetTheme` and the gallery's settings offer, its finishes, which take what floats from the theme's colors, and motion, and components written as structs with a `Render` method (`ui.Button{Text: …, Variant: ui.ButtonSecondary, OnPress: …}`): controls, popups, menus, panels, navigation, shells, lists and a tree, form fields, settings, images, and `ui/chat`, a conversation (`chat.FloatingConversation`, `chat.Turn`, `chat.Composer` and their chips, pickers and meters, `ui/chat`'s own). What only the gallery's demos share is in `examples/gallery/parts.go`. Each reads its colors where it is built, so a subtree's theme reaches it, and reads `ui.ColorsOf`, `ui.TintsOf` and `ui.FinOf` only inside a `StyleFunc`, a `Draw` or another function the engine runs again, as NSH's styles read its colors: a change of theme or appearance restyles every view in place, keeping scroll positions and state. Each color is a method (`colors.Text()`), and a method value (`colors.Text`) is a color to hand on; `colors.Now()` reads them all at once for a `Draw`, and `ui.Themed` holds a component's styles by part for its `StylesFunc` or a `TextView`'s `StyleOf`. `TestAppearanceRestylesInPlace` checks every demo against a fresh dark build, and the package's own every component.
 
 Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffView` a `StylesFunc`, `TextView` a `StyleOf`), as `core.Span` has, so an app restyles them in place too.
 
@@ -82,7 +82,7 @@ A `Switch` has a track of its own: 30 × 16, 40 × 20 and 48 × 24 pt. `Size.Hei
 
 | NSH | NSGo | Why |
 | --- | --- | --- |
-| shadcn's roles from `nsh.json`, as Tailwind tokens | Onevra's roles as typed fields of a Go value, plus named ones (shadcn/ui's among them), which classes name in kebab case | Go code reads the fields; the user picked Onevra's palette |
+| shadcn's roles from `nsh.json`, as Tailwind tokens | Roles as typed fields of a Go value, plus named ones (shadcn/ui's and `ui`'s among them), which classes name in kebab case | Go code reads the fields |
 | One theme per engine | A theme and an appearance per subtree | Apps can theme a sidebar or panel apart |
 | A theme file in `nsh.json` | `ParseTheme` over an embedded file | Go embeds files itself; the tool stays out of it |
 | `nsh.json`'s `tailwind`, one per engine | `Theme.Tailwind`, per subtree; `nsgo.yaml`'s `tailwind` for TSX | It travels with the theme a subtree takes |

@@ -7,18 +7,18 @@ order: 57
 
 ## 文本框
 
-`ui.Input` 是 `ui` 外观的平台文本框，以 `base.Input` 接收输入框的设置。设置 `Value` 后它是受控的：应用保存值并在 `OnChange` 中更新；设置 `DefaultValue` 后它自己保存值。
+`ui.Input` 是 `ui` 外观的平台文本框，字段与 `base.Input` 相同。设置 `Value` 后它是受控的：应用保存值并在 `OnChange` 中更新；设置 `DefaultValue` 后它自己保存值。
 
 ```go
 name, email := core.NewSignal(cx, ""), &core.Ref{}
 
-ui.Input{Input: base.Input{
+ui.Input{
 	Value:         name.Get,
 	OnChange:      name.Set,
 	Placeholder:   "你的名字",
 	ReturnKeyType: core.ReturnKeyNext,
 	OnSubmit:      func(string) { email.Focus() },
-}}
+}
 ```
 
 `Masked` 隐藏字符，`Readonly` 和 `Disabled` 阻止编辑，`Multiline` 让文本换行并随之增长，除非样式指定了尺寸。`KeyboardType` 选择软件键盘（`core.KeyboardEmail`、`core.KeyboardNumber`、`core.KeyboardURL` 等），`AutoComplete` 告诉系统字段内容以便自动填充，`MaxLength` 限制用户输入的 UTF-16 单元数。`AutoCapitalize` 和 `NoAutoCorrect` 调整键盘行为。
@@ -31,7 +31,7 @@ ui.Input{Input: base.Input{
 
 ```go
 email := &core.Ref{}
-ui.Input{Input: base.Input{Ref: email, Placeholder: "you@example.com"}}
+ui.Input{Ref: email, Placeholder: "you@example.com"}
 email.Focus()
 ```
 
@@ -89,7 +89,7 @@ address := core.NewSignal(cx, "")
 err := core.NewSignal(cx, "")
 colors := ui.ColorsOf(cx)
 core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
-	ui.Input{Input: base.Input{
+	ui.Input{
 		Value:    address.Get,
 		OnChange: func(v string) { address.Set(v); err.Set("") },
 		Label:    "邮箱",
@@ -98,7 +98,7 @@ core.View{Style: core.Style{Gap: 4}, Children: []core.Node{
 				err.Set("请输入邮箱地址。")
 			}
 		},
-	}},
+	},
 	core.Show{
 		When: func() bool { return err.Get() != "" },
 		Then: func(*core.Scope) core.Node { return ui.Textf(err.Get, 12, ui.Regular, colors.Danger) },

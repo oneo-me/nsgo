@@ -5,14 +5,14 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
-// Field is an Input in Onevra's text box: the field's color and a rim;
-// the input's own style sets its size and padding.
-type Field struct{ Input base.Input }
+// Field is the platform's text field with base.Input's fields, in a
+// text box's color and rim; its own style sets its size and padding.
+type Field base.Input
 
 // Render implements core.Node.
 func (f Field) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	in := f.Input
+	in := base.Input(f)
 	in.Style = core.Style{FontSize: 13}.Merge(in.Style)
 	own := in.StyleFunc
 	in.StyleFunc = func() core.Style {

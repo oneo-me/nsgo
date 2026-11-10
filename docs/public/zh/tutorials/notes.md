@@ -22,7 +22,7 @@ go tool nsgo dev
 
 把 `app.go` 整个替换为：
 
-```go
+```go program height=480
 package main
 
 import (
@@ -111,14 +111,14 @@ func Root(cx *core.Scope) core.Node {
 		return ui.NavPage(cx, base.NavPage{
 			TitleFunc: func() string { return find(id).title() },
 			Children: []core.Node{core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Padding: core.All(16)}, Children: []core.Node{
-				ui.Input{Input: base.Input{
+				ui.Input{
 					Multiline:   true,
 					Value:       func() string { return find(id).Text },
 					OnChange:    func(text string) { edit(id, text) },
 					Placeholder: "Write something",
 					TestID:      "editor",
 					Style:       core.Style{FlexGrow: 1, FlexShrink: 1},
-				}},
+				},
 			}}},
 		}, ui.NavHeader{
 			OnBack:    func() { nav.Pop(1) },

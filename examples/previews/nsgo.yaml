@@ -1,0 +1,10 @@
+name: Previews
+id: dev.oneo.nsgo.previews
+version: 0.1.0
+
+dev:
+  target: web
+
+build:
+  output: dist
+  targets: [web]

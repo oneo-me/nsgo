@@ -10,7 +10,7 @@ import (
 
 // Dialog is a modal surface over a dimmed app and a sheet from the bottom
 // on touch screens: a title, a description, the app's children and its
-// Footer of actions. On desktops it pops in and fades out as Onevra's
+// Footer of actions. On desktops it pops in and fades out
 // does, centered across and with two thirds of the spare height below it.
 type Dialog struct {
 	Open         func() bool
@@ -100,7 +100,7 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 // RadiusDialog rounds a dialog on desktops.
 const RadiusDialog core.Points = 16
 
-// A dialog's layers move as Onevra's: the dim fades, and the surface pops
+// A dialog's layers move so: the dim fades, and the surface pops
 // in and fades out where it is. Under reduced motion they come and go at
 // once.
 var (

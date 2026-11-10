@@ -49,7 +49,7 @@ func (t Toggle) Render(cx *core.Scope) core.Node {
 调色板中没有对应角色的颜色，以你自己起的名字放进 `Palette.Colors`，两种外观都要设置。应用可以在代码或主题文件的 `light` 和 `dark` 下覆盖它：
 
 ```go
-theme := ui.DefaultTheme()
+theme := core.DefaultTheme()
 theme.Light.SetColor("chip", core.RGB(0xeef5ff))
 theme.Dark.SetColor("chip", core.RGB(0x1b2a3d))
 cx.SetTheme(theme)

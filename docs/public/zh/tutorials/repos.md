@@ -22,7 +22,7 @@ go tool nsgo dev
 
 把 `app.go` 整个替换为：
 
-```go
+```go program height=480
 package main
 
 import (

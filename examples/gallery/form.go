@@ -612,8 +612,8 @@ func inputPlayground(cx *core.Scope) core.Node {
 	value := core.NewSignal(cx, "")
 	multiline, masked, disabled := core.NewSignal(cx, false), core.NewSignal(cx, false), core.NewSignal(cx, false)
 	return Playground{Title: "Input", Fill: true, Base: baseInputForm(cx, value, multiline, masked, disabled), Stage: func() core.Node {
-		return ui.Input{Input: base.Input{Value: value.Get, OnChange: value.Set, Placeholder: tr.CompTypeHere(), Multiline: multiline.Get(), Masked: masked.Get(),
-			Disabled: disabled.Get}}
+		return ui.Input{Value: value.Get, OnChange: value.Set, Placeholder: tr.CompTypeHere(), Multiline: multiline.Get(), Masked: masked.Get(),
+			Disabled: disabled.Get}
 	}, BaseKnobs: []core.Node{boolKnob("Multiline", multiline), boolKnob("Masked", masked), boolKnob("Disabled", disabled)}}
 }
 

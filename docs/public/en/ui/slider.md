@@ -5,9 +5,9 @@ group: Components
 order: 37
 ---
 
-`ui.Slider` picks a value along a track in Onevra's look, with the drag, the step and the keyboard. One value is a single knob; `High` makes a range of two.
+`ui.Slider` picks a value along a track, with the drag, the step and the keyboard. One value is a single knob; `High` makes a range of two.
 
-```go
+```go preview=slider/basic
 volume := core.NewSignal(cx, 40.0)
 ui.Slider{Value: volume.Get, OnChange: volume.Set, Min: 0, Max: 100, Step: 5, Label: "Volume"}
 ```
@@ -16,7 +16,7 @@ ui.Slider{Value: volume.Get, OnChange: volume.Set, Min: 0, Max: 100, Step: 5, La
 
 Set `High` and `OnHighChange` to choose two values. `Value` is the low end. `LowLabel` and `HighLabel` name the knobs for assistive technology.
 
-```go
+```go preview=slider/range
 price := core.NewSignal(cx, 20.0)
 ceiling := core.NewSignal(cx, 80.0)
 ui.Slider{
@@ -31,7 +31,7 @@ ui.Slider{
 
 `Step` snaps the value; a step of 0 takes any value. `ValueText` changes what assistive technology reads as the value, and `Disabled` stops it.
 
-```go
+```go preview=slider/format
 ui.Slider{Value: speed.Get, OnChange: speed.Set, Min: 0.5, Max: 2, Step: 0.25, Label: "Speed",
 	ValueText: func(v float64) string { return fmt.Sprintf("%g×", v) }}
 ```

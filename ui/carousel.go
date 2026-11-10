@@ -8,7 +8,7 @@ import (
 	"github.com/oneo-me/nsgo/icons/lucide"
 )
 
-// Carousel is base.Carousel in Onevra's look, a row of Count slides that
+// Carousel is base.Carousel in ui's look, a row of Count slides that
 // snaps one to the center, its neighbors in view, smaller and dimmer: a
 // swipe or a trackpad moves it, and the arrows and the indicators below
 // choose a slide. The app keeps the centered slide's Index and sets it from

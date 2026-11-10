@@ -12,7 +12,7 @@ type Selection = base.Selection
 // of any number.
 func NewSelection(cx *core.Scope, multiple bool) *Selection { return base.NewSelection(cx, multiple) }
 
-// List is base.List in Onevra's look: rounded rows, the chosen ones on a
+// List is base.List in ui's look: rounded rows, the chosen ones on a
 // faint fill of the text's color as a Sidebar's and the keyboard's cursor
 // ringed. Give it a height, or let it fill what the app sizes.
 type List struct {

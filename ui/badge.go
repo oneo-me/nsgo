@@ -44,7 +44,7 @@ func (v BadgeVariant) tint(colors Colors) (core.Color, bool) {
 	return 0, false
 }
 
-// Badge is a small label in a capsule, as Onevra's: Text, or what TextFunc
+// Badge is a small label in a capsule: Text, or what TextFunc
 // returns, in Variant, or the one VariantFunc returns.
 type Badge struct {
 	Text        string
@@ -65,7 +65,7 @@ func (b Badge) Render(cx *core.Scope) core.Node {
 		variant = func() BadgeVariant { return b.Variant }
 	}
 	// A tinted badge's text leans to the text's color, and its rim to the
-	// page's, as Onevra's badges do.
+	// page's.
 	fg := func() core.Color {
 		if tint, ok := variant().tint(colors); ok {
 			return Mix(tint, colors.Text(), 0.3)

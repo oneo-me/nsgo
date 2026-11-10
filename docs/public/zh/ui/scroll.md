@@ -7,7 +7,7 @@ order: 39
 
 `core.Scroll` 是平台自己的滚动视图。它的子元素按纵向排开，设置 `Horizontal` 后按横向排开；它填满容器，内容在其中滚动。
 
-```go
+```go preview=scroll/basic height=240
 core.Scroll{Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 	core.View{Style: core.Style{Padding: core.All(16), Gap: 12}, Children: rows},
 }}
@@ -19,7 +19,7 @@ core.Scroll{Style: core.Style{FlexGrow: 1}, Children: []core.Node{
 
 `Behavior` 决定滚动方式：`Paging`、`SnapToInterval` 或 `SnapToOffsets` 配合 `SnapToAlignment`、`DecelerationRate`、`NoBounces`、`ContentInset`，以及键盘规则。
 
-```go
+```go preview=scroll/paging height=240
 core.Scroll{
 	Behavior: core.ScrollBehavior{
 		Paging:                    true,

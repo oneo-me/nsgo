@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run gallery && astro dev",
-    "build": "bun run gallery && astro check && astro build",
+    "dev": "bun run gallery && bun run live && astro dev",
+    "build": "bun run gallery && bun run live && astro check && astro build",
     "preview": "astro preview",
     "gallery": "bun scripts/build-gallery.mjs",
+    "live": "bun scripts/build-live.mjs",
     "typecheck": "astro check",
     "screenshots": "bun scripts/screenshots.mjs"
   },

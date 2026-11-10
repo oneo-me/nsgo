@@ -372,14 +372,14 @@ func (p Dialog) crumbs(cx *core.Scope) core.Node {
 // leaving the field returns to the breadcrumbs.
 func (p Dialog) addressField(cx *core.Scope) core.Node {
 	s := p.State
-	return ui.Input{Input: base.Input{Value: s.address.Get, OnChange: s.address.Set, Label: p.Labels.Address, AutoFocus: true,
+	return ui.Input{Value: s.address.Get, OnChange: s.address.Set, Label: p.Labels.Address, AutoFocus: true,
 		OnBlur: func() { s.editing.Set(false) },
 		OnSubmit: func(text string) {
 			if text != "" && text != s.folder.GetUntracked().Path {
 				s.Open(text)
 			}
 			s.editing.Set(false)
-		}}}
+		}}
 }
 
 // places lists the sidebar's sections, following SectionsFunc.

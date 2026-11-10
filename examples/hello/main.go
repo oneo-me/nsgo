@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/examples/hello/locales"
 	"github.com/oneo-me/nsgo/ui"
@@ -36,7 +35,7 @@ func Root(cx *core.Scope) core.Node {
 		Children: []core.Node{
 			core.Text{ContentFunc: greeting, Style: ui.TypeHeading.Merge(core.Style{FontSize: 28, LineHeight: 34, TextAlign: core.TextAlignCenter}), TestID: "greeting"},
 			core.View{Style: core.Style{Width: core.Pt(240)}, Children: []core.Node{
-				ui.Input{Input: base.Input{Value: name.Get, OnChange: name.Set, Placeholder: locales.NamePlaceholder(cx), TestID: "name"}},
+				ui.Input{Value: name.Get, OnChange: name.Set, Placeholder: locales.NamePlaceholder(cx), TestID: "name"},
 			}},
 			ui.Button{Text: locales.SayHello(cx), OnPress: func() { count.Update(func(n int) int { return n + 1 }) }, TestID: "say"},
 			core.Text{ContentFunc: func() string { return locales.Said(cx, count.Get()) },

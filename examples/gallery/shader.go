@@ -11,7 +11,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// signalField is Onevra's SignalField background on core.Shader: a sparse
+// signalField is a signal field background on core.Shader: a sparse
 // grid of dots that breathe with slow noise, gather light around the
 // pointer and pulse outward where it is pressed, behind its children. Its
 // middle stays calmer than its edges, where content usually sits.
@@ -365,7 +365,7 @@ func Fragment(dst vec4, pos vec2) vec4 {
 }
 `
 
-// signalSource is Onevra's SignalField shader.
+// signalSource is the signal field's shader.
 const signalSource = `package main
 
 var Time float

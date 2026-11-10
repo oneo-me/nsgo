@@ -7,7 +7,7 @@ order: 36
 
 `ui.Select[T]` chooses one of a list of values of any comparable type. On desktops the list opens under the trigger; on touch screens it is a sheet.
 
-```go
+```go preview=select/basic height=280
 size := core.NewSignal(cx, "m")
 ui.Select[string]{
 	Options: []ui.Option[string]{{Value: "s", Label: "Small"}, {Value: "m", Label: "Medium"}, {Value: "l", Label: "Large"}},
@@ -21,7 +21,7 @@ ui.Select[string]{
 
 `Options` are `ui.Option[T]`s, each with a `Value`, a `Label`, and an optional `Icon`, `Disabled` function or `Content` of the app's own. `Placeholder` shows while no option is chosen. `Searchable` filters the list by typing, `OnClear` shows a clear button, and `Disabled` stops it.
 
-```go
+```go preview=select/searchable height=400
 ui.Select[string]{
 	Options:  languages,
 	Value:    language.Get,

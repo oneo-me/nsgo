@@ -22,7 +22,9 @@ const { mount } = await import("./" + config.loader);
 window.posts = [];
 window.player = await mount(document.getElementById("app"), "nsgo.json", {
   config,
+  module: WebAssembly.compileStreaming(fetch(config.wasm)),
   params: { user: "Ada" },
+  appearance: "dark",
   host: {
     call(name) {
       if (name === "time") return Promise.resolve("12:00");
@@ -38,7 +40,8 @@ window.player = await mount(document.getElementById("app"), "nsgo.json", {
 
 // TestWebHostChannel runs examples/embedded in a headless browser, in its
 // own page with nsgo.yaml's host module and in another page's element
-// with that page's host: parameters, events, calls, posts and URLs.
+// with that page's host: parameters, events, calls, posts, URLs, the
+// page's settings and a module the page compiled.
 func TestWebHostChannel(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds an app for the web")
@@ -147,5 +150,13 @@ func TestWebHostChannel(t *testing.T) {
 	}
 	if eval(pg, `(() => { try { player.hostEvent("x", { n: 1n }); return false } catch { return true } })()`) != true {
 		t.Fatal("a payload that is not JSON did not throw")
+	}
+	scheme := `document.getElementById("app").style.colorScheme`
+	if got := eval(pg, scheme); got != "dark" {
+		t.Fatalf("the element's color scheme = %v, want the host's dark", got)
+	}
+	eval(pg, `player.setAppearance("light")`)
+	if got := eval(pg, scheme); got != "light" {
+		t.Fatalf("after setAppearance, the element's color scheme = %v, want light", got)
 	}
 }

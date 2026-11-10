@@ -7,14 +7,14 @@ order: 41
 
 `ui.Dialog` 是覆盖在变暗的应用上的模态表面，在触摸屏上是从底部弹出的 sheet。`ui.Sheet` 是从底部弹出的面板，`ui.AlertDialog` 请用户确认。
 
-```go
+```go preview=dialog/basic height=360
 open := core.NewSignal(cx, false)
 ui.Dialog{
 	Open:         open.Get,
 	OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) },
 	Title:        "重命名文件",
 	Description:  "新名称会显示在所有地方。",
-	Children:     []core.Node{ui.Input{Input: base.Input{Value: name.Get, OnChange: name.Set}}},
+	Children:     []core.Node{ui.Input{Value: name.Get, OnChange: name.Set}},
 	Footer: []core.Node{
 		ui.Button{Text: "取消", Variant: ui.ButtonSecondary, OnPress: func() { open.Set(false) }},
 		ui.Button{Text: "保存", OnPress: save},
@@ -32,7 +32,7 @@ ui.Dialog{
 
 `ui.Sheet` 是覆盖在变暗背景上的底部面板；点击背景、Escape 或返回会调用 `OnClose`。
 
-```go
+```go preview=dialog/sheet height=320
 ui.Sheet{Open: filters.Get, OnClose: func() { filters.Set(false) }, Children: filterControls}
 ```
 
@@ -40,7 +40,7 @@ ui.Sheet{Open: filters.Get, OnClose: func() { filters.Set(false) }, Children: fi
 
 `ui.AlertDialog` 请用户确认或知悉某件事。每个操作都会关闭它，点击外部则不会。
 
-```go
+```go preview=dialog/alert height=320
 ui.AlertDialog{
 	Open:         confirm.Get,
 	OnOpenChange: func(v bool, _ base.Reason) { confirm.Set(v) },

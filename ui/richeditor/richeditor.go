@@ -12,7 +12,7 @@ import (
 	"github.com/oneo-me/nsgo/ui"
 )
 
-// View is richeditor.View in ui's look: Onevra's reading text on the theme's
+// View is richeditor.View in ui's look: reading text on the theme's
 // colors, the accent for the caret and links, tables on hairlines with a
 // recessed header, and images shown. The app's Styles or StylesFunc merge over
 // ui's, part by part, and its NodeViews over the image's.

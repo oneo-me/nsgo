@@ -5,9 +5,9 @@ group: Components
 order: 35
 ---
 
-`ui.Switch` is a setting that takes effect at once, in Onevra's look. It holds no value: the app owns it and updates it in `OnChange`.
+`ui.Switch` is a setting that takes effect at once. It holds no value: the app owns it and updates it in `OnChange`.
 
-```go
+```go preview=switch/basic
 notifications := core.NewSignal(cx, true)
 ui.Switch{Checked: notifications.Get, OnChange: notifications.Set, Label: "Notifications"}
 ```
@@ -16,7 +16,7 @@ ui.Switch{Checked: notifications.Get, OnChange: notifications.Set, Label: "Notif
 
 `ui.Switch` takes `Checked`, `OnChange`, `Label` and `Size` (`SizeDefault`, `SizeSmall` or `SizeLarge`). The knob slides and the track changes color on the platform's frame clock.
 
-```go
+```go preview=switch/small
 ui.Switch{Checked: sync.Get, OnChange: sync.Set, Label: "Sync automatically", Size: ui.SizeSmall}
 ```
 

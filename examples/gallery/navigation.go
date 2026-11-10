@@ -169,7 +169,7 @@ func unsavedPage(cx *core.Scope) base.NavPage {
 				}
 				return ui.Badge{Text: tr.NavEmpty()}
 			})}, Children: []core.Node{
-				ui.Input{Input: base.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: tr.NavADraft(), TestID: "draft"}},
+				ui.Input{Value: draft.Get, OnChange: draft.Set, Placeholder: tr.NavADraft(), TestID: "draft"},
 				Note{TextFunc: func() string {
 					if n := len([]rune(draft.Get())); n > 0 {
 						return tr.NavCharactersLost(n)

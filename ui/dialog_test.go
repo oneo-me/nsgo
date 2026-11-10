@@ -21,7 +21,7 @@ func TestDialog(t *testing.T) {
 				Button{Text: "Delete", TestID: "open-alert", OnPress: func() { alert.Set(true) }},
 				Dialog{TestID: "dialog", Title: "Rename file", Description: "Choose a new name.",
 					Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) },
-					Children: []core.Node{Input{Input: base.Input{Label: "Name", DefaultValue: "report.pdf"}}},
+					Children: []core.Node{Input{Label: "Name", DefaultValue: "report.pdf"}},
 					Footer: []core.Node{Button{Variant: ButtonSecondary, Text: "Cancel", TestID: "cancel", OnPress: func() { open.Set(false) }},
 						Button{Variant: ButtonPrimary, Text: "Rename"}}},
 				AlertDialog{TestID: "alert", Title: "Delete report.pdf?", Description: "This cannot be undone.",

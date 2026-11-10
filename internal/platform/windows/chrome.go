@@ -99,7 +99,7 @@ const (
 	mfRightOrder = 0x2000
 )
 
-// The caption buttons after Onevra's: 32 point squares 4 apart, their
+// The caption buttons: 32 point squares 4 apart, their
 // glyphs 10, as Windows' own are at 96 DPI, centered in the app's bar
 // and 8 points in from the right edge; the bar is 32 tall unless the app
 // says otherwise.
@@ -570,7 +570,7 @@ func (w *window) ncActivate(wParam, lParam uintptr) uintptr {
 
 // drawCaptionButtons draws the caption buttons over the app, with the
 // title bar hidden, at the right of a client area width pixels wide. It
-// draws Onevra's: rounded squares in the middle of the bar, the close one
+// draws NSGo's: rounded squares in the middle of the bar, the close one
 // red under the pointer. It draws in pixels, so the glyphs' lines fall on
 // whole ones.
 func (p *painter) drawCaptionButtons(width int32) {
@@ -625,7 +625,7 @@ func (p *painter) drawCaptionButtons(width int32) {
 		}
 		left, glyphTop := float32(r.Left+(button-glyph)/2), float32(top+(button-glyph)/2)
 		if code == htMinButton {
-			// Onevra sets the minus a little low, as its glyph reads.
+			// The minus sits a little low, as its glyph reads.
 			glyphTop += float32(w.px(2))
 		}
 		size := float32(glyph)

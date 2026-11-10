@@ -33,7 +33,7 @@ type Card struct {
 	Variant            CardVariant
 }
 
-// The card's small type, at Onevra's 0.85 of the body's size.
+// The card's small type, at 0.85 of the body's size.
 var cardSmall = core.Style{FontSize: 11, LineHeight: 15}
 
 // Render implements core.Node.

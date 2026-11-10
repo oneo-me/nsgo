@@ -5,9 +5,9 @@ group: 组件
 order: 31
 ---
 
-`ui.Button` 是 Onevra 外观的按钮，带窗口需要的各种变体和尺寸。`OnPress` 在完整的按压后运行。
+`ui.Button` 是 `ui` 外观的按钮，带窗口需要的各种变体和尺寸。`OnPress` 在完整的按压后运行。
 
-```go
+```go preview=button/basic
 ui.Button{Text: "保存", OnPress: save}
 ui.Button{Text: "取消", Variant: ui.ButtonSecondary, OnPress: cancel}
 ```
@@ -16,7 +16,7 @@ ui.Button{Text: "取消", Variant: ui.ButtonSecondary, OnPress: cancel}
 
 `ui.Button.Variant` 可以是 `ButtonPrimary`（默认）、`ButtonSecondary`、`ButtonOutline` 或 `ButtonGhost`。`Size` 可以是 `SizeDefault`（28 点）、`SizeSmall`（24）或 `SizeLarge`（32）。
 
-```go
+```go preview=button/variants
 ui.Button{Text: "删除", Variant: ui.ButtonOutline, OnPress: remove}
 ui.Button{Text: "继续", Size: ui.SizeLarge, OnPress: next}
 ui.Button{Text: "保存", Icon: lucide.Check, Flex: 1, OnPress: save}
@@ -26,7 +26,7 @@ ui.Button{Text: "保存", Icon: lucide.Check, Flex: 1, OnPress: save}
 
 只有图标的按钮用 `ui.IconButton`，`Variant` 为 `IconButtonGhost` 或 `IconButtonRaised`，`Size` 以点为单位，`Label` 供辅助技术读取。设置了 `Icon` 而没有 `Text` 的 `ui.Button` 也是方形的，同样需要 `Label`。
 
-```go
+```go preview=button/icon
 ui.IconButton{Icon: lucide.Trash, Label: "删除", Variant: ui.IconButtonGhost, OnPress: remove}
 ```
 

@@ -7,14 +7,14 @@ order: 41
 
 `ui.Dialog` is a modal surface over a dimmed app, a sheet from the bottom on touch screens. `ui.Sheet` is a panel from the bottom, and `ui.AlertDialog` asks the user to confirm.
 
-```go
+```go preview=dialog/basic height=360
 open := core.NewSignal(cx, false)
 ui.Dialog{
 	Open:         open.Get,
 	OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) },
 	Title:        "Rename the file",
 	Description:  "The new name shows everywhere.",
-	Children:     []core.Node{ui.Input{Input: base.Input{Value: name.Get, OnChange: name.Set}}},
+	Children:     []core.Node{ui.Input{Value: name.Get, OnChange: name.Set}},
 	Footer: []core.Node{
 		ui.Button{Text: "Cancel", Variant: ui.ButtonSecondary, OnPress: func() { open.Set(false) }},
 		ui.Button{Text: "Save", OnPress: save},
@@ -32,7 +32,7 @@ The app holds whether the dialog is open. `OnOpenChange` hears every change the 
 
 `ui.Sheet` is a panel at the bottom over a dimmed backdrop; a press on the backdrop, Escape or back calls `OnClose`.
 
-```go
+```go preview=dialog/sheet height=320
 ui.Sheet{Open: filters.Get, OnClose: func() { filters.Set(false) }, Children: filterControls}
 ```
 
@@ -40,7 +40,7 @@ ui.Sheet{Open: filters.Get, OnClose: func() { filters.Set(false) }, Children: fi
 
 `ui.AlertDialog` asks the user to confirm or acknowledge something. Each action closes it, and a press outside does not.
 
-```go
+```go preview=dialog/alert height=320
 ui.AlertDialog{
 	Open:         confirm.Get,
 	OnOpenChange: func(v bool, _ base.Reason) { confirm.Set(v) },

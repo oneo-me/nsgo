@@ -5,9 +5,9 @@ group: 组件
 order: 35
 ---
 
-`ui.Switch` 是立即生效的设置，采用 Onevra 外观。它不保存值：应用保存它，并在 `OnChange` 中更新。
+`ui.Switch` 是立即生效的设置。它不保存值：应用保存它，并在 `OnChange` 中更新。
 
-```go
+```go preview=switch/basic
 notifications := core.NewSignal(cx, true)
 ui.Switch{Checked: notifications.Get, OnChange: notifications.Set, Label: "通知"}
 ```
@@ -16,7 +16,7 @@ ui.Switch{Checked: notifications.Get, OnChange: notifications.Set, Label: "通�
 
 `ui.Switch` 接受 `Checked`、`OnChange`、`Label` 和 `Size`（`SizeDefault`、`SizeSmall` 或 `SizeLarge`）。旋钮的滑动和轨道颜色的变化在平台的帧时钟上运行。
 
-```go
+```go preview=switch/small
 ui.Switch{Checked: sync.Get, OnChange: sync.Set, Label: "自动同步", Size: ui.SizeSmall}
 ```
 

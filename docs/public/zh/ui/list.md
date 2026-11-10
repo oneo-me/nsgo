@@ -5,9 +5,9 @@ group: 组件
 order: 38
 ---
 
-`ui.List` 在原生滚动视图上显示行，只构建屏幕附近的行，并以 Onevra 外观提供选择、激活和键盘操作。
+`ui.List` 在原生滚动视图上显示行，只构建屏幕附近的行，并提供选择、激活和键盘操作。
 
-```go
+```go preview=list/basic height=280
 ui.List{
 	Count:         func() int { return len(items) },
 	Key:           func(i int) any { return items[i].ID },
@@ -39,7 +39,7 @@ ui.List{Count: count, Key: func(i int) any { return items[i].ID }, Row: func(cx 
 
 `ui.List` 接受 `Selection`，用 `ui.NewSelection(cx, multiple)` 创建。Key、标签、激活和键盘都跟随它：上、下、Home 和 End 移动光标，Shift 扩展，Mod+A 全选，空格在多选时切换当前行，Enter 或双击激活一行。
 
-```go
+```go preview=list/selection height=320
 selected := ui.NewSelection(cx, true)
 ui.List{
 	Count:      count,

@@ -87,8 +87,8 @@ func storageDemo(cx *core.Scope) core.Node {
 		tr := locales.For(cx)
 		colors := ui.ColorsOf(cx)
 		return Card{Title: tr.StorageNote(), Description: tr.StorageSavedAsYouTypeBack(), Children: []core.Node{
-			ui.Field{Input: base.Input{Multiline: true, Value: note, OnChange: write, Placeholder: tr.StorageWriteSomethingThenComeBack(),
-				Label: tr.StorageNote(), TestID: "note", Style: core.Style{Height: core.Pt(120), Padding: core.Edges{Top: 12, Right: 14, Bottom: 12, Left: 14}}}},
+			ui.Field{Multiline: true, Value: note, OnChange: write, Placeholder: tr.StorageWriteSomethingThenComeBack(),
+				Label: tr.StorageNote(), TestID: "note", Style: core.Style{Height: core.Pt(120), Padding: core.Edges{Top: 12, Right: 14, Bottom: 12, Left: 14}}},
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, MinHeight: core.Pt(16)}, Children: []core.Node{
 				core.Show{When: func() bool { return saved.Get() == "saved" }, Then: func(*core.Scope) core.Node { return ui.Icon(lucide.Check, 14, colors.Up) }},
 				core.Text{ContentFunc: func() string {
