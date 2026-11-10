@@ -222,6 +222,18 @@ func TestDiffViewWrapsLongLines(t *testing.T) {
 	}
 }
 
+// Wrapping reads a deleted line from the old text, which may have more
+// lines than the new one or the only lines, as a deleted file's.
+func TestDiffViewWrapsDeletedLines(t *testing.T) {
+	for _, unified := range []bool{true, false} {
+		app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+			return DiffView{OldValue: func() string { return "a\nb\n" }, NewValue: func() string { return "" },
+				SoftWrap: true, Unified: unified, Style: core.Style{Width: core.Pt(400), Height: core.Pt(400)}}
+		})
+		app.Find("text:b")
+	}
+}
+
 func TestWrapStartsBreakAfterSpaces(t *testing.T) {
 	if got := wrapStarts("aaa bbb ccc", 5); !slices.Equal(got, []int{0, 4, 8}) {
 		t.Errorf("starts %v", got)

@@ -77,11 +77,7 @@ func (v *dv) lineCount(r row) int {
 
 // wrapped is where line's wrapped lines start, in bytes.
 func (v *dv) wrapped(isOld bool, line int) []int {
-	text := v.m.new[line]
-	if isOld {
-		text = v.m.old[line]
-	}
-	return wrapStarts(strings.TrimSuffix(text, "\n"), v.wrapCols)
+	return wrapStarts(strings.TrimSuffix(v.lineText(isOld, line), "\n"), v.wrapCols)
 }
 
 // wrapStarts is where text's wrapped lines start at cols columns a line
