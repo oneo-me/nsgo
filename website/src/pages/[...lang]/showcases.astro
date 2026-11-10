@@ -1,5 +1,4 @@
 ---
-import Eyebrow from '../../components/Eyebrow.astro';
 import Icon from '../../components/Icon.astro';
 import { copies } from '../../copy';
 import Layout from '../../layouts/Layout.astro';
@@ -14,10 +13,8 @@ const copy = copies[lang].showcases;
 
 <Layout lang={lang} page="showcases" path="showcases/" title={copy.title} description={copy.description}>
   <section class="showcases-hero">
-    <div class="hero__glow" aria-hidden="true"></div>
     <div class="container">
       <div class="showcases-hero__inner">
-        <Eyebrow>{copy.eyebrow}</Eyebrow>
         <h1>{copy.heading}</h1>
         <p class="showcases-hero__lead">{copy.lead}</p>
       </div>

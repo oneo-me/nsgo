@@ -126,7 +126,6 @@ const en = {
   showcases: {
     title: 'Showcases — NSGo',
     description: 'Apps and demos built with NSGo, and what they run on.',
-    eyebrow: 'Showcases',
     heading: 'Built with NSGo.',
     lead: 'Sample apps to try and apps people make with NSGo, on every platform it runs on.',
     platforms: 'Platforms',
@@ -304,7 +303,6 @@ const zh: Copy = {
   showcases: {
     title: '案例 — NSGo',
     description: '用 NSGo 构建的应用与示例，以及它们运行的平台。',
-    eyebrow: '案例',
     heading: '用 NSGo 构建',
     lead: '可以马上试试的示例，以及大家用 NSGo 做出的应用，运行在它支持的每个平台上。',
     platforms: '平台',
