@@ -1,12 +1,12 @@
 # Roadmap
 
-This plan lists what NSGo may still take from NSH's 0.4.0 release (tag `v0.4.0`, `e626a8dd`), in the order to build it, each with tests of NSGo's own. Each item names its NSH reference and the result that finishes it. What exists is in [ARCHITECTURE.md](../ARCHITECTURE.md), and what NSGo leaves out on purpose in [NSGo and NSH](architecture/nsh.md#what-nsgo-leaves-out). Design questions that block an item are in [Open questions](../ARCHITECTURE.md#open-questions).
+This plan lists what NSGo may still take from NSH's `main` at `76a17753` (2026-11-10), 469 commits past its 0.4.0 release (tag `v0.4.0`, `e626a8dd`), in the order to build it, each with tests of NSGo's own: this once the plan follows `main` rather than a release (decided by the user, 2026-11-10). Each item names its NSH reference and the result that finishes it. What exists is in [ARCHITECTURE.md](../ARCHITECTURE.md), and what NSGo leaves out on purpose in [NSGo and NSH](architecture/nsh.md#what-nsgo-leaves-out). Design questions that block an item are in [Open questions](../ARCHITECTURE.md#open-questions).
 
-References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
+References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets, or NSH's pull requests (#931) where no page describes the work. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
 ## Performance against NSH's baselines
 
-NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, on macOS for the DataTable and the stack, and in the iOS simulator, NSGo costs what NSH does or less; what is left:
+NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, on macOS for the DataTable and the stack, and in the iOS simulator, NSGo costs what NSH does or less. Those readings were taken against 0.4.0's build; `main` rewrote `performance.md` and made lists and scroll views cheaper (#1304, #1310, #1371), so each comparison is measured again against its build before an item here closes. What is left:
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
@@ -14,20 +14,47 @@ NSH records what its hot paths cost (`data-table.md` (Performance), `performance
 | GTK frames | `performance.md` (Linux) | The DataTable's scroll costs on Linux what NSH's does (5.4 ms a frame and 51% of a core against 2.2 ms and 32%), and its ticks and the stack's slides too (16% and 10% against 14% and 6%); most of a scrolling frame is GTK's own snapshot and rendering under its main loop (2026-11-09) |
 | Windows and Android | `data-table.md` (Performance) | The DataTable's scroll and the stack's slides on Windows (41–44% and 28–29% against 30–32% and 20–22%, 2026-11-09) and the DataTable's scroll on Android (125% against 111% on the emulator) cost what NSH's do; and on a Pixel 10 Pro the table holds about NSH's ~870 views, commits at 3 and 7 ms at the median and 90th percentile, and slides on whole pixels |
 
+## Services and components since 0.4.0
+
+What NSH's `main` added after 0.4.0 that NSGo has not, in the order to build it.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| Notifications and the badge | #931, #932, #933, #1140, #1373 | The app asks for permission, shows a system notification, silent if it asks, and sets its badge count on macOS and iOS (`UNUserNotificationCenter`), Android (`NotificationManager`, with `classes.dex` rebuilt), Windows (toasts and the taskbar badge) and Linux (`org.freedesktop.Notifications`), and `nsgotest` records them |
+| Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
+| Haptics | #1328 | `mobile` plays impact, selection and notification feedback on iOS (`UIFeedbackGenerator`) and Android (`performHapticFeedback`, with `classes.dex` rebuilt), and does nothing elsewhere |
+| The app's own information | #1381, #1226 | Go and TSX read the app's version, build and whether it is a development build, as `nsgo.yaml` gives them (`appInfo()`) |
+| The user's locale settings | #976 | `Env` reports the first weekday, hour cycle and measurement system the user chose, apart from the language, and `DatePicker` and `i18n` follow them |
+| Restarting the app | #1055 | `Restart` ends the app and starts it again on macOS, Windows and Linux, as `Quit` ends it |
+| Self-update | `updater.md` (Flow, Decisions) | A desktop app checks a feed, downloads its next version, verifies it, replaces itself and restarts into it on macOS, Windows and Linux |
+| Script results from web views | `elements.md` (WebView evaluation) | A web view's `Evaluate` answers with the script's result as JSON, or its error, on every backend with web views |
+| More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
+| Selections as Markdown and HTML | #1045 | A selectable area's selection reads as plain text, Markdown or HTML, as the text view parsed it |
+| Hidden spans | #1438, #1463 | A span hidden in place keeps its room in no line, leaves copies and screen readers, and is skipped rather than drawn transparent |
+| An emoji picker | `components.md` (Emoji pickers) | `base.EmojiPicker` searches every emoji by its names in the app's languages, its words through `base/locales`, with a styled form in `ui` |
+| SVG on canvases | `canvas.md`, #1291 | A `Drawing` draws an SVG image at a size, its text drawn by the platform's text engine |
+| Scroll handles on phones | #1401 | A long scroll view on iOS and Android shows a handle the user drags along either axis |
+| Image memory | #1330 | The app sets how many encoded image bytes stay in memory, and every backend's cache keeps to it |
+| A terminal backend | `tui.md` | An app runs in a terminal, its views drawn in cells and its keys, mouse and resizes read from it, under `nsgo dev` and `nsgo test`; `base/terminal` stays the terminal shown inside an app |
+| Store releases | `tooling.md` (Releases), #1052, #1054 | `nsgo build` writes Android App Bundles with `targetSdkVersion` from `nsgo.yaml`, and a command uploads to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
+
 ## Application and windows
 
-What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference.
+What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH's `main`, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
 
 | Item | Reference | Done when |
 | --- | --- | --- |
-| Surfaces on Windows and Linux | macOS's `own` surface | The backends run the app on a surface in no window and attach each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
+| Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | The backends run the app on a surface in no window and attach each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
 | Window limits on Linux | `XSetWMNormalHints` on X11, `xdg_toplevel.set_max_size` on Wayland; `GtkHeaderBar`'s decoration layout | GTK 4 reaches neither from its API: a maximum other than a fixed size holds, and `NoMinimize` and `NoMaximize` take the system title bar's buttons |
-| Tray icons on Windows | `Shell_NotifyIcon` | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
-| Tray icons on Linux | StatusNotifierItem over D-Bus | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
-| Global shortcuts on Windows and Linux | `RegisterHotKey`; `XGrabKey`, the GlobalShortcuts portal | A shortcut shows a panel from any app, on Wayland once the user grants it |
-| One instance on Windows and Linux | A named mutex and pipe; a Unix socket | A second launch hands its arguments to the running app, which hears `OnReopen`, and the files it names `OnOpenFiles` |
+| Tray icons on Windows | `Shell_NotifyIcon`; #988 | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
+| Tray icons on Linux | StatusNotifierItem over D-Bus; #988, #1209 | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
+| Global shortcuts on Windows and Linux | `RegisterHotKey`; `XGrabKey`, the GlobalShortcuts portal; #988 | A shortcut shows a panel from any app, on Wayland once the user grants it |
+| One instance on Windows and Linux | A named mutex and pipe; a Unix socket; #1563 | A second launch hands its arguments to the running app, which hears `OnReopen`, and the files it names `OnOpenFiles` |
 | File types on Windows, Linux and iOS | `HKCU\Software\Classes` and `SHChangeNotify`; a `.desktop` entry's `MimeType` with a shared MIME-info package; `CFBundleDocumentTypes` with `scene:openURLContexts:` | Their packages register `file_types` as the macOS app does, and opening such a file reaches `OnOpenFiles`, which on Windows and Linux now hears only the files named at launch |
 | Launch at login on Windows and Linux | The `Run` registry key; an XDG autostart entry | `SetLaunchAtLogin` starts the app at login and `LaunchAtLogin` reads it |
+| Displays | #1044 | `Env` reports each display's frame, visible frame and scale on macOS, Windows and Linux, so an app places a window on the screen it chooses |
+| Tray titles and bounds | #1479, #1355, #1582 | A tray icon shows a title beside it in macOS's menu bar, and its click reports the icon's bounds, so an app places its own popup there |
+| Transparent windows and the taskbar on Windows | #987 | A window opens transparent, showing what is behind it where the app draws nothing, and `SkipTaskbar` keeps it off the taskbar |
 
 ## Terminal
 
@@ -146,10 +173,10 @@ These items wait for community contributions, and a change to one backend record
 | Roles, states and font lists on Android | `elements.md`, `text.md` | `NsgoView` describes the roles NSH 0.4.0 added (`listbox`, `option`, `combobox`, `group`, `region`, `navigation`, `tree`, `treeitem`, `toolbar`, `menuitemcheckbox`, `menuitemradio`) and the pressed and busy states, and a `fontFamily` list falls back through its families with `Typeface.CustomFallbackBuilder` rather than setting the first, which needs `classes.dex` rebuilt |
 | Font lists on Windows | `text.md` | A character the first family of a `fontFamily` list lacks comes from the next that has it through an `IDWriteFontFallback`, rather than from the system's fallback, as elsewhere |
 | Table headers on phones | — | A `DataTable`'s sort control takes a tap in the iOS simulator, as it does on desktops and the web; the gallery's TSX `TestDataTableSorts` sees none there (2026-11-08) and runs on desktops alone |
-| Roving focus on the other backends | `elements.md` (Keyboard focus) | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows, and a `Plot`'s keys, work there |
+| Roving focus on the other backends | `elements.md` (Keyboard focus); #1521 | Windows and Linux move the focus between views as macOS and the web do, so `Focusable`, `Tabs`' and `RadioGroup`'s stops and their arrows, and a `Plot`'s keys, work there |
 | The mouse on Android | `api-naming.md` (`onMouseEnter`) | `NsgoView` reports the mouse's enter and leave with where it is, its moves with the keys and the button held, and a move with a button down, which needs `classes.dex` rebuilt |
 | Text selection reports on Android | NSGo's own (`text.md`) | `Selection.java` reports `EventSelectionChange` with the box of the texts selected to an area with `OnTextSelection`, as the other platforms do, with `classes.dex` rebuilt, so a `DiffView`'s frame follows the selection there |
-| The system's text services on selections elsewhere | NSGo's own (`text.md`) | A selection offers what the platform's text views offer beside Copy, as a selectable text's does on iOS: Look Up, Translate and Services in a secondary click's menu on macOS, and the apps answering `ACTION_PROCESS_TEXT`, Translate among them, in Android's floating toolbar, with `classes.dex` rebuilt |
+| The system's text services on selections elsewhere | NSGo's own (`text.md`); #1516, #1517 | A selection offers what the platform's text views offer beside Copy, as a selectable text's does on iOS: Look Up, Translate and Services in a secondary click's menu on macOS, and the apps answering `ACTION_PROCESS_TEXT`, Translate among them, in Android's floating toolbar, with `classes.dex` rebuilt |
 | Android's runtime of 2026-11-08 on a device | — | A DataTable scroll at a fractional density sends a few items between window shifts on a device, and slowed runs keep their rate there, with the `classes.dex` that starts each view in the default style the first batch carries and holds runs to `AtFrameRate`; the gallery's Android tests pass with it on an x86_64 emulator at 2.625 as before it (2026-11-08) |
 | Rounded borders on Android | NSGo's own (`styles.md`) | `Box` stops the fill under the border with `ViewStyle.Rim`, as the other backends do, so the fill stops showing past a rounded border, with `classes.dex` rebuilt |
 | Pasted HTML | `api-naming.md` (`PasteEvent`) | `onPaste`'s `html` holds the clipboard's HTML on Windows (`CF_HTML`), Linux (`text/html`) and Android (`ClipData.Item.getHtmlText`), as it does on macOS, iOS and the web |
