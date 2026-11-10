@@ -33,8 +33,8 @@ const description = doc.entry.data.description ?? copy.description;
         <summary>{copy.pages}<Icon name="chevron" size={14} /></summary>
         <nav aria-label={copy.title}>
           {groups.map((group) => (
-            <div class="docs__group">
-              <p>{group.title}</p>
+            <details class="docs__group" data-group={group.docs[0].id} open>
+              <summary>{group.title}<Icon name="chevron" size={14} /></summary>
               <ul>
                 {group.docs.map((item) => (
                   <li>
@@ -44,18 +44,37 @@ const description = doc.entry.data.description ?? copy.description;
                   </li>
                 ))}
               </ul>
-            </div>
+            </details>
           ))}
         </nav>
       </details>
+      <script is:inline>
+        // Before the first paint: fold the groups folded before, except the
+        // current page's, bring the current page into view, and on narrow
+        // screens fold the pages above the article.
+        (function () {
+          var sidebar = document.querySelector('.docs__sidebar');
+          var folded = [];
+          try {
+            folded = JSON.parse(localStorage.getItem('nsgo-docs-folded') || '[]');
+          } catch (error) {}
+          sidebar.querySelectorAll('.docs__group').forEach(function (group) {
+            if (folded.indexOf(group.dataset.group) >= 0 && !group.querySelector('[aria-current]')) group.open = false;
+          });
+          if (matchMedia('(max-width: 820px)').matches) sidebar.querySelector('.docs__nav').open = false;
+          var current = sidebar.querySelector('[aria-current]');
+          if (current && current.offsetTop + current.offsetHeight > sidebar.clientHeight)
+            sidebar.scrollTop = current.offsetTop - sidebar.clientHeight / 3;
+        })();
+      </script>
     </aside>
 
     <article class="docs__main">
       <p class="docs__group-name">{doc.entry.data.group}</p>
-      <h1>{doc.entry.data.title}</h1>
+      <h1 tabindex="-1">{doc.entry.data.title}</h1>
       {doc.entry.data.description && <p class="docs__lead">{doc.entry.data.description}</p>}
       {doc.fallback && <p class="docs__notice">{copy.fallback}</p>}
-      <div class="prose" lang={doc.fallback ? 'en' : undefined} data-copy={copies[lang].ui.copy} data-copied={copies[lang].ui.copied}>
+      <div class="prose" lang={doc.fallback ? 'en' : undefined} data-copied={copies[lang].ui.copied}>
         <Content />
       </div>
 
@@ -82,6 +101,13 @@ const description = doc.entry.data.description ?? copy.description;
       )}
     </article>
 
+    <template id="code-copy">
+      <button type="button" class="prose__copy" aria-label={copies[lang].ui.copy} title={copies[lang].ui.copy}>
+        <Icon name="copy" size={14} class="prose__copy-icon" />
+        <Icon name="check" size={14} class="prose__copy-icon prose__copy-icon--done" />
+      </button>
+    </template>
+
     {toc.length > 0 && (
       <nav class="docs__toc" aria-label={copy.onThisPage}>
         <p>{copy.onThisPage}</p>
@@ -98,40 +124,199 @@ const description = doc.entry.data.description ?? copy.description;
 </Layout>
 
 <script>
-  // Each code block gets a copy button, and the contents follow the
-  // heading in view.
-  // On narrow screens the pages fold above the article.
-  const pagesNav = document.querySelector<HTMLDetailsElement>('.docs__nav');
-  if (pagesNav && window.matchMedia('(max-width: 820px)').matches) pagesNav.open = false;
+  // Opening another page replaces only the article and its contents, so the
+  // sidebar keeps its folds and scroll. Each code block gets a copy button,
+  // and the contents follow the heading in view.
+  const sidebar = document.querySelector<HTMLElement>('.docs__sidebar')!;
+  const pagesNav = sidebar.querySelector<HTMLDetailsElement>('.docs__nav')!;
+  const narrow = window.matchMedia('(max-width: 820px)');
+  const pageLinks = Array.from(sidebar.querySelectorAll<HTMLAnchorElement>('.docs__group a'));
+  const pagePaths = new Set(pageLinks.map((link) => link.pathname));
 
-  const prose = document.querySelector<HTMLElement>('.prose');
-  document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
-    const button = document.createElement('button');
-    const label = prose?.dataset.copy ?? 'Copy';
-    button.type = 'button';
-    button.className = 'prose__copy';
-    button.textContent = label;
-    button.addEventListener('click', async () => {
+  const groups = Array.from(sidebar.querySelectorAll<HTMLDetailsElement>('.docs__group'));
+  groups.forEach((group) =>
+    group.addEventListener('toggle', () => {
+      const folded = groups.filter((other) => !other.open).map((other) => other.dataset.group);
       try {
-        await navigator.clipboard.writeText(pre.innerText);
-        button.textContent = prose?.dataset.copied ?? label;
-        window.setTimeout(() => (button.textContent = label), 1400);
+        localStorage.setItem('nsgo-docs-folded', JSON.stringify(folded));
       } catch {
-        // The code can still be selected.
+        // The folds last until the page reloads.
       }
-    });
-    pre.append(button);
-  });
+    }),
+  );
 
-  const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.docs__toc a'));
-  const headings = tocLinks
-    .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
-    .filter((heading): heading is HTMLElement => heading !== null);
+  let tocLinks: HTMLAnchorElement[] = [];
+  let headings: HTMLElement[] = [];
+  let headingLinks: HTMLAnchorElement[] = [];
+  // The current heading is the last one above the top fifth of the window,
+  // or the last one once the page reaches its end.
   const mark = () => {
-    let current = headings[0];
-    for (const heading of headings) if (heading.getBoundingClientRect().top < 120) current = heading;
-    tocLinks.forEach((link) => link.classList.toggle('is-current', link.hash === `#${current?.id}`));
+    const end = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    let current = end ? headings.length - 1 : 0;
+    if (!end) headings.forEach((heading, index) => {
+      if (heading.getBoundingClientRect().top < window.innerHeight / 5) current = index;
+    });
+    tocLinks.forEach((link) => link.classList.toggle('is-current', headingLinks[current] === link));
+    const toc = document.querySelector<HTMLElement>('.docs__toc');
+    const link = headingLinks[current];
+    const list = toc?.querySelector('ul');
+    if (list) {
+      list.style.setProperty('--toc-shown', link ? '1' : '0');
+      if (link) {
+        list.style.setProperty('--toc-top', `${link.offsetTop}px`);
+        list.style.setProperty('--toc-height', `${link.offsetHeight}px`);
+      }
+      // The bar starts in place and slides only from then on.
+      if (!list.classList.contains('is-ready')) requestAnimationFrame(() => list.classList.add('is-ready'));
+    }
+    if (!toc || !list || !link) return;
+    const top = list.offsetTop + link.offsetTop;
+    if (top < toc.scrollTop || top + link.offsetHeight > toc.scrollTop + toc.clientHeight)
+      toc.scrollTop = top - toc.clientHeight / 3;
   };
   window.addEventListener('scroll', mark, { passive: true });
-  mark();
+
+  function setUp() {
+    // The button sits beside the block, not in it, so it stays in the
+    // corner while the code scrolls sideways.
+    const button = document.querySelector<HTMLTemplateElement>('#code-copy')!.content.firstElementChild!;
+    const copied = document.querySelector<HTMLElement>('.prose')?.dataset.copied;
+    document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
+      const code = document.createElement('div');
+      code.className = 'prose__code';
+      pre.replaceWith(code);
+      const copy = button.cloneNode(true) as HTMLButtonElement;
+      const label = copy.getAttribute('aria-label') ?? '';
+      let timer: number | undefined;
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(pre.innerText);
+        } catch {
+          // The code can still be selected.
+          return;
+        }
+        copy.classList.add('is-copied');
+        copy.setAttribute('aria-label', copied ?? label);
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          copy.classList.remove('is-copied');
+          copy.setAttribute('aria-label', label);
+        }, 1600);
+      });
+      code.append(pre, copy);
+    });
+
+    // Hashes are percent-encoded, so links pair with headings by decoded id.
+    tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.docs__toc a'));
+    headings = [];
+    headingLinks = [];
+    for (const link of tocLinks) {
+      const heading = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      if (heading) {
+        headings.push(heading);
+        headingLinks.push(link);
+      }
+    }
+    mark();
+  }
+
+  const pages = new Map<string, Promise<Document>>();
+  const fetchPage = (path: string) => {
+    let page = pages.get(path);
+    if (!page) {
+      page = fetch(path).then(async (response) => {
+        if (!response.ok) throw new Error(response.statusText);
+        return new DOMParser().parseFromString(await response.text(), 'text/html');
+      });
+      page.catch(() => pages.delete(path));
+      pages.set(path, page);
+    }
+    return page;
+  };
+
+  let shown = location.pathname;
+  async function show(url: URL, scroll: number | null) {
+    shown = url.pathname;
+    let page: Document;
+    try {
+      page = await fetchPage(url.pathname);
+    } catch {
+      location.href = url.href;
+      return;
+    }
+    if (shown !== url.pathname) return;
+    const main = page.querySelector('.docs__main');
+    if (!main) {
+      location.href = url.href;
+      return;
+    }
+
+    document.querySelector('.docs__main')!.replaceWith(document.importNode(main, true));
+    document.querySelector('.docs__toc')?.remove();
+    const toc = page.querySelector('.docs__toc');
+    if (toc) document.querySelector('.docs')!.append(document.importNode(toc, true));
+
+    // The head and the language switch describe the page shown.
+    document.title = page.title;
+    for (const [selector, name] of [
+      ['meta[name="description"]', 'content'],
+      ['meta[property^="og:"]', 'content'],
+      ['link[rel="canonical"]', 'href'],
+      ['link[rel="alternate"]', 'href'],
+      ['[data-lang]', 'href'],
+    ]) {
+      const next = page.querySelectorAll(selector);
+      document.querySelectorAll(selector).forEach((element, index) => {
+        const value = next[index]?.getAttribute(name);
+        if (value !== null && value !== undefined) element.setAttribute(name, value);
+      });
+    }
+
+    for (const link of pageLinks) {
+      const current = link.pathname === url.pathname;
+      if (current) {
+        link.setAttribute('aria-current', 'page');
+        link.closest('details')!.open = true;
+      } else link.removeAttribute('aria-current');
+    }
+    if (narrow.matches) pagesNav.open = false;
+
+    const target = url.hash && document.getElementById(decodeURIComponent(url.hash.slice(1)));
+    if (scroll !== null) window.scrollTo(0, scroll);
+    else if (target) target.scrollIntoView();
+    else window.scrollTo(0, 0);
+    document.querySelector<HTMLElement>('.docs__main h1')?.focus({ preventScroll: true });
+    setUp();
+  }
+
+  const pageLink = (event: Event) => {
+    const link = (event.target as Element | null)?.closest?.('a');
+    if (!link || link.target || link.hasAttribute('download') || link.origin !== location.origin) return null;
+    return pagePaths.has(link.pathname) ? link : null;
+  };
+
+  document.addEventListener('click', (event) => {
+    const link = pageLink(event);
+    if (!link || event.defaultPrevented || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (link.pathname === location.pathname) return;
+    event.preventDefault();
+    history.scrollRestoration = 'manual';
+    history.replaceState({ scroll: window.scrollY }, '');
+    history.pushState(null, '', link.href);
+    void show(new URL(link.href), null);
+  });
+
+  // Hovering a page loads it, so opening it is instant.
+  document.addEventListener('pointerover', (event) => {
+    const link = pageLink(event);
+    if (link && link.pathname !== location.pathname) fetchPage(link.pathname).catch(() => {});
+  });
+
+  window.addEventListener('popstate', (event) => {
+    if (location.pathname === shown) return;
+    void show(new URL(location.href), (event.state as { scroll?: number } | null)?.scroll ?? null);
+  });
+
+  setUp();
 </script>
