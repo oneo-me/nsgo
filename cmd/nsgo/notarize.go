@@ -74,7 +74,7 @@ func notarizeMac(ctx context.Context, p *project, app, dmg string) error {
 	if err := notarize(ctx, p, file); err != nil {
 		return err
 	}
-	stage("stapling the ticket")
+	stage(ctx, "stapling the ticket")
 	if err := run(ctx, "xcrun", "stapler", "staple", app); err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func notarizeMac(ctx context.Context, p *project, app, dmg string) error {
 // which takes minutes; a rejection comes with the service's log, which
 // says what it found.
 func notarize(ctx context.Context, p *project, file string) error {
-	stage("notarizing %s (usually a few minutes)", filepath.Base(file))
+	stage(ctx, "notarizing %s (usually a few minutes)", filepath.Base(file))
 	creds, err := p.notaryCredentials()
 	if err != nil {
 		return err

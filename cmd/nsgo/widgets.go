@@ -238,7 +238,7 @@ func compileWidgets(ctx context.Context, p *project, t widgetTarget) (exe, lib s
 	if _, err := os.Stat(lib); err == nil {
 		return exe, lib, nil
 	}
-	stage("compiling the widgets")
+	stage(ctx, "compiling the widgets")
 	if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
 		return "", "", err
 	}

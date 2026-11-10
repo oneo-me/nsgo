@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/oneo-me/nsgo/cmd/nsgo/apk"
@@ -66,8 +67,8 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 	if err != nil {
 		return "", err
 	}
-	stage("packaging the APK")
-	key, err := releaseKey(p)
+	stage(ctx, "packaging the APK")
+	key, err := releaseKey(ctx, p)
 	if err != nil {
 		return "", err
 	}
@@ -137,6 +138,9 @@ func (p *project) versionCode() int {
 // one on first use. Android rejects an update signed by another key, so
 // the key stays with the project's development files.
 func debugKey(p *project) (*apk.Key, error) {
+	// Targets built at once sign with the one key the first makes.
+	debugKeyMu.Lock()
+	defer debugKeyMu.Unlock()
 	path := p.cache("android", "debug.pem")
 	data, err := os.ReadFile(path)
 	if err == nil {
@@ -159,6 +163,8 @@ func debugKey(p *project) (*apk.Key, error) {
 	}
 	return key, nil
 }
+
+var debugKeyMu sync.Mutex
 
 func parseKey(data []byte) (*apk.Key, error) {
 	key := &apk.Key{}

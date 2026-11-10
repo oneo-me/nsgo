@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 )
@@ -30,7 +31,10 @@ func buildAll(ctx context.Context, p *project) error {
 			return err
 		}
 	}
-	var total int64
+	jobs, err := p.buildJobs(len(buildTargets))
+	if err != nil {
+		return err
+	}
 	started := time.Now()
 	header(p.Name, p.Version, strings.Join(buildTargets, ", "))
 	if p.Build.all {
@@ -55,33 +59,9 @@ func buildAll(ctx context.Context, p *project) error {
 	if err := p.cleanReleaseDir(); err != nil {
 		return err
 	}
-	for i, target := range buildTargets {
-		dir := filepath.Join(p.Build.Output, fmt.Sprintf("%s-%s-%s", p.Name, p.Version, target))
-		if err := os.RemoveAll(dir); err != nil {
-			return err
-		}
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return err
-		}
-		// Several targets are counted: [2/5] building ios.
-		count := ""
-		if len(buildTargets) > 1 {
-			count = fmt.Sprintf("[%d/%d] ", i+1, len(buildTargets))
-		}
-		progress := begin("%sbuilding %s", count, target)
-		if err := buildTarget(ctx, p, target, dir); err != nil {
-			progress.fail()
-			os.RemoveAll(dir)
-			return fmt.Errorf("%s: %w", target, err)
-		}
-		size := dirSize(dir)
-		total += size
-		progress.done(fmt.Sprintf("%sbuilt %s", count, target), formatSize(size))
-		detail("→ %s", rel(dir))
-		for _, file := range p.released {
-			detail("→ %s", rel(file))
-		}
-		p.released = nil
+	total, err := buildPackages(ctx, p, buildTargets, jobs)
+	if err != nil {
+		return err
 	}
 	if err := p.writeInstallScripts(); err != nil {
 		return err
@@ -99,6 +79,94 @@ func buildAll(ctx context.Context, p *project) error {
 		return fmt.Errorf("-run: none of %s runs on this machine", strings.Join(buildTargets, ", "))
 	}
 	return nil
+}
+
+// buildPackages builds each target's package into its directory, up to
+// jobs at once, and returns the space they take. Each builds from a
+// copy of p, which holds what one target's build sets, such as what it
+// released. A target that fails stops the others and leaves no directory.
+func buildPackages(ctx context.Context, p *project, targets []string, jobs int) (int64, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var (
+		// mu keeps a target's lines together and guards the results.
+		mu       sync.Mutex
+		total    int64
+		firstErr error
+		wg       sync.WaitGroup
+	)
+	slots := make(chan struct{}, jobs)
+	for i, target := range targets {
+		select {
+		case slots <- struct{}{}:
+		case <-ctx.Done():
+		}
+		if ctx.Err() != nil {
+			break
+		}
+		// Several targets are counted: [2/5] building ios. Begun here,
+		// their spinners stand in the targets' order.
+		count := ""
+		if len(targets) > 1 {
+			count = fmt.Sprintf("[%d/%d] ", i+1, len(targets))
+		}
+		progress := begin("%sbuilding %s", count, target)
+		// Beside other targets, its lines wait for its own.
+		progress.hold = jobs > 1
+		wg.Go(func() {
+			defer func() { <-slots }()
+			dir := filepath.Join(p.Build.Output, fmt.Sprintf("%s-%s-%s", p.Name, p.Version, target))
+			q := *p
+			q.released = nil
+			err := os.RemoveAll(dir)
+			if err == nil {
+				err = os.MkdirAll(dir, 0o755)
+			}
+			if err == nil {
+				err = buildTarget(withStep(ctx, progress), &q, target, dir)
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil {
+				progress.fail()
+				os.RemoveAll(dir)
+				// The others fail as they stop: the first failure is
+				// the build's.
+				if firstErr == nil {
+					firstErr = fmt.Errorf("%s: %w", target, err)
+					cancel()
+				}
+				return
+			}
+			size := dirSize(dir)
+			total += size
+			progress.done(fmt.Sprintf("%sbuilt %s", count, target), formatSize(size))
+			detail("→ %s", rel(dir))
+			for _, file := range q.released {
+				detail("→ %s", rel(file))
+			}
+		})
+	}
+	wg.Wait()
+	if firstErr == nil {
+		// Interrupted before any target failed.
+		firstErr = ctx.Err()
+	}
+	return total, firstErr
+}
+
+// buildJobs is how many targets nsgo build builds at once: build.jobs,
+// else half the CPUs, as each go build uses them all, and no more than
+// there are targets.
+func (p *project) buildJobs(targets int) (int, error) {
+	jobs := p.Build.Jobs
+	switch {
+	case jobs < 0:
+		return 0, fmt.Errorf("build.jobs is %d; use 1 or more, or 0 for half the CPUs", jobs)
+	case jobs == 0:
+		jobs = max(1, runtime.NumCPU()/2)
+	}
+	return max(1, min(jobs, targets)), nil
 }
 
 // buildSummary closes a build of several targets with their number, time
@@ -263,7 +331,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := signForStore(ctx, p, app); err != nil {
 			return err
 		}
-		stage("packaging the IPA")
+		stage(ctx, "packaging the IPA")
 		ipa := filepath.Join(dir, p.Name+".ipa")
 		if err := writeIPA(app, ipa); err != nil {
 			return err
@@ -282,7 +350,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := buildLinux(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
 			return err
 		}
-		deb, pkg, err := buildLinuxPackages(p, dir, goArch(arch))
+		deb, pkg, err := buildLinuxPackages(ctx, p, dir, goArch(arch))
 		if err != nil {
 			return err
 		}
@@ -351,7 +419,7 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 		// rather than compiling as it starts, which a phone or a page
 		// takes seconds for; the tests still link the compiler for their
 		// own files.
-		stage("compiling TSX")
+		stage(ctx, "compiling TSX")
 		bundle, err := p.bundleFile()
 		if err != nil {
 			return err
@@ -360,7 +428,7 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 			files["zz_nsgo_bundle.go"] = bundle
 		}
 	} else {
-		stage("compiling TSX")
+		stage(ctx, "compiling TSX")
 		bundle, err := p.bundleFile()
 		if err != nil {
 			return err
@@ -383,7 +451,7 @@ func goBuildWith(ctx context.Context, p *project, out string, env []string, extr
 	if err != nil {
 		return err
 	}
-	stage("compiling Go")
+	stage(ctx, "compiling Go")
 	if len(files) > 0 {
 		ov, err := p.overlay(files)
 		if err != nil {
@@ -463,7 +531,7 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err := goBuild(ctx, p, bin, []string{"GOOS=darwin", "GOARCH=" + arch, "CGO_ENABLED=0"}); err != nil {
 		return "", err
 	}
-	stage("bundling the app")
+	stage(ctx, "bundling the app")
 	resources := filepath.Join(app, "Contents", "Resources")
 	if err := copyResources(p, resources); err != nil {
 		return "", err
@@ -489,7 +557,7 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	if err := addMacWidgets(ctx, p, app, arch); err != nil {
 		return "", err
 	}
-	stage("signing")
+	stage(ctx, "signing")
 	if err := addMacLibraries(ctx, p, app, arch); err != nil {
 		return "", err
 	}
@@ -509,7 +577,7 @@ func buildWindows(ctx context.Context, p *project, dir, arch string) error {
 	if err != nil {
 		return err
 	}
-	stage("copying resources")
+	stage(ctx, "copying resources")
 	return copyResources(p, dir)
 }
 
@@ -519,7 +587,7 @@ func buildLinux(ctx context.Context, p *project, dir, arch string) error {
 		[]string{"GOOS=linux", "GOARCH=" + arch, "CGO_ENABLED=0"}); err != nil {
 		return err
 	}
-	stage("copying resources")
+	stage(ctx, "copying resources")
 	if err := copyResources(p, dir); err != nil {
 		return err
 	}
@@ -537,7 +605,7 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	if !dev {
 		// A release's TSX is split: the page fetches each module an
 		// import() names when the import runs.
-		stage("compiling TSX")
+		stage(ctx, "compiling TSX")
 		split, err := compileSplit(p.Dir, func(name string, data []byte) (string, error) {
 			name = hashedName(name, data)
 			if err := os.MkdirAll(filepath.Join(dir, filepath.Dir(name)), 0o755); err != nil {
@@ -554,7 +622,7 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	if err := goBuild(ctx, p, wasm, []string{"GOOS=js", "GOARCH=wasm"}); err != nil {
 		return err
 	}
-	stage("writing the site")
+	stage(ctx, "writing the site")
 	goroot, err := output(ctx, "go", "env", "GOROOT")
 	if err != nil {
 		return err

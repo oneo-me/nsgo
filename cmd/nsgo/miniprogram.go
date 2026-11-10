@@ -125,7 +125,7 @@ func buildMiniProgram(ctx context.Context, p *project, mp miniProgramPlatform, d
 		return err
 	}
 	if len(module) > packageLimit {
-		stage("compiling Go without inlining")
+		stage(ctx, "compiling Go without inlining")
 		if module, err = buildMiniProgramModule(ctx, p, wasm, env, []string{"-gcflags=all=-l"}); err != nil {
 			return err
 		}
@@ -135,12 +135,12 @@ func buildMiniProgram(ctx context.Context, p *project, mp miniProgramPlatform, d
 			"leave out what the app does not show on phones, such as the editor, the terminal or TSX",
 			formatSize(int64(len(module))), formatSize(packageLimit))
 	}
-	stage("writing the project")
+	stage(ctx, "writing the project")
 	if err := writeMiniProgram(p, mp, dir, module); err != nil {
 		return err
 	}
 	if main := dirSize(dir) - dirSize(filepath.Join(dir, miniprogramSubpackage)); main > packageLimit {
-		warn("the main package is %s, past %s's %s: move resources the app does not need out", formatSize(main), mp.title, formatSize(packageLimit))
+		warnIn(ctx, "the main package is %s, past %s's %s: move resources the app does not need out", formatSize(main), mp.title, formatSize(packageLimit))
 	}
 	return nil
 }
@@ -163,7 +163,7 @@ func buildMiniProgramModule(ctx context.Context, p *project, wasm string, env, f
 	if err != nil {
 		return nil, err
 	}
-	stage("compressing the module")
+	stage(ctx, "compressing the module")
 	var out bytes.Buffer
 	w := brotli.NewWriterLevel(&out, brotli.BestCompression)
 	if _, err := w.Write(data); err != nil {

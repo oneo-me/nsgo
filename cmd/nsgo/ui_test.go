@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -96,5 +98,39 @@ func TestReportPrintsOneLineErrors(t *testing.T) {
 	got := captureStderr(t, func() { report(errors.New("nsgo.yaml: name is required")) })
 	if want := "  error nsgo.yaml: name is required\n"; got != want {
 		t.Fatalf("report wrote %q, want %q", got, want)
+	}
+}
+
+// A step running beside others prints what it said under way above its
+// own line once it ends, not between theirs.
+func TestStepHoldsItsLinesUntilItEnds(t *testing.T) {
+	s := begin("building ios")
+	s.hold = true
+	ctx := withStep(context.Background(), s)
+	var during string
+	got := captureStderr(t, func() {
+		during = captureStderr(t, func() {
+			detailIn(ctx, "no widgets on tvOS: they are left out")
+			warnIn(ctx, "the App Clip is left out")
+		})
+		s.done("built ios", "")
+	})
+	if during != "" {
+		t.Fatalf("the step printed %q while it ran", during)
+	}
+	want := "    no widgets on tvOS: they are left out\n  warn the App Clip is left out\n  ✓ built ios ("
+	if !strings.HasPrefix(got, want) {
+		t.Fatalf("the step ended with %q, want it to start %q", got, want)
+	}
+}
+
+// A step that does not hold prints its lines as they are said.
+func TestStepPrintsItsLinesAtOnce(t *testing.T) {
+	s := begin("building web")
+	ctx := withStep(context.Background(), s)
+	got := captureStderr(t, func() { detailIn(ctx, "sign with -") })
+	s.fail()
+	if want := "    sign with -\n"; got != want {
+		t.Fatalf("detailIn wrote %q, want %q", got, want)
 	}
 }

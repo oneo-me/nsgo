@@ -167,6 +167,7 @@ type buildFlags struct {
 	open    *boolOverride
 	fps     *boolOverride
 	install *boolOverride
+	jobs    *override[int]
 	run     bool
 	embed   bool
 	dynamic bool
@@ -182,6 +183,7 @@ func bindBuildFlags(fs *flag.FlagSet) *buildFlags {
 	f.open = boolFlag(fs, "open", "open the output directory (default: nsgo.yaml's build.open)")
 	f.fps = boolFlag(fs, "fps", "show the performance monitor (default: nsgo.yaml's build.fps)")
 	f.install = boolFlag(fs, "installers", "package macOS, Windows and Linux targets for users to install: a disk image, an NSIS installer, Debian and Arch packages (default: nsgo.yaml's build.installers, else true)")
+	f.jobs = intFlag(fs, "jobs", "how many targets build at once (default: nsgo.yaml's build.jobs, else half the CPUs)")
 	fs.BoolVar(&f.run, "run", false, "start the package built for this machine: the app, the iPhone's, simulator's or Android device's, or the site served")
 	fs.StringVar(&f.device, "device", "", "the `device` -run starts the package on: an iPhone's name, UDID, serial or ECID, a simulator's name or UDID, or an adb serial or emulator's AVD name (default: the only one connected, or the booted simulator)")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` -run signs the iPhone's package with (default: the team Xcode last used)")
@@ -207,6 +209,7 @@ func (f *buildFlags) apply(p *project) {
 	if f.install.set {
 		p.Build.Installers = &f.install.value
 	}
+	f.jobs.replace(&p.Build.Jobs)
 	p.Build.run, p.Build.embed, p.Build.dynamic = f.run, f.embed, f.dynamic
 	p.Build.device, p.Build.team = f.device, f.team
 	f.sign.apply(p)

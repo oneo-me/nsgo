@@ -76,7 +76,7 @@ func addIOSFrameworks(ctx context.Context, p *project, sys *appleOS, app string,
 	if _, err := os.Stat(lib); err != nil && sys != iOS {
 		// tools/libghostty builds no tvOS library yet; the terminal then
 		// reports it missing.
-		detail("no libghostty-vt for %s: the terminal will not start", sys.name)
+		detailIn(ctx, "no libghostty-vt for %s: the terminal will not start", sys.name)
 		return nil
 	}
 	fw := filepath.Join(app, "Frameworks", ghosttyFramework)

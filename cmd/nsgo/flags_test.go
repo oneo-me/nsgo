@@ -131,7 +131,7 @@ func TestNameFollowsGeneratedID(t *testing.T) {
 func TestBuildFlagsApply(t *testing.T) {
 	fs := flag.NewFlagSet("build", flag.ContinueOnError)
 	f := bindBuildFlags(fs)
-	args := []string{"-target", "web,ios", "-output", "out", "-open=false", "-version", "2.0.0"}
+	args := []string{"-target", "web,ios", "-output", "out", "-open=false", "-version", "2.0.0", "-jobs", "3"}
 	if err := fs.Parse(args); err != nil {
 		t.Fatal(err)
 	}
@@ -152,6 +152,9 @@ func TestBuildFlagsApply(t *testing.T) {
 	}
 	if p.Version != "2.0.0" {
 		t.Errorf("version: got %q, want 2.0.0", p.Version)
+	}
+	if p.Build.Jobs != 3 {
+		t.Errorf("build.jobs: got %d, want 3", p.Build.Jobs)
 	}
 }
 

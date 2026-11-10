@@ -167,14 +167,14 @@ func addIOSAppClip(ctx context.Context, p *project, app string, simulator bool) 
 	size, limit := dirSize(clip), p.AppClip.limit()
 	switch {
 	case size > limit && simulator:
-		warn("the App Clip takes %s, more than the %s a device downloads it at", formatSize(size), formatSize(limit))
+		warnIn(ctx, "the App Clip takes %s, more than the %s a device downloads it at", formatSize(size), formatSize(limit))
 	case size > limit && limit == clipSize:
 		return fmt.Errorf("the App Clip takes %s, more than the %s iOS 16 downloads it at: link less into %s, or set app_clip.minimum to 17.0 for %s when only links open it",
 			formatSize(size), formatSize(limit), p.AppClip.Main, formatSize(clipDigitalSize))
 	case size > limit:
 		return fmt.Errorf("the App Clip takes %s, more than the %s iOS downloads it at", formatSize(size), formatSize(limit))
 	case size > clipSize:
-		detail("the App Clip takes %s: only links open it, never codes or NFC tags", formatSize(size))
+		detailIn(ctx, "the App Clip takes %s: only links open it, never codes or NFC tags", formatSize(size))
 	}
 	return nil
 }

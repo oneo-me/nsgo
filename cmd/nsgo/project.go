@@ -194,6 +194,9 @@ type project struct {
 		// on Windows, Debian and Arch packages on Linux; it defaults to
 		// true.
 		Installers *bool `yaml:"installers"`
+		// Jobs is how many targets build at once; 0, the default, is
+		// half the CPUs.
+		Jobs int `yaml:"jobs"`
 		// run starts the package built for this machine afterwards (-run),
 		// on device (-device), an iPhone signed for team (-team);
 		// embed packages the app for host apps of their own (-embed).

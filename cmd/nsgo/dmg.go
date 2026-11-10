@@ -25,7 +25,7 @@ func dmgName(p *project, arch string) string {
 // tiffutil, which macOS ships, make it. sign.identity signs the image,
 // which an ad hoc build leaves unsigned. It returns the image's path.
 func buildDMG(ctx context.Context, p *project, app, dir, arch string) (string, error) {
-	stage("making the disk image")
+	stage(ctx, "making the disk image")
 	work, err := os.MkdirTemp(dir, ".dmg-")
 	if err != nil {
 		return "", err
@@ -101,7 +101,7 @@ func buildDMG(ctx context.Context, p *project, app, dir, arch string) (string, e
 		return "", err
 	}
 	if p.Sign.Identity != "" && p.Sign.Identity != "-" {
-		stage("signing the disk image")
+		stage(ctx, "signing the disk image")
 		if err := run(ctx, "codesign", "--force", "--timestamp", "--sign", p.Sign.Identity, dmg); err != nil {
 			return "", err
 		}

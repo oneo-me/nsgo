@@ -79,7 +79,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		// The catalogs' code first, which the build and the files watched
 		// may need. One listing serves both, listed again when the
 		// catalogs' new code may import more.
-		stage("generating catalogs")
+		stage(ctx, "generating catalogs")
 		pkgs, catalogErr := goPackages(ctx, p.Dir, true, ".")
 		if catalogErr == nil {
 			var wrote bool
@@ -87,7 +87,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 				pkgs, _ = goPackages(ctx, p.Dir, true, ".")
 			}
 		}
-		stage("finding sources")
+		stage(ctx, "finding sources")
 		dirs := sourceDirs(p.Dir, pkgs)
 		if p.Web.Host != "" {
 			dirs = append(dirs, p.resolve(p.Web.Host))

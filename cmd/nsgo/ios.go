@@ -125,7 +125,7 @@ func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simu
 	if err := goBuild(ctx, p, filepath.Join(app, p.Name), env, "-extldflags=-Wl,-w"); err != nil {
 		return "", err
 	}
-	stage("bundling the app")
+	stage(ctx, "bundling the app")
 	// An iOS bundle's root is its resource directory; a resources
 	// directory there would read as a macOS bundle's and fail signing.
 	if err := copyMobileResources(p, app); err != nil {
@@ -142,7 +142,7 @@ func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simu
 	// An Apple TV has no widgets.
 	widgets := sys == iOS && len(p.Widgets) > 0
 	if sys != iOS && len(p.Widgets) > 0 {
-		detail("no widgets on %s: they are left out", sys.name)
+		detailIn(ctx, "no widgets on %s: they are left out", sys.name)
 	}
 	extra := icon + "\n" + names + "\n\t<key>CFBundleSupportedPlatforms</key><array><string>" + sys.platformName(simulator) + "</string></array>"
 	if widgets {
@@ -167,12 +167,12 @@ func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simu
 			return "", err
 		}
 	} else if p.AppClip != nil {
-		detail("no App Clip on %s: it is left out", sys.name)
+		detailIn(ctx, "no App Clip on %s: it is left out", sys.name)
 	}
 	if !simulator {
 		return app, nil
 	}
-	stage("signing")
+	stage(ctx, "signing")
 	ents := p.simulatorEntitlements()
 	if len(ents) == 0 {
 		return app, run(ctx, "codesign", "--force", "--sign", "-", app)
@@ -392,10 +392,10 @@ func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team s
 	}
 	products := filepath.Join(work, "products")
 	if len(p.Widgets) > 0 {
-		warn("the widgets are left out: Xcode signs the app alone for devices; nsgo build -target ios with sign.profile and sign.widgets_profile keeps them")
+		warnIn(ctx, "the widgets are left out: Xcode signs the app alone for devices; nsgo build -target ios with sign.profile and sign.widgets_profile keeps them")
 	}
 	if p.AppClip != nil {
-		warn("the App Clip is left out: Xcode signs the app alone for devices; nsgo dev -clip runs the clip alone, and nsgo build -target ios with sign.profile and sign.clip_profile keeps it")
+		warnIn(ctx, "the App Clip is left out: Xcode signs the app alone for devices; nsgo dev -clip runs the clip alone, and nsgo build -target ios with sign.profile and sign.clip_profile keeps it")
 	}
 	event("sign for %s with Xcode", device.Name)
 	if err := runXcodebuild(ctx,

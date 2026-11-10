@@ -41,7 +41,7 @@ func nsisSetupName(p *project, arch string) string {
 // for arch (x64 or arm64), with the icon the installer shows, and compiles
 // it when makensis is installed, returning the installer's path.
 func buildNSIS(ctx context.Context, p *project, dir, arch string) (string, error) {
-	stage("writing the installer")
+	stage(ctx, "writing the installer")
 	script, err := nsisScript(p, dir, arch)
 	if err != nil {
 		return "", err
@@ -72,10 +72,10 @@ func buildNSIS(ctx context.Context, p *project, dir, arch string) (string, error
 	}
 	compiler := nsisCompiler()
 	if compiler == "" {
-		detail("install NSIS (brew install makensis) and compile %s for the installer", rel(nsi))
+		detailIn(ctx, "install NSIS (brew install makensis) and compile %s for the installer", rel(nsi))
 		return "", nil
 	}
-	stage("compiling the installer")
+	stage(ctx, "compiling the installer")
 	cmd := exec.CommandContext(ctx, compiler, "-V2", "-INPUTCHARSET", "UTF8", filepath.Base(nsi))
 	cmd.Dir = dir
 	if out, err := cmd.CombinedOutput(); err != nil {

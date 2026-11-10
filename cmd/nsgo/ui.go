@@ -11,13 +11,15 @@ package main
 //     own output.
 //   - A step that takes a while shows a spinner in its line on a terminal,
 //     with what it does at the moment (stage), replaced by its ✓ line, or
-//     cleared when it fails and the error follows.
+//     cleared when it fails and the error follows. Steps running at once,
+//     such as nsgo build's targets, show a spinner line each.
 //   - Colors on terminals unless NO_COLOR is set; redirected, only the
 //     result lines appear.
 //   - All of it is stderr, so stdout stays free for what a command prints.
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -190,11 +192,12 @@ func report(err error) {
 	}
 }
 
-// screen is what is printed and the step whose spinner is drawn below it.
+// screen is what is printed and the steps whose spinners are drawn below
+// it, a line each.
 type screen struct {
 	sync.Mutex
 	steps []*Step
-	drawn bool
+	drawn int
 	frame int
 }
 
@@ -241,37 +244,42 @@ func emit(text string) {
 	out.draw()
 }
 
-// clear removes the spinner line. The caller holds out's lock.
+// clear removes the spinner lines, leaving the cursor at the start of the
+// first. The caller holds out's lock.
 func (o *screen) clear() {
-	if o.drawn {
-		fmt.Fprint(os.Stderr, "\r\x1b[2K")
-		o.drawn = false
-	}
-}
-
-// draw shows the last running step's spinner, or clears the line when none
-// runs. The caller holds out's lock.
-func (o *screen) draw() {
-	if len(o.steps) == 0 {
-		o.clear()
+	if o.drawn == 0 {
 		return
 	}
-	s := o.steps[len(o.steps)-1]
-	label := []rune(s.label)
-	if len(label) > 64 {
-		label = append(label[:63], '…')
+	fmt.Fprint(os.Stderr, "\r\x1b[2K"+strings.Repeat("\x1b[1A\x1b[2K", o.drawn-1))
+	o.drawn = 0
+}
+
+// draw shows the running steps' spinners, a line each, or clears them when
+// none runs. The caller holds out's lock.
+func (o *screen) draw() {
+	o.clear()
+	if len(o.steps) == 0 {
+		return
 	}
-	line := fmt.Sprintf("%s%s %s", margin, cyan(spinnerFrames[o.frame%len(spinnerFrames)]), string(label))
-	if elapsed := time.Since(s.start); elapsed >= time.Second {
-		line += " " + dim(fmt.Sprintf("%ds", int(elapsed.Seconds())))
+	lines := make([]string, len(o.steps))
+	for i, s := range o.steps {
+		label := []rune(s.label)
+		if len(label) > 64 {
+			label = append(label[:63], '…')
+		}
+		line := fmt.Sprintf("%s%s %s", margin, cyan(spinnerFrames[o.frame%len(spinnerFrames)]), string(label))
+		if elapsed := time.Since(s.start); elapsed >= time.Second {
+			line += " " + dim(fmt.Sprintf("%ds", int(elapsed.Seconds())))
+		}
+		if s.stage != "" {
+			line += " " + dim("· "+s.stage)
+		}
+		lines[i] = line
 	}
-	if s.stage != "" {
-		line += " " + dim("· "+s.stage)
-	}
-	// Clear the line and leave the cursor at its start: the next line
-	// replaces it.
-	fmt.Fprintf(os.Stderr, "\r\x1b[2K%s", line)
-	o.drawn = true
+	// The cursor stays at the end of the last line: the next line printed
+	// replaces them.
+	fmt.Fprint(os.Stderr, strings.Join(lines, "\n"))
+	o.drawn = len(lines)
 }
 
 var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
@@ -303,6 +311,11 @@ type Step struct {
 	label string
 	stage string
 	start time.Time
+	// hold keeps the lines said in the step (detailIn, warnIn) until it
+	// ends, when they print together above its own, so a step running
+	// beside others keeps its lines apart from theirs.
+	hold bool
+	held []string
 }
 
 // begin starts the step label names, such as "building web".
@@ -318,23 +331,63 @@ func begin(format string, args ...any) *Step {
 	return s
 }
 
-// stage says what the running step does at the moment, such as "compiling
-// Go", after its label in the spinner. Without a terminal it does nothing.
-func stage(format string, args ...any) {
+type stepKey struct{}
+
+// withStep returns ctx carrying s, the step what runs with ctx belongs to.
+func withStep(ctx context.Context, s *Step) context.Context {
+	return context.WithValue(ctx, stepKey{}, s)
+}
+
+// stepOf is the step ctx carries, or nil.
+func stepOf(ctx context.Context) *Step {
+	s, _ := ctx.Value(stepKey{}).(*Step)
+	return s
+}
+
+// stage says what the step ctx carries does at the moment, such as
+// "compiling Go", after its label in the spinner; without one, the last
+// step begun. Without a terminal it does nothing.
+func stage(ctx context.Context, format string, args ...any) {
 	if !terminalOf().tty {
 		return
 	}
 	out.Lock()
 	defer out.Unlock()
-	if len(out.steps) == 0 {
-		return
+	s := stepOf(ctx)
+	if s == nil {
+		if len(out.steps) == 0 {
+			return
+		}
+		s = out.steps[len(out.steps)-1]
 	}
-	out.steps[len(out.steps)-1].stage = fmt.Sprintf(format, args...)
+	s.stage = fmt.Sprintf(format, args...)
 	out.draw()
 }
 
+// detailIn is detail, said in the step ctx carries.
+func detailIn(ctx context.Context, format string, args ...any) {
+	lineIn(ctx, "  "+dim(fmt.Sprintf(format, args...)))
+}
+
+// warnIn is warn, said in the step ctx carries.
+func warnIn(ctx context.Context, format string, args ...any) {
+	lineIn(ctx, yellow("warn")+" "+fmt.Sprintf(format, args...))
+}
+
+// lineIn prints one of the tool's lines, or keeps it for later when the
+// step ctx carries holds its lines.
+func lineIn(ctx context.Context, text string) {
+	if s := stepOf(ctx); s != nil && s.hold {
+		out.Lock()
+		s.held = append(s.held, text)
+		out.Unlock()
+		return
+	}
+	line(text)
+}
+
 // done ends the step with "✓ message (time, note)", without the note when
-// it is empty.
+// it is empty, under the lines it held.
 func (s *Step) done(message, extra string) {
 	s.remove()
 	elapsed := formatDuration(time.Since(s.start))
@@ -344,18 +397,25 @@ func (s *Step) done(message, extra string) {
 	done("%s %s", message, dim("("+elapsed+")"))
 }
 
-// fail ends a step that failed, without a line of its own.
+// fail ends a step that failed, without a line of its own: only the lines
+// it held print.
 func (s *Step) fail() { s.remove() }
 
-// remove takes the step's spinner away, if it had one.
+// remove takes the step's spinner away, if it had one, and prints the
+// lines it held.
 func (s *Step) remove() {
 	out.Lock()
-	defer out.Unlock()
+	held := s.held
+	s.held = nil
 	for i, step := range out.steps {
 		if step == s {
 			out.steps = append(out.steps[:i], out.steps[i+1:]...)
 			out.draw()
-			return
+			break
 		}
+	}
+	out.Unlock()
+	for _, l := range held {
+		line(l)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io/fs"
@@ -32,8 +33,8 @@ type linuxPackageEntry struct {
 
 // buildLinuxPackages writes the Debian and Arch packages of the Linux
 // package in dir, built for arch, beside it, and returns their paths.
-func buildLinuxPackages(p *project, dir, arch string) (string, string, error) {
-	stage("writing the Linux packages")
+func buildLinuxPackages(ctx context.Context, p *project, dir, arch string) (string, string, error) {
+	stage(ctx, "writing the Linux packages")
 	files, err := linuxPackageFiles(p, dir)
 	if err != nil {
 		return "", "", err

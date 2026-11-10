@@ -55,7 +55,7 @@ func buildWatchApp(ctx context.Context, p *project, dir string, simulator bool) 
 	if err := goBuildWith(ctx, p, filepath.Join(app, p.Name), env, buildExtra{tags: []string{"nsgowatch"}}, link); err != nil {
 		return "", err
 	}
-	stage("bundling the app")
+	stage(ctx, "bundling the app")
 	if err := copyMobileResources(p, app); err != nil {
 		return "", err
 	}
@@ -68,7 +68,7 @@ func buildWatchApp(ctx context.Context, p *project, dir string, simulator bool) 
 		return "", err
 	}
 	if len(p.Widgets) > 0 {
-		detail("no widgets on watchOS: they are left out")
+		detailIn(ctx, "no widgets on watchOS: they are left out")
 	}
 	extra := icon + "\n" + names + "\n\t<key>CFBundleSupportedPlatforms</key><array><string>" + sys.platformName(simulator) + "</string></array>"
 	if err := writePlist(filepath.Join(app, "Info.plist"), p, sys.plist, extra); err != nil {
@@ -77,14 +77,14 @@ func buildWatchApp(ctx context.Context, p *project, dir string, simulator bool) 
 	if !simulator {
 		return app, nil
 	}
-	stage("signing")
+	stage(ctx, "signing")
 	return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 }
 
 // compileWatchHost compiles the host into an object in a directory of its
 // own, which the caller removes, and returns the object's path.
 func compileWatchHost(ctx context.Context, simulator bool) (string, error) {
-	stage("compiling the watch host")
+	stage(ctx, "compiling the watch host")
 	tmp, err := os.MkdirTemp("", "nsgo-watch-")
 	if err != nil {
 		return "", err

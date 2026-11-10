@@ -80,10 +80,10 @@ func (f *signFlags) apply(p *project) {
 
 // releaseKey is the key release APKs are signed with: the keystore's, or
 // the project's debug key without one.
-func releaseKey(p *project) (*apk.Key, error) {
+func releaseKey(ctx context.Context, p *project) (*apk.Key, error) {
 	if p.Sign.Keystore == "" || !p.Release {
 		if p.Release {
-			detail("signed with the debug key: set sign.keystore for store releases")
+			detailIn(ctx, "signed with the debug key: set sign.keystore for store releases")
 		}
 		return debugKey(p)
 	}
@@ -106,8 +106,8 @@ func signMacApp(ctx context.Context, p *project, app string) error {
 	if p.Sign.Identity == "" {
 		return nil
 	}
-	detail("sign with %s", p.Sign.Identity)
-	stage("signing")
+	detailIn(ctx, "sign with %s", p.Sign.Identity)
+	stage(ctx, "signing")
 	libs, _ := filepath.Glob(filepath.Join(app, "Contents", "Frameworks", "*.dylib"))
 	for _, lib := range libs {
 		if err := run(ctx, "codesign", p.macSignArgs(lib)...); err != nil {
@@ -161,7 +161,7 @@ func (p *project) hardenedEntitlements() map[string]any {
 // profile the package stays unsigned, for the developer to sign.
 func signForStore(ctx context.Context, p *project, app string) error {
 	if p.Sign.Profile == "" {
-		detail("unsigned: set sign.profile to install it on devices or upload it")
+		detailIn(ctx, "unsigned: set sign.profile to install it on devices or upload it")
 		return nil
 	}
 	data, err := os.ReadFile(p.Sign.Profile)
@@ -203,8 +203,8 @@ func signForStore(ctx context.Context, p *project, app string) error {
 		return err
 	}
 	defer os.Remove(ents)
-	detail("sign with %s", identity)
-	stage("signing")
+	detailIn(ctx, "sign with %s", identity)
+	stage(ctx, "signing")
 	if err := signFrameworks(ctx, app, identity); err != nil {
 		return err
 	}

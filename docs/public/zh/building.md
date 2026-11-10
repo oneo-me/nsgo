@@ -48,6 +48,7 @@ build:
   open: false           # true 时构建后打开输出目录
   fps: false            # 同 dev.fps，作用于发布包
   installers: true      # false 时不生成磁盘映像、Windows 安装程序和 Linux 软件包
+  jobs: 0               # 同时构建的目标数；0 为 CPU 数的一半，1 为逐个构建
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # Linux 软件包的维护者，省略时为应用名

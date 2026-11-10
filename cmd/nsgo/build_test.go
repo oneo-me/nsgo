@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -96,5 +97,27 @@ func TestSmallJSON(t *testing.T) {
 	t.Setenv("GOEXPERIMENT", "jsonv2")
 	if env, err := smallJSON(t.Context(), &project{Dir: t.TempDir()}, nil, nil); err != nil || len(env) != 0 {
 		t.Fatalf("with GOEXPERIMENT set, env = %v, %v", env, err)
+	}
+}
+
+func TestBuildJobs(t *testing.T) {
+	p := &project{}
+	for _, c := range []struct{ jobs, targets, want int }{
+		{3, 5, 3},
+		{8, 2, 2},
+		{1, 4, 1},
+	} {
+		p.Build.Jobs = c.jobs
+		if got, err := p.buildJobs(c.targets); err != nil || got != c.want {
+			t.Errorf("build.jobs %d for %d targets: got %d, %v; want %d", c.jobs, c.targets, got, err, c.want)
+		}
+	}
+	p.Build.Jobs = 0
+	if got, _ := p.buildJobs(100); got != max(1, runtime.NumCPU()/2) {
+		t.Errorf("by default: got %d, want half of %d CPUs", got, runtime.NumCPU())
+	}
+	p.Build.Jobs = -1
+	if _, err := p.buildJobs(2); err == nil {
+		t.Error("build.jobs -1: got no error")
 	}
 }

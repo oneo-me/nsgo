@@ -48,6 +48,7 @@ build:
   open: false           # true opens the output directory after building
   fps: false            # as dev.fps, for packages
   installers: true      # false leaves out the disk image, the Windows installer and the Linux packages
+  jobs: 0               # how many targets build at once; 0 is half the CPUs, 1 one after another
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # the Linux packages' maintainer, else the app's name
