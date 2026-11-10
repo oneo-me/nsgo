@@ -293,7 +293,9 @@ const (
 )
 
 // dmgHidden are the volume's hidden files, which Finder shows when the
-// user asks for hidden files: the layout puts them below the window.
+// user asks for hidden files: the layout stacks them below the window at
+// its left, one icon wide, so they widen nothing and Finder shows no
+// horizontal scroll bar.
 var dmgHidden = []string{".background", ".DS_Store", ".fseventsd", ".Trashes", ".VolumeIcon.icns"}
 
 // dmgLabelDrop is how far below an icon's center the middle of the icon
@@ -356,8 +358,8 @@ func dmgRecords(app string, l dmgLayout) []dsRecord {
 		dsIconLocation(app, l.AppX, l.AppY),
 		dsIconLocation("Applications", l.ApplicationsX, l.ApplicationsY),
 	}
-	for i, name := range dmgHidden {
-		records = append(records, dsIconLocation(name, 100+i*150, l.Height+200))
+	for _, name := range dmgHidden {
+		records = append(records, dsIconLocation(name, l.IconSize, l.Height+200))
 	}
 	return records
 }
