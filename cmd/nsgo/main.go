@@ -11,6 +11,7 @@
 //	                                                      on a platform
 //	nsgo check [dir]                                     vet the app and type-check its TSX
 //	nsgo i18n  [-source L] [dir]                         check catalogs and write their Go code
+//	nsgo doctor                                          show which targets this machine builds and runs
 //	nsgo keygen name                                     make a root or release key for signed packages
 //	nsgo certify -root K -key P -apps A [-days N] [-out F]
 //	                                                      certify a release key for apps
@@ -131,6 +132,10 @@ func main() {
 		} else {
 			err = generateCatalog(ctx, dir, *source)
 		}
+	case "doctor":
+		fs := flag.NewFlagSet("doctor", flag.ExitOnError)
+		fs.Parse(args)
+		err = doctor(ctx)
 	case "keygen":
 		fs := flag.NewFlagSet("keygen", flag.ExitOnError)
 		fs.Parse(args)
@@ -192,6 +197,7 @@ func usage() {
   nsgo test  [-run REGEXP] [-bench REGEXP] [-junit FILE] [-trace] [-target macos|windows|linux|web|ios_simulator|tvos_simulator|android [-fps]] [dir | App.tsx < steps] [-- go test flags]
   nsgo check [dir]
   nsgo i18n  [-source L] [dir]
+  nsgo doctor
   nsgo keygen name
   nsgo certify -root K -key P -apps A [-days N] [-out F]
   nsgo publish -key K -cert C [-entry E] [-min-runtime V] [-out F] [dir | package]

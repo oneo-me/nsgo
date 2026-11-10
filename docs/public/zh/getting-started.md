@@ -54,6 +54,8 @@ go tool nsgo dev -target watchos_simulator  # 在 Apple Watch 模拟器中
 go tool nsgo dev -target android            # 在已连接的设备或模拟器上
 ```
 
+`go tool nsgo doctor` 列出每个目标在这台机器上能否构建、能否运行，以及不能时缺少什么，例如 Xcode、`adb`、已连接的设备或 GTK。
+
 设备选择、追踪更新、性能监视器和其他语言见[运行与调试](debugging.md)。
 
 ## 下一步

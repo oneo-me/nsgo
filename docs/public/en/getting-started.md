@@ -54,6 +54,8 @@ go tool nsgo dev -target watchos_simulator  # in the Apple Watch simulator
 go tool nsgo dev -target android            # on a connected device or emulator
 ```
 
+`go tool nsgo doctor` lists every target with whether this machine builds it and runs it, and what it lacks for those it cannot, such as Xcode, `adb`, a connected device or GTK.
+
 [Running and debugging](debugging.md) covers devices, tracing updates, the performance monitor and other languages.
 
 ## Next
