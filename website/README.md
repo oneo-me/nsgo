@@ -91,7 +91,8 @@ site its look: its blue gradient (`#4da3ff` to `#007aff`) for the primary
 buttons, the lit platform, the engine and the call to action, and its skewed speed lines
 (`SpeedLines.astro`) before section names and behind the hero. Cards are
 soft and rounded, code takes GitHub's light or dark colors with the
-appearance, and real
+appearance, and behind the hero a WebGL shader (`HeroField.astro`) drifts
+faint blue through its dot grid, still when less motion is asked for. Real
 screens of the gallery show what NSGo makes. The tokens and layout are in
 `src/styles/global.css`.
 

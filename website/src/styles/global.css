@@ -729,35 +729,54 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
 /* Clipped only sideways, so the phone's shadow falls past the bottom. */
 .hero {
   position: relative;
-  padding: 56px 0 56px;
+  padding: 64px 0 56px;
   overflow-x: clip;
 }
 
 /* A blue light behind the hero, fading out before its top edge, and faint
-   dots fading out under it. */
-.hero__glow {
+   dots fading out under it. Where WebGL runs, the field's shader draws the
+   dots instead (`HeroField.astro`). */
+.hero__glow,
+.hero-field {
   position: absolute;
   inset: 0 0 auto;
+  width: 100%;
   height: 820px;
-  background:
-    radial-gradient(60% 50% at 50% 36%, var(--glow), transparent 70%),
-    radial-gradient(var(--border) 1px, transparent 1px) 0 0 / 22px 22px;
   mask-image: linear-gradient(#000 40%, transparent);
   -webkit-mask-image: linear-gradient(#000 40%, transparent);
   pointer-events: none;
 }
 
+.hero__glow {
+  background:
+    radial-gradient(50% 50% at 70% 34%, var(--glow), transparent 70%),
+    radial-gradient(var(--border) 1px, transparent 1px) 0 0 / 22px 22px;
+}
+
+.hero--shaded .hero__glow {
+  background: radial-gradient(50% 50% at 70% 34%, var(--glow), transparent 70%);
+}
+
+/* The copy on the left, the platforms on the right; stacked and centred
+   on narrow screens. */
 .hero__inner {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 72px;
+  min-height: 480px;
+}
+
+.hero__copy {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
 }
 
 .hero h1 {
-  margin-top: 22px;
-  font-size: clamp(40px, 6.4vw, 68px);
+  margin-top: 26px;
+  font-size: clamp(40px, 4.4vw, 56px);
   font-weight: 800;
   line-height: 1.04;
   letter-spacing: -0.045em;
@@ -769,30 +788,54 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
 }
 
 .hero__lead {
-  max-width: 660px;
-  margin-top: 18px;
+  max-width: 500px;
+  margin-top: 22px;
   color: var(--muted);
-  font-size: clamp(17px, 2vw, 19.5px);
+  font-size: clamp(16px, 1.5vw, 17.5px);
   line-height: 1.7;
+}
+
+.hero__lead strong {
+  color: var(--text);
+  font-weight: 650;
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 34px;
 }
 
 .hero__command {
-  margin-top: 16px;
+  margin-top: 18px;
+}
+
+@media (max-width: 960px) {
+  .hero__inner {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .hero__inner {
+    gap: 40px;
+  }
+
+  .hero__copy {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero__actions {
+    justify-content: center;
+  }
 }
 
 /* The gallery's screens: a desktop window and a phone before it. */
 
 .stage {
   position: relative;
-  margin-top: 48px;
+  margin-top: 56px;
   padding: 0 64px 40px 0;
 }
 
@@ -831,49 +874,37 @@ html[data-theme='dark'] .phone {
   border-radius: 34px;
 }
 
-/* The platforms under the title: they rise in one after another,
-   then take turns being lit, each the same size lit or not. */
-.platforms {
+/* The platforms beside the copy, each a tile in the shape of the device or
+   surface it runs on, placed on a board of 480 by 300 units (`--u`). They
+   rise in one after another, then take turns being lit, each the same size
+   lit or not. */
+.hero__platforms {
+  --u: 1px;
   display: grid;
   justify-items: center;
-  gap: 10px;
-  margin-top: 26px;
 }
 
-/* A row holds kinds of platforms, each led by its name. */
-.platforms__row,
-.platforms__group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.platforms__row {
-  column-gap: 28px;
-}
-
-.platforms__kind {
-  margin-right: 2px;
-  color: var(--faint);
-  font-size: 13px;
-  font-weight: 500;
+.tiles {
+  position: relative;
+  width: calc(480 * var(--u));
+  height: calc(300 * var(--u));
 }
 
 .platform {
-  position: relative;
-  display: inline-flex;
+  --tone: var(--border-strong);
+  position: absolute;
+  top: calc(var(--y) * var(--u));
+  left: calc(var(--x) * var(--u));
+  display: flex;
   align-items: center;
   gap: 8px;
-  height: 44px;
-  padding: 0 16px 0 14px;
+  width: calc(var(--w) * var(--u));
+  height: calc(var(--h) * var(--u));
+  padding: 0 calc(12 * var(--u));
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  font-size: 15px;
-  font-weight: 600;
   cursor: default;
   transition:
     border-color 0.35s ease,
@@ -881,15 +912,143 @@ html[data-theme='dark'] .phone {
     transform 0.35s ease;
 }
 
+.platform::before,
+.platform::after {
+  position: absolute;
+  content: '';
+  transition: background-color 0.35s ease;
+}
+
 .platform svg {
+  flex: none;
   color: var(--muted);
   transition: color 0.35s ease;
 }
 
+.platform__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: max(10.5px, calc(13.5 * var(--u)));
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Windows, a browser and a television show their name at the bottom. */
+.platform--window,
+.platform--browser,
+.platform--tv {
+  align-items: flex-end;
+  padding-bottom: calc(12 * var(--u));
+}
+
+/* A window's title bar, its controls on the side its system puts them. */
+.platform--window::before,
+.platform--browser::before {
+  inset: 0 0 auto;
+  height: 18px;
+  border-bottom: 1px solid var(--border);
+  --dot: radial-gradient(circle, var(--tone) 2.5px, transparent 3px);
+  background:
+    var(--dot) 6px 0 / 9px 18px no-repeat,
+    var(--dot) 15px 0 / 9px 18px no-repeat,
+    var(--dot) 24px 0 / 9px 18px no-repeat;
+}
+
+.platform--controls-right::before {
+  background:
+    var(--dot) calc(100% - 6px) 0 / 9px 18px no-repeat,
+    var(--dot) calc(100% - 15px) 0 / 9px 18px no-repeat,
+    var(--dot) calc(100% - 24px) 0 / 9px 18px no-repeat;
+}
+
+/* A browser's address field. */
+.platform--browser::after {
+  top: 5px;
+  right: 10px;
+  left: 40px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--soft);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Phones, an App Clip's round code and a watch stack their icon over
+   their name. */
+.platform--phone,
+.platform--clip,
+.platform--watch {
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.platform--phone {
+  border-radius: calc(18 * var(--u));
+}
+
+.platform--phone::before {
+  top: 7px;
+  left: 50%;
+  width: 18px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--tone);
+  transform: translateX(-50%);
+}
+
+.platform--clip {
+  border-radius: 50%;
+}
+
+.platform--clip .platform__name {
+  font-size: max(9.5px, calc(10.5 * var(--u)));
+}
+
+.platform--watch {
+  border-radius: calc(20 * var(--u));
+}
+
+.platform--watch .platform__name {
+  font-size: max(9px, calc(12 * var(--u)));
+}
+
+.platform--watch::after {
+  top: 30%;
+  right: -4px;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--tone);
+}
+
+.platform--tv {
+  border-radius: 8px;
+}
+
+.platform--tv::after {
+  bottom: -7px;
+  left: 50%;
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--tone);
+  transform: translateX(-50%);
+}
+
+/* A mini program's capsule, like the button its host puts on every one. */
+.platform--capsule {
+  justify-content: center;
+  padding: 0 calc(8 * var(--u));
+  border-radius: 999px;
+}
+
 .platform.is-lit {
+  --tone: var(--blue);
   border-color: var(--blue);
-  box-shadow: 0 8px 22px -10px rgb(0 122 255 / 50%);
-  transform: translateY(-2px);
+  box-shadow: 0 10px 26px -12px rgb(0 122 255 / 50%);
+  transform: translateY(-3px);
 }
 
 .platform.is-lit svg {
@@ -897,12 +1056,22 @@ html[data-theme='dark'] .phone {
 }
 
 /* The line naming what draws the lit platform: every platform's line
-   sits in one place, so changing lines never moves the page. */
+   sits in one place, so changing lines never moves the page. Beside the
+   copy it hangs under the board, so the board alone centres on the copy. */
+.hero__platforms {
+  position: relative;
+}
+
 .platform-lines {
+  position: absolute;
+  top: calc(100% + 24px);
+  right: 0;
+  left: 0;
   display: grid;
-  margin-top: 14px;
+  justify-items: center;
   color: var(--muted);
   font-size: 14px;
+  text-align: center;
 }
 
 .platform-line {
@@ -933,7 +1102,7 @@ html[data-theme='dark'] .phone {
 @media (prefers-reduced-motion: no-preference) {
   .platform {
     animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    animation-delay: calc(0.15s + var(--i) * 0.08s);
+    animation-delay: calc(0.15s + var(--i) * 0.06s);
   }
 
   @keyframes rise {
@@ -941,6 +1110,17 @@ html[data-theme='dark'] .phone {
       opacity: 0;
       transform: translateY(12px);
     }
+  }
+}
+
+@media (max-width: 960px) {
+  .hero__platforms {
+    margin-top: 8px;
+  }
+
+  .platform-lines {
+    position: static;
+    margin-top: 24px;
   }
 }
 
@@ -958,11 +1138,24 @@ html[data-theme='dark'] .phone {
   .phone img {
     border-radius: 20px;
   }
+}
+
+@media (max-width: 560px) {
+  .hero__platforms {
+    --u: calc((100vw - 48px) / 480);
+  }
 
   .platform {
-    height: 40px;
-    padding: 0 12px;
-    font-size: 14px;
+    gap: 4px;
+  }
+
+  .platform__name {
+    font-size: 10px;
+  }
+
+  .platform svg {
+    width: 15px;
+    height: 15px;
   }
 }
 

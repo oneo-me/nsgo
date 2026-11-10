@@ -2,6 +2,7 @@
 import { Code } from 'astro:components';
 import CopyCommand from '../../components/CopyCommand.astro';
 import Eyebrow from '../../components/Eyebrow.astro';
+import HeroField from '../../components/HeroField.astro';
 import Icon, { type IconName } from '../../components/Icon.astro';
 import SpeedLines from '../../components/SpeedLines.astro';
 import { copies } from '../../copy';
@@ -22,6 +23,27 @@ const f = home.features;
 const desktop = lang === 'zh' ? desktopZh : desktopEn;
 const phone = lang === 'zh' ? phoneZh : phoneEn;
 
+// Where each platform's tile sits beside the hero's copy, in points of a
+// 480 by 300 board, and the shape of the device or surface it runs on. The
+// board has three columns, desktops, phones and the rest, with 12 points
+// between every tile.
+type Shape = 'window' | 'browser' | 'phone' | 'clip' | 'watch' | 'tv' | 'capsule';
+const tiles: Record<string, { shape: Shape; x: number; y: number; w: number; h: number; controls?: 'left' | 'right' }> = {
+  macOS: { shape: 'window', controls: 'left', x: 0, y: 0, w: 156, h: 92 },
+  Windows: { shape: 'window', controls: 'right', x: 0, y: 104, w: 156, h: 92 },
+  Linux: { shape: 'window', controls: 'right', x: 0, y: 208, w: 156, h: 92 },
+  iOS: { shape: 'phone', x: 168, y: 0, w: 72, h: 144 },
+  Android: { shape: 'phone', x: 168, y: 156, w: 72, h: 144 },
+  tvOS: { shape: 'tv', x: 252, y: 0, w: 148, h: 84 },
+  watchOS: { shape: 'watch', x: 412, y: 0, w: 68, h: 92 },
+  'App Clips': { shape: 'clip', x: 254, y: 106, w: 88, h: 88 },
+  Web: { shape: 'browser', x: 356, y: 104, w: 124, h: 92 },
+  WeChat: { shape: 'capsule', x: 252, y: 208, w: 108, h: 40 },
+  QQ: { shape: 'capsule', x: 372, y: 208, w: 108, h: 40 },
+  Alipay: { shape: 'capsule', x: 252, y: 260, w: 108, h: 40 },
+  Douyin: { shape: 'capsule', x: 372, y: 260, w: 108, h: 40 },
+};
+
 const tabs = [
   { id: 'go', file: 'main.go', code: goApp, lang: 'go' },
   { id: 'tsx', file: 'App.tsx', code: tsxApp, lang: 'tsx' },
@@ -41,46 +63,49 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
 <Layout lang={lang} page="home" path="" title={home.title} description={home.description}>
   <section class="hero">
     <div class="hero__glow" aria-hidden="true"></div>
+    <HeroField />
     <div class="container hero__inner">
-      <span class="pill"><SpeedLines size={14} />{home.hero.badge}</span>
-      <h1>
-        {home.hero.title[0]}
-        <span class="gradient-text">{home.hero.title[1]}</span>
-      </h1>
-      <div class="platforms" role="group" aria-label={home.hero.runsOn}>
-        {platformRows.map((kinds) => (
-          <div class="platforms__row">
-            {kinds.map((kind) => (
-              <ul class="platforms__group" aria-label={home.hero.kinds[kind]}>
-                <li class="platforms__kind" aria-hidden="true">{home.hero.kinds[kind]}</li>
-                {platformsOf(kind).map(({ platform, index }) => (
-                  <li class="platform" style={`--i: ${index}`}>
-                    <Icon name={platform.icon} size={18} />
-                    {platformName(platform, lang)}
-                  </li>
-                ))}
-              </ul>
-            ))}
-          </div>
-        ))}
+      <div class="hero__copy">
+        <span class="pill"><SpeedLines size={14} />{home.hero.badge}</span>
+        <h1>
+          {home.hero.title[0]}
+          <span class="gradient-text">{home.hero.title[1]}</span>
+        </h1>
+        <p class="hero__lead">{home.hero.lead[0]}<strong>{platforms.length}</strong>{home.hero.lead[1]}</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary btn--large" href={docUrl(lang, 'getting-started')}>
+            {home.hero.start}
+          </a>
+          <a class="btn btn--secondary btn--large" href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
+            {home.hero.demo}
+          </a>
+        </div>
+        <CopyCommand lang={lang} command={install} class="hero__command" />
       </div>
-      <div class="platform-lines" aria-hidden="true">
-        {platforms.map((platform) => (
-          <p class="platform-line">
-            <strong>{platformName(platform, lang)}</strong>{home.hero.drawsWith[0]}<span>{platform.stack}</span>{home.hero.drawsWith[1]}
-          </p>
-        ))}
+
+      <div class="hero__platforms">
+        <ul class="tiles" aria-label={home.hero.runsOn}>
+          {platforms.map((platform, index) => {
+            const tile = tiles[platform.name]!;
+            return (
+              <li
+                class:list={['platform', `platform--${tile.shape}`, tile.controls && `platform--controls-${tile.controls}`]}
+                style={`--i: ${index}; --x: ${tile.x}; --y: ${tile.y}; --w: ${tile.w}; --h: ${tile.h}`}
+              >
+                <Icon name={platform.icon} size={18} />
+                <span class="platform__name">{platformName(platform, lang)}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <div class="platform-lines" aria-hidden="true">
+          {platforms.map((platform) => (
+            <p class="platform-line">
+              <strong>{platformName(platform, lang)}</strong>{home.hero.drawsWith[0]}<span>{platform.stack}</span>{home.hero.drawsWith[1]}
+            </p>
+          ))}
+        </div>
       </div>
-      <p class="hero__lead">{home.hero.lead}</p>
-      <div class="hero__actions">
-        <a class="btn btn--primary btn--large" href={docUrl(lang, 'getting-started')}>
-          {home.hero.start}
-        </a>
-        <a class="btn btn--secondary btn--large" href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
-          {home.hero.demo}
-        </a>
-      </div>
-      <CopyCommand lang={lang} command={install} class="hero__command" />
     </div>
 
     <div class="container stage">

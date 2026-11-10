@@ -1,0 +1,260 @@
+---
+// The hero's background: the dot grid, drawn by a WebGL shader, with a slow
+// noise field lighting patches of dots blue and a quarter of the rows carrying
+// a lit run, like the speed lines of the mark. Near the pointer the dots
+// light up and part around it. Without WebGL, the CSS dots of
+// `.hero__glow` stay; with less motion asked for, one still frame is drawn.
+---
+
+<canvas class="hero-field" aria-hidden="true"></canvas>
+
+<script>
+  const vertex = `
+    attribute vec2 position;
+    void main() {
+      gl_Position = vec4(position, 0.0, 1.0);
+    }
+  `;
+
+  // Works in CSS pixels so the grid matches the 22-pixel CSS dots it
+  // replaces. Outputs premultiplied alpha over the page's background.
+  const fragment = `
+    precision highp float;
+    uniform vec2 size;
+    uniform float scale;
+    uniform float time;
+    uniform vec3 dotColor;
+    uniform vec3 accent;
+    uniform float strength;
+    uniform vec2 pointer;
+    uniform float reach;
+    uniform vec4 quiet;
+
+    const float cell = 22.0;
+
+    float hash(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+
+    float noise(vec3 p) {
+      vec3 i = floor(p);
+      vec3 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      vec2 o = vec2(i.z * 17.0, i.z * 31.0);
+      float a = mix(mix(hash(i.xy + o), hash(i.xy + vec2(1.0, 0.0) + o), f.x),
+                    mix(hash(i.xy + vec2(0.0, 1.0) + o), hash(i.xy + vec2(1.0, 1.0) + o), f.x), f.y);
+      o += vec2(17.0, 31.0);
+      float b = mix(mix(hash(i.xy + o), hash(i.xy + vec2(1.0, 0.0) + o), f.x),
+                    mix(hash(i.xy + vec2(0.0, 1.0) + o), hash(i.xy + vec2(1.0, 1.0) + o), f.x), f.y);
+      return mix(a, b, f.z);
+    }
+
+    float fbm(vec3 p) {
+      float sum = 0.0;
+      float amp = 0.5;
+      for (int i = 0; i < 4; i++) {
+        sum += amp * noise(p);
+        p = p * 2.03 + vec3(1.7, 9.2, 0.0);
+        amp *= 0.5;
+      }
+      return sum;
+    }
+
+    void main() {
+      vec2 p = vec2(gl_FragCoord.x, size.y - gl_FragCoord.y) / scale;
+      vec2 id = floor(p / cell + 0.5);
+
+      // The pointer lights the dots around it and pushes them a little
+      // outward, as through a lens.
+      vec2 away = id * cell - pointer;
+      float gap = length(away);
+      float near = reach * exp(-gap * gap / 60000.0) * 0.5;
+      vec2 offset = p - id * cell - away / max(gap, 1.0) * near * 4.0;
+      float d = length(offset);
+
+      // A slow field drifting across the grid.
+      float field = fbm(vec3(id * 0.07 + vec2(time * 0.12, 0.0), time * 0.08));
+      float patch = smoothstep(0.48, 0.72, field);
+
+      // A quarter of the rows carry a run of lit dots moving right, its
+      // head brightest and its tail fading; each row has its own speed,
+      // phase and pause.
+      float row = hash(vec2(id.y, 7.0));
+      float run = 0.0;
+      if (row < 0.25) {
+        float columns = size.x / scale / cell;
+        float speed = mix(5.0, 12.0, hash(vec2(id.y, 3.0)));
+        float span = columns + 50.0;
+        float head = mod(time * speed + hash(vec2(id.y, 11.0)) * span, span) - 10.0;
+        float behind = head - p.x / cell;
+        float tail = mix(8.0, 20.0, hash(vec2(id.y, 5.0)));
+        run = step(0.0, behind) * (1.0 - smoothstep(0.0, tail, behind));
+        run = run * run;
+      }
+
+      // Quieter under the copy, so the text keeps its ground.
+      float calm = mix(0.6, 1.0, smoothstep(0.6, 1.2, length((p - quiet.xy) / quiet.zw)));
+
+      float lit = max(max(patch * 0.45, run * 0.6) * calm, near);
+
+      // Lit dots grow and glow; a run also draws a hairline along its row.
+      float radius = 0.55 + lit * 0.5;
+      float dotMask = 1.0 - smoothstep(radius, radius + 0.8, d);
+      float halo = exp(-d * d / 10.0) * lit * 0.18;
+      float line = (1.0 - smoothstep(0.0, 0.9, abs(offset.y))) * run * calm * 0.22;
+
+      float base = dotMask * strength * mix(1.0, 1.0 / max(strength, 0.01), lit);
+      float glow = max(halo, line);
+      vec3 color = mix(dotColor, accent, lit);
+      float alpha = min(base + glow * (1.0 - dotMask), 1.0);
+      vec3 rgb = color * base + accent * glow * (1.0 - dotMask);
+      gl_FragColor = vec4(rgb, alpha);
+    }
+  `;
+
+  const canvas = document.querySelector<HTMLCanvasElement>('.hero-field');
+  const gl = canvas?.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
+
+  const compile = (gl: WebGLRenderingContext, type: number, source: string) => {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
+  };
+
+  // Resolves a CSS color, such as a custom property, to 0–1 RGB.
+  const probe = document.createElement('span');
+  const rgb = (value: string): [number, number, number] => {
+    probe.style.color = value;
+    document.body.append(probe);
+    const parts = getComputedStyle(probe).color.match(/[\d.]+/g)?.map(Number) ?? [0, 0, 0];
+    probe.remove();
+    return [parts[0]! / 255, parts[1]! / 255, parts[2]! / 255];
+  };
+
+  const start = (canvas: HTMLCanvasElement, gl: WebGLRenderingContext) => {
+    const vs = compile(gl, gl.VERTEX_SHADER, vertex);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, fragment);
+    if (!vs || !fs) return;
+    const program = gl.createProgram()!;
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+    gl.useProgram(program);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const position = gl.getAttribLocation(program, 'position');
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+    const uniform = (name: string) => gl.getUniformLocation(program, name);
+    const size = uniform('size');
+    const scale = uniform('scale');
+    const time = uniform('time');
+    const dotColor = uniform('dotColor');
+    const accent = uniform('accent');
+    const strength = uniform('strength');
+    const pointer = uniform('pointer');
+    const reach = uniform('reach');
+    const quiet = uniform('quiet');
+
+    const hero = canvas.closest<HTMLElement>('.hero');
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const origin = performance.now() - 40_000;
+    let frame = 0;
+    let visible = true;
+
+    // The pointer's place in the canvas and how much it shows, eased
+    // towards where it is and whether it is over the hero.
+    const target = { x: 0, y: 0, reach: 0 };
+    const eased = { x: 0, y: 0, reach: 0 };
+
+    const draw = (now: number) => {
+      frame = 0;
+      const moving = !still.matches;
+      const ease = moving ? 0.035 : 1;
+      eased.x += (target.x - eased.x) * ease;
+      eased.y += (target.y - eased.y) * ease;
+      eased.reach += (target.reach - eased.reach) * ease;
+      const settled = Math.abs(target.x - eased.x) + Math.abs(target.y - eased.y) < 0.5 && Math.abs(target.reach - eased.reach) < 0.005;
+      gl.uniform1f(time, moving ? (now - origin) / 1000 : 40);
+      gl.uniform2f(pointer, eased.x, eased.y);
+      gl.uniform1f(reach, eased.reach);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (visible && !document.hidden && (moving || !settled)) frame = requestAnimationFrame(draw);
+    };
+    const redraw = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(draw);
+    };
+
+    const colors = () => {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      gl.uniform3fv(dotColor, rgb('var(--border-strong)'));
+      gl.uniform3fv(accent, rgb('var(--blue)'));
+      gl.uniform1f(strength, dark ? 0.85 : 0.9);
+      redraw();
+    };
+
+    const resize = () => {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.round(canvas.clientWidth * ratio);
+      const height = Math.round(canvas.clientHeight * ratio);
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      gl.viewport(0, 0, width, height);
+      gl.uniform2f(size, width, height);
+      gl.uniform1f(scale, ratio);
+      const box = canvas.getBoundingClientRect();
+      const copy = hero?.querySelector('.hero__copy')?.getBoundingClientRect();
+      if (copy) {
+        gl.uniform4f(quiet, copy.left - box.left + copy.width / 2, copy.top - box.top + copy.height / 2, copy.width / 2 + 40, copy.height / 2 + 20);
+      } else {
+        gl.uniform4f(quiet, box.width / 2, 260, 520, 220);
+      }
+      redraw();
+    };
+
+    const point = (event: PointerEvent) => {
+      const box = canvas.getBoundingClientRect();
+      target.x = event.clientX - box.left;
+      target.y = event.clientY - box.top;
+      if (eased.reach < 0.01) {
+        eased.x = target.x;
+        eased.y = target.y;
+      }
+      target.reach = target.y < box.height ? 1 : 0;
+      if (!frame) redraw();
+    };
+    hero?.addEventListener('pointermove', point);
+    hero?.addEventListener('pointerdown', point);
+    hero?.addEventListener('pointerleave', () => {
+      target.reach = 0;
+      if (!frame) redraw();
+    });
+
+    const resizes = new ResizeObserver(resize);
+    resizes.observe(canvas);
+    const copy = hero?.querySelector('.hero__copy');
+    if (copy) resizes.observe(copy);
+    new IntersectionObserver(([entry]) => {
+      visible = entry!.isIntersecting;
+      if (visible) redraw();
+    }).observe(canvas);
+    document.addEventListener('visibilitychange', () => document.hidden || redraw());
+    document.addEventListener('nsgo-theme', colors);
+    still.addEventListener('change', redraw);
+
+    colors();
+    resize();
+    hero?.classList.add('hero--shaded');
+  };
+
+  if (canvas && gl) start(canvas, gl);
+</script>
