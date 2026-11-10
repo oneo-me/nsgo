@@ -2,7 +2,7 @@
 title: TSX apps
 description: Write an app in TSX with Tailwind classes, compiled ahead with no Node.
 group: Guides
-order: 20
+order: 30
 ---
 
 ## A TSX app

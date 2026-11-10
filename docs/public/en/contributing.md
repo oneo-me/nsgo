@@ -7,7 +7,7 @@ order: 100
 
 ## Requirements
 
-macOS with Xcode and Go 1.26 or later builds every target for arm64, Android's APK included. Running on devices needs what [Getting started](getting-started.md#requirements) lists, and the x86_64 Android emulator's target, `android_x64`, an Android NDK, since Go links android/amd64 only with cgo.
+macOS with Xcode and Go 1.26 or later builds every target for arm64, Android's APK included. Running on devices needs what [Your first app](getting-started.md#requirements) lists, and the x86_64 Android emulator's target, `android_x64`, an Android NDK, since Go links android/amd64 only with cgo.
 
 ```sh
 git clone https://github.com/oneo-me/nsgo.git

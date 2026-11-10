@@ -1,7 +1,7 @@
 ---
 title: 组件与状态
 description: 元素、组件、signal 与样式。
-group: 指南
+group: 构建界面
 order: 10
 ---
 

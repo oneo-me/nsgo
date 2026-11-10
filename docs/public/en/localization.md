@@ -2,7 +2,7 @@
 title: Localization
 description: Translate an app's messages and follow the language it shows.
 group: Guides
-order: 35
+order: 45
 ---
 
 ## Messages

@@ -45,7 +45,13 @@ Every target builds on a Mac with Go; iOS also needs Xcode. The `nsgo` tool crea
 
 NSGo is early: it has no stable API or release yet, and what is missing is in the [roadmap](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md). It ports the design of [Native Shell](https://github.com/longbridge/nsh) to Go.
 
-## Next
+## How to read the docs
 
-- [Getting started](getting-started.md): create and run an app.
+Every page answers one question. A code example is a fragment of a component unless the page says otherwise: `cx` is the `*core.Scope` a component receives. `base` components have no look and take their styles from the app; `ui` components are the same controls in Onevra's look.
+
+- [Your first app](getting-started.md): build a small todo app step by step.
+- [Building UI](components.md): elements, components, signals, [layout](layout.md), [styles](styles.md), [text](text.md), [lists](lists.md), [navigation](navigation.md) and [forms](forms.md).
+- [Component reference](ui.md): the most-used components, each with its `base` and `ui` forms.
+- [Guides](tsx.md): [TSX apps](tsx.md), [testing](testing.md), [localization](localization.md), [building](building.md) and [embedding](embedding.md).
+- [Contributing](contributing.md): build NSGo and the website from source.
 - The [live demo](https://oneo-me.github.io/nsgo/gallery/loader.html): every component, in your browser.

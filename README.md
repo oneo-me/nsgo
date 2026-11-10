@@ -61,7 +61,7 @@ func main() { nsgo.Run(Root) }
 
 ## Documentation
 
-The [docs](https://oneo-me.github.io/nsgo/docs/) cover components and state, TSX apps, localization, testing, building and shipping; the [live demo](https://oneo-me.github.io/nsgo/gallery/loader.html) runs the gallery in the browser.
+The [docs](https://oneo-me.github.io/nsgo/docs/) cover components and state, layout, styles, navigation, a component reference, TSX apps, localization, testing, embedding, building and shipping; the [live demo](https://oneo-me.github.io/nsgo/gallery/loader.html) runs the gallery in the browser.
 
 ## Development
 

@@ -2,7 +2,7 @@
 title: Building and shipping
 description: Package an app for every platform, sign it and embed it in other apps.
 group: Guides
-order: 40
+order: 50
 ---
 
 ## Build
@@ -138,7 +138,7 @@ The clip reads the link that opened it with `mobile.OpenedURL`, which changes as
 
 ## Embed in another app
 
-`-embed` packages the app for an iOS or Android app of your own: an XCFramework, of dynamic frameworks with `-dynamic`, or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`, whose host is the page's or the one `web.host` in `nsgo.yaml` names. The repository's `examples/embed-*` show each.
+`-embed` packages the app for an iOS or Android app of your own: an XCFramework, of dynamic frameworks with `-dynamic`, or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`, whose host is the page's or the one `web.host` in `nsgo.yaml` names. The repository's `examples/embed-*` show each; [Embedding](embedding.md) covers the host side.
 
 ## The Mac App Store
 

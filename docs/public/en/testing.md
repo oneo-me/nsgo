@@ -2,7 +2,7 @@
 title: Testing
 description: Test an app the way a user uses it, headless or in a native window.
 group: Guides
-order: 30
+order: 40
 ---
 
 ## A test

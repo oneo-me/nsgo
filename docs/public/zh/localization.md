@@ -2,7 +2,7 @@
 title: 本地化
 description: 翻译应用的文案，并跟随应用显示的语言。
 group: 指南
-order: 35
+order: 45
 ---
 
 ## 文案

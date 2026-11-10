@@ -1,7 +1,7 @@
 ---
 title: Components and state
 description: Elements, components, signals and styles.
-group: Guides
+group: Building UI
 order: 10
 ---
 

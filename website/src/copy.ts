@@ -29,7 +29,7 @@ const en = {
       title: ['Write it once in Go.', 'Native on every platform.'],
       lead: 'NSGo is a cross-platform UI framework. Your app’s state, layout and styles run in Go; iOS and its App Clips, tvOS, watchOS, Android, macOS, Windows, Linux, the web and mini programs draw it with their own views.',
       demo: 'Try the live demo',
-      start: 'Get started',
+      start: 'Build your first app',
       runsOn: 'Runs on',
       kinds: { app: 'Apps', web: 'Web', mini: 'Mini programs' },
       // A platform's line under the row: Android draws with Android Views.
@@ -107,7 +107,7 @@ const en = {
   },
   guides: {
     demo: { title: 'Live demo', body: 'The gallery of every component, full page in your browser.' },
-    docs: { title: 'Documentation', body: 'Guides and references for building with NSGo.' },
+    docs: { title: 'Documentation', body: 'Guides and a component reference for building apps with NSGo.' },
     showcases: { title: 'Showcases', body: 'Apps people build with NSGo.' },
     benchmarks: { title: 'Benchmarks', body: 'How fast NSGo starts, lays out and updates.' },
     architecture: { title: 'Architecture', body: 'How the engine, backends and tool fit together.' },
@@ -197,7 +197,7 @@ const zh: Copy = {
       title: ['用 Go 写一次', '在每个平台原生运行'],
       lead: 'NSGo 是一个跨平台 UI 框架。应用的状态、布局和样式在 Go 中运行，再由 iOS 及其轻 App、tvOS、watchOS、Android、macOS、Windows、Linux、Web 和各家小程序用各自的视图绘制。',
       demo: '在线体验',
-      start: '快速开始',
+      start: '开始写第一个应用',
       runsOn: '运行于',
       kinds: { app: '客户端', web: '网页', mini: '小程序' },
       drawsWith: [' 上由 ', ' 绘制'],
@@ -274,7 +274,7 @@ const zh: Copy = {
   },
   guides: {
     demo: { title: '在线体验', body: '包含全部组件的 Gallery，在浏览器中整页运行。' },
-    docs: { title: '文档', body: '用 NSGo 开发的指南与参考。' },
+    docs: { title: '文档', body: '用 NSGo 开发应用的指南和组件参考。' },
     showcases: { title: '案例', body: '大家用 NSGo 做的应用。' },
     benchmarks: { title: '性能', body: 'NSGo 的启动、布局和更新有多快。' },
     architecture: { title: '架构', body: '引擎、后端和工具如何配合。' },

@@ -55,7 +55,6 @@ export const links = {
   architecture: `${repo}/blob/main/ARCHITECTURE.md`,
   roadmap: `${repo}/blob/main/docs/roadmap.md`,
   changelog: `${repo}/blob/main/CHANGELOG.md`,
-  embedding: `${repo}/blob/main/docs/architecture/embedding.md`,
   license: `${repo}/blob/main/LICENSE`,
   notice: `${repo}/blob/main/NOTICE`,
   /** The gallery's web build, opened full page in a new tab. */

@@ -45,7 +45,13 @@ Go 引擎掌管应用：响应式图、样式、flexbox 与 grid 布局，以及
 
 NSGo 还处于早期：尚无稳定 API，也还没有发布版本，缺少的部分记录在[路线图](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md)中。它把 [Native Shell](https://github.com/longbridge/nsh) 的设计移植到了 Go。
 
-## 下一步
+## 如何阅读这些文档
 
-- [快速开始](getting-started.md)：创建并运行一个应用。
+每个页面只回答一个问题。除非页面另有说明，代码示例都是组件中的片段：`cx` 是组件收到的 `*core.Scope`。`base` 组件没有外观，样式来自应用；`ui` 组件是同一批控件在 Onevra 外观下的形式。
+
+- [第一个应用](getting-started.md)：一步一步构建一个小型待办应用。
+- [构建界面](components.md)：元素、组件、signal、[布局](layout.md)、[样式](styles.md)、[文本](text.md)、[列表](lists.md)、[导航](navigation.md)和[表单](forms.md)。
+- [组件参考](ui.md)：最常用的组件，每个都有 `base` 和 `ui` 两种形式。
+- [指南](tsx.md)：[TSX 应用](tsx.md)、[测试](testing.md)、[本地化](localization.md)、[构建](building.md)和[嵌入](embedding.md)。
+- [参与开发](contributing.md)：从源码构建 NSGo 和网站。
 - [在线体验](https://oneo-me.github.io/nsgo/gallery/loader.html)：在浏览器中查看全部组件。

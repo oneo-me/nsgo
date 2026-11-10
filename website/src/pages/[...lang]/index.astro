@@ -182,8 +182,8 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
           <h3>{f.tests.title}</h3>
           <p>{f.tests.body}</p>
         </article>
-        <a class="bento__card bento__card--link" href={links.embedding} target="_blank" rel="noopener noreferrer">
-          <span class="bento__icon"><Icon name="external" size={18} /></span>
+        <a class="bento__card bento__card--link" href={docUrl(lang, 'embedding')}>
+          <span class="bento__icon"><Icon name="book" size={18} /></span>
           <h3>{f.embed.title}</h3>
           <p>{f.embed.body}</p>
         </a>
