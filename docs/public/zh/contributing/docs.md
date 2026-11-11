@@ -23,9 +23,9 @@ order: 21
 
 页面之间用相对的 `.md` 链接（`[测试](testing.md#在平台上运行)`），网站会把它们转换成自己的 URL。每个页面只回答一个问题；NSGo 内部如何工作留在 `docs/architecture/` 中。
 
-## 案例
+## 案例与组件
 
-案例页面列出 `docs/public/cases/` 中的应用，每个应用一个 Markdown 文档和一张截图；该目录的 README 说明了写法。
+案例页面列出 `docs/public/cases/` 中的应用，每个应用一个 Markdown 文档和一张截图；该目录的 README 说明了写法。组件页面以同样的形式列出 `docs/public/components/` 中的库。每种语言的译文放在对应语言的目录里（中文是 `zh/`），文件名与英文文档相同；没有译文的条目显示英文。
 
 ## 网站
 

@@ -66,6 +66,12 @@ is one document and one image in a pull request. `src/lib/cases.ts` and
 `src/lib/components.ts` read them through `src/lib/collection.ts`, which
 fails the build with the document's line when one breaks that shape.
 
+A language's translations sit in its folder, `zh/` for Chinese, under the
+English document's file name; they give the name, the paragraph, an
+optional screenshot and the details that read differently, such as a
+component's `kind`. A language without a translation shows English, and
+the page marks that paragraph's language for screen readers.
+
 ## Docs
 
 The docs are the Markdown in the repository's `docs/public/`, whose README

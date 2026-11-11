@@ -8,10 +8,12 @@ GitHub; `website/` builds them into the site.
 - `en/` and `zh/` mirror each other path for path. A page missing in
   Chinese shows the English one there, with a notice.
 - `cases/` holds the apps the website's Showcases page lists, one Markdown
-  document each; it is not part of the docs' navigation.
+  document each; it is not part of the docs' navigation. Its root documents
+  are English, and a language's folder (`zh/`) holds their translations.
 - `components/` holds the component libraries the website's Components
   page lists, one Markdown document each beside its screenshot; it is not
-  part of the docs' navigation.
+  part of the docs' navigation. Its root documents are English too, with
+  translations in a language's folder.
 - Front matter gives each page its `title`, an optional `description`, its
   sidebar `group`, in the page's language, and its `order` in the sidebar.
   Pages without a group, the introduction and the comparison, come first.

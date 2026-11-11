@@ -3,6 +3,12 @@
 // the document. The Showcases and Components pages share that shape; each
 // says which details it takes and checks their values.
 //
+// The folder's own documents are English. A translation sits in the
+// language's folder (`zh/`) under the English document's file name, and
+// says what reads differently in its language: its name, its paragraph,
+// optionally its screenshot, and the details the collection marks
+// translatable.
+//
 // A document that breaks the shape fails the build with its line, so a
 // pull request adds an entry by adding a document and an image.
 
@@ -31,6 +37,16 @@ export interface Entry {
   summary: string;
   screen: Screen;
   details: Map<string, Detail>;
+  /** True when the document is in the page's language, false when it shows English. */
+  translated: boolean;
+}
+
+/** The documents of a folder in every language the site shows. */
+export interface Collection {
+  /** The English entries, in the order of their names. */
+  entries: Entry[];
+  /** in answers the entries in one language, or the English ones it lacks. */
+  in(language: string): Entry[];
 }
 
 export interface CollectionOptions {
@@ -40,11 +56,15 @@ export interface CollectionOptions {
   noun: string;
   /** The detail keys it takes, in the order errors list them. */
   keys: readonly string[];
-  /** The details every document needs, each with what it is for. */
+  /** The details every English document needs, each with what it is for. */
   required?: Readonly<Record<string, string>>;
-  /** The folder's documents and images, globbed by the caller. */
+  /** The detail keys a translation may say in its language, such as a component's kind. */
+  translatable?: readonly string[];
+  /** The folder's English documents and images, globbed by the caller. */
   documents: Record<string, string>;
   images: Record<string, ImageMetadata>;
+  /** Each language's translations, keyed by the language and then by file name. */
+  translations?: Readonly<Record<string, Record<string, string>>>;
   /** check answers what is wrong with one detail's value, if anything. */
   check?: (key: string, value: string) => string | undefined;
 }
@@ -58,36 +78,124 @@ interface Draft {
   details: Map<string, Detail>;
 }
 
+/** What readDocument knows about the document's language. */
+interface DocumentState {
+  /** The language a translation is written in; undefined for English. */
+  language?: string;
+  /** The document a translation translates. */
+  base?: Entry;
+  /** The names the language's documents already list. */
+  names?: Map<string, string>;
+}
+
 /**
- * readCollection reads the folder's documents in the order of their
- * names, the README excepted. It throws when the folder is empty or a
- * document is not the shape the folder's README describes.
+ * readCollection reads the folder's English documents in the order of
+ * their names, the README excepted, and each language's translations over
+ * them. It throws when the folder is empty or a document is not the shape
+ * the folder's README describes.
  */
-export function readCollection(options: CollectionOptions): Entry[] {
-  const { folder, documents } = options;
+export function readCollection(options: CollectionOptions): Collection {
+  const { folder, documents, translations = {} } = options;
   const names = new Map<string, string>();
-  const entries: Entry[] = [];
+  const english = new Map<string, Entry>();
   for (const path of Object.keys(documents).sort()) {
     const file = fileName(path);
     if (file.toLowerCase() === 'readme.md') continue;
-    entries.push(readDocument(file, documents[path], names, options));
+    english.set(file, readDocument(file, documents[path], options, { names }));
   }
-  if (entries.length === 0) {
+  if (english.size === 0) {
     throw new Error(`${folder}: add a document, starting with \`# Name\`; see ${folder}/README.md`);
   }
-  return entries.sort((a, b) => a.name.localeCompare(b.name));
+
+  const languages = new Map<string, Map<string, Entry>>();
+  for (const language of Object.keys(translations).sort()) {
+    const translated = new Map<string, Entry>();
+    const translatedNames = new Map<string, string>();
+    for (const path of Object.keys(translations[language]).sort()) {
+      const file = fileName(path);
+      const base = english.get(file);
+      if (base === undefined) {
+        throw new Error(
+          `${folder}/${language}/${file}:1: there is no ${folder}/${file} to translate; ` +
+            'a translation has the English document’s file name',
+        );
+      }
+      translated.set(
+        file,
+        readTranslation(file, translations[language][path], base, language, options, translatedNames),
+      );
+    }
+    languages.set(language, translated);
+  }
+
+  const ordered = [...english.entries()].sort(([, a], [, b]) => byName(a, b));
+  return {
+    entries: ordered.map(([, entry]) => entry),
+    in(language) {
+      const translated = language === 'en' ? undefined : languages.get(language);
+      return ordered.map(([file, entry]) => {
+        if (language === 'en') return entry;
+        return translated?.get(file) ?? { ...entry, translated: false };
+      });
+    },
+  };
+}
+
+/**
+ * readTranslations groups the documents globbed from `<folder>/<language>/`
+ * by language and file name, failing on a folder that is not a language of
+ * the site.
+ */
+export function readTranslations(
+  documents: Record<string, string>,
+  folder: string,
+  languages: readonly string[],
+): Record<string, Record<string, string>> {
+  const translations: Record<string, Record<string, string>> = {};
+  for (const [path, markdown] of Object.entries(documents)) {
+    const parts = path.split('/');
+    const language = parts[parts.length - 2];
+    if (language === 'en') {
+      throw new Error(`${folder}/en: English documents live at the folder’s root, not in en/`);
+    }
+    if (!languages.includes(language)) {
+      const known = languages.length === 0 ? 'none yet' : languages.join(', ');
+      throw new Error(`${folder}/${language}: ${language} is not a language of the site; translations are in ${known}`);
+    }
+    (translations[language] ??= {})[fileName(path)] = markdown;
+  }
+  return translations;
+}
+
+function readTranslation(
+  file: string,
+  markdown: string,
+  base: Entry,
+  language: string,
+  options: CollectionOptions,
+  names: Map<string, string>,
+): Entry {
+  const entry = readDocument(file, markdown, options, { language, base, names });
+  return {
+    ...entry,
+    details: new Map([...base.details, ...entry.details]),
+    translated: true,
+  };
 }
 
 function readDocument(
   file: string,
   markdown: string,
-  names: Map<string, string>,
   options: CollectionOptions,
+  state: DocumentState,
 ): Entry {
   const { folder, noun, keys, required = {}, images, check } = options;
+  const { language, base, names } = state;
+  const translated = language !== undefined;
+  const source = translated ? `${folder}/${language}/${file}` : `${folder}/${file}`;
   const tree: Root = fromMarkdown(markdown);
   function fail(line: number | undefined, message: string): never {
-    throw new Error(`${folder}/${file}:${line ?? 1}: ${message}`);
+    throw new Error(`${source}:${line ?? 1}: ${message}`);
   }
   let draft: Draft | undefined;
 
@@ -105,9 +213,9 @@ function readDocument(
       }
       const name = text(node.children).trim();
       if (name === '') fail(line, 'the `#` heading needs a name');
-      const other = names.get(name.toLowerCase());
+      const other = names?.get(name.toLowerCase());
       if (other !== undefined) fail(line, `“${name}” is already listed in ${other}`);
-      names.set(name.toLowerCase(), file);
+      names?.set(name.toLowerCase(), translated ? `${language}/${file}` : file);
       draft = { name, line: line ?? 1, details: new Map() };
       continue;
     }
@@ -119,7 +227,7 @@ function readDocument(
     if (node.type === 'paragraph') {
       const image = onlyImage(node);
       if (image !== undefined) {
-        addScreen(folder, draft, node, image, images, fail);
+        addScreen(draft, node, image, images, folder, language, fail);
       } else if (draft.summary === undefined) {
         draft.summary = inline(node.children);
       } else {
@@ -129,7 +237,7 @@ function readDocument(
     }
 
     if (node.type === 'list') {
-      addDetails(draft, node, keys, check, fail);
+      addDetails(draft, node, keys, options.translatable ?? [], translated, check, fail);
       continue;
     }
 
@@ -142,36 +250,47 @@ function readDocument(
   if (draft.summary === undefined) {
     fail(draft.line, `“${draft.name}” needs a paragraph under its name saying what it does`);
   }
-  if (draft.screen === undefined) {
+  const screen = draft.screen ?? base?.screen;
+  if (screen === undefined) {
     fail(
       draft.line,
       `“${draft.name}” needs a screenshot, written as \`![what it shows](file.jpg)\``,
     );
   }
-  for (const [key, hint] of Object.entries(required)) {
-    if (draft.details.has(key)) continue;
-    fail(draft.line, `“${draft.name}” needs ${hint}; add \`- ${key}: …\``);
+  if (!translated) {
+    for (const [key, hint] of Object.entries(required)) {
+      if (draft.details.has(key)) continue;
+      fail(draft.line, `“${draft.name}” needs ${hint}; add \`- ${key}: …\``);
+    }
   }
-  return { name: draft.name, summary: draft.summary, screen: draft.screen, details: draft.details };
+  return {
+    name: draft.name,
+    summary: draft.summary,
+    screen,
+    details: draft.details,
+    translated: !translated,
+  };
 }
 
 function addScreen(
-  folder: string,
   draft: Draft,
   node: Paragraph,
   image: Image,
   images: Record<string, ImageMetadata>,
+  folder: string,
+  language: string | undefined,
   fail: (line: number | undefined, message: string) => never,
 ) {
   if (draft.screen !== undefined) {
     fail(node.position?.start.line, `“${draft.name}” has more than one screenshot; keep one`);
   }
   const name = fileName(image.url);
-  const screen = findImage(images, name);
+  const screen = findImage(images, name, folder, language);
   if (screen === undefined) {
+    const where = language === undefined ? folder : `${folder}/${language} or ${folder}`;
     fail(
       node.position?.start.line,
-      `no screenshot “${name}” in ${folder}; it has ${fileNames(images) || 'none'}`,
+      `no screenshot “${name}” in ${where}; it has ${fileNames(images) || 'none'}`,
     );
   }
   draft.screen = {
@@ -182,17 +301,41 @@ function addScreen(
   };
 }
 
-function findImage(images: Record<string, ImageMetadata>, name: string): ImageMetadata | undefined {
-  return Object.entries(images).find(([path]) => fileName(path).toLowerCase() === name.toLowerCase())?.[1];
+function findImage(
+  images: Record<string, ImageMetadata>,
+  name: string,
+  folder: string,
+  language: string | undefined,
+): ImageMetadata | undefined {
+  const wanted = name.toLowerCase();
+  const marker = `/${folder}/`;
+  let own: ImageMetadata | undefined;
+  let root: ImageMetadata | undefined;
+  for (const [path, image] of Object.entries(images)) {
+    if (fileName(path).toLowerCase() !== wanted) continue;
+    const normalized = path.replace(/\\/g, '/');
+    const at = normalized.lastIndexOf(marker);
+    if (at === -1) continue;
+    const parts = normalized.slice(at + marker.length).split('/');
+    if (parts.length === 1) {
+      root = image;
+    } else if (language !== undefined && parts.length === 2 && parts[0] === language) {
+      own = image;
+    }
+  }
+  return own ?? root;
 }
 
 function addDetails(
   draft: Draft,
   node: List,
   keys: readonly string[],
+  translatable: readonly string[],
+  translated: boolean,
   check: ((key: string, value: string) => string | undefined) | undefined,
   fail: (line: number | undefined, message: string) => never,
 ) {
+  const allowed = translated ? translatable : keys;
   for (const item of node.children) {
     const line = item.position?.start.line;
     const paragraph =
@@ -204,7 +347,11 @@ function addDetails(
     const colon = value.indexOf(':');
     const key = colon === -1 ? '' : value.slice(0, colon).trim().toLowerCase();
     const rest = colon === -1 ? '' : value.slice(colon + 1).trim();
-    if (!keys.includes(key)) {
+    if (!allowed.includes(key)) {
+      if (translated) {
+        const only = allowed.length === 0 ? 'no details' : `only ${allowed.map((key) => `\`${key}\``).join(', ')}`;
+        fail(line, `a translation gives ${only}; write \`${key || value}\` in the English document`);
+      }
       fail(
         line,
         `unknown detail “${key || value}”; write ${keys.map((key) => `\`${key}\``).join(', ')} as \`- key: value\``,
@@ -235,6 +382,10 @@ function fileNames(images: Record<string, ImageMetadata>): string {
   return Object.keys(images)
     .map((path) => `“${fileName(path)}”`)
     .join(', ');
+}
+
+function byName(a: Entry, b: Entry): number {
+  return a.name.localeCompare(b.name);
 }
 
 /** text is the prose of inline Markdown, without its formatting. */

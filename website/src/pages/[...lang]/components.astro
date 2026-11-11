@@ -3,13 +3,14 @@ import CopyCommand from '../../components/CopyCommand.astro';
 import Icon from '../../components/Icon.astro';
 import { copies } from '../../copy';
 import Layout from '../../layouts/Layout.astro';
-import { components } from '../../lib/components';
+import { componentsIn } from '../../lib/components';
 import { langOf, langPaths, links } from '../../site';
 
 export const getStaticPaths = () => langPaths('components');
 
 const lang = langOf(Astro.params.lang);
 const copy = copies[lang].components;
+const components = componentsIn(lang);
 ---
 
 <Layout lang={lang} page="components" path="components/" title={copy.title} description={copy.description}>
@@ -42,7 +43,11 @@ const copy = copies[lang].components;
                 <span class="collection-card__kind">{entry.kind}</span>
                 {entry.official && <span class="collection-card__official">{copy.official}</span>}
               </div>
-              <p class="collection-card__summary" set:html={entry.summary} />
+              <p
+                class="collection-card__summary"
+                lang={entry.translated || lang === 'en' ? undefined : 'en'}
+                set:html={entry.summary}
+              />
               <CopyCommand lang={lang} command={`go get ${entry.package}`} class="collection-card__command" />
               {(entry.author || entry.site || entry.source) && (
                 <footer class="collection-card__foot">
