@@ -23,7 +23,8 @@ import (
 const assetsDir = "assets"
 
 // resolveIcons makes nsgo.yaml's icon paths absolute, or finds the
-// defaults in assets: AppIcon.icon, AppIcon.icns and Icon.png, and for
+// defaults in assets: AppIcon.icon, AppIcon.icns and Icon.png, and the
+// Apple TV's and Apple Watch's own, AppIconTV.* and AppIconWatch.*; for
 // dev.icon the same names ending in -dev. A path nsgo.yaml names must
 // exist; a missing default only leaves the app without that icon.
 func (p *project) resolveIcons() error {
@@ -41,8 +42,28 @@ func (p *project) resolveIconSet(set *icons, key, suffix string) error {
 	if ext := filepath.Ext(set.Apple); set.Apple != "" && ext != ".icon" && ext != ".icns" {
 		return fmt.Errorf("%s.apple: %s is neither an .icon nor an .icns", key, rel(set.Apple))
 	}
-	set.PNG, err = p.iconPath(key, set.PNG, "Icon"+suffix+".png")
-	return err
+	if set.PNG, err = p.iconPath(key, set.PNG, "Icon"+suffix+".png"); err != nil {
+		return err
+	}
+	if set.TVOS, err = p.iconPath(key, set.TVOS, "AppIconTV"+suffix+".brandassets", "AppIconTV"+suffix+".png"); err != nil {
+		return err
+	}
+	switch ext := filepath.Ext(set.TVOS); ext {
+	case "", ".png":
+	case ".brandassets":
+		if info, err := os.Stat(set.TVOS); err != nil || !info.IsDir() {
+			return fmt.Errorf("%s.tvos: %s is not a .brandassets folder", key, rel(set.TVOS))
+		}
+	default:
+		return fmt.Errorf("%s.tvos: %s is neither a .brandassets nor a .png", key, rel(set.TVOS))
+	}
+	if set.WatchOS, err = p.iconPath(key, set.WatchOS, "AppIconWatch"+suffix+".icon", "AppIconWatch"+suffix+".png"); err != nil {
+		return err
+	}
+	if ext := filepath.Ext(set.WatchOS); set.WatchOS != "" && ext != ".icon" && ext != ".png" {
+		return fmt.Errorf("%s.watchos: %s is neither an .icon nor a .png", key, rel(set.WatchOS))
+	}
+	return nil
 }
 
 func (p *project) iconPath(key, path string, defaults ...string) (string, error) {
@@ -71,17 +92,42 @@ func (p *project) useDevIcons() {
 	if p.Dev.Icon.PNG != "" {
 		p.Icon.PNG = p.Dev.Icon.PNG
 	}
+	if p.Dev.Icon.TVOS != "" {
+		p.Icon.TVOS = p.Dev.Icon.TVOS
+	}
+	if p.Dev.Icon.WatchOS != "" {
+		p.Icon.WatchOS = p.Dev.Icon.WatchOS
+	}
 }
 
 // iconImage decodes the project's PNG icon, nil when it has none.
 func (p *project) iconImage() (image.Image, error) {
-	if p.Icon.PNG == "" {
-		return nil, nil
-	}
-	return readIcon(p.Icon.PNG)
+	return readOptionalIcon(p.Icon.PNG)
 }
 
-// readIcon decodes a square PNG icon.
+// readOptionalIcon decodes path as a square PNG icon, nil when it is
+// empty.
+func readOptionalIcon(path string) (image.Image, error) {
+	if path == "" {
+		return nil, nil
+	}
+	return readSquareIcon(path)
+}
+
+// readSquareIcon decodes a PNG icon and checks that it is square.
+func readSquareIcon(path string) (image.Image, error) {
+	img, err := readIcon(path)
+	if err != nil {
+		return nil, err
+	}
+	if b := img.Bounds(); b.Dx() != b.Dy() {
+		return nil, fmt.Errorf("icon %s is %dx%d; use a square image", rel(path), b.Dx(), b.Dy())
+	}
+	return img, nil
+}
+
+// readIcon decodes a PNG icon of any shape, such as the wide art an Apple
+// TV's icon fills with.
 func readIcon(path string) (image.Image, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -91,9 +137,6 @@ func readIcon(path string) (image.Image, error) {
 	img, err := png.Decode(f)
 	if err != nil {
 		return nil, fmt.Errorf("icon %s: %w", rel(path), err)
-	}
-	if b := img.Bounds(); b.Dx() != b.Dy() {
-		return nil, fmt.Errorf("icon %s is %dx%d; use a square image", rel(path), b.Dx(), b.Dy())
 	}
 	return img, nil
 }
@@ -108,14 +151,20 @@ func scaledPNG(img image.Image, size int) []byte {
 // scaled is img at size×size pixels, averaging the source pixels each one
 // covers.
 func scaled(img image.Image, size int) *image.NRGBA {
+	return scaledTo(img, size, size)
+}
+
+// scaledTo is img at w×h pixels, averaging the source pixels each one
+// covers.
+func scaledTo(img image.Image, w, h int) *image.NRGBA {
 	b := img.Bounds()
-	dst := image.NewNRGBA(image.Rect(0, 0, size, size))
-	for y := range size {
-		y0 := b.Min.Y + y*b.Dy()/size
-		y1 := max(b.Min.Y+(y+1)*b.Dy()/size, y0+1)
-		for x := range size {
-			x0 := b.Min.X + x*b.Dx()/size
-			x1 := max(b.Min.X+(x+1)*b.Dx()/size, x0+1)
+	dst := image.NewNRGBA(image.Rect(0, 0, w, h))
+	for y := range h {
+		y0 := b.Min.Y + y*b.Dy()/h
+		y1 := max(b.Min.Y+(y+1)*b.Dy()/h, y0+1)
+		for x := range w {
+			x0 := b.Min.X + x*b.Dx()/w
+			x1 := max(b.Min.X+(x+1)*b.Dx()/w, x0+1)
 			// Average premultiplied colors, so transparent pixels add
 			// no color to the edges.
 			var r, g, bl, a, n uint64
@@ -186,10 +235,14 @@ func icns(img image.Image) []byte {
 // writeIOSIcon compiles the app's icon into an iOS or tvOS bundle and
 // returns the Info.plist entries naming it: on iOS the Icon Composer
 // .icon when there is one, else the PNG through an asset catalog; on tvOS
-// the PNG as the layered icon and top shelf images the Apple TV asks for.
+// Icon.TVOS, the project's brand assets or a wide image, else the PNG as
+// the layered icon and top shelf images the Apple TV asks for.
 func writeIOSIcon(ctx context.Context, p *project, sys *appleOS, app string, simulator bool) (string, error) {
 	sdk := sys.sdkName(simulator)
-	if sys == iOS && filepath.Ext(p.Icon.Apple) == ".icon" {
+	if sys == tvOS {
+		return writeTVOSIcon(ctx, p, app, sdk)
+	}
+	if filepath.Ext(p.Icon.Apple) == ".icon" {
 		return compileIcon(ctx, p.Icon.Apple, app, sdk, sys.minimum, sys.idioms)
 	}
 	img, err := p.iconImage()
@@ -202,18 +255,82 @@ func writeIOSIcon(ctx context.Context, p *project, sys *appleOS, app string, sim
 	}
 	defer os.RemoveAll(tmp)
 	catalog := filepath.Join(tmp, "Assets.xcassets")
-	if sys == tvOS {
-		err = writeTVBrandAssets(filepath.Join(catalog, "AppIcon.brandassets"), img)
-	} else {
-		err = writeDir(filepath.Join(catalog, "AppIcon.appiconset"), map[string][]byte{
-			"Icon.png":      scaledPNG(img, 1024),
-			"Contents.json": []byte(`{"images":[{"filename":"Icon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"nsgo","version":1}}`),
-		})
-	}
-	if err != nil {
+	if err := writeDir(filepath.Join(catalog, "AppIcon.appiconset"), map[string][]byte{
+		"Icon.png":      scaledPNG(img, 1024),
+		"Contents.json": []byte(`{"images":[{"filename":"Icon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"nsgo","version":1}}`),
+	}); err != nil {
 		return "", err
 	}
 	return compileIcon(ctx, catalog, app, sdk, sys.minimum, sys.idioms)
+}
+
+// writeTVOSIcon compiles the app's icon into an Apple TV bundle: the
+// project's brand assets as they are, a wide image as the icon's front
+// layer and top shelf art, or the PNG at three quarters of their height
+// over its edges' color.
+func writeTVOSIcon(ctx context.Context, p *project, app, sdk string) (string, error) {
+	icon := p.Icon.TVOS
+	if icon == "" {
+		icon = p.Icon.PNG
+	}
+	switch filepath.Ext(icon) {
+	case "":
+		return "", nil
+	case ".brandassets":
+		return compileBrandAssets(ctx, icon, app, sdk, tvOS.minimum, tvOS.idioms)
+	}
+	img, err := readIcon(icon)
+	if err != nil {
+		return "", err
+	}
+	tmp, err := os.MkdirTemp("", "nsgo-icon-")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(tmp)
+	catalog := filepath.Join(tmp, "Assets.xcassets")
+	// An image of the project's own is wide art that fills the card; the
+	// PNG it falls back to keeps its square shape over its color.
+	wide := p.Icon.TVOS != ""
+	if err := writeTVBrandAssets(filepath.Join(catalog, "AppIcon.brandassets"), img, wide); err != nil {
+		return "", err
+	}
+	return compileIcon(ctx, catalog, app, sdk, tvOS.minimum, tvOS.idioms)
+}
+
+// compileBrandAssets compiles Xcode's brand assets collection, the
+// layered icon and top shelf images an Apple TV asks for, into out:
+// actool takes one inside an asset catalog, so a temporary catalog names
+// it AppIcon.
+func compileBrandAssets(ctx context.Context, dir, out, platform, minimum string, idioms []string) (string, error) {
+	tmp, err := os.MkdirTemp("", "nsgo-icon-")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(tmp)
+	catalog := filepath.Join(tmp, "Assets.xcassets")
+	if err := copyDir(dir, filepath.Join(catalog, "AppIcon.brandassets")); err != nil {
+		return "", err
+	}
+	return compileIcon(ctx, catalog, out, platform, minimum, idioms)
+}
+
+// copyDir copies src's files into dst, making it.
+func copyDir(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, strings.TrimPrefix(path, src))
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	})
 }
 
 // writeDir writes files into dir, making it.
@@ -232,12 +349,17 @@ func writeDir(dir string, files map[string][]byte) error {
 // catalogInfo is the info every asset catalog's Contents.json ends with.
 const catalogInfo = `"info":{"author":"nsgo","version":1}`
 
-// writeTVBrandAssets writes an Apple TV's icons from a square icon: the
-// app icon and its App Store form as two layers the focus tilts apart,
-// the icon over its own edges' color, and the top shelf images, the icon
-// centered on that color.
-func writeTVBrandAssets(dir string, icon image.Image) error {
+// writeTVBrandAssets writes an Apple TV's icons from an image: the app
+// icon and its App Store form as two layers the focus tilts apart, the
+// icon over its own edges' color, and the top shelf images, the icon
+// centered on that color. A wide image, the project's own for tvOS,
+// fills its frames instead of leaving the color around it.
+func writeTVBrandAssets(dir string, icon image.Image, wide bool) error {
 	back := edgeColor(icon)
+	art := tvImage
+	if wide {
+		art = tvFit
+	}
 	stack := func(name, idiom string, w, h int, scales ...int) error {
 		layer := func(layer string, draw func(w, h int) []byte) error {
 			files := map[string][]byte{}
@@ -254,7 +376,7 @@ func writeTVBrandAssets(dir string, icon image.Image) error {
 			}
 			return writeDir(d, map[string][]byte{"Contents.json": []byte(`{` + catalogInfo + `}`)})
 		}
-		if err := layer("Front", func(w, h int) []byte { return tvImage(icon, nil, w, h) }); err != nil {
+		if err := layer("Front", func(w, h int) []byte { return art(icon, nil, w, h) }); err != nil {
 			return err
 		}
 		if err := layer("Back", func(w, h int) []byte { return tvImage(nil, back, w, h) }); err != nil {
@@ -272,8 +394,8 @@ func writeTVBrandAssets(dir string, icon image.Image) error {
 	}
 	shelf := func(name string, w, h int) error {
 		return writeDir(filepath.Join(dir, name+".imageset"), map[string][]byte{
-			"shelf@1x.png": tvImage(icon, back, w, h),
-			"shelf@2x.png": tvImage(icon, back, w*2, h*2),
+			"shelf@1x.png": art(icon, back, w, h),
+			"shelf@2x.png": art(icon, back, w*2, h*2),
 			"Contents.json": []byte(`{"images":[{"filename":"shelf@1x.png","idiom":"tv","scale":"1x"},` +
 				`{"filename":"shelf@2x.png","idiom":"tv","scale":"2x"}],` + catalogInfo + `}`),
 		})
@@ -302,6 +424,31 @@ func tvImage(icon image.Image, back color.Color, w, h int) []byte {
 		size := h * 3 / 4
 		at := image.Pt((w-size)/2, (h-size)/2)
 		draw.Draw(dst, image.Rectangle{Min: at, Max: at.Add(image.Pt(size, size))}, scaled(icon, size), image.Point{}, draw.Over)
+	}
+	var out bytes.Buffer
+	png.Encode(&out, dst)
+	return out.Bytes()
+}
+
+// tvFit draws a w×h PNG: back filling it, if any, and icon over it, if
+// any, scaled as large as it fits and centered, so wide art fills the
+// frame.
+func tvFit(icon image.Image, back color.Color, w, h int) []byte {
+	dst := image.NewNRGBA(image.Rect(0, 0, w, h))
+	if back != nil {
+		draw.Draw(dst, dst.Bounds(), image.NewUniform(back), image.Point{}, draw.Src)
+	}
+	if icon != nil {
+		b := icon.Bounds()
+		iw, ih := w, h
+		if b.Dx()*h > b.Dy()*w {
+			// Wider than the frame: its width sets the size.
+			ih = max(1, b.Dy()*w/b.Dx())
+		} else {
+			iw = max(1, b.Dx()*h/b.Dy())
+		}
+		at := image.Pt((w-iw)/2, (h-ih)/2)
+		draw.Draw(dst, image.Rectangle{Min: at, Max: at.Add(image.Pt(iw, ih))}, scaledTo(icon, iw, ih), image.Point{}, draw.Over)
 	}
 	var out bytes.Buffer
 	png.Encode(&out, dst)

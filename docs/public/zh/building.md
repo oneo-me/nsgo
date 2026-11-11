@@ -36,8 +36,10 @@ build_number: 1         # CFBundleVersion 和 Android 的 versionCode；省略�
 # theme: theme.json     # TSX 应用的主题：NSGo 的主题或 shadcn/ui 主题
 # i18n: { dir: locales, source: en }  # 应用的文案目录及其编写语言
 icon:
-  apple: assets/AppIcon.icon  # macOS、iOS 和 watchOS，或仅用于 macOS 的 .icns；tvOS 用 PNG 分层
+  apple: assets/AppIcon.icon  # macOS、iOS 和 watchOS，或仅用于 macOS 的 .icns
   png: assets/Icon.png        # 其他所有目标
+  tvos: assets/AppIconTV.brandassets  # Apple TV 的分层图标和顶部横幅，或一张宽图
+  watchos: assets/AppIconWatch.icon   # Apple Watch 自己的图标，按圆形绘制，或一张方图
 dev:
   target: native        # native、web、ios、ios_simulator、tvos、tvos_simulator、watchos、watchos_simulator、android 或 miniprogram_<平台>
   hot_reload: true      # false 时只构建一次，不监听文件
@@ -55,6 +57,8 @@ build:
 ```
 
 命令行参数会替换同名的值，例如 `-target`、`-version` 或 `-output`；`-h` 列出全部参数。
+
+Apple TV 的图标不是方形，而是一张分层卡片：`tvos` 取 Xcode 的 `.brandassets`（其中的 `App Icon` 堆栈和顶部横幅），或一张如 1280×768 的宽图，工具用它的边缘色铺底、让图铺满卡片，并居中生成顶部横幅；两者都没有时，`png` 按卡片高度的四分之三居中。Apple Watch 会把图标裁成圆形，所以 `watchos` 取按 watchOS 圆形绘制的 `.icon` 或一张方图；没有它时依次用 `apple` 和 `png`。两者与 `apple`、`png` 一样默认取 `assets/AppIconTV.*` 和 `assets/AppIconWatch.*`。
 
 每个构建在启动时还接受 NSGo 自己的参数，例如 `--nsgo-fps`（[运行与调试](debugging.md#所有构建都接受的参数)）。
 

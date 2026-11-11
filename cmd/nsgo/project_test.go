@@ -91,13 +91,15 @@ func TestIcons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.Icon.Apple != "" || p.Icon.PNG != "" {
+	if p.Icon.Apple != "" || p.Icon.PNG != "" || p.Icon.TVOS != "" || p.Icon.WatchOS != "" {
 		t.Errorf("without icons: got %+v", p.Icon)
 	}
 
 	write("assets/AppIcon.icns")
 	write("assets/AppIcon.icon/icon.json")
 	write("assets/Icon.png")
+	write("assets/AppIconTV.brandassets/Contents.json")
+	write("assets/AppIconWatch.icon/icon.json")
 	p, err = load("")
 	if err != nil {
 		t.Fatal(err)
@@ -108,26 +110,52 @@ func TestIcons(t *testing.T) {
 	if want := filepath.Join(dir, "assets", "Icon.png"); p.Icon.PNG != want {
 		t.Errorf("default PNG icon: got %s, want %s", p.Icon.PNG, want)
 	}
+	if want := filepath.Join(dir, "assets", "AppIconTV.brandassets"); p.Icon.TVOS != want {
+		t.Errorf("default tvOS icon: got %s, want %s", p.Icon.TVOS, want)
+	}
+	if want := filepath.Join(dir, "assets", "AppIconWatch.icon"); p.Icon.WatchOS != want {
+		t.Errorf("default watchOS icon: got %s, want %s", p.Icon.WatchOS, want)
+	}
 
 	write("art/App.icns")
 	write("art/app.png")
-	p, err = load("icon:\n  apple: art/App.icns\n  png: art/app.png\n")
+	write("art/tv.png")
+	write("art/watch.icon/icon.json")
+	p, err = load("icon:\n  apple: art/App.icns\n  png: art/app.png\n  tvos: art/tv.png\n  watchos: art/watch.icon\n")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if want := filepath.Join(dir, "art", "App.icns"); p.Icon.Apple != want {
 		t.Errorf("icon.apple: got %s, want %s", p.Icon.Apple, want)
 	}
-
-	if _, err := load("icon:\n  png: art/missing.png\n"); err == nil {
-		t.Error("a missing icon.png loaded")
+	if want := filepath.Join(dir, "art", "tv.png"); p.Icon.TVOS != want {
+		t.Errorf("icon.tvos: got %s, want %s", p.Icon.TVOS, want)
 	}
-	if _, err := load("icon:\n  apple: art/app.png\n"); err == nil {
-		t.Error("a PNG loaded as icon.apple")
+	if want := filepath.Join(dir, "art", "watch.icon"); p.Icon.WatchOS != want {
+		t.Errorf("icon.watchos: got %s, want %s", p.Icon.WatchOS, want)
+	}
+
+	for _, yaml := range []string{
+		"icon:\n  png: art/missing.png\n",
+		"icon:\n  apple: art/app.png\n",
+		"icon:\n  tvos: art/App.icns\n",
+		"icon:\n  tvos: art/missing.png\n",
+		"icon:\n  watchos: art/App.icns\n",
+		"icon:\n  watchos: art/missing.png\n",
+	} {
+		if _, err := load(yaml); err == nil {
+			t.Errorf("%q loaded", yaml)
+		}
+	}
+	write("art/NotAssets.brandassets")
+	if _, err := load("icon:\n  tvos: art/NotAssets.brandassets\n"); err == nil {
+		t.Error("a file loaded as icon.tvos")
 	}
 
 	// nsgo dev takes the -dev defaults and dev.icon over icon.
 	write("assets/AppIcon-dev.icon/icon.json")
+	write("assets/AppIconTV-dev.brandassets/Contents.json")
+	write("assets/AppIconWatch-dev.icon/icon.json")
 	p, err = load("dev:\n  icon:\n    png: art/app.png\n")
 	if err != nil {
 		t.Fatal(err)
@@ -138,6 +166,23 @@ func TestIcons(t *testing.T) {
 	}
 	if want := filepath.Join(dir, "art", "app.png"); p.Icon.PNG != want {
 		t.Errorf("dev.icon.png: got %s, want %s", p.Icon.PNG, want)
+	}
+	if want := filepath.Join(dir, "assets", "AppIconTV-dev.brandassets"); p.Icon.TVOS != want {
+		t.Errorf("default dev tvOS icon: got %s, want %s", p.Icon.TVOS, want)
+	}
+	if want := filepath.Join(dir, "assets", "AppIconWatch-dev.icon"); p.Icon.WatchOS != want {
+		t.Errorf("default dev watchOS icon: got %s, want %s", p.Icon.WatchOS, want)
+	}
+	p, err = load("dev:\n  icon:\n    tvos: art/tv.png\n    watchos: art/watch.icon\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.useDevIcons()
+	if want := filepath.Join(dir, "art", "tv.png"); p.Icon.TVOS != want {
+		t.Errorf("dev.icon.tvos: got %s, want %s", p.Icon.TVOS, want)
+	}
+	if want := filepath.Join(dir, "art", "watch.icon"); p.Icon.WatchOS != want {
+		t.Errorf("dev.icon.watchos: got %s, want %s", p.Icon.WatchOS, want)
 	}
 	if _, err := load("dev:\n  icon:\n    apple: art/app.png\n"); err == nil {
 		t.Error("a PNG loaded as dev.icon.apple")

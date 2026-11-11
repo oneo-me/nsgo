@@ -36,8 +36,10 @@ build_number: 1         # CFBundleVersion and Android's versionCode; else from v
 # theme: theme.json     # a TSX app's theme: NSGo's or a shadcn/ui one
 # i18n: { dir: locales, source: en }  # the app's catalogs and the language they are written in
 icon:
-  apple: assets/AppIcon.icon  # macOS, iOS and watchOS, or an .icns for macOS; tvOS layers the PNG
+  apple: assets/AppIcon.icon  # macOS, iOS and watchOS, or an .icns for macOS
   png: assets/Icon.png        # every other target
+  tvos: assets/AppIconTV.brandassets  # the Apple TV's layered icon and top shelf art, or a wide PNG
+  watchos: assets/AppIconWatch.icon   # the Apple Watch's own, drawn in circles, or a square PNG
 dev:
   target: native        # native, web, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android or miniprogram_<platform>
   hot_reload: true      # false builds once, watching no files
@@ -55,6 +57,8 @@ build:
 ```
 
 Flags replace the values they name, such as `-target`, `-version` or `-output`; `-h` lists them all.
+
+An Apple TV's icon is a layered card, not a square: `tvos` takes Xcode's `.brandassets`, its `App Icon` stacks and top shelf images, or a wide image such as 1280×768, which the tool draws to fit the card over its edge color and centers on the top shelf images. Without either, the PNG sits at three quarters of the card's height. An Apple Watch masks its icon to a circle, so `watchos` takes an `.icon` drawn for watchOS's circles or a square PNG; without it the app uses `apple`, then `png`. Both fall back to `assets/AppIconTV.*` and `assets/AppIconWatch.*`, as `apple` and `png` do.
 
 Every build also takes NSGo's own flags as it starts, such as `--nsgo-fps` ([Running and debugging](debugging.md#flags-of-every-build)).
 

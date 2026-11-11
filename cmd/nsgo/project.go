@@ -203,12 +203,19 @@ type project struct {
 
 // icons are an app's icon files.
 type icons struct {
-	// Apple is an Icon Composer .icon for macOS and iOS, or an .icns for
-	// macOS.
+	// Apple is an Icon Composer .icon for macOS, iOS and an Apple Watch
+	// without an icon of its own, or an .icns for macOS.
 	Apple string `yaml:"apple"`
 	// PNG is a square image for every other target, and for Apple targets
 	// Apple does not cover.
 	PNG string `yaml:"png"`
+	// TVOS is the Apple TV's: Xcode's .brandassets with its layered icon
+	// and top shelf images, or a wide image that fills them. Without it
+	// the PNG layers as the app icon and top shelf images.
+	TVOS string `yaml:"tvos"`
+	// WatchOS is the Apple Watch's: an Icon Composer .icon drawn in
+	// circles, or a square image. Without it Apple is used, then PNG.
+	WatchOS string `yaml:"watchos"`
 }
 
 // openOutput reports whether nsgo build opens its output directory.

@@ -108,17 +108,29 @@ func compileWatchHost(ctx context.Context, simulator bool) (string, error) {
 	return obj, nil
 }
 
-// writeWatchIcon compiles the app's icon into a watch bundle: the Icon
-// Composer .icon when there is one, else the PNG through an asset
-// catalog, which watchOS masks to a circle.
+// writeWatchIcon compiles the app's icon into a watch bundle: Icon.WatchOS
+// when the project has one, else the Icon Composer .icon macOS and iOS
+// use, else the PNG through an asset catalog, which watchOS masks to a
+// circle.
 func writeWatchIcon(ctx context.Context, p *project, app string, simulator bool) (string, error) {
 	sys := watchOS
 	sdk := sys.sdkName(simulator)
-	if filepath.Ext(p.Icon.Apple) == ".icon" {
-		return compileIcon(ctx, p.Icon.Apple, app, sdk, sys.minimum, sys.idioms)
+	icon := p.Icon.WatchOS
+	if icon == "" {
+		if filepath.Ext(p.Icon.Apple) == ".icon" {
+			icon = p.Icon.Apple
+		} else {
+			icon = p.Icon.PNG
+		}
 	}
-	img, err := p.iconImage()
-	if img == nil || err != nil {
+	switch filepath.Ext(icon) {
+	case "":
+		return "", nil
+	case ".icon":
+		return compileIcon(ctx, icon, app, sdk, sys.minimum, sys.idioms)
+	}
+	img, err := readSquareIcon(icon)
+	if err != nil {
 		return "", err
 	}
 	tmp, err := os.MkdirTemp("", "nsgo-icon-")

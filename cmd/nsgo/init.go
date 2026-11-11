@@ -102,13 +102,16 @@ id: {{.ID}}
 version: 0.1.0
 
 # macOS and iOS use assets/AppIcon.icon, or assets/AppIcon.icns on macOS; the
-# other targets, and Apple ones without those, use assets/Icon.png. To use
-# other files, name them here:
+# other targets, and Apple ones without those, use assets/Icon.png. An Apple
+# TV's icon is a wide layered card and an Apple Watch's is drawn in circles,
+# so each takes files of its own; name them here:
 # icon:
 #   apple: assets/AppIcon.icon  # an Icon Composer .icon; macOS also takes .icns
 #   png: assets/Icon.png        # a square PNG, 1024 pixels wide
-# nsgo dev uses assets/AppIcon-dev.icon, AppIcon-dev.icns and Icon-dev.png
-# where they exist, or the files dev.icon names.
+#   tvos: assets/AppIconTV.brandassets  # layered brand assets, or a wide PNG
+#   watchos: assets/AppIconWatch.icon   # an .icon drawn in circles, or a square PNG
+# nsgo dev uses the same names ending in -dev where they exist, or the files
+# dev.icon names.
 
 dev:
   # native: this machine's backend; web: the browser; ios: a connected iPhone; ios_simulator; android: a connected device or emulator.
