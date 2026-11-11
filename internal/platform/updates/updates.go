@@ -34,6 +34,35 @@ type Config struct {
 	// Automatic has the app check on its own: WinSparkle on its schedule,
 	// and nsgo.Run once a day as the app starts elsewhere.
 	Automatic bool
+	// Store is what installed the app and updates it in nsgo.yaml's
+	// place, as the backend finds as the app starts: Google Play or
+	// another store on Android, Flatpak or Snap on Linux, TestFlight on
+	// iOS. The app then checks nothing.
+	Store string
+}
+
+// Checks reports whether the app has anything to check, appStore for iOS,
+// which asks the App Store, and elsewhere its appcast.
+func (c Config) Checks(appStore bool) bool {
+	return c.Store == "" && (appStore || c.Feed != "")
+}
+
+// AndroidStore names the store that installed an Android app, which
+// updates it, from installer, the installing package: com.android.vending
+// for Google Play. It is "" for an APK the user installed through the
+// system's package installer, or adb did, and for none known. An
+// installer it does not know is a store, so an app never sends a store's
+// users to its own downloads, which stores forbid.
+func AndroidStore(installer string) string {
+	if installer == "" || installer == "com.android.shell" || strings.HasSuffix(installer, ".packageinstaller") {
+		return ""
+	}
+	return installer
+}
+
+// managed is the answer to a check of an app that Store updates.
+func (c Config) managed() driver.Update {
+	return driver.Update{App: c.App, Current: c.Version, Err: "updates: " + c.Store + " installed the app and updates it"}
 }
 
 // build is the version an appcast's items are compared with.
@@ -61,6 +90,9 @@ func Answer(id uint32, find func(context.Context) driver.Update, dispatch func(d
 // Find reads c's appcast and answers with its newest item when that is
 // newer than the running build.
 func Find(ctx context.Context, c Config) driver.Update {
+	if c.Store != "" {
+		return c.managed()
+	}
 	u := driver.Update{App: c.App, Current: c.Version}
 	if c.Feed == "" {
 		u.Err = "updates: nsgo.yaml configures no updates for this build"
@@ -84,6 +116,9 @@ func Find(ctx context.Context, c Config) driver.Update {
 // its version there when that is newer than the running one. An app the
 // store does not list there has none newer.
 func FindInAppStore(ctx context.Context, c Config, country string) driver.Update {
+	if c.Store != "" {
+		return c.managed()
+	}
 	u := driver.Update{App: c.App, Current: c.Version}
 	if c.ID == "" {
 		u.Err = "updates: the app has no bundle ID"

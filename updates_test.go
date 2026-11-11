@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
+	"github.com/oneo-me/nsgo/internal/platform/updates"
 	"github.com/oneo-me/nsgo/nsgotest"
 )
 
@@ -16,7 +17,7 @@ func automaticUpdates(t *testing.T) func(*core.Scope) {
 	was := updateAutomatic
 	updateAutomatic = "1"
 	t.Cleanup(func() { updateAutomatic = was })
-	root, app := withUpdateChecks(func(cx *core.Scope) core.Node { return core.Text{Content: "hello"} }, nil)
+	root, app := withUpdateChecks(func(cx *core.Scope) core.Node { return core.Text{Content: "hello"} }, nil, updateConfig(), true)
 	if root != nil || app == nil {
 		t.Fatal("automatic updates run no app function")
 	}
@@ -25,8 +26,15 @@ func automaticUpdates(t *testing.T) func(*core.Scope) {
 
 func TestAutomaticUpdatesCheckAsTheAppStarts(t *testing.T) {
 	view := func(cx *core.Scope) core.Node { return core.Text{Content: "hello"} }
-	if root, app := withUpdateChecks(view, nil); root == nil || app != nil {
+	if root, app := withUpdateChecks(view, nil, updateConfig(), true); root == nil || app != nil {
 		t.Fatal("an app with no automatic updates changed what it runs")
+	}
+	// Nothing to check: an appcast-reading build with no appcast, and an
+	// app a store installed, which updates it.
+	for _, c := range []updates.Config{{Automatic: true}, {Automatic: true, Feed: "https://example.com/appcast.xml", Store: "com.android.vending"}} {
+		if root, app := withUpdateChecks(view, nil, c, false); root == nil || app != nil {
+			t.Errorf("an app with nothing to check, %+v, changed what it runs", c)
+		}
 	}
 	a := nsgotest.Start(t, core.AppRoot(automaticUpdates(t)))
 	a.Find("text:hello")

@@ -41,6 +41,7 @@ func TestUpdatesConfig(t *testing.T) {
 		{"updates: {feed: https://example.com/hello}", "key names no public key"},
 		{"updates: {automatic: false}", "key names no public key"},
 		{"updates: {key: missing.pub}", "updates: key"},
+		{"updates: {channel: brew}", "is not direct, store or none"},
 	} {
 		dir := t.TempDir()
 		writeFiles(t, dir, map[string]string{"nsgo.yaml": "name: app\nid: dev.example.app\n" + c.yaml + "\n"})
@@ -76,6 +77,50 @@ func TestUpdatesConfig(t *testing.T) {
 		"nsgo.yaml": "name: app\nid: dev.example.app\nupdates: {key: k.pub, feed: 'http://example.com'}\n"})
 	if _, err := load(dir); err == nil || !strings.Contains(err.Error(), "not an https URL") {
 		t.Errorf("an http feed: %v", err)
+	}
+}
+
+// The channel the builds are handed out through decides what they carry
+// and check.
+func TestUpdateChannels(t *testing.T) {
+	// A store's builds need no key: iOS asks the App Store, and the
+	// others carry no updater and read no appcast.
+	dir := t.TempDir()
+	writeFiles(t, dir, map[string]string{"nsgo.yaml": "name: app\nid: dev.example.app\nversion: 1.2.0\nupdates: {channel: store}\n"})
+	p, err := load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.updatesOn() || p.updates() {
+		t.Errorf("store: checks %v, updates itself %v", p.updatesOn(), p.updates())
+	}
+	ios := strings.Join(p.updateLdflags([]string{"GOOS=ios", "GOARCH=arm64"}), " ")
+	if !strings.Contains(ios, "nsgo.version=1.2.0'") || !strings.Contains(ios, "updateAutomatic=1") {
+		t.Errorf("a store's iOS flags %s do not check the App Store", ios)
+	}
+	if flags := strings.Join(p.updateLdflags([]string{"GOOS=linux", "GOARCH=amd64"}), " "); strings.Contains(flags, "updateFeed") {
+		t.Errorf("a store's Linux flags %s name an appcast", flags)
+	}
+	if p.sparklePlist("macos_arm64") != "" {
+		t.Error("a store's macOS app carries Sparkle")
+	}
+	if err := p.checkUpdateFeed("windows_x64"); err != nil {
+		t.Errorf("a store's build: %v", err)
+	}
+	// None, as from -channel none, checks nothing, a key or not.
+	p, _ = updatingProject(t, "")
+	p.Updates.Channel = channelNone
+	if p.updatesOn() || p.updateLdflags([]string{"GOOS=ios", "GOARCH=arm64"}) != nil || p.sparklePlist("macos_arm64") != "" {
+		t.Error("channel none checks for updates")
+	}
+	// The direct channel signs its installers, so it needs the key.
+	p.Updates.Channel, p.Updates.public = channelDirect, nil
+	if err := p.checkUpdateFeed("macos_arm64"); err == nil || !strings.Contains(err.Error(), "updates.key") {
+		t.Errorf("the direct channel without a key: %v", err)
+	}
+	p.Updates.Channel = "brew"
+	if err := p.checkUpdateFeed("macos_arm64"); err == nil {
+		t.Error("-channel brew built")
 	}
 }
 

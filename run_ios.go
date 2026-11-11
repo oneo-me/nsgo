@@ -8,7 +8,9 @@ import (
 )
 
 func run(root App, app func(*core.Scope), o options) {
-	root, app = withUpdateChecks(root, app)
+	updates := updateConfig()
+	updates.Store = ios.InstalledBy()
+	root, app = withUpdateChecks(root, app, updates, true)
 	ios.Run(rootOf(root, app), ios.Options{ID: id, Components: o.components, Fonts: o.fonts, Appearance: o.appearance, Perf: o.monitor,
-		Updates: updateConfig()})
+		Updates: updates})
 }

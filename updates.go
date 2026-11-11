@@ -14,13 +14,13 @@ func updateConfig() updates.Config {
 }
 
 // withUpdateChecks returns what Run runs, checking for updates in the
-// background at most once a day when nsgo.yaml's updates.automatic is on,
-// for the platforms whose updater has no schedule of its own: Linux,
-// Android and iOS. It checks as the app starts and whenever the user
-// comes back to it, as a phone's app stays in memory for days, and never
-// while the app is out of sight.
-func withUpdateChecks(root App, app func(*core.Scope)) (App, func(*core.Scope)) {
-	if updateAutomatic != "1" {
+// background at most once a day when nsgo.yaml's updates.automatic is on
+// and c has anything to check (Config.Checks), for the platforms whose
+// updater has no schedule of its own: Linux, Android and iOS. It checks as
+// the app starts and whenever the user comes back to it, as a phone's app
+// stays in memory for days, and never while the app is out of sight.
+func withUpdateChecks(root App, app func(*core.Scope), c updates.Config, appStore bool) (App, func(*core.Scope)) {
+	if !c.Automatic || !c.Checks(appStore) {
 		return root, app
 	}
 	inner := appOf(root, app)

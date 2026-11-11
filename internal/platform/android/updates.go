@@ -4,17 +4,23 @@ package android
 
 import (
 	"context"
+	"os"
 	"slices"
 
 	"github.com/oneo-me/nsgo/internal/driver"
 	"github.com/oneo-me/nsgo/internal/platform/updates"
 )
 
-// updateConfig is how the app Run runs updates. The Play Store installs
-// only what it lists, and an app may not install its own APK, so a check
-// reads the app's appcast through the runtime's HTTP, and package updater
-// offers the newer release's page.
+// updateConfig is how the app Run runs updates. A check of an APK the
+// user installed reads the app's appcast through the runtime's HTTP, and
+// package updater offers the newer release's page; one of an app a store
+// installed checks nothing, as the store updates it.
 var updateConfig updates.Config
+
+// InstalledBy names the store that installed the app, which updates it,
+// from the installing package the runtime passes in NSGO_INSTALLER
+// (updates.AndroidStore).
+func InstalledBy() string { return updates.AndroidStore(os.Getenv("NSGO_INSTALLER")) }
 
 // withoutUpdateChecks answers b's checks for updates, which Go carries
 // out, and returns b without them, as the runtime knows no such item.

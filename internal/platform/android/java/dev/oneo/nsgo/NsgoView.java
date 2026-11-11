@@ -8,6 +8,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
@@ -464,6 +465,8 @@ public class NsgoView extends FrameLayout {
             builder.environment().put("NSGO_DATA_DIR", data.getAbsolutePath());
             builder.environment().put("NSGO_CACHE_DIR", getContext().getCacheDir().getAbsolutePath());
             if (!host.params.isEmpty()) builder.environment().put("NSGO_HOST_PARAMS", host.params);
+            String installer = installer();
+            if (installer != null) builder.environment().put("NSGO_INSTALLER", installer);
             if (test != null) {
                 agent = new TestAgent(this);
                 TestAgent.apply(test, builder);
@@ -569,6 +572,22 @@ public class NsgoView extends FrameLayout {
             for (String line; (line = err.readLine()) != null; ) Log.i(TAG, line);
         } catch (IOException ignored) {
             // The process ended.
+        }
+    }
+
+    /**
+     * The package that installed the app, which Go's update checks leave a
+     * store's app to (updates.go): null when the system does not say.
+     */
+    @SuppressWarnings("deprecation")
+    private String installer() {
+        PackageManager pm = getContext().getPackageManager();
+        String app = getContext().getPackageName();
+        try {
+            if (Build.VERSION.SDK_INT >= 30) return pm.getInstallSourceInfo(app).getInstallingPackageName();
+            return pm.getInstallerPackageName(app);
+        } catch (Exception e) {
+            return null;
         }
     }
 

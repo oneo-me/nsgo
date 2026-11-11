@@ -54,7 +54,7 @@ build:
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # the Linux packages' maintainer, else the app's name
 # release: { github: me/hello }  # the GitHub repository the install scripts and updates install from, else the Git remote origin's; tag_prefix: v by default
-# updates: { key: updates.pub }  # the app updates itself the platform's way: see Updates
+# updates: { key: updates.pub }  # how the app updates, by platform and channel: see Updates
 # miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # the mini programs'
 ```
 
@@ -111,25 +111,40 @@ On macOS the script copies the app from the disk image into `/Applications`, or 
 
 ## Updates
 
-`updates` has the app keep itself up to date the way its platform does:
+`updates` has the app keep itself up to date the way its platform and the channel users get it from do:
 
 ```yaml
 updates:
   key: updates.pub                    # the public key nsgo keygen updates makes
+  # channel: store                    # direct, store or none; direct by default with a key, none without
   # feed: https://example.com/hello/  # where the appcasts and installers are; by default the latest GitHub release
   # automatic: false                  # check only when asked; true by default
 ```
 
-`nsgo keygen updates` makes `updates.pub`, to commit, and `updates.key`, to keep secret and out of the repository; `NSGO_UPDATES_KEY`, the key file's text, stands in for it in CI. Each build then signs the installers with it and writes `appcast-<target>.xml` beside them, a feed in [Sparkle](https://sparkle-project.org)'s format naming this version, which the app reads under `feed`: upload the appcasts with the installers.
+`nsgo keygen updates` makes `updates.pub`, to commit, and `updates.key`, to keep secret and out of the repository; `NSGO_UPDATES_KEY`, the key file's text, stands in for it in CI. Each direct build signs the installers with it and writes `appcast-<target>.xml` beside them, a feed in [Sparkle](https://sparkle-project.org)'s format that the app reads under `feed`: upload the appcasts with the installers. Without the secret key, `build` writes no macOS or Windows appcast, as those install only signed installers.
 
-| Target | How it updates |
+| Target | How a direct build updates |
 | --- | --- |
 | macOS | Sparkle, which `build` puts into the app, checks daily, offers the new version, downloads the disk image, checks its signature, installs it and restarts the app |
 | Windows | WinSparkle, beside the executable, does the same and runs the installer silently, which starts the new version |
 | Linux, Android | The app reads its appcast and offers the release's page, from which the user installs the package |
 | iOS | The app asks the App Store, which updates it, and offers its page there |
 
-`updater.Check(cx)` checks as a *Check for Updates…* menu item does, and shows what it finds; `updater.CheckInBackground(cx)` shows only a newer version, and `updater.CheckDaily(cx)` does that at most once a day. While `automatic` is on, the app checks that way on Linux, Android and iOS as it starts and whenever the user comes back to it, so a newer version is offered once a day; a check that fails, as one offline does, is tried again an hour later. Development builds never update. `build` downloads Sparkle and WinSparkle once, at the versions `nsgo` pins, and without the secret key writes no macOS or Windows appcast, as they install only signed installers.
+### Channels
+
+The channel decides who updates the app. `-channel` replaces `updates.channel` for one build, so one project builds for each:
+
+| Channel | For | The packages |
+| --- | --- | --- |
+| `direct` | GitHub, a website, Homebrew casks and winget, which install the release's own files | Update themselves as above |
+| `store` | The App Store, Google Play and other stores | Carry no updater; iOS asks the App Store, which needs no key |
+| `none` | Linux distributions and anyone who repackages the app | Check nothing |
+
+Stores reject apps that update themselves, so upload a `store` build, never a direct one. A Homebrew cask for a direct app says `auto_updates true`. Wherever the system tells who installed the app, the app checks that too: an Android app from Google Play or another store, a Flatpak or Snap, and a TestFlight build check nothing, as their store updates them.
+
+### Checking from the app
+
+`updater.Check(cx)` checks as a *Check for Updates…* menu item does, and shows what it finds; `updater.CheckInBackground(cx)` shows only a newer version, and `updater.CheckDaily(cx)` does that at most once a day. While `automatic` is on, the app checks that way on Linux, Android and iOS as it starts and whenever the user comes back to it; a check that fails, as one offline does, is tried again an hour later. Development builds never update.
 
 ## File types
 

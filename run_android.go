@@ -8,7 +8,9 @@ import (
 )
 
 func run(root App, app func(*core.Scope), o options) {
-	root, app = withUpdateChecks(root, app)
+	updates := updateConfig()
+	updates.Store = android.InstalledBy()
+	root, app = withUpdateChecks(root, app, updates, false)
 	android.Run(rootOf(root, app), android.Options{Components: o.components, Fonts: o.fonts, Appearance: o.appearance,
-		Updates: updateConfig()})
+		Updates: updates})
 }
