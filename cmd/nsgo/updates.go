@@ -17,19 +17,30 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/oneo-me/nsgo/tsx/pkg"
 )
 
-// nsgo.yaml's updates have the app update the way its platform does
-// (package updater). For each macOS, Windows, Linux and Android target it
-// releases, nsgo build writes appcast-<target>.xml into the releases
-// directory: an RSS feed in Sparkle's format whose one item is this
-// version's installer, signed with the updates key. macOS packages carry
+// nsgo.yaml's updates have the app update the way its platform and the
+// channel it is handed out through do (package updater). On the direct
+// channel, for each macOS, Windows, Linux and Android target it releases,
+// nsgo build writes appcast-<target>.xml into the releases directory: an
+// RSS feed in Sparkle's format whose one item is this version's
+// installer, signed with the updates key. macOS packages carry
 // Sparkle.framework and Windows ones WinSparkle.dll, which read that feed
-// and install; Linux and Android read it themselves, and iOS asks the App
-// Store.
+// and install; Linux and Android read it themselves. iOS asks the App
+// Store on every channel but none.
+
+// The channels updates.channel names: the app's own downloads, which
+// update themselves; a store, or a package manager, that updates them;
+// and none, which checks nothing.
+const (
+	channelDirect = "direct"
+	channelStore  = "store"
+	channelNone   = "none"
+)
 
 // updatesConfig is nsgo.yaml's updates.
 type updatesConfig struct {
@@ -44,6 +55,10 @@ type updatesConfig struct {
 	// WinSparkle's schedule, and as it starts elsewhere; true by default.
 	// The user's choice in Sparkle's and WinSparkle's settings wins.
 	Automatic *bool `yaml:"automatic"`
+	// Channel is what the builds are handed out through, which build's
+	// -channel replaces: direct, store or none; by default direct with a
+	// key and none without.
+	Channel string `yaml:"channel"`
 
 	// public is Key's key, and repo the GitHub repository the feed is in
 	// without a Feed of its own.
@@ -54,9 +69,12 @@ type updatesConfig struct {
 // validateUpdates reads updates' key and makes its feed whole.
 func (p *project) validateUpdates() error {
 	u := &p.Updates
+	if err := checkChannel(u.Channel); err != nil {
+		return err
+	}
 	if u.Key == "" {
-		if u.Feed != "" || u.Automatic != nil {
-			return errors.New("updates: key names no public key; make one with nsgo keygen updates")
+		if u.Channel == "" && (u.Feed != "" || u.Automatic != nil) {
+			return errors.New("updates: key names no public key; make one with nsgo keygen updates, or set channel to store")
 		}
 		return nil
 	}
@@ -80,9 +98,33 @@ func (p *project) validateUpdates() error {
 	return nil
 }
 
-// updates reports whether the app's builds update: nsgo.yaml names a key
-// and the build is no development build, which never updates.
-func (p *project) updates() bool { return p.Updates.public != nil && !p.Dev.Client }
+// checkChannel refuses a channel updates.channel or -channel cannot name.
+func checkChannel(channel string) error {
+	switch channel {
+	case "", channelDirect, channelStore, channelNone:
+		return nil
+	}
+	return fmt.Errorf("updates: channel %q is not direct, store or none", channel)
+}
+
+// channel is the channel the builds are handed out through.
+func (p *project) channel() string {
+	switch {
+	case p.Updates.Channel != "":
+		return p.Updates.Channel
+	case p.Updates.Key != "":
+		return channelDirect
+	}
+	return channelNone
+}
+
+// updatesOn reports whether the app's builds check for updates: on a
+// channel other than none, and no development build, which never does.
+func (p *project) updatesOn() bool { return p.channel() != channelNone && !p.Dev.Client }
+
+// updates reports whether the app's builds update themselves, on the
+// direct channel: Sparkle and WinSparkle, and the appcasts.
+func (p *project) updates() bool { return p.updatesOn() && p.channel() == channelDirect }
 
 // updatesAutomatic reports whether the app checks on its own.
 func (p *project) updatesAutomatic() bool { return p.Updates.Automatic == nil || *p.Updates.Automatic }
@@ -122,8 +164,15 @@ func (p *project) appcastURL(target string) string {
 }
 
 // checkUpdateFeed refuses to build target's updating package without a
-// feed for it to read.
+// channel nsgo knows, the key the direct one signs with, or a feed for it
+// to read.
 func (p *project) checkUpdateFeed(target string) error {
+	if err := checkChannel(p.Updates.Channel); err != nil {
+		return err
+	}
+	if p.updates() && p.Updates.public == nil {
+		return errors.New("updates: the direct channel signs its installers: set updates.key to the public key nsgo keygen updates makes")
+	}
 	if p.updates() && feedTarget(target) && p.feedBase() == "" {
 		return errors.New("updates: no feed for the appcasts: set updates.feed, or release.github to the repository whose releases hold them")
 	}
@@ -165,15 +214,16 @@ func envTarget(env []string) string {
 }
 
 // updateLdflags give nsgo.Run the version and updates of a build for
-// env's target: its appcast and key, where the backend reads one rather
-// than Sparkle, and whether it checks on its own.
+// env's target: on the direct channel its appcast and key, where the
+// backend reads one rather than Sparkle, and whether it checks on its
+// own.
 func (p *project) updateLdflags(env []string) []string {
-	if !p.updates() {
+	if !p.updatesOn() {
 		return nil
 	}
 	const pkgPath = "github.com/oneo-me/nsgo"
 	flags := []string{fmt.Sprintf("-X '%s.version=%s'", pkgPath, p.Version), fmt.Sprintf("-X '%s.build=%s'", pkgPath, p.BundleVersion())}
-	if feed := p.appcastURL(envTarget(env)); feed != "" {
+	if feed := p.appcastURL(envTarget(env)); feed != "" && p.updates() {
 		flags = append(flags, fmt.Sprintf("-X '%s.updateFeed=%s'", pkgPath, feed),
 			fmt.Sprintf("-X %s.updateKey=%s", pkgPath, pkg.EncodePublicKey(p.Updates.public)))
 	}
@@ -212,9 +262,15 @@ var (
 		"6037df37fc263bd1650a1c4949681a9d40ffe991d01f35892a406cb5d103c976"}
 )
 
+// The targets build at once (buildPackages), so one at a time downloads
+// the updaters and unpacks Sparkle into the user's cache.
+var fetching, unpacking sync.Mutex
+
 // fetch returns the release's path in the user's cache, downloading it
 // the first time.
 func (r pinned) fetch(ctx context.Context) (string, error) {
+	fetching.Lock()
+	defer fetching.Unlock()
 	cache, err := os.UserCacheDir()
 	if err != nil {
 		return "", err
@@ -275,6 +331,8 @@ func sparkleFramework(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	unpacking.Lock()
+	defer unpacking.Unlock()
 	dir := strings.TrimSuffix(archive, ".tar.xz")
 	framework := filepath.Join(dir, "Sparkle.framework")
 	if _, err := os.Stat(filepath.Join(framework, "Sparkle")); err == nil {
@@ -291,7 +349,14 @@ func sparkleFramework(ctx context.Context) (string, error) {
 	if err := os.RemoveAll(dir); err != nil {
 		return "", err
 	}
-	return framework, os.Rename(tmp, dir)
+	if err := os.Rename(tmp, dir); err != nil {
+		// Another nsgo unpacked it meanwhile.
+		if _, statErr := os.Stat(filepath.Join(framework, "Sparkle")); statErr == nil {
+			return framework, nil
+		}
+		return "", err
+	}
+	return framework, nil
 }
 
 // addSparkle puts Sparkle.framework into an updating macOS app's

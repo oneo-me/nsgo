@@ -76,15 +76,15 @@ When the build has a macOS, Windows or Linux target, the releases directory also
 
 ### Updates
 
-`updates.go` has the packages of an app whose `nsgo.yaml` names `updates.key` update the way their platforms do (package `updater`, [services](services.md#updates)); development builds never do.
+`updates.go` builds each package for the channel `updates.channel` or `-channel` names, as [updates](updates.md#channels) describes; development builds never update. Only the direct channel adds anything to a package beyond `-X` flags giving `nsgo.Run` the version, build number and `updates.automatic`.
 
-- Each macOS, Windows, Linux and Android release writes `appcast-<target>.xml` into the releases directory: an RSS feed in Sparkle's format whose one item is this version, `sparkle:version` the build number and `shortVersionString` the version, as elements and as the enclosure's attributes, which WinSparkle and Sparkle's older readers take. Its enclosure is the target's installer, the disk image once notarized, the setup, the `.deb` or the APK, with its length and an EdDSA signature over the file by `NSGO_UPDATES_KEY`'s key, else the `.key` beside `updates.key`, which must be the public key's. One feed per target, since targets are separate builds that machines add on their own, so nothing filters by `sparkle:os` or architecture; macOS and Windows get none without the secret key, as Sparkle and WinSparkle refuse unsigned updates.
-- The feed is `updates.feed`, else `release.github`'s `releases/latest/download/`, so the latest release's appcasts are read, their downloads under `releases/download/<tag>/`; a feed of its own holds the installers beside the appcasts. The keys are `nsgo keygen`'s, base64 of the Ed25519 seed and public key, which is Sparkle's format too.
-- macOS: Sparkle 2.10.1's `Sparkle.framework` in `Contents/Frameworks`, unpacked once by macOS's tar, which keeps its links and signatures, and signed inside out as Sparkle documents: its XPC services, the downloader keeping its entitlements, `Autoupdate`, `Updater.app`, then the framework, ad hoc and then with `sign.identity`, hardened when notarized. Info.plist names `SUFeedURL`, `SUPublicEDKey` and `SUEnableAutomaticChecks`, `updates.automatic`.
-- Windows: WinSparkle 0.9.4's `WinSparkle.dll` for the architecture beside the executable, which the installer installs and uninstalls with the rest. The appcast runs the installer with `/S /RELAUNCH`: silent, it quits the app running from its folder, and `/RELAUNCH` starts the new version once installed.
-- `-X` gives `nsgo.Run` the version, the build number, the target's appcast and key and `updates.automatic`, which WinSparkle and the Linux and Android backends read; iOS asks the App Store by the bundle's own ID.
+- Each direct macOS, Windows, Linux and Android release writes `appcast-<target>.xml`: Sparkle's RSS format, with one item, this version's installer, signed with EdDSA by `NSGO_UPDATES_KEY`'s key, else the `.key` beside `updates.key`.
+- There is one feed per target, since machines build targets apart, so nothing filters by `sparkle:os` or architecture. macOS and Windows get none without the secret key, as Sparkle and WinSparkle refuse unsigned updates.
+- The feed is `updates.feed`, else `release.github`'s `releases/latest/download/`. The keys are `nsgo keygen`'s, which is Sparkle's format too.
+- macOS packages carry Sparkle 2.10.1, unpacked by macOS's tar to keep its links and signatures, and signed inside out as Sparkle documents. Info.plist names the feed, key and schedule.
+- Windows packages carry WinSparkle 0.9.4 beside the executable. The appcast runs the installer with `/S /RELAUNCH`, which starts the new version once installed.
 
-Sparkle and WinSparkle come from their releases, downloaded once into the user cache and checked against the SHA-256 the tool pins, rather than committed as `classes.dex` is: they are other projects' builds, 16 and 27 MB of archives, that only an updating app needs, and WinSparkle builds with Visual C++ alone.
+Sparkle and WinSparkle are downloaded once into the user cache and checked against pinned SHA-256s, not committed as `classes.dex` is: they are other projects' builds, 16 and 27 MB of archives, that only a direct app needs, and WinSparkle builds with Visual C++ alone. Targets build at once, so one at a time downloads and unpacks them.
 
 ### Widgets
 

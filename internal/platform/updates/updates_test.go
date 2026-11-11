@@ -152,3 +152,29 @@ func TestAnswer(t *testing.T) {
 		t.Errorf("Answer dispatched %+v", ev)
 	}
 }
+
+// An app a store installed checks nothing: the store updates it.
+func TestStoreInstalls(t *testing.T) {
+	for installer, store := range map[string]string{
+		"": "", "com.android.shell": "", "com.google.android.packageinstaller": "", "com.miui.packageinstaller": "",
+		"com.android.vending": "com.android.vending", "com.huawei.appmarket": "com.huawei.appmarket",
+	} {
+		if got := AndroidStore(installer); got != store {
+			t.Errorf("AndroidStore(%q) = %q, want %q", installer, got, store)
+		}
+	}
+	serve(t, 200, feed)
+	c := Config{App: "Hello", ID: "com.example.hello", Version: "1.1", Build: "11", Feed: "https://example.com/appcast.xml", Store: "com.android.vending"}
+	if c.Checks(false) || c.Checks(true) {
+		t.Error("an app a store installed checks")
+	}
+	for _, got := range []driver.Update{Find(context.Background(), c), FindInAppStore(context.Background(), c, "")} {
+		if got.Version != "" || !strings.Contains(got.Err, "com.android.vending installed the app") {
+			t.Errorf("a check of an app a store installed = %+v", got)
+		}
+	}
+	c.Store = ""
+	if !c.Checks(false) || (Config{}).Checks(false) || !(Config{}).Checks(true) {
+		t.Error("Checks: an appcast or the App Store is not checked")
+	}
+}

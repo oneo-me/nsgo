@@ -26,8 +26,6 @@ What NSH's `main` added after 0.4.0 that NSGo has not, in the order to build it.
 | The app's own information | #1381, #1226 | Go and TSX read the app's version, build and whether it is a development build, as `nsgo.yaml` gives them (`appInfo()`) |
 | The user's locale settings | #976 | `Env` reports the first weekday, hour cycle and measurement system the user chose, apart from the language, and `DatePicker` and `i18n` follow them |
 | Restarting the app | #1055 | `Restart` ends the app and starts it again on macOS, Windows and Linux, as `Quit` ends it |
-| Updates installed end to end | `updater.md` (Flow) | The native tests install a newer release from a local appcast through Sparkle on macOS and WinSparkle on Windows and start it, Linux's and Android's checks run on their systems, and the App Store's page opens from an iPhone ([services](architecture/services.md#updates)); so far Sparkle installed releases by hand on macOS and iOS's check ran in the simulator (2026-11-11), the rest checked headless |
-| Installing updates on Linux and Android | `updater.md` (Limits) | Linux installs the newer package the appcast names, verified by its signature, once the user confirms, and Android opens the Play Store's page of an app that Store releases put there, rather than the release's page |
 | Script results from web views | `elements.md` (WebView evaluation) | A web view's `Evaluate` answers with the script's result as JSON, or its error, on every backend with web views |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
 | Selections as Markdown and HTML | #1045 | A selectable area's selection reads as plain text, Markdown or HTML, as the text view parsed it |
@@ -156,6 +154,20 @@ What the desktop installers ([tool](architecture/tool.md#installers)) still lack
 | Install scripts from GitHub | — | `install.sh` and `install.ps1` install from a published release; so far they installed from the releases directory served on each machine (2026-11-10) |
 | The Windows installer's pages | — | Its directory, progress and finish pages, in Chinese among others, are checked on a screen; so far the installer ran silently alone (2026-11-10) |
 | File types in installers | — | The Windows installer and the Linux packages register `file_types`, as the macOS app does ([application and windows](#application-and-windows)) |
+
+## Updates
+
+What updates ([updates](architecture/updates.md)) still lack, on the direct channel and the stores'.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Updates installed end to end | `updater.md` (Flow) | The native tests install a newer release from a local appcast through Sparkle and WinSparkle and start it, a Developer ID signed and notarized macOS app and a Windows arm64 one update, Android reads an `https` appcast, and the App Store's page opens from an iPhone; so far each ran once by hand (2026-11-11, [updates](architecture/updates.md#verification)) |
+| Install signs checked | — | A Flatpak and a TestFlight build check nothing, as an Android app installed as Google Play's, a Linux app with `SNAP` set and a development build on an iPhone did (2026-11-11) |
+| Installing updates on Linux and Android | `updater.md` (Limits) | A direct Linux or Android app downloads the newer package the appcast names, checks its signature and installs it once the user confirms, Android's through `mobile.InstallPackage`, rather than opening the release's page |
+| Store packages | [Store releases](#services-and-components-since-040) | `build -channel store` makes the Mac App Store's sandboxed package and MSIX for the Microsoft Store, without the updaters, as Store releases make Android App Bundles |
+| Store updates in the app | Play In-App Updates, `iTunes lookup` | An app from Google Play offers Play's update flow, and one from the Mac App Store its page there, as iOS offers the App Store's |
+| Package manager manifests | `brew` casks, `winget-pkgs` | Each direct release writes a Homebrew cask saying `auto_updates true` and a winget manifest for its setup, checked by `brew audit` and `winget validate` |
+| Mini programs and the web | `wx.getUpdateManager`, service workers | A mini program answers `updater.Check` from its platform's `UpdateManager` and restarts into the new version, and a web app offers to reload once a newer build is deployed |
 
 ## Finish the existing platforms
 

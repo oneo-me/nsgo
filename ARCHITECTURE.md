@@ -34,7 +34,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `i18n`, `*/locales`, `internal/cldr` | — | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on, formatting by CLDR's data; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |
 | `microphone` | — | Recording the default input on macOS and iOS, reporting `ErrUnsupported` elsewhere |
-| `updater`, `updater/locales` | `nsh/updater` | Updating the app the platform's way: Sparkle on macOS, WinSparkle on Windows, the appcast `nsgo build` signs on Linux and Android, the App Store on iOS ([updates](docs/architecture/services.md#updates)) |
+| `updater`, `updater/locales` | `nsh/updater` | Updating the app the way its platform and channel do: Sparkle, WinSparkle, the appcast `nsgo build` signs, or the App Store ([updates](docs/architecture/updates.md)) |
 | `widget` | — | Timelines of views that macOS and iOS widgets show, drawn by a SwiftUI extension the tool compiles ([widgets](docs/architecture/tool.md#widgets)) |
 | `nsgotest` | `nsh-testing` | App tests, headless or on a platform ([testing](docs/architecture/testing.md)) |
 | `internal/testhost` | `nsh-testing`'s agent | A backend's test host for `nsgotest`: the main thread, native input, screenshots |
@@ -126,7 +126,8 @@ Record a design question here, and confirm the answer with the user before choos
 | [Text](docs/architecture/text.md) | Text, a `TextEngine`, `Input` or selection |
 | [Scrolling](docs/architecture/scrolling.md) | `Scroll`, `List` or a scroll view |
 | [Interaction](docs/architecture/interaction.md) | Accessibility, pointers, focus, touches, gestures or drops |
-| [Services](docs/architecture/services.md) | A service, a menu, the desktop window, updates or the app's lifecycle |
+| [Services](docs/architecture/services.md) | A service, a menu, the desktop window or the app's lifecycle |
+| [Updates](docs/architecture/updates.md) | `updater`, an update check, the updaters `nsgo build` bundles or a release channel |
 | [Application and windows](docs/architecture/application.md) | `nsgo.Run`, the windows, panels and tray icons an app opens, global shortcuts or shutdown |
 | [Hosted views](docs/architecture/native-views.md) | `WebView`, `Video` or `Native` components |
 | [Images](docs/architecture/images.md) | How backends load, cache, decode or play images |

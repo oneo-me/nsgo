@@ -54,7 +54,7 @@ build:
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # Linux 软件包的维护者，省略时为应用名
 # release: { github: me/hello }  # 安装脚本和自动更新从其 Releases 安装的 GitHub 仓库，省略时取 Git 远程 origin 的；tag_prefix 默认为 v
-# updates: { key: updates.pub }  # 应用按平台的方式自动更新，见“自动更新”
+# updates: { key: updates.pub }  # 应用按平台和渠道更新的方式，见“自动更新”
 # miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # 小程序的设置
 ```
 
@@ -111,25 +111,40 @@ irm https://github.com/me/hello/releases/latest/download/install.ps1 | iex      
 
 ## 自动更新
 
-`updates` 让应用按所在平台的方式保持最新：
+`updates` 让应用按所在平台和用户获取它的渠道保持最新：
 
 ```yaml
 updates:
   key: updates.pub                    # nsgo keygen updates 生成的公钥
+  # channel: store                    # direct、store 或 none；有 key 时默认 direct，没有时为 none
   # feed: https://example.com/hello/  # appcast 和安装程序所在的地址；默认为 GitHub 上最新的 Release
   # automatic: false                  # 只在要求时检查；默认为 true
 ```
 
-`nsgo keygen updates` 生成 `updates.pub`（提交到仓库）和 `updates.key`（保密，不要放进仓库）；在 CI 中用 `NSGO_UPDATES_KEY`（密钥文件的内容）代替它。之后每次构建都用它签名安装程序，并在旁边写出 `appcast-<目标>.xml`：一个 [Sparkle](https://sparkle-project.org) 格式、列出本版本的更新源，应用从 `feed` 下读取它，把 appcast 和安装程序一起上传即可。
+`nsgo keygen updates` 生成 `updates.pub`（提交到仓库）和 `updates.key`（保密，不要放进仓库）；在 CI 中用 `NSGO_UPDATES_KEY`（密钥文件的内容）代替它。每次 direct 构建都用它签名安装程序，并在旁边写出 `appcast-<目标>.xml`：一个 [Sparkle](https://sparkle-project.org) 格式的更新源，应用从 `feed` 下读取它，把 appcast 和安装程序一起上传即可。没有私钥时，`build` 不写 macOS 和 Windows 的 appcast，因为它们只安装签过名的安装程序。
 
-| 目标 | 更新方式 |
+| 目标 | direct 构建的更新方式 |
 | --- | --- |
 | macOS | `build` 打进应用的 Sparkle 每天检查，提示新版本，下载磁盘映像，校验签名，安装并重启应用 |
 | Windows | 放在可执行文件旁的 WinSparkle 同样如此，并静默运行安装程序，由它启动新版本 |
 | Linux、Android | 应用读取自己的 appcast，打开该 Release 的页面，用户从那里安装软件包 |
 | iOS | 应用查询负责更新它的 App Store，并打开其中的页面 |
 
-`updater.Check(cx)` 如同“检查更新…”菜单项，检查并显示结果；`updater.CheckInBackground(cx)` 只在有新版本时提示，`updater.CheckDaily(cx)` 也是如此，但每天至多检查一次。`automatic` 开启时，Linux、Android 和 iOS 上的应用在启动时和用户回到应用时这样检查，所以新版本每天至多提示一次；检查失败（例如离线）时，一小时后再试。开发构建从不更新。`build` 按 `nsgo` 固定的版本把 Sparkle 和 WinSparkle 下载一次；没有私钥时不写 macOS 和 Windows 的 appcast，因为它们只安装签过名的安装程序。
+### 渠道
+
+渠道决定由谁更新应用。`-channel` 在单次构建中替换 `updates.channel`，所以同一个项目可以为每个渠道各构建一次：
+
+| 渠道 | 用于 | 构建出的包 |
+| --- | --- | --- |
+| `direct` | GitHub、网站，以及直接安装 Release 文件的 Homebrew cask 和 winget | 按上表自行更新 |
+| `store` | App Store、Google Play 和其他应用商店 | 不带更新组件；iOS 查询 App Store，不需要 key |
+| `none` | Linux 发行版，以及重新打包应用的人 | 不检查更新 |
+
+应用商店会拒绝自行更新的应用，所以上传 `store` 构建，不要上传 direct 构建。direct 应用的 Homebrew cask 应写 `auto_updates true`。凡是系统能说明应用由谁安装的地方，应用也会检查：从 Google Play 或其他商店安装的 Android 应用、Flatpak 或 Snap，以及 TestFlight 构建都不检查，由各自的商店更新。
+
+### 在应用中检查
+
+`updater.Check(cx)` 如同“检查更新…”菜单项，检查并显示结果；`updater.CheckInBackground(cx)` 只在有新版本时提示，`updater.CheckDaily(cx)` 也是如此，但每天至多检查一次。`automatic` 开启时，Linux、Android 和 iOS 上的应用在启动时和用户回到应用时这样检查；检查失败（例如离线）时，一小时后再试。开发构建从不更新。
 
 ## 文件类型
 
