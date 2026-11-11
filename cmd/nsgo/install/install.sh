@@ -67,7 +67,7 @@ case "$(uname -s)" in
     # Apple silicon even from a shell running under Rosetta.
     arch=x64
     [ "$(sysctl -in hw.optional.arm64 2> /dev/null)" != 1 ] || arch=arm64
-    asset="$slug-$version-$arch.dmg"
+    asset="$slug-$version-macos-$arch.dmg"
     download "$asset"
     mkdir "$work/mnt"
     hdiutil attach -quiet -nobrowse -readonly -noautoopen -mountpoint "$work/mnt" "$work/$asset" ||
@@ -89,17 +89,16 @@ case "$(uname -s)" in
     ;;
   Linux)
     case "$(uname -m)" in
-      x86_64 | amd64) deb=amd64 pkg=x86_64 ;;
-      aarch64 | arm64) deb=arm64 pkg=aarch64 ;;
+      x86_64 | amd64) arch=x64 ;;
+      aarch64 | arm64) arch=arm64 ;;
       *) fail "no package for $(uname -m)" ;;
     esac
     if command -v pacman > /dev/null 2>&1; then
-      asset="$slug-$(echo "$version" | sed 's/[-+]/_/g')-1-$pkg.pkg.tar.gz"
+      asset="$slug-$version-linux-$arch.pkg.tar.gz"
       download "$asset"
       as_root pacman -U --noconfirm "$work/$asset"
     elif command -v dpkg > /dev/null 2>&1; then
-      # Debian orders a pre-release, 1.2.0-beta.1, before its release as 1.2.0~beta.1.
-      asset="${slug}_$(echo "$version" | sed -e 's/-/~/' -e 's/-/./g' -e 's/+/~/g')_$deb.deb"
+      asset="$slug-$version-linux-$arch.deb"
       download "$asset"
       # apt's sandboxed user reads the package.
       chmod 755 "$work"

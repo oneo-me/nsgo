@@ -16,8 +16,10 @@ import (
 )
 
 // Linux packages are written in Go, as no Mac has dpkg or makepkg: a
-// Debian package, <slug>_<version>_<arch>.deb, and an Arch Linux one,
-// <slug>-<version>-1-<arch>.pkg.tar.gz. Both install the package's
+// Debian package, <slug>-<version>-linux-<arch>.deb, and an Arch Linux
+// one, <slug>-<version>-linux-<arch>.pkg.tar.gz, named as the release's
+// other files are, since dpkg and pacman read the package's name and
+// version from inside it. Both install the package's
 // directory in /opt/<slug>, a link to the app in /usr/bin, its desktop
 // entry and its icon in the hicolor theme.
 
@@ -85,8 +87,7 @@ func linuxPackageFiles(p *project, dir string) ([]linuxPackageEntry, error) {
 		rel = filepath.ToSlash(rel)
 		// What the packages put where desktops look for it, and the
 		// packages themselves, stay out of /opt.
-		if !d.IsDir() && !strings.Contains(rel, "/") && (rel == p.ID+".desktop" || rel == p.ID+".png" ||
-			strings.HasSuffix(rel, ".deb") || strings.HasSuffix(rel, ".pkg.tar.gz")) {
+		if !d.IsDir() && !strings.Contains(rel, "/") && (rel == p.ID+".desktop" || rel == p.ID+".png" || isLinuxPackage(rel)) {
 			return nil
 		}
 		name := opt + "/" + rel
@@ -192,11 +193,11 @@ func archVersion(v string) string {
 }
 
 func debName(p *project, arch string) string {
-	return fmt.Sprintf("%s_%s_%s.deb", p.packageSlug(), debVersion(p.Version), debArch[arch])
+	return p.releaseName("linux_"+goArchName(arch), ".deb")
 }
 
 func archPackageName(p *project, arch string) string {
-	return fmt.Sprintf("%s-%s-1-%s.pkg.tar.gz", p.packageSlug(), archVersion(p.Version), archLinuxArch[arch])
+	return p.releaseName("linux_"+goArchName(arch), ".pkg.tar.gz")
 }
 
 // debPackage is the Debian package installing files: an ar archive of

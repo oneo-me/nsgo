@@ -20,7 +20,7 @@ import (
 // compiler, makensis, runs on macOS (brew install makensis), Linux and
 // Windows: every build writes the script, <name>.nsi, beside the
 // executable, naming the files relative to itself, and compiles it into
-// <slug>-<version>-<arch>-setup.exe where makensis is installed. Without
+// <slug>-<version>-windows-<arch>-setup.exe where makensis is installed. Without
 // it the package keeps the script, which compiles anywhere as it is.
 //
 // The installer installs for the user, with no prompt to elevate, in
@@ -34,7 +34,7 @@ import (
 
 // nsisSetupName is the installer's file name.
 func nsisSetupName(p *project, arch string) string {
-	return fmt.Sprintf("%s-%s-%s-setup.exe", p.packageSlug(), p.Version, arch)
+	return p.releaseName("windows_"+arch, "-setup.exe")
 }
 
 // buildNSIS writes the NSIS script for the Windows package in dir, built

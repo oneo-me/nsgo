@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-// dmgName is the disk image's file: <slug>-<version>-<arch>.dmg, each
-// architecture's named apart so a release keeps both.
+// dmgName is the disk image's file: <slug>-<version>-macos-<arch>.dmg,
+// each architecture's named apart so a release keeps both.
 func dmgName(p *project, arch string) string {
-	return fmt.Sprintf("%s-%s-%s.dmg", p.packageSlug(), p.Version, arch)
+	return p.releaseName("macos_"+arch, ".dmg")
 }
 
 // buildDMG puts app, the signed bundle, into a compressed read-only disk

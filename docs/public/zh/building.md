@@ -17,14 +17,15 @@ go tool nsgo build
 
 | `dist/releases` 中 | 内容 |
 | --- | --- |
-| `*.dmg`、`*-setup.exe`、`*.deb`、`*.pkg.tar.gz` | macOS、Windows 和 Linux 的[安装程序](#安装程序) |
+| `*.dmg`、`*-setup.exe`、`*.deb`、`*.pkg.tar.gz`、`*.AppImage` | macOS、Windows 和 Linux 的[安装程序](#安装程序) |
 | `*-ios.ipa`、`*-tvos.ipa`、`*.apk` | iOS、tvOS 和 Android 的包，用于商店或设备 |
+| `*.pkg`、`*.msix`、`*.aab`、`*.tar.gz` 和 `flatpak/` | `store` 构建的[商店包](#商店包) |
 | `install.sh`、`install.ps1` | 从 [GitHub Releases](#发布到-github) 安装应用的脚本 |
 | `appcast-<目标>.xml` | [自动更新](#自动更新)的应用读取的更新源 |
 | `web/` | 网站，原样部署即可 |
 | `miniprogram/<平台>/` | 各小程序的项目，用对应开发者工具上传 |
 
-其中每个文件旁都有 `.sha256`。构建其他版本时会先清空该目录；同一版本的构建（包括在其他机器上的）会往里追加。模拟器和 watchOS 的包留在各自的 `dist/<name>-<version>-<target>` 目录中。
+每个文件都命名为 `<name>-<version>-<系统>-<架构>`，例如 `hello-1.2.0-windows-x64-setup.exe`，方便用户在 Release 页面找到自己系统的文件；每个文件旁都有 `.sha256`。构建其他版本时会先清空该目录；同一版本的构建（包括在其他机器上的）会往里追加。模拟器和 watchOS 的包留在各自的 `dist/<name>-<version>-<target>` 目录中。
 
 ## nsgo.yaml
 
@@ -70,9 +71,9 @@ Apple TV 的图标不是方形，而是一张分层卡片：`tvos` 取 Xcode 的
 
 | 目标 | 安装程序 |
 | --- | --- |
-| macOS | `<name>-<version>-<arch>.dmg`，打开后显示应用、一个箭头和“应用程序”文件夹的链接，提示把应用拖过去，用 `sign.identity` 签名并[公证](#公证) |
-| Windows | `<name>-<version>-<arch>-setup.exe`，[NSIS](https://nsis.sourceforge.io) 安装程序，为当前用户安装，再次安装时装回用户之前选的目录，应用运行中会先关闭它，带开始菜单快捷方式、可选的桌面快捷方式，以及只删除自己装过的文件的卸载程序 |
-| Linux | 供 Debian 和 Ubuntu 使用的 `<name>_<version>_<arch>.deb`，以及供 Arch Linux 使用的 `<name>-<version>-1-<arch>.pkg.tar.gz`，把应用装到 `/opt/<name>`，并带命令、桌面入口和图标 |
+| macOS | `<name>-<version>-macos-<arch>.dmg`，打开后显示应用、一个箭头和“应用程序”文件夹的链接，提示把应用拖过去，用 `sign.identity` 签名并[公证](#公证) |
+| Windows | `<name>-<version>-windows-<arch>-setup.exe`，[NSIS](https://nsis.sourceforge.io) 安装程序，为当前用户安装，再次安装时装回用户之前选的目录，应用运行中会先关闭它，带开始菜单快捷方式、可选的桌面快捷方式，以及只删除自己装过的文件的卸载程序 |
+| Linux | 供 Debian 和 Ubuntu 使用的 `<name>-<version>-linux-<arch>.deb`，以及供 Arch Linux 使用的 `<name>-<version>-linux-<arch>.pkg.tar.gz`，把应用装到 `/opt/<name>`，并带命令、桌面入口和图标；还有 `<name>-<version>-linux-<arch>.AppImage`，无需安装即可在任何发行版上运行 |
 
 Windows 安装程序需要 NSIS 的编译器，在 Mac 上用 `brew install makensis` 安装，因此 Mac 可以构建全部安装程序；没有它时，`build` 把脚本 `<name>.nsi` 留在包里，在任何系统上都可原样编译。安装程序提供应用文案中 NSIS 有翻译的语言，包括简体和繁体中文，并按系统语言选择。`-installers=false` 或 `build.installers: false` 只构建包本身。
 
@@ -87,7 +88,42 @@ windows:
   uninstaller_icon: assets/Uninstall.png    # 卸载程序的图标
 ```
 
-背景 PNG 旁放一张两倍尺寸的同名图（例如 `DMGBackground@2x.png`），在 Retina 屏幕上就能保持清晰。应用图标位于距左边四分之一处，“应用程序”位于距右边四分之一处，图标连同下方的名称整体上下居中，内置图片的箭头就画在它们之间；自定义背景时请为它们留出位置。Linux 软件包没有专门的图片，安装的是应用图标。
+背景 PNG 旁放一张两倍尺寸的同名图（例如 `DMGBackground@2x.png`），在 Retina 屏幕上就能保持清晰。应用图标位于距左边四分之一处，“应用程序”位于距右边四分之一处，图标连同下方的名称整体上下居中，内置图片的箭头就画在它们之间；自定义背景时请为它们留出位置。Linux 软件包没有专门的图片，安装的是应用图标。AppImage 需要 FUSE（大多数发行版自带），与软件包一样使用系统的 GTK 4；它的运行时首次构建时下载到用户缓存中。
+
+## 商店包
+
+`-channel store` 或 `updates.channel: store` 为各商店构建桌面和 Android 目标，由商店负责更新，不再生成安装程序和安装脚本：
+
+| 目标 | 商店包 |
+| --- | --- |
+| macOS | 用于 Mac App Store 的 `<name>-<version>-macos-<arch>.pkg`：应用运行在 App Sandbox 中，用描述文件对应的身份签名，再用团队的安装器身份打包 |
+| Windows | 用于 Microsoft Store 的 `<name>-<version>-windows-<arch>.msix`，发布时由商店签名 |
+| Linux | 带应用 AppStream 元数据的 `<name>-<version>-linux-<arch>.tar.gz`，以及 `flatpak/<id>.yml`：Flathub 据此构建 Flatpak 的清单，在 GNOME 运行时上从 Release 下载这些归档 |
+| Android | 用于 Google Play 的 App Bundle `<name>-<version>-android-<arch>.aab`，用上传密钥 `sign.keystore` 签名 |
+
+```yaml
+macos:
+  category: public.app-category.productivity  # LSApplicationCategoryType，Mac App Store 要求填写
+  # entitlements: { com.apple.security.files.downloads.read-write: true }  # 网络、用户选择的文件和 apple.info 说明的权限之外的授权
+windows:
+  store:                               # 按 Partner Center 的“产品标识”填写
+    identity: 12345Example.Hello
+    publisher: CN=00000000-0000-0000-0000-000000000000
+    publisher_name: Example
+linux:
+  summary: Says hello                  # 软件中心显示的一句话简介
+  license: MIT                         # SPDX 表达式；默认为 LicenseRef-proprietary
+  # flatpak_runtime: "51"              # GNOME 运行时的版本
+android:
+  target_sdk: 35                       # Google Play 要求的 targetSdkVersion
+sign:
+  macos_profile: assets/MacAppStore.provisionprofile  # Mac App Store 的描述文件
+  # installer: "3rd Party Mac Developer Installer: Example (ABCDE12345)"  # 默认取钥匙串中描述文件所属团队的安装器身份
+```
+
+没有 `sign.macos_profile` 时，Mac 包不签名：它能在你的 Mac 上以沙盒方式运行，可用来测试沙盒，但无法上传。沙盒中的应用只能访问自己的容器、网络和用户选择的文件；小组件暂时无法在沙盒中共享时间线，所以 store 构建会拒绝带小组件的应用。用 Transporter 上传 `.pkg`，在 Partner Center 上传 `.msix`，在 Play Console 上传 `.aab`；Release 中有了清单引用的归档后，把 `flatpak/<id>.yml` 提交到 Flathub，也可以用 `flatpak-builder` 在本地构建。Windows 只安装已签名的 MSIX，商店之外安装需要签名，上架时由商店签名。
+
+在 macOS 上，滚动视图的边缘效果（`Scroll.EdgeEffects`）像 AppKit 自己的边缘效果一样，通过 Core Animation 的私有 `CABackdropLayer` 和 `CAFilter` 实现模糊，因为没有公开 API 能让模糊程度在视图上渐变。App Store 审核可能拒绝使用私有 API 的应用：NSGo 只在带边缘栏的滚动视图中调用它们，但每个 macOS 构建都包含它们的名称。
 
 ## 发布到 GitHub
 
@@ -137,7 +173,7 @@ updates:
 | 渠道 | 用于 | 构建出的包 |
 | --- | --- | --- |
 | `direct` | GitHub、网站，以及直接安装 Release 文件的 Homebrew cask 和 winget | 按上表自行更新 |
-| `store` | App Store、Google Play 和其他应用商店 | 不带更新组件；iOS 查询 App Store，不需要 key |
+| `store` | App Store、Mac App Store、Microsoft Store、Google Play、Flathub 和其他应用商店 | 即[商店包](#商店包)，不带更新组件；iOS 查询 App Store，不需要 key |
 | `none` | Linux 发行版，以及重新打包应用的人 | 不检查更新 |
 
 应用商店会拒绝自行更新的应用，所以上传 `store` 构建，不要上传 direct 构建。direct 应用的 Homebrew cask 应写 `auto_updates true`。凡是系统能说明应用由谁安装的地方，应用也会检查：从 Google Play 或其他商店安装的 Android 应用、Flatpak 或 Snap，以及 TestFlight 构建都不检查，由各自的商店更新。
@@ -259,7 +295,3 @@ app_clip:
 ## 嵌入其他应用
 
 `-embed` 把应用打包给你自己的 iOS 或 Android 应用使用：一个 XCFramework（加 `-dynamic` 时由动态框架组成）或 AAR，通过其中的 `NSGoView` 或 `NsgoView` 显示应用。Go 桌面程序用 `nsgo.NewView` 显示应用，网页则用站点的 `nsgo.js`，其主机为页面所在的主机，或 `nsgo.yaml` 中 `web.host` 指定的主机。仓库中的 `examples/embed-*` 分别给出了示例；宿主侧见[嵌入](embedding.md)。
-
-## Mac App Store
-
-在 macOS 上，滚动视图的边缘效果（`Scroll.EdgeEffects`）像 AppKit 自己的边缘效果一样，通过 Core Animation 的私有 `CABackdropLayer` 和 `CAFilter` 实现模糊，因为没有公开 API 能让模糊程度在视图上渐变。App Store 审核可能拒绝使用私有 API 的应用：NSGo 只在带边缘栏的滚动视图中调用它们，但每个 macOS 构建都包含它们的名称。

@@ -34,6 +34,8 @@ type Manifest struct {
 	// Permissions are the permissions the app asks for beyond the
 	// runtime's, by their full names.
 	Permissions []string
+	// TargetSDK replaces the runtime's targetSdkVersion when it is set.
+	TargetSDK int
 }
 
 // The binary XML chunk and value types, from Android's ResourceTypes.h.
@@ -132,6 +134,48 @@ var softInputModes = map[string]uint32{
 // EncodeManifest turns the runtime's readable manifest into the binary XML
 // an APK carries, with the app's package, version and label set.
 func EncodeManifest(template []byte, m Manifest) ([]byte, error) {
+	root, err := appManifest(template, m)
+	if err != nil {
+		return nil, err
+	}
+	e := &encoder{index: map[string]int{}, icon: m.Icon != nil}
+	// Attribute names come first in the string pool: the resource map
+	// that gives each one its framework ID is indexed by pool position.
+	// It ascends by resource ID, as aapt2 writes it and the system reads
+	// it, so the document may order its attributes freely.
+	names := attrNames(root)
+	sort.Slice(names, func(i, j int) bool { return androidAttrs[names[i]].id < androidAttrs[names[j]].id })
+	for _, name := range names {
+		e.str(name)
+		e.ids = append(e.ids, androidAttrs[name].id)
+	}
+
+	prefix, uri := e.str("android"), e.str(androidNS)
+	e.namespace(xmlStartNS, prefix, uri)
+	if err := e.element(root); err != nil {
+		return nil, err
+	}
+	e.namespace(xmlEndNS, prefix, uri)
+
+	pool := e.pool()
+	var out bytes.Buffer
+	put := func(v any) { binary.Write(&out, binary.LittleEndian, v) }
+	put(uint16(xmlHeader))
+	put(uint16(8))
+	put(uint32(8 + pool.Len() + 8 + 4*len(e.ids) + e.chunks.Len()))
+	out.Write(pool.Bytes())
+	put(uint16(resourceMap))
+	put(uint16(8))
+	put(uint32(8 + 4*len(e.ids)))
+	for _, id := range e.ids {
+		put(id)
+	}
+	out.Write(e.chunks.Bytes())
+	return out.Bytes(), nil
+}
+
+// appManifest is the runtime's manifest with m filled in.
+func appManifest(template []byte, m Manifest) (*node, error) {
 	if err := validPackage(m.Package); err != nil {
 		return nil, err
 	}
@@ -179,41 +223,14 @@ func EncodeManifest(template []byte, m Manifest) ([]byte, error) {
 			root.kids = slices.Insert(root.kids, i, use)
 		}
 	}
-
-	e := &encoder{index: map[string]int{}, icon: m.Icon != nil}
-	// Attribute names come first in the string pool: the resource map
-	// that gives each one its framework ID is indexed by pool position.
-	// It ascends by resource ID, as aapt2 writes it and the system reads
-	// it, so the document may order its attributes freely.
-	names := attrNames(root)
-	sort.Slice(names, func(i, j int) bool { return androidAttrs[names[i]].id < androidAttrs[names[j]].id })
-	for _, name := range names {
-		e.str(name)
-		e.ids = append(e.ids, androidAttrs[name].id)
+	if m.TargetSDK > 0 {
+		sdk := child(root, "uses-sdk")
+		if sdk == nil {
+			return nil, errors.New("manifest: no uses-sdk element")
+		}
+		setAttr(sdk, androidNS, "targetSdkVersion", strconv.Itoa(m.TargetSDK))
 	}
-
-	prefix, uri := e.str("android"), e.str(androidNS)
-	e.namespace(xmlStartNS, prefix, uri)
-	if err := e.element(root); err != nil {
-		return nil, err
-	}
-	e.namespace(xmlEndNS, prefix, uri)
-
-	pool := e.pool()
-	var out bytes.Buffer
-	put := func(v any) { binary.Write(&out, binary.LittleEndian, v) }
-	put(uint16(xmlHeader))
-	put(uint16(8))
-	put(uint32(8 + pool.Len() + 8 + 4*len(e.ids) + e.chunks.Len()))
-	out.Write(pool.Bytes())
-	put(uint16(resourceMap))
-	put(uint16(8))
-	put(uint32(8 + 4*len(e.ids)))
-	for _, id := range e.ids {
-		put(id)
-	}
-	out.Write(e.chunks.Bytes())
-	return out.Bytes(), nil
+	return root, nil
 }
 
 // validPackage rejects IDs Android cannot install.

@@ -167,9 +167,10 @@ var installPs1 string
 // release, the latest's are at releases/latest/download/, and install that
 // release's version, or <SLUG>_VERSION's. They install only the desktop
 // packages, so a build of none of targets' macOS, Windows or Linux writes
-// none. Without a GitHub repository it writes none and says how to name one.
+// none, nor does a store build, whose packages stores install. Without a
+// GitHub repository it writes none and says how to name one.
 func (p *project) writeInstallScripts(targets []string) error {
-	if !p.installers() || !slices.ContainsFunc(targets, desktopTarget) {
+	if !p.installers() || p.channel() == channelStore || !slices.ContainsFunc(targets, desktopTarget) {
 		return nil
 	}
 	repo := p.githubRepository()

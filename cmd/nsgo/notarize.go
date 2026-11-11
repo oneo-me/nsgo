@@ -22,9 +22,10 @@ import (
 var notaryKeyEnv = [3]string{"NSGO_NOTARY_KEY", "NSGO_NOTARY_KEY_ID", "NSGO_NOTARY_ISSUER"}
 
 // notarizing reports whether nsgo build notarizes the macOS package: it
-// has a keychain profile or an API key to do it with.
+// has a keychain profile or an API key to do it with, and is no store
+// build, which App Review checks instead.
 func (p *project) notarizing() bool {
-	return p.Release && (p.Sign.Notarize != "" || os.Getenv(notaryKeyEnv[0]) != "")
+	return p.Release && p.channel() != channelStore && (p.Sign.Notarize != "" || os.Getenv(notaryKeyEnv[0]) != "")
 }
 
 // notaryCredentials are notarytool's arguments naming the credentials: the

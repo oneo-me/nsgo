@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -58,6 +59,19 @@ func buildAndroidBinary(ctx context.Context, p *project, tmp, goarch string) ([]
 // links arm64 without cgo; amd64 needs the NDK's clang, as Go supports no
 // other external linker for it.
 func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (string, error) {
+	return buildAndroidPackage(ctx, p, dir, goarch, ".apk", apk.Write)
+}
+
+// buildAndroidAAB writes <dir>/<name>.aab for one architecture, the
+// Android App Bundle Google Play takes, signed with the upload key.
+func buildAndroidAAB(ctx context.Context, p *project, dir, goarch string) (string, error) {
+	return buildAndroidPackage(ctx, p, dir, goarch, ".aab", apk.WriteBundle)
+}
+
+// buildAndroidPackage writes <dir>/<name><ext> for one architecture with
+// write, apk.Write or apk.WriteBundle.
+func buildAndroidPackage(ctx context.Context, p *project, dir, goarch, ext string,
+	write func(io.Writer, []byte, apk.Manifest, []apk.File, *apk.Key) error) (string, error) {
 	tmp, err := os.MkdirTemp("", "nsgo-android-")
 	if err != nil {
 		return "", err
@@ -67,7 +81,11 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 	if err != nil {
 		return "", err
 	}
-	stage(ctx, "packaging the APK")
+	if ext == ".aab" {
+		stage(ctx, "packaging the App Bundle")
+	} else {
+		stage(ctx, "packaging the APK")
+	}
 	key, err := releaseKey(ctx, p)
 	if err != nil {
 		return "", err
@@ -92,7 +110,7 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 	if img != nil {
 		icon = scaledPNG(img, apk.IconSize)
 	}
-	path := filepath.Join(dir, p.Name+".apk")
+	path := filepath.Join(dir, p.Name+ext)
 	f, err := os.Create(path)
 	if err != nil {
 		return "", err
@@ -102,7 +120,7 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 	if err != nil {
 		return "", err
 	}
-	err = apk.Write(f, androidruntime.Manifest, apk.Manifest{
+	err = write(f, androidruntime.Manifest, apk.Manifest{
 		Package:     p.ID,
 		Label:       p.Name,
 		Names:       names.android(),
@@ -112,11 +130,12 @@ func buildAndroidAPK(ctx context.Context, p *project, dir, goarch string) (strin
 		Theme:       androidThemes[p.Appearance],
 		Debuggable:  p.testBinary,
 		Permissions: p.Android.Permissions,
+		TargetSDK:   p.Android.TargetSDK,
 	}, files, key)
 	if err != nil {
 		return "", err
 	}
-	return path, nil
+	return path, f.Close()
 }
 
 // androidThemes are the activity's themes, so the window starts in the

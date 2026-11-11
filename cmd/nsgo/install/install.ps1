@@ -25,7 +25,7 @@ $arch = switch ($cpu) {
     'ARM64' { 'arm64' }
     default { throw "${name}: no installer for Windows on $cpu" }
 }
-$asset = "$slug-$version-$arch-setup.exe"
+$asset = "$slug-$version-windows-$arch-setup.exe"
 
 # Windows PowerShell 5.1 may not offer TLS 1.2 by default.
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12

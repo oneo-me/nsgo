@@ -37,10 +37,10 @@ A store bans an app that carries a self-updater or sends its users to other down
 
 | Platform | Direct | Store |
 | --- | --- | --- |
-| macOS | GitHub or a website, Homebrew casks: Sparkle | The Mac App Store, once `build` makes its sandboxed package |
-| Windows | GitHub or a website, winget: WinSparkle | The Microsoft Store, once `build` makes MSIX; a Store listing of the setup may keep WinSparkle |
-| Linux | GitHub or a website: the release's page | Distribution repositories and the AUR (`none`), Flatpak and Snap |
-| Android | GitHub or a website: the release's page | Google Play and other stores |
+| macOS | GitHub or a website, Homebrew casks: Sparkle | The Mac App Store, from its sandboxed package |
+| Windows | GitHub or a website, winget: WinSparkle | The Microsoft Store, from the MSIX; a Store listing of the setup may keep WinSparkle |
+| Linux | GitHub or a website: the release's page | Distribution repositories and the AUR (`none`), Flathub from the Flatpak manifest, and Snap |
+| Android | GitHub or a website: the release's page | Google Play from the App Bundle, and other stores |
 | iOS, tvOS | — | The App Store; TestFlight checks nothing |
 
 ## Who installed the app

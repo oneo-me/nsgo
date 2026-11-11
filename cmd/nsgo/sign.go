@@ -40,6 +40,12 @@ type signing struct {
 	// ClipProfile is the provisioning profile of the iOS package's App
 	// Clip, app_clip.id.
 	ClipProfile string `yaml:"clip_profile"`
+	// MacOSProfile is the Mac App Store's provisioning profile, which a
+	// store build of a macOS target embeds and takes its identity from;
+	// Installer is the Mac Installer Distribution identity that signs its
+	// package, by default the keychain's of the profile's team.
+	MacOSProfile string `yaml:"macos_profile"`
+	Installer    string `yaml:"installer"`
 	// Keystore signs Android packages: a PKCS#12 or JKS file, KeyAlias
 	// naming its key when it holds several. Without it they carry the
 	// project's debug key.

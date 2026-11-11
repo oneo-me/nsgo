@@ -135,29 +135,50 @@ type project struct {
 	// Android is the Android target's: Permissions are the permissions
 	// its manifest asks for beyond the runtime's, such as
 	// REQUEST_INSTALL_PACKAGES, which a name without a dot is under
-	// android.permission.
+	// android.permission. TargetSDK replaces the runtime's
+	// targetSdkVersion, for the level Google Play requires.
 	Android struct {
 		Permissions []string `yaml:"permissions"`
+		TargetSDK   int      `yaml:"target_sdk"`
 	} `yaml:"android"`
 	// MacOS is the macOS target's disk image: DMGBackground, a PNG with
 	// an optional @2x twin, is the picture behind its window, which takes
 	// its size, else a built-in arrow; DMGIcon, an .icns or a square PNG,
-	// is the volume's icon, else the app's.
+	// is the volume's icon, else the app's. Category is the app's
+	// LSApplicationCategoryType, such as public.app-category.productivity,
+	// which the Mac App Store requires, and Entitlements are what a store
+	// build's sandboxed app claims beyond its defaults (macstore.go).
 	MacOS struct {
-		DMGBackground string `yaml:"dmg_background"`
-		DMGIcon       string `yaml:"dmg_icon"`
+		DMGBackground string         `yaml:"dmg_background"`
+		DMGIcon       string         `yaml:"dmg_icon"`
+		Category      string         `yaml:"category"`
+		Entitlements  map[string]any `yaml:"entitlements"`
 	} `yaml:"macos"`
 	// Windows is the Windows installer's: InstallerIcon and
 	// UninstallerIcon, an .ico or a square PNG, are the icons of the
-	// setup program and the uninstaller, else the app's.
+	// setup program and the uninstaller, else the app's. Store is the
+	// Microsoft Store's package identity, as Partner Center lists it, which
+	// a store build's MSIX carries (msix.go): the package's name, its
+	// publisher (CN=...) and the publisher's display name.
 	Windows struct {
 		InstallerIcon   string `yaml:"installer_icon"`
 		UninstallerIcon string `yaml:"uninstaller_icon"`
+		Store           struct {
+			Identity      string `yaml:"identity"`
+			Publisher     string `yaml:"publisher"`
+			PublisherName string `yaml:"publisher_name"`
+		} `yaml:"store"`
 	} `yaml:"windows"`
 	// Linux is the Linux target's: Maintainer is who its Debian and Arch
 	// packages name as theirs, "Name <email>", else the app's name.
+	// Summary, License, an SPDX expression, and FlatpakRuntime, GNOME's
+	// runtime version, are what a store build's AppStream metadata and
+	// Flatpak manifest say (flatpak.go).
 	Linux struct {
-		Maintainer string `yaml:"maintainer"`
+		Maintainer     string `yaml:"maintainer"`
+		Summary        string `yaml:"summary"`
+		License        string `yaml:"license"`
+		FlatpakRuntime string `yaml:"flatpak_runtime"`
 	} `yaml:"linux"`
 	// Releases is where the app is published: GitHub, a repository
 	// ("owner/name") whose releases, tagged TagPrefix (v by default) and
@@ -332,7 +353,7 @@ func load(dir string) (*project, error) {
 	if err := p.validateUpdates(); err != nil {
 		return nil, fmt.Errorf("nsgo.yaml: %w", err)
 	}
-	for _, path := range []*string{&p.Sign.Profile, &p.Sign.WidgetsProfile, &p.Sign.ClipProfile, &p.Sign.Keystore} {
+	for _, path := range []*string{&p.Sign.Profile, &p.Sign.WidgetsProfile, &p.Sign.ClipProfile, &p.Sign.MacOSProfile, &p.Sign.Keystore} {
 		if *path != "" {
 			*path = p.resolve(*path)
 		}

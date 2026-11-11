@@ -63,7 +63,7 @@ func TestNSISScript(t *testing.T) {
 	pkg := filepath.Join(dir, "pkg")
 	writeFiles(t, pkg, map[string]string{
 		"MyApp.exe": "exe", "fonts/a$b.ttf": "font", "MyApp.nsi": "old",
-		"myapp-0.9.0-x64-setup.exe": "old",
+		"myapp-0.9.0-windows-x64-setup.exe": "old",
 	})
 	p := &project{Dir: dir, Name: "MyApp", ID: "dev.example.app", Version: "1.2.0-beta.1"}
 	p.I18n.Dir, p.I18n.Source = filepath.Join(dir, "locales"), "en"
@@ -85,7 +85,7 @@ func TestNSISScript(t *testing.T) {
 	script := out.String()
 	for _, want := range []string{
 		`Name "My App" "My App"`,
-		`OutFile "myapp-1.2.0-beta.1-arm64-setup.exe"`,
+		`OutFile "myapp-1.2.0-beta.1-windows-arm64-setup.exe"`,
 		`InstallDir "$LOCALAPPDATA\Programs\My App"`,
 		`InstallDirRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\dev.example.app" "InstallLocation"`,
 		`WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\dev.example.app" "InstallLocation" "$INSTDIR"`,
@@ -181,11 +181,12 @@ func TestICOFiles(t *testing.T) {
 func TestLinuxPackages(t *testing.T) {
 	dir := t.TempDir()
 	writeFiles(t, dir, map[string]string{
-		"App":                     "binary",
-		"fonts/a.ttf":             "font",
-		"dev.example.app.png":     "icon",
-		"dev.example.app.desktop": "entry",
-		"app_0.9.0_amd64.deb":     "old",
+		"App":                          "binary",
+		"fonts/a.ttf":                  "font",
+		"dev.example.app.png":          "icon",
+		"dev.example.app.desktop":      "entry",
+		"app-0.9.0-linux-x64.deb":      "old",
+		"app-0.9.0-linux-x64.AppImage": "old",
 	})
 	os.Chmod(filepath.Join(dir, "App"), 0o755)
 	p := &project{Dir: dir, Name: "App", ID: "dev.example.app", Version: "1.0.0-rc.1"}
@@ -206,7 +207,7 @@ func TestLinuxPackages(t *testing.T) {
 			t.Errorf("packages lack %s", name)
 		}
 	}
-	for _, name := range []string{"opt/app/dev.example.app.png", "opt/app/dev.example.app.desktop", "opt/app/app_0.9.0_amd64.deb"} {
+	for _, name := range []string{"opt/app/dev.example.app.png", "opt/app/dev.example.app.desktop", "opt/app/app-0.9.0-linux-x64.deb", "opt/app/app-0.9.0-linux-x64.AppImage"} {
 		if _, ok := byName[name]; ok {
 			t.Errorf("packages install %s", name)
 		}
@@ -332,20 +333,20 @@ func TestReleaseDirectory(t *testing.T) {
 	dir := t.TempDir()
 	p := &project{Dir: dir, Name: "App", ID: "dev.example.app", Version: "1.1.0"}
 	p.Build.Output = filepath.Join(dir, "dist")
-	writeFiles(t, p.releaseDir(), map[string]string{".version": "1.0.0\n", "app-1.0.0-arm64.dmg": "old"})
+	writeFiles(t, p.releaseDir(), map[string]string{".version": "1.0.0\n", "app-1.0.0-macos-arm64.dmg": "old"})
 	if err := p.cleanReleaseDir(); err != nil {
 		t.Fatal(err)
 	}
-	writeFiles(t, p.releaseDir(), map[string]string{"app_1.1.0_amd64.deb": "from another machine"})
+	writeFiles(t, p.releaseDir(), map[string]string{"app-1.1.0-linux-x64.deb": "from another machine"})
 	if err := p.cleanReleaseDir(); err != nil {
 		t.Fatal(err)
 	}
 	pkg := filepath.Join(dir, "pkg")
-	writeFiles(t, pkg, map[string]string{"app-1.1.0-arm64.dmg": "image", "App.apk": "apk", "site/index.html": "page"})
-	if err := p.releaseAssets(filepath.Join(pkg, "app-1.1.0-arm64.dmg"), ""); err != nil {
+	writeFiles(t, pkg, map[string]string{"app-1.1.0-macos-arm64.dmg": "image", "App.apk": "apk", "site/index.html": "page"})
+	if err := p.releaseAssets(filepath.Join(pkg, "app-1.1.0-macos-arm64.dmg"), ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := p.releaseCopy(filepath.Join(pkg, "App.apk"), "app-1.1.0-arm64.apk"); err != nil {
+	if err := p.releaseCopy(filepath.Join(pkg, "App.apk"), "app-1.1.0-android-arm64.apk"); err != nil {
 		t.Fatal(err)
 	}
 	if err := p.releaseTree(filepath.Join(pkg, "site"), "miniprogram/wechat"); err != nil {
@@ -359,15 +360,15 @@ func TestReleaseDirectory(t *testing.T) {
 		}
 		return nil
 	})
-	want := ".version,app-1.1.0-arm64.apk,app-1.1.0-arm64.apk.sha256,app-1.1.0-arm64.dmg,app-1.1.0-arm64.dmg.sha256,app_1.1.0_amd64.deb,miniprogram/wechat/index.html"
+	want := ".version,app-1.1.0-android-arm64.apk,app-1.1.0-android-arm64.apk.sha256,app-1.1.0-linux-x64.deb,app-1.1.0-macos-arm64.dmg,app-1.1.0-macos-arm64.dmg.sha256,miniprogram/wechat/index.html"
 	if strings.Join(got, ",") != want {
 		t.Fatalf("releases holds %v, want %s", got, want)
 	}
 	if _, err := os.Stat(filepath.Join(pkg, "App.apk")); err != nil {
 		t.Error("the APK left its package")
 	}
-	sum, _ := os.ReadFile(filepath.Join(p.releaseDir(), "app-1.1.0-arm64.dmg.sha256"))
-	if want := "6105d6cc76af400325e94d588ce511be5bfdbb73b437dc51eca43917d7a43e3d  app-1.1.0-arm64.dmg\n"; string(sum) != want {
+	sum, _ := os.ReadFile(filepath.Join(p.releaseDir(), "app-1.1.0-macos-arm64.dmg.sha256"))
+	if want := "6105d6cc76af400325e94d588ce511be5bfdbb73b437dc51eca43917d7a43e3d  app-1.1.0-macos-arm64.dmg\n"; string(sum) != want {
 		t.Errorf("checksum %q, want %q", sum, want)
 	}
 }
@@ -416,7 +417,7 @@ func TestInstallScripts(t *testing.T) {
 			t.Errorf("install.sh lacks %q", want)
 		}
 	}
-	for _, want := range []string{"$repository = 'me/my-app'\r\n", "$env:MY_APP_VERSION", "\"$slug-$version-$arch-setup.exe\""} {
+	for _, want := range []string{"$repository = 'me/my-app'\r\n", "$env:MY_APP_VERSION", "\"$slug-$version-windows-$arch-setup.exe\""} {
 		if !strings.Contains(string(ps), want) {
 			t.Errorf("install.ps1 lacks %q", want)
 		}

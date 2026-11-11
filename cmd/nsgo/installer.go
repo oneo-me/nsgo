@@ -26,6 +26,14 @@ func (p *project) packageSlug() string {
 	return "app"
 }
 
+// releaseName names a release file of target's: <slug>-<version>-<system>-<arch>
+// and then suffix, such as my-app-1.2.0-windows-x64-setup.exe, so a
+// release page tells its downloads apart by system. Targets without an
+// architecture, such as ios, give their name alone.
+func (p *project) releaseName(target, suffix string) string {
+	return p.packageSlug() + "-" + p.Version + "-" + strings.ReplaceAll(target, "_", "-") + suffix
+}
+
 // slug keeps s's ASCII letters and digits, in lowercase, joined by
 // hyphens where anything else was.
 func slug(s string) string {

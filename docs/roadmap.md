@@ -35,7 +35,7 @@ What NSH's `main` added after 0.4.0 that NSGo has not, in the order to build it.
 | Scroll handles on phones | #1401 | A long scroll view on iOS and Android shows a handle the user drags along either axis |
 | Image memory | #1330 | The app sets how many encoded image bytes stay in memory, and every backend's cache keeps to it |
 | A terminal backend | `tui.md` | An app runs in a terminal, its views drawn in cells and its keys, mouse and resizes read from it, under `nsgo dev` and `nsgo test`; `base/terminal` stays the terminal shown inside an app |
-| Store releases | `tooling.md` (Releases), #1052, #1054 | `nsgo build` writes Android App Bundles with `targetSdkVersion` from `nsgo.yaml`, and a command uploads to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
+| Store uploads | `tooling.md` (Releases), #1052, #1054 | A command uploads the store packages `build -channel store` makes to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
 
 ## Application and windows
 
@@ -143,7 +143,7 @@ Go apps run in a mini program through a runtime checked in a stand-in host alone
 
 ## Installers
 
-What the desktop installers ([tool](architecture/tool.md#installers)) still lack.
+What the desktop installers ([tool](architecture/tool.md#installers)) and the store packages ([tool](architecture/tool.md#store-packages)) still lack.
 
 | Item | Reference | Done when |
 | --- | --- | --- |
@@ -153,7 +153,14 @@ What the desktop installers ([tool](architecture/tool.md#installers)) still lack
 | Checked Linux packages | `pacman -U`, `dpkg -i` | The Debian package installs on Debian and Ubuntu and the Arch one with `pacman -U`, as `install.sh` runs them, which so far were only read by `bsdtar` and `pacman -Qip` (2026-11-10), and the Arch package carries `.MTREE` for `pacman -Qk` |
 | Install scripts from GitHub | — | `install.sh` and `install.ps1` install from a published release; so far they installed from the releases directory served on each machine (2026-11-10) |
 | The Windows installer's pages | — | Its directory, progress and finish pages, in Chinese among others, are checked on a screen; so far the installer ran silently alone (2026-11-10) |
-| File types in installers | — | The Windows installer and the Linux packages register `file_types`, as the macOS app does ([application and windows](#application-and-windows)) |
+| File types in installers | — | The Windows installer and the Linux packages register `file_types`, as the macOS app and the MSIX do ([application and windows](#application-and-windows)) |
+| Store packages accepted | — | App Store Connect, Partner Center, Flathub and Play Console take a signed upload of each; so far the Mac App Store's package ran sandboxed unsigned, the MSIX registered and started on Windows from its unpacked manifest, the Flatpak's metadata passed `appstreamcli validate` and the App Bundle passed `bundletool validate` and `jarsigner -verify` and ran on Android 10 and 14 from its APKs (2026-11-11) |
+| Universal Mac App Store packages | `lipo` | A store build of both macOS targets makes one package of a universal app, as App Store Connect takes one build per version; so far each architecture has its own |
+| Signed MSIX | `AppxSignature.p7x` | A certificate in `sign` signs the MSIX, so it installs outside the Store with `Add-AppxPackage` or App Installer |
+| MSIX names and logos | `resources.pri` | The MSIX names the app in each of its languages and carries its logos at every scale, which need a resource index |
+| Flatpak bundles | OSTree, `flatpak build-bundle` | `build` writes a `.flatpak` users install directly, and the manifest is built with flatpak-builder on GNOME's runtime |
+| App Bundles of both ABIs | — | One App Bundle holds arm64 and x86_64, as Play serves both from one upload; so far each target writes its own |
+| AppImage updates | `.upd_info`, zsync | The AppImage carries its update information, so AppImageUpdate and launchers update it |
 
 ## Updates
 
@@ -164,7 +171,6 @@ What updates ([updates](architecture/updates.md)) still lack, on the direct chan
 | Updates installed end to end | `updater.md` (Flow) | The native tests install a newer release from a local appcast through Sparkle and WinSparkle and start it, a Developer ID signed and notarized macOS app and a Windows arm64 one update, Android reads an `https` appcast, and the App Store's page opens from an iPhone; so far each ran once by hand (2026-11-11, [updates](architecture/updates.md#verification)) |
 | Install signs checked | — | A Flatpak and a TestFlight build check nothing, as an Android app installed as Google Play's, a Linux app with `SNAP` set and a development build on an iPhone did (2026-11-11) |
 | Installing updates on Linux and Android | `updater.md` (Limits) | A direct Linux or Android app downloads the newer package the appcast names, checks its signature and installs it once the user confirms, Android's through `mobile.InstallPackage`, rather than opening the release's page |
-| Store packages | [Store releases](#services-and-components-since-040) | `build -channel store` makes the Mac App Store's sandboxed package and MSIX for the Microsoft Store, without the updaters, as Store releases make Android App Bundles |
 | Store updates in the app | Play In-App Updates, `iTunes lookup` | An app from Google Play offers Play's update flow, and one from the Mac App Store its page there, as iOS offers the App Store's |
 | Package manager manifests | `brew` casks, `winget-pkgs` | Each direct release writes a Homebrew cask saying `auto_updates true` and a winget manifest for its setup, checked by `brew audit` and `winget validate` |
 | Mini programs and the web | `wx.getUpdateManager`, service workers | A mini program answers `updater.Check` from its platform's `UpdateManager` and restarts into the new version, and a web app offers to reload once a newer build is deployed |

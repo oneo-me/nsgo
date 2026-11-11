@@ -65,6 +65,9 @@ func buildAll(ctx context.Context, p *project) error {
 	if err := p.writeInstallScripts(buildTargets); err != nil {
 		return err
 	}
+	if err := p.writeFlatpakManifest(buildTargets); err != nil {
+		return err
+	}
 	buildSummary(p, len(buildTargets), total, time.Since(started))
 	if p.openOutput() {
 		openDir(p.Build.Output)
@@ -299,6 +302,16 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err != nil {
 			return err
 		}
+		if p.channel() == channelStore {
+			if !p.installers() {
+				return nil
+			}
+			pkg, err := buildMacStorePackage(ctx, p, app, dir, arch)
+			if err != nil {
+				return err
+			}
+			return p.releaseAssets(pkg)
+		}
 		if err := signMacApp(ctx, p, app); err != nil {
 			return err
 		}
@@ -315,6 +328,13 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 	case "windows_arm64", "windows_x64":
 		if err := buildWindows(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
 			return err
+		}
+		if p.channel() == channelStore {
+			msix, err := buildMSIX(ctx, p, dir, goArch(arch))
+			if err != nil {
+				return err
+			}
+			return p.releaseAssets(msix)
 		}
 		setup, err := buildNSIS(ctx, p, dir, arch)
 		if err != nil {
@@ -338,7 +358,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := writeIPA(app, ipa); err != nil {
 			return err
 		}
-		return p.releaseCopy(ipa, fmt.Sprintf("%s-%s-%s.ipa", p.packageSlug(), p.Version, target))
+		return p.releaseCopy(ipa, p.releaseName(target, ".ipa"))
 	case "ios_simulator", "tvos_simulator", "watchos_simulator":
 		sys, _, _ := appleOSOf(target)
 		_, err := buildIOSApp(ctx, p, sys, dir, true)
@@ -352,20 +372,38 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := buildLinux(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
 			return err
 		}
+		if p.channel() == channelStore {
+			archive, err := buildLinuxArchive(ctx, p, dir, goArch(arch))
+			if err != nil {
+				return err
+			}
+			return p.releaseAssets(archive)
+		}
 		deb, pkg, err := buildLinuxPackages(ctx, p, dir, goArch(arch))
 		if err != nil {
 			return err
 		}
-		if err := p.releaseAssets(pkg); err != nil {
+		appImage, err := buildAppImage(ctx, p, dir, goArch(arch))
+		if err != nil {
+			return err
+		}
+		if err := p.releaseAssets(pkg, appImage); err != nil {
 			return err
 		}
 		return p.releaseInstaller(target, deb)
 	case "android_arm64", "android_x64":
+		if p.channel() == channelStore {
+			aab, err := buildAndroidAAB(ctx, p, dir, goArch(arch))
+			if err != nil {
+				return err
+			}
+			return p.releaseCopy(aab, p.releaseName(target, ".aab"))
+		}
 		apk, err := buildAndroidAPK(ctx, p, dir, goArch(arch))
 		if err != nil {
 			return err
 		}
-		name := fmt.Sprintf("%s-%s-%s.apk", p.packageSlug(), p.Version, arch)
+		name := p.releaseName(target, ".apk")
 		if err := p.releaseCopy(apk, name); err != nil {
 			return err
 		}
@@ -878,6 +916,9 @@ const plistHead = `<?xml version="1.0" encoding="UTF-8"?>
 
 var macPlist = template.Must(template.New("mac").Parse(plistHead + `	<key>LSMinimumSystemVersion</key><string>11.0</string>
 	<key>NSHighResolutionCapable</key><true/>
+{{- if .MacOS.Category}}
+	<key>LSApplicationCategoryType</key><string>{{html .MacOS.Category}}</string>
+{{- end}}
 {{- if eq .Appearance "light"}}
 	<key>NSRequiresAquaSystemAppearance</key><true/>
 {{- end}}

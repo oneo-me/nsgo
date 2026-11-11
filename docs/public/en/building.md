@@ -17,14 +17,15 @@ Everything to hand out lands in `dist/releases`, the only directory to look in:
 
 | In `dist/releases` | What |
 | --- | --- |
-| `*.dmg`, `*-setup.exe`, `*.deb`, `*.pkg.tar.gz` | [Installers](#installers) for macOS, Windows and Linux |
+| `*.dmg`, `*-setup.exe`, `*.deb`, `*.pkg.tar.gz`, `*.AppImage` | [Installers](#installers) for macOS, Windows and Linux |
 | `*-ios.ipa`, `*-tvos.ipa`, `*.apk` | The iOS, tvOS and Android packages, for the stores or devices |
+| `*.pkg`, `*.msix`, `*.aab`, `*.tar.gz` and `flatpak/` | A `store` build's [store packages](#store-packages) |
 | `install.sh`, `install.ps1` | Scripts installing the app from [GitHub releases](#publish-on-github) |
 | `appcast-<target>.xml` | The feeds [updating](#updates) apps read |
 | `web/` | The site, to serve as it is |
 | `miniprogram/<platform>/` | Each mini program's project, to upload from its developer tool |
 
-Each file there has its `.sha256` beside it. A build of another version empties the directory first; builds of the same version, on other machines too, add to it. Simulators' and watchOS's packages stay in their `dist/<name>-<version>-<target>` directories.
+Each file is named `<name>-<version>-<system>-<arch>`, such as `hello-1.2.0-windows-x64-setup.exe`, so users find their system's on a release page, and has its `.sha256` beside it. A build of another version empties the directory first; builds of the same version, on other machines too, add to it. Simulators' and watchOS's packages stay in their `dist/<name>-<version>-<target>` directories.
 
 ## nsgo.yaml
 
@@ -70,9 +71,9 @@ For the desktop targets, `build` writes what users install the app from into `di
 
 | Target | Installer |
 | --- | --- |
-| macOS | `<name>-<version>-<arch>.dmg`, a disk image showing the app, an arrow and a link to Applications to drag it to, signed with `sign.identity` and [notarized](#notarize) |
-| Windows | `<name>-<version>-<arch>-setup.exe`, an [NSIS](https://nsis.sourceforge.io) installer that installs for the user, again in the folder the user chose before, closing the app if it runs, with a Start menu shortcut, an optional desktop one and an uninstaller that removes only what it installed |
-| Linux | `<name>_<version>_<arch>.deb` for Debian and Ubuntu, and `<name>-<version>-1-<arch>.pkg.tar.gz` for Arch Linux, which install the app in `/opt/<name>` with a command, its desktop entry and icon |
+| macOS | `<name>-<version>-macos-<arch>.dmg`, a disk image showing the app, an arrow and a link to Applications to drag it to, signed with `sign.identity` and [notarized](#notarize) |
+| Windows | `<name>-<version>-windows-<arch>-setup.exe`, an [NSIS](https://nsis.sourceforge.io) installer that installs for the user, again in the folder the user chose before, closing the app if it runs, with a Start menu shortcut, an optional desktop one and an uninstaller that removes only what it installed |
+| Linux | `<name>-<version>-linux-<arch>.deb` for Debian and Ubuntu, and `<name>-<version>-linux-<arch>.pkg.tar.gz` for Arch Linux, which install the app in `/opt/<name>` with a command, its desktop entry and icon, and `<name>-<version>-linux-<arch>.AppImage`, which runs on any distribution without installing |
 
 The Windows installer needs NSIS's compiler, on a Mac `brew install makensis`, so a Mac builds every installer; without it `build` leaves the script, `<name>.nsi`, in the package, which compiles anywhere as it is. The installer speaks the languages of the app's catalogs that NSIS translates, Simplified and Traditional Chinese included, picking the system's. `-installers=false` or `build.installers: false` builds the packages alone.
 
@@ -87,7 +88,42 @@ windows:
   uninstaller_icon: assets/Uninstall.png    # the uninstaller's
 ```
 
-A background PNG with a twin twice its size, such as `DMGBackground@2x.png`, stays sharp on Retina screens. The app's icon sits a quarter in from the left, Applications a quarter in from the right, each with its name centered from top to bottom, where the built-in picture draws its arrow; leave room for them in a background of your own. The Linux packages have no pictures of their own; they install the app's icon.
+A background PNG with a twin twice its size, such as `DMGBackground@2x.png`, stays sharp on Retina screens. The app's icon sits a quarter in from the left, Applications a quarter in from the right, each with its name centered from top to bottom, where the built-in picture draws its arrow; leave room for them in a background of your own. The Linux packages have no pictures of their own; they install the app's icon. The AppImage needs FUSE, which most distributions have, and takes GTK 4 from the system, as the packages do; its runtime is downloaded once into the user cache.
+
+## Store packages
+
+`-channel store`, or `updates.channel: store`, builds the desktop and Android targets for their stores, which update them, in place of the installers and install scripts:
+
+| Target | Store package |
+| --- | --- |
+| macOS | `<name>-<version>-macos-<arch>.pkg` for the Mac App Store: the app in the App Sandbox, signed with the provisioning profile's identity and packaged with your team's installer identity |
+| Windows | `<name>-<version>-windows-<arch>.msix` for the Microsoft Store, which signs it on publishing |
+| Linux | `<name>-<version>-linux-<arch>.tar.gz` with the app's AppStream metadata, and `flatpak/<id>.yml`, the manifest Flathub builds the Flatpak from, which downloads those archives from the release on GNOME's runtime |
+| Android | `<name>-<version>-android-<arch>.aab`, an App Bundle for Google Play signed with `sign.keystore`, the upload key |
+
+```yaml
+macos:
+  category: public.app-category.productivity  # LSApplicationCategoryType, which the Mac App Store requires
+  # entitlements: { com.apple.security.files.downloads.read-write: true }  # beyond the network, the files the user picks and what apple.info explains
+windows:
+  store:                               # as Partner Center's Product identity lists them
+    identity: 12345Example.Hello
+    publisher: CN=00000000-0000-0000-0000-000000000000
+    publisher_name: Example
+linux:
+  summary: Says hello                  # one line for software centers
+  license: MIT                         # an SPDX expression; LicenseRef-proprietary by default
+  # flatpak_runtime: "51"              # GNOME's runtime version
+android:
+  target_sdk: 35                       # the targetSdkVersion Google Play requires
+sign:
+  macos_profile: assets/MacAppStore.provisionprofile  # the Mac App Store's profile
+  # installer: "3rd Party Mac Developer Installer: Example (ABCDE12345)"  # by default the keychain's of the profile's team
+```
+
+Without `sign.macos_profile` the Mac package is unsigned: it runs sandboxed on your Mac, which tests the sandbox, but uploads nowhere. A sandboxed app reaches only its own container, the network and the files the user picks; widgets cannot share timelines from the sandbox yet, so a store build refuses them. Upload the `.pkg` with Transporter, the `.msix` in Partner Center, the `.aab` in Play Console, and submit `flatpak/<id>.yml` to Flathub once the release holds the archives it names; `flatpak-builder` builds it locally too. Windows installs an MSIX outside the Store only when it is signed, which the Store does.
+
+On macOS, a scroll view's edge effects (`Scroll.EdgeEffects`) blur through Core Animation's private `CABackdropLayer` and `CAFilter`, as AppKit's own edge effects do, since no public API varies a blur across a view. App Store review may reject apps that use private APIs: NSGo calls them only for scroll views with edge bars, but every macOS build contains their names.
 
 ## Publish on GitHub
 
@@ -137,7 +173,7 @@ The channel decides who updates the app. `-channel` replaces `updates.channel` f
 | Channel | For | The packages |
 | --- | --- | --- |
 | `direct` | GitHub, a website, Homebrew casks and winget, which install the release's own files | Update themselves as above |
-| `store` | The App Store, Google Play and other stores | Carry no updater; iOS asks the App Store, which needs no key |
+| `store` | The App Store, the Mac App Store, the Microsoft Store, Google Play, Flathub and other stores | Are the [store packages](#store-packages) and carry no updater; iOS asks the App Store, which needs no key |
 | `none` | Linux distributions and anyone who repackages the app | Check nothing |
 
 Stores reject apps that update themselves, so upload a `store` build, never a direct one. A Homebrew cask for a direct app says `auto_updates true`. Wherever the system tells who installed the app, the app checks that too: an Android app from Google Play or another store, a Flatpak or Snap, and a TestFlight build check nothing, as their store updates them.
@@ -259,7 +295,3 @@ The clip reads the link that opened it with `mobile.OpenedURL`, which changes as
 ## Embed in another app
 
 `-embed` packages the app for an iOS or Android app of your own: an XCFramework, of dynamic frameworks with `-dynamic`, or an AAR whose `NSGoView` or `NsgoView` shows it. Go desktop programs show apps with `nsgo.NewView`, and web pages with the site's `nsgo.js`, whose host is the page's or the one `web.host` in `nsgo.yaml` names. The repository's `examples/embed-*` show each; [Embedding](embedding.md) covers the host side.
-
-## The Mac App Store
-
-On macOS, a scroll view's edge effects (`Scroll.EdgeEffects`) blur through Core Animation's private `CABackdropLayer` and `CAFilter`, as AppKit's own edge effects do, since no public API varies a blur across a view. App Store review may reject apps that use private APIs: NSGo calls them only for scroll views with edge bars, but every macOS build contains their names.

@@ -56,7 +56,7 @@ func TestUpdatesConfig(t *testing.T) {
 	if got := p.appcastURL("ios"); got != "" {
 		t.Errorf("iOS, which the App Store updates, reads appcast %s", got)
 	}
-	if got := p.downloadURL("hello-1.2.0-arm64.dmg"); got != "https://github.com/example/hello/releases/download/v1.2.0/hello-1.2.0-arm64.dmg" {
+	if got := p.downloadURL("hello-1.2.0-macos-arm64.dmg"); got != "https://github.com/example/hello/releases/download/v1.2.0/hello-1.2.0-macos-arm64.dmg" {
 		t.Errorf("download %s", got)
 	}
 	if !p.updatesAutomatic() {
@@ -160,7 +160,7 @@ func TestWriteAppcast(t *testing.T) {
 	if err := p.cleanReleaseDir(); err != nil {
 		t.Fatal(err)
 	}
-	setup := filepath.Join(t.TempDir(), "hello-1.2.0-x64-setup.exe")
+	setup := filepath.Join(t.TempDir(), "hello-1.2.0-windows-x64-setup.exe")
 	writeFiles(t, filepath.Dir(setup), map[string]string{filepath.Base(setup): "installer"})
 	// Without the secret key, Windows gets no appcast it would refuse.
 	if err := p.releaseInstaller("windows_x64", setup); err != nil {
@@ -196,7 +196,7 @@ func TestWriteAppcast(t *testing.T) {
 		t.Fatal(err)
 	}
 	e := feed.Enclosure
-	if e.URL != "https://github.com/example/hello/releases/download/v1.2.0/hello-1.2.0-x64-setup.exe" || e.Length != len("installer") ||
+	if e.URL != "https://github.com/example/hello/releases/download/v1.2.0/hello-1.2.0-windows-x64-setup.exe" || e.Length != len("installer") ||
 		e.OS != "windows" || e.Arguments != "/S /RELAUNCH" {
 		t.Errorf("enclosure %+v", e)
 	}
