@@ -89,13 +89,14 @@ where it does not (`src/lib/docs.ts`). `src/lib/doc-links.mjs`, a Sätteri
 plugin, turns the relative `.md` links between pages into the site's URLs.
 `src/lib/live.mjs` puts a box before each code block marked
 `preview=<demo>` or `program` (`docs/public/README.md`), and
-`scripts/build-live.mjs` builds what the boxes run: `examples/previews`,
-one app for every component example, into `public/previews/`, and each
-program block's code into `public/programs/<hash>/`, so a program whose
-code a translation shares is built once. `src/scripts/live.ts` mounts a
-box's app through the tool's loader once it nears the window, compiling
-each wasm once a page, in the site's appearance, which it follows, and the
-page's language. A Go program cannot be stopped, so leaving a page whose
+`scripts/build-live.mjs` builds what the boxes run as one app in
+`public/live/`, so a reader downloads NSGo once for the whole site:
+`examples/previews`, the component examples, and each program block's
+code, built once when a translation shares it, each a package whose
+`Root` the app runs when its launch parameters name it. Programs thus
+share one storage. `src/scripts/live.ts` mounts a box through the tool's
+loader once it nears the window, compiling the wasm once a page, in the
+site's appearance, which it follows, and the page's language. A Go program cannot be stopped, so leaving a page whose
 apps started loads the next page whole.
 A page has the sidebar of its language's groups, under the pages without one, its contents, the previous
 and next pages, an edit link and copy buttons on its code; the styles are in

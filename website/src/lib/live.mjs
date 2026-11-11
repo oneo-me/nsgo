@@ -7,10 +7,11 @@
 //   ```go program height=480
 //       a whole app.go, which scripts/build-live.mjs builds on its own
 //
-// height is the preview's in CSS pixels. The previews' build is in
-// public/previews/ and each program's in public/programs/<id>/, its id
-// the hash of its code, so a page's languages share a program whose code
-// they share.
+// height is the preview's in CSS pixels. Both run in one app,
+// public/live/ (scripts/build-live.mjs), which takes the demo or the
+// program's id in its launch parameters; the id is the hash of the
+// program's code, so a page's languages share a program whose code they
+// share.
 import { createHash } from 'node:crypto';
 
 export const defaultHeight = 160;
@@ -48,11 +49,10 @@ export function livePreviews({ base }) {
       if (node.lang !== 'go') return;
       const live = parseLive(node.meta);
       if (!live) return;
-      const app = live.kind === 'preview' ? 'previews/' : `programs/${programId(node.value)}/`;
-      const demo = live.kind === 'preview' ? ` data-demo="${live.demo}"` : '';
+      const param = live.kind === 'preview' ? `data-demo="${live.demo}"` : `data-program="${programId(node.value)}"`;
       ctx.insertBefore(node, {
         type: 'html',
-        value: `<div class="live live--${live.kind}" data-live="${base}${app}"${demo} style="--live-height: ${live.height}px"></div>`,
+        value: `<div class="live live--${live.kind}" data-live="${base}live/" ${param} style="--live-height: ${live.height}px"></div>`,
       });
     },
   });

@@ -29,7 +29,8 @@ GitHub; `website/` builds them into the site.
 - A Go block runs above itself on the site when its info string marks
   it: `` ```go preview=button/basic `` shows that demo of
   `examples/previews`, which holds the block's code with what it leaves
-  out, and `` ```go program `` builds the block as a whole `app.go`.
+  out, and `` ```go program `` builds the block as a whole `app.go`, whose
+  `main` the site skips to run its `Root`.
   `height=240` sets the box's height in pixels. GitHub ignores the marks.
   Both languages mark the same blocks; a demo shows Chinese words on
   Chinese pages, and `examples/previews`' tests fail on a mark naming no

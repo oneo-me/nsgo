@@ -1,8 +1,8 @@
 // Mounts the docs' live previews (src/lib/live.mjs): each box runs its
-// app, the component previews' or a program's, once it nears the window.
-// An app's wasm is fetched, decompressed and compiled once for every box
-// that runs it, and each box's app is a Go program of its own, in the
-// site's appearance and the page's language.
+// demo or program of the docs' one app once it nears the window. The
+// app's wasm is fetched, decompressed and compiled once a page, and each
+// box runs a Go program of its own, in the site's appearance and the
+// page's language.
 import { currentTheme } from './theme';
 
 interface Config {
@@ -61,7 +61,7 @@ async function start(box: HTMLElement, locale: string, failed: string) {
     const player = await app.mount(box, app.url, {
       config: app.config,
       module: app.module,
-      params: box.dataset.demo ? { demo: box.dataset.demo } : {},
+      params: box.dataset.program ? { program: box.dataset.program } : { demo: box.dataset.demo },
       appearance: currentTheme(),
       locale,
     });
