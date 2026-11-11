@@ -384,6 +384,13 @@ func TestOpenFile(t *testing.T) {
 			t.Fatalf("opening %q asked the platform, or answered %v", path, openErr)
 		}
 	}
+	// A desktop opens a folder in its file manager.
+	h.tree.SetEnvironment(Environment{OS: OSMacOS})
+	cx.OpenFile(SharedFile{Path: dir}, open)
+	it = command(h.commit(), driver.ItemOpenFile)
+	if it == nil || *it.Open != (driver.SharedFile{Path: dir, Name: filepath.Base(dir), MIME: "inode/directory"}) {
+		t.Fatalf("a folder opens as %+v", it)
+	}
 }
 
 func TestShare(t *testing.T) {

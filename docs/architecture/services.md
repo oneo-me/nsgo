@@ -97,7 +97,7 @@ The desktops show no camera ([roadmap](../roadmap.md#finish-the-existing-platfor
 
 `OpenFile` opens a file the app has in the app the system associates with its type, and `Share` shows the system's share sheet for files, text or both. Each `SharedFile` is a path, with the name the other app sees and its type, which the file's name and extension say by default. Files go by path or content URI, so their size costs the bridge nothing.
 
-- `core` checks each file is a regular file before asking the platform, and fails a share of neither files nor text.
+- `core` checks each file is a regular file before asking the platform, and fails a share of neither files nor text. `OpenFile` also takes a folder on macOS, Windows and Linux, whose openers hand it to the file manager; phones have no file manager an app can open a folder of its own in, so `core` fails it there.
 - `OpenFile` tells a type no app opens (`opened == false`, no error) from a failure. `Share` answers once the sheet shows, which says nothing of what the app chosen did with the files.
 - Where a platform hands files on by path and shows their own names, a file whose `Name` differs is linked under it in a directory of the temporary one (`SharedFile.Stage`), which a later share removes after `ShareStageAge`. Desktops open a file itself, under its own name.
 - `ShareOptions.Anchor` is the element a sheet shown as a popover points at, on macOS and iPads; it points at the root's center without one.

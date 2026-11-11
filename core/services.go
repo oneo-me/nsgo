@@ -581,6 +581,12 @@ func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
 // path, a name and a type, or why it cannot be: a file that is not
 // there, or not a regular file.
 func resolveShared(f SharedFile) (driver.SharedFile, error) {
+	return resolveOpened(f, false)
+}
+
+// resolveOpened is resolveShared, taking a folder too when folders is
+// set.
+func resolveOpened(f SharedFile, folders bool) (driver.SharedFile, error) {
 	if f.Path == "" {
 		return driver.SharedFile{}, errors.New("core: a shared file has a path")
 	}
@@ -591,6 +597,9 @@ func resolveShared(f SharedFile) (driver.SharedFile, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return driver.SharedFile{}, err
+	}
+	if info.IsDir() && folders {
+		return driver.SharedFile{Path: path, Name: filepath.Base(path), MIME: "inode/directory"}, nil
 	}
 	if !info.Mode().IsRegular() {
 		return driver.SharedFile{}, fmt.Errorf("core: %s is not a file", path)
@@ -611,7 +620,9 @@ func resolveShared(f SharedFile) (driver.SharedFile, error) {
 // OpenFile opens the file f names in the app the system associates with
 // its type, the user choosing where several are: NSWorkspace on macOS,
 // the shell on Windows, GtkFileLauncher on Linux, a document
-// interaction's options on iOS and Intent.ACTION_VIEW on Android. done,
+// interaction's options on iOS and Intent.ACTION_VIEW on Android. On
+// macOS, Windows and Linux f may name a folder, which opens in the file
+// manager; phones have none to open it in, and answer an error. done,
 // when not nil, learns whether an app opened it: false with no error
 // when none opens its type, and the error when the file is missing or
 // the platform failed. On Android the file is in the app's own storage,
@@ -629,7 +640,8 @@ func (cx *Scope) OpenFile(f SharedFile, done func(opened bool, err error)) {
 	if t == nil {
 		return
 	}
-	r, err := resolveShared(f)
+	os := cx.Env().os.GetUntracked()
+	r, err := resolveOpened(f, os == OSMacOS || os == OSWindows || os == OSLinux)
 	if err != nil {
 		answer(false, err)
 		return
