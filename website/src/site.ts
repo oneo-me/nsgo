@@ -66,6 +66,8 @@ export const links = {
   components: `${repo}/tree/main/docs/public/components`,
   /** The Benchmarks page's apps and runner. */
   benchmark: `${repo}/tree/main/benchmark`,
+  /** The community's catalog of apps, packages and guides around NSGo. */
+  awesome: 'https://awesomensgo.dev',
   blog: 'https://oneo.me',
   x: 'https://x.com/oneo666',
   nsh: 'https://github.com/longbridge/nsh',
