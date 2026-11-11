@@ -61,14 +61,15 @@ func check(ctx context.Context, p *project, target string) error {
 	return checkTSX(ctx, p)
 }
 
-// checkTSX writes the app's types and type-checks its TSX.
+// checkTSX writes the app's types and type-checks its TSX. An app
+// without a tsconfig.json has no TSX, so no types are written.
 func checkTSX(ctx context.Context, p *project) error {
-	if err := writeTypes(ctx, p); err != nil {
-		return err
-	}
 	if !p.hasTSConfig() {
 		note("no tsconfig.json: nothing to type-check (a TSX app's extends .nsgo/tsconfig.json)")
 		return nil
+	}
+	if err := writeTypes(ctx, p); err != nil {
+		return err
 	}
 	config := filepath.Join(p.Dir, "tsconfig.json")
 	s := begin("type-checking")
