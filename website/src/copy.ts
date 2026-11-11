@@ -114,7 +114,7 @@ const en = {
     showcases: { title: 'Showcases', body: 'Apps people build with NSGo.' },
     benchmarks: { title: 'Benchmarks', body: 'How fast NSGo starts, lays out and updates.' },
     architecture: { title: 'Architecture', body: 'How the engine, backends and tool fit together.' },
-    github: { title: 'GitHub', body: 'The source, issues and discussions.' },
+    github: { title: 'GitHub', body: 'The source and issues.' },
   },
   docs: {
     title: 'Docs',
@@ -358,7 +358,7 @@ const zh: Copy = {
     showcases: { title: '案例', body: '大家用 NSGo 做的应用。' },
     benchmarks: { title: '性能', body: 'NSGo 的启动、布局和更新有多快。' },
     architecture: { title: '架构', body: '引擎、后端和工具如何配合。' },
-    github: { title: 'GitHub', body: '源码、问题和讨论。' },
+    github: { title: 'GitHub', body: '源码和问题。' },
   },
   docs: {
     title: '文档',

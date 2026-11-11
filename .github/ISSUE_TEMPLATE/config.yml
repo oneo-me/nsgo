@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/oneo-me/nsgo/security/advisories/new
+    about: Report it privately, never in a public issue.
+  - name: Documentation
+    url: https://oneo-me.github.io/nsgo/docs/
+    about: Tutorials, components and how NSGo works.
+  - name: Awesome NSGo
+    url: https://awesomensgo.dev
+    about: The community's catalog of apps, packages and guides.

@@ -1,0 +1,49 @@
+name: Showcase
+description: Share an app, library or resource built with NSGo.
+title: "Showcase: "
+labels: [showcase]
+body:
+  - type: markdown
+    attributes:
+      value: Write in any language. Nothing in NSGo needs to change; the issue can be closed once read.
+  - type: input
+    id: link
+    attributes:
+      label: Link
+      description: Its website, repository or store page.
+    validations:
+      required: true
+  - type: textarea
+    id: about
+    attributes:
+      label: About it
+      description: What it does and how it uses NSGo.
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platforms
+      multiple: true
+      options:
+        - macOS
+        - iOS
+        - tvOS
+        - watchOS
+        - Windows
+        - Linux
+        - Web
+        - Android
+        - Mini programs
+  - type: dropdown
+    id: language
+    attributes:
+      label: App language
+      options:
+        - Go
+        - TSX
+        - Both
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots

@@ -1,0 +1,72 @@
+name: Bug report
+description: Something works wrong, crashes or differs from the docs.
+labels: [bug, needs triage]
+body:
+  - type: markdown
+    attributes:
+      value: Write in any language. One problem per issue, please.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: The smallest app or steps that show it.
+      render: go
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platforms
+      multiple: true
+      options:
+        - macOS
+        - iOS
+        - tvOS
+        - watchOS
+        - Windows
+        - Linux
+        - Web
+        - Android
+        - Mini programs
+        - Every platform
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: App language
+      options:
+        - Go
+        - TSX
+        - Both
+  - type: input
+    id: version
+    attributes:
+      label: NSGo version
+      description: The output of `go list -m github.com/oneo-me/nsgo`.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and version, device or simulator, Go and Xcode versions.
+      placeholder: macOS 27.1, iPhone 18 Pro simulator, Go 1.26.2, Xcode 27.1
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and screenshots
+      render: text

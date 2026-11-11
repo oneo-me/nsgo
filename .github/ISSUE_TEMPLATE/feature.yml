@@ -1,0 +1,42 @@
+name: Feature request
+description: A component, API, service, platform or tool option NSGo lacks.
+labels: [enhancement, needs triage]
+body:
+  - type: markdown
+    attributes:
+      value: Write in any language.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you want to do
+      description: The app or situation that needs it, and what stops you today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The API or behavior you have in mind, if any.
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platforms
+      multiple: true
+      options:
+        - macOS
+        - iOS
+        - tvOS
+        - watchOS
+        - Windows
+        - Linux
+        - Web
+        - Android
+        - Mini programs
+        - Every platform
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: How NSH, the platforms or other frameworks do it, and what you have tried instead.
