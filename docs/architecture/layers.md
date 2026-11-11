@@ -39,6 +39,8 @@ nsgo
 │   ├── mobile                           What only phones have
 │   ├── desktop                          What only desktops have
 │   │   └── locales                      Its menus' words, which backends read
+│   ├── updater                          Updating the app the platform's way
+│   │   └── locales                      Its alerts' words
 │   ├── icons/lucide                     The bundled icons
 │   └── i18n                             The language the app shows
 │       └── internal/cldr                Dates and pseudo locales by CLDR's data
@@ -57,6 +59,7 @@ nsgo
 │       ├── scrollbar, textselect        Shared scrolling and selection
 │       ├── imagedecode, imageload       Shared images
 │       ├── menutext                     Shared menu labels
+│       ├── updates                      Shared update checks of Linux, Android and iOS
 │       ├── picked, fontfile             Shared picked photos and font files
 │       ├── queue, perfhud               Shared batches and readings
 │       └── canvastest, imageloadtest    Shared test drawings and HTTP client checks
@@ -123,6 +126,7 @@ A line means "imports". `layering_test.go` checks the graph on every target, and
 - Backends import `internal/driver`, `internal/engine`, `desktop/locales`, their shared packages and the shader writers, never the compilers, which only `core` links.
 - Only a backend's test host, built with the `nsgotest` tag, imports `core`.
 - `i18n` imports only `core` and `internal/cldr`; `base`'s packages import it for their catalogs.
+- `updater` imports only `core` and its catalogs; the root imports it, to check as the app starts where the platform's updater keeps no schedule.
 - `ui` imports `base`, `core`, `mobile`, `desktop` and the icons; `base` never imports it.
 - `tsx/tsxtest` is the one package that imports both `tsx` and `nsgotest`, and `tsx/ui` with the packages below it the TSX packages that import `ui`. `tsx/internal/js`, the engines' API, imports nothing of NSGo's, and on the web reaches the page through `syscall/js`.
 - `base/terminal` is the one package of `base` that is not portable: it loads libghostty-vt through purego, runs programs on desktops and remote sessions there and on iOS, and elsewhere builds to report that it cannot (`unportable` in `layering_test.go`).

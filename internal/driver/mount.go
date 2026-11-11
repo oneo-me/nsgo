@@ -300,6 +300,10 @@ const (
 	// the round's inserts and before its deletes, so both views are in
 	// place, and only in a batch whose LayoutAnimation has an Update.
 	ItemMatch
+	// ItemCheckForUpdates asks the platform's updater for a newer version
+	// of the app, in the background when On; the platform answers with
+	// EventUpdate carrying Count.
+	ItemCheckForUpdates
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -373,7 +377,8 @@ type MountItem struct {
 	Open        *SharedFile
 	Share       *ShareRequest
 	// Surface is ItemOpenSurface's window, Tray ItemTray's icon, and On
-	// ItemDock's and ItemSetLaunchAtLogin's choice.
+	// ItemDock's and ItemSetLaunchAtLogin's choice and whether
+	// ItemCheckForUpdates checks in the background.
 	Surface *SurfaceConfig
 	Tray    *TrayConfig
 	On      bool

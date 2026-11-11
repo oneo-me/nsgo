@@ -96,6 +96,8 @@ func TestNSISScript(t *testing.T) {
 		`Delete "$INSTDIR\fonts\a$$b.ttf"`,
 		`RMDir "$INSTDIR\fonts"`,
 		`${IfNot} ${IsNativeARM64}`,
+		`${GetOptions} $0 "/RELAUNCH" $1`,
+		`Exec '"$INSTDIR\MyApp.exe"'`,
 		`VIProductVersion "1.2.0.0"`,
 		`$$_.ExecutablePath.StartsWith($$d, 'OrdinalIgnoreCase')`,
 	} {

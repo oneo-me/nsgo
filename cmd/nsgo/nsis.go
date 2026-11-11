@@ -315,6 +315,7 @@ BrandingText " "
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateDesktopShortcut
 !include "MUI2.nsh"
 !include "x64.nsh"
+!include "FileFunc.nsh"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -385,6 +386,14 @@ Section
   WriteRegStr HKCU {{q .UninstallKey}} "QuietUninstallString" '"$INSTDIR\Uninstall.exe" /S'
   WriteRegDWORD HKCU {{q .UninstallKey}} "NoModify" 1
   WriteRegDWORD HKCU {{q .UninstallKey}} "NoRepair" 1
+  ; WinSparkle runs the installer with /S /RELAUNCH, once the app quit:
+  ; the new version starts again.
+  ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/RELAUNCH" $1
+  ${IfNot} ${Errors}
+    Exec '{{path "$INSTDIR\\" .Exe}}'
+  ${EndIf}
 SectionEnd
 
 ; The finish page offers it, so silent installs make none.

@@ -535,6 +535,7 @@ func register(name string, super objc.Class, protocols []*objc.Protocol, methods
 // as NSH's run_app does.
 func Run(app engine.App, opts Options) {
 	nsApp := startApp(opts)
+	startSparkle()
 	s := startOwn(app, opts)
 	nsApp.Send(sel("run"))
 	for o := range surfaces {
@@ -1393,6 +1394,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemOpenURL:
 			s.openURL(it.Value, it.Count)
+			continue
+		case driver.ItemCheckForUpdates:
+			s.checkForUpdates(it.On, it.Count)
 			continue
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)

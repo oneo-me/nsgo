@@ -20,6 +20,7 @@ go tool nsgo build
 | `*.dmg`、`*-setup.exe`、`*.deb`、`*.pkg.tar.gz` | macOS、Windows 和 Linux 的[安装程序](#安装程序) |
 | `*-ios.ipa`、`*-tvos.ipa`、`*.apk` | iOS、tvOS 和 Android 的包，用于商店或设备 |
 | `install.sh`、`install.ps1` | 从 [GitHub Releases](#发布到-github) 安装应用的脚本 |
+| `appcast-<目标>.xml` | [自动更新](#自动更新)的应用读取的更新源 |
 | `web/` | 网站，原样部署即可 |
 | `miniprogram/<平台>/` | 各小程序的项目，用对应开发者工具上传 |
 
@@ -52,7 +53,8 @@ build:
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # Linux 软件包的维护者，省略时为应用名
-# release: { github: me/hello }  # 安装脚本从其 Releases 安装的 GitHub 仓库，省略时取 Git 远程 origin 的；tag_prefix 默认为 v
+# release: { github: me/hello }  # 安装脚本和自动更新从其 Releases 安装的 GitHub 仓库，省略时取 Git 远程 origin 的；tag_prefix 默认为 v
+# updates: { key: updates.pub }  # 应用按平台的方式自动更新，见“自动更新”
 # miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # 小程序的设置
 ```
 
@@ -106,6 +108,28 @@ irm https://github.com/me/hello/releases/latest/download/install.ps1 | iex      
 ```
 
 在 macOS 上，脚本把应用从磁盘映像复制到 `/Applications`，无写权限时复制到 `~/Applications`；在 Linux 上通过 `sudo` 用 `pacman` 安装 Arch 软件包，否则用 `apt-get` 或 `dpkg` 安装 Debian 软件包；在 Windows 上静默运行安装程序，装到应用已安装的目录。安装前都会先核对校验和。`<NAME>_VERSION`（应用名的大写形式，例如 `HELLO_VERSION=1.1.0`）安装其他版本，`<NAME>_DOWNLOAD_URL` 从镜像下载。
+
+## 自动更新
+
+`updates` 让应用按所在平台的方式保持最新：
+
+```yaml
+updates:
+  key: updates.pub                    # nsgo keygen updates 生成的公钥
+  # feed: https://example.com/hello/  # appcast 和安装程序所在的地址；默认为 GitHub 上最新的 Release
+  # automatic: false                  # 只在要求时检查；默认为 true
+```
+
+`nsgo keygen updates` 生成 `updates.pub`（提交到仓库）和 `updates.key`（保密，不要放进仓库）；在 CI 中用 `NSGO_UPDATES_KEY`（密钥文件的内容）代替它。之后每次构建都用它签名安装程序，并在旁边写出 `appcast-<目标>.xml`：一个 [Sparkle](https://sparkle-project.org) 格式、列出本版本的更新源，应用从 `feed` 下读取它，把 appcast 和安装程序一起上传即可。
+
+| 目标 | 更新方式 |
+| --- | --- |
+| macOS | `build` 打进应用的 Sparkle 每天检查，提示新版本，下载磁盘映像，校验签名，安装并重启应用 |
+| Windows | 放在可执行文件旁的 WinSparkle 同样如此，并静默运行安装程序，由它启动新版本 |
+| Linux、Android | 应用读取自己的 appcast，打开该 Release 的页面，用户从那里安装软件包 |
+| iOS | 应用查询负责更新它的 App Store，并打开其中的页面 |
+
+`updater.Check(cx)` 如同“检查更新…”菜单项，检查并显示结果；`updater.CheckInBackground(cx)` 只在有新版本时提示，`updater.CheckDaily(cx)` 也是如此，但每天至多检查一次。`automatic` 开启时，Linux、Android 和 iOS 上的应用在启动时和用户回到应用时这样检查，所以新版本每天至多提示一次；检查失败（例如离线）时，一小时后再试。开发构建从不更新。`build` 按 `nsgo` 固定的版本把 Sparkle 和 WinSparkle 下载一次；没有私钥时不写 macOS 和 Windows 的 appcast，因为它们只安装签过名的安装程序。
 
 ## 文件类型
 

@@ -1,0 +1,23 @@
+updateAvailable:
+  message: "A new version of {app} is available"
+  description: The title of the alert offering a newer version of the app.
+updateAvailableMessage:
+  message: "{app} {version} is available. You have {current}."
+  description: The alert offering a newer version, which names it and the running one.
+update:
+  message: "Update"
+  description: The button of the alert offering a newer version, which opens its page in the App Store or a browser.
+later:
+  message: "Later"
+  description: The button closing the alert offering a newer version.
+upToDate:
+  message: "You’re up to date"
+  description: The title of the alert saying no newer version of the app exists.
+upToDateMessage:
+  message: "{app} {version} is the newest version available."
+  description: The alert saying no newer version exists, which names the running one.
+updateError:
+  message: "Can’t check for updates"
+  description: The title of the alert saying the check for a newer version failed.
+updateErrorMessage: "Something went wrong while checking for updates. Try again later."
+ok: "OK"
