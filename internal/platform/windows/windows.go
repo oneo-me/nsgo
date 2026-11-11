@@ -8,7 +8,8 @@
 // in the window's DirectComposition tree, videos played by Media
 // Foundation's media engine, images decoded by Go, native components'
 // child windows following their views (component.go), files dropped
-// through OLE (drop.go), and alerts as task dialogs. A window with a
+// through OLE (drop.go), alerts as task dialogs and updates through
+// WinSparkle (updates.go). A window with a
 // material behind its content draws through DirectComposition too, over
 // the system backdrop DWM draws (material.go). It uses only the syscall
 // package, so it builds without cgo.
@@ -42,6 +43,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/platform/queue"
 	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
 	"github.com/oneo-me/nsgo/internal/platform/textselect"
+	"github.com/oneo-me/nsgo/internal/platform/updates"
 	"github.com/oneo-me/nsgo/internal/testhost"
 )
 
@@ -74,6 +76,8 @@ type Options struct {
 	Appearance driver.Appearance
 	// Perf shows the performance monitor over the app (perf.go).
 	Perf bool
+	// Updates is how the app updates, with WinSparkle (updates.go).
+	Updates updates.Config
 	// Host is what an embedding host gives the view (NewView), and Parent
 	// the HWND of the window it is a child window of.
 	Host   engine.HostOptions
@@ -561,11 +565,15 @@ func Run(app engine.App, opts Options) {
 	} else if paths := engine.LaunchFiles(); len(paths) > 0 {
 		w.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
 	}
+	if opts.test == nil {
+		startWinSparkle(opts.Updates, hwnd)
+	}
 
 	var m msg
 	for {
 		r, _, _ := getMessageW.Call(uintptr(unsafe.Pointer(&m)), 0, 0, 0)
 		if int32(r) <= 0 {
+			stopWinSparkle()
 			w.engine.Close()
 			engine.SyncStorage()
 			return
@@ -871,6 +879,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemOpenURL:
 			w.openURL(it.Value, it.Count)
+			continue
+		case driver.ItemCheckForUpdates:
+			w.checkForUpdates(it.On, it.Count)
 			continue
 		case driver.ItemPickImages:
 			w.pickImages(*it.Pick, it.Count)

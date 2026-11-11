@@ -5,6 +5,16 @@ import (
 	"errors"
 )
 
+// Update is what a platform's updater with no windows of its own found
+// (EventUpdate): the app's name and running version, and a newer version
+// with the page that gets it, Version empty when the running one is the
+// newest, or why it could not check.
+type Update struct {
+	App, Current string
+	Version, URL string
+	Err          string
+}
+
 // AlertConfig is a native alert: a title, a message and its buttons.
 type AlertConfig struct {
 	Title   string

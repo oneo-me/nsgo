@@ -168,6 +168,8 @@ type project struct {
 		GitHub    string  `yaml:"github"`
 		TagPrefix *string `yaml:"tag_prefix"`
 	} `yaml:"release"`
+	// Updates has the app update the way its platform does (updates.go).
+	Updates updatesConfig `yaml:"updates"`
 	// Mobile is the iOS and Android targets': ExcludeResources are paths in
 	// resources/ their packages leave out, such as what only desktops run.
 	Mobile struct {
@@ -325,6 +327,9 @@ func load(dir string) (*project, error) {
 		return nil, fmt.Errorf("nsgo.yaml: %w", err)
 	}
 	if err := p.validateAppClip(); err != nil {
+		return nil, fmt.Errorf("nsgo.yaml: %w", err)
+	}
+	if err := p.validateUpdates(); err != nil {
 		return nil, fmt.Errorf("nsgo.yaml: %w", err)
 	}
 	for _, path := range []*string{&p.Sign.Profile, &p.Sign.WidgetsProfile, &p.Sign.ClipProfile, &p.Sign.Keystore} {

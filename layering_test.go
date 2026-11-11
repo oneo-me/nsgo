@@ -50,16 +50,19 @@ var layers = []struct {
 	{"internal/platform/queue", []string{"internal/driver"}},
 	{"internal/platform/scrollbar", []string{"internal/driver"}},
 	{"internal/platform/textselect", []string{"internal/driver"}},
+	{"internal/platform/updates", []string{"internal/driver", "internal/platform/imageload"}},
 	{"internal/platform/webstyle", []string{"internal/driver"}},
 	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales"}, platformShared...)},
 	{"nsgotest", []string{"core", "internal/driver", "internal/testhost"}},
-	{"", []string{"core", "internal/engine", "internal/platform/"}},
+	{"", []string{"core", "internal/engine", "internal/platform/", "updater"}},
 	// The code nsgo writes from catalogs runs on i18n.
 	{"i18n", []string{"core", "internal/cldr"}},
 	{"base/", []string{"core", "base/", "i18n"}},
 	{"mobile", []string{"core"}},
 	{"desktop/locales", []string{"core", "i18n"}},
 	{"desktop", []string{"core"}},
+	{"updater/locales", []string{"core", "i18n"}},
+	{"updater", []string{"core", "updater/locales"}},
 	{"icons/", []string{"core"}},
 	{"ui/", []string{"core", "base/", "ui/", "mobile", "desktop", "icons/"}},
 	// The TSX test runner drives apps through nsgotest.
@@ -77,7 +80,7 @@ var layers = []struct {
 	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler", "tsx/internal/js", "tsx/pkg"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
-	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "widget", "examples/"}},
+	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "updater", "widget", "examples/"}},
 	// The nsgo tool links no component or runtime, so changing them does
 	// not build it again; it writes TSX declarations by running the app.
 	{"cmd/", []string{"core", "cmd/", "internal/platform/android/runtime", "tsx/bundler", "tsx/pkg"}},
@@ -89,13 +92,13 @@ var layers = []struct {
 var platformShared = []string{
 	"internal/platform/apple", "internal/platform/canvas2d", "internal/platform/canvastest", "internal/platform/field", "internal/platform/finger",
 	"internal/platform/fontfile", "internal/platform/hover", "internal/platform/imagedecode", "internal/platform/imageload", "internal/platform/menutext", "internal/platform/perfhud", "internal/platform/picked", "internal/platform/queue", "internal/platform/scrollbar",
-	"internal/platform/textselect", "internal/platform/webstyle", "internal/shaderir/",
+	"internal/platform/textselect", "internal/platform/updates", "internal/platform/webstyle", "internal/shaderir/",
 }
 
 // portable lists the packages that build unchanged for every target: no
 // purego, syscall or unsafe.
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shader/wgsl", "internal/shaderir/", "internal/engine",
-	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx"}
+	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx", "updater", "updater/locales"}
 
 // unportable are the packages among portable's that reach the system: the
 // terminal loads libghostty-vt and runs programs, on macOS, Linux and

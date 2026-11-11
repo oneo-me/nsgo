@@ -13,8 +13,9 @@
 //		desktop.NewTray(app, desktop.TrayOptions{Icon: icon, Panel: desktop.OpenPanel(app, desktop.PanelOptions{}, Panel)})
 //	}
 //
-// Build tags pick the backend. The nsgo tool sets the app's name and ID
-// from nsgo.yaml. The engine's own command-line flags, such as --nsgo-fps,
+// Build tags pick the backend. The nsgo tool sets the app's name and ID,
+// and its version and updates where nsgo.yaml configures them (package
+// updater), from nsgo.yaml. The engine's own command-line flags, such as --nsgo-fps,
 // leave os.Args before main runs (launchFlags).
 package nsgo
 
@@ -29,6 +30,12 @@ var (
 	id   = ""
 	// appearance is nsgo.yaml's: "light" or "dark" starts the app in it.
 	appearance = ""
+	// version and build are nsgo.yaml's version and build number, set with
+	// its updates: updateFeed is this target's appcast, updateKey the
+	// public key its downloads are signed with, and updateAutomatic "1"
+	// when the app checks on its own (updates.go).
+	version, build                         = "", ""
+	updateFeed, updateKey, updateAutomatic = "", "", ""
 )
 
 // App builds an app's root element once.

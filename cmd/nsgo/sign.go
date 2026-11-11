@@ -98,8 +98,8 @@ func releaseKey(ctx context.Context, p *project) (*apk.Key, error) {
 	return key, nil
 }
 
-// signMacApp signs a macOS package with sign.identity, its libraries
-// first so the app's signature seals them. macOS keeps the permissions it
+// signMacApp signs a macOS package with sign.identity, its libraries and
+// Sparkle first so the app's signature seals them. macOS keeps the permissions it
 // grants a program signed by an identity across builds, and loses them
 // with each new ad hoc signature, which stays without an identity.
 func signMacApp(ctx context.Context, p *project, app string) error {
@@ -113,6 +113,9 @@ func signMacApp(ctx context.Context, p *project, app string) error {
 		if err := run(ctx, "codesign", p.macSignArgs(lib)...); err != nil {
 			return err
 		}
+	}
+	if err := signSparkle(ctx, app, p.macSignArgs); err != nil {
+		return err
 	}
 	if appex := macWidgetsAppex(app); len(p.Widgets) > 0 {
 		if err := signMacWidgets(ctx, p, appex, p.Sign.Identity); err != nil {

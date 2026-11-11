@@ -231,6 +231,9 @@ const (
 	EventLaunchAtLogin
 	// EventSpeech reports speech session Count (Data, a *SpeechEvent).
 	EventSpeech
+	// EventUpdate answers ItemCheckForUpdates Count: Finished when the
+	// platform's own updater showed what it found, else Data, an *Update.
+	EventUpdate
 )
 
 // EventMask is a set of event kinds.

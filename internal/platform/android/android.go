@@ -47,6 +47,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/platform/fontfile"
 	"github.com/oneo-me/nsgo/internal/platform/imagedecode"
 	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/oneo-me/nsgo/internal/platform/updates"
 	"github.com/oneo-me/nsgo/internal/testhost"
 )
 
@@ -164,11 +165,14 @@ type Options struct {
 	Fonts []string
 	// Appearance is the appearance the app starts in.
 	Appearance driver.Appearance
+	// Updates is how the app updates (updates.go).
+	Updates updates.Config
 }
 
 // Run serves app to the Java runtime over standard input and output until
 // the runtime closes them. Call it from main.
 func Run(app engine.App, opts Options) {
+	updateConfig = opts.Updates
 	s := connect(opts)
 	s.serve(app, opts, nil)
 }
@@ -763,7 +767,7 @@ func (s *surface) RequestFrame() { s.send(msgWantFrame, func(*writer) {}) }
 // Mount implements engine.Platform: one message per commit, then the
 // loads of the image sources it changed.
 func (s *surface) Mount(b *driver.MountBatch) {
-	b = withoutEffects(b)
+	b = s.withoutUpdateChecks(withoutEffects(b))
 	requests, loads := s.trackImages(b)
 	s.stage(b)
 	for i := range b.Items {

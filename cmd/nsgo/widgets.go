@@ -128,8 +128,9 @@ func (p *project) widgetPlist(ios bool) string {
 	return "<key>" + widgetPathKey + "</key><string>" + xmlText(p.macWidgetsPath()) + "</string>"
 }
 
+// xmlText escapes s for XML's text and attributes.
 func xmlText(s string) string {
-	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(s)
+	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;").Replace(s)
 }
 
 // kindsSwift returns Kinds.swift, the declaration of the kinds of widgets.

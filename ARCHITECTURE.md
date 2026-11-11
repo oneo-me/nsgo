@@ -34,6 +34,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `i18n`, `*/locales`, `internal/cldr` | — | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on, formatting by CLDR's data; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |
 | `microphone` | — | Recording the default input on macOS and iOS, reporting `ErrUnsupported` elsewhere |
+| `updater`, `updater/locales` | `nsh/updater` | Updating the app the platform's way: Sparkle on macOS, WinSparkle on Windows, the appcast `nsgo build` signs on Linux and Android, the App Store on iOS ([updates](docs/architecture/services.md#updates)) |
 | `widget` | — | Timelines of views that macOS and iOS widgets show, drawn by a SwiftUI extension the tool compiles ([widgets](docs/architecture/tool.md#widgets)) |
 | `nsgotest` | `nsh-testing` | App tests, headless or on a platform ([testing](docs/architecture/testing.md)) |
 | `internal/testhost` | `nsh-testing`'s agent | A backend's test host for `nsgotest`: the main thread, native input, screenshots |
@@ -42,7 +43,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `internal/shader`, `internal/shader/wgsl`, `internal/shaderir` | — (a fork of Ebitengine's Kage); `nsh-core`'s `shader` | The shader compilers: Go's syntax and WGSL checked into an IR, written as MSL, GLSL or HLSL ([shaders](docs/architecture/shaders.md)) |
 | `internal/engine` | `nsh-engine` | The engine goroutine: a mailbox, a batch per commit, storage files, the performance monitor |
 | `internal/platform/<target>` | `nsh-platform-*` | Native view mounting, text engine and input for one target |
-| `internal/platform/*` | Platforms' shared code | What backends share: `apple` for macOS and iOS, `webstyle` and `canvas2d` for the web and mini programs, images ([images](docs/architecture/images.md)), picked photos, process readings |
+| `internal/platform/*` | Platforms' shared code | What backends share: `apple` for macOS and iOS, `webstyle` and `canvas2d` for the web and mini programs, images ([images](docs/architecture/images.md)), picked photos, process readings, update checks |
 | `examples/gallery` | `examples/gallery` | NSH's gallery in Go, with headless tests; the website runs its web build |
 | `examples/previews` | | The docs' component examples, one demo per marked code block, in one web build the website mounts per block |
 | `examples/embedded`, `examples/embed-*` | `examples/embed-*` | An app to embed, and desktop, iOS and Android apps and a web page embedding it |
@@ -125,7 +126,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Text](docs/architecture/text.md) | Text, a `TextEngine`, `Input` or selection |
 | [Scrolling](docs/architecture/scrolling.md) | `Scroll`, `List` or a scroll view |
 | [Interaction](docs/architecture/interaction.md) | Accessibility, pointers, focus, touches, gestures or drops |
-| [Services](docs/architecture/services.md) | A service, a menu, the desktop window or the app's lifecycle |
+| [Services](docs/architecture/services.md) | A service, a menu, the desktop window, updates or the app's lifecycle |
 | [Application and windows](docs/architecture/application.md) | `nsgo.Run`, the windows, panels and tray icons an app opens, global shortcuts or shutdown |
 | [Hosted views](docs/architecture/native-views.md) | `WebView`, `Video` or `Native` components |
 | [Images](docs/architecture/images.md) | How backends load, cache, decode or play images |

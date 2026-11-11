@@ -8,6 +8,8 @@ import (
 )
 
 func run(root App, app func(*core.Scope), o options) {
+	root, app = withUpdateChecks(root, app)
 	linux.Run(rootOf(root, app), linux.Options{Title: name, Width: o.width, Height: o.height, ID: id,
-		Components: o.components, Constraints: o.constraints, Fonts: o.fonts, Appearance: o.appearance, Perf: o.monitor})
+		Components: o.components, Constraints: o.constraints, Fonts: o.fonts, Appearance: o.appearance, Perf: o.monitor,
+		Updates: updateConfig()})
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/platform/apple"
 	"github.com/oneo-me/nsgo/internal/platform/imageload"
 	"github.com/oneo-me/nsgo/internal/platform/queue"
+	"github.com/oneo-me/nsgo/internal/platform/updates"
 	"github.com/oneo-me/nsgo/internal/testhost"
 )
 
@@ -411,11 +412,14 @@ type Options struct {
 	Appearance driver.Appearance
 	// Perf shows the performance monitor over the app (perf.go).
 	Perf bool
+	// Updates is how the app updates (updates.go).
+	Updates updates.Config
 }
 
 // Run shows app full screen and runs UIKit's event loop. Call it from
 // main; it does not return.
 func Run(root engine.App, opts Options) {
+	updateConfig = opts.Updates
 	runner = newSurface(root, opts)
 	runUIKit(opts)
 }
@@ -858,6 +862,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemOpenURL:
 			s.openURL(it.Value, it.Count)
+			continue
+		case driver.ItemCheckForUpdates:
+			s.checkForUpdates(it.Count)
 			continue
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)

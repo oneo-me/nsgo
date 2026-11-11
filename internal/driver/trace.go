@@ -44,7 +44,7 @@ var itemNames = map[ItemKind]string{
 	ItemOpenSurface: "open-surface", ItemTray: "tray", ItemTrayMenu: "tray-menu", ItemHotKeys: "hot-keys",
 	ItemDock: "dock", ItemSetLaunchAtLogin: "set-launch-at-login", ItemLaunchAtLogin: "launch-at-login",
 	ItemShaderTransition: "shader-transition", ItemShaderInput: "shader-input", ItemSpeech: "speech",
-	ItemTakePhoto: "take-photo", ItemMatch: "match",
+	ItemTakePhoto: "take-photo", ItemMatch: "match", ItemCheckForUpdates: "check-for-updates",
 }
 
 // TraceLine is the item as traces print it: its kind, its view and what

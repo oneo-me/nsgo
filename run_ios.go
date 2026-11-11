@@ -8,5 +8,7 @@ import (
 )
 
 func run(root App, app func(*core.Scope), o options) {
-	ios.Run(rootOf(root, app), ios.Options{ID: id, Components: o.components, Fonts: o.fonts, Appearance: o.appearance, Perf: o.monitor})
+	root, app = withUpdateChecks(root, app)
+	ios.Run(rootOf(root, app), ios.Options{ID: id, Components: o.components, Fonts: o.fonts, Appearance: o.appearance, Perf: o.monitor,
+		Updates: updateConfig()})
 }

@@ -290,6 +290,9 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		}
 		return fmt.Errorf("-embed builds for %s; desktop hosts embed apps with nsgo.NewView", strings.Join(embedTargets, ", "))
 	}
+	if err := p.checkUpdateFeed(target); err != nil {
+		return err
+	}
 	switch target {
 	case "macos_arm64", "macos_x64":
 		app, err := buildMacApp(ctx, p, dir, goArch(arch))
@@ -308,7 +311,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := notarizeMac(ctx, p, app, dmg); err != nil {
 			return err
 		}
-		return p.releaseAssets(dmg)
+		return p.releaseInstaller(target, dmg)
 	case "windows_arm64", "windows_x64":
 		if err := buildWindows(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
 			return err
@@ -317,7 +320,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err != nil {
 			return err
 		}
-		return p.releaseAssets(setup)
+		return p.releaseInstaller(target, setup)
 	case "watchos":
 		_, err := buildWatchApp(ctx, p, dir, false)
 		return err
@@ -353,13 +356,20 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err != nil {
 			return err
 		}
-		return p.releaseAssets(deb, pkg)
+		if err := p.releaseAssets(pkg); err != nil {
+			return err
+		}
+		return p.releaseInstaller(target, deb)
 	case "android_arm64", "android_x64":
 		apk, err := buildAndroidAPK(ctx, p, dir, goArch(arch))
 		if err != nil {
 			return err
 		}
-		return p.releaseCopy(apk, fmt.Sprintf("%s-%s-%s.apk", p.packageSlug(), p.Version, arch))
+		name := fmt.Sprintf("%s-%s-%s.apk", p.packageSlug(), p.Version, arch)
+		if err := p.releaseCopy(apk, name); err != nil {
+			return err
+		}
+		return p.writeAppcast(target, filepath.Join(p.releaseDir(), name))
 	}
 	if mp, ok := miniProgramPlatformOf(target); ok {
 		if err := buildMiniProgram(ctx, p, mp, dir); err != nil {
@@ -396,7 +406,7 @@ type buildExtra struct {
 // without the compiler.
 func goBuildWith(ctx context.Context, p *project, out string, env []string, extra buildExtra, ldflags ...string) error {
 	args := append([]string{"build"}, extra.flags...)
-	args = append(args, "-ldflags", p.ldflags(ldflags...), "-o", out)
+	args = append(args, "-ldflags", p.ldflags(append(append([]string(nil), ldflags...), p.updateLdflags(env)...)...), "-o", out)
 	tags := extra.tags
 	files := map[string]string{}
 	for k, v := range extra.files {
@@ -550,10 +560,13 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 		return "", err
 	}
 	if err := writePlist(filepath.Join(app, "Contents", "Info.plist"), p, macPlist,
-		icon+"\n"+names+"\n"+p.fileTypesPlist()+"\n"+p.widgetPlist(false)); err != nil {
+		icon+"\n"+names+"\n"+p.fileTypesPlist()+"\n"+p.widgetPlist(false)+"\n"+p.sparklePlist("macos_"+goArchName(arch))); err != nil {
 		return "", err
 	}
 	if err := addMacWidgets(ctx, p, app, arch); err != nil {
+		return "", err
+	}
+	if err := addSparkle(ctx, p, app); err != nil {
 		return "", err
 	}
 	stage(ctx, "signing")
@@ -563,8 +576,8 @@ func buildMacApp(ctx context.Context, p *project, dir, arch string) (string, err
 	return app, run(ctx, "codesign", "--force", "--sign", "-", app)
 }
 
-// buildWindows writes <dir>/<name>.exe with the icon linked in and the
-// resources beside it.
+// buildWindows writes <dir>/<name>.exe with the icon linked in, and the
+// resources beside it with WinSparkle.dll where the app updates.
 func buildWindows(ctx context.Context, p *project, dir, arch string) error {
 	removeIcon, err := writeWindowsIcon(p, arch)
 	if err != nil {
@@ -577,7 +590,10 @@ func buildWindows(ctx context.Context, p *project, dir, arch string) error {
 		return err
 	}
 	stage(ctx, "copying resources")
-	return copyResources(p, dir)
+	if err := copyResources(p, dir); err != nil {
+		return err
+	}
+	return addWinSparkle(ctx, p, dir, arch)
 }
 
 // buildLinux writes <dir>/<name> with the resources and icon beside it.

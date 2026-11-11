@@ -168,6 +168,12 @@ type App struct {
 	// answers whether each opens; every one does when it is nil.
 	OpenedURLs []string
 	OpenURL    func(url string) bool
+	// UpdateChecks are the checks for a newer version the app asked the
+	// platform's updater for (updater.Check), oldest first, true for one
+	// in the background. Update answers each with what the updater found;
+	// with none the app is the newest.
+	UpdateChecks []bool
+	Update       func(background bool) core.UpdateCheck
 	// Picks are the photo picks the app asked for, oldest first.
 	// PickImages answers each with the files the user picks; with none
 	// the user cancels.
@@ -731,6 +737,25 @@ func (a *App) Span(selector string) driver.TextSpan {
 		}
 	}
 	return driver.TextSpan{Start: 0, End: len(v.Text), Style: v.TextStyle}
+}
+
+// checkForUpdates records a check for a newer version and answers it as
+// Update says.
+func (a *App) checkForUpdates(it *driver.MountItem) {
+	a.UpdateChecks = append(a.UpdateChecks, it.On)
+	var c core.UpdateCheck
+	if a.Update != nil {
+		c = a.Update(it.On)
+	}
+	ev := driver.Event{Kind: driver.EventUpdate, Count: it.Count, Finished: c.Shown}
+	if !c.Shown {
+		u := &driver.Update{App: c.App, Current: c.Current, Version: c.Version, URL: c.URL}
+		if c.Err != nil {
+			u.Err = c.Err.Error()
+		}
+		ev.Data = u
+	}
+	a.post(ev)
 }
 
 // Alerts returns the alerts shown and not answered yet, oldest first.

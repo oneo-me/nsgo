@@ -43,6 +43,7 @@ import (
 	"github.com/oneo-me/nsgo/internal/platform/queue"
 	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
 	"github.com/oneo-me/nsgo/internal/platform/textselect"
+	"github.com/oneo-me/nsgo/internal/platform/updates"
 	"github.com/oneo-me/nsgo/internal/testhost"
 )
 
@@ -63,6 +64,8 @@ type Options struct {
 	Constraints driver.WindowConstraints
 	// Perf shows the performance monitor over the app (perf.go).
 	Perf bool
+	// Updates is how the app updates (updates.go).
+	Updates updates.Config
 	// Host is what an embedding host gives the view (NewView).
 	Host engine.HostOptions
 	// test is what a test host opens the app with.
@@ -228,6 +231,7 @@ type menuBuild struct {
 // Run opens a window showing app and runs GTK's main loop. Call it from
 // main; it returns when the window closes.
 func Run(app engine.App, opts Options) {
+	updateConfig = opts.Updates
 	w, err := start(app, opts)
 	if err != nil {
 		panic("nsgo: " + err.Error())
@@ -636,6 +640,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemOpenURL:
 			w.openURL(it.Value, it.Count)
+			continue
+		case driver.ItemCheckForUpdates:
+			w.checkForUpdates(it.Count)
 			continue
 		case driver.ItemPickImages:
 			w.pickImages(*it.Pick, it.Count)

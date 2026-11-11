@@ -55,6 +55,7 @@ Each subject records the departures of its own area ([by subject](#departures-by
 | A Swift module and a C ABI for iOS hosts | Classes Go registers, one cgo export the tool generates ([embedding](embedding.md)) | NSGo writes no C or Swift |
 | A runtime library loads an app's bundle | The framework, library or program is the app | Go apps are compiled with the engine |
 | The GPUI backend embeds apps in GPUI apps | Desktops embed with `nsgo.NewView` on their own backend | One backend per desktop to keep |
+| `nsh/updater` swaps in the next version itself from a signed `latest.json`, and only links on phones | Sparkle on macOS and WinSparkle on Windows from appcasts `nsgo build` signs, the same appcast on Linux and Android, the App Store on iOS ([services](services.md#updates)) | Each platform's own updater and windows, as the user decided (2026-11-10) |
 
 ### Consistency across platforms
 

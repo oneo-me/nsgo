@@ -404,6 +404,8 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.OpenedURLs = append(a.OpenedURLs, it.Value)
 			opened := a.OpenURL == nil || a.OpenURL(it.Value)
 			a.post(driver.Event{Kind: driver.EventOpenURL, Count: it.Count, Finished: opened})
+		case driver.ItemCheckForUpdates:
+			a.checkForUpdates(&it)
 		case driver.ItemPickImages:
 			a.Picks = append(a.Picks, *it.Pick)
 			var files []driver.PickedFile
