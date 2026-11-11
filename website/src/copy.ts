@@ -220,7 +220,7 @@ const en = {
   },
   cta: {
     title: 'Start building with NSGo.',
-    body: 'Install the tool into your module, then create your first app.',
+    body: 'Follow the guide to install the tool and create your first app.',
     primary: 'Get started',
     secondary: 'Try the live demo',
   },
@@ -463,7 +463,7 @@ const zh: Copy = {
   },
   cta: {
     title: '开始用 NSGo 构建',
-    body: '把工具安装到你的模块里，然后创建第一个应用。',
+    body: '跟着指南安装工具，创建你的第一个应用。',
     primary: '快速开始',
     secondary: '在线体验',
   },

@@ -1,13 +1,12 @@
 ---
 import { Code } from 'astro:components';
-import CopyCommand from '../../components/CopyCommand.astro';
 import Eyebrow from '../../components/Eyebrow.astro';
 import HeroField from '../../components/HeroField.astro';
 import Icon, { type IconName } from '../../components/Icon.astro';
 import SpeedLines from '../../components/SpeedLines.astro';
 import { copies } from '../../copy';
 import Layout from '../../layouts/Layout.astro';
-import { docUrl, install, langOf, langPaths, links, pageUrl, platformName, platformRows, platforms, platformsOf, shown } from '../../site';
+import { docUrl, langOf, langPaths, links, pageUrl, platformName, platformRows, platforms, platformsOf, shown } from '../../site';
 import { goApp, goTest, tsxApp } from '../../snippets';
 import desktopEn from '../../assets/screens/desktop-en.jpg';
 import desktopZh from '../../assets/screens/desktop-zh.jpg';
@@ -81,7 +80,6 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
             {home.hero.demo}
           </a>
         </div>
-        <CopyCommand lang={lang} command={install} class="hero__command" />
       </div>
 
       <div class="hero__platforms">

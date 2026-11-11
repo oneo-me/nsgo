@@ -729,7 +729,7 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
 /* Clipped only sideways, so the phone's shadow falls past the bottom. */
 .hero {
   position: relative;
-  padding: 64px 0 56px;
+  padding: 56px 0 72px;
   overflow-x: clip;
 }
 
@@ -765,7 +765,6 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 72px;
-  min-height: 480px;
 }
 
 .hero__copy {
@@ -775,7 +774,7 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
 }
 
 .hero h1 {
-  margin-top: 26px;
+  margin-top: 32px;
   font-size: clamp(40px, 4.4vw, 56px);
   font-weight: 800;
   line-height: 1.04;
@@ -789,7 +788,7 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
 
 .hero__lead {
   max-width: 500px;
-  margin-top: 22px;
+  margin-top: 28px;
   color: var(--muted);
   font-size: clamp(16px, 1.5vw, 17.5px);
   line-height: 1.7;
@@ -804,17 +803,12 @@ html[data-theme-preference='system'] .theme-menu__icon--system {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 34px;
-}
-
-.hero__command {
-  margin-top: 18px;
+  margin-top: 44px;
 }
 
 @media (max-width: 960px) {
   .hero__inner {
     grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
   }
 
   .hero__inner {
@@ -1820,7 +1814,7 @@ html[data-theme='dark'] .phone {
   }
 
   .hero {
-    padding-top: 40px;
+    padding-top: 32px;
   }
 }
 
@@ -2122,17 +2116,23 @@ html[data-theme='dark'] .phone {
   align-items: center;
   justify-content: space-between;
   gap: 32px 48px;
-  padding: 40px 48px;
+  padding: 44px 48px;
   overflow: hidden;
   border-radius: 24px;
   background: var(--gradient);
   color: #ffffff;
 }
 
+/* Behind the buttons, whole within the card from its top padding to its
+   bottom. */
 .cta__lines {
   position: absolute;
-  top: -60px;
-  right: -40px;
+  top: 24px;
+  right: 32px;
+  width: auto;
+  height: calc(100% - 48px);
+  max-height: 140px;
+  aspect-ratio: 40 / 44;
   color: #ffffff;
   opacity: 0.12;
 }
@@ -2155,38 +2155,9 @@ html[data-theme='dark'] .phone {
 }
 
 .cta__actions {
-  display: grid;
-  justify-items: start;
-  gap: 14px;
-}
-
-.cta .command {
-  border-color: rgb(255 255 255 / 30%);
-  background: rgb(255 255 255 / 14%);
-  color: #ffffff;
-}
-
-.cta .command__prompt {
-  color: rgb(255 255 255 / 70%);
-}
-
-.cta .command__copy {
-  color: rgb(255 255 255 / 80%);
-}
-
-.cta .command__copy:hover {
-  background: rgb(255 255 255 / 18%);
-  color: #ffffff;
-}
-
-.cta .command__copy.is-copied .command__icon--done {
-  color: #ffffff;
-}
-
-.cta__buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 
 .footer {

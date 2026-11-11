@@ -1,7 +1,6 @@
 ---
 import { copies } from '../copy';
-import { docUrl, install, links, navPages, pageUrl, type Lang } from '../site';
-import CopyCommand from './CopyCommand.astro';
+import { docUrl, links, navPages, pageUrl, type Lang } from '../site';
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import SpeedLines from './SpeedLines.astro';
@@ -58,21 +57,18 @@ const external = (href: string) => href.startsWith('http') || href === links.gal
 {cta && (
   <section class="container cta-wrap">
     <div class="cta">
-      <SpeedLines class="cta__lines" size={320} />
+      <SpeedLines class="cta__lines" />
       <div class="cta__copy">
         <h2>{copy.cta.title}</h2>
         <p>{copy.cta.body}</p>
       </div>
       <div class="cta__actions">
-        <CopyCommand lang={lang} command={install} />
-        <div class="cta__buttons">
-          <a class="btn btn--light" href={docUrl(lang, 'getting-started')}>
-            {copy.cta.primary}
-          </a>
-          <a class="btn btn--ghost" href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
-            {copy.cta.secondary}
-          </a>
-        </div>
+        <a class="btn btn--light btn--large" href={docUrl(lang, 'getting-started')}>
+          {copy.cta.primary}
+        </a>
+        <a class="btn btn--ghost btn--large" href={links.gallery} target="_blank" rel="noopener noreferrer" data-umami-event="open-gallery">
+          {copy.cta.secondary}
+        </a>
       </div>
     </div>
   </section>
