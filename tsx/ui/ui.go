@@ -91,6 +91,7 @@ var enums = []tsx.Option{
 	tsx.Enum(map[string]ui.Size{"default": ui.SizeDefault, "small": ui.SizeSmall, "large": ui.SizeLarge}),
 	tsx.Enum(map[string]ui.SpinnerVariant{"ring": ui.SpinnerRing, "spokes": ui.SpinnerSpokes}),
 	tsx.Enum(map[string]ui.StepStatus{"upcoming": ui.StepUpcoming, "current": ui.StepCurrent, "complete": ui.StepComplete, "failed": ui.StepFailed}),
+	tsx.Enum(map[string]ui.SwitchVariant{"default": ui.SwitchDefault, "system": ui.SwitchSystem}),
 	tsx.Enum(map[string]ui.TabsVariant{"segmented": ui.TabsSegmented, "underline": ui.TabsUnderline}),
 	tsx.Enum(map[string]ui.ToastType{"plain": ui.ToastPlain, "info": ui.ToastInfo, "success": ui.ToastSuccess, "warning": ui.ToastWarning,
 		"error": ui.ToastError}),

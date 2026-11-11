@@ -63,7 +63,7 @@ Every `base` part style has a `…StyleFunc` (`DataTable`, `Editor` and `DiffVie
 
 ### Variants and sizes
 
-Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws, the color it shows included: `BadgeVariant`, `ButtonVariant`, `CollapsibleVariant`, `HoldVariant`, `IconButtonVariant`, `MenuItemVariant`, `MeterVariant`, `SpinnerVariant` and `TabsVariant`.
+Each `ui` component that has several looks takes `Variant`, a type of its own whose zero value is the default. A `Variant` type names only looks its component draws, the color it shows included: `BadgeVariant`, `ButtonVariant`, `CollapsibleVariant`, `HoldVariant`, `IconButtonVariant`, `MenuItemVariant`, `MeterVariant`, `SpinnerVariant`, `SwitchVariant` and `TabsVariant`. `SwitchSystem` is the one look a `ui` component takes from its platform: `core.SystemSwitch`, NSSwitch or UISwitch, where macOS and iOS have it, and `ui`'s own elsewhere; its size is the system's, `Size` choosing macOS's control size.
 
 Most components have one size, so controls line up without an app choosing. `Button`, `Tabs` and `Switch` take `Size`, a `ui.Size` whose zero value is the default:
 

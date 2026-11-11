@@ -124,3 +124,9 @@ type AndroidEventMapper interface {
 // Color as a number (0: the system's); it emits "change" with the index
 // the user chose.
 const TabBarComponent = "nsgo/tab-bar"
+
+// SwitchComponent is the native component macOS and iOS register for
+// core.SystemSwitch: NSSwitch or UISwitch. Its props are "checked",
+// "disabled" and "size" ("small" or "large", which only macOS has); it
+// emits "change" with the value the user chose.
+const SwitchComponent = "nsgo/switch"

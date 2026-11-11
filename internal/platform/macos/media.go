@@ -20,6 +20,9 @@ func (s *surface) configureNative(v *view, c *driver.NativeConfig) {
 	}
 	if v.component == nil && v.componentView == 0 {
 		factory := s.components[c.Component]
+		if factory == nil && c.Component == driver.SwitchComponent {
+			factory = newSwitch
+		}
 		if factory == nil {
 			if s.unknown == nil {
 				s.unknown = map[string]bool{}

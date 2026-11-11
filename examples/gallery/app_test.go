@@ -752,6 +752,36 @@ func TestMedia(t *testing.T) {
 	app.Find("text:0.25")
 }
 
+// TestSystemSwitch shows the platform's switch in the Switch playground
+// and turns it off, with the platform's input on macOS and iOS.
+func TestSystemSwitch(t *testing.T) {
+	var app *nsgotest.App
+	switch nsgotest.Target() {
+	case "ios_simulator":
+		app = startPhone(t)
+		openPhone(app, "Checkbox")
+	case "", "macos":
+		app = startDesktop(t)
+		open(app, "Checkbox")
+	default:
+		t.Skip("macOS and iOS alone have a system switch")
+	}
+	app.Press("role:switch System")
+	native := func() *nsgotest.View { return app.FindMounted("id:form-Switch").Children[0].Children[0] }
+	if v := native(); v.Component != driver.SwitchComponent || v.NativeProps["checked"] != true {
+		t.Fatalf("switch %q with %v, want the system's, on", v.Component, v.NativeProps)
+	}
+	sw := fmt.Sprintf("view:%d", native().ID)
+	if nsgotest.Target() == "" {
+		app.Emit(sw, "change", false)
+	} else {
+		app.Press(sw)
+	}
+	if native().NativeProps["checked"] != false {
+		t.Fatal("the system switch stayed on")
+	}
+}
+
 // TestWebInput clicks the inline page's button and link as the user,
 // whose trusted click posts to the app and saves the page's note, where a
 // platform gives web views trusted input and saves their downloads.

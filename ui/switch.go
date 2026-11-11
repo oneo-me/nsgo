@@ -13,13 +13,39 @@ type Switch struct {
 	OnChange func(bool)
 	Label    string
 	Size     Size
+	Variant  SwitchVariant
+	TestID   string
 }
+
+// SwitchVariant is a Switch's look.
+type SwitchVariant uint8
+
+const (
+	// SwitchDefault is ui's own look. It is the default.
+	SwitchDefault SwitchVariant = iota
+	// SwitchSystem is the platform's own switch where it has one, macOS's
+	// NSSwitch and iOS's UISwitch (core.SystemSwitch), sized as the
+	// system's; elsewhere it is ui's look.
+	SwitchSystem
+)
 
 // Render implements core.Node.
 func (s Switch) Render(cx *core.Scope) core.Node {
+	if s.Variant == SwitchSystem {
+		return core.Show{When: func() bool { return core.SystemSwitchAvailable(cx) }, Else: s.own,
+			Then: func(*core.Scope) core.Node {
+				return core.SystemSwitch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label, TestID: s.TestID,
+					Size: sized(s.Size, "", "small", "large")}
+			}}
+	}
+	return s.own(cx)
+}
+
+// own is the switch in ui's look.
+func (s Switch) own(cx *core.Scope) core.Node {
 	look := NewSwitchLook(cx, s.Checked, s.Size)
 	// More to press on every side, without taking more room.
-	return base.Switch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label,
+	return base.Switch{Checked: s.Checked, OnChange: s.OnChange, Label: s.Label, TestID: s.TestID,
 		Style:          core.Style{Margin: core.All(-8), Padding: core.All(8)},
 		TrackStyleFunc: look.Track, ThumbStyleFunc: look.Thumb}
 }

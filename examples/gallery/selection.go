@@ -35,15 +35,19 @@ func radioCard(cx *core.Scope) core.Node {
 
 func switchCard(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
-	checked, disabled := core.NewSignal(cx, true), core.NewSignal(cx, false)
+	checked, disabled, system := core.NewSignal(cx, true), core.NewSignal(cx, false), core.NewSignal(cx, false)
 	return Playground{Title: "Switch", Base: baseSwitchForm(cx, checked, disabled), Stage: func() core.Node {
+		variant := ui.SwitchDefault
+		if system.Get() {
+			variant = ui.SwitchSystem
+		}
 		var switches []core.Node
 		for _, size := range sizes {
-			switches = append(switches, ui.Switch{Label: tr.LibStarred(), Checked: checked.Get, Size: size.Value,
+			switches = append(switches, ui.Switch{Label: tr.LibStarred(), Checked: checked.Get, Size: size.Value, Variant: variant,
 				OnChange: checked.Set})
 		}
 		return stageRow(switches...)
-	}, BaseKnobs: []core.Node{boolKnob("Checked", checked), boolKnob("Disabled", disabled)}}
+	}, BaseKnobs: []core.Node{boolKnob("Checked", checked), boolKnob("Disabled", disabled)}, Knobs: []core.Node{boolKnob("System", system)}}
 }
 
 func selectPlayground(cx *core.Scope) core.Node {

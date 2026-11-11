@@ -24,6 +24,9 @@ func pressable(v *View) bool {
 // selector names in a text with pressable spans.
 func (a *App) pressTarget(selector string) (v *View, at driver.Point, index int) {
 	a.t.Helper()
+	if m := a.Query(selector); a.target != nil && len(m) == 1 && m[0].Kind == driver.KindNative {
+		return m[0], a.target.reveal(m[0]), 0
+	}
 	if m := a.Query(selector); len(m) == 1 && m[0].Node != nil {
 		_, at = m[0].center()
 		if a.target != nil {
@@ -86,7 +89,9 @@ func (a *App) charsAt(selector string, v *View) int {
 // Press presses what selector names, or the pressable view around it, as
 // a tap does: a finger goes down and lifts on its middle, which the views
 // listening to touches hear and presses outside the overlays it is not in
-// report, while the view hears PressDown, PressUp and Press.
+// report, while the view hears PressDown, PressUp and Press. On a
+// platform, a native component's view, such as the system's switch,
+// takes the press itself.
 func (a *App) Press(selector string) {
 	a.t.Helper()
 	a.step("press(%s)", selector)

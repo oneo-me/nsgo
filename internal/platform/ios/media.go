@@ -448,6 +448,9 @@ func (s *surface) configureNative(v *view, c *driver.NativeConfig) {
 		if factory == nil && c.Component == driver.TabBarComponent {
 			factory = newTabBar
 		}
+		if factory == nil && c.Component == driver.SwitchComponent {
+			factory = newSwitch
+		}
 		if factory == nil {
 			if !s.unknown[c.Component] {
 				s.unknown[c.Component] = true
