@@ -110,7 +110,9 @@ func (t *Toaster) run() {
 	t.shown.Set(t.visible())
 	if !t.ticking {
 		t.ticking = true
-		t.cx.AfterFunc(toastTick, t.tick)
+		// A timer belongs to the scope that starts it: posted, it is the
+		// Toaster's, not that of a dialog showing a toast as it closes.
+		t.cx.Post(func() { t.cx.AfterFunc(toastTick, t.tick) })
 	}
 }
 

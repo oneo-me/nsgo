@@ -45,6 +45,38 @@ func TestToasts(t *testing.T) {
 	})
 }
 
+// TestToastFromClosingScope shows a toast from a scope that then goes,
+// as a dialog's button does as the dialog closes, and still closes it
+// with its close button and lets the next one time out.
+func TestToastFromClosingScope(t *testing.T) {
+	each(t, func(t *testing.T, e core.Environment) {
+		var toaster *Toaster
+		var dialog *core.Scope
+		app, _ := start(t, e, func(cx *core.Scope) core.Node {
+			toaster = NewToaster(cx)
+			dialog = cx.Child()
+			return Toasts{Toaster: toaster, TestID: "toasts", CloseLabel: "Close"}
+		})
+		app.Post(func() {
+			dialog.Post(func() {
+				toaster.Show(ToastContent{ID: "accepted", Title: "Accepted"})
+				dialog.Dispose()
+			})
+		})
+		app.Advance(time.Second)
+		app.Press("accepted-close")
+		app.Advance(time.Second)
+		if app.Exists("accepted") {
+			t.Fatal("a toast shown from a scope that went did not close")
+		}
+		toaster.Show(ToastContent{ID: "next", Title: "Next", Duration: time.Second})
+		app.Advance(2 * time.Second)
+		if app.Exists("next") {
+			t.Fatal("the next toast stayed past its duration")
+		}
+	})
+}
+
 // TestToastPlacements places the stack at each edge, swipes toward it by
 // default and turns it around with Reverse.
 func TestToastPlacements(t *testing.T) {
