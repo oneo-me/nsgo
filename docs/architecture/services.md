@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, notifications and the badge, haptics, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
 ## Requests and answers
 
@@ -126,6 +126,24 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 - macOS and iOS (`apple/speech.go`) feed the Speech framework's recognizer from `AVAudioEngine`'s input, asking for speech recognition and the microphone once each. The app's Info.plist declares `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` (`nsgo.yaml`'s `apple.info`): without them a session ends `not-allowed`, since the system would end the app as it asks. iOS holds the audio session in the record category while it listens.
 - `Env.CanRecognizeSpeech` says the platform recognizes speech; elsewhere a session ends `unavailable` without asking it ([roadmap](../roadmap.md#finish-the-existing-platforms)).
 
+## Notifications and the badge
+
+`NotificationPermission` answers whether the app may show notifications without asking, `RequestNotificationPermission` asks with the system's prompt the first time, as NSH's `Notifications`: not asked (`"default"`), granted, denied, or unavailable where the platform or build shows none. `ShowNotification` shows one, replacing one of its ID, also while the app is in front, and answers whether the system took it; `CloseNotification` removes it; `OnNotificationPress` hears a press, the one that started the app kept for the first handler. `SetBadge` sets the count on the app's icon. Code its `Access` does not grant `AccessNotifications` gets unavailable and nothing shown.
+
+| Target | Notifications | Permission | Press | Badge |
+| --- | --- | --- | --- | --- |
+| macOS, iOS | `UNUserNotificationCenter` (`apple/notifications.go`), its delegate set before launching ends, showing them in front | The center's; a bare executable outside an app bundle has none | The delegate's default action | The Dock tile's label; iOS's needs the permission, `setBadgeCount:` from iOS 16 |
+| Android | `NotificationManager` in `Notifications.java`, a channel with the system's sound and a silent one | `POST_NOTIFICATIONS` from API 33 where the manifest asks for it (`android.permissions`), else the app's setting | A `PendingIntent` bringing the activity back with the ID, kept until the first batch | None: the count goes with notifications shown after it |
+| Windows | Toasts through WinRT's `ToastNotificationManager`, tagged with the ID; an app outside an MSIX registers its ID as an AppUserModelID in the current user's registry with its name and icon | The notifier's setting: granted or denied | The toast's `Activated`, while the app runs | The taskbar button's overlay icon, a red disc drawn with GDI |
+| Linux | `org.freedesktop.Notifications` over GDBus, with `desktop-entry` and `suppress-sound` hints | Granted where a server answers, else unavailable | The `default` action's `ActionInvoked`, presenting the window | None |
+| Web | The page's `Notification` | The page's | Its `onclick`, focusing the window | `navigator.setAppBadge` for an installed web app |
+
+`nsgotest` keeps the notifications shown, the badge and the permission (`NotificationPermission`, `NotificationAnswer`), and `PressNotification` presses one.
+
+## Haptics
+
+`mobile.PlayHaptic`, NSH's `Haptics`, plays a selection, an impact of five weights or a task's outcome: UIKit's feedback generators on iOS, and on Android the view's nearest `HapticFeedbackConstants`, `CONFIRM`, `REJECT` and `SEGMENT_TICK` where its API has them, as the user's touch feedback setting allows. The core sends nothing elsewhere.
+
 ## The app's lifecycle
 
 `Env.Lifecycle`, NSH's `lifecycle()`, says whether the app is in use: `active`, `inactive` (shown without the focus) or `background` (none of it shows). Each backend reports it with the environment, as it changes.
@@ -159,6 +177,8 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 `desktop.Restart`, NSH's `Application.restart()`, quits as `Quit` does with `ItemQuit`'s `On` set, and `nsgo.Run`, once the app has ended, starts the program again with the arguments it started with, its launch flags among them. The two never run side by side: on macOS and Linux a shell waits up to 10 seconds for the old process to exit, then starts the new one, a macOS bundle through `open -n` as the user opens it; on Windows the new process waits for the one `NSGO_RESTART_AFTER` names before `Run` starts. Under `nsgo dev`, which ends with the app it started, it only quits.
 
 When the app ends by itself, and which of its windows a close keeps, is its shutdown mode's and its windows' `OnClosing` ([application and windows](application.md#lifecycle)).
+
+`OnQuit` handlers clean up as the app ends, as NSH's `Application.on("quit")` and GPUI's `on_app_quit`: `Engine.Close` runs them on the engine goroutine, oldest first, with one context that ends `QuitTimeout` (200 ms) after they start, before the graph is disposed, and waits for them no longer than that and 100 ms. They run however the engine closes: `Quit`, the shutdown mode, AppKit's terminate, the window closing on Windows and Linux, the Java runtime ending on Android, iOS's `applicationWillTerminate:` and a host removing an embedded view. The web and watchOS have no such moment ([roadmap](../roadmap.md#services-and-components-since-040)).
 
 ## Desktop windows
 

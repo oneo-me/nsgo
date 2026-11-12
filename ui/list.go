@@ -85,7 +85,7 @@ func (l List) Render(cx *core.Scope) core.Node {
 		RowLabel: l.RowLabel, Columns: l.Columns, EstimatedSize: size, Gap: l.Gap, Header: l.Header, Footer: l.Footer, Empty: l.Empty,
 		OnLoadMore: l.OnLoadMore, Label: l.Label, Ref: l.Ref, TestID: l.TestID,
 		Style:         core.Style{CornerRadius: RadiusControl}.Merge(l.Style),
-		StyleFunc:     func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		StyleFunc:     func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 		ListStyle:     core.Style{Padding: core.All(4)}.Merge(l.ListStyle),
 		ItemStyle:     row,
 		ItemStyleFunc: rowLook(cx, interactive, l.RowStyle, l.RowStyleFunc)}

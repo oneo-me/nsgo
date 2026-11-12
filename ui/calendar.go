@@ -50,7 +50,7 @@ func calendarConfig(cx *core.Scope, months, firstDay int, disabled func(time.Tim
 	colors := ColorsOf(cx)
 	cell := core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, CornerRadius: RadiusControl - 2, Disabled: Dimmed()}
 	strong := func() core.Style {
-		return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -1)}
+		return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, FocusVisible: FocusRing(cx, -1)}
 	}
 	return base.CalendarConfig{NumberOfMonths: months, FirstDayOfWeek: firstDay, DisabledMatcher: disabled,
 		PreviousLabel: locales.CalendarPrevious(cx), NextLabel: locales.CalendarNext(cx),

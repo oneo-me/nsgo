@@ -674,6 +674,9 @@ func startApp(opts Options) objc.ID {
 		Fn:  func(self objc.ID, _ objc.SEL, note objc.ID) { engine.SyncStorage() },
 	}})).Send(selNew)
 	nsApp.Send(sel("setDelegate:"), delegate)
+	// Before the app finishes launching, so a press that launched it is
+	// heard.
+	apple.WatchNotifications()
 	setAppearance(opts.Appearance)
 	return nsApp
 }
@@ -1082,6 +1085,7 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 		if !s.hasKeys() {
 			break
 		}
+		s.engine.InputModality(driver.ModalityKeyboard)
 		if binding, consumed := s.binding(event); consumed {
 			if binding != "" {
 				s.engine.Dispatch(driver.Event{Kind: driver.EventKey, Text: binding})
@@ -1096,6 +1100,7 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 			return 0
 		}
 	case typeLeftDown:
+		s.engine.InputModality(driver.ModalityPointer)
 		s.commitPending()
 		s.pressOutside(event)
 		if s.pressScrolls(event) {
@@ -1113,9 +1118,11 @@ func (s *surface) filterEvent(event objc.ID) objc.ID {
 			return 0
 		}
 	case typeRightDown:
+		s.engine.InputModality(driver.ModalityPointer)
 		s.commitPending()
 		s.pressOutside(event)
 	case typeOtherDown:
+		s.engine.InputModality(driver.ModalityPointer)
 		s.commitPending()
 		const backButton = 3
 		if objc.Send[int](event, sel("buttonNumber")) == backButton && s.under(event) {
@@ -1397,6 +1404,9 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemCheckForUpdates:
 			s.checkForUpdates(it.On, it.Count)
+			continue
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
+			s.notify(it)
 			continue
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)

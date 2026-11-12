@@ -305,6 +305,54 @@ const (
 	// of the app, in the background when On; the platform answers with
 	// EventUpdate carrying Count.
 	ItemCheckForUpdates
+	// ItemHaptic plays haptic feedback Count (a Haptic) where the device
+	// has it and the user allows it.
+	ItemHaptic
+	// ItemNotificationPermission asks whether the app may show
+	// notifications, with the system's prompt when On; the platform
+	// answers with EventNotification carrying Count and the permission as
+	// Index (a NotificationPermission).
+	ItemNotificationPermission
+	// ItemShowNotification shows Notification, replacing one of its ID;
+	// the platform answers with EventNotification carrying Count, Finished
+	// when the system took it.
+	ItemShowNotification
+	// ItemCloseNotification removes the notification whose ID is Value.
+	ItemCloseNotification
+	// ItemBadge shows Count on the app's icon; 0 clears it.
+	ItemBadge
+)
+
+// Notification is a system notification (ItemShowNotification), as
+// core.Notification.
+type Notification struct {
+	ID, Title, Body string
+	Silent          bool
+}
+
+// NotificationPermission is what EventNotification answers an
+// ItemNotificationPermission with, as core's.
+const (
+	NotificationsNotAsked = iota
+	NotificationsGranted
+	NotificationsDenied
+	NotificationsUnavailable
+)
+
+// Haptic is what ItemHaptic plays, as core.Haptic.
+type Haptic = uint32
+
+// The haptics, as core's.
+const (
+	HapticSelection Haptic = iota + 1
+	HapticLight
+	HapticMedium
+	HapticHeavy
+	HapticSoft
+	HapticRigid
+	HapticSuccess
+	HapticWarning
+	HapticError
 )
 
 // MountItem is one change to the native views. Kind says which fields
@@ -369,6 +417,8 @@ type MountItem struct {
 	Pick *PickRequest
 	// Speech is an ItemSpeech's request.
 	Speech *SpeechRequest
+	// Notification is what ItemShowNotification shows.
+	Notification *Notification
 	// Files is ItemPickFiles' request, Save ItemSaveFile's,
 	// Directories ItemPickDirectories', Open ItemOpenFile's and
 	// ItemInstallPackage's and Share ItemShare's.

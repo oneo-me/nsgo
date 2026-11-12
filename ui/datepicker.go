@@ -39,6 +39,9 @@ type DatePicker struct {
 	OnChange     func(value base.DateValue)
 	Open         func() bool
 	OnOpenChange func(open bool, reason base.Reason)
+	// Presentation is base's: a popup at the field by default, or a
+	// sheet, which ui chooses on no device of its own.
+	Presentation base.Presentation
 	// Label names the field for assistive technology.
 	Label  string
 	TestID string
@@ -72,12 +75,12 @@ func (d DatePicker) Render(cx *core.Scope) core.Node {
 	}
 	text := func() string { return value().Format(format) }
 	box, look, segment, segmentLook := timeBox(cx)
-	popup, backdrop := pickerSurface(cx)
+	popup, backdrop := pickerSurface(cx, d.Presentation)
 	label := d.Label
 	if label == "" {
 		label = d.Placeholder
 	}
-	b := base.DatePicker{Value: value, Range: d.Range, Open: open, Disabled: d.Disabled, TimePrecision: d.TimePrecision, HourCycle: d.HourCycle,
+	b := base.DatePicker{Value: value, Range: d.Range, Open: open, Disabled: d.Disabled, Presentation: d.Presentation, TimePrecision: d.TimePrecision, HourCycle: d.HourCycle,
 		DefaultTime: d.DefaultTime, Presets: d.Presets, Cleanable: d.Cleanable,
 		CalendarConfig: calendarConfig(cx, d.NumberOfMonths, d.FirstDayOfWeek, d.DisabledMatcher),
 		CalendarStyle:  calendarStyle(d.NumberOfMonths),
@@ -94,7 +97,7 @@ func (d DatePicker) Render(cx *core.Scope) core.Node {
 			}
 		},
 		Offset: 4, Margin: 8, Label: label, TestID: d.TestID, RootStyle: core.Style{Width: core.Pt(200), AlignSelf: core.AlignStart}.Merge(d.Style),
-		Style: core.Style{Group: "button", CornerRadius: RadiusControl}, StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		Style: core.Style{Group: "button", CornerRadius: RadiusControl}, StyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 		Trigger:        pickerField(cx, nil, pickerText(cx, text, d.Placeholder), lucide.Calendar, open),
 		PopupStyle:     core.Style{Padding: core.All(12), Gap: 8},
 		PopupStyleFunc: popup, BackdropStyle: backdrop, ContentStyle: core.Style{Direction: core.Row, Gap: 12},

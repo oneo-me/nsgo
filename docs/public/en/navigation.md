@@ -51,7 +51,7 @@ ui.Dialog{
 
 ## Menus
 
-`ui.Menu` opens `ui.MenuItem`s from a button: beside it on desktops, as a sheet on touch screens. `ui.ContextMenu` does the same for a secondary click or a long press, and `ui.Popover`, `ui.HoverCard` and `ui.Tooltip` show other anchored content.
+`ui.Menu` opens `ui.MenuItem`s from a button: beside it, or as a sheet from the bottom when its `Presentation` asks, on any device. `ui.ContextMenu` does the same for a secondary click or a long press, and `ui.Popover`, `ui.HoverCard` and `ui.Tooltip` show other anchored content.
 
 ```go
 ui.Menu{Trigger: ui.Button{Text: "Actions", Variant: ui.ButtonSecondary}, Children: []core.Node{

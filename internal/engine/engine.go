@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
@@ -209,6 +210,8 @@ func (h HostEnvironment) over(env driver.Environment) driver.Environment {
 type Engine struct {
 	*runner
 	surface uint32
+	// modality is the input modality last reported (InputModality).
+	modality atomic.Uint32
 }
 
 // runner is what an app's surfaces share.
@@ -222,7 +225,9 @@ type runner struct {
 	wake   chan struct{}
 	done   chan struct{}
 	exited chan struct{}
-	once   sync.Once
+	// quitted is closed once the OnQuit handlers returned.
+	quitted chan struct{}
+	once    sync.Once
 }
 
 type message struct {
@@ -253,11 +258,12 @@ var Trace func(b *driver.MountBatch, took time.Duration)
 // Start runs app on a new goroutine, its first surface on p.
 func Start(p Platform, app App, opts Options) *Engine {
 	e := &Engine{runner: &runner{
-		wake:   make(chan struct{}, 1),
-		done:   make(chan struct{}),
-		exited: make(chan struct{}),
-		event:  opts.Event,
-		pin:    opts.Pin,
+		wake:    make(chan struct{}, 1),
+		done:    make(chan struct{}),
+		exited:  make(chan struct{}),
+		quitted: make(chan struct{}),
+		event:   opts.Event,
+		pin:     opts.Pin,
 	}}
 	var tokens Tokens
 	if hs := opts.Host.Settings; hs != nil {
@@ -445,6 +451,8 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		select {
 		case <-e.wake:
 		case <-e.done:
+			root.Quitting()
+			close(e.quitted)
 			return
 		}
 		if perf != nil {
@@ -572,6 +580,15 @@ func (e *Engine) Dispatch(ev driver.Event) {
 	e.push(message{surface: e.surface, event: ev})
 }
 
+// InputModality reports what the user gives the surface input with
+// (driver.ModalityKeyboard or ModalityPointer), as it changes: a backend
+// calls it for every key and press, before the focus moves they cause.
+func (e *Engine) InputModality(m uint32) {
+	if e != nil && e.modality.Swap(m) != m {
+		e.Dispatch(driver.Event{Kind: driver.EventInputModality, Count: m})
+	}
+}
+
 // LaunchFiles returns the files the command line names, as absolute
 // paths: what Windows and Linux launch an app with to open, which their
 // backends send it as EventOpenFiles. Other arguments are left to the
@@ -670,8 +687,8 @@ func (e *Engine) PressAt(ev driver.Event) { e.push(message{surface: e.surface, a
 // loaded after they were registered (driver.FontRegistrar).
 func (e *Engine) FontsChanged() { e.push(message{fonts: true}) }
 
-// Close stops the app, disposing its graph, and waits for the engine
-// goroutine to exit; an opened surface's Engine only detaches its
+// Close stops the app, running its OnQuit handlers and disposing its
+// graph, and waits for the engine goroutine to exit; an opened surface's Engine only detaches its
 // platform. It must not be called from the engine goroutine.
 func (e *Engine) Close() {
 	if e.surface != 0 {
@@ -679,5 +696,19 @@ func (e *Engine) Close() {
 		return
 	}
 	e.once.Do(func() { close(e.done) })
-	<-e.exited
+	// The OnQuit handlers have core.QuitTimeout, and the platform waits
+	// no longer for one that overstays it.
+	timer := time.NewTimer(core.QuitTimeout + quitGrace)
+	defer timer.Stop()
+	select {
+	case <-e.quitted:
+		<-e.exited
+	case <-e.exited:
+	case <-timer.C:
+		log.Print("nsgo: an OnQuit handler outlasted its time; the app ends without it")
+	}
 }
+
+// quitGrace is how long Close waits past core.QuitTimeout for the
+// engine to end once its quit handlers' context is done.
+const quitGrace = 100 * time.Millisecond

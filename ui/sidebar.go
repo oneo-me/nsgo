@@ -161,7 +161,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(height),
 				Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorDefault},
 			StyleFunc: func() core.Style {
-				return core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, Focus: FocusRing(cx, -2)}
+				return core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, FocusVisible: FocusRing(cx, -2)}
 			},
 			PartStates: func() core.PartStates { return core.PartStates{Focused: on() && focused.Get()} },
 			Children:   children}
@@ -196,7 +196,7 @@ func (s Sidebar) Render(cx *core.Scope) core.Node {
 				title.Style.Padding.Right = 4
 				heading = base.Button{Label: sec.Title, Expanded: open, OnPress: func(core.PressEvent) { take(); hold(); toggle() },
 					Style:     core.Style{Group: sidebarTitle, Direction: core.Row, AlignItems: core.AlignCenter, FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), CornerRadius: 8, Cursor: core.CursorDefault},
-					StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, -2)} },
+					StyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, -2)} },
 					Children:  []core.Node{title, sidebarTrailing(cx, trailing, held), sidebarArrow(cx, open, held)}}
 			}
 			heading = core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter},

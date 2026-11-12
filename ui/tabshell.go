@@ -132,7 +132,7 @@ func (s TabShell) bar(cx *core.Scope, selected func() int, change func(int)) cor
 				Transition: quick},
 			StyleFunc: func() core.Style {
 				return core.Style{Color: colors.Muted(), Hover: &core.Style{Color: colors.Text()}, Active: &core.Style{Background: colors.Pressed()},
-					Selected: &core.Style{Color: colors.Accent()}, Focus: FocusRing(cx, -2)}
+					Selected: &core.Style{Color: colors.Accent()}, FocusVisible: FocusRing(cx, -2)}
 			},
 			Children: content})
 	}

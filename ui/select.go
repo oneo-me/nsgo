@@ -29,6 +29,9 @@ type Select[T comparable] struct {
 	// chosen, which asks to choose none.
 	OnClear  func()
 	Disabled func() bool
+	// Presentation is base's: a popup at the field by default, or a
+	// sheet, which ui chooses on no device of its own.
+	Presentation base.Presentation
 	// Label names the field for assistive technology.
 	Label string
 	// TestID names the field; each option adds "-" and its index.
@@ -89,15 +92,15 @@ func (s Select[T]) Render(cx *core.Scope) core.Node {
 		return ""
 	}
 	face := pickerField(cx, leading, pickerText(cx, title, s.Placeholder), lucide.ChevronDown, open.Get)
-	row, look := listRowStyle(cx)
+	row, look := listRowStyle(cx, s.Presentation)
 	group, groupLook := listGroupStyle(cx)
-	popup, backdrop := pickerSurface(cx)
+	popup, backdrop := pickerSurface(cx, s.Presentation)
 	label := s.Label
 	if label == "" {
 		label = s.Placeholder
 	}
 	root := core.Style{Width: core.Pt(200), AlignSelf: core.AlignStart}.Merge(s.Style)
-	b := base.Select{Items: optionItems(s.Options), Disabled: s.Disabled, Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) },
+	b := base.Select{Items: optionItems(s.Options), Disabled: s.Disabled, Presentation: s.Presentation, Open: open.Get, OnOpenChange: func(v bool, _ base.Reason) { open.Set(v) },
 		Value: func() *string {
 			if i := chosen.Get(); i >= 0 {
 				v := strconv.Itoa(i)
@@ -118,7 +121,7 @@ func (s Select[T]) Render(cx *core.Scope) core.Node {
 		},
 		Offset: 4, Margin: 8, RootStyle: root,
 		Style:     core.Style{Group: "button", CornerRadius: RadiusControl},
-		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		StyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 		Trigger:   face, PopupStyleFunc: popup, BackdropStyle: backdrop, ListStyle: core.Style{MaxHeight: core.Pt(320)},
 		ItemStyle: row, ItemStyleFunc: look, GroupStyle: group, GroupStyleFunc: groupLook, Label: label, TestID: s.TestID,
 		RenderItem: func(e base.SelectEntry) core.Node {

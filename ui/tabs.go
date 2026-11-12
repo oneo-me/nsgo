@@ -112,7 +112,7 @@ func (t Tabs[T]) Render(cx *core.Scope) core.Node {
 	}}
 	tabLook := func() core.Style {
 		// Selection keeps the weight, so it never moves the labels.
-		return core.Style{Color: Alpha(colors.Text(), 0.6), Selected: &core.Style{Color: colors.Text()}, Focus: FocusRing(cx, -2), Disabled: Dimmed()}
+		return core.Style{Color: Alpha(colors.Text(), 0.6), Selected: &core.Style{Color: colors.Text()}, FocusVisible: FocusRing(cx, -2), Disabled: Dimmed()}
 	}
 	for i := range frames {
 		frames[i] = core.NewSignal(cx, core.Bounds{})

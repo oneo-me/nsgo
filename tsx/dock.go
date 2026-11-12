@@ -83,13 +83,7 @@ func init() {
 // dockOptions are DockArea's props in NSH's shapes.
 var dockOptions = []Option{
 	custom("Compact", func(p *props, v reflect.Value) {
-		switch {
-		case !p.has("compact"):
-		case p.bool("compact"):
-			v.Set(reflect.ValueOf(core.ToggleOn))
-		default:
-			v.Set(reflect.ValueOf(core.ToggleOff))
-		}
+		v.Set(reflect.ValueOf(func() bool { return p.bool("compact") }))
 	}, "compact?: boolean"),
 	Event("OnDockOpenChange", "placement", "open"), Event("OnLayoutChange", "layout"),
 	Event("OnPanelActiveChange", "panel", "active"), Event("OnPanelRemove", "panel"),

@@ -77,7 +77,7 @@ func separator(cx *core.Scope, s diff.Separator, ref *diff.Ref) core.Node {
 		Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOff}, Style: place,
 		StyleFunc: func() core.Style {
 			return core.Style{Hover: &core.Style{Background: ui.Alpha(colors.Text(), 0.08)}, Active: &core.Style{Background: ui.Alpha(colors.Text(), 0.14)},
-				Focus: ui.FocusRing(cx, -2)}
+				FocusVisible: ui.FocusRing(cx, -2)}
 		},
 		Children: []core.Node{ui.IconOf(icon, 14, colors.Muted),
 			core.Text{Content: locales.DiffUnchangedLines(cx, s.Lines), MaxLines: 1, Style: core.Style{FontSize: 12}, StyleFunc: ui.Colored(colors.Muted)}}}
@@ -110,7 +110,7 @@ func regionAction(cx *core.Scope, label string, press func()) core.Node {
 			CornerRadius: 5, BorderWidth: 1},
 		StyleFunc: func() core.Style {
 			return core.Style{Background: colors.Raised(), BorderColor: colors.Border(), Hover: &core.Style{Background: colors.Hover()},
-				Active: &core.Style{Background: colors.Pressed()}, Focus: ui.FocusRing(cx, -2)}
+				Active: &core.Style{Background: colors.Pressed()}, FocusVisible: ui.FocusRing(cx, -2)}
 		},
 		Children: []core.Node{core.Text{Content: label, MaxLines: 1, Style: core.Style{FontSize: 11}, StyleFunc: ui.Colored(colors.Text)}}}
 }

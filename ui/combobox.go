@@ -23,6 +23,9 @@ type Combobox[T comparable] struct {
 	// Empty shows while none matches.
 	Empty    string
 	Disabled func() bool
+	// Presentation is base's: a popup at the field by default, or a
+	// sheet, which ui chooses on no device of its own.
+	Presentation base.Presentation
 	// Label names the field for assistive technology.
 	Label string
 	// TestID names the box around the field.
@@ -33,9 +36,9 @@ type Combobox[T comparable] struct {
 
 // Render implements core.Node.
 func (c Combobox[T]) Render(cx *core.Scope) core.Node {
-	row, look := listRowStyle(cx)
+	row, look := listRowStyle(cx, c.Presentation)
 	group, groupLook := listGroupStyle(cx)
-	popup, backdrop := pickerSurface(cx)
+	popup, backdrop := pickerSurface(cx, c.Presentation)
 	indexes := core.NewMemoFunc(cx, func() []string {
 		var out []string
 		if c.Value != nil {
@@ -51,7 +54,7 @@ func (c Combobox[T]) Render(cx *core.Scope) core.Node {
 	if empty == "" {
 		empty = locales.ListNothingFound(cx)
 	}
-	return base.Combobox{Items: optionItems(c.Options), Multiple: c.Multiple, Value: indexes.Get, Disabled: c.Disabled, Placeholder: c.Placeholder,
+	return base.Combobox{Items: optionItems(c.Options), Multiple: c.Multiple, Value: indexes.Get, Disabled: c.Disabled, Presentation: c.Presentation, Placeholder: c.Placeholder,
 		OnChange: func(v []string) {
 			if c.OnChange == nil {
 				return

@@ -50,7 +50,7 @@ func (b Breadcrumbs) Render(cx *core.Scope) core.Node {
 		return base.Button{Role: core.RoleLink, Label: b.Items[i], OnPress: func(core.PressEvent) { choose(i) },
 			Style: core.Style{Padding: core.Symmetric(2, breadcrumbInset), CornerRadius: RadiusSmall, MinWidth: core.Pt(min(b.itemWidth(cx, i), breadcrumbMinWidth)), FlexShrink: 1},
 			StyleFunc: func() core.Style {
-				return core.Style{Color: colors.Muted(), Hover: &core.Style{Color: colors.Text(), Background: colors.Hover()}, Focus: FocusRing(cx, 0)}
+				return core.Style{Color: colors.Muted(), Hover: &core.Style{Color: colors.Text(), Background: colors.Hover()}, FocusVisible: FocusRing(cx, 0)}
 			},
 			Children: []core.Node{line(b.Items[i], TypeBody, 1)}}
 	}

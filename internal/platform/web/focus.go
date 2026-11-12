@@ -10,10 +10,12 @@ import (
 )
 
 // Keyboard focus for pressable views, as NSH's web runtime keeps it:
-// they and Focusable views are Tab stops unless disabled, hidden or NoFocus, their focus
-// state follows the keyboard focus (:focus-visible), and a click never
-// moves the focus. The views under the newest modal are inert, and the
-// focus one took comes back when it closes.
+// they and Focusable views are Tab stops unless disabled, hidden or
+// NoFocus, their focus state follows the keyboard focus, and a click never
+// moves the focus; whether the focus shows is the core's, by the input
+// modality the surface reports (Engine.InputModality). The views under the
+// newest modal are inert, and the focus one took comes back when it
+// closes.
 
 // covered is what a modal made inert, and what had the focus before it.
 type covered struct {
@@ -24,15 +26,14 @@ type covered struct {
 
 func (s *surface) listenFocus(ls *listeners) {
 	ls.on(s.host, "focusin", func(e js.Value) {
-		if v := s.viewOf(e.Get("target")); v != nil && v.kind != driver.KindInput &&
-			e.Get("target").Call("matches", ":focus-visible").Bool() {
-			v.keyFocused = true
+		if v := s.viewOf(e.Get("target")); v != nil && v.kind != driver.KindInput {
+			v.focused = true
 			s.send(v, driver.Event{Kind: driver.EventFocus})
 		}
 	})
 	ls.on(s.host, "focusout", func(e js.Value) {
-		if v := s.viewOf(e.Get("target")); v != nil && v.keyFocused {
-			v.keyFocused = false
+		if v := s.viewOf(e.Get("target")); v != nil && v.focused {
+			v.focused = false
 			s.send(v, driver.Event{Kind: driver.EventBlur})
 		}
 	})

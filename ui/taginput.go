@@ -74,7 +74,7 @@ func (in TagInput) Render(cx *core.Scope) core.Node {
 			Style: core.Style{Width: core.Pt(chipSize - 6), Height: core.Pt(chipSize - 6), CornerRadius: RadiusFull,
 				AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Transition: quick},
 			StyleFunc: func() core.Style {
-				return core.Style{Color: colors.Muted(), Hover: &core.Style{Background: colors.Pressed(), Color: colors.Text()}, Focus: FocusRing(cx, 0)}
+				return core.Style{Color: colors.Muted(), Hover: &core.Style{Background: colors.Pressed(), Color: colors.Text()}, FocusVisible: FocusRing(cx, 0)}
 			},
 			OnPress: func(core.PressEvent) {
 				gone := core.Untracked(cx, tag)

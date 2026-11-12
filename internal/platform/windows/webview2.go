@@ -40,6 +40,7 @@ var (
 
 var (
 	iidUnknown                        = parseGUID("00000000-0000-0000-c000-000000000046")
+	iidAgileObject                    = parseGUID("94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90")
 	iidEnvironment                    = parseGUID("b96d755e-0319-4e92-a296-23436f46a1fc")
 	iidEnvironment3                   = parseGUID("80a22ae3-be7c-4ce2-afe1-5a50056cdeeb")
 	iidController                     = parseGUID("4d00c0d1-9434-4eb6-8078-8697a560334f")
@@ -269,9 +270,12 @@ func wideString(p *uint16) string {
 // a result or event's arguments; a notify object's method takes three
 // words. Go keeps it alive while COM holds a reference.
 type comHandler struct {
-	vtbl   *[4]uintptr
-	refs   int32
-	iid    *guid
+	vtbl *[4]uintptr
+	refs int32
+	iid  *guid
+	// agile says it may be called from any thread (IAgileObject), as a
+	// WinRT event's handler raised on a worker thread is.
+	agile  bool
 	invoke func(a uintptr, b unsafe.Pointer)
 	notify func(a, b, c uintptr)
 }
@@ -319,7 +323,7 @@ func (h *comHandler) ptr() uintptr { return uintptr(unsafe.Pointer(h)) }
 func (h *comHandler) release() { handlerRelease(h) }
 
 func handlerQueryInterface(h *comHandler, iid *guid, out *unsafe.Pointer) uintptr {
-	if *iid == iidUnknown || *iid == *h.iid {
+	if *iid == iidUnknown || *iid == *h.iid || h.agile && *iid == iidAgileObject {
 		*out = unsafe.Pointer(h)
 		handlerAddRef(h)
 		return sOK

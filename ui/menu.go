@@ -6,10 +6,10 @@ import (
 	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
-// Menus are base's: a popup at the trigger or the pointer on desktops,
-// whose submenus cascade; a sheet from the bottom on touch screens, whose
-// submenus replace its items. Their items are MenuItem, MenuSeparator and
-// Submenu, in any arrangement.
+// Menus are base's: a popup at the trigger or the pointer, whose
+// submenus cascade, or, presented so, a sheet from the bottom, whose
+// submenus replace its items and whose rows are taller. Their items are
+// MenuItem, MenuSeparator and Submenu, in any arrangement.
 
 // Menu opens its items from a trigger, which Trigger's look and content
 // draw.
@@ -21,10 +21,13 @@ type Menu struct {
 	Trigger Button
 	// Face, when set, draws the trigger in place of Trigger's look and
 	// content, for one that follows the app's state.
-	Face      core.Node
-	Placement core.Placement
-	Align     core.Align
-	Children  []core.Node
+	Face core.Node
+	// Presentation is base's: a popup at the trigger by default, or a
+	// sheet, which ui chooses on no device of its own.
+	Presentation base.Presentation
+	Placement    core.Placement
+	Align        core.Align
+	Children     []core.Node
 	// MaxHeight, when set, scrolls the items past that height.
 	MaxHeight core.Points
 	Label     string
@@ -37,25 +40,27 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 	if m.Face != nil {
 		face = m.Face
 	}
-	popup, backdrop := menuSurface(cx)
+	sheet := m.Presentation == base.PresentSheet
+	popup, backdrop := menuSurface(cx, sheet)
 	children := m.Children
 	if m.MaxHeight > 0 {
-		popup, children = menuScroll(cx, popup, m.MaxHeight, children)
+		popup, children = menuScroll(sheet, popup, m.MaxHeight, children)
 	}
-	return base.Menu{Open: m.Open, OnOpenChange: m.OnOpenChange, Placement: m.Placement, Align: m.Align, Offset: 4, Margin: 8,
+	return base.Menu{Open: m.Open, OnOpenChange: m.OnOpenChange, Presentation: m.Presentation, Placement: m.Placement, Align: m.Align,
+		Offset: 4, Margin: 8,
 		Style: style, StyleFunc: focus, Trigger: face, PopupStyleFunc: popup, BackdropStyle: backdrop,
 		Children: children, Label: triggerLabel(m.Label, m.Trigger), TestID: m.TestID}
 }
 
-// menuPadding is a desktop popup's padding around its items.
+// menuPadding is a popup's padding around its items.
 const menuPadding core.Points = 4
 
 // menuScroll scrolls children past height, with a popup's padding moved
 // onto them to keep the scroll bar against its edge.
-func menuScroll(cx *core.Scope, popup func() core.Style, height core.Points, children []core.Node) (func() core.Style, []core.Node) {
+func menuScroll(sheet bool, popup func() core.Style, height core.Points, children []core.Node) (func() core.Style, []core.Node) {
 	var pad core.Edges
 	surface := popup
-	if !Touch(cx) {
+	if !sheet {
 		pad = core.All(menuPadding)
 		surface = func() core.Style {
 			s := popup()
@@ -67,10 +72,9 @@ func menuScroll(cx *core.Scope, popup func() core.Style, height core.Points, chi
 		Children: []core.Node{core.View{Style: core.Style{Padding: pad}, Children: children}}}}
 }
 
-// menuSurface is the popup on desktops, or the sheet and its backdrop on
-// Touch screens.
-func menuSurface(cx *core.Scope) (popup func() core.Style, backdrop core.Style) {
-	if !Touch(cx) {
+// menuSurface is the popup, or the sheet and its backdrop.
+func menuSurface(cx *core.Scope, sheet bool) (popup func() core.Style, backdrop core.Style) {
+	if !sheet {
 		return func() core.Style {
 			return FinOf(cx).Menu().Over(core.Style{Padding: core.All(menuPadding), MinWidth: core.Pt(180), CornerRadius: RadiusControl + 2,
 				BorderWidth: 1, Color: ColorsOf(cx).Text()})
@@ -99,7 +103,7 @@ type MenuItem struct {
 	Text string
 	Icon func() *core.SVG
 	// Shortcut is the keys that choose it, such as "mod+c", shown at its
-	// end on desktops as the platform writes them.
+	// end in a popup as the platform writes them.
 	Shortcut string
 	// Leading goes before its text, after its check and icon, and Trailing
 	// at its end, where a button's presses stay its own.
@@ -116,7 +120,7 @@ type MenuItem struct {
 // Render implements core.Node.
 func (i MenuItem) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	style, look := menuRow(cx)
+	style, look := menuRow(cx, base.OnSheet(cx))
 	fg := colors.Text
 	if i.Variant == MenuItemDanger {
 		fg = colors.Danger
@@ -127,7 +131,7 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 	}
 	children = append(children, core.Text{Content: i.Text, MaxLines: 1, Style: TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}),
 		StyleFunc: Colored(fg)})
-	if i.Shortcut != "" && !Touch(cx) {
+	if i.Shortcut != "" && !base.OnSheet(cx) {
 		children = append(children, core.Text{Content: cx.KeyLabel(i.Shortcut), MaxLines: 1,
 			Style: TypeCaption.Merge(core.Style{Margin: core.Edges{Left: 16}}), StyleFunc: Colored(colors.Muted)})
 	}
@@ -153,10 +157,10 @@ const (
 	sheetRowHeight core.Points = 44
 )
 
-// menuIconSize is an item's icon on the device: smaller in a popup, whose
-// rows are compact.
+// menuIconSize is an item's icon: smaller in a popup, whose rows are
+// compact.
 func menuIconSize(cx *core.Scope) core.Points {
-	if Touch(cx) {
+	if base.OnSheet(cx) {
 		return iconSize
 	}
 	return 14
@@ -164,10 +168,10 @@ func menuIconSize(cx *core.Scope) core.Points {
 
 // menuRow is an item's row and its look: compact in a popup, a sheet's
 // row across a sheet.
-func menuRow(cx *core.Scope) (core.Style, func() core.Style) {
+func menuRow(cx *core.Scope, sheet bool) (core.Style, func() core.Style) {
 	colors := ColorsOf(cx)
 	s := core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Disabled: Dimmed()}
-	if !Touch(cx) {
+	if !sheet {
 		s.MinHeight, s.Padding, s.Gap, s.CornerRadius = core.Pt(menuRowHeight), core.Symmetric(0, 8), 6, RadiusControl-2
 		return s, func() core.Style {
 			return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}}

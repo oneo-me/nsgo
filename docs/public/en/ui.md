@@ -19,7 +19,7 @@ The [gallery](https://nsgo.dev/gallery/) runs a demo of every component in the b
 - [Input](ui/input.md): the platform's text field, controlled or not.
 - [Checkbox](ui/checkbox.md): a check box, checked, unchecked or indeterminate.
 - [Switch](ui/switch.md): a setting that is on or off.
-- [Select](ui/select.md): one value from a list, on a desktop as a popup and on touch screens as a sheet.
+- [Select](ui/select.md): one value from a list, as a popup or a sheet.
 - [Slider](ui/slider.md): one value or a range along a track.
 
 ## Collections

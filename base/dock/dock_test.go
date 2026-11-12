@@ -29,6 +29,7 @@ func dockApp(t *testing.T, width core.Points, layouts *[]dock.Layout, events *[]
 	ref := new(dock.AreaRef)
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
 		return dock.Area{Ref: ref, TestID: "dock", Style: core.Style{Width: core.Pt(width), Height: core.Pt(600)},
+			Compact: func() bool { return width < 600 },
 			DefaultLayout: dock.Layout{
 				Center: dock.Split(base.Horizontal, dock.Tabs("editor", "notes"), dock.Tabs("preview")),
 				Left:   &dock.Region{Root: dock.Tabs("files"), Size: 200},
@@ -112,7 +113,7 @@ func TestDockAreaShowsItsRegionsAndRearrangesThem(t *testing.T) {
 	}
 }
 
-func TestDockAreaIsCompactWhenNarrow(t *testing.T) {
+func TestDockAreaIsCompactWhenTheAppSaysSo(t *testing.T) {
 	var layouts []dock.Layout
 	var events []string
 	app, ref := dockApp(t, 390, &layouts, &events)
@@ -250,6 +251,7 @@ func TestDockPanelsKeepTheirStateAcrossTheCompactPresentation(t *testing.T) {
 	ref := new(dock.AreaRef)
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
 		return dock.Area{Ref: ref, TestID: "dock", Style: core.Style{FlexGrow: 1},
+			Compact: func() bool { return cx.Env().Window().Width < 600 },
 			DefaultLayout: dock.Layout{
 				Center: dock.Tabs("editor"),
 				Left:   &dock.Region{Root: dock.Tabs("files"), Size: 200},

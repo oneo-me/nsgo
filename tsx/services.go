@@ -27,6 +27,7 @@ var serviceExports = []export{
 	}},
 	{"keymap", (*runtime).keymap},
 	{"Clipboard", (*runtime).clipboard},
+	{"Notifications", (*runtime).notifications},
 	{"Storage", (*runtime).storage},
 	{"Picker", (*runtime).picker},
 	{"Speech", (*runtime).speech},

@@ -1,11 +1,11 @@
 ---
 title: 选择器
-description: 从列表中选一个值，桌面端是弹出列表，触摸屏上是 sheet。
+description: 从列表中选一个值，以弹出列表或 sheet 显示。
 group: 组件
 order: 36
 ---
 
-`ui.Select[T]` 从一组任意可比较类型的值中选一个。桌面端列表在触发器下方打开；触摸屏上它是一个 sheet。
+`ui.Select[T]` 从一组任意可比较类型的值中选一个。列表在任何设备上都在触发器下方打开；`Presentation: base.PresentSheet` 改为从底部打开 sheet，手机应用可以这样选择。
 
 ```go preview=select/basic height=280
 size := core.NewSignal(cx, "m")

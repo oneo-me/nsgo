@@ -132,6 +132,16 @@ type Tree struct {
 	focus      *node
 	focusChain []*node
 	focusMoved bool
+	// modality is what the user last gave the surface input with
+	// (driver.EventInputModality), 0 before any. focusVisible is whether
+	// the focus shows (focusShows), decided as it moves and again as a key
+	// is typed; focusVisibleOn is the node holding stateFocusVisible, and
+	// focusParts the nodes whose part shows the focus (PartStates.Focused),
+	// restyled as it starts or stops showing (updateFocusVisible).
+	modality       uint32
+	focusVisible   bool
+	focusVisibleOn *node
+	focusParts     []*node
 	// pointerStyled is set once a style has named PointerEvents, as apps
 	// without one skip their walk; pointersMoved asks the next commit
 	// for it (updatePointerEvents).
@@ -1010,17 +1020,18 @@ func (t *Tree) restyle(n *node) bool {
 	merged := n.withClasses(own)
 	var g shownStates
 	if gs := merged.GroupStyle; gs != nil {
-		g = n.groupState(gs.Name)
+		g = t.groupState(n, gs.Name)
 	}
 	z, sticky := n.stackRank()
 	was := &n.style
 	lines, overflow, pointer := was.NumberOfLines, was.TextOverflow, was.PointerEvents
-	n.style = merged.withStates(statesOf(n.shownInteraction(), &p, n.part.Data), g)
+	n.style = merged.withStates(statesOf(t.shownInteraction(n), &p, n.part.Data), g)
 	if p.Disabled {
 		// The platform still follows the states a disabled view's own
 		// styles wait for, which the event mask reads.
 		full := n.withClasses(n.base.Merge(dyn))
 		n.style.Hover, n.style.Focus, n.style.Active, n.style.FocusWithin = full.Hover, full.Focus, full.Active, full.FocusWithin
+		n.style.FocusVisible = full.FocusVisible
 	}
 	if n.style.NumberOfLines != lines || n.style.TextOverflow != overflow {
 		if n.text != nil {
@@ -1058,7 +1069,7 @@ func (t *Tree) restyle(n *node) bool {
 
 // groupState returns the states of n's nearest group named name, or of
 // any group when name is empty.
-func (n *node) groupState(name string) shownStates {
+func (t *Tree) groupState(n *node, name string) shownStates {
 	for a := n.parent; a != nil; a = a.parent {
 		if g := a.style.Group; g != "" && (name == "" || g == name) {
 			p := a.props
@@ -1066,7 +1077,7 @@ func (n *node) groupState(name string) shownStates {
 			p.Indeterminate = p.Indeterminate || a.part.Indeterminate
 			p.Selected = p.Selected || a.part.Selected
 			p.Disabled = p.Disabled || a.part.Disabled || a.input != nil && a.input.config.Disabled
-			return statesOf(a.shownInteraction(), &p, a.part.Data)
+			return statesOf(t.shownInteraction(a), &p, a.part.Data)
 		}
 	}
 	return shownStates{}
@@ -1114,7 +1125,8 @@ func (t *Tree) setState(n *node, state uint8, on bool) {
 	if n.states == was {
 		return
 	}
-	if n.style.Hover != nil || n.style.Focus != nil || n.style.Active != nil || n.style.FocusWithin != nil {
+	if n.style.Hover != nil || n.style.Focus != nil || n.style.FocusVisible != nil || n.style.Active != nil ||
+		n.style.FocusWithin != nil {
 		if t.restyle(n) {
 			t.markLayout(n)
 		}
@@ -1134,15 +1146,93 @@ func (t *Tree) focusReported(n *node, focused bool) {
 	case !focused:
 		n = nil
 	}
+	if n != nil {
+		t.focusVisible = t.focusShows(n)
+	}
 	if t.focus != n {
 		t.focus, t.focusMoved = n, true
 		t.changed = true
+	} else if n != nil && (t.focusVisibleOn == n) != t.focusVisible {
+		t.focusMoved, t.changed = true, true
 	}
 }
 
-// shownInteraction is n's interaction states with those its part shows.
-func (n *node) shownInteraction() uint8 {
+// inputModality records what the user gave the surface input with last,
+// as the platform reports it before the focus moves it causes. A key
+// typed while the focus does not show makes it show, as browsers do; a
+// pointer leaves a focus that shows as it is, as only a move of the focus
+// decides again.
+func (t *Tree) inputModality(m uint32) {
+	t.modality = m
+	if m == driver.ModalityKeyboard && t.focus != nil && !t.focusVisible {
+		t.focusVisible = true
+		t.focusMoved, t.changed = true, true
+	}
+}
+
+// focusShows reports whether the focus coming to n shows (focus-visible:),
+// as CSS's :focus-visible decides: an input that edits always shows it,
+// as it takes typing, and any other view unless the last input was a
+// pointer. So Tab, a group's arrows and a shortcut show it, a press or a
+// tap does not, and a move the app makes shows it after a key and not
+// after a press. Before any input it shows, as a browser's autofocus.
+func (t *Tree) focusShows(n *node) bool {
+	edits := n.kind == driver.KindInput && n.input != nil && !n.input.config.Readonly && !n.input.config.Disabled
+	return edits || t.modality != driver.ModalityPointer
+}
+
+// updateFocusVisible puts stateFocusVisible on the focus while it shows
+// and takes it off the node that had it, and restyles the parts that show
+// the focus when it starts or stops showing.
+func (t *Tree) updateFocusVisible() {
+	target := t.focus
+	if !t.focusVisible || target != nil && target.deleted {
+		target = nil
+	}
+	old := t.focusVisibleOn
+	if target == old {
+		return
+	}
+	t.focusVisibleOn = target
+	if old != nil && !old.deleted {
+		t.setState(old, stateFocusVisible, false)
+	}
+	if target != nil {
+		t.setState(target, stateFocusVisible, true)
+	}
+	if (old == nil) != (target == nil) {
+		parts := t.focusParts[:0]
+		for _, p := range t.focusParts {
+			if p.deleted || !p.part.Focused {
+				continue
+			}
+			parts = append(parts, p)
+			if t.restyle(p) {
+				t.markLayout(p)
+			}
+			t.restyleGroup(p)
+		}
+		clear(t.focusParts[len(parts):])
+		t.focusParts = parts
+	}
+}
+
+// partStates sets n's part states, keeping the nodes whose part shows the
+// focus.
+func (t *Tree) partStates(n *node, p PartStates) {
+	if p.Focused && !n.part.Focused && !slices.Contains(t.focusParts, n) {
+		t.focusParts = append(t.focusParts, n)
+	}
+	n.part = p
+}
+
+// shownInteraction is n's interaction states with those its part shows:
+// a part focused shows the focus too while the focus shows.
+func (t *Tree) shownInteraction(n *node) uint8 {
 	if n.part.Focused {
+		if t.focusVisibleOn != nil {
+			return n.states | stateFocused | stateFocusVisible
+		}
 		return n.states | stateFocused
 	}
 	return n.states
@@ -1330,7 +1420,7 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 	}
 	if v.PartStates != nil {
 		cx.renderEffect(func() {
-			n.part = v.PartStates()
+			t.partStates(n, v.PartStates())
 			if t.restyle(n) {
 				t.markLayout(n)
 			}
@@ -1744,6 +1834,9 @@ func (t *Tree) Dispatch(ev driver.Event) {
 	switch ev.Kind {
 	case driver.EventTouch:
 		t.touched(ev)
+		return
+	case driver.EventInputModality:
+		t.inputModality(ev.Count)
 		return
 	case driver.EventBack:
 		n := t.node(ev.ID)
@@ -2248,8 +2341,9 @@ func (n *node) events() driver.EventMask {
 	// The focus of any view that can take it is reported, for the core's
 	// own focus (focusReported).
 	focusable := n.kind == driver.KindInput || n.takesPresses() || n.props.Focusable
-	bit(driver.EventFocus, h.focus != nil || s.Focus != nil || focusable)
-	bit(driver.EventBlur, h.blur != nil || s.Focus != nil || focusable)
+	focusStyled := s.Focus != nil || s.FocusVisible != nil
+	bit(driver.EventFocus, h.focus != nil || focusStyled || focusable)
+	bit(driver.EventBlur, h.blur != nil || focusStyled || focusable)
 	bit(driver.EventSubmitEditing, h.submit != nil)
 	bit(driver.EventScroll, h.scroll != nil)
 	bit(driver.EventPressOutside, h.pressOutside != nil)

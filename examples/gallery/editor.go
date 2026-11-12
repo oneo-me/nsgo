@@ -840,7 +840,7 @@ func editorDemo(cx *core.Scope) core.Node {
 			}},
 	}}
 
-	docks := dock.Area{Ref: area, TestID: "editor-dock", Style: core.Style{FlexGrow: 1},
+	docks := dock.Area{Ref: area, TestID: "editor-dock", Style: core.Style{FlexGrow: 1}, Compact: narrowDock(cx),
 		DefaultLayout: dock.Layout{Center: dock.Tabs("editor"), Bottom: &dock.Region{Root: dock.Tabs("problems"), Size: 120}},
 		OnDockOpenChange: func(p dock.Placement, open bool) {
 			if p == dock.Bottom {

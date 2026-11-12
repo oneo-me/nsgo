@@ -121,7 +121,7 @@ func chatJumpButton(cx *core.Scope, s *ConversationState, label string, bottom f
 	button := base.Button{Label: label, OnPress: func(core.PressEvent) { s.JumpToLatest() },
 		Style: core.Style{Group: "chat-jump", Width: core.Pt(32), Height: core.Pt(32), CornerRadius: 16, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 		StyleFunc: func() core.Style {
-			st := core.Style{Focus: ui.FocusRing(cx, 2)}
+			st := core.Style{FocusVisible: ui.FocusRing(cx, 2)}
 			if glass {
 				shadow := ui.Black(0.08)
 				if cx.Dark() {

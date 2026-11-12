@@ -22,6 +22,7 @@ var stateProps = map[string]func(s *core.Style) **core.Style{
 	"indeterminateStyle": func(s *core.Style) **core.Style { return &s.Indeterminate },
 	"selectedStyle":      func(s *core.Style) **core.Style { return &s.Selected },
 	"focusWithinStyle":   func(s *core.Style) **core.Style { return &s.FocusWithin },
+	"focusVisibleStyle":  func(s *core.Style) **core.Style { return &s.FocusVisible },
 	"expandedStyle":      func(s *core.Style) **core.Style { return &s.Expanded },
 	"pressedStyle":       func(s *core.Style) **core.Style { return &s.Pressed },
 }

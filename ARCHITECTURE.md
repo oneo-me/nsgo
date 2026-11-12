@@ -108,7 +108,7 @@ Packages import only downward, which `layering_test.go` checks on every target; 
 
 Record a design question here, and confirm the answer with the user before choosing it.
 
-- **Implicit presentations.** Components swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)). Make each one a field the app sets, and which form is the default?
+- **Implicit presentations in `ui`.** `ui.Dialog`, `ui.NumberInput` and `ui/commitgraph.View` still swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)), while menus, dropdowns and `dock.Area` take the form the app sets, popups and docked panels by default, and `ui` adds no choice of its own (decided by the user, 2026-11-12). Make `ui`'s a field the app sets too?
 - **Sizes on a TV.** `ui`'s sizes are constants on every device, but a TV is read from across a room. Since `core` scales nothing by device, does `ui` take larger sizes on a TV, or leave them to the app ([roadmap](docs/roadmap.md#apple-tv))?
 
 ## Verification

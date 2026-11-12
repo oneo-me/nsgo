@@ -1,11 +1,11 @@
 ---
 title: Select
-description: One value from a list, as a popup on desktops and a sheet on touch screens.
+description: One value from a list, as a popup or a sheet.
 group: Components
 order: 36
 ---
 
-`ui.Select[T]` chooses one of a list of values of any comparable type. On desktops the list opens under the trigger; on touch screens it is a sheet.
+`ui.Select[T]` chooses one of a list of values of any comparable type. The list opens under the trigger on every device; `Presentation: base.PresentSheet` opens it as a sheet from the bottom instead, as a phone app may want.
 
 ```go preview=select/basic height=280
 size := core.NewSignal(cx, "m")

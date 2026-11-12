@@ -55,6 +55,8 @@ const (
 	AccessSpeech = "speech"
 	// AccessStatusBar is setting the status bar.
 	AccessStatusBar = "statusBar"
+	// AccessNotifications is system notifications and the app's badge.
+	AccessNotifications = "notifications"
 	// AccessHost is the host's handlers, by name (CallHost, PostHost).
 	AccessHost = "host"
 )

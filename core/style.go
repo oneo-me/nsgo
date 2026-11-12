@@ -304,6 +304,7 @@ type Style struct {
 	// hover:, ...) apply.
 	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled    *Style
 	FocusWithin, AriaBusy, AriaChecked, Expanded, Pressed, AriaSelected *Style
+	FocusVisible                                                        *Style
 	// Data are styles of data-* attributes, sorted by name.
 	Data []DataStyle
 }
@@ -316,7 +317,7 @@ type DataStyle struct {
 }
 
 // stateCount is how many states stateSet lists.
-const stateCount = 13
+const stateCount = 14
 
 // stateSet points at the state styles of a Style or a GroupStyle: all
 // but Data's in the order they merge, as classStates lists their class
@@ -328,12 +329,12 @@ type stateSet struct {
 
 func (s *Style) states() stateSet {
 	return stateSet{[stateCount]**Style{&s.Checked, &s.Indeterminate, &s.Selected, &s.FocusWithin, &s.Hover, &s.Focus,
-		&s.Active, &s.AriaBusy, &s.AriaChecked, &s.Expanded, &s.Pressed, &s.AriaSelected, &s.Disabled}, &s.Data}
+		&s.FocusVisible, &s.Active, &s.AriaBusy, &s.AriaChecked, &s.Expanded, &s.Pressed, &s.AriaSelected, &s.Disabled}, &s.Data}
 }
 
 func (g *GroupStyle) states() stateSet {
 	return stateSet{[stateCount]**Style{&g.Checked, &g.Indeterminate, &g.Selected, &g.FocusWithin, &g.Hover, &g.Focus,
-		&g.Active, &g.AriaBusy, &g.AriaChecked, &g.Expanded, &g.Pressed, &g.AriaSelected, &g.Disabled}, &g.Data}
+		&g.FocusVisible, &g.Active, &g.AriaBusy, &g.AriaChecked, &g.Expanded, &g.Pressed, &g.AriaSelected, &g.Disabled}, &g.Data}
 }
 
 // copyFrom sets s's styles to o's.
@@ -505,6 +506,7 @@ type GroupStyle struct {
 	Name                                                                string
 	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled    *Style
 	FocusWithin, AriaBusy, AriaChecked, Expanded, Pressed, AriaSelected *Style
+	FocusVisible                                                        *Style
 	// Data are styles of data-* attributes of the group, sorted by name.
 	Data []DataStyle
 }
@@ -799,10 +801,13 @@ const (
 	// stateFocusWithin is the core's own: the focus is on the node or
 	// inside it (updateFocusWithin).
 	stateFocusWithin
+	// stateFocusVisible is the core's own too: the focus shows
+	// (updateFocusVisible).
+	stateFocusVisible
 )
 
 // ariaBusyState is the first aria-* state's slot in StateStyles.slots.
-const ariaBusyState = 7
+const ariaBusyState = 8
 
 // shownStates are the states a node, or its group, is in, in the order
 // of StateStyles.slots, and the data-* attributes it shows.
@@ -814,7 +819,7 @@ type shownStates struct {
 // statesOf is the states of a node with interaction states and props p.
 func statesOf(states uint8, p *driver.ViewProps, data []string) shownStates {
 	return shownStates{data: data, on: [stateCount]bool{p.Checked, p.Indeterminate, p.Selected, states&stateFocusWithin != 0,
-		states&stateHovered != 0, states&stateFocused != 0, states&statePressed != 0, p.Busy, p.Checked, p.Expanded,
+		states&stateHovered != 0, states&stateFocused != 0, states&stateFocusVisible != 0, states&statePressed != 0, p.Busy, p.Checked, p.Expanded,
 		p.Pressed, p.Selected, p.Disabled}}
 }
 

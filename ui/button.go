@@ -132,5 +132,5 @@ func (b Button) parts(cx *core.Scope) (core.Style, func() core.Style, core.Node)
 	}
 	style := core.Style{Group: "button", FlexGrow: b.Flex, FlexShrink: b.Flex, CornerRadius: RadiusControl,
 		Disabled: &core.Style{Opacity: core.Alpha(0.4)}}
-	return style, func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} }, core.View{StyleFunc: face, Children: children}
+	return style, func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} }, core.View{StyleFunc: face, Children: children}
 }

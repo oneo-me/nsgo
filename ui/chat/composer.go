@@ -197,7 +197,7 @@ func (p chatPill) Render(cx *core.Scope) core.Node {
 		Style: core.Style{Height: core.Pt(26), Padding: core.Symmetric(0, 12), FlexShrink: 0, CornerRadius: 13, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 			Disabled: &core.Style{Cursor: core.CursorDefault}},
 		StyleFunc: func() core.Style {
-			return core.Style{Background: p.Background(), Hover: &core.Style{Opacity: core.Alpha(0.9)}, Active: &core.Style{Opacity: core.Alpha(0.8)}, Focus: ui.FocusRing(cx, 2)}
+			return core.Style{Background: p.Background(), Hover: &core.Style{Opacity: core.Alpha(0.9)}, Active: &core.Style{Opacity: core.Alpha(0.8)}, FocusVisible: ui.FocusRing(cx, 2)}
 		},
 		Children: []core.Node{ui.Text(p.Label, 12.5, ui.Semibold, p.Foreground)}}
 }
@@ -237,7 +237,7 @@ func (a IconAction) Render(cx *core.Scope) core.Node {
 		Style: core.Style{Group: "chat-action", Width: core.Pt(26), Height: core.Pt(26), FlexShrink: 0, CornerRadius: 6, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 			Disabled: ui.Dimmed()},
 		StyleFunc: func() core.Style {
-			return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}, Focus: ui.FocusRing(cx, 2)}
+			return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}, FocusVisible: ui.FocusRing(cx, 2)}
 		},
 		Children: []core.Node{core.View{StyleFunc: func() core.Style {
 			return core.Style{Color: tint(), GroupStyle: &core.GroupStyle{Name: "chat-action", Hover: &core.Style{Color: colors.Text()}}}

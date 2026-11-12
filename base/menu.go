@@ -81,6 +81,7 @@ type menuParts struct {
 	starting, ending part
 	label, testID    string
 	onPosition       func(core.OverlayPosition)
+	presentation     Presentation
 }
 
 // menuSurface is a menu while it is open: its popup at anchor, or at
@@ -88,7 +89,7 @@ type menuParts struct {
 // read.
 func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal[core.Point], p menuParts,
 	items []core.Node) core.Node {
-	onSheet := !core.Untracked(cx, cx.Env().Desktop)
+	onSheet := p.presentation == PresentSheet
 	path := core.NewSignalFunc(cx, []int(nil), slices.Equal)
 	openSub := core.NewSignal(cx, 0)
 	next := 0
@@ -114,6 +115,7 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 		})
 		return core.Func(func(cx *core.Scope) core.Node {
 			menuKey.Provide(cx, ctx)
+			onSheetKey.Provide(cx, true)
 			return sheet.Layer{Motion: m, Side: core.PlaceBottom, Backdrop: p.backdrop,
 				BackdropPress: func() { dismiss(ReasonBackdropPress) },
 				Panel:         p.popup, Cancel: cancel,
@@ -125,6 +127,7 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 	return core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 		openSub.Set(0)
 		menuKey.Provide(cx, ctx)
+		onSheetKey.Provide(cx, false)
 		o := m.overlay(core.Overlay{
 			Anchor: anchor, AnchorContent: anchor != nil, Placement: p.placement, Align: p.align, Offset: p.offset, Margin: p.margin,
 			Children: items, Role: core.RoleMenu, Label: p.label, TestID: p.testID, OnPosition: p.onPosition,
@@ -138,8 +141,8 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 	}}
 }
 
-// Menu opens a list of MenuItems when its trigger is pressed: beside the
-// trigger on desktops, as a sheet at the bottom on touch screens.
+// Menu opens a list of MenuItems when its trigger is pressed, beside the
+// trigger or as a sheet as Presentation says.
 // Choosing an item closes it, as do a press outside or on the backdrop,
 // Escape and back, which OnCancel hears.
 type Menu struct {
@@ -149,11 +152,13 @@ type Menu struct {
 	OnOpen       func()
 	OnClose      func()
 	OnCancel     func()
-	// OnPosition reports where the popup went on desktops, as Popover's.
+	// OnPosition reports where the popup went, as Popover's.
 	OnPosition func(core.OverlayPosition)
+	// Presentation is a popup at the trigger, or a sheet.
+	Presentation Presentation
 
-	// Placement, Align, Offset and Margin place the popup on desktops;
-	// Align lines it up with its trigger, at its start when 0.
+	// Placement, Align, Offset and Margin place the popup; Align lines it
+	// up with its trigger, at its start when 0.
 	Placement      core.Placement
 	Align          core.Align
 	Offset, Margin core.Points
@@ -161,18 +166,18 @@ type Menu struct {
 	Class     string // the trigger's
 	Style     core.Style
 	StyleFunc func() core.Style
-	// PopupStyle styles the popup on desktops and the sheet on touch
-	// screens, and its submenus' popups.
+	// PopupStyle styles the popup or the sheet, and its submenus'
+	// popups.
 	PopupClass     string
 	PopupStyle     core.Style
 	PopupStyleFunc func() core.Style
-	// StartingStyle and EndingStyle are the popup's on desktops, as
-	// Popover's; a sheet has its own motion.
+	// StartingStyle and EndingStyle are the popup's, as Popover's; a
+	// sheet has its own motion.
 	StartingClass string
 	StartingStyle core.Style
 	EndingClass   string
 	EndingStyle   core.Style
-	// BackdropStyle styles the backdrop behind the sheet on touch screens.
+	// BackdropStyle styles the backdrop behind the sheet.
 	BackdropClass     string
 	BackdropStyle     core.Style
 	BackdropStyleFunc func() core.Style
@@ -203,10 +208,11 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 			OnMouseEnter: barMenu(cx, around, st),
 			Children:     []core.Node{m.Trigger}}),
 		menuSurface(cx, st, anchor, nil, menuParts{placement: m.Placement, align: align, offset: m.Offset, margin: m.Margin, onPosition: m.OnPosition,
-			popup:    parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
-			backdrop: parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
-			starting: parts.Part{Class: m.StartingClass, Style: m.StartingStyle},
-			ending:   parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, m.Children),
+			presentation: m.Presentation,
+			popup:        parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
+			backdrop:     parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
+			starting:     parts.Part{Class: m.StartingClass, Style: m.StartingStyle},
+			ending:       parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, m.Children),
 	}
 }
 

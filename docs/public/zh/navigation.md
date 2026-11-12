@@ -51,7 +51,7 @@ ui.Dialog{
 
 ## 菜单
 
-`ui.Menu` 从一个按钮打开 `ui.MenuItem`：桌面端在按钮旁，触摸屏上作为 sheet。`ui.ContextMenu` 用右键或长按做同样的事，`ui.Popover`、`ui.HoverCard` 和 `ui.Tooltip` 显示其他锚定内容。
+`ui.Menu` 从一个按钮打开 `ui.MenuItem`：在按钮旁，或在 `Presentation` 要求时作为底部 sheet，在任何设备上都一样。`ui.ContextMenu` 用右键或长按做同样的事，`ui.Popover`、`ui.HoverCard` 和 `ui.Tooltip` 显示其他锚定内容。
 
 ```go
 ui.Menu{Trigger: ui.Button{Text: "操作", Variant: ui.ButtonSecondary}, Children: []core.Node{

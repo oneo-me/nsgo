@@ -641,6 +641,9 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemOpenURL:
 			w.openURL(it.Value, it.Count)
 			continue
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification:
+			w.notify(it)
+			continue
 		case driver.ItemCheckForUpdates:
 			w.checkForUpdates(it.Count)
 			continue

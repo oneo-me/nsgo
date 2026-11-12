@@ -5,7 +5,7 @@ group: Components
 order: 42
 ---
 
-`ui.Menu` opens `ui.MenuItem`s from a button: beside it on desktops, as a sheet on touch screens. `ui.ContextMenu` opens the same items at the pointer.
+`ui.Menu` opens `ui.MenuItem`s from a button: beside it, or as a sheet from the bottom with `Presentation: base.PresentSheet`, whatever the device. `ui.ContextMenu` opens the same items at the pointer.
 
 ```go preview=menu/basic height=280
 ui.Menu{Trigger: ui.Button{Text: "Actions", Variant: ui.ButtonSecondary}, Children: []core.Node{
@@ -20,7 +20,7 @@ The menu opens and closes itself; `Open` and `OnOpenChange` let the app hold it.
 
 ## Items
 
-A `ui.MenuItem` shows `Text`, an optional `Icon` and a `Shortcut` (`"mod+c"`, written the platform's way on desktops), and reports `OnSelect`, closing the menu unless `NoCloseOnSelect`. `Disabled` turns it off, `Checked` shows a check beside it, and `Variant: ui.MenuItemDanger` marks a destructive one. `ui.MenuLabel` heads a group and `ui.MenuSeparator` divides them. A `ui.Submenu` holds more items and opens beside the item or, on touch screens, in the sheet in place of the ones around it.
+A `ui.MenuItem` shows `Text`, an optional `Icon` and a `Shortcut` (`"mod+c"`, written the platform's way in a popup), and reports `OnSelect`, closing the menu unless `NoCloseOnSelect`. `Disabled` turns it off, `Checked` shows a check beside it, and `Variant: ui.MenuItemDanger` marks a destructive one. `ui.MenuLabel` heads a group and `ui.MenuSeparator` divides them. A `ui.Submenu` holds more items and opens beside the item or, in a sheet, in place of the ones around it.
 
 ```go preview=menu/checked height=320
 ui.Menu{Trigger: ui.Button{Text: "View", Variant: ui.ButtonGhost}, Children: []core.Node{
@@ -48,7 +48,7 @@ ui.ContextMenu{Trigger: fileRow, Children: []core.Node{
 
 ## Behavior
 
-Escape, back and a press outside close a menu. On desktops the menu is a popup placed by `Placement` and `Align`; on touch screens it is a sheet from the bottom. The keyboard moves through items, opens submenus and chooses with Return.
+Escape, back and a press outside close a menu. The menu is a popup placed by `Placement` and `Align`, or a sheet from the bottom when presented so. The keyboard moves through items, opens submenus and chooses with Return.
 
 ## Accessibility
 
@@ -56,7 +56,7 @@ The menu reports `RoleMenu` and each item `RoleMenuItem`. `Label` names the trig
 
 ## Platform
 
-The trigger and items are the app's; the sheet, popup, focus, Escape and back are the platform's. A desktop popup sits beside the trigger, where a phone shows a sheet with the same items.
+The trigger and items are the app's; the sheet, popup, focus, Escape and back are the platform's. The app chooses the popup or the sheet; NSGo picks neither by device.
 
 ## Related
 

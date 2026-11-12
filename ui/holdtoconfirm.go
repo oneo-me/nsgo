@@ -198,7 +198,7 @@ func (h HoldToConfirm) Render(cx *core.Scope) core.Node {
 			BorderWidth: 1, Transition: quick, Disabled: Dimmed(),
 			Animated: &core.AnimatedStyle{Scale: scale}},
 		StyleFunc: func() core.Style {
-			s := core.Style{Background: colors.Surface(), BorderColor: border(), Focus: FocusRing(cx, 2)}
+			s := core.Style{Background: colors.Surface(), BorderColor: border(), FocusVisible: FocusRing(cx, 2)}
 			if !confirmed() {
 				s.Hover = &core.Style{Background: Mix(colors.Surface(), fillColor(), 0.06)}
 			}

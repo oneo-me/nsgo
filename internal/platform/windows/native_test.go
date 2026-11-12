@@ -26,12 +26,8 @@ var (
 	getWindowTextW         = user32.NewProc("GetWindowTextW")
 	getWindowTextLength    = user32.NewProc("GetWindowTextLengthW")
 	getWindowRgnBox        = user32.NewProc("GetWindowRgnBox")
-	createCompatibleDC     = gdi32.NewProc("CreateCompatibleDC")
 	createCompatibleBitmap = gdi32.NewProc("CreateCompatibleBitmap")
-	deleteDC               = gdi32.NewProc("DeleteDC")
-	selectObject           = gdi32.NewProc("SelectObject")
 	bitBlt                 = gdi32.NewProc("BitBlt")
-	getDIBits              = gdi32.NewProc("GetDIBits")
 
 	findWindowW   = user32.NewProc("FindWindowW")
 	findWindowExW = user32.NewProc("FindWindowExW")
@@ -50,17 +46,6 @@ func windowText(hwnd uintptr) string {
 	buf := make([]uint16, n+1)
 	getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), n+1)
 	return syscall.UTF16ToString(buf)
-}
-
-// bitmapInfo is BITMAPINFO with no color table.
-type bitmapInfo struct {
-	Size                         uint32
-	Width, Height                int32
-	Planes, BitCount             uint16
-	Compression, SizeImage       uint32
-	XPelsPerMeter, YPelsPerMeter int32
-	ClrUsed, ClrImportant        uint32
-	Colors                       [1]uint32
 }
 
 // nativeApp is the app a native test drives: a button and a field whose

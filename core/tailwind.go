@@ -37,11 +37,12 @@ const (
 	classExpanded
 	classAriaPressed
 	classAriaSelected
+	classFocusVisible
 )
 
 // classStates are the class states in the order of StateStyles.slots.
 var classStates = [stateCount]uint16{classChecked, classIndeterminate, classSelected, classFocusWithin, classHovered,
-	classFocused, classPressed, classAriaBusy, classAriaChecked, classExpanded, classAriaPressed, classAriaSelected,
+	classFocused, classFocusVisible, classPressed, classAriaBusy, classAriaChecked, classExpanded, classAriaPressed, classAriaSelected,
 	classDisabled}
 
 // classVariants are the variants that read one state, group-* too.
@@ -51,7 +52,7 @@ var classVariants = map[string]struct {
 }{"checked": {classChecked, rankChecked}, "indeterminate": {classIndeterminate, rankIndeterminate},
 	"selected": {classSelected, rankSelected}, "focus-within": {classFocusWithin, rankFocusWithin},
 	"hover": {classHovered, rankHover}, "focus": {classFocused, rankFocus},
-	"focus-visible": {classFocused, rankFocusVisible}, "active": {classPressed, rankActive},
+	"focus-visible": {classFocusVisible, rankFocusVisible}, "active": {classPressed, rankActive},
 	"disabled": {classDisabled, rankDisabled}, "aria-busy": {classAriaBusy, rankAriaBusy},
 	"aria-checked": {classAriaChecked, rankAriaChecked}, "aria-expanded": {classExpanded, rankAriaExpanded},
 	"aria-pressed": {classAriaPressed, rankAriaPressed}, "aria-selected": {classAriaSelected, rankAriaSelected}}

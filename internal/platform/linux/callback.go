@@ -64,6 +64,9 @@ var (
 	cbMenuActivate    uintptr
 	cbTick            uintptr
 
+	cbNotificationAction uintptr
+	cbNotificationClosed uintptr
+
 	cbShaderRender    uintptr
 	cbShaderUnrealize uintptr
 
@@ -128,6 +131,8 @@ func init() {
 	cbSettingsChanged = newCallback(settingsChangedCallback)
 	cbMenuActivate = newCallback(menuActivateCallback)
 	cbTick = newCallback(tickCallback)
+	cbNotificationAction = newCallback(notificationActionCallback)
+	cbNotificationClosed = newCallback(notificationClosedCallback)
 
 	cbShaderRender = newCallback(shaderRenderCallback)
 	cbShaderUnrealize = newCallback(shaderUnrealizeCallback)

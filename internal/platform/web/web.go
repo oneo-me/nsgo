@@ -143,16 +143,16 @@ type surface struct {
 	// page's host sets, which the browser's own parts follow
 	// (setAppearance).
 	forced, hosted driver.Appearance
-	clicks           clicks
-	timer            js.Value // the pending long press
-	longPress        js.Func
-	outside          []*view // views that report presses outside them
-	alerts           []*alert
-	keys             []driver.KeyBinding // the keymap
-	live             js.Value            // the region announcements are read from
-	watch            watch
-	env              driver.Environment // as last sent
-	gestures         gestures
+	clicks         clicks
+	timer          js.Value // the pending long press
+	longPress      js.Func
+	outside        []*view // views that report presses outside them
+	alerts         []*alert
+	keys           []driver.KeyBinding // the keymap
+	live           js.Value            // the region announcements are read from
+	watch          watch
+	env            driver.Environment // as last sent
+	gestures       gestures
 	// canvasImages are the images canvases draw, by ImageSource.Key.
 	canvasImages map[string]*canvasImage
 	// stickyBound are the sticky cells whose insets follow animated
@@ -234,8 +234,8 @@ type view struct {
 	presented bool // a modal was inserted once
 	hover     bool // pointerenter and pointerleave are listened to
 	moves     bool // pointermove is
-	// keyFocused is whether the view has the keyboard focus it reported.
-	keyFocused bool
+	// focused is whether the view has the keyboard focus it reported.
+	focused bool
 	// panActivation decides when a drag on the view becomes its pan.
 	panActivation driver.PanActivation
 	listeners     listeners
@@ -1298,6 +1298,9 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		case driver.ItemOpenURL:
 			s.openURL(it.Value, it.Count)
 			continue
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
+			s.notify(it)
+			continue
 		case driver.ItemPickImages:
 			s.pickImages(*it.Pick, it.Count)
 			continue
@@ -2294,6 +2297,9 @@ func (s *surface) listen() {
 	// Captured, so shortcuts come before what has focus.
 	s.doc.Call("addEventListener", "keydown", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		if s.owns() {
+			if !modifierKey(args[0].Get("key").String()) {
+				s.engine.InputModality(driver.ModalityKeyboard)
+			}
 			s.shortcut(args[0])
 		}
 		return nil
@@ -2301,6 +2307,9 @@ func (s *surface) listen() {
 	// Captured, so it sees presses that views stop from bubbling.
 	s.doc.Call("addEventListener", "pointerdown", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		s.pressedIn = s.host.Call("contains", args[0].Get("target")).Bool()
+		if s.pressedIn {
+			s.engine.InputModality(driver.ModalityPointer)
+		}
 		s.pressOutside(args[0])
 		return nil
 	}), true)
@@ -2521,6 +2530,15 @@ func (s *surface) escape(e js.Value) {
 	if !editing(s.doc.Get("activeElement")) {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventBack})
 	}
+}
+
+// modifierKey reports whether key, a KeyboardEvent's, is a modifier alone.
+func modifierKey(key string) bool {
+	switch key {
+	case "Shift", "Control", "Alt", "Meta", "AltGraph", "CapsLock", "Fn", "OS":
+		return true
+	}
+	return false
 }
 
 // owns reports whether the page's keys are the app's: it fills the page,

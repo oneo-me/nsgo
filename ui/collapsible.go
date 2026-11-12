@@ -58,7 +58,7 @@ func (c Collapsible) Render(cx *core.Scope) core.Node {
 			},
 			Style: core.Style{Direction: core.Row, AlignSelf: core.AlignStart, AlignItems: core.AlignCenter, Gap: 4,
 				Padding: core.Edges{Top: 4, Right: 8, Bottom: 4, Left: 2}, CornerRadius: RadiusControl, Disabled: Dimmed()},
-			StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), Focus: FocusRing(cx, 2)} }, Children: children}}}
+			StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), FocusVisible: FocusRing(cx, 2)} }, Children: children}}}
 }
 
 // disclosureArrow is the arrow of what open says is open: it points along

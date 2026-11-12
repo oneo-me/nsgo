@@ -89,7 +89,7 @@ func (r FormRow) Render(cx *core.Scope) core.Node {
 	return base.Button{Label: label, TestID: r.TestID, Disabled: r.Disabled, OnPress: func(core.PressEvent) { r.OnPress() },
 		Style: style,
 		StyleFunc: func() core.Style {
-			return core.Style{Active: &core.Style{Background: colors.Hover()}, Focus: FocusRing(cx, -2)}
+			return core.Style{Active: &core.Style{Background: colors.Hover()}, FocusVisible: FocusRing(cx, -2)}
 		},
 		Children: children}
 }

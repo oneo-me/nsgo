@@ -45,15 +45,15 @@ func (s *Style) envUses() (safe, keyboard bool) {
 			keyboard = keyboard || s.PaddingEnv.has(EnvKeyboard) || s.MarginEnv.has(EnvKeyboard)
 		}
 	}
-	states := func(h, f, a, sel, c, i, d *Style) {
-		for _, st := range [...]*Style{h, f, a, sel, c, i, d} {
+	states := func(h, f, fv, a, sel, c, i, d *Style) {
+		for _, st := range [...]*Style{h, f, fv, a, sel, c, i, d} {
 			check(st)
 		}
 	}
 	check(s)
-	states(s.Hover, s.Focus, s.Active, s.Selected, s.Checked, s.Indeterminate, s.Disabled)
+	states(s.Hover, s.Focus, s.FocusVisible, s.Active, s.Selected, s.Checked, s.Indeterminate, s.Disabled)
 	if g := s.GroupStyle; g != nil {
-		states(g.Hover, g.Focus, g.Active, g.Selected, g.Checked, g.Indeterminate, g.Disabled)
+		states(g.Hover, g.Focus, g.FocusVisible, g.Active, g.Selected, g.Checked, g.Indeterminate, g.Disabled)
 	}
 	return
 }

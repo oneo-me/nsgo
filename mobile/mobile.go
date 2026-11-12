@@ -25,6 +25,30 @@ type (
 	InputAccessoryView = core.InputAccessoryView
 )
 
+// Haptic is feedback the device plays under the user's finger, from
+// HapticSelection to HapticError.
+type Haptic = core.Haptic
+
+// The haptics PlayHaptic plays: a selection changing, an impact of a
+// weight, and a task's outcome.
+const (
+	HapticSelection = core.HapticSelection
+	HapticLight     = core.HapticLight
+	HapticMedium    = core.HapticMedium
+	HapticHeavy     = core.HapticHeavy
+	HapticSoft      = core.HapticSoft
+	HapticRigid     = core.HapticRigid
+	HapticSuccess   = core.HapticSuccess
+	HapticWarning   = core.HapticWarning
+	HapticError     = core.HapticError
+)
+
+// PlayHaptic plays h: through UIKit's feedback generators on iOS, and
+// on Android through the view's haptic feedback, its nearest constant,
+// where the user's touch feedback setting allows it. Devices without
+// haptics, and every other platform, play nothing.
+func PlayHaptic(cx *core.Scope, h Haptic) { cx.PlayHaptic(h) }
+
 // IsAvailable reports whether the app runs on iOS or Android, where this
 // package's components show.
 func IsAvailable(cx *core.Scope) bool {

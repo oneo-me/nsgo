@@ -7,9 +7,9 @@ import (
 	"github.com/nsgo-dev/nsgo/core"
 )
 
-// Select picks one value from a list it opens under its trigger on
-// desktops, the selected item over the trigger, and as a sheet on touch
-// screens. Value makes the value controlled, nil for none, with its own
+// Select picks one value from a list it opens under its trigger, the
+// selected item over the trigger, or as a sheet as Presentation says.
+// Value makes the value controlled, nil for none, with its own
 // from DefaultValue otherwise. The list has no look: the app styles each
 // part, a row's Focused style following the highlight, its Selected style
 // the value. Up, Down, Return and Space open it from the focused trigger,
@@ -29,7 +29,9 @@ type Select struct {
 	// value and reports nil.
 	Cleanable bool
 
-	Placement core.Placement
+	// Presentation is a popup at the trigger, or a sheet.
+	Presentation Presentation
+	Placement    core.Placement
 	// Align lines the list up with its trigger, at its start when 0.
 	Align          core.Align
 	Offset, Margin core.Points
@@ -44,7 +46,7 @@ type Select struct {
 	PopupClass     string
 	PopupStyle     core.Style
 	PopupStyleFunc func() core.Style
-	// BackdropClass and BackdropStyle are the sheet's, on touch screens.
+	// BackdropClass and BackdropStyle are the sheet's.
 	BackdropClass string
 	BackdropStyle core.Style
 	ListClass     string
@@ -245,7 +247,7 @@ func (s Select) Render(cx *core.Scope) core.Node {
 			closedBy = 0
 		}}
 	list := listParts{
-		frame: dropdownFrame{placement: s.Placement, align: cmpAlign(s.Align), offset: s.Offset, margin: s.Margin,
+		frame: dropdownFrame{presentation: s.Presentation, placement: s.Placement, align: cmpAlign(s.Align), offset: s.Offset, margin: s.Margin,
 			popup:    parts.Of(s.PopupClass, s.PopupStyle, s.PopupStyleFunc),
 			backdrop: parts.Part{Class: s.BackdropClass, Style: s.BackdropStyle}},
 		list:   part{Class: s.ListClass, Style: s.ListStyle},

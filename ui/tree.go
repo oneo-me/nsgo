@@ -223,10 +223,10 @@ func (tr Tree) Render(cx *core.Scope) core.Node {
 		Row:              row,
 		EstimatedSize:    size, Empty: tr.Empty, Label: tr.Label, ListRef: tr.Ref, TestID: tr.TestID,
 		Style:     core.Style{MinHeight: core.Pt(0), CornerRadius: RadiusControl}.Merge(tr.Style),
-		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		StyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 		ListStyle: core.Style{Padding: core.All(4)},
 		ItemStyle: core.Style{CornerRadius: RadiusControl, MinWidth: core.Pt(0)},
 		ItemStyleFunc: func() core.Style {
-			return core.Style{Focus: &core.Style{OutlineWidth: 2, OutlineColor: colors.Now().Info, OutlineOffset: -2}}
+			return core.Style{FocusVisible: FocusRing(cx, -2)}
 		}}
 }

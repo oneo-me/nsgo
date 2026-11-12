@@ -800,6 +800,32 @@ func TestWebInput(t *testing.T) {
 	app.WaitFor("text:note.txt, 19 B", 10*time.Second)
 }
 
+func TestSystemNotificationsAndBadge(t *testing.T) {
+	headless(t)
+	app := startDesktop(t)
+	open(app, "System")
+	app.Press("id:show-notification")
+	app.Find("text:Shown: no")
+	app.Press("id:ask-notifications")
+	app.Find("text:granted")
+	app.Press("id:show-notification")
+	app.Find("text:Shown: yes")
+	if len(app.Notifications) != 1 || app.Notifications[0].ID != "gallery" {
+		t.Fatalf("notifications = %+v", app.Notifications)
+	}
+	app.PressNotification("gallery")
+	app.Find("text:Pressed: gallery")
+	app.Press("id:badge-up")
+	app.Press("id:badge-up")
+	if app.Badge != 2 {
+		t.Errorf("badge = %d", app.Badge)
+	}
+	app.Press("id:badge-clear")
+	if app.Badge != 0 {
+		t.Errorf("badge after clearing = %d", app.Badge)
+	}
+}
+
 func TestSystem(t *testing.T) {
 	headless(t)
 	app := startDesktop(t)

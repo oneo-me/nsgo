@@ -68,6 +68,89 @@ func TestFocusWithinFollowsTheFocusIntoOverlaysAndOut(t *testing.T) {
 	}
 }
 
+func TestFocusVisibleShowsOnlyAKeyboardsFocus(t *testing.T) {
+	var cursor *Signal[bool]
+	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
+		cursor = NewSignal(cx, false)
+		return View{Children: []Node{
+			View{TestID: "button", OnPress: press, Class: "focus:bg-[#111111] focus-visible:bg-[#222222]"},
+			View{TestID: "ringed", OnPress: press, Style: Style{FocusVisible: &Style{OutlineWidth: 2}}},
+			Input{TestID: "field", Class: "focus-visible:bg-[#333333]"},
+			View{TestID: "row", Class: "focus:bg-[#444444] focus-visible:bg-[#555555]",
+				PartStates: func() PartStates { return PartStates{Focused: cursor.Get()} }},
+		}}
+	})
+	h.commit()
+	modality := func(m uint32) { h.tree.Dispatch(driver.Event{Kind: driver.EventInputModality, Count: m}) }
+	focus := func(id string, on bool) {
+		kind := driver.EventBlur
+		if on {
+			kind = driver.EventFocus
+		}
+		h.tree.Dispatch(driver.Event{Kind: kind, ID: h.find(id).id})
+		h.commit()
+	}
+	bg := func(id string) Color { return h.find(id).style.Background }
+
+	if !h.find("ringed").events().Has(driver.EventFocus) {
+		t.Fatal("a view styled for a focus that shows does not report its focus")
+	}
+	// Before any input the focus shows, as a browser's autofocus.
+	focus("button", true)
+	if bg("button") != RGB(0x222222) {
+		t.Errorf("focused before any input: %x", bg("button"))
+	}
+	// After a press the focus does not show, but focus: holds.
+	modality(driver.ModalityPointer)
+	focus("ringed", true)
+	focus("ringed", false)
+	focus("button", true)
+	if bg("button") != RGB(0x111111) || h.find("ringed").style.OutlineWidth != 0 {
+		t.Errorf("focused after a press: %x, ring %v", bg("button"), h.find("ringed").style.OutlineWidth)
+	}
+	// A key typed while it does not show makes it show.
+	modality(driver.ModalityKeyboard)
+	h.commit()
+	if bg("button") != RGB(0x222222) {
+		t.Errorf("a key typed after a press: %x", bg("button"))
+	}
+	// The keyboard moving it shows it where it lands, and the view it left
+	// shows it no more.
+	focus("ringed", true)
+	focus("button", false)
+	if h.find("ringed").style.OutlineWidth != 2 || bg("button") != 0 {
+		t.Errorf("Tab: ring %v, the left view %x", h.find("ringed").style.OutlineWidth, bg("button"))
+	}
+	// A pointer leaves a focus that shows as it is.
+	modality(driver.ModalityPointer)
+	h.commit()
+	if h.find("ringed").style.OutlineWidth != 2 {
+		t.Error("a press elsewhere hid the focus")
+	}
+	// An input that edits always shows it.
+	focus("field", true)
+	focus("ringed", false)
+	if bg("field") != RGB(0x333333) {
+		t.Errorf("a field focused by a press: %x", bg("field"))
+	}
+	// A part focused shows focus-visible: while the focus shows.
+	cursor.Set(true)
+	h.commit()
+	if bg("row") != RGB(0x555555) {
+		t.Errorf("a cursor while the focus shows: %x", bg("row"))
+	}
+	focus("button", true)
+	focus("field", false)
+	if bg("row") != RGB(0x444444) {
+		t.Errorf("a cursor after a press: %x", bg("row"))
+	}
+	focus("button", false)
+	h.commit()
+	if bg("button") != 0 || bg("row") != RGB(0x444444) {
+		t.Errorf("blurred: %x, row %x", bg("button"), bg("row"))
+	}
+}
+
 func TestPointerEventsInheritNone(t *testing.T) {
 	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
 		return View{Children: []Node{

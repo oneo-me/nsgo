@@ -63,6 +63,6 @@ func (b ToggleButton) Render(cx *core.Scope) core.Node {
 	}
 	return base.Toggle{Label: label, TestID: b.TestID, Pressed: b.On, Disabled: b.Disabled, OnChange: b.OnChange,
 		Style:     core.Style{Group: "button", CornerRadius: RadiusControl, Disabled: Dimmed()},
-		StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		StyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 		Children:  []core.Node{core.View{StyleFunc: face, Children: children}}}
 }

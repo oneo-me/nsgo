@@ -30,7 +30,9 @@ type Combobox struct {
 	// Cleanable shows a button while a value is chosen, which clears it.
 	Cleanable bool
 
-	Placement core.Placement
+	// Presentation is a popup under the box, or a sheet.
+	Presentation Presentation
+	Placement    core.Placement
 	// Align lines the list up with its box, at its start when 0.
 	Align          core.Align
 	Offset, Margin core.Points
@@ -235,7 +237,7 @@ func (c Combobox) Render(cx *core.Scope) core.Node {
 			closedBy = 0
 		}}
 	list := listParts{
-		frame: dropdownFrame{placement: c.Placement, align: cmpAlign(c.Align), offset: c.Offset, margin: c.Margin,
+		frame: dropdownFrame{presentation: c.Presentation, placement: c.Placement, align: cmpAlign(c.Align), offset: c.Offset, margin: c.Margin,
 			popup:    parts.Of(c.PopupClass, c.PopupStyle, c.PopupStyleFunc),
 			backdrop: parts.Part{Class: c.BackdropClass, Style: c.BackdropStyle}},
 		list: part{Class: c.ListClass, Style: c.ListStyle}, item: parts.Of(c.ItemClass, c.ItemStyle, c.ItemStyleFunc),

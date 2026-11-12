@@ -217,6 +217,16 @@ type App struct {
 	Installs        []driver.SharedFile
 	InstallAllowed  bool
 	InstallSettings int
+	// Notifications are the notifications showing, oldest first, one of
+	// an ID replacing the one before; Badge is the count on the app's
+	// icon. NotificationPermission is what the platform answers whether
+	// the app may show them with, the user not asked at first; a request
+	// while not asked makes it NotificationAnswer, the user granting it
+	// when that is zero. Only a granted app shows them.
+	Notifications          []core.Notification
+	Badge                  int
+	NotificationPermission core.NotificationPermission
+	NotificationAnswer     core.NotificationPermission
 	// OnAlert answers each alert the app shows with the index of the
 	// button the user presses, or -1 to dismiss it, once the step that
 	// showed it ends. Without it Alerts lists them and Answer answers

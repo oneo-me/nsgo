@@ -14,6 +14,7 @@ import (
 	"github.com/nsgo-dev/nsgo/base"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/mobile"
 
 	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
 	"github.com/nsgo-dev/nsgo/ui"
@@ -915,9 +916,9 @@ func filesCard(cx *core.Scope) core.Node {
 // systemDemo is what the platform does for the app: the environment, the
 // status bar, alerts, frames and timers, shortcuts, the network, the
 // window, the clipboard, links, photos, the appearance, dictation, the
-// lifecycle and files.
+// lifecycle, notifications, the badge, haptics and files.
 func systemDemo(cx *core.Scope) core.Node {
-	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, speechCard, filesCard)
+	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, speechCard, notificationsCard, filesCard)
 }
 
 // yesNo says whether in tr's language.
@@ -926,4 +927,65 @@ func yesNo(tr locales.Messages, yes bool) string {
 		return tr.CommonYes()
 	}
 	return tr.CommonNo()
+}
+
+// notificationsCard is system notifications, the app's badge and haptics.
+func notificationsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	permission := core.NewSignal(cx, "—")
+	shown := core.NewSignal(cx, "")
+	pressed := core.NewSignal(cx, tr.SystemNothingPressed())
+	badge := core.NewSignal(cx, 0)
+	answer := func(p core.NotificationPermission) { permission.Set(p.String()) }
+	cx.NotificationPermission(answer)
+	cx.OnNotificationPress(func(id string) { pressed.Set(tr.SystemNotificationPressed(id)) })
+	show := func(silent bool) {
+		_ = cx.ShowNotification(core.Notification{ID: "gallery", Title: tr.SystemNotificationTitle(), Body: tr.SystemNotificationBody(),
+			Silent: silent}, func(ok bool) { shown.Set(tr.SystemNotificationShown(yesNo(tr, ok))) })
+	}
+	setBadge := func(n int) {
+		badge.Set(n)
+		cx.SetBadge(n)
+	}
+	small := func(l, id string, fn func()) core.Node {
+		return ui.Button{Text: l, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: fn, TestID: id}
+	}
+	haptic := func(l string, h mobile.Haptic) core.Node {
+		return small(l, "", func() { mobile.PlayHaptic(cx, h) })
+	}
+	line := func() core.Node {
+		return core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
+	}
+	return Card{Title: tr.SystemNotificationsAndHaptics(), Description: tr.SystemNotificationsHapticsSummary(),
+		Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
+			Caption{Label: tr.SystemPermission(), Note: permission.Get},
+			ui.Wrap{Children: []core.Node{
+				ui.Button{Text: tr.SystemAskPermission(), Size: ui.SizeSmall, TestID: "ask-notifications",
+					OnPress: func() { cx.RequestNotificationPermission(answer) }},
+				small(tr.SystemShowNotification(), "show-notification", func() { show(false) }),
+				small(tr.SystemShowSilently(), "", func() { show(true) }),
+				small(tr.SystemCloseNotification(), "close-notification", func() { cx.CloseNotification("gallery") }),
+			}},
+			core.Text{ContentFunc: shown.Get, TestID: "notification-shown", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+			core.Text{ContentFunc: pressed.Get, TestID: "notification-pressed", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+			line(),
+			Caption{Label: tr.SystemBadge(), Note: func() string { return fmt.Sprint(badge.Get()) }},
+			ui.Wrap{Children: []core.Node{
+				small("+1", "badge-up", func() { setBadge(badge.GetUntracked() + 1) }),
+				small(tr.SystemClearBadge(), "badge-clear", func() { setBadge(0) }),
+			}},
+			line(),
+			Caption{Label: tr.SystemHaptics()},
+			core.Dynamic(func(cx *core.Scope) core.Node {
+				if !mobile.IsAvailable(cx) {
+					return Note{Text: locales.For(cx).SystemNoHapticsHere()}
+				}
+				return ui.Wrap{Children: []core.Node{
+					haptic(tr.SystemSelection(), mobile.HapticSelection), haptic(tr.SystemLightImpact(), mobile.HapticLight),
+					haptic(tr.SystemHeavyImpact(), mobile.HapticHeavy), haptic(tr.SystemSuccess(), mobile.HapticSuccess),
+					haptic(tr.SystemWarning(), mobile.HapticWarning), haptic(tr.SystemError(), mobile.HapticError),
+				}}
+			}),
+		}}
 }

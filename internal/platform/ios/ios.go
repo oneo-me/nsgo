@@ -98,7 +98,7 @@ type view struct {
 	selStart, selEnd int // UTF-16
 	area             bool
 	longPress        objc.ID
-	selTap           objc.ID // an area's tap (selection.go)
+	selTap           objc.ID        // an area's tap (selection.go)
 	tsel             *textSelection // a selectable text's own selection (textinput.go)
 
 	// props are the view's last props; the rest what access.go last
@@ -387,7 +387,20 @@ func loadUIKit() {
 	register("NsgoAppDelegate", apple.Class("UIResponder"),
 		[]*objc.Protocol{objc.GetProtocol("UIApplicationDelegate")},
 		[]objc.MethodDef{{Cmd: sel("application:didFinishLaunchingWithOptions:"),
-			Fn: func(self objc.ID, _ objc.SEL, application, options objc.ID) bool { return true }}})
+			Fn: func(self objc.ID, _ objc.SEL, application, options objc.ID) bool {
+				// Before it returns, so a press that launched the app is
+				// heard.
+				apple.WatchNotifications()
+				return true
+			}},
+			// iOS ends the app, as the user swipes it away while it runs:
+			// its OnQuit handlers run, and its storage is written.
+			{Cmd: sel("applicationWillTerminate:"), Fn: func(self objc.ID, _ objc.SEL, application objc.ID) {
+				if runner != nil && runner.engine != nil {
+					runner.engine.Close()
+				}
+				engine.SyncStorage()
+			}}})
 	// The SDK requires the scene life cycle; Info.plist names this class.
 	register("NsgoSceneDelegate", apple.Class("UIResponder"),
 		[]*objc.Protocol{objc.GetProtocol("UIWindowSceneDelegate")},
@@ -510,6 +523,8 @@ func (s *surface) startEngine(test *testOpen) {
 		s.startTicking()
 	}
 	s.engine = engine.Start(s, s.app, opts)
+	e := s.engine
+	apple.SetNotificationPress(func(id string) { e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: id}) })
 	s.observe()
 }
 
@@ -783,6 +798,7 @@ func watcherBegan(self objc.ID, cmd objc.SEL, touches, event objc.ID) {
 	apple.Super(self, cmd, touches, event)
 	if v := views[self.Send(sel("view"))]; v != nil && v.surface.engine != nil {
 		s := v.surface
+		s.engine.InputModality(driver.ModalityPointer)
 		apple.ForEach(touches, s.pressOutside)
 		apple.ForEach(touches, s.clearTouched)
 		apple.ForEach(touches, s.resignTouched)
@@ -862,6 +878,12 @@ func (s *surface) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemOpenURL:
 			s.openURL(it.Value, it.Count)
+			continue
+		case driver.ItemHaptic:
+			haptic(it.Count)
+			continue
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
+			s.notify(it)
 			continue
 		case driver.ItemCheckForUpdates:
 			s.checkForUpdates(it.Count)
@@ -1512,6 +1534,9 @@ var keyNames = map[int]string{
 // and passes the rest on.
 func pressesBegan(self objc.ID, cmd objc.SEL, presses, event objc.ID) {
 	app := pressSurface(self)
+	if app != nil && typesKey(presses) {
+		app.engine.InputModality(driver.ModalityKeyboard)
+	}
 
 	if app != nil && app.engine != nil && app.menuGoesBack(presses) {
 		// The remote's Menu button: back, rather than out of the app.
@@ -1544,6 +1569,21 @@ func pressesBegan(self objc.ID, cmd objc.SEL, presses, event objc.ID) {
 	if i := slices.IndexFunc(app.keys, func(b driver.KeyBinding) bool { return b.Key == binding }); i >= 0 && app.keys[i].Repeat {
 		app.repeatKey(binding)
 	}
+}
+
+// typesKey reports whether presses hold a hardware key other than a
+// modifier (UIKeyboardHIDUsage's Caps Lock, and the controls, shifts,
+// options and commands from 224 on).
+func typesKey(presses objc.ID) bool {
+	typed := false
+	apple.ForEach(presses, func(press objc.ID) {
+		if key := press.Send(sel("key")); key != 0 {
+			if code := objc.Send[int](key, sel("keyCode")); code != 57 && (code < 224 || code > 231) {
+				typed = true
+			}
+		}
+	})
+	return typed
 }
 
 // pressSurface is the surface hardware keys pressed in self go to: an

@@ -5,7 +5,7 @@ group: 组件
 order: 42
 ---
 
-`ui.Menu` 从一个按钮打开 `ui.MenuItem`：桌面上显示在按钮旁边，触摸屏上显示为 sheet。`ui.ContextMenu` 在指针处打开同样的条目。
+`ui.Menu` 从一个按钮打开 `ui.MenuItem`：显示在按钮旁边，或在设置 `Presentation: base.PresentSheet` 时从底部显示为 sheet，与设备无关。`ui.ContextMenu` 在指针处打开同样的条目。
 
 ```go preview=menu/basic height=280
 ui.Menu{Trigger: ui.Button{Text: "操作", Variant: ui.ButtonSecondary}, Children: []core.Node{
@@ -20,7 +20,7 @@ ui.Menu{Trigger: ui.Button{Text: "操作", Variant: ui.ButtonSecondary}, Childre
 
 ## 条目
 
-`ui.MenuItem` 显示 `Text`、可选的 `Icon` 和 `Shortcut`（写作 `"mod+c"`，桌面上按平台的方式显示），并报告 `OnSelect`，除非设置 `NoCloseOnSelect`，否则选择后菜单关闭。`Disabled` 禁用它，`Checked` 在旁边显示勾选，`Variant: ui.MenuItemDanger` 标记危险操作。`ui.MenuLabel` 作为一组的标题，`ui.MenuSeparator` 分隔各组。`ui.Submenu` 包含更多条目，在条目旁边打开，在触摸屏上则在 sheet 中替换周围的条目。
+`ui.MenuItem` 显示 `Text`、可选的 `Icon` 和 `Shortcut`（写作 `"mod+c"`，在弹出层中按平台的方式显示），并报告 `OnSelect`，除非设置 `NoCloseOnSelect`，否则选择后菜单关闭。`Disabled` 禁用它，`Checked` 在旁边显示勾选，`Variant: ui.MenuItemDanger` 标记危险操作。`ui.MenuLabel` 作为一组的标题，`ui.MenuSeparator` 分隔各组。`ui.Submenu` 包含更多条目，在条目旁边打开，在 sheet 中则替换周围的条目。
 
 ```go preview=menu/checked height=320
 ui.Menu{Trigger: ui.Button{Text: "显示", Variant: ui.ButtonGhost}, Children: []core.Node{
@@ -48,7 +48,7 @@ ui.ContextMenu{Trigger: fileRow, Children: []core.Node{
 
 ## 行为
 
-Escape、返回和点击外部会关闭菜单。桌面上菜单是由 `Placement` 和 `Align` 定位的弹出层；触摸屏上是从底部弹出的 sheet。键盘可以在条目间移动、打开子菜单并用回车选择。
+Escape、返回和点击外部会关闭菜单。菜单是由 `Placement` 和 `Align` 定位的弹出层，按要求呈现时则是从底部弹出的 sheet。键盘可以在条目间移动、打开子菜单并用回车选择。
 
 ## 无障碍
 
@@ -56,7 +56,7 @@ Escape、返回和点击外部会关闭菜单。桌面上菜单是由 `Placement
 
 ## 平台
 
-触发器和条目属于应用；sheet、弹出层、焦点、Escape 和返回属于平台。桌面弹出层位于触发器旁边，手机则用 sheet 显示同样的条目。
+触发器和条目属于应用；sheet、弹出层、焦点、Escape 和返回属于平台。弹出层还是 sheet 由应用选择，NSGo 不按设备决定。
 
 ## 相关
 

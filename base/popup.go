@@ -269,6 +269,7 @@ type dropdownFrame struct {
 	align           core.Align
 	offset, margin  core.Points
 	popup, backdrop part
+	presentation    Presentation
 }
 
 // dropdownCover is a view inside a dropdown laid over its trigger, a
@@ -282,10 +283,10 @@ func newDropdownCover(cx *core.Scope) *dropdownCover {
 	return &dropdownCover{view: new(core.Ref), shown: core.NewSignal(cx, false)}
 }
 
-// dropdown is what is open under a Select, a Combobox or a DatePicker: on
-// desktops a popup at anchor, as wide as width says (the trigger's once
-// laid out, -1 before), at least that wide when fit, never past the room on
-// its side; on touch screens a sheet at the bottom over a backdrop.
+// dropdown is what is open under a Select, a Combobox or a DatePicker: a
+// popup at anchor, as wide as width says (the trigger's once laid out, -1
+// before), at least that wide when fit, never past the room on its side;
+// or, presented so, a sheet at the bottom over a backdrop.
 type dropdown struct {
 	anchor *core.Ref
 	// onContent places it against what anchor holds, a trigger's element.
@@ -305,7 +306,7 @@ type dropdown struct {
 
 // node is the dropdown.
 func (d dropdown) node(cx *core.Scope) core.Node {
-	onSheet := !core.Untracked(cx, cx.Env().Desktop)
+	onSheet := d.frame.presentation == PresentSheet
 	leaveBar(cx)
 	report := func(there func() bool) {
 		var was bool
@@ -367,7 +368,7 @@ func (d dropdown) node(cx *core.Scope) core.Node {
 		}
 		popup := d.frame.popup
 		o := core.Overlay{Anchor: d.anchor, AnchorContent: d.onContent, Placement: d.frame.placement, Align: d.frame.align, Offset: d.frame.offset, Margin: d.frame.margin,
-			Class: popup.Class, Children: d.content(false),
+			Class: popup.Class, Children: d.lazyContent(false),
 			StyleFunc: func() core.Style {
 				s := size().Merge(popup.Style)
 				if popup.Fn != nil {
@@ -395,7 +396,11 @@ func (d dropdown) measure() {
 	}
 }
 
-// lazyContent makes the content as the sheet shows it, each opening anew.
+// lazyContent makes the content as the popup or the sheet shows it, each
+// opening anew.
 func (d dropdown) lazyContent(onSheet bool) []core.Node {
-	return []core.Node{core.Func(func(*core.Scope) core.Node { return core.Group(d.content(onSheet)) })}
+	return []core.Node{core.Func(func(cx *core.Scope) core.Node {
+		onSheetKey.Provide(cx, onSheet)
+		return core.Group(d.content(onSheet))
+	})}
 }

@@ -107,7 +107,7 @@ func (p Panel) Render(cx *core.Scope) core.Node {
 		surface.StyleFunc = func() core.Style {
 			colors := ui.ColorsOf(cx)
 			return ui.CardStyle(cx).Merge(core.Style{Hover: &core.Style{BorderColor: colors.FieldBorder()},
-				Active: &core.Style{Background: colors.Raised()}, Focus: ui.FocusRing(cx, 2)}).Merge(p.Style)
+				Active: &core.Style{Background: colors.Raised()}, FocusVisible: ui.FocusRing(cx, 2)}).Merge(p.Style)
 		}
 	}
 	if p.Head == nil {

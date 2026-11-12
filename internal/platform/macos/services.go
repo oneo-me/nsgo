@@ -5,6 +5,7 @@ package macos
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -83,6 +84,30 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 		ev.URIs = fileURLs(pb)
 	}
 	s.engine.Dispatch(ev)
+}
+
+// notify carries out a notification's item through the notification
+// center; the badge is the Dock tile's, which needs no permission.
+func (s *surface) notify(it *driver.MountItem) {
+	e, id := s.engine, it.Count
+	switch it.Kind {
+	case driver.ItemNotificationPermission:
+		apple.NotificationPermission(it.On, func(p int) {
+			e.Dispatch(driver.Event{Kind: driver.EventNotification, Count: id, Index: p})
+		})
+	case driver.ItemShowNotification:
+		apple.ShowNotification(*it.Notification, func(shown bool) {
+			e.Dispatch(driver.Event{Kind: driver.EventNotification, Count: id, Finished: shown})
+		})
+	case driver.ItemCloseNotification:
+		apple.CloseNotification(it.Value)
+	case driver.ItemBadge:
+		label := objc.ID(0)
+		if it.Count > 0 {
+			label = apple.NSString(strconv.FormatUint(uint64(it.Count), 10))
+		}
+		objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")).Send(sel("dockTile")).Send(sel("setBadgeLabel:"), label)
+	}
 }
 
 // openURL opens u with the app the system picks and reports whether one

@@ -45,7 +45,7 @@ func (c Checkbox) Render(cx *core.Scope) core.Node {
 		label = c.Text
 	}
 	return base.Checkbox{Checked: c.Checked, Indeterminate: c.Indeterminate, Disabled: c.Disabled, OnChange: c.OnChange,
-		Style: selectionRow.Merge(c.Style), StyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+		Style: selectionRow.Merge(c.Style), StyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 		IndicatorStyle: box, IndicatorStyleFunc: func() core.Style {
 			on := &core.Style{Background: colors.AccentFill(), BorderColor: colors.AccentFill()}
 			return core.Style{BorderColor: colors.FieldBorder(), Background: colors.Field(), Shadows: FinOf(cx).Raised().Shadows,

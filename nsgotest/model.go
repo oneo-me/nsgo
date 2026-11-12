@@ -1,11 +1,13 @@
 package nsgotest
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
@@ -406,6 +408,22 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.post(driver.Event{Kind: driver.EventOpenURL, Count: it.Count, Finished: opened})
 		case driver.ItemCheckForUpdates:
 			a.checkForUpdates(&it)
+		case driver.ItemNotificationPermission:
+			if it.On && a.NotificationPermission == core.NotificationsNotAsked {
+				a.NotificationPermission = cmp.Or(a.NotificationAnswer, core.NotificationsGranted)
+			}
+			a.post(driver.Event{Kind: driver.EventNotification, Count: it.Count, Index: int(a.NotificationPermission)})
+		case driver.ItemShowNotification:
+			shown := a.NotificationPermission == core.NotificationsGranted
+			if shown {
+				n := core.Notification(*it.Notification)
+				a.Notifications = append(slices.DeleteFunc(a.Notifications, func(o core.Notification) bool { return o.ID == n.ID }), n)
+			}
+			a.post(driver.Event{Kind: driver.EventNotification, Count: it.Count, Finished: shown})
+		case driver.ItemCloseNotification:
+			a.Notifications = slices.DeleteFunc(a.Notifications, func(o core.Notification) bool { return o.ID == it.Value })
+		case driver.ItemBadge:
+			a.Badge = int(it.Count)
 		case driver.ItemPickImages:
 			a.Picks = append(a.Picks, *it.Pick)
 			var files []driver.PickedFile
@@ -563,6 +581,19 @@ func (a *App) speech(id uint32, r driver.SpeechRequest) {
 			a.Speech = nil
 		}
 	}
+}
+
+// PressNotification has the user press the notification called id,
+// which goes as the system takes it away, and settles.
+func (a *App) PressNotification(id string) {
+	a.t.Helper()
+	i := slices.IndexFunc(a.Notifications, func(n core.Notification) bool { return n.ID == id })
+	if i < 0 {
+		a.t.Fatalf("nsgotest: no notification %q shows", id)
+	}
+	a.Notifications = slices.Delete(a.Notifications, i, i+1)
+	a.post(driver.Event{Kind: driver.EventNotificationPress, Text: id})
+	a.Settle()
 }
 
 // HearSpeech has the recognizer of the session running hear text, the

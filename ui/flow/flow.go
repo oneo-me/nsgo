@@ -61,7 +61,7 @@ func (v View) Render(cx *core.Scope) core.Node {
 				Label: colors.Muted(), LabelBackground: colors.Background(), LabelBorder: colors.Border().Faded(.7)}
 		},
 		NodeStyleFunc: func() core.Style {
-			return core.Style{CornerRadius: CardRadius, Focus: ui.FocusRing(cx, 2)}
+			return core.Style{CornerRadius: CardRadius, FocusVisible: ui.FocusRing(cx, 2)}
 		},
 		RingStyleFunc: func() core.Style {
 			return core.Style{BorderWidth: 2, BorderColor: colors.Accent().Faded(.7), CornerRadius: CardRadius + 3}

@@ -61,7 +61,7 @@ func (b SidebarButton) Render(cx *core.Scope) core.Node {
 		Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(32), MinWidth: core.Pt(0), FlexShrink: 0,
 			Padding: core.Symmetric(0, 8), CornerRadius: 8, Cursor: core.CursorDefault},
 		StyleFunc: func() core.Style {
-			s := core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, Focus: FocusRing(cx, -2)}
+			s := core.Style{Selected: &core.Style{Background: Alpha(colors.Text(), 0.1)}, FocusVisible: FocusRing(cx, -2)}
 			if b.Variant == SidebarButtonField {
 				s.Background, s.Hover = Alpha(colors.Text(), 0.06), &core.Style{Background: Alpha(colors.Text(), 0.1)}
 			}

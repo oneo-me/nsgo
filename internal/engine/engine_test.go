@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"slices"
 	"strconv"
 	"sync"
@@ -109,6 +110,47 @@ func TestDispatchNeverBlocksAndMerges(t *testing.T) {
 		case <-deadline:
 			t.Fatalf("texts = %v, want 5000 presses counted", p.texts())
 		}
+	}
+}
+
+func TestCloseRunsTheQuitHandlersFirst(t *testing.T) {
+	p := &recorder{mounted: make(chan struct{}, 1)}
+	var order []string
+	e := Start(p, func(cx *core.Scope) core.Node {
+		cx.OnQuit(func(ctx context.Context) { order = append(order, "first") })
+		cx.OnQuit(func(ctx context.Context) {
+			// Work of its own, waited for while the time lasts.
+			saved := make(chan struct{})
+			go func() { time.Sleep(10 * time.Millisecond); close(saved) }()
+			select {
+			case <-saved:
+				order = append(order, "saved")
+			case <-ctx.Done():
+			}
+		})
+		cx.Cleanup(func() { order = append(order, "disposed") })
+		return core.View{}
+	}, Options{})
+	<-p.mounted
+	e.Close()
+	if !slices.Equal(order, []string{"first", "saved", "disposed"}) {
+		t.Errorf("quitting ran %v", order)
+	}
+}
+
+func TestCloseWaitsNoLongerThanTheQuitTimeout(t *testing.T) {
+	p := &recorder{mounted: make(chan struct{}, 1)}
+	release := make(chan struct{})
+	defer close(release)
+	e := Start(p, func(cx *core.Scope) core.Node {
+		cx.OnQuit(func(context.Context) { <-release })
+		return core.View{}
+	}, Options{})
+	<-p.mounted
+	start := time.Now()
+	e.Close()
+	if took := time.Since(start); took > core.QuitTimeout+time.Second {
+		t.Errorf("Close waited %v for a handler that never returns", took)
 	}
 }
 

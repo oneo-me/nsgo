@@ -50,6 +50,8 @@ func startOwn(app engine.App, opts Options) *surface {
 	eopts.SetDirs(engine.AppDirs(opts.ID))
 	imageload.UseDiskCache(eopts.CacheDir)
 	s.engine = engine.Start(s, app, eopts)
+	e := s.engine
+	apple.SetNotificationPress(func(id string) { e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: id}) })
 	observeApp()
 	return s
 }

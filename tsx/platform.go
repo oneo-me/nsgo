@@ -18,6 +18,7 @@ func init() {
 		faceExport("InputAccessoryView", accessoryFace),
 		faceExport("TabBar", tabBarFace),
 		{"BackHandler", (*runtime).backHandler},
+		{"Haptics", (*runtime).haptics},
 	}
 	moduleTable["nsgo/desktop"] = []export{
 		{"isAvailable", func(r *runtime) js.Value { return r.vm.ToValue(desktop.IsAvailable(r.cx)) }},

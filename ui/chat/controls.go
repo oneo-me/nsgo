@@ -88,7 +88,7 @@ func (a Attachment) Render(cx *core.Scope) core.Node {
 		children = append(children, base.Button{Label: a.RemoveLabel, OnPress: chatPress(a.OnRemove),
 			Style: core.Style{Group: "chat-remove", Width: core.Pt(18), Height: core.Pt(18), FlexShrink: 0, CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
 			StyleFunc: func() core.Style {
-				return core.Style{Hover: &core.Style{Background: colors.chatOverlayStrong()}, Focus: ui.FocusRing(cx, 2)}
+				return core.Style{Hover: &core.Style{Background: colors.chatOverlayStrong()}, FocusVisible: ui.FocusRing(cx, 2)}
 			},
 			Children: []core.Node{ui.Icon(lucide.X, 11, colors.Muted)}})
 	}
@@ -396,7 +396,7 @@ func chatMeterStates(cx *core.Scope, open func() bool) func() core.Style {
 func chatTriggerStates(cx *core.Scope, open bool) core.Style {
 	colors := tonesOf(cx)
 	fill := colors.chatOverlay()
-	s := core.Style{Focus: ui.FocusRing(cx, 2)}
+	s := core.Style{FocusVisible: ui.FocusRing(cx, 2)}
 	if open {
 		fill = colors.chatOverlayStrong()
 		s.Background = fill
@@ -549,7 +549,7 @@ func chatQuotaAction(cx *core.Scope, label string, icon func() *core.SVG, disabl
 	return ui.Tooltip{Text: label, Trigger: base.Button{Label: label, Disabled: disabled, OnPress: chatPress(press),
 		Style: core.Style{Width: core.Pt(20), Height: core.Pt(20), FlexShrink: 0, CornerRadius: 4, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Disabled: ui.Dimmed()},
 		StyleFunc: func() core.Style {
-			return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}, Focus: ui.FocusRing(cx, 2)}
+			return core.Style{Hover: &core.Style{Background: colors.chatOverlay()}, FocusVisible: ui.FocusRing(cx, 2)}
 		},
 		Children: []core.Node{ui.Icon(icon, 13, colors.Muted)}}}
 }

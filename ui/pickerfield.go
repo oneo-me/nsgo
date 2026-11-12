@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/nsgo-dev/nsgo/base"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
@@ -48,15 +49,17 @@ func pickerText(cx *core.Scope, value func() string, placeholder string) core.Te
 		}}
 }
 
-// pickerSurface is a dropdown's panel on desktops and a sheet's on touch
-// screens, with what goes behind the sheet.
-func pickerSurface(cx *core.Scope) (func() core.Style, core.Style) { return menuSurface(cx) }
+// pickerSurface is a dropdown's panel, or a sheet's with what goes behind
+// it.
+func pickerSurface(cx *core.Scope, p base.Presentation) (func() core.Style, core.Style) {
+	return menuSurface(cx, p == base.PresentSheet)
+}
 
 // listRowStyle is a dropdown's row: as a menu's, with the row the keys or
 // the pointer are on lit by its Focus style and a chosen one by Selected.
-func listRowStyle(cx *core.Scope) (core.Style, func() core.Style) {
+func listRowStyle(cx *core.Scope, p base.Presentation) (core.Style, func() core.Style) {
 	colors := ColorsOf(cx)
-	s, _ := menuRow(cx)
+	s, _ := menuRow(cx, p == base.PresentSheet)
 	s.JustifyContent = core.JustifyCenter
 	return s, func() core.Style {
 		return core.Style{Color: colors.Text(), Focus: &core.Style{Background: colors.Hover()},

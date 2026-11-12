@@ -60,7 +60,7 @@ func (a Accordion) Render(cx *core.Scope) core.Node {
 		section := base.AccordionItem{Value: strconv.Itoa(i), Disabled: item.Disabled, TestID: item.TestID,
 			Children: []core.Node{
 				base.AccordionHeader{Children: []core.Node{base.AccordionTrigger{Label: item.Text, Style: face,
-					StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), Focus: FocusRing(cx, -4)} },
+					StyleFunc: func() core.Style { return core.Style{Color: colors.Text(), FocusVisible: FocusRing(cx, -4)} },
 					Children:  []core.Node{line(item.Text, TypeLabel.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}), 0), turn}}}},
 				base.AccordionPanel{Label: item.Text, Reveal: reveal,
 					Children: []core.Node{core.View{Style: core.Style{Padding: core.Edges{Left: 12, Right: 12, Bottom: 12}, Gap: 8}, Children: []core.Node{item.Content}}}},

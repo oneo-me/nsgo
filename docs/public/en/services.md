@@ -122,12 +122,28 @@ if err == nil {
 }
 ```
 
-`cx.Env().Lifecycle()` says whether the app is active, inactive or in the background, and `cx.OnExit` runs as it quits. `cx.SetAppearance` forces light or dark, `cx.SetLocale` chooses the language, `cx.OnKey` binds a keyboard shortcut, `cx.RegisterHotKey` binds one while any app is frontmost, and `cx.OnOpenFiles` hears the documents a macOS app opens.
+`cx.Env().Lifecycle()` says whether the app is active, inactive or in the background, and `cx.OnQuit` cleans up as it quits, however it does, with 200 ms for its work. `cx.SetAppearance` forces light or dark, `cx.SetLocale` chooses the language, `cx.OnKey` binds a keyboard shortcut, `cx.RegisterHotKey` binds one while any app is frontmost, and `cx.OnOpenFiles` hears the documents a macOS app opens.
 
 ```go
 cx.OnKey("mod+k", func() { palette.Set(true) })
 cx.SetLocale("de")
+cx.OnQuit(func(ctx context.Context) { saveDraft(ctx) })
 ```
+
+## Notifications and haptics
+
+`cx.RequestNotificationPermission` asks the user to let the app show notifications, as they do something that needs them, and `cx.NotificationPermission` reads the answer without asking. `cx.ShowNotification` shows one, also while the app is in front, replacing one of the same `ID`; `cx.OnNotificationPress` hears the user press one, the one that started the app included. `cx.SetBadge` puts a count on the app's icon: the Dock's, the Home Screen's, the taskbar button's or an installed web app's.
+
+```go
+cx.RequestNotificationPermission(func(p core.NotificationPermission) {
+	if p == core.NotificationsGranted {
+		cx.ShowNotification(core.Notification{ID: "chat:42", Title: "Ada", Body: "Lunch?"}, nil)
+	}
+})
+cx.OnNotificationPress(func(id string) { openChat(id) })
+```
+
+An Android app asking from Android 13 lists `android.permission.POST_NOTIFICATIONS` in `nsgo.yaml`'s `android.permissions`. `mobile.PlayHaptic` plays a selection, an impact or an outcome under the user's finger on iOS and Android, and nothing elsewhere.
 
 ## Next
 

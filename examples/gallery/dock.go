@@ -264,6 +264,7 @@ func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layou
 	colors := ui.ColorsOf(cx)
 	tints := ui.TintsOf(cx)
 	return dock.Area{Ref: area, TestID: "dock", Layout: layout.Get, OnLayoutChange: layout.Set, Locked: locked.Get, Panels: panels,
+		Compact: narrowDock(cx),
 		OnPanelActiveChange: func(p string, active bool) {
 			if active {
 				*current = p
@@ -380,4 +381,14 @@ func dockArea(cx *core.Scope, area *dock.AreaRef, layout *core.Signal[dock.Layou
 				ui.Text(tr.DockEveryEditorIsClosed(), 13, ui.Semibold, colors.Text), ui.Text(tr.DockResetBringsThemBack(), 12, ui.Regular, colors.Muted)}}
 		},
 	}
+}
+
+// narrowDock is the gallery's choice of a compact dock: in a window
+// narrower than Material 3's compact class, as on a phone.
+func narrowDock(cx *core.Scope) func() bool {
+	env := cx.Env()
+	return core.NewMemo(cx, func() bool {
+		w := env.Window().Width
+		return w > 0 && w < 600
+	}).Get
 }

@@ -6,9 +6,9 @@ import (
 	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
-// Submenu is an item that opens more: beside it on desktops, in place of
-// the menu's items on touch screens, under a row of Back, the app's
-// label for returning.
+// Submenu is an item that opens more: beside it in a popup, in place of
+// the menu's items on a sheet, under a row of Back, the app's label for
+// returning.
 type Submenu struct {
 	Text     string
 	Icon     func() *core.SVG
@@ -21,7 +21,7 @@ type Submenu struct {
 // Render implements core.Node.
 func (s Submenu) Render(cx *core.Scope) core.Node {
 	colors := ColorsOf(cx)
-	style, look := menuRow(cx)
+	style, look := menuRow(cx, base.OnSheet(cx))
 	chevron := menuIconSize(cx) - 2
 	trigger := append(menuLeading(cx, s.Icon, nil),
 		core.Text{Content: s.Text, MaxLines: 1, Style: TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1}), StyleFunc: Colored(colors.Text)},

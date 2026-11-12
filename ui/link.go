@@ -36,7 +36,7 @@ func (l Link) Render(cx *core.Scope) core.Node {
 		},
 		Style: core.Style{Group: "link", AlignSelf: core.AlignStart, CornerRadius: RadiusSmall, Disabled: Dimmed()}.Merge(l.Style),
 		StyleFunc: func() core.Style {
-			return core.Style{Focus: FocusRing(cx, 2)}
+			return core.Style{FocusVisible: FocusRing(cx, 2)}
 		},
 		Children: []core.Node{core.Text{Content: l.Text, Style: TypeBody,
 			StyleFunc: func() core.Style {

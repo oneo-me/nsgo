@@ -234,6 +234,28 @@ export interface ClipboardModule {
   readFiles(): Promise<string[]>;
 }
 export declare const Clipboard: ClipboardModule;
+/** Whether the app may show notifications: `"default"` before the user was asked. */
+export type NotificationPermission = "default" | "granted" | "denied" | "unavailable";
+export interface ShowNotificationOptions {
+  /** The app's name for it: another of the same `id` replaces it, and a press reports it. */
+  id: string;
+  title: string;
+  body?: string;
+  /** Without the system's sound or vibration. */
+  silent?: boolean;
+}
+export interface NotificationsModule {
+  permission(): Promise<NotificationPermission>;
+  requestPermission(): Promise<NotificationPermission>;
+  /** Resolves with whether the system took it: not without the permission. */
+  show(options: ShowNotificationOptions): Promise<boolean>;
+  close(id: string): Promise<void>;
+  /** Shows `count` on the app's icon; `0` clears it. */
+  setBadge(count: number): Promise<void>;
+  /** The user pressed a notification, the one that started the app included. Returns a function that stops listening. */
+  on(event: "press", listener: (press: { id: string }) => void): () => void;
+}
+export declare const Notifications: NotificationsModule;
 export interface StorageModule {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;

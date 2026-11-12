@@ -101,14 +101,31 @@ func TestSheetSlidesInAndReportsAfterItsMotion(t *testing.T) {
 	}
 }
 
-func TestMenusOnTouchScreensAreSheetsWithLevels(t *testing.T) {
+func TestMenusArePopupsOnEveryDeviceUnlessPresentedAsSheets(t *testing.T) {
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return base.Menu{Trigger: core.Text{Content: "More"}, Label: "More", Children: []core.Node{
+			base.MenuItem{Label: "Copy", Children: []core.Node{core.Text{Content: "Copy"}}},
+			base.Submenu{Label: "Share", Trigger: core.Text{Content: "Share"}, Back: core.Text{Content: "‹ Back"},
+				Children: []core.Node{base.MenuItem{Label: "Mail", Children: []core.Node{core.Text{Content: "Mail"}}}}},
+		}}
+	}, nsgotest.Environment(core.Environment{OS: core.OSIOS, Idiom: core.IdiomPhone}))
+	app.Press("label:More")
+	app.Advance(300 * time.Millisecond)
+	app.Press("label:Share")
+	app.Advance(300 * time.Millisecond)
+	if !app.Exists("text:Copy") || !app.Exists("text:Mail") || app.Exists("text:‹ Back") {
+		t.Error("a phone's menu is no popup whose submenu cascades")
+	}
+}
+
+func TestMenusPresentedAsSheetsShowLevels(t *testing.T) {
 	var picked string
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
 		item := func(label string) core.Node {
 			return base.MenuItem{Label: label, OnSelect: func() { picked = label },
 				Children: []core.Node{core.Text{Content: label}}}
 		}
-		return base.Menu{Trigger: core.Text{Content: "More"}, Label: "More", TestID: "menu",
+		return base.Menu{Trigger: core.Text{Content: "More"}, Label: "More", TestID: "menu", Presentation: base.PresentSheet,
 			Children: []core.Node{
 				item("Copy"),
 				base.Submenu{Label: "Share", Trigger: core.Text{Content: "Share"},

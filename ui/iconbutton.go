@@ -60,7 +60,7 @@ func (b IconButton) Render(cx *core.Scope) core.Node {
 		Style: core.Style{Width: core.Pt(size), Height: core.Pt(size), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 			CornerRadius: 8, Disabled: Dimmed()},
 		StyleFunc: func() core.Style {
-			return core.Style{Hover: &core.Style{Background: Alpha(colors.Text(), 0.08)}, Active: &core.Style{Background: Alpha(colors.Text(), 0.14)}, Focus: FocusRing(cx, -2)}
+			return core.Style{Hover: &core.Style{Background: Alpha(colors.Text(), 0.08)}, Active: &core.Style{Background: Alpha(colors.Text(), 0.14)}, FocusVisible: FocusRing(cx, -2)}
 		},
 		Children: []core.Node{IconOf(b.name(), b.glyph(size, 0.6), tint)}}
 }

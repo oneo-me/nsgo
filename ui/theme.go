@@ -318,7 +318,7 @@ func Hovered(cx *core.Scope) *core.Style {
 	return &core.Style{Background: Alpha(ColorsOf(cx).Text(), 0.05)}
 }
 
-// FocusRing is the keyboard focus: a 2-point ring of info inside the
+// FocusRing is the keyboard focus, for a FocusVisible style: a 2-point ring of info inside the
 // view's edge (offset 2 puts it outside, around a filled button), read in
 // a StyleFunc.
 func FocusRing(cx *core.Scope, offset core.Points) *core.Style {

@@ -64,7 +64,7 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("%d items in the baske
 
 ## Focus and the keyboard
 
-On macOS, the web and an Apple TV, views that take presses are Tab stops beside text fields; `NoFocus` keeps one out and `Focusable` makes a view without presses a stop. `Style.Focus` and `Style.FocusWithin` draw the focus ring, `OnFocus` and `OnBlur` hear it, and `Ref.Focus()` and `Ref.SetAccessibilityFocus()` move it. Return and Space press the focused view, and arrow keys move through tab lists, radio groups and menus.
+On macOS, the web and an Apple TV, views that take presses are Tab stops beside text fields; `NoFocus` keeps one out and `Focusable` makes a view without presses a stop. `Style.FocusVisible` draws the focus ring only when the keyboard moved the focus (`focus-visible:`), `Style.Focus` any focus and `Style.FocusWithin` the focus inside a view, `OnFocus` and `OnBlur` hear it, and `Ref.Focus()` and `Ref.SetAccessibilityFocus()` move it. Return and Space press the focused view, and arrow keys move through tab lists, radio groups and menus.
 
 `cx.Env().ScreenReader()` says whether one runs, `cx.Env().ReduceMotion()` whether the user asked for less motion, `cx.Env().FontScale()` the text size, and `cx.Env().RTL()` the layout direction. Texts follow the text size unless `NoFontScaling` is set, and a layout that is right to left mirrors its physical edges when it uses the logical ones.
 

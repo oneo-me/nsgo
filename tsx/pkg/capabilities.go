@@ -23,11 +23,13 @@ type Capabilities struct {
 	OpenURL *OpenURL `json:"openUrl,omitempty"`
 	// Clipboard is reading and writing the system clipboard, Picker the
 	// photo and camera pickers, Speech the microphone and speech
-	// recognizer, StatusBar setting the status bar.
-	Clipboard bool `json:"clipboard,omitempty"`
-	Picker    bool `json:"picker,omitempty"`
-	Speech    bool `json:"speech,omitempty"`
-	StatusBar bool `json:"statusBar,omitempty"`
+	// recognizer, StatusBar setting the status bar, Notifications system
+	// notifications and the app's badge.
+	Clipboard     bool `json:"clipboard,omitempty"`
+	Picker        bool `json:"picker,omitempty"`
+	Speech        bool `json:"speech,omitempty"`
+	StatusBar     bool `json:"statusBar,omitempty"`
+	Notifications bool `json:"notifications,omitempty"`
 	// Host names the host's handlers host.call and host.post may reach:
 	// a name, a prefix ending in "*", or "*" for all.
 	Host []string `json:"host,omitempty"`
@@ -110,6 +112,8 @@ func ParseCapabilities(data []byte, strict bool) (c Capabilities, ignored []stri
 			err = json.Unmarshal(raw, &c.Speech)
 		case "statusBar":
 			err = json.Unmarshal(raw, &c.StatusBar)
+		case "notifications":
+			err = json.Unmarshal(raw, &c.Notifications)
 		case "host":
 			if string(bytes.TrimSpace(raw)) == "true" {
 				c.Host = []string{"*"}
@@ -275,14 +279,15 @@ func validHostGrant(g string) bool {
 
 // The capabilities' keys, which core.Access names as its permissions.
 const (
-	capNetwork   = "network"
-	capWebView   = "webview"
-	capOpenURL   = "openUrl"
-	capClipboard = "clipboard"
-	capPicker    = "picker"
-	capSpeech    = "speech"
-	capStatusBar = "statusBar"
-	capHost      = "host"
+	capNetwork       = "network"
+	capWebView       = "webview"
+	capOpenURL       = "openUrl"
+	capClipboard     = "clipboard"
+	capPicker        = "picker"
+	capSpeech        = "speech"
+	capStatusBar     = "statusBar"
+	capNotifications = "notifications"
+	capHost          = "host"
 )
 
 // Allows reports whether c grants permission, a capability's key, for
@@ -318,6 +323,8 @@ func (c *Capabilities) Allows(permission, resource, method string) bool {
 		return c.Speech
 	case capStatusBar:
 		return c.StatusBar
+	case capNotifications:
+		return c.Notifications
 	case capHost:
 		if !validHostName(resource) {
 			return false

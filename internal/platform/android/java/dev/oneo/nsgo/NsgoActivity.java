@@ -39,6 +39,14 @@ public class NsgoActivity extends Activity {
         view.setFlags(getIntent().getExtras());
         view.setTest(getIntent().getStringExtra(TestAgent.EXTRA));
         setContentView(view);
+        view.notificationPressed(getIntent().getStringExtra(Notifications.EXTRA));
+    }
+
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        // A notification's press, the activity running.
+        view.notificationPressed(intent.getStringExtra(Notifications.EXTRA));
     }
 
     /**

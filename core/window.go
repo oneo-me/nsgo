@@ -689,8 +689,10 @@ func (t *Tree) surfaceEvent(ev driver.Event) bool {
 		}
 	case driver.EventHotKey:
 		rt.hotKey(ev.Count)
-	case driver.EventLaunchAtLogin:
+	case driver.EventLaunchAtLogin, driver.EventNotification:
 		t.answer(ev)
+	case driver.EventNotificationPress:
+		t.within(t.root, func() { rt.notificationPressed(ev.Text) })
 	default:
 		return false
 	}

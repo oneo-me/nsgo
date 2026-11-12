@@ -164,7 +164,7 @@ func chatFoldRow(cx *core.Scope, summary func() string, open func() bool, toggle
 		base.Button{Expanded: open, OnPress: func(core.PressEvent) { toggle() }, LabelFunc: label,
 			Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(24), Padding: core.Symmetric(0, 2), Gap: 5,
 				CornerRadius: ui.RadiusControl},
-			StyleFunc: func() core.Style { return core.Style{Focus: ui.FocusRing(cx, 2)} },
+			StyleFunc: func() core.Style { return core.Style{FocusVisible: ui.FocusRing(cx, 2)} },
 			Children: []core.Node{
 				ui.Textf(label, 13.5, ui.Medium, colors.Muted),
 				ui.IconOf(chatDisclosure(open), 11.5, colors.Muted),
@@ -272,7 +272,7 @@ func chatActivityGroup(cx *core.Scope, s func() Step, live func() bool, conversa
 				conversation.pause()
 			},
 			Style:     core.Style{Group: "chat-group", Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(26), Gap: 6, MinWidth: core.Pt(0)},
-			StyleFunc: func() core.Style { return core.Style{Focus: ui.FocusRing(cx, 2)} },
+			StyleFunc: func() core.Style { return core.Style{FocusVisible: ui.FocusRing(cx, 2)} },
 			Children: []core.Node{
 				core.Text{ContentFunc: title, MaxLines: 1, Style: core.Style{FontSize: 12.5, FontWeight: ui.Medium, MinWidth: core.Pt(0), FlexShrink: 1}, StyleFunc: func() core.Style {
 					return core.Style{Color: colors.chatSecondary(), GroupStyle: &core.GroupStyle{Name: "chat-group", Hover: &core.Style{Color: colors.Text()}, Focus: &core.Style{Color: colors.Text()}}}

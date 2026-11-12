@@ -135,7 +135,7 @@ func (s Stepper) Render(cx *core.Scope) core.Node {
 				if s.OnSelect == nil {
 					return core.Style{}
 				}
-				return core.Style{Focus: FocusRing(cx, 4)}
+				return core.Style{FocusVisible: FocusRing(cx, 4)}
 			},
 			LabelFunc: func() string {
 				if s.StatusText == nil {

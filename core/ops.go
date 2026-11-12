@@ -205,10 +205,11 @@ func (t *Tree) setView(n *node, v View) {
 	if v.AccessibilityLevel != nil {
 		p.Level = v.AccessibilityLevel()
 	}
-	n.part = PartStates{}
+	var part PartStates
 	if v.PartStates != nil {
-		n.part = v.PartStates()
+		part = v.PartStates()
 	}
+	t.partStates(n, part)
 	t.restyled(n)
 	t.restyleGroup(n)
 }

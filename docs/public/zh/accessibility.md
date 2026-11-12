@@ -64,7 +64,7 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("购物车里有 %d �
 
 ## 焦点与键盘
 
-在 macOS、Web 和 Apple TV 上，可按压的视图和文本框一起成为 Tab 停靠点；`NoFocus` 让一个视图退出，`Focusable` 让没有按压的视图成为停靠点。`Style.Focus` 和 `Style.FocusWithin` 绘制焦点环，`OnFocus` 和 `OnBlur` 听到焦点变化，`Ref.Focus()` 和 `Ref.SetAccessibilityFocus()` 移动焦点。Return 和空格按下获得焦点的视图，方向键在标签列表、单选组和菜单中移动。
+在 macOS、Web 和 Apple TV 上，可按压的视图和文本框一起成为 Tab 停靠点；`NoFocus` 让一个视图退出，`Focusable` 让没有按压的视图成为停靠点。`Style.FocusVisible` 只在键盘移动焦点时绘制焦点环（`focus-visible:`），`Style.Focus` 对应任何焦点，`Style.FocusWithin` 对应视图内的焦点，`OnFocus` 和 `OnBlur` 听到焦点变化，`Ref.Focus()` 和 `Ref.SetAccessibilityFocus()` 移动焦点。Return 和空格按下获得焦点的视图，方向键在标签列表、单选组和菜单中移动。
 
 `cx.Env().ScreenReader()` 说明是否有屏幕阅读器运行，`cx.Env().ReduceMotion()` 说明用户是否要求减少动态效果，`cx.Env().FontScale()` 是文本大小，`cx.Env().RTL()` 是布局方向。除非设置 `NoFontScaling`，文本会跟随文本大小；从右到左的布局使用逻辑边时会镜像物理边。
 

@@ -18,3 +18,13 @@ export interface BackListeners {
   onBackPress(listener: () => boolean | void): () => void;
 }
 export declare const BackHandler: BackHandlerModule & BackListeners;
+export interface HapticsModule {
+  /** A selection changing: a picker's value, a segment, a slider's step. */
+  selection(): void;
+  /** Elements colliding, by their weight. */
+  impact(style?: "light" | "medium" | "heavy" | "soft" | "rigid"): void;
+  /** A task ending so. */
+  notification(kind?: "success" | "warning" | "error"): void;
+}
+/** Haptic feedback on iOS and Android; elsewhere nothing plays. */
+export declare const Haptics: HapticsModule;

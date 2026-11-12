@@ -38,124 +38,126 @@ func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
 // its method, for the TSX declarations of the messages
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{
-	"MenusViewState":          {"sidebar", "statusBar", "zoom"},
-	"SystemFolderItems":       {"count"},
-	"SystemCounted":           {"n"},
-	"SystemTitleBarInsets":    {"top", "left", "right"},
-	"SystemClipboardImage":    {"width", "height", "bytes"},
-	"SystemClipboardHolds":    {"text", "image"},
-	"SystemPicked":            {"count"},
-	"ListsVisible":            {"count"},
-	"ListsItemsColumns":       {"items", "columns"},
-	"ListsMessagesPages":      {"messages", "pages"},
-	"ListsCard":               {"n"},
-	"ListsItem":               {"n"},
-	"ListsWeek":               {"n"},
-	"ListsRows":               {"count"},
-	"NavRow":                  {"n"},
-	"NavCharactersLost":       {"count"},
-	"NavLevel":                {"n"},
-	"NavDeep":                 {"n"},
-	"NavOnlyCallOnCancel":     {"what", "count"},
-	"FormAccountCreated":      {"name", "email"},
-	"FormFieldsNeedAttention": {"count"},
-	"CanvasAvg":               {"mean"},
-	"CanvasVsAverage":         {"delta"},
-	"CanvasStrokesPoints":     {"strokes", "points"},
-	"CanvasBarValue":          {"n", "value"},
-	"CanvasBar":               {"n"},
-	"TableIndicator":          {"n"},
-	"TableCellRow":            {"row", "column"},
-	"TableRow":                {"row"},
-	"TableRowsOf":             {"first", "last", "total"},
-	"TableColumnsTick":        {"columns", "tick"},
-	"EditorLnCol":             {"line", "column"},
-	"EditorCarets":            {"count"},
-	"EditorMatches":           {"count"},
-	"EditorDefinitionAt":      {"name", "line", "column"},
-	"EditorReplaced":          {"count"},
-	"EditorLinePressed":       {"line"},
-	"EditorProblemsCount":     {"count"},
-	"CompCharacters":          {"count"},
-	"CompAnnouncement":        {"n"},
-	"AnimViews":               {"count"},
-	"AnimReadyMadeMotions":    {"count"},
-	"GestDown":                {"count"},
-	"GestTouchLine":           {"at", "page", "count"},
-	"GestTaps":                {"count"},
-	"GestPointerAt":           {"at"},
-	"StocksDaysAgo":           {"days"},
-	"StocksFlatIssues":        {"flat", "issues"},
-	"StocksDownCount":         {"count"},
-	"StocksSimulatedFooter":   {"engine", "quotes"},
-	"StocksTicksCumulative":   {"ticks"},
-	"StocksBidShare":          {"share"},
-	"StocksAskShare":          {"share"},
-	"StocksAvgVol":            {"avg", "vol"},
-	"StocksDayRange":          {"low", "high"},
-	"StocksSimulatedStats":    {"engine", "quotes"},
-	"StocksShares":            {"count"},
-	"StocksOfBuyingPower":     {"percent", "power"},
-	"StocksPlacedDetail":      {"quantity", "code", "price"},
-	"ChatFilesWritten":        {"count"},
-	"ChatInstallCli":          {"provider", "why", "command"},
-	"ChatThinking":            {"seconds"},
-	"ChatThoughtFor":          {"seconds"},
-	"ChatWorked":              {"minutes", "seconds"},
-	"ChatWorking":             {"status", "minutes", "seconds"},
-	"ChatRanTools":            {"count"},
-	"ChatQuotaLeft":           {"percent"},
-	"DockEdits":               {"panel", "count"},
-	"ScrollPageOf":            {"title", "n", "total"},
-	"DockRegionNone":          {"name"},
-	"A11yItems":               {"count"},
-	"A11yAKilo":               {"price"},
-	"A11yInTheBasket":         {"count"},
-	"ScrollSettledOnPage":     {"n"},
-	"ScrollViewport":          {"height"},
-	"ScrollTile":              {"n"},
-	"ScrollPost":              {"n"},
-	"ScrollNew":               {"n"},
-	"ScrollPosts":             {"count"},
-	"ChartsVisitorsPerDay":    {"monday", "sunday"},
-	"ChartsHoverValue":        {"day", "visitors", "other", "week"},
-	"ShaderStartPressed":      {"count"},
-	"ShaderScaleIntensity":    {"scale", "intensity"},
-	"PhotosViews":             {"count"},
-	"PhotosPullToRefresh":     {"count"},
-	"PhotosLoadsMore":         {"count"},
-	"PhotosLoadingMore":       {"count"},
-	"DiffChange":              {"n"},
-	"DiffLinesSelected":       {"first", "last"},
-	"DiffLineOfOld":           {"line"},
-	"DiffLineOfNew":           {"line"},
-	"DiffCollapsed":           {"path", "state"},
-	"DiffLines":               {"count"},
-	"DiffChanges":             {"count"},
-	"EditorErrors":            {"count"},
-	"EditorWarnings":          {"count"},
-	"EditorInfos":             {"count"},
-	"GestFiles":               {"count"},
-	"StorageKeysChars":        {"keys", "chars"},
-	"StorageChars":            {"count"},
-	"ResizableSidebarPt":      {"size"},
-	"ResizableConsolePt":      {"size"},
-	"CollapsingEntry":         {"n"},
-	"CollapsingMinutes":       {"count"},
-	"TerminalSizeCells":       {"cols", "rows"},
-	"TerminalUnavailable":     {"reason"},
-	"RichHeading":             {"level"},
-	"RichCount":               {"words", "characters"},
-	"SystemSpeechEnded":       {"reason"},
-	"FlowLabel":               {"nodes", "links"},
-	"FlowNewStep":             {"number"},
-	"FlowExperiment":          {"number"},
-	"WidgetsWrittenAt":        {"time_"},
-	"WidgetsSteps":            {"count"},
-	"WidgetsPercent":          {"count"},
-	"WidgetsMinutes":          {"count"},
-	"WidgetsHours":            {"count"},
-	"WidgetsOfGoal":           {"goal"},
+	"MenusViewState":            {"sidebar", "statusBar", "zoom"},
+	"SystemFolderItems":         {"count"},
+	"SystemCounted":             {"n"},
+	"SystemTitleBarInsets":      {"top", "left", "right"},
+	"SystemClipboardImage":      {"width", "height", "bytes"},
+	"SystemClipboardHolds":      {"text", "image"},
+	"SystemPicked":              {"count"},
+	"ListsVisible":              {"count"},
+	"ListsItemsColumns":         {"items", "columns"},
+	"ListsMessagesPages":        {"messages", "pages"},
+	"ListsCard":                 {"n"},
+	"ListsItem":                 {"n"},
+	"ListsWeek":                 {"n"},
+	"ListsRows":                 {"count"},
+	"NavRow":                    {"n"},
+	"NavCharactersLost":         {"count"},
+	"NavLevel":                  {"n"},
+	"NavDeep":                   {"n"},
+	"NavOnlyCallOnCancel":       {"what", "count"},
+	"FormAccountCreated":        {"name", "email"},
+	"FormFieldsNeedAttention":   {"count"},
+	"CanvasAvg":                 {"mean"},
+	"CanvasVsAverage":           {"delta"},
+	"CanvasStrokesPoints":       {"strokes", "points"},
+	"CanvasBarValue":            {"n", "value"},
+	"CanvasBar":                 {"n"},
+	"TableIndicator":            {"n"},
+	"TableCellRow":              {"row", "column"},
+	"TableRow":                  {"row"},
+	"TableRowsOf":               {"first", "last", "total"},
+	"TableColumnsTick":          {"columns", "tick"},
+	"EditorLnCol":               {"line", "column"},
+	"EditorCarets":              {"count"},
+	"EditorMatches":             {"count"},
+	"EditorDefinitionAt":        {"name", "line", "column"},
+	"EditorReplaced":            {"count"},
+	"EditorLinePressed":         {"line"},
+	"EditorProblemsCount":       {"count"},
+	"CompCharacters":            {"count"},
+	"CompAnnouncement":          {"n"},
+	"AnimViews":                 {"count"},
+	"AnimReadyMadeMotions":      {"count"},
+	"GestDown":                  {"count"},
+	"GestTouchLine":             {"at", "page", "count"},
+	"GestTaps":                  {"count"},
+	"GestPointerAt":             {"at"},
+	"StocksDaysAgo":             {"days"},
+	"StocksFlatIssues":          {"flat", "issues"},
+	"StocksDownCount":           {"count"},
+	"StocksSimulatedFooter":     {"engine", "quotes"},
+	"StocksTicksCumulative":     {"ticks"},
+	"StocksBidShare":            {"share"},
+	"StocksAskShare":            {"share"},
+	"StocksAvgVol":              {"avg", "vol"},
+	"StocksDayRange":            {"low", "high"},
+	"StocksSimulatedStats":      {"engine", "quotes"},
+	"StocksShares":              {"count"},
+	"StocksOfBuyingPower":       {"percent", "power"},
+	"StocksPlacedDetail":        {"quantity", "code", "price"},
+	"ChatFilesWritten":          {"count"},
+	"ChatInstallCli":            {"provider", "why", "command"},
+	"ChatThinking":              {"seconds"},
+	"ChatThoughtFor":            {"seconds"},
+	"ChatWorked":                {"minutes", "seconds"},
+	"ChatWorking":               {"status", "minutes", "seconds"},
+	"ChatRanTools":              {"count"},
+	"ChatQuotaLeft":             {"percent"},
+	"DockEdits":                 {"panel", "count"},
+	"ScrollPageOf":              {"title", "n", "total"},
+	"DockRegionNone":            {"name"},
+	"A11yItems":                 {"count"},
+	"A11yAKilo":                 {"price"},
+	"A11yInTheBasket":           {"count"},
+	"ScrollSettledOnPage":       {"n"},
+	"ScrollViewport":            {"height"},
+	"ScrollTile":                {"n"},
+	"ScrollPost":                {"n"},
+	"ScrollNew":                 {"n"},
+	"ScrollPosts":               {"count"},
+	"ChartsVisitorsPerDay":      {"monday", "sunday"},
+	"ChartsHoverValue":          {"day", "visitors", "other", "week"},
+	"ShaderStartPressed":        {"count"},
+	"ShaderScaleIntensity":      {"scale", "intensity"},
+	"PhotosViews":               {"count"},
+	"PhotosPullToRefresh":       {"count"},
+	"PhotosLoadsMore":           {"count"},
+	"PhotosLoadingMore":         {"count"},
+	"DiffChange":                {"n"},
+	"DiffLinesSelected":         {"first", "last"},
+	"DiffLineOfOld":             {"line"},
+	"DiffLineOfNew":             {"line"},
+	"DiffCollapsed":             {"path", "state"},
+	"DiffLines":                 {"count"},
+	"DiffChanges":               {"count"},
+	"EditorErrors":              {"count"},
+	"EditorWarnings":            {"count"},
+	"EditorInfos":               {"count"},
+	"GestFiles":                 {"count"},
+	"StorageKeysChars":          {"keys", "chars"},
+	"StorageChars":              {"count"},
+	"ResizableSidebarPt":        {"size"},
+	"ResizableConsolePt":        {"size"},
+	"CollapsingEntry":           {"n"},
+	"CollapsingMinutes":         {"count"},
+	"TerminalSizeCells":         {"cols", "rows"},
+	"TerminalUnavailable":       {"reason"},
+	"RichHeading":               {"level"},
+	"RichCount":                 {"words", "characters"},
+	"SystemNotificationShown":   {"shown"},
+	"SystemNotificationPressed": {"id"},
+	"SystemSpeechEnded":         {"reason"},
+	"FlowLabel":                 {"nodes", "links"},
+	"FlowNewStep":               {"number"},
+	"FlowExperiment":            {"number"},
+	"WidgetsWrittenAt":          {"time_"},
+	"WidgetsSteps":              {"count"},
+	"WidgetsPercent":            {"count"},
+	"WidgetsMinutes":            {"count"},
+	"WidgetsHours":              {"count"},
+	"WidgetsOfGoal":             {"goal"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -163,125 +165,127 @@ var Parameters = map[string][]string{
 // of the others; a key or a field left out leaves the message to the
 // catalog.
 type Translation struct {
-	Texts                   map[string]string
-	MenusViewState          func(sidebar string, statusBar string, zoom string) string
-	SystemFolderItems       func(count int) string
-	SystemCounted           func(n int) string
-	SystemTitleBarInsets    func(top float64, left float64, right float64) string
-	SystemClipboardImage    func(width float64, height float64, bytes int) string
-	SystemClipboardHolds    func(text string, image string) string
-	SystemPicked            func(count int) string
-	ListsVisible            func(count int) string
-	ListsItemsColumns       func(items int, columns int) string
-	ListsMessagesPages      func(messages int, pages int) string
-	ListsCard               func(n int) string
-	ListsItem               func(n int) string
-	ListsWeek               func(n int) string
-	ListsRows               func(count int) string
-	NavRow                  func(n int) string
-	NavCharactersLost       func(count int) string
-	NavLevel                func(n int) string
-	NavDeep                 func(n int) string
-	NavOnlyCallOnCancel     func(what string, count int) string
-	FormAccountCreated      func(name string, email string) string
-	FormFieldsNeedAttention func(count int) string
-	CanvasAvg               func(mean float64) string
-	CanvasVsAverage         func(delta string) string
-	CanvasStrokesPoints     func(strokes int, points int) string
-	CanvasBarValue          func(n int, value float64) string
-	CanvasBar               func(n int) string
-	TableIndicator          func(n int) string
-	TableCellRow            func(row string, column string) string
-	TableRow                func(row string) string
-	TableRowsOf             func(first string, last string, total string) string
-	TableColumnsTick        func(columns int, tick int) string
-	EditorLnCol             func(line int, column int) string
-	EditorCarets            func(count int) string
-	EditorMatches           func(count int) string
-	EditorDefinitionAt      func(name string, line int, column int) string
-	EditorReplaced          func(count int) string
-	EditorLinePressed       func(line int) string
-	EditorProblemsCount     func(count int) string
-	CompCharacters          func(count int) string
-	CompAnnouncement        func(n int) string
-	AnimViews               func(count int) string
-	AnimReadyMadeMotions    func(count int) string
-	GestDown                func(count int) string
-	GestTouchLine           func(at string, page string, count int) string
-	GestTaps                func(count int) string
-	GestPointerAt           func(at string) string
-	StocksDaysAgo           func(days int) string
-	StocksFlatIssues        func(flat int, issues int) string
-	StocksDownCount         func(count int) string
-	StocksSimulatedFooter   func(engine string, quotes string) string
-	StocksTicksCumulative   func(ticks int) string
-	StocksBidShare          func(share float64) string
-	StocksAskShare          func(share float64) string
-	StocksAvgVol            func(avg string, vol string) string
-	StocksDayRange          func(low string, high string) string
-	StocksSimulatedStats    func(engine string, quotes string) string
-	StocksShares            func(count int) string
-	StocksOfBuyingPower     func(percent string, power string) string
-	StocksPlacedDetail      func(quantity string, code string, price string) string
-	ChatFilesWritten        func(count int) string
-	ChatInstallCli          func(provider string, why string, command string) string
-	ChatThinking            func(seconds int) string
-	ChatThoughtFor          func(seconds int) string
-	ChatWorked              func(minutes int, seconds int) string
-	ChatWorking             func(status string, minutes int, seconds int) string
-	ChatRanTools            func(count int) string
-	ChatQuotaLeft           func(percent int) string
-	DockEdits               func(panel string, count int) string
-	ScrollPageOf            func(title string, n int, total int) string
-	DockRegionNone          func(name string) string
-	A11yItems               func(count int) string
-	A11yAKilo               func(price string) string
-	A11yInTheBasket         func(count int) string
-	ScrollSettledOnPage     func(n int) string
-	ScrollViewport          func(height string) string
-	ScrollTile              func(n int) string
-	ScrollPost              func(n int) string
-	ScrollNew               func(n int) string
-	ScrollPosts             func(count int) string
-	ChartsVisitorsPerDay    func(monday string, sunday string) string
-	ChartsHoverValue        func(day string, visitors string, other string, week string) string
-	ShaderStartPressed      func(count int) string
-	ShaderScaleIntensity    func(scale string, intensity string) string
-	PhotosViews             func(count string) string
-	PhotosPullToRefresh     func(count int) string
-	PhotosLoadsMore         func(count int) string
-	PhotosLoadingMore       func(count int) string
-	DiffChange              func(n int) string
-	DiffLinesSelected       func(first int, last int) string
-	DiffLineOfOld           func(line int) string
-	DiffLineOfNew           func(line int) string
-	DiffCollapsed           func(path string, state string) string
-	DiffLines               func(count int) string
-	DiffChanges             func(count int) string
-	EditorErrors            func(count int) string
-	EditorWarnings          func(count int) string
-	EditorInfos             func(count int) string
-	GestFiles               func(count int) string
-	StorageKeysChars        func(keys int, chars int) string
-	StorageChars            func(count int) string
-	ResizableSidebarPt      func(size string) string
-	ResizableConsolePt      func(size string) string
-	CollapsingEntry         func(n string) string
-	CollapsingMinutes       func(count int) string
-	TerminalSizeCells       func(cols int, rows int) string
-	TerminalUnavailable     func(reason string) string
-	RichHeading             func(level int) string
-	RichCount               func(words int, characters int) string
-	SystemSpeechEnded       func(reason string) string
-	FlowLabel               func(nodes int, links int) string
-	FlowNewStep             func(number int) string
-	FlowExperiment          func(number int) string
-	WidgetsWrittenAt        func(time_ string) string
-	WidgetsSteps            func(count int) string
-	WidgetsPercent          func(count int) string
-	WidgetsMinutes          func(count int) string
-	WidgetsHours            func(count int) string
-	WidgetsOfGoal           func(goal int) string
+	Texts                     map[string]string
+	MenusViewState            func(sidebar string, statusBar string, zoom string) string
+	SystemFolderItems         func(count int) string
+	SystemCounted             func(n int) string
+	SystemTitleBarInsets      func(top float64, left float64, right float64) string
+	SystemClipboardImage      func(width float64, height float64, bytes int) string
+	SystemClipboardHolds      func(text string, image string) string
+	SystemPicked              func(count int) string
+	ListsVisible              func(count int) string
+	ListsItemsColumns         func(items int, columns int) string
+	ListsMessagesPages        func(messages int, pages int) string
+	ListsCard                 func(n int) string
+	ListsItem                 func(n int) string
+	ListsWeek                 func(n int) string
+	ListsRows                 func(count int) string
+	NavRow                    func(n int) string
+	NavCharactersLost         func(count int) string
+	NavLevel                  func(n int) string
+	NavDeep                   func(n int) string
+	NavOnlyCallOnCancel       func(what string, count int) string
+	FormAccountCreated        func(name string, email string) string
+	FormFieldsNeedAttention   func(count int) string
+	CanvasAvg                 func(mean float64) string
+	CanvasVsAverage           func(delta string) string
+	CanvasStrokesPoints       func(strokes int, points int) string
+	CanvasBarValue            func(n int, value float64) string
+	CanvasBar                 func(n int) string
+	TableIndicator            func(n int) string
+	TableCellRow              func(row string, column string) string
+	TableRow                  func(row string) string
+	TableRowsOf               func(first string, last string, total string) string
+	TableColumnsTick          func(columns int, tick int) string
+	EditorLnCol               func(line int, column int) string
+	EditorCarets              func(count int) string
+	EditorMatches             func(count int) string
+	EditorDefinitionAt        func(name string, line int, column int) string
+	EditorReplaced            func(count int) string
+	EditorLinePressed         func(line int) string
+	EditorProblemsCount       func(count int) string
+	CompCharacters            func(count int) string
+	CompAnnouncement          func(n int) string
+	AnimViews                 func(count int) string
+	AnimReadyMadeMotions      func(count int) string
+	GestDown                  func(count int) string
+	GestTouchLine             func(at string, page string, count int) string
+	GestTaps                  func(count int) string
+	GestPointerAt             func(at string) string
+	StocksDaysAgo             func(days int) string
+	StocksFlatIssues          func(flat int, issues int) string
+	StocksDownCount           func(count int) string
+	StocksSimulatedFooter     func(engine string, quotes string) string
+	StocksTicksCumulative     func(ticks int) string
+	StocksBidShare            func(share float64) string
+	StocksAskShare            func(share float64) string
+	StocksAvgVol              func(avg string, vol string) string
+	StocksDayRange            func(low string, high string) string
+	StocksSimulatedStats      func(engine string, quotes string) string
+	StocksShares              func(count int) string
+	StocksOfBuyingPower       func(percent string, power string) string
+	StocksPlacedDetail        func(quantity string, code string, price string) string
+	ChatFilesWritten          func(count int) string
+	ChatInstallCli            func(provider string, why string, command string) string
+	ChatThinking              func(seconds int) string
+	ChatThoughtFor            func(seconds int) string
+	ChatWorked                func(minutes int, seconds int) string
+	ChatWorking               func(status string, minutes int, seconds int) string
+	ChatRanTools              func(count int) string
+	ChatQuotaLeft             func(percent int) string
+	DockEdits                 func(panel string, count int) string
+	ScrollPageOf              func(title string, n int, total int) string
+	DockRegionNone            func(name string) string
+	A11yItems                 func(count int) string
+	A11yAKilo                 func(price string) string
+	A11yInTheBasket           func(count int) string
+	ScrollSettledOnPage       func(n int) string
+	ScrollViewport            func(height string) string
+	ScrollTile                func(n int) string
+	ScrollPost                func(n int) string
+	ScrollNew                 func(n int) string
+	ScrollPosts               func(count int) string
+	ChartsVisitorsPerDay      func(monday string, sunday string) string
+	ChartsHoverValue          func(day string, visitors string, other string, week string) string
+	ShaderStartPressed        func(count int) string
+	ShaderScaleIntensity      func(scale string, intensity string) string
+	PhotosViews               func(count string) string
+	PhotosPullToRefresh       func(count int) string
+	PhotosLoadsMore           func(count int) string
+	PhotosLoadingMore         func(count int) string
+	DiffChange                func(n int) string
+	DiffLinesSelected         func(first int, last int) string
+	DiffLineOfOld             func(line int) string
+	DiffLineOfNew             func(line int) string
+	DiffCollapsed             func(path string, state string) string
+	DiffLines                 func(count int) string
+	DiffChanges               func(count int) string
+	EditorErrors              func(count int) string
+	EditorWarnings            func(count int) string
+	EditorInfos               func(count int) string
+	GestFiles                 func(count int) string
+	StorageKeysChars          func(keys int, chars int) string
+	StorageChars              func(count int) string
+	ResizableSidebarPt        func(size string) string
+	ResizableConsolePt        func(size string) string
+	CollapsingEntry           func(n string) string
+	CollapsingMinutes         func(count int) string
+	TerminalSizeCells         func(cols int, rows int) string
+	TerminalUnavailable       func(reason string) string
+	RichHeading               func(level int) string
+	RichCount                 func(words int, characters int) string
+	SystemNotificationShown   func(shown string) string
+	SystemNotificationPressed func(id string) string
+	SystemSpeechEnded         func(reason string) string
+	FlowLabel                 func(nodes int, links int) string
+	FlowNewStep               func(number int) string
+	FlowExperiment            func(number int) string
+	WidgetsWrittenAt          func(time_ string) string
+	WidgetsSteps              func(count int) string
+	WidgetsPercent            func(count int) string
+	WidgetsMinutes            func(count int) string
+	WidgetsHours              func(count int) string
+	WidgetsOfGoal             func(goal int) string
 }
 
 var supplied = map[string]Translation{}
@@ -2237,6 +2241,26 @@ const (
 	textSystemSayAnything
 	textSystemListening
 	textSystemNoSpeechHere
+	textSystemNotificationsAndHaptics
+	textSystemNotificationsHapticsSummary
+	textSystemPermission
+	textSystemAskPermission
+	textSystemShowNotification
+	textSystemShowSilently
+	textSystemCloseNotification
+	textSystemNotificationTitle
+	textSystemNotificationBody
+	textSystemNothingPressed
+	textSystemBadge
+	textSystemClearBadge
+	textSystemHaptics
+	textSystemSelection
+	textSystemLightImpact
+	textSystemHeavyImpact
+	textSystemSuccess
+	textSystemWarning
+	textSystemError
+	textSystemNoHapticsHere
 	textSystemLifecycle
 	textMediaSaved
 	textMediaClickThePage
@@ -4277,6 +4301,26 @@ var keyOfText = [numTexts]string{
 	"systemSayAnything",
 	"systemListening",
 	"systemNoSpeechHere",
+	"systemNotificationsAndHaptics",
+	"systemNotificationsHapticsSummary",
+	"systemPermission",
+	"systemAskPermission",
+	"systemShowNotification",
+	"systemShowSilently",
+	"systemCloseNotification",
+	"systemNotificationTitle",
+	"systemNotificationBody",
+	"systemNothingPressed",
+	"systemBadge",
+	"systemClearBadge",
+	"systemHaptics",
+	"systemSelection",
+	"systemLightImpact",
+	"systemHeavyImpact",
+	"systemSuccess",
+	"systemWarning",
+	"systemError",
+	"systemNoHapticsHere",
 	"systemLifecycle",
 	"mediaSaved",
 	"mediaClickThePage",
@@ -6315,6 +6359,26 @@ var textsEn = i18n.NewTexts(""+
 	"Say anything after Dictate"+
 	"Listening…"+
 	"This platform recognizes no speech"+
+	"Notifications and haptics"+
+	"Notifications · SetBadge · PlayHaptic"+
+	"Permission"+
+	"Ask"+
+	"Show"+
+	"Show silently"+
+	"Close"+
+	"Hello from the gallery"+
+	"Press it to come back to the System page."+
+	"No notification pressed yet"+
+	"Badge"+
+	"Clear"+
+	"Haptics"+
+	"Selection"+
+	"Light"+
+	"Heavy"+
+	"Success"+
+	"Warning"+
+	"Error"+
+	"Only iOS and Android play haptics"+
 	"Lifecycle"+
 	"Saved"+
 	"Click the page’s button"+
@@ -8350,6 +8414,26 @@ var textsEn = i18n.NewTexts(""+
 		26,
 		12,
 		34,
+		25,
+		39,
+		10,
+		3,
+		4,
+		13,
+		5,
+		22,
+		41,
+		27,
+		5,
+		5,
+		7,
+		9,
+		5,
+		5,
+		7,
+		7,
+		5,
+		33,
 		9,
 		5,
 		25,
@@ -10388,6 +10472,26 @@ var textsZhHans = i18n.NewTexts(""+
 	"按“听写”后说点什么"+
 	"正在聆听…"+
 	"此平台不识别语音"+
+	"通知与触感反馈"+
+	"Notifications · SetBadge · PlayHaptic"+
+	"权限"+
+	"请求"+
+	"显示"+
+	"静音显示"+
+	"关闭"+
+	"来自示例程序的问候"+
+	"点按它回到系统页面。"+
+	"还没有点按通知"+
+	"角标"+
+	"清除"+
+	"触感反馈"+
+	"选择"+
+	"轻"+
+	"重"+
+	"成功"+
+	"警告"+
+	"错误"+
+	"只有 iOS 和 Android 播放触感反馈"+
 	"生命周期"+
 	"已保存"+
 	"点击页面的按钮"+
@@ -12423,6 +12527,26 @@ var textsZhHans = i18n.NewTexts(""+
 		30,
 		15,
 		24,
+		21,
+		39,
+		6,
+		6,
+		6,
+		12,
+		6,
+		27,
+		30,
+		21,
+		6,
+		6,
+		12,
+		6,
+		3,
+		3,
+		6,
+		6,
+		6,
+		41,
 		12,
 		9,
 		21,
@@ -12887,6 +13011,12 @@ func Supply(lang string, t Translation) {
 	}
 	if t.RichCount != nil {
 		s.RichCount = t.RichCount
+	}
+	if t.SystemNotificationShown != nil {
+		s.SystemNotificationShown = t.SystemNotificationShown
+	}
+	if t.SystemNotificationPressed != nil {
+		s.SystemNotificationPressed = t.SystemNotificationPressed
 	}
 	if t.SystemSpeechEnded != nil {
 		s.SystemSpeechEnded = t.SystemSpeechEnded
@@ -30244,6 +30374,202 @@ func SystemNoSpeechHere(cx *core.Scope) string { return For(cx).SystemNoSpeechHe
 
 // SystemNoSpeechHere is the package's SystemNoSpeechHere in the language of msgs.
 func (msgs Messages) SystemNoSpeechHere() string { return msgs.text(textSystemNoSpeechHere) }
+
+// SystemNotificationsAndHaptics says "Notifications and haptics"
+// in the language the app shows under cx.
+func SystemNotificationsAndHaptics(cx *core.Scope) string {
+	return For(cx).SystemNotificationsAndHaptics()
+}
+
+// SystemNotificationsAndHaptics is the package's SystemNotificationsAndHaptics in the language of msgs.
+func (msgs Messages) SystemNotificationsAndHaptics() string {
+	return msgs.text(textSystemNotificationsAndHaptics)
+}
+
+// SystemNotificationsHapticsSummary says "Notifications · SetBadge · PlayHaptic"
+// in the language the app shows under cx.
+func SystemNotificationsHapticsSummary(cx *core.Scope) string {
+	return For(cx).SystemNotificationsHapticsSummary()
+}
+
+// SystemNotificationsHapticsSummary is the package's SystemNotificationsHapticsSummary in the language of msgs.
+func (msgs Messages) SystemNotificationsHapticsSummary() string {
+	return msgs.text(textSystemNotificationsHapticsSummary)
+}
+
+// SystemPermission says "Permission"
+// in the language the app shows under cx.
+func SystemPermission(cx *core.Scope) string { return For(cx).SystemPermission() }
+
+// SystemPermission is the package's SystemPermission in the language of msgs.
+func (msgs Messages) SystemPermission() string { return msgs.text(textSystemPermission) }
+
+// SystemAskPermission says "Ask"
+// in the language the app shows under cx.
+func SystemAskPermission(cx *core.Scope) string { return For(cx).SystemAskPermission() }
+
+// SystemAskPermission is the package's SystemAskPermission in the language of msgs.
+func (msgs Messages) SystemAskPermission() string { return msgs.text(textSystemAskPermission) }
+
+// SystemShowNotification says "Show"
+// in the language the app shows under cx.
+func SystemShowNotification(cx *core.Scope) string { return For(cx).SystemShowNotification() }
+
+// SystemShowNotification is the package's SystemShowNotification in the language of msgs.
+func (msgs Messages) SystemShowNotification() string { return msgs.text(textSystemShowNotification) }
+
+// SystemShowSilently says "Show silently"
+// in the language the app shows under cx.
+func SystemShowSilently(cx *core.Scope) string { return For(cx).SystemShowSilently() }
+
+// SystemShowSilently is the package's SystemShowSilently in the language of msgs.
+func (msgs Messages) SystemShowSilently() string { return msgs.text(textSystemShowSilently) }
+
+// SystemCloseNotification says "Close"
+// in the language the app shows under cx.
+func SystemCloseNotification(cx *core.Scope) string { return For(cx).SystemCloseNotification() }
+
+// SystemCloseNotification is the package's SystemCloseNotification in the language of msgs.
+func (msgs Messages) SystemCloseNotification() string { return msgs.text(textSystemCloseNotification) }
+
+// SystemNotificationTitle says "Hello from the gallery"
+// in the language the app shows under cx.
+func SystemNotificationTitle(cx *core.Scope) string { return For(cx).SystemNotificationTitle() }
+
+// SystemNotificationTitle is the package's SystemNotificationTitle in the language of msgs.
+func (msgs Messages) SystemNotificationTitle() string { return msgs.text(textSystemNotificationTitle) }
+
+// SystemNotificationBody says "Press it to come back to the System page."
+// in the language the app shows under cx.
+func SystemNotificationBody(cx *core.Scope) string { return For(cx).SystemNotificationBody() }
+
+// SystemNotificationBody is the package's SystemNotificationBody in the language of msgs.
+func (msgs Messages) SystemNotificationBody() string { return msgs.text(textSystemNotificationBody) }
+
+// SystemNotificationShown says "Shown: {shown}"
+// in the language the app shows under cx.
+func SystemNotificationShown(cx *core.Scope, shown string) string {
+	return For(cx).SystemNotificationShown(shown)
+}
+
+// SystemNotificationShown is the package's SystemNotificationShown in the language of msgs.
+func (msgs Messages) SystemNotificationShown(shown string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemNotificationShown(shown))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].SystemNotificationShown; f != nil {
+			return f(shown)
+		}
+		switch lang {
+		case "", "en":
+			return "Shown: " + msgs.arg(shown)
+		case "zh-Hans":
+			return "已显示：" + shown
+		}
+	}
+}
+
+// SystemNotificationPressed says "Pressed: {id}"
+// in the language the app shows under cx.
+func SystemNotificationPressed(cx *core.Scope, id string) string {
+	return For(cx).SystemNotificationPressed(id)
+}
+
+// SystemNotificationPressed is the package's SystemNotificationPressed in the language of msgs.
+func (msgs Messages) SystemNotificationPressed(id string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SystemNotificationPressed(id))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].SystemNotificationPressed; f != nil {
+			return f(id)
+		}
+		switch lang {
+		case "", "en":
+			return "Pressed: " + msgs.arg(id)
+		case "zh-Hans":
+			return "已点按：" + id
+		}
+	}
+}
+
+// SystemNothingPressed says "No notification pressed yet"
+// in the language the app shows under cx.
+func SystemNothingPressed(cx *core.Scope) string { return For(cx).SystemNothingPressed() }
+
+// SystemNothingPressed is the package's SystemNothingPressed in the language of msgs.
+func (msgs Messages) SystemNothingPressed() string { return msgs.text(textSystemNothingPressed) }
+
+// SystemBadge says "Badge"
+// in the language the app shows under cx.
+func SystemBadge(cx *core.Scope) string { return For(cx).SystemBadge() }
+
+// SystemBadge is the package's SystemBadge in the language of msgs.
+func (msgs Messages) SystemBadge() string { return msgs.text(textSystemBadge) }
+
+// SystemClearBadge says "Clear"
+// in the language the app shows under cx.
+func SystemClearBadge(cx *core.Scope) string { return For(cx).SystemClearBadge() }
+
+// SystemClearBadge is the package's SystemClearBadge in the language of msgs.
+func (msgs Messages) SystemClearBadge() string { return msgs.text(textSystemClearBadge) }
+
+// SystemHaptics says "Haptics"
+// in the language the app shows under cx.
+func SystemHaptics(cx *core.Scope) string { return For(cx).SystemHaptics() }
+
+// SystemHaptics is the package's SystemHaptics in the language of msgs.
+func (msgs Messages) SystemHaptics() string { return msgs.text(textSystemHaptics) }
+
+// SystemSelection says "Selection"
+// in the language the app shows under cx.
+func SystemSelection(cx *core.Scope) string { return For(cx).SystemSelection() }
+
+// SystemSelection is the package's SystemSelection in the language of msgs.
+func (msgs Messages) SystemSelection() string { return msgs.text(textSystemSelection) }
+
+// SystemLightImpact says "Light"
+// in the language the app shows under cx.
+func SystemLightImpact(cx *core.Scope) string { return For(cx).SystemLightImpact() }
+
+// SystemLightImpact is the package's SystemLightImpact in the language of msgs.
+func (msgs Messages) SystemLightImpact() string { return msgs.text(textSystemLightImpact) }
+
+// SystemHeavyImpact says "Heavy"
+// in the language the app shows under cx.
+func SystemHeavyImpact(cx *core.Scope) string { return For(cx).SystemHeavyImpact() }
+
+// SystemHeavyImpact is the package's SystemHeavyImpact in the language of msgs.
+func (msgs Messages) SystemHeavyImpact() string { return msgs.text(textSystemHeavyImpact) }
+
+// SystemSuccess says "Success"
+// in the language the app shows under cx.
+func SystemSuccess(cx *core.Scope) string { return For(cx).SystemSuccess() }
+
+// SystemSuccess is the package's SystemSuccess in the language of msgs.
+func (msgs Messages) SystemSuccess() string { return msgs.text(textSystemSuccess) }
+
+// SystemWarning says "Warning"
+// in the language the app shows under cx.
+func SystemWarning(cx *core.Scope) string { return For(cx).SystemWarning() }
+
+// SystemWarning is the package's SystemWarning in the language of msgs.
+func (msgs Messages) SystemWarning() string { return msgs.text(textSystemWarning) }
+
+// SystemError says "Error"
+// in the language the app shows under cx.
+func SystemError(cx *core.Scope) string { return For(cx).SystemError() }
+
+// SystemError is the package's SystemError in the language of msgs.
+func (msgs Messages) SystemError() string { return msgs.text(textSystemError) }
+
+// SystemNoHapticsHere says "Only iOS and Android play haptics"
+// in the language the app shows under cx.
+func SystemNoHapticsHere(cx *core.Scope) string { return For(cx).SystemNoHapticsHere() }
+
+// SystemNoHapticsHere is the package's SystemNoHapticsHere in the language of msgs.
+func (msgs Messages) SystemNoHapticsHere() string { return msgs.text(textSystemNoHapticsHere) }
 
 // SystemLifecycle says "Lifecycle"
 // in the language the app shows under cx.

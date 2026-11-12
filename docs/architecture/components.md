@@ -46,17 +46,21 @@ Each part a component styles takes Tailwind classes beside its style, as NSH's `
 
 Popovers, tooltips, menus, context menus, dialogs and sheets share NSH's contract (`popup.go`): `Open` makes them controlled, `OnOpenChange` reports each request with its `Reason`, `OnCancel` every attempt to close, and `OnOpen` and `OnClose` follow what is shown, after a sheet's motion.
 
-They present themselves by `Env.Desktop`, as NSH's do:
+Menus and dropdowns take the form their `Presentation` names, the same on every device, where NSH's swap it on touch screens (decided by the user, 2026-11-12); `base.OnSheet` tells a styled item which it is in:
+
+| | `PresentPopup` (the zero value) | `PresentSheet` |
+| --- | --- | --- |
+| `Menu` | A popup at its trigger; submenus cascade beside their item, on hover or press | A sheet at the bottom over `BackdropStyle`; a submenu's items replace its menu's, below its `Back` row, and Escape or back return a level |
+| `ContextMenu` | A popup at the pointer (`AnchorBounds` at the click) | The menu's sheet |
+| `Select`, `Combobox`, `DatePicker` | A popup at the trigger, as wide as it or at least that wide, never past the room on its side | A sheet at the bottom over a backdrop, below the status bar at most; a search field takes the keyboard only when pressed |
+
+A `ContextMenu` opens on a secondary click, and on touch screens after a finger rests 400 ms, watched with `OnTouch` so the trigger's own presses and scroll views go on; 10 points of movement cancel. A dropdown closed by a press outside leaves the focus where it went, any other close on a desktop giving it back to the trigger. The other popups follow what the device can do:
 
 | | Desktops | Touch screens |
 | --- | --- | --- |
 | `Popover` | A press outside closes it and goes on to what is under it | A transparent backdrop overlay takes the press outside |
-| `Menu` | A popup at its trigger; submenus cascade beside their item, on hover or press | A sheet at the bottom over `BackdropStyle`; a submenu's items replace its menu's, below its `Back` row, and Escape or back return a level |
-| `ContextMenu` | Opens at the pointer (`AnchorBounds` at the click) | Opens as the menu's sheet after a finger rests 400 ms, watched with `OnTouch` so the trigger's own presses and scroll views go on; 10 points of movement cancel |
 | `Tooltip` | After the pointer rests half a second | Only when the app opens it |
-
 | `HoverCard` | Opens after the pointer rests `OpenDelay` (600 ms) or the focus comes to the trigger, stays while either is on the trigger or the card, closes `CloseDelay` (300 ms) after both left; Escape and a press outside close it at once | A press on the trigger opens and closes it, a press outside closes it and goes on |
-| `Select`, `Combobox`, `DatePicker` | A popup at the trigger, as wide as it or at least that wide, never past the room on its side; a press outside closes it and goes on, leaving the focus where it went, any other close giving it back to the trigger | A sheet at the bottom over a backdrop, below the status bar at most; a search field takes the keyboard only when pressed |
 
 Items reach their menu through a context key (`menuContext`), so the app arranges them freely. A `MenuItem` with `Checked` is a `RoleMenuItemCheckbox`, or the `Role` it gives; its `Indicator` is a part around the app's mark that takes the item's checked and disabled states. A sheet's hidden levels are out of layout and their content out of the tree, so screen readers and tests see one level.
 
@@ -83,6 +87,7 @@ Popups are placed against what their trigger holds (`Overlay.AnchorContent`), th
 | A trigger's role and presses bound on the app's element | A view around it, `Class` and `Style` the view's | Go's `core.Node` cannot be changed from outside, so frames count from the view |
 | `value` as `null` or absent, `Date` an enum | `Value func() *string`, `DateValue` with `Range` and zero times unset | Go's zero values |
 | `searchable`, `filterable`, `separator` | `Command.NoSearch`, `NoFilter`, `NoSeparator` | Go's zero value is the default |
+| Menus and dropdowns as sheets on touch screens, a dock compact below 600 points | `Presentation` and `dock.Area.Compact`, a popup and docked panels unless the app asks | `base` changes nothing by device ([principles](../../AGENTS.md#principles)) |
 | A `DateMatcher` of days, bounds or a function | `DisabledMatcher func(time.Time) bool`, made by `DaysOfWeek`, `DatesOutside` and `DatesBetween` | A Go function says all of them; TSX's forms read as NSH's |
 | A JS matcher asked in the next turn | Asked as a day is read, once per date | Handlers run synchronously here |
 | `HoverCard` delays of 0 and `Infinity` | Zero is the default, negative at once, `HoverNever` for good | Go's zero value is the default; TSX's read as NSH's |
@@ -197,7 +202,7 @@ Popups are placed against what their trigger holds (`Overlay.AnchorContent`), th
 - Each panel's content is a `core.Holder` the area keeps by key while its layout lists the panel, as NSH's render keys: the group showing the panel places it, so a panel moved to another group or dock, or across the compact presentation, keeps its state. A drawer dismissed at compact width leaves its panels built, out of the tree.
 - A tab drag claims the touches with the responder (`OnMove`, after 4 points of a pointer or a long press of a finger), measures the groups' tab bars and content frames with `Ref.Bounds`, and resolves the target as NSH's: a slot between tabs, a content frame's middle to merge, its outer 35% to split. The indicator and the drag preview are overlays that never take the pointer.
 - Zoom and the compact presentation narrow the tree to one group by hiding the containers off its path, so the panels keep their content.
-- Below 600 points the docks are `sheetMotion` drawers and a bottom sheet, presented one at a time, without changing the layout's `Closed`.
+- While `Compact` holds the docks are `sheetMotion` drawers and a bottom sheet, presented one at a time, without changing the layout's `Closed`. The app decides it, by its width or device; NSH's area turns compact below 600 points on its own.
 
 | NSH | NSGo | Why |
 | --- | --- | --- |

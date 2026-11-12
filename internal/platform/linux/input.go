@@ -31,8 +31,11 @@ const (
 	gdkSpace     = 0x020
 	gdkF1        = 0xffbe
 	gdkF35       = 0xffe0
-	gdkKP0       = 0xffb0
-	gdkKP9       = 0xffb9
+	// gdkShiftL to gdkHyperR are the modifier keys, Caps Lock among them.
+	gdkShiftL = 0xffe1
+	gdkHyperR = 0xffee
+	gdkKP0    = 0xffb0
+	gdkKP9    = 0xffb9
 )
 
 // GDK modifier bits.
@@ -505,6 +508,9 @@ func keyPressedCallback(controller uintptr, keyval, keycode, state uint32, data 
 		w.held = map[uint32]bool{}
 	}
 	w.held[keycode] = true
+	if keyval < gdkShiftL || keyval > gdkHyperR {
+		w.engine.InputModality(driver.ModalityKeyboard)
+	}
 	w.menuBarKey(keyval, state, true)
 	if w.selectKey(keyval, state) {
 		return 1
@@ -949,6 +955,7 @@ const (
 	gdkButtonPress   = 2
 	gdkButtonRelease = 3
 	gdkScrollEvent   = 15
+	gdkTouchBegin    = 17
 	gdkScrollSmooth  = 4
 
 	scrollBothAxes       = 3 // GTK_EVENT_CONTROLLER_SCROLL_BOTH_AXES
@@ -976,6 +983,9 @@ func shieldCallback(controller, event, data uintptr) int32 {
 
 func (w *window) shield(event uintptr) bool {
 	typ := gdkEventGetEventType(event)
+	if typ == gdkButtonPress || typ == gdkTouchBegin {
+		w.engine.InputModality(driver.ModalityPointer)
+	}
 	if typ != gdkMotionNotify && typ != gdkButtonPress && typ != gdkButtonRelease && typ != gdkScrollEvent {
 		return false
 	}

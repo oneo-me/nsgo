@@ -39,6 +39,7 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	for round := 0; t.changed && round < maxRounds; round++ {
 		if t.focusMoved {
 			t.updateFocusWithin()
+			t.updateFocusVisible()
 		}
 		if t.pointersMoved {
 			t.updatePointerEvents()

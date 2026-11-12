@@ -138,6 +138,17 @@ final class Protocol {
     static final int ITEM_INSTALL_SETTINGS = 67;
     static final int ITEM_TAKE_PHOTO = 78;
     static final int ITEM_MATCH = 79;
+    static final int ITEM_HAPTIC = 81;
+    static final int ITEM_NOTIFICATION_PERMISSION = 82;
+    static final int ITEM_SHOW_NOTIFICATION = 83;
+    static final int ITEM_CLOSE_NOTIFICATION = 84;
+    static final int ITEM_BADGE = 85;
+
+    // What EVENT_NOTIFICATION answers ITEM_NOTIFICATION_PERMISSION with, as the driver's.
+    static final int NOTIFICATIONS_NOT_ASKED = 0;
+    static final int NOTIFICATIONS_GRANTED = 1;
+    static final int NOTIFICATIONS_DENIED = 2;
+    static final int NOTIFICATIONS_UNAVAILABLE = 3;
 
     // View kinds, as in core/mount.go.
     static final int KIND_VIEW = 1;
@@ -210,6 +221,24 @@ final class Protocol {
     static final int EVENT_SCROLL_END = 60;
     static final int EVENT_WHEEL = 61;
     static final int EVENT_FILES = 62;
+    static final int EVENT_INPUT_MODALITY = 75;
+    static final int EVENT_NOTIFICATION = 76;
+    static final int EVENT_NOTIFICATION_PRESS = 77;
+
+    // core.Haptic, what ITEM_HAPTIC plays.
+    static final int HAPTIC_SELECTION = 1;
+    static final int HAPTIC_LIGHT = 2;
+    static final int HAPTIC_MEDIUM = 3;
+    static final int HAPTIC_HEAVY = 4;
+    static final int HAPTIC_SOFT = 5;
+    static final int HAPTIC_RIGID = 6;
+    static final int HAPTIC_SUCCESS = 7;
+    static final int HAPTIC_WARNING = 8;
+    static final int HAPTIC_ERROR = 9;
+
+    // What EVENT_INPUT_MODALITY reports, as driver's Modality constants.
+    static final int MODALITY_KEYBOARD = 1;
+    static final int MODALITY_POINTER = 2;
 
     // core.PointerEvents.
     static final int POINTER_EVENTS_NONE = 1;

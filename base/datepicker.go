@@ -12,7 +12,7 @@ type DatePreset struct {
 }
 
 // DatePicker is a date, a range, or with TimePrecision a date and time
-// picked in a popup at its trigger, a sheet on touch screens. A complete
+// picked in a popup at its trigger, or a sheet as Presentation says. A complete
 // date is the value and closes it. With a time the popup stays on desktops,
 // each edit reported, until the selected day is pressed again; a tap on a
 // touch screen picks the day at its time and closes. Return opens and
@@ -33,7 +33,9 @@ type DatePicker struct {
 	Presets       []DatePreset
 	CalendarConfig
 
-	Placement core.Placement
+	// Presentation is a popup at the trigger, or a sheet.
+	Presentation Presentation
+	Placement    core.Placement
 	// Align lines the popup up with its trigger, at its start when 0.
 	Align          core.Align
 	Offset, Margin core.Points
@@ -188,7 +190,7 @@ func (d DatePicker) Render(cx *core.Scope) core.Node {
 		return []core.Node{core.Func(func(cx *core.Scope) core.Node { return d.content(cx, onSheet, state) })}
 	}
 	popup := dropdown{anchor: anchor, onContent: true, width: width, fit: true,
-		frame: dropdownFrame{placement: d.Placement, align: cmpAlign(d.Align), offset: d.Offset, margin: d.Margin,
+		frame: dropdownFrame{presentation: d.Presentation, placement: d.Placement, align: cmpAlign(d.Align), offset: d.Offset, margin: d.Margin,
 			popup:    parts.Of(d.PopupClass, d.PopupStyle, d.PopupStyleFunc),
 			backdrop: parts.Part{Class: d.BackdropClass, Style: d.BackdropStyle}},
 		open: st.open, content: content,

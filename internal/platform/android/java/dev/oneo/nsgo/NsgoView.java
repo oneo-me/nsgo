@@ -46,6 +46,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.VelocityTracker;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroupOverlay;
@@ -754,9 +755,16 @@ public class NsgoView extends FrameLayout {
 
     /**
      * Hears the activity's permission prompts: the camera's, which a
-     * photo waits for. A host's activity passes its own here.
+     * photo waits for, and the notifications'. A host's activity passes
+     * its own here.
      */
     public void permissionResult(int request, String[] permissions, int[] results) {
+        if (request == Notifications.PERMISSION_REQUEST) {
+            Notifications.markAsked(getContext());
+            for (long count : permissionAsks) answerPermission(count);
+            permissionAsks.clear();
+            return;
+        }
         if (request != Services.CAMERA_PERMISSION_REQUEST || photo == null) return;
         Activity activity = activity();
         boolean granted = results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -1505,6 +1513,7 @@ public class NsgoView extends FrameLayout {
     @Override
     public boolean dispatchTouchEvent(MotionEvent e) {
         boolean down = e.getActionMasked() == MotionEvent.ACTION_DOWN;
+        if (down) modality(Protocol.MODALITY_POINTER);
         if (selectTouch(e)) return true;
         touches(e);
         if (down) {
@@ -1757,6 +1766,12 @@ public class NsgoView extends FrameLayout {
     }
 
     private void mount(byte[] batch) {
+        if (!mounted) {
+            // The engine runs: a press that started the app goes to it.
+            mounted = true;
+            notificationPressed(pressedEarly);
+            pressedEarly = null;
+        }
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(batch));
         try {
             int root = in.readInt();
@@ -2088,6 +2103,37 @@ public class NsgoView extends FrameLayout {
                 event(Protocol.EVENT_OPEN_URL, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", opened);
                 break;
             }
+            case Protocol.ITEM_HAPTIC:
+                haptic(in.readInt());
+                break;
+            case Protocol.ITEM_NOTIFICATION_PERMISSION: {
+                long count = in.readInt() & 0xffffffffL;
+                boolean ask = in.readUnsignedByte() != 0;
+                Activity activity = activity();
+                if (ask && activity != null && Notifications.needsPrompt(getContext())) {
+                    permissionAsks.add(count);
+                    if (permissionAsks.size() == 1) {
+                        activity.requestPermissions(new String[] {Notifications.PERMISSION}, Notifications.PERMISSION_REQUEST);
+                    }
+                    break;
+                }
+                answerPermission(count);
+                break;
+            }
+            case Protocol.ITEM_SHOW_NOTIFICATION: {
+                long count = in.readInt() & 0xffffffffL;
+                String nid = Protocol.readString(in), title = Protocol.readString(in), body = Protocol.readString(in);
+                boolean silent = in.readUnsignedByte() != 0;
+                boolean shown = Notifications.show(getContext(), activity(), nid, title, body, silent);
+                event(Protocol.EVENT_NOTIFICATION, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", shown);
+                break;
+            }
+            case Protocol.ITEM_CLOSE_NOTIFICATION:
+                Notifications.close(getContext(), Protocol.readString(in));
+                break;
+            case Protocol.ITEM_BADGE:
+                Notifications.badge = in.readInt();
+                break;
             case Protocol.ITEM_PICK_IMAGES: {
                 Services.Pick p = new Services.Pick(in.readInt() & 0xffffffffL, in.readInt(), in.readInt(), in.readFloat(),
                         Protocol.flag(in.readUnsignedByte(), 0));
@@ -2796,12 +2842,83 @@ public class NsgoView extends FrameLayout {
     }
 
     /**
+     * Plays core.Haptic {@code h} as its nearest haptic feedback constant,
+     * which the view plays where the user's touch feedback setting allows:
+     * CONFIRM and REJECT from API 30, SEGMENT_TICK from 34, older ones
+     * before them.
+     */
+    private void haptic(int h) {
+        boolean api30 = Build.VERSION.SDK_INT >= 30;
+        int feedback;
+        switch (h) {
+            case Protocol.HAPTIC_SELECTION:
+                feedback = Build.VERSION.SDK_INT >= 34 ? HapticFeedbackConstants.SEGMENT_TICK : HapticFeedbackConstants.CLOCK_TICK;
+                break;
+            case Protocol.HAPTIC_LIGHT: feedback = HapticFeedbackConstants.KEYBOARD_TAP; break;
+            case Protocol.HAPTIC_MEDIUM: feedback = HapticFeedbackConstants.VIRTUAL_KEY; break;
+            case Protocol.HAPTIC_HEAVY: feedback = HapticFeedbackConstants.LONG_PRESS; break;
+            case Protocol.HAPTIC_SOFT: feedback = HapticFeedbackConstants.CLOCK_TICK; break;
+            case Protocol.HAPTIC_RIGID: feedback = HapticFeedbackConstants.CONTEXT_CLICK; break;
+            case Protocol.HAPTIC_SUCCESS:
+                feedback = api30 ? HapticFeedbackConstants.CONFIRM : HapticFeedbackConstants.VIRTUAL_KEY;
+                break;
+            // A warning has no constant of its own.
+            case Protocol.HAPTIC_WARNING: feedback = HapticFeedbackConstants.LONG_PRESS; break;
+            case Protocol.HAPTIC_ERROR:
+                feedback = api30 ? HapticFeedbackConstants.REJECT : HapticFeedbackConstants.LONG_PRESS;
+                break;
+            default: return;
+        }
+        performHapticFeedback(feedback);
+    }
+
+    /** The notification permission requests waiting for the system's prompt. */
+    private final java.util.ArrayList<Long> permissionAsks = new java.util.ArrayList<>();
+
+    private void answerPermission(long count) {
+        event(Protocol.EVENT_NOTIFICATION, 0, count, 0, 0, "", 0, 0, Notifications.permission(getContext()));
+    }
+
+    /** A notification's press that came before the engine mounted its first batch. */
+    private String pressedEarly;
+    private boolean mounted;
+
+    /**
+     * Reports that the user pressed the notification called id, which
+     * brought the activity back or started it: the activity passes the
+     * intent's extra here.
+     */
+    public void notificationPressed(String id) {
+        if (id == null) return;
+        if (!mounted) {
+            pressedEarly = id;
+            return;
+        }
+        event(Protocol.EVENT_NOTIFICATION_PRESS, 0, 0, 0, 0, id);
+    }
+
+    /** The input modality last reported (modality). */
+    private int modality;
+
+    /**
+     * Reports what the user gives input with, a key or a finger, before
+     * the focus moves it causes, as it changes: the engine shows the
+     * focus by it.
+     */
+    private void modality(int m) {
+        if (modality == m) return;
+        modality = m;
+        event(Protocol.EVENT_INPUT_MODALITY, 0, m, 0, 0, "");
+    }
+
+    /**
      * Consumes a key press matching a keymap binding, named with "mod" for
      * Control or with the modifiers as they are, and reports it as EventKey.
      */
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         int code = e.getKeyCode();
+        if (e.getAction() == KeyEvent.ACTION_DOWN && !KeyEvent.isModifierKey(code)) modality(Protocol.MODALITY_KEYBOARD);
         if (e.getAction() == KeyEvent.ACTION_UP && consumedKeys.remove(code)) return true;
         if (e.getAction() == KeyEvent.ACTION_DOWN && keys.length > 0) {
             String[] names = names(e);

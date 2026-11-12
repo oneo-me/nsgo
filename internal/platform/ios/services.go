@@ -89,6 +89,29 @@ func (s *surface) readClipboard(it *driver.MountItem) {
 	s.engine.Dispatch(ev)
 }
 
+// notify carries out a notification's item through the notification
+// center; the badge needs the permission, and before iOS 16 is the
+// application's.
+func (s *surface) notify(it *driver.MountItem) {
+	e, id := s.engine, it.Count
+	switch it.Kind {
+	case driver.ItemNotificationPermission:
+		apple.NotificationPermission(it.On, func(p int) {
+			e.Dispatch(driver.Event{Kind: driver.EventNotification, Count: id, Index: p})
+		})
+	case driver.ItemShowNotification:
+		apple.ShowNotification(*it.Notification, func(shown bool) {
+			e.Dispatch(driver.Event{Kind: driver.EventNotification, Count: id, Finished: shown})
+		})
+	case driver.ItemCloseNotification:
+		apple.CloseNotification(it.Value)
+	case driver.ItemBadge:
+		if !apple.SetCenterBadge(it.Count) {
+			objc.ID(apple.Class("UIApplication")).Send(sel("sharedApplication")).Send(sel("setApplicationIconBadgeNumber:"), int(it.Count))
+		}
+	}
+}
+
 // openURL opens u in the app that handles it and reports whether one
 // did.
 func (s *surface) openURL(u string, id uint32) {

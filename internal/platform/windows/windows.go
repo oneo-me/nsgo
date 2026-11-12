@@ -579,6 +579,9 @@ func Run(app engine.App, opts Options) {
 			return
 		}
 		// Shortcuts take key presses before they become characters.
+		if m.Hwnd == hwnd {
+			w.reportModality(m.Message, m.WParam)
+		}
 		if (m.Message == wmKeyDown || m.Message == wmSysKeyDown) && m.Hwnd == hwnd && w.shortcut(m.WParam, m.LParam) {
 			continue
 		}
@@ -879,6 +882,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemOpenURL:
 			w.openURL(it.Value, it.Count)
+			continue
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
+			w.notify(it)
 			continue
 		case driver.ItemCheckForUpdates:
 			w.checkForUpdates(it.On, it.Count)
@@ -1651,6 +1657,25 @@ func (w *window) modifierKey(vk uintptr) {
 	w.reportMouseMove()
 }
 
+// reportModality tells the engine what the user gives input with, a key
+// other than a modifier or a button going down, before the focus moves
+// the message causes.
+func (w *window) reportModality(message uint32, wParam uintptr) {
+	if w.engine == nil {
+		return
+	}
+	switch message {
+	case wmKeyDown, wmSysKeyDown:
+		switch wParam {
+		case vkShift, vkControl, vkMenu, vkLWin, vkRWin:
+		default:
+			w.engine.InputModality(driver.ModalityKeyboard)
+		}
+	case wmLButtonDown, wmRButtonDown, wmMButtonDown, wmXButtonDown, wmPointerDown:
+		w.engine.InputModality(driver.ModalityPointer)
+	}
+}
+
 // background is the color behind v: its own or its nearest ancestor's.
 func background(v *view) driver.Color {
 	for ; v != nil; v = v.parent {
@@ -1700,6 +1725,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		r, _, _ := defWindowProcW.Call(hwnd, uintptr(message), wParam, lParam)
 		return r
 	}
+	w.reportModality(message, wParam)
 	// An alert takes the pointer and the keys while it shows.
 	if w.alert != nil {
 		switch message {

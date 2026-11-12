@@ -58,7 +58,7 @@ core.Scroll{Behavior: core.ScrollBehavior{
 
 ## 选择
 
-`ui.Switch` 是立即生效的设置，`ui.Checkbox` 有选中、未选中和不确定三种状态，`ui.Radio` 是 `ui.RadioGroup` 中的一个选项。`ui.Select[T]` 在桌面端从触发器打开选项列表，在触摸屏上作为 sheet 打开；`ui.Tabs[T]` 同时显示少量选项。
+`ui.Switch` 是立即生效的设置，`ui.Checkbox` 有选中、未选中和不确定三种状态，`ui.Radio` 是 `ui.RadioGroup` 中的一个选项。`ui.Select[T]` 在触发器下方打开选项列表，`Presentation` 要求时作为 sheet 打开；`ui.Tabs[T]` 同时显示少量选项。
 
 ```go
 notifications := core.NewSignal(cx, true)

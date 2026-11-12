@@ -58,7 +58,7 @@ core.Scroll{Behavior: core.ScrollBehavior{
 
 ## Choices
 
-`ui.Switch` is a setting that takes effect at once, `ui.Checkbox` is checked, unchecked or indeterminate, and `ui.Radio` is one of a `ui.RadioGroup`. `ui.Select[T]` opens a list of options from a trigger on desktops and as a sheet on touch screens, and `ui.Tabs[T]` shows a few at once.
+`ui.Switch` is a setting that takes effect at once, `ui.Checkbox` is checked, unchecked or indeterminate, and `ui.Radio` is one of a `ui.RadioGroup`. `ui.Select[T]` opens a list of options under its trigger, or as a sheet when its `Presentation` asks, and `ui.Tabs[T]` shows a few at once.
 
 ```go
 notifications := core.NewSignal(cx, true)

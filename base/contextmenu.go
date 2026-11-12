@@ -5,9 +5,9 @@ import (
 	"github.com/nsgo-dev/nsgo/core"
 )
 
-// ContextMenu opens a menu of MenuItems about its trigger: a secondary
-// click opens it at the pointer on desktops, and a finger resting 400 ms
-// on the trigger opens it as a sheet on touch screens, while the
+// ContextMenu opens a menu of MenuItems about its trigger, at the pointer
+// or as a sheet as Presentation says: a secondary click opens it, and on
+// touch screens a finger resting 400 ms on the trigger, while the
 // trigger's own presses and the scroll views around it go on.
 type ContextMenu struct {
 	Open         func() bool
@@ -15,11 +15,13 @@ type ContextMenu struct {
 	OnOpen       func()
 	OnClose      func()
 	OnCancel     func()
-	// OnPosition reports where the popup went on desktops, as Popover's.
+	// OnPosition reports where the popup went, as Popover's.
 	OnPosition func(core.OverlayPosition)
 	Disabled   bool
+	// Presentation is a popup at the pointer, or a sheet.
+	Presentation Presentation
 
-	// Offset and Margin place the popup beside the pointer on desktops.
+	// Offset and Margin place the popup beside the pointer.
 	Offset, Margin core.Points
 	Class          string // the content's
 	Style          core.Style
@@ -93,7 +95,8 @@ func (m ContextMenu) Render(cx *core.Scope) core.Node {
 			},
 			Children: []core.Node{m.Trigger}},
 		menuSurface(cx, st, nil, point, menuParts{placement: core.PlaceBottom, align: core.AlignStart, onPosition: m.OnPosition,
-			offset: m.Offset, margin: m.Margin, popup: parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
+			presentation: m.Presentation,
+			offset:       m.Offset, margin: m.Margin, popup: parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
 			backdrop: parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
 			starting: parts.Part{Class: m.StartingClass, Style: m.StartingStyle},
 			ending:   parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, m.Children),

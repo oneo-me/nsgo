@@ -234,6 +234,27 @@ const (
 	// EventUpdate answers ItemCheckForUpdates Count: Finished when the
 	// platform's own updater showed what it found, else Data, an *Update.
 	EventUpdate
+	// EventInputModality reports what the user gave the surface input
+	// with last (Count, ModalityKeyboard or ModalityPointer), before the
+	// focus moves it causes: the core shows the focus (focus-visible:) by
+	// it.
+	EventInputModality
+	// EventNotification answers ItemNotificationPermission and
+	// ItemShowNotification Count.
+	EventNotification
+	// EventNotificationPress reports that the user pressed the
+	// notification whose ID is Text, the one that started the app
+	// included.
+	EventNotificationPress
+)
+
+// What EventInputModality reports.
+const (
+	// ModalityKeyboard is a key pressed, not a modifier alone: Tab, an
+	// arrow, a shortcut or typing, from a hardware keyboard or a remote.
+	ModalityKeyboard uint32 = iota + 1
+	// ModalityPointer is a mouse button, a pen or a finger going down.
+	ModalityPointer
 )
 
 // EventMask is a set of event kinds.

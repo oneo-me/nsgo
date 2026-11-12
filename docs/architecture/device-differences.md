@@ -7,25 +7,22 @@ Every place a component in `base` or `ui` changes on its own by device, without 
 - Keep a control's size and look the same on every device. Never grow a control or its press area for a finger; a resize handle's 3-point band is the [one exception](#touch-input).
 - Let the app ask for a different size or form through a field or style.
 - Branch only for what a device cannot do, such as hover without a pointer, or for a form listed under [presentation](#presentation).
-- Never branch by device in `core` or `base` ([principles](../../AGENTS.md#principles)); the branches of `base` below are to move to `ui` or a field the app sets ([roadmap](../roadmap.md#apple-tv)).
+- Never branch by device in `core` or `base` ([principles](../../AGENTS.md#principles)); the branches of `base` below follow what an input can do, such as hover or a held finger.
 - Use `ui.Touch` for a branch on input. Use `Env.Idiom` or `Env.OS` only when touch is not the reason. A TV takes no touches: its remote moves a focus, so `ui.Touch` is false there and `ui` presents as on a desktop.
 
 Sizes are constants for this reason: `ui.ButtonHeight` is 28 points, [`Button` and `Tabs`](themes.md#variants-and-sizes) taking another size when an app asks for one, and `ui.RowHeight` 36 on every device. A phone's controls are therefore smaller than the platforms' 44-point guidance unless the app sizes them.
 
 ## Presentation
 
-These swap one form for another. Each is an [open question](../../ARCHITECTURE.md#open-questions) until the app can choose.
+These swap one form for another on their own:
 
 | Component | Desktop | Touch screen | Decided by |
 | --- | --- | --- | --- |
 | `ui.Dialog` | Centered dialog, footer in a row | Bottom sheet, footer stacked | `ui.Touch` |
-| `base.Menu`, `ui.Select` | Popup at the trigger, submenus cascade | Bottom sheet, submenus replace the items | `Env.Desktop` |
-| `base.ContextMenu` | Popup on a secondary click | Sheet on a long press | `Env.Desktop` |
 | `ui.NumberInput` | Stacked chevrons, 22 points wide | A minus and a plus, each 28 points wide | `ui.Touch` |
-| `base/dock.Area` | Docked panels | One group at a time, docks as drawers | Width under 600 points, unless `Compact` is set |
 | `ui/commitgraph.View` | Refs, subject, author, hash and date | Refs and subject | Width under 560 points |
 
-`ui.MenuItem` rows follow the sheet: 26 points in a popup and 44 across a sheet, which also hides `Shortcut`.
+Menus, context menus and dropdowns (`base` and `ui`'s `Menu`, `ContextMenu`, `Select`, `Combobox` and `DatePicker`) are popups unless the app sets `Presentation` to `PresentSheet`, and `dock.Area` keeps its panels docked unless the app makes it `Compact`: neither `base` nor `ui` chooses those by device (decided by the user, 2026-11-12). `ui.MenuItem` rows follow the presentation: 26 points in a popup and 44 across a sheet, which also hides `Shortcut`.
 
 ## Hover and pointer
 

@@ -141,7 +141,7 @@ func (r Rating) Render(cx *core.Scope) core.Node {
 			if r.Readonly {
 				return core.Style{}
 			}
-			return core.Style{Focus: FocusRing(cx, 2)}
+			return core.Style{FocusVisible: FocusRing(cx, 2)}
 		}, Children: stars}
 	if !r.Readonly {
 		view.AccessibilityActions = []core.AccessibilityAction{{Name: core.ActionIncrement}, {Name: core.ActionDecrement}}

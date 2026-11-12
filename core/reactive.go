@@ -127,6 +127,12 @@ type runtime struct {
 	refusals map[string]bool
 	// speech is the speech session running, one per engine.
 	speech *SpeechSession
+	// quits are the OnQuit handlers, oldest first.
+	quits []*quitHandler
+	// notificationPresses hear notifications pressed, and pressesPending
+	// keeps those pressed before any did.
+	notificationPresses []*notificationPressHandler
+	pressesPending      []string
 	// windows are the main window's options where the platform opens
 	// windows (RootOptions.Windows); surfaces the trees of the windows,
 	// panels and tray views opened, keyed those opened with a key.
@@ -144,10 +150,10 @@ type runtime struct {
 	// are those that came before any did.
 	opens       []*openFilesHandler
 	openPending []string
-	trays         map[uint32]*Tray
-	trayID        uint32
-	hotKeys       []*hotKey
-	hotKeyID      uint32
+	trays       map[uint32]*Tray
+	trayID      uint32
+	hotKeys     []*hotKey
+	hotKeyID    uint32
 	// theme is DefaultTheme's, made on first use; subtreeAppearance
 	// whether any scope has forced one.
 	theme             *Theme

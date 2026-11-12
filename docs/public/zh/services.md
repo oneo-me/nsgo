@@ -122,12 +122,28 @@ if err == nil {
 }
 ```
 
-`cx.Env().Lifecycle()` 说明应用处于前台、非活动还是后台，`cx.OnExit` 在退出时运行。`cx.SetAppearance` 强制浅色或深色，`cx.SetLocale` 选择语言，`cx.OnKey` 绑定键盘快捷键，`cx.RegisterHotKey` 绑定任何应用在前台时都生效的快捷键，`cx.OnOpenFiles` 听到 macOS 应用打开的文件。
+`cx.Env().Lifecycle()` 说明应用处于前台、非活动还是后台，`cx.OnQuit` 在应用退出时做清理，无论以何种方式退出，最多有 200 毫秒完成工作。`cx.SetAppearance` 强制浅色或深色，`cx.SetLocale` 选择语言，`cx.OnKey` 绑定键盘快捷键，`cx.RegisterHotKey` 绑定任何应用在前台时都生效的快捷键，`cx.OnOpenFiles` 听到 macOS 应用打开的文件。
 
 ```go
 cx.OnKey("mod+k", func() { palette.Set(true) })
 cx.SetLocale("de")
+cx.OnQuit(func(ctx context.Context) { saveDraft(ctx) })
 ```
+
+## 通知与触感反馈
+
+`cx.RequestNotificationPermission` 在用户做需要通知的操作时请求显示通知的权限，`cx.NotificationPermission` 不打扰用户地读取结果。`cx.ShowNotification` 显示一条通知，应用在前台时也显示，并替换同一 `ID` 的通知；`cx.OnNotificationPress` 听到用户点按通知，包括启动应用的那一条。`cx.SetBadge` 在应用图标上显示数字：程序坞、主屏幕、任务栏按钮或已安装的 Web 应用的图标。
+
+```go
+cx.RequestNotificationPermission(func(p core.NotificationPermission) {
+	if p == core.NotificationsGranted {
+		cx.ShowNotification(core.Notification{ID: "chat:42", Title: "Ada", Body: "一起吃午饭？"}, nil)
+	}
+})
+cx.OnNotificationPress(func(id string) { openChat(id) })
+```
+
+从 Android 13 起请求权限的 Android 应用要在 `nsgo.yaml` 的 `android.permissions` 中列出 `android.permission.POST_NOTIFICATIONS`。`mobile.PlayHaptic` 在 iOS 和 Android 上播放选择、碰撞或结果的触感反馈，其他平台不做任何事。
 
 ## 下一步
 

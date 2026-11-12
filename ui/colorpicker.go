@@ -61,11 +61,11 @@ func (p ColorPicker) Render(cx *core.Scope) core.Node {
 	slider := core.Style{Height: core.Pt(colorSlider), JustifyContent: core.JustifyCenter, Margin: core.Edges{Left: -colorSlider / 2, Right: -colorSlider / 2}}
 	track := core.Style{Height: core.Pt(colorTrack), CornerRadius: colorTrack / 2, Margin: core.Edges{Left: colorSlider / 2, Right: colorSlider / 2}}
 	thumb := func() core.Style {
-		return FinOf(cx).Knob().Over(core.Style{Background: colors.Knob(), BorderWidth: 1, BorderColor: colors.Border(), Focus: FocusRing(cx, 2)})
+		return FinOf(cx).Knob().Over(core.Style{Background: colors.Knob(), BorderWidth: 1, BorderColor: colors.Border(), FocusVisible: FocusRing(cx, 2)})
 	}
 	children := []core.Node{
 		base.ColorArea{Style: core.Style{Height: core.Pt(colorPlane)}, PanelStyle: core.Style{CornerRadius: RadiusControl},
-			PanelStyleFunc: func() core.Style { return core.Style{Focus: FocusRing(cx, 2)} },
+			PanelStyleFunc: func() core.Style { return core.Style{FocusVisible: FocusRing(cx, 2)} },
 			// The thumb is a ring on the plane's own color.
 			ThumbStyle: core.Style{Width: core.Pt(colorKnob), Height: core.Pt(colorKnob), CornerRadius: colorKnob / 2, BorderWidth: 2, BorderColor: 0xffffffff,
 				OutlineWidth: 1, OutlineColor: Black(0.4), Transition: motion, Data: []core.DataStyle{{Name: "dragging", Style: grown(1.15)}}},
@@ -122,7 +122,7 @@ func colorTools(cx *core.Scope) core.Node {
 				Style: core.Style{Width: core.Pt(colorTool), Height: core.Pt(colorTool), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 					CornerRadius: RadiusControl, Disabled: Dimmed()},
 				StyleFunc: func() core.Style {
-					return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, -2)}
+					return core.Style{Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, FocusVisible: FocusRing(cx, -2)}
 				},
 				Children: []core.Node{Icon(lucide.Pipette, 14, colors.Muted)}}
 		}},
@@ -184,7 +184,7 @@ func (w ColorWell) Render(cx *core.Scope) core.Node {
 	return base.Popover{Open: w.Open, OnOpenChange: w.OnOpenChange, Offset: 4, Margin: 8, Label: w.Label, TestID: w.TestID,
 		Style: core.Style{Width: core.Pt(48), Height: core.Pt(32), AlignSelf: core.AlignStart, Padding: core.All(4), CornerRadius: RadiusControl / 2, BorderWidth: 1},
 		StyleFunc: func() core.Style {
-			return core.Style{BorderColor: colors.Border(), Focus: FocusRing(cx, 2)}
+			return core.Style{BorderColor: colors.Border(), FocusVisible: FocusRing(cx, 2)}
 		},
 		Trigger: core.View{Style: core.Style{FlexGrow: 1, CornerRadius: RadiusControl / 2, OverflowX: core.Hidden, OverflowY: core.Hidden, Background: 0xffffffff}, Children: []core.Node{
 			base.Checkerboard(colorCheckers, colorChecks),

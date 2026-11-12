@@ -149,7 +149,7 @@ func (n NumberInput) steppers(cx *core.Scope, in *base.NumberInput) {
 		c := colors.Now()
 		return core.Style{Color: c.Muted, BorderColors: core.EdgeColors{Left: c.Line, Top: c.Line},
 			Hover: &core.Style{Background: c.Hover, Color: c.Text}, Active: &core.Style{Background: c.Pressed},
-			Focus: FocusRing(cx, -2), Disabled: &core.Style{Color: c.Faint, Background: transparent}}
+			FocusVisible: FocusRing(cx, -2), Disabled: &core.Style{Color: c.Faint, Background: transparent}}
 	}
 	icon := func(svg func() *core.SVG) core.Node { return Icon(svg, iconSize-4, Inherited) }
 	if !Touch(cx) {

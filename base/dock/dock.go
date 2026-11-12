@@ -22,8 +22,8 @@ type part = parts.Part
 // persists in gpui-base's format (Layout's JSON). It draws nothing:
 // the app styles every part and renders each panel and tab.
 //
-// An area narrower than 600 points (on phones, in narrow windows or
-// columns) keeps the same layout and presents it compactly: the center
+// An area the app makes Compact, as one on a phone or in a narrow window
+// or column, keeps the same layout and presents it compactly: the center
 // shows one tab group at a time, its tab bar listing every panel of the
 // center, a tab drag reorders within it, and the docks are drawers from
 // their edges and a sheet at the bottom.
@@ -42,9 +42,10 @@ type Area struct {
 	// Locked rearranges nothing: no drags, drops or closes. Selecting,
 	// resizing and toggling docks still work.
 	Locked func() bool
-	// Compact chooses the presentation; automatic by the area's width
-	// when unset.
-	Compact core.Toggle
+	// Compact presents the area compactly while it holds; docked when
+	// nil, whatever the device or the width, which the app reads to set
+	// it.
+	Compact func() bool
 	// Panels says what each panel allows, by key.
 	Panels map[string]PanelOptions
 
@@ -298,13 +299,11 @@ func (r *AreaRef) GroupOf(key string) (uint64, bool) {
 	return 0, false
 }
 
-// The width below which an area is compact, Material 3's compact class;
-// how far a pointer drags a tab before it moves; and how long a finger
-// holds a tab before it drags.
+// How far a pointer drags a tab before it moves, and the share of a
+// group's content along each edge where a drop splits it.
 const (
-	dockCompactWidth core.Points = 600
-	dockDragSlop     core.Points = 4
-	dockSplitZone                = 0.35
+	dockDragSlop  core.Points = 4
+	dockSplitZone             = 0.35
 )
 
 // dockArea is a mounted Area.
@@ -430,19 +429,7 @@ func (a *dockArea) locked() bool { return a.p.Locked != nil && a.p.Locked() }
 func (a *dockArea) options(key string) PanelOptions { return a.p.Panels[key] }
 
 // compact reports, tracked, whether the area presents compactly.
-func (a *dockArea) compact() bool {
-	switch a.p.Compact {
-	case core.ToggleOn:
-		return true
-	case core.ToggleOff:
-		return false
-	}
-	w := a.size.Get().Width
-	if w == 0 {
-		w = a.cx.Env().Window().Width
-	}
-	return w < dockCompactWidth
-}
+func (a *dockArea) compact() bool { return a.p.Compact != nil && a.p.Compact() }
 
 // edit applies fn to a copy of the layout and reports the result when it
 // changed anything.

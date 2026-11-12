@@ -103,14 +103,14 @@ func (c Carousel) Render(cx *core.Scope) core.Node {
 		dots = append(dots, base.CarouselPaginationItem{Index: i, Label: label(i, n), HitSlop: core.All(4), Style: dot,
 			StyleFunc: func() core.Style {
 				return core.Style{Background: colors.Border(), Selected: &core.Style{Width: core.Pt(22), Background: colors.Accent()},
-					Focus: FocusRing(cx, 2)}
+					FocusVisible: FocusRing(cx, 2)}
 			}})
 	}
 	arrow := func(icon func() *core.SVG) core.Node { return Icon(icon, iconSize, Inherited) }
 	face := core.Style{Width: core.Pt(ButtonHeight), Height: core.Pt(ButtonHeight), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
 		CornerRadius: RadiusControl, Transition: quick, Disabled: Dimmed()}
 	look := func() core.Style {
-		return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, Focus: FocusRing(cx, 2)}
+		return core.Style{Color: colors.Text(), Hover: &core.Style{Background: colors.Hover()}, Active: &core.Style{Background: colors.Pressed()}, FocusVisible: FocusRing(cx, 2)}
 	}
 	controls := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 12},
 		Children: []core.Node{

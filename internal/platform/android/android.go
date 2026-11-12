@@ -266,6 +266,10 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				s.nativeEvent(ev.ID, ev.Text, data)
 				break
 			}
+			if ev.Kind == driver.EventInputModality {
+				s.engine.InputModality(ev.Count)
+				break
+			}
 			if ev.Kind == driver.EventTouch {
 				ev.Touches = readTouches(data)
 			}
@@ -1181,6 +1185,20 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			w.str(string(data))
 		case driver.ItemOpenURL:
 			w.u32(it.Count)
+			w.str(it.Value)
+		case driver.ItemHaptic, driver.ItemBadge:
+			w.u32(it.Count)
+		case driver.ItemNotificationPermission:
+			w.u32(it.Count)
+			w.flags(it.On)
+		case driver.ItemShowNotification:
+			n := it.Notification
+			w.u32(it.Count)
+			w.str(n.ID)
+			w.str(n.Title)
+			w.str(n.Body)
+			w.flags(n.Silent)
+		case driver.ItemCloseNotification:
 			w.str(it.Value)
 		case driver.ItemPickImages, driver.ItemTakePhoto:
 			// The request, as NsgoView reads it: the limit, the longest

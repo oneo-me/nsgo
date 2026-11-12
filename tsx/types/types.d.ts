@@ -266,6 +266,7 @@ export interface StateStyleProps {
   activeStyle?: StyleProp<ViewStyle>;
   hoverStyle?: StyleProp<ViewStyle>;
   focusStyle?: StyleProp<ViewStyle>;
+  focusVisibleStyle?: StyleProp<ViewStyle>;
   focusWithinStyle?: StyleProp<ViewStyle>;
   expandedStyle?: StyleProp<ViewStyle>;
   pressedStyle?: StyleProp<ViewStyle>;
@@ -686,6 +687,7 @@ export interface ComponentHostProps {
   activeStyle?: StyleProp<ViewStyle>;
   hoverStyle?: StyleProp<ViewStyle>;
   focusStyle?: StyleProp<ViewStyle>;
+  focusVisibleStyle?: StyleProp<ViewStyle>;
   focusWithinStyle?: StyleProp<ViewStyle>;
   expandedStyle?: StyleProp<ViewStyle>;
   pressedStyle?: StyleProp<ViewStyle>;
