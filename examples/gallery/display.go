@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/oneo-me/nsgo/base"
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/icons/lucide"
 
@@ -166,5 +167,21 @@ func treeCard(cx *core.Scope) core.Node {
 					ui.Textf(func() string { return fmt.Sprint(item.Key()) }, 13, ui.Regular, colors.Text)}}
 			},
 			Style: core.Style{Height: core.Pt(220)}}
+	}}
+}
+
+func formSectionCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	last := core.NewSignal(cx, "")
+	name, notify := core.NewSignal(cx, ""), core.NewSignal(cx, true)
+	return Playground{Title: "FormSection", UIOnly: true, Event: last.Get, Stage: func() core.Node {
+		return ui.FormSection{Title: tr.FormAccount(), Footer: tr.FormSectionFooter(), Style: core.Style{Width: core.Pt(320)}, Children: []core.Node{
+			ui.FormField{Title: tr.FormName(), Input: base.Input{Value: name.Get, OnChange: name.Set, Placeholder: tr.FormEnterYourName()}},
+			ui.FormRow{Icon: lucide.Bell, Title: tr.FormNotifications(),
+				Control: ui.Switch{Label: tr.FormNotifications(), Checked: notify.Get, OnChange: notify.Set}},
+			ui.FormRow{Icon: lucide.Globe, Title: tr.FormWebsite(), Value: func() string { return "nsgo.dev" },
+				OnPress: func() { last.Set("FormRow: " + tr.FormWebsite()) }},
+			ui.FormRow{Title: tr.FormSignOut(), Variant: ui.FormRowDanger, OnPress: func() { last.Set("FormRow: " + tr.FormSignOut()) }},
+		}}
 	}}
 }

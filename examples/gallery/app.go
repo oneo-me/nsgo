@@ -101,7 +101,7 @@ func init() {
 		{"Carousel", m.DemoCarousel, m.DemoCarouselDetail, lucide.GalleryHorizontal, cardsDemo(carouselCard)},
 	}
 	data := []demo{
-		{"List", m.DemoList, m.DemoListDetail, lucide.List, cardsDemo(listCard, treeCard)},
+		{"List", m.DemoList, m.DemoListDetail, lucide.List, cardsDemo(listCard, treeCard, formSectionCard)},
 		{"Table", m.DemoTable, m.DemoTableDetail, lucide.Table, cardsDemo(tableCard)},
 		{"DataTable", m.DemoDataTable, m.DemoDataTableDetail, lucide.Table, dataTableDemo},
 		{"CommitGraph", m.DemoCommitGraph, m.DemoCommitGraphDetail, lucide.GitGraph, commitGraphDemo},

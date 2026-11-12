@@ -50,6 +50,11 @@ func showcase(cx *core.Scope) core.Node {
 		}},
 		Accordion{Items: []AccordionItem{{Text: "Open", Content: core.Text{Content: "Body"}}, {Text: "Closed"}},
 			Open: func(i int) bool { return i == 0 }},
+		FormSection{Title: "Account", Footer: "Footer", Children: []core.Node{
+			FormField{Title: "Name", Input: base.Input{Placeholder: "Ada"}},
+			FormRow{Icon: lucide.Bell, Title: "Alerts", Control: Switch{Label: "Alerts", Checked: on.Get, OnChange: on.Set}},
+			FormRow{Title: "Sign out", Variant: FormRowDanger, OnPress: func() {}},
+		}},
 		Collapsible{Text: "Collapsible", Open: on.Get, OnOpenChange: on.Set, Content: core.Text{Content: "Body"}},
 		Breadcrumbs{Items: []string{"Home", "Docs", "Guide", "Page"}},
 		NavHeader{Title: "Header", OnBack: func() {}, BackLabel: "Back"},

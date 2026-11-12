@@ -969,6 +969,9 @@ const (
 	textFormNoCaret
 	textFormNoCaretHere
 	textFormCreateTheAccount
+	textFormSectionFooter
+	textFormNotifications
+	textFormSignOut
 	textFormSubmittingChecksEveryField
 	textFormSent
 	textFormCheck
@@ -3006,6 +3009,9 @@ var keyOfText = [numTexts]string{
 	"formNoCaret",
 	"formNoCaretHere",
 	"formCreateTheAccount",
+	"formSectionFooter",
+	"formNotifications",
+	"formSignOut",
 	"formSubmittingChecksEveryField",
 	"formSent",
 	"formCheck",
@@ -5041,6 +5047,9 @@ var textsEn = i18n.NewTexts(""+
 	"No caret"+
 	"No caret here"+
 	"Create the account"+
+	"Kept on this device alone."+
+	"Notifications"+
+	"Sign out"+
 	"Submitting checks every field"+
 	"Sent"+
 	"Check"+
@@ -7073,6 +7082,9 @@ var textsEn = i18n.NewTexts(""+
 		8,
 		13,
 		18,
+		26,
+		13,
+		8,
 		29,
 		4,
 		5,
@@ -9108,6 +9120,9 @@ var textsZhHans = i18n.NewTexts(""+
 	"无光标"+
 	"这里没有光标"+
 	"创建账户"+
+	"只保存在这台设备上。"+
+	"通知"+
+	"退出登录"+
 	"提交时会检查每个字段"+
 	"已发送"+
 	"检查"+
@@ -11139,6 +11154,9 @@ var textsZhHans = i18n.NewTexts(""+
 		15,
 		9,
 		18,
+		12,
+		30,
+		6,
 		12,
 		30,
 		9,
@@ -18473,6 +18491,27 @@ func FormCreateTheAccount(cx *core.Scope) string { return For(cx).FormCreateTheA
 
 // FormCreateTheAccount is the package's FormCreateTheAccount in the language of msgs.
 func (msgs Messages) FormCreateTheAccount() string { return msgs.text(textFormCreateTheAccount) }
+
+// FormSectionFooter says "Kept on this device alone."
+// in the language the app shows under cx.
+func FormSectionFooter(cx *core.Scope) string { return For(cx).FormSectionFooter() }
+
+// FormSectionFooter is the package's FormSectionFooter in the language of msgs.
+func (msgs Messages) FormSectionFooter() string { return msgs.text(textFormSectionFooter) }
+
+// FormNotifications says "Notifications"
+// in the language the app shows under cx.
+func FormNotifications(cx *core.Scope) string { return For(cx).FormNotifications() }
+
+// FormNotifications is the package's FormNotifications in the language of msgs.
+func (msgs Messages) FormNotifications() string { return msgs.text(textFormNotifications) }
+
+// FormSignOut says "Sign out"
+// in the language the app shows under cx.
+func FormSignOut(cx *core.Scope) string { return For(cx).FormSignOut() }
+
+// FormSignOut is the package's FormSignOut in the language of msgs.
+func (msgs Messages) FormSignOut() string { return msgs.text(textFormSignOut) }
 
 // FormSubmittingChecksEveryField says "Submitting checks every field"
 // in the language the app shows under cx.

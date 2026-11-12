@@ -742,7 +742,7 @@ func (v *view) configure(c *driver.InputConfig) {
 		in.label.Send(selSetString, apple.NSString(c.Placeholder))
 	} else {
 		in.field.Send(selSetEnabled, !c.Disabled)
-		setPlaceholder(in.field, c.Placeholder, objc.ID(font), placeholderColor(c))
+		setPlaceholder(in.field, c.Placeholder, objc.ID(font), placeholderColor(c), align)
 		if e := in.field.Send(selCurrentEditor); e != 0 {
 			e.Send(selSetFont, objc.ID(font))
 			e.Send(selSetTextColor, nsColor(c.Style.Color))
@@ -769,16 +769,18 @@ func placeholderColor(c *driver.InputConfig) driver.Color {
 }
 
 // textAttrs are AppKit's attribute names, read on first use.
-var textAttrs = sync.OnceValue(func() (a struct{ font, color, background objc.ID }) {
+var textAttrs = sync.OnceValue(func() (a struct{ font, color, background, paragraph objc.ID }) {
 	const appKit = "/System/Library/Frameworks/AppKit.framework/AppKit"
 	a.font = apple.Global(appKit, "NSFontAttributeName")
 	a.color = apple.Global(appKit, "NSForegroundColorAttributeName")
 	a.background = apple.Global(appKit, "NSBackgroundColorAttributeName")
+	a.paragraph = apple.Global(appKit, "NSParagraphStyleAttributeName")
 	return a
 })
 
-// setPlaceholder gives a field its placeholder in its font and color.
-func setPlaceholder(f objc.ID, text string, font objc.ID, color driver.Color) {
+// setPlaceholder gives a field its placeholder in its font, color and
+// alignment: an attributed placeholder keeps to the start otherwise.
+func setPlaceholder(f objc.ID, text string, font objc.ID, color driver.Color, align int) {
 	a := textAttrs()
 	if a.font == 0 || a.color == 0 {
 		f.Send(selSetPlaceholder, apple.NSString(text))
@@ -787,6 +789,12 @@ func setPlaceholder(f objc.ID, text string, font objc.ID, color driver.Color) {
 	attrs := objc.ID(apple.Class("NSMutableDictionary")).Send(sel("dictionary"))
 	attrs.Send(sel("setObject:forKey:"), font, a.font)
 	attrs.Send(sel("setObject:forKey:"), nsColor(color), a.color)
+	if a.paragraph != 0 {
+		para := objc.ID(apple.Class("NSMutableParagraphStyle")).Send(selAlloc).Send(sel("init"))
+		para.Send(selSetAlignment, align)
+		attrs.Send(sel("setObject:forKey:"), para, a.paragraph)
+		para.Send(selRelease)
+	}
 	str := objc.ID(apple.Class("NSAttributedString")).Send(selAlloc).Send(
 		sel("initWithString:attributes:"), apple.NSString(text), attrs)
 	f.Send(sel("setPlaceholderAttributedString:"), str)
