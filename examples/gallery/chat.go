@@ -74,8 +74,6 @@ func chatDemo(cx *core.Scope) core.Node {
 	attachment := core.NewSignalFunc(cx, (*chatAttachment)(nil), func(a, b *chatAttachment) bool { return a == b })
 	bannerOn := core.NewSignal(cx, false)
 	bannerKind := core.NewSignal(cx, "offline")
-	// copied is the copied message, for a moment.
-	copied := core.NewSignal(cx, "")
 	conversation := chat.NewConversationState(cx)
 
 	// The reply being written; finished replies are plain data in
@@ -398,15 +396,6 @@ func chatDemo(cx *core.Scope) core.Node {
 			reply(retried, m.id, true)
 		}
 	}
-	copyText := func(key, text string) {
-		cx.SetClipboard(text)
-		copied.Set(key)
-		later(cx, 1600*time.Millisecond, func() {
-			if copied.GetUntracked() == key {
-				copied.Set("")
-			}
-		})
-	}
 	// choosePhoto attaches a photo from the system's picker.
 	choosePhoto := func() {
 		cx.PickImages(core.PickOptions{MaxDimension: 2048, Quality: 0.85}, func(files []core.PickedFile) {
@@ -454,7 +443,6 @@ func chatDemo(cx *core.Scope) core.Node {
 			}
 			return ""
 		}
-		reasoned := core.NewMemo(cx, func() bool { return reasonText() != "" })
 		thinkingLabel := func() string {
 			if live() {
 				if thinking.Get() {
@@ -526,14 +514,6 @@ func chatDemo(cx *core.Scope) core.Node {
 		}
 		steps := func() []chat.Step {
 			var activities []chat.Activity
-			if reasoned.Get() {
-				a := chat.Activity{ID: "think", Icon: lucide.Brain, Action: thinkingLabel(), Status: chat.Completed,
-					Content: func(*core.Scope) core.Node { return core.Text{ContentFunc: reasonText, Selectable: core.SelectableOn} }}
-				if live() && thinking.Get() {
-					a.Status = chat.Running
-				}
-				activities = append(activities, a)
-			}
 			for _, t := range tools() {
 				a := chat.Activity{ID: t.id, Icon: lucide.Terminal, Action: tr.ChatRunCode(), Detail: t.lang + tr.ChatSandboxed(), MaxHeight: 320}
 				switch t.kind {
@@ -570,65 +550,81 @@ func chatDemo(cx *core.Scope) core.Node {
 			}
 			return out
 		}
-		return chat.Turn{Status: status.Get, Steps: steps, Conversation: conversation,
-			Summary: func() string { minutes, seconds := elapsed(); return tr.ChatWorked(minutes, seconds) },
-			Working: func() string { minutes, seconds := elapsed(); return tr.ChatWorking(statusLabel(), minutes, seconds) },
-			Prompt: func(cx *core.Scope) core.Node {
-				first := core.Untracked(cx, m)
-				var nodes core.Group
-				if hasImage(first.image) {
-					nodes = append(nodes, chat.AttachmentPreview{Label: tr.ChatPhoto(), Image: first.image})
-				}
-				if first.file != nil {
-					nodes = append(nodes, chat.Attachment{Label: first.file.name, Detail: first.file.size})
-				}
-				return append(nodes, core.Text{Content: first.text, Selectable: core.SelectableOn, Style: core.Style{FontSize: 13, LineHeight: 19}})
-			},
-			Final: func(*core.Scope) core.Node { return chatMarkdown(md, func() bool { return false }) }, HasFinal: func() bool { return !live() && written.Get() },
-			Footer: func(cx *core.Scope) core.Node {
-				return core.Group{
-					core.Show{When: func() bool { return m().waiting }, Then: func(cx *core.Scope) core.Node {
-						return ui.HStack{Gap: 6, Children: []core.Node{ui.Spinner{Size: 12}, ui.Text(tr.ChatWaitingForAConnection(), 12, ui.Regular, colors.Muted)}}
-					}},
-					core.Show{When: func() bool { return status.Get() == chat.Failed }, Then: func(cx *core.Scope) core.Node {
-						return errorRow(cx, func() string {
-							if e := m().err; e != "" {
-								return e
-							}
-							return tr.ChatSomethingWentWrong()
-						}, func() { retry(core.Untracked(cx, m)) })
-					}},
-					core.Show{When: func() bool { return status.Get() == chat.Cancelled }, Then: func(cx *core.Scope) core.Node {
-						return ui.Text(tr.ChatYouStoppedThisReply(), 13, ui.Regular, colors.Faint)
-					}},
-				}
-			},
-			ShowActions: func() bool { return status.Get() == chat.Completed || status.Get() == chat.Cancelled },
-			Actions: func(cx *core.Scope) core.Node {
-				rate := func(to string) func() {
-					return func() {
-						update(core.Untracked(cx, m).id, func(x msg) msg {
-							if x.rating == to {
-								x.rating = ""
-							} else {
-								x.rating = to
-							}
-							return x
-						})
+		return core.Group{
+			// Reasoning streams above the answer and folds itself when it
+			// ends, apart from the turn's steps.
+			chat.Reasoning{Text: reasonText,
+				Status: func() chat.Status {
+					if live() && thinking.Get() {
+						return chat.Running
 					}
-				}
-				return core.Group{
-					chat.IconAction{Label: tr.ChatCopy(), IconFunc: func() *core.SVG {
-						if copied.Get() == m().id {
-							return lucide.Check()
+					return chat.Completed
+				},
+				Elapsed: func() time.Duration {
+					if live() && run != nil {
+						return now.Get().Sub(run.thinkStart)
+					}
+					if r := m().reasoning; r != nil {
+						return time.Duration(r.seconds) * time.Second
+					}
+					return 0
+				},
+				Label: thinkingLabel, Summary: thinkingLabel, Conversation: conversation, TestID: "chat-reasoning"},
+			chat.Turn{Status: status.Get, Steps: steps, Conversation: conversation,
+				Summary: func() string { minutes, seconds := elapsed(); return tr.ChatWorked(minutes, seconds) },
+				Working: func() string { minutes, seconds := elapsed(); return tr.ChatWorking(statusLabel(), minutes, seconds) },
+				Prompt: func(cx *core.Scope) core.Node {
+					first := core.Untracked(cx, m)
+					var nodes core.Group
+					if hasImage(first.image) {
+						nodes = append(nodes, chat.AttachmentPreview{Label: tr.ChatPhoto(), Image: first.image})
+					}
+					if first.file != nil {
+						nodes = append(nodes, chat.Attachment{Label: first.file.name, Detail: first.file.size})
+					}
+					return append(nodes, core.Text{Content: first.text, Selectable: core.SelectableOn, Style: core.Style{FontSize: 13, LineHeight: 19}})
+				},
+				Final: func(*core.Scope) core.Node { return chatMarkdown(md, func() bool { return false }) }, HasFinal: func() bool { return !live() && written.Get() },
+				Footer: func(cx *core.Scope) core.Node {
+					return core.Group{
+						core.Show{When: func() bool { return m().waiting }, Then: func(cx *core.Scope) core.Node {
+							return ui.HStack{Gap: 6, Children: []core.Node{ui.Spinner{Size: 12}, ui.Text(tr.ChatWaitingForAConnection(), 12, ui.Regular, colors.Muted)}}
+						}},
+						core.Show{When: func() bool { return status.Get() == chat.Failed }, Then: func(cx *core.Scope) core.Node {
+							return errorRow(cx, func() string {
+								if e := m().err; e != "" {
+									return e
+								}
+								return tr.ChatSomethingWentWrong()
+							}, func() { retry(core.Untracked(cx, m)) })
+						}},
+						core.Show{When: func() bool { return status.Get() == chat.Cancelled }, Then: func(cx *core.Scope) core.Node {
+							return ui.Text(tr.ChatYouStoppedThisReply(), 13, ui.Regular, colors.Faint)
+						}},
+					}
+				},
+				ShowActions: func() bool { return status.Get() == chat.Completed || status.Get() == chat.Cancelled },
+				Actions: func(cx *core.Scope) core.Node {
+					rate := func(to string) func() {
+						return func() {
+							update(core.Untracked(cx, m).id, func(x msg) msg {
+								if x.rating == to {
+									x.rating = ""
+								} else {
+									x.rating = to
+								}
+								return x
+							})
 						}
-						return lucide.Copy()
-					}, Active: func() bool { return copied.Get() == m().id }, Tint: colors.Up, OnPress: func() { mm := core.Untracked(cx, m); copyText(mm.id, mm.md) }},
-					chat.IconAction{Label: tr.ChatRegenerate(), Icon: lucide.RefreshCw, OnPress: func() { regenerate(core.Untracked(cx, m)) }},
-					chat.IconAction{Label: tr.ChatGoodReply(), Icon: lucide.ThumbsUp, Active: func() bool { return m().rating == "up" }, Tint: colors.Accent, OnPress: rate("up")},
-					chat.IconAction{Label: tr.ChatBadReply(), Icon: lucide.ThumbsDown, Active: func() bool { return m().rating == "down" }, Tint: colors.Danger, OnPress: rate("down")},
-				}
-			}}
+					}
+					return chat.Actions{Text: func() string { return m().md },
+						OnRetry:  func() { regenerate(core.Untracked(cx, m)) },
+						CanRetry: func() bool { return run == nil },
+						Children: []core.Node{
+							chat.IconAction{Label: tr.ChatGoodReply(), Icon: lucide.ThumbsUp, Active: func() bool { return m().rating == "up" }, Tint: colors.Accent, OnPress: rate("up")},
+							chat.IconAction{Label: tr.ChatBadReply(), Icon: lucide.ThumbsDown, Active: func() bool { return m().rating == "down" }, Tint: colors.Danger, OnPress: rate("down")},
+						}}
+				}}}
 	}
 
 	emptyText := tr.ChatASimulatedAssistantEveryReply()

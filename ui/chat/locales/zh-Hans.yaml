@@ -1,0 +1,6 @@
+copy: "拷贝"
+copied: "已拷贝"
+retry: "重试"
+edit: "编辑"
+thinking: "思考中… {seconds, number} 秒"
+thoughtFor: "思考了 {seconds, number} 秒"

@@ -1,0 +1,18 @@
+copy:
+  message: "Copy"
+  description: What screen readers say of the button copying a message.
+copied:
+  message: "Copied"
+  description: What screen readers say of the button once the message is on the clipboard.
+retry:
+  message: "Retry"
+  description: What screen readers say of the button asking for the same reply again.
+edit:
+  message: "Edit"
+  description: What screen readers say of the button reopening a message the user sent.
+thinking:
+  message: "Thinking… {seconds, number} s"
+  description: What a reasoning block reads while it streams, with what it has cost so far.
+thoughtFor:
+  message: "Thought for {seconds, number} s"
+  description: What a reasoning block reads once it ends, with what it cost.
