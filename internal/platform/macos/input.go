@@ -248,29 +248,7 @@ func (v *view) setEditor(multiline, masked bool) {
 		}
 	}
 	if multiline {
-		scroll := objc.ID(apple.Class("NSScrollView")).Send(selNew)
-		scroll.Send(sel("setBorderType:"), 0)
-		scroll.Send(sel("setDrawsBackground:"), false)
-		scroll.Send(sel("setHasVerticalScroller:"), true)
-		scroll.Send(sel("setAutohidesScrollers:"), true)
-		tv := objc.ID(classTextView).Send(selAlloc).Send(sel("initWithFrame:"), apple.Rect(0, 0, 100, 40))
-		tv.Send(sel("setMinSize:"), apple.CGSize{Width: 0, Height: 0})
-		tv.Send(sel("setMaxSize:"), apple.CGSize{Width: 1e7, Height: 1e7})
-		tv.Send(sel("setVerticallyResizable:"), true)
-		tv.Send(sel("setHorizontallyResizable:"), false)
-		tv.Send(sel("setAutoresizingMask:"), uint(2)) // width sizable
-		tv.Send(sel("setDrawsBackground:"), false)
-		tv.Send(sel("setRichText:"), false)
-		tv.Send(sel("setImportsGraphics:"), false)
-		tv.Send(sel("setAllowsUndo:"), true)
-		tv.Send(sel("setTextContainerInset:"), apple.CGSize{})
-		container := tv.Send(sel("textContainer"))
-		container.Send(sel("setLineFragmentPadding:"), 0.0)
-		container.Send(sel("setWidthTracksTextView:"), true)
-		tv.Send(selSetDelegate, tv)
-		scroll.Send(sel("setDocumentView:"), tv)
-		scroll.Send(sel("setDocumentCursor:"), objc.ID(0))
-		tv.Send(selRelease)
+		scroll, tv := newMultilineEditor()
 		label := objc.ID(apple.Class("NSTextField")).Send(sel("labelWithString:"), apple.NSString(""))
 		label.Send(selSetHidden, true)
 		label.Send(sel("cell")).Send(sel("setWraps:"), true)
@@ -307,6 +285,37 @@ func (v *view) setEditor(multiline, masked bool) {
 	if text != "" {
 		in.replaceText(text)
 	}
+}
+
+// newMultilineEditor returns a scroll view and its text view, which the
+// scroll view keeps. The text view starts at the scroll view's content
+// size: it follows the width as it changes, keeping the difference it
+// starts with, and its container follows it.
+func newMultilineEditor() (scroll, tv objc.ID) {
+	scroll = objc.ID(apple.Class("NSScrollView")).Send(selNew)
+	scroll.Send(sel("setBorderType:"), 0)
+	scroll.Send(sel("setDrawsBackground:"), false)
+	scroll.Send(sel("setHasVerticalScroller:"), true)
+	scroll.Send(sel("setAutohidesScrollers:"), true)
+	tv = objc.ID(classTextView).Send(selAlloc).Send(sel("initWithFrame:"), apple.CGRect{Size: objc.Send[apple.CGSize](scroll, sel("contentSize"))})
+	tv.Send(sel("setMinSize:"), apple.CGSize{Width: 0, Height: 0})
+	tv.Send(sel("setMaxSize:"), apple.CGSize{Width: 1e7, Height: 1e7})
+	tv.Send(sel("setVerticallyResizable:"), true)
+	tv.Send(sel("setHorizontallyResizable:"), false)
+	tv.Send(sel("setAutoresizingMask:"), uint(2)) // width sizable
+	tv.Send(sel("setDrawsBackground:"), false)
+	tv.Send(sel("setRichText:"), false)
+	tv.Send(sel("setImportsGraphics:"), false)
+	tv.Send(sel("setAllowsUndo:"), true)
+	tv.Send(sel("setTextContainerInset:"), apple.CGSize{})
+	container := tv.Send(sel("textContainer"))
+	container.Send(sel("setLineFragmentPadding:"), 0.0)
+	container.Send(sel("setWidthTracksTextView:"), true)
+	tv.Send(selSetDelegate, tv)
+	scroll.Send(sel("setDocumentView:"), tv)
+	scroll.Send(sel("setDocumentCursor:"), objc.ID(0))
+	tv.Send(selRelease)
+	return scroll, tv
 }
 
 // editor is the text view that edits now: the field editor while a
