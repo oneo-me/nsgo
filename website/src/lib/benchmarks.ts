@@ -73,6 +73,12 @@ const all = (v: Support): Record<FrameworkId, Support> => ({ nsgo: v, mygo: v, n
 const only = (...ids: FrameworkId[]): Record<FrameworkId, Support> =>
   Object.fromEntries(frameworks.map((f) => [f.id, ids.includes(f.id)])) as Record<FrameworkId, Support>;
 
+/** Platforms built outside the framework's own repository. */
+const community: Support = { en: 'Community', zh: '社区' };
+
+/** Mini programs hold an app to 2 MB, which NSGo's larger apps exceed. */
+const experimental: Support = { en: 'Experimental', zh: '试验性' };
+
 /**
  * What each framework offers: the languages an app is written in, what
  * draws it, and where it runs.
@@ -124,21 +130,22 @@ export const features: { en: string; zh: string; rows: FeatureRow[] }[] = [
       { en: 'Web', zh: 'Web', values: all(true) },
       { en: 'iOS', zh: 'iOS', values: only('nsgo', 'nsh') },
       { en: 'Android', zh: 'Android', values: only('nsgo', 'nsh') },
-      { en: 'HarmonyOS', zh: '鸿蒙', values: only('nsh') },
+      { en: 'HarmonyOS', zh: '鸿蒙', values: { ...only(), nsh: community } },
       { en: 'App Clips', zh: '轻 App', values: only('nsgo') },
       { en: 'tvOS', zh: 'tvOS', values: only('nsgo') },
       { en: 'watchOS', zh: 'watchOS', values: only('nsgo') },
       { en: 'Home screen widgets', zh: '桌面小组件', values: only('nsgo') },
+      { en: 'Terminals', zh: '终端', values: only('nsh') },
     ],
   },
   {
     en: 'Mini programs',
     zh: '小程序',
     rows: [
-      { en: 'WeChat', zh: '微信', values: only('nsgo', 'nsh') },
-      { en: 'QQ', zh: 'QQ', values: only('nsgo') },
-      { en: 'Alipay', zh: '支付宝', values: only('nsgo') },
-      { en: 'Douyin', zh: '抖音', values: only('nsgo') },
+      { en: 'WeChat', zh: '微信', values: { ...only(), nsgo: experimental, nsh: community } },
+      { en: 'QQ', zh: 'QQ', values: { ...only(), nsgo: experimental } },
+      { en: 'Alipay', zh: '支付宝', values: { ...only(), nsgo: experimental } },
+      { en: 'Douyin', zh: '抖音', values: { ...only(), nsgo: experimental } },
     ],
   },
 ];

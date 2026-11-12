@@ -90,9 +90,17 @@ const next: { icon: IconName; title: string; body: string; href: string; externa
               <li
                 class:list={['platform', `platform--${tile.shape}`, tile.controls && `platform--controls-${tile.controls}`]}
                 style={`--i: ${index}; --x: ${tile.x}; --y: ${tile.y}; --w: ${tile.w}; --h: ${tile.h}`}
+                tabindex={platform.experimental ? 0 : undefined}
+                aria-describedby={platform.experimental ? `platform-tip-${index}` : undefined}
               >
                 <Icon name={platform.icon} size={18} />
                 <span class="platform__name">{platformName(platform, lang)}</span>
+                {platform.experimental && (
+                  <>
+                    <span class="platform__mark"></span>
+                    <span class="platform__tip" role="tooltip" id={`platform-tip-${index}`}>{home.hero.experimental}</span>
+                  </>
+                )}
               </li>
             );
           })}

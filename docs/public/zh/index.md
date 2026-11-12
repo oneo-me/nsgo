@@ -4,7 +4,7 @@ description: NSGo 是什么、运行在哪些平台上，以及它如何工作�
 order: 1
 ---
 
-NSGo 是一个用 Go 编写的跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，它就能运行在 iOS、tvOS、watchOS、Android、macOS、Windows、Linux 和 Web 上，由每个平台自己的视图绘制；Go 应用还能运行在微信小程序中。
+NSGo 是一个用 Go 编写的跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，它就能运行在 iOS 及其轻 App（App Clip）、tvOS、watchOS、Android、macOS、Windows、Linux 和 Web 上，由每个平台自己的视图绘制。Go 应用还能试验性地运行在微信、QQ、支付宝和抖音小程序中：各平台把应用限制在 2 MB 以内，较大的应用会超出。
 
 ## 你要写什么
 

@@ -220,7 +220,7 @@ Each target writes a project for its platform's developer tool, also in `dist/re
 
 `miniprogram.appid` gives the mini program's AppID on each platform (`wechat`, `qq`, `alipay`, `douyin`); without one, WeChat DevTools previews it with its tourist AppID and the other tools ask for one. The platform's navigation bar shows the app's title; with `custom_navigation`, the app fills the page and its safe area keeps it clear of the menu button. QQ, Alipay and Douyin have not been tried in their tools yet, and Alipay does not yet take back through the app, keyframes or the keyboard's height.
 
-A mini program runs Go apps alone, not TSX, and the platforms hold the app's compressed module to 2 MB: an app of a few screens fits, and `build` says when one does not. Shaders draw nothing there, and web views, videos, native components and the app's font files are not shown yet.
+Mini programs are experimental. A mini program runs Go apps alone, not TSX, and the platforms hold the app's compressed module to 2 MB: an app of a few screens fits, larger ones do not yet, and `build` says when one does not. Shaders draw nothing there, and web views, videos, native components and the app's font files are not shown yet.
 
 ## Sign
 

@@ -1049,6 +1049,55 @@ html[data-theme='dark'] .phone {
   color: var(--blue);
 }
 
+/* An experimental platform's mark follows its name, and its tip opens
+   above the tile while it is pointed at or focused, right-aligned so it
+   stays on the board. */
+.platform__mark {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--dev);
+}
+
+.platform__tip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 14px);
+  z-index: 1;
+  width: max-content;
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--text);
+  box-shadow: var(--shadow);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s;
+}
+
+.platform:hover,
+.platform:focus-visible {
+  z-index: 1;
+}
+
+.platform:hover .platform__tip,
+.platform:focus-visible .platform__tip {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
 /* The line naming what draws the lit platform: every platform's line
    sits in one place, so changing lines never moves the page. Beside the
    copy it hangs under the board, so the board alone centres on the copy. */

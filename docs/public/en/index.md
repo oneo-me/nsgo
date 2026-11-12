@@ -4,7 +4,7 @@ description: What NSGo is, what it runs on and how it works.
 order: 1
 ---
 
-NSGo is a cross-platform native UI framework written in Go. You write an app once, in Go or in TSX, and it runs on iOS, tvOS, watchOS, Android, macOS, Windows, Linux and the web, drawn by each platform's own views; Go apps also run in WeChat, QQ, Alipay and Douyin mini programs.
+NSGo is a cross-platform native UI framework written in Go. You write an app once, in Go or in TSX, and it runs on iOS and its App Clips, tvOS, watchOS, Android, macOS, Windows, Linux and the web, drawn by each platform's own views. Go apps also run in WeChat, QQ, Alipay and Douyin mini programs, experimentally: the platforms hold an app to 2 MB, which larger apps exceed.
 
 ## What you write
 

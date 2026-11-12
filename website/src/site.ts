@@ -77,11 +77,19 @@ export const install = 'go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo';
 
 /**
  * The platforms NSGo runs on, each shown on its own, with its kind and what
- * draws it; zh names one in Chinese where its users call it otherwise.
+ * draws it; zh names one in Chinese where its users call it otherwise, and
+ * experimental marks one not ready for most apps.
  */
 export type PlatformKind = 'app' | 'web' | 'mini';
 
-export const platforms: { name: string; zh?: string; kind: PlatformKind; icon: IconName; stack: string }[] = [
+export const platforms: {
+  name: string;
+  zh?: string;
+  kind: PlatformKind;
+  icon: IconName;
+  stack: string;
+  experimental?: boolean;
+}[] = [
   { name: 'iOS', kind: 'app', icon: 'smartphone', stack: 'UIKit · CoreText' },
   { name: 'App Clips', zh: '轻 App', kind: 'app', icon: 'scan', stack: 'UIKit · CoreText' },
   { name: 'tvOS', kind: 'app', icon: 'tv', stack: 'UIKit · CoreText' },
@@ -91,10 +99,10 @@ export const platforms: { name: string; zh?: string; kind: PlatformKind; icon: I
   { name: 'Windows', kind: 'app', icon: 'windows', stack: 'Direct2D · DirectWrite' },
   { name: 'Linux', kind: 'app', icon: 'terminal', stack: 'GTK 4 · Pango' },
   { name: 'Web', kind: 'web', icon: 'globe', stack: 'WebAssembly · DOM' },
-  { name: 'WeChat', zh: '微信', kind: 'mini', icon: 'chats', stack: 'WebAssembly · WXML' },
-  { name: 'QQ', kind: 'mini', icon: 'bird', stack: 'WebAssembly · QML' },
-  { name: 'Alipay', zh: '支付宝', kind: 'mini', icon: 'wallet', stack: 'WebAssembly · AXML' },
-  { name: 'Douyin', zh: '抖音', kind: 'mini', icon: 'music', stack: 'WebAssembly · TTML' },
+  { name: 'WeChat', zh: '微信', kind: 'mini', icon: 'chats', stack: 'WebAssembly · WXML', experimental: true },
+  { name: 'QQ', kind: 'mini', icon: 'bird', stack: 'WebAssembly · QML', experimental: true },
+  { name: 'Alipay', zh: '支付宝', kind: 'mini', icon: 'wallet', stack: 'WebAssembly · AXML', experimental: true },
+  { name: 'Douyin', zh: '抖音', kind: 'mini', icon: 'music', stack: 'WebAssembly · TTML', experimental: true },
 ];
 
 /** platformName is how lang names a platform. */

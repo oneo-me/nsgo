@@ -24,7 +24,7 @@ const en = {
   home: {
     title: 'NSGo — Write it once in Go, native on every platform',
     description:
-      'NSGo is a cross-platform native UI framework. Write an app once in Go or TSX and run it on iOS and its App Clips, tvOS, watchOS, Android, macOS, Windows, Linux and the web with each platform’s own views, and Go apps in WeChat, QQ, Alipay and Douyin mini programs.',
+      'NSGo is a cross-platform native UI framework. Write an app once in Go or TSX and run it on iOS and its App Clips, tvOS, watchOS, Android, macOS, Windows, Linux and the web with each platform’s own views, and Go apps, experimentally, in WeChat, QQ, Alipay and Douyin mini programs.',
     hero: {
       badge: 'Open source · Early preview',
       title: ['Write it once in Go.', 'Native on every platform.'],
@@ -33,7 +33,9 @@ const en = {
       demo: 'Try the live demo',
       start: 'Build your first app',
       runsOn: 'Runs on',
-      kinds: { app: 'Apps', web: 'Web', mini: 'Mini programs' },
+      kinds: { app: 'Apps', web: 'Web', mini: 'Mini programs (experimental)' },
+      // The tip of an experimental platform's mark.
+      experimental: 'Experimental: mini programs hold an app to 2 MB, which larger apps exceed for now.',
       // A platform's line under the row: Android draws with Android Views.
       drawsWith: [' draws with ', ''],
       desktopAlt: 'The NSGo gallery’s Stocks demo in its desktop layout, on the web backend',
@@ -270,7 +272,7 @@ const zh: Copy = {
   home: {
     title: 'NSGo — 用 Go 写一次，在每个平台原生运行',
     description:
-      'NSGo 是一个跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，就能以各平台自己的视图运行在 iOS 及其轻 App（App Clip）、tvOS、watchOS、Android、macOS、Windows、Linux、Web 上，Go 应用还能运行在微信、QQ、支付宝和抖音小程序中。',
+      'NSGo 是一个跨平台原生 UI 框架。用 Go 或 TSX 写一次应用，就能以各平台自己的视图运行在 iOS 及其轻 App（App Clip）、tvOS、watchOS、Android、macOS、Windows、Linux、Web 上，Go 应用还能试验性地运行在微信、QQ、支付宝和抖音小程序中。',
     hero: {
       badge: '开源 · 早期预览',
       title: ['用 Go 写一次', '在每个平台原生运行'],
@@ -278,7 +280,8 @@ const zh: Copy = {
       demo: '在线体验',
       start: '开始写第一个应用',
       runsOn: '运行于',
-      kinds: { app: '客户端', web: '网页', mini: '小程序' },
+      kinds: { app: '客户端', web: '网页', mini: '小程序（试验性）' },
+      experimental: '试验性：小程序限制应用在 2 MB 以内，较大的应用暂时会超出。',
       drawsWith: [' 上由 ', ' 绘制'],
       desktopAlt: 'NSGo Gallery 的股票演示，桌面布局，运行在 Web 后端',
       phoneAlt: 'NSGo Gallery 的组件列表，手机布局，运行在 Web 后端',
