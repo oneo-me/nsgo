@@ -249,7 +249,7 @@ func (a *Animator) apply(o *AnimationOp) {
 		if o.Animation == nil {
 			return
 		}
-		r := &arun{id: o.ID, root: a.build(o.Animation), forever: endless(o.Animation), rate: o.Animation.FrameRate}
+		r := &arun{id: o.ID, root: a.build(o.Animation), forever: o.Endless || endless(o.Animation), rate: o.Animation.FrameRate}
 		var starts []valueStart
 		for _, id := range r.root.values(nil) {
 			if n := a.value(id); n != nil {
@@ -349,7 +349,8 @@ func (a *Animator) end(r *arun, finished bool) {
 func (a *Animator) Running() bool { return len(a.runs) > 0 || len(a.settling) > 0 }
 
 // Ending reports whether something runs that ends on its own: an
-// animation without an endless loop, or a settling clamp. Tests wait for
+// animation without an endless loop that is not marked Endless, or a
+// settling clamp. Tests wait for
 // it before they look.
 func (a *Animator) Ending() bool {
 	if len(a.settling) > 0 {
@@ -1128,7 +1129,8 @@ func bounce(t float64) float64 {
 type arun struct {
 	id   uint32
 	root astep
-	// forever is set when a loop in it repeats without end.
+	// forever is set when a loop in it repeats without end, or its owner
+	// starts it again when it ends.
 	forever bool
 	// rate is its frame rate, 0 for every step; last is when it last
 	// moved, once moved.

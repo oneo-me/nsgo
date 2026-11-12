@@ -276,9 +276,12 @@ type AnimationOp struct {
 	// ID names a run or a read.
 	ID        uint32
 	Animation *Animation
-	View      NodeID
-	Prop      AnimatedProp
-	X, Y      uint32
+	// Endless marks a run its owner starts again whenever it ends, as a
+	// shader's clock is, so Ending does not wait for it.
+	Endless bool
+	View    NodeID
+	Prop    AnimatedProp
+	X, Y    uint32
 }
 
 // LayoutAnimation animates the frame changes, insertions and removals of

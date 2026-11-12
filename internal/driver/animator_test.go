@@ -66,6 +66,27 @@ func TestAnimatorSpringDecaySequenceAndLoop(t *testing.T) {
 	}
 }
 
+// TestEndingSkipsWhatGoesOn has tests wait for a timing, but not for an
+// endless loop or a run marked Endless, as a shader's clock is.
+func TestEndingSkipsWhatGoesOn(t *testing.T) {
+	a := NewAnimator(func(Event) {})
+	a.Apply([]AnimationOp{{Kind: AnimCreateValue, Node: 1}, {Kind: AnimCreateValue, Node: 2}, {Kind: AnimCreateValue, Node: 3}})
+	hour := func(node uint32) *Animation {
+		return &Animation{Kind: AnimationTiming, Value: node, To: 3600, Timing: TimingConfig{Duration: time.Hour}}
+	}
+	a.Apply([]AnimationOp{
+		{Kind: AnimStart, ID: 1, Animation: &Animation{Kind: AnimationLoop, Steps: []*Animation{hour(1)}}},
+		{Kind: AnimStart, ID: 2, Animation: hour(2), Endless: true},
+	})
+	if !a.Running() || a.Ending() {
+		t.Fatalf("running %v, ending %v: want running, not ending", a.Running(), a.Ending())
+	}
+	a.Apply([]AnimationOp{{Kind: AnimStart, ID: 3, Animation: hour(3)}})
+	if !a.Ending() {
+		t.Fatal("a timing is not ending")
+	}
+}
+
 func TestALoopWithoutResetGoesOnFromWhereItEnded(t *testing.T) {
 	a := NewAnimator(func(Event) {})
 	a.Apply([]AnimationOp{{Kind: AnimCreateValue, Node: 1}})

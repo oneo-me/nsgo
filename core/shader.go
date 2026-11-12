@@ -333,12 +333,12 @@ func (c *shaderClock) loop(cx *Scope) {
 	from := c.elapsed
 	c.v.Set(from)
 	span := clockSpan.Seconds()
-	c.run = cx.StartAnimation(Timing(c.v, from+span, TimingConfig{Duration: clockSpan, Easing: Easing{Bezier: Linear}}), func(finished bool) {
+	c.run = cx.startAnimation(Timing(c.v, from+span, TimingConfig{Duration: clockSpan, Easing: Easing{Bezier: Linear}}), func(finished bool) {
 		if finished && c.running {
 			c.elapsed, c.since = from+span, cx.tree().rt.clock.Now()
 			c.loop(cx)
 		}
-	})
+	}, true)
 }
 
 // values returns what a shader view draws with base's uniforms and over's

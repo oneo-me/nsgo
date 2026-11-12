@@ -286,6 +286,12 @@ func (r *AnimationRun) Reset() {
 // or resetting it, a value's Set or Stop, or another animation of one of
 // its values ends it early. The owner going stops it.
 func (cx *Scope) StartAnimation(a *Animation, done func(finished bool)) *AnimationRun {
+	return cx.startAnimation(a, done, false)
+}
+
+// startAnimation is StartAnimation; endless marks a run its done starts
+// again, which tests need not wait for.
+func (cx *Scope) startAnimation(a *Animation, done func(finished bool), endless bool) *AnimationRun {
 	t := cx.tree()
 	r := &AnimationRun{t: t}
 	reported := false
@@ -296,7 +302,7 @@ func (cx *Scope) StartAnimation(a *Animation, done func(finished bool)) *Animati
 			done(e.Finished)
 		}
 	})
-	t.anim.add(driver.AnimationOp{Kind: driver.AnimStart, ID: r.id, Animation: a})
+	t.anim.add(driver.AnimationOp{Kind: driver.AnimStart, ID: r.id, Animation: a, Endless: endless})
 	cx.current().addCleanup(func() {
 		r.Stop()
 		t.anim.add(driver.AnimationOp{Kind: driver.AnimForgetRun, ID: r.id})
