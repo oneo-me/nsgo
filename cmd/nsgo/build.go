@@ -367,7 +367,7 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 		if err := buildWeb(ctx, p, dir, false); err != nil {
 			return err
 		}
-		return p.releaseTree(dir, "web")
+		return p.releaseZip(dir, p.releaseName(target, ".zip"))
 	case "linux_arm64", "linux_x64":
 		if err := buildLinux(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
 			return err

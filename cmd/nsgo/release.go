@@ -16,9 +16,9 @@ import (
 
 // nsgo build gathers everything it makes for others in build.output's
 // releases directory, the one place to look: at its top the files a
-// GitHub release uploads, each with <file>.sha256 (the installers, IPAs
-// and APKs) and install.sh and install.ps1, which install the app from
-// the repository's releases; the site in web/ and each mini program's
+// GitHub release uploads, each with <file>.sha256 (the installers, IPAs,
+// APKs and the site's zip archive) and install.sh and install.ps1, which
+// install the app from the repository's releases; each mini program's
 // project in miniprogram/<platform>/. Simulators' and watchOS's bundles
 // install nowhere else, and stay in their packages. Machines building
 // different targets each add theirs, so a release may gather them from
@@ -98,8 +98,20 @@ func (p *project) releaseCopy(path, name string) error {
 	return p.releaseAssets(dst)
 }
 
-// releaseTree copies a package's directory, a site or a mini program's
-// project, into the releases directory at name, replacing what was there.
+// releaseZip packs a package's directory, a site, into the releases
+// directory as name, with its checksum.
+func (p *project) releaseZip(dir, name string) error {
+	if err := os.MkdirAll(p.releaseDir(), 0o755); err != nil {
+		return err
+	}
+	dst := filepath.Join(p.releaseDir(), name)
+	if err := writeZip(dir, dst, ""); err != nil {
+		return err
+	}
+	return p.releaseAssets(dst)
+}
+
+// releaseTree copies a package's directory, a mini program's project, into the releases directory at name, replacing what was there.
 func (p *project) releaseTree(dir, name string) error {
 	dst := filepath.Join(p.releaseDir(), filepath.FromSlash(name))
 	if err := os.RemoveAll(dst); err != nil {

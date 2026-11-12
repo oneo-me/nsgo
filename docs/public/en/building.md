@@ -22,7 +22,7 @@ Everything to hand out lands in `dist/releases`, the only directory to look in:
 | `*.pkg`, `*.msix`, `*.aab`, `*.tar.gz` and `flatpak/` | A `store` build's [store packages](#store-packages) |
 | `install.sh`, `install.ps1` | Scripts installing the app from [GitHub releases](#publish-on-github) |
 | `appcast-<target>.xml` | The feeds [updating](#updates) apps read |
-| `web/` | The site, to serve as it is |
+| `*-web.zip` | The site, to unpack and serve as it is |
 | `miniprogram/<platform>/` | Each mini program's project, to upload from its developer tool |
 
 Each file is named `<name>-<version>-<system>-<arch>`, such as `hello-1.2.0-windows-x64-setup.exe`, so users find their system's on a release page, and has its `.sha256` beside it. A build of another version empties the directory first; builds of the same version, on other machines too, add to it. Simulators' and watchOS's packages stay in their `dist/<name>-<version>-<target>` directories.
@@ -127,7 +127,7 @@ On macOS, a scroll view's edge effects (`Scroll.EdgeEffects`) blur through Core 
 
 ## Publish on GitHub
 
-When the build has a macOS, Windows or Linux target, `dist/releases` also holds `install.sh` and `install.ps1`, which install the app from the releases of the GitHub repository `release.github` names, else the one the app's Git remote `origin` is on; without either `build` writes none and says so. Upload its files, the top level without `web/` and `miniprogram/`, to the release tagged `v<version>`:
+When the build has a macOS, Windows or Linux target, `dist/releases` also holds `install.sh` and `install.ps1`, which install the app from the releases of the GitHub repository `release.github` names, else the one the app's Git remote `origin` is on; without either `build` writes none and says so. Upload its files, the top level without `miniprogram/`, to the release tagged `v<version>`:
 
 ```sh
 gh release create v1.2.0 dist/releases/*.*

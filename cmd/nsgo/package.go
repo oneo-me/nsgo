@@ -22,19 +22,27 @@ import (
 // writeIPA packs app, a built .app, as the IPA at dst: its bundle under
 // Payload/, as App Store Connect and installers take it.
 func writeIPA(app, dst string) error {
+	return writeZip(app, dst, "Payload/"+filepath.Base(app))
+}
+
+// writeZip packs dir as the zip archive at dst, its files under prefix, or
+// at the top without one.
+func writeZip(dir, dst, prefix string) error {
 	f, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	zw := zip.NewWriter(f)
-	base := filepath.Dir(app)
-	err = filepath.WalkDir(app, func(p string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		rel, _ := filepath.Rel(base, p)
-		name := "Payload/" + filepath.ToSlash(rel)
+		rel, _ := filepath.Rel(dir, p)
+		name := path.Join(prefix, filepath.ToSlash(rel))
+		if name == "." {
+			return nil
+		}
 		info, err := d.Info()
 		if err != nil {
 			return err

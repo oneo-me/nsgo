@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
@@ -349,6 +350,9 @@ func TestReleaseDirectory(t *testing.T) {
 	if err := p.releaseCopy(filepath.Join(pkg, "App.apk"), "app-1.1.0-android-arm64.apk"); err != nil {
 		t.Fatal(err)
 	}
+	if err := p.releaseZip(filepath.Join(pkg, "site"), "app-1.1.0-web.zip"); err != nil {
+		t.Fatal(err)
+	}
 	if err := p.releaseTree(filepath.Join(pkg, "site"), "miniprogram/wechat"); err != nil {
 		t.Fatal(err)
 	}
@@ -360,7 +364,7 @@ func TestReleaseDirectory(t *testing.T) {
 		}
 		return nil
 	})
-	want := ".version,app-1.1.0-android-arm64.apk,app-1.1.0-android-arm64.apk.sha256,app-1.1.0-linux-x64.deb,app-1.1.0-macos-arm64.dmg,app-1.1.0-macos-arm64.dmg.sha256,miniprogram/wechat/index.html"
+	want := ".version,app-1.1.0-android-arm64.apk,app-1.1.0-android-arm64.apk.sha256,app-1.1.0-linux-x64.deb,app-1.1.0-macos-arm64.dmg,app-1.1.0-macos-arm64.dmg.sha256,app-1.1.0-web.zip,app-1.1.0-web.zip.sha256,miniprogram/wechat/index.html"
 	if strings.Join(got, ",") != want {
 		t.Fatalf("releases holds %v, want %s", got, want)
 	}
@@ -370,6 +374,14 @@ func TestReleaseDirectory(t *testing.T) {
 	sum, _ := os.ReadFile(filepath.Join(p.releaseDir(), "app-1.1.0-macos-arm64.dmg.sha256"))
 	if want := "6105d6cc76af400325e94d588ce511be5bfdbb73b437dc51eca43917d7a43e3d  app-1.1.0-macos-arm64.dmg\n"; string(sum) != want {
 		t.Errorf("checksum %q, want %q", sum, want)
+	}
+	zr, err := zip.OpenReader(filepath.Join(p.releaseDir(), "app-1.1.0-web.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer zr.Close()
+	if len(zr.File) != 1 || zr.File[0].Name != "index.html" {
+		t.Errorf("the site's archive holds %v, want index.html at its top", zr.File)
 	}
 }
 

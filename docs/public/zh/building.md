@@ -22,7 +22,7 @@ go tool nsgo build
 | `*.pkg`、`*.msix`、`*.aab`、`*.tar.gz` 和 `flatpak/` | `store` 构建的[商店包](#商店包) |
 | `install.sh`、`install.ps1` | 从 [GitHub Releases](#发布到-github) 安装应用的脚本 |
 | `appcast-<目标>.xml` | [自动更新](#自动更新)的应用读取的更新源 |
-| `web/` | 网站，原样部署即可 |
+| `*-web.zip` | 网站，解压后原样部署即可 |
 | `miniprogram/<平台>/` | 各小程序的项目，用对应开发者工具上传 |
 
 每个文件都命名为 `<name>-<version>-<系统>-<架构>`，例如 `hello-1.2.0-windows-x64-setup.exe`，方便用户在 Release 页面找到自己系统的文件；每个文件旁都有 `.sha256`。构建其他版本时会先清空该目录；同一版本的构建（包括在其他机器上的）会往里追加。模拟器和 watchOS 的包留在各自的 `dist/<name>-<version>-<target>` 目录中。
@@ -127,7 +127,7 @@ sign:
 
 ## 发布到 GitHub
 
-构建包含 macOS、Windows 或 Linux 目标时，`dist/releases` 还会包含 `install.sh` 和 `install.ps1`，它们从 `release.github` 指定的 GitHub 仓库的 Releases 安装应用；未指定时取应用 Git 远程 `origin` 所在的仓库，两者都没有时 `build` 不写脚本并给出提示。把其中顶层的文件（不含 `web/` 和 `miniprogram/`）上传到标签为 `v<version>` 的 Release：
+构建包含 macOS、Windows 或 Linux 目标时，`dist/releases` 还会包含 `install.sh` 和 `install.ps1`，它们从 `release.github` 指定的 GitHub 仓库的 Releases 安装应用；未指定时取应用 Git 远程 `origin` 所在的仓库，两者都没有时 `build` 不写脚本并给出提示。把其中顶层的文件（不含 `miniprogram/`）上传到标签为 `v<version>` 的 Release：
 
 ```sh
 gh release create v1.2.0 dist/releases/*.*
