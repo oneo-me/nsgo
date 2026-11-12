@@ -128,13 +128,17 @@
         if (params.get('embed') === '1') document.documentElement.setAttribute('data-embed', '');
       })();
     </script>
-    <!-- The web gallery counts as a page of the site, in the site's Umami
-         (src/layouts/Layout.astro); the app itself reports nothing here. -->
+    <!-- The page's arrival is the event load-gallery in the site's Umami
+         (src/layouts/Layout.astro), tagged "gallery-web"; the app counts its pages
+         once it starts (examples/gallery/stats.go). -->
     <script
       defer
       src="https://umami.oneo.me/script.js"
       data-website-id="e8174058-eb31-40f8-bf9c-4ddc9ca5f4ac"
-      data-domains="nsgo.dev,oneo-me.github.io,nsgo.oneo.me"></script>
+      data-domains="nsgo.dev,oneo-me.github.io,nsgo.oneo.me"
+      data-auto-track="false"
+      data-tag="gallery-web"
+      onload="umami.track('load-gallery')"></script>
   </head>
   <body>
     <div class="boot" role="status" aria-live="polite">

@@ -45,9 +45,6 @@ func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 			Keywords: []string{"color", "palette", locales.ColorThemeDefault(cx), locales.ColorThemeWarmDusk(cx)},
 			Control:  g.colorThemeSelect(cx),
 		}}}}}}
-	if !statsShown(cx) {
-		return categories
-	}
 	return append(categories, ui.SettingsCategory{ID: "help", Title: locales.SettingsHelp(cx), Icon: lucide.CircleQuestionMark,
 		Groups: []ui.SettingsGroup{{ID: "stats", Title: locales.SettingsStats(cx), Items: []ui.SettingsItem{{
 			ID: "send", Title: locales.SettingsStatsSend(cx), Description: locales.SettingsStatsDetail(cx),

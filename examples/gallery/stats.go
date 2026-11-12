@@ -7,23 +7,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	neturl "net/url"
 	"testing"
 	"time"
 
 	"github.com/oneo-me/nsgo/core"
 )
 
-// The gallery counts its use in the NSGo site's Umami, on every native
-// target, under a site of its own: a pageview for each demo shown, tagged
-// with the platform and carrying a random ID kept in the storage, so that
-// one install is one visitor. Builds of nsgo dev (statsBuild) and test
-// binaries report nothing, and the settings turn it off. The web reports
-// nothing either: its loader counts it as a page of the site, in the
-// site's own Umami.
+// The gallery counts its use in the NSGo site's Umami, as pages of the
+// site under /gallery/: a pageview for each demo shown, tagged
+// "gallery-app" on the native targets and "gallery-web" in the browser, as
+// the site's own pages are "website". The browser's loader counts the
+// arrival as the event load-gallery before the app starts. A native
+// install carries a random ID kept in the storage, so that one install is
+// one visitor; the web is counted as the site's pages are, and only on the
+// site's hosts (statsPage). Builds of nsgo dev (statsBuild) and test
+// binaries report nothing, and the settings turn it off.
 const (
 	statsURL     = "https://umami.oneo.me/api/send"
-	statsWebsite = "b859a9e2-44b7-4050-b2cd-c8092bff3bb3"
-	statsHost    = "nsgo.oneo.me"
+	statsWebsite = "e8174058-eb31-40f8-bf9c-4ddc9ca5f4ac"
+	statsPath    = "/gallery/"
 )
 
 // Storage keys of the statistics: the install's ID, and statsKey "off"
@@ -40,12 +43,6 @@ const (
 	statsBeat = time.Minute
 	statsIdle = 5 * time.Minute
 )
-
-// statsShown reports whether the gallery counts its use where it runs,
-// and so shows the settings' switch: everywhere but the web.
-func statsShown(cx *core.Scope) bool {
-	return cx.Env().OS() != core.OSWeb
-}
 
 // statsOn reports whether the settings leave the statistics on.
 func statsOn(cx *core.Scope) bool {
@@ -71,8 +68,9 @@ type statsPayload struct {
 	Title    string `json:"title"`
 	Language string `json:"language,omitempty"`
 	Screen   string `json:"screen,omitempty"`
+	Referrer string `json:"referrer,omitempty"`
 	Tag      string `json:"tag"`
-	ID       string `json:"id"`
+	ID       string `json:"id,omitempty"`
 	Name     string `json:"name,omitempty"`
 }
 
@@ -80,18 +78,18 @@ type statsPayload struct {
 // heartbeats while it is read. Events are made on the graph's goroutine
 // and sent from another, oldest first; one that fails is dropped.
 func reportUsage(cx *core.Scope, g *gallery) {
-	if !statsBuild || testing.Testing() || !statsShown(cx) {
+	if !statsBuild || testing.Testing() {
 		return
 	}
-	store := cx.Storage()
-	id, ok := store.GetItem(installKey)
+	host, referrer, ok := statsPage()
 	if !ok {
-		b := make([]byte, 16)
-		rand.Read(b)
-		id = hex.EncodeToString(b)
-		store.SetItem(installKey, id)
+		return
 	}
 	env := cx.Env()
+	tag, id := "gallery-web", ""
+	if env.OS() != core.OSWeb {
+		tag, id = "gallery-app", installID(cx)
+	}
 	agent := statsAgent(env.OS())
 	queue := make(chan statsPayload, 32)
 	go sendStats(queue, agent)
@@ -102,14 +100,16 @@ func reportUsage(cx *core.Scope, g *gallery) {
 		if !statsOn(cx) {
 			return
 		}
-		url, title := "/", "Gallery"
+		url, title := statsPath, "Gallery"
 		if shown != "" {
-			url, title = "/"+shown, shown
+			url, title = statsPath+neturl.PathEscape(shown), shown
 		}
 		w := env.Window()
-		p := statsPayload{Website: statsWebsite, Hostname: statsHost, URL: url, Title: title,
+		p := statsPayload{Website: statsWebsite, Hostname: host, URL: url, Title: title,
 			Language: env.Locale(), Screen: fmt.Sprintf("%dx%d", int(w.Width), int(w.Height)),
-			Tag: osName(env.OS()), ID: id, Name: name}
+			Referrer: referrer, Tag: tag, ID: id, Name: name}
+		// The visit came from the referrer once, with its first page.
+		referrer = ""
 		select {
 		case queue <- p:
 		default:
@@ -135,6 +135,19 @@ func reportUsage(cx *core.Scope, g *gallery) {
 	cx.AfterFunc(statsBeat, beat)
 }
 
+// installID returns the install's random ID, made on first use.
+func installID(cx *core.Scope) string {
+	store := cx.Storage()
+	id, ok := store.GetItem(installKey)
+	if !ok {
+		b := make([]byte, 16)
+		rand.Read(b)
+		id = hex.EncodeToString(b)
+		store.SetItem(installKey, id)
+	}
+	return id
+}
+
 // sendStats posts the queue's events to Umami until it closes.
 func sendStats(queue <-chan statsPayload, agent string) {
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -156,7 +169,7 @@ func sendStats(queue <-chan statsPayload, agent string) {
 
 // statsAgent is the User-Agent a native gallery sends, as a browser on
 // the platform would say it, for Umami to tell the system and not take it
-// for a bot as it does Go's own.
+// for a bot as it does Go's own. The browser sends its own.
 func statsAgent(os core.OS) string {
 	platforms := map[core.OS]string{
 		core.OSMacOS:   "Macintosh; Intel Mac OS X 10_15_7",
