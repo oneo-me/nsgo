@@ -279,9 +279,9 @@ func (s *surface) saveFile(r driver.SaveRequest, id uint32) {
 		}
 		path := apple.GoString(panel.Send(sel("URL")).Send(sel("path")))
 		go func() {
-			ev := driver.Event{Kind: driver.EventFiles, Count: id, Finished: true}
+			ev := driver.Event{Kind: driver.EventFiles, Count: id, Finished: true, Data: path}
 			if err := r.SaveTo(path); err != nil {
-				ev.Finished, ev.Text = false, err.Error()
+				ev.Finished, ev.Text, ev.Data = false, err.Error(), nil
 			}
 			s.engine.Dispatch(ev)
 		}()

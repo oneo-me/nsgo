@@ -536,14 +536,16 @@ type SaveOptions struct {
 
 // SaveFile shows the system's save dialog and copies the file o names to
 // where the user chose, streaming it, then calls done with whether it
-// was saved: false with no error when they cancelled. A save that fails
-// leaves nothing where the user chose, or the file that was there. The
-// web has no files on disk, so it saves Data: a save picker where the
-// browser has one, else a download, which counts as saved.
-func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
-	answer := func(saved bool, err error) {
+// was saved, false with no error when they cancelled, and on desktops
+// the path it was saved at, which an app saves to directly next time. A
+// save that fails leaves nothing where the user chose, or the file that
+// was there. The web has no files on disk, so it saves Data: a save
+// picker where the browser has one, else a download, which counts as
+// saved.
+func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, path string, err error)) {
+	answer := func(saved bool, path string, err error) {
 		if done != nil {
-			done(saved, err)
+			done(saved, path, err)
 		}
 	}
 	t := cx.tree()
@@ -553,7 +555,7 @@ func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
 	r := driver.SaveRequest{Name: o.Name, MIME: o.MIME, Path: o.Path, Data: o.Data}
 	if r.Path != "" {
 		if _, err := os.Stat(r.Path); err != nil {
-			answer(false, err)
+			answer(false, "", err)
 			return
 		}
 	}
@@ -571,10 +573,11 @@ func (cx *Scope) SaveFile(o SaveOptions, done func(saved bool, err error)) {
 	}
 	t.request(cx, driver.MountItem{Kind: driver.ItemSaveFile, Save: &r}, func(ev driver.Event) {
 		if ev.Text != "" {
-			answer(false, errors.New(ev.Text))
+			answer(false, "", errors.New(ev.Text))
 			return
 		}
-		answer(ev.Finished, nil)
+		path, _ := ev.Data.(string)
+		answer(ev.Finished, path, nil)
 	})
 }
 

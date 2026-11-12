@@ -195,7 +195,8 @@ const (
 	// EventFiles answers ItemPickFiles Count with the files picked (Data,
 	// a []File), ItemPickDirectories Count with the folders picked (a
 	// []Directory), none when the user cancelled, ItemSaveFile Count
-	// with whether the file was saved (Finished), ItemOpenFile Count with
+	// with whether the file was saved (Finished) and, on desktops, the
+	// path it was saved at (a string), ItemOpenFile Count with
 	// whether an app opened the file, ItemShare Count with whether the
 	// share sheet showed, ItemInstallPackage Count with whether the
 	// installer started, ItemCanInstallPackages Count with whether the

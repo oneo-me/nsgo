@@ -474,7 +474,7 @@ func (a *App) apply(b *driver.MountBatch) {
 					if err := it.Save.SaveTo(path); err != nil {
 						ev.Text = err.Error()
 					} else {
-						ev.Finished = true
+						ev.Finished, ev.Data = true, path
 					}
 				}
 			}

@@ -191,6 +191,9 @@ func TestThemeTokens(t *testing.T) {
 		t.Error("a palette color follows the theme")
 	}
 	want(t, "unknown", len(unknownOf(defaultTailwind, "bg-nope text-(--nope) w-primary")), 3)
+	if got := UnknownClasses("p-4 bg-nope flex-row"); !slices.Equal(got, []string{"bg-nope"}) {
+		t.Errorf("UnknownClasses = %v", got)
+	}
 }
 
 func TestTailwindColorsWinOverTokensAndTokensComeFromTheTheme(t *testing.T) {

@@ -805,7 +805,7 @@ func filesCard(cx *core.Scope) core.Node {
 		})
 	}
 	save := func(o core.SaveOptions) {
-		cx.SaveFile(o, func(saved bool, err error) {
+		cx.SaveFile(o, func(saved bool, _ string, err error) {
 			switch {
 			case err != nil:
 				status.Set(tr.SystemTheSaveFailed() + err.Error())

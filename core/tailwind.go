@@ -532,6 +532,11 @@ type classSource struct {
 // parseClasses parses a class string for Tailwind's default theme.
 func parseClasses(s string) *classList { return defaultTailwind.classes(s) }
 
+// UnknownClasses returns the classes of s that are no utility of
+// Tailwind's default theme, in order: what an element would log and
+// ignore. A tool checks classes written for it with it before they draw.
+func UnknownClasses(s string) []string { return slices.Clone(parseClasses(s).unknown) }
+
 // classes parses a class string, once per distinct string.
 func (t *tailwindTheme) classes(s string) *classList {
 	key := classSource{t, s}

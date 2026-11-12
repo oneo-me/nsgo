@@ -388,7 +388,7 @@ func (w *window) saveFile(r driver.SaveRequest, id uint32) {
 			} else if err := r.SaveTo(path); err != nil {
 				ev.Text = err.Error()
 			} else {
-				ev.Finished = true
+				ev.Finished, ev.Data = true, path
 			}
 			w.engine.Dispatch(ev)
 		}()

@@ -17,6 +17,9 @@ import (
 // An icon is a decoration assistive technology does not see unless Label
 // names it.
 type Icon struct {
+	// Class is Tailwind CSS classes, as View's: size-6 sizes it and
+	// text-* colors it.
+	Class     string
 	SVG       *SVG
 	SVGFunc   func() *SVG
 	Style     Style
@@ -40,6 +43,8 @@ func (i Icon) mountIn(t *Tree, cx *Scope, parent *node) { t.mountIcon(cx, parent
 // viewBox, where Style sets no size. Its shapes are vectors, sharp at any
 // size, and currentColor is the text color it inherits.
 type SVGView struct {
+	// Class is Tailwind CSS classes, as View's.
+	Class     string
 	SVG       *SVG
 	SVGFunc   func() *SVG
 	Style     Style
@@ -53,7 +58,7 @@ type SVGView struct {
 
 // Render implements Node.
 func (v SVGView) Render(*Scope) Node {
-	return Icon{SVG: v.SVG, SVGFunc: v.SVGFunc, Style: v.Style, StyleFunc: v.StyleFunc, OnPress: v.OnPress,
+	return Icon{Class: v.Class, SVG: v.SVG, SVGFunc: v.SVGFunc, Style: v.Style, StyleFunc: v.StyleFunc, OnPress: v.OnPress,
 		OnLayout: v.OnLayout, Ref: v.Ref, Label: v.Label, TestID: v.TestID, documentSize: true}
 }
 
@@ -89,6 +94,7 @@ func (t *Tree) mountIcon(cx *Scope, parent *node, v Icon) {
 	// Icons draw through the canvas protocol: the engine records the shapes
 	// and a platform plays them, as canvases do.
 	n := t.newNode(driver.KindCanvas, parent, cx)
+	t.setClasses(n, v.Class)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	t.setRef(n, v.Ref)
 	n.h = handlers{press: v.OnPress, layout: v.OnLayout}

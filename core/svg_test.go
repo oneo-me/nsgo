@@ -78,6 +78,30 @@ func TestIconInheritsColorAndSize(t *testing.T) {
 	}
 }
 
+func TestIconTakesClasses(t *testing.T) {
+	s := MustParseSVG([]byte(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8"/></svg>`))
+	h := newHost(t, Size{Width: 200, Height: 100}, func(cx *Scope) Node {
+		return View{Style: Style{AlignItems: AlignStart}, Children: []Node{Icon{SVG: s, Class: "size-8 text-[#112233]", TestID: "icon"}}}
+	})
+	b := h.commit()
+	icon := h.find("icon")
+	if got := icon.frame.Size; got != (Size{Width: 32, Height: 32}) {
+		t.Fatalf("icon size = %v, want size-8's", got)
+	}
+	for _, it := range b.Items {
+		if it.Kind != driver.ItemCanvas || it.ID != icon.id {
+			continue
+		}
+		for _, op := range it.Drawing.Ops {
+			if op.Kind == DrawStrokeColor && op.Color != RGB(0x112233) {
+				t.Errorf("stroke color = %#x, want the class's", op.Color)
+			}
+		}
+		return
+	}
+	t.Fatal("the icon did not draw")
+}
+
 func TestIconChangesDocument(t *testing.T) {
 	square := MustParseSVG([]byte(`<svg viewBox="0 0 24 24"><rect width="24" height="24"/></svg>`))
 	wide := MustParseSVG([]byte(`<svg viewBox="0 0 48 24"><rect width="48" height="24"/></svg>`))
