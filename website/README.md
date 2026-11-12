@@ -1,6 +1,6 @@
 # NSGo website
 
-The site at <https://oneo-me.github.io/nsgo/>: static Astro pages in English
+The site at <https://nsgo.dev/>: static Astro pages in English
 and Chinese, with no UI framework, and the docs built from the repository's
 `docs/public/`, whose marked code blocks run in the page. Its Live demo
 links open the gallery's web build, compiled by `nsgo`, full page in a new
@@ -8,7 +8,7 @@ tab.
 
 ```sh
 bun install
-bun run dev          # build the gallery and the docs' apps, then serve the site at /nsgo/
+bun run dev          # build the gallery and the docs' apps, then serve the site at /
 bun run build        # build them, typecheck, then build dist/
 bun run preview      # serve dist/
 bun run gallery      # rebuild only the gallery
@@ -16,8 +16,8 @@ bun run live         # rebuild only the docs' apps
 bun run screenshots  # retake the home page's screens of the gallery
 ```
 
-`astro.config.mjs` fixes the base at `/nsgo/` for GitHub Pages, so the dev
-server also runs at <http://localhost:4321/nsgo/>. A build for another path
+`astro.config.mjs` fixes the base at `/` for nsgo.dev on GitHub Pages, so the
+dev server also runs at <http://localhost:4321/>. A build for another path
 needs that value changed.
 
 ## Pages

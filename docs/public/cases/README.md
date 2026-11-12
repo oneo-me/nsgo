@@ -1,6 +1,6 @@
 # Cases
 
-The apps the website's [Showcases](https://oneo-me.github.io/nsgo/showcases/)
+The apps the website's [Showcases](https://nsgo.dev/showcases/)
 page lists, one Markdown document per app in English, and a translation in
 the language's folder (`zh/` for Simplified Chinese) where there is one.
 The site reads every Markdown document here but this one, and every

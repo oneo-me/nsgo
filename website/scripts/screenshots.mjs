@@ -27,7 +27,7 @@ const server = Bun.serve({
   port: 0,
   async fetch(request) {
     const { pathname } = new URL(request.url);
-    const file = Bun.file(path.join(publicDir, decodeURIComponent(pathname.replace(/^\/nsgo\//, ''))));
+    const file = Bun.file(path.join(publicDir, decodeURIComponent(pathname.replace(/^\//, ''))));
     return (await file.exists()) ? new Response(file) : new Response('Not found', { status: 404 });
   },
 });
@@ -95,7 +95,7 @@ async function capture(url, shot, locale, out, port) {
 }
 
 try {
-  const url = `http://localhost:${server.port}/nsgo/gallery/loader.html?theme=light`;
+  const url = `http://localhost:${server.port}/gallery/loader.html?theme=light`;
   // Each capture runs its own Chrome on its own debugging port.
   const jobs = Object.entries(locales).flatMap(([lang, locale]) =>
     shots.map((shot) => ({ shot, locale, out: path.join(outDir, `${shot.name}-${lang}.jpg`) })),

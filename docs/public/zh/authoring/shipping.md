@@ -50,7 +50,7 @@ func TestToggle(t *testing.T) {
 
 组件库就是一个 Go module：应用 `go get` 它并导入其中的包。同时有无样式和带样式两种形式时，把它们放在不同的包里，这样有自己外观的应用不会导入用不到的样式。
 
-官网的[组件](https://oneo-me.github.io/nsgo/components/)页列出可供他人使用的库；在 `docs/public/components/` 里加一个文档和一张截图，即可推荐你的库。
+官网的[组件](https://nsgo.dev/components/)页列出可供他人使用的库；在 `docs/public/components/` 里加一个文档和一张截图，即可推荐你的库。
 
 TSX 应用在 Go 组件注册后就能使用它们，注册写在 `init` 函数中：
 

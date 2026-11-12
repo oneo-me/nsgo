@@ -37,7 +37,7 @@ func init() {
 		tr := words(cx)
 		open := func(url string) { cx.OpenURL(url, nil) }
 		return core.View{Style: core.Style{Width: core.Pt(320), MaxWidth: core.Pct(100)}, Children: []core.Node{
-			textview.TextView{Markdown: tr("## Notes\n\nA **native** document, with [a link](https://oneo-me.github.io/nsgo/).", "## 笔记\n\n一份 **原生** 文档，带一个[链接](https://oneo-me.github.io/nsgo/)。"), Styles: ui.TextViewStyles(cx),
+			textview.TextView{Markdown: tr("## Notes\n\nA **native** document, with [a link](https://nsgo.dev/).", "## 笔记\n\n一份 **原生** 文档，带一个[链接](https://nsgo.dev/)。"), Styles: ui.TextViewStyles(cx),
 				OnLinkPress: func(e textview.LinkPressEvent) { open(e.URL) }},
 		}}
 	})

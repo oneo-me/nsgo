@@ -61,7 +61,7 @@ func main() { nsgo.Run(Root) }
 
 ## Documentation
 
-The [docs](https://oneo-me.github.io/nsgo/docs/) cover components and state, layout, styles, navigation, a component reference, TSX apps, localization, testing, embedding, building and shipping; the [live demo](https://oneo-me.github.io/nsgo/gallery/loader.html) runs the gallery in the browser.
+The [docs](https://nsgo.dev/docs/) cover components and state, layout, styles, navigation, a component reference, TSX apps, localization, testing, embedding, building and shipping; the [live demo](https://nsgo.dev/gallery/loader.html) runs the gallery in the browser.
 
 ## Development
 
@@ -71,7 +71,7 @@ go tool nsgo check                  # vet every package
 go tool nsgo test                   # every package's tests
 ```
 
-[Contributing](https://oneo-me.github.io/nsgo/docs/contributing/) has the rest of the setup. Read [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md) before changing code, and [CHANGELOG.md](CHANGELOG.md) for what changed.
+[Contributing](https://nsgo.dev/docs/contributing/) has the rest of the setup. Read [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md) before changing code, and [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## License
 

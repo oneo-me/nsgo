@@ -7,7 +7,7 @@ order: 30
 
 These are `ui`'s components, in NSGo's look and following the theme. This reference starts with the components an app reaches for first; each page starts with the shortest example, then covers its parts, states and accessibility. The gallery covers every component, including those without a page here yet.
 
-The [gallery](https://oneo-me.github.io/nsgo/gallery/loader.html) runs a demo of every component in the browser.
+The [gallery](https://nsgo.dev/gallery/loader.html) runs a demo of every component in the browser.
 
 ## Actions
 

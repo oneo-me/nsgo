@@ -51,4 +51,4 @@ NSGo 还处于早期：尚无稳定 API，也还没有发布版本，缺少的�
 - **核心概念**：[组件与状态](components.md)、[布局](layout.md)、[样式](styles.md)、[文本](text.md)、[列表](lists.md)、[导航](navigation.md)、[表单](forms.md)、[本地化](localization.md)、[TSX](tsx.md) 等。
 - **编写组件**：[给别人的应用用的组件](authoring/index.md)，无样式和带样式两种形式。
 - **参与项目**：[从源码构建 NSGo](contributing.md)、了解代码结构并提交改动。
-- [在线体验](https://oneo-me.github.io/nsgo/gallery/loader.html)：在浏览器中查看全部组件。
+- [在线体验](https://nsgo.dev/gallery/loader.html)：在浏览器中查看全部组件。

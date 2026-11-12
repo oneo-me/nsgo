@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/oneo-me/nsgo/security/advisories/new
     about: Report it privately, never in a public issue.
   - name: Documentation
-    url: https://oneo-me.github.io/nsgo/docs/
+    url: https://nsgo.dev/docs/
     about: Tutorials, components and how NSGo works.
   - name: Awesome NSGo
     url: https://awesomensgo.dev

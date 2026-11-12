@@ -3,14 +3,14 @@ import { satteri } from '@astrojs/markdown-satteri';
 import { docLinks } from './src/lib/doc-links.mjs';
 import { livePreviews } from './src/lib/live.mjs';
 
-const base = '/nsgo/';
+const base = '/';
 
-// The site is deployed under the repository path on GitHub Pages. Every
+// The site is deployed at the root of nsgo.dev on GitHub Pages. Every
 // page is static; English is at the base and Chinese under zh/. The docs
 // are the repository's docs/public/, whose marked code blocks run above
 // themselves.
 export default defineConfig({
-  site: 'https://oneo-me.github.io',
+  site: 'https://nsgo.dev',
   base,
   trailingSlash: 'always',
   devToolbar: { enabled: false },

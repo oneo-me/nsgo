@@ -1,6 +1,6 @@
 # Public docs
 
-The guides the website publishes at <https://oneo-me.github.io/nsgo/docs/>,
+The guides the website publishes at <https://nsgo.dev/docs/>,
 for people building apps with NSGo, then for authors of components and
 people working on NSGo. They read as they are on
 GitHub; `website/` builds them into the site.

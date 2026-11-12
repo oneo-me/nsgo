@@ -7,7 +7,7 @@ order: 30
 
 这些是 `ui` 的组件，带有 NSGo 的外观并跟随主题。这份参考先覆盖应用最常用的组件，每页先给最短示例，再说明部件、状态和无障碍。gallery 覆盖所有组件，包括还没有页面的那些。
 
-[gallery](https://oneo-me.github.io/nsgo/gallery/loader.html) 可以在浏览器中运行每个组件的演示。
+[gallery](https://nsgo.dev/gallery/loader.html) 可以在浏览器中运行每个组件的演示。
 
 ## 操作
 

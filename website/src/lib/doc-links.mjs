@@ -1,6 +1,6 @@
 // Rewrites the relative .md links between docs/public's pages, which work
 // on GitHub, into the site's URLs: `testing.md#run` on a Chinese page
-// becomes /nsgo/zh/docs/testing/#run. A Sätteri mdast plugin.
+// becomes /zh/docs/testing/#run. A Sätteri mdast plugin.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 

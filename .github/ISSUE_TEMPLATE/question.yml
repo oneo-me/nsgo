@@ -4,7 +4,7 @@ labels: [question]
 body:
   - type: markdown
     attributes:
-      value: Write in any language. Check the [documentation](https://oneo-me.github.io/nsgo/docs/) first; if the answer turns out to be a bug or a missing feature, we will relabel the issue.
+      value: Write in any language. Check the [documentation](https://nsgo.dev/docs/) first; if the answer turns out to be a bug or a missing feature, we will relabel the issue.
   - type: textarea
     id: question
     attributes:

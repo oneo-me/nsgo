@@ -61,7 +61,7 @@ func main() { nsgo.Run(Root) }
 
 ## 文档
 
-[文档](https://oneo-me.github.io/nsgo/zh/docs/)介绍组件与状态、布局、样式、导航、组件参考、TSX 应用、本地化、测试、嵌入以及构建与发布；[在线体验](https://oneo-me.github.io/nsgo/gallery/loader.html)可在浏览器中运行 gallery。
+[文档](https://nsgo.dev/zh/docs/)介绍组件与状态、布局、样式、导航、组件参考、TSX 应用、本地化、测试、嵌入以及构建与发布；[在线体验](https://nsgo.dev/gallery/loader.html)可在浏览器中运行 gallery。
 
 ## 开发
 
@@ -71,7 +71,7 @@ go tool nsgo check                  # 检查所有包
 go tool nsgo test                   # 运行所有包的测试
 ```
 
-其余的开发环境配置见[参与开发](https://oneo-me.github.io/nsgo/zh/docs/contributing/)。修改代码前请先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [AGENTS.md](AGENTS.md)，变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+其余的开发环境配置见[参与开发](https://nsgo.dev/zh/docs/contributing/)。修改代码前请先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [AGENTS.md](AGENTS.md)，变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

@@ -23,7 +23,7 @@ const (
 	activityKind = "activity"
 	photoKind    = "photo"
 	// docsURL is what a tap on the medium Activity widget's link opens.
-	docsURL = "https://oneo-me.github.io/nsgo/docs/building/#widgets"
+	docsURL = "https://nsgo.dev/docs/building/#widgets"
 )
 
 // widgetState is what the gallery's widgets show: today's steps toward a

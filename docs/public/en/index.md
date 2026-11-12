@@ -51,4 +51,4 @@ Every page answers one question. A code example is a fragment of a component unl
 - **Core concepts**: [components and state](components.md), [layout](layout.md), [styles](styles.md), [text](text.md), [lists](lists.md), [navigation](navigation.md), [forms](forms.md), [localization](localization.md), [TSX](tsx.md) and the rest.
 - **Writing components**: [components for other people's apps](authoring/index.md), unstyled and styled.
 - **Contributing**: [build NSGo from source](contributing.md), find your way around it and send a change.
-- The [live demo](https://oneo-me.github.io/nsgo/gallery/loader.html): every component, in your browser.
+- The [live demo](https://nsgo.dev/gallery/loader.html): every component, in your browser.

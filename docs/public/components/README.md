@@ -1,6 +1,6 @@
 # Components
 
-The component libraries the website's [Components](https://oneo-me.github.io/nsgo/components/)
+The component libraries the website's [Components](https://nsgo.dev/components/)
 page lists: NSGo's own add-ons and the community's, one Markdown document
 each in English, and a translation in the language's folder (`zh/` for
 Simplified Chinese) where there is one. The site reads every Markdown
