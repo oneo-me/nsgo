@@ -1,8 +1,9 @@
 // Builds the gallery for the web and puts it in public/gallery/ for the
-// site's Live demo links: the tool's site, its wasm compressed
-// (web-build.mjs), behind loader.html, which reports its download,
-// decompression, compilation and start progress and is also written over
-// index.html. nsgo.json goes, as nothing mounts the gallery.
+// site's Live demo links at /gallery/: the tool's site, its wasm compressed
+// (web-build.mjs), behind gallery-loader.html, which reports its download,
+// decompression, compilation and start progress and is written over
+// index.html. loader.html, the gallery's old address, redirects to /gallery/.
+// nsgo.json goes, as nothing mounts the gallery.
 //
 // public/gallery/ is generated: do not edit it.
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -21,6 +22,11 @@ const loader = readFileSync(path.join(website, 'scripts', 'gallery-loader.html')
   .replaceAll('__RESOURCES__', JSON.stringify(app.resources ?? {}))
   .replaceAll('__GZIP_SIZE__', String(app.gzipSize))
   .replaceAll('__ICON__', icon);
-writeFileSync(path.join(galleryDir, 'loader.html'), loader);
 writeFileSync(path.join(galleryDir, 'index.html'), loader);
+writeFileSync(
+  path.join(galleryDir, 'loader.html'),
+  '<!doctype html><meta charset="utf-8"><link rel="canonical" href="./">' +
+    '<script>location.replace("./" + location.search + location.hash)</script>' +
+    '<meta http-equiv="refresh" content="0; url=./">\n',
+);
 rmSync(path.join(galleryDir, 'nsgo.json'));

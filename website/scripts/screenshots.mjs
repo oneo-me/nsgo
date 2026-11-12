@@ -19,7 +19,7 @@ const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 // Long enough to download, compile and start the gallery from disk.
 const startWait = 30000;
 
-if (!existsSync(path.join(publicDir, 'gallery', 'loader.html'))) {
+if (!existsSync(path.join(publicDir, 'gallery', 'index.html'))) {
   throw new Error('public/gallery/ is missing: run `bun run gallery` first');
 }
 
@@ -95,7 +95,7 @@ async function capture(url, shot, locale, out, port) {
 }
 
 try {
-  const url = `http://localhost:${server.port}/gallery/loader.html?theme=light`;
+  const url = `http://localhost:${server.port}/gallery/?theme=light`;
   // Each capture runs its own Chrome on its own debugging port.
   const jobs = Object.entries(locales).flatMap(([lang, locale]) =>
     shots.map((shot) => ({ shot, locale, out: path.join(outDir, `${shot.name}-${lang}.jpg`) })),

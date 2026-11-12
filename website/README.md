@@ -46,9 +46,10 @@ action and the footer.
 
 `scripts/web-build.mjs` builds an app with `go tool nsgo build -target web`
 from the repository root into a folder of `public/`, keeping its wasm only
-as a `.gzip` copy. `scripts/build-gallery.mjs` writes `public/gallery/`
-with `loader.html`, which reports its download, decompression, compilation
-and start progress and follows the site's appearance. All of `public/`'s
+as a `.gzip` copy. `scripts/build-gallery.mjs` writes `public/gallery/`,
+served at `/gallery/`, behind `scripts/gallery-loader.html`, which reports
+its download, decompression, compilation and start progress and follows the
+site's appearance; `loader.html`, its first address, redirects there. All of `public/`'s
 builds are generated and ignored.
 
 ## Showcases and components

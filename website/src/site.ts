@@ -59,7 +59,7 @@ export const links = {
   license: `${repo}/blob/main/LICENSE`,
   notice: `${repo}/blob/main/NOTICE`,
   /** The gallery's web build, opened full page in a new tab. */
-  gallery: `${import.meta.env.BASE_URL}gallery/loader.html`,
+  gallery: `${import.meta.env.BASE_URL}gallery/`,
   /** The folder a contributor adds a case to. */
   cases: `${repo}/tree/main/docs/public/cases`,
   /** The folder a contributor adds a component to. */

@@ -3,7 +3,7 @@
 Every component of `base` and `ui` in one app, with every part of each to try and every platform drawn the way that platform draws it.
 
 - platforms: iOS, macOS, Web
-- site: https://nsgo.dev/gallery/loader.html
+- site: https://nsgo.dev/gallery/
 - source: https://github.com/oneo-me/nsgo/tree/main/examples/gallery
 - author: ONEO
 
