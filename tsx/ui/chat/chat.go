@@ -24,7 +24,8 @@ func init() {
 	tsx.Optional[chat.Chip]("Image")
 	tsx.Register(module, map[string]core.Node{
 		"Conversation": chat.Conversation{}, "FloatingConversation": chat.FloatingConversation{}, "GlassPanel": chat.GlassPanel{},
-		"Turn": chat.Turn{}, "ActivityRow": chat.ActivityRow{}, "Message": chat.Message{}, "Bubble": chat.Bubble{},
+		"Turn": chat.Turn{}, "Reasoning": chat.Reasoning{}, "Actions": chat.Actions{},
+		"ActivityRow": chat.ActivityRow{}, "Message": chat.Message{}, "Bubble": chat.Bubble{},
 		"Composer": chat.Composer{}, "IconAction": chat.IconAction{}, "AttachmentPreview": chat.AttachmentPreview{},
 		"Chip": chat.Chip{}, "ChipPopover": chat.ChipPopover{}, "Picker": chat.Picker{},
 		"EffortPicker": chat.EffortPicker{}, "ContextMeter": chat.ContextMeter{}, "Quota": chat.Quota{},
