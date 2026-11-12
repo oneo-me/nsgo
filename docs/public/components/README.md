@@ -45,7 +45,7 @@ English document, which the translation keeps:
 ```md
 # Kubai Icons
 
-2,871 个分层图标，使用应用的主题色，可以显示角标，悬停时会有动画，为 NSGo 应用而做。
+2,945 个分层图标，使用应用的主题色，可以显示角标，悬停时会有动画，为 NSGo 应用而做。
 
 - kind: 图标
 

@@ -1,6 +1,6 @@
 # Kubai Icons
 
-2,871 layered icons that take the app's accent, show badges and move on hover, for NSGo apps.
+2,945 layered icons that take the app's accent, show badges and move on hover, for NSGo apps.
 
 - kind: Icons
 - package: github.com/oneo-me/nsgo-icons-kubai
