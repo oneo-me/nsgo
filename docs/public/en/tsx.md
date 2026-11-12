@@ -65,17 +65,16 @@ capabilities:
   # webview: { hosts: [...], input: true }, clipboard, picker, speech, status_bar
 ```
 
-Keep a root key offline and certify release keys with it, then sign the app in that directory:
+Keep a root key offline and certify release keys with it, then sign the app in that directory. `go tool nsgo keygen` prints a key pair and writes no file; run it once for the root and once for each release key. Public keys go in flags and the app's code; secret keys stay out of the repository and reach the tool only through `NSGO_ROOT_KEY` and `NSGO_RELEASE_KEY`:
 
 ```sh
-go tool nsgo keygen root
-go tool nsgo keygen release
-go tool nsgo certify -root root.key -key release.pub -apps 'com.example.*'
-go tool nsgo publish -key release.key -cert release.cert plugin
-go tool nsgo verify -root root.pub plugin/dist/Plugin-1.0.0.nsgopkg
+go tool nsgo keygen # once for the root, once for the release key
+NSGO_ROOT_KEY=<root secret> go tool nsgo certify -key <release public> -apps 'com.example.*'
+NSGO_RELEASE_KEY=<release secret> go tool nsgo publish -cert release.cert plugin
+go tool nsgo verify -root <root public> plugin/dist/Plugin-1.0.0.nsgopkg
 ```
 
-The app trusts `root.pub`, verifies the package off the engine's goroutine and shows it in `tsx.View`, sandboxed beside its own views. The package reaches the app only through the host channel the view gives it, and keeps its own part of the app's storage:
+The app trusts the root's public key, written in its code, verifies the package off the engine's goroutine and shows it in `tsx.View`, sandboxed beside its own views. The package reaches the app only through the host channel the view gives it, and keeps its own part of the app's storage:
 
 ```go
 trust, err := pkg.OpenTrust(filepath.Join(cx.DataDir(), "trust"))

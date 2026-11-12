@@ -17,57 +17,48 @@ import (
 	"github.com/oneo-me/nsgo/tsx/pkg"
 )
 
-// Signed TSX packages (tsx/pkg): keygen makes keys, certify has a root
+// Signed TSX packages (tsx/pkg): keygen prints keys, certify has a root
 // certify a release key, publish compiles an app and signs it, or signs a
 // package again, verify checks one and revoke has a root sign a
-// revocation list.
+// revocation list. Secret keys come from the environment alone, never a
+// file or a flag: NSGO_ROOT_KEY for a root's, NSGO_RELEASE_KEY for a
+// release key's.
 
 // packageExt is a package's file extension.
 const packageExt = ".nsgopkg"
 
-// keygen writes a key pair as name.key, the secret, and name.pub.
-func keygen(name string) error {
-	if name == "" {
-		return errors.New("keygen: name the key, as in nsgo keygen root")
-	}
-	secret, public := name+".key", name+".pub"
-	for _, f := range []string{secret, public} {
-		if _, err := os.Stat(f); err == nil {
-			return fmt.Errorf("keygen: %s exists; a key is not replaced", rel(f))
-		}
-	}
+// keygen prints a key pair on standard output and writes nothing: the
+// public key for nsgo.yaml, an app's code or a flag, the secret one for
+// the user to keep and set in the environment.
+func keygen() error {
 	key, err := pkg.GenerateKey()
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(secret, []byte(pkg.EncodeSecretKey(key)+"\n"), 0o600); err != nil {
-		return err
-	}
 	pub := key.Public().(ed25519.PublicKey)
-	if err := os.WriteFile(public, []byte(pkg.EncodePublicKey(pub)+"\n"), 0o644); err != nil {
-		return err
-	}
-	done("made key %s: %s, kept secret, and %s", pkg.KeyID(pub), rel(secret), rel(public))
+	fmt.Printf("public: %s\nsecret: %s\n", pkg.EncodePublicKey(pub), pkg.EncodeSecretKey(key))
+	done("made key %s: keep the secret one out of the repository and give it in NSGO_UPDATES_KEY, NSGO_ROOT_KEY or NSGO_RELEASE_KEY", pkg.KeyID(pub))
 	return nil
 }
 
 type certifyOptions struct {
-	root, key, apps, out string
-	days                 int
+	key, apps, out string
+	days           int
 }
 
-// certify has a root certify a release key for apps, from now for days.
+// certify has NSGO_ROOT_KEY's root certify a release key for apps, from
+// now for days.
 func certify(o certifyOptions) error {
-	if o.root == "" || o.key == "" || o.apps == "" {
-		return errors.New("certify: -root, -key and -apps are required")
+	if o.key == "" || o.apps == "" {
+		return errors.New("certify: -key and -apps are required")
 	}
-	root, err := readSecretKey(o.root)
+	root, err := envSecretKey("NSGO_ROOT_KEY")
 	if err != nil {
 		return err
 	}
-	release, err := readPublicKey(o.key)
+	release, err := pkg.DecodePublicKey(o.key)
 	if err != nil {
-		return err
+		return fmt.Errorf("-key: %w", err)
 	}
 	if o.days <= 0 {
 		return errors.New("certify: -days is 1 or more")
@@ -78,7 +69,7 @@ func certify(o certifyOptions) error {
 		return err
 	}
 	if o.out == "" {
-		o.out = strings.TrimSuffix(o.key, ".pub") + ".cert"
+		o.out = "release.cert"
 	}
 	if err := writeJSON(o.out, cert); err != nil {
 		return err
@@ -88,16 +79,16 @@ func certify(o certifyOptions) error {
 }
 
 type publishOptions struct {
-	key, cert, entry, minRuntime, out string
+	cert, entry, minRuntime, out string
 }
 
-// publish compiles the app in dir and signs it, or signs the package at
-// path again.
+// publish compiles the app in dir and signs it with NSGO_RELEASE_KEY's
+// key, or signs the package at path again.
 func publish(o publishOptions, path string) error {
-	if o.key == "" || o.cert == "" {
-		return errors.New("publish: -key and -cert are required")
+	if o.cert == "" {
+		return errors.New("publish: -cert is required")
 	}
-	key, err := readSecretKey(o.key)
+	key, err := envSecretKey("NSGO_RELEASE_KEY")
 	if err != nil {
 		return err
 	}
@@ -208,9 +199,9 @@ func verifyPackage(o verifyOptions, path string) error {
 	} else {
 		trust := pkg.NewTrust()
 		for _, r := range splitList(o.roots) {
-			root, err := readPublicKey(r)
+			root, err := pkg.DecodePublicKey(r)
 			if err != nil {
-				return err
+				return fmt.Errorf("-root: %w", err)
 			}
 			trust.AddRoot(root)
 		}
@@ -256,17 +247,17 @@ func verifyPackage(o verifyOptions, path string) error {
 }
 
 type revokeOptions struct {
-	root, keys, packages, out string
-	sequence                  uint64
+	keys, packages, out string
+	sequence            uint64
 }
 
-// revoke has a root sign a revocation list of release keys and packages,
-// named by SHA-256 or by file.
+// revoke has NSGO_ROOT_KEY's root sign a revocation list of release keys
+// and packages, named by SHA-256 or by file.
 func revoke(o revokeOptions) error {
-	if o.root == "" || o.out == "" || o.sequence == 0 {
-		return errors.New("revoke: -root, -sequence and -out are required")
+	if o.out == "" || o.sequence == 0 {
+		return errors.New("revoke: -sequence and -out are required")
 	}
-	root, err := readSecretKey(o.root)
+	root, err := envSecretKey("NSGO_ROOT_KEY")
 	if err != nil {
 		return err
 	}
@@ -294,29 +285,16 @@ func revoke(o revokeOptions) error {
 	return nil
 }
 
-func readSecretKey(path string) (ed25519.PrivateKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
+// envSecretKey is the secret key nsgo keygen printed in the environment
+// variable name.
+func envSecretKey(name string) (ed25519.PrivateKey, error) {
+	text := os.Getenv(name)
+	if text == "" {
+		return nil, fmt.Errorf("%s holds no secret key; set it to the secret key nsgo keygen prints", name)
 	}
-	if info, err := os.Stat(path); err == nil && info.Mode().Perm()&0o077 != 0 && filepath.Separator == '/' {
-		warn("%s can be read by others; chmod 600 it", rel(path))
-	}
-	key, err := pkg.DecodeSecretKey(string(data))
+	key, err := pkg.DecodeSecretKey(text)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", rel(path), err)
-	}
-	return key, nil
-}
-
-func readPublicKey(path string) (ed25519.PublicKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	key, err := pkg.DecodePublicKey(string(data))
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", rel(path), err)
+		return nil, fmt.Errorf("%s: %w", name, err)
 	}
 	return key, nil
 }

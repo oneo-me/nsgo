@@ -55,7 +55,7 @@ build:
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # manifest permissions beyond the runtime's
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # the Linux packages' maintainer, else the app's name
 # release: { github: me/hello }  # the GitHub repository the install scripts and updates install from, else the Git remote origin's; tag_prefix: v by default
-# updates: { key: updates.pub }  # how the app updates, by platform and channel: see Updates
+# updates: { key: <public key> }  # how the app updates, by platform and channel: see Updates
 # miniprogram: { appid: { wechat: wx0123456789abcdef, alipay: "2021000000000000" }, custom_navigation: false }  # the mini programs'
 ```
 
@@ -151,13 +151,13 @@ On macOS the script copies the app from the disk image into `/Applications`, or 
 
 ```yaml
 updates:
-  key: updates.pub                    # the public key nsgo keygen updates makes
+  key: zE0hx2FZwwHy6X7LbEP3GjTTE3KWfCAp5gsaBysC+vg=  # the public key nsgo keygen prints
   # channel: store                    # direct, store or none; direct by default with a key, none without
   # feed: https://example.com/hello/  # where the appcasts and installers are; by default the latest GitHub release
   # automatic: false                  # check only when asked; true by default
 ```
 
-`nsgo keygen updates` makes `updates.pub`, to commit, and `updates.key`, to keep secret and out of the repository; `NSGO_UPDATES_KEY`, the key file's text, stands in for it in CI. Each direct build signs the installers with it and writes `appcast-<target>.xml` beside them, a feed in [Sparkle](https://sparkle-project.org)'s format that the app reads under `feed`: upload the appcasts with the installers. Without the secret key, `build` writes no macOS or Windows appcast, as those install only signed installers.
+`nsgo keygen` prints a key pair and writes no file: put the public key in `updates.key` and commit it, and keep the secret one out of the repository, in a password manager and in `NSGO_UPDATES_KEY` where releases build, such as a GitHub Actions secret. Each direct build signs the installers with the secret key and writes `appcast-<target>.xml` beside them, a feed in [Sparkle](https://sparkle-project.org)'s format that the app reads under `feed`: upload the appcasts with the installers. Without the secret key, `build` writes no macOS or Windows appcast, as those install only signed installers.
 
 | Target | How a direct build updates |
 | --- | --- |

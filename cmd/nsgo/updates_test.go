@@ -15,7 +15,7 @@ import (
 )
 
 // updatingProject loads an app whose nsgo.yaml adds yaml to updates with
-// a key nsgo keygen would make, and returns its secret key.
+// a key nsgo keygen would print, and returns its secret key.
 func updatingProject(t *testing.T, yaml string) (*project, ed25519.PrivateKey) {
 	t.Helper()
 	dir := t.TempDir()
@@ -24,8 +24,8 @@ func updatingProject(t *testing.T, yaml string) (*project, ed25519.PrivateKey) {
 		t.Fatal(err)
 	}
 	writeFiles(t, dir, map[string]string{
-		"updates.pub": pkg.EncodePublicKey(key.Public().(ed25519.PublicKey)) + "\n",
-		"nsgo.yaml":   "name: Hello\nid: dev.example.hello\nversion: 1.2.0\nbuild_number: 12\nrelease: {github: example/hello}\nupdates: {key: updates.pub" + yaml + "}\n",
+		"nsgo.yaml": "name: Hello\nid: dev.example.hello\nversion: 1.2.0\nbuild_number: 12\nrelease: {github: example/hello}\nupdates: {key: '" +
+			pkg.EncodePublicKey(key.Public().(ed25519.PublicKey)) + "'" + yaml + "}\n",
 	})
 	p, err := load(dir)
 	if err != nil {
@@ -38,9 +38,9 @@ func TestUpdatesConfig(t *testing.T) {
 	for _, c := range []struct {
 		yaml, err string
 	}{
-		{"updates: {feed: https://example.com/hello}", "key names no public key"},
-		{"updates: {automatic: false}", "key names no public key"},
-		{"updates: {key: missing.pub}", "updates: key"},
+		{"updates: {feed: https://example.com/hello}", "key holds no public key"},
+		{"updates: {automatic: false}", "key holds no public key"},
+		{"updates: {key: updates.pub}", "updates: key"},
 		{"updates: {channel: brew}", "is not direct, store or none"},
 	} {
 		dir := t.TempDir()
@@ -73,8 +73,8 @@ func TestUpdatesConfig(t *testing.T) {
 		t.Error("automatic: false checks on its own")
 	}
 	dir := t.TempDir()
-	writeFiles(t, dir, map[string]string{"k.pub": pkg.EncodePublicKey(make(ed25519.PublicKey, 32)) + "\n",
-		"nsgo.yaml": "name: app\nid: dev.example.app\nupdates: {key: k.pub, feed: 'http://example.com'}\n"})
+	writeFiles(t, dir, map[string]string{
+		"nsgo.yaml": "name: app\nid: dev.example.app\nupdates: {key: '" + pkg.EncodePublicKey(make(ed25519.PublicKey, 32)) + "', feed: 'http://example.com'}\n"})
 	if _, err := load(dir); err == nil || !strings.Contains(err.Error(), "not an https URL") {
 		t.Errorf("an http feed: %v", err)
 	}

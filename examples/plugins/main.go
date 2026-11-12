@@ -1,5 +1,5 @@
 // Command plugins is a Go app that installs and runs signed TSX packages:
-// it verifies greeter.nsgopkg against the root key in root.pub, off the
+// it verifies greeter.nsgopkg against the root key rootKey, off the
 // engine's goroutine, asks the user to grant what its capabilities
 // declare, installs it in the app's data directory and shows it in
 // tsx.View, which reaches the app only through a host channel of its
@@ -7,13 +7,15 @@
 // plugin of functions, which the app loads with tsx.Load and calls.
 //
 // The packages are the apps in plugin/ and search/, signed by a release
-// key of a root whose secret was thrown away. To sign them again, make
-// keys of your own outside the repository, then, in this directory:
+// key of a root whose secret was thrown away. To sign them again, print
+// a root and a release key with go tool nsgo keygen, keep their secret
+// keys out of the repository, set rootKey to the root's public key, then,
+// in this directory:
 //
-//	go tool nsgo certify -root ~/keys/root.key -key ~/keys/release.pub -apps 'dev.oneo.nsgo.plugins.*'
-//	go tool nsgo publish -key ~/keys/release.key -cert ~/keys/release.cert -out greeter.nsgopkg plugin
-//	go tool nsgo publish -key ~/keys/release.key -cert ~/keys/release.cert -entry App.ts -out search.nsgopkg search
-//	cp ~/keys/root.pub .
+//	NSGO_ROOT_KEY=<root secret> go tool nsgo certify -key <release public> -apps 'dev.oneo.nsgo.plugins.*' -out ~/keys/release.cert
+//	export NSGO_RELEASE_KEY=<release secret>
+//	go tool nsgo publish -cert ~/keys/release.cert -out greeter.nsgopkg plugin
+//	go tool nsgo publish -cert ~/keys/release.cert -entry App.ts -out search.nsgopkg search
 package main
 
 import (
@@ -35,9 +37,11 @@ var (
 	greeter []byte
 	//go:embed search.nsgopkg
 	search []byte
-	//go:embed root.pub
-	rootKey string
 )
+
+// rootKey is the public key of the root the packages' release key is
+// certified by, as nsgo keygen prints it.
+const rootKey = "dA1jQr/NOvprVZ26UmaY+CBd0Zdggq/VqVtIc0KK0x4="
 
 func main() { nsgo.Run(Root, nsgo.WindowSize(480, 480)) }
 

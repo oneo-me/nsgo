@@ -44,9 +44,8 @@ const (
 
 // updatesConfig is nsgo.yaml's updates.
 type updatesConfig struct {
-	// Key is the public key nsgo keygen made (updates.pub), whose secret
-	// key signs each release's installers: NSGO_UPDATES_KEY's, else the
-	// .key file beside it.
+	// Key is the public key nsgo keygen printed, in base64, whose secret
+	// key, NSGO_UPDATES_KEY's, signs each release's installers.
 	Key string `yaml:"key"`
 	// Feed is the URL the release's appcasts and installers are under; by
 	// default the GitHub repository's latest release (release.github).
@@ -74,14 +73,13 @@ func (p *project) validateUpdates() error {
 	}
 	if u.Key == "" {
 		if u.Channel == "" && (u.Feed != "" || u.Automatic != nil) {
-			return errors.New("updates: key names no public key; make one with nsgo keygen updates, or set channel to store")
+			return errors.New("updates: key holds no public key; make one with nsgo keygen, or set channel to store")
 		}
 		return nil
 	}
-	u.Key = p.resolve(u.Key)
-	key, err := readPublicKey(u.Key)
+	key, err := pkg.DecodePublicKey(u.Key)
 	if err != nil {
-		return fmt.Errorf("updates: key: %w", err)
+		return fmt.Errorf("updates: key: %w; set it to the public key nsgo keygen prints", err)
 	}
 	u.public = key
 	if u.Feed == "" {
@@ -171,7 +169,7 @@ func (p *project) checkUpdateFeed(target string) error {
 		return err
 	}
 	if p.updates() && p.Updates.public == nil {
-		return errors.New("updates: the direct channel signs its installers: set updates.key to the public key nsgo keygen updates makes")
+		return errors.New("updates: the direct channel signs its installers: set updates.key to the public key nsgo keygen prints")
 	}
 	if p.updates() && feedTarget(target) && p.feedBase() == "" {
 		return errors.New("updates: no feed for the appcasts: set updates.feed, or release.github to the repository whose releases hold them")
@@ -440,29 +438,19 @@ func addWinSparkle(ctx context.Context, p *project, dir, arch string) error {
 }
 
 // updatesSecretKey is the secret key a release's installers are signed
-// with: NSGO_UPDATES_KEY's, else the .key file beside updates.key's
-// public key; nil without either. One of another public key is refused.
+// with, NSGO_UPDATES_KEY's; nil without one. One of another public key
+// than updates.key is refused.
 func (p *project) updatesSecretKey() (ed25519.PrivateKey, error) {
-	var key ed25519.PrivateKey
-	if text := os.Getenv("NSGO_UPDATES_KEY"); text != "" {
-		k, err := pkg.DecodeSecretKey(text)
-		if err != nil {
-			return nil, fmt.Errorf("NSGO_UPDATES_KEY: %w", err)
-		}
-		key = k
-	} else {
-		path := strings.TrimSuffix(p.Updates.Key, filepath.Ext(p.Updates.Key)) + ".key"
-		if _, err := os.Stat(path); err != nil {
-			return nil, nil
-		}
-		k, err := readSecretKey(path)
-		if err != nil {
-			return nil, err
-		}
-		key = k
+	text := os.Getenv("NSGO_UPDATES_KEY")
+	if text == "" {
+		return nil, nil
+	}
+	key, err := pkg.DecodeSecretKey(text)
+	if err != nil {
+		return nil, fmt.Errorf("NSGO_UPDATES_KEY: %w", err)
 	}
 	if !key.Public().(ed25519.PublicKey).Equal(p.Updates.public) {
-		return nil, fmt.Errorf("updates: the secret key is not the one of %s", rel(p.Updates.Key))
+		return nil, errors.New("NSGO_UPDATES_KEY: the secret key is not the one of updates.key")
 	}
 	return key, nil
 }
@@ -493,7 +481,7 @@ func (p *project) writeAppcast(target, installer string) error {
 	}
 	system, _, _ := strings.Cut(target, "_")
 	if key == nil && (system == "macos" || system == "windows") {
-		warn("no %s: sign the installers with updates.key's secret key, in NSGO_UPDATES_KEY or beside it", appcastName(target))
+		warn("no %s: sign the installers with updates.key's secret key, in NSGO_UPDATES_KEY", appcastName(target))
 		return nil
 	}
 	name, err := p.displayName()

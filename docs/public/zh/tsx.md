@@ -65,17 +65,16 @@ capabilities:
   # webview: { hosts: [...], input: true }、clipboard、picker、speech、status_bar
 ```
 
-根密钥离线保存，用它为发布密钥签发证书，然后在该目录中签名应用：
+根密钥离线保存，用它为发布密钥签发证书，然后在该目录中签名应用。`go tool nsgo keygen` 打印一对密钥，不写任何文件；根密钥和每个发布密钥各运行一次。公钥写在参数和应用代码里；私钥不要放进仓库，只通过 `NSGO_ROOT_KEY` 和 `NSGO_RELEASE_KEY` 交给工具：
 
 ```sh
-go tool nsgo keygen root
-go tool nsgo keygen release
-go tool nsgo certify -root root.key -key release.pub -apps 'com.example.*'
-go tool nsgo publish -key release.key -cert release.cert plugin
-go tool nsgo verify -root root.pub plugin/dist/Plugin-1.0.0.nsgopkg
+go tool nsgo keygen # 根密钥一次，发布密钥一次
+NSGO_ROOT_KEY=<根私钥> go tool nsgo certify -key <发布公钥> -apps 'com.example.*'
+NSGO_RELEASE_KEY=<发布私钥> go tool nsgo publish -cert release.cert plugin
+go tool nsgo verify -root <根公钥> plugin/dist/Plugin-1.0.0.nsgopkg
 ```
 
-应用信任 `root.pub`，在引擎协程之外验证包，再用 `tsx.View` 在沙箱中把它显示在自己的视图旁。包只能通过视图给它的 host 通道访问应用，并拥有应用存储中属于自己的一部分：
+应用信任写在代码里的根公钥，在引擎协程之外验证包，再用 `tsx.View` 在沙箱中把它显示在自己的视图旁。包只能通过视图给它的 host 通道访问应用，并拥有应用存储中属于自己的一部分：
 
 ```go
 trust, err := pkg.OpenTrust(filepath.Join(cx.DataDir(), "trust"))

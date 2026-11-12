@@ -12,13 +12,12 @@
 //	nsgo check [dir]                                     vet the app and type-check its TSX
 //	nsgo i18n  [-source L] [dir]                         check catalogs and write their Go code
 //	nsgo doctor                                          show which targets this machine builds and runs
-//	nsgo keygen name                                     make a root or release key for signed packages
-//	nsgo certify -root K -key P -apps A [-days N] [-out F]
-//	                                                      certify a release key for apps
-//	nsgo publish -key K -cert C [-entry E] [-min-runtime V] [-out F] [dir | package]
+//	nsgo keygen                                          print a key pair for updates or signed packages
+//	nsgo certify -key P -apps A [-days N] [-out F]       certify a release key for apps
+//	nsgo publish -cert C [-entry E] [-min-runtime V] [-out F] [dir | package]
 //	                                                      compile a TSX app into a signed package, or sign one again
 //	nsgo verify  [-root P,... [-revocations F]] package  check a package and print what it holds
-//	nsgo revoke  -root K -sequence N [-keys IDs] [-packages H,...] -out F
+//	nsgo revoke  -sequence N [-keys IDs] [-packages H,...] -out F
 //	                                                      sign a revocation list
 //
 // dir is the app's directory, holding nsgo.yaml and its main package; it
@@ -139,22 +138,23 @@ func main() {
 	case "keygen":
 		fs := flag.NewFlagSet("keygen", flag.ExitOnError)
 		fs.Parse(args)
-		err = keygen(fs.Arg(0))
+		if fs.NArg() != 0 {
+			usage()
+		}
+		err = keygen()
 	case "certify":
 		fs := flag.NewFlagSet("certify", flag.ExitOnError)
 		var o certifyOptions
-		fs.StringVar(&o.root, "root", "", "the root's secret `key` file")
-		fs.StringVar(&o.key, "key", "", "the release key's public `key` file")
+		fs.StringVar(&o.key, "key", "", "the release key's public `key`, as nsgo keygen prints it; the root's secret key is NSGO_ROOT_KEY's")
 		fs.StringVar(&o.apps, "apps", "", "the comma-separated app `IDs` it may sign: *, com.example.* or an ID")
 		fs.IntVar(&o.days, "days", 365, "how many `days` from now it may sign")
-		fs.StringVar(&o.out, "out", "", "the certificate's `file` (default: the release key's, with .cert)")
+		fs.StringVar(&o.out, "out", "", "the certificate's `file` (default: release.cert)")
 		fs.Parse(args)
 		err = certify(o)
 	case "publish":
 		fs := flag.NewFlagSet("publish", flag.ExitOnError)
 		var o publishOptions
-		fs.StringVar(&o.key, "key", "", "the release key's secret `key` file")
-		fs.StringVar(&o.cert, "cert", "", "the release key's certificate `file`")
+		fs.StringVar(&o.cert, "cert", "", "the release key's certificate `file`; its secret key is NSGO_RELEASE_KEY's")
 		fs.StringVar(&o.entry, "entry", "", "the TSX `entry` to compile (default: the one the main package runs, else App.tsx)")
 		fs.StringVar(&o.minRuntime, "min-runtime", "", "the oldest runtime `version` the package runs on (default: this tool's)")
 		fs.StringVar(&o.out, "out", "", "the package's `file` (default: build.output's <name>-<version>.nsgopkg)")
@@ -163,7 +163,7 @@ func main() {
 	case "verify":
 		fs := flag.NewFlagSet("verify", flag.ExitOnError)
 		var o verifyOptions
-		fs.StringVar(&o.roots, "root", "", "the comma-separated public `key` files of the roots to trust (default: check the package against itself)")
+		fs.StringVar(&o.roots, "root", "", "the comma-separated public `keys` of the roots to trust (default: check the package against itself)")
 		fs.StringVar(&o.revocations, "revocations", "", "a revocation list `file` to check it against")
 		fs.Parse(args)
 		if fs.NArg() != 1 {
@@ -173,8 +173,7 @@ func main() {
 	case "revoke":
 		fs := flag.NewFlagSet("revoke", flag.ExitOnError)
 		var o revokeOptions
-		fs.StringVar(&o.root, "root", "", "the root's secret `key` file")
-		fs.Uint64Var(&o.sequence, "sequence", 0, "the list's `number`, above the last one's")
+		fs.Uint64Var(&o.sequence, "sequence", 0, "the list's `number`, above the last one's; the root's secret key is NSGO_ROOT_KEY's")
 		fs.StringVar(&o.keys, "keys", "", "the comma-separated `IDs` of the release keys to revoke")
 		fs.StringVar(&o.packages, "packages", "", "the comma-separated packages to revoke, by `SHA-256` or file")
 		fs.StringVar(&o.out, "out", "", "the list's `file`")
@@ -198,11 +197,11 @@ func usage() {
   nsgo check [dir]
   nsgo i18n  [-source L] [dir]
   nsgo doctor
-  nsgo keygen name
-  nsgo certify -root K -key P -apps A [-days N] [-out F]
-  nsgo publish -key K -cert C [-entry E] [-min-runtime V] [-out F] [dir | package]
+  nsgo keygen
+  nsgo certify -key P -apps A [-days N] [-out F]
+  nsgo publish -cert C [-entry E] [-min-runtime V] [-out F] [dir | package]
   nsgo verify  [-root P,... [-revocations F]] package
-  nsgo revoke  -root K -sequence N [-keys IDs] [-packages H,...] -out F
+  nsgo revoke  -sequence N [-keys IDs] [-packages H,...] -out F
 
 dev and build take -name, -id and -version, which replace nsgo.yaml's
 values, and -h lists every flag.`)
