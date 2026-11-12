@@ -225,10 +225,12 @@ type App struct {
 	// else the step fails.
 	OnAlert func(driver.AlertConfig) int
 	// Appearance is the appearance the app last forced; Quits how often
-	// it asked to quit; BackUnhandled how many backs nothing took, which
-	// leave an Android app.
+	// it asked to quit, Restarts how many of those restart it;
+	// BackUnhandled how many backs nothing took, which leave an Android
+	// app.
 	Appearance    driver.Appearance
 	Quits         int
+	Restarts      int
 	BackUnhandled int
 	// PopupMenu is the context menu the app shows with PopupMenu, at
 	// PopupAt; nil once it closed.

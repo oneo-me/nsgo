@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"unicode"
 
 	"github.com/oneo-me/nsgo/internal/driver"
@@ -817,9 +818,19 @@ func (t *Tree) SetAppearance(a Appearance) {
 // Quit ends the app: desktops close the window, the app's last, and
 // return from nsgo.Run; Android finishes the app's activity. iOS apps do
 // not quit themselves, and the web leaves the page open.
-func (cx *Scope) Quit() {
-	if t := cx.rt.tree; t != nil {
-		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemQuit})
-		t.changed = true
-	}
+func (cx *Scope) Quit() { cx.rt.quit(false) }
+
+// restarting records that an app asked to restart, for nsgo.Run, which
+// starts the program again once the app has quit.
+var restarting atomic.Bool
+
+// Restart is the core's part of desktop.Restart, which apps use: the app
+// quits as Quit ends it, and nsgo.Run starts it again.
+func (cx *Scope) Restart() {
+	restarting.Store(true)
+	cx.rt.quit(true)
 }
+
+// Restarting reports whether the app asked to restart before it quit, for
+// nsgo.Run.
+func Restarting() bool { return restarting.Load() }

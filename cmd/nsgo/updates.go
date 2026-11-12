@@ -213,16 +213,15 @@ func envTarget(env []string) string {
 	return goos + "_" + goArchName(goarch)
 }
 
-// updateLdflags give nsgo.Run the version and updates of a build for
-// env's target: on the direct channel its appcast and key, where the
-// backend reads one rather than Sparkle, and whether it checks on its
-// own.
+// updateLdflags give nsgo.Run the updates of a build for env's target:
+// on the direct channel its appcast and key, where the backend reads one
+// rather than Sparkle, and whether it checks on its own.
 func (p *project) updateLdflags(env []string) []string {
 	if !p.updatesOn() {
 		return nil
 	}
 	const pkgPath = "github.com/oneo-me/nsgo"
-	flags := []string{fmt.Sprintf("-X '%s.version=%s'", pkgPath, p.Version), fmt.Sprintf("-X '%s.build=%s'", pkgPath, p.BundleVersion())}
+	var flags []string
 	if feed := p.appcastURL(envTarget(env)); feed != "" && p.updates() {
 		flags = append(flags, fmt.Sprintf("-X '%s.updateFeed=%s'", pkgPath, feed),
 			fmt.Sprintf("-X %s.updateKey=%s", pkgPath, pkg.EncodePublicKey(p.Updates.public)))

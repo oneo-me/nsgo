@@ -85,7 +85,7 @@ A `store` build (`-channel store`) makes each desktop and Android target's packa
 
 ### Updates
 
-`updates.go` builds each package for the channel `updates.channel` or `-channel` names, as [updates](updates.md#channels) describes; development builds never update. Only the direct channel adds anything to a package beyond `-X` flags giving `nsgo.Run` the version, build number and `updates.automatic`.
+`updates.go` builds each package for the channel `updates.channel` or `-channel` names, as [updates](updates.md#channels) describes; development builds never update. Only the direct channel adds anything to a package beyond `-X` flags giving `nsgo.Run` `updates.automatic`; every build, development ones too, gets the app's identity, version and build number in `core` (`core.App`).
 
 - Each direct macOS, Windows, Linux and Android release writes `appcast-<target>.xml`: Sparkle's RSS format, with one item, this version's installer, signed with EdDSA by `NSGO_UPDATES_KEY`'s key, else the `.key` beside `updates.key`.
 - There is one feed per target, since machines build targets apart, so nothing filters by `sparkle:os` or architecture. macOS and Windows get none without the secret key, as Sparkle and WinSparkle refuse unsigned updates.

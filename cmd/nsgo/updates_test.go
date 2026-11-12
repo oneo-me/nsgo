@@ -95,7 +95,7 @@ func TestUpdateChannels(t *testing.T) {
 		t.Errorf("store: checks %v, updates itself %v", p.updatesOn(), p.updates())
 	}
 	ios := strings.Join(p.updateLdflags([]string{"GOOS=ios", "GOARCH=arm64"}), " ")
-	if !strings.Contains(ios, "nsgo.version=1.2.0'") || !strings.Contains(ios, "updateAutomatic=1") {
+	if !strings.Contains(ios, "updateAutomatic=1") {
 		t.Errorf("a store's iOS flags %s do not check the App Store", ios)
 	}
 	if flags := strings.Join(p.updateLdflags([]string{"GOOS=linux", "GOARCH=amd64"}), " "); strings.Contains(flags, "updateFeed") {
@@ -128,8 +128,7 @@ func TestUpdateBuildSettings(t *testing.T) {
 	p, key := updatingProject(t, ", automatic: false")
 	pub := pkg.EncodePublicKey(key.Public().(ed25519.PublicKey))
 	flags := strings.Join(p.updateLdflags([]string{"GOOS=windows", "GOARCH=amd64"}), " ")
-	for _, want := range []string{"nsgo.version=1.2.0'", "nsgo.build=12'",
-		"nsgo.updateFeed=https://github.com/example/hello/releases/latest/download/appcast-windows_x64.xml'", "nsgo.updateKey=" + pub} {
+	for _, want := range []string{"nsgo.updateFeed=https://github.com/example/hello/releases/latest/download/appcast-windows_x64.xml'", "nsgo.updateKey=" + pub} {
 		if !strings.Contains(flags, want) {
 			t.Errorf("ldflags %s lack %s", flags, want)
 		}

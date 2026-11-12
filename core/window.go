@@ -196,10 +196,10 @@ func (w *Window) gone() {
 				return
 			}
 		}
-		rt.quit()
+		rt.quit(false)
 	case ShutdownOnMainWindowClose:
 		if main {
-			rt.quit()
+			rt.quit(false)
 		}
 	}
 }
@@ -366,10 +366,10 @@ func AppRoot(app func(cx *Scope)) func(cx *Scope) Node {
 	}
 }
 
-// quit asks the platform to end the app.
-func (rt *runtime) quit() {
+// quit asks the platform to end the app, saying whether it restarts.
+func (rt *runtime) quit(restart bool) {
 	if t := rt.tree; t != nil {
-		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemQuit})
+		t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemQuit, On: restart})
 		t.changed = true
 	}
 }

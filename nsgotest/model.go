@@ -480,6 +480,9 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.Appearance = it.Appearance
 		case driver.ItemQuit:
 			a.Quits++
+			if it.On {
+				a.Restarts++
+			}
 		case driver.ItemPopupMenu:
 			if a.popupID != 0 {
 				a.post(driver.Event{Kind: driver.EventMenuClosed, Count: a.popupID})

@@ -139,6 +139,8 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 | Linux | The surface is unmapped, or its toplevel minimized or suspended | One of the app's windows `is-active` |
 | Web | The document is hidden | The document has the focus |
 
+`core.App`, NSH's `appInfo()` and TSX's too, is the app's ID, name, version and build number as `nsgo.yaml` gives them, which the tool builds into `core` with `-X`, and whether it is a development build: any but `nsgo build`'s. It is the binary's, not an engine's, so every view a host embeds reads the host build's.
+
 ## Appearance and quitting
 
 `SetAppearance` forces light or dark, and `nsgo.Appearance` starts the app in it. The core keeps the system's appearance beside the forced one and reports the one shown as `Env.Dark`, so platforms may report either. A subtree forces its own with `SetSubtreeAppearance` ([themes](themes.md#scope)).
@@ -153,6 +155,8 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 | Web | The page's `color-scheme` |
 
 `Quit` ends the app. On desktops `nsgo.Run` returns once the engine stopped and storage was written, as NSH's `run_app`: macOS cancels `applicationShouldTerminate:` and stops AppKit's loop, posting an event to wake it. Android finishes its task; iOS apps never quit themselves. `mobile.ExitApp`, NSH's `BackHandler.exitApp`, does what Android's back does when nothing in the app takes it (`ItemBackUnhandled`): the task's root goes to the background, another activity finishes.
+
+`desktop.Restart`, NSH's `Application.restart()`, quits as `Quit` does with `ItemQuit`'s `On` set, and `nsgo.Run`, once the app has ended, starts the program again with the arguments it started with, its launch flags among them. The two never run side by side: on macOS and Linux a shell waits up to 10 seconds for the old process to exit, then starts the new one, a macOS bundle through `open -n` as the user opens it; on Windows the new process waits for the one `NSGO_RESTART_AFTER` names before `Run` starts. Under `nsgo dev`, which ends with the app it started, it only quits.
 
 When the app ends by itself, and which of its windows a close keeps, is its shutdown mode's and its windows' `OnClosing` ([application and windows](application.md#lifecycle)).
 

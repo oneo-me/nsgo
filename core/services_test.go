@@ -700,3 +700,14 @@ func TestQuit(t *testing.T) {
 		t.Fatalf("items = %+v", b.Items)
 	}
 }
+
+func TestRestart(t *testing.T) {
+	var cx *Scope
+	h := newHost(t, Size{Width: 100, Height: 100}, func(c *Scope) Node { cx = c; return View{} })
+	h.commit()
+	defer restarting.Store(false)
+	cx.Restart()
+	if it := command(h.commit(), driver.ItemQuit); it == nil || !it.On || !Restarting() {
+		t.Fatalf("restart's quit is %+v", it)
+	}
+}

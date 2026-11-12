@@ -9,7 +9,8 @@ import (
 // updateConfig is how the app updates, as the nsgo tool set it from
 // nsgo.yaml's updates; macOS's Sparkle reads its own from Info.plist.
 func updateConfig() updates.Config {
-	return updates.Config{App: name, ID: id, Version: version, Build: build,
+	info := core.App()
+	return updates.Config{App: name, ID: id, Version: info.Version, Build: info.Build,
 		Feed: updateFeed, Key: updateKey, Automatic: updateAutomatic == "1"}
 }
 

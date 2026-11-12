@@ -96,6 +96,12 @@ func RegisterHotKey(cx *core.Scope, key string, fn func()) { cx.RegisterHotKey(k
 // it hidden.
 func SetDockVisible(cx *core.Scope, on bool) { cx.SetDockVisible(on) }
 
+// Restart ends the app as core.Scope.Quit does, and nsgo.Run starts it
+// again with the arguments it started with once it has exited, on macOS,
+// Windows and Linux, so a setting read at launch takes effect. Under nsgo
+// dev, and in a view a host embeds, it only quits.
+func Restart(cx *core.Scope) { cx.Restart() }
+
 // SetLaunchAtLogin has the system start the app as the user logs in, or
 // no more. macOS takes only an app in a bundle, as nsgo build makes it.
 func SetLaunchAtLogin(cx *core.Scope, on bool) { cx.SetLaunchAtLogin(on) }

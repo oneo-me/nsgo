@@ -203,7 +203,8 @@ const (
 	// and answer with EventMenuClosed carrying Count.
 	ItemPopupMenu
 	// ItemQuit ends the app: desktops close the window and return from
-	// Run, Android finishes its activity; iOS and the web ignore it.
+	// Run, Android finishes its activity; iOS and the web ignore it. On
+	// says the app restarts, which nsgo.Run does once Run returns.
 	ItemQuit
 	// ItemBackPreview answers EventBackStarted with the screen a back now
 	// pops (ID), for the platform to move it with the gesture; 0 when back

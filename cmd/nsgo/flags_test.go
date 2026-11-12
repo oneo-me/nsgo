@@ -250,3 +250,20 @@ func TestAppFlags(t *testing.T) {
 		t.Errorf("ldflags = %q", p.ldflags())
 	}
 }
+
+func TestIdentityLdflags(t *testing.T) {
+	p := &project{Name: "App", ID: "com.example.app", Version: "1.2.0", BuildNumber: 12}
+	flags := p.ldflags()
+	for _, want := range []string{"core.appName=App'", "core.appID=com.example.app'", "core.appVersion=1.2.0'", "core.appBuild=12'"} {
+		if !strings.Contains(flags, want) {
+			t.Errorf("ldflags %s lack %s", flags, want)
+		}
+	}
+	if strings.Contains(flags, "appRelease") {
+		t.Errorf("a development build's ldflags %s say release", flags)
+	}
+	p.Release = true
+	if !strings.Contains(p.ldflags(), "core.appRelease=1") {
+		t.Errorf("a release's ldflags %s say development", p.ldflags())
+	}
+}

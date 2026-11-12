@@ -13,30 +13,38 @@
 //		desktop.NewTray(app, desktop.TrayOptions{Icon: icon, Panel: desktop.OpenPanel(app, desktop.PanelOptions{}, Panel)})
 //	}
 //
-// Build tags pick the backend. The nsgo tool sets the app's name and ID,
-// and its version and updates where nsgo.yaml configures them (package
-// updater), from nsgo.yaml. The engine's own command-line flags, such as --nsgo-fps,
-// leave os.Args before main runs (launchFlags).
+// Build tags pick the backend. The nsgo tool builds the app's identity
+// into it (core.App), and its updates where nsgo.yaml configures them
+// (package updater), from nsgo.yaml. The engine's own command-line
+// flags, such as --nsgo-fps, leave os.Args before main runs (launchFlags).
 package nsgo
 
 import (
+	"log"
+
 	"github.com/oneo-me/nsgo/core"
 	"github.com/oneo-me/nsgo/internal/engine"
 )
 
 // Set by the nsgo tool with -ldflags -X.
 var (
-	name = "NSGo"
-	id   = ""
 	// appearance is nsgo.yaml's: "light" or "dark" starts the app in it.
 	appearance = ""
-	// version and build are nsgo.yaml's version and build number, set with
-	// its updates: updateFeed is this target's appcast, updateKey the
-	// public key its downloads are signed with, and updateAutomatic "1"
-	// when the app checks on its own (updates.go).
-	version, build                         = "", ""
+	// updateFeed is this target's appcast, updateKey the public key its
+	// downloads are signed with, and updateAutomatic "1" when the app
+	// checks on its own (updates.go).
 	updateFeed, updateKey, updateAutomatic = "", "", ""
 )
+
+// name and id are the app's name, "NSGo" where the tool set none, and ID.
+var name, id = appName(), core.App().ID
+
+func appName() string {
+	if n := core.App().Name; n != "" {
+		return n
+	}
+	return "NSGo"
+}
 
 // App builds an app's root element once.
 type App = engine.App
@@ -56,9 +64,12 @@ type Main interface {
 // phones and the web) desktop.OpenWindow returns nil.
 //
 // On desktops Run returns once the app ends, by its shutdown mode
-// (desktop.SetShutdownMode) or core.Scope.Quit, its storage written, so
-// main can clean up; on iOS, Android and the web it never returns.
+// (desktop.SetShutdownMode), core.Scope.Quit or desktop.Restart, its
+// storage written, so main can clean up; on iOS, Android and the web it
+// never returns. After desktop.Restart it has started the app again,
+// which waits for this process to exit.
 func Run[M Main](main M, opts ...Option) {
+	awaitRestarted()
 	o := options{width: 480, height: 640, appearance: map[string]core.Appearance{
 		"light": core.AppearanceLight, "dark": core.AppearanceDark}[appearance]}
 	for _, fn := range opts {
@@ -76,6 +87,12 @@ func Run[M Main](main M, opts ...Option) {
 		run(devApp(launch.localized(m)), nil, o)
 	case func(app *core.Scope):
 		run(nil, launch.localizedApp(m), o)
+	}
+	// nsgo dev ends with the app it started, so a restart there only quits.
+	if core.Restarting() && !devBuild {
+		if err := restart(launchArgs); err != nil {
+			log.Printf("nsgo: restarting: %v", err)
+		}
 	}
 }
 

@@ -33,9 +33,16 @@ type launchFlags struct {
 // launch holds the flags the app was started with.
 var launch launchFlags
 
+// launchArgs are the program's arguments as it started, its launch flags
+// among them, which a restart passes again.
+var launchArgs []string
+
 // The flags leave os.Args before main runs, so the app's own flag
 // parsing never sees them.
 func init() {
+	if len(os.Args) > 1 {
+		launchArgs = append([]string(nil), os.Args[1:]...)
+	}
 	os.Args = launch.parse(os.Args)
 }
 

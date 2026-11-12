@@ -13,6 +13,9 @@ import (
 	"github.com/oneo-me/nsgo/core"
 )
 
+// devBuild is whether nsgo dev built the app.
+const devBuild = true
+
 // devServer is nsgo dev's server, set with -ldflags -X for targets that
 // pass the app no environment; NSGO_DEV_SERVER overrides it.
 var devServer = ""

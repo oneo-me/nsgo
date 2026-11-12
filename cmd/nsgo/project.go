@@ -395,10 +395,15 @@ func (p *project) cache(parts ...string) string {
 	return filepath.Join(append([]string{p.Dir, ".nsgo"}, parts...)...)
 }
 
-// ldflags passes nsgo.yaml's name and ID to nsgo.Run.
+// corePath is package core's, which holds the app's identity (core.App).
+const corePath = "github.com/oneo-me/nsgo/core"
+
+// ldflags builds nsgo.yaml's name, ID, version and build number into
+// core.App, and passes the rest of what nsgo.Run takes from it.
 func (p *project) ldflags(extra ...string) string {
 	const pkg = "github.com/oneo-me/nsgo"
-	flags := fmt.Sprintf("-X '%s.name=%s' -X '%s.id=%s'", pkg, p.Name, pkg, p.ID)
+	flags := fmt.Sprintf("-X '%s.appName=%s' -X '%s.appID=%s' -X '%s.appVersion=%s' -X '%s.appBuild=%s'",
+		corePath, p.Name, corePath, p.ID, corePath, p.Version, corePath, p.BundleVersion())
 	if p.Appearance != "" {
 		flags += fmt.Sprintf(" -X %s.appearance=%s", pkg, p.Appearance)
 	}
@@ -416,7 +421,7 @@ func (p *project) ldflags(extra ...string) string {
 		}
 	}
 	if p.Release {
-		flags += " -s -w"
+		flags += fmt.Sprintf(" -X %s.appRelease=1 -s -w", corePath)
 	}
 	for _, e := range extra {
 		flags += " " + e

@@ -52,6 +52,23 @@ var envExports = []export{
 		return r.accessor(func() js.Value { return r.edgesValue(insets()) })
 	}),
 	{"platform", (*runtime).platform},
+	fn("appInfo", func(r *runtime, _ js.FunctionCall) js.Value { return r.appInfo() }),
+}
+
+// appInfo is the app's identity (core.App): { id, name, version, build,
+// development }, null for what nsgo.yaml leaves out.
+func (r *runtime) appInfo() js.Value {
+	a := core.App()
+	o := r.vm.NewObject()
+	for _, f := range []struct{ name, value string }{{"id", a.ID}, {"name", a.Name}, {"version", a.Version}, {"build", a.Build}} {
+		v := js.Null()
+		if f.value != "" {
+			v = r.vm.ToValue(f.value)
+		}
+		_ = o.Set(f.name, v)
+	}
+	_ = o.Set("development", a.Development)
+	return o
 }
 
 // platform is the platform the app runs on: { os, version, idiom,

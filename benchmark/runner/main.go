@@ -195,7 +195,7 @@ func build(fw string) (map[string]string, error) {
 			}
 			ldflags := "-s -w"
 			if fw == "nsgo" {
-				ldflags += " -X 'github.com/oneo-me/nsgo.name=" + titles[c] + "'"
+				ldflags += " -X 'github.com/oneo-me/nsgo/core.appName=" + titles[c] + "'"
 			}
 			if err := run("", nil, "go", "build", "-trimpath", "-ldflags", ldflags, "-o", out, "./"+fw+"/"+c); err != nil {
 				return nil, err

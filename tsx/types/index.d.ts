@@ -187,6 +187,15 @@ export declare const fontScale: Accessor<number>;
 export declare const pixelRatio: Accessor<number>;
 export declare const locale: Accessor<string>;
 export declare const platform: PlatformInfo;
+/** The app's identity as nsgo.yaml gives it, null where it gives none; development unless nsgo build built the app. */
+export interface AppInfo {
+  readonly id: string | null;
+  readonly name: string | null;
+  readonly version: string | null;
+  readonly build: string | null;
+  readonly development: boolean;
+}
+export declare function appInfo(): AppInfo;
 export declare const reduceMotion: Accessor<boolean>;
 export declare const screenReaderEnabled: Accessor<boolean>;
 /** Whether the app is in use: "inactive" shows it without the focus, "background" shows none of it. */
