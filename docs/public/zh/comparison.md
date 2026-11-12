@@ -25,10 +25,19 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 
 ## 优势
 
-- **原生视图。** 文本、输入法、选择、滚动、无障碍和菜单都是平台自己的，应用在每个平台上的表现符合用户预期；自绘框架则要逐一重新实现它们。
+- **原生视图。** 文本、输入法、选择、滚动、无障碍和菜单都是平台自己的，应用在每个平台上的表现符合用户预期；自绘框架则要逐一重新实现它们。某个平台独有的效果，比如 iOS 的 Liquid Glass，其他平台会用同样的方式模仿，而不是直接去掉。
 - **细粒度更新。** 组件只运行一次，signal 只更新读取它的地方，没有虚拟 DOM，也没有每帧都要比对的视图函数；动画运行在平台的帧时钟上。
-- **只有 Go。** 引擎、布局和后端都是 Go，Go 应用不需要 C、cgo 或 JavaScript 引擎。所有目标都能在装有 Go 和 Xcode 的 Mac 上构建：不需要 NDK、Android SDK、JDK、GTK 或 Windows 工具链。
-- **覆盖所有平台。** 手机、电视、桌面和 Web 共用一个引擎、一套 API 和一种测试方式，应用还能嵌入已有的 iOS、Android、Go 桌面和 Web 应用。
+- **包最小，启动最快。** 在[基准测试](https://nsgo.dev/zh/benchmarks/)中，同一个计数器应用在 macOS、Windows 和 Linux 上打出的包都在 8 MB 左右，比 MyGo、GPUI 和 NSH 都小（NSH 为 33 到 45 MB）；启动也最快，内存比 MyGo、GPUI 这类在 GPU 上自绘的框架更低。
+- **只有 Go。** 引擎、布局和后端都是 Go，Go 应用不需要 C、cgo 或 JavaScript 引擎。
+- **在一台 Mac 上构建所有平台。** 装有 Go 和 Xcode 的 Mac 能交叉编译每个目标：不需要 NDK、Android SDK、JDK、GTK 或 Windows 工具链。
+- **一条命令生成全部发布文件。** `nsgo build` 写出 macOS 的签名并公证的磁盘映像、Windows 安装程序、deb、Arch 软件包和 AppImage，Mac App Store、Microsoft Store、Google Play 和 Flathub 的商店包，以及从 GitHub Releases 安装的脚本（[构建与发布](building.md)）。
+- **每个平台原生的更新。** macOS 用 Sparkle、Windows 用 WinSparkle 下载、校验签名并安装新版本；Linux 和 Android 检查到新版本后打开它的发布页；iOS 交给 App Store。从商店安装的应用由商店更新（[自动更新](building.md#自动更新)）。
+- **覆盖所有平台。** 手机、平板、电视、手表、桌面和 Web 共用一个引擎和一套 API，还能做 iOS 轻 App、iPhone 和 Mac 的小组件，以及试验性的微信、QQ、支付宝和抖音小程序。
+- **嵌入已有应用。** NSGo 应用可以作为一个视图放进已有的 iOS、Android、Go 桌面和 Web 应用，逐步迁移（[嵌入](embedding.md)）。
+- **快速的开发循环。** 保存 Go 文件后应用自动重新构建并重启；只改 TSX 时在运行中的应用里原地更新，状态保留；构建错误和渲染时的 panic 直接显示在应用上方（[运行与调试](debugging.md)）。
+- **一套测试，到处运行。** 测试像用户一样按文本或角色操作控件，可以无窗口快速运行，也可以原样在每个目标的真实窗口里、用平台自己的输入运行，并保存截图（[测试](testing.md)）。
+- **开箱即用的本地化。** 应用和组件的文案放在文案目录中，伪语言区域能找出未翻译、被截断和不支持从右到左的地方（[本地化](localization.md)）。
+- **用 Go 写着色器。** `core.Shader` 运行用 Go 语法或 WGSL 写的 GPU 着色器，在每个平台上都能用（[画布](canvas.md#着色器)）。
 - **可选 TSX。** 界面可以用 TSX 和 Tailwind 类名编写，与 Go 组件运行在同一个引擎上。
 
 ## 劣势
@@ -38,7 +47,6 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 - **平台之间有差异。** 原生视图意味着各平台之间存在细微差别，应用需要在每个平台上检查。自绘框架在哪里看起来都一样。
 - **自己的桥接方式。** 在 Android 上，Go 程序运行在 Java 运行时旁边，通过管道与它通信；Linux 用户需要 GTK 4.14 或更新版本。
 - **TSX 是解释执行的。** TSX 运行在 goja 中，这是一个用 Go 写的 JavaScript 解释器，比 React Native 或 Electron 使用的引擎慢。
-- **没有自动更新。** `nsgo build` 能生成安装程序、公证 macOS 应用，并写出从 GitHub Releases 安装的脚本，但装好的应用不会自行更新。
 
 ## NSH
 

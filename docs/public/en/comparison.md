@@ -25,10 +25,19 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 
 ## Strengths
 
-- **Native views.** Text, input methods, selection, scrolling, accessibility and menus are the platform's own, so an app behaves as users expect there, where a framework that draws itself rebuilds each of them.
+- **Native views.** Text, input methods, selection, scrolling, accessibility and menus are the platform's own, so an app behaves as users expect there, where a framework that draws itself rebuilds each of them. What only one platform has, such as iOS's Liquid Glass, the others imitate the same way rather than drop.
 - **Fine-grained updates.** Components run once and signals update only what reads them, with no virtual DOM or per-frame view function to diff; animation runs on the platform's frame clock.
-- **Go only.** The engine, layout and backends are Go, with no C, no cgo and no JavaScript engine for Go apps. Every target builds from a Mac with Go and Xcode: no NDK, Android SDK, JDK, GTK or Windows toolchain.
-- **Every platform.** Phones, TVs, desktops and the web share one engine, one API and one test model, and apps can embed in existing iOS, Android, Go desktop and web apps.
+- **The smallest packages and the fastest start.** In the [benchmarks](https://nsgo.dev/benchmarks/), the same counter app packs to about 8 MB on macOS, Windows and Linux, smaller than MyGo's, GPUI's and NSH's (33 to 45 MB for NSH); it also starts fastest, and takes less memory than frameworks that draw on the GPU, such as MyGo and GPUI.
+- **Go only.** The engine, layout and backends are Go, with no C, no cgo and no JavaScript engine for Go apps.
+- **Every platform from one Mac.** A Mac with Go and Xcode cross-compiles every target: no NDK, Android SDK, JDK, GTK or Windows toolchain.
+- **Every release file from one command.** `nsgo build` writes a signed, notarized disk image for macOS, a Windows installer, deb and Arch packages and an AppImage, packages for the Mac App Store, the Microsoft Store, Google Play and Flathub, and scripts that install from GitHub releases ([building](building.md)).
+- **Each platform's own updates.** On macOS Sparkle, and on Windows WinSparkle, download, verify and install the next version; on Linux and Android the app finds it and opens its release page; on iOS the App Store does. An app a store installed is left to that store ([updates](building.md#updates)).
+- **Every platform.** Phones, tablets, TVs, watches, desktops and the web share one engine and one API, along with iOS App Clips, iPhone and Mac widgets, and, experimentally, WeChat, QQ, Alipay and Douyin mini programs.
+- **Embedding.** An NSGo app can sit as a view in an existing iOS, Android, Go desktop or web app, to move over a screen at a time ([embedding](embedding.md)).
+- **A fast dev loop.** Saving a Go file rebuilds and restarts the app; a TSX change updates the running app in place and keeps its state; build errors and panics while rendering show over the app ([running and debugging](debugging.md)).
+- **One set of tests everywhere.** Tests find and use controls by text or role as users do, quickly with no window, or unchanged in real windows on each target with the platform's own input, saving screenshots ([testing](testing.md)).
+- **Localization built in.** An app's and its components' words live in catalogs, and pseudo-locales find what is untranslated, cut off or not ready for right-to-left ([localization](localization.md)).
+- **Shaders in Go.** `core.Shader` runs GPU shaders written in Go syntax or WGSL, on every platform ([canvas](canvas.md#shaders)).
 - **TSX when wanted.** Screens can be written in TSX with Tailwind classes, on the same engine as Go components.
 
 ## Weaknesses
@@ -38,7 +47,6 @@ NSGo's place among UI frameworks comes from three choices: apps are written in G
 - **Platforms differ.** Native views mean small differences between platforms, so an app needs checking on each. A framework that draws itself looks the same everywhere.
 - **Its own bridges.** On Android the Go program runs beside the Java runtime and talks to it over pipes, and on Linux users need GTK 4.14 or newer.
 - **TSX is interpreted.** TSX runs in goja, a JavaScript interpreter written in Go, slower than the engines React Native or Electron use.
-- **No automatic updates.** `nsgo build` makes installers, notarizes macOS apps and writes scripts that install from GitHub releases, but installed apps do not update themselves.
 
 ## NSH
 
