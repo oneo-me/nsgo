@@ -74,9 +74,10 @@ var (
 	attrFont, attrColor, attrKern, attrUnderline, attrParagraph uintptr
 	attrTraits, attrWeight, attrSymbolic, attrUnderlineColor    uintptr
 	attrFeatureSettings, attrFeatureTag, attrFeatureValue       uintptr
-	attrCascadeList                                             uintptr
+	attrCascadeList, attrFamilyName, attrWidth                  uintptr
 
 	ctFontDescriptorCreateWithAttrs func(attrs uintptr) uintptr
+	ctFontDescriptorCopyAttr        func(desc, attr uintptr) uintptr
 	ctFontCreateCopyWithAttrs       func(font uintptr, size float64, matrix, desc uintptr) uintptr
 )
 
@@ -151,9 +152,12 @@ func loadText(cf, cg uintptr) {
 	attrUnderlineColor = constant(ct, "kCTUnderlineColorAttributeName")
 	attrFeatureSettings = constant(ct, "kCTFontFeatureSettingsAttribute")
 	attrCascadeList = constant(ct, "kCTFontCascadeListAttribute")
+	attrFamilyName = constant(ct, "kCTFontFamilyNameAttribute")
+	attrWidth = constant(ct, "kCTFontWidthTrait")
 	attrFeatureTag = constant(ct, "kCTFontOpenTypeFeatureTag")
 	attrFeatureValue = constant(ct, "kCTFontOpenTypeFeatureValue")
 	reg(&ctFontDescriptorCreateWithAttrs, ct, "CTFontDescriptorCreateWithAttributes")
+	reg(&ctFontDescriptorCopyAttr, ct, "CTFontDescriptorCopyAttribute")
 	reg(&ctFontCreateCopyWithAttrs, ct, "CTFontCreateCopyWithAttributes")
 	loadInline(ct, cg)
 }
@@ -311,12 +315,27 @@ func buildFace(f driver.Font) uintptr {
 		symbolic = italicTrait
 	}
 	sym := int32Number(symbolic)
-	traits := dictionary([]uintptr{attrWeight, attrSymbolic}, []uintptr{weight, sym})
-	attrs := dictionary([]uintptr{attrTraits}, []uintptr{traits})
+	width := float64Number(0)
+	traits := dictionary([]uintptr{attrWeight, attrSymbolic, attrWidth}, []uintptr{weight, sym, width})
 	desc := ctFontCopyFontDescriptor(base)
-	styled := ctFontDescriptorCopyAttrs(desc, attrs)
+	family := ctFontCopyFamilyName(base)
+	var styled, attrs, cascade uintptr
+	if strings.HasPrefix(GoString(objc.ID(family)), ".") {
+		// The system's UI fonts take the traits onto their own descriptor.
+		attrs = dictionary([]uintptr{attrTraits}, []uintptr{traits})
+		styled = ctFontDescriptorCopyAttrs(desc, attrs)
+	} else {
+		// A named face's descriptor keeps its face over the traits, so the
+		// face is matched in its family, its fallbacks kept.
+		keys, values := []uintptr{attrFamilyName, attrTraits}, []uintptr{family, traits}
+		if cascade = ctFontDescriptorCopyAttr(desc, attrCascadeList); cascade != 0 {
+			keys, values = append(keys, attrCascadeList), append(values, cascade)
+		}
+		attrs = dictionary(keys, values)
+		styled = ctFontDescriptorCreateWithAttrs(attrs)
+	}
 	font := ctFontCreateWithDescriptor(styled, float64(f.Size), 0)
-	for _, ref := range []uintptr{weight, sym, traits, attrs, desc, styled, base} {
+	for _, ref := range []uintptr{weight, sym, width, traits, family, cascade, attrs, desc, styled, base} {
 		Release(ref)
 	}
 	return font

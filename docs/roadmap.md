@@ -61,7 +61,6 @@ What `base/terminal` still lacks of a terminal app's features, Ghostty's the ref
 
 | Item | Ghostty reference | Done when |
 | --- | --- | --- |
-| Bold and italic monospace text on Apple platforms | — | A monospace or named family's bold and italic draw in their faces: Apple's `buildFace` copies traits onto a descriptor that names a font, which keeps the regular face |
 | Android | — | An Android app's remote session runs: libghostty-vt built for `aarch64-linux-android` (Ghostty's build takes the NDK's sysroot, which `tools/libghostty` would download) goes into the APK's native libraries, and the Go process, which has no cgo on arm64, loads it: purego loads libraries on Android only through cgo, so this needs a loader for bionic without cgo, checked on a device |
 | iOS on a device | — | The gallery's `TestTerminalPhone` passes on an iPhone with its signed framework and software keyboard, as it does under `nsgo test -target ios_simulator` since 2026-11-05 |
 | `-embed` frameworks and other packages | — | `-embed` XCFrameworks and AARs, and Windows and Linux packages, carry libghostty-vt beside the app, as macOS and iOS apps do |
